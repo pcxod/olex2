@@ -395,6 +395,15 @@ AFileSystem* UpdateAPI::FSFromString(const olxstr& _repo,
       if( url.GetProtocol() == "http" )  {
         TSocketFS* _fs = new TSocketFS(url);
         _fs->SetExtraHeaders(httpHeaderPlatform);
+        olxstr tfn = TBasicApp::GetSharedDir() + "app.token";
+        if (TEFile::Exists(tfn)) {
+          TStrList sl;
+          sl.LoadFromFile(tfn);
+          if (sl.Count() == 1) {
+            _fs->SetSessionInfo(sl[0]);
+            _fs->SetExtraHeaders(httpHeaderPlatform|httpHeaderESession);
+          }
+        }
         FS = _fs;
       }
 #ifdef __WXWIDGETS__

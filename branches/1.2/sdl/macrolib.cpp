@@ -345,18 +345,33 @@ void TEMacroLib::ProcessMacro(const olxstr& Cmd, TMacroError& Error,
   if (Command.IsEmpty()) return;
   // processing environment variables
   size_t ind = Command.FirstIndexOf('|');
-  while( ind != InvalidIndex )  {
-    if( ind+1 >= Command.Length() )  break;
+  while (ind != InvalidIndex) {
+    if (is_escaped(Command, ind)) {
+      Command.Delete(ind - 1, 1);
+      if (++ind >= Command.Length()) break;
+      ind = Command.FirstIndexOf('|', ind);
+      continue;
+    }
+    if (ind+1 >= Command.Length()) break;
     size_t ind1 = Command.FirstIndexOf('|', ind+1);
-    if( ind1 == InvalidIndex )  break;
-    if( ind1 == ind+1 )  { // %%
-      Command.Delete(ind1, 1);
+    if (ind1 == InvalidIndex) break;
+    if (is_escaped(Command, ind1)) {
+      Command.Delete(ind1 - 1, 1);
+      if (++ind1 >= Command.Length())  break;
       ind = Command.FirstIndexOf('|', ind1);
       continue;
     }
+    if (ind1 == ind+1) { // leave these - could be operators
+      if (++ind1 >= Command.Length())  break;
+      ind = Command.FirstIndexOf('|', ind1);
+      continue;
+    }
+    if (ind1 == InvalidIndex) {
+      break;
+    }
     const olxstr var_name = Command.SubString(ind+1, ind1-ind-1);
     const olxstr eval = olx_getenv(var_name);
-    if( !eval.IsEmpty() )  {
+    if (!eval.IsEmpty()) {
       Command.Delete(ind, ind1-ind+1);
       Command.Insert(eval, ind);
       ind1 = ind + eval.Length();
@@ -364,8 +379,8 @@ void TEMacroLib::ProcessMacro(const olxstr& Cmd, TMacroError& Error,
     else  // variable is not found - leave as it is
       ind1 = ind + var_name.Length();
 
-    if( ind1+1 >= Command.Length() )  break;
-    ind = Command.FirstIndexOf('|', ind1+1);
+    if (++ind1 >= Command.Length())  break;
+    ind = Command.FirstIndexOf('|', ind1);
   }
   try {
     exparse::expression_parser expr(Command);

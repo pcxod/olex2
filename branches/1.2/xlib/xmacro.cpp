@@ -3508,7 +3508,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
   olxstr CifCustomisationFN = xapp.GetCifTemplatesDir() + "customisation.xlt";
   typedef SortedObjectList<olxstr, olxstrComparator<true> > SortedStrList;
   SortedStrList items_to_skip, items_to_merge;
-  TTypeList<Wildcard> masks_to_skip;
+  TTypeList<Wildcard> masks_to_skip, masks_to_merge;
   if (TEFile::Exists(CifCustomisationFN)) {
     try {
       TDataFile df;
@@ -3541,7 +3541,10 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
           "cif_customisation").FindItem("do_merge");
         if (mi != NULL) {
           for (size_t i = 0; i < mi->ItemCount(); i++) {
-            items_to_merge.AddUnique(mi->GetItemByIndex(i).GetName());
+            if (mi->GetItemByIndex(i).GetName().ContainAnyOf("*?"))
+              masks_to_merge.AddNew(mi->GetItemByIndex(i).GetName());
+            else
+              items_to_merge.AddUnique(mi->GetItemByIndex(i).GetName());
           }
         }
       }
@@ -3885,23 +3888,29 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
       }
       bool skip = false;
       for (size_t k = 0; k < masks_to_skip.Count(); k++) {
-        if (masks_to_skip[k].DoesMatch(e.GetName()) &&
-            !items_to_merge.Contains(e.GetName()))
-        {
-          TBasicApp::NewLogEntry(logInfo) << "Skipping '" << e.GetName() << '\'';
+        if (masks_to_skip[k].DoesMatch(e.GetName())) {
           skip = true;
           break;
         }
       }
-      if (skip) continue;
-      for (size_t k=0; k < _loop_names_to_skip.Count(); k++) {
-        const olxstr &i_name = e.GetName();
-        if(i_name.StartsFromi(_loop_names_to_skip[k]) &&
-          (i_name.Length()>_loop_names_to_skip[k].Length() &&
-           i_name.CharAt(_loop_names_to_skip[k].Length()) == '_'))
-        {
-          skip = true;
-          break;
+      if (skip) {
+        for (size_t k = 0; k < masks_to_merge.Count(); k++) {
+          if (masks_to_merge[k].DoesMatch(e.GetName())) {
+            skip = false;
+            break;
+          }
+        }
+      }
+      if (!skip) {
+        for (size_t k = 0; k < _loop_names_to_skip.Count(); k++) {
+          const olxstr &i_name = e.GetName();
+          if (i_name.StartsFromi(_loop_names_to_skip[k]) &&
+            (i_name.Length()>_loop_names_to_skip[k].Length() &&
+            i_name.CharAt(_loop_names_to_skip[k].Length()) == '_'))
+          {
+            skip = true;
+            break;
+          }
         }
       }
       if (!skip) {
