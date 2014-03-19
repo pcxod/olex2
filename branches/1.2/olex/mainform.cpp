@@ -1488,9 +1488,10 @@ bool TMainForm::CreateUpdateThread(bool force) {
   {
     olxstr tfn = TBasicApp::GetSharedDir() + "app.token";
     if (!TEFile::Exists(tfn)) {
-      int answer = wxMessageBox(wxString("The usage of Olex2 can provide very "
-        "useful information to its developers. Would you like please to help us"
-        " by providing anonymous information regarding the Olex2 usage?"),
+      int answer = wxMessageBox(wxString("The program usage statistics can "
+        "provide very helpful information to its developers. Would you like to "
+        "contribute into the Olex2 development by providing us with"
+        " anonymous information regarding its use?"),
         wxT("Help needed!"),
         wxYES_NO | wxCANCEL | wxYES_DEFAULT | wxICON_QUESTION);
       TCStrList sl;
