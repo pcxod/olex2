@@ -31,11 +31,10 @@ void THttpFileSystem::Init() {
 void THttpFileSystem::SetUrl(const TUrl& url) {
   if (Connected) Disconnect();
   Initialise();
-  if (ExecutableSession_().IsEmpty()) { // not UUID, but quite unique
-    ExecutableSession_() = MD5::Digest(olxstr(TETime::msNow()));
+  if (SessionInfo_().IsEmpty()) { // not UUID, but quite unique
+    SessionInfo_() = MD5::Digest(olxstr(TETime::msNow()));
     olx_sleep(1);
-    ExecutableSession_() = MD5::Digest(ExecutableSession_()+
-      olxstr(TETime::msNow()));
+    SessionInfo_() = MD5::Digest(SessionInfo_() + olxcstr(TETime::msNow()));
   }
   Url = url;
   SetBase(url.GetPath());
@@ -147,7 +146,7 @@ olxcstr THttpFileSystem::GenerateRequest(const olxcstr& cmd, const olxcstr& File
   if ((ExtraHeaders & httpHeaderPlatform) != 0)
     request << "Platform: " << TBasicApp::GetPlatformString() << '\n';
   if ((ExtraHeaders & httpHeaderESession) != 0)
-    request << "ESession: " << ExecutableSession_() << '\n';
+    request << "ESession: " << SessionInfo_() << '\n';
   if (position != InvalidIndex && position != 0)
     request << "Resume-From: " << position << '\n';
   return request << '\n';

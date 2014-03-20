@@ -17,8 +17,14 @@
 */
 class TSocketFS: public THttpFileSystem  {
 protected:
-  static bool UseLocalFS;
-  static olxstr Base;
+  static bool &UseLocalFS() {
+    static bool use = false;
+    return use;
+  }
+  static olxstr &Base() {
+    static olxstr base;
+    return base;
+  }
   int attempts, max_attempts;
   bool BaseValid;
   virtual IInputStream* _DoOpenFile(const olxstr& src)  {
@@ -34,12 +40,12 @@ public:
   TSocketFS(const TUrl& url, int _max_attempts=100) :
       THttpFileSystem(url), max_attempts(_max_attempts), BaseValid(false)
   {
-    if( Base.IsEmpty() )
-      Base = TBasicApp::GetInstanceDir() + ".cds/";
-    if( UseLocalFS )  {
-      try  {
-        if( !TEFile::Exists(Base) )  {
-          if( TEFile::MakeDir(Base) )
+    if (Base().IsEmpty())
+      Base() = TBasicApp::GetInstanceDir() + ".cds/";
+    if (UseLocalFS()) {
+      try {
+        if (!TEFile::Exists(Base())) {
+          if (TEFile::MakeDir(Base()))
             BaseValid = true;
         }
         else
@@ -47,15 +53,15 @@ public:
       }
       catch(...)  {}
     }
-    if( max_attempts < 0 )
+    if (max_attempts < 0)
       max_attempts = 0;
-    else if( max_attempts > 32000 )
+    else if (max_attempts > 32000)
       max_attempts = 32000;
   }
-  virtual ~TSocketFS()  {}
-  static bool CanUseLocalFS()  {  return UseLocalFS;  }
+  virtual ~TSocketFS() {}
+  static bool CanUseLocalFS()  {  return UseLocalFS();  }
   // allows creating temporary files in basedir/.cds/
-  static void SetUseLocalFS(bool v)  {  UseLocalFS = v;  } 
+  static void SetUseLocalFS(bool v)  {  UseLocalFS() = v;  } 
   /* sets the dir in which temporary files can be stores and enables
   the use of it as in a call to SetUseLocalFS(true). If the folder
   does not exists an attempt to create one will be made and in the case
@@ -65,7 +71,7 @@ public:
       if( !TEFile::MakeDir(base) )
         return false;
     }
-    Base = base;
+    Base() = base;
     SetUseLocalFS(true);
     return false;
   }

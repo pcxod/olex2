@@ -320,17 +320,17 @@ void TCif::Initialize()  {
       }
     }
   }
-  else  {
+  else {
     Loop = FindLoop("_symmetry_equiv_pos");
-    if( Loop == NULL )
+    if (Loop == NULL)
       Loop = FindLoop("_symmetry_equiv_pos_as_xyz");
-    if( Loop != NULL  )  {
+    if (Loop != NULL) {
       cetTable& symop_tab = AddLoopDef(
         "_space_group_symop_id,_space_group_symop_operation_xyz");
       size_t sindex = Loop->ColIndex("_symmetry_equiv_pos_as_xyz");
       size_t iindex = Loop->ColIndex("_symmetry_equiv_pos_site_id");
-      if( sindex != InvalidIndex )  {
-        for( size_t i=0; i < Loop->RowCount(); i++ )  {
+      if (sindex != InvalidIndex) {
+        for (size_t i=0; i < Loop->RowCount(); i++) {
           try {
             Matrices.AddCopy(
               TSymmParser::SymmToMatrix(Loop->Get(i, sindex).GetStringValue()));
@@ -347,11 +347,42 @@ void TCif::Initialize()  {
             MatrixMap.Add(i+1, i);
             row[0] = new cetString(i+1);
           }
-          else  {
+          else {
             MatrixMap.Add(Loop->Get(i, iindex).GetStringValue(), i);
             row[0] = Loop->Get(i, iindex).Replicate();
           }
           row[1] = Loop->Get(i, sindex).Replicate();
+        }
+      }
+      if (!Matrices.IsEmpty()) {
+        if (!Matrices[0].IsI()) {
+          TBasicApp::NewLogEntry(logError) << "The CIF symmetry first matrix "
+            "element is not identity! This may cause CIF processing errors - "
+            "please fix.";
+          size_t idx = InvalidIndex;
+          for (size_t i = 1; i < Matrices.Count(); i++) {
+            if (Matrices[i].IsI()) {
+              idx = i;
+              break;
+            }
+          }
+          if (idx != InvalidIndex) {
+            Matrices.Swap(0, idx);
+            size_t i0 = InvalidIndex, i1 = InvalidIndex;
+            for (size_t i = 0; i < MatrixMap.Count(); i++) {
+              if (MatrixMap.GetValue(i) == 0) {
+                i0 = i;
+              }
+              else if (MatrixMap.GetValue(i) == idx) {
+                i1 = i;
+              }
+              if (i0 != InvalidIndex && i1 != InvalidIndex) {
+                MatrixMap.GetValue(i0) = idx;
+                MatrixMap.GetValue(i1) = 0;
+                break;
+              }
+            }
+          }
         }
       }
       // remove obsolete loop
