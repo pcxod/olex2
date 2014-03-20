@@ -99,6 +99,7 @@ public:
       throw TInvalidArgumentException(__OlxSourceInfo, "empty data dir");
     GetDDSetting().is_static = is_static;
     GetDDSetting().data_dir = dir;
+    GetDDSetting().is_manually_set = true;
   }
   /* return 'AppData' or OLEX2_DATADIR if defined
   */

@@ -156,7 +156,7 @@ bool PatchAPI::UnlockUpdater() {
 }
 //.............................................................................
 olxstr PatchAPI::ReadRepositoryTag(const olxstr& base_dir)  {
-  if (repository_base_dir == base_dir)
+  if (repository_base_dir == base_dir && !base_dir.IsEmpty())
     return repository_tag;
   repository_base_dir = base_dir.IsEmpty() ? TBasicApp::GetBaseDir()
     : base_dir;

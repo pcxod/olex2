@@ -158,6 +158,7 @@
 #include "label_corrector.h"
 #include "estopwatch.h"
 #include "ememstream.h"
+#include "pers_util.h"
 //#include "gl2ps/gl2ps.c"
 
 static const olxstr OnModeChangeCBName("modechange");
@@ -1340,6 +1341,10 @@ void TMainForm::macSave(TStrObjList &Cmds, const TParamList &Options,
         : TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "oxv");
       TDataFile df;
       FXApp->SaveStructureStyle(df.Root().AddItem("GraphicsView"));
+      TDataItem &dim = df.Root().AddItem("Dimensions");
+      dim.AddField("maxd", PersUtil::VecToStr(FXApp->GetRender().MaxDim()));
+      dim.AddField("mind", PersUtil::VecToStr(FXApp->GetRender().MinDim()));
+      FXApp->GetRender().GetBasis().ToDataItem(dim.AddItem("Basis"));
       df.SaveToXLFile(Tmp);
     }
   }
@@ -1568,6 +1573,14 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options,
       df.LoadFromXLFile(FN);
       FXApp->LoadStructureStyle(df.Root().GetItemByName("GraphicsView"));
       FXApp->CreateObjects(false);
+      TDataItem *dim = df.Root().FindItem("Dimensions");
+      if (dim != NULL) {
+        vec3d mid = PersUtil::VecFromStr<vec3d>(dim->GetFieldByName("mind"));
+        vec3d mad = PersUtil::VecFromStr<vec3d>(dim->GetFieldByName("maxd"));
+        FXApp->GetRender().GetBasis().FromDataItem(dim->GetItemByName("Basis"));
+        FXApp->GetRender().ClearMinMax();
+        FXApp->GetRender().UpdateMinMax(mid, mad);
+      }
     }
   }
   else

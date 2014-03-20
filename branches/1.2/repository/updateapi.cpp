@@ -418,6 +418,22 @@ AFileSystem* UpdateAPI::FSFromString(const olxstr& _repo,
   }
 }
 //.............................................................................
+bool UpdateAPI::WillUpdate(bool force) const {
+  bool update = force ? true : false;
+  if (!force) {
+    const SettingsFile& sf = settings;
+    if (sf.update_interval.IsEmpty() || sf.update_interval.Equalsi("Always"))
+      update = true;
+    else if (sf.update_interval.Equalsi("Daily"))
+      update = ((TETime::EpochTime() - sf.last_updated ) > SecsADay);
+    else if (sf.update_interval.Equalsi("Weekly"))
+      update = ((TETime::EpochTime() - sf.last_updated ) > SecsADay*7);
+    else if (sf.update_interval.Equalsi("Monthly"))
+      update = ((TETime::EpochTime() - sf.last_updated ) > SecsADay*30);
+  }
+  return update;
+}
+//.............................................................................
 AFileSystem* UpdateAPI::FindActiveUpdateRepositoryFS(short* res, bool force) const {
   if (Tag.IsEmpty()) {
     if (res != NULL)
@@ -436,19 +452,7 @@ AFileSystem* UpdateAPI::FindActiveUpdateRepositoryFS(short* res, bool force) con
       return new TOSFileSystem(AddTagPart(repo, true));
   }
   else {
-    bool update = force ? true : false;
-    if (!force) {
-      const SettingsFile& sf = settings;
-      if( sf.update_interval.IsEmpty() || sf.update_interval.Equalsi("Always") )
-        update = true;
-      else if( sf.update_interval.Equalsi("Daily") )
-        update = ((TETime::EpochTime() - sf.last_updated ) > SecsADay );
-      else if( sf.update_interval.Equalsi("Weekly") )
-        update = ((TETime::EpochTime() - sf.last_updated ) > SecsADay*7 );
-      else if( sf.update_interval.Equalsi("Monthly") )
-        update = ((TETime::EpochTime() - sf.last_updated ) > SecsADay*30 );
-    }
-    if (update) {
+    if (WillUpdate(force)) {
       AFileSystem* FS = FindActiveRepositoryFS(&repo,
         (AddTagPart(EmptyString(), true)+"index.ind").SubStringFrom(1));
       if (FS == NULL) {

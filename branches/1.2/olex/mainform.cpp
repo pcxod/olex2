@@ -987,6 +987,7 @@ void TMainForm::XApp(Olex2App *XA)  {
   Library.AttachLibrary(XA->DUnitCell().ExportLibrary());
   Library.AttachLibrary(TFileHandlerManager::ExportLibrary());
   TOlxVars::ExportLibrary(EmptyString(), &Library);
+
 #ifdef _CUSTOM_BUILD_
   CustomCodeBase::Initialise(Library);
 #endif
@@ -1484,7 +1485,8 @@ void TMainForm::StartupInit()  {
 //..............................................................................
 bool TMainForm::CreateUpdateThread(bool force) {
   volatile olx_scope_cs cs(TBasicApp::GetCriticalSection());
-  if (_UpdateThread != NULL) return false;
+  if (_UpdateThread != NULL || !updater::UpdateAPI().WillUpdate(force))
+    return false;
   {
     olxstr tfn = TBasicApp::GetSharedDir() + "app.token";
     if (!TEFile::Exists(tfn)) {
