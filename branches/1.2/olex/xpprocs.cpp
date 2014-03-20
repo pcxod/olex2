@@ -1355,22 +1355,21 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options,
 {
   if( Cmds[0].Equalsi("style") )  {
     olxstr FN = Cmds.Text(' ', 1);
-    if( FN.IsEmpty() ) {
+    if (FN.IsEmpty()) {
       FN = PickFile("Load drawing style", "Drawing styles|*.glds",
         StylesDir, EmptyString(), true);
     }
-    if( FN.IsEmpty() )
-      return;
+    if (FN.IsEmpty()) return;
     olxstr Tmp = TEFile::ExtractFilePath(FN);
-    if( !Tmp.IsEmpty() )  {
-      if( !StylesDir.Equalsi(Tmp) )  {
+    if (!Tmp.IsEmpty()) {
+      if (!StylesDir.Equalsi(Tmp)) {
         TBasicApp::NewLogEntry(logInfo) <<
           "Styles folder is changed to: " << Tmp;
         StylesDir = Tmp;
       }
     }
-    else  {
-      if( !StylesDir.IsEmpty() )
+    else {
+      if (!StylesDir.IsEmpty())
         Tmp = StylesDir;
       else
         Tmp = FXApp->GetBaseDir();
@@ -1381,21 +1380,32 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options,
     TDataFile F;
     F.LoadFromXLFile(FN, NULL);
     FXApp->GetRender().ClearSelection();
+    bool clear = Options.GetBoolOption('c', false, true);
+    const vec3d mid = FXApp->GetRender().MinDim();
+    const vec3d mad = FXApp->GetRender().MaxDim();
     // this forces the object creation, so if there is anything wrong...
-    try  {
+    try {
       FXApp->GetRender().GetStyles().FromDataItem(
       *F.Root().FindItem("style"), false);
     }
-    catch(const TExceptionBase &e)  {
+    catch(const TExceptionBase &e) {
       FXApp->GetRender().GetStyles().Clear();
       TBasicApp::NewLogEntry(logError) << "Failed to load given style";
       TBasicApp::NewLogEntry(logExceptionTrace) << e;
     }
-    FXApp->ClearIndividualCollections();
-    FXApp->CreateObjects(true);
-    FXApp->CenterView(true);
+    if (clear) {
+      FXApp->ClearIndividualCollections();
+    }
+    FXApp->CreateObjects(clear);
+    if (clear) {
+      FXApp->CenterView(true);
+    }
+    else {
+      FXApp->GetRender().ClearMinMax();
+      FXApp->GetRender().UpdateMinMax(mid, mad);
+    }
     FN = FXApp->GetRender().GetStyles().GetLinkFile();
-    if( !FN.IsEmpty() )  {
+    if (!FN.IsEmpty()) {
       if( TEFile::Exists(FN) )  {
         F.LoadFromXLFile(FN, NULL);
         LoadScene(F.Root(), FXApp->GetRender().LightModel);

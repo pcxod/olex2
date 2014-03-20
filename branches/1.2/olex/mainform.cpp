@@ -634,7 +634,8 @@ void TMainForm::XApp(Olex2App *XA)  {
     "Saves style/scene/view/gview/model");
   GetLibrary().Register(
     new TMacro<TMainForm>(this, &TMainForm::macLoad, "Load",
-      EmptyString(),  fpAny^fpNone,
+      "c-when loading style clears current model customisation [false]",
+      fpAny^fpNone,
       "Loads style/scene/view/gview/model/radii. For radii accepts sfil, vdw, pers"),
     libChain
   );
