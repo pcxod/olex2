@@ -29,15 +29,6 @@ void UpdateThread::DoInit(bool force)  {
   try {
     if (TEFile::Exists(patcher::PatchAPI::GetUpdateLocationFileName()))
       return;
-    // compatibility with older versions!
-    olxstr old_lf = TBasicApp::GetBaseDir() +
-      "__location.update";
-    if (TEFile::Exists(old_lf)) {
-      TEFile::Copy(old_lf, patcher::PatchAPI::GetUpdateLocationFileName());
-      TEFile::DelFile(old_lf);
-      return;
-    }
-    // end of the compatibility section
     updater::UpdateAPI uapi;
     srcFS = uapi.FindActiveUpdateRepositoryFS(NULL, force);
     if( srcFS == NULL )  return;

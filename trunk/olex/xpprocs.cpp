@@ -6456,13 +6456,15 @@ void TMainForm::macFlushFS(TStrObjList &Cmds, const TParamList &Options,
   }
 }
 //..............................................................................
-void TMainForm::macUpdate(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+void TMainForm::macUpdate(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
   if (patcher::PatchAPI::HaveUpdates()) {
     TBasicApp::NewLogEntry() <<
       "Updates already available, please restart the program to apply";
     return;
   }
-  CreateUpdateThread(true);
+  CreateUpdateThread(Options.GetBoolOption('f', true, true));
 }
 //..............................................................................
 void TMainForm::macElevate(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {

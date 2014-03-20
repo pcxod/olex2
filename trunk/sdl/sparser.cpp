@@ -9,8 +9,13 @@
 
 #include "sparser.h"
 #include "typelist.h"
+#include "exparse/exptree.h"
 
-TOperatorSignature::TOperatorSignature(const short shortVal, const olxstr &strVal) {
+using namespace exparse;
+
+TOperatorSignature::TOperatorSignature(const short shortVal,
+  const olxstr &strVal)
+{
   ShortValue = shortVal;
   StringValue = strVal;
 }
@@ -49,10 +54,8 @@ TSyntaxParser::TSyntaxParser(IEvaluatorFactory* FactoryInstance, const olxstr& E
   Root = SimpleParse( olxstr::DeleteChars(Expression, ' ') );
 }
 TSyntaxParser::~TSyntaxParser()  {
-  for( size_t i=0; i < Evaluables.Count(); i++ )
-    delete Evaluables[i];
-  for( size_t i=0; i < Evaluators.Count(); i++ )
-    delete Evaluators[i];
+  Evaluables.DeleteItems(false);
+  Evaluators.DeleteItems(false);
   for( size_t i=0; i < LogicalOperators.Count(); i++ )
     delete LogicalOperators.GetValue(i);
   for( size_t i=0; i < ComparisonOperators.Count(); i++ )
@@ -64,117 +67,88 @@ IEvaluable* TSyntaxParser::SimpleParse(const olxstr& Exp)  {
   IEvaluable *LeftCondition = NULL, *RightCondition = NULL;
   IEvaluable *LogicalOperator = NULL;
   TObjectFactory<IEvaluable> *loFactory = NULL, *coFactory=NULL;
-  olxstr ComplexExp;
-  for( size_t i=0; i < Exp.Length(); i++ )  {
-    olxch Char = Exp.CharAt(i);
-    if( Char == '(' )  {
-      if( ++i >= Exp.Length() )  {
+  for (size_t i = 0; i < Exp.Length(); i++) {
+    if (Exp.CharAt(i) == '(') {
+      olxstr ComplexExp;
+      if (!parser_util::parse_brackets(Exp, ComplexExp, i)) {
         FErrors.Add("Unclosed brackets");
         break;
       }
-      int bc = 1;
-      Char = Exp.CharAt(i);
-      ComplexExp.SetLength(0);
-      while( bc != 0 )  {
-        if( Char == '(' )  bc++;
-        else if( Char == ')' )  bc--;
-        if( bc != 0 )  ComplexExp << Char;
-        else  break;
-        if( ++i > Exp.Length() )  {
-          FErrors.Add("Unclosed brackets");
-          break;
-        }
-        Char = Exp.CharAt(i);
-      }
-      if( !ComplexExp.IsEmpty() )  {
-        if( loFactory )
+      if (!ComplexExp.IsEmpty()) {
+        if (loFactory)
           RightCondition = SimpleParse(ComplexExp);
         else
           LeftCondition = SimpleParse(ComplexExp);
       }
-      if( ++i < Exp.Length() )  Char = Exp.CharAt(i);
-      else                      Char = '\0';
+      i++;
     }
-
-    while( olxstr::o_isalphanumeric(Char) ||
-           Char == '_' || Char =='.' || Char == '-' || Char == '+' )
-    {
-      // put values to different strings
-      if( coFactory != NULL )  {
-        if( !RightStr.IsEmpty() )  RightStr << Char;
-        else                       RightExp << Char;
+    if (i < Exp.Length()) {
+      size_t st = i;
+      while (i < Exp.Length() && (olxstr::o_isalphanumeric(Exp.CharAt(i)) ||
+        olxstr::o_isoneof(Exp.CharAt(i), "_.-+",4)))
+      {
+        i++;
       }
-      else  {
-        if( !LeftStr.IsEmpty() )  LeftStr << Char;
-        else                      LeftExp << Char;
+      olxstr expr = Exp.SubString(st, i - st);
+      if (coFactory != NULL) {
+        if (!RightStr.IsEmpty())
+          RightStr << expr;
+        else
+          RightExp << expr;
       }
-      if( ++i >= Exp.Length() )  break;
-      Char = Exp.CharAt(i);
+      else {
+        if (!LeftStr.IsEmpty())
+          LeftStr << expr;
+        else
+          LeftExp << expr;
+      }
     }
-
-    // spaces are for readibility only
-    if( Char == ' ' )  continue;
-
-    if( Char == '\'' || Char == '\"' )  {  // string beginning
-      olxch StringWrappingChar = Char;
-      while( true )  {
-        if( ++i >= Exp.Length() )  {
-          FErrors.Add( olxstr("Unclose quotation") );
+    if (parser_util::skip_whitechars(Exp, i) < Exp.Length()) {
+      if (parser_util::is_quote(Exp.CharAt(i))) {  // string beginning
+        olxstr expr;
+        if (!parser_util::parse_string(Exp, expr, i)) {
+          FErrors.Add(olxstr("Unclose quotation"));
           break;
         }
-        Char = Exp.CharAt(i);
-        if( Char == StringWrappingChar )  {
-          if( coFactory != NULL )  {
-            if( !RightStr.IsEmpty() && RightStr.GetLast() == '\\' )
-              RightStr[RightStr.Length()-1] = Char;
-            else  break;
-          }
-          else  {
-            if( !LeftStr.IsEmpty() && LeftStr.GetLast() == '\\' )
-              LeftStr[LeftStr.Length()-1] = Char;
-            else  break;
-          }
-        }
-        if( coFactory != NULL )  RightStr << Char;
-        else             LeftStr << Char;
+        if (coFactory != NULL)
+          RightStr << expr;
+        else
+          LeftStr << expr;
       }
-      if( ++i < Exp.Length() )  Char = Exp.CharAt(i);
-      else                      Char = '\0';
     }
- 
     // processing comparison operators
-    if( coFactory != NULL && (!LeftExp.IsEmpty() || !LeftStr.IsEmpty()) &&
-                             (!RightExp.IsEmpty() || !RightStr.IsEmpty()) )
+    if (coFactory != NULL && (!LeftExp.IsEmpty() || !LeftStr.IsEmpty()) &&
+                             (!RightExp.IsEmpty() || !RightStr.IsEmpty()))
     {
       IEvaluator *LeftEvaluator = NULL, *RightEvaluator = NULL;
-      if( !LeftExp.IsEmpty() )  {
-        if( LeftExp.IsNumber() )
+      if (!LeftExp.IsEmpty()) {
+        if (LeftExp.IsNumber())
           LeftEvaluator = Evaluators.Add(new TScalarEvaluator(LeftExp.ToDouble()));
-        else if( LeftExp.IsBool() )
+        else if (LeftExp.IsBool())
           LeftEvaluator = Evaluators.Add(new TBoolEvaluator(LeftExp.ToBool()));
-        else  {
+        else {
           LeftEvaluator = EvaluatorFactory->Evaluator(LeftExp);
-          if( LeftEvaluator == NULL )
+          if (LeftEvaluator == NULL)
             FErrors.Add("Could not find evaluator for: ") << LeftExp;
         }
       }
-      else  {
+      else {
         LeftEvaluator = Evaluators.Add(new TStringEvaluator(LeftStr));
       }
-      if( !RightExp.IsEmpty() )  {
-        if( RightExp.IsNumber() )  {
+      if (!RightExp.IsEmpty()) {
+        if (RightExp.IsNumber()) {
           RightEvaluator = Evaluators.Add(new TScalarEvaluator(RightExp.ToDouble()));
         }
-        else if( RightExp.IsBool() )  {
+        else if (RightExp.IsBool()) {
           RightEvaluator = Evaluators.Add(new TBoolEvaluator(RightExp.ToBool()));
         }
-        else  {
+        else {
           RightEvaluator = EvaluatorFactory->Evaluator(RightExp);
-          if( RightEvaluator == NULL )
+          if (RightEvaluator == NULL)
             FErrors.Add("Could not find evaluator for: ") << RightExp;
         }
       }
-      else  {
+      else {
         RightEvaluator = new TStringEvaluator(RightStr);
         Evaluators.Add(RightEvaluator);
       }
@@ -183,7 +157,7 @@ IEvaluable* TSyntaxParser::SimpleParse(const olxstr& Exp)  {
       Args[0] = LeftEvaluator;
       Args[1] = RightEvaluator;
       try {
-        if( loFactory != NULL )
+        if (loFactory != NULL)
           RightCondition = Evaluables.Add(coFactory->NewInstance(&Args));
         else
           LeftCondition = Evaluables.Add(coFactory->NewInstance(&Args));
@@ -203,14 +177,14 @@ IEvaluable* TSyntaxParser::SimpleParse(const olxstr& Exp)  {
     // do not check the left condition - for '!' operator it might be empty or
     // if there is a logical operator on the left (on the right it can be only
     // in the case of brackets)
-    if( loFactory && RightCondition )  {
+    if (loFactory && RightCondition) {
       TPtrList<IEObject> Args;
-      if( LogicalOperator != NULL )  {
+      if (LogicalOperator != NULL) {
         Args.Add(LogicalOperator);
         Args.Add(RightCondition);
         LogicalOperator = loFactory->NewInstance(&Args);
       }
-      else  {
+      else {
         Args.Add(LeftCondition);
         Args.Add(RightCondition);
         LogicalOperator = loFactory->NewInstance(&Args);
@@ -221,13 +195,14 @@ IEvaluable* TSyntaxParser::SimpleParse(const olxstr& Exp)  {
       loFactory = NULL;
     }
 
-    if( coFactory == NULL && (i < Exp.Length()) )  {
-      for( size_t j=0; j < ComparisonOperators.Count(); j++ )  {
+    if (coFactory == NULL && (i < Exp.Length())) {
+      olxch Char = Exp.CharAt(i);
+      for (size_t j=0; j < ComparisonOperators.Count(); j++) {
         size_t index = 0;
         while( (index < ComparisonOperators.GetKey(j).Length()) &&
                (ComparisonOperators.GetKey(j).CharAt(index) == Char)  )
         {
-          if( (i+index+1) >= Exp.Length() )  break;
+          if ((i+index+1) >= Exp.Length()) break;
           Char = Exp.CharAt(i+index+1);
           index++;
         }
@@ -238,16 +213,17 @@ IEvaluable* TSyntaxParser::SimpleParse(const olxstr& Exp)  {
         }
         Char = Exp.CharAt(i);  // roll back the character
       }
-      if( coFactory != NULL )  continue;
+      if (coFactory != NULL) continue;
     }
 
-    if( loFactory == NULL && (i < Exp.Length()) )  {
-      for( size_t j=0; j < LogicalOperators.Count(); j++ )  {
+    if (loFactory == NULL && (i < Exp.Length())) {
+      olxch Char = Exp.CharAt(i);
+      for (size_t j = 0; j < LogicalOperators.Count(); j++) {
         size_t index = 0;
         while( (index < LogicalOperators.GetKey(j).Length()) &&
                (LogicalOperators.GetKey(j).CharAt(index) == Char)  )
         {
-          if( (i+index+1) >= Exp.Length() )  break;
+          if ((i+index+1) >= Exp.Length()) break;
           Char = Exp.CharAt(i+index+1);
           index++;
         }
@@ -260,9 +236,9 @@ IEvaluable* TSyntaxParser::SimpleParse(const olxstr& Exp)  {
       }
     }
   }
-  if( LogicalOperator != NULL )  return LogicalOperator;
-  if( LeftCondition != NULL )  return LeftCondition;
+  if (LogicalOperator != NULL)  return LogicalOperator;
+  if (LeftCondition != NULL)  return LeftCondition;
 
-  FErrors.Add( olxstr("Could not parse: ") << Exp);
+  FErrors.Add("Could not parse: ").quote() << Exp;
   return NULL;
 }

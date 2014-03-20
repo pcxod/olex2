@@ -88,9 +88,9 @@
     typedef unsigned __int64 uint64_t;
 # endif
 # ifdef _WIN64
-    typedef __int64 index_t;
+    typedef int64_t index_t;
 # else
-    typedef __int32 index_t;
+    typedef int32_t index_t;
 # endif
 #else // non Windows
   typedef int32_t index_t;

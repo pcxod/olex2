@@ -758,7 +758,10 @@ void TMainForm::XApp(Olex2App *XA)  {
   this_InitMacro(SetCmd, , fpAny);
 
   this_InitMacroD(UpdateOptions, EmptyString(), fpNone, "Shows the Update Options dialog");
-  this_InitMacroD(Update, EmptyString(), fpNone, "Does check the for the updates");
+  this_InitMacroD(Update,
+    "f-force [true]",
+    fpNone,
+    "Does check the for the updates");
   this_InitMacro(Reload, , fpOne);
   this_InitMacro(StoreParam, , fpTwo|fpThree);
   this_InitMacro(SelBack, a&;o&;x, fpNone);
@@ -1471,15 +1474,42 @@ void TMainForm::StartupInit()  {
   }  // load html in last call - it might call some destructive functions on uninitialised data
   HtmlManager.main->LoadPage(FHtmlIndexFile.u_str());
   HtmlManager.main->SetHomePage(FHtmlIndexFile);
-  // must move it here since on Linux things will not get initialised at the previous position
-  CreateUpdateThread(false);
   FileDropTarget* dndt = new FileDropTarget(*this);
   this->SetDropTarget(dndt);
+  //CreateUpdateThread(false);
+  processMacro("schedule 1 'update -f=false' -g");
 }
 //..............................................................................
 bool TMainForm::CreateUpdateThread(bool force) {
   volatile olx_scope_cs cs(TBasicApp::GetCriticalSection());
   if (_UpdateThread != NULL) return false;
+  {
+    olxstr tfn = TBasicApp::GetSharedDir() + "app.token";
+    if (!TEFile::Exists(tfn)) {
+      int answer = wxMessageBox(wxString("The program usage statistics can "
+        "provide very helpful information to its developers. Would you like to "
+        "contribute into the Olex2 development by providing us with"
+        " anonymous information regarding its use?"),
+        wxT("Help needed!"),
+        wxYES_NO | wxCANCEL | wxYES_DEFAULT | wxICON_QUESTION);
+      TCStrList sl;
+      if (answer == wxYES) {
+        TShellUtil::MACInfo mi;
+        TShellUtil::ListMACAddresses(mi);
+        if (!mi.IsEmpty()) {
+          sl.Add("at=") << MD5::Digest((const char *)mi.GetObject(0).GetData(),
+            mi.GetObject(0).Count());
+        }
+        else {
+          sl.Add("at=") << MD5::Digest(
+            olxcstr(rand()) << TETime::msNow() << rand());
+        }
+      }
+      if (answer != wxCANCEL) {
+        TEFile::WriteLines(tfn, sl); // NO creates empty file
+      }
+    }
+  }
 #ifndef __WIN32__ // do updates on non-Win only if the folder is writable
   if( FXApp->IsBaseDirWriteable() )  {
 #endif

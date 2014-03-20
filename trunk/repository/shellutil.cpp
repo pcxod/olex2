@@ -503,6 +503,10 @@ bool TShellUtil::IsAdmin() {
   return ::IsUserAnAdmin();
 #endif
 }
+#else
+bool TShellUtil::IsAdmin() {
+  throw TNotImplementedException(__OlxSourceInfo);
+}
 #endif //__GNUC__
 //.............................................................................
 //http://msdn.microsoft.com/en-us/library/windows/desktop/bb762153(v=vs.85).aspx
