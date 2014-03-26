@@ -188,6 +188,8 @@ public:
   not it will be set to updater::uapi_UptoDate or an error code
   */
   AFileSystem* FindActiveUpdateRepositoryFS(short* res, bool force=false) const;
+  //returns true if the program will/allowed try to update itself
+  bool WillUpdate(bool force=false) const;
   // creates an FS from string - ftpfs, httpfs, os-fs or zipfs
   static AFileSystem* FSFromString(const olxstr& repo_str,
     const olxstr& proxy_str);

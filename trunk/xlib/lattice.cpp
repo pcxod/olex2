@@ -2577,12 +2577,13 @@ TUndoData *TLattice::ValidateHGroups(bool reinit, bool report) {
         part = ag[j].GetPart();
         break;
       }
-      size_t attached_cnt=0, metal_cnt=0;
+      size_t attached_cnt=0, metal_cnt=0, dependent_cnt=0;
       for (size_t j=0; j < ag.GetPivot().AttachedSiteCount(); j++) {
         TCAtom &a = ag.GetPivot().GetAttachedAtom(j);
         if (a.IsDeleted() || a.GetType().z < 2)
           continue;
         if (TAfixGroup::HasImplicitPivot(a.GetAfix())) {
+          dependent_cnt++;
           continue;
         }
         if (part == 0 || a.GetPart() == 0 || a.GetPart() == part) {
@@ -2625,7 +2626,8 @@ TUndoData *TLattice::ValidateHGroups(bool reinit, bool report) {
             "AFIX group and the group was removed. Please revise your model.";
           TBasicApp::NewLogEntry() << ag.GetPivot().GetLabel() << ", AFIX " <<
             ag.GetAfix() << ", attached atoms " << attached_cnt <<
-            ", attached metals " << metal_cnt;
+            ", attached metals " << metal_cnt <<
+            ", attached dependent groups " << dependent_cnt;
         }
         ag.Clear();
       }

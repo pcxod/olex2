@@ -41,6 +41,10 @@
 #include <signal.h>
 #endif
 
+#ifdef _CUSTOM_BUILD_
+  #include "custom_base.h"
+#endif
+
 class TProgress: public AActionHandler  {
   wxProgressDialog *Progress;
   int Max, Start;
@@ -164,11 +168,16 @@ bool TGlXApp::OnInit()  {
 #else
     XApp = new Olex2App(TBasicApp::GuessBaseDir(BaseDir, "OLEX2_DIR"));
 #endif
-    XApp->SetSharedDir(patcher::PatchAPI::GetSharedDir());
-    XApp->SetInstanceDir(patcher::PatchAPI::GetInstanceDir());
-    olxstr config_dir = olx_getenv("OLEX2_CONFIGDIR");
-    if (!config_dir.IsEmpty())
-      XApp->SetConfigdDir(config_dir);
+#ifdef _CUSTOM_BUILD_
+  if (!CustomCodeBase::OnStartup())
+#endif
+    {
+      XApp->SetSharedDir(patcher::PatchAPI::GetSharedDir());
+      XApp->SetInstanceDir(patcher::PatchAPI::GetInstanceDir());
+      olxstr config_dir = olx_getenv("OLEX2_CONFIGDIR");
+      if (!config_dir.IsEmpty())
+        XApp->SetConfigdDir(config_dir);
+    }
     XApp->ReadOptions(XApp->GetConfigDir() + ".options");
     XApp->CleanupLogs();
     XApp->CreateLogFile(XApp->GetOptions().FindValue("log_name", "olex2"));
