@@ -40,7 +40,7 @@ AConstraintGenerator::AConstraintGenerator(RefinementModel& rm) : RefMod(rm) {
   Distances(GenId(fgSiH2, 2), 1.43);
 
   Distances(GenId(fgSH1, 0), 1.2);
-  
+
   if( rm.expl.IsTemperatureSet() )  {
     if( rm.expl.GetTempValue().GetV() < -70 )  {
       for( size_t i=0; i < Distances.Count(); i++ )
@@ -141,7 +141,7 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
         olx_create_rotation_matrix(M, PlaneN, cos(M_PI*120./180));
         crds.AddNew(M*crds[0]);
         crds.AddNew(M*crds[1]);
-    
+
         for( size_t i=0; i < crds.Count(); i++ )  {
           crds[i] *= dis;
           crds[i] += envi.GetBase().crd();
@@ -429,7 +429,7 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
         olx_create_rotation_matrix(M, PlaneN, cos(M_PI*120./180));
         crds.AddNew(M*crds[0]);
         crds.AddNew(M*crds[1]);
-    
+
         for( size_t i=0; i < crds.Count(); i++ )  {
           crds[i] *= dis;
           crds[i] += envi.GetBase().crd();
@@ -581,7 +581,7 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
 //            break;
 //          }
         }
-        if( create ) 
+        if( create )
           crds.AddNew(Vec1.NormaliseTo(-dis) + envi.GetBase().crd());
       }
       break;

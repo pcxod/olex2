@@ -13,7 +13,7 @@
 #include "glbase.h"
 #include "threex3.h"
 
-/* A simple postscript file interface 
+/* A simple postscript file interface
 */
 class TEXWriter  {
   TEFile out;
@@ -26,7 +26,7 @@ public:
     CurrentColor = 0;
     CurrentLineWidth = 1;
     out.Open(fileName, "w+b");
-      
+
     out.Writeln("\\documentclass[a4paper,10pt]{article}");
     out.Writeln("\\usepackage{color}");
     out.Writeln("\\usepackage{graphicx}");
@@ -41,11 +41,11 @@ public:
     out.Writeln("");
     //white border width around elements
     out.Writeln("\\newcommand{\\whitespace}{1pt}");
-    out.Writeln("");   
+    out.Writeln("");
   }
   void Writenl(const char* bf)  {
     out.Writeln(bf);
-  }  
+  }
 };
 
 #endif

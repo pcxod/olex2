@@ -168,11 +168,11 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options,
         saStat[i][3] = '+';
         if( SAHits[i].IsExcluded() )
           saStat[i][3] << '-';
-        else 
+        else
           UniqueElements.Add(&SAHits[i].GetSymmElement());
         PresentElements.Add( &SAHits[i].GetSymmElement() );
       }
-      else 
+      else
         saStat[i][3] = '-';
     }
     else  {
@@ -316,7 +316,7 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options,
       sgTab[i][1] = olxstr::FormatFloat(2,
         sortedSGMergeResults.GetValue(i)->GetSummI() /
         sortedSGMergeResults.GetValue(i)->GetCount());
-      sgTab[i][1] << '(' << olxstr::FormatFloat(2, 
+      sgTab[i][1] << '(' << olxstr::FormatFloat(2,
         sortedSGMergeResults.GetValue(i)->GetSummSI() /
         sortedSGMergeResults.GetValue(i)->GetCount()) << ')';
       sgTab[i][2] = sortedSGMergeResults.GetValue(i)->GetCount();
@@ -476,7 +476,7 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options,
       for( size_t i=0; i < SATestResults.Count(); i++ )  {
         if( SATestResults[i].GetWeakCount() == 0 &&
           (SATestResults[i].GetObject()->HasTranslations() ||
-           !SATestResults[i].GetObject()->GetLattice().GetVectors().IsEmpty()) ) 
+           !SATestResults[i].GetObject()->GetLattice().GetVectors().IsEmpty()) )
         {
           if( !amb_sg.IsEmpty() )
             amb_sg << ", ";

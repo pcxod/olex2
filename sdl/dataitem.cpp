@@ -263,7 +263,7 @@ size_t TDataItem::LoadFromString(size_t start, const olxstr &Data,
           olxstr RefFieldName;
           olxstr *RefField = DotField(FieldName, RefFieldName);
           if (RefField == NULL)
-            _AddField(FieldName, FieldValue); 
+            _AddField(FieldName, FieldValue);
           else
             _AddField(RefFieldName, *RefField);
         }

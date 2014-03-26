@@ -41,9 +41,9 @@ public:
   };
 
   TNameUndo(IUndoAction* action) : TUndoData(action)  {}
-  
+
   TTypeList<NameRef> Data;
-  
+
   void AddAtom(TCAtom& A, const olxstr& oldName)  {
     Data.Add(new NameRef(A.GetId(), &A.GetType(), A.GetQPeak(), oldName));
   }
@@ -83,7 +83,7 @@ public:
     ASelectionOwner* selOwner=NULL);
   virtual ~TXApp();
   inline TXFile& XFile() const {  return *FXFile; }
-  
+
   DefPropC(olxstr, CifTemplatesDir)
 
   virtual class TLibrary&  GetLibrary()  {  return Library;  }

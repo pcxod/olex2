@@ -37,7 +37,7 @@ public:
   void printTLS(const olxstr &title="TLS matrices") const;
   void printDiff(const olxstr &title="Uobs vs Utls") const;
   void printFOM() const;
-  
+
   ConstTypeList<evecd> calcUijEllipse(const TSAtomPList &atoms);
   bool calcTLS(const ematd& designM, const evecd& UijC, const ematd &weigts);
   //returns t
@@ -53,11 +53,11 @@ private:
   mat3d RtoLaxes;
   //TLS wrt current frame: Updated through analysis
   mat3d Tmat, Lmat, Smat;
-  
-  evecd_list newElps;  //Ellipsoids calculated from TLS 
-  unsigned short TLSfreeParameters; // 21, To be reduced by 1 per constraint 
+
+  evecd_list newElps;  //Ellipsoids calculated from TLS
+  unsigned short TLSfreeParameters; // 21, To be reduced by 1 per constraint
                     //(unless enforced with Lagrange multipliers?).
-  
+
   vec3d FoM;    // {R1,R2'}
   // (6T, 6L, 9S) x (6T, 6L, 9S)
   ematd TLS_VcV;
@@ -76,4 +76,3 @@ private:
 
 EndXlibNamespace()
 #endif
-

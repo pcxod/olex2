@@ -16,7 +16,7 @@
 BeginEsdlNamespace()
 
 // app event registry, these might not be implemented
-static olxstr 
+static olxstr
   olxappevent_GL_DRAW("GLDRAW"),
   olxappevent_GL_CLEAR_STYLES("GLDSCLEAR"),
   olxappevent_UPDATE_GUI("UPDATE_GUI");
@@ -133,7 +133,7 @@ public:
       throw TFunctionFailedException(__OlxSourceInfo,
         "Uninitialised application layer...");
     }
-    return *Instance;  
+    return *Instance;
   }
 
   static bool HasInstance();
@@ -149,7 +149,7 @@ public:
   void CleanupLogs(const olxstr &dir_name=EmptyString());
 
   TActionQueue& NewActionQueue(const olxstr& Name);
-  TActionQueue* FindActionQueue(const olxstr& Name)  {  
+  TActionQueue* FindActionQueue(const olxstr& Name)  {
     try  {  return Actions.Find(Name);   }
     catch(...)  {  return NULL;  }
   }

@@ -151,7 +151,7 @@ class SplashDlg : public wxDialog  {
 public:
   SplashDlg(wxWindow *parent) :
       wxDialog(parent, -1, wxT("Initialising"), wxDefaultPosition, wxSize(100, 100),
-        wxNO_BORDER|wxFRAME_SHAPED) 
+        wxNO_BORDER|wxFRAME_SHAPED)
   {
     wxDialog::SetTitle(wxT("Olex2 splash screen"));
     bmp = NULL;
@@ -290,7 +290,7 @@ BEGIN_EVENT_TABLE(TMainForm, wxFrame)  // basic interface
   EVT_MENU(ID_AtomSelRings, TMainForm::OnAtom)
 
   EVT_MENU(ID_PlaneActivate, TMainForm::OnPlane)
-  
+
   EVT_MENU(ID_BondViewAlong, TMainForm::OnBond)
 
   EVT_MENU(ID_View100, TMainForm::OnViewAlong)
@@ -380,10 +380,10 @@ TMainForm::TMainForm(TGlXApp *Parent)
   MousePositionX = MousePositionY = -1;
 
   LabelToEdit = NULL;
-  
+
   TimePerFrame = 50;
   DrawSceneTimer = 0;
-  
+
   MouseMoveTimeElapsed  = 0;
   FBitmapDraw = false;
   FMode = 0;
@@ -543,12 +543,12 @@ void TMainForm::XApp(Olex2App *XA)  {
     "fraction of their real width. If a values is not 0 - it specifies the "
     "width of the strips&;"
     ,
-    fpOne|psFileLoaded, 
+    fpOne|psFileLoaded,
     "Postscript rendering");
   this_InitMacroD(PictTEX,
     "color_line-lines&;"
     "color_fill-ellipses are filled",
-    fpOne|psFileLoaded, 
+    fpOne|psFileLoaded,
     "Experimental tex/pgf rendering");
   this_InitMacroD(PictS,
     "a-view angle [6]&;"
@@ -690,7 +690,7 @@ void TMainForm::XApp(Olex2App *XA)  {
     "v-[grow] use user provided delta for connectivity analysis, default 2A\n&;"
     "shells-[grow] grow atom shells vs fragments&;"
     "l-[name] lock atom types after naming\n&;",
-    (fpAny^fpNone)|psFileLoaded, 
+    (fpAny^fpNone)|psFileLoaded,
     "Turns specified mode on. Valid mode: fixu, fixc, grow, himp, match, move,"
     " name, occu, pack, part, split, fit");
 
@@ -781,7 +781,7 @@ void TMainForm::XApp(Olex2App *XA)  {
   this_InitMacro(NextSolution, ,fpNone);
 
   this_InitMacro(ShowWindow, ,fpOne|fpTwo);
-  
+
   this_InitMacroD(OFileDel, EmptyString(), fpOne,
     "Deletes overlayed file specified by index");
   this_InitMacroD(OFileSwap, EmptyString(), fpNone|fpOne,
@@ -856,7 +856,7 @@ void TMainForm::XApp(Olex2App *XA)  {
     "g-sphere quality [6]&;"
     "e-emboss the sphere"
     ,
-    fpAny|psFileLoaded, 
+    fpAny|psFileLoaded,
     "Creates a projection from the selected atom onto a sphere, coloring each "
     "point on the sphere with a unique color corresponding to fragments.");
   this_InitMacroD(UpdateQPeakTable, EmptyString(), fpNone|psFileLoaded,
@@ -1534,7 +1534,7 @@ bool TMainForm::CreateUpdateThread(bool force) {
 bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender,
   const IEObject *Data, TActionQueue *)
 {
-  
+
   if (StartupInitialised && PyEval_ThreadsInitialized() && wxThread::IsMain()) {
     PyGILState_STATE st = PyGILState_Ensure();
     Py_BEGIN_ALLOW_THREADS
@@ -1546,7 +1546,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender,
   bool res = true, Silent = (FMode & mSilent) != 0, Draw=false;
   static bool actionEntered = false, downloadEntered=false;
   if( Destroying )  {
-    FMode = 0;  // to release waitfor 
+    FMode = 0;  // to release waitfor
     return false;
   }
   if( MsgId == ID_GLDRAW && !IsIconized() )  {
@@ -1776,7 +1776,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender,
         }
       }
       if( DrawSceneTimer > 0 && !Draw )  {
-        if( DrawSceneTimer < FTimer->GetInterval() )  
+        if( DrawSceneTimer < FTimer->GetInterval() )
           TimePerFrame = FXApp->Draw();
         else
           DrawSceneTimer -= FTimer->GetInterval();
@@ -1810,8 +1810,8 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender,
       if( downloadEntered && UpdateProgress != NULL )  {
         downloadEntered = false;
         UpdateExecuted = true;
-        StatusBar->SetStatusText( 
-          (olxstr("Downloading ") << UpdateProgress->GetAction() << ' ' << 
+        StatusBar->SetStatusText(
+          (olxstr("Downloading ") << UpdateProgress->GetAction() << ' ' <<
           olxstr::FormatFloat(2, UpdateProgress->GetPos()*100/
             (UpdateProgress->GetMax()+1)) << '%').u_str()
         );
@@ -2746,15 +2746,15 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
   I = DF.Root().FindItem("Window");
   if( I != NULL )  {
     if( I->FindField("Maximized", FalseString()).ToBool() )  {
-      int l = I->FindField("X", "0").ToInt(), 
+      int l = I->FindField("X", "0").ToInt(),
           t = I->FindField("Y", "0").ToInt();
         Move(l, t);
       Maximize();
     }
     else  {
-      int w = I->FindField("Width", "100").ToInt(), 
-        h = I->FindField("Height", "100").ToInt(), 
-        l = I->FindField("X", "0").ToInt(), 
+      int w = I->FindField("Width", "100").ToInt(),
+        h = I->FindField("Height", "100").ToInt(),
+        l = I->FindField("X", "0").ToInt(),
         t = I->FindField("Y", "0").ToInt();
       SetSize(l, t, w, h);
     }
@@ -2762,7 +2762,7 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
   else
     Maximize();
   SkipSizing = false;
-  
+
   I = DF.Root().FindItem("Windows");
   if( I != NULL )  {
     HelpWindowVisible = I->FindField("Help", TrueString()).ToBool();
@@ -2822,7 +2822,7 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
       olxstr new_set = FXApp->GetBaseDir() + "last.osp";
       if( TEFile::Exists(new_set) )  {
         TDataFile LF;
-        try  {  
+        try  {
           LF.LoadFromXLFile(new_set);
           TDataItem& distributed_style = LF.Root().GetItemByName("Styles");
           int d_version = TGraphicsStyles::ReadStyleVersion(distributed_style);
@@ -2861,7 +2861,7 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
   const olxstr& defGlTVal = TrueString();
 #endif
   UseGlTooltip( I->FindField("GlTooltip", defGlTVal).ToBool() );
-  if( I->FieldExists("ThreadCount") ) 
+  if( I->FieldExists("ThreadCount") )
     FXApp->SetMaxThreadCount(I->FindField("ThreadCount", "1").ToInt());
   else  {
     int cpu_cnt = wxThread::GetCPUCount();
@@ -2881,7 +2881,7 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
   if( !TEFile::Exists(GradientPicture) )
     GradientPicture.SetLength(0);
   olxstr T = I->FindField("Gradient", EmptyString());
-  if( !T.IsEmpty() ) 
+  if( !T.IsEmpty() )
     processMacro(olxstr("grad ") << T);
 
   I = DF.Root().FindItem("Stored_params");
@@ -2977,7 +2977,7 @@ void TMainForm::UpdateRecentFile(const olxstr& fn)  {
           (int)(ID_FILE0+FRecentFiles.Count()), wxT("tmp"));
       }
       FRecentFiles.Insert(0, FN, mi);
-    }  
+    }
     else  {
       FRecentFiles.Insert(0, FN, FRecentFiles.GetLast().Object);
       FRecentFiles.Delete(FRecentFiles.Count()-1);
@@ -2987,7 +2987,7 @@ void TMainForm::UpdateRecentFile(const olxstr& fn)  {
     FRecentFiles.Move(index, 0);
 
   for( size_t i=0; i < FRecentFiles.Count(); i++ )
-    Items.Add( FRecentFiles.GetObject(i) ); 
+    Items.Add( FRecentFiles.GetObject(i) );
   for( size_t i=0; i < FRecentFiles.Count(); i++ )  { // put items in the right position
     FRecentFiles.GetObject(Items[i]->GetId()-ID_FILE0) = Items[i];
     Items[i]->SetText(FRecentFiles[Items[i]->GetId()-ID_FILE0].u_str());
@@ -3333,7 +3333,7 @@ bool TMainForm::CheckState(size_t state, const olxstr& stateData) const {
 void TMainForm::OnInternalIdle()  {
   if( Destroying )  return;
   wxWindow::UpdateWindowUI();
-#if !defined(__WIN32__)  
+#if !defined(__WIN32__)
   if( !StartupInitialised )
     StartupInit();
 #endif
@@ -3370,7 +3370,7 @@ void TMainForm::OnInternalIdle()  {
   wxFrame::OnInternalIdle();
 #ifdef __MAC__  // duno why otherwise it takes 100% of CPU time...
   wxMilliSleep(15);
-#endif  
+#endif
   return;
 }
 //..............................................................................
@@ -3795,7 +3795,7 @@ void TMainForm::OnCloseWindow(wxCloseEvent &evt) {
         evt.Veto();
     }
   }
-  else 
+  else
     Destroy();
 }
 //..............................................................................
@@ -3850,7 +3850,7 @@ PyObject* pyPPI(PyObject* self, PyObject* args)  {
 }
 //..............................................................................
 static PyMethodDef CORE_Methods[] = {
-  {"GetUserInput", pyGetUserInput, METH_VARARGS, 
+  {"GetUserInput", pyGetUserInput, METH_VARARGS,
   "Shows a dialog, where user can type some text. Takes three agruments: flags"
   ", title and content. If flags not equal to 1, a muliline dialog sis created"
   },

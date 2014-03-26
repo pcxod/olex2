@@ -174,7 +174,7 @@ void TCHNExp::LoadFromExpression(const olxstr &E1)  {
       if( !NExp.IsEmpty() )  {
         TCHNExp& Exp = Dependencies.AddNew();
         Exp.LoadFromExpression(NExp);
-        if( !SMult.IsEmpty() )  
+        if( !SMult.IsEmpty() )
           Exp.SetMult(SMult);
       }
       continue;

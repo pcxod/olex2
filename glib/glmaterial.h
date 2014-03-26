@@ -22,7 +22,7 @@ const uint16_t
   sglmAmbientF   = 0x0001,    // material properties
   sglmAmbientB   = 0x0002,
   sglmAmbientFB  = 0x0003,
-  
+
   sglmDiffuseF   = 0x0004,
   sglmDiffuseB   = 0x0008,
   sglmDiffuseFB  = 0x000C,
@@ -34,11 +34,11 @@ const uint16_t
   sglmShininessF = 0x0040,
   sglmShininessB = 0x0080,
   sglmShininessFB= 0x00C0,
-  
+
   sglmEmissionF =  0x0100,
   sglmEmissionB =  0x0200,
   sglmEmissionFB = 0x0300,
-  
+
   sglmTransparent =0x0400,
   sglmIdentityDraw=0x0800,
 //  sglmStaticDraw  =0x1000,
@@ -62,16 +62,16 @@ public:
 
   TGlOption AmbientB;
   TGlOption DiffuseB;
-  
+
   TGlMaterial() : Flags(0), ShininessF(0), ShininessB(0) {}
   TGlMaterial(const olxstr& str)  {  FromString(str);  }
 
   void Init(bool skip) const;
   const TGlMaterial& Intensity(TGlOption& ClearColor, double intensity) const;
-  
+
   DefPropP(uint16_t, Flags)
 
-  // Has/Set 
+  // Has/Set
   DefPropBFHasSet(AmbientF,   Flags, sglmAmbientF)
   DefPropBFHasSet(DiffuseF,   Flags, sglmDiffuseF)
   DefPropBFHasSet(EmissionF,  Flags, sglmEmissionF)

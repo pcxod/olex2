@@ -153,7 +153,7 @@ public:
       return PyUnicode_FromWideChar(L"", 0);
     return PyUnicode_FromWideChar(str.raw_str(), str.Length());
   }
-// parsing string 
+// parsing string
   static olxstr ParseStr(PyObject *pobj) {
     char*  crv;
     olxstr rv;

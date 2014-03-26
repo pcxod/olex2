@@ -25,7 +25,7 @@ public:
   inline TSPoint& Point(size_t i) const {  return Points[i];  }
   // calculates isotope pattern for Exp - chemical formula and fills Points with TSPoint
   // Msg - error message
-  // Combine - if the masses have to be combined 
+  // Combine - if the masses have to be combined
   // Delta - the difference between combined masses
   bool Calc(const olxstr& Exp, olxstr& Msg, bool Combine, double Delta);
   void SortDataByMolWeight();

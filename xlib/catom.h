@@ -37,7 +37,7 @@ const short
   catom_var_name_U13   = 10,
   catom_var_name_U12   = 11;
 
-const short 
+const short
   catom_flag_Deleted    = 0x0001,
   catom_flag_Growable   = 0x0002,
   catom_flag_HAttached  = 0x0004,
@@ -74,7 +74,7 @@ private:
   const cm_Element* Type;
   olxstr Label;    // atom's label
   // Id is also used to identify if TSAtoms are the same
-  size_t Id, EllpId;  
+  size_t Id, EllpId;
   /* this is used in asymmetric unit sort and initialised in
   TLatice::InitBody()
   */
@@ -123,7 +123,7 @@ public:
   label is set without changing the atom type
   */
   void SetLabel(const olxstr& L, bool validate=true);
-  
+
   // returns atom label
   const olxstr& GetLabel() const {  return Label;  }
   /* if ResiId == -1 works the same as GetLabel(), otherwise appends '_' and
@@ -150,7 +150,7 @@ public:
   bool AttachSite(TCAtom* atom, const smatd& matrix);
   void ClearAttachedSites()  {
     AttachedSites.Clear();
-    AttachedSitesI.Clear(); 
+    AttachedSitesI.Clear();
   }
   // aplies conninfo to the list of attached sites
   void UpdateAttachedSites();
@@ -215,7 +215,7 @@ public:
   void RemoveDependentHfixGroup(TAfixGroup& hg) {
     DependentHfixGroups->Remove(&hg);
   }
-  void ClearDependentHfixGroups() {  
+  void ClearDependentHfixGroups() {
     if( DependentHfixGroups != NULL ) DependentHfixGroups->Clear();
   }
   void AddDependentHfixGroup(TAfixGroup& hg) {
@@ -260,7 +260,7 @@ public:
       throw TInvalidArgumentException(__OlxSourceInfo, "var index");
     return Vars[i];
   }
-  virtual olxstr GetVarName(size_t i) const { 
+  virtual olxstr GetVarName(size_t i) const {
     if( i >= VarCount() )
       throw TInvalidArgumentException(__OlxSourceInfo, "var index");
     return VarNames[i];
@@ -304,7 +304,7 @@ public:
   FlagsAnalyser(short flags) {
     return FlagsAnalyser_<DirectAccessor>(DirectAccessor(), flags);
   }
-  
+
   template <class Accessor> struct FlagSetter_ {
     const Accessor &accessor;
     const short ref_flags;

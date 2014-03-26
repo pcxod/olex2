@@ -95,7 +95,7 @@ protected:
   IProcessOutput& data;
 public:
   BufferedProcessOutput(bool thread_use) :
-      data(*(thread_use ? 
+      data(*(thread_use ?
         (IProcessOutput*)(new SynchronisedProcessOutput)
         : (IProcessOutput*)(new ProcessOutput)))
   {}
@@ -251,7 +251,7 @@ public:
   }
   //..............................................................................
   ~ProcessManager()  {
-    TBasicApp::GetInstance().OnTimer.Remove(this); 
+    TBasicApp::GetInstance().OnTimer.Remove(this);
     for( size_t i=0; i < Processes.Count(); i++ )  {
       Processes[i]->OnTerminate.Clear();
       Processes[i]->Terminate();

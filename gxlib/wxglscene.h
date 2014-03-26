@@ -48,7 +48,7 @@ public:
     AGlScene::StartSelect(x, y, Bf);
   }
   virtual int EndSelect()  {  return AGlScene::EndSelect();  }
-  /* the canvas must be set for this operation to succeed. 
+  /* the canvas must be set for this operation to succeed.
   */
   virtual bool MakeCurrent();
   virtual void StartDraw()  {  AGlScene::StartDraw();  }

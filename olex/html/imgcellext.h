@@ -29,7 +29,7 @@ class THtmlImageCell : public wxHtmlCell, public AOlxCtrl  {
     float qr;
     Circle(short _x, short _y, float _r) : x(_x), y(_y), qr(_r*_r) {}
     inline bool IsInside(short _x, short _y) const {
-      return (olx_sqr(_x-x) + olx_sqr(_y-y) <= qr); 
+      return (olx_sqr(_x-x) + olx_sqr(_y-y) <= qr);
     }
   };
   struct AShapeInfo  {
@@ -50,8 +50,8 @@ public:
   THtmlImageCell(wxWindow *window,
     wxFSFile *input, int w = wxDefaultCoord, int h = wxDefaultCoord,
     double scale = 1.0, int align = wxHTML_ALIGN_BOTTOM,
-    const wxString& mapname = wxEmptyString, 
-    bool WidthInPercent = false, 
+    const wxString& mapname = wxEmptyString,
+    bool WidthInPercent = false,
     bool HeightInPercent = false);
   ~THtmlImageCell();
   void Draw(wxDC& dc, int x, int y, int WXUNUSED(view_y1), int WXUNUSED(view_y2),

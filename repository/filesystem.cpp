@@ -86,7 +86,7 @@ bool TOSFileSystem::_DoAdoptFile(const TFSItem& Src)  {
     olxstr path = TEFile::ExtractFilePath(DFN);
     if( !TEFile::Exists(path) ) {
       if( !TEFile::MakeDir(path) ) {
-        if( !TEFile::MakeDirs(path) )  {  
+        if( !TEFile::MakeDirs(path) )  {
           TBasicApp::NewLogEntry(logError) << "MKdir failed on \'" << path
             << "\'";
           return false;
@@ -165,7 +165,7 @@ size_t TFSItem::UpdateDigest()  {
   }
   try  {
     olxstr fn = Index.IndexFS.GetBase() + GetFullName();
-    if( !Index.IndexFS.Exists(fn) )  return 0; 
+    if( !Index.IndexFS.Exists(fn) )  return 0;
     IInputStream* is = Index.IndexFS.OpenFile(fn);
     if( is == NULL )  return 0;
     Digest = MD5::Digest(*is);
@@ -204,15 +204,15 @@ size_t TFSItem::ReadStrings(size_t& index, TFSItem* caller, TStrList& strings,
   {
   TStrList toks, propToks;
   while( (index + 2) <= strings.Count() )  {
-    size_t level = strings[index].LeadingCharCount('\t'), 
+    size_t level = strings[index].LeadingCharCount('\t'),
         nextlevel = 0;
-    olxstr name( strings[index].Trim('\t') ), 
+    olxstr name( strings[index].Trim('\t') ),
            ext( TEFile::ExtractFileExt(name) );
     bool skip = false, folder = false;
     TFSItem* item = NULL;
     if( (index+2) < strings.Count() )  {
       nextlevel = strings[index+2].LeadingCharCount('\t');
-      if( nextlevel > level )  
+      if( nextlevel > level )
         folder = true;
     }
     if( toSkip != NULL )  {  // skip business
@@ -235,14 +235,14 @@ size_t TFSItem::ReadStrings(size_t& index, TFSItem* caller, TStrList& strings,
             }
             if( nextlevel > level )  //reached the end
               return 0;
-            if( nextlevel < level )  
+            if( nextlevel < level )
               return  nextlevel;
             continue;
           }
         }
       }
       else  {
-        if( toSkip->extsToSkip != NULL && !ext.IsEmpty() )  {  
+        if( toSkip->extsToSkip != NULL && !ext.IsEmpty() )  {
           for( size_t i=0; i < toSkip->extsToSkip->Count(); i++ )  {
             if( (*toSkip->extsToSkip)[i].Equalsi(ext) )  {
               skip = true;
@@ -395,7 +395,7 @@ uint64_t TFSItem::Synchronise(TFSItem& Dest, const TStrList& properties,
   // add new files
   for( size_t i=0; i < this->Count(); i++ )  {
     TFSItem& FI = Item(i);
-    if( FI.IsProcessed() || !FI.ValidateProperties(properties) ) 
+    if( FI.IsProcessed() || !FI.ValidateProperties(properties) )
       continue;
     if( Index.Break )  // termination signal
       return Index.Progress.GetPos();
@@ -593,7 +593,7 @@ void TFSItem::ClearNonexisting()  {
     return;
   for( size_t i=0; i < Count(); i++ )  {
     if( !Item(i).IsFolder() )  {
-      if( Index.ShouldExist(Item(i)) && 
+      if( Index.ShouldExist(Item(i)) &&
         !GetIndexFS().Exists(GetIndexFS().GetBase() + Item(i).GetFullName()) )
       {
         delete Items.GetValue(i);
@@ -626,7 +626,7 @@ void TFSItem::ClearEmptyFolders()  {
 //.............................................................................
 //.............................................................................
 //.............................................................................
-TFSIndex::TFSIndex(AFileSystem& fs) : 
+TFSIndex::TFSIndex(AFileSystem& fs) :
   IndexFS(fs),
   OnBreak(Actions.New("ON_BREAK")),
   OnProgress(Actions.New("ON_PROGRESS")),
@@ -690,7 +690,7 @@ void TFSIndex::SaveIndex(const olxstr &IndexFile)  {
 //.............................................................................
 uint64_t TFSIndex::Synchronise(AFileSystem& To, const TStrList& properties,
   const TFSItem::SkipOptions* toSkip,TStrList* cmds,
-  const olxstr& indexName)  
+  const olxstr& indexName)
 {
   TFSIndex DestI(To);
   OnBreak.Add(&DestI.OnBreak);
@@ -800,7 +800,7 @@ bool TFSIndex::ShallAdopt(const TFSItem& src, TFSItem& dest) const  {
     if( src.GetActions().IndexOfi("delete") != InvalidIndex )
       return !(dest.GetDateTime() == src.GetDateTime() &&
         dest.GetSize() == src.GetSize());
-    if( dest.GetDateTime() != src.GetDateTime() || 
+    if( dest.GetDateTime() != src.GetDateTime() ||
       !dest.GetIndexFS().Exists(
         dest.GetIndexFS().GetBase() + dest.GetFullName()) )
     {

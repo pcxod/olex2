@@ -287,7 +287,7 @@ PyObject* pySGInfo(PyObject* self, PyObject* args)  {
     PyObject* matr_out = PyTuple_New(sg->MatrixCount());
     for( size_t i=0; i < sg->MatrixCount(); i++ )  {
       const smatd& m = sg->GetMatrix(i);
-      PyTuple_SetItem(matr_out, i, 
+      PyTuple_SetItem(matr_out, i,
         Py_BuildValue("(iiid)(iiid)(iiid)",
         m.r[0][0], m.r[0][1], m.r[0][2], m.t[0],
         m.r[1][0], m.r[1][1], m.r[1][2], m.t[1],
@@ -438,7 +438,7 @@ PyObject* pyUpdateRepository(PyObject* self, PyObject* args)  {
   index_fn = index.SubStringFrom(lsi+1);
   repos = index.SubStringTo(lsi+1);
   TUrl url(repos);
-  if( !proxy.IsEmpty() )  
+  if( !proxy.IsEmpty() )
     url.SetProxy(TUrl(proxy));
   TSocketFS httpFS(url);
   TOSFileSystem osFS(dest);
@@ -490,7 +490,7 @@ PyObject* pySetBadReflections(PyObject* self, PyObject* args)  {
     bad_refs.AddCopy(br).UpdateFactor();
   }
   TXApp::GetInstance().XFile().GetRM().SetBadReflectionList(bad_refs);
-  
+
   return PythonExt::PyNone();
 }
 //..............................................................................

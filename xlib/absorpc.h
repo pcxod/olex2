@@ -28,7 +28,7 @@ tables are also added
 
 BeginXlibNamespace()
 
-struct cm_Absorption_Coefficient {  
+struct cm_Absorption_Coefficient {
   double energy, mu_over_rho, muen_over_rho;
   double GetMuOverRho() const {  return mu_over_rho;  }
   double GetMuEnOverRho() const {  return muen_over_rho;  }

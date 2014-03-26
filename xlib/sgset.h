@@ -43,7 +43,7 @@ public:
       axis = a;
   }
   bool HasMonoclinicAxis() const {
-    if( axis.IsEmpty() )  return false; 
+    if( axis.IsEmpty() )  return false;
     if( (axis.Length() == 3 && axis.CharAt(0) == '-' && olxstr::o_islatin(axis.CharAt(1)) ) ||
       (axis.Length() < 3 && olxstr::o_islatin(axis.CharAt(0))) )
       return true;
@@ -64,7 +64,7 @@ class SGSettings  {
     return axis.Length() == 2 ? axis.CharAt(1) : axis.CharAt(0);
   }
 public:
-  SGSettings(TSpaceGroup& _sg) : sg(_sg), axisInfo(_sg) { 
+  SGSettings(TSpaceGroup& _sg) : sg(_sg), axisInfo(_sg) {
     //static const mat3d I_to_P(-0.5, 0.5, 0.5, 0.5, -0.5, -0.5), P_to_I(0, 1, 1, 0, 1, 0);
     //static const mat3d F_to_P(0, 0.5, 0.5, 0, 0.5, 0), P_to_F(-1, 1, 1, -1, 1, 1);
   }
@@ -110,7 +110,7 @@ public:
       return !rv.IsI();
     }
     if( ai.GetAxis().Equalsi("abc") )  {
-      if( sg.GetAxis() == "ba-c" ) 
+      if( sg.GetAxis() == "ba-c" )
         rv = mat3d(0, 1, 0, 1, 0, 0, 0, 0, -1);
       else if( sg.GetAxis() == "cab" )
         rv = mat3d(0, 0, 1, 1, 0, 0, 0, 1, 0);
@@ -120,7 +120,7 @@ public:
         rv = mat3d(0, 1, 0, 0, 0, 1, 1, 0, 0);
       else if( sg.GetAxis() == "a-cb" )
         rv = mat3d(1, 0, 0, 0, 0, -1, 0, 1, 0);
-      else 
+      else
         return false;
       m = rv;
       return true;
@@ -131,4 +131,3 @@ public:
 
 EndXlibNamespace()
 #endif
-

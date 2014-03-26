@@ -72,7 +72,7 @@ protected:
       const size_t yi = Data.IndexOf(x);
       if( yi == InvalidIndex )  {
         ip = &Data.Add(x, new IsoPointListY)->Add(y, new IsoPointListZ)->
-          Add(z, Points3()).ps[edgeId]; 
+          Add(z, Points3()).ps[edgeId];
       }
       else  {
         IsoPointListY* ly = Data.GetValue(yi);
@@ -84,7 +84,7 @@ protected:
           IsoPointListZ* lz = ly->GetValue(zi);
           const size_t pi = lz->IndexOf(z);
           if( pi == InvalidIndex )  {
-            ip = &lz->Add(z, Points3()).ps[edgeId]; 
+            ip = &lz->Add(z, Points3()).ps[edgeId];
           }
           else  {
             ip = &lz->GetValue(pi).ps[edgeId];
@@ -108,7 +108,7 @@ protected:
     void Clear()  {
       for( size_t i=0; i < Data.Count(); i++ )  {
         IsoPointListY* ly = Data.GetValue(i);
-        for( size_t j=0; j < ly->Count(); j++ ) 
+        for( size_t j=0; j < ly->Count(); j++ )
           delete ly->GetValue(j);
         delete ly;
       }
@@ -147,7 +147,7 @@ protected:
         case 1:  y++;                    break; // (x,y+1,z)
         case 2:  x++;  extra = 1;        break;  // (x+1,y,z) + 1;
         case 3:                          break; // (x,y,z)
-        case 4:  z++;  extra = 1;        break;  // (x,y,z+1) + 1 
+        case 4:  z++;  extra = 1;        break;  // (x,y,z+1) + 1
         case 5:  y++;  z++;              break; //(x,y+1,z+1)
         case 6:  x++;  z++;  extra = 1;  break;  //(x+1,y,z+1) + 1
         case 7:  z++;                    break;  //(x,y,z+1)
@@ -166,7 +166,7 @@ protected:
         case 1:  y++;                    break; // (x,y+1,z)
         case 2:  x++;  extra = 1;        break;  // (x+1,y,z) + 1;
         case 3:                          break; // (x,y,z)
-        case 4:  z++;  extra = 1;        break;  // (x,y,z+1) + 1 
+        case 4:  z++;  extra = 1;        break;  // (x,y,z+1) + 1
         case 5:  y++;  z++;              break; //(x,y+1,z+1)
         case 6:  x++;  z++;  extra = 1;  break;  //(x+1,y,z+1) + 1
         case 7:  z++;                    break;  //(x,y,z+1)
@@ -177,8 +177,8 @@ protected:
         default: return ~0;         // Invalid edge no.
       }
       // max grid size is 1024x1024x1022
-      return (uint32_t)extra     | 
-             (uint32_t)(x << 22) | 
+      return (uint32_t)extra     |
+             (uint32_t)(x << 22) |
              (uint32_t)(y << 12) |
              (uint32_t)(z << 2);
     }

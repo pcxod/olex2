@@ -606,7 +606,7 @@ template <class OC, class IC, class AC>
   public:
     ~TtaFactory() {}
     OC *NewInstance(TPtrList<IEObject>* Args) {
-      if( Args->Count() != 2 )  
+      if( Args->Count() != 2 )
         throw TInvalidArgumentException(__OlxSourceInfo, "number of operands");
       return new IC((AC*)Args->GetItem(0), (AC*)Args->GetItem(1));
     }

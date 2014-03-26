@@ -69,7 +69,7 @@ class TGlRenderer : public IEObject  {
   function
   */
     FViewZoom,
-    FProjectionLeft, FProjectionRight, FProjectionTop, FProjectionBottom 
+    FProjectionLeft, FProjectionRight, FProjectionTop, FProjectionBottom
     ;
 //__________________Fog stuff
   bool Fog;
@@ -155,7 +155,7 @@ public:
   double GetZoom() const {  return FBasis.GetZoom(); }
   void  SetZoom(double V);
   void ResetBasis()  {  FBasis.Reset();  }
-  
+
   TGlLightModel LightModel;
   TActionQueue &OnDraw, // register your handler to swap buffers etc
     &OnStylesClear,  // Enter and Exit are called
@@ -183,10 +183,10 @@ public:
   bool IsColorStereo() const {  return StereoFlag==glStereoColor;  }
   bool IsCrossStereo() const {  return StereoFlag==glStereoCross;  }
   bool IsAnaglyphStereo() const {  return StereoFlag==glStereoAnaglyph;  }
-  
+
   void Initialise();
   void InitLights();
-  double CalcZoom() const { 
+  double CalcZoom() const {
     const double df = SceneDepth < 0 ?
       (SceneDepth=olx_max(FMaxV.DistanceTo(FMinV), 1.0)) : SceneDepth;
     return 1./df;
@@ -315,7 +315,7 @@ public:
   // tracks translucent and identity objects
   void SetProperties(TGlMaterial& P);
 
-  void SetObjectsCapacity(size_t v)  { FGObjects.SetCapacity(v);  } 
+  void SetObjectsCapacity(size_t v)  { FGObjects.SetCapacity(v);  }
   AGDrawObject& GetObject(size_t i) const {  return *FGObjects[i]; }
   void RemoveObject(AGDrawObject& D)  {  FGObjects.Remove(&D);  }
   void RemoveObjects(const AGDObjList& objects);

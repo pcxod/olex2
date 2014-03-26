@@ -80,7 +80,7 @@ template <class Traverser>
     }
     while( en )  {
       if( en->right )  TraverseLeft(en->right, traverser);
-      if( en->left )  {  
+      if( en->left )  {
         if( !traverser.OnItem(en->left) )  return false;
         nxt = en->left->next;
         while( nxt )  {

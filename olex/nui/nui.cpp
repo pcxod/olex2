@@ -186,7 +186,7 @@ void Kinect::processVideo()  {
   if( LockedRect.Pitch != 0 )  {
     BYTE *pBuffer = (BYTE*) LockedRect.pBits;
     if( pixels->IsVisible() )
-      pixels->SetData(640, 480, pBuffer, GL_RGBA); 
+      pixels->SetData(640, 480, pBuffer, GL_RGBA);
   }
   NuiImageStreamReleaseFrame(hVideoStream, pImageFrame);
   TGXApp::GetInstance().Draw();

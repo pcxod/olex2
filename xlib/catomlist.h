@@ -10,9 +10,9 @@
 #ifndef __olx_catom_list_H
 #define __olx_catom_list_H
 #include "residue.h"
-/* 
+/*
 Atom list to handle list of explicit (by label), implicit (last, first) and
-expandable atom labels (C1_*, $C etc) 
+expandable atom labels (C1_*, $C etc)
 */
 
 BeginXlibNamespace()
@@ -79,9 +79,9 @@ public:
 };
 typedef TTypeListExt<ExplicitCAtomRef, IEObject> TAtomRefList;
 
-/* 
-Last - last atom of a residue, 
-First - first atom of a residue, 
+/*
+Last - last atom of a residue,
+First - first atom of a residue,
 * - all non H atoms of a residue
 $Type - all Type atoms
 $Type_tol - all Type atoms of a residue
@@ -224,4 +224,3 @@ public:
 EndXlibNamespace()
 
 #endif
-

@@ -141,7 +141,7 @@ TAutoDBNode::TAutoDBNode(TSAtom& sa,
   //    atoms->AddNew<TCAtom*, vec3d>(
   //    const_cast<TCAtom*>(res[i].GetA()), res[i].GetB());
   //  AttachedNodes.Add(new TAttachedNode(&res[i].GetA()->GetType(), res[i].GetB()));
-  //  
+  //
   //}
   for( size_t i=0; i < ca.AttachedSiteCount(); i++ )  {
     const TCAtom::Site& site = ca.GetAttachedSite(i);
@@ -333,7 +333,7 @@ bool TAutoDBNode::IsMetricSimilar(const TAutoDBNode& dbn, double& fom) const {
       if( diff > LengthVar )  return false;
     }
     /* 5.7 degrees give about 0.1 deviation in distance for 1A bonds
-    (b^2+a^2-2abcos)^1/2 
+    (b^2+a^2-2abcos)^1/2
     */
     else  {
       if( diff > AngleVar ) return false;
@@ -434,8 +434,8 @@ void TAutoDBNetNode::SaveToStream(IDataOutputStream& output) const {
 void TAutoDBNetNode::LoadFromStream(IDataInputStream& input)  {
 #ifdef __GNUC__  // dunno how it is implemented, but need 8 bits here
   unsigned char cnt;
-#else  
-  uint8_t cnt; 
+#else
+  uint8_t cnt;
 #endif
   int32_t ind;
   input >> ind;
@@ -802,12 +802,12 @@ void TAutoDB::LoadFromStream(IDataInputStream& input)  {
   input >> listCount;  // nt MaxConnectivity is overriden!
   Nodes.Clear();
   Nodes.SetCapacity(listCount);
-  
+
   TOnProgress pg;
   pg.SetAction("Loading database...");
   pg.SetMax(listCount);
   TBasicApp::GetInstance().OnProgress.Enter(NULL, &pg);
-  
+
   for( uint32_t i=0; i < listCount; i++ )  {
     Nodes.AddNew();
     input >> ind;
@@ -951,7 +951,7 @@ void TAutoDB::AnalyseNode(TSAtom& sa, TStrList& report)  {
   return;
 }
 //..............................................................................
-void TAutoDB::AnalyseStructure(const olxstr& lastFileName, TLattice& latt, 
+void TAutoDB::AnalyseStructure(const olxstr& lastFileName, TLattice& latt,
   TAtomTypePermutator* permutator, TAutoDB::AnalysisStat& stat,
   ElementPList* proposed_atoms)
 {
@@ -1284,7 +1284,7 @@ bool TAutoDB::ChangeType(TCAtom &a, const cm_Element &e) {
   return false;
 }
 //..............................................................................
-void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator, 
+void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
   double& Uiso, TAutoDB::AnalysisStat& stat, ElementPList* proposed_atoms)
 {
   TSAtomPList cas;
@@ -1370,7 +1370,7 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
       if( sn->Node(i).Node(j)->GetTag() == -1 &&
           sn->Node(i).Node(j)->GetId() == 0 )
       {
-        sn->Node(i).Node(j)->SetTag( 
+        sn->Node(i).Node(j)->SetTag(
           guessN[0].hits[0].Node->Node(
             cindexes[j])->Center()->GetType().index);
       }

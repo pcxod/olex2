@@ -7,7 +7,7 @@
 * the root folder.                                                            *
 ******************************************************************************/
 
-/* Beevers-Lipson Fourier summation 
+/* Beevers-Lipson Fourier summation
 */
 #ifndef __beevers_lipson_h
 #define __beevers_lipson_h
@@ -210,11 +210,11 @@ public:
           if( val < minVal )  minVal = val;
           map[ix][iy][iz] = (FloatT)val;
         }
-        for( size_t i=0; i < lLen; i++ )  
+        for( size_t i=0; i < lLen; i++ )
           T[i].Null();
       }
-      for( size_t i=0; i < kLen; i++ )  
-        for( size_t j=0; j < lLen; j++ )  
+      for( size_t i=0; i < kLen; i++ )
+        for( size_t j=0; j < lLen; j++ )
           S[i][j].Null();
     }
     TCalcEDMTask* Replicate()  {  return new TCalcEDMTask(map,dim, vol,
@@ -277,11 +277,11 @@ public:
           if( val < minVal )  minVal = val;
           map[ix][iy][iz] = (FloatT)val;
         }
-        for( size_t i=0; i < lLen; i++ )  
+        for( size_t i=0; i < lLen; i++ )
           T[i].Null();
       }
-      for( size_t i=0; i < kLen; i++ )  
-        for( size_t j=0; j < lLen; j++ )  
+      for( size_t i=0; i < kLen; i++ )
+        for( size_t j=0; j < lLen; j++ )
           S[i][j].Null();
     }
     TCalcPattTask* Replicate()  {  return new TCalcPattTask(map, dim, vol,

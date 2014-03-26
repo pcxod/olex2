@@ -56,7 +56,7 @@ protected:
     static TStrList l;
     return l;
   }
-  
+
   void _Clear();
   IDataInputStream *_GetInputStream(const olxstr &FN);
 #ifdef __WXWIDGETS__
@@ -82,7 +82,7 @@ public:
 
   static void SaveToStream(IDataOutputStream& os, short persistenceMask);
   static void LoadFromStream(IDataInputStream& is, short persistenceId);
-  
+
   static const TMemoryBlock* FindMemoryBlock(const olxstr& bn);
   static size_t Count();
   static const olxstr& GetBlockName(size_t i);

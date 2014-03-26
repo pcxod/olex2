@@ -40,7 +40,7 @@ public:
   DefPropP(double, Z)
   DefPropP(size_t, FontIndex)
   class TGlFont& GetFont() const;
-  
+
   bool IsText() const {  return TextStyle;  }
   inline olxch GetSymbol() const {  return Symbol;  }
   void SetSymbol(olxch v);

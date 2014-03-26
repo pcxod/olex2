@@ -55,7 +55,7 @@ public:
   // returns true if the two atoms share a matrix
   static bool HaveSharedMatrix(const TSAtom& sa, const TSAtom& sb);
   static bool IsBondAllowed(const TSAtom& sa, const TSAtom& sb)  {
-    if( sa.CAtom().GetPart() == 0 || sb.CAtom().GetPart() == 0 || 
+    if( sa.CAtom().GetPart() == 0 || sb.CAtom().GetPart() == 0 ||
        (sa.CAtom().GetPart() == sb.CAtom().GetPart()) )
     {
       if ((sa.CAtom().GetPart() < 0 || sb.CAtom().GetPart() < 0))
@@ -67,7 +67,7 @@ public:
   static bool IsBondAllowed(const TSAtom& sa, const TCAtom& cb,
     const smatd& sm)
   {
-    if( sa.CAtom().GetPart() == 0 || cb.GetPart() == 0 || 
+    if( sa.CAtom().GetPart() == 0 || cb.GetPart() == 0 ||
        (sa.CAtom().GetPart() == cb.GetPart()) )
     {
       if ((sa.CAtom().GetPart() < 0 || cb.GetPart() < 0))
@@ -95,7 +95,7 @@ public:
   // compares the quadratic distances
   bool CBondExistsQ(const TCAtom& CA1, const TCAtom& CA2,
     const smatd& sm, const double& qD) const;
-  
+
   bool HBondExists(const TCAtom& CA1, const TCAtom& CA2,
     const smatd& sm, const double& D) const;
   // compares the quadratic distances
@@ -171,7 +171,7 @@ public:
   bool operator != (const TNetwork& n) const {  return this != &n;  }
   bool operator != (const TNetwork* n) const {  return this != n;  }
 
-  // returns true if the ring is regular (distances from centroid and angles) 
+  // returns true if the ring is regular (distances from centroid and angles)
   static bool IsRingRegular(const TSAtomPList& ring);
   static bool IsRingPrimitive(const TSAtomPList& ring);
   // invertion must be specified for the permutational graph match
@@ -211,7 +211,7 @@ public:
     size_t MaxSubsANode, HeaviestSubsIndex;
     TSizeList Ternary, // three bond inside the ring
       Substituted,    // more than two connections, two belong to the ring
-      Alpha;          // susbtituted next to a ternary atom 
+      Alpha;          // susbtituted next to a ternary atom
     TTypeList<TSAtomPList> Substituents;
     bool HasAfix;
     RingInfo()
@@ -268,7 +268,7 @@ public:
   static void DoAlignAtoms(const TSAtomPList& atomsToTransform,
     const vec3d &center,
     const mat3d &m, const vec3d &shift);
-  
+
   static TArrayList<align::pair>& AtomsToPairs(
     const TTypeList<olx_pair_t<TSAtom*,TSAtom*> >& atoms,
     bool invert,
@@ -287,4 +287,3 @@ public:
 
 EndXlibNamespace()
 #endif
-

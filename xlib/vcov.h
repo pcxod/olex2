@@ -266,7 +266,7 @@ public:
       const vec3d pc = c.evaluate();
       const double pcd = pc.DotProd(pi.normal) - pi.d;
       const double res = pc.QDistanceTo(pi.center) - pcd*pcd;
-      return  res <= 0 ? 0 : sqrt(res); 
+      return  res <= 0 ? 0 : sqrt(res);
     }
   };
   // alignment RMSD
@@ -501,7 +501,7 @@ protected:
       r[i] = atoms[i]->crd();
   }
   //http://en.wikipedia.org/wiki/Numerical_differentiation
-  template <class VecT, class OutVecT, class Evaluator> 
+  template <class VecT, class OutVecT, class Evaluator>
   void CalcDiff(VecT& vars, OutVecT& df, const Evaluator& e)  {
     static const double delta=sqrt(2.2e-16);
     for( size_t i=0; i < vars.Count(); i++ )  {
@@ -547,7 +547,7 @@ protected:
       return base.DoCalcForPoints(points, m, e);
     }
   };
-  template <class list, typename eval> 
+  template <class list, typename eval>
   TEValue<double> DoCalcForPoints(list& points, const mat3d_list& vcov,
     const eval& e)
   {
@@ -606,7 +606,7 @@ public:
     for( size_t i=0; i < atoms.Count(); i++ )  {
       cnt += atoms[i]->crd();
       for( size_t j=0; j < atoms.Count(); j++ )
-        vcov += ch.m[i*atoms.Count()+j]; 
+        vcov += ch.m[i*atoms.Count()+j];
     }
     vcov *= 1./olx_sqr(atoms.Count());
     cnt /= atoms.Count();
@@ -623,7 +623,7 @@ public:
     for( size_t i=0; i < atoms.Count(); i++ )  {
       cnt += atoms[i]->ccrd();
       for( size_t j=0; j < atoms.Count(); j++ )
-        vcov += ch.m[i*atoms.Count()+j]; 
+        vcov += ch.m[i*atoms.Count()+j];
     }
     vcov *= 1./olx_sqr(atoms.Count());
     cnt /= atoms.Count();
@@ -632,7 +632,7 @@ public:
       TEValueD(cnt[1], sqrt(vcov[1][1])),
       TEValueD(cnt[2], sqrt(vcov[2][2])));
   }
-  // analytical, http://salilab.org/modeller/8v0/manual/node248.html 
+  // analytical, http://salilab.org/modeller/8v0/manual/node248.html
   TEValue<double> CalcAngleA(const TSAtom& a1, const TSAtom& a2,
     const TSAtom& a3)
   {

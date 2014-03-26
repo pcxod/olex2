@@ -15,7 +15,7 @@
 BeginXlibNamespace()
 
 /*bit packed integer rotation matrix - uses 9 bits for the values
-  and 9 bits for the signs 
+  and 9 bits for the signs
 */
 namespace rotation_id {
   // derived/using classes might need to know this

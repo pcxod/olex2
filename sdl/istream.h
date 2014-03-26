@@ -73,13 +73,13 @@ public:
     return cc;
   }
 //...................................................................................
-  inline wchar_t ReadWc()  {  
+  inline wchar_t ReadWc()  {
     wchar_t wc;
     ValidateRead(sizeof(wchar_t)).Read(&wc, sizeof(wchar_t));
     return wc;
   }
 //...................................................................................
-  inline olxch ReadCh()  {  
+  inline olxch ReadCh()  {
     olxch ch;
     ValidateRead(sizeof(olxch)).Read(&ch, sizeof(olxch));
     return ch;

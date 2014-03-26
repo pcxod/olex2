@@ -38,11 +38,11 @@ public:
   }
   void SetColor(wxColor c)  {  Window->SetBackgroundColour(c);  Window->Refresh();  }
   bool IsVisible()    const {  return Window->IsShown();  }
-  void SetVisible(bool v)   {  
-    if( v )  
-      Window->Show();  
-    else  
-      Window->Hide();  
+  void SetVisible(bool v)   {
+    if( v )
+      Window->Show();
+    else
+      Window->Hide();
   }
 
   long GetWindowStyle()  const {   return Window->GetWindowStyleFlag();  }

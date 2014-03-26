@@ -26,9 +26,9 @@ void TMol2::Clear()  {
 //..............................................................................
 olxstr TMol2::MOLAtom(TCAtom& A)  {
   olxstr rv(A.GetId(), 64);
-  rv << '\t' << A.GetLabel() 
-     << '\t' << A.ccrd()[0] 
-     << '\t' << A.ccrd()[1] 
+  rv << '\t' << A.GetLabel()
+     << '\t' << A.ccrd()[0]
+     << '\t' << A.ccrd()[1]
      << '\t' << A.ccrd()[2]
      << '\t' << A.GetType().symbol;
   return rv;
@@ -49,8 +49,8 @@ short TMol2::DecodeBondType(const olxstr& name) const  {
 //..............................................................................
 olxstr TMol2::MOLBond(TMol2Bond& B)  {
   olxstr rv(B.GetId(), 32);
-  rv << '\t' << B.a1->GetId() 
-     << '\t' << B.a2->GetId() 
+  rv << '\t' << B.a1->GetId()
+     << '\t' << B.a2->GetId()
      << '\t' << EncodeBondType(B.BondType);
   return rv;
 }

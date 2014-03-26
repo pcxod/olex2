@@ -81,7 +81,7 @@ void TGlCanvas::Render()  {
 #if defined(__WXX11__) || defined(__MAC__)  // context is null
   SetCurrent();
 #else
-  Context->SetCurrent(*this); 
+  Context->SetCurrent(*this);
 #endif
 
   /* init OpenGL once, but after SetCurrent */
@@ -98,7 +98,7 @@ void TGlCanvas::OnEraseBackground(wxEraseEvent& event)  {
 }
 //..............................................................................
 void TGlCanvas::InitGL()  {
-  if( FXApp != NULL )  
+  if( FXApp != NULL )
     FXApp->Init();
 }
 //..............................................................................

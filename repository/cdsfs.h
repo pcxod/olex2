@@ -61,7 +61,7 @@ public:
   virtual ~TSocketFS() {}
   static bool CanUseLocalFS()  {  return UseLocalFS();  }
   // allows creating temporary files in basedir/.cds/
-  static void SetUseLocalFS(bool v)  {  UseLocalFS() = v;  } 
+  static void SetUseLocalFS(bool v)  {  UseLocalFS() = v;  }
   /* sets the dir in which temporary files can be stores and enables
   the use of it as in a call to SetUseLocalFS(true). If the folder
   does not exists an attempt to create one will be made and in the case

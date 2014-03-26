@@ -265,7 +265,7 @@ int TGlXApp::OnExit()  {
     pid_file = NULL;
   }
   TStrList pid_files;
-  olxstr conf_dir = XApp->GetInstanceDir(); 
+  olxstr conf_dir = XApp->GetInstanceDir();
   TEFile::ListDir(conf_dir, pid_files, olxstr("*.") <<
     patcher::PatchAPI::GetOlex2PIDFileExt(), sefAll);
 #ifdef __linux__

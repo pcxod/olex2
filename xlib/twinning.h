@@ -31,7 +31,7 @@ namespace twinning  {
   };
   struct detwin_result {
     double f_sq, sig;
-    detwin_result() : f_sq(0), sig(0)  {} 
+    detwin_result() : f_sq(0), sig(0)  {}
     detwin_result(double _f_sq, double _sig) : f_sq(_f_sq), sig(_sig) {}
   };
   struct twin_mate_full : public twin_mate_calc, public detwin_result {
@@ -170,7 +170,7 @@ namespace twinning  {
       res += tw.NextCalc().f_sq_calc();
     return res;
   }
-  
+
   struct merohedral  {
     struct iterator  {
       const merohedral& parent;

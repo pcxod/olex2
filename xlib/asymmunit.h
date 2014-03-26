@@ -167,7 +167,7 @@ public:
   initialised
   */
   void InitData();
-  
+
   void Clear();
   //creates a new residue
   TResidue& NewResidue(const olxstr& RClass, int number,
@@ -273,7 +273,7 @@ public:
   DefPropP(RefinementModel*, RefMod)
 // IXVarReferencerContainer implementation
   static const olxstr& _GetIdName() {  return IdName;  }
-  
+
   virtual olxstr GetIdName() const {  return IdName;  }
   // note - possibly unsafe, type is not checked
   virtual size_t GetIdOf(const IXVarReferencer& vr) const {
@@ -336,4 +336,3 @@ public:
 
 EndXlibNamespace()
 #endif
-

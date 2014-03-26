@@ -24,7 +24,7 @@
   //#define gmtime gmtime_s
 #endif
   time_t TETime::TimeStart = TETime::EpochTime();
-  
+
 unsigned char DaysInMonth[2][12] =
     { {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},
       {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31} };
@@ -211,14 +211,14 @@ time_t TETime::ParseDate(const olxstr& date)  {
   int month = -1, day = -1, year = -1;
   if( toks[0].Length() == 3 )  {
     for( int i=0; i < 12; i++ )  {
-      if( MonthsLong[i][0] == toks[0].CharAt(0) && 
+      if( MonthsLong[i][0] == toks[0].CharAt(0) &&
           MonthsLong[i][1] == toks[0].CharAt(1) &&
           MonthsLong[i][2] == toks[0].CharAt(2) )  {
         month = i;
         break;
       }
     }
-    if( month == -1 )  
+    if( month == -1 )
       throw TInvalidArgumentException(__OlxSourceInfo, "invalid short month name");
   }
   else

@@ -27,7 +27,7 @@ TGlCursor::TGlCursor(TGlRenderer& R, const olxstr& collectionName, bool TextStyl
 //..............................................................................
 void TGlCursor::Create(const olxstr& cName)  {
   FontIndex = Parent.GetScene().FindFontIndexForType<TGlCursor>(FontIndex);
-  if( !cName.IsEmpty() )  
+  if( !cName.IsEmpty() )
     SetCollectionName(cName);
 
   TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());

@@ -178,7 +178,7 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
         }
         TCAtom* atom = _ParseAtom(Toks, cx);
         atom->SetLabel(Toks[0], false);
-        if( qpeak ) 
+        if( qpeak )
           atom->SetType(elmQPeak);
         else
           atom->SetType(*cx.BasicAtoms.GetObject(Toks[1].ToInt()-1));
@@ -257,11 +257,11 @@ void TIns::_ProcessSame(ParseContext& cx)  {
        double esd1=0.02, esd2=0.04;
        size_t from_ind = 0;
        if( toks.Count() > 0 && toks[0].IsNumber() )  {
-         esd1 = toks[0].ToDouble(); 
+         esd1 = toks[0].ToDouble();
          from_ind++;
        }
        if( toks.Count() > 1 && toks[1].IsNumber() )  {
-         esd2 = toks[1].ToDouble(); 
+         esd2 = toks[1].ToDouble();
          from_ind++;
        }
        TAtomReference ar( toks.Text(' ', from_ind) );
@@ -741,13 +741,13 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
           if( cx.ins != NULL )
             cx.ins->Skipped.Add(ins[i]);
           if( ins[i].StartsFromi("REM") &&
-              ins[i].IndexOf("olex2.resume_parsing") != InvalidIndex ) 
+              ins[i].IndexOf("olex2.resume_parsing") != InvalidIndex )
           {
             break;
           }
           i++;
         }
-      } 
+      }
       else if( Toks[1].StartsFromi("<HKL>") )  {
         olxstr hklsrc = Toks.Text(' ', 1);
         size_t index = hklsrc.FirstIndexOf('>');
@@ -948,7 +948,7 @@ void TIns::SaveForSolution(const olxstr& FileName, const olxstr& sMethod,
   UpdateParams();
   SL.Add("TITL ") << GetTitle();
 
-  if( !comments.IsEmpty() && rems ) 
+  if( !comments.IsEmpty() && rems )
     SL.Add("REM ") << comments;
 // try to estimate Z'
   SL.Add(_CellToString());
@@ -1205,7 +1205,7 @@ void TIns::SaveToStrings(TStrList& SL)  {
   uint32_t fragmentId = ~0;
   for( size_t i=0; i < GetAsymmUnit().ResidueCount(); i++ )  {
     TResidue& residue = GetAsymmUnit().GetResidue(i);
-    if( i != 0 && !residue.IsEmpty() )  { 
+    if( i != 0 && !residue.IsEmpty() )  {
       SL.Add();
       SL.Add(residue.ToString());
       fragmentId = ~0;
@@ -1218,7 +1218,7 @@ void TIns::SaveToStrings(TStrList& SL)  {
           SL.Add(EmptyString());
         fragmentId = ac.GetFragmentId();
       }
-      if( ac.GetParentAfixGroup() != NULL && 
+      if( ac.GetParentAfixGroup() != NULL &&
          !ac.GetParentAfixGroup()->GetPivot().IsDeleted() )  continue;
       _SaveAtom(GetRM(), ac, part, afix, &BasicAtoms, SL, NULL, true, false);
     }
@@ -1386,7 +1386,7 @@ void TIns::SavePattSolution(const olxstr& FileName,
   olxstr& _wght = SL.Add("WGHT ");
   for( size_t i=0; i < RefMod.used_weight.Count(); i++ )
     _wght << ' ' << RefMod.used_weight[i];
-  if( RefMod.used_weight.Count() == 0 )  
+  if( RefMod.used_weight.Count() == 0 )
     _wght << " 0.1";
 
   SL.Add("FVAR 1");
@@ -1509,7 +1509,7 @@ olxstr TIns::AtomToString(RefinementModel& rm, TCAtom& CA, index_t SfacIndex)  {
     Tmp << olxstr::FormatFloat(-5,
       rm.Vars.GetParam(CA, catom_var_name_X+j)) << ' ';
   }
-  
+
   // save occupancy
   Tmp << olxstr::FormatFloat(-5,
     rm.Vars.GetParam(CA, catom_var_name_Sof)) << ' ';
@@ -1611,7 +1611,7 @@ void TIns::_SaveHklInfo(TStrList& SL, bool solution)  {
     }
   }
   if( !GetRM().GetHKLSource().IsEmpty() )  {  // update html source string
-    HyphenateIns("REM ", 
+    HyphenateIns("REM ",
       olxstr("<HKL>") <<
         olxstr(GetRM().GetHKLSource()).Replace(' ', "%20")<< "</HKL>",
       SL);
@@ -1724,7 +1724,7 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
   for( size_t i=0; i < rm.Vars.EquationCount(); i++ )  {
     if( !rm.Vars.GetEquation(i).Validate() )  continue;
     SL.Add("SUMP ") << rm.Vars.GetSUMPStr(i);
-    //if( processed != NULL )  
+    //if( processed != NULL )
     //  processed->equations.Add( &rm.Vars.GetEquation(i) );
   }
   SL.Add(EmptyString());
@@ -2064,7 +2064,7 @@ bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& _toks)  {
           *Vals[0] = toks[1].ToDouble();
           *Vals[1] = toks[2].ToDouble();
           *Vals[2] = toks[3].ToDouble();
-          index = 4; 
+          index = 4;
         }
         else  {  // two numerical params
           if( AcceptsParams < 2 ) {
@@ -2073,7 +2073,7 @@ bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& _toks)  {
           }
           *Vals[0] = toks[1].ToDouble();
           *Vals[1] = toks[2].ToDouble();
-          index = 3; 
+          index = 3;
         }
       }
       else  {
@@ -2082,7 +2082,7 @@ bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& _toks)  {
             "too many numerical parameters");
         }
         *Vals[0] = toks[1].ToDouble();
-        index = 2; 
+        index = 2;
       }
     }
     if( use_var_manager )

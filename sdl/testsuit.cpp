@@ -13,7 +13,7 @@
 void OlxTests::run()  {
   int failed_cnt = 0;
   for( size_t i=0; i < tests.Count(); i++ )  {
-    try  { 
+    try  {
       description.SetLength(0);
       tests[i].run(*this);
       if (description.IsEmpty())

@@ -15,7 +15,7 @@ BeginEsdlNamespace()
 namespace exparse  {
 
   struct context  {
-    LibraryRegistry functions; 
+    LibraryRegistry functions;
     //olxdict<std::type_info const*, IClassRegistry*, TPointerComparator> classes;
     //olxdict<olxstr, IClassRegistry*, olxstrComparator<false> > classes;
     olxdict<olxstr, IEvaluable*, olxstrComparator<true> > consts;

@@ -363,7 +363,7 @@ const_strlist TXBond::PovDeclare()  {
     out.Add(" disc {<0,0,") << (double)(i+0.5)/ConeStipples << "><0,0,1>, 0.1}";
   }
   out.Add("}}");
-  
+
   out.Add("#declare bond_bottom_stipple_cone=object { union {");
   for( double i=0; i < ConeStipples/2; i++ )  {
     out.Add(" disc {<0,0,") << (i+0.5)/ConeStipples << "><0,0,-1>, 0.1}";
@@ -563,7 +563,7 @@ void TXBond::CreateStaticObjects(TGlRenderer& Parent)  {
   GlP = &Parent.NewPrimitive(sgloCommandList);
   primitives.Add("Top disk", GlP);
 
-  GlPRC1 = &Parent.NewPrimitive(sgloDisk); 
+  GlPRC1 = &Parent.NewPrimitive(sgloDisk);
   GlPRC1->Params[0] = 0;  GlPRC1->Params[1] = 0.1;  GlPRC1->Params[2] = ConeQ;
   GlPRC1->Params[3] = 1;
   GlPRC1->Compile();

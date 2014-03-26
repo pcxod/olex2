@@ -47,7 +47,7 @@ bool TXGrowLine::Orient(TGlPrimitive& GlP)  {
   olx_gl::rotate(Params()[0], Params()[1], Params()[2], 0.0);
   olx_gl::scale(Params()[4], Params()[4], Params()[3]);
   return false;
-} 
+}
 //..............................................................................
 void TXGrowLine::Radius(float V)  {
   Params()[4] = V;

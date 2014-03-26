@@ -74,7 +74,7 @@ public:
 
   bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d& Max, vec3d& Min) {  return false;  }
- 
+
   void Init(bool clear=true, uint8_t value=(uint8_t)~0);
   void MarkLabel(const TXAtom& atom, bool v);
   void MarkLabel(size_t index, bool v);

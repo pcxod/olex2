@@ -66,8 +66,8 @@ short PatchAPI::DoPatch(AActionHandler* OnFileCopy,
 
     try  {  ft.CopyTo(TBasicApp::GetBaseDir(), &AfterFileCopy);  }
     catch(PatchAPI::DeletionExc)  {  res = papi_DeleteError;  }
-    catch(const TExceptionBase& exc)  {  
-      res = papi_CopyError;  
+    catch(const TExceptionBase& exc)  {
+      res = papi_CopyError;
       TBasicApp::NewLogEntry(logException) << exc;
     }
 
@@ -133,7 +133,7 @@ size_t PatchAPI::GetNumberOfOlex2Running()  {
 bool PatchAPI::LockUpdater() {
   if( lock_file != NULL )
     return false;
-  try  {  
+  try  {
     if( TEFile::Exists(GetUpdaterPIDFileName()) )
       if( !TEFile::DelFile(GetUpdaterPIDFileName()) )
         return false;

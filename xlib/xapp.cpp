@@ -59,7 +59,7 @@ void TXApp::Init(ASObjectProvider* objectProvider, ASelectionOwner* selOwner) {
   DefineState(psCheckFileTypeCif, "CIF file is expected");
   DefineState(psCheckFileTypeP4P, "P4P file is expected");
   DefineState(psCheckFileTypeCRS, "CRS file is expected");
-  
+
   CifTemplatesDir = GetBaseDir() + "etc/CIF/";
 
   XLibMacros::Export(Library);
@@ -117,7 +117,7 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F) cons
   BM[0] *= BM[0];
   BM[1] *= BM[1];
   BM[2] *= BM[2];
-  
+
   ElementPList bais;
   TPtrList<TCAtom> alist;
   double *Ucifs = new double[6*au.AtomCount() + 1];
@@ -136,7 +136,7 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F) cons
     }
     ca.SetTag(ind);
     ind = alist.Count()*6;
-    alist.Add(&ca); 
+    alist.Add(&ca);
     TEllipsoid* elp = ca.GetEllipsoid();
     if( elp != NULL )  {
       elp->GetShelxQuad(quad);  // default is Ucart
@@ -147,7 +147,7 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F) cons
     else
       Ucifs[ind] = -EQ_PI*ca.GetUiso();
   }
-  
+
   const size_t a_cnt = alist.Count(),
             m_cnt = ml.Count();
   for( size_t i=0; i < refs.Count(); i++ )  {
@@ -168,8 +168,8 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F) cons
         olx_sincos(tv, &sa, &ca);
         if( alist[j]->GetEllipsoid() != NULL )  {
           const double* Q = &Ucifs[j*6];  // pick up the correct ellipsoid
-          double B = (hkl[0]*(Q[0]*hkl[0]+Q[4]*hkl[2]+Q[5]*hkl[1]) + 
-                      hkl[1]*(Q[1]*hkl[1]+Q[3]*hkl[2]) + 
+          double B = (hkl[0]*(Q[0]*hkl[0]+Q[4]*hkl[2]+Q[5]*hkl[1]) +
+                      hkl[1]*(Q[1]*hkl[1]+Q[3]*hkl[2]) +
                       hkl[2]*(Q[2]*hkl[2]));
           B = exp(B);
           l.Re() += B*ca;
@@ -183,7 +183,7 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F) cons
       compd scv = scatterers[alist[j]->GetTag()].GetB();
       if( alist[j]->GetEllipsoid() == NULL )
         scv *= exp(Ucifs[j*6]*d_s2);
-      
+
       scv *= alist[j]->GetOccu();
       scv *= l;
       ir += scv;
@@ -277,8 +277,8 @@ void TXApp::NameHydrogens(TSAtom& SA, TUndoData* ud, bool CheckLabel)  {
   TNameUndo* nu = static_cast<TNameUndo*>(ud);
   int lablInc = 0;
   olxdict<int,TSAtomPList,TPrimitiveComparator> parts;
-  olxstr Name( 
-    SA.GetLabel().StartsFromi(SA.GetType().symbol) ? 
+  olxstr Name(
+    SA.GetLabel().StartsFromi(SA.GetType().symbol) ?
       SA.GetLabel().SubStringFrom(SA.GetType().symbol.Length())
     :
       EmptyString()
@@ -634,7 +634,7 @@ void TXApp::AutoAfixRings(int afix, TSAtom* sa, bool TryPyridine)  {
       try  {
         if( m == 6 || m == 7 )  {
           FindRings("C6", rings);
-          if( TryPyridine )  
+          if( TryPyridine )
             FindRings("NC5", rings);
         }
         else if( m == 5 || m == 10 ) // Cp or Cp*
@@ -653,7 +653,7 @@ void TXApp::AutoAfixRings(int afix, TSAtom* sa, bool TryPyridine)  {
         if( ri.HasAfix || !olx_is_valid_index(ri.HeaviestSubsIndex) )  continue;
         if( m != 10 && ri.Substituted.Count() > 1 )  continue;
         if( m == 10 && ri.Substituted.Count() != 5 )  continue; // Cp*
-        // do not allign to pivot for Cp* 
+        // do not allign to pivot for Cp*
         size_t shift = (m == 10 ? 0 : ri.HeaviestSubsIndex+1);
         rings[i].ShiftL(shift);  // pivot is the last one now
         if( m == 11 )  {  // validate and rearrange to figure of 8
@@ -662,7 +662,7 @@ void TXApp::AutoAfixRings(int afix, TSAtom* sa, bool TryPyridine)  {
           // counter-clockwise direction
           if( ri.Ternary.IndexOf(
               shift >= 2 ? shift-2 : rings[i].Count()-shift ) != InvalidIndex )
-          { 
+          {
             for( size_t j=0; j < (rings[i].Count()-1)/2; j++ )  {
               TSAtom* a = rings[i][j];
               rings[i][j] = rings[i][rings[i].Count()-j-2];
@@ -691,7 +691,7 @@ void TXApp::AutoAfixRings(int afix, TSAtom* sa, bool TryPyridine)  {
         RingContentFromStr(ring.IsEmpty() ? "C5" :"C4", ring);
       else if( m == 10 )
         RingContentFromStr(ring.IsEmpty() ? "C5" :"C4", ring);
-      else if( m == 11 ) 
+      else if( m == 11 )
         RingContentFromStr(ring.IsEmpty() ? "C10" :"C9", ring);
       if( ring.IsEmpty() )  {
         NewLogEntry() << "Unable to derive ring size";
@@ -744,7 +744,7 @@ void TXApp::AutoAfixRings(int afix, TSAtom* sa, bool TryPyridine)  {
           return;
         }
       }
-      if( ri.Substituted.Count() > 1 && m != 10 )  
+      if( ri.Substituted.Count() > 1 && m != 10 )
         NewLogEntry() << "The selected ring has more than one substituent";
       ProcessRingAfix(rings[0], afix, m!=10);
     }
@@ -921,7 +921,7 @@ WBoxInfo TXApp::CalcWBox(const TSAtomPList& atoms, const TDoubleList* radii,
 
   WBoxInfo rv;
   vec3d rms;
-  TSPlane::CalcPlanes(crds, rv.normals, rms, rv.center);  
+  TSPlane::CalcPlanes(crds, rv.normals, rms, rv.center);
   for( int i=0; i < 3; i++ )  {
     rv.d[i] = rv.normals[i].DotProd(rv.center)/rv.normals[i].Length();
     rv.normals[i].Normalise();
@@ -1130,7 +1130,7 @@ const_strlist TXApp::TangList(TSBond *XMiddle)  {
   }
   for( size_t i=0; i < L.Count(); i++ )  {
     size_t j = L[i].IndexOf(':');
-    L[i].Insert(' ', j, maxl-j);  
+    L[i].Insert(' ', j, maxl-j);
   }
   return L;
 }

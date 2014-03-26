@@ -130,7 +130,7 @@ class AtomRegistry  {
     TArray3D<TArrayList<TSAtomPList*>*> registry;
     mutable int ref_cnt;
     DataStruct(const vec3i& mind, const vec3i& maxd)
-      : registry(mind, maxd), ref_cnt(1) {} 
+      : registry(mind, maxd), ref_cnt(1) {}
     ~DataStruct()  {
       for( size_t i=0; i < registry.Length1(); i++ )  {
         for( size_t j=0; j < registry.Length2(); j++ )  {

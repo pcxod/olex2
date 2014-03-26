@@ -132,7 +132,7 @@ public:
   void GrowAtoms(const TCAtomPList& Atoms, const smatd_list& matrices);
   // returns the atom (generated or exisiting)
   TSAtom *GrowAtom(TCAtom& atom, const smatd& matrix);
-  // adds new asymmetric unit transformed by the given symop 
+  // adds new asymmetric unit transformed by the given symop
   void Grow(const smatd& transform);
   /* generates content using current matrices, the current content stays */
   void GenerateWholeContent(TCAtomPList* Template);
@@ -182,7 +182,7 @@ public:
   TAsymmUnit& GetAsymmUnit() const {  return *AsymmUnit; }
   void UpdateAsymmUnit();
   // re-creats unit cell U's and reinitialises atom U's
-  void RestoreADPs(bool restoreCoordinates=true);  
+  void RestoreADPs(bool restoreCoordinates=true);
   // re-calculates the cartesian coordinates of atoms
   void RestoreCoordinates();
   void MoveFragment(const vec3d& to, TSAtom& fragAtom);
@@ -271,4 +271,3 @@ public:
 
 EndXlibNamespace()
 #endif
-

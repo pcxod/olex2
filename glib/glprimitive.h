@@ -33,7 +33,7 @@ const short
   sgloMacro     = 14,
   sgloCommandList = 15;
 // data format
-const short 
+const short
   glpdVertexCrd    = 0x0001,
   glpdVertexColor  = 0x0002,
   glpdEdgeColor    = 0x0002,
@@ -192,7 +192,7 @@ public:
   void MakeOctahedron(double sz);
   static void CallList(TGlPrimitive* GlP)  {
     if( GlP->IsList() )
-      olx_gl::callList(GlP->GetListId()); 
+      olx_gl::callList(GlP->GetListId());
     else
       GlP->Draw();
   }
@@ -235,12 +235,12 @@ public:
   static void DrawVertex(const vec3d& v)  {  olx_gl::vertex(v);  }
   static void DrawVertex(const vec3f& v)  {  olx_gl::vertex(v);  }
 
-  template <class vec_class> 
+  template <class vec_class>
   void DrawVertex(const vec_class& v, const uint32_t& c) const {
     SetColor(c);
     DrawVertex(v);
   }
-  template <class vec_class> 
+  template <class vec_class>
   void DrawVertex(const vec_class& v, const uint32_t& c,
     const TextureCrd& tc) const
   {
@@ -248,7 +248,7 @@ public:
     SetTexCrd(tc);
     DrawVertex(v);
   }
-  template <class vec_class> 
+  template <class vec_class>
   static void DrawVertex(const vec_class& v, const TextureCrd& tc)  {
     SetTexCrd(tc);
     DrawVertex(v);

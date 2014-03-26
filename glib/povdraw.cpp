@@ -43,4 +43,3 @@ olxstr pov::get_mat_name(const TGlMaterial& glm,
   return (lmi == InvalidIndex ? materials.Add(glm, olxstr("mat") <<
     (materials.Count()+1)) : materials.GetValue(lmi));
 }
-

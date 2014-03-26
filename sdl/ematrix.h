@@ -91,7 +91,7 @@ template <class FT> class TMatrix
   void  Clear()  {
     if( FData == NULL )  return;
     delete [] FData;
-    FData = NULL;  
+    FData = NULL;
   }
   TVector<FT>* FData;
 public:
@@ -100,13 +100,13 @@ public:
     Fn = Fm = 0;
     SetTag(-1);
   }
-  
+
   TMatrix(size_t VectorsNumber, size_t ElementsNumber)  {
     Fn = VectorsNumber;
     Fm = ElementsNumber;
     if( (Fn == 0) || (Fm == 0) )   {  FData = NULL;  return;  }
     FData = new TVector<FT>[Fn];
-    for( size_t i=0; i < Fn; i++ )  
+    for( size_t i=0; i < Fn; i++ )
       FData[i].Resize(Fm);
     SetTag(-1);
   }
@@ -116,14 +116,14 @@ public:
   {
     if( (Fn == 0) || (Fm == 0) )   {  FData = NULL;  return;  }
     FData = new TVector<FT>[Fn];
-    for( size_t i=0; i < Fn; i++ )  
+    for( size_t i=0; i < Fn; i++ )
       FData[i] = M[i];
   }
 
   TMatrix(const TMatrix& M) : Fn(M.Fn), Fm(M.Fm)  {
     if( (Fn == 0) || (Fm == 0) )   {  FData = NULL;  return;  }
     FData = new TVector<FT>[Fn];
-    for( size_t i=0; i < Fn; i++ )  
+    for( size_t i=0; i < Fn; i++ )
       FData[i] = M[i];
   }
 
@@ -145,7 +145,7 @@ public:
   }
 
   size_t Vectors() const {  return Fn;  }
-  size_t Elements() const {  return Fm;  } 
+  size_t Elements() const {  return Fm;  }
   size_t ColCount() const {  return Fm;  }
   size_t RowCount() const {  return Fn;  }
   bool IsEmpty() const {  return Fm == 0 || Fn == 0;  }
@@ -167,7 +167,7 @@ public:
 
   template <class AType> TMatrix& operator += (const TMatrix<AType>& c)  {
     if( (Fm ==c.Elements()) && (Fn == c.Vectors()) )
-      for( size_t i=0; i < Fn; i++ )  
+      for( size_t i=0; i < Fn; i++ )
         FData[i] += c[i];
     else
       throw TFunctionFailedException(__OlxSourceInfo, "incompatible matrix dimensions");
@@ -176,7 +176,7 @@ public:
 
   template <class AType> TMatrix& operator -= (const TMatrix<AType>& c)  {
     if( (Fm ==c.Elements()) && (Fn == c.Vectors()) )
-      for( size_t i=0; i < Fn; i++ )  
+      for( size_t i=0; i < Fn; i++ )
         FData[i] -= c[i];
     else
       throw TFunctionFailedException(__OlxSourceInfo, "incompatible matrix dimensions");
@@ -200,7 +200,7 @@ public:
       FData[i] *= V;
     return *this;
   }
-    
+
   TMatrix& operator /= (FT V)  {
     for( size_t i = 0; i < Fn; i++ )
       FData[i] /= V;
@@ -312,19 +312,19 @@ public:
   }
 
   void AddRows(size_t to, size_t which)  {  FData[to] += FData[which];  }
-  
+
   void AddCols(size_t to, size_t which)  {
     for( size_t i=0; i < Fn; i++ )
       FData[i][to] += FData[i][which];
   }
 
   void SubRows(size_t from, size_t which )  {  FData[from] -= FData[which];  }
-  
+
   void SubCols(size_t from, size_t which)  {
     for( size_t i=0; i < Fn; i++ )
       FData[i][from] -= FData[i][which];
   }
-  
+
   void MulRow(size_t which, FT v)  {  FData[which] *= v;  }
   void DivRow(size_t which, FT v)  {  FData[which] /= v;  }
 
@@ -512,7 +512,7 @@ public:
         b[i] += b[j-1];
       }
     }
- 
+
     if (arr[sz-1][sz-1] == 0) {
       throw TFunctionFailedException(__OlxSourceInfo,
         "dependent set of equations");

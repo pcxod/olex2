@@ -120,9 +120,9 @@ public:
   virtual ~THtml();
 
   const olxstr &GetPopupName() const {  return PopupName;  }
-  void OnKeyDown(wxKeyEvent &event);  
-  void OnChar(wxKeyEvent &event);  
-  void OnNavigation(wxNavigationKeyEvent &event);  
+  void OnKeyDown(wxKeyEvent &event);
+  void OnChar(wxKeyEvent &event);
+  void OnNavigation(wxNavigationKeyEvent &event);
 
   void SetSwitchState(THtmlSwitch &sw, size_t state);
 

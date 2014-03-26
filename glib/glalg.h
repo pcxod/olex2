@@ -27,14 +27,14 @@ struct gl_alg {
   {
     vec_t vd = v2-v1;
     float_type u = N.DotProd(p-v1)/N.DotProd(vd);
-    return v1 + vd*u; 
+    return v1 + vd*u;
   }
   // for zero based vector
   static vec_t VectorPlaneIntersection(const vec_t &v,
     const vec_t &N, const vec_t &p)
   {
     float_type u = N.DotProd(p)/N.DotProd(v);
-    return v*u; 
+    return v*u;
   }
   static bool IsPointInTriangle(const vec_t &p,
     const vec_t &a, const vec_t &b, const vec_t &c)

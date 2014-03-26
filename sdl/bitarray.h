@@ -14,13 +14,13 @@
 BeginEsdlNamespace()
 
 class TEBitArray: public IEObject  {
-  unsigned char *FData; 
+  unsigned char *FData;
   size_t FCount, FCharCount;
 public:
   TEBitArray();
   TEBitArray(const TEBitArray& arr);
   TEBitArray(size_t size);
-  // if own is true, data [created with new!] will be deleted automatically 
+  // if own is true, data [created with new!] will be deleted automatically
   TEBitArray(unsigned char* data, size_t size, bool own);
   virtual ~TEBitArray();
   void Clear();
@@ -52,7 +52,7 @@ public:
     if( !v )  FData[intIndex] &= ~bitIndex;
     else      FData[intIndex] |= bitIndex;
   }
-  inline void SetTrue(size_t index)   {  
+  inline void SetTrue(size_t index)   {
     size_t intIndex = index/8;
     size_t bitIndex = 1 << index%8;
 #ifdef _DEBUG
@@ -60,7 +60,7 @@ public:
 #endif
     FData[intIndex] |= bitIndex;
   }
-  inline void SetFalse(size_t index)  {  
+  inline void SetFalse(size_t index)  {
     size_t intIndex = index/8;
     size_t bitIndex = 1 << index%8;
 #ifdef _DEBUG
@@ -79,7 +79,7 @@ public:
 
   void operator << (IInputStream& in);
   void operator >> (IOutputStream& out) const;
-  
+
   TEBitArray& operator = (const TEBitArray& arr);
   bool operator == (const TEBitArray& arr)  const;
   int Compare(const TEBitArray& arr)  const;

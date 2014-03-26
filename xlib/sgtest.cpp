@@ -35,9 +35,9 @@ TSGTest::TSGTest() : minInd(100, 100, 100), maxInd(-100, -100, -100) {
     }
   }
   Hkl3DArray = new TArray3D<TReflection*>(
-    minInd[0], maxInd[0], 
-    minInd[1], maxInd[1], 
-    minInd[2], maxInd[2] 
+    minInd[0], maxInd[0],
+    minInd[1], maxInd[1],
+    minInd[2], maxInd[2]
   );
   TArray3D<TReflection*>& Hkl3D = *Hkl3DArray;
   for( size_t i=0; i < ref_cnt; i++ )  {
@@ -51,7 +51,7 @@ TSGTest::TSGTest() : minInd(100, 100, 100), maxInd(-100, -100, -100) {
 }
 //..............................................................................
 TSGTest::~TSGTest()  {
-  if( Hkl3DArray != NULL )  
+  if( Hkl3DArray != NULL )
     delete Hkl3DArray;
 }
 //..............................................................................
@@ -104,7 +104,7 @@ void TSGTest::MergeTest(const TPtrList<TSpaceGroup>& sgList,  TTypeList<TSGStats
       if( !vec3i::IsInRangeExc(hklv, minInd, maxInd) )  continue;
       if( !Refs[j].EqHkl(hklv) )  {
         const TReflection* ref = Hkl3D(hklv);
-        if( ref == NULL )  
+        if( ref == NULL )
           continue;
 
         //double weight = olx_abs(ref->Data()[0] - Hkl.Ref(j)->Data()[0]) / (olx_abs(ref->Data()[0]) +olx_abs(Hkl.Ref(j)->Data()[0]));
@@ -334,7 +334,7 @@ void TSGTest::LatticeSATest(TTypeList<TElementStats<TCLattice*> >& latRes, TType
         GlideN1.GetB()->c++;
       }
       if (((K+L)%4) != 0) {
-        GlideD1.GetB()->a += ref.GetI(); 
+        GlideD1.GetB()->a += ref.GetI();
         GlideD1.GetB()->b += olx_sqr(ref.GetS());
         GlideD1.GetB()->c++;
       }
@@ -471,7 +471,7 @@ void TSGTest::LatticeSATest(TTypeList<TElementStats<TCLattice*> >& latRes, TType
       Ssq += olx_abs(v-averageSAI);
     }
     Ssq /= PresentElements.Count();
-    Ssq = sqrt( Ssq );                
+    Ssq = sqrt( Ssq );
     double maxInt = 1.0*(averageSAI + 2*Ssq);
     for( size_t i=0; i < PresentElements.Count(); i++ )  {
       double v = PresentElements[i]->GetB()->GetA()/PresentElements[i]->GetB()->GetC();

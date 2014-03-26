@@ -30,15 +30,15 @@ void TSameGroup::Assign(TAsymmUnit& tau, const TSameGroup& sg)  {
       Add(*aa);
     }
   }
-  Esd12 = sg.Esd12;  
-  Esd13 = sg.Esd13;  
+  Esd12 = sg.Esd12;
+  Esd13 = sg.Esd13;
   for( size_t i=0; i < sg.Dependent.Count(); i++ )
     Dependent.Add(Parent[sg.Dependent[i]->Id]);
   if( sg.GetParentGroup() != NULL )
     ParentGroup = &Parent[sg.GetParentGroup()->Id];
 }
 //.............................................................................
-TCAtom& TSameGroup::Add(TCAtom& ca)  {  
+TCAtom& TSameGroup::Add(TCAtom& ca)  {
   ca.SetSameId(Id);
   Atoms.Add(&ca);
   return ca;
@@ -200,7 +200,7 @@ PyObject* TSameGroupList::PyExport(TPtrList<PyObject>& _atoms)  {
   for( size_t i=0; i < id; i++ )
     PyTuple_SetItem(main, i, allGroups.Add(PyDict_New()));
   id = 0;
-  for( size_t i=0; i < Groups.Count(); i++ ) 
+  for( size_t i=0; i < Groups.Count(); i++ )
     if( Groups[i].IsValidForSave() )
       Groups[i].PyExport(allGroups[id++], allGroups, _atoms);
   return main;

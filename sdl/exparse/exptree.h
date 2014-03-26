@@ -162,7 +162,7 @@ namespace exparse  {
       rv.start_char_ind = oti+open_tag.Length();
       int otc = 1;
       while( otc != 0 )  {
-        const olxstr& line = list[str_ind]; 
+        const olxstr& line = list[str_ind];
         for( size_t i=0; i < line.Length(); i++ )  {
           if( line.IsSubStringAt(open_tag, i) )  otc++;
           else if( line.IsSubStringAt(close_tag, i) && --otc == 0)  {
@@ -190,7 +190,7 @@ namespace exparse  {
     bool priority,  // the expression is in brackets
       macro_call; // call conversion - f(x) or 'f x'
     expression_tree(expression_tree* p, const olxstr& dt,
-      expression_tree* l, expression_tree* r, 
+      expression_tree* l, expression_tree* r,
       evaluator<expression_tree>* e)
       : data(dt), parent(p), left(l), right(r), evator(e),
       priority(false), macro_call(false)

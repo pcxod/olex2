@@ -42,7 +42,7 @@ public:
 
   TZipWrapper(const olxstr &zipName, bool useCache);
   TZipWrapper(TEFile* zipName, bool useCache);
-  
+
   TActionQueue& OnProgress;
 
   ~TZipWrapper();
@@ -185,4 +185,4 @@ public:
 };
 
 #endif  // __WXWIDGETS__
-#endif  
+#endif

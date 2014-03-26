@@ -110,7 +110,7 @@ TEValue<double> TUnitCell::CalcVolumeEx(const TAsymmUnit& au) {
     olx_sqr(v*axe[0]/ax[0]) + olx_sqr(v*axe[1]/ax[1]) + olx_sqr(v*axe[2]/ax[2]) +
     olx_sqr(r/t*ss[0]*(cs[0]-cs[1]*cs[2])*ange[0]) +
     olx_sqr(r/t*ss[1]*(cs[1]-cs[0]*cs[2])*ange[1]) +
-    olx_sqr(r/t*ss[2]*(cs[2]-cs[0]*cs[1])*ange[2]) 
+    olx_sqr(r/t*ss[2]*(cs[2]-cs[0]*cs[1])*ange[2])
     );
   return  TEValue<double>(v, esd);
 }
@@ -804,7 +804,7 @@ void TUnitCell::BuildStructureMap_Direct(TArray3D<short>& map, double delta,
   TBasicApp::NewLogEntry() << "Building structure map...";
   TTypeList< AnAssociation3<vec3d,TCAtom*, double> > allAtoms;
   GenereteAtomCoordinates(allAtoms, true, _template);
-  
+
   const size_t da = map.Length1(),
                db = map.Length2(),
                dc = map.Length3();
@@ -919,7 +919,7 @@ const_olxdict<short, TArray3D<bool>*, TPrimitiveComparator>
   return scatterers;
 }
 //..................................................................................
-void TUnitCell::BuildStructureMap_Masks(TArray3D<short>& map, double delta, short val, 
+void TUnitCell::BuildStructureMap_Masks(TArray3D<short>& map, double delta, short val,
   ElementRadii* radii, const TCAtomPList* _template) const
 {
   TTypeList< olx_pair_t<vec3d,TCAtom*> > allAtoms;

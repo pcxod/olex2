@@ -73,9 +73,9 @@ public:
 
 class TSGTest  {
   TRefList Refs;  // P1 merged reflections
-  double TotalI, TotalIS, 
-         AverageI, AverageIS, 
-         MaxI, MaxIS, 
+  double TotalI, TotalIS,
+         AverageI, AverageIS,
+         MaxI, MaxIS,
          MinI, MinIS;
   vec3i minInd, maxInd;
   TArray3D< TReflection* >* Hkl3DArray;

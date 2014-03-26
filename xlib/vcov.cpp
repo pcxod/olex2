@@ -162,7 +162,7 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
   Allocate(diag.Count());
   for( size_t i=0; i < indexes.Count(); i++ )  {
     for( size_t j=0; j <= i; j++ )  {
-      if( i == j )  
+      if( i == j )
         data[i][j] = diag[i]*diag[i];
       else  {  // top diagonal to bottom diagonal
         size_t ix = indexes[j];
@@ -290,7 +290,7 @@ double VcoVMatrix::Find(const olxstr& atom, const short va,
       }
       if( i1 == InvalidIndex || i2 == InvalidIndex )
         return 0;
-      return (i1 <= i2 ) ? data[i2][i1] : data[i1][i2]; 
+      return (i1 <= i2 ) ? data[i2][i1] : data[i1][i2];
     }
   }
   return 0;

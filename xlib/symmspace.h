@@ -101,9 +101,9 @@ public:
 };
 
 namespace SymmSpace  {
-  
+
   extern int sort_group(const smatd &m1, const smatd &m2);
-  
+
   struct Info  {
   protected:
     static int sort_matrix_list(const smatd &m1, const smatd &m2) {

@@ -40,7 +40,7 @@ bool AGlMouseHandler::EventHandler::OnMouseMove(AGlMouseHandler& Sender, const T
         else if( Sender.IsMove2DZ() )  {
           Sender.DoTranslate(
             vec3d((double)dx/Sender.DoGetRenderer().GetZoom(),
-                  (double)dy/Sender.DoGetRenderer().GetZoom(), 
+                  (double)dy/Sender.DoGetRenderer().GetZoom(),
                   0));
         }
         else  {  // move in 3D
@@ -61,11 +61,11 @@ bool AGlMouseHandler::EventHandler::OnMouseMove(AGlMouseHandler& Sender, const T
       }
     }
     else if( (Data.Shift == 0 || ((Data.Shift&sssCtrl) != 0)) )  { // rotate
-      if( Sender.IsRoteable() )  {  
+      if( Sender.IsRoteable() )  {
         /* not a trivial (for some) task, to rotate in current basis as if the rotation
         happens in on screen (identity) basis; so we need to find such a vector, which becomes
-        {0,0,1} for the Z rotation etc for X and Y after multiplied by current basis. for Z axis it is 
-        defined by {0,0,1} = ra*Current_Basis and so on, this leasd to three linear equations for 
+        {0,0,1} for the Z rotation etc for X and Y after multiplied by current basis. for Z axis it is
+        defined by {0,0,1} = ra*Current_Basis and so on, this leasd to three linear equations for
         three values of the rotation vector...
         */
         mat3d basis(mat3d::Transpose(Sender.DoGetRenderer().GetBasis().GetMatrix()));
@@ -85,7 +85,7 @@ bool AGlMouseHandler::EventHandler::OnMouseMove(AGlMouseHandler& Sender, const T
         else if( Data.Shift == 0 )  {// rotate XY
           const double RX = -(double)(dy)/FRotationDiv;
           const double RY = (double)(dx)/FRotationDiv;
-          if( RX != 0 ) 
+          if( RX != 0 )
             Sender.DoRotate(mat3d::CramerSolve(basis, vec3d(1,0,0)).Normalise(), RX*M_PI/180);
           if( RY != 0 )
             Sender.DoRotate(mat3d::CramerSolve(basis, vec3d(0,1,0)).Normalise(), RY*M_PI/180);

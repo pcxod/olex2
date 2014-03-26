@@ -68,7 +68,7 @@ void TButton::MouseEnterEvent(wxMouseEvent& event)  {
   event.Skip();
 }
 //..............................................................................
-void TButton::MouseLeaveEvent(wxMouseEvent& event)  {  
+void TButton::MouseLeaveEvent(wxMouseEvent& event)  {
   event.Skip();
 }
 //..............................................................................
@@ -85,7 +85,7 @@ void TBmpButton::MouseEnterEvent(wxMouseEvent& event)  {
   event.Skip();
 }
 //..............................................................................
-void TBmpButton::MouseLeaveEvent(wxMouseEvent& event)  {  
+void TBmpButton::MouseLeaveEvent(wxMouseEvent& event)  {
   event.Skip();
 }
 //..............................................................................
@@ -126,7 +126,7 @@ void TImgButton::MouseEnterEvent(wxMouseEvent& event)  {
   event.Skip();
 }
 //..............................................................................
-void TImgButton::MouseLeaveEvent(wxMouseEvent& event)  {  
+void TImgButton::MouseLeaveEvent(wxMouseEvent& event)  {
   MouseIn = false;
   if( state != stDisabled && state != stUp && !ProcessingOnDown )  {
     state = stUp;

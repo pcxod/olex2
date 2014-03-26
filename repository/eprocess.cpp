@@ -96,7 +96,7 @@ bool TWinProcess::InitStreams() {
 
   if (!CreatePipe(&TmpOutRead, &OutWrite, &sa, 0)) // Create a child stdout pipe
     return false;
-  
+
    // Create a duplicate of the stdout write handle for the std
   if (!DuplicateHandle( GetCurrentProcess(), OutWrite, GetCurrentProcess(),
         &ErrWrite,0, true, DUPLICATE_SAME_ACCESS))

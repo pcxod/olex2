@@ -14,7 +14,7 @@
 #include "glprimitive.h"
 
 TXFader::TXFader(TGlRenderer& R, const olxstr& collectionName):
-  AGDrawObject(R, collectionName)  
+  AGDrawObject(R, collectionName)
 {
   SetSelectable(false);
   Foreground = Background = NULL;
@@ -31,7 +31,7 @@ TXFader::~TXFader()  {
 }
 //..............................................................................
 void TXFader::Create(const olxstr& cName)  {
-  if( !cName.IsEmpty() )  
+  if( !cName.IsEmpty() )
     SetCollectionName(cName);
 
   TGPCollection& GPC = Parent.FindOrCreateCollection( GetCollectionName() );

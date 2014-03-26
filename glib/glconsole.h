@@ -55,8 +55,8 @@ enum {
 };
 #endif
 
-class TGlConsole: public AGDrawObject, 
-                  public AActionHandler, 
+class TGlConsole: public AGDrawObject,
+                  public AActionHandler,
                   public IDataOutputStream  {
   double FLineSpacing;
   uint16_t Width, Height, Top, Left; // to clip the content
@@ -106,7 +106,7 @@ public:
 
   olxstr GetCommand() const;
   void SetCommand(const olxstr& NewCmd);
-  size_t GetCmdInsertPosition() const {  
+  size_t GetCmdInsertPosition() const {
     return (FCommand.StartsFrom(PromptStr) ?
       (FStringPos - PromptStr.Length()) : FStringPos);
   }

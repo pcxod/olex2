@@ -81,7 +81,7 @@ enum  {
   ID_AtomGrow,
   ID_AtomCenter,
   ID_AtomSelRings,
-  
+
   ID_PlaneActivate,
   ID_BondViewAlong,
 
@@ -226,14 +226,14 @@ protected:
   Olex2App* FXApp;
   TDataFile FHelpFile, FMacroFile;
   TDataItem *FHelpItem;
-  
+
   olxstr GradientPicture;
   TGlConsole *FGlConsole;
   TGlTextBox *FHelpWindow, *FInfoBox, *GlTooltip;
   // a list of commands called when a file is changed by another process
   TStrList FOnListenCmds;
   TMacroError MacroError;
-  
+
   void PreviewHelp(const olxstr& Cmd);
   olxstr ExpandCommand(const olxstr &Cmd, bool inc_files);
   int MouseMoveTimeElapsed, MousePositionX, MousePositionY;
@@ -530,7 +530,7 @@ public:
   virtual bool ProcessEvent(wxEvent& evt);
   void OnResize();
   olxstr StylesDir, // styles folder
-    ScenesDir, 
+    ScenesDir,
     DefStyle,         // default style file
     DefSceneP,        // default scene parameters file
     TutorialDir;
@@ -577,7 +577,7 @@ private:
   class TCmdLine* FCmdLine;
   olxstr FHtmlIndexFile;
 
-  bool FHtmlMinimized, FHtmlOnLeft, FBitmapDraw, FHtmlWidthFixed, 
+  bool FHtmlMinimized, FHtmlOnLeft, FBitmapDraw, FHtmlWidthFixed,
        RunOnceProcessed,
        StartupInitialised;
   bool InfoWindowVisible, HelpWindowVisible, CmdLineVisible, _UseGlTooltip;
@@ -641,7 +641,7 @@ protected:
     wxMenuItem *miAtomGrow;
     TMenu    *pmBang;  // bonds angles
     TMenu    *pmAtomType;
-    TMenu    *pmAtomOccu, 
+    TMenu    *pmAtomOccu,
              *pmAtomConn,
              *pmAtomPoly,
              *pmAtomPart,

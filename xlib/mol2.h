@@ -14,7 +14,7 @@
 
 BeginXlibNamespace()
 
-const short 
+const short
   mol2btSingle       = 1,
   mol2btDouble       = 2,
   mol2btTriple       = 3,

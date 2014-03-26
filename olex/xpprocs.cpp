@@ -855,9 +855,14 @@ void TMainForm::macPictTEX(TStrObjList &Cmds, const TParamList &Options, TMacroE
   od.Render(Cmds[0]);
 }
 //..............................................................................
-void TMainForm::macPictPR(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+void TMainForm::macPictPR(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
   olxstr file_name = (Cmds[0].EndsWith(".pov") ? Cmds[0] : olxstr(Cmds[0]) << ".pov");
   TEFile::WriteLines(file_name, TCStrList(FXApp->ToPov().GetObject()));
+
+  TStrList l("1;2;3;4", ';');
+  olxstr res = olxstr(' ').Join(l);
 }
 //..............................................................................
 void TMainForm::macClear(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error) {
@@ -907,7 +912,7 @@ void TMainForm::macListen(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 #ifdef __WIN32__
 void TMainForm::macWindowCmd(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   for( size_t i=1; i < Cmds.Count(); i++ )  {
-    if( Cmds[i].Equalsi("nl") )    
+    if( Cmds[i].Equalsi("nl") )
       TWinWinCmd::SendWindowCmd(Cmds[0], '\r');
     else if( Cmds[i].Equalsi("sp") )
       TWinWinCmd::SendWindowCmd(Cmds[0], ' ');
@@ -1228,7 +1233,7 @@ void TMainForm::macShell(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     ShellExecute((HWND)this->GetHWND(), wxT("open"), cmd.u_str(), NULL,
       TEFile::CurrentDir().u_str(), SW_SHOWNORMAL);
 #else
-    if( cmd.StartsFrom("http") || cmd.StartsFrom("https") || cmd.EndsWith(".htm") || 
+    if( cmd.StartsFrom("http") || cmd.StartsFrom("https") || cmd.EndsWith(".htm") ||
         cmd.EndsWith(".html") || cmd.EndsWith(".php") || cmd.EndsWith(".asp") )
     {
       Macros.ProcessMacro(olxstr("exec -o getvar(defbrowser) '") << cmd << '\'', Error);
@@ -1626,7 +1631,7 @@ void TMainForm::macLink(TStrObjList &Cmds, const TParamList &Options,
     FN = (Tmp << FN );
   }
   FN = TEFile::ChangeFileExt(FN, "glsp");
-  if( TEFile::Exists(FN) )  
+  if( TEFile::Exists(FN) )
     FXApp->GetRender().GetStyles().SetLinkFile(FN);
   else  {
     Error.ProcessingError(__OlxSrcInfo, "file does not exists : ") << FN;
@@ -2474,7 +2479,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   // check if crashed last time
   {
     TStrList pid_files;
-    olxstr conf_dir = TBasicApp::GetInstanceDir(); 
+    olxstr conf_dir = TBasicApp::GetInstanceDir();
     TEFile::ListDir(conf_dir, pid_files, olxstr("*.") <<
       patcher::PatchAPI::GetOlex2PIDFileExt(), sefAll);
     size_t del_cnt=0;
@@ -2697,7 +2702,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       if (update_vfs)
         LoadVFS(plStructure);  // load virtual fs file
     }
-    catch (const TExceptionBase& exc) { 
+    catch (const TExceptionBase& exc) {
       // manual recovery of the situation...
       FXApp->ClearStructureRelated();
       FXApp->XFile().GetRM().Clear(rm_clear_ALL);
@@ -2783,11 +2788,11 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       }
       UpdateInfoBox();
       // check if the associated HKL file has the same name and location
-      olxstr 
+      olxstr
         hkl_fn = TEFile::OSPath(FXApp->XFile().GetRM().GetHKLSource())
-          .DeleteSequencesOf(TEFile::GetPathDelimeter()), 
+          .DeleteSequencesOf(TEFile::GetPathDelimeter()),
         src_fn = TEFile::OSPath(FXApp->XFile().LastLoader()->GetFileName())
-          .DeleteSequencesOf(TEFile::GetPathDelimeter()); 
+          .DeleteSequencesOf(TEFile::GetPathDelimeter());
 #ifdef __WIN32__
       if( !TEFile::ChangeFileExt(hkl_fn, EmptyString()).Equalsi(
           TEFile::ChangeFileExt(src_fn, EmptyString())) )
@@ -2940,7 +2945,7 @@ void TMainForm::macPopup(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   pd->Html->SetSize(width, height);
   try  {  pd->Html->LoadPage(Cmds[1].u_str());  }
   catch( ... )  {}
-  
+
   pd->Html->OnKey.Add(this, ID_HTMLKEY);
   pd->Html->OnDblClick.Add(this, ID_ONLINK);
   pd->Html->OnSize.Add(this, ID_ONLINK);
@@ -2978,7 +2983,7 @@ void TMainForm::macCreateMenu(TStrObjList &Cmds, const TParamList &Options, TMac
   for( size_t i=0; i < Cmds.Count(); i++ )
     Cmds[i].Replace("\\t", '\t');
   size_t ind = Cmds[0].LastIndexOf(';');
-  if( ind == InvalidIndex )  
+  if( ind == InvalidIndex )
     throw TInvalidArgumentException(__OlxSourceInfo, "menu name");
   olxstr menuName = Cmds[0].SubStringTo(ind);
 
@@ -2997,7 +3002,7 @@ void TMainForm::macCreateMenu(TStrObjList &Cmds, const TParamList &Options, TMac
       menuName = menuName.SubStringTo(ind);
       menu = Menus.Find(menuName, NULL);
       mi++;
-      
+
       if( menu )  break;
     }
     mi = (menu == NULL ? 0 : toks.Count() - 1 - mi);
@@ -3350,9 +3355,9 @@ void TMainForm::ChangeSolution(int sol)  {
   const TLst& Lst = FXApp->XFile().GetLastLoader<TIns>().GetLst();
   if( Lst.PattSolutionCount() == 0 )  {
     if( Solutions.IsEmpty() )  return;
-    if( sol < 0 )  
+    if( sol < 0 )
       sol = Solutions.Count()-1;
-    else if( (size_t)sol >= Solutions.Count() )  
+    else if( (size_t)sol >= Solutions.Count() )
       sol = 0;
     olxstr cf = olxstr(SolutionFolder) << Solutions[sol] << ".res";
     TEFile::Copy( cf, TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "res"), true);
@@ -3364,9 +3369,9 @@ void TMainForm::ChangeSolution(int sol)  {
     FXApp->Draw();
   }
   else  {
-    if( sol < 0 )  
+    if( sol < 0 )
       sol = Lst.PattSolutionCount()-1;
-    else if( (size_t)sol >= Lst.PattSolutionCount() )  
+    else if( (size_t)sol >= Lst.PattSolutionCount() )
       sol = 0;
 
     TIns& Ins = FXApp->XFile().GetLastLoader<TIns>();
@@ -3412,7 +3417,7 @@ void TMainForm::macTref(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   olxstr cinsFN = TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "ins");
   olxstr cresFN = TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "res");
   olxstr clstFN = TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "lst");
-  
+
   OlxStateVar _var(XLibMacros::VarName_InternalTref());
   try  {
     for( size_t i=0; i < Solutions.Count(); i++ )  {
@@ -3584,7 +3589,7 @@ void TMainForm::macInstallPlugin(TStrObjList &Cmds, const TParamList &Options,
       olxstr SettingsFile = updater::UpdateAPI::GetSettingsFileName();
       if( TEFile::Exists(SettingsFile) )  {
         updater::UpdateAPI api;
-        short res = api.InstallPlugin(new TDownloadProgress(*FXApp), 
+        short res = api.InstallPlugin(new TDownloadProgress(*FXApp),
           new TOnSync(*FXApp, TBasicApp::GetBaseDir()),
           Cmds[0]);
         if( res == updater::uapi_OK )  {
@@ -3782,7 +3787,7 @@ void TMainForm::macShowWindow(TStrObjList &Cmds, const TParamList &Options, TMac
       FGlConsole->ShowBuffer(!HelpWindowVisible);  // sync states
       TStateRegistry::GetInstance().SetState(stateHelpWindowVisible,
         HelpWindowVisible, EmptyString(), true);
-    } 
+    }
     else  if( Cmds[0].Equalsi("info") )  {
       InfoWindowVisible = Cmds[1].ToBool();
       FInfoBox->SetVisible(InfoWindowVisible);
@@ -3790,7 +3795,7 @@ void TMainForm::macShowWindow(TStrObjList &Cmds, const TParamList &Options, TMac
         InfoWindowVisible, EmptyString(), true);
       OnResize();
       FXApp->Draw();
-    } 
+    }
     else if( Cmds[0].Equalsi("cmdline") )  {
       CmdLineVisible = Cmds[1].ToBool();
       FCmdLine->Show(CmdLineVisible);
@@ -3809,7 +3814,7 @@ void TMainForm::macShowWindow(TStrObjList &Cmds, const TParamList &Options, TMac
       FGlConsole->ShowBuffer(!HelpWindowVisible);  // sync states
       TStateRegistry::GetInstance().SetState(stateHelpWindowVisible,
         HelpWindowVisible, EmptyString(), true);
-    } 
+    }
     else if( Cmds[0].Equalsi("info") )  {
       InfoWindowVisible = !InfoWindowVisible;
       FInfoBox->SetVisible(InfoWindowVisible);
@@ -3817,7 +3822,7 @@ void TMainForm::macShowWindow(TStrObjList &Cmds, const TParamList &Options, TMac
         InfoWindowVisible, EmptyString(), true);
       OnResize();
       FXApp->Draw();
-    } 
+    }
     else if( Cmds[0].Equalsi("cmdline") )  {
       CmdLineVisible = !CmdLineVisible;
       FCmdLine->Show( CmdLineVisible );
@@ -4295,7 +4300,7 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   //double sums[5] = {0.0,0.0,0.0,0.0,0.0};
   //const vec3i min_i = ms.MinIndexes, max_i = ms.MaxIndexes;
   //TRefPList pos, neg;
-  //RefUtil::GetBijovetPairs(refs, min_i, max_i, pos, neg, sp); 
+  //RefUtil::GetBijovetPairs(refs, min_i, max_i, pos, neg, sp);
   //TArray3D<TReflection*> hkl3d(min_i, max_i);
   //cm_Absorption_Coefficient_Reg ac;
   //ContentList cont = xapp.XFile().GetAsymmUnit().GetContentList();
@@ -4307,7 +4312,7 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   //}
   //mu *= xapp.XFile().GetAsymmUnit().GetZ()/xapp.XFile().GetAsymmUnit().CalcCellVolume();
   //mu /= 6.022142;
-  //xapp.NewLogEntry() << mu;  
+  //xapp.NewLogEntry() << mu;
   //for( size_t i=0; i < refs.Count(); i++ )  {
   //  hkl3d(refs[i].GetHkl()) = &refs[i];
   //  refs[i].SetTag(i);
@@ -4491,7 +4496,7 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   //  FXApp->XFile().EndUpdate();
   //}
   //return;
-  
+
   //wxImage img;
   //img.LoadFile(wxT("c:/tmp/tex2d.jpg"));
   //int tex_id = FXApp->GetRender().GetTextureManager().Add2DTexture("shared_site", 1, img.GetWidth(), img.GetHeight(), 0, GL_RGB, img.GetData());
@@ -4499,7 +4504,7 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   //  TXAtomPList xatoms;
   //  FindXAtoms(Cmds, xatoms, true, true);
   //  for( size_t i=0; i < xatoms.Count(); i++ )  {
-  //    xatoms[i]->Primitives()->Primitive(0)->Texture(tex_id); 
+  //    xatoms[i]->Primitives()->Primitive(0)->Texture(tex_id);
   //  }
   //}
   //return;
@@ -4517,7 +4522,7 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   //  FXApp->XFile().GetLastLoaderSG().GetMatrices(ml, mattAll^mattIdentity);
   //  MergeStats stat = RefMerger::Merge<smatd_list,RefMerger::ShelxMerger>(ml, fp, refs, empty_omits, false);
   //  nrefs.SetCapacity(refs.Count());
-  //  for( size_t i=0; i < refs.Count(); i++ ) 
+  //  for( size_t i=0; i < refs.Count(); i++ )
   //    nrefs.AddNew(refs[i]).GetHkl() *= -1;
   //  TArrayList<compd> FP(refs.Count()), FN(refs.Count());
   //  SFUtil::CalcSF(FXApp->XFile(), refs, FP, true);
@@ -4536,7 +4541,7 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   //    sxs += (nqm - pqm)*(nqm - pqm);
   //  }
   //  double k = (sxy - sx*sy/f_cnt)/(sxs - sx*sx/f_cnt);
-  //  double a = (sy - k*sx)/f_cnt;  
+  //  double a = (sy - k*sx)/f_cnt;
   //  double sdiff = 0;
   //  for( size_t i=0; i < f_cnt; i++ )  {
   //    const double I = pscale*pscale*refs[i].GetI();
@@ -4554,7 +4559,7 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 //  for( size_t i=0; i < dim; i++ )  {
 //    cell[i] = new bool*[dim];
 //    for( size_t j=0; j < dim; j++ )  {
-//      cell[i][j] = new bool[dim]; 
+//      cell[i][j] = new bool[dim];
 //    }
 //  }
 //  vec3d p1;
@@ -4598,7 +4603,7 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 //        }
 //      }
 //    }
-//    TBasicApp::GetLog() << sl.GetGroup(i).GetName() << "; mc = " << 
+//    TBasicApp::GetLog() << sl.GetGroup(i).GetName() << "; mc = " <<
 //      ml.Count() << " - " << (double)sets*100/(dim*dim*dim) << "% {" << mi1 << ',' << mi2 << ',' << mi3 << "}\n";
 //  }
 //  for( size_t i=0; i < dim; i++ )  {
@@ -4616,12 +4621,12 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 //    r[0][0] = h2c[0].DotProd(h2c[0]);  r[0][1] = h2c[0].DotProd(h2c[1]);  r[0][2] = h2c[0].DotProd(h2c[2]);
 //    r[0][1] = r[1][0];                 r[1][1] = h2c[1].DotProd(h2c[1]);  r[1][2] = h2c[1].DotProd(h2c[2]);
 //    r[2][0] = r[0][2];                 r[2][1] = r[1][2];                 r[2][2] = h2c[2].DotProd(h2c[2]);
-//    
+//
 //    mat3d::EigenValues(r, I.I() );
 //    TBasicApp::GetLog() << r[0][0] << ',' << r[1][1] << ',' << r[2][2] << '\n';
 //    TBasicApp::GetLog() << 1./r[0][0] << ',' << 1./r[1][1] << ',' << 1./r[2][2] << '\n';
 //  }
-//  
+//
 //  olxstr fn( FXApp->XFile().GetFileName() );
 //  for( size_t i=0; i < 250; i++ )  {
 //    Macros.ProcessMacro(olxstr("@reap '") << fn << '\'', Error);
@@ -4685,7 +4690,7 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 //  tv = tree3.Find(0, 0, 0);
 //  tv = tree3.Find(0, 1, 0);
 //  tree3.Traverser.FullTraverse(tree3, tt);
-//#endif  
+//#endif
 //  if( Cmds.IsEmpty() )  return;
 //  const olxcstr atom_s("ATOM");
 //  TCStrList lst, toks;
@@ -5004,7 +5009,7 @@ void main_GenerateCrd(const vec3d_list& p, const smatd_list& sm, vec3d_list& res
       while( v[j] < -0.01 ) {  v[j] += 1;  t[j] += 1;  }
     }
     bool found = false;
-    for( size_t j=0; j < res.Count(); j += p.Count() )  { 
+    for( size_t j=0; j < res.Count(); j += p.Count() )  {
       if( v.QDistanceTo( res[j] ) < 0.0001 )  {
         found = true;
         break;
@@ -5034,7 +5039,7 @@ void main_GenerateCrd(const vec3d_list& p, const smatd_list& sm, vec3d_list& res
             else if( v[j] < -0.01 )  {  v[j] += 1;  t[j] += 1;  }
           }
           bool found = false;
-          for( size_t j=0; j < res.Count(); j+=p.Count() )  {  
+          for( size_t j=0; j < res.Count(); j+=p.Count() )  {
             if( v.QDistanceTo( res[j] ) < 0.0001 )  {
               found = true;
               break;
@@ -5139,7 +5144,7 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
         delete uo;
         throw TFunctionFailedException(__OlxSourceInfo, e);
       }
-      //for( size_t i=3; i < Cmds.Count(); i+=3 ) 
+      //for( size_t i=3; i < Cmds.Count(); i+=3 )
       //  p.AddNew(Cmds[i].ToDouble(), Cmds[i+1].ToDouble(), Cmds[i+2].ToDouble());
       //main_GenerateCrd(p, ml, allPoints);
       //TArrayList<vec3f>& data = *(new TArrayList<vec3f>(allPoints.Count()));
@@ -5367,7 +5372,7 @@ void TMainForm::macSetFont(TStrObjList &Cmds, const TParamList &Options, TMacroE
     if( !ps.IsEmpty() )  {
       if( ps.CharAt(0) == '+' || ps.CharAt(0) == '-' )
         mf.SetSize(mf.GetSize() + ps.ToInt());
-      else 
+      else
         mf.SetSize(ps.ToInt());
     }
     if( Options.Contains('i') )
@@ -5387,7 +5392,7 @@ void TMainForm::funChooseFont(const TStrObjList &Params, TMacroError &E)  {
   olxstr fntId;
   if( !Params.IsEmpty() )  {
     if( Params[0].Equalsi("olex2") )  {
-      if( Params.Count() == 2 && TwxGlScene::MetaFont::IsOlexFont(Params[1]) ) 
+      if( Params.Count() == 2 && TwxGlScene::MetaFont::IsOlexFont(Params[1]) )
         fntId = Params[1];
       else
         fntId = TwxGlScene::MetaFont::BuildOlexFontId("olex2.fnt", 12, true, false, false);
@@ -5687,7 +5692,7 @@ struct PointAnalyser : public TDSphere::PointAnalyser {
       cl = 0x00ffffff;
     else if( cnt > 1 )
       cl /= cnt;
-    if( OLX_GetAValue(cl) != 0 ) 
+    if( OLX_GetAValue(cl) != 0 )
       return cl;
     return cl|(127<<24);
   }
@@ -5720,7 +5725,7 @@ void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroE
           break;
         pa.colors[i+cr] = colors[i];
       }
-    }  
+    }
   }
   size_t g = Options.FindValue('g', 6).ToSizeT();
   if (g > 10)
@@ -5817,7 +5822,7 @@ void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options,
   if (iv->ref_cnt() == 0)
     delete iv;
   iv = _exp.build("a=a[4][1][1].toUpper()");
-  
+
   iv = _exp.build("cos pi*30/180");
   if( !iv->is_final() )  {
     IEvaluable* iv1 = iv->_evaluate();
@@ -5868,11 +5873,11 @@ class TestDistanceAnalysisIteration {
   smatd_list ml;
 public:
   sorted::PrimitiveAssociation<int, int>
-    XYZ, XY, XZ, YZ, XX, YY, ZZ;  // length, occurence 
+    XYZ, XY, XZ, YZ, XX, YY, ZZ;  // length, occurence
 
-  TestDistanceAnalysisIteration( const TStrList& f_list) : 
-      files(f_list), au(cif.GetAsymmUnit())  
-  {  
+  TestDistanceAnalysisIteration( const TStrList& f_list) :
+      files(f_list), au(cif.GetAsymmUnit())
+  {
     //TBasicApp::GetInstance().SetMaxThreadCount(1);  // reset for xfile
   }
   ~TestDistanceAnalysisIteration()  {   }
@@ -6338,13 +6343,13 @@ void TMainForm::macPictS(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   double res = 1,
     half_ang = Options.FindValue('a', "6").ToDouble()/2,
     sep_width = Options.FindValue('s', "10").ToDouble();
-  if( Cmds.Count() == 2 && Cmds[1].IsNumber() )  
+  if( Cmds.Count() == 2 && Cmds[1].IsNumber() )
     res = Cmds[1].ToDouble();
   if( res >= 100 )  // width provided
     res /= orgWidth;
   if( res > 10 )
     res = 10;
-  if( res <= 0 )  
+  if( res <= 0 )
     res = 1;
   if( res > 1 && res < 100 )
     res = olx_round(res);
@@ -6361,7 +6366,7 @@ void TMainForm::macPictS(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     SrcHeight = BmpHeight;
   if( BmpWidth < SrcWidth )
     SrcWidth = BmpWidth;
-  FXApp->GetRender().Resize(0, 0, SrcWidth, SrcHeight, res); 
+  FXApp->GetRender().Resize(0, 0, SrcWidth, SrcHeight, res);
 
   const int bmpSize = BmpHeight*ImgWidth*3;
   char* bmpData = (char*)malloc(bmpSize);
@@ -6418,14 +6423,14 @@ void TMainForm::macPictS(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   FXApp->GetRender().GetBasis().RotateY(RY);
   if( res != 1 ) {
     FXApp->GetRender().GetScene().RestoreFontScale();
-    if( res >= 3 ) 
+    if( res >= 3 )
       FXApp->Quality(qaMedium);
   }
 
   FXApp->GetRender().OnDraw.SetEnabled(true);
   FGlConsole->SetVisible(true);
   // end drawing etc
-  FXApp->GetRender().Resize(orgWidth, orgHeight); 
+  FXApp->GetRender().Resize(orgWidth, orgHeight);
   FXApp->GetRender().LookAt(0,0,1);
   FXApp->GetRender().SetView(false, 1);
   FXApp->Draw();
@@ -6435,7 +6440,7 @@ void TMainForm::macPictS(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   else
     bmpFN = Cmds[0];
   wxImage image;
-  image.SetData((unsigned char*)bmpData, ImgWidth, BmpHeight); 
+  image.SetData((unsigned char*)bmpData, ImgWidth, BmpHeight);
   // correct a common typo
   if( TEFile::ExtractFileExt(bmpFN).Equalsi("jpeg") )
     bmpFN = TEFile::ChangeFileExt(bmpFN, "jpg");

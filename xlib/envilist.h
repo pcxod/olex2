@@ -79,5 +79,3 @@ typedef TTypeList<TAtomEnvi> TAtomEnviList;
 
 EndXlibNamespace()
 #endif
-
-

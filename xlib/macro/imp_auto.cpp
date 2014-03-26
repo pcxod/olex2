@@ -22,7 +22,7 @@ struct _auto_BI {
   int type;
   uint32_t min_bonds, max_bonds;
 };
-static _auto_BI _autoMaxBond[] = { 
+static _auto_BI _autoMaxBond[] = {
   {iOxygenZ, 1, 2},
   {iFluorineZ, 0, 1},
   {iChlorineZ, 0, 1},
@@ -60,7 +60,7 @@ void XLibMacros::funATA(const TStrObjList &Cmds, TMacroError &Error)  {
     elm_l = olx_analysis::helper::get_user_elements();
   TAutoDB::AnalysisStat stat;
   uint64_t st = TETime::msNow();
-  TAutoDB::GetInstance().AnalyseStructure(xapp.XFile().GetFileName(), latt, 
+  TAutoDB::GetInstance().AnalyseStructure(xapp.XFile().GetFileName(), latt,
     NULL, stat, elm_l.IsEmpty() ? NULL : &elm_l);
   st = TETime::msNow() - st;
   TBasicApp::NewLogEntry(logInfo) << "Elapsed time " << st << " ms";
@@ -73,7 +73,7 @@ void XLibMacros::funATA(const TStrObjList &Cmds, TMacroError &Error)  {
   if ((double)stat.ConfidentAtomTypes/ac < 0.2) {
     olex2::IOlex2Processor::GetInstance()->processMacro("clean -d");
   }
-  Error.SetRetVal(olxstr(stat.AtomTypeChanges!=0) << ';' << 
+  Error.SetRetVal(olxstr(stat.AtomTypeChanges!=0) << ';' <<
     (double)stat.ConfidentAtomTypes*100/ac);
 }
 //..............................................................................
@@ -84,7 +84,7 @@ void XLibMacros::macAtomInfo(TStrObjList &Cmds, const TParamList &Options,
   TSAtomPList satoms;
   xapp.FindSAtoms(Cmds.Text(' '), satoms);
   TStrList report;
-  for( size_t i=0; i < satoms.Count(); i++ ) 
+  for( size_t i=0; i < satoms.Count(); i++ )
     TAutoDB::GetInstance().AnalyseNode(*satoms[i], report);
   xapp.NewLogEntry() << report;
 }
@@ -112,7 +112,7 @@ void helper_CleanBaiList(TStringToList<olxstr, const cm_Element*>& list,
   TXApp& xapp = TXApp::GetInstance();
   if( xapp.CheckFileType<TIns>() )  {
     TIns& ins = xapp.XFile().GetLastLoader<TIns>();
-    list.Clear();   
+    list.Clear();
     const ContentList& cl = ins.GetRM().GetUserContent();
     for( size_t i=0; i < cl.Count(); i++ )  {
       au_bais.Add(&cl[i].element);
@@ -569,7 +569,7 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
     }
     // get rid of the rest of Q-peaks and "validate" geometry of atoms
     for( size_t i=0; i < au.AtomCount(); i++ )  {
-      if( au.GetAtom(i).GetType() == iQPeakZ ) 
+      if( au.GetAtom(i).GetType() == iQPeakZ )
         au.GetAtom(i).SetDeleted(true);
     }
     xapp.XFile().EndUpdate();
@@ -581,7 +581,7 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
       TSAtom& sa = objects.atoms[i];
       for( size_t j=0; j < maxb_cnt; j++ )  {
         if( sa.GetType() == _autoMaxBond[j].type )  {
-          uc.GetAtomEnviList(sa, bc_to_check.AddNew()); 
+          uc.GetAtomEnviList(sa, bc_to_check.AddNew());
           if( bc_to_check.GetLast().Count() <= _autoMaxBond[j].max_bonds &&
               bc_to_check.GetLast().Count() >= _autoMaxBond[j].min_bonds)
           {
@@ -681,7 +681,7 @@ double TryPoint(TArray3D<float>& map, const TUnitCell& uc, const vec3i& p,
   //size_t count=0;
   //for( size_t i=0; i < Peaks.Count(); i++ )  {
   //  const MapUtil::peak& peak = Peaks[i];
-  //  const vec3d cnt = norm*peak.center; 
+  //  const vec3d cnt = norm*peak.center;
   //  const double ed = peak.summ/peak.count;
   //  if( uc.FindClosestDistance(crd, cnt) < 1.0 )  {
   //    sum += ed;
@@ -768,7 +768,7 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
           atoms[i].GetA()->GetLabel() << '\'';
         continue;
       }
-      double p_ed = 0, n_ed  = 0; 
+      double p_ed = 0, n_ed  = 0;
       const cm_Element& original_type = atoms[i].GetA()->GetType();
       const size_t ti = atom_masks.IndexOf(original_type.index);
       TArray3D<bool> &mask = *atom_masks.GetValue(ti);
@@ -794,13 +794,13 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
       if( n_e != NULL && p_e != NULL )  {
         if( (n_ed == 0 || olx_sign(n_ed) == olx_sign(p_ed))&& p_ed > 0 )  {
           found_cnt++;
-          TBasicApp::NewLogEntry() << "Atom type changed from " << original_type.symbol << 
+          TBasicApp::NewLogEntry() << "Atom type changed from " << original_type.symbol <<
             " to " << n_e->symbol << " for " << atoms[i].GetA()->GetLabel();
           atoms[i].GetA()->SetType(*n_e);
         }
         else if( n_ed < 0 && (p_ed == 0 || olx_sign(p_ed) == olx_sign(n_ed)) )  {
           found_cnt++;
-          TBasicApp::NewLogEntry() << "Atom type changed from " << original_type.symbol << 
+          TBasicApp::NewLogEntry() << "Atom type changed from " << original_type.symbol <<
             " to " << p_e->symbol << " for " << atoms[i].GetA()->GetLabel();
           atoms[i].GetA()->SetType(*p_e);
         }
@@ -810,12 +810,12 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
             if( olx_abs(r) > 0.5 )  {
               found_cnt++;
               if( r > 0 )  {
-                TBasicApp::NewLogEntry() << "Atom type changed from " << original_type.symbol << 
+                TBasicApp::NewLogEntry() << "Atom type changed from " << original_type.symbol <<
                   " to " << n_e->symbol << " for " << atoms[i].GetA()->GetLabel();
                 atoms[i].GetA()->SetType(*n_e);
               }
               else  {
-                TBasicApp::NewLogEntry() << (olxstr("Atom type changed from ") << original_type.symbol << 
+                TBasicApp::NewLogEntry() << (olxstr("Atom type changed from ") << original_type.symbol <<
                   " to " << p_e->symbol << " for " << atoms[i].GetA()->GetLabel() << '\n');
                 atoms[i].GetA()->SetType(*p_e);
               }
@@ -824,12 +824,12 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
           else  { // same sign?
             found_cnt++;
             if( n_ed > 0 )  {
-              TBasicApp::NewLogEntry() << "Atom type changed from " << original_type.symbol << 
+              TBasicApp::NewLogEntry() << "Atom type changed from " << original_type.symbol <<
                 " to " << n_e->symbol << " for " << atoms[i].GetA()->GetLabel();
               atoms[i].GetA()->SetType(*n_e);
             }
             else  {
-              TBasicApp::NewLogEntry() << "Atom type changed from " << original_type.symbol << 
+              TBasicApp::NewLogEntry() << "Atom type changed from " << original_type.symbol <<
                 " to " << p_e->symbol << " for " << atoms[i].GetA()->GetLabel();
               atoms[i].GetA()->SetType(*p_e);
             }

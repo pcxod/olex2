@@ -54,7 +54,7 @@ inline int_t olx_round_t(const float_t a)  {
   int_t b = (int_t)a;  // |b| is always smaller than a
   return ((a < 0) ? (((b-a) >= .5) ? --b : b) : (((a-b) >= .5) ? ++b : b));
 }
-// rounds a floating point: returns (float_t)(round(a*num))/num 
+// rounds a floating point: returns (float_t)(round(a*num))/num
 template <typename float_t>
 inline float_t olx_round(const float_t a, long num)  {
   return (float_t)olx_round(a*num)/num;
@@ -118,7 +118,7 @@ double olx_tetrahedron_volume(const VC& A, const VC& B,
   if( a.QLength()*b.QLength() < 1e-15 )
     throw TDivException(__OlxSourceInfo);
   double caS = a.CAngle(b);
-  if( olx_abs(caS) > (1.0-1e-15) )  
+  if( olx_abs(caS) > (1.0-1e-15) )
     return 0;
   const double sa = sqrt(1 - caS*caS);
   caS = a.Length() * b.Length() * sa / 2;
@@ -141,13 +141,13 @@ template <class VC>
 double olx_dihedral_angle(const VC& v1, const VC& v2,
   const VC& v3, const VC& v4)
 {
-  const VC a((v1-v2).XProdVec(v3-v2)), 
-    b((v2-v3).XProdVec(v4-v3)); 
+  const VC a((v1-v2).XProdVec(v3-v2)),
+    b((v2-v3).XProdVec(v4-v3));
   if( a.QLength()*b.QLength() < 1e-15 )
     throw TDivException(__OlxSourceInfo);
   return acos(a.CAngle(b))*180/M_PI;
 }
-/* dihedral angle in degrees (-180..180] 
+/* dihedral angle in degrees (-180..180]
 http://en.wikipedia.org/wiki/Dihedral_angle
 */
 template <class VC>
@@ -262,8 +262,8 @@ template <class MC, class VC> MC& QuaternionToMatrix(const VC& qt, MC& matr)  {
   matr[2][2] = qt[0]*qt[0] + qt[3]*qt[3] - qt[1]*qt[1] - qt[2]*qt[2];
   return matr;
 }
-/* 
-generates a new permutation from the original list 
+/*
+generates a new permutation from the original list
 http://en.wikipedia.org/wiki/Permutation
 */
 template <class List> void GeneratePermutation(List& out, size_t perm)  {
@@ -376,7 +376,7 @@ namespace olx_vec  {
     }
     return v1;
   }
-  template <typename VecT> 
+  template <typename VecT>
   static typename VecT::number_type QLength(const VecT &v) {
     size_t cnt=v.Count(),
       c1=(cnt>>2)<<2, i=0;
@@ -429,7 +429,7 @@ namespace olx_mat  {
     size_t nc = n.ColCount(),
       mr = m.RowCount(),
       mc = m.ColCount();
-    if (nc >= 8) { 
+    if (nc >= 8) {
       size_t c1 = (mc>>2)<<2;
       for (size_t i=0; i < mr; i++) {
         for (size_t j = 0; j < nc; j++) {

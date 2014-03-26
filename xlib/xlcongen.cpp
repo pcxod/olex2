@@ -136,7 +136,7 @@ bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group,
           sr->SetValue(dis);
           sr->AddAtomPair(envi.GetBase().CAtom(), NULL, *CreatedAtoms[0], NULL);
           const double _d1 = (d1 < 1.8 ? d1 : d2);
-          // if this is not applied, the refinement may never converge 
+          // if this is not applied, the refinement may never converge
           sr = &RefMod.rDANG.AddNew();
           sr->SetEsd(0.02);
           sr->SetValue(sqrt(_d1*_d1+dis*dis-2*dis*_d1*cos(109.4*M_PI/180)));
@@ -195,7 +195,7 @@ bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group,
       else
         CreatedAtoms[i]->SetUisoScale(1.2);
       CreatedAtoms[i]->SetUiso(4*caDefIso*caDefIso);
-      RefMod.Vars.SetParam(*CreatedAtoms[i], catom_var_name_Sof, 
+      RefMod.Vars.SetParam(*CreatedAtoms[i], catom_var_name_Sof,
         RefMod.Vars.GetParam(envi.GetBase().CAtom(), catom_var_name_Sof));
       CreatedAtoms[i]->SetOccu(CreatedAtoms[i]->GetOccu()*occu_mult);
       if( generated != NULL )

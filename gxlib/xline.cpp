@@ -12,7 +12,7 @@
 #include "xatom.h"
 #include "pers_util.h"
 
-TXLine::TXLine(TGlRenderer& r, const olxstr& collectionName, const vec3d& base, const vec3d& edge): 
+TXLine::TXLine(TGlRenderer& r, const olxstr& collectionName, const vec3d& base, const vec3d& edge):
   TXBond(NULL, r, collectionName),
   FBase(base), FEdge(edge)
 {
@@ -54,7 +54,7 @@ bool TXLine::Orient(TGlPrimitive& GlP)  {
     olx_gl::scale(Params()[4], Params()[4], Params()[3]);
   }
   return false;
-} 
+}
 //..............................................................................
 void TXLine::ToDataItem(TDataItem &di) const {
   di.SetValue(GetCollectionName());

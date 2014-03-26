@@ -489,10 +489,10 @@ public:
   {
     TStopWatch sw(__FUNC__);
     SymmSpace::InfoEx info_ex = SymmSpace::Compact(ml);
-    if (mergeFP)  info_ex.centrosymmetric = true; 
+    if (mergeFP)  info_ex.centrosymmetric = true;
     return MergeExS<RefListMerger>(info_ex, Refs, output, omits, cmp);
   }
-  
+
   template <class RefListMerger, class RefList>
   static MergeStats Merge(const SymmSpace::InfoEx& si, RefList& Refs,
     TRefList& output, const vec3i_list& omits)
@@ -633,7 +633,7 @@ public:
       double _sumDiff=0)
       : ref(_ref),
         sigInt(_sigInt),
-        sumI(_sumI),  
+        sumI(_sumI),
         sumDiff(_sumDiff) {}
     MergerOut& operator = (const MergerOut& mo)  {
       ref = mo.ref;
@@ -711,13 +711,13 @@ Imean = sum( I/Sig^2 )/sum( 1./Sig^2 )
         sum_diff += (diff < 0 ? -diff : diff);
         summ_i += rl[i]->GetI();
         const double w = 1./(rl[i]->GetS() != 0 ? rl[i]->GetS() : 0.001);
-        sig_top += w*diff*diff; 
+        sig_top += w*diff*diff;
       }
-      return MergerOut( 
+      return MergerOut(
         new TReflection( rl[from]->GetH(), rl[from]->GetK(), rl[from]->GetL(),
-        mean, 1./sqrt(sum_wght)), 
-        sqrt(sig_top/(sum_wght*(cnt-1))), 
-        sum_i, 
+        mean, 1./sqrt(sum_wght)),
+        sqrt(sig_top/(sum_wght*(cnt-1))),
+        sum_i,
         sum_diff
         );
     }
@@ -741,13 +741,13 @@ Imean = sum( I/Sig^2 )/sum( 1./Sig^2 )
         sum_diff += (diff < 0 ? -diff : diff);
         summ_i += rl[i]->GetI();
         const double w = 1./(rl[i]->GetS() != 0 ? rl[i]->GetS() : 0.001);
-        sig_top += w*diff*diff; 
+        sig_top += w*diff*diff;
       }
-      return DryMergerOut( 
-        mean, 
-        1./sqrt(sum_wght), 
-        sqrt(sig_top/(sum_wght*(cnt-1))), 
-        sum_i, 
+      return DryMergerOut(
+        mean,
+        1./sqrt(sum_wght),
+        sqrt(sig_top/(sum_wght*(cnt-1))),
+        sum_i,
         sum_diff
         );
     }
@@ -772,11 +772,11 @@ Imean = sum( I/Sig^2 )/sum( 1./Sig^2 )
         sum_diff += (diff < 0 ? -diff : diff);
         sum_diff_sq += diff*diff;
       }
-      return MergerOut( 
+      return MergerOut(
         new TReflection( rl[from]->GetH(), rl[from]->GetK(), rl[from]->GetL(),
-        mean, sqrt(sum_sig_sq/cnt)), 
-        sqrt(sum_diff_sq/(cnt*(cnt-1))), 
-        sum_i, 
+        mean, sqrt(sum_sig_sq/cnt)),
+        sqrt(sum_diff_sq/(cnt*(cnt-1))),
+        sum_i,
         sum_diff
         );
     }
@@ -798,16 +798,16 @@ Imean = sum( I/Sig^2 )/sum( 1./Sig^2 )
         sum_diff += (diff < 0 ? -diff : diff);
         sum_diff_sq += diff*diff;
       }
-      return DryMergerOut( 
-        mean, 
-        sqrt(sum_sig_sq/cnt), 
-        sqrt(sum_diff_sq/(cnt*(cnt-1))), 
-        sum_i, 
+      return DryMergerOut(
+        mean,
+        sqrt(sum_sig_sq/cnt),
+        sqrt(sum_diff_sq/(cnt*(cnt-1))),
+        sum_i,
         sum_diff
         );
     }
   };
-/* merges using George's approach 
+/* merges using George's approach
    http://www.crystal.chem.uu.nl/distr/mergehklf5/mergehklf5.html
 */
   class ShelxMerger  {
@@ -835,11 +835,11 @@ Imean = sum( I/Sig^2 )/sum( 1./Sig^2 )
         sum_diff += (diff < 0 ? -diff : diff);
         sum_i += rl[i]->GetI();
       }
-      return MergerOut( 
+      return MergerOut(
         new TReflection( rl[from]->GetH(), rl[from]->GetK(), rl[from]->GetL(),
-        mean, 1./sqrt(sum_rec_sig_sq)), 
-        sum_diff/(cnt*sqrt((double)cnt-1.0)), 
-        sum_i, 
+        mean, 1./sqrt(sum_rec_sig_sq)),
+        sum_diff/(cnt*sqrt((double)cnt-1.0)),
+        sum_i,
         sum_diff
         );
     }
@@ -866,11 +866,11 @@ Imean = sum( I/Sig^2 )/sum( 1./Sig^2 )
         sum_diff += (diff < 0 ? -diff : diff);
         sum_i += rl[i]->GetI();
       }
-      return DryMergerOut(  
-        mean, 
-        1./sqrt(sum_rec_sig_sq), 
-        sum_diff/(cnt*sqrt((double)cnt-1.0)), 
-        sum_i, 
+      return DryMergerOut(
+        mean,
+        1./sqrt(sum_rec_sig_sq),
+        sum_diff/(cnt*sqrt((double)cnt-1.0)),
+        sum_i,
         sum_diff
         );
     }

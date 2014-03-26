@@ -12,10 +12,10 @@
 #include "lattice.h"
 #include "edict.h"
 
-const short 
+const short
   atom_sort_None      = 0x0000,
   atom_sort_Mw        = 0x0001,
-  atom_sort_Label     = 0x0002,  // clever sort C1a1  
+  atom_sort_Label     = 0x0002,  // clever sort C1a1
   atom_sort_Label1    = 0x0004, // string comparison sort
   atom_sort_MoietySize = 0x0008,  // fgrament size
   atom_sort_KeepH     = 0x0010,  // keeps H atoms after the pivoting one
@@ -416,4 +416,3 @@ public:
 
 
 #endif
-

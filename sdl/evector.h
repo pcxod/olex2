@@ -155,7 +155,7 @@ public:
     return operator [] (offset);
   }
   FT& operator ()(size_t offset)  {  return operator [] (offset);  }
-  
+
   const FT* GetRawData() const {  return FData;  }
 
   FT& GetLast() const {
@@ -166,7 +166,7 @@ public:
   }
 
   template <typename vec_t>
-  static vec_t& Null(vec_t& v, size_t sz)  {  
+  static vec_t& Null(vec_t& v, size_t sz)  {
     for( size_t i=0; i < sz; i++ )  v[i] = 0;
     return v;
   }
@@ -272,7 +272,7 @@ public:
 
   TVector& operator /= (FT v)  {
     if( v == 0 )  throw TDivException(__OlxSourceInfo);
-    for( size_t i=0; i < Fn; i++ )    
+    for( size_t i=0; i < Fn; i++ )
       FData[i] /= v;
     return *this;
   }
@@ -344,7 +344,7 @@ public:
   template <typename AType> bool operator == (const TVector<AType>& a) const {
     if( Fn != a.Count() )  return false;
     for( size_t i=0; i < Fn; i++ )
-      if( FData[i] != a[i] )  
+      if( FData[i] != a[i] )
         return false;
     return true;
   }
@@ -391,7 +391,7 @@ public:
         delete [] FData;
         FData = NULL;
       }
-      Fn = 0;  
+      Fn = 0;
     }
     else  {
       if( FData != NULL )  {

@@ -179,7 +179,7 @@ public:
   static bool Exists(const olxstr& F);
   // just a wrapper for chmod...
   static bool Chmod(const olxstr& f, const short Flags);
-  /* a case insensitive alternative (for windows - same as above) 
+  /* a case insensitive alternative (for windows - same as above)
     the case sensitive name is stored in res (the first one if there
     are several file names matching
   */
@@ -298,7 +298,7 @@ public:
 
   static olxstr QuotePath(const olxstr &p);
   static olxstr UnquotePath(const olxstr &p);
-  
+
   static const olxstr& AllFilesMask() {
     static olxstr m = "*.";
     return m;

@@ -515,7 +515,7 @@ void AtomRefList::ToDataItem(TDataItem &di) const {
     if (refs[i].IsValid())
       refs[i].ToDataItem(di.AddItem("item"));
   }
-  
+
 }
 //.............................................................................
 void AtomRefList::FromDataItem(const TDataItem &di) {

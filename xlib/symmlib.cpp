@@ -908,7 +908,7 @@ bool TSpaceGroup::Compare(const smatd_list& matrices, double& st) const {
           }
         }
         st += translation.QLength();
-        break;  
+        break;
       }
     }
     if( !found )  return false;
@@ -1152,7 +1152,7 @@ TSymmLib::TSymmLib(const olxstr& FN) : extra_added(0)  {
   SymmetryElements.AddNew<olxstr, TSpaceGroup*>("64", FindGroupByName("P64") );
   //-Y+X,+X,0.833+Z;-Y,+X-Y,0.667+Z;-X,-Y,0.5+Z;+Y-X,-X,0.333+Z;+Y,-X+Y,0.167+Z
   SymmetryElements.AddNew<olxstr, TSpaceGroup*>("65", FindGroupByName("P65") );
-  
+
   // -X,0.5+Y,0.5+Z
   TSymmElement* se_n11 = &SymmetryElements.AddNew<olxstr, TSpaceGroup*>(
     "n--", FindGroupByName("Pn11") );
@@ -1162,7 +1162,7 @@ TSymmLib::TSymmLib(const olxstr& FN) : extra_added(0)  {
   //0.5+X,0.5+Y,-Z
   TSymmElement* se_11n = &SymmetryElements.AddNew<olxstr, TSpaceGroup*>(
     "--n", FindGroupByName("P11n") );
-  
+
   // 0.5+X,-Y,+Z
   SymmetryElements.AddNew<olxstr, TSpaceGroup*>(
     "-a-", FindGroupByName("Pa") ).SuperElement = se_n;

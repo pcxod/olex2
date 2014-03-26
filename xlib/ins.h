@@ -69,14 +69,14 @@ protected:
   static void _SaveFVar(RefinementModel& rm, TStrList& SL);
   void _SaveSymm(TStrList& SL);
   void _SaveSizeTemp(TStrList& SL);
-  // if solution specified, only OMIT's and HKLSrc are saved 
+  // if solution specified, only OMIT's and HKLSrc are saved
   void _SaveHklInfo(TStrList& SL, bool solution);
   void _SaveRefMethod(TStrList& SL);
   static void _ProcessAfix(TCAtom& a, ParseContext& cx);
   // validates existing AFIX'es and clears the stack
   static void _ProcessAfix0(ParseContext& cx);
-  // if atoms is saved, its Tag is added to the index (if not NULL) 
-  static void _SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix, 
+  // if atoms is saved, its Tag is added to the index (if not NULL)
+  static void _SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
     TStringToList<olxstr, const cm_Element*>* sfac, TStrList& sl,
     TIndexList* index=NULL, bool checkSame=true, bool checkResi=true);
   static void _ProcessSame(ParseContext& cx);
@@ -93,7 +93,7 @@ public:
   void Clear();
 
   DefPropBIsSet(LoadQPeaks)
-  
+
   // this is -1 if not in the file like REM R1 = ...
   inline double GetR1() const {  return R1;  }
   TLst& GetLst()  {  return Lst;  }
@@ -115,12 +115,12 @@ public:
   atom Ids this must be passed to UpdateAtomsFromString
   */
   static bool SaveAtomsToStrings(RefinementModel& rm, const TCAtomPList& CAtoms,
-    TIndexList& index, TStrList& SL, 
+    TIndexList& index, TStrList& SL,
     RefinementModel::ReleasedItems* processed);
   static void ValidateRestraintsAtomNames(RefinementModel& rm,
     bool report=true);
   static bool ParseRestraint(RefinementModel& rm, const TStrList& toks);
-  static void SaveRestraints(TStrList& SL, const TCAtomPList* atoms, 
+  static void SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
     RefinementModel::ReleasedItems* processed, RefinementModel& rm,
     bool write_internals);
   template <class StrLst> static
@@ -298,7 +298,7 @@ public:
         i += lst.Count();
       }
     }
-    return l;   
+    return l;
   }
   // spits out all instructions, including CELL, FVAR, etc
   void SaveHeader(TStrList& out, bool ValidateRestraintNames,

@@ -97,11 +97,11 @@ public:
     const vec3d &n, const vec3d &p);
   vec3d GetCrystallographicDirection() const;
 // static members
-  /* calculates all three planes - best, worst and the complimentary, 
+  /* calculates all three planes - best, worst and the complimentary,
   the normals are sorted by rms ascending, so the best plane is at [0] and the
   worst - at [2] Returns true if the function succeded (point cound > 2)
   */
-  template <class List> static bool CalcPlanes(const List& Points, 
+  template <class List> static bool CalcPlanes(const List& Points,
     mat3d& params, vec3d& rms, vec3d& center, bool sort=true);
   // a convinience function for non-weighted plane
   static bool CalcPlanes(const TSAtomPList& atoms, mat3d& params, vec3d& rms,
@@ -111,10 +111,10 @@ public:
    for the point, weight association
    returns sqrt(smallest eigen value/point.Count())
   */
-  template <class List> static double CalcPlane(const List& Points, 
+  template <class List> static double CalcPlane(const List& Points,
     vec3d& Params, vec3d& center, const short plane_type = plane_best);
   // a convinience function for non-weighted planes
-  static double CalcPlane(const TSAtomPList& Points, 
+  static double CalcPlane(const TSAtomPList& Points,
     vec3d& Params, vec3d& center, const short plane_type = plane_best);
   // returns sqrt(smallest eigen value/point.Count())
   static double CalcRMSD(const TSAtomPList& atoms);
@@ -129,8 +129,8 @@ public:
       DefData(const TSAtom::Ref& r, double w) : ref(r), weight(w)  {}
       DefData(const DefData& r) : ref(r.ref), weight(r.weight)  {}
       DefData(const TDataItem& item) : ref(~0,~0) {  FromDataItem(item);  }
-      DefData& operator = (const DefData& r)  {  
-        ref = r.ref;  
+      DefData& operator = (const DefData& r)  {
+        ref = r.ref;
         weight = r.weight;
         return *this;
       }
@@ -175,7 +175,7 @@ public:
   size_t GetDefId() const {  return DefId; }
   // not for external use
   void _SetDefId(size_t id)  {  DefId = id; }
-  
+
   void ToDataItem(TDataItem& item) const;
   void FromDataItem(const TDataItem& item);
 };
@@ -187,7 +187,7 @@ public:
 unit/equal weights, otherwise it will become smaller than directly calculated
 one since the priority will be given to some points and
 RMSD'=(sum(w^2*distances^2)/sum(w^2))^0.5, where distance will be smaller for
-higher weights... there are functions to calculate both values 
+higher weights... there are functions to calculate both values
 */
 template <class List>  // olx_pair_t<vec3d, double> list, returning & on []
 bool TSPlane::CalcPlanes(const List& Points, mat3d& Params, vec3d& rms,
@@ -213,7 +213,7 @@ bool TSPlane::CalcPlanes(const List& Points, mat3d& Params, vec3d& rms,
     m[1][1] += (t[1]*t[1]);
     m[1][2] += (t[1]*t[2]);
     m[2][2] += (t[2]*t[2]);
-  } 
+  }
   m[1][0] = m[0][1];
   m[2][0] = m[0][2];
   m[2][1] = m[1][2];
@@ -261,4 +261,3 @@ double TSPlane::CalcPlane(const List& Points, vec3d& Params, vec3d& center,
 
 EndXlibNamespace()
 #endif
-

@@ -54,7 +54,7 @@ namespace ctrl_ext  {
   };
 
   const size_t UnknownSwitchState = (size_t)(-2);
-  static olxstr 
+  static olxstr
     evt_change_id("ONCHANGE"),
     evt_on_mouse_leave_id("ONLEAVE"),
     evt_on_mouse_enter_id("ONENTER"),

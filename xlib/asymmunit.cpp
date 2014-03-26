@@ -48,7 +48,7 @@ TAsymmUnit::TAsymmUnit(TLattice *L) : MainResidue(*(new TResidue(*this, 0))),
 }
 //..............................................................................
 TAsymmUnit::~TAsymmUnit()  {
-  Clear();  
+  Clear();
   delete &MainResidue;
 }
 //..............................................................................
@@ -85,7 +85,7 @@ void TAsymmUnit::Assign(const TAsymmUnit& C)  {
 
   for( size_t i = 0; i < C.MatrixCount(); i++ )
     Matrices.AddNew(C.GetMatrix(i));
-  
+
   for( size_t i = 0; i < C.EllpCount(); i++ )
     this->NewEllp() = C.GetEllp(i);
 
@@ -96,7 +96,7 @@ void TAsymmUnit::Assign(const TAsymmUnit& C)  {
   }
   for( size_t i = 0; i < C.AtomCount(); i++ )
     NewAtom(&GetResidue(C.GetAtom(i).GetResiId())).SetId(i);
-  
+
   for( size_t i = 0; i < C.AtomCount(); i++ )  {
     TCAtom& ca = GetAtom(i);
     ca.Assign(C.GetAtom(i));
@@ -371,7 +371,7 @@ void TAsymmUnit::AssignResidues(const TAsymmUnit& au) {
 }
 //..............................................................................
 void TAsymmUnit::_OnAtomTypeChanged(TCAtom& caller)  {
-  if( !Assigning )  
+  if( !Assigning )
     caller.SetConnInfo( RefMod->Conn.GetConnInfo(caller) );
 }
 //..............................................................................
@@ -880,7 +880,7 @@ PyObject* TAsymmUnit::PyExport(TPtrList<PyObject>& _atoms, bool export_conn)  {
       if( r[j].GetTag() < 0 )  continue;
       atom_cnt++;
     }
-    PyObject* atoms = PyTuple_New(atom_cnt), 
+    PyObject* atoms = PyTuple_New(atom_cnt),
       *ri = PyDict_New();
 
     if( i == 0 )

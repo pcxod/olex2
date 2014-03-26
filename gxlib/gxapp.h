@@ -481,7 +481,7 @@ public:
 
   TGlBitmap* CreateGlBitmap(const olxstr& name, int left, int top,
     int width, int height, unsigned char* RGBa, unsigned int format);
-    
+
   TGlBitmap* FindGlBitmap(const olxstr& name);
   void DeleteGlBitmap(const olxstr& name);
   size_t GlBitmapCount() const {  return GlBitmaps.Count();  }
@@ -549,7 +549,7 @@ public:
   {    FXFile->GetLattice().Generate(center, rad, Template, ClearPrevCont);  }
   void Uniq()  {    FXFile->GetLattice().Uniq();  }
   void GrowFragments(bool Shell, TCAtomPList* Template=NULL)  {
-    FXFile->GetLattice().GrowFragments(Shell, Template);  
+    FXFile->GetLattice().GrowFragments(Shell, Template);
   }
   void GrowAtoms(const olxstr& Atoms, bool Shell, TCAtomPList* Template=NULL);
   void GrowAtom(TXAtom *XA, bool Shell, TCAtomPList* Template=NULL);
@@ -664,7 +664,7 @@ public:
 
   TXPlane *AddPlane(const olxstr &name, const TXAtomPList& Atoms,
     bool Rectangular, double weightExtent=0);
-  TSPlane *TmpPlane(const TXAtomPList* Atoms=NULL, double weightExtent=0); 
+  TSPlane *TmpPlane(const TXAtomPList* Atoms=NULL, double weightExtent=0);
   void DeletePlane(TXPlane* plane);
   void ClearPlanes();
   TXPlane *FindPlane(const olxstr& PlaneName);
@@ -688,7 +688,7 @@ public:
   void SelectBondsWhere(const olxstr& Where, bool Invert=false);
   /* allows selcting rings: Condition describes the rings to select:
     C5N - content and 1-4, substitutions..
-    SelectRing( "C6 1-4") selects all 1,4 substituted benzene rings 
+    SelectRing( "C6 1-4") selects all 1,4 substituted benzene rings
   */
   void SelectRings(const olxstr& Condition, bool Invert=false);
   TTypeList<TSAtomPList>& FindRings(const olxstr& Condition,

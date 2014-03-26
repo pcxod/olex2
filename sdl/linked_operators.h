@@ -31,7 +31,7 @@ public:
   heir_t& operator = (const linked_operators<a_t, aheir_t, h_t> &v)  {
     return SetValue(v.GetValue());
   }
-  
+
   bool operator == (a_t v) const {  return v == GetValue();  }
   bool operator != (a_t v) const {  return v != GetValue();  }
   bool operator > (a_t v) const {  return v > GetValue();  }

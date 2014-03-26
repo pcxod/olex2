@@ -235,7 +235,7 @@ PyObject* runRegisterMacro(PyObject* self, PyObject* args) {
   }
   TLibrary *lib = FindOrCreateLibrary(lib_name);
   if (lib == NULL)
-    return PythonExt::SetErrorMsg(PyExc_RuntimeError, __OlxSourceInfo, 
+    return PythonExt::SetErrorMsg(PyExc_RuntimeError, __OlxSourceInfo,
     "Olex2 binding python library is not initialised...");
   TMacroWrapper* mw = PythonExt::GetInstance()->AddToDelete(
     new TMacroWrapper(fun, profile));

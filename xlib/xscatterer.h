@@ -50,7 +50,7 @@ public:
   }
   // copy constructor
   XScatterer(const XScatterer& sc) :
-    gaussians(sc.gaussians), 
+    gaussians(sc.gaussians),
     mu(sc.mu),
     wt(sc.wt),
     r(sc.r),

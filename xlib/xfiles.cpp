@@ -127,7 +127,7 @@ TXFile::TXFile(ASObjectProvider& Objects) :
   OnFileClose(Actions.New("XFILECLOSE"))
 {
   Lattice.GetAsymmUnit().SetRefMod(&RefMod);
-  Lattice.GetAsymmUnit().OnSGChange.Add(this, XFILE_SG_Change); 
+  Lattice.GetAsymmUnit().OnSGChange.Add(this, XFILE_SG_Change);
   Lattice.OnStructureUniq.Add(this, XFILE_UNIQ);
   FLastLoader = NULL;
   FSG = NULL;
@@ -314,7 +314,7 @@ void TXFile::UpdateAsymmUnit()  {
     LL->GetAsymmUnit().NewEllp() = GetAsymmUnit().GetEllp(i);
   for( size_t i=0; i < GetAsymmUnit().AtomCount(); i++ )  {
     TCAtom& CA = GetAsymmUnit().GetAtom(i);
-    TCAtom& CA1 = LL->GetAsymmUnit().AtomCount() <= i ? 
+    TCAtom& CA1 = LL->GetAsymmUnit().AtomCount() <= i ?
       LL->GetAsymmUnit().NewAtom() : LL->GetAsymmUnit().GetAtom(i);
     CA1.Assign(CA);
   }
@@ -480,11 +480,11 @@ void TXFile::ValidateTabs()  {
         break;
       }
     }
-    if( !hasH )  {  
+    if( !hasH )  {
       TBasicApp::NewLogEntry() << "Removing HTAB (donor has no H atoms): "
         << it.InsStr();
       RefMod.DeleteInfoTab(i--);
-      continue;  
+      continue;
     }
     // validate the distance makes sense
     const TAsymmUnit& au = *ta[0].GetAtom().GetParent();
@@ -497,7 +497,7 @@ void TXFile::ValidateTabs()  {
     const double dis = au.CellToCartesian(v1).DistanceTo(au.CellToCartesian(v2));
     if( dis > 5 )  {
       TBasicApp::NewLogEntry() << "Removing HTAB (d > 5A): " << it.InsStr();
-      RefMod.DeleteInfoTab(i--);  
+      RefMod.DeleteInfoTab(i--);
       continue;
     }
   }
@@ -516,7 +516,7 @@ void TXFile::SaveToFile(const olxstr& FN, bool Sort)  {
     }
     else
       UpdateAsymmUnit();
-    if( Sort )  
+    if( Sort )
       Loader->GetAsymmUnit().Sort();
   }
   OnFileSave.Enter(this);
@@ -859,19 +859,19 @@ TLibrary* TXFile::ExportLibrary(const olxstr& name)  {
       fpOne|psCheckFileTypeCif,
       "Returns data name for given CIF block")
   );
-  
+
   lib->Register(
     new TFunction<TXFile>(this,  &TXFile::LibCurrentData, "CurrentData",
       fpNone|fpOne|psCheckFileTypeCif,
       "Returns current data index or changes current data block within the CIF")
   );
-  
+
   lib->Register(
     new TFunction<TXFile>(this,  &TXFile::LibGetMu, "GetMu",
       fpNone|psFileLoaded,
       "Changes current data block within the CIF")
   );
-  
+
   lib->AttachLibrary(Lattice.GetAsymmUnit().ExportLibrary());
   lib->AttachLibrary(Lattice.GetUnitCell().ExportLibrary());
   lib->AttachLibrary(Lattice.ExportLibrary());
@@ -968,4 +968,3 @@ olxstr TXFile::LocateHklFile()  {
   return EmptyString();
 }
 //..............................................................................
-

@@ -90,7 +90,7 @@ bool TCifDP::ExtractLoop(size_t& start, parse_context& context)  {
     if( Lines[start].CharAt(0) == ';' )  q_cnt++;
     loop_data.Add(Lines[start]);
   }
-  
+
   try  {
     table.DataFromStrings(loop_data);
     context.current_block->Add(table);
@@ -372,7 +372,7 @@ void cetTable::DataFromStrings(TStrList& lines)  {
   if( (cells.Count() % data.ColCount()) != 0 )  {
     for( size_t i=0; i < cells.Count(); i++ )  // clean up the memory
       delete cells[i];
-    throw TFunctionFailedException(__OlxSourceInfo, 
+    throw TFunctionFailedException(__OlxSourceInfo,
       olxstr("wrong number of parameters in '") << GetName() << "' loop");
   }
   const size_t ColCount = data.ColCount();
@@ -445,8 +445,8 @@ cetString::cetString(const olxstr& _val) : value(_val), quoted(false)  {
 }
 void cetString::ToStrings(TStrList& list) const {
   olxstr& line =
-    (list.IsEmpty() || 
-     (list.GetLastString().Length() + value.Length() + 3 > 80) || 
+    (list.IsEmpty() ||
+     (list.GetLastString().Length() + value.Length() + 3 > 80) ||
      list.GetLastString().StartsFrom(';')) ?
     list.Add(' ') : (list.GetLastString() << ' ');
   if( quoted )
@@ -460,7 +460,7 @@ void cetNamedString::ToStrings(TStrList& list) const {
     list.Add(name);
     if( quoted )
       list.Add('\'') << value << '\'';
-    else 
+    else
       list.Add(value.IsEmpty() ? empty_value : value);
   }
   else  {
@@ -468,7 +468,7 @@ void cetNamedString::ToStrings(TStrList& list) const {
     tmp.RightPadding(34, ' ', true);
     if( quoted )
       tmp << '\'' << value << '\'';
-    else  
+    else
       tmp << (value.IsEmpty() ? empty_value : value);
   }
 }
@@ -568,7 +568,7 @@ void CifBlock::ToStrings(TStrList& list) const {
 }
 void CifBlock::Format()  {
   for( size_t i=0; i < params.Count(); i++ )
-    params.GetObject(i)->Format();    
+    params.GetObject(i)->Format();
 }
 //..............................................................................
 void CifBlock::Sort(const TStrList& pivots, const TStrList& endings)  {

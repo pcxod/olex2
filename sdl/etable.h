@@ -123,9 +123,9 @@ public:
   bool Find(const olxstr& What, size_t& row, size_t& col) const {
     for( size_t i=0; i < Rows.Count(); i++ )  {
       col = Rows[i].IndexOf(What);
-      if(  col != InvalidIndex )  {  
-        row = i;  
-        return true;  
+      if(  col != InvalidIndex )  {
+        row = i;
+        return true;
       }
     }
     return false;
@@ -133,9 +133,9 @@ public:
   // finds a row for the column value
   bool FindCol(const olxstr& What, size_t& col) const {
     for( size_t i=0; i < Rows.Count(); i++ )
-      if( Rows[i][col] == What )  { 
-        col = i;  
-        return true;  
+      if( Rows[i][col] == What )  {
+        col = i;
+        return true;
       }
     return false;
   }
@@ -179,7 +179,7 @@ public:
     if( Format )  L.Add("</table>");
     return L;
   }
-  
+
   const_strlist CreateHTMLList(const olxstr &Title,
     const olxstr& footer,
     bool colNames, bool rowNames,
@@ -288,7 +288,7 @@ public:
 
     rowV += Sep.Length();
 
-    for( size_t i=0; i < ColNames.Count(); i++ )  
+    for( size_t i=0; i < ColNames.Count(); i++ )
       rowV[i+1] += rowV[i];
 
     if( colNames )  {

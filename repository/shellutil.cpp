@@ -398,7 +398,7 @@ bool TShellUtil::VerifyEmbeddedSignature(const olxstr &file_name) {
   WinTrustData.pPolicyCallbackData = NULL;
   WinTrustData.pSIPClientData = NULL;
   WinTrustData.dwUIChoice = WTD_UI_NONE;
-  WinTrustData.fdwRevocationChecks = WTD_REVOKE_NONE; 
+  WinTrustData.fdwRevocationChecks = WTD_REVOKE_NONE;
   WinTrustData.dwUnionChoice = WTD_CHOICE_FILE;
   WinTrustData.dwStateAction = 0;
   WinTrustData.hWVTStateData = NULL;
@@ -428,7 +428,7 @@ olxstr TShellUtil::GetFileVersion(const olxstr &fn, const olxstr &lang) {
       {
         return pValue[0];
       }
-    } 
+    }
   }
   return EmptyString();
 }
@@ -438,18 +438,18 @@ http://stackoverflow.com/questions/581204/how-do-i-check-if-a-user-has-local-adm
 */
 bool TShellUtil::IsAdmin() {
   //SID_IDENTIFIER_AUTHORITY NtAuthority = SECURITY_NT_AUTHORITY;
-  //PSID AdministratorsGroup; 
+  //PSID AdministratorsGroup;
   //b = AllocateAndInitializeSid(
   //  &NtAuthority,
   //  2,
   //  SECURITY_BUILTIN_DOMAIN_RID,
   //  DOMAIN_ALIAS_RID_ADMINS,
   //  0, 0, 0, 0, 0, 0,
-  //  &AdministratorsGroup); 
+  //  &AdministratorsGroup);
   //if( b == TRUE )   {
   //  if( !CheckTokenMembership(NULL, AdministratorsGroup, &b) )
   //    b = FALSE;
-  //  FreeSid(AdministratorsGroup); 
+  //  FreeSid(AdministratorsGroup);
   //}
   //return b == TRUE;
   // check if supports elevation

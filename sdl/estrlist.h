@@ -171,7 +171,7 @@ public:
     Strings.Add(new T(str));
     return *this;
   }
-  template <class T1> 
+  template <class T1>
   TTStrList& operator << (const TTStrList<T1>& list)  {
     Strings.SetCapacity(Count() + list.Count());
     for( size_t i=0; i < list.Count(); i++ )
@@ -192,7 +192,7 @@ public:
   string_type& Insert(size_t i, const wchar_t* S)  {
     return Strings.Insert(i, new T(S))->String;
   }
-  template <class T1> 
+  template <class T1>
   void Insert(size_t i, const TTStrList<T1>& list)  {
     if( list.IsEmpty() )  return;
     Strings.Insert(i, list.Count() );
@@ -320,7 +320,7 @@ public:
   size_t IndexOfi(const StrClass& C) const {
     return FindIndexOf(C, true);
   }
-  
+
   template <class StrClass>
   size_t FindIndexes(const StrClass& C, TSizeList& rv, bool CI) const {
     size_t cc = rv.Count();
@@ -402,7 +402,7 @@ public:
   void QSort(bool ci)  {
     if( ci )
       QuickSorter::Sort(Strings, TStringWrapperComparator<true>());
-    else 
+    else
       QuickSorter::Sort(Strings, TStringWrapperComparator<false>());
   }
 
@@ -438,7 +438,7 @@ public:
         Tmp.SetLength(0);
         break;
       }
-      while( ++ind < Tmp.Length() && Tmp.CharAt(ind) == Sep ) 
+      while( ++ind < Tmp.Length() && Tmp.CharAt(ind) == Sep )
         if( !SkipSequences )
           Add(EmptyString());
       if( ind >= Tmp.Length() )  {

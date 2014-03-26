@@ -50,7 +50,7 @@ RefinementModel::RefinementModel(TAsymmUnit& au) :
   rSAME(*this),
   OnSetBadReflections(Actions.New("OnSetBadReflections")),
   OnCellDifference(Actions.New("OnCellDifference")),
-  aunit(au), 
+  aunit(au),
   Conn(*this)
 {
   SetDefaults();
@@ -575,7 +575,7 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
   try {
     GetReflections();
     bool update = (HklStatFileID != HklFileID);
-    if( !update && 
+    if( !update &&
       _HklStat.OMIT_s == OMIT_s &&
       _HklStat.OMIT_2t == OMIT_2t &&
       _HklStat.SHEL_lr == SHEL_lr &&
@@ -702,9 +702,9 @@ size_t RefinementModel::ProcessOmits(TRefList& refs)  {
     const TReflection& r = refs[i];
     const size_t omit_cnt = Omits.Count();
     for( size_t j=0; j < omit_cnt; j++ )  {
-      if( r.GetH() == Omits[j][0] && 
+      if( r.GetH() == Omits[j][0] &&
           r.GetK() == Omits[j][1] &&
-          r.GetL() == Omits[j][2] ) 
+          r.GetL() == Omits[j][2] )
       {
         refs.NullItem(i);
         processed++;
@@ -767,7 +767,7 @@ void RefinementModel::DetwinShelx(TRefList& refs, const TArrayList<compd>& F,
   if( !BASF.IsEmpty() )  {
     if( refs.Count() != F.Count() )
       throw TInvalidArgumentException(__OlxSourceInfo, "F.size()!=refs.size()");
-    merohedral(info_ex, refs, st, GetBASFAsDoubleList(), 
+    merohedral(info_ex, refs, st, GetBASFAsDoubleList(),
       mat3d::Transpose(GetTWIN_mat()), 2).detwin(detwinner_shelx(), refs, F);
   }
 }
@@ -1005,7 +1005,7 @@ const_strlist RefinementModel::Describe() {
       else {
         str << AtomListToStr(sr.GetAtoms().ExpandList(*this), InvalidSize, " ~ ");
       }
-      str << ": within " << sr.GetValue() << "A with sigma of " << sr.GetEsd() << 
+      str << ": within " << sr.GetValue() << "A with sigma of " << sr.GetEsd() <<
         " and sigma for terminal atoms of " << sr.GetEsd1();
     }
     for( size_t i=0; i < rISOR.Count(); i++ )  {
@@ -1032,7 +1032,7 @@ const_strlist RefinementModel::Describe() {
       for( size_t j=0; j < al.Count(); j++ )  {
         if( al[j].GetAtom().GetEllipsoid() == NULL )
           str << "Uiso(";
-        else 
+        else
           str << "Uanis(";
         str << al[j].GetExpression(NULL) << ')';
         if( (j+1) < al.Count() )
@@ -1265,7 +1265,7 @@ void RefinementModel::ToDataItem(TDataItem& item) {
     mat_tags[i] = UsedSymm.GetValue(i).symop.GetId();
     UsedSymm.GetValue(i).symop.SetRawId((uint32_t)i);
   }
-  
+
   Vars.ToDataItem(item.AddItem("LEQS"));
   expl.ToDataItem(item.AddItem("EXPL"));
 
@@ -1276,7 +1276,7 @@ void RefinementModel::ToDataItem(TDataItem& item) {
     rcList1[i]->ToDataItem(item.AddItem(rcList1[i]->GetIdName()));
   for( size_t i=0; i < rcList.Count(); i++ )
     rcList[i]->ToDataItem(item.AddItem(rcList[i]->GetName()));
-  
+
   TDataItem& hklf = item.AddItem("HKLF", HKLF);
   hklf.AddField("s", HKLF_s);
   hklf.AddField("wt", HKLF_wt);
@@ -1412,8 +1412,8 @@ void RefinementModel::FromDataItem(TDataItem& item) {
 //.............................................................................
 #ifdef _PYTHON
 PyObject* RefinementModel::PyExport(bool export_conn)  {
-  PyObject* main = PyDict_New(), 
-    *hklf = PyDict_New(), 
+  PyObject* main = PyDict_New(),
+    *hklf = PyDict_New(),
     *eq = PyTuple_New(UsedSymm.Count());
   TPtrList<PyObject> atoms, equivs;
   PythonExt::SetDictItem(main, "aunit", aunit.PyExport(atoms, export_conn));
@@ -1484,10 +1484,10 @@ PyObject* RefinementModel::PyExport(bool export_conn)  {
     PythonExt::SetDictItem(main, "merge", Py_BuildValue("i", MERG));
   }
   if( TWIN_set )  {
-    PyObject* twin = PyDict_New(), 
+    PyObject* twin = PyDict_New(),
       *basf = PyTuple_New(BASF.Count());
     PythonExt::SetDictItem(twin, "n", Py_BuildValue("i", TWIN_n));
-    PythonExt::SetDictItem(twin, "matrix", 
+    PythonExt::SetDictItem(twin, "matrix",
       Py_BuildValue("(ddd)(ddd)(ddd)", TWIN_mat[0][0], TWIN_mat[0][1], TWIN_mat[0][2],
       TWIN_mat[1][0], TWIN_mat[1][1], TWIN_mat[1][2],
       TWIN_mat[2][0], TWIN_mat[2][1], TWIN_mat[2][2]));
@@ -1575,7 +1575,7 @@ bool RefinementModel::Update(const RefinementModel& rm)  {
 
   for( size_t i=0; i < aunit.EllpCount(); i++ )
     aunit.GetEllp(i) = rm.aunit.GetEllp(i);
-  
+
   Vars.Assign(rm.Vars);
   used_weight = rm.used_weight;
   proposed_weight = rm.proposed_weight;
@@ -2022,7 +2022,7 @@ void RefinementModel::LibShareADP(TStrObjList &Cmds, const TParamList &Options,
     ang = Cmds[0].ToDouble();
     Cmds.Delete(0);
   }
-  TXApp::GetInstance().FindSAtoms(Cmds.Text(' '), atoms); 
+  TXApp::GetInstance().FindSAtoms(Cmds.Text(' '), atoms);
   if( atoms.Count() < 3 )  {
     E.ProcessingError(__OlxSrcInfo, "At least three atoms are expected");
     return;

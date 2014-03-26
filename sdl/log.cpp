@@ -10,7 +10,7 @@
 #include "log.h"
 #include "etime.h"
 
-TLog::TLog() : 
+TLog::TLog() :
   OnInfo(Actions.New("ONINF")),
   OnWarning(Actions.New("ONWRN")),
   OnError(Actions.New("ONERR")),
@@ -63,7 +63,7 @@ TLog::LogEntry::~LogEntry()  {
     case logInfo:
       ac = &parent.OnInfo;
       break;
-    case logWarning: 
+    case logWarning:
       ac = &parent.OnWarning;
       break;
     case logError:

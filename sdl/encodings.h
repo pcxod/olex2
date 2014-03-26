@@ -45,7 +45,7 @@ namespace encoding  {
         rv << _base64[(data[from] >> 2) & 0x3f];
         if (len == 1) {
           rv << _base64[(data[from] << 4) & 0x30] << '=';
-        } 
+        }
         else {
           rv << _base64[((data[from] << 4) & 0x30)| ((data[from+1] >> 4) & 0xf)] <<
                 _base64[(data[from+1] << 2) & 0x3c];

@@ -58,7 +58,7 @@ public:
   inline size_t AtomCount() const  {  return Atoms.Count();  }
   void Push(const vec3d& t)  {
     for( size_t i=0; i < Atoms.Count(); i++ )
-      Atoms[i].a += t; 
+      Atoms[i].a += t;
   }
 
   //bool EvaluateMatrix(int rowIndex, const vec3d& trans, smatd& res)  {

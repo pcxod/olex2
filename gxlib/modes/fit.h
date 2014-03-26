@@ -195,7 +195,7 @@ public:
           ag.AddDependent(Atoms[i]->CAtom());
       }
       gxapp.XFile().EndUpdate();
-      
+
     }
     if (undo != NULL) {
       gxapp.GetUndo().Push(undo);

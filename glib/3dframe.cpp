@@ -85,7 +85,7 @@ void T3DFrameCtrl::Create(const olxstr& cName)  {
 }
 //.............................................................................
 bool T3DFrameCtrl::DoRotate(const vec3d& vec, double angle)  {
-  mat3d m;  
+  mat3d m;
   olx_create_rotation_matrix(m, vec, cos(angle), sin(angle));
   vec3d cnt = GetCenter();
   for( int i=0; i < 8; i++ )

@@ -17,7 +17,7 @@
 
 #if wxCHECK_VERSION(2,9,0)
 #  define wxComp(a,b) (a)
-#else 
+#else
 #  define wxComp(a,b) (b)
 #endif
 
@@ -77,7 +77,7 @@ TdlgSceneProps::TdlgSceneProps(TMainFrame *ParentFrame) :
     tbR->SetRange(-3,3);
   teR = new TTextEdit(wxComp(boxLP, this));
     teR->SetReadOnly(true);
-    
+
   wxFlexGridSizer *LightPosGridSizer = new wxFlexGridSizer(4, 3, Border, Border);
   LightPosGridSizer->Add(stX, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 2);
   LightPosGridSizer->Add(tbX, 1, wxEXPAND | wxALL, 1);
@@ -95,7 +95,7 @@ TdlgSceneProps::TdlgSceneProps(TMainFrame *ParentFrame) :
   LightPosGridSizer->Add(tbR, 1, wxEXPAND | wxALL, 1);
   LightPosGridSizer->Add(teR, 0, wxALIGN_CENTER_VERTICAL | wxALL, 1);
   LightPosGridSizer->AddGrowableCol(1);
-  
+
   wxStaticBoxSizer *sizerLP = new wxStaticBoxSizer(boxLP, wxVERTICAL);
   sizerLP->Add(LightPosGridSizer, 1, wxEXPAND | wxALL, 1);
   //    light colours *********************************************************
@@ -145,10 +145,10 @@ TdlgSceneProps::TdlgSceneProps(TMainFrame *ParentFrame) :
   GridSizer->Add(scSExp, 0, wxALIGN_CENTER_VERTICAL | wxEXPAND | wxALL, 1);
   GridSizer->AddGrowableCol(1);
   GridSizer->SetSizeHints(this);
-  
+
   wxStaticBoxSizer *LSizer = new wxStaticBoxSizer(boxLC, wxHORIZONTAL );
   LSizer->Add(GridSizer, 1, wxEXPAND | wxALL, 1);
-  
+
   wxBoxSizer *TSizer0 = new wxBoxSizer(wxHORIZONTAL);
   TSizer0->Add(LSizer, 1, wxEXPAND | wxALL, Border);//Light frame
   TSizer0->Add(sizerLP, 1, wxEXPAND | wxALL, Border);//Light position frame
@@ -166,7 +166,7 @@ TdlgSceneProps::TdlgSceneProps(TMainFrame *ParentFrame) :
   wxBoxSizer *sizerE = new wxBoxSizer(wxHORIZONTAL);
   sizerE->Add(cbEnabled, 1, wxEXPAND | wxALL, Border);
   //end checkbox enabled
-  
+
   wxBoxSizer *SizerLt = new wxBoxSizer(wxHORIZONTAL);
   SizerLt->Add(cbLights, 1, wxEXPAND | wxALL, Border);
   SizerLt->Add(sizerE, 1, wxEXPAND | wxALL, Border);
@@ -253,11 +253,11 @@ TdlgSceneProps::TdlgSceneProps(TMainFrame *ParentFrame) :
   SizerLM2->Add(tcAmbLM, 0, wxEXPAND | wxALL, 1);
   SizerLM2->Add(stBgClr, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 2);
   SizerLM2->Add(tcBgClr, 0, wxEXPAND | wxALL, 1);
-  
+
   SizerLM->Add(SizerLM2, 1, wxEXPAND | wxALL, Border);//light model frame
   SizerLM->Add(SizerLM1, 1, wxEXPAND | wxALL, Border);
   //light model frame
-  
+
   wxBoxSizer *TSizer2 = new wxBoxSizer(wxVERTICAL);
   TSizer2->Add(sizerFonts, 0, wxEXPAND | wxALL, Border);//fonts frame
   TSizer2->Add(-1,10);//spacer
@@ -384,8 +384,8 @@ void TdlgSceneProps::InitLight(TGlLight& L)  {
   teAmb->WI.SetColor(L.GetAmbient().GetRGB());
   scAmbA->SetValue( (int)L.GetAmbient()[3]*100);
   teDiff->WI.SetColor(L.GetDiffuse().GetRGB());
-  /*teDiff->SetColour(wxColour(OLX_GetRValue(L.Diffuse().GetRGB()), 
-    OLX_GetGValue(L.Diffuse().GetRGB()), 
+  /*teDiff->SetColour(wxColour(OLX_GetRValue(L.Diffuse().GetRGB()),
+    OLX_GetGValue(L.Diffuse().GetRGB()),
     OLX_GetBValue(L.Diffuse().GetRGB())));*/
   scDiffA->SetValue(L.GetDiffuse()[3]*100);
   teSpec->WI.SetColor(L.GetSpecular().GetRGB());

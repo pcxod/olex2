@@ -167,7 +167,7 @@ void XLibMacros::macGraphSR(TStrObjList &Cmds, const TParamList &Options, TMacro
       points[1][i] = binData[i].GetB();
     }
     double rms = ematd::PLSQ(points, line, 3);
-    
+
     for( size_t i=0; i < binData.Count(); i++ )  {
       tab[i][0] = olxstr::FormatFloat(3, binData[i].GetA());
       tab[i][1] = olxstr::FormatFloat(3, binData[i].GetB());

@@ -23,18 +23,18 @@ public:
     uint32_t count;
     vec3i center;
     peak() : process(true), summ(0), count(0)  {}
-    peak(int _x, int _y, int _z) : process(true),  
+    peak(int _x, int _y, int _z) : process(true),
       summ(0), count(0), center(_x, _y, _z) {}
   };
 
 protected:
   template <typename MapT>
   static void peak_search(MapT*** const data, const vec3s& dim,
-    MapT pos_level, const TArray3D<bool>& Mask, TArrayList<peak>& maxima)  
+    MapT pos_level, const TArray3D<bool>& Mask, TArrayList<peak>& maxima)
   {
     TStack<vec3i> stack;
     bool*** const mask = Mask.Data;
-    const MapT neg_level = -pos_level; 
+    const MapT neg_level = -pos_level;
     for( size_t mc=0; mc < maxima.Count(); mc++ )  {
       peak& peak = maxima[mc];
       if( mask[peak.center[0]][peak.center[1]][peak.center[2]] )  continue;
@@ -85,7 +85,7 @@ protected:
       new_cent /= peak.count;
       peak.center = new_cent.Round<int>();
       for( size_t i=0; i < 3; i++ )
-        peak.center[i] = peak.center[i]%(int)dim[i]; 
+        peak.center[i] = peak.center[i]%(int)dim[i];
     }
   }
 public:
@@ -97,7 +97,7 @@ public:
   {
     const vec3i map_dim(map_dim_);
     const vec3i dim_e = vec3i(Mask.GetSize());
-    const MapT neg_level = -pos_level; 
+    const MapT neg_level = -pos_level;
     for( int ix=0; ix < dim_e[0]; ix++ )  {
       for( int iy=0; iy < dim_e[1]; iy++ )  {
         for( int iz=0; iz < dim_e[2]; iz++ )  {
@@ -165,11 +165,11 @@ public:
     const vec3s& dim, MapT pos_level, TArrayList<MapUtil::peak>& Peaks)
   {
     TArray3D<bool> Mask(0, dim[0]-1, 0, dim[1]-1, 0, dim[2]-1);
-    Integrate(map, dim, Mask, pos_level, Peaks); 
+    Integrate(map, dim, Mask, pos_level, Peaks);
   }
   // a simple map integration, considering the peaks and holes as spheres
   template <typename MapT> static double IntegrateMask(MapT*** const map,
-    const vec3s& dim, 
+    const vec3s& dim,
     const vec3i &_p, const TArray3D<bool> &mask)
   {
     const TVector3<index_t> d(mask.Length1()+mask.GetMin1(),
@@ -237,14 +237,14 @@ public:
             if( p[dim_ind[ii]] >= 0 && map[p[0]][p[1]][p[2]] == res[dim_n] )  {
               stack.Push(p);
               map[p[0]][p[1]][p[2]] = res[dim_n]-1;
-            } 
+            }
             p[dim_ind[ii]] = (int)(pt[dim_ind[ii]]+1);
             if( p[dim_ind[ii]] < (int)dim[dim_ind[ii]] &&
                 map[p[0]][p[1]][p[2]] >= res[dim_n] )
             {
               stack.Push(p);
               map[p[0]][p[1]][p[2]] = res[dim_n]-1;
-            } 
+            }
             p[dim_ind[ii]] = (int)pt[dim_ind[ii]];
           }
         }
@@ -336,8 +336,8 @@ public:
   /*ml - all symmetry matrices, including identity matrix;
   norm - the reciprocal gridding (1/mapX, 1/mapY, 1/mapZ)*/
   template <class SymSpace>
-  static void MergePeaks(const SymSpace& sp, const vec3d& norm, 
-    TArrayList<MapUtil::peak>& Peaks, TTypeList<MapUtil::peak>& out)  
+  static void MergePeaks(const SymSpace& sp, const vec3d& norm,
+    TArrayList<MapUtil::peak>& Peaks, TTypeList<MapUtil::peak>& out)
   {
     const size_t cnt = Peaks.Count();
     TTypeList<vec3d> crds;
@@ -352,7 +352,7 @@ public:
     for( size_t i=0; i < cnt; i++ )  {
       if( !Peaks[i].process )  continue;
       TPtrList<MapUtil::peak> toMerge;
-      toMerge.Add(Peaks[i]); 
+      toMerge.Add(Peaks[i]);
       vec3d center(crds[i]), cmp_center(crds[i]);
       for( size_t j=i+1; j < cnt; j++ )  {
         if( !Peaks[j].process )  continue;

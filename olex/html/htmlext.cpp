@@ -162,7 +162,7 @@ bool THtml::Dispatch(int MsgId, short MsgSubId, const IEObject* Sender,
 }
 //.............................................................................
 void THtml::OnChildFocus(wxChildFocusEvent& event)  {
-  wxWindow *wx_next = event.GetWindow(), 
+  wxWindow *wx_next = event.GetWindow(),
     *focused = FindFocus();
   /* this happens when the child windows is in visible to API like in
   combo/spinctls */
@@ -290,7 +290,7 @@ bool THtml::DoHandleFocusEvent(AOlxCtrl* prev, AOlxCtrl* next)  {
 void THtml::DoNavigate(bool forward)  {
   index_t current=-1, another=-1;
   GetTraversibleIndeces(current, another, forward);
-  DoHandleFocusEvent( 
+  DoHandleFocusEvent(
     current == -1 ? NULL : Traversables[current].GetA(),
     another == -1 ? NULL : Traversables[another].GetA());
   if( another != -1 )  {
@@ -389,7 +389,7 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
         }
       }
       if( tag_found )  continue;
-      else  
+      else
         break;
     }
 
@@ -682,7 +682,7 @@ void THtml::OnCellMouseHover(wxHtmlCell *Cell, wxCoord x, wxCoord y)  {
         ind = Href.FirstIndexOf('%', ind+1);
         continue;
       }
-      olxstr nm = Href.SubString(ind+1, 2); 
+      olxstr nm = Href.SubString(ind+1, 2);
       if( nm.IsNumber() )  {
         try  {
           int val = nm.RadInt<int>(16);
@@ -1002,7 +1002,7 @@ void THtml::TObjectsState::SaveState()  {
     }
     else //?
       ;
-    // stroring the control colours, it is generic 
+    // stroring the control colours, it is generic
     if( win != NULL )  {
       props->Add("fg", win->GetForegroundColour().GetAsString(wxC2S_HTML_SYNTAX));
       props->Add("bg", win->GetBackgroundColour().GetAsString(wxC2S_HTML_SYNTAX));
