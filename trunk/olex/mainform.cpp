@@ -161,7 +161,10 @@ public:
     olxstr splash_img = TBasicApp::GetBaseDir() + "splash.jpg";
     if( TEFile::Exists(splash_img) )  {
       wxImage img;
-      img.LoadFile(splash_img.u_str());
+      {
+        wxLogNull nl;
+        img.LoadFile(splash_img.u_str());
+      }
       has_alpha = img.HasAlpha();
       if (has_alpha)
         img.ConvertAlphaToMask();
