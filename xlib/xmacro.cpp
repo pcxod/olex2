@@ -449,7 +449,8 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(Tria,
     "cs-do not clear selection",
     fpAny,
-    "Adds a distance restraint for bonds and 'angle' restraint for the angle");
+    "Adds a distance restraint for bonds and 'angle' restraint for the angle."
+    "Takes bond pairs or atom triplets.");
   xlib_InitMacro(Dang,
     "cs-do not clear selection",
     fpAny|psCheckFileTypeIns,
@@ -6892,7 +6893,7 @@ void XLibMacros::macTria(TStrObjList &Cmds, const TParamList &Options,
         esd = 0.02,  // esd for dfix, for dang will be doubled
         angle = 0;
   bool esd_set = ParseResParam(Cmds, esd, &dfixLenA, &dfixLenB, &angle);
-  if( angle == 0 )  {
+  if (angle == 0) {
     E.ProcessingError(__OlxSrcInfo, "please provide the angle to restrain to");
     return;
   }
@@ -6901,7 +6902,7 @@ void XLibMacros::macTria(TStrObjList &Cmds, const TParamList &Options,
   TSAtomPList atoms;
   if (!mi.atoms.IsEmpty())
     atoms = mi.atoms;
-  else  {
+  else {
     if (mi.bonds.Count() > 1) {
       for (size_t i=0; i < mi.bonds.Count(); i += 2) {
         TSBond *ba = mi.bonds[i];
@@ -6918,9 +6919,13 @@ void XLibMacros::macTria(TStrObjList &Cmds, const TParamList &Options,
       }
     }
   }
+  if ((atoms.Count() % 3) != 0) {
+    E.ProcessingError(__OlxSrcInfo, "Please provide atom triplets");
+    return;
+  }
   TBasicApp::NewLogEntry() << "Placing the following restraints: ";
-  for( size_t i=0; i < atoms.Count(); i+=3 )  {
-    if( dfixLenA == 0 )  {
+  for (size_t i=0; i < atoms.Count(); i+=3) {
+    if (dfixLenA == 0) {
       dfixLenA = app.XFile().GetRM().FindRestrainedDistance(
         atoms[i]->CAtom(), atoms[i+1]->CAtom());
       dfixLenB = app.XFile().GetRM().FindRestrainedDistance(
