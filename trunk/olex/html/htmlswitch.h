@@ -26,8 +26,8 @@ protected:
   bool UpdateSwitch;
   THtml* ParentHtml;
 public:
-  THtmlSwitch(THtml *_parent_html, THtmlSwitch *_parent_switch) : 
-      ParentHtml(_parent_html), 
+  THtmlSwitch(THtml *_parent_html, THtmlSwitch *_parent_switch) :
+      ParentHtml(_parent_html),
         ParentSwitch(_parent_switch),
         UpdateSwitch(true),
         FileIndex(0) {}

@@ -227,7 +227,7 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source)  {
   }
   uint64_t TotalRead = starting_file_len;
   size_t data_off = GetDataOffset(Buffer, ThisRead, crlf);
-  const olxcstr line_break(crlf ? "\r\n" : "\n"); 
+  const olxcstr line_break(crlf ? "\r\n" : "\n");
   ResponseInfo info =
     ParseResponseInfo(olxcstr(Buffer, data_off), line_break, Source);
   if( !info.HasData() )  {

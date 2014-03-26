@@ -17,7 +17,7 @@
 
 BeginXlibNamespace()
 
-const unsigned short 
+const unsigned short
   satom_Deleted    = 0x0001,
   //satom_Grown      = 0x0002, - obsolete
   satom_Standalone = 0x0004,
@@ -140,7 +140,7 @@ public:
     size_t catom_id;
     uint32_t matrix_id;
     Ref() : catom_id(~0), matrix_id(~0) {}
-    Ref(size_t a_id, uint32_t m_id) : catom_id(a_id), matrix_id(m_id) {} 
+    Ref(size_t a_id, uint32_t m_id) : catom_id(a_id), matrix_id(m_id) {}
     Ref(const Ref& r) : catom_id(r.catom_id), matrix_id(r.matrix_id)  {}
     Ref(const TDataItem& item)  {  FromDataItem(item);  }
     Ref& operator = (const Ref& r)  {
@@ -178,7 +178,7 @@ public:
 
   virtual void ToDataItem(TDataItem& item) const;
   virtual void FromDataItem(const TDataItem& item, class TLattice& parent);
-  
+
   // sorts atoms according to the distcance from {0,0,0}
   struct SortByDistance {
     template <class item_a_t, class item_b_t>
@@ -206,7 +206,7 @@ public:
   FlagsAnalyser(short flags) {
     return FlagsAnalyser_<DirectAccessor>(DirectAccessor(), flags);
   }
-  
+
   template <class Accessor> struct FlagSetter_ {
     const Accessor &accessor;
     const short ref_flags;
@@ -261,4 +261,3 @@ typedef TPtrList<const TSAtom> TSAtomCPList;
 
 EndXlibNamespace()
 #endif
-

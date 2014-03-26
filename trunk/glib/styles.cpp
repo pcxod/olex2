@@ -164,7 +164,7 @@ TGraphicsStyle *TGraphicsStyle::FindStyle(const olxstr& Name) {
     }
     return NULL;
   }
-  else 
+  else
     return FindLocalStyle(Name);
 }
 //..............................................................................
@@ -246,7 +246,7 @@ void TGraphicsStyle::RemoveNonPersistent() {
       changed = true;
     }
   }
-  if( changed )  
+  if( changed )
     Styles.Pack();
 }
 //..............................................................................
@@ -428,7 +428,7 @@ TDataItem* TGraphicsStyles::GetDataItem(const TPrimitiveStyle* Style) const {
 }
 //..............................................................................
 TGlMaterial* TGraphicsStyles::GetMaterial(TDataItem& I) const {
-  if( I.GetData() == NULL )  
+  if( I.GetData() == NULL )
     I.SetData( new TGlMaterial() );
   return (TGlMaterial*)I.GetData();
 }

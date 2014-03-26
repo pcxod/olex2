@@ -321,7 +321,7 @@ struct QuickSorter : public SortInterface<QuickSorter> {
       }
     }
   };
-  template <class list_t, class comparator_t, class listener_t> 
+  template <class list_t, class comparator_t, class listener_t>
   static QuickSorter_ <list_t,comparator_t,listener_t>
   Make(list_t& list, const comparator_t& cmp, const listener_t& listener) {
     return QuickSorter_<list_t,comparator_t,listener_t>(

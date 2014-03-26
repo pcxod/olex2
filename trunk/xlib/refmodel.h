@@ -99,7 +99,7 @@ protected:
 public:
   // needs to be extended for the us of the batch numbers...
   struct HklStat : public MergeStats {
-    double MaxD, MinD, LimDmin, LimDmax, 
+    double MaxD, MinD, LimDmin, LimDmax,
       OMIT_s, OMIT_2t, SHEL_lr, SHEL_hr, MaxI, MinI, HKLF_m, HKLF_s;
     TDoubleList Completeness;
     mat3d HKLF_mat;
@@ -116,7 +116,7 @@ public:
       MergeStats::operator = (hs);
       FileMinInd = hs.FileMinInd;
       FileMaxInd = hs.FileMaxInd;
-      MaxD = hs.MaxD;         MinD = hs.MinD; 
+      MaxD = hs.MaxD;         MinD = hs.MinD;
       OMIT_s = hs.OMIT_s;     OMIT_2t = hs.OMIT_2t;
       SHEL_lr = hs.SHEL_lr;   SHEL_hr = hs.SHEL_hr;
       LimDmin = hs.LimDmin;   LimDmax = hs.LimDmax;
@@ -239,11 +239,11 @@ public:
   TDoubleList PLAN;  // up to three params
 
   ConnInfo Conn;     // extra connectivity information
-  
+
   const olxstr& GetHKLSource() const {  return HKLSource;  }
   //TODO: handle the change
   void SetHKLSource(const olxstr& src);
-  olxstr GetHKLFStr() const {  
+  olxstr GetHKLFStr() const {
     olxstr rv(HKLF, 80);
     if( HKLF_m == def_HKLF_m )  {
       if( HKLF_wt == def_HKLF_wt )  {
@@ -270,7 +270,7 @@ public:
         rv << ' ' << HKLF_mat[i/3][i%3];
       rv << ' ' << HKLF_wt << ' ' << HKLF_m;
     }
-    return rv;  
+    return rv;
   }
   template <class list> void SetHKLF(const list& hklf) {
     if( hklf.IsEmpty() )
@@ -316,7 +316,7 @@ public:
   bool UseFdp() const {  return MERG != 4;  }
   void SetMERG(int v)  {  MERG = v;  MERG_set = true;  }
   bool HasMERG() const {  return MERG_set;  }
-  
+
   const TEValueD& GetEXTI() const {  return EXTI;  }
   void SetEXTI(double v, double e) {
     EXTI.V() = v;  EXTI.E() = e;
@@ -324,7 +324,7 @@ public:
   }
   bool HasEXTI() const {  return EXTI_set;  }
   void ClearEXTI() { EXTI_set = false; }
-  
+
   double GetOMIT_s() const {  return OMIT_s;  }
   void SetOMIT_s(double v)  {  OMIT_s = v;  OMIT_set = true;  }
   double GetOMIT_2t() const {  return OMIT_2t;  }
@@ -410,7 +410,7 @@ public:
     return TDoubleList();
   }
   olxstr GetBASFStr() const;
-  
+
   template <class list> void SetTWIN(const list& twin) {
     if( twin.Count() > 8 )  {
       for( size_t i=0; i < 9; i++ )
@@ -432,7 +432,7 @@ of BASF parameters, if any, should be increased from m-1 to 2m-1 where m is the
 original number of components (equal to the new |n| divided by 2). The TWIN
 matrix is applied m-1 times to generate components 2 ... m from the prime
 reflection (component 1); components m+1 ... 2m are then generated as the
-Friedel opposites of components 1 ... m  
+Friedel opposites of components 1 ... m
 */
   int GetTWIN_n() const {  return TWIN_n;  }
   void SetTWIN_n(int v)  {  TWIN_n = v;  TWIN_set = true;  }
@@ -467,7 +467,7 @@ Friedel opposites of components 1 ... m
 
   DefPropC(olxstr, RefinementMethod)
   DefPropC(olxstr, SolutionMethod)
-  
+
   void SetIterations(int v);
   void SetPlan(int v);
 
@@ -493,7 +493,7 @@ Friedel opposites of components 1 ... m
     return selectedTableRows;
   }
   bool ValidateInfoTab(const InfoTab& it);
-  // adss new symmetry matrics, used in restraints/constraints 
+  // adss new symmetry matrics, used in restraints/constraints
   const smatd& AddUsedSymm(const smatd& matr, const olxstr& id=EmptyString());
   //removes the matrix or decriments the reference count
   void RemUsedSymm(const smatd& matr) const;
@@ -534,7 +534,7 @@ Friedel opposites of components 1 ... m
   }
   // user content management
   const ContentList& GetUserContent() const {  return UserContent;  }
-  const olxstr GetUserContentStr() const {  
+  const olxstr GetUserContentStr() const {
     olxstr rv;
     for( size_t i=0; i < UserContent.Count(); i++ )
       rv << UserContent[i].element.symbol << UserContent[i].count;
@@ -686,7 +686,7 @@ Friedel opposites of components 1 ... m
   */
   const TRefList& GetReflections() const;
   // this will be only valid if any list of the reflections was called
-  const HklStat& GetReflectionStat() const {  return _HklStat;  } 
+  const HklStat& GetReflectionStat() const {  return _HklStat;  }
   // filters the reflections according to the parameters
   HklStat& FilterHkl(TRefList& out, HklStat& stats);
   // adjust intensity of reflections according to OMIT

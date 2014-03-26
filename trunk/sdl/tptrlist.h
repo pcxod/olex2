@@ -94,7 +94,7 @@ public:
   }
 //..............................................................................
   //deletes the objects and clears the list
-  inline void Clear()  {  
+  inline void Clear()  {
     if( Items != NULL )  {
       olx_free(Items);
       Items = NULL;
@@ -235,7 +235,7 @@ public:
 //..............................................................................
   inline T*& AddUnique(T* pObj)  {
     const size_t ind = IndexOf(pObj);
-    if( ind != InvalidIndex )  
+    if( ind != InvalidIndex )
       return Items[ind];
     return Add(pObj);
   }
@@ -329,7 +329,7 @@ public:
     FCapacity = v;
     Allocate();
      // initialise the rest of items to NULL
-    memset(&Items[FCount], 0, (FCapacity-FCount)*sizeof(T*)); 
+    memset(&Items[FCount], 0, (FCapacity-FCount)*sizeof(T*));
     return *this;
   }
 //..............................................................................
@@ -521,7 +521,7 @@ public:
 //..............................................................................
   size_t IndexOf(const T* val) const {
     for( size_t i=0; i < FCount; i++ )
-      if( Items[i] == val )  
+      if( Items[i] == val )
         return i;
     return InvalidIndex;
   }
@@ -529,7 +529,7 @@ public:
   size_t IndexOf(const T& val) const {
     const T* pv = &val;
     for( size_t i=0; i < FCount; i++ )
-      if( Items[i] == pv )  
+      if( Items[i] == pv )
         return i;
     return InvalidIndex;
   }

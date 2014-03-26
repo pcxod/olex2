@@ -48,7 +48,7 @@ void HallSymbol::init()  {
     rotz1.AddNew(rotation_id::get(mat3d( 0, 1, 0,   1, 0, 0,   0, 0,-1)), "2\"");
 
     rot3.AddNew(rotation_id::get(mat3d( 0, 0, 1,   1, 0, 0,   0, 1, 0)), "3*");
-    
+
     TPtrList<TTypeList<olx_pair_t<int,olxstr> > > rots;
     rots << rotx << roty << rotz << rot3;
     for (size_t i=0; i < rots.Count(); i++) {
@@ -213,7 +213,7 @@ int HallSymbol::find_diagonal(int axis, olxch which) const {
   if (axis == 1)  return rotx1[index].GetA();
   if (axis == 2)  return roty1[index].GetA();
   if (axis == 3)  return rotz1[index].GetA();
-  throw TInvalidArgumentException(__OlxSourceInfo, 
+  throw TInvalidArgumentException(__OlxSourceInfo,
     olxstr("axis direction: ") << axis << ", which: " << which);
 }
 //.............................................................................
@@ -250,7 +250,7 @@ SymmSpace::Info HallSymbol::Expand_(const olxstr &_hs) const {
         change_of_basis.t[2] = toks[2].ToDouble()/12;
       }
     }
-    
+
   }
   TStrList toks(hs, ' ');
   if (toks.Count() < 1) {

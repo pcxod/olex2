@@ -126,7 +126,7 @@ void TestSVD(OlxTests& t)  {
     {-1.5, 0.5, -2.8, 0.5, -2.9},
     {1.5, -0.5, -2.8, 10, -2.9},
   };
-  
+
   TMatrix<FT> m, s;
   SVD<FT> svd;
   try {
@@ -299,7 +299,7 @@ void TestMatrixDiff(OlxTests& t)  {
     for (int i1=0; i1 < 3; i1++)
       if (!r[i1].Equals(t[i1], 1e-8))
         throw TFunctionFailedException(__OlxSourceInfo, "assert");
-    
+
     r = dmat::One_x_M(m, j/3, j%3);
     t = tm*m;
     for (int i1=0; i1 < 3; i1++)
@@ -323,7 +323,7 @@ void TestMatrixDiff(OlxTests& t)  {
     for (int i1=0; i1 < 3; i1++)
       if (!r[i1].Equals(t[i1], 1e-8))
         throw TFunctionFailedException(__OlxSourceInfo, "assert");
-    
+
     r = dmat::OneSym_x_M(m, a[j][0], a[j][1]);
     t = tm*m;
     for (int i1=0; i1 < 3; i1++)

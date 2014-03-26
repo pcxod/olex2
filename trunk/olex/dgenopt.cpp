@@ -68,13 +68,13 @@ TdlgGenerate::TdlgGenerate(TMainFrame *ParentFrame) :
   GridSizer->AddGrowableCol(1);
   GridSizer->AddGrowableCol(3);
   GridSizer->AddGrowableCol(4);
-  
+
   wxBoxSizer *ButtonsSizer = new wxBoxSizer( wxHORIZONTAL );
 
   ButtonsSizer->Add( new wxButton( this, wxID_OK, wxT("OK") ), 0, wxALL, Border);
   ButtonsSizer->Add( new wxButton( this, wxID_CANCEL, wxT("Cancel") ), 0, wxALL, Border);
   ButtonsSizer->Add( new wxButton( this, wxID_HELP, wxT("Help") ),     0, wxALL, Border );
-  
+
   TopSizer->Add(GridSizer, 1, wxEXPAND | wxALL, 5);
   TopSizer->Add(ButtonsSizer, 0, wxALL, 5);
   SetSizer( TopSizer );      // use the sizer for layout

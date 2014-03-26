@@ -35,7 +35,7 @@ public:
   bool OnMouseDown(const IEObject *Sender, const TMouseData& Data);
   bool OnMouseUp(const IEObject *Sender, const TMouseData& Data);
   bool OnMouseMove(const IEObject *Sender, const TMouseData& Data);
-  
+
   TActionQueue& OnSelect;
 };
 

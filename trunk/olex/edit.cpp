@@ -39,17 +39,17 @@ TdlgEdit::TdlgEdit(TMainFrame *ParentFrame, bool MultiLine):
   //this->WI.SetWidth(width+5);
   //this->WI.SetHeight(height+70);
   GlobalSizer->Add(ButtonsSizer,0, wxALL, 3);
-    
-  
+
+
   SetSizer(GlobalSizer);
-  GlobalSizer->SetSizeHints(this);  
-  
+  GlobalSizer->SetSizeHints(this);
+
   //delete ButtonsSizer;
   Center();
   FParent->RestorePosition(this);
 }
 //..............................................................................
-TdlgEdit::~TdlgEdit()  { 
+TdlgEdit::~TdlgEdit()  {
   FParent->SavePosition(this);
 }
 //..............................................................................

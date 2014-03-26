@@ -55,7 +55,7 @@ public:
     Position += count;
   }
   void operator >> (IOutputStream &os);
-  
+
   TEMemoryStream& operator << (IInputStream &is);
 
   // functions rewind to zero position saves and then restores the position
@@ -90,12 +90,12 @@ class TEMemoryInputStream : public IDataInputStream {
   size_t Length;
   size_t Position;
 public:
-  TEMemoryInputStream(const void* data, size_t length) : 
-    Data((unsigned char const*)data), 
+  TEMemoryInputStream(const void* data, size_t length) :
+    Data((unsigned char const*)data),
     Length(length),
     Position(0)
     {}
-  
+
   virtual inline uint64_t GetSize() const {  return Length;  }
   virtual inline uint64_t GetPosition() const {  return Position;  }
   virtual void SetPosition(uint64_t pos)  {

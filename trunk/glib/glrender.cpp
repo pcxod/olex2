@@ -282,7 +282,7 @@ TGPCollection *TGlRenderer::FindCollectionX(const olxstr& Name,
   const size_t di = Name.FirstIndexOf('.');
   if( di != InvalidIndex )  {
     const size_t ind = FCollections.IndexOf(Name);
-    if( ind != InvalidIndex )  
+    if( ind != InvalidIndex )
       return FCollections.GetValue(ind);
 
     TGPCollection *BestMatch=NULL;
@@ -450,7 +450,7 @@ void TGlRenderer::SetupStencilFoInterlacedDraw(bool even) {
 
   const double aspect = (double)Width/(double)Height;
   glRectd(-0.5*aspect, -0.5, 0.5*aspect, 0.5);
-  
+
   olx_gl::colorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
   olx_gl::enable(GL_DEPTH_TEST);
   olx_gl::disable(GL_POLYGON_STIPPLE);
@@ -720,7 +720,7 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects,
     for (size_t i=0; i < trans_id_obj_count; i++) {
       TGlMaterial* GlM = FTranslucentIdentityObjects[i];
       GlM->Init(skip_mat);
-      const size_t obj_count = GlM->ObjectCount(); 
+      const size_t obj_count = GlM->ObjectCount();
       for( size_t j=0; j < obj_count; j++ )  {
         TGlPrimitive& GlP = (TGlPrimitive&)GlM->GetObject(j);
         TGPCollection* GPC = GlP.GetParentCollection();
@@ -768,7 +768,7 @@ AGDrawObject* TGlRenderer::SelectObject(int x, int y) {
         }
         if( (int)(in)*4+3 < 0 )  return NULL;
         in = selectBuf[(in)*4+3] - 1;
-        if( in < ObjectCount() )  
+        if( in < ObjectCount() )
           Result = &GetObject(in);
       }
     }
@@ -858,11 +858,11 @@ TGlPrimitive* TGlRenderer::SelectPrimitive(int x, int y) {
 TGlGroup* TGlRenderer::FindObjectGroup(const AGDrawObject& G) const {
   // get the topmost group
   TGlGroup* G1 = G.GetParentGroup();
-  if( G1 == NULL )  
+  if( G1 == NULL )
     return NULL;
   while( G1->GetParentGroup() != NULL )  {
     if( G1->GetParentGroup() == FSelection )  break;
-    G1 = G1->GetParentGroup(); 
+    G1 = G1->GetParentGroup();
   }
   return (G1 == FSelection) ? NULL : G1;
 }
@@ -971,7 +971,7 @@ TGlGroup* TGlRenderer::GroupSelection(const olxstr& groupName)  {
 }
 //..............................................................................
 TGlGroup& TGlRenderer::NewGroup(const olxstr& collection_name) {
-  return *FGroups.Add(new TGlGroup(*this, collection_name));  
+  return *FGroups.Add(new TGlGroup(*this, collection_name));
 }
 //..............................................................................
 void TGlRenderer::UnGroup(TGlGroup& OS)  {
@@ -982,7 +982,7 @@ void TGlRenderer::UnGroup(TGlGroup& OS)  {
   AGDObjList Objects(OS.Count());
   for( size_t i=0; i < OS.Count(); i++ )
     Objects[i] = &OS[i];
-  OS.GetPrimitives().RemoveObject(OS); // 
+  OS.GetPrimitives().RemoveObject(OS); //
   FGObjects.Remove(&OS);
   delete &OS;  // it will reset Parent group to NULL in the objects
   for( size_t i=0; i < Objects.Count(); i++ )
@@ -1373,7 +1373,7 @@ void TGlRenderer::LibStereo(const TStrObjList& Params, TMacroError& E)  {
 }
 //..............................................................................
 void TGlRenderer::LibStereoColor(const TStrObjList& Params, TMacroError& E)  {
-  TGlOption* glo = Params[0].Equalsi("left") ? &StereoLeftColor : 
+  TGlOption* glo = Params[0].Equalsi("left") ? &StereoLeftColor :
     (Params[0].Equalsi("right") ? &StereoRightColor : NULL);
   if( glo == NULL )  {
     E.ProcessingError(__OlxSrcInfo,

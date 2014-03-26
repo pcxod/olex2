@@ -22,7 +22,7 @@ TGlBackground::TGlBackground(TGlRenderer& r, const olxstr& collectionName, bool 
 }
 //..............................................................................
 void TGlBackground::Create(const olxstr& cName) {
-  if( !cName.IsEmpty() )  
+  if( !cName.IsEmpty() )
     SetCollectionName(cName);
   TGPCollection& GPC = Parent.FindOrCreateCollection( GetCollectionName() );
   GPC.AddObject(*this);
@@ -59,7 +59,7 @@ void TGlBackground::SetTexture(TGlTexture* tx)  {
 }
 //..............................................................................
 bool TGlBackground::Orient(TGlPrimitive& P)  {
-  if( Parent.IsColorStereo() )  return true; 
+  if( Parent.IsColorStereo() )  return true;
   if( Texture != NULL )
     P.SetTextureId(Texture->GetId());
   double Scale = Parent.GetScale();

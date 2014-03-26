@@ -172,7 +172,7 @@ public:
   // provided handlers must be created with new, and will be deleted
   short InstallPlugin(AActionHandler* download_lsnr,
     AActionHandler* extract_lsnr, const olxstr& name);
-  
+
   static const_strlist GetPluginProperties(const olxstr &p);
 
   SettingsFile& GetSettings() {  return settings;  }
@@ -205,7 +205,7 @@ public:
   }
   static bool IsNewInstallation()  {
     return TEFile::Exists(TBasicApp::GetBaseDir() + new_installation_fn);
-  } 
+  }
   static void TagInstallationAsNew()  {
     TEFile(TBasicApp::GetBaseDir() + new_installation_fn, "w+");
   }

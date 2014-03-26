@@ -84,27 +84,27 @@ protected:
     }
     delete is;
     delete [] bf;
-    return ms;  
-    
+    return ms;
+
   }
   virtual bool _DoesExist(const olxstr& DN, bool)  {
     olxstr fn( NormaliseName(DN).u_str() );
     if( Index != NULL )
       return Index->GetRoot().FindByFullName(fn) != NULL;
-    return Ftp.FileExists(fn.u_str());  
+    return Ftp.FileExists(fn.u_str());
   }
 
   virtual bool _DoDelFile(const olxstr& FN)     {  // to dangerous
-    return Ftp.RmFile(NormaliseName(FN).u_str());    
+    return Ftp.RmFile(NormaliseName(FN).u_str());
   }
   virtual bool _DoDelDir(const olxstr& DN)      {  // too dangerous
-    return Ftp.RmDir(NormaliseName(DN).u_str());     
+    return Ftp.RmDir(NormaliseName(DN).u_str());
   }
-  virtual bool _DoAdoptFile(const TFSItem& src){  
+  virtual bool _DoAdoptFile(const TFSItem& src){
     IInputStream* is = NULL;
-    try  {  
-      is = src.GetIndexFS().OpenFile(src.GetIndexFS().GetBase() + src.GetFullName() );  
-      if( is != NULL )  
+    try  {
+      is = src.GetIndexFS().OpenFile(src.GetIndexFS().GetBase() + src.GetFullName() );
+      if( is != NULL )
         return AdoptStream(*is, TEFile::UnixPath(src.GetFullName()));
     }
     catch(const TExceptionBase& exc)  {
@@ -115,7 +115,7 @@ protected:
       delete is;
     return true;
   }
-  virtual bool _DoAdoptStream(IInputStream& in, const olxstr& as) {  
+  virtual bool _DoAdoptStream(IInputStream& in, const olxstr& as) {
     olxstr rel_path( NormaliseName(as) );
 //    OnAdoptFile->Execute( this, &F__N);
     TOnProgress Progress;
@@ -132,7 +132,7 @@ protected:
       olxstr fn( ind == 0-1 ? rel_path : rel_path.SubStringFrom(ind+1) );
       int depth = 0;
       if( !path.IsEmpty() && !Ftp.FileExists(path.u_str()) )  {
-        if( !NewDir(path) )  
+        if( !NewDir(path) )
           throw TFunctionFailedException(__OlxSourceInfo, olxstr("Mkdir \'") << path << '\'');
       }
 
@@ -172,7 +172,7 @@ protected:
     }
     return true;
   }
-  virtual bool _DoNewDir(const olxstr& DN)      {  
+  virtual bool _DoNewDir(const olxstr& DN)      {
     olxstr norm_path( NormaliseName(DN) );
     if( norm_path.FirstIndexOf('/') != InvalidIndex )  {
       TStrList toks(norm_path, '/');
@@ -188,7 +188,7 @@ protected:
           return false;
       return true;
     }
-    return Ftp.MkDir(norm_path.u_str());     
+    return Ftp.MkDir(norm_path.u_str());
   }
 public:
   TwxFtpFileSystem(const TUrl& url, TwxZipFileSystem* zipFS=NULL) : Url(url) {
@@ -218,7 +218,7 @@ public:
       ZipFS = zipFS;
   }
   virtual wxInputStream* wxOpenFile(const olxstr& Source) {  return Ftp.GetInputStream(Source.u_str());  }
-  bool ChangeDir(const olxstr& DN)   {  
+  bool ChangeDir(const olxstr& DN)   {
     if( Ftp.ChDir( DN.u_str() ) )  {
       pwd = TEFile::UnixPath(Ftp.Pwd().wx_str());
       return true;

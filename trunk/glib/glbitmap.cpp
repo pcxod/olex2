@@ -111,7 +111,7 @@ bool TGlBitmap::Orient(TGlPrimitive& P)  {
   P.Vertices[0] = vec3d((Left+w+xx-hw)*Scale, -(Top+h+xy-hh)*Scale, Z);
   P.Vertices[1] = vec3d(P.Vertices[0][0], -(Top+xy-hh)*Scale, Z);
   P.Vertices[2] = vec3d((Left+xx-hw)*Scale, -(Top+xy-hh)*Scale, Z);
-  P.Vertices[3] = vec3d(P.Vertices[2][0], -(Top+h+xy-hh)*Scale, Z); 
+  P.Vertices[3] = vec3d(P.Vertices[2][0], -(Top+h+xy-hh)*Scale, Z);
   return false;
 }
 //.............................................................................

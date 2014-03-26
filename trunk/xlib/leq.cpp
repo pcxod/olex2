@@ -45,8 +45,8 @@ XVarReference& XVarReference::FromDataItem(const TDataItem& item,
     item.GetFieldByName("id_name"));
   IXVarReferencer& ref = rc.GetReferencer(
     item.GetFieldByName("owner_id").ToSizeT());
-  return *(new XVarReference(parent, ref, 
-    item.GetFieldByName("var_index").ToInt(), 
+  return *(new XVarReference(parent, ref,
+    item.GetFieldByName("var_index").ToInt(),
     XVarManager::RelationIndex(item.GetFieldByName("rel")),
     item.GetFieldByName("k").ToDouble()));
 }
@@ -238,7 +238,7 @@ void XVarManager::RestoreRef(IXVarReferencer& a, short var_name,
     vr->Parent._AddRef(*vr);
     References.Add(vr);
   }
-  else 
+  else
     a.SetVarRef(var_name, NULL);
   for( size_t i=0; i < References.Count(); i++ )
     References[i].SetId(i);
@@ -448,7 +448,7 @@ void XVarManager::ToDataItem(TDataItem& item) const {
 #ifdef _PYTHON
 PyObject* XVarManager::PyExport(TPtrList<PyObject>& atoms)  {
   PyObject* main = PyDict_New();
-  
+
   TPtrList<PyObject> var_refs(Vars.Count());
   PyObject* vars = PyTuple_New(Vars.Count());
   for( size_t i=0; i < Vars.Count(); i++ )

@@ -44,7 +44,7 @@ public:
   }
   bool DoesMatch(const olxstr& str) const {
     if( matchAll )  return true;
-    if( matchBoth )  
+    if( matchBoth )
       return (str.StartsFrom(start) && str.EndsWith(end));
     if( matchAny )
       return str.IndexOf(mask) != InvalidIndex;
@@ -56,7 +56,7 @@ public:
   }
   bool DoesMatchi(const olxstr& str) const {
     if( matchAll )  return true;
-    if( matchBoth )  
+    if( matchBoth )
       return (str.StartsFromi(start) && str.EndsWithi(end));
     if( matchAny )
       return str.IndexOfi(mask) != InvalidIndex;

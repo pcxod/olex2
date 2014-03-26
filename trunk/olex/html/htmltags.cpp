@@ -74,7 +74,7 @@ TAG_HANDLER_END(SWITCHINFOE)
 TAG_HANDLER_BEGIN(RECT, "ZRECT")
 TAG_HANDLER_PROC(tag)  {
   if( tag.HasParam(wxT("COORDS")) )  {
-    if( m_WParser->GetContainer()->GetLastChild() != NULL && 
+    if( m_WParser->GetContainer()->GetLastChild() != NULL &&
       EsdlInstanceOf(*m_WParser->GetContainer()->GetLastChild(), THtmlImageCell) )
     {
       THtmlImageCell* ic =
@@ -98,7 +98,7 @@ TAG_HANDLER_END(RECT)
 TAG_HANDLER_BEGIN(CIRCLE, "ZCIRCLE")
 TAG_HANDLER_PROC(tag)  {
   if( tag.HasParam(wxT("COORDS")) )  {
-    if( m_WParser->GetContainer()->GetLastChild() != NULL && 
+    if( m_WParser->GetContainer()->GetLastChild() != NULL &&
       EsdlInstanceOf(*m_WParser->GetContainer()->GetLastChild(), THtmlImageCell) )
     {
       THtmlImageCell* ic =
@@ -106,7 +106,7 @@ TAG_HANDLER_PROC(tag)  {
       TStrList toks(tag.GetParam(wxT("COORDS")), ',');
       if( toks.Count() == 3 )
         ic->AddCircle(
-          toks[0].ToInt(), 
+          toks[0].ToInt(),
           toks[1].ToInt(),
           toks[2].ToFloat(),
           tag.GetParam(wxT("HREF")),
@@ -155,7 +155,7 @@ TAG_HANDLER_PROC(tag)  {
       ObjectName;
     TBasicApp::NewLogEntry() << "Offending input: '" << Tmp << '\'';
   }
-  
+
   if (tag.HasParam(wxT("FLOAT"))) fl = ax;
 
   if( !text.IsEmpty() )  {
@@ -225,7 +225,7 @@ TAG_HANDLER_PROC(tag)  {
   ObjectName = tag.GetParam(wxT("NAME"));
   const olxstr SrcInfo = olxstr(__OlxSrcInfo) << " for input '" << TagName <<
     '[' << ObjectName << "]'";
-  int valign = -1, halign = -1, 
+  int valign = -1, halign = -1,
     fl=0,
     ax=100, ay=20;
   bool width_set = false, height_set = false;
@@ -270,7 +270,7 @@ TAG_HANDLER_PROC(tag)  {
   }
   if( ax == 0 )  ax = 30;
   if( ay == 0 )  ay = 20;
- 
+
   if( tag.HasParam(wxT("FLOAT")) )
     fl = ax;
 
@@ -565,7 +565,7 @@ TAG_HANDLER_PROC(tag)  {
       m_WParser->GetDC()->GetTextExtent(wxs, &w, &h, &desc, &exlead, &fnt);
       int borderx = 12, bordery = 8;
       ((TButton*)Btn)->SetClientSize(w+borderx,h+desc+bordery);
-#endif 
+#endif
       CreatedWindow = (TButton*)Btn;
     }
     CreatedObject = Btn;
@@ -764,7 +764,7 @@ TAG_HANDLER_PROC(tag)  {
       else if (Tmp.IsBool())
         Box->SetChecked(Tmp.ToBool());
       else {
-        TBasicApp::NewLogEntry(logError) << 
+        TBasicApp::NewLogEntry(logError) <<
           (olxstr("Invalid value for boolean: ").quote() << Tmp);
       }
     }

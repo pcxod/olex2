@@ -469,7 +469,7 @@ bool TLst::ExportHTML( const short Param, TStrList &Html, bool TableDef)  {
 }
 //..............................................................................
 void TLst::SynchroniseOmits(RefinementModel& rm)  {
-  for( size_t i=0; i < FDRefs.Count(); i++ )  
+  for( size_t i=0; i < FDRefs.Count(); i++ )
     FDRefs[i].Deleted = false;
   for( size_t i=0; i < rm.OmittedCount(); i++ )  {
     const vec3i& r = rm.GetOmitted(i);

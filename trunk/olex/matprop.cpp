@@ -157,8 +157,8 @@ void TdlgMatProp::Init()  {
   tcEmmB = new TTextEdit(this);  tcEmmB->SetReadOnly(true);  tcEmmB->OnClick.Add(this);
   tcSpecF = new TTextEdit(this); tcSpecF->SetReadOnly(true); tcSpecF->OnClick.Add(this);
   tcSpecB = new TTextEdit(this); tcSpecB->SetReadOnly(true); tcSpecB->OnClick.Add(this);
-  tcShnF = new TTextEdit(this);  tcShnF->SetReadOnly(false); 
-  tcShnB = new TTextEdit(this);  tcShnB->SetReadOnly(false); 
+  tcShnF = new TTextEdit(this);  tcShnF->SetReadOnly(false);
+  tcShnB = new TTextEdit(this);  tcShnB->SetReadOnly(false);
 
   wxBoxSizer *Sizer0 = NULL;
   if( cbPrimitives != NULL )  {
@@ -235,7 +235,7 @@ void TdlgMatProp::Init()  {
   grid->Add(cbShnB, 0, wxALL, Border);
   grid->Add(tcShnB, 0, wxEXPAND | wxALL, Border);
   grid->Add(-1,10);
-  
+
   grid->Add(cbTrans, 0, wxALL, Border);
   grid->Add(scTrans, 0, wxEXPAND | wxALL, Border);
   grid->Add(-1,10);
@@ -244,7 +244,7 @@ void TdlgMatProp::Init()  {
   grid->AddGrowableCol(2);
   grid->AddGrowableCol(4);
   grid->AddGrowableCol(5);
-  
+
   wxBoxSizer *ButtonsSizer = new wxBoxSizer(wxHORIZONTAL);
   ButtonsSizer->Add(new wxButton(this, wxID_OK, wxT("OK") ), 0, wxEXPAND | wxALL, Border);
   ButtonsSizer->Add(new wxButton(this, wxID_CANCEL, wxT("Cancel") ), 0, wxEXPAND | wxALL, Border);
@@ -261,7 +261,7 @@ void TdlgMatProp::Init()  {
 }
 //..............................................................................
 TdlgMatProp::~TdlgMatProp()  {
-  if( cbPrimitives != NULL )  
+  if( cbPrimitives != NULL )
     cbPrimitives->OnChange.Clear();
   scTrans->OnChange.Clear();
   tcAmbF->OnClick.Clear();
@@ -298,7 +298,7 @@ bool TdlgMatProp::Execute(const IEObject *Sender, const IEObject *Data,
     }
   }
   if( (TSpinCtrl*)Sender == scTrans )  {
-    for( size_t i=0; i < SpinCtrls.Count(); i++ ) 
+    for( size_t i=0; i < SpinCtrls.Count(); i++ )
       SpinCtrls[i]->SetValue(scTrans->GetValue());
   }
   return true;

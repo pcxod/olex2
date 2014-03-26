@@ -65,7 +65,7 @@ void SFUtil::ExpandToP1(const TArrayList<vec3i>& hkl, const TArrayList<compd>& F
   //    }
   //    else
   //      out[ind].val = F[i];
-  //  }  
+  //  }
   //}
   //end test
 }
@@ -122,7 +122,7 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
     for( size_t i=0; i < hklLoop->RowCount(); i++ )  {
       const cif_dp::CifRow& row = (*hklLoop)[i];
       TReflection& ref = refs.AddNew(row[hInd]->GetStringValue().ToInt(),
-        row[kInd]->GetStringValue().ToInt(), 
+        row[kInd]->GetStringValue().ToInt(),
         row[lInd]->GetStringValue().ToInt(),
         row[mfInd]->GetStringValue().ToDouble(),
         row[sfInd]->GetStringValue().ToDouble());
@@ -178,7 +178,7 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
       twin.detwin_and_merge(twinning::detwinner_shelx(),
         RefMerger::ShelxMerger(), refs, Fc, &F);
     }
-   
+
     //xapp.XFile().GetRM().DetwinRatio(refs, F, ms, info_ex);
     //xapp.XFile().GetRM().DetwinAlgebraic(refs, ms, info_ex);
 
@@ -236,7 +236,7 @@ void SFUtil::PrepareCalcSF(const TAsymmUnit& au, double* U, ElementPList& scatte
   BM[0] *= BM[0];
   BM[1] *= BM[1];
   BM[2] *= BM[2];
-  
+
   au.GetAtoms().ForEach(ACollectionItem::TagSetter(0));
   if (au.GetRefMod() && !au.GetRefMod()->OmittedAtoms().IsEmpty()) {
     TTypeList<ExplicitCAtomRef> l =
@@ -255,7 +255,7 @@ void SFUtil::PrepareCalcSF(const TAsymmUnit& au, double* U, ElementPList& scatte
     }
     ca.SetTag(ind);
     ind = alist.Count()*6;
-    alist.Add(&ca); 
+    alist.Add(&ca);
     TEllipsoid* elp = ca.GetEllipsoid();
     if( elp != NULL )  {
       elp->GetShelxQuad(quad);  // default is Ucart

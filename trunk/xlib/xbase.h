@@ -129,7 +129,7 @@ public:
   virtual ~TBasicNode()  {}
 
   void Assign(const TBasicNode& S)  {}
-  
+
   void Clear()  {
     Nodes.Clear();
     Bonds.Clear();
@@ -143,10 +143,10 @@ public:
     return Nodes.IndexOf(N) != InvalidIndex;
   }
   inline void NullNode(size_t i)  {  Nodes[i] = NULL; }
-  inline bool NullNode(const NodeType& N)  {  
+  inline bool NullNode(const NodeType& N)  {
     size_t ind = Nodes.IndexOf(N);
     if( ind != InvalidIndex )  {
-      Nodes[ind] = NULL; 
+      Nodes[ind] = NULL;
       return true;
     }
     return false;
@@ -159,15 +159,15 @@ public:
   inline BondType& AddBond(BondType& N)  {  return *Bonds.Add(N);  }
   const TPtrList<BondType>& GetBonds() const {  return Bonds;  }
   inline void NullBond(size_t i)  {  Bonds[i] = NULL;  }
-  inline bool NullBond(const BondType& N) {  
+  inline bool NullBond(const BondType& N) {
     const size_t ind = Bonds.IndexOf(N);
     if( ind != InvalidIndex )  {
-      Bonds[ind] = NULL; 
+      Bonds[ind] = NULL;
       return true;
     }
     return false;
   }
-  inline void PackBonds()  {  Bonds.Pack();  } 
+  inline void PackBonds()  {  Bonds.Pack();  }
   inline void ClearBonds()  {  Bonds.Clear();  }
 
   inline void SetCapacity(size_t v)  {
@@ -188,5 +188,3 @@ struct WBoxInfo  {
 EndXlibNamespace()
 
 #endif
-
- 

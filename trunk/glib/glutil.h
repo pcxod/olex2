@@ -52,7 +52,7 @@ public:
   }
   static void RenderEx(const TTypeList<vec_t>& vecs,
     const TTypeList<IndexTriangle>& triags,
-    const TArrayList<vec_t>& norms, 
+    const TArrayList<vec_t>& norms,
     const vec_t& f_mask, const vec_t& t_mask)
   {
     const size_t tc = triags.Count();

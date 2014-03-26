@@ -86,7 +86,7 @@ public:
     Data.SetCount(l.Count());
     for (size_t i=0; i < l.Count(); i++)
       Data[i] = new EntryType(*l.Data[i]);
-    return *this; 
+    return *this;
   }
 //..............................................................................
   virtual ~TSTypeList()  {  Data.DeleteItems();  }

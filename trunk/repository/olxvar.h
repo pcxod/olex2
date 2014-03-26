@@ -63,7 +63,7 @@ public:
     if( Obj != NULL )  Py_INCREF(Obj);
     return *this;
   }
-  
+
   ~TOlxPyVar();
   PyObject* GetObj()  {  return Obj;  }
   PyObject* GetObjVal();
@@ -81,7 +81,7 @@ struct TOlxVarChangeData : public IEObject  {
   TOlxVarChangeData(const olxstr& v_name, const olxstr& v_val, PyObject* p_val)
     : str_val(v_val), var_name(v_name), py_val(p_val) {}
 };
-   
+
 class TOlxVars : public IEObject  {
   // this object is a singleton
   static TOlxVars* Instance;

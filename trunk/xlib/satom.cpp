@@ -15,7 +15,7 @@
 #include "unitcell.h"
 #include "pers_util.h"
 #include "index_range.h"
-          
+
 TSAtom::TSAtom(TNetwork *N)
   : TBasicNode<TNetwork, TSAtom, TSBond>(N),
     Matrix(NULL)
@@ -94,7 +94,7 @@ void TSAtom::ToDataItem(TDataItem& item) const {
 #ifdef _DEBUG
   const TAsymmUnit &au = *FCAtom->GetParent();
   for (size_t i=0; i < au.AtomCount(); i++) {
-    if (au.GetAtom(i).GetTag() == FCAtom->GetTag() && 
+    if (au.GetAtom(i).GetTag() == FCAtom->GetTag() &&
       &au.GetAtom(i) != FCAtom)
     {
       throw TFunctionFailedException(__OlxSourceInfo, "assert");

@@ -55,7 +55,7 @@ class CifAngle : public ACifValue {
   const TCAtom &left, &middle, &right;
   smatd mat_l, mat_r;
 public:
-  CifAngle(const TCAtom& _l, const TCAtom& _m, const TCAtom& _r, 
+  CifAngle(const TCAtom& _l, const TCAtom& _m, const TCAtom& _r,
     const smatd& _lm, const smatd& _rm, const TEValueD& _d) :
     ACifValue(_d),
     left(_l),
@@ -82,7 +82,7 @@ public:
   virtual size_t Count() const {  return 3;  }
   virtual bool Match(const TSAtomCPList& atoms) const {
     if( atoms.Count() != 3 )  return false;
-    return DoesMatch(*atoms[0], *atoms[1], *atoms[2]) || 
+    return DoesMatch(*atoms[0], *atoms[1], *atoms[2]) ||
            DoesMatch(*atoms[2], *atoms[1], *atoms[0]);
   }
 };

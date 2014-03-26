@@ -80,14 +80,14 @@ public:
 
   // rotation around an arbitrary vector, New = Current*m
   template <class VC> void Rotate(const VC& V, double angle)  {
-    mat3d m;  
+    mat3d m;
     olx_create_rotation_matrix(m, V, cos(angle), sin(angle) );
     FMatrix *= m;
   }
 
   // rotation around an arbitrary vector New = m*Current
   template <class VC> void RotateT(const VC& V, double angle)  {
-    mat3d m;  
+    mat3d m;
     olx_create_rotation_matrix(m, V, cos(angle), sin(angle));
     FMatrix = m * FMatrix;
   }
@@ -102,7 +102,7 @@ public:
   void Reset();
   void ResetAngles()  {  FRX = FRY = FRZ = 0;  }
   template <class VC> void OrientNormal(const VC& normal)  {
-    SetMatrix(CalcBasis<VC, mat3d>(normal).Transpose());  
+    SetMatrix(CalcBasis<VC, mat3d>(normal).Transpose());
   }
   // give a normal calculates two other vectors to form orthogonal basis...
   template <typename VecType, typename MatType> static MatType CalcBasis(const VecType& normal)  {

@@ -56,7 +56,7 @@ TGlGroup::~TGlGroup()  {
   if( GetParentGroup() != NULL )
     GetParentGroup()->Remove(*this);
   Clear();
-} 
+}
 //..............................................................................
 void TGlGroup::Clear()  {
   Objects.ForEach(ObjectReleaser());
@@ -112,7 +112,7 @@ bool TGlGroup::Add(AGDrawObject& GO, bool remove)  {
 //..............................................................................
 void TGlGroup::SetVisible(bool On)  {
   for( size_t i=0; i < Objects.Count(); i++ )
-    Objects[i]->SetVisible(On); 
+    Objects[i]->SetVisible(On);
   AGDrawObject::SetVisible(On);
 }
 //..............................................................................

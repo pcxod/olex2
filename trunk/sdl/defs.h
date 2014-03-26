@@ -30,7 +30,7 @@
 #endif
 
 #ifndef __WIN32__
-  #ifdef __WINDOWS__  
+  #ifdef __WINDOWS__
     #define __WIN32__ 1
   #endif
 #endif

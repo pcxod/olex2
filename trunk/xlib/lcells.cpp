@@ -609,7 +609,7 @@ void IndexManager::Search(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &E)
 {
   const double vd = Options.FindValue('d', '1').ToDouble();
-  Index::PrintResults(Search(DefaultCfgName(), Cmds, vd)); 
+  Index::PrintResults(Search(DefaultCfgName(), Cmds, vd));
 }
 //.............................................................................
 void IndexManager::Search(const TStrObjList &Params, TMacroError &E)  {
@@ -656,7 +656,7 @@ void IndexManager::Update(TStrObjList &Cmds, const TParamList &Options,
       return;
     }
     else
-      cfg_name = Cmds[0]; 
+      cfg_name = Cmds[0];
   }
   else if( Cmds.Count() == 2 )  {
     if( TEFile::IsDir(Cmds[0]) )  {

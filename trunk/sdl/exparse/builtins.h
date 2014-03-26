@@ -21,8 +21,8 @@ namespace exparse  {
       IConstFunc(IEvaluable* _arg) : arg(_arg) {
         arg->inc_ref();
       }
-      ~IConstFunc()  {  
-        if( arg->dec_ref() == 0 )  delete arg;  
+      ~IConstFunc()  {
+        if( arg->dec_ref() == 0 )  delete arg;
       }
     };
     struct IConstFunc2 : public ANumberEvaluator  {
@@ -31,9 +31,9 @@ namespace exparse  {
         a->inc_ref();
         b->inc_ref();
       }
-      ~IConstFunc2()  {  
-        if( a->dec_ref() == 0 )  delete a;  
-        if( b->dec_ref() == 0 )  delete b;  
+      ~IConstFunc2()  {
+        if( a->dec_ref() == 0 )  delete a;
+        if( b->dec_ref() == 0 )  delete b;
       }
     };
     struct AbsFunc : public IConstFunc  {
@@ -225,11 +225,11 @@ namespace exparse  {
     static bool is_logical(const olxstr& name) {
       return name == "||" || name == "&&" || name == '!';
     }
-    static bool is_cmp(const olxstr& name) {  
+    static bool is_cmp(const olxstr& name) {
       return name == "==" || name == "!=" || name == '>' || name == '<' ||
         name == ">=" || name == "<=";
     }
-    static bool is_arithmetic(const olxstr& name) {  
+    static bool is_arithmetic(const olxstr& name) {
       return name == '+' || name == '-' || name == '*' || name == '/' ||
         name == '%';
     }

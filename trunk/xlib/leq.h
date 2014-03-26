@@ -46,7 +46,7 @@ public:
   short relation_type; // relationAsVar or relation_AsOneMinusVar
   double coefficient; // like 0.25 in 20.25
   XVarReference(XVar& parent, IXVarReferencer& r, short _var_index,
-    short _relation_type, double coeff=1.0) : 
+    short _relation_type, double coeff=1.0) :
     Parent(parent),
     referencer(r),
     var_index(_var_index),
@@ -165,12 +165,12 @@ class XVarManager {
 public:
 
   class RefinementModel& RM;
-  
+
   static olxstr RelationNames[];
   static short RelationIndex(const olxstr& rn);
-  
+
   XVarManager(RefinementModel& rm);
-  
+
   XVar& NewVar(double val = 0.5)  {
     XVar* v = new XVar(*this, val);
     v->SetId(Vars.Count());
@@ -228,7 +228,7 @@ public:
     return ref;
   }
   // releases a reference to the variable, must be deleted, unless restored
-  XVarReference* ReleaseRef(IXVarReferencer& r, short var_name); 
+  XVarReference* ReleaseRef(IXVarReferencer& r, short var_name);
   // restrores previously released var reference
   void RestoreRef(IXVarReferencer& r, short var_name, XVarReference* vr);
   // removes all unused variables and invalid/incomplete equations
@@ -251,7 +251,7 @@ public:
     for( size_t i=0; i < fvar.Count(); i++, NextVar++ )  {
       if( Vars.Count() <= NextVar )
         NewVar(fvar[i].ToDouble());
-      else 
+      else
         Vars[NextVar].SetValue(fvar[i].ToDouble());
     }
   }

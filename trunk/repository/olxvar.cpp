@@ -263,4 +263,3 @@ TLibrary *TOlxVars::ExportLibrary(const olxstr &name, TLibrary *_l) {
       "is not saved."));
   return l;
 }
-

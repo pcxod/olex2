@@ -96,7 +96,7 @@ public:
   /* find an entry by the key, if entry is not found and closest is provided,
   closest is initlised with the entry to accept the key for the next add operation */
   O* Find(const C& key, Entry** insertPoint=NULL)  {
-    if( _Count == 0 )  {  
+    if( _Count == 0 )  {
       if( insertPoint ) *insertPoint = &Root;
       return NULL;
     }
@@ -147,7 +147,7 @@ public:
     Tree.Clear();
     _Count = 0;
   }
-  
+
   inline const YEntry* GetRoot() const {  return Tree.GetRoot();  }
   inline int Count()            const {  return _Count;  }
 
@@ -225,7 +225,7 @@ public:
     Tree.Clear();
     _Count = 0;
   }
-  
+
   inline const ZEntry* GetRoot() const {  return Tree.GetRoot();  }
   inline int Count()            const {  return _Count;  }
 

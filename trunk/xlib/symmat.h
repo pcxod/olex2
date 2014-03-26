@@ -42,7 +42,7 @@ public:
   TVector3<VC> operator * (const TVector3<AT>& a) const {
     return TVector3<VC>(r*a).operator +=(t);
   }
-  
+
   TSymmMat operator * (const TSymmMat& v) const {
     return TSymmMat(r*v.r, r*v.t+t);
   }
@@ -68,7 +68,7 @@ public:
   bool Equals(const TSymmMat& v, VC eps=1e-3) const {
     return (r == v.r && t.Equals(v.t, eps));
   }
-  
+
   TSymmMat& operator = (const TSymmMat& sm)  {
     t = sm.t;
     r = sm.r;
@@ -76,19 +76,19 @@ public:
     return *this;
   }
 
-  template <class AMC, class AVC> 
+  template <class AMC, class AVC>
   TSymmMat& operator = (const TSymmMat<AMC,AVC>& sm)  {
     t = sm.t;
     r = sm.r;
     Id = sm.GetId();
     return *this;
   }
-  
+
   template <class AT> void operator *= (AT v) {
     r *= v;
     t *= v;
   }
-  
+
   TSymmMat& I()  {
     r.I();
     t.Null();
@@ -98,19 +98,19 @@ public:
     return (r.IsI() && t.QLength() < 1e-6);
   }
   static TSymmMat Identity()  { return  TSymmMat(TMatrix33<MC>::Idenity()); }
-  
+
   TSymmMat& Null()  {
     r.Null();
     t.Null();
     return *this;
   }
-  
+
   TSymmMat Inverse() const  {
     TSymmMat rv(r.Inverse(), t*-1);
     rv.t = rv.r * rv.t;
     return rv;
   }
-  
+
   static TSymmMat& Inverse(TSymmMat& m)  {
     m.r = m.r.Inverse();
     m.t = ((m.r*m.t) *= -1);
@@ -194,7 +194,7 @@ public:
       if( (tmp[0] < v[0]) ||  // standardise then ...
         (olx_abs(tmp[0]-v[0]) < 1e-3 && (tmp[1] < v[1])) ||
         (olx_abs(tmp[0]-v[0]) < 1e-3 &&
-         olx_abs(tmp[1]-v[1]) < 1e-3 && (tmp[2] < v[2])) )    
+         olx_abs(tmp[1]-v[1]) < 1e-3 && (tmp[2] < v[2])) )
       {
         v = tmp;
       }

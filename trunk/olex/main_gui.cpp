@@ -36,7 +36,7 @@ void TMainForm::OnGenerate(wxCommandEvent& WXUNUSED(event))  {
       olxstr::FormatFloat(1, G->GetATo()) <<
       olxstr::FormatFloat(1, G->GetBFrom()) <<
       olxstr::FormatFloat(1, G->GetBTo()) <<
-      olxstr::FormatFloat(1, G->GetCFrom()) << 
+      olxstr::FormatFloat(1, G->GetCFrom()) <<
       olxstr::FormatFloat(1, G->GetCTo()));
   }
   G->Destroy();
@@ -79,7 +79,7 @@ void TMainForm::OnViewAlong(wxCommandEvent& event) {
 void TMainForm::OnAtomOccuChange(wxCommandEvent& event)  {
   TXAtom *XA = dynamic_cast<TXAtom*>(FObjectUnderMouse);
   if( XA == NULL )  return;
-  olxstr Tmp = ((event.GetId() == ID_AtomOccuFix) ? "fix " : 
+  olxstr Tmp = ((event.GetId() == ID_AtomOccuFix) ? "fix " :
                 (event.GetId() == ID_AtomOccuFree) ? "free " : "fix ");
   Tmp << "occu ";
   double val = 0;
@@ -288,7 +288,7 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
       MatProp->SetCurrent(((TGlGroup*)FObjectUnderMouse)->GetGlM());
     if( MatProp->ShowModal() == wxID_OK )  {
       if( EsdlInstanceOf(*FObjectUnderMouse, TXAtom) )
-        ;//FXApp->SynchroniseBonds((TXAtom*)FObjectUnderMouse);  
+        ;//FXApp->SynchroniseBonds((TXAtom*)FObjectUnderMouse);
     }
     MatProp->Destroy();
     TimePerFrame = FXApp->Draw();
@@ -392,7 +392,7 @@ void TMainForm::ObjectUnderMouse(AGDrawObject *G)  {
     if( XA->GetType() == iQPeakZ )  {
       T << ": " << olxstr::FormatFloat(3, XA->CAtom().GetQPeak());
     }
-    else 
+    else
       T << " Occu: " << TEValueD(XA->CAtom().GetOccu(), XA->CAtom().GetOccuEsd()).ToString();
     miAtomInfo->SetText(T.u_str());
     pmAtom->Enable(ID_AtomGrow, !XA->IsGrown());
@@ -552,9 +552,9 @@ void TMainForm::OnAtomTypePTable(wxCommandEvent& event)  {
   TXAtom *XA = (TXAtom*)FObjectUnderMouse;
   if( XA == NULL )  return;
   olxstr Tmp = "name ";
-  if( XA->IsSelected() )  
+  if( XA->IsSelected() )
     Tmp << "sel";
-  else                  
+  else
     Tmp << "#s" << XA->GetOwnerId();
   Tmp << ' ';
   TPTableDlg *Dlg = new TPTableDlg(this);
@@ -686,7 +686,7 @@ void TMainForm::OnSelection(wxCommandEvent& m)  {
     TGlGroup *GlR = NULL;
     if( FObjectUnderMouse != NULL && EsdlInstanceOf(*FObjectUnderMouse, TGlGroup) )
       FXApp->UnGroup(*((TGlGroup*)FObjectUnderMouse));
-    else      
+    else
       FXApp->UnGroupSelection();
   }
   else if( m.GetId() == ID_SelLabel )  {

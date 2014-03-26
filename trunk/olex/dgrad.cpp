@@ -19,7 +19,7 @@ END_EVENT_TABLE()
 
 TdlgGradient::TdlgGradient(TMainFrame *ParentFrame):
   TDialog(ParentFrame, wxT("Gradient"), EsdlClassName(TdlgGradient).u_str())
-{                 
+{
   AActionHandler::SetToDelete(false);
   short Border = 3;
 
@@ -40,9 +40,9 @@ TdlgGradient::TdlgGradient(TMainFrame *ParentFrame):
 
   GridSizer->Add( stcA, 0, wxALIGN_CENTER_VERTICAL | wxRight, 2 );
   GridSizer->Add( tcA, 1, wxEXPAND | wxALL, 0 );
-  GridSizer->Add( stcB, 0, wxALIGN_CENTER_VERTICAL | wxRight, 2 );  
+  GridSizer->Add( stcB, 0, wxALIGN_CENTER_VERTICAL | wxRight, 2 );
   GridSizer->Add( tcB, 1, wxEXPAND | wxALL, 0 );
-  
+
   GridSizer->AddGrowableCol(1);
   GridSizer->AddGrowableCol(3);
 

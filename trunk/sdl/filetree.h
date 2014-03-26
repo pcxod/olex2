@@ -194,7 +194,7 @@ public:
   TActionQueue &OnExpand, // called when the OS folder structure is traversed
     &OnSynchronise, // called when fodlers are merged
     &OnFileCopy,   // called in file copy process
-    &OnFileCompare, // called in the comparison process 
+    &OnFileCompare, // called in the comparison process
     &OnCompare, // called when files are being compared
     &OnDelete;  // called when recursive folder deletion is executed
 
@@ -229,9 +229,9 @@ public:
   //...........................................................................
   /* if do_throw is true, the processes will be terminated on the first error
   else all what is possible will be copied */
-  bool CopyTo(const olxstr& _dest, 
-    void (*AfterCopy)(const olxstr& src, const olxstr& dest)=NULL, 
-    bool do_throw=true)  
+  bool CopyTo(const olxstr& _dest,
+    void (*AfterCopy)(const olxstr& src, const olxstr& dest)=NULL,
+    bool do_throw=true)
   {
     TOnProgress OnSync;
     OnSync.SetMax(Root.CalcSize());

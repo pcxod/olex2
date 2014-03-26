@@ -85,9 +85,9 @@ const cm_Element &alg::find_heaviest(const TCAtomPList &atoms) {
 }
 //.............................................................................
 bool alg::check_geometry(const TCAtom &a, const cm_Element &e) {
-  double diff = rate_envi(a.GetParent()->GetLattice().GetUnitCell(), 
+  double diff = rate_envi(a.GetParent()->GetLattice().GetUnitCell(),
     a.ccrd(), e.r_bonding+1.3) -
-      rate_envi(a.GetParent()->GetLattice().GetUnitCell(), 
+      rate_envi(a.GetParent()->GetLattice().GetUnitCell(),
       a.ccrd(), a.GetType().r_bonding+1.3);
   return diff > -0.05;
 }
@@ -643,8 +643,8 @@ bool fragments::fragment::is_regular() const {
     // finally - check the angles...
     vec3d v1 = crds[indices[0]]-cnt;
     // cos 120 = -0.5, +- 10
-    if ((v1.CAngle(crds[indices[1]]-cnt)+0.5) > 0.16) return false; 
-    if ((v1.CAngle(crds[indices[2]]-cnt)+0.5) > 0.16) return false; 
+    if ((v1.CAngle(crds[indices[1]]-cnt)+0.5) > 0.16) return false;
+    if ((v1.CAngle(crds[indices[2]]-cnt)+0.5) > 0.16) return false;
     return true;
   }
   // some spherical arrangement test
@@ -705,7 +705,7 @@ bool fragments::fragment::is_flat() const {
   if (crds.Count() <= 3) {
     return true;
   }
-  else { 
+  else {
     TArrayList<olx_pair_t<vec3d, double> > points(crds.Count());
     for (size_t i=0; i < crds.Count(); i++) {
       points[i].a = crds[i];

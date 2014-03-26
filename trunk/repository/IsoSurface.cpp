@@ -314,7 +314,7 @@ const int CIsoSurface::m_triTable[256][16] = {
   {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1}
 };
 //..............................................................................
-CIsoSurface::CIsoSurface(TArray3D<float>& points) : 
+CIsoSurface::CIsoSurface(TArray3D<float>& points) :
   DimmX(points.Length1()), DimmY(points.Length2()), DimmZ(points.Length3()),
   ZSlice(DimmY*DimmX),
   Points(points)
@@ -348,7 +348,7 @@ void CIsoSurface::GenerateSurface(float tIsoLevel)  {
           if( D[x][y+1][z+1] > m_tIsoLevel)    tableIndex |= 32;
           if( D[x+1][y+1][z+1] > m_tIsoLevel)  tableIndex |= 64;
           if( D[x+1][y][z+1] > m_tIsoLevel)    tableIndex |= 128;
-        }  
+        }
         else {
           if( D[x][y][z] < m_tIsoLevel)        tableIndex |= 1;
           if( D[x][y+1][z] < m_tIsoLevel)      tableIndex |= 2;
@@ -375,11 +375,11 @@ void CIsoSurface::GenerateSurface(float tIsoLevel)  {
         if( y == ymo ) {
           if( eid & 2 )  AddSurfacePoint(x,y,z, 1);
           if( eid & 512 ) AddSurfacePoint(x,y,z, 9);
-          if( (z == zmo) && (eid & 32) )  AddSurfacePoint(x,y,z, 5); 
+          if( (z == zmo) && (eid & 32) )  AddSurfacePoint(x,y,z, 5);
         }
 
         if( z == zmo ) {
-          if( eid & 16 )  AddSurfacePoint(x,y,z, 4);  
+          if( eid & 16 )  AddSurfacePoint(x,y,z, 4);
           if( eid & 128 ) AddSurfacePoint(x,y,z, 7);
         }
         for (unsigned int i = 0; m_triTable[tableIndex][i] != -1; i += 3) {
@@ -393,7 +393,7 @@ void CIsoSurface::GenerateSurface(float tIsoLevel)  {
           AllTriangles.Add(triangle);
         }
       }
-  
+
   RenameVerticesAndTriangles();
   CalculateNormals();
   m_bValidSurface = true;
@@ -479,11 +479,11 @@ void CIsoSurface::AddSurfacePoint(unsigned int nX, unsigned int nY,
   }
   float val1 = Points.Data[v1x][v1y][v1z];
   float val2 = Points.Data[v2x][v2y][v2z];
-  if( olx_abs(m_tIsoLevel-val1) < 0.01 )  
+  if( olx_abs(m_tIsoLevel-val1) < 0.01 )
     IsoPoints.Add(nX, nY, nZ, nEdgeNo, (float)v1x, (float)v1y, (float)v1z);
-  else if( olx_abs(m_tIsoLevel-val2) < 0.01 )  
+  else if( olx_abs(m_tIsoLevel-val2) < 0.01 )
     IsoPoints.Add(nX, nY, nZ, nEdgeNo, (float)v2x, (float)v2y, (float)v2z);
-  else if( olx_abs(val1-val2) < 0.01 )         
+  else if( olx_abs(val1-val2) < 0.01 )
     IsoPoints.Add(nX, nY, nZ, nEdgeNo, (float)v1x, (float)v1y, (float)v1z);
   else  {
     const float mu =  (m_tIsoLevel-val1)/(val2-val1);

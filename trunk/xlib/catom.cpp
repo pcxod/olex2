@@ -44,7 +44,7 @@ TCAtom::TCAtom(TAsymmUnit* _Parent) : Parent(_Parent)  {
 }
 //..............................................................................
 TCAtom::~TCAtom()  {
-  if( DependentHfixGroups != NULL )  delete DependentHfixGroups; 
+  if( DependentHfixGroups != NULL )  delete DependentHfixGroups;
   if( ConnInfo != NULL )  delete ConnInfo;
   if( Equivs != NULL )  delete Equivs;
 }
@@ -98,7 +98,7 @@ void TCAtom::AssignEquivs(const TCAtom& S)  {
   }
 }
 //..............................................................................
-void TCAtom::ClearEquivs()  {  
+void TCAtom::ClearEquivs()  {
   if(Equivs != NULL )  {
     delete Equivs;
     Equivs = NULL;
@@ -240,8 +240,8 @@ PyObject* TCAtom::PyExport(bool export_attached_sites)  {
   else  {
     double Q[6], E[6];
     GetEllipsoid()->GetShelxQuad(Q, E);
-    PythonExt::SetDictItem(main, "adp", 
-      Py_BuildValue("(dddddd)(dddddd)", Q[0], Q[1], Q[2], Q[3], Q[4], Q[5], 
+    PythonExt::SetDictItem(main, "adp",
+      Py_BuildValue("(dddddd)(dddddd)", Q[0], Q[1], Q[2], Q[3], Q[4], Q[5],
        E[0], E[1], E[2], E[3], E[4], E[5]
       ) );
   }
@@ -264,10 +264,10 @@ PyObject* TCAtom::PyExport(bool export_attached_sites)  {
       if( mat.IsFirst() )
         PyTuple_SetItem(neighbours, cnt++, Py_BuildValue("i", s.atom->GetTag()));
       else  {
-        PyTuple_SetItem(neighbours, cnt++, 
+        PyTuple_SetItem(neighbours, cnt++,
           Py_BuildValue("OOO", Py_BuildValue("i", s.atom->GetTag()),
             Py_BuildValue("(ddd)", crd[0], crd[1], crd[2]),
-            Py_BuildValue("(iii)(iii)(iii)(ddd)", 
+            Py_BuildValue("(iii)(iii)(iii)(ddd)",
               mat.r[0][0], mat.r[0][1], mat.r[0][2],
               mat.r[1][0], mat.r[1][1], mat.r[1][2],
               mat.r[2][0], mat.r[2][1], mat.r[2][2],
@@ -432,7 +432,7 @@ void TCAtom::UpdateAttachedSites()  {
     for( size_t j=0; j < AttachedSites.Count(); j++ )  {
       if( &toDelete[i].to == AttachedSites[j].atom )  {
         if( (toDelete[i].matr == NULL && AttachedSites[j].matrix.IsFirst()) ||
-            (toDelete[i].matr != NULL && 
+            (toDelete[i].matr != NULL &&
              toDelete[i].matr->GetId() == AttachedSites[j].matrix.GetId()))
         {
           AttachedSites.Delete(j);
@@ -521,7 +521,7 @@ olxstr TGroupCAtom::GetFullLabel(const RefinementModel& rm,
 
   olxstr name(Atom->GetLabel());
   if( resiName.IsNumber() )  {
-    if( Atom->GetResiId() == 0 || 
+    if( Atom->GetResiId() == 0 ||
       (Atom->GetParent()->GetResidue(
         Atom->GetResiId()).GetNumber() == resiName.ToInt()) )
     {
@@ -535,7 +535,7 @@ olxstr TGroupCAtom::GetFullLabel(const RefinementModel& rm,
     }
   }
   else  {
-    if( !olx_is_valid_index(Atom->GetResiId()) || 
+    if( !olx_is_valid_index(Atom->GetResiId()) ||
       (!resiName.IsEmpty() && Atom->GetParent()->GetResidue(
         Atom->GetResiId()).GetClassName().Equalsi(resiName)) )
     {
@@ -570,7 +570,7 @@ double TCAtom::GetValue(size_t var_index) const {
     case catom_var_name_Y:     return Center[1];
     case catom_var_name_Z:     return Center[2];
     case catom_var_name_Sof:   return Occu;
-    case catom_var_name_Uiso:  return Uiso;  
+    case catom_var_name_Uiso:  return Uiso;
     case catom_var_name_U11:
     case catom_var_name_U22:
     case catom_var_name_U33:
@@ -591,7 +591,7 @@ void TCAtom::SetValue(size_t var_index, const double& val) {
     case catom_var_name_Y:     Center[1] = val;  break;
     case catom_var_name_Z:     Center[2] = val;  break;
     case catom_var_name_Sof:   Occu = val;  break;
-    case catom_var_name_Uiso:  Uiso = val;  break;  
+    case catom_var_name_Uiso:  Uiso = val;  break;
     case catom_var_name_U11:
     case catom_var_name_U22:
     case catom_var_name_U33:

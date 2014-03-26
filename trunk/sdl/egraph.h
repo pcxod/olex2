@@ -88,9 +88,9 @@ public:
     TTypeList<TSizeList>& res)
   {
     TSizeList permutation;
-    size_t total_perm = 1, 
+    size_t total_perm = 1,
         total_perm_size = 0,
-        perm_size = 0, 
+        perm_size = 0,
         group_size = 1;
     for( size_t i=0; i < conn.Count(); i++ )  {
       total_perm *= olx_factorial_t<size_t, size_t>(conn[i].GetA().Count());
@@ -137,7 +137,7 @@ public:
   bool IsMutable() const {  return Mutable;  }
   size_t GetGroupIndex() const {  return GroupIndex;  }
   void SetRingNode()  {  RingNode = true;  }
-  
+
   TEGraphNode& NewNode(const IC& Data, const AssociatedOC& obj)  {
     return *Nodes.Add(new TEGraphNode(Data, obj));
   }

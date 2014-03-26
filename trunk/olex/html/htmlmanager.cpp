@@ -1171,13 +1171,13 @@ TLibrary *THtmlManager::ExportLibrary(const olxstr &name) {
     " [html normal_face fixed_face]");
   InitMacroD(Library, THtmlManager, SetBorders, EmptyString(), fpOne|fpTwo,
     "Sets borders between HTML content and window edges");
-  InitMacroD(Library, THtmlManager, DefineControl, 
+  InitMacroD(Library, THtmlManager, DefineControl,
     "v-value&;"
     "i-tems&;"
     "c-checked/down&;"
     "bg-background color&;"
     "fg-foreground color&;"
-    "min-min value&;max-max value", 
+    "min-min value&;max-max value",
     fpTwo,
     "Defines a managed control properties"
   );
@@ -1186,7 +1186,7 @@ TLibrary *THtmlManager::ExportLibrary(const olxstr &name) {
   InitMacroD(Library, THtmlManager, Group, EmptyString(),
     fpAny^(fpNone|fpOne),
     "Creates an exclusive group of buttons");
-  InitMacroD(Library, THtmlManager, LstObj, EmptyString(), 
+  InitMacroD(Library, THtmlManager, LstObj, EmptyString(),
     fpNone|fpOne,
     "Prints the list of available HTML objects");
   this_InitFuncD(GetValue, fpOne,

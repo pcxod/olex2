@@ -107,7 +107,7 @@ class xappXFileLoad: public AActionHandler  {
   int state;
 public:
   xappXFileLoad(TGXApp *Parent) {
-    FParent = Parent;  
+    FParent = Parent;
     AActionHandler::SetToDelete(false);
     GrowInfo = NULL;
     SameFile = false;
@@ -116,7 +116,7 @@ public:
   ~xappXFileLoad()  {
     if( GrowInfo != NULL )
       delete GrowInfo;
-    return;  
+    return;
   }
   bool Enter(const IEObject *Sender, const IEObject *Data, TActionQueue *)  {
     state = 1;
@@ -485,7 +485,7 @@ void TGXApp::CreateObjects(bool centerModel, bool init_visibility)  {
         : (xa.IsAvailable() && xa.CAtom().IsAvailable()));
     }
   }
-  
+
   sw.start("Bonds creation");
   while( bi.HasNext() )  {
     TXBond& xb = bi.Next();
@@ -663,7 +663,7 @@ void TGXApp::CalcProbFactor(double Prob)  {
 //..............................................................................
 /* finds such a value of x at wich the value of integral 4*pi*exp(-x^2/2)*x^2 is
 Prob/100 of the max value, which is sqrt(8*pi^3), max returned value is around
-10 
+10
 */
 double TGXApp::ProbFactor(double Prob) {
   // max of 4pi*int(0,inf)(exp(-x^2/2)*x^2dx) [/(4*pi*100)]
@@ -936,7 +936,7 @@ olxstr TGXApp::GetSelectionInfo(bool list) const {
       if( EsdlInstanceOf(Sel[1], TXPlane) && EsdlInstanceOf(Sel[0], TXPlane) )  {
         TXPlane &a = ((TXPlane&)Sel[0]),
           &b = ((TXPlane&)Sel[1]);
-        
+
         const double ang = a.Angle(b);
         Tmp = "Angle (plane-plane): ";
         Tmp << olxstr::FormatFloat(3, ang) <<
@@ -965,7 +965,7 @@ olxstr TGXApp::GetSelectionInfo(bool list) const {
           "\nDistance (plane[" << macSel_GetPlaneName(a) << "]-centroid): " <<
           olxstr::FormatFloat(3, a.DistanceTo(b.GetCenter())) <<
           "\nShift (plane [" << macSel_GetPlaneName(a) << "]-plane): " <<
-          olxstr::FormatFloat(3, 
+          olxstr::FormatFloat(3,
             sqrt(olx_max(0, a.GetCenter().QDistanceTo(b.GetCenter())
             -
             olx_sqr(a.DistanceTo(b.GetCenter())))));
@@ -973,7 +973,7 @@ olxstr TGXApp::GetSelectionInfo(bool list) const {
           Tmp << "\nDistance (plane[" << macSel_GetPlaneName(b) << "]-centroid): " <<
           olxstr::FormatFloat(3, b.DistanceTo(a.GetCenter())) <<
           "\nShift (plane [" << macSel_GetPlaneName(b) << "]-plane): " <<
-          olxstr::FormatFloat(3, 
+          olxstr::FormatFloat(3,
             sqrt(olx_max(0, a.GetCenter().QDistanceTo(b.GetCenter())
             -
             olx_sqr(b.DistanceTo(a.GetCenter())))));
@@ -1023,7 +1023,7 @@ olxstr TGXApp::GetSelectionInfo(bool list) const {
             &p2 = ((TXPlane&)Sel[1]),
             &p3 = ((TXPlane&)Sel[2]);
           Tmp = "Angle between plane centroids: ";
-          Tmp << olxstr::FormatFloat(3, 
+          Tmp << olxstr::FormatFloat(3,
             olx_angle(p1.GetCenter(), p2.GetCenter(), p3.GetCenter()));
       }
       else if( EsdlInstanceOf(Sel[0], TXPlane) &&
@@ -1032,7 +1032,7 @@ olxstr TGXApp::GetSelectionInfo(bool list) const {
           TXPlane &p1 = ((TXPlane&)Sel[0]),
             &p2 = ((TXPlane&)Sel[2]);
           Tmp = "Angle between plane centroid - atom - plane centroid: ";
-          Tmp << olxstr::FormatFloat(3, 
+          Tmp << olxstr::FormatFloat(3,
             olx_angle(p1.GetCenter(), ((TXAtom&)Sel[1]).crd(), p2.GetCenter()));
       }
     }
@@ -1049,16 +1049,16 @@ olxstr TGXApp::GetSelectionInfo(bool list) const {
           Tmp << macSel_GetName4(a1, a2, a3, a4) << "): ";
           v = olx_dihedral_angle_signed(a1.crd(), a2.crd(), a3.crd(), a4.crd());
           Tmp << olxstr::FormatFloat(3, v);
-          Tmp << 
+          Tmp <<
             "\nAngle (" << macSel_GetName3(a1, a2, a3) << "): " <<
             olxstr::FormatFloat(3, olx_angle(a1.crd(), a2.crd(), a3.crd())) <<
-            "\nAngle (" << macSel_GetName3(a2, a3, a4) << "): " << 
+            "\nAngle (" << macSel_GetName3(a2, a3, a4) << "): " <<
             olxstr::FormatFloat(3, olx_angle(a2.crd(), a3.crd(), a4.crd())) <<
-            "\nDistance (" << macSel_GetName2(a1, a2) << "): " << 
+            "\nDistance (" << macSel_GetName2(a1, a2) << "): " <<
             olxstr::FormatFloat(3, a1.crd().DistanceTo(a2.crd())) <<
-            "\nDistance (" << macSel_GetName2(a2, a3) << "): " << 
+            "\nDistance (" << macSel_GetName2(a2, a3) << "): " <<
             olxstr::FormatFloat(3, a2.crd().DistanceTo(a3.crd())) <<
-            "\nDistance (" << macSel_GetName2(a3, a4) << "): " << 
+            "\nDistance (" << macSel_GetName2(a3, a4) << "): " <<
             olxstr::FormatFloat(3, a3.crd().DistanceTo(a4.crd()));
       }
     }
@@ -1232,7 +1232,7 @@ olxstr TGXApp::GetObjectInfoAt(int x, int y) const {
     rv << "\nn: " << olx_round(n[0], 1000) << ',' << olx_round(n[1], 1000) <<
       ',' << olx_round(n[2], 1000);
 #endif
-  } 
+  }
   else if (EsdlInstanceOf(*G, TXReflection)) {
     rv = ((TXReflection*)G)->GetHKL()[0];
     rv << ' '
@@ -1492,7 +1492,7 @@ void TGXApp::Select(const vec3d& From, const vec3d& To )  {
       if( Cnt[0] < To[0] && Cnt[1] < To[1] &&
           Cnt[0] > From[0] && Cnt[1] > From[1] )  {
         if( !XA.IsSelected() )  {
-          if( XA.GetPrimitives().PrimitiveCount() )  
+          if( XA.GetPrimitives().PrimitiveCount() )
             GetRender().Select(XA);
         }
       }
@@ -1510,7 +1510,7 @@ void TGXApp::Select(const vec3d& From, const vec3d& To )  {
       if( Cnt[0] < To[0] && Cnt[1] < To[1] && Cnt[0] > From[0] && Cnt[1] > From[1] &&
           Cnt1[0] < To[0] && Cnt1[1] < To[1] && Cnt1[0] > From[0] && Cnt1[1] > From[1] )  {
         if( !B.IsSelected() )  {
-          if( B.GetPrimitives().PrimitiveCount() )  
+          if( B.GetPrimitives().PrimitiveCount() )
             GetRender().Select(B);
         }
       }
@@ -1524,7 +1524,7 @@ void TGXApp::Select(const vec3d& From, const vec3d& To )  {
   //    Cnt *= GetRender().GetBasis().GetZoom();
   //    if( Cnt[0] < To[0] && Cnt[1] < To[1] &&
   //        Cnt[0] > From[0] && Cnt[1] > From[1] )  {
-  //      if( !XR.IsSelected() )  
+  //      if( !XR.IsSelected() )
   //        GetRender().Select(XR);
   //    }
   //  }
@@ -1986,7 +1986,7 @@ ConstPtrList<TXAtom> TGXApp::FindXAtoms(const olxstr &Atoms, bool getAll,
       rv.SetCapacity(ai.count);
       while( ai.HasNext() )  {
         TXAtom& xa = ai.Next();
-        if( xa.IsDeleted() )  continue; 
+        if( xa.IsDeleted() )  continue;
         if( !FindHidden && !xa.IsVisible() ) continue;
         rv.Add(xa);
       }
@@ -2616,7 +2616,7 @@ TUndoData* TGXApp::DeleteXObjects(const AGDObjList& L)  {
   atoms.SetCapacity(L.Count());
   bool planes_deleted = false;
   for( size_t i=0; i < L.Count(); i++ )  {
-    if( EsdlInstanceOf(*L[i], TXAtom) )  
+    if( EsdlInstanceOf(*L[i], TXAtom) )
       atoms.Add((TXAtom*)L[i]);
     else if( EsdlInstanceOf(*L[i], TXPlane) )  {
       ((TXPlane*)L[i])->Delete(true);
@@ -2858,7 +2858,7 @@ void TGXApp::SelectAtoms(const olxstr &Names, bool Invert)  {
     if( Invert )
       GetRender().Select(*Sel[i]);
     else
-      if( !Sel[i]->IsSelected() )  
+      if( !Sel[i]->IsSelected() )
         GetRender().Select(*Sel[i]);
   }
 }
@@ -3015,7 +3015,7 @@ ConstPtrList<TXBond> TGXApp::GetBonds(const TStrList& Bonds, bool inc_lines)  {
     if( GPC == NULL )  continue;
     for( size_t i=0; i < GPC->ObjectCount(); i++ )  {
       // check if the right type !
-      if( i == 0 &&  !EsdlInstanceOf(GPC->GetObject(0), TXBond) )  
+      if( i == 0 &&  !EsdlInstanceOf(GPC->GetObject(0), TXBond) )
         break;
       List.Add((TXBond&)GPC->GetObject(i));
     }
@@ -3060,7 +3060,7 @@ void TGXApp::AtomRad(const olxstr& Rad, TXAtomPList* Atoms)  { // pers, sfil
     DS = darCustom;
     r = Rad.ToDouble();
   }
-  else 
+  else
     throw TInvalidArgumentException(__OlxSourceInfo, "rad");
 
   if( Atoms != NULL )  {  // make sure all atoms of selected collections are updated
@@ -3089,7 +3089,7 @@ void TGXApp::AtomRad(const olxstr& Rad, TXAtomPList* Atoms)  { // pers, sfil
         a.SetR(r);
     }
   }
-  if( Atoms == NULL )  { // 
+  if( Atoms == NULL )  { //
     TXAtom::DefZoom(1);
     TXAtom::TelpProb(1);
     TXAtom::DefRad(DS);
@@ -3201,7 +3201,7 @@ void TGXApp::BondRad(float R, TXBondPList* Bonds)  {
   TPtrList<TGPCollection> Colls;
   GetGPCollections(objects, Colls);
   for( size_t i=0; i < Colls.Count(); i++ )  {
-    if( Colls[i]->ObjectCount() != 0 ) 
+    if( Colls[i]->ObjectCount() != 0 )
       ((TXBond&)Colls[i]->GetObject(0)).SetRadius(R);
   }
 }
@@ -3298,7 +3298,7 @@ void TGXApp::RestoreGroup(TGlGroup& glg, const GroupData& gd)  {
 void TGXApp::StoreGroup(const TGlGroup& glG, GroupData& gd)  {
   gd.collectionName = glG.GetCollectionName();  //planes
   gd.visible = glG.IsVisible();
-  gd.parent_id = (glG.GetParentGroup() != NULL ? glG.GetParentGroup()->GetTag() : -2); 
+  gd.parent_id = (glG.GetParentGroup() != NULL ? glG.GetParentGroup()->GetTag() : -2);
   for( size_t j=0; j < glG.Count(); j++ )  {
     AGDrawObject& glO = glG[j];
     if( EsdlInstanceOf(glO, TXAtom) )  {
@@ -3590,7 +3590,7 @@ void TGXApp::SetStructureVisible(bool v)  {
   if( v )  {
     if( !FXGrid->IsEmpty() )
       FXGrid->SetVisible(true);
-  } 
+  }
   else
     FXGrid->SetVisible(false);
   _syncBondsVisibility();
@@ -3605,7 +3605,7 @@ void TGXApp::LoadXFile(const olxstr& fn)  {
   if( !FStructureVisible )
     NewLogEntry() << "Note: structure is invisible";
   else {
-    if( !FQPeaksVisible ) 
+    if( !FQPeaksVisible )
       NewLogEntry() << "Note: Q-peaks are invisible";
     if( !FHydrogensVisible )
       NewLogEntry() << "Note: H-atoms are invisible";
@@ -3766,7 +3766,7 @@ void TGXApp::Individualise(const TXAtomPList& atoms, short _level, int32_t mask)
       cl = _level;
     const olxstr leg = xbonds[i]->GetLegend(*xbonds[i], cl);
     TGPCollection* indCol = FGlRender->FindCollection(leg);
-    if( &xbonds[i]->GetPrimitives() == indCol )  
+    if( &xbonds[i]->GetPrimitives() == indCol )
       continue;
     else  {
       if( indCol == NULL )  {
@@ -3801,7 +3801,7 @@ void TGXApp::Individualise(const TXBondPList& bonds, short _level, int32_t mask)
   if( bonds.IsEmpty() || _level > 3 )  return;
   for( size_t i=0; i < bonds.Count(); i++ )  {
     TXBond& b = *bonds[i];
-    const int cl = TXAtom::LegendLevel(b.GetPrimitives().GetName()); 
+    const int cl = TXAtom::LegendLevel(b.GetPrimitives().GetName());
     if( cl >= 3 )  {
       if( mask >= 0 )
         b.UpdatePrimitives(mask);
@@ -3877,7 +3877,7 @@ void TGXApp::Collectivise(const TXAtomPList& atoms, short _level, int32_t mask) 
     if( cl == 0 || (_level != -1 && cl < _level) )  continue;
     const olxstr leg = a.GetLegend(a, _level == -1 ? cl-1 : _level);
     TGPCollection* indCol = FGlRender->FindCollection(leg);
-    if( indCol != NULL && &a.GetPrimitives() == indCol )  
+    if( indCol != NULL && &a.GetPrimitives() == indCol )
       continue;
     else  {
       if( indCol == NULL )
@@ -3963,7 +3963,7 @@ void TGXApp::SetPackMode(short v, const olxstr& atoms)  {
 //..............................................................................
 void TGXApp::CreateXGrowPoints()  {
   if( XGrowPoints.Count() != 0 )  return;
-  // remove the identity matrix 
+  // remove the identity matrix
   smatd I;
   I.r.I();
   UsedTransforms.AddCopy(I);
@@ -4687,7 +4687,7 @@ void TGXApp::ToDataItem(TDataItem& item, IOutputStream& zos) const {
       vis.Set(p_cnt++, xp.IsVisible());
   }
   visibility.AddField("planes", vis.ToBase64String());
-  
+
   F3DFrame->ToDataItem(item.AddItem("3DFrame"));
   FXGrid->ToDataItem(item.AddItem("Grid"), zos);
   FDBasis->ToDataItem(item.AddItem("DBasis"));
@@ -4704,7 +4704,7 @@ void TGXApp::ToDataItem(TDataItem& item, IOutputStream& zos) const {
 
   FGlRender->GetSelection().SetTag(-1);
   FGlRender->GetGroups().ForEach(ACollectionItem::IndexTagSetter());
-  
+
   TDataItem& groups = item.AddItem("Groups");
   for (size_t i=0; i < FGlRender->GroupCount(); i++) {
     TGlGroup& glG = FGlRender->GetGroup(i);
@@ -4863,7 +4863,7 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
     while (bi.HasNext())
       bi.Next().GetGlLabel().FromDataItem(bond_labels->GetItemByIndex(i++));
   }
-  //// restore 
+  //// restore
 
   //BondIterator bonds = GetBonds();
   //while( bonds.HasNext() )
@@ -5210,7 +5210,7 @@ void TGXApp::GrowBonds() {
   olxdict<uint32_t, smatd_list, TPrimitiveComparator> transforms;
   for (size_t i=0; i < XGrowLines.Count(); i++) {
     if (XGrowLines[i].IsVisible()) {
-      transforms.Add(XGrowLines[i].CAtom().GetFragmentId()) << 
+      transforms.Add(XGrowLines[i].CAtom().GetFragmentId()) <<
         XGrowLines[i].GetTransform();
     }
   }

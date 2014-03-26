@@ -206,15 +206,15 @@ olxstr TZipWrapper::ComposeFileName(const olxstr &ZipFileNameA, const olxstr &FN
 /*____________________________________________________________________________*/
 
 
-TwxZipFileSystem::TwxZipFileSystem(const olxstr& zip_name, bool UseCache) : 
-zip(zip_name, UseCache) 
-{ 
+TwxZipFileSystem::TwxZipFileSystem(const olxstr& zip_name, bool UseCache) :
+zip(zip_name, UseCache)
+{
   Access = afs_ReadOnlyAccess;
   AActionHandler::SetToDelete(false);
   zip.OnProgress.Add(this);
 }
 //..............................................................................
-TwxZipFileSystem::TwxZipFileSystem(TEFile* zip_fh, bool UseCache) : 
+TwxZipFileSystem::TwxZipFileSystem(TEFile* zip_fh, bool UseCache) :
   zip(zip_fh, UseCache) { }
 //..............................................................................
 IInputStream* TwxZipFileSystem::_DoOpenFile(const olxstr& Source)  {
@@ -224,11 +224,11 @@ IInputStream* TwxZipFileSystem::_DoOpenFile(const olxstr& Source)  {
   Progress.SetPos(0);
   Progress.SetMax(1);
   OnProgress.Enter(this, &Progress);
-  
+
   IDataInputStream* rv = zip.OpenEntry(Source);
   if( rv == NULL )
     throw TFunctionFailedException(__OlxSourceInfo, olxstr("Could not locate zip entry: ") << fn);
-  
+
   Progress.SetAction("Done");
 //  Progress.SetPos( TEFile::FileLength(TmpFN) );
   OnProgress.Exit(this, &Progress);

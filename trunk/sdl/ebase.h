@@ -90,8 +90,8 @@ template <typename int_t> static bool olx_is_valid_size(const int_t& v)  {
   return v != int_t(~0);
 }
 // wrap memory management functions
-extern void *olx_malloc_(size_t sz);  // throws TOutOfMemoryException 
-extern void *olx_realloc_(void * a, size_t sz);  // throws TOutOfMemoryException 
+extern void *olx_malloc_(size_t sz);  // throws TOutOfMemoryException
+extern void *olx_realloc_(void * a, size_t sz);  // throws TOutOfMemoryException
 template <typename T> T *olx_malloc(size_t sz) {
   return (T*)olx_malloc_(sz*sizeof(T));
 }
@@ -250,7 +250,7 @@ class IEObject  {
   struct static_destruction_handler : public a_destruction_handler {
     void (*destruction_handler)(IEObject* obj);
     static_destruction_handler(
-      a_destruction_handler* prev, 
+      a_destruction_handler* prev,
       void (*_destruction_handler)(IEObject* obj)) :
         a_destruction_handler(prev),
         destruction_handler(_destruction_handler) {}
@@ -284,7 +284,7 @@ class IEObject  {
   };
 
   a_destruction_handler *dsh_head, *dsh_tail;
-  
+
   void _RemoveDestructionHandler(const a_destruction_handler &);
   bool _HasDestructionHandler(a_destruction_handler *dh) const;
 public:
@@ -349,7 +349,7 @@ protected:
   /* to prevent creation this class directly. All instances must be of the
  TBasicExceptionClass defined in exception.h
  */
-  virtual void CreationProtection() = 0;  
+  virtual void CreationProtection() = 0;
 public:
   static void ThrowFunctionFailed(const char* file, const char* function,
     int line, const char* msg);
@@ -375,7 +375,7 @@ public:
   static void SetAutoLogging(bool v)  {  AutoLog = v;  }
   static bool GetAutoLogging()  {  return AutoLog;  }
   // returns recasted this, or throws exception if dynamic_cast fails
-  const class TBasicException* GetException() const; 
+  const class TBasicException* GetException() const;
 };
 
 #include "olxptr.h"
@@ -475,7 +475,7 @@ public:
   };
 };
 
-/* swaps two objects using a temporary variable (copy constructor must be 
+/* swaps two objects using a temporary variable (copy constructor must be
  available for complex types) */
 template <typename obj> inline void olx_swap(obj& o1, obj& o2)  {
   obj tmp = o1;

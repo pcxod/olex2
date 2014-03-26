@@ -316,7 +316,7 @@ void TLattice::GenerateWholeContent(TCAtomPList* Template)  {
 }
 //..............................................................................
 void TLattice::Generate(TCAtomPList* Template, bool ClearCont)  {
-  if( ClearCont && Template != NULL ) 
+  if( ClearCont && Template != NULL )
     ClearAtoms();
   else  {
     const size_t ac = Objects.atoms.Count();
@@ -515,7 +515,7 @@ void TLattice::GetGrowMatrices(smatd_list& res) const {
       bool found = false;
       for( size_t l=0; l < MatrixCount(); l++ )  {
         if( Matrices[l]->GetId() == m.GetId() )  {
-          found = true;  
+          found = true;
           break;
         }
       }
@@ -592,7 +592,7 @@ void TLattice::GrowFragments(bool GrowShells, TCAtomPList* Template)  {
   const size_t ac = Objects.atoms.Count();
   for( size_t i=0; i < ac; i++ )  {
     TSAtom& A = Objects.atoms[i];
-    if( A.IsDeleted() || !A.CAtom().IsAvailable() )  
+    if( A.IsDeleted() || !A.CAtom().IsAvailable() )
       continue;
     for( size_t j=0; j < A.NodeCount(); j++ )  {
       if( A.Node(j).IsDeleted() )
@@ -770,7 +770,7 @@ void TLattice::RestoreAtom(const TSAtom::Ref& id)  {
 TSAtom* TLattice::FindSAtom(const olxstr& Label) const {
   const size_t ac = Objects.atoms.Count();
   for( size_t i=0; i < ac; i++ )
-    if( Label.Equalsi(Objects.atoms[i].GetLabel()) )  
+    if( Label.Equalsi(Objects.atoms[i].GetLabel()) )
       return &Objects.atoms[i];
   return NULL;
 }
@@ -778,7 +778,7 @@ TSAtom* TLattice::FindSAtom(const olxstr& Label) const {
 TSAtom* TLattice::FindSAtom(const TCAtom& ca) const {
   const size_t ac = Objects.atoms.Count();
   for( size_t i=0; i < ac; i++ )
-    if( ca.GetId() == Objects.atoms[i].CAtom().GetId() )  
+    if( ca.GetId() == Objects.atoms[i].CAtom().GetId() )
       return &Objects.atoms[i];
   return NULL;
 }
@@ -982,8 +982,8 @@ void TLattice::UpdateAsymmUnit()  {
     //  for( size_t k=0; k < am_c; k++ )  {
     //    const smatd& m = A->GetMatrix(k);
     //    if( m.IsFirst() )  {  // the original atom
-    //      OA = A;  
-    //      break; 
+    //      OA = A;
+    //      break;
     //    }
     //  }
     //  if( OA != NULL )  break;
@@ -1829,10 +1829,10 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom,
   else if( atom.GetType() == iBoronZ )  {  // boron
     if( AE.Count() == 3 )  {
       const vec3d cnt = AE.GetBase().crd();
-      const double v = olx_tetrahedron_volume( 
-        cnt, 
-        (AE.GetCrd(0)-cnt).Normalise() + cnt, 
-        (AE.GetCrd(1)-cnt).Normalise() + cnt, 
+      const double v = olx_tetrahedron_volume(
+        cnt,
+        (AE.GetCrd(0)-cnt).Normalise() + cnt,
+        (AE.GetCrd(1)-cnt).Normalise() + cnt,
         (AE.GetCrd(2)-cnt).Normalise() + cnt);
       if( v > 0.1 )  {
         TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() << ": XYZBH";
@@ -1867,10 +1867,10 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom,
   else if( atom.GetType() == iSiliconZ )  {
     if( AE.Count() == 3 )  {
       const vec3d cnt = AE.GetBase().crd();
-      const double v = olx_tetrahedron_volume( 
-        cnt, 
-        (AE.GetCrd(0)-cnt).Normalise() + cnt, 
-        (AE.GetCrd(1)-cnt).Normalise() + cnt, 
+      const double v = olx_tetrahedron_volume(
+        cnt,
+        (AE.GetCrd(0)-cnt).Normalise() + cnt,
+        (AE.GetCrd(1)-cnt).Normalise() + cnt,
         (AE.GetCrd(2)-cnt).Normalise() + cnt);
       if( v > 0.1 )  {
         TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() << ": XYZSiH";
@@ -1912,10 +1912,10 @@ void TLattice::_ProcessRingHAdd(AConstraintGenerator& cg,
         if( AE.Count() == 3 )  {
           const vec3d cnt = AE.GetBase().crd();
           try  {
-            const double v = olx_tetrahedron_volume( 
-              cnt, 
-              (AE.GetCrd(0)-cnt).Normalise() + cnt, 
-              (AE.GetCrd(1)-cnt).Normalise() + cnt, 
+            const double v = olx_tetrahedron_volume(
+              cnt,
+              (AE.GetCrd(0)-cnt).Normalise() + cnt,
+              (AE.GetCrd(1)-cnt).Normalise() + cnt,
               (AE.GetCrd(2)-cnt).Normalise() + cnt);
             if( v < 0.1 )  continue;  // coordination or substituted
           }
@@ -1954,7 +1954,7 @@ void TLattice::AnalyseHAdd(AConstraintGenerator& cg, const TSAtomPList& atoms)  
   // treat rings
   ElementPList rcont;
   rcont.Add(CTypes[0]);
-  for( size_t i=0; i < 4; i++ )  
+  for( size_t i=0; i < 4; i++ )
     rcont.Add(rcont[0]);
   _ProcessRingHAdd(cg, rcont, atoms); // Cp
   rcont.Add(rcont[0]);
@@ -2095,7 +2095,7 @@ void TLattice::RemoveNonHBonding(TAtomEnvi& Envi)  {
 }
 //..............................................................................
 void TLattice::SetAnis(const TCAtomPList& atoms, bool anis)  {
-  if (atoms.IsEmpty()) return; 
+  if (atoms.IsEmpty()) return;
   if( !anis )  {
     for( size_t i=0; i < atoms.Count(); i++ )  {
       if( olx_is_valid_index(atoms[i]->GetEllpId()) )  {
@@ -2167,15 +2167,15 @@ void TLattice::ToDataItem(TDataItem& item) const  {
   TDataItem& frags = item.AddItem("Fragments");
   for( size_t i=0; i < Fragments.Count(); i++ )
     Fragments[i]->ToDataItem(frags.AddItem("Fragment"));
-  // restore original matrix tags 
+  // restore original matrix tags
   for( size_t i=0; i < mat_c; i++ )
     Matrices[i]->SetRawId(m_tags[i]);
   // save planes
   TSPlanePList valid_planes;
   for( size_t i=0; i < Objects.planes.Count(); i++ )  {
     if( Objects.planes[i].IsDeleted() ) continue;
-    size_t p_ac = 0;  
-    for( size_t j=0; j < Objects.planes[i].Count(); j++ ) 
+    size_t p_ac = 0;
+    for( size_t j=0; j < Objects.planes[i].Count(); j++ )
       if( Objects.planes[i].GetAtom(j).IsAvailable() )
         p_ac++;
     if( p_ac >= 3 ) // a plane must contain at least three atoms
@@ -2290,7 +2290,7 @@ TLattice::GrowInfo* TLattice::GetGrowInfo() const {
 //..............................................................................
 bool TLattice::ApplyGrowInfo()  {
   TAsymmUnit& au = GetAsymmUnit();
-  if( _GrowInfo == NULL || !Objects.atoms.IsEmpty() || !Matrices.IsEmpty() || 
+  if( _GrowInfo == NULL || !Objects.atoms.IsEmpty() || !Matrices.IsEmpty() ||
     GetUnitCell().MatrixCount() != _GrowInfo->unc_matrix_count )
   {
     if( _GrowInfo != NULL )  {
@@ -2370,7 +2370,7 @@ olxstr TLattice::CalcMoiety() const {
         equals = false;
       else  {
         for( size_t k=1; k < cl.Count(); k++ )  {
-          if( frags[j].GetB()[k].element != cl[k].element || 
+          if( frags[j].GetB()[k].element != cl[k].element ||
             olx_abs((frags[j].GetB()[k].count/frags[j].GetB()[0].count)-(cl[k].count/cl[0].count)) > 0.01 )
           {
             equals = false;
@@ -2442,7 +2442,7 @@ void TLattice::RestoreADPs(bool restoreCoordinates)  {
   }
   for( size_t i=0; i < uc.EllpCount(); i++ )  {
     TEllipsoid* elp = uc.GetEllp(i);
-    if( elp != NULL )  
+    if( elp != NULL )
       elp->SetTag(0);
   }
 }

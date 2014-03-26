@@ -53,7 +53,7 @@ def OlexMail(SendorNot=0):
   body = MIMEText('Please find attached my python log') #Here is the body
   filename = 'PythonError.log'
   path = ErrorLogPath + filename
-  
+
 # Mailing stuff
   ctype, encoding = mimetypes.guess_type(path)
   if ctype is None or encoding is not None:
@@ -74,5 +74,5 @@ def OlexMail(SendorNot=0):
   server.sendmail(From, To, msg.as_string()) #Send away
   server.quit()
   print "Your log file has been emailed to the Olex2 Team, thank you for your support"
-  
+
 OV.registerFunction(OlexMail)

@@ -141,15 +141,15 @@ namespace math  {
     }
     bool IsEmpty() const {  return ColCount() == 0 || RowCount() == 0;  }
   };
-  
+
   struct proxy  {
     template <typename CT> static mat_mat<CT>
     mat(CT& _m, size_t rows, size_t rowe, size_t cols, size_t cole)  {
-      return mat_mat<CT>(_m, rows, rowe, cols, cole); 
+      return mat_mat<CT>(_m, rows, rowe, cols, cole);
     }
     template <typename CT> static mat_mat<CT>
     mat_to(CT& _m, size_t rowe, size_t cole)  {
-      return mat_mat<CT>(_m, 0, rowe, 0, cole); 
+      return mat_mat<CT>(_m, 0, rowe, 0, cole);
     }
     template <typename CT> static mat_col<CT>
     col(CT& _m, size_t _col, size_t _start, size_t _end=InvalidIndex)  {
@@ -290,7 +290,7 @@ namespace math  {
       template <typename FT> void operator ()(FT& f) const {  f = -f;  }
     };
   };  // end namespace alg
-  
+
   template<typename FT> struct Reflection  {
     TVector<FT> tmp;
     Reflection(size_t sz) : tmp(sz) {}
@@ -545,7 +545,7 @@ namespace math  {
       }
     }
   }; // end of LQ
-  
+
   struct QR  {
     template <typename MatT, typename VecT>
     static void Decompose(MatT& m, VecT& taus)  {
@@ -577,7 +577,7 @@ namespace math  {
       const size_t sz = olx_min(min_d, col_num)-1;
       TVector<FT> v(qr.RowCount());
       for( size_t i=sz; i != InvalidIndex; i-- )  {
-        alg::copy_1(v, proxy::col(qr, i, i, qr.RowCount())); 
+        alg::copy_1(v, proxy::col(qr, i, i, qr.RowCount()));
         ref.ApplyFromLeft(q, tau(i), v, i, qr.RowCount(), 0, col_num);
       }
     }

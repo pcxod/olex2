@@ -34,6 +34,6 @@ const short
   ddsDefAtomB  = 2,
   ddsDefRim    = 3,
   ddsDefSphere = 4;
-            
+
 EndGxlNamespace()
 #endif

@@ -118,7 +118,7 @@ public:
 //    if( envi.Count() == 1 )
 //      return inrange(envi.GetBase().crd().DistanceTo(envi.GetCrd(0)), GetRange(GenId(fgOH1,1))[0]);
 //    if( envi.Count() == 2 )  {
-//      const RangeList d = GetRange(GenId(fgOH1,2));  
+//      const RangeList d = GetRange(GenId(fgOH1,2));
 //      return inrange(
 //        AE.GetCrd(0).DistanceTo(envi.GetBase().crd()), d[0],
 //        AE.GetCrd(1).DistanceTo(envi.GetBase().crd()), d[1]

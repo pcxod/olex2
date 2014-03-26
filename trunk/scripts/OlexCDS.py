@@ -43,7 +43,7 @@ except:
 To run this script, type spy.OlexCDS() in Olex2
 '''
 # Fredrik Lundh
-# This function removes HTML tags, and also converts character entities and character references. 
+# This function removes HTML tags, and also converts character entities and character references.
 # Removes HTML markup from a text string.
 #
 # @param text The HTML source.
@@ -80,7 +80,7 @@ def OlexCDS():
   # First need to login
   # Need to get login credentials from usettings.dat file
   # I would like to MD5sum the password in the release version (not that CDS does that!)
-  
+
   # Usettings
   Olex2Path = olex.f("BaseDir()")
   #Olex2Path = "/home/xray/olexsvn"
@@ -90,7 +90,7 @@ def OlexCDS():
   cds_username = ""
   cds_password = ""
   URL="cds.dl.ac.uk"
-  
+
   # Find the key words
   for usettings_line in usettings:
     if not cds_username or not cds_password:
@@ -104,20 +104,20 @@ def OlexCDS():
       print "Unable to find CDS credentials"
       break
   usettings.close()
-  
+
   # First URL is for authentication into the CDS to get our session cookie
   print "Login Into CDS Server"
-  
+
   # Default connection information
   HTTPConnection.debuglevel = 0
   connection = HTTPSConnection(URL)
-  
+
   head = {"Content-Type" : "application/x-www-form-urlencoded", "Accept" : "text/plain"}
   login_params = urlencode({
       "id": cds_id,
       "pass":cds_passwd
   })
-  
+
   connection.request("POST", "/cgi-bin/login/loginhandler.cgi", login_params, head)
   response = connection.getresponse()
   #print DLCOOKIE
@@ -136,7 +136,7 @@ def OlexCDS():
     cell_alpha = CDSCell[3]
     cell_beta = CDSCell[4]
     cell_gamma = CDSCell[5]
-    
+
     # Ok, this takes the cell parameters and searches the CDS crystalweb service
     params = urlencode({
         "search" : "search",
@@ -157,11 +157,11 @@ def OlexCDS():
     head = {'Cookie': DLCOOKIE, "action": "cw10", "enctype" : "application/x-www-form-urlencoded"}
     #print response.read()
     connection.request("POST", "/cgi-bin/cweb/cw10", params, head)
-    
+
     response = connection.getresponse()
     #print response.status
     #print response.read()
-    
+
     if response.status == 200:
       #print "Page Found Successfully, Outputting Request Body"
       for line_response in response.read().splitlines():
@@ -205,7 +205,7 @@ def OlexCDS():
             CDS_res.write("%s"%search_results_out)
             CDS_res.close()
             olx.Shell('%s/%s_CDS.html' %(OV.FilePath(), OV.FileName()))
-    
+
             search_results = response.read()
             #print response.read()
           else:
@@ -251,7 +251,7 @@ def OlexCDS():
                   compound_formula = lines[i+2]
                   compound_reference = lines[i+3]
                   #print "Compound name", compound_name
-                  #print "Compound formula", compound_formular 
+                  #print "Compound formula", compound_formular
                   #print "Compound reference", compound_reference
                 if "LengthsAngles" in lines[i]:
                   fishing = re.search('a(?P<a>\d+.\d+)alpha(?P<alpha>\d+)', lines[i+1])
@@ -314,7 +314,7 @@ def OlexCDS():
     Reference: %s
     Cell %.2f|%.2f|%.2f|%.2f|%.2f|%.2f| %s
     %s|%s|%s|%s|%s
-              """%(CDS_hit_no, 
+              """%(CDS_hit_no,
                                     CDS_hit_result[CDS_hit_no][1],#database_result,
                                     CDS_hit_result[CDS_hit_no][3],#compound_formula,
                                     CDS_hit_result[CDS_hit_no][2],#compound_name

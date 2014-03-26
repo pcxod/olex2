@@ -93,19 +93,19 @@ public:
     if( P == NULL )
       SetSelected(false);
   }
-  
+
   virtual void ListDrawingStyles(TStrList&)  {}
   virtual void UpdaterimitiveParams(TGlPrimitive*)  {}
   /* a generic Update function, called when the model (like control points) has changed
   should be implemented by objects depending on coordinates of others in an indirect way
   */
   virtual void Update()  {}
-  // should be implemented to update labels when font is changed 
+  // should be implemented to update labels when font is changed
   virtual void UpdateLabel()  {}
 
   /* is used to compile new created primitives without rebuilding entire model;
   use it when some object is added to existing scene */
-  virtual void Compile(); 
+  virtual void Compile();
 
   // for parameters of a specific primitive
   virtual void ListParams(TStrList&, TGlPrimitive*)  {}

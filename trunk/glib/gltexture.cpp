@@ -327,7 +327,7 @@ GLuint TTextureManager::Add2DTexture(const olxstr& name, GLint level,
     olx_gl::texImage(GL_TEXTURE_2D, level, 4, width, height, border,
       format, GL_UNSIGNED_BYTE, pixels);
   }
-  else {  
+  else {
     throw TInvalidArgumentException(__OlxSourceInfo,
       olxstr("format=") << (int)format);
   }
@@ -413,5 +413,3 @@ void TTextureManager::AfterContextChange() {
   TextureData.Clear();
 }
 //.............................................................................
-
-

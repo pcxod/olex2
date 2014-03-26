@@ -42,7 +42,7 @@ struct FragAtom {
 class Fragment {
   int Code;
   TTypeList<FragAtom> Atoms;
-  mat3d f2c;  // fractioal to cartesian 
+  mat3d f2c;  // fractioal to cartesian
 protected:
   void BuildMatrix(double a, double b, double c, double alpha, double beta,
     double gamma)
@@ -60,14 +60,14 @@ protected:
     f2c[2][2] = 1./cs;
   }
 public:
-  Fragment(int code, double a, double b, double c, 
+  Fragment(int code, double a, double b, double c,
     double alpha, double beta, double gamma) : Code(code)
-  {  
+  {
     BuildMatrix(a, b, c, alpha, beta, gamma);
   }
   Fragment(const Fragment& frag) : Code(frag.Code), Atoms(frag.Atoms)  {}
-  Fragment& operator = (const Fragment& f)  {  
-    Atoms = f.Atoms;  
+  Fragment& operator = (const Fragment& f)  {
+    Atoms = f.Atoms;
     Code = f.Code;
     return *this;
   }
@@ -83,9 +83,9 @@ public:
   FragAtom& Add(const olxstr& label, const VecType& v)  {
     return Add(label, v[0], v[1], v[2]);
   }
-  
+
   FragAtom& Add(const olxstr& label, double a, double b, double c)  {
-    vec3d crd( 
+    vec3d crd(
       a*f2c[0][0] + b*f2c[1][0] + c*f2c[2][0],
       b*f2c[1][1] + c*f2c[2][1],
       c*f2c[2][2]
@@ -103,7 +103,7 @@ public:
   template <class slist> void ToStrings(slist& lst) const {
     lst.Add("FRAG ") << Code;
     for( size_t i=0; i < Atoms.Count(); i++ )
-      lst.Add( Atoms[i].ToString() ); 
+      lst.Add( Atoms[i].ToString() );
     lst.Add("FEND");
   }
   ////
@@ -152,4 +152,3 @@ public:
 
 EndXlibNamespace()
 #endif
-

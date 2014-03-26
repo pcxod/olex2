@@ -48,7 +48,7 @@ public:
   int16_t GetId() const {  return Id;  }
 
   void Assign(class TAsymmUnit& tau, const TSameGroup& sg);
-  
+
   void Clear()  {
     for( size_t i=0; i < Atoms.Count(); i++ )
       Atoms[i]->SetSameId(~0);
@@ -60,17 +60,17 @@ public:
     Atoms.Clear();
     Dependent.Clear();
   }
-  
+
   bool IsReference() const {  return !Dependent.IsEmpty();  }
-  
+
   // will invalidate previously assigned group
-  TCAtom& Add(TCAtom& ca); 
-  
+  TCAtom& Add(TCAtom& ca);
+
   void AddDependent(TSameGroup& sg)  {
     Dependent.Add(sg);
     sg.ParentGroup = this;
   }
-  
+
   // compares pointer addresses only!
   bool operator == (const TSameGroup& sr) const {  return this == &sr;  }
 
@@ -81,7 +81,7 @@ public:
   size_t DependentCount() const {  return Dependent.Count();  }
   TSameGroup& GetDependent(size_t i) {  return *Dependent[i];  }
   const TSameGroup& GetDependent(size_t i) const {  return *Dependent[i];  }
-  
+
   bool IsValidForSave() const;
   // returns true if contains only unique atoms
   bool AreAllAtomsUnique() const;
@@ -106,13 +106,13 @@ public:
 
   class RefinementModel& RM;
 
-  TSameGroupList(RefinementModel& parent) : RM(parent) {} 
+  TSameGroupList(RefinementModel& parent) : RM(parent) {}
   TSameGroup& New() {
     return Groups.Add(new TSameGroup((uint16_t)Groups.Count(), *this));
   }
-  TSameGroup& NewDependent(TSameGroup& on) {  
+  TSameGroup& NewDependent(TSameGroup& on) {
     TSameGroup& rv = Groups.Add(
-      new TSameGroup((uint16_t)Groups.Count(), *this)); 
+      new TSameGroup((uint16_t)Groups.Count(), *this));
     on.AddDependent(rv);
     return rv;
   }

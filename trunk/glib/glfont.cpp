@@ -31,7 +31,7 @@ TGlFont::TGlFont(AGlScene& parent, size_t _Id, const olxstr& name, size_t _Small
   ClearData();
   PointSize = 0;
   MaxWidth = MaxHeight = 0;
-  Leftmost = 1000; 
+  Leftmost = 1000;
   Topmost  = 1000;
   VectorScale = 700;
 }
@@ -299,7 +299,7 @@ bool TGlFont::CharFromRGBArray(size_t Char, unsigned char *RGBData,
   for( uint16_t i=0; i < width; i++ )  {
     for( uint16_t j=0; j < height; j++ )  {
       const size_t ind = (j*width+i)*3;
-      if( ( (RGBData[ind] | RGBData[ind+1] | RGBData[ind+2]) != background) )  { 
+      if( ( (RGBData[ind] | RGBData[ind+1] | RGBData[ind+2]) != background) )  {
         _Leftmost = i;  break;
       }
     }
@@ -356,7 +356,7 @@ bool TGlFont::CharFromRGBArray(size_t Char, unsigned char *RGBData,
 void TGlFont::CreateGlyphsFromRGBArray(bool FW,
   uint16_t Width, uint16_t Height)
 {
-  if( Width < MaxWidth || 
+  if( Width < MaxWidth ||
       Height < MaxHeight ||
       MaxWidth == 0 || MaxHeight == 0 )
     throw TInvalidArgumentException(__OlxSourceInfo, olxstr("font size w:") <<
@@ -399,7 +399,7 @@ void TGlFont::CreateGlyphsFromRGBArray(bool FW,
         cs->Right = MaxWidth;
       }
       else  {
-        olx_gl::bitmap(olx_min(BWidth*8, CharOffset*5), MaxHeight, 0.0, 0.0, 
+        olx_gl::bitmap(olx_min(BWidth*8, CharOffset*5), MaxHeight, 0.0, 0.0,
            (float)(olx_min(BWidth*8, CharOffset*5)+CharOffset), 0.0, BmpData);
         cs->Right = olx_min(BWidth*8, CharOffset*5);
       }
@@ -502,9 +502,9 @@ void TGlFont::CreateGlyphs(const TEBitArray& ba, bool fixedWidth,
     //  olx_gl::endList();
     //}
     //else  {  // an empty character as a space char
-    //  cs->Top = 0;                 
+    //  cs->Top = 0;
     //  cs->Left = 0;
-    //  cs->Right = olx_min(BWidth, CharOffset*3);   
+    //  cs->Right = olx_min(BWidth, CharOffset*3);
     //  cs->Bottom = MaxHeight;
     //}
     if( cs->Left > 0 || cs->Bottom > 0 )  {  // check if bitmap is not empty
@@ -545,8 +545,8 @@ void TGlFont::CreateGlyphs(const TEBitArray& ba, bool fixedWidth,
 }
 //..............................................................................
 void TGlFont::CreateTextures(uint16_t Width, uint16_t Height)  {
-  if( Width < MaxWidth || 
-      Height < MaxHeight || 
+  if( Width < MaxWidth ||
+      Height < MaxHeight ||
       MaxWidth == 0 || MaxHeight == 0 )
   {
     throw TInvalidArgumentException(__OlxSourceInfo, olxstr("font size w:") <<
@@ -586,7 +586,7 @@ void TGlFont::CreateTextures(uint16_t Width, uint16_t Height)  {
       olx_gl::bindTexture(GL_TEXTURE_2D, Textures[i]);
       olx_gl::texEnv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
       olx_gl::texParam(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-      olx_gl::texParam(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);  
+      olx_gl::texParam(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
       olx_gl::texParam(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
       olx_gl::texParam(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
       olx_gl::pixelStore(GL_UNPACK_ALIGNMENT, 4);

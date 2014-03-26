@@ -27,7 +27,7 @@ enum {
   fiCommonAppData,
   fiCommonPrograms,
   fiCommonDesktop
-}; 
+};
 
 
 class TShellUtil  {

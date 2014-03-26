@@ -77,7 +77,7 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins,
   try  {
     Clear();
     TEFile::CheckFileExists(__OlxSourceInfo, FN);
-    bool ZeroRead = false, 
+    bool ZeroRead = false,
       HklFinished = false,
       HasBatch = false,
       FormatInitialised = false;
@@ -155,7 +155,7 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins,
           !line.SubString(12,8).IsNumber() ||
           !line.SubString(20,8).IsNumber() )
         {
-          HklFinished = true; 
+          HklFinished = true;
           i--;  // reset to the non-hkl line
         }
       }
@@ -423,7 +423,7 @@ bool THklFile::SaveToFile(const olxstr& FN, const TRefPList& refs,
     if( refs[0]->GetBatch() != TReflection::NoBatchSet )
       NullRef.SetBatch(0);
     const size_t ref_str_len = NullRef.ToString().Length();
-    const size_t bf_sz = ref_str_len+1; 
+    const size_t bf_sz = ref_str_len+1;
     olx_array_ptr<char> ref_bf(new char[bf_sz]);
     for( size_t i=0; i < refs.Count(); i++ )  {
       if( !refs[i]->IsOmitted() )
@@ -451,7 +451,7 @@ bool THklFile::SaveToFile(const olxstr& FN, const TRefList& refs)  {
   if( refs[0].GetBatch() != TReflection::NoBatchSet )
     NullRef.SetBatch(0);
   const size_t ref_str_len = NullRef.ToString().Length();
-  const size_t bf_sz = ref_str_len+1; 
+  const size_t bf_sz = ref_str_len+1;
   olx_array_ptr<char> ref_bf(new char[bf_sz]);
   for( size_t i=0; i < refs.Count(); i++ )  {
     if( !refs[i].IsOmitted() )

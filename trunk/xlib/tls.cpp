@@ -163,10 +163,10 @@ void TLS::createDM(ematd &dm, evecd &UijC) {
   dm.Resize(6*atoms.Count(),TLSfreeParameters).Null();
   UijC.Resize(6*atoms.Count()).Null();
   evecd quad(6);
-  for( size_t i=0; i < atoms.Count(); i++ )  {  
+  for( size_t i=0; i < atoms.Count(); i++ )  {
     if ( atoms[i]->GetEllipsoid() == NULL ) {
       throw TInvalidArgumentException(__OlxSourceInfo,
-        "Isotropic atom: invalid TLS input"); 
+        "Isotropic atom: invalid TLS input");
     }
     vec3d r = atoms[i]->crd() - origin;
     mat3d Atls(0, r[2], -r[1], -r[2], 0, r[0], r[1], -r[0], 0);
@@ -191,7 +191,7 @@ void TLS::createDM(ematd &dm, evecd &UijC) {
     for (int j=0; j < 6; j++)
       UijC[idx+j]  = quad[TEllipsoid::shelx_to_linear(j)];
   }
-} 
+}
 
 
 bool TLS::calcTLS(const ematd &designM, const evecd &UijC,
@@ -201,11 +201,11 @@ bool TLS::calcTLS(const ematd &designM, const evecd &UijC,
   const size_t mRows = designM.Vectors();  //No. of Rows
 
   if (TLSfreeParameters!= nColumns)
-    throw TFunctionFailedException(__OlxSourceInfo, 
+    throw TFunctionFailedException(__OlxSourceInfo,
     "TLS Failed: Number of free TLS parameters not same as design matrix width");
 
   if (nColumns> mRows) {
-    throw TFunctionFailedException(__OlxSourceInfo, 
+    throw TFunctionFailedException(__OlxSourceInfo,
     "TLS Failed: more tls parameters than equations."
     "\nTry adding more atoms or constraints.");
   }
@@ -274,7 +274,7 @@ ConstTypeList<evecd> TLS::calcUijEllipse (const TSAtomPList &atoms) {
   /* For each atom, calc U_ij from current TLS matrices */
   evecd_list Ellipsoids;
   mat3d RtoLaxesT = mat3d::Transpose(RtoLaxes);  //inverse
-  for( size_t i=0; i < atoms.Count(); i++ )  {  
+  for( size_t i=0; i < atoms.Count(); i++ )  {
     mat3d UtlsLaxes = calcUijCart(RtoLaxes*atoms[i]->crd());
     mat3d UtlsCell = RtoLaxesT * UtlsLaxes * RtoLaxes;
     evecd vec(6);
@@ -365,7 +365,7 @@ void TLS::diagS(mat3d &split, mat3d &Tmatrix, mat3d &Smatrix){
   for (int i=0; i<3; i++) {
     for (int j=0; j<3 ; j++) {
       for (int k =0; k <3; k++)
-        split[i][j] = epsil(i,j,k)*Smat[j][k]/Lmat[j][j]; 
+        split[i][j] = epsil(i,j,k)*Smat[j][k]/Lmat[j][j];
     }
   }
   // Calc change to T matrix
@@ -401,12 +401,12 @@ void TLS::diagS(mat3d &split, mat3d &Tmatrix, mat3d &Smatrix){
 int TLS::epsil(int i, int j, int k) const{
   //antiSym tensor Epsilon_(i,j,k)
   //    = +1, even perms of 0,1,2
-  //    = -1, odd perms 
-  //    = 0 for repeated index, eg 0,0,k 
+  //    = -1, odd perms
+  //    = 0 for repeated index, eg 0,0,k
   if( (i==0 && j==1 && k==2) ||
       (i==1 && j==2 && k==0) ||
       (i==2 && j==0 && k==1) )
-    return 1;    
+    return 1;
   else if(
       (i==1 && j==0 && k==2) ||
       (i==2 && j==1 && k==0) ||
@@ -416,7 +416,7 @@ int TLS::epsil(int i, int j, int k) const{
     return 0;  // returns zero eg for i==j > 2;
   else {
     throw TInvalidArgumentException(__OlxSourceInfo,
-      "epsilon_i,j,k not permutation of 0,1,2"); 
+      "epsilon_i,j,k not permutation of 0,1,2");
   }
 }
 

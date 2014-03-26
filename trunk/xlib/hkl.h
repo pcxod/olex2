@@ -62,7 +62,7 @@ public:
 
   void Clear();
   void Sort()  {  QuickSorter::SortSF(Refs, HklCmp);  }
-  /* if ins loader is passed and the hkl file has CELL and SFAC in it, 
+  /* if ins loader is passed and the hkl file has CELL and SFAC in it,
   it will be initalised and if the ins_initialised is provided - it will be set
   True if the CELL and SFAC are found
   */

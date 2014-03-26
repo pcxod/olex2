@@ -26,7 +26,7 @@ namespace ctrl_ext  {
     TMainFrame(const wxString& title, const wxPoint& pos, const wxSize& size,
       const wxString &ClassName)
     : wxFrame((wxFrame*)NULL, wxID_ANY, title, pos, size, wxDEFAULT_FRAME_STYLE),
-      AOlxCtrl(this)  
+      AOlxCtrl(this)
     {
       MainFrameInstance = this;
     }
@@ -42,7 +42,7 @@ namespace ctrl_ext  {
     virtual const olxstr& GetScenesFolder() const = 0;
     virtual void LoadScene(const TDataItem &root, TGlLightModel &scene) = 0;
     virtual void SaveScene(TDataItem &root, const TGlLightModel &scene) const = 0;
-    
+
     static TMainFrame& GetMainFrameInstance() {  return *MainFrameInstance;  }
     static int ShowAlert(const olxstr &msg, const olxstr &title, int flags);
     static void ShowAlert(const TExceptionBase &esc,

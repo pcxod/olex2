@@ -105,7 +105,7 @@ public:
     return _parent_t::p->p->GetKey(i);
   }
   const value_item_type &GetValue(size_t i) const {
-    return _parent_t::p->p->GetValue(i); 
+    return _parent_t::p->p->GetValue(i);
   }
   size_t Count() const {
     return _parent_t::p == NULL ? 0 : _parent_t::p->p->Count();

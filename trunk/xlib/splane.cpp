@@ -88,7 +88,7 @@ bool TSPlane::CalcPlanes(const TSAtomPList& atoms, mat3d& params, vec3d& rms,
   return CalcPlanes(Points, params, rms, center);
 }
 //..............................................................................
-double TSPlane::CalcPlane(const TSAtomPList& atoms, 
+double TSPlane::CalcPlane(const TSAtomPList& atoms,
                         vec3d& Params, vec3d& center, const short type)
 {
   TTypeList< olx_pair_t<vec3d, double> > Points;
@@ -108,7 +108,7 @@ void TSPlane::ToDataItem(TDataItem& item) const {
   for( size_t i=0; i < Crds.Count(); i++ )  {
     if( Crds[i].GetA()->IsDeleted() )  continue;
     item.AddItem(cnt++, Crds[i].GetB()).AddField("atom_id",
-      Crds[i].GetA()->GetTag()); 
+      Crds[i].GetA()->GetTag());
   }
 }
 //..............................................................................

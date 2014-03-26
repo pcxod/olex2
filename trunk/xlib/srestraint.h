@@ -83,14 +83,14 @@ public:
   bool operator == (const TSimpleRestraint& sr) const {  return this == &sr;  }
 // IXVarReferencer implementation
   virtual size_t VarCount() const {  return 1;  }
-  virtual XVarReference* GetVarRef(size_t var_index) const {  
+  virtual XVarReference* GetVarRef(size_t var_index) const {
     if( var_index != 0 )
       throw TInvalidArgumentException(__OlxSourceInfo, "var index");
     return VarRef;
   }
 
   virtual olxstr GetVarName(size_t var_index) const;
-  
+
   virtual void SetVarRef(size_t var_index, XVarReference* var_ref) {
     if( var_index != 0 )
       throw TInvalidArgumentException(__OlxSourceInfo, "var index");
@@ -98,13 +98,13 @@ public:
   }
 
   virtual IXVarReferencerContainer& GetParentContainer() const;
-  
+
   virtual double GetValue(size_t var_index) const {
     if( var_index != 0 )
       throw TInvalidArgumentException(__OlxSourceInfo, "var index");
     return Value;
   }
-  virtual void SetValue(size_t var_index, const double& val) {  
+  virtual void SetValue(size_t var_index, const double& val) {
     if( var_index != 0 )
       throw TInvalidArgumentException(__OlxSourceInfo, "var index");
     Value = val;

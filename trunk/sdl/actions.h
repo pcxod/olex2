@@ -206,7 +206,7 @@ public:
     TActionQueue *caller)
   {
     return queue.Execute(Sender, Data, caller);
-  } 
+  }
 };
 /* disabled the queue when created and restores the state (if was enabled!)
 when destroyed

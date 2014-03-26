@@ -238,13 +238,13 @@ const olxstr& TBasicApp::SetSharedDir(const olxstr& cd) {
 const olxstr& TBasicApp::GetSharedDir() {
   if( GetInstance().SharedDir.IsEmpty() )
     return GetInstance().BaseDir;
-  return GetInstance().SharedDir; 
+  return GetInstance().SharedDir;
 }
 //..............................................................................
 void TBasicApp::SetInstanceDir(const olxstr &d) {
   if (!TEFile::Exists(d))
     TEFile::MakeDirs(d);
-  InstanceDir = TEFile::AddPathDelimeter(d); 
+  InstanceDir = TEFile::AddPathDelimeter(d);
   //2013.06.25 - do it manually only!
   //// read user settings
   //if (!InstanceDir.Equals(BaseDir))

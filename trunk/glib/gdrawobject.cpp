@@ -42,7 +42,7 @@ void AGDrawObject::UpdatePrimitives(int32_t Mask)  {
 //..............................................................................
 //..............................................................................
 void AGDrawObject::LibVisible(const TStrObjList& Params, TMacroError& E)  {
-  if( !Params.IsEmpty() ) 
+  if( !Params.IsEmpty() )
     SetVisible(Params[0].ToBool());
   else
     E.SetRetVal<olxstr>(IsVisible());

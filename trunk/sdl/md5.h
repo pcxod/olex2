@@ -29,7 +29,7 @@ protected:
   void finalise() {
     HashingUtilsLE::hs_copy(state, digest, 4);
   }
-  olxcstr formatDigest(); 
+  olxcstr formatDigest();
 };
 
 typedef HashingBase<MD5Impl, HashingUtilsLE> MD5;

@@ -31,7 +31,7 @@ public:
     if( pivot != NULL )  {
       if( HasExcplicitPivot() || IsUnbound() )
         pivot->SetDependentAfixGroup(this);
-      else 
+      else
         pivot->AddDependentHfixGroup(*this);
     }
   }
@@ -62,7 +62,7 @@ public:
     Pivot = &ca;
     if( HasExcplicitPivot() || IsUnbound() )
       Pivot->SetDependentAfixGroup(this);
-    else 
+    else
       Pivot->AddDependentHfixGroup(*this);
   }
   const TCAtom& GetPivot() const {  return *Pivot;  }

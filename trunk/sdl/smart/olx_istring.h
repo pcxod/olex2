@@ -56,11 +56,11 @@
   #if defined(__MAC__)
     static int olx_wcscmpni(const wchar_t* s1, const wchar_t* s2, size_t len)  {
       for( size_t i=0; i < len; i++ )  {
-        const int diff = towlower(s1[i]) - towlower(s2[i]); 
-        if( diff != 0 )  return diff; 
+        const int diff = towlower(s1[i]) - towlower(s2[i]);
+        if( diff != 0 )  return diff;
       }
       return 0;
-    } 
+    }
   #else
     #define olx_wcscmpni wcsncasecmp
   #endif
@@ -182,7 +182,7 @@ public:
     if( change_size )
       T::_Length = sz;
     return *this;
-  } 
+  }
 
   template <class T1, typename TC1> TTSString(const TTSString<T1,TC1>& v)
     : T((const T1&)v)  {}
@@ -305,7 +305,7 @@ public:
     return *this;
   }
   TTSString& operator = (const TTSString& v)  {
-    if( &v == this )  
+    if( &v == this )
       return *this;
     if( T::SData != NULL && --T::SData->RefCnt == 0 )  delete T::SData;
     T::_Start = v._Start;
@@ -554,7 +554,7 @@ public:
   int Compare(const TTSString& v) const {
     return o_strcmp(T::Data(), T::_Length, v.Data(), v._Length);
   }
-  int Compare(const wchar_t& v) const { 
+  int Compare(const wchar_t& v) const {
     if( T::_Length == 0 )  return -1;
     const int df = T::Data()[0] - v;
     return df != 0 ? df : (T::_Length == 1 ? 0 : 1);
@@ -577,7 +577,7 @@ public:
   int Comparei(const TTSString& v) const {
     return o_strcmpi(T::Data(), T::_Length, v.Data(), v._Length);
   }
-  int Comparei(const wchar_t& v) const { 
+  int Comparei(const wchar_t& v) const {
     if( T::_Length == 0 )  return -1;
     int df = 0;
     if( T::Data()[0] != v )  {
@@ -933,11 +933,11 @@ public:
   static IT o_atois(const TC* data, size_t len, bool& negative,
     unsigned short Rad=10)
   {
-    if( len == 0 )    
+    if( len == 0 )
       TExceptionBase::ThrowInvalidIntegerFormat(__POlxSourceInfo, data, len);
     size_t sts = 0; // string start, end
     while( o_iswhitechar(data[sts]) && ++sts < len )
-    if( sts >= len )  
+    if( sts >= len )
       TExceptionBase::ThrowInvalidIntegerFormat(__POlxSourceInfo, data, len);
   // test for any particluar format specifier, here just '0x', for hexadecimal
     if( len > sts+1 && data[sts] == '0' &&
@@ -1021,12 +1021,12 @@ public:
     IT val=0;
     negative = false;
     if( data[sts] == '-' )  {
-      negative = true;  
-      sts++;  
+      negative = true;
+      sts++;
     }
     else if( data[sts] == '+' )
       sts++;
-    if( sts == ste )  
+    if( sts == ste )
       TExceptionBase::ThrowInvalidIntegerFormat(__POlxSourceInfo, data, len);
     if( Rad > 10 )  {
       for( size_t i=sts; i < ste; i++ )  {
@@ -1082,7 +1082,7 @@ public:
     negative = false;
     if( data[sts] == '-' )  {
       negative = true;
-      sts++;  
+      sts++;
     }
     else if( data[sts] == '+' )
       sts++;
@@ -1164,7 +1164,7 @@ public:
   //...........................................................................
   // no '\0' at the end, got to do it ourselves
   template <class FT> static FT o_atof(const TC* data, size_t len) {
-    if( len == 0 )  
+    if( len == 0 )
       TExceptionBase::ThrowInvalidFloatFormat(__POlxSourceInfo, data, len);
     size_t sts = 0, ste = len; // string start, end
     while( o_iswhitechar(data[sts]) && ++sts < len ) ;
@@ -1277,7 +1277,7 @@ public:
         T::_Length);
     }
 #endif
-    if( dv == T::_Length )  { 
+    if( dv == T::_Length )  {
       if( from != 0 )  T::_Length -= count;  // substring to
       else            T::_Length = 0;  // empty string ...
       return *this;
@@ -1285,7 +1285,7 @@ public:
     // delete from start - just substring from
     if( from == 0 )  {
       T::_Start += count;
-      T::_Length -= count;  
+      T::_Length -= count;
     }
     else  {
       T::checkBufferForModification(T::_Length);
@@ -1883,12 +1883,12 @@ public:
         continue;
       }
       else if( ch == '.' )  {
-        if( fpfound )  
+        if( fpfound )
           return false;
         fpfound = true;
       }
       else if( ch == 'e' || ch == 'E' )  {
-        if( expfound )  
+        if( expfound )
           return false;
         expfound = true;
         if( ++i == ste )  // exponent cannot be the last char
@@ -1918,7 +1918,7 @@ public:
   void SetCapacity(size_t newc)  {
     if( T::SData == NULL )
       T::SData = new struct T::Buffer(newc+T::_Increment);
-    else if( newc > T::GetCapacity() )                
+    else if( newc > T::GetCapacity() )
       T::checkBufferForModification(newc);
   }
   //...........................................................................
@@ -1972,7 +1972,7 @@ public:
     return rv;
   }
   //...........................................................................
-  olxch GetLast() const {  
+  olxch GetLast() const {
     if( T::_Length == 0 )
       TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "empty string");
     return T::SData->Data[T::_Start+T::_Length-1];

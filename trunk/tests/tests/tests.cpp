@@ -45,8 +45,8 @@ class Listener : public AActionHandler  {
 public:
   virtual bool Execute(const IEObject *Sender, const IEObject *Data) {
     if( EsdlInstanceOf(*Data, TOnProgress) )  {
-      TBasicApp::GetLog() << '\r' << ((TOnProgress*)Data)->GetAction() << "     "; 
-      return true; 
+      TBasicApp::GetLog() << '\r' << ((TOnProgress*)Data)->GetAction() << "     ";
+      return true;
     }
     return false;
   }

@@ -441,7 +441,7 @@ void TCif::Initialize()  {
     GetRM().SetUserFormula(frm.Text(EmptyString()));
   }
   catch(...)  {}
-  
+
   this->Title = GetDataName().ToUpperCase();
   this->Title << " OLEX2: imported from CIF";
 

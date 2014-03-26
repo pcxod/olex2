@@ -298,7 +298,7 @@ public:
     for( size_t i=0; i < List.Count(); i++ )
       delete (DestructCast*)List[i];
     List.SetCount(list.Count());
-    for( size_t i=0; i < list.Count(); i++ ) 
+    for( size_t i=0; i < list.Count(); i++ )
       List[i] = new T(list[i]);
     return *this;
   }
@@ -312,7 +312,7 @@ public:
     Clear();
     return TakeOver(list.Release(), true);
   }
-  
+
   TTypeListExt & operator = (const SharedTypeList<T>& list)  {
     return _Assign_Wrapper(list);
   }
@@ -524,9 +524,9 @@ template <class T>
       TTypeListExt<T,T>::operator = (list);
       return *this;
     }
-    template <class alist> TTypeList& operator = (const alist& list)  { 
-      TTypeListExt<T,T>::operator = (list);  
-      return *this;  
+    template <class alist> TTypeList& operator = (const alist& list)  {
+      TTypeListExt<T,T>::operator = (list);
+      return *this;
     }
   public:
     typedef T list_item_type;

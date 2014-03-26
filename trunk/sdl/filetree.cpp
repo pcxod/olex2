@@ -315,9 +315,9 @@ void TFileTree::Folder::ExportIndex(const olxstr& fileName, TStrList* list,
 {
   TStrList* lst = (list == NULL) ? new TStrList : list;
   for( size_t i=0; i < Files.Count(); i++ )  {
-    lst->Add(olxstr::CharStr('\t', level) ) << Files[i].GetName(); 
+    lst->Add(olxstr::CharStr('\t', level) ) << Files[i].GetName();
     lst->Add(olxstr::CharStr('\t', level) ) << Files[i].GetModificationTime()
-      << ',' << Files[i].GetSize() << "{}"; 
+      << ',' << Files[i].GetSize() << "{}";
   }
   for( size_t i=0; i < Folders.Count(); i++ )
     Folders[i].ExportIndex(fileName, lst, level+1);
@@ -347,7 +347,7 @@ void TFileTree::Folder::ListFilesEx(TStrList& out,
     }
   }
   else  {
-    for( size_t i=0; i < Files.Count(); i++ )  
+    for( size_t i=0; i < Files.Count(); i++ )
       out.Add(FullPath) << Files[i].GetName();
   }
   for( size_t i=0; i < Folders.Count(); i++ )

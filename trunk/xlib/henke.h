@@ -35,8 +35,8 @@
 
 BeginXlibNamespace()
 
-struct cm_Anomalous_Henke {  
-  double energy, fp, fdp;  
+struct cm_Anomalous_Henke {
+  double energy, fp, fdp;
   static const double Undefined;
 };
 

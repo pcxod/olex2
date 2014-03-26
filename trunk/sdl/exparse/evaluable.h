@@ -110,7 +110,7 @@ namespace exparse  {
       if( ti == typeid(IEvaluable&) ) {
         return val_wrapper<T,IEvaluable>(cast_result(create_proxy_(), true));
       }
-      try  {  
+      try  {
         cast_operator co = get_cast_operator(ti);
         if( co != NULL )
           return caster<T>(co).cast(this);
@@ -120,7 +120,7 @@ namespace exparse  {
     }
     template <class T> static const T* cast_helper(const IEvaluable* i)  {
       const T* ci = dynamic_cast<const T*>(i);
-      if( ci == NULL )  
+      if( ci == NULL )
         throw TCastException(__OlxSourceInfo, typeid(i));
       return ci;
     }
@@ -130,11 +130,11 @@ namespace exparse  {
   protected:
     static IEvaluable::operator_dict cast_operators;
     static const IEvaluable::operator_dict::Entry cast_operators_table[];
-    static cast_result bool_cast(const IEvaluable* i)  {  
+    static cast_result bool_cast(const IEvaluable* i)  {
       return cast_result(new bool(
         IEvaluable::cast_helper<ANumberEvaluator>(i)->Evaluate() != 0), true);
     }
-    static cast_result str_cast(const IEvaluable* i)  {  
+    static cast_result str_cast(const IEvaluable* i)  {
       return cast_result(new olxstr(
         IEvaluable::cast_helper<ANumberEvaluator>(i)->Evaluate()), true);
     }
@@ -182,7 +182,7 @@ namespace exparse  {
       else if( typeid(olxstr) == ti )
         return &str_cast;
       return ANumberEvaluator::get_cast_operator(ti);
-    } 
+    }
     TPrimitiveEvaluator(const Type& val) : ANumberEvaluator(true), BC(val)  {}
     virtual double Evaluate() const {
       return (double)BC::val;
@@ -244,7 +244,7 @@ namespace exparse  {
     }
     virtual cast_operator get_cast_operator(const std::type_info& ti) const {
       return value->get_cast_operator(ti);
-    } 
+    }
      bool is_final() const {  return false;  }
     IEvaluable *undress() { return value->undress(); }
     virtual IEvaluable *create_new(const void *data) const {

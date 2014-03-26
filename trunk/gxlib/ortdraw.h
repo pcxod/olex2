@@ -26,7 +26,7 @@ static const vec3f NullVec;
 struct a_ort_object {
   const OrtDraw& parent;
 public:
-  a_ort_object(const OrtDraw& _parent) : parent(_parent) {} 
+  a_ort_object(const OrtDraw& _parent) : parent(_parent) {}
   virtual ~a_ort_object(){}
   virtual void render(PSWriter&) const = 0;
   virtual float get_z() const = 0;

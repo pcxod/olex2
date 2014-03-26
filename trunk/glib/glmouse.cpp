@@ -85,7 +85,7 @@ bool TGlMouse::MouseUp(int x, int y, short Shift, short button)  {
         {
           if (PColl != NULL && PColl != &FParent->GetSelection())
             FParent->Select(*PColl);
-          else 
+          else
             FParent->Select(*MData.Object);
           FParent->Draw();
           res = true;
@@ -151,7 +151,7 @@ bool TGlMouse::MouseDown(int x, int y, short Shift, short button)  {
     TGlGroup *PColl = FindObjectGroup(*MData.Object);
     if( PColl != NULL )
       res = PColl->OnMouseDown(this, MData);
-    else 
+    else
       res = MData.Object->OnMouseDown(this, MData);
   }
   if( res == false && Shift == sssShift )  {

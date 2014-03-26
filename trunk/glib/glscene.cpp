@@ -174,7 +174,7 @@ olxstr AGlScene::MetaFont::GetIdString() const {
 }
 //.............................................................................
 olxstr AGlScene::MetaFont::GetFileIdString() const {
-  if( IsOlexFont(OriginalId) ) 
+  if( IsOlexFont(OriginalId) )
     return BuildOlexFontId(EmptyString(), Size, Fixed, Bold, Italic);
   throw TInvalidArgumentException(__OlxSourceInfo, "Olex2 font is expected");
 }

@@ -22,9 +22,9 @@ BeginEsdlNamespace()
     uint64_t Size;
     olxstr Name;
   public:
-    TFileListItem()  { 
-      Size = 0;  
-      CreationTime = ModificationTime = LastAccessTime = 0;   
+    TFileListItem()  {
+      Size = 0;
+      CreationTime = ModificationTime = LastAccessTime = 0;
       Attributes = 0;
     }
     TFileListItem( const TFileListItem& item)  {

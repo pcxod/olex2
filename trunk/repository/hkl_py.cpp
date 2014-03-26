@@ -75,7 +75,7 @@ PyObject* hkl_py::Write(PyObject* self, PyObject* args)  {
       return PythonExt::SetErrorMsg(PyExc_RuntimeError, __OlxSourceInfo,
         "Failed to parse the (iiiddi) tuple");
     }
-    if( test_flag == -1 )  
+    if( test_flag == -1 )
        test_flag = flag;
     else if( test_flag == TReflection::NoBatchSet &&
       flag != TReflection::NoBatchSet )

@@ -79,13 +79,13 @@ void GXLibMacros::Export(TLibrary& lib) {
     fpOne,
     "Sets drawings quality, 1 - low, 2 - medium, 3 - high");
 
-  gxlib_InitMacro(Mask, EmptyString(), fpAny^fpNone, 
+  gxlib_InitMacro(Mask, EmptyString(), fpAny^fpNone,
     "Sets primitives for atoms or bonds according to provided mask. Accepts "
     "atoms, bonds, hbonds or a name (like from LstGO).\n"
     "Example: 'mask hbonds 2048' - this resets hydrogen bond style to "
     "default");
 
-  gxlib_InitMacro(ARad, EmptyString(), fpAny^fpNone, 
+  gxlib_InitMacro(ARad, EmptyString(), fpAny^fpNone,
     "Changes how the atoms are drawn [sfil - sphere packing, pers - static "
     "radii, isot - radii proportional to Ueq, isoth - as isot, but applied to "
     "H atoms as well]");
@@ -252,12 +252,12 @@ void GXLibMacros::Export(TLibrary& lib) {
     "List current graphical objects");
   gxlib_InitMacro(WBox,
     "w-use atomic mass instead of unit weights for atoms&;"
-    "s-create separate boxes for fragments", 
+    "s-create separate boxes for fragments",
     (fpAny)|psFileLoaded,
     "Calculates wrapping box around provided box using the set of best, "
     "intermidiate and worst planes");
   gxlib_InitMacro(Center,
-    "z-also recalculates the scene zoom", 
+    "z-also recalculates the scene zoom",
     (fpAny)|psFileLoaded,
     "Sets the centre of rotation to given point");
   gxlib_InitMacro(ChemDraw,
@@ -329,7 +329,7 @@ void GXLibMacros::macGrow(TStrObjList &Cmds, const TParamList &Options,
   if( Options.Contains('t') )
     TemplAtoms = app.FindCAtoms(olxstr(Options['t']).Replace(',', ' '));
   if( Cmds.IsEmpty() )  {  // grow fragments
-    if( GrowContent ) 
+    if( GrowContent )
       app.GrowWhole(TemplAtoms.IsEmpty() ? NULL : &TemplAtoms);
     else  {
       TXAtomPList atoms;
@@ -603,7 +603,7 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
       const MapUtil::peak& peak = MergedPeaks[i];
       if( peak.count == 0 )  continue;
       vec3d cnt((double)peak.center[0]/dim[0], (double)peak.center[1]/dim[1],
-        (double)peak.center[2]/dim[2]); 
+        (double)peak.center[2]/dim[2]);
       const double ed = (double)((long)((peak.summ*1000)/peak.count))/1000;
       TCAtom& ca = au.NewAtom();
       ca.SetLabel(olxstr("Q") << olxstr((100+i)));
@@ -692,7 +692,7 @@ void GXLibMacros::macMask(TStrObjList &Cmds, const TParamList &Options,
   {
     int Mask = Cmds[1].ToInt();
     TXBondPList Bonds = app.GetBonds(TStrList(Cmds.SubListFrom(2)), false);
-    app.UpdateBondPrimitives(Mask, 
+    app.UpdateBondPrimitives(Mask,
       (Bonds.IsEmpty() && app.GetSelection().Count() == 0) ? NULL : &Bonds,
       Cmds[0].Equalsi("hbonds"));
   }
@@ -1512,7 +1512,7 @@ void GXLibMacros::macMpln(TStrObjList &Cmds, const TParamList &Options,
           if ((i + j) >= Atoms.Count())
             break;
           tab[i/colCount][j*3] = plane->GetAtom(i+j).GetLabel();
-          const double v = plane->DistanceTo(plane->GetAtom(i+j).crd()); 
+          const double v = plane->DistanceTo(plane->GetAtom(i+j).crd());
           rmsd += v*v;
           tab[i/colCount][j*3+1] = olxstr::FormatFloat(3, v);
         }
@@ -1671,7 +1671,7 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
     //      const TCAtom& ca1 = xb.A().CAtom();
     //      const TCAtom& ca2 = xb.B().CAtom();
     //      if( (ca1.GetId() == id1 && ca2.GetId() == id2) ||
-    //          (ca1.GetId() == id2 && ca2.GetId() == id1) )  
+    //          (ca1.GetId() == id2 && ca2.GetId() == id1) )
     //      {
     //        app.GetRender().Select(xb);
     //        break;
@@ -2161,11 +2161,11 @@ void main_CreateWBox(TGXApp& app, const TSAtomPList& atoms,
   const WBoxInfo bs = TXApp::CalcWBox(atoms, &all_radii, weight_c);
   static int obj_cnt = 0;
   if( print_info )  {
-    app.NewLogEntry() << "Wrapping box dimension: " << 
+    app.NewLogEntry() << "Wrapping box dimension: " <<
       olxstr::FormatFloat(3, bs.r_to[0]-bs.r_from[0]) << " x "  <<
       olxstr::FormatFloat(3, bs.r_to[1]-bs.r_from[1]) << " x "  <<
       olxstr::FormatFloat(3, bs.r_to[2]-bs.r_from[2]) << " A";
-    app.NewLogEntry() << "Wrapping box volume: " << 
+    app.NewLogEntry() << "Wrapping box volume: " <<
       olxstr::FormatFloat(3, (bs.r_to-bs.r_from).Prod()) << " A^3";
   }
   const vec3d nx = bs.normals[0]*bs.s_from[0];
@@ -2308,7 +2308,7 @@ void GXLibMacros::macCalcVoid(TStrObjList &Cmds, const TParamList &Options,
   // consider the selection if any
   TGlGroup& sel = app.GetSelection();
   for( size_t i=0; i < sel.Count(); i++ )  {
-    if( EsdlInstanceOf(sel[i], TXAtom) ) 
+    if( EsdlInstanceOf(sel[i], TXAtom) )
       catoms.Add(((TXAtom&)sel[i]).CAtom())->SetTag(catoms.Count());
   }
   catoms.Pack(ACollectionItem::IndexTagAnalyser());
@@ -2322,9 +2322,9 @@ void GXLibMacros::macCalcVoid(TStrObjList &Cmds, const TParamList &Options,
   }
   olxstr_dict<olxstr> rv;
   double surfdis = rv('d', Options.FindValue('d', '0')).ToDouble();
-  
+
   TBasicApp::NewLogEntry() << "Extra distance from the surface: " << surfdis;
-  
+
   float resolution = Options.FindValue("r", "0.2").ToFloat();
   if( resolution < 0.005 )
     resolution = 0.005;
@@ -2388,7 +2388,7 @@ void GXLibMacros::macCalcVoid(TStrObjList &Cmds, const TParamList &Options,
   }
   TBasicApp::NewLogEntry() << (catoms.IsEmpty() ? "Structure occupies"
     : "Selected atoms occupy")
-    << " (A^3) " << olxstr::FormatFloat(2, structureGridPoints*vol/mapVol) 
+    << " (A^3) " << olxstr::FormatFloat(2, structureGridPoints*vol/mapVol)
     << " (" << olxstr::FormatFloat(2, structureGridPoints*100/mapVol) << "%)";
 
   double totalVol = 0;
@@ -2465,7 +2465,7 @@ void GXLibMacros::macDirection(TStrObjList &Cmds, const TParamList &Options,
         }
       }
     }
-    if( !app.XGrid().IsEmpty() && app.XGrid().IsVisible() && 
+    if( !app.XGrid().IsEmpty() && app.XGrid().IsVisible() &&
       (app.XGrid().GetRenderMode()&(planeRenderModeContour|planeRenderModePlane)) != 0 )
     {
       const vec3d center(app.GetRender().GetBasis().GetCenter());
@@ -2924,11 +2924,11 @@ void GXLibMacros::macEsd(TStrObjList &Cmds, const TParamList &Options,
             TEValue<double> rv = vcovc.CalcOHDistortionBP(
               TSAtomCPList(sorted_atoms));
             total_val_bp += rv.GetV()*3;
-            total_esd_bp += olx_sqr(rv.GetE()); 
+            total_esd_bp += olx_sqr(rv.GetE());
             rv = vcovc.CalcOHDistortion(
               TSAtomCPList(sorted_atoms));
             total_val += rv.GetV()*3;
-            total_esd += olx_sqr(rv.GetE()); 
+            total_esd += olx_sqr(rv.GetE());
             values.GetLastString() << rv.ToString();
           }
         }
@@ -3277,7 +3277,7 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
     StartMatchCBName, TStrList() << EmptyString());
   const bool TryInvert = Options.GetBoolOption('i');
   double (*weight_calculator)(const TSAtom&) = &TSAtom::weight_unit;
-  
+
   if (Options.Contains('w')) {
     olxstr w = Options.FindValue('w', "zo").ToLowerCase();
     if (w == 'o')
@@ -3726,13 +3726,13 @@ TStrList TMainForm_funMatchNets1(TNetwork& netA, TNetwork& netB, bool verbose)
     TSAtom::weight_unit);
   if( r == XLibMacros::NAString() )  return rv;
   rv.Add("Fragment content: ") << netA.GetFormula();
-  rv.Add("inverted:false,weight:unit=") << r; 
+  rv.Add("inverted:false,weight:unit=") << r;
   rv.Add("inverted:false,weight:Z=") <<
     GXLibMacros_funMatchNets(netA, netB, false, verbose, TSAtom::weight_z);
   rv.Add("inverted:true,weight:unit=") <<
-    GXLibMacros_funMatchNets(netA, netB, true, verbose, TSAtom::weight_unit); 
+    GXLibMacros_funMatchNets(netA, netB, true, verbose, TSAtom::weight_unit);
   rv.Add("inverted:true,weight:Z=") <<
-    GXLibMacros_funMatchNets(netA, netB, true, verbose, TSAtom::weight_z); 
+    GXLibMacros_funMatchNets(netA, netB, true, verbose, TSAtom::weight_z);
   return rv;
 }
 TStrList GXLibMacros_funMatchLatts(TLattice& lattA, TLattice& lattB,

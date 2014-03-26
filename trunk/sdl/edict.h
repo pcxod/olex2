@@ -161,7 +161,7 @@ public:
     for (size_t i = 0; i < d.Count(); i++) {
       size_t idx = IndexOf(d.GetKey(i));
       if (idx == InvalidIndex) {
-        Add(d.GetKey(idx), d.GetValue(idx));
+        Add(d.GetKey(i), d.GetValue(i));
       }
       else if (replace) {
         GetValue(idx) = d.GetValue(idx);

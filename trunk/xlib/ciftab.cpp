@@ -54,8 +54,8 @@ int TLLTBondSort::Compare_(const CifTabBond &I, const CifTabBond &I1) const {
 // CifTabBond function bodies - bond objsect for TLinkedLoopTable
 //----------------------------------------------------------------------------//
 const CifTabAtom& CifTabBond::Another(CifTabAtom& A) const {
-  if(&A == &A1)  return A2; 
-  if(&A == &A2)  return A1; 
+  if(&A == &A1)  return A2;
+  if(&A == &A2)  return A1;
   throw TInvalidArgumentException(__OlxSourceInfo, "atom");
 }
 //..............................................................................
@@ -68,7 +68,7 @@ bool CifTabBond::operator == (const CifTabBond &B) const {
 // CifTabAngle function bodies - angle objsect for TLinkedLoopTable
 //----------------------------------------------------------------------------//
 bool CifTabAngle::Contains(const CifTabAtom& A) const {
-  if( A1==A || A2==A || A3 == A ) return true; 
+  if( A1==A || A2==A || A3 == A ) return true;
   return false;
 }
 //..............................................................................
@@ -143,7 +143,7 @@ TLinkedLoopTable::TLinkedLoopTable(const TCif& C) : FCif(C)  {
   index3 = AngTab.ColIndex("_geom_angle");
   size_t index4 = AngTab.ColIndex("_geom_angle_site_symmetry_1");
   size_t index5 = AngTab.ColIndex("_geom_angle_site_symmetry_3");
-  if( (index|index1|index2|index3|index4|index5) == InvalidIndex )  
+  if( (index|index1|index2|index3|index4|index5) == InvalidIndex )
     return;  // will not work then ...
   for( size_t j=0; j < AngTab.RowCount(); j++ )  {
     const cif_dp::CifRow& row = AngTab[j];
