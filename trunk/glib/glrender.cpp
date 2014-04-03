@@ -392,8 +392,6 @@ void TGlRenderer::SetView(int x, int y, bool identity, bool Select, short Res)  
       olx_gl::ortho(aspect*FProjectionLeft, aspect*FProjectionRight,
         FProjectionTop, FProjectionBottom, 1, 10);
     }
-    //glTranslated(0, 0, FMinV[2] > 0 ? -1 : FMinV[2]-FMaxV[2]);
-    olx_gl::translate(0, 0, -2);
   }
   else  {
     olx_gl::ortho(aspect*FProjectionLeft, aspect*FProjectionRight,
@@ -414,7 +412,9 @@ void TGlRenderer::SetView(int x, int y, bool identity, bool Select, short Res)  
     Bf[3][3] = 1;
     olx_gl::loadMatrix(&Bf[0][0]);
     olx_gl::scale(GetBasis().GetZoom());
-    olx_gl::translate(GetBasis().GetCenter());
+    vec3d t = GetBasis().GetCenter();// *GetBasis().GetMatrix();
+    t += GetBasis().GetMatrix()*vec3d(0, 0, -2 / GetBasis().GetZoom());
+    olx_gl::translate(t);
   }
   else  {
     olx_gl::loadIdentity();
@@ -1237,6 +1237,18 @@ void TGlRenderer::AfterContextChange()  {
   TextureManager->AfterContextChange();
   //OnClear.SetEnabled(true);
   //OnClear.Exit(this);
+}
+//..............................................................................
+void TGlRenderer::RotateX(double V)  {
+  FBasis.RotateX(V);
+}
+//..............................................................................
+void TGlRenderer::RotateY(double V)  {
+  FBasis.RotateY(V);
+}
+//..............................................................................
+void TGlRenderer::RotateZ(double V)  {
+  FBasis.RotateZ(V);
 }
 //..............................................................................
 //..............................................................................
