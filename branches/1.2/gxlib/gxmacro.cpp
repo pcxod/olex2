@@ -685,32 +685,44 @@ void GXLibMacros::macMask(TStrObjList &Cmds, const TParamList &Options,
 {
   if (Cmds[0].Equalsi("atoms") && Cmds.Count() > 1) {
     int Mask = Cmds[1].ToInt();
-    short AtomsStart=2;
+    short AtomsStart = 2;
     TXAtomPList Atoms =
       app.FindXAtoms(TStrObjList(Cmds.SubListFrom(AtomsStart)), false, false);
     app.UpdateAtomPrimitives(Mask, Atoms.IsEmpty() ? NULL : &Atoms);
   }
-  else if( (Cmds[0].Equalsi("bonds") || Cmds[0].Equalsi("hbonds")) &&
-           Cmds.Count() > 1 )
+  else if ((Cmds[0].Equalsi("bonds") || Cmds[0].Equalsi("hbonds")) &&
+    Cmds.Count() > 1)
   {
     int Mask = Cmds[1].ToInt();
     TXBondPList Bonds = app.GetBonds(TStrList(Cmds.SubListFrom(2)), false);
-    app.UpdateBondPrimitives(Mask, 
+    app.UpdateBondPrimitives(Mask,
       (Bonds.IsEmpty() && app.GetSelection().Count() == 0) ? NULL : &Bonds,
       Cmds[0].Equalsi("hbonds"));
   }
-  else  {
+  else {
     int Mask = Cmds.GetLastString().ToInt();
     Cmds.Delete(Cmds.Count() - 1);
-    TGPCollection *GPC = app.GetRender().FindCollection(Cmds.Text(' '));
-    if( GPC != NULL )  {
-      if( GPC->ObjectCount() != 0 )
-        GPC->GetObject(0).UpdatePrimitives(Mask);
+    olxstr name = Cmds.Text(' ');
+    if (!name.IsEmpty()) {
+      TGPCollection *GPC = app.GetRender().FindCollection(name);
+      if (GPC != NULL) {
+        if (GPC->ObjectCount() != 0)
+          GPC->GetObject(0).UpdatePrimitives(Mask);
+      }
+      else {
+        Error.ProcessingError(__OlxSrcInfo, "Undefined graphics: ").quote() <<
+          Cmds.Text(' ');
+        return;
+      }
     }
-    else  {
-      Error.ProcessingError(__OlxSrcInfo,"Undefined graphics:").quote() <<
-        Cmds.Text(' ');
-      return;
+    else {
+      TGlGroup &sel = app.GetSelection();
+      SortedPtrList<TGPCollection, TPointerComparator> colls;
+      for (size_t i = 0; i < sel.Count(); i++) {
+        if (colls.AddUnique(&sel[i].GetPrimitives())) {
+          sel[i].UpdatePrimitives(Mask);
+        }
+      }
     }
   }
 }

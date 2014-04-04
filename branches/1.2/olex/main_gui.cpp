@@ -24,7 +24,8 @@
 
 void TMainForm::OnHtmlPanel(wxCommandEvent& event)  {
   processMacro("htmlpanelvisible");
-  processMacro("html.update");
+  if (!this->FHtmlMinimized)
+    processMacro("html.update");
 }
 //..............................................................................
 void TMainForm::OnGenerate(wxCommandEvent& WXUNUSED(event))  {
