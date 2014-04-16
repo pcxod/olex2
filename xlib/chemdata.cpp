@@ -1168,10 +1168,6 @@ void XElementLib::ParseSimpleElementStr(const olxstr& str, TStrList& toks)  {
   if (str.Length() == 1) {
     if (IsElement(str) || IsShortcut(str))
       toks.Add(str);
-    else {
-      throw TFunctionFailedException(__OlxSourceInfo,
-        olxstr("Unknown element: ").quote() << str);
-    }
   }
   else if (str.Length() == 2) {
     // both capital? prioritise two elements
@@ -1180,17 +1176,18 @@ void XElementLib::ParseSimpleElementStr(const olxstr& str, TStrList& toks)  {
         toks.Add(str[0]);
         toks.Add(str[1]);
       }
+      else {
+        olxstr elm = olxstr(str[0]) << olxstr::o_tolower(str[1]);
+        if (IsElement(elm))
+          toks.Add(elm);
+      }
     }
     else {
       if (IsElement(str) || IsShortcut(str))
         toks.Add(str);
-      else if (IsElement(str[0]) || IsElement(str[1])) {
+      else if (IsElement(str[0]) && IsElement(str[1])) {
         toks.Add(str[0]);
         toks.Add(str[1]);
-      }
-      else {
-        throw TFunctionFailedException(__OlxSourceInfo,
-          olxstr("Unknown element: ").quote() << str);
       }
     }
   }
@@ -1220,14 +1217,18 @@ void XElementLib::ParseSimpleElementStr(const olxstr& str, TStrList& toks)  {
         }
       }
     }
-    if (st < str.Length())  {
+    if (st < str.Length()) {
       olxstr tmp = str.SubStringFrom(st);
       if(!IsElement(tmp) && !IsShortcut(tmp)) {
         throw TFunctionFailedException(__OlxSourceInfo,
-          olxstr("Unknown element - ") << tmp);
+          olxstr("Unknown element: ").quote() << tmp);
       }
       toks.Add(tmp);
     }
+  }
+  if (toks.IsEmpty()) {
+    throw TFunctionFailedException(__OlxSourceInfo,
+      olxstr("Unknown element(s): ").quote() << str);
   }
 }
 //..............................................................................

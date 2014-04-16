@@ -751,6 +751,7 @@ void TMainForm::macPictPS(TStrObjList &Cmds, const TParamList &Options,
   od.SetPieLineWidth(Options.FindValue("lw_pie", "0.5").ToDouble());
   od.SetElpLineWidth(Options.FindValue("lw_ellipse", "1").ToDouble());
   od.SetQuadLineWidth(Options.FindValue("lw_octant", "0.5").ToDouble());
+  od.SetElpDiv(Options.FindValue("div_ellipse", "36").ToInt());
   od.SetBondOutlineColor(
     Options.FindValue("bond_outline_color", "0xFFFFFF").SafeUInt<uint32_t>());
   od.SetBondOutlineSize(
@@ -860,9 +861,6 @@ void TMainForm::macPictPR(TStrObjList &Cmds, const TParamList &Options,
 {
   olxstr file_name = (Cmds[0].EndsWith(".pov") ? Cmds[0] : olxstr(Cmds[0]) << ".pov");
   TEFile::WriteLines(file_name, TCStrList(FXApp->ToPov().GetObject()));
-
-  TStrList l("1;2;3;4", ';');
-  olxstr res = olxstr(' ').Join(l);
 }
 //..............................................................................
 void TMainForm::macClear(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error) {
