@@ -1624,7 +1624,7 @@ double RefinementModel::CalcCompletnessTo2Theta(double tt) const {
   for (int h=mn[0]; h <= mx[0]; h++) {
     for (int k=mn[1]; k <= mx[1]; k++) {
       for (int l=mn[2]; l <= mx[2]; l++) {
-        if (h==0 && k==0 && l==0) continue;
+        if (l == 0 && k == 0 && h == 0) continue;
         vec3i hkl(h,k,l);
         vec3i shkl = TReflection::Standardise(hkl, info_ex);
         if (shkl != hkl) continue;
@@ -2107,6 +2107,12 @@ void RefinementModel::LibCalcCompleteness(const TStrObjList& Params,
   E.SetRetVal(CalcCompletnessTo2Theta(Params[0].ToDouble()));
 }
 //..............................................................................
+void RefinementModel::LibMaxIndex(const TStrObjList& Params,
+  TMacroError& E)
+{
+  E.SetRetVal(olxstr(' ').Join(CalcMaxHklIndex(Params[0].ToDouble())));
+}
+//..............................................................................
 TLibrary* RefinementModel::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("rm") : name);
   lib->Register(
@@ -2138,7 +2144,7 @@ TLibrary* RefinementModel::ExportLibrary(const olxstr& name)  {
     new TFunction<RefinementModel>(this, &RefinementModel::LibCalcCompleteness,
       "Completeness",
       fpOne,
-"") );
+"Calculates completeness to the given 2 theta value") );
   lib->Register(
     new TMacro<RefinementModel>(this, &RefinementModel::LibShareADP,
       "ShareADP", EmptyString(),
@@ -2152,5 +2158,12 @@ TLibrary* RefinementModel::ExportLibrary(const olxstr& name)  {
     "HasOccu",
     fpNone,
     "Returns true if occupancy of any of the atoms is refined or deviates from 1"));
+
+  lib->Register(
+    new TFunction<RefinementModel>(this, &RefinementModel::LibMaxIndex,
+    "MaxIndex",
+    fpOne,
+    "Calculates largest Miller index for the given 2 theta value"));
+
   return lib;
 }

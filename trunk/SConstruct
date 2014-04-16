@@ -245,8 +245,6 @@ if sys.platform[:3] == 'win':
     if sse:
       cc_flags.append( '/arch:'+sse)
     env.Append(CCFLAGS = cc_flags) 
-    env.Append(CPPPATH=[pyFolder+'include'])
-    env.Append(CCFLAGS = ['-D_PYTHON'])
     #env.Append(LINKFLAGS=['/LTCG'])
   else:
     cc_flags = ['/EHsc', '/RTC1', '-D_DUBUG', '/Od', '/MDd', '/bigobj', '/fp:fast']
@@ -254,7 +252,8 @@ if sys.platform[:3] == 'win':
     else:  cc_flags.append('/ZI')
     env.Append(CCFLAGS = cc_flags) 
     env.Append(LINKFLAGS=['/DEBUG', '/ASSEMBLYDEBUG', '/NODEFAULTLIB:msvcrt'])
-    env.Append(CPPPATH=[pyFolder+'include'])
+  env.Append(CPPPATH=[pyFolder+'include'])
+  env.Append(CCFLAGS = ['-D_PYTHON'])
   if architecture == '64bit':
     #env.Append(LINKFLAGS=['/MACHINE:X64', '/DEBUG']) #this emits debug info...
     env.Append(LINKFLAGS=['/MACHINE:X64'])

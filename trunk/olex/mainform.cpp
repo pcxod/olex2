@@ -545,6 +545,7 @@ void TMainForm::XApp(Olex2App *XA)  {
     "multiple_bond_width- if 0 double and triple bonds are rendered as a "
     "fraction of their real width. If a values is not 0 - it specifies the "
     "width of the strips&;"
+    "div_ellipse-the number of ellipse segments [36]"
     ,
     fpOne|psFileLoaded,
     "Postscript rendering");

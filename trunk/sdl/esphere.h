@@ -18,6 +18,7 @@ BeginEsdlNamespace()
 struct IndexTriangle {
   TVector3<size_t> vertices;
   size_t operator [] (size_t i) const { return vertices[i]; }
+  IndexTriangle() {}
   IndexTriangle(size_t i1, size_t i2, size_t i3) : vertices(i1,i2,i3)  {}
 };
 // Octahedron face provider

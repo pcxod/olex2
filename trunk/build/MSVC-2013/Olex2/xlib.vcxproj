@@ -630,8 +630,6 @@
       </DebugInformationFormat>
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|x64'">/bigobj %(AdditionalOptions)</AdditionalOptions>
       <MinimalRebuild Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|x64'">false</MinimalRebuild>
-      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|x64'">
-      </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\chnexp.cpp" />
     <ClCompile Include="..\..\..\xlib\congen.cpp" />

@@ -500,7 +500,7 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
 }
 //.............................................................................
 bool THtml::ProcessPageLoadRequest()  {
-  if( !PageLoadRequested || IsPageLocked() )  return false;
+  if (!PageLoadRequested || IsPageLocked()) return false;
   PageLoadRequested = false;
   bool res = false;
   if( !PageRequested.IsEmpty() )
@@ -512,15 +512,17 @@ bool THtml::ProcessPageLoadRequest()  {
 }
 //.............................................................................
 bool THtml::LoadPage(const wxString &file)  {
-  if( file.IsEmpty() )
+  if (file.IsEmpty())
     return false;
 
-  if( IsPageLocked() )  {
+  if (IsPageLocked()) {
     PageLoadRequested = true;
     PageRequested = file;
     return true;
   }
-
+  if (this->WI.GetWidth() < 100) {
+    return false;
+  }
   olxstr File(file), TestFile(file);
   olxstr Path = TEFile::ExtractFilePath(File);
   TestFile = TEFile::ExtractFileName(File);

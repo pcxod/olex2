@@ -174,9 +174,9 @@ void  TUnitCell::InitMatrices()  {
       m_tab[i][j] = MulDest[i][j];
     }
   }
-  TBasicApp::GetLog() <<
+  TBasicApp::NewLogEntry() <<
     m_tab.CreateTXTList("Space group multiplication table", false, false, ' ');
-  TBasicApp::GetLog() <<
+  TBasicApp::NewLogEntry() <<
     i_tab.CreateTXTList("Space inversion table", true, false, ' ');
 #endif
 }

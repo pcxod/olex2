@@ -814,6 +814,7 @@ Friedel opposites of components 1 ... m
   void LibEXTI(const TStrObjList& Params, TMacroError& E);
   void LibUpdateCRParams(const TStrObjList& Params, TMacroError& E);
   void LibCalcCompleteness(const TStrObjList& Params, TMacroError& E);
+  void LibMaxIndex(const TStrObjList& Params, TMacroError& E);
   // restraints & constraints related functions
   void LibShareADP(TStrObjList &Cmds, const TParamList &Opts, TMacroError &E);
 
