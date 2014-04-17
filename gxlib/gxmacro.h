@@ -60,12 +60,16 @@ public:
   DefMacro(Individualise)
   DefMacro(Collectivise)
   DefMacro(Match)
-  DefFunc(MatchFiles)
 
   DefMacro(Uniq)
   DefMacro(Fmol)
 
+  DefMacro(SetMaterial)
+
+  DefFunc(MatchFiles)
   DefFunc(ExtraZoom)
+  DefFunc(SelName)
+  DefFunc(GetMaterial)
 
   static int QPeakSortA(const TCAtom &a, const TCAtom &b);
   static int QPeakSortD(const TCAtom &a, const TCAtom &b) {

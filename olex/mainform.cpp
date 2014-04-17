@@ -762,7 +762,8 @@ void TMainForm::XApp(Olex2App *XA)  {
 
   this_InitMacro(SetCmd, , fpAny);
 
-  this_InitMacroD(UpdateOptions, EmptyString(), fpNone, "Shows the Update Options dialog");
+  this_InitMacroD(UpdateOptions, EmptyString(), fpNone,
+    "Shows the Update Options dialog");
   this_InitMacroD(Update,
     "f-force [true]",
     fpNone,
@@ -830,8 +831,16 @@ void TMainForm::XApp(Olex2App *XA)  {
     "Sets font for specified control");
   this_InitMacroD(EditMaterial, EmptyString(), fpOne,
     "Brings up material properties dialog for specified object");
-  this_InitMacroD(SetMaterial, EmptyString(), fpTwo | fpThree,
-    "Assigns provided value to specified material");
+
+  GetLibrary().Register(
+    new TMacro<TMainForm>(this, &TMainForm::macSetMaterial, "SetMaterial",
+    EmptyString(),
+    fpTwo | fpThree,
+    "Assigns provided value to specified material. Special materials are: "
+    "helpcmd, helptxt, execout, error, exception"),
+    libChain
+    );
+
   this_InitMacroD(TestBinding, EmptyString(), fpAny,
     "Internal tests");
   this_InitMacroD(ShowSymm, EmptyString(), fpNone|fpOne,
@@ -944,8 +953,15 @@ void TMainForm::XApp(Olex2App *XA)  {
     "provided in the second argument then)");
   this_InitFuncD(GetFont, fpOne,
     "Returns specified font");
-  this_InitFuncD(GetMaterial, fpOne|fpTwo,
-    "Returns material of specified object");
+
+  GetLibrary().Register(
+    new TFunction<TMainForm>(this, &TMainForm::funGetMaterial, "GetMaterial",
+    fpOne | fpTwo,
+    "Returns material of specified object. Special materials are: "
+    "helpcmd, helptxt, execout, error, exception"),
+    libChain
+    );
+
   this_InitFuncD(ChooseMaterial, fpNone|fpOne,
     "Brings up a dialog to edit default or provided material");
 
