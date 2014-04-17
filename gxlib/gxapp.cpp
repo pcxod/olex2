@@ -2482,8 +2482,6 @@ TXPlane *TGXApp::AddPlane(const olxstr &name_, const TXAtomPList &Atoms,
     TXPlane * p =static_cast<TXPlane*>(planes[i]);
     if (!p->IsVisible())
       p->SetVisible(true);
-    if (name.IsEmpty())
-      name = olxstr("TXPlane") << planes[i]->GetDefId();
     p->Create(name);
     if (&planes[i]->GetAtom(0) == Atoms[0]) {
       pi = i;
@@ -5217,6 +5215,7 @@ void TGXApp::ClearStructureRelated() {
   UserObjects.Clear();
   Rings.Clear();
   GetLabels().ClearLabelMarks(lmiDefault);
+  TXPlane::NamesRegistry().Clear();
 }
 //..............................................................................
 olxstr TGXApp::Label(const TXAtomPList &atoms, const olxstr &sp) {

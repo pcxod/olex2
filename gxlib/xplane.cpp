@@ -16,8 +16,19 @@
 #include "povdraw.h"
 
 void TXPlane::Create(const olxstr& cName)  {
-  if( !cName.IsEmpty() )
-    SetCollectionName(cName);
+  olxstr colName = cName;
+  if (colName.IsEmpty()) {
+    colName = NamesRegistry().Find(GetDefId(), EmptyString());
+  }
+  else {
+    NamesRegistry().Add(GetDefId(), colName);
+  }
+  if (colName.IsEmpty()) {
+    colName = olxstr("TXPlane") << GetDefId();
+  }
+  if (!colName.IsEmpty()) {
+    SetCollectionName(colName);
+  }
   TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
   if (GPC.ObjectCount() == 0 && GPC.PrimitiveCount() != 0)
     GPC.ClearPrimitives();
