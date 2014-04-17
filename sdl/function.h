@@ -194,6 +194,7 @@ public:
     return new TFunction<Base>(BaseClassInstance, Func, GetName(),
       ArgStateMask, GetDescription());
   }
+  Base &GetBaseInstance() const { return *BaseClassInstance; }
 protected:
   virtual void DoRun(const TStrObjList &Params, TMacroError& E)  {
     (BaseClassInstance->*Func)(Params, E);
@@ -307,6 +308,8 @@ typedef TPtrList<ABasicLibrary> TBasicLibraryPList;
 
 class FunctionChainer {
   TBasicFunctionPList functions;
+  void Update(TMacro<FunctionChainer> &m);
+  void Update(TFunction<FunctionChainer> &m);
 public:
   FunctionChainer() {}
   ~FunctionChainer() { functions.DeleteItems(false); }
@@ -317,7 +320,7 @@ public:
   void RunMacro(TStrObjList &Params, const TParamList &Options,
     TMacroError& E);
   void RunFunction(const TStrObjList &Params, TMacroError& E);
-  void Update(TMacro<FunctionChainer> &m);
+  void Update(ABasicFunction *f);
 };
 
 EndEsdlNamespace()

@@ -207,11 +207,11 @@ void FunctionChainer::RunMacro(TStrObjList &Params, const TParamList &Options,
       E.SetUnhandled(false);
   }
   if (!E.IsHandled())
-    E.ProcessingError(__OlxSourceInfo, "unhandled function call");
+    E.ProcessingError(__OlxSourceInfo, "unhandled macro call");
 }
 //.............................................................................
 void FunctionChainer::RunFunction(const TStrObjList &Params, TMacroError& E) {
-  for (size_t i=0; i < functions.Count(); i++) {
+  for (size_t i = functions.Count()-1; i != InvalidIndex; i--) {
     functions[i]->Run(Params, E);
     if (E.IsHandled() || !E.IsSuccessful())
       break;
@@ -238,3 +238,27 @@ void FunctionChainer::Update(TMacro<FunctionChainer> &m) {
   m.SetOptions(options);
 }
 //.............................................................................
+void FunctionChainer::Update(TFunction<FunctionChainer> &f) {
+  uint32_t args = 0;
+  TStrList description;
+  description << NewLineSequence();
+  for (size_t i = 0; i < functions.Count(); i++) {
+    args |= functions[i]->GetArgStateMask();
+    description.Add() << '#' << (i + 1);
+    description.Add(functions[i]->GetDescription());
+  }
+  f.SetDescription(description.Text(NewLineSequence()));
+  f.SetArgStateMask(args);
+}
+//.............................................................................
+void FunctionChainer::Update(ABasicFunction *f) {
+  if (dynamic_cast<TMacro<FunctionChainer> *>(f) != 0) {
+    Update(*(TMacro<FunctionChainer> *)f);
+  }
+  else if (dynamic_cast<TFunction<FunctionChainer> *>(f) != 0) {
+    Update(*(TFunction<FunctionChainer> *)f);
+  }
+  else {
+    throw TFunctionFailedException(__OlxSourceInfo, "Unexpected object");
+  }
+}
