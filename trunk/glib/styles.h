@@ -80,6 +80,7 @@ class TGraphicsStyle: public ACollectionItem  {
   uint16_t Level;
   bool Saveable; // if the style is saveable to dataitems
   bool Persistent; // specifies if RemovesStylesByTag can delete it
+  bool New; // style is created with defaults
 protected:
   // does not delete the styles
   void ReleaseStyles() {  Styles.Clear();  }
@@ -121,7 +122,8 @@ public:
        Name(name),
        Level(parent_style == 0 ? 0 : parent_style->Level+1),
        Saveable(true),
-       Persistent(false)
+       Persistent(false),
+       New(true)
   {}
 
   ~TGraphicsStyle() {  Clear();  }
@@ -235,7 +237,10 @@ public:
 
   DefPropBIsSet(Saveable)
   DefPropBIsSet(Persistent)
-
+  DefPropBIsSet(New)
+  bool IsEmpty() const {
+    return Params.IsEmpty() && Styles.IsEmpty() && PStyles.IsEmpty();
+  }
   void ToDataItem(TDataItem& Item, bool saveAll=false) const;
   bool FromDataItem(const TDataItem& Item);
   // sets ICollectionItem::Tag of styles to Tag

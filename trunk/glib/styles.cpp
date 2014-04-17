@@ -42,7 +42,7 @@ bool TPrimitiveStyle::FromDataItem(const TDataItem& Item)  {
 //------------------------------------------------------------------------------
 //TGraphicsStyle implementation
 //------------------------------------------------------------------------------
-void TGraphicsStyle::Clear()  {
+void TGraphicsStyle::Clear() {
   for (size_t i =0; i < Styles.Count(); i++)
     delete Styles.GetValue(i);
   Styles.Clear();
@@ -51,10 +51,10 @@ void TGraphicsStyle::Clear()  {
 //..............................................................................
 bool TGraphicsStyle::operator == (const TGraphicsStyle &GS) const  {
   const size_t pc = PrimitiveStyleCount();
-  if( pc != GS.PrimitiveStyleCount() )
+  if (pc != GS.PrimitiveStyleCount())
     return false;
-  for( size_t i=0; i < pc; i++ )  {
-    if( !(*PStyles[i] == GS.GetPrimitiveStyle(i)) )
+  for (size_t i=0; i < pc; i++ ) {
+    if (!(*PStyles[i] == GS.GetPrimitiveStyle(i)))
       return false;
   }
   return true;
@@ -97,6 +97,7 @@ void TGraphicsStyle::ToDataItem(TDataItem& Item, bool saveAll) const {
 }
 //..............................................................................
 bool TGraphicsStyle::FromDataItem(const TDataItem& Item)  {
+  SetNew(false);
   bool name_set = false,
     persistence_set = false;
   for (size_t i = 0; i < Item.FieldCount(); i++) {
