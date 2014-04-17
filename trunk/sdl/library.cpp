@@ -81,20 +81,38 @@ ABasicFunction *TLibrary::Register(
         break;
       }
       else if ((flags&libChain) != 0) {
-        TMacro<FunctionChainer> *fcm =
-          dynamic_cast<TMacro<FunctionChainer> *>(f);
-        FunctionChainer *fc = NULL;
-        if (fcm == NULL) {
-          fc = &Chains.AddNew();
-          fc->Add(f);
-          fcm = new TMacro<FunctionChainer>(fc, &FunctionChainer::RunMacro,
-            f->GetName(), EmptyString(), 0);
-          fcm->SetParentLibrary(*this);
-          container.GetValue(list[i]) = fcm;
+        if (dynamic_cast<AMacro *>(f) != NULL) {
+          TMacro<FunctionChainer> *fcm =
+            dynamic_cast<TMacro<FunctionChainer> *>(f);
+          FunctionChainer *fc = NULL;
+          if (fcm == NULL) {
+            fc = &Chains.AddNew();
+            fc->Add(f);
+            fcm = new TMacro<FunctionChainer>(fc, &FunctionChainer::RunMacro,
+              f->GetName(), EmptyString(), 0);
+            fcm->SetParentLibrary(*this);
+            container.GetValue(list[i]) = fcm;
+          }
+          else
+            fc = &fcm->GetBaseInstance();
+          fc->Add(fm).Update(fcm);
         }
-        else
-          fc = &fcm->GetBaseInstance();
-        fc->Add(fm).Update(*fcm);
+        else if (dynamic_cast<AFunction *>(f) != NULL) {
+          TFunction<FunctionChainer> *fcm =
+            dynamic_cast<TFunction<FunctionChainer> *>(f);
+          FunctionChainer *fc = NULL;
+          if (fcm == NULL) {
+            fc = &Chains.AddNew();
+            fc->Add(f);
+            fcm = new TFunction<FunctionChainer>(fc, &FunctionChainer::RunFunction,
+              f->GetName(), 0);
+            fcm->SetParentLibrary(*this);
+            container.GetValue(list[i]) = fcm;
+          }
+          else
+            fc = &fcm->GetBaseInstance();
+          fc->Add(fm).Update(fcm);
+        }
         return NULL;
       }
       throw TDuplicateEntry(__OlxSourceInfo,
