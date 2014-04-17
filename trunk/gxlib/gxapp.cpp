@@ -505,8 +505,7 @@ void TGXApp::CreateObjects(bool centerModel, bool init_visibility)  {
   ObjectCaster<TSPlane,TXPlane> latt_planes =
     XFile().GetLattice().GetObjects().planes.GetAccessor<TXPlane>();
   for( size_t i=0; i < latt_planes.Count(); i++ )  {
-    TXPlane& xp = latt_planes[i];
-    xp.Create(olxstr("TXPlane") << xp.GetDefId());
+    latt_planes[i].Create();
   }
   double cell[] = {
     XFile().GetAsymmUnit().GetAxes()[0],
@@ -4057,33 +4056,16 @@ struct TGXApp_GBondCreator {
     bc_mat = gbst == 0 ? 0 : gbst->FindMaterial("Bottom cone");
   }
   TXGrowLine &Create(const TGXApp_Transform& nt) {
-    TXGrowLine& gl = *(new TXGrowLine(renderer, EmptyString(),
+    TXGrowLine& gl = *(new TXGrowLine(renderer,
+      EmptyString(),
       *nt.from, *nt.to, nt.transform));
-    TGraphicsStyle *ast = renderer.GetStyles().FindStyle(nt.to->GetType().symbol);
-    olxstr legend = def_legend;
-    if (ast != NULL) {
-      legend = olxstr("GrowBond") << '_' << nt.to->GetType().symbol;
-      if (renderer.GetStyles().FindStyle(legend) == 0) {
-        TGraphicsStyle &st = renderer.GetStyles().NewStyle(legend);
-        st.SetParam(gl.GetPrimitiveMaskName(), 1040, false);
-        TGlMaterial *glm = ast->FindMaterial("Sphere");
-        if (glm != 0)
-          st.SetMaterial("Top stipple cone", *glm);
-        if (bc_mat != 0)
-          glm = bc_mat;
-        else
-          glm = nt.from->Style().FindMaterial("Sphere");
-        if (glm != 0)
-          st.SetMaterial("Bottom cone", *glm);
-      }
-    }
-    gl.Create(legend);
+    gl.Create();
     return gl;
   }
 };
 //..............................................................................
 void TGXApp::CreateXGrowLines()  {
-  if( !XGrowLines.IsEmpty() )  {  // clear the existing ones...
+  if ( !XGrowLines.IsEmpty() )  {  // clear the existing ones...
     TPtrList<TGPCollection> colls; // list of unique collections
     AGDObjList lines(XGrowLines.Count()*2);  // list of the AGDrawObject pointers to lines...
     for( size_t i=0; i < XGrowLines.Count(); i++ )  {

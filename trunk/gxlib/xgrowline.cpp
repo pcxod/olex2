@@ -23,11 +23,11 @@ TXGrowLine::TXGrowLine(TGlRenderer& r, const olxstr& collectionName, TXAtom& A,
   FEdge = transform * CA.ccrd();
   CA.GetParent()->CellToCartesian(FEdge);
   vec3d C = FEdge - A.crd();
-  if( !C.IsNull() )  {
+  if (!C.IsNull()) {
     Params()[3] = C.Length();
     C.Normalise();
     Params()[0] = (float)(acos(C[2])*180/M_PI);
-    if( olx_abs(Params()[0]-180) < 1e-3 )  { // degenerate case with Pi rotation
+    if (olx_abs(Params()[0]-180) < 1e-3) { // degenerate case with Pi rotation
       Params()[1] = 0;
       Params()[2] = 1;
     }
@@ -39,7 +39,33 @@ TXGrowLine::TXGrowLine(TGlRenderer& r, const olxstr& collectionName, TXAtom& A,
 }
 //..............................................................................
 void TXGrowLine::Create(const olxstr& cName)  {
-  TXBond::Create(cName);
+  olxstr colName = cName;
+  if (colName.IsEmpty()) {
+    colName = olxstr("GrowBond_") << _CAtom.GetType().symbol << '-' <<
+      _XAtom.GetType().symbol;
+  }
+  TGraphicsStyle *style = Parent.GetStyles().FindStyle(colName);
+  if (style == 0 || style->IsNew()) {
+    TGraphicsStyle &st = (style == 0 ? Parent.GetStyles().NewStyle(colName)
+      : *style);
+    st.SetParam(GetPrimitiveMaskName(), 1040, false);
+    TGraphicsStyle *ast = Parent.GetStyles().FindStyle(_CAtom.GetType().symbol);
+    if (ast != NULL) {
+      TGlMaterial *glm = ast->FindMaterial("Sphere");
+      if (glm != 0)
+        st.SetMaterial("Top stipple cone", *glm);
+    }
+    // atom may be not created yet, so using it's style!
+    ast = Parent.GetStyles().FindStyle(_XAtom.GetType().symbol);
+    if (ast != 0) {
+      TGlMaterial *glm = ast->FindMaterial("Sphere");
+      if (glm != 0)
+        st.SetMaterial("Bottom cone", *glm);
+    }
+    st.SetNew(false);
+  }
+  TXBond::Create(colName);
+  GetPrimitives().GetStyle().SetSaveable(false);
 }
 //..............................................................................
 bool TXGrowLine::Orient(TGlPrimitive& GlP)  {

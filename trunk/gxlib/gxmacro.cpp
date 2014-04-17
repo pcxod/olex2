@@ -263,7 +263,7 @@ void GXLibMacros::Export(TLibrary& lib) {
   gxlib_InitMacro(ChemDraw,
     EmptyString(),
     fpAny|psFileLoaded,
-    "Currently only creates aromatic rings for Ph, Py and Cp rings");
+    "Changes the view to show aromatic rings and double/tripple bonds.");
   gxlib_InitMacro(Direction,
     EmptyString(),
     fpNone,
@@ -310,10 +310,17 @@ void GXLibMacros::Export(TLibrary& lib) {
     ,
     fpNone|fpOne|fpTwo,
     "Fragment matching, alignment and label transfer routine");
+  gxlib_InitMacro(SetMaterial, EmptyString(), fpTwo | fpThree,
+    "Assigns provided value to specified material");
+
   gxlib_InitFunc(ExtraZoom, fpNone|fpOne,
     "Sets/reads current extra zoom (default zoom correction)");
   gxlib_InitFunc(MatchFiles, fpTwo|fpThree,
     "Matches given files");
+  gxlib_InitFunc(SelName, fpNone,
+    "Returns name for the selected object group");
+  gxlib_InitFunc(GetMaterial, fpOne | fpTwo,
+    "Returns material of specified object");
 }
 //.............................................................................
 void GXLibMacros::macGrow(TStrObjList &Cmds, const TParamList &Options,
@@ -3822,5 +3829,128 @@ void GXLibMacros::funMatchFiles(const TStrObjList& Params, TMacroError &E)  {
   }
   catch(...)  {}
   E.SetRetVal(XLibMacros::NAString());
+}
+//..............................................................................
+void GXLibMacros::funSelName(const TStrObjList& Params, TMacroError &E)  {
+  TGlGroup& sel = app.GetSelection();
+  if (sel.Count() == 1) {
+    E.SetRetVal(sel[0].GetCollectionName());
+  }
+  else {
+    E.SetRetVal(EmptyString());
+  }
+}
+//..............................................................................
+void GXLibMacros::macSetMaterial(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
+  TGlMaterial* mat = NULL;
+  TGlMaterial glm(Cmds[1]);
+  sorted::PointerPointer<TGPCollection> colls;
+  size_t di = Cmds[0].IndexOf('.');
+  olxstr col_name = di != InvalidIndex ? Cmds[0].SubStringTo(di) : Cmds[0];
+  olxstr prm_name = di != InvalidIndex ? Cmds[0].SubStringFrom(di + 1)
+    : EmptyString();
+  if (col_name.Equalsi("sel")) {
+    TGlGroup &g = app.GetSelection();
+    for (size_t i = 0; i < g.Count(); i++) {
+      colls.AddUnique(&g[i].GetPrimitives());
+    }
+  }
+  else {
+    TGPCollection* gpc = app.GetRender().FindCollection(col_name);
+    if (gpc != 0) {
+      colls.Add(gpc);
+    }
+    else {  // try to modify the style then, if exists
+      bool found = false;
+      TGraphicsStyle* gs = app.GetRender().GetStyles().FindStyle(col_name);
+      if (gs != NULL) {
+        mat = gs->FindMaterial(prm_name);
+        if (mat != NULL)  {
+          *mat = glm;
+          found = true;
+        }
+      }
+      if (!found) {
+        E.ProcessingError(__OlxSrcInfo, "Undefined style ").quote() <<
+          Cmds[0];
+      }
+    }
+  }
+  for (size_t ci = 0; ci < colls.Count(); ci++) {
+    bool found = false;
+    if (!prm_name.IsEmpty()) {
+      TGlPrimitive* glp = colls[ci]->FindPrimitiveByName(prm_name);
+      if (glp != NULL)  {
+        glp->SetProperties(glm);
+        colls[ci]->GetStyle().SetMaterial(prm_name, glm);
+        found = true;
+      }
+    }
+    else {
+      for (size_t i = 0; i < colls[ci]->ObjectCount(); i++)  {
+        TGlGroup *glg = dynamic_cast<TGlGroup*>(&colls[ci]->GetObject(i));
+        if (glg != NULL) {
+          glg->SetGlM(glm);
+          found = true;
+        }
+      }
+    }
+    if (!found) {
+      TBasicApp::NewLogEntry(logError) << "Collection '" << colls[ci]->GetName()
+        << "' is not processed";
+    }
+  }
+}
+//..............................................................................
+void GXLibMacros::funGetMaterial(const TStrObjList &Params, TMacroError &E) {
+  const TGlMaterial* mat = NULL;
+  size_t di = Params[0].IndexOf('.');
+  olxstr col_name = di != InvalidIndex ? Params[0].SubStringTo(di) : Params[0];
+  olxstr prm_name = di != InvalidIndex ? Params[0].SubStringFrom(di + 1)
+    : EmptyString();
+  TGPCollection* gpc = NULL;
+  if (col_name.Equalsi("sel")) {
+    TGlGroup &g = app.GetSelection();
+    if (g.Count() != 1) {
+      E.ProcessingError(__OlxSrcInfo, "Please select one object only");
+      return;
+    }
+    gpc = &g[0].GetPrimitives();
+  }
+  if (gpc != NULL) {
+    if (prm_name.IsEmpty()) {
+      if (EsdlInstanceOf(*gpc, TGlGroup))
+        mat = &((TGlGroup*)gpc)->GetGlM();
+    }
+    else {
+      TGlPrimitive* glp = gpc->FindPrimitiveByName(prm_name);
+      if (glp != NULL)
+        mat = &glp->GetProperties();
+    }
+  }
+  else {  // check if the style exists
+    TGraphicsStyle* gs = app.GetRender().GetStyles().FindStyle(col_name);
+    if (gs != NULL) {
+      if (prm_name.IsEmpty()) {
+        mat = gs->FindMaterial("mat");
+      }
+      else {
+        mat = gs->FindMaterial(prm_name);
+      }
+    }
+  }
+  if (mat == NULL) {
+    E.ProcessingError(__OlxSrcInfo, "Undefined material ").quote() <<
+      Params[0];
+    return;
+  }
+  else {
+    if (Params.Count() == 2)
+      E.SetRetVal(mat->ToPOV());
+    else
+      E.SetRetVal(mat->ToString());
+  }
 }
 //..............................................................................

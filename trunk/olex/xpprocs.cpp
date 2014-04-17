@@ -1115,7 +1115,7 @@ void TMainForm::macHelp(TStrObjList &Cmds, const TParamList &Options,
       PostCmdHelp(Cmds[0], true);
     else {
       if (Options.GetName(0)[0] ==  'c') {  // show categories
-        FGlConsole->PrintText(olxstr("Macroses for category: ") << Cmds[0]);
+        FGlConsole->PrintText(olxstr("Macros for category: ") << Cmds[0]);
         for( size_t i=0; i < FHelpItem->ItemCount(); i++ )  {
           TDataItem *Cat = FHelpItem->GetItemByIndex(i).FindItemi("category");
           if (Cat == NULL) continue;
@@ -5474,61 +5474,21 @@ void TMainForm::macEditMaterial(TStrObjList &Cmds, const TParamList &Options, TM
 //..............................................................................
 void TMainForm::macSetMaterial(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TGlMaterial* mat = NULL;
-  TGlMaterial glm(Cmds[1]);
-  if( Cmds[0] == "helpcmd" )
+  if (Cmds[0] == "helpcmd")
     mat = &HelpFontColorCmd;
-  else if( Cmds[0] == "helptxt" )
+  else if (Cmds[0] == "helptxt")
     mat = &HelpFontColorTxt;
-  else if( Cmds[0] == "execout" )
+  else if (Cmds[0] == "execout")
     mat = &ExecFontColor;
-  else if( Cmds[0] == "error" )
+  else if (Cmds[0] == "error")
     mat = &ErrorFontColor;
-  else if( Cmds[0] == "exception" )
+  else if (Cmds[0] == "exception")
     mat = &ExceptionFontColor;
-  else {
-    size_t di = Cmds[0].IndexOf('.');
-    bool found = false;
-    olxstr col_name = di != InvalidIndex ? Cmds[0].SubStringTo(di) : Cmds[0];
-    olxstr prm_name = di != InvalidIndex ? Cmds[0].SubStringFrom(di+1)
-      : EmptyString();
-    TGPCollection* gpc = FXApp->GetRender().FindCollection(col_name);
-    if( gpc != NULL )  {
-      if( !prm_name.IsEmpty() )  {
-        TGlPrimitive* glp = gpc->FindPrimitiveByName(prm_name);
-        if( glp != NULL )  {
-          glp->SetProperties(glm);
-          gpc->GetStyle().SetMaterial(prm_name, glm);
-          found = true;
-        }
-      }
-      else {
-        for( size_t i=0; i < gpc->ObjectCount(); i++ )  {
-          TGlGroup *glg = dynamic_cast<TGlGroup*>(&gpc->GetObject(i));
-          if( glg != NULL ) {
-            glg->SetGlM(glm);
-            found = true;
-          }
-        }
-      }
-    }
-    else  {  // try to modify the style then, if exists
-      TGraphicsStyle* gs = FXApp->GetRender().GetStyles().FindStyle(col_name);
-      if( gs != NULL )  {
-        mat = gs->FindMaterial(prm_name);
-        if( mat != NULL )  {
-          *mat = glm;
-          found = true;
-        }
-      }
-    }
-    if( !found )
-      E.ProcessingError(__OlxSrcInfo, olxstr("Undefined object ") << Cmds[0]);
-    return;
+  if (mat == NULL) {
+    E.SetUnhandled(true);
   }
-  if( mat == NULL )
-    E.ProcessingError(__OlxSrcInfo, olxstr("Undefined material ") << Cmds[0]);
   else
-    *mat = glm;
+    *mat = TGlMaterial(Cmds[1]);
 }
 //..............................................................................
 void TMainForm::funChooseMaterial(const TStrObjList &Params, TMacroError &E)  {
@@ -5545,48 +5505,22 @@ void TMainForm::funChooseMaterial(const TStrObjList &Params, TMacroError &E)  {
 //..............................................................................
 void TMainForm::funGetMaterial(const TStrObjList &Params, TMacroError &E)  {
   const TGlMaterial* mat = NULL;
-  if( Params[0] == "helpcmd" )
+  if (Params[0] == "helpcmd")
     mat = &HelpFontColorCmd;
-  else if( Params[0] == "helptxt" )
+  else if (Params[0] == "helptxt")
     mat = &HelpFontColorTxt;
-  else if( Params[0] == "execout" )
+  else if (Params[0] == "execout")
     mat = &ExecFontColor;
-  else if( Params[0] == "error" )
+  else if (Params[0] == "error")
     mat = &ErrorFontColor;
-  else if( Params[0] == "exception" )
+  else if (Params[0] == "exception")
     mat = &ExceptionFontColor;
-  else  {
-    size_t di = Params[0].IndexOf('.');
-    if( di != InvalidIndex )  {
-      TGPCollection* gpc = FXApp->GetRender().FindCollection(Params[0].SubStringTo(di));
-      if( gpc != NULL )  {
-        TGlPrimitive* glp = gpc->FindPrimitiveByName(Params[0].SubStringFrom(di+1));
-        if( glp != NULL )
-          mat = &glp->GetProperties();
-      }
-      else  {  // check if the style exists
-        TGraphicsStyle* gs = FXApp->GetRender().GetStyles().FindStyle(Params[0].SubStringTo(di));
-        if( gs != NULL )
-          mat = gs->FindMaterial(Params[0].SubStringFrom(di+1));
-      }
-    }
-    else  {
-      TGPCollection* gpc = FXApp->GetRender().FindCollection(Params[0]);
-      if( gpc != NULL && EsdlInstanceOf(*gpc, TGlGroup) )
-        mat = &((TGlGroup*)gpc)->GetGlM();
-      else  {  // check if the style exists
-        TGraphicsStyle* gs = FXApp->GetRender().GetStyles().FindStyle(Params[0]);
-        if( gs != NULL )
-          mat = gs->FindMaterial("mat");
-      }
-    }
-  }
-  if( mat == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, olxstr("undefined material ") << Params[0]);
+  if (mat == NULL) {
+    E.SetUnhandled(true);
     return;
   }
-  else  {
-    if( Params.Count() == 2 )
+  else {
+    if (Params.Count() == 2)
       E.SetRetVal(mat->ToPOV());
     else
       E.SetRetVal(mat->ToString());
