@@ -479,13 +479,79 @@ double RefinementModel::FindRestrainedDistance(const TCAtom& a1,
 }
 //.............................................................................
 void RefinementModel::SetHKLSource(const olxstr& src) {
-  if( HKLSource == src )  return;
   HKLSource = src;
+}
+//.............................................................................
+void RefinementModel::SetReflections(const TRefList &refs) const {
+  TStopWatch sw(__FUNC__);
+  _HklStat.FileMinInd = vec3i(100);
+  _HklStat.FileMaxInd = vec3i(-100);
+  _Reflections.Clear();
+  _FriedelPairCount = 0;
+  _Reflections.SetCapacity(refs.Count());
+  for (size_t i = 0; i < refs.Count(); i++) {
+    if (refs[i].IsOmitted()) continue;
+    TReflection& r = _Reflections.AddNew(refs[i]);
+    if (HKLF < 5)  // enforce to clear the batch number...
+      r.SetBatch(TReflection::NoBatchSet);
+    r.SetI(r.GetI()*HKLF_s);
+    r.SetS(r.GetS()*HKLF_s / HKLF_wt);
+    vec3i::UpdateMinMax(r.GetHkl(), _HklStat.FileMinInd, _HklStat.FileMaxInd);
+  }
+  size_t maxRedundancy = 0;
+  _Redundancy.Clear();
+
+  sw.start("Building 3D reflection array");
+  TArray3D<TRefPList *> hkl3d(
+    _HklStat.FileMinInd, _HklStat.FileMaxInd);
+  hkl3d.FastInitWith(0);
+  for (size_t i = 0; i < _Reflections.Count(); i++) {
+    TReflection &r = _Reflections[i];
+    if (r.GetBatch() <= 0) {
+      continue;
+    }
+    TRefPList *& rl = hkl3d(r.GetHkl());
+    if (rl == NULL)
+      rl = new TRefPList;
+    rl->Add(r);
+    if (rl->Count() > maxRedundancy)
+      maxRedundancy = rl->Count();
+  }
+  sw.start("Analysing redundancy and Friedel pairs");
+  _Redundancy.SetCount(maxRedundancy);
+  _Redundancy.ForEach(olx_list_init::zero());
+  for (int h = _HklStat.FileMinInd[0]; h <= _HklStat.FileMaxInd[0]; h++)  {
+    for (int k = _HklStat.FileMinInd[1]; k <= _HklStat.FileMaxInd[1]; k++)  {
+      for (int l = _HklStat.FileMinInd[2]; l <= _HklStat.FileMaxInd[2]; l++)  {
+        TRefPList* rl1 = hkl3d(h, k, l);
+        if (rl1 == NULL)  continue;
+        const vec3i ind(-h, -k, -l);
+        if (hkl3d.IsInRange(ind))  {
+          TRefPList* rl2 = hkl3d(ind);
+          if (rl2 != NULL && rl2 != rl1)  {
+            _FriedelPairCount++;
+            _Redundancy[rl2->Count() - 1]++;
+            delete rl2;
+            hkl3d(ind) = NULL;
+          }
+        }
+        _Redundancy[rl1->Count() - 1]++;
+        delete rl1;
+        hkl3d(h, k, l) = NULL;
+      }
+    }
+  }
+  if (HKLSource.IsEmpty()) {
+    HklFileID.timestamp = TETime::msNow();
+  }
 }
 //.............................................................................
 const TRefList& RefinementModel::GetReflections() const {
   TStopWatch sw(__FUNC__);
   try {
+    if (!_Reflections.IsEmpty() && HKLSource.IsEmpty()) {
+      return _Reflections;
+    }
     TEFile::FileID hkl_src_id = TEFile::GetFileID(HKLSource);
     if( !_Reflections.IsEmpty() &&
         hkl_src_id == HklFileID &&
@@ -509,59 +575,7 @@ const TRefList& RefinementModel::GetReflections() const {
         OnCellDifference.Execute(this, &hf);
       }
     }
-    _HklStat.FileMinInd = hf.GetMinHkl();
-    _HklStat.FileMaxInd = hf.GetMaxHkl();
-    sw.start("Building 3D reflection array");
-    TArray3D<TRefPList*> hkl3d(_HklStat.FileMinInd , _HklStat.FileMaxInd);
-    hkl3d.FastInitWith(0);
-    HklFileID = hkl_src_id;
-    const size_t hkl_cnt = hf.RefCount();
-    size_t maxRedundancy = 0;
-    _Reflections.Clear();
-    _Redundancy.Clear();
-    _FriedelPairCount = 0;
-    _Reflections.SetCapacity(hkl_cnt);
-    for( size_t i=0; i < hkl_cnt; i++ )  {
-      if( HKLF < 5 )  // enforce to clear the batch number...
-        hf[i].SetBatch(TReflection::NoBatchSet);
-      if (hf[i].IsOmitted()) continue;
-      hf[i].SetI(hf[i].GetI()*HKLF_s);
-      hf[i].SetS(hf[i].GetS()*HKLF_s/HKLF_wt);
-      TReflection& r = _Reflections.AddNew(hf[i]);
-      if (hf[i].GetBatch() <= 0) {
-        continue;
-      }
-      TRefPList* rl = hkl3d(hf[i].GetHkl());
-      if( rl == NULL )
-        hkl3d(hf[i].GetHkl()) = rl = new TRefPList;
-      rl->Add(r);
-      if( rl->Count() > maxRedundancy )
-        maxRedundancy = rl->Count();
-    }
-    sw.start("Analysing redundancy and Friedel pairs");
-    _Redundancy.SetCount(maxRedundancy);
-    _Redundancy.ForEach(olx_list_init::zero());
-    for( int h=_HklStat.FileMinInd[0]; h <= _HklStat.FileMaxInd[0]; h++ )  {
-      for( int k=_HklStat.FileMinInd[1]; k <= _HklStat.FileMaxInd[1]; k++ )  {
-        for( int l=_HklStat.FileMinInd[2]; l <= _HklStat.FileMaxInd[2]; l++ )  {
-          TRefPList* rl1 = hkl3d(h, k, l);
-          if( rl1 == NULL )  continue;
-          const vec3i ind(-h,-k,-l);
-          if( hkl3d.IsInRange(ind) )  {
-            TRefPList* rl2 = hkl3d(ind);
-            if( rl2 != NULL && rl2 != rl1 )  {
-              _FriedelPairCount++;
-              _Redundancy[rl2->Count()-1]++;
-              delete rl2;
-              hkl3d(ind) = NULL;
-            }
-          }
-          _Redundancy[rl1->Count()-1]++;
-          delete rl1;
-          hkl3d(h, k, l) = NULL;
-        }
-      }
-    }
+    SetReflections(hf.RefList());
     return _Reflections;
   }
   catch(TExceptionBase& exc)  {

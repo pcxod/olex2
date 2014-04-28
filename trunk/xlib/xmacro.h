@@ -192,6 +192,7 @@ public:
   static DefFunc(CalcR) // calculates R factors
   static DefFunc(GetCompilationInfo)
   static DefFunc(SGList)
+  static DefMacro(TestR)
 
   static void ChangeCell(const mat3d& tm, const TSpaceGroup& sg,
     const olxstr& resHKL_FN);

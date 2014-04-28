@@ -685,6 +685,9 @@ Friedel opposites of components 1 ... m
     applied)
   */
   const TRefList& GetReflections() const;
+  /* Sets the reflection list for this object - operates only on the mutable
+  members*/
+  void SetReflections(const TRefList &refs) const;
   // this will be only valid if any list of the reflections was called
   const HklStat& GetReflectionStat() const {  return _HklStat;  }
   // filters the reflections according to the parameters
