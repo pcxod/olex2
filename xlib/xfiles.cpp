@@ -17,6 +17,7 @@
 #include "crs.h"
 #include "cif.h"
 #include "hkl.h"
+#include "cif.h"
 #include "utf8file.h"
 #include "atomsort.h"
 #include "infotab.h"
@@ -231,9 +232,54 @@ void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
      !TEFile::Exists(GetRM().GetHKLSource()) )
   {
     olxstr src = LocateHklFile();
-    if( !src.IsEmpty() && !TEFile::Existsi(olxstr(src), src) )
+    if (!src.IsEmpty() && !TEFile::Existsi(olxstr(src), src))
       src.SetLength(0);
     GetRM().SetHKLSource(src);
+    try {
+      if (src.IsEmpty() && fn.EndsWithi(".cif")) {
+        TCif &cif = GetLastLoader<TCif>();
+        cif_dp::cetTable* hklLoop = cif.FindLoop("_refln");
+        if (hklLoop != NULL) {
+          const size_t hInd = hklLoop->ColIndex("_refln_index_h");
+          const size_t kInd = hklLoop->ColIndex("_refln_index_k");
+          const size_t lInd = hklLoop->ColIndex("_refln_index_l");
+          const size_t mInd = hklLoop->ColIndex("_refln_F_squared_meas");
+          const size_t sInd = hklLoop->ColIndex("_refln_F_squared_sigma");
+          const size_t bInd = hklLoop->ColIndex("_refln_scale_group_code");
+          if ((hInd | kInd | lInd | mInd | sInd) != InvalidIndex) {
+            TRefList refs;
+            refs.SetCapacity(hklLoop->RowCount());
+            for (size_t i = 0; i < hklLoop->RowCount(); i++) {
+              TReflection* r = new TReflection(
+                hklLoop->Get(i, hInd).GetStringValue().ToInt(),
+                hklLoop->Get(i, kInd).GetStringValue().ToInt(),
+                hklLoop->Get(i, lInd).GetStringValue().ToInt(),
+                hklLoop->Get(i, mInd).GetStringValue().ToDouble(),
+                hklLoop->Get(i, sInd).GetStringValue().ToDouble());
+              if (bInd != InvalidIndex) {
+                r->SetBatch(hklLoop->Get(i, bInd).GetStringValue().ToInt());
+              }
+              refs.Add(r);
+            }
+            GetRM().SetReflections(refs);
+          }
+        }
+        else {
+          cif_dp::cetStringList *ci = dynamic_cast<cif_dp::cetStringList *>(
+            cif.FindEntry("_shelx_hkl_file"));
+          if (ci != NULL) {
+            THklFile hkf;
+            hkf.LoadFromStrings(TCStrList(ci->lines));
+            GetRM().SetReflections(hkf.RefList());
+          }
+        }
+
+      }
+    }
+    catch (const TExceptionBase &e) {
+      TBasicApp::NewLogEntry(logWarning) << "Failed to extract HKL data from "
+        "CIF";
+    }
   }
   TXApp::GetInstance().SetLastSGResult_(EmptyString());
 }

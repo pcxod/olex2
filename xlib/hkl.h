@@ -22,7 +22,7 @@ BeginXlibNamespace()
 
 class THklFile: public IEObject  {
   static int HklCmp(const TReflection &I1, const TReflection &I2);
-  TRefPList Refs;
+  TRefList Refs;
   TArray3D< TRefPList* > *Hkl3D;
   mat3d Basis;
 protected:
@@ -49,9 +49,10 @@ public:
   // function has to be called to sort the list of reflections
   void EndAppend();
 
-  TReflection& Reflection(size_t i)  const {  return *Refs[i];  }
-  TReflection& operator [](size_t i) const {  return *Refs[i];  }
+  TReflection& Reflection(size_t i) const {  return Refs[i];  }
+  TReflection& operator [](size_t i) const {  return Refs[i];  }
   size_t RefCount() const {  return Refs.Count();  }
+  const TRefList &RefList() const { return Refs;  }
 
   const vec3i& GetMaxHkl() const {  return MaxHkl;  }
   const vec3i& GetMinHkl() const {  return MinHkl;  }
@@ -68,6 +69,8 @@ public:
   */
   bool LoadFromFile(const olxstr& FN, class TIns* ins = NULL,
     bool* ins_initialised=NULL);
+  bool LoadFromStrings(const TCStrList& lines, class TIns* ins = NULL,
+    bool* ins_initialised = NULL);
   bool SaveToFile(const olxstr& FN);
   void UpdateRef(const TReflection& R);
   // returns reflections owned by this object

@@ -39,7 +39,7 @@ void THklFile::Init() {
 }
 //..............................................................................
 void THklFile::Clear()  {
-  Refs.DeleteItems().Clear();
+  Refs.Clear();
   Clear3D();
 }
 //..............................................................................
@@ -70,7 +70,7 @@ void THklFile::Clear3D()  {
   delete Hkl3D;
   Hkl3D = NULL;
 }
-
+//..............................................................................
 bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins,
   bool* ins_initialised)
 {
@@ -82,8 +82,24 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins,
       HasBatch = false,
       FormatInitialised = false;
     TCStrList SL = TEFile::ReadCLines(FN);
-    if( SL.IsEmpty() )
+    if (SL.IsEmpty())
       throw TEmptyFileException(__OlxSrcInfo, FN);
+    return LoadFromStrings(SL, ins, ins_initialised);
+  }
+  catch (const TExceptionBase& e) {
+    throw TFunctionFailedException(__OlxSourceInfo, e);
+  }
+}
+//..............................................................................
+bool THklFile::LoadFromStrings(const TCStrList& SL, TIns* ins,
+  bool* ins_initialised)
+{
+  try  {
+    Clear();
+    bool ZeroRead = false,
+      HklFinished = false,
+      HasBatch = false,
+      FormatInitialised = false;
     {  // validate if 'real' HKL, not fcf
       if( !IsHKLFileLine(SL[0]) )  {
         TCif cif;
@@ -126,7 +142,7 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins,
             r[mInd]->GetStringValue().ToDouble(),
             r[sInd]->GetStringValue().ToDouble()
             ));
-          UpdateMinMax(*Refs.GetLast());
+          UpdateMinMax(Refs.GetLast());
         }
         if( ins != NULL && cif.FindEntry("_cell_length_a") != NULL )  {
           ins->GetRM().Assign(cif.GetRM(), true);
@@ -236,9 +252,7 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins,
           break;
         }
         ins->Clear();
-        ins->SetTitle(
-          TEFile::ChangeFileExt(TEFile::ExtractFileName(FN),
-            EmptyString()) << " imported from HKL file");
+        ins->SetTitle("Olex2 imported from HKL file");
         bool cell_found = false, sfac_found = false;
         for( size_t j=i; j < SL.Count(); j++ )  {
           olxstr line = SL[j].Trim(' ');
@@ -321,7 +335,7 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins,
   catch(const TExceptionBase& e)  {
     throw TFunctionFailedException(__OlxSourceInfo, e);
   }
-  if( Refs.IsEmpty() )
+  if (Refs.IsEmpty())
     throw TFunctionFailedException(__OlxSourceInfo, "no reflections found");
   return true;
 }
@@ -334,7 +348,7 @@ void THklFile::UpdateRef(const TReflection& R)  {
   size_t ind = olx_abs(R.GetTag())-1;
   if( ind >= Refs.Count() )
     throw TInvalidArgumentException(__OlxSourceInfo, "reflection tag");
-  Refs[ind]->SetOmitted(R.IsOmitted());
+  Refs[ind].SetOmitted(R.IsOmitted());
 }
 //..............................................................................
 int THklFile::HklCmp(const TReflection &R1, const TReflection &R2)  {
@@ -351,8 +365,8 @@ void THklFile::InitHkl3D() {
   volatile TStopWatch sw(__FUNC__);
   TArray3D<TRefPList*> &hkl3D = *(new TArray3D<TRefPList*>(MinHkl, MaxHkl));
   for (size_t i=0; i < Refs.Count(); i++) {
-    TReflection *r1 = Refs[i];
-    TRefPList *&rl = hkl3D(r1->GetHkl());
+    TReflection &r1 = Refs[i];
+    TRefPList *&rl = hkl3D(r1.GetHkl());
     if (rl == NULL)
       rl = new TRefPList();
     rl->Add(r1);
@@ -380,7 +394,7 @@ ConstPtrList<TReflection> THklFile::AllRefs(const vec3i& idx,
 //..............................................................................
 void THklFile::Append(TReflection& hkl)  {
   UpdateMinMax(hkl);
-  Refs.Add(hkl)->SetTag(Refs.Count());
+  Refs.Add(hkl).SetTag(Refs.Count());
 }
 //..............................................................................
 void THklFile::EndAppend()  {
@@ -391,7 +405,7 @@ void THklFile::Append(const TRefPList& hkls)  {
   if( hkls.IsEmpty() )  return;
   for( size_t i=0; i < hkls.Count(); i++ )  {
     UpdateMinMax(*hkls[i]);
-    Refs.Add(new TReflection(*hkls[i]))->SetTag(Refs.Count());
+    Refs.Add(new TReflection(*hkls[i])).SetTag(Refs.Count());
   }
   EndAppend();
 }
