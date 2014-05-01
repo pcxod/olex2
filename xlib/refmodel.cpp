@@ -559,6 +559,7 @@ const TRefList& RefinementModel::GetReflections() const {
     {
       return _Reflections;
     }
+    HklFileID = hkl_src_id;
     THklFile hf(HKLF_mat);
     HklFileMat = HKLF_mat;
     hf.LoadFromFile(HKLSource);
