@@ -7291,6 +7291,10 @@ void XLibMacros::macExport(TStrObjList &Cmds, const TParamList &Options,
   if (!TEFile::Exists(res_name)) {
     cif_dp::cetStringList *ci = dynamic_cast<cif_dp::cetStringList *>(
       C->FindEntry("_shelx_res_file"));
+    if (ci == 0) {
+      ci = dynamic_cast<cif_dp::cetStringList *>(
+        C->FindEntry("_iucr_refine_instructions_details"));
+    }
     if (ci != NULL) {
       TBasicApp::NewLogEntry() << "Exporting RES file";
       TEFile::WriteLines(res_name, TCStrList(ci->lines));
