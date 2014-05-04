@@ -228,15 +228,15 @@ void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
     delete FLastLoader;
   }
   FLastLoader = Loader;
-  if( GetRM().GetHKLSource().IsEmpty() ||
-     !TEFile::Exists(GetRM().GetHKLSource()) )
+  if (GetRM().GetHKLSource().IsEmpty() ||
+     !TEFile::Exists(GetRM().GetHKLSource()))
   {
     olxstr src = LocateHklFile();
     if (!src.IsEmpty() && !TEFile::Existsi(olxstr(src), src))
       src.SetLength(0);
     GetRM().SetHKLSource(src);
     try {
-      if (src.IsEmpty() && fn.EndsWithi(".cif")) {
+      if (src.IsEmpty() && EsdlInstanceOf(*FLastLoader, TCif)) {
         TCif &cif = GetLastLoader<TCif>();
         cif_dp::cetTable* hklLoop = cif.FindLoop("_refln");
         if (hklLoop != NULL) {
