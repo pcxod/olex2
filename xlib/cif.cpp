@@ -60,17 +60,25 @@ void TCif::LoadFromStrings(const TStrList& Strings)  {
 }
 //..............................................................................
 void TCif::_LoadCurrent()  {
-  if ( data_provider.Count() == 0) {
+  if (data_provider.Count() == 0) {
     throw TInvalidArgumentException(__OlxSourceInfo,
       "Empty/Invalid CIF");
   }
-  if( block_index == InvalidIndex )  {
-    if( data_provider.Count() > 1 || data_provider.Count() == 0 ) {
+  if (block_index == InvalidIndex) {
+    if (data_provider.Count() == 0) {
       throw TFunctionFailedException(__OlxSourceInfo,
-        "could not locate required data");
+        "no data available");
     }
-    block_index = 0;
-    return;  // nothing to initialise anyway... must be a dummy CIF
+    for (size_t i = 0; i < data_provider.Count(); i++) {
+      CifBlock& cb = data_provider[i];
+      if (cb.param_map.IndexOf("_cell_length_a") != InvalidIndex) {
+        block_index = i;
+        break;
+      }
+    }
+    if (block_index == InvalidIndex) {
+      return;  // nothing to initialise anyway... must be a dummy CIF
+    }
   }
   // undo the changes
   for( size_t i=0; i < data_provider.Count(); i++ )  {
