@@ -714,6 +714,15 @@ TSAtom& TLattice::GenerateAtom(TCAtom& a, smatd& symop, TNetwork* net)  {
   TSAtom& SA = Objects.atoms.New(net == NULL ? Network : net);
   SA.CAtom(a);
   SA._SetMatrix(&symop);
+  if (!symop.IsFirst()) {
+    for (size_t i = 0; i < a.EquivCount(); i++) {
+      uint32_t id = GetUnitCell().MulMatrixId(a.GetEquiv(i), symop);
+      if (smatd::IsFirst(id)) {
+        SA._SetMatrix(&GetMatrix(0));
+        break;
+      }
+    }
+  }
   SA.crd() = GetAsymmUnit().Orthogonalise(SA.ccrd() = symop * SA.ccrd());
   SA.SetEllipsoid(&GetUnitCell().GetEllipsoid(
     symop.GetContainerId(), SA.CAtom().GetId()));
