@@ -29,8 +29,8 @@ private:
   size_t Id;
 public:
   TMol2Bond(size_t id) : Id(id) { }
-  short BondType;
-  TCAtom* a1, *a2;
+  size_t BondType;
+  index_t a1, a2;
   size_t GetId() const {  return Id;  }
 };
 
@@ -38,18 +38,22 @@ class TMol2: public TBasicCFile  {
 private:
   void Clear();
   TTypeList<TMol2Bond> Bonds;
-  static const olxstr BondNames[];
+
+  static const TStrList &BondNames() {
+    static TStrList rv("1;2;3;am;ar;du;un;nc", ';');
+    return rv;
+  }
 protected:
   olxstr MOLAtom(TCAtom& CA);
   olxstr MOLBond(TMol2Bond& B);
-  const olxstr& EncodeBondType(short type) const;
-  short DecodeBondType(const olxstr& name) const;
+  const olxstr& EncodeBondType(size_t type) const;
+  size_t DecodeBondType(const olxstr& name) const;
 public:
   TMol2() { }
   virtual ~TMol2() {  Clear();  }
 
-  inline size_t BondCount() const {  return Bonds.Count();  }
-  inline TMol2Bond& Bond(size_t index) {  return Bonds[index];  }
+  size_t BondCount() const {  return Bonds.Count();  }
+  TMol2Bond& Bond(size_t index) {  return Bonds[index];  }
   virtual void SaveToStrings(TStrList& Strings);
   virtual void LoadFromStrings(const TStrList& Strings);
   virtual bool Adopt(TXFile& XF);
