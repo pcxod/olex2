@@ -4086,15 +4086,14 @@ void TGXApp::CreateXGrowLines()  {
     AGDObjList lines(XGrowLines.Count()*2);  // list of the AGDrawObject pointers to lines...
     for( size_t i=0; i < XGrowLines.Count(); i++ )  {
       XGrowLines[i].GetPrimitives().SetTag(i);
-      XGrowLines[i].GetGlLabel().GetPrimitives().SetTag(i);
+      XGrowLines[i].GetGlLabel().GetPrimitives().RemoveObject(
+        XGrowLines[i].GetGlLabel());
       lines.Set(i*2, XGrowLines[i]);
       lines.Set(i*2+1, XGrowLines[i].GetGlLabel());
     }
     for( size_t i=0; i < XGrowLines.Count(); i++ )  {
       if( (size_t)XGrowLines[i].GetPrimitives().GetTag() == i )
         colls.Add(XGrowLines[i].GetPrimitives());
-      if( (size_t)XGrowLines[i].GetGlLabel().GetPrimitives().GetTag() == i )
-        colls.Add(XGrowLines[i].GetGlLabel().GetPrimitives());
     }
     FGlRender->RemoveCollections(colls);  // remove collections with their primitives
     FGlRender->RemoveObjects(lines);  // remove the object references
