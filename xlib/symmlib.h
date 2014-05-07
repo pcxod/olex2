@@ -342,24 +342,32 @@ public:
     const TCLattice& latt = GetLatticeByNumber(_latt);
     out.SetCapacity(latt.GetVectors().Count()*ml.Count()* (_latt > 0 ? 2 : 1));
     out.AddNew().r.I();
-    for( size_t i=0;  i < ml.Count(); i++ )  {
+    for (size_t i=0;  i < ml.Count(); i++) {
       const smatd& m = ml[i];
-      if( !m.r.IsI() )  // skip I matrix - always the first one
+      if (!m.r.IsI())  // skip I matrix - always the first one
         out.AddNew(m);
     }
-    size_t mc = out.Count();
-    if( _latt > 0 )  {
-      for( size_t i=0; i < mc; i++ )
-        out.AddCopy(out[i]) *= -1;
+    const size_t mc = out.Count();
+    for (size_t i= 0; i < latt.GetVectors().Count(); i++) {
+      for (size_t j = 0; j < mc; j++) {
+        out.AddCopy(out[j]).t += latt.GetVectors()[i];
+      }
     }
-    mc = out.Count();
-    for( size_t i=0; i < mc; i++ )  {
-      const smatd& m = out[i];
-      for( size_t j = 0; j < latt.GetVectors().Count(); j++ )
-        out.AddCopy(m).t += latt.GetVectors()[j];
+    if (_latt > 0) {
+      for (size_t j = 0; j < mc; j++) out.AddCopy(out[j].Negate());
+      for (size_t i = 0; i < latt.GetVectors().Count(); i++) {
+        for (size_t j = 0; j < mc; j++) {
+          out.AddCopy(out[j].Negate()).t += latt.GetVectors()[i];
+        }
+      }
     }
-    for( size_t i=0; i < out.Count(); i++ )
-      out[i].t -= out[i].t.Floor<int>();
+    for (size_t i = 0; i < out.Count(); i++) {
+      for (int j = 0; j < 3; j++) {
+        if (olx_abs(out[i].t[j]) >= 1) {
+          out[i].t[j] -= int(out[i].t[j]);
+        }
+      }
+    }
   }
 
   static bool IsInitialised()  {  return Instance != NULL;  }
