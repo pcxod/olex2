@@ -111,7 +111,7 @@ void TComboBox::EnterEvent(wxFocusEvent& event)  {
   event.Skip();
 }
 //..............................................................................
-const IEObject* TComboBox::GetObject(int i)  {
+const IEObject* TComboBox::GetObject(int i) const {
   TDataObj* res = (TDataObj*)GetClientData(i);
   return (res != NULL && !res->Delete) ? res->Data : NULL;
 }
@@ -119,14 +119,13 @@ const IEObject* TComboBox::GetObject(int i)  {
 olxstr TComboBox::GetText() const {
   if (!HasValue())
     return EmptyString();
-  olxstr cv = GetValue();
-  for (unsigned int i=0; i < GetCount(); i++) {
-    if (cv == GetString(i)) {
-      TDataObj* res = (TDataObj*)GetClientData(i);
-      return (res != NULL && res->Delete) ? res->Data->ToString() : cv;
-    }
+  int sel = GetSelection();
+  if (sel == -1) {
+    return EmptyString();
   }
-  return cv;
+  TDataObj* res = (TDataObj*)GetClientData(sel);
+  return (res == NULL || !res->Delete) ? olxstr(GetValue())
+    : res->Data->ToString();
 }
 //..............................................................................
 olxstr TComboBox::ItemsToString(const olxstr &sep)  {
