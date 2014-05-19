@@ -788,11 +788,17 @@ olxstr macSel_GetPlaneName(const TSPlane& p)  {
 olxstr macSel_FormatValue(double d, const ACifValue *cv) {
   if (cv == NULL)
     return olxstr::FormatFloat(3, d);
-  if (olx_abs(cv->GetValue().GetV()-d) > 1e-2) {
-    return  olxstr("CIF: ") << cv->GetValue().ToString() <<
+  if (cv->GetValue().GetE() == 0) {
+    return cv->GetValue().ToString();
+  }
+  olxstr cif_v = cv->GetValue().ToString(),
+    act_v = TEValueD(d, cv->GetValue().GetE()).ToString();
+
+  if (cif_v != act_v) {
+    return  olxstr("CIF: ") << cif_v <<
       " Actual: " << olxstr::FormatFloat(3, d);
   }
-  return cv->GetValue().ToString();
+  return cif_v;
 }
 
 olxstr macSel_FormatDistance(const TSAtom &a, const TSAtom &b, double d,
@@ -891,8 +897,30 @@ olxstr TGXApp::GetSelectionInfo(bool list) const {
         v = olx_angle(A.Edge(), A.Base(), B.A().crd(), B.B().crd());
         Tmp << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ")";
       }
-      else if( (EsdlInstanceOf(Sel[0], TXPlane) && EsdlInstanceOf(Sel[1], TXAtom)) ||
-               (EsdlInstanceOf(Sel[1], TXPlane) && EsdlInstanceOf(Sel[0], TXAtom)))
+      else if ((EsdlInstanceOf(Sel[0], TXBond) && EsdlInstanceOf(Sel[1], TXAtom)) ||
+               (EsdlInstanceOf(Sel[1], TXBond) && EsdlInstanceOf(Sel[0], TXAtom)))
+      {
+        const TXBond &b = (TXBond&)(EsdlInstanceOf(Sel[0], TXBond) ? Sel[0] : Sel[1]);
+        const TXAtom &a = (TXAtom&)(EsdlInstanceOf(Sel[0], TXBond) ? Sel[1] : Sel[0]);
+        Tmp = "Distance (bond-atom): ";
+        vec3d av = a.crd() - b.A().crd(),
+          bv = (b.B().crd() - b.A().crd()).Normalise();
+        v = (av - (bv*bv.DotProd(av))).Length();
+        Tmp << olxstr::FormatFloat(3, v);
+      }
+      else if ((EsdlInstanceOf(Sel[0], TXLine) && EsdlInstanceOf(Sel[1], TXAtom)) ||
+        (EsdlInstanceOf(Sel[1], TXLine) && EsdlInstanceOf(Sel[0], TXAtom)))
+      {
+        TXLine &l = (TXLine&)(EsdlInstanceOf(Sel[0], TXLine) ? Sel[0] : Sel[1]);
+        const TXAtom &a = (TXAtom&)(EsdlInstanceOf(Sel[0], TXLine) ? Sel[1] : Sel[0]);
+        Tmp = "Distance (line-atom): ";
+        vec3d av = a.crd() - l.Base(),
+          bv = (l.Edge() - l.Base()).Normalise();
+        v = (av - (bv*bv.DotProd(av))).Length();
+        Tmp << olxstr::FormatFloat(3, v);
+      }
+      else if ((EsdlInstanceOf(Sel[0], TXPlane) && EsdlInstanceOf(Sel[1], TXAtom)) ||
+        (EsdlInstanceOf(Sel[1], TXPlane) && EsdlInstanceOf(Sel[0], TXAtom)))
       {
         const TXPlane &p = (TXPlane&)(EsdlInstanceOf(Sel[0], TXPlane) ? Sel[0] : Sel[1]);
         const TXAtom &a = (TXAtom&)(EsdlInstanceOf(Sel[0], TXPlane) ? Sel[1] : Sel[0]);
@@ -900,17 +928,17 @@ olxstr TGXApp::GetSelectionInfo(bool list) const {
         v = p.DistanceTo(a);
         Tmp << olxstr::FormatFloat(3, v) << "\nDistance (plane centroid-atom): " <<
           olxstr::FormatFloat(3, p.GetCenter().DistanceTo(a.crd()));
-        vec3d x = (a.crd()-p.GetCenter());
+        vec3d x = (a.crd() - p.GetCenter());
         x -= p.GetNormal()*p.GetNormal().DotProd(x);
         Tmp << "\nAtom projection to the plane fractional coordinates: " <<
-          XFile().GetAsymmUnit().Fractionalise(x+p.GetCenter()).ToString();
+          XFile().GetAsymmUnit().Fractionalise(x + p.GetCenter()).ToString();
         Tmp << "\nCentroid-projection point distance: " <<
           olxstr::FormatFloat(3, x.Length());
         Tmp << "\nAtom-Centroid-projection point angle: " <<
           olxstr::FormatFloat(2,
-            acos((a.crd()-p.GetCenter()).CAngle(x))*180/M_PI);
+          acos((a.crd() - p.GetCenter()).CAngle(x)) * 180 / M_PI);
       }
-      else if( EsdlInstanceOf(Sel[0], TXBond) && EsdlInstanceOf(Sel[1], TXPlane) )  {
+      else if (EsdlInstanceOf(Sel[0], TXBond) && EsdlInstanceOf(Sel[1], TXPlane))  {
         Tmp = "Angle (plane-bond): ";
         v = ((TXPlane&)Sel[1]).Angle(((TXBond&)Sel[0]));
         Tmp << olxstr::FormatFloat(3, v);
