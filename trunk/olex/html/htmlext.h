@@ -65,7 +65,7 @@ protected:
   */
   void OnScroll(wxScrollEvent& evt);
   virtual void ScrollWindow(int dx, int dy, const wxRect* rect = NULL);
-
+  virtual void DoScroll(int x_pos, int y_pos);
   // position of where the mous was down
   int MouseX, MouseY;
   bool MouseDown;
