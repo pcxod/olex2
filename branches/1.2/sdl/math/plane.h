@@ -39,10 +39,16 @@ namespace olx_plane {
         continue;
       double ca = origin.CAngle(vec);
       vec = origin.XProdVec(vec);
+      double vo;
+      if (vec.IsNull(1e-6)) { // same direction as the origin
+        vo = 0;
+      }
+      else {
+        vo = (ca == -1 ? 0 : vec.CAngle(normal));
+      }
       /* negative - vec is on the right, positive - on the left, if ca == 0,
       vec == (0,0,0)
       */
-      double vo = (ca == -1 ? 0 : vec.CAngle(normal));
       if( ca >= 0 )  { // -90 to 90
         if( vo < 0 )  // -90 to 0 3->4
           pvs[i] = 3.0 + ca;

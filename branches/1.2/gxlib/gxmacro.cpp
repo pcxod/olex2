@@ -1456,6 +1456,13 @@ void GXLibMacros::macLine(TStrObjList &Cmds, const TParamList &Options,
     }
     from = center+params[2]*minl;
     to = center+params[2]*maxl;
+    double rmsd = 0;
+    for (size_t i = 0; i < Atoms.Count(); i++) {
+      vec3d v = Atoms[i]->crd() - center;
+      rmsd += (v - params[2]*params[2].DotProd(v)).QLength();
+    }
+    TBasicApp::NewLogEntry() << "RMSD/A: " <<
+      olxstr::FormatFloat(3, sqrt(rmsd/Atoms.Count()));
   }
   else if (Atoms.Count() == 2) {
     from = Atoms[0]->crd();

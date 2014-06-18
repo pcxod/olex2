@@ -520,6 +520,8 @@ void TCif::Initialize()  {
         DegenFunction = 1;
       else if (olx_abs((double)MatrixCount()/b - a) < 1e-3)
         DegenFunction = 2;
+      else if (olx_abs(b - 1./a) < 1e-3)
+        DegenFunction = 3;
     }
     if (DegenFunction == 0) {
       size_t degen = TUnitCell::GetPositionMultiplicity(MatrixList, A.ccrd());
@@ -532,7 +534,9 @@ void TCif::Initialize()  {
       double degen = ALoop->Get(i, Degen).GetStringValue().ToDouble();
       if (DegenFunction == 2)
         degen = (double)MatrixCount()/degen;
-      if( degen != 1 )  {
+      else if (DegenFunction == 3)
+        degen = 1. / degen;
+      if (degen != 1) {
         A.SetOccu(A.GetOccu()/degen);
         A.SetOccuEsd(A.GetOccuEsd()/degen);
       }

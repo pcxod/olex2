@@ -566,21 +566,21 @@ bool THtml::ItemState(const olxstr &ItemName, short State)  {
 }
 //.............................................................................
 bool THtml::UpdatePage(bool update_indices)  {
-  if( IsPageLocked() )  {
+  if (IsPageLocked()) {
     PageLoadRequested = true;
     PageRequested.SetLength(0);
     return true;
   }
 
-  olxstr Path(TEFile::ExtractFilePath(FileName));
-  if( TEFile::IsAbsolutePath(FileName) )  {
+  olxstr Path = TEFile::ExtractFilePath(FileName);
+  if (TEFile::IsAbsolutePath(FileName)) {
     Path = TEFile::OSPath(Path);
     WebFolder = Path;
   }
   else
     Path = WebFolder;
 
-  olxstr oldPath(TEFile::CurrentDir());
+  olxstr oldPath = TEFile::CurrentDir();
   TEFile::ChangeDir(WebFolder);
   if (update_indices) { // reload switches
     for (size_t i=0; i < Root->SwitchCount(); i++)
@@ -594,17 +594,23 @@ bool THtml::UpdatePage(bool update_indices)  {
   Traversables.Clear();
   InFocus = NULL;
   int xPos = -1, yPos = -1, xWnd=-1, yWnd = -1;
-  wxHtmlWindow::GetViewStart(&xPos, &yPos);
+  GetViewStart(&xPos, &yPos);
+  if (!FocusedControl.IsEmpty()) {
+    wxWindow *fw = wxWindow::FindFocus();
+    if (fw != 0 && fw->GetParent() != this) {
+      FocusedControl.SetLength(0);
+    }
+  }
 #if defined(__WIN32__)
-  wxHtmlWindow::Freeze();
+  Freeze();
 #else
   Hide();
 #endif
   SetPage(Res.Text(' ').u_str());
   ObjectsState.RestoreState();
-  wxHtmlWindow::Scroll(xPos, yPos);
 #if defined(__MAC__) || (defined(__linux__) && !wxCHECK_VERSION(2,9,0))
   CreateLayout();
+  Scroll(xPos, yPos);
   Show();
   Refresh();
   Update();
@@ -619,9 +625,11 @@ bool THtml::UpdatePage(bool update_indices)  {
   }
 #if defined(__WIN32__)
   CreateLayout();
+  Scroll(xPos, yPos);
   Thaw();
 #elif defined(__linux__) && wxCHECK_VERSION(2,9,0)
   CreateLayout();
+  Scroll(xPos, yPos);
   Show();
   Refresh();
   Update();
@@ -629,11 +637,11 @@ bool THtml::UpdatePage(bool update_indices)  {
   SwitchSources().Clear();
   SwitchSource().SetLength(0);
   TEFile::ChangeDir(oldPath);
-  if( !FocusedControl.IsEmpty() )  {
-    size_t ind = Objects.IndexOf( FocusedControl );
-    if( ind != InvalidIndex )  {
+  if (!FocusedControl.IsEmpty()) {
+    size_t ind = Objects.IndexOf(FocusedControl);
+    if (ind != InvalidIndex) {
       wxWindow* wnd = Objects.GetValue(ind).B();
-      if( EsdlInstanceOf(*wnd, TTextEdit) )
+      if (EsdlInstanceOf(*wnd, TTextEdit))
         ((TTextEdit*)wnd)->SetSelection(-1,-1);
       else if( EsdlInstanceOf(*wnd, TComboBox) )  {
         TComboBox* cb = (TComboBox*)wnd;
@@ -657,16 +665,21 @@ void THtml::OnScroll(wxScrollEvent& evt)  {  // this is never called at least on
   evt.Skip();
 }
 //.............................................................................
-void THtml::ScrollWindow(int dx, int dy, const wxRect* rect)  {
-  wxHtmlWindow::ScrollWindow(dx,dy,rect);
+void THtml::DoScroll(int x, int y) {
+  // disable automatic horizontal scrolling
+  wxHtmlWindow::DoScroll(0, y);
 }
+//.............................................................................
+void THtml::ScrollWindow(int dx, int dy, const wxRect* rect)  {
+  wxHtmlWindow::ScrollWindow(dx, dy,rect);
+} 
 //.............................................................................
 bool THtml::AddObject(const olxstr& Name, AOlxCtrl *Object, wxWindow* wxWin,
   bool Manage)
 {
   Traversables.Add(Association::New(Object,wxWin));
-  if( Name.IsEmpty() )  return true;  // an anonymous object
-  if( Objects.IndexOf(Name) != InvalidIndex )  return false;
+  if (Name.IsEmpty())  return true;  // an anonymous object
+  if (Objects.HasKey(Name))  return false;
   Objects.Add(Name, Association::Create(Object, wxWin, Manage));
   return true;
 }
