@@ -272,7 +272,7 @@ void TLattice::InitBody()  {
     Matrices.Add(new smatd(GetUnitCell().GetMatrix(0)))->SetId(0);
     ClearPlanes();
     Objects.atoms.IncCapacity(GetAsymmUnit().AtomCount());
-    for( size_t i=0; i < GetAsymmUnit().AtomCount(); i++ )    {
+    for( size_t i=0; i < GetAsymmUnit().AtomCount(); i++ )  {
       TCAtom& CA = GetAsymmUnit().GetAtom(i);
       if( CA.IsDeleted() )  continue;
       GenerateAtom(CA, *Matrices[0]);
@@ -714,15 +714,6 @@ TSAtom& TLattice::GenerateAtom(TCAtom& a, smatd& symop, TNetwork* net)  {
   TSAtom& SA = Objects.atoms.New(net == NULL ? Network : net);
   SA.CAtom(a);
   SA._SetMatrix(&symop);
-  if (!symop.IsFirst()) {
-    for (size_t i = 0; i < a.EquivCount(); i++) {
-      uint32_t id = GetUnitCell().MulMatrixId(a.GetEquiv(i), symop);
-      if (smatd::IsFirst(id)) {
-        SA._SetMatrix(&GetMatrix(0));
-        break;
-      }
-    }
-  }
   SA.crd() = GetAsymmUnit().Orthogonalise(SA.ccrd() = symop * SA.ccrd());
   SA.SetEllipsoid(&GetUnitCell().GetEllipsoid(
     symop.GetContainerId(), SA.CAtom().GetId()));
@@ -1485,9 +1476,35 @@ void TLattice::Disassemble(bool create_planes)  {
   // clear bonds & fragments
   ClearBonds();
   ClearFragments();
+  {
+    smatd *I = 0;
+    for (size_t i = 0; i < Matrices.Count(); i++) {
+      if (Matrices[i]->IsFirst()) {
+        I = Matrices[i];
+        break;
+      }
+    }
+    if (I == 0) {
+      I = Matrices.Add(new smatd());
+      I->I().SetId(0);
+    }
+    for (size_t i = 0; i < Objects.atoms.Count(); i++) {
+      TSAtom &a = Objects.atoms[i];
+      if (a.CAtom().EquivCount() == 0) continue;
+      if (!a.GetMatrix().IsFirst()) {
+        for (size_t j = 0; j < a.CAtom().EquivCount(); j++) {
+          uint32_t id = GetUnitCell().MulMatrixId(a.CAtom().GetEquiv(j), a.GetMatrix());
+          if (smatd::IsFirst(id)) {
+            a._SetMatrix(I);
+            break;
+          }
+        }
+      }
+    }
+  }
   TArrayList<vec3d> ocrd(Objects.atoms.Count());
   GenerateBondsAndFragments(&ocrd);
-  if( create_planes )
+  if (create_planes)
     BuildPlanes();
   OnDisassemble.Exit(this);
 }
@@ -2488,8 +2505,6 @@ void TLattice::BuildAtomRegistry()  {
     if( au_slice == NULL )  {
       const size_t atom_cnt = GetAsymmUnit().AtomCount();
       au_slice = ((*aum_slice)[c_id] = new TSAtomPList(atom_cnt));
-      for( size_t j=0; j < atom_cnt; j++)
-        (*au_slice)[j] = NULL;
     }
     else if( (*au_slice)[refs[i].catom_id] != NULL &&
         (*au_slice)[refs[i].catom_id] != sa )
