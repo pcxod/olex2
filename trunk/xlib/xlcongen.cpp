@@ -90,13 +90,30 @@ bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group,
       case fgOH2:
         dis = Distances.Get(GenId(fgOH2,0));
         if( CreatedAtoms.Count() == 2 )  {
-          if (envi.Count() == 1 &&
+          if (IsUseRestrains()) {
+            sr = &RefMod.rDFIX.AddNew();
+            sr->SetValue(dis);
+            sr->AddAtomPair(envi.GetBase().CAtom(), NULL, *CreatedAtoms[0], NULL);
+            sr->AddAtomPair(envi.GetBase().CAtom(), NULL, *CreatedAtoms[1], NULL);
+            sr = &RefMod.rDANG.AddNew();
+            sr->SetValue(olx_round(dis*sqrt(2 - 2 * cos(104.5*M_PI / 180)), 100));
+            sr->AddAtomPair(*CreatedAtoms[0], NULL, *CreatedAtoms[1], NULL);
+            if (envi.Count() == 1 &&
               XElementLib::IsMetal(envi.GetCAtom(0).GetType()))
+            {
+              sr = &RefMod.rSADI.AddNew();
+              sr->AddAtomPair(envi.GetCAtom(0), NULL, *CreatedAtoms[0], NULL);
+              sr->AddAtomPair(envi.GetCAtom(0), NULL, *CreatedAtoms[1], NULL);
+            }
+          }
+          else if (envi.Count() == 1 &&
+            XElementLib::IsMetal(envi.GetCAtom(0).GetType()))
           {
             afix = 7;
           }
-          else
+          else {
             afix = 6;
+          }
         }
         else if( CreatedAtoms.Count() == 1 && envi.GetBase().CAtom().GetDegeneracy() == 2 )  {
           sr = &RefMod.rDFIX.AddNew();

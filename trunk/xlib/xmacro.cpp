@@ -205,7 +205,9 @@ void XLibMacros::Export(TLibrary& lib)  {
     "Adds HTAB instructions to the ins file, maximum bond length [2.9] and "
     "minimal angle [150] might be provided");
 //_____________________________________________________________________________
-  xlib_InitMacro(HAdd, EmptyString(), fpAny,
+  xlib_InitMacro(HAdd,
+    "r-use restraints vs constraints for water molecules [False]",
+    fpAny,
     "Adds hydrogen atoms to all or provided atoms, however the ring atoms are "
     "treated separately and added all the time");
   xlib_InitMacro(HImp, EmptyString(), (fpAny^fpNone)|psFileLoaded,
@@ -1427,7 +1429,9 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options,
   }
 }
 //.............................................................................
-void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
   TXApp &XApp = TXApp::GetInstance();
   if (XApp.XFile().GetLattice().IsGenerated()) {
     Error.ProcessingError(__OlxSrcInfo, "not applicable to grown structures");
@@ -1445,13 +1449,14 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       ca.SetDetached(false);
   }
   TActionQueueLock q_draw(XApp.FindActionQueue(olxappevent_GL_DRAW));
-  try  {
+  try {
     TLattice &latt = XApp.XFile().GetLattice();
     TSAtomPList satoms = XApp.FindSAtoms(Cmds.Text(' '), true);
     // find atoms first, or selection gets lost...
     latt.UpdateConnectivity();
     RefinementModel &rm = XApp.XFile().GetRM();
     TXlConGen xlConGen(rm);
+    xlConGen.SetUseRestrains(Options.GetBoolOption('r'));
     TUnitCell &uc = XApp.XFile().GetUnitCell();
     if (Hfix == 0) {
       latt.AnalyseHAdd(xlConGen, satoms);
