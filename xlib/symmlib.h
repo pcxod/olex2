@@ -361,13 +361,6 @@ public:
         }
       }
     }
-    for (size_t i = 0; i < out.Count(); i++) {
-      for (int j = 0; j < 3; j++) {
-        if (olx_abs(out[i].t[j]) >= 1) {
-          out[i].t[j] -= int(out[i].t[j]);
-        }
-      }
-    }
   }
 
   static bool IsInitialised()  {  return Instance != NULL;  }

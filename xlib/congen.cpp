@@ -17,7 +17,10 @@
 
 static const double THA = acos(-1./3)*180/M_PI;
 
-AConstraintGenerator::AConstraintGenerator(RefinementModel& rm) : RefMod(rm) {
+AConstraintGenerator::AConstraintGenerator(RefinementModel& rm)
+  : UseRestrains(false),
+  RefMod(rm)
+{
   Distances(GenId(fgCH3, 1), 0.96);
   Distances(GenId(fgCH2, 2), 0.97);
   Distances(GenId(fgCH2, 1), 0.86);

@@ -20,7 +20,7 @@ const uint16_t
   fgCH1  = 3,
   fgOH3  = 4,
   fgOH2  = 5,
-  fgOH1  = 6,
+  fgOH1 = 6,
   fgNH4  = 7,
   fgNH3  = 8,
   fgNH2  = 9,
@@ -47,7 +47,8 @@ const uint16_t
 
 typedef TTypeList< olx_pair_t<double, double> > TFixedValueList;
 
-class AConstraintGenerator : public IEObject{
+class AConstraintGenerator : public IEObject {
+  bool UseRestrains;
 protected:
   olxdict<uint32_t,double, TPrimitiveComparator> Distances;
   void DoGenerateAtom(TCAtomPList& created, TAsymmUnit& au, vec3d_list& Crds,
@@ -64,7 +65,10 @@ public:
     TCAtomPList* generated = NULL) = 0;
   virtual void AnalyseMultipart(const TAtomEnvi& envi,
     const TTypeList<TCAtomPList>& parts) = 0;
-  /* front 32 bits - number of bonds, following 8 bits - geometry, rear 8 bits
+  
+  DefPropBIsSet(UseRestrains)
+
+  /* front 16 bits - number of bonds, following 8 bits - geometry, rear 8 bits
   - group */
   static uint32_t GenId(uint16_t groupId, uint16_t bonds,
     uint16_t geometry=fgDefault)
