@@ -65,6 +65,7 @@ public:
   DefMacro(Fmol)
 
   DefMacro(SetMaterial)
+  DefMacro(DefineVar)
 
   DefFunc(MatchFiles)
   DefFunc(ExtraZoom)

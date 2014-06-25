@@ -51,7 +51,8 @@ RefinementModel::RefinementModel(TAsymmUnit& au) :
   OnSetBadReflections(Actions.New("OnSetBadReflections")),
   OnCellDifference(Actions.New("OnCellDifference")),
   aunit(au),
-  Conn(*this)
+  Conn(*this),
+  CVars(*this)
 {
   SetDefaults();
   RefContainers(rDFIX.GetIdName(), &rDFIX);
@@ -279,6 +280,7 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignA
   }
   Omitted.Assign(rm.Omitted);
   selectedTableRows.Assign(rm.selectedTableRows, aunit);
+  CVars.Assign(rm.CVars);
   return *this;
 }
 //.............................................................................
@@ -1309,7 +1311,6 @@ void RefinementModel::ToDataItem(TDataItem& item) {
   item.AddItem("EXTI", EXTI_set).AddField("val", EXTI.ToString());
   Conn.ToDataItem(item.AddItem("CONN"));
   item.AddField("UserContent", GetUserContentStr());
-
   TDataItem& info_tables = item.AddItem("INFO_TABLES");
   size_t info_tab_cnt=0;
   for( size_t i=0; i < InfoTables.Count(); i++ )  {
@@ -1323,6 +1324,9 @@ void RefinementModel::ToDataItem(TDataItem& item) {
       SfacData.GetValue(i)->ToDataItem(sfacs);
   }
   selectedTableRows.ToDataItem(item.AddItem("selected_cif_records"));
+  if (CVars.Validate()) {
+    CVars.ToDataItem(item.AddItem("to_calculate"), true);
+  }
   // restore matrix tags
   for( size_t i=0; i < UsedSymm.Count(); i++ )
     UsedSymm.GetValue(i).symop.SetRawId(mat_tags[i]);
@@ -1421,7 +1425,10 @@ void RefinementModel::FromDataItem(TDataItem& item) {
   if (cif_sel != NULL) {
     selectedTableRows.FromDataItem(*cif_sel, aunit);
   }
-
+  TDataItem *to_calc = item.FindItem("to_calculate");
+  if (to_calc != NULL) {
+    CVars.FromDataItem(*to_calc, true);
+  }
   aunit._UpdateConnInfo();
 }
 //.............................................................................
@@ -1850,6 +1857,9 @@ olxstr RefinementModel::WriteInsExtras(const TCAtomPList* atoms,
     if (sci->ItemCount() == 0)
       di.DeleteItem(sci);
   }
+  if (CVars.Validate()) {
+    CVars.ToDataItem(di.AddItem("to_calculate"), false);
+  }
   if (di.ItemCount() == 0 && di.FieldCount() == 0)
     return EmptyString();
   TEStrBuffer bf;
@@ -1933,7 +1943,17 @@ void RefinementModel::ReadInsExtras(const TStrList &items)  {
         e.GetException()->GetFullMessage();
     }
   }
-
+  TDataItem *to_calc = di.FindItem("to_calculate");
+  if (to_calc != NULL) {
+    try {
+      CVars.FromDataItem(*to_calc, false);
+    }
+    catch (const TExceptionBase &e) {
+      TBasicApp::NewLogEntry(logError) <<
+        "While loading variables definitions: " <<
+        e.GetException()->GetFullMessage();
+    }
+  }
 }
 //..............................................................................
 //..............................................................................
