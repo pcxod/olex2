@@ -256,8 +256,7 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
         {
           volatile olx_scope_cs cs_(GetCriticalSection());
           Atoms[ind]->AttachSiteI(Atoms[i], Matrices[j]);
-          Atoms[i]->AttachSiteI(Atoms[ind],
-            Latt->GetUnitCell().InvMatrix(Matrices[j]));
+          Atoms[i]->AttachSiteI(Atoms[ind], Matrices[j]);
         }
         continue;
       }
@@ -298,9 +297,9 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
         }
       }
     }
-    for (int ii=-1; ii <= 1; ii++) {
-      for (int ij=-1; ij <= 1; ij++) {
-        for (int ik=-1; ik <= 1; ik++ ) {
+    for (int ii = -1; ii <= 1; ii++) {
+      for (int ij = -1; ij <= 1; ij++) {
+        for (int ik = -1; ik <= 1; ik++) {
           const vec3i shift(ii, ij, ik);
           const double qd = AU->Orthogonalise(
             Atoms[ind]->ccrd() - shift - Atoms[i]->ccrd()).QLength();

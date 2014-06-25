@@ -154,6 +154,8 @@ public:
   static DefMacro(RSA)
   static DefMacro(CONF)
   static DefMacro(D2CG)
+  static DefMacro(TestR)
+  static DefMacro(CalcVars)
 
   static DefFunc(Lst)
   static DefFunc(FileName)
@@ -192,7 +194,6 @@ public:
   static DefFunc(CalcR) // calculates R factors
   static DefFunc(GetCompilationInfo)
   static DefFunc(SGList)
-  static DefMacro(TestR)
 
   static void ChangeCell(const mat3d& tm, const TSpaceGroup& sg,
     const olxstr& resHKL_FN);

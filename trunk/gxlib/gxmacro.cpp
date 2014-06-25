@@ -312,6 +312,9 @@ void GXLibMacros::Export(TLibrary& lib) {
     "Fragment matching, alignment and label transfer routine");
   gxlib_InitMacro(SetMaterial, EmptyString(), fpTwo | fpThree,
     "Assigns provided value to specified material");
+  gxlib_InitMacro(DefineVar, EmptyString(), fpTwo|psFileLoaded,
+    "Define a variable to be clalculated with CalcVars. The arguments are "
+    "the variable type (dist,ang) and the variable name.");
 
   gxlib_InitFunc(ExtraZoom, fpNone|fpOne,
     "Sets/reads current extra zoom (default zoom correction)");
@@ -3959,5 +3962,53 @@ void GXLibMacros::funGetMaterial(const TStrObjList &Params, TMacroError &E) {
     else
       E.SetRetVal(mat->ToString());
   }
+}
+//..............................................................................
+void GXLibMacros::macDefineVar(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
+  RefinementModel &rm = app.XFile().GetRM();
+  CalculatedVars &cv = rm.CVars;
+  TGlGroup &g = app.GetSelection();
+  if (g.Count() == 2) {
+    if (EsdlInstanceOf(g[0], TXPlane) && EsdlInstanceOf(g[1], TXPlane)) {
+      TXPlane &xp1 = (TXPlane&)g[0],
+        &xp2 = (TXPlane&)g[1];
+      CalculatedVars::Object *p1 = new CalculatedVars::Object();
+      size_t si=0;
+      for (size_t i = 0; i < xp1.Count(); i++) {
+        TGroupCAtom &ga = p1->atoms.Add(new TGroupCAtom(
+          &xp1.GetAtom(i).CAtom(),
+          cv.GetEqiv(xp1.GetAtom(i).GetMatrix())));
+        si += xp1.GetAtom(i).GetMatrix().GetId();
+        p1->name << ga.GetAtom()->GetResiLabel();
+      }
+      p1->name << si;
+      p1 = &cv.AddObject(p1);
+      
+      CalculatedVars::Object *p2 = new CalculatedVars::Object();
+      si = 0;
+      for (size_t i = 0; i < xp2.Count(); i++) {
+        TGroupCAtom &ga = p2->atoms.Add(new TGroupCAtom(
+          &xp2.GetAtom(i).CAtom(),
+          cv.GetEqiv(xp2.GetAtom(i).GetMatrix())));
+        si += xp2.GetAtom(i).GetMatrix().GetId();
+        p2->name << ga.GetAtom()->GetResiLabel();
+      }
+      p2->name << si;
+      p2 = &cv.AddObject(p2);
+      p1->type = p2->type = cv_ot_plane;
+      cv.AddVar(new CalculatedVars::Var(Cmds[0] + "cc",
+        CalculatedVars::ObjectRef(*p1, "c"),
+        CalculatedVars::ObjectRef(*p2, "c"))).type = cv_vt_distance;
+      cv.AddVar(new CalculatedVars::Var(Cmds[0] + "pc",
+        CalculatedVars::ObjectRef(*p1, "c"),
+        CalculatedVars::ObjectRef(*p2))).type = cv_vt_distance;
+      cv.AddVar(new CalculatedVars::Var(Cmds[0] + "a",
+        CalculatedVars::ObjectRef(*p1),
+        CalculatedVars::ObjectRef(*p2))).type = cv_vt_angle;
+    }
+  }
+  //
 }
 //..............................................................................

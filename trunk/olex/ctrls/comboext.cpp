@@ -121,7 +121,7 @@ olxstr TComboBox::GetText() const {
     return EmptyString();
   int sel = GetSelection();
   if (sel == -1) {
-    return EmptyString();
+    return IsReadOnly() ? EmptyString() : olxstr(GetValue());
   }
   TDataObj* res = (TDataObj*)GetClientData(sel);
   return (res == NULL || !res->Delete) ? olxstr(GetValue())

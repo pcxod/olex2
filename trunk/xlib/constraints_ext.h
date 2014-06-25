@@ -19,10 +19,15 @@ class RefinementModel;
 static const uint16_t
   direction_static = 0,
   direction_vector = 1,
-  direction_normal = 2;
+  direction_normal = 2,
+  direction_centroid = 3;
+
 struct adirection : public AReferencible {
   olxstr id;
-  static olxstr type_names[];
+  static const olxstr* type_names() {
+    static olxstr ts[] = {"static", "vector", "normal", "centroid"};
+    return &ts[0];
+  }
   adirection() {}
   adirection(const olxstr &_id) : id(_id) {}
   virtual vec3d get() const = 0;

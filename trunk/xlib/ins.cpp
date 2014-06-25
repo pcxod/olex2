@@ -1189,6 +1189,7 @@ void TIns::SaveToStrings(TStrList& SL)  {
     FixTypeListAndLabels();
   for (size_t i=0; i < GetAsymmUnit().AtomCount(); i++) {
     TCAtom &ca = GetAsymmUnit().GetAtom(i);
+    if (ca.IsDeleted()) continue;
     olxstr lb = ca.GetLabel();
     lb.Replace('\t' ,' ').Replace('_', ' ');
     if (lb.Contains(' ')) {

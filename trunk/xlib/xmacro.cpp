@@ -597,6 +597,11 @@ void XLibMacros::Export(TLibrary& lib)  {
     EmptyString(),
     fpAny | psFileLoaded,
     "Under development.");
+  xlib_InitMacro(CalcVars,
+    EmptyString(),
+    fpAny | psFileLoaded,
+    "Calculates previously defined varoables and stores the named values in "
+    "olex2.calculated.* variables");
   //_____________________________________________________________________________
 
   xlib_InitFunc(FileName, fpNone|fpOne,
@@ -8833,5 +8838,12 @@ void XLibMacros::macTestR(TStrObjList &Cmds, const TParamList &Options,
   }
   THklFile::SaveToFile(TEFile::ExtractFilePath(xapp.XFile().GetFileName()) +
     "processed.hkl", out);
+}
+//.............................................................................
+void XLibMacros::macCalcVars(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
+  TXApp& xapp = TXApp::GetInstance();
+  xapp.XFile().GetRM().CVars.CalcAll();
 }
 //.............................................................................

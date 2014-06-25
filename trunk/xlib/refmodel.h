@@ -23,6 +23,7 @@
 #include "edict.h"
 #include "constraints_ext.h"
 #include "selected.h"
+#include "calc_ext.h"
 
 BeginXlibNamespace()
 
@@ -240,6 +241,7 @@ public:
 
   ConnInfo Conn;     // extra connectivity information
 
+  CalculatedVars CVars;
   const olxstr& GetHKLSource() const {  return HKLSource;  }
   //TODO: handle the change
   void SetHKLSource(const olxstr& src);

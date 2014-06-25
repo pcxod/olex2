@@ -736,6 +736,16 @@ public:
           weight_slice(ch.weights, 0, atoms.Count())),
         pnt_pt(ch.points.GetLast())));
   }
+  // plane to centroid distance
+  TEValue<double> CalcP2CDistance(const TSAtomCPList& p, const TSAtomCPList& c) {
+    CalcWHelper ch(*this, TSAtomCPList(p) << c);
+    return ch.DoCalc(
+      PlaneToPointDistance<pln_et, cnt_et>(
+      pln_et(crd_slice(ch.points, 0, p.Count()),
+        weight_slice(ch.weights, 0, p.Count())),
+      cnt_et(crd_slice(ch.points, p.Count(), c.Count()),
+        weight_slice(ch.weights, p.Count(), c.Count()))));
+  }
   // plane centroid to atom distance
   TEValue<double> CalcPC2ADistance(const TSAtomCPList& plane,
     const TSAtom& a)
@@ -746,6 +756,18 @@ public:
         cnt_et(crd_slice(ch.points, 0, plane.Count()),
           weight_slice(ch.weights, 0, plane.Count())),
         pnt_pt(ch.points.GetLast())));
+  }
+  // centroid to centroid
+  TEValue<double> CalcC2CDistance(const TSAtomCPList& c1,
+    const TSAtomCPList& c2)
+  {
+    CalcWHelper ch(*this, TSAtomCPList(c1) << c2);
+    return ch.DoCalc(
+      Distance<cnt_et, cnt_et>(
+      cnt_et(crd_slice(ch.points, 0, c1.Count()),
+      weight_slice(ch.weights, 0, c1.Count())),
+      cnt_et(crd_slice(ch.points, c1.Count(), c2.Count()),
+      weight_slice(ch.weights, c1.Count(), c2.Count()))));
   }
   // plane to a vector angle
   TEValue<double> CalcP2VAngle(const TSAtomCPList& plane, const TSAtom& a1,
