@@ -136,6 +136,7 @@ void RefinementModel::Clear(uint32_t clear_mask) {
   LS.Clear();
   Omitted.Clear();
   selectedTableRows.Clear();
+  CVars.Clear();
   if( (clear_mask & rm_clear_AFIX) != 0 )
     AfixGroups.Clear();
   if( (clear_mask & rm_clear_VARS) != 0 )

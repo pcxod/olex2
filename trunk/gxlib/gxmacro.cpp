@@ -312,9 +312,9 @@ void GXLibMacros::Export(TLibrary& lib) {
     "Fragment matching, alignment and label transfer routine");
   gxlib_InitMacro(SetMaterial, EmptyString(), fpTwo | fpThree,
     "Assigns provided value to specified material");
-  gxlib_InitMacro(DefineVar, EmptyString(), fpTwo|psFileLoaded,
-    "Define a variable to be clalculated with CalcVars. The arguments are "
-    "the variable type (dist,ang) and the variable name.");
+  gxlib_InitMacro(DefineVar, EmptyString(), fpOne|psFileLoaded,
+    "Defines a variable to be clalculated with CalcVars. The argument is "
+    "the variable name.");
 
   gxlib_InitFunc(ExtraZoom, fpNone|fpOne,
     "Sets/reads current extra zoom (default zoom correction)");
@@ -2773,7 +2773,7 @@ void GXLibMacros::macEsd(TStrObjList &Cmds, const TParamList &Options,
         }
         TSBond& sb = ((TXBond&)sel[ EsdlInstanceOf(sel[0], TXBond) ? 0 : 1]);
         TEValue<double> v(vcovc.CalcP2VAngle(atoms, sb.A(), sb.B())),
-          v1(180-v.GetV(), v.GetE());
+          v1(180 - v.GetV(), v.GetE());
         values.Add(sb.A().GetLabel()) << '-' << sb.B().GetLabel() << " to plane "
           << pld << "angle: " << v.ToString() << '(' << v1.ToString() << ')';
       }
@@ -2803,7 +2803,7 @@ void GXLibMacros::macEsd(TStrObjList &Cmds, const TParamList &Options,
         if( olx_abs(angle.GetV()) > 1e-6 )  {
           values.Add("Plane [") << pld2 << "] to plane centroid distance: " <<
             vcovc.CalcP2PCDistance(p2, p1).ToString() << " A";
-          values.Add("Plane [") << pld2 << "] to plane shift distance: " <<
+          values.Add("Plane [") << pld2 << "] to plane shift: " <<
             vcovc.CalcP2PShiftDistance(p2, p1).ToString() << " A";
         }
         if (xp1.Count() == xp2.Count() && xp1.Count() == 3) {
@@ -3972,42 +3972,49 @@ void GXLibMacros::macDefineVar(TStrObjList &Cmds, const TParamList &Options,
   TGlGroup &g = app.GetSelection();
   if (g.Count() == 2) {
     if (EsdlInstanceOf(g[0], TXPlane) && EsdlInstanceOf(g[1], TXPlane)) {
-      TXPlane &xp1 = (TXPlane&)g[0],
-        &xp2 = (TXPlane&)g[1];
-      CalculatedVars::Object *p1 = new CalculatedVars::Object();
-      size_t si=0;
-      for (size_t i = 0; i < xp1.Count(); i++) {
-        TGroupCAtom &ga = p1->atoms.Add(new TGroupCAtom(
-          &xp1.GetAtom(i).CAtom(),
-          cv.GetEqiv(xp1.GetAtom(i).GetMatrix())));
-        si += xp1.GetAtom(i).GetMatrix().GetId();
-        p1->name << ga.GetAtom()->GetResiLabel();
-      }
-      p1->name << si;
-      p1 = &cv.AddObject(p1);
-      
-      CalculatedVars::Object *p2 = new CalculatedVars::Object();
-      si = 0;
-      for (size_t i = 0; i < xp2.Count(); i++) {
-        TGroupCAtom &ga = p2->atoms.Add(new TGroupCAtom(
-          &xp2.GetAtom(i).CAtom(),
-          cv.GetEqiv(xp2.GetAtom(i).GetMatrix())));
-        si += xp2.GetAtom(i).GetMatrix().GetId();
-        p2->name << ga.GetAtom()->GetResiLabel();
-      }
-      p2->name << si;
-      p2 = &cv.AddObject(p2);
-      p1->type = p2->type = cv_ot_plane;
-      cv.AddVar(new CalculatedVars::Var(Cmds[0] + "cc",
-        CalculatedVars::ObjectRef(*p1, "c"),
-        CalculatedVars::ObjectRef(*p2, "c"))).type = cv_vt_distance;
-      cv.AddVar(new CalculatedVars::Var(Cmds[0] + "pc",
-        CalculatedVars::ObjectRef(*p1, "c"),
-        CalculatedVars::ObjectRef(*p2))).type = cv_vt_distance;
-      cv.AddVar(new CalculatedVars::Var(Cmds[0] + "a",
-        CalculatedVars::ObjectRef(*p1),
-        CalculatedVars::ObjectRef(*p2))).type = cv_vt_angle;
+      CalculatedVars::Object
+        *p1 = CalculatedVars::Object::create((TXPlane&)g[0], cv),
+        *p2 = CalculatedVars::Object::create((TXPlane&)g[1], cv);
+      cv.AddVar(new CalculatedVars::Var(Cmds[0] + "cc"))
+        .AddRef(*p1, "c").AddRef(*p2, "c").type = cv_vt_distance;
+      cv.AddVar(new CalculatedVars::Var(Cmds[0] + "pc"))
+        .AddRef(*p1, "c").AddRef(*p2).type = cv_vt_distance;
+      cv.AddVar(new CalculatedVars::Var(Cmds[0] + "a"))
+        .AddRef(*p1).AddRef(*p2).type = cv_vt_angle;
+      cv.AddVar(new CalculatedVars::Var(Cmds[0] + "sa"))
+        .AddRef(*p1, "c").AddRef(*p2).type = cv_vt_shift;
+      cv.AddVar(new CalculatedVars::Var(Cmds[0] + "sb"))
+        .AddRef(*p1).AddRef(*p2, "c").type = cv_vt_shift;
     }
+    else if ((EsdlInstanceOf(g[0], TXPlane) && EsdlInstanceOf(g[1], TXBond)) ||
+      (EsdlInstanceOf(g[1], TXPlane) && EsdlInstanceOf(g[0], TXBond)))
+    {
+      TXPlane &p = (TXPlane &)(g[EsdlInstanceOf(g[0], TXPlane) ? 0 : 1]);
+      TXBond &b = (TXBond &)(g[EsdlInstanceOf(g[0], TXPlane) ? 1 : 0]);
+      CalculatedVars::Object
+        *p1 = CalculatedVars::Object::create(p, cv),
+        *p2 = CalculatedVars::Object::create(b, cv);
+      cv.AddVar(new CalculatedVars::Var(Cmds[0]))
+        .AddRef(*p1, "n").AddRef(*p2).type = cv_vt_angle;
+    }
+    else if (EsdlInstanceOf(g[0], TXAtom) && EsdlInstanceOf(g[1], TXAtom)) {
+      CalculatedVars::Object
+        *p1 = CalculatedVars::Object::create((TXAtom &)g[0], cv),
+        *p2 = CalculatedVars::Object::create((TXAtom &)g[1], cv);
+      cv.AddVar(new CalculatedVars::Var(Cmds[0]))
+        .AddRef(*p1).AddRef(*p2).type = cv_vt_distance;
+    }
+  }
+  else if (g.Count() == 3 &&
+    olx_list_and_st(g, &olx_is<TXAtom, TGlGroup::list_item_type>))
+  {
+    CalculatedVars::Object
+      *p1 = CalculatedVars::Object::create((TXAtom &)g[0], cv),
+      *p2 = CalculatedVars::Object::create((TXAtom &)g[1], cv),
+      *p3 = CalculatedVars::Object::create((TXAtom &)g[2], cv);
+    cv.AddVar(new CalculatedVars::Var(Cmds[0]))
+      .AddRef(*p1).AddRef(*p2).AddRef(*p3).type = cv_vt_angle;
+
   }
   //
 }

@@ -171,6 +171,10 @@ public:
   TSPlanePList NewPlane(const TSAtomPList& Atoms, double weightExtent=0,
     bool regular=false);
   void ClearPlaneDefinitions()  {  PlaneDefs.Clear();  }
+  void SetPlaneDefinitions(const TTypeList<TSPlane::Def> &pd);
+  const TTypeList<TSPlane::Def> &GetPlaneDefinitions() const {
+    return PlaneDefs;
+  }
   //the plane must be deleted by the caller !
   TSPlane* TmpPlane(const TSAtomPList& Atoms, double weightExtent=0);
   TSAtomPList NewCentroid(const TSAtomPList& Atoms);
