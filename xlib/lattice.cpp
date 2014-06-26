@@ -89,7 +89,6 @@ void TLattice::Clear(bool ClearUnitCell)  {
   ClearFragments();
   ClearMatrices();
   ClearPlanes();
-  PlaneDefs.Clear();
   if( ClearUnitCell )  {
     GetUnitCell().Clear();
     GetAsymmUnit().Clear();
@@ -2286,6 +2285,10 @@ void TLattice::SetGrowInfo(GrowInfo* grow_info)  {
   if( _GrowInfo != NULL )
     delete _GrowInfo;
   _GrowInfo = grow_info;
+}
+//..............................................................................
+void TLattice::SetPlaneDefinitions(const TTypeList<TSPlane::Def> &pd) {
+  PlaneDefs = pd;
 }
 //..............................................................................
 TLattice::GrowInfo* TLattice::GetGrowInfo() const {

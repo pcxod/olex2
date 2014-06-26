@@ -329,6 +329,22 @@ public:
     PlaneNormalEvaluator(const VT& _v, const WT& _w) : values(_v), weights(_w)  {}
     vec3d evaluate() const {  return CalcPlane(values, weights).normal;  }
   };
+  template <class VT, class WT> struct LineEvaluator  {
+    VT values;
+    WT weights;
+    LineEvaluator(const VT& _v, const WT& _w)
+      : values(_v), weights(_w)
+    {
+      if (values.Count() < 2)
+        throw TInvalidArgumentException(__OlxSourceInfo, "point count");
+    }
+    vec3d evaluate() const {
+      if (values.Count() == 2) {
+        return values[1] - values[0];
+      }
+      return CalcPlane(values, weights, 2).normal;
+    }
+  };
   template <class VT, class WT> struct Plane  {
     VT values;
     WT weights;
@@ -566,6 +582,7 @@ protected:
   typedef PointProxy pnt_pt;
   typedef PlaneEvaluator<crd_slice,weight_slice> pln_et;
   typedef PlaneNormalEvaluator<crd_slice,weight_slice> plnn_et;
+  typedef LineEvaluator<crd_slice, weight_slice> ln_et;
 public:
   VcoVContainer(TAsymmUnit& _au) : au(_au), cell(6), celle(6)  {
     static const double a2r = M_PI/180;
@@ -669,6 +686,20 @@ public:
       Angle3<pnt_pt,pnt_pt,pnt_pt>(pnt_pt(ch.points[0]), pnt_pt(ch.points[1]),
         pnt_pt(ch.points[2])));
   }
+  TEValue<double> CalcAngle(const TSAtomCPList& a1, const TSAtomCPList& a2,
+    const TSAtomCPList& a3)
+  {
+    CalcWHelper ch(*this, TSAtomCPList(a1) << a2 << a3);
+    return ch.DoCalc(
+      Angle3<cnt_et, cnt_et, cnt_et>(
+      cnt_et(crd_slice(ch.points, 0, a1.Count()),
+        weight_slice(ch.weights, 0, a1.Count())),
+      cnt_et(crd_slice(ch.points, a1.Count(), a2.Count()),
+        weight_slice(ch.weights, a1.Count(), a2.Count())),
+      cnt_et(crd_slice(ch.points, a1.Count()+a2.Count(), a3.Count()),
+        weight_slice(ch.weights, a1.Count()+a2.Count(), a3.Count()))
+      ));
+  }
   // analytical,http://salilab.org/modeller/8v0/manual/node248.html
   TEValue<double> CalcTAngleA(const TSAtom& a1, const TSAtom& a2,
     const TSAtom& a3, const TSAtom& a4)
@@ -736,16 +767,6 @@ public:
           weight_slice(ch.weights, 0, atoms.Count())),
         pnt_pt(ch.points.GetLast())));
   }
-  // plane to centroid distance
-  TEValue<double> CalcP2CDistance(const TSAtomCPList& p, const TSAtomCPList& c) {
-    CalcWHelper ch(*this, TSAtomCPList(p) << c);
-    return ch.DoCalc(
-      PlaneToPointDistance<pln_et, cnt_et>(
-      pln_et(crd_slice(ch.points, 0, p.Count()),
-        weight_slice(ch.weights, 0, p.Count())),
-      cnt_et(crd_slice(ch.points, p.Count(), c.Count()),
-        weight_slice(ch.weights, p.Count(), c.Count()))));
-  }
   // plane centroid to atom distance
   TEValue<double> CalcPC2ADistance(const TSAtomCPList& plane,
     const TSAtom& a)
@@ -779,6 +800,17 @@ public:
         plnn_et(crd_slice(ch.points, 0, plane.Count()), weight_slice(ch.weights,
           0, plane.Count())),
         VectorProxy(ch.points[plane.Count()], ch.points[plane.Count()+1])));
+  }
+  TEValue<double> CalcP2VAngle(const TSAtomCPList& plane,
+    const TSAtomCPList &ln)
+  {
+    CalcWHelper ch(*this, TSAtomCPList(plane) << ln);
+    return ch.DoCalc(
+      Angle2<plnn_et, ln_et>(
+      plnn_et(crd_slice(ch.points, 0, plane.Count()),
+        weight_slice(ch.weights, 0, plane.Count())),
+      ln_et(crd_slice(ch.points, plane.Count(), ln.Count()),
+        weight_slice(ch.weights, plane.Count(), ln.Count()))));
   }
   // plane to plane angle
   TEValue<double> CalcP2PAngle(const TSAtomCPList& p1, const TSAtomCPList& p2)

@@ -22,7 +22,8 @@ const uint16_t
   cv_ot_line = 2,
   cv_ot_plane = 3,
   cv_vt_distance = 1,
-  cv_vt_angle = 2;
+  cv_vt_angle = 2,
+  cv_vt_shift = 3;
 
 class CalculatedVars {
 public:
@@ -37,6 +38,10 @@ public:
     void FromDataItem(const TDataItem &i, CalculatedVars &parent, bool use_id);
     olxstr GetQualifiedName() const;
     bool IsValid() const;
+
+    static Object *create(class TSAtom &a, CalculatedVars &parent);
+    static Object *create(class TSBond &b, CalculatedVars &parent);
+    static Object *create(class TSPlane &p, CalculatedVars &parent);
   };
 
   struct ObjectRef {
@@ -58,17 +63,24 @@ public:
 
   struct Var {
     olxstr name;
-    ObjectRef r1, r2;
+    TTypeList<ObjectRef> refs;
     uint16_t type;
-    Var(const olxstr &n, const ObjectRef &r1, const ObjectRef &r2)
-      : name(n), r1(r1), r2(r2)
+    Var(const olxstr &n) : name(n)
     {}
-    static Var *Clone(const Var &v, CalculatedVars &parent);
+    Var &AddRef(Object& o, const olxstr &prop=EmptyString()) {
+      refs.Add(new ObjectRef(o, prop));
+      return *this;
+    }
     TEValueD Calculate(class VcoVContainer &vcov) const;
     void ToDataItem(TDataItem &i) const;
     bool IsValid() const {
-      return r1.object.IsValid() && r2.object.IsValid();
+      for (size_t i = 0; i < refs.Count(); i++) {
+        if (!refs[i].object.IsValid())
+          return false;
+      }
+      return true;
     }
+    static Var *Clone(const Var &v, CalculatedVars &parent);
     static olx_pair_t<olxstr, olxstr> parseObject(const olxstr on);
     static Var *FromDataItem(const TDataItem &i, CalculatedVars &parent);
   };
@@ -77,12 +89,12 @@ protected:
   mutable olxstr_dict<Object *> objects;
   mutable olxstr_dict<Var *> vars;
   mutable olxdict<uint64_t, smatd*, TPrimitiveComparator> eqivs;
-  void Clear();
   smatd * GetEqiv(size_t idx) { return eqivs.GetValue(idx); }
 public:
   CalculatedVars(RefinementModel &);
   virtual ~CalculatedVars() { Clear(); }
 
+  void Clear();
   void Assign(const CalculatedVars &cv);
   smatd * GetEqiv(const smatd &m);
   Object &AddObject(Object *o);

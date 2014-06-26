@@ -126,7 +126,7 @@ public:
       GrowInfo = NULL;
     }
     EmptyFile = SameFile = false;
-    if( Data != NULL && EsdlInstanceOf(*Data, olxstr) )  {
+    if (Data != NULL && EsdlInstanceOf(*Data, olxstr)) {
       olxstr s1 = TEFile::UnixPath(TEFile::ChangeFileExt(
         *(olxstr*)Data, EmptyString()));
       olxstr s2 = TEFile::UnixPath(TEFile::ChangeFileExt(

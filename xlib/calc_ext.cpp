@@ -13,6 +13,7 @@
 #include "olxvar.h"
 #include "lattice.h"
 #include "unitcell.h"
+#include "symmparser.h"
 #include "mat_id.h"
 //.............................................................................
 CalculatedVars::Object::Object(const CalculatedVars::Object &o,
@@ -139,6 +140,52 @@ bool CalculatedVars::Object::IsValid() const {
   }
 }
 //.............................................................................
+CalculatedVars::Object *CalculatedVars::Object::create(TSAtom &a,
+  CalculatedVars &parent)
+{
+  CalculatedVars::Object *p = new CalculatedVars::Object();
+  p->atoms.Add(new TGroupCAtom(&a.CAtom(), parent.GetEqiv(a.GetMatrix())));
+  p->name << a.CAtom().GetResiLabel() << a.GetMatrix().GetId();
+  p->type = cv_ot_centroid;
+  p = &parent.AddObject(p);
+  return p;
+}
+//.............................................................................
+CalculatedVars::Object *CalculatedVars::Object::create(TSBond &b,
+  CalculatedVars &parent)
+{
+  CalculatedVars::Object *p = new CalculatedVars::Object();
+  p->atoms.Add(new TGroupCAtom(&b.A().CAtom(),
+    parent.GetEqiv(b.A().GetMatrix())));
+  p->atoms.Add(new TGroupCAtom(&b.B().CAtom(),
+    parent.GetEqiv(b.B().GetMatrix())));
+
+  p->name << b.A().CAtom().GetResiLabel() << b.B().CAtom().GetResiLabel() <<
+    (b.A().GetMatrix().GetId() + b.B().GetMatrix().GetId());
+
+  p->type = cv_ot_line;
+  p = &parent.AddObject(p);
+  return p;
+}
+//.............................................................................
+CalculatedVars::Object *CalculatedVars::Object::create(TSPlane &sp,
+  CalculatedVars &parent)
+{
+  CalculatedVars::Object *p = new CalculatedVars::Object();
+  size_t si = 0;
+  for (size_t i = 0; i < sp.Count(); i++) {
+    p->atoms.Add(new TGroupCAtom(
+      &sp.GetAtom(i).CAtom(),
+      parent.GetEqiv(sp.GetAtom(i).GetMatrix())));
+    si += sp.GetAtom(i).GetMatrix().GetId();
+    p->name << sp.GetAtom(i).CAtom().GetResiLabel();
+  }
+  p->name << si;
+  p->type = cv_ot_plane;
+  p = &parent.AddObject(p);
+  return p;
+}
+//.............................................................................
 //.............................................................................
 //.............................................................................
 void CalculatedVars::Var::ToDataItem(TDataItem &i_) const {
@@ -146,13 +193,18 @@ void CalculatedVars::Var::ToDataItem(TDataItem &i_) const {
   i.AddField("name", name);
   olxstr value;
   if (type == cv_vt_distance) {
-    value = "dist";
+    value = "distance";
+  }
+  else if (type == cv_vt_angle) {
+    value = "angle";
   }
   else {
-    value = "angl";
+    value = "shift";
   }
-  i.AddField("value", value.stream(' ') << r1.GetQualifiedName() <<
-    r2.GetQualifiedName());
+  for (size_t i = 0; i < refs.Count(); i++) {
+    value << ' ' << refs[i].GetQualifiedName();
+  }
+  i.AddField("value", value);
 }
 //.............................................................................
 olx_pair_t<olxstr, olxstr> CalculatedVars::Var::parseObject(const olxstr on) {
@@ -172,10 +224,12 @@ olx_pair_t<olxstr, olxstr> CalculatedVars::Var::parseObject(const olxstr on) {
 CalculatedVars::Var *CalculatedVars::Var::Clone(const Var &v,
   CalculatedVars &parent)
 {
-  Var *rv = new Var(v.name,
-    ObjectRef(*parent.objects[v.r1.object.GetQualifiedName()], v.r1.prop),
-    ObjectRef(*parent.objects[v.r2.object.GetQualifiedName()], v.r2.prop));
+  Var *rv = new Var(v.name);
   rv->type = v.type;
+  for (size_t i = 0; i < v.refs.Count(); i++) {
+    rv->refs.Add(new ObjectRef(
+      *parent.objects[v.refs[i].object.GetQualifiedName()], v.refs[i].prop));
+  }
   return rv;
 }
 //.............................................................................
@@ -183,57 +237,107 @@ CalculatedVars::Var *CalculatedVars::Var::FromDataItem(const TDataItem &i,
   CalculatedVars &parent)
 {
   TStrList vt(i.GetFieldByName("value"), ' ');
-  if (vt.Count() != 3) {
+  if (vt.Count() < 2) {
     throw TInvalidArgumentException(__OlxSourceInfo, "value");
   }
-  olx_pair_t<olxstr, olxstr> o1 = parseObject(vt[1]),
-    o2 = parseObject(vt[2]);
-  Var *v = new Var(i.GetFieldByName("name"),
-    ObjectRef(*parent.objects[o1.a], o1.b),
-    ObjectRef(*parent.objects[o2.a], o2.b));
-  if (vt[0].Equals("dist"))
+  Var *v = new Var(i.GetFieldByName("name"));
+  for (size_t i = 1; i < vt.Count(); i++) {
+    olx_pair_t<olxstr, olxstr> o = parseObject(vt[i]);
+    v->refs.Add(new ObjectRef(*parent.objects[o.a], o.b));
+  }
+  if (vt[0].Equals("distance"))
     v->type = cv_vt_distance;
-  else
+  else if (vt[0].Equals("angle"))
     v->type = cv_vt_angle;
+  else
+    v->type = cv_vt_shift;
   return v;
 }
 //.............................................................................
 TEValueD CalculatedVars::Var::Calculate(class VcoVContainer &vcov) const {
-  TSAtomCPList l1 = r1.object.GetAtoms(),
-    l2 = r2.object.GetAtoms();
+  TArrayList<TSAtomCPList> atoms(refs.Count());
+  for (size_t i = 0; i < refs.Count(); i++) {
+    atoms[i] = refs[i].object.GetAtoms();
+  }
   TEValueD rv;
-  if (type == cv_vt_distance) {
-    if (r1.object.type == cv_ot_centroid && r2.object.type == cv_ot_centroid) {
-      rv = vcov.CalcC2CDistance(l1, l2);
-    }
-    if (r1.object.type == cv_ot_plane && r2.object.type == cv_ot_plane) {
-      if (r1.prop.Equalsi('c') && r1.prop.Equalsi('c')) {
-        rv = vcov.CalcC2CDistance(l1, l2);
+  rv.E() = -1;
+  if (refs.Count() == 2) {
+    ObjectRef &r1 = refs[0], &r2 = refs[1];
+    if (type == cv_vt_distance) {
+      if (r1.object.type == cv_ot_centroid && r2.object.type == cv_ot_centroid) {
+        rv = vcov.CalcC2CDistance(atoms[0], atoms[1]);
       }
-      else if ((r1.prop.Equalsi('c') && r2.prop.IsEmpty()) ||
-        (r2.prop.Equalsi('c') && r1.prop.IsEmpty()))
+      if (r1.object.type == cv_ot_plane && r2.object.type == cv_ot_plane) {
+        if (r1.prop.Equalsi('c') && r2.prop.Equalsi('c')) {
+          rv = vcov.CalcC2CDistance(atoms[0], atoms[1]);
+        }
+        else if ((r1.prop.Equalsi('c') && r2.prop.IsEmpty()) ||
+          (r2.prop.Equalsi('c') && r1.prop.IsEmpty()))
+        {
+          if (r1.prop.IsEmpty())
+            rv = vcov.CalcP2PCDistance(atoms[1], atoms[0]);
+          else
+            rv = vcov.CalcP2PCDistance(atoms[0], atoms[1]);
+        }
+      }
+    }
+    else if (type == cv_vt_shift) {
+      if (r1.object.type == cv_ot_plane && r2.object.type == cv_ot_plane) {
+        if ((r1.prop.Equalsi('c') && r2.prop.IsEmpty()) ||
+          (r2.prop.Equalsi('c') && r1.prop.IsEmpty()))
+        {
+          if (r1.prop.IsEmpty())
+            rv = vcov.CalcP2PShiftDistance(atoms[1], atoms[0]);
+          else
+            rv = vcov.CalcP2PShiftDistance(atoms[0], atoms[1]);
+        }
+      }
+      else if ((r1.object.type == cv_ot_plane && r2.object.type == cv_ot_centroid) ||
+        (r2.object.type == cv_ot_plane && r1.object.type == cv_ot_centroid))
       {
-        if (r1.prop.IsEmpty())
-          rv = vcov.CalcP2CDistance(l1, l2);
+        if (r1.object.type == cv_ot_plane)
+          rv = vcov.CalcP2PShiftDistance(atoms[0], atoms[1]);
         else
-          rv = vcov.CalcP2CDistance(l2, l1);
+          rv = vcov.CalcP2PShiftDistance(atoms[1], atoms[0]);
       }
     }
-  }
-  else {
-    if (r1.object.type == cv_ot_plane && r2.object.type == cv_ot_plane) {
-      if (r1.prop.Equalsi('n') && r1.prop.Equalsi('n')) {
-        rv = vcov.CalcP2PAngle(l1, l2);
+    else {
+      if (r1.object.type == cv_ot_plane && r2.object.type == cv_ot_plane) {
+        if (r1.prop.Equalsi('n') && r1.prop.Equalsi('n')) {
+          rv = vcov.CalcP2PAngle(atoms[0], atoms[1]);
+        }
+        else if (r1.prop.IsEmpty() && r2.prop.IsEmpty()) {
+          rv = vcov.CalcP2PAngle(atoms[0], atoms[1]);
+          rv.V() = 180 - rv.GetV();
+        }
       }
-      else if (r1.prop.IsEmpty() && r2.prop.IsEmpty())
+      else if ((r1.object.type == cv_ot_plane && r2.object.type == cv_ot_line) ||
+        (r2.object.type == cv_ot_plane && r1.object.type == cv_ot_line))
       {
-        rv = vcov.CalcP2PAngle(l1, l2);
-        rv.V() = 180 - rv.GetV();
+        const ObjectRef &plane = (r1.object.type == cv_ot_plane ? r1 : r2);
+        const ObjectRef &line = (r1.object.type == cv_ot_plane ? r2 : r1);
+        if (r1.object.type == cv_ot_plane)
+          rv = vcov.CalcP2VAngle(atoms[0], atoms[1]);
+        else
+          rv = vcov.CalcP2VAngle(atoms[1], atoms[0]);
+        if (plane.prop.IsEmpty()) {
+          rv.V() = 180 - rv.GetV();
+        }
       }
     }
   }
-  l1.DeleteItems();
-  l2.DeleteItems();
+  else if (refs.Count() == 3) {
+    if (type == cv_vt_angle &&
+      refs[0].object.type == cv_ot_centroid &&
+      refs[1].object.type == cv_ot_centroid &&
+      refs[2].object.type == cv_ot_centroid)
+    {
+      rv = vcov.CalcAngle(atoms[0], atoms[1], atoms[2]);
+    }
+  }
+  for (size_t i = 0; i < atoms.Count(); i++) {
+    atoms[i].DeleteItems();
+  }
   return rv;
 }
 //.............................................................................
@@ -291,15 +395,21 @@ void CalculatedVars::CalcAll() const {
       "could not initialise ");
   }
   for (size_t i = 0; i < vars.Count(); i++) {
-    TOlxVars::SetVar(olxstr("olex2.calculated.") << vars.GetKey(i),
-      vars.GetValue(i)->Calculate(vcovc).ToString());
+    olxstr vn = olxstr("olex2.calculated.") << vars.GetKey(i);
+    TEValueD v = vars.GetValue(i)->Calculate(vcovc);
+    if (v.GetE() < 0) {
+      TBasicApp::NewLogEntry(logError) << "Failed to calculate '" << vn << '\'';
+    }
+    olxstr strv = v.ToString();
+    TOlxVars::SetVar(vn, strv);
+    TBasicApp::NewLogEntry() << vn << '=' << strv;
   }
 }
 //.............................................................................
 void CalculatedVars::ToDataItem(TDataItem &di, bool use_id) const {
   olxstr equivs_str;
   for (size_t i = 0; i < eqivs.Count(); i++) {
-    equivs_str << ',' << full_smatd_id<>::get(*eqivs.GetValue(i));
+    equivs_str << ';' << TSymmParser::MatrixToSymmEx(*eqivs.GetValue(i));
     eqivs.GetValue(i)->SetRawId((uint32_t)i);
   }
   di.AddField("equivs", equivs_str.IsEmpty() ? equivs_str
@@ -318,10 +428,10 @@ void CalculatedVars::ToDataItem(TDataItem &di, bool use_id) const {
 //.............................................................................
 void CalculatedVars::FromDataItem(const TDataItem &di, bool use_id) {
   Clear();
-  TStrList et(di.GetFieldByName("equivs"), ',');
+  TStrList et(di.GetFieldByName("equivs"), ';');
   for (size_t i = 0; i < et.Count(); i++) {
-    uint64_t id = et[i].RadUInt<uint64_t>();
-    eqivs.Add(id, new smatd(full_smatd_id<>::get(id)));
+    smatd m = TSymmParser::SymmToMatrix(et[i]);
+    eqivs.Add(full_smatd_id<>::get(m), new smatd(m));
   }
   TDataItem &os = di.GetItemByName("objects");
   for (size_t i = 0; i < os.ItemCount(); i++) {
