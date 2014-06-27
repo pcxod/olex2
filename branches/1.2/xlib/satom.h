@@ -171,10 +171,9 @@ public:
     return (FCAtom->GetId() == id.catom_id &&
             Matrix->GetId() == id.matrix_id);
   }
-  Ref GetRef() const {  return Ref(FCAtom->GetId(), Matrix->GetId());  }
   // finds the matrix with smallest Id
-  Ref GetMinRef() const {  return GetMinRef(CAtom(), GetMatrix());  }
-  static Ref GetMinRef(const TCAtom &a, const smatd &generator);
+  Ref GetRef() const {  return GetRef(CAtom(), GetMatrix());  }
+  static Ref GetRef(const TCAtom &a, const smatd &generator);
 
   virtual void ToDataItem(TDataItem& item) const;
   virtual void FromDataItem(const TDataItem& item, class TLattice& parent);

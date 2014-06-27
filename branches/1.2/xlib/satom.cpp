@@ -168,7 +168,7 @@ bool TSAtom::IsGenerator(uint32_t m_id) const {
   return false;
 }
 //..............................................................................
-TSAtom::Ref TSAtom::GetMinRef(const TCAtom &a, const smatd &generator) {
+TSAtom::Ref TSAtom::GetRef(const TCAtom &a, const smatd &generator) {
   uint32_t m_id = generator.GetId();
   const TUnitCell &uc = a.GetParent()->GetLattice().GetUnitCell();
   for (size_t i=0; i < a.EquivCount(); i++) {

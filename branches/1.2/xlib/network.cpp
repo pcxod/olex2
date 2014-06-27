@@ -94,7 +94,7 @@ void TNetwork::Disassemble(ASObjectProvider& objects, TNetPList& Frags)  {
       TCAtom::Site& site = sa.CAtom().GetAttachedSite(j);
       const smatd m = uc.MulMatrix(site.matrix, sa.GetMatrix());
       TSAtom* a = objects.atomRegistry.Find(
-        TSAtom::GetMinRef(*site.atom, m));
+        TSAtom::GetRef(*site.atom, m));
       if( a != NULL && !a->IsDeleted() )
         sa.AddNode(*a);
     }
