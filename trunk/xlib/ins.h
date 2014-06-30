@@ -31,7 +31,7 @@ class TIns: public TBasicCFile  {
   struct ParseContext {
     RefinementModel& rm;
     TAsymmUnit& au;
-    TStrList Symm;
+    TStrList Symm, Extras;
     TStringToList<olxstr, const cm_Element*>  BasicAtoms;  // SFAC container
     bool CellFound, SetNextPivot, End;
     int Part, ToAnis;
@@ -69,6 +69,7 @@ protected:
   static void _SaveFVar(RefinementModel& rm, TStrList& SL);
   void _SaveSymm(TStrList& SL);
   void _SaveSizeTemp(TStrList& SL);
+  void _ReadExtras(TStrList &l, ParseContext &cx);
   // if solution specified, only OMIT's and HKLSrc are saved
   void _SaveHklInfo(TStrList& SL, bool solution);
   void _SaveRefMethod(TStrList& SL);
@@ -95,7 +96,7 @@ public:
   DefPropBIsSet(LoadQPeaks)
 
   // this is -1 if not in the file like REM R1 = ...
-  inline double GetR1() const {  return R1;  }
+  double GetR1() const {  return R1;  }
   TLst& GetLst()  {  return Lst;  }
   const TLst& GetLst() const {  return Lst;  }
   /* updates all instructions */
@@ -121,8 +122,9 @@ public:
     bool report=true);
   static bool ParseRestraint(RefinementModel& rm, const TStrList& toks);
   static void SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
-    RefinementModel::ReleasedItems* processed, RefinementModel& rm,
-    bool write_internals);
+    RefinementModel::ReleasedItems* processed, RefinementModel& rm);
+  static void SaveExtras(TStrList& SL, const TCAtomPList* atoms,
+    RefinementModel::ReleasedItems* processed, RefinementModel& rm);
   template <class StrLst> static
   void ParseRestraints(RefinementModel& rm, StrLst& SL)  {
     bool preserve = DoPreserveInvalid();
@@ -301,8 +303,7 @@ public:
     return l;
   }
   // spits out all instructions, including CELL, FVAR, etc
-  void SaveHeader(TStrList& out, bool ValidateRestraintNames,
-    bool write_internals);
+  void SaveHeader(TStrList& out, bool ValidateRestraintNames);
   // Parses all instructions, exclusing atoms, throws if fails
   void ParseHeader(const TStrList& in);
 

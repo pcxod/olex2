@@ -111,8 +111,13 @@ void TIns::LoadFromFile(const olxstr& fileName)  {
 void TIns::LoadFromStrings(const TStrList& FileContent)  {
   Clear();
   ParseContext cx(GetRM());
+  cm_Element& elmQPeak = XElementLib::GetByIndex(iQPeakIndex);
+  cx.Resi = &GetAsymmUnit().GetResidue(0);
+  cx.ins = this;
   TStrList Toks, InsFile(FileContent);
-  for( size_t i=0; i < InsFile.Count(); i++ )  {
+  // read the extras before preprocessing
+  _ReadExtras(InsFile, cx);
+  for (size_t i = 0; i < InsFile.Count(); i++) {
     InsFile[i].Trim(' ').
       Trim('\0').
       Trim('\r').
@@ -121,25 +126,22 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
       Trim(' ');
   }
   Preprocess(InsFile);
-  cm_Element& elmQPeak = XElementLib::GetByIndex(iQPeakIndex);
-  cx.Resi = &GetAsymmUnit().GetResidue(0);
-  cx.ins = this;
-  for( size_t i=0; i < InsFile.Count(); i++ )  {
-    try  {
-      if( InsFile[i].IsEmpty() )      continue;
+  for (size_t i = 0; i < InsFile.Count(); i++) {
+    try {
+      if (InsFile[i].IsEmpty())  continue;
       const size_t exi = InsFile[i].IndexOf('!');
-      if( exi != InvalidIndex )
+      if (exi != InvalidIndex)
         InsFile[i].SetLength(exi);
 
       Toks.Clear();
       Toks.Strtok(InsFile[i], ' ');
-      if( Toks.IsEmpty() )  continue;
+      if (Toks.IsEmpty())  continue;
 
-      if( Toks[0].Equalsi("MOLE") )  // these are dodgy
+      if (Toks[0].Equalsi("MOLE"))  // these are dodgy
         continue;
-      else if( ParseIns(InsFile, Toks, cx, i) )
+      else if (ParseIns(InsFile, Toks, cx, i))
         continue;
-      else if( Toks[0].Equalsi("END") )  {   //reset RESI to default
+      else if (Toks[0].Equalsi("END"))  {   //reset RESI to default
         // this will help with recognising ins after end which to be ignored
         Ins.Add(Toks[0]);
         cx.End = true;
@@ -147,41 +149,41 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
         cx.AfixGroups.Clear();
         cx.Part = 0;
       }
-      else if( Toks[0].Equalsi("TITL") )
+      else if (Toks[0].Equalsi("TITL"))
         SetTitle(Toks.Text(' ', 1));
-      else if( Toks.Count() < 6 || Toks.Count() > 12 )  // atom sgould have at least 7 parameters
+      else if (Toks.Count() < 6 || Toks.Count() > 12)  // atom sgould have at least 7 parameters
         Ins.Add(InsFile[i]);
       else {
         bool qpeak = olxstr::o_toupper(Toks[0].CharAt(0)) == 'Q';
-        if( qpeak && !cx.End && !LoadQPeaks )  continue;
-        if( cx.End && !qpeak )  continue;
+        if (qpeak && !cx.End && !LoadQPeaks)  continue;
+        if (cx.End && !qpeak)  continue;
         // is a valid atom
         //if( !atomsInfo.IsAtom(Toks[0]))  {  Ins.Add(InsFile[i]);  continue;  }
-        if( !Toks[1].IsUInt() )  {
+        if (!Toks[1].IsUInt())  {
           Ins.Add(InsFile[i]);
           continue;
         }
         uint32_t index = Toks[1].ToUInt();
-        if( index < 1 || index > cx.BasicAtoms.Count() )  {  // wrong index in SFAC
+        if (index < 1 || index > cx.BasicAtoms.Count())  {  // wrong index in SFAC
           Ins.Add(InsFile[i]);
           continue;
         }
         // should be four numbers
-        if( (!Toks[2].IsNumber()) || (!Toks[3].IsNumber()) ||
-          (!Toks[4].IsNumber()) || (!Toks[5].IsNumber()) )  {
-            Ins.Add(InsFile[i]);
-            continue;
+        if ((!Toks[2].IsNumber()) || (!Toks[3].IsNumber()) ||
+          (!Toks[4].IsNumber()) || (!Toks[5].IsNumber()))  {
+          Ins.Add(InsFile[i]);
+          continue;
         }
-        if( !cx.CellFound )  {
+        if (!cx.CellFound)  {
           Clear();
           throw TFunctionFailedException(__OlxSourceInfo, "uninitialised cell");
         }
         TCAtom* atom = _ParseAtom(Toks, cx);
         atom->SetLabel(Toks[0], false);
-        if( qpeak )
+        if (qpeak)
           atom->SetType(elmQPeak);
         else
-          atom->SetType(*cx.BasicAtoms.GetObject(Toks[1].ToInt()-1));
+          atom->SetType(*cx.BasicAtoms.GetObject(Toks[1].ToInt() - 1));
         if (atom->GetType().z > 1 &&
           (cx.AfixGroups.IsEmpty() || cx.AfixGroups.Top().GetB()->GetAfix() != 3))
         {
@@ -190,12 +192,12 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
         _ProcessAfix(*atom, cx);
       }
     }
-    catch(const TExceptionBase& exc)  {
+    catch (const TExceptionBase& exc)  {
       throw TFunctionFailedException(__OlxSourceInfo, exc,
-        olxstr("at line #") << i+1 << " ('" << InsFile[i] << "')");
+        olxstr("at line #") << i + 1 << " ('" << InsFile[i] << "')");
     }
   }
-  for (size_t i=0; i < cx.Symm.Count(); i++) {
+  for (size_t i = 0; i < cx.Symm.Count(); i++) {
     GetAsymmUnit().AddMatrix(TSymmParser::SymmToMatrix(cx.Symm[i]));
   }
 
@@ -206,8 +208,9 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
   // remove dublicated instructions, rems ONLY
   for (size_t i = 0; i < Ins.Count(); i++) {
     if (!Ins[i].StartsFromi("REM")) continue;
+    olxstr a = olxstr(' ').Join(*Ins.GetObject(i));
     for (size_t j = i + 1; j < Ins.Count(); j++) {
-      if (Ins[i] == Ins[j]) {
+      if (Ins[i] == Ins[j] && a == olxstr(' ').Join(*Ins.GetObject(j))) {
         delete Ins.GetObject(j);
         Ins[j].SetLength(0);
       }
@@ -344,6 +347,31 @@ void TIns::__ProcessConn(ParseContext& cx)  {
   Ins.Pack();
 }
 //..............................................................................
+void TIns::_ReadExtras(TStrList &l, ParseContext &cx) {
+  cx.Extras.Clear();
+  for (size_t i = 0; i < l.Count(); i++) {
+    if (l[i].Equals("REM <olex2.extras>")) {
+      size_t j = i;
+      while (++j != l.Count() && !l[j].Equals("REM </olex2.extras>"))
+        ;
+      if (j == l.Count()) {
+        TBasicApp::NewLogEntry(logError) << "Failed to read Olex2 extra "
+          "information";
+        return;
+      }
+      l.SubList(i + 1, j - i - 1, cx.Extras);
+      l.DeleteRange(i, j-i+1);
+      break;
+    }
+  }
+  for (size_t i = 0; i < cx.Extras.Count(); i++) {
+    if (cx.Extras[i].Length() > 4)
+      cx.Extras[i] = cx.Extras[i].SubStringFrom(4);
+    else
+      cx.Extras[i].SetLength(0);
+  }
+}
+//..............................................................................
 void TIns::_FinishParsing(ParseContext& cx)  {
   __ProcessConn(cx);
   for( size_t i=0; i < Ins.Count(); i++ )  {
@@ -385,20 +413,6 @@ void TIns::_FinishParsing(ParseContext& cx)  {
         TBasicApp::NewLogEntry(logError) << e.GetException()->GetFullMessage();
       }
     }
-    else if( toks.Count() == 2 && toks[0].Equalsi("REM") &&
-      toks[1].Equalsi("<olex2.extras>") )
-    {
-      TStrList extras;
-      size_t j = i;
-      while( ++j < Ins.Count() && !Ins[j].Equalsi("REM </olex2.extras>") )  {
-        if (Ins[j].StartsFromi("REM")) {
-          extras.Add(Ins[j].SubStringFrom(3));
-        }
-      }
-      Ins.DeleteRange(i, j-i+1);
-      cx.rm.ReadInsExtras(extras);
-      i--;
-    }
     else  {
       TInsList* Param = new TInsList(toks);
       Ins.GetObject(i) = Param;
@@ -422,6 +436,7 @@ void TIns::_FinishParsing(ParseContext& cx)  {
     for (size_t j=0; j < extras.GetValue(i).Count(); j++)
       ag.AddDependent(*extras.GetValue(i)[j]);
   }
+  cx.rm.ReadInsExtras(cx.Extras);
   cx.rm.Vars.Validate();
   cx.rm.ProcessFrags();
 }
@@ -855,19 +870,19 @@ void TIns::HyphenateIns(const olxstr &InsName, const olxstr &Ins,
   TStrList &Res, int sz)
 {
   olxstr Tmp = Ins;
-  if( Tmp.Length() > 80-InsName.Length() )  {
-    while( Tmp.Length() > 80-InsName.Length() )  {
-      size_t spindex = Tmp.LastIndexOf(' ', sz-InsName.Length());
-      if( spindex != InvalidIndex && spindex > 0 )  {
+  if (Tmp.Length() > 80 - InsName.Length()) {
+    while (Tmp.Length() > 80 - InsName.Length())  {
+      size_t spindex = Tmp.LastIndexOf(' ', sz - InsName.Length());
+      if (spindex != InvalidIndex && spindex > 0)  {
         Res.Add(InsName + Tmp.SubStringTo(spindex));
-        Tmp = Tmp.SubStringFrom(spindex+1);
+        Tmp = olxstr(' ') << Tmp.SubStringFrom(spindex + 1);
       }
-      else  {
-        Res.Add(InsName + Tmp.SubStringTo(80-InsName.Length()-2));
-        Tmp = Tmp.SubStringFrom(sz-InsName.Length()-2);
+      else {
+        Res.Add(InsName + Tmp.SubStringTo(80 - InsName.Length() - 2));
+        Tmp = Tmp.SubStringFrom(sz - InsName.Length() - 2);
       }
     }
-    if( !Tmp.IsEmpty() )
+    if (!Tmp.IsEmpty())
       Res.Add(InsName + Tmp);
   }
   else
@@ -879,7 +894,7 @@ void TIns::HyphenateIns(const olxstr& Ins, TStrList& Res, int sz)  {
   olxstr Tmp(Ins), Tmp1;
   while( Tmp.Length() >= (size_t)sz )  {
     MultiLine = true;
-    size_t spindex = Tmp.LastIndexOf(' ', sz-3); // for the right hypernation
+    size_t spindex = Tmp.LastIndexOf(' ', sz-3); // for the right hyphernation
     if( spindex != InvalidIndex && spindex > 0 )  {
       if( added )  Tmp1 = ' ';
       Tmp1 << Tmp.SubStringTo(spindex);
@@ -1200,7 +1215,8 @@ void TIns::SaveToStrings(TStrList& SL)  {
   }
   ValidateRestraintsAtomNames(GetRM());
   UpdateParams();
-  SaveHeader(SL, false, false);
+  SaveHeader(SL, false);
+  SaveExtras(SL, NULL, NULL, GetRM());
   SL.Add(EmptyString());
   int afix = 0, part = 0;
   uint32_t fragmentId = ~0;
@@ -1226,8 +1242,8 @@ void TIns::SaveToStrings(TStrList& SL)  {
   }
   if( afix != 0 )  SL.Add("AFIX 0");
   SL.Add("HKLF ") << RefMod.GetHKLFStr();
-  SL.Add("END");
   SL.Add(EmptyString());
+  SL.Add("END");
 }
 //..............................................................................
 bool TIns::Adopt(TXFile& XF)  {
@@ -1324,7 +1340,7 @@ bool TIns::SaveAtomsToStrings(RefinementModel& rm, const TCAtomPList& CAtoms,
   if( CAtoms.IsEmpty() )  return false;
   int part = 0,
       afix = 0;
-  SaveRestraints(SL, &CAtoms, processed, rm, false);
+  SaveRestraints(SL, &CAtoms, processed, rm);
   _SaveFVar(rm, SL);
   for( size_t i=0; i < CAtoms.Count(); i++ )
     CAtoms[i]->SetSaved(false);
@@ -1335,6 +1351,7 @@ bool TIns::SaveAtomsToStrings(RefinementModel& rm, const TCAtomPList& CAtoms,
       !ac.GetParentAfixGroup()->GetPivot().IsDeleted() )  continue;
     _SaveAtom(rm, ac, part, afix, NULL, SL, &index);
   }
+  SaveExtras(SL, &CAtoms, processed, rm);
   return true;
 }
 //..............................................................................
@@ -1611,12 +1628,6 @@ void TIns::_SaveHklInfo(TStrList& SL, bool solution)  {
       SL.Add("OMIT ") << r[0] << ' ' << r[1] << ' ' << r[2];
     }
   }
-  if( !GetRM().GetHKLSource().IsEmpty() )  {  // update html source string
-    HyphenateIns("REM ",
-      olxstr("<HKL>") <<
-        olxstr(GetRM().GetHKLSource()).Replace(' ', "%20")<< "</HKL>",
-      SL);
-  }
 }
 //..............................................................................
 bool Ins_ProcessRestraint(const TCAtomPList* atoms,
@@ -1661,8 +1672,7 @@ olxstr TIns::RestraintToString(const TSimpleRestraint &sr,
 }
 //..............................................................................
 void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
-  RefinementModel::ReleasedItems* processed, RefinementModel& rm,
-  bool write_internals)
+  RefinementModel::ReleasedItems* processed, RefinementModel& rm)
 {
   size_t oindex = SL.Count();
   typedef olx_pair_t<TSRestraintList*,RCInfo> ResInfo;
@@ -1748,15 +1758,18 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
       frag->ToStrings(SL);
     }
   }
-  TStrList extras(
-    rm.WriteInsExtras(atoms, write_internals), NewLineSequence());
-  if( !extras.IsEmpty() )  {
+}
+//..............................................................................
+void TIns::SaveExtras(TStrList& SL, const TCAtomPList* atoms,
+  RefinementModel::ReleasedItems* processed, RefinementModel& rm)
+{
+  TStrList extras(rm.WriteInsExtras(atoms, false), NewLineSequence());
+  if (!extras.IsEmpty()) {
     SL.Add("REM <olex2.extras>");
-    for( size_t i=0; i < extras.Count(); i++ )
-     HyphenateIns("REM ", extras[i], SL);
+    for (size_t i = 0; i < extras.Count(); i++)
+      HyphenateIns("REM ", extras[i], SL);
     SL.Add("REM </olex2.extras>");
   }
-  SL.Add();
 }
 //..............................................................................
 void TIns::ValidateRestraintsAtomNames(RefinementModel& rm, bool report)  {
@@ -1819,23 +1832,27 @@ void TIns::_SaveSizeTemp(TStrList& SL)  {
     SL.Add("TEMP ") << RefMod.expl.GetTempValue().ToString();
 }
 //..............................................................................
-void TIns::SaveHeader(TStrList& SL, bool ValidateRestraintNames,
-  bool write_internals)
-{
+void TIns::SaveHeader(TStrList& SL, bool ValidateRestraintNames) {
   SL.Add("TITL ") << GetTitle();
+  for (size_t i = 0; i < Ins.Count(); i++) {
+    TInsList* L = Ins.GetObject(i);
+    if (L == NULL)  continue;  // if load failed
+    if (Ins[i].Equalsi("REM")) {
+      HyphenateIns(Ins[i] + ' ', L->Text(' '), SL);
+    }
+  }
   SL.Add(_CellToString());
   SL.Add(_ZerrToString());
   _SaveSymm(SL);
   SL.Add(EmptyString());
-  SL.Add(EmptyString());
   SaveSfacUnit(GetRM(), GetRM().GetUserContent(), SL, SL.Count()-1);
-  if( ValidateRestraintNames )
+  if (ValidateRestraintNames)
     ValidateRestraintsAtomNames(GetRM());
-  SaveRestraints(SL, NULL, NULL, GetRM(), write_internals);
+  SaveRestraints(SL, NULL, NULL, GetRM());
   _SaveRefMethod(SL);
   _SaveSizeTemp(SL);
-  for( size_t i=0; i < GetRM().InfoTabCount(); i++ )  {
-    if( GetRM().GetInfoTab(i).IsValid() ) {
+  for (size_t i=0; i < GetRM().InfoTabCount(); i++) {
+    if (GetRM().GetInfoTab(i).IsValid()) {
       GetRM().GetInfoTab(i).UpdateResi();
       SL.Add(GetRM().GetInfoTab(i).InsStr());
     }
@@ -1843,10 +1860,12 @@ void TIns::SaveHeader(TStrList& SL, bool ValidateRestraintNames,
   GetRM().Conn.ToInsList(SL);
   // copy "unknown" instructions except rems
 
-  for( size_t i=0; i < Ins.Count(); i++ )  {
+  for (size_t i=0; i < Ins.Count(); i++) {
     TInsList* L = Ins.GetObject(i);
     if( L == NULL )  continue;  // if load failed
-    HyphenateIns(Ins[i]+' ', L->Text(' ') , SL);
+    if (!Ins[i].Equalsi("REM")) {
+      HyphenateIns(Ins[i] + ' ', L->Text(' '), SL);
+    }
   }
   SL << Skipped;
   if (!GetRM().OmittedAtoms().IsEmpty())
@@ -1858,12 +1877,12 @@ void TIns::SaveHeader(TStrList& SL, bool ValidateRestraintNames,
   _SaveHklInfo(SL, false);
 
   olxstr& wght = SL.Add("WGHT ");
-  for( size_t i=0; i < RefMod.used_weight.Count(); i++ )  {
+  for (size_t i = 0; i < RefMod.used_weight.Count(); i++)  {
     wght << RefMod.used_weight[i];
-    if( i+1 < RefMod.used_weight.Count() )
+    if (i + 1 < RefMod.used_weight.Count())
       wght << ' ';
   }
-  if( RefMod.used_weight.IsEmpty() )
+  if (RefMod.used_weight.IsEmpty())
     wght << "0.1";
   _SaveFVar(RefMod, SL);
 }
@@ -1884,7 +1903,8 @@ void TIns::ParseHeader(const TStrList& in)  {
   Preprocess(lst);
   ParseContext cx(GetRM());
   cx.ins = this;
-  for( size_t i=0; i < lst.Count(); i++ )  {
+  _ReadExtras(lst, cx);
+  for (size_t i = 0; i < lst.Count(); i++)  {
     try  {
       olxstr Tmp = olxstr::DeleteSequencesOf<char>(lst[i], ' ');
       if( Tmp.IsEmpty() )  continue;

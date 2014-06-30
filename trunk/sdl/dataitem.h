@@ -168,7 +168,7 @@ public:
   size_t GetLevel() const { return Level; }
   olxstr GetFullName(const olxstr &sep='.', const TDataItem *upto=NULL) const;
   DefPropC(olxstr, Name)
-  olxstr GetValue() const {  return Value; }
+  const olxstr &GetValue() const {  return Value; }
   void SetValue(const olxstr &V)  {  Value = V; }
   // for use with whatsoever, initialised twith NULL
   DefPropP(void*, Data)

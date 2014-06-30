@@ -50,7 +50,8 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
   }
   olxstr last_atom_name;
   size_t ua_index;
-  for ( size_t i=1; i < param_cnt; i++ )  { // skipp OSF
+  TCAtom *atom = NULL;
+  for (size_t i = 1; i < param_cnt; i++)  { // skipp OSF
     toks.Clear();
     toks.Strtok(sl[i+7], ' ');
     if( toks[0].ToSizeT() != i+1 || toks.Count() != 6 )  {
@@ -81,7 +82,6 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
       }
       continue;
     }
-    TCAtom *atom = NULL;
     if (last_atom_name != toks[5])  {
       atom = au.FindCAtom(toks[5]);
       last_atom_name = toks[5];
