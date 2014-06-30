@@ -370,6 +370,27 @@ public:
         c.evaluate(), d.evaluate());
     }
   };
+  template <class PT> struct TwistAngle {
+    PT a, b;
+    TwistAngle(const PT &a_, const PT &b_) : a(a_), b(b_) {}
+    double calc() const {
+      const PlaneInfo ai = a.evaluate(), bi = b.evaluate();
+      return olx_dihedral_angle(ai.center + ai.normal,
+        ai.center, bi.center, bi.center + bi.normal);
+    }
+  };
+  template <class PT> struct FoldAngle {
+    PT a, b;
+    FoldAngle(const PT &a_, const PT &b_) : a(a_), b(b_) {}
+    double calc() const {
+      const PlaneInfo ai = a.evaluate(), bi = b.evaluate();
+      vec3d n_c = (bi.center - ai.center).XProdVec(
+        ai.normal + bi.normal).Normalise();
+      vec3d p_a = ai.normal - n_c*n_c.DotProd(ai.normal);
+      vec3d p_b = bi.normal - n_c*n_c.DotProd(bi.normal);
+      return (acos(p_a.CAngle(p_b)) * 180 / M_PI);
+    }
+  };
   // tetrahedron volume
   template <class aT, class bT, class cT, class dT> struct TetrahedronVolume  {
     aT a;
@@ -822,6 +843,28 @@ public:
           weight_slice(ch.weights, 0, p1.Count())),
         plnn_et(crd_slice(ch.points, p1.Count(), p2.Count()),
           weight_slice(ch.weights, p1.Count(), p2.Count()))));
+  }
+  // plane to plane twisting angle
+  TEValue<double> CalcP2PTAngle(const TSAtomCPList& p1, const TSAtomCPList& p2)
+  {
+    CalcWHelper ch(*this, TSAtomCPList(p1) << p2);
+    return ch.DoCalc(
+      TwistAngle<pln_et>(
+      pln_et(crd_slice(ch.points, 0, p1.Count()),
+        weight_slice(ch.weights, 0, p1.Count())),
+      pln_et(crd_slice(ch.points, p1.Count(), p2.Count()),
+        weight_slice(ch.weights, p1.Count(), p2.Count()))));
+  }
+  // plane to plane folding angle
+  TEValue<double> CalcP2PFAngle(const TSAtomCPList& p1, const TSAtomCPList& p2)
+  {
+    CalcWHelper ch(*this, TSAtomCPList(p1) << p2);
+    return ch.DoCalc(
+      FoldAngle<pln_et>(
+      pln_et(crd_slice(ch.points, 0, p1.Count()),
+        weight_slice(ch.weights, 0, p1.Count())),
+      pln_et(crd_slice(ch.points, p1.Count(), p2.Count()),
+        weight_slice(ch.weights, p1.Count(), p2.Count()))));
   }
   //plane centroid to plane centroid distance
   TEValue<double> CalcPC2PCDistance(const TSAtomCPList& p1,

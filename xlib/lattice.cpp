@@ -2484,7 +2484,7 @@ void TLattice::BuildAtomRegistry()  {
   for( size_t i=0; i < ac; i++ )  {
     TSAtom &sa = Objects.atoms[i];
     if( !sa.IsAvailable() )  continue;
-    refs[i] = sa.GetMinRef();
+    refs[i] = sa.GetRef();
     vec3i::UpdateMinMax(smatd::GetT(refs[i].matrix_id), mind, maxd);
   }
   if (ac == 0) {

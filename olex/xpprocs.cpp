@@ -2297,9 +2297,10 @@ void TMainForm::macEditIns(TStrObjList &Cmds, const TParamList &Options, TMacroE
   TIns& Ins = FXApp->XFile().GetLastLoader<TIns>();
   TStrList SL;
   FXApp->XFile().UpdateAsymmUnit();  // synchronise au's
-  Ins.SaveHeader(SL, true, false);
+  Ins.SaveHeader(SL, true);
   SL.Add("HKLF ") << Ins.GetRM().GetHKLFStr();
-
+  SL.Add();
+  Ins.SaveExtras(SL, NULL, NULL, Ins.GetRM());
   TdlgEdit *dlg = new TdlgEdit(this, true);
   dlg->SetText(SL.Text('\n'));
   try  {

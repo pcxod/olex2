@@ -1861,8 +1861,7 @@ olxstr RefinementModel::WriteInsExtras(const TCAtomPList* atoms,
   if (CVars.Validate()) {
     CVars.ToDataItem(di.AddItem("to_calculate"), false);
   }
-  if (di.ItemCount() == 0 && di.FieldCount() == 0)
-    return EmptyString();
+  di.AddItem("HklSrc").SetValue(HKLSource);
   TEStrBuffer bf;
   di.SaveToStrBuffer(bf);
   return bf.ToString();
@@ -1870,7 +1869,7 @@ olxstr RefinementModel::WriteInsExtras(const TCAtomPList* atoms,
 //..............................................................................
 void RefinementModel::ReadInsExtras(const TStrList &items)  {
   TDataItem di(NULL, EmptyString());
-  di.LoadFromString(0, items.Text(EmptyString()), NULL);
+  di.LoadFromString(0, olxstr().Join(items), NULL);
   TDataItem *restraints = di.FindItem("restraints");
   if( restraints != NULL )   {
     for( size_t i=0; i < restraints->ItemCount(); i++ )  {
@@ -1954,6 +1953,10 @@ void RefinementModel::ReadInsExtras(const TStrList &items)  {
         "While loading variables definitions: " <<
         e.GetException()->GetFullMessage();
     }
+  }
+  TDataItem *hs = di.FindItem("HklSrc");
+  if (hs != 0) {
+    HKLSource = hs->GetValue();
   }
 }
 //..............................................................................

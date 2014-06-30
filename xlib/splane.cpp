@@ -226,7 +226,7 @@ TSPlane* TSPlane::Def::FromAtomRegistry(ASObjectProvider& ar, size_t def_id,
       smatd m = smatd::FromId(ref.matrix_id,
         uc.GetMatrix(smatd::GetContainerId(ref.matrix_id)));
       TSAtom* sa = ar.atomRegistry.Find(
-        TSAtom::GetMinRef(au.GetAtom(ref.catom_id), m));
+        TSAtom::GetRef(au.GetAtom(ref.catom_id), m));
       if( sa == NULL )  return NULL;
       points.AddNew(sa, atoms[i].weight);
     }
@@ -237,7 +237,7 @@ TSPlane* TSPlane::Def::FromAtomRegistry(ASObjectProvider& ar, size_t def_id,
       smatd m = uc.MulMatrix(smatd::FromId(ref.matrix_id,
         uc.GetMatrix(smatd::GetContainerId(ref.matrix_id))), matr);
       TSAtom* sa = ar.atomRegistry.Find(
-        TSAtom::GetMinRef(au.GetAtom(ref.catom_id), m));
+        TSAtom::GetRef(au.GetAtom(ref.catom_id), m));
       if( sa == NULL )  return NULL;
       points.AddNew(sa, atoms[i].weight);
     }
