@@ -91,11 +91,13 @@ void TMainForm::OnAtomOccuChange(wxCommandEvent& event)  {
     case ID_AtomOccu13:  val = 1./3;  break;
     case ID_AtomOccu14:  val = 0.25;  break;
     case ID_AtomOccuFix:   break;
+    case ID_AtomOccuFixCurrent:
+      Tmp = "fvar 1";  break;
     case ID_AtomOccuFree:  break;
   }
-  if( val != 0 )
+  if (val != 0)
     Tmp << val;
-  if( XA->IsSelected() )
+  if( XA->IsSelected())
     Tmp << " sel";
   else
     Tmp << " #c" << XA->CAtom().GetId();
@@ -194,7 +196,12 @@ void TMainForm::OnAtomUisoChange(wxCommandEvent& event)  {
           if (event.GetId() == ID_AtomUisoFix)
             cmd << "fix uiso " << val;
           else {
-            try { FXApp->SetAtomUiso(*XA, val); }
+            try {
+              TXAtomPList atoms = FXApp->GetSelection().Extract<TXAtom>();
+              for (size_t i = 0; i < atoms.Count(); i++) {
+                FXApp->SetAtomUiso(*atoms[i], val);
+              }
+            }
             catch (const TExceptionBase &e) {
               TBasicApp::NewLogEntry(logException) << e;
             }

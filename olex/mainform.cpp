@@ -311,6 +311,7 @@ BEGIN_EVENT_TABLE(TMainForm, wxFrame)  // basic interface
   EVT_MENU(ID_AtomOccu14, TMainForm::OnAtomOccuChange)
   EVT_MENU(ID_AtomOccuFree, TMainForm::OnAtomOccuChange)
   EVT_MENU(ID_AtomOccuFix, TMainForm::OnAtomOccuChange)
+  EVT_MENU(ID_AtomOccuFixCurrent, TMainForm::OnAtomOccuChange)
 
   EVT_MENU(ID_AtomConn0, TMainForm::OnAtomConnChange)
   EVT_MENU(ID_AtomConn1, TMainForm::OnAtomConnChange)
@@ -1145,6 +1146,7 @@ void TMainForm::XApp(Olex2App *XA)  {
     pmAtomOccu->Append(ID_AtomOccu13, wxT("1/3"));
     pmAtomOccu->Append(ID_AtomOccu14, wxT("1/4"));
     pmAtomOccu->Append(ID_AtomOccuFix, wxT("Fix"));
+    pmAtomOccu->Append(ID_AtomOccuFixCurrent, wxT("Fix as is"));
     pmAtomOccu->Append(ID_AtomOccuFree, wxT("Free"));
     pmAtomConn->Append(ID_AtomConn0, wxT("0"));
     pmAtomConn->Append(ID_AtomConn1, wxT("1"));

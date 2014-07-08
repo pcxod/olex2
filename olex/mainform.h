@@ -107,6 +107,7 @@ enum  {
   ID_AtomOccu13,
   ID_AtomOccu14,
   ID_AtomOccuFix,
+  ID_AtomOccuFixCurrent,
   ID_AtomOccuFree,
 
   ID_AtomConn0,

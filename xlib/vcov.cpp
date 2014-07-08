@@ -9,20 +9,16 @@
 
 #include "vcov.h"
 #include "refmodel.h"
-#include "symmcon.h"
 #include "xapp.h"
 
-TStrList VcoVMatrix::U_annotations;
 //.............................................................................
 VcoVMatrix::VcoVMatrix() : data(NULL), count(0) {
-  if( U_annotations.IsEmpty() )  {
-    U_annotations.Add("u11");
-    U_annotations.Add("u22");
-    U_annotations.Add("u33");
-    U_annotations.Add("u23");
-    U_annotations.Add("u13");
-    U_annotations.Add("u12");
-  }
+  U_annotations.Add("u11");
+  U_annotations.Add("u22");
+  U_annotations.Add("u33");
+  U_annotations.Add("u23");
+  U_annotations.Add("u13");
+  U_annotations.Add("u12");
 }
 //.............................................................................
 void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
@@ -272,28 +268,39 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
         a.SetUisoEsd(sqrt(Ueq));
       }
     }
+    UpdateAtomIndex();
   }
-  catch(const TExceptionBase& e)  {
+  catch(const TExceptionBase& e) {
     TBasicApp::NewLogEntry(logError) << e.GetException()->GetFullMessage();
+  }
+}
+//.............................................................................
+void VcoVMatrix::UpdateAtomIndex() {
+  AtomIdIndex.Clear();
+  AtomIdIndex.SetCapacity(Index.Count());
+  AtomNameIndex.Clear();
+  AtomNameIndex.SetCapacity(Index.Count());
+  for (size_t i = 0; i < Index.Count(); i++) {
+    AtomIdIndex.Add(Index[i].GetC(), i);
+    AtomNameIndex.Add(Index[i].GetA(), i);
   }
 }
 //.............................................................................
 double VcoVMatrix::Find(const olxstr& atom, const short va,
   const short vb) const
 {
-  for( size_t i=0; i < Index.Count(); i++ )  {
-    if( Index[i].GetA() == atom )  {
-      size_t i1 = InvalidIndex, i2 = InvalidIndex;
-      for( size_t j=i; j < Index.Count() && Index[j].GetA() == atom; j++ )  {
-        if( Index[j].GetB() == va )  i1 = j;
-        if( Index[j].GetB() == vb )  i2 = j;
-      }
-      if( i1 == InvalidIndex || i2 == InvalidIndex )
-        return 0;
-      return (i1 <= i2 ) ? data[i2][i1] : data[i1][i2];
-    }
+  size_t ni = AtomNameIndex.IndexOf(atom);
+  if (ni == InvalidIndex) {
+    return 0;
   }
-  return 0;
+  size_t i1 = InvalidIndex, i2 = InvalidIndex;
+  for (size_t j = ni; j < Index.Count() && Index[j].GetA() == atom; j++) {
+    if (Index[j].GetB() == va)  i1 = j;
+    if (Index[j].GetB() == vb)  i2 = j;
+  }
+  if (i1 == InvalidIndex || i2 == InvalidIndex)
+    return 0;
+  return (i1 <= i2) ? data[i2][i1] : data[i1][i2];
 }
 //.............................................................................
 void VcoVMatrix::ReadSmtbxMat(const olxstr& fileName, TAsymmUnit& au)  {
@@ -424,6 +431,7 @@ void VcoVMatrix::ReadSmtbxMat(const olxstr& fileName, TAsymmUnit& au)  {
     const double Ueq = (Um*Ut).DotProd(Ut);
     a.SetUisoEsd(sqrt(Ueq));
   }
+  UpdateAtomIndex();
 }
 //.............................................................................
 void VcoVMatrix::FromCIF(TAsymmUnit& au) {
@@ -438,5 +446,6 @@ void VcoVMatrix::FromCIF(TAsymmUnit& au) {
       data[0][i*3+j] = olx_sqr(a.ccrdEsd()[j]);
     }
   }
+  UpdateAtomIndex();
 }
 //.............................................................................

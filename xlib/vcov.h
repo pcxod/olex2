@@ -16,6 +16,7 @@
 #include "lattice.h"
 #include "bapp.h"
 #include "log.h"
+#include "symmcon.h"
 #undef QLength
 BeginXlibNamespace()
 
@@ -29,7 +30,9 @@ class VcoVMatrix {
   double **data;
   size_t count;
   TTypeList<AnAssociation3<olxstr, short, size_t> > Index;
-  static TStrList U_annotations;
+  olxdict<size_t, size_t, TPrimitiveComparator> AtomIdIndex;
+  olxstr_dict<size_t> AtomNameIndex;
+  TStrList U_annotations;
   bool diagonal;
 protected:
   void Allocate(size_t w, bool diag=false) {
@@ -51,11 +54,9 @@ protected:
     }
   }
   size_t FindAtomIndex(const TCAtom& a) const {
-    for( size_t i=0; i < Index.Count(); i++ )
-      if( Index[i].GetC() == a.GetId() )
-        return i;
-    return InvalidIndex;
+    return AtomIdIndex.Find(a.GetId(), InvalidIndex);
   }
+  void UpdateAtomIndex();
 public:
   VcoVMatrix();
   ~VcoVMatrix() {  Clear();  }
@@ -82,14 +83,19 @@ public:
   template <class list> void FindVcoV(const list& atoms, mat3d_list& m) const {
     TSizeList a_indexes;
     TTypeList<TVector3<size_t> > indexes;
-    for( size_t i=0; i < atoms.Count(); i++ )  {
-      if( a_indexes.Add(FindAtomIndex(atoms[i]->CAtom())) == InvalidIndex ) {
-        TBasicApp::NewLogEntry(logError) << "Unable to located given atom: " <<
-          atoms[i]->GetLabel();
+    for (size_t i = 0; i < atoms.Count(); i++) {
+      if (a_indexes.Add(FindAtomIndex(atoms[i]->CAtom())) == InvalidIndex) {
+        SiteSymmCon sc = atoms[i]->CAtom().GetSiteConstraints();
+        if (sc.map[6].param != -2 || sc.map[7].param != -2 ||
+          sc.map[8].param != -2) // is not constrained?
+        {
+          TBasicApp::NewLogEntry(logError) << "Unable to located given atom: "
+            << atoms[i]->GetLabel();
+        }
       }
-      indexes.AddNew(InvalidIndex,InvalidIndex,InvalidIndex);
+      indexes.AddNew(InvalidIndex, InvalidIndex, InvalidIndex);
     }
-    for( size_t i=0; i < a_indexes.Count(); i++ )  {
+    for (size_t i = 0; i < a_indexes.Count(); i++)  {
       if( a_indexes[i] == InvalidIndex )  continue;
       for( size_t j=a_indexes[i];
           j < Index.Count() && Index[j].GetC() == atoms[i]->CAtom().GetId();

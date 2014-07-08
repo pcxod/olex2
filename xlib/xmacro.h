@@ -194,6 +194,7 @@ public:
   static DefFunc(CalcR) // calculates R factors
   static DefFunc(GetCompilationInfo)
   static DefFunc(SGList)
+  static DefFunc(HKLF)
 
   static void ChangeCell(const mat3d& tm, const TSpaceGroup& sg,
     const olxstr& resHKL_FN);
