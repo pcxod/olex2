@@ -778,7 +778,10 @@ void TXApp::SetAtomUiso(TSAtom& sa, double val) {
       else
         throw TInvalidArgumentException(__OlxSourceInfo, "U owner");
     }
-    else  {
+    else {
+      if (val > 1 && int(val / 10) >= rm.Vars.VarCount()) {
+        rm.Vars.NewVar(0.025);
+      }
       rm.Vars.SetParam(sa.CAtom(), catom_var_name_Uiso, val);
       sa.CAtom().SetUisoOwner(NULL);
     }

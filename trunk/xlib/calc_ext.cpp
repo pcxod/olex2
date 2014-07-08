@@ -124,20 +124,11 @@ ConstPtrList<const TSAtom> CalculatedVars::Object::GetAtoms() const {
 }
 //.............................................................................
 bool CalculatedVars::Object::IsValid() const {
-  size_t ac = 0;
   for (size_t i = 0; i < atoms.Count(); i++) {
-    if (!atoms[i].GetAtom()->IsDeleted())
-      ac++;
+    if (atoms[i].GetAtom()->IsDeleted())
+      return false;
   }
-  if (type == cv_ot_centroid) {
-    return ac > 0;
-  }
-  else if (type == cv_ot_line) {
-    return ac > 1;
-  }
-  else {
-    return ac > 2;
-  }
+  return true;
 }
 //.............................................................................
 CalculatedVars::Object *CalculatedVars::Object::create(TSAtom &a,

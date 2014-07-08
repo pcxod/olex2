@@ -2036,6 +2036,10 @@ public:
     return SeperatedStream<sep_t>(*this, separator);
   }
 
+  SeperatedStream<olxstr> stream(const char *separator) {
+    return SeperatedStream<olxstr>(*this, olxstr(separator));
+  }
+
   template <typename sep_t>
   Encloser<sep_t> enclose(const sep_t& front, const sep_t& rear) {
     return Encloser<sep_t>(*this, front, rear);

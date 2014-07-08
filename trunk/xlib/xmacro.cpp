@@ -600,7 +600,7 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(CalcVars,
     EmptyString(),
     fpAny | psFileLoaded,
-    "Calculates previously defined varoables and stores the named values in "
+    "Calculates previously defined variables and stores the named values in "
     "olex2.calculated.* variables");
   //_____________________________________________________________________________
 
@@ -698,6 +698,10 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitFunc(SGList, fpNone|psFileLoaded,
     "Returns result of the last call to the space group determination "
     "procedure");
+  xlib_InitFunc(HKLF, fpAny | psFileLoaded,
+    "If no arguments given - returns current HKLF value, otherwise if the given"
+    " value 0 - sets HKLF to 4 else - sets HKLF to 5 and adds the given number "
+    "of BASF parameters");
 }
 //.............................................................................
 void XLibMacros::macTransform(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -6381,15 +6385,9 @@ void XLibMacros::macFvar(TStrObjList &Cmds, const TParamList &Options,
   }
   else  {
     for( size_t i=0; i < atoms.Count(); i++ )  {
-      XVarReference *v_ref = atoms[i]->GetVarRef(catom_var_name_Sof);
       double val;
       if( k < 0 )  {
-        if( v_ref != NULL )  {
-          val = (v_ref->relation_type == relation_None ?
-            atoms[i]->GetOccu() : v_ref->coefficient);
-        }
-        else
-          val = atoms[i]->GetOccu();
+        val = atoms[i]->GetOccu();
       }
       else
         val = k/atoms[i]->GetDegeneracy();
@@ -6398,14 +6396,9 @@ void XLibMacros::macFvar(TStrObjList &Cmds, const TParamList &Options,
       if( atoms[i]->DependentHfixGroupCount() == 1 )  {
         TAfixGroup &ag = atoms[i]->GetDependentHfixGroup(0);
         for( size_t j=0; j < ag.Count(); j++ )  {
-          v_ref = ag[j].GetVarRef(catom_var_name_Sof);
-          if( k < 0 )  {
-            if( v_ref != NULL )  {
-              val = (v_ref->relation_type == relation_None ?
-                ag[j].GetOccu() : v_ref->coefficient);
-            }
-            else
-              val = ag[j].GetOccu();
+          XVarReference *v_ref = ag[j].GetVarRef(catom_var_name_Sof);
+          if (k < 0) {
+            val = ag[j].GetOccu();
           }
           else
             val = k/ag[j].GetDegeneracy();
@@ -8756,7 +8749,7 @@ void XLibMacros::macTestR(TStrObjList &Cmds, const TParamList &Options,
     mat3d dir_tm = direct ? hm : fm;
     for (int h = -12; h <= 12; h++) {
       for (int k = -12; k <= 12; k++) {
-        for (int l = -12; l <= 12; l++)
+        for (int l = 0; l <= 12; l++)
         {
           if (h == 0 && k == 0 && l == 0) continue;
           mat3d rm;
@@ -8808,8 +8801,8 @@ void XLibMacros::macTestR(TStrObjList &Cmds, const TParamList &Options,
   }
   for (size_t i = 0; i < olx_min(30, hits.Count()); i++) {
     TBasicApp::NewLogEntry() << hits.GetKey(i) << ": " <<
-      olxstr(',').Join(hits.GetValue(i).a) << ", " << hits.GetValue(i).b <<
-      ", " << hits.GetValue(i).c << ", " << hits.GetValue(i).d;
+      (olxstr(',').Join(hits.GetValue(i).a).stream(", ") << hits.GetValue(i).b
+      << hits.GetValue(i).c << hits.GetValue(i).d);
   }
   if (hits.IsEmpty())
     return;
@@ -8847,3 +8840,33 @@ void XLibMacros::macCalcVars(TStrObjList &Cmds, const TParamList &Options,
   xapp.XFile().GetRM().CVars.CalcAll();
 }
 //.............................................................................
+void XLibMacros::funHKLF(const TStrObjList &args, TMacroError &E) {
+  TXFile &xf = TXApp::GetInstance().XFile();
+  if (args.IsEmpty()) {
+    E.SetRetVal(xf.GetRM().GetHKLF());
+  }
+  else if (args.Count() == 1 && args[0].IsUInt()) {
+    uint32_t bc = args[0].ToUInt();
+    if (bc == 0) {
+      xf.GetRM().ClearBASF();
+      xf.GetRM().SetHKLF(4);
+    }
+    else {
+      xf.GetRM().ClearBASF();
+      xf.GetRM().SetHKLF(5);
+      bc--;
+      double bv = 1. / bc;
+      for (size_t i = 0; i < bc; i++) {
+        xf.GetRM().AddBASF(bv);
+      }
+    }
+  }
+  else {
+    xf.GetRM().ClearBASF();
+    xf.GetRM().SetHKLF(5);
+    for (size_t i = 0; i < args.Count(); i++) {
+      xf.GetRM().AddBASF(args[i].ToDouble());
+    }
+  }
+}
+//..............................................................................
