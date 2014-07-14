@@ -147,7 +147,8 @@ public:
     TMacroError &E);
   void LibSaveSolution(const TStrObjList& Params, TMacroError& E);
   void LibGetMu(const TStrObjList& Params, TMacroError& E);
-  class TLibrary* ExportLibrary(const olxstr& name=EmptyString());
+  void LibRefinementInfo(const TStrObjList& Params, TMacroError& E);
+  class TLibrary* ExportLibrary(const olxstr& name = EmptyString());
 
   /* describes a file name with which may carry reference to the dataset in the
   case of multiple-dataset files

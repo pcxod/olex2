@@ -306,6 +306,21 @@ public:
   void SaveHeader(TStrList& out, bool ValidateRestraintNames);
   // Parses all instructions, exclusing atoms, throws if fails
   void ParseHeader(const TStrList& in);
+  /* parsed out from REMS if refined with Olex2, typically listed like:
+  REM R1_all = 0.0509
+  REM R1_gt = 0.0380
+  REM wR_ref = 0.0946
+  REM GOOF = 0.9447
+  REM Shift_max = 0.0014
+  REM Shift_mean = 0.0001
+  REM Reflections_all = 5404
+  REM Reflections_gt = 4352
+  REM Parameters = 340
+  REM Hole = -0.2418
+  REM Peak = 0.3648
+  REM Flack = -0.2(4)
+  */
+  olxstr_dict<olxstr> RefinementInfo;
 
   struct RCInfo  {
     short has_value,  // +1 - true, goes first, -1 - true, goes last, 0 - false
