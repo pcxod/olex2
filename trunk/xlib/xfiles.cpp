@@ -859,6 +859,28 @@ void TXFile::LibGetMu(const TStrObjList& Params, TMacroError& E)  {
   E.SetRetVal(olxstr::FormatFloat(3,mu));
 }
 //..............................................................................
+void TXFile::LibRefinementInfo(const TStrObjList& Params, TMacroError& E) {
+  TIns &ins = *(TIns*)FLastLoader;
+  if (Params.IsEmpty()) {
+    TStrList rv;
+    for (size_t i = 0; i < ins.RefinementInfo.Count(); i++) {
+      rv.Add(ins.RefinementInfo.GetKey(i)) << '=' <<
+        ins.RefinementInfo.GetValue(i);
+    }
+    E.SetRetVal(rv.Text(';'));
+  }
+  else {
+    ins.RefinementInfo.Clear();
+    TStrList toks(Params[0].DeleteCharSet("\t \r\n"), ';');
+    for (size_t i = 0; i < toks.Count(); i++) {
+      size_t ei = toks[i].IndexOf('=');
+      if (ei == InvalidIndex)  continue;
+      ins.RefinementInfo(toks[i].SubStringTo(ei),
+        toks[i].SubStringFrom(ei + 1));
+    }
+  }
+}
+//..............................................................................
 TLibrary* TXFile::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("xf") : name);
 
@@ -915,8 +937,14 @@ TLibrary* TXFile::ExportLibrary(const olxstr& name)  {
   lib->Register(
     new TFunction<TXFile>(this,  &TXFile::LibGetMu, "GetMu",
       fpNone|psFileLoaded,
-      "Changes current data block within the CIF")
+      "Returns absorption coefficient for current model.")
   );
+
+  lib->Register(
+    new TFunction<TXFile>(this, &TXFile::LibRefinementInfo, "RefinementInfo",
+    fpNone | fpOne | psCheckFileTypeIns,
+    "Sets/returns refinement information.")
+    );
 
   lib->AttachLibrary(Lattice.GetAsymmUnit().ExportLibrary());
   lib->AttachLibrary(Lattice.GetUnitCell().ExportLibrary());

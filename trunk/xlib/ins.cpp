@@ -37,15 +37,16 @@ TIns::TIns()  {  LoadQPeaks = true;  }
 //..............................................................................
 TIns::~TIns()  {  Clear();  }
 //..............................................................................
-void TIns::Clear()  {
+void TIns::Clear() {
   GetRM().Clear(rm_clear_ALL);
   GetAsymmUnit().Clear();
-  for( size_t i=0; i < Ins.Count(); i++ )
+  for (size_t i=0; i < Ins.Count(); i++)
     delete Ins.GetObject(i);
   Ins.Clear();
   Skipped.Clear();
   Title.SetLength(0);
   R1 = -1;
+  RefinementInfo.Clear();
 }
 //..............................................................................
 void TIns::LoadFromFile(const olxstr& fileName)  {
@@ -102,6 +103,33 @@ void TIns::LoadFromFile(const olxstr& fileName)  {
         }
         else
           break;
+      }
+      if (RefinementInfo.IsEmpty()) {
+        RefinementInfo("R1_all",
+          Lst.params.Find("R1all", XLibMacros::NAString()));
+        RefinementInfo("R1_gt",
+          Lst.params.Find("R1", XLibMacros::NAString()));
+        RefinementInfo("wR_ref",
+          Lst.params.Find("wR2", XLibMacros::NAString()));
+        RefinementInfo("GOOF",
+          Lst.params.Find("S", XLibMacros::NAString()));
+        RefinementInfo("Shift_max",
+          Lst.params.Find("max_shift/esd", XLibMacros::NAString()));
+        RefinementInfo("Shift_mean",
+          Lst.params.Find("mean_shift/esd", XLibMacros::NAString()));
+        RefinementInfo("Hole",
+          Lst.params.Find("hole", XLibMacros::NAString()));
+        RefinementInfo("Peak",
+          Lst.params.Find("peak", XLibMacros::NAString()));
+
+        RefinementInfo("Reflections_all",
+          Lst.params.Find("ref_unique", XLibMacros::NAString()));
+        RefinementInfo("Reflections_gt",
+          Lst.params.Find("ref_4sig", XLibMacros::NAString()));
+        RefinementInfo("Parameters",
+          Lst.params.Find("param_n", XLibMacros::NAString()));
+        RefinementInfo("Flack",
+          Lst.params.Find("flack", XLibMacros::NAString()));
       }
     }
     catch (...)  {}
@@ -361,6 +389,22 @@ void TIns::_ReadExtras(TStrList &l, ParseContext &cx) {
       }
       l.SubList(i + 1, j - i - 1, cx.Extras);
       l.DeleteRange(i, j-i+1);
+      i = j;
+    }
+    else if (l[i].Contains("Refinement Information")) {
+      size_t j = i;
+      while (++j < l.Count() && l[j].StartsFrom("REM ")) {
+        size_t eq_idx = l[j].FirstIndexOf('=', 4);
+        if (eq_idx == InvalidIndex) {
+          break;
+        }
+        RefinementInfo(l[j].SubString(4, eq_idx - 4).TrimWhiteChars(),
+          l[j].SubStringFrom(eq_idx + 1).TrimWhiteChars());
+      }
+      if (j == l.Count()) {
+        j--;
+      }
+      l.DeleteRange(i, j - i + 1);
       break;
     }
   }
