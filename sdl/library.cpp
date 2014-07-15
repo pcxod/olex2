@@ -55,17 +55,17 @@ ABasicFunction *TLibrary::Register(
   if (fm->GetArgStateMask() == uint32_t(~0)) {
     if (list.Count() > 1)
       throw TInvalidArgumentException(__OlxSourceInfo, "ambiguous replacement");
-    if (!list.IsEmpty()) {
-      ABasicFunction *src = container.GetValue(list[0]);
-      fm->SetArgStateMask(src->GetArgStateMask());
-      if (src->HasOptions()) {
-        olxstr_dict<olxstr> options = src->GetOptions();
-        options.Merge(fm->GetOptions());
-        fm->SetOptions(options);
-      }
+  }
+  if (!list.IsEmpty()) {
+    ABasicFunction *src = container.GetValue(list[0]);
+    fm->SetArgStateMask(fm->GetArgStateMask() | src->GetArgStateMask());
+    if (src->HasOptions()) {
+      olxstr_dict<olxstr> options = src->GetOptions();
+      options.Merge(fm->GetOptions());
+      fm->SetOptions(options);
     }
   }
-
+  fm->SetParentLibrary(*this);
   for( size_t i=0; i < list.Count(); i++ )  {
     ABasicFunction *f = container.GetValue(list[i]);
     if( (fm->GetArgStateMask() & f->GetArgStateMask()) != 0 )  {
@@ -121,7 +121,6 @@ ABasicFunction *TLibrary::Register(
         "static macro");
     }
   }
-  fm->SetParentLibrary(*this);
   container.Add(fm->GetName(), fm);
   return rv;
 }

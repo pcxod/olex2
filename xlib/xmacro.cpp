@@ -602,6 +602,19 @@ void XLibMacros::Export(TLibrary& lib)  {
     fpAny | psFileLoaded,
     "Calculates previously defined variables and stores the named values in "
     "olex2.calculated.* variables");
+  xlib_InitMacro(Pack,
+    "c-specifies if current lattice content should not be deleted",
+    fpAny | psFileLoaded,
+    "Packs structure within default or given volume(6 or 2 values for "
+    "parallelepiped "
+    "or 1 for sphere). If atom names/types are provided it only packs the "
+    "provided atoms.");
+  xlib_InitMacro(Grow,
+    "s-grow shells vs fragments&;"
+    "w-grows the rest of the structure, using already applied generators&;"
+    "t-grows only provided atoms/atom types&;",
+    fpAny | psFileLoaded,
+    "Grows whole structure or provided atoms only");
   //_____________________________________________________________________________
 
   xlib_InitFunc(FileName, fpNone|fpOne,
@@ -8870,3 +8883,129 @@ void XLibMacros::funHKLF(const TStrObjList &args, TMacroError &E) {
   }
 }
 //..............................................................................
+void XLibMacros::macPack(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
+  TXApp &app = TXApp::GetInstance();
+  const bool ClearCont = !Options.Contains("c");
+  const bool cell = (Cmds.Count() > 0 && Cmds[0].Equalsi("cell"));
+  if (cell)
+    Cmds.Delete(0);
+  TStopWatch sw(__FUNC__);
+  if (cell) {
+    app.XFile().GetLattice().GenerateCell();
+  }
+  else {
+    vec3d From(-0.5), To(1.5);
+    size_t number_count = 0;
+    for (size_t i = 0; i < Cmds.Count(); i++)  {
+      if (Cmds[i].IsNumber())  {
+        if (!(number_count % 2))
+          From[number_count / 2] = Cmds[i].ToDouble();
+        else
+          To[number_count / 2] = Cmds[i].ToDouble();
+        number_count++;
+        Cmds.Delete(i--);
+      }
+    }
+
+    if (number_count != 0 && !(number_count == 6 || number_count == 1 ||
+      number_count == 2))
+    {
+      Error.ProcessingError(__OlxSrcInfo, "please provide 6, 2 or 1 number");
+      return;
+    }
+
+    TCAtomPList TemplAtoms;
+    if (!Cmds.IsEmpty()) {
+      TSAtomPList atoms = app.FindSAtoms(Cmds.Text(' '));
+      ACollectionItem::Unique(atoms,
+        FunctionAccessor::MakeConst(&TSAtom::CAtom));
+      TemplAtoms.AddList(atoms, FunctionAccessor::MakeConst(&TSAtom::CAtom));
+    }
+
+    if (number_count == 6 || number_count == 0 || number_count == 2)  {
+      if (number_count == 2)  {
+        From[1] = From[2] = From[0];
+        To[1] = To[2] = To[0];
+      }
+      app.XFile().GetLattice().Generate(
+        From, To, TemplAtoms.IsEmpty() ? NULL : &TemplAtoms, ClearCont);
+    }
+    else {
+      TSAtomPList xatoms = app.FindSAtoms(Cmds, true, true);
+      vec3d cent;
+      double wght = 0;
+      for (size_t i = 0; i < xatoms.Count(); i++)  {
+        cent += xatoms[i]->crd()*xatoms[i]->CAtom().GetChemOccu();
+        wght += xatoms[i]->CAtom().GetChemOccu();
+      }
+      if (wght != 0)
+        cent /= wght;
+      app.XFile().GetLattice().Generate(
+        cent, From[0], TemplAtoms.IsEmpty() ? NULL : &TemplAtoms, ClearCont);
+    }
+  }
+}
+//.............................................................................
+void XLibMacros::macGrow(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
+  TXApp &app = TXApp::GetInstance();
+  TLattice& latt = app.XFile().GetLattice();
+  bool GrowShells = Options.Contains('s'),
+    GrowContent = Options.Contains('w');
+  TCAtomPList TemplAtoms;
+  if (Options.Contains('t')) {
+    TSAtomPList atoms = app.FindSAtoms(olxstr(Options['t']).Replace(',', ' '));
+    ACollectionItem::Unique(atoms,
+      FunctionAccessor::MakeConst(&TSAtom::CAtom));
+    TemplAtoms.AddList(atoms, FunctionAccessor::MakeConst(&TSAtom::CAtom));
+  }
+  if (Cmds.IsEmpty()) {  // grow fragments
+    if (GrowContent) {
+      latt.GenerateWholeContent(TemplAtoms.IsEmpty() ? NULL : &TemplAtoms);
+    }
+    else  {
+      TSAtomPList atoms;
+      app.XFile().GetLattice().GrowFragments(
+        GrowShells, TemplAtoms.IsEmpty() ? NULL : &TemplAtoms);
+      if (!GrowShells)  {
+        smatd_list gm;
+        /* check if next grow will not introduce simple translations */
+        bool grow_next = true;
+        while (grow_next)  {
+          gm.Clear();
+          latt.GetGrowMatrices(gm);
+          if (gm.IsEmpty())  break;
+          for (size_t i = 0; i < latt.MatrixCount(); i++)  {
+            for (size_t j = 0; j < gm.Count(); j++)  {
+              if (latt.GetMatrix(i).r == gm[j].r)  {
+                const vec3d df = latt.GetMatrix(i).t - gm[j].t;
+                if ((df - df.Round<int>()).QLength() < 1e-6)  {
+                  grow_next = false;
+                  break;
+                }
+              }
+            }
+            if (!grow_next)  break;
+          }
+          if (grow_next) {
+            latt.GrowFragments(GrowShells,
+              TemplAtoms.IsEmpty() ? NULL : &TemplAtoms);
+          }
+        }
+      }
+    }
+  }
+  else  {  // grow atoms
+    if (GrowContent)
+      latt.GenerateWholeContent(TemplAtoms.IsEmpty() ? NULL : &TemplAtoms);
+    else {
+      latt.GrowAtoms(app.FindSAtoms(Cmds.Text(' ')), GrowShells,
+        TemplAtoms.IsEmpty() ? NULL : &TemplAtoms);
+    }
+
+  }
+}
+//.............................................................................

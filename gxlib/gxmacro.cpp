@@ -32,21 +32,20 @@
 
 //.............................................................................
 void GXLibMacros::Export(TLibrary& lib) {
-  gxlib_InitMacro(Grow,
-    "s-grow shells vs fragments&;"
-    "w-grows the rest of the structure, using already applied generators&;"
-    "t-grows only provided atoms/atom types&;"
+  lib.Register(new TMacro<GXLibMacros>(this, &GXLibMacros::macGrow,
+    "Grow",
     "b-grows all visible grow bonds (when in a grow mode)",
-    fpAny|psFileLoaded,
-    "Grows whole structure or provided atoms only");
+    fpAny | psFileLoaded,
+    EmptyString()),
+    libChain
+    );
 
-  gxlib_InitMacro(Pack,
-    "c-specifies if current lattice content should not be deleted",
+  lib.Register(new TMacro<GXLibMacros>(this, &GXLibMacros::macPack,
+    "Pack", EmptyString(),
     fpAny|psFileLoaded,
-    "Packs structure within default or given volume(6 or 2 values for "
-    "parallelepiped "
-    "or 1 for sphere). If atom names/types are provided it only packs the "
-    "provided atoms.");
+    "Extends the default macro by keyword 'wbox'"),
+    libChain
+    );
 
   gxlib_InitMacro(Name,
     "c-enables checking labels for duplications&;"
@@ -331,56 +330,9 @@ void GXLibMacros::macGrow(TStrObjList &Cmds, const TParamList &Options,
 {
   if (Options.Contains('b')) {  // grow XGrowBonds only
     app.GrowBonds();
-    return;
   }
-  bool GrowShells = Options.Contains('s'),
-       GrowContent = Options.Contains('w');
-  TCAtomPList TemplAtoms;
-  if( Options.Contains('t') )
-    TemplAtoms = app.FindCAtoms(olxstr(Options['t']).Replace(',', ' '));
-  if( Cmds.IsEmpty() )  {  // grow fragments
-    if( GrowContent )
-      app.GrowWhole(TemplAtoms.IsEmpty() ? NULL : &TemplAtoms);
-    else  {
-      TXAtomPList atoms;
-      app.GrowFragments(GrowShells, TemplAtoms.IsEmpty() ? NULL : &TemplAtoms);
-      if( !GrowShells )  {
-        const TLattice& latt = app.XFile().GetLattice();
-        smatd_list gm;
-        /* check if next grow will not introduce simple translations */
-        bool grow_next = true;
-        while( grow_next )  {
-          gm.Clear();
-          latt.GetGrowMatrices(gm);
-          if( gm.IsEmpty() )  break;
-          for( size_t i=0; i < latt.MatrixCount(); i++ )  {
-            for( size_t j=0; j < gm.Count(); j++ )  {
-              if( latt.GetMatrix(i).r == gm[j].r )  {
-                const vec3d df = latt.GetMatrix(i).t - gm[j].t;
-                if( (df-df.Round<int>()).QLength() < 1e-6 )  {
-                  grow_next = false;
-                  break;
-                }
-              }
-            }
-            if( !grow_next )  break;
-          }
-          if( grow_next ) {
-            app.GrowFragments(GrowShells,
-              TemplAtoms.IsEmpty() ? NULL : &TemplAtoms);
-          }
-        }
-      }
-    }
-  }
-  else  {  // grow atoms
-    if( GrowContent )
-      app.GrowWhole(TemplAtoms.IsEmpty() ? NULL : &TemplAtoms);
-    else {
-      app.GrowAtoms(Cmds.Text(' '), GrowShells,
-        TemplAtoms.IsEmpty() ? NULL : &TemplAtoms);
-    }
-
+  else {
+    Error.SetUnhandled(true);
   }
 }
 //.............................................................................
@@ -388,79 +340,21 @@ void GXLibMacros::macPack(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &Error)
 {
   const bool ClearCont = !Options.Contains("c");
-  const bool cell = (Cmds.Count() > 0 && Cmds[0].Equalsi("cell"));
   const bool wbox = (Cmds.Count() > 0 && Cmds[0].Equalsi("wbox"));
-  if( cell || wbox )
+  if (wbox) {
     Cmds.Delete(0);
-  const uint64_t st = TETime::msNow();
-  if( cell )
-    app.XFile().GetLattice().GenerateCell();
-  else if( wbox && app.Get3DFrame().IsVisible() )  {
-    vec3d_alist norms(6), centres(6);
-    for (int i=0; i < 6; i++) {
-      norms[i] = app.Get3DFrame().Faces[i].GetN();
-      centres[i] = app.Get3DFrame().Faces[i].GetCenter();
-    }
-    app.XFile().GetLattice().GenerateBox(norms, centres, ClearCont);
-  }
-  else  {
-    vec3d From(-0.5), To(1.5);
-    size_t number_count = 0;
-    for( size_t i=0; i < Cmds.Count(); i++ )  {
-      if( Cmds[i].IsNumber() )  {
-        if( !(number_count%2) )
-          From[number_count/2] = Cmds[i].ToDouble();
-        else
-          To[number_count/2]= Cmds[i].ToDouble();
-        number_count++;
-        Cmds.Delete(i--);
+    if (app.Get3DFrame().IsVisible()) {
+      vec3d_alist norms(6), centres(6);
+      for (int i = 0; i < 6; i++) {
+        norms[i] = app.Get3DFrame().Faces[i].GetN();
+        centres[i] = app.Get3DFrame().Faces[i].GetCenter();
       }
-    }
-
-    if( number_count != 0 && !(number_count == 6 || number_count == 1 ||
-      number_count == 2) )
-    {
-      Error.ProcessingError(__OlxSrcInfo, "please provide 6, 2 or 1 number");
-      return;
-    }
-
-    TCAtomPList TemplAtoms;
-    if( !Cmds.IsEmpty() )
-      TemplAtoms = app.FindCAtoms(Cmds.Text(' '));
-
-    if( number_count == 6 || number_count == 0 || number_count == 2 )  {
-      if( number_count == 2 )  {
-        From[1] = From[2] = From[0];
-        To[1] = To[2] = To[0];
-      }
-      app.Generate(From, To, TemplAtoms.IsEmpty() ? NULL
-        : &TemplAtoms, ClearCont);
-    }
-    else  {
-      TXAtomPList xatoms = app.FindXAtoms(Cmds, true, true);
-      vec3d cent;
-      double wght = 0;
-      for( size_t i=0; i < xatoms.Count(); i++ )  {
-        cent += xatoms[i]->crd()*xatoms[i]->CAtom().GetChemOccu();
-        wght += xatoms[i]->CAtom().GetChemOccu();
-      }
-      if( wght != 0 )
-        cent /= wght;
-      app.Generate(cent, From[0], TemplAtoms.IsEmpty() ? NULL
-        : &TemplAtoms, ClearCont);
+      app.XFile().GetLattice().GenerateBox(norms, centres, ClearCont);
     }
   }
-  if (TBasicApp::GetInstance().IsProfiling()) {
-    TBasicApp::NewLogEntry(logInfo) <<
-      app.XFile().GetLattice().GetObjects().atoms.Count() <<
-      " atoms and " <<
-      app.XFile().GetLattice().GetObjects().bonds.Count() <<
-      " bonds generated in " <<
-      app.XFile().GetLattice().FragmentCount() << " fragments ("
-      << (TETime::msNow()-st) << "ms)";
+  else {
+    Error.SetUnhandled(true);
   }
-  // optimise drawing ...
-  //app.GetRender().Compile(true);
 }
 //.............................................................................
 void GXLibMacros::macName(TStrObjList &Cmds, const TParamList &Options,
