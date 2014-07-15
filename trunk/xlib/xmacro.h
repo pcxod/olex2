@@ -156,6 +156,8 @@ public:
   static DefMacro(D2CG)
   static DefMacro(TestR)
   static DefMacro(CalcVars)
+  static DefMacro(Pack)
+  static DefMacro(Grow)
 
   static DefFunc(Lst)
   static DefFunc(FileName)
