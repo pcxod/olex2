@@ -2404,8 +2404,15 @@ void TGXApp::InfoList(const olxstr &Atoms, TStrList &Info, bool sort,
   Table.ColName(10) = "R-VdW";
   if( have_q )
     Table.ColName(11) = "Peak";
+  olxdict<const cm_Element*, olx_pair_t<double,size_t>, TPrimitiveComparator> elements;
   for(size_t i = 0; i < atoms.Count(); i++ )  {
     const TCAtom& A = *atoms[i].GetB();
+    if (A.GetType() != iQPeakZ) {
+      olx_pair_t<double, size_t> &ei = elements.Add(&A.GetType(),
+        olx_pair_t<double, size_t>(0, 0));
+      ei.a += A.GetChemOccu();
+      ei.b++;
+    }
     Table[i][0] = A.GetLabel();
     Table[i][1] = A.GetType().symbol;
     vec3d c = cart ? au.Orthogonalise(atoms[i].GetA()) : atoms[i].GetA();
@@ -2436,6 +2443,29 @@ void TGXApp::InfoList(const olxstr &Atoms, TStrList &Info, bool sort,
     }
   }
   Table.CreateTXTList(Info, "Atom information", true, true, ' ');
+  if (elements.IsEmpty())
+    return;
+  olxstr formula, formula_a;
+  double ec = 0, ec_a = 0, mc = 0, mc_a = 0;
+  for (size_t i = 0; i < elements.Count(); i++) {
+    formula << elements.GetKey(i)->symbol;
+    if (elements.GetValue(i).b != 1)
+      formula << elements.GetValue(i).b;
+    ec += elements.GetKey(i)->z * elements.GetValue(i).b;
+    mc += elements.GetKey(i)->GetMr() * elements.GetValue(i).b;
+    // actual formula
+    formula_a << elements.GetKey(i)->symbol;
+    if (elements.GetValue(i).a != 1)
+      formula_a << elements.GetValue(i).a;
+    ec_a += elements.GetKey(i)->z * elements.GetValue(i).a;
+    mc_a += elements.GetKey(i)->GetMr() * elements.GetValue(i).a;
+  }
+  Info.Add("Formula: ") << formula_a << ", e number: " <<
+    olxstr::FormatFloat(3, ec_a) << ", mass: " << olxstr::FormatFloat(3, mc_a);
+  if (olx_abs(ec - ec_a) > 1e-2) {
+    Info.GetLastString() << " (for unit occupancy: " << formula << ", " <<
+      ec << ", " << olxstr::FormatFloat(3, mc) << ')';
+  }
 }
 //..............................................................................
 TXGlLabel& TGXApp::CreateLabel(const TXAtom& a, uint16_t FontIndex)  {

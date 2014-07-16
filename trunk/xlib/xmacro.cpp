@@ -2443,13 +2443,11 @@ void XLibMacros::macFixUnit(TStrObjList &Cmds, const TParamList &Options,
   au.SetZ(Z);
   olxstr n_c;
   for( size_t i=0; i < content.Count(); i++ )  {
-    n_c << content[i].element.symbol <<
+    n_c << ' ' << content[i].element.symbol <<
       olxstr::FormatFloat(3,content[i].count/Zp).TrimFloat();
-    if( (i+1) < content.Count() )
-      n_c << ' ';
     content[i].count *= Z_sg;
   }
-  TBasicApp::NewLogEntry() << "New content is: " << n_c;
+  TBasicApp::NewLogEntry() << "New content is:" << n_c;
   xf.GetRM().SetUserContent(content);
 }
 //.............................................................................
