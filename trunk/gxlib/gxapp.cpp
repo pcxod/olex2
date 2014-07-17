@@ -2445,23 +2445,31 @@ void TGXApp::InfoList(const olxstr &Atoms, TStrList &Info, bool sort,
   Table.CreateTXTList(Info, "Atom information", true, true, ' ');
   if (elements.IsEmpty())
     return;
+  ContentList list, list_a;
+  for (size_t i = 0; i < elements.Count(); i++) {
+    list.Add(new ElementCount(*elements.GetKey(i), elements.GetValue(i).b));
+    list_a.Add(new ElementCount(*elements.GetKey(i), elements.GetValue(i).a));
+  }
+  XElementLib::SortContentList(list);
+  XElementLib::SortContentList(list_a);
   olxstr formula, formula_a;
   double ec = 0, ec_a = 0, mc = 0, mc_a = 0;
-  for (size_t i = 0; i < elements.Count(); i++) {
-    formula << elements.GetKey(i)->symbol;
-    if (elements.GetValue(i).b != 1)
-      formula << elements.GetValue(i).b;
-    ec += elements.GetKey(i)->z * elements.GetValue(i).b;
-    mc += elements.GetKey(i)->GetMr() * elements.GetValue(i).b;
+  for (size_t i = 0; i < list.Count(); i++) {
+    formula << list[i].element.symbol;
+    if (list[i].count != 1)
+      formula << list[i].count;
+    ec += list[i].element.z * list[i].count;
+    mc += list[i].element.GetMr() * list[i].count;
     // actual formula
-    formula_a << elements.GetKey(i)->symbol;
-    if (elements.GetValue(i).a != 1)
-      formula_a << elements.GetValue(i).a;
-    ec_a += elements.GetKey(i)->z * elements.GetValue(i).a;
-    mc_a += elements.GetKey(i)->GetMr() * elements.GetValue(i).a;
+    formula_a << list_a[i].element.symbol;
+    if (list_a[i].count != 1)
+      formula_a << list_a[i].count;
+    ec_a += list_a[i].element.z *list_a[i].count;
+    mc_a += list_a[i].element.GetMr() * list_a[i].count;
   }
-  Info.Add("Formula: ") << formula_a << ", e number: " <<
-    olxstr::FormatFloat(3, ec_a) << ", mass: " << olxstr::FormatFloat(3, mc_a);
+  Info.Add("Formula: ") << formula_a << ", e count: " <<
+    olxstr::FormatFloat(3, ec_a).TrimFloat() <<
+    ", mass: " << olxstr::FormatFloat(3, mc_a);
   if (olx_abs(ec - ec_a) > 1e-2) {
     Info.GetLastString() << " (for unit occupancy: " << formula << ", " <<
       ec << ", " << olxstr::FormatFloat(3, mc) << ')';
