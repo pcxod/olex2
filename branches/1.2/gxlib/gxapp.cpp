@@ -107,7 +107,7 @@ class xappXFileLoad: public AActionHandler  {
   int state;
 public:
   xappXFileLoad(TGXApp *Parent) {
-    FParent = Parent;  
+    FParent = Parent;
     AActionHandler::SetToDelete(false);
     GrowInfo = NULL;
     SameFile = false;

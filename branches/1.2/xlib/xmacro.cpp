@@ -2770,16 +2770,16 @@ void XLibMacros::macCompaq(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &E)
 {
   TXFile &xf = TXApp::GetInstance().XFile();
-  if (xf.GetLattice().IsGenerated()) {
+  if (xf.GetLattice().IsGenerated() && !Options.Contains('q')) {
     TBasicApp::NewLogEntry(logError) <<
       "Cannot perform this operation on grown structure";
     return;
   }
-  if( Options.Contains('a') )  
+  if( Options.Contains('a') )
     xf.GetLattice().CompaqAll();
-  else if( Options.Contains('c') )  
+  else if( Options.Contains('c') )
     xf.GetLattice().CompaqClosest();
-  else if( Options.Contains('q') )  
+  else if( Options.Contains('q') )
     xf.GetLattice().CompaqQ();
   else if( Options.Contains('m') )  {
     TAsymmUnit &au = xf.GetAsymmUnit();

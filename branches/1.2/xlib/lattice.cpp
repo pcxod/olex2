@@ -1386,41 +1386,47 @@ void TLattice::CompaqClosest()  {
   OnStructureUniq.Exit(this);
 }
 //..............................................................................
-void TLattice::CompaqType(short type)  {
-  if( IsGenerated() )  return;
-  const size_t ac = Objects.atoms.Count();
+void TLattice::CompaqType(short type) {
   const TAsymmUnit& au = GetAsymmUnit();
-  for( size_t i=0; i < ac; i++ )  {
-    TSAtom& sa = Objects.atoms[i];
-    if( sa.GetType() != type )  continue;
+  const TUnitCell &uc = GetUnitCell();
+  size_t ac = au.AtomCount();
+  for (size_t i = 0; i < ac; i++) {
+    TCAtom& ca = au.GetAtom(i);
+    if (ca.GetType() != type) continue;
     smatd* transform = NULL;
     double minQD = 1000;
-    for( size_t j=0; j < ac; j++ )  {
-      TSAtom& sb = Objects.atoms[j];
-      if( sb.GetType() == type || sb.GetType() == iQPeakZ )  continue;
+    for (size_t j = 0; j < ac; j++) {
+      TCAtom& cb = au.GetAtom(j);
+      if (cb.GetType() == type || cb.GetType() == iQPeakZ)
+        continue;
       double qd = 0;
-      smatd* m = GetUnitCell().GetClosest(sb.ccrd(), sa.ccrd(), true, &qd);
-      if( qd < minQD )  {
-        if( transform != NULL )
+      smatd* m = GetUnitCell().GetClosest(cb.ccrd(), ca.ccrd(), true, &qd);
+      if (qd < minQD)  {
+        if (transform != NULL)
           delete transform;
         transform = m;
         minQD = qd;
       }
-      else if( m != NULL )
+      else if (m != NULL)
         delete m;
     }
-    if( transform == NULL )  continue;
-    sa.ccrd() = sa.CAtom().ccrd() = (*transform * sa.ccrd());
-    sa.crd() = au.Orthogonalise(sa.CAtom().ccrd());
-    if( sa.CAtom().GetEllipsoid() != NULL )  {
-      *sa.CAtom().GetEllipsoid() = GetUnitCell().GetEllipsoid(
-        transform->GetContainerId(), sa.CAtom().GetId());
+    if (transform == NULL) continue;
+    ca.ccrd() = (*transform * ca.ccrd());
+    if (ca.GetEllipsoid() != NULL)  {
+      *ca.GetEllipsoid() = uc.GetEllipsoid(transform->GetContainerId(),
+        ca.GetId());
     }
     delete transform;
   }
-  OnStructureUniq.Enter(this);
-  Init();
-  OnStructureUniq.Exit(this);
+  // update symm eqivs
+  ac = Objects.atoms.Count();
+  for (size_t i = 0; i < ac; i++) {
+    TSAtom& sa = Objects.atoms[i];
+    if (sa.GetType() != type) continue;
+    sa.ccrd() = (sa.GetMatrix() * sa.CAtom().ccrd());
+    sa.crd() = au.Orthogonalise(sa.ccrd());
+  }
+  UpdateConnectivityInfo();
 }
 //..............................................................................
 void TLattice::TransformFragments(const TSAtomPList& fragAtoms,
@@ -2313,12 +2319,12 @@ TLattice::GrowInfo* TLattice::GetGrowInfo() const {
   return &gi;
 }
 //..............................................................................
-bool TLattice::ApplyGrowInfo()  {
+bool TLattice::ApplyGrowInfo() {
   TAsymmUnit& au = GetAsymmUnit();
-  if( _GrowInfo == NULL || !Objects.atoms.IsEmpty() || !Matrices.IsEmpty() || 
-    GetUnitCell().MatrixCount() != _GrowInfo->unc_matrix_count )
+  if (_GrowInfo == NULL || !Objects.atoms.IsEmpty() || !Matrices.IsEmpty() ||
+    GetUnitCell().MatrixCount() != _GrowInfo->unc_matrix_count)
   {
-    if( _GrowInfo != NULL )  {
+    if (_GrowInfo != NULL) {
       delete _GrowInfo;
       _GrowInfo = NULL;
     }
@@ -2327,16 +2333,21 @@ bool TLattice::ApplyGrowInfo()  {
   Matrices.Assign(_GrowInfo->matrices);
   _GrowInfo->matrices.Clear();
   Objects.atoms.IncCapacity(au.AtomCount()*Matrices.Count());
-  for( size_t i=0; i < au.AtomCount(); i++ )    {
+  for (size_t i=0; i < au.AtomCount(); i++) {
     TCAtom& ca = GetAsymmUnit().GetAtom(i);
     // we still need masked and detached atoms here
-    if( ca.IsDeleted() )  continue;
-    if( i >= _GrowInfo->info.Count() )  {  // create just with I matrix
-      GenerateAtom(ca, *Matrices[0]);
+    if (ca.IsDeleted())  continue;
+    if (ca.GetType() == iQPeakZ ||
+      i >= _GrowInfo->info.Count() ||
+      _GrowInfo->info[i].IsEmpty())
+    {
+      for (size_t j = 0; j < Matrices.Count(); j++) {
+        GenerateAtom(ca, *Matrices[j]);
+      }
       continue;
     }
     const TIndexList& mi = _GrowInfo->info[i];
-    for( size_t j=0; j < mi.Count(); j++ )
+    for (size_t j=0; j < mi.Count(); j++)
       GenerateAtom(ca, *Matrices[mi[j]]);
   }
   delete _GrowInfo;
