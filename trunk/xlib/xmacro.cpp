@@ -1681,56 +1681,72 @@ void XLibMacros::macFix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   olxstr vars(Cmds[0]);
   Cmds.Delete(0);
   double var_val = 0;
-  if( !Cmds.IsEmpty() && Cmds[0].IsNumber() )  {
+  if (!Cmds.IsEmpty() && Cmds[0].IsNumber())  {
     var_val = Cmds[0].ToDouble();
     Cmds.Delete(0);
   }
   TXApp& xapp = TXApp::GetInstance();
   TSAtomPList atoms;
-  if( !xapp.FindSAtoms(Cmds.Text(' '), atoms, true, true) )
+  if (!xapp.FindSAtoms(Cmds.Text(' '), atoms, true, true))
     return;
 
-  if( vars.Equalsi( "XYZ" ) )  {
-    for( size_t i=0; i < atoms.Count(); i++ )  {
-      for( short j=0; j < 3; j++ )
-        xapp.XFile().GetRM().Vars.FixParam(atoms[i]->CAtom(), catom_var_name_X+j);
+  if (vars.Equalsi("XYZ")) {
+    for (size_t i = 0; i < atoms.Count(); i++) {
+      for (short j = 0; j < 3; j++)
+        xapp.XFile().GetRM().Vars.FixParam(atoms[i]->CAtom(), catom_var_name_X + j);
     }
   }
-  else if( vars.Equalsi( "UISO" ) )  {
-    for( size_t i=0; i < atoms.Count(); i++ )  {
-      if( atoms[i]->GetEllipsoid() == NULL )  {// isotropic atom
+  else if (vars.Equalsi("UISO")) {
+    for (size_t i = 0; i < atoms.Count(); i++) {
+      if (atoms[i]->GetEllipsoid() == NULL)  {// isotropic atom
         xapp.SetAtomUiso(*atoms[i], var_val);
         xapp.XFile().GetRM().Vars.FixParam(atoms[i]->CAtom(), catom_var_name_Uiso);
       }
       else  {
-        for( short j=0; j < 6; j++ )
-          xapp.XFile().GetRM().Vars.FixParam(atoms[i]->CAtom(), catom_var_name_U11+j);
+        for (short j = 0; j < 6; j++)
+          xapp.XFile().GetRM().Vars.FixParam(atoms[i]->CAtom(), catom_var_name_U11 + j);
       }
     }
   }
-  else if( vars.Equalsi( "OCCU" ) )  {
+  else if (vars.Equalsi("OCCU")) {
     const ASObjectProvider& objects = xapp.XFile().GetLattice().GetObjects();
     objects.atoms.ForEach(ACollectionItem::TagSetter(0));
-    for( size_t i=0; i < atoms.Count(); i++ )  {
-      if( atoms[i]->GetTag() != 0 )  continue;
+    XVar *var = 0;
+    int rel=relation_None;
+    if (olx_abs(var_val) > 10) {
+      rel = var_val < 0 ? relation_AsOneMinusVar : relation_AsVar;
+      int var_n = (int)(olx_abs(var_val) / 10) - 1;
+      var_val = olx_abs(var_val) - var_n * 10;
+      var = &xapp.XFile().GetRM().Vars.GetReferencedVar(var_n);
+    }
+    for (size_t i = 0; i < atoms.Count(); i++)  {
+      if (atoms[i]->GetTag() != 0)  continue;
       TSAtomPList neighbours;
       neighbours.Add(atoms[i]);
-      for( size_t j=0; j < atoms[i]->NodeCount(); j++ )  {
+      for (size_t j = 0; j < atoms[i]->NodeCount(); j++)  {
         TSAtom& n = atoms[i]->Node(j);
-        if( n.IsDeleted() || n.GetType() != iHydrogenZ || n.GetTag() != 0 )  continue;
+        if (n.IsDeleted() || n.GetType() != iHydrogenZ || n.GetTag() != 0)  continue;
         neighbours.Add(n);
       }
-      for( size_t j=0; j < neighbours.Count(); j++ )  {
-        if( neighbours[j]->CAtom().GetPart() != atoms[i]->CAtom().GetPart() )
+      for (size_t j = 0; j < neighbours.Count(); j++)  {
+        if (neighbours[j]->CAtom().GetPart() != atoms[i]->CAtom().GetPart())
           continue;
         neighbours[j]->SetTag(1);
         xapp.XFile().GetRM().Vars.FixParam(neighbours[j]->CAtom(), catom_var_name_Sof);
-        if( var_val == 0 )  {
-          if( neighbours[j]->CAtom().GetPart() == 0 )  // else leave as it is
-            neighbours[j]->CAtom().SetOccu(1./neighbours[j]->CAtom().GetDegeneracy());
+        if (var_val == 0)  {
+          if (neighbours[j]->CAtom().GetPart() == 0)  // else leave as it is
+            neighbours[j]->CAtom().SetOccu(1. / neighbours[j]->CAtom().GetDegeneracy());
         }
-        else
-          neighbours[j]->CAtom().SetOccu(var_val/neighbours[j]->CAtom().GetDegeneracy());
+        else {
+          if (var == 0) {
+            neighbours[j]->CAtom().SetOccu(
+              var_val / neighbours[j]->CAtom().GetDegeneracy());
+          }
+          else {
+            xapp.XFile().GetRM().Vars.AddVarRef(*var, neighbours[j]->CAtom(),
+              catom_var_name_Sof, rel, var_val);
+          }
+        }
       }
     }
   }
@@ -2802,7 +2818,7 @@ void XLibMacros::macCompaq(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &E)
 {
   TXFile &xf = TXApp::GetInstance().XFile();
-  if (xf.GetLattice().IsGenerated()) {
+  if (xf.GetLattice().IsGenerated() && !Options.Contains('q')) {
     TBasicApp::NewLogEntry(logError) <<
       "Cannot perform this operation on grown structure";
     return;

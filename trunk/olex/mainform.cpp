@@ -304,6 +304,7 @@ BEGIN_EVENT_TABLE(TMainForm, wxFrame)  // basic interface
   EVT_MENU(ID_View011, TMainForm::OnViewAlong)
   EVT_MENU(ID_View111, TMainForm::OnViewAlong)
 
+  EVT_MENU(ID_AtomOccuCustom, TMainForm::OnAtomOccuChange)
   EVT_MENU(ID_AtomOccu1, TMainForm::OnAtomOccuChange)
   EVT_MENU(ID_AtomOccu34, TMainForm::OnAtomOccuChange)
   EVT_MENU(ID_AtomOccu12, TMainForm::OnAtomOccuChange)
@@ -313,12 +314,14 @@ BEGIN_EVENT_TABLE(TMainForm, wxFrame)  // basic interface
   EVT_MENU(ID_AtomOccuFix, TMainForm::OnAtomOccuChange)
   EVT_MENU(ID_AtomOccuFixCurrent, TMainForm::OnAtomOccuChange)
 
+  EVT_MENU(ID_AtomConnCustom, TMainForm::OnAtomConnChange)
   EVT_MENU(ID_AtomConn0, TMainForm::OnAtomConnChange)
   EVT_MENU(ID_AtomConn1, TMainForm::OnAtomConnChange)
   EVT_MENU(ID_AtomConn2, TMainForm::OnAtomConnChange)
   EVT_MENU(ID_AtomConn3, TMainForm::OnAtomConnChange)
   EVT_MENU(ID_AtomConn4, TMainForm::OnAtomConnChange)
   EVT_MENU(ID_AtomConn12, TMainForm::OnAtomConnChange)
+  EVT_MENU(ID_AtomConn24, TMainForm::OnAtomConnChange)
 
   EVT_MENU(ID_AtomPolyNone, TMainForm::OnAtomPolyChange)
   EVT_MENU(ID_AtomPolyAuto, TMainForm::OnAtomPolyChange)
@@ -1129,8 +1132,7 @@ void TMainForm::XApp(Olex2App *XA)  {
   pmLattice->Append(ID_FixLattice, wxT("Fix"));
   pmLattice->Append(ID_FreeLattice, wxT("Free"));
 // setting atom menu
-  pmAtom->Append(ID_MenuItemAtomInfo, wxT("?"));
-  miAtomInfo = pmAtom->FindItemByPosition(0);
+  pmAtom->Append(ID_AtomInfo, wxT("?"));
   pmAtom->AppendSeparator();
   pmAtom->Append(ID_MenuBang, wxT("BANG"), pmBang);
     pmAtomType->Append(ID_AtomTypeChangeC, wxT("C"));
@@ -1140,46 +1142,48 @@ void TMainForm::XApp(Olex2App *XA)  {
     pmAtomType->Append(ID_AtomTypeChangeH, wxT("H"));
     pmAtomType->Append(ID_AtomTypeChangeS, wxT("S"));
     pmAtomType->Append(ID_AtomTypePTable, wxT("More..."));
-    pmAtomOccu->Append(ID_AtomOccu1,  wxT("1"));
-    pmAtomOccu->Append(ID_AtomOccu34, wxT("3/4"));
-    pmAtomOccu->Append(ID_AtomOccu12, wxT("1/2"));
-    pmAtomOccu->Append(ID_AtomOccu13, wxT("1/3"));
-    pmAtomOccu->Append(ID_AtomOccu14, wxT("1/4"));
-    pmAtomOccu->Append(ID_AtomOccuFix, wxT("Fix"));
+    pmAtomOccu->AppendRadioItem(ID_AtomOccuCustom, wxT("Custom"));
+    pmAtomOccu->AppendRadioItem(ID_AtomOccu1, wxT("1"));
+    pmAtomOccu->AppendRadioItem(ID_AtomOccu34, wxT("3/4"));
+    pmAtomOccu->AppendRadioItem(ID_AtomOccu12, wxT("1/2"));
+    pmAtomOccu->AppendRadioItem(ID_AtomOccu13, wxT("1/3"));
+    pmAtomOccu->AppendRadioItem(ID_AtomOccu14, wxT("1/4"));
+    pmAtomOccu->AppendRadioItem(ID_AtomOccuFix, wxT("Fix"));
+    pmAtomOccu->AppendRadioItem(ID_AtomOccuFree, wxT("Free"));
     pmAtomOccu->Append(ID_AtomOccuFixCurrent, wxT("Fix as is"));
-    pmAtomOccu->Append(ID_AtomOccuFree, wxT("Free"));
-    pmAtomConn->Append(ID_AtomConn0, wxT("0"));
-    pmAtomConn->Append(ID_AtomConn1, wxT("1"));
-    pmAtomConn->Append(ID_AtomConn2, wxT("2"));
-    pmAtomConn->Append(ID_AtomConn3, wxT("3"));
-    pmAtomConn->Append(ID_AtomConn4, wxT("4"));
-    pmAtomConn->Append(ID_AtomConn12, wxT("Default"));
+    pmAtomConn->AppendRadioItem(ID_AtomConnCustom, wxT("Custom"));
+    pmAtomConn->AppendRadioItem(ID_AtomConn0, wxT("0"));
+    pmAtomConn->AppendRadioItem(ID_AtomConn1, wxT("1"));
+    pmAtomConn->AppendRadioItem(ID_AtomConn2, wxT("2"));
+    pmAtomConn->AppendRadioItem(ID_AtomConn3, wxT("3"));
+    pmAtomConn->AppendRadioItem(ID_AtomConn4, wxT("4"));
+    pmAtomConn->AppendRadioItem(ID_AtomConn12, wxT("Default [12]"));
+    pmAtomConn->AppendRadioItem(ID_AtomConn24, wxT("24"));
     pmAtomPoly->AppendRadioItem(ID_AtomPolyNone, wxT("None"));
     pmAtomPoly->AppendRadioItem(ID_AtomPolyAuto, wxT("Auto"));
     pmAtomPoly->AppendRadioItem(ID_AtomPolyRegular, wxT("Regular"));
     pmAtomPoly->AppendRadioItem(ID_AtomPolyPyramid, wxT("Pyramid"));
     pmAtomPoly->AppendRadioItem(ID_AtomPolyBipyramid, wxT("Bipyramid"));
-    miAtomPartCustom = pmAtomPart->AppendRadioItem(ID_AtomPartCustom, wxT("X"));
+    pmAtomPart->AppendRadioItem(ID_AtomPartCustom, wxT("X"));
     pmAtomPart->AppendRadioItem(ID_AtomPart_2, wxT("-2"));
     pmAtomPart->AppendRadioItem(ID_AtomPart_1, wxT("-1"));
     pmAtomPart->AppendRadioItem(ID_AtomPart0, wxT("0"));
     pmAtomPart->AppendRadioItem(ID_AtomPart1, wxT("1"));
     pmAtomPart->AppendRadioItem(ID_AtomPart2, wxT("2"));
-    miAtomUisoCustom = pmAtomUiso->AppendRadioItem(ID_AtomUisoCustom, wxT("X"));
+    pmAtomUiso->AppendRadioItem(ID_AtomUisoCustom, wxT("X"));
     pmAtomUiso->AppendRadioItem(ID_AtomUiso12, wxT("1.2x"));
     pmAtomUiso->AppendRadioItem(ID_AtomUiso15, wxT("1.5x"));
-    miAtomUisoFree = pmAtomUiso->AppendRadioItem(ID_AtomUisoFree, wxT("Free"));
+    pmAtomUiso->AppendRadioItem(ID_AtomUisoFree, wxT("Free"));
     pmAtomUiso->AppendRadioItem(ID_AtomUisoFix, wxT("Fix"));
 
-  pmAtom->Append(ID_MenuAtomType, wxT("Type"), pmAtomType);
-  pmAtom->Append(ID_MenuAtomConn, wxT("Bonds"), pmAtomConn);
-  pmAtom->Append(ID_MenuAtomOccu, wxT("Chemical occupancy"), pmAtomOccu);
-  pmAtom->Append(ID_MenuAtomPart, wxT("Part"), pmAtomPart);
-  pmAtom->Append(ID_MenuAtomUiso, wxT("Uiso"), pmAtomUiso);
-  pmAtom->Append(ID_MenuAtomPoly, wxT("Polyhedron"), pmAtomPoly);
+  pmAtom->Append(ID_AtomType, wxT("Type"), pmAtomType);
+  pmAtom->Append(ID_AtomConn, wxT("Bonds"), pmAtomConn);
+  pmAtom->Append(ID_AtomOccu, wxT("Chemical occupancy"), pmAtomOccu);
+  pmAtom->Append(ID_AtomPart, wxT("Part"), pmAtomPart);
+  pmAtom->Append(ID_AtomUiso, wxT("Uiso"), pmAtomUiso);
+  pmAtom->Append(ID_AtomPoly, wxT("Polyhedron"), pmAtomPoly);
   pmAtom->AppendSeparator();
   pmAtom->Append(ID_AtomGrow, wxT("Grow"));
-    miAtomGrow = pmAtom->FindItemByPosition(pmAtom->GetMenuItemCount()-1);
   pmAtom->Append(ID_AtomCenter, wxT("Center"));
   pmAtom->Append(ID_AtomSelRings, wxT("Select ring(s)"));
   pmAtom->AppendSeparator();
@@ -1189,9 +1193,9 @@ void TMainForm::XApp(Olex2App *XA)  {
   pmAtom->Append(ID_MenuGraphics, wxT("Graphics"), pmGraphics->Clone());
   pmAtom->Append(ID_Selection, wxT("Selection"), pmSelection->Clone());
 // setting bond menu
-  pmBond->Append(ID_MenuItemBondInfo, wxT("?"));
+  pmBond->Append(ID_BondInfo, wxT("?"));
+  pmBond->Append(ID_BondRadius, wxT("?"));
   pmBond->AppendSeparator();
-  miBondInfo = pmBond->FindItemByPosition(0);
   pmBond->Append(ID_MenuTang, wxT("TANG"), pmTang);
   pmBond->AppendSeparator();
   pmBond->Append(ID_BondViewAlong, wxT("View along"));

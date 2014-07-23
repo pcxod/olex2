@@ -80,6 +80,11 @@ inline int olx_cmp_float(float_t v1, float_t v2, float_t eps)  {
   const float_t diff = v1 -v2;
   return olx_is_zero(diff, eps) ? 0 : (diff > 0 ? 1 : -1);
 }
+/* compares if the difference between two float point values is within the eps */
+template <typename float_t>
+inline bool olx_feq(float_t v1, float_t v2, float_t eps = float_t(1e-3)) {
+  return olx_is_zero(v1 - v2, eps);
+}
 // returns absolute value of a number
 template <typename num> inline num olx_abs(num n)  {
   return n < 0 ? -n : n;
