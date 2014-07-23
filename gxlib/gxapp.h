@@ -731,8 +731,10 @@ public:
     return FGlMouse->MouseMove(x, y, Shift);
   }
   bool DblClick()  {  return FGlMouse->DblClick();  }
-  void ResetMouseState(short x, short y, short shift=0, short button=0) {
-    FGlMouse->ResetMouseState(x, y, shift, button);
+  void ResetMouseState(short x, short y, short shift=0, short button=0,
+    bool keep_object=false)
+  {
+    FGlMouse->ResetMouseState(x, y, shift, button, keep_object);
   }
   void EnableSelection(bool v)  {  FGlMouse->SetSelectionEnabled(v);  }
 //..............................................................................

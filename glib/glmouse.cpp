@@ -118,13 +118,17 @@ bool TGlMouse::DblClick()  {
   return (MData.Object != NULL) ? MData.Object->OnDblClick(this, MData) : false;
 }
 //..............................................................................
-void TGlMouse::ResetMouseState(short x, short y, short shift, short button) {
+void TGlMouse::ResetMouseState(short x, short y, short shift, short button,
+  bool keep_object)
+{
   FDblClick = false;
   MData.Button = button;
   MData.Shift = shift;
   FSX = MData.X = x;
   FSY = MData.Y = y;
-  MData.Object = NULL;
+  if (!keep_object) {
+    MData.Object = NULL;
+  }
 }
 //..............................................................................
 TGlGroup* TGlMouse::FindObjectGroup(const AGDrawObject& obj)  {
@@ -147,14 +151,14 @@ bool TGlMouse::MouseDown(int x, int y, short Shift, short button)  {
   MData.DownY = y;
   MData.Event = smeMouseDown;
   MData.Object = FParent->SelectObject(x, y);
-  if( MData.Object != NULL )  {
+  if (MData.Object != NULL) {
     TGlGroup *PColl = FindObjectGroup(*MData.Object);
-    if( PColl != NULL )
+    if (PColl != NULL)
       res = PColl->OnMouseDown(this, MData);
     else
       res = MData.Object->OnMouseDown(this, MData);
   }
-  if( res == false && Shift == sssShift )  {
+  if (res == false && Shift == sssShift) {
     MData.Object = FDFrame;
     res = MData.Object->OnMouseDown(this, MData);
   }

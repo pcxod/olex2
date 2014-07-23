@@ -46,14 +46,6 @@ enum  {
   ID_MenuFragment,
   ID_MenuDrawStyle,
   ID_MenuDrawQ,
-  ID_MenuItemAtomInfo,
-  ID_MenuItemBondInfo,
-  ID_MenuAtomType,
-  ID_MenuAtomOccu,
-  ID_MenuAtomConn,
-  ID_MenuAtomPoly,
-  ID_MenuAtomPart,
-  ID_MenuAtomUiso,
 
   ID_DSBS,  // drawing style, balls and sticks
   ID_DSES,  // ellipsoids and sticks
@@ -71,6 +63,11 @@ enum  {
   ID_ShowAll,
   ID_ModelCenter,
 
+  ID_BondInfo,
+  ID_BondRadius,
+
+  ID_AtomInfo,
+  ID_AtomType,
   ID_AtomTypeChangeC,
   ID_AtomTypeChangeN,
   ID_AtomTypeChangeO,
@@ -101,6 +98,8 @@ enum  {
   ID_View011,
   ID_View111,
 
+  ID_AtomOccu,
+  ID_AtomOccuCustom,
   ID_AtomOccu1,
   ID_AtomOccu34,
   ID_AtomOccu12,
@@ -110,19 +109,24 @@ enum  {
   ID_AtomOccuFixCurrent,
   ID_AtomOccuFree,
 
+  ID_AtomConn,
+  ID_AtomConnCustom,
   ID_AtomConn0,
   ID_AtomConn1,
   ID_AtomConn2,
   ID_AtomConn3,
   ID_AtomConn4,
   ID_AtomConn12,
+  ID_AtomConn24,
 
+  ID_AtomUiso,
   ID_AtomUisoCustom,
   ID_AtomUiso15,
   ID_AtomUiso12,
   ID_AtomUisoFree,
   ID_AtomUisoFix,
 
+  ID_AtomPart,
   ID_AtomPartCustom,
   ID_AtomPart_2,
   ID_AtomPart_1,
@@ -130,6 +134,7 @@ enum  {
   ID_AtomPart1,
   ID_AtomPart2,
 
+  ID_AtomPoly,
   ID_AtomPolyNone,
   ID_AtomPolyAuto,
   ID_AtomPolyRegular,
@@ -638,8 +643,6 @@ protected:
                 *pmModel,
                 *pmDrawQ;
   TMenu    *pmAtom;
-    wxMenuItem *miAtomInfo;
-    wxMenuItem *miAtomGrow;
     TMenu    *pmBang;  // bonds angles
     TMenu    *pmAtomType;
     TMenu    *pmAtomOccu,
@@ -648,14 +651,9 @@ protected:
              *pmAtomPart,
              *pmAtomUiso
              ;
-  wxMenuItem *miAtomPartCustom,
-    *miAtomUisoCustom,
-    *miAtomUisoFree;
   TMenu    *pmBond;
-    wxMenuItem *miBondInfo;
     TMenu    *pmTang;  // torsion angles
   TMenu    *pmFragment;
-    wxMenuItem *miFragGrow;
   TMenu    *pmSelection;
   TMenu    *pmView;
   TMenu    *pmPlane;

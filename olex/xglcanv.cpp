@@ -194,7 +194,10 @@ void TGlCanvas::OnMouseMove(wxMouseEvent& me) {
   // check if a handler for the event is found
   if (FXApp != NULL && FXApp->MouseMove(me.m_x, me.m_y, Fl)) {
 #ifdef __WIN32__
-    wxWindow::Refresh();  // this seems to help but not to solve! with the desktop compositionon Vista/7
+    /* this seems to help but not to solve! with the desktop composition on
+    Vista/7
+    */
+    wxWindow::Refresh();
 #else
     FXApp->Draw();
 #endif
@@ -210,7 +213,7 @@ void TGlCanvas::OnMouseDblClick(wxMouseEvent& me)  {
 void TGlCanvas::OnMouse(wxMouseEvent& me) {
   if (me.Entering()) {
     short fl = EncodeEvent(me, true);
-    FXApp->ResetMouseState(me.m_x, me.m_y, fl, MouseButton);
+    FXApp->ResetMouseState(me.m_x, me.m_y, fl, MouseButton, true);
   }
   if (me.GetWheelRotation() != 0) {
     FParent->OnMouseWheel(me.GetX(), me.GetY(),
