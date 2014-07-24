@@ -382,7 +382,6 @@ TMainForm::TMainForm(TGlXApp *Parent)
   FGlConsole = NULL;
   FInfoBox = NULL;
   GlTooltip = NULL;
-  ActiveLogFile = NULL;
 
   MousePositionX = MousePositionY = -1;
 
@@ -462,10 +461,6 @@ TMainForm::~TMainForm()  {
 //     T = TEFile::ChangeFileExt(FXApp->XFile().FileName(), "xlds");
 //     FXApp->Render()->Styles()->SaveToFile(T);
 //   }
-  if( ActiveLogFile != NULL )  {
-    delete ActiveLogFile;
-    ActiveLogFile = NULL;
-  }
   FTimer->OnTimer.Clear();
   delete FTimer;
   delete pmGraphics;
@@ -1946,12 +1941,10 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender,
     OnChar(((TKeyEvent*)Data)->GetEvent());
   }
   else if( MsgId == ID_TEXTPOST )  {
-    if( Data != NULL )  {
+    if (Data != NULL) {
       FGlConsole->SetSkipPosting(true);
       TBasicApp::NewLogEntry() << olxstr(Data->ToString());
       FGlConsole->SetSkipPosting(false);
-      if( ActiveLogFile != NULL )
-        ActiveLogFile->Writeln(Data->ToString());
     }
   }
   else if( MsgId == ID_COMMAND )  {

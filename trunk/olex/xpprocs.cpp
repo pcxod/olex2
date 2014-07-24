@@ -961,33 +961,38 @@ void TMainForm::macSwapBg(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   FXApp->GetRender().InitLights();
 }
 //..............................................................................
-void TMainForm::macSilent(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  if( Cmds.IsEmpty() )  {
-    if( FMode & mSilent )  TBasicApp::NewLogEntry() << "Silent mode is on";
-    else                   TBasicApp::NewLogEntry() << "Silent mode is off";
+void TMainForm::macSilent(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
+  if (Cmds.IsEmpty()) {
+    if (FMode & mSilent)
+      TBasicApp::NewLogEntry() << "Silent mode is on";
+    else
+      TBasicApp::NewLogEntry() << "Silent mode is off";
   }
-  else if( Cmds[0] == "on" )  {
+  else if (Cmds[0] == "on") {
     FMode |= mSilent;
     TBasicApp::NewLogEntry(logInfo) << "Silent mode is on";
   }
-  else if( Cmds[0] == "off" )  {
+  else if (Cmds[0] == "off") {
     FMode &= ~mSilent;
     TBasicApp::NewLogEntry(logInfo) << "Silent mode is off";
   }
 }
 //..............................................................................
 void TMainForm::macStop(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  if( Cmds[0] == "listen" )  {
-    if( FMode & mListen )  {
+  if (Cmds[0] == "listen") {
+    if (FMode & mListen) {
       FMode ^= mListen;
       TBasicApp::NewLogEntry() << "Listen mode is off";
       FListenFile.SetLength(0);
     }
   }
-  else if( Cmds[0] == "logging" )  {
-    if( ActiveLogFile != NULL )  {
-      delete ActiveLogFile;
-      ActiveLogFile = NULL;
+  else if (Cmds[0] == "logging") {
+    if (!LogFiles.IsEmpty()) {
+      TEFile *f = LogFiles.Pop();
+      TBasicApp::GetLog().RemoveStream(f);
+      delete f;
     }
   }
 }
@@ -4950,29 +4955,30 @@ void TMainForm::macIT(TStrObjList &Cmds, const TParamList &Options, TMacroError 
   }
 }
 //..............................................................................
-void TMainForm::macStartLogging(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+void TMainForm::macStartLogging(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
   bool clear = Options.Contains("c");
-  if( clear )  {
-    olxstr fn = ActiveLogFile->GetName();
-    if( ActiveLogFile != NULL )  {
-      ActiveLogFile->Delete();
-      delete ActiveLogFile;
-      ActiveLogFile = NULL;
-    }
-    else  {
-      if( TEFile::Exists(Cmds[0]) )  {
-        TEFile::DelFile( Cmds[0] );
+  if (clear) {
+    if (TEFile::Exists(Cmds[0])) {
+      if (!TEFile::DelFile(Cmds[0])) {
+        TBasicApp::NewLogEntry(logError) << "Faield to delete log file: '" <<
+          Cmds[0] << '\'';
       }
     }
   }
-  if( ActiveLogFile != NULL )
-    return;
-  if( TEFile::Exists(Cmds[0]) )
-    ActiveLogFile = new TEFile(Cmds[0], "a+b");
-  else
-    ActiveLogFile = new TEFile(Cmds[0], "w+b");
-  ActiveLogFile->Writeln(EmptyString());
-  ActiveLogFile->Writeln(olxstr("Olex2 log started on ") << TETime::FormatDateTime(TETime::Now()));
+  TEFile *f;
+  if (TEFile::Exists(Cmds[0])) {
+    f = &TUtf8File::Open(Cmds[0], "a+b", false).release();
+    f->Writeln(EmptyString());
+  }
+  else {
+    f = TUtf8File::Create(Cmds[0], false);
+  }
+  f->Writeln(olxstr("Olex2 log started on ") <<
+    TETime::FormatDateTime(TETime::Now()));
+  TBasicApp::GetLog().AddStream(f, true);
+  LogFiles.Push(f);
 }
 //..............................................................................
 void TMainForm::macViewLattice(TStrObjList &Cmds, const TParamList &Options,

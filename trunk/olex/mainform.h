@@ -218,7 +218,7 @@ protected:
   TStack<olx_pair_t<wxCursor,wxString> > CursorStack;
   UpdateThread* _UpdateThread;
   TOnProgress* UpdateProgress, *ActionProgress;
-  TEFile* ActiveLogFile;
+  TStack<TEFile *> LogFiles;
   static void PyInit();
   TActionQList Action;
   TGlXApp* FParent;
