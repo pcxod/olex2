@@ -344,12 +344,18 @@ void GXLibMacros::macPack(TStrObjList &Cmds, const TParamList &Options,
   if (wbox) {
     Cmds.Delete(0);
     if (app.Get3DFrame().IsVisible()) {
-      vec3d_alist norms(6), centres(6);
-      for (int i = 0; i < 6; i++) {
-        norms[i] = app.Get3DFrame().Faces[i].GetN();
-        centres[i] = app.Get3DFrame().Faces[i].GetCenter();
+      if (app.Get3DFrame().IsSpherical()) {
+        app.XFile().GetLattice().GenerateSphere(app.Get3DFrame().GetCenter(),
+          app.Get3DFrame().GetZoom(), ClearCont);
       }
-      app.XFile().GetLattice().GenerateBox(norms, centres, ClearCont);
+      else {
+        vec3d_alist norms(6), centres(6);
+        for (int i = 0; i < 6; i++) {
+          norms[i] = app.Get3DFrame().Faces[i].GetN();
+          centres[i] = app.Get3DFrame().Faces[i].GetCenter();
+        }
+        app.XFile().GetLattice().GenerateBox(norms, centres, ClearCont);
+      }
     }
   }
   else {

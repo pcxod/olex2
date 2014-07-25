@@ -871,7 +871,11 @@ void TXGrid::RescaleSurface()  {
     PListId = Parent.NewListId();
     NListId = Parent.NewListId();
   }
-  if( Boxed )  {
+  if (Boxed) {
+    bool sphere = XApp->Get3DFrame().IsVisible() &&
+      XApp->Get3DFrame().IsSpherical();
+    float qr = (float)olx_sqr(XApp->Get3DFrame().GetZoom());
+    vec3f center = XApp->Get3DFrame().GetCenter();
     for( int li = 0; li <= 1; li++ )  {
       const TTypeList<vec3f>& verts = (li == 0 ? p_vertices : n_vertices);
       const TTypeList<vec3f>& norms = (li == 0 ? p_normals : n_normals);
@@ -879,10 +883,28 @@ void TXGrid::RescaleSurface()  {
       olx_gl::newList(li == 0 ? PListId : NListId, GL_COMPILE);
       olx_gl::polygonMode(GL_FRONT_AND_BACK, GetPolygonMode());
       olx_gl::begin(GL_TRIANGLES);
-      for( size_t i=0; i < trians.Count(); i++ )  {
-        for( int j=0; j < 3; j++ )  {
-          olx_gl::normal(norms[trians[i].pointID[j]]);
-          olx_gl::vertex(verts[trians[i].pointID[j]]);
+      if (sphere) {
+        for (size_t i = 0; i < trians.Count(); i++)  {
+          bool draw = true;
+          for (int j = 0; j < 3; j++)  {
+            if ((verts[trians[i].pointID[j]] - center).QLength() > qr) {
+              draw = false;
+              break;
+            }
+          }
+          if (!draw) continue;
+          for (int j = 0; j < 3; j++)  {
+            olx_gl::normal(norms[trians[i].pointID[j]]);
+            olx_gl::vertex(verts[trians[i].pointID[j]]);
+          }
+        }
+      }
+      else {
+        for (size_t i = 0; i < trians.Count(); i++)  {
+          for (int j = 0; j < 3; j++)  {
+            olx_gl::normal(norms[trians[i].pointID[j]]);
+            olx_gl::vertex(verts[trians[i].pointID[j]]);
+          }
         }
       }
       olx_gl::end();

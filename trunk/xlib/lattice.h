@@ -22,6 +22,7 @@
 #include "macroerror.h"
 #include "library.h"
 #include "bitarray.h"
+#include "math/geom.h"
 
 BeginXlibNamespace()
 
@@ -90,15 +91,25 @@ public:
   void AddLatticeContent(const TLattice& latt);
   // generates atoms inside the unit cell only
   void GenerateCell();
+  void Generate(const IVolumeValidator &validator, bool clear_content);
   /* generates atoms inside the given box, the volume is
   given by 6 planes defined by normal and centres
   */
   void GenerateBox(const vec3d_alist& norms, const vec3d_alist& centres,
-    bool clear_content);
+    bool clear_content)
+  {
+    Generate(BoxVolumeValidator(norms, centres), clear_content);
+  }
+  /* generates asymmetric units within sphere volume at center */
+  void GenerateSphere(const vec3d& center, double rad,
+    bool clear_content)
+  {
+    Generate(SphereVolumeValidator(center, rad), clear_content);
+  }
   // generates atoms within specified volume
   void Generate(const vec3d& MFrom, const vec3d& MTo, TCAtomPList* Template,
     bool ClearCont);
-  // generates atoms within sphere volume at center
+  /* generates asymmetric units within sphere volume at center */
   void Generate(const vec3d& center, double rad, TCAtomPList* Template,
     bool ClearCont);
   // checks if there are more than one matrix

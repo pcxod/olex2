@@ -387,12 +387,7 @@ void TLattice::GenerateCell()  {
   OnStructureGrow.Exit(this);
 }
 //..............................................................................
-void TLattice::GenerateBox(const vec3d_alist& norms,
-  const vec3d_alist& centres, bool clear_content)
-{
-  if (norms.Count() !=6 || norms.Count() != centres.Count()) {
-    throw TInvalidArgumentException(__OlxSourceInfo, "volume definition");
-  }
+void TLattice::Generate(const IVolumeValidator &v, bool clear_content) {
   OnStructureGrow.Enter(this);
   if( clear_content )  {
     ClearAtoms();
@@ -421,14 +416,7 @@ void TLattice::GenerateBox(const vec3d_alist& norms,
             if( ca.IsDeleted() )  continue;
             vec3d p = m*ca.ccrd() + t;
             const vec3d c = au.CellToCartesian(p);
-            bool inside = true;
-            for (int fi=0; fi < 6; fi++) {
-              if ((c-centres[fi]).DotProd(norms[fi]) > 0) {
-                inside = false;
-                break;
-              }
-            }
-            if (!inside) continue;
+            if (!v.IsInside(c)) continue;
             GenerateAtom(ca, *lm);
             if( matrix_created )  {
               matrices.Add(m_id, lm);

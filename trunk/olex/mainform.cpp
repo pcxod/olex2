@@ -295,6 +295,7 @@ BEGIN_EVENT_TABLE(TMainForm, wxFrame)  // basic interface
   EVT_MENU(ID_PlaneActivate, TMainForm::OnPlane)
 
   EVT_MENU(ID_BondViewAlong, TMainForm::OnBond)
+  EVT_MENU(ID_BondRadius, TMainForm::OnBond)
 
   EVT_MENU(ID_View100, TMainForm::OnViewAlong)
   EVT_MENU(ID_View010, TMainForm::OnViewAlong)

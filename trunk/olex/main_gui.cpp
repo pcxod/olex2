@@ -774,12 +774,33 @@ void TMainForm::OnPlane(wxCommandEvent& event)  {
 //..............................................................................
 void TMainForm::OnBond(wxCommandEvent& event)  {
   TXBond *xb = dynamic_cast<TXBond*>(FObjectUnderMouse);
-  if( xb == NULL )  return;
-  if( event.GetId() == ID_BondViewAlong )  {
+  if (xb == NULL) return;
+  if (event.GetId() == ID_BondViewAlong) {
     const vec3d n = (xb->B().crd()-xb->A().crd()).Normalise();
     const vec3d c = (xb->B().crd()+xb->A().crd())/2;
     processMacro(olxstr("SetView -c ") << n[0] << ' ' << n[1] << ' ' << n[2]
      << ' ' << c[0] << ' ' << c[1] << ' ' << c[2]);
+  }
+  else if (event.GetId() == ID_BondRadius) {
+    TdlgEdit *dlg = new TdlgEdit(this, false);
+    dlg->SetTitle(wxT("Please input the bond radius. By default it will be applied")
+      wxT(" to the current bond group [by atom type], use 'individualise' and ")
+      wxT("'collectivise' change this."));
+    olxstr txt = xb->GetRadius();
+    dlg->SetText(txt);
+    if (dlg->ShowModal() == wxID_OK) {
+      double r = dlg->GetText().ToDouble();
+      TXBondPList bl;
+      if (xb->IsSelected()) {
+        bl = FXApp->GetSelection().Extract<TXBond>();
+      }
+      else {
+        bl << xb;
+      }
+      FXApp->BondRad(r, &bl);
+      FXApp->Draw();
+    }
+    dlg->Destroy();
   }
 }
 //..............................................................................

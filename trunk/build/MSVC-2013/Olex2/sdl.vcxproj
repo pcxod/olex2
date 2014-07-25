@@ -725,6 +725,7 @@
     <ClInclude Include="..\..\..\sdl\math\composite.h" />
     <ClInclude Include="..\..\..\sdl\math\dmatrix.h" />
     <ClInclude Include="..\..\..\sdl\math\evaln.h" />
+    <ClInclude Include="..\..\..\sdl\math\geom.h" />
     <ClInclude Include="..\..\..\sdl\math\integration.h" />
     <ClInclude Include="..\..\..\sdl\math\libmath.h" />
     <ClInclude Include="..\..\..\sdl\math\mmath.h" />
