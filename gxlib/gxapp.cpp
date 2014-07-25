@@ -295,6 +295,7 @@ TGXApp::TGXApp(const olxstr &FileName, AGlScene *scene)
 
   ObjectsToCreate.Add(F3DFrame=new T3DFrameCtrl(*FGlRender, "3DFrame"));
   F3DFrame->SetVisible(false);
+  Library.AttachLibrary(F3DFrame->ExportLibrary());
   XFile().GetLattice().OnDisassemble.Add(this, ID_OnDisassemble);
   XFile().GetLattice().OnStructureUniq.Add(this, ID_OnUniq);
   XFile().GetLattice().OnStructureGrow.Add(this, ID_OnGrow);

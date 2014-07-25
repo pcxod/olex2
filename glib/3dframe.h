@@ -62,7 +62,8 @@ public:
 };
 // the frame class itself...
 class T3DFrameCtrl : public AGlMouseHandlerImp, public A3DFrameCtrl {
-  vec3d edges[8], norms[6];
+  vec3d edges[8], norms[6], center;
+  double zoom;
 protected:
   virtual bool DoTranslate(const vec3d& t)  {  Translate(t);  return true;  }
   virtual bool DoRotate(const vec3d& vec, double angle);
@@ -74,33 +75,18 @@ protected:
   virtual bool OnZoom(size_t, double, bool)  {
     return true;
   }
+  bool sphere;
 public:
   T3DFrameCtrl(TGlRenderer& prnt, const olxstr& cName);
   void Create(const olxstr& cName);
   virtual bool GetDimensions(vec3d& _mn, vec3d& _mx)  {
-    for( int i=0; i < 8; i++ )
+    for (int i=0; i < 8; i++)
       vec3d::UpdateMinMax(edges[i], _mn, _mx);
     return true;
   }
   virtual void SetBasis() const {}
-  virtual void SetVisible(bool v)  {
-    AGDrawObject::SetVisible(v);
-    for( int i=0; i < 6; i++ )
-      Faces[i].SetVisible(v);
-  }
-  virtual bool Orient(TGlPrimitive&)  {
-    SetBasis();
-    olx_gl::begin(GL_QUADS);
-    for( int i=0; i < 6; i++ )  {
-      olx_gl::normal(Faces[i].GetN());
-      olx_gl::vertex(Faces[i].GetA());
-      olx_gl::vertex(Faces[i].GetB());
-      olx_gl::vertex(Faces[i].GetC());
-      olx_gl::vertex(Faces[i].GetD());
-    }
-    olx_gl::end();
-    return true;
-  }
+  virtual void SetVisible(bool v);
+  virtual bool Orient(TGlPrimitive& p);
   const vec3d& GetEdge(size_t i) const {
     if( i >= 8 )
       throw TIndexOutOfRangeException(__OlxSourceInfo, i, 0, 8);
@@ -116,6 +102,7 @@ public:
   void Translate(const vec3d& t)  {
     for( int i=0; i < 8; i++ )
       edges[i] += t;
+    center += t;
   }
   double GetVolume() const {
     return sqrt((edges[1]-edges[0]).QLength()*(edges[3]-edges[0]).QLength()
@@ -127,12 +114,8 @@ public:
       (edges[1]-edges[0]).Length(),
       (edges[4]-edges[0]).Length());
   }
-  vec3d GetCenter() const {
-    vec3d cnt;
-    for( int i=0; i < 8; i++ )
-      cnt += edges[i];
-    return cnt/8;
-  }
+  const vec3d &GetCenter() const { return center; }
+  const double GetZoom() const { return zoom; }
   mat3d GetNormals() const {
     return mat3d(
       (edges[3]-edges[0]).Normalise(),
@@ -141,8 +124,17 @@ public:
   }
   void ToDataItem(TDataItem &di) const;
   void FromDataItem(const TDataItem &di);
+  bool IsSpherical() const { return sphere; }
+  // ftSphere/ftBox
+  void SetType(int t);
+  void LibType(const TStrObjList& Params, TMacroError& E);
+  class TLibrary* ExportLibrary(const olxstr& name = EmptyString());
 
   TTypeList<TFaceCtrl> Faces;
+
+  static const int
+    ftSphere = 1,
+    ftBox = 2;
 };
 
 EndGlNamespace()
