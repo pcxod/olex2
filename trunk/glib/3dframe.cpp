@@ -141,7 +141,7 @@ bool T3DFrameCtrl::DoRotate(const vec3d& vec, double angle)  {
   for( int i=0; i < 8; i++ )
     edges[i] = (edges[i]-cnt)*m+cnt;
   UpdateEdges();
-  return true;
+  return !sphere;
 }
 //.............................................................................
 bool T3DFrameCtrl::DoZoom(double zoom_, bool inc)  {
