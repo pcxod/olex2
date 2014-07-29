@@ -29,21 +29,22 @@ bool AGlMouseHandler::EventHandler::OnMouseUp(AGlMouseHandler& Sender, const TMo
 }
 //..............................................................................
 bool AGlMouseHandler::EventHandler::OnMouseMove(AGlMouseHandler& Sender, const TMouseData& Data)  {
-  if( !MouseDown )  return false;
+  if (!MouseDown)  return false;
   const int dx = Data.X - SX, dy = SY - Data.Y;
   bool res = false;
-  if( (Data.Button == smbLeft) )  {
-    if( (Data.Shift == sssShift) )  {  // move
-      if( Sender.IsMoveable() )  {
-        if( Sender.IsMove2D() )
-          Sender.DoTranslate(vec3d(dx, dy, 0));
-        else if( Sender.IsMove2DZ() )  {
-          Sender.DoTranslate(
+  if ((Data.Button == smbLeft)) {
+    if ((Data.Shift == sssShift)) {  // move
+      if (Sender.IsMoveable()) {
+        if (Sender.IsMove2D()) {
+          res = Sender.DoTranslate(vec3d(dx, dy, 0));
+        }
+        else if (Sender.IsMove2DZ()) {
+          res = Sender.DoTranslate(
             vec3d((double)dx/Sender.DoGetRenderer().GetZoom(),
                   (double)dy/Sender.DoGetRenderer().GetZoom(),
                   0));
         }
-        else  {  // move in 3D
+        else {  // move in 3D
           vec3d T;
           const double v = Sender.DoGetRenderer().GetScale();
           if( (Data.Shift & sssCtrl) != 0 )
@@ -55,13 +56,12 @@ bool AGlMouseHandler::EventHandler::OnMouseMove(AGlMouseHandler& Sender, const T
           // use V*M not M*V, as the basis is transposed (See TEBasis::Orient for details)
           T = Sender.DoGetRenderer().GetBasis().GetMatrix() * T;
           T /= Sender.DoGetRenderer().GetBasis().GetZoom();
-          Sender.DoTranslate(T);
+          res = Sender.DoTranslate(T);
         }
-        res = true;
       }
     }
-    else if( (Data.Shift == 0 || ((Data.Shift&sssCtrl) != 0)) )  { // rotate
-      if( Sender.IsRoteable() )  {
+    else if ((Data.Shift == 0 || ((Data.Shift&sssCtrl) != 0))) { // rotate
+      if (Sender.IsRoteable()) {
         /* not a trivial (for some) task, to rotate in current basis as if the rotation
         happens in on screen (identity) basis; so we need to find such a vector, which becomes
         {0,0,1} for the Z rotation etc for X and Y after multiplied by current basis. for Z axis it is
@@ -69,7 +69,7 @@ bool AGlMouseHandler::EventHandler::OnMouseMove(AGlMouseHandler& Sender, const T
         three values of the rotation vector...
         */
         mat3d basis(mat3d::Transpose(Sender.DoGetRenderer().GetBasis().GetMatrix()));
-        if( Data.Shift == sssCtrl )  {
+        if (Data.Shift == sssCtrl) {
           double RZ = 0;
           if( SX > Sender.DoGetRenderer().GetWidth()/2 )
             RZ -= (double)dy/FRotationDiv;
@@ -79,25 +79,29 @@ bool AGlMouseHandler::EventHandler::OnMouseMove(AGlMouseHandler& Sender, const T
             RZ -= (double)dx/FRotationDiv;
           else
             RZ += (double)dx/FRotationDiv;
-          if( RZ != 0 )
-            Sender.DoRotate(mat3d::CramerSolve(basis, vec3d(0,0,1)).Normalise(), RZ*M_PI/180);
+          if (RZ != 0) {
+            res = Sender.DoRotate(mat3d::CramerSolve(basis,
+              vec3d(0, 0, 1)).Normalise(), RZ*M_PI / 180);
+          }
         }
-        else if( Data.Shift == 0 )  {// rotate XY
+        else if (Data.Shift == 0) {// rotate XY
           const double RX = -(double)(dy)/FRotationDiv;
           const double RY = (double)(dx)/FRotationDiv;
-          if( RX != 0 )
-            Sender.DoRotate(mat3d::CramerSolve(basis, vec3d(1,0,0)).Normalise(), RX*M_PI/180);
-          if( RY != 0 )
-            Sender.DoRotate(mat3d::CramerSolve(basis, vec3d(0,1,0)).Normalise(), RY*M_PI/180);
+          if (RX != 0) {
+            res = Sender.DoRotate(mat3d::CramerSolve(basis,
+              vec3d(1, 0, 0)).Normalise(), RX*M_PI / 180);
+          }
+          if (RY != 0) {
+            res = Sender.DoRotate(mat3d::CramerSolve(basis,
+              vec3d(0, 1, 0)).Normalise(), RY*M_PI / 180);
+          }
         }
-        res = true;
       }
     }
   }
-  else if( (Data.Button&smbRight) != 0 && (Data.Shift == 0) )  {  // zoom
-    if( Sender.IsZoomable() )  {
-      Sender.DoZoom((double)(dx)/FZoomDiv - (double)(dy)/FZoomDiv, true);
-      res = true;
+  else if ((Data.Button&smbRight) != 0 && (Data.Shift == 0)) {  // zoom
+    if (Sender.IsZoomable()) {
+      res = Sender.DoZoom((double)(dx)/FZoomDiv - (double)(dy)/FZoomDiv, true);
     }
   }
   SX = Data.X;
