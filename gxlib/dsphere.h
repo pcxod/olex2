@@ -35,6 +35,7 @@ protected:
   }
   PointAnalyser& analyser;
   size_t Generation;  //6
+  bool OnDblClick(const IEObject *, const TMouseData& Data);
 public:
   TDSphere(TGlRenderer& Render, PointAnalyser& analyser,
     const olxstr& collectionName=EmptyString());

@@ -15,6 +15,7 @@
 #include "styles.h"
 #include "glutil.h"
 #include "esphere.h"
+#include "glmouse.h"
 
 TDSphere::TDSphere(TGlRenderer& R, PointAnalyser &pa,
   const olxstr& collectionName)
@@ -85,5 +86,26 @@ bool TDSphere::Orient(TGlPrimitive& P)  {
   olx_gl::orient(Basis.GetMDataT());
   olx_gl::scale(Basis.GetZoom());
   return false;
+}
+//...........................................................................
+bool TDSphere::OnDblClick(const IEObject *obj_, const TMouseData& md) {
+  const TEBasis &b = Parent.GetBasis();
+  vec3d l(md.DownX-Parent.GetWidth()/2,
+    Parent.GetHeight()- md.DownY, 0),
+    o(0, 0, 1),
+    c = Basis.GetCenter();
+  l *= Parent.GetScale();
+  double r = Basis.GetZoom();
+  vec3d dv = o - c;
+  double x = l.DotProd(dv);
+  double dq = olx_sqr(x) - dv.QLength() + r*r;
+  if (dq < 0) {
+    return true;
+  }
+  double d = -x + sqrt(dq);
+  vec3f intersect = o + l*d;
+  TBasicApp::NewLogEntry() << olxstr(' ').Join(intersect) <<
+    analyser.Analyse(intersect);
+  return true;
 }
 //...........................................................................

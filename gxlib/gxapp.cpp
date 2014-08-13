@@ -1598,6 +1598,7 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
   }
   else if( MsgId == ID_OnFileClose )  {
     if( MsgSubId == msiExit )  {
+      ClearGroupDefinitions();
       ClearLabels();
       ClearLines();
       XGrid().Clear();
@@ -2146,8 +2147,15 @@ TUndoData* TGXApp::ChangeSuffix(const TXAtomPList& xatoms, const olxstr &To,
 TUndoData* TGXApp::Name(TXAtom& XA, const olxstr& _Name, bool CheckLabel)  {
   olxstr Name = _Name;
   bool checkBonds = (XA.GetType() == iQPeakZ);
-  cm_Element* elm = XElementLib::FindBySymbolEx(Name);
-  if( elm == NULL )
+  const cm_Element* elm;
+  if (_Name.IsNumber()) {
+    elm = &XA.GetType();
+    Name = olxstr(elm->GetSymbol()) << _Name;
+  }
+  else {
+    elm = XElementLib::FindBySymbolEx(Name);
+  }
+  if (elm == NULL)
     throw TFunctionFailedException(__OlxSourceInfo, "invalid element");
   TNameUndo *undo = new TNameUndo(
     new TUndoActionImplMF<TGXApp>(this, &GxlObject(TGXApp::undoName)));
@@ -2179,64 +2187,46 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To, bool CheckLabel,
   bool ClearSelection, bool NameResi)
 {
   TXAtomPList Atoms;
-  TNameUndo *undo;
-  TXAtom* XA = GetXAtom(From, false);
-  if (XA != NULL) {
-    Atoms << XA;
-    if (ClearSelection) SelectAll(false);
-    undo = dynamic_cast<TNameUndo *>(Name(*XA, To, CheckLabel));
-  }
-  else {
+  olx_object_ptr<TNameUndo> undo;
+  const cm_Element *to_elm = XElementLib::FindBySymbol(From);
+  if (to_elm != NULL && To.IsNumber()) {
     undo = new TNameUndo(
       new TUndoActionImplMF<TGXApp>(this, &GxlObject(TGXApp::undoName)));
-    Atoms = FindXAtoms(From, ClearSelection);
-    TXAtomPList ChangedAtoms;
-    // leave only AU atoms
-    Atoms.ForEach(ACollectionItem::IndexTagSetter());
-    Atoms.Pack(ACollectionItem::IndexTagAnalyser());
-    if (From.Equalsi("sel") && To.IsNumber()) {
-      int j = To.ToInt();
-      for (size_t i=0; i < Atoms.Count(); i++) {
-        XA = Atoms[i];
-        bool checkBonds = (XA->GetType() == iQPeakZ);
-        const olxstr Tmp = XA->GetLabel();
-        olxstr NL = XA->GetType().symbol;
-        NL << j++;
-        const olxstr oldL = XA->GetLabel();
-        XA->CAtom().SetLabel(
-          CheckLabel ? XFile().GetAsymmUnit().CheckLabel(&XA->CAtom(), NL) : NL,
-          false);
-        undo->AddAtom(XA->CAtom(), oldL);
-        NameHydrogens(*XA, undo, CheckLabel);
-        if (checkBonds)
-          CheckQBonds(*XA);
-      }
+    Atoms = GetSelectedXAtoms();
+    int j = To.ToInt();
+    for (size_t i=0; i < Atoms.Count(); i++) {
+      TXAtom *XA = Atoms[i];
+      XA->CAtom().SetType(*to_elm);
+      bool checkBonds = (XA->GetType() == iQPeakZ);
+      const olxstr Tmp = XA->GetLabel();
+      olxstr NL = XA->GetType().symbol;
+      NL << j++;
+      const olxstr oldL = XA->GetLabel();
+      XA->CAtom().SetLabel(
+        CheckLabel ? XFile().GetAsymmUnit().CheckLabel(&XA->CAtom(), NL) : NL,
+        false);
+      undo().AddAtom(XA->CAtom(), oldL);
+      NameHydrogens(*XA, &undo(), CheckLabel);
+      if (checkBonds)
+        CheckQBonds(*XA);
     }
-    else if (From.CharAt(0) == '$') {
-      const cm_Element* elm = XElementLib::FindBySymbolEx(
-        To.CharAt(0) == '$' ? To.SubStringFrom(1) : To);
-      if (elm != NULL) {  // change type
-        for (size_t i=0; i < Atoms.Count(); i++) {
-          XA = Atoms[i];
-          const bool checkBonds = (XA->GetType() == iQPeakZ);
-          const olxstr Tmp = XA->GetLabel();
-          olxstr NL = elm->symbol;
-          NL << Tmp.SubStringFrom(From.Length()-1);
-          bool recreate = XA->GetType() != *elm;
-          const olxstr oldL = XA->GetLabel();
-          XA->CAtom().SetLabel(
-            CheckLabel ? XFile().GetAsymmUnit().CheckLabel(&XA->CAtom(), NL) : NL, false);
-          undo->AddAtom(XA->CAtom(), oldL);
-          XA->CAtom().SetType(*elm);
-          NameHydrogens(*XA, undo, CheckLabel);
-          if (recreate) {
-            ChangedAtoms.Add(XA);
-            if (checkBonds)
-              CheckQBonds(*XA);
-          }
-        }
-      }
-      else if (To.IsNumber()) {  // change number
+  }
+  else {
+    TXAtom* XA = GetXAtom(From, false);
+    if (XA != NULL) {
+      Atoms << XA;
+      if (ClearSelection) SelectAll(false);
+      undo = dynamic_cast<TNameUndo *>(Name(*XA, To, CheckLabel));
+    }
+    else {
+      undo = new TNameUndo(
+        new TUndoActionImplMF<TGXApp>(this, &GxlObject(TGXApp::undoName)));
+      Atoms = FindXAtoms(From, ClearSelection);
+      TXAtomPList ChangedAtoms;
+      // leave only AU atoms
+      Atoms.ForEach(ACollectionItem::IndexTagSetter());
+      Atoms.Pack(ACollectionItem::IndexTagAnalyser());
+      if (From.Equalsi("sel") && To.IsNumber()) {
         int j = To.ToInt();
         for (size_t i=0; i < Atoms.Count(); i++) {
           XA = Atoms[i];
@@ -2248,74 +2238,118 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To, bool CheckLabel,
           XA->CAtom().SetLabel(
             CheckLabel ? XFile().GetAsymmUnit().CheckLabel(&XA->CAtom(), NL) : NL,
             false);
-          undo->AddAtom(XA->CAtom(), oldL);
-          NameHydrogens(*XA, undo, CheckLabel);
-          if( checkBonds )
-            CheckQBonds(*XA);
-        }
-      }
-      else
-        throw TFunctionFailedException(__OlxSourceInfo, "wrong syntax");
-    }
-    else {  // C2? to C3? ; Q? to Ni? ...
-      const cm_Element* elm = XElementLib::FindBySymbolEx(To);
-      if (elm == NULL)
-        throw TFunctionFailedException(__OlxSourceInfo, "wrong syntax");
-      const bool to_element = XElementLib::IsElement(To);
-      for (size_t i=0; i < Atoms.Count(); i++) {
-        XA = (TXAtom*)Atoms[i];
-        const bool checkBonds = (XA->GetType() == iQPeakZ);
-        const olxstr Tmp = XA->GetLabel();
-        olxstr NL = To;
-        const bool recreate = XA->GetType() != *elm;
-        if (to_element) {
-          if (XA->GetLabel().StartsFrom(XA->GetType().symbol))
-            NL << XA->GetLabel().SubStringFrom(XA->GetType().symbol.Length());
-        }
-        else {
-          for (size_t j=0; j < NL.Length(); j++) {
-            if (NL.CharAt(j) == '?') {
-              size_t qmi = 0;
-              qmi = From.FirstIndexOf('?', qmi);
-              if (qmi != InvalidIndex) {
-                NL[j] = Tmp.CharAt(qmi);
-                qmi++;
-              }
-              else
-                NL[j] = '_';
-            }
-          }
-        }
-        const olxstr oldL = XA->GetLabel();
-        XA->CAtom().SetLabel(
-          CheckLabel ? XFile().GetAsymmUnit().CheckLabel(&XA->CAtom(), NL) : NL,
-          false);
-        undo->AddAtom(XA->CAtom(), oldL);
-        XA->CAtom().SetType(*elm);
-        NameHydrogens(*XA, undo, CheckLabel);
-        if (recreate) {
-          ChangedAtoms.Add(XA);
+          undo().AddAtom(XA->CAtom(), oldL);
+          NameHydrogens(*XA, &undo(), CheckLabel);
           if (checkBonds)
             CheckQBonds(*XA);
         }
       }
+      else if (From.CharAt(0) == '$') {
+        const cm_Element* elm = XElementLib::FindBySymbolEx(
+          To.CharAt(0) == '$' ? To.SubStringFrom(1) : To);
+        if (elm != NULL) {  // change type
+          for (size_t i=0; i < Atoms.Count(); i++) {
+            XA = Atoms[i];
+            const bool checkBonds = (XA->GetType() == iQPeakZ);
+            const olxstr Tmp = XA->GetLabel();
+            olxstr NL = elm->symbol;
+            NL << Tmp.SubStringFrom(From.Length()-1);
+            bool recreate = XA->GetType() != *elm;
+            const olxstr oldL = XA->GetLabel();
+            XA->CAtom().SetLabel(
+              CheckLabel ? XFile().GetAsymmUnit().CheckLabel(&XA->CAtom(), NL)
+              : NL, false);
+            undo().AddAtom(XA->CAtom(), oldL);
+            XA->CAtom().SetType(*elm);
+            NameHydrogens(*XA, &undo(), CheckLabel);
+            if (recreate) {
+              ChangedAtoms.Add(XA);
+              if (checkBonds)
+                CheckQBonds(*XA);
+            }
+          }
+        }
+        else if (To.IsNumber()) {  // change number
+          int j = To.ToInt();
+          for (size_t i=0; i < Atoms.Count(); i++) {
+            XA = Atoms[i];
+            bool checkBonds = (XA->GetType() == iQPeakZ);
+            const olxstr Tmp = XA->GetLabel();
+            olxstr NL = XA->GetType().symbol;
+            NL << j++;
+            const olxstr oldL = XA->GetLabel();
+            XA->CAtom().SetLabel(
+              CheckLabel ? XFile().GetAsymmUnit().CheckLabel(&XA->CAtom(), NL) : NL,
+              false);
+            undo().AddAtom(XA->CAtom(), oldL);
+            NameHydrogens(*XA, &undo(), CheckLabel);
+            if( checkBonds )
+              CheckQBonds(*XA);
+          }
+        }
+        else
+          throw TFunctionFailedException(__OlxSourceInfo, "wrong syntax");
+      }
+      else {  // C2? to C3? ; Q? to Ni? ...
+        const cm_Element* elm = XElementLib::FindBySymbolEx(To);
+        if (elm == NULL)
+          throw TFunctionFailedException(__OlxSourceInfo, "wrong syntax");
+        const bool to_element = XElementLib::IsElement(To);
+        for (size_t i=0; i < Atoms.Count(); i++) {
+          XA = (TXAtom*)Atoms[i];
+          const bool checkBonds = (XA->GetType() == iQPeakZ);
+          const olxstr Tmp = XA->GetLabel();
+          olxstr NL = To;
+          const bool recreate = XA->GetType() != *elm;
+          if (to_element) {
+            if (XA->GetLabel().StartsFrom(XA->GetType().symbol))
+              NL << XA->GetLabel().SubStringFrom(XA->GetType().symbol.Length());
+          }
+          else {
+            for (size_t j=0; j < NL.Length(); j++) {
+              if (NL.CharAt(j) == '?') {
+                size_t qmi = 0;
+                qmi = From.FirstIndexOf('?', qmi);
+                if (qmi != InvalidIndex) {
+                  NL[j] = Tmp.CharAt(qmi);
+                  qmi++;
+                }
+                else
+                  NL[j] = '_';
+              }
+            }
+          }
+          const olxstr oldL = XA->GetLabel();
+          XA->CAtom().SetLabel(
+            CheckLabel ? XFile().GetAsymmUnit().CheckLabel(&XA->CAtom(), NL) : NL,
+            false);
+          undo().AddAtom(XA->CAtom(), oldL);
+          XA->CAtom().SetType(*elm);
+          NameHydrogens(*XA, &undo(), CheckLabel);
+          if (recreate) {
+            ChangedAtoms.Add(XA);
+            if (checkBonds)
+              CheckQBonds(*XA);
+          }
+        }
+      }
+      AGDObjList objects;
+      for (size_t i=0; i < ChangedAtoms.Count(); i++) {
+        XA = ChangedAtoms[i];
+        objects.AddList(XA->GetPrimitives().GetObjects());
+        XA->GetPrimitives().ClearObjects();
+      }
+      for (size_t i=0; i < objects.Count(); i++) {
+        objects[i]->Create();
+      }
+      SynchroniseBonds(TXAtomPList(objects, DynamicCastAccessor<TXAtom>()));
+      UpdateDuplicateLabels();
     }
-    AGDObjList objects;
-    for (size_t i=0; i < ChangedAtoms.Count(); i++) {
-      XA = ChangedAtoms[i];
-      objects.AddList(XA->GetPrimitives().GetObjects());
-      XA->GetPrimitives().ClearObjects();
-    }
-    for (size_t i=0; i < objects.Count(); i++) {
-      objects[i]->Create();
-    }
-    SynchroniseBonds(TXAtomPList(objects, DynamicCastAccessor<TXAtom>()));
-    UpdateDuplicateLabels();
   }
   if (NameResi) {
-    undo->AddAction(SynchroniseResidues(Atoms));
+    undo().AddAction(SynchroniseResidues(Atoms));
   }
-  return undo;
+  return &undo.release();
 }
 //..............................................................................
 TUndoData* TGXApp::SynchroniseResidues(const TXAtomPList &reference) {
