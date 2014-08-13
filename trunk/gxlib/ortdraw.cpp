@@ -922,7 +922,8 @@ void OrtDraw::Render(const olxstr& fileName)  {
     if (xa.IsDeleted()) continue;
     xa.SetTag(objects.Count());
     ort_atom *a = new ort_atom(*this, xa);
-    a->draw_style |= ortep_atom_rims;
+    if (xa.GetPrimitives().FindPrimitiveByName("Rims") != NULL)
+      a->draw_style |= ortep_atom_rims;
     if (xa.DrawStyle() == adsOrtep)
       a->draw_style |= ortep_atom_quads;
     if ((ColorMode&ortep_color_lines))

@@ -856,48 +856,54 @@ void GXLibMacros::macLabel(TStrObjList &Cmds, const TParamList &Options,
   const olxstr str_lt = Options.FindValue("type");
   olxstr str_symm_tag = Options.FindValue("symm");
   // enforce the default
-  if( str_lt.Equalsi("brackets") )
+  if (str_lt.Containsi("brackets"))
     lt = 1;
-  else if( str_lt.Equalsi("subscript") )
-    lt = 2;
+  if (str_lt.Containsi("subscript") || str_lt.Containsi("sb"))
+    lt |= 2;
+  if (str_lt.Containsi("superscript") || str_lt.Containsi("sp"))
+    lt |= 4;
   // have to kill labels in this case, for consistency of _$ or ^#
-  if( str_symm_tag =='$' || str_symm_tag == '#' )  {
-    for( size_t i=0; i < app.LabelCount(); i++ )
+  if (str_symm_tag =='$' || str_symm_tag == '#') {
+    for (size_t i=0; i < app.LabelCount(); i++)
       app.GetLabel(i).SetVisible(false);
     symm_tag = (str_symm_tag =='$' ? 1 : 2);
   }
-  else if( str_symm_tag.Equals("full") )
+  else if (str_symm_tag.Equals("full"))
     symm_tag = 3;
   TTypeList<uint32_t> equivs;
-  for( size_t i=0; i < atoms.Count(); i++ )  {
+  for (size_t i = 0; i < atoms.Count(); i++) {
     TXGlLabel& gxl = atoms[i]->GetGlLabel();
     olxstr lb;
-    if( lt != 0 &&
-        atoms[i]->GetLabel().Length() > atoms[i]->GetType().symbol.Length() )
+    if (lt != 0 &&
+      atoms[i]->GetLabel().Length() > atoms[i]->GetType().symbol.Length())
     {
       olxstr bcc = atoms[i]->GetLabel().SubStringFrom(
         atoms[i]->GetType().symbol.Length());
       lb = atoms[i]->GetType().symbol;
-      if( lt == 1 )
-        lb << '(' << bcc << ')';
-      else if( lt == 2 )
+      if ((lt & 1) == 1)
+        bcc =  olxstr('(') << bcc << ')';
+      if ((lt & 2) == 2)
         lb << "\\-" << bcc;
+      else if ((lt & 4) == 4)
+        lb << "\\+" << bcc;
+      else
+        lb << bcc;
     }
     else
       lb = atoms[i]->GetLabel();
-    if( !atoms[i]->IsAUAtom() )  {
-      if( symm_tag == 1 || symm_tag == 2 )  {
+    if (!atoms[i]->IsAUAtom()) {
+      if (symm_tag == 1 || symm_tag == 2) {
         size_t pos = equivs.IndexOf(atoms[i]->GetMatrix().GetId());
-        if( pos == InvalidIndex )  {
+        if (pos == InvalidIndex)  {
           equivs.AddCopy(atoms[i]->GetMatrix().GetId());
-          pos = equivs.Count()-1;
+          pos = equivs.Count() - 1;
         }
-        if( symm_tag == 1 )
-          lb << "_$" << (pos+1);
+        if (symm_tag == 1)
+          lb << "_$" << (pos + 1);
         else
-          lb << "\\+" << (pos+1);
+          lb << "\\+" << (pos + 1);
       }
-      else if( symm_tag == 3 )
+      else if (symm_tag == 3)
         lb << ' ' << TSymmParser::MatrixToSymmEx(atoms[i]->GetMatrix());
     }
     gxl.SetOffset(atoms[i]->crd());
@@ -2439,15 +2445,19 @@ void GXLibMacros::macIndividualise(TStrObjList &Cmds, const TParamList &Options,
 void GXLibMacros::macCollectivise(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &E)
 {
-  if( Cmds.IsEmpty() )  {
+  if (Cmds.IsEmpty()) {
     TGlGroup& glg = app.GetSelection();
     TXAtomPList atoms;
     TXBondPList bonds;
-    for( size_t i=0; i < glg.Count(); i++ )  {
-      if( EsdlInstanceOf(glg[i], TXAtom) )
+    for (size_t i=0; i < glg.Count(); i++) {
+      if (EsdlInstanceOf(glg[i], TXAtom))
         atoms.Add((TXAtom&)glg[i]);
-      else if( EsdlInstanceOf(glg[i], TXBond) )
+      else if (EsdlInstanceOf(glg[i], TXBond))
         bonds.Add((TXBond&)glg[i]);
+    }
+    if (atoms.IsEmpty() && bonds.IsEmpty()) {
+      app.ClearIndividualCollections();
+      app.CreateObjects(false, false);
     }
     app.Collectivise(atoms);
     app.Collectivise(bonds);

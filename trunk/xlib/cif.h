@@ -213,8 +213,12 @@ public:
     olxch Quote,           // %10%, #10#, ...
     olxstr (*ResolveExternal)(const olxstr& valueName) = NULL,
     bool DoubleTheta = true) const;
+  /* creates a table from a loop using provided table definition. Fills the
+  list of used symmetry. label_options specify if the label suffix should be
+  placed in brackets (1) and/or placed a superscript (4) or subscript (2)
+  */
   bool CreateTable(TDataItem* TableDefinitions, TTTable<TStrList>& Table,
-    smatd_list& SymmList) const;
+    smatd_list& SymmList, int label_options=0) const;
   const TCifDataManager& GetDataManager() const {  return DataManager;  }
   virtual IEObject* Replicate() const {  return new TCif;  }
 };

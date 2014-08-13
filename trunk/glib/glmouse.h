@@ -66,6 +66,21 @@ struct TMouseData: public IEObject  {
   class TGlMouse *GlMouse;
 };
 
+struct TMouseRegion {
+  int x, y;
+  TMouseRegion(int x, int y) : x(x), y(y)
+  {}
+  int Compare(const TMouseRegion &r) const {
+    int d = x - r.x;
+    if (olx_abs(d) > 2)
+      return d;
+    d = y - r.y;
+    if (olx_abs(d) > 2)
+      return d;
+    return 0;
+  }
+};
+
 struct AMouseEvtHandler {
   short Button, Shift, Event;
   AMouseEvtHandler(short btn, short shift, short evt)
@@ -141,6 +156,11 @@ protected:
   // to distinguish clicking on an object
   int ClickThreshold;
   void process_command_list(TStrObjList& Cmds, bool enable);
+  olxdict<TMouseRegion, AGDrawObject *, TComparableComparator>
+    object_cache;
+  void OnObjectDelete(IEObject *o);
+  AGDrawObject *find_object(int x, int y);
+  void ClearObjectCache(IEObject *caller=NULL);
 public:
   TGlMouse(TGlRenderer *Parent, TDFrame *Frame);
   virtual ~TGlMouse();

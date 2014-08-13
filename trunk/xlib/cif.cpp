@@ -1217,8 +1217,9 @@ bool Cif_ValidateColumn(const TDataItem &col, const ICifEntry &entry) {
   return true;
 }
 bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table,
-  smatd_list& SymmList) const
+  smatd_list& SymmList, int label_options) const
 {
+  label_options = 5;
   int RowDeleted=0, ColDeleted=0;
   SymmList.Clear();
   const CifTable* LT = NULL;
@@ -1242,8 +1243,29 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table,
   Table.Resize(LT->RowCount(), LT->ColCount());
   for (size_t i =0; i < Table.ColCount(); i++) {
     Table.ColName(i) = LT->ColName(i);
-    for (size_t j=0; j < Table.RowCount(); j++)
+    for (size_t j = 0; j < Table.RowCount(); j++) {
       Table[j][i] = (*LT)[j][i]->GetStringValue();
+      if (label_options == 0) continue;
+      AtomCifEntry *ae = dynamic_cast<AtomCifEntry *>((*LT)[j][i]);
+      if (ae == 0) {
+        continue;
+      }
+      size_t ls = ae->data.GetType().GetSymbol().Length();
+      olxstr sf = ae->data.GetLabel().Length() > ls
+        ? ae->data.GetLabel().SubStringFrom(ls) : EmptyString();
+      if (sf.IsEmpty()) continue;
+      if ((label_options & 1) == 1) {
+        sf = olxstr('(') << sf << ')';
+      }
+      if ((label_options & 2) == 2) {
+        Table[j][i] = olxstr(ae->data.GetType().GetSymbol()) <<
+          "<sub>" << sf << "</sub>";
+      }
+      else if ((label_options & 4) == 4) {
+        Table[j][i] = olxstr(ae->data.GetType().GetSymbol()) <<
+          "<sup>" << sf << "</sup>";
+      }
+    }
   }
   // process rows
   for (size_t i=0; i < LT->RowCount(); i++) {

@@ -2650,7 +2650,7 @@ TUndoData *TLattice::ValidateHGroups(bool reinit, bool report) {
           TBasicApp::NewLogEntry(logError) << "Pivot atom " <<
             ag.GetPivot().GetLabel() << " has wrong connectivity for the given "
             "AFIX group and the group was removed. Please revise your model.";
-          TBasicApp::NewLogEntry() << ag.GetPivot().GetLabel() << ", AFIX " <<
+          TBasicApp::NewLogEntry() << ag.GetPivot().GetResiLabel() << ", AFIX " <<
             ag.GetAfix() << ", attached atoms " << attached_cnt <<
             ", attached metals " << metal_cnt <<
             ", attached dependent groups " << dependent_cnt;
