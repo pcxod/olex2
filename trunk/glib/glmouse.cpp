@@ -123,14 +123,14 @@ bool TGlMouse::DblClick()  {
 void TGlMouse::ResetMouseState(short x, short y, short shift, short button,
   bool keep_object)
 {
+  if (!keep_object || MData.Button != button || button == 0) {
+    MData.Object = NULL;
+  }
   FDblClick = false;
   MData.Button = button;
   MData.Shift = shift;
   FSX = MData.X = x;
   FSY = MData.Y = y;
-  if (!keep_object) {
-    MData.Object = NULL;
-  }
 }
 //..............................................................................
 TGlGroup* TGlMouse::FindObjectGroup(const AGDrawObject& obj)  {

@@ -2037,7 +2037,7 @@ public:
   }
 
   SeperatedStream<olxstr> stream(const char *separator) {
-    return SeperatedStream<olxstr>(*this, olxstr(separator));
+    return SeperatedStream<olxstr>(*this, TTSString(separator));
   }
 
   template <typename sep_t>
