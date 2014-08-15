@@ -295,7 +295,7 @@ void TIns::_ProcessSame(ParseContext& cx)  {
          esd2 = toks[1].ToDouble();
          from_ind++;
        }
-       TAtomReference ar( toks.Text(' ', from_ind) );
+       TAtomReference ar(toks.Text(' ', from_ind));
        TCAtomGroup ag;
        size_t atomAGroup;
        try  {  ar.Expand(cx.rm, ag, resi, atomAGroup);  }

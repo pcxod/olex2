@@ -40,7 +40,7 @@ public:
     void start(const olxstr& name)  {
       if (!steps.IsEmpty() && steps.GetLast().GetC() == 0)
         steps.GetLast().SetC(TETime::msNow());
-      steps.AddNew(TETime::msNow(), name, 0).b;
+      steps.AddNew(TETime::msNow(), name, 0);
       sequence.Add(int(steps.Count()));
     }
     void stop()  {

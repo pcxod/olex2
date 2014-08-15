@@ -474,16 +474,20 @@ public:
 //..............................................................................
   bool IsEmpty() const {  return List.IsEmpty();  }
 //..............................................................................
-  // the comparison operator is used
+// the comparison operator is used
   size_t IndexOf(const T& val) const {
-    for( size_t i=0; i < List.Count(); i++ )
-      if( *List[i] == val )
+    for (size_t i=0; i < List.Count(); i++)
+      if (*List[i] == val)
         return i;
     return InvalidIndex;
   }
+  //..............................................................................
+  size_t IndexOf(const T* val) const { return List.IndexOf(val); }
 //..............................................................................
   bool Contains(const T &v) const { return IndexOf(v) != InvalidIndex; }
 //..............................................................................
+  bool Contains(const T *v) const { return IndexOf(v) != InvalidIndex; }
+  //..............................................................................
   struct Accessor  {
     static T* get(TTypeListExt<T,DestructCast>& l, size_t i)  {
       return l.List[i];
