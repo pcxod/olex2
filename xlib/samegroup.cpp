@@ -165,14 +165,19 @@ void TSameGroupList::Release(TSameGroup& sg)  {
 }
 //.............................................................................
 void TSameGroupList::Restore(TSameGroup& sg)  {
-  if( &sg.GetParent() != this ) {
+  if (&sg.GetParent() != this) {
     throw TInvalidArgumentException(__OlxSourceInfo,
       "SAME group parent differs");
   }
+  sg.SetId((uint16_t)Groups.Count());
   Groups.Add(sg);
-  if( sg.GetParentGroup() != NULL )
+  if (sg.GetParentGroup() != NULL) {
     sg.GetParentGroup()->AddDependent(sg);
-  sg.SetId((uint16_t)(Groups.Count()-1));
+    // make sure that atoms have parent group Id
+    if (Groups.Contains(sg.GetParentGroup())) {
+      sg.GetParentGroup()->SetId(sg.GetParentGroup()->GetId());
+    }
+  }
 }
 //.............................................................................
 void TSameGroupList::ToDataItem(TDataItem& item) const {

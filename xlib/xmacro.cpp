@@ -3690,27 +3690,43 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
           for (size_t ai=0; ai < r.Count(); ai++)
             rD.AddUnique(&r[ai].GetAtom());
         }
-        for (size_t rs_i=0; rs_i < rm.rISOR.Count(); rs_i++) {
+        for (size_t rs_i = 0; rs_i < rm.rSADI.Count(); rs_i++) {
+          TTypeList<ExplicitCAtomRef> r =
+            rm.rSADI[rs_i].GetAtoms().ExpandList(rm, 2);
+          for (size_t ai = 0; ai < r.Count(); ai++)
+            rD.AddUnique(&r[ai].GetAtom());
+        }
+        for (size_t rs_i = 0; rs_i < rm.rISOR.Count(); rs_i++) {
           TTypeList<ExplicitCAtomRef> r =
             rm.rISOR[rs_i].GetAtoms().ExpandList(rm);
           for (size_t ai=0; ai < r.Count(); ai++)
             rU.AddUnique(&r[ai].GetAtom());
         }
-        for (size_t rs_i=0; rs_i < rm.rDELU.Count(); rs_i++) {
-          if (rm.rDELU[rs_i].IsAllNonHAtoms()) {
-            for (size_t ai=0; ai < au.AtomCount(); ai++) {
-              if (au.GetAtom(ai).GetType().z > 1)
-                rU.AddUnique(&au.GetAtom(ai));
+        for (size_t rs_i = 0; rs_i < rm.rSAME.Count(); rs_i++) {
+          for (size_t ai = 0; ai < rm.rSAME[rs_i].Count(); ai++)
+            rU.AddUnique(&rm.rSAME[rs_i][ai]);
+        }
+        {
+          TPtrList<const TSRestraintList> Urs;
+          Urs << rm.rDELU << rm.rSIMU << rm.rRIGU;
+          for (size_t rrs_i = 0; rrs_i < Urs.Count(); rrs_i++) {
+            const TSRestraintList &rl = *Urs[rrs_i];
+            for (size_t rs_i = 0; rs_i < rl.Count(); rs_i++) {
+              if (rl[rs_i].IsAllNonHAtoms()) {
+                for (size_t ai = 0; ai < au.AtomCount(); ai++) {
+                  if (au.GetAtom(ai).GetType().z > 1)
+                    rU.AddUnique(&au.GetAtom(ai));
+                }
+              }
+              else {
+                TTypeList<ExplicitCAtomRef> r =
+                  rl[rs_i].GetAtoms().ExpandList(rm);
+                for (size_t ai = 0; ai < r.Count(); ai++)
+                  rU.AddUnique(&r[ai].GetAtom());
+              }
             }
           }
-          else {
-            TTypeList<ExplicitCAtomRef> r =
-              rm.rDELU[rs_i].GetAtoms().ExpandList(rm);
-            for (size_t ai=0; ai < r.Count(); ai++)
-              rU.AddUnique(&r[ai].GetAtom());
-          }
         }
-
         cetTable* tab = Cif->FindLoop("_atom_site");
         if( tab == NULL || tab->RowCount() != tau.AtomCount() )  {
           TBasicApp::NewLogEntry() << "Could not locate the atom_site loop or"
@@ -7840,6 +7856,7 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
   }
   TXApp &app = TXApp::GetInstance();
   TSAtomPList atoms = app.FindSAtoms(Cmds, false, true);
+  TSameGroup *created = NULL;
   if (atoms.Count() == 2) {
     TTypeList< olx_pair_t<size_t, size_t> > res;
     TNetwork &netA = atoms[0]->GetNetwork(),
@@ -7866,6 +7883,7 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
     }
     else {
       TSameGroup& sg = app.XFile().GetRM().rSAME.New();
+      created = &sg;
       for (size_t i=0; i < netA.NodeCount(); i++) {
         netA.Node(i).SetTag(-1);
         netB.Node(i).SetTag(-1);
@@ -7908,6 +7926,7 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
     else  {
       TPtrList<TSameGroup> deps;
       TSameGroup& sg = app.XFile().GetRM().rSAME.New();
+      created = &sg;
       for (size_t i=0; i < groups_count-1; i++)
         deps.Add(app.XFile().GetRM().rSAME.NewDependent(sg));
       for (size_t i=0; i < cnt; i++) {
@@ -7920,6 +7939,9 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
   }
   else  {
     E.ProcessingError(__OlxSrcInfo, "invalid input arguments");
+  }
+  if (created != NULL) {
+
   }
 }
 //.............................................................................
