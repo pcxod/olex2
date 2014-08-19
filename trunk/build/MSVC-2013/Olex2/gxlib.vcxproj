@@ -338,7 +338,7 @@
       <Optimization>Disabled</Optimization>
       <InlineFunctionExpansion>Default</InlineFunctionExpansion>
       <IntrinsicFunctions>false</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>$(OLX_WX64_DIR_V12)\lib\vc_lib\mswud;$(OLX_WX64_DIR_V12)\include;..\..\..\glib;..\..\..\xlib;..\..\..\repository;$(OLX_PY64_DIR)\include;..\..\..\sdl;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(OLX_WX64_DIR_V12)\lib\vc_x64_lib\mswud;$(OLX_WX64_DIR_V12)\lib\vc_lib\mswud;$(OLX_WX64_DIR_V12)\include;..\..\..\glib;..\..\..\xlib;..\..\..\repository;$(OLX_PY64_DIR)\include;..\..\..\sdl;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_PYTHON;__WXWIDGETS__;__WXDEBUG__;_UNICODE;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <MinimalRebuild>true</MinimalRebuild>

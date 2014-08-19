@@ -1285,6 +1285,7 @@ void TAsymmUnit::LibGetZ(const TStrObjList& Params, TMacroError& E)  {
 }
 //..............................................................................
 void TAsymmUnit::LibSetZ(const TStrObjList& Params, TMacroError& E)  {
+  if (Params[0].IsEmpty()) return;
   Z = Params[0].ToInt();
   if( Z <= 0 )  Z = 1;
 }
@@ -1294,6 +1295,7 @@ void TAsymmUnit::LibGetZprime(const TStrObjList& Params, TMacroError& E)  {
 }
 //..............................................................................
 void TAsymmUnit::LibSetZprime(const TStrObjList& Params, TMacroError& E)  {
+  if (Params[0].IsEmpty()) return;
   double zp = Params[0].ToDouble();
   Z = (short)olx_round(
     TCLattice::GetLattMultiplier(Latt)*(MatrixCount()+1)*zp);

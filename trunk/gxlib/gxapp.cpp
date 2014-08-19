@@ -478,26 +478,26 @@ void TGXApp::CreateObjects(bool centerModel, bool init_visibility)  {
   AtomIterator ai = GetAtoms();
   BondIterator bi = GetBonds();
   GetRender().SetObjectsCapacity(ai.count + bi.count + 512);
-  while( ai.HasNext() )  {
+  while (ai.HasNext()) {
     TXAtom& xa = ai.Next();
     xa.Create();
-    if( !xa.IsDeleted() && init_visibility )  {
+    if (!xa.IsDeleted() && init_visibility) {
       xa.SetVisible(!FStructureVisible ? false
         : (xa.IsAvailable() && xa.CAtom().IsAvailable()));
     }
   }
 
   sw.start("Bonds creation");
-  while( bi.HasNext() )  {
+  while (bi.HasNext()) {
     TXBond& xb = bi.Next();
     xb.Update();
-    xb.Create(TXBond::GetLegend(xb, 3));
-    if( !xb.IsDeleted() && init_visibility )
+    xb.Create();
+    if (!xb.IsDeleted() && init_visibility)
       xb.SetVisible(xb.A().IsVisible() && xb.B().IsVisible());
-    if( xb.IsVisible() && init_visibility )  {
-      if( xb.A().GetType() == iQPeakZ || xb.B().GetType() == iQPeakZ )
+    if (xb.IsVisible() && init_visibility) {
+      if (xb.A().GetType() == iQPeakZ || xb.B().GetType() == iQPeakZ)
         xb.SetVisible(FQPeakBondsVisible);
-      else if( xb.GetType() == sotHBond )
+      else if (xb.GetType() == sotHBond)
         xb.SetVisible(FHBondsVisible);
     }
   }
@@ -5316,6 +5316,8 @@ void TGXApp::ClearStructureRelated() {
   Rings.Clear();
   GetLabels().ClearLabelMarks(lmiDefault);
   TXPlane::NamesRegistry().Clear();
+  TXAtom::NamesRegistry().Clear();
+  TXBond::NamesRegistry().Clear();
 }
 //..............................................................................
 olxstr TGXApp::Label(const TXAtomPList &atoms, const olxstr &sp) {

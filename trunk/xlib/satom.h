@@ -136,7 +136,7 @@ public:
   */
   void RemoveNode(TSAtom& node);
 
-  struct Ref  {
+  struct Ref {
     size_t catom_id;
     uint32_t matrix_id;
     Ref() : catom_id(~0), matrix_id(~0) {}
@@ -164,6 +164,9 @@ public:
     void FromDataItem(const TDataItem& item)  {
       catom_id = item.GetFieldByName("a_id").ToSizeT();
       matrix_id = item.GetFieldByName("m_id").ToUInt();
+    }
+    olxstr ToString() const {
+      return olxstr(catom_id) << matrix_id;
     }
   };
 

@@ -53,33 +53,20 @@ void TdlgMatProp::Init()  {
   cbBlend = NULL;
   short Border = 3, SpW = 40;
   FCurrentMaterial = 0;
-  if( Object != NULL && Object->GetPrimitives().PrimitiveCount() > 1 )  {
+  if (Object != NULL && Object->GetPrimitives().PrimitiveCount() > 1) {
     cbPrimitives = new TComboBox(this, true);
     TGPCollection& gpc = Object->GetPrimitives();
-    for( size_t i=0; i < gpc.PrimitiveCount(); i++ )  {
+    for (size_t i=0; i < gpc.PrimitiveCount(); i++) {
       TGlPrimitive& GlP = gpc.GetPrimitive(i);
       cbPrimitives->AddObject(GlP.GetName(), &GlP);
       Materials.AddCopy(GlP.GetProperties());
     }
     cbPrimitives->SetValue(gpc.GetPrimitive(0).GetName().u_str());
     cbPrimitives->OnChange.Add(this);
-    if( EsdlInstanceOf(*Object,TXAtom) )  {
-      const uint16_t current_level =
-        TXAtom::LegendLevel(Object->GetPrimitives().GetName());
-      wxArrayString choices;
-      if( current_level == 0 )
-        choices.Add(wxT("Atom Type"));
-      if( current_level <= 1 )
-        choices.Add(wxT("Atom Name"));
-      choices.Add(wxT("Individual Atom"));
-      cbApplyTo = new wxComboBox(this, -1, choices[0], wxDefaultPosition,
-        wxDefaultSize, choices, wxCB_READONLY);
-      cbApplyTo->SetSelection(0);
-    }
   }
-  else  {
+  else {
     cbPrimitives = NULL;
-    if( Object != NULL )  {
+    if (Object != NULL) {
       if( EsdlInstanceOf(*Object, TGlGroup) )  {
         Materials.AddCopy(((TGlGroup*)Object)->GetGlM());
         cbBlend = new wxCheckBox(this, -1,
@@ -88,6 +75,21 @@ void TdlgMatProp::Init()  {
       }
       else if( Object->GetPrimitives().PrimitiveCount() != 0 )
         Materials.AddCopy(Object->GetPrimitives().GetPrimitive(0).GetProperties());
+    }
+  }
+  if (Object != NULL) {
+    if (EsdlInstanceOf(*Object, TXAtom) || EsdlInstanceOf(*Object, TXBond)) {
+      const uint16_t current_level =
+        TXAtom::LegendLevel(Object->GetPrimitives().GetName());
+      wxArrayString choices;
+      if (current_level == 0)
+        choices.Add(wxT("Atom Type"));
+      if (current_level <= 1)
+        choices.Add(wxT("Atom Name"));
+      choices.Add(wxT("Individual Atom/Bond"));
+      cbApplyTo = new wxComboBox(this, -1, choices[0], wxDefaultPosition,
+        wxDefaultSize, choices, wxCB_READONLY);
+      cbApplyTo->SetSelection(0);
     }
   }
   long flags = 0; //wxCHK_3STATE|wxCHK_ALLOW_3RD_STATE_FOR_USER;
@@ -161,10 +163,13 @@ void TdlgMatProp::Init()  {
   tcShnB = new TTextEdit(this);  tcShnB->SetReadOnly(false);
 
   wxBoxSizer *Sizer0 = NULL;
-  if( cbPrimitives != NULL )  {
+  if (cbPrimitives != NULL || cbApplyTo != NULL) {
     Sizer0 = new wxBoxSizer(wxHORIZONTAL);
-    Sizer0->Add(new wxStaticText(this, -1, wxT("Primitive: ")), 0, wxEXPAND | wxALL, Border);
-    Sizer0->Add(cbPrimitives, 0, wxFIXED_MINSIZE | wxALL, Border);
+    if (cbPrimitives != NULL) {
+      Sizer0->Add(new wxStaticText(this, -1,
+        wxT("Primitive: ")), 0, wxEXPAND | wxALL, Border);
+      Sizer0->Add(cbPrimitives, 0, wxFIXED_MINSIZE | wxALL, Border);
+    }
     if( cbApplyTo != NULL )  {
       Sizer0->Add(new wxStaticText(this, -1, wxT("Apply to: ")), 0, wxEXPAND | wxALL, Border);
       Sizer0->Add(cbApplyTo, 0, wxFIXED_MINSIZE | wxALL, Border);
@@ -176,7 +181,7 @@ void TdlgMatProp::Init()  {
       !Object->GetPrimitives().GetPrimitive(0).GetFont()->IsVectorFont());
     Sizer0->Add(bEditFont, 1, wxEXPAND | wxALL, Border);
   }
-  else if( cbBlend != NULL )  {
+  else if (cbBlend != NULL) {
     Sizer0 = new wxBoxSizer(wxHORIZONTAL);
     Sizer0->Add(new wxStaticText(this, -1,
       wxT("Group color properties: ")), 0, wxEXPAND | wxALL, Border);
@@ -430,7 +435,7 @@ void TdlgMatProp::OnOK(wxCommandEvent& event)  {
             uniqCol.AddUnique(&atoms[i]->GetPrimitives());
         }
         else  {
-          app.Individualise(bonds, 3);
+          app.Individualise(bonds, cl + cbApplyTo->GetSelection());
           for( size_t i=0; i < bonds.Count(); i++ )
             uniqCol.AddUnique(&bonds[i]->GetPrimitives());
         }
@@ -454,7 +459,8 @@ void TdlgMatProp::OnOK(wxCommandEvent& event)  {
       */
       if( EsdlInstanceOf(*Object, TXBond) )  {
         const uint32_t pmask = ((TXBond*)Object)->GetPrimitiveMask();
-        app.Individualise(*((TXBond*)Object), 3, pmask);
+        app.Individualise(
+          *((TXBond*)Object), cl + cbApplyTo->GetSelection(), pmask);
       }
       if( cbApplyTo != NULL && cbApplyTo->GetSelection() != 0 )  {
         if( EsdlInstanceOf(*Object, TXAtom) )  {

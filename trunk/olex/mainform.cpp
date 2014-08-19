@@ -234,16 +234,6 @@ BEGIN_EVENT_TABLE(TMainForm, wxFrame)  // basic interface
   EVT_SIZE(TMainForm::OnSize)
   EVT_MOVE(TMainForm::OnMove)
   EVT_CLOSE(TMainForm::OnCloseWindow)
-  EVT_MENU(ID_FILE0, TMainForm::OnFileOpen)
-  EVT_MENU(ID_FILE0+1, TMainForm::OnFileOpen)
-  EVT_MENU(ID_FILE0+2, TMainForm::OnFileOpen)
-  EVT_MENU(ID_FILE0+3, TMainForm::OnFileOpen)
-  EVT_MENU(ID_FILE0+4, TMainForm::OnFileOpen)
-  EVT_MENU(ID_FILE0+5, TMainForm::OnFileOpen)
-  EVT_MENU(ID_FILE0+6, TMainForm::OnFileOpen)
-  EVT_MENU(ID_FILE0+7, TMainForm::OnFileOpen)
-  EVT_MENU(ID_FILE0+8, TMainForm::OnFileOpen)
-  EVT_MENU(ID_FILE0+9, TMainForm::OnFileOpen)
 
   EVT_MENU(ID_HtmlPanel, TMainForm::OnHtmlPanel)
 
@@ -271,6 +261,8 @@ BEGIN_EVENT_TABLE(TMainForm, wxFrame)  // basic interface
   EVT_MENU(ID_GraphicsP, TMainForm::OnGraphics)
   EVT_MENU(ID_GraphicsEdit, TMainForm::OnGraphics)
   EVT_MENU(ID_GraphicsSelect, TMainForm::OnGraphics)
+  EVT_MENU(ID_GraphicsCollectivise, TMainForm::OnGraphics)
+  EVT_MENU(ID_GraphicsIndividualise, TMainForm::OnGraphics)
   EVT_MENU(ID_FixLattice, TMainForm::OnGraphics)
   EVT_MENU(ID_FreeLattice, TMainForm::OnGraphics)
   EVT_MENU(ID_GridMenuCreateBlob, TMainForm::OnGraphics)
@@ -281,13 +273,7 @@ BEGIN_EVENT_TABLE(TMainForm, wxFrame)  // basic interface
   EVT_MENU(ID_FragmentSelectBonds, TMainForm::OnFragmentSelectBonds)
   EVT_MENU(ID_FragmentSelectAll, TMainForm::OnFragmentSelectAll)
 
-  EVT_MENU(ID_AtomTypeChangeC, TMainForm::OnAtomTypeChange)
-  EVT_MENU(ID_AtomTypeChangeN, TMainForm::OnAtomTypeChange)
-  EVT_MENU(ID_AtomTypeChangeO, TMainForm::OnAtomTypeChange)
-  EVT_MENU(ID_AtomTypeChangeF, TMainForm::OnAtomTypeChange)
-  EVT_MENU(ID_AtomTypeChangeH, TMainForm::OnAtomTypeChange)
-  EVT_MENU(ID_AtomTypeChangeS, TMainForm::OnAtomTypeChange)
-  EVT_MENU(ID_AtomTypePTable, TMainForm::OnAtomTypePTable)
+  EVT_MENU(ID_AtomTypeChangeLast, TMainForm::OnAtomTypeChange)
   EVT_MENU(ID_AtomGrow, TMainForm::OnAtom)
   EVT_MENU(ID_AtomCenter, TMainForm::OnAtom)
   EVT_MENU(ID_AtomSelRings, TMainForm::OnAtom)
@@ -296,14 +282,6 @@ BEGIN_EVENT_TABLE(TMainForm, wxFrame)  // basic interface
 
   EVT_MENU(ID_BondViewAlong, TMainForm::OnBond)
   EVT_MENU(ID_BondRadius, TMainForm::OnBond)
-
-  EVT_MENU(ID_View100, TMainForm::OnViewAlong)
-  EVT_MENU(ID_View010, TMainForm::OnViewAlong)
-  EVT_MENU(ID_View001, TMainForm::OnViewAlong)
-  EVT_MENU(ID_View110, TMainForm::OnViewAlong)
-  EVT_MENU(ID_View101, TMainForm::OnViewAlong)
-  EVT_MENU(ID_View011, TMainForm::OnViewAlong)
-  EVT_MENU(ID_View111, TMainForm::OnViewAlong)
 
   EVT_MENU(ID_AtomOccuCustom, TMainForm::OnAtomOccuChange)
   EVT_MENU(ID_AtomOccu1, TMainForm::OnAtomOccuChange)
@@ -315,14 +293,7 @@ BEGIN_EVENT_TABLE(TMainForm, wxFrame)  // basic interface
   EVT_MENU(ID_AtomOccuFix, TMainForm::OnAtomOccuChange)
   EVT_MENU(ID_AtomOccuFixCurrent, TMainForm::OnAtomOccuChange)
 
-  EVT_MENU(ID_AtomConnCustom, TMainForm::OnAtomConnChange)
-  EVT_MENU(ID_AtomConn0, TMainForm::OnAtomConnChange)
-  EVT_MENU(ID_AtomConn1, TMainForm::OnAtomConnChange)
-  EVT_MENU(ID_AtomConn2, TMainForm::OnAtomConnChange)
-  EVT_MENU(ID_AtomConn3, TMainForm::OnAtomConnChange)
-  EVT_MENU(ID_AtomConn4, TMainForm::OnAtomConnChange)
-  EVT_MENU(ID_AtomConn12, TMainForm::OnAtomConnChange)
-  EVT_MENU(ID_AtomConn24, TMainForm::OnAtomConnChange)
+  EVT_MENU(ID_AtomConnChangeLast, TMainForm::OnAtomConnChange)
 
   EVT_MENU(ID_AtomPolyNone, TMainForm::OnAtomPolyChange)
   EVT_MENU(ID_AtomPolyAuto, TMainForm::OnAtomPolyChange)
@@ -330,12 +301,7 @@ BEGIN_EVENT_TABLE(TMainForm, wxFrame)  // basic interface
   EVT_MENU(ID_AtomPolyPyramid, TMainForm::OnAtomPolyChange)
   EVT_MENU(ID_AtomPolyBipyramid, TMainForm::OnAtomPolyChange)
 
-  EVT_MENU(ID_AtomPartCustom, TMainForm::OnAtomPartChange)
-  EVT_MENU(ID_AtomPart_2, TMainForm::OnAtomPartChange)
-  EVT_MENU(ID_AtomPart_1, TMainForm::OnAtomPartChange)
-  EVT_MENU(ID_AtomPart0, TMainForm::OnAtomPartChange)
-  EVT_MENU(ID_AtomPart1, TMainForm::OnAtomPartChange)
-  EVT_MENU(ID_AtomPart2, TMainForm::OnAtomPartChange)
+  EVT_MENU(ID_AtomPartChangeLast, TMainForm::OnAtomPartChange)
 
   EVT_MENU(ID_AtomUisoCustom, TMainForm::OnAtomUisoChange)
   EVT_MENU(ID_AtomUiso12, TMainForm::OnAtomUisoChange)
@@ -1046,6 +1012,10 @@ void TMainForm::XApp(Olex2App *XA)  {
   pmPlane = new TMenu();
 
   MenuBar->Append(MenuFile, wxT("&File"));
+  for (int i = 0; i < 10; i++) {
+    Bind(wxEVT_COMMAND_MENU_SELECTED,
+      &TMainForm::OnFileOpen, this, ID_FILE0 + i);
+  }
   MenuBar->Append(MenuView, wxT("&View"));
   MenuBar->Append(MenuStructure, wxT("&Structure"));
   MenuBar->Append(MenuHelp, wxT("&Help"));
@@ -1127,17 +1097,22 @@ void TMainForm::XApp(Olex2App *XA)  {
   pmLattice = pmGraphics->Clone();
   pmLattice->Append(ID_FixLattice, wxT("Fix"));
   pmLattice->Append(ID_FreeLattice, wxT("Free"));
-// setting atom menu
+// extra graphics bits
+  pmGraphics->Append(ID_GraphicsCollectivise,
+    "Join parent group")->Enable(false);
+  pmGraphics->Append(ID_GraphicsIndividualise,
+    "Remove from parent group")->Enable(false);
+  // setting atom menu
   pmAtom->Append(ID_AtomInfo, wxT("?"));
   pmAtom->AppendSeparator();
   pmAtom->Append(ID_MenuBang, wxT("BANG"), pmBang);
-    pmAtomType->Append(ID_AtomTypeChangeC, wxT("C"));
-    pmAtomType->Append(ID_AtomTypeChangeN, wxT("N"));
-    pmAtomType->Append(ID_AtomTypeChangeO, wxT("O"));
-    pmAtomType->Append(ID_AtomTypeChangeF, wxT("F"));
-    pmAtomType->Append(ID_AtomTypeChangeH, wxT("H"));
-    pmAtomType->Append(ID_AtomTypeChangeS, wxT("S"));
-    pmAtomType->Append(ID_AtomTypePTable, wxT("More..."));
+  TStrList at("C;N;O;F;H;S", ';');
+  for (size_t i = 0; i < at.Count(); i++) {
+    pmAtomType->Append(ID_AtomTypeChange + i, at[i].u_str());
+    Bind(wxEVT_COMMAND_MENU_SELECTED,
+      &TMainForm::OnAtomTypeChange, this, ID_AtomTypeChange + i);
+  }
+    pmAtomType->Append(ID_AtomTypeChangeLast, wxT("More..."));
     pmAtomOccu->AppendRadioItem(ID_AtomOccuCustom, wxT("Custom"));
     pmAtomOccu->AppendRadioItem(ID_AtomOccu1, wxT("1"));
     pmAtomOccu->AppendRadioItem(ID_AtomOccu34, wxT("3/4"));
@@ -1147,37 +1122,41 @@ void TMainForm::XApp(Olex2App *XA)  {
     pmAtomOccu->AppendRadioItem(ID_AtomOccuFix, wxT("Fix"));
     pmAtomOccu->AppendRadioItem(ID_AtomOccuFree, wxT("Free"));
     pmAtomOccu->Append(ID_AtomOccuFixCurrent, wxT("Fix as is"));
-    pmAtomConn->AppendRadioItem(ID_AtomConnCustom, wxT("Custom"));
-    pmAtomConn->AppendRadioItem(ID_AtomConn0, wxT("0"));
-    pmAtomConn->AppendRadioItem(ID_AtomConn1, wxT("1"));
-    pmAtomConn->AppendRadioItem(ID_AtomConn2, wxT("2"));
-    pmAtomConn->AppendRadioItem(ID_AtomConn3, wxT("3"));
-    pmAtomConn->AppendRadioItem(ID_AtomConn4, wxT("4"));
-    pmAtomConn->AppendRadioItem(ID_AtomConn12, wxT("Default [12]"));
-    pmAtomConn->AppendRadioItem(ID_AtomConn24, wxT("24"));
+
+    pmAtomConn->AppendRadioItem(ID_AtomConnChangeLast, wxT("Custom"));
+    TStrList bc("0;1;2;3;4;12 [Default];24", ';');
+    for (size_t i = 0; i < bc.Count(); i++) {
+      pmAtomConn->AppendRadioItem(ID_AtomConnChange+i, bc[i].u_str());
+      Bind(wxEVT_COMMAND_MENU_SELECTED,
+        &TMainForm::OnAtomConnChange, this, ID_AtomConnChange + i);
+    }
+
     pmAtomPoly->AppendRadioItem(ID_AtomPolyNone, wxT("None"));
     pmAtomPoly->AppendRadioItem(ID_AtomPolyAuto, wxT("Auto"));
     pmAtomPoly->AppendRadioItem(ID_AtomPolyRegular, wxT("Regular"));
     pmAtomPoly->AppendRadioItem(ID_AtomPolyPyramid, wxT("Pyramid"));
     pmAtomPoly->AppendRadioItem(ID_AtomPolyBipyramid, wxT("Bipyramid"));
-    pmAtomPart->AppendRadioItem(ID_AtomPartCustom, wxT("X"));
-    pmAtomPart->AppendRadioItem(ID_AtomPart_2, wxT("-2"));
-    pmAtomPart->AppendRadioItem(ID_AtomPart_1, wxT("-1"));
-    pmAtomPart->AppendRadioItem(ID_AtomPart0, wxT("0"));
-    pmAtomPart->AppendRadioItem(ID_AtomPart1, wxT("1"));
-    pmAtomPart->AppendRadioItem(ID_AtomPart2, wxT("2"));
+
+    pmAtomPart->AppendRadioItem(ID_AtomPartChangeLast, wxT("X"));
+    TStrList pn("-2;-1;0;1;2", ';');
+    for (size_t i = 0; i < pn.Count(); i++) {
+      pmAtomPart->AppendRadioItem(ID_AtomPartChange+i, pn[i].u_str());
+      Bind(wxEVT_COMMAND_MENU_SELECTED,
+        &TMainForm::OnAtomPartChange, this, ID_AtomPartChange + i);
+    }
+
     pmAtomUiso->AppendRadioItem(ID_AtomUisoCustom, wxT("X"));
     pmAtomUiso->AppendRadioItem(ID_AtomUiso12, wxT("1.2x"));
     pmAtomUiso->AppendRadioItem(ID_AtomUiso15, wxT("1.5x"));
     pmAtomUiso->AppendRadioItem(ID_AtomUisoFree, wxT("Free"));
     pmAtomUiso->AppendRadioItem(ID_AtomUisoFix, wxT("Fix"));
 
-  pmAtom->Append(ID_AtomType, wxT("Type"), pmAtomType);
-  pmAtom->Append(ID_AtomConn, wxT("Bonds"), pmAtomConn);
-  pmAtom->Append(ID_AtomOccu, wxT("Chemical occupancy"), pmAtomOccu);
-  pmAtom->Append(ID_AtomPart, wxT("Part"), pmAtomPart);
-  pmAtom->Append(ID_AtomUiso, wxT("Uiso"), pmAtomUiso);
-  pmAtom->Append(ID_AtomPoly, wxT("Polyhedron"), pmAtomPoly);
+  pmAtom->Append(ID_MenuAtomType, wxT("Type"), pmAtomType);
+  pmAtom->Append(ID_MenuAtomConn, wxT("Bonds"), pmAtomConn);
+  pmAtom->Append(ID_MenuAtomOccu, wxT("Chemical occupancy"), pmAtomOccu);
+  pmAtom->Append(ID_MenuAtomPart, wxT("Part"), pmAtomPart);
+  pmAtom->Append(ID_MenuAtomUiso, wxT("Uiso"), pmAtomUiso);
+  pmAtom->Append(ID_MenuAtomPoly, wxT("Polyhedron"), pmAtomPoly);
   pmAtom->AppendSeparator();
   pmAtom->Append(ID_AtomGrow, wxT("Grow"));
   pmAtom->Append(ID_AtomCenter, wxT("Center"));
@@ -1204,19 +1183,22 @@ void TMainForm::XApp(Olex2App *XA)  {
   pmPlane->Append(ID_PlaneActivate, wxT("View along normal"));
   pmPlane->Append(ID_GraphicsKill, wxT("Delete"));
   pmPlane->Append(1, wxT("Graphics"), pmGraphics->Clone());
+  pmPlane->Enable(ID_GraphicsCollectivise, false);
+  pmPlane->Enable(ID_GraphicsIndividualise, false);
   pmPlane->Append(ID_Selection, wxT("Selection"), pmSelection->Clone());
   pmPlane->AppendSeparator();
 // setting view menu
-  pmView->Append(ID_View100, wxT("100"));
-  pmView->Append(ID_View010, wxT("010"));
-  pmView->Append(ID_View001, wxT("001"));
-  pmView->Append(ID_View110, wxT("110"));
-  pmView->Append(ID_View101, wxT("101"));
-  pmView->Append(ID_View011, wxT("011"));
-  pmView->Append(ID_View111, wxT("111"));
+  TStrList vn("100;010;001;110;101;011;111", ';');
+  for (size_t i = 0; i < vn.Count(); i++) {
+    pmView->Append(ID_ViewAlong+i, vn[i].u_str());
+    Bind(wxEVT_COMMAND_MENU_SELECTED,
+      &TMainForm::OnViewAlong, this, ID_ViewAlong + i);
+  }
 // update to selection menu - need to add graphics
   pmSelection->AppendSeparator();
   pmSelection->Append(ID_MenuGraphics, wxT("Graphics"), pmGraphics->Clone());
+  pmSelection->Enable(ID_GraphicsCollectivise, false);
+  pmSelection->Enable(ID_GraphicsIndividualise, false);
 
   Menus.Add("File", MenuFile);
   Menus.Add("View", MenuView);

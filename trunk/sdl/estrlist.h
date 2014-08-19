@@ -144,7 +144,19 @@ public:
   string_type& GetString(size_t i) const {
     return Strings[i]->String;
   }
-  T& GetLast() const {  return *Strings.GetLast();   }
+  string_type& GetStringSafe(size_t i) const {
+    if (i >= Strings.Count()) {
+      throw TIndexOutOfRangeException(__OlxSourceInfo, i, 0, Strings.Count());
+    }
+    return Strings[i]->String;
+  }
+  string_type& GetString(size_t i, bool safe) const {
+    if (safe) {
+      return GetStringSafe(i)
+    }
+    return GetString(i);
+  }
+  T& GetLast() const { return *Strings.GetLast(); }
   string_type& GetLastString() const {  return Strings.GetLast()->String;   }
   size_t Count() const {  return Strings.Count();  }
   bool IsEmpty() const {  return Strings.IsEmpty();  }

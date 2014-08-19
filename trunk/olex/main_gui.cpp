@@ -67,15 +67,7 @@ void TMainForm::OnDrawStyleChange(wxCommandEvent& event)  {
 }
 //..............................................................................
 void TMainForm::OnViewAlong(wxCommandEvent& event) {
-  switch( event.GetId() )  {
-    case ID_View100:  processMacro("matr 1");  break;
-    case ID_View010:  processMacro("matr 2");  break;
-    case ID_View001:  processMacro("matr 3");  break;
-    case ID_View110:  processMacro("matr 110");  break;
-    case ID_View101:  processMacro("matr 101");  break;
-    case ID_View011:  processMacro("matr 011");  break;
-    case ID_View111:  processMacro("matr 111");  break;
-  }
+  processMacro(olxstr("matr ") << pmView->GetLabel(event.GetId()));
 }
 //..............................................................................
 void TMainForm::OnAtomOccuChange(wxCommandEvent& event)  {
@@ -122,29 +114,24 @@ void TMainForm::OnAtomOccuChange(wxCommandEvent& event)  {
 //..............................................................................
 void TMainForm::OnAtomConnChange(wxCommandEvent& event)  {
   TXAtom *XA = (TXAtom*)FObjectUnderMouse;
-  if( XA == NULL )  return;
+  if (XA == NULL) return;
   olxstr tmp = "conn ";
-  switch (event.GetId()) {
-    case ID_AtomConn0:   tmp << '0';  break;
-    case ID_AtomConn1:   tmp << '1';  break;
-    case ID_AtomConn2:   tmp << '2';  break;
-    case ID_AtomConn3:   tmp << '3';  break;
-    case ID_AtomConn4:   tmp << '4';  break;
-    case ID_AtomConn12:  tmp << 12;  break;
-    case ID_AtomConn24:  tmp << 24;  break;
-    case ID_AtomConnCustom:
-    {
-      TdlgEdit *dlg = new TdlgEdit(this, false);
-      dlg->SetTitle(wxT("Please input the maximum number of bonds ")
-        wxT("and optionally the bonding radius"));
-      olxstr txt = XA->CAtom().GetConnInfo().maxBonds;
-      txt << ' ' << XA->CAtom().GetConnInfo().r;
-      dlg->SetText(txt);
-      if (dlg->ShowModal() == wxID_OK) {
-        tmp << dlg->GetText();
-      }
-      dlg->Destroy();
+  if (event.GetId() == ID_AtomConnChangeLast) {
+    TdlgEdit dlg(this, false);
+    dlg.SetTitle(wxT("Please input the maximum number of bonds ")
+      wxT("and optionally the bonding radius"));
+    olxstr txt = XA->CAtom().GetConnInfo().maxBonds;
+    txt << ' ' << XA->CAtom().GetConnInfo().r;
+    dlg.SetText(txt);
+    if (dlg.ShowModal() == wxID_OK) {
+      tmp << dlg.GetText();
     }
+    else {
+      return;
+    }
+  }
+  else {
+    tmp << TStrList(pmAtomConn->GetLabel(event.GetId()), ' ')[0];
   }
   if (!XA->IsSelected())
     tmp << " #c" << XA->CAtom().GetId();
@@ -171,23 +158,26 @@ void TMainForm::OnAtomPolyChange(wxCommandEvent& event)  {
 //..............................................................................
 void TMainForm::OnAtomPartChange(wxCommandEvent& event)  {
   TXAtom *XA = (TXAtom*)FObjectUnderMouse;
-  if( XA == NULL )  return;
+  if (XA == NULL) return;
   olxstr cmd;
-  if (event.GetId() == ID_AtomPartCustom) {
-    TdlgEdit *dlg = new TdlgEdit(this, false);
-    dlg->SetTitle(wxT("Please input the part number"));
+  if (event.GetId() == ID_AtomPartChangeLast) {
+    TdlgEdit dlg(this, false);
+    dlg.SetTitle(wxT("Please input the part number"));
     int val=XA->CAtom().GetPart();
-    dlg->SetText(val);
-    if (dlg->ShowModal() == wxID_OK) {
-      try { val = dlg->GetText().ToInt(); }
+    dlg.SetText(val);
+    if (dlg.ShowModal() == wxID_OK) {
+      try { val = dlg.GetText().ToInt(); }
       catch(...) {}
     }
-    dlg->Destroy();
-    if (val != XA->CAtom().GetPart())
+    if (val != XA->CAtom().GetPart()) {
       cmd << "part " << val;
+    }
+    else {
+      return;
+    }
   }
   else {
-    cmd << "part " << (event.GetId() - ID_AtomPart0);
+    cmd << "part " << pmAtomPart->GetLabel(event.GetId());
   }
   if (!cmd.IsEmpty()) {
     if( !XA->IsSelected() )
@@ -287,16 +277,16 @@ void TMainForm::OnBasisVisible(wxCommandEvent& event)  {
 }
 //..............................................................................
 void TMainForm::OnGraphics(wxCommandEvent& event)  {
-  if( FObjectUnderMouse == NULL )  return;
+  if (FObjectUnderMouse == NULL) return;
 
-  if( event.GetId() == ID_GraphicsHide )  {
-    if( FObjectUnderMouse->IsSelected() )
+  if (event.GetId() == ID_GraphicsHide) {
+    if (FObjectUnderMouse->IsSelected())
       processMacro("hide sel");
     else
       FXApp->GetUndo().Push(FXApp->SetGraphicsVisible(FObjectUnderMouse, false));
     TimePerFrame = FXApp->Draw();
   }
-  else if( event.GetId() == ID_GraphicsKill )  {
+  else if (event.GetId() == ID_GraphicsKill) {
     if( FObjectUnderMouse->IsSelected() )
       processMacro("kill sel");
     else  {
@@ -306,7 +296,7 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
     }
     TimePerFrame = FXApp->Draw();
   }
-  else if( event.GetId() == ID_GraphicsEdit )  {
+  else if (event.GetId() == ID_GraphicsEdit) {
     if( LabelToEdit != NULL )  {
       olxstr Tmp = "getuserinput(1, \'Please, enter new label\', \'";
       Tmp << LabelToEdit->GetLabel() << "\')";
@@ -317,13 +307,13 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
       LabelToEdit = NULL;
     }
   }
-  else if( event.GetId() == ID_GraphicsDS )  {
+  else if (event.GetId() == ID_GraphicsDS) {
     TGlGroup& Sel = FXApp->GetSelection();
     TdlgMatProp* MatProp = new TdlgMatProp(this, *FObjectUnderMouse);
-    if( EsdlInstanceOf(*FObjectUnderMouse, TGlGroup) )
+    if (EsdlInstanceOf(*FObjectUnderMouse, TGlGroup))
       MatProp->SetCurrent(((TGlGroup*)FObjectUnderMouse)->GetGlM());
-    if( MatProp->ShowModal() == wxID_OK )  {
-      if( EsdlInstanceOf(*FObjectUnderMouse, TXAtom) )
+    if (MatProp->ShowModal() == wxID_OK)  {
+      if (EsdlInstanceOf(*FObjectUnderMouse, TXAtom))
         ;//FXApp->SynchroniseBonds((TXAtom*)FObjectUnderMouse);
     }
     MatProp->Destroy();
@@ -353,20 +343,20 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
     }
     TimePerFrame = FXApp->Draw();
   }
-  else if( event.GetId() == ID_GraphicsP )  {
+  else if (event.GetId() == ID_GraphicsP) {
     TStrList Ps;
     FObjectUnderMouse->ListPrimitives(Ps);
-    if( Ps.IsEmpty() )  {
+    if (Ps.IsEmpty())  {
       TBasicApp::NewLogEntry() << "The object does not support requested function...";
       return;
     }
     TdlgPrimitive* Primitives = new TdlgPrimitive(this, *FObjectUnderMouse);
-    if( Primitives->ShowModal() == wxID_OK )  {
-      if( EsdlInstanceOf(*FObjectUnderMouse, TXBond) )  {
+    if (Primitives->ShowModal() == wxID_OK) {
+      if (EsdlInstanceOf(*FObjectUnderMouse, TXBond)) {
         TXBondPList bonds;
-        if( FObjectUnderMouse->IsSelected() )  {
-          for( size_t i=0; i < FXApp->GetSelection().Count(); i++ )  {
-            if( EsdlInstanceOf(FXApp->GetSelection()[i], TXBond) )
+        if (FObjectUnderMouse->IsSelected())  {
+          for (size_t i = 0; i < FXApp->GetSelection().Count(); i++) {
+            if (EsdlInstanceOf(FXApp->GetSelection()[i], TXBond))
               bonds.Add((TXBond&)FXApp->GetSelection()[i]);
           }
         }
@@ -374,11 +364,11 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
           bonds.Add((TXBond*)FObjectUnderMouse);
         FXApp->Individualise(bonds, Primitives->Level, Primitives->Mask);
       }
-      else if( EsdlInstanceOf(*FObjectUnderMouse, TXAtom) )  {
+      else if (EsdlInstanceOf(*FObjectUnderMouse, TXAtom)) {
         TXAtomPList atoms;
-        if( FObjectUnderMouse->IsSelected() )  {
-          for( size_t i=0; i < FXApp->GetSelection().Count(); i++ )  {
-            if( EsdlInstanceOf(FXApp->GetSelection()[i], TXAtom) )
+        if (FObjectUnderMouse->IsSelected())  {
+          for (size_t i = 0; i < FXApp->GetSelection().Count(); i++) {
+            if (EsdlInstanceOf(FXApp->GetSelection()[i], TXAtom))
               atoms.Add((TXAtom&)FXApp->GetSelection()[i]);
           }
         }
@@ -395,19 +385,59 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
     Primitives->Destroy();
     TimePerFrame = FXApp->Draw();
   }
-  else if( event.GetId() == ID_FixLattice )  {
-    if( EsdlInstanceOf(*FObjectUnderMouse, TXLattice) )
+  else if (event.GetId() == ID_FixLattice) {
+    if (EsdlInstanceOf(*FObjectUnderMouse, TXLattice))
       ((TXLattice*)FObjectUnderMouse)->SetFixed(true);
   }
-  else if( event.GetId() == ID_FreeLattice )  {
-    if( EsdlInstanceOf(*FObjectUnderMouse, TXLattice) )
+  else if (event.GetId() == ID_FreeLattice) {
+    if (EsdlInstanceOf(*FObjectUnderMouse, TXLattice))
       ((TXLattice*)FObjectUnderMouse)->SetFixed(false);
   }
-  else if( event.GetId() == ID_GridMenuCreateBlob )  {
+  else if (event.GetId() == ID_GridMenuCreateBlob) {
     TXBlob* xb = FXApp->XGrid().CreateBlob(MousePositionX, MousePositionY);
-    if( xb != NULL )
+    if (xb != NULL)
       FXApp->AddObjectToCreate(xb);
     xb->Create();
+  }
+  else if (event.GetId() == ID_GraphicsCollectivise) {
+    if (FObjectUnderMouse->IsSelected()) {
+      if (EsdlInstanceOf(*FObjectUnderMouse, TXAtom)) {
+        FXApp->Collectivise(
+          FXApp->GetSelection().Extract<TXAtom>().GetObject());
+      }
+      else if (EsdlInstanceOf(*FObjectUnderMouse, TXBond)) {
+        FXApp->Collectivise(
+          FXApp->GetSelection().Extract<TXBond>().GetObject());
+      }
+    }
+    else {
+      if (EsdlInstanceOf(*FObjectUnderMouse, TXAtom)) {
+        FXApp->Collectivise(*(TXAtom*)FObjectUnderMouse);
+      }
+      else if (EsdlInstanceOf(*FObjectUnderMouse, TXBond)) {
+        FXApp->Collectivise(*(TXBond*)FObjectUnderMouse);
+      }
+    }
+  }
+  else if (event.GetId() == ID_GraphicsIndividualise) {
+    if (FObjectUnderMouse->IsSelected()) {
+      if (EsdlInstanceOf(*FObjectUnderMouse, TXAtom)) {
+        FXApp->Individualise(
+          FXApp->GetSelection().Extract<TXAtom>().GetObject());
+      }
+      else if (EsdlInstanceOf(*FObjectUnderMouse, TXBond)) {
+        FXApp->Individualise(
+          FXApp->GetSelection().Extract<TXBond>().GetObject());
+      }
+    }
+    else {
+      if (EsdlInstanceOf(*FObjectUnderMouse, TXAtom)) {
+        FXApp->Individualise(*(TXAtom*)FObjectUnderMouse);
+      }
+      else if (EsdlInstanceOf(*FObjectUnderMouse, TXBond)) {
+        FXApp->Individualise(*(TXBond*)FObjectUnderMouse);
+      }
+    }
   }
 }
 //..............................................................................
@@ -439,6 +469,11 @@ void TMainForm::ObjectUnderMouse(AGDrawObject *G)  {
     pmAtom->Enable(ID_Selection, G->IsSelected() &&
       EsdlInstanceOf(*G->GetParentGroup(), TGlGroup));
     pmAtom->Enable(ID_SelGroup, false);
+    {
+      int level = TXAtom::LegendLevel(XA->GetPrimitives().GetName());
+      pmAtom->Enable(ID_GraphicsCollectivise, level > 0);
+      pmAtom->Enable(ID_GraphicsIndividualise, level < 2);
+    }
     // occu
     {
       double occu = XA->CAtom().GetChemOccu();
@@ -482,19 +517,20 @@ void TMainForm::ObjectUnderMouse(AGDrawObject *G)  {
     // conn
     {
       short bonds = XA->CAtom().GetConnInfo().maxBonds;
-      pmAtom->SetLabel(ID_AtomConnCustom, wxString("Custom..."));
+      pmAtom->SetLabel(ID_AtomConnChangeLast, wxString("Custom..."));
       if (bonds >= 0 && bonds <= 4) {
-        pmAtomConn->Check(ID_AtomConn0+bonds, true);
+        pmAtomConn->Check(ID_AtomConnChange+bonds, true);
       }
       else if (bonds == 12) {
-        pmAtomConn->Check(ID_AtomConn12, true);
+        pmAtomConn->Check(ID_AtomConnChange+5, true);
       }
       else if (bonds == 24) {
-        pmAtomConn->Check(ID_AtomConn24, true);
+        pmAtomConn->Check(ID_AtomConnChange+6, true);
       }
       else {
-        pmAtomConn->Check(ID_AtomConnCustom, true);
-        pmAtom->SetLabel(ID_AtomConnCustom, wxString("Custom: ") << bonds);
+        pmAtomConn->Check(ID_AtomConnChangeLast, true);
+        pmAtom->SetLabel(ID_AtomConnChangeLast,
+          wxString("Custom: ") << bonds);
       }
     }
     // poly
@@ -504,16 +540,16 @@ void TMainForm::ObjectUnderMouse(AGDrawObject *G)  {
         continue;
       bound_cnt++;
     }
-    pmAtom->Enable(ID_AtomPoly, bound_cnt > 3);
+    pmAtom->Enable(ID_MenuAtomPoly, bound_cnt > 3);
     if (bound_cnt > 3)
       pmAtom->Check(ID_AtomPolyNone + XA->GetPolyhedronType(), true);
     if (XA->CAtom().GetPart() >= -2 && XA->CAtom().GetPart() <= 2) {
-      pmAtom->Check(ID_AtomPart0 + XA->CAtom().GetPart(), true);
-      pmAtom->SetLabel(ID_AtomPartCustom, wxT("Custom..."));
+      pmAtom->Check(ID_AtomPartChange + XA->CAtom().GetPart()+2, true);
+      pmAtom->SetLabel(ID_AtomPartChangeLast, wxT("Custom..."));
     }
     else {
-      pmAtom->Check(ID_AtomPartCustom, true);
-      pmAtom->SetLabel(ID_AtomPartCustom, (olxstr("Custom: ") <<
+      pmAtom->Check(ID_AtomPartChangeLast, true);
+      pmAtom->SetLabel(ID_AtomPartChangeLast, (olxstr("Custom: ") <<
         XA->CAtom().GetPart()).u_str());
     }
     // Uiso
@@ -529,7 +565,7 @@ void TMainForm::ObjectUnderMouse(AGDrawObject *G)  {
       pmAtom->SetLabel(ID_AtomUisoCustom, wxT("Custom..."));
       pmAtom->SetLabel(ID_AtomUisoFree, wxT("Free"));
       pmAtom->SetLabel(ID_AtomUisoFix, wxT("Fix"));
-      pmAtom->Enable(ID_AtomUiso, true);
+      pmAtom->Enable(ID_MenuAtomUiso, true);
       if (XA->CAtom().GetUisoOwner() != NULL) {
         if (XA->CAtom().GetUisoScale() == 1.5)
           pmAtom->Check(ID_AtomUiso15, true);
@@ -556,13 +592,18 @@ void TMainForm::ObjectUnderMouse(AGDrawObject *G)  {
       }
     }
     else {
-      pmAtom->Enable(ID_AtomUiso, false);
+      pmAtom->Enable(ID_MenuAtomUiso, false);
     }
     FCurrentPopup = pmAtom;
   }
   else if (EsdlInstanceOf(*G, TXBond))  {
     olxstr T;
     TXBond *XB = (TXBond*)G;
+    {
+      int level = TXAtom::LegendLevel(XB->GetPrimitives().GetName());
+      pmBond->Enable(ID_GraphicsCollectivise, level > 0);
+      pmBond->Enable(ID_GraphicsIndividualise, level < 2);
+    }
     TStrList SL = FXApp->TangList(XB);
     pmTang->Clear();
     for (size_t i = 0; i < SL.Count(); i++)
@@ -621,52 +662,26 @@ void TMainForm::ObjectUnderMouse(AGDrawObject *G)  {
 //..............................................................................
 void TMainForm::OnAtomTypeChange(wxCommandEvent& event)  {
   TXAtom *XA = (TXAtom*)FObjectUnderMouse;
-  if( XA == NULL )  return;
+  if (XA == NULL)  return;
   olxstr Tmp("name -c ");
-  if( XA->IsSelected() )
+  if (XA->IsSelected())
     Tmp << "sel";
   else
     Tmp << "#s" << XA->GetOwnerId();
   Tmp << ' ';
-  switch( event.GetId() )  {
-    case ID_AtomTypeChangeC:
-      Tmp << 'C';
-      break;
-    case ID_AtomTypeChangeN:
-      Tmp << 'N';
-      break;
-    case ID_AtomTypeChangeO:
-      Tmp << 'O';
-      break;
-    case ID_AtomTypeChangeF:
-      Tmp << 'F';
-      break;
-    case ID_AtomTypeChangeH:
-      Tmp << 'H';
-      break;
-    case ID_AtomTypeChangeS:
-      Tmp << 'S';
-      break;
+  if (event.GetId() == ID_AtomTypeChangeLast) {
+    TPTableDlg Dlg(this);
+    if (Dlg.ShowModal() == wxID_OK)  {
+      Tmp << Dlg.GetSelected()->symbol;
+    }
+    else {
+      return;
+    }
+  }
+  else {
+    Tmp << pmAtomType->GetLabel(event.GetId());
   }
   processMacro(Tmp);
-  TimePerFrame = FXApp->Draw();
-}
-//..............................................................................
-void TMainForm::OnAtomTypePTable(wxCommandEvent& event)  {
-  TXAtom *XA = (TXAtom*)FObjectUnderMouse;
-  if( XA == NULL )  return;
-  olxstr Tmp = "name ";
-  if( XA->IsSelected() )
-    Tmp << "sel";
-  else
-    Tmp << "#s" << XA->GetOwnerId();
-  Tmp << ' ';
-  TPTableDlg *Dlg = new TPTableDlg(this);
-  if( Dlg->ShowModal() == wxID_OK )  {
-    Tmp << Dlg->GetSelected()->symbol;
-    processMacro(Tmp);
-  }
-  Dlg->Destroy();
   TimePerFrame = FXApp->Draw();
 }
 //..............................................................................

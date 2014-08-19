@@ -99,7 +99,7 @@ public:
   bool FromDataItem(const TDataItem& Item);
 
   TIString ToString() const;
-  void FromString(const olxstr& str);
+  void FromString(const olxstr& str, bool safe=false);
   olxstr ToPOV() const;
   olxstr ToWRL() const;
 };

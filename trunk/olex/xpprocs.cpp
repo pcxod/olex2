@@ -5648,7 +5648,7 @@ void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroE
     }
   }
   TXAtomPList xatoms = FindXAtoms(Cmds, false, true);
-  if( xatoms.Count() != 1 )  {
+  if (xatoms.Count() != 1) {
     E.ProcessingError(__OlxSourceInfo, "one atom is expected");
     return;
   }
@@ -5679,6 +5679,40 @@ void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroE
   sph->Basis.SetZoom(2);
   sph->SetMoveable(true);
   sph->SetZoomable(true);
+  olxdict<uint32_t, TGlGroup *, TPrimitiveComparator> groups;
+  TGXApp::AtomIterator atoms = FXApp->GetAtoms();
+  while (atoms.HasNext()) {
+    TXAtom &a = atoms.Next();
+    if (&a == xatoms[0] || !a.IsAvailable())
+      continue;
+    TGlGroup *glg = groups.Find(a.CAtom().GetFragmentId(), NULL);
+    if (glg == NULL) {
+      glg = &FXApp->GetRender().NewGroup(
+        olxstr("Ligand") << (groups.Count() + 1));
+      groups.Add(a.CAtom().GetFragmentId(), glg)->Create();
+    }
+    glg->Add(a);
+  }
+  TGXApp::BondIterator bonds = FXApp->GetBonds();
+  while (bonds.HasNext()) {
+    TXBond &b = bonds.Next();
+    if (!b.IsAvailable())
+      continue;
+    TGlGroup *glg = groups.Find(b.A().CAtom().GetFragmentId(), NULL);
+    if (glg == NULL) {
+      glg = &FXApp->GetRender().NewGroup(
+        olxstr("Ligand") << (groups.Count() + 1));
+      groups.Add(b.A().CAtom().GetFragmentId(), glg)->Create();
+    }
+    glg->Add(b);
+  }
+  for (size_t i = 0; i < groups.Count(); i++) {
+    TGlMaterial glm = groups.GetValue(i)->GetGlM();
+    glm.AmbientF = pa.colors[groups.GetKey(i)];
+    glm.DiffuseF = pa.colors[groups.GetKey(i)];
+    glm.SetTransparent(false);
+    groups.GetValue(i)->SetGlM(glm);
+  }
   FXApp->AddObjectToCreate(sph);
 }
 //..............................................................................

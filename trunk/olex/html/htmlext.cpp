@@ -161,169 +161,12 @@ bool THtml::Dispatch(int MsgId, short MsgSubId, const IEObject* Sender,
   return true;
 }
 //.............................................................................
-void THtml::OnChildFocus(wxChildFocusEvent& event)  {
-  wxWindow *wx_next = event.GetWindow(),
-    *focused = FindFocus();
-  /* this happens when the child windows is in visible to API like in
-  combo/spinctls */
-  if (wx_next != focused)  {
-    if (focused->GetParent() == wx_next) {
-      focused = wx_next;
-    }
-    else if(InFocus != NULL) { // this would be odd
-      InFocus->SetFocus();
-      return;
-    }
-  }
-  AOlxCtrl* prev = NULL, *next = NULL;
-  for( size_t i=0; i < Traversables.Count(); i++ )  {
-    if( Traversables[i].GetB() == InFocus )
-      prev = Traversables[i].GetA();
-    if( Traversables[i].GetB() == wx_next )
-      next = Traversables[i].GetA();
-  }
-  bool skip = true;
-  if( prev != next || next == NULL || prev == NULL )  {
-    skip = DoHandleFocusEvent(prev, next);
-    InFocus = wx_next;
-  }
+void THtml::OnKeyDown(wxKeyEvent& event)  {
   event.Skip();
 }
 //.............................................................................
-void THtml::_FindNext(index_t from, index_t& dest, bool scroll) const {
-  if( Traversables.IsEmpty() )  {
-    dest = -1;
-    return;
-  }
-  int i = from;
-  while( ++i < (int)Traversables.Count() && Traversables[i].GetB() == NULL )
-    ;
-  dest = ((i >= (int)Traversables.Count() ||
-    (Traversables[i].GetB() == NULL)) ? -1 : i);
-  if( dest == -1 && scroll )  {
-    i = -1;
-    while( ++i < from && Traversables[i].GetB() == NULL )
-      ;
-    dest = ((Traversables[i].GetB() == NULL) ? -1 : i);
-  }
-}
-//.............................................................................
-void THtml::_FindPrev(index_t from, index_t& dest, bool scroll) const {
-  if( Traversables.IsEmpty() )  {
-    dest = -1;
-    return;
-  }
-  if( from < 0 )  from = Traversables.Count();
-  index_t i = from;
-  while( --i >= 0 && Traversables[i].GetB() == NULL )
-    ;
-  dest = ((i < 0 || (Traversables[i].GetB() == NULL)) ? -1 : i);
-  if( dest == -1 && scroll )  {
-    i = Traversables.Count();
-    while( --i > from && Traversables[i].GetB() == NULL )
-      ;
-    dest = ((Traversables[i].GetB() == NULL) ? -1 : i);
-  }
-}
-//.............................................................................
-void THtml::GetTraversibleIndeces(index_t& current, index_t& another,
-  bool forward) const
-{
-  wxWindow* w = FindFocus();
-  // no focus? find the one at the edge
-  if( w == NULL || w == static_cast<const wxWindow*>(this) )  {
-    if( forward )
-      _FindNext(-1, another, false);
-    else
-      _FindPrev(Traversables.Count(), another, false);
-  }
-  else  {
-    for( size_t i=0; i < Traversables.Count(); i++ )  {
-      if( Traversables[i].GetB() == w ||
-          Traversables[i].GetB() == w->GetParent() )
-      {
-        current = i;
-        break;
-      }
-    }
-    if( forward )
-      _FindNext(current, another, true);
-    else
-      _FindPrev(current , another, true);
-  }
-}
-//.............................................................................
-bool THtml::DoHandleFocusEvent(AOlxCtrl* prev, AOlxCtrl* next)  {
-  // prevent page re-loading and object deletion
-  volatile THtmlManager::DestructionLocker dm =
-    Manager.LockDestruction(this, this);
-  bool rv = false;
-  if( prev != NULL )  {
-    if( EsdlInstanceOf(*prev, TTextEdit) )  {
-      olxstr s = ((TTextEdit*)prev)->OnLeave.data;
-      ((TTextEdit*)prev)->OnLeave.Execute(prev, &s);
-    }
-    else if( EsdlInstanceOf(*prev, TComboBox) )  {
-      ((TComboBox*)prev)->HandleOnLeave();
-    }
-    else
-      rv = true;
-  }
-  if (next != NULL) {
-    if (EsdlInstanceOf(*next, TTextEdit)) {
-      olxstr s = ((TTextEdit*)next)->OnEnter.data;
-      ((TTextEdit*)next)->OnEnter.Execute(next, &s);
-      if (!((TTextEdit*)next)->IsReadOnly())
-        ((TTextEdit*)next)->SetSelection(-1,-1);
-    }
-    else if (EsdlInstanceOf(*next, TComboBox)) {
-      ((TComboBox*)next)->HandleOnEnter();
-      if (!((TTextEdit*)next)->IsReadOnly())
-        ((TComboBox*)next)->SetSelection(-1,-1);
-    }
-    else
-      rv = true;
-  }
-  return rv;
-}
-//.............................................................................
-void THtml::DoNavigate(bool forward)  {
-  index_t current=-1, another=-1;
-  GetTraversibleIndeces(current, another, forward);
-  DoHandleFocusEvent(
-    current == -1 ? NULL : Traversables[current].GetA(),
-    another == -1 ? NULL : Traversables[another].GetA());
-  if( another != -1 )  {
-    InFocus = Traversables[another].GetB();
-    InFocus->SetFocus();
-    InFocus = FindFocus();
-    for( size_t i=0; i < Objects.Count(); i++ )  {
-      if( Objects.GetValue(i).GetB() == NULL )  continue;
-      if( Objects.GetValue(i).GetB() == InFocus
-#ifdef __WIN32__
-          || Objects.GetValue(i).GetB() == InFocus->GetParent()
-#endif
-        )
-      {
-        FocusedControl = Objects.GetKey(i);
-        break;
-      }
-    }
-  }
-}
-//.............................................................................
-void THtml::OnKeyDown(wxKeyEvent& event)  {
-  if( event.GetKeyCode() == WXK_TAB )
-    DoNavigate( event.GetModifiers() != wxMOD_SHIFT );
-  else
-    event.Skip();
-}
-//.............................................................................
 void THtml::OnNavigation(wxNavigationKeyEvent& event)  {
-  if( event.IsFromTab() )
-    DoNavigate( event.GetDirection() );
-  else
-    event.Skip();
+  event.Skip();
 }
 //.............................................................................
 void THtml::OnChar(wxKeyEvent& event)  {
@@ -590,7 +433,6 @@ bool THtml::UpdatePage(bool update_indices)  {
   Root->ToStrings(Res);
   ObjectsState.SaveState();
   Objects.Clear();
-  Traversables.Clear();
   InFocus = NULL;
   int xPos = -1, yPos = -1, xWnd=-1, yWnd = -1;
   GetViewStart(&xPos, &yPos);
@@ -676,7 +518,6 @@ void THtml::ScrollWindow(int dx, int dy, const wxRect* rect)  {
 bool THtml::AddObject(const olxstr& Name, AOlxCtrl *Object, wxWindow* wxWin,
   bool Manage)
 {
-  Traversables.Add(Association::New(Object,wxWin));
   if (Name.IsEmpty())  return true;  // an anonymous object
   if (Objects.HasKey(Name))  return false;
   Objects.Add(Name, Association::Create(Object, wxWin, Manage));
