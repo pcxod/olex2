@@ -22,29 +22,21 @@ TdlgPrimitive::TdlgPrimitive(TMainFrame *P, AGDrawObject& object) :
 {
   wxBoxSizer *TopSizer = new wxBoxSizer(wxVERTICAL);
   const int border = 1;
-  if( (EsdlInstanceOf(Object,TXAtom) || EsdlInstanceOf(Object, TXBond)) )  {
+  if ((EsdlInstanceOf(Object,TXAtom) || EsdlInstanceOf(Object, TXBond))) {
     const uint16_t current_level =
       TXAtom::LegendLevel(Object.GetPrimitives().GetName());
     wxArrayString choices;
-    if( EsdlInstanceOf(Object,TXAtom) )  {
-      if( current_level == 0 )
-        choices.Add(wxT("Atom Type"));
-      if( current_level <= 1 )
-        choices.Add(wxT("Atom Name"));
-      choices.Add(wxT("Individual Atom"));
-    }
-    else {
-      if( current_level == 0 )
-        choices.Add(wxT("Bond by Atom Types"));
-      if( current_level <= 1 )
-        choices.Add(wxT("Bond by Atom Names"));
-      choices.Add(wxT("Individual Bond"));
-    }
+    if( current_level == 0 )
+      choices.Add(wxT("Atom Type"));
+    if( current_level <= 1 )
+      choices.Add(wxT("Atom Name"));
+    choices.Add(wxT("Individual Atom/Bond"));
     cbApplyTo = new wxComboBox(this, -1,
       choices[0], wxDefaultPosition, wxDefaultSize, choices, wxCB_READONLY);
     cbApplyTo->SetSelection(0);
     wxBoxSizer* Sizer0 = new wxBoxSizer(wxHORIZONTAL);
-    Sizer0->Add(new wxStaticText(this, -1, wxT("Apply to: ")), 1, wxEXPAND|wxALL, border);
+    Sizer0->Add(new wxStaticText(this, -1, wxT("Apply to: ")), 1,
+      wxEXPAND|wxALL, border);
     Sizer0->Add(cbApplyTo, 1, wxFIXED_MINSIZE|wxALL, border);
     TopSizer->Add(Sizer0, 1, wxEXPAND|wxALL, border);
     TopSizer->Add(-1, 10);
@@ -53,16 +45,19 @@ TdlgPrimitive::TdlgPrimitive(TMainFrame *P, AGDrawObject& object) :
   Object.ListPrimitives(L);
   int mask = Object.GetPrimitives().GetStyle().GetParam(
     Object.GetPrimitiveMaskName(), "0").ToInt();
-  for( size_t i=0; i < L.Count(); i++ )  {
+  for (size_t i=0; i < L.Count(); i++) {
     wxCheckBox* Box = Boxes.Add(
       new wxCheckBox(this, -1, L[i].u_str(), wxDefaultPosition));
     TopSizer->Add(Box, 0, wxALL, border);
     Box->SetValue((mask & (1 << i)) != 0);
   }
   wxBoxSizer *ButtonsSizer = new wxBoxSizer(wxHORIZONTAL);
-  ButtonsSizer->Add(new wxButton(this, wxID_OK, wxT("OK")), 1, wxALL, 1);
-  ButtonsSizer->Add(new wxButton(this, wxID_CANCEL, wxT("Cancel")), 1, wxALL, 1);
-  ButtonsSizer->Add(new wxButton(this, wxID_HELP, wxT("Help")), 1, wxALL, 1);
+  ButtonsSizer->Add(
+    new wxButton(this, wxID_OK, wxT("OK")), 1, wxALL, 1);
+  ButtonsSizer->Add(
+    new wxButton(this, wxID_CANCEL, wxT("Cancel")), 1, wxALL, 1);
+  ButtonsSizer->Add(
+    new wxButton(this, wxID_HELP, wxT("Help")), 1, wxALL, 1);
   TopSizer->Add(-1, 10);
   TopSizer->Add(ButtonsSizer, 0, wxALL, border);
   TopSizer->SetSizeHints(this);   // set size hints to honour minimum size
@@ -70,14 +65,14 @@ TdlgPrimitive::TdlgPrimitive(TMainFrame *P, AGDrawObject& object) :
   Center();
 }
 //..............................................................................
-void TdlgPrimitive::OnOK(wxCommandEvent& event)  {
+void TdlgPrimitive::OnOK(wxCommandEvent& event) {
   Mask = 0;
-  for( size_t i=0; i < Boxes.Count(); i++ )  {
-    if( Boxes[i]->GetValue() )
+  for (size_t i = 0; i < Boxes.Count(); i++) {
+    if (Boxes[i]->GetValue())
       Mask |= (1 << i);
   }
-  if( cbApplyTo != NULL )
-    Level = cbApplyTo->GetSelection() + (3-cbApplyTo->GetCount());
+  if (cbApplyTo != NULL)
+    Level = cbApplyTo->GetSelection() + (3 - cbApplyTo->GetCount());
   EndModal(wxID_OK);
 }
 //..............................................................................

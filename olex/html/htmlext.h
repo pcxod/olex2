@@ -54,8 +54,6 @@ protected:
   void OnMouseUp(wxMouseEvent& event);
   void OnMouseMotion(wxMouseEvent& event);
   void OnCellMouseHover(wxHtmlCell *Cell, wxCoord x, wxCoord y);
-  void OnChildFocus(wxChildFocusEvent& event);
-  bool DoHandleFocusEvent(AOlxCtrl* prev, AOlxCtrl* next);
   void OnClipboard(wxClipboardTextEvent& event);
   olxstr OnSizeData, OnDblClickData;
   virtual bool Dispatch(int MsgId, short MsgSubId, const IEObject* Sender,
@@ -73,7 +71,6 @@ protected:
   THtmlSwitch* Root;
   olxdict<olxstr, AnAssociation3<AOlxCtrl*,wxWindow*,bool>,
     olxstrComparator<true> > Objects;
-  TTypeList<olx_pair_t<AOlxCtrl*,wxWindow*> > Traversables;
   olxstr_dict<size_t,true> SwitchStates;
   TTypeList<TStrList> Groups;
   olxstr FocusedControl;
@@ -109,11 +106,6 @@ protected:
     const olxstr& state_name);
   bool SetObjectImage(AOlxCtrl *AOlxCtrl, const olxstr& src);
   bool SetObjectItems(AOlxCtrl *AOlxCtrl, const olxstr& src);
-  void _FindNext(index_t from, index_t &dest, bool scroll) const;
-  void _FindPrev(index_t from, index_t &dest, bool scroll) const;
-  void GetTraversibleIndeces(index_t& current, index_t& another,
-    bool forward) const;
-  void DoNavigate(bool forward);
 public:
   THtml(THtmlManager &manager, wxWindow *Parent,
     const olxstr &pop_name=EmptyString(), int flags=4);

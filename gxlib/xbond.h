@@ -144,6 +144,11 @@ public:
   virtual const vec3d &GetBaseCrd() const;
   static TGraphicsStyle* GetParamStyle()  {  return FBondParams;  }
   static void CreateStaticObjects(TGlRenderer& parent);
+
+  static olxdict<olxstr, olxstr, olxstrComparator<false> > &NamesRegistry() {
+    static olxdict<olxstr, olxstr, olxstrComparator<false> > nr;
+    return nr;
+  }
 };
 
 EndGxlNamespace()

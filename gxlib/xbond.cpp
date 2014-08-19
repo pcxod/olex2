@@ -102,15 +102,24 @@ void TXBond::Update()  {
 //..............................................................................
 void TXBond::Create(const olxstr& cName)  {
   SetCreated(true);
-  if (!cName.IsEmpty())
+  olxstr Legend, strRef = GetRef().ToString();
+  if (!cName.IsEmpty())  {
     SetCollectionName(cName);
+    NamesRegistry().Add(strRef, Legend = cName);
+  }
+  else {
+    Legend = NamesRegistry().Find(strRef, EmptyString());
+    if (Legend.IsEmpty()) {
+      Legend = GetLegend(*this, 3);
+    }
+  }
   if (GetStaticPrimitives().IsEmpty())
     CreateStaticObjects(Parent);
   Label->SetFontIndex(Parent.GetScene().FindFontIndexForType<TXBond>());
   Label->Create();
   // find collection
   olxstr NewL;
-  TGPCollection* GPC = Parent.FindCollectionX(GetCollectionName(), NewL);
+  TGPCollection* GPC = Parent.FindCollectionX(Legend, NewL);
   if( GPC == NULL )
     GPC = &Parent.NewCollection(NewL);
   else if( GPC->PrimitiveCount() != 0 )  {
@@ -125,7 +134,7 @@ void TXBond::Create(const olxstr& cName)  {
     (GetType() == sotHBond) ? 2048 : DefMask(), IsMaskSaveable());
 
   GPC->AddObject(*this);
-  if( PrimitiveMask == 0 )
+  if (PrimitiveMask == 0)
     return;  // nothing to create then...
 
   Params()[4]= GS.GetNumParam('R', DefR());

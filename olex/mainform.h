@@ -67,14 +67,9 @@ enum  {
   ID_BondRadius,
 
   ID_AtomInfo,
-  ID_AtomType,
-  ID_AtomTypeChangeC,
-  ID_AtomTypeChangeN,
-  ID_AtomTypeChangeO,
-  ID_AtomTypeChangeF,
-  ID_AtomTypeChangeH,
-  ID_AtomTypeChangeS,
-  ID_AtomTypePTable,
+  ID_MenuAtomType,
+  ID_AtomTypeChange,
+  ID_AtomTypeChangeLast = ID_AtomTypeChange+120, // reserve some
   ID_AtomGrow,
   ID_AtomCenter,
   ID_AtomSelRings,
@@ -90,15 +85,10 @@ enum  {
   ID_FileLoad,
   ID_FileClose,
 
-  ID_View100,   // view menu
-  ID_View010,
-  ID_View001,
-  ID_View110,
-  ID_View101,
-  ID_View011,
-  ID_View111,
+  ID_ViewAlong,   // view menu
+  ID_ViewAlongLast = ID_ViewAlong + 6,
 
-  ID_AtomOccu,
+  ID_MenuAtomOccu,
   ID_AtomOccuCustom,
   ID_AtomOccu1,
   ID_AtomOccu34,
@@ -109,32 +99,22 @@ enum  {
   ID_AtomOccuFixCurrent,
   ID_AtomOccuFree,
 
-  ID_AtomConn,
-  ID_AtomConnCustom,
-  ID_AtomConn0,
-  ID_AtomConn1,
-  ID_AtomConn2,
-  ID_AtomConn3,
-  ID_AtomConn4,
-  ID_AtomConn12,
-  ID_AtomConn24,
+  ID_MenuAtomConn,
+  ID_AtomConnChange,
+  ID_AtomConnChangeLast = ID_AtomConnChange + 8,
 
-  ID_AtomUiso,
+  ID_MenuAtomUiso,
   ID_AtomUisoCustom,
   ID_AtomUiso15,
   ID_AtomUiso12,
   ID_AtomUisoFree,
   ID_AtomUisoFix,
 
-  ID_AtomPart,
-  ID_AtomPartCustom,
-  ID_AtomPart_2,
-  ID_AtomPart_1,
-  ID_AtomPart0,
-  ID_AtomPart1,
-  ID_AtomPart2,
+  ID_MenuAtomPart,
+  ID_AtomPartChange,
+  ID_AtomPartChangeLast = ID_AtomPartChange + 6,
 
-  ID_AtomPoly,
+  ID_MenuAtomPoly,
   ID_AtomPolyNone,
   ID_AtomPolyAuto,
   ID_AtomPolyRegular,
@@ -155,6 +135,8 @@ enum  {
   ID_GraphicsP,
   ID_GraphicsEdit,
   ID_GraphicsSelect,
+  ID_GraphicsCollectivise,
+  ID_GraphicsIndividualise,
 
   ID_GStyleSave,
   ID_GStyleOpen,
@@ -325,7 +307,6 @@ protected:
   void OnAtomPartChange(wxCommandEvent& event);
   void OnAtomUisoChange(wxCommandEvent& event);
   void OnAtomPolyChange(wxCommandEvent& event);
-  void OnAtomTypePTable(wxCommandEvent& event);
   void OnAtom(wxCommandEvent& event); // general handler
 
   void OnBond(wxCommandEvent& event);

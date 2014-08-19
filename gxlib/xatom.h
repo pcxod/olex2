@@ -244,6 +244,11 @@ public:
 
   static TGraphicsStyle* GetParamStyle() {  return FAtomParams;  }
   static void CreateStaticObjects(TGlRenderer& parent);
+
+  static olxdict<olxstr, olxstr, olxstrComparator<false> > &NamesRegistry() {
+    static olxdict<olxstr, olxstr, olxstrComparator<false> > nr;
+    return nr;
+  }
 };
 
 EndGxlNamespace()

@@ -273,13 +273,17 @@ void TXAtom::ValidateDS(TGraphicsStyle& GS)  {
 //..............................................................................
 void TXAtom::Create(const olxstr& cName)  {
   SetCreated(true);
-  olxstr Legend;
-  if( !cName.IsEmpty() )  {
+  olxstr Legend, strRef = GetRef().ToString();
+  if (!cName.IsEmpty())  {
     SetCollectionName(cName);
-    Legend = cName;
+    NamesRegistry().Add(strRef, Legend = cName);
   }
-  else
-    Legend = GetLegend(*this);
+  else {
+    Legend = NamesRegistry().Find(strRef, EmptyString());
+    if (Legend.IsEmpty()) {
+      Legend = GetLegend(*this);
+    }
+  }
 
   TGPCollection *GPC = NULL;
   if( FStaticObjects.IsEmpty() )

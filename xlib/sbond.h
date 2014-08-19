@@ -69,6 +69,10 @@ public:
       const int rv = a.Compare(r.a);
       return rv == 0 ? b.Compare(r.b) : rv;
     }
+
+    olxstr ToString() const {
+      return a.ToString() << b.ToString();
+    }
   };
 
   Ref GetRef() const {  return Ref(FA->GetRef(), FB->GetRef());  }

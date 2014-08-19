@@ -1511,8 +1511,8 @@ void GXLibMacros::macUniq(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &Error)
 {
   TXAtomPList Atoms = app.FindXAtoms(Cmds, false, true);
-  if( Atoms.IsEmpty() )  {
-    Error.ProcessingError(__OlxSrcInfo, "no atoms provided");
+  if (Atoms.IsEmpty()) {
+    olex2::IOlex2Processor::GetInstance()->processMacro("fmol");
     return;
   }
   TNetPList L(Atoms, FunctionAccessor::MakeConst(&TXAtom::GetNetwork));
@@ -2438,8 +2438,9 @@ void GXLibMacros::macIndividualise(TStrObjList &Cmds, const TParamList &Options,
     app.Individualise(atoms);
     app.Individualise(bonds);
   }
-  else
+  else {
     app.Individualise(app.FindXAtoms(Cmds, false, false).GetObject());
+  }
 }
 //..............................................................................
 void GXLibMacros::macCollectivise(TStrObjList &Cmds, const TParamList &Options,
