@@ -162,9 +162,8 @@ void TdlgMatProp::Init()  {
   tcShnF = new TTextEdit(this);  tcShnF->SetReadOnly(false);
   tcShnB = new TTextEdit(this);  tcShnB->SetReadOnly(false);
 
-  wxBoxSizer *Sizer0 = NULL;
+  wxBoxSizer *Sizer0 = new wxBoxSizer(wxHORIZONTAL);
   if (cbPrimitives != NULL || cbApplyTo != NULL) {
-    Sizer0 = new wxBoxSizer(wxHORIZONTAL);
     if (cbPrimitives != NULL) {
       Sizer0->Add(new wxStaticText(this, -1,
         wxT("Primitive: ")), 0, wxEXPAND | wxALL, Border);
@@ -174,19 +173,18 @@ void TdlgMatProp::Init()  {
       Sizer0->Add(new wxStaticText(this, -1, wxT("Apply to: ")), 0, wxEXPAND | wxALL, Border);
       Sizer0->Add(cbApplyTo, 0, wxFIXED_MINSIZE | wxALL, Border);
     }
-    Sizer0->Add(new wxButton(this, ID_COPY, wxT("Copy  Mat.")), 1, wxEXPAND | wxALL, Border);
-    Sizer0->Add(new wxButton(this, ID_PASTE, wxT("Paste Mat.")), 1, wxEXPAND | wxALL, Border);
     bEditFont = new wxButton(this, ID_EDITFONT, wxT("Edit Font"));
     bEditFont->Enable(Object->GetPrimitives().GetPrimitive(0).GetFont() != NULL &&
       !Object->GetPrimitives().GetPrimitive(0).GetFont()->IsVectorFont());
     Sizer0->Add(bEditFont, 1, wxEXPAND | wxALL, Border);
   }
   else if (cbBlend != NULL) {
-    Sizer0 = new wxBoxSizer(wxHORIZONTAL);
     Sizer0->Add(new wxStaticText(this, -1,
       wxT("Group color properties: ")), 0, wxEXPAND | wxALL, Border);
     Sizer0->Add(cbBlend, 1, wxEXPAND | wxALL, Border);
   }
+  Sizer0->Add(new wxButton(this, ID_COPY, wxT("Copy  Mat.")), 1, wxEXPAND | wxALL, Border);
+  Sizer0->Add(new wxButton(this, ID_PASTE, wxT("Paste Mat.")), 1, wxEXPAND | wxALL, Border);
 
 #if !wxCHECK_VERSION(2,9,0)
   wxFlexGridSizer *grid = new wxFlexGridSizer(6, 5);
@@ -309,7 +307,7 @@ bool TdlgMatProp::Execute(const IEObject *Sender, const IEObject *Data,
   return true;
 }
 //..............................................................................
-void TdlgMatProp::Init( const TGlMaterial &Glm )  {
+void TdlgMatProp::Init(const TGlMaterial &Glm) {
   cbAmbF->SetValue(Glm.HasAmbientF());
   cbAmbB->SetValue(Glm.HasAmbientB());
   scAmbF->SetValue(olx_round(Glm.AmbientF.Data()[3]*100));

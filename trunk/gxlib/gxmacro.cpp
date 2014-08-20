@@ -366,6 +366,73 @@ void GXLibMacros::macPack(TStrObjList &Cmds, const TParamList &Options,
 void GXLibMacros::macName(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &Error)
 {
+  if (Cmds.Count() == 2 && Cmds[0].Equalsi("collection")) {
+    sorted::PointerPointer<TGPCollection> old;
+    TGlGroup &sel = app.GetSelection();
+    for (size_t i = 0; i < sel.Count(); i++) {
+      if (old.AddUnique(&sel[i].GetPrimitives()).b) {
+        // check type of the objects
+        if (old.Count() > 1) {
+          size_t idx = (old[0] == &sel[i].GetPrimitives() ? 1 : 0);
+          if (typeid(old[idx]->GetObject(0)) != typeid(sel[i])) {
+            TBasicApp::NewLogEntry(logError) << "Mixed object collections";
+            return;
+          }
+        }
+      }
+    }
+    if (old.IsEmpty()) {
+      return;
+    }
+    bool create = false;
+    TGPCollection *gpc = app.GetRender().FindCollection(Cmds[1]);
+    if (gpc != NULL && gpc->ObjectCount() != 0) {
+      if (typeid(old[0]->GetObject(0)) != typeid(gpc->GetObject(0))) {
+        TBasicApp::NewLogEntry(logError) << "Destination collection is used "
+          "by different object type";
+        return;
+      }
+    }
+    else {
+      if (gpc != NULL) {
+        gpc->ClearPrimitives();
+      }
+      else {
+        gpc = &app.GetRender().NewCollection(Cmds[1]);
+      }
+      create = true;
+    }
+
+    for (size_t i = 0; i < sel.Count(); i++) {
+      sel[i].GetPrimitives().RemoveObject(sel[i]);
+      gpc->AddObject(sel[i]);
+    }
+    if (EsdlInstanceOf(sel[0], TXAtom)) {
+      for (size_t i = 0; i < sel.Count(); i++) {
+        TXAtom &a = dynamic_cast<TXAtom &>(sel[i]);
+        TXAtom::NamesRegistry().Add(a.GetRef().ToString(), Cmds[1]);
+      }
+    }
+    else if (EsdlInstanceOf(sel[0], TXBond)) {
+      for (size_t i = 0; i < sel.Count(); i++) {
+        TXBond &b = dynamic_cast<TXBond &>(sel[i]);
+        TXBond::NamesRegistry().Add(b.GetRef().ToString(), Cmds[1]);
+      }
+    }
+    else if (EsdlInstanceOf(sel[0], TXPlane)) {
+      for (size_t i = 0; i < sel.Count(); i++) {
+        TXPlane &p = dynamic_cast<TXPlane &>(sel[i]);
+        TXPlane::NamesRegistry().Add(p.GetDefId(), Cmds[1]);
+      }
+    }
+    if (create) {
+      AGDrawObject & o = gpc->GetObject(0);
+      gpc->DeleteObject(0);
+      o.Create();
+    }
+    sel.Clear();
+    return;
+  }
   bool checkLabels = Options.GetBoolOption('c');
   bool changeSuffix = Options.Contains('s');
   bool nameResi = Options.GetBoolOption('r');
@@ -2052,26 +2119,27 @@ void GXLibMacros::macPiM(TStrObjList &Cmds, const TParamList &Options,
     c /= rings[i].Count();
     ACollectionItem::Unique(ring_M[i]);
     for( size_t j=0; j < ring_M[i].Count(); j++ )  {
-      TXLine &l = app.AddLine(ring_M[i][j]->GetLabel()+olxstr(i),
+      TXLine *l = app.AddLine(ring_M[i][j]->GetLabel()+olxstr(i),
         ring_M[i][j]->crd(), c);
+      if (l == NULL) continue;
       TGraphicsStyle &ms = ((TXAtom*)ring_M[i][j])->GetPrimitives().GetStyle();
       TGlMaterial *sm = ms.FindMaterial("Sphere");
       if (sm != NULL) {
-        l.GetPrimitives().GetStyle().SetMaterial(
+        l->GetPrimitives().GetStyle().SetMaterial(
           TXBond::GetStaticPrimitives()[9], *sm);
       }
-      l.UpdatePrimitives((1<<9)|(1<<10));
-      l.SetRadius(0.5);
+      l->UpdatePrimitives((1<<9)|(1<<10));
+      l->SetRadius(0.5);
       ring_M[i][j]->SetTag(2);
-      if( !label )
-        l.GetGlLabel().SetVisible(false);
+      if (!label)
+        l->GetGlLabel().SetVisible(false);
     }
     // hide replaced bonds
   }
   TGXApp::BondIterator bi = app.GetBonds();
-  while( bi.HasNext() )  {
+  while (bi.HasNext()) {
     TXBond &b = bi.Next();
-    if( b.A().GetTag() == 2 && b.B().GetTag() == 1 )
+    if (b.A().GetTag() == 2 && b.B().GetTag() == 1)
       b.SetVisible(false);
   }
 }
@@ -3771,7 +3839,8 @@ void GXLibMacros::macSetMaterial(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &E)
 {
   TGlMaterial* mat = NULL;
-  TGlMaterial glm(Cmds[1]);
+  TGlMaterial glm;
+  glm.FromString(Cmds[1], true);
   sorted::PointerPointer<TGPCollection> colls;
   size_t di = Cmds[0].IndexOf('.');
   olxstr col_name = di != InvalidIndex ? Cmds[0].SubStringTo(di) : Cmds[0];

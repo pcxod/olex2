@@ -2471,7 +2471,9 @@ void TMainForm::macHklExtract(TStrObjList &Cmds, const TParamList &Options, TMac
   THklFile::SaveToFile(Cmds[0], Refs, true);
 }
 //..............................................................................
-void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
   // a Open dialog appearing breaks the wxWidgets sizing...
   if( !IsShown() && Cmds.IsEmpty() )  return;
   TStopWatch sw(__FUNC__);
@@ -2890,9 +2892,23 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       }
     }
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    {
+      ContentList cl = FXApp->XFile().GetAsymmUnit().GetContentList();
+      TStrList at("C;N;O;F;H;S", ';');
+      for (size_t i = 0; i < cl.Count(); i++) {
+        if (!at.Contains(cl[i].element.symbol)) {
+          at.Add(cl[i].element.symbol);
+        }
+      }
+      pmAtomType->Clear();
+      for (size_t i = 0; i < at.Count(); i++) {
+        pmAtomType->Append(ID_AtomTypeChange + i, at[i].u_str());
+        Bind(wxEVT_COMMAND_MENU_SELECTED,
+          &TMainForm::OnAtomTypeChange, this, ID_AtomTypeChange + i);
+      }
+    }
     FGlConsole->SetCommand(FGlConsole->GetCommand());  // force the update
     FXApp->Draw();
-    return;
   }
   else  {
     Error.ProcessingError(__OlxSrcInfo, EmptyString());

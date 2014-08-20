@@ -329,8 +329,18 @@ public:
   }
 
   template <class StrClass>
+  bool Contains(const StrClass& C) const {
+    return IndexOf(C) != InvalidIndex;
+  }
+
+  template <class StrClass>
   size_t IndexOfi(const StrClass& C) const {
     return FindIndexOf(C, true);
+  }
+
+  template <class StrClass>
+  bool Containsi(const StrClass& C) const {
+    return IndexOfi(C) != InvalidIndex;
   }
 
   template <class StrClass>
