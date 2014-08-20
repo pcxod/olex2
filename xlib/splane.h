@@ -142,6 +142,9 @@ public:
       }
       void ToDataItem(TDataItem& item) const;
       void FromDataItem(const TDataItem& item);
+      olxstr ToString() const {
+        return ref.ToString() << weight;
+      }
     };
     TTypeList<DefData> atoms;
     bool regular;
@@ -169,6 +172,14 @@ public:
       class TNetwork* parent, const smatd& matr) const;
     void ToDataItem(TDataItem& item) const;
     void FromDataItem(const TDataItem& item);
+    // a string hash for the plane definition
+    TIString ToString() const {
+      olxstr_buf rv;
+      for (size_t i = 0; i < atoms.Count(); i++) {
+        rv << atoms[i].ToString();
+      }
+      return olxstr(rv) << regular;
+    }
   };
 
   Def GetDef() const { return Def(*this);  }

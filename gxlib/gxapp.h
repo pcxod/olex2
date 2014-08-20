@@ -669,7 +669,7 @@ public:
   void ClearPlanes();
   TXPlane *FindPlane(const olxstr& PlaneName);
 
-  TXLine &AddLine(const olxstr& Name, const vec3d& base, const vec3d& edge);
+  TXLine *AddLine(const olxstr& Name, const vec3d& base, const vec3d& edge);
   void ClearLines()  {  Lines.Clear();  }
   size_t LineCount() const { return Lines.Count(); }
   TXLine &GetLine(size_t i) const{ return Lines[i]; }
