@@ -5599,46 +5599,52 @@ struct PointAnalyser : public TDSphere::PointAnalyser {
   TSAtom &center;
   TArrayList<uint32_t> colors;
   bool emboss;
+  sorted::ObjectPrimitive<uint32_t> added;
   PointAnalyser(const TLattice &l, TXAtom &c)
     : latt(l), center(c)
   {
-    size_t max_net_id = 0;
     for( size_t i=0; i < latt.GetObjects().atoms.Count(); i++ )  {
-      TSAtom &a = latt.GetObjects().atoms[i];
+      TXAtom &a = (TXAtom &)latt.GetObjects().atoms[i];
       if( !a.IsAvailable() )  continue;
-      if (a.CAtom().GetFragmentId() > max_net_id &&
-          a.CAtom().GetFragmentId() != ~0)
-      {
-        max_net_id = a.CAtom().GetFragmentId();
+      if (a.CAtom().GetFragmentId() != ~0) {
+        uint32_t ni = a.CAtom().GetFragmentId();
+        if (ni >= colors.Count()) {
+          colors.SetCount(ni+1);
+        }
+        if (a.IsGrouped()) {
+          colors[ni] = a.GetParentGroup()->GetGlM().AmbientF.GetRGB();
+        }
+        else {
+          TGlMaterial glm;
+          colors[ni] = a.GetPrimitives().GetStyle().GetMaterial("Sphere", glm)
+            .AmbientF.GetRGB();
+        }
       }
     }
-    colors.SetCount(max_net_id+1);
-    if( max_net_id >= 1 )  {
-      colors[0] = 0xff;
-      colors[1] = 0xff00;
-    }
-    if( max_net_id >= 2 )  {
-      colors[2] = 0xff0000;
-    }
   }
-  uint32_t Analyse(vec3f &p_)  {
-    uint64_t cl = 0;
-    size_t cnt = 0;
+  uint32_t Analyse(vec3f &p_) {
+    int r=0, g=0, b=0;
     vec3f p = p_;
     float maxd=1;
+    added.Clear();
     for( size_t i=0; i < latt.GetObjects().atoms.Count(); i++ )  {
       TSAtom &a = latt.GetObjects().atoms[i];
-      if( &a == &center || !a.IsAvailable() )
+      if (&a == &center || !a.IsAvailable())
         continue;
       vec3f v = a.crd() - center.crd();
       float dp = p.DotProd(v);
       if( dp < 0 )
         continue;
       float d = (v-p*dp).Length();
-      if( d < a.GetType().r_vdw )  {
+      if (d < a.GetType().r_vdw) {
+        if (!added.AddUnique(a.CAtom().GetFragmentId()).b) {
+          continue;
+        }
         if (a.CAtom().GetFragmentId() < colors.Count()) {
-          cl += colors[a.CAtom().GetFragmentId()];
-          cnt++;
+          uint32_t c = colors[a.CAtom().GetFragmentId()];
+          r += OLX_GetRValue(c);
+          g += OLX_GetGValue(c);
+          b += OLX_GetBValue(c);
         }
         if (dp > maxd)
           maxd = dp;
@@ -5646,13 +5652,18 @@ struct PointAnalyser : public TDSphere::PointAnalyser {
     }
     if (emboss)
       p_.NormaliseTo(maxd);
-    if( cnt == 0 )
-      cl = 0x00ffffff;
-    else if( cnt > 1 )
-      cl /= cnt;
-    if( OLX_GetAValue(cl) != 0 )
-      return cl;
-    return cl|(127<<24);
+    if (added.IsEmpty())
+      return 0x9cffffff;
+    else {
+      r /= added.Count();
+      g /= added.Count();
+      b /= added.Count();
+      return OLX_RGBA(
+        r > 255 ? 255 : r,
+        g > 255 ? 255 : g,
+        b > 255 ? 255 : b,
+        0x9c);
+    }
   }
 };
 void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -5688,7 +5699,13 @@ void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroE
   size_t g = Options.FindValue('g', 6).ToSizeT();
   if (g > 10)
     g = 10;
-  TDSphere *sph = new TDSphere(FXApp->GetRender(), pa, olxstr("Sph_") << ++counter);
+  {
+    TGPCollection *gp = FXApp->GetRender().FindCollection("SASphere");
+    if (gp != NULL) {
+      FXApp->GetRender().RemoveCollection(*gp);
+    }
+  }
+  TDSphere *sph = new TDSphere(FXApp->GetRender(), pa, olxstr("SASphere"));
   sph->SetGeneration(g);
   sph->Create();
   sph->Basis.SetCenter(xatoms[0]->crd());
@@ -5699,7 +5716,7 @@ void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroE
   TGXApp::AtomIterator atoms = FXApp->GetAtoms();
   while (atoms.HasNext()) {
     TXAtom &a = atoms.Next();
-    if (&a == xatoms[0] || !a.IsAvailable())
+    if (&a == xatoms[0] || !a.IsAvailable() || a.IsGrouped())
       continue;
     TGlGroup *glg = groups.Find(a.CAtom().GetFragmentId(), NULL);
     if (glg == NULL) {
@@ -5712,7 +5729,7 @@ void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroE
   TGXApp::BondIterator bonds = FXApp->GetBonds();
   while (bonds.HasNext()) {
     TXBond &b = bonds.Next();
-    if (!b.IsAvailable())
+    if (!b.IsAvailable() || b.A().IsGrouped())
       continue;
     TGlGroup *glg = groups.Find(b.A().CAtom().GetFragmentId(), NULL);
     if (glg == NULL) {
