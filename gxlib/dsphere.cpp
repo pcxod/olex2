@@ -50,6 +50,7 @@ void TDSphere::Create(const olxstr& cName)  {
     triags);
   const size_t tc = triags.Count();
   uint32_t last_cl = 0;
+  bool color_initialised = false;
   TArrayList<uint32_t> colors(vecs.Count());
   for (size_t i=0; i < vecs.Count(); i++)
     colors[i] = analyser.Analyse(vecs[i]);
@@ -64,7 +65,7 @@ void TDSphere::Create(const olxstr& cName)  {
         vec3f n = (vecs[t.vertices[0]]-vecs[t.vertices[1]]).XProdVec(
           vecs[t.vertices[2]]-vecs[t.vertices[1]]).Normalise();
         olx_gl::normal(-n);
-        if( cl != last_cl )  {
+        if (!color_initialised || cl != last_cl) {
           olx_gl::color((float)OLX_GetRValue(cl)/255,
             (float)OLX_GetGValue(cl)/255,
             (float)OLX_GetBValue(cl)/255,
