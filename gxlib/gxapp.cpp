@@ -4683,7 +4683,7 @@ void TGXApp::BuildSceneMask(FractMask& mask, double inc)  {
   }
   st.start("Building scene mask");
   SceneMaskTask task(au, atoms, cmap, *mdata);
-  TListIteratorManager<SceneMaskTask> im(task, atoms.Count(), tLinearTask, 10);
+  OlxListTask::Run(task, atoms.Count(), tLinearTask, 10);
 }
 //..............................................................................
 void TGXApp::SaveStructureStyle(TDataItem& item) const {

@@ -356,14 +356,12 @@ namespace SFUtil {
       if( centrosymmetric )  {
         SFCalculateTask<TRefList, true> task(*this, refs, hkl2c, F, scatterers,
           atoms, U, fpfdp);
-        TListIteratorManager<SFCalculateTask<TRefList, true> >
-          tasks(task, refs.Count(), tLinearTask, 50);
+        OlxListTask::Run(task, refs.Count(), tLinearTask, 50);
       }
       else  {
         SFCalculateTask<TRefList, false> task(*this, refs, hkl2c, F,
           scatterers, atoms, U, fpfdp);
-        TListIteratorManager<SFCalculateTask<TRefList, false> >
-          tasks(task, refs.Count(), tLinearTask, 50);
+        OlxListTask::Run(task, refs.Count(), tLinearTask, 50);
       }
     }
     virtual size_t GetSGOrder() const {  return sg::size;  }

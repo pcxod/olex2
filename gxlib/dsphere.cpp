@@ -16,6 +16,7 @@
 #include "glutil.h"
 #include "esphere.h"
 #include "glmouse.h"
+#include "estopwatch.h"
 
 TDSphere::TDSphere(TGlRenderer& R, PointAnalyser &pa,
   const olxstr& collectionName)
@@ -26,8 +27,36 @@ TDSphere::TDSphere(TGlRenderer& R, PointAnalyser &pa,
   SetSelectable(false);
 }
 //...........................................................................
+class PATask : public TaskBase {
+public:
+  TDSphere::PointAnalyser &analyser;
+  TTypeList<TVector3<float> > &vecs;
+  TArrayList<uint32_t> &colors;
+  bool delete_analyser;
+  PATask(TDSphere::PointAnalyser &analyser,
+    TTypeList<TVector3<float> > &vecs, TArrayList<uint32_t> &colors,
+    bool delete_analyser=false)
+    : analyser(analyser), vecs(vecs), colors(colors),
+    delete_analyser(delete_analyser)
+  {
+  }
+  ~PATask() {
+    if (delete_analyser) {
+      delete &analyser;
+    }
+  }
+  PATask * Replicate() {
+    return new PATask(*(TDSphere::PointAnalyser*)analyser.Replicate(),
+      vecs, colors, true);
+  }
+  void Run(size_t i) const {
+    colors[i] = analyser.Analyse(vecs[i]);
+  }
+};
+//...........................................................................
 void TDSphere::Create(const olxstr& cName)  {
-  if( !cName.IsEmpty() )
+  TStopWatch sw(__FUNC__);
+  if (!cName.IsEmpty())
     SetCollectionName(cName);
   olxstr NewL;
   TGPCollection* GPC = Parent.FindCollectionX(GetCollectionName(), NewL);
@@ -44,6 +73,7 @@ void TDSphere::Create(const olxstr& cName)  {
   m.SetColorMaterial(true);
   m.SetTransparent(true);
   GlP.SetProperties(m);
+  sw.start("Generating sphere");
   TTypeList<TVector3<float> > vecs;
   TTypeList<IndexTriangle> triags;
   OlxSphere<float,OctahedronFP<vec3f> >::Generate(1.0f, Generation, vecs,
@@ -52,19 +82,19 @@ void TDSphere::Create(const olxstr& cName)  {
   uint32_t last_cl = 0;
   bool color_initialised = false;
   TArrayList<uint32_t> colors(vecs.Count());
-  for (size_t i=0; i < vecs.Count(); i++)
-    colors[i] = analyser.Analyse(vecs[i]);
+  sw.start("Running the analysis");
+  PATask pa_task(analyser, vecs, colors);
+  OlxListTask::Run(pa_task, vecs.Count(), tLinearTask, 1000);
+  sw.start("Building the object");
   GlP.StartList();
   olx_gl::colorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
   olx_gl::begin(GL_TRIANGLES);
-  for( size_t i = 0; i < tc; i++ )  {
+  for (size_t i = 0; i < tc; i++) {
     const IndexTriangle& t = triags[i];
     try {
-      for( size_t j=0; j < 3; j++ )  {
+      for (size_t j=0; j < 3; j++) {
         uint32_t cl = colors[t.vertices[j]];
-        vec3f n = (vecs[t.vertices[0]]-vecs[t.vertices[1]]).XProdVec(
-          vecs[t.vertices[2]]-vecs[t.vertices[1]]).Normalise();
-        olx_gl::normal(-n);
+        olx_gl::normal(vecs[t.vertices[j]]);
         if (!color_initialised || cl != last_cl) {
           olx_gl::color((float)OLX_GetRValue(cl)/255,
             (float)OLX_GetGValue(cl)/255,
@@ -81,6 +111,7 @@ void TDSphere::Create(const olxstr& cName)  {
   }
   olx_gl::end();
   GlP.EndList();
+  sw.start("Exiting the procedure");
 }
 //...........................................................................
 bool TDSphere::Orient(TGlPrimitive& P)  {

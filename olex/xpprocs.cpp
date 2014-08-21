@@ -4172,8 +4172,7 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     ft.GetRoot().ListFiles(files, "*.cif");
     TStrList out;
     ExtractInfoTask task(files, out);
-    TListIteratorManager<ExtractInfoTask> job(task, files.Count(),
-      tLinearTask, 20);
+    OlxListTask::Run(task, files.Count(), tLinearTask, 20);
     TEFile::WriteLines("e:/c-v.txt", TCStrList(out));
   }
   {
@@ -5596,16 +5595,24 @@ void TMainForm::macShowSymm(TStrObjList &Cmds, const TParamList &Options, TMacro
 //..............................................................................
 struct PointAnalyser : public TDSphere::PointAnalyser {
   const TLattice &latt;
-  TSAtom &center;
+  const TSAtom &center;
   TArrayList<uint32_t> colors;
   bool emboss;
-  sorted::ObjectPrimitive<uint32_t> added;
+  uint8_t alpha;
+protected:
+  PointAnalyser(const PointAnalyser &pa)
+    : latt(pa.latt), center(pa.center), colors(pa.colors),
+    emboss(pa.emboss), alpha(pa.alpha)
+  {}
+public:
   PointAnalyser(const TLattice &l, TXAtom &c)
     : latt(l), center(c)
   {
-    for( size_t i=0; i < latt.GetObjects().atoms.Count(); i++ )  {
+    alpha = 0x9c;
+    olxdict<uint32_t, int, TPrimitiveComparator> highest;
+    for (size_t i=0; i < latt.GetObjects().atoms.Count(); i++) {
       TXAtom &a = (TXAtom &)latt.GetObjects().atoms[i];
-      if( !a.IsAvailable() )  continue;
+      if (!a.IsAvailable()) continue;
       if (a.CAtom().GetFragmentId() != ~0) {
         uint32_t ni = a.CAtom().GetFragmentId();
         if (ni >= colors.Count()) {
@@ -5615,9 +5622,12 @@ struct PointAnalyser : public TDSphere::PointAnalyser {
           colors[ni] = a.GetParentGroup()->GetGlM().AmbientF.GetRGB();
         }
         else {
-          TGlMaterial glm;
-          colors[ni] = a.GetPrimitives().GetStyle().GetMaterial("Sphere", glm)
-            .AmbientF.GetRGB();
+          if (a.GetType().z > highest.Find(a.CAtom().GetFragmentId(), 0)) {
+            TGlMaterial glm;
+            colors[ni] = a.GetPrimitives().GetStyle().GetMaterial("Sphere", glm)
+              .AmbientF.GetRGB();
+            highest.Add(a.CAtom().GetFragmentId(), a.GetType().z);
+          }
         }
       }
     }
@@ -5626,7 +5636,7 @@ struct PointAnalyser : public TDSphere::PointAnalyser {
     int r=0, g=0, b=0;
     vec3f p = p_;
     float maxd=1;
-    added.Clear();
+    sorted::ObjectPrimitive<uint32_t> added;
     for( size_t i=0; i < latt.GetObjects().atoms.Count(); i++ )  {
       TSAtom &a = latt.GetObjects().atoms[i];
       if (&a == &center || !a.IsAvailable())
@@ -5653,7 +5663,7 @@ struct PointAnalyser : public TDSphere::PointAnalyser {
     if (emboss)
       p_.NormaliseTo(maxd);
     if (added.IsEmpty())
-      return 0x9cffffff;
+      return 0x00ffffff|((uint32_t)alpha << 24);
     else {
       r /= added.Count();
       g /= added.Count();
@@ -5662,8 +5672,11 @@ struct PointAnalyser : public TDSphere::PointAnalyser {
         r > 255 ? 255 : r,
         g > 255 ? 255 : g,
         b > 255 ? 255 : b,
-        0x9c);
+        alpha);
     }
+  }
+  IEObject *Replicate() const {
+    return new PointAnalyser(*this);
   }
 };
 void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -5681,6 +5694,7 @@ void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroE
   }
   static size_t counter = 0;
   PointAnalyser &pa = *new PointAnalyser(FXApp->XFile().GetLattice(), *xatoms[0]);
+  pa.alpha = Options.FindValue('a', "0x9c").SafeUInt<uint8_t>();
   pa.emboss = Options.GetBoolOption('e');
   {
     if( pa.colors.Count() == 1 && !colors.IsEmpty() )
@@ -5729,7 +5743,7 @@ void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroE
   TGXApp::BondIterator bonds = FXApp->GetBonds();
   while (bonds.HasNext()) {
     TXBond &b = bonds.Next();
-    if (!b.IsAvailable() || b.A().IsGrouped())
+    if (!b.IsAvailable() || b.IsGrouped())
       continue;
     TGlGroup *glg = groups.Find(b.A().CAtom().GetFragmentId(), NULL);
     if (glg == NULL) {

@@ -100,7 +100,7 @@ public:
     for (size_t i=0; i < v2.Count(); i++)
       QL[i] = v2[i].QLength();
     DiffTask dt(v1, v2, triags, QL, used, used1);
-    TListIteratorManager<DiffTask> tasks(dt, v1.Count(), tLinearTask, 1000);
+    OlxListTask::Run(dt, v1.Count(), tLinearTask, 1000);
     out1.SetCapacity(out1.Count()+triags.Count());
     out2.SetCapacity(out2.Count()+triags.Count());
     for (size_t i=0; i < triags.Count(); i++) {

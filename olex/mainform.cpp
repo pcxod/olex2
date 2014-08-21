@@ -833,7 +833,8 @@ void TMainForm::XApp(Olex2App *XA)  {
     "Exports selected fragment to an external file");
   this_InitMacroD(ProjSph,
     "g-sphere quality [6]&;"
-    "e-emboss the sphere"
+    "e-emboss the sphere&;"
+    "a-transparency level [0x9c] 0 - 255&;"
     ,
     fpAny|psFileLoaded,
     "Creates a projection from the selected atom onto a sphere, coloring each "

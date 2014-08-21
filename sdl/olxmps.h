@@ -58,89 +58,95 @@ template <class TaskClass> class TArrayIterationItem : public ITask {
 
 
 template <class TaskClass> class TListIteratorManager {
-    TTypeList<TArrayIterationItem<TaskClass> > Items;
-    TPtrList<TaskClass> Tasks;
-  protected:
-    void CalculateRatios(eveci& res, size_t ListSize, const short TaskType)  {
-      if( TaskType == tLinearTask )  {
-        const short mt = TBasicApp::GetInstance().GetMaxThreadCount();
-        res.Resize(mt);  // max 4 threads to support
-        res[0] = (int)(ListSize/mt);
-        for( short i=1; i < mt-1; i++ ) res[i] = res[0];
-        if( mt > 1 )
-          res[mt-1] = (int)(ListSize - (int)((mt-1)*res[0]));
-      }
-      else if( TaskType == tQuadraticTask )  {
-        const short mt = olx_min(4,
-          TBasicApp::GetInstance().GetMaxThreadCount());
-        res.Resize(mt);  // max 4 threads to support
-        switch( mt )  {
-          case 1:
-            res[0] = (int)ListSize;
-            break;
-          case 2:
-            res[0] = (int)(ListSize*(2-sqrt(2.0))/2);
-            res[1] = (int)(ListSize - res[0]);
-            break;
-          case 3:
-            res[0] = (int)(ListSize*(2-sqrt(8.0/3))/2);
-            res[1] = (int)(ListSize*(2-sqrt(4.0/3))/2 - res[0]);
-            res[2] = (int)(ListSize - (res[0]+res[1]));
-            break;
-          case 4:
-            res[0] = (int)(ListSize*(2-sqrt(3.0))/2);
-            res[1] = (int)(ListSize*(2-sqrt(2.0))/2 - res[0]);
-            res[2] = (int)((ListSize - (res[0]+res[1]))*(2-sqrt(2.0))/2);
-            res[3] = (int)(ListSize - (res[0]+res[1]+res[2]));
-            break;
-          default:
-            throw TInvalidArgumentException(__OlxSourceInfo, "thread count");
-        }
-      }
-      else {
-        throw TInvalidArgumentException(__OlxSourceInfo,
-          "unknown task complexity");
+  TTypeList<TArrayIterationItem<TaskClass> > Items;
+  TPtrList<TaskClass> Tasks;
+protected:
+  void CalculateRatios(eveci& res, size_t ListSize, const short TaskType)  {
+    if( TaskType == tLinearTask )  {
+      const short mt = TBasicApp::GetInstance().GetMaxThreadCount();
+      res.Resize(mt);  // max 4 threads to support
+      res[0] = (int)(ListSize/mt);
+      for( short i=1; i < mt-1; i++ ) res[i] = res[0];
+      if( mt > 1 )
+        res[mt-1] = (int)(ListSize - (int)((mt-1)*res[0]));
+    }
+    else if( TaskType == tQuadraticTask )  {
+      const short mt = olx_min(4,
+        TBasicApp::GetInstance().GetMaxThreadCount());
+      res.Resize(mt);  // max 4 threads to support
+      switch( mt )  {
+        case 1:
+          res[0] = (int)ListSize;
+          break;
+        case 2:
+          res[0] = (int)(ListSize*(2-sqrt(2.0))/2);
+          res[1] = (int)(ListSize - res[0]);
+          break;
+        case 3:
+          res[0] = (int)(ListSize*(2-sqrt(8.0/3))/2);
+          res[1] = (int)(ListSize*(2-sqrt(4.0/3))/2 - res[0]);
+          res[2] = (int)(ListSize - (res[0]+res[1]));
+          break;
+        case 4:
+          res[0] = (int)(ListSize*(2-sqrt(3.0))/2);
+          res[1] = (int)(ListSize*(2-sqrt(2.0))/2 - res[0]);
+          res[2] = (int)((ListSize - (res[0]+res[1]))*(2-sqrt(2.0))/2);
+          res[3] = (int)(ListSize - (res[0]+res[1]+res[2]));
+          break;
+        default:
+          throw TInvalidArgumentException(__OlxSourceInfo, "thread count");
       }
     }
-  public:
-    TListIteratorManager(TaskClass& task, size_t ListSize, const short TaskType,
-      size_t minSize)
-    {
-      Tasks.Add(&task);  // must not delete it!!!
-      // should we create parallel tasks then at all?
-      if( ListSize < minSize || TThreadPool::GetSlotsCount() == 1)  {
-        for( size_t i=0; i < ListSize; i++ )
-          task.Run(i);
-        return;
-      }
-      eveci ratios;
-      CalculateRatios(ratios, ListSize, TaskType);
-      size_t startIndex = 0;
-      TaskClass* taskInstance = &task;
-      olx_critical_section cs;
-      for( size_t i=0; i < ratios.Count(); i++ )  {
-        if( i > 0 )  {
-          taskInstance = task.Replicate();
-          Tasks.Add(*taskInstance);
-        }
-        Tasks[i]->SetCriticalSection(cs);
-        TArrayIterationItem<TaskClass>& item = Items.Add(
-          new TArrayIterationItem<TaskClass>(*taskInstance,
-            startIndex, startIndex + ratios[i]));
-        startIndex += ratios[i];
-        item.SetId((uint16_t)(Items.Count()-1));
-        TThreadPool::AllocateTask(item);
-      }
-      TThreadPool::DoRun();
+    else {
+      throw TInvalidArgumentException(__OlxSourceInfo,
+        "unknown task complexity");
     }
-    ~TListIteratorManager()  {
-      Tasks.Delete(0);
-      Tasks.DeleteItems(false);
+  }
+public:
+  TListIteratorManager(TaskClass& task, size_t ListSize, const short TaskType,
+    size_t minSize)
+  {
+    Tasks.Add(&task);  // must not delete it!!!
+    // should we create parallel tasks then at all?
+    if( ListSize < minSize || TThreadPool::GetSlotsCount() == 1)  {
+      for( size_t i=0; i < ListSize; i++ )
+        task.Run(i);
+      return;
     }
-    size_t Count() {  return Tasks.Count();  }
-    TaskClass& operator [] (size_t i) {  return *Tasks[i];  }
-    const TaskClass& operator [] (size_t i) const {  return *Tasks[i];  }
-  };
+    eveci ratios;
+    CalculateRatios(ratios, ListSize, TaskType);
+    size_t startIndex = 0;
+    TaskClass* taskInstance = &task;
+    olx_critical_section cs;
+    for( size_t i=0; i < ratios.Count(); i++ )  {
+      if( i > 0 )  {
+        taskInstance = task.Replicate();
+        Tasks.Add(*taskInstance);
+      }
+      Tasks[i]->SetCriticalSection(cs);
+      TArrayIterationItem<TaskClass>& item = Items.Add(
+        new TArrayIterationItem<TaskClass>(*taskInstance,
+          startIndex, startIndex + ratios[i]));
+      startIndex += ratios[i];
+      item.SetId((uint16_t)(Items.Count()-1));
+      TThreadPool::AllocateTask(item);
+    }
+    TThreadPool::DoRun();
+  }
+  ~TListIteratorManager()  {
+    Tasks.Delete(0);
+    Tasks.DeleteItems(false);
+  }
+  size_t Count() {  return Tasks.Count();  }
+  TaskClass& operator [] (size_t i) {  return *Tasks[i];  }
+  const TaskClass& operator [] (size_t i) const {  return *Tasks[i];  }
+};
 
+struct OlxListTask {
+  template <class task_t>
+  static void Run(task_t &task, size_t size, short type, size_t limit) {
+    TListIteratorManager<task_t>(task, size, type, limit);
+  }
+};
 EndEsdlNamespace()
 #endif

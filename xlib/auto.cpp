@@ -1198,8 +1198,7 @@ ConstTypeList<TAutoDB::TAnalysisResult> TAutoDB::AnalyseNet(TNetwork& net)  {
     return res;
   }
   TAnalyseNetNodeTask analyseNetNodeTask(Nodes, *sn, guesses);
-  TListIteratorManager<TAnalyseNetNodeTask> nodesAnalysis(
-    analyseNetNodeTask, sn_count, tLinearTask, 0);
+  OlxListTask::Run(analyseNetNodeTask, sn_count, tLinearTask, 0);
   uint16_t cindexes[MaxConnectivity];
   TArrayList<short> node_lists(sn_count);
   for( size_t i=0; i < sn_count; i++ )  {
@@ -1339,8 +1338,7 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
     gc.atom = &cas[i]->CAtom();
   }
   TAnalyseNetNodeTask analyseNetNodeTask(Nodes, *sn, guesses);
-  TListIteratorManager<TAnalyseNetNodeTask> nodesAnalysis(
-    analyseNetNodeTask, sn_count, tLinearTask, 0);
+  OlxListTask::Run(analyseNetNodeTask, sn_count, tLinearTask, 0);
   //TListIteratorManager<TAnalyseNetNodeTask> nodesAnalysis(analyseNetNodeTask, sn->Count(), tQuadraticTask);
   uint16_t cindexes[MaxConnectivity];
   uint16_t UisoCnt = 0;
