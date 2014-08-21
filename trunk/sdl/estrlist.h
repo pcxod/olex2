@@ -152,7 +152,7 @@ public:
   }
   string_type& GetString(size_t i, bool safe) const {
     if (safe) {
-      return GetStringSafe(i)
+      return GetStringSafe(i);
     }
     return GetString(i);
   }

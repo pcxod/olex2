@@ -16,7 +16,7 @@ BeginGxlNamespace()
 
 class TDSphere: public AGlMouseHandlerImp  {
 public:
-  struct PointAnalyser {
+  struct PointAnalyser : public IEObject {
     virtual ~PointAnalyser()  {}
     virtual uint32_t Analyse(vec3f &p) = 0;
   };

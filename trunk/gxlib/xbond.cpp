@@ -102,15 +102,26 @@ void TXBond::Update()  {
 //..............................................................................
 void TXBond::Create(const olxstr& cName)  {
   SetCreated(true);
-  olxstr Legend, strRef = GetRef().ToString();
-  if (!cName.IsEmpty())  {
-    SetCollectionName(cName);
-    NamesRegistry().Add(strRef, Legend = cName);
+  olxstr Legend;
+  if (EsdlInstanceOf(*this, TXBond)) {
+    olxstr strRef = GetRef().ToString();
+    if (!cName.IsEmpty())  {
+      SetCollectionName(cName);
+      NamesRegistry().Add(strRef, Legend = cName);
+    }
+    else {
+      Legend = NamesRegistry().Find(strRef, EmptyString());
+      if (Legend.IsEmpty()) {
+        Legend = GetLegend(*this, 3);
+      }
+    }
   }
   else {
-    Legend = NamesRegistry().Find(strRef, EmptyString());
-    if (Legend.IsEmpty()) {
-      Legend = GetLegend(*this, 3);
+    if (cName.IsEmpty()) {
+      Legend = GetCollectionName();
+    }
+    else {
+      Legend = cName;
     }
   }
   if (GetStaticPrimitives().IsEmpty())

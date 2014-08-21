@@ -396,8 +396,7 @@ void TUnitCell::FindSymmEq() const {
   else  {
     TSearchSymmEqTask searchTask(ACA, Matrices);
     searchTask.InitEquiv();
-    TListIteratorManager<TSearchSymmEqTask> searchm(searchTask, ACA.Count(),
-      tQuadraticTask, 1000);
+    OlxListTask::Run(searchTask, ACA.Count(), tQuadraticTask, 1000);
     for( size_t i=0; i < ACA.Count(); i++ )
       ACA[i]->UpdateAttachedSites();
   }
@@ -989,7 +988,7 @@ void TUnitCell::BuildDistanceMap_Direct(TArray3D<short>& _map, double delta, sho
   TArray3D<float> map(0, dims[0]-1, 0, dims[1]-1, 0, dims[2]-1);
   map.InitWith(10000);
   TBuildDistanceMapTask task(tm, map.Data, dims, allAtoms);
-  TListIteratorManager<TBuildDistanceMapTask> taskm(task, dims[0], tLinearTask, 0);
+  OlxListTask::Run(task, dims[0], tLinearTask, 0);
   task.clear_loop_data();
   float scale = (float)dims[0]/(float)Lattice->GetAsymmUnit().GetAxes()[0];
   for( size_t i=0; i < dims[0]; i++ )  {
