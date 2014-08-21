@@ -4061,7 +4061,17 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
   TSpaceGroup &sg = TSymmLib::GetInstance().FindSG(Cif->GetAsymmUnit());
   Cif->SetParam("_space_group_crystal_system",
     sg.GetBravaisLattice().GetName().ToLowerCase(), true);
-  Cif->SetParam("_space_group_name_Hall", sg.GetHallSymbol(), true);
+  const olxstr hall_symbol = Cif->GetParamAsString("_space_group_name_Hall");
+  if (hall_symbol.IsEmpty() || hall_symbol == '?') {
+    Cif->SetParam("_space_group_name_Hall", sg.GetHallSymbol(), true);
+  }
+  else {
+    if (hall_symbol != sg.GetHallSymbol()) {
+      TBasicApp::NewLogEntry(logWarning) << "Note that the provided '" <<
+        hall_symbol << "' and calculated '" << sg.GetHallSymbol() <<
+        "' are different";
+    }
+  }
   Cif->SetParam("_space_group_name_H-M_alt", sg.GetFullName(), true);
   Cif->SetParam("_space_group_IT_number", sg.GetNumber(), false);
   if( !sg.IsCentrosymmetric() &&
