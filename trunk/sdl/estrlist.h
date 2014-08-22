@@ -592,7 +592,7 @@ public:
   ConstStrList<TTStrList<T> > Filter(const Functor& f) const {
     TTStrList rv;
     rv.SetCapacity(Count());
-    for (size_t i = 0; i < String.Count(); i++) {
+    for (size_t i = 0; i < Strings.Count(); i++) {
       if (f.OnItem(*Strings[i], i)) {
         rv.AddCopy(*Strings[i]);
       }
