@@ -54,30 +54,25 @@ public:
   }
 };
 //...........................................................................
-void TDSphere::Create(const olxstr& cName)  {
+TGlPrimitive &TDSphere::CreatePrimitive(TGPCollection &GPC,
+  const olxstr &name, size_t gen, bool update_vec_cnt)
+{
   TStopWatch sw(__FUNC__);
-  if (!cName.IsEmpty())
-    SetCollectionName(cName);
-  olxstr NewL;
-  TGPCollection* GPC = Parent.FindCollectionX(GetCollectionName(), NewL);
-  if( GPC == NULL )
-    GPC = &Parent.NewCollection(NewL);
-  GPC->AddObject(*this);
-  if( GPC->PrimitiveCount() != 0 )  return;
-
-  TGraphicsStyle& GS = GPC->GetStyle();
-  GS.SetSaveable(false);
-  TGlPrimitive& GlP = GPC->NewPrimitive("Sphere", sgloCommandList);
+  TGraphicsStyle& GS = GPC.GetStyle();
+  TGlPrimitive& GlP = GPC.NewPrimitive(name, sgloCommandList);
   TGlMaterial &m = GS.GetMaterial("Object",
-      TGlMaterial("85;0;4286611584;4290822336;64"));
+    TGlMaterial("85;0;4286611584;4290822336;64"));
   m.SetColorMaterial(true);
   m.SetTransparent(true);
   GlP.SetProperties(m);
   sw.start("Generating sphere");
   TTypeList<TVector3<float> > vecs;
   TTypeList<IndexTriangle> triags;
-  OlxSphere<float,OctahedronFP<vec3f> >::Generate(1.0f, Generation, vecs,
+  OlxSphere<float, OctahedronFP<vec3f> >::Generate(1.0f, gen, vecs,
     triags);
+  if (update_vec_cnt) {
+    vec_cnt = vecs.Count();
+  }
   const size_t tc = triags.Count();
   uint32_t last_cl = 0;
   bool color_initialised = false;
@@ -92,32 +87,60 @@ void TDSphere::Create(const olxstr& cName)  {
   for (size_t i = 0; i < tc; i++) {
     const IndexTriangle& t = triags[i];
     try {
-      for (size_t j=0; j < 3; j++) {
+      for (size_t j = 0; j < 3; j++) {
         uint32_t cl = colors[t.vertices[j]];
         olx_gl::normal(vecs[t.vertices[j]]);
         if (!color_initialised || cl != last_cl) {
-          olx_gl::color((float)OLX_GetRValue(cl)/255,
-            (float)OLX_GetGValue(cl)/255,
-            (float)OLX_GetBValue(cl)/255,
-            (float)OLX_GetAValue(cl)/255);
+          olx_gl::color((float)OLX_GetRValue(cl) / 255,
+            (float)OLX_GetGValue(cl) / 255,
+            (float)OLX_GetBValue(cl) / 255,
+            (float)OLX_GetAValue(cl) / 255);
           last_cl = cl;
         }
         olx_gl::vertex(vecs[t.vertices[j]]);
       }
     }
-    catch(TDivException) {
+    catch (TDivException) {
       break;
     }
   }
   olx_gl::end();
   GlP.EndList();
-  sw.start("Exiting the procedure");
+  return GlP;
 }
 //...........................................................................
-bool TDSphere::Orient(TGlPrimitive& P)  {
+void TDSphere::Create(const olxstr& cName)  {
+  volatile TStopWatch sw(__FUNC__);
+  if (!cName.IsEmpty())
+    SetCollectionName(cName);
+  olxstr NewL;
+  TGPCollection* GPC = Parent.FindCollectionX(GetCollectionName(), NewL);
+  if (GPC == NULL)
+    GPC = &Parent.NewCollection(NewL);
+  GPC->AddObject(*this);
+  if (GPC->PrimitiveCount() != 0)  return;
+
+  TGraphicsStyle& GS = GPC->GetStyle();
+  GS.SetSaveable(false);
+  analyser.SetDryRun(false);
+  current = highq = &CreatePrimitive(*GPC, "Sphere", Generation, true);
+  if (Generation > 6) {
+    analyser.SetDryRun(true);
+    lowq = &CreatePrimitive(*GPC, "SphereLQ", 5, false);
+  }
+  else {
+    lowq = NULL;
+  }
+}
+//...........................................................................
+bool TDSphere::Orient(TGlPrimitive& P) {
+  if (&P != current) {
+    return true;
+  }
   olx_gl::orient(Basis.GetMDataT());
   olx_gl::scale(Basis.GetZoom());
-  return false;
+  current->Draw();
+  return true;
 }
 //...........................................................................
 bool TDSphere::OnDblClick(const IEObject *obj_, const TMouseData& md) {
