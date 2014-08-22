@@ -185,7 +185,9 @@ void GXLibMacros::Export(TLibrary& lib) {
   gxlib_InitMacro(Basis, EmptyString(), fpNone|fpOne,
     "Shows/hides the orientation basis");
   gxlib_InitMacro(Group,
-    "n-a custom name can be provided",
+    "n-a custom name can be provided&;"
+    "u-ungroups given group"
+    ,
     fpNone|fpOne|psFileLoaded,
   "Groups current visible objects or selection");
   gxlib_InitMacro(Fmol, EmptyString(), fpNone|psFileLoaded,
@@ -1595,6 +1597,10 @@ void GXLibMacros::macUniq(TStrObjList &Cmds, const TParamList &Options,
 void GXLibMacros::macGroup(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &Error)
 {
+  if (Options.GetBoolOption('u')) {
+    app.UnGroupSelection();
+    return;
+  }
   olxstr name = Options.FindValue('n');
   if (app.GetSelection().IsEmpty())
     app.SelectAll(true);
