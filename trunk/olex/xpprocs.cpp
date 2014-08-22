@@ -5597,18 +5597,20 @@ struct PointAnalyser : public TDSphere::PointAnalyser {
   const TLattice &latt;
   const TSAtom &center;
   TArrayList<uint32_t> colors;
-  bool emboss;
+  bool emboss, dry_run;
   uint8_t alpha;
+  static olx_critical_section cs;
 protected:
   PointAnalyser(const PointAnalyser &pa)
     : latt(pa.latt), center(pa.center), colors(pa.colors),
-    emboss(pa.emboss), alpha(pa.alpha)
+    emboss(pa.emboss), dry_run(pa.dry_run), alpha(pa.alpha)
   {}
 public:
   PointAnalyser(const TLattice &l, TXAtom &c)
     : latt(l), center(c)
   {
     alpha = 0x9c;
+    dry_run = false;
     olxdict<uint32_t, int, TPrimitiveComparator> highest;
     for (size_t i=0; i < latt.GetObjects().atoms.Count(); i++) {
       TXAtom &a = (TXAtom &)latt.GetObjects().atoms[i];
@@ -5631,7 +5633,9 @@ public:
         }
       }
     }
+    areas.Clear();
   }
+  void SetDryRun(bool v) { dry_run = v; }
   uint32_t Analyse(vec3f &p_) {
     int r=0, g=0, b=0;
     vec3f p = p_;
@@ -5660,14 +5664,24 @@ public:
           maxd = dp;
       }
     }
+    // update area info
+    if (!dry_run) {
+      cs.enter();
+      areas.Add(olxstr(';').Join(added), 0)++;
+      cs.leave();
+    }
     if (emboss)
       p_.NormaliseTo(maxd);
     if (added.IsEmpty())
       return 0x00ffffff|((uint32_t)alpha << 24);
     else {
-      r /= added.Count();
-      g /= added.Count();
-      b /= added.Count();
+      int s = (int)added.Count();
+      if (s > 1) { // make darker
+        s++;
+      }
+      r /= s;
+      g /= s;
+      b /= s;
       return OLX_RGBA(
         r > 255 ? 255 : r,
         g > 255 ? 255 : g,
@@ -5678,7 +5692,11 @@ public:
   IEObject *Replicate() const {
     return new PointAnalyser(*this);
   }
+  static olxstr_dict<size_t, false> areas;
 };
+olx_critical_section PointAnalyser::cs;
+olxstr_dict<size_t, false> PointAnalyser::areas;
+
 void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TArrayList<uint32_t> colors;
   for( size_t i=0; i < Cmds.Count(); i++ )  {
@@ -5761,6 +5779,33 @@ void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroE
     groups.GetValue(i)->SetGlM(glm);
   }
   FXApp->AddObjectToCreate(sph);
+  for (size_t i = 0; i < pa.areas.Count(); i++) {
+    olxstr legend;
+    if (pa.areas.GetKey(i).IsEmpty()) {
+      legend = "Accessible";
+    }
+    else {
+      TStrList toks(pa.areas.GetKey(i), ';');
+      for (size_t j = 0; j < toks.Count(); j++) {
+        TNetwork &n = FXApp->XFile().GetLattice().GetFragment(toks[j].ToSizeT());
+        size_t cnt = olx_min(3, n.NodeCount());
+        legend << '{';
+        for (size_t j = 0; j < cnt; j++) {
+          legend << n.Node(j).CAtom().GetResiLabel() << ',';
+        }
+        if (cnt < n.NodeCount()) {
+          legend << "...";
+        }
+        legend << "},";
+      }
+      if (!legend.IsEmpty()) {
+        legend.SetLength(legend.Length() - 1);
+      }
+    }
+    TBasicApp::NewLogEntry() << legend << ", " << pa.areas.GetKey(i) << ": " <<
+      olxstr::FormatFloat(2,
+        (double)(pa.areas.GetValue(i)*100)/sph->GetVectorCount());
+  }
 }
 //..............................................................................
 void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options,
