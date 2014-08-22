@@ -2224,8 +2224,7 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To, bool CheckLabel,
       Atoms = FindXAtoms(From, ClearSelection);
       TXAtomPList ChangedAtoms;
       // leave only AU atoms
-      Atoms.ForEach(ACollectionItem::IndexTagSetter());
-      Atoms.Pack(ACollectionItem::IndexTagAnalyser());
+      ACollectionItem::Unify(Atoms);
       if (From.Equalsi("sel") && To.IsNumber()) {
         int j = To.ToInt();
         for (size_t i=0; i < Atoms.Count(); i++) {
@@ -3123,7 +3122,7 @@ ConstPtrList<TXBond> TGXApp::GetBonds(const TStrList& Bonds, bool inc_lines)  {
           List.Add(xa.Bond(j));
       }
     }
-    return ACollectionItem::Unique(List);
+    return ACollectionItem::Unify(List);
   }
   for (size_t i=0; i < Bonds.Count(); i++) {
     TGPCollection *GPC = GetRender().FindCollection(Bonds[i]);
@@ -3983,37 +3982,35 @@ void TGXApp::Collectivise(const TXBondPList& bonds, short _level, int32_t mask) 
 }
 //..............................................................................
 void TGXApp::Collectivise(const TXAtomPList& atoms, short _level, int32_t mask)  {
-  if( atoms.IsEmpty() )  return;
+  if (atoms.IsEmpty())  return;
   //TSBondPList sbonds;
   TPtrList<TGPCollection> colls;
   for( size_t i=0; i < atoms.Count(); i++ )  {
     TXAtom& a = *atoms[i];
     const int cl = TXAtom::LegendLevel(a.GetPrimitives().GetName());
-    if( cl == 0 || (_level != -1 && cl < _level) )  continue;
+    if (cl == 0 || (_level != -1 && cl < _level))  continue;
     const olxstr leg = a.GetLegend(a, _level == -1 ? cl-1 : _level);
     TGPCollection* indCol = FGlRender->FindCollection(leg);
-    if( indCol != NULL && &a.GetPrimitives() == indCol )
+    if (indCol != NULL && &a.GetPrimitives() == indCol)
       continue;
-    else  {
-      if( indCol == NULL )
+    else {
+      if (indCol == NULL)
         indCol = &FGlRender->NewCollection(leg);
-      const size_t index = IndividualCollections.IndexOf(a.GetPrimitives().GetName());
-      if( index != InvalidIndex )
-        IndividualCollections.Delete(index);
+      IndividualCollections.Remove(a.GetPrimitives().GetName());
       TGPCollection &gpc = a.GetPrimitives();
-      colls << gpc;
-      TPtrList<AGDrawObject> objects = gpc.GetObjects();
-      gpc.ClearObjects();
-      for( size_t oi=0; oi < objects.Count(); oi++ )
-        objects[oi]->Create(leg);
-      if( mask >= 0 )
-        a.UpdatePrimitives(mask);
-      //for( size_t j=0; j < a.BondCount(); j++ )
-      //  sbonds.Add(a.Bond(j));
-
+      if (colls.AddUnique(gpc)) {
+        TPtrList<AGDrawObject> objects = gpc.GetObjects();
+        gpc.ClearObjects();
+        for (size_t oi = 0; oi < objects.Count(); oi++)
+          objects[oi]->Create(leg);
+        if (mask >= 0)
+          a.UpdatePrimitives(mask);
+        //for( size_t j=0; j < a.BondCount(); j++ )
+        //  sbonds.Add(a.Bond(j));
+      }
     }
-    GetRender().RemoveCollections(colls);
   }
+  GetRender().RemoveCollections(colls);
 }
 //..............................................................................
 size_t TGXApp::GetNextAvailableLabel(const olxstr& AtomType) {
@@ -4040,11 +4037,11 @@ size_t TGXApp::GetNextAvailableLabel(const olxstr& AtomType) {
 //..............................................................................
 void TGXApp::SynchroniseBonds(const TXAtomPList& xatoms)  {
   TXBondPList xbonds;
-  for( size_t i=0; i < xatoms.Count(); i++ )
+  for (size_t i = 0; i < xatoms.Count(); i++) {
     xbonds.AddList(xatoms[i]->GetBonds(), StaticCastAccessor<TXBond>());
+  }
   // prepare unique list of bonds
-  xbonds.ForEach(ACollectionItem::IndexTagSetter());
-  xbonds.Pack(ACollectionItem::IndexTagAnalyser());
+  ACollectionItem::Unify(xbonds);
   // have to call setatom function to set the correct order for atom of bond
   for( size_t i=0; i < xbonds.Count(); i++ )
     xbonds[i]->SetA(xbonds[i]->A());
@@ -4906,8 +4903,8 @@ void TGXApp::LoadStructureStyle(const TDataItem &item) {
     }
     TDataItem &br = name_reg->GetItemByName("Bonds");
     for (size_t i = 0; i < ar.ItemCount(); i++) {
-      TXBond::NamesRegistry().Add(ar.GetItemByIndex(i).GetFieldByName("id"),
-        ar.GetItemByIndex(i).GetFieldByName("value"));
+      TXBond::NamesRegistry().Add(br.GetItemByIndex(i).GetFieldByName("id"),
+        br.GetItemByIndex(i).GetFieldByName("value"));
     }
   }
 }

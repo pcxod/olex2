@@ -451,6 +451,19 @@ public:
     return *this;
   }
 //..............................................................................
+  /* copy constructor must be implemented
+  */
+  template <class Functor> ConstTypeList<T> Filter(const Functor& f) const {
+    TTypeList rv;
+    rv.SetCapacity(List.Count());
+    for (size_t i = 0; i < List.Count(); i++) {
+      if (f.OnItem(GetItem(i), i)) {
+        rv.Add(new T(GetItem(i)));
+      }
+    }
+    return rv;
+  }
+//..............................................................................
   size_t Count() const {  return List.Count();  }
 //..............................................................................
   // same as shrink if list size is larger
@@ -501,6 +514,7 @@ public:
     {}
   };
   typedef T list_item_type;
+  typedef ConstTypeList<T> const_list_type;
 };
 
 template <class T>

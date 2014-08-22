@@ -51,7 +51,7 @@ public:
       : accessor(accessor_) {}
     template <class Item>
     bool OnItem(const Item& o, size_t i) const {
-      return (size_t)GetTag(accessor(o)) != i;
+      return (size_t)GetTag(accessor(o)) == i;
     }
   };
   template <class Accessor>
@@ -124,13 +124,23 @@ public:
   // common algorithms
   // creates a list of unique items
   template <class List, class Accessor>
-  static List& Unique(List& list, const Accessor &acc)  {
+  static List& Unify(List& list, const Accessor &acc)  {
     list.ForEach(IndexTagSetter(acc));
-    list.Pack(IndexTagAnalyser(acc));
-    return list;
+    return list.Pack(olx_alg::olx_not(IndexTagAnalyser(acc)));
   }
   template <class List>
-  static List& Unique(List& list)  { return Unique(list, DummyAccessor()); }
+  static List& Unify(List& list)  { return Unify(list, DummyAccessor()); }
+  template <class List, class Accessor>
+  static typename List::const_list_type Unique(const List &list,
+    const Accessor &acc)
+  {
+    list.ForEach(IndexTagSetter(acc));
+    return list.Filter(olx_alg::olx_not(IndexTagAnalyser(acc)));
+  }
+  template <class List>
+  static typename List::const_list_type Unique(const List &list) {
+    return Unique(list, DummyAccessor());
+  }
   // exludes a set of items from a list of items
   template <class ListA, class AccessorA, class ListB, class AccessorB>
   static ListA& Exclude(ListA& from, const AccessorA &aa,

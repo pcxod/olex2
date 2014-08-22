@@ -1083,39 +1083,39 @@ void TGlRenderer::RemoveCollection(TGPCollection& GP)  {
   GP.GetPrimitives().ForEach(ACollectionItem::TagSetter(0));
   Primitives.RemoveObjectsByTag(0);
   FCollections.Delete(FCollections.IndexOfValue(&GP));
-  for( size_t i=0; i < Primitives.PropertiesCount(); i++ )  {
+  for (size_t i=0; i < Primitives.PropertiesCount(); i++) {
     TGlMaterial& GlM = Primitives.GetProperties(i);
-    if( GlM.IsTransparent() && GlM.IsIdentityDraw()  )
+    if (GlM.IsTransparent() && GlM.IsIdentityDraw())
       FTranslucentIdentityObjects.Add(GlM);
-    else if( GlM.IsTransparent() )
+    else if (GlM.IsTransparent())
       FTranslucentObjects.Add(GlM);
-    else if( GlM.IsIdentityDraw() )
+    else if (GlM.IsIdentityDraw())
       FIdentityObjects.Add(GlM);
   }
   delete &GP;
 }
 //..............................................................................
-void TGlRenderer::RemoveCollections(const TPtrList<TGPCollection>& Colls)  {
-  if( Colls.IsEmpty() )  return;
+void TGlRenderer::RemoveCollections(const TPtrList<TGPCollection>& Colls_)  {
+  if (Colls_.IsEmpty()) return;
+  TPtrList<TGPCollection> colls = ACollectionItem::Unique(Colls_);
   FTranslucentIdentityObjects.Clear();
   FTranslucentObjects.Clear();
   FIdentityObjects.Clear();
-
   Primitives.GetObjects().ForEach(ACollectionItem::TagSetter(-1));
-  for( size_t i=0; i < Colls.Count(); i++ )  {
-    Colls[i]->GetPrimitives().ForEach(ACollectionItem::TagSetter(0));
-    const size_t col_ind = FCollections.IndexOfValue(Colls[i]);
+  for (size_t i = 0; i < colls.Count(); i++) {
+    colls[i]->GetPrimitives().ForEach(ACollectionItem::TagSetter(0));
+    const size_t col_ind = FCollections.IndexOfValue(colls[i]);
     FCollections.Delete(col_ind);
-    delete Colls[i];
+    delete colls[i];
   }
   Primitives.RemoveObjectsByTag(0);
-  for( size_t i=0; i < Primitives.PropertiesCount(); i++ )  {
+  for (size_t i = 0; i < Primitives.PropertiesCount(); i++)  {
     TGlMaterial& GlM = Primitives.GetProperties(i);
-    if( GlM.IsTransparent() && GlM.IsIdentityDraw() )
+    if (GlM.IsTransparent() && GlM.IsIdentityDraw())
       FTranslucentIdentityObjects.Add(&GlM);
-    else if( GlM.IsTransparent() )
+    else if (GlM.IsTransparent())
       FTranslucentObjects.Add(GlM);
-    else if( GlM.IsIdentityDraw() )
+    else if (GlM.IsIdentityDraw())
       FIdentityObjects.Add(GlM);
   }
 }

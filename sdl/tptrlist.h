@@ -23,8 +23,8 @@ template <class T> class TPtrList : public IEObject  {
   size_t FCount, FCapacity;
   size_t FIncrement;
   T **Items;
-  inline void Allocate()  {
-    if( FCapacity == 0 )  {
+  inline void Allocate() {
+    if (FCapacity == 0) {
       olx_free(Items);
       Items = NULL;
     }
@@ -32,12 +32,12 @@ template <class T> class TPtrList : public IEObject  {
       Items = olx_realloc<T*>(Items, FCapacity);
   }
 
-  void init(size_t size)  {
+  void init(size_t size) {
     FCount = size;
     FIncrement = 5;
     FCapacity = FCount;
     Items = NULL;
-    if( size != 0 )  {
+    if (size != 0) {
       Allocate();
       memset(Items, 0, FCapacity*sizeof(T*));
     }
@@ -491,14 +491,27 @@ public:
   }
 //..............................................................................
   template <class Functor> const TPtrList& ForEach(const Functor& f) const {
-    for( size_t i=0; i < FCount; i++ )
+    for (size_t i=0; i < FCount; i++)
       f.OnItem(*Items[i], i);
     return *this;
   }
 //..............................................................................
-  inline void Fit()  {
+  template <class Functor> ConstPtrList<T> Filter(const Functor& f) const {
+    TPtrList rv;
+    rv.SetCapacity(Count());
+    for (size_t i = 0; i < FCount; i++) {
+      if (f.OnItem(*Items[i], i)) {
+        rv.Add(Items[i]);
+      }
+    }
+    return rv.Fit();
+  }
+//..............................................................................
+  // make list capcity equal to its size
+  inline TPtrList& Fit() {
     FCapacity = FCount;
     Allocate();
+    return *this;
   }
 //..............................................................................
   inline size_t Count() const {  return FCount;  }
@@ -561,6 +574,7 @@ public:
     typedef T* list_item_type;
   };
   typedef T *list_item_type;
+  typedef ConstPtrList<T> const_list_type;
 };
 
 #ifndef __BORLANDC__
