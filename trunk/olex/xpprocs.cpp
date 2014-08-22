@@ -5609,6 +5609,15 @@ public:
   PointAnalyser(const TLattice &l, TXAtom &c)
     : latt(l), center(c)
   {
+    colors.SetCount(7);
+    colors[0] = 0XFF0000;
+    colors[1] = 0X009933;
+    colors[2] = 0xFFFF00;
+    colors[3] = 0x0000FF;
+    colors[4] = 0xFF33CC;
+    colors[5] = 0xFF9966;
+    colors[6] = 0x00FFFF;
+
     alpha = 0x9c;
     dry_run = false;
     olxdict<uint32_t, int, TPrimitiveComparator> highest;
@@ -5618,8 +5627,9 @@ public:
       if (a.CAtom().GetFragmentId() != ~0) {
         uint32_t ni = a.CAtom().GetFragmentId();
         if (ni >= colors.Count()) {
-          colors.SetCount(ni+1);
+          colors.SetCount(ni+1, olx_list_init::zero());
         }
+        if (colors[ni] != 0) continue;
         if (a.IsGrouped()) {
           colors[ni] = a.GetParentGroup()->GetGlM().AmbientF.GetRGB();
         }
@@ -5698,9 +5708,16 @@ olx_critical_section PointAnalyser::cs;
 olxstr_dict<size_t, false> PointAnalyser::areas;
 
 void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  {
+    ElementRadii radii;
+    TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
+    if (Cmds.Count() == 1 && TEFile::Exists(Cmds[0]))
+      radii = TXApp::ReadVdWRadii(Cmds[0]);
+    TXApp::PrintVdWRadii(radii, au.GetContentList());
+  }
   TArrayList<uint32_t> colors;
-  for( size_t i=0; i < Cmds.Count(); i++ )  {
-    if( Cmds[i].IsNumber() )  {
+  for (size_t i = 0; i < Cmds.Count(); i++) {
+    if (Cmds[i].IsNumber())  {
       colors.Add(Cmds[i].SafeUInt<uint32_t>());
       Cmds.Delete(i--);
     }
@@ -5779,24 +5796,32 @@ void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroE
     groups.GetValue(i)->SetGlM(glm);
   }
   FXApp->AddObjectToCreate(sph);
+  olxstr_dict<olxstr, false> ligand_name;
   for (size_t i = 0; i < pa.areas.Count(); i++) {
     olxstr legend;
     if (pa.areas.GetKey(i).IsEmpty()) {
       legend = "Accessible";
     }
     else {
+      legend.SetLength(0);
       TStrList toks(pa.areas.GetKey(i), ';');
       for (size_t j = 0; j < toks.Count(); j++) {
         TNetwork &n = FXApp->XFile().GetLattice().GetFragment(toks[j].ToSizeT());
-        size_t cnt = olx_min(3, n.NodeCount());
-        legend << '{';
-        for (size_t j = 0; j < cnt; j++) {
-          legend << n.Node(j).CAtom().GetResiLabel() << ',';
+        TSAtom *a = NULL;
+        for (size_t j = 0; j < n.NodeCount(); j++) {
+          if (a == NULL) {
+            a = &n.Node(j);
+          }
+          else if (a->GetType() < n.Node(j).GetType()) {
+            a = &n.Node(j);
+          }
         }
-        if (cnt < n.NodeCount()) {
-          legend << "...";
+        if (a != NULL) {
+          if (!legend.IsEmpty()) {
+            legend << ',';
+          }
+          legend << a->GetGuiLabel();
         }
-        legend << "},";
       }
       if (!legend.IsEmpty()) {
         legend.SetLength(legend.Length() - 1);
@@ -5806,6 +5831,8 @@ void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroE
       olxstr::FormatFloat(2,
         (double)(pa.areas.GetValue(i)*100)/sph->GetVectorCount());
   }
+  TBasicApp::NewLogEntry() << "For the use of solid angles, see: "
+    "Guzei, I.A.; Wendt, M.Dalton Trans., 2006, 3991–3999.";
 }
 //..............................................................................
 void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options,
