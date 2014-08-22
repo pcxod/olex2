@@ -2272,6 +2272,10 @@ void TLattice::FinaliseLoading() {
   GetUnitCell().FindSymmEq();
   for( size_t i=0; i < GetAsymmUnit().AtomCount(); i++ )
     GetAsymmUnit().GetAtom(i).SetDeleted(false);
+  for (size_t i = 0; i < Fragments.Count(); i++)  {
+    for (size_t j = 0; j < Fragments[i]->NodeCount(); j++)
+      Fragments[i]->Node(j).CAtom().SetFragmentId((uint32_t)i);
+  }
   BuildAtomRegistry();
 }
 //..............................................................................

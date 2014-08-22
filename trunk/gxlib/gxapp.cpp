@@ -5171,12 +5171,11 @@ TGlGroup *TGXApp::GroupSelection(const olxstr& name)  {
 //..............................................................................
 void TGXApp::UnGroupSelection()  {
   TGlGroup& sel = GetSelection();
-  if( sel.Count() < 2 )  return;
-  for( size_t i=0; i < sel.Count(); i++ )  {
-    if( EsdlInstanceOf(sel[i], TGlGroup) )  {
+  for (size_t i=0; i < sel.Count(); i++) {
+    if (EsdlInstanceOf(sel[i], TGlGroup)) {
       TGlGroup& G = (TGlGroup&)sel[i];
       size_t i = GroupDict.IndexOf(&G);
-      if( i != InvalidIndex )  {
+      if (i != InvalidIndex)  {
         GroupDefs.Delete(GroupDict.GetValue(i));
         GroupDict.Delete(i);
       }
