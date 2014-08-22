@@ -60,6 +60,9 @@ protected:
     }
     return InvalidIndex;
   }
+  T &AddCopy(const T &v) {
+    return *Strings.Add(new T(v));
+  }
 public:
   TTStrList()  {}
 
@@ -218,6 +221,24 @@ public:
     for( size_t i=0; i < Strings.Count(); i++ )
       delete Strings[i];
     Strings.Clear();
+  }
+  template <typename SC>
+  bool Remove(const SC &v) {
+    size_t i = IndexOf(v);
+    if (i != InvalidIndex) {
+      Delete(i);
+      return true;
+    }
+    return false;
+  }
+  template <typename SC>
+  bool Removei(const SC &v) {
+    size_t i = IndexOfi(v);
+    if (i != InvalidIndex) {
+      Delete(i);
+      return true;
+    }
+    return false;
   }
   void Delete(size_t i)  {
     delete Strings[i];
@@ -566,6 +587,19 @@ public:
       f.OnItem(Strings[i]->String, i);
     return *this;
   }
+
+  template <class Functor>
+  ConstStrList<TTStrList<T> > Filter(const Functor& f) const {
+    TTStrList rv;
+    rv.SetCapacity(Count());
+    for (size_t i = 0; i < String.Count(); i++) {
+      if (f.OnItem(*Strings[i], i)) {
+        rv.AddCopy(*Strings[i]);
+      }
+    }
+    return rv;
+  }
+
 public:
   struct InternalAccessor : public TPtrList<T>::InternalAccessor {
     InternalAccessor(TTStrList &l)
@@ -573,6 +607,7 @@ public:
     {}
   };
   typedef typename T::string_type list_item_type;
+  typedef ConstStrList<TTStrList<T> > const_list_type;
 };
 
 

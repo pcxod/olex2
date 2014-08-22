@@ -219,6 +219,17 @@ public:
     return *this;
   }
 //..............................................................................
+  template <class Functor> ConstArrayList<T> Filter(const Functor& f) const {
+    TArrayList rv;
+    rv.SetCapacity(Count());
+    for (size_t i = 0; i < List.Count(); i++) {
+      if (f.OnItem(GetItem(i), i)) {
+        rv.Add(GetItem(i));
+      }
+    }
+    return rv;
+  }
+//..............................................................................
   TArrayList& SetCapacity(size_t v)  {
     if( v <= FCapacity )  return *this;
     FCapacity = v;

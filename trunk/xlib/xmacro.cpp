@@ -6394,7 +6394,7 @@ void XLibMacros::macFvar(TStrObjList &Cmds, const TParamList &Options,
   TCAtomPList atoms(
     app.FindSAtoms(Cmds.Text(' '), false, !Options.Contains("cs")),
     FunctionAccessor::MakeConst(&TSAtom::CAtom));
-  ACollectionItem::Unique(atoms);
+  ACollectionItem::Unify(atoms);
   atoms.ForEach(ACollectionItem::TagSetter(0));
   for( size_t i=0; i < atoms.Count(); i++ )  {
     if( atoms[i]->DependentHfixGroupCount() == 1 )  {
@@ -7670,7 +7670,7 @@ void XLibMacros::macConstrain(TStrObjList &Cmds, const TParamList &Options,
     //  E.ProcessingError(__OlxSrcInfo, "at least two atoms are expected");
     //  return;
     //}
-    //ACollectionItem::Unique(atoms,
+    //ACollectionItem::Unify(atoms,
     //  FunctionAccessor::MakeConst(&TXAtom::CAtom));
     //// search optimisation
     //SortedPtrList<TCAtom, TPointerComparator> s_catoms;
@@ -7701,7 +7701,7 @@ void XLibMacros::macConstrain(TStrObjList &Cmds, const TParamList &Options,
       E.ProcessingError(__OlxSrcInfo, "at least two atoms are expected");
       return;
     }
-    ACollectionItem::Unique(atoms,
+    ACollectionItem::Unify(atoms,
       FunctionAccessor::MakeConst(&TSAtom::CAtom));
     // search optimisation
     sorted::PointerPointer<TCAtom> s_catoms;
@@ -7998,7 +7998,7 @@ void XLibMacros::macRESI(TStrObjList &Cmds, const TParamList &Options,
     return;
   }
   TAsymmUnit& au = app.XFile().GetAsymmUnit();
-  ACollectionItem::Unique(atoms);
+  ACollectionItem::Unify(atoms);
   if (resi_class.Equalsi("none")) {
     TResidue& main_resi = au.GetResidue(0);
     for (size_t i=0; i < atoms.Count(); i++) {
@@ -8965,7 +8965,7 @@ void XLibMacros::macPack(TStrObjList &Cmds, const TParamList &Options,
     TCAtomPList TemplAtoms;
     if (!Cmds.IsEmpty()) {
       TSAtomPList atoms = app.FindSAtoms(Cmds.Text(' '));
-      ACollectionItem::Unique(atoms,
+      ACollectionItem::Unify(atoms,
         FunctionAccessor::MakeConst(&TSAtom::CAtom));
       TemplAtoms.AddList(atoms, FunctionAccessor::MakeConst(&TSAtom::CAtom));
     }
@@ -9004,7 +9004,7 @@ void XLibMacros::macGrow(TStrObjList &Cmds, const TParamList &Options,
   TCAtomPList TemplAtoms;
   if (Options.Contains('t')) {
     TSAtomPList atoms = app.FindSAtoms(olxstr(Options['t']).Replace(',', ' '));
-    ACollectionItem::Unique(atoms,
+    ACollectionItem::Unify(atoms,
       FunctionAccessor::MakeConst(&TSAtom::CAtom));
     TemplAtoms.AddList(atoms, FunctionAccessor::MakeConst(&TSAtom::CAtom));
   }

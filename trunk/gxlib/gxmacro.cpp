@@ -411,6 +411,9 @@ void GXLibMacros::macName(TStrObjList &Cmds, const TParamList &Options,
       for (size_t i = 0; i < sel.Count(); i++) {
         TXAtom &a = dynamic_cast<TXAtom &>(sel[i]);
         TXAtom::NamesRegistry().Add(a.GetRef().ToString(), Cmds[1]);
+        for (size_t j = 0; j < a.BondCount(); j++) {
+          a.Bond(j).UpdateStyle();
+        }
       }
     }
     else if (EsdlInstanceOf(sel[0], TXBond)) {
@@ -1584,7 +1587,7 @@ void GXLibMacros::macUniq(TStrObjList &Cmds, const TParamList &Options,
   }
   TNetPList L(Atoms, FunctionAccessor::MakeConst(&TXAtom::GetNetwork));
   app.FragmentsVisible(app.InvertFragmentsList(
-    ACollectionItem::Unique(L)), false);
+    ACollectionItem::Unify(L)), false);
   app.CenterView(true);
   app.Draw();
 }
@@ -1641,7 +1644,7 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
     TNetPList nets(
       app.FindXAtoms(TStrObjList(Cmds.SubListFrom(1)), false, false),
       FunctionAccessor::MakeConst(&TXAtom::GetNetwork));
-    app.SelectFragments(ACollectionItem::Unique(nets), !Options.Contains('u'));
+    app.SelectFragments(ACollectionItem::Unify(nets), !Options.Contains('u'));
   }
   else if( Cmds.Count() == 1 && Cmds[0].Equalsi("res") )  {
     //app.GetRender().ClearSelection();
@@ -2117,7 +2120,7 @@ void GXLibMacros::macPiM(TStrObjList &Cmds, const TParamList &Options,
       rings[i][j]->SetTag(1);
     }
     c /= rings[i].Count();
-    ACollectionItem::Unique(ring_M[i]);
+    ACollectionItem::Unify(ring_M[i]);
     for( size_t j=0; j < ring_M[i].Count(); j++ )  {
       TXLine *l = app.AddLine(ring_M[i][j]->GetLabel()+olxstr(i),
         ring_M[i][j]->crd(), c);
@@ -2314,7 +2317,7 @@ void GXLibMacros::macCalcVoid(TStrObjList &Cmds, const TParamList &Options,
     if( EsdlInstanceOf(sel[i], TXAtom) )
       catoms.Add(((TXAtom&)sel[i]).CAtom())->SetTag(catoms.Count());
   }
-  catoms.Pack(ACollectionItem::IndexTagAnalyser());
+  catoms.Pack(olx_alg::olx_not(ACollectionItem::IndexTagAnalyser()));
   if( catoms.IsEmpty() ) {
     TBasicApp::NewLogEntry() <<
      "Calculating for all atoms of the asymmetric unit";
@@ -2526,6 +2529,8 @@ void GXLibMacros::macCollectivise(TStrObjList &Cmds, const TParamList &Options,
     }
     if (atoms.IsEmpty() && bonds.IsEmpty()) {
       app.ClearIndividualCollections();
+      TXAtom::NamesRegistry().Clear();
+      TXBond::NamesRegistry().Clear();
       app.CreateObjects(false, false);
     }
     app.Collectivise(atoms);
@@ -2540,15 +2545,36 @@ void GXLibMacros::macLstGO(TStrObjList &Cmds, const TParamList &Options,
 {
   TStrList output;
   output.SetCapacity( app.GetRender().CollectionCount() );
-  for( size_t i=0; i < app.GetRender().CollectionCount(); i++ )  {
+  for (size_t i=0; i < app.GetRender().CollectionCount(); i++) {
     TGPCollection& gpc = app.GetRender().GetCollection(i);
     output.Add( gpc.GetName() ) << '[';
-    for( size_t j=0; j < gpc.PrimitiveCount(); j++ )  {
+    for (size_t j=0; j < gpc.PrimitiveCount(); j++) {
       output.GetLastString() << gpc.GetPrimitive(j).GetName();
       if( (j+1) < gpc.PrimitiveCount() )
         output.GetLastString() << ';';
     }
     output.GetLastString() << "]->" << gpc.ObjectCount();
+  }
+  if (!TXAtom::NamesRegistry().IsEmpty()) {
+    output.Add("Named collections, atoms:");
+    for (size_t i = 0; i < TXAtom::NamesRegistry().Count(); i++) {
+      output.Add(TXAtom::NamesRegistry().GetKey(i)) << ": " <<
+        TXAtom::NamesRegistry().GetValue(i);
+    }
+  }
+  if (!TXBond::NamesRegistry().IsEmpty()) {
+    output.Add("Named collections, bonds:");
+    for (size_t i = 0; i < TXBond::NamesRegistry().Count(); i++) {
+      output.Add(TXBond::NamesRegistry().GetKey(i)) << ": " <<
+        TXBond::NamesRegistry().GetValue(i);
+    }
+  }
+  if (!TXPlane::NamesRegistry().IsEmpty()) {
+    output.Add("Named collections, planes:");
+    for (size_t i = 0; i < TXPlane::NamesRegistry().Count(); i++) {
+      output.Add(TXPlane::NamesRegistry().GetKey(i)) << ": " <<
+        TXPlane::NamesRegistry().GetValue(i);
+    }
   }
   TBasicApp::NewLogEntry() << output;
 }
@@ -3111,8 +3137,8 @@ void GXLibMacros::macPoly(TStrObjList &Cmds, const TParamList &Options,
   TXAtomPList atoms = app.FindXAtoms(Cmds, true, true);
   atoms.ForEach(ACollectionItem::IndexTagSetter(
     FunctionAccessor::MakeConst(&TXAtom::GetPrimitives)));
-  atoms.Pack(ACollectionItem::IndexTagAnalyser(
-    FunctionAccessor::MakeConst(&TXAtom::GetPrimitives)));
+  atoms.Pack(olx_alg::olx_not(ACollectionItem::IndexTagAnalyser(
+    FunctionAccessor::MakeConst(&TXAtom::GetPrimitives))));
   for (size_t i=0; i < atoms.Count(); i++)
     atoms[i]->SetPolyhedronType(pt);
 }

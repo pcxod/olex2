@@ -107,7 +107,7 @@ void TXBond::Create(const olxstr& cName)  {
     olxstr strRef = GetRef().ToString();
     if (!cName.IsEmpty())  {
       SetCollectionName(cName);
-      NamesRegistry().Add(strRef, Legend = cName);
+      NamesRegistry().Add(strRef, Legend = cName, true);
     }
     else {
       Legend = NamesRegistry().Find(strRef, EmptyString());

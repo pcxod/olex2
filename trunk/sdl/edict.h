@@ -128,9 +128,9 @@ public:
   template <typename T> VType& operator () (const T& key, const VType& def) {
     return Add(key, def);
   }
-  template <typename T> VType& Add(const T& key, const VType& def) {
+  template <typename T> VType& Add(const T& key, const VType& def, bool update=false) {
     olx_pair_t<size_t, bool> ip = SortedL::AddUnique(key);
-    if (ip.b) // new entry?
+    if (ip.b || update) // new entry?
       SortedL::operator[] (ip.a).val = def;
     return SortedL::operator[] (ip.a).val;
   }
