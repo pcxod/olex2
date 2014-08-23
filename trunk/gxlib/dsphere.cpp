@@ -114,6 +114,7 @@ void TDSphere::Create(const olxstr& cName)  {
   if (analyser == NULL) {
     return;
   }
+  SetCreated(true);
   volatile TStopWatch sw(__FUNC__);
   if (!cName.IsEmpty())
     SetCollectionName(cName);
@@ -122,9 +123,7 @@ void TDSphere::Create(const olxstr& cName)  {
   if (GPC == NULL)
     GPC = &Parent.NewCollection(NewL);
   GPC->AddObject(*this);
-  if (GPC->PrimitiveCount() != 0) {
-    GPC->ClearPrimitives();
-  }
+  if (GPC->PrimitiveCount() != 0) return;
 
   TGraphicsStyle& GS = GPC->GetStyle();
   GS.SetSaveable(false);
@@ -141,7 +140,7 @@ void TDSphere::Create(const olxstr& cName)  {
 }
 //...........................................................................
 bool TDSphere::Orient(TGlPrimitive& P) {
-  if (TGlMouse::GetInstance().GetMouseData().Button != 0) {
+  if (TGlMouse::GetInstance().GetMouseData().Button != 0 || Parent.IsSelecting()) {
     if (lowq != NULL && &P != lowq)
       return true;
   }

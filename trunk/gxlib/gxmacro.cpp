@@ -4073,6 +4073,8 @@ void GXLibMacros::macProjSph(TStrObjList &Cmds, const TParamList &Options,
     E.ProcessingError(__OlxSourceInfo, "one atom is expected");
     return;
   }
+  TBasicApp::NewLogEntry() << "Analysing : " << xatoms[0]->GetGuiLabel() <<
+    " environment";
   static size_t counter = 0;
   PointAnalyser &pa = *new PointAnalyser(*xatoms[0]);
   pa.alpha = Options.FindValue('a', "0x9c").SafeUInt<uint8_t>();
@@ -4094,13 +4096,10 @@ void GXLibMacros::macProjSph(TStrObjList &Cmds, const TParamList &Options,
   size_t g = Options.FindValue('g', 6).ToSizeT();
   if (g > 10)
     g = 10;
-  {
-    TGPCollection *gp = app.GetRender().FindCollection("SASphere");
-    if (gp != NULL) {
-      app.GetRender().RemoveCollection(*gp);
-    }
-  }
   TDSphere &sph = app.DSphere();
+  if (sph.IsCreated()) {
+    sph.GetPrimitives().ClearPrimitives();
+  }
   sph.SetAnalyser(&pa);
   sph.SetGeneration(g);
   sph.SetVisible(true);
@@ -4144,10 +4143,10 @@ void GXLibMacros::macProjSph(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   TTable table_l(0, 3), table_o(0, 2);
-  table_l.ColName(0) = "Haeviest atom";
-  table_l.ColName(1) = "Area indiviual, %";
-  table_l.ColName(2) = "Area total, %";
-  olxdict<TNetwork *, double, TPointerComparator> li;
+  table_l.ColName(0) = "Ligand id";
+  table_l.ColName(1) = "Area total, %";
+  table_l.ColName(2) = "Area indiviual, %";
+  olxdict<TNetwork *, olx_pair_t<double, TSAtom *>, TPointerComparator> li;
   olxdict<TNetwork *, size_t, TPointerComparator> ri;
   for (size_t i = 0; i < pa.areas.Count(); i++) {
     olxstr legend;
@@ -4174,24 +4173,35 @@ void GXLibMacros::macProjSph(TStrObjList &Cmds, const TParamList &Options,
           legend << ',';
         }
         legend << a->GetGuiLabel();
-        li(&n, 0) += prc;
+        li(&n, olx_pair_t<double, TSAtom *>(0, a)).a += prc;
       }
     }
     bool lo = !pa.areas.GetKey(i).Contains(';');
     TStrList &r = (lo ? table_l : table_o).AddRow();
     r[0] = legend;
-    r[1] = olxstr::FormatFloat(2, prc);
+    r[lo ? 2 : 1] = olxstr::FormatFloat(2, prc);
   }
+  app.XFile().GetLattice().GetObjects().atoms.ForEach(
+    ACollectionItem::TagSetter(-1));
   for (size_t i = 0; i < ri.Count(); i++) {
     if (ri.GetValue(i) < table_l.RowCount()) {
-      table_l[ri.GetValue(i)][2] = olxstr::FormatFloat(2, li[ri.GetKey(i)]);
+      size_t ix = li.IndexOf(ri.GetKey(i));
+      table_l[ri.GetValue(i)][1] = olxstr::FormatFloat(2, li.GetValue(ix).a);
+      li.GetValue(ix).b->SetTag(0);
     }
+  }
+  for (size_t i = 0; i < li.Count(); i++) {
+    if (li.GetValue(i).b->GetTag() == 0) continue;
+    TStrList &row = table_l.AddRow();
+    row[0] = li.GetValue(i).b->GetGuiLabel();
+    row[1] = olxstr::FormatFloat(2, li.GetValue(i).a);
+    row[2] = '-';
   }
   TBasicApp::NewLogEntry() <<
     table_l.CreateTXTList("Area coverage by ligand, unique (%)", true, false, ' ');
   TBasicApp::NewLogEntry() <<
     table_o.CreateTXTList("Overlapping area (%)", false, false, ' ');
   TBasicApp::NewLogEntry() << "For the use of solid angles, see: "
-    "Guzei, I.A., Wendt, M.Dalton Trans., 2006, 3991–3999.";
+    "Guzei, I.A., Wendt, M.Dalton Trans., 2006, 3991-3999.";
 }
 //..............................................................................
