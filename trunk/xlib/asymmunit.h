@@ -238,7 +238,7 @@ public:
 
   vec3d GetOCenter(bool IncludeQ, bool IncludeH) const;
   // returns properly sorted content list
-  ContentList GetContentList(double mult=1.0) const;
+  ContentList::const_list_type GetContentList(double mult=1.0) const;
   /* returns summarised formula of the asymmetric unit, use MutiplyZ to
   multiply the content by Z
   */

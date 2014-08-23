@@ -142,6 +142,7 @@ class TGlMouse: public IEObject {
   class TGlRenderer *FParent;
   class TDFrame *FDFrame;
   TActionQList Actions;
+  static TGlMouse *Instance;
 protected:
   int FSX, FSY;
   bool FDblClick;
@@ -178,6 +179,7 @@ public:
     return (olx_abs(md.DownX-md.UpX) <= ClickThreshold) &&
           (olx_abs(md.DownY-md.UpY) <= ClickThreshold);
   }
+  const TMouseData &GetMouseData() { return MData; }
   // the pointer created with new is expected (use MouseEvtHandler)
   AMouseEvtHandler &SetHandler(AMouseEvtHandler &eh);
   // is set by handlers
@@ -191,7 +193,12 @@ public:
   DefPropBIsSet(TranslationEnabled)
   DefPropBIsSet(ZoomingEnabled)
   DefPropBIsSet(InMode)
-
+  static TGlMouse &GetInstance() {
+    if (Instance == NULL) {
+      throw TFunctionFailedException(__OlxSourceInfo, "uninitialised object");
+    }
+    return *Instance;
+  }
   TActionQueue &OnObject;
   void LibEnable(TStrObjList& Cmds, const TParamList& Options,
     TMacroError &E);

@@ -18,22 +18,23 @@
 #include "glmouse.h"
 #include "estopwatch.h"
 
-TDSphere::TDSphere(TGlRenderer& R, PointAnalyser &pa,
-  const olxstr& collectionName)
+TDSphere::TDSphere(TGlRenderer& R, const olxstr& collectionName)
   : AGlMouseHandlerImp(R, collectionName),
-    analyser(pa),
+    analyser(NULL),
     Generation(6)
 {
   SetSelectable(false);
+  SetZoomable(true);
+  SetMoveable(true);
 }
 //...........................................................................
 class PATask : public TaskBase {
 public:
-  TDSphere::PointAnalyser &analyser;
+  APointAnalyser &analyser;
   TTypeList<TVector3<float> > &vecs;
   TArrayList<uint32_t> &colors;
   bool delete_analyser;
-  PATask(TDSphere::PointAnalyser &analyser,
+  PATask(APointAnalyser &analyser,
     TTypeList<TVector3<float> > &vecs, TArrayList<uint32_t> &colors,
     bool delete_analyser=false)
     : analyser(analyser), vecs(vecs), colors(colors),
@@ -46,7 +47,7 @@ public:
     }
   }
   PATask * Replicate() {
-    return new PATask(*(TDSphere::PointAnalyser*)analyser.Replicate(),
+    return new PATask(*(APointAnalyser*)analyser.Replicate(),
       vecs, colors, true);
   }
   void Run(size_t i) const {
@@ -78,7 +79,7 @@ TGlPrimitive &TDSphere::CreatePrimitive(TGPCollection &GPC,
   bool color_initialised = false;
   TArrayList<uint32_t> colors(vecs.Count());
   sw.start("Running the analysis");
-  PATask pa_task(analyser, vecs, colors);
+  PATask pa_task(*analyser, vecs, colors);
   OlxListTask::Run(pa_task, vecs.Count(), tLinearTask, 1000);
   sw.start("Building the object");
   GlP.StartList();
@@ -110,6 +111,9 @@ TGlPrimitive &TDSphere::CreatePrimitive(TGPCollection &GPC,
 }
 //...........................................................................
 void TDSphere::Create(const olxstr& cName)  {
+  if (analyser == NULL) {
+    return;
+  }
   volatile TStopWatch sw(__FUNC__);
   if (!cName.IsEmpty())
     SetCollectionName(cName);
@@ -122,10 +126,11 @@ void TDSphere::Create(const olxstr& cName)  {
 
   TGraphicsStyle& GS = GPC->GetStyle();
   GS.SetSaveable(false);
-  analyser.SetDryRun(false);
-  current = highq = &CreatePrimitive(*GPC, "Sphere", Generation, true);
+  analyser->SetDryRun(false);
+  analyser->GetReady();
+  highq = &CreatePrimitive(*GPC, "Sphere", Generation, true);
   if (Generation > 6) {
-    analyser.SetDryRun(true);
+    analyser->SetDryRun(true);
     lowq = &CreatePrimitive(*GPC, "SphereLQ", 5, false);
   }
   else {
@@ -134,13 +139,17 @@ void TDSphere::Create(const olxstr& cName)  {
 }
 //...........................................................................
 bool TDSphere::Orient(TGlPrimitive& P) {
-  if (&P != current) {
-    return true;
+  if (TGlMouse::GetInstance().GetMouseData().Button != 0) {
+    if (lowq != NULL && &P != lowq)
+      return true;
+  }
+  else {
+    if (&P != highq)
+      return true;
   }
   olx_gl::orient(Basis.GetMDataT());
   olx_gl::scale(Basis.GetZoom());
-  current->Draw();
-  return true;
+  return false;
 }
 //...........................................................................
 bool TDSphere::OnDblClick(const IEObject *obj_, const TMouseData& md) {
@@ -160,7 +169,27 @@ bool TDSphere::OnDblClick(const IEObject *obj_, const TMouseData& md) {
   double d = -x + sqrt(dq);
   vec3f intersect = o + l*d;
   TBasicApp::NewLogEntry() << olxstr(' ').Join(intersect) <<
-    analyser.Analyse(intersect);
+    analyser->Analyse(intersect);
   return true;
+}
+//...........................................................................
+void TDSphere::ToDataItem(TDataItem &di) const {
+  if (analyser == NULL) {
+    return;
+  }
+  analyser->ToDataItem(di.AddItem("Analyser"));
+  di.AddField("generation", Generation);
+  Basis.ToDataItem(di.AddItem("Basis"));
+}
+//...........................................................................
+void TDSphere::FromDataItem(const TDataItem &di) {
+  Generation = di.GetFieldByName("generation").ToUInt();
+  Basis.FromDataItem(di.GetItemByName("Basis"));
+  APointAnalyser *pa = APointAnalyser::FromDataItem(
+    di.GetItemByName("Analyser"));
+  if (pa == NULL) {
+    return;
+  }
+  SetAnalyser(pa);
 }
 //...........................................................................

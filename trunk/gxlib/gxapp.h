@@ -78,6 +78,7 @@ class TXReflection;
 class TXGrid;
 class TXLattice;
 class TDUserObj;
+class TDSphere;
 
   typedef TTypeListExt<TXAtom, TSAtom> TXAtomList;
   typedef TTypeListExt<TXBond, TSBond> TXBondList;
@@ -228,6 +229,7 @@ protected:
   TDFrame* FDFrame;
   T3DFrameCtrl* F3DFrame;
   TXGrid* FXGrid;
+  TDSphere *FDSphere;
 
   void FragmentVisible( TNetwork *N, bool V);
   bool Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
@@ -439,7 +441,8 @@ public:
   THklFile& HklFile()  {  return *FHklFile; }
   TDFrame& DFrame() const {  return *FDFrame; }
   TXGrid& XGrid() const {  return *FXGrid;  }
-  T3DFrameCtrl& Get3DFrame() const { return *F3DFrame;  }
+  TDSphere& DSphere() const { return *FDSphere; }
+  T3DFrameCtrl& Get3DFrame() const { return *F3DFrame; }
   TGlMouse& GetMouseHandler() const { return *FGlMouse; }
 
   // this function to be used to get all networks, including th overlayed files

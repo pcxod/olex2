@@ -831,14 +831,6 @@ void TMainForm::XApp(Olex2App *XA)  {
     "Import a fragment into current structure");
   this_InitMacroD(ExportFrag, EmptyString(), fpNone|psFileLoaded,
     "Exports selected fragment to an external file");
-  this_InitMacroD(ProjSph,
-    "g-sphere quality [6]&;"
-    "e-emboss the sphere&;"
-    "a-transparency level [0x9c] 0 - 255&;"
-    ,
-    fpAny|psFileLoaded,
-    "Creates a projection from the selected atom onto a sphere, coloring each "
-    "point on the sphere with a unique color corresponding to fragments.");
   this_InitMacroD(UpdateQPeakTable, EmptyString(), fpNone|psFileLoaded,
     "Internal routine for synchronisation");
   this_InitMacroD(FlushFS, EmptyString(),

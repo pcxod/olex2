@@ -171,7 +171,7 @@ public:
 public:
   typedef KType key_item_type;
   typedef VType value_item_type;
-
+  typedef const_olxdict<KType, VType, Comparator> const_dict_type;
 };
 
 // a string to type association....

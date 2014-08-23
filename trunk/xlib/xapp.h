@@ -155,10 +155,24 @@ public:
   olxstr GetLastSGResult() const { return LastSGResult; }
   // for the internal use
   void SetLastSGResult_(const olxstr &r) { LastSGResult = r; }
-
-  static ElementRadii ReadVdWRadii(const olxstr& fileName);
-  static void PrintVdWRadii(const ElementRadii& radii,
+  /* reads a simple 'element radius' a line text file
+  */
+  static ElementRadii::const_dict_type ReadRadii(const olxstr& fn);
+  /* which = 0 - r_bonding, 1 - r_pers, 2 - r_cov, 3 - r_sfil, 4 - r_vdw,
+  5 - r_custom
+  */
+  static void PrintRadii(int which, const ElementRadii& radii,
     const ContentList& au_cont);
+  static void PrintVdWRadii(const ElementRadii& radii,
+    const ContentList& au_cont)
+  {
+    PrintRadii(4, radii, au_cont);
+  }
+  static void PrintCustomRadii(const ElementRadii& radii,
+    const ContentList& au_cont)
+  {
+    PrintRadii(5, radii, au_cont);
+  }
   template <class AtomType>  // could be either TCAtom or TSAtom
   static double GetVdWRadius(const AtomType& a, const ElementRadii* radii)  {
     const size_t ei = (radii == NULL ? InvalidIndex
