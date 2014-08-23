@@ -839,39 +839,48 @@ olxstr TXApp::InitVcoV(VcoVContainer& vcovc) const {
   return src_mat;
 }
 //..............................................................................
-ElementRadii TXApp::ReadVdWRadii(const olxstr& fileName)  {
+ElementRadii::const_dict_type TXApp::ReadRadii(const olxstr& fileName) {
   ElementRadii radii;
-  if( TEFile::Exists(fileName) )  {
+  if (TEFile::Exists(fileName)) {
     TStrList sl = TEFile::ReadLines(fileName);
-    for( size_t i=0; i < sl.Count(); i++ )  {
+    for (size_t i = 0; i < sl.Count(); i++) {
       TStrList toks(sl[i], ' ');
-      if( toks.Count() == 2 )  {
+      if (toks.Count() == 2) {
         cm_Element* elm = XElementLib::FindBySymbol(toks[0]);
-        if( elm == NULL )  {
+        if (elm == NULL) {
           TBasicApp::NewLogEntry(logError) << "Invalid atom type: " << toks[0];
           continue;
         }
-        const size_t b_i = radii.IndexOf(elm);
-        if( b_i == InvalidIndex )
-          radii.Add(elm, toks[1].ToDouble());
-        else
-          radii.GetValue(b_i) = toks[1].ToDouble();
+        radii.Add(elm, toks[1].ToDouble(), true);
       }
     }
   }
   return radii;
 }
 //..............................................................................
-void TXApp::PrintVdWRadii(const ElementRadii& radii, const ContentList& au_cont)  {
-  if( au_cont.IsEmpty() )  return;
+void TXApp::PrintRadii(int which, const ElementRadii& radii,
+  const ContentList& au_cont)
+{
+  if (au_cont.IsEmpty())  return;
   TBasicApp::NewLogEntry() << "Using the following element radii:";
-  TBasicApp::NewLogEntry() <<
-    "(Default radii source: http://www.ccdc.cam.ac.uk/products/csd/radii)";
-  for( size_t i=0; i < au_cont.Count(); i++ )  {
+  if (which == 4) {
+    TBasicApp::NewLogEntry() <<
+      "(Default radii source: http://www.ccdc.cam.ac.uk/products/csd/radii)";
+  }
+  for (size_t i = 0; i < au_cont.Count(); i++) {
     const size_t ei = radii.IndexOf(&au_cont[i].element);
-    if( ei == InvalidIndex ) {
+    if (ei == InvalidIndex) {
+      double r = 0;
+      switch (which) {
+      case 0: r = au_cont[i].element.r_bonding; break;
+      case 1: r = au_cont[i].element.r_pers; break;
+      case 2: r = au_cont[i].element.r_cov; break;
+      case 3: r = au_cont[i].element.r_sfil; break;
+      case 4: r = au_cont[i].element.r_vdw; break;
+      case 5: r = au_cont[i].element.r_custom; break;
+      }
       TBasicApp::NewLogEntry() << au_cont[i].element.symbol << '\t' <<
-        au_cont[i].element.r_vdw;
+        r;
     }
     else {
       TBasicApp::NewLogEntry() << au_cont[i].element.symbol << '\t' <<

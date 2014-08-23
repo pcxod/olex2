@@ -16,6 +16,7 @@
 #include "planesort.h"
 #include "xmacro.h"
 #include "cif.h"
+#include "dsphere.h"
 
 #define gxlib_InitMacro(macroName, validOptions, argc, desc)\
   lib.Register(\
@@ -316,6 +317,17 @@ void GXLibMacros::Export(TLibrary& lib) {
   gxlib_InitMacro(DefineVar, EmptyString(), fpOne|psFileLoaded,
     "Defines a variable to be clalculated with CalcVars. The argument is "
     "the variable name.");
+
+  gxlib_InitMacro(ProjSph,
+    "g-sphere quality [6]&;"
+    "e-emboss the sphere&;"
+    "a-transparency level [0x9c] 0 - 255&;"
+    "group-group the ligands into same-colour groups [false]&;"
+    ,
+    fpAny | psFileLoaded,
+    "Creates a projection from the selected atom onto a sphere, coloring each "
+    "point on the sphere with a unique color corresponding to fragments. For "
+    "referece see Guzei, I.A., Wendt, M.Dalton Trans., 2006, 3991–3999.");
 
   gxlib_InitFunc(ExtraZoom, fpNone|fpOne,
     "Sets/reads current extra zoom (default zoom correction)");
@@ -2229,7 +2241,7 @@ void GXLibMacros::macWBox(TStrObjList &Cmds, const TParamList &Options,
   ElementRadii radii;
   TAsymmUnit& au = app.XFile().GetAsymmUnit();
   if( Cmds.Count() == 1 && TEFile::Exists(Cmds[0]) )
-    radii = TXApp::ReadVdWRadii(Cmds[0]);
+    radii = TXApp::ReadRadii(Cmds[0]);
   TXApp::PrintVdWRadii(radii, au.GetContentList());
   const bool use_aw = Options.Contains('w');
   if (Options.GetBoolOption('s')) {
@@ -2314,7 +2326,7 @@ void GXLibMacros::macCalcVoid(TStrObjList &Cmds, const TParamList &Options,
   ElementRadii radii;
   TAsymmUnit& au = app.XFile().GetAsymmUnit();
   if( Cmds.Count() == 1 && TEFile::Exists(Cmds[0]) )
-    radii = TXApp::ReadVdWRadii(Cmds[0]);
+    radii = TXApp::ReadRadii(Cmds[0]);
   TXApp::PrintVdWRadii(radii, au.GetContentList());
   TCAtomPList catoms;
   // consider the selection if any
@@ -4034,5 +4046,139 @@ void GXLibMacros::macDefineVar(TStrObjList &Cmds, const TParamList &Options,
 
   }
   //
+}
+//..............................................................................
+void GXLibMacros::macProjSph(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
+  {
+    ElementRadii radii;
+    if (Cmds.Count() == 1 && TEFile::Exists(Cmds[0]))
+      radii = TXApp::ReadRadii(Cmds[0]);
+    ContentList cl = app.XFile().GetAsymmUnit().GetContentList();
+    for (size_t i = 0; i < cl.Count(); i++) {
+      cl[i].element.r_custom = radii.Find(&cl[i].element, cl[i].element.r_vdw);
+    }
+    TXApp::PrintCustomRadii(radii, cl);
+  }
+  TArrayList<uint32_t> colors;
+  for (size_t i = 0; i < Cmds.Count(); i++) {
+    if (Cmds[i].IsNumber())  {
+      colors.Add(Cmds[i].SafeUInt<uint32_t>());
+      Cmds.Delete(i--);
+    }
+  }
+  TXAtomPList xatoms = app.FindXAtoms(Cmds, false, true);
+  if (xatoms.Count() != 1) {
+    E.ProcessingError(__OlxSourceInfo, "one atom is expected");
+    return;
+  }
+  static size_t counter = 0;
+  PointAnalyser &pa = *new PointAnalyser(*xatoms[0]);
+  pa.alpha = Options.FindValue('a', "0x9c").SafeUInt<uint8_t>();
+  pa.emboss = Options.GetBoolOption('e');
+  {
+    if (pa.colors.Count() == 1 && !colors.IsEmpty())
+      pa.colors[0] = colors[0];
+    else {
+      size_t cr = 0;
+      for (size_t i = 0; i < colors.Count(); i++) {
+        if (xatoms[0]->CAtom().GetFragmentId() == i)
+          cr = 1;
+        if (i + cr >= pa.colors.Count())
+          break;
+        pa.colors[i + cr] = colors[i];
+      }
+    }
+  }
+  size_t g = Options.FindValue('g', 6).ToSizeT();
+  if (g > 10)
+    g = 10;
+  {
+    TGPCollection *gp = app.GetRender().FindCollection("SASphere");
+    if (gp != NULL) {
+      app.GetRender().RemoveCollection(*gp);
+    }
+  }
+  TDSphere &sph = app.DSphere();
+  sph.SetAnalyser(&pa);
+  sph.SetGeneration(g);
+  sph.Create();
+  sph.Basis.SetCenter(xatoms[0]->crd());
+  sph.Basis.SetZoom(2);
+  if (Options.GetBoolOption("group")) {
+    olxdict<uint32_t, TGlGroup *, TPrimitiveComparator> groups;
+    TGXApp::AtomIterator atoms = app.GetAtoms();
+    while (atoms.HasNext()) {
+      TXAtom &a = atoms.Next();
+      if (&a == xatoms[0] || !a.IsAvailable() || a.IsGrouped())
+        continue;
+      TGlGroup *glg = groups.Find(a.CAtom().GetFragmentId(), NULL);
+      if (glg == NULL) {
+        glg = &app.GetRender().NewGroup(
+          olxstr("Ligand") << (groups.Count() + 1));
+        groups.Add(a.CAtom().GetFragmentId(), glg)->Create();
+      }
+      glg->Add(a);
+    }
+    TGXApp::BondIterator bonds = app.GetBonds();
+    while (bonds.HasNext()) {
+      TXBond &b = bonds.Next();
+      if (!b.IsAvailable() || b.IsGrouped())
+        continue;
+      TGlGroup *glg = groups.Find(b.A().CAtom().GetFragmentId(), NULL);
+      if (glg == NULL) {
+        glg = &app.GetRender().NewGroup(
+          olxstr("Ligand") << (groups.Count() + 1));
+        groups.Add(b.A().CAtom().GetFragmentId(), glg)->Create();
+      }
+      glg->Add(b);
+    }
+    for (size_t i = 0; i < groups.Count(); i++) {
+      TGlMaterial glm = groups.GetValue(i)->GetGlM();
+      glm.AmbientF = pa.colors[groups.GetKey(i)];
+      glm.DiffuseF = pa.colors[groups.GetKey(i)];
+      glm.SetTransparent(false);
+      groups.GetValue(i)->SetGlM(glm);
+    }
+  }
+  TTable table(0, 2);
+  for (size_t i = 0; i < pa.areas.Count(); i++) {
+    olxstr legend;
+    if (pa.areas.GetKey(i).IsEmpty()) {
+      legend = "Accessible";
+    }
+    else {
+      legend.SetLength(0);
+      TStrList toks(pa.areas.GetKey(i), ';');
+      for (size_t j = 0; j < toks.Count(); j++) {
+        TNetwork &n = app.XFile().GetLattice().GetFragment(toks[j].ToSizeT());
+        if (n.NodeCount() == 0) continue;
+        TSAtom *a = &n.Node(0);
+        for (size_t j = 1; j < n.NodeCount(); j++) {
+          if (a->GetType() < n.Node(j).GetType()) {
+            a = &n.Node(j);
+          }
+        }
+        if (a != NULL) {
+          if (!legend.IsEmpty()) {
+            legend << ',';
+          }
+          legend << a->GetGuiLabel();
+        }
+      }
+      if (!legend.IsEmpty()) {
+        legend.SetLength(legend.Length() - 1);
+      }
+    }
+    TStrList &r = table.AddRow();
+    r[0] = legend;
+    r[1] = olxstr::FormatFloat(2,
+      (double)(pa.areas.GetValue(i) * 100) / sph.GetVectorCount());
+  }
+  TBasicApp::NewLogEntry() <<
+    table.CreateTXTList("Area coverage (%)", false, false, ' ');
+  TBasicApp::NewLogEntry() << "For the use of solid angles, see: "
+    "Guzei, I.A., Wendt, M.Dalton Trans., 2006, 3991–3999.";
 }
 //..............................................................................

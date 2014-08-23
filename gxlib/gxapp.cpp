@@ -44,6 +44,8 @@
 #include "xmacro.h"
 #include "md5.h"
 #include "index_range.h"
+#include "solid_angles.h"
+#include "dsphere.h"
 #ifdef __WXWIDGETS__
   #include "wxglscene.h"
   #include "wx/string.h"
@@ -121,6 +123,7 @@ public:
   bool Enter(const IEObject *Sender, const IEObject *Data, TActionQueue *)  {
     state = 1;
     FParent->GetUndo().Clear();
+    FParent->DSphere().SetAnalyser(NULL);
     if( GrowInfo != NULL )  {
       delete GrowInfo;
       GrowInfo = NULL;
@@ -279,11 +282,13 @@ TGXApp::TGXApp(const olxstr &FileName, AGlScene *scene)
   FDUnitCell->SetVisible(false);
   FDBasis = new TDBasis(*FGlRender, "DBasis");
   FDBasis->SetVisible(false);
+  FDSphere = new TDSphere(*FGlRender, olxstr("DSphere"));
   FProbFactor = 50;
   ExtraZoom = 1.25;
 
   FLabels = new TXGlLabels(*FGlRender, "Labels");
   ObjectsToCreate.Add(FDBasis);
+  ObjectsToCreate.Add(FDSphere);
   ObjectsToCreate.Add(FDUnitCell);
   ObjectsToCreate.Add(FDFrame);
   ObjectsToCreate.Add(Fader);
@@ -390,6 +395,7 @@ TGXApp::TGXApp(const olxstr &FileName, AGlScene *scene)
   );
   TextureNames << "LockedAtoms";
   TextureNames << "ConstrainedAtoms";
+  PointAnalyser::Register();
 }
 //..............................................................................
 TGXApp::~TGXApp()  {
@@ -4785,6 +4791,7 @@ void TGXApp::ToDataItem(TDataItem& item, IOutputStream& zos) const {
   F3DFrame->ToDataItem(item.AddItem("3DFrame"));
   FXGrid->ToDataItem(item.AddItem("Grid"), zos);
   FDBasis->ToDataItem(item.AddItem("DBasis"));
+  FDSphere->ToDataItem(item.AddItem("DSphere"));
 
   TDataItem& labels = item.AddItem("Labels");
   for (size_t i=0; i < XLabels.Count(); i++)
@@ -4954,6 +4961,10 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
     OnGraphicsVisible.Execute(dynamic_cast<TBasicApp*>(this), FXGrid);
 
   FDBasis->FromDataItem(item.GetItemByName("DBasis"));
+  TDataItem *dspi = item.FindItem("DSphere");
+  if (dspi != NULL) {
+    FDSphere->FromDataItem(*dspi);
+  }
   {
     TDataItem *lines = item.FindItem("Lines");
     if (lines != NULL) {

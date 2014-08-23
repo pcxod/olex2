@@ -66,6 +66,7 @@ public:
 
   DefMacro(SetMaterial)
   DefMacro(DefineVar)
+  DefMacro(ProjSph)
 
   DefFunc(MatchFiles)
   DefFunc(ExtraZoom)

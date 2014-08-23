@@ -533,7 +533,7 @@ vec3d TAsymmUnit::GetOCenter(bool IncludeQ, bool IncludeH) const {
 /* since this is the AU, only the crystallographic occupancies must be summed
 up, atoms' degeracy should not be taken into account ...
 */
-ContentList TAsymmUnit::GetContentList(double mult) const {
+ContentList::const_list_type TAsymmUnit::GetContentList(double mult) const {
   ElementPList elements;
   ContentList rv;
   for( size_t i=0; i < AtomCount(); i++ )  {

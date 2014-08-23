@@ -457,7 +457,7 @@ PyObject* pyGetVdWRadii(PyObject* self, PyObject* args)  {
   olxstr radii_fn;
   if( !PythonExt::ParseTuple(args, "|w", &radii_fn) )
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "|w");
-  TXApp::ReadVdWRadii(radii_fn);
+  radii = TXApp::ReadRadii(radii_fn);
   ContentList content =
     TXApp::GetInstance().XFile().GetAsymmUnit().GetContentList();
   PyObject* dict = PyDict_New();

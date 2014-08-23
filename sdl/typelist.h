@@ -454,7 +454,7 @@ public:
   /* copy constructor must be implemented
   */
   template <class Functor> ConstTypeList<T> Filter(const Functor& f) const {
-    TTypeLisExt rv;
+    TTypeListExt rv;
     rv.SetCapacity(List.Count());
     for (size_t i = 0; i < List.Count(); i++) {
       if (f.OnItem(GetItem(i), i)) {

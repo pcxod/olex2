@@ -8304,7 +8304,7 @@ void XLibMacros::funVVol(const TStrObjList& Params, TMacroError &E) {
   TXApp &app = TXApp::GetInstance();
   ElementRadii radii;
   if( Params.Count() == 1 && TEFile::Exists(Params[0]) )
-    radii = TXApp::ReadVdWRadii(Params[0]);
+    radii = TXApp::ReadRadii(Params[0]);
   TXApp::PrintVdWRadii(radii, app.XFile().GetAsymmUnit().GetContentList());
 
   const TXApp::CalcVolumeInfo vi = app.CalcVolume(&radii);

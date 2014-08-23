@@ -449,7 +449,6 @@ private:
   DefMacro(TestStat)
   DefMacro(ExportFont)
   DefMacro(ImportFont)
-  DefMacro(ProjSph)
   DefMacro(UpdateQPeakTable)
   DefMacro(Capitalise)
   DefMacro(FlushFS)

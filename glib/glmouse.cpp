@@ -13,9 +13,12 @@
 #include "dframe.h"
 #include "glgroup.h"
 
+TGlMouse *TGlMouse::Instance = NULL;
+//..............................................................................
 TGlMouse::TGlMouse(TGlRenderer *Parent, TDFrame *Frame)
   : OnObject(Actions.New("ObObject"))
 {
+  Instance = this;
   FSX = FSY = 0;
   MData.GlMouse = this;
   InMode = FDblClick = false;
