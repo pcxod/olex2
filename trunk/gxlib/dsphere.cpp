@@ -122,7 +122,9 @@ void TDSphere::Create(const olxstr& cName)  {
   if (GPC == NULL)
     GPC = &Parent.NewCollection(NewL);
   GPC->AddObject(*this);
-  if (GPC->PrimitiveCount() != 0)  return;
+  if (GPC->PrimitiveCount() != 0) {
+    GPC->ClearPrimitives();
+  }
 
   TGraphicsStyle& GS = GPC->GetStyle();
   GS.SetSaveable(false);

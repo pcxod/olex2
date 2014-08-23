@@ -4103,6 +4103,7 @@ void GXLibMacros::macProjSph(TStrObjList &Cmds, const TParamList &Options,
   TDSphere &sph = app.DSphere();
   sph.SetAnalyser(&pa);
   sph.SetGeneration(g);
+  sph.SetVisible(true);
   sph.Create();
   sph.Basis.SetCenter(xatoms[0]->crd());
   sph.Basis.SetZoom(2);
@@ -4142,9 +4143,15 @@ void GXLibMacros::macProjSph(TStrObjList &Cmds, const TParamList &Options,
       groups.GetValue(i)->SetGlM(glm);
     }
   }
-  TTable table(0, 2);
+  TTable table_l(0, 3), table_o(0, 2);
+  table_l.ColName(0) = "Haeviest atom";
+  table_l.ColName(1) = "Area indiviual, %";
+  table_l.ColName(2) = "Area total, %";
+  olxdict<TNetwork *, double, TPointerComparator> li;
+  olxdict<TNetwork *, size_t, TPointerComparator> ri;
   for (size_t i = 0; i < pa.areas.Count(); i++) {
     olxstr legend;
+    double prc = (double)(pa.areas.GetValue(i) * 100) / sph.GetVectorCount();
     if (pa.areas.GetKey(i).IsEmpty()) {
       legend = "Accessible";
     }
@@ -4153,6 +4160,9 @@ void GXLibMacros::macProjSph(TStrObjList &Cmds, const TParamList &Options,
       TStrList toks(pa.areas.GetKey(i), ';');
       for (size_t j = 0; j < toks.Count(); j++) {
         TNetwork &n = app.XFile().GetLattice().GetFragment(toks[j].ToSizeT());
+        if (toks.Count() == 1) {
+          ri(&n, table_l.RowCount());
+        }
         if (n.NodeCount() == 0) continue;
         TSAtom *a = &n.Node(0);
         for (size_t j = 1; j < n.NodeCount(); j++) {
@@ -4160,24 +4170,27 @@ void GXLibMacros::macProjSph(TStrObjList &Cmds, const TParamList &Options,
             a = &n.Node(j);
           }
         }
-        if (a != NULL) {
-          if (!legend.IsEmpty()) {
-            legend << ',';
-          }
-          legend << a->GetGuiLabel();
+        if (!legend.IsEmpty()) {
+          legend << ',';
         }
-      }
-      if (!legend.IsEmpty()) {
-        legend.SetLength(legend.Length() - 1);
+        legend << a->GetGuiLabel();
+        li(&n, 0) += prc;
       }
     }
-    TStrList &r = table.AddRow();
+    bool lo = !pa.areas.GetKey(i).Contains(';');
+    TStrList &r = (lo ? table_l : table_o).AddRow();
     r[0] = legend;
-    r[1] = olxstr::FormatFloat(2,
-      (double)(pa.areas.GetValue(i) * 100) / sph.GetVectorCount());
+    r[1] = olxstr::FormatFloat(2, prc);
+  }
+  for (size_t i = 0; i < ri.Count(); i++) {
+    if (ri.GetValue(i) < table_l.RowCount()) {
+      table_l[ri.GetValue(i)][2] = olxstr::FormatFloat(2, li[ri.GetKey(i)]);
+    }
   }
   TBasicApp::NewLogEntry() <<
-    table.CreateTXTList("Area coverage (%)", false, false, ' ');
+    table_l.CreateTXTList("Area coverage by ligand, unique (%)", true, false, ' ');
+  TBasicApp::NewLogEntry() <<
+    table_o.CreateTXTList("Overlapping area (%)", false, false, ' ');
   TBasicApp::NewLogEntry() << "For the use of solid angles, see: "
     "Guzei, I.A., Wendt, M.Dalton Trans., 2006, 3991–3999.";
 }
