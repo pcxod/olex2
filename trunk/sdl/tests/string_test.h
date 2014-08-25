@@ -111,9 +111,18 @@ void PrintTest(OlxTests& t_) {
     throw TFunctionFailedException(__OlxSourceInfo, "assert");
 }
 //...................................................................................................
+void TrimTest(OlxTests& t_) {
+  t_.description = __FUNC__;
+  if (olxstr("lu").TrimR('u') != "l")
+    throw TFunctionFailedException(__OlxSourceInfo, "assert");
+  if (olxstr("u").TrimR('u') != "")
+    throw TFunctionFailedException(__OlxSourceInfo, "assert");
+}
+//...................................................................................................
 void StringTests(OlxTests& t)  {
   t.Add(&ReplaceTest).Add(&IsNumberTest)
     .Add(&SubstringTest)
-    .Add(&PrintTest);
+    .Add(&PrintTest)
+    .Add(&TrimTest);
 }
 };  //namespace test

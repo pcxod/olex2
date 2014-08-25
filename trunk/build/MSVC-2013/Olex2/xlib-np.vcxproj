@@ -613,6 +613,7 @@
     <ClCompile Include="..\..\..\xlib\asymmunit.cpp" />
     <ClCompile Include="..\..\..\xlib\atomref.cpp" />
     <ClCompile Include="..\..\..\xlib\auto.cpp" />
+    <ClCompile Include="..\..\..\xlib\calc_ext.cpp" />
     <ClCompile Include="..\..\..\xlib\catomlist.cpp" />
     <ClCompile Include="..\..\..\xlib\cifdp.cpp" />
     <ClCompile Include="..\..\..\xlib\constraints_ext.cpp" />
