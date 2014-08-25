@@ -398,9 +398,8 @@ public:
       : olxcstr((const char*)bf, bf_sz);
     // must preserve the new lines on Linux!!! 2008.08.17
     Strtok(str, '\n', false);
-    for( size_t i=0; i < Count(); i++ )
-      if( GetString(i).EndsWith('\r') )
-        GetString(i).SetLength(GetString(i).Length()-1);
+    for (size_t i = 0; i < Count(); i++)
+      GetString(i).TrimR('\r');
     return *this;
   }
   TTStrList& LoadFromTextStream(IInputStream& io)  {

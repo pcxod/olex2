@@ -1757,6 +1757,12 @@ public:
   //...........................................................................
   template <typename AC> TTSString& TrimR(AC wht)  {
     if( T::_Length == 0 )  return *this;
+    if (T::_Length == 1) {
+      if (TTIString<TC>::CharAt(0) == wht) {
+        T::_Length = 0;
+      }
+      return *this;
+    }
     size_t end = T::_Length;
     while (--end > 0 && TTIString<TC>::CharAt(end) == wht)  ;
     T::_Length = (end + 1);
