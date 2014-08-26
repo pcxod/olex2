@@ -472,8 +472,9 @@ public:
   TGlGroup& GetSelection() const {  return GetRender().GetSelection();  }
   /* returns the newly created group or NULL if the grouping has failed */
   TGlGroup *GroupSelection(const olxstr& name);
-  void UnGroupSelection();
-  void UnGroup(TGlGroup& G);
+  void UngroupSelection();
+  void Ungroup(TGlGroup& G);
+  void UngroupAll();
   // if list is true - the selection is considered as a list of bonds
   olxstr GetSelectionInfo(bool list=false) const;
   olxstr GetObjectInfoAt(int x, int y) const;

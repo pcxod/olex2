@@ -824,10 +824,10 @@ void TMainForm::OnSelection(wxCommandEvent& m)  {
     processMacro("group");
   else if( m.GetId() == ID_SelUnGroup )  {
     TGlGroup *GlR = NULL;
-    if( FObjectUnderMouse != NULL && EsdlInstanceOf(*FObjectUnderMouse, TGlGroup) )
-      FXApp->UnGroup(*((TGlGroup*)FObjectUnderMouse));
+    if (FObjectUnderMouse != NULL && EsdlInstanceOf(*FObjectUnderMouse, TGlGroup))
+      FXApp->Ungroup(*((TGlGroup*)FObjectUnderMouse));
     else
-      FXApp->UnGroupSelection();
+      FXApp->UngroupSelection();
   }
   else if( m.GetId() == ID_SelLabel )  {
     vec3d cent;

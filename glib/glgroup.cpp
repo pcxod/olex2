@@ -64,9 +64,12 @@ void TGlGroup::Clear()  {
   Objects.Clear();
 }
 //..............................................................................
-void TGlGroup::Remove(AGDrawObject& G)  {
-  Objects.Remove(&G);
-  ObjectReleaser::OnItem(G, 0);  // dummy 0 arg...
+bool TGlGroup::Remove(AGDrawObject& G)  {
+  if (Objects.Remove(&G)) {
+    ObjectReleaser::OnItem(G, 0);  // dummy 0 arg...
+    return true;
+  }
+  return false;
 }
 //..............................................................................
 void TGlGroup::RemoveHidden()  {

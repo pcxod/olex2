@@ -881,8 +881,8 @@ void TGlRenderer::Select(AGDrawObject& G)  {
   G.SetSelected(FSelection->Add(G));
 }
 //..............................................................................
-void TGlRenderer::DeSelect(AGDrawObject& G)  {
-  if( G.GetParentGroup() == FSelection )
+void TGlRenderer::Deselect(AGDrawObject& G)  {
+  if (G.GetParentGroup() == FSelection)
     FSelection->Remove(G);
 }
 //..............................................................................
@@ -892,7 +892,7 @@ void TGlRenderer::Select(AGDrawObject& G, bool v)  {
       Select(G);
   }
   else if( G.IsSelected() )
-    DeSelect(G);
+    Deselect(G);
 }
 //..............................................................................
 void TGlRenderer::Select(AGDrawObject& G, glSelectionFlag v)  {
@@ -902,13 +902,13 @@ void TGlRenderer::Select(AGDrawObject& G, glSelectionFlag v)  {
   }
   else if (v == glSelectionUnselect) {
     if (G.IsSelected())
-      DeSelect(G);
+      Deselect(G);
   }
   else if (v == glSelectionInvert) {
     if (!G.IsSelected())
       Select(G);
     else
-      DeSelect(G);
+      Deselect(G);
   }
 }
 //..............................................................................
@@ -939,13 +939,12 @@ void TGlRenderer::SelectAll(bool Select)  {
 }
 //..............................................................................
 void TGlRenderer::ClearGroups()  {
-  if( FGroups.IsEmpty() )  return;
-  for( size_t i=0; i < FGroups.Count(); i++ )  {
-    if( FGroups[i]->IsSelected() )
-      DeSelect(*FGroups[i]);
+  for (size_t i = 0; i < FGroups.Count(); i++) {
+    if (FGroups[i]->IsSelected())
+      Deselect(*FGroups[i]);
     FGroups[i]->Clear();
   }
-  for( size_t i=0; i < FGroups.Count(); i++ )
+  for (size_t i = 0; i < FGroups.Count(); i++)
     delete FGroups[i];
   FGroups.Clear();
 }
@@ -984,10 +983,9 @@ TGlGroup& TGlRenderer::NewGroup(const olxstr& collection_name) {
   return *FGroups.Add(new TGlGroup(*this, collection_name));
 }
 //..............................................................................
-void TGlRenderer::UnGroup(TGlGroup& OS)  {
+void TGlRenderer::Ungroup(TGlGroup& OS)  {
   FGroups.Remove(OS);
-  if( FSelection->Contains(OS) )
-    FSelection->Remove(OS);
+  FSelection->Remove(OS);
 
   AGDObjList Objects(OS.Count());
   for( size_t i=0; i < OS.Count(); i++ )
