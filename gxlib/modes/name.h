@@ -203,6 +203,7 @@ public:
       olxstr Labl(Symbol.IsEmpty() ? XA.GetType().symbol : Symbol);
       Labl << Prefix <<  Index << Suffix;
       TNameModeUndo* undo = new TNameModeUndo(XA);
+      gxapp.MarkLabel(XA, true);
       undo->AddAction(gxapp.Name(XA, Labl, false));
       if (NameResidues) {
         undo->AddAction(gxapp.SynchroniseResidues(TXAtomPList() << XA));
@@ -213,7 +214,6 @@ public:
         XA.Update();
       }
       gxapp.GetUndo().Push(undo);
-      gxapp.MarkLabel(XA, true);
       Index++;
       SetCursor();
       if (AutoComplete != 0)

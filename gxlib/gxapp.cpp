@@ -3069,18 +3069,24 @@ void TGXApp::UpdateDuplicateLabels() {
   AtomIterator ai = GetAtoms();
   while (ai.HasNext()) {
     TXAtom &a = ai.Next();
-    if (!a.IsAvailable() || !a.GetMatrix().IsFirst()) continue;
+    if (!a.GetMatrix().IsFirst()) continue;
     olxstr gl = a.GetGuiLabel();
     size_t idx = ld.IndexOf(gl);
     if (idx != InvalidIndex) {
       if (ld.GetValue(idx) != InvalidIndex) {
         if (FLabels->GetMaterialIndex(ld.GetValue(idx)) != lmiMark) {
           FLabels->SetMaterialIndex(ld.GetValue(idx), lmiDuplicateLabel);
+          TXAtom &b = GetXAtom(ld.GetValue(idx));
+          b.CAtom().SetLabel(
+            b.CAtom().GetParent()->CheckLabel(&b.CAtom(), b.GetLabel()), false);
           ld.GetValue(idx) = InvalidIndex;
         }
       }
-      if (FLabels->GetMaterialIndex(a.GetOwnerId()) != lmiMark)
+      if (FLabels->GetMaterialIndex(a.GetOwnerId()) != lmiMark) {
         FLabels->SetMaterialIndex(a.GetOwnerId(), lmiDuplicateLabel);
+        a.CAtom().SetLabel(
+          a.CAtom().GetParent()->CheckLabel(&a.CAtom(), a.GetLabel()), false);
+      }
     }
     else {
       ld(gl, a.GetOwnerId());
