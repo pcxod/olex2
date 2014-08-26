@@ -85,7 +85,7 @@ bool TGlMouse::MouseUp(int x, int y, short Shift, short button)  {
           }
         }
         if (res == false && SelectionEnabled && Shift == 0 && button == smbLeft &&
-            is_click )  // right click
+            is_click && !FDblClick)  // right click
         {
           if (PColl != NULL && PColl != &FParent->GetSelection())
             FParent->Select(*PColl);
