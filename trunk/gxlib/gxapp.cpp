@@ -716,12 +716,21 @@ int32_t TGXApp::Quality(const short V)  {
   TXAtom::CreateStaticObjects(*FGlRender);
   rv |= TXBond::Quality((uint16_t)(V&0x0000FFFF));
   TXBond::CreateStaticObjects(*FGlRender);
+  TDRing::Quality((uint16_t)(V & 0x0000FFFF));
+  TDRing::CreateStaticObjects(*FGlRender);
   AtomIterator ai = GetAtoms();
-  while( ai.HasNext() )
+  while (ai.HasNext())
     ai.Next().GetPrimitives().ClearPrimitives();
   BondIterator bi = GetBonds();
-  while( bi.HasNext() )
+  while (bi.HasNext())
     bi.Next().GetPrimitives().ClearPrimitives();
+  Rings.ForEach(ACollectionItem::IndexTagSetter(
+    FunctionAccessor::MakeConst(&TDRing::GetPrimitives)));
+  for (size_t i = 0; i < Rings.Count(); i++) {
+    if (Rings[i].GetPrimitives().GetTag() != (index_t)i)
+      continue;
+    Rings[i].GetPrimitives().ClearPrimitives();
+  }
   CreateObjects(false, false);
   Draw();
   return rv;
@@ -1339,8 +1348,8 @@ void TGXApp::SelectFragmentsAtoms(const TNetPList& frags, bool v)  {
         GetRender().Select(*XA[i]);
     }
     else  {
-      if( XA[i]->IsSelected() )
-        GetRender().DeSelect(*XA[i]);
+      if ( XA[i]->IsSelected() )
+        GetRender().Deselect(*XA[i]);
     }
   }
 }
@@ -1358,7 +1367,7 @@ void TGXApp::SelectFragmentsBonds(const TNetPList& frags, bool v)  {
     }
     else  {
       if( XB[i]->IsSelected() )
-        GetRender().DeSelect(*XB[i]);
+        GetRender().Deselect(*XB[i]);
     }
   }
 }
@@ -5180,7 +5189,7 @@ TGlGroup *TGXApp::GroupSelection(const olxstr& name)  {
   return glg;
 }
 //..............................................................................
-void TGXApp::UnGroupSelection()  {
+void TGXApp::UngroupSelection()  {
   TGlGroup& sel = GetSelection();
   for (size_t i=0; i < sel.Count(); i++) {
     if (EsdlInstanceOf(sel[i], TGlGroup)) {
@@ -5190,18 +5199,25 @@ void TGXApp::UnGroupSelection()  {
         GroupDefs.Delete(GroupDict.GetValue(i));
         GroupDict.Delete(i);
       }
-      GetRender().UnGroup(G);
+      GetRender().Ungroup(G);
     }
     _UpdateGroupIds();
   }
   Draw();
 }
 //..............................................................................
-void TGXApp::UnGroup(TGlGroup& G)  {
+void TGXApp::Ungroup(TGlGroup& G)  {
   size_t i = GroupDict.IndexOf(&G);
-  if( i != InvalidIndex )
+  if (i != InvalidIndex)
     GroupDefs.Delete(GroupDict.GetValue(i));
-  GetRender().UnGroup(G);
+  GetRender().Ungroup(G);
+  _UpdateGroupIds();
+  Draw();
+}
+//..............................................................................
+void TGXApp::UngroupAll()  {
+  GroupDefs.Clear();
+  GetRender().ClearGroups();
   _UpdateGroupIds();
   Draw();
 }
@@ -5349,7 +5365,7 @@ void TGXApp::CreateRings(bool force, bool create) {
     {
       continue;
     }
-    TDRing &r = *(new TDRing(GetRender(), olxstr("DRing_") << i));
+    TDRing &r = *(new TDRing(GetRender(), "ARing"));
     Rings.Add(r);
     r.Basis.OrientNormal(normal);
     r.Basis.SetCenter(center);

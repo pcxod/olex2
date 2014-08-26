@@ -43,7 +43,7 @@ const short
 
 class TGlFont;
 class TGPCollection;
-class TGlrenderer;
+class TGlRenderer;
 
 class AEvaluator  { // a prototype for the calculation of expressions
   int FMinX, FMaxX, FMinY, FMaxY;

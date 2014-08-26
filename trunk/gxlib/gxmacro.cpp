@@ -17,6 +17,7 @@
 #include "xmacro.h"
 #include "cif.h"
 #include "dsphere.h"
+#include "dring.h"
 
 #define gxlib_InitMacro(macroName, validOptions, argc, desc)\
   lib.Register(\
@@ -770,27 +771,43 @@ void GXLibMacros::macBRad(TStrObjList &Cmds, const TParamList &Options,
   Cmds.Delete(0);
   TXBondPList bonds;
   bool absolute = Options.GetBoolOption('a');
-  if( Cmds.Count() == 1 && Cmds[0].Equalsi("hbonds") )  {
+  if (Cmds.Count() == 1 && Cmds[0].Equalsi("hbonds")) {
     if (absolute) r /= 0.02;
     TGXApp::BondIterator bi = app.GetBonds();
-    while( bi.HasNext() )  {
+    bonds.SetCapacity(bi.count/10);
+    while (bi.HasNext()) {
       TXBond& xb = bi.Next();
-      if( xb.GetType() == sotHBond )
+      if (xb.GetType() == sotHBond)
         bonds.Add(xb);
     }
     app.BondRad(r, &bonds);
   }
-  else  {
+  else {
     if (absolute) r /= 0.1f;
     bonds = app.GetBonds(Cmds, true);
-    if( bonds.IsEmpty() && Cmds.IsEmpty() )  {  // get all non-H
+    if (bonds.IsEmpty() && Cmds.IsEmpty()) {  // get all non-H
       TGXApp::BondIterator bi = app.GetBonds();
-      while( bi.HasNext() )  {
+      bonds.SetCapacity(bi.count);
+      while (bi.HasNext()) {
         TXBond& xb = bi.Next();
-        if( xb.GetType() != sotHBond )
+        if (xb.GetType() != sotHBond)
           bonds.Add(xb);
       }
       TXBond::DefR(r);
+      TDRing::SetDefTubeRadius(r / 13.3);
+      TDRing::CreateStaticObjects(app.GetRender());
+      app.GetRings().ForEach(ACollectionItem::IndexTagSetter(
+        FunctionAccessor::MakeConst(&TDRing::GetPrimitives)));
+      for (size_t i = 0; i < app.GetRings().Count(); i++) {
+        if (app.GetRings()[i].GetPrimitives().GetTag() != (index_t)i) {
+          continue;
+        }
+        app.GetRings()[i].GetPrimitives().ClearPrimitives();
+        app.GetRings()[i].GetPrimitives().ClearObjects();
+      }
+      for (size_t i = 0; i < app.GetRings().Count(); i++) {
+        app.GetRings()[i].Create();
+      }
     }
     app.BondRad(r, &bonds);
   }
@@ -1610,7 +1627,12 @@ void GXLibMacros::macGroup(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &Error)
 {
   if (Options.GetBoolOption('u')) {
-    app.UnGroupSelection();
+    if (app.GetSelection().IsEmpty()) {
+      app.UngroupAll();
+    }
+    else {
+      app.UngroupSelection();
+    }
     return;
   }
   olxstr name = Options.FindValue('n');

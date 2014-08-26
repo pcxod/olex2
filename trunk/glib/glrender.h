@@ -254,7 +254,7 @@ public:
   if current selection had less than 2 elements */
   TGlGroup* GroupSelection(const olxstr& groupName);
   void ClearGroups();
-  void UnGroup(TGlGroup& GlG);
+  void Ungroup(TGlGroup& GlG);
   TGlGroup& GetSelection() const {  return *FSelection; }
   template <class SelType> SelType& ReplaceSelection() {
     FSelection->GetPrimitives().RemoveObject(*FSelection);
@@ -269,7 +269,7 @@ public:
   void Select(AGDrawObject& G, bool v); // convinience function...
   void Select(AGDrawObject& G, glSelectionFlag flag);
   void Select(AGDrawObject& G);
-  void DeSelect(AGDrawObject& G);
+  void Deselect(AGDrawObject& G);
   void ClearSelection();
   void SelectAll(bool Select);
   void InvertSelection();
