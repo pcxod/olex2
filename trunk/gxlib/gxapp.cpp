@@ -3748,43 +3748,39 @@ void TGXApp::LoadXFile(const olxstr& fn)  {
   Draw();  // fixes native loader is not draw after load
 }
 //..............................................................................
-void ShowPart_TagSetter(TCAtom &a, index_t v) {
-  if (a.IsProcessed()) return;
-  a.SetProcessed(true);
-  for (size_t i=0; i < a.AttachedSiteCount(); i++) {
-    TCAtom &aa = a.GetAttachedAtom(i);
-    aa.SetTag(v);
-    ShowPart_TagSetter(aa, v);
+sorted::ObjectPrimitive<index_t>::cons_list_type TGXApp::GetVisibleCAtomTags() {
+  sorted::ObjectPrimitive<index_t> tags;
+  TAsymmUnit &au = XFile().GetAsymmUnit();
+  for (size_t i = 0; i < au.AtomCount(); i++) {
+    TCAtom &a = au.GetAtom(i);
+    a.SetProcessed(false);
+    a.SetTag(-1);
   }
+  for (size_t i = 0; i < au.AtomCount(); i++) {
+    TCAtom &a = au.GetAtom(i);
+    if (!a.IsProcessed())
+      TCAtom::SetTagRecursively(a, (index_t)i);
+  }
+  AtomIterator ai(*this);
+  while (ai.HasNext()) {
+    TXAtom& xa = ai.Next();
+    if (xa.IsVisible()) {
+      tags.AddUnique(xa.CAtom().GetTag());
+    }
+  }
+  return tags;
 }
+//..............................................................................
 void TGXApp::ShowPart(const TIntList& parts, bool show, bool visible_only)  {
   if (visible_only) {
-    SortedObjectList<index_t, TPrimitiveComparator> tags;
+    SortedObjectList<index_t, TPrimitiveComparator> tags = 
+      GetVisibleCAtomTags();
     AtomIterator ai(*this);
-    TAsymmUnit &au = XFile().GetAsymmUnit();
-    for (size_t i=0; i < au.AtomCount(); i++) {
-      TCAtom &a = au.GetAtom(i);
-      a.SetProcessed(false);
-      a.SetTag(-1);
-    }
-    for (size_t i=0; i < au.AtomCount(); i++) {
-      TCAtom &a = au.GetAtom(i);
-      if (!a.IsProcessed())
-        ShowPart_TagSetter(a, (index_t)i);
-
-    }
-    while (ai.HasNext()) {
-      TXAtom& xa = ai.Next();
-      if (xa.IsVisible()) {
-        tags.AddUnique(xa.CAtom().GetTag());
-      }
-    }
-    ai.Reset();
     while (ai.HasNext()) {
       TXAtom& xa = ai.Next();
       if (!xa.IsVisible() && tags.Contains(xa.CAtom().GetTag())) {
-        xa.SetMasked(false);
-        xa.SetVisible(true);
+        xa.SetMasked(!show);
+        xa.SetVisible(show);
       }
     }
     if (parts.IsEmpty()) {
@@ -3794,7 +3790,7 @@ void TGXApp::ShowPart(const TIntList& parts, bool show, bool visible_only)  {
   }
   if (parts.IsEmpty()) {
     if (!visible_only)
-      AllVisible(true);
+      AllVisible(show);
     return;
   }
   AtomIterator ai(*this);
@@ -3803,6 +3799,54 @@ void TGXApp::ShowPart(const TIntList& parts, bool show, bool visible_only)  {
     if (visible_only && !xa.IsVisible())
       continue;
     if (parts.Contains(xa.CAtom().GetPart())) {
+      xa.SetVisible(show);
+      xa.SetMasked(!show);
+    }
+    else {
+      xa.SetVisible(!show);
+      xa.SetMasked(show);
+    }
+    if (xa.IsVisible())
+      xa.SetVisible(xa.IsAvailable());
+  }
+  _maskInvisible();
+  UpdateConnectivity();
+}
+//..............................................................................
+void TGXApp::ShowResi(const TIntList& numbers, const TStrList &names,
+  bool show, bool visible_only)
+{
+  if (visible_only) {
+    SortedObjectList<index_t, TPrimitiveComparator> tags =
+      GetVisibleCAtomTags();
+    AtomIterator ai(*this);
+    while (ai.HasNext()) {
+      TXAtom& xa = ai.Next();
+      if (!xa.IsVisible() && tags.Contains(xa.CAtom().GetTag())) {
+        xa.SetMasked(!show);
+        xa.SetVisible(show);
+      }
+    }
+    if (numbers.IsEmpty() && names.IsEmpty()) {
+      _maskInvisible();
+      UpdateConnectivity();
+    }
+  }
+  if (numbers.IsEmpty() && names.IsEmpty()) {
+    if (!visible_only)
+      AllVisible(show);
+    return;
+  }
+  AtomIterator ai(*this);
+  while (ai.HasNext()) {
+    TXAtom& xa = ai.Next();
+    if (visible_only && !xa.IsVisible())
+      continue;
+    TResidue &r = xa.CAtom().GetParent()->GetResidue(xa.CAtom().GetResiId());
+    if (numbers.Contains(r.GetNumber()) ||
+      (r.HasAlias() && numbers.Contains(r.GetAlias())) ||
+      names.Containsi(r.GetClassName()))
+    {
       xa.SetVisible(show);
       xa.SetMasked(!show);
     }

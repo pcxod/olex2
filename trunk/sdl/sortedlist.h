@@ -249,6 +249,7 @@ public:
   }
 public:
   typedef ObjectClass list_item_type;
+  typedef ConstSortedObjectList<ObjectClass, Comparator> cons_list_type;
 };
 //.............................................................................
 /* A choice of comprators is provided:

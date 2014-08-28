@@ -119,6 +119,7 @@ bool TXPlane::Orient(TGlPrimitive& P)  {
 void TXPlane::ListPrimitives(TStrList &List) const {
   List.Add("Plane");
   List.Add("Centroid");
+  List.Add("Ring");
 }
 //..............................................................................
 const_strlist TXPlane::PovDeclare()  {

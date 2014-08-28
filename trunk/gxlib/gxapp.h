@@ -345,6 +345,7 @@ protected:
     }
     return static_cast<TXBond&>(GetLatt(li).GetObjects().bonds[ind]);
   }
+  sorted::ObjectPrimitive<index_t>::cons_list_type GetVisibleCAtomTags();
 public:
   /* considers overlayed files
   */
@@ -559,7 +560,9 @@ public:
   void GrowAtom(TXAtom *XA, bool Shell, TCAtomPList* Template=NULL);
   void Grow(const TXGrowPoint& growPoint);
   void ChangeAtomType(TXAtom *A, const olxstr& Element);
-  void GrowWhole(TCAtomPList* Template=NULL){  FXFile->GetLattice().GenerateWholeContent(Template); }
+  void GrowWhole(TCAtomPList* Template=NULL) {
+    FXFile->GetLattice().GenerateWholeContent(Template);
+  }
   void Grow(const TXAtomPList& atoms, const smatd_list& matrices);
   void GrowBonds();
   void MoveFragment(TXAtom* to, TXAtom* fragAtom, bool copy);
@@ -586,6 +589,8 @@ public:
   bool IsHklVisible() const {  return FHklVisible;  }
   bool IsStructureVisible() const {  return FStructureVisible;  }
   void ShowPart(const TIntList& parts, bool show, bool visible_only);
+  void ShowResi(const TIntList& numbers, const TStrList &names,
+    bool show, bool visible_only);
 
   void SetXGrowLinesVisible(bool v);
   bool GetXGrowLinesVisible() const {  return FXGrowLinesVisible;  }

@@ -23,6 +23,7 @@
 #include "ins.h"
 #include "math/composite.h"
 #include "estopwatch.h"
+#include "encodings.h"
 
 RefinementModel::RefinementModel(TAsymmUnit& au) :
   VarRefrencerId("basf"),
@@ -1861,7 +1862,8 @@ olxstr RefinementModel::WriteInsExtras(const TCAtomPList* atoms,
   if (CVars.Validate()) {
     CVars.ToDataItem(di.AddItem("to_calculate"), false);
   }
-  di.AddItem("HklSrc").SetValue(HKLSource);
+  di.AddItem("HklSrc").SetValue(
+    olxstr('%') << encoding::percent::encode(HKLSource));
   TEStrBuffer bf;
   di.SaveToStrBuffer(bf);
   return bf.ToString();
@@ -1957,6 +1959,9 @@ void RefinementModel::ReadInsExtras(const TStrList &items)  {
   TDataItem *hs = di.FindItem("HklSrc");
   if (hs != 0) {
     HKLSource = hs->GetValue();
+    if (HKLSource.StartsFrom('%')) {
+      HKLSource = encoding::percent::decode(HKLSource.SubStringFrom(1));
+    }
   }
 }
 //..............................................................................

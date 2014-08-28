@@ -351,6 +351,11 @@ public:
     return TypeAnalyser_<DirectAccessor>(DirectAccessor(), e.z);
   }
 
+  /* recursive tag setter, uses Processed property to define the ermination
+  procedure
+  */
+  static void SetTagRecursively(TCAtom &a, index_t v);
+
   friend class TAsymmUnit;
 };
 //..............................................................................
