@@ -610,3 +610,14 @@ int TCAtom::SortSitesByDistanceAsc(const Site &a1, const Site &a2) const {
   return olx_cmp(v1.QLength(), v2.QLength());
 }
 //..............................................................................
+void TCAtom::SetTagRecursively(TCAtom &a, index_t v) {
+  a.SetProcessed(true);
+  for (size_t i = 0; i < a.AttachedSiteCount(); i++) {
+    TCAtom &aa = a.GetAttachedAtom(i);
+    if (aa.IsProcessed()) {
+      continue;
+    }
+    aa.SetTag(v);
+    SetTagRecursively(aa, v);
+  }
+}

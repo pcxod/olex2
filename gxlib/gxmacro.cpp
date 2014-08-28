@@ -230,6 +230,12 @@ void GXLibMacros::Export(TLibrary& lib) {
     ,
     fpAny,
     "Shows specified or all parts of the structure");
+  gxlib_InitMacro(ShowR,
+    "m-do not modify the display view&;"
+    "v-operate only on currently visible atoms/fragments;"
+    ,
+    fpAny,
+    "Shows residues by number or name");
   gxlib_InitMacro(Undo, EmptyString(), fpNone,
     "Reverts some of the previous operations");
   gxlib_InitMacro(Esd,
@@ -2191,11 +2197,28 @@ void GXLibMacros::macShowP(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &E)
 {
   TIntList parts;
-  if (!Cmds.IsEmpty())  {
-    for (size_t i=0; i < Cmds.Count(); i++)
-      parts.Add(Cmds[i].ToInt());
+  for (size_t i=0; i < Cmds.Count(); i++) {
+    parts.Add(Cmds[i].ToInt());
   }
   app.ShowPart(parts, true, Options.GetBoolOption('v'));
+  if (!Options.GetBoolOption('m'))
+    app.CenterView();
+}
+//.............................................................................
+void GXLibMacros::macShowR(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
+  TIntList numbers;
+  TStrList names;
+  for (size_t i = 0; i < Cmds.Count(); i++) {
+    if (Cmds[i].IsNumber()) {
+      numbers.Add(Cmds[i].ToInt());
+    }
+    else {
+      names.Add(Cmds[i]);
+    }
+  }
+  app.ShowResi(numbers, names, true, Options.GetBoolOption('v'));
   if (!Options.GetBoolOption('m'))
     app.CenterView();
 }

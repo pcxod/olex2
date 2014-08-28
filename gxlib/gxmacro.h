@@ -34,6 +34,7 @@ public:
   DefMacro(ShowH)
   DefMacro(ShowQ)
   DefMacro(ShowP)
+  DefMacro(ShowR)
   DefMacro(Cell)
   DefMacro(Basis)
   DefMacro(Sel)

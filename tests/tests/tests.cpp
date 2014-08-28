@@ -65,9 +65,8 @@ int main(int argc, char* argv[]) {
   tests.Add(&test::exparse::ExparseTests);
   tests.Add(&test::StringTests);
   tests.Add(&test::ContainerTests);
-  tests.Add(&test::MD5Test).
-    Add(&test::SHA1Test).
-    Add(&test::SHA2Test);
+  tests.Add(&test::HashingTests).
+    Add(&test::EncodingTests);
   tests.Add(new test::CriticalSectionTest(true), &test::CriticalSectionTest::DoTest).
     Add(new test::CriticalSectionTest(false), &test::CriticalSectionTest::DoTest);
   tests.Add(&test::FileTests);
