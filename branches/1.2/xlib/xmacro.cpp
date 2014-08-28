@@ -3943,24 +3943,19 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
     // emmbedding the RES file into the CIF
     Cif->Remove("_shelx_res_file");
     Cif->Remove("_shelx_res_checksum");
-    bool has_details = Cif->ParamExists("_iucr_refine_instructions_details");
-    if (has_details)
-      Cif->Remove("_iucr_refine_instructions_details");
+    Cif->Remove("_iucr_refine_instructions_details");
+    Cif->Remove("_shelx_hkl_file");
+    Cif->Remove("_shelx_hkl_checksum");
+    Cif->Remove("_refln");
     if (insert) {
       olxstr res_fn = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "res");
       if (TEFile::Exists(res_fn)) {
-        cetNamedStringList res(has_details ? "_iucr_refine_instructions_details"
-          : "_shelx_res_file");
+        cetNamedStringList res("_iucr_refine_instructions_details");
         TEFile res_f(res_fn, "rb");
         res.lines.LoadFromTextStream(res_f);
         Cif->SetParam(res);
       }
-    }
-    Cif->Remove("_shelx_hkl_file");
-    Cif->Remove("_shelx_hkl_checksum");
-    Cif->Remove("_refln");
-    // embedd HKL
-    if (insert) {
+      // embedd HKL
       olxstr hkl_src = xapp.XFile().LocateHklFile();
       if (TEFile::Exists(hkl_src)) {
         cetTable &t = Cif->AddLoopDef("_refln_index_h,_refln_index_k,_refln_index_l,"
