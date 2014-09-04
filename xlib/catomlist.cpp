@@ -541,7 +541,7 @@ void AtomRefList::UpdateResi() {
         if (r->GetMatrix() != NULL && r0->GetMatrix() != NULL)
           return;
         if (r->GetMatrix() == NULL && r0->GetMatrix() == NULL)
-          break;
+          return;
         if (r->GetMatrix() != NULL)
           r_id = r->GetAtom().GetResiId();
         else if (r0->GetMatrix() != NULL)
@@ -552,8 +552,9 @@ void AtomRefList::UpdateResi() {
     }
     r_id = ri;
   }
-  if (r_id != 0)
-    residue = r_id;
+  if (r_id != 0) {
+    residue = this->rm.aunit.GetResidue(r_id).GetNumber();
+  }
 }
 //.............................................................................
 olxstr AtomRefList::GetExpression() const {
