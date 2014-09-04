@@ -33,7 +33,6 @@ private:
   bool Movable, PageLoadRequested, ShowTooltips;
   olxdict<const IEObject*, int, TPointerComparator> Locks;
   olxstr PageRequested;
-  wxWindow* InFocus;
   TActionQList Actions;
   olxstr PopupName;
   static size_t &stateTooltipsVisible() {
@@ -73,7 +72,6 @@ protected:
     olxstrComparator<true> > Objects;
   olxstr_dict<size_t,true> SwitchStates;
   TTypeList<TStrList> Groups;
-  olxstr FocusedControl;
   class TObjectsState  {
     olxstr_dict<olxstr_dict<olxstr,false>*, true> Objects;
     THtml& html;

@@ -11,11 +11,7 @@
 #define __olx_ctrl_combo_H
 #include "olxctrlbase.h"
 #include "estrlist.h"
-#ifdef __WIN32__
-  #include "wx/odcombo.h"
-#else
 #include "wx/combo.h"
-#endif
 
 namespace ctrl_ext {
   class TComboBox: public wxComboBox, public AOlxCtrl  {
