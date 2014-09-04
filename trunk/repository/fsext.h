@@ -48,10 +48,7 @@ public:
   TFileHandlerManager();
   ~TFileHandlerManager();
 protected:
-  static TFileHandlerManager *&Handler() {
-    static TFileHandlerManager *h;
-    return h;
-  }
+  static TFileHandlerManager *&Handler();
   static TStrList &BaseDirs() {
     static TStrList l;
     return l;
