@@ -35,7 +35,6 @@ THtml::THtml(THtmlManager &manager, wxWindow *Parent,
   const olxstr &pop_name, int flags)
   : wxHtmlWindow(Parent, -1, wxDefaultPosition, wxDefaultSize, flags),
     PopupName(pop_name), WI(this), ObjectsState(*this),
-    InFocus(NULL),
     Manager(manager),
     OnLink(Actions.New("ONLINK")),
     OnURL(Actions.New("ONURL")),
@@ -176,9 +175,9 @@ void THtml::OnChar(wxKeyEvent& event)  {
     return;
   }
   wxWindow* parent = GetParent();
-  if( parent != NULL )  {
+  if (parent != NULL) {
     wxDialog* dlg = dynamic_cast<wxDialog*>(parent);
-    if( dlg != NULL )
+    if (dlg != NULL)
       return;
   }
   TKeyEvent KE(event);
@@ -424,23 +423,28 @@ bool THtml::UpdatePage(bool update_indices)  {
   olxstr oldPath = TEFile::CurrentDir();
   TEFile::ChangeDir(WebFolder);
   if (update_indices) { // reload switches
-    for (size_t i=0; i < Root->SwitchCount(); i++)
+    for (size_t i = 0; i < Root->SwitchCount(); i++)
       Root->GetSwitch(i).UpdateFileIndex();
   }
 
+  int xPos = -1, yPos = -1, xWnd = -1, yWnd = -1;
+  GetViewStart(&xPos, &yPos);
+  olxstr FocusedControl;
+  {
+    wxWindow *fw = wxWindow::FindFocus();
+    if (fw != 0 && fw->GetParent() == this) {
+      for (size_t i = 0; i < Objects.Count(); i++) {
+        if (Objects.GetValue(i).b == fw) {
+          FocusedControl = Objects.GetKey(i);
+          break;
+        }
+      }
+    }
+  }
   TStrList Res;
   Root->ToStrings(Res);
   ObjectsState.SaveState();
   Objects.Clear();
-  InFocus = NULL;
-  int xPos = -1, yPos = -1, xWnd=-1, yWnd = -1;
-  GetViewStart(&xPos, &yPos);
-  if (!FocusedControl.IsEmpty()) {
-    wxWindow *fw = wxWindow::FindFocus();
-    if (fw != 0 && fw->GetParent() != this) {
-      FocusedControl.SetLength(0);
-    }
-  }
 #if defined(__WIN32__)
   Freeze();
 #else
@@ -493,7 +497,6 @@ bool THtml::UpdatePage(bool update_indices)  {
         sc->SetSelection((long)sv.Length(), -1);
       }
       wnd->SetFocus();
-      InFocus = wnd;
     }
     else
       FocusedControl.SetLength(0);

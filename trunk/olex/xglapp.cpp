@@ -292,7 +292,18 @@ bool TGlXApp::Dispatch()  {
 }
 //..............................................................................
 void TGlXApp::OnChar(wxKeyEvent& event)  {
-  //MainForm->OnChar(event);
+  if (event.GetKeyCode() == 9) {
+    wxComboBox *wnd = dynamic_cast<wxComboBox *>(MainForm->FindFocus());
+    if (wnd != NULL) {
+      event.Skip(false);
+      wxWindow *nw = (event.GetModifiers() == wxMOD_SHIFT) ?
+        wnd->GetPrevSibling() : wnd->GetNextSibling();
+      if (nw != 0) {
+        nw->SetFocus();
+        return;
+      }
+    }
+  }
   event.Skip(); // pass it to the controls...
 }
 //..............................................................................

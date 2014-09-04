@@ -766,8 +766,6 @@ void THtmlManager::funGetImage(const TStrObjList &Params, TMacroError &E)  {
 void THtmlManager::funSetFocus(const TStrObjList &Params, TMacroError &E)  {
   Control c = FindControl(Params[0], E, 0, __OlxSrcInfo);
   if( c.html == NULL )  return;
-  c.html->FocusedControl = c.ctrl_name;
-  c.html->InFocus = c.wnd;
   if( c.wnd == NULL )  // not created yet?
     return;
   if( EsdlInstanceOf(*c.wnd, TTextEdit) )
@@ -776,7 +774,7 @@ void THtmlManager::funSetFocus(const TStrObjList &Params, TMacroError &E)  {
     TComboBox* cb = (TComboBox*)c.wnd;
     //cb->GetTextCtrl()->SetSelection(-1, -1);
   }
-  c.html->InFocus->SetFocus();
+  c.wnd->SetFocus();
 }
 //.............................................................................
 void THtmlManager::funSelect(const TStrObjList &Params, TMacroError &E)  {
