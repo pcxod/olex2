@@ -424,10 +424,10 @@ TTypeList<TAtomRefList> &AtomRefList::Expand(const RefinementModel& rm,
   return c_res;
 }
 //.............................................................................
-ConstTypeList<ExplicitCAtomRef> AtomRefList::ExpandList(
+TAtomRefList::const_list_type AtomRefList::ExpandList(
   const RefinementModel& rm, size_t group_size) const
 {
-  TTypeList<ExplicitCAtomRef> rv;
+  TAtomRefList rv;
   TPtrList<TResidue> residues = rm.aunit.FindResidues(residue);
   for( size_t i=0; i < residues.Count(); i++ )  {
     TAtomRefList l;
@@ -535,7 +535,7 @@ void AtomRefList::UpdateResi() {
     ExplicitCAtomRef * r = dynamic_cast<ExplicitCAtomRef *>(&refs[i]);
     if (r == NULL) return;
     uint32_t ri = r->GetAtom().GetResiId();
-    if (r_id != 0 && ri != 0 && ri != r_id) {
+    if (ri != r_id) {
       if (refs.Count() == 2) {  // special case, 'easy' to handle
         ExplicitCAtomRef * r0 = dynamic_cast<ExplicitCAtomRef *>(&refs[0]);
         if (r->GetMatrix() != NULL && r0->GetMatrix() != NULL)

@@ -3703,8 +3703,10 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
             rU.AddUnique(&r[ai].GetAtom());
         }
         for (size_t rs_i = 0; rs_i < rm.rSAME.Count(); rs_i++) {
-          for (size_t ai = 0; ai < rm.rSAME[rs_i].Count(); ai++)
-            rU.AddUnique(&rm.rSAME[rs_i][ai]);
+          TTypeList<ExplicitCAtomRef> r =
+            rm.rSAME[rs_i].GetAtoms().ExpandList(rm);
+          for (size_t ai = 0; ai < r.Count(); ai++)
+            rD.AddUnique(&r[ai].GetAtom());
         }
         {
           TPtrList<const TSRestraintList> Urs;

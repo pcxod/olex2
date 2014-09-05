@@ -14,7 +14,6 @@
 #include "threex3.h"
 #include "macroerror.h"
 #include "ellipsoid.h"
-#include "samegroup.h"
 #include "dataitem.h"
 #include "conninfo.h"
 

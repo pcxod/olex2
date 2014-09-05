@@ -146,7 +146,7 @@ protected:
   same_group_constraint() {}
 public:
   TTypeList<TCAtomPList> groups;
-  same_group_constraint(const ConstTypeList<TCAtomPList> &groups_)
+  same_group_constraint(const TTypeList<TCAtomPList>::const_list_type &groups_)
   : groups(groups_)
   {}
   bool IsValid()  {
