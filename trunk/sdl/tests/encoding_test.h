@@ -86,8 +86,8 @@ namespace test {
   void PercentEncodingTest(OlxTests& t) {
     t.description = __FUNC__;
     olxstr msgs[] = { L"The quick brown fox",
-      L"%% %%% % \u2045", L"Heizölrückstoßabdämpfung" };
-    for (int i = 0; i < 3; i++) {
+      L"%% %%% % \u2045" };
+    for (int i = 0; i < 2; i++) {
       olxcstr eres = encoding::percent::encode(msgs[i]);
       olxstr dres = encoding::percent::decode(eres);
       if (dres != msgs[i]) {
