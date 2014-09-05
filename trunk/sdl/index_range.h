@@ -67,7 +67,7 @@ struct IndexRange  {
     }
     return list;
   }
-  static TSizeList FromString(const olxstr& range)  {
+  static TSizeList::const_list_type FromString(const olxstr& range)  {
     TSizeList l;
     return FromString(range, l);
   }

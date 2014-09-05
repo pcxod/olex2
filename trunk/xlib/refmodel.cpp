@@ -256,7 +256,7 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignA
     for( size_t i=0; i < rcList1.Count(); i++ )
       rcList1[i]->Assign(*rm.rcList1[i]);
 
-    rSAME.Assign(aunit, rm.rSAME);
+    rSAME.Assign(rm.rSAME);
     ExyzGroups.Assign(rm.ExyzGroups);
     AfixGroups.Assign(rm.AfixGroups);
     for( size_t i=0; i < rcList.Count(); i++ )
@@ -1033,7 +1033,7 @@ const_strlist RefinementModel::Describe() {
       if( sr.IsAllNonHAtoms() )
         str << "All non-hydrogen atoms" << ' ' << "restrained to be isotropic";
       else {
-        ConstTypeList<ExplicitCAtomRef> al = sr.GetAtoms().ExpandList(*this);
+        TAtomRefList al = sr.GetAtoms().ExpandList(*this);
         for( size_t j=0; j < al.Count(); j++ )  {
           if( al[j].GetAtom().GetEllipsoid() == NULL )  continue;
           str << "Uanis(" << al[j].GetExpression(NULL) << ") ~ Ueq";
@@ -1047,7 +1047,7 @@ const_strlist RefinementModel::Describe() {
     for( size_t i=0; i < rEADP.Count(); i++ )  {
       TSimpleRestraint& sr = rEADP[i];
       olxstr& str = lst.Add(EmptyString());
-      ConstTypeList<ExplicitCAtomRef> al = sr.GetAtoms().ExpandList(*this);
+      TAtomRefList al = sr.GetAtoms().ExpandList(*this);
       for( size_t j=0; j < al.Count(); j++ )  {
         if( al[j].GetAtom().GetEllipsoid() == NULL )
           str << "Uiso(";
@@ -1061,7 +1061,7 @@ const_strlist RefinementModel::Describe() {
     for (size_t i=0; i < rFixedUeq.Count(); i++) {
       TSimpleRestraint& sr = rFixedUeq[i];
       olxstr& str = lst.Add(EmptyString());
-      ConstTypeList<ExplicitCAtomRef> al = sr.GetAtoms().ExpandList(*this);
+      TAtomRefList al = sr.GetAtoms().ExpandList(*this);
       for (size_t j=0; j < al.Count(); j++)  {
         str << "Ueq(" << al[j].GetExpression(NULL) << ')';
         if ((j+1) < al.Count()) str << ", ";
@@ -1074,7 +1074,7 @@ const_strlist RefinementModel::Describe() {
       if( sr.IsAllNonHAtoms() )
         str << "All non-hydrogen atoms" << ' ' << "have similar Ueq";
       else {
-        ConstTypeList<ExplicitCAtomRef> al = sr.GetAtoms().ExpandList(*this);
+        TAtomRefList al = sr.GetAtoms().ExpandList(*this);
         for( size_t j=0; j < al.Count(); j++ )  {
           str << "Ueq(" << al[j].GetExpression(NULL) << ')';
           if( (j+1) < al.Count() )
@@ -1089,7 +1089,7 @@ const_strlist RefinementModel::Describe() {
       if( sr.IsAllNonHAtoms() )
         str << "All non-hydrogen atoms" << ' ' << "have similar Uvol";
       else {
-        ConstTypeList<ExplicitCAtomRef> al = sr.GetAtoms().ExpandList(*this);
+        TAtomRefList al = sr.GetAtoms().ExpandList(*this);
         for( size_t j=0; j < al.Count(); j++ )  {
           str << "Uvol(" << al[j].GetExpression(NULL) << ')';
           if( (j+1) < al.Count() )
@@ -1117,27 +1117,42 @@ const_strlist RefinementModel::Describe() {
     }
   }
   // fragment related
-  if( rSAME.Count() != 0 )  {
+  if (rSAME.Count() != 0) {
     lst.Add(olxstr(++sec_num)) << ". Same fragment restrains";
-    for( size_t i=0; i < rSAME.Count(); i++ )  {
+    for (size_t i = 0; i < rSAME.Count(); i++) {
       TSameGroup& sg = rSAME[i];
-      if( sg.DependentCount() == 0 || !sg.IsValidForSave() )
+      if (sg.DependentCount() == 0 || !sg.IsValidForSave() ||
+        !sg.GetAtoms().IsExplicit())
+      {
         continue;
-      for( size_t j=0; j < sg.DependentCount(); j++ )  {
-        if( !sg.GetDependent(j).IsValidForSave() )
+      }
+      TAtomRefList ratoms = sg.GetAtoms().ExpandList(*this);
+      if (ratoms.IsEmpty()) continue;
+      for (size_t j = 0; j < sg.DependentCount(); j++)  {
+        if (!sg.GetDependent(j).IsValidForSave())
           continue;
-        olxstr& str = lst.Add('{');
-        str << sg.GetDependent(j)[0].GetLabel();
-        for( size_t k=1; k < sg.GetDependent(j).Count(); k++ )
-          str << ", " << sg.GetDependent(j)[k].GetLabel();
-        str << '}';
+        TAtomRefList atoms = sg.GetDependent(j).GetAtoms().ExpandList(*this);
+        if (atoms.Count() != ratoms.Count()) continue;
+        lst.Add('{') << AtomListToStr(atoms, InvalidSize, ", ") << '}' <<
+          " sigma for 1-2: " << sg.GetDependent(j).Esd12 << ", 1-3: " <<
+          sg.GetDependent(j).Esd13;
       }
       lst.Add("as");
-      olxstr& str = lst.Add('{');
-      str << sg[0].GetLabel();
-      for( size_t j=1; j < sg.Count(); j++ )
-        str << ", " << sg[j].GetLabel();
-      str << '}';
+      lst.Add('{') << AtomListToStr(ratoms, InvalidSize, ", ") << '}';
+    }
+    for (size_t i = 0; i < rSAME.Count(); i++) {
+      TSameGroup& sg = rSAME[i];
+      if (sg.GetAtoms().IsExplicit() || !sg.IsValidForSave()) continue;
+      TTypeList<TAtomRefList> atoms = sg.GetAtoms().Expand(*this);
+      if (atoms.Count() < 2 || atoms[0].Count() < 2) continue;
+      for (size_t j = 1; j < atoms.Count(); j++)  {
+        if (atoms[j].Count() != atoms[0].Count()) continue;
+        lst.Add('{') << AtomListToStr(atoms[j], InvalidSize, ", ") << '}';
+      }
+      lst.Add("as");
+      lst.Add('{') << AtomListToStr(atoms[0], InvalidSize, ", ") << '}' <<
+        " sigma for 1-2: " << sg.Esd12 << " 1-3: " <<
+        sg.Esd13;
     }
   }
   if (!SameGroups.items.IsEmpty()) {
@@ -1460,7 +1475,7 @@ PyObject* RefinementModel::PyExport(bool export_conn)  {
   PythonExt::SetDictItem(main, "exptl", expl.PyExport());
   PythonExt::SetDictItem(main, "afix", AfixGroups.PyExport(atoms));
   PythonExt::SetDictItem(main, "exyz", ExyzGroups.PyExport(atoms));
-  PythonExt::SetDictItem(main, "same", rSAME.PyExport(atoms));
+  PythonExt::SetDictItem(main, "same", rSAME.PyExport(atoms, equivs));
   for (size_t i=0; i < rcList1.Count(); i++) {
     PythonExt::SetDictItem(main, rcList1[i]->GetIdName().ToLowerCase(),
       rcList1[i]->PyExport(atoms, equivs));
@@ -1733,6 +1748,10 @@ TSimpleRestraint & RefinementModel::SetRestraintDefaults(
     r.SetEsd(0.1);
   }
   return r;
+}
+//..............................................................................
+bool RefinementModel::IsDefaultRestraint(const TSameGroup &r) const {
+  return r.Esd12 == 0.02 && r.Esd13 == 0.02;
 }
 //..............................................................................
 bool RefinementModel::IsDefaultRestraint(const TSimpleRestraint &r) const {

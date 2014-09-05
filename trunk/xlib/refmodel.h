@@ -17,6 +17,7 @@
 #include "refmerge.h"
 #include "afixgroup.h"
 #include "exyzgroup.h"
+#include "samegroup.h"
 #include "reflection.h"
 #include "fragment.h"
 #include "symmlib.h"
@@ -215,7 +216,7 @@ public:
     rRIGU;
   TExyzGroups ExyzGroups;
   TAfixGroups AfixGroups;
-  TSameGroupList  rSAME;
+  TSameGroupList rSAME;
   TActionQueue &OnSetBadReflections,
     &OnCellDifference;
   TAsymmUnit& aunit;
@@ -364,7 +365,9 @@ public:
     return BadReflections;
   }
 
-  void SetBadReflectionList(const ConstTypeList<BadReflection> &bad_refs) {
+  void SetBadReflectionList(
+    const TTypeList<BadReflection>::const_list_type &bad_refs)
+  {
     OnSetBadReflections.Enter(this);
     BadReflections = bad_refs;
     OnSetBadReflections.Exit(this);
@@ -810,6 +813,7 @@ Friedel opposites of components 1 ... m
   TSimpleRestraint &SetRestraintDefaults(TSimpleRestraint &restraint) const;
   // returns true if restraint parameters are default
   bool IsDefaultRestraint(const TSimpleRestraint &restraint) const;
+  bool IsDefaultRestraint(const TSameGroup &restraint) const;
   // feeds on .options - instance static
   bool DoShowRestraintDefaults() const;
   void LibHasOccu(const TStrObjList& Params, TMacroError& E);

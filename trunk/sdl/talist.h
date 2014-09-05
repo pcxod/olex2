@@ -413,6 +413,7 @@ public:
     typedef T list_item_type;
   };
   typedef T list_item_type;
+  typedef ConstArrayList<T> const_list_type;
 };
 
 #ifndef __BORLANDC__

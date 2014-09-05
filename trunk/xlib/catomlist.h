@@ -182,13 +182,13 @@ public:
   */
   TTypeList<TAtomRefList> &Expand(const RefinementModel& rm,
     TTypeList<TAtomRefList>& res, size_t group_size=InvalidSize) const;
-  ConstTypeList<TAtomRefList> Expand(const RefinementModel& rm,
+  TTypeList<TAtomRefList>::const_list_type Expand(const RefinementModel& rm,
     size_t group_size=InvalidSize) const
   {
     TTypeList<TAtomRefList> res;
     return Expand(rm, res, group_size);
   }
-  ConstTypeList<ExplicitCAtomRef> ExpandList(const RefinementModel& rm,
+  TAtomRefList::const_list_type ExpandList(const RefinementModel& rm,
     size_t group_size=InvalidSize) const;
   /* parses the expression into a list */
   void Build(const olxstr& exp,

@@ -2166,8 +2166,9 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options,
   // process SAME's
   for (size_t i = 0; i < released.sameList.Count(); i++)  {
     TSameGroup &sg = *released.sameList[i];
-    for (size_t j = 0; j < sg.Count(); j++)
-      CAtoms.Add(sg[j]);
+    TAtomRefList atoms = sg.GetAtoms().ExpandList(rm);
+    for (size_t j = 0; j < atoms.Count(); j++)
+      CAtoms.Add(atoms[j].GetAtom());
   }
   for (size_t i = 0; i < rm.AfixGroups.Count(); i++)
     rm.AfixGroups[i].SetTag(0);

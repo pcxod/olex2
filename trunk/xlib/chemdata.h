@@ -285,7 +285,7 @@ public:
   reference to provided ContentList
   */
   static ContentList& ParseElementString(const olxstr& su, ContentList& cl);
-  static ConstTypeList<ElementCount> ParseElementString(const olxstr& su) {
+  static ContentList::const_list_type ParseElementString(const olxstr& su) {
     ContentList cl;
     return ParseElementString(su, cl);
   }

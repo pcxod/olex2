@@ -12,78 +12,73 @@
 #include "refmodel.h"
 #include "index_range.h"
 
-void TSameGroup::Assign(TAsymmUnit& tau, const TSameGroup& sg)  {
+TSameGroup::TSameGroup(uint16_t id, TSameGroupList& parent)
+: Atoms(parent.RM), Id(id), Parent(parent),
+  ParentGroup(NULL), Esd12(0.02), Esd13(0.02)
+{}
+//.............................................................................
+void TSameGroup::SetAtomIds(uint16_t id) {
+  TAtomRefList atoms = Atoms.ExpandList(Parent.RM);
+  for (size_t i = 0; i < atoms.Count(); i++) {
+    atoms[i].GetAtom().SetSameId(id);
+  }
+}
+//.............................................................................
+void TSameGroup::Assign(const TSameGroup& sg)  {
   Clear();
-  if( sg.Count() == 0 )  return;
-  TAsymmUnit * au = sg[0].GetParent();
-  if( au == &tau )  {
-    for( size_t i=0; i < sg.Count(); i++ )
-      Add(const_cast<TCAtom&>(sg[i]));
-  }
-  else  {
-    for( size_t i=0; i < sg.Count(); i++ )  {
-      TCAtom* aa = tau.FindCAtomById(sg[i].GetId());
-      if( aa == NULL ) {
-        throw TFunctionFailedException(__OlxSourceInfo,
-          "asymmetric units do not match");
-      }
-      Add(*aa);
-    }
-  }
+  if (sg.Atoms.IsEmpty()) return;
+  Atoms.Assign(sg.Atoms);
   Esd12 = sg.Esd12;
   Esd13 = sg.Esd13;
-  for( size_t i=0; i < sg.Dependent.Count(); i++ )
+  for (size_t i=0; i < sg.Dependent.Count(); i++)
     Dependent.Add(Parent[sg.Dependent[i]->Id]);
-  if( sg.GetParentGroup() != NULL )
+  if (sg.GetParentGroup() != NULL)
     ParentGroup = &Parent[sg.GetParentGroup()->Id];
 }
 //.............................................................................
 TCAtom& TSameGroup::Add(TCAtom& ca)  {
   ca.SetSameId(Id);
-  Atoms.Add(&ca);
+  Atoms.AddExplicit(ca);
   return ca;
 }
 //.............................................................................
 void TSameGroup::ToDataItem(TDataItem& item) const {
-  item.AddField("esd12", Esd12);
-  item.AddField("esd13", Esd13);
-  size_t atom_id = 0;
-  IndexRange::Builder rb;
-  for( size_t i=0; i < Atoms.Count(); i++ )  {
-    if( Atoms[i]->IsDeleted() ) continue;
-    rb << Atoms[i]->GetTag();
+  item.AddField("esd12", Esd12)
+    .AddField("esd13", Esd13)
+    .AddField("AtomList", Atoms.GetExpression());
+  IndexRange::Builder irb;
+  for (size_t i = 0; i < Dependent.Count(); i++) {
+    irb << Dependent[i]->GetId();
   }
-  item.AddField("atom_range", rb.GetString(true));
-  TDataItem& dep = item.AddItem("dependent");
-  for( size_t i=0; i < Dependent.Count(); i++ )
-    dep.AddItem(atom_id++, Dependent[i]->GetId());
-  if( ParentGroup != NULL )
+  item.AddField("dependent", irb.GetString());
+  if (ParentGroup != NULL)
     item.AddField("parent", ParentGroup->GetId());
 }
 //..............................................................................
 #ifdef _PYTHON
 PyObject* TSameGroup::PyExport(PyObject* main, TPtrList<PyObject>& allGroups,
-  TPtrList<PyObject>& _atoms)
+  TPtrList<PyObject>& _atoms, TPtrList<PyObject>& equiv)
 {
   PythonExt::SetDictItem(main, "esd12", Py_BuildValue("d", Esd12));
   PythonExt::SetDictItem(main, "esd13", Py_BuildValue("d", Esd13));
-  int atom_cnt = 0;
-  for( size_t i=0; i < Atoms.Count(); i++ )  {
-    if( Atoms[i]->IsDeleted() )  continue;
-    atom_cnt++;
-  }
-  PyObject* atoms = PyTuple_New(atom_cnt);
-  atom_cnt = 0;
-  for( size_t i=0; i < Atoms.Count(); i++ )  {
-    if( Atoms[i]->IsDeleted() )  continue;
-    PyTuple_SetItem(atoms, atom_cnt++, Py_BuildValue("i", Atoms[i]->GetTag()));
+  TAtomRefList atom_list = Atoms.ExpandList(Parent.RM);
+  PyObject* atoms = PyTuple_New(atom_list.Count());
+  for (size_t i=0; i < atom_list.Count(); i++) {
+    PyObject* eq;
+    if (atom_list[i].GetMatrix() == NULL)
+      eq = Py_None;
+    else
+      eq = equiv[atom_list[i].GetMatrix()->GetId()];
+    Py_INCREF(eq);
+    PyTuple_SetItem(atoms, i,
+      Py_BuildValue("OO", Py_BuildValue("i", atom_list[i].GetAtom().GetTag()), eq));
   }
   PythonExt::SetDictItem(main, "atoms", atoms);
   PyObject* dependent = PyTuple_New(Dependent.Count());
-  for( size_t i=0; i < Dependent.Count(); i++ )
+  for (size_t i=0; i < Dependent.Count(); i++)
     PyTuple_SetItem(dependent, i, Py_BuildValue("i", Dependent[i]->GetTag()));
   PythonExt::SetDictItem(main, "dependent", dependent);
-  if( ParentGroup != NULL ) {
+  if (ParentGroup != NULL) {
     PythonExt::SetDictItem(main, "parent", Py_BuildValue("i",
       ParentGroup->GetTag()));
   }
@@ -95,56 +90,59 @@ void TSameGroup::FromDataItem(TDataItem& item) {
   Clear();
   Esd12 = item.GetFieldByName("esd12").ToDouble();
   Esd13 = item.GetFieldByName("esd13").ToDouble();
-  TAsymmUnit& au = Parent.RM.aunit;
-  const TDataItem* _atoms = item.FindItem("atoms");
-  if( _atoms != NULL )  {
-    for( size_t i=0; i < _atoms->ItemCount(); i++ )
-      Add(au.GetAtom(_atoms->GetItemByIndex(i).GetValue().ToSizeT()));
+
+  if (item.FieldExists("AtomList")) {
+    Atoms.FromDataItem(item.GetItemByName("AtomList"));
+    IndexRange::RangeItr di(item.GetFieldByName("dependent_range"));
+    while (di.HasNext()) {
+      AddDependent(Parent[di.Next()]);
+    }
   }
-  else  {  // index range then
-    IndexRange::RangeItr ai(item.GetFieldByName("atom_range"));
-    while( ai.HasNext() )
-      Add(au.GetAtom(ai.Next()));
+  else {
+    TAsymmUnit& au = Parent.RM.aunit;
+    const TDataItem* _atoms = item.FindItem("atoms");
+    if (_atoms != NULL) {
+      for (size_t i = 0; i < _atoms->ItemCount(); i++)
+        Add(au.GetAtom(_atoms->GetItemByIndex(i).GetValue().ToSizeT()));
+    }
+    else  {  // index range then
+      IndexRange::RangeItr ai(item.GetFieldByName("atom_range"));
+      while (ai.HasNext())
+        Add(au.GetAtom(ai.Next()));
+    }
+    TDataItem& dep = item.GetItemByName("dependent");
+    for (size_t i = 0; i < dep.ItemCount(); i++)
+      AddDependent(Parent[dep.GetItemByIndex(i).GetValue().ToInt()]);
   }
-  TDataItem& dep = item.GetItemByName("dependent");
-  for( size_t i=0; i < dep.ItemCount(); i++ )
-    AddDependent(Parent[dep.GetItemByIndex(i).GetValue().ToInt()]);
   const olxstr p_id = item.FindField("parent");
   if( !p_id.IsEmpty() )
     ParentGroup = &Parent[p_id.ToInt()];
 }
 //.............................................................................
 bool TSameGroup::DoOverlap(const TSameGroup &g) const {
-  for( size_t i=0; i < Atoms.Count(); i++ )
-    Atoms[i]->SetTag(0);
-  for( size_t i=0; i < g.Atoms.Count(); i++ )
-    g.Atoms[i]->SetTag(1);
-  for( size_t i=0; i < Atoms.Count(); i++ )
-    if( Atoms[i]->GetTag() != 0 )
+  TAtomRefList ar1 = Atoms.ExpandList(Parent.RM);
+  TAtomRefList ar2 = g.Atoms.ExpandList(g.Parent.RM);
+  for (size_t i = 0; i < ar1.Count(); i++)
+    ar1[i].GetAtom().SetTag(0);
+  for (size_t i=0; i < ar2.Count(); i++)
+    ar2[i].GetAtom().SetTag(1);
+  for (size_t i=0; i < ar1.Count(); i++)
+    if (ar1[i].GetAtom().GetTag() != 0)
       return true;
   return false;
 }
 //.............................................................................
 bool TSameGroup::IsValidForSave() const {
-  if( Atoms.IsEmpty() )
-    return false;
-  for( size_t i=0; i < Atoms.Count(); i++ )
-    if( Atoms[i]->IsDeleted() )
-      return false;
-  if( Dependent.IsEmpty() )
-    return true;
-  int dep_cnt = 0;
-  for( size_t i=0; i < Dependent.Count(); i++ )
-    if( Dependent[i]->IsValidForSave() )
-      dep_cnt++;
-  return dep_cnt != 0;
+  if (Atoms.IsEmpty()) return false;
+  return true;
 }
 //.............................................................................
 bool TSameGroup::AreAllAtomsUnique() const {
-  for( size_t i=0; i < Atoms.Count(); i++ )
-    Atoms[i]->SetTag(i);
-  for( size_t i=0; i < Atoms.Count(); i++ )
-    if( (size_t)Atoms[i]->GetTag() != i )
+  TAtomRefList atoms = Atoms.ExpandList(Parent.RM);
+  for (size_t i=0; i < atoms.Count(); i++)
+    atoms[i].GetAtom().SetTag(i);
+  for (size_t i=0; i < atoms.Count(); i++)
+    if( (size_t)atoms[i].GetAtom().GetTag() != i)
       return false;
   return true;
 }
@@ -157,10 +155,10 @@ void TSameGroupList::Release(TSameGroup& sg)  {
       "SAME group parent differs");
   }
   Groups.Release(sg.GetId());
-  if( sg.GetParentGroup() != NULL )
+  if (sg.GetParentGroup() != NULL)
     sg.GetParentGroup()->RemoveDependent(sg);
   sg.ClearAtomIds();
-  for( size_t i=0; i < Groups.Count(); i++ )
+  for (size_t i=0; i < Groups.Count(); i++)
     Groups[i].SetId((uint16_t)i);
 }
 //.............................................................................
@@ -180,6 +178,26 @@ void TSameGroupList::Restore(TSameGroup& sg)  {
   }
 }
 //.............................................................................
+void TSameGroupList::Delete(const TPtrList <TSameGroup> &groups_) {
+  Groups.ForEach(ACollectionItem::TagSetter(0));
+  TPtrList <TSameGroup> groups = groups_;
+  for (size_t i = 0; i < groups.Count(); i++) {
+    for (size_t j = 0; j < groups[i]->DependentCount(); j++) {
+      groups.AddUnique(groups[i]->GetDependent(j));
+    }
+  }
+  for (size_t i = 0; i < groups.Count(); i++) {
+    if (&groups[i]->GetParent() != this) {
+      throw TInvalidArgumentException(__OlxSourceInfo,
+        "SAME group parent differs");
+    }
+    groups[i]->SetTag(1);
+  }
+  Groups.Pack(ACollectionItem::TagAnalyser(1));
+  for (size_t i = 0; i < Groups.Count(); i++)
+    Groups[i].SetId((uint16_t)i);
+}
+//.............................................................................
 void TSameGroupList::ToDataItem(TDataItem& item) const {
   size_t cnt=0;
   for( size_t i=0; i < Groups.Count(); i++ )  {
@@ -192,22 +210,24 @@ void TSameGroupList::ToDataItem(TDataItem& item) const {
 }
 //..............................................................................
 #ifdef _PYTHON
-PyObject* TSameGroupList::PyExport(TPtrList<PyObject>& _atoms)  {
+PyObject* TSameGroupList::PyExport(TPtrList<PyObject>& _atoms,
+  TPtrList<PyObject>& equiv)
+{
   size_t id = 0;
-  for( size_t i=0; i < Groups.Count(); i++ )  {
-    if( Groups[i].IsValidForSave() )
+  for (size_t i=0; i < Groups.Count(); i++) {
+    if (Groups[i].IsValidForSave())
       Groups[i].SetTag(id++);
   }
-  if( id == 0 )
+  if (id == 0)
     return PythonExt::PyNone();
   PyObject* main = PyTuple_New(id);
   TPtrList<PyObject> allGroups;
-  for( size_t i=0; i < id; i++ )
+  for (size_t i=0; i < id; i++)
     PyTuple_SetItem(main, i, allGroups.Add(PyDict_New()));
   id = 0;
-  for( size_t i=0; i < Groups.Count(); i++ )
-    if( Groups[i].IsValidForSave() )
-      Groups[i].PyExport(allGroups[id++], allGroups, _atoms);
+  for (size_t i=0; i < Groups.Count(); i++)
+    if (Groups[i].IsValidForSave())
+      Groups[i].PyExport(allGroups[id++], allGroups, _atoms, equiv);
   return main;
 }
 #endif
@@ -215,30 +235,30 @@ PyObject* TSameGroupList::PyExport(TPtrList<PyObject>& _atoms)  {
 void TSameGroupList::FromDataItem(TDataItem& item) {
   Clear();
   size_t n = item.GetFieldByName("n").ToSizeT();
-  if( n != item.ItemCount() ) {
+  if (n != item.ItemCount()) {
     throw TFunctionFailedException(__OlxSourceInfo,
       "number of groups does not match the number of items");
   }
-  for( size_t i=0; i < n; i++ )
+  for (size_t i=0; i < n; i++)
     New();
   for( size_t i=0; i < n; i++ )
     Groups[i].FromDataItem(item.GetItemByIndex(i));
 }
 //.............................................................................
-void TSameGroupList::Assign(TAsymmUnit& tau, const TSameGroupList& sl)  {
+void TSameGroupList::Assign(const TSameGroupList& sl) {
   Clear();
-  for( size_t i=0; i < sl.Groups.Count(); i++ )
+  for (size_t i=0; i < sl.Groups.Count(); i++)
     New().SetTag(0);
-  for( size_t i=0; i < sl.Groups.Count(); i++ )  {
+  for (size_t i=0; i < sl.Groups.Count(); i++) {
     // dependent first, to override shared atoms SameId
-    for( size_t j=0; j < sl.Groups[i].DependentCount(); j++ )  {
+    for (size_t j=0; j < sl.Groups[i].DependentCount(); j++) {
       size_t id = sl.Groups[i].GetDependent(j).GetId();
-      if( Groups[id].GetTag() != 0 )  continue;
-      Groups[id].Assign(tau, sl.Groups[i].GetDependent(j));
+      if (Groups[id].GetTag() != 0) continue;
+      Groups[id].Assign(sl.Groups[i].GetDependent(j));
       Groups[id].SetTag(1);
     }
-    if( Groups[i].GetTag() != 0 )  continue;
-    Groups[i].Assign( tau, sl.Groups[i] );
+    if (Groups[i].GetTag() != 0) continue;
+    Groups[i].Assign(sl.Groups[i]);
     Groups[i].SetTag(1);
   }
 }

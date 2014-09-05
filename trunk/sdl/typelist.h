@@ -16,6 +16,7 @@
 BeginEsdlNamespace()
 
 template <typename> class SharedTypeList;
+template <typename, typename> class ConstTypeListExt;
 template <typename> class ConstTypeList;
 
 template <class T, class DestructCast> class TTypeListExt : public IEObject  {
@@ -57,7 +58,7 @@ public:
     TakeOver(list.Release(), true);
   }
 //..............................................................................
-  TTypeListExt(const ConstTypeList<T>& list)  {
+  TTypeListExt(const ConstTypeListExt<T, DestructCast>& list)  {
     TTypeListExt &l = list.Release();
     List.TakeOver(l.List);
     delete &l;
@@ -317,7 +318,7 @@ public:
     return _Assign_Wrapper(list);
   }
 //..............................................................................
-  TTypeListExt & operator = (const ConstTypeList<T>& list)  {
+  TTypeListExt & operator = (const ConstTypeListExt<T, DestructCast>& list)  {
     return _Assign_Wrapper(list);
   }
 //..............................................................................
@@ -366,7 +367,7 @@ public:
     List.DeleteRange(from, count);
   }
 //..............................................................................
-  ConstTypeList<T> SubList(size_t from, size_t count) const {
+  ConstTypeListExt<T, DestructCast> SubList(size_t from, size_t count) const {
 #ifdef _DEBUG
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, from, 0,
       List.Count()+1);
@@ -379,11 +380,13 @@ public:
     return rv;
   }
 //..............................................................................
-  ConstTypeList<T> SubListFrom(size_t from) const {
+  ConstTypeListExt<T, DestructCast> SubListFrom(size_t from) const {
     return SubList(from, List.Count()-from);
   }
 //..............................................................................
-  ConstTypeList<T> SubListTo(size_t to) const {  return SubList(0, to);  }
+  ConstTypeListExt<T, DestructCast> SubListTo(size_t to) const {
+    return SubList(0, to);
+  }
 //..............................................................................
   TTypeListExt& Shrink(size_t newSize)  {
     if( newSize >= List.Count() )  return *this;
@@ -453,7 +456,8 @@ public:
 //..............................................................................
   /* copy constructor must be implemented
   */
-  template <class Functor> ConstTypeList<T> Filter(const Functor& f) const {
+  template <class Functor>
+  ConstTypeListExt<T, DestructCast> Filter(const Functor& f) const {
     TTypeListExt rv;
     rv.SetCapacity(List.Count());
     for (size_t i = 0; i < List.Count(); i++) {
@@ -514,7 +518,7 @@ public:
     {}
   };
   typedef T list_item_type;
-  typedef ConstTypeList<T> const_list_type;
+  typedef ConstTypeListExt<T, DestructCast> const_list_type;
 };
 
 template <class T>
@@ -548,6 +552,7 @@ template <class T>
     }
   public:
     typedef T list_item_type;
+    typedef ConstTypeList<T> const_list_type;
   };
 #ifndef __BORLANDC__
 template <class T, typename DestructCast>
@@ -566,6 +571,22 @@ public:
   SharedTypeList(lst_t *lst) : parent_t(lst) {}
   SharedTypeList(lst_t &lst) : parent_t(lst) {}
   SharedTypeList &operator = (const SharedTypeList &l) {
+    parent_t::operator = (l);
+    return *this;
+  }
+public:
+  typedef item_t list_item_type;
+};
+
+template <typename item_t, typename d_t>
+class ConstTypeListExt : public const_list<TTypeListExt<item_t, d_t> > {
+  typedef TTypeListExt<item_t, d_t> lst_t;
+  typedef const_list<lst_t> parent_t;
+public:
+  ConstTypeListExt(const ConstTypeListExt &l) : parent_t(l) {}
+  ConstTypeListExt(lst_t *lst) : parent_t(lst) {}
+  ConstTypeListExt(lst_t &lst) : parent_t(lst) {}
+  ConstTypeListExt &operator = (const ConstTypeListExt &l) {
     parent_t::operator = (l);
     return *this;
   }
