@@ -398,36 +398,32 @@ TMainForm::TMainForm(TGlXApp *Parent)
 }
 //..............................................................................
 bool TMainForm::Destroy()  {
-  if( FXApp != NULL )  {
+  Destroying = true;
+  if (FXApp != NULL) {
     SaveVFS(plGlobal);  // save virtual db to file
     SaveVFS(plStructure);
     FXApp->OnObjectsDestroy.Remove(this);
     processMacro("onexit");
     SaveSettings(FXApp->GetConfigDir() + FLastSettingsFile);
   }
-  Destroying = true;
   HtmlManager.Destroy();
-  return wxFrame::Destroy();
-}
-//..............................................................................
-TMainForm::~TMainForm()  {
-  if( _UpdateThread != NULL )  {
+  if (_UpdateThread != NULL)  {
     _UpdateThread->OnTerminate.Remove(this);
     _UpdateThread->Join(true);
     delete _UpdateThread;
   }
-  if( UpdateProgress != NULL )
+  if (UpdateProgress != NULL)
     delete UpdateProgress;
   // clean up it here
   FXApp->GetStatesRegistry().OnChange.Clear();
   delete Modes;
   // delete FIOExt;
 
-//   if( FXApp->XFile().GetLastLoader() ) // save curent settings
-//   {
-//     T = TEFile::ChangeFileExt(FXApp->XFile().FileName(), "xlds");
-//     FXApp->Render()->Styles()->SaveToFile(T);
-//   }
+  //   if( FXApp->XFile().GetLastLoader() ) // save curent settings
+  //   {
+  //     T = TEFile::ChangeFileExt(FXApp->XFile().FileName(), "xlds");
+  //     FXApp->Render()->Styles()->SaveToFile(T);
+  //   }
   FTimer->OnTimer.Clear();
   delete FTimer;
   delete pmGraphics;
@@ -446,6 +442,11 @@ TMainForm::~TMainForm()  {
   // the order is VERY important!
   TOlxVars::Finalise();
   PythonExt::Finilise();
+  return wxFrame::Destroy();
+}
+//..............................................................................
+TMainForm::~TMainForm()  {
+  GetInstance() = 0;
 }
 //..............................................................................
 void TMainForm::XApp(Olex2App *XA)  {

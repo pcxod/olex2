@@ -671,7 +671,13 @@ public:
 //..............................................................................
 // General interface
 //..............................................................................
-// actions
+  static TMainForm *&GetInstance() {
+    static TMainForm *i = 0;
+    return i;
+  }
+  static bool HasInstance() {
+    return GetInstance() != 0 && !GetInstance()->Destroying;
+  }
   void ObjectUnderMouse(AGDrawObject *G);
 //..............................................................................
   DECLARE_CLASS(TMainForm)
