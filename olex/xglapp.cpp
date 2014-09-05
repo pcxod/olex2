@@ -284,6 +284,9 @@ int TGlXApp::OnExit()  {
 #endif
     TEFile::DelFile(conf_dir+pid_files[i]);
   }
+  if (TMainForm::HasInstance()) {
+    MainForm->Destroy();
+  }
   delete XApp;
   return 0;
 }
