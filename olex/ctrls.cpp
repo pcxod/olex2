@@ -9,6 +9,8 @@
 
 #include "ctrls.h"
 
+wxDEFINE_EVENT(OLX_COMMAND_EVT, olxCommandEvent);
+
 IMPLEMENT_CLASS(TDialog, wxDialog)
 IMPLEMENT_CLASS(TTimer, wxTimer)
 

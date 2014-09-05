@@ -11,7 +11,7 @@
 #define __olx_xglApp_H
 #include "gxapp.h"
 #include "olex2app_imp.h"
-#include "wx/wx.h"
+#include "ctrls.h"
 
 class TGlXApp: public wxApp  {
 private:
@@ -29,6 +29,7 @@ private:
   void OnNavigation(wxNavigationKeyEvent& event);
   void OnIdle(wxIdleEvent& event);
   void OnMouse(wxMouseEvent &evt);
+  void OnCmd(olxCommandEvent &evt);
 public:
   TGlXApp() : pid_file(NULL)  {}
   bool Dispatch();

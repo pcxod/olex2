@@ -279,7 +279,6 @@ protected:
   void OnViewAlong(wxCommandEvent& event);
   void OnCloseWindow(wxCloseEvent &evt);
   void OnInternalIdle();
-
   friend class TObjectVisibilityChange;
   void BasisVChange();
   void CellVChange();

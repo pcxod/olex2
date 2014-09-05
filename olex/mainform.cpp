@@ -1528,7 +1528,7 @@ bool TMainForm::CreateUpdateThread(bool force) {
 #endif
 }
 //..............................................................................
-bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender,
+bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
   const IEObject *Data, TActionQueue *)
 {
 
@@ -1798,7 +1798,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender,
   // deal with updates
     if( wxIsMainThread() )  {
       static bool UpdateExecuted = false;
-      volatile olx_scope_cs cs( TBasicApp::GetCriticalSection());
+      volatile olx_scope_cs cs(TBasicApp::GetCriticalSection());
       if( actionEntered && ActionProgress != NULL )  {
         StatusBar->SetStatusText( (olxstr("Processing ") <<
           ActionProgress->GetAction()).u_str() );
