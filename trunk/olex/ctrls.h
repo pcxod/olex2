@@ -13,6 +13,22 @@
 #include "ctrls/olxctrlbase.h"
 #include "wx/wx.h"
 
+class olxCommandEvent;
+wxDECLARE_EVENT(OLX_COMMAND_EVT, olxCommandEvent);
+class olxCommandEvent : public wxEvent {
+  olxstr cmd;
+public:
+  olxCommandEvent(const olxCommandEvent &e)
+    : wxEvent(e), cmd(e.cmd)
+  {}
+  olxCommandEvent(const olxstr &cmd, int id=-1)
+    : wxEvent(id, OLX_COMMAND_EVT), cmd(cmd)
+  {}
+  wxEvent *Clone() const { return new olxCommandEvent(*this); }
+  const olxstr &GetCommand() const { return cmd; }
+  void SetCommand(const olxstr &c) { cmd = c; }
+};
+
 namespace ctrl_ext  {
 
   class TDialog: public wxDialog, public AOlxCtrl {

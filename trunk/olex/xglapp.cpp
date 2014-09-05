@@ -253,6 +253,7 @@ bool TGlXApp::OnInit()  {
   }
   SetTopWindow(MainForm);
   //MainForm->Maximize(true);
+  Bind(OLX_COMMAND_EVT, &TGlXApp::OnCmd, this);
   MainForm->Show(true);
   return true;
 }
@@ -323,6 +324,15 @@ void TGlXApp::OnIdle(wxIdleEvent& event)  {
 //..............................................................................
 void TGlXApp::OnMouse(wxMouseEvent &evt) {
   evt.Skip();
+}
+//..............................................................................
+void TGlXApp::OnCmd(olxCommandEvent &evt) {
+  TStrList toks(evt.GetCommand(), ">>");
+  for (size_t i = 0; i < toks.Count(); i++) {
+    if (!MainForm->processMacro(olxstr::DeleteSequencesOf(toks[i], ' '))) {
+      break;
+    }
+  }
 }
 //..............................................................................
 
