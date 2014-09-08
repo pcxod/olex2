@@ -3326,48 +3326,42 @@ bool TMainForm::CheckState(size_t state, const olxstr& stateData) const {
   return false;
 }
 //..............................................................................
-void TMainForm::OnInternalIdle()  {
-  if( Destroying )  return;
-  wxWindow::UpdateWindowUI();
+void TMainForm::OnIdle() {
+  if (Destroying) return;
 #if !defined(__WIN32__)
-  if( !StartupInitialised )
+  if (!StartupInitialised)
     StartupInit();
 #endif
   TBasicApp::GetInstance().OnIdle.Execute((AEventsDispatcher*)this, NULL);
   // runonce business...
-  if( !RunOnceProcessed && TBasicApp::IsBaseDirWriteable() )  {
+  if (!RunOnceProcessed && TBasicApp::IsBaseDirWriteable()) {
     RunOnceProcessed = true;
     TStrList rof;
     TEFile::ListDir(FXApp->GetBaseDir(), rof, "runonce*.*", sefFile);
     TStrList macros;
-    for( size_t i=0; i < rof.Count(); i++ )  {
+    for (size_t i=0; i < rof.Count(); i++) {
       rof[i] = FXApp->GetBaseDir()+rof[i];
-      try  {
+      try {
         TEFile::ReadLines(rof[i], macros);
         macros.CombineLines('\\');
-        for( size_t j=0; j < macros.Count(); j++ )  {
+        for (size_t j=0; j < macros.Count(); j++) {
           processMacro(macros[j]);
 #ifdef _DEBUG
-          FXApp->NewLogEntry() << TEFile::ExtractFileName(rof[i]) << ": " << macros[j];
+          FXApp->NewLogEntry() << TEFile::ExtractFileName(rof[i]) << ": " <<
+            macros[j];
 #endif
         }
       }
-      catch(const TExceptionBase& e)  {
+      catch (const TExceptionBase& e) {
         ShowAlert(e);
       }
-      time_t fa = TEFile::FileAge( rof[i] );
+      time_t fa = TEFile::FileAge(rof[i]);
       // Null the file
       try  {  TEFile ef(rof[i], "wb+");  }
       catch(TIOException&)  {}
       TEFile::SetFileTimes(rof[i], fa, fa);
-      //TEFile::DelFile(rof.String(i));
     }
   }
-  wxFrame::OnInternalIdle();
-#ifdef __MAC__  // duno why otherwise it takes 100% of CPU time...
-  wxMilliSleep(15);
-#endif
-  return;
 }
 //..............................................................................
 void TMainForm::SetUserCursor(const olxstr& param, const olxstr& mode)  {
