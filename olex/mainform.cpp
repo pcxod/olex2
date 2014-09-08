@@ -1675,7 +1675,6 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
       RunWhenVisibleTasks[i]->Run();
     RunWhenVisibleTasks.DeleteItems().Clear();
     // end tasks ...
-    HtmlManager.ProcessPageLoadRequests();
     FTimer->OnTimer.SetEnabled(true);
     if( (FMode & mListen) != 0 && TEFile::Exists(FListenFile) )  {
       static time_t FileMT = TEFile::FileAge(FListenFile);
@@ -3332,6 +3331,7 @@ void TMainForm::OnIdle() {
   if (!StartupInitialised)
     StartupInit();
 #endif
+  HtmlManager.ProcessPageLoadRequests();
   TBasicApp::GetInstance().OnIdle.Execute((AEventsDispatcher*)this, NULL);
   // runonce business...
   if (!RunOnceProcessed && TBasicApp::IsBaseDirWriteable()) {

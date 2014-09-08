@@ -170,9 +170,7 @@ bool THtmlManager::Execute(const IEObject *sender, const IEObject *data,
     if (html != NULL) {
       volatile THtmlManager::DestructionLocker dm =
         LockDestruction(html, this);
-      //OnLink.Execute(sender, data);
-      wxQueueEvent(wxApp::GetInstance(),
-        new olxCommandEvent(*(const olxstr *)data));
+      OnLink.Execute(sender, data);
       return true;
     }
   }
