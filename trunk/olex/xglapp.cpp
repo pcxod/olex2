@@ -323,6 +323,7 @@ void TGlXApp::OnIdle(wxIdleEvent& event)  {
   event.Skip();
   if (GetMainForm()->idle_start == 0)
     GetMainForm()->idle_start = TETime::msNow();
+  GetMainForm()->OnIdle();
 }
 //..............................................................................
 void TGlXApp::OnMouse(wxMouseEvent &evt) {

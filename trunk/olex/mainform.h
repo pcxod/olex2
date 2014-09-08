@@ -278,7 +278,6 @@ protected:
   void OnDrawQChange(wxCommandEvent& event);
   void OnViewAlong(wxCommandEvent& event);
   void OnCloseWindow(wxCloseEvent &evt);
-  void OnInternalIdle();
   friend class TObjectVisibilityChange;
   void BasisVChange();
   void CellVChange();
@@ -511,6 +510,7 @@ public:
   void OnKeyDown(wxKeyEvent& event);
   void OnChar(wxKeyEvent& event);
   void OnNavigation(wxNavigationKeyEvent& event);
+  void OnIdle();
 
   virtual bool ProcessEvent(wxEvent& evt);
   void OnResize();
