@@ -372,10 +372,14 @@ bool TBasicApp::TActionHandler::Execute(const IEObject *, const IEObject *,
 {
   olx_scope_cs cs_(TBasicApp::GetCriticalSection());
   TBasicApp& app = TBasicApp::GetInstance();
-  for (size_t i = 0; i < app.Actions.Count(); i++) {
-    app.Actions[i].Run();
+  bool update = !app.Actions.IsEmpty();
+  if (update) {
+    for (size_t i = 0; i < app.Actions.Count(); i++) {
+      app.Actions[i].Run();
+    }
+    app.Actions.Clear();
+    app.Update();
   }
-  app.Actions.Clear();
   return true;
 }
 //..............................................................................

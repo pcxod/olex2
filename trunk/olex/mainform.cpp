@@ -3339,7 +3339,6 @@ void TMainForm::OnIdle() {
     StartupInit();
 #endif
   TBasicApp::GetInstance().OnIdle.Execute((AEventsDispatcher*)this, NULL);
-  HtmlManager.ProcessPageLoadRequests();
   // runonce business...
   if (!RunOnceProcessed && TBasicApp::IsBaseDirWriteable()) {
     RunOnceProcessed = true;
