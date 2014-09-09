@@ -4063,7 +4063,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
     Cif->SetParam("_space_group_name_Hall", sg.GetHallSymbol(), true);
   }
   else {
-    if (hall_symbol != sg.GetHallSymbol()) {
+    if (olxstr(hall_symbol).TrimWhiteChars() != sg.GetHallSymbol()) {
       TBasicApp::NewLogEntry(logWarning) << "Note that the provided '" <<
         hall_symbol << "' and calculated '" << sg.GetHallSymbol() <<
         "' are different";

@@ -5653,3 +5653,12 @@ void TGXApp::LoadTextures(const olxstr &folder) {
   }
 }
 //..............................................................................
+olxstr TGXApp::GetPlatformString_() const {
+  olxstr rv = TXApp::GetPlatformString_();
+#ifdef __WXWIDGETS__
+  (rv << ", wxWidgets: " << wxMAJOR_VERSION).stream('.') <<
+    wxMINOR_VERSION << wxRELEASE_NUMBER;
+#endif
+  return rv;
+}
+//..............................................................................

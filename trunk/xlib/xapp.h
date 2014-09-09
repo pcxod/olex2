@@ -71,13 +71,13 @@ protected:
   SortedObjectList<int, TPrimitiveComparator> interactions_from,
     interactions_to;
   void InitInteractions();
-protected:
   virtual bool CheckProgramState(unsigned int specialCheck);
   void ProcessRingAfix(TSAtomPList& ring, int afix, bool pivot_last);
   TXApp(const olxstr &basedir, bool dummy);
   void Init(ASObjectProvider* objectProvider=NULL,
     ASelectionOwner* selOwner=NULL);
   olxstr LastSGResult;
+  virtual olxstr GetPlatformString_() const;
 public:
   TXApp(const olxstr &basedir, ASObjectProvider* objectProvider=NULL,
     ASelectionOwner* selOwner=NULL);

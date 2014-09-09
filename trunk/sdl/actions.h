@@ -235,6 +235,13 @@ public:
     }
   }
 };
+
+class IOlxAction {
+public:
+  virtual ~IOlxAction() {}
+  virtual bool Run() = 0;
+};
+
 // generic on progress data
 class TOnProgress: public IEObject {
   uint64_t Max, Pos;
