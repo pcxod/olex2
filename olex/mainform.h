@@ -320,9 +320,11 @@ protected:
   static bool DownloadFile(const olxstr &url, const olxstr &dest) {
     return DownloadFiles(TStrList() << url, dest) != 0;
   }
-  // macro functions
+  // tries to expand the command and returns the success status
+  bool ProcessTab();
+  TPtrList<olxCommandEvent> PostponedEvents;
 private:
-
+  // macro functions
   DefMacro(Reap)
   DefMacro(Pict)
   DefMacro(Picta)

@@ -346,6 +346,7 @@ protected:
     return static_cast<TXBond&>(GetLatt(li).GetObjects().bonds[ind]);
   }
   sorted::ObjectPrimitive<index_t>::cons_list_type GetVisibleCAtomTags();
+  virtual olxstr GetPlatformString_() const;
 public:
   /* considers overlayed files
   */

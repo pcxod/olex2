@@ -29,6 +29,15 @@ public:
   void SetCommand(const olxstr &c) { cmd = c; }
 };
 
+class olxCommandAction : public IOlxAction {
+  olxstr cmd;
+public:
+  olxCommandAction(const olxstr &cmd)
+    : cmd(cmd)
+  {}
+  bool Run();
+};
+
 namespace ctrl_ext  {
 
   class TDialog: public wxDialog, public AOlxCtrl {

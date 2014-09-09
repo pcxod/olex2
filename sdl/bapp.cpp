@@ -28,10 +28,11 @@ UseEsdlNamespace()
 TBasicApp* TBasicApp::Instance = NULL;
 
 TBasicApp::TBasicApp(const olxstr& FileName, bool read_options)
-  : OnProgress(Actions.New("PROGRESS")),
-    OnTimer(Actions.New("TIMER")), OnIdle(Actions.New("IDLE"))
+  : OnProgress(ActionList.New("PROGRESS")),
+    OnTimer(ActionList.New("TIMER")),
+    OnIdle(ActionList.New("IDLE"))
 {
-  if( Instance != NULL ) {
+  if (Instance != NULL) {
     throw TFunctionFailedException(__OlxSourceInfo,
       "an application instance already exists");
   }
@@ -53,6 +54,7 @@ TBasicApp::TBasicApp(const olxstr& FileName, bool read_options)
   SetBaseDir(FileName);
   if (read_options)
     ReadOptions(GetBaseDir() + ".options");
+  OnIdle.Add(new TActionHandler());
 }
 //..............................................................................
 TBasicApp::~TBasicApp()  {
@@ -264,10 +266,8 @@ void TBasicApp::SetConfigdDir(const olxstr &cd) {
 }
 //..............................................................................
 TActionQueue& TBasicApp::NewActionQueue(const olxstr& Name) {
-  if( Actions.Exists(Name) )
-    return *Actions.Find(Name);
-  else
-    return Actions.New(Name);
+  TActionQueue *aq = ActionList.Find(Name);
+  return (aq != 0) ? *aq : ActionList.New(Name);
 }
 //..............................................................................
 bool TBasicApp::Is64BitCompilation() {
@@ -285,7 +285,7 @@ bool TBasicApp::Is64BitCompilation() {
   return false;
 }
 //..............................................................................
-olxstr TBasicApp::GetPlatformString()  {
+olxstr TBasicApp::GetPlatformString_() const {
   olxstr rv;
 #ifdef _WIN64
   rv << "WIN64";
@@ -360,6 +360,23 @@ void TBasicApp::CleanupLogs(const olxstr &dir_name) {
 void TBasicApp::ValidateArgs() const {
   if (!Arguments.IsEmpty())
     throw TFunctionFailedException(__OlxSourceInfo, "already initialised");
+}
+//..............................................................................
+void TBasicApp::PostAction(IOlxAction *a) {
+  olx_scope_cs cs_(TBasicApp::GetCriticalSection());
+  TBasicApp::GetInstance().Actions.Add(a);
+}
+//..............................................................................
+bool TBasicApp::TActionHandler::Execute(const IEObject *, const IEObject *,
+  TActionQueue *)
+{
+  olx_scope_cs cs_(TBasicApp::GetCriticalSection());
+  TBasicApp& app = TBasicApp::GetInstance();
+  for (size_t i = 0; i < app.Actions.Count(); i++) {
+    app.Actions[i].Run();
+  }
+  app.Actions.Clear();
+  return true;
 }
 //..............................................................................
 //..............................................................................

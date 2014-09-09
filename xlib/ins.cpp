@@ -321,7 +321,7 @@ void TIns::_ProcessSame(ParseContext& cx)  {
         sg.Add(a);
       }
       if (valid) {
-        for (size_t j = 0; j < all_groups.Count(); i++) {
+        for (size_t j = 0; j < all_groups.Count(); j++) {
           sg.AddDependent(*all_groups[j]);
         }
       }

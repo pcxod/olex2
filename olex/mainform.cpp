@@ -2085,11 +2085,37 @@ bool TMainForm::ImportFrag(const olxstr& line)  {
   catch(...)  {  return false;  }
 }
 //..............................................................................
+bool TMainForm::ProcessTab() {
+  olxstr FullCmd;
+  olxstr Cmd = CmdLineVisible? FCmdLine->GetCommand()
+    : FGlConsole->GetCommand();
+  size_t spi = Cmd.LastIndexOf(' ');
+  if (spi != InvalidIndex)  {
+    FullCmd = ExpandCommand(Cmd.SubStringFrom(spi + 1), true);
+    if (FullCmd != Cmd.SubStringFrom(spi + 1))
+      FullCmd = Cmd.SubStringTo(spi + 1) << FullCmd;
+    else
+      FullCmd.SetLength(0);
+  }
+  else
+    FullCmd = ExpandCommand(Cmd, false);
+  bool res = false;
+  if (!FullCmd.IsEmpty() && (FullCmd != Cmd)) {
+    if (CmdLineVisible)
+      FCmdLine->SetCommand(FullCmd);
+    else {
+      FGlConsole->SetCommand(FullCmd);
+      TimePerFrame = FXApp->Draw();
+    }
+    res = true;
+  }
+  return res;
+}
+//..............................................................................
 void TMainForm::OnChar(wxKeyEvent& m) {
   OnNonIdle();
   m.Skip(false);
   short Fl=0;
-  olxstr Cmd, FullCmd;
   if (m.GetModifiers() & wxMOD_ALT) Fl |= sssAlt;
   if (m.GetModifiers() & wxMOD_RAW_CONTROL) Fl |= sssCtrl;
   if (m.GetModifiers() & wxMOD_SHIFT) Fl |= sssShift;
@@ -2137,36 +2163,39 @@ void TMainForm::OnChar(wxKeyEvent& m) {
     }
   }
   // Ctrl + Up, Down - browse solutions
-  if( (Fl & sssCtrl) != 0  )  {
-
-    if( m.m_keyCode == WXK_UP && ((FMode&mSolve) == mSolve) )  {
+  if ((Fl & sssCtrl) != 0 ) {
+    if (m.m_keyCode == WXK_UP && ((FMode&mSolve) == mSolve)) {
       ChangeSolution(CurrentSolution - 1);
       return;
     }
-    if( m.m_keyCode == WXK_DOWN  && ((FMode&mSolve) == mSolve) )  {
+    if (m.m_keyCode == WXK_DOWN && ((FMode&mSolve) == mSolve)) {
       ChangeSolution(CurrentSolution + 1);
       return;
     }
   }
-  if( (Fl&sssCtrl) && m.GetKeyCode() == 'c'-'a'+1 )  {  // Ctrl+C
-    if( _ProcessManager->GetRedirected() != NULL )  {
-      if( _ProcessManager->GetRedirected()->Terminate() )
-        TBasicApp::NewLogEntry(logInfo) << "Process has been successfully terminated...";
-      else
-        TBasicApp::NewLogEntry(logInfo) << "Could not terminate the process...";
+  if ((Fl&sssCtrl) && m.GetKeyCode() == 'c'-'a'+1) {  // Ctrl+C
+    if (_ProcessManager->GetRedirected() != NULL) {
+      if (_ProcessManager->GetRedirected()->Terminate()) {
+        TBasicApp::NewLogEntry(logInfo) <<
+          "Process has been successfully terminated...";
+      }
+      else {
+        TBasicApp::NewLogEntry(logInfo) <<
+          "Could not terminate the process...";
+      }
       TimePerFrame = FXApp->Draw();
     }
     return;
   }
-  if( m.GetKeyCode() == WXK_RETURN )  {
-    if( FMode & mSolve )  {
+  if (m.GetKeyCode() == WXK_RETURN) {
+    if (FMode & mSolve)  {
       FMode ^= mSolve;
       TBasicApp::NewLogEntry(logInfo) << "Model is set to current solution";
     }
   }
-  if( m.GetKeyCode() == WXK_ESCAPE )  {  // escape
-    if( Modes->GetCurrent() != NULL )  {
-      if( Modes->GetCurrent()->OnKey( m.GetKeyCode(), Fl) )
+  if (m.GetKeyCode() == WXK_ESCAPE) {  // escape
+    if (Modes->GetCurrent() != NULL) {
+      if (Modes->GetCurrent()->OnKey(m.GetKeyCode(), Fl))
         return;
       else
         processMacro("mode off");
@@ -2174,31 +2203,8 @@ void TMainForm::OnChar(wxKeyEvent& m) {
     processMacro("sel -u");
     TimePerFrame = FXApp->Draw();
   }
-  if( m.GetKeyCode() == WXK_TAB )  {  // tab
-    if (CmdLineVisible)
-      Cmd = FCmdLine->GetCommand();
-    else
-      Cmd = FGlConsole->GetCommand();
-    size_t spi = Cmd.LastIndexOf(' ');
-    if( spi != InvalidIndex )  {
-      FullCmd = ExpandCommand(Cmd.SubStringFrom(spi+1), true);
-      if( FullCmd != Cmd.SubStringFrom(spi+1) )
-        FullCmd = Cmd.SubStringTo(spi+1) << FullCmd;
-      else
-        FullCmd.SetLength(0);
-    }
-    else
-      FullCmd = ExpandCommand(Cmd, false);
-    if( !FullCmd.IsEmpty() && (FullCmd != Cmd) ) {
-      if (CmdLineVisible)
-        FCmdLine->SetCommand(FullCmd);
-      else {
-        FGlConsole->SetCommand(FullCmd);
-        TimePerFrame = FXApp->Draw();
-      }
-    }
-    else
-      TimePerFrame = FXApp->Draw();
+  if (m.GetKeyCode() == WXK_TAB) {  // tab
+    ProcessTab();
     return;
   }
 
@@ -2396,7 +2402,8 @@ void TMainForm::OnNavigation(wxNavigationKeyEvent& event)  {
     }
     return;
   }
-  event.Skip();
+  ProcessTab();
+  event.Skip(false);
 }
 //..............................................................................
 void TMainForm::OnMove(wxMoveEvent& evt) {
@@ -3331,8 +3338,8 @@ void TMainForm::OnIdle() {
   if (!StartupInitialised)
     StartupInit();
 #endif
-  HtmlManager.ProcessPageLoadRequests();
   TBasicApp::GetInstance().OnIdle.Execute((AEventsDispatcher*)this, NULL);
+  HtmlManager.ProcessPageLoadRequests();
   // runonce business...
   if (!RunOnceProcessed && TBasicApp::IsBaseDirWriteable()) {
     RunOnceProcessed = true;
@@ -3535,12 +3542,7 @@ bool TMainForm::OnMouseDblClick(int x, int y, short Flags, short Buttons)  {
 }
 //..............................................................................
 bool TMainForm::Show(bool v)  {
-#ifdef __WXGTK__
-  bool res = wxWindow::Show(v);
-  //OnResize();
-#else
   bool res = wxFrame::Show(v);
-#endif
   FXApp->SetMainFormVisible(v);
   if (CmdLineVisible)
     FCmdLine->SetFocus();

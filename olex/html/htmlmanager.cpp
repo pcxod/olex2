@@ -170,7 +170,8 @@ bool THtmlManager::Execute(const IEObject *sender, const IEObject *data,
     if (html != NULL) {
       volatile THtmlManager::DestructionLocker dm =
         LockDestruction(html, this);
-      OnLink.Execute(sender, data);
+      TBasicApp::PostAction(new olxCommandAction(*(const olxstr *)data));
+      //OnLink.Execute(sender, data);
       return true;
     }
   }

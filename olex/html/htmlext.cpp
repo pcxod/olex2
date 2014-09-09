@@ -445,39 +445,20 @@ bool THtml::UpdatePage(bool update_indices)  {
   Root->ToStrings(Res);
   ObjectsState.SaveState();
   Objects.Clear();
-#if defined(__WIN32__)
   Freeze();
-#else
-  Hide();
-#endif
   SetPage(Res.Text(' ').u_str());
   ObjectsState.RestoreState();
-#if defined(__MAC__) || (defined(__linux__) && !wxCHECK_VERSION(2,9,0))
-  CreateLayout();
-  Scroll(xPos, yPos);
-  Show();
-  Refresh();
-  Update();
-#endif
-  for (size_t i=0; i < Objects.Count(); i++) {
+  for (size_t i = 0; i < Objects.Count(); i++) {
     if (Objects.GetValue(i).GetB() != NULL) {
 #ifndef __MAC__
-      Objects.GetValue(i).b->Move(16000, 0);
+      Objects.GetValue(i).b->Move(6000, 0);
 #endif
       Objects.GetValue(i).b->Show();
     }
   }
-#if defined(__WIN32__)
   CreateLayout();
   Scroll(xPos, yPos);
   Thaw();
-#elif defined(__linux__) && wxCHECK_VERSION(2,9,0)
-  CreateLayout();
-  Scroll(xPos, yPos);
-  Show();
-  Refresh();
-  Update();
-#endif
   SwitchSources().Clear();
   SwitchSource().SetLength(0);
   TEFile::ChangeDir(oldPath);
@@ -491,7 +472,7 @@ bool THtml::UpdatePage(bool update_indices)  {
         TComboBox* cb = (TComboBox*)wnd;
         wnd = cb;
       }
-      else if( EsdlInstanceOf(*wnd, TSpinCtrl) )  {
+      else if (EsdlInstanceOf(*wnd, TSpinCtrl)) {
         TSpinCtrl* sc = (TSpinCtrl*)wnd;
         olxstr sv(sc->GetValue());
         sc->SetSelection((long)sv.Length(), -1);
