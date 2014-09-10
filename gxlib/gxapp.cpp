@@ -2595,7 +2595,7 @@ TSPlane *TGXApp::TmpPlane(const TXAtomPList* atoms, double weightExtent)  {
 }
 //..............................................................................
 TXPlane *TGXApp::AddPlane(const olxstr &name, const TXAtomPList &Atoms,
-  bool regular, double weightExtent)
+  size_t sides, double weightExtent)
 {
   if (Atoms.Count() < 3) return NULL;
   TGPCollection *gpc = GetRender().FindCollection(name);
@@ -2608,10 +2608,14 @@ TXPlane *TGXApp::AddPlane(const olxstr &name, const TXAtomPList &Atoms,
     }
   }
   TSPlanePList planes = XFile().GetLattice().NewPlane(
-    TSAtomPList(Atoms), weightExtent, regular);
+    TSAtomPList(Atoms), weightExtent);
+  if (!planes.IsEmpty()) {
+    XFile().GetLattice().GetPlaneDefinitions()[planes[0]->GetDefId()]
+      .SetSides(sides);
+  }
   size_t pi=0;
   for (size_t i=0; i < planes.Count(); i++) {
-    TXPlane * p =static_cast<TXPlane*>(planes[i]);
+    TXPlane * p = static_cast<TXPlane*>(planes[i]);
     if (!p->IsVisible())
       p->SetVisible(true);
     p->Create(name);

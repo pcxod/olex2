@@ -374,10 +374,11 @@ bool TBasicApp::TActionHandler::Execute(const IEObject *, const IEObject *,
   TBasicApp& app = TBasicApp::GetInstance();
   bool update = !app.Actions.IsEmpty();
   if (update) {
-    for (size_t i = 0; i < app.Actions.Count(); i++) {
-      app.Actions[i].Run();
+    while (!app.Actions.IsEmpty()) {
+      IOlxAction &a = app.Actions.Release(0);
+      a.Run();
+      delete &a;
     }
-    app.Actions.Clear();
     app.Update();
   }
   return true;

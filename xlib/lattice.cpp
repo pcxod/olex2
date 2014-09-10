@@ -806,59 +806,58 @@ TSAtom& TLattice::NewAtom(const vec3d& center)  {
   return GenerateAtom(ca, *Matrices[0]);
 }
 //..............................................................................
-TSPlanePList TLattice::NewPlane(const TSAtomPList& Atoms, double weightExtent, bool regular)  {
+TSPlanePList TLattice::NewPlane(const TSAtomPList& Atoms, double weightExtent) {
   TSPlane* Plane = TmpPlane(Atoms, weightExtent);
   TSPlanePList rv;
-  if( Plane != NULL)  {
-    Plane->SetRegular(regular);
+  if (Plane != NULL) {
     TSPlane::Def pd = Plane->GetDef();
     bool found = false;
-    for( size_t i=0; i < PlaneDefs.Count(); i++ )  {
-      if( PlaneDefs[i] == pd )  {
+    for (size_t i = 0; i < PlaneDefs.Count(); i++) {
+      if (PlaneDefs[i] == pd)  {
         found = true;
         break;
       }
     }
-    if( !found )  {
+    if (!found)  {
       PlaneDefs.AddCopy(pd);
-      if( IsGenerated() )  {
+      if (IsGenerated())  {
         delete Plane;
-        for( size_t i=0; i < Matrices.Count(); i++ )  {
-          TSPlane* p = pd.FromAtomRegistry(Objects, PlaneDefs.Count()-1,
+        for (size_t i = 0; i < Matrices.Count(); i++) {
+          TSPlane* p = pd.FromAtomRegistry(Objects, PlaneDefs.Count() - 1,
             Network, *Matrices[i]);
-          if( p != NULL )  {
+          if (p != NULL) {
             bool uniq = true;
-            for( size_t j=0; j < Objects.planes.Count()-1; j++ )  {
+            for (size_t j = 0; j < Objects.planes.Count() - 1; j++) {
               if (!Objects.planes[j].IsDeleted() &&
-                   Objects.planes[j].GetCenter().QDistanceTo(
-                     p->GetCenter()) < 1e-6 &&
-                     Objects.planes[j].GetNormal().IsParallel(p->GetNormal()))
+                Objects.planes[j].GetCenter().QDistanceTo(
+                p->GetCenter()) < 1e-6 &&
+                Objects.planes[j].GetNormal().IsParallel(p->GetNormal()))
               {
                 rv << Objects.planes[j];
                 uniq = false;
                 break;
               }
             }
-            if( !uniq )
+            if (!uniq)
               Objects.planes.DeleteLast();
             else
               rv.Add(p);
           }
         }
       }
-      else  {
+      else {
         Objects.planes.Attach(*Plane);
         rv.Add(Plane);
-        Plane->_SetDefId(PlaneDefs.Count()-1);
+        Plane->_SetDefId(PlaneDefs.Count() - 1);
       }
     }
     else {
-      bool uniq=true;
-      for (size_t i=0; i < Objects.planes.Count(); i++) {
+      bool uniq = true;
+      for (size_t i = 0; i < Objects.planes.Count(); i++) {
         if (!Objects.planes[i].IsDeleted() &&
-             Objects.planes[i].GetCenter().QDistanceTo(
-               Plane->GetCenter()) < 1e-6 &&
-               Objects.planes[i].GetNormal().IsParallel(Plane->GetNormal()))
+          Objects.planes[i].GetCenter().QDistanceTo(
+          Plane->GetCenter()) < 1e-6 &&
+          Objects.planes[i].GetNormal().IsParallel(Plane->GetNormal()))
         {
           rv << Objects.planes[i];
           uniq = false;
@@ -2191,20 +2190,35 @@ void TLattice::ToDataItem(TDataItem& item) const  {
     Matrices[i]->SetRawId(m_tags[i]);
   // save planes
   TSPlanePList valid_planes;
-  for( size_t i=0; i < Objects.planes.Count(); i++ )  {
-    if( Objects.planes[i].IsDeleted() ) continue;
+  for (size_t i = 0; i < Objects.planes.Count(); i++) {
+    if (Objects.planes[i].IsDeleted()) continue;
     size_t p_ac = 0;
-    for( size_t j=0; j < Objects.planes[i].Count(); j++ )
-      if( Objects.planes[i].GetAtom(j).IsAvailable() )
-        p_ac++;
-    if( p_ac >= 3 ) // a plane must contain at least three atoms
+    for (size_t j = 0; j < Objects.planes[i].Count(); j++)
+    if (Objects.planes[i].GetAtom(j).IsAvailable())
+      p_ac++;
+    if (p_ac >= 3) {// a plane must contain at least three atoms
       valid_planes.Add(Objects.planes[i]);
+    }
     else
       Objects.planes[i].SetDeleted(true);
   }
+  TPtrList<TSPlane::Def> defs;
   TDataItem& planes = item.AddItem("Planes");
-  for( size_t i=0; i < valid_planes.Count(); i++ )
+  for (size_t i = 0; i < valid_planes.Count(); i++) {
+    size_t di = defs.IndexOf(PlaneDefs[valid_planes[i]->GetDefId()]);
+    if (di == InvalidIndex) {
+      di = defs.Count();
+      defs.Add(PlaneDefs[valid_planes[i]->GetDefId()]);
+    }
+    size_t odi = valid_planes[i]->GetDefId();
+    valid_planes[i]->_SetDefId(di);
     valid_planes[i]->ToDataItem(planes.AddItem("Plane"));
+    valid_planes[i]->_SetDefId(odi);
+  }
+  TDataItem &plane_defs = item.AddItem("Plane_defs");
+  for (size_t i = 0; i < defs.Count(); i++) {
+    defs[i]->ToDataItem(plane_defs.AddItem("Def"));
+  }
 }
 //..............................................................................
 void TLattice::FromDataItem(TDataItem& item)  {
@@ -2245,24 +2259,33 @@ void TLattice::FromDataItem(TDataItem& item)  {
   // load fragments
   for( size_t i=0; i < frags.ItemCount(); i++ )
     Fragments[i]->FromDataItem(frags.GetItemByIndex(i));
+  TDataItem *plane_defs = item.FindAnyItem("Plane_defs");
+  if (plane_defs != 0) {
+    for (size_t i = 0; i < plane_defs->ItemCount(); i++) {
+      PlaneDefs.AddNew(plane_defs->GetItemByIndex(i));
+    }
+  }
   TDataItem& planes = item.GetItemByName("Planes");
-  for( size_t i=0; i < planes.ItemCount(); i++ )  {
+  for (size_t i=0; i < planes.ItemCount(); i++) {
     TSPlane& p = Objects.planes.New(Network);
     p.FromDataItem(planes.GetItemByIndex(i));
-    TSPlane::Def def = p.GetDef();
-    size_t di = InvalidIndex;
-    for( size_t j=0; j < PlaneDefs.Count(); j++ )  {
-      if( PlaneDefs[j] == def )  {
-        di = j;
-        break;
+    if (p.GetDefId() == InvalidIndex) {
+      TSPlane::Def def = p.GetDef();
+      size_t di = InvalidIndex;
+      for (size_t j = 0; j < PlaneDefs.Count(); j++) {
+        if (PlaneDefs[j] == def)  {
+          di = j;
+          break;
+        }
+      }
+      if (di == InvalidIndex) {
+        p._SetDefId(PlaneDefs.Count());
+        PlaneDefs.AddNew(def);
+      }
+      else {
+        p._SetDefId(di);
       }
     }
-    if( di == InvalidIndex )  {
-      p._SetDefId(PlaneDefs.Count());
-      PlaneDefs.AddNew(def);
-    }
-    else
-      p._SetDefId(di);
   }
   //FinaliseLoading();
 }

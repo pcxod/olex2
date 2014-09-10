@@ -185,11 +185,14 @@ void TDSphere::ToDataItem(TDataItem &di) const {
 }
 //...........................................................................
 void TDSphere::FromDataItem(const TDataItem &di) {
+  TDataItem *an = di.FindItem("Analyser");
+  if (an == 0) {
+    return;
+  }
   Generation = di.GetFieldByName("generation").ToUInt();
   //SetVisible(di.GetFieldByName("visible").ToBool());
   Basis.FromDataItem(di.GetItemByName("Basis"));
-  APointAnalyser *pa = APointAnalyser::FromDataItem(
-    di.GetItemByName("Analyser"));
+  APointAnalyser *pa = APointAnalyser::FromDataItem(*an);
   if (pa == NULL) {
     return;
   }

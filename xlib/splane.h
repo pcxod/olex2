@@ -21,8 +21,7 @@ const uint16_t
   plane_best = 1,
   plane_worst = 2;
 const uint16_t
-  plane_flag_deleted = 0x0001,
-  plane_flag_regular = 0x0002;
+  plane_flag_deleted = 0x0001;
 
 class TSPlane : public TSObject<TNetwork>  {
   TTypeList<olx_pair_t<TSAtom*, double> > Crds;
@@ -40,15 +39,15 @@ class TSPlane : public TSObject<TNetwork>  {
     }
   };
 public:
-  TSPlane() :TSObject<TNetwork>(NULL) {}
+  TSPlane() : TSObject<TNetwork>(NULL), DefId(InvalidIndex)
+  {}
   TSPlane(TNetwork* Parent, size_t def_id = InvalidIndex)
     : TSObject<TNetwork>(Parent), Distance(0), wRMSD(0), Flags(0),
-      DefId(def_id)  {}
+      DefId(def_id)
+  {}
   virtual ~TSPlane()  {}
 
   DefPropBFIsSet(Deleted, Flags, plane_flag_deleted)
-  // this is just a flag for the owner - is not used by the object itself
-  DefPropBFIsSet(Regular, Flags, plane_flag_regular)
 
   // an association point, weight is provided
   void Init(const TTypeList<olx_pair_t<TSAtom*, double> >& Points);
@@ -147,15 +146,16 @@ public:
       }
     };
     TTypeList<DefData> atoms;
-    bool regular;
+    size_t sides;
   public:
-    Def() {}
+    Def() : sides(0) {}
     Def(const TSPlane& plane);
-    Def(const Def& r) : atoms(r.atoms), regular(r.regular)  {}
+    Def(const Def& r) : atoms(r.atoms), sides(r.sides)
+    {}
     Def(const TDataItem& item)  {  FromDataItem(item);  }
     Def& operator = (const Def& r)  {
       atoms = r.atoms;
-      regular = r.regular;
+      sides = r.sides;
       return *this;
     }
     bool operator == (const Def& d)  const {
@@ -178,8 +178,10 @@ public:
       for (size_t i = 0; i < atoms.Count(); i++) {
         rv << atoms[i].ToString();
       }
-      return olxstr(rv) << regular;
+      return olxstr(rv) << sides;
     }
+    size_t GetSides() const { return sides; }
+    void SetSides(size_t s) { sides = s; }
   };
 
   Def GetDef() const { return Def(*this);  }
