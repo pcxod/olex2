@@ -36,12 +36,12 @@ void TComboBox::SetText(const olxstr& T) {
   olxstr actual_val = T;
   bool found = false;
   for (unsigned int i=0; i < GetCount(); i++ )  {
+    if (T == GetString(i)) {
+      found = true;
+    }
     TDataObj* res = (TDataObj*)GetClientData(i);
     if (res == NULL || !res->Delete) {
       continue;
-    }
-    if (T == GetString(i)) {
-      found = true;
     }
     olxstr sv = res->Data->ToString();
     if (sv == T) {
@@ -56,6 +56,7 @@ void TComboBox::SetText(const olxstr& T) {
   else {
     if (GetCount() != 0) {
       wxComboBox::SetSelection(0);
+      StrValue = GetString(0);
     }
   }
 }
