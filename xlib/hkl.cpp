@@ -98,8 +98,8 @@ bool THklFile::LoadFromStrings(const TCStrList& SL, TIns* ins,
     Clear();
     bool ZeroRead = false,
       HklFinished = false,
-      HasBatch = false,
-      FormatInitialised = false;
+      HasBatch = false;
+    size_t line_length = 0;
     {  // validate if 'real' HKL, not fcf
       if( !IsHKLFileLine(SL[0]) )  {
         TCif cif;
@@ -156,35 +156,40 @@ bool THklFile::LoadFromStrings(const TCStrList& SL, TIns* ins,
     size_t removed_cnt = 0;
     const size_t line_cnt = SL.Count();
     Refs.SetCapacity(line_cnt);
-    for( size_t i=0; i < line_cnt; i++ )  {
+    for (size_t i=0; i < line_cnt; i++) {
       const olxcstr& line = SL[i];
-      if( !ZeroRead && line.Length() < 28 )  continue;
-      if( !FormatInitialised )  {
-        if( line.Length() >= 32 )
+      if (!ZeroRead && line.Length() < 28)  continue;
+      if (line_length == 0)  {
+        if (line.Length() >= 32) {
           HasBatch = true;
-        FormatInitialised = true;
+          line_length = 32;
+        }
+        else {
+          line_length = 28;
+        }
       }
-      if( ZeroRead && !HklFinished )  {
-        if( !line.SubString(0,4).IsNumber() ||
+      if (ZeroRead && !HklFinished) {
+        if( line.Length() < line_length ||
+          !line.SubString(0,4).IsNumber() ||
           !line.SubString(4,4).IsNumber() ||
           !line.SubString(8,4).IsNumber() ||
           !line.SubString(12,8).IsNumber() ||
-          !line.SubString(20,8).IsNumber() )
+          !line.SubString(20,8).IsNumber())
         {
           HklFinished = true;
           i--;  // reset to the non-hkl line
         }
       }
-      if( !HklFinished )  {
+      if (!HklFinished) {
         const int h = line.SubString(0,4).ToInt(),
           k = line.SubString(4,4).ToInt(),
           l = line.SubString(8,4).ToInt();
         // end of the reflections included into calculations
-        if( h == 0 && k == 0 && l == 0 )  {
+        if (h == 0 && k == 0 && l == 0) {
           ZeroRead = true;
           continue;
         }
-        try  {
+        try {
           TReflection* ref = HasBatch ?
             new TReflection(h, k, l, line.SubString(12,8).ToDouble(),
               line.SubString(20,8).ToDouble(),
