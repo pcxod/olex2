@@ -543,8 +543,21 @@ static typename accessor_t::return_type olx_sum(
 {
   typename accessor_t::return_type rv(0);
   if (to == InvalidIndex) to = l.Count();
-  for (size_t i=0; i < to; i++) rv += accessor(l[i]);
+  for (size_t i=from; i < to; i++) rv += accessor(l[i]);
   return rv;
+}
+
+template <class list_t, class analyser_t>
+static size_t olx_count(const list_t &l, const analyser_t &anz,
+  size_t from = 0, size_t to = InvalidIndex)
+{
+  size_t cnt = 0;
+  if (to == InvalidIndex) to = l.Count();
+  for (size_t i = from; i < to; i++) {
+    if (anz.OnItem(l[i], i))
+      cnt++;
+  }
+  return cnt;
 }
 
 template <class list_t>

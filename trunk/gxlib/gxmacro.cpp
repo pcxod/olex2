@@ -1507,12 +1507,18 @@ void GXLibMacros::macMpln(TStrObjList &Cmds, const TParamList &Options,
   if (rings_name.IsEmpty()) {
     TSPlane* plane = NULL;
     bool orientOnly = Options.Contains('n'),
-      rectangular = Options.Contains('r');
+      reqular = Options.Contains('r');
+    size_t sides_n = 0;
+    if (reqular) {
+      olxstr v = Options.FindValue('r');
+      sides_n = (v.IsEmpty()) ? 4 : v.ToSizeT();
+      if (sides_n < 4) sides_n = 4;
+    }
     olxstr name = Options.FindValue('n');
     const double weightExtent = olx_abs(Options.FindValue("we", "0").ToDouble());
     olxstr planeName;
     TXAtomPList Atoms = app.FindXAtoms(Cmds, true, true);
-    for (size_t i=0; i < Atoms.Count(); i++ ) {
+    for (size_t i=0; i < Atoms.Count(); i++) {
       planeName << Atoms[i]->GetLabel();
       if( i+1 < Atoms.Count() )
         planeName << ' ';
@@ -1534,8 +1540,8 @@ void GXLibMacros::macMpln(TStrObjList &Cmds, const TParamList &Options,
         plane = NULL;
       }
     }
-    else  {
-      TXPlane* xp = app.AddPlane(name, Atoms, rectangular, weightExtent);
+    else {
+      TXPlane* xp = app.AddPlane(name, Atoms, sides_n, weightExtent);
       if (xp != NULL)
         plane = xp;
     }
@@ -3734,7 +3740,7 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
         //inertia<>::out io2;
         //if (ra_i.inverted) {
         //  io2 = inertia<>::calc(nets[j]->GetNodes(),
-        //    olx_alg::olx_minus(FunctionAccessor::Make(&TSAtom::crd)),
+        //    olx_alg::olx_chsig(FunctionAccessor::Make(&TSAtom::crd)),
         //    FunctionAccessor::MakeStatic(&TSAtom::weight_occu_z));
         //    io2.center *= -1;
         //    io2.axis *= -1;

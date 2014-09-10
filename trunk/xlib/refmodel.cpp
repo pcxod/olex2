@@ -613,13 +613,14 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
       FilterHkl(refs, _HklStat);
       TUnitCell::SymmSpace sp =
         aunit.GetLattice().GetUnitCell().GetSymmSpace();
-      if( MERG != 0 && HKLF != 5 )  {
+      if (MERG != 0 && HKLF != 5) {
         bool mergeFP = (MERG == 4 || MERG == 3 || sp.IsCentrosymmetric());
         _HklStat = RefMerger::DryMerge<RefMerger::ShelxMerger>(
             sp, refs, Omits, mergeFP);
       }
-      else
+      else {
         _HklStat = RefMerger::DrySGFilter(sp, refs, Omits);
+      }
       _HklStat.HKLF_mat = HKLF_mat;
       _HklStat.HKLF_m = HKLF_m;
       _HklStat.HKLF_s = HKLF_s;
@@ -636,7 +637,7 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
             vec3i hkl(h,k,l);
             vec3i shkl = TReflection::Standardise(hkl, info_ex);
             if (shkl != hkl) continue;
-            if( TReflection::IsAbsent(hkl, info_ex)) continue;
+            if (TReflection::IsAbsent(hkl, info_ex)) continue;
             double d = 1/TReflection::ToCart(hkl, h2c).Length();
             if (d <= _HklStat.MaxD && d >= _HklStat.MinD)
               e_cnt++;
@@ -645,13 +646,14 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
       }
       if (HKLF == 5) {
         TSizeList cnts(BASF.Count() + 1, olx_list_init::zero());
-        for (size_t i = 0; i < refs.Count(); i++) {
-          size_t idx = refs[i].GetBatch() - 1;
-          if (idx >= cnts.Count()) {
-            throw TInvalidArgumentException(__OlxSourceInfo,
-              olxstr("Batch number: ") << refs[i].GetBatch());
+        for (size_t i = 0; i < BASF.Count(); i++) {
+          TRefList fr = refs.Filter(olx_alg::olx_eq(
+            i+1, FunctionAccessor::MakeConst(&TReflection::GetBatch)));
+          if (!fr.IsEmpty()) {
+            MergeStats st =
+              RefMerger::DryMergeInP1<RefMerger::ShelxMerger>(fr, Omits);
+            cnts[i] = st.UniqueReflections;
           }
-          cnts[idx]++;
         }
         BubbleSorter::Sort(cnts, ReverseComparator::Make(TPrimitiveComparator()));
         for (size_t i = 0; i < cnts.Count(); i++) {

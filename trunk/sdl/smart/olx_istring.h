@@ -20,6 +20,7 @@
 #endif
 #ifdef _PYTHON
   #undef HAVE_SSIZE_T
+  #undef HAVE_WCHAR_H
   #ifdef _DEBUG
     #undef _DEBUG
     #include "Python.h"

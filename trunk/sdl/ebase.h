@@ -421,9 +421,9 @@ protected:
     }
   };
 
-  template <class Accessor> struct minus_ {
+  template <class Accessor> struct chsig_ {
     const Accessor &accessor;
-    minus_(const Accessor &accessor_) : accessor(accessor_) {}
+    chsig_(const Accessor &accessor_) : accessor(accessor_) {}
     template <class Item>
     typename Accessor::return_type OnItem(const Item& o) const {
       return -accessor(o);
@@ -435,6 +435,19 @@ protected:
     template <class Item>
     typename Accessor::return_type operator () (const Item& o) const {
       return -accessor(o);
+    }
+  };
+
+  template <typename to_t, class Accessor> struct eq_ {
+    to_t to;
+    const Accessor &accessor;
+    eq_(const to_t &t, const Accessor &accessor_) : to(t), accessor(accessor_)
+    {}
+    template <class Item> bool OnItem(const Item& o) const {
+      return accessor(o) == to;
+    }
+    template <class Item> bool OnItem(const Item& o, size_t) const {
+      return accessor(o) == to;
     }
   };
 public:
@@ -453,27 +466,20 @@ public:
   /* creates a new or logical operator */
   template <class AnalyserA, class AnalyserB>
   static or_<AnalyserA, AnalyserB> olx_or(
-    const AnalyserA& a, const AnalyserB& b)
-  {
+    const AnalyserA& a, const AnalyserB& b) {
     return or_<AnalyserA, AnalyserB>(a, b);
   }
-  /* creates a new minus arithmetic functor/accessor */
+  /* creates a new chsig arithmetic functor/accessor */
   template <class Accessor>
-  static minus_<Accessor> olx_minus(const Accessor& a)  {
-    return minus_<Accessor>(a);
+  static chsig_<Accessor> olx_chsig(const Accessor& a) {
+    return chsig_<Accessor>(a);
   }
-  /* creates a new static boolean value */
-  struct olx_bool  {
-    bool value;
-    olx_bool(bool _value) : value(_value)  {}
-    template <typename Item> bool OnItem(const Item& o) const {
-      return value;
-    }
-    template <typename Item> bool OnItem(const Item& o, size_t) const {
-      return value;
-    }
+  /* creates a new equality checker */
+  template <typename to_t, class Accessor>
+  static eq_<to_t, Accessor> olx_eq(const to_t &to, const Accessor& a)  {
+    return eq_<to_t, Accessor>(to, a);
+  }
   };
-};
 
 /* swaps two objects using a temporary variable (copy constructor must be
  available for complex types) */

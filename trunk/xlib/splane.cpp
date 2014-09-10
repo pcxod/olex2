@@ -103,16 +103,21 @@ double TSPlane::Angle(const TSBond& Bd) const {
 }
 //..............................................................................
 void TSPlane::ToDataItem(TDataItem& item) const {
-  item.AddField("regular", IsRegular());
+  item.AddField("def_id", GetDefId());
   size_t cnt = 0;
-  for( size_t i=0; i < Crds.Count(); i++ )  {
-    if( Crds[i].GetA()->IsDeleted() )  continue;
-    item.AddItem(cnt++, Crds[i].GetB()).AddField("atom_id",
+  olxstr iname("atom");
+  for (size_t i = 0; i < Crds.Count(); i++) {
+    if (Crds[i].GetA()->IsDeleted())  continue;
+    item.AddItem(iname, Crds[i].GetB()).AddField("atom_id",
       Crds[i].GetA()->GetTag());
   }
 }
 //..............................................................................
-void TSPlane::FromDataItem(const TDataItem& item)  {
+void TSPlane::FromDataItem(const TDataItem& item) {
+  olxstr di = item.FindField("def_id");
+  if (!di.IsEmpty()) {
+    DefId = di.ToSizeT();
+  }
   Crds.Clear();
   ASObjectProvider& objects = Network->GetLattice().GetObjects();
   for( size_t i=0; i < item.ItemCount(); i++ )  {
@@ -122,10 +127,9 @@ void TSPlane::FromDataItem(const TDataItem& item)  {
   }
   TTypeList< olx_pair_t<vec3d, double> > points;
   points.SetCapacity(Crds.Count());
-  for( size_t i=0; i < Crds.Count(); i++ )
-    points.AddNew( Crds[i].GetA()->crd(), Crds[i].GetB());
+  for (size_t i=0; i < Crds.Count(); i++)
+    points.AddNew(Crds[i].GetA()->crd(), Crds[i].GetB());
   _Init(points);
-  SetRegular(item.FindField("regular", FalseString()).ToBool());
 }
 //..............................................................................
 olxstr TSPlane::StrRepr() const {
@@ -174,9 +178,9 @@ vec3d TSPlane::GetCrystallographicDirection(const mat3d &m,
 //..............................................................................
 //..............................................................................
 TSPlane::Def::Def(const TSPlane& plane)
-  : atoms(plane.Count()), regular(plane.IsRegular())
+  : atoms(plane.Count()), sides(0)
 {
-  for( size_t i=0; i < plane.Count(); i++ )
+  for (size_t i=0; i < plane.Count(); i++)
     atoms.Set(i, new DefData(plane.GetAtom(i).GetRef(), plane.GetWeight(i)));
   if( plane.Count() == 0 )  return;
   if( !plane.GetAtom(0).IsAUAtom() )  {
@@ -202,15 +206,15 @@ void TSPlane::Def::DefData::FromDataItem(const TDataItem& item)  {
 }
 //..............................................................................
 void TSPlane::Def::ToDataItem(TDataItem& item) const {
-  item.AddField("regular", regular);
+  item.AddField("sides", sides);
   for( size_t i=0; i < atoms.Count(); i++ )
     atoms[i].ToDataItem(item.AddItem(i+1));
 }
 //..............................................................................
 void TSPlane::Def::FromDataItem(const TDataItem& item)  {
   atoms.Clear();
-  regular = item.GetFieldByName("regular").ToBool();
-  for( size_t i=0; i < item.ItemCount(); i++ )
+  sides = item.GetFieldByName("sides").ToSizeT();
+  for (size_t i=0; i < item.ItemCount(); i++)
     atoms.AddNew(item.GetItemByIndex(i));
 }
 //..............................................................................
@@ -245,7 +249,6 @@ TSPlane* TSPlane::Def::FromAtomRegistry(ASObjectProvider& ar, size_t def_id,
   TSPlane& p = ar.planes.New(parent);
   p.DefId = def_id;
   p.Init(points);
-  p.SetRegular(regular);
   return &p;
 }
 //..............................................................................

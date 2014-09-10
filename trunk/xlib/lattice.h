@@ -179,8 +179,7 @@ public:
   void RestoreAtom(const TSAtom::Ref& id);
 
   // for the grown structure might return more than one plane
-  TSPlanePList NewPlane(const TSAtomPList& Atoms, double weightExtent=0,
-    bool regular=false);
+  TSPlanePList NewPlane(const TSAtomPList& Atoms, double weightExtent=0);
   void ClearPlaneDefinitions()  {  PlaneDefs.Clear();  }
   void SetPlaneDefinitions(const TTypeList<TSPlane::Def> &pd);
   const TTypeList<TSPlane::Def> &GetPlaneDefinitions() const {

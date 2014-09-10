@@ -673,7 +673,7 @@ public:
   void CalcProbFactor(double Prob);
 
   TXPlane *AddPlane(const olxstr &name, const TXAtomPList& Atoms,
-    bool Rectangular, double weightExtent=0);
+    size_t sides, double weightExtent=0);
   TSPlane *TmpPlane(const TXAtomPList* Atoms=NULL, double weightExtent=0);
   void DeletePlane(TXPlane* plane);
   void ClearPlanes();
