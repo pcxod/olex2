@@ -3918,17 +3918,22 @@ void TMainForm::funIsCurrentLanguage(const TStrObjList& Params, TMacroError &E) 
 void TMainForm::macSchedule(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &Error)
 {
-  if (!Cmds[0].IsNumber())  {
-    Error.ProcessingError(__OlxSrcInfo,
-      "invalid syntax: <interval 'task'> is expected");
-    return;
+  if (!Cmds[0].IsNumber()) {
+    if (Cmds.Count() != 1) {
+      Error.ProcessingError(__OlxSrcInfo,
+        "invalid syntax: <interval 'task'> or <'task'> is expected");
+      return;
+    }
+    FXApp->PostAction(new olxCommandAction(Cmds[0]));
   }
-  TScheduledTask& task = Tasks.AddNew();
-  task.Repeatable= Options.GetBoolOption('r');
-  task.NeedsGUI = Options.GetBoolOption('g');
-  task.Interval = Cmds[0].ToUInt();
-  task.Task = Cmds[1];
-  task.LastCalled = TETime::Now();
+  else {
+    TScheduledTask& task = Tasks.AddNew();
+    task.Repeatable = Options.GetBoolOption('r');
+    task.NeedsGUI = Options.GetBoolOption('g');
+    task.Interval = Cmds[0].ToUInt();
+    task.Task = Cmds[1];
+    task.LastCalled = TETime::Now();
+  }
 }
 //..............................................................................
 //void TMainForm::funSGList(const TStrObjList& Params, TMacroError &E) {

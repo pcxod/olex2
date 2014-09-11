@@ -688,6 +688,7 @@
     <ClInclude Include="..\..\..\sdl\ememstream.h" />
     <ClInclude Include="..\..\..\sdl\encodings.h" />
     <ClInclude Include="..\..\..\sdl\equeue.h" />
+    <ClInclude Include="..\..\..\sdl\eset.h" />
     <ClInclude Include="..\..\..\sdl\esort.h" />
     <ClInclude Include="..\..\..\sdl\estack.h" />
     <ClInclude Include="..\..\..\sdl\estlist.h" />

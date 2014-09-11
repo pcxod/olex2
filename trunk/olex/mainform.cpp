@@ -764,9 +764,10 @@ void TMainForm::XApp(Olex2App *XA)  {
     "r-repeatable&;"
     "g-requires GUI"
     ,
-    fpAny^(fpNone|fpOne),
+    fpAny^(fpNone),
     "Schedules a particular macro (second argument) to be executed within "
-    "provided interval (first argument)");
+    "provided interval (first argument). If the interval is not specified the "
+    "requested macro is called when the program is idle");
 
   this_InitMacro(Test, , fpAny);
 
@@ -1388,39 +1389,39 @@ void TMainForm::StartupInit()  {
 
   FTimer->Start(15);
 
-  if( TEFile::Exists(FXApp->GetBaseDir() + "settings.xld") )  {
+  if (TEFile::Exists(FXApp->GetBaseDir() + "settings.xld")) {
     TDataFile settings;
     settings.LoadFromXLFile(FXApp->GetBaseDir() + "settings.xld", NULL);
     settings.Include(NULL);
     TDataItem* sh = settings.Root().FindItemi("shortcuts");
-    if( sh != NULL )  {
-      try  {
+    if (sh != NULL) {
+      try {
         olxstr cmd;
-        for( size_t i=0; i < sh->ItemCount(); i++ )  {
+        for (size_t i=0; i < sh->ItemCount(); i++) {
           TDataItem& item = sh->GetItemByIndex(i);
-        AccShortcuts.AddAccell(
-          TranslateShortcut(item.FindField("key")),
-          item.FindField("macro"));
-        // cannot execute it through a macro - functions get evaluated...
-        //Macros.ProcessMacro(cmd, MacroError);
+          AccShortcuts.AddAccell(
+            TranslateShortcut(item.FindField("key")),
+            item.FindField("macro"));
+          // cannot execute it through a macro - functions get evaluated...
+          //Macros.ProcessMacro(cmd, MacroError);
         }
       }
-      catch( TExceptionBase& exc )  {
-        TBasicApp::NewLogEntry(logException) << exc.GetException()->GetFullMessage();
+      catch (TExceptionBase& exc) {
+        TBasicApp::NewLogEntry(logException) <<
+          exc.GetException()->GetFullMessage();
       }
     }
     sh = settings.Root().FindItemi("menus");
     ABasicFunction *cm_macro = GetLibrary().FindMacro("CreateMenu");
-    if (sh != NULL && cm_macro != NULL)  {
+    if (sh != NULL && cm_macro != NULL) {
       TMacroError me;
       me.SetLocation(__OlxSrcInfo);
-      try  {
-        for( size_t i=0; i < sh->ItemCount(); i++ )  {
+      try {
+        for (size_t i=0; i < sh->ItemCount(); i++) {
           TDataItem& item = sh->GetItemByIndex(i);
           TStrObjList params;
           TParamList opts;
-          params << item.FindField("title") <<
-            item.FindField("macro");
+          params << item.FindField("title") << item.FindField("macro");
           olxstr bf = item.FindField("before");
           if (!bf.IsEmpty())
             params << bf;
@@ -1440,17 +1441,16 @@ void TMainForm::StartupInit()  {
           cm_macro->Run(params, opts, me);
         }
       }
-      catch( TExceptionBase& exc )  {
+      catch (TExceptionBase& exc) {
         TBasicApp::NewLogEntry(logExceptionTrace) << exc;
       }
     }
   }
 
   // set the variables
-  for( size_t i=0; i < StoredParams.Count(); i++ )  {
+  for (size_t i=0; i < StoredParams.Count(); i++) {
     processMacro(olxstr("setvar(") << StoredParams.GetKey(i) << ",\"" <<
       StoredParams.GetValue(i) << "\")");
-
   }
 
   olxstr textures_dir = FXApp->GetBaseDir() + "etc/Textures";
@@ -1468,16 +1468,17 @@ void TMainForm::StartupInit()  {
   }
   processMacro("onstartup", __OlxSrcInfo);
   processMacro("user_onstartup", __OlxSrcInfo);
-  if( FXApp->GetArguments().Count() >= 2 ) {
+  if (FXApp->GetArguments().Count() >= 2) {
     processMacro(olxstr("reap \"") << FXApp->GetArguments().Text(' ', 1) <<
       '\"', __OlxSrcInfo);
-  }  // load html in last call - it might call some destructive functions on uninitialised data
+  }
+  // load html in last call - it might call some destructive functions on uninitialised data
   HtmlManager.main->LoadPage(FHtmlIndexFile.u_str());
   HtmlManager.main->SetHomePage(FHtmlIndexFile);
   FileDropTarget* dndt = new FileDropTarget(*this);
   this->SetDropTarget(dndt);
-  //CreateUpdateThread(false);
-  processMacro("schedule 1 'update -f=false' -g");
+  processMacro("schedule 'update -f=false' -g");
+  TStateRegistry::GetInstance().RepeatAll();
 }
 //..............................................................................
 bool TMainForm::CreateUpdateThread(bool force) {
