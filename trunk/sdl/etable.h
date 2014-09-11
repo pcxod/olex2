@@ -54,8 +54,14 @@ public:
   template <typename Str> size_t ColIndex(const Str& N) const {
     return ColNames.IndexOf(N);
   }
+  template <typename Str> size_t ColIndexi(const Str& N) const {
+    return ColNames.IndexOfi(N);
+  }
   template <typename Str> size_t RowIndex(const Str& N) const {
     return RowNames.IndexOf(N);
+  }
+  template <typename Str> size_t RowIndexi(const Str& N) const {
+    return RowNames.IndexOfi(N);
   }
 
   void Resize(size_t RowCnt, size_t ColCnt)  {

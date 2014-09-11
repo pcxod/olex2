@@ -194,7 +194,7 @@ namespace cif_dp {
     const olxstr& ColName(size_t i) const {  return data.ColName(i);  }
     template <class Str>
     size_t ColIndex(const Str& name) const {
-      return data.ColIndex(name);
+      return data.ColIndexi(name);
     }
     size_t RowCount() const {  return data.RowCount();  }
     void SetRowCount(size_t sz) { data.SetRowCount(sz); }
