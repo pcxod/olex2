@@ -166,7 +166,11 @@ void XLibMacros::Export(TLibrary& lib)  {
 //_____________________________________________________________________________
   xlib_InitMacro(Cif2Doc, "n-output file name", fpNone|fpOne|psFileLoaded,
     "converts cif to a document");
-  xlib_InitMacro(Cif2Tab, "n-output file name&;t-table definition file",
+  xlib_InitMacro(Cif2Tab,
+    "n-output file name&;"
+    "t-table definition file&;"
+    "l-label option flag: 0 - as is, 1 - round brackets, 2 - subscript, "
+    "4 - superscript, this can be combined",
     fpAny|psFileLoaded,
     "creates a table from a cif");
   xlib_InitMacro(CifMerge,
@@ -3481,7 +3485,9 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options,
       }
       continue;
     }
-    if (Cif->CreateTable(TD, DT, SymmList) && DT.RowCount() > 0) {
+    if (Cif->CreateTable(TD, DT, SymmList, Options.FindValue('l', "0").ToInt())
+      && DT.RowCount() > 0)
+    {
       olxstr Tmp = "Table ";
       Tmp << ++tab_count << ' ' << TD->FindField("caption");
       Tmp.Replace("%DATA_NAME%", Cif->GetDataName());

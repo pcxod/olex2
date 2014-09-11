@@ -10,6 +10,7 @@
 #ifndef __olx_gxlib_states_H
 #define __olx_gxlib_states_H
 #include "estlist.h"
+#include "eset.h"
 #include "integration.h"
 #include "gxapp.h"
 #undef Status
@@ -136,12 +137,21 @@ private:
   TPtrList<Slot> slots;
   olxstr_dict<size_t, true> slots_d;
   TActionQList Actions;
-  static olxstr StateChangeCB;
-  static TStateRegistry *Instance;
+  static const olxstr &StateChangeCB() {
+    static olxstr s("statechange");
+    return s;
+  }
+  static TStateRegistry *& Instance() {
+    static TStateRegistry *i = 0;
+    return i;
+  }
+  olxdict<size_t, olx_cset<olxstr>, TPrimitiveComparator>
+    data_cache;
 public:
   TStateRegistry();
   ~TStateRegistry() {
     slots.DeleteItems(false);
+    Instance() = 0;
   }
   size_t Register(const olxstr &str_repr, Slot *slot) {
     slots.Add(slot)->name = str_repr;
@@ -188,6 +198,9 @@ public:
   }
   void SetState(size_t id, bool status, const olxstr &data=EmptyString(),
     bool internal_call=false);
+  /* Repeats the SetState calls
+  */
+  void RepeatAll();
 
   TActionQueue &OnChange;
   static TStateRegistry &GetInstance();
@@ -288,8 +301,14 @@ class TModeRegistry  {
   olxstr_dict<AModeFactory*, true> Modes;
   AMode *CurrentMode;
   TActionQList Actions;
-  static olxstr ModeChangeCB;
-  static TModeRegistry *Instance;
+  static const olxstr &ModeChangeCB() {
+    static olxstr s("modechange");
+    return s;
+  }
+  static TModeRegistry *&Instance() {
+    static TModeRegistry *i = 0;
+    return i;
+  }
 public:
   TModeRegistry();
   ~TModeRegistry();
@@ -311,7 +330,9 @@ class TModeChange: public IEObject  {
   bool FStatus;
   size_t Mode;
 public:
-  TModeChange(size_t mode, bool status) : FStatus(status), Mode(mode) {}
+  TModeChange(size_t mode, bool status)
+    : FStatus(status), Mode(mode)
+  {}
   ~TModeChange()  {}
   bool GetStatus() const {  return FStatus;  }
 };

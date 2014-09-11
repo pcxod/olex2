@@ -81,15 +81,12 @@ AModeWithLabels::~AModeWithLabels()  {
 //..............................................................................
 //..............................................................................
 //..............................................................................
-olxstr TModeRegistry::ModeChangeCB = "modechange";
-TModeRegistry* TModeRegistry::Instance = NULL;
-
 TModeRegistry::TModeRegistry()
   : OnChange(Actions.New("OnChange"))
 {
-  if( Instance != NULL )
+  if (Instance() != NULL)
     throw TFunctionFailedException(__OlxSourceInfo, "singleton");
-  Instance = this;
+  Instance() = this;
   Modes.Add("name",   new TModeFactory<TNameMode>(0));
   Modes.Add("match",  new TModeFactory<TMatchMode>(0));
   Modes.Add("split",  new TModeFactory<TSplitMode>(0));
@@ -122,7 +119,7 @@ AMode* TModeRegistry::SetMode(const olxstr& name, const olxstr &args)  {
     olex2::IOlex2Processor *op = olex2::IOlex2Processor::GetInstance();
     olxstr tmp = name;
     if (!args.IsEmpty()) tmp << ' ' << args;
-    op->callCallbackFunc(ModeChangeCB, TStrList() << tmp);
+    op->callCallbackFunc(ModeChangeCB(), TStrList() << tmp);
     if (name.Equalsi("off")) {
       olxstr location = __OlxSrcInfo;
       for (size_t i=0; i < OnModeExit.Count(); i++) {
@@ -147,7 +144,7 @@ TModeRegistry::~TModeRegistry()  {
     delete Modes.GetValue(i);
   if( CurrentMode != NULL )
     delete CurrentMode;
-  Instance = NULL;
+  Instance() = NULL;
 }
 //..............................................................................
 size_t TModeRegistry::DecodeMode(const olxstr& mode)  {
@@ -155,9 +152,9 @@ size_t TModeRegistry::DecodeMode(const olxstr& mode)  {
 }
 //..............................................................................
 TModeRegistry &TModeRegistry::GetInstance() {
-  if (Instance == NULL)
+  if (Instance() == NULL)
     throw TFunctionFailedException(__OlxSourceInfo, "uninitialised instance");
-  return *Instance;
+  return *Instance();
 }
 //..............................................................................
 bool TModeRegistry::CheckMode(size_t mode) {
@@ -172,15 +169,31 @@ bool TModeRegistry::CheckMode(const olxstr& mode) {
 //..............................................................................
 //..............................................................................
 //..............................................................................
-TStateRegistry *TStateRegistry::Instance = NULL;
-olxstr TStateRegistry::StateChangeCB = "statechange";
-//..............................................................................
 TStateRegistry::TStateRegistry()
  : OnChange(Actions.New("state_change"))
 {
-  if( Instance != NULL )
+  if (Instance() != NULL)
     throw TFunctionFailedException(__OlxSourceInfo, "singleton");
-  Instance = this;
+  Instance() = this;
+}
+//..............................................................................
+void TStateRegistry::RepeatAll() {
+  olex2::IOlex2Processor *op = olex2::IOlex2Processor::GetInstance();
+  for (size_t i = 0; i < slots.Count(); i++) {
+    olx_cset<olxstr> &dl = data_cache.Add(i);
+    for (size_t j = 0; j <= dl.Count(); j++) {
+      TStrList args;
+      olxstr data = (j == dl.Count() ? EmptyString() : dl[j]);
+      args.Add(slots[i]->name);
+      args.Add(slots[i]->Get(data));
+      if (j != dl.Count()) {
+        args.Add(dl[j]);
+      }
+      op->callCallbackFunc(StateChangeCB(), args);
+      TStateChange sc(i, slots[i]->Get(data), data);
+      OnChange.Execute(NULL, &sc);
+    }
+  }
 }
 //..............................................................................
 void TStateRegistry::SetState(size_t id, bool status, const olxstr &data,
@@ -192,9 +205,11 @@ void TStateRegistry::SetState(size_t id, bool status, const olxstr &data,
   TStrList args;
   args.Add(slots[id]->name);
   args.Add(status);
-  if (!data.IsEmpty())
+  if (!data.IsEmpty()) {
     args.Add(data);
-  op->callCallbackFunc(StateChangeCB, args);
+    data_cache.Add(id).Add(data);
+  }
+  op->callCallbackFunc(StateChangeCB(), args);
   if (internal_call) return;
   slots[id]->Set(status, data);
 }
@@ -207,7 +222,7 @@ void TStateRegistry::TMacroSetter::operator ()(bool v, const olxstr &data) {
 }
 //..............................................................................
 TStateRegistry &TStateRegistry::GetInstance() {
-  if (Instance == NULL)
+  if (Instance() == NULL)
     throw TFunctionFailedException(__OlxSourceInfo, "uninitialised instance");
-  return *Instance;
+  return *Instance();
 }

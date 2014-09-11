@@ -554,6 +554,9 @@
     <ClInclude Include="..\..\..\sdl\math\geom.h">
       <Filter>Header Files\math</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\sdl\eset.h">
+      <Filter>Header Files\containers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />

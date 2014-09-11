@@ -1219,7 +1219,6 @@ bool Cif_ValidateColumn(const TDataItem &col, const ICifEntry &entry) {
 bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table,
   smatd_list& SymmList, int label_options) const
 {
-  label_options = 5;
   int RowDeleted=0, ColDeleted=0;
   SymmList.Clear();
   const CifTable* LT = NULL;

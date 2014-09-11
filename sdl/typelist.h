@@ -399,7 +399,7 @@ public:
 //..............................................................................
   // the memory has to be delalocated by calling process (using delete)
   T& Release(size_t index)  {
-    T*& v = List[index];
+    T* v = List[index];
 #ifdef _DEBUG
     if( v == NULL ) {
       throw TFunctionFailedException(__OlxSourceInfo,

@@ -268,12 +268,21 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
       Toks.Strtok(SL[i], ' ');
       if (Toks.Count() > 3) {
         TEValueD flack_c = Toks[3]; // 'classical' Flack
-        if (i + 1 < SL.Count()) {
+        if (++i < SL.Count()) {
           Toks.Clear();
-          Toks.Strtok(SL[i + 1], ' ');
+          Toks.Strtok(SL[i], ' ');
           if (!Toks.IsEmpty()) {
+            if (Toks[0].Contains('*')) {
+              if (++i < SL.Count()) {
+                Toks.Clear();
+                Toks.Strtok(SL[i], ' ');
+              }
+              else {
+                break;
+              }
+            }
             TEValueD flack = Toks[0];
-              params("flack", flack.ToString());
+            params("flack", flack.ToString());
           }
           else
             params("flack", flack_c.ToString());
