@@ -258,17 +258,16 @@ bool TGlXApp::OnInit()  {
   return true;
 }
 //..............................................................................
-int TGlXApp::OnExit()  {
+int TGlXApp::OnExit() {
   // do all operations before TEGC is deleted
   if( pid_file != NULL )  {
     pid_file->Delete();
     delete pid_file;
     pid_file = NULL;
   }
-  TStrList pid_files;
   olxstr conf_dir = XApp->GetInstanceDir();
-  TEFile::ListDir(conf_dir, pid_files, olxstr("*.") <<
-    patcher::PatchAPI::GetOlex2PIDFileExt(), sefAll);
+  TStrList pid_files = TEFile::ListDir(conf_dir, olxstr("*.") <<
+    patcher::PatchAPI::GetOlex2PIDFileExt(), sefFile);
 #ifdef __linux__
     size_t ext_len = olxstr::o_strlen(patcher::PatchAPI::GetOlex2PIDFileExt())+1;
 #endif
@@ -291,7 +290,7 @@ int TGlXApp::OnExit()  {
   return 0;
 }
 //..............................................................................
-bool TGlXApp::Dispatch()  {
+bool TGlXApp::Dispatch() {
   return wxApp::Dispatch();
 }
 //..............................................................................

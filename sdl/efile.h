@@ -211,12 +211,40 @@ public:
   static olxstr ChangeFileExt(const olxstr& F, const olxstr& Extension);
   static bool ListCurrentDirEx(TFileList& Out, const olxstr& Mask,
     const uint16_t searchFlags);
+  static TFileList::const_list_type ListCurrentDirEx(const olxstr& Mask,
+    const uint16_t searchFlags)
+  {
+    TFileList l;
+    ListCurrentDirEx(l, Mask, searchFlags);
+    return l;
+  }
   static bool ListDirEx(const olxstr& dir, TFileList& Out, const olxstr& Mask,
     const uint16_t searchFlags);
+  static TFileList::const_list_type ListDirEx(const olxstr& dir,
+    const olxstr& Mask, const uint16_t searchFlags)
+  {
+    TFileList l;
+    ListDirEx(dir, l, Mask, searchFlags);
+    return l;
+  }
   static bool ListCurrentDir(TStrList& Out, const olxstr& Mask,
     const uint16_t searchFlags);
+  static TStrList::const_list_type ListCurrentDir(const olxstr& Mask,
+    const uint16_t searchFlags)
+  {
+    TStrList l;
+    ListCurrentDir(l, Mask, searchFlags);
+    return l;
+  }
   static bool ListDir(const olxstr& dir, TStrList& Out, const olxstr& Mask,
     const uint16_t searchFlags);
+  static TStrList::const_list_type ListDir(const olxstr& dir,
+    const olxstr& Mask, const uint16_t searchFlags)
+  {
+    TStrList l;
+    ListDir(dir, l, Mask, searchFlags);
+    return l;
+  }
   static bool ChangeDir(const olxstr& To);
   static bool MakeDir(const olxstr& Name);
   // the function forces the creation of all dirs upto the last one
@@ -300,7 +328,7 @@ public:
   static olxstr UnquotePath(const olxstr &p);
 
   static const olxstr& AllFilesMask() {
-    static olxstr m = "*.";
+    static olxstr m = "*.*";
     return m;
   };
 
