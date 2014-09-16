@@ -102,35 +102,15 @@ void TXBond::Update()  {
 //..............................................................................
 void TXBond::Create(const olxstr& cName)  {
   SetCreated(true);
-  olxstr Legend;
-  if (EsdlInstanceOf(*this, TXBond)) {
-    olxstr strRef = GetRef().ToString();
-    if (!cName.IsEmpty())  {
-      SetCollectionName(cName);
-      NamesRegistry().Add(strRef, Legend = cName, true);
-    }
-    else {
-      Legend = NamesRegistry().Find(strRef, EmptyString());
-      if (Legend.IsEmpty()) {
-        Legend = GetLegend(*this, 3);
-      }
-    }
-  }
-  else {
-    if (cName.IsEmpty()) {
-      Legend = GetCollectionName();
-    }
-    else {
-      Legend = cName;
-    }
-  }
+  if (!cName.IsEmpty())
+    SetCollectionName(cName);
   if (GetStaticPrimitives().IsEmpty())
     CreateStaticObjects(Parent);
   Label->SetFontIndex(Parent.GetScene().FindFontIndexForType<TXBond>());
   Label->Create();
   // find collection
   olxstr NewL;
-  TGPCollection* GPC = Parent.FindCollectionX(Legend, NewL);
+  TGPCollection* GPC = Parent.FindCollectionX(GetCollectionName(), NewL);
   if( GPC == NULL )
     GPC = &Parent.NewCollection(NewL);
   else if( GPC->PrimitiveCount() != 0 )  {
@@ -145,12 +125,12 @@ void TXBond::Create(const olxstr& cName)  {
     (GetType() == sotHBond) ? 2048 : DefMask(), IsMaskSaveable());
 
   GPC->AddObject(*this);
-  if (PrimitiveMask == 0)
+  if( PrimitiveMask == 0 )
     return;  // nothing to create then...
 
   Params()[4]= GS.GetNumParam('R', DefR());
   const uint16_t legend_level = TXAtom::LegendLevel(GetPrimitives().GetName());
-  const TStringToList<olxstr, TGlPrimitive*> &primitives = GetStaticPrimitives();
+  const TStrPObjList<olxstr, TGlPrimitive*> &primitives = GetStaticPrimitives();
   for (size_t i=0; i < primitives.Count(); i++) {
     if( (PrimitiveMask & (1<<i)) != 0 ) {
       TGlPrimitive* SGlP = primitives.GetObject(i);
@@ -212,7 +192,7 @@ void TXBond::UpdateStyle()  {
   TGraphicsStyle& GS = gpc.GetStyle();
   const int PrimitiveMask = GS.GetNumParam(GetPrimitiveMaskName(),
     (GetType() == sotHBond) ? 2048 : DefMask(), IsMaskSaveable());
-  const TStringToList<olxstr, TGlPrimitive*> &primitives = GetStaticPrimitives();
+  const TStrPObjList<olxstr, TGlPrimitive*> &primitives = GetStaticPrimitives();
   for (size_t i = 0; i < primitives.Count(); i++) {
     if( (PrimitiveMask & (1<<i)) != 0 )  {
       TGlPrimitive *SGlP = primitives.GetObject(i);
@@ -383,7 +363,7 @@ const_strlist TXBond::PovDeclare()  {
     out.Add(" disc {<0,0,") << (double)(i+0.5)/ConeStipples << "><0,0,1>, 0.1}";
   }
   out.Add("}}");
-
+  
   out.Add("#declare bond_bottom_stipple_cone=object { union {");
   for( double i=0; i < ConeStipples/2; i++ )  {
     out.Add(" disc {<0,0,") << (i+0.5)/ConeStipples << "><0,0,-1>, 0.1}";
@@ -562,7 +542,7 @@ void TXBond::CreateStaticObjects(TGlRenderer& Parent)  {
     new TContextClear(Parent);
   }
   ClearStaticObjects();
-  TStringToList<olxstr, TGlPrimitive*> &primitives = GetStaticPrimitives();
+  TStrPObjList<olxstr, TGlPrimitive*> &primitives = GetStaticPrimitives();
   TGlMaterial GlM;
   TGlPrimitive *GlP, *GlPRC1, *GlPRD1, *GlPRD2;
   ValidateBondParams();
@@ -583,7 +563,7 @@ void TXBond::CreateStaticObjects(TGlRenderer& Parent)  {
   GlP = &Parent.NewPrimitive(sgloCommandList);
   primitives.Add("Top disk", GlP);
 
-  GlPRC1 = &Parent.NewPrimitive(sgloDisk);
+  GlPRC1 = &Parent.NewPrimitive(sgloDisk); 
   GlPRC1->Params[0] = 0;  GlPRC1->Params[1] = 0.1;  GlPRC1->Params[2] = ConeQ;
   GlPRC1->Params[3] = 1;
   GlPRC1->Compile();

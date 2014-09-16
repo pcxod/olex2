@@ -26,7 +26,7 @@ enum  {
 };
 class TLog: public IEObject, public IDataOutputStream  {
   // stream, to delete at the end
-  TArrayList<olx_pair_t<IDataOutputStream*, bool> > Streams;
+  TArrayList<AnAssociation2<IDataOutputStream*, bool> > Streams;
   TActionQList Actions;
 protected:
   virtual size_t Write(const void* Data, size_t size);
@@ -36,19 +36,19 @@ protected:
 
   void Add(const olxstr& str)  {
     for( size_t i=0; i < Streams.Count(); i++ )
-      Streams[i].a->Writeln(str);
+      Streams[i].A()->Writeln(str);
   }
   template <class List> void Add(const List& lst)  {
       for( size_t i=0; i < lst.Count(); i++ )
         for( size_t j=0; j < Streams.Count(); j++ )
-          Streams[j].a->Writeln(lst[i]);
+          Streams[j].A()->Writeln(lst[i]);
     }
 public:
   TLog();
   virtual ~TLog();
   // if own is true, the object will be deleted in the end
   void AddStream(IDataOutputStream* stream, bool own)  {
-    Streams.Add(olx_pair_t<IDataOutputStream*, bool>(stream, own));
+    Streams.Add(AnAssociation2<IDataOutputStream*, bool>(stream, own));
   }
   void RemoveStream(IDataOutputStream* stream)  {
     for( size_t i=0; i < Streams.Count(); i++ )
@@ -60,7 +60,7 @@ public:
   // use this operators for unconditional 'printing'
   TLog& operator << (const olxstr& str)  {
     for( size_t i=0; i < Streams.Count(); i++ )
-      Streams[i].a->Write(str);
+      Streams[i].A()->Write(str);
     return *this;
   }
   template <class T>

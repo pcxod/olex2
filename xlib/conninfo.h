@@ -75,7 +75,7 @@ protected:
   TTypeList<SortedIntList> PartGroups;
   // optimised for search
   olxdict<int, SortedIntList, TPrimitiveComparator> PartGroups_;
-  //
+  // 
   const smatd* GetCorrectMatrix(const smatd* eqiv1, const smatd* eqiv2,
     bool release) const;
 public:

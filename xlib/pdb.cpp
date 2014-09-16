@@ -48,7 +48,7 @@ void TPdb::SaveToStrings(TStrList& Strings)  {
     if (p != 0)
       p_num[0] = ('A'+p-1);
     sprintf(bf, "ATOM  %5d %4s%1s%3s  %4s    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s  ",
-      (int)(i+1),
+      i+1,
       label.c_str(),
       p_num.c_str(),
       r_name.c_str(),
@@ -67,7 +67,7 @@ void TPdb::SaveToStrings(TStrList& Strings)  {
     for( int j=0; j < 6; j++ )
       iq[j] = (int)(q[j]*10000);
     sprintf(bf, "ANISOU%5d %4s            %7d%7d%7d%7d%7d%7d      %2s ",
-      (int)(i+1),
+      i+1,
       label.c_str(),
       iq[0],
       iq[1],

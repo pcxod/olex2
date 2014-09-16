@@ -78,7 +78,6 @@ class TXReflection;
 class TXGrid;
 class TXLattice;
 class TDUserObj;
-class TDSphere;
 
   typedef TTypeListExt<TXAtom, TSAtom> TXAtomList;
   typedef TTypeListExt<TXBond, TSBond> TXBondList;
@@ -229,7 +228,6 @@ protected:
   TDFrame* FDFrame;
   T3DFrameCtrl* F3DFrame;
   TXGrid* FXGrid;
-  TDSphere *FDSphere;
 
   void FragmentVisible( TNetwork *N, bool V);
   bool Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
@@ -345,8 +343,6 @@ protected:
     }
     return static_cast<TXBond&>(GetLatt(li).GetObjects().bonds[ind]);
   }
-  sorted::ObjectPrimitive<index_t>::cons_list_type GetVisibleCAtomTags();
-  virtual olxstr GetPlatformString_() const;
 public:
   /* considers overlayed files
   */
@@ -443,8 +439,7 @@ public:
   THklFile& HklFile()  {  return *FHklFile; }
   TDFrame& DFrame() const {  return *FDFrame; }
   TXGrid& XGrid() const {  return *FXGrid;  }
-  TDSphere& DSphere() const { return *FDSphere; }
-  T3DFrameCtrl& Get3DFrame() const { return *F3DFrame; }
+  T3DFrameCtrl& Get3DFrame() const { return *F3DFrame;  }
   TGlMouse& GetMouseHandler() const { return *FGlMouse; }
 
   // this function to be used to get all networks, including th overlayed files
@@ -474,9 +469,8 @@ public:
   TGlGroup& GetSelection() const {  return GetRender().GetSelection();  }
   /* returns the newly created group or NULL if the grouping has failed */
   TGlGroup *GroupSelection(const olxstr& name);
-  void UngroupSelection();
-  void Ungroup(TGlGroup& G);
-  void UngroupAll();
+  void UnGroupSelection();
+  void UnGroup(TGlGroup& G);
   // if list is true - the selection is considered as a list of bonds
   olxstr GetSelectionInfo(bool list=false) const;
   olxstr GetObjectInfoAt(int x, int y) const;
@@ -487,7 +481,7 @@ public:
 
   TGlBitmap* CreateGlBitmap(const olxstr& name, int left, int top,
     int width, int height, unsigned char* RGBa, unsigned int format);
-
+    
   TGlBitmap* FindGlBitmap(const olxstr& name);
   void DeleteGlBitmap(const olxstr& name);
   size_t GlBitmapCount() const {  return GlBitmaps.Count();  }
@@ -555,15 +549,13 @@ public:
   {    FXFile->GetLattice().Generate(center, rad, Template, ClearPrevCont);  }
   void Uniq()  {    FXFile->GetLattice().Uniq();  }
   void GrowFragments(bool Shell, TCAtomPList* Template=NULL)  {
-    FXFile->GetLattice().GrowFragments(Shell, Template);
+    FXFile->GetLattice().GrowFragments(Shell, Template);  
   }
   void GrowAtoms(const olxstr& Atoms, bool Shell, TCAtomPList* Template=NULL);
   void GrowAtom(TXAtom *XA, bool Shell, TCAtomPList* Template=NULL);
   void Grow(const TXGrowPoint& growPoint);
   void ChangeAtomType(TXAtom *A, const olxstr& Element);
-  void GrowWhole(TCAtomPList* Template=NULL) {
-    FXFile->GetLattice().GenerateWholeContent(Template);
-  }
+  void GrowWhole(TCAtomPList* Template=NULL){  FXFile->GetLattice().GenerateWholeContent(Template); }
   void Grow(const TXAtomPList& atoms, const smatd_list& matrices);
   void GrowBonds();
   void MoveFragment(TXAtom* to, TXAtom* fragAtom, bool copy);
@@ -590,8 +582,6 @@ public:
   bool IsHklVisible() const {  return FHklVisible;  }
   bool IsStructureVisible() const {  return FStructureVisible;  }
   void ShowPart(const TIntList& parts, bool show, bool visible_only);
-  void ShowResi(const TIntList& numbers, const TStrList &names,
-    bool show, bool visible_only);
 
   void SetXGrowLinesVisible(bool v);
   bool GetXGrowLinesVisible() const {  return FXGrowLinesVisible;  }
@@ -673,13 +663,13 @@ public:
   void CalcProbFactor(double Prob);
 
   TXPlane *AddPlane(const olxstr &name, const TXAtomPList& Atoms,
-    size_t sides, double weightExtent=0);
-  TSPlane *TmpPlane(const TXAtomPList* Atoms=NULL, double weightExtent=0);
+    bool Rectangular, double weightExtent=0);
+  TSPlane *TmpPlane(const TXAtomPList* Atoms=NULL, double weightExtent=0); 
   void DeletePlane(TXPlane* plane);
   void ClearPlanes();
   TXPlane *FindPlane(const olxstr& PlaneName);
 
-  TXLine *AddLine(const olxstr& Name, const vec3d& base, const vec3d& edge);
+  TXLine &AddLine(const olxstr& Name, const vec3d& base, const vec3d& edge);
   void ClearLines()  {  Lines.Clear();  }
   size_t LineCount() const { return Lines.Count(); }
   TXLine &GetLine(size_t i) const{ return Lines[i]; }
@@ -698,7 +688,7 @@ public:
   void SelectBondsWhere(const olxstr& Where, bool Invert=false);
   /* allows selcting rings: Condition describes the rings to select:
     C5N - content and 1-4, substitutions..
-    SelectRing( "C6 1-4") selects all 1,4 substituted benzene rings
+    SelectRing( "C6 1-4") selects all 1,4 substituted benzene rings 
   */
   void SelectRings(const olxstr& Condition, bool Invert=false);
   TTypeList<TSAtomPList>& FindRings(const olxstr& Condition,
@@ -741,10 +731,8 @@ public:
     return FGlMouse->MouseMove(x, y, Shift);
   }
   bool DblClick()  {  return FGlMouse->DblClick();  }
-  void ResetMouseState(short x, short y, short shift=0, short button=0,
-    bool keep_object=false)
-  {
-    FGlMouse->ResetMouseState(x, y, shift, button, keep_object);
+  void ResetMouseState(short x, short y, short shift=0, short button=0) {
+    FGlMouse->ResetMouseState(x, y, shift, button);
   }
   void EnableSelection(bool v)  {  FGlMouse->SetSelectionEnabled(v);  }
 //..............................................................................

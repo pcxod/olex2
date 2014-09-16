@@ -151,7 +151,7 @@ class SplashDlg : public wxDialog  {
 public:
   SplashDlg(wxWindow *parent) :
       wxDialog(parent, -1, wxT("Initialising"), wxDefaultPosition, wxSize(100, 100),
-        wxNO_BORDER|wxFRAME_SHAPED)
+        wxNO_BORDER|wxFRAME_SHAPED) 
   {
     wxDialog::SetTitle(wxT("Olex2 splash screen"));
     bmp = NULL;
@@ -161,10 +161,7 @@ public:
     olxstr splash_img = TBasicApp::GetBaseDir() + "splash.jpg";
     if( TEFile::Exists(splash_img) )  {
       wxImage img;
-      {
-        wxLogNull nl;
-        img.LoadFile(splash_img.u_str());
-      }
+      img.LoadFile(splash_img.u_str());
       has_alpha = img.HasAlpha();
       if (has_alpha)
         img.ConvertAlphaToMask();
@@ -234,6 +231,16 @@ BEGIN_EVENT_TABLE(TMainForm, wxFrame)  // basic interface
   EVT_SIZE(TMainForm::OnSize)
   EVT_MOVE(TMainForm::OnMove)
   EVT_CLOSE(TMainForm::OnCloseWindow)
+  EVT_MENU(ID_FILE0, TMainForm::OnFileOpen)
+  EVT_MENU(ID_FILE0+1, TMainForm::OnFileOpen)
+  EVT_MENU(ID_FILE0+2, TMainForm::OnFileOpen)
+  EVT_MENU(ID_FILE0+3, TMainForm::OnFileOpen)
+  EVT_MENU(ID_FILE0+4, TMainForm::OnFileOpen)
+  EVT_MENU(ID_FILE0+5, TMainForm::OnFileOpen)
+  EVT_MENU(ID_FILE0+6, TMainForm::OnFileOpen)
+  EVT_MENU(ID_FILE0+7, TMainForm::OnFileOpen)
+  EVT_MENU(ID_FILE0+8, TMainForm::OnFileOpen)
+  EVT_MENU(ID_FILE0+9, TMainForm::OnFileOpen)
 
   EVT_MENU(ID_HtmlPanel, TMainForm::OnHtmlPanel)
 
@@ -261,8 +268,6 @@ BEGIN_EVENT_TABLE(TMainForm, wxFrame)  // basic interface
   EVT_MENU(ID_GraphicsP, TMainForm::OnGraphics)
   EVT_MENU(ID_GraphicsEdit, TMainForm::OnGraphics)
   EVT_MENU(ID_GraphicsSelect, TMainForm::OnGraphics)
-  EVT_MENU(ID_GraphicsCollectivise, TMainForm::OnGraphics)
-  EVT_MENU(ID_GraphicsIndividualise, TMainForm::OnGraphics)
   EVT_MENU(ID_FixLattice, TMainForm::OnGraphics)
   EVT_MENU(ID_FreeLattice, TMainForm::OnGraphics)
   EVT_MENU(ID_GridMenuCreateBlob, TMainForm::OnGraphics)
@@ -273,17 +278,29 @@ BEGIN_EVENT_TABLE(TMainForm, wxFrame)  // basic interface
   EVT_MENU(ID_FragmentSelectBonds, TMainForm::OnFragmentSelectBonds)
   EVT_MENU(ID_FragmentSelectAll, TMainForm::OnFragmentSelectAll)
 
-  EVT_MENU(ID_AtomTypeChangeLast, TMainForm::OnAtomTypeChange)
+  EVT_MENU(ID_AtomTypeChangeC, TMainForm::OnAtomTypeChange)
+  EVT_MENU(ID_AtomTypeChangeN, TMainForm::OnAtomTypeChange)
+  EVT_MENU(ID_AtomTypeChangeO, TMainForm::OnAtomTypeChange)
+  EVT_MENU(ID_AtomTypeChangeF, TMainForm::OnAtomTypeChange)
+  EVT_MENU(ID_AtomTypeChangeH, TMainForm::OnAtomTypeChange)
+  EVT_MENU(ID_AtomTypeChangeS, TMainForm::OnAtomTypeChange)
+  EVT_MENU(ID_AtomTypePTable, TMainForm::OnAtomTypePTable)
   EVT_MENU(ID_AtomGrow, TMainForm::OnAtom)
   EVT_MENU(ID_AtomCenter, TMainForm::OnAtom)
   EVT_MENU(ID_AtomSelRings, TMainForm::OnAtom)
 
   EVT_MENU(ID_PlaneActivate, TMainForm::OnPlane)
-
+  
   EVT_MENU(ID_BondViewAlong, TMainForm::OnBond)
-  EVT_MENU(ID_BondRadius, TMainForm::OnBond)
 
-  EVT_MENU(ID_AtomOccuCustom, TMainForm::OnAtomOccuChange)
+  EVT_MENU(ID_View100, TMainForm::OnViewAlong)
+  EVT_MENU(ID_View010, TMainForm::OnViewAlong)
+  EVT_MENU(ID_View001, TMainForm::OnViewAlong)
+  EVT_MENU(ID_View110, TMainForm::OnViewAlong)
+  EVT_MENU(ID_View101, TMainForm::OnViewAlong)
+  EVT_MENU(ID_View011, TMainForm::OnViewAlong)
+  EVT_MENU(ID_View111, TMainForm::OnViewAlong)
+
   EVT_MENU(ID_AtomOccu1, TMainForm::OnAtomOccuChange)
   EVT_MENU(ID_AtomOccu34, TMainForm::OnAtomOccuChange)
   EVT_MENU(ID_AtomOccu12, TMainForm::OnAtomOccuChange)
@@ -291,9 +308,13 @@ BEGIN_EVENT_TABLE(TMainForm, wxFrame)  // basic interface
   EVT_MENU(ID_AtomOccu14, TMainForm::OnAtomOccuChange)
   EVT_MENU(ID_AtomOccuFree, TMainForm::OnAtomOccuChange)
   EVT_MENU(ID_AtomOccuFix, TMainForm::OnAtomOccuChange)
-  EVT_MENU(ID_AtomOccuFixCurrent, TMainForm::OnAtomOccuChange)
 
-  EVT_MENU(ID_AtomConnChangeLast, TMainForm::OnAtomConnChange)
+  EVT_MENU(ID_AtomConn0, TMainForm::OnAtomConnChange)
+  EVT_MENU(ID_AtomConn1, TMainForm::OnAtomConnChange)
+  EVT_MENU(ID_AtomConn2, TMainForm::OnAtomConnChange)
+  EVT_MENU(ID_AtomConn3, TMainForm::OnAtomConnChange)
+  EVT_MENU(ID_AtomConn4, TMainForm::OnAtomConnChange)
+  EVT_MENU(ID_AtomConn12, TMainForm::OnAtomConnChange)
 
   EVT_MENU(ID_AtomPolyNone, TMainForm::OnAtomPolyChange)
   EVT_MENU(ID_AtomPolyAuto, TMainForm::OnAtomPolyChange)
@@ -301,7 +322,12 @@ BEGIN_EVENT_TABLE(TMainForm, wxFrame)  // basic interface
   EVT_MENU(ID_AtomPolyPyramid, TMainForm::OnAtomPolyChange)
   EVT_MENU(ID_AtomPolyBipyramid, TMainForm::OnAtomPolyChange)
 
-  EVT_MENU(ID_AtomPartChangeLast, TMainForm::OnAtomPartChange)
+  EVT_MENU(ID_AtomPartCustom, TMainForm::OnAtomPartChange)
+  EVT_MENU(ID_AtomPart_2, TMainForm::OnAtomPartChange)
+  EVT_MENU(ID_AtomPart_1, TMainForm::OnAtomPartChange)
+  EVT_MENU(ID_AtomPart0, TMainForm::OnAtomPartChange)
+  EVT_MENU(ID_AtomPart1, TMainForm::OnAtomPartChange)
+  EVT_MENU(ID_AtomPart2, TMainForm::OnAtomPartChange)
 
   EVT_MENU(ID_AtomUisoCustom, TMainForm::OnAtomUisoChange)
   EVT_MENU(ID_AtomUiso12, TMainForm::OnAtomUisoChange)
@@ -349,14 +375,15 @@ TMainForm::TMainForm(TGlXApp *Parent)
   FGlConsole = NULL;
   FInfoBox = NULL;
   GlTooltip = NULL;
+  ActiveLogFile = NULL;
 
   MousePositionX = MousePositionY = -1;
 
   LabelToEdit = NULL;
-
+  
   TimePerFrame = 50;
   DrawSceneTimer = 0;
-
+  
   MouseMoveTimeElapsed  = 0;
   FBitmapDraw = false;
   FMode = 0;
@@ -398,32 +425,40 @@ TMainForm::TMainForm(TGlXApp *Parent)
 }
 //..............................................................................
 bool TMainForm::Destroy()  {
-  Destroying = true;
-  if (FXApp != NULL) {
+  if( FXApp != NULL )  {
     SaveVFS(plGlobal);  // save virtual db to file
     SaveVFS(plStructure);
     FXApp->OnObjectsDestroy.Remove(this);
     processMacro("onexit");
     SaveSettings(FXApp->GetConfigDir() + FLastSettingsFile);
   }
+  Destroying = true;
   HtmlManager.Destroy();
-  if (_UpdateThread != NULL)  {
+  return wxFrame::Destroy();
+}
+//..............................................................................
+TMainForm::~TMainForm()  {
+  if( _UpdateThread != NULL )  {
     _UpdateThread->OnTerminate.Remove(this);
     _UpdateThread->Join(true);
     delete _UpdateThread;
   }
-  if (UpdateProgress != NULL)
+  if( UpdateProgress != NULL )
     delete UpdateProgress;
   // clean up it here
   FXApp->GetStatesRegistry().OnChange.Clear();
   delete Modes;
   // delete FIOExt;
 
-  //   if( FXApp->XFile().GetLastLoader() ) // save curent settings
-  //   {
-  //     T = TEFile::ChangeFileExt(FXApp->XFile().FileName(), "xlds");
-  //     FXApp->Render()->Styles()->SaveToFile(T);
-  //   }
+//   if( FXApp->XFile().GetLastLoader() ) // save curent settings
+//   {
+//     T = TEFile::ChangeFileExt(FXApp->XFile().FileName(), "xlds");
+//     FXApp->Render()->Styles()->SaveToFile(T);
+//   }
+  if( ActiveLogFile != NULL )  {
+    delete ActiveLogFile;
+    ActiveLogFile = NULL;
+  }
   FTimer->OnTimer.Clear();
   delete FTimer;
   delete pmGraphics;
@@ -442,11 +477,6 @@ bool TMainForm::Destroy()  {
   // the order is VERY important!
   TOlxVars::Finalise();
   PythonExt::Finilise();
-  return wxFrame::Destroy();
-}
-//..............................................................................
-TMainForm::~TMainForm()  {
-  GetInstance() = 0;
 }
 //..............................................................................
 void TMainForm::XApp(Olex2App *XA)  {
@@ -512,14 +542,13 @@ void TMainForm::XApp(Olex2App *XA)  {
     "multiple_bond_width- if 0 double and triple bonds are rendered as a "
     "fraction of their real width. If a values is not 0 - it specifies the "
     "width of the strips&;"
-    "div_ellipse-the number of ellipse segments [36]"
     ,
-    fpOne|psFileLoaded,
+    fpOne|psFileLoaded, 
     "Postscript rendering");
   this_InitMacroD(PictTEX,
     "color_line-lines&;"
     "color_fill-ellipses are filled",
-    fpOne|psFileLoaded,
+    fpOne|psFileLoaded, 
     "Experimental tex/pgf rendering");
   this_InitMacroD(PictS,
     "a-view angle [6]&;"
@@ -661,7 +690,7 @@ void TMainForm::XApp(Olex2App *XA)  {
     "v-[grow] use user provided delta for connectivity analysis, default 2A\n&;"
     "shells-[grow] grow atom shells vs fragments&;"
     "l-[name] lock atom types after naming\n&;",
-    (fpAny^fpNone)|psFileLoaded,
+    (fpAny^fpNone)|psFileLoaded, 
     "Turns specified mode on. Valid mode: fixu, fixc, grow, himp, match, move,"
     " name, occu, pack, part, split, fit");
 
@@ -729,8 +758,7 @@ void TMainForm::XApp(Olex2App *XA)  {
 
   this_InitMacro(SetCmd, , fpAny);
 
-  this_InitMacroD(UpdateOptions, EmptyString(), fpNone,
-    "Shows the Update Options dialog");
+  this_InitMacroD(UpdateOptions, EmptyString(), fpNone, "Shows the Update Options dialog");
   this_InitMacroD(Update,
     "f-force [true]",
     fpNone,
@@ -753,7 +781,7 @@ void TMainForm::XApp(Olex2App *XA)  {
   this_InitMacro(NextSolution, ,fpNone);
 
   this_InitMacro(ShowWindow, ,fpOne|fpTwo);
-
+  
   this_InitMacroD(OFileDel, EmptyString(), fpOne,
     "Deletes overlayed file specified by index");
   this_InitMacroD(OFileSwap, EmptyString(), fpNone|fpOne,
@@ -764,10 +792,9 @@ void TMainForm::XApp(Olex2App *XA)  {
     "r-repeatable&;"
     "g-requires GUI"
     ,
-    fpAny^(fpNone),
+    fpAny^(fpNone|fpOne),
     "Schedules a particular macro (second argument) to be executed within "
-    "provided interval (first argument). If the interval is not specified the "
-    "requested macro is called when the program is idle");
+    "provided interval (first argument)");
 
   this_InitMacro(Test, , fpAny);
 
@@ -799,16 +826,8 @@ void TMainForm::XApp(Olex2App *XA)  {
     "Sets font for specified control");
   this_InitMacroD(EditMaterial, EmptyString(), fpOne,
     "Brings up material properties dialog for specified object");
-
-  GetLibrary().Register(
-    new TMacro<TMainForm>(this, &TMainForm::macSetMaterial, "SetMaterial",
-    EmptyString(),
-    fpTwo | fpThree,
-    "Assigns provided value to specified material. Special materials are: "
-    "helpcmd, helptxt, execout, error, exception"),
-    libChain
-    );
-
+  this_InitMacroD(SetMaterial, EmptyString(), fpTwo | fpThree,
+    "Assigns provided value to specified material");
   this_InitMacroD(TestBinding, EmptyString(), fpAny,
     "Internal tests");
   this_InitMacroD(ShowSymm, EmptyString(), fpNone|fpOne,
@@ -833,6 +852,13 @@ void TMainForm::XApp(Olex2App *XA)  {
     "Import a fragment into current structure");
   this_InitMacroD(ExportFrag, EmptyString(), fpNone|psFileLoaded,
     "Exports selected fragment to an external file");
+  this_InitMacroD(ProjSph,
+    "g-sphere quality [6]&;"
+    "e-emboss the sphere"
+    ,
+    fpAny|psFileLoaded, 
+    "Creates a projection from the selected atom onto a sphere, coloring each "
+    "point on the sphere with a unique color corresponding to fragments.");
   this_InitMacroD(UpdateQPeakTable, EmptyString(), fpNone|psFileLoaded,
     "Internal routine for synchronisation");
   this_InitMacroD(FlushFS, EmptyString(),
@@ -914,15 +940,8 @@ void TMainForm::XApp(Olex2App *XA)  {
     "provided in the second argument then)");
   this_InitFuncD(GetFont, fpOne,
     "Returns specified font");
-
-  GetLibrary().Register(
-    new TFunction<TMainForm>(this, &TMainForm::funGetMaterial, "GetMaterial",
-    fpOne | fpTwo,
-    "Returns material of specified object. Special materials are: "
-    "helpcmd, helptxt, execout, error, exception"),
-    libChain
-    );
-
+  this_InitFuncD(GetMaterial, fpOne|fpTwo,
+    "Returns material of specified object");
   this_InitFuncD(ChooseMaterial, fpNone|fpOne,
     "Brings up a dialog to edit default or provided material");
 
@@ -1007,10 +1026,6 @@ void TMainForm::XApp(Olex2App *XA)  {
   pmPlane = new TMenu();
 
   MenuBar->Append(MenuFile, wxT("&File"));
-  for (int i = 0; i < 10; i++) {
-    Bind(wxEVT_COMMAND_MENU_SELECTED,
-      &TMainForm::OnFileOpen, this, ID_FILE0 + i);
-  }
   MenuBar->Append(MenuView, wxT("&View"));
   MenuBar->Append(MenuStructure, wxT("&Structure"));
   MenuBar->Append(MenuHelp, wxT("&Help"));
@@ -1092,58 +1107,46 @@ void TMainForm::XApp(Olex2App *XA)  {
   pmLattice = pmGraphics->Clone();
   pmLattice->Append(ID_FixLattice, wxT("Fix"));
   pmLattice->Append(ID_FreeLattice, wxT("Free"));
-// extra graphics bits
-  pmGraphics->Append(ID_GraphicsCollectivise,
-    "Join parent group")->Enable(false);
-  pmGraphics->Append(ID_GraphicsIndividualise,
-    "Remove from parent group")->Enable(false);
-  // setting atom menu
-  pmAtom->Append(ID_AtomInfo, wxT("?"));
+// setting atom menu
+  pmAtom->Append(ID_MenuItemAtomInfo, wxT("?"));
+  miAtomInfo = pmAtom->FindItemByPosition(0);
   pmAtom->AppendSeparator();
   pmAtom->Append(ID_MenuBang, wxT("BANG"), pmBang);
-  TStrList at("C;N;O;F;H;S", ';');
-  for (size_t i = 0; i < at.Count(); i++) {
-    pmAtomType->Append(ID_AtomTypeChange + i, at[i].u_str());
-    Bind(wxEVT_COMMAND_MENU_SELECTED,
-      &TMainForm::OnAtomTypeChange, this, ID_AtomTypeChange + i);
-  }
-    pmAtomType->Append(ID_AtomTypeChangeLast, wxT("More..."));
-    pmAtomOccu->AppendRadioItem(ID_AtomOccuCustom, wxT("Custom"));
-    pmAtomOccu->AppendRadioItem(ID_AtomOccu1, wxT("1"));
-    pmAtomOccu->AppendRadioItem(ID_AtomOccu34, wxT("3/4"));
-    pmAtomOccu->AppendRadioItem(ID_AtomOccu12, wxT("1/2"));
-    pmAtomOccu->AppendRadioItem(ID_AtomOccu13, wxT("1/3"));
-    pmAtomOccu->AppendRadioItem(ID_AtomOccu14, wxT("1/4"));
-    pmAtomOccu->AppendRadioItem(ID_AtomOccuFix, wxT("Fix"));
-    pmAtomOccu->AppendRadioItem(ID_AtomOccuFree, wxT("Free"));
-    pmAtomOccu->Append(ID_AtomOccuFixCurrent, wxT("Fix as is"));
-
-    pmAtomConn->AppendRadioItem(ID_AtomConnChangeLast, wxT("Custom"));
-    TStrList bc("0;1;2;3;4;12 [Default];24", ';');
-    for (size_t i = 0; i < bc.Count(); i++) {
-      pmAtomConn->AppendRadioItem(ID_AtomConnChange+i, bc[i].u_str());
-      Bind(wxEVT_COMMAND_MENU_SELECTED,
-        &TMainForm::OnAtomConnChange, this, ID_AtomConnChange + i);
-    }
-
+    pmAtomType->Append(ID_AtomTypeChangeC, wxT("C"));
+    pmAtomType->Append(ID_AtomTypeChangeN, wxT("N"));
+    pmAtomType->Append(ID_AtomTypeChangeO, wxT("O"));
+    pmAtomType->Append(ID_AtomTypeChangeF, wxT("F"));
+    pmAtomType->Append(ID_AtomTypeChangeH, wxT("H"));
+    pmAtomType->Append(ID_AtomTypeChangeS, wxT("S"));
+    pmAtomType->Append(ID_AtomTypePTable, wxT("More..."));
+    pmAtomOccu->Append(ID_AtomOccu1,  wxT("1"));
+    pmAtomOccu->Append(ID_AtomOccu34, wxT("3/4"));
+    pmAtomOccu->Append(ID_AtomOccu12, wxT("1/2"));
+    pmAtomOccu->Append(ID_AtomOccu13, wxT("1/3"));
+    pmAtomOccu->Append(ID_AtomOccu14, wxT("1/4"));
+    pmAtomOccu->Append(ID_AtomOccuFix, wxT("Fix"));
+    pmAtomOccu->Append(ID_AtomOccuFree, wxT("Free"));
+    pmAtomConn->Append(ID_AtomConn0, wxT("0"));
+    pmAtomConn->Append(ID_AtomConn1, wxT("1"));
+    pmAtomConn->Append(ID_AtomConn2, wxT("2"));
+    pmAtomConn->Append(ID_AtomConn3, wxT("3"));
+    pmAtomConn->Append(ID_AtomConn4, wxT("4"));
+    pmAtomConn->Append(ID_AtomConn12, wxT("Default"));
     pmAtomPoly->AppendRadioItem(ID_AtomPolyNone, wxT("None"));
     pmAtomPoly->AppendRadioItem(ID_AtomPolyAuto, wxT("Auto"));
     pmAtomPoly->AppendRadioItem(ID_AtomPolyRegular, wxT("Regular"));
     pmAtomPoly->AppendRadioItem(ID_AtomPolyPyramid, wxT("Pyramid"));
     pmAtomPoly->AppendRadioItem(ID_AtomPolyBipyramid, wxT("Bipyramid"));
-
-    pmAtomPart->AppendRadioItem(ID_AtomPartChangeLast, wxT("X"));
-    TStrList pn("-2;-1;0;1;2", ';');
-    for (size_t i = 0; i < pn.Count(); i++) {
-      pmAtomPart->AppendRadioItem(ID_AtomPartChange+i, pn[i].u_str());
-      Bind(wxEVT_COMMAND_MENU_SELECTED,
-        &TMainForm::OnAtomPartChange, this, ID_AtomPartChange + i);
-    }
-
-    pmAtomUiso->AppendRadioItem(ID_AtomUisoCustom, wxT("X"));
+    miAtomPartCustom = pmAtomPart->AppendRadioItem(ID_AtomPartCustom, wxT("X"));
+    pmAtomPart->AppendRadioItem(ID_AtomPart_2, wxT("-2"));
+    pmAtomPart->AppendRadioItem(ID_AtomPart_1, wxT("-1"));
+    pmAtomPart->AppendRadioItem(ID_AtomPart0, wxT("0"));
+    pmAtomPart->AppendRadioItem(ID_AtomPart1, wxT("1"));
+    pmAtomPart->AppendRadioItem(ID_AtomPart2, wxT("2"));
+    miAtomUisoCustom = pmAtomUiso->AppendRadioItem(ID_AtomUisoCustom, wxT("X"));
     pmAtomUiso->AppendRadioItem(ID_AtomUiso12, wxT("1.2x"));
     pmAtomUiso->AppendRadioItem(ID_AtomUiso15, wxT("1.5x"));
-    pmAtomUiso->AppendRadioItem(ID_AtomUisoFree, wxT("Free"));
+    miAtomUisoFree = pmAtomUiso->AppendRadioItem(ID_AtomUisoFree, wxT("Free"));
     pmAtomUiso->AppendRadioItem(ID_AtomUisoFix, wxT("Fix"));
 
   pmAtom->Append(ID_MenuAtomType, wxT("Type"), pmAtomType);
@@ -1154,6 +1157,7 @@ void TMainForm::XApp(Olex2App *XA)  {
   pmAtom->Append(ID_MenuAtomPoly, wxT("Polyhedron"), pmAtomPoly);
   pmAtom->AppendSeparator();
   pmAtom->Append(ID_AtomGrow, wxT("Grow"));
+    miAtomGrow = pmAtom->FindItemByPosition(pmAtom->GetMenuItemCount()-1);
   pmAtom->Append(ID_AtomCenter, wxT("Center"));
   pmAtom->Append(ID_AtomSelRings, wxT("Select ring(s)"));
   pmAtom->AppendSeparator();
@@ -1163,9 +1167,9 @@ void TMainForm::XApp(Olex2App *XA)  {
   pmAtom->Append(ID_MenuGraphics, wxT("Graphics"), pmGraphics->Clone());
   pmAtom->Append(ID_Selection, wxT("Selection"), pmSelection->Clone());
 // setting bond menu
-  pmBond->Append(ID_BondInfo, wxT("?"));
-  pmBond->Append(ID_BondRadius, wxT("?"));
+  pmBond->Append(ID_MenuItemBondInfo, wxT("?"));
   pmBond->AppendSeparator();
+  miBondInfo = pmBond->FindItemByPosition(0);
   pmBond->Append(ID_MenuTang, wxT("TANG"), pmTang);
   pmBond->AppendSeparator();
   pmBond->Append(ID_BondViewAlong, wxT("View along"));
@@ -1178,22 +1182,19 @@ void TMainForm::XApp(Olex2App *XA)  {
   pmPlane->Append(ID_PlaneActivate, wxT("View along normal"));
   pmPlane->Append(ID_GraphicsKill, wxT("Delete"));
   pmPlane->Append(1, wxT("Graphics"), pmGraphics->Clone());
-  pmPlane->Enable(ID_GraphicsCollectivise, false);
-  pmPlane->Enable(ID_GraphicsIndividualise, false);
   pmPlane->Append(ID_Selection, wxT("Selection"), pmSelection->Clone());
   pmPlane->AppendSeparator();
 // setting view menu
-  TStrList vn("100;010;001;110;101;011;111", ';');
-  for (size_t i = 0; i < vn.Count(); i++) {
-    pmView->Append(ID_ViewAlong+i, vn[i].u_str());
-    Bind(wxEVT_COMMAND_MENU_SELECTED,
-      &TMainForm::OnViewAlong, this, ID_ViewAlong + i);
-  }
+  pmView->Append(ID_View100, wxT("100"));
+  pmView->Append(ID_View010, wxT("010"));
+  pmView->Append(ID_View001, wxT("001"));
+  pmView->Append(ID_View110, wxT("110"));
+  pmView->Append(ID_View101, wxT("101"));
+  pmView->Append(ID_View011, wxT("011"));
+  pmView->Append(ID_View111, wxT("111"));
 // update to selection menu - need to add graphics
   pmSelection->AppendSeparator();
   pmSelection->Append(ID_MenuGraphics, wxT("Graphics"), pmGraphics->Clone());
-  pmSelection->Enable(ID_GraphicsCollectivise, false);
-  pmSelection->Enable(ID_GraphicsIndividualise, false);
 
   Menus.Add("File", MenuFile);
   Menus.Add("View", MenuView);
@@ -1365,7 +1366,8 @@ void TMainForm::StartupInit()  {
     LoadSettings(T);
     olxstr hfn = FXApp->GetConfigDir() + "history.txt";
     if (TEFile::Exists(hfn)) {
-      TStrList h = TEFile::ReadLines(hfn);
+      TStrList h;
+      h.LoadFromFile(hfn);
       FGlConsole->SetCommands(h);
     }
    }
@@ -1389,39 +1391,39 @@ void TMainForm::StartupInit()  {
 
   FTimer->Start(15);
 
-  if (TEFile::Exists(FXApp->GetBaseDir() + "settings.xld")) {
+  if( TEFile::Exists(FXApp->GetBaseDir() + "settings.xld") )  {
     TDataFile settings;
     settings.LoadFromXLFile(FXApp->GetBaseDir() + "settings.xld", NULL);
     settings.Include(NULL);
     TDataItem* sh = settings.Root().FindItemi("shortcuts");
-    if (sh != NULL) {
-      try {
+    if( sh != NULL )  {
+      try  {
         olxstr cmd;
-        for (size_t i=0; i < sh->ItemCount(); i++) {
+        for( size_t i=0; i < sh->ItemCount(); i++ )  {
           TDataItem& item = sh->GetItemByIndex(i);
-          AccShortcuts.AddAccell(
-            TranslateShortcut(item.FindField("key")),
-            item.FindField("macro"));
-          // cannot execute it through a macro - functions get evaluated...
-          //Macros.ProcessMacro(cmd, MacroError);
+        AccShortcuts.AddAccell(
+          TranslateShortcut(item.FindField("key")),
+          item.FindField("macro"));
+        // cannot execute it through a macro - functions get evaluated...
+        //Macros.ProcessMacro(cmd, MacroError);
         }
       }
-      catch (TExceptionBase& exc) {
-        TBasicApp::NewLogEntry(logException) <<
-          exc.GetException()->GetFullMessage();
+      catch( TExceptionBase& exc )  {
+        TBasicApp::NewLogEntry(logException) << exc.GetException()->GetFullMessage();
       }
     }
     sh = settings.Root().FindItemi("menus");
     ABasicFunction *cm_macro = GetLibrary().FindMacro("CreateMenu");
-    if (sh != NULL && cm_macro != NULL) {
+    if (sh != NULL && cm_macro != NULL)  {
       TMacroError me;
       me.SetLocation(__OlxSrcInfo);
-      try {
-        for (size_t i=0; i < sh->ItemCount(); i++) {
+      try  {
+        for( size_t i=0; i < sh->ItemCount(); i++ )  {
           TDataItem& item = sh->GetItemByIndex(i);
           TStrObjList params;
           TParamList opts;
-          params << item.FindField("title") << item.FindField("macro");
+          params << item.FindField("title") <<
+            item.FindField("macro");
           olxstr bf = item.FindField("before");
           if (!bf.IsEmpty())
             params << bf;
@@ -1441,16 +1443,17 @@ void TMainForm::StartupInit()  {
           cm_macro->Run(params, opts, me);
         }
       }
-      catch (TExceptionBase& exc) {
+      catch( TExceptionBase& exc )  {
         TBasicApp::NewLogEntry(logExceptionTrace) << exc;
       }
     }
   }
 
   // set the variables
-  for (size_t i=0; i < StoredParams.Count(); i++) {
+  for( size_t i=0; i < StoredParams.Count(); i++ )  {
     processMacro(olxstr("setvar(") << StoredParams.GetKey(i) << ",\"" <<
-      StoredParams.GetValue(i) << "\")");
+      StoredParams.GetObject(i) << "\")");
+
   }
 
   olxstr textures_dir = FXApp->GetBaseDir() + "etc/Textures";
@@ -1460,7 +1463,8 @@ void TMainForm::StartupInit()  {
   // do the iterpreters job...
   if (FXApp->GetArguments().Count() >= 2) {
     if (FXApp->GetArguments().GetLastString().EndsWith(".py")) {
-      TStrList in = TEFile::ReadLines(FXApp->GetArguments().GetLastString());
+      TStrList in;
+      in.LoadFromFile(FXApp->GetArguments().GetLastString());
       PythonExt::GetInstance()->RunPython(in.Text('\n'));
     }
     else // disable reading last file in
@@ -1468,17 +1472,16 @@ void TMainForm::StartupInit()  {
   }
   processMacro("onstartup", __OlxSrcInfo);
   processMacro("user_onstartup", __OlxSrcInfo);
-  if (FXApp->GetArguments().Count() >= 2) {
+  if( FXApp->GetArguments().Count() >= 2 ) {
     processMacro(olxstr("reap \"") << FXApp->GetArguments().Text(' ', 1) <<
       '\"', __OlxSrcInfo);
-  }
-  // load html in last call - it might call some destructive functions on uninitialised data
+  }  // load html in last call - it might call some destructive functions on uninitialised data
   HtmlManager.main->LoadPage(FHtmlIndexFile.u_str());
   HtmlManager.main->SetHomePage(FHtmlIndexFile);
   FileDropTarget* dndt = new FileDropTarget(*this);
   this->SetDropTarget(dndt);
-  processMacro("schedule 'update -f=false' -g");
-  TStateRegistry::GetInstance().RepeatAll();
+  //CreateUpdateThread(false);
+  processMacro("schedule 1 'update -f=false' -g");
 }
 //..............................................................................
 bool TMainForm::CreateUpdateThread(bool force) {
@@ -1508,7 +1511,7 @@ bool TMainForm::CreateUpdateThread(bool force) {
         }
       }
       if (answer != wxCANCEL) {
-        TEFile::WriteLines(tfn, sl); // NO creates empty file
+        sl.SaveToFile(tfn); // NO creates empty file
       }
     }
   }
@@ -1530,10 +1533,10 @@ bool TMainForm::CreateUpdateThread(bool force) {
 #endif
 }
 //..............................................................................
-bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
+bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender,
   const IEObject *Data, TActionQueue *)
 {
-
+  
   if (StartupInitialised && PyEval_ThreadsInitialized() && wxThread::IsMain()) {
     PyGILState_STATE st = PyGILState_Ensure();
     Py_BEGIN_ALLOW_THREADS
@@ -1545,7 +1548,7 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
   bool res = true, Silent = (FMode & mSilent) != 0, Draw=false;
   static bool actionEntered = false, downloadEntered=false;
   if( Destroying )  {
-    FMode = 0;  // to release waitfor
+    FMode = 0;  // to release waitfor 
     return false;
   }
   if( MsgId == ID_GLDRAW && !IsIconized() )  {
@@ -1676,6 +1679,7 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
       RunWhenVisibleTasks[i]->Run();
     RunWhenVisibleTasks.DeleteItems().Clear();
     // end tasks ...
+    HtmlManager.ProcessPageLoadRequests();
     FTimer->OnTimer.SetEnabled(true);
     if( (FMode & mListen) != 0 && TEFile::Exists(FListenFile) )  {
       static time_t FileMT = TEFile::FileAge(FListenFile);
@@ -1774,7 +1778,7 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
         }
       }
       if( DrawSceneTimer > 0 && !Draw )  {
-        if( DrawSceneTimer < FTimer->GetInterval() )
+        if( DrawSceneTimer < FTimer->GetInterval() )  
           TimePerFrame = FXApp->Draw();
         else
           DrawSceneTimer -= FTimer->GetInterval();
@@ -1799,7 +1803,7 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
   // deal with updates
     if( wxIsMainThread() )  {
       static bool UpdateExecuted = false;
-      volatile olx_scope_cs cs(TBasicApp::GetCriticalSection());
+      volatile olx_scope_cs cs( TBasicApp::GetCriticalSection());
       if( actionEntered && ActionProgress != NULL )  {
         StatusBar->SetStatusText( (olxstr("Processing ") <<
           ActionProgress->GetAction()).u_str() );
@@ -1808,8 +1812,8 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
       if( downloadEntered && UpdateProgress != NULL )  {
         downloadEntered = false;
         UpdateExecuted = true;
-        StatusBar->SetStatusText(
-          (olxstr("Downloading ") << UpdateProgress->GetAction() << ' ' <<
+        StatusBar->SetStatusText( 
+          (olxstr("Downloading ") << UpdateProgress->GetAction() << ' ' << 
           olxstr::FormatFloat(2, UpdateProgress->GetPos()*100/
             (UpdateProgress->GetMax()+1)) << '%').u_str()
         );
@@ -1918,10 +1922,12 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
     OnChar(((TKeyEvent*)Data)->GetEvent());
   }
   else if( MsgId == ID_TEXTPOST )  {
-    if (Data != NULL) {
+    if( Data != NULL )  {
       FGlConsole->SetSkipPosting(true);
       TBasicApp::NewLogEntry() << olxstr(Data->ToString());
       FGlConsole->SetSkipPosting(false);
+      if( ActiveLogFile != NULL )
+        ActiveLogFile->Writeln(Data->ToString());
     }
   }
   else if( MsgId == ID_COMMAND )  {
@@ -2086,37 +2092,11 @@ bool TMainForm::ImportFrag(const olxstr& line)  {
   catch(...)  {  return false;  }
 }
 //..............................................................................
-bool TMainForm::ProcessTab() {
-  olxstr FullCmd;
-  olxstr Cmd = CmdLineVisible? FCmdLine->GetCommand()
-    : FGlConsole->GetCommand();
-  size_t spi = Cmd.LastIndexOf(' ');
-  if (spi != InvalidIndex)  {
-    FullCmd = ExpandCommand(Cmd.SubStringFrom(spi + 1), true);
-    if (FullCmd != Cmd.SubStringFrom(spi + 1))
-      FullCmd = Cmd.SubStringTo(spi + 1) << FullCmd;
-    else
-      FullCmd.SetLength(0);
-  }
-  else
-    FullCmd = ExpandCommand(Cmd, false);
-  bool res = false;
-  if (!FullCmd.IsEmpty() && (FullCmd != Cmd)) {
-    if (CmdLineVisible)
-      FCmdLine->SetCommand(FullCmd);
-    else {
-      FGlConsole->SetCommand(FullCmd);
-      TimePerFrame = FXApp->Draw();
-    }
-    res = true;
-  }
-  return res;
-}
-//..............................................................................
 void TMainForm::OnChar(wxKeyEvent& m) {
   OnNonIdle();
   m.Skip(false);
   short Fl=0;
+  olxstr Cmd, FullCmd;
   if (m.GetModifiers() & wxMOD_ALT) Fl |= sssAlt;
   if (m.GetModifiers() & wxMOD_RAW_CONTROL) Fl |= sssCtrl;
   if (m.GetModifiers() & wxMOD_SHIFT) Fl |= sssShift;
@@ -2164,39 +2144,36 @@ void TMainForm::OnChar(wxKeyEvent& m) {
     }
   }
   // Ctrl + Up, Down - browse solutions
-  if ((Fl & sssCtrl) != 0 ) {
-    if (m.m_keyCode == WXK_UP && ((FMode&mSolve) == mSolve)) {
+  if( (Fl & sssCtrl) != 0  )  {
+
+    if( m.m_keyCode == WXK_UP && ((FMode&mSolve) == mSolve) )  {
       ChangeSolution(CurrentSolution - 1);
       return;
     }
-    if (m.m_keyCode == WXK_DOWN && ((FMode&mSolve) == mSolve)) {
+    if( m.m_keyCode == WXK_DOWN  && ((FMode&mSolve) == mSolve) )  {
       ChangeSolution(CurrentSolution + 1);
       return;
     }
   }
-  if ((Fl&sssCtrl) && m.GetKeyCode() == 'c'-'a'+1) {  // Ctrl+C
-    if (_ProcessManager->GetRedirected() != NULL) {
-      if (_ProcessManager->GetRedirected()->Terminate()) {
-        TBasicApp::NewLogEntry(logInfo) <<
-          "Process has been successfully terminated...";
-      }
-      else {
-        TBasicApp::NewLogEntry(logInfo) <<
-          "Could not terminate the process...";
-      }
+  if( (Fl&sssCtrl) && m.GetKeyCode() == 'c'-'a'+1 )  {  // Ctrl+C
+    if( _ProcessManager->GetRedirected() != NULL )  {
+      if( _ProcessManager->GetRedirected()->Terminate() )
+        TBasicApp::NewLogEntry(logInfo) << "Process has been successfully terminated...";
+      else
+        TBasicApp::NewLogEntry(logInfo) << "Could not terminate the process...";
       TimePerFrame = FXApp->Draw();
     }
     return;
   }
-  if (m.GetKeyCode() == WXK_RETURN) {
-    if (FMode & mSolve)  {
+  if( m.GetKeyCode() == WXK_RETURN )  {
+    if( FMode & mSolve )  {
       FMode ^= mSolve;
       TBasicApp::NewLogEntry(logInfo) << "Model is set to current solution";
     }
   }
-  if (m.GetKeyCode() == WXK_ESCAPE) {  // escape
-    if (Modes->GetCurrent() != NULL) {
-      if (Modes->GetCurrent()->OnKey(m.GetKeyCode(), Fl))
+  if( m.GetKeyCode() == WXK_ESCAPE )  {  // escape
+    if( Modes->GetCurrent() != NULL )  {
+      if( Modes->GetCurrent()->OnKey( m.GetKeyCode(), Fl) )
         return;
       else
         processMacro("mode off");
@@ -2204,8 +2181,31 @@ void TMainForm::OnChar(wxKeyEvent& m) {
     processMacro("sel -u");
     TimePerFrame = FXApp->Draw();
   }
-  if (m.GetKeyCode() == WXK_TAB) {  // tab
-    ProcessTab();
+  if( m.GetKeyCode() == WXK_TAB )  {  // tab
+    if (CmdLineVisible)
+      Cmd = FCmdLine->GetCommand();
+    else
+      Cmd = FGlConsole->GetCommand();
+    size_t spi = Cmd.LastIndexOf(' ');
+    if( spi != InvalidIndex )  {
+      FullCmd = ExpandCommand(Cmd.SubStringFrom(spi+1), true);
+      if( FullCmd != Cmd.SubStringFrom(spi+1) )
+        FullCmd = Cmd.SubStringTo(spi+1) << FullCmd;
+      else
+        FullCmd.SetLength(0);
+    }
+    else
+      FullCmd = ExpandCommand(Cmd, false);
+    if( !FullCmd.IsEmpty() && (FullCmd != Cmd) ) {
+      if (CmdLineVisible)
+        FCmdLine->SetCommand(FullCmd);
+      else {
+        FGlConsole->SetCommand(FullCmd);
+        TimePerFrame = FXApp->Draw();
+      }
+    }
+    else
+      TimePerFrame = FXApp->Draw();
     return;
   }
 
@@ -2403,8 +2403,7 @@ void TMainForm::OnNavigation(wxNavigationKeyEvent& event)  {
     }
     return;
   }
-  ProcessTab();
-  event.Skip(false);
+  event.Skip();
 }
 //..............................................................................
 void TMainForm::OnMove(wxMoveEvent& evt) {
@@ -2557,7 +2556,7 @@ void TMainForm::PostCmdHelp(const olxstr &Cmd, bool Full)  {
       FGlConsole->PrintText(" Options: ");
       for (size_t i=0; i < MF->GetOptions().Count(); i++) {
         FGlConsole->PrintText(olxstr("   ") << MF->GetOptions().GetKey(i) << " - "
-          << MF->GetOptions().GetValue(i));
+          << MF->GetOptions().GetObject(i));
       }
     }
   }
@@ -2637,7 +2636,7 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
   I = &DF.Root().AddItem("Stored_params");
   for( size_t i=0; i < StoredParams.Count(); i++ )  {
     TDataItem& it = I->AddItem(StoredParams.GetKey(i));
-    it.AddField("value", olxstr().quote('"') << StoredParams.GetValue(i));
+    it.AddField("value", olxstr().quote('"') << StoredParams.GetObject(i));
   }
 
   SaveScene(DF.Root().AddItem("Scene"), FXApp->GetRender().LightModel);
@@ -2682,11 +2681,12 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
       olxcstr l = f.ReadLine(), ds("\\\\");
       f.Close();
       if (l.Contains('\\') && !l.Contains(ds)) { // no escapes, needs converting
-        TCStrList t = TEFile::ReadCLines(FN);
+        TCStrList t;
+        t.LoadFromFile(FN);
         for (size_t i=0; i < t.Count(); i++)
           t[i].Replace('\\', ds);
         try {
-          TEFile::WriteLines(FN, t);
+          t.SaveToFile(FN);
         }
         catch (const TExceptionBase &e) {
           TBasicApp::NewLogEntry(logException) << e;
@@ -2749,15 +2749,15 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
   I = DF.Root().FindItem("Window");
   if( I != NULL )  {
     if( I->FindField("Maximized", FalseString()).ToBool() )  {
-      int l = I->FindField("X", "0").ToInt(),
+      int l = I->FindField("X", "0").ToInt(), 
           t = I->FindField("Y", "0").ToInt();
         Move(l, t);
       Maximize();
     }
     else  {
-      int w = I->FindField("Width", "100").ToInt(),
-        h = I->FindField("Height", "100").ToInt(),
-        l = I->FindField("X", "0").ToInt(),
+      int w = I->FindField("Width", "100").ToInt(), 
+        h = I->FindField("Height", "100").ToInt(), 
+        l = I->FindField("X", "0").ToInt(), 
         t = I->FindField("Y", "0").ToInt();
       SetSize(l, t, w, h);
     }
@@ -2765,7 +2765,7 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
   else
     Maximize();
   SkipSizing = false;
-
+  
   I = DF.Root().FindItem("Windows");
   if( I != NULL )  {
     HelpWindowVisible = I->FindField("Help", TrueString()).ToBool();
@@ -2825,7 +2825,7 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
       olxstr new_set = FXApp->GetBaseDir() + "last.osp";
       if( TEFile::Exists(new_set) )  {
         TDataFile LF;
-        try  {
+        try  {  
           LF.LoadFromXLFile(new_set);
           TDataItem& distributed_style = LF.Root().GetItemByName("Styles");
           int d_version = TGraphicsStyles::ReadStyleVersion(distributed_style);
@@ -2864,7 +2864,7 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
   const olxstr& defGlTVal = TrueString();
 #endif
   UseGlTooltip( I->FindField("GlTooltip", defGlTVal).ToBool() );
-  if( I->FieldExists("ThreadCount") )
+  if( I->FieldExists("ThreadCount") ) 
     FXApp->SetMaxThreadCount(I->FindField("ThreadCount", "1").ToInt());
   else  {
     int cpu_cnt = wxThread::GetCPUCount();
@@ -2884,7 +2884,7 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
   if( !TEFile::Exists(GradientPicture) )
     GradientPicture.SetLength(0);
   olxstr T = I->FindField("Gradient", EmptyString());
-  if( !T.IsEmpty() )
+  if( !T.IsEmpty() ) 
     processMacro(olxstr("grad ") << T);
 
   I = DF.Root().FindItem("Stored_params");
@@ -2980,7 +2980,7 @@ void TMainForm::UpdateRecentFile(const olxstr& fn)  {
           (int)(ID_FILE0+FRecentFiles.Count()), wxT("tmp"));
       }
       FRecentFiles.Insert(0, FN, mi);
-    }
+    }  
     else  {
       FRecentFiles.Insert(0, FN, FRecentFiles.GetLast().Object);
       FRecentFiles.Delete(FRecentFiles.Count()-1);
@@ -2990,7 +2990,7 @@ void TMainForm::UpdateRecentFile(const olxstr& fn)  {
     FRecentFiles.Move(index, 0);
 
   for( size_t i=0; i < FRecentFiles.Count(); i++ )
-    Items.Add( FRecentFiles.GetObject(i) );
+    Items.Add( FRecentFiles.GetObject(i) ); 
   for( size_t i=0; i < FRecentFiles.Count(); i++ )  { // put items in the right position
     FRecentFiles.GetObject(Items[i]->GetId()-ID_FILE0) = Items[i];
     Items[i]->SetText(FRecentFiles[Items[i]->GetId()-ID_FILE0].u_str());
@@ -3223,10 +3223,9 @@ void TMainForm::RefineDataTable(bool TableDef, bool Create)  {
 void TMainForm::OnMouseWheel(int x, int y, double delta)  {
   size_t ind = Bindings.IndexOf("wheel");
   if( ind == InvalidIndex )  return;
-  olxstr cmd = Bindings.GetValue(ind);
+  olxstr cmd = Bindings.GetObject(ind);
   ind = TOlxVars::VarIndex("core_wheel_step");
-  const olxstr& step( ind == InvalidIndex ? EmptyString()
-    : TOlxVars::GetVarStr(ind));
+  const olxstr& step( ind == InvalidIndex ? EmptyString() : TOlxVars::GetVarStr(ind));
   if( step.IsNumber() )
     delta *= step.ToDouble();
   cmd << delta;
@@ -3333,42 +3332,48 @@ bool TMainForm::CheckState(size_t state, const olxstr& stateData) const {
   return false;
 }
 //..............................................................................
-void TMainForm::OnIdle() {
-  if (Destroying) return;
-#if !defined(__WIN32__)
-  if (!StartupInitialised)
+void TMainForm::OnInternalIdle()  {
+  if( Destroying )  return;
+  wxWindow::UpdateWindowUI();
+#if !defined(__WIN32__)  
+  if( !StartupInitialised )
     StartupInit();
 #endif
   TBasicApp::GetInstance().OnIdle.Execute((AEventsDispatcher*)this, NULL);
   // runonce business...
-  if (!RunOnceProcessed && TBasicApp::IsBaseDirWriteable()) {
+  if( !RunOnceProcessed && TBasicApp::IsBaseDirWriteable() )  {
     RunOnceProcessed = true;
     TStrList rof;
     TEFile::ListDir(FXApp->GetBaseDir(), rof, "runonce*.*", sefFile);
     TStrList macros;
-    for (size_t i=0; i < rof.Count(); i++) {
+    for( size_t i=0; i < rof.Count(); i++ )  {
       rof[i] = FXApp->GetBaseDir()+rof[i];
-      try {
-        TEFile::ReadLines(rof[i], macros);
+      try  {
+        macros.LoadFromFile( rof[i] );
         macros.CombineLines('\\');
-        for (size_t j=0; j < macros.Count(); j++) {
+        for( size_t j=0; j < macros.Count(); j++ )  {
           processMacro(macros[j]);
 #ifdef _DEBUG
-          FXApp->NewLogEntry() << TEFile::ExtractFileName(rof[i]) << ": " <<
-            macros[j];
+          FXApp->NewLogEntry() << TEFile::ExtractFileName(rof[i]) << ": " << macros[j];
 #endif
         }
       }
-      catch (const TExceptionBase& e) {
+      catch(const TExceptionBase& e)  {
         ShowAlert(e);
       }
-      time_t fa = TEFile::FileAge(rof[i]);
+      time_t fa = TEFile::FileAge( rof[i] );
       // Null the file
       try  {  TEFile ef(rof[i], "wb+");  }
       catch(TIOException&)  {}
       TEFile::SetFileTimes(rof[i], fa, fa);
+      //TEFile::DelFile(rof.String(i));
     }
   }
+  wxFrame::OnInternalIdle();
+#ifdef __MAC__  // duno why otherwise it takes 100% of CPU time...
+  wxMilliSleep(15);
+#endif  
+  return;
 }
 //..............................................................................
 void TMainForm::SetUserCursor(const olxstr& param, const olxstr& mode)  {
@@ -3542,7 +3547,12 @@ bool TMainForm::OnMouseDblClick(int x, int y, short Flags, short Buttons)  {
 }
 //..............................................................................
 bool TMainForm::Show(bool v)  {
+#ifdef __WXGTK__
+  bool res = wxWindow::Show(v);
+  //OnResize();
+#else
   bool res = wxFrame::Show(v);
+#endif
   FXApp->SetMainFormVisible(v);
   if (CmdLineVisible)
     FCmdLine->SetFocus();
@@ -3787,7 +3797,7 @@ void TMainForm::OnCloseWindow(wxCloseEvent &evt) {
         evt.Veto();
     }
   }
-  else
+  else 
     Destroy();
 }
 //..............................................................................
@@ -3842,7 +3852,7 @@ PyObject* pyPPI(PyObject* self, PyObject* args)  {
 }
 //..............................................................................
 static PyMethodDef CORE_Methods[] = {
-  {"GetUserInput", pyGetUserInput, METH_VARARGS,
+  {"GetUserInput", pyGetUserInput, METH_VARARGS, 
   "Shows a dialog, where user can type some text. Takes three agruments: flags"
   ", title and content. If flags not equal to 1, a muliline dialog sis created"
   },

@@ -24,9 +24,9 @@ struct HashingUtilsLE : public HashingUtils {
   // operates on 64 byte blocks only, little endian
   static inline void hs_copy(const uint8_t* src, uint32_t* dest, size_t src_len)  {
     for( size_t i=0, j=0; i < src_len; i += 4, j++ )
-      dest[j] = ((uint32_t)src[i]) |
-      (((uint32_t)src[i+1]) << 8) |
-      (((uint32_t)src[i+2]) << 16) |
+      dest[j] = ((uint32_t)src[i]) | 
+      (((uint32_t)src[i+1]) << 8) | 
+      (((uint32_t)src[i+2]) << 16) | 
       (((uint32_t)src[i+3]) << 24);
   }
   static inline void hs_copy(const uint32_t* src, uint8_t* dest, size_t src_len)  {
@@ -48,9 +48,9 @@ public:
   // operates on 64 byte blocks only, big endian
   static inline void hs_copy(const uint8_t* src, uint32_t* dest, size_t src_len)  {
     for( size_t i=0, j=0; i < src_len; i += 4, j++ )
-      dest[j] = ((uint32_t)src[i+3]) |
-      (((uint32_t)src[i+2]) << 8) |
-      (((uint32_t)src[i+1]) << 16) |
+      dest[j] = ((uint32_t)src[i+3]) | 
+      (((uint32_t)src[i+2]) << 8) | 
+      (((uint32_t)src[i+1]) << 16) | 
       (((uint32_t)src[i]) << 24);
   }
   static inline void hs_copy(const uint32_t* src, uint8_t* dest, size_t src_len)  {

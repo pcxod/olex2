@@ -62,7 +62,7 @@ public:
     P.Id = FMembers.Count()-1;
     return P;
   }
-
+  
   bool operator == (const TPolynomMember& P) const  {
     if( FMembers.Count() != P.FMembers.Count() )
       return false;
@@ -122,7 +122,7 @@ public:
   TPolynom(AddEvaluator* av, Evaluator* v, PolySort* v1) :
     FAddEvaluator(av),
     FEvaluator(v),
-    FPolySort(v1)
+    FPolySort(v1)  
   {}
 
   ~TPolynom() {}
@@ -133,15 +133,15 @@ public:
   void SetThreshold(double Threshold);
   TPolynom* PowX(size_t MembersToLeave, size_t p) const;
   TPolynom* Mul(const TPolynom& P) const;
-
+  
   void MulSelf(const TPolynom& P);
-
+  
   TPolynom&  operator = (const TPolynom& P)  {
     FMembers.Clear();
     FMembers.AddList(P.FMembers);
     return *this;
   }
-
+  
   TPolynom* Qrt() const;
   void SetEvaluator(Evaluator *v){ FEvaluator = v; };
   olxstr Values();

@@ -613,7 +613,6 @@
     <ClCompile Include="..\..\..\xlib\asymmunit.cpp" />
     <ClCompile Include="..\..\..\xlib\atomref.cpp" />
     <ClCompile Include="..\..\..\xlib\auto.cpp" />
-    <ClCompile Include="..\..\..\xlib\calc_ext.cpp" />
     <ClCompile Include="..\..\..\xlib\catomlist.cpp" />
     <ClCompile Include="..\..\..\xlib\cifdp.cpp" />
     <ClCompile Include="..\..\..\xlib\constraints_ext.cpp" />
@@ -663,7 +662,6 @@
     <ClCompile Include="..\..\..\xlib\samegroup.cpp" />
     <ClCompile Include="..\..\..\xlib\satom.cpp" />
     <ClCompile Include="..\..\..\xlib\sbond.cpp" />
-    <ClCompile Include="..\..\..\xlib\selected.cpp" />
     <ClCompile Include="..\..\..\xlib\seval.cpp" />
     <ClCompile Include="..\..\..\xlib\sfutil.cpp" />
     <ClCompile Include="..\..\..\xlib\macro\sg.cpp" />

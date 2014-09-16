@@ -30,7 +30,7 @@ public:
   AGOProperties() : ObjectGroupId(InvalidIndex) {}
   virtual ~AGOProperties() {}
   // adds an object (reference or a pointer) to the group and returns it
-  template <class AGO>
+  template <class AGO> 
   AGroupObject& AddObject(AGO& O)  {  return *Objects.Add(O); }
   AGroupObject& GetObject(size_t index) const {
     return *Objects[index];
@@ -39,7 +39,7 @@ public:
   // removes an object reference or a pointer
   template <class AGO> void RemoveObject(const AGO& GO)  {
     size_t index = Objects.IndexOf(GO);
-    if( index != InvalidIndex )
+    if( index != InvalidIndex )  
       Objects.Delete(index);
   }
   void ClearObjects()  {  Objects.Clear();  }

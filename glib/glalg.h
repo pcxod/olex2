@@ -27,14 +27,14 @@ struct gl_alg {
   {
     vec_t vd = v2-v1;
     float_type u = N.DotProd(p-v1)/N.DotProd(vd);
-    return v1 + vd*u;
+    return v1 + vd*u; 
   }
   // for zero based vector
   static vec_t VectorPlaneIntersection(const vec_t &v,
     const vec_t &N, const vec_t &p)
   {
     float_type u = N.DotProd(p)/N.DotProd(v);
-    return v*u;
+    return v*u; 
   }
   static bool IsPointInTriangle(const vec_t &p,
     const vec_t &a, const vec_t &b, const vec_t &c)
@@ -100,7 +100,7 @@ public:
     for (size_t i=0; i < v2.Count(); i++)
       QL[i] = v2[i].QLength();
     DiffTask dt(v1, v2, triags, QL, used, used1);
-    OlxListTask::Run(dt, v1.Count(), tLinearTask, 1000);
+    TListIteratorManager<DiffTask> tasks(dt, v1.Count(), tLinearTask, 1000);
     out1.SetCapacity(out1.Count()+triags.Count());
     out2.SetCapacity(out2.Count()+triags.Count());
     for (size_t i=0; i < triags.Count(); i++) {

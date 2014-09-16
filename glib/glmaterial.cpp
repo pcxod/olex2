@@ -169,7 +169,7 @@ void TGlMaterial::ToDataItem(TDataItem& Item) const {
 }
 //..............................................................................
 bool TGlMaterial::FromDataItem(const TDataItem& Item)  {
-  if (Item.FieldCount() != 0) {  // backwards compatibility
+  if( Item.FieldCount() != 0 )  {  // backwards compatibility
     AmbientF.FromString(Item.FindField("AmbientF"));
     AmbientB.FromString(Item.FindField("AmbientB"));
     DiffuseF.FromString(Item.FindField("DiffuseF"));
@@ -183,7 +183,7 @@ bool TGlMaterial::FromDataItem(const TDataItem& Item)  {
     Flags = Item.FindField("Flags").ToInt();
   }
   else
-    FromString(Item.GetValue());
+    FromString( Item.GetValue() );
   return true;
 }
 //..............................................................................
@@ -209,48 +209,28 @@ TIString TGlMaterial::ToString() const {
   return str;
 }
 //..............................................................................
-void TGlMaterial::FromString(const olxstr& str, bool safe)  {
+void TGlMaterial::FromString(const olxstr& str)  {
   if( str.IsEmpty() )
     throw TInvalidArgumentException(__OlxSourceInfo, "representation");
   TStrList toks( str, ';');
   Flags = toks[0].ToInt();
   int ind = 1;
-  if (!safe) {
-    if ((Flags & sglmAmbientF) != 0)
-      AmbientF.FromString(toks[ind++]);
-    if ((Flags & sglmAmbientB) != 0)
-      AmbientB.FromString(toks[ind++]);
-    if ((Flags & sglmDiffuseF) != 0)
-      DiffuseF.FromString(toks[ind++]);
-    if ((Flags & sglmDiffuseB) != 0)
-      DiffuseB.FromString(toks[ind++]);
-    if ((Flags & sglmSpecularF) != 0)
-      SpecularF.FromString(toks[ind++]);
-    if ((Flags & sglmSpecularB) != 0)
-      SpecularB.FromString(toks[ind++]);
-    if ((Flags & sglmShininessF) != 0)
-      ShininessF = toks[ind++].ToInt();
-    if ((Flags & sglmShininessB) != 0)
-      ShininessB = toks[ind++].ToInt();
-  }
-  else {
-    if ((Flags & sglmAmbientF) != 0)
-      AmbientF.FromString(toks.GetStringSafe(ind++));
-    if ((Flags & sglmAmbientB) != 0)
-      AmbientB.FromString(toks.GetStringSafe(ind++));
-    if ((Flags & sglmDiffuseF) != 0)
-      DiffuseF.FromString(toks.GetStringSafe(ind++));
-    if ((Flags & sglmDiffuseB) != 0)
-      DiffuseB.FromString(toks.GetStringSafe(ind++));
-    if ((Flags & sglmSpecularF) != 0)
-      SpecularF.FromString(toks.GetStringSafe(ind++));
-    if ((Flags & sglmSpecularB) != 0)
-      SpecularB.FromString(toks.GetStringSafe(ind++));
-    if ((Flags & sglmShininessF) != 0)
-      ShininessF = toks.GetStringSafe(ind++).ToInt();
-    if ((Flags & sglmShininessB) != 0)
-      ShininessB = toks.GetStringSafe(ind).ToInt();
-  }
+  if( (Flags & sglmAmbientF) != 0 )
+    AmbientF.FromString( toks[ind++] );
+  if( (Flags & sglmAmbientB) != 0 )
+    AmbientB.FromString( toks[ind++] );
+  if( (Flags & sglmDiffuseF) != 0 )
+    DiffuseF.FromString( toks[ind++] );
+  if( (Flags & sglmDiffuseB) != 0 )
+    DiffuseB.FromString( toks[ind++] );
+  if( (Flags & sglmSpecularF) != 0 )
+    SpecularF.FromString( toks[ind++] );
+  if( (Flags & sglmSpecularB) != 0 )
+    SpecularB.FromString( toks[ind++] );
+  if( (Flags & sglmShininessF) != 0 )
+    ShininessF = toks[ind++].ToInt();
+  if( (Flags & sglmShininessB) != 0 )
+    ShininessB = toks[ind++].ToInt();
 }
 //..............................................................................
 olxstr TGlMaterial::ToPOV() const {

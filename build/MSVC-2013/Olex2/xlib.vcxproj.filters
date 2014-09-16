@@ -801,9 +801,6 @@
     <ClCompile Include="..\..\..\xlib\selected.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\xlib\calc_ext.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\xlib\afixgroup.h">
@@ -1077,9 +1074,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\xlib\selected.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\xlib\calc_ext.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

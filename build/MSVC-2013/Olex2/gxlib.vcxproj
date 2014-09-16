@@ -338,7 +338,7 @@
       <Optimization>Disabled</Optimization>
       <InlineFunctionExpansion>Default</InlineFunctionExpansion>
       <IntrinsicFunctions>false</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>$(OLX_WX64_DIR_V12)\lib\vc_x64_lib\mswud;$(OLX_WX64_DIR_V12)\lib\vc_lib\mswud;$(OLX_WX64_DIR_V12)\include;..\..\..\glib;..\..\..\xlib;..\..\..\repository;$(OLX_PY64_DIR)\include;..\..\..\sdl;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(OLX_WX64_DIR_V12)\lib\vc_lib\mswud;$(OLX_WX64_DIR_V12)\include;..\..\..\glib;..\..\..\xlib;..\..\..\repository;$(OLX_PY64_DIR)\include;..\..\..\sdl;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_PYTHON;__WXWIDGETS__;__WXDEBUG__;_UNICODE;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <MinimalRebuild>true</MinimalRebuild>
@@ -587,7 +587,6 @@
     <ClCompile Include="..\..\..\gxlib\gxmacro.cpp" />
     <ClCompile Include="..\..\..\gxlib\olxstate.cpp" />
     <ClCompile Include="..\..\..\gxlib\ortdraw.cpp" />
-    <ClCompile Include="..\..\..\gxlib\solid_angles.cpp" />
     <ClCompile Include="..\..\..\gxlib\wxglscene.cpp" />
     <ClCompile Include="..\..\..\gxlib\xatom.cpp" />
     <ClCompile Include="..\..\..\gxlib\xblob.cpp" />
@@ -654,7 +653,6 @@
     <ClInclude Include="..\..\..\gxlib\ortdraw.h" />
     <ClInclude Include="..\..\..\gxlib\ortdrawtex.h" />
     <ClInclude Include="..\..\..\gxlib\oxmfile.h" />
-    <ClInclude Include="..\..\..\gxlib\solid_angles.h" />
     <ClInclude Include="..\..\..\gxlib\wglscene.h" />
     <ClInclude Include="..\..\..\gxlib\wxglscene.h" />
     <ClInclude Include="..\..\..\gxlib\xatom.h" />

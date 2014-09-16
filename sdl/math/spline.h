@@ -144,7 +144,7 @@ namespace math  {  namespace spline {
       return hermite(d, s);
     }
     /*
-    lbl, rbl - one of the boundary_type,
+    lbl, rbl - one of the boundary_type, 
     lb, rb - one of the boundary_condition
     */
     static Spline3<FT>& cubic(Spline3<FT>& s, short lbt, short lb, short rbt, short rb)  {

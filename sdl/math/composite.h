@@ -48,7 +48,7 @@ struct CompositeMatrix {
 /* a wrapper class to represent a list of vectors as a single vector. To be
 used with non empty list and all vectors of the same size
 */
-struct CompositeVector {
+struct CompositeVector { 
   template <class list_t> class CompositeVector_  {
     const list_t& vertices;
     const size_t vec_sz;
@@ -108,7 +108,7 @@ template <typename NumT> class ConstPlainVector  {
   const size_t size;
 public:
   ConstPlainVector(const NumT* _data, size_t sz)
-    :   data(_data) , size(sz) {}
+    :	data(_data) , size(sz) {}
   size_t Count() const {  return size;  }
   const NumT& Get(size_t i) const {  return  data[i];  }
   const NumT& operator [] (size_t i) const {  return Get(i);  }

@@ -54,7 +54,7 @@ public:
       try  {
         if( Instance.Instances.HasKey(th_id) )
           rv = &Instance.Instances[th_id]->GetInstance();
-        else
+        else 
           rv = &Instance.Instances.Add(th_id, new Impl)->GetInstance();
       }
       catch(...) {}

@@ -424,10 +424,10 @@ TTypeList<TAtomRefList> &AtomRefList::Expand(const RefinementModel& rm,
   return c_res;
 }
 //.............................................................................
-TAtomRefList::const_list_type AtomRefList::ExpandList(
+ConstTypeList<ExplicitCAtomRef> AtomRefList::ExpandList(
   const RefinementModel& rm, size_t group_size) const
 {
-  TAtomRefList rv;
+  TTypeList<ExplicitCAtomRef> rv;
   TPtrList<TResidue> residues = rm.aunit.FindResidues(residue);
   for( size_t i=0; i < residues.Count(); i++ )  {
     TAtomRefList l;
@@ -515,7 +515,7 @@ void AtomRefList::ToDataItem(TDataItem &di) const {
     if (refs[i].IsValid())
       refs[i].ToDataItem(di.AddItem("item"));
   }
-
+  
 }
 //.............................................................................
 void AtomRefList::FromDataItem(const TDataItem &di) {
@@ -535,13 +535,13 @@ void AtomRefList::UpdateResi() {
     ExplicitCAtomRef * r = dynamic_cast<ExplicitCAtomRef *>(&refs[i]);
     if (r == NULL) return;
     uint32_t ri = r->GetAtom().GetResiId();
-    if (ri != r_id) {
+    if (r_id != 0 && ri != 0 && ri != r_id) {
       if (refs.Count() == 2) {  // special case, 'easy' to handle
         ExplicitCAtomRef * r0 = dynamic_cast<ExplicitCAtomRef *>(&refs[0]);
         if (r->GetMatrix() != NULL && r0->GetMatrix() != NULL)
           return;
         if (r->GetMatrix() == NULL && r0->GetMatrix() == NULL)
-          return;
+          break;
         if (r->GetMatrix() != NULL)
           r_id = r->GetAtom().GetResiId();
         else if (r0->GetMatrix() != NULL)
@@ -552,9 +552,8 @@ void AtomRefList::UpdateResi() {
     }
     r_id = ri;
   }
-  if (r_id != 0) {
-    residue = this->rm.aunit.GetResidue(r_id).GetNumber();
-  }
+  if (r_id != 0)
+    residue = r_id;
 }
 //.............................................................................
 olxstr AtomRefList::GetExpression() const {

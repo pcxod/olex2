@@ -98,7 +98,7 @@ int UpdateThread::Run()  {
       }
     }
     bool completed = false;
-    try {
+    try {  
       if( Index->Synchronise(*destFS, properties, skip ? NULL
             : &toSkip, &cmds) == update_size )
       {
@@ -114,7 +114,7 @@ int UpdateThread::Run()  {
     CleanUp();
     patcher::PatchAPI::UnlockUpdater();
     return 0;
-  }
+  }  
   return 1;
 }
 //.............................................................................

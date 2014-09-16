@@ -824,7 +824,7 @@ void OrtDraw::Init(PSWriter& pw)  {
   const TEBasis& basis = app.GetRender().GetBasis();
   LinearScale = olx_min((float)pw.GetWidth()/vp[2],
     (float)pw.GetHeight()/vp[3]);
-
+  
   {
     olxcstr fnt("/Verdana findfont ");
     AGlScene& sc = app.GetRender().GetScene();
@@ -890,7 +890,7 @@ Direct calculation:
     SFUtil::ExpandToP1(hkl, F, *sg, P1SF);
     float cell_vol = (float)app.XFile().GetUnitCell().CalcVolume();
     for( int i=0; i < MaxDim; i++ )  {
-      for( int j=0; j < MaxDim; j++ )  {  // (i,j,Depth)
+      for( int j=0; j < MaxDim; j++ )  {  // (i,j,Depth)        
         vec3f p((float)(i-hh)/Size, (float)(j-hh)/Size,  Depth);
         p = bm*p;
         p -= center;
@@ -922,8 +922,7 @@ void OrtDraw::Render(const olxstr& fileName)  {
     if (xa.IsDeleted()) continue;
     xa.SetTag(objects.Count());
     ort_atom *a = new ort_atom(*this, xa);
-    if (xa.GetPrimitives().FindPrimitiveByName("Rims") != NULL)
-      a->draw_style |= ortep_atom_rims;
+    a->draw_style |= ortep_atom_rims;
     if (xa.DrawStyle() == adsOrtep)
       a->draw_style |= ortep_atom_quads;
     if ((ColorMode&ortep_color_lines))
@@ -977,7 +976,7 @@ void OrtDraw::Render(const olxstr& fileName)  {
     for (int i=0; i < 3; i++) {
       vec3f mp = cm[i]*((float)(0.2*len[i]*b.GetZoom())),
         ep = cm[i]*((float)((0.2*len[i]+0.8)*b.GetZoom()));
-
+      
       ort_cone* arrow_cone = new ort_cone(*this, cnt+mp, cnt+ep,
         (float)(0.2*DrawScale*b.GetZoom()), 0, 0);
       objects.Add(arrow_cone);
@@ -990,10 +989,10 @@ void OrtDraw::Render(const olxstr& fileName)  {
       ort_cone* axis_cone = new ort_cone(*this,
         cnt+vec3f(cm[i]).NormaliseTo(// extra 3D effect for the central sphere
           sqrt(olx_sqr(sph_rad)-olx_sqr(base_r))),
-        cnt+mp,
-        base_r,
+        cnt+mp, 
+        base_r, 
         base_r*pscale,
-        0);
+        0); 
       objects.Add(axis_cone);
       all_points.Add(axis_cone->bottom);
       all_points.Add(axis_cone->top);
@@ -1080,7 +1079,7 @@ void OrtDraw::Render(const olxstr& fileName)  {
       delete [] data[i];
   }
   QuickSorter::SortSF(objects, OrtObjectsZSort);
-
+  
   for (size_t i=0; i < objects.Count(); i++)
     objects[i].render(pw);
 

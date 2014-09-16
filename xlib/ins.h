@@ -24,15 +24,15 @@
 
 BeginXlibNamespace()
 
-typedef TStringToList<olxstr, TCAtom*> TInsList;
+  typedef TStrPObjList<olxstr,TCAtom*> TInsList;
 
 class TIns: public TBasicCFile  {
   // parsing context state and varables
   struct ParseContext {
     RefinementModel& rm;
     TAsymmUnit& au;
-    TStrList Symm, Extras;
-    TStringToList<olxstr, const cm_Element*>  BasicAtoms;  // SFAC container
+    TStrList Symm;
+    TStrPObjList<olxstr, const cm_Element*>  BasicAtoms;  // SFAC container
     bool CellFound, SetNextPivot, End;
     int Part, ToAnis;
     // number of atoms (left), pivot, Hydrogens or not
@@ -44,7 +44,7 @@ class TIns: public TBasicCFile  {
       *LastWithU, *LastRideable;
     TIns* ins;
     // SAME instructions and the first atom after it/them
-    TTypeList< olx_pair_t<TStrList,TCAtom*> > Same;
+    TTypeList< AnAssociation2<TStrList,TCAtom*> > Same;
     ParseContext(RefinementModel& _rm) : rm(_rm), au(_rm.aunit),
       Resi(NULL), Last(NULL), LastWithU(NULL), LastRideable(NULL)
     {
@@ -55,7 +55,7 @@ class TIns: public TBasicCFile  {
     }
   };
 private:
-  TStringToList<olxstr, TInsList*> Ins;  // instructions
+  TStrPObjList<olxstr, TInsList*> Ins;  // instructions
   TStrList Skipped;
   // mean error of cell parameters. Can be used for estimation of other lengths
   double R1;
@@ -69,16 +69,15 @@ protected:
   static void _SaveFVar(RefinementModel& rm, TStrList& SL);
   void _SaveSymm(TStrList& SL);
   void _SaveSizeTemp(TStrList& SL);
-  void _ReadExtras(TStrList &l, ParseContext &cx);
-  // if solution specified, only OMIT's and HKLSrc are saved
+  // if solution specified, only OMIT's and HKLSrc are saved 
   void _SaveHklInfo(TStrList& SL, bool solution);
   void _SaveRefMethod(TStrList& SL);
   static void _ProcessAfix(TCAtom& a, ParseContext& cx);
   // validates existing AFIX'es and clears the stack
   static void _ProcessAfix0(ParseContext& cx);
-  // if atoms is saved, its Tag is added to the index (if not NULL)
-  static void _SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
-    TStringToList<olxstr, const cm_Element*>* sfac, TStrList& sl,
+  // if atoms is saved, its Tag is added to the index (if not NULL) 
+  static void _SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix, 
+    TStrPObjList<olxstr,const cm_Element*>* sfac, TStrList& sl,
     TIndexList* index=NULL, bool checkSame=true, bool checkResi=true);
   static void _ProcessSame(ParseContext& cx);
   // initialises the unparsed instruction list
@@ -86,7 +85,7 @@ protected:
   // processes CONN, FREE and BIND, called from _FinishParsing
   void __ProcessConn(ParseContext& cx);
   // also updates the RM user content if any of the types missing
-  TStringToList<olxstr, const cm_Element*> FixTypeListAndLabels();
+  TStrPObjList<olxstr,const cm_Element*> FixTypeListAndLabels();
 public:
   TIns();
   virtual ~TIns();
@@ -94,9 +93,9 @@ public:
   void Clear();
 
   DefPropBIsSet(LoadQPeaks)
-
+  
   // this is -1 if not in the file like REM R1 = ...
-  double GetR1() const {  return R1;  }
+  inline double GetR1() const {  return R1;  }
   TLst& GetLst()  {  return Lst;  }
   const TLst& GetLst() const {  return Lst;  }
   /* updates all instructions */
@@ -116,15 +115,14 @@ public:
   atom Ids this must be passed to UpdateAtomsFromString
   */
   static bool SaveAtomsToStrings(RefinementModel& rm, const TCAtomPList& CAtoms,
-    TIndexList& index, TStrList& SL,
+    TIndexList& index, TStrList& SL, 
     RefinementModel::ReleasedItems* processed);
   static void ValidateRestraintsAtomNames(RefinementModel& rm,
     bool report=true);
   static bool ParseRestraint(RefinementModel& rm, const TStrList& toks);
-  static void SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
-    RefinementModel::ReleasedItems* processed, RefinementModel& rm);
-  static void SaveExtras(TStrList& SL, const TCAtomPList* atoms,
-    RefinementModel::ReleasedItems* processed, RefinementModel& rm);
+  static void SaveRestraints(TStrList& SL, const TCAtomPList* atoms, 
+    RefinementModel::ReleasedItems* processed, RefinementModel& rm,
+    bool write_internals);
   template <class StrLst> static
   void ParseRestraints(RefinementModel& rm, StrLst& SL)  {
     bool preserve = DoPreserveInvalid();
@@ -294,33 +292,20 @@ public:
           TBasicApp::NewLogEntry(logError) << "Included file missing: " << fn;
           continue;
         }
-        TStrList lst = TEFile::ReadLines(fn);
+        TStrList lst;
+        lst.LoadFromFile(fn);
         l.Delete(i);
         l.Insert(i, lst);
         i += lst.Count();
       }
     }
-    return l;
+    return l;   
   }
   // spits out all instructions, including CELL, FVAR, etc
-  void SaveHeader(TStrList& out, bool ValidateRestraintNames);
+  void SaveHeader(TStrList& out, bool ValidateRestraintNames,
+    bool write_internals);
   // Parses all instructions, exclusing atoms, throws if fails
   void ParseHeader(const TStrList& in);
-  /* parsed out from REMS if refined with Olex2, typically listed like:
-  REM R1_all = 0.0509
-  REM R1_gt = 0.0380
-  REM wR_ref = 0.0946
-  REM GOOF = 0.9447
-  REM Shift_max = 0.0014
-  REM Shift_mean = 0.0001
-  REM Reflections_all = 5404
-  REM Reflections_gt = 4352
-  REM Parameters = 340
-  REM Hole = -0.2418
-  REM Peak = 0.3648
-  REM Flack = -0.2(4)
-  */
-  olxstr_dict<olxstr> RefinementInfo;
 
   struct RCInfo  {
     short has_value,  // +1 - true, goes first, -1 - true, goes last, 0 - false

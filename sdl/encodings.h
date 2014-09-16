@@ -9,7 +9,7 @@
 
 #ifndef __olx_encodings_H
 #define __olx_encodings_H
-#include "eutf8.h"
+#include "ebase.h"
 BeginEsdlNamespace()
 
 namespace encoding  {
@@ -45,7 +45,7 @@ namespace encoding  {
         rv << _base64[(data[from] >> 2) & 0x3f];
         if (len == 1) {
           rv << _base64[(data[from] << 4) & 0x30] << '=';
-        }
+        } 
         else {
           rv << _base64[((data[from] << 4) & 0x30)| ((data[from+1] >> 4) & 0xf)] <<
                 _base64[(data[from+1] << 2) & 0x3c];
@@ -137,7 +137,7 @@ namespace encoding  {
     template <class T>
     static size_t decode(const T &in, char *dest, size_t dest_len) {
       size_t off=0;
-      size_t len = in.Length();
+      size_t len = olxstr::o_strlen(in);
       for (size_t i=0; i < len; i++) {
         olxch c = in[i];
         if (c >= '0' && c <= '9')       c -= '0';
@@ -167,70 +167,7 @@ namespace encoding  {
       return encode(data, len, data::base16(),
         hyphen_each, hyphen_char);
     }
-
-    static olxcstr encode(const olxcstr &data) {
-      return encode((const uint8_t *)data.c_str(), data.Length(), data::base16());
-    }
-    static olxcstr decode(const olxcstr &data) {
-      size_t len = data.Length() / 2 + 1;
-      char *bf = olx_malloc<char>(len);
-      size_t al = decode(data, bf, len);
-      return olxcstr::FromExternal(bf, al, len);
-    }
   }; // end struct base16
-
-  struct percent {
-    static olxcstr encode(const wchar_t* data, size_t len) {
-      olxcstr us = TUtf8::Encode(data, len).Replace('%', "%25"),
-        rv;
-      rv.SetCapacity(us.Length());
-      for (size_t i = 0; i < us.Length(); i++) {
-        if (us.CharAt(i) < 33 || us.CharAt(i) > 126) {
-          if (us.CharAt(i) == '%') {
-            i += 2;
-          }
-          else {
-            rv << '%' << data::base16()[((uint8_t)us.CharAt(i)) >> 4] <<
-              data::base16()[((uint8_t)us.CharAt(i)) & 0x0F];
-          }
-        }
-        else {
-          rv << us.CharAt(i);
-        }
-      }
-      return rv;
-    }
-    static olxstr decode(const uint8_t *data, size_t len) {
-      olxcstr s;
-      bool has_percents = false;
-      s.SetCapacity(len);
-      for (size_t i = 0; i < len; i++) {
-        if (data[i] == '%') {
-          if (i + 2 < len) {
-            char ch = olxcstr::o_atoi<char>((const char*)&data[i + 1], 2, 16);
-            if (ch != '%') {
-              s << ch;
-            }
-            else {
-              s << "%25";
-              has_percents = true;
-            }
-            i += 2;
-          }
-        }
-        else {
-          s << (char)data[i];
-        }
-      }
-      return TUtf8::Decode(has_percents ? s.Replace("%25", '%') : s);
-    }
-    static olxcstr encode(const olxstr &w) {
-      return encode(w.u_str(), w.Length());
-    }
-    static olxstr decode(const olxcstr &data) {
-      return decode((const uint8_t *)data.c_str(), data.Length());
-    }
-  }; // end of struct percent
 };
 
 EndEsdlNamespace()

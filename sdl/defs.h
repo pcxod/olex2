@@ -30,7 +30,7 @@
 #endif
 
 #ifndef __WIN32__
-  #ifdef __WINDOWS__
+  #ifdef __WINDOWS__  
     #define __WIN32__ 1
   #endif
 #endif
@@ -88,9 +88,9 @@
     typedef unsigned __int64 uint64_t;
 # endif
 # ifdef _WIN64
-    typedef int64_t index_t;
+    typedef __int64 index_t;
 # else
-    typedef int32_t index_t;
+    typedef __int32 index_t;
 # endif
 #else // non Windows
   typedef int32_t index_t;

@@ -164,7 +164,7 @@ olxstr TEMacroLib::ProcessEvaluator(
     try {
       rv = me.GetRetVal();
       if (e->left != NULL)
-        rv = EvaluateArg(e->left, me, argv).b << rv;
+        rv = EvaluateArg(e->left, me, argv).B() << rv;
       if (e->right != NULL) {
         rv << EvaluateArg(e->right, me, argv).GetB();
       }

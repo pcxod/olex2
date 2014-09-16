@@ -17,7 +17,8 @@
 using namespace lcells;
 
 ConstArrayList<CellInfo> CellReader::read(const olxstr &fn)  {
-  TStrList lines = TEFile::ReadLines(fn);
+  TStrList lines;
+  lines.LoadFromFile(fn);
   TArrayList<CellInfo> rvl;
   const olxstr ext = TEFile::ExtractFileExt(fn).ToLowerCase();
   try {
@@ -353,7 +354,7 @@ ConstTypeList<Index::ResultEntry> Index::Search(const CellInfo &cell,
   }
   // search by cell volume
   QuickSorter::Sort(all, CellInfo::VolumeComparator(),
-    SyncSortListener::Make(usage));
+    SyncSwapListener::Make(usage));
   const size_t vi = sorted::FindInsertIndex(
     all, CellInfo::VolumeComparator(), to_search);
   // go right
@@ -609,7 +610,7 @@ void IndexManager::Search(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &E)
 {
   const double vd = Options.FindValue('d', '1').ToDouble();
-  Index::PrintResults(Search(DefaultCfgName(), Cmds, vd));
+  Index::PrintResults(Search(DefaultCfgName(), Cmds, vd)); 
 }
 //.............................................................................
 void IndexManager::Search(const TStrObjList &Params, TMacroError &E)  {
@@ -656,7 +657,7 @@ void IndexManager::Update(TStrObjList &Cmds, const TParamList &Options,
       return;
     }
     else
-      cfg_name = Cmds[0];
+      cfg_name = Cmds[0]; 
   }
   else if( Cmds.Count() == 2 )  {
     if( TEFile::IsDir(Cmds[0]) )  {

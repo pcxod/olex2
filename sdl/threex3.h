@@ -56,7 +56,7 @@ public:
     if( s != 3 )
       throw TInvalidArgumentException(__OlxSourceInfo, "size");
   }
-
+  
   template <class AT> T QDistanceTo(const TVector3<AT>& v) const {
     return olx_sqr(data[0]-v[0]) +
       olx_sqr(data[1]-v[1]) + olx_sqr(data[2]-v[2]);
@@ -167,7 +167,7 @@ public:
   }
   // a*b*sin = a*b*(1-cos^2) = a*b - DotProd^2
   template <class AT> T XProdVal(const TVector3<AT>& v) const {
-    const T dp = DotProd(v);
+    const T dp = DotProd(v); 
     return sqrt(QLength()*v.QLength()) - dp*dp;
   }
   template <class AT> TVector3<T> XProdVec(const TVector3<AT>& v) const
@@ -281,12 +281,12 @@ public:
       olx_abs(data[2]-v[2]) < eps);
   }
   TVector3<T>& operator = (const TVector3<T>& v)  {
-    data[0] = v[0];  data[1] = v[1];  data[2] = v[2];
+    data[0] = v[0];  data[1] = v[1];  data[2] = v[2];  
     return *this;
   }
   // any vector
   template <class AT> TVector3<T>& operator = (const AT& v)  {
-    data[0] = (T)v[0];  data[1] = (T)v[1];  data[2] = (T)v[2];
+    data[0] = (T)v[0];  data[1] = (T)v[1];  data[2] = (T)v[2];  
     return *this;
   }
   template <class AT>
@@ -306,7 +306,7 @@ public:
   }
   template <class AT>
   TVector3<T>& operator /= (const TVector3<AT>& v) {
-    data[0] /= (T)v[0];  data[1] /= (T)v[1];  data[2] /= (T)v[2];
+    data[0] /= (T)v[0];  data[1] /= (T)v[1];  data[2] /= (T)v[2];  
     return *this;
   }
 #ifndef __BORLANDC__ // does not really work with templates well
@@ -504,14 +504,14 @@ public:
     }
     return r;
   }
-
+  
   const TVector3<T>& operator [] (size_t i) const {  return data[i];  }
-  TVector3<T>& operator [] (size_t i)  {  return data[i];  }
-  const TVector3<T>& Get(size_t i) const {  return data[i];  }
-  const T& Get(size_t i, size_t j) const {  return data[i][j];  }
-  T& Set(size_t i, size_t j, const T& v) {
-    return (data[i][j] = v);
-  }
+  TVector3<T>& operator [] (size_t i)  {  return data[i];  } 
+  const TVector3<T>& Get(size_t i) const {  return data[i];  } 
+  const T& Get(size_t i, size_t j) const {  return data[i][j];  } 
+  void Set(size_t i, size_t j, const T& v) const {
+    return data[i][j] = v;
+  } 
   T& operator () (size_t i, size_t j)  {  return data[i][j];  }
   const T& operator () (size_t i, size_t j) const {
     return data[i][j];
@@ -784,7 +784,7 @@ protected:
     const T c = olx_abs(m[0][1]);
     i = 0;  j = 1;
     if( olx_abs(m[0][2]) > c )  {
-      j = 2;
+      j = 2;  
       return olx_abs(m[0][2]);
     }
     if( olx_abs(m[1][2]) > c )  {
@@ -816,7 +816,7 @@ protected:
     D[i][j] = D[j][i] = 0;
     D[i][i] = (ii*cf*cf + jj*sf*sf - ij*sdf);
     D[j][j] = (ii*sf*sf + jj*cf*cf + ij*sdf);
-
+    
     for( size_t t=0; t < 3; t++ )  {
       const T eit = E[i][t], ejt = E[j][t];
       E[i][t] = eit*cf - ejt*sf;  //i
@@ -871,7 +871,7 @@ public:
     for( size_t j = 1; j != InvalidIndex; j-- )  {
       for( size_t k1=1; k1 < 4-j; k1++ )  {
         if( k1 == (3-j) )
-          for( size_t i=2; i > 3-k1; i-- )
+          for( size_t i=2; i > 3-k1; i-- )  
             b[j] -= arr[j][i]*c[i];
       }
       c[j]= b[j]/arr[j][j];

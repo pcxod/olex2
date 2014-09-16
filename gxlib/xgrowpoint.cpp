@@ -11,7 +11,7 @@
 #include "gpcollection.h"
 
 TXGrowPoint::TXGrowPoint(TGlRenderer& R, const olxstr& collectionName, const vec3d& center,
-  const smatd& transform) : AGDrawObject(R, collectionName)
+  const smatd& transform) : AGDrawObject(R, collectionName)  
 {
   AGDrawObject::SetSelectable(false);
   Params().Resize(1);
@@ -21,7 +21,7 @@ TXGrowPoint::TXGrowPoint(TGlRenderer& R, const olxstr& collectionName, const vec
 }
 //..............................................................................
 void TXGrowPoint::Create(const olxstr& cName) {
-  if( !cName.IsEmpty() )
+  if( !cName.IsEmpty() )  
     SetCollectionName(cName);
   TGPCollection& GPC = Parent.FindOrCreateCollection( GetCollectionName() );
   GPC.AddObject(*this);
@@ -68,7 +68,7 @@ bool TXGrowPoint::Orient(TGlPrimitive& GlP)  {
   olx_gl::translate(Center);
   olx_gl::scale(Params()[0]);
   return false;
-}
+} 
 //..............................................................................
 void TXGrowPoint::SetRadius(float V)  {
   Params()[0] = V;

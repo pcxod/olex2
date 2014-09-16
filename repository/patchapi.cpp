@@ -66,8 +66,8 @@ short PatchAPI::DoPatch(AActionHandler* OnFileCopy,
 
     try  {  ft.CopyTo(TBasicApp::GetBaseDir(), &AfterFileCopy);  }
     catch(PatchAPI::DeletionExc)  {  res = papi_DeleteError;  }
-    catch(const TExceptionBase& exc)  {
-      res = papi_CopyError;
+    catch(const TExceptionBase& exc)  {  
+      res = papi_CopyError;  
       TBasicApp::NewLogEntry(logException) << exc;
     }
 
@@ -93,7 +93,8 @@ short PatchAPI::DoPatch(AActionHandler* OnFileCopy,
 olxstr PatchAPI::GetUpdateLocation()  {
   olxstr update_location = GetUpdateLocationFileName();
   if( TEFile::Exists(update_location) )  {
-    TCStrList fc = TEFile::ReadCLines(update_location);
+    TCStrList fc;
+    fc.LoadFromFile(update_location);
     if( fc.Count() == 1 ) {
       olxstr path = TUtf8::Decode(fc[0]);
       if (TEFile::IsAbsolutePath(path))
@@ -133,7 +134,7 @@ size_t PatchAPI::GetNumberOfOlex2Running()  {
 bool PatchAPI::LockUpdater() {
   if( lock_file != NULL )
     return false;
-  try  {
+  try  {  
     if( TEFile::Exists(GetUpdaterPIDFileName()) )
       if( !TEFile::DelFile(GetUpdaterPIDFileName()) )
         return false;
@@ -162,7 +163,8 @@ olxstr PatchAPI::ReadRepositoryTag(const olxstr& base_dir)  {
   olxstr tag_fn = repository_base_dir + GetTagFileName();
   if( !TEFile::Exists(tag_fn) )
     return (repository_tag=EmptyString());
-  TStrList sl = TEFile::ReadLines(tag_fn);
+  TStrList sl;
+  sl.LoadFromFile(tag_fn);
   return sl.Count() == 1 ? (repository_tag=sl[0]) : EmptyString();
 }
 //.............................................................................

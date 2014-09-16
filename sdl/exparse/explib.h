@@ -40,14 +40,14 @@ namespace exparse  {
       return info.functions.create_from_index(proxy == NULL ? *this
         : *proxy, ef, i, args);
     }
-    static cast_result str_cast(const IEvaluable* i)  {
+    static cast_result str_cast(const IEvaluable* i)  {  
       return cast_result(&(IEvaluable::cast_helper<StringValue>(i))->val, false);
     }
     virtual cast_operator get_cast_operator(const std::type_info& ti) const {
       if( typeid(olxstr) == ti )
         return &str_cast;
-      throw TCastException(__OlxSourceInfo, ti);
-    }
+      throw TCastException(__OlxSourceInfo, ti);  
+    } 
     virtual IEvaluable* create_new(const void *data) const {
       return new StringValue(*static_cast<const olxstr*>(data));
     }
@@ -117,14 +117,14 @@ namespace exparse  {
       return info.functions.create_from_index(proxy == NULL ? *this
         : *proxy, ef, i, args);
     }
-    static cast_result list_cast(const IEvaluable* i)  {
+    static cast_result list_cast(const IEvaluable* i)  {  
       return cast_result(&(IEvaluable::cast_helper<ListValue>(i))->val, false);
     }
     virtual cast_operator get_cast_operator(const std::type_info& ti) const {
       if( typeid(list_t) == ti )
         return &list_cast;
       throw TCastException(__OlxSourceInfo, ti);
-    }
+    } 
     virtual IEvaluable* create_new(const void *data) const {
       return new ListValue(*static_cast<const list_t*>(data));
     }

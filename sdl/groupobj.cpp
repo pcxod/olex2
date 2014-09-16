@@ -30,7 +30,7 @@ void TObjectGroup::RemoveObjectsByTag(int Tag)  {
   for( size_t i=0; i < ObjectCount(); i++ )  {
     if( Objects[i]->GetTag() == Tag )  {
       AGOProperties& P = Objects[i]->GetProperties();
-      if( P.ObjectCount() == 1 )
+      if( P.ObjectCount() == 1 )   
         P.SetObjectGroupId(InvalidIndex); // mark to remove
       P.RemoveObject(Objects[i]);
       delete Objects[i];
@@ -54,8 +54,8 @@ AGOProperties* TObjectGroup::FindProps(const AGOProperties &C)  {
   return NULL;
 }
 //..............................................................................
-AGOProperties* TObjectGroup::NewProps(AGroupObject& Sender, AGOProperties* OldProps,
-                                      const AGOProperties& P)
+AGOProperties* TObjectGroup::NewProps(AGroupObject& Sender, AGOProperties* OldProps, 
+                                      const AGOProperties& P)  
 {
   if( OldProps != NULL )
     if( *OldProps == P )

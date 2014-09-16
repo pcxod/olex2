@@ -30,7 +30,7 @@ class TEMacro : public AMacro {
   TStrStrList Args;
 public:
   TEMacro(const olxstr& name, const olxstr& desc);
-
+  
   virtual void DoRun(TStrObjList &Params, const TParamList &Options,
     TMacroError& E);
   void AddCmd(const olxstr& cmd);
@@ -84,8 +84,8 @@ public:
   ~TEMacroLib() {}
   void Init();  // extends the Library with functionality
   void Load(const TDataItem& m_root);
-
-  typedef olx_pair_t<olxstr,olxstr> arg_t;
+  
+  typedef AnAssociation2<olxstr,olxstr> arg_t;
   static ABasicFunction *FindEvaluator(const olxstr &name, bool macro_first);
   static ABasicFunction *FindEvaluator(exparse::expression_tree *&e,
     olxstr &name);

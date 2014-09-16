@@ -22,7 +22,7 @@
 class TFSIndex;
 class TFSItem;
 
-const uint16_t
+const uint16_t 
   afs_ReadAccess  = 0x0001,
   afs_WriteAccess = 0x0002,
   afs_DeleteAccess = 0x0004,
@@ -101,7 +101,7 @@ public:
   the check can take some time. See _DoesExist description for more details. */
   bool Exists(const olxstr& fn, bool forced_check=false) {
     if( (Access & afs_BrowseAccess) == 0 )
-      return false;
+      return false;  
     return _DoesExist(fn, forced_check);
  }
   // returns a stream for a specified stream, must be deleted
@@ -112,7 +112,7 @@ public:
  }
   bool AdoptStream(IInputStream& file, const olxstr& name) {
     if( (Access & afs_WriteAccess) == 0 )
-      return false;
+      return false;  
     return _DoAdoptStream(file, name);
  }
   void RemoveAccessRight(uint16_t access) {
@@ -189,7 +189,7 @@ private:
   bool Folder;
   mutable bool Processed;
   uint64_t DateTime, Size;
-  olxstr_dict<TFSItem*> Items;
+  TCSTypeList<olxstr, TFSItem*> Items;
   olxstr Name, Digest;
   TStrList Properties, Actions;
 protected:
@@ -201,12 +201,12 @@ protected:
   void SetProcessed(bool v) const;
 public:
   TFSItem(TFSIndex& index, TFSItem* parent, const olxstr& name) :
-    Parent(parent),
+    Parent(parent), 
     Index(index),
     Folder(false),
     Processed(false) ,
-    DateTime(0),
-    Size(0),
+    DateTime(0), 
+    Size(0), 
     Name(name) { }
   virtual ~TFSItem() { Clear(); }
   void Clear();
@@ -221,7 +221,7 @@ public:
   void ClearNonexisting();
 
   TFSItem& operator = (const TFSItem& FI);
-  TFSItem& Item(size_t i) const { return *Items.GetValue(i); }
+  TFSItem& Item(size_t i) const { return *Items.GetObject(i); }
   size_t Count() const { return Items.Count(); }
   bool IsEmpty() const { return Items.IsEmpty(); }
   TFSItem& NewItem(const olxstr& name);
@@ -261,9 +261,10 @@ public:
   size_t UpdateDigest();
 
   template <class SC> TFSItem* FindByName(const SC& Name) const {
-    return Items.Find(Name, NULL);
+    const size_t ind = Items.IndexOf(Name);
+    return (ind == InvalidIndex) ? NULL : Items.GetObject(ind);
  }
-        // does a search of /parent_folder/parent_folder/file_name
+	// does a search of /parent_folder/parent_folder/file_name
   TFSItem* FindByFullName(const olxstr& Name) const;
 
   AFileSystem& GetIndexFS() const;
@@ -304,7 +305,7 @@ protected:
 public:
   TFSIndex(AFileSystem& fs);
   virtual ~TFSIndex();
-
+  
   // this is to be used for the overal progress monitorring
   TActionQueue &OnProgress;
   /* this is to be used for when an action is being applied to a file (like
@@ -339,9 +340,9 @@ public:
     return src.GetActions().IndexOfi("delete") == InvalidIndex;
  }
   // returns if the action was procesed (or not) successful
-  bool ProcessActions(TFSItem& item);
+  bool ProcessActions(TFSItem& item); 
   // stops the syncronisation and updates the index
-  void DoBreak() {
+  void DoBreak() { 
     Break = true;
     OnBreak.Execute(this);
  }

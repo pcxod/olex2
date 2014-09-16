@@ -44,7 +44,7 @@ UpdateAPI::UpdateAPI() : f_lsnr(NULL), p_lsnr(NULL),
 }
 //..............................................................................
 short UpdateAPI::DoUpdate(AActionHandler* _f_lsnr, AActionHandler* _p_lsnr)  {
-  CleanUp(_f_lsnr, _p_lsnr);
+  CleanUp(_f_lsnr, _p_lsnr); 
   if( !settings.IsValid() )  {
     log.Add("Invalid settings file: ") << settings.source_file;
     return uapi_NoSettingsFile;
@@ -134,14 +134,14 @@ short UpdateAPI::DoInstall(AActionHandler* download_lsnr,
   }
   if( src_s == NULL )
     res = updater::uapi_InvaildRepository;
-
+  
   if( res != updater::uapi_OK )  {
     delete fs;
     PatchAPI::UnlockUpdater();
     return res;
   }
   try  {
-    src_fn = TBasicApp::GetBaseDir() + src_fn;
+    src_fn = TBasicApp::GetBaseDir() + src_fn; 
     TEFile src_f(src_fn, "w+b");
     src_f << *src_s;
     delete src_s;
@@ -176,7 +176,7 @@ short UpdateAPI::DoInstall(AActionHandler* download_lsnr,
 short UpdateAPI::InstallPlugin(AActionHandler* d_lsnr,
   AActionHandler* e_lsnr, const olxstr& name)
 {
-  CleanUp(d_lsnr, e_lsnr);
+  CleanUp(d_lsnr, e_lsnr); 
   if( !TBasicApp::GetInstance().IsBaseDirWriteable() )
     return updater::uapi_AccessDenied;
   if( Tag.IsEmpty() )
@@ -222,7 +222,7 @@ short UpdateAPI::InstallPlugin(AActionHandler* d_lsnr,
     return updater::uapi_NoSource;
   }
   try  {
-    zip_fn = (TBasicApp::GetBaseDir() + name) << ".zip";
+    zip_fn = (TBasicApp::GetBaseDir() + name) << ".zip"; 
     TEFile src_f(zip_fn, "w+b");
     src_f << *is;
     delete is;
@@ -257,7 +257,7 @@ short UpdateAPI::InstallPlugin(AActionHandler* d_lsnr,
 }
 //.............................................................................
 short UpdateAPI::DoSynch(AActionHandler* _f_lsnr, AActionHandler* _p_lsnr)  {
-  CleanUp(_f_lsnr, _p_lsnr);
+  CleanUp(_f_lsnr, _p_lsnr); 
   if( !settings.IsValid() )  {
     log.Add("Invalid settings file: ") << settings.source_file;
     return uapi_NoSettingsFile;
@@ -270,7 +270,7 @@ short UpdateAPI::DoSynch(AActionHandler* _f_lsnr, AActionHandler* _p_lsnr)  {
     srcFS = new TOSFileSystem(TBasicApp::GetBaseDir());
   else if( sf.src_for_dest.Equalsi("remote") )
     srcFS = FSFromString( sf.repository, sf.proxy );
-
+  
   if( srcFS == NULL )  {
     log.Add("Could not locate source for synchronisation");
     return updater::uapi_NoSource;
@@ -295,7 +295,7 @@ const_strlist UpdateAPI::GetSystemTags() {
   os_str = "mac";
 #elif defined(__linux__)
   os_str = "linux";
-#else
+#else  
   os_str = "unknown";
 #endif
   res << os_str << os_str;
@@ -397,7 +397,8 @@ AFileSystem* UpdateAPI::FSFromString(const olxstr& _repo,
         _fs->SetExtraHeaders(httpHeaderPlatform);
         olxstr tfn = TBasicApp::GetSharedDir() + "app.token";
         if (TEFile::Exists(tfn)) {
-          TCStrList sl = TEFile::ReadCLines(tfn);
+          TStrList sl;
+          sl.LoadFromFile(tfn);
           if (sl.Count() == 1) {
             _fs->SetSessionInfo(sl[0]);
             _fs->SetExtraHeaders(httpHeaderPlatform|httpHeaderESession);
@@ -499,7 +500,7 @@ AFileSystem* UpdateAPI::FindActiveRepositoryFS(olxstr* repo_name,
 void UpdateAPI::GetAvailableMirrors(TStrList& res) const {
   olxstr mirrors_fn = GetMirrorsFileName();
   if( TEFile::Exists(mirrors_fn) )
-    TEFile::ReadLines(mirrors_fn, res);
+    res.LoadFromFile(mirrors_fn);
   TStrList defs = GetDefaultRepositories();
   for( size_t i=0; i < defs.Count(); i++ )  {
     if( res.IndexOf(defs[defs.Count()-i-1]) == InvalidIndex )
@@ -515,9 +516,9 @@ void UpdateAPI::GetAvailableMirrors(TStrList& res) const {
 }
 //.............................................................................
 void UpdateAPI::GetAvailableRepositories(TStrList& res) const {
-  olxstr repo_name,
+  olxstr repo_name, 
          inst_zip_fn = TBasicApp::GetBaseDir() + GetInstallationFileName();
-  if( TEFile::Exists(inst_zip_fn) )
+  if( TEFile::Exists(inst_zip_fn) )  
     res.Add(inst_zip_fn);
   AFileSystem* fs = FindActiveRepositoryFS(&repo_name, GetTagsFileName());
   if( fs == NULL )  return;
@@ -538,7 +539,7 @@ void UpdateAPI::GetAvailableRepositories(TStrList& res) const {
   for( size_t i=0; i < res.Count(); i++ )
     res[i] = repo_name + res[i];
   // LoadFromTextStream clears the list...
-  if( TEFile::Exists(inst_zip_fn) )
+  if( TEFile::Exists(inst_zip_fn) )  
     res.Insert(0, inst_zip_fn);
 }
 //.............................................................................

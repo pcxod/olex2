@@ -16,8 +16,9 @@
 #include "planesort.h"
 #include "xmacro.h"
 #include "cif.h"
-#include "dsphere.h"
-#include "dring.h"
+#ifdef __WXWIDGETS__
+#include "wx/wx.h"
+#endif
 
 #define gxlib_InitMacro(macroName, validOptions, argc, desc)\
   lib.Register(\
@@ -34,20 +35,21 @@
 
 //.............................................................................
 void GXLibMacros::Export(TLibrary& lib) {
-  lib.Register(new TMacro<GXLibMacros>(this, &GXLibMacros::macGrow,
-    "Grow",
+  gxlib_InitMacro(Grow,
+    "s-grow shells vs fragments&;"
+    "w-grows the rest of the structure, using already applied generators&;"
+    "t-grows only provided atoms/atom types&;"
     "b-grows all visible grow bonds (when in a grow mode)",
-    fpAny | psFileLoaded,
-    EmptyString()),
-    libChain
-    );
-
-  lib.Register(new TMacro<GXLibMacros>(this, &GXLibMacros::macPack,
-    "Pack", EmptyString(),
     fpAny|psFileLoaded,
-    "Extends the default macro by keyword 'wbox'"),
-    libChain
-    );
+    "Grows whole structure or provided atoms only");
+
+  gxlib_InitMacro(Pack,
+    "c-specifies if current lattice content should not be deleted",
+    fpAny|psFileLoaded,
+    "Packs structure within default or given volume(6 or 2 values for "
+    "parallelepiped "
+    "or 1 for sphere). If atom names/types are provided it only packs the "
+    "provided atoms.");
 
   gxlib_InitMacro(Name,
     "c-enables checking labels for duplications&;"
@@ -80,13 +82,13 @@ void GXLibMacros::Export(TLibrary& lib) {
     fpOne,
     "Sets drawings quality, 1 - low, 2 - medium, 3 - high");
 
-  gxlib_InitMacro(Mask, EmptyString(), fpAny^fpNone,
+  gxlib_InitMacro(Mask, EmptyString(), fpAny^fpNone, 
     "Sets primitives for atoms or bonds according to provided mask. Accepts "
     "atoms, bonds, hbonds or a name (like from LstGO).\n"
     "Example: 'mask hbonds 2048' - this resets hydrogen bond style to "
     "default");
 
-  gxlib_InitMacro(ARad, EmptyString(), fpAny^fpNone,
+  gxlib_InitMacro(ARad, EmptyString(), fpAny^fpNone, 
     "Changes how the atoms are drawn [sfil - sphere packing, pers - static "
     "radii, isot - radii proportional to Ueq, isoth - as isot, but applied to "
     "H atoms as well]");
@@ -187,9 +189,7 @@ void GXLibMacros::Export(TLibrary& lib) {
   gxlib_InitMacro(Basis, EmptyString(), fpNone|fpOne,
     "Shows/hides the orientation basis");
   gxlib_InitMacro(Group,
-    "n-a custom name can be provided&;"
-    "u-ungroups given group"
-    ,
+    "n-a custom name can be provided",
     fpNone|fpOne|psFileLoaded,
   "Groups current visible objects or selection");
   gxlib_InitMacro(Fmol, EmptyString(), fpNone|psFileLoaded,
@@ -230,12 +230,6 @@ void GXLibMacros::Export(TLibrary& lib) {
     ,
     fpAny,
     "Shows specified or all parts of the structure");
-  gxlib_InitMacro(ShowR,
-    "m-do not modify the display view&;"
-    "v-operate only on currently visible atoms/fragments;"
-    ,
-    fpAny,
-    "Shows residues by number or name");
   gxlib_InitMacro(Undo, EmptyString(), fpNone,
     "Reverts some of the previous operations");
   gxlib_InitMacro(Esd,
@@ -261,18 +255,18 @@ void GXLibMacros::Export(TLibrary& lib) {
     "List current graphical objects");
   gxlib_InitMacro(WBox,
     "w-use atomic mass instead of unit weights for atoms&;"
-    "s-create separate boxes for fragments",
+    "s-create separate boxes for fragments", 
     (fpAny)|psFileLoaded,
     "Calculates wrapping box around provided box using the set of best, "
     "intermidiate and worst planes");
   gxlib_InitMacro(Center,
-    "z-also recalculates the scene zoom",
+    "z-also recalculates the scene zoom", 
     (fpAny)|psFileLoaded,
     "Sets the centre of rotation to given point");
   gxlib_InitMacro(ChemDraw,
     EmptyString(),
     fpAny|psFileLoaded,
-    "Changes the view to show aromatic rings and double/tripple bonds.");
+    "Currently only creates aromatic rings for Ph, Py and Cp rings");
   gxlib_InitMacro(Direction,
     EmptyString(),
     fpNone,
@@ -319,31 +313,10 @@ void GXLibMacros::Export(TLibrary& lib) {
     ,
     fpNone|fpOne|fpTwo,
     "Fragment matching, alignment and label transfer routine");
-  gxlib_InitMacro(SetMaterial, EmptyString(), fpTwo | fpThree,
-    "Assigns provided value to specified material");
-  gxlib_InitMacro(DefineVar, EmptyString(), fpOne|psFileLoaded,
-    "Defines a variable to be clalculated with CalcVars. The argument is "
-    "the variable name.");
-
-  gxlib_InitMacro(ProjSph,
-    "g-sphere quality [6]&;"
-    "e-emboss the sphere&;"
-    "a-transparency level [0x9c] 0 - 255&;"
-    "group-group the ligands into same-colour groups [false]&;"
-    ,
-    fpAny | psFileLoaded,
-    "Creates a projection from the selected atom onto a sphere, coloring each "
-    "point on the sphere with a unique color corresponding to fragments. For "
-    "referece see Guzei, I.A., Wendt, M.Dalton Trans., 2006, 3991–3999.");
-
   gxlib_InitFunc(ExtraZoom, fpNone|fpOne,
     "Sets/reads current extra zoom (default zoom correction)");
   gxlib_InitFunc(MatchFiles, fpTwo|fpThree,
     "Matches given files");
-  gxlib_InitFunc(SelName, fpNone,
-    "Returns name for the selected object group");
-  gxlib_InitFunc(GetMaterial, fpOne | fpTwo,
-    "Returns material of specified object");
 }
 //.............................................................................
 void GXLibMacros::macGrow(TStrObjList &Cmds, const TParamList &Options,
@@ -351,9 +324,56 @@ void GXLibMacros::macGrow(TStrObjList &Cmds, const TParamList &Options,
 {
   if (Options.Contains('b')) {  // grow XGrowBonds only
     app.GrowBonds();
+    return;
   }
-  else {
-    Error.SetUnhandled(true);
+  bool GrowShells = Options.Contains('s'),
+       GrowContent = Options.Contains('w');
+  TCAtomPList TemplAtoms;
+  if( Options.Contains('t') )
+    TemplAtoms = app.FindCAtoms(olxstr(Options['t']).Replace(',', ' '));
+  if( Cmds.IsEmpty() )  {  // grow fragments
+    if( GrowContent ) 
+      app.GrowWhole(TemplAtoms.IsEmpty() ? NULL : &TemplAtoms);
+    else  {
+      TXAtomPList atoms;
+      app.GrowFragments(GrowShells, TemplAtoms.IsEmpty() ? NULL : &TemplAtoms);
+      if( !GrowShells )  {
+        const TLattice& latt = app.XFile().GetLattice();
+        smatd_list gm;
+        /* check if next grow will not introduce simple translations */
+        bool grow_next = true;
+        while( grow_next )  {
+          gm.Clear();
+          latt.GetGrowMatrices(gm);
+          if( gm.IsEmpty() )  break;
+          for( size_t i=0; i < latt.MatrixCount(); i++ )  {
+            for( size_t j=0; j < gm.Count(); j++ )  {
+              if( latt.GetMatrix(i).r == gm[j].r )  {
+                const vec3d df = latt.GetMatrix(i).t - gm[j].t;
+                if( (df-df.Round<int>()).QLength() < 1e-6 )  {
+                  grow_next = false;
+                  break;
+                }
+              }
+            }
+            if( !grow_next )  break;
+          }
+          if( grow_next ) {
+            app.GrowFragments(GrowShells,
+              TemplAtoms.IsEmpty() ? NULL : &TemplAtoms);
+          }
+        }
+      }
+    }
+  }
+  else  {  // grow atoms
+    if( GrowContent )
+      app.GrowWhole(TemplAtoms.IsEmpty() ? NULL : &TemplAtoms);
+    else {
+      app.GrowAtoms(Cmds.Text(' '), GrowShells,
+        TemplAtoms.IsEmpty() ? NULL : &TemplAtoms);
+    }
+
   }
 }
 //.............................................................................
@@ -361,102 +381,84 @@ void GXLibMacros::macPack(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &Error)
 {
   const bool ClearCont = !Options.Contains("c");
+  const bool cell = (Cmds.Count() > 0 && Cmds[0].Equalsi("cell"));
   const bool wbox = (Cmds.Count() > 0 && Cmds[0].Equalsi("wbox"));
-  if (wbox) {
+  if( cell || wbox )
     Cmds.Delete(0);
-    if (app.Get3DFrame().IsVisible()) {
-      if (app.Get3DFrame().IsSpherical()) {
-        app.XFile().GetLattice().GenerateSphere(app.Get3DFrame().GetCenter(),
-          app.Get3DFrame().GetZoom(), ClearCont);
-      }
-      else {
-        vec3d_alist norms(6), centres(6);
-        for (int i = 0; i < 6; i++) {
-          norms[i] = app.Get3DFrame().Faces[i].GetN();
-          centres[i] = app.Get3DFrame().Faces[i].GetCenter();
-        }
-        app.XFile().GetLattice().GenerateBox(norms, centres, ClearCont);
+  const uint64_t st = TETime::msNow();
+  if( cell )
+    app.XFile().GetLattice().GenerateCell();
+  else if( wbox && app.Get3DFrame().IsVisible() )  {
+    vec3d_alist norms(6), centres(6);
+    for (int i=0; i < 6; i++) {
+      norms[i] = app.Get3DFrame().Faces[i].GetN();
+      centres[i] = app.Get3DFrame().Faces[i].GetCenter();
+    }
+    app.XFile().GetLattice().GenerateBox(norms, centres, ClearCont);
+  }
+  else  {
+    vec3d From(-0.5), To(1.5);
+    size_t number_count = 0;
+    for( size_t i=0; i < Cmds.Count(); i++ )  {
+      if( Cmds[i].IsNumber() )  {
+        if( !(number_count%2) )
+          From[number_count/2] = Cmds[i].ToDouble();
+        else
+          To[number_count/2]= Cmds[i].ToDouble();
+        number_count++;
+        Cmds.Delete(i--);
       }
     }
+
+    if( number_count != 0 && !(number_count == 6 || number_count == 1 ||
+      number_count == 2) )
+    {
+      Error.ProcessingError(__OlxSrcInfo, "please provide 6, 2 or 1 number");
+      return;
+    }
+
+    TCAtomPList TemplAtoms;
+    if( !Cmds.IsEmpty() )
+      TemplAtoms = app.FindCAtoms(Cmds.Text(' '));
+
+    if( number_count == 6 || number_count == 0 || number_count == 2 )  {
+      if( number_count == 2 )  {
+        From[1] = From[2] = From[0];
+        To[1] = To[2] = To[0];
+      }
+      app.Generate(From, To, TemplAtoms.IsEmpty() ? NULL
+        : &TemplAtoms, ClearCont);
+    }
+    else  {
+      TXAtomPList xatoms = app.FindXAtoms(Cmds, true, true);
+      vec3d cent;
+      double wght = 0;
+      for( size_t i=0; i < xatoms.Count(); i++ )  {
+        cent += xatoms[i]->crd()*xatoms[i]->CAtom().GetChemOccu();
+        wght += xatoms[i]->CAtom().GetChemOccu();
+      }
+      if( wght != 0 )
+        cent /= wght;
+      app.Generate(cent, From[0], TemplAtoms.IsEmpty() ? NULL
+        : &TemplAtoms, ClearCont);
+    }
   }
-  else {
-    Error.SetUnhandled(true);
+  if (TBasicApp::GetInstance().IsProfiling()) {
+    TBasicApp::NewLogEntry(logInfo) <<
+      app.XFile().GetLattice().GetObjects().atoms.Count() <<
+      " atoms and " <<
+      app.XFile().GetLattice().GetObjects().bonds.Count() <<
+      " bonds generated in " <<
+      app.XFile().GetLattice().FragmentCount() << " fragments ("
+      << (TETime::msNow()-st) << "ms)";
   }
+  // optimise drawing ...
+  //app.GetRender().Compile(true);
 }
 //.............................................................................
 void GXLibMacros::macName(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &Error)
 {
-  if (Cmds.Count() == 2 && Cmds[0].Equalsi("collection")) {
-    sorted::PointerPointer<TGPCollection> old;
-    TGlGroup &sel = app.GetSelection();
-    for (size_t i = 0; i < sel.Count(); i++) {
-      if (old.AddUnique(&sel[i].GetPrimitives()).b) {
-        // check type of the objects
-        if (old.Count() > 1) {
-          size_t idx = (old[0] == &sel[i].GetPrimitives() ? 1 : 0);
-          if (typeid(old[idx]->GetObject(0)) != typeid(sel[i])) {
-            TBasicApp::NewLogEntry(logError) << "Mixed object collections";
-            return;
-          }
-        }
-      }
-    }
-    if (old.IsEmpty()) {
-      return;
-    }
-    bool create = false;
-    TGPCollection *gpc = app.GetRender().FindCollection(Cmds[1]);
-    if (gpc != NULL && gpc->ObjectCount() != 0) {
-      if (typeid(old[0]->GetObject(0)) != typeid(gpc->GetObject(0))) {
-        TBasicApp::NewLogEntry(logError) << "Destination collection is used "
-          "by different object type";
-        return;
-      }
-    }
-    else {
-      if (gpc != NULL) {
-        gpc->ClearPrimitives();
-      }
-      else {
-        gpc = &app.GetRender().NewCollection(Cmds[1]);
-      }
-      create = true;
-    }
-
-    for (size_t i = 0; i < sel.Count(); i++) {
-      sel[i].GetPrimitives().RemoveObject(sel[i]);
-      gpc->AddObject(sel[i]);
-    }
-    if (EsdlInstanceOf(sel[0], TXAtom)) {
-      for (size_t i = 0; i < sel.Count(); i++) {
-        TXAtom &a = dynamic_cast<TXAtom &>(sel[i]);
-        TXAtom::NamesRegistry().Add(a.GetRef().ToString(), Cmds[1]);
-        for (size_t j = 0; j < a.BondCount(); j++) {
-          a.Bond(j).UpdateStyle();
-        }
-      }
-    }
-    else if (EsdlInstanceOf(sel[0], TXBond)) {
-      for (size_t i = 0; i < sel.Count(); i++) {
-        TXBond &b = dynamic_cast<TXBond &>(sel[i]);
-        TXBond::NamesRegistry().Add(b.GetRef().ToString(), Cmds[1]);
-      }
-    }
-    else if (EsdlInstanceOf(sel[0], TXPlane)) {
-      for (size_t i = 0; i < sel.Count(); i++) {
-        TXPlane &p = dynamic_cast<TXPlane &>(sel[i]);
-        TXPlane::NamesRegistry().Add(p.GetDefId(), Cmds[1]);
-      }
-    }
-    if (create) {
-      AGDrawObject & o = gpc->GetObject(0);
-      gpc->DeleteObject(0);
-      o.Create();
-    }
-    sel.Clear();
-    return;
-  }
   bool checkLabels = Options.GetBoolOption('c');
   bool changeSuffix = Options.Contains('s');
   bool nameResi = Options.GetBoolOption('r');
@@ -604,7 +606,7 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
       const MapUtil::peak& peak = MergedPeaks[i];
       if( peak.count == 0 )  continue;
       vec3d cnt((double)peak.center[0]/dim[0], (double)peak.center[1]/dim[1],
-        (double)peak.center[2]/dim[2]);
+        (double)peak.center[2]/dim[2]); 
       const double ed = (double)((long)((peak.summ*1000)/peak.count))/1000;
       TCAtom& ca = au.NewAtom();
       ca.SetLabel(olxstr("Q") << olxstr((100+i)));
@@ -689,7 +691,7 @@ void GXLibMacros::macMask(TStrObjList &Cmds, const TParamList &Options,
     app.UpdateAtomPrimitives(Mask, Atoms.IsEmpty() ? NULL : &Atoms);
   }
   else if ((Cmds[0].Equalsi("bonds") || Cmds[0].Equalsi("hbonds")) &&
-           Cmds.Count() > 1)
+    Cmds.Count() > 1)
   {
     int Mask = Cmds[1].ToInt();
     TXBondPList Bonds = app.GetBonds(TStrList(Cmds.SubListFrom(2)), false);
@@ -715,9 +717,9 @@ void GXLibMacros::macMask(TStrObjList &Cmds, const TParamList &Options,
     }
     else {
       TGlGroup &sel = app.GetSelection();
-      sorted::PointerPointer<TGPCollection> colls;
+      SortedPtrList<TGPCollection, TPointerComparator> colls;
       for (size_t i = 0; i < sel.Count(); i++) {
-        if (colls.AddUnique(&sel[i].GetPrimitives()).b) {
+        if (colls.AddUnique(&sel[i].GetPrimitives())) {
           sel[i].UpdatePrimitives(Mask);
         }
       }
@@ -777,43 +779,27 @@ void GXLibMacros::macBRad(TStrObjList &Cmds, const TParamList &Options,
   Cmds.Delete(0);
   TXBondPList bonds;
   bool absolute = Options.GetBoolOption('a');
-  if (Cmds.Count() == 1 && Cmds[0].Equalsi("hbonds")) {
+  if( Cmds.Count() == 1 && Cmds[0].Equalsi("hbonds") )  {
     if (absolute) r /= 0.02;
     TGXApp::BondIterator bi = app.GetBonds();
-    bonds.SetCapacity(bi.count/10);
-    while (bi.HasNext()) {
+    while( bi.HasNext() )  {
       TXBond& xb = bi.Next();
-      if (xb.GetType() == sotHBond)
+      if( xb.GetType() == sotHBond )
         bonds.Add(xb);
     }
     app.BondRad(r, &bonds);
   }
-  else {
+  else  {
     if (absolute) r /= 0.1f;
     bonds = app.GetBonds(Cmds, true);
-    if (bonds.IsEmpty() && Cmds.IsEmpty()) {  // get all non-H
+    if( bonds.IsEmpty() && Cmds.IsEmpty() )  {  // get all non-H
       TGXApp::BondIterator bi = app.GetBonds();
-      bonds.SetCapacity(bi.count);
-      while (bi.HasNext()) {
+      while( bi.HasNext() )  {
         TXBond& xb = bi.Next();
-        if (xb.GetType() != sotHBond)
+        if( xb.GetType() != sotHBond )
           bonds.Add(xb);
       }
       TXBond::DefR(r);
-      TDRing::SetDefTubeRadius(r / 13.3);
-      TDRing::CreateStaticObjects(app.GetRender());
-      app.GetRings().ForEach(ACollectionItem::IndexTagSetter(
-        FunctionAccessor::MakeConst(&TDRing::GetPrimitives)));
-      for (size_t i = 0; i < app.GetRings().Count(); i++) {
-        if (app.GetRings()[i].GetPrimitives().GetTag() != (index_t)i) {
-          continue;
-        }
-        app.GetRings()[i].GetPrimitives().ClearPrimitives();
-        app.GetRings()[i].GetPrimitives().ClearObjects();
-      }
-      for (size_t i = 0; i < app.GetRings().Count(); i++) {
-        app.GetRings()[i].Create();
-      }
     }
     app.BondRad(r, &bonds);
   }
@@ -963,54 +949,48 @@ void GXLibMacros::macLabel(TStrObjList &Cmds, const TParamList &Options,
   const olxstr str_lt = Options.FindValue("type");
   olxstr str_symm_tag = Options.FindValue("symm");
   // enforce the default
-  if (str_lt.Containsi("brackets"))
+  if( str_lt.Equalsi("brackets") )
     lt = 1;
-  if (str_lt.Containsi("subscript") || str_lt.Containsi("sb"))
-    lt |= 2;
-  if (str_lt.Containsi("superscript") || str_lt.Containsi("sp"))
-    lt |= 4;
+  else if( str_lt.Equalsi("subscript") )
+    lt = 2;
   // have to kill labels in this case, for consistency of _$ or ^#
-  if (str_symm_tag =='$' || str_symm_tag == '#') {
-    for (size_t i=0; i < app.LabelCount(); i++)
+  if( str_symm_tag =='$' || str_symm_tag == '#' )  {
+    for( size_t i=0; i < app.LabelCount(); i++ )
       app.GetLabel(i).SetVisible(false);
     symm_tag = (str_symm_tag =='$' ? 1 : 2);
   }
-  else if (str_symm_tag.Equals("full"))
+  else if( str_symm_tag.Equals("full") )
     symm_tag = 3;
   TTypeList<uint32_t> equivs;
-  for (size_t i = 0; i < atoms.Count(); i++) {
+  for( size_t i=0; i < atoms.Count(); i++ )  {
     TXGlLabel& gxl = atoms[i]->GetGlLabel();
     olxstr lb;
-    if (lt != 0 &&
-      atoms[i]->GetLabel().Length() > atoms[i]->GetType().symbol.Length())
+    if( lt != 0 &&
+        atoms[i]->GetLabel().Length() > atoms[i]->GetType().symbol.Length() )
     {
       olxstr bcc = atoms[i]->GetLabel().SubStringFrom(
         atoms[i]->GetType().symbol.Length());
       lb = atoms[i]->GetType().symbol;
-      if ((lt & 1) == 1)
-        bcc =  olxstr('(') << bcc << ')';
-      if ((lt & 2) == 2)
+      if( lt == 1 )
+        lb << '(' << bcc << ')';
+      else if( lt == 2 )
         lb << "\\-" << bcc;
-      else if ((lt & 4) == 4)
-        lb << "\\+" << bcc;
-      else
-        lb << bcc;
     }
     else
       lb = atoms[i]->GetLabel();
-    if (!atoms[i]->IsAUAtom()) {
-      if (symm_tag == 1 || symm_tag == 2) {
+    if( !atoms[i]->IsAUAtom() )  {
+      if( symm_tag == 1 || symm_tag == 2 )  {
         size_t pos = equivs.IndexOf(atoms[i]->GetMatrix().GetId());
-        if (pos == InvalidIndex)  {
+        if( pos == InvalidIndex )  {
           equivs.AddCopy(atoms[i]->GetMatrix().GetId());
-          pos = equivs.Count() - 1;
+          pos = equivs.Count()-1;
         }
-        if (symm_tag == 1)
-          lb << "_$" << (pos + 1);
+        if( symm_tag == 1 )
+          lb << "_$" << (pos+1);
         else
-          lb << "\\+" << (pos + 1);
+          lb << "\\+" << (pos+1);
       }
-      else if (symm_tag == 3)
+      else if( symm_tag == 3 )
         lb << ' ' << TSymmParser::MatrixToSymmEx(atoms[i]->GetMatrix());
     }
     gxl.SetOffset(atoms[i]->crd());
@@ -1225,7 +1205,7 @@ void GXLibMacros::macShowQ(TStrObjList &Cmds, const TParamList &Options,
     app.UpdateConnectivity();
     app.Draw();
   }
-  else {
+  else  {
     if ((!app.AreQPeaksVisible() && !app.AreQPeakBondsVisible())) {
       app.SetQPeaksVisible(true);
     }
@@ -1507,18 +1487,12 @@ void GXLibMacros::macMpln(TStrObjList &Cmds, const TParamList &Options,
   if (rings_name.IsEmpty()) {
     TSPlane* plane = NULL;
     bool orientOnly = Options.Contains('n'),
-      reqular = Options.Contains('r');
-    size_t sides_n = 0;
-    if (reqular) {
-      olxstr v = Options.FindValue('r');
-      sides_n = (v.IsEmpty()) ? 4 : v.ToSizeT();
-      if (sides_n < 4) sides_n = 4;
-    }
+      rectangular = Options.Contains('r');
     olxstr name = Options.FindValue('n');
     const double weightExtent = olx_abs(Options.FindValue("we", "0").ToDouble());
     olxstr planeName;
     TXAtomPList Atoms = app.FindXAtoms(Cmds, true, true);
-    for (size_t i=0; i < Atoms.Count(); i++) {
+    for (size_t i=0; i < Atoms.Count(); i++ ) {
       planeName << Atoms[i]->GetLabel();
       if( i+1 < Atoms.Count() )
         planeName << ' ';
@@ -1540,8 +1514,8 @@ void GXLibMacros::macMpln(TStrObjList &Cmds, const TParamList &Options,
         plane = NULL;
       }
     }
-    else {
-      TXPlane* xp = app.AddPlane(name, Atoms, sides_n, weightExtent);
+    else  {
+      TXPlane* xp = app.AddPlane(name, Atoms, rectangular, weightExtent);
       if (xp != NULL)
         plane = xp;
     }
@@ -1560,7 +1534,7 @@ void GXLibMacros::macMpln(TStrObjList &Cmds, const TParamList &Options,
           if ((i + j) >= Atoms.Count())
             break;
           tab[i/colCount][j*3] = plane->GetAtom(i+j).GetLabel();
-          const double v = plane->DistanceTo(plane->GetAtom(i+j).crd());
+          const double v = plane->DistanceTo(plane->GetAtom(i+j).crd()); 
           rmsd += v*v;
           tab[i/colCount][j*3+1] = olxstr::FormatFloat(3, v);
         }
@@ -1624,13 +1598,13 @@ void GXLibMacros::macUniq(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &Error)
 {
   TXAtomPList Atoms = app.FindXAtoms(Cmds, false, true);
-  if (Atoms.IsEmpty()) {
-    olex2::IOlex2Processor::GetInstance()->processMacro("fmol");
+  if( Atoms.IsEmpty() )  {
+    Error.ProcessingError(__OlxSrcInfo, "no atoms provided");
     return;
   }
   TNetPList L(Atoms, FunctionAccessor::MakeConst(&TXAtom::GetNetwork));
   app.FragmentsVisible(app.InvertFragmentsList(
-    ACollectionItem::Unify(L)), false);
+    ACollectionItem::Unique(L)), false);
   app.CenterView(true);
   app.Draw();
 }
@@ -1638,15 +1612,6 @@ void GXLibMacros::macUniq(TStrObjList &Cmds, const TParamList &Options,
 void GXLibMacros::macGroup(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &Error)
 {
-  if (Options.GetBoolOption('u')) {
-    if (app.GetSelection().IsEmpty()) {
-      app.UngroupAll();
-    }
-    else {
-      app.UngroupSelection();
-    }
-    return;
-  }
   olxstr name = Options.FindValue('n');
   if (app.GetSelection().IsEmpty())
     app.SelectAll(true);
@@ -1696,7 +1661,7 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
     TNetPList nets(
       app.FindXAtoms(TStrObjList(Cmds.SubListFrom(1)), false, false),
       FunctionAccessor::MakeConst(&TXAtom::GetNetwork));
-    app.SelectFragments(ACollectionItem::Unify(nets), !Options.Contains('u'));
+    app.SelectFragments(ACollectionItem::Unique(nets), !Options.Contains('u'));
   }
   else if( Cmds.Count() == 1 && Cmds[0].Equalsi("res") )  {
     //app.GetRender().ClearSelection();
@@ -1728,7 +1693,7 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
     //      const TCAtom& ca1 = xb.A().CAtom();
     //      const TCAtom& ca2 = xb.B().CAtom();
     //      if( (ca1.GetId() == id1 && ca2.GetId() == id2) ||
-    //          (ca1.GetId() == id2 && ca2.GetId() == id1) )
+    //          (ca1.GetId() == id2 && ca2.GetId() == id1) )  
     //      {
     //        app.GetRender().Select(xb);
     //        break;
@@ -2172,29 +2137,28 @@ void GXLibMacros::macPiM(TStrObjList &Cmds, const TParamList &Options,
       rings[i][j]->SetTag(1);
     }
     c /= rings[i].Count();
-    ACollectionItem::Unify(ring_M[i]);
+    ACollectionItem::Unique(ring_M[i]);
     for( size_t j=0; j < ring_M[i].Count(); j++ )  {
-      TXLine *l = app.AddLine(ring_M[i][j]->GetLabel()+olxstr(i),
+      TXLine &l = app.AddLine(ring_M[i][j]->GetLabel()+olxstr(i),
         ring_M[i][j]->crd(), c);
-      if (l == NULL) continue;
       TGraphicsStyle &ms = ((TXAtom*)ring_M[i][j])->GetPrimitives().GetStyle();
       TGlMaterial *sm = ms.FindMaterial("Sphere");
       if (sm != NULL) {
-        l->GetPrimitives().GetStyle().SetMaterial(
+        l.GetPrimitives().GetStyle().SetMaterial(
           TXBond::GetStaticPrimitives()[9], *sm);
       }
-      l->UpdatePrimitives((1<<9)|(1<<10));
-      l->SetRadius(0.5);
+      l.UpdatePrimitives((1<<9)|(1<<10));
+      l.SetRadius(0.5);
       ring_M[i][j]->SetTag(2);
-      if (!label)
-        l->GetGlLabel().SetVisible(false);
+      if( !label )
+        l.GetGlLabel().SetVisible(false);
     }
     // hide replaced bonds
   }
   TGXApp::BondIterator bi = app.GetBonds();
-  while (bi.HasNext()) {
+  while( bi.HasNext() )  {
     TXBond &b = bi.Next();
-    if (b.A().GetTag() == 2 && b.B().GetTag() == 1)
+    if( b.A().GetTag() == 2 && b.B().GetTag() == 1 )
       b.SetVisible(false);
   }
 }
@@ -2203,28 +2167,11 @@ void GXLibMacros::macShowP(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &E)
 {
   TIntList parts;
-  for (size_t i=0; i < Cmds.Count(); i++) {
-    parts.Add(Cmds[i].ToInt());
+  if (!Cmds.IsEmpty())  {
+    for (size_t i=0; i < Cmds.Count(); i++)
+      parts.Add(Cmds[i].ToInt());
   }
   app.ShowPart(parts, true, Options.GetBoolOption('v'));
-  if (!Options.GetBoolOption('m'))
-    app.CenterView();
-}
-//.............................................................................
-void GXLibMacros::macShowR(TStrObjList &Cmds, const TParamList &Options,
-  TMacroError &E)
-{
-  TIntList numbers;
-  TStrList names;
-  for (size_t i = 0; i < Cmds.Count(); i++) {
-    if (Cmds[i].IsNumber()) {
-      numbers.Add(Cmds[i].ToInt());
-    }
-    else {
-      names.Add(Cmds[i]);
-    }
-  }
-  app.ShowResi(numbers, names, true, Options.GetBoolOption('v'));
   if (!Options.GetBoolOption('m'))
     app.CenterView();
 }
@@ -2236,11 +2183,11 @@ void main_CreateWBox(TGXApp& app, const TSAtomPList& atoms,
   const WBoxInfo bs = TXApp::CalcWBox(atoms, &all_radii, weight_c);
   static int obj_cnt = 0;
   if( print_info )  {
-    app.NewLogEntry() << "Wrapping box dimension: " <<
+    app.NewLogEntry() << "Wrapping box dimension: " << 
       olxstr::FormatFloat(3, bs.r_to[0]-bs.r_from[0]) << " x "  <<
       olxstr::FormatFloat(3, bs.r_to[1]-bs.r_from[1]) << " x "  <<
       olxstr::FormatFloat(3, bs.r_to[2]-bs.r_from[2]) << " A";
-    app.NewLogEntry() << "Wrapping box volume: " <<
+    app.NewLogEntry() << "Wrapping box volume: " << 
       olxstr::FormatFloat(3, (bs.r_to-bs.r_from).Prod()) << " A^3";
   }
   const vec3d nx = bs.normals[0]*bs.s_from[0];
@@ -2292,7 +2239,7 @@ void GXLibMacros::macWBox(TStrObjList &Cmds, const TParamList &Options,
   ElementRadii radii;
   TAsymmUnit& au = app.XFile().GetAsymmUnit();
   if( Cmds.Count() == 1 && TEFile::Exists(Cmds[0]) )
-    radii = TXApp::ReadRadii(Cmds[0]);
+    radii = TXApp::ReadVdWRadii(Cmds[0]);
   TXApp::PrintVdWRadii(radii, au.GetContentList());
   const bool use_aw = Options.Contains('w');
   if (Options.GetBoolOption('s')) {
@@ -2377,16 +2324,16 @@ void GXLibMacros::macCalcVoid(TStrObjList &Cmds, const TParamList &Options,
   ElementRadii radii;
   TAsymmUnit& au = app.XFile().GetAsymmUnit();
   if( Cmds.Count() == 1 && TEFile::Exists(Cmds[0]) )
-    radii = TXApp::ReadRadii(Cmds[0]);
+    radii = TXApp::ReadVdWRadii(Cmds[0]);
   TXApp::PrintVdWRadii(radii, au.GetContentList());
   TCAtomPList catoms;
   // consider the selection if any
   TGlGroup& sel = app.GetSelection();
   for( size_t i=0; i < sel.Count(); i++ )  {
-    if( EsdlInstanceOf(sel[i], TXAtom) )
+    if( EsdlInstanceOf(sel[i], TXAtom) ) 
       catoms.Add(((TXAtom&)sel[i]).CAtom())->SetTag(catoms.Count());
   }
-  catoms.Pack(olx_alg::olx_not(ACollectionItem::IndexTagAnalyser()));
+  catoms.Pack(ACollectionItem::IndexTagAnalyser());
   if( catoms.IsEmpty() ) {
     TBasicApp::NewLogEntry() <<
      "Calculating for all atoms of the asymmetric unit";
@@ -2397,9 +2344,9 @@ void GXLibMacros::macCalcVoid(TStrObjList &Cmds, const TParamList &Options,
   }
   olxstr_dict<olxstr> rv;
   double surfdis = rv('d', Options.FindValue('d', '0')).ToDouble();
-
+  
   TBasicApp::NewLogEntry() << "Extra distance from the surface: " << surfdis;
-
+  
   float resolution = Options.FindValue("r", "0.2").ToFloat();
   if( resolution < 0.005 )
     resolution = 0.005;
@@ -2463,7 +2410,7 @@ void GXLibMacros::macCalcVoid(TStrObjList &Cmds, const TParamList &Options,
   }
   TBasicApp::NewLogEntry() << (catoms.IsEmpty() ? "Structure occupies"
     : "Selected atoms occupy")
-    << " (A^3) " << olxstr::FormatFloat(2, structureGridPoints*vol/mapVol)
+    << " (A^3) " << olxstr::FormatFloat(2, structureGridPoints*vol/mapVol) 
     << " (" << olxstr::FormatFloat(2, structureGridPoints*100/mapVol) << "%)";
 
   double totalVol = 0;
@@ -2540,7 +2487,7 @@ void GXLibMacros::macDirection(TStrObjList &Cmds, const TParamList &Options,
         }
       }
     }
-    if( !app.XGrid().IsEmpty() && app.XGrid().IsVisible() &&
+    if( !app.XGrid().IsEmpty() && app.XGrid().IsVisible() && 
       (app.XGrid().GetRenderMode()&(planeRenderModeContour|planeRenderModePlane)) != 0 )
     {
       const vec3d center(app.GetRender().GetBasis().GetCenter());
@@ -2578,29 +2525,22 @@ void GXLibMacros::macIndividualise(TStrObjList &Cmds, const TParamList &Options,
     app.Individualise(atoms);
     app.Individualise(bonds);
   }
-  else {
+  else
     app.Individualise(app.FindXAtoms(Cmds, false, false).GetObject());
-  }
 }
 //..............................................................................
 void GXLibMacros::macCollectivise(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &E)
 {
-  if (Cmds.IsEmpty()) {
+  if( Cmds.IsEmpty() )  {
     TGlGroup& glg = app.GetSelection();
     TXAtomPList atoms;
     TXBondPList bonds;
-    for (size_t i=0; i < glg.Count(); i++) {
-      if (EsdlInstanceOf(glg[i], TXAtom))
+    for( size_t i=0; i < glg.Count(); i++ )  {
+      if( EsdlInstanceOf(glg[i], TXAtom) )
         atoms.Add((TXAtom&)glg[i]);
-      else if (EsdlInstanceOf(glg[i], TXBond))
+      else if( EsdlInstanceOf(glg[i], TXBond) )
         bonds.Add((TXBond&)glg[i]);
-    }
-    if (atoms.IsEmpty() && bonds.IsEmpty()) {
-      app.ClearIndividualCollections();
-      TXAtom::NamesRegistry().Clear();
-      TXBond::NamesRegistry().Clear();
-      app.CreateObjects(false, false);
     }
     app.Collectivise(atoms);
     app.Collectivise(bonds);
@@ -2614,36 +2554,15 @@ void GXLibMacros::macLstGO(TStrObjList &Cmds, const TParamList &Options,
 {
   TStrList output;
   output.SetCapacity( app.GetRender().CollectionCount() );
-  for (size_t i=0; i < app.GetRender().CollectionCount(); i++) {
+  for( size_t i=0; i < app.GetRender().CollectionCount(); i++ )  {
     TGPCollection& gpc = app.GetRender().GetCollection(i);
     output.Add( gpc.GetName() ) << '[';
-    for (size_t j=0; j < gpc.PrimitiveCount(); j++) {
+    for( size_t j=0; j < gpc.PrimitiveCount(); j++ )  {
       output.GetLastString() << gpc.GetPrimitive(j).GetName();
       if( (j+1) < gpc.PrimitiveCount() )
         output.GetLastString() << ';';
     }
     output.GetLastString() << "]->" << gpc.ObjectCount();
-  }
-  if (!TXAtom::NamesRegistry().IsEmpty()) {
-    output.Add("Named collections, atoms:");
-    for (size_t i = 0; i < TXAtom::NamesRegistry().Count(); i++) {
-      output.Add(TXAtom::NamesRegistry().GetKey(i)) << ": " <<
-        TXAtom::NamesRegistry().GetValue(i);
-    }
-  }
-  if (!TXBond::NamesRegistry().IsEmpty()) {
-    output.Add("Named collections, bonds:");
-    for (size_t i = 0; i < TXBond::NamesRegistry().Count(); i++) {
-      output.Add(TXBond::NamesRegistry().GetKey(i)) << ": " <<
-        TXBond::NamesRegistry().GetValue(i);
-    }
-  }
-  if (!TXPlane::NamesRegistry().IsEmpty()) {
-    output.Add("Named collections, planes:");
-    for (size_t i = 0; i < TXPlane::NamesRegistry().Count(); i++) {
-      output.Add(TXPlane::NamesRegistry().GetKey(i)) << ": " <<
-        TXPlane::NamesRegistry().GetValue(i);
-    }
   }
   TBasicApp::NewLogEntry() << output;
 }
@@ -2847,7 +2766,7 @@ void GXLibMacros::macEsd(TStrObjList &Cmds, const TParamList &Options,
         }
         TSBond& sb = ((TXBond&)sel[ EsdlInstanceOf(sel[0], TXBond) ? 0 : 1]);
         TEValue<double> v(vcovc.CalcP2VAngle(atoms, sb.A(), sb.B())),
-          v1(180 - v.GetV(), v.GetE());
+          v1(180-v.GetV(), v.GetE());
         values.Add(sb.A().GetLabel()) << '-' << sb.B().GetLabel() << " to plane "
           << pld << "angle: " << v.ToString() << '(' << v1.ToString() << ')';
       }
@@ -2877,14 +2796,9 @@ void GXLibMacros::macEsd(TStrObjList &Cmds, const TParamList &Options,
         if( olx_abs(angle.GetV()) > 1e-6 )  {
           values.Add("Plane [") << pld2 << "] to plane centroid distance: " <<
             vcovc.CalcP2PCDistance(p2, p1).ToString() << " A";
-          values.Add("Plane [") << pld2 << "] to plane shift: " <<
+          values.Add("Plane [") << pld2 << "] to plane shift distance: " <<
             vcovc.CalcP2PShiftDistance(p2, p1).ToString() << " A";
         }
-        values.Add("Plane ") << pld1 << "to plane twist angle: " <<
-          vcovc.CalcP2PTAngle(p1, p2).ToString();
-        values.Add("Plane ") << pld1 << "to plane fold angle: " <<
-          vcovc.CalcP2PFAngle(p1, p2).ToString();
-
         if (xp1.Count() == xp2.Count() && xp1.Count() == 3) {
           TSAtomPList atoms(6), sorted_atoms;
           for (size_t i=0; i < 3; i++) {
@@ -3032,11 +2946,11 @@ void GXLibMacros::macEsd(TStrObjList &Cmds, const TParamList &Options,
             TEValue<double> rv = vcovc.CalcOHDistortionBP(
               TSAtomCPList(sorted_atoms));
             total_val_bp += rv.GetV()*3;
-            total_esd_bp += olx_sqr(rv.GetE());
+            total_esd_bp += olx_sqr(rv.GetE()); 
             rv = vcovc.CalcOHDistortion(
               TSAtomCPList(sorted_atoms));
             total_val += rv.GetV()*3;
-            total_esd += olx_sqr(rv.GetE());
+            total_esd += olx_sqr(rv.GetE()); 
             values.GetLastString() << rv.ToString();
           }
         }
@@ -3097,7 +3011,7 @@ void GXLibMacros::macChemDraw(TStrObjList &Cmds, const TParamList &Options,
 {
   app.CreateRings(true, true);
   TGXApp::BondIterator bi = app.GetBonds();
-  sorted::PointerPointer<TGPCollection> cols;
+  SortedPtrList<TGPCollection, TPointerComparator> cols;
   TPtrList<TXBond> changed;
   while (bi.HasNext()) {
     TXBond &b = bi.Next();
@@ -3206,8 +3120,8 @@ void GXLibMacros::macPoly(TStrObjList &Cmds, const TParamList &Options,
   TXAtomPList atoms = app.FindXAtoms(Cmds, true, true);
   atoms.ForEach(ACollectionItem::IndexTagSetter(
     FunctionAccessor::MakeConst(&TXAtom::GetPrimitives)));
-  atoms.Pack(olx_alg::olx_not(ACollectionItem::IndexTagAnalyser(
-    FunctionAccessor::MakeConst(&TXAtom::GetPrimitives))));
+  atoms.Pack(ACollectionItem::IndexTagAnalyser(
+    FunctionAccessor::MakeConst(&TXAtom::GetPrimitives)));
   for (size_t i=0; i < atoms.Count(); i++)
     atoms[i]->SetPolyhedronType(pt);
 }
@@ -3301,7 +3215,7 @@ void GXLibMacros::macKill(TStrObjList &Cmds, const TParamList &Options,
 }
 //.............................................................................
 TNetwork::AlignInfo GXLibMacros_MatchAtomPairsQT(
-  const TTypeList<olx_pair_t<TSAtom*,TSAtom*> >& atoms,
+  const TTypeList<AnAssociation2<TSAtom*,TSAtom*> >& atoms,
   bool TryInversion, double (*weight_calculator)(const TSAtom&),
   bool print = true)
 {
@@ -3322,7 +3236,7 @@ TNetwork::AlignInfo GXLibMacros_MatchAtomPairsQT(
 }
 //..............................................................................
 TNetwork::AlignInfo GXLibMacros_MatchAtomPairsQTEsd(
-  const TTypeList< olx_pair_t<TSAtom*,TSAtom*> >& atoms,
+  const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms,
   bool TryInversion, double (*weight_calculator)(const TSAtom&))
 {
   TXApp& xapp = TXApp::GetInstance();
@@ -3385,7 +3299,7 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
     StartMatchCBName, TStrList() << EmptyString());
   const bool TryInvert = Options.GetBoolOption('i');
   double (*weight_calculator)(const TSAtom&) = &TSAtom::weight_unit;
-
+  
   if (Options.Contains('w')) {
     olxstr w = Options.FindValue('w', "zo").ToLowerCase();
     if (w == 'o')
@@ -3414,7 +3328,7 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
     if (atoms.Count() == 2 &&
         (&atoms[0]->GetNetwork() != &atoms[1]->GetNetwork()))
     {
-      TTypeList<olx_pair_t<size_t, size_t> > res;
+      TTypeList<AnAssociation2<size_t, size_t> > res;
       TSizeList sk;
       TNetwork &netA = atoms[0]->GetNetwork(),
         &netB = atoms[1]->GetNetwork();
@@ -3429,7 +3343,7 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
             : netA.GetLattice();
           latt1.RestoreADPs();
         }
-        TTypeList< olx_pair_t<TSAtom*,TSAtom*> > satomp;
+        TTypeList< AnAssociation2<TSAtom*,TSAtom*> > satomp;
         TSAtomPList atomsToTransform;
         for (size_t i=0; i < res.Count(); i++) {
           if (!atomsToTransform.Contains(&netB.Node(res[i].GetB()))) {
@@ -3501,7 +3415,7 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
             center *= -1;
           }
           vec3d total_t = align_info.align_out.center_a-center*m;
-          sorted::PrimitiveAssociation<double, size_t> sorted_pairs;
+          TPSTypeList<double, size_t> sorted_pairs;
           for (size_t i=0; i < res.Count(); i++) {
             vec3d v = au.Orthogonalise(netB.Node(res[i].GetB()).ccrd());
             v = v*m + total_t;
@@ -3517,7 +3431,7 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
             "Dist/A";
           TBasicApp::NewLogEntry() << "Matching pairs:";
           for (size_t i=0; i < sorted_pairs.Count(); i++) {
-            size_t idx = sorted_pairs.GetValue(i);
+            size_t idx = sorted_pairs.GetObject(i);
             size_t c_off = (i%4)*3, r_i = i/4;
             tab[r_i][c_off+0] = netA.Node(res[idx].GetA()).GetLabel();
             tab[r_i][c_off+1] = netB.Node(res[idx].GetB()).GetLabel();
@@ -3648,7 +3562,7 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
     // a full basis provided
     else if (atoms.Count() >= 3*group_cnt && (atoms.Count()%group_cnt) == 0) {
       const size_t atom_a_group = atoms.Count()/group_cnt;
-      TTypeList<olx_pair_t<TSAtom*,TSAtom*> > satomp(atom_a_group);
+      TTypeList<AnAssociation2<TSAtom*,TSAtom*> > satomp(atom_a_group);
       // fill the reference group
       for (size_t i=0; i < atom_a_group; i++)
         satomp[i].SetA(atoms[i]);
@@ -3703,12 +3617,12 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
       if (!nets[i]->IsSuitableForMatching() || matched[i])  continue;
       for (size_t j=i+1; j < nets.Count(); j++) {
         if (!nets[j]->IsSuitableForMatching() || matched[j])  continue;
-        TTypeList<olx_pair_t<size_t, size_t> > res;
+        TTypeList<AnAssociation2<size_t, size_t> > res;
         if (!nets[i]->DoMatch(*nets[j], res, false, weight_calculator))
           continue;
         match_cnt++;
         matched.SetTrue(j);
-        TTypeList<olx_pair_t<TSAtom*,TSAtom*> > ap;
+        TTypeList<AnAssociation2<TSAtom*,TSAtom*> > ap;
         for( size_t k=0; k < res.Count(); k++ ) {
           if (exclude_h && nets[i]->Node(res[k].GetA()).GetType() == 1)
             continue;
@@ -3740,7 +3654,7 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
         //inertia<>::out io2;
         //if (ra_i.inverted) {
         //  io2 = inertia<>::calc(nets[j]->GetNodes(),
-        //    olx_alg::olx_chsig(FunctionAccessor::Make(&TSAtom::crd)),
+        //    olx_alg::olx_minus(FunctionAccessor::Make(&TSAtom::crd)),
         //    FunctionAccessor::MakeStatic(&TSAtom::weight_occu_z));
         //    io2.center *= -1;
         //    io2.axis *= -1;
@@ -3774,7 +3688,7 @@ olxstr GXLibMacros_funMatchNets(TNetwork& netA, TNetwork& netB, bool invert,
   bool verbose,
   double (*w_c)(const TSAtom&))
 {
-  TTypeList<olx_pair_t<size_t, size_t> > res;
+  TTypeList<AnAssociation2<size_t, size_t> > res;
   TSizeList sk;
   bool match = false;
   try  {  match = netA.DoMatch(netB, res, invert, w_c);  }
@@ -3783,7 +3697,7 @@ olxstr GXLibMacros_funMatchNets(TNetwork& netA, TNetwork& netB, bool invert,
   }
   if( match )  {
     olxstr rv;
-    TTypeList<olx_pair_t<TSAtom*,TSAtom*> > satomp;
+    TTypeList<AnAssociation2<TSAtom*,TSAtom*> > satomp;
     for( size_t i=0; i < res.Count(); i++ ) {
       satomp.AddNew<TSAtom*,TSAtom*>(
         &netA.Node(res[i].GetA()), &netB.Node(res[i].GetB()));
@@ -3793,7 +3707,7 @@ olxstr GXLibMacros_funMatchNets(TNetwork& netA, TNetwork& netB, bool invert,
     rv = olxstr::FormatFloat(3, align_info.rmsd.GetV());
     mat3d m;
     QuaternionToMatrix(align_info.align_out.quaternions[0], m);
-    sorted::PrimitiveAssociation<double, olx_pair_t<TSAtom*,TSAtom*>*> pairs;
+    TPSTypeList<double, AnAssociation2<TSAtom*,TSAtom*>*> pairs;
     pairs.SetCapacity(satomp.Count());
     const TAsymmUnit& au2 =
       satomp[0].GetB()->GetNetwork().GetLattice().GetAsymmUnit();
@@ -3810,16 +3724,16 @@ olxstr GXLibMacros_funMatchNets(TNetwork& netA, TNetwork& netB, bool invert,
       for( size_t i=0; i < pairs.Count(); i++ )  {
         size_t index = pairs.Count() - i -1;
         rv << olxstr::FormatFloat(3, pairs.GetKey(index)) << "(";
-        rv << pairs.GetValue(index)->GetA()->GetLabel() << ',' <<
-          pairs.GetValue(index)->GetB()->GetLabel() << ')';
+        rv << pairs.GetObject(index)->GetA()->GetLabel() << ',' <<
+          pairs.GetObject(index)->GetB()->GetLabel() << ')';
         if( i+1 < pairs.Count() )
           rv << ',';
       }
     }
     else  {
       rv << olxstr::FormatFloat(3, pairs.GetLastKey()) << "(";
-      rv << pairs.GetLastValue()->GetA()->GetLabel() << ',' <<
-        pairs.GetLastValue()->GetB()->GetLabel() << ')';
+      rv << pairs.GetLastObject()->GetA()->GetLabel() << ',' <<
+        pairs.GetLastObject()->GetB()->GetLabel() << ')';
     }
     return rv << '}';
   }
@@ -3834,13 +3748,13 @@ TStrList TMainForm_funMatchNets1(TNetwork& netA, TNetwork& netB, bool verbose)
     TSAtom::weight_unit);
   if( r == XLibMacros::NAString() )  return rv;
   rv.Add("Fragment content: ") << netA.GetFormula();
-  rv.Add("inverted:false,weight:unit=") << r;
+  rv.Add("inverted:false,weight:unit=") << r; 
   rv.Add("inverted:false,weight:Z=") <<
     GXLibMacros_funMatchNets(netA, netB, false, verbose, TSAtom::weight_z);
   rv.Add("inverted:true,weight:unit=") <<
-    GXLibMacros_funMatchNets(netA, netB, true, verbose, TSAtom::weight_unit);
+    GXLibMacros_funMatchNets(netA, netB, true, verbose, TSAtom::weight_unit); 
   rv.Add("inverted:true,weight:Z=") <<
-    GXLibMacros_funMatchNets(netA, netB, true, verbose, TSAtom::weight_z);
+    GXLibMacros_funMatchNets(netA, netB, true, verbose, TSAtom::weight_z); 
   return rv;
 }
 TStrList GXLibMacros_funMatchLatts(TLattice& lattA, TLattice& lattB,
@@ -3918,341 +3832,5 @@ void GXLibMacros::funMatchFiles(const TStrObjList& Params, TMacroError &E)  {
   }
   catch(...)  {}
   E.SetRetVal(XLibMacros::NAString());
-}
-//..............................................................................
-void GXLibMacros::funSelName(const TStrObjList& Params, TMacroError &E)  {
-  TGlGroup& sel = app.GetSelection();
-  if (sel.Count() == 1) {
-    E.SetRetVal(sel[0].GetCollectionName());
-  }
-  else {
-    E.SetRetVal(EmptyString());
-  }
-}
-//..............................................................................
-void GXLibMacros::macSetMaterial(TStrObjList &Cmds, const TParamList &Options,
-  TMacroError &E)
-{
-  TGlMaterial* mat = NULL;
-  TGlMaterial glm;
-  glm.FromString(Cmds[1], true);
-  sorted::PointerPointer<TGPCollection> colls;
-  size_t di = Cmds[0].IndexOf('.');
-  olxstr col_name = di != InvalidIndex ? Cmds[0].SubStringTo(di) : Cmds[0];
-  olxstr prm_name = di != InvalidIndex ? Cmds[0].SubStringFrom(di + 1)
-    : EmptyString();
-  if (col_name.Equalsi("sel")) {
-    TGlGroup &g = app.GetSelection();
-    for (size_t i = 0; i < g.Count(); i++) {
-      colls.AddUnique(&g[i].GetPrimitives());
-    }
-  }
-  else {
-    TGPCollection* gpc = app.GetRender().FindCollection(col_name);
-    if (gpc != 0) {
-      colls.Add(gpc);
-    }
-    else {  // try to modify the style then, if exists
-      bool found = false;
-      TGraphicsStyle* gs = app.GetRender().GetStyles().FindStyle(col_name);
-      if (gs != NULL) {
-        mat = gs->FindMaterial(prm_name);
-        if (mat != NULL)  {
-          *mat = glm;
-          found = true;
-        }
-      }
-      if (!found) {
-        E.ProcessingError(__OlxSrcInfo, "Undefined style ").quote() <<
-          Cmds[0];
-      }
-    }
-  }
-  for (size_t ci = 0; ci < colls.Count(); ci++) {
-    bool found = false;
-    if (!prm_name.IsEmpty()) {
-      TGlPrimitive* glp = colls[ci]->FindPrimitiveByName(prm_name);
-      if (glp != NULL)  {
-        glp->SetProperties(glm);
-        colls[ci]->GetStyle().SetMaterial(prm_name, glm);
-        found = true;
-      }
-    }
-    else {
-      for (size_t i = 0; i < colls[ci]->ObjectCount(); i++)  {
-        TGlGroup *glg = dynamic_cast<TGlGroup*>(&colls[ci]->GetObject(i));
-        if (glg != NULL) {
-          glg->SetGlM(glm);
-          found = true;
-        }
-      }
-    }
-    if (!found) {
-      TBasicApp::NewLogEntry(logError) << "Collection '" << colls[ci]->GetName()
-        << "' is not processed";
-    }
-  }
-}
-//..............................................................................
-void GXLibMacros::funGetMaterial(const TStrObjList &Params, TMacroError &E) {
-  const TGlMaterial* mat = NULL;
-  size_t di = Params[0].IndexOf('.');
-  olxstr col_name = di != InvalidIndex ? Params[0].SubStringTo(di) : Params[0];
-  olxstr prm_name = di != InvalidIndex ? Params[0].SubStringFrom(di + 1)
-    : EmptyString();
-  TGPCollection* gpc = NULL;
-  if (col_name.Equalsi("sel")) {
-    TGlGroup &g = app.GetSelection();
-    if (g.Count() != 1) {
-      E.ProcessingError(__OlxSrcInfo, "Please select one object only");
-      return;
-    }
-    gpc = &g[0].GetPrimitives();
-  }
-  if (gpc != NULL) {
-    if (prm_name.IsEmpty()) {
-      if (EsdlInstanceOf(*gpc, TGlGroup))
-        mat = &((TGlGroup*)gpc)->GetGlM();
-    }
-    else {
-      TGlPrimitive* glp = gpc->FindPrimitiveByName(prm_name);
-      if (glp != NULL)
-        mat = &glp->GetProperties();
-    }
-  }
-  else {  // check if the style exists
-    TGraphicsStyle* gs = app.GetRender().GetStyles().FindStyle(col_name);
-    if (gs != NULL) {
-      if (prm_name.IsEmpty()) {
-        mat = gs->FindMaterial("mat");
-      }
-      else {
-        mat = gs->FindMaterial(prm_name);
-      }
-    }
-  }
-  if (mat == NULL) {
-    E.ProcessingError(__OlxSrcInfo, "Undefined material ").quote() <<
-      Params[0];
-    return;
-  }
-  else {
-    if (Params.Count() == 2)
-      E.SetRetVal(mat->ToPOV());
-    else
-      E.SetRetVal(mat->ToString());
-  }
-}
-//..............................................................................
-void GXLibMacros::macDefineVar(TStrObjList &Cmds, const TParamList &Options,
-  TMacroError &E)
-{
-  RefinementModel &rm = app.XFile().GetRM();
-  CalculatedVars &cv = rm.CVars;
-  TGlGroup &g = app.GetSelection();
-  if (g.Count() == 2) {
-    if (EsdlInstanceOf(g[0], TXPlane) && EsdlInstanceOf(g[1], TXPlane)) {
-      CalculatedVars::Object
-        *p1 = CalculatedVars::Object::create((TXPlane&)g[0], cv),
-        *p2 = CalculatedVars::Object::create((TXPlane&)g[1], cv);
-      cv.AddVar(new CalculatedVars::Var(Cmds[0] + "cc"))
-        .AddRef(*p1, "c").AddRef(*p2, "c").type = cv_vt_distance;
-      cv.AddVar(new CalculatedVars::Var(Cmds[0] + "pc"))
-        .AddRef(*p1, "c").AddRef(*p2).type = cv_vt_distance;
-      cv.AddVar(new CalculatedVars::Var(Cmds[0] + "a"))
-        .AddRef(*p1).AddRef(*p2).type = cv_vt_angle;
-      cv.AddVar(new CalculatedVars::Var(Cmds[0] + "sa"))
-        .AddRef(*p1, "c").AddRef(*p2).type = cv_vt_shift;
-      cv.AddVar(new CalculatedVars::Var(Cmds[0] + "sb"))
-        .AddRef(*p1).AddRef(*p2, "c").type = cv_vt_shift;
-    }
-    else if ((EsdlInstanceOf(g[0], TXPlane) && EsdlInstanceOf(g[1], TXBond)) ||
-      (EsdlInstanceOf(g[1], TXPlane) && EsdlInstanceOf(g[0], TXBond)))
-    {
-      TXPlane &p = (TXPlane &)(g[EsdlInstanceOf(g[0], TXPlane) ? 0 : 1]);
-      TXBond &b = (TXBond &)(g[EsdlInstanceOf(g[0], TXPlane) ? 1 : 0]);
-      CalculatedVars::Object
-        *p1 = CalculatedVars::Object::create(p, cv),
-        *p2 = CalculatedVars::Object::create(b, cv);
-      cv.AddVar(new CalculatedVars::Var(Cmds[0]))
-        .AddRef(*p1, "n").AddRef(*p2).type = cv_vt_angle;
-    }
-    else if (EsdlInstanceOf(g[0], TXAtom) && EsdlInstanceOf(g[1], TXAtom)) {
-      CalculatedVars::Object
-        *p1 = CalculatedVars::Object::create((TXAtom &)g[0], cv),
-        *p2 = CalculatedVars::Object::create((TXAtom &)g[1], cv);
-      cv.AddVar(new CalculatedVars::Var(Cmds[0]))
-        .AddRef(*p1).AddRef(*p2).type = cv_vt_distance;
-    }
-  }
-  else if (g.Count() == 3 &&
-    olx_list_and_st(g, &olx_is<TXAtom, TGlGroup::list_item_type>))
-  {
-    CalculatedVars::Object
-      *p1 = CalculatedVars::Object::create((TXAtom &)g[0], cv),
-      *p2 = CalculatedVars::Object::create((TXAtom &)g[1], cv),
-      *p3 = CalculatedVars::Object::create((TXAtom &)g[2], cv);
-    cv.AddVar(new CalculatedVars::Var(Cmds[0]))
-      .AddRef(*p1).AddRef(*p2).AddRef(*p3).type = cv_vt_angle;
-
-  }
-  //
-}
-//..............................................................................
-void GXLibMacros::macProjSph(TStrObjList &Cmds, const TParamList &Options,
-  TMacroError &E)
-{
-  {
-    ElementRadii radii;
-    if (Cmds.Count() == 1 && TEFile::Exists(Cmds[0]))
-      radii = TXApp::ReadRadii(Cmds[0]);
-    ContentList cl = app.XFile().GetAsymmUnit().GetContentList();
-    for (size_t i = 0; i < cl.Count(); i++) {
-      cl[i].element.r_custom = radii.Find(&cl[i].element, cl[i].element.r_vdw);
-    }
-    TXApp::PrintCustomRadii(radii, cl);
-  }
-  TArrayList<uint32_t> colors;
-  for (size_t i = 0; i < Cmds.Count(); i++) {
-    if (Cmds[i].IsNumber())  {
-      colors.Add(Cmds[i].SafeUInt<uint32_t>());
-      Cmds.Delete(i--);
-    }
-  }
-  TXAtomPList xatoms = app.FindXAtoms(Cmds, false, true);
-  if (xatoms.Count() != 1) {
-    E.ProcessingError(__OlxSourceInfo, "one atom is expected");
-    return;
-  }
-  TBasicApp::NewLogEntry() << "Analysing : " << xatoms[0]->GetGuiLabel() <<
-    " environment";
-  static size_t counter = 0;
-  PointAnalyser &pa = *new PointAnalyser(*xatoms[0]);
-  pa.alpha = Options.FindValue('a', "0x9c").SafeUInt<uint8_t>();
-  pa.emboss = Options.GetBoolOption('e');
-  {
-    if (pa.colors.Count() == 1 && !colors.IsEmpty())
-      pa.colors[0] = colors[0];
-    else {
-      size_t cr = 0;
-      for (size_t i = 0; i < colors.Count(); i++) {
-        if (xatoms[0]->CAtom().GetFragmentId() == i)
-          cr = 1;
-        if (i + cr >= pa.colors.Count())
-          break;
-        pa.colors[i + cr] = colors[i];
-      }
-    }
-  }
-  size_t g = Options.FindValue('g', 6).ToSizeT();
-  if (g > 10)
-    g = 10;
-  TDSphere &sph = app.DSphere();
-  if (sph.IsCreated()) {
-    sph.GetPrimitives().ClearPrimitives();
-  }
-  sph.SetAnalyser(&pa);
-  sph.SetGeneration(g);
-  sph.SetVisible(true);
-  sph.Create();
-  sph.Basis.SetCenter(xatoms[0]->crd());
-  sph.Basis.SetZoom(2);
-  if (Options.GetBoolOption("group")) {
-    olxdict<uint32_t, TGlGroup *, TPrimitiveComparator> groups;
-    TGXApp::AtomIterator atoms = app.GetAtoms();
-    while (atoms.HasNext()) {
-      TXAtom &a = atoms.Next();
-      if (&a == xatoms[0] || !a.IsAvailable() || a.IsGrouped())
-        continue;
-      TGlGroup *glg = groups.Find(a.CAtom().GetFragmentId(), NULL);
-      if (glg == NULL) {
-        glg = &app.GetRender().NewGroup(
-          olxstr("Ligand") << (groups.Count() + 1));
-        groups.Add(a.CAtom().GetFragmentId(), glg)->Create();
-      }
-      glg->Add(a);
-    }
-    TGXApp::BondIterator bonds = app.GetBonds();
-    while (bonds.HasNext()) {
-      TXBond &b = bonds.Next();
-      if (!b.IsAvailable() || b.IsGrouped())
-        continue;
-      TGlGroup *glg = groups.Find(b.A().CAtom().GetFragmentId(), NULL);
-      if (glg == NULL) {
-        glg = &app.GetRender().NewGroup(
-          olxstr("Ligand") << (groups.Count() + 1));
-        groups.Add(b.A().CAtom().GetFragmentId(), glg)->Create();
-      }
-      glg->Add(b);
-    }
-    for (size_t i = 0; i < groups.Count(); i++) {
-      TGlMaterial glm = groups.GetValue(i)->GetGlM();
-      glm.AmbientF = pa.colors[groups.GetKey(i)];
-      glm.DiffuseF = pa.colors[groups.GetKey(i)];
-      glm.SetTransparent(false);
-      groups.GetValue(i)->SetGlM(glm);
-    }
-  }
-  TTable table_l(0, 3), table_o(0, 2);
-  table_l.ColName(0) = "Ligand id";
-  table_l.ColName(1) = "Area total, %";
-  table_l.ColName(2) = "Area indiviual, %";
-  olxdict<TNetwork *, olx_pair_t<double, TSAtom *>, TPointerComparator> li;
-  olxdict<TNetwork *, size_t, TPointerComparator> ri;
-  for (size_t i = 0; i < pa.areas.Count(); i++) {
-    olxstr legend;
-    double prc = (double)(pa.areas.GetValue(i) * 100) / sph.GetVectorCount();
-    if (pa.areas.GetKey(i).IsEmpty()) {
-      legend = "Accessible";
-    }
-    else {
-      legend.SetLength(0);
-      TStrList toks(pa.areas.GetKey(i), ';');
-      for (size_t j = 0; j < toks.Count(); j++) {
-        TNetwork &n = app.XFile().GetLattice().GetFragment(toks[j].ToSizeT());
-        if (toks.Count() == 1) {
-          ri(&n, table_l.RowCount());
-        }
-        if (n.NodeCount() == 0) continue;
-        TSAtom *a = &n.Node(0);
-        for (size_t j = 1; j < n.NodeCount(); j++) {
-          if (a->GetType() < n.Node(j).GetType()) {
-            a = &n.Node(j);
-          }
-        }
-        if (!legend.IsEmpty()) {
-          legend << ',';
-        }
-        legend << a->GetGuiLabel();
-        li(&n, olx_pair_t<double, TSAtom *>(0, a)).a += prc;
-      }
-    }
-    bool lo = !pa.areas.GetKey(i).Contains(';');
-    TStrList &r = (lo ? table_l : table_o).AddRow();
-    r[0] = legend;
-    r[lo ? 2 : 1] = olxstr::FormatFloat(2, prc);
-  }
-  app.XFile().GetLattice().GetObjects().atoms.ForEach(
-    ACollectionItem::TagSetter(-1));
-  for (size_t i = 0; i < ri.Count(); i++) {
-    if (ri.GetValue(i) < table_l.RowCount()) {
-      size_t ix = li.IndexOf(ri.GetKey(i));
-      table_l[ri.GetValue(i)][1] = olxstr::FormatFloat(2, li.GetValue(ix).a);
-      li.GetValue(ix).b->SetTag(0);
-    }
-  }
-  for (size_t i = 0; i < li.Count(); i++) {
-    if (li.GetValue(i).b->GetTag() == 0) continue;
-    TStrList &row = table_l.AddRow();
-    row[0] = li.GetValue(i).b->GetGuiLabel();
-    row[1] = olxstr::FormatFloat(2, li.GetValue(i).a);
-    row[2] = '-';
-  }
-  TBasicApp::NewLogEntry() <<
-    table_l.CreateTXTList("Area coverage by ligand, unique (%)", true, false, ' ');
-  TBasicApp::NewLogEntry() <<
-    table_o.CreateTXTList("Overlapping area (%)", false, false, ' ');
-  TBasicApp::NewLogEntry() << "For the use of solid angles, see: "
-    "Guzei, I.A., Wendt, M.Dalton Trans., 2006, 3991-3999.";
 }
 //..............................................................................

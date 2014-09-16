@@ -20,8 +20,8 @@ void TXDMas::LoadFromStrings(const TStrList& Strings)  {
 
   GetAsymmUnit().Clear();
 
-  TStrList crds = TEFile::ReadLines(crdfn),
-    symm;
+  TStrList crds, symm;
+  crds.LoadFromFile(crdfn);
   bool CellFound = false, LattFound = false;
   double Q[6];
 
@@ -64,8 +64,8 @@ void TXDMas::LoadFromStrings(const TStrList& Strings)  {
         throw TFunctionFailedException(__OlxSourceInfo,
           "invalid LATT instruction");
       }
-      olxch centroflag = olxstr::o_toupper(toks[1][0]);
-      olxch centering = olxstr::o_toupper(toks[2][0]);
+      olxch centroflag = olxstr::o_toupper(toks[1][0]); 
+      olxch centering = olxstr::o_toupper(toks[2][0]); 
       TCLattice* latt = TSymmLib::GetInstance().FindLattice(centering);
       if (latt == NULL) {
         throw TFunctionFailedException(__OlxSourceInfo,

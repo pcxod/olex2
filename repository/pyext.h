@@ -14,6 +14,17 @@
 #include "etbuffer.h"
 
 #ifdef _PYTHON
+#if defined __APPLE__ && defined __MACH__
+  #include "Python/python.h"
+#else
+  #ifdef _DEBUG
+    #undef _DEBUG
+    #include "Python.h"
+    #define _DEBUG
+  #else
+    #include "Python.h"
+  #endif
+#endif
 //---------------------------------------------------------------------------
 using namespace olex2;
 typedef void (*pyRegFunc)();
@@ -153,7 +164,7 @@ public:
       return PyUnicode_FromWideChar(L"", 0);
     return PyUnicode_FromWideChar(str.raw_str(), str.Length());
   }
-// parsing string
+// parsing string 
   static olxstr ParseStr(PyObject *pobj) {
     char*  crv;
     olxstr rv;

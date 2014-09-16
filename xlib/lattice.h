@@ -22,7 +22,6 @@
 #include "macroerror.h"
 #include "library.h"
 #include "bitarray.h"
-#include "math/geom.h"
 
 BeginXlibNamespace()
 
@@ -91,25 +90,15 @@ public:
   void AddLatticeContent(const TLattice& latt);
   // generates atoms inside the unit cell only
   void GenerateCell();
-  void Generate(const IVolumeValidator &validator, bool clear_content);
   /* generates atoms inside the given box, the volume is
   given by 6 planes defined by normal and centres
   */
   void GenerateBox(const vec3d_alist& norms, const vec3d_alist& centres,
-    bool clear_content)
-  {
-    Generate(BoxVolumeValidator(norms, centres), clear_content);
-  }
-  /* generates asymmetric units within sphere volume at center */
-  void GenerateSphere(const vec3d& center, double rad,
-    bool clear_content)
-  {
-    Generate(SphereVolumeValidator(center, rad), clear_content);
-  }
+    bool clear_content);
   // generates atoms within specified volume
   void Generate(const vec3d& MFrom, const vec3d& MTo, TCAtomPList* Template,
     bool ClearCont);
-  /* generates asymmetric units within sphere volume at center */
+  // generates atoms within sphere volume at center
   void Generate(const vec3d& center, double rad, TCAtomPList* Template,
     bool ClearCont);
   // checks if there are more than one matrix
@@ -143,7 +132,7 @@ public:
   void GrowAtoms(const TCAtomPList& Atoms, const smatd_list& matrices);
   // returns the atom (generated or exisiting)
   TSAtom *GrowAtom(TCAtom& atom, const smatd& matrix);
-  // adds new asymmetric unit transformed by the given symop
+  // adds new asymmetric unit transformed by the given symop 
   void Grow(const smatd& transform);
   /* generates content using current matrices, the current content stays */
   void GenerateWholeContent(TCAtomPList* Template);
@@ -179,12 +168,9 @@ public:
   void RestoreAtom(const TSAtom::Ref& id);
 
   // for the grown structure might return more than one plane
-  TSPlanePList NewPlane(const TSAtomPList& Atoms, double weightExtent=0);
+  TSPlanePList NewPlane(const TSAtomPList& Atoms, double weightExtent=0,
+    bool regular=false);
   void ClearPlaneDefinitions()  {  PlaneDefs.Clear();  }
-  void SetPlaneDefinitions(const TTypeList<TSPlane::Def> &pd);
-  const TTypeList<TSPlane::Def> &GetPlaneDefinitions() const {
-    return PlaneDefs;
-  }
   //the plane must be deleted by the caller !
   TSPlane* TmpPlane(const TSAtomPList& Atoms, double weightExtent=0);
   TSAtomPList NewCentroid(const TSAtomPList& Atoms);
@@ -196,7 +182,7 @@ public:
   TAsymmUnit& GetAsymmUnit() const {  return *AsymmUnit; }
   void UpdateAsymmUnit();
   // re-creats unit cell U's and reinitialises atom U's
-  void RestoreADPs(bool restoreCoordinates=true);
+  void RestoreADPs(bool restoreCoordinates=true);  
   // re-calculates the cartesian coordinates of atoms
   void RestoreCoordinates();
   void MoveFragment(const vec3d& to, TSAtom& fragAtom);
@@ -285,3 +271,4 @@ public:
 
 EndXlibNamespace()
 #endif
+

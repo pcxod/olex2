@@ -15,9 +15,9 @@
 
 IEvaluator *TSFactoryRegister::Evaluator(const olxstr& name)  {
   TStrList toks(name, '.');
-  IEvaluatorFactory* factory = FactoryMap.Find(toks[0], NULL);
+  IEvaluatorFactory* factory = FactoryMap[toks[0]];
   toks.Delete(0);
-  return factory ? factory->Evaluator(toks.Text('.')) : NULL;
+  return factory?factory->Evaluator(toks.Text('.')):NULL;
 }
 // constructor to create instaces of registered evaluators
 TTSAtom_EvaluatorFactory::TTSAtom_EvaluatorFactory(
@@ -78,5 +78,5 @@ TSFactoryRegister::TSFactoryRegister()  {
 
 TSFactoryRegister::~TSFactoryRegister()  {
   for( size_t i=0; i < Factories.Count(); i++ )
-    delete Factories.GetValue(i);
+    delete Factories.GetObject(i);
 }

@@ -94,39 +94,36 @@ olxstr rotated_adp_constraint::Describe() const {
 //.............................................................................
 //.............................................................................
 //.............................................................................
+olxstr adirection::type_names[] = {"static", "vector", "normal"};
 const olxstr& adirection::GetName()  {
   static olxstr name("olex2.direction");
   return name;
 }
 //.............................................................................
 const olxstr &adirection::EncodeType(uint16_t type)  {
-  if (type == direction_static)
-    return type_names()[0];
-  else if (type == direction_vector)
-    return type_names()[1];
-  else if (type == direction_normal)
-    return type_names()[2];
-  else if (type == direction_centroid)
-    return type_names()[3];
+  if( type == direction_static )
+    return type_names[0];
+  else if( type == direction_vector )
+    return type_names[1];
+  else if( type == direction_normal )
+    return type_names[2];
   throw TInvalidArgumentException(__OlxSourceInfo, olxstr("type=") << type);
 }
 //.............................................................................
 uint16_t adirection::DecodeType(const olxstr &type)  {
-  if (type.Equalsi(type_names()[0]))
+  if( type.Equalsi(type_names[0]) )
     return direction_static;
-  else if (type.Equalsi(type_names()[1]))
+  else if( type.Equalsi(type_names[1]) )
     return direction_vector;
-  else if (type.Equalsi(type_names()[2]))
+  else if( type.Equalsi(type_names[2]) )
     return direction_normal;
-  else if (type.Equalsi(type_names()[3]))
-    return direction_centroid;
   throw TInvalidArgumentException(__OlxSourceInfo, olxstr("type=") << type);
 }
 //.............................................................................
 void adirection::FromToks(const TStrList& toks, RefinementModel& rm,
     TTypeList<adirection>& out)
 {
-  if ( toks.Count() < 4 )  return;
+  if( toks.Count() < 4 )  return;
   try  {
     uint16_t type = adirection::DecodeType(toks[0]);
     if( type == direction_static )  {
@@ -171,8 +168,6 @@ olxstr direction::Describe() const {
     rv = "vector through";
   else if( type == direction_normal)
     rv = "normal for";
-  else if (type == direction_centroid)
-    rv = "centroid for";
   return rv << " [" << olx_analysis::alg::label(atoms, ',') << ']';
 }
 //.............................................................................
@@ -268,34 +263,7 @@ adirection* direction::CreateFromDataItem(const TDataItem& di,
 }
 //.............................................................................
 vec3d direction::get() const {
-  if (atoms.IsEmpty()) {
-    throw TFunctionFailedException(__OlxSourceInfo, "empty atom list");
-  }
-  if (type == direction_vector || type == direction_normal) {
-    TAsymmUnit &au = *atoms[0].GetAtom()->GetParent();
-    TTypeList< olx_pair_t<vec3d, double> > Points;
-    Points.SetCapacity(atoms.Count());
-    for (size_t i = 0; i < atoms.Count(); i++)
-      Points.AddNew(au.Orthogonalise(atoms[i].ccrd()), 1.0);
-    mat3d normals;
-    vec3d rmsds, center;
-    TSPlane::CalcPlanes(Points, normals, rmsds, center);
-    if (type == direction_vector) {
-      return normals[2];
-    }
-    else {
-      return normals[0];
-    }
-  }
-  else if (type == direction_centroid) {
-    TAsymmUnit &au = *atoms[0].GetAtom()->GetParent();
-    vec3d cnt;
-    for (size_t i = 0; i < atoms.Count(); i++) {
-      cnt += au.Orthogonalise(atoms[i].ccrd());
-    }
-    return cnt / atoms.Count();
-  }
-  throw TFunctionFailedException(__OlxSourceInfo, "undefined object type");
+  return vec3d(0,0,0);
 }
 //.............................................................................
 //.............................................................................

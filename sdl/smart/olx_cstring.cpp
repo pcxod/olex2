@@ -77,7 +77,7 @@ TCString& TCString::operator << (const CharW &v)  {
   return *this;
 }
 
-#ifdef _UNICODE
+#ifdef _UNICODE  
   TIString TCString::ToString() const {  return TWString(*this);  }
 #else
   TIString TCString::ToString() const {  return *this;  }

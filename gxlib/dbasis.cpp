@@ -15,7 +15,7 @@
 #include "glprimitive.h"
 #include "pers_util.h"
 
-TDBasis::TDBasis(TGlRenderer& Render, const olxstr& collectionName) :
+TDBasis::TDBasis(TGlRenderer& Render, const olxstr& collectionName) : 
   AGlMouseHandlerImp(Render, collectionName),
   Zoom(1.0)
 {
@@ -38,7 +38,7 @@ TDBasis::~TDBasis()  {
 void TDBasis::SetAsymmUnit(TAsymmUnit& au)  {
   AU = &au;
   const size_t FontIndex = Parent.GetScene().FindFontIndexForType<TDBasis>();
-  for( int i=0; i < 3; i++ )  {
+  for( int i=0; i < 3; i++ )  {  
     //Labels[i]->SetCenter(FGlP->Vertices[i*2+1]);
     Labels[i]->SetFontIndex(FontIndex);
     Labels[i]->SetLabel(olxstr((char)('a'+i)));
@@ -65,7 +65,7 @@ void TDBasis::Create(const olxstr& cName)  {
   GlM.ShininessF = 128;
   GlM.SpecularF = 0x03030303;
   GlM.SpecularF = 0x03030303;
-
+  
   GlM1.SetFlags(0);
   GlM1.ShininessF = 128;
   GlM1.SpecularF = 0x03030303;
@@ -143,7 +143,7 @@ void TDBasis::Create(const olxstr& cName)  {
   EB = new TEBasis(*EB);  GlP->SetBasis(EB);  EB->NullCenter();
   GlP->Params[0] = ConeW/2;  GlP->Params[1] = ConeW/2;
   GlP->Params[2] = m[2].Length()/5; GlP->Params[3] = CQ; GlP->Params[4] = CQs;
-
+  
   Compile();
   for( int i=0; i < 3; i++ )
     Labels[i]->Create();

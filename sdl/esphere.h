@@ -14,11 +14,10 @@
 #include "typelist.h"
 BeginEsdlNamespace()
 
-// simple structure to contain three indeces to vertices
+// simple structure to contain three indeces to vertices 
 struct IndexTriangle {
   TVector3<size_t> vertices;
   size_t operator [] (size_t i) const { return vertices[i]; }
-  IndexTriangle() {}
   IndexTriangle(size_t i1, size_t i2, size_t i3) : vertices(i1,i2,i3)  {}
 };
 // Octahedron face provider
@@ -90,7 +89,7 @@ public:
     size_t nc = FaceProvider::face_count();
     for( size_t i=0; i < ext; i++ )
       nc += nc*3;
-
+    
     to.SetCapacity(nc+1);
     vo.SetCapacity(nc-1);
     for( size_t i=0; i < FaceProvider::vertex_count(); i++ )

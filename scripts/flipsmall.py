@@ -7,7 +7,7 @@ version = "110310"
 
  Charge Flipping for ab initio small-molecule structure determination
           A van der Lee, C.Dumas & L. Palatinus   (python version february 08th,  2010)
-          corrected bug in "forcesymmetry=yes" processing ins symcards.
+	  corrected bug in "forcesymmetry=yes" processing ins symcards.
 
  prepares input file for SUPERFLIP and EDMA program  (L. Palatinus)
 
@@ -68,18 +68,18 @@ cleanup=yes      ...... remove all intermediate files, keep only .res (default=y
     for i in range(1,len(s)):
        if  ".ins" in s[i]:
           if  os.path.isfile(s[i]):
-            files['insin']=s[i]
-            files['base']=os.path.splitext(files['insin'])[0]
-            files['hklin']=files['base']+".hkl"
+	    files['insin']=s[i]
+	    files['base']=os.path.splitext(files['insin'])[0]
+	    files['hklin']=files['base']+".hkl"
             if  not os.path.isfile(files['hklin']):
-                print "%s does not exist" % files['hklin']
-                sys.exit(1)
+         	print "%s does not exist" % files['hklin']
+	    	sys.exit(1)
             files['inflip']=files['base']+".inflip"
             files['m81']=files['base']+".m81"
             files['fliplog']=files['base']+".sflog"
             insfile_defined = True
-          else:
-            print "%s does not exist" % s[i]
+	  else:
+	    print "%s does not exist" % s[i]
             return False
 
        for k, v in flip_keywords.items():
@@ -102,12 +102,12 @@ cleanup=yes      ...... remove all intermediate files, keep only .res (default=y
     else:
        flip_keywords['derivesymmetry'] = "yes"
 
-    if olexrun:
+    if olexrun: 
        flip_keywords['logging'] = "no"
        flip_keywords['comments'] = "no"
-
+     
     exe['SF'] = flip_keywords['sflipversion']
-
+              
     if  ( flip_keywords['logging'] == "yes" ): log=open('/home/vdlee/unix/python/log.txt', "a")
 
     return True
@@ -138,35 +138,35 @@ def process_insfile(flip_keywords,files,derived_info):
     c=map(float,c)
     if ( abs(c[3] - 90.00)/90.00 < delta ) and ( abs(c[4]-90.00) / 90.00 < delta ) and ( abs(c[5]-90.00) / 90.00 < delta ) \
     and ( abs((c[0]-c[1]) / c[0]) < delta ) and ( abs((c[0]-c[2]) / c[0]) < delta ) \
-    and ( abs((c[1]-c[2]) / c[0]) < delta ):
+    and ( abs((c[1]-c[2]) / c[0]) < delta ): 
         derived_info['crsyst']='cubi'
-        derived_info['flipcell'] = str(c[0])+" "+str(c[0])+" "+str(c[0])+" 90.00 90.00 90.00"
+	derived_info['flipcell'] = str(c[0])+" "+str(c[0])+" "+str(c[0])+" 90.00 90.00 90.00"
     if ( abs(c[3] - 90.00)/90.00 < delta ) and ( abs(c[4]-90.00) / 90.00 < delta ) and ( abs(c[5]-90.00) / 90.00 < delta ) \
     and ( abs((c[0]-c[1]) / c[0]) < delta ) and ( abs((c[0]-c[2]) / c[0]) > delta ) \
-    and ( abs((c[1]-c[2]) / c[0]) > delta ):
+    and ( abs((c[1]-c[2]) / c[0]) > delta ): 
         derived_info['crsyst']='tetr'
-        derived_info['flipcell'] = str(c[0])+" "+str(c[0])+" "+str(c[2])+" 90.00 90.00 90.00"
+	derived_info['flipcell'] = str(c[0])+" "+str(c[0])+" "+str(c[2])+" 90.00 90.00 90.00"	
     if ( abs(c[3] - 90.00)/90.00 < delta ) and ( abs(c[4]-90.00) / 90.00 < delta ) and ( abs(c[5]-90.00) / 90.00 < delta ) \
     and ( abs((c[0]-c[1]) / c[0]) > delta ) and ( abs((c[0]-c[2]) / c[0]) > delta ) \
-    and ( abs((c[1]-c[2]) / c[0]) > delta ):
+    and ( abs((c[1]-c[2]) / c[0]) > delta ): 
         derived_info['crsyst']='orth'
-        derived_info['flipcell'] = str(c[0])+" "+str(c[1])+" "+str(c[2])+" 90.00 90.00 90.00"
+	derived_info['flipcell'] = str(c[0])+" "+str(c[1])+" "+str(c[2])+" 90.00 90.00 90.00"		
     if ( abs(c[3] - 90.00)/90.00 < delta ) and ( abs(c[4]-90.00) / 90.00 < delta ) and ( abs(c[5]-120.00) / 120.00 < delta ) \
-    and ( abs((c[0]-c[1]) / c[0]) < delta ):
+    and ( abs((c[0]-c[1]) / c[0]) < delta ): 
         derived_info['crsyst']='trig'
-        derived_info['flipcell'] = str(c[0])+" "+str(c[0])+" "+str(c[2])+" 90.00 90.00 120.00"
-    if ( abs(c[3] - 90.00)/90.00 < delta ) and ( abs(c[4]-90.00) / 90.00 > delta ) and ( abs(c[5]-90.00) / 90.00 < delta ):
+	derived_info['flipcell'] = str(c[0])+" "+str(c[0])+" "+str(c[2])+" 90.00 90.00 120.00"	
+    if ( abs(c[3] - 90.00)/90.00 < delta ) and ( abs(c[4]-90.00) / 90.00 > delta ) and ( abs(c[5]-90.00) / 90.00 < delta ): 
         derived_info['crsyst']='mono'
-        derived_info['flipcell'] = str(c[0])+" "+str(c[1])+" "+str(c[2])+" 90.00 "+str(c[4])+" 90.00"
+	derived_info['flipcell'] = str(c[0])+" "+str(c[1])+" "+str(c[2])+" 90.00 "+str(c[4])+" 90.00"
     if ( derived_info["crsyst"] == "tric"):
-        derived_info['flipcell'] = str(c[0])+" "+str(c[1])+" "+str(c[2])+" "+str(c[3])+" "+str(c[4])+" "+str(c[5])
+	derived_info['flipcell'] = str(c[0])+" "+str(c[1])+" "+str(c[2])+" "+str(c[3])+" "+str(c[4])+" "+str(c[5])   
 
 #Process symmetry information from .ins-file if this is to be used and put this is temporary symcards.tmp file
     if ( flip_keywords['forcesymmetry'] == "yes" ):
         if ( nsymm == 0 ) and not (derived_info["crsyst"]=="tric"):
            print " No symmetry information available "
            print " Calculation continues, but forcesymmetry is set to no"
-           flip_keywords['forcesymmetry'] = "no"
+	   flip_keywords['forcesymmetry'] = "no"
            if ( flip_keywords['comments'] == 'yes' ): raw_input(" Press <RETURN> to continue")
         else:
            symcards = open("symcards.tmp", "w")
@@ -175,23 +175,23 @@ def process_insfile(flip_keywords,files,derived_info):
            if ( derived_info['latt'] > 0 ): print >> symcards, " -X -Y -Z"
            for line in fileinput.input(files['insin']):
                if "SYMM" in line:
-                  line = string.upper(string.join(string.split(line)[1:]))
-                  for k in ['X', 'Y', 'Z']:
+	          line = string.upper(string.join(string.split(line)[1:]))
+	          for k in ['X', 'Y', 'Z']:
                       line = string.replace(line,"+ "+k,"+"+k)
                       line = string.replace(line,"- "+k,"-"+k)
-                  line = string.replace(line,"+"," +")
-                  line = string.replace(line,"-"," -")
-                  line = string.replace(line,","," , ")
+	          line = string.replace(line,"+"," +")
+     	          line = string.replace(line,"-"," -")
+     	          line = string.replace(line,","," , ")
                   print >> symcards, line
                   if ( derived_info['latt'] > 0 ):
-                     splitline=string.split(line)
+		     splitline=string.split(line)
                      invline = ""
-                     for k in splitline:
+		     for k in splitline:
                          if ( k[0] == "+" ): l = string.replace(k,'+','-')
                          if ( k[0] == "-" ): l = string.replace(k,'-','+')
                          if ( k[0] != "-" ) and ( k[0] != "+" ) and ( k[0] != ","): l = "-"+k
                          if ( k == "," ): l = k
-                         invline = invline+l
+			 invline = invline+l
                      print >> symcards, "%s" % invline
            print  >> symcards, "endsymmetry"
            symcards.close()
@@ -204,16 +204,16 @@ def process_insfile(flip_keywords,files,derived_info):
         if ( derived_info['crsyst'] == 'tric' ):
            symcards.write("-x -y -z\n")
            flip_keywords['SG'] = '2'
-        if ( derived_info['crsyst'] == 'mono' ):
+        if ( derived_info['crsyst'] == 'mono' ):       
            symcards.write("-x y -z\n")
            flip_keywords['SG'] = '3'
-        if ( derived_info['crsyst'] == 'orth' ):
+        if ( derived_info['crsyst'] == 'orth' ):       
            symcards.write("-x -y z\n-x y -z\nx -y -z\n")
            flip_keywords['SG'] = '16'
-        if ( derived_info['crsyst'] == 'tetr' ):
+        if ( derived_info['crsyst'] == 'tetr' ):       
            symcards.write("-x -y z\n-y x z\ny -x z\n")
            flip_keywords['SG'] = '75'
-        if ( derived_info['crsyst'] == 'trig' ):
+        if ( derived_info['crsyst'] == 'trig' ):       
            symcards.write("-y x-y z\n-x+y -x z\n")
            flip_keywords['SG'] = '143'
         if ( derived_info['crsyst'] == 'cubi' ):
@@ -250,7 +250,7 @@ def process_insfile(flip_keywords,files,derived_info):
 #Process SFAC info (is a bit complicated, since there are two styles in Shelx-files
 # there can be two types of SFAC cards in .ins file; second character of element need to be lower-case
     if ( nsfac == 1 ):
-       for line in fileinput.input(files['insin']):
+       for line in fileinput.input(files['insin']): 
           if "SFAC" in line:
              multi=re.search('=$',line)
              sfacline=string.split(line)[1:]
@@ -282,12 +282,12 @@ def check_executables(exe):
 def generate_superflip_file(flip_keywords,files,derived_info):
 #Generate Superflip .inflip file and write some info to the screen
     print """
-============================================================================
+============================================================================    
 !                  Ab initio Charge Flipping procedure                     !
-!                      for small-molecule structures                       !
+!                      for small-molecule structures                       ! 
 !                                                                          !
 !          script written by: A. van der Lee, C. Dumas & L. Palatinus      !
-!  CF and map interpretation calculations by : L. Palatinus & G. Chapuis   !
+!  CF and map interpretation calculations by : L. Palatinus & G. Chapuis   ! 
 !       Palatinus, L. & Chapuis, G.(2007): J. Appl. Cryst. 40, 786-790     !
 !              http://superspace.fzu.cz/superflip                         !
 !                                                                          !
@@ -305,18 +305,18 @@ merging space group      .......  %s
 
 ----------------  CF parameters used  -----------------
 flip threshold            ......  %s
-weak threshold            ......  %s
+weak threshold	          ......  %s
 Biso                      ......  %s
 maximum cycles / trial    ......  %s
 normalize                 ......  %s
 number of trials          ......  %s
 superposition             ......  %s
 ----------------------------------------------------
+       
+    """ % (files['insin'], files['hklin'], derived_info['flipcell'], derived_info['crsyst'], flip_keywords['SG'], flip_keywords['ked'], flip_keywords['weak'], flip_keywords['biso'], 
+       flip_keywords['maxcycl'], flip_keywords['normalize'], flip_keywords['trial'], flip_keywords['superposition']) 
 
-    """ % (files['insin'], files['hklin'], derived_info['flipcell'], derived_info['crsyst'], flip_keywords['SG'], flip_keywords['ked'], flip_keywords['weak'], flip_keywords['biso'],
-       flip_keywords['maxcycl'], flip_keywords['normalize'], flip_keywords['trial'], flip_keywords['superposition'])
-
-    if ( flip_keywords['comments'] == 'yes' ): raw_input("\n Press <RETURN> to continue\n")
+    if ( flip_keywords['comments'] == 'yes' ): raw_input("\n Press <RETURN> to continue\n")       
 
 #Now generate inflip file
     f = open(files['inflip'], "w")
@@ -326,13 +326,13 @@ superposition             ......  %s
     f.write("""
 #=============================================
 #   Ab initio phasing by Charge Flipping
-#
+#                                             
 #                   SUPERFLIP
 #
 #=============================================
-title    ab initio Phasing by Charge Flipping
+title    ab initio Phasing by Charge Flipping 
 
-# Basic crystallographic information
+# Basic crystallographic information          
 cell             %s
 """ % derived_info['flipcell'])
 
@@ -360,22 +360,22 @@ outputfile       %s
 
 dataformat       %s
 """ % ( flip_keywords['terminal'], flip_keywords['weak'], flip_keywords['biso'], flip_keywords['normalize'],
-       flip_keywords['missing'], flip_keywords['maxcycl'], flip_keywords['trial'],
+       flip_keywords['missing'], flip_keywords['maxcycl'], flip_keywords['trial'], 
        flip_keywords['derivesymmetry'], files['m81'], flip_keywords['dataformat']  ))
 
     if ( flip_keywords['ked'] != "auto" ):
        f.write("""
 
 delta %s sigma
-
-               """ % flip_keywords['ked'])
+               
+	       """ % flip_keywords['ked'])
 
     if ( flip_keywords['superposition'] == "yes" ):
        f.write("""
 
 modelfile superposition 0.05
-
-               """)
+               
+	       """)
 
     if ( flip_keywords['dataformat'] == "shelx" ):
        f.write("""
@@ -395,16 +395,16 @@ def analyze_superflip_logfile(flip_keywords,files,derived_info):
 # Analyse the log-file
     derived_info['itlino']=[]
     for line in fileinput.input(files['fliplog']):
-        if "Last run from" in line: cev=fileinput.filelineno()-2
+        if "Last run from" in line: cev=fileinput.filelineno()-2 
         if "Number of successes" in line: nsuccess=int(string.split(line)[4])
         if "# Iteration #" in line: derived_info['itlino'].append(fileinput.filelineno()-1)
-    try:
+    try: 
         cev
-        nsuccess
+        nsuccess   
     except NameError:
 # x doesn't exist, do something
-        print "\n Note from Flipsmall:\n Not all required information could be found in Superflip's logfile.\n Did Superflip report a problem?"
-        return False
+      	print "\n Note from Flipsmall:\n Not all required information could be found in Superflip's logfile.\n Did Superflip report a problem?"
+	return False 
     derived_info['itlino'].append(fileinput.filelineno()-1)
     bestresults = open(files['fliplog'],'r').readlines()[cev].strip()
     if ( bestresults[0:3] == "" ): bestresults = open(files['fliplog'],'r').readlines()[cev-2].strip()
@@ -415,13 +415,13 @@ def analyze_superflip_logfile(flip_keywords,files,derived_info):
     if  ( flip_keywords['logging'] == "yes" ):
         log.write("\
 %12s: %12s %12s\n" % (files['base'], derived_info['spgr'], phisym))
-
+    
 
     print """
 
 
             =====================================================
-                         ANALYSIS OF THE RESULTS
+                         ANALYSIS OF THE RESULTS          
             =====================================================
 
 
@@ -435,7 +435,7 @@ def analyze_superflip_logfile(flip_keywords,files,derived_info):
        if ( flip_keywords['edmacontinue'] == "no"):
           print "              * you can try another time"
           print ""
-          print " normal exit"
+	  print " normal exit"
           return False
        else:
           print "              * continue anyhow"
@@ -477,7 +477,7 @@ def analyze_superflip_logfile(flip_keywords,files,derived_info):
 
     if ( flip_keywords['comments'] == "yes" ): raw_input(" Press <RETURN> to continue")
     return True
-
+    
 def generate_edma_file(flip_keywords,files,derived_info):
 #Create EDMA file:
     files['edmain']=files['base']+'_edma.inflip'
@@ -527,13 +527,13 @@ centers\n")
                    break
                 else:
                    a=string.split(line)
-                   if ( len(a) > 0 ):
-                      if (a[0] == '0.333') or (a[0] == '0.667'):
+		   if ( len(a) > 0 ):
+		      if (a[0] == '0.333') or (a[0] == '0.667'):
                          for k in a:
-                            if (k == '0.333'): h.write('0.33333333 ')
-                            if (k == '0.667'): h.write('0.66666667 ')
-                         h.write('\n')
-                      else:
+	                    if (k == '0.333'): h.write('0.33333333 ')
+	                    if (k == '0.667'): h.write('0.66666667 ')
+	                 h.write('\n')
+	              else:
                           h.write(string.join(string.split(line.strip())[0:])+'\n')
        else:
           h.write('0.000 0.000 0.000\n')
@@ -697,10 +697,10 @@ def flipsmall (*args):
 # the main keywords
 flip_keywords=dict(weak=0.20, biso=2.5, maxcycl=10000, comments="yes", edmacontinue="no",
                    normalize="yes", merge="yes", forcesymmetry="no", trial="1", SG="1", missing="zero",
-                   derivesymmetry="use",dataformat="shelx",cleanup="yes",terminal='yes', logging='no', superposition='no',
-                   sflipversion='superflip',ked='auto')
+		   derivesymmetry="use",dataformat="shelx",cleanup="yes",terminal='yes', logging='no', superposition='no', 
+		   sflipversion='superflip',ked='auto')
 # calculated and extracted info, from ins-file and logfile
-derived_info=dict(crsyst='tric', cell="9.0 9.0 9.0 90.0 90.0 90.0", flipcell="9.0 9.0 9.0 90.0 90.0 90.0",
+derived_info=dict(crsyst='tric', cell="9.0 9.0 9.0 90.0 90.0 90.0", flipcell="9.0 9.0 9.0 90.0 90.0 90.0",  
                   cellesd = "0.0 0.0 0.0 0.0 0.0 0.0", wavelength ="0.71073", sfac="C H O N",
                   latt=1, spgr='P1', zerr = '1', itlino=[], bestrun=1)
 # file names in use
@@ -722,3 +722,4 @@ except:
   comlineargs = tuple(sys.argv)
   flipsmall(*comlineargs)
 sys.exit(0)
+

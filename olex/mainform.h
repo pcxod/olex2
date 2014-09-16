@@ -46,6 +46,14 @@ enum  {
   ID_MenuFragment,
   ID_MenuDrawStyle,
   ID_MenuDrawQ,
+  ID_MenuItemAtomInfo,
+  ID_MenuItemBondInfo,
+  ID_MenuAtomType,
+  ID_MenuAtomOccu,
+  ID_MenuAtomConn,
+  ID_MenuAtomPoly,
+  ID_MenuAtomPart,
+  ID_MenuAtomUiso,
 
   ID_DSBS,  // drawing style, balls and sticks
   ID_DSES,  // ellipsoids and sticks
@@ -63,17 +71,17 @@ enum  {
   ID_ShowAll,
   ID_ModelCenter,
 
-  ID_BondInfo,
-  ID_BondRadius,
-
-  ID_AtomInfo,
-  ID_MenuAtomType,
-  ID_AtomTypeChange,
-  ID_AtomTypeChangeLast = ID_AtomTypeChange+120, // reserve some
+  ID_AtomTypeChangeC,
+  ID_AtomTypeChangeN,
+  ID_AtomTypeChangeO,
+  ID_AtomTypeChangeF,
+  ID_AtomTypeChangeH,
+  ID_AtomTypeChangeS,
+  ID_AtomTypePTable,
   ID_AtomGrow,
   ID_AtomCenter,
   ID_AtomSelRings,
-
+  
   ID_PlaneActivate,
   ID_BondViewAlong,
 
@@ -85,36 +93,42 @@ enum  {
   ID_FileLoad,
   ID_FileClose,
 
-  ID_ViewAlong,   // view menu
-  ID_ViewAlongLast = ID_ViewAlong + 6,
+  ID_View100,   // view menu
+  ID_View010,
+  ID_View001,
+  ID_View110,
+  ID_View101,
+  ID_View011,
+  ID_View111,
 
-  ID_MenuAtomOccu,
-  ID_AtomOccuCustom,
   ID_AtomOccu1,
   ID_AtomOccu34,
   ID_AtomOccu12,
   ID_AtomOccu13,
   ID_AtomOccu14,
   ID_AtomOccuFix,
-  ID_AtomOccuFixCurrent,
   ID_AtomOccuFree,
 
-  ID_MenuAtomConn,
-  ID_AtomConnChange,
-  ID_AtomConnChangeLast = ID_AtomConnChange + 8,
+  ID_AtomConn0,
+  ID_AtomConn1,
+  ID_AtomConn2,
+  ID_AtomConn3,
+  ID_AtomConn4,
+  ID_AtomConn12,
 
-  ID_MenuAtomUiso,
   ID_AtomUisoCustom,
   ID_AtomUiso15,
   ID_AtomUiso12,
   ID_AtomUisoFree,
   ID_AtomUisoFix,
 
-  ID_MenuAtomPart,
-  ID_AtomPartChange,
-  ID_AtomPartChangeLast = ID_AtomPartChange + 6,
+  ID_AtomPartCustom,
+  ID_AtomPart_2,
+  ID_AtomPart_1,
+  ID_AtomPart0,
+  ID_AtomPart1,
+  ID_AtomPart2,
 
-  ID_MenuAtomPoly,
   ID_AtomPolyNone,
   ID_AtomPolyAuto,
   ID_AtomPolyRegular,
@@ -135,8 +149,6 @@ enum  {
   ID_GraphicsP,
   ID_GraphicsEdit,
   ID_GraphicsSelect,
-  ID_GraphicsCollectivise,
-  ID_GraphicsIndividualise,
 
   ID_GStyleSave,
   ID_GStyleOpen,
@@ -197,15 +209,15 @@ class TMainForm: public TMainFrame, public AEventsDispatcher,
   //TFrameMaker FrameMaker;
 protected:
   bool Destroying;
-  TStack<olx_pair_t<wxCursor,wxString> > CursorStack;
+  TStack<AnAssociation2<wxCursor,wxString> > CursorStack;
   UpdateThread* _UpdateThread;
   TOnProgress* UpdateProgress, *ActionProgress;
-  TStack<TEFile *> LogFiles;
+  TEFile* ActiveLogFile;
   static void PyInit();
   TActionQList Action;
   TGlXApp* FParent;
-  TArrayList< olx_pair_t<TDUnitCell*, TSpaceGroup*> > UserCells;
-  olxstr_dict<olxstr> StoredParams;
+  TArrayList< AnAssociation2<TDUnitCell*, TSpaceGroup*> > UserCells;
+  TCSTypeList<olxstr, olxstr> StoredParams;
 
   TTypeList<TScheduledTask> Tasks;
   TPtrList<IOlxTask> RunWhenVisibleTasks;
@@ -214,14 +226,14 @@ protected:
   Olex2App* FXApp;
   TDataFile FHelpFile, FMacroFile;
   TDataItem *FHelpItem;
-
+  
   olxstr GradientPicture;
   TGlConsole *FGlConsole;
   TGlTextBox *FHelpWindow, *FInfoBox, *GlTooltip;
   // a list of commands called when a file is changed by another process
   TStrList FOnListenCmds;
   TMacroError MacroError;
-
+  
   void PreviewHelp(const olxstr& Cmd);
   olxstr ExpandCommand(const olxstr &Cmd, bool inc_files);
   int MouseMoveTimeElapsed, MousePositionX, MousePositionY;
@@ -278,6 +290,8 @@ protected:
   void OnDrawQChange(wxCommandEvent& event);
   void OnViewAlong(wxCommandEvent& event);
   void OnCloseWindow(wxCloseEvent &evt);
+  void OnInternalIdle();
+
   friend class TObjectVisibilityChange;
   void BasisVChange();
   void CellVChange();
@@ -305,6 +319,7 @@ protected:
   void OnAtomPartChange(wxCommandEvent& event);
   void OnAtomUisoChange(wxCommandEvent& event);
   void OnAtomPolyChange(wxCommandEvent& event);
+  void OnAtomTypePTable(wxCommandEvent& event);
   void OnAtom(wxCommandEvent& event); // general handler
 
   void OnBond(wxCommandEvent& event);
@@ -320,11 +335,9 @@ protected:
   static bool DownloadFile(const olxstr &url, const olxstr &dest) {
     return DownloadFiles(TStrList() << url, dest) != 0;
   }
-  // tries to expand the command and returns the success status
-  bool ProcessTab();
-  TPtrList<olxCommandEvent> PostponedEvents;
-private:
   // macro functions
+private:
+
   DefMacro(Reap)
   DefMacro(Pict)
   DefMacro(Picta)
@@ -449,6 +462,7 @@ private:
   DefMacro(TestStat)
   DefMacro(ExportFont)
   DefMacro(ImportFont)
+  DefMacro(ProjSph)
   DefMacro(UpdateQPeakTable)
   DefMacro(Capitalise)
   DefMacro(FlushFS)
@@ -512,12 +526,11 @@ public:
   void OnKeyDown(wxKeyEvent& event);
   void OnChar(wxKeyEvent& event);
   void OnNavigation(wxNavigationKeyEvent& event);
-  void OnIdle();
 
   virtual bool ProcessEvent(wxEvent& evt);
   void OnResize();
   olxstr StylesDir, // styles folder
-    ScenesDir,
+    ScenesDir, 
     DefStyle,         // default style file
     DefSceneP,        // default scene parameters file
     TutorialDir;
@@ -556,15 +569,15 @@ private:
 
   olxstr FListenFile;
 
-  TStringToList<olxstr,wxMenuItem*> FRecentFiles;
-  olxstr_dict<olxstr,true> Bindings;
+  TStrPObjList<olxstr,wxMenuItem*> FRecentFiles;
+  TSStrStrList<olxstr,true> Bindings;
   uint16_t FRecentFilesToShow;
   void UpdateRecentFile(const olxstr& FN);
   TGlOption FBgColor;
   class TCmdLine* FCmdLine;
   olxstr FHtmlIndexFile;
 
-  bool FHtmlMinimized, FHtmlOnLeft, FBitmapDraw, FHtmlWidthFixed,
+  bool FHtmlMinimized, FHtmlOnLeft, FBitmapDraw, FHtmlWidthFixed, 
        RunOnceProcessed,
        StartupInitialised;
   bool InfoWindowVisible, HelpWindowVisible, CmdLineVisible, _UseGlTooltip;
@@ -579,7 +592,7 @@ private:
   TAccellList<olxstr> AccShortcuts;
   TAccellList<TMenuItem*> AccMenus;
 
-  olxstr_dict<TMenu*, false> Menus;
+  TSStrPObjList<olxstr,TMenu*, false> Menus;
   int32_t TranslateShortcut(const olxstr& sk);
   void SaveVFS(short persistenceId);
   void LoadVFS(short persistenceId);
@@ -624,17 +637,24 @@ protected:
                 *pmModel,
                 *pmDrawQ;
   TMenu    *pmAtom;
+    wxMenuItem *miAtomInfo;
+    wxMenuItem *miAtomGrow;
     TMenu    *pmBang;  // bonds angles
     TMenu    *pmAtomType;
-    TMenu    *pmAtomOccu,
+    TMenu    *pmAtomOccu, 
              *pmAtomConn,
              *pmAtomPoly,
              *pmAtomPart,
              *pmAtomUiso
              ;
+  wxMenuItem *miAtomPartCustom,
+    *miAtomUisoCustom,
+    *miAtomUisoFree;
   TMenu    *pmBond;
+    wxMenuItem *miBondInfo;
     TMenu    *pmTang;  // torsion angles
   TMenu    *pmFragment;
+    wxMenuItem *miFragGrow;
   TMenu    *pmSelection;
   TMenu    *pmView;
   TMenu    *pmPlane;
@@ -673,13 +693,7 @@ public:
 //..............................................................................
 // General interface
 //..............................................................................
-  static TMainForm *&GetInstance() {
-    static TMainForm *i = 0;
-    return i;
-  }
-  static bool HasInstance() {
-    return GetInstance() != 0 && !GetInstance()->Destroying;
-  }
+// actions
   void ObjectUnderMouse(AGDrawObject *G);
 //..............................................................................
   DECLARE_CLASS(TMainForm)

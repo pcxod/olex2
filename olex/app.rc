@@ -40,12 +40,12 @@ MAINICON           ICON         "olex2.ico"
         BEGIN
             VALUE "CompanyName", "OlexSys Ltd\0"
             VALUE "FileDescription", "Olex2 executable\0"
-            VALUE "FileVersion", "1.2.6.1\0"
+            VALUE "FileVersion", "1.2.5.1\0"
             VALUE "InternalName", "Olex2\0"
             VALUE "LegalCopyright", "Copyright (c) OlexSys Ltd, 2004-2014\0"
             VALUE "OriginalFilename", "Olex2.exe\0"
             VALUE "ProductName", "Olex2\0"
-            VALUE "ProductVersion", "1.2.6\0"
+            VALUE "ProductVersion", "1.2.5\0"
         END
     END
     BLOCK "VarFileInfo"
@@ -53,6 +53,7 @@ MAINICON           ICON         "olex2.ico"
         VALUE "Translation", 0x809, 1252
     END
  END
+END
 
 
 #ifdef APSTUDIO_INVOKED
@@ -61,13 +62,13 @@ MAINICON           ICON         "olex2.ico"
 // TEXTINCLUDE
 //
 
-1 TEXTINCLUDE
- BEGIN
+1 TEXTINCLUDE  
+BEGIN
     "resource.h\0"
     "\0"
- END
+END
 
-2 TEXTINCLUDE
+2 TEXTINCLUDE  
 BEGIN
     "#include ""afxres.h""\r\n"
     "\0"

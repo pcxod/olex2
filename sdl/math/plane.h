@@ -66,7 +66,7 @@ namespace olx_plane {
       }
     }
     QuickSorter::Sort(pvs, TPrimitiveComparator(),
-      SyncSortListener::Make(points));
+      SyncSwapListener::Make(points));
   }
 };  //end namespace olx_plane
 

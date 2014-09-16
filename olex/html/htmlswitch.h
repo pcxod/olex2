@@ -18,7 +18,7 @@ protected:
   olxstr Name;
   size_t FileIndex;  // the file index
   TStrList  Files;
-  TStringToList<olxstr,THtmlSwitch*> Strings;  // represents current content of the switch
+  TStrPObjList<olxstr,THtmlSwitch*> Strings;  // represents current content of the switch
   TParamList Params;   // parameters to be replaced with their values param=ll use #param
   TTypeList<THtmlSwitch> Switches; // a list of subitems
   THtmlSwitch *ParentSwitch;
@@ -26,8 +26,8 @@ protected:
   bool UpdateSwitch;
   THtml* ParentHtml;
 public:
-  THtmlSwitch(THtml *_parent_html, THtmlSwitch *_parent_switch) :
-      ParentHtml(_parent_html),
+  THtmlSwitch(THtml *_parent_html, THtmlSwitch *_parent_switch) : 
+      ParentHtml(_parent_html), 
         ParentSwitch(_parent_switch),
         UpdateSwitch(true),
         FileIndex(0) {}
@@ -47,8 +47,8 @@ public:
     return olx_is_valid_index(FileIndex) ? Files[FileIndex] : EmptyString();
   }
 
-  TStringToList<olxstr,THtmlSwitch*>& GetStrings()  {  return Strings; }
-  const TStringToList<olxstr,THtmlSwitch*>& GetStrings() const {  return Strings; }
+  TStrPObjList<olxstr,THtmlSwitch*>& GetStrings()  {  return Strings; }
+  const TStrPObjList<olxstr,THtmlSwitch*>& GetStrings() const {  return Strings; }
 
   inline size_t SwitchCount() const {  return Switches.Count(); }
   inline THtmlSwitch& GetSwitch(size_t ind)  {  return Switches[ind]; }

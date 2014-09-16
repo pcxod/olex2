@@ -46,7 +46,7 @@ public:
       if( use_cs )
         throw TFunctionFailedException(__OlxSourceInfo, "critical section test has failed");
     }
-    else if( !use_cs )
+    else if( !use_cs )  
       throw TFunctionFailedException(__OlxSourceInfo, "critical section test is ambiguous (it is possible)");
   }
 };

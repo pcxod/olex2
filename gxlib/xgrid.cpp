@@ -152,7 +152,7 @@ bool TXGrid::TLegend::Orient(TGlPrimitive& P)  {
     P.Vertices[0] = vec3d((Left+w+xx-hw)*Scale, -(Top+h+xy-hh)*Scale, z);
     P.Vertices[1] = vec3d(P.Vertices[0][0], -(Top+xy-hh)*Scale, z);
     P.Vertices[2] = vec3d((Left+xx-hw)*Scale, -(Top+xy-hh)*Scale, z);
-    P.Vertices[3] = vec3d(P.Vertices[2][0], -(Top+h+xy-hh)*Scale, z);
+    P.Vertices[3] = vec3d(P.Vertices[2][0], -(Top+h+xy-hh)*Scale, z); 
     return false;
   }
 }
@@ -270,14 +270,14 @@ void TXGrid::Create(const olxstr& cName)  {
   GlP.TextureCrds[3].s = 0;  GlP.TextureCrds[3].t = 1;
   // create dummy primitives
   glpP = &GPC.NewPrimitive("+Surface", sgloQuads);
-  glpP->SetProperties(GS.GetMaterial("+Surface",
+  glpP->SetProperties(GS.GetMaterial("+Surface", 
     TGlMaterial("85;0.000,1.000,0.000,0.850;3632300160;1.000,1.000,1.000,0.500;36")));
   glpN = &GPC.NewPrimitive("-Surface", sgloQuads);
-  glpN->SetProperties(GS.GetMaterial("-Surface",
+  glpN->SetProperties(GS.GetMaterial("-Surface", 
     TGlMaterial("85;1.000,0.000,0.000,0.850;3632300160;1.000,1.000,1.000,0.500;36")));
 
   glpC = &GPC.NewPrimitive("Contour plane", sgloQuads);
-  glpC->SetProperties(GS.GetMaterial("Contour plane",
+  glpC->SetProperties(GS.GetMaterial("Contour plane", 
     TGlMaterial("1029;3628944717;645955712")));
   glpC->Vertices.SetCount(4);
   if( !olx_is_valid_index(PListId) )
@@ -406,7 +406,7 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
     GlP.PrepareColorRendering(GL_LINES);
     olx_gl::color(0, 0, 0);
     cm.DoContour(ContourData, 0, (int)MaxDim-1, 0, (int)MaxDim-1,
-      ContourCrds[0], ContourCrds[1],
+      ContourCrds[0], ContourCrds[1], 
       ContourLevelCount, ContourLevels, mf);
     GlP.EndColorRendering();
   }
@@ -438,7 +438,7 @@ void TXGrid::GlLine(float x1, float y1, float x2, float y2, float z)  {
   p2 = Parent.GetBasis().GetMatrix()*p2 - Parent.GetBasis().GetCenter();
   if( z < 0 )  // render just a half of the segment
     p2 = (p1 + p2)*0.5;
-
+  
   olx_gl::vertex(p1);
   olx_gl::vertex(p2);
 }
@@ -506,8 +506,8 @@ void TXGrid::DeleteObjects()  {
 //.............................................................................
 bool TXGrid::LoadFromFile(const olxstr& GridFile)  {
   TEFile::CheckFileExists(__OlxSourceInfo, GridFile);
-  TCStrList SL = TEFile::ReadCLines(GridFile),
-    toks;
+  TStrList SL, toks;
+  SL.LoadFromFile(GridFile);
   toks.Strtok(SL[0], ' ');
 
   int vc = 3;
@@ -625,7 +625,7 @@ void TXGrid::SetDepth(const vec3d& v)  {
 }
 //.............................................................................
 void TXGrid::SetPlaneSize(size_t _v)  {
-  size_t v = _v;
+  size_t v = _v; 
   while( (v&1) == 0 )
     v = v >> 1;
   if( v != 1 ) {
@@ -653,7 +653,7 @@ void TXGrid::SetPlaneSize(size_t _v)  {
       ContourCrds[0][i] = ContourCrds[1][i] = (float)i-hh;
     }
   }
-  MaxDim = _v;
+  MaxDim = _v;   
   Parent.Draw();
 }
 //.............................................................................
@@ -871,11 +871,7 @@ void TXGrid::RescaleSurface()  {
     PListId = Parent.NewListId();
     NListId = Parent.NewListId();
   }
-  if (Boxed) {
-    bool sphere = XApp->Get3DFrame().IsVisible() &&
-      XApp->Get3DFrame().IsSpherical();
-    float qr = (float)olx_sqr(XApp->Get3DFrame().GetZoom());
-    vec3f center = XApp->Get3DFrame().GetCenter();
+  if( Boxed )  {
     for( int li = 0; li <= 1; li++ )  {
       const TTypeList<vec3f>& verts = (li == 0 ? p_vertices : n_vertices);
       const TTypeList<vec3f>& norms = (li == 0 ? p_normals : n_normals);
@@ -883,28 +879,10 @@ void TXGrid::RescaleSurface()  {
       olx_gl::newList(li == 0 ? PListId : NListId, GL_COMPILE);
       olx_gl::polygonMode(GL_FRONT_AND_BACK, GetPolygonMode());
       olx_gl::begin(GL_TRIANGLES);
-      if (sphere) {
-        for (size_t i = 0; i < trians.Count(); i++)  {
-          bool draw = true;
-          for (int j = 0; j < 3; j++)  {
-            if ((verts[trians[i].pointID[j]] - center).QLength() > qr) {
-              draw = false;
-              break;
-            }
-          }
-          if (!draw) continue;
-          for (int j = 0; j < 3; j++)  {
-            olx_gl::normal(norms[trians[i].pointID[j]]);
-            olx_gl::vertex(verts[trians[i].pointID[j]]);
-          }
-        }
-      }
-      else {
-        for (size_t i = 0; i < trians.Count(); i++)  {
-          for (int j = 0; j < 3; j++)  {
-            olx_gl::normal(norms[trians[i].pointID[j]]);
-            olx_gl::vertex(verts[trians[i].pointID[j]]);
-          }
+      for( size_t i=0; i < trians.Count(); i++ )  {
+        for( int j=0; j < 3; j++ )  {
+          olx_gl::normal(norms[trians[i].pointID[j]]);
+          olx_gl::vertex(verts[trians[i].pointID[j]]);
         }
       }
       olx_gl::end();
@@ -1139,7 +1117,7 @@ void TXGrid::LibPlaneSize(const TStrObjList& Params, TMacroError& E)  {
 }
 //.............................................................................
 void TXGrid::LibDepth(const TStrObjList& Params, TMacroError& E)  {
-  if (Params.IsEmpty())
+  if (Params.IsEmpty()) 
     E.SetRetVal(Depth);
   else {
     if (Params.Count() == 1)

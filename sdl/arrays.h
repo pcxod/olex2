@@ -85,7 +85,7 @@ public:
     : MinWidth(minWidth), Width(maxWidth - minWidth + 1),
       MinHeight(minHeight), Height(maxHeight - minHeight + 1)  {
     Data = NULL;
-    if( minWidth > maxWidth || minHeight > maxHeight )
+    if( minWidth > maxWidth || minHeight > maxHeight )  
       throw TInvalidArgumentException(__OlxSourceInfo, "size");
     Data = new AE*[Width];
     for( size_t i=0; i < Width; i++ )  {
@@ -102,19 +102,19 @@ public:
   }
 
   void InitWith(const AE& val)  {
-    for( int i=0; i < Width; i++ )
+    for( int i=0; i < Width; i++ ) 
       for( int j=0; j < Height; j++ )
         Data[i][j] = val;
   }
 
   void FastInitWith(const int val)  {
-    for( int i=0; i < Width; i++ )
+    for( int i=0; i < Width; i++ ) 
       memset( Data[i], val, Height*sizeof(AE) );
   }
 
-  bool IsInRange(index_t x, index_t y) const {
+  bool IsInRange(index_t x, index_t y) const {  
     return (x >= MinWidth && ((x-MinWidth) < Width)) &&
-           (y >= MinHeight && ((y-MinHeight) < Height));
+           (y >= MinHeight && ((y-MinHeight) < Height));  
   }
   size_t GetWidth() const {  return Width;  }
   size_t Length1() const {  return Width;  }
@@ -135,7 +135,7 @@ public:
     return Data[x-MinWidth][y-MinHeight];
   }
   const AE& operator () (index_t x, index_t y) const {  return Value(x, y);  }
-
+  
   template <class VC>
     AE& Value(const TVector<VC>& ind) const {
       return Value((index_t)ind[0], (index_t)ind[1]);
@@ -172,7 +172,7 @@ public:
       MinDepth(mind[2]), Depth(maxd[2] - mind[2] + 1)
   {
     Data = NULL;
-    if( mind[0] > maxd[0] || mind[1] > maxd[1] || mind[2] > maxd[2] )
+    if( mind[0] > maxd[0] || mind[1] > maxd[1] || mind[2] > maxd[2] )  
       throw TInvalidArgumentException(__OlxSourceInfo, "size");
     Init();
   }
@@ -184,7 +184,7 @@ public:
       MinDepth(minDepth), Depth(maxDepth - minDepth + 1)
   {
     Data = NULL;
-    if( minWidth >= maxWidth || minHeight >= maxHeight || minDepth >= maxDepth )
+    if( minWidth >= maxWidth || minHeight >= maxHeight || minDepth >= maxDepth )  
       throw TInvalidArgumentException(__OlxSourceInfo, "size");
     Init();
   }
@@ -211,12 +211,12 @@ public:
         memset(Data[i][j], val, Depth*sizeof(AE));
   }
 
-  bool IsInRange(index_t x, index_t y, index_t z) const {
+  bool IsInRange(index_t x, index_t y, index_t z) const {  
     return (x >= MinWidth && ((x-MinWidth) < (index_t)Width)) &&
            (y >= MinHeight && ((y-MinHeight) < (index_t)Height)) &&
-           (z >= MinDepth && ((z-MinDepth) < (index_t)Depth));
+           (z >= MinDepth && ((z-MinDepth) < (index_t)Depth));  
   }
-  template <class vec> bool IsInRange(const vec& ind) const {
+  template <class vec> bool IsInRange(const vec& ind) const {  
     return IsInRange((index_t)ind[0], (index_t)ind[1], (index_t)ind[2]);
   }
   vec3s GetSize() const {  return vec3s(Width, Height, Depth);  }
@@ -242,17 +242,17 @@ public:
     TIndexOutOfRangeException::ValidateRange(
       __POlxSourceInfo, z-MinDepth, 0, Depth);
 #endif
-    return Data[x-MinWidth][y-MinHeight][z-MinDepth];
+    return Data[x-MinWidth][y-MinHeight][z-MinDepth];  
   }
   AE& operator () (index_t x, index_t y, index_t z) const {
     return Value(x,y,z);
   }
 
-  template <class VC> AE& Value(const VC& ind) const {
-    return Value((index_t)ind[0], (index_t)ind[1], (index_t)ind[2]);
+  template <class VC> AE& Value(const VC& ind) const {  
+    return Value((index_t)ind[0], (index_t)ind[1], (index_t)ind[2]);  
   }
-  template <class VC> AE& operator () (const VC& ind) const {
-    return Value((index_t)ind[0], (index_t)ind[1], (index_t)ind[2]);
+  template <class VC> AE& operator () (const VC& ind) const {  
+    return Value((index_t)ind[0], (index_t)ind[1], (index_t)ind[2]);  
   }
 };
 

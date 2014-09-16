@@ -49,7 +49,7 @@ void TAfixGroup::Assign(const TAfixGroup& ag)  {
   Sof = ag.Sof;
   U = ag.U;
   Afix = ag.Afix;
-
+  
   Pivot = Parent.RM.aunit.FindCAtomById(ag.Pivot->GetId());
   if( Pivot == NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "asymmetric units mismatch");

@@ -45,7 +45,7 @@ bool TSocketFS::_DoValidate(const THttpFileSystem::ResponseInfo& info,
       olxstr fn = TEFile::OSPath(info.source);
       TSettingsFile sf;
       sf.SetParam("MD5", info.contentMD5);
-      sf.SaveSettings(ifn);
+      sf.SaveSettings(ifn); 
     }
     else if (TEFile::Exists(ifn))
       TEFile::DelFile(ifn);

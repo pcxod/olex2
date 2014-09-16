@@ -73,7 +73,7 @@ public:
   }
   // calculates eigen values and vectors; FQuad must be initialised
   void Initialise();
-
+  
   template <class T> void GetShelxQuad(T& Q) const {
     for( size_t i=0; i < 6; i++ )
       Q[i] = Quad[i];
@@ -136,3 +136,4 @@ public:
   typedef TPtrList<TEllipsoid>  TEllpPList;
 EndXlibNamespace()
 #endif
+

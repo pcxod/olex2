@@ -53,20 +53,33 @@ void TdlgMatProp::Init()  {
   cbBlend = NULL;
   short Border = 3, SpW = 40;
   FCurrentMaterial = 0;
-  if (Object != NULL && Object->GetPrimitives().PrimitiveCount() > 1) {
+  if( Object != NULL && Object->GetPrimitives().PrimitiveCount() > 1 )  {
     cbPrimitives = new TComboBox(this, true);
     TGPCollection& gpc = Object->GetPrimitives();
-    for (size_t i=0; i < gpc.PrimitiveCount(); i++) {
+    for( size_t i=0; i < gpc.PrimitiveCount(); i++ )  {
       TGlPrimitive& GlP = gpc.GetPrimitive(i);
       cbPrimitives->AddObject(GlP.GetName(), &GlP);
       Materials.AddCopy(GlP.GetProperties());
     }
     cbPrimitives->SetValue(gpc.GetPrimitive(0).GetName().u_str());
     cbPrimitives->OnChange.Add(this);
+    if( EsdlInstanceOf(*Object,TXAtom) )  {
+      const uint16_t current_level =
+        TXAtom::LegendLevel(Object->GetPrimitives().GetName());
+      wxArrayString choices;
+      if( current_level == 0 )
+        choices.Add(wxT("Atom Type"));
+      if( current_level <= 1 )
+        choices.Add(wxT("Atom Name"));
+      choices.Add(wxT("Individual Atom"));
+      cbApplyTo = new wxComboBox(this, -1, choices[0], wxDefaultPosition,
+        wxDefaultSize, choices, wxCB_READONLY);
+      cbApplyTo->SetSelection(0);
+    }
   }
-  else {
+  else  {
     cbPrimitives = NULL;
-    if (Object != NULL) {
+    if( Object != NULL )  {
       if( EsdlInstanceOf(*Object, TGlGroup) )  {
         Materials.AddCopy(((TGlGroup*)Object)->GetGlM());
         cbBlend = new wxCheckBox(this, -1,
@@ -75,21 +88,6 @@ void TdlgMatProp::Init()  {
       }
       else if( Object->GetPrimitives().PrimitiveCount() != 0 )
         Materials.AddCopy(Object->GetPrimitives().GetPrimitive(0).GetProperties());
-    }
-  }
-  if (Object != NULL) {
-    if (EsdlInstanceOf(*Object, TXAtom) || EsdlInstanceOf(*Object, TXBond)) {
-      const uint16_t current_level =
-        TXAtom::LegendLevel(Object->GetPrimitives().GetName());
-      wxArrayString choices;
-      if (current_level == 0)
-        choices.Add(wxT("Atom Type"));
-      if (current_level <= 1)
-        choices.Add(wxT("Atom Name"));
-      choices.Add(wxT("Individual Atom/Bond"));
-      cbApplyTo = new wxComboBox(this, -1, choices[0], wxDefaultPosition,
-        wxDefaultSize, choices, wxCB_READONLY);
-      cbApplyTo->SetSelection(0);
     }
   }
   long flags = 0; //wxCHK_3STATE|wxCHK_ALLOW_3RD_STATE_FOR_USER;
@@ -159,32 +157,31 @@ void TdlgMatProp::Init()  {
   tcEmmB = new TTextEdit(this);  tcEmmB->SetReadOnly(true);  tcEmmB->OnClick.Add(this);
   tcSpecF = new TTextEdit(this); tcSpecF->SetReadOnly(true); tcSpecF->OnClick.Add(this);
   tcSpecB = new TTextEdit(this); tcSpecB->SetReadOnly(true); tcSpecB->OnClick.Add(this);
-  tcShnF = new TTextEdit(this);  tcShnF->SetReadOnly(false);
-  tcShnB = new TTextEdit(this);  tcShnB->SetReadOnly(false);
+  tcShnF = new TTextEdit(this);  tcShnF->SetReadOnly(false); 
+  tcShnB = new TTextEdit(this);  tcShnB->SetReadOnly(false); 
 
-  wxBoxSizer *Sizer0 = new wxBoxSizer(wxHORIZONTAL);
-  if (cbPrimitives != NULL || cbApplyTo != NULL) {
-    if (cbPrimitives != NULL) {
-      Sizer0->Add(new wxStaticText(this, -1,
-        wxT("Primitive: ")), 0, wxEXPAND | wxALL, Border);
-      Sizer0->Add(cbPrimitives, 0, wxFIXED_MINSIZE | wxALL, Border);
-    }
+  wxBoxSizer *Sizer0 = NULL;
+  if( cbPrimitives != NULL )  {
+    Sizer0 = new wxBoxSizer(wxHORIZONTAL);
+    Sizer0->Add(new wxStaticText(this, -1, wxT("Primitive: ")), 0, wxEXPAND | wxALL, Border);
+    Sizer0->Add(cbPrimitives, 0, wxFIXED_MINSIZE | wxALL, Border);
     if( cbApplyTo != NULL )  {
       Sizer0->Add(new wxStaticText(this, -1, wxT("Apply to: ")), 0, wxEXPAND | wxALL, Border);
       Sizer0->Add(cbApplyTo, 0, wxFIXED_MINSIZE | wxALL, Border);
     }
+    Sizer0->Add(new wxButton(this, ID_COPY, wxT("Copy  Mat.")), 1, wxEXPAND | wxALL, Border);
+    Sizer0->Add(new wxButton(this, ID_PASTE, wxT("Paste Mat.")), 1, wxEXPAND | wxALL, Border);
     bEditFont = new wxButton(this, ID_EDITFONT, wxT("Edit Font"));
     bEditFont->Enable(Object->GetPrimitives().GetPrimitive(0).GetFont() != NULL &&
       !Object->GetPrimitives().GetPrimitive(0).GetFont()->IsVectorFont());
     Sizer0->Add(bEditFont, 1, wxEXPAND | wxALL, Border);
   }
-  else if (cbBlend != NULL) {
+  else if( cbBlend != NULL )  {
+    Sizer0 = new wxBoxSizer(wxHORIZONTAL);
     Sizer0->Add(new wxStaticText(this, -1,
       wxT("Group color properties: ")), 0, wxEXPAND | wxALL, Border);
     Sizer0->Add(cbBlend, 1, wxEXPAND | wxALL, Border);
   }
-  Sizer0->Add(new wxButton(this, ID_COPY, wxT("Copy  Mat.")), 1, wxEXPAND | wxALL, Border);
-  Sizer0->Add(new wxButton(this, ID_PASTE, wxT("Paste Mat.")), 1, wxEXPAND | wxALL, Border);
 
 #if !wxCHECK_VERSION(2,9,0)
   wxFlexGridSizer *grid = new wxFlexGridSizer(6, 5);
@@ -238,7 +235,7 @@ void TdlgMatProp::Init()  {
   grid->Add(cbShnB, 0, wxALL, Border);
   grid->Add(tcShnB, 0, wxEXPAND | wxALL, Border);
   grid->Add(-1,10);
-
+  
   grid->Add(cbTrans, 0, wxALL, Border);
   grid->Add(scTrans, 0, wxEXPAND | wxALL, Border);
   grid->Add(-1,10);
@@ -247,7 +244,7 @@ void TdlgMatProp::Init()  {
   grid->AddGrowableCol(2);
   grid->AddGrowableCol(4);
   grid->AddGrowableCol(5);
-
+  
   wxBoxSizer *ButtonsSizer = new wxBoxSizer(wxHORIZONTAL);
   ButtonsSizer->Add(new wxButton(this, wxID_OK, wxT("OK") ), 0, wxEXPAND | wxALL, Border);
   ButtonsSizer->Add(new wxButton(this, wxID_CANCEL, wxT("Cancel") ), 0, wxEXPAND | wxALL, Border);
@@ -264,7 +261,7 @@ void TdlgMatProp::Init()  {
 }
 //..............................................................................
 TdlgMatProp::~TdlgMatProp()  {
-  if( cbPrimitives != NULL )
+  if( cbPrimitives != NULL )  
     cbPrimitives->OnChange.Clear();
   scTrans->OnChange.Clear();
   tcAmbF->OnClick.Clear();
@@ -301,13 +298,13 @@ bool TdlgMatProp::Execute(const IEObject *Sender, const IEObject *Data,
     }
   }
   if( (TSpinCtrl*)Sender == scTrans )  {
-    for( size_t i=0; i < SpinCtrls.Count(); i++ )
+    for( size_t i=0; i < SpinCtrls.Count(); i++ ) 
       SpinCtrls[i]->SetValue(scTrans->GetValue());
   }
   return true;
 }
 //..............................................................................
-void TdlgMatProp::Init(const TGlMaterial &Glm) {
+void TdlgMatProp::Init( const TGlMaterial &Glm )  {
   cbAmbF->SetValue(Glm.HasAmbientF());
   cbAmbB->SetValue(Glm.HasAmbientB());
   scAmbF->SetValue(olx_round(Glm.AmbientF.Data()[3]*100));
@@ -405,7 +402,7 @@ void TdlgMatProp::OnOK(wxCommandEvent& event)  {
     else if( Object->IsSelected() )  {
       TGlGroup& gl = app.GetSelection();
       TGPCollection* ogpc = &Object->GetPrimitives();
-      sorted::PointerPointer<TGPCollection> uniqCol;
+      SortedPtrList<TGPCollection, TPointerComparator> uniqCol;
       const bool is_bond = EsdlInstanceOf(*Object, TXBond);
       if( cbApplyTo == NULL || cbApplyTo->GetSelection() == 0 )  {
         for( size_t i=0; i < gl.Count(); i++ )  {
@@ -433,7 +430,7 @@ void TdlgMatProp::OnOK(wxCommandEvent& event)  {
             uniqCol.AddUnique(&atoms[i]->GetPrimitives());
         }
         else  {
-          app.Individualise(bonds, cl + cbApplyTo->GetSelection());
+          app.Individualise(bonds, 3);
           for( size_t i=0; i < bonds.Count(); i++ )
             uniqCol.AddUnique(&bonds[i]->GetPrimitives());
         }
@@ -457,8 +454,7 @@ void TdlgMatProp::OnOK(wxCommandEvent& event)  {
       */
       if( EsdlInstanceOf(*Object, TXBond) )  {
         const uint32_t pmask = ((TXBond*)Object)->GetPrimitiveMask();
-        app.Individualise(
-          *((TXBond*)Object), cl + cbApplyTo->GetSelection(), pmask);
+        app.Individualise(*((TXBond*)Object), 3, pmask);
       }
       if( cbApplyTo != NULL && cbApplyTo->GetSelection() != 0 )  {
         if( EsdlInstanceOf(*Object, TXAtom) )  {

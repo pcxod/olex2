@@ -13,7 +13,7 @@
 #include "updateapi.h"
 
 class TdlgUpdateOptions: public TDialog  {
-  wxStaticText *stProxy, *stProxyUser, *stProxyPasswd,
+  wxStaticText *stProxy, *stProxyUser, *stProxyPasswd, 
     *stRepository, *stLastUpdated;
   wxTextCtrl *tcProxy;
   wxComboBox* cbRepository;

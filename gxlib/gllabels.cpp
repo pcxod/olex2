@@ -24,7 +24,7 @@ TXGlLabels::TXGlLabels(TGlRenderer& Render, const olxstr& collectionName)
 void TXGlLabels::Create(const olxstr& cName)  {
   if( !cName.IsEmpty() )
     SetCollectionName(cName);
-
+  
   TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
   GPC.AddObject(*this);
   if( GPC.PrimitiveCount() != 0 )  return;

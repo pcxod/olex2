@@ -129,7 +129,7 @@ struct olx_ptr {
   }
 };
 
-// this object could be safelly passed to/from dll function calls
+// this object could be safelly passed to/from dll function calls 
 template <typename ptr> struct olx_dll_ptr {
 protected:
   struct olx_dll_ptr_ {
@@ -137,7 +137,7 @@ protected:
     void (*deallocator_func)(void *p);
     ptr* p;
     int ref_cnt;
-
+  
     void init() {
       allocator_func = &olx_dll_ptr_::alloc;
       deallocator_func = &olx_dll_ptr_::dealloc;

@@ -110,7 +110,7 @@ void TMol::LoadFromStrings(const TStrList& Strings)  {
         BondsCycle = false;
       continue;
     }
-
+    
     if( (line.FirstIndexOf("V2000") != InvalidIndex) || (line.FirstIndexOf("V3000") != InvalidIndex) ) {  // count line
       AC = line.SubString(0, 3).ToInt();
       BC = line.SubString(3, 3).ToInt();

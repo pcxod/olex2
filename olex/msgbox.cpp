@@ -14,22 +14,22 @@
 #include "icons/question.xpm"
 #include "icons/stop.xpm"
 
-TdlgMsgBox::TdlgMsgBox(TMainFrame* Parent, const olxstr& msg, const olxstr& title,
+TdlgMsgBox::TdlgMsgBox(TMainFrame* Parent, const olxstr& msg, const olxstr& title, 
                        const olxstr& tickBoxMsg, long flags, bool ShowRememberCheckBox) :
   TDialog(Parent, title.u_str(), EsdlClassName(TdlgMsgBox).u_str() )
-{
+{         
   AActionHandler::SetToDelete(false);
   int Border = 5;
   wxStaticText* text = new wxStaticText(this, -1, msg.u_str());
   wxStaticBitmap* sbmp = NULL;
   cbRemember = (ShowRememberCheckBox ? new wxCheckBox(this, -1, tickBoxMsg.u_str()) : NULL);
-  if( (flags & wxICON_EXCLAMATION) != 0 )
+  if( (flags & wxICON_EXCLAMATION) != 0 ) 
     sbmp = new wxStaticBitmap(this, -1, wxBitmap(exclamation_xpm));
   else if( (flags & wxICON_HAND) != 0 )
     sbmp = new wxStaticBitmap(this, -1, wxBitmap(stop_xpm));
   else if( (flags & wxICON_ERROR) != 0 )
     sbmp = new wxStaticBitmap(this, -1, wxBitmap(exception_xpm));
-  else if( (flags & wxICON_INFORMATION) != 0 )
+  else if( (flags & wxICON_INFORMATION) != 0 )  
     sbmp = new wxStaticBitmap(this, -1, wxBitmap(information_xpm));
   else if( (flags & wxICON_QUESTION) != 0 )
     sbmp = new wxStaticBitmap(this, -1, wxBitmap(question_xpm));
@@ -98,7 +98,7 @@ bool TdlgMsgBox::Execute(const IEObject *Sender, const IEObject *Data,
   return true;
 }
 //..............................................................................
-olxstr TdlgMsgBox::Execute(TMainFrame* Parent, const olxstr& msg, const olxstr& title,
+olxstr TdlgMsgBox::Execute(TMainFrame* Parent, const olxstr& msg, const olxstr& title, 
                            const olxstr& tickBoxMsg, long flags, bool ShowRememberCheckBox)  {
   TdlgMsgBox* dlg = new TdlgMsgBox(Parent, msg, title, tickBoxMsg, flags, ShowRememberCheckBox);
   int mv = dlg->ShowModal();

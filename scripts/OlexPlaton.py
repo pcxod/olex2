@@ -26,7 +26,7 @@ def OlexPlaton(platonflag="0"):
   print "Input file is: ", inputfilename
 
   platonflagcodes = {
-  'a' : ["ORTEP/ADP [PLOT ADP]", "lis"],
+  'a' : ["ORTEP/ADP [PLOT ADP]", "lis"], 
   'b' : ["CSD-Search [CALC GEOM CSD]","lis"],
   'c' : ["Calc Mode [CALC]", "lis"],
   'd' : ["DELABS [CALC DELABS]", "lis"],
@@ -72,7 +72,7 @@ def OlexPlaton(platonflag="0"):
   'X' : ["Stripped SHELXS86 (Direct Methods Only) Mode" , ""],
   'Y' : ["Native Structure Tidy (Parthe & Gelato) Mode" , ""]
   }
-
+  
   # OS Checking
   if sys.platform[:3] == 'lin':
     # Risky but assuming that this is a debroglie version of platon
@@ -83,7 +83,7 @@ def OlexPlaton(platonflag="0"):
   elif sys.platform[:3] == 'dar':
     # Mac assuming like windows
     tickornot = '-o -'
-
+    
   # Checking for help string
   if len(platonflag) > 1 or platonflag == "help":
     print "Unknown option, please check options and try again"
@@ -123,7 +123,7 @@ def OlexPlaton(platonflag="0"):
         for platon_line in platon_result_file:
           print platon_line
         platon_result_file.close()
-      except IOError:
+      except IOError: 
         print "Failed to open file"
       print "You can read this file by typing:"
       print "edit %s"%(platon_extension)

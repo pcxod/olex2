@@ -21,7 +21,7 @@ bool TIPattern::Calc(const olxstr& Exp, olxstr& Msg, bool Combine, double Delta)
   Clear();
   olxstr Tmp;
   TCHNExp CHN;
-  TStringToList<olxstr,double> SL;
+  TStrPObjList<olxstr,double> SL;
   TIDistribution ID;
   CHN.LoadFromExpression(Exp);
   CHN.MolWeight(); // to check the correctness of the formula
@@ -49,7 +49,7 @@ bool TIPattern::Calc(const olxstr& Exp, olxstr& Msg, bool Combine, double Delta)
     // normalisation of the serie
     double MaxY = 100.0/Points[0].Y; // normalisation factor
     for( size_t i=0; i < Points.Count(); i++ )
-      Points[i].Y *= MaxY;
+      Points[i].Y *= MaxY; 
   }
   return true;
 }

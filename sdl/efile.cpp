@@ -99,6 +99,7 @@
 
 UseEsdlNamespace()
 
+const olxstr TEFile::AllFilesMask("*.*");
 //----------------------------------------------------------------------------//
 // TEFile function bodies
 //----------------------------------------------------------------------------//
@@ -181,7 +182,7 @@ void TEFile::Read(void *Bf, size_t count)  {
 }
 //..............................................................................
 void TEFile::_seek(uint64_t off, int origin) const {
-  if( fseek(FHandle, off, origin) != 0 )
+  if( fseek(FHandle, off, origin) != 0 )  
     throw TFileException(__OlxSourceInfo, FName, "fseek failed" );
 }
 //..............................................................................
@@ -236,7 +237,7 @@ bool TEFile::Existsi(const olxstr& F, olxstr& res)  {
   olxstr path = ExtractFilePath(F);
   olxstr name = ExtractFileName(F);
   TStrList files;
-  if( path.IsEmpty() )
+  if( path.IsEmpty() )  
     TEFile::ListCurrentDir(files, name, sefAll);
   else
     TEFile::ListDir(path, files, name, sefAll);
@@ -283,7 +284,7 @@ olxstr TEFile::ExtractFileExt(const olxstr& F)  {
   olxstr fn = OLX_OS_PATH(F);
   size_t i = fn.LastIndexOf('.');
   if( i > 0 && i != InvalidIndex )  {
-    size_t del_ind = fn.LastIndexOf(OLX_PATH_DEL);
+    size_t del_ind = fn.LastIndexOf(OLX_PATH_DEL); 
     if( del_ind != InvalidIndex && del_ind > i )
       return EmptyString();
     return fn.SubStringFrom(i+1);
@@ -323,7 +324,7 @@ olxstr TEFile::ChangeFileExt(const olxstr &F, const olxstr &Ext)  {
       fn.SetLength(fn.Length()-1);
   }
   if( !Ext.IsEmpty() )  {
-    if( Ext.CharAt(0) != '.' )
+    if( Ext.CharAt(0) != '.' )  
       fn << '.';
     fn << Ext;
   }
@@ -340,7 +341,7 @@ bool TEFile::DelFile(const olxstr& F)  {
 #else  // POSIX -1 - no change!
   if( res != 0 && res != -1 )
     return false;
-#endif
+#endif 
   return unlink(OLXSTR(fn)) != -1;
 }
 //..............................................................................
@@ -383,7 +384,7 @@ bool TEFile::DeleteDir(const olxstr& F, bool ContentOnly, bool rethrow)  {
 //..............................................................................
 bool TEFile::IsEmptyDir(const olxstr& F)  {
   olxstr fn = OLX_OS_PATH(F);
-  if( !Exists(fn) || !TEFile::IsDir(fn) )
+  if( !Exists(fn) || !TEFile::IsDir(fn) )  
     throw TFunctionFailedException(__OlxSourceInfo, "The directory does not exist");
   TStrList out;
   if( !TEFile::ListDir(fn, out, "*", sefAll^sefRelDir) )
@@ -421,9 +422,9 @@ bool TEFile::ListCurrentDirEx(TFileList &Out, const olxstr &Mask, const uint16_t
   if( (sF & sefReadOnly) != 0 )  flags |= FILE_ATTRIBUTE_READONLY;
   if( (sF & sefSystem) != 0 )    flags |= FILE_ATTRIBUTE_SYSTEM;
   if( (sF & sefHidden) != 0 )    flags |= FILE_ATTRIBUTE_HIDDEN;
-  sd.dwFileAttributes = flags;
-  HANDLE hn = FindFirstFile(AllFilesMask().u_str(), &sd);
-  if( hn == INVALID_HANDLE_VALUE )
+  sd.dwFileAttributes = flags; 
+  HANDLE hn = FindFirstFile(AllFilesMask.u_str(), &sd);
+  if( hn == INVALID_HANDLE_VALUE )  
     return false;
   bool done = true;
   while( done )  {
@@ -448,14 +449,14 @@ bool TEFile::ListCurrentDirEx(TFileList &Out, const olxstr &Mask, const uint16_t
       else
         throw TFunctionFailedException(__OlxSourceInfo, "stat failed");
       attrib = 0;
-      if( (sd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0 )
+      if( (sd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0 )  
         attrib |= sefDir;
       else                                      attrib |= sefFile;
-      if( (sd.dwFileAttributes & FILE_ATTRIBUTE_READONLY) != 0 )
+      if( (sd.dwFileAttributes & FILE_ATTRIBUTE_READONLY) != 0 ) 
         attrib |= sefReadOnly;
-      if( (sd.dwFileAttributes & FILE_ATTRIBUTE_SYSTEM) != 0 )
+      if( (sd.dwFileAttributes & FILE_ATTRIBUTE_SYSTEM) != 0 ) 
         attrib |= sefSystem;
-      if( (sd.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) != 0 )
+      if( (sd.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) != 0 ) 
         attrib |= sefHidden;
       li.SetAttributes( attrib );
     }
@@ -471,30 +472,25 @@ bool TEFile::ListCurrentDir(TStrList& Out, const olxstr &Mask, const uint16_t sF
   memset(&sd, 0, sizeof(sd));
 
   int flags = 0;
-  if ((sF & sefFile) != 0)      flags |= FILE_ATTRIBUTE_NORMAL;
-  if ((sF & sefDir) != 0)       flags |= FILE_ATTRIBUTE_DIRECTORY;
-  if ((sF & sefReadOnly) != 0)  flags |= FILE_ATTRIBUTE_READONLY;
-  if ((sF & sefSystem) != 0)    flags |= FILE_ATTRIBUTE_SYSTEM;
-  if ((sF & sefHidden) != 0)    flags |= FILE_ATTRIBUTE_HIDDEN;
-  sd.dwFileAttributes = flags;
-  HANDLE hn = FindFirstFile(AllFilesMask().u_str(), &sd);
-  if (hn == INVALID_HANDLE_VALUE)
+  if( (sF & sefDir) != 0 )       flags |= FILE_ATTRIBUTE_DIRECTORY;
+  if( (sF & sefReadOnly) != 0 )  flags |= FILE_ATTRIBUTE_READONLY;
+  if( (sF & sefSystem) != 0 )    flags |= FILE_ATTRIBUTE_SYSTEM;
+  if( (sF & sefHidden) != 0 )    flags |= FILE_ATTRIBUTE_HIDDEN;
+  sd.dwFileAttributes = flags; 
+  HANDLE hn = FindFirstFile(AllFilesMask.u_str(), &sd);
+  if( hn == INVALID_HANDLE_VALUE )  
     return false;
   bool done = true;
-  while (done) {
-    if ((sF & sefDir) != 0 && (sF & sefRelDir) == 0 &&
-      (sd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
-    {
+  while( done )  {
+    if( (sF & sefDir) != 0 && (sF & sefRelDir) == 0 && (sd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)  {
       size_t len = olxstr::o_strlen(sd.cFileName);
-      if ((len == 1 && sd.cFileName[0] == '.') ||
-          (len == 2 && sd.cFileName[0] == '.' && sd.cFileName[1] == '.'))
-      {
+      if( (len == 1 && sd.cFileName[0] == '.') || (len == 2 && sd.cFileName[0] == '.' && sd.cFileName[1] == '.') )  {
         done = (FindNextFile(hn, &sd) != 0);
         continue;
       }
     }
-    if (DoesMatchMasks(sd.cFileName, masks))
-      Out.Add(sd.cFileName);
+    if( DoesMatchMasks(sd.cFileName, masks) )
+      Out.Add( sd.cFileName );
     done = (FindNextFile(hn, &sd) != 0);
   }
   FindClose(hn);
@@ -626,11 +622,13 @@ bool TEFile::SetFileTimes(const olxstr& fileName, uint64_t AccTime, uint64_t Mod
 //..............................................................................
 time_t TEFile::FileAge(const olxstr& fileName)  {
   struct STAT_STR the_stat;
-  if (STAT(OLXSTR(OLX_OS_PATH(fileName)), &the_stat) != 0) {
-    throw TInvalidArgumentException(__OlxSourceInfo,
-      olxstr("Invalid file '") << fileName << '\'');
-  }
-#if defined(__BORLANDC__) || defined(_MSC_VER) || defined(__GNUC__)
+  if( STAT(OLXSTR(OLX_OS_PATH(fileName)), &the_stat) != 0 )
+    throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Invalid file '") << fileName << '\'');
+#ifdef __BORLANDC__
+  return the_stat.st_mtime;
+#elif _MSC_VER
+  return the_stat.st_mtime;
+#elif __GNUC__
   return the_stat.st_mtime;
 #else
   struct timespec& t = the_stat.st_mtimespec;
@@ -645,14 +643,12 @@ uint64_t TEFile::FileLength(const olxstr& fileName)  {
   return the_stat.st_size;
 }
 //..............................................................................
-TEFile::FileID TEFile::GetFileID(const olxstr& fileName) {
+TEFile::FileID TEFile::GetFileID(const olxstr& fileName)  {
   olxstr _name( OLX_OS_PATH(fileName) );
   time_t _timestamp = 0;
   struct STAT_STR the_stat;
-  if (STAT(OLXSTR(_name), &the_stat) != 0) {
-    throw TInvalidArgumentException(__OlxSourceInfo,
-      olxstr("Invalid file '") << _name << '\'');
-  }
+  if( STAT(OLXSTR(_name), &the_stat) != 0 )
+    throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Invalid file '") << _name << '\'');
 #if defined(__BORLANDC__) || defined(_MSC_VER) || defined(__GNUC__)
   _timestamp = the_stat.st_mtime;
 #else
@@ -739,10 +735,10 @@ olxstr& TEFile::UnixPathI( olxstr& F )  {
 }
 //..............................................................................
 olxstr TEFile::AddPathDelimeter( const olxstr& Path )  {
-  if( Path.IsEmpty() )
+  if( Path.IsEmpty() )  
     return olxstr(OLX_PATH_DEL);
   olxstr T = OLX_OS_PATH(Path);
-  if( T[T.Length()-1] != OLX_PATH_DEL )
+  if( T[T.Length()-1] != OLX_PATH_DEL )  
     T << OLX_PATH_DEL;
   return T;
 }
@@ -750,7 +746,7 @@ olxstr TEFile::AddPathDelimeter( const olxstr& Path )  {
 olxstr& TEFile::AddPathDelimeterI(olxstr &Path)  {
   if( Path.IsEmpty() )  return Path;
   OLX_OS_PATHI(Path);
-  if( Path[Path.Length()-1] != OLX_PATH_DEL )
+  if( Path[Path.Length()-1] != OLX_PATH_DEL )  
     Path << OLX_PATH_DEL;
   return Path;
 }
@@ -838,14 +834,14 @@ TEFile* TEFile::TmpFile(const olxstr& templ)  {
     return new TEFile(EmptyString(), tmpfile());
 #endif
   }
-  else
+  else  
     throw TNotImplementedException(__OlxSourceInfo);
 }
 //..............................................................................
 bool TEFile::Rename(const olxstr& from, const olxstr& to, bool overwrite)  {
   if( !Exists(from) )  return false;
   if( Exists(to) )  {
-    if( !overwrite )
+    if( !overwrite )  
       return false;
     if( !IsDir(to) )
       DelFile(to);

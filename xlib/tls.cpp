@@ -30,15 +30,16 @@ TLS::TLS(const TSAtomPList &atoms_) : atoms(atoms_)
   TLSfreeParameters = 21;
   RtoLaxes.I();
   //Use an atom as origin (reducing numerical errors on distances)
-  origin = olx_mean(atoms,
-    FunctionAccessor::MakeConst<vec3d, TSAtom>(&TSAtom::crd));
+  for (size_t i=0; i < atoms.Count(); i++)
+    origin += atoms[i]->crd();
+  origin /= atoms.Count();
   /*
   Calculate errors on Uij input - to be replaced be VcV when available from
   Olex2
   */
   ematd designM, weights;
   evecd UijCol;
-  UijErrors(weights);
+  //UijErrors(weights);
   /*
   currently unit weights
   Create design matrix and find TLS matrices using SVD
@@ -53,10 +54,10 @@ TLS::TLS(const TSAtomPList &atoms_) : atoms(atoms_)
   symS();  //Origin shift to symmetrise the S
   newElps = calcUijEllipse(atoms);
   FoM = FigOfMerit(newElps, weights);
-  if (false) { // diagonalise S?
-    mat3d splitAxes, Tmatrix, Smatrix;
-    diagS(splitAxes,Tmatrix,Smatrix);
-  }
+  //{ // diagonalise S?
+  //  mat3d splitAxes, Tmatrix, Smatrix;
+  //  diagS(splitAxes,Tmatrix,Smatrix);
+  //}
 }
 
 void TLS::printTLS(const olxstr &title) const {
@@ -102,8 +103,8 @@ void TLS::printDiff(const olxstr &title) const {
       tab[idx][j+1] = olxstr::FormatFloat(-3, Q[j], true);
     tab[idx+1][0] = "Utls";
     Q = GetElpList()[i];
-    double v_tls = TEllipsoid(Q).CalcVolume();
-    double dV = (v - v_tls);
+    double dV = (atoms[i]->GetEllipsoid()->CalcVolume() -
+      TEllipsoid(Q).CalcVolume());
     R1 += olx_abs(dV);
     R2 += dV*dV;
     for (size_t j=0; j < 6; j++)
@@ -111,7 +112,6 @@ void TLS::printDiff(const olxstr &title) const {
     tab[idx][7] = olxstr::FormatFloat(-3, dV, true);
     tab[idx][8] = olxstr::FormatFloat(3, v, true);
     tab[idx][9] = olxstr::FormatFloat(-3, 100*dV/v);
-    tab[idx + 1][8] = olxstr::FormatFloat(3, v_tls, true);
   }
   TBasicApp::NewLogEntry() << tab.CreateTXTList(title, true, false, ' ');
   TBasicApp::NewLogEntry() << "R1(vol)=" <<
@@ -163,10 +163,10 @@ void TLS::createDM(ematd &dm, evecd &UijC) {
   dm.Resize(6*atoms.Count(),TLSfreeParameters).Null();
   UijC.Resize(6*atoms.Count()).Null();
   evecd quad(6);
-  for( size_t i=0; i < atoms.Count(); i++ )  {
+  for( size_t i=0; i < atoms.Count(); i++ )  {  
     if ( atoms[i]->GetEllipsoid() == NULL ) {
       throw TInvalidArgumentException(__OlxSourceInfo,
-        "Isotropic atom: invalid TLS input");
+        "Isotropic atom: invalid TLS input"); 
     }
     vec3d r = atoms[i]->crd() - origin;
     mat3d Atls(0, r[2], -r[1], -r[2], 0, r[0], r[1], -r[0], 0);
@@ -191,7 +191,8 @@ void TLS::createDM(ematd &dm, evecd &UijC) {
     for (int j=0; j < 6; j++)
       UijC[idx+j]  = quad[TEllipsoid::shelx_to_linear(j)];
   }
-}
+} 
+
 
 bool TLS::calcTLS(const ematd &designM, const evecd &UijC,
   const ematd &weights)
@@ -200,11 +201,11 @@ bool TLS::calcTLS(const ematd &designM, const evecd &UijC,
   const size_t mRows = designM.Vectors();  //No. of Rows
 
   if (TLSfreeParameters!= nColumns)
-    throw TFunctionFailedException(__OlxSourceInfo,
+    throw TFunctionFailedException(__OlxSourceInfo, 
     "TLS Failed: Number of free TLS parameters not same as design matrix width");
 
   if (nColumns> mRows) {
-    throw TFunctionFailedException(__OlxSourceInfo,
+    throw TFunctionFailedException(__OlxSourceInfo, 
     "TLS Failed: more tls parameters than equations."
     "\nTry adding more atoms or constraints.");
   }
@@ -215,8 +216,8 @@ bool TLS::calcTLS(const ematd &designM, const evecd &UijC,
   bool svdRes = svd.Decompose(m, 2, 2);
   ematd D(TLSfreeParameters, svd.u.ColCount()),
     Ds(TLSfreeParameters, TLSfreeParameters);
-  for (int i = 0; i < TLSfreeParameters; i++) {
-    if (svd.w(i)) {
+  for (int i = 0; i < TLSfreeParameters; i++){
+    if (svd.w(i))  {
       D(i,i) = 1.0/svd.w(i);
       Ds(i,i) = olx_sqr(D(i,i));
     }
@@ -232,6 +233,9 @@ bool TLS::calcTLS(const ematd &designM, const evecd &UijC,
   for (size_t i=0; i < UijC.Count(); i++)
     ssr += olx_sqr(UijC[i] - designM[i].DotProd(tlsElements));
   TLS_VcV *= ssr/(UijC.Count()-TLSfreeParameters);
+#ifdef _DEBUG
+  math::alg::print0_2(TLS_VcV, "VcV");
+#endif
   to_sym3d tm = Tmat, lm = Lmat;
   for (size_t i=0; i < 6; i++) {
     tm(i) = tlsElements[i];
@@ -243,7 +247,7 @@ bool TLS::calcTLS(const ematd &designM, const evecd &UijC,
   return svdRes;
 }
 
-void TLS::RotateLaxes() {
+void TLS::RotateLaxes(){
   //Rotates TLS tensors to L principle axes
   Lmat.EigenValues(Lmat, RtoLaxes.I());
   origin = RtoLaxes*origin;
@@ -268,12 +272,19 @@ void TLS::RotateLaxes() {
 
 ConstTypeList<evecd> TLS::calcUijEllipse (const TSAtomPList &atoms) {
   /* For each atom, calc U_ij from current TLS matrices */
-  evecd_list Ellipsoids(atoms.Count());
+  evecd_list Ellipsoids;
   mat3d RtoLaxesT = mat3d::Transpose(RtoLaxes);  //inverse
-  for( size_t i=0; i < atoms.Count(); i++ )  {
+  for( size_t i=0; i < atoms.Count(); i++ )  {  
     mat3d UtlsLaxes = calcUijCart(RtoLaxes*atoms[i]->crd());
     mat3d UtlsCell = RtoLaxesT * UtlsLaxes * RtoLaxes;
-    ShelxQuad(UtlsCell, Ellipsoids[i].Resize(6));
+    evecd vec(6);
+    vec[0]=  UtlsCell[0][0];
+    vec[1]=  UtlsCell[1][1];
+    vec[2]=  UtlsCell[2][2];
+    vec[3]=  UtlsCell[2][1];
+    vec[4]=  UtlsCell[2][0];
+    vec[5]=  UtlsCell[0][1];
+    Ellipsoids.AddCopy(vec);
   }
   return Ellipsoids;
 }
@@ -287,19 +298,23 @@ mat3d TLS::calcUijCart(const vec3d &position) {
 
 vec3d TLS::FigOfMerit(const evecd_list &Elps, const ematd &weights) {
   //sets FoM = {R1,R2}
-  // R1 = sum {i<j=0..3} |Uobs - Utls| / sum |Uobs|
+  // R1 = sum {i<j=0..3} |Uobs - Utls| / sum |Uobs| in L axes
   // R2 = Sqrt[ sum {i,j=0..3} (Uobs - Utls)^2 / sum{Uobs^2}  ]
   double sumUobs=0;
   double R1=0, R2=0, sumUobsSq=0;
+  double k[6] = {1, 2, 2, 1, 2, 1};
+  mat3d RtoLaxesT = mat3d::Transpose(RtoLaxes);
   for (size_t i=0; i < atoms.Count(); i++) {
+    from_sym3d E1 = RtoLaxes*atoms[i]->GetEllipsoid()->ExpandQuad()*
+      RtoLaxesT;
+    from_sym3d E2 = RtoLaxes*mat3d(Elps[i][0], Elps[i][5], Elps[i][4],
+      Elps[i][1], Elps[i][3], Elps[i][2])*RtoLaxesT;
     for (int j=0; j < 6; j++) {
-      double k = (j > 2 ? 2 : 1);
-      double e = atoms[i]->GetEllipsoid()->GetQuad(j);
-      double d = olx_abs(e - Elps[i][j]);
+      double d = olx_abs(E1(j)-E2(j));
       R1 += d;
-      sumUobs += olx_abs(e);
-      R2 += k*olx_sqr(d);
-      sumUobsSq += k*olx_sqr(e);
+      sumUobs += olx_abs(E1(j));
+      R2 += k[j]*olx_sqr(d);
+      sumUobsSq += k[j]*olx_sqr(E1(j));
     }
   }
   R1 = R1/sumUobs;
@@ -308,7 +323,7 @@ vec3d TLS::FigOfMerit(const evecd_list &Elps, const ematd &weights) {
   return vec3d(R1, R2, sqrt(chiSq));
 }
 
-void TLS::symS() {
+void TLS::symS(){
   vec3d r; //shifts of origin
   r[0] = (Smat[1][2] - Smat[2][1])/(Lmat[1][1] + Lmat[2][2]);
   r[1] = (Smat[2][0] - Smat[0][2])/(Lmat[2][2] + Lmat[0][0]);
@@ -350,7 +365,7 @@ void TLS::diagS(mat3d &split, mat3d &Tmatrix, mat3d &Smatrix){
   for (int i=0; i<3; i++) {
     for (int j=0; j<3 ; j++) {
       for (int k =0; k <3; k++)
-        split[i][j] = epsil(i,j,k)*Smat[j][k]/Lmat[j][j];
+        split[i][j] = epsil(i,j,k)*Smat[j][k]/Lmat[j][j]; 
     }
   }
   // Calc change to T matrix
@@ -386,12 +401,12 @@ void TLS::diagS(mat3d &split, mat3d &Tmatrix, mat3d &Smatrix){
 int TLS::epsil(int i, int j, int k) const{
   //antiSym tensor Epsilon_(i,j,k)
   //    = +1, even perms of 0,1,2
-  //    = -1, odd perms
-  //    = 0 for repeated index, eg 0,0,k
+  //    = -1, odd perms 
+  //    = 0 for repeated index, eg 0,0,k 
   if( (i==0 && j==1 && k==2) ||
       (i==1 && j==2 && k==0) ||
       (i==2 && j==0 && k==1) )
-    return 1;
+    return 1;    
   else if(
       (i==1 && j==0 && k==2) ||
       (i==2 && j==1 && k==0) ||
@@ -401,7 +416,7 @@ int TLS::epsil(int i, int j, int k) const{
     return 0;  // returns zero eg for i==j > 2;
   else {
     throw TInvalidArgumentException(__OlxSourceInfo,
-      "epsilon_i,j,k not permutation of 0,1,2");
+      "epsilon_i,j,k not permutation of 0,1,2"); 
   }
 }
 
@@ -429,15 +444,12 @@ TEValueD TLS::BondCorrect(const TSAtom &atom1, const TSAtom &atom2){
 evecd TLS::extrapolate(const TSAtom &atom) {
   mat3d UtlsLaxes = calcUijCart(RtoLaxes*atom.crd());
   mat3d UtlsCell= mat3d::Transpose(RtoLaxes) * UtlsLaxes * RtoLaxes;
-  return ShelxQuad(UtlsCell);
-}
-
-evecd &TLS::ShelxQuad(const mat3d &m, evecd &vec) {
-  vec[0] = m[0][0];
-  vec[1] = m[1][1];
-  vec[2] = m[2][2];
-  vec[3] = m[2][1];
-  vec[4] = m[2][0];
-  vec[5] = m[0][1];
+  evecd vec(6);
+  vec[0]=  UtlsCell[0][0];
+  vec[1]=  UtlsCell[1][1];
+  vec[2]=  UtlsCell[2][2];
+  vec[3]=  UtlsCell[2][1];
+  vec[4]=  UtlsCell[2][0];
+  vec[5]=  UtlsCell[0][1];
   return vec;
 }

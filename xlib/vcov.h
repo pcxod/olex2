@@ -16,7 +16,6 @@
 #include "lattice.h"
 #include "bapp.h"
 #include "log.h"
-#include "symmcon.h"
 #undef QLength
 BeginXlibNamespace()
 
@@ -30,9 +29,7 @@ class VcoVMatrix {
   double **data;
   size_t count;
   TTypeList<AnAssociation3<olxstr, short, size_t> > Index;
-  olxdict<size_t, size_t, TPrimitiveComparator> AtomIdIndex;
-  olxstr_dict<size_t> AtomNameIndex;
-  TStrList U_annotations;
+  static TStrList U_annotations;
   bool diagonal;
 protected:
   void Allocate(size_t w, bool diag=false) {
@@ -54,9 +51,11 @@ protected:
     }
   }
   size_t FindAtomIndex(const TCAtom& a) const {
-    return AtomIdIndex.Find(a.GetId(), InvalidIndex);
+    for( size_t i=0; i < Index.Count(); i++ )
+      if( Index[i].GetC() == a.GetId() )
+        return i;
+    return InvalidIndex;
   }
-  void UpdateAtomIndex();
 public:
   VcoVMatrix();
   ~VcoVMatrix() {  Clear();  }
@@ -83,19 +82,14 @@ public:
   template <class list> void FindVcoV(const list& atoms, mat3d_list& m) const {
     TSizeList a_indexes;
     TTypeList<TVector3<size_t> > indexes;
-    for (size_t i = 0; i < atoms.Count(); i++) {
-      if (a_indexes.Add(FindAtomIndex(atoms[i]->CAtom())) == InvalidIndex) {
-        SiteSymmCon sc = atoms[i]->CAtom().GetSiteConstraints();
-        if (sc.map[6].param != -2 || sc.map[7].param != -2 ||
-          sc.map[8].param != -2) // is not constrained?
-        {
-          TBasicApp::NewLogEntry(logError) << "Unable to located given atom: "
-            << atoms[i]->GetLabel();
-        }
+    for( size_t i=0; i < atoms.Count(); i++ )  {
+      if( a_indexes.Add(FindAtomIndex(atoms[i]->CAtom())) == InvalidIndex ) {
+        TBasicApp::NewLogEntry(logError) << "Unable to located given atom: " <<
+          atoms[i]->GetLabel();
       }
-      indexes.AddNew(InvalidIndex, InvalidIndex, InvalidIndex);
+      indexes.AddNew(InvalidIndex,InvalidIndex,InvalidIndex);
     }
-    for (size_t i = 0; i < a_indexes.Count(); i++)  {
+    for( size_t i=0; i < a_indexes.Count(); i++ )  {
       if( a_indexes[i] == InvalidIndex )  continue;
       for( size_t j=a_indexes[i];
           j < Index.Count() && Index[j].GetC() == atoms[i]->CAtom().GetId();
@@ -272,7 +266,7 @@ public:
       const vec3d pc = c.evaluate();
       const double pcd = pc.DotProd(pi.normal) - pi.d;
       const double res = pc.QDistanceTo(pi.center) - pcd*pcd;
-      return  res <= 0 ? 0 : sqrt(res);
+      return  res <= 0 ? 0 : sqrt(res); 
     }
   };
   // alignment RMSD
@@ -335,22 +329,6 @@ public:
     PlaneNormalEvaluator(const VT& _v, const WT& _w) : values(_v), weights(_w)  {}
     vec3d evaluate() const {  return CalcPlane(values, weights).normal;  }
   };
-  template <class VT, class WT> struct LineEvaluator  {
-    VT values;
-    WT weights;
-    LineEvaluator(const VT& _v, const WT& _w)
-      : values(_v), weights(_w)
-    {
-      if (values.Count() < 2)
-        throw TInvalidArgumentException(__OlxSourceInfo, "point count");
-    }
-    vec3d evaluate() const {
-      if (values.Count() == 2) {
-        return values[1] - values[0];
-      }
-      return CalcPlane(values, weights, 2).normal;
-    }
-  };
   template <class VT, class WT> struct Plane  {
     VT values;
     WT weights;
@@ -374,27 +352,6 @@ public:
     double calc_signed() const {
       return olx_dihedral_angle_signed(a.evaluate(), b.evaluate(),
         c.evaluate(), d.evaluate());
-    }
-  };
-  template <class PT> struct TwistAngle {
-    PT a, b;
-    TwistAngle(const PT &a_, const PT &b_) : a(a_), b(b_) {}
-    double calc() const {
-      const PlaneInfo ai = a.evaluate(), bi = b.evaluate();
-      return olx_dihedral_angle(ai.center + ai.normal,
-        ai.center, bi.center, bi.center + bi.normal);
-    }
-  };
-  template <class PT> struct FoldAngle {
-    PT a, b;
-    FoldAngle(const PT &a_, const PT &b_) : a(a_), b(b_) {}
-    double calc() const {
-      const PlaneInfo ai = a.evaluate(), bi = b.evaluate();
-      vec3d n_c = (bi.center - ai.center).XProdVec(
-        ai.normal + bi.normal).Normalise();
-      vec3d p_a = ai.normal - n_c*n_c.DotProd(ai.normal);
-      vec3d p_b = bi.normal - n_c*n_c.DotProd(bi.normal);
-      return (acos(p_a.CAngle(p_b)) * 180 / M_PI);
     }
   };
   // tetrahedron volume
@@ -544,7 +501,7 @@ protected:
       r[i] = atoms[i]->crd();
   }
   //http://en.wikipedia.org/wiki/Numerical_differentiation
-  template <class VecT, class OutVecT, class Evaluator>
+  template <class VecT, class OutVecT, class Evaluator> 
   void CalcDiff(VecT& vars, OutVecT& df, const Evaluator& e)  {
     static const double delta=sqrt(2.2e-16);
     for( size_t i=0; i < vars.Count(); i++ )  {
@@ -590,7 +547,7 @@ protected:
       return base.DoCalcForPoints(points, m, e);
     }
   };
-  template <class list, typename eval>
+  template <class list, typename eval> 
   TEValue<double> DoCalcForPoints(list& points, const mat3d_list& vcov,
     const eval& e)
   {
@@ -609,7 +566,6 @@ protected:
   typedef PointProxy pnt_pt;
   typedef PlaneEvaluator<crd_slice,weight_slice> pln_et;
   typedef PlaneNormalEvaluator<crd_slice,weight_slice> plnn_et;
-  typedef LineEvaluator<crd_slice, weight_slice> ln_et;
 public:
   VcoVContainer(TAsymmUnit& _au) : au(_au), cell(6), celle(6)  {
     static const double a2r = M_PI/180;
@@ -650,7 +606,7 @@ public:
     for( size_t i=0; i < atoms.Count(); i++ )  {
       cnt += atoms[i]->crd();
       for( size_t j=0; j < atoms.Count(); j++ )
-        vcov += ch.m[i*atoms.Count()+j];
+        vcov += ch.m[i*atoms.Count()+j]; 
     }
     vcov *= 1./olx_sqr(atoms.Count());
     cnt /= atoms.Count();
@@ -667,7 +623,7 @@ public:
     for( size_t i=0; i < atoms.Count(); i++ )  {
       cnt += atoms[i]->ccrd();
       for( size_t j=0; j < atoms.Count(); j++ )
-        vcov += ch.m[i*atoms.Count()+j];
+        vcov += ch.m[i*atoms.Count()+j]; 
     }
     vcov *= 1./olx_sqr(atoms.Count());
     cnt /= atoms.Count();
@@ -676,7 +632,7 @@ public:
       TEValueD(cnt[1], sqrt(vcov[1][1])),
       TEValueD(cnt[2], sqrt(vcov[2][2])));
   }
-  // analytical, http://salilab.org/modeller/8v0/manual/node248.html
+  // analytical, http://salilab.org/modeller/8v0/manual/node248.html 
   TEValue<double> CalcAngleA(const TSAtom& a1, const TSAtom& a2,
     const TSAtom& a3)
   {
@@ -712,20 +668,6 @@ public:
     return ch.DoCalc(
       Angle3<pnt_pt,pnt_pt,pnt_pt>(pnt_pt(ch.points[0]), pnt_pt(ch.points[1]),
         pnt_pt(ch.points[2])));
-  }
-  TEValue<double> CalcAngle(const TSAtomCPList& a1, const TSAtomCPList& a2,
-    const TSAtomCPList& a3)
-  {
-    CalcWHelper ch(*this, TSAtomCPList(a1) << a2 << a3);
-    return ch.DoCalc(
-      Angle3<cnt_et, cnt_et, cnt_et>(
-      cnt_et(crd_slice(ch.points, 0, a1.Count()),
-        weight_slice(ch.weights, 0, a1.Count())),
-      cnt_et(crd_slice(ch.points, a1.Count(), a2.Count()),
-        weight_slice(ch.weights, a1.Count(), a2.Count())),
-      cnt_et(crd_slice(ch.points, a1.Count()+a2.Count(), a3.Count()),
-        weight_slice(ch.weights, a1.Count()+a2.Count(), a3.Count()))
-      ));
   }
   // analytical,http://salilab.org/modeller/8v0/manual/node248.html
   TEValue<double> CalcTAngleA(const TSAtom& a1, const TSAtom& a2,
@@ -805,18 +747,6 @@ public:
           weight_slice(ch.weights, 0, plane.Count())),
         pnt_pt(ch.points.GetLast())));
   }
-  // centroid to centroid
-  TEValue<double> CalcC2CDistance(const TSAtomCPList& c1,
-    const TSAtomCPList& c2)
-  {
-    CalcWHelper ch(*this, TSAtomCPList(c1) << c2);
-    return ch.DoCalc(
-      Distance<cnt_et, cnt_et>(
-      cnt_et(crd_slice(ch.points, 0, c1.Count()),
-      weight_slice(ch.weights, 0, c1.Count())),
-      cnt_et(crd_slice(ch.points, c1.Count(), c2.Count()),
-      weight_slice(ch.weights, c1.Count(), c2.Count()))));
-  }
   // plane to a vector angle
   TEValue<double> CalcP2VAngle(const TSAtomCPList& plane, const TSAtom& a1,
     const TSAtom& a2)
@@ -828,17 +758,6 @@ public:
           0, plane.Count())),
         VectorProxy(ch.points[plane.Count()], ch.points[plane.Count()+1])));
   }
-  TEValue<double> CalcP2VAngle(const TSAtomCPList& plane,
-    const TSAtomCPList &ln)
-  {
-    CalcWHelper ch(*this, TSAtomCPList(plane) << ln);
-    return ch.DoCalc(
-      Angle2<plnn_et, ln_et>(
-      plnn_et(crd_slice(ch.points, 0, plane.Count()),
-        weight_slice(ch.weights, 0, plane.Count())),
-      ln_et(crd_slice(ch.points, plane.Count(), ln.Count()),
-        weight_slice(ch.weights, plane.Count(), ln.Count()))));
-  }
   // plane to plane angle
   TEValue<double> CalcP2PAngle(const TSAtomCPList& p1, const TSAtomCPList& p2)
   {
@@ -849,28 +768,6 @@ public:
           weight_slice(ch.weights, 0, p1.Count())),
         plnn_et(crd_slice(ch.points, p1.Count(), p2.Count()),
           weight_slice(ch.weights, p1.Count(), p2.Count()))));
-  }
-  // plane to plane twisting angle
-  TEValue<double> CalcP2PTAngle(const TSAtomCPList& p1, const TSAtomCPList& p2)
-  {
-    CalcWHelper ch(*this, TSAtomCPList(p1) << p2);
-    return ch.DoCalc(
-      TwistAngle<pln_et>(
-      pln_et(crd_slice(ch.points, 0, p1.Count()),
-        weight_slice(ch.weights, 0, p1.Count())),
-      pln_et(crd_slice(ch.points, p1.Count(), p2.Count()),
-        weight_slice(ch.weights, p1.Count(), p2.Count()))));
-  }
-  // plane to plane folding angle
-  TEValue<double> CalcP2PFAngle(const TSAtomCPList& p1, const TSAtomCPList& p2)
-  {
-    CalcWHelper ch(*this, TSAtomCPList(p1) << p2);
-    return ch.DoCalc(
-      FoldAngle<pln_et>(
-      pln_et(crd_slice(ch.points, 0, p1.Count()),
-        weight_slice(ch.weights, 0, p1.Count())),
-      pln_et(crd_slice(ch.points, p1.Count(), p2.Count()),
-        weight_slice(ch.weights, p1.Count(), p2.Count()))));
   }
   //plane centroid to plane centroid distance
   TEValue<double> CalcPC2PCDistance(const TSAtomCPList& p1,

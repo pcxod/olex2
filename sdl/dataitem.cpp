@@ -92,7 +92,7 @@ TDataItem *TDataItem::DotItem(const olxstr &DotName, TStrList* Log)  {
   for( size_t i=0; i < SL.Count(); i++ )  {
     root = root->FindItem(SL[i]);
     if( root == NULL )  {
-      if( Log != NULL )
+      if( Log != NULL )  
         Log->Add("Unresolved reference: ") << DotName;
       break;
     }
@@ -117,7 +117,7 @@ olxstr* TDataItem::DotField(const olxstr& DotName, olxstr& RefFieldName)  {
 }
 //..............................................................................
 TDataItem *TDataItem::FindAnyItem(const olxstr& Name) const {
-  TDataItem *DI = FindItem(Name);
+  TDataItem *DI = Items.FindObject(Name);
   if (DI == NULL) {
     for (size_t i=0; i < ItemCount(); i++) {
       DI = GetItemByIndex(i).FindAnyItem(Name);
@@ -128,7 +128,7 @@ TDataItem *TDataItem::FindAnyItem(const olxstr& Name) const {
 }
 //..............................................................................
 TDataItem *TDataItem::FindAnyItemi(const olxstr &Name) const {
-  TDataItem *DI = FindItemi(Name);
+  TDataItem *DI = Items.FindObjecti(Name);
   if (DI == NULL) {
     for (size_t i=0; i < ItemCount(); i++) {
       DI = GetItemByIndex(i).FindAnyItemi(Name);
@@ -263,7 +263,7 @@ size_t TDataItem::LoadFromString(size_t start, const olxstr &Data,
           olxstr RefFieldName;
           olxstr *RefField = DotField(FieldName, RefFieldName);
           if (RefField == NULL)
-            _AddField(FieldName, FieldValue);
+            _AddField(FieldName, FieldValue); 
           else
             _AddField(RefFieldName, *RefField);
         }
@@ -591,7 +591,7 @@ const_strstrlist TDataItem::GetOrderedFieldList() const {
 void TDataItem::UpdateFieldIndices(size_t deleted) {
   for (size_t i = 0; i < Fields.Count(); i++) {
     if (Fields.GetValue(i).GetB() > deleted)
-      Fields.GetValue(i).b--;
+      Fields.GetValue(i).B()--;
   }
 }
 //..............................................................................

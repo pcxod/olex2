@@ -23,14 +23,14 @@ TLangDict::~TLangDict()  {  Clear();  }
 //..............................................................................
 void TLangDict::Clear()  {
   for( size_t i=0; i < Records.Count(); i++ )
-    delete Records.GetValue(i);
+    delete Records.GetObject(i);
   Records.Clear();
 }
 //..............................................................................
 const olxstr& TLangDict::Translate(const olxstr& Phrase) const  {
   if( CurrentLanguageIndex == 0 )  return Phrase;
   size_t ind = Records.IndexOf(Phrase);
-  return (ind == InvalidIndex ? Phrase : *Records.GetValue(ind));
+  return (ind == InvalidIndex ? Phrase : *Records.GetObject(ind));
 }
 //..............................................................................
 void TLangDict::SetCurrentLanguage(const olxstr& fileName, const olxstr& lang)  {

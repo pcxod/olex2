@@ -23,7 +23,7 @@ namespace ctrl_ext  {
     olxstr Data;
   public:
     TListBox(wxWindow *Parent) :
-      wxListBox(Parent, -1),
+      wxListBox(Parent, -1), 
       AOlxCtrl(this),
       OnSelect(AOlxCtrl::ActionQueue::New(Actions, evt_on_select_id)),
       OnDblClick(AOlxCtrl::ActionQueue::New(Actions, evt_on_dbl_click_id))  {}

@@ -14,6 +14,7 @@
 #include "threex3.h"
 #include "macroerror.h"
 #include "ellipsoid.h"
+#include "samegroup.h"
 #include "dataitem.h"
 #include "conninfo.h"
 
@@ -166,7 +167,7 @@ public:
   initialised
   */
   void InitData();
-
+  
   void Clear();
   //creates a new residue
   TResidue& NewResidue(const olxstr& RClass, int number,
@@ -237,7 +238,7 @@ public:
 
   vec3d GetOCenter(bool IncludeQ, bool IncludeH) const;
   // returns properly sorted content list
-  ContentList::const_list_type GetContentList(double mult=1.0) const;
+  ContentList GetContentList(double mult=1.0) const;
   /* returns summarised formula of the asymmetric unit, use MutiplyZ to
   multiply the content by Z
   */
@@ -272,7 +273,7 @@ public:
   DefPropP(RefinementModel*, RefMod)
 // IXVarReferencerContainer implementation
   static const olxstr& _GetIdName() {  return IdName;  }
-
+  
   virtual olxstr GetIdName() const {  return IdName;  }
   // note - possibly unsafe, type is not checked
   virtual size_t GetIdOf(const IXVarReferencer& vr) const {
@@ -335,3 +336,4 @@ public:
 
 EndXlibNamespace()
 #endif
+

@@ -40,5 +40,6 @@ int main(int argc, char* argv[]) {
   TBasicApp::NewLogEntry() << tab.CreateTXTList("Atoms", true, false, ' ');
   xapp.NewLogEntry() << "Finished";
   system("PAUSE");
-        return 0;
+	return 0;
 }
+

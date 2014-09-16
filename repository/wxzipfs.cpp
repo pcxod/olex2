@@ -19,9 +19,10 @@ TMemoryBlock* TZipWrapper::GetMemoryBlock(const olxstr &EM)  {
   olxstr entryName( TEFile::UnixPath(EM) );
   TMemoryBlock * mb = NULL;
   if( UseCache )
-    mb = FMemoryBlocks.Find(entryName, NULL);
+    mb = FMemoryBlocks[entryName];
+
   if( mb == NULL )  {
-    wxZipEntry *entry = FEntries.Find(TEFile::UnixPath(entryName), NULL);
+    wxZipEntry *entry = FEntries[TEFile::UnixPath(entryName)];
     if( !entry )  return NULL;
     if( !FInputStream->OpenEntry(*entry) )  return NULL;
     //if( FInputStream->GetLength() <=0 )  {  FInputStream->CloseEntry();  return NULL;  }
@@ -67,12 +68,12 @@ TZipWrapper::TZipWrapper(TEFile* file, bool useCache) :
 //..............................................................................
 TZipWrapper::~TZipWrapper()  {
   for( size_t i=0; i < FMemoryBlocks.Count(); i++ )  {
-    TMemoryBlock *mb = FMemoryBlocks.GetValue(i);
+    TMemoryBlock *mb = FMemoryBlocks.GetObject(i);
     delete [] mb->Buffer;
     delete mb;
   }
   for( size_t i=0; i < FEntries.Count(); i++ )
-    delete FEntries.GetValue(i);
+    delete FEntries.GetObject(i);
   if( FInputStream != NULL )  delete FInputStream;
   if( wxfile != NULL )  {
     wxfile->Detach();
@@ -120,14 +121,14 @@ bool TZipWrapper::ExtractAll(const olxstr& dest)  {
       res = false;
       break;
     }
-    if( FEntries.GetKey(i).EndsWith('/') )  continue;
-    if (!FInputStream->OpenEntry(*FEntries.GetValue(i)))
+    if( FEntries.GetString(i).EndsWith('/') )  continue;
+    if( !FInputStream->OpenEntry(*FEntries.GetObject(i)) )
       continue;
     Progress.SetPos(i+1);
-    Progress.SetAction(FEntries.GetKey(i));
+    Progress.SetAction(FEntries.GetString(i));
     OnProgress.Execute(NULL, &Progress);
 
-    olxstr dest_file = extractPath + FEntries.GetKey(i);
+    olxstr dest_file = extractPath + FEntries.GetString(i);
     olxstr dst_dir = TEFile::ExtractFilePath(dest_file);
     if( !TEFile::Exists(dst_dir) )
       if( !TEFile::MakeDirs(dst_dir) )  {
@@ -206,15 +207,15 @@ olxstr TZipWrapper::ComposeFileName(const olxstr &ZipFileNameA, const olxstr &FN
 /*____________________________________________________________________________*/
 
 
-TwxZipFileSystem::TwxZipFileSystem(const olxstr& zip_name, bool UseCache) :
-zip(zip_name, UseCache)
-{
+TwxZipFileSystem::TwxZipFileSystem(const olxstr& zip_name, bool UseCache) : 
+zip(zip_name, UseCache) 
+{ 
   Access = afs_ReadOnlyAccess;
   AActionHandler::SetToDelete(false);
   zip.OnProgress.Add(this);
 }
 //..............................................................................
-TwxZipFileSystem::TwxZipFileSystem(TEFile* zip_fh, bool UseCache) :
+TwxZipFileSystem::TwxZipFileSystem(TEFile* zip_fh, bool UseCache) : 
   zip(zip_fh, UseCache) { }
 //..............................................................................
 IInputStream* TwxZipFileSystem::_DoOpenFile(const olxstr& Source)  {
@@ -224,11 +225,11 @@ IInputStream* TwxZipFileSystem::_DoOpenFile(const olxstr& Source)  {
   Progress.SetPos(0);
   Progress.SetMax(1);
   OnProgress.Enter(this, &Progress);
-
+  
   IDataInputStream* rv = zip.OpenEntry(Source);
   if( rv == NULL )
     throw TFunctionFailedException(__OlxSourceInfo, olxstr("Could not locate zip entry: ") << fn);
-
+  
   Progress.SetAction("Done");
 //  Progress.SetPos( TEFile::FileLength(TmpFN) );
   OnProgress.Exit(this, &Progress);

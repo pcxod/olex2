@@ -14,7 +14,7 @@
 #include "glrender.h"
 #include "efile.h"
 
-//#include "ft2build.h"
+//#include "ft2build.h"  
 //#include FT_FREETYPE_H
 //#include FT_GLYPH_H
 //---------------------------------------------------------------------------
@@ -47,7 +47,7 @@ public:
       AASizer->Add( new wxStaticText(this, -1, wxT("File name")), wxALL, 5);
     cbFileName = new wxComboBox(this, -1, mf.GetFileName().u_str());
     for( size_t i=0; i < fntFiles.Count(); i++ )
-      cbFileName->Append( fntFiles[i].u_str() );
+      cbFileName->Append( fntFiles[i].u_str() ); 
     AASizer->Add( cbFileName, 0, wxALL, 5);
 
     wxBoxSizer *ASizer = new wxBoxSizer( wxHORIZONTAL );
@@ -92,7 +92,7 @@ public:
     long fs = 10;
     cbSize->GetValue().ToLong(&fs);
     return TwxGlScene::MetaFont::BuildOlexFontId(cbFileName->GetValue(),
-      (int)fs,
+      (int)fs, 
       cbFixed->IsChecked(),
       cbBold->IsChecked(),
       cbItalic->IsChecked() );
@@ -127,7 +127,7 @@ bool TwxGlScene::MakeCurrent() {
 //{
 //  TGlFont *Fnt;
 //  wxFont Font(10, wxMODERN, wxNORMAL, wxNORMAL);//|wxFONTFLAG_ANTIALIASED);
-//
+//  
 //  try  {  Font = *static_cast<wxFont*>(Data);  }
 //  catch(...)  {
 //    throw TInvalidArgumentException(__OlxSourceInfo, "invalid data type");
@@ -310,9 +310,9 @@ void TwxGlScene_RipFontA(wxFont& fnt, TGlFont& glf, wxZipOutputStream& zos) {
     fnt.SetPointSize(i);
     TwxGlScene_RipFont(fnt, glf, ba);
     zos.PutNextEntry((olxstr(prefix) << i).u_str());
-    uint16_t s = glf.GetMaxWidth()+1;
+    uint16_t s = glf.GetMaxWidth()+1; 
     zos.Write(&s, sizeof(uint16_t));
-    s = glf.GetMaxHeight()+1;
+    s = glf.GetMaxHeight()+1; 
     zos.Write(&s, sizeof(uint16_t));
     zos.Write(ba.GetData(), ba.CharCount());
     zos.CloseEntry();
@@ -320,9 +320,9 @@ void TwxGlScene_RipFontA(wxFont& fnt, TGlFont& glf, wxZipOutputStream& zos) {
   fnt.SetPointSize(TwxGlScene_LastFontSize);
   TwxGlScene_RipFont(fnt, glf, ba);
   zos.PutNextEntry((olxstr(prefix) << TwxGlScene_LastFontSize).u_str());
-  uint16_t s = glf.GetMaxWidth()+1;
+  uint16_t s = glf.GetMaxWidth()+1; 
   zos.Write(&s, sizeof(uint16_t));
-  s = glf.GetMaxHeight()+1;
+  s = glf.GetMaxHeight()+1; 
   zos.Write(&s, sizeof(uint16_t));
   zos.Write(ba.GetData(), ba.CharCount());
   zos.CloseEntry();
@@ -357,7 +357,7 @@ TGlFont& TwxGlScene::ImportFont(TGlFont& fnt) const {
   if( mf.GetSize() <= 1 )
     mf.SetSize(10);
   olxstr fileName(FontsFolder + mf.GetFileName());
-  if( !TEFile::Exists(fileName) )
+  if( !TEFile::Exists(fileName) )  
     throw TFileDoesNotExistException(__OlxSourceInfo, fileName);
   wxFileInputStream fis(fileName.u_str());
   char sig[4];
@@ -408,7 +408,7 @@ TGlFont& TwxGlScene::ImportFont(TGlFont& fnt) const {
   if( Scale )  {
     TPtrList<wxImage> Images;
     int bit_cnt = 0;
-    uint16_t imgw = (uint16_t)(olx_round((double)maxw*mf.GetSize()/originalFntSize)),
+    uint16_t imgw = (uint16_t)(olx_round((double)maxw*mf.GetSize()/originalFntSize)), 
       imgh = (uint16_t)(olx_round((double)maxh*mf.GetSize()/originalFntSize));
     for( int i=0; i < 256; i++ )  {
       wxImage* img = new wxImage(maxw, maxh);

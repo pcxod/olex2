@@ -70,10 +70,7 @@ public:
     TPtrList<obj_t> rv;
     return Extract<obj_t, TPtrList<obj_t> >(rv);
   }
-  /* Returns true if th eobejct was removed and false if it was not a part of
-  the group
-  */
-  bool Remove(AGDrawObject& G);
+  void Remove(AGDrawObject& G);
   void RemoveHidden();
 
   bool Contains(const AGDrawObject& G) const {  return  Objects.Contains(G);  }

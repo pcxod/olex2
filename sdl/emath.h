@@ -54,7 +54,7 @@ inline int_t olx_round_t(const float_t a)  {
   int_t b = (int_t)a;  // |b| is always smaller than a
   return ((a < 0) ? (((b-a) >= .5) ? --b : b) : (((a-b) >= .5) ? ++b : b));
 }
-// rounds a floating point: returns (float_t)(round(a*num))/num
+// rounds a floating point: returns (float_t)(round(a*num))/num 
 template <typename float_t>
 inline float_t olx_round(const float_t a, long num)  {
   return (float_t)olx_round(a*num)/num;
@@ -79,11 +79,6 @@ template <typename float_t>
 inline int olx_cmp_float(float_t v1, float_t v2, float_t eps)  {
   const float_t diff = v1 -v2;
   return olx_is_zero(diff, eps) ? 0 : (diff > 0 ? 1 : -1);
-}
-/* compares if the difference between two float point values is within the eps */
-template <typename float_t>
-inline bool olx_feq(float_t v1, float_t v2, float_t eps = float_t(1e-3)) {
-  return olx_is_zero(v1 - v2, eps);
 }
 // returns absolute value of a number
 template <typename num> inline num olx_abs(num n)  {
@@ -123,7 +118,7 @@ double olx_tetrahedron_volume(const VC& A, const VC& B,
   if( a.QLength()*b.QLength() < 1e-15 )
     throw TDivException(__OlxSourceInfo);
   double caS = a.CAngle(b);
-  if( olx_abs(caS) > (1.0-1e-15) )
+  if( olx_abs(caS) > (1.0-1e-15) )  
     return 0;
   const double sa = sqrt(1 - caS*caS);
   caS = a.Length() * b.Length() * sa / 2;
@@ -146,13 +141,13 @@ template <class VC>
 double olx_dihedral_angle(const VC& v1, const VC& v2,
   const VC& v3, const VC& v4)
 {
-  const VC a((v1-v2).XProdVec(v3-v2)),
-    b((v2-v3).XProdVec(v4-v3));
+  const VC a((v1-v2).XProdVec(v3-v2)), 
+    b((v2-v3).XProdVec(v4-v3)); 
   if( a.QLength()*b.QLength() < 1e-15 )
     throw TDivException(__OlxSourceInfo);
   return acos(a.CAngle(b))*180/M_PI;
 }
-/* dihedral angle in degrees (-180..180]
+/* dihedral angle in degrees (-180..180] 
 http://en.wikipedia.org/wiki/Dihedral_angle
 */
 template <class VC>
@@ -267,8 +262,8 @@ template <class MC, class VC> MC& QuaternionToMatrix(const VC& qt, MC& matr)  {
   matr[2][2] = qt[0]*qt[0] + qt[3]*qt[3] - qt[1]*qt[1] - qt[2]*qt[2];
   return matr;
 }
-/*
-generates a new permutation from the original list
+/* 
+generates a new permutation from the original list 
 http://en.wikipedia.org/wiki/Permutation
 */
 template <class List> void GeneratePermutation(List& out, size_t perm)  {
@@ -299,13 +294,13 @@ namespace olx_vec  {
           o(i) += v(j)*m(j,i) + v(j+1)*m(j+1,i) +
             v(j+2)*m(j+2, i) + v(j+3)*m(j+3,i);
         }
-        for (; j < vc; j++)
+        for (; j < vc; j)
           o(i) += v(j)*m(j,i);
       }
     }
     else {
       for (size_t i=0; i < cc; i++)  {
-        for (size_t j=0; j < vc; j++)
+        for (size_t j=0; j < vc; j)
           o(i) += v(j)*m(j,i);
       }
     }
@@ -381,7 +376,7 @@ namespace olx_vec  {
     }
     return v1;
   }
-  template <typename VecT>
+  template <typename VecT> 
   static typename VecT::number_type QLength(const VecT &v) {
     size_t cnt=v.Count(),
       c1=(cnt>>2)<<2, i=0;
@@ -434,7 +429,7 @@ namespace olx_mat  {
     size_t nc = n.ColCount(),
       mr = m.RowCount(),
       mc = m.ColCount();
-    if (nc >= 8) {
+    if (nc >= 8) { 
       size_t c1 = (mc>>2)<<2;
       for (size_t i=0; i < mr; i++) {
         for (size_t j = 0; j < nc; j++) {
@@ -543,21 +538,8 @@ static typename accessor_t::return_type olx_sum(
 {
   typename accessor_t::return_type rv(0);
   if (to == InvalidIndex) to = l.Count();
-  for (size_t i=from; i < to; i++) rv += accessor(l[i]);
+  for (size_t i=0; i < to; i++) rv += accessor(l[i]);
   return rv;
-}
-
-template <class list_t, class analyser_t>
-static size_t olx_count(const list_t &l, const analyser_t &anz,
-  size_t from = 0, size_t to = InvalidIndex)
-{
-  size_t cnt = 0;
-  if (to == InvalidIndex) to = l.Count();
-  for (size_t i = from; i < to; i++) {
-    if (anz.OnItem(l[i], i))
-      cnt++;
-  }
-  return cnt;
 }
 
 template <class list_t>

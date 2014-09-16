@@ -27,7 +27,7 @@ struct TFontCharSize  {
   unsigned char Background;
 };
 
-struct TTextRect  {
+struct TTextRect  { 
   double top, left, width, height;
   TTextRect() : top(0), left(0), width(0), height(0) {}
 };
@@ -82,7 +82,7 @@ public:
   inline int16_t GetLeftmost() const {  return Leftmost;  }
   inline int16_t GetTopmost() const {  return Topmost;  }
   inline double GetVectorScale() const {  return VectorScale;  }
-  size_t GetId() const {  return Id;  }
+  size_t GetId() const {  return Id;  }  
   DefPropP(uint16_t, PointSize)
   size_t TextWidth(const olxstr& Text) const;
   size_t TextWidth(const olxstr& Text, short& state) const;

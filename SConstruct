@@ -245,6 +245,8 @@ if sys.platform[:3] == 'win':
     if sse:
       cc_flags.append( '/arch:'+sse)
     env.Append(CCFLAGS = cc_flags) 
+    env.Append(CPPPATH=[pyFolder+'include'])
+    env.Append(CCFLAGS = ['-D_PYTHON'])
     #env.Append(LINKFLAGS=['/LTCG'])
   else:
     cc_flags = ['/EHsc', '/RTC1', '-D_DUBUG', '/Od', '/MDd', '/bigobj', '/fp:fast']
@@ -252,8 +254,7 @@ if sys.platform[:3] == 'win':
     else:  cc_flags.append('/ZI')
     env.Append(CCFLAGS = cc_flags) 
     env.Append(LINKFLAGS=['/DEBUG', '/ASSEMBLYDEBUG', '/NODEFAULTLIB:msvcrt'])
-  env.Append(CPPPATH=[pyFolder+'include'])
-  env.Append(CCFLAGS = ['-D_PYTHON'])
+    env.Append(CPPPATH=[pyFolder+'include'])
   if architecture == '64bit':
     #env.Append(LINKFLAGS=['/MACHINE:X64', '/DEBUG']) #this emits debug info...
     env.Append(LINKFLAGS=['/MACHINE:X64'])
@@ -279,15 +280,10 @@ else:
   try: 
     if sys.platform[:6] == 'darwin':
       env.Append(CCFLAGS = '-D__MAC__')
-      if architecture == '64bit':
-        env.ParseConfig("wx-config --cxxflags --version=3.0 --static=yes --libs std gl")
-        env.Append(CCFLAGS=['-mmacosx-version-min=10.5'])
-        env.Append(LINKFLAGS=['-mmacosx-version-min=10.5'])
-      else:
-        env.ParseConfig("wx-config --cxxflags --version=2.9 --static=yes --libs std gl")
-      env.Append(FRAMEWORKS=['OpenGL', 'AGL'])
+      env.ParseConfig("wx-config --cxxflags --version=2.9 --static=yes --unicode --libs std gl")
+      env.Append(FRAMEWORKS=['OpenGL', 'AGL', 'Python'])
     else:
-      env.ParseConfig("wx-config --cxxflags --version=2.9 --static=yes --libs std gl")
+      env.ParseConfig("wx-config --cxxflags --version=2.9 --static=yes --unicode --libs std gl")
       env.Append(LIBS=['libGL', 'libGLU'])
 #!!!
     tests_env = env.Clone()

@@ -31,7 +31,7 @@ TGlPrimitive& TGPCollection::NewPrimitive(const olxstr& Name, short type)  {
 //..............................................................................
 TGlPrimitive* TGPCollection::FindPrimitiveByName(const olxstr &Name) const {
   for( size_t i = 0; i < Primitives.Count(); i++ )
-    if( Primitives[i]->GetName() == Name )
+    if( Primitives[i]->GetName() == Name )  
       return Primitives[i];
   return NULL;
 }

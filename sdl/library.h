@@ -20,10 +20,10 @@ const uint16_t
   libChain   = 0x0004;
 
 class TLibrary: public IEObject, public ABasicLibrary  {
-  sorted::StringAssociation<ABasicFunction*, true> Functions, Macros;
+  TSStrPObjList<olxstr,ABasicFunction*, true> Functions, Macros;
   TTypeList<FunctionChainer> Chains;
   olxstr LibraryName;
-  olxstr_dict<TLibrary*, true> Libraries;
+  TSStrPObjList<olxstr,TLibrary*, true> Libraries;
   ALibraryContainer* LibraryOwner;
   TLibrary* ParentLibrary;
 protected:
@@ -44,7 +44,7 @@ protected:
   the previous function will be copied to
   */
   ABasicFunction *Register(
-    sorted::StringAssociation<ABasicFunction*, true> &container,
+    TSStrPObjList<olxstr,ABasicFunction*, true> &container,
     ABasicFunction* fm,
     uint16_t flags);
 public:
@@ -62,12 +62,12 @@ public:
 
   size_t FunctionCount() const {  return Functions.Count(); }
   ABasicFunction* GetFunctionByIndex(size_t i)  const {
-    return Functions.GetValue(i);
+    return Functions.GetObject(i);
   }
 
   size_t MacroCount() const {  return Macros.Count(); }
   ABasicFunction* GetMacroByIndex(size_t i) const {
-    return Macros.GetValue(i);
+    return Macros.GetObject(i);
   }
 
   TLibrary* AddLibrary(const olxstr& name, ALibraryContainer* owner = NULL);
@@ -76,10 +76,10 @@ public:
 
   size_t LibraryCount() const {  return Libraries.Count();  }
   TLibrary* GetLibraryByName(const olxstr& name) const {
-    return Libraries.Find(name, NULL);
+    return Libraries[name];
   }
   TLibrary* GetLibraryByIndex(size_t index) const {
-    return Libraries.GetValue(index);
+    return Libraries.GetObject(index);
   }
 
   ABasicFunction *Register(

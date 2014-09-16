@@ -12,7 +12,7 @@
 
 // simple OS utilities...
 #ifdef __WIN32__
-#  if defined(_MSC_VER)
+#  ifdef _MSC_VER
 #    ifdef _UNICODE
 #      define OLX_GETENV _wgetenv_s
 #      define OLX_PUTENV _wputenv_s
@@ -22,6 +22,20 @@
 #    endif
    bool EsdlObject(olx_setenv)(const olxstr& name, const olxstr& val)  {
      return OLX_PUTENV(name.u_str(), val.u_str()) == 0;
+   }
+   //.............................................................................
+   //.............................................................................
+   HANDLE EsdlObject(Module::handle) = NULL;
+   HANDLE Module::GetHandle() const {
+     if (handle == NULL)
+       handle = ::GetModuleHandle(NULL);
+     return handle;
+   }
+   //.............................................................................
+   HANDLE Module::SetHandle(HANDLE h) {
+     HANDLE r = handle;
+     handle = h;
+     return r;
    }
    //.............................................................................
    //.............................................................................
@@ -35,18 +49,11 @@
      return olxstr::FromExternal(val, sz-1);
    }
 #  else // not MSVC
-#    ifdef _UNICODE
-#      define OLX_GETENV _wgetenv
-#      define OLX_PUTENV _wputenv
-#    else
-#      define OLX_GETENV getenv
-#      define OLX_PUTENV putenv
-#    endif
-  bool EsdlObject(olx_setenv)(const olxstr& name, const olxstr& val)  {
-     return OLX_GETENV((olxstr(name) << '=' << val).u_str()) == 0;
+   bool EsdlObject(olx_setenv)(const olxstr& name, const olxstr& val)  {
+     return putenv((olxstr(name) << '=' << val).c_str()) == 0;
    }
    olxstr EsdlObject(olx_getenv)(const olxstr& name)  {
-     return OLX_PUTENV(name.u_str());
+     return getenv(name.c_str());
    }
 #  endif  // MSVC and others WIN compilers
 /*http://msdn.microsoft.com/en-us/library/ms684139.aspx
@@ -64,22 +71,6 @@ bool EsdlObject(IsWow64)()  {
   }
   return bIsWow64 == TRUE;
 }
-//.............................................................................
-//.............................................................................
-HANDLE EsdlObject(Module::handle) = NULL;
-HANDLE Module::GetHandle() const {
-  if (handle == NULL)
-    handle = ::GetModuleHandle(NULL);
-  return handle;
-}
-//.............................................................................
-HANDLE Module::SetHandle(HANDLE h) {
-  HANDLE r = handle;
-  handle = h;
-  return r;
-}
-//.............................................................................
-//.............................................................................
 #else  // not WIN
 bool EsdlObject(olx_setenv)(const olxstr& name, const olxstr& val)  {
   return setenv(name.c_str(), val.c_str(), 1) == 0;

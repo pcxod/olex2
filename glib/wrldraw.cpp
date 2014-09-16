@@ -51,3 +51,4 @@ olxstr wrl::get_mat_str(const TGlMaterial& glm,
   else
     return olxstr("USE ") << materials.GetValue(lmi);
 }
+

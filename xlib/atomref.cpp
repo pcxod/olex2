@@ -52,7 +52,7 @@ size_t TAtomReference::_Expand(RefinementModel& rm, TCAtomGroup& atoms,
     atoms.AddNew( ca );
     return 1;
   }
-  else if( Expression.StartsFrom("#c") )  {
+  else if( Expression.StartsFrom("#c") )  { 
     if( rm.aunit.AtomCount() == 0 )  return 0;
     size_t i= Expression.SubStringFrom(2).ToInt();
     if( i >= rm.aunit.AtomCount() )
@@ -129,7 +129,7 @@ size_t TAtomReference::_Expand(RefinementModel& rm, TCAtomGroup& atoms,
   // check if it is just an equivalent position
   const smatd* eqiv = NULL;
   size_t eqiv_ind = resi_name.IndexOf('$');
-  if( eqiv_ind != InvalidIndex )  {
+  if( eqiv_ind != InvalidIndex )  {  
     olxstr str_eqiv = resi_name.SubStringFrom(eqiv_ind);
     eqiv = rm.FindUsedSymm(str_eqiv);
     if( eqiv == NULL )  {
@@ -147,7 +147,7 @@ size_t TAtomReference::_Expand(RefinementModel& rm, TCAtomGroup& atoms,
       throw TInvalidArgumentException(__OlxSourceInfo, "current residue");
     if( resi_name.CharAt(0) == '+' )
       residues.Add(rm.aunit.NextResidue(*CurrResi));
-    else
+    else  
       residues.Add(rm.aunit.PrevResidue(*CurrResi));
   }
   else  {
@@ -311,3 +311,4 @@ ConstSortedElementPList TAtomReference::DecodeTypes(const olxstr &types,
   return res;
 }
 //.............................................................................
+

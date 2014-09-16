@@ -146,7 +146,7 @@ void XLibMacros::macGraphSR(TStrObjList &Cmds, const TParamList &Options, TMacro
   }
 
   TStrList output, header;
-  TTypeList< olx_pair_t<double,double> > binData;
+  TTypeList< AnAssociation2<double,double> > binData;
   for( size_t i=0; i < bins.Count(); i++ )  {
     if( bins[i]->Count != 0 )  {
       double rt = bins[i]->SFo / bins[i]->SFc;
@@ -167,7 +167,7 @@ void XLibMacros::macGraphSR(TStrObjList &Cmds, const TParamList &Options, TMacro
       points[1][i] = binData[i].GetB();
     }
     double rms = ematd::PLSQ(points, line, 3);
-
+    
     for( size_t i=0; i < binData.Count(); i++ )  {
       tab[i][0] = olxstr::FormatFloat(3, binData[i].GetA());
       tab[i][1] = olxstr::FormatFloat(3, binData[i].GetB());
@@ -190,7 +190,7 @@ void XLibMacros::macGraphSR(TStrObjList &Cmds, const TParamList &Options, TMacro
     header.Add("RMS = ") << olxstr::FormatFloat(3, rms);
     tab.CreateTXTList(header, "Sum(|Fo|)/Sum(|Fc|) vs sin(theta)/lambda.", false, false, EmptyString());
     XApp.NewLogEntry() << header;
-    TEFile::WriteLines(outputFileName, TCStrList(output));
+    TCStrList(output).SaveToFile( outputFileName ) ;
     XApp.NewLogEntry() << outputFileName << " file was created";
   }
 }

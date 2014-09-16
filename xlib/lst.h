@@ -69,7 +69,7 @@ protected:
   TTypeList<TTrefTry> TrefTries;
   TTypeList< TTypeList<TPattAtom> > PattSolutions;
   TTypeList<TLstSplitAtom> FSplitAtoms;
-  TTypeList< olx_pair_t<olxstr, olxstr> > ErrorMsgs;
+  TTypeList< AnAssociation2<olxstr, olxstr> > ErrorMsgs;
   bool Loaded;
 public:
   TLst() : Loaded(false) {}

@@ -302,7 +302,7 @@ void TGlTexture::WriteData(TGlTexture& tex, const TGlTexture::Data &data) {
 //.............................................................................
 TTextureManager::~TTextureManager()  {
   for( size_t i=0; i < Textures.Count(); i++ )  {
-    TGlTexture* tex = Textures.GetValue(i);
+    TGlTexture* tex = Textures.GetObject(i);
     GLuint texId = tex->GetId();
     olx_gl::deleteTextures(1, (GLuint*)&texId);
     delete tex;
@@ -327,7 +327,7 @@ GLuint TTextureManager::Add2DTexture(const olxstr& name, GLint level,
     olx_gl::texImage(GL_TEXTURE_2D, level, 4, width, height, border,
       format, GL_UNSIGNED_BYTE, pixels);
   }
-  else {
+  else {  
     throw TInvalidArgumentException(__OlxSourceInfo,
       olxstr("format=") << (int)format);
   }
@@ -385,7 +385,7 @@ GLuint TTextureManager::Add1DTexture(const olxstr& name, GLint level,
 void TTextureManager::BeforeContextChange() {
   TextureData.Clear();
   for (size_t i=0; i < Textures.Count(); i++) {
-    TGlTexture &glt = *Textures.GetValue(i);
+    TGlTexture &glt = *Textures.GetObject(i);
     if (glt.GetId() != ~0) {
       TextureData.AddCopy(glt.ReadData());
       GLuint texId = glt.GetId();
@@ -404,7 +404,7 @@ void TTextureManager::AfterContextChange() {
   olx_array_ptr<GLuint> texIds(new  GLuint[Textures.Count()]);
   olx_gl::genTextures((GLuint)Textures.Count(), texIds());
   for (size_t i=0; i < Textures.Count(); i++) {
-    TGlTexture &glt = *Textures.GetValue(i);
+    TGlTexture &glt = *Textures.GetObject(i);
     if (glt.GetId() == ~0) {
       glt.SetId((GLuint)(texIds[i]));
       glt.WriteData(TextureData[i]);
@@ -413,3 +413,5 @@ void TTextureManager::AfterContextChange() {
   TextureData.Clear();
 }
 //.............................................................................
+
+

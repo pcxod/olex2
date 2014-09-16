@@ -25,6 +25,7 @@ BEGIN_EVENT_TABLE(THtml, wxHtmlWindow)
   EVT_LEFT_UP(THtml::OnMouseUp)
   EVT_MOTION(THtml::OnMouseMotion)
   EVT_SCROLL(THtml::OnScroll)
+  EVT_CHILD_FOCUS(THtml::OnChildFocus)
   EVT_KEY_DOWN(THtml::OnKeyDown)
   EVT_CHAR(THtml::OnChar)
   EVT_SIZE(THtml::OnSizeEvt)
@@ -35,6 +36,7 @@ THtml::THtml(THtmlManager &manager, wxWindow *Parent,
   const olxstr &pop_name, int flags)
   : wxHtmlWindow(Parent, -1, wxDefaultPosition, wxDefaultSize, flags),
     PopupName(pop_name), WI(this), ObjectsState(*this),
+    InFocus(NULL),
     Manager(manager),
     OnLink(Actions.New("ONLINK")),
     OnURL(Actions.New("ONURL")),
@@ -95,11 +97,12 @@ void THtml::SetSwitchState(THtmlSwitch& sw, size_t state)  {
   if( ind == InvalidIndex )
     SwitchStates.Add(sw.GetName(), state);
   else
-    SwitchStates.GetValue(ind) = state;
+    SwitchStates.GetObject(ind) = state;
 }
 //.............................................................................
 size_t THtml::GetSwitchState(const olxstr& switchName)  {
-  return SwitchStates.Find(switchName, UnknownSwitchState);
+  const size_t ind = SwitchStates.IndexOf( switchName );
+  return (ind == InvalidIndex) ? UnknownSwitchState : SwitchStates.GetObject(ind);
 }
 //.............................................................................
 void THtml::OnMouseDown(wxMouseEvent& event)  {
@@ -159,12 +162,169 @@ bool THtml::Dispatch(int MsgId, short MsgSubId, const IEObject* Sender,
   return true;
 }
 //.............................................................................
-void THtml::OnKeyDown(wxKeyEvent& event)  {
+void THtml::OnChildFocus(wxChildFocusEvent& event)  {
+  wxWindow *wx_next = event.GetWindow(), 
+    *focused = FindFocus();
+  /* this happens when the child windows is in visible to API like in
+  combo/spinctls */
+  if (wx_next != focused)  {
+    if (focused->GetParent() == wx_next) {
+      focused = wx_next;
+    }
+    else if(InFocus != NULL) { // this would be odd
+      InFocus->SetFocus();
+      return;
+    }
+  }
+  AOlxCtrl* prev = NULL, *next = NULL;
+  for( size_t i=0; i < Traversables.Count(); i++ )  {
+    if( Traversables[i].GetB() == InFocus )
+      prev = Traversables[i].GetA();
+    if( Traversables[i].GetB() == wx_next )
+      next = Traversables[i].GetA();
+  }
+  bool skip = true;
+  if( prev != next || next == NULL || prev == NULL )  {
+    skip = DoHandleFocusEvent(prev, next);
+    InFocus = wx_next;
+  }
   event.Skip();
 }
 //.............................................................................
+void THtml::_FindNext(index_t from, index_t& dest, bool scroll) const {
+  if( Traversables.IsEmpty() )  {
+    dest = -1;
+    return;
+  }
+  int i = from;
+  while( ++i < (int)Traversables.Count() && Traversables[i].GetB() == NULL )
+    ;
+  dest = ((i >= (int)Traversables.Count() ||
+    (Traversables[i].GetB() == NULL)) ? -1 : i);
+  if( dest == -1 && scroll )  {
+    i = -1;
+    while( ++i < from && Traversables[i].GetB() == NULL )
+      ;
+    dest = ((Traversables[i].GetB() == NULL) ? -1 : i);
+  }
+}
+//.............................................................................
+void THtml::_FindPrev(index_t from, index_t& dest, bool scroll) const {
+  if( Traversables.IsEmpty() )  {
+    dest = -1;
+    return;
+  }
+  if( from < 0 )  from = Traversables.Count();
+  index_t i = from;
+  while( --i >= 0 && Traversables[i].GetB() == NULL )
+    ;
+  dest = ((i < 0 || (Traversables[i].GetB() == NULL)) ? -1 : i);
+  if( dest == -1 && scroll )  {
+    i = Traversables.Count();
+    while( --i > from && Traversables[i].GetB() == NULL )
+      ;
+    dest = ((Traversables[i].GetB() == NULL) ? -1 : i);
+  }
+}
+//.............................................................................
+void THtml::GetTraversibleIndeces(index_t& current, index_t& another,
+  bool forward) const
+{
+  wxWindow* w = FindFocus();
+  // no focus? find the one at the edge
+  if( w == NULL || w == static_cast<const wxWindow*>(this) )  {
+    if( forward )
+      _FindNext(-1, another, false);
+    else
+      _FindPrev(Traversables.Count(), another, false);
+  }
+  else  {
+    for( size_t i=0; i < Traversables.Count(); i++ )  {
+      if( Traversables[i].GetB() == w ||
+          Traversables[i].GetB() == w->GetParent() )
+      {
+        current = i;
+        break;
+      }
+    }
+    if( forward )
+      _FindNext(current, another, true);
+    else
+      _FindPrev(current , another, true);
+  }
+}
+//.............................................................................
+bool THtml::DoHandleFocusEvent(AOlxCtrl* prev, AOlxCtrl* next)  {
+  // prevent page re-loading and object deletion
+  volatile THtmlManager::DestructionLocker dm =
+    Manager.LockDestruction(this, this);
+  bool rv = false;
+  if( prev != NULL )  {
+    if( EsdlInstanceOf(*prev, TTextEdit) )  {
+      olxstr s = ((TTextEdit*)prev)->OnLeave.data;
+      ((TTextEdit*)prev)->OnLeave.Execute(prev, &s);
+    }
+    else if( EsdlInstanceOf(*prev, TComboBox) )  {
+      ((TComboBox*)prev)->HandleOnLeave();
+    }
+    else
+      rv = true;
+  }
+  if (next != NULL) {
+    if (EsdlInstanceOf(*next, TTextEdit)) {
+      olxstr s = ((TTextEdit*)next)->OnEnter.data;
+      ((TTextEdit*)next)->OnEnter.Execute(next, &s);
+      if (!((TTextEdit*)next)->IsReadOnly())
+        ((TTextEdit*)next)->SetSelection(-1,-1);
+    }
+    else if (EsdlInstanceOf(*next, TComboBox)) {
+      ((TComboBox*)next)->HandleOnEnter();
+      if (!((TTextEdit*)next)->IsReadOnly())
+        ((TComboBox*)next)->SetSelection(-1,-1);
+    }
+    else
+      rv = true;
+  }
+  return rv;
+}
+//.............................................................................
+void THtml::DoNavigate(bool forward)  {
+  index_t current=-1, another=-1;
+  GetTraversibleIndeces(current, another, forward);
+  DoHandleFocusEvent( 
+    current == -1 ? NULL : Traversables[current].GetA(),
+    another == -1 ? NULL : Traversables[another].GetA());
+  if( another != -1 )  {
+    InFocus = Traversables[another].GetB();
+    InFocus->SetFocus();
+    InFocus = FindFocus();
+    for( size_t i=0; i < Objects.Count(); i++ )  {
+      if( Objects.GetValue(i).GetB() == NULL )  continue;
+      if( Objects.GetValue(i).GetB() == InFocus
+#ifdef __WIN32__
+          || Objects.GetValue(i).GetB() == InFocus->GetParent()
+#endif
+        )
+      {
+        FocusedControl = Objects.GetKey(i);
+        break;
+      }
+    }
+  }
+}
+//.............................................................................
+void THtml::OnKeyDown(wxKeyEvent& event)  {
+  if( event.GetKeyCode() == WXK_TAB )
+    DoNavigate( event.GetModifiers() != wxMOD_SHIFT );
+  else
+    event.Skip();
+}
+//.............................................................................
 void THtml::OnNavigation(wxNavigationKeyEvent& event)  {
-  event.Skip();
+  if( event.IsFromTab() )
+    DoNavigate( event.GetDirection() );
+  else
+    event.Skip();
 }
 //.............................................................................
 void THtml::OnChar(wxKeyEvent& event)  {
@@ -175,9 +335,9 @@ void THtml::OnChar(wxKeyEvent& event)  {
     return;
   }
   wxWindow* parent = GetParent();
-  if (parent != NULL) {
+  if( parent != NULL )  {
     wxDialog* dlg = dynamic_cast<wxDialog*>(parent);
-    if (dlg != NULL)
+    if( dlg != NULL )
       return;
   }
   TKeyEvent KE(event);
@@ -204,7 +364,7 @@ void THtml::UpdateSwitchState(THtmlSwitch &Switch, olxstr &String)  {
 }
 //.............................................................................
 void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
-  TStringToList<olxstr,THtmlSwitch*>& Lst = Sender.GetStrings();
+  TStrPObjList<olxstr,THtmlSwitch*>& Lst = Sender.GetStrings();
   TStrList Toks;
   using namespace exparse::parser_util;
   static const olxstr Tag  = "<!-- #include ",
@@ -230,7 +390,7 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
         }
       }
       if( tag_found )  continue;
-      else
+      else  
         break;
     }
 
@@ -423,61 +583,77 @@ bool THtml::UpdatePage(bool update_indices)  {
   olxstr oldPath = TEFile::CurrentDir();
   TEFile::ChangeDir(WebFolder);
   if (update_indices) { // reload switches
-    for (size_t i = 0; i < Root->SwitchCount(); i++)
+    for (size_t i=0; i < Root->SwitchCount(); i++)
       Root->GetSwitch(i).UpdateFileIndex();
   }
 
-  int xPos = -1, yPos = -1, xWnd = -1, yWnd = -1;
-  GetViewStart(&xPos, &yPos);
-  olxstr FocusedControl;
-  {
-    wxWindow *fw = wxWindow::FindFocus();
-    if (fw != 0 && fw->GetParent() == this) {
-      for (size_t i = 0; i < Objects.Count(); i++) {
-        if (Objects.GetValue(i).b == fw) {
-          FocusedControl = Objects.GetKey(i);
-          break;
-        }
-      }
-    }
-  }
   TStrList Res;
   Root->ToStrings(Res);
   ObjectsState.SaveState();
   Objects.Clear();
-  Freeze();
-  SetPage(Res.Text(' ').u_str());
-  ObjectsState.RestoreState();
-  for (size_t i = 0; i < Objects.Count(); i++) {
-    if (Objects.GetValue(i).GetB() != NULL) {
-#ifndef __MAC__
-      Objects.GetValue(i).b->Move(6000, 0);
-#endif
-      Objects.GetValue(i).b->Show();
+  Traversables.Clear();
+  InFocus = NULL;
+  int xPos = -1, yPos = -1, xWnd=-1, yWnd = -1;
+  GetViewStart(&xPos, &yPos);
+  if (!FocusedControl.IsEmpty()) {
+    wxWindow *fw = wxWindow::FindFocus();
+    if (fw != 0 && fw->GetParent() != this) {
+      FocusedControl.SetLength(0);
     }
   }
+#if defined(__WIN32__)
+  Freeze();
+#else
+  Hide();
+#endif
+  SetPage(Res.Text(' ').u_str());
+  ObjectsState.RestoreState();
+#if defined(__MAC__) || (defined(__linux__) && !wxCHECK_VERSION(2,9,0))
+  CreateLayout();
+  Scroll(xPos, yPos);
+  Show();
+  Refresh();
+  Update();
+#endif
+  for( size_t i=0; i < Objects.Count(); i++ )  {
+    if( Objects.GetValue(i).B() != NULL )  {
+#ifndef __MAC__
+      Objects.GetValue(i).B()->Move(16000, 0);
+#endif
+      Objects.GetValue(i).B()->Show();
+    }
+  }
+#if defined(__WIN32__)
   CreateLayout();
   Scroll(xPos, yPos);
   Thaw();
+#elif defined(__linux__) && wxCHECK_VERSION(2,9,0)
+  CreateLayout();
+  Scroll(xPos, yPos);
+  Show();
+  Refresh();
+  Update();
+#endif
   SwitchSources().Clear();
   SwitchSource().SetLength(0);
   TEFile::ChangeDir(oldPath);
   if (!FocusedControl.IsEmpty()) {
     size_t ind = Objects.IndexOf(FocusedControl);
     if (ind != InvalidIndex) {
-      wxWindow* wnd = Objects.GetValue(ind).b;
+      wxWindow* wnd = Objects.GetValue(ind).B();
       if (EsdlInstanceOf(*wnd, TTextEdit))
         ((TTextEdit*)wnd)->SetSelection(-1,-1);
       else if( EsdlInstanceOf(*wnd, TComboBox) )  {
         TComboBox* cb = (TComboBox*)wnd;
         wnd = cb;
       }
-      else if (EsdlInstanceOf(*wnd, TSpinCtrl)) {
+      else if( EsdlInstanceOf(*wnd, TSpinCtrl) )  {
         TSpinCtrl* sc = (TSpinCtrl*)wnd;
         olxstr sv(sc->GetValue());
         sc->SetSelection((long)sv.Length(), -1);
       }
       wnd->SetFocus();
+      InFocus = wnd;
     }
     else
       FocusedControl.SetLength(0);
@@ -501,6 +677,7 @@ void THtml::ScrollWindow(int dx, int dy, const wxRect* rect)  {
 bool THtml::AddObject(const olxstr& Name, AOlxCtrl *Object, wxWindow* wxWin,
   bool Manage)
 {
+  Traversables.Add(Association::New(Object,wxWin));
   if (Name.IsEmpty())  return true;  // an anonymous object
   if (Objects.HasKey(Name))  return false;
   Objects.Add(Name, Association::Create(Object, wxWin, Manage));
@@ -521,7 +698,7 @@ void THtml::OnCellMouseHover(wxHtmlCell *Cell, wxCoord x, wxCoord y)  {
         ind = Href.FirstIndexOf('%', ind+1);
         continue;
       }
-      olxstr nm = Href.SubString(ind+1, 2);
+      olxstr nm = Href.SubString(ind+1, 2); 
       if( nm.IsNumber() )  {
         try  {
           int val = nm.RadInt<int>(16);
@@ -753,7 +930,7 @@ void THtml::SetObjectState(AOlxCtrl *Obj, bool State, const olxstr& state_name) 
 //.............................................................................
 THtml::TObjectsState::~TObjectsState()  {
   for( size_t i=0; i < Objects.Count(); i++ )
-    delete Objects.GetValue(i);
+    delete Objects.GetObject(i);
 }
 //.............................................................................
 void THtml::TObjectsState::SaveState()  {
@@ -762,13 +939,13 @@ void THtml::TObjectsState::SaveState()  {
     size_t ind = Objects.IndexOf(html.GetObjectName(i));
     AOlxCtrl* obj = html.GetObject(i);
     wxWindow* win = html.GetWindow(i);
-    olxstr_dict<olxstr,false>* props;
+    TSStrStrList<olxstr,false>* props;
     if( ind == InvalidIndex )  {
-      props = new olxstr_dict<olxstr,false>;
+      props = new TSStrStrList<olxstr,false>;
       Objects.Add(html.GetObjectName(i), props);
     }
     else  {
-      props = Objects.GetValue(ind);
+      props = Objects.GetObject(ind);
       props->Clear();
     }
     props->Add("type", EsdlClassName(*obj));  // type
@@ -841,7 +1018,7 @@ void THtml::TObjectsState::SaveState()  {
     }
     else //?
       ;
-    // stroring the control colours, it is generic
+    // stroring the control colours, it is generic 
     if( win != NULL )  {
       props->Add("fg", win->GetForegroundColour().GetAsString(wxC2S_HTML_SYNTAX));
       props->Add("bg", win->GetBackgroundColour().GetAsString(wxC2S_HTML_SYNTAX));
@@ -857,10 +1034,10 @@ void THtml::TObjectsState::RestoreState()  {
     if( ind == InvalidIndex )  continue;
     AOlxCtrl* obj = html.GetObject(i);
     wxWindow* win = html.GetWindow(i);
-    olxstr_dict<olxstr, false>& props = *Objects.GetValue(ind);
-    if( props.Get("type") != EsdlClassName(*obj) )  {
+    TSStrStrList<olxstr,false>& props = *Objects.GetObject(ind);
+    if( props["type"] != EsdlClassName(*obj) )  {
       TBasicApp::NewLogEntry(logError) << "Object type changed for: "
-        << Objects.GetKey(ind);
+        << Objects.GetString(ind);
       continue;
     }
     if( EsdlInstanceOf(*obj, TTextEdit) )  {
@@ -879,14 +1056,12 @@ void THtml::TObjectsState::RestoreState()  {
       tb->SetRange(olx_round(props["min"].ToDouble()), olx_round(props["max"].ToDouble()));
       tb->SetValue(olx_round(props["val"].ToDouble()));
       tb->SetData(props["data"]);
-      tb->SetData(props.Get("data"));
     }
     else if( EsdlInstanceOf(*obj, TSpinCtrl) )  {
-      TSpinCtrl* sc = (TSpinCtrl*)obj;
+      TSpinCtrl* sc = (TSpinCtrl*)obj;  
       sc->SetRange(olx_round(props["min"].ToDouble()), olx_round(props["max"].ToDouble()));
       sc->SetValue(olx_round(props["val"].ToDouble()));
       sc->SetData(props["data"]);
-      sc->SetData(props.Get("data"));
     }
     else if( EsdlInstanceOf(*obj, TButton) )  {
       TButton* bt = (TButton*)obj;
@@ -977,13 +1152,13 @@ bool THtml::TObjectsState::LoadFromFile(const olxstr& fn)  {
   return true;
 }
 //.............................................................................
-olxstr_dict<olxstr,false>* THtml::TObjectsState::DefineControl(
+TSStrStrList<olxstr,false>* THtml::TObjectsState::DefineControl(
   const olxstr& name, const std::type_info& type)
 {
   const size_t ind = Objects.IndexOf( name );
   if( ind != InvalidIndex )
     throw TFunctionFailedException(__OlxSourceInfo, "object already exists");
-  olxstr_dict<olxstr,false>* props = new olxstr_dict<olxstr,false>;
+  TSStrStrList<olxstr,false>* props = new TSStrStrList<olxstr,false>;
 
   props->Add("type", type.name());  // type
   props->Add("data");

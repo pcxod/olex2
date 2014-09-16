@@ -101,7 +101,7 @@ olxstr ABasicFunction::GetQualifiedName() const {
 }
 //.............................................................................
 void ABasicFunction::ParseOptions(const olxstr& Options,
-  olxstr_dict<olxstr>& list)
+  TCSTypeList<olxstr,olxstr>& list)
 {
   if( Options.IsEmpty() )  return;
   TStrList toks(Options, "&;");
@@ -115,14 +115,14 @@ void ABasicFunction::ParseOptions(const olxstr& Options,
 }
 //.............................................................................
 olxstr ABasicFunction::OptionsToString(
-  const olxstr_dict<olxstr>& list) const
+  const TCSTypeList<olxstr,olxstr>& list) const
 {
   olxstr_buf rv;
   olxstr sep1 = '-', sep2 = "&;";
   for( size_t i=0; i < list.Count(); i++ )  {
     rv << list.GetKey(i);
-    if( !list.GetValue(i).IsEmpty() )
-      rv << sep1 << list.GetValue(i);
+    if( !list.GetObject(i).IsEmpty() )
+      rv << sep1 << list.GetObject(i);
     rv << sep2;
   }
   return rv;
@@ -207,11 +207,11 @@ void FunctionChainer::RunMacro(TStrObjList &Params, const TParamList &Options,
       E.SetUnhandled(false);
   }
   if (!E.IsHandled())
-    E.ProcessingError(__OlxSourceInfo, "unhandled macro call");
+    E.ProcessingError(__OlxSourceInfo, "unhandled function call");
 }
 //.............................................................................
 void FunctionChainer::RunFunction(const TStrObjList &Params, TMacroError& E) {
-  for (size_t i = functions.Count()-1; i != InvalidIndex; i--) {
+  for (size_t i=0; i < functions.Count(); i++) {
     functions[i]->Run(Params, E);
     if (E.IsHandled() || !E.IsSuccessful())
       break;
@@ -224,7 +224,7 @@ void FunctionChainer::RunFunction(const TStrObjList &Params, TMacroError& E) {
 //.............................................................................
 void FunctionChainer::Update(TMacro<FunctionChainer> &m) {
   uint32_t args=0;
-  olxstr_dict<olxstr> options;
+  TCSTypeList<olxstr,olxstr> options;
   TStrList description;
   description << NewLineSequence();
   for (size_t i=0; i < functions.Count(); i++) {
@@ -238,27 +238,3 @@ void FunctionChainer::Update(TMacro<FunctionChainer> &m) {
   m.SetOptions(options);
 }
 //.............................................................................
-void FunctionChainer::Update(TFunction<FunctionChainer> &f) {
-  uint32_t args = 0;
-  TStrList description;
-  description << NewLineSequence();
-  for (size_t i = 0; i < functions.Count(); i++) {
-    args |= functions[i]->GetArgStateMask();
-    description.Add() << '#' << (i + 1);
-    description.Add(functions[i]->GetDescription());
-  }
-  f.SetDescription(description.Text(NewLineSequence()));
-  f.SetArgStateMask(args);
-}
-//.............................................................................
-void FunctionChainer::Update(ABasicFunction *f) {
-  if (dynamic_cast<TMacro<FunctionChainer> *>(f) != 0) {
-    Update(*(TMacro<FunctionChainer> *)f);
-  }
-  else if (dynamic_cast<TFunction<FunctionChainer> *>(f) != 0) {
-    Update(*(TFunction<FunctionChainer> *)f);
-  }
-  else {
-    throw TFunctionFailedException(__OlxSourceInfo, "Unexpected object");
-  }
-}

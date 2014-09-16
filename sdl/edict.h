@@ -14,10 +14,15 @@ BeginEsdlNamespace()
 
 template <typename, typename, typename> class const_olxdict;
 
-template <typename key_c, typename val_c, class ComparatorType>
-struct DictEntry {
+template <typename key_c, typename val_c, class Comparator> struct DictEntry {
   key_c key;
   mutable val_c val;
+  int Compare(const DictEntry& sl) const {
+    return Comparator::Compare(this->key, sl.key);
+  }
+  template <class T> int Compare(const T& key) const {
+    return Comparator::Compare(this->key, key);
+  }
   DictEntry(const DictEntry& v) : key(v.key), val(v.val) {}
   DictEntry(const key_c& k, const val_c& v) : key(k), val(v) {}
   DictEntry(const key_c& k) : key(k) {}
@@ -27,32 +32,16 @@ struct DictEntry {
     val = v.val;
     return *this;
   }
-
-  struct Comparator {
-    ComparatorType cmp;
-    Comparator() {}
-    Comparator(const ComparatorType &cmp)
-      : cmp(cmp)
-    {}
-    int Compare(const DictEntry& e1, const DictEntry& e2) const {
-      return cmp.Compare(e1.key, e2.key);
-    }
-    template <class T>
-    int Compare(const DictEntry& e1, const T& key) const {
-      return cmp.Compare(e1.key, key);
-    }
-  };
 };
 
 template <typename KType, typename VType, class Comparator> class olxdict
   : protected SortedObjectList
-      <DictEntry<KType,VType,Comparator>,
-      typename DictEntry<KType, VType, Comparator>::Comparator>
+      <DictEntry<KType,VType,Comparator>, TComparableComparator>
 {
   typedef DictEntry<KType,VType,Comparator> EntryType;
-  typedef typename EntryType::Comparator cmpt_t;
-  typedef SortedObjectList<EntryType, typename EntryType::Comparator> SortedL;
+  typedef SortedObjectList<EntryType, TComparableComparator> SortedL;
 public:
+
   struct Entry  {
     KType key;
     VType value;
@@ -62,24 +51,12 @@ public:
   };
 
   olxdict() {}
-
-  olxdict(const Comparator &cmp)
-    : SortedL(cmpt_t(cmp))
-  {}
-  olxdict(const Entry _values[], size_t cnt, const Comparator &cmp)
-    : SortedL(cmpt_t(cmp))
-  {
+  olxdict(const Entry _values[], size_t cnt) {
     for( size_t i=0; i < cnt; i++ )
       Add(_values[i].key, _values[i].value);
   }
-  olxdict(const Entry _values[], size_t cnt) {
-    for (size_t i = 0; i < cnt; i++)
-      Add(_values[i].key, _values[i].value);
-  }
   olxdict(const olxdict& ad) : SortedL(ad) {}
-  olxdict(const const_olxdict<KType,VType,Comparator>& ad)
-    : SortedL(ad.GetObject().cmp)
-  {
+  olxdict(const const_olxdict<KType,VType,Comparator>& ad) {
     SortedL::TakeOver(ad.Release(), true);
   }
   void TakeOver(olxdict &d)  {  SortedL::TakeOver(d);  }
@@ -91,14 +68,11 @@ public:
     SortedL::TakeOver(ad.Release(), true);
     return *this;
   }
-  template <class T> VType& Get(const T& key) const {
+  template <class T> VType& operator [] (const T& key) const {
     size_t ind = SortedL::IndexOf(key);
-    if (ind == InvalidIndex)
+    if( ind == InvalidIndex )
       throw TInvalidArgumentException(__OlxSourceInfo, "key");
     return SortedL::operator[] (ind).val;
-  }
-  template <class T> VType& operator [] (const T& key) const {
-    return Get(key);
   }
   template <class T> const VType& Find(const T& key, const VType& def) const {
     size_t ind = SortedL::IndexOf(key);
@@ -109,8 +83,7 @@ public:
   void Clear()  {  SortedL::Clear();  }
   size_t Count() const {  return SortedL::Count();  }
   bool IsEmpty() const {  return SortedL::IsEmpty();  }
-  void SetCapacity(size_t c)  { SortedL::SetCapacity(c); }
-  void SetIncrement(size_t inc) { SortedL::SetIncrement(inc);  }
+  void SetCapacity(size_t c)  {  SortedL::SetCapacity(c);  }
   VType& GetValue(size_t ind)  {  return SortedL::operator[] (ind).val;  }
   const VType& GetValue(size_t ind) const {
     return SortedL::operator[] (ind).val;
@@ -128,15 +101,16 @@ public:
   template <typename T> VType& operator () (const T& key, const VType& def) {
     return Add(key, def);
   }
-  template <typename T> VType& Add(const T& key, const VType& def, bool update=false) {
-    olx_pair_t<size_t, bool> ip = SortedL::AddUnique(key);
-    if (ip.b || update) // new entry?
-      SortedL::operator[] (ip.a).val = def;
-    return SortedL::operator[] (ip.a).val;
+  template <typename T> VType& Add(const T& key, const VType& def) {
+    size_t ind = InvalidIndex;
+    if( SortedL::AddUnique(key, &ind) ) // new entry?
+      SortedL::operator[] (ind).val = def;
+    return SortedL::operator[] (ind).val;
   }
   template <typename T> VType& Add(const T& key) {
-    olx_pair_t<size_t, bool> ip = SortedL::AddUnique(key);
-    return SortedL::operator[] (ip.a).val;
+    size_t ind = InvalidIndex;
+    SortedL::AddUnique(key, &ind);
+    return SortedL::operator[] (ind).val;
   }
   template <class T> size_t IndexOf(const T& key) const {
     return SortedL::IndexOf(key);
@@ -156,36 +130,15 @@ public:
     return false;
   }
   void Delete(size_t ind)  {  SortedL::Delete(ind);  }
-
-  void Merge(const olxdict &d, bool replace=true) {
-    for (size_t i = 0; i < d.Count(); i++) {
-      size_t idx = IndexOf(d.GetKey(i));
-      if (idx == InvalidIndex) {
-        Add(d.GetKey(i), d.GetValue(i));
-      }
-      else if (replace) {
-        GetValue(idx) = d.GetValue(idx);
-      }
-    }
-  }
 public:
   typedef KType key_item_type;
   typedef VType value_item_type;
-  typedef const_olxdict<KType, VType, Comparator> const_dict_type;
+
 };
 
 // a string to type association....
-template <typename VType, bool case_insensitive=false>
-class olxstr_dict
-  : public olxdict<olxstr, VType, olxstrComparator<case_insensitive> >
-{
-  typedef olxdict < olxstr, VType, olxstrComparator<case_insensitive> >
-    parent_t;
-public:
-  olxstr_dict()
-    : parent_t(olxstrComparator<case_insensitive>())
-  {}
-};
+template <typename VType, bool case_insensitive=false> class olxstr_dict
+  : public olxdict<olxstr, VType, olxstrComparator<case_insensitive> > {};
 
 // const_dict
 template <typename key_t, typename val_t, class Comparator>

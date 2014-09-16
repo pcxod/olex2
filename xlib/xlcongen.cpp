@@ -88,32 +88,15 @@ bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group,
       case fgOH3:
         break;
       case fgOH2:
-        dis = Distances.Get(GenId(fgOH2,0));
+        dis = Distances[GenId(fgOH2,0)];
         if( CreatedAtoms.Count() == 2 )  {
-          if (IsUseRestrains()) {
-            sr = &RefMod.rDFIX.AddNew();
-            sr->SetValue(dis);
-            sr->AddAtomPair(envi.GetBase().CAtom(), NULL, *CreatedAtoms[0], NULL);
-            sr->AddAtomPair(envi.GetBase().CAtom(), NULL, *CreatedAtoms[1], NULL);
-            sr = &RefMod.rDANG.AddNew();
-            sr->SetValue(olx_round(dis*sqrt(2 - 2 * cos(104.5*M_PI / 180)), 100));
-            sr->AddAtomPair(*CreatedAtoms[0], NULL, *CreatedAtoms[1], NULL);
-            if (envi.Count() == 1 &&
+          if (envi.Count() == 1 &&
               XElementLib::IsMetal(envi.GetCAtom(0).GetType()))
-            {
-              sr = &RefMod.rSADI.AddNew();
-              sr->AddAtomPair(envi.GetCAtom(0), NULL, *CreatedAtoms[0], NULL);
-              sr->AddAtomPair(envi.GetCAtom(0), NULL, *CreatedAtoms[1], NULL);
-            }
-          }
-          else if (envi.Count() == 1 &&
-            XElementLib::IsMetal(envi.GetCAtom(0).GetType()))
           {
             afix = 7;
           }
-          else {
+          else
             afix = 6;
-          }
         }
         else if( CreatedAtoms.Count() == 1 && envi.GetBase().CAtom().GetDegeneracy() == 2 )  {
           sr = &RefMod.rDFIX.AddNew();
@@ -147,13 +130,13 @@ bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group,
           const double d1 = envi.GetCrd(0).DistanceTo(envi.GetBase().crd());
           const double d2 = envi.GetCrd(1).DistanceTo(envi.GetBase().crd());
           //afix = 3; // possible...
-          dis = Distances.Get(GenId(fgOH2,0));
+          dis = Distances[GenId(fgOH2,0)];
           sr = &RefMod.rDFIX.AddNew();
           sr->SetEsd(0.01);
           sr->SetValue(dis);
           sr->AddAtomPair(envi.GetBase().CAtom(), NULL, *CreatedAtoms[0], NULL);
           const double _d1 = (d1 < 1.8 ? d1 : d2);
-          // if this is not applied, the refinement may never converge
+          // if this is not applied, the refinement may never converge 
           sr = &RefMod.rDANG.AddNew();
           sr->SetEsd(0.02);
           sr->SetValue(sqrt(_d1*_d1+dis*dis-2*dis*_d1*cos(109.4*M_PI/180)));
@@ -212,7 +195,7 @@ bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group,
       else
         CreatedAtoms[i]->SetUisoScale(1.2);
       CreatedAtoms[i]->SetUiso(4*caDefIso*caDefIso);
-      RefMod.Vars.SetParam(*CreatedAtoms[i], catom_var_name_Sof,
+      RefMod.Vars.SetParam(*CreatedAtoms[i], catom_var_name_Sof, 
         RefMod.Vars.GetParam(envi.GetBase().CAtom(), catom_var_name_Sof));
       CreatedAtoms[i]->SetOccu(CreatedAtoms[i]->GetOccu()*occu_mult);
       if( generated != NULL )

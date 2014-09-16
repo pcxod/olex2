@@ -171,7 +171,7 @@ bool TGlConsole::Orient(TGlPrimitive& P)  {
           continue;
         }
         TGlMaterial* GlMP = FBuffer.GetObject(i);
-        if( GlMP != NULL )
+        if( GlMP != NULL ) 
           GlMP->Init(Parent.ForcePlain());
         else
           OGlM.Init(Parent.ForcePlain());
@@ -316,7 +316,7 @@ bool TGlConsole::ProcessKey( int Key , short ShiftState)  {
   if( !Key || Key > 255 || (ShiftState & sssCtrl) || (ShiftState & sssAlt))
     return false;
   if( !IsPromptVisible() )  return false;
-
+  
   if( Key == OLX_KEY_ESCAPE )  {
     PromptStr = InviteStr;
     olex2::IOlex2Processor::GetInstance()->processFunction(PromptStr);
@@ -617,7 +617,7 @@ size_t TGlConsole::Write(const TTIString<olxch>& str)  {
   if( &str == &NewLineSequence() )  {
     if( !FBuffer.GetLastString().IsEmpty() )
       FBuffer.Add(EmptyString(), PrintMaterial == NULL ? NULL : new TGlMaterial(*PrintMaterial));
-    return 1;
+    return 1;  
   }
   FBuffer.GetLastString().SetCapacity(FBuffer.GetLastString().Length() + str.Length());
   for( size_t i=0; i < str.Length(); i++ )  {

@@ -41,12 +41,12 @@ public:
   TSAtom& GetBase() const { return *Base; }
   void SetBase(TSAtom& base) { Base = &base; }
   const olxstr& GetLabel(size_t ind) const {
-    return Envi[ind].a->GetLabel();
+    return Envi[ind].A()->GetLabel();
   }
   const cm_Element& GetType(size_t ind) const {
-    return Envi[ind].a->GetType();
+    return Envi[ind].A()->GetType();
   }
-  TCAtom& GetCAtom(size_t ind) const { return *Envi[ind].a; }
+  TCAtom& GetCAtom(size_t ind) const { return *Envi[ind].A(); }
   const vec3d& GetCrd(size_t ind) const { return Envi[ind].GetC(); }
   const smatd& GetMatrix(size_t ind) const { return Envi[ind].GetB(); }
   void Delete(size_t i) { Envi.Delete(i); }
@@ -79,3 +79,5 @@ typedef TTypeList<TAtomEnvi> TAtomEnviList;
 
 EndXlibNamespace()
 #endif
+
+

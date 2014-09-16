@@ -103,8 +103,9 @@ void TDataFile::Include(TStrList* Log)  {
     TDataFile DF;
     DF.LoadFromXLFile(Tmp, Log);
     DF.Include(Log);
-    Inc->GetParent()->AddContent(DF.Root(),
-      Inc->FindField("extend", FalseString()).ToBool());
+    const olxstr& extend_str = Inc->FindField("extend");
+    bool extend = extend_str.IsEmpty() ? false : extend_str.ToBool();
+    Inc->GetParent()->AddContent(DF.Root(), extend);
     FRoot->DeleteItem(Inc);
     Inc = FRoot->FindAnyItem("#include");
   }

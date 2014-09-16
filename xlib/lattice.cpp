@@ -315,7 +315,7 @@ void TLattice::GenerateWholeContent(TCAtomPList* Template)  {
 }
 //..............................................................................
 void TLattice::Generate(TCAtomPList* Template, bool ClearCont)  {
-  if( ClearCont && Template != NULL )
+  if( ClearCont && Template != NULL ) 
     ClearAtoms();
   else  {
     const size_t ac = Objects.atoms.Count();
@@ -387,7 +387,12 @@ void TLattice::GenerateCell()  {
   OnStructureGrow.Exit(this);
 }
 //..............................................................................
-void TLattice::Generate(const IVolumeValidator &v, bool clear_content) {
+void TLattice::GenerateBox(const vec3d_alist& norms,
+  const vec3d_alist& centres, bool clear_content)
+{
+  if (norms.Count() !=6 || norms.Count() != centres.Count()) {
+    throw TInvalidArgumentException(__OlxSourceInfo, "volume definition");
+  }
   OnStructureGrow.Enter(this);
   if( clear_content )  {
     ClearAtoms();
@@ -416,7 +421,14 @@ void TLattice::Generate(const IVolumeValidator &v, bool clear_content) {
             if( ca.IsDeleted() )  continue;
             vec3d p = m*ca.ccrd() + t;
             const vec3d c = au.CellToCartesian(p);
-            if (!v.IsInside(c)) continue;
+            bool inside = true;
+            for (int fi=0; fi < 6; fi++) {
+              if ((c-centres[fi]).DotProd(norms[fi]) > 0) {
+                inside = false;
+                break;
+              }
+            }
+            if (!inside) continue;
             GenerateAtom(ca, *lm);
             if( matrix_created )  {
               matrices.Add(m_id, lm);
@@ -479,9 +491,9 @@ SortedObjectList<smatd, smatd::ContainerIdComparator>
         if (aa.IsDeleted() || (!use_q_peaks && aa.GetType() == iQPeakZ))
           continue;
         smatd m = uc.MulMatrix(a.GetAttachedSite(k).matrix, ref_m);
-        olx_pair_t<size_t, bool> idx = res.AddUnique(m);
-        if(idx.b)
-          q.Push(&res[idx.a]);
+        size_t idx;
+        if( res.AddUnique(m, &idx) )
+          q.Push(&res[idx]);
       }
     }
   }
@@ -502,7 +514,7 @@ void TLattice::GetGrowMatrices(smatd_list& res) const {
       bool found = false;
       for( size_t l=0; l < MatrixCount(); l++ )  {
         if( Matrices[l]->GetId() == m.GetId() )  {
-          found = true;
+          found = true;  
           break;
         }
       }
@@ -515,7 +527,7 @@ void TLattice::GetGrowMatrices(smatd_list& res) const {
 void TLattice::DoGrow(const TSAtomPList& atoms, bool GrowShell, TCAtomPList* Template)  {
   RestoreCoordinates();
   const TUnitCell& uc = GetUnitCell();
-  SortedPointerList<smatd, smatd::IdComparator> matrices;
+  SortedPtrList<smatd, smatd::IdComparator> matrices;
   matrices.SetCapacity(Matrices.Count());
   for (size_t i=0; i < Matrices.Count(); i++)
     matrices.AddUnique(Matrices[i]);
@@ -579,7 +591,7 @@ void TLattice::GrowFragments(bool GrowShells, TCAtomPList* Template)  {
   const size_t ac = Objects.atoms.Count();
   for( size_t i=0; i < ac; i++ )  {
     TSAtom& A = Objects.atoms[i];
-    if( A.IsDeleted() || !A.CAtom().IsAvailable() )
+    if( A.IsDeleted() || !A.CAtom().IsAvailable() )  
       continue;
     for( size_t j=0; j < A.NodeCount(); j++ )  {
       if( A.Node(j).IsDeleted() )
@@ -634,7 +646,7 @@ void TLattice::GrowFragments(
     if (fi != InvalidIndex) {
       const smatd_list &l = job.GetValue(fi);
       for( size_t j=0; j < l.Count(); j++)
-        GenerateAtom(ca, *matrix_map.Get(l[j].GetId()));
+        GenerateAtom(ca, *matrix_map[l[j].GetId()]);
     }
   }
   RestoreCoordinates();
@@ -757,7 +769,7 @@ void TLattice::RestoreAtom(const TSAtom::Ref& id)  {
 TSAtom* TLattice::FindSAtom(const olxstr& Label) const {
   const size_t ac = Objects.atoms.Count();
   for( size_t i=0; i < ac; i++ )
-    if( Label.Equalsi(Objects.atoms[i].GetLabel()) )
+    if( Label.Equalsi(Objects.atoms[i].GetLabel()) )  
       return &Objects.atoms[i];
   return NULL;
 }
@@ -765,7 +777,7 @@ TSAtom* TLattice::FindSAtom(const olxstr& Label) const {
 TSAtom* TLattice::FindSAtom(const TCAtom& ca) const {
   const size_t ac = Objects.atoms.Count();
   for( size_t i=0; i < ac; i++ )
-    if( ca.GetId() == Objects.atoms[i].CAtom().GetId() )
+    if( ca.GetId() == Objects.atoms[i].CAtom().GetId() )  
       return &Objects.atoms[i];
   return NULL;
 }
@@ -806,58 +818,59 @@ TSAtom& TLattice::NewAtom(const vec3d& center)  {
   return GenerateAtom(ca, *Matrices[0]);
 }
 //..............................................................................
-TSPlanePList TLattice::NewPlane(const TSAtomPList& Atoms, double weightExtent) {
+TSPlanePList TLattice::NewPlane(const TSAtomPList& Atoms, double weightExtent, bool regular)  {
   TSPlane* Plane = TmpPlane(Atoms, weightExtent);
   TSPlanePList rv;
-  if (Plane != NULL) {
+  if( Plane != NULL)  {
+    Plane->SetRegular(regular);
     TSPlane::Def pd = Plane->GetDef();
     bool found = false;
-    for (size_t i = 0; i < PlaneDefs.Count(); i++) {
-      if (PlaneDefs[i] == pd)  {
+    for( size_t i=0; i < PlaneDefs.Count(); i++ )  {
+      if( PlaneDefs[i] == pd )  {
         found = true;
         break;
       }
     }
-    if (!found)  {
+    if( !found )  {
       PlaneDefs.AddCopy(pd);
-      if (IsGenerated())  {
+      if( IsGenerated() )  {
         delete Plane;
-        for (size_t i = 0; i < Matrices.Count(); i++) {
-          TSPlane* p = pd.FromAtomRegistry(Objects, PlaneDefs.Count() - 1,
+        for( size_t i=0; i < Matrices.Count(); i++ )  {
+          TSPlane* p = pd.FromAtomRegistry(Objects, PlaneDefs.Count()-1,
             Network, *Matrices[i]);
-          if (p != NULL) {
+          if( p != NULL )  {
             bool uniq = true;
-            for (size_t j = 0; j < Objects.planes.Count() - 1; j++) {
+            for( size_t j=0; j < Objects.planes.Count()-1; j++ )  {
               if (!Objects.planes[j].IsDeleted() &&
-                Objects.planes[j].GetCenter().QDistanceTo(
-                p->GetCenter()) < 1e-6 &&
-                Objects.planes[j].GetNormal().IsParallel(p->GetNormal()))
+                   Objects.planes[j].GetCenter().QDistanceTo(
+                     p->GetCenter()) < 1e-6 &&
+                     Objects.planes[j].GetNormal().IsParallel(p->GetNormal()))
               {
                 rv << Objects.planes[j];
                 uniq = false;
                 break;
               }
             }
-            if (!uniq)
+            if( !uniq )
               Objects.planes.DeleteLast();
             else
               rv.Add(p);
           }
         }
       }
-      else {
+      else  {
         Objects.planes.Attach(*Plane);
         rv.Add(Plane);
-        Plane->_SetDefId(PlaneDefs.Count() - 1);
+        Plane->_SetDefId(PlaneDefs.Count()-1);
       }
     }
     else {
-      bool uniq = true;
-      for (size_t i = 0; i < Objects.planes.Count(); i++) {
+      bool uniq=true;
+      for (size_t i=0; i < Objects.planes.Count(); i++) {
         if (!Objects.planes[i].IsDeleted() &&
-          Objects.planes[i].GetCenter().QDistanceTo(
-          Plane->GetCenter()) < 1e-6 &&
-          Objects.planes[i].GetNormal().IsParallel(Plane->GetNormal()))
+             Objects.planes[i].GetCenter().QDistanceTo(
+               Plane->GetCenter()) < 1e-6 &&
+               Objects.planes[i].GetNormal().IsParallel(Plane->GetNormal()))
         {
           rv << Objects.planes[i];
           uniq = false;
@@ -876,7 +889,7 @@ TSPlanePList TLattice::NewPlane(const TSAtomPList& Atoms, double weightExtent) {
 TSPlane* TLattice::TmpPlane(const TSAtomPList& atoms, double weightExtent)  {
   if( atoms.Count() < 3 )  return NULL;
   //TODO: need to consider occupancy for disordered groups ...
-  TTypeList<olx_pair_t<TSAtom*, double> > Points;
+  TTypeList<AnAssociation2<TSAtom*, double> > Points;
   Points.SetCapacity(atoms.Count());
   if( weightExtent != 0 )  {
     double swg = 0;
@@ -888,7 +901,7 @@ TSPlane* TLattice::TmpPlane(const TSAtomPList& atoms, double weightExtent)  {
     // normalise the sum of weights to atoms.Count()...
     const double m = atoms.Count()/swg;
     for( size_t i=0; i < Points.Count(); i++ )
-      Points[i].b *= m;
+      Points[i].B() *= m;
   }
   else  {
     for( size_t i=0; i < atoms.Count(); i++ )
@@ -968,8 +981,8 @@ void TLattice::UpdateAsymmUnit()  {
     //  for( size_t k=0; k < am_c; k++ )  {
     //    const smatd& m = A->GetMatrix(k);
     //    if( m.IsFirst() )  {  // the original atom
-    //      OA = A;
-    //      break;
+    //      OA = A;  
+    //      break; 
     //    }
     //  }
     //  if( OA != NULL )  break;
@@ -1847,10 +1860,10 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom,
   else if( atom.GetType() == iBoronZ )  {  // boron
     if( AE.Count() == 3 )  {
       const vec3d cnt = AE.GetBase().crd();
-      const double v = olx_tetrahedron_volume(
-        cnt,
-        (AE.GetCrd(0)-cnt).Normalise() + cnt,
-        (AE.GetCrd(1)-cnt).Normalise() + cnt,
+      const double v = olx_tetrahedron_volume( 
+        cnt, 
+        (AE.GetCrd(0)-cnt).Normalise() + cnt, 
+        (AE.GetCrd(1)-cnt).Normalise() + cnt, 
         (AE.GetCrd(2)-cnt).Normalise() + cnt);
       if( v > 0.1 )  {
         TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() << ": XYZBH";
@@ -1885,10 +1898,10 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom,
   else if( atom.GetType() == iSiliconZ )  {
     if( AE.Count() == 3 )  {
       const vec3d cnt = AE.GetBase().crd();
-      const double v = olx_tetrahedron_volume(
-        cnt,
-        (AE.GetCrd(0)-cnt).Normalise() + cnt,
-        (AE.GetCrd(1)-cnt).Normalise() + cnt,
+      const double v = olx_tetrahedron_volume( 
+        cnt, 
+        (AE.GetCrd(0)-cnt).Normalise() + cnt, 
+        (AE.GetCrd(1)-cnt).Normalise() + cnt, 
         (AE.GetCrd(2)-cnt).Normalise() + cnt);
       if( v > 0.1 )  {
         TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() << ": XYZSiH";
@@ -1930,10 +1943,10 @@ void TLattice::_ProcessRingHAdd(AConstraintGenerator& cg,
         if( AE.Count() == 3 )  {
           const vec3d cnt = AE.GetBase().crd();
           try  {
-            const double v = olx_tetrahedron_volume(
-              cnt,
-              (AE.GetCrd(0)-cnt).Normalise() + cnt,
-              (AE.GetCrd(1)-cnt).Normalise() + cnt,
+            const double v = olx_tetrahedron_volume( 
+              cnt, 
+              (AE.GetCrd(0)-cnt).Normalise() + cnt, 
+              (AE.GetCrd(1)-cnt).Normalise() + cnt, 
               (AE.GetCrd(2)-cnt).Normalise() + cnt);
             if( v < 0.1 )  continue;  // coordination or substituted
           }
@@ -1972,7 +1985,7 @@ void TLattice::AnalyseHAdd(AConstraintGenerator& cg, const TSAtomPList& atoms)  
   // treat rings
   ElementPList rcont;
   rcont.Add(CTypes[0]);
-  for( size_t i=0; i < 4; i++ )
+  for( size_t i=0; i < 4; i++ )  
     rcont.Add(rcont[0]);
   _ProcessRingHAdd(cg, rcont, atoms); // Cp
   rcont.Add(rcont[0]);
@@ -2069,7 +2082,7 @@ void TLattice::RemoveNonHBonding(TAtomEnvi& Envi)  {
   }
   // choose the shortest bond ...
   if( Envi.Count() > 1 )  {
-    sorted::PrimitiveAssociation<double, TCAtom*> hits;
+    TPSTypeList<double, TCAtom*> hits;
     for( size_t i=0; i < Envi.Count(); i++ )  {
       double d = Envi.GetBase().crd().DistanceTo(Envi.GetCrd(i));
       if( Envi.GetMatrix(i).IsFirst() && // prioritise sligtly longer intramolecular bonds
@@ -2082,13 +2095,13 @@ void TLattice::RemoveNonHBonding(TAtomEnvi& Envi)  {
 
     while( hits.Count() > 1 &&
       ((hits.GetLastKey() - hits.GetKey(0)) > 0.15) )  {
-      Envi.Exclude(*hits.GetValue(hits.Count() - 1));
+      Envi.Exclude(*hits.GetObject(hits.Count()-1));
       hits.Delete(hits.Count()-1);
     }
   }
   // all similar length  .... Q peaks might help :)
   if( Envi.Count() > 1 )  {
-    sorted::PrimitiveAssociation<double, TCAtom*> hits;
+    TPSTypeList<double, TCAtom*> hits;
     AE.Clear();
     UnitCell->GetAtomQEnviList(Envi.GetBase(), AE);
     for( size_t i=0; i < AE.Count(); i++ )  {
@@ -2105,7 +2118,7 @@ void TLattice::RemoveNonHBonding(TAtomEnvi& Envi)  {
       hits.Add(olx_abs(-1 + vec2.CAngle(vec1)), &Envi.GetCAtom(i));
     }
     while( hits.Count() > 1 )  {
-      Envi.Exclude(*hits.GetValue(hits.Count() - 1));
+      Envi.Exclude(*hits.GetObject( hits.Count() - 1 ) );
       hits.Delete(hits.Count() - 1);
     }
   }
@@ -2113,7 +2126,7 @@ void TLattice::RemoveNonHBonding(TAtomEnvi& Envi)  {
 }
 //..............................................................................
 void TLattice::SetAnis(const TCAtomPList& atoms, bool anis)  {
-  if (atoms.IsEmpty()) return;
+  if (atoms.IsEmpty()) return; 
   if( !anis )  {
     for( size_t i=0; i < atoms.Count(); i++ )  {
       if( olx_is_valid_index(atoms[i]->GetEllpId()) )  {
@@ -2185,40 +2198,25 @@ void TLattice::ToDataItem(TDataItem& item) const  {
   TDataItem& frags = item.AddItem("Fragments");
   for( size_t i=0; i < Fragments.Count(); i++ )
     Fragments[i]->ToDataItem(frags.AddItem("Fragment"));
-  // restore original matrix tags
+  // restore original matrix tags 
   for( size_t i=0; i < mat_c; i++ )
     Matrices[i]->SetRawId(m_tags[i]);
   // save planes
   TSPlanePList valid_planes;
-  for (size_t i = 0; i < Objects.planes.Count(); i++) {
-    if (Objects.planes[i].IsDeleted()) continue;
-    size_t p_ac = 0;
-    for (size_t j = 0; j < Objects.planes[i].Count(); j++)
-    if (Objects.planes[i].GetAtom(j).IsAvailable())
-      p_ac++;
-    if (p_ac >= 3) {// a plane must contain at least three atoms
+  for( size_t i=0; i < Objects.planes.Count(); i++ )  {
+    if( Objects.planes[i].IsDeleted() ) continue;
+    size_t p_ac = 0;  
+    for( size_t j=0; j < Objects.planes[i].Count(); j++ ) 
+      if( Objects.planes[i].GetAtom(j).IsAvailable() )
+        p_ac++;
+    if( p_ac >= 3 ) // a plane must contain at least three atoms
       valid_planes.Add(Objects.planes[i]);
-    }
     else
       Objects.planes[i].SetDeleted(true);
   }
-  TPtrList<TSPlane::Def> defs;
   TDataItem& planes = item.AddItem("Planes");
-  for (size_t i = 0; i < valid_planes.Count(); i++) {
-    size_t di = defs.IndexOf(PlaneDefs[valid_planes[i]->GetDefId()]);
-    if (di == InvalidIndex) {
-      di = defs.Count();
-      defs.Add(PlaneDefs[valid_planes[i]->GetDefId()]);
-    }
-    size_t odi = valid_planes[i]->GetDefId();
-    valid_planes[i]->_SetDefId(di);
+  for( size_t i=0; i < valid_planes.Count(); i++ )
     valid_planes[i]->ToDataItem(planes.AddItem("Plane"));
-    valid_planes[i]->_SetDefId(odi);
-  }
-  TDataItem &plane_defs = item.AddItem("Plane_defs");
-  for (size_t i = 0; i < defs.Count(); i++) {
-    defs[i]->ToDataItem(plane_defs.AddItem("Def"));
-  }
 }
 //..............................................................................
 void TLattice::FromDataItem(TDataItem& item)  {
@@ -2259,33 +2257,24 @@ void TLattice::FromDataItem(TDataItem& item)  {
   // load fragments
   for( size_t i=0; i < frags.ItemCount(); i++ )
     Fragments[i]->FromDataItem(frags.GetItemByIndex(i));
-  TDataItem *plane_defs = item.FindAnyItem("Plane_defs");
-  if (plane_defs != 0) {
-    for (size_t i = 0; i < plane_defs->ItemCount(); i++) {
-      PlaneDefs.AddNew(plane_defs->GetItemByIndex(i));
-    }
-  }
   TDataItem& planes = item.GetItemByName("Planes");
-  for (size_t i=0; i < planes.ItemCount(); i++) {
+  for( size_t i=0; i < planes.ItemCount(); i++ )  {
     TSPlane& p = Objects.planes.New(Network);
     p.FromDataItem(planes.GetItemByIndex(i));
-    if (p.GetDefId() == InvalidIndex) {
-      TSPlane::Def def = p.GetDef();
-      size_t di = InvalidIndex;
-      for (size_t j = 0; j < PlaneDefs.Count(); j++) {
-        if (PlaneDefs[j] == def)  {
-          di = j;
-          break;
-        }
-      }
-      if (di == InvalidIndex) {
-        p._SetDefId(PlaneDefs.Count());
-        PlaneDefs.AddNew(def);
-      }
-      else {
-        p._SetDefId(di);
+    TSPlane::Def def = p.GetDef();
+    size_t di = InvalidIndex;
+    for( size_t j=0; j < PlaneDefs.Count(); j++ )  {
+      if( PlaneDefs[j] == def )  {
+        di = j;
+        break;
       }
     }
+    if( di == InvalidIndex )  {
+      p._SetDefId(PlaneDefs.Count());
+      PlaneDefs.AddNew(def);
+    }
+    else
+      p._SetDefId(di);
   }
   //FinaliseLoading();
 }
@@ -2295,10 +2284,6 @@ void TLattice::FinaliseLoading() {
   GetUnitCell().FindSymmEq();
   for( size_t i=0; i < GetAsymmUnit().AtomCount(); i++ )
     GetAsymmUnit().GetAtom(i).SetDeleted(false);
-  for (size_t i = 0; i < Fragments.Count(); i++)  {
-    for (size_t j = 0; j < Fragments[i]->NodeCount(); j++)
-      Fragments[i]->Node(j).CAtom().SetFragmentId((uint32_t)i);
-  }
   BuildAtomRegistry();
 }
 //..............................................................................
@@ -2306,10 +2291,6 @@ void TLattice::SetGrowInfo(GrowInfo* grow_info)  {
   if( _GrowInfo != NULL )
     delete _GrowInfo;
   _GrowInfo = grow_info;
-}
-//..............................................................................
-void TLattice::SetPlaneDefinitions(const TTypeList<TSPlane::Def> &pd) {
-  PlaneDefs = pd;
 }
 //..............................................................................
 TLattice::GrowInfo* TLattice::GetGrowInfo() const {
@@ -2425,7 +2406,7 @@ olxstr TLattice::CalcMoiety() const {
         equals = false;
       else  {
         for( size_t k=1; k < cl.Count(); k++ )  {
-          if( frags[j].GetB()[k].element != cl[k].element ||
+          if( frags[j].GetB()[k].element != cl[k].element || 
             olx_abs((frags[j].GetB()[k].count/frags[j].GetB()[0].count)-(cl[k].count/cl[0].count)) > 0.01 )
           {
             equals = false;
@@ -2434,7 +2415,7 @@ olxstr TLattice::CalcMoiety() const {
         }
       }
       if( equals )  {
-        frags[j].a += cl[0].count/frags[j].GetB()[0].count;
+        frags[j].A() += cl[0].count/frags[j].GetB()[0].count;
         uniq = false;
         break;
       }
@@ -2456,9 +2437,9 @@ olxstr TLattice::CalcMoiety() const {
       const TCAtomPList& l = cfrags[frags[i].GetC()];
       const size_t generators = GetFragmentGrowMatrices(l, false).Count();
       const int gd = int(generators == 0 ? 1 : generators);
-      frags[i].a *= zp_mult/gd;
+      frags[i].A() *= zp_mult/gd;
       for( size_t j=0; j < frags[i].GetB().Count(); j++ )
-        frags[i].b[j].count *= gd;
+        frags[i].B()[j].count *= gd;
     }
   }
   olxstr rv;
@@ -2497,7 +2478,7 @@ void TLattice::RestoreADPs(bool restoreCoordinates)  {
   }
   for( size_t i=0; i < uc.EllpCount(); i++ )  {
     TEllipsoid* elp = uc.GetEllp(i);
-    if( elp != NULL )
+    if( elp != NULL )  
       elp->SetTag(0);
   }
 }
@@ -2630,13 +2611,12 @@ TUndoData *TLattice::ValidateHGroups(bool reinit, bool report) {
         part = ag[j].GetPart();
         break;
       }
-      size_t attached_cnt=0, metal_cnt=0, dependent_cnt=0;
+      size_t attached_cnt=0, metal_cnt=0;
       for (size_t j=0; j < ag.GetPivot().AttachedSiteCount(); j++) {
         TCAtom &a = ag.GetPivot().GetAttachedAtom(j);
         if (a.IsDeleted() || a.GetType().z < 2)
           continue;
         if (TAfixGroup::HasImplicitPivot(a.GetAfix())) {
-          dependent_cnt++;
           continue;
         }
         if (part == 0 || a.GetPart() == 0 || a.GetPart() == part) {
@@ -2677,10 +2657,9 @@ TUndoData *TLattice::ValidateHGroups(bool reinit, bool report) {
           TBasicApp::NewLogEntry(logError) << "Pivot atom " <<
             ag.GetPivot().GetLabel() << " has wrong connectivity for the given "
             "AFIX group and the group was removed. Please revise your model.";
-          TBasicApp::NewLogEntry() << ag.GetPivot().GetResiLabel() << ", AFIX " <<
+          TBasicApp::NewLogEntry() << ag.GetPivot().GetLabel() << ", AFIX " <<
             ag.GetAfix() << ", attached atoms " << attached_cnt <<
-            ", attached metals " << metal_cnt <<
-            ", attached dependent groups " << dependent_cnt;
+            ", attached metals " << metal_cnt;
         }
         ag.Clear();
       }

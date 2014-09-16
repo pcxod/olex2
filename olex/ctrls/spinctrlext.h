@@ -24,17 +24,17 @@ namespace ctrl_ext  {
     void EnterPressedEvent(wxCommandEvent& event);
     olxstr Data;
   public:
-    TSpinCtrl(wxWindow *Parent, const wxSize& sz=wxDefaultSize):
+    TSpinCtrl(wxWindow *Parent, const wxSize& sz=wxDefaultSize): 
       wxSpinCtrl(Parent, -1, wxEmptyString, wxDefaultPosition, sz),
-      AOlxCtrl(this),
+      AOlxCtrl(this),  
       OnChange(AOlxCtrl::ActionQueue::New(Actions, evt_change_id))  {}
 
     DefPropC(olxstr, Data)
 
     int GetValue() const {  return wxSpinCtrl::GetValue(); }
-    void SetValue(int v) {
+    void SetValue(int v) { 
       Value = v;
-      wxSpinCtrl::SetValue(v);
+      wxSpinCtrl::SetValue(v); 
     }
 
     AOlxCtrl::ActionQueue &OnChange;

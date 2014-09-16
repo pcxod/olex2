@@ -102,7 +102,7 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
     if( ref.ds < minds )  minds = ref.ds;
     if( ref.ds > maxds )  maxds = ref.ds;
     ref.Fo2 = Refs[i].GetI(); // * Refs[i].GetDegeneracy(); merged in P-1 now, so no use
-//    if( Refs[i].IsCentric() )
+//    if( Refs[i].IsCentric() ) 
 //      ref.Fo2 /= 2;
     for( size_t j=0; j < elements.Count(); j++ )  {
       double v = elements.GetKey(j)->gaussians->calc_sq(ref.ds);
@@ -116,7 +116,7 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
   if( binsCnt <= 0 ) binsCnt = 10;
 
   if( ! picture )  {  /// use spherical bins
-    double Vtot = olx_sphere_volume(sqrt(maxds)), Vstep = Vtot/binsCnt,
+    double Vtot = olx_sphere_volume(sqrt(maxds)), Vstep = Vtot/binsCnt, 
       Vstart = olx_sphere_volume(sqrt(minds)),
       Vhstep = Vstep/2;
     for( size_t i=0; i < binsCnt; i++ )  {
@@ -163,7 +163,7 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
     }
   }
 
-  TTypeList< olx_pair_t<double,double> > binData;
+  TTypeList< AnAssociation2<double,double> > binData;
   // normalise summs
   for( size_t i=0; i < bins.Count(); i++ )  {
     if( bins[i].Count == 0 )  continue;
@@ -218,7 +218,7 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
     output.Add("#Title = Wilson plot");
     output.Add("#y_label = sin^2(theta)/lambda^2");
     output.Add("#x_label = ln(<Fo^2>)/(Fexp^2)");
-    output.Add(olxstr("#y = ") << olxstr::FormatFloat(3,line[1]) << "*x"
+    output.Add(olxstr("#y = ") << olxstr::FormatFloat(3,line[1]) << "*x" 
       << ((line[1] < 0) ? " " : "+") << olxstr::FormatFloat(3,line[0]) );
     output.Add("#fit_y_intercept = ") << olxstr::FormatFloat(3,line[0]);
     output.Add("#fit_slope = ") << olxstr::FormatFloat(3,line[1]);
@@ -227,7 +227,7 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
     output.Add("#<|E^2-1|> = ") << olxstr::FormatFloat(3,E2);
     output.Add("#%|E| > 2 = ") << olxstr::FormatFloat(3,(double)iE2GT2*100/refs.Count());
 
-    TEFile::WriteLines(outputFileName, TCStrList(output));
+    TCStrList(output).SaveToFile(outputFileName) ;
     XApp.NewLogEntry() << outputFileName << " file was created";
 
     if( E2 -(0.968+0.736)/2 < 0 )
@@ -256,7 +256,7 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
           ebins[j]->Count ++;
       }
     }
-    TTypeList< olx_pair_t<double,double> > ebinData;
+    TTypeList< AnAssociation2<double,double> > ebinData;
 
     for( size_t i=0; i < ebins.Count(); i++ )  {
       if( ebins[i]->Count == 0 )  continue;

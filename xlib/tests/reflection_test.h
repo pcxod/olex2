@@ -34,7 +34,7 @@ void reflection_tests(OlxTests& t)  {
   ref.SetMultiplicity(0);
   if( ref.GetMultiplicity() != 0 )
     throw TFunctionFailedException(__OlxSourceInfo, "mult");
-
+  
   if( ref.IsAbsent() )
     throw TFunctionFailedException(__OlxSourceInfo, "absent");
   ref.SetAbsent(true);

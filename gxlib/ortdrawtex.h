@@ -23,9 +23,9 @@ private:
     OrtAtom(const OrtAtom& a) :
     atom(a.atom), crd(a.crd), elpm(a.elpm), ielpm(a.ielpm) {  }
     ~OrtAtom()  {
-      if( elpm != NULL )
+      if( elpm != NULL )   
         delete elpm;
-      if( ielpm != NULL )
+      if( ielpm != NULL )  
         delete ielpm;
     }
   };
@@ -42,8 +42,8 @@ protected:
   short ElpDiv, PieDiv, BondDiv;
   TArrayList<vec3f> ElpCrd, PieCrd, Arc, BondCrd, BondProjF, BondProjT;
   TPtrList<const vec3f> FilteredArc;
-  float PieLineWidth,
-    ElpLineWidth,
+  float PieLineWidth, 
+    ElpLineWidth, 
     QuadLineWidth,
     HBondScale;
 
@@ -81,13 +81,13 @@ protected:
         continue;
       vec3f p1 = (bn.Another(sa).crd() + SceneOrigin)*ProjMatr+DrawOrigin;
       if( p1[2] <= oa.crd[2] )  // goes into the plane - drawn
-        continue;
+        continue; 
       dir_vec = (p1-oa.crd).Normalise();
       const float pers_scale = 1.0-olx_sqr(dir_vec[2]);
-      float brad = (bn.A().GetType() == iHydrogenZ || bn.B().GetType() == iHydrogenZ) ?
+      float brad = (bn.A().GetType() == iHydrogenZ || bn.B().GetType() == iHydrogenZ) ? 
         BondRad*HBondScale : BondRad;
       if( bn.GetType() == sotHBond )  //even thiner H-bonds
-        brad *= HBondScale;
+        brad *= HBondScale;      
       touch_point = (bn.Another(sa).crd()-oa.atom->crd()).Normalise();
       vec3f rot_vec(-touch_point[1], touch_point[0], 0);
       olx_create_rotation_matrix(rot_mat, rot_vec.Normalise(), touch_point[2]);
@@ -109,7 +109,7 @@ protected:
       else  {
         const float off_len = AradScale*sa.GetType().r_bonding/2;
         for( int j=0; j < BondDiv; j++ )  {
-          BondProjT[j] = BondProjF[j] = (BondCrd[j]*proj_mat).NormaliseTo(brad*(1+pers_scale)*scalex);
+          BondProjT[j] = BondProjF[j] = (BondCrd[j]*proj_mat).NormaliseTo(brad*(1+pers_scale)*scalex); 
           BondProjT[j].NormaliseTo(brad*2*scalex) += dir_vec*b_len;
           BondProjF[j] += dir_vec*off_len;
         }
@@ -120,7 +120,7 @@ protected:
         throw TFunctionFailedException(__OlxSourceInfo, "lists mismatch");
       if( BondProjF.Count() > 2 )
       {
-        //Calculation of the centre of the intersection ellipsis
+        //Calculation of the centre of the intersection ellipsis 
         za = zb = ya = yb = xa = xb = 0;
         for( size_t bpi=0; bpi < BondProjT.Count(); bpi++ )  {
           xa += BondProjT[bpi][0];
@@ -129,7 +129,7 @@ protected:
           xb += BondProjF[bpi][0];
           yb += BondProjF[bpi][1];
           zb += BondProjF[bpi][2];
-        }
+        }            
         xa = xa/BondProjT.Count() + p[0];
         xb = xb/BondProjT.Count() + p[0];
         ya = ya/BondProjT.Count() + p[1];
@@ -137,13 +137,13 @@ protected:
         za = za/BondProjT.Count() + p[2];
         zb = zb/BondProjT.Count() + p[2];
         //calculation of the angle between the bond and the vertical. Needed to apply a shading on the bond
-        if(xb>xa && (xb-xa)/sqrt((xb-xa)*(xb-xa)+(yb-ya)*(yb-ya))<1 && (xb-xa)/sqrt((xb-xa)*(xb-xa)+(yb-ya)*(yb-ya))>-1)
+        if(xb>xa && (xb-xa)/sqrt((xb-xa)*(xb-xa)+(yb-ya)*(yb-ya))<1 && (xb-xa)/sqrt((xb-xa)*(xb-xa)+(yb-ya)*(yb-ya))>-1) 
         {
           angle = asin((xb-xa)/sqrt((xb-xa)*(xb-xa)+(yb-ya)*(yb-ya)))*180/M_PI;
           if(ya<yb)
             angle = - asin((xb-xa)/sqrt((xb-xa)*(xb-xa)+(yb-ya)*(yb-ya)))*180/M_PI;
         }
-        else if(xa>xb && (xa-xb)/sqrt((xb-xa)*(xb-xa)+(yb-ya)*(yb-ya))<1 && (xa-xb)/sqrt((xb-xa)*(xb-xa)+(yb-ya)*(yb-ya))>-1)
+        else if(xa>xb && (xa-xb)/sqrt((xb-xa)*(xb-xa)+(yb-ya)*(yb-ya))<1 && (xa-xb)/sqrt((xb-xa)*(xb-xa)+(yb-ya)*(yb-ya))>-1) 
         {
           angle = - asin((xa-xb)/sqrt((xb-xa)*(xb-xa)+(yb-ya)*(yb-ya)))*180/M_PI;
           if(ya<yb)
@@ -171,7 +171,7 @@ protected:
         sprintf(bf, "\\draw[white,very thick, rounded corners=\\cornerradius] (%fmm,%fmm) --  (%fmm,%fmm) -- (%fmm,%fmm) -- (%fmm,%fmm) -- cycle;",
           xc/5,yc/5,
           xe/5, ye/5,
-          xf/5, yf/5,
+          xf/5, yf/5, 
           xd/5, yd/5);
         pw.Writenl(bf);
 
@@ -181,56 +181,56 @@ protected:
         vec3f p3 = (bn.B().crd() + SceneOrigin)*ProjMatr+DrawOrigin;
 
         //All this, just to have a correct shading...
-        if(ya > yb && xa < xb)
+        if(ya > yb && xa < xb) 
         {
           if(p2[2] < p3[2])
             sprintf(bf, "\\shade[top color=\\color%s, bottom color=\\color%s, shading angle=%f, rounded corners=\\cornerradius] (%fmm,%fmm) --  (%fmm,%fmm) -- (%fmm,%fmm) -- (%fmm,%fmm) -- cycle;",
             bn.B().GetType().symbol.c_str(), bn.A().GetType().symbol.c_str(), angle,
             xc/5,yc/5,
             xe/5, ye/5,
-            xf/5, yf/5,
+            xf/5, yf/5, 
             xd/5, yd/5);
           else
             sprintf(bf, "\\shade[top color=\\color%s, bottom color=\\color%s, shading angle=%f, rounded corners=\\cornerradius] (%fmm,%fmm) --  (%fmm,%fmm) -- (%fmm,%fmm) -- (%fmm,%fmm) -- cycle;",
             bn.A().GetType().symbol.c_str(), bn.B().GetType().symbol.c_str(), angle,
             xc/5,yc/5,
             xe/5, ye/5,
-            xf/5, yf/5,
+            xf/5, yf/5, 
             xd/5, yd/5);
         }
-        else if(ya > yb && xa > xb)
+        else if(ya > yb && xa > xb) 
         {
           if(p2[2] < p3[2])
             sprintf(bf, "\\shade[top color=\\color%s, bottom color=\\color%s, shading angle=%f, rounded corners=\\cornerradius] (%fmm,%fmm) --  (%fmm,%fmm) -- (%fmm,%fmm) -- (%fmm,%fmm) -- cycle;",
             bn.B().GetType().symbol.c_str(), bn.A().GetType().symbol.c_str(), angle,
             xc/5,yc/5,
             xe/5, ye/5,
-            xf/5, yf/5,
+            xf/5, yf/5, 
             xd/5, yd/5);
           else
             sprintf(bf, "\\shade[top color=\\color%s, bottom color=\\color%s, shading angle=%f, rounded corners=\\cornerradius] (%fmm,%fmm) --  (%fmm,%fmm) -- (%fmm,%fmm) -- (%fmm,%fmm) -- cycle;",
             bn.A().GetType().symbol.c_str(), bn.B().GetType().symbol.c_str(), angle,
             xc/5,yc/5,
             xe/5, ye/5,
-            xf/5, yf/5,
-            xd/5, yd/5);
+            xf/5, yf/5, 
+            xd/5, yd/5);                    
         }
-        else if(ya <= yb && xa <= xb)
+        else if(ya <= yb && xa <= xb) 
         {
           if(p2[2] < p3[2])
             sprintf(bf, "\\shade[top color=\\color%s, bottom color=\\color%s, shading angle=%f, rounded corners=\\cornerradius] (%fmm,%fmm) --  (%fmm,%fmm) -- (%fmm,%fmm) -- (%fmm,%fmm) -- cycle;",
             bn.A().GetType().symbol.c_str(), bn.B().GetType().symbol.c_str(), angle,
             xc/5,yc/5,
             xe/5, ye/5,
-            xf/5, yf/5,
+            xf/5, yf/5, 
             xd/5, yd/5);
           else
             sprintf(bf, "\\shade[top color=\\color%s, bottom color=\\color%s, shading angle=%f, rounded corners=\\cornerradius] (%fmm,%fmm) --  (%fmm,%fmm) -- (%fmm,%fmm) -- (%fmm,%fmm) -- cycle;",
             bn.B().GetType().symbol.c_str(), bn.A().GetType().symbol.c_str(), angle,
             xc/5,yc/5,
             xe/5, ye/5,
-            xf/5, yf/5,
-            xd/5, yd/5);
+            xf/5, yf/5, 
+            xd/5, yd/5);                    
         }
         else //if(ya <= yb && xa >= xb)
         {
@@ -239,15 +239,15 @@ protected:
             bn.A().GetType().symbol.c_str(), bn.B().GetType().symbol.c_str(), angle,
             xc/5,yc/5,
             xe/5, ye/5,
-            xf/5, yf/5,
+            xf/5, yf/5, 
             xd/5, yd/5);
           else
             sprintf(bf, "\\shade[top color=\\color%s, bottom color=\\color%s, shading angle=%f, rounded corners=\\cornerradius] (%fmm,%fmm) --  (%fmm,%fmm) -- (%fmm,%fmm) -- (%fmm,%fmm) -- cycle;",
             bn.B().GetType().symbol.c_str(), bn.A().GetType().symbol.c_str(), angle,
             xc/5,yc/5,
             xe/5, ye/5,
-            xf/5, yf/5,
-            xd/5, yd/5);
+            xf/5, yf/5, 
+            xd/5, yd/5);                    
         }
 
         pw.Writenl(bf);
@@ -256,7 +256,7 @@ protected:
         sprintf(bf, "\\draw[rounded corners=\\cornerradius] (%fmm,%fmm) --  (%fmm,%fmm) -- (%fmm,%fmm) -- (%fmm,%fmm) -- cycle;",
           xc/5,yc/5,
           xe/5, ye/5,
-          xf/5, yf/5,
+          xf/5, yf/5, 
           xd/5, yd/5);
         pw.Writenl(bf);
 
@@ -312,7 +312,7 @@ protected:
     }*/
   }
 public:
-  OrtDrawTex() : app(TGXApp::GetInstance()) {
+  OrtDrawTex() : app(TGXApp::GetInstance()) {  
     ElpDiv = 36;
     BondDiv = 12;
     PieDiv = 4;
@@ -364,7 +364,7 @@ public:
     SceneOrigin = basis.GetCenter();
     //DrawOrigin = vec3f(pw.GetWidth()/2, pw.GetHeight()/2, 0);
     DrawOrigin = vec3f(vp[2]/2, vp[3]/2, 0);
-    ProjMatr = basis.GetMatrix()*DrawScale;
+    ProjMatr = basis.GetMatrix()*DrawScale;  
     UnProjMatr = ProjMatr.Inverse();
   }
   void Render(const olxstr& fileName)  {
@@ -375,7 +375,7 @@ public:
 
     //temporary colour dictionary
     //map<olxstr,string> ColourDic;
-    olxdict <olxstr,olxcstr,olxstrComparator<false> > ColourDic;
+    olxdict <olxstr,olxstr,olxstrComparator<false> > ColourDic;
     ColourDic("H","white");
     ColourDic("D","white");
     ColourDic("He","white");
@@ -480,7 +480,7 @@ public:
     ColourDic("Lr","white");
     ColourDic("Ne","white");
     ColourDic("Ar","white");
-    olxcstr def_color = "white";
+
 
     const TEBasis& basis = app.GetRender().GetBasis();
     TTypeList<OrtDrawTex::OrtAtom> atoms;
@@ -488,7 +488,7 @@ public:
     atoms.SetCapacity(ai.count);
 
     //radius for the end of the bond
-    sprintf(bf, "\\newcommand{\\cornerradius}{%fmm}",
+    sprintf(bf, "\\newcommand{\\cornerradius}{%fmm}", 
       0.12*0.1*DrawScale);
     pw.Writenl(bf);
 
@@ -508,10 +508,10 @@ public:
       //writing of the color definition of the atom
       if(CurrentAtom == false)
       {
-        sprintf(bf, "\\newcommand{\\color%s}{%s!90!black}",
+        sprintf(bf, "\\newcommand{\\color%s}{%s!90!black}",         
           sa.GetType().symbol.c_str(),
-          ColourDic.Find(sa.GetType().symbol, def_color).c_str()
-          );
+          ColourDic[sa.GetType().symbol].c_str()
+          );        
         pw.Writenl(bf);
 
         sprintf(bf, "\\pgfdeclareradialshading{ballshading%s}{\\pgfpoint{-10bp}{10bp}}",
@@ -521,7 +521,7 @@ public:
           sa.GetType().symbol.c_str(), sa.GetType().symbol.c_str());
         pw.Writenl(bf);
         sprintf(bf, "color(18bp)=(\\color%s!70!black); color(25bp)=(\\color%s!50!black); color(50bp)=(black)} ",
-          sa.GetType().symbol.c_str(), sa.GetType().symbol.c_str());
+          sa.GetType().symbol.c_str(), sa.GetType().symbol.c_str());          
         pw.Writenl(bf);
       }
 
@@ -550,17 +550,17 @@ public:
       if( sa.GetEllipsoid() == NULL )  {
         //draw the atom as a circle, done twice, to make a white border arounf it
         //draw circle, centre, radius
-        sprintf(bf, "\\begin{pgfscope}\\pgfsetstrokecolor{white}\\pgfsetlinewidth{\\whitespace}\\pgfpathcircle{\\pgfpoint{%fmm}{%fmm}}{%fmm}\n\\pgfshadepath{ballshading%s}{0}\n\\pgfusepath{draw}\\end{pgfscope}",
+        sprintf(bf, "\\begin{pgfscope}\\pgfsetstrokecolor{white}\\pgfsetlinewidth{\\whitespace}\\pgfpathcircle{\\pgfpoint{%fmm}{%fmm}}{%fmm}\n\\pgfshadepath{ballshading%s}{0}\n\\pgfusepath{draw}\\end{pgfscope}",         
           p[0]/5, p[1]/5,
           AradScale*sqrt(sa.GetType().r_pers)/5,
           sa.GetType().symbol.c_str()
-          );
+          );        
         pw.Writenl(bf);
-        sprintf(bf, "\\pgfpathcircle{\\pgfpoint{%fmm}{%fmm}}{%fmm}\n\\pgfshadepath{ballshading%s}{0}\n\\pgfusepath{draw}",
+        sprintf(bf, "\\pgfpathcircle{\\pgfpoint{%fmm}{%fmm}}{%fmm}\n\\pgfshadepath{ballshading%s}{0}\n\\pgfusepath{draw}",         
           p[0]/5, p[1]/5,
           AradScale*sqrt(sa.GetType().r_bonding)/5,
           sa.GetType().symbol.c_str()
-          );
+          );        
         pw.Writenl(bf);
         //write a node to make life easier later
         sprintf(bf, "\\node (atom%i) at (%fmm,%fmm) {};",
@@ -574,18 +574,18 @@ public:
         //centre, basis
         //draw a white border around the ellipse
         pw.Writenl("\\begin{pgfscope}\n\\pgfsetstrokecolor{white}\\pgfsetlinewidth{\\whitespace}");
-        sprintf(bf, "\\pgfpathellipse{\\pgfpoint{%fmm}{%fmm}}\n{\\pgfpoint{%fmm}{%fmm}}\n{\\pgfpoint{%fmm}{%fmm}}\n\\pgfusepath{draw}",
+        sprintf(bf, "\\pgfpathellipse{\\pgfpoint{%fmm}{%fmm}}\n{\\pgfpoint{%fmm}{%fmm}}\n{\\pgfpoint{%fmm}{%fmm}}\n\\pgfusepath{draw}", 
           p[0]/5, p[1]/5,
-          ielpm[0][0]/5, ielpm[0][1]/5,
+          ielpm[0][0]/5, ielpm[0][1]/5, 
           ielpm[1][0]/5, ielpm[1][1]/5,
           sa.GetType().symbol.c_str()
           );
         pw.Writenl(bf);
         pw.Writenl("\\end{pgfscope}");
         //the ellipse
-        sprintf(bf, "\\pgfpathellipse{\\pgfpoint{%fmm}{%fmm}}\n{\\pgfpoint{%fmm}{%fmm}}\n{\\pgfpoint{%fmm}{%fmm}}\n\\pgfshadepath{ballshading%s}{0}\n\\pgfusepath{draw}",
+        sprintf(bf, "\\pgfpathellipse{\\pgfpoint{%fmm}{%fmm}}\n{\\pgfpoint{%fmm}{%fmm}}\n{\\pgfpoint{%fmm}{%fmm}}\n\\pgfshadepath{ballshading%s}{0}\n\\pgfusepath{draw}", 
           p[0]/5, p[1]/5,
-          ielpm[0][0]/5, ielpm[0][1]/5,
+          ielpm[0][0]/5, ielpm[0][1]/5, 
           ielpm[1][0]/5, ielpm[1][1]/5,
           sa.GetType().symbol.c_str()
           );
@@ -618,8 +618,8 @@ public:
   }
 
   DefPropP(short, ElpDiv)
-    DefPropP(short, PieDiv)
-    DefPropP(short, BondDiv)
+    DefPropP(short, PieDiv) 
+    DefPropP(short, BondDiv) 
     DefPropP(short, ColorMode)
     DefPropP(float, HBondScale)
     DefPropP(float, BondRad)

@@ -42,7 +42,7 @@ struct CellChangeTask : public IOlxTask {
   CellChangeTask(const olxstr &hklsrc_, const evecd &cell_, const evecd &esds_)
     : cell(cell_), esds(esds_), hklsrc(hklsrc_)
   {}
-
+  
   virtual void Run();
 };
 

@@ -50,7 +50,7 @@ namespace ctrl_ext {
       short dependentOn);
     bool Execute(const IEObject *Sender, const IEObject *Data, TActionQueue *);
     // updates checked status
-    void ValidateState();
+    void ValidateState(); 
     DefPropC(olxstr, Command)
 
     TActionQueue &OnModeChange;

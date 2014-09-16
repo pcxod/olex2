@@ -26,9 +26,9 @@ FILE(GLOB gxlib_SRCS "${src}/gxlib/*.cpp")
 FILE(GLOB repo_SRCS "${src}/repository/*.cpp")
 
 IF (NOT WIN32)
-        LIST(REMOVE_ITEM repo_SRCS "${src}/repository/fsindex.cpp")
-        LIST(REMOVE_ITEM repo_SRCS "${src}/repository/unzip.cpp")
-        LIST(REMOVE_ITEM repo_SRCS "${src}/repository/zip.cpp")
+	LIST(REMOVE_ITEM repo_SRCS "${src}/repository/fsindex.cpp")
+	LIST(REMOVE_ITEM repo_SRCS "${src}/repository/unzip.cpp")
+	LIST(REMOVE_ITEM repo_SRCS "${src}/repository/zip.cpp")
 endif (NOT WIN32)
 
 FILE(GLOB unirun_SRCS "${src}/unirun/*.cpp")
@@ -37,17 +37,17 @@ FILE(GLOB olex2_html_SRCS "${src}/olex/html/*.cpp")
 FILE(GLOB olex2_ctrls_SRCS "${src}/olex/ctrls/*.cpp")
 
 SET(all_SRCS
-        ${alglib_SRCS}
-        ${sdl_SRCS}
-        ${sdlsmart_SRCS}
-        ${sdlexp_SRCS}
-        ${xlib_SRCS}
-        ${xlibmacro_SRCS}
-        ${glib_SRCS}
-        ${gxlib_SRCS}
-        ${repo_SRCS})
-        ${olex2_html_SRCS})
-        ${olex2_ctrls_SRCS})
+	${alglib_SRCS}
+	${sdl_SRCS}
+	${sdlsmart_SRCS}
+	${sdlexp_SRCS}
+	${xlib_SRCS}
+	${xlibmacro_SRCS}
+	${glib_SRCS}
+	${gxlib_SRCS}
+	${repo_SRCS})
+	${olex2_html_SRCS})
+	${olex2_ctrls_SRCS})
 
 INCLUDE_DIRECTORIES("${src}/alglib")
 INCLUDE_DIRECTORIES("${src}/glib")

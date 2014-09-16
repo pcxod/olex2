@@ -63,7 +63,7 @@ public:
   void funThickness(const TStrObjList& Params, TMacroError& E);
   void funDrawstyle(const TStrObjList& Params, TMacroError& E);
   TLibrary *ExportLibrary(const olxstr &name = EmptyString());
-
+  
   const_strlist ToPov(
     olxdict<TGlMaterial, olxstr, TComparableComparator> &materials) const;
   const_strlist ToWrl(

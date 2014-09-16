@@ -30,7 +30,7 @@ protected:
         Vars[i] = rm.Vars.ReleaseRef(Atom, catom_var_name_U11+i);
     }
     ~TFixUModeUndo()  {
-      if( Uiso != NULL )
+      if( Uiso != NULL )  
         delete Uiso;
       for( int i=0; i < 6; i++ )
         if( Vars[i] != NULL )

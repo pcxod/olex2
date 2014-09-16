@@ -174,15 +174,15 @@ public:
 // evaluator implementation for bool selected
 class TTSAtom_EvaluatorFactory: public IEvaluatorFactory {
   // the list of all evaluators
-  olxstr_dict<IEvaluator*, true> Evaluators;
-  olxstr_dict<IDataProvider*, true> DataProviders;
+  TSStrPObjList<olxstr,IEvaluator*, true> Evaluators;
+  TSStrPObjList<olxstr,IDataProvider*, true> DataProviders;
   IEvaluatorFactory *FactoryRegister;
 public:
   IEvaluator *Evaluator(const olxstr &propertyName) {
-    return Evaluators.Find(propertyName, NULL);
+    return Evaluators[propertyName];
   }
   IEvaluator *Evaluator(size_t index) {
-    return Evaluators.GetValue(index);
+    return Evaluators.GetObject(index);
   }
   const olxstr& EvaluatorName(size_t index) {
     return Evaluators.GetKey(index);
@@ -190,9 +190,9 @@ public:
   size_t EvaluatorCount() {  return Evaluators.Count();  }
   ~TTSAtom_EvaluatorFactory()  {
     for( size_t i=0; i < Evaluators.Count(); i++ )
-      delete Evaluators.GetValue(i);
+      delete Evaluators.GetObject(i);
     for( size_t i=0; i < DataProviders.Count(); i++ )
-      delete DataProviders.GetValue(i);
+      delete DataProviders.GetObject(i);
     delete provider;
   }
   // constructor to create instances of registered evaluators
@@ -241,21 +241,21 @@ public:
 // factory class implementation
 class TTBasicAtomInfoEvaluatorFactory : public IEvaluatorFactory {
   // the list of all evaluators
-  olxstr_dict<IEvaluator*, true> Evaluators;
-  olxstr_dict<IDataProvider*, true> DataProviders;
+  TSStrPObjList<olxstr,IEvaluator*, true> Evaluators;
+  TSStrPObjList<olxstr,IDataProvider*, true> DataProviders;
   IEvaluatorFactory *FactoryRegister;
 public:
   IEvaluator *Evaluator(const olxstr & propertyName)  {
-    return Evaluators.Find(propertyName, NULL);
+    return Evaluators[propertyName];
   }
-  IEvaluator *Evaluator(size_t index)  { return Evaluators.GetValue(index); }
+  IEvaluator *Evaluator(size_t index)  {  return Evaluators.GetObject(index);  }
   const olxstr& EvaluatorName(size_t index)  {  return Evaluators.GetKey(index);  }
   size_t EvaluatorCount()  {  return Evaluators.Count();  }
   ~TTBasicAtomInfoEvaluatorFactory()  {
     for( size_t i=0; i < Evaluators.Count(); i++ )
-      delete Evaluators.GetValue(i);
+      delete Evaluators.GetObject(i);
     for( size_t i=0; i < DataProviders.Count(); i++ )
-      delete DataProviders.GetValue(i);
+      delete DataProviders.GetObject(i);
     delete provider;
   }
   // constructor to create instaces of registered evaluators
@@ -266,16 +266,14 @@ public:
 
 class TSFactoryRegister: public IEvaluatorFactory  {
 protected:
-  olxstr_dict<IEvaluatorFactory*, true> Factories;
-  olxstr_dict<IEvaluatorFactory*, true> FactoryMap;
+  TSStrPObjList<olxstr,IEvaluatorFactory*, true> Factories;
+  TSStrPObjList<olxstr,IEvaluatorFactory*, true> FactoryMap;
 public:
   TSFactoryRegister();
   ~TSFactoryRegister();
-  IEvaluatorFactory *Factory(const olxstr &name) {
-    return Factories.Find(name, NULL);
-  }
+  IEvaluatorFactory *Factory(const olxstr &name) {  return Factories[name];  }
   IEvaluatorFactory *BindingFactory(const olxstr &name) {
-    return FactoryMap.Find(name, NULL);
+    return FactoryMap[name];
   }
   size_t EvaluatorCount()  {  return 0;  }
   IEvaluator *Evaluator(size_t index)  {

@@ -33,7 +33,7 @@ class TFitMode : public AEventsDispatcher, public AMode  {
     }
   };
   class TFitModeUndo : public TUndoData {
-    TArrayList<olx_pair_t<TCAtom*, vec3d> > data;
+    TArrayList<AnAssociation2<TCAtom*, vec3d> > data;
     typedef TUndoActionImplMF<TFitModeUndo> impl_t;
   public:
     TFitModeUndo() : TUndoData(new impl_t(this, &TFitModeUndo::undo)) {}
@@ -42,8 +42,8 @@ class TFitMode : public AEventsDispatcher, public AMode  {
         data(atoms.Count())
     {
       for (size_t i=0; i < atoms.Count(); i++) {
-        data[i].a = &atoms[i]->CAtom();
-        data[i].b = atoms[i]->ccrd();
+        data[i].A() = &atoms[i]->CAtom();
+        data[i].B() = atoms[i]->ccrd();
       }
     }
     void undo(TUndoData *) {
@@ -51,8 +51,8 @@ class TFitMode : public AEventsDispatcher, public AMode  {
       TAsymmUnit &au = *data[0].GetA()->GetParent();
       au.GetAtoms().ForEach(ACollectionItem::TagSetter(0));
       for (size_t i=0; i < data.Count(); i++) {
-        data[i].a->ccrd() = data[i].GetB();
-        data[i].a->SetTag(1);
+        data[i].A()->ccrd() = data[i].B();
+        data[i].A()->SetTag(1);
       }
       TGXApp::AtomIterator ai = TGXApp::GetInstance().GetAtoms();
       while (ai.HasNext()) {
@@ -175,14 +175,14 @@ public:
         FunctionAccessor::MakeConst(&TSAtom::CAtom), 1));
       for (size_t i=0; i < Atoms.Count(); i++) {
         Atoms[i]->CAtom().ccrd() = au.Fractionalise(Atoms[i]->crd());
-        TTypeList<olx_pair_t<TCAtom*, vec3d> > res;
+        TTypeList<AnAssociation2<TCAtom*, vec3d> > res;
         uc.FindInRangeAC(Atoms[i]->CAtom().ccrd(), 0.5, res);
         for (size_t j=0; j < res.Count(); j++) {
           if (res[j].GetA()->GetTag() == 0 &&
               (res[j].GetA()->GetPart() == 0 ||
                res[j].GetA()->GetPart() == Atoms[i]->CAtom().GetPart()))
           {
-            res[j].a->SetDeleted(true);
+            res[j].A()->SetDeleted(true);
           }
         }
       }
@@ -195,7 +195,7 @@ public:
           ag.AddDependent(Atoms[i]->CAtom());
       }
       gxapp.XFile().EndUpdate();
-
+      
     }
     if (undo != NULL) {
       gxapp.GetUndo().Push(undo);

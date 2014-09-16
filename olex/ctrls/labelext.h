@@ -17,8 +17,8 @@ namespace ctrl_ext  {
     void ClickEvent(wxCommandEvent& event);
     olxstr Data;
   public:
-    TLabel(wxWindow *Parent, const olxstr &label) :
-      AOlxCtrl(this),
+    TLabel(wxWindow *Parent, const olxstr &label) : 
+      AOlxCtrl(this), 
       OnClick(AOlxCtrl::ActionQueue::New(Actions, evt_on_click_id)),
       wxStaticText(Parent, wxID_ANY, label.u_str()),
       Data(EmptyString()) {}

@@ -34,32 +34,17 @@ TComboBox::~TComboBox()  {
 //..............................................................................
 void TComboBox::SetText(const olxstr& T) {
   olxstr actual_val = T;
-  bool found = false;
   for (unsigned int i=0; i < GetCount(); i++ )  {
-    if (T == GetString(i)) {
-      found = true;
-    }
     TDataObj* res = (TDataObj*)GetClientData(i);
-    if (res == NULL || !res->Delete) {
-      continue;
-    }
+    if (res == NULL || !res->Delete) continue;
     olxstr sv = res->Data->ToString();
     if (sv == T) {
       actual_val = GetString(i);
-      found = true;
       break;
     }
   }
-  if (!IsReadOnly() || found) {
-    StrValue = actual_val;
-    SetValue(StrValue.u_str());
-  }
-  else if (!T.IsEmpty()) {
-    if (GetCount() != 0) {
-      wxComboBox::SetSelection(0);
-      StrValue = GetString(0);
-    }
-  }
+  StrValue = actual_val;
+  SetValue(StrValue.u_str());
 }
 //..............................................................................
 void TComboBox::Clear() {

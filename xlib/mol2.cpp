@@ -25,9 +25,9 @@ void TMol2::Clear() {
 //..............................................................................
 olxstr TMol2::MOLAtom(TCAtom& A) {
   olxstr rv(A.GetId(), 64);
-  rv << '\t' << A.GetLabel()
-     << '\t' << A.ccrd()[0]
-     << '\t' << A.ccrd()[1]
+  rv << '\t' << A.GetLabel() 
+     << '\t' << A.ccrd()[0] 
+     << '\t' << A.ccrd()[1] 
      << '\t' << A.ccrd()[2]
      << '\t' << A.GetType().symbol;
   return rv;

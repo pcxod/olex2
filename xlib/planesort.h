@@ -29,21 +29,21 @@ namespace PlaneSort {
 
     struct PointAccessor {
       const vec3d &operator() (
-        const olx_pair_t<vec3d, TSAtom*> &p) const
+        const AnAssociation2<vec3d, TSAtom*> &p) const
       {
         return p.GetA();
       }
     };
 
     static void SortPlane(TSPlane &p) {
-      TArrayList<olx_pair_t<vec3d, TSAtom*> > sorted(p.Count());
+      TArrayList<AnAssociation2<vec3d, TSAtom*> > sorted(p.Count());
       for (size_t i=0; i < p.Count(); i++) {
-        sorted[i].a = p.GetAtom(i).crd();
-        sorted[i].b = &p.GetAtom(i);
+        sorted[i].A() = p.GetAtom(i).crd();
+        sorted[i].B() = &p.GetAtom(i);
       }
       olx_plane::Sort(sorted, PointAccessor(), p.GetCenter(), p.GetNormal());
       for (size_t i=0; i < sorted.Count(); i++)
-        sorted[i].b->SetTag((index_t)i);
+        sorted[i].B()->SetTag((index_t)i);
       p._PlaneSortByAtomTags();
     }
 
@@ -54,15 +54,15 @@ namespace PlaneSort {
     {
       if (atoms.IsEmpty())
         throw TInvalidArgumentException(__OlxSourceInfo, "atom list");
-      TArrayList<olx_pair_t<vec3d, TSAtom*> > sorted(atoms.Count());
+      TArrayList<AnAssociation2<vec3d, TSAtom*> > sorted(atoms.Count());
       for( size_t i=0; i < atoms.Count(); i++ )  {
-        sorted[i].a = atoms[i]->crd()+transforms.Get(atoms[i]->GetTag());
-        sorted[i].b = atoms[i];
+        sorted[i].A() = atoms[i]->crd()+transforms[atoms[i]->GetTag()];
+        sorted[i].B() = atoms[i];
       }
       olx_plane::Sort(sorted, PointAccessor(), center, normal);
       output.SetCount(sorted.Count());
       for( size_t i=0; i < sorted.Count(); i++ )
-        output[i] = sorted[i].b;
+        output[i] = sorted[i].B();
     }
   };
 };

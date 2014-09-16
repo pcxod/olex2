@@ -17,10 +17,7 @@
 
 static const double THA = acos(-1./3)*180/M_PI;
 
-AConstraintGenerator::AConstraintGenerator(RefinementModel& rm)
-  : UseRestrains(false),
-  RefMod(rm)
-{
+AConstraintGenerator::AConstraintGenerator(RefinementModel& rm) : RefMod(rm) {
   Distances(GenId(fgCH3, 1), 0.96);
   Distances(GenId(fgCH2, 2), 0.97);
   Distances(GenId(fgCH2, 1), 0.86);
@@ -43,7 +40,7 @@ AConstraintGenerator::AConstraintGenerator(RefinementModel& rm)
   Distances(GenId(fgSiH2, 2), 1.43);
 
   Distances(GenId(fgSH1, 0), 1.2);
-
+  
   if( rm.expl.IsTemperatureSet() )  {
     if( rm.expl.GetTempValue().GetV() < -70 )  {
       for( size_t i=0; i < Distances.Count(); i++ )
@@ -103,7 +100,7 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
 
   switch( Group )  {
     case fgCH3:
-      dis = Distances.Get(GenId(fgCH3,1));
+      dis = Distances[GenId(fgCH3,1)];
       if( envi.Count() == 1 )  {
         NA = envi.GetBase().GetNetwork().GetLattice().FindSAtom(
           envi.GetCAtom(0));
@@ -144,7 +141,7 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
         olx_create_rotation_matrix(M, PlaneN, cos(M_PI*120./180));
         crds.AddNew(M*crds[0]);
         crds.AddNew(M*crds[1]);
-
+    
         for( size_t i=0; i < crds.Count(); i++ )  {
           crds[i] *= dis;
           crds[i] += envi.GetBase().crd();
@@ -153,7 +150,7 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
       break;
     case fgCH2:
       if( envi.Count() == 2 )  {
-        dis = -Distances.Get(GenId(fgCH2,2));
+        dis = -Distances[GenId(fgCH2,2)];
         // summ vector
         Vec1 = ((envi.GetCrd(0) - envi.GetBase().crd()).Normalise() +
           (envi.GetCrd(1) - envi.GetBase().crd()).Normalise()).Normalise();
@@ -171,7 +168,7 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
         crds[1] = (M*crds[1])*dis + envi.GetBase().crd();
       }
       else if( envi.Count() == 1 )  {
-        dis = Distances.Get(GenId(fgCH2,1));
+        dis = Distances[GenId(fgCH2,1)];
         NA = envi.GetBase().GetNetwork().GetLattice().FindSAtom(
           envi.GetCAtom(0));
         envi.GetBase().GetNetwork().GetLattice().GetUnitCell().GetAtomEnviList(
@@ -198,7 +195,7 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
       // proposed by Luc, see Afix 1 in shelxl
       AnglesEqual = (envi.Count() == 3);
       if( envi.Count() == 3 )  {
-        dis = Distances.Get(GenId(fgCH1,3));
+        dis = Distances[GenId(fgCH1,3)];
         for( size_t i=0; i < envi.Count(); i++ )  {
           if( envi.GetCrd(i).DistanceTo( envi.GetBase().crd() ) > 1.95 &&
             envi.GetType(i) != iBromineZ )  {  // bromine
@@ -227,14 +224,14 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
           Vec1 += (envi.GetCrd(i) - envi.GetBase().crd()).Normalise();
           c++;
         }
-        dis = Distances.Get(GenId(fgCH1,(uint16_t)c));
+        dis = Distances[GenId(fgCH1,(uint16_t)c)];
         crds.AddNew(Vec1.NormaliseTo(-dis) + envi.GetBase().crd());
       }
       break;
     case fgOH3:
       break;
     case fgOH2:
-      dis = Distances.Get(GenId(fgOH2,0));
+      dis = Distances[GenId(fgOH2,0)];
       if( envi.IsEmpty())  {
         vec3d_list h_crds;
         TCAtom &a = envi.GetBase().CAtom();
@@ -332,7 +329,7 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
       }
       break;
     case fgOH1:
-      dis = Distances.Get(GenId(fgOH1,0));
+      dis = Distances[GenId(fgOH1,0)];
       if( envi.Count() > 0 && pivoting != NULL && pivoting->Count() >= 1 )  {  // any pssibl H-bonds?
         Vec1 = pivoting->GetCrd(0) - envi.GetBase().crd();
         Vec2 = envi.GetCrd(0) - envi.GetBase().crd();
@@ -424,7 +421,7 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
       break;
     case fgNH3:
       if( envi.Count() == 1 )  {
-        dis = Distances.Get(GenId(fgNH3,0));
+        dis = Distances[GenId(fgNH3,0)];
         PlaneN = (envi.GetCrd(0) - envi.GetBase().crd()).Normalise();
         RotVec = PlaneN.XProdVec(Z).Normalise();
         olx_create_rotation_matrix(M, RotVec, cos(M_PI*THA/180));
@@ -432,7 +429,7 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
         olx_create_rotation_matrix(M, PlaneN, cos(M_PI*120./180));
         crds.AddNew(M*crds[0]);
         crds.AddNew(M*crds[1]);
-
+    
         for( size_t i=0; i < crds.Count(); i++ )  {
           crds[i] *= dis;
           crds[i] += envi.GetBase().crd();
@@ -440,7 +437,7 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
       }
       break;
     case fgNH2:
-      dis = Distances.Get(GenId(fgNH2,0));
+      dis = Distances[GenId(fgNH2,0)];
       if( envi.Count() == 1 )  {
         if( pivoting == NULL )  {
           PlaneN = (envi.GetCrd(0) - envi.GetBase().crd()).Normalise();
@@ -498,9 +495,9 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
     case fgNH1:
       if (envi.Count() >= 2) {
         if (envi.Count() == 3)
-          dis = Distances.Get(GenId(fgNH1,3));
+          dis = Distances[GenId(fgNH1,3)];
         else
-          dis = Distances.Get(GenId(fgNH1,0));  // generic...
+          dis = Distances[GenId(fgNH1,0)];  // generic...
         for (size_t i=0; i < envi.Count(); i++)
           Vec1 += (envi.GetCrd(i)-envi.GetBase().crd()).Normalise();
         crds.AddNew(Vec1.NormaliseTo(-dis) + envi.GetBase().crd());
@@ -508,7 +505,7 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
       break;
     case fgNH1t:
       if (envi.Count() == 2) {
-        dis = Distances.Get(GenId(fgNH1,0));
+        dis = Distances[GenId(fgNH1,0)];
         Vec1 = envi.GetCrd(0) - envi.GetBase().crd();
         Vec2 = envi.GetCrd(1) - envi.GetBase().crd();
         Vec3 = Vec1.XProdVec(Vec2);
@@ -562,7 +559,7 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
       break;
     case fgBH1:
       if( envi.Count() == 3 )  {
-        dis = Distances.Get(GenId(fgBH1,3));
+        dis = Distances[GenId(fgBH1,3)];
         Vec1 = (envi.GetCrd(0)-envi.GetBase().crd()).Normalise();
         Vec2 = (envi.GetCrd(1)-envi.GetBase().crd()).Normalise();
         Vec3 = (envi.GetCrd(2)-envi.GetBase().crd()).Normalise();
@@ -574,7 +571,7 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
         crds[0] = (Vec3 += envi.GetBase().crd());
       }
       else if( envi.Count() == 4 || envi.Count() == 5 )  {
-        dis = Distances.Get(GenId(fgBH1,5));
+        dis = Distances[GenId(fgBH1,5)];
         bool create = true;
         for( size_t i=0; i < envi.Count(); i++ )  {
           Vec1 += (envi.GetCrd(i)-envi.GetBase().crd()).Normalise();
@@ -584,13 +581,13 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
 //            break;
 //          }
         }
-        if( create )
+        if( create ) 
           crds.AddNew(Vec1.NormaliseTo(-dis) + envi.GetBase().crd());
       }
       break;
     case fgSiH1:
       if( envi.Count() == 3 )  {
-        dis = Distances.Get(GenId(fgSiH1,3));
+        dis = Distances[GenId(fgSiH1,3)];
         Vec1 = (envi.GetCrd(0)-envi.GetBase().crd()).Normalise();
         Vec2 = (envi.GetCrd(1)-envi.GetBase().crd()).Normalise();
         Vec3 = (envi.GetCrd(2)-envi.GetBase().crd()).Normalise();
@@ -604,7 +601,7 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
       break;
     case fgSiH2:
       if( envi.Count() == 2 )  {
-        dis = -Distances.Get(GenId(fgSiH2,2));
+        dis = -Distances[GenId(fgSiH2,2)];
         // summ vector
         Vec1 = ((envi.GetCrd(0) - envi.GetBase().crd()).Normalise() +
           (envi.GetCrd(1) - envi.GetBase().crd()).Normalise()).Normalise();
@@ -621,7 +618,7 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
       }
       break;
     case fgSH1:
-      dis = Distances.Get(GenId(fgSH1,0));
+      dis = Distances[GenId(fgSH1,0)];
       if( envi.Count() == 1 )  {
         if( pivoting != NULL && pivoting->Count() >= 1 )  {  // any possible H-bonds?
           Vec1 = pivoting->GetCrd(0) - envi.GetBase().crd();

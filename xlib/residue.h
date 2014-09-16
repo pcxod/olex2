@@ -78,8 +78,8 @@ public:
   void Clear() {
     for( size_t i=0; i < Atoms.Count(); i++ )
       Atoms[i]->SetResiId(~0);
-    Atoms.Clear();
-  }
+    Atoms.Clear();  
+  } 
   size_t IndexOf(const TCAtom& ca) const {  return Atoms.IndexOf(ca);  }
   // removes atom from previous residue and puts into current
   void Add(TCAtom& ca) {
@@ -103,3 +103,4 @@ typedef TPtrList<TResidue> ResiPList;
 EndXlibNamespace()
 
 #endif
+

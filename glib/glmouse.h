@@ -66,21 +66,6 @@ struct TMouseData: public IEObject  {
   class TGlMouse *GlMouse;
 };
 
-struct TMouseRegion {
-  int x, y;
-  TMouseRegion(int x, int y) : x(x), y(y)
-  {}
-  int Compare(const TMouseRegion &r) const {
-    int d = x - r.x;
-    if (olx_abs(d) > 2)
-      return d;
-    d = y - r.y;
-    if (olx_abs(d) > 2)
-      return d;
-    return 0;
-  }
-};
-
 struct AMouseEvtHandler {
   short Button, Shift, Event;
   AMouseEvtHandler(short btn, short shift, short evt)
@@ -142,7 +127,6 @@ class TGlMouse: public IEObject {
   class TGlRenderer *FParent;
   class TDFrame *FDFrame;
   TActionQList Actions;
-  static TGlMouse *Instance;
 protected:
   int FSX, FSY;
   bool FDblClick;
@@ -157,19 +141,13 @@ protected:
   // to distinguish clicking on an object
   int ClickThreshold;
   void process_command_list(TStrObjList& Cmds, bool enable);
-  olxdict<TMouseRegion, AGDrawObject *, TComparableComparator>
-    object_cache;
-  void OnObjectDelete(IEObject *o);
-  AGDrawObject *find_object(int x, int y);
-  void ClearObjectCache(IEObject *caller=NULL);
 public:
   TGlMouse(TGlRenderer *Parent, TDFrame *Frame);
   virtual ~TGlMouse();
 
   bool MouseUp(int x, int y, short Shift, short button);
   bool DblClick();
-  void ResetMouseState(short x, short y, short shift = 0, short button = 0,
-    bool keep_object = false);
+  void ResetMouseState(short x, short y, short shift=0, short button=0);
   bool MouseDown(int x, int y, short Shift, short button);
   bool MouseMove(int x, int y, short Shift);
   TGlRenderer* Parent() const {  return FParent;  }
@@ -179,7 +157,6 @@ public:
     return (olx_abs(md.DownX-md.UpX) <= ClickThreshold) &&
           (olx_abs(md.DownY-md.UpY) <= ClickThreshold);
   }
-  const TMouseData &GetMouseData() { return MData; }
   // the pointer created with new is expected (use MouseEvtHandler)
   AMouseEvtHandler &SetHandler(AMouseEvtHandler &eh);
   // is set by handlers
@@ -193,12 +170,7 @@ public:
   DefPropBIsSet(TranslationEnabled)
   DefPropBIsSet(ZoomingEnabled)
   DefPropBIsSet(InMode)
-  static TGlMouse &GetInstance() {
-    if (Instance == NULL) {
-      throw TFunctionFailedException(__OlxSourceInfo, "uninitialised object");
-    }
-    return *Instance;
-  }
+
   TActionQueue &OnObject;
   void LibEnable(TStrObjList& Cmds, const TParamList& Options,
     TMacroError &E);

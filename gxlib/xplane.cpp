@@ -10,27 +10,14 @@
 #include "xplane.h"
 #include "estlist.h"
 #include "planesort.h"
-#include "network.h"
-#include "lattice.h"
 #include "glprimitive.h"
 #include "styles.h"
 #include "gpcollection.h"
 #include "povdraw.h"
 
 void TXPlane::Create(const olxstr& cName)  {
-  olxstr colName = cName;
-  if (colName.IsEmpty()) {
-    colName = NamesRegistry().Find(GetDefId(), EmptyString());
-  }
-  else {
-    NamesRegistry().Add(GetDefId(), colName);
-  }
-  if (colName.IsEmpty()) {
-    colName = olxstr("TXPlane") << GetDefId();
-  }
-  if (!colName.IsEmpty()) {
-    SetCollectionName(colName);
-  }
+  if( !cName.IsEmpty() )
+    SetCollectionName(cName);
   TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
   if (GPC.ObjectCount() == 0 && GPC.PrimitiveCount() != 0)
     GPC.ClearPrimitives();
@@ -45,9 +32,7 @@ void TXPlane::Create(const olxstr& cName)  {
   if (deleted_cnt == GPC.ObjectCount())
     GPC.ClearPrimitives();
   GPC.AddObject(*this);
-  const TSPlane::Def &def =
-    GetNetwork().GetLattice().GetPlaneDefinitions()[this->GetDefId()];
-  if (def.GetSides() > 2) {
+  if (IsRegular()) {
     double maxrs = (GetAtom(0).crd()-GetCenter()).QLength();
     size_t maxr_i = 0;
     for (size_t i=1; i < Count(); i++) {
@@ -58,8 +43,7 @@ void TXPlane::Create(const olxstr& cName)  {
       }
     }
     MaxV = (GetAtom(maxr_i).crd()-GetCenter());
-    olx_create_rotation_matrix(RM, GetNormal(),
-      cos(2*M_PI / def.GetSides()));
+    olx_create_rotation_matrix(RM, GetNormal(), cos(M_PI*(360/4)/180));
   }
   else {
     PlaneSort::Sorter::SortPlane(*this);
@@ -95,14 +79,12 @@ void TXPlane::Create(const olxstr& cName)  {
 bool TXPlane::Orient(TGlPrimitive& P)  {
   if (P.GetType() != sgloSphere) {
     olx_gl::FlagDisabler fc(GL_CULL_FACE);
-    const TSPlane::Def &def =
-      GetNetwork().GetLattice().GetPlaneDefinitions()[this->GetDefId()];
-    if (def.GetSides() > 2) {
+    if (IsRegular()) {
       olx_gl::translate(GetCenter());
       olx_gl::normal(GetNormal());
       vec3d v = MaxV;
-      olx_gl::begin(GL_POLYGON);
-      for (int i = 0; i < def.GetSides(); i++) {
+      olx_gl::begin(GL_QUADS);
+      for (int i=0; i < 4; i++) {
         olx_gl::vertex(v);
         v *= RM;
       }
@@ -126,7 +108,6 @@ bool TXPlane::Orient(TGlPrimitive& P)  {
 void TXPlane::ListPrimitives(TStrList &List) const {
   List.Add("Plane");
   List.Add("Centroid");
-  List.Add("Ring");
 }
 //..............................................................................
 const_strlist TXPlane::PovDeclare()  {

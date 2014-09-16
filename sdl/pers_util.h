@@ -36,13 +36,15 @@ namespace PersUtil {
   }
 
   template <class lc> static olxstr NumberListToStr(const lc& v)  {
-    return olxstr(',').Join(v);
-  }
-
-  template <class lc> static olxstr ComplexListToStr(const lc& v)  {
-    typedef typename lc::list_item_type lit;
-    return olxstr(',').Join(v,
-      FunctionAccessor::MakeConst(&lit::ToString));
+    olxstr_buf rv;
+    olxstr sep = ',';
+    if (v.Count() > 0) {
+      size_t to = v.Count()-1;
+      for( size_t i=0; i < to; i++ )
+        rv << v[i] << sep;
+      rv << v[to];
+    }
+    return rv;
   }
 
   template <class vl> static olxstr VecArrayToStr(const vl& l, size_t count)  {
@@ -85,13 +87,6 @@ namespace PersUtil {
     return l;
   }
 
-  template <class vl> static vl& ComplexListFromStr(const olxstr& v, vl& l)  {
-    TStrList toks(v, ',');
-    l.SetCount(toks.Count());
-    for (size_t i = 0; i < toks.Count(); i++)
-      l[i] = toks[i];
-    return l;
-  }
 };
 
 EndEsdlNamespace()

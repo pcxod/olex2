@@ -22,8 +22,8 @@ void FractMask::Init(const vec3d& _min, const vec3d& _max, const vec3d& norms, d
     throw TInvalidArgumentException(__OlxSourceInfo, "mask size");
 
   Mask = new TArray3D<bool>(
-    min_[0], max_[0],
-    min_[1], max_[1],
+    min_[0], max_[0], 
+    min_[1], max_[1], 
     min_[2], max_[2]
   );
   Mask->FastInitWith(0);
@@ -33,8 +33,8 @@ void FractMask::ToDataItem(TDataItem& di, IOutputStream& os) const {
   TEBitArray ba(Mask->Length1()*Mask->Length2()*Mask->Length3());
   di.AddField("norm", PersUtil::VecToStr(Norm));
   di.AddField("min", PersUtil::VecToStr(TVector3<index_t>(Mask->GetMin1(), Mask->GetMin2(), Mask->GetMin3())));
-  di.AddField("max",
-    PersUtil::VecToStr(TVector3<index_t>(Mask->Length1()+Mask->GetMin1()-1,
+  di.AddField("max", 
+    PersUtil::VecToStr(TVector3<index_t>(Mask->Length1()+Mask->GetMin1()-1, 
       Mask->Length2()+Mask->GetMin2()-1, Mask->Length3()+Mask->GetMin3()-1))
   );
   di.AddField("char_count", ba.CharCount());

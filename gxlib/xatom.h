@@ -103,7 +103,7 @@ protected:
   static short FDefRad, FDefDS, FDefMask;
   static TGraphicsStyle *FAtomParams;
   static olxstr PolyTypeName;
-  static TStringToList<olxstr,TGlPrimitive*> FStaticObjects;
+  static TStrPObjList<olxstr,TGlPrimitive*> FStaticObjects;
 
   class TStylesClear: public AActionHandler  {
   public:
@@ -244,11 +244,6 @@ public:
 
   static TGraphicsStyle* GetParamStyle() {  return FAtomParams;  }
   static void CreateStaticObjects(TGlRenderer& parent);
-
-  static olxdict<olxstr, olxstr, olxstrComparator<false> > &NamesRegistry() {
-    static olxdict<olxstr, olxstr, olxstrComparator<false> > nr;
-    return nr;
-  }
 };
 
 EndGxlNamespace()

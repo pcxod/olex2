@@ -182,7 +182,7 @@ void TOlxPyVar::Set(const olxstr& str)  {
 //.............................................................................
 const olxstr& TOlxVars::GetVarStr(size_t index)  {
   volatile olx_scope_cs cs(CS());
-  TOlxPyVar& oo = Instance->Vars.GetValue(index);
+  TOlxPyVar& oo = Instance->Vars.GetObject(index);
   if( oo.GetStr() != NULL )  return *oo.GetStr();
   PyObject *po = oo.GetObjVal();
   double fv;
@@ -236,7 +236,7 @@ void olxvar_funFlush(const TStrObjList& Params, TMacroError &E) {
     if (!wc.DoesMatch(vn) || vn.Length() < from) continue;
     settings.Add(vn.SubStringFrom(from)) << '=' << TOlxVars::GetVarStr(i);
   }
-  TEFile::WriteLines(Params[0], TCStrList(settings));
+  TCStrList(settings).SaveToFile(Params[0]);
 }
 TLibrary *TOlxVars::ExportLibrary(const olxstr &name, TLibrary *_l) {
   TLibrary *l = _l == NULL ? new TLibrary(name) : _l;
@@ -263,3 +263,4 @@ TLibrary *TOlxVars::ExportLibrary(const olxstr &name, TLibrary *_l) {
       "is not saved."));
   return l;
 }
+

@@ -43,7 +43,7 @@ namespace ctrl_ext  {
     wxTreeItemId _FindByData(const wxTreeItemId& root, const olxstr& data) const;
   public:
     TTreeView(wxWindow* Parent, long flags=(wxTR_HAS_BUTTONS|wxTR_LINES_AT_ROOT)) :
-      wxTreeCtrl(Parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, flags),
+      wxTreeCtrl(Parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, flags), 
       AOlxCtrl(this),
       Popup(NULL),
       OnSelect(AOlxCtrl::ActionQueue::New(Actions, evt_on_select_id)),

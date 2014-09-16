@@ -24,7 +24,7 @@ TDFrame::TDFrame(TGlRenderer& Render, const olxstr& collectionName) :
 };
 //..............................................................................
 void TDFrame::Create(const olxstr& cName) {
-  if( !cName.IsEmpty() )
+  if( !cName.IsEmpty() )  
     SetCollectionName(cName);
   TGPCollection& GPC = Parent.FindOrCreateCollection( GetCollectionName() );
   GPC.AddObject(*this);

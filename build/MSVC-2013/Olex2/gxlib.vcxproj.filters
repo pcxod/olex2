@@ -87,9 +87,6 @@
     <ClCompile Include="..\..\..\gxlib\olxstate.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\gxlib\solid_angles.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\gxlib\dbasis.h">
@@ -219,9 +216,6 @@
       <Filter>Header Files\modes</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\gxlib\olxstate.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\gxlib\solid_angles.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

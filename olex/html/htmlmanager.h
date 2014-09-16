@@ -112,7 +112,7 @@ public:
   THtml* FindHtml(const olxstr& name) const;
   TPopupData &NewPopup(TDialog *owner, const olxstr &name, long flags=4);
   TLibrary* ExportLibrary(const olxstr &name="html");
-
+  
   olxstr_dict<TPopupData*, true> Popups;
   TActionQueue &OnLink;
 };

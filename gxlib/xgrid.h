@@ -92,14 +92,14 @@ class TXGrid: public AGDrawObject  {
   TTypeList<IsoTriangle> p_triangles, n_triangles;
 protected:
   float MaxVal, MinVal, Depth, Size, Scale;
-  size_t MaxX, MaxY, MaxZ, MaxDim;
+  size_t MaxX, MaxY, MaxZ, MaxDim; 
   float MinHole, MaxHole;  // the values of scale to skip
   int LastMouseX, LastMouseY;
   bool MouseDown;
   void DoSmooth();
   void GlLine(float x1, float y1, float x2, float y2, float z);
   int GetPolygonMode() const {  return RenderMode == planeRenderModeFill ? GL_FILL :
-    (RenderMode == planeRenderModeLine ? GL_LINE :
+    (RenderMode == planeRenderModeLine ? GL_LINE : 
     (RenderMode == planeRenderModePoint ? GL_POINT : -1));
   }
   bool Is3D() const {  return RenderMode == planeRenderModeFill ||
@@ -143,7 +143,7 @@ public:
   template <class T> inline float GetValue(const T& v) const {
     return ED->Data[(int)v[0]][(int)v[1]][(int)v[2]];
   }
-
+  
   // copies the 0yz x0z and xy0 layers to Maxyz xMaxyz and xyMaxZ
   void AdjustMap();
   virtual void Create(const olxstr& cName=EmptyString());
@@ -175,7 +175,7 @@ public:
   const TTypeList<vec3f> &GetNVertices() const {  return n_vertices;  }
   const TTypeList<vec3f> &GetNNormals() const {  return n_normals;  }
   const TTypeList<IsoTriangle> &GetNTriangles() const {  return n_triangles;  }
-
+  
   DefPropP(float, MinHole)
   DefPropP(float, MaxHole)
   DefPropP(float, MinVal)
@@ -183,13 +183,13 @@ public:
 
   inline bool IsEmpty() const {  return ED == NULL;  }
   short GetRenderMode() const {  return RenderMode;  }
-
+  
   size_t GetContourLevelCount() const {  return ContourLevelCount;  }
   // sets new number of contours...
   void SetContourLevelCount(size_t v);
 
-  inline virtual void SetVisible(bool On) {
-    AGDrawObject::SetVisible(On);
+  inline virtual void SetVisible(bool On) {  
+    AGDrawObject::SetVisible(On);  
     Info->SetVisible(On);
     Legend->SetVisible(On);
     if( !On )
@@ -216,7 +216,7 @@ public:
   class TLibrary*  ExportLibrary(const olxstr& name=EmptyString());
 #ifdef _PYTHON
   static void PyInit();
-#endif
+#endif  
   void ToDataItem(TDataItem& item, IOutputStream& zos) const;
   void FromDataItem(const TDataItem& item, IInputStream& zis);
   // creates a blob at given screen coordinates (raster position)

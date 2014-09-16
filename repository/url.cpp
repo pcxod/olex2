@@ -104,7 +104,7 @@ TUrl& TUrl::operator = (const TUrl& url) {
 olxstr TUrl::GetFullHost() const {
   olxstr retVal;
 
-  if( !Protocol.IsEmpty() )
+  if( !Protocol.IsEmpty() ) 
     retVal << Protocol << "://";
   retVal << Host;
   if( Port != 80 )

@@ -81,7 +81,7 @@ void TGlCanvas::Render()  {
 #if defined(__WXX11__) || defined(__MAC__)  // context is null
   SetCurrent();
 #else
-  Context->SetCurrent(*this);
+  Context->SetCurrent(*this); 
 #endif
 
   /* init OpenGL once, but after SetCurrent */
@@ -98,7 +98,7 @@ void TGlCanvas::OnEraseBackground(wxEraseEvent& event)  {
 }
 //..............................................................................
 void TGlCanvas::InitGL()  {
-  if( FXApp != NULL )
+  if( FXApp != NULL )  
     FXApp->Init();
 }
 //..............................................................................
@@ -194,10 +194,7 @@ void TGlCanvas::OnMouseMove(wxMouseEvent& me) {
   // check if a handler for the event is found
   if (FXApp != NULL && FXApp->MouseMove(me.m_x, me.m_y, Fl)) {
 #ifdef __WIN32__
-    /* this seems to help but not to solve! with the desktop composition on
-    Vista/7
-    */
-    wxWindow::Refresh();
+    wxWindow::Refresh();  // this seems to help but not to solve! with the desktop compositionon Vista/7
 #else
     FXApp->Draw();
 #endif
@@ -213,7 +210,7 @@ void TGlCanvas::OnMouseDblClick(wxMouseEvent& me)  {
 void TGlCanvas::OnMouse(wxMouseEvent& me) {
   if (me.Entering()) {
     short fl = EncodeEvent(me, true);
-    FXApp->ResetMouseState(me.m_x, me.m_y, fl, MouseButton, true);
+    FXApp->ResetMouseState(me.m_x, me.m_y, fl, MouseButton);
   }
   if (me.GetWheelRotation() != 0) {
     FParent->OnMouseWheel(me.GetX(), me.GetY(),

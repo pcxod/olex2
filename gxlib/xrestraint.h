@@ -67,7 +67,7 @@ public:
   void CalcRad(short DefAtomR);
 
   inline operator TSAtom* () const {  return FAtom;  }
-
+  
   inline TSAtom* Atom() const  {  return FAtom; }
   void ApplyStyle(TGraphicsStyle *S);
   void UpdateStyle(TGraphicsStyle *S);

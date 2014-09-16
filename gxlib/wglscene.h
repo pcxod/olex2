@@ -9,7 +9,7 @@
 
 #ifndef __olx_gxl_wglscene_H
 #define __olx_gxl_wglscene_H
-#include "glscene.h"
+#include "glscene.h" 
 
 #if defined(__WIN32__)
 class TWGlScene:public AGlScene  {

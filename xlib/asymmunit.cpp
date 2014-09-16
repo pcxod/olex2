@@ -26,11 +26,13 @@
 
 #undef GetObject
 
-class TAU_SfacSorter {
+class TAU_SfacSorter  {
 public:
-  template <class item_t>
-  static int Compare(const item_t& s1, const item_t &s2) {
-    return olx_cmp(olx_ptr::get(s1)->GetMr(), olx_ptr::get(s2)->GetMr());
+  static int Compare(const TPrimitiveStrListData<olxstr,const cm_Element*>* s1, 
+                    const TPrimitiveStrListData<olxstr,const cm_Element*>* s2)
+  {
+    const double diff = s1->Object->GetMr() - s1->Object->GetMr();
+    return diff < 0 ? -1 : (diff > 0 ? 1 : 0);
   }
 };
 
@@ -39,7 +41,7 @@ const olxstr TAsymmUnit::IdName("catom");
 TAsymmUnit::TAsymmUnit(TLattice *L) : MainResidue(*(new TResidue(*this, 0))),
   OnSGChange(Actions.New("AU_SG_CHANGE"))
 {
-  Lattice = L;
+  Lattice   = L;
   Latt = -1;
   Assigning = false;
   Z = 1;
@@ -48,7 +50,7 @@ TAsymmUnit::TAsymmUnit(TLattice *L) : MainResidue(*(new TResidue(*this, 0))),
 }
 //..............................................................................
 TAsymmUnit::~TAsymmUnit()  {
-  Clear();
+  Clear();  
   delete &MainResidue;
 }
 //..............................................................................
@@ -85,7 +87,7 @@ void TAsymmUnit::Assign(const TAsymmUnit& C)  {
 
   for( size_t i = 0; i < C.MatrixCount(); i++ )
     Matrices.AddNew(C.GetMatrix(i));
-
+  
   for( size_t i = 0; i < C.EllpCount(); i++ )
     this->NewEllp() = C.GetEllp(i);
 
@@ -96,7 +98,7 @@ void TAsymmUnit::Assign(const TAsymmUnit& C)  {
   }
   for( size_t i = 0; i < C.AtomCount(); i++ )
     NewAtom(&GetResidue(C.GetAtom(i).GetResiId())).SetId(i);
-
+  
   for( size_t i = 0; i < C.AtomCount(); i++ )  {
     TCAtom& ca = GetAtom(i);
     ca.Assign(C.GetAtom(i));
@@ -371,7 +373,7 @@ void TAsymmUnit::AssignResidues(const TAsymmUnit& au) {
 }
 //..............................................................................
 void TAsymmUnit::_OnAtomTypeChanged(TCAtom& caller)  {
-  if( !Assigning )
+  if( !Assigning )  
     caller.SetConnInfo( RefMod->Conn.GetConnInfo(caller) );
 }
 //..............................................................................
@@ -533,7 +535,7 @@ vec3d TAsymmUnit::GetOCenter(bool IncludeQ, bool IncludeH) const {
 /* since this is the AU, only the crystallographic occupancies must be summed
 up, atoms' degeracy should not be taken into account ...
 */
-ContentList::const_list_type TAsymmUnit::GetContentList(double mult) const {
+ContentList TAsymmUnit::GetContentList(double mult) const {
   ElementPList elements;
   ContentList rv;
   for( size_t i=0; i < AtomCount(); i++ )  {
@@ -576,7 +578,7 @@ olxstr TAsymmUnit::SummFormula(const olxstr &Sep, bool MultiplyZ) const  {
   if (!hasI)  matrixInc ++;
   double m = 1;
   if (MultiplyZ) {
-    m =(double) (MatrixCount() + matrixInc)*TCLattice::GetLattMultiplier(this->Latt);
+    m = (MatrixCount() + matrixInc)*TCLattice::GetLattMultiplier(this->Latt);
   }
   return _SummFormula(Sep, m);
 }
@@ -780,13 +782,13 @@ void TAsymmUnit::FitAtoms(TTypeList<AnAssociation3<TCAtom*, const cm_Element*,
     }
     v = tm*(v-tr);
     if( _atoms[i].GetA() == NULL )  {
-      _atoms[i].a = &NewAtom();
-      _atoms[i].a->SetType(*_atoms[i].GetB());
-      _atoms[i].a->SetLabel(
-        _atoms[i].GetA()->GetType().symbol+(olxstr('x') << (char)('a'+i)), false);
-      GetRefMod()->Vars.SetParam(*_atoms[i].a, catom_var_name_Sof, 11.0);
+      _atoms[i].A() = &NewAtom();
+      _atoms[i].A()->SetType(*_atoms[i].GetB());
+      _atoms[i].A()->SetLabel(
+        _atoms[i].A()->GetType().symbol+(olxstr('x') << (char)('a'+i)), false);
+      GetRefMod()->Vars.SetParam(*_atoms[i].A(), catom_var_name_Sof, 11.0);
     }
-    _atoms[i].a->ccrd() = CartesianToCell(v);
+    _atoms[i].A()->ccrd() = CartesianToCell(v);
   }
 }
 //..............................................................................
@@ -880,7 +882,7 @@ PyObject* TAsymmUnit::PyExport(TPtrList<PyObject>& _atoms, bool export_conn)  {
       if( r[j].GetTag() < 0 )  continue;
       atom_cnt++;
     }
-    PyObject* atoms = PyTuple_New(atom_cnt),
+    PyObject* atoms = PyTuple_New(atom_cnt), 
       *ri = PyDict_New();
 
     if( i == 0 )
@@ -1221,7 +1223,7 @@ void TAsymmUnit::LibSetAtomOccu(const TStrObjList& Params, TMacroError& E)  {
 }
 //..............................................................................
 void TAsymmUnit::_UpdateQPeaks() {
-  sorted::PrimitiveAssociation<double, TCAtom*> sortedPeaks;
+  TPSTypeList<double, TCAtom*> sortedPeaks;
   size_t ac = CAtoms.Count();
   for (size_t i=0; i < ac; i++) {
     if (CAtoms[i]->GetType() != iQPeakZ || CAtoms[i]->IsDeleted()) continue;
@@ -1229,10 +1231,10 @@ void TAsymmUnit::_UpdateQPeaks() {
   }
   ac = sortedPeaks.Count();
   for (size_t i=0; i < ac; i++)
-    sortedPeaks.GetValue(i)->SetLabel(olxstr('Q') << olxstr(ac - i), false);
+    sortedPeaks.GetObject(i)->SetLabel(olxstr('Q') << olxstr(ac-i), false);
   if (ac != 0) {
     MinQPeak = sortedPeaks.GetKey(0);
-    MaxQPeak = sortedPeaks.GetLast().Key;
+    MaxQPeak = sortedPeaks.GetLast().Comparable;
   }
   else {
     MaxQPeak = -1000;
@@ -1285,7 +1287,6 @@ void TAsymmUnit::LibGetZ(const TStrObjList& Params, TMacroError& E)  {
 }
 //..............................................................................
 void TAsymmUnit::LibSetZ(const TStrObjList& Params, TMacroError& E)  {
-  if (Params[0].IsEmpty()) return;
   Z = Params[0].ToInt();
   if( Z <= 0 )  Z = 1;
 }
@@ -1295,7 +1296,6 @@ void TAsymmUnit::LibGetZprime(const TStrObjList& Params, TMacroError& E)  {
 }
 //..............................................................................
 void TAsymmUnit::LibSetZprime(const TStrObjList& Params, TMacroError& E)  {
-  if (Params[0].IsEmpty()) return;
   double zp = Params[0].ToDouble();
   Z = (short)olx_round(
     TCLattice::GetLattMultiplier(Latt)*(MatrixCount()+1)*zp);

@@ -162,10 +162,7 @@ public:
       }
       int Compare(const substituent &s) const;
       struct atom_cmp {
-        atom_cmp() {}
-        template <class item_a_t, class item_b_t>
-        int Compare(const item_a_t &a1_, const item_b_t &a2_) const {
-          const TCAtom &a1 = olx_ref::get(a1_), &a2 = olx_ref::get(a2_);
+        static int Compare(const TCAtom &a1, const TCAtom &a2) {
           int r = olx_cmp(a1.GetTag(), a2.GetTag());
           if (r == 0) r = olx_cmp(a1.GetType().z, a2.GetType().z);
           return r;
@@ -245,8 +242,8 @@ public:
 
 class Analysis {
   static int hr_sort(
-    const olx_pair_t<double, olxstr> *a1,
-    const olx_pair_t<double, olxstr> *a2)
+    const AnAssociation2<double, olxstr> *a1,
+    const AnAssociation2<double, olxstr> *a2)
   {
     return olx_cmp(a1->GetA(), a2->GetA());
   }

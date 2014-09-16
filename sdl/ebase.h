@@ -90,8 +90,8 @@ template <typename int_t> static bool olx_is_valid_size(const int_t& v)  {
   return v != int_t(~0);
 }
 // wrap memory management functions
-extern void *olx_malloc_(size_t sz);  // throws TOutOfMemoryException
-extern void *olx_realloc_(void * a, size_t sz);  // throws TOutOfMemoryException
+extern void *olx_malloc_(size_t sz);  // throws TOutOfMemoryException 
+extern void *olx_realloc_(void * a, size_t sz);  // throws TOutOfMemoryException 
 template <typename T> T *olx_malloc(size_t sz) {
   return (T*)olx_malloc_(sz*sizeof(T));
 }
@@ -250,7 +250,7 @@ class IEObject  {
   struct static_destruction_handler : public a_destruction_handler {
     void (*destruction_handler)(IEObject* obj);
     static_destruction_handler(
-      a_destruction_handler* prev,
+      a_destruction_handler* prev, 
       void (*_destruction_handler)(IEObject* obj)) :
         a_destruction_handler(prev),
         destruction_handler(_destruction_handler) {}
@@ -284,7 +284,7 @@ class IEObject  {
   };
 
   a_destruction_handler *dsh_head, *dsh_tail;
-
+  
   void _RemoveDestructionHandler(const a_destruction_handler &);
   bool _HasDestructionHandler(a_destruction_handler *dh) const;
 public:
@@ -349,7 +349,7 @@ protected:
   /* to prevent creation this class directly. All instances must be of the
  TBasicExceptionClass defined in exception.h
  */
-  virtual void CreationProtection() = 0;
+  virtual void CreationProtection() = 0;  
 public:
   static void ThrowFunctionFailed(const char* file, const char* function,
     int line, const char* msg);
@@ -375,7 +375,7 @@ public:
   static void SetAutoLogging(bool v)  {  AutoLog = v;  }
   static bool GetAutoLogging()  {  return AutoLog;  }
   // returns recasted this, or throws exception if dynamic_cast fails
-  const class TBasicException* GetException() const;
+  const class TBasicException* GetException() const; 
 };
 
 #include "olxptr.h"
@@ -421,9 +421,9 @@ protected:
     }
   };
 
-  template <class Accessor> struct chsig_ {
+  template <class Accessor> struct minus_ {
     const Accessor &accessor;
-    chsig_(const Accessor &accessor_) : accessor(accessor_) {}
+    minus_(const Accessor &accessor_) : accessor(accessor_) {}
     template <class Item>
     typename Accessor::return_type OnItem(const Item& o) const {
       return -accessor(o);
@@ -435,19 +435,6 @@ protected:
     template <class Item>
     typename Accessor::return_type operator () (const Item& o) const {
       return -accessor(o);
-    }
-  };
-
-  template <typename to_t, class Accessor> struct eq_ {
-    to_t to;
-    const Accessor &accessor;
-    eq_(const to_t &t, const Accessor &accessor_) : to(t), accessor(accessor_)
-    {}
-    template <class Item> bool OnItem(const Item& o) const {
-      return accessor(o) == to;
-    }
-    template <class Item> bool OnItem(const Item& o, size_t) const {
-      return accessor(o) == to;
     }
   };
 public:
@@ -466,22 +453,29 @@ public:
   /* creates a new or logical operator */
   template <class AnalyserA, class AnalyserB>
   static or_<AnalyserA, AnalyserB> olx_or(
-    const AnalyserA& a, const AnalyserB& b) {
+    const AnalyserA& a, const AnalyserB& b)
+  {
     return or_<AnalyserA, AnalyserB>(a, b);
   }
-  /* creates a new chsig arithmetic functor/accessor */
+  /* creates a new minus arithmetic functor/accessor */
   template <class Accessor>
-  static chsig_<Accessor> olx_chsig(const Accessor& a) {
-    return chsig_<Accessor>(a);
+  static minus_<Accessor> olx_minus(const Accessor& a)  {
+    return minus_<Accessor>(a);
   }
-  /* creates a new equality checker */
-  template <typename to_t, class Accessor>
-  static eq_<to_t, Accessor> olx_eq(const to_t &to, const Accessor& a)  {
-    return eq_<to_t, Accessor>(to, a);
-  }
+  /* creates a new static boolean value */
+  struct olx_bool  {
+    bool value;
+    olx_bool(bool _value) : value(_value)  {}
+    template <typename Item> bool OnItem(const Item& o) const {
+      return value;
+    }
+    template <typename Item> bool OnItem(const Item& o, size_t) const {
+      return value;
+    }
   };
+};
 
-/* swaps two objects using a temporary variable (copy constructor must be
+/* swaps two objects using a temporary variable (copy constructor must be 
  available for complex types) */
 template <typename obj> inline void olx_swap(obj& o1, obj& o2)  {
   obj tmp = o1;

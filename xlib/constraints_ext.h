@@ -19,15 +19,10 @@ class RefinementModel;
 static const uint16_t
   direction_static = 0,
   direction_vector = 1,
-  direction_normal = 2,
-  direction_centroid = 3;
-
+  direction_normal = 2;
 struct adirection : public AReferencible {
   olxstr id;
-  static const olxstr* type_names() {
-    static olxstr ts[] = {"static", "vector", "normal", "centroid"};
-    return &ts[0];
-  }
+  static olxstr type_names[];
   adirection() {}
   adirection(const olxstr &_id) : id(_id) {}
   virtual vec3d get() const = 0;
@@ -146,7 +141,7 @@ protected:
   same_group_constraint() {}
 public:
   TTypeList<TCAtomPList> groups;
-  same_group_constraint(const TTypeList<TCAtomPList>::const_list_type &groups_)
+  same_group_constraint(const ConstTypeList<TCAtomPList> &groups_)
   : groups(groups_)
   {}
   bool IsValid()  {

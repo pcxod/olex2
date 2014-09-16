@@ -63,7 +63,7 @@ public:
     if( Obj != NULL )  Py_INCREF(Obj);
     return *this;
   }
-
+  
   ~TOlxPyVar();
   PyObject* GetObj()  {  return Obj;  }
   PyObject* GetObjVal();
@@ -81,7 +81,7 @@ struct TOlxVarChangeData : public IEObject  {
   TOlxVarChangeData(const olxstr& v_name, const olxstr& v_val, PyObject* p_val)
     : str_val(v_val), var_name(v_name), py_val(p_val) {}
 };
-
+   
 class TOlxVars : public IEObject  {
   // this object is a singleton
   static TOlxVars* Instance;
@@ -89,14 +89,14 @@ class TOlxVars : public IEObject  {
     static olx_critical_section cs;
     return cs;
   }
-  olxstr_dict<TOlxPyVar, true> Vars;
+  TSStrObjList<olxstr,TOlxPyVar, true> Vars;
 
   template <class T>
   void _SetVar(const T& name, const olxstr& value)  {
     const size_t ind = Vars.IndexOf(name);
     try  {
       if( ind != InvalidIndex )
-        Vars.GetValue(ind).Set(value);
+        Vars.GetObject(ind).Set(value);
       else
         Vars.Add(name, value);
     }
@@ -112,7 +112,7 @@ class TOlxVars : public IEObject  {
     const size_t ind = Vars.IndexOf(name);
     try {
       if (ind != InvalidIndex)
-        Vars.GetValue(ind).Set(value);
+        Vars.GetObject(ind).Set(value);
       else
         Vars.Add(name, value);
     }
@@ -126,8 +126,8 @@ class TOlxVars : public IEObject  {
 
   const olxstr& _FindName(PyObject* value) {
     for (size_t i=0; i < Vars.Count(); i++)
-      if (Vars.GetValue(i).GetObj()  == value)
-        return Vars.GetKey(i);
+      if (Vars.GetObject(i).GetObj()  == value)
+        return Vars.GetString(i);
     return EmptyString();
   }
 
@@ -169,11 +169,11 @@ public:
 
   static PyObject* GetVarValue(size_t index) {
     volatile olx_scope_cs cs(CS());
-    return Instance->Vars.GetValue(index).GetObjVal();
+    return Instance->Vars.GetObject(index).GetObjVal();
   }
   static PyObject* GetVarWrapper(size_t index) {
     volatile olx_scope_cs cs(CS());
-    return Instance->Vars.GetValue(index).GetObj();
+    return Instance->Vars.GetObject(index).GetObj();
   }
   static const olxstr& GetVarStr(size_t index);
 
@@ -236,13 +236,13 @@ class TOlxVars : public IEObject  {
     static olx_critical_section cs;
     return cs;
   }
-  olxstr_dict<olxstr, true> Vars;
+  TSStrObjList<olxstr,olxstr, true> Vars;
 
   template <class T>
   void _SetVar(const T& name, const olxstr& value)  {
     const size_t ind = Vars.IndexOf(name);
     if( ind != InvalidIndex )
-      Vars.GetValue(ind) = value;
+      Vars.GetObject(ind) = value;
     else
       Vars.Add(name, value);
   }
@@ -279,7 +279,7 @@ public:
   }
   static const olxstr& GetVarStr(size_t index) {
     volatile olx_scope_cs cs(CS());
-    return Instance->Vars.GetValue(index);
+    return Instance->Vars.GetObject(index);
   }
 
   template <class T>

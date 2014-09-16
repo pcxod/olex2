@@ -265,6 +265,6 @@ template <typename T>
 public:
   typedef T list_item_type;
 };
-
+  
 EndEsdlNamespace()
 #endif

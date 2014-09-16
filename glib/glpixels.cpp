@@ -16,7 +16,7 @@
 TGlPixels::TGlPixels(TGlRenderer& Render, const olxstr& collectionName,
   int left, int top, int width, int height,
   unsigned char* data, GLenum format)
-  : AGDrawObject(Render, collectionName)
+  : AGDrawObject(Render, collectionName)  
 {
   Z = 0;
   Left = left;
@@ -28,7 +28,7 @@ TGlPixels::TGlPixels(TGlRenderer& Render, const olxstr& collectionName,
 }
 //.............................................................................
 void TGlPixels::Create(const olxstr& cName)  {
-  if( !cName.IsEmpty() )
+  if( !cName.IsEmpty() )  
     SetCollectionName(cName);
 
   TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
@@ -42,7 +42,7 @@ void TGlPixels::Create(const olxstr& cName)  {
 
   TGlMaterial GlM;
 
-  GlM.SetFlags(0);
+  GlM.SetFlags(0);   
   GlM.ShininessF = 128;
   GlM.SetFlags(sglmAmbientF|sglmDiffuseF|sglmIdentityDraw);
   GlM.AmbientF = 0x800f0f0f;
@@ -97,7 +97,7 @@ bool TGlPixels::Orient(TGlPrimitive& P)  {
     olx_gl::pixelStore(GL_PACK_ALIGNMENT, 4);
     //olx_gl::drawBuffer(GL_BACK);
     //olx_gl::rasterPos(Left, Top, 0);
-    olx_gl::drawPixels(Width, Height, DataFormat, GL_UNSIGNED_BYTE, Data);
+    olx_gl::drawPixels(Width, Height, DataFormat, GL_UNSIGNED_BYTE, Data); 
   }
   return true;
 }

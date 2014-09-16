@@ -73,10 +73,10 @@ protected:  // do not allow to create externally
     Terminate(false),
     Detached(true),
     Running(false),
-    Handle(0),
+    Handle(0), 
     OnTerminate(Actions.New("ON_TERMINATE")) {}
   //...........................................................................
-  /* thread can do some extras here, as it will be called from SendTerminate
+  /* thread can do some extras here, as it will be called from SendTerminate 
   before the Terimate flag is set */
   virtual void OnSendTerminate() {}
 public:
@@ -125,7 +125,7 @@ public:
     Handle = CreateThread(NULL, 0, _Run, this, 0, &thread_id);
     if( Handle == NULL )
       return false;
-#else
+#else  
     return (pthread_create(&Handle, NULL, _Run, this) == 0);
 #endif
     return true;
@@ -149,7 +149,7 @@ public:
         olx_sleep(5);
     }
     return rv != 0;
-#else
+#else  
     if( pthread_join(Handle, NULL) != 0 )
       return false;
 #endif
@@ -180,7 +180,7 @@ public:
       return false;
     // make sure it gets deleted at the end!
     TEGC::AddP( new HandleRemover(h) );
-#else
+#else  
     pthread_t thread_id;
     return (pthread_create(&thread_id, NULL,
       &ThreadFunctionConverter<T>::Func, (void*)(f)) == 0);

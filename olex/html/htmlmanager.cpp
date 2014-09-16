@@ -170,11 +170,7 @@ bool THtmlManager::Execute(const IEObject *sender, const IEObject *data,
     if (html != NULL) {
       volatile THtmlManager::DestructionLocker dm =
         LockDestruction(html, this);
-      olxstr cmd = *(const olxstr *)data;
-      if (!cmd.IsEmpty()) {
-        TBasicApp::PostAction(new olxCommandAction(cmd));
-        //OnLink.Execute(sender, data);
-      }
+      OnLink.Execute(sender, data);
       return true;
     }
   }
@@ -481,7 +477,7 @@ void THtmlManager::macDefineControl(TStrObjList &Cmds,
       " already exists";
     return;
   }
-  olxstr_dict<olxstr,false>* props = NULL;
+  TSStrStrList<olxstr,false>* props = NULL;
   if( Cmds[1].Equalsi("text") )  {
     props = html->ObjectsState.DefineControl(objName, typeid(TTextEdit));
   }
@@ -522,7 +518,7 @@ void THtmlManager::macDefineControl(TStrObjList &Cmds,
     (*props)["fg"] = Options.FindValue("fg");
     if( props->IndexOf("data") != InvalidIndex )
       (*props)["data"] = Options.FindValue("data", EmptyString());
-    if (props->HasKey("val"))
+    if( props->IndexOf("val") != InvalidIndex )
       (*props)["val"] = Options.FindValue("v");
   }
 }
@@ -531,7 +527,7 @@ void THtmlManager::funGetValue(const TStrObjList &Params, TMacroError &E)  {
   Control c = FindControl(Params[0], E, 0, __OlxSrcInfo);
   if( c.html == NULL )  return;
   if( c.ctrl == NULL )  {
-    olxstr_dict<olxstr,false>* props =
+    TSStrStrList<olxstr,false>* props =
       c.html->ObjectsState.FindProperties(c.ctrl_name);
     if( props == NULL )  {
       E.ProcessingError(__OlxSrcInfo,
@@ -553,7 +549,7 @@ void THtmlManager::funSetValue(const TStrObjList &Params, TMacroError &E)  {
   Control c = FindControl(Params[0], E, 0, __OlxSrcInfo);
   if( c.html == NULL )  return;
   if( c.ctrl == NULL )  {
-    olxstr_dict<olxstr,false>* props =
+    TSStrStrList<olxstr,false>* props =
       c.html->ObjectsState.FindProperties(c.ctrl_name);
     if( props == NULL )  {
       E.ProcessingError(__OlxSrcInfo,
@@ -591,7 +587,7 @@ void THtmlManager::funGetData(const TStrObjList &Params, TMacroError &E)  {
   Control c = FindControl(Params[0], E, 0, __OlxSrcInfo);
   if( c.html == NULL )  return;
   if( c.ctrl == NULL )  {
-    olxstr_dict<olxstr,false>* props =
+    TSStrStrList<olxstr,false>* props =
       c.html->ObjectsState.FindProperties(c.ctrl_name);
     if( props == NULL )  {
       E.ProcessingError(__OlxSrcInfo,
@@ -648,7 +644,7 @@ void THtmlManager::funGetState(const TStrObjList &Params, TMacroError &E)  {
   Control c = FindControl(Params[0], E, 0, __OlxSrcInfo);
   if( c.html == NULL )  return;
   if( c.ctrl == NULL )  {
-    olxstr_dict<olxstr,false>* props =
+    TSStrStrList<olxstr,false>* props =
       c.html->ObjectsState.FindProperties(c.ctrl_name);
     if( props == NULL )  {
       E.ProcessingError(__OlxSrcInfo,
@@ -770,6 +766,8 @@ void THtmlManager::funGetImage(const TStrObjList &Params, TMacroError &E)  {
 void THtmlManager::funSetFocus(const TStrObjList &Params, TMacroError &E)  {
   Control c = FindControl(Params[0], E, 0, __OlxSrcInfo);
   if( c.html == NULL )  return;
+  c.html->FocusedControl = c.ctrl_name;
+  c.html->InFocus = c.wnd;
   if( c.wnd == NULL )  // not created yet?
     return;
   if( EsdlInstanceOf(*c.wnd, TTextEdit) )
@@ -778,7 +776,7 @@ void THtmlManager::funSetFocus(const TStrObjList &Params, TMacroError &E)  {
     TComboBox* cb = (TComboBox*)c.wnd;
     //cb->GetTextCtrl()->SetSelection(-1, -1);
   }
-  c.wnd->SetFocus();
+  c.html->InFocus->SetFocus();
 }
 //.............................................................................
 void THtmlManager::funSelect(const TStrObjList &Params, TMacroError &E)  {
@@ -801,7 +799,7 @@ bool THtmlManager::SetState(const TStrObjList &Params, TMacroError &E)  {
   if( c.html == NULL )  return false;
   const bool state = Params.GetLastString().ToBool();
   if( c.ctrl == NULL )  {
-    olxstr_dict<olxstr,false>* props =
+    TSStrStrList<olxstr,false>* props =
       c.html->ObjectsState.FindProperties(c.ctrl_name);
     if( props == NULL )  {
       E.ProcessingError(__OlxSrcInfo,
@@ -1173,13 +1171,13 @@ TLibrary *THtmlManager::ExportLibrary(const olxstr &name) {
     " [html normal_face fixed_face]");
   InitMacroD(Library, THtmlManager, SetBorders, EmptyString(), fpOne|fpTwo,
     "Sets borders between HTML content and window edges");
-  InitMacroD(Library, THtmlManager, DefineControl,
+  InitMacroD(Library, THtmlManager, DefineControl, 
     "v-value&;"
     "i-tems&;"
     "c-checked/down&;"
     "bg-background color&;"
     "fg-foreground color&;"
-    "min-min value&;max-max value",
+    "min-min value&;max-max value", 
     fpTwo,
     "Defines a managed control properties"
   );
@@ -1188,7 +1186,7 @@ TLibrary *THtmlManager::ExportLibrary(const olxstr &name) {
   InitMacroD(Library, THtmlManager, Group, EmptyString(),
     fpAny^(fpNone|fpOne),
     "Creates an exclusive group of buttons");
-  InitMacroD(Library, THtmlManager, LstObj, EmptyString(),
+  InitMacroD(Library, THtmlManager, LstObj, EmptyString(), 
     fpNone|fpOne,
     "Prints the list of available HTML objects");
   this_InitFuncD(GetValue, fpOne,

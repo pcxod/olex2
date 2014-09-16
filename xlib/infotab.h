@@ -35,7 +35,7 @@ public:
     : RM(rm), Type(type), AtomCount(atomCount),
     ParamName(paramName), atoms(rm)
   {}
-
+  
   InfoTab(RefinementModel& rm, const TDataItem& di)
     : RM(rm), atoms(rm)
   {

@@ -13,8 +13,8 @@
 //.............................................................................
 void TAtomEnvi::ApplySymm(const smatd& sym) {
   for (size_t i=0; i < Envi.Count(); i++) {
-    Envi[i].b *= sym;
-    Envi[i].c = Envi[i].GetB() * Envi[i].GetA()->ccrd();
+    Envi[i].B() *= sym;
+    Envi[i].C() = Envi[i].GetB() * Envi[i].GetA()->ccrd();
   }
 }
 //.............................................................................
@@ -42,10 +42,10 @@ PyObject* TAtomEnvi::PyExport(TPtrList<PyObject>& atoms)  {
       PyTuple_SetItem(neighbours, i, Py_BuildValue("i", Envi[i].GetA()->GetTag()));
     }
     else  {
-      PyTuple_SetItem(neighbours, i,
+      PyTuple_SetItem(neighbours, i, 
         Py_BuildValue("OOO", Py_BuildValue("i", Envi[i].GetA()->GetTag()),
           Py_BuildValue("(ddd)", crd[0], crd[1], crd[2]),
-            Py_BuildValue("(iii)(iii)(iii)(ddd)",
+            Py_BuildValue("(iii)(iii)(iii)(ddd)", 
               mat.r[0][0], mat.r[0][1], mat.r[0][2],
               mat.r[1][0], mat.r[1][1], mat.r[1][2],
               mat.r[2][0], mat.r[2][1], mat.r[2][2],

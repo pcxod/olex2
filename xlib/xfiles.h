@@ -60,7 +60,7 @@ private:
   RefinementModel RefMod;
 protected:
   TActionQList Actions;
-  TStringToList<olxstr,TBasicCFile*> FileFormats;
+  TStrPObjList<olxstr,TBasicCFile*> FileFormats;
   TBasicCFile *FLastLoader;
   TSpaceGroup* FSG;
   virtual bool Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
@@ -92,7 +92,7 @@ public:
   inline TSpaceGroup& GetLastLoaderSG() const {
     if( FSG == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "unknown space group");
-    return *FSG;
+    return *FSG; 
   }
   // returns file loader associated with given file extension
   TBasicCFile* FindFormat(const olxstr& Ext);
@@ -103,7 +103,7 @@ public:
       throw TFunctionFailedException(__OlxSourceInfo, "no last loader");
     if( !EsdlInstanceOf(*FLastLoader, LoaderClass) )
       throw TInvalidArgumentException(__OlxSourceInfo, "wrong last loader type");
-    return *(LoaderClass*)FLastLoader;
+    return *(LoaderClass*)FLastLoader; 
   }
   inline void SetLastLoader(TBasicCFile* ll)  {  FLastLoader = ll;  }
   // returns true if a file is loaded
@@ -116,7 +116,7 @@ public:
   olxstr LocateHklFile();
   void UpdateAsymmUnit();
   /* Generic sort procedure, taking string instructions...
-    instructions: Mw, Label, Label1, moiety size, weight, heaviest
+    instructions: Mw, Label, Label1, moiety size, weight, heaviest 
   */
   void Sort(const TStrList& instructions);
   // nameToken is build is similar way to the NameArg!
@@ -126,7 +126,7 @@ public:
   void SaveToFile(const olxstr& FN, bool Sort);
   // clears the last loader and the model
   void Close();
-  // returns last loaded file name (if any) or empty string
+  // returns last loaded file name (if any) or empty string 
   const olxstr& GetFileName() const {
     return FLastLoader != NULL ? FLastLoader->GetFileName() : EmptyString();
   }
@@ -147,8 +147,7 @@ public:
     TMacroError &E);
   void LibSaveSolution(const TStrObjList& Params, TMacroError& E);
   void LibGetMu(const TStrObjList& Params, TMacroError& E);
-  void LibRefinementInfo(const TStrObjList& Params, TMacroError& E);
-  class TLibrary* ExportLibrary(const olxstr& name = EmptyString());
+  class TLibrary* ExportLibrary(const olxstr& name=EmptyString());
 
   /* describes a file name with which may carry reference to the dataset in the
   case of multiple-dataset files

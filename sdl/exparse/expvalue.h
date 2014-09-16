@@ -22,7 +22,7 @@ namespace exparse  {
     template <typename T>
     cast_result(T val, bool tmp)
       : value(val), temporary(tmp)
-    {}
+    {} 
   };
 
   template <class T, class OT> struct val_wrapper  {
@@ -34,19 +34,19 @@ namespace exparse  {
     {
       v.origin = NULL;
       v.do_delete = false;
-    }
+    }  
     val_wrapper(const val_wrapper& v, OT* _origin) : val(v.val),
       do_delete(v.do_delete), origin(_origin)
     {
       origin->inc_ref();
       v.do_delete = false;
-    }
+    }  
     val_wrapper(const cast_result& cr)
       : val((T*)cr.value), do_delete(cr.temporary), origin(NULL)
     {}
     ~val_wrapper()  {
       if( do_delete )
-        delete val;
+        delete val;  
       if( origin != NULL && origin->dec_ref() == 0 )
         delete origin;
     }
@@ -62,13 +62,13 @@ namespace exparse  {
     {
       v.origin = NULL;
       v.do_delete = false;
-    }
+    }  
     val_wrapper(const val_wrapper& v, OT* _origin) : val(v.val),
       origin(_origin), do_delete(v.do_delete)
     {
       origin->inc_ref();
       v.do_delete = false;
-    }
+    }  
     val_wrapper(const cast_result& cr)
       : val((T*)cr.value), origin(NULL), do_delete(cr.temporary)  {}
     ~val_wrapper()  {
@@ -95,12 +95,12 @@ namespace exparse  {
     {
       origin->inc_ref();
       v.do_delete = false;
-    }
+    }  
     val_wrapper(const cast_result& cr)
       : val((T*)cr.value), origin(NULL), do_delete(cr.temporary)  {}
-    ~val_wrapper()  {
+    ~val_wrapper()  {  
       if( do_delete )
-        delete val;
+        delete val;  
       if( origin != NULL && origin->dec_ref() == 0 )
         delete origin;
     }

@@ -15,7 +15,7 @@
 BeginXlibNamespace()
 
 /*bit packed integer rotation matrix - uses 9 bits for the values
-  and 9 bits for the signs
+  and 9 bits for the signs 
 */
 namespace rotation_id {
   // derived/using classes might need to know this
@@ -123,7 +123,7 @@ template <int base=12> struct full_smatd_id  {
   static uint64_t get(const smatd& m)  {
     uint64_t res = rotation_id::get(m.r);
     for( int i=0; i < 3; i++ )  {
-      int t = olx_round(m.t[i]*base);
+      int t = static_cast<int>(m.t[i]*base);
 #ifdef _DEBUG
       if( olx_abs(t) > tr_mask )
         throw TFunctionFailedException(__OlxSourceInfo, "translation is too large");

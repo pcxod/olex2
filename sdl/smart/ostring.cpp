@@ -94,10 +94,10 @@ olxstr esdl::olx_print(const char *format_, ...) {
                 rv << va_arg(argptr, unsigned long int);
                 break;
               case 'c':
-#ifdef __GNUC__
-                rv << va_arg(argptr, int);
-#else
+#ifdef __WIN32__
                 rv << va_arg(argptr, wchar_t);
+#else
+                rv << va_arg(argptr, int);
 #endif
                 break;
               case 's':
@@ -113,16 +113,16 @@ olxstr esdl::olx_print(const char *format_, ...) {
         case 'h': // h d/u
           if (++i < format.Length()) {
             if (format.CharAt(i) == 'd')
-#ifdef __GNUC__
-              rv << va_arg(argptr, int);
-#else
+#ifdef __WIn32__
               rv << va_arg(argptr, short int);
+#else
+              rv << va_arg(argptr, int);
 #endif
             else if (format.CharAt(i) == 'u')
-#ifdef __GNUC__
-              rv << va_arg(argptr, unsigned int);
-#else
+#ifdef __WIN32__
               rv << va_arg(argptr, unsigned short int);
+#else
+              rv << va_arg(argptr, unsigned int);
 #endif
             else
               throw TInvalidArgumentException(__OlxSourceInfo,
@@ -139,10 +139,10 @@ olxstr esdl::olx_print(const char *format_, ...) {
           }
           break;
         case 'f':
-#ifdef __GNUC__
-          rv << va_arg(argptr, double);
-#else
+#ifdef __WIN32__
           rv << va_arg(argptr, float);
+#else
+          rv << va_arg(argptr, double);
 #endif
           break;
         case 'i':
@@ -153,10 +153,10 @@ olxstr esdl::olx_print(const char *format_, ...) {
           rv << va_arg(argptr, unsigned int);
           break;
         case 'c':
-#ifdef __GNUC__
-          rv << va_arg(argptr, int);
-#else
+#ifdef __WIN32__
           rv << va_arg(argptr, char);
+#else
+          rv << va_arg(argptr, int);
 #endif
           break;
         case 's':

@@ -21,36 +21,37 @@ const uint16_t
   plane_best = 1,
   plane_worst = 2;
 const uint16_t
-  plane_flag_deleted = 0x0001;
+  plane_flag_deleted = 0x0001,
+  plane_flag_regular = 0x0002;
 
 class TSPlane : public TSObject<TNetwork>  {
-  TTypeList<olx_pair_t<TSAtom*, double> > Crds;
+  TTypeList<AnAssociation2<TSAtom*, double> > Crds;
   vec3d Center;
   mat3d Normals;
   double Distance, wRMSD;  uint16_t Flags;
   size_t DefId;
-  void _Init(const TTypeList<olx_pair_t<vec3d, double> >& points);
+  void _Init(const TTypeList<AnAssociation2<vec3d, double> >& points);
   // for Crd sorting by atom tag
   struct AtomTagAccessor {
     index_t operator() (
-      const olx_pair_t<TSAtom*, double> *p) const
+      const AnAssociation2<TSAtom*, double> *p) const
     {
       return p->GetA()->GetTag();
     }
   };
 public:
-  TSPlane() : TSObject<TNetwork>(NULL), DefId(InvalidIndex)
-  {}
+  TSPlane() :TSObject<TNetwork>(NULL) {}
   TSPlane(TNetwork* Parent, size_t def_id = InvalidIndex)
     : TSObject<TNetwork>(Parent), Distance(0), wRMSD(0), Flags(0),
-      DefId(def_id)
-  {}
+      DefId(def_id)  {}
   virtual ~TSPlane()  {}
 
   DefPropBFIsSet(Deleted, Flags, plane_flag_deleted)
+  // this is just a flag for the owner - is not used by the object itself
+  DefPropBFIsSet(Regular, Flags, plane_flag_regular)
 
   // an association point, weight is provided
-  void Init(const TTypeList<olx_pair_t<TSAtom*, double> >& Points);
+  void Init(const TTypeList<AnAssociation2<TSAtom*, double> >& Points);
 
   inline const vec3d& GetNormal() const {  return Normals[0]; }
   // note that the Normal (or Z) is the first row of the matrix
@@ -81,12 +82,11 @@ public:
   }
   size_t Count() const {  return Crds.Count();  }
   const TSAtom& GetAtom(size_t i) const {  return *Crds[i].GetA();  }
-  TSAtom& GetAtom(size_t i) {  return *Crds[i].a;  }
+  TSAtom& GetAtom(size_t i) {  return *Crds[i].A();  }
   double GetWeight(size_t i) const {  return Crds[i].GetB();  }
   void _PlaneSortByAtomTags() {
-    InsertSorter::Sort(Crds,
-      ComplexComparator::Make(AtomTagAccessor(), TPrimitiveComparator()),
-      DummySortListener());
+    BubbleSorter::Sort(Crds, AtomTagAccessor(), TPrimitiveComparator(),
+      DummySwapListener());
   }
   /* returns inverse intersects with the lattice vectors, the vector is divided
   by modulus of the smallest non-zero value. Takes the orthogonalisation matrix
@@ -96,11 +96,11 @@ public:
     const vec3d &n, const vec3d &p);
   vec3d GetCrystallographicDirection() const;
 // static members
-  /* calculates all three planes - best, worst and the complimentary,
+  /* calculates all three planes - best, worst and the complimentary, 
   the normals are sorted by rms ascending, so the best plane is at [0] and the
   worst - at [2] Returns true if the function succeded (point cound > 2)
   */
-  template <class List> static bool CalcPlanes(const List& Points,
+  template <class List> static bool CalcPlanes(const List& Points, 
     mat3d& params, vec3d& rms, vec3d& center, bool sort=true);
   // a convinience function for non-weighted plane
   static bool CalcPlanes(const TSAtomPList& atoms, mat3d& params, vec3d& rms,
@@ -110,10 +110,10 @@ public:
    for the point, weight association
    returns sqrt(smallest eigen value/point.Count())
   */
-  template <class List> static double CalcPlane(const List& Points,
+  template <class List> static double CalcPlane(const List& Points, 
     vec3d& Params, vec3d& center, const short plane_type = plane_best);
   // a convinience function for non-weighted planes
-  static double CalcPlane(const TSAtomPList& Points,
+  static double CalcPlane(const TSAtomPList& Points, 
     vec3d& Params, vec3d& center, const short plane_type = plane_best);
   // returns sqrt(smallest eigen value/point.Count())
   static double CalcRMSD(const TSAtomPList& atoms);
@@ -128,8 +128,8 @@ public:
       DefData(const TSAtom::Ref& r, double w) : ref(r), weight(w)  {}
       DefData(const DefData& r) : ref(r.ref), weight(r.weight)  {}
       DefData(const TDataItem& item) : ref(~0,~0) {  FromDataItem(item);  }
-      DefData& operator = (const DefData& r)  {
-        ref = r.ref;
+      DefData& operator = (const DefData& r)  {  
+        ref = r.ref;  
         weight = r.weight;
         return *this;
       }
@@ -141,21 +141,17 @@ public:
       }
       void ToDataItem(TDataItem& item) const;
       void FromDataItem(const TDataItem& item);
-      olxstr ToString() const {
-        return ref.ToString() << weight;
-      }
     };
     TTypeList<DefData> atoms;
-    size_t sides;
+    bool regular;
   public:
-    Def() : sides(0) {}
+    Def() {}
     Def(const TSPlane& plane);
-    Def(const Def& r) : atoms(r.atoms), sides(r.sides)
-    {}
+    Def(const Def& r) : atoms(r.atoms), regular(r.regular)  {}
     Def(const TDataItem& item)  {  FromDataItem(item);  }
     Def& operator = (const Def& r)  {
       atoms = r.atoms;
-      sides = r.sides;
+      regular = r.regular;
       return *this;
     }
     bool operator == (const Def& d)  const {
@@ -172,23 +168,13 @@ public:
       class TNetwork* parent, const smatd& matr) const;
     void ToDataItem(TDataItem& item) const;
     void FromDataItem(const TDataItem& item);
-    // a string hash for the plane definition
-    TIString ToString() const {
-      olxstr_buf rv;
-      for (size_t i = 0; i < atoms.Count(); i++) {
-        rv << atoms[i].ToString();
-      }
-      return olxstr(rv) << sides;
-    }
-    size_t GetSides() const { return sides; }
-    void SetSides(size_t s) { sides = s; }
   };
 
   Def GetDef() const { return Def(*this);  }
   size_t GetDefId() const {  return DefId; }
   // not for external use
   void _SetDefId(size_t id)  {  DefId = id; }
-
+  
   void ToDataItem(TDataItem& item) const;
   void FromDataItem(const TDataItem& item);
 };
@@ -200,9 +186,9 @@ public:
 unit/equal weights, otherwise it will become smaller than directly calculated
 one since the priority will be given to some points and
 RMSD'=(sum(w^2*distances^2)/sum(w^2))^0.5, where distance will be smaller for
-higher weights... there are functions to calculate both values
+higher weights... there are functions to calculate both values 
 */
-template <class List>  // olx_pair_t<vec3d, double> list, returning & on []
+template <class List>  // AnAssociation2<vec3d, double> list, returning & on []
 bool TSPlane::CalcPlanes(const List& Points, mat3d& Params, vec3d& rms,
   vec3d& center, bool sort)
 {
@@ -226,7 +212,7 @@ bool TSPlane::CalcPlanes(const List& Points, mat3d& Params, vec3d& rms,
     m[1][1] += (t[1]*t[1]);
     m[1][2] += (t[1]*t[2]);
     m[2][2] += (t[2]*t[2]);
-  }
+  } 
   m[1][0] = m[0][1];
   m[2][0] = m[0][2];
   m[2][1] = m[1][2];
@@ -274,3 +260,4 @@ double TSPlane::CalcPlane(const List& Points, vec3d& Params, vec3d& center,
 
 EndXlibNamespace()
 #endif
+

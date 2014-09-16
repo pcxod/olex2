@@ -201,7 +201,7 @@ TActionQueue& TActionQList::Add(TActionQueue *q)  {
 bool TActionQList::Execute(const olxstr& Name, const IEObject* Sender,
   const IEObject* Data)
 {
-  TActionQueue* Q = Queues.Find(Name, NULL);
+  TActionQueue* Q = Queues[Name];
   if (Q == NULL)
     throw TFunctionFailedException(__OlxSourceInfo, "undefined action queue");
   return Q->Execute(Sender, Data);
@@ -211,12 +211,12 @@ void TActionQList::Clear()  {
   size_t ac=0;
   TPtrList<AActionHandler> hands;
   for (size_t i=0; i < Queues.Count(); i++)
-    ac += Queues.GetValue(i)->HandlerCount();
+    ac += Queues.GetObject(i)->HandlerCount();
 
   hands.SetCapacity(ac);
   ac = 0;
   for (size_t i=0; i < Queues.Count(); i++) {
-    TActionQueue* Q = Queues.GetValue(i);
+    TActionQueue* Q = Queues.GetObject(i);
     for (size_t j=0; j < Q->HandlerCount(); j++) {
       hands.Add(Q->GetHandler(j));
       ac++;

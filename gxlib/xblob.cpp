@@ -21,7 +21,7 @@ TXBlob::TXBlob(TGlRenderer& R, const olxstr& collectionName) :
 }
 //...........................................................................
 void TXBlob::Create(const olxstr& cName)  {
-  if( !cName.IsEmpty() )
+  if( !cName.IsEmpty() )  
     SetCollectionName(cName);
   olxstr NewL;
   TGPCollection* GPC = Parent.FindCollectionX(GetCollectionName(), NewL);

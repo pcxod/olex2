@@ -179,7 +179,7 @@ public:
   static bool Exists(const olxstr& F);
   // just a wrapper for chmod...
   static bool Chmod(const olxstr& f, const short Flags);
-  /* a case insensitive alternative (for windows - same as above)
+  /* a case insensitive alternative (for windows - same as above) 
     the case sensitive name is stored in res (the first one if there
     are several file names matching
   */
@@ -211,40 +211,12 @@ public:
   static olxstr ChangeFileExt(const olxstr& F, const olxstr& Extension);
   static bool ListCurrentDirEx(TFileList& Out, const olxstr& Mask,
     const uint16_t searchFlags);
-  static TFileList::const_list_type ListCurrentDirEx(const olxstr& Mask,
-    const uint16_t searchFlags)
-  {
-    TFileList l;
-    ListCurrentDirEx(l, Mask, searchFlags);
-    return l;
-  }
   static bool ListDirEx(const olxstr& dir, TFileList& Out, const olxstr& Mask,
     const uint16_t searchFlags);
-  static TFileList::const_list_type ListDirEx(const olxstr& dir,
-    const olxstr& Mask, const uint16_t searchFlags)
-  {
-    TFileList l;
-    ListDirEx(dir, l, Mask, searchFlags);
-    return l;
-  }
   static bool ListCurrentDir(TStrList& Out, const olxstr& Mask,
     const uint16_t searchFlags);
-  static TStrList::const_list_type ListCurrentDir(const olxstr& Mask,
-    const uint16_t searchFlags)
-  {
-    TStrList l;
-    ListCurrentDir(l, Mask, searchFlags);
-    return l;
-  }
   static bool ListDir(const olxstr& dir, TStrList& Out, const olxstr& Mask,
     const uint16_t searchFlags);
-  static TStrList::const_list_type ListDir(const olxstr& dir,
-    const olxstr& Mask, const uint16_t searchFlags)
-  {
-    TStrList l;
-    ListDir(dir, l, Mask, searchFlags);
-    return l;
-  }
   static bool ChangeDir(const olxstr& To);
   static bool MakeDir(const olxstr& Name);
   // the function forces the creation of all dirs upto the last one
@@ -326,39 +298,8 @@ public:
 
   static olxstr QuotePath(const olxstr &p);
   static olxstr UnquotePath(const olxstr &p);
-
-  static const olxstr& AllFilesMask() {
-    static olxstr m = "*.*";
-    return m;
-  };
-
-  static const_cstrlist ReadCLines(const olxstr &fn) {
-    TCStrList l;
-    TEFile f(fn, "rb");
-    return l.LoadFromTextStream(f);
-  }
-  static const_wstrlist ReadWLines(const olxstr &fn) {
-    TWStrList l;
-    TEFile f(fn, "rb");
-    return l.LoadFromTextStream(f);
-  }
-  static const_strlist ReadLines(const olxstr &fn) {
-    TStrList l;
-    TEFile f(fn, "rb");
-    return l.LoadFromTextStream(f);
-  }
-  template <class list_t>
-  static void ReadLines(const olxstr &fn, list_t &l) {
-    TEFile f(fn, "rb");
-    l.LoadFromTextStream(f);
-  }
-  template <class str_t>
-  static const TTStrList<str_t> & WriteLines(const olxstr &fn,
-    const TTStrList<str_t> &lines)
-  {
-    TEFile out(fn, "wb");
-    return lines.SaveToTextStream(out);
-  }
+  
+  static const olxstr AllFilesMask;
 };
 
 EndEsdlNamespace()

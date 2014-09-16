@@ -104,7 +104,7 @@ TGlFont& TWGlScene::DoCreateFont(TGlFont& glf, bool half_size) const {
   Bmpi.bmiHeader.biSize = sizeof(Bmpi);
   HDC hDC = CreateCompatibleDC(NULL);
   HBITMAP Bmp = CreateCompatibleBitmap(hDC, ImageW, ImageW);
-  if( Bmp == NULL )
+  if( Bmp == NULL ) 
     throw TFunctionFailedException(__OlxSourceInfo, "NULL handle");
   HBRUSH Brush = CreateSolidBrush(0xffffff);
   SetTextColor(hDC, 0);
@@ -223,3 +223,4 @@ void TWGlScene::Destroy() {
 }
 //..............................................................................
 #endif // end Win32 section
+ 

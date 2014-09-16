@@ -48,7 +48,7 @@ namespace ctrl_ext  {
 
     DefPropC(olxstr, Data)
 
-      AOlxCtrl::ActionQueue &OnChange, &OnReturn, &OnLeave, &OnEnter,
+      AOlxCtrl::ActionQueue &OnChange, &OnReturn, &OnLeave, &OnEnter, 
         &OnClick, &OnChar, &OnKeyDown;
 
     DECLARE_CLASS(TTextEdit)

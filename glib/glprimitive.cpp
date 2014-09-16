@@ -96,7 +96,7 @@ void TGlPrimitive::SetType(short T)  {
   }
   if( Type == sgloDisk || Type == sgloDiskSlice ||
       Type == sgloCylinder || Type == sgloSphere ||
-      Type == sgloCommandList )
+      Type == sgloCommandList )  
     ListId = Renderer.NewListId();
 
 }
@@ -137,7 +137,7 @@ void TGlPrimitive::ListParams(TStrList &List)  {
       break;
     default:
       ParentCollection->ListParams(List, this);
-      break;
+      break;    
   }
 }
 //..............................................................................
@@ -323,7 +323,7 @@ void TGlPrimitive::Draw()  {
     for( size_t i=0; i < Vertices.Count(); i++ )
       DrawVertex(Vertices[i]);
     olx_gl::end();
-    if( LW != 0 )
+    if( LW != 0 ) 
       olx_gl::lineWidth(LW);
   }
   else if( Type == sgloLineLoop )  {
@@ -595,3 +595,4 @@ void TGlPrimitive::MakeOctahedron(double sz) {
   TriangularFromEdges(&edges[0], 6, sz, faces);
 }
 //..............................................................................
+

@@ -18,7 +18,7 @@
 template <class IC, class AssociatedOC> class TEGraphNode : ACollectionItem  {
   IC Data;
   typedef TEGraphNode<IC, AssociatedOC> NodeType;
-  typedef olx_pair_t<TSizeList,TSizeList> ConnInfo;
+  typedef AnAssociation2<TSizeList,TSizeList> ConnInfo;
   TPtrList<NodeType> Nodes;
   bool RingNode, Root;
   size_t GroupIndex;
@@ -62,21 +62,21 @@ protected:
           for (size_t k=0; k < conn.Count(); k++) {
             if (conn[k].GetB().Contains(i)) {
               if (!conn[k].GetA().Contains(j))
-                conn[k].a.Add(j);
+                conn[k].A().Add(j);
               found = true;
               break;
             }
             else if (conn[k].GetA().Contains(j)) {
               if (!conn[k].GetB().Contains(i))
-                conn[k].b.Add(i);
+                conn[k].B().Add(i);
               found = true;
               break;
             }
           }
           if (!found) {
             ConnInfo& ci = conn.AddNew();
-            ci.a.Add(j);
-            ci.b.Add(i);
+            ci.A().Add(j);
+            ci.B().Add(i);
           }
         }
       }
@@ -88,9 +88,9 @@ public:
     TTypeList<TSizeList>& res)
   {
     TSizeList permutation;
-    size_t total_perm = 1,
+    size_t total_perm = 1, 
         total_perm_size = 0,
-        perm_size = 0,
+        perm_size = 0, 
         group_size = 1;
     for( size_t i=0; i < conn.Count(); i++ )  {
       total_perm *= olx_factorial_t<size_t, size_t>(conn[i].GetA().Count());
@@ -137,7 +137,7 @@ public:
   bool IsMutable() const {  return Mutable;  }
   size_t GetGroupIndex() const {  return GroupIndex;  }
   void SetRingNode()  {  RingNode = true;  }
-
+  
   TEGraphNode& NewNode(const IC& Data, const AssociatedOC& obj)  {
     return *Nodes.Add(new TEGraphNode(Data, obj));
   }

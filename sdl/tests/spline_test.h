@@ -32,13 +32,13 @@ void spline_test(OlxTests& t)  {
   splines.Add("Cubic-periodic-2", Association::Create(&cubic, 0, 0.0));
   splines.Add("Catmull-Rom, t=0.5", Association::Create(&catmull_rom, 0, 0.1));
   for( size_t si = 0; si < splines.Count(); si++ )  {
-    Spline3<FT>* sp = splines.GetValue(si).a;
+    Spline3<FT>* sp = splines.GetValue(si).A();
     for( size_t i=1; i < 200; i++ )  {
       const double x = M_PI*i/50;
       if( !sp->periodic && x >= 2*M_PI )
         continue;
-      splines.GetValue(si).b++;
-      splines.GetValue(si).c += olx_sqr(sp->interpolate(x)-f(x));
+      splines.GetValue(si).B()++;
+      splines.GetValue(si).C() += olx_sqr(sp->interpolate(x)-f(x));
     }
   }
   for( size_t si = 0; si < splines.Count(); si++ )  {

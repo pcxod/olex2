@@ -36,11 +36,9 @@ extern const olxwstr &WFalseString();
 extern const olxwstr &WTrueString();
 #endif
 
-template <bool CaseInsensetive> class olxstrComparator {
+template <bool CaseInsensetive> class olxstrComparator  {
 public:
-  olxstrComparator() {}
-  template <class S1, class S2>
-  inline int Compare(const S1& A, const S2& B) const {
+  template <class S1, class S2>  static inline int Compare(const S1& A, const S2& B)  {
     return CaseInsensetive ? A.Comparei(B): A.Compare(B);
   }
 };

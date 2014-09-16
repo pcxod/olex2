@@ -14,165 +14,164 @@ BeginEsdlNamespace()
 
 namespace sorted {
 
-  /* The function assumes that there are at least two elements in the list and
-  that the given entity is greater that the first ans smalelr that the last
-  entry.
-  */
   template <class ListClass, class Comparator, typename TypeClass>
   size_t FindInsertIndex(const ListClass &list, const Comparator &cmp,
     const TypeClass &entity)
   {
     size_t from = 0, to = list.Count()-1;
-    while ((to - from) != 1) {
-      const size_t index = from + (to - from) / 2;
+    while( true )  {
+      if( (to-from) == 1 )  return to;
+      const size_t index = (to+from)/2;
       const int cr = cmp.Compare(list[index], entity);
-      if (cr < 0)
+      if( cr < 0 )  
         from = index;
-      else if (cr > 0)
-        to  = index;
-      else
-        return index;
-    }
-    return to;
-  }
-
-  /* The function assumes that there are at least two elements in the list and
-  that the given entity is greater that the first ans smalelr that the last
-  entry.
-  */
-  template <class ListClass, class Comparator, typename TypeClass>
-  olx_pair_t<size_t, bool> FindInsertIndexEx(const ListClass &list,
-    const Comparator &cmp, const TypeClass &entity)
-  {
-    size_t from = 0, to = list.Count() - 1;
-    while ((to - from) != 1) {
-      const size_t index = from + (to - from) / 2;
-      const int cr = cmp.Compare(list[index], entity);
-      if (cr < 0)
-        from = index;
-      else if (cr > 0)
-        to  = index;
-      else {
-        return olx_pair::Make(index, true);
+      else  {
+        if( cr > 0 )  
+          to  = index;
+        else
+          if( cr == 0 )  
+            return index;  
       }
     }
-    if (cmp.Compare(list[from], entity) == 0) {
-      return olx_pair::Make(from, true);
+    return InvalidIndex;  // should never happen - infinite loop above!
+  }
+
+  template <class ListClass, class Comparator, typename TypeClass>
+  size_t FindInsertIndexEx(const ListClass &list, const Comparator &cmp,
+    const TypeClass &entity, bool &exists)
+  {
+    size_t from = 0, to = list.Count()-1;
+    while( true )  {
+      if( (to-from) == 1 )  {  
+        if( cmp.Compare(list[from], entity) == 0 )  {
+          exists = true;
+          return from;
+        }
+        else if( cmp.Compare(list[to], entity) == 0 )  {
+          exists = true;
+          return to;
+        }
+        else
+          return to;
+      }
+      const size_t index = (to+from)/2;
+      const int cr = cmp.Compare(list[index], entity);
+      if( cr < 0 )  
+        from = index;
+      else  {
+        if( cr > 0 )  
+          to  = index;
+        else
+          if( cr == 0 )  {  
+            exists = true;  
+            return index;  
+          }
+      }
     }
-    else if (cmp.Compare(list[to], entity) == 0) {
-      return olx_pair::Make(to, true);
-    }
-    return olx_pair::Make(to, false);
+    return InvalidIndex;  // should never happen - infinite loop above!
   }
 
   template <class ListClass, class Comparator, typename KeyC>
   size_t FindIndexOf(const ListClass &list, const Comparator &cmp,
     const KeyC &entity)
   {
-    const size_t lc = list.Count();
-    if (lc == 0) return InvalidIndex;
-    if (lc == 1)
-      return cmp.Compare(list[0], entity) == 0 ? 0 : InvalidIndex;
-    size_t from = 0, to = lc-1;
+    if( list.Count() == 0 )  return InvalidIndex;
+    if( list.Count() == 1 )  
+      return cmp.Compare(list[0],entity) == 0 ? 0 : InvalidIndex;
+    size_t from = 0, to = list.Count()-1;
     const int from_cr = cmp.Compare(list[from], entity);
-    if (from_cr == 0) return from;
-    if (from_cr > 0) return InvalidIndex;
+    if( from_cr == 0 )  return from;
+    if( from_cr > 0  )  return InvalidIndex;
     const int to_cr = cmp.Compare(list[to], entity);
-    if (to_cr == 0) return to;
-    if (to_cr < 0) return InvalidIndex;
-    while((to-from) > 1) {
-      const size_t index = from + (to - from) / 2;
+    if( to_cr == 0 )  return to;
+    if( to_cr < 0  )  return InvalidIndex;
+    while( true ) {
+      const size_t index = (to+from)/2;
+      if( index == from || index == to)  
+        return InvalidIndex;
       const int cr = cmp.Compare(list[index], entity);
-      if (cr < 0)
+      if( cr < 0 )  
         from = index;
-      else if (cr > 0)
-        to  = index;
-      else
-        return index;
+      else  {
+        if( cr > 0 )  
+          to  = index;
+        else  {
+          if( cr == 0 )  
+            return index;
+        }
+      }
     }
     return InvalidIndex;
   }
 
   template <class ListClass, class Comparator, typename TypeClass>
-  size_t Add(ListClass &list, const Comparator &cmp, TypeClass entry) {
-    const size_t lc = list.Count();
-    if (lc == 0) {
-      list.Add(entry);
-      return 0;
-    }
-    const int cmp_val0 = cmp.Compare(list[0], entry);
-    if (lc == 1) {
-      if (cmp_val0 < 0) {
-        list.Add(entry);
-        return 1;
-      }
-      else if (cmp_val0 > 0) {
-        list.Insert(0, entry);
-        return 0;
-      }
-      else {
-        list.Add(entry);
-        return 1;
-      }
+  size_t Add(ListClass &list, const Comparator &cmp, TypeClass entry)  {
+    if( list.Count() == 0 )  {  list.Add(entry);  return 0;  }
+    if( list.Count() == 1 )  {
+      const int cmp_val = cmp.Compare(list[0], entry);
+      if(  cmp_val < 0 )     {  list.Add(entry);  return 1;  }
+      else if( cmp_val > 0 ) {  list.Insert(0, entry);  return 0;  }
+      else                   {  list.Add(entry);  return 1;  }
     }
     // smaller than the first
-    if (cmp_val0 >= 0) {
+    if( cmp.Compare(list[0], entry) >=0  )  {
       list.Insert(0, entry);
       return 0;
     }
     // larger than the last
-    if (cmp.Compare(list.GetLast(), entry) <=0) {
+    if( cmp.Compare(list.GetLast(), entry) <=0 )  {
       list.Add(entry);
-      return lc;
+      return list.Count()-1;
     }
     // an easy case then with two items
-    if (lc == 2) {
-      list.Insert(1, entry);
-      return 1;
-    }
+    if( list.Count() == 2 )  {  list.Insert(1, entry);  return 1; }
     const size_t pos = FindInsertIndex(list, cmp, entry);
     list.Insert(pos, entry);
     return pos;
   }
 
   template <class ListClass, class Comparator, typename TypeClass>
-  olx_pair_t<size_t, bool> AddUnique(ListClass &list, const Comparator &cmp,
-    TypeClass entry)
+  bool AddUnique(ListClass &list, const Comparator &cmp,
+    TypeClass entry, size_t *pos=NULL)
   {
-    const size_t lc = list.Count();
-    if (lc == 0) {
-      list.Add(entry);
-      return olx_pair::Make(0, true);
+    if( list.Count() == 0 )  {  
+      list.Add(entry);  
+      if( pos != NULL )  *pos = 0;
+      return true;  
     }
-    const int cmp_val0 = cmp.Compare(list[0], entry);
-    if (lc == 1) {
-      if (cmp_val0 < 0) {
-        list.Add(entry);
-        return olx_pair::Make(1, true);
+    if( list.Count() == 1 )  {
+      const int cmp_val = cmp.Compare(list[0], entry);
+      if(  cmp_val < 0 )  {  
+        list.Add(entry);  
+        if( pos != NULL )  *pos = 1;
+        return true;  
       }
-      else if (cmp_val0 > 0) {
-        list.Insert(0, entry);
-        return olx_pair::Make(0, true);
+      else if( cmp_val > 0 )  {  
+        list.Insert(0, entry);  
+        if( pos != NULL )  *pos = 0;      
+        return true;  
       }
-      else {
-        return olx_pair::Make(0, false);
+      else  {  
+        if( pos != NULL )  *pos = 0;
+        return false;  
       }
     }
-    if (cmp_val0 > 0) {  // smaller than the first
-      list.Insert(0, entry);
-      return olx_pair::Make(0, true);
+    if( cmp.Compare(list[0],entry) > 0 )  {  // smaller than the first
+      list.Insert(0, entry);  
+      if( pos != NULL )  *pos = 0;
+      return true; 
     }
-    // larger than the last
-    if (cmp.Compare(list.GetLast(), entry) < 0) {
-      list.Add(entry);
-      return olx_pair::Make(lc, true);
+    if( cmp.Compare(list.GetLast(), entry) < 0 )  {  // larger than the last
+      list.Add(entry);  
+      if( pos != NULL ) *pos = list.Count()-1;
+      return true; 
     }
-    olx_pair_t<size_t, bool> ps = FindInsertIndexEx(list, cmp, entry);
-    if (!(ps.b = !ps.b)) {
-      return ps;
-    }
-    list.Insert(ps.a, entry);
-    return ps;
+    bool exists = false;
+    size_t ps = FindInsertIndexEx(list, cmp, entry, exists);
+    if( pos != NULL )  *pos = ps;
+    if( exists )  return false;
+    list.Insert(ps, entry);
+    return true;
   }
 }  // end namespace sorted
 

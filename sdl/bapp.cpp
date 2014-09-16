@@ -28,11 +28,10 @@ UseEsdlNamespace()
 TBasicApp* TBasicApp::Instance = NULL;
 
 TBasicApp::TBasicApp(const olxstr& FileName, bool read_options)
-  : OnProgress(ActionList.New("PROGRESS")),
-    OnTimer(ActionList.New("TIMER")),
-    OnIdle(ActionList.New("IDLE"))
+  : OnProgress(Actions.New("PROGRESS")),
+    OnTimer(Actions.New("TIMER")), OnIdle(Actions.New("IDLE"))
 {
-  if (Instance != NULL) {
+  if( Instance != NULL ) {
     throw TFunctionFailedException(__OlxSourceInfo,
       "an application instance already exists");
   }
@@ -54,7 +53,6 @@ TBasicApp::TBasicApp(const olxstr& FileName, bool read_options)
   SetBaseDir(FileName);
   if (read_options)
     ReadOptions(GetBaseDir() + ".options");
-  OnIdle.Add(new TActionHandler());
 }
 //..............................................................................
 TBasicApp::~TBasicApp()  {
@@ -99,7 +97,8 @@ const olxstr &TBasicApp::GetModuleMD5Hash() {
   bool do_calculate = true;
   olxstr last_dg_fn = GetInstanceDir() + "app.md5";
   if (TEFile::Exists(last_dg_fn)) {
-    TCStrList l = TEFile::ReadCLines(last_dg_fn);
+    TCStrList l;
+    l.LoadFromFile(last_dg_fn);
     if (l.Count() > 3) {
       TEFile::FileID fd = TEFile::GetFileID(name);
       if (l[0] == name &&
@@ -121,7 +120,7 @@ const olxstr &TBasicApp::GetModuleMD5Hash() {
       l << fd.size;
       l << fd.timestamp;
       l << Digest;
-      TEFile::WriteLines(last_dg_fn, l);
+      l.SaveToFile(last_dg_fn);
     }
     catch (const TExceptionBase &e) {
       TBasicApp::NewLogEntry(logExceptionTrace) << e;
@@ -240,13 +239,13 @@ const olxstr& TBasicApp::SetSharedDir(const olxstr& cd) {
 const olxstr& TBasicApp::GetSharedDir() {
   if( GetInstance().SharedDir.IsEmpty() )
     return GetInstance().BaseDir;
-  return GetInstance().SharedDir;
+  return GetInstance().SharedDir; 
 }
 //..............................................................................
 void TBasicApp::SetInstanceDir(const olxstr &d) {
   if (!TEFile::Exists(d))
     TEFile::MakeDirs(d);
-  InstanceDir = TEFile::AddPathDelimeter(d);
+  InstanceDir = TEFile::AddPathDelimeter(d); 
   //2013.06.25 - do it manually only!
   //// read user settings
   //if (!InstanceDir.Equals(BaseDir))
@@ -266,8 +265,10 @@ void TBasicApp::SetConfigdDir(const olxstr &cd) {
 }
 //..............................................................................
 TActionQueue& TBasicApp::NewActionQueue(const olxstr& Name) {
-  TActionQueue *aq = ActionList.Find(Name);
-  return (aq != 0) ? *aq : ActionList.New(Name);
+  if( Actions.Exists(Name) )
+    return *Actions.Find(Name);
+  else
+    return Actions.New(Name);
 }
 //..............................................................................
 bool TBasicApp::Is64BitCompilation() {
@@ -285,7 +286,7 @@ bool TBasicApp::Is64BitCompilation() {
   return false;
 }
 //..............................................................................
-olxstr TBasicApp::GetPlatformString_() const {
+olxstr TBasicApp::GetPlatformString()  {
   olxstr rv;
 #ifdef _WIN64
   rv << "WIN64";
@@ -360,28 +361,6 @@ void TBasicApp::CleanupLogs(const olxstr &dir_name) {
 void TBasicApp::ValidateArgs() const {
   if (!Arguments.IsEmpty())
     throw TFunctionFailedException(__OlxSourceInfo, "already initialised");
-}
-//..............................................................................
-void TBasicApp::PostAction(IOlxAction *a) {
-  olx_scope_cs cs_(TBasicApp::GetCriticalSection());
-  TBasicApp::GetInstance().Actions.Add(a);
-}
-//..............................................................................
-bool TBasicApp::TActionHandler::Execute(const IEObject *, const IEObject *,
-  TActionQueue *)
-{
-  olx_scope_cs cs_(TBasicApp::GetCriticalSection());
-  TBasicApp& app = TBasicApp::GetInstance();
-  bool update = !app.Actions.IsEmpty();
-  if (update) {
-    while (!app.Actions.IsEmpty()) {
-      IOlxAction &a = app.Actions.Release(0);
-      a.Run();
-      delete &a;
-    }
-    app.Update();
-  }
-  return true;
 }
 //..............................................................................
 //..............................................................................

@@ -95,7 +95,7 @@ protected:
   IProcessOutput& data;
 public:
   BufferedProcessOutput(bool thread_use) :
-      data(*(thread_use ?
+      data(*(thread_use ? 
         (IProcessOutput*)(new SynchronisedProcessOutput)
         : (IProcessOutput*)(new ProcessOutput)))
   {}
@@ -215,7 +215,7 @@ private:
   /* there could be many processes running at the same time, however only one
    *  process a time can be redirected (i.e. get input) and only one process to
    *  wait for... */
-  sorted::PointerPointer<AProcess> Processes;
+  SortedPtrList<AProcess, TPointerComparator> Processes;
   AProcess* Redirected, *Current, *Last;
 protected:
   IProcessHandler& OutputHandler;
@@ -251,7 +251,7 @@ public:
   }
   //..............................................................................
   ~ProcessManager()  {
-    TBasicApp::GetInstance().OnTimer.Remove(this);
+    TBasicApp::GetInstance().OnTimer.Remove(this); 
     for( size_t i=0; i < Processes.Count(); i++ )  {
       Processes[i]->OnTerminate.Clear();
       Processes[i]->Terminate();

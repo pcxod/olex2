@@ -48,7 +48,7 @@ TdlgUpdateOptions::TdlgUpdateOptions(TMainFrame *ParentFrame) :
     cbRepository->Append(uapi.AddTagPart(repos[i], true).u_str());
   cbRepository->SetValue(
     uapi.AddTagPart(uapi.GetSettings().repository, true).u_str());
-
+  
   cbQueryUpdate = new wxCheckBox(this, -1,
     wxT("Download updates automatically"));
   cbQueryUpdate->SetValue(!uapi.GetSettings().ask_for_update);

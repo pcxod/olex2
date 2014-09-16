@@ -73,7 +73,7 @@ namespace ctrl_ext  {
     virtual wxWindow* GetParent() const {  return wxBitmapButton::GetParent();  }
   public:
     TBmpButton(wxWindow* parent, wxWindowID id=-1, const wxBitmap& bitmap=wxNullBitmap,
-      const wxPoint& pos=wxDefaultPosition,
+      const wxPoint& pos=wxDefaultPosition, 
       const wxSize& size=wxDefaultSize, long style=wxBU_AUTODRAW) :
         wxBitmapButton(parent, -1, bitmap, pos, size, style),
         AButtonBase(this)  {}
@@ -127,7 +127,7 @@ namespace ctrl_ext  {
     void MouseMoveEvent(wxMouseEvent& event);
     void MouseEnterEvent(wxMouseEvent& event);
     void MouseLeaveEvent(wxMouseEvent& event);
-
+        
     DECLARE_EVENT_TABLE()
   };
 }; //end namespace ctrl_ext

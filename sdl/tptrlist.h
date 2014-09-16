@@ -23,8 +23,8 @@ template <class T> class TPtrList : public IEObject  {
   size_t FCount, FCapacity;
   size_t FIncrement;
   T **Items;
-  inline void Allocate() {
-    if (FCapacity == 0) {
+  inline void Allocate()  {
+    if( FCapacity == 0 )  {
       olx_free(Items);
       Items = NULL;
     }
@@ -32,12 +32,12 @@ template <class T> class TPtrList : public IEObject  {
       Items = olx_realloc<T*>(Items, FCapacity);
   }
 
-  void init(size_t size) {
+  void init(size_t size)  {
     FCount = size;
     FIncrement = 5;
     FCapacity = FCount;
     Items = NULL;
-    if (size != 0) {
+    if( size != 0 )  {
       Allocate();
       memset(Items, 0, FCapacity*sizeof(T*));
     }
@@ -94,7 +94,7 @@ public:
   }
 //..............................................................................
   //deletes the objects and clears the list
-  inline void Clear()  {
+  inline void Clear()  {  
     if( Items != NULL )  {
       olx_free(Items);
       Items = NULL;
@@ -235,7 +235,7 @@ public:
 //..............................................................................
   inline T*& AddUnique(T* pObj)  {
     const size_t ind = IndexOf(pObj);
-    if( ind != InvalidIndex )
+    if( ind != InvalidIndex )  
       return Items[ind];
     return Add(pObj);
   }
@@ -329,7 +329,7 @@ public:
     FCapacity = v;
     Allocate();
      // initialise the rest of items to NULL
-    memset(&Items[FCount], 0, (FCapacity-FCount)*sizeof(T*));
+    memset(&Items[FCount], 0, (FCapacity-FCount)*sizeof(T*)); 
     return *this;
   }
 //..............................................................................
@@ -491,27 +491,14 @@ public:
   }
 //..............................................................................
   template <class Functor> const TPtrList& ForEach(const Functor& f) const {
-    for (size_t i=0; i < FCount; i++)
+    for( size_t i=0; i < FCount; i++ )
       f.OnItem(*Items[i], i);
     return *this;
   }
 //..............................................................................
-  template <class Functor> ConstPtrList<T> Filter(const Functor& f) const {
-    TPtrList rv;
-    rv.SetCapacity(Count());
-    for (size_t i = 0; i < FCount; i++) {
-      if (f.OnItem(*Items[i], i)) {
-        rv.Add(Items[i]);
-      }
-    }
-    return rv.Fit();
-  }
-//..............................................................................
-  // make list capcity equal to its size
-  inline TPtrList& Fit() {
+  inline void Fit()  {
     FCapacity = FCount;
     Allocate();
-    return *this;
   }
 //..............................................................................
   inline size_t Count() const {  return FCount;  }
@@ -534,7 +521,7 @@ public:
 //..............................................................................
   size_t IndexOf(const T* val) const {
     for( size_t i=0; i < FCount; i++ )
-      if( Items[i] == val )
+      if( Items[i] == val )  
         return i;
     return InvalidIndex;
   }
@@ -542,7 +529,7 @@ public:
   size_t IndexOf(const T& val) const {
     const T* pv = &val;
     for( size_t i=0; i < FCount; i++ )
-      if( Items[i] == pv )
+      if( Items[i] == pv )  
         return i;
     return InvalidIndex;
   }
@@ -574,7 +561,6 @@ public:
     typedef T* list_item_type;
   };
   typedef T *list_item_type;
-  typedef ConstPtrList<T> const_list_type;
 };
 
 #ifndef __BORLANDC__

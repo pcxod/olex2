@@ -24,7 +24,7 @@ TXReflection::TXReflection(TGlRenderer& r, const olxstr& collectionName,
   Params().Resize(2);
   Params()[0] = (I - minI) / (maxI + olx_abs(minI));
   if( Params()[0] > 0 )
-    Params()[0] = sqrt(Params()[0]);
+    Params()[0] = sqrt(Params()[0]); 
 }
 //..............................................................................
 void TXReflection::Create(const olxstr& cName) {

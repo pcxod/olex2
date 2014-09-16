@@ -58,9 +58,9 @@ protected:
     struct Points3  {
       IsoPoint ps[3];
     };
-    typedef olxdict<int, Points3, TPrimitiveComparator> IsoPointListZ;  //x
-    typedef olxdict<int, IsoPointListZ*, TPrimitiveComparator> IsoPointListY;  //y
-    typedef olxdict<int, IsoPointListY*, TPrimitiveComparator> IsoPointListX;  //z
+    typedef TPSTypeList<int, Points3> IsoPointListZ;  //x
+    typedef TPSTypeList<int, IsoPointListZ*> IsoPointListY;  //y
+    typedef TPSTypeList<int, IsoPointListY*> IsoPointListX;  //z
     IsoPointListX Data;
     size_t Count;
   public:
@@ -71,23 +71,23 @@ protected:
       IsoPoint* ip;
       const size_t yi = Data.IndexOf(x);
       if( yi == InvalidIndex )  {
-        ip = &Data.Add(x, new IsoPointListY)->Add(y, new IsoPointListZ)->
-          Add(z, Points3()).ps[edgeId];
+        ip = &Data.Add(x, new IsoPointListY).Object->Add(y, new IsoPointListZ).
+          Object->Add(z, Points3()).Object.ps[edgeId]; 
       }
       else  {
-        IsoPointListY* ly = Data.GetValue(yi);
+        IsoPointListY* ly = Data.GetObject(yi);
         const size_t zi = ly->IndexOf(y);
         if( zi == InvalidIndex )  {
-          ip = &ly->Add(y, new IsoPointListZ)->Add(z, Points3()).ps[edgeId];
+          ip = &ly->Add(y, new IsoPointListZ).Object->Add(z, Points3()).Object.ps[edgeId]; 
         }
         else  {
-          IsoPointListZ* lz = ly->GetValue(zi);
+          IsoPointListZ* lz = ly->GetObject(zi);
           const size_t pi = lz->IndexOf(z);
           if( pi == InvalidIndex )  {
-            ip = &lz->Add(z, Points3()).ps[edgeId];
+            ip = &lz->Add(z, Points3()).Object.ps[edgeId]; 
           }
           else  {
-            ip = &lz->GetValue(pi).ps[edgeId];
+            ip = &lz->GetObject(pi).ps[edgeId];
           }
         }
       }
@@ -98,18 +98,18 @@ protected:
       Count++;
     }
     const IsoPoint& Get(int x, int y, int z, int extra) const {
-      return Data.Get(x)->Get(y)->Get(z).ps[extra];
+      return (*(*Data[x])[y])[z].ps[extra];
     }
     const IsoPoint& Get(uint32_t crd) const {
       int x, y, z, e;
       decode(crd, x, y, z, e);
-      return Data.Get(x)->Get(y)->Get(z).ps[e];
+      return (*(*Data[x])[y])[z].ps[e];
     }
     void Clear()  {
       for( size_t i=0; i < Data.Count(); i++ )  {
-        IsoPointListY* ly = Data.GetValue(i);
-        for( size_t j=0; j < ly->Count(); j++ )
-          delete ly->GetValue(j);
+        IsoPointListY* ly = Data.GetObject(i);
+        for( size_t j=0; j < ly->Count(); j++ ) 
+          delete ly->GetObject(j);
         delete ly;
       }
       Data.Clear();
@@ -119,11 +119,11 @@ protected:
       v.SetCount(Count);
       size_t ind = 0;
       for( size_t i=0; i < Data.Count(); i++ )  {
-        IsoPointListY* ly = Data.GetValue(i);
+        IsoPointListY* ly = Data.GetObject(i);
         for( size_t j=0; j < ly->Count(); j++ )  {
-          IsoPointListZ* lz = ly->GetValue(j);
+          IsoPointListZ* lz = ly->GetObject(j);
           for( size_t k=0; k < lz->Count(); k++ )  {
-            Points3& p = lz->GetValue(k);
+            Points3& p = lz->GetObject(k);
             for(int l=0; l < 3; l++ )  {
               if( p.ps[l].initialised )  {
                 p.ps[l].newID = ind;
@@ -147,7 +147,7 @@ protected:
         case 1:  y++;                    break; // (x,y+1,z)
         case 2:  x++;  extra = 1;        break;  // (x+1,y,z) + 1;
         case 3:                          break; // (x,y,z)
-        case 4:  z++;  extra = 1;        break;  // (x,y,z+1) + 1
+        case 4:  z++;  extra = 1;        break;  // (x,y,z+1) + 1 
         case 5:  y++;  z++;              break; //(x,y+1,z+1)
         case 6:  x++;  z++;  extra = 1;  break;  //(x+1,y,z+1) + 1
         case 7:  z++;                    break;  //(x,y,z+1)
@@ -166,7 +166,7 @@ protected:
         case 1:  y++;                    break; // (x,y+1,z)
         case 2:  x++;  extra = 1;        break;  // (x+1,y,z) + 1;
         case 3:                          break; // (x,y,z)
-        case 4:  z++;  extra = 1;        break;  // (x,y,z+1) + 1
+        case 4:  z++;  extra = 1;        break;  // (x,y,z+1) + 1 
         case 5:  y++;  z++;              break; //(x,y+1,z+1)
         case 6:  x++;  z++;  extra = 1;  break;  //(x+1,y,z+1) + 1
         case 7:  z++;                    break;  //(x,y,z+1)
@@ -177,8 +177,8 @@ protected:
         default: return ~0;         // Invalid edge no.
       }
       // max grid size is 1024x1024x1022
-      return (uint32_t)extra     |
-             (uint32_t)(x << 22) |
+      return (uint32_t)extra     | 
+             (uint32_t)(x << 22) | 
              (uint32_t)(y << 12) |
              (uint32_t)(z << 2);
     }

@@ -343,366 +343,366 @@ static const cm_Neutron_Scattering _cm_neutron_U238(8.402, 0, 2.68);
 static const cm_Neutron_Scattering _cm_neutron_Np(10.55, 0, 175.9);
 static const cm_Neutron_Scattering _cm_neutron_Am(8.3, 0, 75.3);
 static const cm_Isotope _cm_isotope_H[] = {
-  {1.007825, 0.99989, &_cm_neutron_H1},
+  {1.007825, 0.99989, &_cm_neutron_H1}, 
   {2.014102, 0.000115, &_cm_neutron_H2}};
 static const cm_Isotope _cm_isotope_He[] = {
-  {3.016029, 0.000001, &_cm_neutron_He3},
+  {3.016029, 0.000001, &_cm_neutron_He3}, 
   {4.002603, 0.999999, &_cm_neutron_He4}};
 static const cm_Isotope _cm_isotope_Li[] = {
-  {6.015121, 0.0759, &_cm_neutron_Li6},
+  {6.015121, 0.0759, &_cm_neutron_Li6}, 
   {7.016003, 0.9241, &_cm_neutron_Li7}};
 static const cm_Isotope _cm_isotope_Be[] = {
   {9.012182, 1, NULL}};
 static const cm_Isotope _cm_isotope_B[] = {
-  {10.012937, 0.199, &_cm_neutron_B10},
+  {10.012937, 0.199, &_cm_neutron_B10}, 
   {11.009305, 0.8022, &_cm_neutron_B11}};
 static const cm_Isotope _cm_isotope_C[] = {
-  {12, 0.9889, &_cm_neutron_C12},
+  {12, 0.9889, &_cm_neutron_C12}, 
   {13.003355, 0.0111, &_cm_neutron_C13}};
 static const cm_Isotope _cm_isotope_N[] = {
-  {14.003074, 0.99632, &_cm_neutron_N14},
+  {14.003074, 0.99632, &_cm_neutron_N14}, 
   {15.000109, 0.00368, &_cm_neutron_N15}};
 static const cm_Isotope _cm_isotope_O[] = {
-  {15.994915, 0.99757, &_cm_neutron_O16},
-  {16.999131, 0.00038, &_cm_neutron_O17},
+  {15.994915, 0.99757, &_cm_neutron_O16}, 
+  {16.999131, 0.00038, &_cm_neutron_O17}, 
   {17.99916, 0.00205, &_cm_neutron_O18}};
 static const cm_Isotope _cm_isotope_F[] = {
   {18.998403, 1, NULL}};
 static const cm_Isotope _cm_isotope_Ne[] = {
-  {19.992436, 0.9048, &_cm_neutron_Ne20},
-  {20.993843, 0.0027, &_cm_neutron_Ne21},
+  {19.992436, 0.9048, &_cm_neutron_Ne20}, 
+  {20.993843, 0.0027, &_cm_neutron_Ne21}, 
   {21.991383, 0.0925, &_cm_neutron_Ne22}};
 static const cm_Isotope _cm_isotope_Na[] = {
   {22.989768, 1, NULL}};
 static const cm_Isotope _cm_isotope_Mg[] = {
-  {23.985042, 0.7899, &_cm_neutron_Mg24},
-  {24.985837, 0.1, &_cm_neutron_Mg25},
+  {23.985042, 0.7899, &_cm_neutron_Mg24}, 
+  {24.985837, 0.1, &_cm_neutron_Mg25}, 
   {25.982594, 0.1101, &_cm_neutron_Mg26}};
 static const cm_Isotope _cm_isotope_Al[] = {
   {26.981539, 1, NULL}};
 static const cm_Isotope _cm_isotope_Si[] = {
-  {27.976927, 0.922297, &_cm_neutron_Si28},
-  {28.976495, 0.046832, &_cm_neutron_Si29},
+  {27.976927, 0.922297, &_cm_neutron_Si28}, 
+  {28.976495, 0.046832, &_cm_neutron_Si29}, 
   {29.973771, 0.030872, &_cm_neutron_Si30}};
 static const cm_Isotope _cm_isotope_P[] = {
   {30.973762, 1, NULL}};
 static const cm_Isotope _cm_isotope_S[] = {
-  {31.972071, 0.9493, &_cm_neutron_S32},
-  {32.971458, 0.0076, &_cm_neutron_S33},
-  {33.967867, 0.0429, &_cm_neutron_S34},
+  {31.972071, 0.9493, &_cm_neutron_S32}, 
+  {32.971458, 0.0076, &_cm_neutron_S33}, 
+  {33.967867, 0.0429, &_cm_neutron_S34}, 
   {35.967081, 0.0002, &_cm_neutron_S36}};
 static const cm_Isotope _cm_isotope_Cl[] = {
-  {34.968853, 0.7578, &_cm_neutron_Cl35},
+  {34.968853, 0.7578, &_cm_neutron_Cl35}, 
   {36.965903, 0.2422, &_cm_neutron_Cl37}};
 static const cm_Isotope _cm_isotope_Ar[] = {
-  {35.967546, 0.003365, &_cm_neutron_Ar36},
-  {37.962733, 0.000632, &_cm_neutron_Ar38},
+  {35.967546, 0.003365, &_cm_neutron_Ar36}, 
+  {37.962733, 0.000632, &_cm_neutron_Ar38}, 
   {39.962384, 0.996003, &_cm_neutron_Ar40}};
 static const cm_Isotope _cm_isotope_K[] = {
-  {38.963707, 0.932581, &_cm_neutron_K39},
-  {39.963999, 0.000117, &_cm_neutron_K40},
+  {38.963707, 0.932581, &_cm_neutron_K39}, 
+  {39.963999, 0.000117, &_cm_neutron_K40}, 
   {40.961825, 0.067302, &_cm_neutron_K41}};
 static const cm_Isotope _cm_isotope_Ca[] = {
-  {39.962591, 0.96941, &_cm_neutron_Ca40},
-  {41.958618, 0.00647, &_cm_neutron_Ca42},
-  {42.958766, 0.00135, &_cm_neutron_Ca43},
-  {43.955481, 0.02086, &_cm_neutron_Ca44},
-  {45.953689, 0.00004, &_cm_neutron_Ca46},
+  {39.962591, 0.96941, &_cm_neutron_Ca40}, 
+  {41.958618, 0.00647, &_cm_neutron_Ca42}, 
+  {42.958766, 0.00135, &_cm_neutron_Ca43}, 
+  {43.955481, 0.02086, &_cm_neutron_Ca44}, 
+  {45.953689, 0.00004, &_cm_neutron_Ca46}, 
   {47.952533, 0.00187, &_cm_neutron_Ca48}};
 static const cm_Isotope _cm_isotope_Sc[] = {
   {44.95591, 1, NULL}};
 static const cm_Isotope _cm_isotope_Ti[] = {
-  {45.952629, 0.0825, &_cm_neutron_Ti46},
-  {46.951764, 0.0744, &_cm_neutron_Ti47},
-  {47.947947, 0.7372, &_cm_neutron_Ti48},
-  {48.947871, 0.0541, &_cm_neutron_Ti49},
+  {45.952629, 0.0825, &_cm_neutron_Ti46}, 
+  {46.951764, 0.0744, &_cm_neutron_Ti47}, 
+  {47.947947, 0.7372, &_cm_neutron_Ti48}, 
+  {48.947871, 0.0541, &_cm_neutron_Ti49}, 
   {49.944792, 0.0518, &_cm_neutron_Ti50}};
 static const cm_Isotope _cm_isotope_V[] = {
-  {49.947161, 0.0025, &_cm_neutron_V50},
+  {49.947161, 0.0025, &_cm_neutron_V50}, 
   {50.943962, 0.9975, &_cm_neutron_V51}};
 static const cm_Isotope _cm_isotope_Cr[] = {
-  {49.946046, 0.04345, &_cm_neutron_Cr50},
-  {51.94051, 0.83789, &_cm_neutron_Cr52},
-  {52.940651, 0.09501, &_cm_neutron_Cr53},
+  {49.946046, 0.04345, &_cm_neutron_Cr50}, 
+  {51.94051, 0.83789, &_cm_neutron_Cr52}, 
+  {52.940651, 0.09501, &_cm_neutron_Cr53}, 
   {53.938882, 0.02365, &_cm_neutron_Cr54}};
 static const cm_Isotope _cm_isotope_Mn[] = {
   {54.938047, 1, NULL}};
 static const cm_Isotope _cm_isotope_Fe[] = {
-  {53.939613, 0.05845, &_cm_neutron_Fe54},
-  {55.934939, 0.91754, &_cm_neutron_Fe56},
-  {56.935396, 0.02119, &_cm_neutron_Fe57},
+  {53.939613, 0.05845, &_cm_neutron_Fe54}, 
+  {55.934939, 0.91754, &_cm_neutron_Fe56}, 
+  {56.935396, 0.02119, &_cm_neutron_Fe57}, 
   {57.933277, 0.00282, &_cm_neutron_Fe58}};
 static const cm_Isotope _cm_isotope_Co[] = {
   {58.933198, 1, NULL}};
 static const cm_Isotope _cm_isotope_Ni[] = {
-  {57.935346, 0.680769, &_cm_neutron_Ni58},
-  {59.930788, 0.26223, &_cm_neutron_Ni60},
-  {60.931058, 0.011399, &_cm_neutron_Ni61},
-  {61.928346, 0.036345, &_cm_neutron_Ni62},
+  {57.935346, 0.680769, &_cm_neutron_Ni58}, 
+  {59.930788, 0.26223, &_cm_neutron_Ni60}, 
+  {60.931058, 0.011399, &_cm_neutron_Ni61}, 
+  {61.928346, 0.036345, &_cm_neutron_Ni62}, 
   {63.927968, 0.009256, &_cm_neutron_Ni64}};
 static const cm_Isotope _cm_isotope_Cu[] = {
-  {62.929599, 0.6917, &_cm_neutron_Cu63},
+  {62.929599, 0.6917, &_cm_neutron_Cu63}, 
   {64.927793, 0.3083, &_cm_neutron_Cu65}};
 static const cm_Isotope _cm_isotope_Zn[] = {
-  {63.929145, 0.4863, &_cm_neutron_Zn64},
-  {65.926035, 0.279, &_cm_neutron_Zn66},
-  {66.927129, 0.041, &_cm_neutron_Zn67},
-  {67.924846, 0.1875, &_cm_neutron_Zn68},
+  {63.929145, 0.4863, &_cm_neutron_Zn64}, 
+  {65.926035, 0.279, &_cm_neutron_Zn66}, 
+  {66.927129, 0.041, &_cm_neutron_Zn67}, 
+  {67.924846, 0.1875, &_cm_neutron_Zn68}, 
   {69.925325, 0.0062, &_cm_neutron_Zn70}};
 static const cm_Isotope _cm_isotope_Ga[] = {
-  {68.92558, 0.60108, &_cm_neutron_Ga69},
+  {68.92558, 0.60108, &_cm_neutron_Ga69}, 
   {70.924701, 0.39892, &_cm_neutron_Ga71}};
 static const cm_Isotope _cm_isotope_Ge[] = {
-  {69.92425, 0.2084, &_cm_neutron_Ge70},
-  {71.922079, 0.2754, &_cm_neutron_Ge72},
-  {72.923463, 0.0773, &_cm_neutron_Ge73},
-  {73.921177, 0.3628, &_cm_neutron_Ge74},
+  {69.92425, 0.2084, &_cm_neutron_Ge70}, 
+  {71.922079, 0.2754, &_cm_neutron_Ge72}, 
+  {72.923463, 0.0773, &_cm_neutron_Ge73}, 
+  {73.921177, 0.3628, &_cm_neutron_Ge74}, 
   {75.921402, 0.0761, &_cm_neutron_Ge76}};
 static const cm_Isotope _cm_isotope_As[] = {
   {74.921594, 1, NULL}};
 static const cm_Isotope _cm_isotope_Se[] = {
-  {73.922475, 0.0089, &_cm_neutron_Se74},
-  {75.919212, 0.0937, &_cm_neutron_Se76},
-  {76.919912, 0.0763, &_cm_neutron_Se77},
-  {77.917308, 0.2377, &_cm_neutron_Se78},
-  {79.91652, 0.4961, &_cm_neutron_Se80},
+  {73.922475, 0.0089, &_cm_neutron_Se74}, 
+  {75.919212, 0.0937, &_cm_neutron_Se76}, 
+  {76.919912, 0.0763, &_cm_neutron_Se77}, 
+  {77.917308, 0.2377, &_cm_neutron_Se78}, 
+  {79.91652, 0.4961, &_cm_neutron_Se80}, 
   {81.916698, 0.0873, &_cm_neutron_Se82}};
 static const cm_Isotope _cm_isotope_Br[] = {
-  {78.918336, 0.5069, &_cm_neutron_Br79},
+  {78.918336, 0.5069, &_cm_neutron_Br79}, 
   {80.916289, 0.4931, &_cm_neutron_Br81}};
 static const cm_Isotope _cm_isotope_Kr[] = {
-  {77.920396, 0.0035, NULL},
-  {79.91638, 0.0228, NULL},
-  {81.913482, 0.1158, NULL},
-  {82.914135, 0.1149, NULL},
-  {83.911507, 0.57, NULL},
+  {77.920396, 0.0035, NULL}, 
+  {79.91638, 0.0228, NULL}, 
+  {81.913482, 0.1158, NULL}, 
+  {82.914135, 0.1149, NULL}, 
+  {83.911507, 0.57, NULL}, 
   {85.910616, 0.173, &_cm_neutron_Kr86}};
 static const cm_Isotope _cm_isotope_Rb[] = {
-  {84.911794, 0.7217, &_cm_neutron_Rb85},
+  {84.911794, 0.7217, &_cm_neutron_Rb85}, 
   {86.909187, 0.2783, &_cm_neutron_Rb87}};
 static const cm_Isotope _cm_isotope_Sr[] = {
-  {83.91343, 0.0056, &_cm_neutron_Sr84},
-  {85.909267, 0.0986, &_cm_neutron_Sr86},
-  {86.908884, 0.07, &_cm_neutron_Sr87},
+  {83.91343, 0.0056, &_cm_neutron_Sr84}, 
+  {85.909267, 0.0986, &_cm_neutron_Sr86}, 
+  {86.908884, 0.07, &_cm_neutron_Sr87}, 
   {87.905619, 0.8258, &_cm_neutron_Sr88}};
 static const cm_Isotope _cm_isotope_Y[] = {
   {89.905849, 1, NULL}};
 static const cm_Isotope _cm_isotope_Zr[] = {
-  {89.904703, 0.5145, &_cm_neutron_Zr90},
-  {90.905644, 0.1122, &_cm_neutron_Zr91},
-  {91.905039, 0.1715, &_cm_neutron_Zr92},
-  {93.906315, 0.1738, &_cm_neutron_Zr94},
+  {89.904703, 0.5145, &_cm_neutron_Zr90}, 
+  {90.905644, 0.1122, &_cm_neutron_Zr91}, 
+  {91.905039, 0.1715, &_cm_neutron_Zr92}, 
+  {93.906315, 0.1738, &_cm_neutron_Zr94}, 
   {95.908275, 0.028, &_cm_neutron_Zr96}};
 static const cm_Isotope _cm_isotope_Nb[] = {
   {92.906377, 1, NULL}};
 static const cm_Isotope _cm_isotope_Mo[] = {
-  {91.906809, 0.1484, &_cm_neutron_Mo92},
-  {93.905085, 0.0925, &_cm_neutron_Mo94},
-  {94.905841, 0.1592, &_cm_neutron_Mo95},
-  {95.904679, 0.1668, &_cm_neutron_Mo96},
-  {96.90602, 0.0955, &_cm_neutron_Mo97},
-  {97.905407, 0.2413, &_cm_neutron_Mo98},
+  {91.906809, 0.1484, &_cm_neutron_Mo92}, 
+  {93.905085, 0.0925, &_cm_neutron_Mo94}, 
+  {94.905841, 0.1592, &_cm_neutron_Mo95}, 
+  {95.904679, 0.1668, &_cm_neutron_Mo96}, 
+  {96.90602, 0.0955, &_cm_neutron_Mo97}, 
+  {97.905407, 0.2413, &_cm_neutron_Mo98}, 
   {99.907477, 0.0963, &_cm_neutron_Mo100}};
 static const cm_Isotope _cm_isotope_Ru[] = {
-  {95.907599, 0.0554, NULL},
-  {97.905287, 0.0187, NULL},
-  {98.905939, 0.1276, NULL},
-  {99.904219, 0.126, NULL},
-  {100.905582, 0.1706, NULL},
-  {101.904349, 0.3155, NULL},
+  {95.907599, 0.0554, NULL}, 
+  {97.905287, 0.0187, NULL}, 
+  {98.905939, 0.1276, NULL}, 
+  {99.904219, 0.126, NULL}, 
+  {100.905582, 0.1706, NULL}, 
+  {101.904349, 0.3155, NULL}, 
   {103.905424, 0.1862, NULL}};
 static const cm_Isotope _cm_isotope_Rh[] = {
   {102.9055, 1, NULL}};
 static const cm_Isotope _cm_isotope_Pd[] = {
-  {101.905634, 0.0102, &_cm_neutron_Pd102},
-  {103.904029, 0.1114, &_cm_neutron_Pd104},
-  {104.905079, 0.2233, &_cm_neutron_Pd105},
-  {105.903478, 0.2733, &_cm_neutron_Pd106},
-  {107.903895, 0.2646, &_cm_neutron_Pd108},
+  {101.905634, 0.0102, &_cm_neutron_Pd102}, 
+  {103.904029, 0.1114, &_cm_neutron_Pd104}, 
+  {104.905079, 0.2233, &_cm_neutron_Pd105}, 
+  {105.903478, 0.2733, &_cm_neutron_Pd106}, 
+  {107.903895, 0.2646, &_cm_neutron_Pd108}, 
   {109.905167, 0.1172, &_cm_neutron_Pd110}};
 static const cm_Isotope _cm_isotope_Ag[] = {
-  {106.905092, 0.51839, &_cm_neutron_Ag107},
+  {106.905092, 0.51839, &_cm_neutron_Ag107}, 
   {108.904756, 0.48161, &_cm_neutron_Ag109}};
 static const cm_Isotope _cm_isotope_Cd[] = {
-  {105.906461, 0.0125, &_cm_neutron_Cd106},
-  {107.904176, 0.0089, &_cm_neutron_Cd108},
-  {109.903005, 0.1249, &_cm_neutron_Cd110},
-  {110.904182, 0.128, &_cm_neutron_Cd111},
-  {111.902757, 0.2413, &_cm_neutron_Cd112},
-  {112.9044, 0.1222, &_cm_neutron_Cd113},
-  {113.903357, 0.2873, &_cm_neutron_Cd114},
+  {105.906461, 0.0125, &_cm_neutron_Cd106}, 
+  {107.904176, 0.0089, &_cm_neutron_Cd108}, 
+  {109.903005, 0.1249, &_cm_neutron_Cd110}, 
+  {110.904182, 0.128, &_cm_neutron_Cd111}, 
+  {111.902757, 0.2413, &_cm_neutron_Cd112}, 
+  {112.9044, 0.1222, &_cm_neutron_Cd113}, 
+  {113.903357, 0.2873, &_cm_neutron_Cd114}, 
   {115.904755, 0.0749, &_cm_neutron_Cd116}};
 static const cm_Isotope _cm_isotope_In[] = {
-  {112.904061, 0.0429, &_cm_neutron_In113},
+  {112.904061, 0.0429, &_cm_neutron_In113}, 
   {114.903882, 0.9571, &_cm_neutron_In115}};
 static const cm_Isotope _cm_isotope_Sn[] = {
-  {111.904826, 0.0097, &_cm_neutron_Sn112},
-  {113.902784, 0.0066, &_cm_neutron_Sn114},
-  {114.903348, 0.0034, &_cm_neutron_Sn115},
-  {115.901747, 0.1454, &_cm_neutron_Sn116},
-  {116.902956, 0.0768, &_cm_neutron_Sn117},
-  {117.901609, 0.2422, &_cm_neutron_Sn118},
-  {118.903311, 0.0859, &_cm_neutron_Sn119},
-  {119.902199, 0.3258, &_cm_neutron_Sn120},
-  {121.90344, 0.0463, &_cm_neutron_Sn122},
+  {111.904826, 0.0097, &_cm_neutron_Sn112}, 
+  {113.902784, 0.0066, &_cm_neutron_Sn114}, 
+  {114.903348, 0.0034, &_cm_neutron_Sn115}, 
+  {115.901747, 0.1454, &_cm_neutron_Sn116}, 
+  {116.902956, 0.0768, &_cm_neutron_Sn117}, 
+  {117.901609, 0.2422, &_cm_neutron_Sn118}, 
+  {118.903311, 0.0859, &_cm_neutron_Sn119}, 
+  {119.902199, 0.3258, &_cm_neutron_Sn120}, 
+  {121.90344, 0.0463, &_cm_neutron_Sn122}, 
   {123.905274, 0.0579, &_cm_neutron_Sn124}};
 static const cm_Isotope _cm_isotope_Sb[] = {
-  {120.903821, 0.5721, &_cm_neutron_Sb121},
+  {120.903821, 0.5721, &_cm_neutron_Sb121}, 
   {122.904216, 0.4279, &_cm_neutron_Sb123}};
 static const cm_Isotope _cm_isotope_Te[] = {
-  {119.904048, 0.0009, &_cm_neutron_Te120},
-  {121.90305, 0.0255, &_cm_neutron_Te122},
-  {122.904271, 0.0089, &_cm_neutron_Te123},
-  {123.902818, 0.0474, &_cm_neutron_Te124},
-  {124.904428, 0.0707, &_cm_neutron_Te125},
-  {125.90331, 0.1884, &_cm_neutron_Te126},
-  {127.904463, 0.3174, &_cm_neutron_Te128},
+  {119.904048, 0.0009, &_cm_neutron_Te120}, 
+  {121.90305, 0.0255, &_cm_neutron_Te122}, 
+  {122.904271, 0.0089, &_cm_neutron_Te123}, 
+  {123.902818, 0.0474, &_cm_neutron_Te124}, 
+  {124.904428, 0.0707, &_cm_neutron_Te125}, 
+  {125.90331, 0.1884, &_cm_neutron_Te126}, 
+  {127.904463, 0.3174, &_cm_neutron_Te128}, 
   {129.906229, 0.3408, &_cm_neutron_Te130}};
 static const cm_Isotope _cm_isotope_I[] = {
   {126.904473, 1, NULL}};
 static const cm_Isotope _cm_isotope_Xe[] = {
-  {123.905894, 0.0009, NULL},
-  {125.904281, 0.0009, NULL},
-  {127.903531, 0.0192, NULL},
-  {128.90478, 0.2644, NULL},
-  {129.903509, 0.0408, NULL},
-  {130.905072, 0.2118, NULL},
-  {131.904144, 0.2689, NULL},
-  {133.905395, 0.1044, NULL},
+  {123.905894, 0.0009, NULL}, 
+  {125.904281, 0.0009, NULL}, 
+  {127.903531, 0.0192, NULL}, 
+  {128.90478, 0.2644, NULL}, 
+  {129.903509, 0.0408, NULL}, 
+  {130.905072, 0.2118, NULL}, 
+  {131.904144, 0.2689, NULL}, 
+  {133.905395, 0.1044, NULL}, 
   {135.907214, 0.0887, NULL}};
 static const cm_Isotope _cm_isotope_Cs[] = {
   {132.905429, 1, NULL}};
 static const cm_Isotope _cm_isotope_Ba[] = {
-  {129.906282, 0.00106, &_cm_neutron_Ba130},
-  {131.905042, 0.00101, &_cm_neutron_Ba132},
-  {133.904486, 0.02417, &_cm_neutron_Ba134},
-  {134.905665, 0.06592, &_cm_neutron_Ba135},
-  {135.904553, 0.07854, &_cm_neutron_Ba136},
-  {136.905812, 0.11232, &_cm_neutron_Ba137},
+  {129.906282, 0.00106, &_cm_neutron_Ba130}, 
+  {131.905042, 0.00101, &_cm_neutron_Ba132}, 
+  {133.904486, 0.02417, &_cm_neutron_Ba134}, 
+  {134.905665, 0.06592, &_cm_neutron_Ba135}, 
+  {135.904553, 0.07854, &_cm_neutron_Ba136}, 
+  {136.905812, 0.11232, &_cm_neutron_Ba137}, 
   {137.905232, 0.71698, &_cm_neutron_Ba138}};
 static const cm_Isotope _cm_isotope_La[] = {
-  {137.907105, 0.0009, &_cm_neutron_La138},
+  {137.907105, 0.0009, &_cm_neutron_La138}, 
   {138.906347, 0.9991, &_cm_neutron_La139}};
 static const cm_Isotope _cm_isotope_Ce[] = {
-  {135.90714, 0.00185, &_cm_neutron_Ce136},
-  {137.905985, 0.00251, &_cm_neutron_Ce138},
-  {139.905433, 0.8845, &_cm_neutron_Ce140},
+  {135.90714, 0.00185, &_cm_neutron_Ce136}, 
+  {137.905985, 0.00251, &_cm_neutron_Ce138}, 
+  {139.905433, 0.8845, &_cm_neutron_Ce140}, 
   {141.909241, 0.11114, &_cm_neutron_Ce142}};
 static const cm_Isotope _cm_isotope_Pr[] = {
   {140.907647, 1, NULL}};
 static const cm_Isotope _cm_isotope_Nd[] = {
-  {141.907719, 0.272, &_cm_neutron_Nd142},
-  {142.90981, 0.122, &_cm_neutron_Nd143},
-  {143.910083, 0.238, &_cm_neutron_Nd144},
-  {144.91257, 0.083, &_cm_neutron_Nd145},
-  {145.913113, 0.172, &_cm_neutron_Nd146},
-  {147.916889, 0.057, &_cm_neutron_Nd148},
+  {141.907719, 0.272, &_cm_neutron_Nd142}, 
+  {142.90981, 0.122, &_cm_neutron_Nd143}, 
+  {143.910083, 0.238, &_cm_neutron_Nd144}, 
+  {144.91257, 0.083, &_cm_neutron_Nd145}, 
+  {145.913113, 0.172, &_cm_neutron_Nd146}, 
+  {147.916889, 0.057, &_cm_neutron_Nd148}, 
   {149.920887, 0.056, &_cm_neutron_Nd150}};
 static const cm_Isotope _cm_isotope_Sm[] = {
-  {143.911998, 0.0307, &_cm_neutron_Sm144},
-  {146.914894, 0.1499, &_cm_neutron_Sm147},
-  {147.914819, 0.1124, &_cm_neutron_Sm148},
-  {148.91718, 0.1382, &_cm_neutron_Sm149},
-  {149.917273, 0.0738, &_cm_neutron_Sm150},
-  {151.919728, 0.2675, &_cm_neutron_Sm152},
+  {143.911998, 0.0307, &_cm_neutron_Sm144}, 
+  {146.914894, 0.1499, &_cm_neutron_Sm147}, 
+  {147.914819, 0.1124, &_cm_neutron_Sm148}, 
+  {148.91718, 0.1382, &_cm_neutron_Sm149}, 
+  {149.917273, 0.0738, &_cm_neutron_Sm150}, 
+  {151.919728, 0.2675, &_cm_neutron_Sm152}, 
   {153.922205, 0.2275, &_cm_neutron_Sm154}};
 static const cm_Isotope _cm_isotope_Eu[] = {
-  {150.919702, 0.4781, &_cm_neutron_Eu151},
+  {150.919702, 0.4781, &_cm_neutron_Eu151}, 
   {152.921225, 0.5219, &_cm_neutron_Eu153}};
 static const cm_Isotope _cm_isotope_Gd[] = {
-  {151.919786, 0.002, &_cm_neutron_Gd152},
-  {153.920861, 0.0218, &_cm_neutron_Gd154},
-  {154.922618, 0.148, &_cm_neutron_Gd155},
-  {155.922118, 0.2047, &_cm_neutron_Gd156},
-  {156.923956, 0.1565, &_cm_neutron_Gd157},
-  {157.924019, 0.2484, &_cm_neutron_Gd158},
+  {151.919786, 0.002, &_cm_neutron_Gd152}, 
+  {153.920861, 0.0218, &_cm_neutron_Gd154}, 
+  {154.922618, 0.148, &_cm_neutron_Gd155}, 
+  {155.922118, 0.2047, &_cm_neutron_Gd156}, 
+  {156.923956, 0.1565, &_cm_neutron_Gd157}, 
+  {157.924019, 0.2484, &_cm_neutron_Gd158}, 
   {159.927049, 0.2186, &_cm_neutron_Gd160}};
 static const cm_Isotope _cm_isotope_Tb[] = {
   {158.925342, 1, NULL}};
 static const cm_Isotope _cm_isotope_Dy[] = {
-  {155.924277, 0.0006, &_cm_neutron_Dy156},
-  {157.924403, 0.001, &_cm_neutron_Dy158},
-  {159.925193, 0.0234, &_cm_neutron_Dy160},
-  {160.92693, 0.1891, &_cm_neutron_Dy161},
-  {161.926795, 0.2551, &_cm_neutron_Dy162},
-  {162.928728, 0.249, &_cm_neutron_Dy163},
+  {155.924277, 0.0006, &_cm_neutron_Dy156}, 
+  {157.924403, 0.001, &_cm_neutron_Dy158}, 
+  {159.925193, 0.0234, &_cm_neutron_Dy160}, 
+  {160.92693, 0.1891, &_cm_neutron_Dy161}, 
+  {161.926795, 0.2551, &_cm_neutron_Dy162}, 
+  {162.928728, 0.249, &_cm_neutron_Dy163}, 
   {163.929171, 0.2818, &_cm_neutron_Dy164}};
 static const cm_Isotope _cm_isotope_Ho[] = {
   {164.930319, 1, NULL}};
 static const cm_Isotope _cm_isotope_Er[] = {
-  {161.928775, 0.0014, &_cm_neutron_Er162},
-  {163.929198, 0.0161, &_cm_neutron_Er164},
-  {165.93029, 0.3361, &_cm_neutron_Er166},
-  {166.932046, 0.2293, &_cm_neutron_Er167},
-  {167.932368, 0.2678, &_cm_neutron_Er168},
+  {161.928775, 0.0014, &_cm_neutron_Er162}, 
+  {163.929198, 0.0161, &_cm_neutron_Er164}, 
+  {165.93029, 0.3361, &_cm_neutron_Er166}, 
+  {166.932046, 0.2293, &_cm_neutron_Er167}, 
+  {167.932368, 0.2678, &_cm_neutron_Er168}, 
   {169.935461, 0.1493, &_cm_neutron_Er170}};
 static const cm_Isotope _cm_isotope_Tm[] = {
   {168.934212, 1, NULL}};
 static const cm_Isotope _cm_isotope_Yb[] = {
-  {167.933894, 0.0013, &_cm_neutron_Yb168},
-  {169.934759, 0.0304, &_cm_neutron_Yb170},
-  {170.936323, 0.1428, &_cm_neutron_Yb171},
-  {171.936378, 0.2183, &_cm_neutron_Yb172},
-  {172.938208, 0.1613, &_cm_neutron_Yb173},
-  {173.938859, 0.3183, &_cm_neutron_Yb174},
+  {167.933894, 0.0013, &_cm_neutron_Yb168}, 
+  {169.934759, 0.0304, &_cm_neutron_Yb170}, 
+  {170.936323, 0.1428, &_cm_neutron_Yb171}, 
+  {171.936378, 0.2183, &_cm_neutron_Yb172}, 
+  {172.938208, 0.1613, &_cm_neutron_Yb173}, 
+  {173.938859, 0.3183, &_cm_neutron_Yb174}, 
   {175.942564, 0.1276, &_cm_neutron_Yb176}};
 static const cm_Isotope _cm_isotope_Lu[] = {
-  {174.94077, 0.9741, &_cm_neutron_Lu175},
+  {174.94077, 0.9741, &_cm_neutron_Lu175}, 
   {175.942679, 0.0259, &_cm_neutron_Lu176}};
 static const cm_Isotope _cm_isotope_Hf[] = {
-  {173.940044, 0.0016, &_cm_neutron_Hf174},
-  {175.941406, 0.0526, &_cm_neutron_Hf176},
-  {176.943217, 0.186, &_cm_neutron_Hf177},
-  {177.943696, 0.2728, &_cm_neutron_Hf178},
-  {178.945812, 0.1362, &_cm_neutron_Hf179},
+  {173.940044, 0.0016, &_cm_neutron_Hf174}, 
+  {175.941406, 0.0526, &_cm_neutron_Hf176}, 
+  {176.943217, 0.186, &_cm_neutron_Hf177}, 
+  {177.943696, 0.2728, &_cm_neutron_Hf178}, 
+  {178.945812, 0.1362, &_cm_neutron_Hf179}, 
   {179.946546, 0.3508, &_cm_neutron_Hf180}};
 static const cm_Isotope _cm_isotope_Ta[] = {
-  {179.947462, 0.00012, &_cm_neutron_Ta180},
+  {179.947462, 0.00012, &_cm_neutron_Ta180}, 
   {180.947992, 0.99988, &_cm_neutron_Ta181}};
 static const cm_Isotope _cm_isotope_W[] = {
-  {179.946701, 0.0012, &_cm_neutron_W180},
-  {181.948202, 0.265, &_cm_neutron_W182},
-  {182.95022, 0.1431, &_cm_neutron_W183},
-  {183.950928, 0.3064, &_cm_neutron_W184},
+  {179.946701, 0.0012, &_cm_neutron_W180}, 
+  {181.948202, 0.265, &_cm_neutron_W182}, 
+  {182.95022, 0.1431, &_cm_neutron_W183}, 
+  {183.950928, 0.3064, &_cm_neutron_W184}, 
   {185.954357, 0.2843, &_cm_neutron_W186}};
 static const cm_Isotope _cm_isotope_Re[] = {
-  {184.952951, 0.374, &_cm_neutron_Re185},
+  {184.952951, 0.374, &_cm_neutron_Re185}, 
   {186.955744, 0.626, &_cm_neutron_Re187}};
 static const cm_Isotope _cm_isotope_Os[] = {
-  {183.952488, 0.0002, &_cm_neutron_Os184},
-  {185.95383, 0.0159, &_cm_neutron_Os186},
-  {186.955741, 0.0196, &_cm_neutron_Os187},
-  {187.95583, 0.1324, &_cm_neutron_Os188},
-  {188.958137, 0.1615, &_cm_neutron_Os189},
-  {189.958436, 0.2626, &_cm_neutron_Os190},
+  {183.952488, 0.0002, &_cm_neutron_Os184}, 
+  {185.95383, 0.0159, &_cm_neutron_Os186}, 
+  {186.955741, 0.0196, &_cm_neutron_Os187}, 
+  {187.95583, 0.1324, &_cm_neutron_Os188}, 
+  {188.958137, 0.1615, &_cm_neutron_Os189}, 
+  {189.958436, 0.2626, &_cm_neutron_Os190}, 
   {191.961467, 0.4078, &_cm_neutron_Os192}};
 static const cm_Isotope _cm_isotope_Ir[] = {
-  {190.960584, 0.373, NULL},
+  {190.960584, 0.373, NULL}, 
   {192.962917, 0.627, NULL}};
 static const cm_Isotope _cm_isotope_Pt[] = {
-  {189.959917, 0.00014, &_cm_neutron_Pt190},
-  {191.961019, 0.00782, &_cm_neutron_Pt192},
-  {193.962655, 0.32967, &_cm_neutron_Pt194},
-  {194.964766, 0.33832, &_cm_neutron_Pt195},
-  {195.964926, 0.25242, &_cm_neutron_Pt196},
+  {189.959917, 0.00014, &_cm_neutron_Pt190}, 
+  {191.961019, 0.00782, &_cm_neutron_Pt192}, 
+  {193.962655, 0.32967, &_cm_neutron_Pt194}, 
+  {194.964766, 0.33832, &_cm_neutron_Pt195}, 
+  {195.964926, 0.25242, &_cm_neutron_Pt196}, 
   {197.967869, 0.07163, &_cm_neutron_Pt198}};
 static const cm_Isotope _cm_isotope_Au[] = {
   {196.966543, 1, NULL}};
 static const cm_Isotope _cm_isotope_Hg[] = {
-  {196.966543, 0.0015, NULL},
-  {197.966743, 0.0997, NULL},
-  {198.968254, 0.1687, &_cm_neutron_Hg199},
-  {199.9683, 0.231, NULL},
-  {200.970277, 0.1318, NULL},
-  {201.970617, 0.2986, NULL},
+  {196.966543, 0.0015, NULL}, 
+  {197.966743, 0.0997, NULL}, 
+  {198.968254, 0.1687, &_cm_neutron_Hg199}, 
+  {199.9683, 0.231, NULL}, 
+  {200.970277, 0.1318, NULL}, 
+  {201.970617, 0.2986, NULL}, 
   {203.973467, 0.0687, NULL}};
 static const cm_Isotope _cm_isotope_Tl[] = {
-  {202.97232, 0.29524, &_cm_neutron_Tl203},
+  {202.97232, 0.29524, &_cm_neutron_Tl203}, 
   {204.974401, 0.70476, &_cm_neutron_Tl205}};
 static const cm_Isotope _cm_isotope_Pb[] = {
-  {203.97302, 0.014, &_cm_neutron_Pb204},
-  {205.97444, 0.241, &_cm_neutron_Pb206},
-  {206.975872, 0.221, &_cm_neutron_Pb207},
+  {203.97302, 0.014, &_cm_neutron_Pb204}, 
+  {205.97444, 0.241, &_cm_neutron_Pb206}, 
+  {206.975872, 0.221, &_cm_neutron_Pb207}, 
   {207.976627, 0.524, &_cm_neutron_Pb208}};
 static const cm_Isotope _cm_isotope_Bi[] = {
   {208.980374, 1, NULL}};
@@ -711,8 +711,8 @@ static const cm_Isotope _cm_isotope_Th[] = {
 static const cm_Isotope _cm_isotope_Pa[] = {
   {231.0359, 1, NULL}};
 static const cm_Isotope _cm_isotope_U[] = {
-  {234.040947, 0.000055, &_cm_neutron_U234},
-  {235.043924, 0.0072, &_cm_neutron_U235},
+  {234.040947, 0.000055, &_cm_neutron_U234}, 
+  {235.043924, 0.0072, &_cm_neutron_U235}, 
   {238.050785, 0.992745, &_cm_neutron_U238}};
 //static const cm_Gaussians _cm_gaussians_H(0.489918, 0.262003, 0.196767, 0.049879, 20.6593, 7.74039, 49.5519, 2.20159, 0.001305);
 static const cm_Gaussians _cm_gaussians_H(0.493002, 0.322912, 0.140191, 0.040810, 10.5109, 26.1257, 3.14236, 57.7997, 0.003038);
@@ -1290,14 +1290,14 @@ void XElementLib::ExpandShortcut(const olxstr& sh, ContentList& res, double cnt)
 ContentList& XElementLib::SortContentList(ContentList& cl)  {
   const cm_Element *c_type = NULL, *h_type = NULL;
   ElementPList elms;
-  for (size_t i=0; i < cl.Count(); i++) {
+  for (size_t i = 0; i < cl.Count(); i++) {
     elms.Add(cl[i].element);
     if (*elms.GetLast() == iCarbonZ)
       c_type = elms.GetLast();
     else if (*elms.GetLast() == iHydrogenZ)
       h_type = elms.GetLast();
   }
-  QuickSorter::Sort(elms, ElementSymbolSorter(), SyncSortListener::Make(cl));
+  QuickSorter::Sort(elms, ElementSymbolSorter(), SyncSwapListener::Make(cl));
   if (c_type != NULL && h_type != NULL) {
     if (c_type != NULL && elms.Count() > 1) {
       size_t ind = elms.IndexOf(c_type);

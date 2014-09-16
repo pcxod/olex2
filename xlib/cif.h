@@ -171,8 +171,9 @@ public:
   // return number of blocks with atoms
   size_t BlockCount() const {  return data_provider.Count();  }
   // changes current block index, i.e. loads structure from different block
-  void SetCurrentBlock(size_t i) {
-    block_index = i;
+  void SetCurrentBlock(size_t i)  {
+    if( i != InvalidIndex && i < data_provider.Count() )  // load default
+      block_index = i;
     _LoadCurrent();
   }
   /* Sets current block and creates if specified to in the case the block does
@@ -213,12 +214,8 @@ public:
     olxch Quote,           // %10%, #10#, ...
     olxstr (*ResolveExternal)(const olxstr& valueName) = NULL,
     bool DoubleTheta = true) const;
-  /* creates a table from a loop using provided table definition. Fills the
-  list of used symmetry. label_options specify if the label suffix should be
-  placed in brackets (1) and/or placed a superscript (4) or subscript (2)
-  */
   bool CreateTable(TDataItem* TableDefinitions, TTTable<TStrList>& Table,
-    smatd_list& SymmList, int label_options=0) const;
+    smatd_list& SymmList) const;
   const TCifDataManager& GetDataManager() const {  return DataManager;  }
   virtual IEObject* Replicate() const {  return new TCif;  }
 };

@@ -24,7 +24,7 @@ TXLattice::TXLattice(TGlRenderer& Render, const olxstr& collectionName) :
 }
 //..............................................................................
 void TXLattice::Create(const olxstr& cName)  {
-  if( !cName.IsEmpty() )
+  if( !cName.IsEmpty() )  
     SetCollectionName(cName);
   TGPCollection& GPC = Parent.FindOrCreateCollection( GetCollectionName() );
   GPC.AddObject(*this);

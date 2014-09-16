@@ -17,7 +17,7 @@
 
 BeginXlibNamespace()
 
-const unsigned short
+const unsigned short 
   satom_Deleted    = 0x0001,
   //satom_Grown      = 0x0002, - obsolete
   satom_Standalone = 0x0004,
@@ -136,11 +136,11 @@ public:
   */
   void RemoveNode(TSAtom& node);
 
-  struct Ref {
+  struct Ref  {
     size_t catom_id;
     uint32_t matrix_id;
     Ref() : catom_id(~0), matrix_id(~0) {}
-    Ref(size_t a_id, uint32_t m_id) : catom_id(a_id), matrix_id(m_id) {}
+    Ref(size_t a_id, uint32_t m_id) : catom_id(a_id), matrix_id(m_id) {} 
     Ref(const Ref& r) : catom_id(r.catom_id), matrix_id(r.matrix_id)  {}
     Ref(const TDataItem& item)  {  FromDataItem(item);  }
     Ref& operator = (const Ref& r)  {
@@ -165,9 +165,6 @@ public:
       catom_id = item.GetFieldByName("a_id").ToSizeT();
       matrix_id = item.GetFieldByName("m_id").ToUInt();
     }
-    olxstr ToString() const {
-      return olxstr(catom_id) << matrix_id;
-    }
   };
 
   bool operator == (const Ref& id) const {
@@ -180,13 +177,11 @@ public:
 
   virtual void ToDataItem(TDataItem& item) const;
   virtual void FromDataItem(const TDataItem& item, class TLattice& parent);
-
+  
   // sorts atoms according to the distcance from {0,0,0}
   struct SortByDistance {
-    template <class item_a_t, class item_b_t>
-    int Compare(const item_a_t &A, const item_b_t &A1) const {
-      return olx_cmp(olx_ref::get(A).crd().QLength(),
-        olx_ref::get(A1).crd().QLength());
+    static int Compare(const TSAtom &A, const TSAtom &A1)  {
+      return olx_cmp(A.crd().QLength(), A1.crd().QLength());
     }
   };
 
@@ -194,7 +189,7 @@ public:
     const Accessor &accessor;
     const short ref_flags;
     FlagsAnalyser_(const Accessor &accessor_, short _ref_flags)
-      : accessor(accessor_), ref_flags(_ref_flags)  {}
+      : accessor(accessor), ref_flags(_ref_flags)  {}
     template <class Item>
     bool OnItem(const Item& o, size_t) const {
       return (Accessor::Access(o).Flags&ref_flags) != 0;
@@ -206,9 +201,9 @@ public:
   }
   static FlagsAnalyser_<DirectAccessor>
   FlagsAnalyser(short flags) {
-    return FlagsAnalyser_<DirectAccessor>(DirectAccessor(), flags);
+    return FlagsAnalyser(DirectAccessor(), flags);
   }
-
+  
   template <class Accessor> struct FlagSetter_ {
     const Accessor &accessor;
     const short ref_flags;
@@ -226,7 +221,7 @@ public:
   }
   static FlagSetter_<DirectAccessor>
   FlagSetter(short ref_flags, bool set) {
-    return FlagSetter_<DirectAccessor>(DirectAccessor(), ref_flags, set);
+    return FlagSetter(DirectAccessor(), ref_flags, set);
   }
 
   template <class Accessor> struct TypeAnalyser_ {
@@ -244,15 +239,15 @@ public:
   }
   template <class acc_t> static TypeAnalyser_<acc_t>
   TypeAnalyser(const acc_t &acc, const cm_Element &e) {
-    return TypeAnalyser_<acc_t>(acc, e.z);
+    return TypeAnalyser(acc, e.z);
   }
   static TypeAnalyser_<DirectAccessor>
   TypeAnalyser(short z) {
-    return TypeAnalyser_<DirectAccessor>(DirectAccessor(), z);
+    return TypeAnalyser(DirectAccessor(), z);
   }
   static TypeAnalyser_<DirectAccessor>
   TypeAnalyser(const cm_Element &e) {
-    return TypeAnalyser_<DirectAccessor>(DirectAccessor(), e.z);
+    return TypeAnalyser(DirectAccessor(), e.z);
   }
 
 };
@@ -263,3 +258,4 @@ typedef TPtrList<const TSAtom> TSAtomCPList;
 
 EndXlibNamespace()
 #endif
+

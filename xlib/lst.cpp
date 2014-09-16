@@ -35,6 +35,7 @@ void TLst::Clear()  {
 //..............................................................................
 bool TLst::LoadFromFile(const olxstr &FN)  {
   TEFile::CheckFileExists(__OlxSourceInfo, FN);
+  TStrList SL;
   bool TRefC  = false,
        URefC  = false,
        DRef   = false,
@@ -52,7 +53,7 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
   bool header_found = false;
   TStrList Toks;
   Clear();
-  TStrList SL = TEFile::ReadLines(FN);
+  SL.LoadFromFile(FN);
   // skip INS file
   size_t start = 0;
   while (start < SL.Count() && !SL[start].Contains("Reflections read,")) {
@@ -268,21 +269,12 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
       Toks.Strtok(SL[i], ' ');
       if (Toks.Count() > 3) {
         TEValueD flack_c = Toks[3]; // 'classical' Flack
-        if (++i < SL.Count()) {
+        if (i + 1 < SL.Count()) {
           Toks.Clear();
-          Toks.Strtok(SL[i], ' ');
+          Toks.Strtok(SL[i + 1], ' ');
           if (!Toks.IsEmpty()) {
-            if (Toks[0].Contains('*')) {
-              if (++i < SL.Count()) {
-                Toks.Clear();
-                Toks.Strtok(SL[i], ' ');
-              }
-              else {
-                break;
-              }
-            }
             TEValueD flack = Toks[0];
-            params("flack", flack.ToString());
+              params("flack", flack.ToString());
           }
           else
             params("flack", flack_c.ToString());
@@ -332,16 +324,16 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
     else {
       // errors
       if (SL[i].Contains("**")) {
-        olx_pair_t<olxstr,olxstr>& msg = ErrorMsgs.AddNew(SL[i], EmptyString());
+        AnAssociation2<olxstr,olxstr>& msg = ErrorMsgs.AddNew(SL[i], EmptyString());
         if (SL[i].Contains(':'))
           continue;
         if (i >= 2) {
           if (i > 2 && SL[i-3].EndsWith('=')) {
-            msg.b << SL[i-3].SubStringTo(SL[i-3].Length()-1);
-            msg.b << SL[i-2];
+            msg.B() << SL[i-3].SubStringTo(SL[i-3].Length()-1);
+            msg.B() << SL[i-2];
           }
           else {
-            msg.b << SL[i-2];
+            msg.B() << SL[i-2];
           }
         }
       }
@@ -399,14 +391,10 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
             params("flack",
               TEValueD(toks[1].ToDouble(), toks[2].ToDouble()).ToString());
           }
-          if (toks.Count() == 6) {
+          else if (toks.Count() == 6) {
             params(olxstr("basf_") << toks[5],
               TEValueD(toks[1].ToDouble(), toks[2].ToDouble()).ToString());
           }
-        }
-        else if (toks[4].Equalsi("FVAR") && toks.Count() == 6) {
-          params(olxstr("fvar_") << toks[5],
-            TEValueD(toks[1].ToDouble(), toks[2].ToDouble()).ToString());
         }
       }
       params_found++;
@@ -478,7 +466,7 @@ bool TLst::ExportHTML( const short Param, TStrList &Html, bool TableDef)  {
 }
 //..............................................................................
 void TLst::SynchroniseOmits(RefinementModel& rm)  {
-  for( size_t i=0; i < FDRefs.Count(); i++ )
+  for( size_t i=0; i < FDRefs.Count(); i++ )  
     FDRefs[i].Deleted = false;
   for( size_t i=0; i < rm.OmittedCount(); i++ )  {
     const vec3i& r = rm.GetOmitted(i);

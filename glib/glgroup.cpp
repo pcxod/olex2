@@ -56,7 +56,7 @@ TGlGroup::~TGlGroup()  {
   if( GetParentGroup() != NULL )
     GetParentGroup()->Remove(*this);
   Clear();
-}
+} 
 //..............................................................................
 void TGlGroup::Clear()  {
   Objects.ForEach(ObjectReleaser());
@@ -64,12 +64,9 @@ void TGlGroup::Clear()  {
   Objects.Clear();
 }
 //..............................................................................
-bool TGlGroup::Remove(AGDrawObject& G)  {
-  if (Objects.Remove(&G)) {
-    ObjectReleaser::OnItem(G, 0);  // dummy 0 arg...
-    return true;
-  }
-  return false;
+void TGlGroup::Remove(AGDrawObject& G)  {
+  Objects.Remove(&G);
+  ObjectReleaser::OnItem(G, 0);  // dummy 0 arg...
 }
 //..............................................................................
 void TGlGroup::RemoveHidden()  {
@@ -115,7 +112,7 @@ bool TGlGroup::Add(AGDrawObject& GO, bool remove)  {
 //..............................................................................
 void TGlGroup::SetVisible(bool On)  {
   for( size_t i=0; i < Objects.Count(); i++ )
-    Objects[i]->SetVisible(On);
+    Objects[i]->SetVisible(On); 
   AGDrawObject::SetVisible(On);
 }
 //..............................................................................

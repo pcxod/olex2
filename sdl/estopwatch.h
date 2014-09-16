@@ -40,11 +40,11 @@ public:
     void start(const olxstr& name)  {
       if (!steps.IsEmpty() && steps.GetLast().GetC() == 0)
         steps.GetLast().SetC(TETime::msNow());
-      steps.AddNew(TETime::msNow(), name, 0);
+      steps.AddNew(TETime::msNow(), name, 0).B();
       sequence.Add(int(steps.Count()));
     }
     void stop()  {
-      steps.GetLast().c = TETime::msNow();
+      steps.GetLast().C() = TETime::msNow();
     }
     const_strlist prepareList(size_t level);
   };

@@ -40,7 +40,7 @@ public:
     if( DeleteObject )
       delete RetValue;
   }
-
+  
   void operator = (const TMacroError& ME);
   olxstr& ProcessingError(const olxstr& location, const olxstr& errMsg);
   void NonexitingMacroError(const olxstr& macroName);
@@ -99,7 +99,7 @@ public:
 
   bool HasRetVal() const {  return RetValue != NULL;  }
   IEObject* RetObj() const {  return RetValue;  }
-
+  
   str_stack& GetStack() {  return Stack;  }
 
   void PrintStack(int logEvt=logError, bool annotate=false,

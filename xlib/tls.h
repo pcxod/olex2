@@ -31,20 +31,13 @@ public:
   const mat3d& GetS() const { return Smat; }
   const vec3d& GetOrigin() const { return origin; }
   const vec3d& GetFoM() const { return FoM; }
-  void RotateElps(const mat3d &basis) {
-    mat3d basis_t = mat3d::Transpose(basis);
-    for (size_t i = 0; i < newElps.Count(); i++) {
-      ShelxQuad(basis*TEllipsoid::ExpandShelxQuad(newElps[i])*basis_t,
-        newElps[i]);
-    }
-  }
   const evecd_list& GetElpList() const { return newElps; }
   const mat3d& GetRtoLaxes() const { return RtoLaxes; }
   const ematd& GetVcV() const { return TLS_VcV; }
   void printTLS(const olxstr &title="TLS matrices") const;
   void printDiff(const olxstr &title="Uobs vs Utls") const;
   void printFOM() const;
-
+  
   ConstTypeList<evecd> calcUijEllipse(const TSAtomPList &atoms);
   bool calcTLS(const ematd& designM, const evecd& UijC, const ematd &weigts);
   //returns t
@@ -53,11 +46,6 @@ public:
   evecd extrapolate(const TSAtom &atom);
 
 private:
-  static evecd &ShelxQuad(const mat3d &m, evecd &dest);
-  static evecd ShelxQuad(const mat3d &m) {
-    evecd v(6);
-    return ShelxQuad(m, v);
-  }
   vec3d origin;
   /* Rotation matrix, transforms TLS to L-principle axes. Nb.
   Inverse = Transpose since orthog
@@ -65,11 +53,11 @@ private:
   mat3d RtoLaxes;
   //TLS wrt current frame: Updated through analysis
   mat3d Tmat, Lmat, Smat;
-
-  evecd_list newElps;  //Ellipsoids calculated from TLS
-  unsigned short TLSfreeParameters; // 21, To be reduced by 1 per constraint
+  
+  evecd_list newElps;  //Ellipsoids calculated from TLS 
+  unsigned short TLSfreeParameters; // 21, To be reduced by 1 per constraint 
                     //(unless enforced with Lagrange multipliers?).
-
+  
   vec3d FoM;    // {R1,R2'}
   // (6T, 6L, 9S) x (6T, 6L, 9S)
   ematd TLS_VcV;
@@ -88,3 +76,4 @@ private:
 
 EndXlibNamespace()
 #endif
+

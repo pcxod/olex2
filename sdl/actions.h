@@ -10,7 +10,7 @@
 #ifndef __olx_actions_H
 #define __olx_actions_H
 #include "ebase.h"
-#include "edict.h"
+#include "estlist.h"
 #include "tptrlist.h"
 #include "typelist.h"
 #undef GetObject
@@ -146,7 +146,7 @@ public:
 
 class TActionQList: public IEObject {
 private:
-  olxstr_dict<TActionQueue*> Queues;
+  TCSTypeList<olxstr,TActionQueue*> Queues;
 public:
   TActionQList()  {}
   virtual ~TActionQList() {  Clear();  }
@@ -167,14 +167,13 @@ public:
   }
   /* find a queue by name, returns NULL if not found */
   TActionQueue* Find(const olxstr& Name) const {
-    return Queues.Find(Name, NULL);
+    size_t i = Queues.IndexOf(Name);
+    return i == InvalidIndex ? NULL : Queues.GetObject(i);
   }
   // queue by index
-  TActionQueue& Get(size_t index) const {
-    return *Queues.GetValue(index);
-  }
+  TActionQueue& Get(size_t index) const {  return *Queues.GetObject(index);  }
   TActionQueue& operator [](size_t index) const {
-    return *Queues.GetValue(index);
+    return *Queues.GetObject(index);
   }
   // returns the number of queues
   size_t Count() const {  return Queues.Count();  }
@@ -206,7 +205,7 @@ public:
     TActionQueue *caller)
   {
     return queue.Execute(Sender, Data, caller);
-  }
+  } 
 };
 /* disabled the queue when created and restores the state (if was enabled!)
 when destroyed
@@ -235,13 +234,6 @@ public:
     }
   }
 };
-
-class IOlxAction {
-public:
-  virtual ~IOlxAction() {}
-  virtual bool Run() = 0;
-};
-
 // generic on progress data
 class TOnProgress: public IEObject {
   uint64_t Max, Pos;

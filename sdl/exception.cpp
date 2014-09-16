@@ -57,7 +57,7 @@ olxstr TBasicException::GetFullMessage() const {
   const char* n_n = GetNiceName();
   if( n_n != NULL )
     rv = n_n;
-  else
+  else 
     rv = EsdlClassName(*this);
   if( Message.IsEmpty() )
     rv << " at " << Location;

@@ -46,10 +46,11 @@ void TEllipsoid::operator = (const TEllipsoid &E)  {
 //..............................................................................
 /* to get the quadratic for Matrix*Matr(SX^2,SY^2,SZ^2)*MatrixT */
 void TEllipsoid::Mult(const mat3d &Matr)  {
-  if (NPD) return;
-  mat3d N = ExpandQuad();
+  if( NPD )  return;
+  mat3d N = ExpandQuad(),
+    M(mat3d::Transpose(Matr));
   // do trasformation of the eigen vectors
-  N = Matr*N*mat3d::Transpose(Matr);
+  N = Matr*N*M;
   // store new quadratic form
   Quad[0] = N[0][0];  Quad[1] = N[1][1];  Quad[2] = N[2][2];
   Quad[3] = N[1][2];  Quad[4] = N[0][2];  Quad[5] = N[0][1];

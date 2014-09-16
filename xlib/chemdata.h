@@ -15,9 +15,9 @@
 #include "henke.h"
 
 // atomic number of some atoms
-static const short
+static const short 
   iHydrogenZ   = 1,
-  iBoronZ      = 5,
+  iBoronZ      = 5,  
   iCarbonZ     = 6,
   iNitrogenZ   = 7,
   iOxygenZ     = 8,
@@ -80,26 +80,26 @@ BeginXlibNamespace()
 
 struct cm_Neutron_Scattering {
   compd coh;
-  double xs;
+  double xs; 
   cm_Neutron_Scattering(double _coh_re, double _coh_im, double _xs) :
   coh(_coh_re, _coh_im), xs(_xs)  {  }
 };
-struct cm_Isotope {
-  double Mr, W;
+struct cm_Isotope {  
+  double Mr, W;  
   const cm_Neutron_Scattering* neutron_scattering;
 };
 
-struct cm_Gaussians {
-  double a1, a2, a3, a4, b1, b2, b3, b4, c;
+struct cm_Gaussians {  
+  double a1, a2, a3, a4, b1, b2, b3, b4, c;  
   cm_Gaussians() : a1(0), a2(0), a3(0), a4(0), b1(0), b2(0), b3(0), b4(0), c(0)  {}
   // constructor, note that b values are inverted!
-  cm_Gaussians(double _a1, double _a2, double _a3, double _a4,
+  cm_Gaussians(double _a1, double _a2, double _a3, double _a4, 
     double _b1, double _b2, double _b3, double _b4, double _c) :
-    a1(_a1), a2(_a2), a3(_a3), a4(_a4),
+    a1(_a1), a2(_a2), a3(_a3), a4(_a4), 
       b1(-_b1), b2(-_b2), b3(-_b3), b4(-_b4), c(_c)  {  }
   // copy constructor
   cm_Gaussians(const cm_Gaussians& g) :
-    a1(g.a1), a2(g.a2), a3(g.a3), a4(g.a4),
+    a1(g.a1), a2(g.a2), a3(g.a3), a4(g.a4), 
       b1(g.b1), b2(g.b2), b3(g.b3), b4(g.b4), c(g.c)  {  }
 
   double calc_sq(double sqv) const {
@@ -128,26 +128,23 @@ public:
   uint32_t def_color;
   const short z, isotope_count, henke_count;
   double r_pers, r_cov, r_vdw, r_bonding, r_sfil;
-  // custom radii are to be used by procedure which require custom radii...
-  mutable double r_custom;
   const cm_Gaussians* gaussians;  // 9 elements = 4 gaussians + const
   const cm_Isotope* isotopes;
   const cm_Anomalous_Henke* henke_data;
   const cm_Neutron_Scattering* neutron_scattering;
-  cm_Element(short _index, const char* _symbol, const char* _name,
-    uint32_t _def_color, short _z, double _r_vdw, double _r_cov, double _r_pers,
-    double _r_bonding, double _r_sfil, const cm_Gaussians* _gaussians,
+  cm_Element(short _index, const char* _symbol, const char* _name, uint32_t _def_color, short _z,
+    double _r_vdw, double _r_cov, double _r_pers, double _r_bonding, double _r_sfil, const cm_Gaussians* _gaussians, 
     const cm_Isotope* _isotopes, short _isotope_count,
-    const cm_Anomalous_Henke* _henke_data, short _henke_count,
+    const cm_Anomalous_Henke* _henke_data, short _henke_count, 
     const cm_Neutron_Scattering* _neutron_scattering) :
     Mr(0), index(_index),
     symbol(_symbol), name(_name), def_color(_def_color), z(_z),
     isotope_count(_isotope_count), henke_count(_henke_count), r_pers(_r_pers),
-    r_cov(_r_cov), r_vdw(_r_vdw), r_bonding(_r_bonding), r_sfil(_r_sfil),
-    r_custom(0), gaussians(_gaussians), isotopes(_isotopes),
-    henke_data(_henke_data), neutron_scattering(_neutron_scattering)
+    r_cov(_r_cov), r_vdw(_r_vdw), r_bonding(_r_bonding), r_sfil(_r_sfil), gaussians(_gaussians), 
+    isotopes(_isotopes), henke_data(_henke_data),
+    neutron_scattering(_neutron_scattering)
   {
-    for (int i=0; i < isotope_count; i++)
+    for( int i=0; i < isotope_count; i++ )
       Mr += isotopes[i].Mr*isotopes[i].W;
   }
 
@@ -163,10 +160,10 @@ public:
         double k = (eV-henke_data[i-1].energy)/(henke_data[i].energy - henke_data[i-1].energy);
         double fp  = cm_Anomalous_Henke::Undefined;
         double fdp = cm_Anomalous_Henke::Undefined;
-        if( henke_data[i-1].fp != cm_Anomalous_Henke::Undefined &&
+        if( henke_data[i-1].fp != cm_Anomalous_Henke::Undefined && 
           henke_data[i].fp != cm_Anomalous_Henke::Undefined )
           fp = henke_data[i-1].fp + k*(henke_data[i].fp-henke_data[i-1].fp);
-        if( henke_data[i-1].fdp != cm_Anomalous_Henke::Undefined &&
+        if( henke_data[i-1].fdp != cm_Anomalous_Henke::Undefined && 
           henke_data[i].fdp != cm_Anomalous_Henke::Undefined )
           fdp = henke_data[i-1].fdp + k*(henke_data[i].fdp-henke_data[i-1].fdp);
         return compd(fp, fdp);
@@ -216,26 +213,24 @@ struct ElementCount {
 };
 
 typedef TPtrList<const cm_Element> ElementPList;
-typedef sorted::PointerComparable<const cm_Element>
+typedef SortedPtrList<const cm_Element, TComparableComparator>
   SortedElementPList;
-typedef ConstSortedPointerList<const cm_Element, TComparableComparator>
+typedef ConstSortedPtrList<const cm_Element, TComparableComparator>
   ConstSortedElementPList;
 typedef TTypeList<ElementCount> ContentList;
 typedef olxdict<const cm_Element*, double, TPointerComparator> ElementRadii;
 typedef olxdict<const cm_Element*, double, TPointerComparator> ElementDict;
 
-// sorts element by Z descending
+// sorts element by Z descending 
 struct ElementZSorter  {
-  template <class item_t>
-  static int Compare(const item_t &s1, const item_t &s2)  {
-    return olx_ref::get(s2).z - olx_ref::get(s1).z;
+  static int Compare(const cm_Element &s1, const cm_Element &s2)  {
+    return s2.z - s1.z;
   }
 };
 // sorts element by symbol ascending
 struct ElementSymbolSorter  {
-  template <class item_t>
-  static int Compare(const item_t &s1, const item_t &s2)  {
-    return olx_ref::get(s1).symbol.Compare(olx_ref::get(s2).symbol);
+  static int Compare(const cm_Element &s1, const cm_Element &s2)  {
+    return s1.symbol.Compare(s2.symbol);
   }
 };
 
@@ -285,7 +280,7 @@ public:
   reference to provided ContentList
   */
   static ContentList& ParseElementString(const olxstr& su, ContentList& cl);
-  static ContentList::const_list_type ParseElementString(const olxstr& su) {
+  static ConstTypeList<ElementCount> ParseElementString(const olxstr& su) {
     ContentList cl;
     return ParseElementString(su, cl);
   }
@@ -313,24 +308,24 @@ public:
   considered to be in group #3 */
   static bool IsTtransitionalGroup(int group, const cm_Element &e) {
     if( e.z >= 21 && e.z <= 30 )  { // Sc->Zn
-      int z = e.z > 28 ? e.z-10 : e.z;
+      int z = e.z > 28 ? e.z-10 : e.z; 
       return z == (group+18);
     }
     else if( e.z >= 39 && e.z <= 48 )  { //Y->Cd
-      int z = e.z > 46 ? e.z-10 : e.z;
+      int z = e.z > 46 ? e.z-10 : e.z; 
       return z == (group+36);
     }
     else if( e.z >= 57 && e.z <= 80 )  { //La->Hg
       if( e.z < 72 ) // Lanthanides
         return group == 3;
-      int z = e.z > 78 ? e.z-10 : e.z;
+      int z = e.z > 78 ? e.z-10 : e.z; 
       return z == (group+68);
     }
     return false;
   }
   // Sc->Zn, Y->Cd, Hf->Hg, lanthanides excluded
   static bool IsTransitionalMetal(const cm_Element &e)  {
-    return (e.z >= 21 && e.z <= 30) ||
+    return (e.z >= 21 && e.z <= 30) || 
       (e.z >= 39 && e.z <= 48) ||
       (e.z >= 72 && e.z <= 80);
   }
@@ -351,7 +346,7 @@ public:
   static cm_Element *PrevGroup(int group, const cm_Element *e);
 
   static bool IsMetal(const cm_Element &e) {
-    return
+    return 
       IsTransitionalMetal(e) ||
       IsPostTransitionalMetal(e) ||
       IsLanthanide(e) ||

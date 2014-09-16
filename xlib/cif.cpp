@@ -60,25 +60,17 @@ void TCif::LoadFromStrings(const TStrList& Strings)  {
 }
 //..............................................................................
 void TCif::_LoadCurrent()  {
-  if (data_provider.Count() == 0) {
+  if ( data_provider.Count() == 0) {
     throw TInvalidArgumentException(__OlxSourceInfo,
       "Empty/Invalid CIF");
   }
-  if (block_index == InvalidIndex) {
-    if (data_provider.Count() == 0) {
+  if( block_index == InvalidIndex )  {
+    if( data_provider.Count() > 1 || data_provider.Count() == 0 ) {
       throw TFunctionFailedException(__OlxSourceInfo,
-        "no data available");
+        "could not locate required data");
     }
-    for (size_t i = 0; i < data_provider.Count(); i++) {
-      CifBlock& cb = data_provider[i];
-      if (cb.param_map.IndexOf("_cell_length_a") != InvalidIndex) {
-        block_index = i;
-        break;
-      }
-    }
-    if (block_index == InvalidIndex) {
-      return;  // nothing to initialise anyway... must be a dummy CIF
-    }
+    block_index = 0;
+    return;  // nothing to initialise anyway... must be a dummy CIF
   }
   // undo the changes
   for( size_t i=0; i < data_provider.Count(); i++ )  {
@@ -449,7 +441,7 @@ void TCif::Initialize()  {
     GetRM().SetUserFormula(frm.Text(EmptyString()));
   }
   catch(...)  {}
-
+  
   this->Title = GetDataName().ToUpperCase();
   this->Title << " OLEX2: imported from CIF";
 
@@ -743,7 +735,7 @@ void TCif::Initialize()  {
   // identify EXYZ/EADP
   {
     TAsymmUnit &au = GetAsymmUnit();
-    sorted::PrimitiveAssociation<long, TCAtom*> atom_map;
+    TPSTypeList<long, TCAtom *> atom_map;
     for (size_t i=0; i < au.AtomCount(); i++) {
       TCAtom &a = au.GetAtom(i);
       atom_map.Add(olx_round(a.ccrd().Prod()*1000), &a);
@@ -759,13 +751,13 @@ void TCif::Initialize()  {
         throw TFunctionFailedException(__OlxSourceInfo, "assert");
       if (idx.Count() < 2) continue;
       for (size_t j=0; j < idx.Count(); j++) {
-        if (!a.ccrd().Equals(atom_map.GetValue(idx[j])->ccrd(), 1e-2))
+        if (!a.ccrd().Equals(atom_map.GetObject(idx[j])->ccrd(), 1e-2))
           idx.Delete(j--);
       }
       if (idx.Count() < 2) continue;
       TExyzGroup &g = GetRM().ExyzGroups.New();
       for (size_t j=0; j < idx.Count(); j++)
-        g.Add(*atom_map.GetValue(idx[j])).SetTag(1);
+        g.Add(*atom_map.GetObject(idx[j])).SetTag(1);
     }
   }
 }
@@ -1217,7 +1209,7 @@ bool Cif_ValidateColumn(const TDataItem &col, const ICifEntry &entry) {
   return true;
 }
 bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table,
-  smatd_list& SymmList, int label_options) const
+  smatd_list& SymmList) const
 {
   int RowDeleted=0, ColDeleted=0;
   SymmList.Clear();
@@ -1242,29 +1234,8 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table,
   Table.Resize(LT->RowCount(), LT->ColCount());
   for (size_t i =0; i < Table.ColCount(); i++) {
     Table.ColName(i) = LT->ColName(i);
-    for (size_t j = 0; j < Table.RowCount(); j++) {
+    for (size_t j=0; j < Table.RowCount(); j++)
       Table[j][i] = (*LT)[j][i]->GetStringValue();
-      if (label_options == 0) continue;
-      AtomCifEntry *ae = dynamic_cast<AtomCifEntry *>((*LT)[j][i]);
-      if (ae == 0) {
-        continue;
-      }
-      size_t ls = ae->data.GetType().GetSymbol().Length();
-      olxstr sf = ae->data.GetLabel().Length() > ls
-        ? ae->data.GetLabel().SubStringFrom(ls) : EmptyString();
-      if (sf.IsEmpty()) continue;
-      if ((label_options & 1) == 1) {
-        sf = olxstr('(') << sf << ')';
-      }
-      if ((label_options & 2) == 2) {
-        Table[j][i] = olxstr(ae->data.GetType().GetSymbol()) <<
-          "<sub>" << sf << "</sub>";
-      }
-      else if ((label_options & 4) == 4) {
-        Table[j][i] = olxstr(ae->data.GetType().GetSymbol()) <<
-          "<sup>" << sf << "</sup>";
-      }
-    }
   }
   // process rows
   for (size_t i=0; i < LT->RowCount(); i++) {

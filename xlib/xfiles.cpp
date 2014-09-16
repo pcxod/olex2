@@ -17,7 +17,6 @@
 #include "crs.h"
 #include "cif.h"
 #include "hkl.h"
-#include "cif.h"
 #include "utf8file.h"
 #include "atomsort.h"
 #include "infotab.h"
@@ -106,7 +105,8 @@ void TBasicCFile::LoadFromFile(const olxstr& _fn)  {
   TStopWatch(__FUNC__);
   TXFile::NameArg file_n(_fn);
   TEFile::CheckFileExists(__OlxSourceInfo, file_n.file_name);
-  TStrList L = TEFile::ReadLines(file_n.file_name);
+  TStrList L;
+  L.LoadFromFile(file_n.file_name);
   if (L.IsEmpty())
     throw TEmptyFileException(__OlxSourceInfo, _fn);
   try {
@@ -128,7 +128,7 @@ TXFile::TXFile(ASObjectProvider& Objects) :
   OnFileClose(Actions.New("XFILECLOSE"))
 {
   Lattice.GetAsymmUnit().SetRefMod(&RefMod);
-  Lattice.GetAsymmUnit().OnSGChange.Add(this, XFILE_SG_Change);
+  Lattice.GetAsymmUnit().OnSGChange.Add(this, XFILE_SG_Change); 
   Lattice.OnStructureUniq.Add(this, XFILE_UNIQ);
   FLastLoader = NULL;
   FSG = NULL;
@@ -228,58 +228,13 @@ void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
     delete FLastLoader;
   }
   FLastLoader = Loader;
-  if (GetRM().GetHKLSource().IsEmpty() ||
-     !TEFile::Exists(GetRM().GetHKLSource()))
+  if( GetRM().GetHKLSource().IsEmpty() ||
+     !TEFile::Exists(GetRM().GetHKLSource()) )
   {
     olxstr src = LocateHklFile();
-    if (!src.IsEmpty() && !TEFile::Existsi(olxstr(src), src))
+    if( !src.IsEmpty() && !TEFile::Existsi(olxstr(src), src) )
       src.SetLength(0);
     GetRM().SetHKLSource(src);
-    try {
-      if (src.IsEmpty() && EsdlInstanceOf(*FLastLoader, TCif)) {
-        TCif &cif = GetLastLoader<TCif>();
-        cif_dp::cetTable* hklLoop = cif.FindLoop("_refln");
-        if (hklLoop != NULL) {
-          const size_t hInd = hklLoop->ColIndex("_refln_index_h");
-          const size_t kInd = hklLoop->ColIndex("_refln_index_k");
-          const size_t lInd = hklLoop->ColIndex("_refln_index_l");
-          const size_t mInd = hklLoop->ColIndex("_refln_F_squared_meas");
-          const size_t sInd = hklLoop->ColIndex("_refln_F_squared_sigma");
-          const size_t bInd = hklLoop->ColIndex("_refln_scale_group_code");
-          if ((hInd | kInd | lInd | mInd | sInd) != InvalidIndex) {
-            TRefList refs;
-            refs.SetCapacity(hklLoop->RowCount());
-            for (size_t i = 0; i < hklLoop->RowCount(); i++) {
-              TReflection* r = new TReflection(
-                hklLoop->Get(i, hInd).GetStringValue().ToInt(),
-                hklLoop->Get(i, kInd).GetStringValue().ToInt(),
-                hklLoop->Get(i, lInd).GetStringValue().ToInt(),
-                hklLoop->Get(i, mInd).GetStringValue().ToDouble(),
-                hklLoop->Get(i, sInd).GetStringValue().ToDouble());
-              if (bInd != InvalidIndex) {
-                r->SetBatch(hklLoop->Get(i, bInd).GetStringValue().ToInt());
-              }
-              refs.Add(r);
-            }
-            GetRM().SetReflections(refs);
-          }
-        }
-        else {
-          cif_dp::cetStringList *ci = dynamic_cast<cif_dp::cetStringList *>(
-            cif.FindEntry("_shelx_hkl_file"));
-          if (ci != NULL) {
-            THklFile hkf;
-            hkf.LoadFromStrings(TCStrList(ci->lines));
-            GetRM().SetReflections(hkf.RefList());
-          }
-        }
-
-      }
-    }
-    catch (const TExceptionBase &e) {
-      TBasicApp::NewLogEntry(logWarning) << "Failed to extract HKL data from "
-        "CIF";
-    }
   }
   TXApp::GetInstance().SetLastSGResult_(EmptyString());
 }
@@ -360,7 +315,7 @@ void TXFile::UpdateAsymmUnit()  {
     LL->GetAsymmUnit().NewEllp() = GetAsymmUnit().GetEllp(i);
   for( size_t i=0; i < GetAsymmUnit().AtomCount(); i++ )  {
     TCAtom& CA = GetAsymmUnit().GetAtom(i);
-    TCAtom& CA1 = LL->GetAsymmUnit().AtomCount() <= i ?
+    TCAtom& CA1 = LL->GetAsymmUnit().AtomCount() <= i ? 
       LL->GetAsymmUnit().NewAtom() : LL->GetAsymmUnit().GetAtom(i);
     CA1.Assign(CA);
   }
@@ -526,11 +481,11 @@ void TXFile::ValidateTabs()  {
         break;
       }
     }
-    if( !hasH )  {
+    if( !hasH )  {  
       TBasicApp::NewLogEntry() << "Removing HTAB (donor has no H atoms): "
         << it.InsStr();
       RefMod.DeleteInfoTab(i--);
-      continue;
+      continue;  
     }
     // validate the distance makes sense
     const TAsymmUnit& au = *ta[0].GetAtom().GetParent();
@@ -543,7 +498,7 @@ void TXFile::ValidateTabs()  {
     const double dis = au.CellToCartesian(v1).DistanceTo(au.CellToCartesian(v2));
     if( dis > 5 )  {
       TBasicApp::NewLogEntry() << "Removing HTAB (d > 5A): " << it.InsStr();
-      RefMod.DeleteInfoTab(i--);
+      RefMod.DeleteInfoTab(i--);  
       continue;
     }
   }
@@ -562,7 +517,7 @@ void TXFile::SaveToFile(const olxstr& FN, bool Sort)  {
     }
     else
       UpdateAsymmUnit();
-    if( Sort )
+    if( Sort )  
       Loader->GetAsymmUnit().Sort();
   }
   OnFileSave.Enter(this);
@@ -859,28 +814,6 @@ void TXFile::LibGetMu(const TStrObjList& Params, TMacroError& E)  {
   E.SetRetVal(olxstr::FormatFloat(3,mu));
 }
 //..............................................................................
-void TXFile::LibRefinementInfo(const TStrObjList& Params, TMacroError& E) {
-  TIns &ins = *(TIns*)FLastLoader;
-  if (Params.IsEmpty()) {
-    TStrList rv;
-    for (size_t i = 0; i < ins.RefinementInfo.Count(); i++) {
-      rv.Add(ins.RefinementInfo.GetKey(i)) << '=' <<
-        ins.RefinementInfo.GetValue(i);
-    }
-    E.SetRetVal(rv.Text(';'));
-  }
-  else {
-    ins.RefinementInfo.Clear();
-    TStrList toks(Params[0].DeleteCharSet("\t \r\n"), ';');
-    for (size_t i = 0; i < toks.Count(); i++) {
-      size_t ei = toks[i].IndexOf('=');
-      if (ei == InvalidIndex)  continue;
-      ins.RefinementInfo(toks[i].SubStringTo(ei),
-        toks[i].SubStringFrom(ei + 1));
-    }
-  }
-}
-//..............................................................................
 TLibrary* TXFile::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("xf") : name);
 
@@ -927,25 +860,19 @@ TLibrary* TXFile::ExportLibrary(const olxstr& name)  {
       fpOne|psCheckFileTypeCif,
       "Returns data name for given CIF block")
   );
-
+  
   lib->Register(
     new TFunction<TXFile>(this,  &TXFile::LibCurrentData, "CurrentData",
       fpNone|fpOne|psCheckFileTypeCif,
       "Returns current data index or changes current data block within the CIF")
   );
-
+  
   lib->Register(
     new TFunction<TXFile>(this,  &TXFile::LibGetMu, "GetMu",
       fpNone|psFileLoaded,
-      "Returns absorption coefficient for current model.")
+      "Changes current data block within the CIF")
   );
-
-  lib->Register(
-    new TFunction<TXFile>(this, &TXFile::LibRefinementInfo, "RefinementInfo",
-    fpNone | fpOne | psCheckFileTypeIns,
-    "Sets/returns refinement information.")
-    );
-
+  
   lib->AttachLibrary(Lattice.GetAsymmUnit().ExportLibrary());
   lib->AttachLibrary(Lattice.GetUnitCell().ExportLibrary());
   lib->AttachLibrary(Lattice.ExportLibrary());
@@ -1042,3 +969,4 @@ olxstr TXFile::LocateHklFile()  {
   return EmptyString();
 }
 //..............................................................................
+

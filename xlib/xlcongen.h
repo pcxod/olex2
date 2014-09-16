@@ -19,24 +19,24 @@ public:
   virtual bool FixParam(const short paramMask, TStrList& res,
     const TCAtomPList& atoms, const TFixedValueList& values);
   virtual bool FixAtom(TAtomEnvi& envi, const short Group,
-    const cm_Element& atomType,
+    const cm_Element& atomType, 
     TAtomEnvi* pivoting = NULL, TCAtomPList* generated = NULL);
   virtual void AnalyseMultipart(const TAtomEnvi& envi,
     const TTypeList<TCAtomPList>& parts);
   // translates shelxl AFIX, HFIX to olex2 notation
   static int OlexToShelx(short code, const TAtomEnvi& envi, TAtomEnvi* pivot = NULL) {
     switch( code ) {
-      case fgNH3:
-      case fgCH3:
+      case fgNH3:  
+      case fgCH3:  
         return 137;
-      case fgCH2:
-        if( envi.Count() == 1 )
+      case fgCH2: 
+        if( envi.Count() == 1 )  
           return 93;
-        else if( envi.Count() == 2 )
+        else if( envi.Count() == 2 )  
           return 23;
         break;
       case fgCH1:
-        if( envi.Count() == 1 )
+        if( envi.Count() == 1 ) 
           return 163;
         else if( envi.Count() == 2 )
           return 43;

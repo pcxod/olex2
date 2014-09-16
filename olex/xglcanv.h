@@ -10,7 +10,6 @@
 #ifndef __olx_xglCanvas_H
 #define __olx_xglCanvas_H
 #include "gxapp.h"
-#include "wx/wx.h"
 #include "wx/glcanvas.h"
 
 class TGlCanvas: public wxGLCanvas  {

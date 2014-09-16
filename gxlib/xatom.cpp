@@ -28,9 +28,9 @@
 bool TXAtom::TStylesClear::Enter(const IEObject *Sender, const IEObject *Data,
   TActionQueue *)
 {
-  TXAtom::FAtomParams = NULL;
+  TXAtom::FAtomParams = NULL; 
   TXAtom::ClearStaticObjects();
-  return true;
+  return true; 
 }
 //..............................................................................
 bool TXAtom::TStylesClear::Exit(const IEObject *Sender, const IEObject *Data,
@@ -50,7 +50,7 @@ bool TXAtom::TContextClear::Enter(const IEObject *Sender, const IEObject *Data,
   TActionQueue *)
 {
   TXAtom::ClearStaticObjects();
-  return true;
+  return true; 
 }
 //..............................................................................
 bool TXAtom::TContextClear::Exit(const IEObject *Sender, const IEObject *Data,
@@ -62,7 +62,7 @@ bool TXAtom::TContextClear::Exit(const IEObject *Sender, const IEObject *Data,
 //----------------------------------------------------------------------------//
 // TSAtom function bodies
 //----------------------------------------------------------------------------//
-TStringToList<olxstr,TGlPrimitive*> TXAtom::FStaticObjects;
+TStrPObjList<olxstr,TGlPrimitive*> TXAtom::FStaticObjects;
 TTypeList<TGlPrimitiveParams> TXAtom::FPrimitiveParams;
 float TXAtom::FTelpProb = 0;
 float TXAtom::FQPeakScale = 0;
@@ -273,17 +273,13 @@ void TXAtom::ValidateDS(TGraphicsStyle& GS)  {
 //..............................................................................
 void TXAtom::Create(const olxstr& cName)  {
   SetCreated(true);
-  olxstr Legend, strRef = GetRef().ToString();
-  if (!cName.IsEmpty())  {
+  olxstr Legend;
+  if( !cName.IsEmpty() )  {
     SetCollectionName(cName);
-    NamesRegistry().Add(strRef, Legend = cName, true);
+    Legend = cName;
   }
-  else {
-    Legend = NamesRegistry().Find(strRef, EmptyString());
-    if (Legend.IsEmpty()) {
-      Legend = GetLegend(*this);
-    }
-  }
+  else  
+    Legend = GetLegend(*this);
 
   TGPCollection *GPC = NULL;
   if( FStaticObjects.IsEmpty() )
@@ -334,7 +330,7 @@ void TXAtom::Create(const olxstr& cName)  {
   int PMask = SMask.ToInt();
 
   GPC->AddObject(*this);
-  if( PMask == 0 )
+  if( PMask == 0 )  
     return; // nothing to create then...
   // update primitives list
   ValidateDS(GS);
@@ -426,7 +422,7 @@ bool TXAtom::Orient(TGlPrimitive& GlP) {
   // override for standalone atoms
   if (FDrawStyle == adsStandalone && !IsStandalone())
     return true;
-
+ 
   if (GlP.GetOwnerId() == xatom_PolyId) {
     if (Polyhedron == NULL) return true;
     olx_gl::begin(GL_TRIANGLES);
@@ -487,13 +483,13 @@ bool TXAtom::Orient(TGlPrimitive& GlP) {
     //else if (&(*exyz)[0] != &CAtom())
     //  return true;
   }
-
+  
   olx_gl::translate(c);
 
   double scale = GetZoom();
   if ((FRadius & (darIsot|darIsotH)) != 0)
     scale *= TelpProb();
-
+  
   if (FDrawStyle == adsEllipsoid || FDrawStyle == adsOrtep) {
     if (GetEllipsoid() != NULL) {
       // override for NPD atoms
@@ -625,11 +621,11 @@ TGraphicsStyle& TXAtom::Style()  {
 //..............................................................................
 void TXAtom::ApplyStyle(TGraphicsStyle& Style)  {
   for( size_t i=0; i < Style.PrimitiveStyleCount(); i++ )  {
-    TGlPrimitive* GP = GetPrimitives().FindPrimitiveByName(
+    TGlPrimitive* GP = GetPrimitives().FindPrimitiveByName( 
       Style.GetPrimitiveStyle(i).GetName() );
     if( GP != NULL )
       GP->SetProperties(Style.GetPrimitiveStyle(i).GetProperties());
-  }
+  } 
 }
 //..............................................................................
 void TXAtom::DrawStyle(short V)  {
@@ -662,7 +658,7 @@ void TXAtom::ListDrawingStyles(TStrList &List)  {
   List.Add("NPD Ellipsoid");
 }
 void UpdateDrawingStyle(int Index) {
-  return;
+  return; 
 };
 //..............................................................................
 void TXAtom::UpdatePrimitiveParams(TGlPrimitive* GlP)  {
@@ -940,7 +936,7 @@ const_strlist TXAtom::WrlDeclare() {
   olxstr &p = out.Add("  coord Coordinate{ point[");
   for (size_t i=0; i < glp->Vertices.Count(); i+=3) {
     p <<  wrl::to_str(glp->Vertices[i]);
-    if (i+3 < glp->Vertices.Count())
+    if (i+3 < glp->Vertices.Count()) 
       p << ", ";
   }
   p << "]}";
@@ -1065,12 +1061,12 @@ void TXAtom::CreateStaticObjects(TGlRenderer& Parent)  {
   // create cross
   FStaticObjects.Add("Cross", GlP = &Parent.NewPrimitive(sgloLines));
   GlP->Vertices.SetCount(6);
-  GlP->Vertices[0][0] = -1;
-  GlP->Vertices[1][0] =  1;
-  GlP->Vertices[2][1] = -1;
-  GlP->Vertices[3][1] =  1;
-  GlP->Vertices[4][2] = -1;
-  GlP->Vertices[5][2] =  1;
+  GlP->Vertices[0][0] = -1; 
+  GlP->Vertices[1][0] =  1; 
+  GlP->Vertices[2][1] = -1; 
+  GlP->Vertices[3][1] =  1; 
+  GlP->Vertices[4][2] = -1; 
+  GlP->Vertices[5][2] =  1; 
   GlP->Params[0] = 1.0;
   GlP->Params.Resize(GlP->Params.Count()+1);
   GlP->Params.GetLast() = ddsDefSphere;
@@ -1101,7 +1097,7 @@ void TXAtom::CreateStaticObjects(TGlRenderer& Parent)  {
   typedef GlSphereEx<float, OctahedronFP<vec3f> > gls;
   gls::Generate(1, olx_round(log((float)SphereQ)+0.5f), vecs, triags, norms);
   OrtepSpheres = olx_gl::genLists(9);
-
+  
   olx_gl::newList(OrtepSpheres, GL_COMPILE);
   gls::RenderEx(vecs, triags, norms, vec3f(0,0,0), vec3f(1,1,1));
   olx_gl::endList();
@@ -1339,7 +1335,7 @@ void TXAtom::CreateNormals(TXAtom::Poly& pl, const vec3f& cnt)  {
 }
 vec3f TXAtom::TriangulateType2(Poly& pl, const TSAtomPList& atoms)  {
   TSPlane plane(NULL);
-  TTypeList< olx_pair_t<TSAtom*, double> > pa;
+  TTypeList< AnAssociation2<TSAtom*, double> > pa;
   vec3f cnt;
   double wght = 0;
   for( size_t i=0; i < atoms.Count(); i++ )  {
@@ -1352,7 +1348,7 @@ vec3f TXAtom::TriangulateType2(Poly& pl, const TSAtomPList& atoms)  {
   cnt /= (float)wght;
   plane.Init(pa);
   plane.GetCenter();
-  // this might fail if one of the atoms is at the center
+  // this might fail if one of the atoms is at the center 
   PlaneSort::Sorter sp;
   try  {  sp.DoSort(plane);  }
   catch( ... )  {

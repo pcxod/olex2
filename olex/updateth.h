@@ -46,7 +46,7 @@ public:
   UpdateThread(const olxstr& patch_dir, bool force_update);
 
   virtual ~UpdateThread()  {  CleanUp();  }
-  void DoUpdate() {  _DoUpdate = true;  }
+  void DoUpdate() {  _DoUpdate = true;  }  
   uint64_t GetUpdateSize() const {  return UpdateSize;  }
   void ResetUpdateSize() {  UpdateSize = 0;  }
   virtual int Run();

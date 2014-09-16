@@ -85,7 +85,7 @@ public:
         }
         if( do_unquote )
           out.Add(unquote(exp.SubString(start, i-start).TrimWhiteChars()));
-        else
+        else 
           out.Add(exp.SubString(start, i-start).TrimWhiteChars());
         start = i+1;
       }
@@ -93,7 +93,7 @@ public:
     if( start < exp.Length() )  {
       if( do_unquote )
         out.Add(unquote(exp.SubStringFrom(start).TrimWhiteChars()));
-      else
+      else 
         out.Add(exp.SubStringFrom(start).TrimWhiteChars());
     }
     return out.Count() - pc;
@@ -134,7 +134,7 @@ public:
         }
         if (do_unquote)
           rv.Add(unquote(exp.SubString(start, i-start).TrimWhiteChars()));
-        else
+        else 
           rv.Add(exp.SubString(start, i-start).TrimWhiteChars());
         start = i+sep.Length();
         i += (sep.Length()-1);
@@ -143,7 +143,7 @@ public:
     if (start < exp.Length()) {
       if (do_unquote)
         rv.Add(unquote(exp.SubStringFrom(start).TrimWhiteChars()));
-      else
+      else 
         rv.Add(exp.SubStringFrom(start).TrimWhiteChars());
     }
     return rv;

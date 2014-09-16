@@ -28,8 +28,8 @@ bool exp_builder::needs_sorting(expression_tree* root)  {
     }
   }
   if( BuiltInsFactory::has_arithmetic_priority(root->data) )  {
-    if( root->right != NULL &&
-      (BuiltInsFactory::is_arithmetic(root->right->data) &&
+    if( root->right != NULL && 
+      (BuiltInsFactory::is_arithmetic(root->right->data) && 
       !BuiltInsFactory::has_arithmetic_priority(root->right->data)) )
     {
       if( root->right->left == NULL )  // +/- number
@@ -85,7 +85,7 @@ expression_tree* exp_builder::sort_logical(expression_tree* root)  {
 IEvaluable* exp_builder::process_const_func(IEvaluable* func, IEvaluable* left,
   IEvaluable* right)
 {
-  if( (dynamic_cast<BuiltInsFactory::IConstFunc*>(func) != NULL ||
+  if( (dynamic_cast<BuiltInsFactory::IConstFunc*>(func) != NULL || 
     dynamic_cast<BuiltInsFactory::IConstFunc2*>(func) != NULL) )
   {
     ANumberEvaluator* left_na = (left == NULL ? NULL

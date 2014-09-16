@@ -21,7 +21,7 @@ namespace ctrl_ext  {
     int this_Val;  // needed to call events only if value has changed
   public:
     // on gtk, the size cannot be changed after the creation!
-    TTrackBar(wxWindow *Parent, const wxSize& sz=wxDefaultSize) :
+    TTrackBar(wxWindow *Parent, const wxSize& sz=wxDefaultSize) : 
       wxSlider(Parent, -1, 0, 0, 100, wxDefaultPosition, sz, wxSL_HORIZONTAL|wxSL_AUTOTICKS),
       AOlxCtrl(this),
       OnChange(AOlxCtrl::ActionQueue::New(Actions, evt_change_id)),

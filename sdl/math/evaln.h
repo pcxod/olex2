@@ -18,10 +18,10 @@
 /*
 How to use:
 when an expression is passed to LoadFromEpression the lits of variales is being
-initialised with variable names. Before the Evaluate is called the array of
-IVariables has to beinitialised with the values of the variables. Use
+initialised with variable names. Before the Evaluate is called the array of 
+IVariables has to beinitialised with the values of the variables. Use 
 Variables->IndexOf(VarName) to identify the index of variables.
-The Functions have to be predefined. If no variables is expected when the
+The Functions have to be predefined. If no variables is expected when the 
 constructur can be caled as TSOperatio(NULL, NULL, Function, NULL). If the
 functions are not in the expression call TSOperatio(NULL, NULL, NULL, NULL).
 Note that the variables list is in the upper case.
@@ -149,7 +149,7 @@ struct ExpEvaluator {
   static double div(double a, double b) { return a/b; }
   static double mod(double a, double b) { return (int)a%(int)b; }
 
-  TStringToList<olxstr, AEvaluable *> ScopeVariables;
+  TStrPObjList<olxstr, AEvaluable *> ScopeVariables;
   // these are filled in by the build function
   TPtrList<Variable> Variables;
   TPtrList<Evaluator> Evaluators;

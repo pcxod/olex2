@@ -17,7 +17,7 @@
 
 BeginXlibNamespace()
 
-  typedef olx_pair_t<double, double> TwoDoubles;
+  typedef AnAssociation2<double, double> TwoDoubles;
   typedef AnAssociation3<double, double, int> TwoDoublesInt;
 
 
@@ -73,9 +73,9 @@ public:
 
 class TSGTest  {
   TRefList Refs;  // P1 merged reflections
-  double TotalI, TotalIS,
-         AverageI, AverageIS,
-         MaxI, MaxIS,
+  double TotalI, TotalIS, 
+         AverageI, AverageIS, 
+         MaxI, MaxIS, 
          MinI, MinIS;
   vec3i minInd, maxInd;
   TArray3D< TReflection* >* Hkl3DArray;

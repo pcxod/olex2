@@ -21,7 +21,7 @@ public:
   FractMask() : Mask(NULL)  {  }
   ~FractMask()  {
     if( Mask != NULL )
-      delete Mask;
+      delete Mask; 
   }
   /* min and max - fractional coordinates, norm - length of the sides,
   resolution - the mask resolution in anstrems */
@@ -32,12 +32,12 @@ public:
     const vec3d ind = fc * Norm;
     if( Mask->IsInRange(ind) )
       Mask->Value(ind) = v;
-  }
+  } 
   // takes fractional coordinates
   template <class vec> inline bool Get(const vec& fc) const {
     const vec3d ind = fc*Norm;
     return Mask->IsInRange(ind) ? Mask->Value(ind) : false;
-  }
+  } 
   inline TArray3D<bool>* GetMask() const {  return Mask;  }
 
   void ToDataItem(TDataItem& di, IOutputStream& os) const;
@@ -46,3 +46,4 @@ public:
 
 
 #endif
+

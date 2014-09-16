@@ -127,7 +127,7 @@ public:
   bool IsEmpty() const {  return Count() == 0;  }
   void Delete(size_t i)  {
     shared_base<cont_t,item_t>::on_modify();
-    shared_base<cont_t,item_t>::p->p->Delete(i);
+    shared_base<cont_t,item_t>::p->p->Delete(i);  
   }
   void IncCapacity(size_t v)  {
     shared_base<cont_t,item_t>::on_modify();

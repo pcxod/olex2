@@ -19,7 +19,7 @@
 using namespace olx_nui;
 
 void Skeleton::Create(const olxstr& cName) {
-  if( !cName.IsEmpty() )
+  if( !cName.IsEmpty() )  
     SetCollectionName(cName);
 
   TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
@@ -28,7 +28,7 @@ void Skeleton::Create(const olxstr& cName) {
 
   TGraphicsStyle& GS = GPC.GetStyle();
   TGlMaterial GlM;
-  GlM.SetFlags(0);
+  GlM.SetFlags(0);   
   //GlM.ShininessF = 128;
   GlM.SetFlags(sglmAmbientF|sglmDiffuseF|sglmSpecularF|
     sglmAmbientB|sglmDiffuseB|sglmSpecularB|sglmIdentityDraw);

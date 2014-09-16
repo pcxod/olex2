@@ -32,7 +32,7 @@ namespace SFUtil {
   static const double MT_PI = -M_PI*2;
   const static double EQ_PI = 8*M_PI*M_PI;
   const static double TQ_PI = 2*M_PI*M_PI;
-
+  
   struct StructureFactor  {
     vec3i hkl;  // hkl indexes
     double ps;  // phase shift
@@ -50,7 +50,7 @@ namespace SFUtil {
     elements of Ucif or Uiso for each atom
     */
     virtual void Calculate(const IMillerIndexList& refs,
-      const mat3d& hkl2c, TArrayList<compd>& F,
+      const mat3d& hkl2c, TArrayList<compd>& F, 
       const ElementPList& scatterers, const TCAtomPList& atoms,
       const double* U,
       const TArrayList<compd> &fpfdp) const = 0;
@@ -60,7 +60,7 @@ namespace SFUtil {
 
   // for internal use
   void PrepareCalcSF(const TAsymmUnit& au, double* U,
-    ElementPList& scatterers, TCAtomPList& alist);
+    ElementPList& scatterers, TCAtomPList& alist); 
   /* calculates the scale sum(Fc)/sum(Fo) Fc = k*Fo. Can accept a list of
   doubles (Fo)
   */
@@ -149,7 +149,7 @@ namespace SFUtil {
         }
         else
           out[ind].val = F[i];
-      }
+      }  
     }
   }
   /* find minimum and maximum values of the miller indexes of the structure
@@ -160,7 +160,7 @@ namespace SFUtil {
   /* prepares the list of hkl and structure factors, return error message or
  empty string
  */
-  olxstr GetSF(TRefList& refs, TArrayList<compd>& F,
+  olxstr GetSF(TRefList& refs, TArrayList<compd>& F, 
     short mapType, short sfOrigin = sfOriginOlex2,
     short scaleType = scaleSimple,
     double scale = 0);
@@ -264,7 +264,7 @@ namespace SFUtil {
                 const double* Q = &U[j*6];  // pick up the correct ellipsoid
                 const double B = exp(
                   (Q[0]*rv[k][0]+Q[4]*rv[k][2]+Q[5]*rv[k][1])*rv[k][0] +
-                  (Q[1]*rv[k][1]+Q[3]*rv[k][2])*rv[k][1] +
+                  (Q[1]*rv[k][1]+Q[3]*rv[k][2])*rv[k][1] + 
                   (Q[2]*rv[k][2])*rv[k][2]);
                 l += ca*B;
               }
@@ -292,8 +292,8 @@ namespace SFUtil {
               if( olx_is_valid_index(atoms[j]->GetEllpId()) )  {
                 const double* Q = &U[j*6];  // pick up the correct ellipsoid
                 const double B = exp(
-                  (Q[0]*rv[k][0]+Q[4]*rv[k][2]+Q[5]*rv[k][1])*rv[k][0] +
-                  (Q[1]*rv[k][1]+Q[3]*rv[k][2])*rv[k][1] +
+                  (Q[0]*rv[k][0]+Q[4]*rv[k][2]+Q[5]*rv[k][1])*rv[k][0] + 
+                  (Q[1]*rv[k][1]+Q[3]*rv[k][2])*rv[k][1] + 
                   (Q[2]*rv[k][2])*rv[k][2]);
                 l.Re() += ca*B;
                 l.Im() += sa*B;
@@ -356,12 +356,14 @@ namespace SFUtil {
       if( centrosymmetric )  {
         SFCalculateTask<TRefList, true> task(*this, refs, hkl2c, F, scatterers,
           atoms, U, fpfdp);
-        OlxListTask::Run(task, refs.Count(), tLinearTask, 50);
+        TListIteratorManager<SFCalculateTask<TRefList, true> >
+          tasks(task, refs.Count(), tLinearTask, 50);
       }
       else  {
         SFCalculateTask<TRefList, false> task(*this, refs, hkl2c, F,
           scatterers, atoms, U, fpfdp);
-        OlxListTask::Run(task, refs.Count(), tLinearTask, 50);
+        TListIteratorManager<SFCalculateTask<TRefList, false> >
+          tasks(task, refs.Count(), tLinearTask, 50);
       }
     }
     virtual size_t GetSGOrder() const {  return sg::size;  }

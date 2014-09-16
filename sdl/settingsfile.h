@@ -21,10 +21,10 @@ the most recent value will be kept
 */
 class TSettingsFile: public IEObject  {
   olxstr_dict<olxstr, true> Params;
-  TStringToList<olxstr, bool> Lines;
+  TTOStringList<TObjectStrListData<olxstr,bool> > Lines;
 protected:
-  void Clear()  {
-    Params.Clear();
+  void Clear()  {  
+    Params.Clear();  
     Lines.Clear();
   }
 public:
@@ -37,7 +37,7 @@ public:
   inline size_t ParamCount() const {  return Params.Count();  }
   const olxstr& ParamName(size_t i) const {  return Params.GetKey(i);  }
   const olxstr& ParamValue(size_t i) const {  return Params.GetValue(i);  }
-  //
+  // 
   template <class SC>
   inline const olxstr& GetParam(const SC& paramName,
     const olxstr& defVal=EmptyString()) const
@@ -60,7 +60,7 @@ public:
       return Params.Add(paramName, EmptyString());
     }
   }
-
+  
   template <class SC>
   inline bool HasParam(const SC& paramName) const {
     return Params.HasKey(paramName);

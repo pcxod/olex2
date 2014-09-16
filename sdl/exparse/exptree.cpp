@@ -52,7 +52,7 @@ bool parser_util::operator_set::parse_control_chars(const olxstr& exp,
 }
 //.............................................................................
 bool parser_util::operator_set::add_operator(const olxstr &opr) {
-  if (!operators.AddUnique(opr).GetB()) return false;
+  if (!operators.AddUnique(opr)) return false;
   for (size_t i=0; i < opr.Length(); i++)
     control_chars.AddUnique(opr[i]);
   return true;
@@ -112,7 +112,7 @@ bool parser_util::parse_escaped_string(const olxstr& exp, olxstr& dest,
 }
 //.............................................................................
 bool parser_util::skip_brackets(const olxstr& exp, size_t& ind)  {
-  const olxch oc = exp.CharAt(ind),
+  const olxch oc = exp.CharAt(ind), 
     cc = get_closing_bracket(oc);
   int bc = 1;
   const size_t start = ind+1;

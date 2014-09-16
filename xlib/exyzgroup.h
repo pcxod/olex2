@@ -18,7 +18,7 @@ class TExyzGroup {
   TCAtomPList Atoms;
 public:
   TExyzGroup(TExyzGroups& parent, size_t id) : Parent(parent), Id(id) {  }
-  ~TExyzGroup()  {
+  ~TExyzGroup()  { 
     for( size_t i=0; i < Atoms.Count(); i++ )
       Atoms[i]->SetExyzGroup(NULL);
   }
@@ -40,7 +40,7 @@ public:
   bool IsEmpty() const {
     size_t ac = 0;
     for( size_t i=0; i < Atoms.Count(); i++ )
-      if( !Atoms[i]->IsDeleted() && Atoms[i]->GetExyzGroup() == this )
+      if( !Atoms[i]->IsDeleted() && Atoms[i]->GetExyzGroup() == this ) 
         ac++;
     return (ac < 2);
   }

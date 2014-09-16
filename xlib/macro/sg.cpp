@@ -145,7 +145,7 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options,
   }
   CalculatedLaueClasses.Pack();
   // evaluete and print systematic absences; also fill the Present elements list
-  sorted::PrimitiveAssociation<double, TCLattice*> SortedLatticeHits;
+  TPSTypeList<double, TCLattice*> SortedLatticeHits;
   TPtrList<TSpaceGroup>  SGToConsider;
   TPtrList<TSymmElement> PresentElements, AllElements, UniqueElements;
 
@@ -168,11 +168,11 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options,
         saStat[i][3] = '+';
         if( SAHits[i].IsExcluded() )
           saStat[i][3] << '-';
-        else
+        else 
           UniqueElements.Add(&SAHits[i].GetSymmElement());
         PresentElements.Add( &SAHits[i].GetSymmElement() );
       }
-      else
+      else 
         saStat[i][3] = '-';
     }
     else  {
@@ -193,11 +193,8 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options,
   const double threshold = SGTest.GetAverageI()/20;
   for( size_t i=0; i < LatticeHits.Count(); i++ )  {
     if( LatticeHits[i].GetStrongCount() != 0 )  {
-      if (LatticeHits[i].GetWeakCount() != 0) {
-        SortedLatticeHits.Add(
-          LatticeHits[i].GetSummWeakI() / LatticeHits[i].GetWeakCount(),
-          LatticeHits[i].GetObject());
-      }
+      if( LatticeHits[i].GetWeakCount() != 0 )
+        SortedLatticeHits.Add(LatticeHits[i].GetSummWeakI()/LatticeHits[i].GetWeakCount(), LatticeHits[i].GetObject() );
       else
         SortedLatticeHits.Add(-1, LatticeHits[i].GetObject() );
     }
@@ -206,27 +203,22 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options,
     ChosenLats.Add(SymmLib.FindLattice("P"));
   for( size_t i=0; i < SortedLatticeHits.Count(); i++ )  {
     if( SortedLatticeHits.GetKey(i) == -1 || SortedLatticeHits.GetKey(i) < threshold )
-      ChosenLats.Add(SortedLatticeHits.GetValue(i));
+      ChosenLats.Add( SortedLatticeHits.GetObject(i) );
   }
   if( ChosenLats.IsEmpty() )
-    ChosenLats.Add(SortedLatticeHits.GetValue(0));
+    ChosenLats.Add(SortedLatticeHits.GetObject(0));
 
   for( size_t i=0; i < LatticeHits.Count(); i++ )  {
     latTab[i][0] = LatticeHits[i].GetObject()->GetSymbol();
     if( LatticeHits[i].GetStrongCount() != 0 )
-      latTab[i][1] << olxstr::FormatFloat(2,
-        LatticeHits[i].GetSummStrongI()/LatticeHits[i].GetStrongCount())
-        << '(' << olxstr::FormatFloat(2,
-        LatticeHits[i].GetSummStrongSI()/LatticeHits[i].GetStrongCount() )
-        << ')';
+      latTab[i][1] << olxstr::FormatFloat(2, LatticeHits[i].GetSummStrongI()/LatticeHits[i].GetStrongCount() )
+                               << '(' << olxstr::FormatFloat(2, LatticeHits[i].GetSummStrongSI()/LatticeHits[i].GetStrongCount() )  << ')';
     else
       latTab[i][1] = '-';
     latTab[i][2] = LatticeHits[i].GetStrongCount();
     if( LatticeHits[i].GetWeakCount() != 0 )
-      latTab[i][3] << olxstr::FormatFloat(2,
-        LatticeHits[i].GetSummWeakI()/LatticeHits[i].GetWeakCount() )
-        << '(' << olxstr::FormatFloat(2,
-        LatticeHits[i].GetSummWeakSI()/LatticeHits[i].GetWeakCount() )  << ')';
+      latTab[i][3] << olxstr::FormatFloat(2, LatticeHits[i].GetSummWeakI()/LatticeHits[i].GetWeakCount() )
+                               << '(' << olxstr::FormatFloat(2, LatticeHits[i].GetSummWeakSI()/LatticeHits[i].GetWeakCount() )  << ')';
 
     else
       latTab[i][3] = '-';
@@ -282,8 +274,7 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options,
       SGToConsider.Add( &sg);
     }
     if( !SGToConsider.IsEmpty() )  {
-      XApp.NewLogEntry() << "Testing " << SGToConsider.Count()
-        << " selected space groups";
+      XApp.NewLogEntry() << "Testing " << SGToConsider.Count() << " selected space groups";
     }
   }
   TPtrList<TSpaceGroup> FoundSpaceGroups;
@@ -291,7 +282,7 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options,
   if( UniqueElements.IsEmpty() && !PresentElements.IsEmpty() )  {
     TTypeList<TSGStats> sgMergeStat;
     SGTest.MergeTest(SGToConsider, sgMergeStat);
-    sorted::PrimitiveAssociation<double, TSGStats*> sortedSGMergeResults;
+    TPSTypeList<double, TSGStats*> sortedSGMergeResults;
     for( size_t i=0; i < SGToConsider.Count(); i++ )  {
       if( sgMergeStat[i].GetCount() == 0 )  continue;
       double dv = sgMergeStat[i].GetSummI()/sgMergeStat[i].GetCount();
@@ -312,29 +303,22 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options,
     sgTab.ColName(1) = "(I-Ieq)/Count";
     sgTab.ColName(2) = "Count";
     for( size_t i=sortedSGMergeResults.Count()-1; i != InvalidIndex; i-- )  {
-      sgTab[i][0] = sortedSGMergeResults.GetValue(i)->GetSpaceGroup().GetName();
-      sgTab[i][1] = olxstr::FormatFloat(2,
-        sortedSGMergeResults.GetValue(i)->GetSummI() /
-        sortedSGMergeResults.GetValue(i)->GetCount());
-      sgTab[i][1] << '(' << olxstr::FormatFloat(2,
-        sortedSGMergeResults.GetValue(i)->GetSummSI() /
-        sortedSGMergeResults.GetValue(i)->GetCount()) << ')';
-      sgTab[i][2] = sortedSGMergeResults.GetValue(i)->GetCount();
+      sgTab[i][0] = sortedSGMergeResults.GetObject(i)->GetSpaceGroup().GetName();
+      sgTab[i][1] = olxstr::FormatFloat(2, 
+        sortedSGMergeResults.GetObject(i)->GetSummI()/sortedSGMergeResults.GetObject(i)->GetCount() );
+      sgTab[i][1] << '(' << olxstr::FormatFloat(2, 
+        sortedSGMergeResults.GetObject(i)->GetSummSI()/sortedSGMergeResults.GetObject(i)->GetCount() ) << ')';
+      sgTab[i][2] = sortedSGMergeResults.GetObject(i)->GetCount();
     }
-    XApp.NewLogEntry().nl() << sgTab.CreateTXTList(
-      "4. Merge test (no unique systematic absences found)", true, true, ' ');
+    XApp.NewLogEntry().nl() << sgTab.CreateTXTList("4. Merge test (no unique systematic absences found)", true, true, ' ');
     size_t cs_cnt = 0, noncs_cnt = 0;
     for( size_t i=0; i < sortedSGMergeResults.Count(); i++ )  {
-      if (cs_cnt < 3 &&
-        sortedSGMergeResults.GetValue(i)->GetSpaceGroup().IsCentrosymmetric())
-      {
-        FoundSpaceGroups.Add(&sortedSGMergeResults.GetValue(i)->GetSpaceGroup());
+      if( cs_cnt < 3 && sortedSGMergeResults.GetObject(i)->GetSpaceGroup().IsCentrosymmetric() )  {
+        FoundSpaceGroups.Add( &sortedSGMergeResults.GetObject(i)->GetSpaceGroup() );
         cs_cnt++;
       }
-      if (noncs_cnt < 3 &&
-        !sortedSGMergeResults.GetValue(i)->GetSpaceGroup().IsCentrosymmetric())
-      {
-        FoundSpaceGroups.Add(&sortedSGMergeResults.GetValue(i)->GetSpaceGroup());
+      if( noncs_cnt < 3 && !sortedSGMergeResults.GetObject(i)->GetSpaceGroup().IsCentrosymmetric() )  {
+        FoundSpaceGroups.Add( &sortedSGMergeResults.GetObject(i)->GetSpaceGroup() );
         noncs_cnt++;
       }
     }
@@ -342,9 +326,7 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options,
   else  {
     TTypeList<TElementStats<TSpaceGroup*> > SATestResults;
     SGTest.WeakRefTest(SGToConsider, SATestResults);
-    sorted::PrimitiveAssociation<double,
-      AnAssociation3<TElementStats<TSpaceGroup*>*, size_t, size_t>*>
-      sortedSATestResults;
+    TPSTypeList<double, AnAssociation3<TElementStats<TSpaceGroup*>*, size_t, size_t>* > sortedSATestResults;
 
     for( size_t i=0; i < SATestResults.Count(); i++ )  {
       if( SATestResults[i].GetWeakCount() == 0  ) continue;
@@ -353,12 +335,10 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options,
       double mult = pow(10, olx_min(olx_abs(v)/threshold, 100.0) );
       while( v < 1 )  v ++;
       v *= mult;
-      sortedSATestResults.Add( SATestResults[i].GetWeakCount()/v,
-        new AnAssociation3<TElementStats<TSpaceGroup*>*, size_t, size_t>(
-        &SATestResults[i], 0, 0));
+      sortedSATestResults.Add( SATestResults[i].GetWeakCount()/v, new AnAssociation3<TElementStats<TSpaceGroup*>*, size_t, size_t>(&SATestResults[i], 0, 0));
     }
 
-    //TPtrList< AnAssociation3<TElementStats<TSpaceGroup*>*, size_t, size_t> >
+    //TPtrList< AnAssociation3<TElementStats<TSpaceGroup*>*, size_t, size_t> >  
     TTTable<TStrList> sgTab(sortedSATestResults.Count(), 8);
     sgTab.ColName(0) = "SG";
     sgTab.ColName(1) = "Strong I/Count";
@@ -371,31 +351,27 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options,
     size_t maxElementFound = 0, maxUniqueElementFound = 0;
     bool FilterByElementCount = false;
     for( size_t i=0; i < sortedSATestResults.Count(); i++ )  {
-      sgTab[i][0] = sortedSATestResults.GetValue(i)->GetA()->GetObject()->GetName();
-      if (sortedSATestResults.GetValue(i)->GetA()->GetStrongCount() != 0)  {
+      sgTab[i][0] = sortedSATestResults.GetObject(i)->GetA()->GetObject()->GetName();
+      if( sortedSATestResults.GetObject(i)->GetA()->GetStrongCount() != 0 )  {
         sgTab[i][1] = olxstr::FormatFloat(2,
-          sortedSATestResults.GetValue(i)->GetA()->GetSummStrongI() /
-          sortedSATestResults.GetValue(i)->GetA()->GetStrongCount());
+          sortedSATestResults.GetObject(i)->GetA()->GetSummStrongI()/sortedSATestResults.GetObject(i)->GetA()->GetStrongCount() );
       }
       else  {
         sgTab[i][1] = '-';
       }
-      sgTab[i][2] = sortedSATestResults.GetValue(i)->GetA()->GetStrongCount();
-      if (sortedSATestResults.GetValue(i)->GetA()->GetWeakCount() != 0)  {
+      sgTab[i][2] = sortedSATestResults.GetObject(i)->GetA()->GetStrongCount();
+      if( sortedSATestResults.GetObject(i)->GetA()->GetWeakCount() != 0 )  {
         sgTab[i][3] = olxstr::FormatFloat(2,
-          sortedSATestResults.GetValue(i)->GetA()->GetSummWeakI() /
-          sortedSATestResults.GetValue(i)->GetA()->GetWeakCount());
+          sortedSATestResults.GetObject(i)->GetA()->GetSummWeakI()/sortedSATestResults.GetObject(i)->GetA()->GetWeakCount() );
       }
       else  {
         sgTab[i][3] = '-';
       }
-      sgTab[i][4] = sortedSATestResults.GetValue(i)->GetA()->GetWeakCount();
-      sgTab[i][5] = sortedSATestResults.GetValue(i)->GetA()->GetObject()
-        ->GetLaueClass().GetBareName();
+      sgTab[i][4] = sortedSATestResults.GetObject(i)->GetA()->GetWeakCount();
+      sgTab[i][5] = sortedSATestResults.GetObject(i)->GetA()->GetObject()->GetLaueClass().GetBareName();
       if( !PresentElements.IsEmpty() )  {
         smatd_list sgMl;
-        sortedSATestResults.GetValue(i)->GetA()->GetObject()->GetMatrices(
-          sgMl, mattAll);
+        sortedSATestResults.GetObject(i)->GetA()->GetObject()->GetMatrices( sgMl, mattAll);
         TPtrList<TSymmElement> sgElmAll, sgElmFound;
         TSpaceGroup::SplitIntoElements(sgMl, AllElements, sgElmAll);
         TSpaceGroup::SplitIntoElements(sgMl, PresentElements, sgElmFound);
@@ -407,8 +383,7 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options,
             break;
           }
         }
-        sgTab[i][6] << olxstr::FormatFloat(0,
-          (double)sgElmFound.Count()*100/PresentElements.Count()) << '%';
+        sgTab[i][6] << olxstr::FormatFloat(0, (double)sgElmFound.Count()*100/PresentElements.Count()) << '%';
         if( all_present )  {
           size_t unique_elm = 0;
           for( size_t j=0; j < sgElmFound.Count(); j++ )
@@ -421,62 +396,57 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options,
           if( sgElmFound.Count() <= maxElementFound )
             FilterByElementCount = true;
           sgTab[i][7] << '+';
-          sortedSATestResults.GetValue(i)->b = sgElmFound.Count();
-          sortedSATestResults.GetValue(i)->c = unique_elm;
+          sortedSATestResults.GetObject(i)->B() = sgElmFound.Count();
+          sortedSATestResults.GetObject(i)->C() = unique_elm;
         }
         else  {
           sgTab[i][7] << '-';
-          sortedSATestResults.GetValue(i)->b = 0;
-          sortedSATestResults.GetValue(i)->c = 0;
+          sortedSATestResults.GetObject(i)->B() = 0;
+          sortedSATestResults.GetObject(i)->C() = 0;
         }
       }
     }
     // print the result of analysis
-    if (sortedSATestResults.Count() != 0) {
-      XApp.NewLogEntry().nl() <<
-        sgTab.CreateTXTList("4. Space group test", true, true, ' ');
-    }
+    if( sortedSATestResults.Count() != 0 )
+      XApp.NewLogEntry().nl() << sgTab.CreateTXTList("4. Space group test", true, true, ' ');
     if( !PresentElements.IsEmpty() )  {
       TPtrList<TSpaceGroup> ToAppend;  // alternative groups, but lower probability
       for( size_t i=sortedSATestResults.Count()-1; i != InvalidIndex; i-- )  {
-        if (sortedSATestResults.GetValue(i)->GetA()->GetWeakCount() != 0) {
-          double v = sortedSATestResults.GetValue(i)->GetA()->GetSummWeakI() /
-            sortedSATestResults.GetValue(i)->GetA()->GetWeakCount();
+        if( sortedSATestResults.GetObject(i)->GetA()->GetWeakCount() != 0 )  {
+          double v = sortedSATestResults.GetObject(i)->GetA()->GetSummWeakI()/sortedSATestResults.GetObject(i)->GetA()->GetWeakCount();
           if( v > SGTest.GetAverageI()/5 )
             break;
         }
         if( FilterByElementCount )  {
           if( maxElementFound > UniqueElements.Count() )  {
-            if (sortedSATestResults.GetValue(i)->GetC() == maxUniqueElementFound)  {
-              FoundSpaceGroups.Add(sortedSATestResults.GetValue(i)->GetA()->GetObject());
+            if( sortedSATestResults.GetObject(i)->GetC() == maxUniqueElementFound )  {
+              FoundSpaceGroups.Add( sortedSATestResults.GetObject(i)->GetA()->GetObject() );
             }  // this is still a good match!
-            else if (sortedSATestResults.GetValue(i)->GetB() == maxElementFound)
-              ToAppend.Add(sortedSATestResults.GetValue(i)->GetA()->GetObject());
+            else if( sortedSATestResults.GetObject(i)->GetB() == maxElementFound )
+              ToAppend.Add( sortedSATestResults.GetObject(i)->GetA()->GetObject() );
           }
           else  {
-            if (sortedSATestResults.GetValue(i)->GetB() == maxElementFound)
-              FoundSpaceGroups.Add(sortedSATestResults.GetValue(i)->GetA()->GetObject());
+            if( sortedSATestResults.GetObject(i)->GetB() == maxElementFound )
+              FoundSpaceGroups.Add( sortedSATestResults.GetObject(i)->GetA()->GetObject() );
           }
         }
         else
-          FoundSpaceGroups.Add(sortedSATestResults.GetValue(i)->GetA()->GetObject());
+          FoundSpaceGroups.Add( sortedSATestResults.GetObject(i)->GetA()->GetObject() );
       }
       FoundSpaceGroups.AddList( ToAppend );
       // try to recover...
       if( FilterByElementCount && FoundSpaceGroups.IsEmpty() )  {
-        for (size_t i=sortedSATestResults.Count()-1;
-          i >= olx_max(0, sortedSATestResults.Count()-6) ; i--)
-        {
-          if (sortedSATestResults.GetValue(i)->GetB() == maxElementFound)
-            FoundSpaceGroups.Add(sortedSATestResults.GetValue(i)->GetA()->GetObject());
+        for( size_t i=sortedSATestResults.Count()-1; i >= olx_max(0, sortedSATestResults.Count()-6) ; i-- )  {
+          if( sortedSATestResults.GetObject(i)->GetB() == maxElementFound )
+            FoundSpaceGroups.Add( sortedSATestResults.GetObject(i)->GetA()->GetObject() );
           if( i== 0 )  break;
         }
       }
       olxstr amb_sg;
       for( size_t i=0; i < SATestResults.Count(); i++ )  {
-        if( SATestResults[i].GetWeakCount() == 0 &&
+        if( SATestResults[i].GetWeakCount() == 0 && 
           (SATestResults[i].GetObject()->HasTranslations() ||
-           !SATestResults[i].GetObject()->GetLattice().GetVectors().IsEmpty()) )
+           !SATestResults[i].GetObject()->GetLattice().GetVectors().IsEmpty()) ) 
         {
           if( !amb_sg.IsEmpty() )
             amb_sg << ", ";
@@ -484,8 +454,7 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options,
         }
       }
       if( !amb_sg.IsEmpty() )  {
-        XApp.NewLogEntry() <<
-          "Ambiguous space groups (statistics incomplete to determine):";
+        XApp.NewLogEntry() << "Ambiguous space groups (statistics incomplete to determine):";
         TStrList Output;
         Output.Hyphenate(amb_sg, 80);
         XApp.NewLogEntry() << Output;
@@ -494,13 +463,13 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options,
     else  {
       // three hits from here
       for( size_t i=sortedSATestResults.Count()-1; i != InvalidIndex; i-- )  {
-        if (sortedSATestResults.GetValue(i)->GetA()->GetWeakCount() != 0)  {
-          double v = sortedSATestResults.GetValue(i)->GetA()->GetSummWeakI() /
-            sortedSATestResults.GetValue(i)->GetA()->GetWeakCount();
+        if( sortedSATestResults.GetObject(i)->GetA()->GetWeakCount() != 0 )  {
+          double v = sortedSATestResults.GetObject(i)->GetA()->GetSummWeakI()/
+            sortedSATestResults.GetObject(i)->GetA()->GetWeakCount();
           if( v > SGTest.GetAverageI()/5 )
             break;
         }
-        FoundSpaceGroups.Add(sortedSATestResults.GetValue(i)->GetA()->GetObject());
+        FoundSpaceGroups.Add( sortedSATestResults.GetObject(i)->GetA()->GetObject() );
       }
       // check all spacegroups without translations as well
       TPtrList<TSpaceGroup> laueClassGroups, possibleGroups;
@@ -515,7 +484,7 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options,
       }
     }
     for( size_t i=0; i < sortedSATestResults.Count(); i++ )
-      delete sortedSATestResults.GetValue(i);
+      delete sortedSATestResults.GetObject(i);
   } // Unique elements present
   if( !FoundSpaceGroups.IsEmpty() )  {
     XApp.NewLogEntry().nl() << "Possible space groups:";

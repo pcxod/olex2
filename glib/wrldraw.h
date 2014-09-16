@@ -8,7 +8,7 @@
 ******************************************************************************/
 
 #ifndef __olx_gxl_wrldraw_H
-#define __olx_gxl_wrldraw_H
+#define __olx_gxl_pwrldraw_H
 #include "gloption.h"
 #include "ebasis.h"
 #include "edict.h"

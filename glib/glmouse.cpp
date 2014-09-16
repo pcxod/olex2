@@ -13,12 +13,9 @@
 #include "dframe.h"
 #include "glgroup.h"
 
-TGlMouse *TGlMouse::Instance = NULL;
-//..............................................................................
 TGlMouse::TGlMouse(TGlRenderer *Parent, TDFrame *Frame)
   : OnObject(Actions.New("ObObject"))
 {
-  Instance = this;
   FSX = FSY = 0;
   MData.GlMouse = this;
   InMode = FDblClick = false;
@@ -48,8 +45,7 @@ TGlMouse::TGlMouse(TGlRenderer *Parent, TDFrame *Frame)
     ZoomingEnabled = true;
 }
 //..............................................................................
-TGlMouse::~TGlMouse() {
-  ClearObjectCache();
+TGlMouse::~TGlMouse()  {
   Handlers.DeleteItems(false);
 }
 //..............................................................................
@@ -85,11 +81,11 @@ bool TGlMouse::MouseUp(int x, int y, short Shift, short button)  {
           }
         }
         if (res == false && SelectionEnabled && Shift == 0 && button == smbLeft &&
-            is_click && !FDblClick)  // right click
+            is_click )  // right click
         {
           if (PColl != NULL && PColl != &FParent->GetSelection())
             FParent->Select(*PColl);
-          else
+          else 
             FParent->Select(*MData.Object);
           FParent->Draw();
           res = true;
@@ -119,21 +115,16 @@ bool TGlMouse::MouseUp(int x, int y, short Shift, short button)  {
 //..............................................................................
 bool TGlMouse::DblClick()  {
   FDblClick = true;
-  MData.Object = find_object(MData.DownX, MData.DownY);
   return (MData.Object != NULL) ? MData.Object->OnDblClick(this, MData) : false;
 }
 //..............................................................................
-void TGlMouse::ResetMouseState(short x, short y, short shift, short button,
-  bool keep_object)
-{
-  if (!keep_object || MData.Button != button || button == 0) {
-    MData.Object = NULL;
-  }
+void TGlMouse::ResetMouseState(short x, short y, short shift, short button) {
   FDblClick = false;
   MData.Button = button;
   MData.Shift = shift;
   FSX = MData.X = x;
   FSY = MData.Y = y;
+  MData.Object = NULL;
 }
 //..............................................................................
 TGlGroup* TGlMouse::FindObjectGroup(const AGDrawObject& obj)  {
@@ -155,15 +146,15 @@ bool TGlMouse::MouseDown(int x, int y, short Shift, short button)  {
   MData.DownX = x;
   MData.DownY = y;
   MData.Event = smeMouseDown;
-  MData.Object = find_object(x, y);
-  if (MData.Object != NULL) {
+  MData.Object = FParent->SelectObject(x, y);
+  if( MData.Object != NULL )  {
     TGlGroup *PColl = FindObjectGroup(*MData.Object);
-    if (PColl != NULL)
+    if( PColl != NULL )
       res = PColl->OnMouseDown(this, MData);
-    else
+    else 
       res = MData.Object->OnMouseDown(this, MData);
   }
-  if (res == false && Shift == sssShift) {
+  if( res == false && Shift == sssShift )  {
     MData.Object = FDFrame;
     res = MData.Object->OnMouseDown(this, MData);
   }
@@ -183,9 +174,6 @@ bool TGlMouse::MouseMove(int x, int y, short Shift)  {
   MData.Y = y;
   MData.Event = smeMouseMove;
   MData.Shift = Shift;
-  if (!object_cache.HasKey(TMouseRegion(x,y))) {
-    ClearObjectCache();
-  }
   bool res = false;
   if (MData.Object != NULL) {
     if (MData.Object == FDFrame) {
@@ -238,32 +226,6 @@ void TGlMouse::process_command_list(TStrObjList& Cmds, bool enable) {
     else if (Cmds[i].Equalsi("zooming"))
       SetZoomingEnabled(enable);
   }
-}
-//..............................................................................
-void TGlMouse::OnObjectDelete(IEObject *o) {
-  ClearObjectCache(o);
-}
-//..............................................................................
-AGDrawObject *TGlMouse::find_object(int x, int y) {
-  AGDrawObject *o = object_cache.Find(TMouseRegion(x,y), NULL);
-  if (o == NULL) {
-    o = FParent->SelectObject(x, y);
-    if (o != NULL) {
-      object_cache.Add(TMouseRegion(x, y), o);
-      o->AddDestructionHandler(*this, &TGlMouse::OnObjectDelete);
-    }
-  }
-  return o;
-}
-//..............................................................................
-void TGlMouse::ClearObjectCache(IEObject *caller) {
-  for (size_t i=0; i < object_cache.Count(); i++) {
-    if (object_cache.GetValue(i) != caller) {
-      object_cache.GetValue(i)->RemoveDestructionHandler(
-        *this, &TGlMouse::OnObjectDelete);
-    }
-  }
-  object_cache.Clear();
 }
 //..............................................................................
 void TGlMouse::LibEnable(TStrObjList& Cmds, const TParamList& Options,

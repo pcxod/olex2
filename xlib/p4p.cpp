@@ -45,11 +45,11 @@ void TP4PFile::SaveToStrings(TStrList& SL)  {
   SL.Add("MORPH   ") << GetMorph();
   SL.Add("CCOLOR  ") << GetColor();
   SL.Add("CSIZE ").stream(' ')
-    << GetRM().expl.GetCrystalSize()[0]
+    << GetRM().expl.GetCrystalSize()[0] 
     << GetRM().expl.GetCrystalSize()[0]
     << GetRM().expl.GetCrystalSize()[1]
     << GetRM().expl.GetCrystalSize()[2];
-    if( GetRM().expl.IsTemperatureSet() )
+    if( GetRM().expl.IsTemperatureSet() ) 
       SL.GetLastString() << ' ' << GetRM().expl.GetTempValue().ToString();
     else
       SL.GetLastString() << " 0";
@@ -67,7 +67,7 @@ void TP4PFile::SaveToStrings(TStrList& SL)  {
 void TP4PFile::LoadFromStrings(const TStrList& Strings)  {
   Clear();
   olxstr Cell, CellSd, Size, Source, chem;
-  TStringToList<olxstr, olxstr*> params;
+  TStrPObjList<olxstr,olxstr*> params;
   params.Add("SITEID",  &SiteId);
   params.Add("MORPH",   &Morph);
   params.Add("CCOLOR",  &Color);
@@ -161,7 +161,7 @@ bool TP4PFile::Adopt(TXFile& f)  {
   Morph   = SiteId;
   Color   = SiteId;
   Mosaic  = SiteId;
-  Symm = SiteId;
+  Symm = SiteId;  
   SGString = SiteId;
   Bravais = SiteId;
   try  {

@@ -127,8 +127,8 @@ class ABasicFunction: public IEObject  {
   olxstr Description;
 protected:
   void SetName(const olxstr& n)  {  Name = n;  }
-  void ParseOptions(const olxstr& Options, olxstr_dict<olxstr>& list);
-  olxstr OptionsToString(const olxstr_dict<olxstr>& list) const;
+  void ParseOptions(const olxstr& Options, TCSTypeList<olxstr,olxstr>& list);
+  olxstr OptionsToString(const TCSTypeList<olxstr,olxstr>& list) const;
   uint32_t ArgStateMask;
   olxstr RunSignature;
 public:
@@ -145,8 +145,8 @@ public:
   ABasicLibrary* GetParentLibrary()  const {  return ParentLibrary;  }
   virtual olxstr GetSignature() const;
   virtual bool HasOptions() const = 0;
-  virtual const olxstr_dict<olxstr>& GetOptions() const = 0;
-  virtual void SetOptions(const olxstr_dict<olxstr>&)  {
+  virtual const TCSTypeList<olxstr,olxstr>& GetOptions() const = 0;
+  virtual void SetOptions(const TCSTypeList<olxstr,olxstr>&)  {
     if (!HasOptions())
       throw TNotImplementedException(__OlxSourceInfo);
   }
@@ -170,7 +170,7 @@ public:
     throw TNotImplementedException(__OlxSourceInfo);
   }
   virtual bool HasOptions() const { return false; }
-  virtual const olxstr_dict<olxstr>& GetOptions() const {
+  virtual const TCSTypeList<olxstr,olxstr>& GetOptions() const {
     throw TNotImplementedException(__OlxSourceInfo);
   }
   virtual void Run(const TStrObjList &Params, class TMacroError& E);
@@ -194,7 +194,6 @@ public:
     return new TFunction<Base>(BaseClassInstance, Func, GetName(),
       ArgStateMask, GetDescription());
   }
-  Base &GetBaseInstance() const { return *BaseClassInstance; }
 protected:
   virtual void DoRun(const TStrObjList &Params, TMacroError& E)  {
     (BaseClassInstance->*Func)(Params, E);
@@ -221,7 +220,7 @@ protected:
 //------------------------------------------------------------------------------
 class AMacro: public ABasicFunction  {
 protected:
-  olxstr_dict<olxstr> ValidOptions;
+  TCSTypeList<olxstr,olxstr> ValidOptions;
   virtual void DoRun(TStrObjList &Params, const TParamList &Options,
     TMacroError& E) = 0;
 public:
@@ -234,10 +233,10 @@ public:
     ParseOptions(validOptions, ValidOptions);
   }
   virtual bool HasOptions() const { return true; }
-  virtual const olxstr_dict<olxstr>& GetOptions() const {
+  virtual const TCSTypeList<olxstr,olxstr>& GetOptions() const {
     return ValidOptions;
   }
-  virtual void SetOptions(const olxstr_dict<olxstr> &opts)  {
+  virtual void SetOptions(const TCSTypeList<olxstr,olxstr>& opts)  {
     ValidOptions = opts;
   }
   virtual void Run(const TStrObjList& Params, TMacroError& E)  {
@@ -308,8 +307,6 @@ typedef TPtrList<ABasicLibrary> TBasicLibraryPList;
 
 class FunctionChainer {
   TBasicFunctionPList functions;
-  void Update(TMacro<FunctionChainer> &m);
-  void Update(TFunction<FunctionChainer> &m);
 public:
   FunctionChainer() {}
   ~FunctionChainer() { functions.DeleteItems(false); }
@@ -320,7 +317,7 @@ public:
   void RunMacro(TStrObjList &Params, const TParamList &Options,
     TMacroError& E);
   void RunFunction(const TStrObjList &Params, TMacroError& E);
-  void Update(ABasicFunction *f);
+  void Update(TMacro<FunctionChainer> &m);
 };
 
 EndEsdlNamespace()

@@ -27,7 +27,7 @@ enum {
   fiCommonAppData,
   fiCommonPrograms,
   fiCommonDesktop
-};
+}; 
 
 
 class TShellUtil  {
@@ -42,7 +42,8 @@ public:
     const olxstr& DefFolder=EmptyString(),
     const olxstr &DefFile=EmptyString());
   // lists all interface names and related MAC addresses
-  typedef TStringToList<olxstr, TArrayList<unsigned char> > MACInfo;
+  typedef TTOStringList<TObjectStrListData<olxstr,
+    TArrayList<unsigned char> > > MACInfo;
 protected:
   static bool _MACFromArray(const unsigned char* bf, const char* name,
     MACInfo& mi, size_t len=6, bool accept_empty=false);

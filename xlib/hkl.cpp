@@ -39,7 +39,7 @@ void THklFile::Init() {
 }
 //..............................................................................
 void THklFile::Clear()  {
-  Refs.Clear();
+  Refs.DeleteItems().Clear();
   Clear3D();
 }
 //..............................................................................
@@ -70,36 +70,21 @@ void THklFile::Clear3D()  {
   delete Hkl3D;
   Hkl3D = NULL;
 }
-//..............................................................................
+
 bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins,
   bool* ins_initialised)
 {
   try  {
     Clear();
     TEFile::CheckFileExists(__OlxSourceInfo, FN);
-    bool ZeroRead = false,
+    TCStrList SL;
+    bool ZeroRead = false, 
       HklFinished = false,
       HasBatch = false,
       FormatInitialised = false;
-    TCStrList SL = TEFile::ReadCLines(FN);
-    if (SL.IsEmpty())
+    SL.LoadFromFile(FN);
+    if( SL.IsEmpty() )
       throw TEmptyFileException(__OlxSrcInfo, FN);
-    return LoadFromStrings(SL, ins, ins_initialised);
-  }
-  catch (const TExceptionBase& e) {
-    throw TFunctionFailedException(__OlxSourceInfo, e);
-  }
-}
-//..............................................................................
-bool THklFile::LoadFromStrings(const TCStrList& SL, TIns* ins,
-  bool* ins_initialised)
-{
-  try  {
-    Clear();
-    bool ZeroRead = false,
-      HklFinished = false,
-      HasBatch = false;
-    size_t line_length = 0;
     {  // validate if 'real' HKL, not fcf
       if( !IsHKLFileLine(SL[0]) )  {
         TCif cif;
@@ -142,7 +127,7 @@ bool THklFile::LoadFromStrings(const TCStrList& SL, TIns* ins,
             r[mInd]->GetStringValue().ToDouble(),
             r[sInd]->GetStringValue().ToDouble()
             ));
-          UpdateMinMax(Refs.GetLast());
+          UpdateMinMax(*Refs.GetLast());
         }
         if( ins != NULL && cif.FindEntry("_cell_length_a") != NULL )  {
           ins->GetRM().Assign(cif.GetRM(), true);
@@ -156,40 +141,35 @@ bool THklFile::LoadFromStrings(const TCStrList& SL, TIns* ins,
     size_t removed_cnt = 0;
     const size_t line_cnt = SL.Count();
     Refs.SetCapacity(line_cnt);
-    for (size_t i=0; i < line_cnt; i++) {
+    for( size_t i=0; i < line_cnt; i++ )  {
       const olxcstr& line = SL[i];
-      if (!ZeroRead && line.Length() < 28)  continue;
-      if (line_length == 0)  {
-        if (line.Length() >= 32) {
+      if( !ZeroRead && line.Length() < 28 )  continue;
+      if( !FormatInitialised )  {
+        if( line.Length() >= 32 )
           HasBatch = true;
-          line_length = 32;
-        }
-        else {
-          line_length = 28;
-        }
+        FormatInitialised = true;
       }
-      if (ZeroRead && !HklFinished) {
-        if( line.Length() < line_length ||
-          !line.SubString(0,4).IsNumber() ||
+      if( ZeroRead && !HklFinished )  {
+        if( !line.SubString(0,4).IsNumber() ||
           !line.SubString(4,4).IsNumber() ||
           !line.SubString(8,4).IsNumber() ||
           !line.SubString(12,8).IsNumber() ||
-          !line.SubString(20,8).IsNumber())
+          !line.SubString(20,8).IsNumber() )
         {
-          HklFinished = true;
+          HklFinished = true; 
           i--;  // reset to the non-hkl line
         }
       }
-      if (!HklFinished) {
+      if( !HklFinished )  {
         const int h = line.SubString(0,4).ToInt(),
           k = line.SubString(4,4).ToInt(),
           l = line.SubString(8,4).ToInt();
         // end of the reflections included into calculations
-        if (h == 0 && k == 0 && l == 0) {
+        if( h == 0 && k == 0 && l == 0 )  {
           ZeroRead = true;
           continue;
         }
-        try {
+        try  {
           TReflection* ref = HasBatch ?
             new TReflection(h, k, l, line.SubString(12,8).ToDouble(),
               line.SubString(20,8).ToDouble(),
@@ -257,7 +237,9 @@ bool THklFile::LoadFromStrings(const TCStrList& SL, TIns* ins,
           break;
         }
         ins->Clear();
-        ins->SetTitle("Olex2 imported from HKL file");
+        ins->SetTitle(
+          TEFile::ChangeFileExt(TEFile::ExtractFileName(FN),
+            EmptyString()) << " imported from HKL file");
         bool cell_found = false, sfac_found = false;
         for( size_t j=i; j < SL.Count(); j++ )  {
           olxstr line = SL[j].Trim(' ');
@@ -340,7 +322,7 @@ bool THklFile::LoadFromStrings(const TCStrList& SL, TIns* ins,
   catch(const TExceptionBase& e)  {
     throw TFunctionFailedException(__OlxSourceInfo, e);
   }
-  if (Refs.IsEmpty())
+  if( Refs.IsEmpty() )
     throw TFunctionFailedException(__OlxSourceInfo, "no reflections found");
   return true;
 }
@@ -353,7 +335,7 @@ void THklFile::UpdateRef(const TReflection& R)  {
   size_t ind = olx_abs(R.GetTag())-1;
   if( ind >= Refs.Count() )
     throw TInvalidArgumentException(__OlxSourceInfo, "reflection tag");
-  Refs[ind].SetOmitted(R.IsOmitted());
+  Refs[ind]->SetOmitted(R.IsOmitted());
 }
 //..............................................................................
 int THklFile::HklCmp(const TReflection &R1, const TReflection &R2)  {
@@ -370,8 +352,8 @@ void THklFile::InitHkl3D() {
   volatile TStopWatch sw(__FUNC__);
   TArray3D<TRefPList*> &hkl3D = *(new TArray3D<TRefPList*>(MinHkl, MaxHkl));
   for (size_t i=0; i < Refs.Count(); i++) {
-    TReflection &r1 = Refs[i];
-    TRefPList *&rl = hkl3D(r1.GetHkl());
+    TReflection *r1 = Refs[i];
+    TRefPList *&rl = hkl3D(r1->GetHkl());
     if (rl == NULL)
       rl = new TRefPList();
     rl->Add(r1);
@@ -399,7 +381,7 @@ ConstPtrList<TReflection> THklFile::AllRefs(const vec3i& idx,
 //..............................................................................
 void THklFile::Append(TReflection& hkl)  {
   UpdateMinMax(hkl);
-  Refs.Add(hkl).SetTag(Refs.Count());
+  Refs.Add(hkl)->SetTag(Refs.Count());
 }
 //..............................................................................
 void THklFile::EndAppend()  {
@@ -410,7 +392,7 @@ void THklFile::Append(const TRefPList& hkls)  {
   if( hkls.IsEmpty() )  return;
   for( size_t i=0; i < hkls.Count(); i++ )  {
     UpdateMinMax(*hkls[i]);
-    Refs.Add(new TReflection(*hkls[i])).SetTag(Refs.Count());
+    Refs.Add(new TReflection(*hkls[i]))->SetTag(Refs.Count());
   }
   EndAppend();
 }
@@ -442,7 +424,7 @@ bool THklFile::SaveToFile(const olxstr& FN, const TRefPList& refs,
     if( refs[0]->GetBatch() != TReflection::NoBatchSet )
       NullRef.SetBatch(0);
     const size_t ref_str_len = NullRef.ToString().Length();
-    const size_t bf_sz = ref_str_len+1;
+    const size_t bf_sz = ref_str_len+1; 
     olx_array_ptr<char> ref_bf(new char[bf_sz]);
     for( size_t i=0; i < refs.Count(); i++ )  {
       if( !refs[i]->IsOmitted() )
@@ -470,7 +452,7 @@ bool THklFile::SaveToFile(const olxstr& FN, const TRefList& refs)  {
   if( refs[0].GetBatch() != TReflection::NoBatchSet )
     NullRef.SetBatch(0);
   const size_t ref_str_len = NullRef.ToString().Length();
-  const size_t bf_sz = ref_str_len+1;
+  const size_t bf_sz = ref_str_len+1; 
   olx_array_ptr<char> ref_bf(new char[bf_sz]);
   for( size_t i=0; i < refs.Count(); i++ )  {
     if( !refs[i].IsOmitted() )

@@ -54,14 +54,8 @@ public:
   template <typename Str> size_t ColIndex(const Str& N) const {
     return ColNames.IndexOf(N);
   }
-  template <typename Str> size_t ColIndexi(const Str& N) const {
-    return ColNames.IndexOfi(N);
-  }
   template <typename Str> size_t RowIndex(const Str& N) const {
     return RowNames.IndexOf(N);
-  }
-  template <typename Str> size_t RowIndexi(const Str& N) const {
-    return RowNames.IndexOfi(N);
   }
 
   void Resize(size_t RowCnt, size_t ColCnt)  {
@@ -129,9 +123,9 @@ public:
   bool Find(const olxstr& What, size_t& row, size_t& col) const {
     for( size_t i=0; i < Rows.Count(); i++ )  {
       col = Rows[i].IndexOf(What);
-      if(  col != InvalidIndex )  {
-        row = i;
-        return true;
+      if(  col != InvalidIndex )  {  
+        row = i;  
+        return true;  
       }
     }
     return false;
@@ -139,9 +133,9 @@ public:
   // finds a row for the column value
   bool FindCol(const olxstr& What, size_t& col) const {
     for( size_t i=0; i < Rows.Count(); i++ )
-      if( Rows[i][col] == What )  {
-        col = i;
-        return true;
+      if( Rows[i][col] == What )  { 
+        col = i;  
+        return true;  
       }
     return false;
   }
@@ -185,7 +179,7 @@ public:
     if( Format )  L.Add("</table>");
     return L;
   }
-
+  
   const_strlist CreateHTMLList(const olxstr &Title,
     const olxstr& footer,
     bool colNames, bool rowNames,
@@ -294,7 +288,7 @@ public:
 
     rowV += Sep.Length();
 
-    for( size_t i=0; i < ColNames.Count(); i++ )
+    for( size_t i=0; i < ColNames.Count(); i++ )  
       rowV[i+1] += rowV[i];
 
     if( colNames )  {
@@ -333,7 +327,7 @@ public:
   inline T const & operator [] (size_t index) const {  return Rows[index];  }
 
   template <class Comparator> void SortRows(const Comparator& cmp)  {
-    QuickSorter::Sort(Rows, cmp, SyncSortListener::Make(RowNames));
+    QuickSorter::Sort(Rows, cmp, SyncSwapListener::Make(RowNames));
   }
   void SwapRows(size_t r1, size_t r2)  {
     Rows.Swap(r1, r2);
@@ -349,7 +343,7 @@ public:
 };
 
   typedef TTTable< TStrList > TTable;
-  typedef TTTable< TStringToList<olxstr,void*> > TETable;
+  typedef TTTable< TStrPObjList<olxstr,void*> > TETable;
 
 EndEsdlNamespace()
 #endif

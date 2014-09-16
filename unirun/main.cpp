@@ -48,9 +48,9 @@ public:
 class TEProgress: public AActionHandler  {
 public:
   TEProgress(){}
-  bool Exit(const IEObject *Sender, const IEObject *Data)  {
+  bool Exit(const IEObject *Sender, const IEObject *Data)  {  
     TBasicApp::GetLog() << "Done\n";
-    return true;
+    return true;  
   }
   bool Enter(const IEObject *Sender, const IEObject *Data)  {  return true;  }
   bool Execute(const IEObject *Sender, const IEObject *Data)  {
@@ -63,9 +63,9 @@ public:
 class TUProgress: public AActionHandler  {
 public:
   TUProgress(){}
-  bool Exit(const IEObject *Sender, const IEObject *Data)  {
+  bool Exit(const IEObject *Sender, const IEObject *Data)  {  
     TBasicApp::NewLogEntry() << "Done";
-    return true;
+    return true;  
   }
   bool Enter(const IEObject *Sender, const IEObject *Data)  {  return true;  }
   bool Execute(const IEObject *Sender, const IEObject *Data)  {
@@ -78,9 +78,9 @@ public:
 class TDProgress: public AActionHandler  {
 public:
   TDProgress(){}
-  bool Exit(const IEObject *Sender, const IEObject *Data)  {
+  bool Exit(const IEObject *Sender, const IEObject *Data)  {  
     TBasicApp::NewLogEntry() << "\rDone";
-    return true;
+    return true;  
   }
   bool Enter(const IEObject *Sender, const IEObject *Data)  {
     if( Data == NULL )  {  return false;  }
@@ -118,11 +118,11 @@ char **ListToArgs(TStrList &args_list) {
   return args;
 }
 
-class MyApp: public wxAppConsole {
-  virtual bool OnInit() {
-    return true;
-  }
-  virtual int OnRun() {  return 0;  }
+class MyApp: public wxAppConsole { 
+  virtual bool OnInit() { 
+    return true; 
+  } 
+  virtual int OnRun() {  return 0;  } 
 };
 IMPLEMENT_APP_NO_MAIN(MyApp)
 int main(int argc, char** argv)  {
@@ -233,7 +233,7 @@ void DoRun()  {
           TBasicApp::NewLogEntry() << "Could not locate any installation "
             "repositories/tags, aborting...";
           return;
-        }
+        }  
         double max_tag = 0;
         for( size_t i=0; i < tags.Count(); i++ )  {
           if( tags[i].IsNumber() && tags[i].ToDouble() > max_tag )
@@ -418,3 +418,4 @@ void DoLaunch(const TStrList &args_)  {
   execv(c_cmdl.c_str(), args);
   TBasicApp::NewLogEntry(logError) << "Failed to launch '" << cmdl << '\'';
 }
+

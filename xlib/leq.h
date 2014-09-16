@@ -46,7 +46,7 @@ public:
   short relation_type; // relationAsVar or relation_AsOneMinusVar
   double coefficient; // like 0.25 in 20.25
   XVarReference(XVar& parent, IXVarReferencer& r, short _var_index,
-    short _relation_type, double coeff=1.0) :
+    short _relation_type, double coeff=1.0) : 
     Parent(parent),
     referencer(r),
     var_index(_var_index),
@@ -64,16 +64,15 @@ public:
 };
 
 class XVar {
-  double Value, Esd;
+  double Value;
   TPtrList<XVarReference> References;  // owed from the Parent
   TPtrList<XLEQ> Equations; // equations using this variable
   size_t Id;
 public:
   XVarManager& Parent;
 
-  XVar(XVarManager& parent, double val=0.5, double esd=0)
-    : Value(val), Esd(esd), Id(InvalidIndex), Parent(parent)
-  {}
+  XVar(XVarManager& parent, double val=0.5)
+    : Value(val), Id(InvalidIndex), Parent(parent) {}
   // adds a new atom, referencing this variable, for internal use
   XVarReference& _AddRef(XVarReference& vr)  {  return *References.Add(&vr);  }
   // removes a refence, for internal use
@@ -93,8 +92,7 @@ public:
   size_t LeqCount() const {  return Equations.Count();  }
   bool IsUsed() const;
   DefPropP(double, Value)
-  DefPropP(double, Esd)
-  DefPropP(size_t, Id)
+  DefPropP(size_t, Id)  
 
   void ToDataItem(TDataItem& item) const;
 #ifdef _PYTHON
@@ -160,21 +158,21 @@ public:
 class XVarManager {
   TTypeList<XVar> Vars;
   TTypeList<XLEQ> Equations;
-  TTypeList<XVarReference> References;
+  TTypeList<XVarReference> References;  
   uint16_t NextVar;  // this controls there variables go in sebsequent calls
 public:
 
   class RefinementModel& RM;
-
+  
   static olxstr RelationNames[];
   static short RelationIndex(const olxstr& rn);
-
+  
   XVarManager(RefinementModel& rm);
-
-  XVar& NewVar(double val = 0.5)  {
+  
+  XVar& NewVar(double val = 0.5)  {  
     XVar* v = new XVar(*this, val);
     v->SetId(Vars.Count());
-    return Vars.Add(v);
+    return Vars.Add(v);  
   }
   /* returns existing variable or creates a new one. Sets a limit of 1024
   variables
@@ -192,15 +190,15 @@ public:
   const XVar& GetVar(size_t i) const {  return Vars[i];  }
   XVar& GetVar(size_t i)  {  return Vars[i];  }
 
-  XLEQ& NewEquation(double val=1.0, double sig=0.01)   {
+  XLEQ& NewEquation(double val=1.0, double sig=0.01)   {  
     XLEQ* leq = new XLEQ(*this, val, sig);
     leq->SetId(Equations.Count());
-    return Equations.Add(leq);
+    return Equations.Add(leq);  
   }
   size_t EquationCount() const {  return Equations.Count();  }
   const XLEQ& GetEquation(size_t i) const {  return Equations[i];  }
   XLEQ& GetEquation(size_t i)  {  return Equations[i];  }
-  XLEQ& ReleaseEquation(size_t i)  {
+  XLEQ& ReleaseEquation(size_t i)  {  
     Equations[i].SetId(InvalidIndex);
     XLEQ& eq = Equations.Release(i);
     for( size_t i=0; i < Equations.Count(); i++ )
@@ -228,7 +226,7 @@ public:
     return ref;
   }
   // releases a reference to the variable, must be deleted, unless restored
-  XVarReference* ReleaseRef(IXVarReferencer& r, short var_name);
+  XVarReference* ReleaseRef(IXVarReferencer& r, short var_name); 
   // restrores previously released var reference
   void RestoreRef(IXVarReferencer& r, short var_name, XVarReference* vr);
   // removes all unused variables and invalid/incomplete equations
@@ -251,7 +249,7 @@ public:
     for( size_t i=0; i < fvar.Count(); i++, NextVar++ )  {
       if( Vars.Count() <= NextVar )
         NewVar(fvar[i].ToDouble());
-      else
+      else 
         Vars[NextVar].SetValue(fvar[i].ToDouble());
     }
   }
@@ -281,7 +279,7 @@ public:
     XLEQ& le = Equations[ind];
     olxstr rv(le.GetValue());
     rv << ' ' << le.GetSigma();
-    for( size_t i=0; i < le.Count(); i++ )
+    for( size_t i=0; i < le.Count(); i++ ) 
       rv << ' ' << le.GetCoefficient(i) << ' ' << le[i].GetId()+1;
     return rv;
   }

@@ -253,21 +253,21 @@ bool TGlXApp::OnInit()  {
   }
   SetTopWindow(MainForm);
   //MainForm->Maximize(true);
-  Bind(OLX_COMMAND_EVT, &TGlXApp::OnCmd, this);
   MainForm->Show(true);
   return true;
 }
 //..............................................................................
-int TGlXApp::OnExit() {
+int TGlXApp::OnExit()  {
   // do all operations before TEGC is deleted
   if( pid_file != NULL )  {
     pid_file->Delete();
     delete pid_file;
     pid_file = NULL;
   }
-  olxstr conf_dir = XApp->GetInstanceDir();
-  TStrList pid_files = TEFile::ListDir(conf_dir, olxstr("*.") <<
-    patcher::PatchAPI::GetOlex2PIDFileExt(), sefFile);
+  TStrList pid_files;
+  olxstr conf_dir = XApp->GetInstanceDir(); 
+  TEFile::ListDir(conf_dir, pid_files, olxstr("*.") <<
+    patcher::PatchAPI::GetOlex2PIDFileExt(), sefAll);
 #ifdef __linux__
     size_t ext_len = olxstr::o_strlen(patcher::PatchAPI::GetOlex2PIDFileExt())+1;
 #endif
@@ -283,30 +283,16 @@ int TGlXApp::OnExit() {
 #endif
     TEFile::DelFile(conf_dir+pid_files[i]);
   }
-  if (TMainForm::HasInstance()) {
-    MainForm->Destroy();
-  }
   delete XApp;
   return 0;
 }
 //..............................................................................
-bool TGlXApp::Dispatch() {
+bool TGlXApp::Dispatch()  {
   return wxApp::Dispatch();
 }
 //..............................................................................
 void TGlXApp::OnChar(wxKeyEvent& event)  {
-  if (event.GetKeyCode() == 9) {
-    wxComboBox *wnd = dynamic_cast<wxComboBox *>(MainForm->FindFocus());
-    if (wnd != NULL) {
-      event.Skip(false);
-      wxWindow *nw = (event.GetModifiers() == wxMOD_SHIFT) ?
-        wnd->GetPrevSibling() : wnd->GetNextSibling();
-      if (nw != 0) {
-        nw->SetFocus();
-        return;
-      }
-    }
-  }
+  //MainForm->OnChar(event);
   event.Skip(); // pass it to the controls...
 }
 //..............................................................................
@@ -322,20 +308,10 @@ void TGlXApp::OnIdle(wxIdleEvent& event)  {
   event.Skip();
   if (GetMainForm()->idle_start == 0)
     GetMainForm()->idle_start = TETime::msNow();
-  GetMainForm()->OnIdle();
 }
 //..............................................................................
 void TGlXApp::OnMouse(wxMouseEvent &evt) {
   evt.Skip();
-}
-//..............................................................................
-void TGlXApp::OnCmd(olxCommandEvent &evt) {
-  TStrList toks(evt.GetCommand(), ">>");
-  for (size_t i = 0; i < toks.Count(); i++) {
-    if (!MainForm->processMacro(olxstr::DeleteSequencesOf(toks[i], ' '))) {
-      break;
-    }
-  }
 }
 //..............................................................................
 

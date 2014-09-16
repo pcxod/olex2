@@ -117,11 +117,11 @@ TWString& TWString::operator = (const char &ch)          {
   return *this;
 }
 //..............................................................................
-TWString& TWString::operator = (const TCString& astr)  {
-  return AssignCharStr(astr.raw_str(), astr.Length());
+TWString& TWString::operator = (const TCString& astr)  {  
+  return AssignCharStr(astr.raw_str(), astr.Length());  
 }
 //..............................................................................
-#ifdef _UNICODE
+#ifdef _UNICODE  
   TIString TWString::ToString() const {  return *this;  }
 #else
   TIString TWString::ToString() const {  return TCString(*this);  }

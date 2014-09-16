@@ -411,7 +411,7 @@ public:
 };
 
 class TEvaluatorFactory  {
-  olxstr_dict<IClassDefinition*, true> ClassDefinitions;
+  TSStrPObjList<olxstr,IClassDefinition*, true> ClassDefinitions;
 public:
   TEvaluatorFactory() {  ;  }
   IEvaluator* Evaluator(const olxstr &Val) {
@@ -421,15 +421,15 @@ public:
       // in the future
       return NULL;
     }
-    IClassDefinition * classDef = ClassDefinitions.Find(toks[0], NULL);
+    IClassDefinition * classDef = ClassDefinitions[toks[0]];
     //TODO: report the error
     if( !classDef )  return NULL;
     toks.Delete(0);
-    return ProcessProperties(classDef, toks);
+    return ProcessProperties( classDef, toks );
   }
 protected:
-  IEvaluator* ProcessProperties(IClassDefinition *classDef, const TStrList &props) {
-    short memberType = classDef->GetMemberType(props[0]);
+  IEvaluator* ProcessProperties(IClassDefinition *classDef, TStrList props) {
+    short memberType = classDef->GetMemberType( props[0] );
     switch( memberType ) {
       case mtProperty:
         break;
@@ -606,7 +606,7 @@ template <class OC, class IC, class AC>
   public:
     ~TtaFactory() {}
     OC *NewInstance(TPtrList<IEObject>* Args) {
-      if( Args->Count() != 2 )
+      if( Args->Count() != 2 )  
         throw TInvalidArgumentException(__OlxSourceInfo, "number of operands");
       return new IC((AC*)Args->GetItem(0), (AC*)Args->GetItem(1));
     }
@@ -619,7 +619,7 @@ class TSyntaxParser  {
   TPtrList<IEvaluable> Evaluables;
   TPtrList<IEvaluator> Evaluators;
   TStrList FErrors;
-  olxstr_dict<TObjectFactory<IEvaluable>*, false> LogicalOperators,
+  TSStrPObjList<olxstr,TObjectFactory<IEvaluable>*, false > LogicalOperators,
     ComparisonOperators, ArithmeticFunctions;
 protected:
   IEvaluable* SimpleParse(const olxstr& Expression);

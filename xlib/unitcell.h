@@ -29,7 +29,7 @@ BeginXlibNamespace()
 class TUnitCell: public IEObject  {
   TNetwork*  Network;  // for internal use only
   smatd_list Matrices;  // list of unique matrices; FMatrices + centering
-  TArrayList<TEllpPList> Ellipsoids;  // i - atoms index, j - matrix index
+  TArrayList<TEllpPList> Ellipsoids;  // i - atoms index, j - matrix index 
   // index of r from a product of two matrices
   TTypeList<TArrayList<uint8_t> > MulDest;
   TArrayList<uint8_t> InvDest;
@@ -48,7 +48,7 @@ class TUnitCell: public IEObject  {
   void _FindBinding(const TCAtom& center, const smatd& center_tm, double delta,
     TTypeList<AnAssociation3<TCAtom*, smatd, vec3d> >& res,
     const TCAtomPList* atoms=NULL) const;
-  // explicit use of the I matrix
+  // explicit use of the I matrix 
   void _FindBinding(const TCAtom& center, double delta,
     TTypeList<AnAssociation3<TCAtom*, smatd, vec3d> >& res,
     const TCAtomPList* atoms=NULL) const
@@ -162,14 +162,14 @@ public:
   }
   smatd* GetClosest(const vec3d& to, const vec3d& from, bool ConsiderOriginal,
     double* dist=NULL) const;
-
+  
   /* Finds matrices UNIQ to the unit cell (besides the I matrix, see below)
   which move point 'from' to 'to' within R. Always returns a valid object to be
   deleted with delete. For the identity matrix additionally checks the
   translational symmetry (in some cases the atom within the aunit is closer
   than the translational symmetry generated one), so there might be a two I
   matrices with different translations
-  */
+  */ 
   ConstTypeList<smatd> GetInRange(const vec3d& to, const vec3d& from,
     double R, bool IncludeI) const;
 
@@ -186,8 +186,8 @@ public:
     _FindInRange(center, R, res, false, atoms);
     out.SetCount(res.Count());
     for( size_t i=0; i < res.Count(); i++ )  {
-      out[i].a = res[i].a;
-      out[i].b = res[i].GetB();
+      out[i].A() = res[i].A();
+      out[i].B() = res[i].GetB(); 
     }
   }
   /* As above, but expects a list of
@@ -201,14 +201,14 @@ public:
     _FindInRange(center, R, res, false, atoms);
     out.SetCount(res.Count());
     for( size_t i=0; i < res.Count(); i++ )  {
-      out[i].a = res[i].a;
-      out[i].b = res[i].GetB();
-      out[i].c = res[i].GetC();
+      out[i].A() = res[i].A();
+      out[i].B() = res[i].GetB();
+      out[i].C() = res[i].GetC(); 
     }
   }
   /* finds only bound atoms defined by delta, can take both TCAtom and TSAtom.
   In first case the result will be located at the origin of the atom in the
-  asymmetric unit, in the second - to the center of the TSAtom
+  asymmetric unit, in the second - to the center of the TSAtom 
   */
   template <class atom_t, class res_t> void FindBindingAM(const atom_t& center,
     double delta, res_t& out,
@@ -218,8 +218,8 @@ public:
     _FindBinding(center, delta, res, atoms);
     out.SetCount(res.Count());
     for( size_t i=0; i < res.Count(); i++ )  {
-      out[i].a = res[i].a;
-      out[i].b = res[i].GetB();
+      out[i].A() = res[i].A();
+      out[i].B() = res[i].GetB(); 
     }
   }
   /* As above but provides an association of atoms with the cartesian
@@ -233,8 +233,8 @@ public:
     _FindInRange(center, R, res, false, atoms);
     out.SetCount(res.Count());
     for( size_t i=0; i < res.Count(); i++ )  {
-      out[i].a = res[i].a;
-      out[i].b = res[i].GetC();
+      out[i].A() = res[i].A();
+      out[i].B() = res[i].GetC(); 
     }
   }
 
@@ -243,7 +243,7 @@ public:
   ConstTypeList<smatd> GetBinding(const TCAtom& toA, const TCAtom& fromA,
     const vec3d& to, const vec3d& from, bool IncludeI,
     bool IncludeHBonds) const;
-
+  
   typedef MatrixListAdaptor<TUnitCell> MatrixList;
   typedef TSymmSpace<TUnitCell::MatrixList> SymmSpace;
 
@@ -276,21 +276,21 @@ public:
     for( size_t i=0; i < ml.Count(); i++ )  {
       v = ml[i]*from - to;
       const double D = au.Orthogonalise(v -= v.Round<int>()).QLength();
-      if( D < minD )
+      if( D < minD )  
         minD = D;
     }
     return sqrt(minD);
   }
-
+  
   /* finds all atoms (+symm attached) and Q-peaks, if specfied; if part is not
   -1, part 0 and the specified part are only placed
   */
   void GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ = false,
     int part=DefNoPart) const;
-
+  
   // finds only q-peaks in the environment of specified atom
   void GetAtomQEnviList(TSAtom& atom, TAtomEnvi& envi);
-
+  
   /* finds "pivoting" atoms for possible h-bonds, considering O, N and Cl only
   with distances within 2.9A and angles 90-150 deg
   */
@@ -328,8 +328,8 @@ public:
   void BuildDistanceMap_Masks(TArray3D<short>& map, double delta, short value,
     const ElementRadii* radii, const TCAtomPList* _template = NULL) const;
 protected:
-  // helper function, association should be olx_pair_t+<vec3d,TCAtom*,+>
-  template <class Association>
+  // helper function, association should be AnAssociation2+<vec3d,TCAtom*,+>
+  template <class Association> 
     static int AtomsSortByDistance(const Association &A1,
       const Association &A2)
     {
@@ -343,7 +343,7 @@ public:
     TSymmLib::GetInstance().ExpandLatt(out,
       MatrixListAdaptor<TAsymmUnit>(au), latt);
   }
-  /* association should be olx_pair_t+<vec3d,TCAtom*,+>, generates all
+  /* association should be AnAssociation2+<vec3d,TCAtom*,+>, generates all
   atoms of the aunit
   */
   template <class Association> void GenereteAtomCoordinates(
@@ -416,22 +416,22 @@ public:
       const double yi = v[1] < c_min ? 1 : (v[1] > c_max ? -1 : 0);
       const double zi = v[2] < c_min ? 1 : (v[2] > c_max ? -1 : 0);
       if( xi != 0 )  {
-        list.AddNew(vec3d(v[0]+xi, v[1], v[2]), list[i].b);
+        list.AddNew(vec3d(v[0]+xi, v[1], v[2]), list[i].B());
         if( yi != 0 )  {
-          list.AddNew(vec3d(v[0]+xi, v[1]+yi, v[2]), list[i].b);
+          list.AddNew(vec3d(v[0]+xi, v[1]+yi, v[2]), list[i].B());
           if( zi != 0 )
-            list.AddNew(vec3d(v[0]+xi, v[1]+yi, v[2]+zi), list[i].b);
+            list.AddNew(vec3d(v[0]+xi, v[1]+yi, v[2]+zi), list[i].B());
         }
         if( zi != 0 )
-          list.AddNew(vec3d(v[0]+xi, v[1], v[2]+zi), list[i].b);
+          list.AddNew(vec3d(v[0]+xi, v[1], v[2]+zi), list[i].B());
       }
       if( yi != 0 )  {
-        list.AddNew(vec3d(v[0], v[1]+yi, v[2]), list[i].b);
+        list.AddNew(vec3d(v[0], v[1]+yi, v[2]), list[i].B());
         if( zi != 0 )
-          list.AddNew(vec3d(v[0], v[1]+yi, v[2]+zi), list[i].b);
+          list.AddNew(vec3d(v[0], v[1]+yi, v[2]+zi), list[i].B());
       }
       if( zi != 0 )
-        list.AddNew(vec3d(v[0], v[1], v[2]+zi), list[i].b);
+        list.AddNew(vec3d(v[0], v[1], v[2]+zi), list[i].B());
     }
   }
   // finds an atom at given position
@@ -458,8 +458,8 @@ public:
     vec3d center;
     AC_Sort(const vec3d &_center) : center(_center) {}
     int Compare(
-      const olx_pair_t<const TCAtom *, vec3d> &a1,
-      const olx_pair_t<const TCAtom *, vec3d> &a2) const
+      const AnAssociation2<const TCAtom *, vec3d> &a1,
+      const AnAssociation2<const TCAtom *, vec3d> &a2) const
     {
       return olx_cmp(
         center.QDistanceTo(a1.GetB()),
@@ -514,3 +514,4 @@ public:
 
 EndXlibNamespace()
 #endif
+

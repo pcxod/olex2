@@ -205,7 +205,7 @@ public:
     Bonds.ForEach(ACollectionItem::IndexTagSetter());
     Bonds.Pack(
       olx_alg::olx_or(
-        olx_alg::olx_not(ACollectionItem::IndexTagAnalyser()),
+        ACollectionItem::IndexTagAnalyser(),
         AGDrawObject::FlagsAnalyser(sgdoHidden)
       )
     );

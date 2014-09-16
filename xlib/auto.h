@@ -103,7 +103,7 @@ class TAutoDBNode  {
   int32_t Id;
   // runtime information
   // this is the "index"
-  TTypeList<olx_pair_t<TAutoDBNet*,uint32_t> > Parents;
+  TTypeList<AnAssociation2<TAutoDBNet*,uint32_t> > Parents;
   evecd Params; // pre-calculated parameters
   void _PreCalc();
   double CalcDistance(size_t i) const {
@@ -112,11 +112,11 @@ class TAutoDBNode  {
   double CalcAngle(size_t i, size_t j) const;
 protected:
   static int SortMetricsFunc(const TAttachedNode &a, const TAttachedNode &b);
-  static int SortCAtomsFunc(const olx_pair_t<TCAtom*, vec3d> &a,
-                            const olx_pair_t<TCAtom*, vec3d> &b);
+  static int SortCAtomsFunc(const AnAssociation2<TCAtom*, vec3d> &a,
+                            const AnAssociation2<TCAtom*, vec3d> &b);
   static vec3d SortCenter;
 public:
-  TAutoDBNode(TSAtom& sa, TTypeList<olx_pair_t<TCAtom*, vec3d> >* atoms);
+  TAutoDBNode(TSAtom& sa, TTypeList<AnAssociation2<TCAtom*, vec3d> >* atoms);
   TAutoDBNode(IDataInputStream& in)  {  LoadFromStream(in);  }
 
   const olxstr& ToString() const;
@@ -281,7 +281,7 @@ public:
   void SaveToStream( IDataOutputStream& output ) const;
   void LoadFromStream( IDataInputStream& input );
 protected:
-  void AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
+  void AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator, 
     double& Uiso, AnalysisStat& stat, ElementPList* proposed_atoms = NULL);
   // a helper function to check C-O and C-N
   void A2Pemutate(TCAtom& a1, TCAtom& a2, const cm_Element& e1,
@@ -290,7 +290,7 @@ protected:
   short CheckA2Pemutate(TCAtom& a1, TCAtom& a2, const cm_Element& e1,
     const cm_Element& e2, double threshold);
 public:
-  void AnalyseStructure(const olxstr& LastFileName, TLattice& latt,
+  void AnalyseStructure(const olxstr& LastFileName, TLattice& latt, 
     TAtomTypePermutator* permutator, AnalysisStat& stat,
     ElementPList* proposed_atoms = NULL);
 
@@ -319,7 +319,7 @@ public:
       return olx_cmp(a.Fom, b.Fom);
     }
   };
-
+  
   template <class NodeClass>
   struct THitList {
     TTypeList< THitStruct<NodeClass> > hits;
@@ -374,7 +374,7 @@ public:
   };
   struct TAnalysisResult {
     TCAtom* atom;
-    TTypeList<Type> list1, list2, list3,
+    TTypeList<Type> list1, list2, list3, 
       enforced;
   };
   void ValidateResult(const olxstr& fileName, const TLattice& au,
@@ -386,10 +386,10 @@ protected:
   ConstTypeList<TAnalysisResult> AnalyseNet(TNetwork& net);
   // hits must be sorted beforehand!
   void AnalyseUiso(TCAtom& ca, const TTypeList<THitList<TAutoDBNode> >& list,
-    AnalysisStat& stat,
+    AnalysisStat& stat, 
     bool heavier, bool lighter,
     ElementPList* proposed_atoms = NULL);
-
+  
   class TAnalyseNetNodeTask : public TaskBase {
     TTypeList< TPtrList<TAutoDBNode> >& Nodes;
     TAutoDBNet& Network;

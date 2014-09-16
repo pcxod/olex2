@@ -24,7 +24,7 @@ class TGPCollection: public ACollectionItem  {
   olxstr Name;
   class TGraphicsStyle* Style;
 public:
-  TGPCollection(TGlRenderer& parent, const olxstr& name=EmptyString()) :
+  TGPCollection(TGlRenderer& parent, const olxstr& name=EmptyString()) : 
       Parent(parent), Name(name), Style(NULL) {}
   virtual ~TGPCollection() {}
   // clears the content of the colelction and removes primitives

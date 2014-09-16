@@ -49,10 +49,10 @@ class TGlGroup;
 class TGlRenderer : public IEObject  {
   // a list of all groups of primitives
   ObjectGroup<TGlMaterial, TGlPrimitive>  Primitives;
-  olxstr_dict<TGPCollection*, false> FCollections;
+  TSStrPObjList<olxstr,TGPCollection*, false> FCollections;
   TPtrList<TGlMaterial> FTranslucentObjects,
     FIdentityObjects, FTranslucentIdentityObjects;
-  typedef sorted::PointerPointer<AGDrawObject> GObjectList;
+  typedef SortedPtrList<AGDrawObject, TPointerComparator> GObjectList;
   GObjectList FGObjects;
   TPtrList<TGlGroup> FGroups;   // list of groups
   TGlGroup* FSelection;  // list of selected objects
@@ -69,7 +69,7 @@ class TGlRenderer : public IEObject  {
   function
   */
     FViewZoom,
-    FProjectionLeft, FProjectionRight, FProjectionTop, FProjectionBottom
+    FProjectionLeft, FProjectionRight, FProjectionTop, FProjectionBottom 
     ;
 //__________________Fog stuff
   bool Fog;
@@ -155,7 +155,7 @@ public:
   double GetZoom() const {  return FBasis.GetZoom(); }
   void  SetZoom(double V);
   void ResetBasis()  {  FBasis.Reset();  }
-
+  
   TGlLightModel LightModel;
   TActionQueue &OnDraw, // register your handler to swap buffers etc
     &OnStylesClear,  // Enter and Exit are called
@@ -183,10 +183,10 @@ public:
   bool IsColorStereo() const {  return StereoFlag==glStereoColor;  }
   bool IsCrossStereo() const {  return StereoFlag==glStereoCross;  }
   bool IsAnaglyphStereo() const {  return StereoFlag==glStereoAnaglyph;  }
-
+  
   void Initialise();
   void InitLights();
-  double CalcZoom() const {
+  double CalcZoom() const { 
     const double df = SceneDepth < 0 ?
       (SceneDepth=olx_max(FMaxV.DistanceTo(FMinV), 1.0)) : SceneDepth;
     return 1./df;
@@ -254,7 +254,7 @@ public:
   if current selection had less than 2 elements */
   TGlGroup* GroupSelection(const olxstr& groupName);
   void ClearGroups();
-  void Ungroup(TGlGroup& GlG);
+  void UnGroup(TGlGroup& GlG);
   TGlGroup& GetSelection() const {  return *FSelection; }
   template <class SelType> SelType& ReplaceSelection() {
     FSelection->GetPrimitives().RemoveObject(*FSelection);
@@ -269,7 +269,7 @@ public:
   void Select(AGDrawObject& G, bool v); // convinience function...
   void Select(AGDrawObject& G, glSelectionFlag flag);
   void Select(AGDrawObject& G);
-  void Deselect(AGDrawObject& G);
+  void DeSelect(AGDrawObject& G);
   void ClearSelection();
   void SelectAll(bool Select);
   void InvertSelection();
@@ -278,17 +278,17 @@ public:
   void operator = (const TGlRenderer &G);
   TGPCollection& NewCollection(const olxstr &Name);
   TGPCollection& GetCollection(size_t ind) const {
-    return *FCollections.GetValue(ind);
+    return *FCollections.GetObject(ind);
   }
   template <class T>
   TGPCollection* FindCollection(const T& Name)  {
     const size_t ind = FCollections.IndexOf(Name);
-    return (ind != InvalidIndex) ? FCollections.GetValue(ind) : NULL;
+    return (ind != InvalidIndex) ? FCollections.GetObject(ind) : NULL;
   }
   template <class T>
   TGPCollection& FindOrCreateCollection(const T& Name)  {
     const size_t ind = FCollections.IndexOf(Name);
-    return (ind != InvalidIndex) ? *FCollections.GetValue(ind)
+    return (ind != InvalidIndex) ? *FCollections.GetObject(ind)
       : NewCollection(Name);
   }
 
@@ -315,7 +315,7 @@ public:
   // tracks translucent and identity objects
   void SetProperties(TGlMaterial& P);
 
-  void SetObjectsCapacity(size_t v)  { FGObjects.SetCapacity(v);  }
+  void SetObjectsCapacity(size_t v)  { FGObjects.SetCapacity(v);  } 
   AGDrawObject& GetObject(size_t i) const {  return *FGObjects[i]; }
   void RemoveObject(AGDrawObject& D)  {  FGObjects.Remove(&D);  }
   void RemoveObjects(const AGDObjList& objects);

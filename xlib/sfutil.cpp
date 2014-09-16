@@ -21,7 +21,7 @@ using namespace SFUtil;
 #ifdef __OLX_USE_FASTSYMM
   DefineFSFactory(ISF_Util, SF_Util)
 #endif
-//..............................................................................
+//...........................................................................................
 ISF_Util* SFUtil::GetSF_Util_Instance(const TSpaceGroup& sg)  {
 #ifdef __OLX_USE_FASTSYMM
   ISF_Util* sf_util = fs_factory_ISF_Util(sg.GetName());
@@ -36,7 +36,7 @@ ISF_Util* SFUtil::GetSF_Util_Instance(const TSpaceGroup& sg)  {
   //return new SF_Util<SG_Impl>(all_m, all_m, false);
 #endif
 }
-//..............................................................................
+//...........................................................................................
 void SFUtil::ExpandToP1(const TArrayList<vec3i>& hkl, const TArrayList<compd>& F,
   const TSpaceGroup& sg, TArrayList<StructureFactor>& out)
 {
@@ -65,31 +65,36 @@ void SFUtil::ExpandToP1(const TArrayList<vec3i>& hkl, const TArrayList<compd>& F
   //    }
   //    else
   //      out[ind].val = F[i];
-  //  }
+  //  }  
   //}
   //end test
 }
-//..............................................................................
-void SFUtil::FindMinMax(const TArrayList<StructureFactor>& F,
-  vec3i& min, vec3i& max)
-{
+//...........................................................................................
+void SFUtil::FindMinMax(const TArrayList<StructureFactor>& F, vec3i& min, vec3i& max)  {
   min = vec3i(100, 100, 100);
   max = vec3i(-100, -100, -100);
-  for (size_t i=0; i < F.Count(); i++) {
-    vec3i::UpdateMinMax(F[i].hkl, min, max);
+  for( size_t i=0; i < F.Count(); i++ )  {
+    if( F[i].hkl[0] > max[0] )  max[0] = F[i].hkl[0];
+    if( F[i].hkl[0] < min[0] )  min[0] = F[i].hkl[0];
+
+    if( F[i].hkl[1] > max[1] )  max[1] = F[i].hkl[1];
+    if( F[i].hkl[1] < min[1] )  min[1] = F[i].hkl[1];
+
+    if( F[i].hkl[2] > max[2] )  max[2] = F[i].hkl[2];
+    if( F[i].hkl[2] < min[2] )  min[2] = F[i].hkl[2];
   }
 }
-//..............................................................................
+//...........................................................................................
 olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
   short mapType, short sfOrigin, short scaleType, double scale)
 {
   TXApp& xapp = TXApp::GetInstance();
   TStopWatch sw(__FUNC__);
-  if (sfOrigin == sfOriginFcf) {
-    olxstr fcffn = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "fcf");
-    if (!TEFile::Exists(fcffn)) {
+  if( sfOrigin == sfOriginFcf )  {
+    olxstr fcffn( TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "fcf") );
+    if( !TEFile::Exists(fcffn) )  {
       fcffn = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "fco");
-      if (!TEFile::Exists(fcffn))
+      if( !TEFile::Exists(fcffn) )
         return "please load fcf file or make sure the one exists in current folder";
     }
     sw.start("Loading CIF");
@@ -109,52 +114,49 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
     const size_t aInd = hklLoop->ColIndex("_refln_A_calc");
     const size_t bInd = hklLoop->ColIndex("_refln_B_calc");
 
-    if ((hInd|kInd|lInd|mfInd|sfInd|aInd|bInd) == InvalidIndex) {
+    if( (hInd|kInd|lInd|mfInd|sfInd|aInd|bInd) == InvalidIndex  ) {
       return "list 3 fcf file is expected";
     }
     refs.SetCapacity(hklLoop->RowCount());
     F.SetCount(hklLoop->RowCount());
-    for (size_t i=0; i < hklLoop->RowCount(); i++) {
+    for( size_t i=0; i < hklLoop->RowCount(); i++ )  {
       const cif_dp::CifRow& row = (*hklLoop)[i];
       TReflection& ref = refs.AddNew(row[hInd]->GetStringValue().ToInt(),
-        row[kInd]->GetStringValue().ToInt(),
+        row[kInd]->GetStringValue().ToInt(), 
         row[lInd]->GetStringValue().ToInt(),
         row[mfInd]->GetStringValue().ToDouble(),
         row[sfInd]->GetStringValue().ToDouble());
-      if (mapType == mapTypeDiff) {
-        const compd rv(row[aInd]->GetStringValue().ToDouble(),
-          row[bInd]->GetStringValue().ToDouble());
+      if( mapType == mapTypeDiff )  {
+        const compd rv(row[aInd]->GetStringValue().ToDouble(), row[bInd]->GetStringValue().ToDouble());
         double dI = (ref.GetI() - rv.mod());
         F[i] = compd::polar(dI, rv.arg());
       }
-      else if (mapType == mapType2OmC) {
-        const compd rv(row[aInd]->GetStringValue().ToDouble(),
-          row[bInd]->GetStringValue().ToDouble());
+      else if( mapType == mapType2OmC )  {
+        const compd rv(row[aInd]->GetStringValue().ToDouble(), row[bInd]->GetStringValue().ToDouble());
         double dI = 2*ref.GetI() - rv.mod();
         F[i] = compd::polar(dI, rv.arg());
       }
-      else if (mapType == mapTypeObs) {
-        const compd rv(row[aInd]->GetStringValue().ToDouble(),
-          row[bInd]->GetStringValue().ToDouble());
+      else if( mapType == mapTypeObs ) {
+        const compd rv(row[aInd]->GetStringValue().ToDouble(), row[bInd]->GetStringValue().ToDouble());
         F[i] = compd::polar(ref.GetI(), rv.arg());
       }
-      else {
+      else  {
         F[i].SetRe(row[aInd]->GetStringValue().ToDouble());
         F[i].SetIm(row[bInd]->GetStringValue().ToDouble());
       }
     }
     sw.stop();
   }
-  else {  // olex2 calculated SF
-    olxstr hklFileName = xapp.XFile().LocateHklFile();
-    if (!TEFile::Exists(hklFileName))
+  else  {  // olex2 calculated SF
+    olxstr hklFileName(xapp.XFile().LocateHklFile());
+    if( !TEFile::Exists(hklFileName) )
       return "could not locate hkl file";
     sw.start("Loading/Filtering/Merging HKL");
     TUnitCell::SymmSpace sp = xapp.XFile().GetUnitCell().GetSymmSpace();
     SymmSpace::InfoEx info_ex = SymmSpace::Compact(sp);
     info_ex.centrosymmetric = true;
     RefinementModel& rm = xapp.XFile().GetRM();
-    if (rm.GetHKLF() < 5) {
+    if( rm.GetHKLF() < 5 )  {
       RefinementModel::HklStat ms =
         rm.GetFourierRefList<
           TUnitCell::SymmSpace,RefMerger::ShelxMerger>(sp, refs);
@@ -168,53 +170,51 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
       //xapp.XFile().GetRM().DetwinMixed(refs, F, ms, info_ex);
       //xapp.XFile().GetRM().DetwinAlgebraic(refs, ms, info_ex);
     }
-    else {
+    else  {
       twinning::general twin(info_ex, rm.GetReflections(),
-        RefUtil::ResolutionAndSigmaFilter(rm), rm.GetBASFAsDoubleList());
+        RefUtil::ResolutionAndSigmaFilter(rm), rm.GetBASF());
       TArrayList<compd> Fc(twin.unique_indices.Count());
       SFUtil::CalcSF(xapp.XFile(), twin.unique_indices, Fc);
       twin.detwin_and_merge(twinning::detwinner_shelx(),
         RefMerger::ShelxMerger(), refs, Fc, &F);
     }
-
+   
     //xapp.XFile().GetRM().DetwinRatio(refs, F, ms, info_ex);
     //xapp.XFile().GetRM().DetwinAlgebraic(refs, ms, info_ex);
 
     xapp.XFile().GetRM().CorrectExtiForF(refs, F, sp);
     sw.start("Scaling structure factors");
-    if (mapType != mapTypeCalc) {
+    if( mapType != mapTypeCalc )  {
       // find a linear scale between F
       double a = 0, k = 1;
-      if (scaleType == scaleExternal)
+      if( scaleType == scaleExternal )
         k = scale;
-      else if (scaleType == scaleRegression) {
+      else if( scaleType == scaleRegression )  {
         CalcFScale(F, refs, k, a);
-        if (TBasicApp::GetInstance().IsProfiling()) {
-          TBasicApp::NewLogEntry(logInfo) << "Fc^2 = " << k << "*Fo^2" <<
-            (a >= 0 ? " +" : " ") << a;
-        }
+        if( TBasicApp::GetInstance().IsProfiling() )
+          TBasicApp::NewLogEntry(logInfo) << "Fc^2 = " << k << "*Fo^2" << (a >= 0 ? " +" : " ") << a;
       }
-      else {  // simple scale on I/sigma > 3
+      else  {  // simple scale on I/sigma > 3
         k = CalcFScale(F, refs);
-        if (TBasicApp::GetInstance().IsProfiling())
+        if( TBasicApp::GetInstance().IsProfiling() )
           TBasicApp::NewLogEntry(logInfo) << "Fc^2 = " << k << "*Fo^2";
       }
       const size_t f_cnt = F.Count();
-      for (size_t i=0; i < f_cnt; i++) {
+      for( size_t i=0; i < f_cnt; i++ )  {
         double dI = refs[i].GetI() < 0 ? 0 : sqrt(refs[i].GetI());
         dI *= k;
-        if (scaleType == scaleRegression)
+        if( scaleType == scaleRegression )
           dI += a;
-        if (mapType == mapTypeDiff) {
+        if( mapType == mapTypeDiff )  {
           dI -= F[i].mod();
           F[i] = compd::polar(dI, F[i].arg());
         }
-        else if (mapType == mapType2OmC) {
+        else if( mapType == mapType2OmC )  {
           dI *= 2;
           dI -= F[i].mod();
           F[i] = compd::polar(dI, F[i].arg());
         }
-        else if (mapType == mapTypeObs) {
+        else if( mapType == mapTypeObs )  {
           F[i] = compd::polar(dI, F[i].arg());
         }
       }
@@ -222,7 +222,7 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
   }
   return EmptyString();
 }
-//..............................................................................
+//...........................................................................................
 void SFUtil::PrepareCalcSF(const TAsymmUnit& au, double* U, ElementPList& scatterers,
   TCAtomPList& alist)
 {
@@ -236,7 +236,7 @@ void SFUtil::PrepareCalcSF(const TAsymmUnit& au, double* U, ElementPList& scatte
   BM[0] *= BM[0];
   BM[1] *= BM[1];
   BM[2] *= BM[2];
-
+  
   au.GetAtoms().ForEach(ACollectionItem::TagSetter(0));
   if (au.GetRefMod() && !au.GetRefMod()->OmittedAtoms().IsEmpty()) {
     TTypeList<ExplicitCAtomRef> l =
@@ -255,7 +255,7 @@ void SFUtil::PrepareCalcSF(const TAsymmUnit& au, double* U, ElementPList& scatte
     }
     ca.SetTag(ind);
     ind = alist.Count()*6;
-    alist.Add(&ca);
+    alist.Add(&ca); 
     TEllipsoid* elp = ca.GetEllipsoid();
     if( elp != NULL )  {
       elp->GetShelxQuad(quad);  // default is Ucart
@@ -267,7 +267,7 @@ void SFUtil::PrepareCalcSF(const TAsymmUnit& au, double* U, ElementPList& scatte
       U[ind] = -EQ_PI*ca.GetUiso();
   }
 }
-//..............................................................................
+//...........................................................................................
 void SFUtil::_CalcSF(const TXFile& xfile, const IMillerIndexList& refs,
   TArrayList<TEComplex<double> >& F, bool UseFdp)
 {
@@ -314,4 +314,4 @@ void SFUtil::_CalcSF(const TXFile& xfile, const IMillerIndexList& refs,
   delete sf_util;
   delete [] U;
 }
-//..............................................................................
+//...........................................................................................

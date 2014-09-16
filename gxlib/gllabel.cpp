@@ -27,7 +27,7 @@ TXGlLabel::TXGlLabel(TGlRenderer& R, const olxstr& collectionName) :
 };
 //..............................................................................
 void TXGlLabel::Create(const olxstr& cName)  {
-  if( !cName.IsEmpty() )
+  if( !cName.IsEmpty() )  
     SetCollectionName(cName);
   TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
   GPC.AddObject(*this);
@@ -52,7 +52,7 @@ void TXGlLabel::Create(const olxstr& cName)  {
 }
 //..............................................................................
 void TXGlLabel::SetLabel(const olxstr& L)  {
-  FLabel = L;
+  FLabel = L;  
   text_rect = GetFont().GetTextRect(FLabel);
 }
 //..............................................................................

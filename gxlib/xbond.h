@@ -87,9 +87,9 @@ public:
   /* returns a list of static primitives. This list has the same order as
   primtives masks, so primitives names can be obtained for any particular mask
   */
-  static TStringToList<olxstr, TGlPrimitive*> &GetStaticPrimitives() {
+  static TStrPObjList<olxstr,TGlPrimitive*> &GetStaticPrimitives() {
     //static TArrayList<TGlPrimitiveParams> FPrimitiveParams;
-    static TStringToList<olxstr, TGlPrimitive*> sp;
+    static TStrPObjList<olxstr, TGlPrimitive*> sp;
     return sp;
   }
   // updates primitive properties from atoms
@@ -144,11 +144,6 @@ public:
   virtual const vec3d &GetBaseCrd() const;
   static TGraphicsStyle* GetParamStyle()  {  return FBondParams;  }
   static void CreateStaticObjects(TGlRenderer& parent);
-
-  static olxdict<olxstr, olxstr, olxstrComparator<false> > &NamesRegistry() {
-    static olxdict<olxstr, olxstr, olxstrComparator<false> > nr;
-    return nr;
-  }
 };
 
 EndGxlNamespace()

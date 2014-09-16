@@ -10,13 +10,12 @@
 #ifndef __olx_fsext_H
 #define __olx_fsext_H
 
-#include "efile.h"
-#include "library.h"
-
 #ifdef __WXWIDGETS__
-  #include <wx/wx.h>
   #include <wx/filesys.h>
 #endif
+
+#include "efile.h"
+#include "library.h"
 
 class TZipWrapper;
 //class TOZPFS;
@@ -35,10 +34,10 @@ struct TMemoryBlock  {
 /*____________________________________________________________________________*/
 class TFileHandlerManager : public IEObject  {
 #ifdef __WXWIDGETS__
-  olxstr_dict<TZipWrapper*, false> FZipFiles;
+  TSStrPObjList<olxstr,TZipWrapper*, false> FZipFiles;
 //  TSStrPObjList<olxstr,TOZPFS*, false> FOZPFiles;
 #endif
-  olxstr_dict<TMemoryBlock*, false> FMemoryBlocks;
+  TSStrPObjList<olxstr,TMemoryBlock*, false> FMemoryBlocks;
   static const int16_t Version() { return 0x0001; }
   static const char *Signature() { return "ODF_"; }
   static size_t SignatureLength() { return 4; }
@@ -48,12 +47,15 @@ public:
   TFileHandlerManager();
   ~TFileHandlerManager();
 protected:
-  static TFileHandlerManager *&Handler();
+  static TFileHandlerManager *&Handler() {
+    static TFileHandlerManager *h;
+    return h;
+  }
   static TStrList &BaseDirs() {
     static TStrList l;
     return l;
   }
-
+  
   void _Clear();
   IDataInputStream *_GetInputStream(const olxstr &FN);
 #ifdef __WXWIDGETS__
@@ -65,7 +67,7 @@ protected:
   void _SaveToStream(IDataOutputStream& os, short persistenceMask);
   void _LoadFromStream(IDataInputStream& is, short persistenceId);
   inline bool IsMemoryBlock(const olxstr &EM) const {
-    return FMemoryBlocks.HasKey(TEFile::UnixPath(EM));
+    return FMemoryBlocks[TEFile::UnixPath(EM)] != NULL;
   }
 public:
   static IDataInputStream *GetInputStream(const olxstr &FN);
@@ -79,7 +81,7 @@ public:
 
   static void SaveToStream(IDataOutputStream& os, short persistenceMask);
   static void LoadFromStream(IDataInputStream& is, short persistenceId);
-
+  
   static const TMemoryBlock* FindMemoryBlock(const olxstr& bn);
   static size_t Count();
   static const olxstr& GetBlockName(size_t i);

@@ -143,7 +143,7 @@ double cm_Absorption_Coefficient_Reg::_CalcForE(double eV,
   // matches the entry?
   if( olx_abs(ac.data[i_start].energy-eV) < 1e-3/k )
     return (ac.data[i_start].*f)();
-  TTypeList<olx_pair_t<double,double> > left, right;
+  TTypeList<AnAssociation2<double,double> > left, right;
   // go left
   for( size_t i=i_start-1; i != InvalidIndex; i-- )  {
     const double v = (ac.data[i].*f)();

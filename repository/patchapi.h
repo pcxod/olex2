@@ -142,7 +142,7 @@ public:
     location_file_content.Add(TEFile::AddPathDelimeter(
       (base_dir.IsEmpty() ? TBasicApp::GetBaseDir() : base_dir)))
         << patcher::PatchAPI::ReadRepositoryTag();
-    TEFile::WriteLines(shared_dir + "folder.info", location_file_content);
+    location_file_content.SaveToFile( shared_dir + "folder.info");
   }
   static olxstr ComposeOldSharedDir(const olxstr& shared_dir)  {
     olxstr new_shared_dir = shared_dir;

@@ -11,8 +11,8 @@
 #define __olx_console_interface_H
 #include "estack.h"
 
-#ifdef __WIN32__
-const int
+#ifdef __WIN32__ 
+const int 
   fgcReset  = 0,
   fgcRed   = FOREGROUND_RED,
   fgcGreen = FOREGROUND_GREEN,
@@ -51,10 +51,10 @@ class ConsoleInterface  { // : public IConsoleInterface {
   TStack<CONSOLE_SCREEN_BUFFER_INFO> TextAttrib;
 public:
   ConsoleInterface()  {
-    conin = CreateFile(olxT("CONIN$"), GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    conin = CreateFile(olxT("CONIN$"), GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL); 
     conout  = CreateFile(olxT("CONOUT$"), GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     CONSOLE_SCREEN_BUFFER_INFO pi;
-    GetConsoleScreenBufferInfo(conout, &pi);
+    GetConsoleScreenBufferInfo(conout, &pi); 
     TextAttrib.Push(pi);
   }
   ~ConsoleInterface()  {
@@ -63,14 +63,14 @@ public:
   }
   void Push()  {
     CONSOLE_SCREEN_BUFFER_INFO pi;
-    GetConsoleScreenBufferInfo(conout, &pi);
+    GetConsoleScreenBufferInfo(conout, &pi); 
     TextAttrib.Push(pi);
   }
   void Pop()  {
-    SetConsoleTextAttribute(conout, TextAttrib.Pop().wAttributes);
+    SetConsoleTextAttribute(conout, TextAttrib.Pop().wAttributes); 
   }
   void SetTextBackground(const int cl, bool intensity=false)  {
-    if( intensity )
+    if( intensity ) 
       SetConsoleTextAttribute(conout, cl|FOREGROUND_INTENSITY);
     else
       SetConsoleTextAttribute(conout, cl|FOREGROUND_INTENSITY);
@@ -83,7 +83,7 @@ public:
 class ConsoleInterface  { // : public IConsoleInterface {
 public:
   ConsoleInterface()  {
-
+  
   }
   ~ConsoleInterface()  {
   }
@@ -94,7 +94,7 @@ public:
   }
   void SetTextBackground(const int cl, bool intensity=false)  {
     cout << "\033[" << cl;
-    if( intensity )
+    if( intensity ) 
       cout << ";1";
     cout << "m";
   }

@@ -12,66 +12,47 @@ namespace test {
 class SortTest  {
   static int icmp(const int& a, const int& b)  {  return a-b;  }
   struct Cmp {
-    template <class it>
-    int Compare(const it &a, const it &b) const {
-      return olx_ref::get(a)-olx_ref::get(b);
-    }
-    int compare(const int &a, const int &b) const {
+    int Compare(const int &a, const int &b) const {
       return a-b;
     }
   };
 public:
-  template <class Sorter>
-  static void DoTestT(OlxTests& t)  {
-    t.description << __FUNC__ << '<' << EsdlClassName(Sorter) << '>';
-    TArrayList<int> al1(1001), al2(1001);
-    TPtrList<int> pl1(1001), pl2(1001);
-    TTypeList<int> tl1(1001, false), tl2(1001, false);
-    for( size_t i=0; i < al1.Count(); i++ )  {
+  void DoTest(OlxTests& t)  {
+    t.description << __FUNC__;
+    TArrayList<int> al1(100), al2(100);
+    TPtrList<int> pl1(100), pl2(100);
+    TTypeList<int> tl1(100, false), tl2(100, false);
+    for( size_t i=0; i < 100; i++ )  {
       al1[i] = al2[i] = rand();
       pl1[i] = &al1[i];  pl2[i] = &al2[i];
       tl1.Set(i, &al1[i]);  tl2.Set(i, &al2[i]);
     }
-    IEObject *cause=NULL;
-    try {
-      Cmp cmp;
-      Sorter::Sort(al1, FunctionComparator::Make(icmp),
-        SyncSortListener::Make(al2));
-      Sorter::Sort(pl1, Cmp(),
-        SyncSortListener::Make(pl2));
-      Sorter::Sort(tl1, FunctionComparator::MakeConst(cmp, &Cmp::compare),
-        SyncSortListener::Make(tl2));
-      for( size_t i=0; i < al1.Count(); i++ )  {
-        if( i > 0 && (al1[i-1] > al1[i] || tl1[i-1] > tl2[i] || *pl1[i-1] > *pl2[i]) )
-          throw TFunctionFailedException(__OlxSourceInfo, "sorting failed");
-        if( al1[i] != al2[i] || tl1[i] != tl2[i] || *pl1[i] != *pl2[i] )
-          throw TFunctionFailedException(__OlxSourceInfo, "syncronised sorting failed");
-      }
-      Sorter::Sort(al1, ReverseComparator::Make(icmp));
-      Sorter::Sort(al2, ReverseComparator::Make(Cmp()));
-      for( size_t i=0; i < al1.Count(); i++ )  {
-        if (i > 0 && (al1[i-1] < al1[i] || al2[i-1] < al2[i] || al1[i] != al2[i]))
-          throw TFunctionFailedException(__OlxSourceInfo, "sorting failed");
-      }
-      Sorter::Sort(al2, ReverseComparator::MakeConst(cmp, &Cmp::compare));
-      for( size_t i=0; i < al1.Count(); i++ )  {
-        if (al1[i] != al2[i])
-          throw TFunctionFailedException(__OlxSourceInfo, "sorting failed");
-      }
+    Cmp cmp;
+    QuickSorter::Sort(al1, FunctionComparator::Make(icmp),
+      SyncSwapListener::Make(al2));
+    QuickSorter::Sort(pl1, Cmp(),
+      SyncSwapListener::Make(pl2));
+    QuickSorter::Sort(tl1, FunctionComparator::MakeConst(cmp, &Cmp::Compare),
+      SyncSwapListener::Make(tl2));
+    for( size_t i=0; i < 100; i++ )  {
+      if( i > 0 && (al1[i-1] > al1[i] || tl1[i-1] > tl2[i] || *pl1[i-1] > *pl2[i]) )
+        throw TFunctionFailedException(__OlxSourceInfo, "sorting failed");
+      if( al1[i] != al2[i] || tl1[i] != tl2[i] || *pl1[i] != *pl2[i] )
+        throw TFunctionFailedException(__OlxSourceInfo, "syncronised sorting failed");
     }
-    catch(TExceptionBase &e) {
-      cause = e.Replicate();
+    QuickSorter::Sort(al1, ReverseComparator::Make(icmp));
+    QuickSorter::Sort(al2, ReverseComparator::Make(Cmp()));
+    for( size_t i=0; i < 100; i++ )  {
+      if (i > 0 && (al1[i-1] < al1[i] || al2[i-1] < al2[i] || al1[i] != al2[i]))
+        throw TFunctionFailedException(__OlxSourceInfo, "sorting failed");
+    }
+    QuickSorter::Sort(al2, ReverseComparator::MakeConst(cmp, &Cmp::Compare));
+    for( size_t i=0; i < 100; i++ )  {
+      if (al1[i] != al2[i])
+        throw TFunctionFailedException(__OlxSourceInfo, "sorting failed");
     }
     tl1.ReleaseAll();
     tl2.ReleaseAll();
-    if (cause != 0) {
-      throw TFunctionFailedException(__OlxSourceInfo, cause);
-    }
-  }
-  void DoTest(OlxTests& t) {
-    t.Add( &SortTest::DoTestT<BubbleSorter>)
-      .Add(&SortTest::DoTestT<QuickSorter>)
-      .Add(&SortTest::DoTestT<InsertSorter>);
   }
 };
 //.........................................................................

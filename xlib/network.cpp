@@ -58,7 +58,7 @@ void TNetwork::CreateBondsAndFragments(ASObjectProvider& objects, TNetPList& Fra
             A3.SetNetwork(*Net);
             TSBond& B = objects.bonds.New(Net);
             B.SetType(sotBond);
-            B.SetA(A2);
+            B.SetA(A2); 
             B.SetB(A3);
             A2.AddBond(B);
             A3.AddBond(B);
@@ -268,9 +268,9 @@ public:
 };
 
 void ResultCollector(
-  TEGraphNode<uint64_t,TSAtom*>& subRoot,
-  TEGraphNode<uint64_t,TSAtom*>& Root,
-  TTypeList<olx_pair_t<size_t, size_t> >& res)
+  TEGraphNode<uint64_t,TSAtom*>& subRoot, 
+  TEGraphNode<uint64_t,TSAtom*>& Root, 
+  TTypeList<AnAssociation2<size_t, size_t> >& res)
 {
   res.AddNew(subRoot.GetObject()->GetFragmentId(),
     Root.GetObject()->GetFragmentId());
@@ -287,7 +287,7 @@ void ResultCollector(
 void ResultCollector(
   TEGraphNode<uint64_t,TSAtom*>& subRoot,
   TEGraphNode<uint64_t,TSAtom*>& Root,
-  TTypeList< olx_pair_t<TSAtom*, TSAtom*> >& res)
+  TTypeList< AnAssociation2<TSAtom*, TSAtom*> >& res)
 {
   if( !subRoot.ShallowEquals(Root) )  return;
   res.AddNew(subRoot.GetObject(), Root.GetObject());
@@ -348,7 +348,7 @@ uint64_t CalculateNodeHash2(TEGraphNode<uint64_t,TSAtom*>& graphNode,
   TSAtom &a = *graphNode.GetObject();
   TArrayList<uint64_t> ids(a.NodeCount());
   for (size_t i=0; i < a.NodeCount(); i++) {
-    ids[i] = map.Get(&a.Node(i))->GetData();
+    ids[i] = map[&a.Node(i)]->GetData();
   }
   BubbleSorter::Sort(ids, TPrimitiveComparator());
   uint64_t id=0;
@@ -383,7 +383,7 @@ void CalculateHashes2(TEGraphNode<uint64_t,TSAtom*>& graphNode,
 void AssignHashes2(TEGraphNode<uint64_t,TSAtom*>& graphNode,
   const olxdict<TEGraphNode<uint64_t,TSAtom*>*, uint64_t, TPointerComparator>& vs)
 {
-  graphNode.SetData(vs.Get(&graphNode));
+  graphNode.SetData(vs[&graphNode]);
   for (size_t i=0; i < graphNode.Count(); i++) {
     AssignHashes2(graphNode.Item(i), vs);
   }
@@ -435,7 +435,7 @@ void BuildGraph(TEGraphNode<uint64_t,TSAtom*>& graphNode)  {
 }
 
 struct GraphAnalyser  {
-  TEGraphNode<uint64_t,TSAtom*> &RootA, &RootB;
+  TEGraphNode<uint64_t,TSAtom*> &RootA, &RootB; 
   int CallsCount;
   bool Invert, CalcRMSForH;
   vec3d bCent;
@@ -468,7 +468,7 @@ struct GraphAnalyser  {
   }
 
   double CalcRMS() {
-    TTypeList< olx_pair_t<TSAtom*,TSAtom*> > matchedAtoms;
+    TTypeList< AnAssociation2<TSAtom*,TSAtom*> > matchedAtoms;
     TagSetter tag_s;
     RootA.Traverser.Traverse(RootA, tag_s);
     matchedAtoms.SetCapacity(tag_s.calls);
@@ -476,7 +476,7 @@ struct GraphAnalyser  {
     ResultCollector(RootA, RootB, matchedAtoms);
     if( !CalcRMSForH )  {
       for( size_t i=0; i < matchedAtoms.Count(); i++ )
-        if( matchedAtoms[i].a->GetType() == iHydrogenZ )
+        if( matchedAtoms[i].A()->GetType() == iHydrogenZ )
           matchedAtoms.NullItem(i);
     }
     matchedAtoms.Pack();
@@ -492,7 +492,7 @@ struct GraphAnalyser  {
     return ao.rmsd[0];
   }
   double CalcRMSFull()  {
-    TTypeList< olx_pair_t<TSAtom*,TSAtom*> > matchedAtoms;
+    TTypeList< AnAssociation2<TSAtom*,TSAtom*> > matchedAtoms;
     TagSetter tag_s;
     RootA.Traverser.Traverse(RootA, tag_s);
     matchedAtoms.SetCapacity(tag_s.calls);
@@ -601,10 +601,10 @@ struct GraphAnalyser  {
     const TAsymmUnit& au = *n2[0].GetObject()->CAtom().GetParent();
     TSizeList permutation, null_permutation(pos.Count());
     const size_t perm_cnt = olx_factorial_t<size_t, size_t>(pos.Count());
-    sorted::PrimitiveAssociation<double, size_t> hits;
+    TPSTypeList<double, size_t> hits;
     TArrayList<vec3d> crds(pos.Count());
     for( size_t i=0; i < pos.Count(); i++ )  {
-      vec3d v = n2[pos[i]].GetObject()->ccrd();
+      vec3d v = n2[pos[i]].GetObject()->ccrd(); 
       if( Invert )  v*= -1;
       crds[i] = bestMatrix*(au.CellToCartesian(v) - bCent);
       null_permutation[i] = i;
@@ -619,15 +619,15 @@ struct GraphAnalyser  {
     }
     bool rv = false;
     permutation = null_permutation;
-    if (hits.GetValue(0) != 0)  {
-      GeneratePermutation(permutation, hits.GetValue(0));
+    if( hits.GetObject(0) != 0 )  {
+      GeneratePermutation(permutation, hits.GetObject(0));
       rv = true;
     }
     TPtrList<TEGraphNode<uint64_t,TSAtom*> > nodes(n2.GetNodes());
     for( size_t i=0; i < pos.Count(); i++ )
       n2.GetNodes()[pos[permutation[i]]] = nodes[pos[i]];
     return rv;
-  }
+  } 
 };
 
 //..............................................................................
@@ -641,7 +641,7 @@ size_t TNetwork_NodeCounter(const TSAtom& a)  {
   return nc;
 }
 bool TNetwork::DoMatch(TNetwork& net,
-  TTypeList<olx_pair_t<size_t,size_t> >& res,
+  TTypeList<AnAssociation2<size_t,size_t> >& res,
   bool Invert, double (*weight_calculator)(const TSAtom&))
 {
   if( NodeCount() != net.NodeCount() )  return false;
@@ -716,7 +716,7 @@ bool TNetwork::DoMatch(TNetwork& net,
 }
 //..............................................................................
 bool TNetwork::IsSubgraphOf(TNetwork& net,
-  TTypeList<olx_pair_t<size_t, size_t> >& res,
+  TTypeList<AnAssociation2<size_t, size_t> >& res,
   const TSizeList& rootsToSkip )
 {
   if( NodeCount() > net.NodeCount() )  return false;
@@ -879,7 +879,7 @@ void TNetwork::FindRings(const ElementPList& ringContent,
 //  TTypeList<TreeNode> nodes;
 //  for( size_t i=0; i < left.NodeCount(); i++ )  {
 //    if( left.Node(i).GetTag() == -1 )
-//
+//    
 //  }
 //  for( size_t i=0; i < left.NodeCount(); i++ )  {
 //    if( left.Node(i).GetTag() >= src.GetTag() )  {
@@ -952,7 +952,7 @@ void TNetwork::FindAtomRings(TSAtom& ringAtom, const ElementPList& ringContent,
   size_t resCount = res.Count();
   for( size_t i=0; i < ringAtom.NodeCount(); i++ )  {
     TSAtom& a = ringAtom.Node(i);
-    if( a.IsDeleted() || a.NodeCount() < 2 ||
+    if( a.IsDeleted() || a.NodeCount() < 2 || 
        (ringContent[1] != NULL && a.GetType() != *ringContent[1]) )  continue;
     ring.Clear();
     for( size_t j=0; j < NodeCount(); j++ )
@@ -980,7 +980,7 @@ TNetwork::RingInfo& TNetwork::AnalyseRing(const TSAtomPList& ring, TNetwork::Rin
     if( !ri.HasAfix && ring[i]->CAtom().GetAfix() != 0 )
       ri.HasAfix = true;
     TSAtomPList& al = ri.Substituents.AddNew();
-
+   
     size_t nhc = 0, // not hydrogen atom count
       rnc = 0;   // of which belong to the ring
     double local_maxmw = 0;
@@ -1007,7 +1007,7 @@ TNetwork::RingInfo& TNetwork::AnalyseRing(const TSAtomPList& ring, TNetwork::Rin
       if( nhc-rnc > ri.MaxSubsANode )
         ri.MaxSubsANode = nhc-rnc;
     }
-    else if( rnc > 2 )
+    else if( rnc > 2 ) 
       ri.Ternary.Add(i);
   }
   // analyse alpha atoms (substituted next to ternary atoms)
@@ -1120,10 +1120,10 @@ bool TNetwork::IsRingRegular(const TSAtomPList& ring)  {
   return true;
 }
 //..............................................................................
-void TNetwork::PrepareESDCalc(const TTypeList< olx_pair_t<TSAtom*,TSAtom*> >& atoms,
+void TNetwork::PrepareESDCalc(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms, 
     bool Inverted,
     TSAtomPList& atoms_out,
-    vec3d_alist& crd_out,
+    vec3d_alist& crd_out, 
     TDoubleList& wght_out,
     double (*weight_calculator)(const TSAtom&))
 {
@@ -1133,23 +1133,23 @@ void TNetwork::PrepareESDCalc(const TTypeList< olx_pair_t<TSAtom*,TSAtom*> >& at
   if( Inverted )  {
     const TAsymmUnit& au2 = atoms[0].GetB()->GetNetwork().GetLattice().GetAsymmUnit();
     for(size_t i=0; i < atoms.Count(); i++ )  {
-      atoms_out[i] = atoms[i].a;
-      atoms_out[atoms.Count()+i] = atoms[i].b;
+      atoms_out[i] = atoms[i].A();
+      atoms_out[atoms.Count()+i] = atoms[i].B();
       wght_out[i] = weight_calculator(*atoms[i].GetA());
       wght_out[atoms.Count()+i] = weight_calculator(*atoms[i].GetB());
       vec3d v = atoms[i].GetB()->ccrd() * -1;
       au2.CellToCartesian(v);
-      crd_out[i] = atoms[i].GetA()->crd();
+      crd_out[i] = atoms[i].GetA()->crd(); 
       crd_out[atoms.Count()+i] = v;
     }
   }
   else  {
     for(size_t i=0; i < atoms.Count(); i++ )  {
-      atoms_out[i] = atoms[i].a;
-      atoms_out[atoms.Count()+i] = atoms[i].b;
+      atoms_out[i] = atoms[i].A();
+      atoms_out[atoms.Count()+i] = atoms[i].B();
       wght_out[i] = weight_calculator(*atoms[i].GetA());
       wght_out[atoms.Count()+i] = weight_calculator(*atoms[i].GetB());
-      crd_out[i] = atoms[i].GetA()->crd();
+      crd_out[i] = atoms[i].GetA()->crd(); 
       crd_out[atoms.Count()+i] = atoms[i].GetB()->crd();
     }
   }
@@ -1194,7 +1194,7 @@ void TNetwork::DoAlignAtoms(const TSAtomPList& atomsToTransform,
 }
 //..............................................................................
 TNetwork::AlignInfo TNetwork::GetAlignmentRMSD(
-  const TTypeList< olx_pair_t<TSAtom*,TSAtom*> >& atoms,
+  const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms,
   bool invert,
   double (*weight_calculator)(const TSAtom&),
   bool reset_crd
@@ -1210,7 +1210,7 @@ TNetwork::AlignInfo TNetwork::GetAlignmentRMSD(
 }
 //..............................................................................
 TArrayList<align::pair>& TNetwork::AtomsToPairs(
-  const TTypeList<olx_pair_t<TSAtom*,TSAtom*> >& atoms,
+  const TTypeList<AnAssociation2<TSAtom*,TSAtom*> >& atoms,
   bool invert, double (*weight_calculator)(const TSAtom&),
   TArrayList<align::pair>& pairs,
   bool reset_crd
@@ -1242,7 +1242,7 @@ TArrayList<align::pair>& TNetwork::AtomsToPairs(
 }
 //..............................................................................
 align::out TNetwork::GetAlignmentInfo(
-  const TTypeList<olx_pair_t<TSAtom*,TSAtom*> >& atoms,
+  const TTypeList<AnAssociation2<TSAtom*,TSAtom*> >& atoms,
   bool invert, double (*weight_calculator)(const TSAtom&), bool reset_crd)
 {
   TArrayList<align::pair> pairs;
@@ -1261,7 +1261,7 @@ bool TNetwork::RingInfo::IsSingleCSubstituted() const  {
       if( ra.GetType().GetMr() < 3 )  continue;  // H,D,Q
       nhc++;
     }
-    if( nhc > 1 )  return false;  // only one to ring bond
+    if( nhc > 1 )  return false;  // only one to ring bond 
   }
   return true;
 }

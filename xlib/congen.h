@@ -20,7 +20,7 @@ const uint16_t
   fgCH1  = 3,
   fgOH3  = 4,
   fgOH2  = 5,
-  fgOH1 = 6,
+  fgOH1  = 6,
   fgNH4  = 7,
   fgNH3  = 8,
   fgNH2  = 9,
@@ -45,10 +45,9 @@ const uint16_t
   fgPlaner      = 2,
   fgTetrahedral = 3;
 
-typedef TTypeList< olx_pair_t<double, double> > TFixedValueList;
+typedef TTypeList< AnAssociation2<double, double> > TFixedValueList;
 
-class AConstraintGenerator : public IEObject {
-  bool UseRestrains;
+class AConstraintGenerator : public IEObject{
 protected:
   olxdict<uint32_t,double, TPrimitiveComparator> Distances;
   void DoGenerateAtom(TCAtomPList& created, TAsymmUnit& au, vec3d_list& Crds,
@@ -65,10 +64,7 @@ public:
     TCAtomPList* generated = NULL) = 0;
   virtual void AnalyseMultipart(const TAtomEnvi& envi,
     const TTypeList<TCAtomPList>& parts) = 0;
-  
-  DefPropBIsSet(UseRestrains)
-
-  /* front 16 bits - number of bonds, following 8 bits - geometry, rear 8 bits
+  /* front 32 bits - number of bonds, following 8 bits - geometry, rear 8 bits
   - group */
   static uint32_t GenId(uint16_t groupId, uint16_t bonds,
     uint16_t geometry=fgDefault)
@@ -122,7 +118,7 @@ public:
 //    if( envi.Count() == 1 )
 //      return inrange(envi.GetBase().crd().DistanceTo(envi.GetCrd(0)), GetRange(GenId(fgOH1,1))[0]);
 //    if( envi.Count() == 2 )  {
-//      const RangeList d = GetRange(GenId(fgOH1,2));
+//      const RangeList d = GetRange(GenId(fgOH1,2));  
 //      return inrange(
 //        AE.GetCrd(0).DistanceTo(envi.GetBase().crd()), d[0],
 //        AE.GetCrd(1).DistanceTo(envi.GetBase().crd()), d[1]

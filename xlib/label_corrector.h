@@ -76,7 +76,7 @@ struct LabelCorrector  {
       if( a.IsDeleted() )  continue;
       if( trim && a.GetLabel().Length() > 4 )
         a.SetLabel(a.GetLabel().SubStringTo(4), false);
-      uniq_labels.Add(a.GetResiLabel(), &a);
+      uniq_labels.Add(a.GetLabel(), &a);
     }
   }
   void Correct(TCAtom& a) {
@@ -90,7 +90,7 @@ struct LabelCorrector  {
         return;
       LabelIterator *li;
       if (labels.HasKey(&a.GetType()))
-        li = &labels.Get(&a.GetType());
+        li = &labels[&a.GetType()];
       else {
         const size_t off = a.GetType().symbol.Length();
         li = &labels(&a.GetType(),
@@ -103,7 +103,7 @@ struct LabelCorrector  {
       li->inc();
     }
     else
-      uniq_labels.Add(a.GetResiLabel(), &a);
+      uniq_labels.Add(a.GetLabel(), &a);
   }
   void CorrectAll(TResidue& r) {
     uniq_labels.SetCapacity(r.Count());
@@ -113,11 +113,11 @@ struct LabelCorrector  {
   // must be initialised with AsymmUnit!
   void CorrectGlobal(TCAtom& a) {
     if (a.IsDeleted()) return;
-    TCAtom* lo = uniq_labels.Find(a.GetResiLabel(), NULL);
+    TCAtom* lo = uniq_labels.Find(a.GetLabel(), NULL);
     if (lo != &a) {
       LabelIterator *li;
       if (labels.HasKey(&a.GetType()))
-        li = &labels.Get(&a.GetType());
+        li = &labels[&a.GetType()];
       else {
         const size_t off = a.GetType().symbol.Length();
         li = &labels(&a.GetType(),
@@ -135,7 +135,7 @@ struct LabelCorrector  {
     }
   }
   bool IsGlobal(const TCAtom& a) const {
-    TCAtom* lo = uniq_labels.Find(a.GetResiLabel(), NULL);
+    TCAtom* lo = uniq_labels.Find(a.GetLabel(), NULL);
     if (lo != &a)
       return false;
     else if (lo == NULL) {

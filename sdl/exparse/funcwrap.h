@@ -106,7 +106,7 @@ namespace exparse  {
     void (*func)(argt_1);
   public:
     VoidFunction1(const olxstr& name, void (*f)(argt_1))
-      : AFunction<IStaticFunction,void>(name), func(f)
+      : AFunction<IStaticFunction,void>(name), func(f) 
     {
       arg_types.Add(typeid(argt_1));
     }
@@ -145,7 +145,7 @@ namespace exparse  {
     void (*func)(argt_1, argt_2);
   public:
     VoidFunction2(const olxstr& name, void (*f)(argt_1, argt_2) )
-      : AFunction<IStaticFunction,void>(name), func(f)
+      : AFunction<IStaticFunction,void>(name), func(f) 
     {
       arg_types.Add(typeid(argt_1));
       arg_types.Add(typeid(argt_2));
@@ -164,7 +164,7 @@ namespace exparse  {
   public:
     VoidMemberFunction2(const olxstr& name,
       void (base_class::*f)(argt_1, argt_2) )
-      : AFunction<IMemberFunction,void>(name), func(f)
+      : AFunction<IMemberFunction,void>(name), func(f) 
     {
       arg_types.Add(typeid(argt_1));
       arg_types.Add(typeid(argt_2));
@@ -184,7 +184,7 @@ namespace exparse  {
       return new VoidValue;
     }
   };
-
+  
   /////////////////////////////  FUNCTIONS RETURNING A VALUE //////////////////
   /////////////////////////////  NO ARGUMENT FUNCTION RETURNING A VALUE ///////
   // static function
@@ -224,7 +224,7 @@ namespace exparse  {
     rvt (*func)(argt_1);
   public:
     Function1(const olxstr& name, rvt (*f)(argt_1))
-      : AFunction<IStaticFunction,rvt>(name), func(f)
+      : AFunction<IStaticFunction,rvt>(name), func(f) 
     {
       AFunction<IStaticFunction,rvt>::arg_types.Add(typeid(argt_1));
     }
@@ -240,7 +240,7 @@ namespace exparse  {
     rvt (base_class::*func)(argt_1);
   public:
     MemberFunction1(const olxstr& name, rvt (base_class::*f)(argt_1) )
-      : AFunction<IMemberFunction,rvt>(name), func(f)
+      : AFunction<IMemberFunction,rvt>(name), func(f) 
     {
       AFunction<IMemberFunction,rvt>::arg_types.Add(typeid(argt_1));
     }
@@ -261,8 +261,8 @@ namespace exparse  {
   class Function2 : public AFunction<IStaticFunction,rvt> {
     rvt (*func)(argt_1, argt_2);
   public:
-    Function2(const olxstr& name,  rvt(*f)(argt_1,argt_2) ) :
-      AFunction<IStaticFunction,rvt>(name), func(f)
+    Function2(const olxstr& name,  rvt(*f)(argt_1,argt_2) ) : 
+      AFunction<IStaticFunction,rvt>(name), func(f) 
     {
       AFunction<IStaticFunction,rvt>::arg_types.Add(typeid(argt_1));
       AFunction<IStaticFunction,rvt>::arg_types.Add(typeid(argt_2));
@@ -280,7 +280,7 @@ namespace exparse  {
     rvt (base_class::*func)(argt_1, argt_2);
   public:
     MemberFunction2(const olxstr& name, rvt (base_class::*f)(argt_1, argt_2))
-      : AFunction<IMemberFunction,rvt>(name), func(f)
+      : AFunction<IMemberFunction,rvt>(name), func(f) 
     {
       AFunction<IMemberFunction,rvt>::arg_types.Add(typeid(argt_1));
       AFunction<IMemberFunction,rvt>::arg_types.Add(typeid(argt_2));
@@ -324,11 +324,11 @@ namespace exparse  {
       _add(name + "#0", new VoidFunction(name, f));
     }
     template<class argt_1>
-    void add(const olxstr& name, void (*f)(argt_1) )  {
+    void add(const olxstr& name, void (*f)(argt_1) )  {  
       _add(name + "#1", new VoidFunction1<argt_1>(name, f));
     }
     template<class argt_1, class argt_2>
-    void add(const olxstr& name, void (*f)(argt_1,argt_2) )  {
+    void add(const olxstr& name, void (*f)(argt_1,argt_2) )  {  
       _add(name + "#2", new VoidFunction2<argt_1,argt_2>(name, f));
     }
     template <class rvt>
@@ -336,11 +336,11 @@ namespace exparse  {
       _add(name + "#0", new Function<rvt>(name, f));
     }
     template<class rvt, class argt_1>
-    void add(const olxstr& name, rvt (*f)(argt_1) )  {
+    void add(const olxstr& name, rvt (*f)(argt_1) )  {  
       _add(name + "#1", new Function1<rvt,argt_1>(name, f));
     }
     template<class rvt, class argt_1, class argt_2>
-    void add(const olxstr& name, rvt (*f)(argt_1,argt_2) )  {
+    void add(const olxstr& name, rvt (*f)(argt_1,argt_2) )  {  
       _add(name + "#2", new Function2<rvt,argt_1,argt_2>(name, f));
     }
 
@@ -406,7 +406,7 @@ namespace exparse  {
       const olxstr& name,
       const TPtrList<IEvaluable>& args) const = 0;
     virtual IEvaluable* create_from_index(IEvaluable& self,
-      const EvaluableFactory& factory,
+      const EvaluableFactory& factory, 
       size_t index,
       const TPtrList<IEvaluable>& args) const = 0;
     virtual bool is_empty() const = 0;
@@ -427,8 +427,8 @@ namespace exparse  {
       for( size_t i=0; i < args.Count(); i++ )
         args[i]->inc_ref();
     }
-    ~AClassFuncEvaluator()  {
-      if( self.dec_ref() == 0 )
+    ~AClassFuncEvaluator()  {  
+      if( self.dec_ref() == 0 ) 
         delete &self;
       for( size_t i=0; i < args.Count(); i++ )
         if( args[i]->dec_ref() == 0 )
@@ -470,22 +470,22 @@ namespace exparse  {
         (void (base_class::*)())f));
     }
     template<class argt_1>
-    void add(const olxstr& name, void (base_class::*f)(argt_1) )  {
+    void add(const olxstr& name, void (base_class::*f)(argt_1) )  {  
       _add(name + "#1", new VoidMemberFunction1<base_class,argt_1>(
         name, f));
     }
     template<class argt_1>
-    void add(const olxstr& name, void (base_class::*f)(argt_1) const)  {
+    void add(const olxstr& name, void (base_class::*f)(argt_1) const)  {  
       _add(name + "#1", new VoidMemberFunction1<base_class,argt_1>(name,
         (void (base_class::*)(argt_1))f));
     }
     template<class argt_1, class argt_2>
-    void add(const olxstr& name, void (base_class::*f)(argt_1,argt_2) )  {
+    void add(const olxstr& name, void (base_class::*f)(argt_1,argt_2) )  {  
       _add(name + "#2", new VoidMemberFunction2<base_class,argt_1,argt_2>(
         name, f));
     }
     template<class argt_1, class argt_2>
-    void add(const olxstr& name, void (base_class::*f)(argt_1,argt_2) const)  {
+    void add(const olxstr& name, void (base_class::*f)(argt_1,argt_2) const)  {  
       _add(name + "#2", new VoidMemberFunction2<base_class,argt_1,argt_2>(name,
         (void (base_class::*)(argt_1,argt_2))f));
     }
@@ -499,21 +499,21 @@ namespace exparse  {
         (rvt (base_class::*)())f));
     }
     template<class rvt, class argt_1>
-    void add(const olxstr& name, rvt (base_class::*f)(argt_1) )  {
+    void add(const olxstr& name, rvt (base_class::*f)(argt_1) )  {  
       _add(name + "#1", new MemberFunction1<rvt,base_class,argt_1>(name, f));
     }
     template<class rvt, class argt_1>
-    void add(const olxstr& name, rvt (base_class::*f)(argt_1) const)  {
+    void add(const olxstr& name, rvt (base_class::*f)(argt_1) const)  {  
       _add(name + "#1", new MemberFunction1<rvt,base_class,argt_1>(name,
         (rvt (base_class::*)(argt_1))f));
     }
     template<class rvt, class argt_1, class argt_2>
-    void add(const olxstr& name, rvt (base_class::*f)(argt_1,argt_2) )  {
+    void add(const olxstr& name, rvt (base_class::*f)(argt_1,argt_2) )  {  
       _add(name + "#2", new MemberFunction2<rvt,base_class,argt_1,argt_2>(
         name, f));
     }
     template<class rvt, class argt_1, class argt_2>
-    void add(const olxstr& name, rvt (base_class::*f)(argt_1,argt_2) const)  {
+    void add(const olxstr& name, rvt (base_class::*f)(argt_1,argt_2) const)  {  
       _add(name + "#2", new MemberFunction2<rvt,base_class,argt_1,argt_2>(
         name, (rvt (base_class::*)(argt_1,argt_2))f));
     }

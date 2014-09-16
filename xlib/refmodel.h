@@ -17,14 +17,12 @@
 #include "refmerge.h"
 #include "afixgroup.h"
 #include "exyzgroup.h"
-#include "samegroup.h"
 #include "reflection.h"
 #include "fragment.h"
 #include "symmlib.h"
 #include "edict.h"
 #include "constraints_ext.h"
 #include "selected.h"
-#include "calc_ext.h"
 
 BeginXlibNamespace()
 
@@ -85,8 +83,7 @@ protected:
   bool TWIN_set, OMIT_set, MERG_set, HKLF_set, SHEL_set, OMITs_Modified,
     EXTI_set, DEFS_set;
   vec3i_list Omits;
-  TDoubleList DEFS;
-  TArrayList<TEValueD> BASF;
+  TDoubleList BASF, DEFS;
   TPtrList<XVarReference> BASF_Vars;
   olxstr VarRefrencerId;
   olxdict<olxstr, IXVarReferencerContainer*, olxstrComparator<false> >
@@ -101,7 +98,7 @@ protected:
 public:
   // needs to be extended for the us of the batch numbers...
   struct HklStat : public MergeStats {
-    double MaxD, MinD, LimDmin, LimDmax,
+    double MaxD, MinD, LimDmin, LimDmax, 
       OMIT_s, OMIT_2t, SHEL_lr, SHEL_hr, MaxI, MinI, HKLF_m, HKLF_s;
     TDoubleList Completeness;
     mat3d HKLF_mat;
@@ -118,7 +115,7 @@ public:
       MergeStats::operator = (hs);
       FileMinInd = hs.FileMinInd;
       FileMaxInd = hs.FileMaxInd;
-      MaxD = hs.MaxD;         MinD = hs.MinD;
+      MaxD = hs.MaxD;         MinD = hs.MinD; 
       OMIT_s = hs.OMIT_s;     OMIT_2t = hs.OMIT_2t;
       SHEL_lr = hs.SHEL_lr;   SHEL_hr = hs.SHEL_hr;
       LimDmin = hs.LimDmin;   LimDmax = hs.LimDmax;
@@ -216,7 +213,7 @@ public:
     rRIGU;
   TExyzGroups ExyzGroups;
   TAfixGroups AfixGroups;
-  TSameGroupList rSAME;
+  TSameGroupList  rSAME;
   TActionQueue &OnSetBadReflections,
     &OnCellDifference;
   TAsymmUnit& aunit;
@@ -241,12 +238,11 @@ public:
   TDoubleList PLAN;  // up to three params
 
   ConnInfo Conn;     // extra connectivity information
-
-  CalculatedVars CVars;
+  
   const olxstr& GetHKLSource() const {  return HKLSource;  }
   //TODO: handle the change
   void SetHKLSource(const olxstr& src);
-  olxstr GetHKLFStr() const {
+  olxstr GetHKLFStr() const {  
     olxstr rv(HKLF, 80);
     if( HKLF_m == def_HKLF_m )  {
       if( HKLF_wt == def_HKLF_wt )  {
@@ -273,7 +269,7 @@ public:
         rv << ' ' << HKLF_mat[i/3][i%3];
       rv << ' ' << HKLF_wt << ' ' << HKLF_m;
     }
-    return rv;
+    return rv;  
   }
   template <class list> void SetHKLF(const list& hklf) {
     if( hklf.IsEmpty() )
@@ -319,7 +315,7 @@ public:
   bool UseFdp() const {  return MERG != 4;  }
   void SetMERG(int v)  {  MERG = v;  MERG_set = true;  }
   bool HasMERG() const {  return MERG_set;  }
-
+  
   const TEValueD& GetEXTI() const {  return EXTI;  }
   void SetEXTI(double v, double e) {
     EXTI.V() = v;  EXTI.E() = e;
@@ -327,7 +323,7 @@ public:
   }
   bool HasEXTI() const {  return EXTI_set;  }
   void ClearEXTI() { EXTI_set = false; }
-
+  
   double GetOMIT_s() const {  return OMIT_s;  }
   void SetOMIT_s(double v)  {  OMIT_s = v;  OMIT_set = true;  }
   double GetOMIT_2t() const {  return OMIT_2t;  }
@@ -365,9 +361,7 @@ public:
     return BadReflections;
   }
 
-  void SetBadReflectionList(
-    const TTypeList<BadReflection>::const_list_type &bad_refs)
-  {
+  void SetBadReflectionList(const ConstTypeList<BadReflection> &bad_refs) {
     OnSetBadReflections.Enter(this);
     BadReflections = bad_refs;
     OnSetBadReflections.Exit(this);
@@ -390,24 +384,20 @@ public:
   void ClearShell() { SHEL_set = false; }
   olxstr GetSHELStr() const {  return olxstr(SHEL_lr) << ' ' << SHEL_hr;  }
 
-  const TArrayList<TEValueD>& GetBASF() const {  return BASF;  }
-  ConstArrayList<double> GetBASFAsDoubleList() const {
-    return TDoubleList::FromList(GetBASF(),
-      FunctionAccessor::MakeConst(&TEValueD::GetV));
-  }
+  const TDoubleList& GetBASF() const {  return BASF;  }
   // returns a list of [1-sum(basf), basf[0], basf[1],...] - complete scales
   TDoubleList GetScales() const {
-    if (!GetBASF().IsEmpty()) {
+    if( !GetBASF().IsEmpty() )  {
       double pi = 0;  // 'prime' reflection fraction
-      for (size_t bi=0; bi < GetBASF().Count(); bi++)
-        pi += GetBASF()[bi].GetV();
-      return TDoubleList() << 1-pi << GetBASFAsDoubleList();
+      for( size_t bi=0; bi < GetBASF().Count(); bi++ )
+        pi += GetBASF()[bi];
+      return TDoubleList() << 1-pi << GetBASF();
     }
-    else {
-      if (GetTWIN_n() != 0 ) {  // all the fractions are the same
+    else  {
+      if( GetTWIN_n() != 0 )  {  // all the fractions are the same
         double f = 1./olx_abs(GetTWIN_n());
         TDoubleList rv(olx_abs(GetTWIN_n()));
-        for (size_t i=0; i < rv.Count(); i++)
+        for( size_t i=0; i < rv.Count(); i++ )
           rv[i] = f;
         return rv;
       }
@@ -415,7 +405,7 @@ public:
     return TDoubleList();
   }
   olxstr GetBASFStr() const;
-
+  
   template <class list> void SetTWIN(const list& twin) {
     if( twin.Count() > 8 )  {
       for( size_t i=0; i < 9; i++ )
@@ -437,7 +427,7 @@ of BASF parameters, if any, should be increased from m-1 to 2m-1 where m is the
 original number of components (equal to the new |n| divided by 2). The TWIN
 matrix is applied m-1 times to generate components 2 ... m from the prime
 reflection (component 1); components m+1 ... 2m are then generated as the
-Friedel opposites of components 1 ... m
+Friedel opposites of components 1 ... m  
 */
   int GetTWIN_n() const {  return TWIN_n;  }
   void SetTWIN_n(int v)  {  TWIN_n = v;  TWIN_set = true;  }
@@ -445,18 +435,18 @@ Friedel opposites of components 1 ... m
   void RemoveTWIN()  {  TWIN_set = false;  }
 
   void AddBASF(double val)  {
-    BASF.Add(TEValueD(val));
+    BASF.Add(val);  
     BASF_Vars.Add(NULL);
   }
   template <class list> void SetBASF(const list& bs)  {
     BASF.SetCount(bs.Count());
     BASF_Vars.SetCount(bs.Count());
-    for (size_t i=0; i < bs.Count(); i++) {
+    for( uint16_t i=0; i < bs.Count(); i++ )  {
       BASF_Vars[i] = NULL;
-      Vars.SetParam(*this, (short)i, bs[i].ToDouble());
+      BASF[i] = Vars.SetParam(*this, i, bs[i].ToDouble());
     }
   }
-  void ClearBASF() {
+  void ClearBASF()  {
     BASF.Clear();
     BASF_Vars.Clear();
   }
@@ -472,7 +462,7 @@ Friedel opposites of components 1 ... m
 
   DefPropC(olxstr, RefinementMethod)
   DefPropC(olxstr, SolutionMethod)
-
+  
   void SetIterations(int v);
   void SetPlan(int v);
 
@@ -498,7 +488,7 @@ Friedel opposites of components 1 ... m
     return selectedTableRows;
   }
   bool ValidateInfoTab(const InfoTab& it);
-  // adss new symmetry matrics, used in restraints/constraints
+  // adss new symmetry matrics, used in restraints/constraints 
   const smatd& AddUsedSymm(const smatd& matr, const olxstr& id=EmptyString());
   //removes the matrix or decriments the reference count
   void RemUsedSymm(const smatd& matr) const;
@@ -539,7 +529,7 @@ Friedel opposites of components 1 ... m
   }
   // user content management
   const ContentList& GetUserContent() const {  return UserContent;  }
-  const olxstr GetUserContentStr() const {
+  const olxstr GetUserContentStr() const {  
     olxstr rv;
     for( size_t i=0; i < UserContent.Count(); i++ )
       rv << UserContent[i].element.symbol << UserContent[i].count;
@@ -690,11 +680,8 @@ Friedel opposites of components 1 ... m
     applied)
   */
   const TRefList& GetReflections() const;
-  /* Sets the reflection list for this object - operates only on the mutable
-  members*/
-  void SetReflections(const TRefList &refs) const;
   // this will be only valid if any list of the reflections was called
-  const HklStat& GetReflectionStat() const {  return _HklStat;  }
+  const HklStat& GetReflectionStat() const {  return _HklStat;  } 
   // filters the reflections according to the parameters
   HklStat& FilterHkl(TRefList& out, HklStat& stats);
   // adjust intensity of reflections according to OMIT
@@ -753,43 +740,40 @@ Friedel opposites of components 1 ... m
   vec3i CalcMaxHklIndex(double two_theta=60) const;
   double CalcCompletnessTo2Theta(double tt) const;
   IXVarReferencerContainer& GetRefContainer(const olxstr& id_name)  {
-    try {  return *RefContainers.Get(id_name);  }
+    try {  return *RefContainers[id_name];  }
     catch(...)  {
       throw TInvalidArgumentException(__OlxSourceInfo, "container id");
     }
   }
 // IXVarReferencer implementation
   virtual size_t VarCount() const {  return BASF.Count();  }
-  virtual olxstr GetVarName(size_t i) const {
-    if (i >= BASF_Vars.Count())
+  virtual olxstr GetVarName(size_t i) const {  
+    if( i >= BASF_Vars.Count() )
       throw TInvalidArgumentException(__OlxSourceInfo, "var index");
-    return olxstr("k") << (i+1);
+    return olxstr("k") << (i+1);  
   }
-  virtual XVarReference* GetVarRef(size_t i) const {
-    if (i >= BASF_Vars.Count())
+  virtual XVarReference* GetVarRef(size_t i) const {  
+    if( i >= BASF_Vars.Count() )
       throw TInvalidArgumentException(__OlxSourceInfo, "var index");
-    return BASF_Vars[i];
+    return BASF_Vars[i];  
   }
-  virtual void SetVarRef(size_t i, XVarReference* var_ref)  {
-    if (i >= BASF_Vars.Count())
+  virtual void SetVarRef(size_t i, XVarReference* var_ref)  {  
+    if( i >= BASF_Vars.Count() )
       throw TInvalidArgumentException(__OlxSourceInfo, "var index");
-    if (var_ref != NULL) {
-      BASF[i].E() = var_ref->coefficient*var_ref->Parent.GetEsd();
-    }
-    BASF_Vars[i] = var_ref;
+    BASF_Vars[i] = var_ref;  
   }
   virtual const IXVarReferencerContainer& GetParentContainer() const {
     return *this;
   }
   virtual double GetValue(size_t var_index) const {
-    if (var_index >= BASF.Count())
+    if( var_index >= BASF.Count() )
       throw TInvalidArgumentException(__OlxSourceInfo, "var_index");
-    return BASF[var_index].GetV();
+    return BASF[var_index];  
   }
   virtual void SetValue(size_t var_index, const double& val) {
-    if (var_index >= BASF.Count())
+    if( var_index >= BASF.Count() )
       throw TInvalidArgumentException(__OlxSourceInfo, "var_index");
-    BASF[var_index] = val;
+    BASF[var_index] = val;  
   }
   virtual bool IsValid() const {  return true;  }
 //
@@ -813,17 +797,14 @@ Friedel opposites of components 1 ... m
   TSimpleRestraint &SetRestraintDefaults(TSimpleRestraint &restraint) const;
   // returns true if restraint parameters are default
   bool IsDefaultRestraint(const TSimpleRestraint &restraint) const;
-  bool IsDefaultRestraint(const TSameGroup &restraint) const;
   // feeds on .options - instance static
   bool DoShowRestraintDefaults() const;
   void LibHasOccu(const TStrObjList& Params, TMacroError& E);
   void LibOSF(const TStrObjList& Params, TMacroError& E);
-  void LibBASF(const TStrObjList& Params, TMacroError& E);
   void LibFVar(const TStrObjList& Params, TMacroError& E);
   void LibEXTI(const TStrObjList& Params, TMacroError& E);
   void LibUpdateCRParams(const TStrObjList& Params, TMacroError& E);
   void LibCalcCompleteness(const TStrObjList& Params, TMacroError& E);
-  void LibMaxIndex(const TStrObjList& Params, TMacroError& E);
   // restraints & constraints related functions
   void LibShareADP(TStrObjList &Cmds, const TParamList &Opts, TMacroError &E);
 

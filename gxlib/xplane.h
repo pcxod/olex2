@@ -46,20 +46,14 @@ public:
     return false;
   }
 
-  void Delete(bool v) {
+  void Delete(bool v)  {
     TSPlane::SetDeleted(v);
     if (v)
       SetVisible(false);
   }
-
   const_strlist ToPov(olxdict<TGlMaterial, olxstr,
-    TComparableComparator> &materials) const;
+  TComparableComparator> &materials) const;
   static const_strlist PovDeclare();
-
-  static olxdict<size_t, olxstr, TPrimitiveComparator> &NamesRegistry() {
-    static olxdict<size_t, olxstr, TPrimitiveComparator> nr;
-    return nr;
-  }
 };
 
 EndGxlNamespace()

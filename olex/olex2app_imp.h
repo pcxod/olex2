@@ -64,7 +64,7 @@ public:
     }
   }
   bool AddPlugin(const olxstr &pn) {
-    if (!plugins.AddUnique(pn).b) return false;
+    if (!plugins.AddUnique(pn)) return false;
     TDataFile df;
     if (TEFile::Exists(PluginFileName)) {
       df.LoadFromXLFile(PluginFileName, NULL);

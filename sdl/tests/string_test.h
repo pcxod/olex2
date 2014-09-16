@@ -33,7 +33,7 @@ void ReplaceTest(OlxTests& t)  {
 
 void IsNumberTest(OlxTests& t)  {
   t.description = __FUNC__;
-  olxstr valid_num_str[] = { "0", " 0 ", " 0", "0 ", " 0", " 0", " .0 ", " 0.0 ", " 0.e0 ",
+  olxstr valid_num_str[] = { "0", " 0 ", " 0", "0 ", " 0", " 0", " .0 ", " 0.0 ", " 0.e0 ", 
     "  0.e-1  ", "  0xffa  ", "  0xffa", " 0", " -0. ", " +0. ", "+0e-5", "-.e-5", "07777"  };
   olxstr invalid_num_str[] = { EmptyString(), "  0xffx", " 0a", " -.", "0e-a", "08", "..", "0.0.",
     "1e-5e-4" };
@@ -111,18 +111,9 @@ void PrintTest(OlxTests& t_) {
     throw TFunctionFailedException(__OlxSourceInfo, "assert");
 }
 //...................................................................................................
-void TrimTest(OlxTests& t_) {
-  t_.description = __FUNC__;
-  if (olxstr("lu").TrimR('u') != "l")
-    throw TFunctionFailedException(__OlxSourceInfo, "assert");
-  if (olxstr("u").TrimR('u') != "")
-    throw TFunctionFailedException(__OlxSourceInfo, "assert");
-}
-//...................................................................................................
 void StringTests(OlxTests& t)  {
   t.Add(&ReplaceTest).Add(&IsNumberTest)
     .Add(&SubstringTest)
-    .Add(&PrintTest)
-    .Add(&TrimTest);
+    .Add(&PrintTest);
 }
 };  //namespace test

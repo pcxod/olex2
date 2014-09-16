@@ -215,7 +215,7 @@ void ConnInfo::ToInsList(TStrList& ins) const {
     const AtomConnInfo& aci = AtomInfo.GetValue(i);
     if (aci.atom->IsDeleted())
       continue;
-    if( !aci.temporary &&
+    if( !aci.temporary && 
       (aci.r != -1 || aci.maxBonds != def_max_bonds) )
     {
       olxstr& str = ins.Add("CONN ");
@@ -277,7 +277,7 @@ CXConnInfo& ConnInfo::GetConnInfo(const TCAtom& ca) const {
     ci.maxBonds = aci.maxBonds;
     ci.BondsToCreate.AddList(aci.BondsToCreate);
     ci.BondsToRemove.AddList(aci.BondsToRemove);
-  }
+  } 
   // use defaults then
   if( ai_ind == InvalidIndex && ti_ind == InvalidIndex )  {
     ci.r = ca.GetType().r_bonding;
@@ -341,7 +341,7 @@ void ConnInfo::Assign(const ConnInfo& ci)  {
       aci.BondsToRemove.Add(new CXBondInfo(*ca, sm));
     }
   }
-  for( size_t i=0; i < ci.TypeInfo.Count(); i++ )
+  for( size_t i=0; i < ci.TypeInfo.Count(); i++ ) 
     TypeInfo.Add(ci.TypeInfo.GetKey(i), ci.TypeInfo.GetValue(i));
   PartGroups = ci.PartGroups;
   PartGroups_ = ci.PartGroups_;
@@ -478,7 +478,7 @@ size_t ConnInfo::FindBondIndex(const BondInfoList& list, TCAtom* key,
       if( list[i].to == a2 )  {
         if( list[i].matr == NULL && eqiv == NULL )
           return i;
-        if( list[i].matr != NULL && eqiv != NULL && *list[i].matr == *eqiv )
+        if( list[i].matr != NULL && eqiv != NULL && *list[i].matr == *eqiv )  
           return i;
       }
     }
@@ -634,7 +634,7 @@ void ConnInfo::Compile(const TCAtom& a, BondInfoList& toCreate,
             : uc.InvMatrix(*ci.BondsToRemove[j].matr);
           bool uniq = true;
           for( size_t k=0; k < toDelete.Count(); k++ )  {
-            if( toDelete[k].to == a &&
+            if( toDelete[k].to == a && 
               ((toDelete[k].matr != NULL &&
                 toDelete[k].matr->GetId() == matr.GetId()) ||
                 (toDelete[k].matr == NULL && ci.BondsToRemove[j].matr == NULL)))
@@ -653,7 +653,7 @@ void ConnInfo::Compile(const TCAtom& a, BondInfoList& toCreate,
             uc.InvMatrix(*ci.BondsToCreate[j].matr);
           bool uniq = true;
           for( size_t k=0; k < toCreate.Count(); k++ )  {
-            if( toCreate[k].to == a &&
+            if( toCreate[k].to == a && 
               ((toCreate[k].matr != NULL &&
                 toCreate[k].matr->GetId() == matr.GetId()) ||
                 (toCreate[k].matr == NULL && ci.BondsToCreate[j].matr == NULL)))
@@ -718,7 +718,7 @@ void ConnInfo::AtomConnInfo::FromDataItem(const TDataItem& item,
       ab.GetItemByIndex(i).GetFieldByName("to").ToInt());
     const olxstr& eq = ab.GetItemByIndex(i).FindField("eqiv");
     smatd const* eqiv = NULL;
-    if( !eq.IsEmpty() )  {
+    if( !eq.IsEmpty() )  { 
       eqiv = &rm.GetUsedSymm(eq.ToInt());
       rm.AddUsedSymm(*eqiv);  // persist
     }

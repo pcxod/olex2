@@ -21,7 +21,7 @@ template <class Data> class Shared  {
   };
   Share* shared;
 protected:
-  /* must be implementd in the derived classes if custom cleanuo
+  /* must be implementd in the derived classes if custom cleanuo 
   is required preceding the call to delete */
   virtual void CleanUp()  {}
 public:

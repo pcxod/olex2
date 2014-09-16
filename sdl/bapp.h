@@ -16,12 +16,12 @@
 BeginEsdlNamespace()
 
 // app event registry, these might not be implemented
-static olxstr
+static olxstr 
   olxappevent_GL_DRAW("GLDRAW"),
   olxappevent_GL_CLEAR_STYLES("GLDSCLEAR"),
   olxappevent_UPDATE_GUI("UPDATE_GUI");
 
-class TBasicApp: public IEObject {
+class TBasicApp: public IEObject  {
   olxstr
 /* the directory from which the program is running */
     BaseDir,
@@ -33,7 +33,7 @@ class TBasicApp: public IEObject {
 /* the configuration, writable directory, by default = InstanceDir */
     ConfigDir;
 protected:
-  class TActionQList ActionList;
+  class TActionQList Actions;
   static TBasicApp *Instance;
   class TLog *Log;
   class TEFile *LogFile;
@@ -42,16 +42,6 @@ protected:
   void ValidateArgs() const;
   TParamList Options;
   TStrList Arguments;
-  virtual olxstr GetPlatformString_() const;
-
-  /* this list of actions will be processes in the next OnIdle call
-  (from the main thread)
-  */
-  TTypeList<IOlxAction> Actions;
-  class TActionHandler : public AActionHandler {
-  public:
-    bool Execute(const IEObject *, const IEObject *, TActionQueue *);
-  };
 public:
   // the file name of the application with full path
   TBasicApp(const olxstr& AppName, bool read_options=false);
@@ -127,7 +117,7 @@ public:
     const olxstr& var_name=EmptyString());
   static const olxstr& GetBaseDir()  {  return GetInstance().BaseDir;  }
   /* instance dir dependents on the location of the executable and to be used
-  to store instance specific data - updates etc.  If unset, the value is equal
+  to store insatnce specific data - updates etc.  If unset, the value is equal
   to the BaseDir
   */
   static const olxstr& GetInstanceDir()  {
@@ -143,7 +133,7 @@ public:
       throw TFunctionFailedException(__OlxSourceInfo,
         "Uninitialised application layer...");
     }
-    return *Instance;
+    return *Instance;  
   }
 
   static bool HasInstance();
@@ -159,28 +149,24 @@ public:
   void CleanupLogs(const olxstr &dir_name=EmptyString());
 
   TActionQueue& NewActionQueue(const olxstr& Name);
-  TActionQueue* FindActionQueue(const olxstr& Name) {
-    return ActionList.Find(Name);
+  TActionQueue* FindActionQueue(const olxstr& Name)  {  
+    try  {  return Actions.Find(Name);   }
+    catch(...)  {  return NULL;  }
   }
 
-  const TActionQList& GetActionList() const { return ActionList; }
-  // implementation might consider drawing scene, update GUI etc..
-  virtual void Update()  {}
-  /* the action must be allocated on the heap
-  */
-  static void PostAction(IOlxAction *a);
+  const TActionQList& GetActions() const {  return Actions; }
 
   static bool IsProfiling()  {  return GetInstance().Profiling;  }
   static void SetProfiling(bool v)  {  GetInstance().Profiling = v;  }
 
+  // implementation might consider drawing scene, update GUI etc..
+  virtual void Update()  {}
   static size_t GetArgCount()  {  return GetInstance().Arguments.Count();  }
   static const olxstr& GetArg(size_t i)  {
     return GetInstance().Arguments[i];
   }
   // returns WIN32, WIN64, LINUX32, LINUX64, MAC32 etc
-  static olxstr GetPlatformString() {
-    return GetInstance().GetPlatformString_();
-  }
+  static olxstr GetPlatformString();
   static bool Is64BitCompilation();
   TLibrary* ExportLibrary(const olxstr& lib_name="app");
 

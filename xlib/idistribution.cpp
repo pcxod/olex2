@@ -81,10 +81,10 @@ int  _SerieSort(const TSPoint &I, const TSPoint &I1)  {
   return 0;
 }
 //----------------------------------------------------------------------------//
-// TIsotopeData
+// TIsotopeData 
 //----------------------------------------------------------------------------//
 void TIsotopeData::Evail(TPolySerie& S, double &eM, double &eW) {
-  double cM = eM + M,
+  double cM = eM + M, 
          cW = eW*W;
   for( size_t i=0; i < Children.Count(); i++ )  {
     cM = eM + M;   cW = eW*W;
@@ -93,7 +93,7 @@ void TIsotopeData::Evail(TPolySerie& S, double &eM, double &eW) {
   if( Children.IsEmpty() )
     S.AddNew(cM, cW);
   else  {
-    eM = cM;
+    eM = cM;  
     cW = cW;
   }
 }

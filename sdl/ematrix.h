@@ -91,7 +91,7 @@ template <class FT> class TMatrix
   void  Clear()  {
     if( FData == NULL )  return;
     delete [] FData;
-    FData = NULL;
+    FData = NULL;  
   }
   TVector<FT>* FData;
 public:
@@ -100,13 +100,13 @@ public:
     Fn = Fm = 0;
     SetTag(-1);
   }
-
+  
   TMatrix(size_t VectorsNumber, size_t ElementsNumber)  {
     Fn = VectorsNumber;
     Fm = ElementsNumber;
     if( (Fn == 0) || (Fm == 0) )   {  FData = NULL;  return;  }
     FData = new TVector<FT>[Fn];
-    for( size_t i=0; i < Fn; i++ )
+    for( size_t i=0; i < Fn; i++ )  
       FData[i].Resize(Fm);
     SetTag(-1);
   }
@@ -116,14 +116,14 @@ public:
   {
     if( (Fn == 0) || (Fm == 0) )   {  FData = NULL;  return;  }
     FData = new TVector<FT>[Fn];
-    for( size_t i=0; i < Fn; i++ )
+    for( size_t i=0; i < Fn; i++ )  
       FData[i] = M[i];
   }
 
   TMatrix(const TMatrix& M) : Fn(M.Fn), Fm(M.Fm)  {
     if( (Fn == 0) || (Fm == 0) )   {  FData = NULL;  return;  }
     FData = new TVector<FT>[Fn];
-    for( size_t i=0; i < Fn; i++ )
+    for( size_t i=0; i < Fn; i++ )  
       FData[i] = M[i];
   }
 
@@ -145,7 +145,7 @@ public:
   }
 
   size_t Vectors() const {  return Fn;  }
-  size_t Elements() const {  return Fm;  }
+  size_t Elements() const {  return Fm;  } 
   size_t ColCount() const {  return Fm;  }
   size_t RowCount() const {  return Fn;  }
   bool IsEmpty() const {  return Fm == 0 || Fn == 0;  }
@@ -167,7 +167,7 @@ public:
 
   template <class AType> TMatrix& operator += (const TMatrix<AType>& c)  {
     if( (Fm ==c.Elements()) && (Fn == c.Vectors()) )
-      for( size_t i=0; i < Fn; i++ )
+      for( size_t i=0; i < Fn; i++ )  
         FData[i] += c[i];
     else
       throw TFunctionFailedException(__OlxSourceInfo, "incompatible matrix dimensions");
@@ -176,7 +176,7 @@ public:
 
   template <class AType> TMatrix& operator -= (const TMatrix<AType>& c)  {
     if( (Fm ==c.Elements()) && (Fn == c.Vectors()) )
-      for( size_t i=0; i < Fn; i++ )
+      for( size_t i=0; i < Fn; i++ )  
         FData[i] -= c[i];
     else
       throw TFunctionFailedException(__OlxSourceInfo, "incompatible matrix dimensions");
@@ -184,25 +184,25 @@ public:
   }
 
   TMatrix& operator += (FT V)  {
-    for( size_t i = 0; i < Fn; i++ )
+    for( size_t i = 0; i < Fn; i++ )  
       FData[i] += V;
     return *this;
   }
 
   TMatrix& operator -= (FT V)  {
-    for( size_t i = 0; i < Fn; i++ )
+    for( size_t i = 0; i < Fn; i++ )  
       FData[i] -= V;
     return *this;
   }
 
   TMatrix& operator *= (FT V)  {
-    for( size_t i = 0; i < Fn; i++ )
+    for( size_t i = 0; i < Fn; i++ )  
       FData[i] *= V;
     return *this;
   }
-
+    
   TMatrix& operator /= (FT V)  {
-    for( size_t i = 0; i < Fn; i++ )
+    for( size_t i = 0; i < Fn; i++ )  
       FData[i] /= V;
     return *this;
   }
@@ -256,15 +256,15 @@ public:
   }
 
   void Null()  {
-    for( size_t i=0; i < Fn; i++ )
+    for( size_t i=0; i < Fn; i++ )  
       FData[i].Null();
   }
 
   bool IsI() const  {
     for( size_t i=0; i < Fn; i++ )
       for( size_t j=0; j < Fm; j++ )
-        if( FData[i][j] != (i ==j ? 1 : 0) )
-          return false;
+        if( FData[i][j] != (i ==j ? 1 : 0) ) 
+          return false; 
     return true;
   }
 
@@ -274,14 +274,14 @@ public:
     }
     else if( Fn == n )  {
       if( Fm != m )  {
-        for( size_t i=0; i < n; i++ )
+        for( size_t i=0; i < n; i++ )  
           FData[i].Resize(m);
         Fm = m;
       }
     }
     else if( n < Fn )  {  // do not shrink - just change the size indicator
       if( Fm != m )  {
-        for( size_t i=0; i < n; i++ )
+        for( size_t i=0; i < n; i++ )  
           FData[i].Resize(m);
         Fm = m;
       }
@@ -293,7 +293,7 @@ public:
         nd[i] = FData[i];
       delete [] FData;
       FData = nd;
-      Fn = n;
+      Fn = n;  
       Fm = m;
       for( size_t i=0; i < Fn; i++ )
         FData[i].Resize(Fm);
@@ -312,25 +312,25 @@ public:
   }
 
   void AddRows(size_t to, size_t which)  {  FData[to] += FData[which];  }
-
-  void AddCols(size_t to, size_t which)  {
-    for( size_t i=0; i < Fn; i++ )
-      FData[i][to] += FData[i][which];
+  
+  void AddCols(size_t to, size_t which)    {  
+    for( size_t i=0; i < Fn; i++ )  
+      FData[i][to] += FData[i][which];  
   }
 
   void SubRows(size_t from, size_t which )  {  FData[from] -= FData[which];  }
-
-  void SubCols(size_t from, size_t which)  {
-    for( size_t i=0; i < Fn; i++ )
-      FData[i][from] -= FData[i][which];
+  
+  void SubCols(size_t from, size_t which)  {  
+    for( size_t i=0; i < Fn; i++ )  
+      FData[i][from] -= FData[i][which];  
   }
-
+  
   void MulRow(size_t which, FT v)  {  FData[which] *= v;  }
   void DivRow(size_t which, FT v)  {  FData[which] /= v;  }
 
-  void MulCol(size_t which, FT v)  {
-    for( size_t i=0; i < Fn; i++ )
-      FData[i][which] *= v;
+  void MulCol(size_t which, FT v)  {    
+    for( size_t i=0; i < Fn; i++ )  
+      FData[i][which] *= v;  
   }
 
   void DivCol(size_t which, FT v)  {
@@ -377,7 +377,7 @@ public:
         "incompatible matrix dimensions");
     }
     FT a = 0;
-    for( size_t i = 0; i < Fn; i++ )
+    for( size_t i = 0; i < Fn; i++ )  
       a += FData[i][i];
     return a;
   }
@@ -392,16 +392,17 @@ public:
   }
 
   bool LoadFromFile(const olxstr& FN)  {
-    TCStrList S = TEFile::ReadCLines(FN);
+    TStrList S;
+    S.LoadFromFile( FN );
     if( S.IsEmpty() )  return false;
     for( size_t i=0; i < S.Count(); i++ )  {
-      TCStrList Toks(S[i].Replace('\t', ' '), ' ');
+      TStrList Toks(S[i].Replace('\t', ' '), ' ');
       if( i == 0 )  {
         size_t dim = Toks.Count();
         if( dim == 0 )  return false;
         Resize(S.Count(), dim);
       }
-      if( Toks.Count() != Fm )
+      if( Toks.Count() != Fm )  
         throw TFunctionFailedException(__OlxSourceInfo, "file rows not even");
       for( size_t j=0; j < Fm; j++ )
         FData[i][j] = (FT)Toks[j].ToDouble();
@@ -412,11 +413,11 @@ public:
   void SaveToFile(const olxstr& FN)  {
     TCStrList S;
     for( size_t i=0; i < Fn; i++ )  {
-      olxcstr& T = S.Add();
+      olxstr& T = S.Add(EmptyString());
       for( size_t j=0; j < Fm; j++ )
-        T << olxcstr::FormatFloat(5, FData[i][j], true) << '\t';
+        T << olxstr::FormatFloat(5, FData[i][j], true) << '\t';
     }
-    TEFile::WriteLines(FN, S);
+    S.SaveToFile(FN);
   }
 
 //------------------------------------------------------------------------------
@@ -512,7 +513,7 @@ public:
         b[i] += b[j-1];
       }
     }
-
+ 
     if (arr[sz-1][sz-1] == 0) {
       throw TFunctionFailedException(__OlxSourceInfo,
         "dependent set of equations");

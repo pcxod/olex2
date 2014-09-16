@@ -37,7 +37,7 @@ const short
   catom_var_name_U13   = 10,
   catom_var_name_U12   = 11;
 
-const short
+const short 
   catom_flag_Deleted    = 0x0001,
   catom_flag_Growable   = 0x0002,
   catom_flag_HAttached  = 0x0004,
@@ -74,7 +74,7 @@ private:
   const cm_Element* Type;
   olxstr Label;    // atom's label
   // Id is also used to identify if TSAtoms are the same
-  size_t Id, EllpId;
+  size_t Id, EllpId;  
   /* this is used in asymmetric unit sort and initialised in
   TLatice::InitBody()
   */
@@ -123,7 +123,7 @@ public:
   label is set without changing the atom type
   */
   void SetLabel(const olxstr& L, bool validate=true);
-
+  
   // returns atom label
   const olxstr& GetLabel() const {  return Label;  }
   /* if ResiId == -1 works the same as GetLabel(), otherwise appends '_' and
@@ -150,7 +150,7 @@ public:
   bool AttachSite(TCAtom* atom, const smatd& matrix);
   void ClearAttachedSites()  {
     AttachedSites.Clear();
-    AttachedSitesI.Clear();
+    AttachedSitesI.Clear(); 
   }
   // aplies conninfo to the list of attached sites
   void UpdateAttachedSites();
@@ -215,7 +215,7 @@ public:
   void RemoveDependentHfixGroup(TAfixGroup& hg) {
     DependentHfixGroups->Remove(&hg);
   }
-  void ClearDependentHfixGroups() {
+  void ClearDependentHfixGroups() {  
     if( DependentHfixGroups != NULL ) DependentHfixGroups->Clear();
   }
   void AddDependentHfixGroup(TAfixGroup& hg) {
@@ -260,7 +260,7 @@ public:
       throw TInvalidArgumentException(__OlxSourceInfo, "var index");
     return Vars[i];
   }
-  virtual olxstr GetVarName(size_t i) const {
+  virtual olxstr GetVarName(size_t i) const { 
     if( i >= VarCount() )
       throw TInvalidArgumentException(__OlxSourceInfo, "var index");
     return VarNames[i];
@@ -290,7 +290,7 @@ public:
     const Accessor &accessor;
     const short ref_flags;
     FlagsAnalyser_(const Accessor &accessor_, short _ref_flags)
-      : accessor(accessor_), ref_flags(_ref_flags)  {}
+      : accessor(accessor), ref_flags(_ref_flags)  {}
     template <class Item>
     bool OnItem(const Item& o, size_t) const {
       return (accessor(o).Flags&ref_flags) != 0;
@@ -302,9 +302,9 @@ public:
   }
   static FlagsAnalyser_<DirectAccessor>
   FlagsAnalyser(short flags) {
-    return FlagsAnalyser_<DirectAccessor>(DirectAccessor(), flags);
+    return FlagsAnalyser(DirectAccessor(), flags);
   }
-
+  
   template <class Accessor> struct FlagSetter_ {
     const Accessor &accessor;
     const short ref_flags;
@@ -322,7 +322,7 @@ public:
   }
   static FlagSetter_<DirectAccessor>
   FlagSetter(short ref_flags, bool set) {
-    return FlagSetter_<DirectAccessor>(DirectAccessor(), ref_flags, set);
+    return FlagSetter(DirectAccessor(), ref_flags, set);
   }
 
   template <class Accessor> struct TypeAnalyser_ {
@@ -344,17 +344,12 @@ public:
   }
   static TypeAnalyser_<DirectAccessor>
   TypeAnalyser(short z) {
-    return TypeAnalyser_<DirectAccessor>(DirectAccessor(), z);
+    return TypeAnalyser(DirectAccessor(), z);
   }
   static TypeAnalyser_<DirectAccessor>
   TypeAnalyser(const cm_Element &e) {
-    return TypeAnalyser_<DirectAccessor>(DirectAccessor(), e.z);
+    return TypeAnalyser(DirectAccessor(), e.z);
   }
-
-  /* recursive tag setter, uses Processed property to define the ermination
-  procedure
-  */
-  static void SetTagRecursively(TCAtom &a, index_t v);
 
   friend class TAsymmUnit;
 };
@@ -364,16 +359,13 @@ public:
 //..............................................................................
 class TCAtomComparator  {
 public:
-  template <class item_a_t, class item_b_t>
-  static int Compare(const item_a_t &a1_, const item_b_t &a2_) {
-    const TCAtom &a1 = olx_ref::get(a1_),
-      &a2 = olx_ref::get(a2_);
-    if (a1.GetFragmentId() != a2.GetFragmentId())
+  static int Compare(const TCAtom &a1, const TCAtom &a2)  {
+    if( a1.GetFragmentId() != a2.GetFragmentId() )
       return a1.GetFragmentId() - a2.GetFragmentId();
-    if (a1.GetResiId() != a2.GetResiId())
+    if( a1.GetResiId() != a2.GetResiId() )
       return olx_cmp(a1.GetResiId(), a2.GetResiId());
     // by label
-    if (a1.GetType() == a2.GetType())
+    if( a1.GetType() == a2.GetType() )
       return TCAtom::CompareAtomLabels(a1.GetLabel(), a2.GetLabel());
     // by mass
     return olx_cmp(a1.GetType().GetMr(), a2.GetType().GetMr());

@@ -194,7 +194,7 @@ namespace cif_dp {
     const olxstr& ColName(size_t i) const {  return data.ColName(i);  }
     template <class Str>
     size_t ColIndex(const Str& name) const {
-      return data.ColIndexi(name);
+      return data.ColIndex(name);
     }
     size_t RowCount() const {  return data.RowCount();  }
     void SetRowCount(size_t sz) { data.SetRowCount(sz); }
@@ -230,12 +230,8 @@ namespace cif_dp {
     }
     void Sort();
     // used in table sorting, not suitable for parallelisation
-    struct TableSorter {
-      int Compare_(const CifRow &r1, const CifRow &r2) const;
-      template <class item_a_t, class item_b_t>
-      int Compare(const item_a_t &r1, const item_b_t &r2) const {
-        return Compare_(olx_ref::get(r1), olx_ref::get(r2));
-      }
+    struct TableSorter  {
+      static int Compare(const CifRow &r1, const CifRow &r2);
     };
   };
 
@@ -246,7 +242,7 @@ namespace cif_dp {
     olxstr name;
     olxdict<olxstr, cetTable*, olxstrComparator<true> > table_map;
     olxdict<olxstr, ICifEntry*, olxstrComparator<true> > param_map;
-    TStringToList<olxstr, ICifEntry*> params;
+    TStrPObjList<olxstr, ICifEntry*> params;
     CifBlock* parent;
     CifBlock(const CifBlock& v);
     // if parent is not NULL, creates save_ rather than data_
@@ -281,11 +277,7 @@ namespace cif_dp {
       const TStrList &pivots, &endings;
       CifSorter(const TStrList& _pivots, const TStrList& _endings) :
         pivots(_pivots), endings(_endings)  {}
-      int Compare_(const EntryGroup &e1, const EntryGroup &e2) const;
-      template <class item_a_t, class item_b_t>
-      int Compare(const item_a_t &e1, const item_b_t &e2) const {
-        return Compare_(olx_ref::get(e1), olx_ref::get(e2));
-      }
+      int Compare(const EntryGroup &e1, const EntryGroup &e2) const;
     };
   };
 

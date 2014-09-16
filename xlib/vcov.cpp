@@ -9,16 +9,20 @@
 
 #include "vcov.h"
 #include "refmodel.h"
+#include "symmcon.h"
 #include "xapp.h"
 
+TStrList VcoVMatrix::U_annotations;
 //.............................................................................
 VcoVMatrix::VcoVMatrix() : data(NULL), count(0) {
-  U_annotations.Add("u11");
-  U_annotations.Add("u22");
-  U_annotations.Add("u33");
-  U_annotations.Add("u23");
-  U_annotations.Add("u13");
-  U_annotations.Add("u12");
+  if( U_annotations.IsEmpty() )  {
+    U_annotations.Add("u11");
+    U_annotations.Add("u22");
+    U_annotations.Add("u33");
+    U_annotations.Add("u23");
+    U_annotations.Add("u13");
+    U_annotations.Add("u12");
+  }
 }
 //.............................................................................
 void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
@@ -30,9 +34,9 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
     if( lst_fa > mat_fa && (lst_fa-mat_fa) > 5 )
       TBasicApp::NewLogEntry(logWarning) << "The mat file is possibly out of date";
   }
-  TCStrList sl = TEFile::ReadCLines(fileName),
-    toks;
-  if (sl.Count() < 10)
+  TCStrList sl, toks;
+  sl.LoadFromFile(fileName);
+  if( sl.Count() < 10 )
     throw TFunctionFailedException(__OlxSourceInfo, "invalid file content");
   toks.Strtok(sl[3], ' ');
   const size_t param_cnt = toks[0].ToSizeT();
@@ -158,7 +162,7 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
   Allocate(diag.Count());
   for( size_t i=0; i < indexes.Count(); i++ )  {
     for( size_t j=0; j <= i; j++ )  {
-      if( i == j )
+      if( i == j )  
         data[i][j] = diag[i]*diag[i];
       else  {  // top diagonal to bottom diagonal
         size_t ix = indexes[j];
@@ -176,10 +180,10 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
       throw TFunctionFailedException(__OlxSourceInfo,
         "matrix is not upto date");
     }
-    Index[i].c = ca->GetId();
+    Index[i].C() = ca->GetId();
     size_t j = i;
     while( ++j < Index.Count() && Index[i].GetA().Equalsi(Index[j].GetA()) )
-      Index[j].c = ca->GetId();
+      Index[j].C() = ca->GetId();
     i = j-1;
   }
   // expand refined parameters into crystallographic ones
@@ -268,43 +272,33 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
         a.SetUisoEsd(sqrt(Ueq));
       }
     }
-    UpdateAtomIndex();
   }
-  catch(const TExceptionBase& e) {
+  catch(const TExceptionBase& e)  {
     TBasicApp::NewLogEntry(logError) << e.GetException()->GetFullMessage();
-  }
-}
-//.............................................................................
-void VcoVMatrix::UpdateAtomIndex() {
-  AtomIdIndex.Clear();
-  AtomIdIndex.SetCapacity(Index.Count());
-  AtomNameIndex.Clear();
-  AtomNameIndex.SetCapacity(Index.Count());
-  for (size_t i = 0; i < Index.Count(); i++) {
-    AtomIdIndex.Add(Index[i].GetC(), i);
-    AtomNameIndex.Add(Index[i].GetA(), i);
   }
 }
 //.............................................................................
 double VcoVMatrix::Find(const olxstr& atom, const short va,
   const short vb) const
 {
-  size_t ni = AtomNameIndex.IndexOf(atom);
-  if (ni == InvalidIndex) {
-    return 0;
+  for( size_t i=0; i < Index.Count(); i++ )  {
+    if( Index[i].GetA() == atom )  {
+      size_t i1 = InvalidIndex, i2 = InvalidIndex;
+      for( size_t j=i; j < Index.Count() && Index[j].GetA() == atom; j++ )  {
+        if( Index[j].GetB() == va )  i1 = j;
+        if( Index[j].GetB() == vb )  i2 = j;
+      }
+      if( i1 == InvalidIndex || i2 == InvalidIndex )
+        return 0;
+      return (i1 <= i2 ) ? data[i2][i1] : data[i1][i2]; 
+    }
   }
-  size_t i1 = InvalidIndex, i2 = InvalidIndex;
-  for (size_t j = ni; j < Index.Count() && Index[j].GetA() == atom; j++) {
-    if (Index[j].GetB() == va)  i1 = j;
-    if (Index[j].GetB() == vb)  i2 = j;
-  }
-  if (i1 == InvalidIndex || i2 == InvalidIndex)
-    return 0;
-  return (i1 <= i2) ? data[i2][i1] : data[i1][i2];
+  return 0;
 }
 //.............................................................................
 void VcoVMatrix::ReadSmtbxMat(const olxstr& fileName, TAsymmUnit& au)  {
-  TStrList in = TEFile::ReadLines(fileName);
+  TStrList in;
+  in.LoadFromFile(fileName);
   if( in.Count() != 3 || !in[0].Equals("VCOV") )
     throw TInvalidArgumentException(__OlxSourceInfo, "file format");
   TStrList annotations(in[1], ' '),
@@ -390,10 +384,10 @@ void VcoVMatrix::ReadSmtbxMat(const olxstr& fileName, TAsymmUnit& au)  {
   }
   for( size_t i=0; i < Index.Count(); i++ )  {
     TCAtom* ca = au.FindCAtom(Index[i].GetA());
-    Index[i].c = ca->GetId();
+    Index[i].C() = ca->GetId();
     size_t j = i;
     while( ++j < Index.Count() && Index[i].GetA().Equalsi(Index[j].GetA()) )
-      Index[j].c = ca->GetId();
+      Index[j].C() = ca->GetId();
     i = j-1;
   }
   const mat3d& f2c = au.GetCellToCartesian();
@@ -431,7 +425,6 @@ void VcoVMatrix::ReadSmtbxMat(const olxstr& fileName, TAsymmUnit& au)  {
     const double Ueq = (Um*Ut).DotProd(Ut);
     a.SetUisoEsd(sqrt(Ueq));
   }
-  UpdateAtomIndex();
 }
 //.............................................................................
 void VcoVMatrix::FromCIF(TAsymmUnit& au) {
@@ -446,6 +439,5 @@ void VcoVMatrix::FromCIF(TAsymmUnit& au) {
       data[0][i*3+j] = olx_sqr(a.ccrdEsd()[j]);
     }
   }
-  UpdateAtomIndex();
 }
 //.............................................................................

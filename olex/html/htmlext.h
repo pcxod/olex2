@@ -33,6 +33,7 @@ private:
   bool Movable, PageLoadRequested, ShowTooltips;
   olxdict<const IEObject*, int, TPointerComparator> Locks;
   olxstr PageRequested;
+  wxWindow* InFocus;
   TActionQList Actions;
   olxstr PopupName;
   static size_t &stateTooltipsVisible() {
@@ -53,6 +54,8 @@ protected:
   void OnMouseUp(wxMouseEvent& event);
   void OnMouseMotion(wxMouseEvent& event);
   void OnCellMouseHover(wxHtmlCell *Cell, wxCoord x, wxCoord y);
+  void OnChildFocus(wxChildFocusEvent& event);
+  bool DoHandleFocusEvent(AOlxCtrl* prev, AOlxCtrl* next);
   void OnClipboard(wxClipboardTextEvent& event);
   olxstr OnSizeData, OnDblClickData;
   virtual bool Dispatch(int MsgId, short MsgSubId, const IEObject* Sender,
@@ -70,19 +73,21 @@ protected:
   THtmlSwitch* Root;
   olxdict<olxstr, AnAssociation3<AOlxCtrl*,wxWindow*,bool>,
     olxstrComparator<true> > Objects;
-  olxstr_dict<size_t,true> SwitchStates;
+  TTypeList<AnAssociation2<AOlxCtrl*,wxWindow*> > Traversables;
+  TSStrPObjList<olxstr,size_t,true> SwitchStates;
   TTypeList<TStrList> Groups;
+  olxstr FocusedControl;
   class TObjectsState  {
-    olxstr_dict<olxstr_dict<olxstr,false>*, true> Objects;
+    TSStrPObjList<olxstr,TSStrStrList<olxstr,false>*, true> Objects;
     THtml& html;
   public:
     TObjectsState(THtml& htm) : html(htm) { }
     ~TObjectsState();
-    olxstr_dict<olxstr,false>* FindProperties(const olxstr& cname) {
+    TSStrStrList<olxstr,false>* FindProperties(const olxstr& cname) {
       const size_t ind = Objects.IndexOf(cname);
-      return (ind == InvalidIndex) ? NULL : Objects.GetValue(ind);
+      return (ind == InvalidIndex) ? NULL : Objects.GetObject(ind);
     }
-    olxstr_dict<olxstr,false>* DefineControl(const olxstr& name,
+    TSStrStrList<olxstr,false>* DefineControl(const olxstr& name,
       const std::type_info& type);
     void SaveState();
     void RestoreState();
@@ -104,15 +109,20 @@ protected:
     const olxstr& state_name);
   bool SetObjectImage(AOlxCtrl *AOlxCtrl, const olxstr& src);
   bool SetObjectItems(AOlxCtrl *AOlxCtrl, const olxstr& src);
+  void _FindNext(index_t from, index_t &dest, bool scroll) const;
+  void _FindPrev(index_t from, index_t &dest, bool scroll) const;
+  void GetTraversibleIndeces(index_t& current, index_t& another,
+    bool forward) const;
+  void DoNavigate(bool forward);
 public:
   THtml(THtmlManager &manager, wxWindow *Parent,
     const olxstr &pop_name=EmptyString(), int flags=4);
   virtual ~THtml();
 
   const olxstr &GetPopupName() const {  return PopupName;  }
-  void OnKeyDown(wxKeyEvent &event);
-  void OnChar(wxKeyEvent &event);
-  void OnNavigation(wxNavigationKeyEvent &event);
+  void OnKeyDown(wxKeyEvent &event);  
+  void OnChar(wxKeyEvent &event);  
+  void OnNavigation(wxNavigationKeyEvent &event);  
 
   void SetSwitchState(THtmlSwitch &sw, size_t state);
 
@@ -171,15 +181,15 @@ public:
     bool Manage = false);
   AOlxCtrl *FindObject(const olxstr& Name)  {
     const size_t ind = Objects.IndexOf(Name);
-    return (ind == InvalidIndex) ? NULL : Objects.GetValue(ind).a;
+    return (ind == InvalidIndex) ? NULL : Objects.GetValue(ind).A();
   }
   wxWindow *FindObjectWindow(const olxstr& Name)  {
     const size_t ind = Objects.IndexOf(Name);
-    return (ind == InvalidIndex) ? NULL : Objects.GetValue(ind).b;
+    return (ind == InvalidIndex) ? NULL : Objects.GetValue(ind).B();
   }
   size_t ObjectCount() const {  return Objects.Count();  }
-  AOlxCtrl* GetObject(size_t i)  {  return Objects.GetValue(i).a;  }
-  wxWindow* GetWindow(size_t i)  {  return Objects.GetValue(i).b;  }
+  AOlxCtrl* GetObject(size_t i)  {  return Objects.GetValue(i).A();  }
+  wxWindow* GetWindow(size_t i)  {  return Objects.GetValue(i).B();  }
   const olxstr& GetObjectName(size_t i) const {  return Objects.GetKey(i);  }
   bool IsObjectManageble(size_t i) const {
     return Objects.GetValue(i).GetC();

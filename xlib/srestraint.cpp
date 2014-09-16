@@ -98,7 +98,7 @@ ConstPtrList<PyObject> TSimpleRestraint::PyExport(TPtrList<PyObject>& atoms,
       else
         eq = equiv[ats[i][j].GetMatrix()->GetId()];
       Py_INCREF(eq);
-      PyTuple_SetItem(involved, j,
+      PyTuple_SetItem(involved, j, 
         Py_BuildValue("OO", Py_BuildValue("i", ats[i][j].GetAtom().GetTag()), eq));
     }
     PythonExt::SetDictItem(rv[i], "atoms", involved);
@@ -133,11 +133,11 @@ IXVarReferencerContainer& TSimpleRestraint::GetParentContainer() const {
 //..............................................................................
 olxstr TSimpleRestraint::GetIdName() const {  return Parent.GetIdName();  }
 //..............................................................................
-olxstr TSimpleRestraint::GetVarName(size_t var_index) const {
+olxstr TSimpleRestraint::GetVarName(size_t var_index) const {  
   const static olxstr vm("1");
   if( var_index != 0 )
     throw TInvalidArgumentException(__OlxSourceInfo, "var index");
-  return vm;
+  return vm;  
 }
 //..............................................................................
 TIString TSimpleRestraint::ToString() const {
@@ -190,13 +190,13 @@ void TSRestraintList::Clear()  {
 TSimpleRestraint& TSRestraintList::Release(size_t i)  {
   if( Restraints[i].GetVarRef(0) != NULL )
     RefMod.Vars.ReleaseRef(Restraints[i], 0);
-  return Restraints.Release(i);
+  return Restraints.Release(i);  
 }
 //..............................................................................
-void TSRestraintList::Restore(TSimpleRestraint& sr)  {
+void TSRestraintList::Restore(TSimpleRestraint& sr)  {  
   if( &sr.GetParent() != this )
     throw TInvalidArgumentException(__OlxSourceInfo, "restraint parent differs");
-  Restraints.Add(sr);
+  Restraints.Add(sr);  
   if( sr.GetVarRef(0) != NULL )
     RefMod.Vars.RestoreRef(sr, 0, sr.GetVarRef(0));
 }

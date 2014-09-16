@@ -146,7 +146,7 @@ void TGlRenderer::Clear()  {
     CompiledListId = -1;
   }
   for( size_t i=0; i < FCollections.Count(); i++ )
-    delete FCollections.GetValue(i);
+    delete FCollections.GetObject(i);
   FCollections.Clear();
   for( size_t i=0; i < Primitives.ObjectCount(); i++ )
     delete &Primitives.GetObject(i);
@@ -173,7 +173,7 @@ void TGlRenderer::ClearObjects()  {
     CompiledListId = -1;
   }
   for( size_t i=0; i < FCollections.Count(); i++ )
-    FCollections.GetValue(i)->ClearObjects();
+    FCollections.GetObject(i)->ClearObjects();
   FGObjects.Clear();
   ClearMinMax();
   ReleaseGlImage();
@@ -215,13 +215,13 @@ void TGlRenderer::operator = (const TGlRenderer &G)  { ; }
 void TGlRenderer::_OnStylesClear()  {
   OnStylesClear.Enter(this);
   for( size_t i=0; i < FCollections.Count(); i++ )
-    FCollections.GetValue(i)->SetStyle(NULL);
+    FCollections.GetObject(i)->SetStyle(NULL);
 }
 //..............................................................................
 void TGlRenderer::_OnStylesLoaded()  {
   for( size_t i=0; i < FCollections.Count(); i++ ) {
-    FCollections.GetValue(i)->SetStyle(
-      &FStyles->NewStyle(FCollections.GetValue(i)->GetName(), true));
+    FCollections.GetObject(i)->SetStyle(
+      &FStyles->NewStyle(FCollections.GetObject(i)->GetName(), true));
   }
   // groups are deleted by Clear, so should be removed!
   for( size_t i=0; i < FGroups.Count(); i++ )
@@ -250,7 +250,7 @@ void TGlRenderer::_OnStylesLoaded()  {
 //..............................................................................
 TGPCollection& TGlRenderer::NewCollection(const olxstr &Name)  {
   TGPCollection *GPC =
-    FCollections.Add(Name, new TGPCollection(*this, Name));
+    FCollections.Add(Name, new TGPCollection(*this, Name)).Object;
   GPC->SetStyle(&FStyles->NewStyle(Name, true));
   return *GPC;
 }
@@ -282,8 +282,8 @@ TGPCollection *TGlRenderer::FindCollectionX(const olxstr& Name,
   const size_t di = Name.FirstIndexOf('.');
   if( di != InvalidIndex )  {
     const size_t ind = FCollections.IndexOf(Name);
-    if( ind != InvalidIndex )
-      return FCollections.GetValue(ind);
+    if( ind != InvalidIndex )  
+      return FCollections.GetObject(ind);
 
     TGPCollection *BestMatch=NULL;
     short maxMatchLevels = 0;
@@ -293,10 +293,10 @@ TGPCollection *TGlRenderer::FindCollectionX(const olxstr& Name,
       // keep the one with shortes name
       if( BestMatch != NULL && dc == maxMatchLevels )  {
         if( BestMatch->GetName().Length() > FCollections.GetKey(i).Length() )
-          BestMatch = FCollections.GetValue(i);
+          BestMatch = FCollections.GetObject(i);
       }
       else
-        BestMatch = FCollections.GetValue(i);
+        BestMatch = FCollections.GetObject(i);
       maxMatchLevels = dc;
     }
     if( BestMatch != NULL )  {
@@ -392,6 +392,8 @@ void TGlRenderer::SetView(int x, int y, bool identity, bool Select, short Res)  
       olx_gl::ortho(aspect*FProjectionLeft, aspect*FProjectionRight,
         FProjectionTop, FProjectionBottom, 1, 10);
     }
+    //glTranslated(0, 0, FMinV[2] > 0 ? -1 : FMinV[2]-FMaxV[2]);
+    olx_gl::translate(0, 0, -2);
   }
   else  {
     olx_gl::ortho(aspect*FProjectionLeft, aspect*FProjectionRight,
@@ -412,9 +414,7 @@ void TGlRenderer::SetView(int x, int y, bool identity, bool Select, short Res)  
     Bf[3][3] = 1;
     olx_gl::loadMatrix(&Bf[0][0]);
     olx_gl::scale(GetBasis().GetZoom());
-    vec3d t = GetBasis().GetCenter();// *GetBasis().GetMatrix();
-    t += GetBasis().GetMatrix()*vec3d(0, 0, -2 / GetBasis().GetZoom());
-    olx_gl::translate(t);
+    olx_gl::translate(GetBasis().GetCenter());
   }
   else  {
     olx_gl::loadIdentity();
@@ -450,7 +450,7 @@ void TGlRenderer::SetupStencilFoInterlacedDraw(bool even) {
 
   const double aspect = (double)Width/(double)Height;
   glRectd(-0.5*aspect, -0.5, 0.5*aspect, 0.5);
-
+  
   olx_gl::colorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
   olx_gl::enable(GL_DEPTH_TEST);
   olx_gl::disable(GL_POLYGON_STIPPLE);
@@ -677,14 +677,6 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects,
       }
     }
   }
-  const size_t group_count = FGroups.Count();
-  for (size_t i = 0; i < group_count; i++)  {
-    if (FGroups[i]->GetParentGroup() == NULL &&
-      !FGroups[i]->GetGlM().IsTransparent())
-    {
-      FGroups[i]->Draw(SelectPrimitives, SelectObjects);
-    }
-  }
   const size_t trans_obj_count = FTranslucentObjects.Count();
   //olx_gl::disable(GL_DEPTH_TEST);
   /* disabling the depth test does help for a set of transparent objects but
@@ -711,12 +703,10 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects,
     }
   }
   //olx_gl::enable(GL_DEPTH_TEST);
-  for (size_t i = 0; i < group_count; i++)  {
-    if (FGroups[i]->GetParentGroup() == NULL &&
-      FGroups[i]->GetGlM().IsTransparent())
-    {
+  const size_t group_count = FGroups.Count();
+  for( size_t i=0; i < group_count; i++ )  {
+    if( FGroups[i]->GetParentGroup() == NULL )
       FGroups[i]->Draw(SelectPrimitives, SelectObjects);
-    }
   }
 
   if( !FSelection->GetGlM().IsIdentityDraw() )  {
@@ -730,7 +720,7 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects,
     for (size_t i=0; i < trans_id_obj_count; i++) {
       TGlMaterial* GlM = FTranslucentIdentityObjects[i];
       GlM->Init(skip_mat);
-      const size_t obj_count = GlM->ObjectCount();
+      const size_t obj_count = GlM->ObjectCount(); 
       for( size_t j=0; j < obj_count; j++ )  {
         TGlPrimitive& GlP = (TGlPrimitive&)GlM->GetObject(j);
         TGPCollection* GPC = GlP.GetParentCollection();
@@ -778,7 +768,7 @@ AGDrawObject* TGlRenderer::SelectObject(int x, int y) {
         }
         if( (int)(in)*4+3 < 0 )  return NULL;
         in = selectBuf[(in)*4+3] - 1;
-        if( in < ObjectCount() )
+        if( in < ObjectCount() )  
           Result = &GetObject(in);
       }
     }
@@ -868,11 +858,11 @@ TGlPrimitive* TGlRenderer::SelectPrimitive(int x, int y) {
 TGlGroup* TGlRenderer::FindObjectGroup(const AGDrawObject& G) const {
   // get the topmost group
   TGlGroup* G1 = G.GetParentGroup();
-  if( G1 == NULL )
+  if( G1 == NULL )  
     return NULL;
   while( G1->GetParentGroup() != NULL )  {
     if( G1->GetParentGroup() == FSelection )  break;
-    G1 = G1->GetParentGroup();
+    G1 = G1->GetParentGroup(); 
   }
   return (G1 == FSelection) ? NULL : G1;
 }
@@ -881,8 +871,8 @@ void TGlRenderer::Select(AGDrawObject& G)  {
   G.SetSelected(FSelection->Add(G));
 }
 //..............................................................................
-void TGlRenderer::Deselect(AGDrawObject& G)  {
-  if (G.GetParentGroup() == FSelection)
+void TGlRenderer::DeSelect(AGDrawObject& G)  {
+  if( G.GetParentGroup() == FSelection )
     FSelection->Remove(G);
 }
 //..............................................................................
@@ -892,7 +882,7 @@ void TGlRenderer::Select(AGDrawObject& G, bool v)  {
       Select(G);
   }
   else if( G.IsSelected() )
-    Deselect(G);
+    DeSelect(G);
 }
 //..............................................................................
 void TGlRenderer::Select(AGDrawObject& G, glSelectionFlag v)  {
@@ -902,13 +892,13 @@ void TGlRenderer::Select(AGDrawObject& G, glSelectionFlag v)  {
   }
   else if (v == glSelectionUnselect) {
     if (G.IsSelected())
-      Deselect(G);
+      DeSelect(G);
   }
   else if (v == glSelectionInvert) {
     if (!G.IsSelected())
       Select(G);
     else
-      Deselect(G);
+      DeSelect(G);
   }
 }
 //..............................................................................
@@ -939,12 +929,13 @@ void TGlRenderer::SelectAll(bool Select)  {
 }
 //..............................................................................
 void TGlRenderer::ClearGroups()  {
-  for (size_t i = 0; i < FGroups.Count(); i++) {
-    if (FGroups[i]->IsSelected())
-      Deselect(*FGroups[i]);
+  if( FGroups.IsEmpty() )  return;
+  for( size_t i=0; i < FGroups.Count(); i++ )  {
+    if( FGroups[i]->IsSelected() )
+      DeSelect(*FGroups[i]);
     FGroups[i]->Clear();
   }
-  for (size_t i = 0; i < FGroups.Count(); i++)
+  for( size_t i=0; i < FGroups.Count(); i++ )
     delete FGroups[i];
   FGroups.Clear();
 }
@@ -980,17 +971,18 @@ TGlGroup* TGlRenderer::GroupSelection(const olxstr& groupName)  {
 }
 //..............................................................................
 TGlGroup& TGlRenderer::NewGroup(const olxstr& collection_name) {
-  return *FGroups.Add(new TGlGroup(*this, collection_name));
+  return *FGroups.Add(new TGlGroup(*this, collection_name));  
 }
 //..............................................................................
-void TGlRenderer::Ungroup(TGlGroup& OS)  {
+void TGlRenderer::UnGroup(TGlGroup& OS)  {
   FGroups.Remove(OS);
-  FSelection->Remove(OS);
+  if( FSelection->Contains(OS) )
+    FSelection->Remove(OS);
 
   AGDObjList Objects(OS.Count());
   for( size_t i=0; i < OS.Count(); i++ )
     Objects[i] = &OS[i];
-  OS.GetPrimitives().RemoveObject(OS); //
+  OS.GetPrimitives().RemoveObject(OS); // 
   FGObjects.Remove(&OS);
   delete &OS;  // it will reset Parent group to NULL in the objects
   for( size_t i=0; i < Objects.Count(); i++ )
@@ -1080,40 +1072,40 @@ void TGlRenderer::RemoveCollection(TGPCollection& GP)  {
   Primitives.GetObjects().ForEach(ACollectionItem::TagSetter(-1));
   GP.GetPrimitives().ForEach(ACollectionItem::TagSetter(0));
   Primitives.RemoveObjectsByTag(0);
-  FCollections.Delete(FCollections.IndexOfValue(&GP));
-  for (size_t i=0; i < Primitives.PropertiesCount(); i++) {
+  FCollections.Delete(FCollections.IndexOfObject(&GP));
+  for( size_t i=0; i < Primitives.PropertiesCount(); i++ )  {
     TGlMaterial& GlM = Primitives.GetProperties(i);
-    if (GlM.IsTransparent() && GlM.IsIdentityDraw())
+    if( GlM.IsTransparent() && GlM.IsIdentityDraw()  )
       FTranslucentIdentityObjects.Add(GlM);
-    else if (GlM.IsTransparent())
+    else if( GlM.IsTransparent() )
       FTranslucentObjects.Add(GlM);
-    else if (GlM.IsIdentityDraw())
+    else if( GlM.IsIdentityDraw() )
       FIdentityObjects.Add(GlM);
   }
   delete &GP;
 }
 //..............................................................................
-void TGlRenderer::RemoveCollections(const TPtrList<TGPCollection>& Colls_)  {
-  if (Colls_.IsEmpty()) return;
-  TPtrList<TGPCollection> colls = ACollectionItem::Unique(Colls_);
+void TGlRenderer::RemoveCollections(const TPtrList<TGPCollection>& Colls)  {
+  if( Colls.IsEmpty() )  return;
   FTranslucentIdentityObjects.Clear();
   FTranslucentObjects.Clear();
   FIdentityObjects.Clear();
+
   Primitives.GetObjects().ForEach(ACollectionItem::TagSetter(-1));
-  for (size_t i = 0; i < colls.Count(); i++) {
-    colls[i]->GetPrimitives().ForEach(ACollectionItem::TagSetter(0));
-    const size_t col_ind = FCollections.IndexOfValue(colls[i]);
+  for( size_t i=0; i < Colls.Count(); i++ )  {
+    Colls[i]->GetPrimitives().ForEach(ACollectionItem::TagSetter(0));
+    const size_t col_ind = FCollections.IndexOfObject(Colls[i]);
     FCollections.Delete(col_ind);
-    delete colls[i];
+    delete Colls[i];
   }
   Primitives.RemoveObjectsByTag(0);
-  for (size_t i = 0; i < Primitives.PropertiesCount(); i++)  {
+  for( size_t i=0; i < Primitives.PropertiesCount(); i++ )  {
     TGlMaterial& GlM = Primitives.GetProperties(i);
-    if (GlM.IsTransparent() && GlM.IsIdentityDraw())
+    if( GlM.IsTransparent() && GlM.IsIdentityDraw() )
       FTranslucentIdentityObjects.Add(&GlM);
-    else if (GlM.IsTransparent())
+    else if( GlM.IsTransparent() )
       FTranslucentObjects.Add(GlM);
-    else if (GlM.IsIdentityDraw())
+    else if( GlM.IsIdentityDraw() )
       FIdentityObjects.Add(GlM);
   }
 }
@@ -1164,7 +1156,7 @@ void TGlRenderer::CleanUpStyles()  {// removes styles, which are not used by any
   OnStylesClear.Enter(this);
   GetStyles().SetStylesTag(0);
   for( size_t i=0; i < FCollections.Count(); i++ )
-    FCollections.GetValue(i)->GetStyle().SetTag(1);
+    FCollections.GetObject(i)->GetStyle().SetTag(1);
   GetStyles().RemoveStylesByTag(0);
   OnStylesClear.Exit(this);
 }
@@ -1381,7 +1373,7 @@ void TGlRenderer::LibStereo(const TStrObjList& Params, TMacroError& E)  {
 }
 //..............................................................................
 void TGlRenderer::LibStereoColor(const TStrObjList& Params, TMacroError& E)  {
-  TGlOption* glo = Params[0].Equalsi("left") ? &StereoLeftColor :
+  TGlOption* glo = Params[0].Equalsi("left") ? &StereoLeftColor : 
     (Params[0].Equalsi("right") ? &StereoRightColor : NULL);
   if( glo == NULL )  {
     E.ProcessingError(__OlxSrcInfo,

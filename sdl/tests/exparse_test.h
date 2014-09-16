@@ -96,7 +96,7 @@ void Test(OlxTests& t)  {
   iv = _exp.build("cos pi*30/180");
   if (*iv->cast<double>().val != cos(M_PI*30/180))
     throw TFunctionFailedException(__OlxSourceInfo, "assert");
-
+  
   if (iv->ref_cnt() == 0) delete iv;
 }
 //...................................................................................................

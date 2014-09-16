@@ -249,16 +249,16 @@ const SymmCon* SymmConReg::_Find(int r_id)  {
   if( to_cr < 0  )  return NULL;
   while( true ) {
     const size_t index = (to+from)/2;
-    if( index == from || index == to)
+    if( index == from || index == to)  
       return NULL;
     const int cr = SortedSymmConTab[index].r_id - r_id;
-    if( cr < 0 )
+    if( cr < 0 )  
       from = index;
     else  {
-      if( cr > 0 )
+      if( cr > 0 )  
         to  = index;
       else  {
-        if( cr == 0 )
+        if( cr == 0 )  
           return &SortedSymmConTab[index];
       }
     }
