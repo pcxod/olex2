@@ -1,0 +1,1161 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Unicode-debug|Win32">
+      <Configuration>Unicode-debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Unicode-debug|x64">
+      <Configuration>Unicode-debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Unicode-release-d|Win32">
+      <Configuration>Unicode-release-d</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Unicode-release-d|x64">
+      <Configuration>Unicode-release-d</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Unicode-release-static|Win32">
+      <Configuration>Unicode-release-static</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Unicode-release-static|x64">
+      <Configuration>Unicode-release-static</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Unicode-release|Win32">
+      <Configuration>Unicode-release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Unicode-release|x64">
+      <Configuration>Unicode-release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{61C58785-8535-4CD3-B84A-F324CFA4E27F}</ProjectGuid>
+    <RootNamespace>xlib</RootNamespace>
+    <Keyword>ManagedCProj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-release-d|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <CLRSupport>false</CLRSupport>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-release-static|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <CLRSupport>false</CLRSupport>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <CLRSupport>false</CLRSupport>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+    <PlatformToolset>v100</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <CLRSupport>false</CLRSupport>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+    <PlatformToolset>v100</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>NotSet</CharacterSet>
+    <CLRSupport>false</CLRSupport>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>NotSet</CharacterSet>
+    <CLRSupport>false</CLRSupport>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-release-d|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <CLRSupport>false</CLRSupport>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-release-static|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <CLRSupport>false</CLRSupport>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <CLRSupport>false</CLRSupport>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+    <PlatformToolset>v100</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <CLRSupport>false</CLRSupport>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+    <PlatformToolset>v100</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>NotSet</CharacterSet>
+    <CLRSupport>false</CLRSupport>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>NotSet</CharacterSet>
+    <CLRSupport>false</CLRSupport>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-release-d|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-release-static|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-release-d|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-release-static|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.30128.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)$(Platform)\$(Configuration)\lib\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(Configuration)\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)$(Platform)\$(Configuration)\lib\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(Configuration)\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">$(SolutionDir)$(Platform)\$(Configuration)\lib\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">$(SolutionDir)$(Platform)\$(Configuration)\obj\$(ProjectName)\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Unicode-release|Win32'">$(SolutionDir)$(Platform)\$(Configuration)\lib\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Unicode-release|Win32'">$(SolutionDir)$(Platform)\$(Configuration)\obj\$(ProjectName)\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Unicode-release-static|Win32'">$(SolutionDir)$(Platform)\$(Configuration)\lib</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Unicode-release-static|Win32'">$(Configuration)\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Unicode-release-d|Win32'">$(SolutionDir)$(Platform)\$(Configuration)\lib</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Unicode-release-d|Win32'">$(Configuration)\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)$(Platform)\$(Configuration)\lib\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(Platform)\$(Configuration)\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)$(Platform)\$(Configuration)\lib\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(Platform)\$(Configuration)\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|x64'">$(SolutionDir)$(Platform)\$(Configuration)\lib\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|x64'">$(SolutionDir)$(Platform)\$(Configuration)\obj\$(ProjectName)\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Unicode-release|x64'">$(SolutionDir)$(Platform)\$(Configuration)\lib\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Unicode-release|x64'">$(SolutionDir)$(Platform)\$(Configuration)\obj\$(ProjectName)\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Unicode-release-static|x64'">$(SolutionDir)$(Platform)\$(Configuration)\lib</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Unicode-release-static|x64'">$(Platform)\$(Configuration)\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Unicode-release-d|x64'">$(SolutionDir)$(Platform)\$(Configuration)\lib</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Unicode-release-d|x64'">$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib;$(OLX_PY_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_PYTHON;WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <BrowseInformation>true</BrowseInformation>
+      <WarningLevel>Level2</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Lib>
+      <UseUnicodeResponseFiles>false</UseUnicodeResponseFiles>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <AdditionalIncludeDirectories>..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib;$(OLX_PY_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_PYTHON;WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <IntrinsicFunctions>false</IntrinsicFunctions>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <AdditionalIncludeDirectories>..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib;$(OLX_PY_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_PYTHON;_UNICODE;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <MinimalRebuild>false</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <StructMemberAlignment>Default</StructMemberAlignment>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <BrowseInformation>true</BrowseInformation>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-release|Win32'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <AdditionalIncludeDirectories>..\..\..\sdl;..\..\..\repository;..\..\..\xlib;$(OLX_PY_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_PYTHON;_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <MinimalRebuild>false</MinimalRebuild>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <BrowseInformation>
+      </BrowseInformation>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+      <CallingConvention>Cdecl</CallingConvention>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-release-static|Win32'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <AdditionalIncludeDirectories>..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib;$(OLX_PY_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_PYTHON;_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <MinimalRebuild>false</MinimalRebuild>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <BrowseInformation>
+      </BrowseInformation>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+      <CallingConvention>Cdecl</CallingConvention>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-release-d|Win32'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <AdditionalIncludeDirectories>..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib;$(OLX_PY_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_PYTHON;_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <MinimalRebuild>false</MinimalRebuild>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <BrowseInformation>true</BrowseInformation>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <CallingConvention>Cdecl</CallingConvention>
+      <FloatingPointExceptions>false</FloatingPointExceptions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib;$(OLX_PY64_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_PYTHON;WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <BrowseInformation>true</BrowseInformation>
+      <WarningLevel>Level2</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Lib>
+      <UseUnicodeResponseFiles>false</UseUnicodeResponseFiles>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <AdditionalIncludeDirectories>..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib;$(OLX_PY64_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_PYTHON;WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <IntrinsicFunctions>false</IntrinsicFunctions>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <AdditionalIncludeDirectories>..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib;$(OLX_PY64_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_PYTHON;_UNICODE;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <StructMemberAlignment>Default</StructMemberAlignment>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <BrowseInformation>true</BrowseInformation>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-release|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <AdditionalIncludeDirectories>..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib;$(OLX_PY64_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_PYTHON;_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <MinimalRebuild>false</MinimalRebuild>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <BrowseInformation>
+      </BrowseInformation>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+      <CallingConvention>Cdecl</CallingConvention>
+      <OmitFramePointers>true</OmitFramePointers>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <StructMemberAlignment>Default</StructMemberAlignment>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-release-static|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <AdditionalIncludeDirectories>..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib;$(OLX_PY64_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_PYTHON;_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <MinimalRebuild>false</MinimalRebuild>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <BrowseInformation>
+      </BrowseInformation>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+      <CallingConvention>Cdecl</CallingConvention>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-release-d|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <AdditionalIncludeDirectories>..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib;$(OLX_PY64_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_PYTHON;_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <MinimalRebuild>false</MinimalRebuild>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <BrowseInformation>true</BrowseInformation>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <CallingConvention>Cdecl</CallingConvention>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+    </ClCompile>
+    <Lib>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+      <LinkTimeCodeGeneration>false</LinkTimeCodeGeneration>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <Reference Include="System">
+      <CopyLocalSatelliteAssemblies>true</CopyLocalSatelliteAssemblies>
+      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+    </Reference>
+    <Reference Include="System.Data">
+      <CopyLocalSatelliteAssemblies>true</CopyLocalSatelliteAssemblies>
+      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+    </Reference>
+    <Reference Include="System.Xml">
+      <CopyLocalSatelliteAssemblies>true</CopyLocalSatelliteAssemblies>
+      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\xlib\absorpc.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ac.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ag.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Al.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ar.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_As.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_At.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Au.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_B.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ba.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Be.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Bi.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Br.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_C.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ca.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Cd.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ce.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Cl.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Co.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Cr.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Cs.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Cu.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Dy.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Er.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Eu.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_F.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Fe.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Fr.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ga.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Gd.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ge.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_H.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_He.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Hf.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Hg.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ho.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_I.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_In.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ir.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_K.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Kr.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_La.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Li.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Lu.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Mg.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Mn.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Mo.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_N.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Na.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Nb.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Nd.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ne.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ni.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_O.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Os.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_P.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Pa.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Pb.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Pd.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Pm.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Po.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Pr.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Pt.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ra.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Rb.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Re.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Rh.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Rn.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ru.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_S.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Sb.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Sc.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Se.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Si.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Sm.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Sn.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Sr.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ta.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Tb.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Tc.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Te.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Th.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ti.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Tl.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Tm.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_U.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_V.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_W.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Xe.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Y.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Yb.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Zn.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Zr.cpp" />
+    <ClCompile Include="..\..\..\xlib\afixgroup.cpp" />
+    <ClCompile Include="..\..\..\xlib\analysis.cpp" />
+    <ClCompile Include="..\..\..\xlib\asymmunit.cpp" />
+    <ClCompile Include="..\..\..\xlib\atomref.cpp" />
+    <ClCompile Include="..\..\..\xlib\auto.cpp" />
+    <ClCompile Include="..\..\..\xlib\constraints_ext.cpp" />
+    <ClCompile Include="..\..\..\xlib\hall.cpp" />
+    <ClCompile Include="..\..\..\xlib\infotab.cpp" />
+    <ClCompile Include="..\..\..\xlib\lcells.cpp" />
+    <ClCompile Include="..\..\..\xlib\macro\brushhkl.cpp" />
+    <ClCompile Include="..\..\..\xlib\catom.cpp" />
+    <ClCompile Include="..\..\..\xlib\catomlist.cpp" />
+    <ClCompile Include="..\..\..\xlib\chemdata.cpp">
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">/bigobj %(AdditionalOptions)</AdditionalOptions>
+      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">Default</BasicRuntimeChecks>
+      <BrowseInformation Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </BrowseInformation>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|x64'">/bigobj %(AdditionalOptions)</AdditionalOptions>
+      <MinimalRebuild Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|x64'">false</MinimalRebuild>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|x64'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\chnexp.cpp" />
+    <ClCompile Include="..\..\..\xlib\congen.cpp" />
+    <ClCompile Include="..\..\..\xlib\conninfo.cpp" />
+    <ClCompile Include="..\..\..\xlib\crs.cpp" />
+    <ClCompile Include="..\..\..\xlib\ellipsoid.cpp" />
+    <ClCompile Include="..\..\..\xlib\envilist.cpp" />
+    <ClCompile Include="..\..\..\xlib\experimental.cpp" />
+    <ClCompile Include="..\..\..\xlib\exyzgroup.cpp" />
+    <ClCompile Include="..\..\..\xlib\fastsymm.cpp" />
+    <ClCompile Include="..\..\..\xlib\fracmask.cpp" />
+    <ClCompile Include="..\..\..\xlib\macro\graphsr.cpp" />
+    <ClCompile Include="..\..\..\xlib\hkl.cpp" />
+    <ClCompile Include="..\..\..\xlib\idistribution.cpp" />
+    <ClCompile Include="..\..\..\xlib\macro\imp_auto.cpp" />
+    <ClCompile Include="..\..\..\xlib\ins.cpp" />
+    <ClCompile Include="..\..\..\xlib\ipattern.cpp" />
+    <ClCompile Include="..\..\..\xlib\lattice.cpp" />
+    <ClCompile Include="..\..\..\xlib\leq.cpp" />
+    <ClCompile Include="..\..\..\xlib\lst.cpp" />
+    <ClCompile Include="..\..\..\xlib\mol.cpp" />
+    <ClCompile Include="..\..\..\xlib\mol2.cpp" />
+    <ClCompile Include="..\..\..\xlib\network.cpp" />
+    <ClCompile Include="..\..\..\xlib\p4p.cpp" />
+    <ClCompile Include="..\..\..\xlib\pdb.cpp" />
+    <ClCompile Include="..\..\..\xlib\reflection.cpp" />
+    <ClCompile Include="..\..\..\xlib\refmodel.cpp" />
+    <ClCompile Include="..\..\..\xlib\rm_base.cpp" />
+    <ClCompile Include="..\..\..\xlib\samegroup.cpp" />
+    <ClCompile Include="..\..\..\xlib\satom.cpp" />
+    <ClCompile Include="..\..\..\xlib\sbond.cpp" />
+    <ClCompile Include="..\..\..\xlib\selected.cpp" />
+    <ClCompile Include="..\..\..\xlib\seval.cpp" />
+    <ClCompile Include="..\..\..\xlib\sfutil.cpp" />
+    <ClCompile Include="..\..\..\xlib\macro\sg.cpp" />
+    <ClCompile Include="..\..\..\xlib\sgtest.cpp" />
+    <ClCompile Include="..\..\..\xlib\splane.cpp" />
+    <ClCompile Include="..\..\..\xlib\srestraint.cpp" />
+    <ClCompile Include="..\..\..\xlib\symmcon.cpp" />
+    <ClCompile Include="..\..\..\xlib\symmlib.cpp" />
+    <ClCompile Include="..\..\..\xlib\symmparser.cpp" />
+    <ClCompile Include="..\..\..\xlib\macro\testsymm.cpp" />
+    <ClCompile Include="..\..\..\xlib\symmspace.cpp" />
+    <ClCompile Include="..\..\..\xlib\tls.cpp" />
+    <ClCompile Include="..\..\..\xlib\unitcell.cpp" />
+    <ClCompile Include="..\..\..\xlib\vcov.cpp" />
+    <ClCompile Include="..\..\..\xlib\macro\wilson.cpp" />
+    <ClCompile Include="..\..\..\xlib\xapp.cpp" />
+    <ClCompile Include="..\..\..\xlib\xdmas.cpp" />
+    <ClCompile Include="..\..\..\xlib\xfiles.cpp" />
+    <ClCompile Include="..\..\..\xlib\xlcongen.cpp" />
+    <ClCompile Include="..\..\..\xlib\xmacro.cpp" />
+    <ClCompile Include="..\..\..\xlib\xyz.cpp" />
+    <ClCompile Include="..\..\..\xlib\henke\henke_Ac.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Ag.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Al.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Ar.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_As.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_At.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Au.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_B.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Ba.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Be.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Bi.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Br.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_C.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Ca.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Cd.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Ce.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Cl.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Co.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Cr.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Cs.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Cu.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_D.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Dy.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Er.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Eu.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_F.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Fe.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Fr.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Ga.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Gd.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Ge.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_H.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_He.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Hf.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Hg.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Ho.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_I.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_In.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Ir.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_K.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Kr.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_La.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Li.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Lu.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Mg.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Mn.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Mo.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_N.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Na.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Nb.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Nd.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Ne.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Ni.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_O.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Os.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_P.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Pa.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Pb.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Pd.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Pm.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Po.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Pr.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Pt.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Ra.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Rb.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Re.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Rh.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Rn.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Ru.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_S.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Sb.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Sc.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Se.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Si.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Sm.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Sn.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Sr.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Ta.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Tb.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Tc.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Te.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Th.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Ti.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Tl.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Tm.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_U.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_V.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_W.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Xe.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Y.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Yb.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Zn.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Zr.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+      </DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\cif.cpp" />
+    <ClCompile Include="..\..\..\xlib\cifdata.cpp" />
+    <ClCompile Include="..\..\..\xlib\cifdp.cpp" />
+    <ClCompile Include="..\..\..\xlib\ciftab.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\xlib\afixgroup.h" />
+    <ClInclude Include="..\..\..\xlib\analysis.h" />
+    <ClInclude Include="..\..\..\xlib\asymmunit.h" />
+    <ClInclude Include="..\..\..\xlib\atomref.h" />
+    <ClInclude Include="..\..\..\xlib\atomregistry.h" />
+    <ClInclude Include="..\..\..\xlib\atomsort.h" />
+    <ClInclude Include="..\..\..\xlib\auto.h" />
+    <ClInclude Include="..\..\..\xlib\beevers-lipson.h" />
+    <ClInclude Include="..\..\..\xlib\catom.h" />
+    <ClInclude Include="..\..\..\xlib\catomlist.h" />
+    <ClInclude Include="..\..\..\xlib\cell_reduction.h" />
+    <ClInclude Include="..\..\..\xlib\chembase.h" />
+    <ClInclude Include="..\..\..\xlib\chemdata.h" />
+    <ClInclude Include="..\..\..\xlib\chnexp.h" />
+    <ClInclude Include="..\..\..\xlib\congen.h" />
+    <ClInclude Include="..\..\..\xlib\connext.h" />
+    <ClInclude Include="..\..\..\xlib\conninfo.h" />
+    <ClInclude Include="..\..\..\xlib\constraints_ext.h" />
+    <ClInclude Include="..\..\..\xlib\crs.h" />
+    <ClInclude Include="..\..\..\xlib\ellipsoid.h" />
+    <ClInclude Include="..\..\..\xlib\envilist.h" />
+    <ClInclude Include="..\..\..\xlib\exlib.h" />
+    <ClInclude Include="..\..\..\xlib\experimental.h" />
+    <ClInclude Include="..\..\..\xlib\exyzgroup.h" />
+    <ClInclude Include="..\..\..\xlib\fastsymm.h" />
+    <ClInclude Include="..\..\..\xlib\fracmask.h" />
+    <ClInclude Include="..\..\..\xlib\fragment.h" />
+    <ClInclude Include="..\..\..\xlib\hall.h" />
+    <ClInclude Include="..\..\..\xlib\henke.h" />
+    <ClInclude Include="..\..\..\xlib\hkl.h" />
+    <ClInclude Include="..\..\..\xlib\idistribution.h" />
+    <ClInclude Include="..\..\..\xlib\infotab.h" />
+    <ClInclude Include="..\..\..\xlib\ins.h" />
+    <ClInclude Include="..\..\..\xlib\ipattern.h" />
+    <ClInclude Include="..\..\..\xlib\label_corrector.h" />
+    <ClInclude Include="..\..\..\xlib\lattice.h" />
+    <ClInclude Include="..\..\..\xlib\lcells.h" />
+    <ClInclude Include="..\..\..\xlib\leq.h" />
+    <ClInclude Include="..\..\..\xlib\lst.h" />
+    <ClInclude Include="..\..\..\xlib\maputil.h" />
+    <ClInclude Include="..\..\..\xlib\mat_id.h" />
+    <ClInclude Include="..\..\..\xlib\mol.h" />
+    <ClInclude Include="..\..\..\xlib\mol2.h" />
+    <ClInclude Include="..\..\..\xlib\network.h" />
+    <ClInclude Include="..\..\..\xlib\p4p.h" />
+    <ClInclude Include="..\..\..\xlib\packutil.h" />
+    <ClInclude Include="..\..\..\xlib\planesort.h" />
+    <ClInclude Include="..\..\..\xlib\reflection.h" />
+    <ClInclude Include="..\..\..\xlib\refmerge.h" />
+    <ClInclude Include="..\..\..\xlib\refmodel.h" />
+    <ClInclude Include="..\..\..\xlib\refutil.h" />
+    <ClInclude Include="..\..\..\xlib\residue.h" />
+    <ClInclude Include="..\..\..\xlib\rm_base.h" />
+    <ClInclude Include="..\..\..\xlib\samegroup.h" />
+    <ClInclude Include="..\..\..\xlib\satom.h" />
+    <ClInclude Include="..\..\..\xlib\sbond.h" />
+    <ClInclude Include="..\..\..\xlib\seval.h" />
+    <ClInclude Include="..\..\..\xlib\sfutil.h" />
+    <ClInclude Include="..\..\..\xlib\sgset.h" />
+    <ClInclude Include="..\..\..\xlib\sgtest.h" />
+    <ClInclude Include="..\..\..\xlib\splane.h" />
+    <ClInclude Include="..\..\..\xlib\srestraint.h" />
+    <ClInclude Include="..\..\..\xlib\symmat.h" />
+    <ClInclude Include="..\..\..\xlib\symmcon.h" />
+    <ClInclude Include="..\..\..\xlib\symmlib.h" />
+    <ClInclude Include="..\..\..\xlib\symmparser.h" />
+    <ClInclude Include="..\..\..\xlib\symmspace.h" />
+    <ClInclude Include="..\..\..\xlib\symmtest.h" />
+    <ClInclude Include="..\..\..\xlib\tests\cell_reduction_test.h" />
+    <ClInclude Include="..\..\..\xlib\tests\formula_test.h" />
+    <ClInclude Include="..\..\..\xlib\tests\hall_test.h" />
+    <ClInclude Include="..\..\..\xlib\tests\mat_id_test.h" />
+    <ClInclude Include="..\..\..\xlib\tests\reflection_test.h" />
+    <ClInclude Include="..\..\..\xlib\tests\smat_test.h" />
+    <ClInclude Include="..\..\..\xlib\tests\symmparser_test.h" />
+    <ClInclude Include="..\..\..\xlib\tests\vcov_test.h" />
+    <ClInclude Include="..\..\..\xlib\tls.h" />
+    <ClInclude Include="..\..\..\xlib\twinning.h" />
+    <ClInclude Include="..\..\..\xlib\unitcell.h" />
+    <ClInclude Include="..\..\..\xlib\vcov.h" />
+    <ClInclude Include="..\..\..\xlib\xapp.h" />
+    <ClInclude Include="..\..\..\xlib\xbase.h" />
+    <ClInclude Include="..\..\..\xlib\xdmas.h" />
+    <ClInclude Include="..\..\..\xlib\xfiles.h" />
+    <ClInclude Include="..\..\..\xlib\xlcongen.h" />
+    <ClInclude Include="..\..\..\xlib\xmacro.h" />
+    <ClInclude Include="..\..\..\xlib\xscatterer.h" />
+    <ClInclude Include="..\..\..\xlib\xyz.h" />
+    <ClInclude Include="..\..\..\xlib\cif.h" />
+    <ClInclude Include="..\..\..\xlib\cifdp.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="sdl.vcxproj">
+      <Project>{01eb4f8b-6f6e-4fd4-908e-37e02aa6ea63}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
