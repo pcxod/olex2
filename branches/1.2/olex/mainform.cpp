@@ -1533,6 +1533,10 @@ bool TMainForm::CreateUpdateThread(bool force) {
 bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
   const IEObject *Data, TActionQueue *)
 {
+  if (Destroying) {
+    FMode = 0;  // to release waitfor
+    return false;
+  }
 
   if (StartupInitialised && PyEval_ThreadsInitialized() && wxThread::IsMain()) {
     PyGILState_STATE st = PyGILState_Ensure();
@@ -1544,10 +1548,6 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
 
   bool res = true, Silent = (FMode & mSilent) != 0, Draw=false;
   static bool actionEntered = false, downloadEntered=false;
-  if( Destroying )  {
-    FMode = 0;  // to release waitfor
-    return false;
-  }
   if( MsgId == ID_GLDRAW && !IsIconized() )  {
     if( !FBitmapDraw )  {
       //glLoadIdentity();

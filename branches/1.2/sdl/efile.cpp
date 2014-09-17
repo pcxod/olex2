@@ -471,25 +471,30 @@ bool TEFile::ListCurrentDir(TStrList& Out, const olxstr &Mask, const uint16_t sF
   memset(&sd, 0, sizeof(sd));
 
   int flags = 0;
-  if( (sF & sefDir) != 0 )       flags |= FILE_ATTRIBUTE_DIRECTORY;
-  if( (sF & sefReadOnly) != 0 )  flags |= FILE_ATTRIBUTE_READONLY;
-  if( (sF & sefSystem) != 0 )    flags |= FILE_ATTRIBUTE_SYSTEM;
-  if( (sF & sefHidden) != 0 )    flags |= FILE_ATTRIBUTE_HIDDEN;
+  if ((sF & sefFile) != 0)      flags |= FILE_ATTRIBUTE_NORMAL;
+  if ((sF & sefDir) != 0)       flags |= FILE_ATTRIBUTE_DIRECTORY;
+  if ((sF & sefReadOnly) != 0)  flags |= FILE_ATTRIBUTE_READONLY;
+  if ((sF & sefSystem) != 0)    flags |= FILE_ATTRIBUTE_SYSTEM;
+  if ((sF & sefHidden) != 0)    flags |= FILE_ATTRIBUTE_HIDDEN;
   sd.dwFileAttributes = flags;
   HANDLE hn = FindFirstFile(AllFilesMask().u_str(), &sd);
-  if( hn == INVALID_HANDLE_VALUE )
+  if (hn == INVALID_HANDLE_VALUE)
     return false;
   bool done = true;
-  while( done )  {
-    if( (sF & sefDir) != 0 && (sF & sefRelDir) == 0 && (sd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)  {
+  while (done) {
+    if ((sF & sefDir) != 0 && (sF & sefRelDir) == 0 &&
+      (sd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
+    {
       size_t len = olxstr::o_strlen(sd.cFileName);
-      if( (len == 1 && sd.cFileName[0] == '.') || (len == 2 && sd.cFileName[0] == '.' && sd.cFileName[1] == '.') )  {
+      if ((len == 1 && sd.cFileName[0] == '.') ||
+          (len == 2 && sd.cFileName[0] == '.' && sd.cFileName[1] == '.'))
+      {
         done = (FindNextFile(hn, &sd) != 0);
         continue;
       }
     }
-    if( DoesMatchMasks(sd.cFileName, masks) )
-      Out.Add( sd.cFileName );
+    if (DoesMatchMasks(sd.cFileName, masks))
+      Out.Add(sd.cFileName);
     done = (FindNextFile(hn, &sd) != 0);
   }
   FindClose(hn);
@@ -621,13 +626,11 @@ bool TEFile::SetFileTimes(const olxstr& fileName, uint64_t AccTime, uint64_t Mod
 //..............................................................................
 time_t TEFile::FileAge(const olxstr& fileName)  {
   struct STAT_STR the_stat;
-  if( STAT(OLXSTR(OLX_OS_PATH(fileName)), &the_stat) != 0 )
-    throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Invalid file '") << fileName << '\'');
-#ifdef __BORLANDC__
-  return the_stat.st_mtime;
-#elif _MSC_VER
-  return the_stat.st_mtime;
-#elif __GNUC__
+  if (STAT(OLXSTR(OLX_OS_PATH(fileName)), &the_stat) != 0) {
+    throw TInvalidArgumentException(__OlxSourceInfo,
+      olxstr("Invalid file '") << fileName << '\'');
+  }
+#if defined(__BORLANDC__) || defined(_MSC_VER) || defined(__GNUC__)
   return the_stat.st_mtime;
 #else
   struct timespec& t = the_stat.st_mtimespec;
@@ -642,12 +645,14 @@ uint64_t TEFile::FileLength(const olxstr& fileName)  {
   return the_stat.st_size;
 }
 //..............................................................................
-TEFile::FileID TEFile::GetFileID(const olxstr& fileName)  {
+TEFile::FileID TEFile::GetFileID(const olxstr& fileName) {
   olxstr _name( OLX_OS_PATH(fileName) );
   time_t _timestamp = 0;
   struct STAT_STR the_stat;
-  if( STAT(OLXSTR(_name), &the_stat) != 0 )
-    throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Invalid file '") << _name << '\'');
+  if (STAT(OLXSTR(_name), &the_stat) != 0) {
+    throw TInvalidArgumentException(__OlxSourceInfo,
+      olxstr("Invalid file '") << _name << '\'');
+  }
 #if defined(__BORLANDC__) || defined(_MSC_VER) || defined(__GNUC__)
   _timestamp = the_stat.st_mtime;
 #else
