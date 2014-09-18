@@ -3623,8 +3623,12 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
     }
     Cif = &Cif2();
   }
-  const olxstr shelxl_version_number =
+  olxstr shelxl_version_number =
     Cif->GetParamAsString("_shelxl_version_number");
+  if (shelxl_version_number.IsEmpty()) { // 2014-7?
+    shelxl_version_number =
+      Cif->GetParamAsString("_shelx_SHELXL_version_number");
+  }
   const bool shelxl2014 = shelxl_version_number.StartsFrom("2014");
   // normalise
   for (size_t i=0; i < Translations.Count(); i++)
