@@ -146,17 +146,17 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
   // read the extras before preprocessing
   _ReadExtras(InsFile, cx);
   for (size_t i = 0; i < InsFile.Count(); i++) {
-    InsFile[i].Trim(' ').
-      Trim('\0').
-      Trim('\r').
-      Replace('\t', ' ').
-      DeleteSequencesOf(' ').
-      Trim(' ');
+    InsFile[i].Replace('\t', ' ')
+      .TrimR(' ')
+      .TrimR('\0')
+      .TrimR('\r')
+      .TrimR(' ');
   }
   Preprocess(InsFile);
   for (size_t i = 0; i < InsFile.Count(); i++) {
     try {
-      if (InsFile[i].IsEmpty())  continue;
+      if (InsFile[i].IsEmpty() || InsFile[i].StartsFrom(' '))
+        continue;
       const size_t exi = InsFile[i].IndexOf('!');
       if (exi != InvalidIndex)
         InsFile[i].SetLength(exi);
