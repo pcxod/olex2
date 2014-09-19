@@ -1123,8 +1123,8 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
           continue;
         olxstr tmp("SAME ");
         tmp << olxstr(sg.GetDependent(i).Esd12).TrimFloat() << ' '
-            << olxstr(sg.GetDependent(i).Esd13).TrimFloat() <<
-            sg.GetDependent(i).GetAtoms().GetExpression();
+          << olxstr(sg.GetDependent(i).Esd13).TrimFloat() << ' '
+          << sg.GetDependent(i).GetAtoms().GetExpression();
         HyphenateIns(tmp, sl);
       }
       if (sg.GetAtoms().IsExplicit()) {

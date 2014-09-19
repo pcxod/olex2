@@ -28,6 +28,7 @@ void TSameGroup::Assign(const TSameGroup& sg)  {
   Clear();
   if (sg.Atoms.IsEmpty()) return;
   Atoms.Assign(sg.Atoms);
+  SetAtomIds(GetId());
   Esd12 = sg.Esd12;
   Esd13 = sg.Esd13;
   for (size_t i=0; i < sg.Dependent.Count(); i++)
