@@ -2906,6 +2906,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
         Bind(wxEVT_COMMAND_MENU_SELECTED,
           &TMainForm::OnAtomTypeChange, this, ID_AtomTypeChange + i);
       }
+      pmAtomType->Append(ID_AtomTypeChangeLast, wxT("More..."));
     }
     FGlConsole->SetCommand(FGlConsole->GetCommand());  // force the update
     FXApp->Draw();
