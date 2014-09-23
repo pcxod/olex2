@@ -166,7 +166,8 @@ public:
   }
 //..............................................................................
   T& Add(const T& Obj)  {
-    if( FCapacity == FCount )  SetCapacity((size_t)(1.5*FCount + FIncrement));
+    if (FCapacity == FCount)
+      SetCapacity((size_t)(1.5*FCount + FIncrement));
     return (Items[FCount++] = Obj);
   }
 //..............................................................................
@@ -179,7 +180,8 @@ public:
     TIndexOutOfRangeException::ValidateRange(
       __POlxSourceInfo, index, 0, FCount+1);
 #endif
-    if( FCapacity == FCount )  SetCapacity((size_t)(1.5*FCount + FIncrement));
+    if (FCapacity == FCount)
+      SetCapacity((size_t)(1.5*FCount + FIncrement));
     const size_t diff = FCount - index;
     for( size_t i=0; i < diff; i++ )  {
       const size_t ind = FCount -i;
@@ -230,17 +232,38 @@ public:
     return rv;
   }
 //..............................................................................
-  TArrayList& SetCapacity(size_t v)  {
-    if( v <= FCapacity )  return *this;
+  TArrayList& SetCapacity(size_t v) {
+    if (v <= FCapacity) return *this;
     FCapacity = v;
     T* Bf = new T[v];
-    for( size_t i=0; i < FCount; i++ )
-      Bf[i] = Items[i];
-    if( Items != NULL )
-      delete [] Items;
+    if (Items != NULL) {
+      for (size_t i = 0; i < FCount; i++)
+        Bf[i] = Items[i];
+      delete[] Items;
+    }
     Items = Bf;
     return *this;
   }
+//..............................................................................
+  template <class init_t>
+  TArrayList& SetCapacity(size_t v, const init_t &inz)  {
+    if (v <= FCapacity) return *this;
+    size_t old_c = FCapacity;
+    FCapacity = v;
+    T* Bf = new T[v];
+    if (Items != NULL) {
+      for (size_t i = 0; i < FCount; i++)
+        Bf[i] = Items[i];
+      delete[] Items;
+    }
+    for (size_t i = old_c; i < v; i++) {
+      inz.OnItem(Bf[i], i);
+    }
+    Items = Bf;
+    return *this;
+  }
+//..............................................................................
+  size_t GetCapacity() const { return FCapacity; }
 //..............................................................................
   TArrayList& SetIncrement(size_t v)  {
     FIncrement = v;
