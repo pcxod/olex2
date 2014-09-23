@@ -135,7 +135,7 @@ public:
     const Accessor &acc)
   {
     list.ForEach(IndexTagSetter(acc));
-    return list.Filter(olx_alg::olx_not(IndexTagAnalyser(acc)));
+    return list.Filter(IndexTagAnalyser(acc));
   }
   template <class List>
   static typename List::const_list_type Unique(const List &list) {

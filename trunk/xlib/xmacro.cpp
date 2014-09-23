@@ -7112,7 +7112,8 @@ void XLibMacros::macSadi(TStrObjList &Cmds, const TParamList &Options,
       TSAtomPList &atoms = parts.GetValue(i);
       vec3d normal, center;
       TSPlane::CalcPlane(atoms, normal , center);
-      olx_plane::Sort(atoms, FunctionAccessor::MakeConst(&TSAtom::crd),
+      olx_plane::Sort(atoms, FunctionAccessor::MakeConst(
+        (const vec3d& (TSAtom::*)() const)&TSAtom::crd),
         center, normal);
       for (size_t j = 1; j < atoms.Count(); j++) {
         sr2.AddAtomPair(
