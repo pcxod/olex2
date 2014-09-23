@@ -42,6 +42,7 @@
 #include "refutil.h"
 #include "analysis.h"
 #include "tls.h"
+#include "math/plane.h"
 
 #ifdef _CUSTOM_BUILD_
   #include "custom_base.h"
@@ -7056,7 +7057,7 @@ void XLibMacros::macSadi(TStrObjList &Cmds, const TParamList &Options,
     sr.SetEsd(esd*2);
     TSAtom* A = Atoms[0];
     double td = 0;
-    for( size_t i=0; i < A->NodeCount(); i++ )  {
+    for (size_t i=0; i < A->NodeCount(); i++) {
       TSAtom& SA = A->Node(i);
       if (SA.IsDeleted() || SA.GetType() == iQPeakZ) continue;
       sr1.AddAtomPair(
@@ -7083,6 +7084,50 @@ void XLibMacros::macSadi(TStrObjList &Cmds, const TParamList &Options,
       }
     }
     TBasicApp::NewLogEntry() << sr1.ToString();
+  }
+  else if (Atoms.Count() == 2) {  // 'rotor;
+    for (size_t i = 0; i < Atoms[0]->NodeCount(); i++) {
+      TSAtom& n = Atoms[0]->Node(i);
+      if (n.IsDeleted() || n.GetType() == iQPeakZ || &n == Atoms[1])
+        continue;
+      sr.AddAtomPair(
+        Atoms[0]->CAtom(), &Atoms[0]->GetMatrix(),
+        n.CAtom(), &n.GetMatrix());
+    }
+    TSimpleRestraint &sr1 = app.XFile().GetRM().rSADI.AddNew();
+    if (esd_set) sr1.SetEsd(esd);
+    olxdict<int, TSAtomPList, TPrimitiveComparator> parts;
+    for (size_t i = 0; i < Atoms[0]->NodeCount(); i++) {
+      TSAtom& n = Atoms[0]->Node(i);
+      if (n.IsDeleted() || n.GetType() == iQPeakZ || &n == Atoms[1])
+        continue;
+      parts.Add(n.CAtom().GetPart()).Add(n);
+      sr1.AddAtomPair(
+        Atoms[1]->CAtom(), &Atoms[1]->GetMatrix(),
+        n.CAtom(), &n.GetMatrix());
+    }
+    TSimpleRestraint &sr2 = app.XFile().GetRM().rSADI.AddNew();
+    if (esd_set) sr2.SetEsd(esd);
+    for (size_t i = 0; i < parts.Count(); i++) {
+      TSAtomPList &atoms = parts.GetValue(i);
+      vec3d normal, center;
+      TSPlane::CalcPlane(atoms, normal , center);
+      olx_plane::Sort(atoms, FunctionAccessor::MakeConst(
+        (const vec3d& (TSAtom::*)() const)&TSAtom::crd),
+        center, normal);
+      for (size_t j = 1; j < atoms.Count(); j++) {
+        sr2.AddAtomPair(
+          atoms[j-1]->CAtom(), &atoms[j-1]->GetMatrix(),
+          atoms[j]->CAtom(), &atoms[j]->GetMatrix());
+      }
+      if (atoms.Count() > 2) {
+        sr2.AddAtomPair(
+          atoms[0]->CAtom(), &atoms[0]->GetMatrix(),
+          atoms.GetLast()->CAtom(), &atoms.GetLast()->GetMatrix());
+      }
+    }
+    TBasicApp::NewLogEntry() << sr1.ToString();
+    TBasicApp::NewLogEntry() << sr2.ToString();
   }
   else if (Atoms.Count() == 3) {  // special case
     sr.AddAtomPair(
