@@ -25,7 +25,7 @@ private:
   void Initialize();
   TCifDataManager DataManager;
   smatd_list Matrices;
-  olxdict<olxstr, size_t, olxstrComparator<true> > MatrixMap;
+  olxstr_dict<size_t, true> MatrixMap;
   // to be used inernally for locating atoms in the tables
   ConstPtrList<TCAtom> FindAtoms(const TStrList &names);
 protected:

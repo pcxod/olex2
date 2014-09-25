@@ -12,8 +12,7 @@
 #include "glgroup.h"
 
 olxstr pov::get_mat_name(const olxstr &primitive_name,
-  TGraphicsStyle &style, olxdict<TGlMaterial, olxstr,
-  TComparableComparator> &materials,
+  TGraphicsStyle &style, olx_cdict<TGlMaterial, olxstr> &materials,
   const AGDrawObject *sender)
 {
   if (sender != NULL && sender->GetParentGroup() != NULL)
@@ -32,7 +31,7 @@ olxstr pov::get_mat_name(const olxstr &primitive_name,
 }
 
 olxstr pov::get_mat_name(const TGlMaterial& glm,
-  olxdict<TGlMaterial, olxstr, TComparableComparator> &materials,
+  olx_cdict<TGlMaterial, olxstr> &materials,
   const AGDrawObject *sender)
 {
   if (sender != NULL && sender->GetParentGroup() != NULL) {

@@ -90,7 +90,7 @@ public:
 
 //---------------------------------------------------------------------------
 class TCifDataManager  {
-  olxdict<size_t, TPtrList<ACifValue>, TPrimitiveComparator> Data;
+  olx_pdict<size_t, TPtrList<ACifValue> > Data;
 public:
   TCifDataManager()  {}
   virtual ~TCifDataManager()  {  Clear();  }

@@ -174,17 +174,76 @@ public:
   typedef const_olxdict<KType, VType, Comparator> const_dict_type;
 };
 
+// a primitive comparable
+template <typename key_t, typename obj_t>
+class olx_pdict
+  : public olxdict<key_t, obj_t, TPrimitiveComparator>
+{
+  typedef olxdict<key_t, obj_t, TPrimitiveComparator> parent_t;
+public:
+  typedef const_olxdict<key_t, obj_t, TPrimitiveComparator> const_dict_type;
+
+  olx_pdict() : parent_t(TPrimitiveComparator()) {}
+  olx_pdict(const olx_pdict &d) : parent_t(d) {}
+  olx_pdict(const const_dict_type &d) : parent_t(d) {}
+  olx_pdict &operator = (const olx_pdict &d) {
+    parent_t::operator = (d);
+    return *this;
+  }
+  olx_pdict &operator = (const const_dict_type &d) {
+    parent_t::operator = (d);
+    return *this;
+  }
+};
+
+// a comparable comparable
+template <class key_t, typename obj_t>
+class olx_cdict
+  : public olxdict<key_t, obj_t, TComparableComparator>
+{
+  typedef olxdict<key_t, obj_t, TComparableComparator> parent_t;
+public:
+  typedef const_olxdict<key_t, obj_t, TComparableComparator> const_dict_type;
+
+  olx_cdict()
+    : parent_t(TComparableComparator())
+  {}
+  olx_cdict(const olx_cdict &d) : parent_t(d) {}
+  olx_cdict(const const_dict_type &d) : parent_t(d) {}
+  olx_cdict &operator = (const olx_cdict &d) {
+    parent_t::operator = (d);
+    return *this;
+  }
+  olx_cdict &operator = (const const_dict_type &d) {
+    parent_t::operator = (d);
+    return *this;
+  }
+};
+
 // a string to type association....
-template <typename VType, bool case_insensitive=false>
+template <typename VType, bool case_insensitive = false>
 class olxstr_dict
   : public olxdict<olxstr, VType, olxstrComparator<case_insensitive> >
 {
   typedef olxdict < olxstr, VType, olxstrComparator<case_insensitive> >
-    parent_t;
+  parent_t;
 public:
+  typedef const_olxdict<olxstr, VType, olxstrComparator<case_insensitive> >
+    const_dict_type;
+
   olxstr_dict()
     : parent_t(olxstrComparator<case_insensitive>())
   {}
+  olxstr_dict(const olxstr_dict &d) : parent_t(d) {}
+  olxstr_dict(const const_dict_type &d) : parent_t(d) {}
+  olxstr_dict &operator = (const olxstr_dict &d) {
+    parent_t::operator = (d);
+    return *this;
+  }
+  olxstr_dict &operator = (const const_dict_type &d) {
+    parent_t::operator = (d);
+    return *this;
+  }
 };
 
 // const_dict

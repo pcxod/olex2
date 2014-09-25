@@ -19,7 +19,7 @@ namespace ctrl_ext  {
     static TMainFrame* MainFrameInstance;
   protected:
     struct TWindowInfo  {  int x, y;  };
-    olxdict<olxstr, TWindowInfo, olxstrComparator<false> > WindowPos;
+    olxstr_dict<TWindowInfo> WindowPos;
     // extends filter for case sensitive OS
     olxstr PortableFilter(const olxstr& filter);
   public:

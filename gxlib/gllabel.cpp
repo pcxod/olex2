@@ -160,8 +160,7 @@ void TXGlLabel::FromDataItem(const TDataItem& item) {
   }
 }
 //..............................................................................
-const_strlist TXGlLabel::ToPov(
-  olxdict<TGlMaterial, olxstr, TComparableComparator> &materials) const
+const_strlist TXGlLabel::ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const
 {
   TStrList out;
   TGlPrimitive *glp = GetPrimitives().FindPrimitiveByName("Text");
@@ -181,8 +180,7 @@ const_strlist TXGlLabel::ToPov(
   return out;
 }
 //..............................................................................
-const_strlist TXGlLabel::ToWrl(
-  olxdict<TGlMaterial, olxstr, TComparableComparator> &materials) const
+const_strlist TXGlLabel::ToWrl(olx_cdict<TGlMaterial, olxstr> &materials) const
 {
   TStrList out;
   TGlPrimitive *glp = GetPrimitives().FindPrimitiveByName("Text");

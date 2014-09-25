@@ -75,7 +75,7 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
   TTypeList<TWilsonRef> refs;
   refs.SetCapacity(Refs.Count());
 
-  olxdict<const cm_Element*, double, TPrimitiveComparator> elements;
+  olx_pdict<const cm_Element*, double> elements;
   for( size_t i=0; i < au.AtomCount(); i++ )  {
     const TCAtom& ca = au.GetAtom(i);
     if( ca.IsDeleted() || ca.GetType() == iQPeakZ )  continue;

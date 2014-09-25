@@ -130,8 +130,7 @@ public:
   environment of the atoms which can grow is generated */
   void GrowFragments(bool GrowShells, TCAtomPList* Template);
   /* grows fragemnts with a list of transforms */
-  void GrowFragments(
-    const olxdict<uint32_t, smatd_list, TPrimitiveComparator> &job);
+  void GrowFragments(const olx_pdict<uint32_t, smatd_list> &job);
   /* grows a fragment using particular matrix */
   void GrowFragment(uint32_t FragId, const smatd& transform) {
     GrowFragment(FragId, smatd_list() << transform);

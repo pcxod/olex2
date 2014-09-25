@@ -158,7 +158,7 @@ namespace SymmSpace  {
       rv.matrices.AddCopy(sp[0]);
       return rv;
     }
-    olxdict<int, smatd_list, TPrimitiveComparator> groups;
+    olx_pdict<int, smatd_list> groups;
     bool identity_found = false;
     for( size_t i=0; i < sp.Count(); i++ )  {
       smatd_list& l = groups.Add(rotation_id::get(sp[i].r));

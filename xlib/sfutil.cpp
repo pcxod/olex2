@@ -286,7 +286,7 @@ void SFUtil::_CalcSF(const TXFile& xfile, const IMillerIndexList& refs,
   PrepareCalcSF(au, U, scatterers, alist);
   TArrayList<compd> fpfdp(scatterers.Count(), olx_list_init::zero());
   const double ev = xfile.GetRM().expl.GetRadiationEnergy();
-  olxdict<olxstr, XScatterer *, olxstrComparator<true> > scs;
+  olxstr_dict<XScatterer *, true> scs;
   for (size_t i=0; i < xfile.GetRM().SfacCount(); i++) {
     XScatterer &sc = xfile.GetRM().GetSfacData(i);
     scs(sc.GetLabel(), &sc);

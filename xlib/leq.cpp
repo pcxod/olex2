@@ -379,8 +379,7 @@ void XVarManager::Describe(TStrList& lst)  {
   for (size_t i=1; i < Vars.Count(); i++) {
     if (Vars[i]._RefCount() < 2) continue;
 
-    olxdict<double, TPtrList<XVarReference>, TPrimitiveComparator>
-      avd;
+    olx_pdict<double, TPtrList<XVarReference> > avd;
     for (size_t j=0; j < Vars[i]._RefCount(); j++) {
       if (Vars[i].GetRef(j).relation_type == relation_AsVar)
         avd.Add(Vars[i].GetRef(j).coefficient).Add(Vars[i].GetRef(j));
@@ -409,7 +408,7 @@ void XVarManager::Describe(TStrList& lst)  {
     }
   }
   // fixed params...
-  olxdict<olxstr,olxstr,olxstrComparator<false> > fixed;
+  olxstr_dict<olxstr> fixed;
   for( size_t i=0; i < Vars[0]._RefCount(); i++ )  {
     TCAtom *ca = dynamic_cast<TCAtom*>(&Vars[0].GetRef(i).referencer);
     if (ca != NULL) {

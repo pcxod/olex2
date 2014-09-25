@@ -324,8 +324,7 @@ const vec3d &TXBond::GetBaseCrd() const {
   return A().crd();
 }
 //..............................................................................
-const_strlist TXBond::ToPov(olxdict<TGlMaterial, olxstr,
-  TComparableComparator> &materials) const
+const_strlist TXBond::ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const
 {
   TStrList out;
   if (olx_abs(Params()[1]) + olx_abs(Params()[2]) < 1e-3)
@@ -435,9 +434,7 @@ const_strlist TXBond::PovDeclare()  {
   return out;
 }
 //..............................................................................
-const_strlist TXBond::ToWrl(olxdict<TGlMaterial, olxstr,
-    TComparableComparator> &materials) const
-{
+const_strlist TXBond::ToWrl(olx_cdict<TGlMaterial, olxstr> &materials) const {
   TStrList out;
   if (olx_abs(Params()[1]) + olx_abs(Params()[2]) < 1e-3 || Params()[3] < 1e-3)
     return out;

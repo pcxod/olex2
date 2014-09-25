@@ -13,6 +13,7 @@
 #include "../typelist.h"
 #include "../talist.h"
 #include "../bitarray.h"
+#include "../eset.h"
 
 namespace test {
 
@@ -252,6 +253,24 @@ struct ConstListTest {
   }
 };
 //.........................................................................
+void SetTest(OlxTests& t) {
+  t.description = __FUNC__;
+  int sv[5] = { 1, 2, 5, 7, 1 }, sv1[4] = {2,7,8,9};
+  olxset<int, TPrimitiveComparator> s(sv, 5), s1(sv1, 4);
+  if (s.Count() != 4) {
+    throw TFunctionFailedException(__OlxSourceInfo, "Unexpected result");
+  }
+  if ((s-s1).Count() != 2) {
+    throw TFunctionFailedException(__OlxSourceInfo, "Unexpected result");
+  }
+  if ((s + s1).Count() != 6) {
+    throw TFunctionFailedException(__OlxSourceInfo, "Unexpected result");
+  }
+  if ((s & s1).Count() != 2) {
+    throw TFunctionFailedException(__OlxSourceInfo, "Unexpected result");
+  }
+}
+//.........................................................................
 void BitArrayTest(OlxTests& t)  {
   t.description = __FUNC__;
   TEBitArray br(16);
@@ -295,7 +314,8 @@ void ContainerTests(OlxTests& t)  {
     Add(&test::StackTest).
     Add(&test::SharedListTest).
     Add(new ConstListTest, &ConstListTest::ContainerTests).
-    Add(&test::BitArrayTest);
+    Add(&test::BitArrayTest).
+    Add(&test::SetTest);
 }
 //.........................................................................
 };  // namespace test

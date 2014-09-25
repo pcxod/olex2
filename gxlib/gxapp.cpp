@@ -1027,7 +1027,7 @@ olxstr TGXApp::GetSelectionInfo(bool list) const {
             (atoms[i] = &a.GetAtom(i))->SetTag(0);
             (atoms[i+3] = &b.GetAtom(i))->SetTag(1);
           }
-          olxdict<index_t, vec3d, TPrimitiveComparator> transforms;
+          olx_pdict<index_t, vec3d> transforms;
           transforms.Add(1, -b.GetCenter());
           transforms.Add(0, -a.GetCenter());
           PlaneSort::Sorter::DoSort(atoms, transforms, vec3d(),
@@ -1121,7 +1121,7 @@ olxstr TGXApp::GetSelectionInfo(bool list) const {
             if( thv < 0.1 )  continue;
             face_cnt++;
             TSAtomPList sorted_atoms;
-            olxdict<index_t, vec3d, TPrimitiveComparator> transforms;
+            olx_pdict<index_t, vec3d> transforms;
             atoms.ForEach(ACollectionItem::TagSetter(0));
             atoms[i]->SetTag(1);
             atoms[j]->SetTag(1);
@@ -2369,7 +2369,7 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To, bool CheckLabel,
 TUndoData* TGXApp::SynchroniseResidues(const TXAtomPList &reference) {
   TNameUndo *undo = new TNameUndo(
     new TUndoActionImplMF<TGXApp>(this, &GxlObject(TGXApp::undoName)));
-  olxdict<olxstr, TTypeList<TCAtomPList>, olxstrComparator<true> > groups;
+  olxstr_dict<TTypeList<TCAtomPList>, true> groups;
   TAsymmUnit &au = XFile().GetAsymmUnit();
   for (size_t i=1; i < au.ResidueCount(); i++) {
     TResidue &r = au.GetResidue(i);
@@ -2453,7 +2453,7 @@ void TGXApp::InfoList(const olxstr &Atoms, TStrList &Info, bool sort,
   Table.ColName(10) = "R-VdW";
   if( have_q )
     Table.ColName(11) = "Peak";
-  olxdict<const cm_Element*, olx_pair_t<double,size_t>, TPrimitiveComparator> elements;
+  olxdict<const cm_Element*, olx_pair_t<double,size_t>, TPointerComparator> elements;
   for(size_t i = 0; i < atoms.Count(); i++ )  {
     const TCAtom& A = *atoms[i].GetB();
     if (A.GetType() != iQPeakZ) {
@@ -3069,7 +3069,7 @@ ConstPtrList<TCAtom> TGXApp::FindCAtoms(const olxstr &Atoms, bool ClearSelection
 //..............................................................................
 void TGXApp::UpdateDuplicateLabels() {
   if (!FLabels->IsVisible() || (FLabels->GetMode()&lmLabels) == 0) return;
-  olxdict<olxstr, size_t, olxstrComparator<true> > ld;
+  olxstr_dict<size_t, true> ld;
   AtomIterator ai = GetAtoms();
   while (ai.HasNext()) {
     TXAtom &a = ai.Next();
@@ -4169,13 +4169,13 @@ void TGXApp::CreateXGrowPoints()  {
 }
 //..............................................................................
 void TGXApp::SetXGrowLinesVisible(bool v)  {
-  if( v )  {
+  if (v) {
     CreateXGrowLines();
     FXGrowLinesVisible = v;
     return;
   }
-  for( size_t i=0; i < XGrowLines.Count(); i++ )
-    XGrowLines[i].SetVisible( v );
+  for (size_t i=0; i < XGrowLines.Count(); i++)
+    XGrowLines[i].SetVisible(v);
   FXGrowLinesVisible = v;
 }
 //..............................................................................
@@ -4204,13 +4204,13 @@ struct TGXApp_CrdMap  {
     zd.AddUnique( olx_round(pt[2]*resolution) );
   }
   bool Exists(const vec3d& pt) const  {
-    const size_t y_ind = data.IndexOf( olx_round(pt[0]*resolution) );
+    const size_t y_ind = data.IndexOf(olx_round(pt[0]*resolution));
     if( y_ind == InvalidIndex )  return false;
     const YDict& yd = data.GetValue(y_ind);
-    const size_t z_ind = yd.IndexOf( olx_round(pt[1]*resolution) );
+    const size_t z_ind = yd.IndexOf(olx_round(pt[1]*resolution));
     if( z_ind == InvalidIndex )  return false;
     const ZDict& zd = yd.GetValue( z_ind );
-    return zd.IndexOf( olx_round(pt[2]*resolution) ) == InvalidIndex ? false : true;
+    return zd.Contains(olx_round(pt[2]*resolution));
   }
 };
 //..............................................................................
@@ -4247,7 +4247,7 @@ struct TGXApp_GBondCreator {
 };
 //..............................................................................
 void TGXApp::CreateXGrowLines()  {
-  if ( !XGrowLines.IsEmpty() )  {  // clear the existing ones...
+  if (!XGrowLines.IsEmpty()) {  // clear the existing ones...
     TPtrList<TGPCollection> colls; // list of unique collections
     AGDObjList lines(XGrowLines.Count()*2);  // list of the AGDrawObject pointers to lines...
     for( size_t i=0; i < XGrowLines.Count(); i++ )  {
@@ -5304,7 +5304,7 @@ void TGXApp::SelectAll(bool Select)  {
 }
 //..............................................................................
 const_strlist TGXApp::ToPov() const {
-  olxdict<TGlMaterial, olxstr, TComparableComparator> materials;
+  olx_cdict<TGlMaterial, olxstr> materials;
   TStrList out = GetRender().GetScene().ToPov();
   out << TXAtom::PovDeclare();
   out << TXBond::PovDeclare();
@@ -5353,7 +5353,7 @@ const_strlist TGXApp::ToPov() const {
 }
 //..............................................................................
 const_strlist TGXApp::ToWrl() const {
-  olxdict<TGlMaterial, olxstr, TComparableComparator> materials;
+  olx_cdict<TGlMaterial, olxstr> materials;
   TStrList out;// = GetRender().GetScene().ToPov();
   out << TXAtom::WrlDeclare();
   out << TXBond::WrlDeclare();
@@ -5440,7 +5440,7 @@ void TGXApp::CreateRings(bool force, bool create) {
 }
 //..............................................................................
 void TGXApp::GrowBonds() {
-  olxdict<uint32_t, smatd_list, TPrimitiveComparator> transforms;
+  olx_pdict<uint32_t, smatd_list> transforms;
   for (size_t i=0; i < XGrowLines.Count(); i++) {
     if (XGrowLines[i].IsVisible()) {
       transforms.Add(XGrowLines[i].CAtom().GetFragmentId()) <<

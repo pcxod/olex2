@@ -233,8 +233,7 @@ void TDUnitCell::FromDataItem(const TDataItem& di)  {
     Labels[i]->FromDataItem(labels.GetItemByIndex(i));
 }
 //..............................................................................
-const_strlist TDUnitCell::ToPov(olxdict<TGlMaterial, olxstr,
-  TComparableComparator> &materials) const
+const_strlist TDUnitCell::ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const
 {
   TStrList out;
   if (Edges.IsEmpty()) return out;
@@ -255,8 +254,7 @@ const_strlist TDUnitCell::ToPov(olxdict<TGlMaterial, olxstr,
   return out;
 }
 //..............................................................................
-const_strlist TDUnitCell::ToWrl(olxdict<TGlMaterial, olxstr,
-  TComparableComparator> &materials) const
+const_strlist TDUnitCell::ToWrl(olx_cdict<TGlMaterial, olxstr> &materials) const
 {
   TStrList out;
   if (Edges.IsEmpty()) return out;

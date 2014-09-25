@@ -59,8 +59,7 @@ public:
   bool GetDimensions(vec3d &Max, vec3d &Min){  return false;  }
   void ToDataItem(TDataItem &di) const;
   void FromDataItem(const TDataItem &di);
-  const_strlist ToPov(
-    olxdict<TGlMaterial, olxstr, TComparableComparator> &materials) const;
+  const_strlist ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const;
   short GetType() const { return Type; }
   TEBasis Basis;
 };

@@ -52,12 +52,11 @@ public:
       SetVisible(false);
   }
 
-  const_strlist ToPov(olxdict<TGlMaterial, olxstr,
-    TComparableComparator> &materials) const;
+  const_strlist ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const;
   static const_strlist PovDeclare();
 
-  static olxdict<size_t, olxstr, TPrimitiveComparator> &NamesRegistry() {
-    static olxdict<size_t, olxstr, TPrimitiveComparator> nr;
+  static olx_pdict<size_t, olxstr> &NamesRegistry() {
+    static olx_pdict<size_t, olxstr> nr;
     return nr;
   }
 };

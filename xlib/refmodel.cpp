@@ -185,11 +185,10 @@ void RefinementModel::UpdateUsedSymm(const class TUnitCell& uc)  {
 }
 //.............................................................................
 void RefinementModel::RemUsedSymm(const smatd& matr) const {
-  for( size_t i=0;  i < UsedSymm.Count(); i++ )  {
-    if( UsedSymm.GetValue(i).symop == matr )  {
-      if( UsedSymm.GetValue(i).ref_cnt > 0 )
-        const_cast<olxdict<olxstr,Equiv,olxstrComparator<false> >&>(UsedSymm)
-          .GetValue(i).ref_cnt--;
+  for (size_t i = 0; i < UsedSymm.Count(); i++) {
+    if (UsedSymm.GetValue(i).symop == matr) {
+      if (UsedSymm.GetValue(i).ref_cnt > 0)
+        UsedSymm.GetValue(i).ref_cnt--;
       return;
     }
   }
@@ -203,7 +202,9 @@ size_t RefinementModel::UsedSymmIndex(const smatd& matr) const {
   return InvalidIndex;
 }
 //.............................................................................
-RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignAUnit) {
+RefinementModel& RefinementModel::Assign(const RefinementModel& rm,
+  bool AssignAUnit)
+{
   Clear(rm_clear_ALL);
   expl = rm.expl;
   used_weight = rm.used_weight;
@@ -847,20 +848,18 @@ const_strlist RefinementModel::Describe() {
   Validate();
   int sec_num = 0;
   // riding atoms..
-  olxdict<double, // scale
-    olxdict<const TCAtom *, TCAtomPList, TPointerComparator>,
-    TPrimitiveComparator> riding_u;
+  olx_pdict<double, // scale
+    olxdict<const TCAtom *, TCAtomPList, TPointerComparator> > riding_u;
   for (size_t i=0; i < aunit.AtomCount(); i++) {
     TCAtom &a = aunit.GetAtom(i);
     if (a.GetUisoOwner() != NULL && !a.IsDeleted())
       riding_u.Add(a.GetUisoScale()).Add(a.GetUisoOwner()).Add(a);
   }
   if (!riding_u.IsEmpty()) {
-    olxdict<uint32_t, //low-to-high: 8 - bond count, 8 - riding z, 8 - pivot z
+    olx_pdict<uint32_t, //low-to-high: 8 - bond count, 8 - riding z, 8 - pivot z
       olxdict<double,
         sorted::PointerPointer<const TCAtom>,
-        TPrimitiveComparator>,
-      TPrimitiveComparator> riding_u_g;
+        TPrimitiveComparator> > riding_u_g;
     for (size_t i=0; i < riding_u.Count(); i++) {
       for (size_t j=0; j < riding_u.GetValue(i).Count(); j++) {
         TCAtomPList &al = riding_u.GetValue(i).GetValue(j);
@@ -890,7 +889,7 @@ const_strlist RefinementModel::Describe() {
     }
 
     lst.Add(olxstr(++sec_num)) << ". Fixed Uiso";
-    olxdict<double, TSizeList, TPrimitiveComparator> gg;
+    olx_pdict<double, TSizeList> gg;
     // groups first
     for (size_t i=0; i < riding_u_g.Count(); i++) {
       if (riding_u_g.GetValue(i).Count() != 1) continue;
@@ -1178,7 +1177,7 @@ const_strlist RefinementModel::Describe() {
     lst.AddList(vars);
   }
   size_t afix_sn = 0;
-  olxdict<int, TPtrList<TAfixGroup>, TPrimitiveComparator> a_gs;
+  olx_pdict<int, TPtrList<TAfixGroup> > a_gs;
   for( size_t i=0; i < AfixGroups.Count(); i++ )  {
     if( !AfixGroups[i].IsEmpty() )
       a_gs.Add(AfixGroups[i].GetAfix()).Add(AfixGroups[i]);
@@ -1213,8 +1212,8 @@ const_strlist RefinementModel::Describe() {
 //.............................................................................
 void RefinementModel::ProcessFrags()  {
   // generate missing atoms for the AFIX 59, 66
-  olxdict<int, TPtrList<TAfixGroup>, TPrimitiveComparator> a_groups;
-  olxdict<int, Fragment*, TPrimitiveComparator> frags;
+  olx_pdict<int, TPtrList<TAfixGroup> > a_groups;
+  olx_pdict<int, Fragment*> frags;
   for( size_t i=0; i < AfixGroups.Count(); i++ )  {
     TAfixGroup& ag = AfixGroups[i];
     int m = ag.GetM();
@@ -1984,6 +1983,55 @@ void RefinementModel::ReadInsExtras(const TStrList &items)  {
       HKLSource = encoding::percent::decode(HKLSource.SubStringFrom(1));
     }
   }
+}
+//..............................................................................
+void RefinementModel::BeforeAUUpdate_() {
+  if (!atom_refs.IsEmpty()) {
+    TBasicApp::NewLogEntry(logError) << "Not clean operation";
+    atom_refs.Clear();
+  }
+  olx_cset<ExplicitCAtomRef *> rs;
+  for (size_t i = 0; i < InfoTables.Count(); i++) {
+    rs += InfoTables[i].GetAtoms().GetExplicit().GetObject();
+  }
+  TPtrList<TSRestraintList> restraints = GetRestraints();
+  for (size_t i = 0; i < restraints.Count(); i++) {
+    for (size_t j = 0; j < restraints[i]->Count(); j++) {
+      rs += (*restraints[i])[j].GetAtoms().GetExplicit();
+    }
+  }
+  for (size_t i = 0; i < rs.Count(); i++) {
+    atom_refs.Add(rs[i], rs[i]->GetCCrd());
+  }
+}
+//..............................................................................
+void RefinementModel::AfterAUUpdate_() {
+  for (size_t i = 0; i < InfoTables.Count(); i++) {
+    InfoTables[i].OnAUUpdate();
+  }
+  TPtrList<TSRestraintList> restraints = GetRestraints();
+  for (size_t i = 0; i < restraints.Count(); i++) {
+    restraints[i]->OnAUUpdate();
+  }
+  atom_refs.Clear();
+}
+//..............................................................................
+TPtrList<const TSRestraintList>::const_list_type
+RefinementModel::GetRestraints() const
+{
+  TPtrList<const TSRestraintList> restraints;
+  restraints << rDFIX << rDANG << rSADI << rCHIV << rFLAT << rDELU <<
+    rSIMU << rAngle << rDihedralAngle << rFixedUeq << rSimilarUeq <<
+    rSimilarAdpVolume << rRIGU;
+  return restraints;
+}
+//..............................................................................
+TPtrList<TSRestraintList>::const_list_type RefinementModel::GetRestraints() {
+  TPtrList<TSRestraintList> restraints;
+  restraints << rDFIX << rDANG << rSADI << rCHIV << rFLAT << rDELU <<
+    rSIMU << rAngle << rDihedralAngle << rFixedUeq << rSimilarUeq <<
+    rSimilarAdpVolume << rRIGU;
+  return restraints;
 }
 //..............................................................................
 //..............................................................................

@@ -10,6 +10,7 @@
 #ifndef __olx_catom_list_H
 #define __olx_catom_list_H
 #include "residue.h"
+#include "eset.h"
 /*
 Atom list to handle list of explicit (by label), implicit (last, first) and
 expandable atom labels (C1_*, $C etc)
@@ -65,17 +66,27 @@ public:
   }
   TCAtom& GetAtom() const {  return *atom;  }
   const smatd* GetMatrix() const {  return matrix;  }
+  void UpdateMatrix(const smatd *m);
+  vec3d GetCCrd() const {
+    return matrix == 0 ? atom->ccrd() : *matrix *atom->ccrd();
+  }
+  // works correctly only if the atom Id is smaller than 32 bit
+  uint64_t GetHash() const {
+    return ((uint64_t)atom->GetId() << 32) |
+      (uint64_t)(matrix == 0 ? 0 : matrix->GetId());
+  }
   /* builds instance from C1 or C1_$1 expression for given residue, may return
   NULL
   */
   static ExplicitCAtomRef* NewInstance(const RefinementModel& rm,
     const olxstr& exp, TResidue* resi);
   virtual IAtomRef* Clone(RefinementModel& rm) const;
+  virtual void ToDataItem(TDataItem &di) const;
+  int Compare(const ExplicitCAtomRef &r) const;
   static const olxstr &GetTypeId() {
     static olxstr t = "explicit";
     return t;
   }
-  virtual void ToDataItem(TDataItem &di) const;
 };
 typedef TTypeListExt<ExplicitCAtomRef, IEObject> TAtomRefList;
 
@@ -128,7 +139,9 @@ public:
     delete &start;
     delete &end;
   }
-  virtual bool IsExpandable() const {  return true;  }
+  IAtomRef &GetStart() { return start;  }
+  IAtomRef &GetEnd() { return end; }
+  virtual bool IsExpandable() const { return true; }
   virtual bool IsExplicit() const {  return false;  }
   // * is special char
   virtual olxstr GetExpression(TResidue *r) const {
@@ -215,10 +228,16 @@ public:
   void Clear() { refs.Clear(); }
   bool IsEmpty() const { return refs.IsEmpty(); }
   size_t Count() const { return refs.Count(); }
-  AtomRefList &Validate(size_t group_size=InvalidSize);
+  IAtomRef &GetRef(size_t i) const { return refs[i]; }
+  IAtomRef &operator [] (size_t i) const { return refs[i]; }
+  AtomRefList &Validate(size_t group_size = InvalidSize);
   void Assign(const AtomRefList &arl);
   void ToDataItem(TDataItem &di) const;
   void FromDataItem(const TDataItem &di);
+  // returns all explicit refereces
+  olx_cset<ExplicitCAtomRef*>::const_set_type
+    GetExplicit() const;
+  void OnAUUpdate();
 };
 
 EndXlibNamespace()

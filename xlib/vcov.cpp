@@ -38,8 +38,8 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
   const size_t param_cnt = toks[0].ToSizeT();
   TSizeList indexes;
   TDoubleList diag;
-  olxdict<size_t, eveci, TPrimitiveComparator> Us;
-  olxdict<size_t, SiteSymmCon, TPrimitiveComparator> SiteConstraints;
+  olx_pdict<size_t, eveci> Us;
+  olx_pdict<size_t, SiteSymmCon> SiteConstraints;
   if( param_cnt == 0 || sl.Count() < param_cnt+11 )  {
     throw TFunctionFailedException(__OlxSourceInfo,
       "empty/invalid matrix file");
@@ -317,7 +317,7 @@ void VcoVMatrix::ReadSmtbxMat(const olxstr& fileName, TAsymmUnit& au)  {
   olxstr last_atom_name;
   TSizeList indexes;
   TCAtom* atom = NULL;
-  olxdict<size_t, eveci, TPrimitiveComparator> Us;
+  olx_pdict<size_t, eveci> Us;
   const mat3d& h2c = au.GetHklToCartesian();
   const double O[6] = {
     1./h2c[0].QLength(), 1./h2c[1].QLength(), 1./h2c[2].QLength(),

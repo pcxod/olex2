@@ -82,12 +82,11 @@ struct wrl {
   }
 
   static olxstr get_mat_str(const olxstr &primitive_name,
-    TGraphicsStyle &style, olxdict<TGlMaterial, olxstr,
-    TComparableComparator> &materials,
+    TGraphicsStyle &style, olx_cdict<TGlMaterial, olxstr> &materials,
     const AGDrawObject *sender=NULL);
 
   static olxstr get_mat_str(const TGlMaterial& glm,
-    olxdict<TGlMaterial, olxstr, TComparableComparator> &materials,
+    olx_cdict<TGlMaterial, olxstr> &materials,
     const AGDrawObject *sender=NULL);
 
   struct CrdTransformer {

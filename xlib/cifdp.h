@@ -244,8 +244,8 @@ namespace cif_dp {
     bool Delete(size_t idx);
   public:
     olxstr name;
-    olxdict<olxstr, cetTable*, olxstrComparator<true> > table_map;
-    olxdict<olxstr, ICifEntry*, olxstrComparator<true> > param_map;
+    olxstr_dict<cetTable*, true> table_map;
+    olxstr_dict<ICifEntry*, true> param_map;
     TStringToList<olxstr, ICifEntry*> params;
     CifBlock* parent;
     CifBlock(const CifBlock& v);
@@ -293,7 +293,7 @@ namespace cif_dp {
   public:
   private:
     TTypeList<CifBlock> data;
-    olxdict<olxstr, CifBlock*, olxstrComparator<true> > data_map;
+    olxstr_dict<CifBlock*, true> data_map;
     void Format();
     struct parse_context  {
       TStrList& lines;

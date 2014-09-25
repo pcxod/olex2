@@ -30,7 +30,7 @@ class VcoVMatrix {
   double **data;
   size_t count;
   TTypeList<AnAssociation3<olxstr, short, size_t> > Index;
-  olxdict<size_t, size_t, TPrimitiveComparator> AtomIdIndex;
+  olx_pdict<size_t, size_t> AtomIdIndex;
   olxstr_dict<size_t> AtomNameIndex;
   TStrList U_annotations;
   bool diagonal;

@@ -206,9 +206,7 @@ TAG_HANDLER_PROC(tag)  {
 }
 TAG_HANDLER_END(IMAGE)
 // helpe function
-olxstr ExpandMacroShortcuts(const olxstr &s,
-  const olxdict<olxstr,olxstr, olxstrComparator<false> > &map)
-{
+olxstr ExpandMacroShortcuts(const olxstr &s, const olxstr_dict<olxstr> &map) {
   olxstr rv = s;
   for( size_t i=0; i < map.Count(); i++ )
     rv.Replace(map.GetKey(i), map.GetValue(i));
@@ -231,7 +229,7 @@ TAG_HANDLER_PROC(tag)  {
   bool width_set = false, height_set = false;
   AOlxCtrl* CreatedObject = NULL;
   wxWindow* CreatedWindow = NULL;
-  olxdict<olxstr,olxstr, olxstrComparator<false> > macro_map;
+  olxstr_dict<olxstr> macro_map;
   // init the shortcuts
   {
     olxstr pn = html->GetPopupName();

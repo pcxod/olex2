@@ -68,8 +68,7 @@ protected:
   bool MouseDown;
 
   THtmlSwitch* Root;
-  olxdict<olxstr, AnAssociation3<AOlxCtrl*,wxWindow*,bool>,
-    olxstrComparator<true> > Objects;
+  olxstr_dict<AnAssociation3<AOlxCtrl*,wxWindow*,bool>, true> Objects;
   olxstr_dict<size_t,true> SwitchStates;
   TTypeList<TStrList> Groups;
   class TObjectsState  {

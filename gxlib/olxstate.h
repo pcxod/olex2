@@ -145,8 +145,7 @@ private:
     static TStateRegistry *i = 0;
     return i;
   }
-  olxdict<size_t, olx_cset<olxstr>, TPrimitiveComparator>
-    data_cache;
+  olx_pdict<size_t, olx_cset<olxstr> > data_cache;
 public:
   TStateRegistry();
   ~TStateRegistry() {
