@@ -733,7 +733,7 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
       radii.Add(&au.GetAtom(i).GetType(), au.GetAtom(i).GetType().r_vdw*0.5);
     }
   }
-  olxdict<short, TArray3D<bool>*, TPrimitiveComparator> atom_masks =
+  olx_pdict<short, TArray3D<bool>*> atom_masks =
     uc.BuildAtomMasks(map.GetSize(), &radii, 0);
   TSizeList mask_sizes(atom_masks.Count());
   for( size_t i=0; i < atom_masks.Count(); i++ )  {

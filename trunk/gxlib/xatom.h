@@ -234,19 +234,17 @@ public:
   int GetPolyhedronType() const;
   Poly *GetPolyhedron() const {  return Polyhedron;  }
 
-  const_strlist ToPov(olxdict<TGlMaterial, olxstr,
-    TComparableComparator> &materials) const;
+  const_strlist ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const;
   static const_strlist PovDeclare();
 
-  const_strlist ToWrl(olxdict<TGlMaterial, olxstr,
-    TComparableComparator> &materials) const;
+  const_strlist ToWrl(olx_cdict<TGlMaterial, olxstr> &materials) const;
   static const_strlist WrlDeclare();
 
   static TGraphicsStyle* GetParamStyle() {  return FAtomParams;  }
   static void CreateStaticObjects(TGlRenderer& parent);
 
-  static olxdict<olxstr, olxstr, olxstrComparator<false> > &NamesRegistry() {
-    static olxdict<olxstr, olxstr, olxstrComparator<false> > nr;
+  static olxstr_dict<olxstr> &NamesRegistry() {
+    static olxstr_dict<olxstr> nr;
     return nr;
   }
 };

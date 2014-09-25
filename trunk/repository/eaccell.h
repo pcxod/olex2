@@ -13,7 +13,7 @@
 #include "bapp.h"
 
 template <class T> class TAccellList : public IEObject  {
-  olxdict<int32_t, T, TPrimitiveComparator> Entries;
+  olx_pdict<int32_t, T> Entries;
   protected:
     int32_t LastId;
   public:

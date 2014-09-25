@@ -41,7 +41,7 @@ PointAnalyser::PointAnalyser(TXAtom &c)
 
   alpha = 0x9c;
   dry_run = false;
-  olxdict<uint32_t, int, TPrimitiveComparator> highest;
+  olx_pdict<uint32_t, int> highest;
   const TLattice &latt = center.GetParent();
   for (size_t i = 0; i < latt.GetObjects().atoms.Count(); i++) {
     TXAtom &a = (TXAtom &)latt.GetObjects().atoms[i];

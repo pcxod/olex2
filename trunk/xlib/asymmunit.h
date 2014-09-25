@@ -56,7 +56,7 @@ protected:
   TActionQList Actions;
   TTypeListExt<TResidue, IEObject> Residues;
   TResidue& MainResidue;
-  olxdict<int, TResidue*, TPrimitiveComparator> ResidueRegistry;
+  olx_pdict<int, TResidue*> ResidueRegistry;
   class RefinementModel* RefMod;
   static const olxstr IdName;
   void _UpdateQPeaks();

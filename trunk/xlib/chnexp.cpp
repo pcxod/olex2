@@ -37,14 +37,16 @@ double TCHNExp::MolWeight()  {
   double w = 0;
   for( size_t i=0; i < E1.Count(); i++ )  {
     cm_Element* I = XElementLib::FindBySymbol(E1[i]);
-    if( I == NULL )
-      throw TFunctionFailedException(__OlxSourceInfo, olxstr("Undefined elment: ") << E1[i]);
+    if (I == NULL) {
+      throw TFunctionFailedException(__OlxSourceInfo,
+        olxstr("Undefined elment: ") << E1[i]);
+    }
     w += (E1.GetObject(i) * I->GetMr());
   }
   return w;
 }
 //..............................................................................
-double TCHNExp::CHN(olxdict<short, double, TPrimitiveComparator>& rv) const {
+double TCHNExp::CHN(olx_pdict<short, double>& rv) const {
   TStringToList<olxstr, double> E1;
   CalcSummFormula(E1);
   ElementPList bais(E1.Count());

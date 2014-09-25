@@ -20,7 +20,8 @@ protected:
   TEBitArray detached;
 public:
   TGrowMode(size_t id)
-    : AMode(id), GrowShells(false), mode(0), part(0)  {}
+    : AMode(id), GrowShells(false), mode(0), part(0)
+  {}
   bool Initialise_(TStrObjList& Cmds, const TParamList& Options) {
     bool SI = Options.Contains('s'),
          Cov = Options.Contains('c'),

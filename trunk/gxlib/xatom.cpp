@@ -689,8 +689,7 @@ void TXAtom::UpdatePrimitiveParams(TGlPrimitive* GlP)  {
   }
 }
 //..............................................................................
-const_strlist TXAtom::ToPov(olxdict<TGlMaterial, olxstr,
-  TComparableComparator> &materials) const
+const_strlist TXAtom::ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const
 {
   TStrList out;
   if( DrawStyle() == adsStandalone && !IsStandalone() )
@@ -821,8 +820,7 @@ const_strlist TXAtom::PovDeclare()  {
   return out;
 }
 //..............................................................................
-const_strlist TXAtom::ToWrl(olxdict<TGlMaterial, olxstr,
-  TComparableComparator> &materials) const
+const_strlist TXAtom::ToWrl(olx_cdict<TGlMaterial, olxstr> &materials) const
 {
   TStrList out;
   if (DrawStyle() == adsStandalone && !IsStandalone())

@@ -34,39 +34,42 @@ public:
     for (size_t i = 0; i < cnt; i++)
       Add(_values[i]);
   }
-  olxset(const olxset& ad) : list_t(ad) {}
+  olxset(const olxset &ad) : list_t(ad) {}
   olxset(const const_olxset<object_t, cmp_t>& ad)
     : list_t(ad.GetObject().cmp)
   {
     list_t::TakeOver(ad.Release(), true);
   }
   void TakeOver(olxset &d)  { list_t::TakeOver(d); }
-  olxset& operator = (const olxset& ad) {
+  olxset &operator = (const olxset& ad) {
     list_t::operator = (ad);
     return *this;
   }
-  olxset& operator = (const const_olxset<object_t, cmp_t>& ad)  {
+  olxset &operator = (const const_olxset<object_t, cmp_t> &ad)  {
     list_t::TakeOver(ad.Release(), true);
     return *this;
   }
   size_t Count() const { return list_t::Count(); }
-  const object_t& operator [] (size_t i) const {
+  const object_t &operator [] (size_t i) const {
     return list_t::operator[] (i);
   }
-  template <class T> bool Contains(const T& key) const {
-    return list_t::IndexOf(key) != InvalidIndex;
+  const object_t &Get(size_t i) const {
+    return list_t::operator[] (i);
   }
-  template <typename T> bool Add(const T& obj) {
+  template <class T> bool Contains(const T &key) const {
+    return list_t::Contains(key);
+  }
+  template <typename T> bool Add(const T &obj) {
     return list_t::AddUnique(obj).b;
   }
-  template <typename T> olxset &operator << (const T& obj) {
+  template <typename T> olxset &operator << (const  T &obj) {
     list_t::AddUnique(obj);
     return *this;
   }
-  template <class T> size_t IndexOf(const T& key) const {
+  template <class T> size_t IndexOf(const T &key) const {
     return list_t::IndexOf(key);
   }
-  template <class T> bool Remove(const T& v) {
+  template <class T> bool Remove(const T &v) {
     size_t ind = list_t::IndexOf(v);
     if (ind != InvalidIndex) {
       list_t::Delete(ind);
@@ -75,11 +78,53 @@ public:
     return false;
   }
   void Delete(size_t ind)  { list_t::Delete(ind); }
+  void Clear() { list_t::Clear(); }
+  bool IsEmpty() const { return list_t::IsEmpty(); }
 
-  void Merge(const olxset &s) {
+  olxset &Merge(const olxset &s) {
     for (size_t i = 0; i < s.Count(); i++) {
       list_t::AddUnique(s[i]);
     }
+    return *this;
+  }
+
+  olxset &operator += (const olxset &s) { return Merge(s); }
+
+  const_olxset<object_t, cmp_t> operator + (const olxset &s) const {
+    olxset ts(*this);
+    return ts.Merge(s);
+  }
+
+  const_olxset<object_t, cmp_t> operator & (const olxset &s) const {
+    olxset rv;
+    const olxset &a = (s.Count() > Count()) ? *this : s,
+      &b = (&a == &s) ? *this : s;
+    for (size_t i = 0; i < a.Count(); i++) {
+      if (b.Contains(a.Get(i))) {
+        rv.Add(a.Get(i));
+      }
+    }
+    return rv;
+  }
+
+  olxset operator -= (const olxset &s) const {
+    for (size_t i = 0; i < s.Count(); i++) {
+      size_t idx = IndexOf(s[i]);
+      if (idx != InvalidIndex) {
+        Delete(idx);
+      }
+    }
+    return *this;
+  }
+
+  const_olxset<object_t, cmp_t> operator - (const olxset &s) const {
+    olxset rv;
+    for (size_t i = 0; i < Count(); i++) {
+      if (!s.Contains(Get(i))) {
+        rv.Add(Get(i));
+      }
+    }
+    return rv;
   }
 public:
   typedef object_t list_item_type;
@@ -104,9 +149,21 @@ template <typename obj_t>
 class olx_pset
   : public olxset<obj_t, TPrimitiveComparator>
 {
+  typedef olxset<obj_t, TPrimitiveComparator> parent_t;
 public:
-  olx_pset() : olxset<obj_t, TPrimitiveComparator>()
-  {}
+  typedef const_olxset<obj_t, TPrimitiveComparator> const_set_type;
+
+  olx_pset() {}
+  olx_pset(const olx_pset &s) : parent_t(s) {}
+  olx_pset(const const_set_type &s) : parent_t(s) {}
+  olx_pset &operator = (const olx_pset &s) {
+    parent_t::operator = (s);
+    return *this;
+  }
+  olx_pset &operator = (const const_set_type &s) {
+    parent_t::operator = (s);
+    return *this;
+  }
 };
 
 // a comparable set
@@ -114,9 +171,21 @@ template <typename obj_t>
 class olx_cset
   : public olxset<obj_t, TComparableComparator>
 {
+  typedef olxset<obj_t, TComparableComparator> parent_t;
 public:
-  olx_cset() : olxset<obj_t, TComparableComparator>()
-  {}
+  typedef const_olxset<obj_t, TComparableComparator> const_set_type;
+
+  olx_cset() {}
+  olx_cset(const olx_cset &s) : parent_t(s) {}
+  olx_cset(const const_set_type &s) : parent_t(s) {}
+  olx_cset &operator = (const olx_cset &s) {
+    parent_t::operator = (s);
+    return *this;
+  }
+  olx_cset &operator = (const const_set_type &s) {
+    parent_t::operator = (s);
+    return *this;
+  }
 };
 
 // const_set

@@ -31,6 +31,12 @@ void TXPlane::Create(const olxstr& cName)  {
   if (!colName.IsEmpty()) {
     SetCollectionName(colName);
   }
+  if (GetNetwork().GetLattice().GetPlaneDefinitions().Count() <=
+    this->GetDefId())
+  {
+    SetDeleted(true);
+    return;
+  }
   TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
   if (GPC.ObjectCount() == 0 && GPC.PrimitiveCount() != 0)
     GPC.ClearPrimitives();
@@ -135,9 +141,7 @@ const_strlist TXPlane::PovDeclare()  {
   return out;
 }
 //..............................................................................
-const_strlist TXPlane::ToPov(olxdict<TGlMaterial, olxstr,
-  TComparableComparator> &materials) const
-{
+const_strlist TXPlane::ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const {
   TStrList out;
    pov::CrdTransformer crdc(Parent.GetBasis());
   out.Add(" object { union {");

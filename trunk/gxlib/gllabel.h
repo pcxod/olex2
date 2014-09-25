@@ -57,10 +57,8 @@ public:
   const vec3d& GetCenter() const {  return _Center;  }
   void ToDataItem(TDataItem& item) const;
   void FromDataItem(const TDataItem& item);
-  const_strlist ToPov(
-    olxdict<TGlMaterial, olxstr, TComparableComparator> &materials) const;
-  const_strlist ToWrl(
-    olxdict<TGlMaterial, olxstr, TComparableComparator> &materials) const;
+  const_strlist ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const;
+  const_strlist ToWrl(olx_cdict<TGlMaterial, olxstr> &materials) const;
 };
 
 EndGxlNamespace()

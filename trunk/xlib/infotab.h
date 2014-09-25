@@ -57,6 +57,8 @@ public:
   }
   void AddAtom(TCAtom& ca, const smatd* sm);
   void UpdateResi() { atoms.UpdateResi(); }
+  // this is called internally by the RM
+  void OnAUUpdate() { atoms.OnAUUpdate();  }
 
   AtomRefList& GetAtoms() {  return atoms;  }
   const AtomRefList& GetAtoms() const {  return atoms;  }

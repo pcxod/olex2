@@ -76,7 +76,7 @@ void TWGlScene::SetPixelFormatDescriptorX(HDC hDc, uint8_t bits) {
 TGlFont& TWGlScene::DoCreateFont(TGlFont& glf, bool half_size) const {
   glf.ClearData();
   if( MetaFont::IsVectorFont(glf.GetIdString()) )  {
-    olxdict<size_t, olxstr, TPrimitiveComparator> dummy;
+    olx_pdict<size_t, olxstr> dummy;
     glf.CreateHershey(dummy, 120);
     MetaFont mf;
     mf.SetIdString(glf.GetIdString());

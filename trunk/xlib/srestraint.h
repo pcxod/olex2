@@ -67,6 +67,8 @@ public:
   olxstr GetAtomExpression() const { return Atoms.GetExpression(); }
   void UpdateResi() { Atoms.UpdateResi(); }
   TSimpleRestraint &Validate();
+  // this is called internally by the RM
+  void OnAUUpdate() { Atoms.OnAUUpdate(); }
 
   // copies data from a restrain, but with atoms from the thisAU
   void Assign(const TSimpleRestraint&);
@@ -159,7 +161,9 @@ public:
     for (size_t i=0; i < Restraints.Count(); i++)
       Restraints[i].UpdateResi();
   }
-// IXVarReferencerContainer implementation
+  // this is called internally by the RM
+  void OnAUUpdate();
+  // IXVarReferencerContainer implementation
   virtual olxstr GetIdName() const {  return IdName;  }
   virtual size_t GetIdOf(const IXVarReferencer& vr) const {
     if( !EsdlInstanceOf(vr, TSimpleRestraint) )

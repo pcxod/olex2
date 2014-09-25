@@ -276,7 +276,7 @@ RefinementModel::HklStat TXApp::CalcFsq(TRefList &refs, evecd &Fsq,
 void TXApp::NameHydrogens(TSAtom& SA, TUndoData* ud, bool CheckLabel)  {
   TNameUndo* nu = static_cast<TNameUndo*>(ud);
   int lablInc = 0;
-  olxdict<int,TSAtomPList,TPrimitiveComparator> parts;
+  olx_pdict<int,TSAtomPList> parts;
   olxstr Name(
     SA.GetLabel().StartsFromi(SA.GetType().symbol) ?
       SA.GetLabel().SubStringFrom(SA.GetType().symbol.Length())
@@ -357,7 +357,7 @@ void TXApp::undoName(TUndoData *data)  {
 TUndoData* TXApp::FixHL()  {
   TNameUndo *undo = new TNameUndo(
     new TUndoActionImplMF<TXApp>(this, &TXApp::undoName));
-  olxdict<int,TSAtomPList,TPrimitiveComparator> frags;
+  olx_pdict<int,TSAtomPList> frags;
   TIntList frag_id;
   TSAtomPList satoms;
   FindSAtoms(EmptyString(), satoms, false, true);  //the selection might be returned

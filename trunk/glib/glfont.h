@@ -49,7 +49,7 @@ public:
       PSChar(const olxcstr& _id) : id(_id) {}
     };
     TTypeList<PSChar> definitions;
-    olxdict<uint32_t, size_t, TPrimitiveComparator> def_dict;
+    olx_pdict<uint32_t, size_t> def_dict;
     // only very limited number of olxch range is supported in vector fonts
     static uint32_t make_id(olxch ch, uint16_t font_size)  {
       return ((uint32_t(ch) << 16) | font_size);
@@ -68,8 +68,10 @@ protected:
   TGlMaterial Material;
   double VectorScale;
   olxstr IdString, Name;
-  bool AnalyseBitArray(const TEBitArray& ba, size_t Char, uint16_t width, uint16_t height);
-  const olxcstr& DefinePSChar(olxch ch, const double& drawScale, PSRenderContext& context) const;
+  bool AnalyseBitArray(const TEBitArray& ba, size_t Char,
+    uint16_t width, uint16_t height);
+  const olxcstr& DefinePSChar(olxch ch, const double& drawScale,
+    PSRenderContext& context) const;
   void _DrawText(const vec3d& from, const olxstr& text, double scale) const;
 public:
   TGlFont(AGlScene& parent, size_t _Id, const olxstr& name, size_t _SmallId=~0);
@@ -93,21 +95,31 @@ public:
   uint16_t TextHeight(const olxstr& Text=EmptyString()) const;
   bool IsCreated() const {  return (Flags&fntCreated) != 0;  }
   TTextRect GetTextRect(const olxstr& str) const;
-  bool CharFromRGBArray(size_t Char, unsigned char *RGBData, uint16_t width, uint16_t height);
+  bool CharFromRGBArray(size_t Char, unsigned char *RGBData,
+    uint16_t width, uint16_t height);
 
-  void CreateGlyphsFromRGBArray(bool FixedWidth, uint16_t Width, uint16_t Height);
+  void CreateGlyphsFromRGBArray(bool FixedWidth,
+    uint16_t Width, uint16_t Height);
   // much faster version
-  void CreateGlyphs(const TEBitArray& ba, bool FixedWidth, uint16_t Width, uint16_t Height);
-  void CreateHershey(const olxdict<size_t, olxstr, TPrimitiveComparator>& definition, double scale);
+  void CreateGlyphs(const TEBitArray& ba, bool FixedWidth,
+    uint16_t Width, uint16_t Height);
+  void CreateHershey(const olx_pdict<size_t, olxstr>& definition,
+    double scale);
   static TStrList ExportHersheyToPS(const olxstr& uniq_chars);
-  TCStrList RenderPSLabel(const vec3d& pos, const olxstr& label, double drawScale,
-    PSRenderContext& context) const;
+  TCStrList RenderPSLabel(const vec3d& pos, const olxstr& label,
+    double drawScale, PSRenderContext& context) const;
   void CreateTextures(uint16_t Width, uint16_t Height);
   inline bool HasTextures() const {  return Textures != NULL;  }
-  inline TFontCharSize* CharSize(size_t Char) const {  return Char < 256 ? CharSizes[(unsigned)Char] : NULL;  }
+  inline TFontCharSize* CharSize(size_t Char) const {
+    return Char < 256 ? CharSizes[(unsigned)Char] : NULL;
+  }
 
-  inline bool IsFixedWidth() const {  return (Flags & fntFixedWidth) == fntFixedWidth;  }
-  inline bool IsVectorFont() const {  return (Flags & fntVectorFont) == fntVectorFont;  }
+  inline bool IsFixedWidth() const {
+    return (Flags & fntFixedWidth) == fntFixedWidth;
+  }
+  inline bool IsVectorFont() const {
+    return (Flags & fntVectorFont) == fntVectorFont;
+  }
   DefPropP(uint16_t, CharOffset)
   inline void Reset_ATI(bool v) const {
     if( v )  {
@@ -115,17 +127,22 @@ public:
       olx_gl::callList(FontBase + ' ');
     }
   }
-  void DrawVectorText(const vec3d& from, const olxstr& text, double scale=1.0) const {
+  void DrawVectorText(const vec3d& from, const olxstr& text,
+    double scale=1.0) const
+  {
     short state = 0;
     DrawVectorText(from, text, scale, state);
   }
-  void DrawVectorText(const vec3d& from, const olxstr& text, double scale, short& state) const;
+  void DrawVectorText(const vec3d& from, const olxstr& text, double scale,
+    short& state) const;
   void DrawRasterText(const olxstr& text) const {
     short state = 0;
     DrawRasterText(text, state);
   }
   void DrawRasterText(const olxstr& text, short& state) const;
-  // renders a single char, if the \+, \- or \0 is used, the index is scrolled accordingly
+  /*  renders a single char, if the \+, \- or \0 is used, the index is scrolled
+  accordingly
+  */
   void DrawRasterChar(size_t& i, const olxstr& str, short& state) const;
   void DrawVectorChar(size_t& i, const olxstr& str, short& state) const;
   DefPropC(olxstr, IdString)

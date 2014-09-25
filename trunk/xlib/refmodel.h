@@ -66,9 +66,9 @@ class RefinementModel
       return *this;
     }
   };
-  olxdict<olxstr,Equiv,olxstrComparator<false> > UsedSymm;
-  olxdict<olxstr,XScatterer*, olxstrComparator<false> > SfacData;
-  olxdict<int, Fragment*, TPrimitiveComparator> Frags;
+  mutable olxstr_dict<Equiv, false> UsedSymm;
+  olxstr_dict<XScatterer*, false> SfacData;
+  olx_pdict<int, Fragment*> Frags;
   ContentList UserContent;
 protected:
   olxstr HKLSource;
@@ -89,8 +89,7 @@ protected:
   TArrayList<TEValueD> BASF;
   TPtrList<XVarReference> BASF_Vars;
   olxstr VarRefrencerId;
-  olxdict<olxstr, IXVarReferencerContainer*, olxstrComparator<false> >
-    RefContainers;
+  olxstr_dict<IXVarReferencerContainer*, false> RefContainers;
   void SetDefaults();
   TTypeListExt<class InfoTab, IEObject> InfoTables;
   SelectedTableRows selectedTableRows;
@@ -193,6 +192,7 @@ protected:
   TActionQList Actions;
   olxstr AtomListToStr(const TTypeList<ExplicitCAtomRef> &al,
     size_t group_size, const olxstr &sep) const;
+  olx_cdict<ExplicitCAtomRef *, vec3d> atom_refs;
 public:
   RefinementModel(TAsymmUnit& au);
   virtual ~RefinementModel() {  Clear(rm_clear_DEF);  }
@@ -225,7 +225,7 @@ public:
   ConstraintContainer<adirection> Directions;
   ConstraintContainer<tls_group_constraint> cTLS;
   // restraints and constraints register
-  olxdict<olxstr, IConstraintContainer*, olxstrComparator<false> > rcRegister;
+  olxstr_dict<IConstraintContainer*> rcRegister;
   TPtrList<IConstraintContainer> rcList;  // when order matters
   TPtrList<TSRestraintList> rcList1;
   // removes references to all deleted atoms
@@ -491,6 +491,16 @@ Friedel opposites of components 1 ... m
   InfoTab& AddHTAB();
   InfoTab& AddRTAB(const olxstr& codename);
   InfoTab& AddCONF();
+  // internal: this should be called before the AU atom coordinates are changed
+  void BeforeAUUpdate_();
+  // internal: this should be called after the AU atom coordinates are changed
+  void AfterAUUpdate_();
+  /* For internal use - this returns sensible results only in between a call to
+  BenAUUpdate_ and EndAUUpdate_
+  */
+  const olx_cdict<ExplicitCAtomRef *, vec3d> & GetAtomRefs_() {
+    return atom_refs;
+  }
   // if the name is empty - all tabs a removed
   void ClearInfoTab(const olxstr &name);
   SelectedTableRows &GetSelectedTableRows() { return selectedTableRows;  }
@@ -616,10 +626,7 @@ Friedel opposites of components 1 ... m
   size_t FragCount() const {  return Frags.Count();  }
   Fragment& GetFrag(size_t i)  {  return *Frags.GetValue(i);  }
   const Fragment& GetFrag(size_t i) const {  return *Frags.GetValue(i);  }
-  Fragment* FindFragByCode(int code) {
-    size_t ind = Frags.IndexOf(code);
-    return ind == InvalidIndex ? NULL : Frags.GetValue(ind);
-  }
+  Fragment* FindFragByCode(int code) const { return Frags.Find(code, NULL); }
   Fragment& AddFrag(int code, double a=1, double b=1, double c=1, double al=90,
     double be=90, double ga=90)
   {
@@ -804,6 +811,8 @@ Friedel opposites of components 1 ... m
   }
   virtual size_t ReferencerCount() const {  return 1;  }
 //
+  TPtrList<const TSRestraintList>::const_list_type GetRestraints() const;
+  TPtrList<TSRestraintList>::const_list_type GetRestraints();
   void ToDataItem(TDataItem& item);
   void FromDataItem(TDataItem& item);
   olxstr WriteInsExtras(const TCAtomPList* atoms,

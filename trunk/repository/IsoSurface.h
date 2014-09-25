@@ -58,9 +58,9 @@ protected:
     struct Points3  {
       IsoPoint ps[3];
     };
-    typedef olxdict<int, Points3, TPrimitiveComparator> IsoPointListZ;  //x
-    typedef olxdict<int, IsoPointListZ*, TPrimitiveComparator> IsoPointListY;  //y
-    typedef olxdict<int, IsoPointListY*, TPrimitiveComparator> IsoPointListX;  //z
+    typedef olx_pdict<int, Points3> IsoPointListZ;  //x
+    typedef olx_pdict<int, IsoPointListZ*> IsoPointListY;  //y
+    typedef olx_pdict<int, IsoPointListY*> IsoPointListX;  //z
     IsoPointListX Data;
     size_t Count;
   public:

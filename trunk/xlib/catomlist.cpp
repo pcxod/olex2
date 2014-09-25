@@ -11,6 +11,7 @@
 #include "refmodel.h"
 #include "satom.h"
 #include "atomref.h"
+#include "unitcell.h"
 
 //.............................................................................
 IAtomRef &IAtomRef::FromDataItem(const TDataItem &di, RefinementModel& rm) {
@@ -73,6 +74,13 @@ void ExplicitCAtomRef::DealWithSymm(const smatd* m)  {
     ? &atom->GetParent()->GetRefMod()->AddUsedSymm(*m) : NULL;
 }
 //.............................................................................
+void ExplicitCAtomRef::UpdateMatrix(const smatd *m) {
+  if (matrix != NULL) {
+    atom->GetParent()->GetRefMod()->RemUsedSymm(*matrix);
+  }
+  DealWithSymm(m);
+}
+//.............................................................................
 IAtomRef* ExplicitCAtomRef::Clone(RefinementModel& rm) const {
   TCAtom *a = rm.aunit.FindCAtomById(atom->GetId());
   if (a == NULL) {
@@ -116,6 +124,15 @@ void ExplicitCAtomRef::ToDataItem(TDataItem &di) const {
   di.AddField("atom_id", atom->GetTag()).
     AddField("type", GetTypeId()).
     AddField("eqiv_id", matrix == NULL ? uint32_t(~0) : matrix->GetId());
+}
+//.............................................................................
+int ExplicitCAtomRef::Compare(const ExplicitCAtomRef &r) const {
+  int rv = olx_cmp(atom->GetId(), r.atom->GetId());
+  if (rv == 0) {
+    rv = olx_cmp(matrix == NULL ? 0 : matrix->GetId(),
+      r.matrix == NULL ? 0 : r.matrix->GetId());
+  }
+  return rv;
 }
 //.............................................................................
 //.............................................................................
@@ -569,3 +586,49 @@ void AtomRefList::AddExplicit(class TSAtom &a) {
     a.GetMatrix().IsFirst() ? NULL : &a.GetMatrix()));
 }
 //.............................................................................
+olx_cset<ExplicitCAtomRef*>::const_set_type AtomRefList::GetExplicit() const {
+  olxset<ExplicitCAtomRef*, TComparableComparator> st;
+  for (size_t i = 0; i < refs.Count(); i++) {
+    IAtomRef &r = refs[i];
+    if (r.IsExplicit()) {
+      st.Add(&dynamic_cast<ExplicitCAtomRef&>(r));
+    }
+    else {
+      ListIAtomRef *lr = dynamic_cast<ListIAtomRef *>(&r);
+      if (lr == 0) continue;
+      if (lr->GetStart().IsExplicit()) {
+        st.Add(&dynamic_cast<ExplicitCAtomRef&>(lr->GetStart()));
+      }
+      if (lr->GetEnd().IsExplicit()) {
+        st.Add(&dynamic_cast<ExplicitCAtomRef&>(lr->GetEnd()));
+      }
+    }
+  }
+  return st;
+}
+//.............................................................................
+void AtomRefList::OnAUUpdate() {
+  olx_cset<ExplicitCAtomRef *> tr = GetExplicit();
+  // we need at least two references
+  if (tr.Count() < 2) return;
+  size_t i_idx = InvalidIndex;
+  for (size_t i = 0; i < tr.Count(); i++) {
+    if (tr[i]->GetMatrix() == 0) {
+      i_idx = i;
+      break;
+    }
+  }
+  // cannot do much?
+  if (i_idx == InvalidIndex) {
+    return;
+  }
+  TUnitCell &uc = rm.aunit.GetLattice().GetUnitCell();
+  const olx_cdict<ExplicitCAtomRef *, vec3d> &all_refs = rm.GetAtomRefs_();
+  smatd tm = uc.GetRelation(tr[i_idx]->GetAtom().ccrd(), all_refs[tr[i_idx]]);
+  for (size_t i = 0; i < tr.Count(); i++) {
+    if (i == i_idx) continue;
+    smatd dtm = uc.GetRelation(tm*all_refs[tr[i]], tr[i]->GetAtom().ccrd());
+    tr[i]->UpdateMatrix(&dtm);
+  }
+
+}

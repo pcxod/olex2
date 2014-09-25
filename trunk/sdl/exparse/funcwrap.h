@@ -298,7 +298,7 @@ namespace exparse  {
   };
   /////////////////////////////////////////////////////////////////////////////
   class LibraryRegistry  {
-    olxdict<olxstr, IStaticFunction*, olxstrComparator<false> > funcs;
+    olxstr_dict<IStaticFunction*> funcs;
     void _add(const olxstr& name, IStaticFunction* f)  {
       if( funcs.IndexOf(name) != InvalidIndex )  {
         delete f;
@@ -440,7 +440,7 @@ namespace exparse  {
   template <class base_class> class ClassRegistry
     : public IClassRegistry
   {
-    olxdict<olxstr, IMemberFunction*, olxstrComparator<false> > funcs;
+    olxstr_dict<IMemberFunction*> funcs;
     void _add(const olxstr& name, IMemberFunction* f)  {
       if( funcs.IndexOf(name) != InvalidIndex )  {
         delete f;

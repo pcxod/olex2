@@ -27,7 +27,7 @@ void spline_test(OlxTests& t)  {
     boundary_type_periodic, boundary_condition_second_derivative,
     boundary_type_periodic, boundary_condition_second_derivative);
   Builder<FT>::catmull_rom(catmull_rom, boundary_type_parabolic, 0.5);
-  olxdict<olxstr, AnAssociation3<Spline3<FT>*,int,double>, olxstrComparator<false> > splines;
+  olxstr_dict<AnAssociation3<Spline3<FT>*,int,double> > splines;
   splines.Add("Akima", Association::Create(&akima, 0, 0.0));
   splines.Add("Cubic-periodic-2", Association::Create(&cubic, 0, 0.0));
   splines.Add("Catmull-Rom, t=0.5", Association::Create(&catmull_rom, 0, 0.1));

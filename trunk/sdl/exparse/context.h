@@ -18,8 +18,8 @@ namespace exparse  {
     LibraryRegistry functions;
     //olxdict<std::type_info const*, IClassRegistry*, TPointerComparator> classes;
     //olxdict<olxstr, IClassRegistry*, olxstrComparator<false> > classes;
-    olxdict<olxstr, IEvaluable*, olxstrComparator<true> > consts;
-    olxdict<olxstr, VarProxy*, olxstrComparator<false> > vars;
+    olxstr_dict<IEvaluable*, true> consts;
+    olxstr_dict<VarProxy*, false> vars;
     context* parent;
     context(context* _parent = NULL) : parent(_parent)  {}
     ~context()  {

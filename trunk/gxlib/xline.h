@@ -43,14 +43,10 @@ public:
   const vec3d &GetBaseCrd() const {  return FBase;  }
   void ToDataItem(TDataItem &di) const;
   void FromDataItem(const TDataItem &di);
-  const_strlist ToPov(olxdict<TGlMaterial, olxstr,
-    TComparableComparator> &materials) const
-  {
+  const_strlist ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const {
     return TXBond::ToPov(materials);
   }
-  const_strlist ToWrl(olxdict<TGlMaterial, olxstr,
-    TComparableComparator> &materials) const
-  {
+  const_strlist ToWrl(olx_cdict<TGlMaterial, olxstr> &materials) const {
     return TXBond::ToWrl(materials);
   }
   void UpdatePrimitives(int32_t mask)  {

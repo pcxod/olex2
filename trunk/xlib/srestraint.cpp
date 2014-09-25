@@ -254,3 +254,9 @@ TSimpleRestraint& TSRestraintList::AddNew()  {
   return RefMod.SetRestraintDefaults(r);
 }
 //..............................................................................
+void TSRestraintList::OnAUUpdate() {
+  for (size_t i = 0; i < Restraints.Count(); i++) {
+    Restraints[i].OnAUUpdate();
+  }
+}
+//..............................................................................

@@ -32,7 +32,7 @@ public:
   // to get %: %(c) = C*100/Mr
   void CHN(double& C, double& H, double& N, double& Mr) const;
   // expects a distrionary with keys of TBasicAtomInfo::GetIndex()
-  double CHN(olxdict<short, double, TPrimitiveComparator>& rv) const;
+  double CHN(olx_pdict<short, double>& rv) const;
   void LoadFromExpression(const olxstr &E);
   void CalcSummFormula(TStringToList<olxstr, double> &Exp) const;
   void SetMult(const olxstr& S)  {  FMult = S.ToDouble();  }

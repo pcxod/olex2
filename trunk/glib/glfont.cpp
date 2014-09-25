@@ -1277,8 +1277,8 @@ TStrList TGlFont::ExportHersheyToPS(const olxstr& uniq_chars)  {
   rv.Add("");
   return rv;
 }
-void TGlFont::CreateHershey(const olxdict<size_t, olxstr,
-  TPrimitiveComparator>& definition, double scale)
+void TGlFont::CreateHershey(const olx_pdict<size_t, olxstr>& definition,
+  double scale)
 {
   ClearData();
   Flags |= fntVectorFont;
