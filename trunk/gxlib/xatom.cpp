@@ -497,7 +497,9 @@ bool TXAtom::Orient(TGlPrimitive& GlP) {
   if (FDrawStyle == adsEllipsoid || FDrawStyle == adsOrtep) {
     if (GetEllipsoid() != NULL) {
       // override for NPD atoms
-      if (GetEllipsoid()->IsNPD() || CAtom().GetUiso() < 5e-3) {
+      if (GetEllipsoid()->IsNPD() ||
+        (CAtom().GetUiso() < 1e-2 && IsSpecialDrawing()))
+      {
         olx_gl::scale(caDefIso*2*scale);
         if (GlP.GetOwnerId() == xatom_SphereId) {
           FStaticObjects.GetObject(TetrahedronIndex)->Draw();
@@ -532,7 +534,7 @@ bool TXAtom::Orient(TGlPrimitive& GlP) {
       }
     }
     else {
-      if (CAtom().GetUiso() < 5e-3) {
+      if (CAtom().GetUiso() < 1e-2 && IsSpecialDrawing()) {
         if (GlP.GetOwnerId() == xatom_SphereId) {
           olx_gl::scale(caDefIso * 2 * scale);
           FStaticObjects.GetObject(TetrahedronIndex)->Draw();
