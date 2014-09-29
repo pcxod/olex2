@@ -235,7 +235,7 @@ public:
   void ToDataItem(TDataItem &di) const;
   void FromDataItem(const TDataItem &di);
   // returns all explicit refereces
-  olx_cset<ExplicitCAtomRef*>::const_set_type
+  TPtrList<ExplicitCAtomRef>::const_list_type
     GetExplicit() const;
   void OnAUUpdate();
 };

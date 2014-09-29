@@ -586,8 +586,8 @@ void AtomRefList::AddExplicit(class TSAtom &a) {
     a.GetMatrix().IsFirst() ? NULL : &a.GetMatrix()));
 }
 //.............................................................................
-olx_cset<ExplicitCAtomRef*>::const_set_type AtomRefList::GetExplicit() const {
-  olxset<ExplicitCAtomRef*, TComparableComparator> st;
+TPtrList<ExplicitCAtomRef>::const_list_type AtomRefList::GetExplicit() const {
+  TPtrList<ExplicitCAtomRef> st;
   for (size_t i = 0; i < refs.Count(); i++) {
     IAtomRef &r = refs[i];
     if (r.IsExplicit()) {
@@ -608,7 +608,7 @@ olx_cset<ExplicitCAtomRef*>::const_set_type AtomRefList::GetExplicit() const {
 }
 //.............................................................................
 void AtomRefList::OnAUUpdate() {
-  olx_cset<ExplicitCAtomRef *> tr = GetExplicit();
+  TPtrList<ExplicitCAtomRef> tr = GetExplicit();
   // we need at least two references
   if (tr.Count() < 2) return;
   size_t i_idx = InvalidIndex;
@@ -623,7 +623,8 @@ void AtomRefList::OnAUUpdate() {
     return;
   }
   TUnitCell &uc = rm.aunit.GetLattice().GetUnitCell();
-  const olx_cdict<ExplicitCAtomRef *, vec3d> &all_refs = rm.GetAtomRefs_();
+  const olxdict<ExplicitCAtomRef *, vec3d, TPointerComparator> &all_refs =
+    rm.GetAtomRefs_();
   smatd tm = uc.GetRelation(tr[i_idx]->GetAtom().ccrd(), all_refs[tr[i_idx]]);
   for (size_t i = 0; i < tr.Count(); i++) {
     if (i == i_idx) continue;

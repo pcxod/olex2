@@ -192,7 +192,7 @@ protected:
   TActionQList Actions;
   olxstr AtomListToStr(const TTypeList<ExplicitCAtomRef> &al,
     size_t group_size, const olxstr &sep) const;
-  olx_cdict<ExplicitCAtomRef *, vec3d> atom_refs;
+  olxdict<ExplicitCAtomRef *, vec3d, TPointerComparator> atom_refs;
 public:
   RefinementModel(TAsymmUnit& au);
   virtual ~RefinementModel() {  Clear(rm_clear_DEF);  }
@@ -498,7 +498,8 @@ Friedel opposites of components 1 ... m
   /* For internal use - this returns sensible results only in between a call to
   BenAUUpdate_ and EndAUUpdate_
   */
-  const olx_cdict<ExplicitCAtomRef *, vec3d> & GetAtomRefs_() {
+  const olxdict<ExplicitCAtomRef *, vec3d, TPointerComparator> & GetAtomRefs_()
+  {
     return atom_refs;
   }
   // if the name is empty - all tabs a removed
