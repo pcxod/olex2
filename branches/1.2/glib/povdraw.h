@@ -45,12 +45,11 @@ struct pov {
     }
   }
   static olxstr get_mat_name(const olxstr &primitive_name,
-    TGraphicsStyle &style, olxdict<TGlMaterial, olxstr,
-    TComparableComparator> &materials,
+    TGraphicsStyle &style, olx_cdict<TGlMaterial, olxstr> &materials,
     const AGDrawObject *sender=NULL);
 
   static olxstr get_mat_name(const TGlMaterial& glm,
-    olxdict<TGlMaterial, olxstr, TComparableComparator> &materials,
+    olx_cdict<TGlMaterial, olxstr> &materials,
     const AGDrawObject *sender=NULL);
 
   struct CrdTransformer  {

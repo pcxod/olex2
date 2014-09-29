@@ -200,7 +200,7 @@ TGlFont& TwxGlScene::DoCreateFont(TGlFont& glf, bool half_size) const {
     return ImportFont(glf);
   }
   if( MetaFont::IsVectorFont(glf.GetIdString()) )  {
-    olxdict<size_t, olxstr, TPrimitiveComparator> dummy;
+    olx_pdict<size_t, olxstr> dummy;
     glf.CreateHershey(dummy, 120);
     MetaFont mf(glf.GetIdString());
     glf.SetPointSize(mf.GetSize());

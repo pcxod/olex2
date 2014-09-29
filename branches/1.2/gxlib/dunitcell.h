@@ -64,10 +64,8 @@ public:
   void funDrawstyle(const TStrObjList& Params, TMacroError& E);
   TLibrary *ExportLibrary(const olxstr &name = EmptyString());
 
-  const_strlist ToPov(
-    olxdict<TGlMaterial, olxstr, TComparableComparator> &materials) const;
-  const_strlist ToWrl(
-    olxdict<TGlMaterial, olxstr, TComparableComparator> &materials) const;
+  const_strlist ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const;
+  const_strlist ToWrl(olx_cdict<TGlMaterial, olxstr> &materials) const;
 };
 
 EndGxlNamespace()

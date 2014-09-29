@@ -2891,7 +2891,7 @@ void GXLibMacros::macEsd(TStrObjList &Cmds, const TParamList &Options,
             (atoms[i] = &xp1.GetAtom(i))->SetTag(0);
             (atoms[i+3] = &xp2.GetAtom(i))->SetTag(1);
           }
-          olxdict<index_t, vec3d, TPrimitiveComparator> transforms;
+          olx_pdict<index_t, vec3d> transforms;
           transforms.Add(1, -xp2.GetCenter());
           transforms.Add(0, -xp1.GetCenter());
           PlaneSort::Sorter::DoSort(atoms, transforms, vec3d(),
@@ -2996,7 +2996,7 @@ void GXLibMacros::macEsd(TStrObjList &Cmds, const TParamList &Options,
         << vcovc.CalcOHDistortion(TSAtomCPList(atoms)).ToString();
       TSAtom* central_atom = atoms[0];
       atoms.Delete(0);
-      olxdict<index_t, vec3d, TPrimitiveComparator> transforms;
+      olx_pdict<index_t, vec3d> transforms;
       int face_cnt = 0;
       double total_val=0, total_esd=0, total_val_bp=0, total_esd_bp=0;
       for( size_t i=0; i < 6; i++ )  {
@@ -4158,7 +4158,7 @@ void GXLibMacros::macProjSph(TStrObjList &Cmds, const TParamList &Options,
   sph.Basis.SetCenter(xatoms[0]->crd());
   sph.Basis.SetZoom(2);
   if (Options.GetBoolOption("group")) {
-    olxdict<uint32_t, TGlGroup *, TPrimitiveComparator> groups;
+    olx_pdict<uint32_t, TGlGroup *> groups;
     TGXApp::AtomIterator atoms = app.GetAtoms();
     while (atoms.HasNext()) {
       TXAtom &a = atoms.Next();

@@ -49,7 +49,7 @@ namespace PlaneSort {
 
     static void DoSort(const TSAtomPList& atoms,
       // tag dependent translations
-      const olxdict<index_t, vec3d, TPrimitiveComparator>& transforms,
+      const olx_pdict<index_t, vec3d>& transforms,
       const vec3d& center, const vec3d& normal, TSAtomPList& output)
     {
       if (atoms.IsEmpty())

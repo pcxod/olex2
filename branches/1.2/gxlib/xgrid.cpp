@@ -730,9 +730,7 @@ void TXGrid::UpdateInfo()  {
   Info->Fit();
 }
 //.............................................................................
-const_strlist TXGrid::ToPov(olxdict<TGlMaterial, olxstr,
-  TComparableComparator> &materials) const
-{
+const_strlist TXGrid::ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const {
   TGraphicsStyle &style = GetPrimitives().GetStyle();
   const olxstr p_mat_name = pov::get_mat_name("-Surface", style, materials),
     n_mat_name = pov::get_mat_name("+Surface", style, materials);

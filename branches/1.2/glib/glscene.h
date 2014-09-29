@@ -21,7 +21,7 @@ class TGlFont;
 /* abstarct class */
 class AGlScene: public IEObject {
 private:
-  olxdict<olxstr, TGlFont*, olxstrComparator<false> > FontsDict;
+  olxstr_dict<TGlFont*> FontsDict;
   TPtrList<TGlFont> Fonts, SmallFonts;
   olxdict<std::type_info const*, size_t, TPointerComparator> FontRegistry;
   bool Enabled;

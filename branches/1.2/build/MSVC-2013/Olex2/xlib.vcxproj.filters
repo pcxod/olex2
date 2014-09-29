@@ -1082,6 +1082,9 @@
     <ClInclude Include="..\..\..\xlib\calc_ext.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\xlib\cifdata.h">
+      <Filter>Header Files\CIF</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />

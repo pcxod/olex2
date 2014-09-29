@@ -475,6 +475,28 @@ smatd* TUnitCell::GetClosest(const vec3d& to, const vec3d& from,
   return NULL;
 }
 //..............................................................................
+smatd TUnitCell::GetRelation(const vec3d& to, const vec3d& from) const {
+  if (to.Equals(from, 1e-3)) {
+    return Matrices[0];
+  }
+  const TAsymmUnit &au = GetLattice().GetAsymmUnit();
+  for (size_t i = 0; i < Matrices.Count(); i++) {
+    const smatd& matr = Matrices[i];
+    vec3d v = matr * from - to;
+    const vec3i shift = -v.Round<int>();
+    v += shift;
+    const double D = au.CellToCartesian(v).QLength();
+    if (D < 1e-3) {
+      smatd retVal(matr);
+      retVal.t += shift;
+      retVal.SetId(matr.GetContainerId(), shift);
+      return retVal;
+    }
+  }
+  throw TFunctionFailedException(__OlxSourceInfo,
+    "Could not locate symmetry relation");
+}
+//..............................................................................
 void TUnitCell::UnifyAMCList(
   TTypeList<AnAssociation3<TCAtom*, smatd, vec3d> >& res)
 {
@@ -880,7 +902,7 @@ olx_object_ptr<TArray3D<bool> > TUnitCell::BuildAtomMask(const vec3s& dim,
   return spm;
 }
 //..................................................................................
-const_olxdict<short, TArray3D<bool>*, TPrimitiveComparator>
+olx_pdict<short, TArray3D<bool>*>::const_dict_type
   TUnitCell::BuildAtomMasks(const vec3s& dim, ElementRadii* radii, double delta) const
 {
   // angstrem per pixel scale
@@ -892,7 +914,7 @@ const_olxdict<short, TArray3D<bool>*, TPrimitiveComparator>
   const double sin_a = sin(au.GetAngles()[0]*M_PI/180);
   const double sin_b = sin(au.GetAngles()[1]*M_PI/180);
   const double sin_g = sin(au.GetAngles()[2]*M_PI/180);
-  olxdict<short, TArray3D<bool>*, TPrimitiveComparator> scatterers;
+  olx_pdict<short, TArray3D<bool>*> scatterers;
   for( size_t i=0; i < au.AtomCount(); i++ )  {
     if( au.GetAtom(i).IsDeleted() || au.GetAtom(i).GetType() == iQPeakZ )  continue;
     size_t ind = scatterers.IndexOf(au.GetAtom(i).GetType().index);
@@ -925,8 +947,7 @@ void TUnitCell::BuildStructureMap_Masks(TArray3D<short>& map, double delta, shor
   const vec3s dim = map.GetSize();
   // angstrem per pixel scale
   // precalculate the sphere/ellipsoid etc coordinates for all distinct scatterers
-  olxdict<short, TArray3D<bool>*, TPrimitiveComparator> scatterers =
-    BuildAtomMasks(dim, radii, delta);
+  olx_pdict<short, TArray3D<bool>*> scatterers = BuildAtomMasks(dim, radii, delta);
   vec3i aa[8];
   for( size_t i=0; i < allAtoms.Count(); i++ )  {
     TArray3D<bool>* spm = scatterers.Get(allAtoms[i].GetB()->GetType().index);
@@ -1091,7 +1112,7 @@ void TUnitCell::BuildDistanceMap_Masks(TArray3D<short>& map, double delta, short
   TTypeList<AnAssociation3<vec3d,TCAtom*,short> > allAtoms;
   GenereteAtomCoordinates(allAtoms, true, _template);
   // Z->R
-  olxdict<short, short, TPrimitiveComparator> scatterers;
+  olx_pdict<short, short> scatterers;
   for( size_t i=0; i < au.AtomCount(); i++ )  {
     if( au.GetAtom(i).IsDeleted() )  continue;
     size_t ind = scatterers.IndexOf(au.GetAtom(i).GetType().index);

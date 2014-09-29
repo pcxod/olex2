@@ -64,8 +64,8 @@ struct LabelIterator {
 };
 
 struct LabelCorrector  {
-  olxdict<olxstr, TCAtom*, olxstrComparator<true> > uniq_labels;
-  olxdict<const cm_Element*, LabelIterator, TPrimitiveComparator>
+  olxstr_dict<TCAtom*, true> uniq_labels;
+  olxdict<const cm_Element*, LabelIterator, TPointerComparator>
     labels;
   bool trim;
   LabelCorrector(bool trim=true) : trim(trim)  {}

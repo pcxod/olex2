@@ -1518,7 +1518,7 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options,
           EmptyString(), EmptyString(), true);
       }
       if (TEFile::Exists(fn)) {
-        olxdict<olxstr,double,olxstrComparator<false> > radii;
+        olxstr_dict<double> radii;
         TStrList sl = TEFile::ReadLines(fn),
           changed;
         // parse the file and fill the dictionary
@@ -6054,7 +6054,7 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options,
   }
   else if( Options.Contains('d') )  {
     RefinementModel& rm = FXApp->XFile().GetRM();
-    olxdict<double, TSimpleRestraint*, TPrimitiveComparator> r12, r13;
+    olx_pdict<double, TSimpleRestraint*> r12, r13;
     for( size_t i=0; i < xatoms.Count(); i++ )  {
       TXAtom& a = *xatoms[i];
       for( size_t j=0; j < a.BondCount(); j++ )  {

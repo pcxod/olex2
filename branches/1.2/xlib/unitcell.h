@@ -162,7 +162,10 @@ public:
   }
   smatd* GetClosest(const vec3d& to, const vec3d& from, bool ConsiderOriginal,
     double* dist=NULL) const;
-
+  /* Finds a symmetry matrix linking two symmetry dependent positions.
+  Throws an exception if the relation cannot be found.
+  */
+  smatd GetRelation(const vec3d& to, const vec3d& from) const;
   /* Finds matrices UNIQ to the unit cell (besides the I matrix, see below)
   which move point 'from' to 'to' within R. Always returns a valid object to be
   deleted with delete. For the identity matrix additionally checks the
@@ -313,7 +316,7 @@ public:
   /* builds boolean mask for atoms types, mdim - the dimensions of the grid to
   which the masks will be applied, delta - extra added value for Rs
   */
-  const_olxdict<short, TArray3D<bool>*, TPrimitiveComparator>
+  olx_pdict<short, TArray3D<bool>*>::const_dict_type
     BuildAtomMasks(const vec3s& dim, ElementRadii* radii,
     double delta=0) const;
   olx_object_ptr<TArray3D<bool> > BuildAtomMask(const vec3s& dim,

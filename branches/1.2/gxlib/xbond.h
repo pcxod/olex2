@@ -133,20 +133,18 @@ public:
   // should be called when atom coordinates have changed
   virtual void Update();
 
-  const_strlist ToPov(olxdict<TGlMaterial, olxstr,
-    TComparableComparator> &materials) const;
+  const_strlist ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const;
   static const_strlist PovDeclare();
 
-  const_strlist ToWrl(olxdict<TGlMaterial, olxstr,
-    TComparableComparator> &materials) const;
+  const_strlist ToWrl(olx_cdict<TGlMaterial, olxstr> &materials) const;
   static const_strlist WrlDeclare();
 
   virtual const vec3d &GetBaseCrd() const;
   static TGraphicsStyle* GetParamStyle()  {  return FBondParams;  }
   static void CreateStaticObjects(TGlRenderer& parent);
 
-  static olxdict<olxstr, olxstr, olxstrComparator<false> > &NamesRegistry() {
-    static olxdict<olxstr, olxstr, olxstrComparator<false> > nr;
+  static olxstr_dict<olxstr> &NamesRegistry() {
+    static olxstr_dict<olxstr> nr;
     return nr;
   }
 };

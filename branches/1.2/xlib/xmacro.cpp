@@ -5130,7 +5130,7 @@ void XLibMacros_fit_chn_process(TTypeList<XLibMacros_ChnFitData>& list,
   const ematd& chn,
   const evecd& p,
   const olxstr names[4],
-  const olxdict<short, double, TPrimitiveComparator>& obs,
+  const olx_pdict<short, double>& obs,
   size_t cnt)
 {
   for( size_t i=0; i < cnt; i++ )  {
@@ -5162,7 +5162,7 @@ void XLibMacros::macFitCHN(TStrObjList &Cmds, const TParamList &Options,
   TCHNExp chne;
   chne.LoadFromExpression(Cmds[0]);
   TStrList solvents;
-  olxdict<short, double, TPrimitiveComparator> obs, calc;
+  olx_pdict<short, double> obs, calc;
   for( size_t i=1; i < Cmds.Count(); i++ )  {
     size_t si = Cmds[i].IndexOf(':');
     if( si == InvalidIndex )
@@ -7096,7 +7096,7 @@ void XLibMacros::macSadi(TStrObjList &Cmds, const TParamList &Options,
     }
     TSimpleRestraint &sr1 = app.XFile().GetRM().rSADI.AddNew();
     if (esd_set) sr1.SetEsd(esd);
-    olxdict<int, TSAtomPList, TPrimitiveComparator> parts;
+    olx_pdict<int, TSAtomPList> parts;
     for (size_t i = 0; i < Atoms[0]->NodeCount(); i++) {
       TSAtom& n = Atoms[0]->Node(i);
       if (n.IsDeleted() || n.GetType() == iQPeakZ || &n == Atoms[1])
@@ -8566,7 +8566,7 @@ void XLibMacros::macRSA(TStrObjList &Cmds, const TParamList &Options,
 ConstTypeList<TGroupCAtom> CONF_GetSites(const TLattice &latt,
   const TCAtom &cf, const smatd &fm,
   const TCAtom &ce, const smatd &em,
-  olxdict<uint32_t, smatd*, TPrimitiveComparator> &matrices,
+  olx_pdict<uint32_t, smatd*> &matrices,
   short min_z)
 {
   const TUnitCell &uc = latt.GetUnitCell();
@@ -8602,7 +8602,7 @@ ConstTypeList<TGroupCAtom> CONF_GetSites(const TLattice &latt,
   return rv;
 }
 void CONF_Process(TCAtom &a, const smatd &am, TCAtom &b, const smatd &bm,
-  olxdict<uint32_t, smatd*, TPrimitiveComparator> &matrices, short min_z)
+  olx_pdict<uint32_t, smatd*> &matrices, short min_z)
 {
   if (a.GetType() < min_z || b.GetType() < min_z)
     return;
@@ -8662,7 +8662,7 @@ void XLibMacros::macCONF(TStrObjList &Cmds, const TParamList &Options,
   RefinementModel &rm = app.XFile().GetRM();
   const TLattice &latt = app.XFile().GetLattice();
   sorted::PointerPointer<TSAtom> atoms;
-  olxdict<uint32_t, smatd*, TPrimitiveComparator> matrices;
+  olx_pdict<uint32_t, smatd*> matrices;
   short min_z = 2;
   if (ma.atoms.IsEmpty()) {
     if (all) {

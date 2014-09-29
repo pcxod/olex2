@@ -50,7 +50,7 @@ typedef TTypeList< olx_pair_t<double, double> > TFixedValueList;
 class AConstraintGenerator : public IEObject {
   bool UseRestrains;
 protected:
-  olxdict<uint32_t,double, TPrimitiveComparator> Distances;
+  olx_pdict<uint32_t,double> Distances;
   void DoGenerateAtom(TCAtomPList& created, TAsymmUnit& au, vec3d_list& Crds,
     const olxstr& StartingName);
   void GenerateAtom(TCAtomPList& created, TAtomEnvi& envi, const short Group,

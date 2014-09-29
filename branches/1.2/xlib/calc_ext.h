@@ -88,7 +88,7 @@ protected:
   RefinementModel &rm;
   mutable olxstr_dict<Object *> objects;
   mutable olxstr_dict<Var *> vars;
-  mutable olxdict<uint64_t, smatd*, TPrimitiveComparator> eqivs;
+  mutable olx_pdict<uint64_t, smatd*> eqivs;
   smatd * GetEqiv(size_t idx) { return eqivs.GetValue(idx); }
 public:
   CalculatedVars(RefinementModel &);

@@ -157,8 +157,7 @@ protected:
   // to distinguish clicking on an object
   int ClickThreshold;
   void process_command_list(TStrObjList& Cmds, bool enable);
-  olxdict<TMouseRegion, AGDrawObject *, TComparableComparator>
-    object_cache;
+  olx_cdict<TMouseRegion, AGDrawObject *> object_cache;
   void OnObjectDelete(IEObject *o);
   AGDrawObject *find_object(int x, int y);
   void ClearObjectCache(IEObject *caller=NULL);

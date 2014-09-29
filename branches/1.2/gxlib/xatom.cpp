@@ -497,7 +497,9 @@ bool TXAtom::Orient(TGlPrimitive& GlP) {
   if (FDrawStyle == adsEllipsoid || FDrawStyle == adsOrtep) {
     if (GetEllipsoid() != NULL) {
       // override for NPD atoms
-      if (GetEllipsoid()->IsNPD()) {
+      if (GetEllipsoid()->IsNPD() ||
+        (CAtom().GetUiso() < 1e-2 && IsSpecialDrawing()))
+      {
         olx_gl::scale(caDefIso*2*scale);
         if (GlP.GetOwnerId() == xatom_SphereId) {
           FStaticObjects.GetObject(TetrahedronIndex)->Draw();
@@ -531,8 +533,16 @@ bool TXAtom::Orient(TGlPrimitive& GlP) {
         }
       }
     }
-    else
+    else {
+      if (CAtom().GetUiso() < 1e-2 && IsSpecialDrawing()) {
+        if (GlP.GetOwnerId() == xatom_SphereId) {
+          olx_gl::scale(caDefIso * 2 * scale);
+          FStaticObjects.GetObject(TetrahedronIndex)->Draw();
+        }
+        return true;
+      }
       olx_gl::scale(GetR()*scale);
+    }
   }
   else if (FDrawStyle == adsSphere)
     olx_gl::scale(GetR()*scale);
@@ -689,8 +699,7 @@ void TXAtom::UpdatePrimitiveParams(TGlPrimitive* GlP)  {
   }
 }
 //..............................................................................
-const_strlist TXAtom::ToPov(olxdict<TGlMaterial, olxstr,
-  TComparableComparator> &materials) const
+const_strlist TXAtom::ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const
 {
   TStrList out;
   if( DrawStyle() == adsStandalone && !IsStandalone() )
@@ -821,8 +830,7 @@ const_strlist TXAtom::PovDeclare()  {
   return out;
 }
 //..............................................................................
-const_strlist TXAtom::ToWrl(olxdict<TGlMaterial, olxstr,
-  TComparableComparator> &materials) const
+const_strlist TXAtom::ToWrl(olx_cdict<TGlMaterial, olxstr> &materials) const
 {
   TStrList out;
   if (DrawStyle() == adsStandalone && !IsStandalone())

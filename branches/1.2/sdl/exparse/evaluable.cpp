@@ -31,7 +31,8 @@ const IEvaluable::operator_dict::Entry ANumberEvaluator::cast_operators_table[] 
 olxdict<std::type_info const*, IEvaluable::cast_operator, TPointerComparator>
 ANumberEvaluator::cast_operators(
   ANumberEvaluator::cast_operators_table,
-  sizeof(ANumberEvaluator::cast_operators_table)/sizeof(ANumberEvaluator::cast_operators_table[0])
+  sizeof(ANumberEvaluator::cast_operators_table)
+    /sizeof(ANumberEvaluator::cast_operators_table[0])
 );
 
 IEvaluable *IEvaluable::create_proxy_() const {

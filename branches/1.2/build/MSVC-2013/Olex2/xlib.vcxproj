@@ -1077,6 +1077,7 @@
     <ClInclude Include="..\..\..\xlib\chembase.h" />
     <ClInclude Include="..\..\..\xlib\chemdata.h" />
     <ClInclude Include="..\..\..\xlib\chnexp.h" />
+    <ClInclude Include="..\..\..\xlib\cifdata.h" />
     <ClInclude Include="..\..\..\xlib\congen.h" />
     <ClInclude Include="..\..\..\xlib\connext.h" />
     <ClInclude Include="..\..\..\xlib\conninfo.h" />

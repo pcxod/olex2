@@ -2106,10 +2106,10 @@ bool TMainForm::ProcessTab() {
       FCmdLine->SetCommand(FullCmd);
     else {
       FGlConsole->SetCommand(FullCmd);
-      TimePerFrame = FXApp->Draw();
     }
     res = true;
   }
+  TimePerFrame = FXApp->Draw();
   return res;
 }
 //..............................................................................
