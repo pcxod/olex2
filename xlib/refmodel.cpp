@@ -1990,14 +1990,14 @@ void RefinementModel::BeforeAUUpdate_() {
     TBasicApp::NewLogEntry(logError) << "Not clean operation";
     atom_refs.Clear();
   }
-  olx_cset<ExplicitCAtomRef *> rs;
+  TPtrList<ExplicitCAtomRef> rs;
   for (size_t i = 0; i < InfoTables.Count(); i++) {
-    rs += InfoTables[i].GetAtoms().GetExplicit().GetObject();
+    rs.AddList(InfoTables[i].GetAtoms().GetExplicit().GetObject());
   }
   TPtrList<TSRestraintList> restraints = GetRestraints();
   for (size_t i = 0; i < restraints.Count(); i++) {
     for (size_t j = 0; j < restraints[i]->Count(); j++) {
-      rs += (*restraints[i])[j].GetAtoms().GetExplicit();
+      rs.AddList((*restraints[i])[j].GetAtoms().GetExplicit());
     }
   }
   for (size_t i = 0; i < rs.Count(); i++) {
