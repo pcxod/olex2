@@ -45,73 +45,52 @@
   #include "custom_base.h"
 #endif
 
-class TProgress: public AActionHandler  {
+class TProgress : public AActionHandler {
   wxProgressDialog *Progress;
-  int Max, Start;
-  wxDateTime StartTime;
-  bool ShowDialog;
+  uint64_t start, p_max;
 public:
-  TProgress()  {
-    Progress = NULL;
-    Start = Max = 0;
-    ShowDialog = false;
-    return;
+  TProgress() : Progress(NULL)
+  {}
+  virtual ~TProgress() {
+    if (Progress != NULL)
+      Progress->Destroy();
   }
-  virtual ~TProgress()  {  if( Progress )    delete Progress;  }
-  bool Enter(const IEObject *Sender, const IEObject *Data, TActionQueue *)  {
-    StartTime = wxDateTime::UNow();
-    Start = 0;
+  bool Enter(const IEObject *, const IEObject *, TActionQueue *) {
+    start = TETime::msNow();
     return false;
   }
-  bool Exit(const IEObject *Sender, const IEObject *Data, TActionQueue *)  {
-    if( Progress )  {
-      delete Progress;
+  bool Exit(const IEObject *Sender, const IEObject *Data, TActionQueue *) {
+    if (Progress) {
+      Progress->Destroy();
       Progress = NULL;
-      Max = 0;
     }
     return false;
   }
-  bool Execute(const IEObject *Sender, const IEObject *Data, TActionQueue *)  {
-    return false; // not good for now...
-    if( !EsdlInstanceOf(*Data, TOnProgress) )
+  bool Execute(const IEObject *Sender, const IEObject *Data, TActionQueue *) {
+    const TOnProgress *A = dynamic_cast<const TOnProgress*>(Data);
+    if (A == NULL || A->GetPos() == 0) {
       return false;
-    if( Sender != NULL && EsdlInstanceOf(*Data, TwxZipFileSystem) )
-      return false;
-    IEObject* p_d = const_cast<IEObject*>(Data);
-    TOnProgress *A = dynamic_cast<TOnProgress*>(p_d);
-
-    if( (Progress == NULL) && ShowDialog )  {
-      Progress = new wxProgressDialog(wxT("Progress"), wxT(""), (int)A->GetMax() );
-      Max = (int)A->GetMax(); // remember to recreate the dialog when it changes, ...
-      Start = (int)A->GetPos();
     }
-    if( A->GetMax() != Max )  {
-      if( Progress != NULL )
-        delete Progress;
-      if( ShowDialog )
-        Progress = new wxProgressDialog(wxT("Progress"), wxT(""), (int)A->GetMax());
-      Max = (int)A->GetMax(); // remember to recreate the dialog when it changes, ...
-      StartTime = wxDateTime::UNow();
-    }
-    if( A->GetPos() > (Start + A->GetMax()*0.001) )  {  // if more than 5 seconds
-      if( (wxDateTime::UNow() - StartTime).GetSeconds() > 1 )  {
-        ShowDialog = true;
-        if( Progress == NULL )
-          Progress = new wxProgressDialog(wxT("Progress"), wxT(""), (int)A->GetMax());
-        Progress->Show();
+    if (Progress == NULL) {
+      double tat = (double)A->GetPos()*(TETime::msNow() - start) / A->GetMax();
+      if (tat*A->GetMax() < 30000) { // max time 30 sec
+        return false;
       }
-      Start = (int)A->GetMax();
+      p_max = A->GetMax();
+      Progress = new wxProgressDialog(wxT("Progress"), wxT(""), (int)A->GetMax());
     }
-    if( Progress != NULL )  {
-      wxSize ds = Progress->GetSize();
-      ds.SetWidth(400);
-      Progress->SetSize(ds);
-
-      // this is to prevent wxWidgets popping an assertion  dialogue
-      if( A->GetPos() > A->GetMax() )
-        A->SetPos(A->GetMax());
-
-      Progress->Update((int)A->GetPos(), A->GetAction().u_str());
+    else if (A->GetMax() != p_max) {
+      Progress->Destroy();
+      Progress = new wxProgressDialog(wxT("Progress"), wxT(""), (int)A->GetMax());
+      p_max = A->GetMax();
+    }
+    if (Progress != NULL) {
+      //wxSize ds = Progress->GetSize();
+      //ds.SetWidth(400);
+      //Progress->SetSize(ds);
+      if (A->GetPos() < A->GetMax()) {
+        Progress->Update((int)A->GetPos(), A->GetAction().u_str());
+      }
     }
     return false;
   }
@@ -129,23 +108,12 @@ BEGIN_EVENT_TABLE(TGlXApp, wxApp)
 END_EVENT_TABLE()
 
 //..............................................................................
-bool TGlXApp::OnInit()  {
+bool TGlXApp::OnInit() {
   setlocale(LC_NUMERIC, "C");
   wxApp::SetAppName(wxT("olex2"));
   Instance() = this;
-//  wxToolTip::Enable(true);
-  int ScreenW = wxSystemSettings::GetMetric(wxSYS_SCREEN_X),
-      ScreenH = wxSystemSettings::GetMetric(wxSYS_SCREEN_Y);
-  wxPoint wTop(0, 0);
-  wxSize wSize(ScreenW, ScreenH);
-  TSocketFS::SetUseLocalFS(true);
-  MainForm = new TMainForm(this);
   TEGC::Initialise();  // prepare Olex2 API...
-#ifdef __WIN32__
-  MainForm->SetIcon(wxIcon(wxT("MAINICON")));
-#else
-  MainForm->SetIcon(wxIcon(mainicon_xpm));
-#endif
+  TSocketFS::SetUseLocalFS(true);
   // register wxWidgets to handle ZIP files
   TwxZipFileSystem::RegisterFactory();
   // create an instance of the XApplication
@@ -197,10 +165,21 @@ bool TGlXApp::OnInit()  {
     TBasicApp::NewLogEntry(logException) << e;
   }
   XApp->InitArguments<wxChar>(argc, argv);
+  {
+    olxstr cctbx_env = XApp->GetBaseDir() + "cctbx/cctbx_build/libtbx_env";
+    if (!TEFile::Exists(cctbx_env) && !TBasicApp::IsBaseDirWriteable()) {
+      TMainForm::ShowAlert("Please run Olex2 as administrator on the first run."
+        "\nPyhton modules need to be precompiled.", "Error", wxOK | wxICON_ERROR);
+      OnExit();
+      return false;
+    }
+  }
+  MainForm = new TMainForm(this);
   XApp->InitOlex2App();
-  TProgress *P = new TProgress;
-  XApp->OnProgress.Add(P);
-
+  /* This generic progress box requires more thinking in particular considering
+  the paralellalised tasks
+  */
+  //XApp->OnProgress.Add(new TProgress);
   TCif *Cif = new TCif;  // the objects will be automatically removed by the XApp
   XApp->RegisterXFileFormat(Cif, "cif");
   XApp->RegisterXFileFormat(Cif, "cmf");
@@ -220,8 +199,13 @@ bool TGlXApp::OnInit()  {
 
   // set backgrownd color of the GlRender
   XApp->ClearColor(0x3f3f3f);
+#ifdef __WIN32__
+  MainForm->SetIcon(wxIcon(wxT("MAINICON")));
+#else
+  MainForm->SetIcon(wxIcon(mainicon_xpm));
+#endif
 #ifdef __WIN32__  // on LInux they are multiline by default...
-  MainForm->SetToolTip(wxT("\n")); // force multiline ttoltips with (&#10;)
+  MainForm->SetToolTip(wxT("\n")); // force multiline tooltips with (&#10;)
 #endif
   olxstr str_glAttr = olx_getenv("OLEX2_GL_DEFAULT"),
     str_glStereo = olx_getenv("OLEX2_GL_STEREO"),
@@ -247,7 +231,9 @@ bool TGlXApp::OnInit()  {
   MainForm->GlCanvas(new TGlCanvas(
     MainForm, gl_attr, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0,
     wxT("GL_CANVAS")));
-  try  { MainForm->XApp(XApp); }  // his sets XApp for the canvas as well
+  try {
+    MainForm->XApp(XApp);
+  }  // his sets XApp for the canvas as well
   catch(const TExceptionBase& e)  {
     TMainForm::ShowAlert(e);
   }
