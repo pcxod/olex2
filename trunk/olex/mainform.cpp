@@ -343,6 +343,7 @@ TMainForm::TMainForm(TGlXApp *Parent)
   PythonExt::Init(this).Register(&TMainForm::PyInit);
   PythonExt::GetInstance()->Register(&OlexPyCore::PyInit);
   PythonExt::GetInstance()->Register(&hkl_py::PyInit);
+  PythonExt::GetInstance()->Register(&TXGrid::PyInit);
   //TOlxVars::Init().OnVarChange->Add(this, ID_VarChange);
   FGlCanvas = NULL;
   FXApp = NULL;

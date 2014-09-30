@@ -194,9 +194,6 @@ TXGrid::TXGrid(const olxstr& collectionName, TGXApp* xapp) :
   Instance = this;
   Loading_ = Boxed = Extended = false;
   RenderMode = planeRenderModeFill;
-#ifdef _PYTHON
-  PythonExt::GetInstance()->Register(&TXGrid::PyInit);
-#endif
   XApp = xapp;
   Depth = 0;
   ED = NULL;
