@@ -162,6 +162,12 @@ public:
     return data->registry;
   }
   //...........................................................................
+  void Clear() {
+    if (data != NULL && --data->ref_cnt == 0)
+      delete data;
+    data = NULL;
+  }
+  //...........................................................................
   ~AtomRegistry()  {
     if( data != NULL && --data->ref_cnt  == 0 )
       delete data;

@@ -3222,20 +3222,20 @@ void GXLibMacros::funExtraZoom(const TStrObjList& Params, TMacroError &E) {
 void GXLibMacros::macKill(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &Error)
 {
-  if (TModeRegistry::GetInstance().GetCurrent() != NULL)  {
+  if (TModeRegistry::GetInstance().GetCurrent() != NULL) {
     Error.ProcessingError(__OlxSrcInfo, "Kill inaccessible from within a mode");
     return;
   }
-  if( Cmds.Count() == 1 && Cmds[0].Equalsi("sel") )  {
-    AGDObjList Objects;
+  if (Cmds.IsEmpty() || (Cmds.Count() == 1 && Cmds[0].Equalsi("sel"))) {
+      AGDObjList Objects;
     TGlGroup& sel = app.GetSelection();
     olxstr out;
     bool group_deletion = false;
-    for( size_t i=0; i < sel.Count(); i++ )  {
-      if( EsdlInstanceOf(sel[i], TXAtom) )
+    for (size_t i=0; i < sel.Count(); i++) {
+      if (EsdlInstanceOf(sel[i], TXAtom))
         out << ((TXAtom&)sel[i]).GetLabel();
-      if( EsdlInstanceOf(sel[i], TGlGroup) )  {
-        if( !group_deletion )  {
+      if (EsdlInstanceOf(sel[i], TGlGroup)) {
+        if (!group_deletion) {
           group_deletion = true;
           TBasicApp::NewLogEntry() << "Please use 'ungroup' to delete groups";
         }
@@ -3246,21 +3246,21 @@ void GXLibMacros::macKill(TStrObjList &Cmds, const TParamList &Options,
       out << ' ';
       Objects.Add(sel[i]);
     }
-    if( !out.IsEmpty() )  {
+    if (!out.IsEmpty()) {
       TBasicApp::NewLogEntry() << "Deleting " << out;
       app.GetUndo().Push(app.DeleteXObjects(Objects));
       sel.Clear();
     }
   }
-  else if( Cmds.Count() == 1 && Cmds[0].Equalsi("labels") )  {
+  else if (Cmds.Count() == 1 && Cmds[0].Equalsi("labels")) {
     TBasicApp::NewLogEntry() << "Deleting labels";
-    for( size_t i=0; i < app.LabelCount(); i++ )
+    for (size_t i=0; i < app.LabelCount(); i++)
       app.GetLabel(i).SetVisible(false);
     TGXApp::AtomIterator ai = app.GetAtoms();
-    while( ai.HasNext() )
+    while (ai.HasNext())
       ai.Next().GetGlLabel().SetVisible(false);
     TGXApp::BondIterator bi = app.GetBonds();
-    while( bi.HasNext() )
+    while (bi.HasNext())
       bi.Next().GetGlLabel().SetVisible(false);
   }
   else {
@@ -3292,7 +3292,7 @@ void GXLibMacros::macKill(TStrObjList &Cmds, const TParamList &Options,
       todel.Pack();
       if (todel.IsEmpty()) return;
       olxstr log = "Deleting";
-      for( size_t i=0; i < todel.Count(); i++ )
+      for (size_t i=0; i < todel.Count(); i++)
         log << ' ' << todel[i]->GetLabel();
       app.NewLogEntry() << log;
       app.GetUndo().Push(app.DeleteXAtoms(todel));

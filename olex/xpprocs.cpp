@@ -2346,7 +2346,6 @@ void TMainForm::macHklEdit(TStrObjList &Cmds, const TParamList &Options,
   }
   smatd_list matrices;
   FXApp->GetSymm(matrices);
-  TSpaceGroup& sg = FXApp->XFile().GetLastLoaderSG();
   sw.start("Loading HKL");
   THklFile Hkl;
   Hkl.LoadFromFile(HklFN, false);
