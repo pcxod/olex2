@@ -1982,11 +1982,11 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
     processMacro("html.update");
   }
   else if (MsgId == ID_CellChanged) {
-    if (Data != NULL && EsdlInstanceOf(*Data, THklFile) ) {
-       const THklFile &hf = *dynamic_cast<const THklFile*>(Data);
+    if (Data != NULL && EsdlInstanceOf(*Data, TIns) ) {
+       const TIns *hf = dynamic_cast<const TIns*>(Data);
       RunWhenVisibleTasks.Add(
         new CellChangeTask(FXApp->XFile().GetRM().GetHKLSource(),
-          hf.GetCell(), hf.GetCellEsd()));
+        hf->GetAsymmUnit()));
     }
   }
   return res;
