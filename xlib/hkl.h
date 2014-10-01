@@ -7,13 +7,12 @@
 * the root folder.                                                            *
 ******************************************************************************/
 
-#ifndef hklH
-#define hklH
+#ifndef __olx_xlib_hkl_H
+#define __olx_xlib_hkl_H
 
 #include "xbase.h"
-#include "evector.h"
 #include "arrays.h"
-#include "asymmunit.h"
+#include "ins.h"
 
 #include "refmerge.h"
 #include "symmlib.h"
@@ -28,8 +27,6 @@ class THklFile: public IEObject  {
 protected:
   vec3i MaxHkl, MinHkl;
   double MaxI, MaxIS, MinI, MinIS;
-  evecd Cell, CellEsd;
-  double Radiation;
   /* the function must be caled before the reflection is added to the list, as
   it needs to initialise the starting values of min and max
   */
@@ -63,14 +60,11 @@ public:
 
   void Clear();
   void Sort()  {  QuickSorter::SortSF(Refs, HklCmp);  }
-  /* if ins loader is passed and the hkl file has CELL and SFAC in it,
-  it will be initalised and if the ins_initialised is provided - it will be set
-  True if the CELL and SFAC are found
+  /* reads the HKL file, marking reflections after 000 or new line as omitted.
+  Returns all remaining information information as an Ins file or NULL
   */
-  bool LoadFromFile(const olxstr& FN, class TIns* ins = NULL,
-    bool* ins_initialised=NULL);
-  bool LoadFromStrings(const TCStrList& lines, class TIns* ins = NULL,
-    bool* ins_initialised = NULL);
+  olx_object_ptr<TIns> LoadFromFile(const olxstr& FN, bool get_ins);
+  olx_object_ptr<TIns> LoadFromStrings(const TCStrList& lines, bool get_ins);
   bool SaveToFile(const olxstr& FN);
   void UpdateRef(const TReflection& R);
   // returns reflections owned by this object
@@ -78,12 +72,6 @@ public:
     return AllRefs(R.GetHkl(), sg);
   }
   ConstPtrList<TReflection> AllRefs(const vec3i& idx, const smatd_list& sg);
-  bool HasCell() const {
-    return !(Cell.IsEmpty() || CellEsd.IsEmpty() || Radiation == 0);
-  }
-  const evecd &GetCell() const {  return Cell;  }
-  const evecd &GetCellEsd() const {  return CellEsd;  }
-  double GetRadiation() const {  return Radiation;  }
 //..............................................................................
   template <class Merger> void MergeInP1(TRefList& output) const {
     vec3i_list omits;

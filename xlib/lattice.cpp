@@ -1092,7 +1092,7 @@ void TLattice::MoveFragmentG(TSAtom& to, TSAtom& fragAtom)  {
 }
 //..............................................................................
 void TLattice::MoveToCenter()  {
-  if( IsGenerated() )  {
+  if (IsGenerated()) {
     TBasicApp::NewLogEntry(logError) <<
       "Cannot perform this operation on grown structure";
     return;
@@ -1100,29 +1100,29 @@ void TLattice::MoveToCenter()  {
   GetAsymmUnit().GetRefMod()->BeforeAUUpdate_();
   vec3d cnt(0.5),
     ocnt = GetAsymmUnit().Orthogonalise(cnt);
-  for( size_t i=0; i < Fragments.Count(); i++ )  {
+  for (size_t i = 0; i < Fragments.Count(); i++) {
     TNetwork* frag = Fragments[i];
     vec3d molCenter;
     size_t ac = 0;
-    for( size_t j=0; j < frag->NodeCount(); j++ )  {
-      if( frag->Node(j).IsDeleted() )  continue;
+    for (size_t j = 0; j < frag->NodeCount(); j++)  {
+      if (frag->Node(j).IsDeleted())  continue;
       molCenter += frag->Node(j).ccrd();
       ac++;
     }
-    if( ac == 0 )  continue;
+    if (ac == 0)  continue;
     molCenter /= ac;
     smatd* m = GetUnitCell().GetClosest(cnt, molCenter, true);
-    if( m == NULL )  continue;
+    if (m == NULL)  continue;
     double d1 = GetAsymmUnit().Orthogonalise(molCenter).DistanceTo(ocnt);
     double d2 = GetAsymmUnit().Orthogonalise(*m*molCenter).DistanceTo(ocnt);
-    if (olx_abs(d1-d2) < 1e-6) {
+    if (olx_abs(d1 - d2) < 1e-6) {
       delete m;
       continue;
     }
-    for( size_t j=0; j < frag->NodeCount(); j++ )  {
+    for (size_t j = 0; j < frag->NodeCount(); j++) {
       TSAtom& SA = frag->Node(j);
       SA.CAtom().ccrd() = *m * SA.CAtom().ccrd();
-      if( SA.CAtom().GetEllipsoid() != NULL )  {
+      if (SA.CAtom().GetEllipsoid() != NULL)  {
         *SA.CAtom().GetEllipsoid() =
           GetUnitCell().GetEllipsoid(m->GetContainerId(), SA.CAtom().GetId());
       }

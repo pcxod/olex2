@@ -269,7 +269,7 @@ void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
             cif.FindEntry("_shelx_hkl_file"));
           if (ci != NULL) {
             THklFile hkf;
-            hkf.LoadFromStrings(TCStrList(ci->lines));
+            hkf.LoadFromStrings(TCStrList(ci->lines), false);
             GetRM().SetReflections(hkf.RefList());
           }
         }
@@ -1015,7 +1015,7 @@ olxstr TXFile::LocateHklFile()  {
   HklFN = TEFile::ChangeFileExt(fn, "raw");
   if (TEFile::Existsi(olxstr(HklFN), HklFN)) {
     THklFile Hkl;
-    Hkl.LoadFromFile(HklFN);
+    Hkl.LoadFromFile(HklFN, false);
     HklFN = TEFile::ChangeFileExt(fn, "hkl");
     for (size_t i=0; i < Hkl.RefCount(); i++) {
       Hkl[i].SetI((double)olx_round(Hkl[i].GetI())/100.0);

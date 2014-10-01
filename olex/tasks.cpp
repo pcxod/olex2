@@ -73,8 +73,8 @@ void CellChangeTask::Run() {
   for (size_t i=0; i < 3; i++) {
     o << ' ' << TEValueD(au.GetAxes()[i], au.GetAxisEsds()[i]).ToString() <<
       ' ' << TEValueD(au.GetAngles()[i], au.GetAngleEsds()[i]).ToString();
-    n << ' ' << TEValueD(cell[i], esds[i]).ToString() <<
-      ' ' << TEValueD(cell[3+i], esds[3+i]).ToString();
+    n << ' ' << TEValueD(axes[i], axis_esd[i]).ToString() <<
+      ' ' << TEValueD(angles[i], angle_esd[i]).ToString();
   }
   bool use = TBasicApp::GetInstance().GetOptions().FindValue(
     "use_hkl_cell", TrueString()).ToBool();
@@ -93,10 +93,10 @@ void CellChangeTask::Run() {
   if (use) {
    TAsymmUnit &au1 =
      TXApp::GetInstance().XFile().LastLoader()->GetAsymmUnit();
-    au1.GetAxes() = au.GetAxes() = vec3d(cell[0], cell[1], cell[2]);
-    au1.GetAngles() = au.GetAngles() = vec3d(cell[3], cell[4], cell[5]);
-    au1.GetAxisEsds() = au.GetAxisEsds() = vec3d(esds[0], esds[1], esds[2]);
-    au1.GetAngleEsds() = au.GetAngleEsds() = vec3d(esds[3], esds[4], esds[5]);
+    au1.GetAxes() = au.GetAxes() = axes;
+    au1.GetAngles() = au.GetAngles() = angles;
+    au1.GetAxisEsds() = au.GetAxisEsds() = axis_esd;
+    au1.GetAngleEsds() = au.GetAngleEsds() = angle_esd;
     TBasicApp::NewLogEntry() <<
       "Updating cell parameters with value from HKL file";
   }

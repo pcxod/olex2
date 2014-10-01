@@ -66,7 +66,7 @@ void XLibMacros::macHklBrush(TStrObjList &Cmds, const TParamList &Options, TMacr
     return;
   }
   THklFile Hkl;
-  Hkl.LoadFromFile(HklFN);
+  Hkl.LoadFromFile(HklFN, false);
 
   TAsymmUnit& au = XApp.XFile().GetAsymmUnit();
   TSpaceGroup &sg = TSymmLib::GetInstance().FindSG(au);
