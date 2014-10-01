@@ -2335,7 +2335,9 @@ void TMainForm::macEditIns(TStrObjList &Cmds, const TParamList &Options, TMacroE
   dlg->Destroy();
 }
 //..............................................................................
-void TMainForm::macHklEdit(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+void TMainForm::macHklEdit(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
   TStopWatch sw(__FUNC__);
   olxstr HklFN = FXApp->XFile().LocateHklFile();
   if (!TEFile::Exists(HklFN)) {
@@ -2344,10 +2346,9 @@ void TMainForm::macHklEdit(TStrObjList &Cmds, const TParamList &Options, TMacroE
   }
   smatd_list matrices;
   FXApp->GetSymm(matrices);
-  TSpaceGroup& sg = FXApp->XFile().GetLastLoaderSG();
   sw.start("Loading HKL");
   THklFile Hkl;
-  Hkl.LoadFromFile(HklFN);
+  Hkl.LoadFromFile(HklFN, false);
   sw.start("Preparing input");
   TStrList SL;
   SL.Add("REM Please put \'-\' char in the front of reflections you wish to omit");
@@ -2625,18 +2626,16 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
       TEFile::DelFile(FXApp->GetInstanceDir()+"spacegroups.htm");
     }
     // special treatment of the kl files
-    if( TEFile::ExtractFileExt(file_n.file_name).Equalsi("hkl") )  {
-      if( !TEFile::Exists(TEFile::ChangeFileExt(file_n.file_name, "ins") ) )  {
+    if (TEFile::ExtractFileExt(file_n.file_name).Equalsi("hkl")) {
+      if (!TEFile::Exists(TEFile::ChangeFileExt(file_n.file_name, "ins"))) {
         THklFile hkl;
-        bool ins_initialised = false;
-        TIns* ins = (TIns*)FXApp->XFile().FindFormat("ins");
         sw.start("Loading HKL file");
-        hkl.LoadFromFile(file_n.file_name, ins, &ins_initialised);
-        if( !ins_initialised )  {
+        olx_object_ptr<TIns> hkl_ins = hkl.LoadFromFile(file_n.file_name, true);
+        if (!hkl_ins.is_valid()) {
           olxstr src_fn = TEFile::ChangeFileExt(file_n.file_name, "p4p");
-          if( !TEFile::Exists(src_fn) )
+          if (!TEFile::Exists(src_fn))
             src_fn = TEFile::ChangeFileExt(file_n.file_name, "crs");
-          if( !TEFile::Exists(src_fn) )  {
+          if (!TEFile::Exists(src_fn)) {
             Error.ProcessingError(__OlxSrcInfo,
               "could not initialise CELL/SFAC from the hkl file");
             return;
@@ -2644,7 +2643,9 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
           else
             file_n.file_name = src_fn;
         }
-        else  {
+        else {
+          TIns *ins = (TIns *)FXApp->XFile().FindFormat("ins");
+          ins->GetRM().Assign(hkl_ins().GetRM(), true);
           FXApp->XFile().SetLastLoader(ins);
           FXApp->XFile().LastLoaderChanged();
           // make sure tha SGE finds the related HKL
@@ -2652,12 +2653,12 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
           TMacroError er;
           Macros.ProcessMacro(olxstr("SGE '") <<
             TEFile::ChangeFileExt(file_n.file_name, "ins") << '\'', er);
-          if( !er.HasRetVal() || !er.GetRetObj< TEPType<bool> >()->GetValue() )  {
+          if (!er.HasRetVal() || !er.GetRetObj< TEPType<bool> >()->GetValue()) {
             olxstr
               s_inp("getuserinput(1, \'Please, enter the spacegroup\', \'')"),
               s_sg(s_inp);
             TSpaceGroup* sg = NULL;
-            while( sg == NULL )  {
+            while (sg == NULL) {
               processFunction(s_sg);
               sg = TSymmLib::GetInstance().FindGroupByName(s_sg);
               if( sg != NULL ) break;
@@ -2665,15 +2666,15 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
             }
             ins = (TIns*)FXApp->XFile().FindFormat("ins");
             ins->GetAsymmUnit().ChangeSpaceGroup(*sg);
-            if( ins->GetRM().GetUserContent().IsEmpty() )  {
+            if (ins->GetRM().GetUserContent().IsEmpty()) {
               s_inp = "getuserinput(1, \'Please, enter cell content\', \'C1')";
               processFunction(s_inp);
               ins->GetRM().SetUserFormula(s_inp);
             }
-            else  {
+            else {
               size_t sfac_count = ins->GetRM().GetUserContent().Count();
               TStrList unit;
-              for( size_t i=0; i < sfac_count; i++ ) {
+              for (size_t i=0; i < sfac_count; i++) {
                 unit.Add((sg->MatrixCount()+1)*
                   (sg->GetLattice().GetVectors().Count()+1));
               }

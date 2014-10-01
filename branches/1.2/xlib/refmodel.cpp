@@ -567,24 +567,27 @@ const TRefList& RefinementModel::GetReflections() const {
     HklFileID = hkl_src_id;
     THklFile hf(HKLF_mat);
     HklFileMat = HKLF_mat;
-    hf.LoadFromFile(HKLSource);
-    if (hf.HasCell()) {
+    olx_object_ptr<TIns> ins = hf.LoadFromFile(HKLSource, true);
+    if (ins.is_valid()) {
       evecd cell = evecd::FromAny(
         CompositeVector::Make(vec3d_list() << aunit.GetAxes() <<
           aunit.GetAngles()));
       evecd esd = evecd::FromAny(
         CompositeVector::Make(vec3d_list() << aunit.GetAxisEsds() <<
           aunit.GetAngleEsds()));
-      if (cell.DistanceTo(hf.GetCell()) > 1e-6 ||
-          esd.DistanceTo(hf.GetCellEsd()) > 1e-6 )
+      if (aunit.GetAxes().DistanceTo(ins().GetAsymmUnit().GetAxes()) > 1e-6 ||
+        aunit.GetAngles().DistanceTo(ins().GetAsymmUnit().GetAngles()) > 1e-6 ||
+        aunit.GetAxisEsds().DistanceTo(ins().GetAsymmUnit().GetAxisEsds()) > 1e-6 ||
+        aunit.GetAngleEsds().DistanceTo(ins().GetAsymmUnit().GetAngleEsds()))
       {
-        OnCellDifference.Execute(this, &hf);
+        OnCellDifference.Execute(this, &ins());
       }
     }
     SetReflections(hf.RefList());
     return _Reflections;
   }
-  catch(TExceptionBase& exc)  {
+  catch(TExceptionBase& exc) {
+    _Reflections.Clear();
     throw TFunctionFailedException(__OlxSourceInfo, exc);
   }
 }
@@ -1990,14 +1993,14 @@ void RefinementModel::BeforeAUUpdate_() {
     TBasicApp::NewLogEntry(logError) << "Not clean operation";
     atom_refs.Clear();
   }
-  olx_cset<ExplicitCAtomRef *> rs;
+  TPtrList<ExplicitCAtomRef> rs;
   for (size_t i = 0; i < InfoTables.Count(); i++) {
-    rs += InfoTables[i].GetAtoms().GetExplicit().GetObject();
+    rs.AddList(InfoTables[i].GetAtoms().GetExplicit().GetObject());
   }
   TPtrList<TSRestraintList> restraints = GetRestraints();
   for (size_t i = 0; i < restraints.Count(); i++) {
     for (size_t j = 0; j < restraints[i]->Count(); j++) {
-      rs += (*restraints[i])[j].GetAtoms().GetExplicit();
+      rs.AddList((*restraints[i])[j].GetAtoms().GetExplicit());
     }
   }
   for (size_t i = 0; i < rs.Count(); i++) {

@@ -411,6 +411,7 @@ PyObject* pyHklStat(PyObject* self, PyObject* args)  {
     return out;
   }
   catch(const TExceptionBase& e)  {
+    TBasicApp::NewLogEntry(logExceptionTrace) << e;
     return PythonExt::SetErrorMsg(PyExc_Exception, __OlxSourceInfo,
       e.GetException()->GetFullMessage());
   }

@@ -2215,12 +2215,16 @@ void XLibMacros::ChangeCell(const mat3d& tm, const TSpaceGroup& new_sg, const ol
   au.GetAxes()[0] = f2c[0].Length();  au.GetAxisEsds()[0] = sqrt(ax_err[0][0]);
   au.GetAxes()[1] = f2c[1].Length();  au.GetAxisEsds()[1] = sqrt(ax_err[1][1]);
   au.GetAxes()[2] = f2c[2].Length();  au.GetAxisEsds()[2] = sqrt(ax_err[2][2]);
-  au.GetAngles()[0] = acos(f2c[1].CAngle(f2c[2]))*180.0/M_PI;  au.GetAngleEsds()[0] = sqrt(an_err[0][0]);
-  au.GetAngles()[1] = acos(f2c[0].CAngle(f2c[2]))*180.0/M_PI;  au.GetAngleEsds()[1] = sqrt(an_err[1][1]);
-  au.GetAngles()[2] = acos(f2c[0].CAngle(f2c[1]))*180.0/M_PI;  au.GetAngleEsds()[2] = sqrt(an_err[2][2]);
+  au.GetAngles()[0] = acos(f2c[1].CAngle(f2c[2]))*180.0/M_PI;
+  au.GetAngleEsds()[0] = sqrt(an_err[0][0]);
+  au.GetAngles()[1] = acos(f2c[0].CAngle(f2c[2]))*180.0/M_PI;
+  au.GetAngleEsds()[1] = sqrt(an_err[1][1]);
+  au.GetAngles()[2] = acos(f2c[0].CAngle(f2c[1]))*180.0/M_PI;
+  au.GetAngleEsds()[2] = sqrt(an_err[2][2]);
   const mat3d old_cac = au.GetCartesianToCell();
   au.InitMatrices();
-  const mat3d elptm = mat3d::Transpose(au.GetCellToCartesian())*i_tm*mat3d::Transpose(old_cac);
+  const mat3d elptm = mat3d::Transpose(au.GetCellToCartesian())
+    *i_tm*mat3d::Transpose(old_cac);
   ematd J = TEllipsoid::GetTransformationJ(elptm),
     Jt = ematd::Transpose(J);
   for( size_t i=0; i < au.AtomCount(); i++ )  {
@@ -2238,19 +2242,20 @@ void XLibMacros::ChangeCell(const mat3d& tm, const TSpaceGroup& new_sg, const ol
     TEValueD(au.GetAngles()[2], au.GetAngleEsds()[2]).ToString();
   TBasicApp::NewLogEntry(logError) << "Cell esd's are estimated!";
   bool save = false;
-  if( !resHKL_FN.IsEmpty() )  {
+  if (!resHKL_FN.IsEmpty()) {
     olxstr hkl_fn(xapp.XFile().LocateHklFile());
-    if( !hkl_fn.IsEmpty() )  {
+    if (!hkl_fn.IsEmpty()) {
       THklFile hklf;
-      hklf.LoadFromFile(hkl_fn);
-      for( size_t i=0; i < hklf.RefCount(); i++ )
+      hklf.LoadFromFile(hkl_fn, false);
+      for (size_t i=0; i < hklf.RefCount(); i++)
         hklf[i].SetHkl((tm_t * vec3d(hklf[i].GetHkl())).Round<int>());
       hklf.SaveToFile(resHKL_FN);
       xapp.XFile().GetRM().SetHKLSource(resHKL_FN);
       save = true;
     }
-    else
+    else {
       TBasicApp::NewLogEntry(logError) << "Could not locate source HKL file";
+    }
   }
   else  {
     const mat3d hklf_mat = tm_t*xapp.XFile().LastLoader()->GetRM().GetHKLF_mat();
@@ -2263,7 +2268,9 @@ void XLibMacros::ChangeCell(const mat3d& tm, const TSpaceGroup& new_sg, const ol
     xapp.XFile().SaveToFile(xapp.XFile().GetFileName(), false);
 }
 //.............................................................................
-TSpaceGroup* XLibMacros_macSGS_FindSG(TPtrList<TSpaceGroup>& sgs, const olxstr& axis)  {
+TSpaceGroup* XLibMacros_macSGS_FindSG(TPtrList<TSpaceGroup>& sgs,
+  const olxstr& axis)
+{
   for( size_t i=0; i < sgs.Count(); i++ )
     if( sgs[i]->GetAxis().Compare(axis) == 0 )
       return sgs[i];
@@ -4039,7 +4046,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
         cetTable &t = Cif->AddLoopDef("_refln_index_h,_refln_index_k,_refln_index_l,"
           "_refln_F_squared_meas,_refln_F_squared_sigma");
         THklFile hkl;
-        hkl.LoadFromFile(hkl_src);
+        hkl.LoadFromFile(hkl_src, false);
         bool batch_set = false;
         if (hkl.RefCount() > 0 && hkl[0].IsBatchSet()) {
           batch_set = hkl[0].IsBatchSet();
@@ -5946,7 +5953,7 @@ void XLibMacros::macHklAppend(TStrObjList &Cmds, const TParamList &Options,
   }
   THklFile Hkl;
   size_t c = 0;
-  Hkl.LoadFromFile(hklSrc);
+  Hkl.LoadFromFile(hklSrc, false);
   if( Options.IsEmpty() )  {
     for( size_t i=0; i < Hkl.RefCount(); i++ )  {
       if( Hkl[i].IsOmitted() )  {
@@ -6010,7 +6017,7 @@ void XLibMacros::macHklExclude(TStrObjList &Cmds, const TParamList &Options,
   }
   THklFile Hkl;
   size_t c = 0;
-  Hkl.LoadFromFile(hklSrc);
+  Hkl.LoadFromFile(hklSrc, false);
   if( combine )  {
     for( size_t i=0; i < Hkl.RefCount(); i++ )  {
       if( !Hkl[i].IsOmitted() )  {

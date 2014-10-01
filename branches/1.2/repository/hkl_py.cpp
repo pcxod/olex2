@@ -29,16 +29,15 @@ PyObject* hkl_py::Read(PyObject* self, PyObject* args)  {
       olxstr("File does not exist: ") << fn);
   }
   THklFile hkl;
-  bool res = false;
   olxstr error;
-  try  {  res = hkl.LoadFromFile(fn);  }
-  catch( const TExceptionBase& e )  {  error = e.GetException()->GetError();  }
-  if( !res )  {
+  try  {  hkl.LoadFromFile(fn, false);  }
+  catch (const TExceptionBase& e)  {
     return PythonExt::SetErrorMsg(PyExc_IOError, __OlxSourceInfo,
-      olxstr("Invalid HKL file: ") << fn << '\n' << error);
+      olxstr("Invalid HKL file: ") << fn << '\n' <<
+      e.GetException()->GetError());
   }
-  PyObject* rv = PyTuple_New( hkl.RefCount() );
-  for( size_t i=0; i < hkl.RefCount(); i++ )  {
+  PyObject* rv = PyTuple_New(hkl.RefCount());
+  for (size_t i=0; i < hkl.RefCount(); i++) {
     PyObject* ref = PyTuple_New(7);
     PyTuple_SetItem(rv, i, ref);
     PyTuple_SetItem(ref, 0, Py_BuildValue("i", hkl[i].GetH()));

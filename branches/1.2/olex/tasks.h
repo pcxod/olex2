@@ -38,9 +38,11 @@ struct P4PTask : public IOlxTask {
 
 struct CellChangeTask : public IOlxTask {
   olxstr hklsrc;
-  evecd cell, esds;
-  CellChangeTask(const olxstr &hklsrc_, const evecd &cell_, const evecd &esds_)
-    : cell(cell_), esds(esds_), hklsrc(hklsrc_)
+  vec3d axes, axis_esd, angles, angle_esd;
+  CellChangeTask(const olxstr &hklsrc_, const TAsymmUnit &au)
+    : hklsrc(hklsrc_),
+    axes(au.GetAxes()), axis_esd(au.GetAxisEsds()),
+    angles(au.GetAngles()), angle_esd(au.GetAngleEsds())
   {}
 
   virtual void Run();

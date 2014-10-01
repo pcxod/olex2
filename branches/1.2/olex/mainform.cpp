@@ -343,6 +343,7 @@ TMainForm::TMainForm(TGlXApp *Parent)
   PythonExt::Init(this).Register(&TMainForm::PyInit);
   PythonExt::GetInstance()->Register(&OlexPyCore::PyInit);
   PythonExt::GetInstance()->Register(&hkl_py::PyInit);
+  PythonExt::GetInstance()->Register(&TXGrid::PyInit);
   //TOlxVars::Init().OnVarChange->Add(this, ID_VarChange);
   FGlCanvas = NULL;
   FXApp = NULL;
@@ -1981,11 +1982,11 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
     processMacro("html.update");
   }
   else if (MsgId == ID_CellChanged) {
-    if (Data != NULL && EsdlInstanceOf(*Data, THklFile) ) {
-       const THklFile &hf = *dynamic_cast<const THklFile*>(Data);
+    if (Data != NULL && EsdlInstanceOf(*Data, TIns) ) {
+       const TIns *hf = dynamic_cast<const TIns*>(Data);
       RunWhenVisibleTasks.Add(
         new CellChangeTask(FXApp->XFile().GetRM().GetHKLSource(),
-          hf.GetCell(), hf.GetCellEsd()));
+        hf->GetAsymmUnit()));
     }
   }
   return res;
@@ -3087,12 +3088,21 @@ void TMainForm::QPeakTable(bool TableDef, bool Create)  {
 //..............................................................................
 void TMainForm::BadReflectionsTable(bool TableDef, bool Create)  {
   static const olxstr BadRefsFile("badrefs.htm");
-  if( !Create ||
-    (!FXApp->CheckFileType<TIns>() &&
-      !(FXApp->XFile().HasLastLoader() && FXApp->XFile().LastLoader()->IsNative())) )
+  if (!Create ||
+     (!FXApp->CheckFileType<TIns>() &&
+      !(FXApp->XFile().HasLastLoader() &&
+        FXApp->XFile().LastLoader()->IsNative())))
   {
     TFileHandlerManager::AddMemoryBlock(BadRefsFile, NULL, 0, plStructure);
     return;
+  }
+
+  smatd_list matrices;
+  FXApp->GetSymm(matrices);
+  THklFile Hkl;
+  olxstr HklFN = FXApp->XFile().LocateHklFile();
+  if (TEFile::Exists(HklFN)) {
+    Hkl.LoadFromFile(HklFN, false);
   }
   bool sort_abs = TOlxVars::FindValue(
     "olex2.disagreeable.sort_abs", TrueString()).ToBool();
@@ -3128,8 +3138,13 @@ void TMainForm::BadReflectionsTable(bool TableDef, bool Create)  {
         bad_refs[i].index[1] << ' ' << bad_refs[i].index[2] << "\'>" <<
         "omit" << "</a>";
     }
-    Table[i][5].stream(' ') << "<a href='HklEdit" << bad_refs[i].index[0]
-      << bad_refs[i].index[1] << bad_refs[i].index[2] << "'>Edit...</a>";
+    if (Hkl.AllRefs(bad_refs[i].index, matrices).Count() > 1) {
+      Table[i][5].stream(' ') << "<a href='HklEdit" << bad_refs[i].index[0]
+        << bad_refs[i].index[1] << bad_refs[i].index[2] << "'>Edit...</a>";
+    }
+    else {
+      Table[i][5] = "---";
+    }
   }
   TStrList Output = Table.CreateHTMLList(EmptyString(), true, false, TableDef);
   Output.Add("Error = sig(D)"
