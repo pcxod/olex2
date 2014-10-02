@@ -15,7 +15,6 @@ bool InfoTab::operator == (const InfoTab &it) const {
   // planes...
   if (Type == infotab_mpla) return false;
   if (atoms.GetResi() != it.atoms.GetResi()) return false;
-  if (atoms.Count() != it.atoms.Count())  return false;
   TTypeList<ExplicitCAtomRef> ra = atoms.ExpandList(RM);
   TTypeList<ExplicitCAtomRef> rb = it.atoms.ExpandList(RM);
   if (ra.Count() != rb.Count()) return false;

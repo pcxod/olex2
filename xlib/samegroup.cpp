@@ -18,6 +18,7 @@ TSameGroup::TSameGroup(uint16_t id, TSameGroupList& parent)
 {}
 //.............................................................................
 void TSameGroup::SetAtomIds(uint16_t id) {
+  if (!Atoms.IsExplicit()) return;
   TAtomRefList atoms = Atoms.ExpandList(Parent.RM);
   for (size_t i = 0; i < atoms.Count(); i++) {
     atoms[i].GetAtom().SetSameId(id);
@@ -151,10 +152,12 @@ bool TSameGroup::AreAllAtomsUnique() const {
 //.............................................................................
 //.............................................................................
 void TSameGroupList::Release(TSameGroup& sg)  {
-  if( &sg.GetParent() != this ) {
+  if (&sg.GetParent() != this) {
     throw TInvalidArgumentException(__OlxSourceInfo,
       "SAME group parent differs");
   }
+  if (Groups.Count() <= sg.GetId() || &Groups[sg.GetId()] != &sg)
+    return;
   Groups.Release(sg.GetId());
   if (sg.GetParentGroup() != NULL)
     sg.GetParentGroup()->RemoveDependent(sg);

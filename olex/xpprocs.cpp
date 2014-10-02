@@ -2156,14 +2156,15 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options,
     if (olx_is_valid_index(CAtoms[i]->GetSameId()))  {
       TSameGroup& sg = rm.rSAME[CAtoms[i]->GetSameId()];
       if (sg.GetParentGroup() != NULL)
-        released.sameList.AddUnique(sg.GetParentGroup());
-      released.sameList.AddUnique(sg);
+        released.sameList.Add(sg.GetParentGroup());
+      released.sameList.Add(sg);
       for (size_t j = 0; j < sg.DependentCount(); j++) {
-        released.sameList.AddUnique(sg.GetDependent(j));
+        released.sameList.Add(sg.GetDependent(j));
       }
     }
   }
   // process SAME's
+  ACollectionItem::Unify(released.sameList);
   for (size_t i = 0; i < released.sameList.Count(); i++)  {
     TSameGroup &sg = *released.sameList[i];
     TAtomRefList atoms = sg.GetAtoms().ExpandList(rm);
@@ -2237,6 +2238,7 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options,
     &released);
   for (size_t i = 0; i < released.restraints.Count(); i++)
     released.restraints[i]->GetParent().Release(*released.restraints[i]);
+  ACollectionItem::Unify(released.sameList);
   for (size_t i = 0; i < released.sameList.Count(); i++)
     released.sameList[i]->GetParent().Release(*released.sameList[i]);
   au.Release(TPtrList<TResidue>(residues_to_release));
