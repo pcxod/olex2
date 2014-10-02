@@ -495,6 +495,57 @@ PyObject* pySetBadReflections(PyObject* self, PyObject* args)  {
   return PythonExt::PyNone();
 }
 //..............................................................................
+#if defined(__WIN32__)
+struct olxProcessWindow {
+  HWND hwnd;
+  DWORD pid;
+  olxProcessWindow(DWORD pid) : hwnd(0), pid(pid) {}
+};
+BOOL CALLBACK olx_EnumWindowsProc(HWND hwnd, LPARAM lParam) {
+  olxch bf[32];
+  GetWindowText(hwnd, &bf[0], 32);
+  olxstr wn(&bf[0]);
+  if (!(wn.Equalsi("P.L.A.T.O.N") || wn.Equalsi("P.L.U.T.O.N"))) {
+    return TRUE;
+  }
+  DWORD pid;
+  GetWindowThreadProcessId(hwnd, &pid);
+  olxProcessWindow *pw = (olxProcessWindow*)lParam;
+  if (pid == pw->pid) {
+    pw->hwnd = hwnd;
+    return FALSE;
+  }
+  return TRUE;
+}
+#endif
+PyObject* pyOnPlatonRun(PyObject* self, PyObject* args) {
+#if defined(__WIN32__)
+  DWORD pid;
+  if (!PythonExt::ParseTuple(args, "i", &pid)) {
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "i");
+  }
+  olxProcessWindow pwt(pid);
+  size_t cnt = 0;
+  while (true) {
+    EnumWindows(&olx_EnumWindowsProc, (LPARAM)&pwt);
+    if (pwt.hwnd != NULL) {
+      break;
+    }
+    olx_sleep(50);
+    if (++cnt >= 20) {
+      return PythonExt::PyFalse();
+    }
+  }
+  HMENU  hMenu = GetSystemMenu(pwt.hwnd, FALSE);
+  if (hMenu != NULL) {
+    EnableMenuItem(hMenu, SC_CLOSE,
+      MF_BYCOMMAND | (MF_DISABLED | MF_GRAYED));
+  }
+  return PythonExt::PyTrue();
+#endif
+  return PythonExt::PyFalse();
+}
+//..............................................................................
 static PyMethodDef CORE_Methods[] = {
   {"UpdateRepository", pyUpdateRepository, METH_VARARGS,
   "Updates specified local repository from the http one. Takes the following "
@@ -538,7 +589,9 @@ static PyMethodDef CORE_Methods[] = {
     "Sets a list of bad reflections as iterable of (h k l Fo Fc esd)"},
   {"MatrixToString", pyMatrixToString, METH_VARARGS,
     "Converts a symmetry operation into string representation"},
-  {NULL, NULL, 0, NULL}
+  { "OnPlatonRun", pyOnPlatonRun, METH_VARARGS,
+    "Deals with orphaned Platon processes" },
+  { NULL, NULL, 0, NULL }
    };
 
 void OlexPyCore::PyInit()  {
