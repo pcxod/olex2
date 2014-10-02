@@ -299,8 +299,11 @@ void TIns::_ProcessSame(ParseContext& cx)  {
       sg1.GetAtoms().Build(toks.Text(' ', from_ind), resi);
       sg1.Esd12 = esd1;
       sg1.Esd13 = esd2;
-      if (sg1.GetAtoms().IsExplicit() && sg1.GetAtoms().Count() > max_atoms)
-        max_atoms = sg1.GetAtoms().Count();
+      if (sg1.GetAtoms().IsExplicit()) {
+        TTypeList<ExplicitCAtomRef> atoms = sg1.GetAtoms().ExpandList(cx.rm);
+        if (atoms.Count() > max_atoms)
+          max_atoms = atoms.Count();
+      }
     }
     // now process the reference group
     if (max_atoms != 0) {
@@ -1666,7 +1669,7 @@ olxstr TIns::RestraintToString(const TSimpleRestraint &sr,
     return EmptyString();
   if (sr.GetAtoms().IsExplicit()) {
     // has lower atom count limit?
-    if ((int)sr.GetAtoms().Count() < ri.atom_limit )
+    if ((int)sr.GetAtoms().ExpandList(rm).Count() < ri.atom_limit)
       return EmptyString();
   }
   bool def = rm.IsDEFSSet() ? rm.IsDefaultRestraint(sr) :

@@ -142,7 +142,9 @@ public:
   IAtomRef &GetStart() { return start;  }
   IAtomRef &GetEnd() { return end; }
   virtual bool IsExpandable() const { return true; }
-  virtual bool IsExplicit() const {  return false;  }
+  virtual bool IsExplicit() const {
+    return start.IsExplicit() && end.IsExplicit();
+  }
   // * is special char
   virtual olxstr GetExpression(TResidue *r) const {
     return olxstr(start.GetExpression(r) << ' ' << op << ' ' <<
@@ -227,9 +229,6 @@ public:
   void UpdateResi();
   void Clear() { refs.Clear(); }
   bool IsEmpty() const { return refs.IsEmpty(); }
-  size_t Count() const { return refs.Count(); }
-  IAtomRef &GetRef(size_t i) const { return refs[i]; }
-  IAtomRef &operator [] (size_t i) const { return refs[i]; }
   AtomRefList &Validate(size_t group_size = InvalidSize);
   void Assign(const AtomRefList &arl);
   void ToDataItem(TDataItem &di) const;
