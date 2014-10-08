@@ -59,6 +59,8 @@ public:
   void UpdateResi() { atoms.UpdateResi(); }
   // this is called internally by the RM
   void OnAUUpdate() { atoms.OnAUUpdate();  }
+  void BeginAUSort() { atoms.BeginAUSort(); }
+  void EndAUSort() { atoms.EndAUSort(); }
 
   AtomRefList& GetAtoms() {  return atoms;  }
   const AtomRefList& GetAtoms() const {  return atoms;  }

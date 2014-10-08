@@ -294,6 +294,59 @@ struct FunctionAccessor {
   }
 };
 
+struct ComplexAccessor {
+  template <class acc1_t, class acc2_t>
+  class TComplexAccessor {
+    acc1_t acc1;
+    acc2_t acc2;
+  public:
+    TComplexAccessor(const acc1_t &a1, const acc2_t &a2)
+      : acc1(a1), acc2(a2)
+    {}
+    typedef typename acc2_t::return_type return_type;
+    template <typename i_t>
+    const return_type& operator ()(const i_t& item) const {
+      return acc2(acc1(item));
+    }
+    template <typename i_t>
+    return_type& operator ()(i_t& item) const {
+      return acc2(acc1(item));
+    }
+  };
+
+  template <class acc1_t, class acc2_t>
+  class TComplexAccessorP {
+    acc1_t acc1;
+    acc2_t acc2;
+  public:
+    TComplexAccessorP(const acc1_t &a1, const acc2_t &a2)
+      : acc1(a1), acc2(a2)
+    {}
+    typedef typename acc2_t::return_type return_type;
+    template <typename i_t>
+    return_type operator ()(const i_t& item) const {
+      return acc2(acc1(item));
+    }
+    template <typename i_t>
+    return_type operator ()(i_t& item) const {
+      return acc2(acc1(item));
+    }
+  };
+  // for accessors returning references like const int &f()
+  template <class acc1_t, class acc2_t>
+  static TComplexAccessor<acc1_t, acc2_t>
+    Make(const acc1_t &a1, const acc2_t &a2) {
+      return TComplexAccessor<acc1_t, acc2_t>(a1, a2);
+    }
+  // for accessors returning instances like int f()
+  template <class acc1_t, class acc2_t>
+  static TComplexAccessorP<acc1_t, acc2_t>
+    MakeP(const acc1_t &a1, const acc2_t &a2) {
+      return TComplexAccessorP<acc1_t, acc2_t>(a1, a2);
+    }
+};
+
+
 struct IndexAccessor {
   template <typename data_list_t>
   struct ConstIndexAccessor_  {

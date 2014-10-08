@@ -175,6 +175,7 @@ public:
     return NewResidue(RClass, number, number);
   }
   size_t ResidueCount() const {  return Residues.Count()+1;  }
+  /* 0 - main residue */
   TResidue& GetResidue(size_t i) const {
     return (i==0) ? const_cast<TAsymmUnit*>(this)->MainResidue : Residues[i-1];
   }

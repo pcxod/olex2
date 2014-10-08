@@ -37,6 +37,10 @@ public:
   int16_t GetId() const { return Id; }
 
   void Assign(const TSameGroup& sg);
+  // this is called internally by the RM
+  void OnAUUpdate() { Atoms.OnAUUpdate(); }
+  void BeginAUSort() { Atoms.BeginAUSort(); }
+  void EndAUSort() { Atoms.EndAUSort(); }
 
   void Clear() {
     SetAtomIds(~0);
@@ -106,11 +110,18 @@ public:
   TSameGroup& operator [] (size_t i) { return Groups[i]; }
   const TSameGroup& operator [] (size_t i) const { return Groups[i]; }
   size_t Count() const { return Groups.Count(); }
+  // searches a group by the content
+  TSameGroup *Find(const TSameGroup &g) const;
   void Clear()  { Groups.Clear(); }
   void Assign(const TSameGroupList& sl);
   void Release(TSameGroup& sg);
   void Restore(TSameGroup& sg);
   void Delete(const TPtrList <TSameGroup> &groups);
+  // this is called internally by the RM
+  void OnAUUpdate();
+  void BeginAUSort();
+  void SortGroupContent();
+  void EndAUSort();
 
   void ToDataItem(TDataItem& item) const;
 #ifdef _PYTHON

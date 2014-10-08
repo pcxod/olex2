@@ -105,8 +105,9 @@ public:
   }
 //..............................................................................
   TTypeListExt &TakeOver(TTypeListExt& l, bool do_delete=false)  {
+    Clear();
     List.TakeOver(l.List);
-    if( do_delete )  delete &l;
+    if (do_delete)  delete &l;
     return *this;
   }
 //..............................................................................

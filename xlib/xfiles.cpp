@@ -377,8 +377,11 @@ void TXFile::UpdateAsymmUnit()  {
 //..............................................................................
 void TXFile::Sort(const TStrList& ins) {
   if (FLastLoader == NULL) return;
-  if (!FLastLoader->IsNative())
+  if (!FLastLoader->IsNative()) {
     UpdateAsymmUnit();
+  }
+  GetRM().BeforeAUSort_();
+
   TStrList labels;
   TCAtomPList &list = GetAsymmUnit().GetResidue(0).GetAtomList();
   size_t moiety_index = InvalidIndex, h_cnt=0, del_h_cnt = 0, free_h_cnt = 0;
@@ -403,7 +406,7 @@ void TXFile::Sort(const TStrList& ins) {
     }
   }
   try {
-    AtomSorter::CombiSort cs;
+    AtomSorter::CombiSort acs;
     olxstr sort;
     for (size_t i=0; i < ins.Count(); i++) {
       if (ins[i].CharAt(0) == '+')
@@ -419,78 +422,93 @@ void TXFile::Sort(const TStrList& ins) {
       label_swap = false;
     for (size_t i=0; i < sort.Length(); i++) {
       if (sort.CharAt(i) == 'm')
-        cs.sequence.AddNew(&AtomSorter::atom_cmp_Mw);
+        acs.sequence.AddNew(&AtomSorter::atom_cmp_Mw);
       else if (sort.CharAt(i) == 'z')
-        cs.sequence.AddNew(&AtomSorter::atom_cmp_Z);
+        acs.sequence.AddNew(&AtomSorter::atom_cmp_Z);
       else if (sort.CharAt(i) == 'l')
-        cs.sequence.AddNew(&AtomSorter::atom_cmp_Label);
+        acs.sequence.AddNew(&AtomSorter::atom_cmp_Label);
       else if (sort.CharAt(i) == 'p')
-        cs.sequence.AddNew(&AtomSorter::atom_cmp_Part);
+        acs.sequence.AddNew(&AtomSorter::atom_cmp_Part);
       else if (sort.CharAt(i) == 'h')
         keeph = false;
       else if (sort.CharAt(i) == 's')
-        cs.sequence.AddNew(&AtomSorter::atom_cmp_Suffix);
+        acs.sequence.AddNew(&AtomSorter::atom_cmp_Suffix);
       else if (sort.CharAt(i) == 'n')
-        cs.sequence.AddNew(&AtomSorter::atom_cmp_Number);
+        acs.sequence.AddNew(&AtomSorter::atom_cmp_Number);
+      else if (sort.CharAt(i) == 'x')
+        acs.sequence.AddNew(&AtomSorter::atom_cmp_MoietySize);
       else if (sort.CharAt(i) == 'f')
         insert_at_fisrt_label = true;
       else if (sort.CharAt(i) == 'w')
         label_swap = true;
     }
-    if (!cs.sequence.IsEmpty()) {
+    if (!acs.sequence.IsEmpty()) {
       if (!labels.IsEmpty()) {
-        for (size_t i=0; i < cs.sequence.Count(); i++)
-          cs.sequence[i].AddExceptions(labels);
+        for (size_t i=0; i < acs.sequence.Count(); i++)
+          acs.sequence[i].AddExceptions(labels);
       }
-      AtomSorter::Sort(list, cs);
-      if (label_swap)
-        AtomSorter::ReorderByName(list, labels);
-      else
-        AtomSorter::SortByName(list, labels, insert_at_fisrt_label);
+      AtomSorter::Sort(list, acs);
+    }
+    if (label_swap) {
+      AtomSorter::ReorderByName(list, labels);
     }
     else {
-      if (label_swap)
-        AtomSorter::ReorderByName(list, labels);
-      else
-        AtomSorter::SortByName(list, labels, insert_at_fisrt_label);
+      AtomSorter::SortByName(list, labels, insert_at_fisrt_label);
     }
     labels.Clear();
-    if( moiety_index != InvalidIndex )  {
+    if (moiety_index != InvalidIndex) {
+      MoietySorter::CombiSort mcs;
+      TTypeList<MoietySorter::moiety_t> moieties =
+        MoietySorter::SplitIntoMoieties(list);
       sort.SetLength(0);
-      if( moiety_index+1 < ins.Count() )  {
-        for( size_t i=moiety_index+1; i < ins.Count(); i++ )  {
-          if( ins[i].CharAt(0) == '+' )
+      if (moiety_index + 1 < ins.Count()) {
+        for (size_t i = moiety_index + 1; i < ins.Count(); i++) {
+          if (ins[i].CharAt(0) == '+')
             sort << ins[i].SubStringFrom(1);
           else
             labels.Add(ins[i]);
         }
-        for( size_t i=0; i < sort.Length(); i++ )  {
-          if( sort.CharAt(i) == 's' )
-            MoietySorter::SortBySize(list);
-          else if( sort.CharAt(i) == 'h' )
-            MoietySorter::SortByHeaviestElement(list);
-          else if( sort.CharAt(i) == 'm' )
-            MoietySorter::SortByWeight(list);
+        for (size_t i = 0; i < sort.Length(); i++) {
+          if (sort.CharAt(i) == 'l')
+            mcs.sequence.Add(&MoietySorter::moiety_cmp_label);
+          if (sort.CharAt(i) == 's')
+            mcs.sequence.Add(&MoietySorter::moiety_cmp_size);
+          else if (sort.CharAt(i) == 'h')
+            mcs.sequence.Add(&MoietySorter::moiety_cmp_heaviest);
+          else if (sort.CharAt(i) == 'm')
+            mcs.sequence.Add(&MoietySorter::moiety_cmp_mass);
         }
-        if( !labels.IsEmpty() )
-          MoietySorter::SortByMoietyAtom(list, labels);
+        if (!mcs.sequence.IsEmpty()) {
+          QuickSorter::SortMF(moieties, mcs, &MoietySorter::CombiSort::moiety_cmp);
+        }
       }
-      else
-        MoietySorter::CreateMoieties(list);
+      if (!labels.IsEmpty()) {
+        MoietySorter::ReoderByMoietyAtom(moieties, labels);
+      }
+      MoietySorter::UpdateList(list, moieties);
     }
-    if( keeph )
-      AtomSorter::KeepH(list,GetLattice(), AtomSorter::atom_cmp_Label);
+    if (keeph) {
+      AtomSorter::KeepH(list, GetAsymmUnit(), AtomSorter::atom_cmp_Label);
+    }
   }
   catch(const TExceptionBase& exc)  {
     TBasicApp::NewLogEntry(logError) << exc.GetException()->GetError();
   }
-  if( !FLastLoader->IsNative() )  {
+  list.ForEach(ACollectionItem::IndexTagSetter());
+  GetRM().rSAME.SortGroupContent();
+  TSizeList indices = TIns::DrySave(list);
+  if (indices.Count() != list.Count()) {
+    throw TFunctionFailedException(__OlxSourceInfo, "assert");
+  }
+  list.Rearrange(indices);
+  if (!FLastLoader->IsNative()) {
     AtomSorter::SyncLists(list,
       FLastLoader->GetAsymmUnit().GetResidue(0).GetAtomList());
     FLastLoader->GetAsymmUnit().ComplyToResidues();
   }
   // this changes Id's !!! so must be called after the SyncLists
   GetAsymmUnit().ComplyToResidues();
+  GetRM().AfterAUSort_();
   // 2010.11.29, ASB bug fix for ADPS on H...
   GetUnitCell().UpdateEllipsoids();
   GetLattice().RestoreADPs(false);
