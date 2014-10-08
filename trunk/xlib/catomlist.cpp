@@ -298,35 +298,35 @@ size_t ListIAtomRef::Expand(const RefinementModel& rm, TAtomRefList& res,
   TResidue& _resi) const
 {
   TAtomRefList boundaries;
-  if( start.Expand(rm, boundaries, _resi) != 1 )    return 0;
-  if( end.Expand(rm, boundaries, _resi) != 1 )    return 0;
-  if( boundaries[0].GetMatrix() != boundaries[1].GetMatrix() )
+  if (start.Expand(rm, boundaries, _resi) != 1)  return 0;
+  if (end.Expand(rm, boundaries, _resi) != 1)  return 0;
+  if (boundaries[0].GetMatrix() != boundaries[1].GetMatrix())
     return 0;
-  if( boundaries[0].GetAtom().GetResiId() != boundaries[1].GetAtom().GetResiId() )
+  if (boundaries[0].GetAtom().GetResiId() != boundaries[1].GetAtom().GetResiId())
     return 0;
   TResidue& resi = (boundaries[0].GetAtom().GetResiId() == _resi.GetId()
-    ? _resi : rm.aunit.GetResidue(boundaries[0].GetAtom().GetResiId()) );
+    ? _resi : rm.aunit.GetResidue(boundaries[0].GetAtom().GetResiId()));
   size_t si = resi.IndexOf(boundaries[0].GetAtom());
   size_t ei = resi.IndexOf(boundaries[1].GetAtom());
   // would be odd, since expansion worked...
-  if( si == InvalidIndex || ei == InvalidIndex )
+  if (si == InvalidIndex || ei == InvalidIndex)
     return 0;
-  if( op == '>' && si <= ei )  {
+  if (op == '>' && si <= ei) {
     size_t ac = 0;
-    for( size_t i=si; i <= ei; i++ )  {
-      if( resi[i].IsDeleted() || resi[i].GetType().z < 2 )  continue;
+    for (size_t i=si; i <= ei; i++) {
+      if (resi[i].IsDeleted() || resi[i].GetType().z < 2) continue;
       res.Add(new ExplicitCAtomRef(resi[i], boundaries[0].GetMatrix()));
       ac++;
     }
     return ac;
   }
-  if( op == '<' && si >= ei )  {
+  if (op == '<' && si >= ei) {
     size_t ac = 0;
-    for( size_t i=si; i >= ei; i-- )  {
-      if( resi[i].IsDeleted() || resi[i].GetType().z < 2 )  continue;
+    for (size_t i=si; i >= ei; i--) {
+      if (resi[i].IsDeleted() || resi[i].GetType().z < 2) continue;
       res.Add(new ExplicitCAtomRef(resi[i], boundaries[0].GetMatrix()));
       ac++;
-      if( i == 0 )  break;
+      if (i == 0) break;
     }
     return ac;
   }
@@ -460,21 +460,13 @@ TAtomRefList::const_list_type AtomRefList::ExpandList(
   return rv;
 }
 //.............................................................................
-bool AtomRefList::IsExpandable(const RefinementModel& rm,
-  size_t group_size) const
-{
-  if( !Valid )  return false;
-  TPtrList<TResidue> residues = rm.aunit.FindResidues(residue);
-  size_t ac = 0;
-  for( size_t i=0; i < residues.Count(); i++ )  {
-    TAtomRefList res;
-    for( size_t j=0; j < refs.Count(); j++ )
-      refs[j].Expand(rm, res, *residues[i]);
-    if (group_size != InvalidSize)
-      EnsureAtomGroups(rm, res, group_size);
-    ac += res.Count();
+bool AtomRefList::IsExpandable() const {
+  if (!Valid) return false;
+  for (size_t i = 0; i < refs.Count(); i++) {
+    if (refs[i].IsExpandable())
+      return true;
   }
-  return ac != 0;
+  return false;
 }
 //.............................................................................
 void AtomRefList::Assign(const AtomRefList &arl) {
@@ -591,20 +583,40 @@ TPtrList<ExplicitCAtomRef>::const_list_type AtomRefList::GetExplicit() const {
   for (size_t i = 0; i < refs.Count(); i++) {
     IAtomRef &r = refs[i];
     if (r.IsExplicit()) {
-      st.Add(&dynamic_cast<ExplicitCAtomRef&>(r));
-    }
-    else {
-      ListIAtomRef *lr = dynamic_cast<ListIAtomRef *>(&r);
-      if (lr == 0) continue;
-      if (lr->GetStart().IsExplicit()) {
-        st.Add(&dynamic_cast<ExplicitCAtomRef&>(lr->GetStart()));
+      if (r.IsExpandable()) {
+        ListIAtomRef *lr = dynamic_cast<ListIAtomRef *>(&r);
+        if (lr == 0) continue;
+        if (lr->GetStart().IsExplicit()) {
+          st.Add(&dynamic_cast<ExplicitCAtomRef&>(lr->GetStart()));
+        }
+        if (lr->GetEnd().IsExplicit()) {
+          st.Add(&dynamic_cast<ExplicitCAtomRef&>(lr->GetEnd()));
+        }
       }
-      if (lr->GetEnd().IsExplicit()) {
-        st.Add(&dynamic_cast<ExplicitCAtomRef&>(lr->GetEnd()));
+      else {
+        st.Add(&dynamic_cast<ExplicitCAtomRef&>(r));
       }
     }
   }
   return st;
+}
+//.............................................................................
+AtomRefList &AtomRefList::ConvertToExplicit() {
+  if (!IsExplicit()) {
+    throw TInvalidArgumentException(__OlxSourceInfo, "list type");
+  }
+  TTypeList<IAtomRef> nrefs;
+  for (size_t i = 0; i < refs.Count(); i++) {
+    TAtomRefList lrefs;
+    refs[i].Expand(rm, lrefs, rm.aunit.GetResidue(0));
+    nrefs.SetCapacity(nrefs.Count() + lrefs.Count());
+    for (size_t j = 0; j < lrefs.Count(); j++) {
+      nrefs.Add(lrefs[j]);
+    }
+    lrefs.ReleaseAll();
+  }
+  refs.TakeOver(nrefs);
+  return *this;
 }
 //.............................................................................
 void AtomRefList::OnAUUpdate() {
@@ -633,3 +645,61 @@ void AtomRefList::OnAUUpdate() {
   }
 
 }
+//.............................................................................
+void AtomRefList::BeginAUSort() {
+  if (!IsExplicit()) return;
+  ConvertToExplicit();
+  expression = BuildExpression(NULL);
+}
+//.............................................................................
+void AtomRefList::EndAUSort() {
+  if (!IsExplicit() || refs.Count() <= 3) return;
+  size_t start_id = ((ExplicitCAtomRef &)refs[0]).GetAtom().GetId(),
+    end_id = ((ExplicitCAtomRef &)refs.GetLast()).GetAtom().GetId();
+
+  if (start_id < end_id) {
+    if ((end_id - start_id) != (refs.Count()-1))
+      return;
+    for (size_t i = 1; i < refs.Count(); i++) {
+      if (((ExplicitCAtomRef &)refs[i]).GetAtom().GetId() != start_id + i) {
+        return;
+      }
+    }
+  }
+  else {
+    if ((start_id - end_id) != (refs.Count() - 1))
+      return;
+    for (size_t i = 1; i < refs.Count(); i++) {
+      if (((ExplicitCAtomRef &)refs[i]).GetAtom().GetId() != start_id - i) {
+        return;
+      }
+    }
+  }
+  ListIAtomRef *list = new ListIAtomRef(refs[0], refs.GetLast(),
+    (start_id < end_id) ? '>' : '<');
+  refs.Release(0);
+  refs.Release(refs.Count() - 1);
+  refs.Clear();
+  refs.Add(list);
+  expression = BuildExpression(NULL);
+}
+//.............................................................................
+//.............................................................................
+void AtomRefList::SortByTag(const TPtrList<AtomRefList> &sync) {
+  if (!IsExplicit()) return;
+    QuickSorter::Sort(refs,
+      ComplexComparator::Make(
+        DynamicCastAccessor<ExplicitCAtomRef>(),
+        FunctionComparator::Make(&AtomRefList::RefTagCmp)),
+      SyncSortListener::MakeMultiple(sync,
+        FunctionAccessor::Make(&AtomRefList::GetRefs)));
+  //QuickSorter::Sort(refs,
+  //  ComplexComparator::Make(
+  //    ComplexAccessor::MakeP(DynamicCastAccessor<ExplicitCAtomRef>(),
+  //      ComplexAccessor::MakeP(
+  //        FunctionAccessor::MakeConst(&ExplicitCAtomRef::GetAtom),
+  //        FunctionAccessor::MakeConst(&TCAtom::GetId))),
+  //    TPrimitiveComparator())
+  //  );
+}
+//.............................................................................

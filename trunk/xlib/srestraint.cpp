@@ -260,3 +260,15 @@ void TSRestraintList::OnAUUpdate() {
   }
 }
 //..............................................................................
+void TSRestraintList::BeginAUSort() {
+  for (size_t i = 0; i < Restraints.Count(); i++) {
+    Restraints[i].BeginAUSort();
+  }
+}
+//..............................................................................
+void TSRestraintList::EndAUSort() {
+  for (size_t i = 0; i < Restraints.Count(); i++) {
+    Restraints[i].EndAUSort();
+  }
+}
+//..............................................................................

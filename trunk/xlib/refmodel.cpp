@@ -2019,6 +2019,43 @@ void RefinementModel::AfterAUUpdate_() {
   atom_refs.Clear();
 }
 //..............................................................................
+void RefinementModel::BeforeAUSort_() {
+  atom_ids.Clear();
+  for (size_t i = 0; i < aunit.AtomCount(); i++) {
+    atom_ids.Add(&aunit.GetAtom(i), aunit.GetAtom(i).GetId());
+  }
+
+  for (size_t i = 0; i < InfoTables.Count(); i++) {
+    InfoTables[i].BeginAUSort();
+  }
+  TPtrList<TSRestraintList> restraints = GetRestraints();
+  for (size_t i = 0; i < restraints.Count(); i++) {
+    restraints[i]->BeginAUSort();
+  }
+  rSAME.BeginAUSort();
+}
+//..............................................................................
+void RefinementModel::AfterAUSort_() {
+  if (atom_ids.Count() != aunit.AtomCount()) {
+    throw TInvalidArgumentException(__OlxSourceInfo,
+      "atom count");
+  }
+  old_atom_ids.SetCount(atom_ids.Count());
+  for (size_t i = 0; i < aunit.AtomCount(); i++) {
+    old_atom_ids[i] = atom_ids[&aunit.GetAtom(i)];
+  }
+
+  for (size_t i = 0; i < InfoTables.Count(); i++) {
+    InfoTables[i].EndAUSort();
+  }
+  TPtrList<TSRestraintList> restraints = GetRestraints();
+  for (size_t i = 0; i < restraints.Count(); i++) {
+    restraints[i]->EndAUSort();
+  }
+  rSAME.EndAUSort();
+  old_atom_ids.Clear();
+}
+//..............................................................................
 TPtrList<const TSRestraintList>::const_list_type
 RefinementModel::GetRestraints() const
 {

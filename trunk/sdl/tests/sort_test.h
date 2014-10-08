@@ -36,11 +36,11 @@ public:
     try {
       Cmp cmp;
       Sorter::Sort(al1, FunctionComparator::Make(icmp),
-        SyncSortListener::Make(al2));
+        SyncSortListener::MakeSingle(al2));
       Sorter::Sort(pl1, Cmp(),
-        SyncSortListener::Make(pl2));
+        SyncSortListener::MakeSingle(pl2));
       Sorter::Sort(tl1, FunctionComparator::MakeConst(cmp, &Cmp::compare),
-        SyncSortListener::Make(tl2));
+        SyncSortListener::MakeSingle(tl2));
       for( size_t i=0; i < al1.Count(); i++ )  {
         if( i > 0 && (al1[i-1] > al1[i] || tl1[i-1] > tl2[i] || *pl1[i-1] > *pl2[i]) )
           throw TFunctionFailedException(__OlxSourceInfo, "sorting failed");
