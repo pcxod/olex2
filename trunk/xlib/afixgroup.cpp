@@ -162,6 +162,15 @@ bool TAfixGroup::IsEmpty() const {
   return dep_cnt == 0;
 }
 //..............................................................................
+void TAfixGroup::Sort() {
+  if (IsFittedRing()) return;
+  QuickSorter::Sort(Dependent,
+    ComplexComparator::Make(
+      FunctionAccessor::MakeConst(&TCAtom::GetTag),
+      TPrimitiveComparator())
+    );
+}
+//..............................................................................
 //..............................................................................
 //..............................................................................
 void TAfixGroups::ToDataItem(TDataItem& item) {
@@ -226,5 +235,11 @@ void TAfixGroups::Restore(TAfixGroup& ag)  {
   }
   Groups.Add(ag);
   ag.SetId((uint16_t)(Groups.Count()-1));
+}
+//.............................................................................
+void TAfixGroups::SortGroupContent() {
+  for (size_t i = 0; i < Groups.Count(); i++) {
+    Groups[i].Sort();
+  }
 }
 //.............................................................................

@@ -272,3 +272,9 @@ void TSRestraintList::EndAUSort() {
   }
 }
 //..............................................................................
+void TSRestraintList::SortAtomsByTags() {
+  for (size_t i = 0; i < Restraints.Count(); i++) {
+    Restraints[i].Sort();
+  }
+}
+//..............................................................................

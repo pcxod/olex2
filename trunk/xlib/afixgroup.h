@@ -153,6 +153,7 @@ public:
     Afix = a;
   }
   void Clear();
+  void Sort();
   bool IsEmpty() const;
   size_t Count() const {  return Dependent.Count();  }
   TCAtom& operator [] (size_t i) const {  return *Dependent[i];  }
@@ -188,21 +189,26 @@ public:
     for (size_t j=i; j < Groups.Count(); j++)
       Groups[j].SetId(j);
   }
-  void Assign(const TAfixGroups& ags)  {
+  void Assign(const TAfixGroups& ags) {
     Clear();
-    for( size_t i=0; i < ags.Count(); i++ )  {
-      if( !ags[i].IsEmpty() )  {
+    for (size_t i=0; i < ags.Count(); i++ ) {
+      if (!ags[i].IsEmpty()) {
         Groups.Add(new TAfixGroup(*this, ags[i]));
         Groups.GetLast().SetId(Groups.Count() - 1);
       }
     }
   }
   void ValidateAll() {
-    for( size_t i=0; i < Groups.Count(); i++ )
-      if( Groups[i].IsEmpty() )
+    for (size_t i = 0; i < Groups.Count(); i++) {
+      if (Groups[i].IsEmpty())
         Groups.NullItem(i);
+    }
     Groups.Pack();
+    for (size_t i = 0; i < Groups.Count(); i++) {
+      Groups[i].SetId(i);
+    }
   }
+  void SortGroupContent();
   void Release(TAfixGroup &ag);
   void Restore(TAfixGroup &ag);
   void ToDataItem(TDataItem& item);

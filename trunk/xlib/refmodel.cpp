@@ -2052,10 +2052,20 @@ void RefinementModel::AfterAUSort_() {
   for (size_t i = 0; i < restraints.Count(); i++) {
     restraints[i]->EndAUSort();
   }
+  
   rSAME.EndAUSort();
   old_atom_ids.Clear();
 }
 //..............................................................................
+void RefinementModel::Sort_() {
+  rSAME.SortGroupContent();
+  AfixGroups.SortGroupContent();
+  rFLAT.SortAtomsByTags();
+  rRIGU.SortAtomsByTags();
+  rSIMU.SortAtomsByTags();
+  rDELU.SortAtomsByTags();
+}
+  //..............................................................................
 TPtrList<const TSRestraintList>::const_list_type
 RefinementModel::GetRestraints() const
 {
