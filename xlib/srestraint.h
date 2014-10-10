@@ -71,7 +71,7 @@ public:
   void OnAUUpdate() { Atoms.OnAUUpdate(); }
   void BeginAUSort() { Atoms.BeginAUSort(); }
   void EndAUSort() { Atoms.EndAUSort(); }
-
+  void Sort() { Atoms.SortByTag(TPtrList<AtomRefList>()); }
   // copies data from a restrain, but with atoms from the thisAU
   void Assign(const TSimpleRestraint&);
 
@@ -167,6 +167,7 @@ public:
   void OnAUUpdate();
   void BeginAUSort();
   void EndAUSort();
+  void SortAtomsByTags();
   // IXVarReferencerContainer implementation
   virtual olxstr GetIdName() const {  return IdName;  }
   virtual size_t GetIdOf(const IXVarReferencer& vr) const {

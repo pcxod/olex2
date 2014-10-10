@@ -2122,7 +2122,7 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options,
   TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
   RefinementModel& rm = FXApp->XFile().GetRM();
   TIns::ValidateRestraintsAtomNames(FXApp->XFile().GetRM(), false);
-  FXApp->XFile().UpdateAsymmUnit();
+  FXApp->XFile().UpdateAtomIds();
   if (Ins != NULL)
     Ins->UpdateParams();
   // get CAtoms and EXYZ equivalents

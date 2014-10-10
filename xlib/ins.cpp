@@ -316,7 +316,6 @@ void TIns::_ProcessSame(ParseContext& cx)  {
         }
         TCAtom& a = cx.au.GetAtom(ca->GetId() + j);
         if (a.GetType() == iHydrogenZ) {
-          max_atoms++;
           continue;
         }
         sg.Add(a);

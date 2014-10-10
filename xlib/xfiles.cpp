@@ -495,7 +495,7 @@ void TXFile::Sort(const TStrList& ins) {
     TBasicApp::NewLogEntry(logError) << exc.GetException()->GetError();
   }
   list.ForEach(ACollectionItem::IndexTagSetter());
-  GetRM().rSAME.SortGroupContent();
+  GetRM().Sort_();
   TSizeList indices = TIns::DrySave(list);
   if (indices.Count() != list.Count()) {
     throw TFunctionFailedException(__OlxSourceInfo, "assert");
@@ -508,10 +508,56 @@ void TXFile::Sort(const TStrList& ins) {
   }
   // this changes Id's !!! so must be called after the SyncLists
   GetAsymmUnit().ComplyToResidues();
+  index_t idx = 0;
+  for (size_t i = 0; i < GetAsymmUnit().AtomCount(); i++) {
+    TCAtom &a = GetAsymmUnit().GetAtom(i);
+    if (a.GetType() == iHydrogenZ) continue;
+    a.SetTag(idx++);
+  }
   GetRM().AfterAUSort_();
   // 2010.11.29, ASB bug fix for ADPS on H...
   GetUnitCell().UpdateEllipsoids();
   GetLattice().RestoreADPs(false);
+}
+//..............................................................................
+void TXFile::UpdateAtomIds() {
+  if (!FLastLoader->IsNative()) {
+    UpdateAsymmUnit();
+  }
+  TAsymmUnit &au = GetAsymmUnit();
+  TCAtomPList &list = au.GetResidue(0).GetAtomList();
+  TSizeList indices = TIns::DrySave(list);
+  if (indices.Count() != list.Count()) {
+    throw TFunctionFailedException(__OlxSourceInfo, "assert");
+  }
+  bool uniform = true;
+  for (size_t i = 0; i < indices.Count(); i++) {
+    if (indices[i] != i) {
+      uniform = false;
+      break;
+    }
+  }
+  if (uniform) {
+    return;
+  }
+  GetRM().BeforeAUSort_();
+  list.ForEach(ACollectionItem::IndexTagSetter());
+  GetRM().Sort_();
+  list.Rearrange(indices);
+  if (!FLastLoader->IsNative()) {
+    AtomSorter::SyncLists(list,
+      FLastLoader->GetAsymmUnit().GetResidue(0).GetAtomList());
+    FLastLoader->GetAsymmUnit().ComplyToResidues();
+  }
+  // this changes Id's !!! so must be called after the SyncLists
+  GetAsymmUnit().ComplyToResidues();
+  index_t idx = 0;
+  for (size_t i = 0; i < au.AtomCount(); i++) {
+    TCAtom &a = au.GetAtom(i);
+    if (a.GetType() == iHydrogenZ) continue;
+    a.SetTag(idx++);
+  }
+  GetRM().AfterAUSort_();
 }
 //..............................................................................
 void TXFile::ValidateTabs()  {
@@ -604,9 +650,9 @@ void TXFile::Close()  {
 //..............................................................................
 IEObject* TXFile::Replicate() const {
   TXFile* xf = new TXFile(*(SObjectProvider*)Lattice.GetObjects().Replicate());
-  for( size_t i=0; i < FileFormats.Count(); i++ )  {
+  for (size_t i=0; i < FileFormats.Count(); i++) {
     xf->RegisterFileFormat((TBasicCFile*)FileFormats.GetObject(i)->Replicate(),
-                              FileFormats[i]);
+      FileFormats[i]);
   }
   return xf;
 }
