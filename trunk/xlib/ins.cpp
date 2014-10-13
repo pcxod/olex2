@@ -316,6 +316,7 @@ void TIns::_ProcessSame(ParseContext& cx)  {
         }
         TCAtom& a = cx.au.GetAtom(ca->GetId() + j);
         if (a.GetType() == iHydrogenZ) {
+          max_atoms++; // do not count the H atoms!
           continue;
         }
         sg.Add(a);
@@ -1303,6 +1304,12 @@ TSizeList::const_list_type TIns::DrySave(const TCAtomPList& atoms) {
       continue;
     }
     _DrySaveAtom(*atoms[i], rv, true, false);
+  }
+  // move all deleted atoms to the end
+  for (size_t i = 0; i < atoms.Count(); i++) {
+    if (atoms[i]->IsDeleted()) {
+      rv.Add(atoms[i]->GetTag());
+    }
   }
   return rv;
 }
