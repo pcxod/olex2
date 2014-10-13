@@ -28,8 +28,9 @@ template <class T> class TPtrList : public IEObject  {
       olx_free(Items);
       Items = NULL;
     }
-    else
+    else {
       Items = olx_realloc<T*>(Items, FCapacity);
+    }
   }
 
   void init(size_t size) {
@@ -539,26 +540,27 @@ public:
     return InvalidIndex;
   }
 //..............................................................................
-  size_t IndexOf(const T& val) const {
-    const T* pv = &val;
-    for( size_t i=0; i < FCount; i++ )
-      if( Items[i] == pv )
-        return i;
-    return InvalidIndex;
-  }
+  size_t IndexOf(const T& val) const { return IndexOf(&val); }
 //..............................................................................
   template <typename AT>
   bool Contains(const AT &v) const { return IndexOf(v) != InvalidIndex; }
 //..............................................................................
   template <class size_t_list_t>
   TPtrList& Rearrange(const size_t_list_t &indices)  {
-    if( FCount < 2 )  return *this;
-    if( FCount != indices.Count() )
-      throw TInvalidArgumentException(__OlxSourceInfo, "indices size");
+    if (FCount < 2)  return *this;
+    if (FCount != indices.Count()) {
+      throw TInvalidArgumentException(__OlxSourceInfo,
+        "indices list size");
+    }
     // allocate the list of NULLs
-    T** ni = olx_malloc<T*>(FCount);
-    for( size_t i=0; i < FCount; i++ )
+    T** ni = olx_malloc<T*>(FCapacity = FCount);
+    for (size_t i = 0; i < FCount; i++) {
+#ifdef _DEBUG
+      TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo,
+        indices[i], 0, FCount);
+#endif
       ni[i] = Items[indices[i]];
+    }
     olx_free(Items);
     Items = ni;
     return *this;

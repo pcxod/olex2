@@ -488,7 +488,8 @@ void TXFile::Sort(const TStrList& ins) {
       MoietySorter::UpdateList(list, moieties);
     }
     if (keeph) {
-      AtomSorter::KeepH(list, GetAsymmUnit(), AtomSorter::atom_cmp_Label);
+      // this will not work with SAME
+      AtomSorter::KeepH(list, GetAsymmUnit(), &AtomSorter::atom_cmp_Label);
     }
   }
   catch(const TExceptionBase& exc)  {
@@ -541,9 +542,9 @@ void TXFile::UpdateAtomIds() {
     return;
   }
   GetRM().BeforeAUSort_();
+  list.Rearrange(indices);
   list.ForEach(ACollectionItem::IndexTagSetter());
   GetRM().Sort_();
-  list.Rearrange(indices);
   if (!FLastLoader->IsNative()) {
     AtomSorter::SyncLists(list,
       FLastLoader->GetAsymmUnit().GetResidue(0).GetAtomList());
