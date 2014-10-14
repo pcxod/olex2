@@ -1643,6 +1643,9 @@ void XLibMacros::macHImp(TStrObjList &Cmds, const TParamList &Options,
     XApp.XFile().GetAsymmUnit().CartesianToCell(v);
     h.CAtom().ccrd() = v;
     h.ccrd() = v;
+    if (h.CAtom().GetParentAfixGroup() != NULL) {
+      h.CAtom().GetParentAfixGroup()->SetD(sqrt(qd1));
+    }
   }
   XApp.XFile().GetLattice().UpdateConnectivity();
   //XApp.XFile().EndUpdate();
