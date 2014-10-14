@@ -562,8 +562,8 @@ void TXFile::UpdateAtomIds() {
 }
 //..............................................................................
 void TXFile::ValidateTabs()  {
-  for( size_t i=0; i < RefMod.InfoTabCount(); i++ )  {
-    if( RefMod.GetInfoTab(i).GetType() != infotab_htab )
+  for (size_t i = 0; i < RefMod.InfoTabCount(); i++) {
+    if (RefMod.GetInfoTab(i).GetType() != infotab_htab)
       continue;
     if (!RefMod.GetInfoTab(i).GetAtoms().IsExplicit()) continue;
     TTypeList<ExplicitCAtomRef> ta =
@@ -571,27 +571,15 @@ void TXFile::ValidateTabs()  {
     if (ta.IsEmpty()) continue;
     TSAtom* sa = NULL;
     InfoTab& it = RefMod.GetInfoTab(i);
-    ASObjectProvider& objects = Lattice.GetObjects();
-    const size_t ac = objects.atoms.Count();
-    for( size_t j=0; j < ac; j++ )  {
-      TSAtom& sa1 = objects.atoms[j];
-      if( sa1.CAtom().GetId() == ta[0].GetAtom().GetId() )  {
-        sa = &sa1;
-        break;
-      }
-    }
-    if( sa == NULL )  {
-      RefMod.DeleteInfoTab(i--);
-      continue;
-    }
     bool hasH = false;
-    for( size_t j=0; j < sa->NodeCount(); j++ )  {
-      if( !sa->Node(j).IsDeleted() && sa->Node(j).GetType() == iHydrogenZ )  {
+    for (size_t j = 0; j < ta[0].GetAtom().AttachedSiteCount(); j++) {
+      TCAtom &aa = ta[0].GetAtom().GetAttachedAtom(j);
+      if (!aa.IsDeleted() && aa.GetType() == iHydrogenZ)  {
         hasH = true;
         break;
       }
     }
-    if( !hasH )  {
+    if (!hasH) {
       TBasicApp::NewLogEntry() << "Removing HTAB (donor has no H atoms): "
         << it.InsStr();
       RefMod.DeleteInfoTab(i--);
@@ -600,13 +588,13 @@ void TXFile::ValidateTabs()  {
     // validate the distance makes sense
     const TAsymmUnit& au = *ta[0].GetAtom().GetParent();
     vec3d v1 = ta[0].GetAtom().ccrd();
-    if( ta[0].GetMatrix() != NULL )
-      v1  = *ta[0].GetMatrix()*v1;
+    if (ta[0].GetMatrix() != NULL)
+      v1 = *ta[0].GetMatrix()*v1;
     vec3d v2 = ta[1].GetAtom().ccrd();
-    if( ta[1].GetMatrix() != NULL )
-      v2  = *ta[1].GetMatrix()*v2;
+    if (ta[1].GetMatrix() != NULL)
+      v2 = *ta[1].GetMatrix()*v2;
     const double dis = au.CellToCartesian(v1).DistanceTo(au.CellToCartesian(v2));
-    if( dis > 5 )  {
+    if (dis > 5) {
       TBasicApp::NewLogEntry() << "Removing HTAB (d > 5A): " << it.InsStr();
       RefMod.DeleteInfoTab(i--);
       continue;

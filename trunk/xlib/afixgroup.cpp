@@ -166,7 +166,7 @@ void TAfixGroup::Sort() {
   if (IsFittedRing()) return;
   QuickSorter::Sort(Dependent,
     ComplexComparator::Make(
-      FunctionAccessor::MakeConst(&TCAtom::GetTag),
+      FunctionAccessor::MakeConst((index_t (TCAtom::*)() const)&TCAtom::GetTag),
       TPrimitiveComparator())
     );
 }
