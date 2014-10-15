@@ -119,6 +119,10 @@ public:
     instructions: Mw, Label, Label1, moiety size, weight, heaviest
   */
   void Sort(const TStrList& instructions);
+  /* this function checks how the atom sequence will change when saving to a
+  file and synchronise it with the atom Ids
+  */
+  void UpdateAtomIds();
   // nameToken is build is similar way to the NameArg!
   void LoadFromStream(IInputStream &is, const olxstr &nameToken);
   void LoadFromStrings(const TStrList& lines, const olxstr &nameToken);

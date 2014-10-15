@@ -1049,9 +1049,9 @@ void TAsymmUnit::LibGetCellVolume(const TStrObjList& Params, TMacroError& E)  {
 //..............................................................................
 void TAsymmUnit::LibGetSymm(const TStrObjList& Params, TMacroError& E)  {
   TSpaceGroup& sg = TSymmLib::GetInstance().FindSG(*this);
-  if( Params.IsEmpty() )
+  if (Params.IsEmpty())
     E.SetRetVal(sg.GetName());
-  else if( Params[0].Equalsi("hall") )
+  else if (Params[0].Equalsi("hall"))
     E.SetRetVal(sg.GetHallSymbol());
 }
 //..............................................................................
@@ -1078,24 +1078,24 @@ void TAsymmUnit::LibSetAtomCrd(const TStrObjList& Params, TMacroError& E)  {
 //..............................................................................
 void TAsymmUnit::LibSetAtomLabel(const TStrObjList& Params, TMacroError& E)  {
   size_t index = Params[0].ToSizeT();
-  if( index >= AtomCount() )
+  if (index >= AtomCount())
     throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, AtomCount());
   olxstr newLabel;
-  if( Params[1].IsNumber() )  {
+  if (Params[1].IsNumber()) {
     int inc = Params[1].ToInt();
     int v = GetAtom(index).GetType().index + inc;
-    if( v >= 0 && v <= iQPeakIndex )  {
-      newLabel << XElementLib::GetByIndex(v).symbol
-               << GetAtom(index).GetLabel().SubStringFrom(
-                    GetAtom(index).GetType().symbol.Length());
+    if (v >= 0 && v <= iQPeakIndex) {
+      newLabel << XElementLib::GetByIndex(v).symbol <<
+        GetAtom(index).GetLabel().SubStringFrom(
+          GetAtom(index).GetType().symbol.Length());
     }
   }
-  else  {
+  else {
     newLabel = Params[1];
   }
   newLabel = CheckLabel(&GetAtom(index), newLabel);
-  if( !newLabel.Length() )  {
-    E.ProcessingError(__OlxSrcInfo, "incorrect label ") << Params[1];
+  if (!newLabel.Length()) {
+    E.ProcessingError(__OlxSrcInfo, "incorrect label ").quote() << Params[1];
     return;
   }
   GetAtom(index).SetLabel(newLabel);
@@ -1242,12 +1242,13 @@ void TAsymmUnit::_UpdateQPeaks() {
 //..............................................................................
 void TAsymmUnit::LibNewAtom(const TStrObjList& Params, TMacroError& E)  {
   vec3d crd(Params[1].ToDouble(), Params[2].ToDouble(), Params[3].ToDouble());
-  const bool is_q_peak = Params[0].IsNumber();
-  if( Lattice != NULL )  {
+  bool is_q_peak = Params[0].IsNumber(),
+    validate = (Params.Count() == 5 ? Params[4].ToBool() : true);
+  if (Lattice != NULL && validate) {
     vec3d test_pos(crd);
     TCAtom* ca =
       Lattice->GetUnitCell().FindOverlappingAtom(test_pos, is_q_peak, 0.01);
-    if( ca != NULL )  {
+    if (ca != NULL) {
       if( is_q_peak && (ca->GetType() == iQPeakZ || ca->IsDeleted()))  {
         ca->SetDeleted(false);
         ca->SetType(XElementLib::GetByIndex(iQPeakIndex));
@@ -1276,8 +1277,22 @@ void TAsymmUnit::LibNewAtom(const TStrObjList& Params, TMacroError& E)  {
   GetRefMod()->Vars.SetParam(ca, catom_var_name_Uiso, 0.5);
   for( short i=0; i < 3; i++ )
     GetRefMod()->Vars.SetParam(ca, catom_var_name_X+i, crd[i]);
-  E.SetRetVal(AtomCount() - 1);
   ca.AssignEllp(NULL);
+  E.SetRetVal(AtomCount() - 1);
+}
+//..............................................................................
+void TAsymmUnit::LibGetAtomPart(const TStrObjList& Params, TMacroError& E)  {
+  size_t index = Params[0].ToSizeT();
+  if (index >= AtomCount())
+    throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, AtomCount());
+  E.SetRetVal(GetAtom(index).GetPart());
+}
+//..............................................................................
+void TAsymmUnit::LibSetAtomPart(const TStrObjList& Params, TMacroError& E)  {
+  size_t index = Params[0].ToSizeT();
+  if (index >= AtomCount())
+    throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, AtomCount());
+  GetAtom(index).SetPart(Params[0].ToDouble());
 }
 //..............................................................................
 void TAsymmUnit::LibGetZ(const TStrObjList& Params, TMacroError& E)  {
@@ -1363,10 +1378,11 @@ void TAsymmUnit::LibFractionalise(const TStrObjList& Params, TMacroError& E) {
 TLibrary* TAsymmUnit::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("au") : name);
   lib->Register(new TFunction<TAsymmUnit>(this,
-    &TAsymmUnit::LibNewAtom, "NewAtom", fpFour,
+    &TAsymmUnit::LibNewAtom, "NewAtom", fpFour|fpFive,
     "Adds a new atom to the asymmetric unit and return its ID, by which it can"
-    " be referred. The function takes the atom name and coordinates, if -1 is "
-    "returned, the atom is not created"));
+    " be referred. The function takes the atom name and coordinates, the "
+    "optional 5th parameter specifies if the position has to be tested for an "
+    "existing atoms. If -1 is returned, the atom is not created"));
   lib->Register(new TFunction<TAsymmUnit>(this,
     &TAsymmUnit::LibGetAtomCount, "GetAtomCount", fpNone,
     "Returns the atom count in the asymmetric unit"));
@@ -1379,6 +1395,9 @@ TLibrary* TAsymmUnit::ExportLibrary(const olxstr& name)  {
     &TAsymmUnit::LibGetAtomCrd, "GetAtomCrd", fpOne,
     "Returns a comma separated list of fractional coordinates for the "
     "specified atom"));
+  lib->Register(new TFunction<TAsymmUnit>(this,
+    &TAsymmUnit::LibGetAtomPart, "GetAtomPart", fpOne,
+    "Returns part of the specified atom"));
   lib->Register(new TFunction<TAsymmUnit>(this,
     &TAsymmUnit::LibGetAtomName, "GetAtomName", fpOne,
     "Returns atom label"));
@@ -1417,6 +1436,9 @@ TLibrary* TAsymmUnit::ExportLibrary(const olxstr& name)  {
     &TAsymmUnit::LibSetAtomCrd, "SetAtomCrd", fpFour,
     "Sets atom coordinates to specified values, first parameters is the atom "
     "ID"));
+  lib->Register(new TFunction<TAsymmUnit>(this,
+    &TAsymmUnit::LibSetAtomPart, "SetAtomPart", fpTwo,
+    "Sets part of the atom specified atom"));
   lib->Register(new TFunction<TAsymmUnit>(this,
     &TAsymmUnit::LibSetAtomU, "SetAtomU", fpSeven | fpTwo,
     "Sets atoms Uiso/anis first paramater is the atom ID followed by 1 or six "

@@ -271,7 +271,6 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
 //..............................................................................
 void TIns::_ProcessSame(ParseContext& cx)  {
   TSameGroupList& sgl = cx.rm.rSAME;
-  TStrList toks;
   for (size_t i=0; i < cx.Same.Count(); i++) {
     TCAtom* ca = cx.Same[i].b;
     TStrList& sl = cx.Same[i].a;
@@ -280,8 +279,7 @@ void TIns::_ProcessSame(ParseContext& cx)  {
     TPtrList<TSameGroup> all_groups;
     size_t max_atoms = 0;
     for (size_t j=0; j < sl.Count(); j++) {
-       toks.Clear();
-       toks.Strtok(sl[j], ' ');
+       TStrList toks(sl[j], ' ');
        size_t resi_ind = toks[0].IndexOf('_');
        olxstr resi( (resi_ind != InvalidIndex)
          ? toks[0].SubStringFrom(resi_ind+1) : EmptyString());
@@ -318,7 +316,7 @@ void TIns::_ProcessSame(ParseContext& cx)  {
         }
         TCAtom& a = cx.au.GetAtom(ca->GetId() + j);
         if (a.GetType() == iHydrogenZ) {
-          max_atoms++;
+          max_atoms++; // do not count the H atoms!
           continue;
         }
         sg.Add(a);
@@ -1102,27 +1100,9 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
   }
   if (checkSame && olx_is_valid_index(a.GetSameId())) {  // "
     TSameGroup& sg = rm.rSAME[a.GetSameId()];
-    if( sg.IsValidForSave() )  {
-      bool overlap = false;
+    if (sg.IsValidForSave()) {
       for (size_t i = 0; i < sg.DependentCount(); i++) {
         if (!sg.GetDependent(i).IsValidForSave())
-          continue;
-        if (sg.DoOverlap(sg.GetDependent(i)))  {
-          overlap = true;
-          break;
-        }
-        for (size_t j = i + 1; j < sg.DependentCount(); j++) {
-          if (!sg.GetDependent(j).IsValidForSave())
-            continue;
-          if (sg.GetDependent(i).DoOverlap(sg.GetDependent(j))) {
-            overlap = true;
-            break;
-          }
-        }
-        if (overlap)  break;
-      }
-      for (size_t i = 0; i < sg.DependentCount(); i++) {
-        if( !sg.GetDependent(i).IsValidForSave() )
           continue;
         olxstr tmp("SAME ");
         tmp << olxstr(sg.GetDependent(i).Esd12).TrimFloat() << ' '
@@ -1262,6 +1242,76 @@ void TIns::SaveToStrings(TStrList& SL)  {
   SL.Add("HKLF ") << RefMod.GetHKLFStr();
   SL.Add(EmptyString());
   SL.Add("END");
+}
+//..............................................................................
+void TIns::_DrySaveAtom(TCAtom& a, TSizeList &indices,
+  bool checkSame, bool checkResi)
+{
+  if (a.IsDeleted() || a.IsSaved())  return;
+  if (checkResi && a.GetResiId() != 0)  {
+    const TResidue& resi = a.GetParent()->GetResidue(a.GetResiId());
+    for (size_t i = 0; i < resi.Count(); i++) {
+      _DrySaveAtom(resi[i], indices, true, false);
+    }
+    return;
+  }
+  if (checkSame && olx_is_valid_index(a.GetSameId())) {
+    TSameGroup& sg = a.GetParent()->GetRefMod()->rSAME[a.GetSameId()];
+    if (sg.IsValidForSave())  {
+      if (sg.GetAtoms().IsExplicit()) {
+        TAtomRefList atoms = sg.GetAtoms().ExpandList(*a.GetParent()->GetRefMod());
+        for (size_t i = 0; i < atoms.Count(); i++)
+          _DrySaveAtom(atoms[i].GetAtom(), indices, false, checkResi);
+      }
+      return;
+    }
+  }
+  if (a.GetUisoOwner() != NULL && !a.GetUisoOwner()->IsSaved()) {
+    _DrySaveAtom(*a.GetUisoOwner(), indices, checkSame, checkResi);
+  }
+  TAfixGroup* ag = a.GetDependentAfixGroup();
+  indices.Add(a.GetTag());
+  a.SetSaved(true);
+  for (size_t i = 0; i < a.DependentHfixGroupCount(); i++) {
+    TAfixGroup& hg = a.GetDependentHfixGroup(i);
+    for (size_t j = 0; j < hg.Count(); j++)  {
+      if (!hg[j].IsDeleted() && !hg[j].IsSaved()) {
+        _DrySaveAtom(hg[j], indices, checkSame, checkResi);
+      }
+    }
+  }
+  if (ag != NULL) {  // save dependent rigid group
+    for (size_t i = 0; i < ag->Count(); i++)  {
+      if (!(*ag)[i].IsDeleted() && !(*ag)[i].IsSaved()) {
+        _DrySaveAtom((*ag)[i], indices, checkSame, checkResi);
+      }
+    }
+  }
+}
+//..............................................................................
+TSizeList::const_list_type TIns::DrySave(const TCAtomPList& atoms) {
+  TSizeList rv;
+  for (size_t i = 0; i < atoms.Count(); i++) {
+    atoms[i]->SetSaved(false);
+    atoms[i]->SetTag((index_t)i);
+  }
+  for (size_t i = 0; i < atoms.Count(); i++) {
+    if (atoms[i]->IsDeleted() || atoms[i]->IsSaved())
+      continue;
+    if (atoms[i]->GetParentAfixGroup() != NULL &&
+      !atoms[i]->GetParentAfixGroup()->GetPivot().IsDeleted())
+    {
+      continue;
+    }
+    _DrySaveAtom(*atoms[i], rv, true, false);
+  }
+  // move all deleted atoms to the end
+  for (size_t i = 0; i < atoms.Count(); i++) {
+    if (atoms[i]->IsDeleted()) {
+      rv.Add(atoms[i]->GetTag());
+    }
+  }
+  return rv;
 }
 //..............................................................................
 bool TIns::Adopt(TXFile& XF)  {

@@ -206,16 +206,57 @@ struct DummySortListener {
 };
 
 struct SyncSortListener {
-  template <typename List> struct SyncSortListener_ {
-    List& list;
-    SyncSortListener_(List& _list) : list(_list)  {}
-    void OnSwap(size_t i, size_t j) const {  list.Swap(i, j);  }
-    void OnMove(size_t i, size_t j) const {  list.Move(i, j);  }
+  template <class list_t, class acc_t>
+  struct SyncSortListener_1 {
+    list_t& list;
+    acc_t acc;
+    SyncSortListener_1(list_t& _list, const acc_t &a)
+      : list(_list), acc(a)
+    {}
+    void OnSwap(size_t i, size_t j) const {  acc(list).Swap(i, j);  }
+    void OnMove(size_t i, size_t j) const {  acc(list).Move(i, j);  }
   };
-  template <class list_t> static SyncSortListener_<list_t> Make(
+  template <class list_t, class acc_t>
+  struct SyncSortListener_N {
+    list_t& list;
+    acc_t acc;
+    SyncSortListener_N(list_t& _list, const acc_t &acc)
+      : list(_list), acc(acc)
+    {}
+    void OnSwap(size_t i, size_t j) const {
+      for (size_t li = 0; li < list.Count(); li++)
+        olx_ref::get(acc(list[li])).Swap(i, j);
+    }
+    void OnMove(size_t i, size_t j) const {
+      for (size_t li = 0; li < list.Count(); li++)
+        olx_ref::get(acc(list[li])).Move(i, j);
+    }
+  };
+  /* synchronises a single list */
+  template <class list_t>
+  static SyncSortListener_1<list_t, DummyAccessor> MakeSingle(
     list_t &l)
   {
-    return SyncSortListener_<list_t>(l);
+    return SyncSortListener_1<list_t, DummyAccessor>(l, DummyAccessor());
+  }
+  template <class list_t, class acc_t>
+  static SyncSortListener_1<list_t, acc_t> MakeSingle(
+    list_t &l, const acc_t &acc)
+  {
+    return SyncSortListener_1<list_t, acc_t>(l, acc);
+  }
+  /* syncronises a list of lists */
+  template <class list_t>
+  static SyncSortListener_N<list_t, DummyAccessor> MakeMultiple(
+    list_t &l)
+  {
+    return SyncSortListener_N<list_t, DummyAccessor>(l, DummyAccessor());
+  }
+  template <class list_t, class acc_t>
+  static SyncSortListener_N<list_t, acc_t> MakeMultiple(
+    list_t &l, const acc_t &acc)
+  {
+    return SyncSortListener_N<list_t, acc_t>(l, acc);
   }
 };
 //.............................................................................

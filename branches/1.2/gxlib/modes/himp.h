@@ -57,6 +57,9 @@ public:
             XA.Node(i).crd());
           XA.Node(i).CAtom().ccrd() = XA.Node(i).ccrd();
           gxapp.MarkLabel(XA.Node(i), true);
+          if (XA.Node(i).CAtom().GetParentAfixGroup() != NULL) {
+            XA.Node(i).CAtom().GetParentAfixGroup()->SetD(BondLength);
+          }
         }
       }
       return true;

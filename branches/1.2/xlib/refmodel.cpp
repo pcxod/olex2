@@ -2019,6 +2019,53 @@ void RefinementModel::AfterAUUpdate_() {
   atom_refs.Clear();
 }
 //..............................................................................
+void RefinementModel::BeforeAUSort_() {
+  atom_ids.Clear();
+  for (size_t i = 0; i < aunit.AtomCount(); i++) {
+    atom_ids.Add(&aunit.GetAtom(i), aunit.GetAtom(i).GetId());
+  }
+
+  for (size_t i = 0; i < InfoTables.Count(); i++) {
+    InfoTables[i].BeginAUSort();
+  }
+  TPtrList<TSRestraintList> restraints = GetRestraints();
+  for (size_t i = 0; i < restraints.Count(); i++) {
+    restraints[i]->BeginAUSort();
+  }
+  rSAME.BeginAUSort();
+}
+//..............................................................................
+void RefinementModel::AfterAUSort_() {
+  if (atom_ids.Count() != aunit.AtomCount()) {
+    throw TInvalidArgumentException(__OlxSourceInfo,
+      "atom count");
+  }
+  old_atom_ids.SetCount(atom_ids.Count());
+  for (size_t i = 0; i < aunit.AtomCount(); i++) {
+    old_atom_ids[i] = atom_ids[&aunit.GetAtom(i)];
+  }
+
+  for (size_t i = 0; i < InfoTables.Count(); i++) {
+    InfoTables[i].EndAUSort();
+  }
+  TPtrList<TSRestraintList> restraints = GetRestraints();
+  for (size_t i = 0; i < restraints.Count(); i++) {
+    restraints[i]->EndAUSort();
+  }
+  
+  rSAME.EndAUSort();
+  old_atom_ids.Clear();
+}
+//..............................................................................
+void RefinementModel::Sort_() {
+  rSAME.SortGroupContent();
+  AfixGroups.SortGroupContent();
+  rFLAT.SortAtomsByTags();
+  rRIGU.SortAtomsByTags();
+  rSIMU.SortAtomsByTags();
+  rDELU.SortAtomsByTags();
+}
+  //..............................................................................
 TPtrList<const TSRestraintList>::const_list_type
 RefinementModel::GetRestraints() const
 {
@@ -2229,6 +2276,97 @@ void RefinementModel::LibMaxIndex(const TStrObjList& Params,
   E.SetRetVal(olxstr(' ').Join(CalcMaxHklIndex(Params[0].ToDouble())));
 }
 //..............................................................................
+void RefinementModel::LibNewAfixGroup(TStrObjList &Cmds,
+  const TParamList &Options, TMacroError &E)
+{
+  int afix = Cmds[0].ToInt();
+  TCAtomPList atoms;
+  for (size_t i = 1; i < Cmds.Count(); i++) {
+    size_t ai = Cmds[i].ToSizeT();
+    if (ai >= aunit.AtomCount()) {
+      E.ProcessingError(__OlxSrcInfo, "atom index out of bonds");
+      return;
+    }
+    atoms.Add(aunit.GetAtom(ai));
+  }
+  size_t exp_c = TAfixGroup::ExpectedAtomCount(afix);
+  if (exp_c != InvalidSize && atoms.Count() != exp_c) {
+    E.ProcessingError(__OlxSrcInfo, "unexpected atom count for given AFIX");
+    return;
+  }
+  size_t st = 0;
+  TCAtom *pvt = NULL;
+  if (TAfixGroup::HasExcplicitPivot(afix)) {
+    st = 1;
+    pvt = atoms[0];
+  }
+ 
+  TAfixGroup &ag = AfixGroups.New(pvt, afix,
+    Options.FindValue('d', '0').ToDouble(),
+    Options.FindValue("sof", '0').ToDouble(),
+    Options.FindValue('u', '0').ToDouble());
+  for (size_t i = st; i < atoms.Count(); i++) {
+    ag.AddDependent(*atoms[i]);
+  }
+  TBasicApp::NewLogEntry() << "Adding:";
+  TBasicApp::NewLogEntry() << ag.ToString();
+}
+//..............................................................................
+void RefinementModel::LibNewRestraint(TStrObjList &Cmds,
+  const TParamList &Options, TMacroError &E)
+{
+  size_t st = 1;
+  TSimpleRestraint *sr = NULL;
+  if (Cmds[0].Equalsi("sadi")) {
+    sr = &rSADI.AddNew();
+  }
+  else if (Cmds[0].Equalsi("dfix")) {
+    sr = &rDFIX.AddNew();
+    sr->SetValue(Cmds[st++].ToDouble());
+  }
+  else if (Cmds[0].Equalsi("dang")) {
+    sr = &rDANG.AddNew();
+    sr->SetValue(Cmds[st++].ToDouble());
+  }
+  else if (Cmds[0].Equalsi("flat")) {
+    sr = &rFLAT.AddNew();
+  }
+  else if (Cmds[0].Equalsi("chiv")) {
+    sr = &rCHIV.AddNew();
+  }
+  else if (Cmds[0].Equalsi("delu")) {
+    sr = &rDELU.AddNew();
+  }
+  else if (Cmds[0].Equalsi("simu")) {
+    sr = &rSIMU.AddNew();
+  }
+  else if (Cmds[0].Equalsi("rigu")) {
+    sr = &rRIGU.AddNew();
+  }
+  if (sr == NULL) {
+    E.ProcessingError(__OlxSrcInfo, "unknown restraint: ").quote() << Cmds[0];
+    return;
+  }
+  for (size_t i = st; i < Cmds.Count(); i++) {
+    size_t ai = Cmds[i].ToSizeT();
+    if (ai >= aunit.AtomCount()) {
+      E.ProcessingError(__OlxSrcInfo, "atom index out of bonds");
+      return;
+    }
+    sr->AddAtom(aunit.GetAtom(ai), NULL);
+  }
+  double s = Options.FindValue("s1", '0').ToDouble();
+  if (s != 0) {
+    sr->SetEsd(s);
+    s = Options.FindValue("s2", '0').ToDouble();
+    if (s != 0) {
+      sr->SetEsd1(s);
+    }
+  }
+  TBasicApp::NewLogEntry() << "Adding:";
+  TBasicApp::NewLogEntry() << sr->ToString();
+}
+//..............................................................................
 TLibrary* RefinementModel::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("rm") : name);
   lib->Register(
@@ -2281,5 +2419,21 @@ TLibrary* RefinementModel::ExportLibrary(const olxstr& name)  {
     fpOne,
     "Calculates largest Miller index for the given 2 theta value"));
 
+  lib->Register(
+    new TMacro<RefinementModel>(this, &RefinementModel::LibNewAfixGroup,
+    "NewAfixGroup",
+    "d-distance when applicable&;"
+    "sof-occupancy [11]&;"
+    "u-default U value for atoms",
+    fpAny^(fpNone|fpOne|fpTwo),
+    "Creates a new AFIX group expects AFIX code and atom ids"));
+
+  lib->Register(
+    new TMacro<RefinementModel>(this, &RefinementModel::LibNewRestraint,
+    "NewRestraint",
+    "s1-standard deviation 1&;"
+    "s2-standard deviation 2",
+    fpAny ^ (fpNone|fpOne),
+    "Creates a new restraint expects AFIX code and atom ids"));
   return lib;
 }

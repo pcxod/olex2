@@ -80,6 +80,9 @@ protected:
   static void _SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
     TStringToList<olxstr, const cm_Element*>* sfac, TStrList& sl,
     TIndexList* index=NULL, bool checkSame=true, bool checkResi=true);
+  static void _DrySaveAtom(TCAtom& a, TSizeList &indices,
+    bool checkSame = true, bool checkResi = true);
+
   static void _ProcessSame(ParseContext& cx);
   // initialises the unparsed instruction list
   void _FinishParsing(ParseContext& cx);
@@ -118,6 +121,8 @@ public:
   static bool SaveAtomsToStrings(RefinementModel& rm, const TCAtomPList& CAtoms,
     TIndexList& index, TStrList& SL,
     RefinementModel::ReleasedItems* processed);
+  /**/
+  static TSizeList::const_list_type DrySave(const TCAtomPList& atoms);
   static void ValidateRestraintsAtomNames(RefinementModel& rm,
     bool report=true);
   static bool ParseRestraint(RefinementModel& rm, const TStrList& toks);

@@ -193,6 +193,9 @@ protected:
   olxstr AtomListToStr(const TTypeList<ExplicitCAtomRef> &al,
     size_t group_size, const olxstr &sep) const;
   olxdict<ExplicitCAtomRef *, vec3d, TPointerComparator> atom_refs;
+  /* this is used to initialise the old_atom_ids */
+  olxdict<TCAtom *, size_t, TPointerComparator> atom_ids;
+  TSizeList old_atom_ids;
 public:
   RefinementModel(TAsymmUnit& au);
   virtual ~RefinementModel() {  Clear(rm_clear_DEF);  }
@@ -502,6 +505,17 @@ Friedel opposites of components 1 ... m
   {
     return atom_refs;
   }
+  // internal: this should be called before the AU atom coordinates are changed
+  void BeforeAUSort_();
+  // internal: this should be called after the AU atom coordinates are changed
+  void AfterAUSort_();
+  // internal: sorts all possible atom containers
+  void Sort_();
+  /* For internal use - this returns sensible results only in between a call to
+  BenAUSort_ and EndAUSorte_ each [TCAtom::GetId()] returns previous value
+  */
+  const TSizeList & GetOldAtomIds_() { return old_atom_ids; }
+
   // if the name is empty - all tabs a removed
   void ClearInfoTab(const olxstr &name);
   SelectedTableRows &GetSelectedTableRows() { return selectedTableRows;  }
@@ -836,6 +850,10 @@ Friedel opposites of components 1 ... m
   void LibMaxIndex(const TStrObjList& Params, TMacroError& E);
   // restraints & constraints related functions
   void LibShareADP(TStrObjList &Cmds, const TParamList &Opts, TMacroError &E);
+  void LibNewAfixGroup(TStrObjList &Cmds, const TParamList &Options,
+    TMacroError &E);
+  void LibNewRestraint(TStrObjList &Cmds, const TParamList &Options,
+    TMacroError &E);
 
   TLibrary* ExportLibrary(const olxstr& name=EmptyString());
 

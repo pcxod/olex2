@@ -266,3 +266,58 @@ void TSameGroupList::Assign(const TSameGroupList& sl) {
     Groups[i].SetTag(1);
   }
 }
+//.............................................................................
+void TSameGroupList::OnAUUpdate() {
+  for (size_t i = 0; i < Groups.Count(); i++) {
+    Groups[i].OnAUUpdate();
+  }
+}
+//.............................................................................
+void TSameGroupList::BeginAUSort() {
+  for (size_t i = 0; i < Groups.Count(); i++) {
+    Groups[i].BeginAUSort();
+  }
+}
+//.............................................................................
+void TSameGroupList::EndAUSort() {
+  for (size_t i = 0; i < Groups.Count(); i++) {
+    Groups[i].EndAUSort();
+  }
+}
+//.............................................................................
+void TSameGroupList::SortGroupContent() {
+  for (size_t i = 0; i < Groups.Count(); i++) {
+    if (Groups[i].GetParentGroup() == NULL) {
+      TPtrList<AtomRefList> deps;
+      for (size_t j = 0; j < Groups[i].DependentCount(); j++) {
+        deps.Add(Groups[i].GetDependent(j).GetAtoms());
+      }
+      Groups[i].GetAtoms().SortByTag(deps);
+    }
+  }
+}
+//.............................................................................
+TSameGroup *TSameGroupList::Find(const TSameGroup &g) const {
+  TAtomRefList ar1 = g.GetAtoms().ExpandList(RM);
+  for (size_t i = 0; i < Groups.Count(); i++) {
+    if (&Groups[i] == &g || !Groups[i].GetAtoms().IsExplicit()) {
+      continue;
+    }
+    TAtomRefList ar2 = Groups[i].GetAtoms().ExpandList(RM);
+    if (ar1.Count() != ar2.Count()) {
+      continue;
+    }
+    bool eq = true;
+    for (size_t j = 0; j < ar1.Count(); j++) {
+      if (ar1[j].GetAtom().GetId() != ar2[j].GetAtom().GetId()) {
+        eq = false;
+        break;
+      }
+    }
+    if (eq) {
+      return &Groups[i];
+    }
+  }
+  return NULL;
+}
+//.............................................................................

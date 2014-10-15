@@ -23,22 +23,23 @@ class ExplicitCAtomRef;
 
 typedef TTypeListExt<ExplicitCAtomRef, IEObject> TAtomRefList_;
 
-class IAtomRef : public IEObject {
+class AAtomRef : public ACollectionItem {
 public:
-  virtual ~IAtomRef()  {}
+  virtual ~AAtomRef()  {}
   // returns either an atom label or a string of C1_tol kind or $C
   virtual olxstr GetExpression(TResidue *r=NULL) const = 0;
+  virtual bool IsExpandable() const = 0;
   virtual bool IsExplicit() const = 0;
   virtual size_t Expand(const RefinementModel& rm, TAtomRefList_& res,
     TResidue& resi) const = 0;
-  virtual IAtomRef* Clone(RefinementModel& rm) const = 0;
+  virtual AAtomRef* Clone(RefinementModel& rm) const = 0;
   virtual void ToDataItem(TDataItem &di) const = 0;
   virtual bool IsValid() const { return true; }
-  static IAtomRef &FromDataItem(const TDataItem &di, RefinementModel& rm);
+  static AAtomRef &FromDataItem(const TDataItem &di, RefinementModel& rm);
 };
 
 // C1, C1_$2, C1_2 expressions handling
-class ExplicitCAtomRef : public IAtomRef  {
+class ExplicitCAtomRef : public AAtomRef  {
   TCAtom *atom;
   const smatd* matrix;
   void DealWithSymm(const smatd* m);
@@ -56,7 +57,8 @@ public:
   ExplicitCAtomRef(const TDataItem & di, RefinementModel& rm);
   ~ExplicitCAtomRef();
   virtual olxstr GetExpression(TResidue *) const;
-  virtual bool IsExplicit() const {  return true;  }
+  virtual bool IsExpandable() const { return false; }
+  virtual bool IsExplicit() const { return true; }
   virtual bool IsValid() const;
   virtual size_t Expand(const RefinementModel &, TAtomRefList_& res,
     TResidue &) const
@@ -80,7 +82,7 @@ public:
   */
   static ExplicitCAtomRef* NewInstance(const RefinementModel& rm,
     const olxstr& exp, TResidue* resi);
-  virtual IAtomRef* Clone(RefinementModel& rm) const;
+  virtual AAtomRef* Clone(RefinementModel& rm) const;
   virtual void ToDataItem(TDataItem &di) const;
   int Compare(const ExplicitCAtomRef &r) const;
   static const olxstr &GetTypeId() {
@@ -100,7 +102,7 @@ C1_tol - all explicit atoms of a residue
 C1_+ - an explicit atom of next residue
 C1_- - an explicit atom of previous residue
 */
-class ImplicitCAtomRef : public IAtomRef  {
+class ImplicitCAtomRef : public AAtomRef  {
   olxstr Name;
 public:
   ImplicitCAtomRef(const ImplicitCAtomRef& ar) : Name(ar.Name) {}
@@ -110,13 +112,14 @@ public:
   virtual olxstr GetExpression(TResidue *) const {
     return Name == '*' ? EmptyString() : Name;
   }
-  virtual bool IsExplicit() const {  return false;  }
+  virtual bool IsExpandable() const { return true; }
+  virtual bool IsExplicit() const { return false; }
   virtual size_t Expand(const RefinementModel& rm, TAtomRefList_& res,
     TResidue& resi) const;
   // may return NULL
-  static IAtomRef* NewInstance(const RefinementModel& rm, const olxstr& exp,
+  static AAtomRef* NewInstance(const RefinementModel& rm, const olxstr& exp,
     const olxstr& resi, TResidue* _resi);
-  virtual IAtomRef* Clone(RefinementModel& rm) const {
+  virtual AAtomRef* Clone(RefinementModel& rm) const {
     return new ImplicitCAtomRef(Name);
   }
   virtual void ToDataItem(TDataItem &di) const;
@@ -127,20 +130,20 @@ public:
 };
 
 //manages C1 > C5 and C5 < C1 expressions
-class ListIAtomRef : public IAtomRef {
-  IAtomRef &start, &end;
+class ListAtomRef : public AAtomRef {
+  AAtomRef &start, &end;
   olxstr op;
 public:
-  ListIAtomRef(IAtomRef& _start, IAtomRef& _end, const olxstr& _op) :
+  ListAtomRef(AAtomRef& _start, AAtomRef& _end, const olxstr& _op) :
     start(_start), end(_end), op(_op)
   {}
-  ListIAtomRef(const TDataItem &di, RefinementModel& rm);
-  virtual ~ListIAtomRef()  {
+  ListAtomRef(const TDataItem &di, RefinementModel& rm);
+  virtual ~ListAtomRef()  {
     delete &start;
     delete &end;
   }
-  IAtomRef &GetStart() { return start;  }
-  IAtomRef &GetEnd() { return end; }
+  AAtomRef &GetStart() { return start;  }
+  AAtomRef &GetEnd() { return end; }
   virtual bool IsExpandable() const { return true; }
   virtual bool IsExplicit() const {
     return start.IsExplicit() && end.IsExplicit();
@@ -152,8 +155,8 @@ public:
   }
   virtual size_t Expand(const RefinementModel& rm, TAtomRefList_& res,
     TResidue& resi) const;
-  virtual IAtomRef* Clone(RefinementModel& rm) const {
-    return new ListIAtomRef(*start.Clone(rm), *end.Clone(rm), op);
+  virtual AAtomRef* Clone(RefinementModel& rm) const {
+    return new ListAtomRef(*start.Clone(rm), *end.Clone(rm), op);
   }
   virtual void ToDataItem(TDataItem &di) const;
   static const olxstr &GetTypeId() {
@@ -163,7 +166,7 @@ public:
 };
 
 class AtomRefList  {
-  TTypeList<IAtomRef> refs;
+  TTypeList<AAtomRef> refs;
   RefinementModel& rm;
   olxstr residue;
   olxstr expression;
@@ -180,6 +183,13 @@ class AtomRefList  {
   void EnsureAtomGroups(const RefinementModel& rm, TAtomRefList& al,
     size_t groups_size) const;
   void EnsureAtomGroups(size_t group_size);
+  static int RefTagCmp(const ExplicitCAtomRef &a, const ExplicitCAtomRef &b) {
+    return olx_cmp(a.GetAtom().GetTag(), b.GetAtom().GetTag());
+  }
+  static int RefIdCmp(const ExplicitCAtomRef &a, const ExplicitCAtomRef &b) {
+    return olx_cmp(a.GetAtom().GetId(), b.GetAtom().GetId());
+  }
+  TTypeList<AAtomRef> &GetRefs() { return refs; }
 public:
   /* creates an instance of the object from given expression for given residue
   class, number or alias. Empty residue specifies the main residue.
@@ -214,13 +224,14 @@ public:
   */
   olxstr GetExpression() const;
   const olxstr &GetResi() const { return residue; }
-  /* expands the list and returns if resulting explicit list is not empty */
-  bool IsExpandable(const RefinementModel& rm,
-    size_t group_size=InvalidSize) const;
+  /* checks if any of the references are expandable */
+  bool IsExpandable() const;
   /* this can be used to decide if the atom list is valid */
   virtual bool IsExplicit() const {
     return (!ContainsImplicitAtoms && residue.IsEmpty());
   }
+  /* converts this list to list of exlicit references */
+  AtomRefList &ConvertToExplicit();
   void AddExplicit(TCAtom &a, const smatd *m=NULL) {
     refs.Add(new ExplicitCAtomRef(a, m));
   }
@@ -233,10 +244,13 @@ public:
   void Assign(const AtomRefList &arl);
   void ToDataItem(TDataItem &di) const;
   void FromDataItem(const TDataItem &di);
-  // returns all explicit refereces
-  TPtrList<ExplicitCAtomRef>::const_list_type
-    GetExplicit() const;
+  /* returns all explicit references */
+  TPtrList<ExplicitCAtomRef>::const_list_type GetExplicit() const;
   void OnAUUpdate();
+  /* sorts the references by atom tag */
+  void SortByTag(const TPtrList<AtomRefList> &sync);
+  void BeginAUSort();
+  void EndAUSort();
 };
 
 EndXlibNamespace()

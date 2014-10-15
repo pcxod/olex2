@@ -291,12 +291,14 @@ void XLibMacros::Export(TLibrary& lib)  {
   "\n\th - to treat hydrogen atoms independent of the pivot atom"
   "\n\ts - non-numerical labels suffix"
   "\n\tn - number after the atom symbol"
+  "\n\tx - atom moiety size"
   "\n\tf - when a list of atoms provided the atoms will be ordered after the "
   "first given name - otherwise at the position of the firstly found atom in "
   "current list"
   "\n\tw - rather than ordering atoms by given sequence this will swap their "
   "positions"
   "\n Moiety sort arguments:"
+  "\n\tl - label"
   "\n\ts - size"
   "\n\th - by heaviest atom"
   "\n\tm - molecular mass"
@@ -1058,9 +1060,7 @@ void XLibMacros::macSort(TStrObjList &Cmds, const TParamList &Options,
   TStrList cmds = (Cmds.IsEmpty() ? TStrList("+ml moiety", ' ')
     : TStrList(Cmds));
   TXApp::GetInstance().XFile().Sort(cmds);
-  TBasicApp::NewLogEntry() <<
-    "Atom order after sorting (note that H atoms position may be not final "
-    "when they\n are AFIX-ed or have riding U):";
+  TBasicApp::NewLogEntry() << "Atom order after sorting :";
   olxstr_buf atoms;
   olxstr ws = ' ';
   const TAsymmUnit &au = TXApp::GetInstance().XFile().GetAsymmUnit();
@@ -1643,6 +1643,9 @@ void XLibMacros::macHImp(TStrObjList &Cmds, const TParamList &Options,
     XApp.XFile().GetAsymmUnit().CartesianToCell(v);
     h.CAtom().ccrd() = v;
     h.ccrd() = v;
+    if (h.CAtom().GetParentAfixGroup() != NULL) {
+      h.CAtom().GetParentAfixGroup()->SetD(sqrt(qd1));
+    }
   }
   XApp.XFile().GetLattice().UpdateConnectivity();
   //XApp.XFile().EndUpdate();
@@ -7370,8 +7373,15 @@ void XLibMacros::macExport(TStrObjList &Cmds, const TParamList &Options,
       C->FindEntry("_shelx_hkl_file"));
     if (ci == NULL)
       TBasicApp::NewLogEntry() << "No hkl loop or data found";
-    else
+    else {
       TEFile::WriteLines(hkl_name, TCStrList(ci->lines));
+      ci = dynamic_cast<cif_dp::cetStringList *>(
+        C->FindEntry("_shelx_fab_file"));
+      if (ci != NULL) {
+        TEFile::WriteLines(TEFile::ChangeFileExt(hkl_name, "fab"),
+          TCStrList(ci->lines));
+      }
+    }
   }
   else {
     const size_t hInd = hklLoop->ColIndex("_refln_index_h");

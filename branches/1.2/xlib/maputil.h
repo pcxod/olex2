@@ -348,7 +348,7 @@ public:
     }
     QuickSorter::Sort(Peaks,
       FunctionComparator::Make(PeakSortByCount),
-      SyncSortListener::Make(crds));
+      SyncSortListener::MakeSingle(crds));
     for( size_t i=0; i < cnt; i++ )  {
       if( !Peaks[i].process )  continue;
       TPtrList<MapUtil::peak> toMerge;
