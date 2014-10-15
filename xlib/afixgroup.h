@@ -91,7 +91,16 @@ public:
     const int m = GetM(afix);
     return (m == 5 || m == 6 || m == 7 || m == 10 || m == 11);
   }
-  static bool IsFittedGroup(int afix)  {  return GetM(afix) > 16;  }
+  static size_t ExpectedAtomCount(int afix)  {
+    const int m = GetM(afix);
+    switch (m) {
+    case 5: case 6: case 10: return m;
+    case 7: return 6;
+    case 11: return 10;
+    }
+    return InvalidSize;
+  }
+  static bool IsFittedGroup(int afix)  { return GetM(afix) > 16; }
   /** returns true for groups where pivot atom is a part of the group and
   not a preceeding (like afix n=3 vs n=6)
   */
