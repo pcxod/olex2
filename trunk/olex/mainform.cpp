@@ -830,7 +830,7 @@ void TMainForm::XApp(Olex2App *XA)  {
     "a-set specified AFIX to the imported fragment&;"
     "o-set specified occupancy to the imported fragment atoms&;"
     "c-take the content from the clipboard",
-    fpNone|psFileLoaded,
+    fpNone|fpOne|psFileLoaded,
     "Import a fragment into current structure");
   this_InitMacroD(ExportFrag, EmptyString(), fpNone|psFileLoaded,
     "Exports selected fragment to an external file");

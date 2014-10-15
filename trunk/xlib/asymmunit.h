@@ -300,28 +300,38 @@ public:
 #endif
   void FromDataItem(TDataItem& item);
 
-  void LibNewAtom(const TStrObjList& Params, TMacroError& E);
   void LibGetAtomCount(const TStrObjList& Params, TMacroError& E);
+  void LibNewAtom(const TStrObjList& Params, TMacroError& E);
+  
   void LibGetAtomCrd(const TStrObjList& Params, TMacroError& E);
-  void LibGetAtomU(const TStrObjList& Params, TMacroError& E);
+  void LibSetAtomCrd(const TStrObjList& Params, TMacroError& E);
+
   void LibGetAtomUiso(const TStrObjList& Params, TMacroError& E);
+  void LibGetAtomU(const TStrObjList& Params, TMacroError& E);
+  void LibSetAtomU(const TStrObjList& Params, TMacroError& E);
+
+  void LibSetAtomOccu(const TStrObjList& Params, TMacroError& E);
   void LibGetAtomOccu(const TStrObjList& Params, TMacroError& E);
+
+  void LibGetAtomPart(const TStrObjList& Params, TMacroError& E);
+  void LibSetAtomPart(const TStrObjList& Params, TMacroError& E);
+
   void LibGetAtomName(const TStrObjList& Params, TMacroError& E);
   void LibGetAtomType(const TStrObjList& Params, TMacroError& E);
   void LibGetAtomAfix(const TStrObjList& Params, TMacroError& E);
   void LibGetPeak(const TStrObjList& Params, TMacroError& E);
+
   void LibGetCell(const TStrObjList& Params, TMacroError& E);
   void LibGetVolume(const TStrObjList& Params, TMacroError& E);
   void LibGetCellVolume(const TStrObjList& Params, TMacroError& E);
-  void LibSetAtomCrd(const TStrObjList& Params, TMacroError& E);
+
+  void LibGetAtomLabel(const TStrObjList& Params, TMacroError& E);
   void LibSetAtomLabel(const TStrObjList& Params, TMacroError& E);
   // retruns label if +-num is used
   void LibIsAtomDeleted(const TStrObjList& Params, TMacroError& E);
   void LibIsPeak(const TStrObjList& Params, TMacroError& E);
-  void LibGetAtomLabel(const TStrObjList& Params, TMacroError& E);
-  void LibSetAtomU(const TStrObjList& Params, TMacroError& E);
+
   void LibNPDCount(const TStrObjList& Params, TMacroError& E);
-  void LibSetAtomOccu(const TStrObjList& Params, TMacroError& E);
   void LibGetSymm(const TStrObjList& Params, TMacroError& E);
   void LibGetZ(const TStrObjList& Params, TMacroError& E);
   void LibSetZ(const TStrObjList& Params, TMacroError& E);

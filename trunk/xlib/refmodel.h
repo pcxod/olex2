@@ -850,6 +850,10 @@ Friedel opposites of components 1 ... m
   void LibMaxIndex(const TStrObjList& Params, TMacroError& E);
   // restraints & constraints related functions
   void LibShareADP(TStrObjList &Cmds, const TParamList &Opts, TMacroError &E);
+  void LibNewAfixGroup(TStrObjList &Cmds, const TParamList &Options,
+    TMacroError &E);
+  void LibNewRestraint(TStrObjList &Cmds, const TParamList &Options,
+    TMacroError &E);
 
   TLibrary* ExportLibrary(const olxstr& name=EmptyString());
 

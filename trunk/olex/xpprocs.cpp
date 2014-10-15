@@ -5986,19 +5986,21 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options,
   TStrList content;
   if (Options.Contains('c')) {
     olxstr clipbrd_content;
-    if( wxTheClipboard->Open() )  {
-      if (wxTheClipboard->IsSupported(wxDF_TEXT) )  {
+    if (wxTheClipboard->Open()) {
+      if (wxTheClipboard->IsSupported(wxDF_TEXT)) {
         wxTextDataObject data;
         wxTheClipboard->GetData(data);
         clipbrd_content = data.GetText();
       }
       wxTheClipboard->Close();
     }
-    clipbrd_content.Trim(' ').Replace('\r', '\n').Trim('\n').DeleteSequencesOf('\n');
-    if( !clipbrd_content.StartsFromi("FRAG") ||
-        !clipbrd_content.EndsWithi("FEND") )
+    clipbrd_content.Trim(' ').Replace('\r', '\n').Trim('\n')
+      .DeleteSequencesOf('\n');
+    if (!clipbrd_content.StartsFromi("FRAG") ||
+        !clipbrd_content.EndsWithi("FEND"))
     {
-      E.ProcessingError(__OlxSrcInfo, "Unrecognisable clipboard content");
+      E.ProcessingError(__OlxSrcInfo,
+        "Unrecognisable clipboard content, FRAG/FEND are expected");
       return;
     }
     content.Strtok(clipbrd_content, '\n');
@@ -6008,9 +6010,9 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options,
     }
     content.Delete(content.Count()-1);
     content.Delete(0);
-    for( size_t i=0; i < content.Count(); i++ )  {
-      TStrList toks(content[i].Trim('\r'), ' ');
-      if( toks.Count() != 5 )  {
+    for (size_t i=0; i < content.Count(); i++) {
+      TStrList toks(content[i], ' ');
+      if (toks.Count() != 5) {
         content[i].SetLength(0);
         continue;
       }
@@ -6019,9 +6021,15 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   else {
-    olxstr FN = PickFile("Load Fragment", "XYZ files (*.xyz)|*.xyz",
-      XLibMacros::CurrentDir(), EmptyString(), true);
-    if (FN.IsEmpty()) {
+    olxstr FN;
+    if (!Cmds.IsEmpty()) {
+      FN = Cmds[0];
+    }
+    else {
+      FN = PickFile("Load Fragment", "XYZ files (*.xyz)|*.xyz",
+        XLibMacros::CurrentDir(), EmptyString(), true);
+    }
+    if (FN.IsEmpty() || !TEFile::Exists(FN)) {
       E.ProcessingError(__OlxSrcInfo, "A file is expected");
       return;
     }
@@ -6044,44 +6052,44 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options,
     if (part != -100)
       xatoms[i]->CAtom().SetPart(part);
   }
-  if( xatoms.IsEmpty() )  return;
+  if (xatoms.IsEmpty())  return;
   Macros.ProcessMacro("mode fit", E);
   const int afix = Options.FindValue("a", "-100").ToInt();
-  if( afix != -100 )  {
+  if (afix != -100) {
     TCAtom* pivot = TAfixGroup::HasExcplicitPivot(afix) ? &xatoms[0]->CAtom()
       : NULL;
     TAfixGroup& ag = FXApp->XFile().GetRM().AfixGroups.New(pivot, afix);
     const size_t start = pivot != NULL ? 1 : 0;
-    for( size_t i=start; i < xatoms.Count(); i++ )
+    for (size_t i=start; i < xatoms.Count(); i++)
       ag.AddDependent(xatoms[i]->CAtom());
   }
-  else if( Options.Contains('d') )  {
+  else if (Options.Contains('d')) {
     RefinementModel& rm = FXApp->XFile().GetRM();
     olx_pdict<double, TSimpleRestraint*> r12, r13;
-    for( size_t i=0; i < xatoms.Count(); i++ )  {
+    for (size_t i=0; i < xatoms.Count(); i++) {
       TXAtom& a = *xatoms[i];
-      for( size_t j=0; j < a.BondCount(); j++ )  {
+      for (size_t j=0; j < a.BondCount(); j++) {
         TXAtom& b = a.Bond(j).Another(a);
-        if( b.GetOwnerId() <= a.GetOwnerId() )  continue;
-        const double d = (double)olx_round(a.Bond(j).Length()*1000)/1000;
+        if (b.GetOwnerId() <= a.GetOwnerId())  continue;
+        const double d = olx_round(a.Bond(j).Length(), 1000);
         const size_t ri = r12.IndexOf(d);
         TSimpleRestraint& df = (ri == InvalidIndex) ? rm.rDFIX.AddNew()
           : *r12.GetValue(ri);
         df.AddAtomPair(a.CAtom(), NULL, b.CAtom(), NULL);
-        if( ri == InvalidIndex )  {
+        if (ri == InvalidIndex) {
           df.SetValue(d);
           df.SetEsd(0.02);
           r12.Add(d, &df);
         }
-        for( size_t k=0; k < b.NodeCount(); k++ )  {
+        for (size_t k=0; k < b.NodeCount(); k++) {
           TSAtom& b1 = b.Node(k);
-          if( b1.GetOwnerId() <= a.GetOwnerId() )  continue;
+          if (b1.GetOwnerId() <= a.GetOwnerId())  continue;
           const double d1 = olx_round(a.crd().DistanceTo(b1.crd()), 1000);
           const size_t ri1 = r13.IndexOf(d1);
           TSimpleRestraint& df1 = (ri1 == InvalidIndex) ? rm.rDFIX.AddNew()
             : *r13.GetValue(ri1);
           df1.AddAtomPair(a.CAtom(), NULL, b1.CAtom(), NULL);
-          if( ri1 == InvalidIndex )  {
+          if (ri1 == InvalidIndex) {
             df1.SetValue(d1);
             df1.SetEsd(0.04);
             r13.Add(d1, &df1);
@@ -6093,36 +6101,35 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options,
   FXApp->CenterView(true);
   FXApp->SelectAll(false);
   AMode *md = Modes->GetCurrent();
-  if( md != NULL )  {
+  if (md != NULL) {
     md->AddAtoms(xatoms);
-    for( size_t i=0; i < xbonds.Count(); i++ )
+    for (size_t i=0; i < xbonds.Count(); i++)
       FXApp->GetRender().Select(*xbonds[i], true);
   }
 }
 //..............................................................................
-void TMainForm::macExportFrag(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  TXAtomPList xatoms;
+void TMainForm::macExportFrag(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
   TGlGroup& glg = FXApp->GetSelection();
-  for( size_t i=0; i < glg.Count(); i++ )  {
-    if( EsdlInstanceOf(glg[i], TXAtom) )
-      xatoms.Add((TXAtom&)glg[i]);
-  }
+  TXAtomPList xatoms = glg.Extract<TXAtom>();
   TNetPList nets;
-  for( size_t i=0; i < xatoms.Count(); i++ )  {
+  for (size_t i=0; i < xatoms.Count(); i++) {
     TNetwork* net = &xatoms[i]->GetNetwork();
-    if( nets.IndexOf(net) == InvalidIndex )
+    if (nets.IndexOf(net) == InvalidIndex)
       nets.Add(net);
   }
-  if( nets.Count() != 1 )  {
-    E.ProcessingError(__OlxSrcInfo, "please select one fragment or one atom only");
+  if (nets.Count() != 1) {
+    E.ProcessingError(__OlxSrcInfo,
+      "please select one fragment or one atom only");
     return;
   }
   olxstr FN = PickFile("Save Fragment as...", "XYZ files (*.xyz)|*.xyz",
     XLibMacros::CurrentDir(), EmptyString(), false);
-  if( FN.IsEmpty() )  return;
+  if (FN.IsEmpty()) return;
   TXyz xyz;
-  for( size_t i=0; i < nets[0]->NodeCount(); i++ )  {
-    if( nets[0]->Node(i).IsDeleted() || nets[0]->Node(i).GetType() == iQPeakZ )
+  for (size_t i=0; i < nets[0]->NodeCount(); i++) {
+    if (nets[0]->Node(i).IsDeleted() || nets[0]->Node(i).GetType() == iQPeakZ)
       continue;
     TCAtom& ca = xyz.GetAsymmUnit().NewAtom();
     ca.ccrd() = nets[0]->Node(i).crd();
