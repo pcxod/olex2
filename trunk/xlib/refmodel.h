@@ -400,22 +400,22 @@ public:
   }
   // returns a list of [1-sum(basf), basf[0], basf[1],...] - complete scales
   TDoubleList::const_list_type GetScales() const {
+    TDoubleList rv;
     if (!GetBASF().IsEmpty()) {
       double pi = 0;  // 'prime' reflection fraction
       for (size_t bi=0; bi < GetBASF().Count(); bi++)
         pi += GetBASF()[bi].GetV();
-      return TDoubleList() << 1-pi << GetBASFAsDoubleList();
+      rv << 1-pi << GetBASFAsDoubleList();
     }
     else {
       if (GetTWIN_n() != 0 ) {  // all the fractions are the same
         double f = 1./olx_abs(GetTWIN_n());
-        TDoubleList rv(olx_abs(GetTWIN_n()));
+        rv.SetCount(olx_abs(GetTWIN_n()));
         for (size_t i=0; i < rv.Count(); i++)
           rv[i] = f;
-        return rv;
       }
     }
-    return TDoubleList();
+    return rv;
   }
   olxstr GetBASFStr() const;
 
