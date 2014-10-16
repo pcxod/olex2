@@ -1112,7 +1112,7 @@ olxstr TGXApp::GetSelectionInfo(bool list) const {
       TSAtom* central_atom = atoms[0];
       atoms.Delete(0);
       size_t face_cnt=0;
-      double total_val_bp=0, total_val=0;
+      double total_val_bp = 0;
       for( size_t i=0; i < 6; i++ )  {
         for( size_t j=i+1; j < 6; j++ )  {
           for( size_t k=j+1; k < 6; k++ )  {
@@ -1145,25 +1145,14 @@ olxstr TGXApp::GetSelectionInfo(bool list) const {
             vec3d_alist pts;
             pts << central_atom->crd() << vec3d_alist::FromList(sorted_atoms,
               FunctionAccessor::Make(&TSAtom::crd));
-            total_val += VcoVContainer::OctahedralDistortion(pts).calc();
             total_val_bp += VcoVContainer::OctahedralDistortionBP(pts).calc();
           }
         }
       }
       if( face_cnt == 8 ) {
-        if (olx_abs(total_val-total_val_bp) < 1e-3) {
-          Tmp << "Combined distortion: " <<
-            olxstr::FormatFloat(2, total_val*3) << ", mean: " <<
-            olxstr::FormatFloat(2, total_val/8) << NewLineSequence();
-        }
-        else {
-          Tmp << "Combined distortion (cross-projections): " <<
-            olxstr::FormatFloat(2, total_val*3) << ", mean: " <<
-            olxstr::FormatFloat(2, total_val/8) << NewLineSequence();
-          Tmp << "Combined distortion (best plane): " <<
-            olxstr::FormatFloat(2, total_val_bp*3) << ", mean: " <<
-            olxstr::FormatFloat(2, total_val_bp/8) << " degrees";
-        }
+        Tmp << "Combined distortion: " <<
+          olxstr::FormatFloat(2, total_val_bp*3) << ", mean: " <<
+          olxstr::FormatFloat(2, total_val_bp/8) << " degrees";
       }
       else  {  // calculate just for the selection
         // centroids

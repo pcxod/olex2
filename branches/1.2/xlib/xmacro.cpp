@@ -4124,6 +4124,30 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
     Cif->SetParam("_diffrn_reflns_limit_k_max", hs.MaxIndexes[1], false);
     Cif->SetParam("_diffrn_reflns_limit_l_max", hs.MaxIndexes[2], false);
   }
+  // batch scales
+  if (!xapp.XFile().GetRM().GetBASF().IsEmpty()) {
+    cetTable *l = Cif->FindLoop("_twin_individual");
+    if (l == NULL) {
+      const TArrayList<TEValueD> &basf = xapp.XFile().GetRM().GetBASF();
+      double esd = 0, sum = 0;
+      for (size_t i = 0; i < basf.Count(); i++) {
+        sum += basf[i].GetV();
+        esd += olx_sqr(basf[i].GetE());
+      }
+      l = &Cif->AddLoopDef("_twin_individual_id,"
+        "_twin_individual_mass_fraction_refined");
+      for (size_t i = 0; i <= basf.Count(); i++) {
+        CifRow &r = l->AddRow();
+        r[0] = new cetString(i + 1);
+        if (i == 0) {
+          r[1] = new cetString(TEValueD(1-sum, sqrt(esd)).ToString());
+        }
+        else {
+          r[1] = new cetString(basf[i-1].ToString());
+        }
+      }
+    }
+  }
   // update the refinement description
   cetNamedStringList description("_olex2_refinement_description");
   TStrList ri = xapp.XFile().GetRM().Describe();

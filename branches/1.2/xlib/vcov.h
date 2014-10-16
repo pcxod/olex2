@@ -443,27 +443,6 @@ public:
     Distance(const aT& _a, const bT& _b) : a(_a), b(_b)  {}
     double calc() const {  return a.evaluate().DistanceTo(b.evaluate());  }
   };
-  // octahedral distortion (in degrees)
-  struct OctahedralDistortion  {
-    const vec3d_alist& points;
-    OctahedralDistortion(const vec3d_alist& _points)
-      : points(_points)
-    {}
-    double calc() const {
-      // centroid for first face
-      const vec3d c1 = (points[1] + points[3] + points[5])/3;
-      vec3d normal = vec3d::Normal(points, 1, 3, 5);
-      // centroid for second face
-      const vec3d c2 = (points[2] + points[4] + points[6])/3;
-      double sum = 0;
-      for (int i=1; i < 7; i += 2)  {
-        vec3d v1 = points[i].Projection(c1, normal);
-        vec3d v2 = points[i+1].Projection(c2, normal);
-        sum += olx_abs(M_PI/3-acos(v1.CAngle(v2)));
-      }
-      return (sum*180/3)/M_PI;
-    }
-  };
   // octahedral distortion (in degrees), using best plane approach
   struct OctahedralDistortionBP  {
     const vec3d_alist& points;
@@ -491,6 +470,39 @@ public:
       return (sum*180/3)/M_PI;
     }
   };
+  struct OctahedralDistortion {
+    const vec3d_alist& points;
+    TTypeList<AnAssociation3<size_t, size_t, size_t> > angles;
+    OctahedralDistortion(const vec3d_alist& _points);
+    // octahedral anngle distortion (in degrees, deviation from 90)
+    double calc_angle() const;
+    // distacne between the metal and the centroid
+    double calc_d_cent() const;
+    // length distrortion (deviation from the mean)
+    double calc_d_len() const;
+    // octahedral distortion (in degrees), using best plane approach
+    double calc_distortion() const;
+  };
+
+  struct CalcWrapper {
+    template <class calc_t>
+    struct CalcWrapper_ {
+      const calc_t &cl;
+      double (calc_t::*func)() const;
+      CalcWrapper_(const calc_t &cl, double (calc_t::*func)() const)
+        : cl(cl), func(func)
+      {}
+      double calc() const {
+        return (cl.*func)();
+      }
+    };
+    template <class calc_t>
+    static CalcWrapper_<calc_t> Make(const calc_t &b,
+      double (calc_t::*func)() const)
+    {
+      return CalcWrapper_<calc_t>(b, func);
+    }
+  };
   // triangle twist (in degrees), using best plane approach
   struct TriangleTwistBP  {
     const vec3d_alist& points;
@@ -501,24 +513,7 @@ public:
       : points(_points), pl(6), weights(6, olx_list_init::value(1.0)),
       angles(3)
     {}
-    double calc() const {
-      // translation for first face
-      const vec3d c1 = (points[0] + points[2] + points[4])/3;
-      // translation for second face
-      const vec3d c2 = (points[1] + points[3] + points[5])/3;
-      for (short i=0; i < 6; i+=2) {
-        pl[i] = (points[i] - c1);
-        pl[i+1] = (points[i+1] - c2);
-      }
-      const PlaneInfo pi = CalcPlane(pl, weights, 0);
-      for (short i=0; i < 6; i++) {
-        pl[i] = pl[i].Projection(pi.center, pi.normal);
-      }
-      for (short i=0; i < 6; i+=2) {
-        angles[i/2] = acos(pl[i].CAngle(pl[i+1]));
-      }
-      return (olx_sum(angles)*180/3)/M_PI;
-    }
+    double calc() const;
   };
 protected:
   // helper functions
@@ -954,14 +949,6 @@ public:
     return ch.DoCalc(AlignmentRMSD(ch.points, weights));
   }
   /* octahedral distortion, takes {Central Atom, a1, b1, a2, b2, a3, b3},
-  returns mean value in degrees. This calculation projects second set of points
-  onto the plane defined be the firts set
-  */
-  TEValue<double> CalcOHDistortion(const TSAtomCPList& atoms)  {
-    CalcHelper ch(*this, atoms);
-    return ch.DoCalc(OctahedralDistortion(ch.points));
-  }
-  /* octahedral distortion, takes {Central Atom, a1, b1, a2, b2, a3, b3},
   returns mean value in degrees. This function uses mean plane defined by
   the 6 points arranged around the origin
   */
@@ -976,7 +963,21 @@ public:
     CalcHelper ch(*this, atoms);
     return ch.DoCalc(TriangleTwistBP(ch.points));
   }
-  const VcoVMatrix& GetMatrix() const {  return vcov;  }
+  olxstr_dict<TEValue<double> >::const_dict_type
+  CalcOctahedralDistortion(const TSAtomCPList& atoms)
+  {
+    olxstr_dict<TEValue<double> > rv;
+    CalcHelper ch(*this, atoms);
+    OctahedralDistortion od(ch.points);
+    rv.Add("Octohedral angle deviation from 90 (for 12 S-M-S angles)",
+      ch.DoCalc(CalcWrapper::Make(od, &OctahedralDistortion::calc_angle)));
+    rv.Add("Octohedral length deviation from mean",
+      ch.DoCalc(CalcWrapper::Make(od, &OctahedralDistortion::calc_d_len)));
+    rv.Add("Octohedral metal to centroid deviation",
+      ch.DoCalc(CalcWrapper::Make(od, &OctahedralDistortion::calc_d_cent)));
+    return rv;
+  }
+  const VcoVMatrix& GetMatrix() const { return vcov; }
 };
 
 EndXlibNamespace()
