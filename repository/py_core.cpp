@@ -524,6 +524,10 @@ PyObject* pyOnPlatonRun(PyObject* self, PyObject* args) {
   if (!PythonExt::ParseTuple(args, "i", &pid)) {
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "i");
   }
+  HANDLE ph = OpenProcess(PROCESS_QUERY_INFORMATION, false, pid);
+  if (ph == NULL) {
+    return PythonExt::PyFalse();
+  }
   olxProcessWindow pwt(pid);
   size_t cnt = 0;
   while (true) {
@@ -531,8 +535,17 @@ PyObject* pyOnPlatonRun(PyObject* self, PyObject* args) {
     if (pwt.hwnd != NULL) {
       break;
     }
+    DWORD ec;
+    if (GetExitCodeProcess(ph, &ec) == TRUE) {
+      if (ec != STILL_ACTIVE) {
+        return PythonExt::PyFalse();
+      }
+    }
+    else {
+      return PythonExt::PyFalse();
+    }
     olx_sleep(50);
-    if (++cnt >= 20) {
+    if (++cnt >= 100) {
       return PythonExt::PyFalse();
     }
   }
