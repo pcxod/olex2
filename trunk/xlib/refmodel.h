@@ -394,12 +394,12 @@ public:
   olxstr GetSHELStr() const {  return olxstr(SHEL_lr) << ' ' << SHEL_hr;  }
 
   const TArrayList<TEValueD>& GetBASF() const {  return BASF;  }
-  ConstArrayList<double> GetBASFAsDoubleList() const {
+  TDoubleList::const_list_type GetBASFAsDoubleList() const {
     return TDoubleList::FromList(GetBASF(),
       FunctionAccessor::MakeConst(&TEValueD::GetV));
   }
   // returns a list of [1-sum(basf), basf[0], basf[1],...] - complete scales
-  TDoubleList GetScales() const {
+  TDoubleList::const_list_type GetScales() const {
     if (!GetBASF().IsEmpty()) {
       double pi = 0;  // 'prime' reflection fraction
       for (size_t bi=0; bi < GetBASF().Count(); bi++)

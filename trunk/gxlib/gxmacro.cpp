@@ -2993,12 +2993,12 @@ void GXLibMacros::macEsd(TStrObjList &Cmds, const TParamList &Options,
       TSAtomPList atoms(sel, DynamicCastAccessor<TSAtom>()),
         face_atoms, sorted_atoms;
       values.Add("Octahedral distortion is (for the selection): ")
-        << vcovc.CalcOHDistortion(TSAtomCPList(atoms)).ToString();
+        << vcovc.CalcOHDistortionBP(TSAtomCPList(atoms)).ToString();
       TSAtom* central_atom = atoms[0];
       atoms.Delete(0);
       olx_pdict<index_t, vec3d> transforms;
       int face_cnt = 0;
-      double total_val=0, total_esd=0, total_val_bp=0, total_esd_bp=0;
+      double total_val_bp=0, total_esd_bp=0;
       for( size_t i=0; i < 6; i++ )  {
         for( size_t j=i+1; j < 6; j++ )  {
           for( size_t k=j+1; k < 6; k++ )  {
@@ -3033,31 +3033,20 @@ void GXLibMacros::macEsd(TStrObjList &Cmds, const TParamList &Options,
               TSAtomCPList(sorted_atoms));
             total_val_bp += rv.GetV()*3;
             total_esd_bp += olx_sqr(rv.GetE());
-            rv = vcovc.CalcOHDistortion(
-              TSAtomCPList(sorted_atoms));
-            total_val += rv.GetV()*3;
-            total_esd += olx_sqr(rv.GetE());
             values.GetLastString() << rv.ToString();
           }
         }
       }
       if( face_cnt == 8 )  {
-        if (olx_abs(total_val-total_val_bp) < 1e-3) {
-          values.Add("Combined distortion: ") <<
-            TEValue<double>(total_val, 3*sqrt(total_esd)).ToString() <<
-            ", mean: " <<
-            TEValue<double>(total_val/24, 3*sqrt(total_esd)/24).ToString();
-        }
-        else {
-          values.Add("Combined distortion (cross-projections): ") <<
-            TEValue<double>(total_val, 3*sqrt(total_esd)).ToString() <<
-            ", mean: " <<
-            TEValue<double>(total_val/24, 3*sqrt(total_esd)/24).ToString();
-          values.Add("Combined distortion (best plane): ") <<
-            TEValue<double>(total_val_bp, 3*sqrt(total_esd_bp)).ToString() <<
-            ", mean: " <<
-            TEValue<double>(total_val_bp/24, 3*sqrt(total_esd_bp)/24).ToString()
-            << " degrees";
+        values.Add("Combined distortion: ") <<
+          TEValue<double>(total_val_bp, 3*sqrt(total_esd_bp)).ToString() <<
+          ", mean: " <<
+          TEValue<double>(total_val_bp/24, 3*sqrt(total_esd_bp)/24).ToString()
+          << " degrees";
+        olxstr_dict<TEValue<double> > od_c = vcovc.CalcOctahedralDistortion(
+          TSAtomCPList() << central_atom << atoms);
+        for (size_t ci = 0; ci < od_c.Count(); ci++) {
+          values.Add(od_c.GetKey(ci)) << ": " << od_c.GetValue(ci).ToString();
         }
       }
       else  {

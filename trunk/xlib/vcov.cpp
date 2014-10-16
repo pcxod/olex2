@@ -449,3 +449,99 @@ void VcoVMatrix::FromCIF(TAsymmUnit& au) {
   UpdateAtomIndex();
 }
 //.............................................................................
+//.............................................................................
+//.............................................................................
+VcoVContainer::OctahedralDistortion::OctahedralDistortion(
+  const vec3d_alist& points) : points(points)
+{
+  size_t opp = InvalidIndex, opp1 = InvalidIndex;
+  for (size_t i = 2; i < points.Count(); i++) {
+    double ang = olx_angle(points[1], points[0], points[i]);
+    if (ang > 160) {
+      if (opp != InvalidIndex) {
+        throw TFunctionFailedException(__OlxSourceInfo,
+          "unable to evaluate the 12 angles");
+      }
+      opp = i;
+      continue;
+    }
+    angles.AddNew(1, 0, i);
+  }
+  if (opp == InvalidIndex) {
+    throw TFunctionFailedException(__OlxSourceInfo,
+      "unable to evaluate the 12 angles");
+  }
+  for (size_t i = 2; i < points.Count(); i++) {
+    if (i == opp) continue;
+    angles.AddNew(opp, 0, i);
+  }
+  size_t current = (opp == 2 ? 3 : 2);
+  for (size_t i = 2; i < points.Count(); i++) {
+    if (i == opp || i == current) continue;
+    double ang = olx_angle(points[current], points[0], points[i]);
+    if (ang > 160) {
+      if (opp1 != InvalidIndex) {
+        throw TFunctionFailedException(__OlxSourceInfo,
+          "unable to evaluate the 12 angles");
+      }
+      opp1 = i;
+      continue;
+    }
+    angles.AddNew(current, 0, i);
+  }
+  if (opp1 == InvalidIndex) {
+    throw TFunctionFailedException(__OlxSourceInfo,
+      "unable to evaluate the 12 angles");
+  }
+  for (size_t i = 2; i < points.Count(); i++) {
+    if (i == opp || i == opp1 || i == current) continue;
+    angles.AddNew(opp1, 0, i);
+  }
+}
+double VcoVContainer::OctahedralDistortion::calc_angle() const {
+  double sum = 0;
+  for (size_t i = 0; i < angles.Count(); i++) {
+    double ang = olx_angle(points[angles[i].a], points[angles[i].b],
+      points[angles[i].c]);
+    sum += olx_abs(ang - 90);
+  }
+  return sum;
+}
+double VcoVContainer::OctahedralDistortion::calc_d_cent() const {
+  vec3d cnt = olx_mean(crd_slice(points, 1, points.Count()-1));
+  return points[0].DistanceTo(cnt);
+}
+double VcoVContainer::OctahedralDistortion::calc_d_len() const {
+  TArrayList<double> ds(points.Count(), olx_list_init::value(0.0));
+  for (size_t i = 1; i < points.Count(); i++) {
+    ds[i] = points[0].DistanceTo(points[i]);
+    ds[0] += ds[i];
+  }
+  ds[0] /= (points.Count() - 1);
+  double d = 0;
+  for (size_t i = 1; i < points.Count(); i++) {
+    d += olx_abs(ds[i] - ds[0]);
+  }
+  return d;
+}
+//.............................................................................
+double VcoVContainer::TriangleTwistBP::calc() const {
+  // translation for first face
+  const vec3d c1 = (points[0] + points[2] + points[4]) / 3;
+  // translation for second face
+  const vec3d c2 = (points[1] + points[3] + points[5]) / 3;
+  for (short i = 0; i < 6; i += 2) {
+    pl[i] = (points[i] - c1);
+    pl[i + 1] = (points[i + 1] - c2);
+  }
+  const PlaneInfo pi = CalcPlane(pl, weights, 0);
+  for (short i = 0; i < 6; i++) {
+    pl[i] = pl[i].Projection(pi.center, pi.normal);
+  }
+  for (short i = 0; i < 6; i += 2) {
+    angles[i / 2] = acos(pl[i].CAngle(pl[i + 1]));
+  }
+  return (olx_sum(angles) * 180 / 3) / M_PI;
+}
+//.............................................................................
+//.............................................................................

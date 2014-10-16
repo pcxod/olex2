@@ -290,11 +290,9 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm,
 olxstr RefinementModel::GetBASFStr() const {
   olxstr rv;
   for (size_t i=0; i < BASF.Count(); i++) {
-    rv << Vars.GetParam(*this, (short)i);
-    if( (i+1) < BASF.Count() )
-      rv << ' ';
+    rv << ' ' << Vars.GetParam(*this, (short)i);
   }
-  return rv;
+  return rv.IsEmpty() ? rv : rv.SubStringFrom(1);
 }
 //.............................................................................
 olxstr RefinementModel::GetDEFSStr() const {
@@ -850,6 +848,21 @@ const_strlist RefinementModel::Describe() {
   TStrList lst;
   Validate();
   int sec_num = 0;
+  // twinning...
+  if (!BASF.IsEmpty()) {
+    lst.Add(olxstr(++sec_num)) << ". Twinned data refinement";
+    double esd = 0, sum = 0;
+    for (size_t i = 0; i < BASF.Count(); i++) {
+      sum += BASF[i].GetV();
+      esd += olx_sqr(BASF[i].GetE());
+    }
+    olxstr str_s = " Scales: ";
+    str_s << TEValueD(1 - sum, sqrt(esd)).ToString();
+    for (size_t i = 0; i < BASF.Count(); i++) {
+      str_s << ' ' << BASF[i].ToString();
+    }
+    lst << str_s;
+  }
   // riding atoms..
   olx_pdict<double, // scale
     olxdict<const TCAtom *, TCAtomPList, TPointerComparator> > riding_u;
@@ -2434,6 +2447,7 @@ TLibrary* RefinementModel::ExportLibrary(const olxstr& name)  {
     "s1-standard deviation 1&;"
     "s2-standard deviation 2",
     fpAny ^ (fpNone|fpOne),
-    "Creates a new restraint expects AFIX code and atom ids"));
+    "Creates a new restraint expects restraint name, parameters if required "
+    "and atom ids"));
   return lib;
 }
