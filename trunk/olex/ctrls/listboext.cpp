@@ -15,11 +15,11 @@ using namespace ctrl_ext;
 IMPLEMENT_CLASS(TListBox, wxListBox)
 
 BEGIN_EVENT_TABLE(TListBox, wxListBox)
-  EVT_LEFT_DCLICK(TListBox::ClickEvent)
+  EVT_LEFT_DCLICK(TListBox::DblClickEvent)
   EVT_LISTBOX(-1, TListBox::ItemSelectEvent)
 END_EVENT_TABLE()
 //..............................................................................
-void TListBox::ClickEvent(wxMouseEvent& event)  {
+void TListBox::DblClickEvent(wxMouseEvent& event)  {
   event.Skip();
   OnDblClick.Execute(this);
 }
@@ -31,17 +31,4 @@ void TListBox::ItemSelectEvent(wxCommandEvent& event)  {
   OnSelect.Execute(this);
 }
 //..............................................................................
-olxstr TListBox::ItemsToString(const olxstr &sep)  {
-  olxstr_buf rv;
-  for( unsigned int i=0; i < GetCount(); i++ )  {
-    rv << GetString(i);
-    if( (i+1) < GetCount() )
-      rv << sep;
-  }
-  return rv;
-}
-//..............................................................................
-void TListBox::AddItems(const TStrList &items)  {
-  for( size_t i=0; i < items.Count(); i++ )
-    AddObject(items[i]);
-}
+

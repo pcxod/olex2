@@ -10,15 +10,12 @@
 #ifndef __olx_ctrl_combo_H
 #define __olx_ctrl_combo_H
 #include "olxctrlbase.h"
+#include "itemlist.h"
 #include "estrlist.h"
 #include "wx/combo.h"
 
 namespace ctrl_ext {
-  class TComboBox: public wxComboBox, public AOlxCtrl  {
-    struct TDataObj  {
-      IEObject* Data;
-      bool Delete;
-    };
+  class TComboBox : public TItemList<wxComboBox>, public AOlxCtrl {
     void ChangeEvent(wxCommandEvent& event);
     void EnterPressedEvent(wxCommandEvent& event);
     void LeaveEvent(wxFocusEvent& event);
@@ -27,18 +24,16 @@ namespace ctrl_ext {
     olxstr StrValue;
     int entered_counter;
     bool OnChangeAlways;
-  protected:
-    void _AddObject(const olxstr &Item, IEObject* Data, bool Delete);
   public:
     TComboBox(wxWindow *Parent, bool ReadOnly=false, const wxSize& sz=wxDefaultSize) :
-      wxComboBox(Parent, -1, wxString(), wxDefaultPosition, sz, 0, NULL,
-        wxCB_DROPDOWN|(ReadOnly?wxCB_READONLY:0)|wxTE_PROCESS_ENTER),
       AOlxCtrl(this),
       OnChange(AOlxCtrl::ActionQueue::New(Actions, evt_change_id)),
       OnLeave(AOlxCtrl::ActionQueue::New(Actions, evt_on_mouse_leave_id)),
       OnEnter(AOlxCtrl::ActionQueue::New(Actions, evt_on_mouse_enter_id)),
       OnReturn(AOlxCtrl::ActionQueue::New(Actions, evt_on_return_id))
     {
+      wxComboBox::Create(Parent, -1, wxString(), wxDefaultPosition, sz, 0, NULL,
+        wxCB_DROPDOWN | (ReadOnly ? wxCB_READONLY : 0) | wxTE_PROCESS_ENTER);
       OnLeave.SetEnabled(false);
       entered_counter = 0;
       OnChangeAlways = false;
@@ -46,17 +41,6 @@ namespace ctrl_ext {
     virtual ~TComboBox();
 
     void Clear();
-    void AddObject( const olxstr &Item, IEObject *Data = NULL);
-
-    olxstr GetItem(int i) const {  return GetString(i);  }
-    const IEObject* GetObject(int i) const;
-
-    /*if a list item is constructed like 'name<-value' the pair is added as single
-    item, though, once this item is selected, the value of Text() function will be
-    the valu part of the item */
-    void AddItems(const TStrList &items);
-
-    olxstr ItemsToString(const olxstr &separator);
 
     bool HasValue() const {
 #if wxCHECK_VERSION(2,9,0)

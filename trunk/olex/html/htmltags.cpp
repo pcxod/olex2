@@ -863,32 +863,32 @@ TAG_HANDLER_PROC(tag)  {
     }
   }
 /******************* LIST CONTROL *********************************************/
-  else if( TagName.Equalsi("list") )  {
-    bool srcTag   = tag.HasParam(wxT("SRC")),
-         itemsTag = tag.HasParam(wxT("ITEMS"));
+  else if (TagName.Equalsi("list")) {
+    bool srcTag = tag.HasParam(wxT("SRC")),
+      itemsTag = tag.HasParam(wxT("ITEMS"));
     TStrList itemsList;
-    if( srcTag && itemsTag ) {
+    if (srcTag && itemsTag) {
       TBasicApp::NewLogEntry(logError) <<
         "THTML: list can have only src or items";
     }
-    else if( srcTag ) {
+    else if (srcTag) {
       olxstr src = tag.GetParam(wxT("SRC"));
       op->processFunction(src, SrcInfo, true);
       IInputStream* ios = TFileHandlerManager::GetInputStream(src);
-      if( ios == NULL ) {
+      if (ios == NULL) {
         TBasicApp::NewLogEntry(logError) <<
           "THTML: could not locate list source: \'" << src <<  '\'';
       }
-      else  {
+      else {
 #ifdef _UNICODE
         itemsList = TUtf8File::ReadLines(*ios, false);
 #else
-        itemsList.LoadFromTextStream( *ios );
+        itemsList.LoadFromTextStream(*ios);
 #endif
         delete ios;
       }
     }
-    else if( itemsTag )  {
+    else if (itemsTag) {
       olxstr items = tag.GetParam(wxT("ITEMS"));
       op->processFunction(items, SrcInfo, true);
       itemsList.Strtok(items, ';');
@@ -902,12 +902,12 @@ TAG_HANDLER_PROC(tag)  {
     List->SetData(Data);
     List->AddItems(itemsList);
     // binding events
-    if( tag.HasParam(wxT("ONSELECT")) )  {
+    if (tag.HasParam(wxT("ONSELECT"))) {
       List->OnSelect.data =
         ExpandMacroShortcuts(tag.GetParam(wxT("ONSELECT")), macro_map);
       List->OnSelect.Add(&html->Manager);
     }
-    if( tag.HasParam(wxT("ONDBLCLICK")) )  {
+    if (tag.HasParam(wxT("ONDBLCLICK"))) {
       List->OnDblClick.data =
         ExpandMacroShortcuts(tag.GetParam(wxT("ONDBLCLICK")), macro_map);
       List->OnDblClick.Add(&html->Manager);
