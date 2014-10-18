@@ -45,6 +45,10 @@ public:
       Window->Hide();
   }
 
+  bool IsEnabled() const { return Window->IsEnabled(); }
+  void SetEnabled(bool v) { Window->Enable(v); }
+
+
   long GetWindowStyle()  const {   return Window->GetWindowStyleFlag();  }
   void SetWindowStyle(long v)  { Window->SetWindowStyleFlag(v);  }
   void AddWindowStyle(long v)  { Window->SetWindowStyleFlag(GetWindowStyle() | v);  }

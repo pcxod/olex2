@@ -331,6 +331,15 @@ void THtmlManager::funIsPopup(const TStrObjList& Params, TMacroError &E)  {
   E.SetRetVal(html != NULL && html->GetParent()->IsShown());
 }
 //.............................................................................
+void THtmlManager::funIsEnabled(const TStrObjList& Params, TMacroError &E)  {
+  Control c = FindControl(Params[0], E, 0, __OlxSrcInfo);
+  if (c.ctrl == NULL) {
+    E.ProcessingError(__OlxSrcInfo, "undefined control: ").quote() << Params[0];
+    return;
+  }
+  E.SetRetVal(c.ctrl->WI.IsEnabled());
+}
+//.............................................................................
 void THtmlManager::funIsItem(const TStrObjList &Params, TMacroError &E)  {
   THtml *html = (Params.Count() == 2) ? FindHtml(Params[0]) : main;
   if( html == NULL )  {
@@ -844,6 +853,15 @@ void THtmlManager::funSetState(const TStrObjList &Params, TMacroError &E)  {
   //}
 }
 //.............................................................................
+void THtmlManager::funSetEnabled(const TStrObjList &Params, TMacroError &E) {
+  Control c = FindControl(Params[0], E, 1, __OlxSrcInfo);
+  if (c.ctrl == NULL) {
+    E.ProcessingError(__OlxSrcInfo, "undefined control: ").quote() << Params[0];
+    return;
+  }
+  c.ctrl->WI.SetEnabled(Params[1].ToBool());
+}
+//.............................................................................
 void THtmlManager::funSetItems(const TStrObjList &Params, TMacroError &E)  {
   Control c = FindControl(Params[0], E, 1, __OlxSrcInfo);
   if( c.html == NULL || c.ctrl == NULL )  return;
@@ -1217,7 +1235,9 @@ TLibrary *THtmlManager::ExportLibrary(const olxstr &name) {
     "Sets image location for a button or a zimg");
   this_InitFuncD(SetItems, fpTwo,
     "Sets items for comboboxes and lists");
-  this_InitFuncD(SaveData, fpOne|fpTwo,
+  this_InitFuncD(SetEnabled, fpTwo,
+    "Enables/disables the control");
+  this_InitFuncD(SaveData, fpOne | fpTwo,
     "Saves state, data, label and value of all objects to a file");
   this_InitFuncD(LoadData, fpOne|fpTwo,
     "Loads previously saved data of html objects form a file");
@@ -1238,6 +1258,8 @@ TLibrary *THtmlManager::ExportLibrary(const olxstr &name) {
   this_InitFuncD(IsItem, fpOne, "Returns true if specified switch exists");
   this_InitFuncD(IsPopup, fpOne,
     "Returns true if specified popup window exists and visible");
+  this_InitFuncD(IsEnabled, fpOne,
+    "Returns true if specified control is enabled");
   this_InitFuncD(EndModal, fpTwo,
     "Ends a modal popup and sets the return code");
   this_InitFuncD(ShowModal, fpOne|fpTwo,
