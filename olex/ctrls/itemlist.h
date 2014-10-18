@@ -28,10 +28,10 @@ namespace ctrl_ext {
       parent_t::Append(Item.u_str());
       if (Data != NULL)  {
         TDataObj* d_o = new TDataObj(Data, Delete);
-        parent_t::SetClientData(GetCount() - 1, d_o);
+        parent_t::SetClientData(parent_t::GetCount() - 1, d_o);
       }
       else
-        parent_t::SetClientData(GetCount() - 1, NULL);
+        parent_t::SetClientData(parent_t::GetCount() - 1, NULL);
     }
     void _Clear() {
       for (unsigned int i = 0; i < parent_t::GetCount(); i++) {
