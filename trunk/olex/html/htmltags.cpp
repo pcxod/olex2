@@ -406,7 +406,7 @@ TAG_HANDLER_PROC(tag)  {
 /******************* DATE CONTROL *****************************************/
   if( TagName.Equalsi("date") )  {
     int flags = wxDP_SPIN;
-    if( tag.HasParam(wxT("dropdown")) )  {
+    if (GetBoolAttribute(tag, "dropdown")) {
       flags = wxDP_DROPDOWN;
     }
     TDateCtrl *DT = new TDateCtrl(html, flags);
@@ -417,28 +417,30 @@ TAG_HANDLER_PROC(tag)  {
     DT->SetData(Data);
     wxDateTime dt;
     dt.ParseDate(Value.u_str());
-    if( dt.IsValid() )
+    if (dt.IsValid())
       DT->SetValue(dt);
     else {
       TBasicApp::NewLogEntry(logError) << (
         olxstr("Invalid format for date and time: ").quote() << Value);
     }
-    if( !Label.IsEmpty() )  {
+    if (!Label.IsEmpty()) {
       wxHtmlContainerCell* contC =
         new wxHtmlContainerCell(m_WParser->GetContainer());
       THtml::WordCell* wc =
         new THtml::WordCell(Label.u_str(), *m_WParser->GetDC());
-      if( LinkInfo != NULL ) wc->SetLink(*LinkInfo);
+      if (LinkInfo != NULL)
+        wc->SetLink(*LinkInfo);
       wc->SetDescent(0);
-      contC->InsertCell( wc );
+      contC->InsertCell(wc);
       contC->InsertCell(new THtmlWidgetCell(DT, fl));
-      if( valign != -1 )  contC->SetAlignVer(valign);
-      if( halign != -1 )  contC->SetAlignHor(halign);
+      if (valign != -1)  contC->SetAlignVer(valign);
+      if (halign != -1)  contC->SetAlignHor(halign);
     }
-    else
+    else {
       m_WParser->GetContainer()->InsertCell(new THtmlWidgetCell(DT, fl));
+    }
 
-    if( tag.HasParam(wxT("ONCHANGE")) )  {
+    if (tag.HasParam(wxT("ONCHANGE"))) {
       DT->OnChange.data =
         ExpandMacroShortcuts(tag.GetParam(wxT("ONCHANGE")), macro_map);
       DT->OnChange.Add(&html->Manager);
