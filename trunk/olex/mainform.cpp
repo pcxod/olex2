@@ -845,6 +845,9 @@ void TMainForm::XApp(Olex2App *XA)  {
     fpNone|fpOne,
     "Runs Olex2 in elevated/desktop mode [true]/false- only available on "
     "Windows");
+  this_InitMacroD(Restart, EmptyString(),
+    fpNone,
+    "Restarts Olex2");
   this_InitMacroD(ADPDisp, EmptyString(),
     fpTwo,
     "Compares two structures in the terms of atomsic dispacement after the "

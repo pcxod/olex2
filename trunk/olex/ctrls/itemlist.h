@@ -102,7 +102,7 @@ namespace ctrl_ext {
           return olx_pair_t<size_t,olxstr>(i, GetItem(i));
         }
       }
-      return olx_pair_t<size_t, olxstr>(idx, EmptyString());
+      return olx_pair_t<size_t, olxstr>(idx, text);
     }
     olx_pair_t<bool, olxstr> _GetText(size_t i) const {
       const TDataObj* res = (TDataObj*)parent_t::GetClientData(i);
