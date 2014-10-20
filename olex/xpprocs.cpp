@@ -6389,6 +6389,15 @@ void TMainForm::macElevate(TStrObjList &Cmds, const TParamList &Options, TMacroE
 #endif
 }
 //..............................................................................
+void TMainForm::macRestart(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  olxstr cd = TEFile::CurrentDir();
+  TEFile::ChangeDir(TBasicApp::GetBaseDir());
+  olxstr mn = TEFile::ChangeFileExt(TBasicApp::GetModuleName(), "exe");
+  wxExecute(mn.u_str());
+  FXApp->UpdateOption("confirm_on_close", FalseString());
+  Close(false);
+}
+//..............................................................................
 double ProbFactorEx(double scale)  {
   // max of 4pi*int(0,inf)(exp(-x/2)*x^2dx) [/(4*pi*100)]
   static const double max_val = sqrt(8 * M_PI*M_PI*M_PI) / (4 * M_PI);
