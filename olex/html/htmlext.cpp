@@ -564,7 +564,7 @@ olxstr THtml::GetObjectValue(const AOlxCtrl *Obj)  {
     return olx_td->GetData()->ToString();
   }
   if( EsdlInstanceOf(*Obj, TDateCtrl) )  {
-    return ((TDateCtrl*)Obj)->GetValue().Format(wxT("%d/%m/%Y"));
+    return ((TDateCtrl*)Obj)->GetValue().Format(wxT("%Y-%m-%d"));
   }
   if( EsdlInstanceOf(*Obj, TColorCtrl) )  {
     wxColor c = ((TColorCtrl*)Obj)->GetColour();
