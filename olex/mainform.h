@@ -487,7 +487,6 @@ private:
   DefFunc(CurrentLanguageEncoding)
 
   DefFunc(ChooseElement)
-  DefFunc(StrDir)
   DefFunc(ChooseFont)
   DefFunc(GetFont)
   DefFunc(ChooseMaterial)
@@ -605,7 +604,6 @@ public:
   // fires the state change as well
   void UseGlTooltip(bool v);
 
-  const olxstr& GetStructureOlexFolder();
   float GetHtmlPanelWidth() const {  return FHtmlPanelWidth;  }
   time_t idle_time, idle_start;
   void OnNonIdle();

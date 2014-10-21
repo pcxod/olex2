@@ -3965,10 +3965,6 @@ void TMainForm::funChooseDir(const TStrObjList& Params, TMacroError &E) {
     E.ProcessingError(__OlxSrcInfo, EmptyString());
 }
 //..............................................................................
-void TMainForm::funStrDir(const TStrObjList& Params, TMacroError &E) {
-  E.SetRetVal( GetStructureOlexFolder().SubStringFrom(0,1) );
-}
-//..............................................................................
 struct FormulaFitter {
   typedef olx_pair_t<double, TTypeList<ElementCount> > atype;
   olxstr_dict <olx_object_ptr<atype> > input;

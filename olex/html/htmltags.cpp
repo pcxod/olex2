@@ -415,13 +415,15 @@ TAG_HANDLER_PROC(tag)  {
     CreatedWindow = DT;
     DT->SetSize(ax, ay);
     DT->SetData(Data);
-    wxDateTime dt;
-    dt.ParseDate(Value.u_str());
-    if (dt.IsValid())
-      DT->SetValue(dt);
-    else {
-      TBasicApp::NewLogEntry(logError) << (
-        olxstr("Invalid format for date and time: ").quote() << Value);
+    if (!Value.IsEmpty()) {
+      wxDateTime dt;
+      dt.ParseDate(Value.u_str());
+      if (dt.IsValid())
+        DT->SetValue(dt);
+      else {
+        TBasicApp::NewLogEntry(logError) << (
+          olxstr("Invalid format for date and time: ").quote() << Value);
+      }
     }
     if (!Label.IsEmpty()) {
       wxHtmlContainerCell* contC =
