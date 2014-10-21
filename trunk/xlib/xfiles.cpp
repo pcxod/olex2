@@ -1095,3 +1095,20 @@ olxstr TXFile::LocateHklFile()  {
   return EmptyString();
 }
 //..............................................................................
+olxstr TXFile::GetStructureDataFolder() const {
+  if (HasLastLoader()) {
+    olxstr ofn = TEFile::ExtractFilePath(GetFileName());
+    TEFile::AddPathDelimeterI(ofn) << ".olex/";
+    if (!TEFile::Exists(ofn)) {
+      if (!TEFile::MakeDir(ofn)) {
+        throw TFunctionFailedException(__OlxSourceInfo, "cannot create folder");
+      }
+#ifdef __WIN32__
+      SetFileAttributes(ofn.u_str(), FILE_ATTRIBUTE_HIDDEN);
+#endif
+    }
+    return ofn;
+  }
+  return EmptyString();
+}
+//..............................................................................
