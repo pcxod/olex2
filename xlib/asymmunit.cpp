@@ -1292,7 +1292,7 @@ void TAsymmUnit::LibSetAtomPart(const TStrObjList& Params, TMacroError& E)  {
   size_t index = Params[0].ToSizeT();
   if (index >= AtomCount())
     throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, AtomCount());
-  GetAtom(index).SetPart(Params[0].ToDouble());
+  GetAtom(index).SetPart(Params[1].ToInt());
 }
 //..............................................................................
 void TAsymmUnit::LibGetZ(const TStrObjList& Params, TMacroError& E)  {
