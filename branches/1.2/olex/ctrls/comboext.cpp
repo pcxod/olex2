@@ -21,37 +21,14 @@ BEGIN_EVENT_TABLE(TComboBox, wxComboBox)
   EVT_SET_FOCUS(TComboBox::EnterEvent)
 END_EVENT_TABLE()
 
-TComboBox::~TComboBox()  {
-  for( unsigned int i=0; i < GetCount(); i++ )  {
-    TDataObj* d_o = (TDataObj*)GetClientData(i);
-    if( d_o != NULL )  {
-      if( d_o->Delete )
-        delete (IEObject*)d_o->Data;
-      delete d_o;
-    }
-  }
+TComboBox::~TComboBox() {
+  _Clear();
 }
 //..............................................................................
 void TComboBox::SetText(const olxstr& T) {
-  olxstr actual_val = T;
-  bool found = false;
-  for (unsigned int i=0; i < GetCount(); i++ )  {
-    if (T == GetString(i)) {
-      found = true;
-    }
-    TDataObj* res = (TDataObj*)GetClientData(i);
-    if (res == NULL || !res->Delete) {
-      continue;
-    }
-    olxstr sv = res->Data->ToString();
-    if (sv == T) {
-      actual_val = GetString(i);
-      found = true;
-      break;
-    }
-  }
-  if (!IsReadOnly() || found) {
-    StrValue = actual_val;
+  olx_pair_t<size_t, olxstr> found = _SetText(T);
+  if (!IsReadOnly() || found.a != InvalidIndex) {
+    StrValue = found.b;
     SetValue(StrValue.u_str());
   }
   else if (!T.IsEmpty()) {
@@ -65,35 +42,12 @@ void TComboBox::SetText(const olxstr& T) {
 void TComboBox::Clear() {
   StrValue.SetLength(0);
   if (GetCount() == 0) return;
-  for( unsigned int i=0; i < GetCount(); i++ )  {
-    TDataObj* d_o = (TDataObj*)GetClientData(i);
-    if( d_o != NULL )  {
-      if( d_o->Delete )
-        delete (IEObject*)d_o->Data;
-      delete d_o;
-    }
-  }
+  _Clear();
 #if defined(__MAC__) && wxCHECK_VERSION(2,9,0)
   wxComboBox::DoClear();
 #else
   wxComboBox::Clear();
 #endif
-}
-//..............................................................................
-void TComboBox::_AddObject(const olxstr &Item, IEObject* Data, bool Delete)  {
-  Append(Item.u_str());
-  if( Data != NULL )  {
-    TDataObj* d_o = new TDataObj;
-    d_o->Data = Data;
-    d_o->Delete = Delete;
-    SetClientData(GetCount()-1, d_o);
-  }
-  else
-    SetClientData(GetCount()-1, NULL);
-}
-//..............................................................................
-void TComboBox::AddObject(const olxstr &Item, IEObject* Data)  {
-  _AddObject(Item, Data, false);
 }
 //..............................................................................
 void TComboBox::EnterPressedEvent(wxCommandEvent &event)  {
@@ -126,11 +80,6 @@ void TComboBox::EnterEvent(wxFocusEvent& event)  {
   event.Skip();
 }
 //..............................................................................
-const IEObject* TComboBox::GetObject(int i) const {
-  TDataObj* res = (TDataObj*)GetClientData(i);
-  return (res != NULL && !res->Delete) ? res->Data : NULL;
-}
-//..............................................................................
 olxstr TComboBox::GetText() const {
   if (!HasValue())
     return EmptyString();
@@ -138,34 +87,8 @@ olxstr TComboBox::GetText() const {
   if (sel == -1) {
     return IsReadOnly() ? EmptyString() : olxstr(GetValue());
   }
-  TDataObj* res = (TDataObj*)GetClientData(sel);
-  return (res == NULL || !res->Delete) ? olxstr(GetValue())
-    : res->Data->ToString();
-}
-//..............................................................................
-olxstr TComboBox::ItemsToString(const olxstr &sep)  {
-  olxstr rv;
-  for( unsigned int i=0; i < GetCount(); i++ )  {
-    rv << GetString(i);
-    TDataObj* res = (TDataObj*)GetClientData(i);
-    if( res != NULL && res->Delete )
-      rv << "<-" << res->Data->ToString();
-    if( (i+1) < GetCount() )
-      rv << sep;
-  }
-  return rv;
-}
-//..............................................................................
-void TComboBox::AddItems(const TStrList& EL) {
-  for( size_t i=0; i < EL.Count(); i++ )  {
-    size_t ind = EL[i].IndexOf( "<-" );
-    if(  ind != InvalidIndex )  {
-      olxstr tmp = EL[i].SubStringFrom(ind + 2);
-      _AddObject(EL[i].SubStringTo(ind), tmp.Replicate(), true);
-    }
-    else
-      _AddObject(EL[i], NULL, false);
-  }
+  olx_pair_t<bool, olxstr> v = _GetText(sel);
+  return (v.a ? v.b : olxstr(GetValue()));
 }
 //..............................................................................
 void TComboBox::HandleOnLeave() {

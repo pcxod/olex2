@@ -1264,6 +1264,9 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table,
         Table[j][i] = olxstr(ae->data.GetType().GetSymbol()) <<
           "<sup>" << sf << "</sup>";
       }
+      else {
+        Table[j][i] = olxstr(ae->data.GetType().GetSymbol()) << sf;
+      }
     }
   }
   // process rows

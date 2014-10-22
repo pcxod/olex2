@@ -845,6 +845,9 @@ void TMainForm::XApp(Olex2App *XA)  {
     fpNone|fpOne,
     "Runs Olex2 in elevated/desktop mode [true]/false- only available on "
     "Windows");
+  this_InitMacroD(Restart, EmptyString(),
+    fpNone,
+    "Restarts Olex2");
   this_InitMacroD(ADPDisp, EmptyString(),
     fpTwo,
     "Compares two structures in the terms of atomsic dispacement after the "
@@ -903,10 +906,6 @@ void TMainForm::XApp(Olex2App *XA)  {
 "Returns current language encoding, like: ISO8859-1");
 
   this_InitFunc(ChooseElement, fpNone);
-
-  this_InitFuncD(StrDir, fpNone|psFileLoaded,
-    "Returns location of the folder, where Olex2 stores structure related "
-    "data");
 
   this_InitFuncD(ChooseFont, fpNone|fpOne|fpTwo,
     "Brings up a font dialog. If font information provided, initialises the "
@@ -3577,16 +3576,16 @@ void TMainForm::UseGlTooltip(bool v)  {
 //..............................................................................
 //..............................................................................
 //..............................................................................
-void TMainForm::SaveVFS(short persistenceId)  {
-  try  {
+void TMainForm::SaveVFS(short persistenceId) {
+  try {
     olxstr dbFN;
-    if( persistenceId == plStructure )  {
-      if( !FXApp->XFile().HasLastLoader() )  return;
-      dbFN = GetStructureOlexFolder();
+    if (persistenceId == plStructure) {
+      if (!FXApp->XFile().HasLastLoader())  return;
+      dbFN = FXApp->XFile().GetStructureDataFolder();
       dbFN << TEFile::ChangeFileExt(
         TEFile::ExtractFileName(FXApp->XFile().GetFileName()) , "odb");
     }
-    else if(persistenceId == plGlobal )
+    else if (persistenceId == plGlobal)
       dbFN << FXApp->GetInstanceDir() << "global.odb";
     else
       throw TFunctionFailedException(__OlxSourceInfo, "undefined persistence level");
@@ -3596,57 +3595,40 @@ void TMainForm::SaveVFS(short persistenceId)  {
     dbf.Close();
     TEFile::Rename(dbFN + ".tmp", dbFN);
   }
-  catch(const TExceptionBase &e)  {
+  catch (const TExceptionBase &e) {
     TBasicApp::NewLogEntry(logInfo) << "Failed to save VFS: " << e;
   }
 }
 //..............................................................................
-void TMainForm::LoadVFS(short persistenceId)  {
-  try  {
+void TMainForm::LoadVFS(short persistenceId) {
+  try {
     olxstr dbFN;
-    if( persistenceId == plStructure )  {
-      if( !FXApp->XFile().HasLastLoader() )  return;
-      dbFN = GetStructureOlexFolder();
+    if (persistenceId == plStructure) {
+      if (!FXApp->XFile().HasLastLoader()) return;
+      dbFN = FXApp->XFile().GetStructureDataFolder();
       dbFN << TEFile::ChangeFileExt(
         TEFile::ExtractFileName(FXApp->XFile().GetFileName()) , "odb");
     }
-    else if(persistenceId == plGlobal )
+    else if (persistenceId == plGlobal)
       dbFN << FXApp->GetInstanceDir() << "global.odb";
-    else  {
+    else {
       throw TFunctionFailedException(__OlxSourceInfo,
         "undefined persistence level");
     }
 
-    if( !TEFile::Exists(dbFN ) )  return;
-    try  {
+    if (!TEFile::Exists(dbFN))  return;
+    try {
       TEFile dbf(dbFN, "rb");
       TFileHandlerManager::LoadFromStream(dbf, persistenceId);
     }
-    catch(const TExceptionBase &e)  {
+    catch (const TExceptionBase &e) {
       TEFile::DelFile(dbFN);
       throw TFunctionFailedException(__OlxSourceInfo, e, "failed to read VFS");
     }
   }
-  catch(const TExceptionBase &e)  {
+  catch (const TExceptionBase &e) {
     ShowAlert(e, "Failed to read VFS");
   }
-}
-//..............................................................................
-const olxstr& TMainForm::GetStructureOlexFolder()  {
-  if( FXApp->XFile().HasLastLoader() )  {
-    olxstr ofn = TEFile::ExtractFilePath(FXApp->XFile().GetFileName());
-    TEFile::AddPathDelimeterI(ofn) << ".olex/";
-    if( !TEFile::Exists(ofn) )  {
-      if( !TEFile::MakeDir(ofn) )  {
-        throw TFunctionFailedException(__OlxSourceInfo, "cannot create folder");
-      }
-#ifdef __WIN32__
-      SetFileAttributes(ofn.u_str(), FILE_ATTRIBUTE_HIDDEN);
-#endif
-    }
-    return TEGC::New<olxstr>(ofn);
-  }
-  return EmptyString();
 }
 //..............................................................................
 bool TMainForm::FindXAtoms(const TStrObjList &Cmds, TXAtomPList& xatoms,

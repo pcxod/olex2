@@ -406,7 +406,7 @@ TAG_HANDLER_PROC(tag)  {
 /******************* DATE CONTROL *****************************************/
   if( TagName.Equalsi("date") )  {
     int flags = wxDP_SPIN;
-    if( tag.HasParam(wxT("dropdown")) )  {
+    if (GetBoolAttribute(tag, "dropdown")) {
       flags = wxDP_DROPDOWN;
     }
     TDateCtrl *DT = new TDateCtrl(html, flags);
@@ -415,30 +415,34 @@ TAG_HANDLER_PROC(tag)  {
     CreatedWindow = DT;
     DT->SetSize(ax, ay);
     DT->SetData(Data);
-    wxDateTime dt;
-    dt.ParseDate(Value.u_str());
-    if( dt.IsValid() )
-      DT->SetValue(dt);
-    else {
-      TBasicApp::NewLogEntry(logError) << (
-        olxstr("Invalid format for date and time: ").quote() << Value);
+    if (!Value.IsEmpty()) {
+      wxDateTime dt;
+      dt.ParseDate(Value.u_str());
+      if (dt.IsValid())
+        DT->SetValue(dt);
+      else {
+        TBasicApp::NewLogEntry(logError) << (
+          olxstr("Invalid format for date and time: ").quote() << Value);
+      }
     }
-    if( !Label.IsEmpty() )  {
+    if (!Label.IsEmpty()) {
       wxHtmlContainerCell* contC =
         new wxHtmlContainerCell(m_WParser->GetContainer());
       THtml::WordCell* wc =
         new THtml::WordCell(Label.u_str(), *m_WParser->GetDC());
-      if( LinkInfo != NULL ) wc->SetLink(*LinkInfo);
+      if (LinkInfo != NULL)
+        wc->SetLink(*LinkInfo);
       wc->SetDescent(0);
-      contC->InsertCell( wc );
+      contC->InsertCell(wc);
       contC->InsertCell(new THtmlWidgetCell(DT, fl));
-      if( valign != -1 )  contC->SetAlignVer(valign);
-      if( halign != -1 )  contC->SetAlignHor(halign);
+      if (valign != -1)  contC->SetAlignVer(valign);
+      if (halign != -1)  contC->SetAlignHor(halign);
     }
-    else
+    else {
       m_WParser->GetContainer()->InsertCell(new THtmlWidgetCell(DT, fl));
+    }
 
-    if( tag.HasParam(wxT("ONCHANGE")) )  {
+    if (tag.HasParam(wxT("ONCHANGE"))) {
       DT->OnChange.data =
         ExpandMacroShortcuts(tag.GetParam(wxT("ONCHANGE")), macro_map);
       DT->OnChange.Add(&html->Manager);
@@ -863,32 +867,32 @@ TAG_HANDLER_PROC(tag)  {
     }
   }
 /******************* LIST CONTROL *********************************************/
-  else if( TagName.Equalsi("list") )  {
-    bool srcTag   = tag.HasParam(wxT("SRC")),
-         itemsTag = tag.HasParam(wxT("ITEMS"));
+  else if (TagName.Equalsi("list")) {
+    bool srcTag = tag.HasParam(wxT("SRC")),
+      itemsTag = tag.HasParam(wxT("ITEMS"));
     TStrList itemsList;
-    if( srcTag && itemsTag ) {
+    if (srcTag && itemsTag) {
       TBasicApp::NewLogEntry(logError) <<
         "THTML: list can have only src or items";
     }
-    else if( srcTag ) {
+    else if (srcTag) {
       olxstr src = tag.GetParam(wxT("SRC"));
       op->processFunction(src, SrcInfo, true);
       IInputStream* ios = TFileHandlerManager::GetInputStream(src);
-      if( ios == NULL ) {
+      if (ios == NULL) {
         TBasicApp::NewLogEntry(logError) <<
           "THTML: could not locate list source: \'" << src <<  '\'';
       }
-      else  {
+      else {
 #ifdef _UNICODE
         itemsList = TUtf8File::ReadLines(*ios, false);
 #else
-        itemsList.LoadFromTextStream( *ios );
+        itemsList.LoadFromTextStream(*ios);
 #endif
         delete ios;
       }
     }
-    else if( itemsTag )  {
+    else if (itemsTag) {
       olxstr items = tag.GetParam(wxT("ITEMS"));
       op->processFunction(items, SrcInfo, true);
       itemsList.Strtok(items, ';');
@@ -902,12 +906,12 @@ TAG_HANDLER_PROC(tag)  {
     List->SetData(Data);
     List->AddItems(itemsList);
     // binding events
-    if( tag.HasParam(wxT("ONSELECT")) )  {
+    if (tag.HasParam(wxT("ONSELECT"))) {
       List->OnSelect.data =
         ExpandMacroShortcuts(tag.GetParam(wxT("ONSELECT")), macro_map);
       List->OnSelect.Add(&html->Manager);
     }
-    if( tag.HasParam(wxT("ONDBLCLICK")) )  {
+    if (tag.HasParam(wxT("ONDBLCLICK"))) {
       List->OnDblClick.data =
         ExpandMacroShortcuts(tag.GetParam(wxT("ONDBLCLICK")), macro_map);
       List->OnDblClick.Add(&html->Manager);

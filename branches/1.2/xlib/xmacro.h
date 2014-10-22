@@ -197,6 +197,7 @@ public:
   static DefFunc(GetCompilationInfo)
   static DefFunc(SGList)
   static DefFunc(HKLF)
+  static DefFunc(StrDir)
 
   static void ChangeCell(const mat3d& tm, const TSpaceGroup& sg,
     const olxstr& resHKL_FN);

@@ -89,7 +89,7 @@ public:
   /* the space group is initialised upon file loading
    if the space group is unknow, TFunctionFailedException is thrown
   */
-  inline TSpaceGroup& GetLastLoaderSG() const {
+  TSpaceGroup& GetLastLoaderSG() const {
     if( FSG == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "unknown space group");
     return *FSG;
@@ -98,16 +98,16 @@ public:
   TBasicCFile* FindFormat(const olxstr& Ext);
   // returns a reference to the last loader (type safe)
   template <class LoaderClass>
-  inline LoaderClass& GetLastLoader() const {
+  LoaderClass& GetLastLoader() const {
     if( FLastLoader == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "no last loader");
     if( !EsdlInstanceOf(*FLastLoader, LoaderClass) )
       throw TInvalidArgumentException(__OlxSourceInfo, "wrong last loader type");
     return *(LoaderClass*)FLastLoader;
   }
-  inline void SetLastLoader(TBasicCFile* ll)  {  FLastLoader = ll;  }
+  void SetLastLoader(TBasicCFile* ll)  {  FLastLoader = ll;  }
   // returns true if a file is loaded
-  inline bool HasLastLoader() const {  return FLastLoader != NULL;  }
+  bool HasLastLoader() const {  return FLastLoader != NULL;  }
   /* returns last loader object to access properties of the base class if type
   is not required
   */
@@ -134,6 +134,10 @@ public:
   const olxstr& GetFileName() const {
     return FLastLoader != NULL ? FLastLoader->GetFileName() : EmptyString();
   }
+  /* returns 'file_path/.olex' if the folder does not exists - it tryes to
+  create one and may throw an exception if it fails.
+  */
+  olxstr GetStructureDataFolder() const;
 
   void EndUpdate();
   void LastLoaderChanged();  // performs complete reinitialisation

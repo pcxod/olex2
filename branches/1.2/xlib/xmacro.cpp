@@ -503,7 +503,7 @@ void XLibMacros::Export(TLibrary& lib)  {
     EmptyString(),
     fpNone|fpOne,
     "Prints/sets current delta for short interactions");
-  xlib_InitMacro(Export,
+  xlib_InitMacroA(Export, @Export,
     EmptyString(),
     fpNone|fpOne|psCheckFileTypeCif,
     "Exports reflections file and RES if present in the loaded CIF");
@@ -722,6 +722,9 @@ void XLibMacros::Export(TLibrary& lib)  {
     "If no arguments given - returns current HKLF value, otherwise if the given"
     " value 0 - sets HKLF to 4 else - sets HKLF to 5 and adds the given number "
     "of BASF parameters");
+  xlib_InitFunc(StrDir, fpNone | psFileLoaded,
+    "Returns location of the folder, where Olex2 stores structure related "
+    "data");
 }
 //.............................................................................
 void XLibMacros::macTransform(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -7447,6 +7450,74 @@ void XLibMacros::macExport(TStrObjList &Cmds, const TParamList &Options,
     if (ci != NULL) {
       TBasicApp::NewLogEntry() << "Exporting RES file";
       TEFile::WriteLines(res_name, TCStrList(ci->lines));
+
+      olxstr CifCustomisationFN = app.GetCifTemplatesDir() + "customisation.xlt";
+      TTypeList<Wildcard> to_extract, to_skip;
+      if (TEFile::Exists(CifCustomisationFN)) {
+        try {
+          TDataFile df;
+          if (!df.LoadFromXLFile(CifCustomisationFN)) {
+            E.ProcessingError(__OlxSrcInfo,
+              "falied to load CIF customisation file");
+            return;
+          }
+          df.Include(NULL);
+          TDataItem* di = df.Root().GetItemByName(
+            "cif_customisation").FindItem("export_metacif");
+          if (di == 0) {
+            E.ProcessingError(__OlxSrcInfo, "the metacif definition is missing");
+          }
+          else {
+            for (size_t i = 0; i < di->ItemCount(); i++) {
+              if (di->GetItemByIndex(i).FindField("skip", FalseString()).
+                ToBool())
+              {
+                to_skip.AddNew(di->GetItemByIndex(i).GetName());
+              }
+              else {
+                to_extract.AddNew(di->GetItemByIndex(i).GetName());
+              }
+            }
+          }
+        }
+        catch (const TExceptionBase& e) {
+          throw TFunctionFailedException(__OlxSourceInfo, e);
+        }
+      }
+      try {
+        olxstr data_path = app.XFile().GetStructureDataFolder();
+        olxstr mc_n = data_path + C->GetDataName() + ".metacif";
+        TCif mcf;
+        mcf.SetCurrentBlock(C->GetDataName(), true);
+        const CifBlock &cb = C->GetBlock(C->GetBlockIndex());
+        for (size_t i = 0; i < cb.params.Count(); i++) {
+          bool skip = false;
+          for (size_t j = 0; j < to_skip.Count(); j++) {
+            if (to_skip[j].DoesMatch(cb.params[i])) {
+              skip = true;
+              break;
+            }
+          }
+          if (skip) continue;
+          for (size_t j = 0; j < to_extract.Count(); j++) {
+            if (to_extract[j].DoesMatch(cb.params[i])) {
+              try {
+                olxstr s = cb.params.GetObject(i)->GetStringValue();
+                if (s.IsEmpty() || s == '?') {
+                  continue;
+                }
+              }
+              catch (const TExceptionBase &) {}
+              mcf.SetParam(*cb.params.GetObject(i));
+            }
+          }
+        }
+        mcf.SaveToFile(mc_n);
+      }
+      catch (const TExceptionBase &e) {
+        TBasicApp::NewLogEntry(logError) << "Failed to retrieve structure "
+          "folder - skipping metacif export";
+      }
     }
   }
 }
@@ -9148,3 +9219,8 @@ void XLibMacros::macGrow(TStrObjList &Cmds, const TParamList &Options,
   }
 }
 //.............................................................................
+void XLibMacros::funStrDir(const TStrObjList& Params, TMacroError &E) {
+  olxstr f = TXApp::GetInstance().XFile().GetStructureDataFolder();
+  E.SetRetVal(f.IsEmpty() ? EmptyString() : f.SubStringFrom(0, 1));
+}
+//..............................................................................

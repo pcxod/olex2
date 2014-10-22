@@ -564,7 +564,7 @@ olxstr THtml::GetObjectValue(const AOlxCtrl *Obj)  {
     return olx_td->GetData()->ToString();
   }
   if( EsdlInstanceOf(*Obj, TDateCtrl) )  {
-    return ((TDateCtrl*)Obj)->GetValue().Format(wxT("%d/%m/%Y"));
+    return ((TDateCtrl*)Obj)->GetValue().Format(wxT("%Y-%m-%d"));
   }
   if( EsdlInstanceOf(*Obj, TColorCtrl) )  {
     wxColor c = ((TColorCtrl*)Obj)->GetColour();
@@ -688,19 +688,18 @@ olxstr THtml::GetObjectItems(const AOlxCtrl* Obj)  {
 }
 //.............................................................................
 bool THtml::SetObjectItems(AOlxCtrl* Obj, const olxstr& src)  {
-  if( src.IsEmpty() )  return false;
-  if( EsdlInstanceOf(*Obj, TComboBox) )  {
+  if (EsdlInstanceOf(*Obj, TComboBox)) {
     TComboBox *cb = ((TComboBox*)Obj);
     cb->Clear();
     cb->AddItems(TStrList(src, ';'));
     if (cb->IsReadOnly() && cb->GetCount() > 0)
       cb->SetValue(cb->GetString(0));
   }
-  else if( EsdlInstanceOf(*Obj, TListBox) )  {
+  else if (EsdlInstanceOf(*Obj, TListBox)) {
     ((TListBox*)Obj)->Clear();
     ((TListBox*)Obj)->AddItems(TStrList(src, ';'));
   }
-  else  {
+  else {
     TBasicApp::NewLogEntry(logError) << "SetItems: unsupported object type";
     return false;
   }

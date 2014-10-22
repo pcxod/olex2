@@ -3965,10 +3965,6 @@ void TMainForm::funChooseDir(const TStrObjList& Params, TMacroError &E) {
     E.ProcessingError(__OlxSrcInfo, EmptyString());
 }
 //..............................................................................
-void TMainForm::funStrDir(const TStrObjList& Params, TMacroError &E) {
-  E.SetRetVal( GetStructureOlexFolder().SubStringFrom(0,1) );
-}
-//..............................................................................
 struct FormulaFitter {
   typedef olx_pair_t<double, TTypeList<ElementCount> > atype;
   olxstr_dict <olx_object_ptr<atype> > input;
@@ -6387,6 +6383,15 @@ void TMainForm::macElevate(TStrObjList &Cmds, const TParamList &Options, TMacroE
 #else
   throw TNotImplementedException(__OlxSourceInfo);
 #endif
+}
+//..............................................................................
+void TMainForm::macRestart(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  olxstr cd = TEFile::CurrentDir();
+  TEFile::ChangeDir(TBasicApp::GetBaseDir());
+  olxstr mn = TEFile::ChangeFileExt(TBasicApp::GetModuleName(), "exe");
+  wxExecute(mn.u_str());
+  FXApp->UpdateOption("confirm_on_close", FalseString());
+  Close(false);
 }
 //..............................................................................
 double ProbFactorEx(double scale)  {
