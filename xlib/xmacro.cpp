@@ -503,7 +503,7 @@ void XLibMacros::Export(TLibrary& lib)  {
     EmptyString(),
     fpNone|fpOne,
     "Prints/sets current delta for short interactions");
-  xlib_InitMacro(Export,
+  xlib_InitMacroA(Export, @Export,
     EmptyString(),
     fpNone|fpOne|psCheckFileTypeCif,
     "Exports reflections file and RES if present in the loaded CIF");
