@@ -819,7 +819,7 @@ void THtml::TObjectsState::SaveState()  {
     }
     else if( EsdlInstanceOf(*obj, TComboBox) )  {
       TComboBox* cb = (TComboBox*)obj;
-      props->Add("val", (cb->HasValue() ? cb->GetValue() : EmptyString()));
+      props->Add("val", cb->GetValue());
       props->Add("items", cb->ItemsToString(';'));
       props->Add("data", cb->GetData());
     }
