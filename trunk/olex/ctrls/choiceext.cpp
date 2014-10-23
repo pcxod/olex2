@@ -14,7 +14,7 @@
 using namespace ctrl_ext;
 IMPLEMENT_CLASS(TChoice, wxChoice)
 BEGIN_EVENT_TABLE(TChoice, wxChoice)
-EVT_COMBOBOX(-1, TChoice::ChangeEvent)
+EVT_CHOICE(-1, TChoice::ChangeEvent)
 EVT_KILL_FOCUS(TChoice::LeaveEvent)
 EVT_SET_FOCUS(TChoice::EnterEvent)
 END_EVENT_TABLE()
@@ -29,7 +29,7 @@ void TChoice::SetText(const olxstr& T) {
     StrValue = found.b;
     wxChoice::SetSelection(found.a);
   }
-  else if (!T.IsEmpty()) {
+  else {
     wxChoice::SetSelection(wxNOT_FOUND);
     StrValue = EmptyString();
   }
