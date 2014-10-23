@@ -551,7 +551,8 @@ olxstr THtml::GetObjectValue(const AOlxCtrl *Obj)  {
   if( EsdlInstanceOf(*Obj, TSpinCtrl) )  {  return ((TSpinCtrl*)Obj)->GetValue(); }
   if( EsdlInstanceOf(*Obj, TButton) )    {  return ((TButton*)Obj)->GetCaption();    }
   if( EsdlInstanceOf(*Obj, TComboBox) )  {  return ((TComboBox*)Obj)->GetText();  }
-  if( EsdlInstanceOf(*Obj, TListBox) )   {  return ((TListBox*)Obj)->GetValue();  }
+  if (EsdlInstanceOf(*Obj, TChoice))  { return ((TChoice*)Obj)->GetText(); }
+  if (EsdlInstanceOf(*Obj, TListBox))   { return ((TListBox*)Obj)->GetValue(); }
   if( EsdlInstanceOf(*Obj, TTreeView) )  {
     TTreeView* T = (TTreeView*)Obj;
     wxTreeItemId ni = T->GetSelection();
@@ -600,7 +601,11 @@ void THtml::SetObjectValue(AOlxCtrl *Obj, const olxstr& Value)  {
     ((TComboBox*)Obj)->SetText(Value);
     ((TComboBox*)Obj)->Update();
   }
-  else if( EsdlInstanceOf(*Obj, TListBox) )  {
+  else if (EsdlInstanceOf(*Obj, TChoice))  {
+    ((TChoice*)Obj)->SetText(Value);
+    ((TChoice*)Obj)->Update();
+  }
+  else if (EsdlInstanceOf(*Obj, TListBox))  {
     TListBox *L = (TListBox*)Obj;
     int index = L->GetSelection();
     if( index >=0 && index < L->Count() )
@@ -625,7 +630,8 @@ const olxstr& THtml::GetObjectData(const AOlxCtrl *Obj)  {
   if( EsdlInstanceOf(*Obj, TSpinCtrl) )  {  return ((TSpinCtrl*)Obj)->GetData(); }
   if( EsdlInstanceOf(*Obj, TButton) )    {  return ((TButton*)Obj)->GetData();    }
   if( EsdlInstanceOf(*Obj, TComboBox) )  {  return ((TComboBox*)Obj)->GetData();  }
-  if( EsdlInstanceOf(*Obj, TListBox) )  {  return ((TListBox*)Obj)->GetData();  }
+  if (EsdlInstanceOf(*Obj, TChoice))  { return ((TChoice*)Obj)->GetData(); }
+  if (EsdlInstanceOf(*Obj, TListBox))  { return ((TListBox*)Obj)->GetData(); }
   if( EsdlInstanceOf(*Obj, TTreeView) )  {  return ((TTreeView*)Obj)->GetData();  }
   return EmptyString();
 }
@@ -681,7 +687,10 @@ olxstr THtml::GetObjectItems(const AOlxCtrl* Obj)  {
   if( EsdlInstanceOf(*Obj, TComboBox) )  {
     return ((TComboBox*)Obj)->ItemsToString(';');
   }
-  else if( EsdlInstanceOf(*Obj, TListBox) )  {
+  if (EsdlInstanceOf(*Obj, TChoice))  {
+    return ((TChoice*)Obj)->ItemsToString(';');
+  }
+  if (EsdlInstanceOf(*Obj, TListBox))  {
     return ((TListBox*)Obj)->ItemsToString(';');
   }
   return EmptyString();
@@ -692,8 +701,11 @@ bool THtml::SetObjectItems(AOlxCtrl* Obj, const olxstr& src)  {
     TComboBox *cb = ((TComboBox*)Obj);
     cb->Clear();
     cb->AddItems(TStrList(src, ';'));
-    if (cb->IsReadOnly() && cb->GetCount() > 0)
-      cb->SetValue(cb->GetString(0));
+  }
+  else if (EsdlInstanceOf(*Obj, TChoice)) {
+    TChoice *cb = ((TChoice*)Obj);
+    cb->Clear();
+    cb->AddItems(TStrList(src, ';'));
   }
   else if (EsdlInstanceOf(*Obj, TListBox)) {
     ((TListBox*)Obj)->Clear();
@@ -713,7 +725,8 @@ void THtml::SetObjectData(AOlxCtrl *Obj, const olxstr& Data)  {
   if( EsdlInstanceOf(*Obj, TSpinCtrl) )  {  ((TSpinCtrl*)Obj)->SetData(Data);  return;  }
   if( EsdlInstanceOf(*Obj, TButton) )    {  ((TButton*)Obj)->SetData(Data);    return;  }
   if( EsdlInstanceOf(*Obj, TComboBox) )  {  ((TComboBox*)Obj)->SetData(Data);  return;  }
-  if( EsdlInstanceOf(*Obj, TListBox) )  {  ((TListBox*)Obj)->SetData(Data);  return;  }
+  if (EsdlInstanceOf(*Obj, TChoice))  { ((TChoice*)Obj)->SetData(Data);  return; }
+  if (EsdlInstanceOf(*Obj, TListBox))  { ((TListBox*)Obj)->SetData(Data);  return; }
   if( EsdlInstanceOf(*Obj, TTreeView) )  {  ((TTreeView*)Obj)->SetData(Data);  return;  }
 }
 //.............................................................................
@@ -823,7 +836,13 @@ void THtml::TObjectsState::SaveState()  {
       props->Add("items", cb->ItemsToString(';'));
       props->Add("data", cb->GetData());
     }
-    else if( EsdlInstanceOf(*obj, TListBox) )  {
+    else if (EsdlInstanceOf(*obj, TChoice))  {
+      TChoice* c = (TChoice*)obj;
+      props->Add("val", c->GetValue());
+      props->Add("items", c->ItemsToString(';'));
+      props->Add("data", c->GetData());
+    }
+    else if (EsdlInstanceOf(*obj, TListBox))  {
       TListBox* lb = (TListBox*)obj;
       props->Add("val", lb->GetValue());
       props->Add("items", lb->ItemsToString(';'));
@@ -920,19 +939,22 @@ void THtml::TObjectsState::RestoreState()  {
     }
     else if( EsdlInstanceOf(*obj, TComboBox) )  {
       TComboBox* cb = (TComboBox*)obj;
-      if (!cb->IsReadOnly()) {
-        TStrList toks(props["items"], ';');
-        cb->Clear();
-        cb->AddItems(toks);
-      }
+      cb->Clear();
+      cb->AddItems(TStrList(props["items"], ';'));
       cb->SetText(props["val"] );
       cb->SetData(props["data"]);
     }
-    else if( EsdlInstanceOf(*obj, TListBox) )  {
+    else if (EsdlInstanceOf(*obj, TChoice))  {
+      TChoice* cb = (TChoice*)obj;
+      cb->Clear();
+      cb->AddItems(TStrList(props["items"], ';'));
+      cb->SetText(props["val"]);
+      cb->SetData(props["data"]);
+    }
+    else if (EsdlInstanceOf(*obj, TListBox))  {
       TListBox* lb = (TListBox*)obj;
-      TStrList toks(props["items"], ';');
       lb->Clear();
-      lb->AddItems(toks);
+      lb->AddItems(TStrList(props["items"], ';'));
     }
     else if( EsdlInstanceOf(*obj, TTreeView) )  {
       ((TTreeView*)obj)->RestoreState(props["state"]);
@@ -950,20 +972,11 @@ void THtml::TObjectsState::RestoreState()  {
         op->processFunction(bg);
         op->processFunction(fg);
       }
-      if( EsdlInstanceOf(*win, TComboBox) )  {
-        TComboBox* Box = (TComboBox*)win;
-        if( !fg.IsEmpty() )  {
-          wxColor fgCl = wxColor(fg.u_str());
-          Box->SetForegroundColour(fgCl);
-        }
-        if( !bg.IsEmpty() )  {
-          wxColor bgCl = wxColor(bg.u_str());
-          Box->SetBackgroundColour(bgCl);
-        }
+      if (!fg.IsEmpty()) {
+        win->SetForegroundColour(wxColor(fg.u_str()));
       }
-      else  {
-        if( !fg.IsEmpty() )  win->SetForegroundColour(wxColor(fg.u_str()));
-        if( !bg.IsEmpty() )  win->SetBackgroundColour(wxColor(bg.u_str()));
+      if (!bg.IsEmpty()) {
+        win->SetBackgroundColour(wxColor(bg.u_str()));
       }
     }
   }
@@ -1017,7 +1030,11 @@ olxstr_dict<olxstr,false>* THtml::TObjectsState::DefineControl(
     props->Add("val");
     props->Add("items");
   }
-  else if( type == typeid(TListBox) )  {
+  else if (type == typeid(TChoice))  {
+    props->Add("val");
+    props->Add("items");
+  }
+  else if (type == typeid(TListBox))  {
     props->Add("val");
     props->Add("items");
   }
