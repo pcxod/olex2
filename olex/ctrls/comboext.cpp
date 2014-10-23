@@ -30,7 +30,15 @@ void TComboBox::SetText(const olxstr& T) {
   if (!IsReadOnly() || found.a != InvalidIndex) {
     StrValue = found.b;
     SetValue(StrValue.u_str());
-    selection_index = (found.a == InvalidIndex ? -1 : (int)found.a);
+    if (found.a == InvalidIndex) {
+      selection_index = -1;
+    }
+    else {
+      selection_index = (int)found.a;
+#ifndef __WIN32__
+      wxComboBox::SetSelection(wxNOT_FOUND);
+#endif
+    }
   }
   else if (!T.IsEmpty()) {
     wxComboBox::SetSelection(wxNOT_FOUND);
@@ -48,6 +56,8 @@ void TComboBox::Clear() {
 #else
   wxComboBox::Clear();
 #endif
+  selection_index = -1;
+  wxComboBox::SetSelection(wxNOT_FOUND);
 }
 //..............................................................................
 void TComboBox::EnterPressedEvent(wxCommandEvent &event)  {
@@ -58,8 +68,8 @@ void TComboBox::EnterPressedEvent(wxCommandEvent &event)  {
 }
 //..............................................................................
 void TComboBox::ChangeEvent(wxCommandEvent& event) {
-  olxstr v = GetValue();
   selection_index = wxComboBox::GetSelection();
+  olxstr v = GetValue();
   if (IsOnChangeAlways() || v != StrValue) {
     StrValue = v;
     if (!Data.IsEmpty())

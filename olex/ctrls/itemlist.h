@@ -50,7 +50,7 @@ namespace ctrl_ext {
     }
 
     olxstr GetItem(size_t i) const { return parent_t::GetString(i); }
-    
+
     const IEObject* GetObject(size_t i) const {
       TDataObj* res = (TDataObj*)parent_t::GetClientData(i);
       return (res != NULL && !res->Delete) ? res->Data : NULL;
