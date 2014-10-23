@@ -1229,7 +1229,7 @@ void TMainForm::XApp(Olex2App *XA)  {
   XLibMacros::OnAddIns().Add(this, ID_ADDINS, msiExit);
   LoadVFS(plGlobal);
 
-  HtmlManager.InitialiseMain(wxBORDER_NONE|wxVSCROLL|wxALWAYS_SHOW_SB|wxCLIP_CHILDREN);
+  HtmlManager.InitialiseMain(wxBORDER_NONE|wxVSCROLL|wxCLIP_CHILDREN);
   GetLibrary().AttachLibrary(HtmlManager.ExportLibrary());
 
   HtmlManager.OnLink.Add(this, ID_ONLINK);

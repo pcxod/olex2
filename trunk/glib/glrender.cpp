@@ -1274,8 +1274,8 @@ void TGlRenderer::LibFog(TStrObjList &Cmds, const TParamList &Options,
 {
   if (Cmds.Count() == 1) {
     SetFogType(GL_LINEAR);
-    SetFogStart(0.9f);
-    SetFogEnd(1.4f);
+    SetFogStart(2.0f);
+    SetFogEnd(3.3f);
     SetFogColor(Cmds[0].SafeUInt<uint32_t>());
     EnableFog(true);
   }
