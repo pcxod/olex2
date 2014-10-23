@@ -22,7 +22,7 @@ namespace ctrl_ext {
     void EnterEvent(wxFocusEvent& event);
     olxstr Data;
     olxstr StrValue;
-    int entered_counter;
+    int entered_counter, selection_index;
     bool OnChangeAlways;
   public:
     TComboBox(wxWindow *Parent, bool ReadOnly=false, const wxSize& sz=wxDefaultSize) :
@@ -36,6 +36,7 @@ namespace ctrl_ext {
         wxCB_DROPDOWN | (ReadOnly ? wxCB_READONLY : 0) | wxTE_PROCESS_ENTER);
       OnLeave.SetEnabled(false);
       entered_counter = 0;
+      selection_index = -1;
       OnChangeAlways = false;
     }
     virtual ~TComboBox();
@@ -43,12 +44,13 @@ namespace ctrl_ext {
     void Clear();
 
     bool HasValue() const {
-#if wxCHECK_VERSION(2,9,0)
-      if (IsReadOnly() && GetSelection() < 0)
-        return false;
-#endif
-      return true;
+      return !(IsReadOnly() && selection_index == -1);
     }
+
+    wxString GetValue() const {
+      return (HasValue() ? wxComboBox::GetValue() : wxEmptyString);
+    }
+
     olxstr GetText() const;
     void SetText(const olxstr &text);
 
