@@ -48,7 +48,7 @@ namespace ctrl_ext {
     }
 
     wxString GetValue() const {
-      return (HasValue() ? wxComboBox::GetValue() : wxEmptyString);
+      return (HasValue() ? wxComboBox::GetValue() : wxString(wxEmptyString));
     }
 
     olxstr GetText() const;
