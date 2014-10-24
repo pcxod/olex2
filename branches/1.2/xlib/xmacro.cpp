@@ -542,7 +542,7 @@ void XLibMacros::Export(TLibrary& lib)  {
     "name is 'none', provided atoms are removed from their residues");
   xlib_InitMacro(Restrain,
     EmptyString(),
-    fpAny|psFileLoaded,
+    (fpAny^fpNone)|psFileLoaded,
     "Creates a restraint");
   xlib_InitMacro(Constrain,
     EmptyString(),

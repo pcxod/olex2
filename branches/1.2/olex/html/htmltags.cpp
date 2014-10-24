@@ -609,13 +609,18 @@ TAG_HANDLER_PROC(tag)  {
       if (tag.HasParam(wxT("ITEMS"))) {
         olxstr Items = tag.GetParam(wxT("ITEMS"));
         op->processFunction(Items, SrcInfo, true);
-        TStrList SL(Items, ';');
-        Box->AddItems(SL);
+        Box->AddItems(TStrList(Items, ';'));
       }
       else {
         Box->AddObject(Value);
       }
+      Box->SetHasDefault(GetBoolAttribute(tag, "SETDEFAULT"));
       Box->SetText(Value);
+      if (Box->GetSelection() == -1 && Box->HasDefault() &&
+        !Box->IsEmpty())
+      {
+        Box->SetSelection(0);
+      }
       Box->SetData(Data);
       if (tag.HasParam(wxT("ONCHANGE"))) {
         Box->OnChange.data =

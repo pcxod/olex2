@@ -30,20 +30,10 @@ void TComboBox::SetText(const olxstr& T) {
   if (!IsReadOnly() || found.a != InvalidIndex) {
     StrValue = found.b;
     SetValue(StrValue.u_str());
-    if (found.a == InvalidIndex) {
-      selection_index = -1;
-    }
-    else {
-      selection_index = (int)found.a;
-#ifndef __WIN32__
-      wxComboBox::SetSelection(wxNOT_FOUND);
-#endif
-    }
   }
   else if (!T.IsEmpty()) {
     wxComboBox::SetSelection(wxNOT_FOUND);
     StrValue = EmptyString();
-    selection_index = -1;
   }
 }
 //..............................................................................
@@ -56,7 +46,6 @@ void TComboBox::Clear() {
 #else
   wxComboBox::Clear();
 #endif
-  selection_index = -1;
   wxComboBox::SetSelection(wxNOT_FOUND);
 }
 //..............................................................................
@@ -68,7 +57,6 @@ void TComboBox::EnterPressedEvent(wxCommandEvent &event)  {
 }
 //..............................................................................
 void TComboBox::ChangeEvent(wxCommandEvent& event) {
-  selection_index = wxComboBox::GetSelection();
   olxstr v = GetValue();
   if (IsOnChangeAlways() || v != StrValue) {
     StrValue = v;
@@ -76,9 +64,6 @@ void TComboBox::ChangeEvent(wxCommandEvent& event) {
       TOlxVars::SetVar(Data, GetText());
     OnChange.Execute(this);
   }
-#ifndef __WIN32__
-  wxComboBox::SetSelection(wxNOT_FOUND);
-#endif
   event.Skip();
 }
 //..............................................................................
@@ -95,12 +80,10 @@ void TComboBox::EnterEvent(wxFocusEvent& event)  {
 }
 //..............................................................................
 olxstr TComboBox::GetText() const {
-  if (!HasValue())
-    return EmptyString();
-  if (selection_index == -1) {
+  if (GetSelection() == -1) {
     return IsReadOnly() ? EmptyString() : olxstr(wxComboBox::GetValue());
   }
-  olx_pair_t<bool, olxstr> v = _GetText(selection_index);
+  olx_pair_t<bool, olxstr> v = _GetText(GetSelection());
   return (v.a ? v.b : olxstr(GetValue()));
 }
 //..............................................................................
