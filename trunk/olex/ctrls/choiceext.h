@@ -22,7 +22,7 @@ namespace ctrl_ext {
     olxstr Data;
     olxstr StrValue;
     int entered_counter;
-    bool OnChangeAlways;
+    bool OnChangeAlways, hasDefault;
   public:
     TChoice(wxWindow *Parent, const wxSize& sz = wxDefaultSize) :
       AOlxCtrl(this),
@@ -46,10 +46,19 @@ namespace ctrl_ext {
 
     olxstr GetText() const;
     void SetText(const olxstr &text);
+    void AddItems(const TStrList &items) {
+      TItemList<wxChoice>::AddItems(items);
+      if (HasDefault() && !IsEmpty()) {
+        SetSelection(0);
+      }
+    }
 
     DefPropC(olxstr, Data)
 
     DefPropBIsSet(OnChangeAlways)
+
+    bool HasDefault() const { return hasDefault; }
+    void SetHasDefault(bool v) { hasDefault = v; }
 
     void HandleOnLeave();
     void HandleOnEnter();
