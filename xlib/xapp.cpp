@@ -1147,8 +1147,11 @@ const_strlist TXApp::TangList(TSBond *XMiddle)  {
   return L;
 }
 //..............................................................................
-olxstr TXApp::GetPlatformString_() const {
-  olxstr rv = TBasicApp::GetPlatformString_();
+olxstr TXApp::GetPlatformString_(bool full) const {
+  olxstr rv = TBasicApp::GetPlatformString_(full);
+  if (!full) {
+    return rv;
+  }
 #ifdef _PYTHON
   rv << ", Python: " << PY_VERSION;
 #endif
