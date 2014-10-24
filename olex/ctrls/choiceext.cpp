@@ -30,8 +30,14 @@ void TChoice::SetText(const olxstr& T) {
     wxChoice::SetSelection(found.a);
   }
   else {
-    wxChoice::SetSelection(wxNOT_FOUND);
-    StrValue = EmptyString();
+    if (HasDefault() && !IsEmpty()) {
+      wxChoice::SetSelection(0);
+      StrValue = GetText();
+    }
+    else {
+      wxChoice::SetSelection(wxNOT_FOUND);
+      StrValue = EmptyString();
+    }
   }
 }
 //..............................................................................
