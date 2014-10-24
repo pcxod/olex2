@@ -86,6 +86,7 @@ using namespace ctrl_ext;
 #include "ctrls/menuext.h"
 #include "ctrls/labelext.h"
 #include "ctrls/comboext.h"
+#include "ctrls/choiceext.h"
 #include "ctrls/texteditext.h"
 #include "ctrls/treeviewext.h"
 #include "ctrls/trackbarext.h"

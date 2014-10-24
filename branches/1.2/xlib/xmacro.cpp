@@ -6368,7 +6368,7 @@ olxstr XLibMacros::GetCompilationInfo() {
 #elif __GNUC__
   rv << " GCC:" << __GNUC__ << '.' << __GNUC_MINOR__ << '.' << __GNUC_PATCHLEVEL__;
 #endif
-  rv << " on " << TBasicApp::GetPlatformString();
+  rv << " on " << TBasicApp::GetPlatformString(true);
 #ifdef _CUSTOM_BUILD_
   rv << " for " << CustomCodeBase::GetName();
 #endif

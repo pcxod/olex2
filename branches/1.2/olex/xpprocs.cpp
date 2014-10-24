@@ -6388,8 +6388,7 @@ void TMainForm::macElevate(TStrObjList &Cmds, const TParamList &Options, TMacroE
 void TMainForm::macRestart(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   olxstr cd = TEFile::CurrentDir();
   TEFile::ChangeDir(TBasicApp::GetBaseDir());
-  olxstr mn = TEFile::ChangeFileExt(TBasicApp::GetModuleName(), "exe");
-  wxExecute(mn.u_str());
+  wxExecute(TBasicApp::GetModuleName().u_str());
   FXApp->UpdateOption("confirm_on_close", FalseString());
   Close(false);
 }

@@ -49,9 +49,11 @@ namespace ctrl_ext {
       olx_pair_t<size_t, olxstr> found = _SetText(v);
       if (found.a != InvalidIndex) {
         SetSelection((int)found.a);
+        return true;
       }
       else {
         SetSelection(-1);
+        return false;
       }
     }
     olxstr GetValue() const  {

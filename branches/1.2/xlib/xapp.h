@@ -77,7 +77,7 @@ protected:
   void Init(ASObjectProvider* objectProvider=NULL,
     ASelectionOwner* selOwner=NULL);
   olxstr LastSGResult;
-  virtual olxstr GetPlatformString_() const;
+  virtual olxstr GetPlatformString_(bool full) const;
 public:
   TXApp(const olxstr &basedir, ASObjectProvider* objectProvider=NULL,
     ASelectionOwner* selOwner=NULL);

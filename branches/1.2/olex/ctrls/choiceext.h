@@ -7,48 +7,41 @@
 * the root folder.                                                            *
 ******************************************************************************/
 
-#ifndef __olx_ctrl_combo_H
-#define __olx_ctrl_combo_H
+#ifndef __olx_ctrl_choice_H
+#define __olx_ctrl_choice_H
 #include "olxctrlbase.h"
 #include "itemlist.h"
 #include "estrlist.h"
-#include "wx/combo.h"
+#include "wx/choice.h"
 
 namespace ctrl_ext {
-  class TComboBox : public TItemList<wxComboBox>, public AOlxCtrl {
+  class TChoice : public TItemList<wxChoice>, public AOlxCtrl {
     void ChangeEvent(wxCommandEvent& event);
-    void EnterPressedEvent(wxCommandEvent& event);
-    void LeaveEvent(wxFocusEvent& event);
     void EnterEvent(wxFocusEvent& event);
+    void LeaveEvent(wxFocusEvent& event);
     olxstr Data;
     olxstr StrValue;
-    int entered_counter, selection_index;
+    int entered_counter;
     bool OnChangeAlways;
   public:
-    TComboBox(wxWindow *Parent, bool ReadOnly=false, const wxSize& sz=wxDefaultSize) :
+    TChoice(wxWindow *Parent, const wxSize& sz = wxDefaultSize) :
       AOlxCtrl(this),
       OnChange(AOlxCtrl::ActionQueue::New(Actions, evt_change_id)),
       OnLeave(AOlxCtrl::ActionQueue::New(Actions, evt_on_mouse_leave_id)),
-      OnEnter(AOlxCtrl::ActionQueue::New(Actions, evt_on_mouse_enter_id)),
-      OnReturn(AOlxCtrl::ActionQueue::New(Actions, evt_on_return_id))
+      OnEnter(AOlxCtrl::ActionQueue::New(Actions, evt_on_mouse_enter_id))
     {
-      wxComboBox::Create(Parent, -1, wxString(), wxDefaultPosition, sz, 0, NULL,
-        wxCB_DROPDOWN | (ReadOnly ? wxCB_READONLY : 0) | wxTE_PROCESS_ENTER);
+      wxChoice::Create(Parent, -1, wxDefaultPosition, sz);
       OnLeave.SetEnabled(false);
       entered_counter = 0;
-      selection_index = -1;
       OnChangeAlways = false;
     }
-    virtual ~TComboBox();
+    virtual ~TChoice();
 
     void Clear();
 
-    bool HasValue() const {
-      return !(IsReadOnly() && selection_index == -1);
-    }
-
     wxString GetValue() const {
-      return (HasValue() ? wxComboBox::GetValue() : wxString(wxEmptyString));
+      return (GetSelection() != wxNOT_FOUND ?
+        wxChoice::GetString(GetSelection()) : wxString(wxEmptyString));
     }
 
     olxstr GetText() const;
@@ -56,16 +49,12 @@ namespace ctrl_ext {
 
     DefPropC(olxstr, Data)
 
-    bool IsReadOnly() const { return WI.HasWindowStyle(wxCB_READONLY); }
-    void SetReadOnly(bool v) {
-      v ? WI.AddWindowStyle(wxCB_READONLY) : WI.DelWindowStyle(wxCB_READONLY);
-    }
     DefPropBIsSet(OnChangeAlways)
 
     void HandleOnLeave();
     void HandleOnEnter();
 
-    ActionQueue &OnChange, &OnLeave, &OnEnter, &OnReturn;
+    ActionQueue &OnChange, &OnLeave, &OnEnter;
 
     DECLARE_CLASS(TComboBox)
     DECLARE_EVENT_TABLE()

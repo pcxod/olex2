@@ -7,68 +7,42 @@
 * the root folder.                                                            *
 ******************************************************************************/
 
-#include "comboext.h"
+#include "choiceext.h"
 #include "frameext.h"
 #include "olxvar.h"
 
 using namespace ctrl_ext;
-IMPLEMENT_CLASS(TComboBox, wxComboBox)
-
-BEGIN_EVENT_TABLE(TComboBox, wxComboBox)
-  EVT_COMBOBOX(-1, TComboBox::ChangeEvent)
-  EVT_TEXT_ENTER(-1, TComboBox::EnterPressedEvent)
-  EVT_KILL_FOCUS(TComboBox::LeaveEvent)
-  EVT_SET_FOCUS(TComboBox::EnterEvent)
+IMPLEMENT_CLASS(TChoice, wxChoice)
+BEGIN_EVENT_TABLE(TChoice, wxChoice)
+EVT_CHOICE(-1, TChoice::ChangeEvent)
+EVT_KILL_FOCUS(TChoice::LeaveEvent)
+EVT_SET_FOCUS(TChoice::EnterEvent)
 END_EVENT_TABLE()
 
-TComboBox::~TComboBox() {
+TChoice::~TChoice() {
   _Clear();
 }
 //..............................................................................
-void TComboBox::SetText(const olxstr& T) {
+void TChoice::SetText(const olxstr& T) {
   olx_pair_t<size_t, olxstr> found = _SetText(T);
-  if (!IsReadOnly() || found.a != InvalidIndex) {
+  if (found.a != InvalidIndex) {
     StrValue = found.b;
-    SetValue(StrValue.u_str());
-    if (found.a == InvalidIndex) {
-      selection_index = -1;
-    }
-    else {
-      selection_index = (int)found.a;
-#ifndef __WIN32__
-      wxComboBox::SetSelection(wxNOT_FOUND);
-#endif
-    }
+    wxChoice::SetSelection(found.a);
   }
-  else if (!T.IsEmpty()) {
-    wxComboBox::SetSelection(wxNOT_FOUND);
+  else {
+    wxChoice::SetSelection(wxNOT_FOUND);
     StrValue = EmptyString();
-    selection_index = -1;
   }
 }
 //..............................................................................
-void TComboBox::Clear() {
+void TChoice::Clear() {
   StrValue.SetLength(0);
   if (GetCount() == 0) return;
   _Clear();
-#if defined(__MAC__) && wxCHECK_VERSION(2,9,0)
-  wxComboBox::DoClear();
-#else
-  wxComboBox::Clear();
-#endif
-  selection_index = -1;
-  wxComboBox::SetSelection(wxNOT_FOUND);
+  wxChoice::Clear();
 }
 //..............................................................................
-void TComboBox::EnterPressedEvent(wxCommandEvent &event)  {
-  if( !Data.IsEmpty() )
-    TOlxVars::SetVar(Data, GetText());
-  OnReturn.Execute(this);
-  event.Skip();
-}
-//..............................................................................
-void TComboBox::ChangeEvent(wxCommandEvent& event) {
-  selection_index = wxComboBox::GetSelection();
+void TChoice::ChangeEvent(wxCommandEvent& event) {
   olxstr v = GetValue();
   if (IsOnChangeAlways() || v != StrValue) {
     StrValue = v;
@@ -76,35 +50,31 @@ void TComboBox::ChangeEvent(wxCommandEvent& event) {
       TOlxVars::SetVar(Data, GetText());
     OnChange.Execute(this);
   }
-#ifndef __WIN32__
-  wxComboBox::SetSelection(wxNOT_FOUND);
-#endif
   event.Skip();
 }
 //..............................................................................
-void TComboBox::LeaveEvent(wxFocusEvent& event)  {
+void TChoice::LeaveEvent(wxFocusEvent& event)  {
   if (--entered_counter == 0)
     HandleOnLeave();
   event.Skip();
 }
 //..............................................................................
-void TComboBox::EnterEvent(wxFocusEvent& event)  {
+void TChoice::EnterEvent(wxFocusEvent& event)  {
   if (++entered_counter == 1)
     HandleOnEnter();
   event.Skip();
 }
 //..............................................................................
-olxstr TComboBox::GetText() const {
-  if (!HasValue())
+olxstr TChoice::GetText() const {
+  int sel = wxChoice::GetSelection();
+  if (sel == wxNOT_FOUND) {
     return EmptyString();
-  if (selection_index == -1) {
-    return IsReadOnly() ? EmptyString() : olxstr(wxComboBox::GetValue());
   }
-  olx_pair_t<bool, olxstr> v = _GetText(selection_index);
+  olx_pair_t<bool, olxstr> v = _GetText(sel);
   return (v.a ? v.b : olxstr(GetValue()));
 }
 //..............................................................................
-void TComboBox::HandleOnLeave() {
+void TChoice::HandleOnLeave() {
   if (OnLeave.IsEnabled()) {
     olxstr v = GetValue();
     bool changed = (v != StrValue);
@@ -118,7 +88,7 @@ void TComboBox::HandleOnLeave() {
   }
 }
 //..............................................................................
-void TComboBox::HandleOnEnter()  {
+void TChoice::HandleOnEnter()  {
   if (OnEnter.IsEnabled()) {
     OnEnter.Execute(this);
     OnEnter.SetEnabled(false);

@@ -42,7 +42,7 @@ protected:
   void ValidateArgs() const;
   TParamList Options;
   TStrList Arguments;
-  virtual olxstr GetPlatformString_() const;
+  virtual olxstr GetPlatformString_(bool full) const;
 
   /* this list of actions will be processes in the next OnIdle call
   (from the main thread)
@@ -177,9 +177,11 @@ public:
   static const olxstr& GetArg(size_t i)  {
     return GetInstance().Arguments[i];
   }
-  // returns WIN32, WIN64, LINUX32, LINUX64, MAC32 etc
-  static olxstr GetPlatformString() {
-    return GetInstance().GetPlatformString_();
+  /* returns WIN32, WIN64, LINUX32, LINUX64, MAC32 etc. If full is true the
+  used package versions are also included
+  */
+  static olxstr GetPlatformString(bool full) {
+    return GetInstance().GetPlatformString_(full);
   }
   static bool Is64BitCompilation();
   TLibrary* ExportLibrary(const olxstr& lib_name="app");

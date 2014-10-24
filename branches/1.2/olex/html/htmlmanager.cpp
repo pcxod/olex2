@@ -44,9 +44,7 @@ void THtmlManager::Destroy() {
 void THtmlManager::InitialiseMain(long flags) {
   main = new THtml(*this, mainWindow, EmptyString(), flags);
   main->OnLink.Add(this);
-#if wxCHECK_VERSION(2,9,0)
-  main->AlwaysShowScrollbars();
-#endif
+  main->ShowScrollbars(wxSHOW_SB_ALWAYS, wxSHOW_SB_ALWAYS);
 }
 //.............................................................................
 void THtmlManager::ProcessPageLoadRequests() {
@@ -505,7 +503,11 @@ void THtmlManager::macDefineControl(TStrObjList &Cmds,
     props = html->ObjectsState.DefineControl(objName, typeid(TComboBox));
     (*props)["items"] = Options.FindValue("i");
   }
-  else if( Cmds[1].Equalsi("spin") )  {
+  else if (Cmds[1].Equalsi("choice"))  {
+    props = html->ObjectsState.DefineControl(objName, typeid(TChoice));
+    (*props)["items"] = Options.FindValue("i");
+  }
+  else if (Cmds[1].Equalsi("spin"))  {
     props = html->ObjectsState.DefineControl(objName, typeid(TSpinCtrl));
     (*props)["min"] = Options.FindValue("min", "0");
     (*props)["max"] = Options.FindValue("max", "100");

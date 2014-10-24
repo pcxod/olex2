@@ -285,7 +285,7 @@ bool TBasicApp::Is64BitCompilation() {
   return false;
 }
 //..............................................................................
-olxstr TBasicApp::GetPlatformString_() const {
+olxstr TBasicApp::GetPlatformString_(bool) const {
   olxstr rv;
 #ifdef _WIN64
   rv << "WIN64";
@@ -448,7 +448,7 @@ void BAPP_ConfigDir(const TStrObjList& Params, TMacroError &E)  {
 }
 //..............................................................................
 void BAPP_Platform(const TStrObjList& Params, TMacroError &E)  {
-  E.SetRetVal(TBasicApp::GetPlatformString());
+  E.SetRetVal(TBasicApp::GetPlatformString(true));
 }
 //..............................................................................
 void BAPP_ModuleHash(const TStrObjList& Params, TMacroError &E)  {
