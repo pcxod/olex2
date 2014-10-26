@@ -849,11 +849,13 @@ void TMainForm::XApp(Olex2App *XA)  {
     fpNone,
     "Restarts Olex2");
   this_InitMacroD(ADPDisp, EmptyString(),
-    fpTwo,
+    fpTwo|fpNone,
     "Compares two structures in the terms of atomsic dispacement after the "
     "structure optimisation and the experimental ADP. First structure is the "
     "XRay experimental structure and the second is the optimised one. The "
-    "structures are expected to have identical labelling scheme.");
+    "structures are expected to have identical labelling scheme. If no "
+    "arguments is given - the procedure prints lengths cut by ADPs on the "
+    "bonds.");
 
   // FUNCTIONS _________________________________________________________________
 

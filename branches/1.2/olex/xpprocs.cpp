@@ -6456,5 +6456,40 @@ void TMainForm::macADPDisp(TStrObjList &Cmds, const TParamList &Options,
     }
     TBasicApp::NewLogEntry() << out.CreateTXTList("Summary", true, false, "  ");
   }
+  else {
+    double tb = TXAtom::TelpProb();
+    FXApp->GetBonds().ForEach(ACollectionItem::TagSetter(0));
+    TStrList out;
+    TTable tab(0, 3);
+    tab.ColName(0) = "Bond, a-b";
+    tab.ColName(1) = "a/A";
+    tab.ColName(2) = "b/A";
+    TGXApp::AtomIterator ai = FXApp->GetAtoms();
+    while (ai.HasNext()) {
+      TXAtom &a = ai.Next();
+      if (a.GetEllipsoid() == 0) continue;
+      for (size_t i = 0; i < a.BondCount(); i++) {
+        if (a.Bond(i).GetTag() != 0) continue;
+        a.Bond(i).SetTag(1);
+        TSAtom &b = a.Bond(i).Another(a);
+        TStrList &r = tab.AddRow();
+        r[0] << a.GetLabel() << '-' << b.GetLabel();
+        double sa = tb/a.GetEllipsoid()->CalcScale((a.crd()-b.crd()).Normalise());
+        if (&a.Bond(i).A() == &a)
+          a.Bond(i).Params()[3] = sa;
+        r[1] =  olxstr::FormatFloat(3, sa);
+        if (b.GetEllipsoid() == 0) {
+          r[2] = '-';
+          continue;
+        }
+        double sb = tb/b.GetEllipsoid()->CalcScale((a.crd() - b.crd()).Normalise());
+        if (&a.Bond(i).A() == &b)
+          a.Bond(i).Params()[3] = sb;
+        r[2] = olxstr::FormatFloat(3, sb);
+      }
+    }
+    TBasicApp::NewLogEntry() << tab.CreateTXTList(
+      "Length of the bonds hidden in ADPs", true, false, " ");
+  }
 }
 //..............................................................................

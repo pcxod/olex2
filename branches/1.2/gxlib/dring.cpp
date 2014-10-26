@@ -66,7 +66,7 @@ double TDRing::GetRadius() const {
 int16_t TDRing::Quality(int16_t v) {
   static int16_t qv = -1;
   if (v == -1) v = qaMedium;
-  ValidateGlobalStyle();
+  if (!ValidateGlobalStyle()) return -1;
   olxstr &tus = GlobalStyle()->GetParam("TubeSections", "8", true);
   olxstr &trs = GlobalStyle()->GetParam("TorusSections", "25", true);
   switch (v) {
