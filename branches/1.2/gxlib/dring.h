@@ -48,7 +48,7 @@ protected:
     bool Enter(const IEObject *Sender, const IEObject *Data, TActionQueue *);
     bool Exit(const IEObject *Sender, const IEObject *Data, TActionQueue *);
   };
-  static void ValidateGlobalStyle();
+  static bool ValidateGlobalStyle();
   static TGraphicsStyle *&GlobalStyle() {
     static TGraphicsStyle *p = NULL;
     return p;

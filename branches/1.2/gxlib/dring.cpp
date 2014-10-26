@@ -123,14 +123,23 @@ bool TDRing::Orient(TGlPrimitive &) {
 void TDRing::Update() {
 }
 //...........................................................................
-void TDRing::ValidateGlobalStyle() {
+bool TDRing::ValidateGlobalStyle() {
   if (GlobalStyle() == NULL) {
+    if (!Initialised()) {
+      return false;
+    }
     GlobalStyle() = &TGlRenderer::_GetStyles().NewStyle("RingParams", true);
     GlobalStyle()->SetPersistent(true);
   }
+  return true;
 }
 //..............................................................................
 void TDRing::CreateStaticObjects(TGlRenderer &r) {
+  if (!Initialised()) {
+    Initialised() = true;
+    new TContextClear(r);
+    new TStylesClear(r);
+  }
   ClearStaticObjects();
   TGlPrimitive &torus = r.NewPrimitive(sgloCommandList);
   torus.StartList();
@@ -156,13 +165,13 @@ void TDRing::FromDataItem(const TDataItem &i) {
 //...........................................................................
 double TDRing::GetDefTubeRadius() {
   if (DefTubeRadius() > 0) return DefTubeRadius();
-  ValidateGlobalStyle();
+  if (!ValidateGlobalStyle()) return DefTubeRadius();
   return (DefTubeRadius() =
     GlobalStyle()->GetNumParam("TubeRadius", 0.075, true));
 }
 //...........................................................................
 void TDRing::SetDefTubeRadius(double v) {
-  ValidateGlobalStyle();
+  if (!ValidateGlobalStyle()) return;
   GlobalStyle()->SetParam("TubeRadius", (DefTubeRadius() = v), true);
 }
 //...........................................................................
