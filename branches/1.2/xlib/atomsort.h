@@ -128,9 +128,11 @@ public:
     au.GetAtoms().ForEach(ACollectionItem::TagSetter(-1));
     list.ForEach(ACollectionItem::TagSetter(0));
     for (size_t i=0; i < list.Count(); i++) {
-      if (list[i]->GetType() == iHydrogenZ || list[i]->IsDeleted())
+      if (list[i]->GetType() == iHydrogenZ || list[i]->IsDeleted()) {
         continue;
+      }
       TCAtomPList& ca_list = atom_tree.Add(new tree_node(list[i])).b;
+      list[i]->SetTag(1);
       for (size_t j = 0; j < list[i]->AttachedSiteCount(); j++) {
         TCAtom &a = list[i]->GetAttachedAtom(j);
         if (a.GetTag() == 0 && a.GetType() == iHydrogenZ)
@@ -139,11 +141,15 @@ public:
       if (ca_list.Count() > 1 && sort_func != NULL)
         QuickSorter::SortSF(ca_list, sort_func);
     }
+    TCAtomPList left = list.Filter(ACollectionItem::TagAnalyser(0));
     size_t atom_count = 0;
     for (size_t i=0; i < atom_tree.Count(); i++) {
       list[atom_count++] = atom_tree[i].a;
       for (size_t j=0; j < atom_tree[i].GetB().Count(); j++)
         list[atom_count++] = atom_tree[i].GetB()[j];
+    }
+    for (size_t i = 0; i < left.Count(); i++) {
+      list[atom_count++] = left[i];
     }
   }
 

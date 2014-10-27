@@ -1305,9 +1305,9 @@ TSizeList::const_list_type TIns::DrySave(const TCAtomPList& atoms) {
     }
     _DrySaveAtom(*atoms[i], rv, true, false);
   }
-  // move all deleted atoms to the end
+  // move all not saved atoms to the end
   for (size_t i = 0; i < atoms.Count(); i++) {
-    if (atoms[i]->IsDeleted()) {
+    if (!atoms[i]->IsSaved()) {
       rv.Add(atoms[i]->GetTag());
     }
   }
