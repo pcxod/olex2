@@ -105,7 +105,7 @@ ConstMatrix<double> TEllipsoid::GetTransformationJ(const mat3d &tm) {
 //..............................................................................
 double TEllipsoid::CalcScale(const vec3d &v) {
   mat3d etm = mat3d::Scale(Matrix, vec3d(SX, SY, SZ));
-  vec3d nv = (etm.Inverse()*v).Normalise()*etm;
+  vec3d nv = (v*etm.Inverse()).Normalise()*etm;
   return sqrt(v.QLength() / nv.QLength());
 }
 //..............................................................................

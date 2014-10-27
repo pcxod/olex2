@@ -6474,7 +6474,7 @@ void TMainForm::macADPDisp(TStrObjList &Cmds, const TParamList &Options,
         TSAtom &b = a.Bond(i).Another(a);
         TStrList &r = tab.AddRow();
         r[0] << a.GetLabel() << '-' << b.GetLabel();
-        double sa = tb/a.GetEllipsoid()->CalcScale((a.crd()-b.crd()).Normalise());
+        double sa = tb/a.GetEllipsoid()->CalcScale((b.crd()-a.crd()).Normalise());
         if (&a.Bond(i).A() == &a)
           a.Bond(i).Params()[3] = sa;
         r[1] =  olxstr::FormatFloat(3, sa);

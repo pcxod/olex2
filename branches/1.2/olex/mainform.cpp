@@ -1540,10 +1540,12 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
     return false;
   }
 
-  if (StartupInitialised && PyEval_ThreadsInitialized() && wxThread::IsMain()) {
+  if (!(MsgId >= ID_INFO && MsgId <= ID_EXCEPTION) && StartupInitialised &&
+    PyEval_ThreadsInitialized() && wxThread::IsMain())
+  {
     PyGILState_STATE st = PyGILState_Ensure();
     Py_BEGIN_ALLOW_THREADS
-      olx_sleep(10);
+      olx_sleep(5);
     Py_END_ALLOW_THREADS
     PyGILState_Release(st);
   }
