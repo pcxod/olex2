@@ -2645,11 +2645,9 @@ TUndoData *TLattice::ValidateHGroups(bool reinit, bool report) {
           dependent_cnt++;
           continue;
         }
-        if (part == 0 || a.GetPart() == 0 || a.GetPart() == part) {
-          if (XElementLib::IsMetal(a.GetType()))
-            metal_cnt++;
-          attached_cnt++;
-        }
+        if (XElementLib::IsMetal(a.GetType()))
+          metal_cnt++;
+        attached_cnt++;
       }
       bool valid = true;
       int m = ag.GetM();
