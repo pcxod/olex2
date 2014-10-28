@@ -455,43 +455,39 @@ VcoVContainer::OctahedralDistortion::OctahedralDistortion(
   const vec3d_alist& points) : points(points)
 {
   size_t opp = InvalidIndex, opp1 = InvalidIndex;
+  double mx = 0;
   for (size_t i = 2; i < points.Count(); i++) {
     double ang = olx_angle(points[1], points[0], points[i]);
-    if (ang > 160) {
-      if (opp != InvalidIndex) {
-        throw TFunctionFailedException(__OlxSourceInfo,
-          "unable to evaluate the 12 angles");
-      }
+    if (ang > mx) {
       opp = i;
+      mx = ang;
+    }
+  }
+  for (size_t i = 2; i < points.Count(); i++) {
+    if (i == opp) {
       continue;
     }
     angles.AddNew(1, 0, i);
-  }
-  if (opp == InvalidIndex) {
-    throw TFunctionFailedException(__OlxSourceInfo,
-      "unable to evaluate the 12 angles");
   }
   for (size_t i = 2; i < points.Count(); i++) {
     if (i == opp) continue;
     angles.AddNew(opp, 0, i);
   }
   size_t current = (opp == 2 ? 3 : 2);
+  mx = 0;
   for (size_t i = 2; i < points.Count(); i++) {
     if (i == opp || i == current) continue;
     double ang = olx_angle(points[current], points[0], points[i]);
-    if (ang > 160) {
-      if (opp1 != InvalidIndex) {
-        throw TFunctionFailedException(__OlxSourceInfo,
-          "unable to evaluate the 12 angles");
-      }
+    if (ang > mx) {
       opp1 = i;
+      mx = ang;
+    }
+  }
+  for (size_t i = 2; i < points.Count(); i++) {
+    if (i == opp || i == current || i == opp1) {
       continue;
     }
     angles.AddNew(current, 0, i);
-  }
-  if (opp1 == InvalidIndex) {
-    throw TFunctionFailedException(__OlxSourceInfo,
-      "unable to evaluate the 12 angles");
   }
   for (size_t i = 2; i < points.Count(); i++) {
     if (i == opp || i == opp1 || i == current) continue;
