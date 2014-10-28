@@ -4110,17 +4110,14 @@ void TGXApp::SynchroniseBonds(const TXAtomPList& xatoms)  {
   // prepare unique list of bonds
   ACollectionItem::Unify(xbonds);
   // have to call setatom function to set the correct order for atom of bond
-  for( size_t i=0; i < xbonds.Count(); i++ )
+  for (size_t i=0; i < xbonds.Count(); i++)
     xbonds[i]->SetA(xbonds[i]->A());
   // safety sake...
-  for( size_t i=0; i < xbonds.Count(); i++ )  {
+  for (size_t i=0; i < xbonds.Count(); i++) {
     TXBond& xb = *xbonds[i];
     xb.Update();
     xb.GetPrimitives().RemoveObject(xb);
-    xb.Create(
-      TXBond::GetLegend(xb,
-        olx_max(TXAtom::LegendLevel(xb.A().GetPrimitives().GetName()),
-        TXAtom::LegendLevel(xb.B().GetPrimitives().GetName()))));
+    xb.Create();
   }
 }
 //..............................................................................
