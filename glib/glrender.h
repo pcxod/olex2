@@ -25,6 +25,7 @@
 #include "paramlist.h"
 #include "gpcollection.h"
 #include "glgroup.h"
+#include "styles.h"
 #undef DrawText
 #undef GetObject
 BeginGlNamespace()
@@ -45,8 +46,31 @@ enum glSelectionFlag {
 
 class AGDrawObject;
 class TGlGroup;
+class TGlRenderer;
 
-class TGlRenderer : public IEObject  {
+class AGOSettings : public AActionHandler {
+protected:
+  TGlRenderer &parent;
+  olxstr name;
+  TGraphicsStyle *style;
+  bool Enter(const IEObject *, const IEObject *, TActionQueue *);
+  bool Exit(const IEObject *, const IEObject *, TActionQueue *);
+  virtual void OnStyleChange() = 0;;
+public:
+  AGOSettings(TGlRenderer &p, const olxstr &name);
+  virtual ~AGOSettings();
+  virtual void OnRendererClear() = 0;
+  TGraphicsStyle *GetStyle() const { return style;  }
+
+  template <typename value_t, typename name_t>
+  value_t GetParam(const name_t &name, value_t &v, const value_t &def) const {
+    if (style == 0) { return def; }
+    return v != -1 ? v
+      : (v = style->GetNumParam(name, def, true));
+  }
+};
+
+class TGlRenderer : public AActionHandler {
   // a list of all groups of primitives
   ObjectGroup<TGlMaterial, TGlPrimitive>  Primitives;
   olxstr_dict<TGPCollection*, false> FCollections;
@@ -86,6 +110,9 @@ class TGlRenderer : public IEObject  {
   bool poly_even;
   void SetupStencilFoInterlacedDraw(bool even);
   GLubyte SelectionBuffer[4][4*3];
+  olxstr_dict<AGOSettings *> ObjectSettings;
+  bool Enter(const IEObject *, const IEObject *, TActionQueue *);
+  bool Exit(const IEObject *, const IEObject *, TActionQueue *);
 protected:
   void DrawObjects(int x, int y, bool SelectObjects, bool SelectPrimitives);
 
@@ -93,7 +120,7 @@ protected:
   TEBasis FBasis;
   class AGlScene *FScene;
 
-  static class TGraphicsStyles* FStyles;
+  TGraphicsStyles Styles;
   class TGlBackground *FBackground, *FCeiling;
   bool FGlImageChanged; // true if DrawMethod was used
   char *FGlImage;
@@ -104,7 +131,7 @@ protected:
   mutable double SceneDepth;
   bool ATI, GLUSelection;
 
-  class TGlListManager  {
+  class TGlListManager {
     GLuint Inc, Pos;
     TArrayList<GLuint> Lists;
   public:
@@ -126,13 +153,10 @@ public:
   */
   void SetView(bool Identity, short Res=1);
 
-  TGraphicsStyles& GetStyles() const {  return *FStyles; }
+  const TGraphicsStyles& GetStyles() const { return Styles; }
+  TGraphicsStyles& GetStyles() { return Styles; }
   // removes styles, which are not used by any collection
   void CleanUpStyles();
-  // is called by the FStyles only!
-  void _OnStylesClear();
-  // is called by the FStyles only!
-  void _OnStylesLoaded();
 
   bool IsCompiled() const {  return CompiledListId != -1; }
   void Compile(bool v);
@@ -158,7 +182,6 @@ public:
 
   TGlLightModel LightModel;
   TActionQueue &OnDraw, // register your handler to swap buffers etc
-    &OnStylesClear,  // Enter and Exit are called
     &OnClear;
 
   void Resize(size_t w, size_t h);
@@ -343,7 +366,14 @@ public:
   */
   void LookAt(double x, double y, short res);
 
-  static TGraphicsStyles& _GetStyles();
+  template <class n_t>
+  AGOSettings *FindSettings(const n_t &name) {
+    return ObjectSettings.Find(name, NULL);
+  }
+
+  AGOSettings &RegisterSettings(AGOSettings &s, const olxstr &name) {
+    return *ObjectSettings.Add(name, &s);
+  }
 
   void LibCompile(const TStrObjList& Params, TMacroError& E);
   void LibStereo(const TStrObjList& Params, TMacroError& E);

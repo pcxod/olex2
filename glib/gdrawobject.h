@@ -114,7 +114,8 @@ public:
   // fills the list with primitives from which the object can be constructed
   virtual void ListPrimitives(TStrList&) const {}
   virtual void UpdatePrimitives(int32_t Mask);
-  virtual void OnPrimitivesCleared()  {}
+  virtual void OnPrimitivesCleared() {}
+  virtual void OnStyleChange() {}
 
   void LibVisible(const TStrObjList& Params, TMacroError& E);
   void LibIsGrouped(const TStrObjList& Params, TMacroError& E);

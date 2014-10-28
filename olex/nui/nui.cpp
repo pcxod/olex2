@@ -41,7 +41,7 @@ void Kinect::InitProcessing(short flags)  {
   if( (flags&INUI::processVideo) != 0 )  {
     if( pixels == NULL )  {
       TGXApp &app = TGXApp::GetInstance();
-      pixels = new TGlPixels(app.GetRender(), "kinet_pixels", 0, 0, 0, 0, 0, 0);
+      pixels = new TGlPixels(app.GetRenderer(), "kinet_pixels", 0, 0, 0, 0, 0, 0);
       pixels->SetVisible(false);
       app.AddObjectToCreate(pixels)->Create();
     }
@@ -49,7 +49,7 @@ void Kinect::InitProcessing(short flags)  {
   if( (flags&INUI::processSkeleton) != 0 )  {
     if( skeleton == NULL )  {
       TGXApp &app = TGXApp::GetInstance();
-      skeleton = new Skeleton(app.GetRender(), "kinet_skeleton");
+      skeleton = new Skeleton(app.GetRenderer(), "kinet_skeleton");
       app.AddObjectToCreate(skeleton)->Create();
     }
   }

@@ -218,7 +218,7 @@ public:
   BondIterator GetBonds() const {  return BondIterator(*this);  }
   PlaneIterator GetPlanes() const {  return PlaneIterator(*this);  }
 protected:
-  TGlRenderer* FGlRender;
+  TGlRenderer* GlRenderer;
   TXFader* Fader;
   TTypeList<TXFile> OverlayedXFiles;
 
@@ -409,11 +409,11 @@ public:
   void ClearStructureRelated();
 //..............................................................................
 // GlRender interface
-  void ClearColor(int Color) {  FGlRender->LightModel.SetClearColor(Color); }
+  void ClearColor(int Color) {  GlRenderer->LightModel.SetClearColor(Color); }
   uint32_t ClearColor() const {
-    return FGlRender->LightModel.GetClearColor().GetRGB();
+    return GlRenderer->LightModel.GetClearColor().GetRGB();
   }
-  TGlRenderer& GetRender() const {  return *FGlRender; }
+  TGlRenderer& GetRenderer() const {  return *GlRenderer; }
   TXFader& GetFader() {  return *Fader; }
   void InitFadeMode();
 
@@ -428,12 +428,12 @@ public:
   void BeginDrawBitmap(double res);
   // restores the on-screen rendering
   void FinishDrawBitmap();
-  void Resize(int new_w, int new_h)  {  FGlRender->Resize(new_w, new_h); }
+  void Resize(int new_w, int new_h)  {  GlRenderer->Resize(new_w, new_h); }
   AGDrawObject* SelectObject(int x, int y) const {
-    return FGlRender->SelectObject(x, y);
+    return GlRenderer->SelectObject(x, y);
   }
   TGlPrimitive *SelectPrimitive(int x, int y) const {
-    return FGlRender->SelectPrimitive(x, y);
+    return GlRenderer->SelectPrimitive(x, y);
   }
   DefPropP(double, ExtraZoom)
 //..............................................................................
@@ -464,14 +464,14 @@ public:
 
   void Select(const vec3d& From, const vec3d& To);
   void SelectAll(bool Select);
-  void InvertSelection()  {  GetRender().InvertSelection();  Draw();  }
+  void InvertSelection()  {  GetRenderer().InvertSelection();  Draw();  }
   TGlGroup* FindObjectGroup(AGDrawObject& G)  {
-    return GetRender().FindObjectGroup(G);
+    return GetRenderer().FindObjectGroup(G);
   }
   TGlGroup* FindGroup(const olxstr& colName)  {
-    return GetRender().FindGroupByName(colName);
+    return GetRenderer().FindGroupByName(colName);
   }
-  TGlGroup& GetSelection() const {  return GetRender().GetSelection();  }
+  TGlGroup& GetSelection() const {  return GetRenderer().GetSelection();  }
   /* returns the newly created group or NULL if the grouping has failed */
   TGlGroup *GroupSelection(const olxstr& name);
   void UngroupSelection();
@@ -725,10 +725,10 @@ public:
   void UpdateLabels();
   static olxstr Label(const TXAtomPList &atoms, const olxstr &sep= ' ');
 //..............................................................................
-  void SetQPeakScale(float V);
-  float GetQPeakScale();
-  void SetQPeakSizeScale(float V);
-  float GetQPeakSizeScale();
+  void SetQPeakScale(double V);
+  double GetQPeakScale();
+  void SetQPeakSizeScale(double V);
+  double GetQPeakSizeScale();
 //..............................................................................
 // GlMouse interface
   bool MouseDown(int x, int y, short Shift, short Button)  {

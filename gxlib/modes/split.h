@@ -164,7 +164,7 @@ public:
       }
       else  {  // do selection then
         UpdateSelectionCrds();
-        gxapp.GetRender().Select(*XA);
+        gxapp.GetRenderer().Select(*XA);
       }
       return true;
     }

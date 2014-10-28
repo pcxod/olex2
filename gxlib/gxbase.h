@@ -20,15 +20,17 @@
 
 BeginGxlNamespace()
 
-static olxstr
-  PLabelsCollectionName("PLabels");
-const int16_t
+static const olxstr PLabelsCollectionName() {
+  static olxstr v = "PLabels";
+  return v;
+}
+const int
   qaHigh    = 1,  // drawing quality
   qaMedium  = 2,
   qaLow     = 3,
   qaPict    = 4;
 
-const short
+const int
   ddsDef       = 0, // default drawing style for primitives
   ddsDefAtomA  = 1,
   ddsDefAtomB  = 2,

@@ -44,6 +44,7 @@ TBasicCFile::~TBasicCFile()  {
 }
 //..............................................................................
 void TBasicCFile::SaveToFile(const olxstr& fn)  {
+  TStopWatch sw(__FUNC__);
   TStrList L;
   SaveToStrings(L);
   TUtf8File::WriteLines(fn, L, false);
@@ -195,7 +196,8 @@ bool TXFile::Dispatch(int MsgId, short MsgSubId, const IEObject* Sender,
 }
 //..............................................................................
 void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
-  for (size_t i=0; i < Loader->GetAsymmUnit().AtomCount(); i++) {
+  TStopWatch sw(__FUNC__);
+  for (size_t i = 0; i < Loader->GetAsymmUnit().AtomCount(); i++) {
     TCAtom &a = Loader->GetAsymmUnit().GetAtom(i);
     if (olx_abs(a.ccrd()[0]) > 127 ||
       olx_abs(a.ccrd()[1]) > 127 ||
@@ -603,6 +605,7 @@ void TXFile::ValidateTabs()  {
 }
 //..............................................................................
 void TXFile::SaveToFile(const olxstr& FN, bool Sort)  {
+  TStopWatch sw(__FUNC__);
   olxstr Ext = TEFile::ExtractFileExt(FN);
   TBasicCFile *Loader = FindFormat(Ext);
   TBasicCFile *LL = FLastLoader;

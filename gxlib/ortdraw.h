@@ -242,7 +242,7 @@ protected:
   };
   TPtrList<ort_atom> atoms;
 public:
-  OrtDraw() : app(TGXApp::GetInstance()), basis(app.GetRender().GetBasis()) {
+  OrtDraw() : app(TGXApp::GetInstance()), basis(app.GetRenderer().GetBasis()) {
     ElpDiv = 36;
     BondDiv = 12;
     PieDiv = 4;

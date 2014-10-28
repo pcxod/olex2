@@ -87,18 +87,18 @@ bool TdlgGradient::Execute(const IEObject *Sender, const IEObject *Data,
 }
 //..............................................................................
 void TdlgGradient::Init()  {
-  tcA->WI.SetColor(TGXApp::GetInstance().GetRender().Background()->LT().GetRGB());
-  tcB->WI.SetColor(TGXApp::GetInstance().GetRender().Background()->RT().GetRGB());
-  tcC->WI.SetColor(TGXApp::GetInstance().GetRender().Background()->RB().GetRGB());
-  tcD->WI.SetColor(TGXApp::GetInstance().GetRender().Background()->LB().GetRGB());
+  tcA->WI.SetColor(TGXApp::GetInstance().GetRenderer().Background()->LT().GetRGB());
+  tcB->WI.SetColor(TGXApp::GetInstance().GetRenderer().Background()->RT().GetRGB());
+  tcC->WI.SetColor(TGXApp::GetInstance().GetRenderer().Background()->RB().GetRGB());
+  tcD->WI.SetColor(TGXApp::GetInstance().GetRenderer().Background()->LB().GetRGB());
 }
 //..............................................................................
 void TdlgGradient::OnOK(wxCommandEvent& event)  {
   TGlOption opt;
-  opt = tcA->WI.GetColor();  TGXApp::GetInstance().GetRender().Background()->LT(opt);
-  opt = tcB->WI.GetColor();  TGXApp::GetInstance().GetRender().Background()->RT(opt);
-  opt = tcC->WI.GetColor();  TGXApp::GetInstance().GetRender().Background()->RB(opt);
-  opt = tcD->WI.GetColor();  TGXApp::GetInstance().GetRender().Background()->LB(opt);
+  opt = tcA->WI.GetColor();  TGXApp::GetInstance().GetRenderer().Background()->LT(opt);
+  opt = tcB->WI.GetColor();  TGXApp::GetInstance().GetRenderer().Background()->RT(opt);
+  opt = tcC->WI.GetColor();  TGXApp::GetInstance().GetRenderer().Background()->RB(opt);
+  opt = tcD->WI.GetColor();  TGXApp::GetInstance().GetRenderer().Background()->LB(opt);
   EndModal(wxID_OK);
 }
 //..............................................................................

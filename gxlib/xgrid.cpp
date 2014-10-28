@@ -179,12 +179,11 @@ bool TXGrid::TContextClear::Exit(const IEObject *Sender, const IEObject *Data,
 //.............................................................................
 //.............................................................................
 TXGrid* TXGrid::Instance = NULL;
-
 //----------------------------------------------------------------------------//
-TXGrid::TXGrid(const olxstr& collectionName, TGXApp* xapp) :
-                     AGDrawObject(xapp->GetRender(), collectionName),
-                     ExtMin(-1,-1,-1),
-                     ExtMax(1,1,1)
+TXGrid::TXGrid(const olxstr& collectionName, TGXApp* xapp)
+: AGDrawObject(xapp->GetRenderer(), collectionName),
+  ExtMin(-1,-1,-1),
+  ExtMax(1,1,1)
 {
   if( Instance != NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "singleton");

@@ -38,7 +38,7 @@ TdlgSceneProps::TdlgSceneProps(TMainFrame *ParentFrame) :
   // Fonts ********************************************************************
   wxStaticBox *boxFonts = new wxStaticBox(this, -1, wxT("Fonts"));
   cbFonts = new TComboBox(wxComp(boxFonts, this));
-  AGlScene& ascene = TGXApp::GetInstance().GetRender().GetScene();
+  AGlScene& ascene = TGXApp::GetInstance().GetRenderer().GetScene();
   for (size_t i=0; i < ascene.FontCount(); i++)
     cbFonts->AddObject(ascene._GetFont(i).GetName(), &ascene._GetFont(i));
   cbFonts->SetSelection(0);
@@ -291,8 +291,8 @@ TdlgSceneProps::TdlgSceneProps(TMainFrame *ParentFrame) :
   Center();
 
   FCurrentLight = 0;
-  FLightModel = TGXApp::GetInstance().GetRender().LightModel;
-  FOriginalModel = TGXApp::GetInstance().GetRender().LightModel;
+  FLightModel = TGXApp::GetInstance().GetRenderer().LightModel;
+  FOriginalModel = TGXApp::GetInstance().GetRenderer().LightModel;
   InitLight(FLightModel.GetLight(0));
   InitLightModel(FLightModel);
 }
@@ -352,7 +352,7 @@ bool TdlgSceneProps::Execute(const IEObject* Sender, const IEObject* Data,
   else if ((TButton*)(AOlxCtrl*)Sender == tbEditFont) {
     int sel = cbFonts->GetSelection();
     if( sel == -1 )  return false;
-    TGXApp::GetInstance().GetRender().GetScene().ShowFontDialog(
+    TGXApp::GetInstance().GetRenderer().GetScene().ShowFontDialog(
       (TGlFont*)cbFonts->GetObject(sel));
   }
 
@@ -417,14 +417,14 @@ void TdlgSceneProps::UpdateLight(TGlLight& L)  {
 void TdlgSceneProps::OnApply(wxCommandEvent& event)  {
   UpdateLight(FLightModel.GetLight(FCurrentLight));
   UpdateLightModel(FLightModel);
-  TGXApp::GetInstance().GetRender().LightModel = FLightModel;
-  TGXApp::GetInstance().GetRender().InitLights();
+  TGXApp::GetInstance().GetRenderer().LightModel = FLightModel;
+  TGXApp::GetInstance().GetRenderer().InitLights();
   TGXApp::GetInstance().Draw();
 }
 //..............................................................................
 void TdlgSceneProps::OnCancel(wxCommandEvent& event)  {
-  TGXApp::GetInstance().GetRender().LightModel = FOriginalModel;
-  TGXApp::GetInstance().GetRender().InitLights();
+  TGXApp::GetInstance().GetRenderer().LightModel = FOriginalModel;
+  TGXApp::GetInstance().GetRenderer().InitLights();
   EndModal(wxID_OK);
 }
 //..............................................................................
