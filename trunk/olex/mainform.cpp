@@ -1202,7 +1202,7 @@ void TMainForm::XApp(Olex2App *XA)  {
 
   SetMenuBar(MenuBar);
 //////////////////////////////////////////////////////////////
-  FXApp->GetRender().OnDraw.Add(this, ID_GLDRAW, msiExit);
+  FXApp->GetRenderer().OnDraw.Add(this, ID_GLDRAW, msiExit);
   TObjectVisibilityChange* VC = new TObjectVisibilityChange(this);
   XA->OnGraphicsVisible.Add(VC);
   // put correct captions to the menu
@@ -1236,9 +1236,9 @@ void TMainForm::XApp(Olex2App *XA)  {
   HtmlManager.main->OnKey.Add(this, ID_HTMLKEY);
 
   FXApp->SetLabelsVisible(false);
-  FXApp->GetRender().LightModel.SetClearColor(0x0f0f0f0f);
+  FXApp->GetRenderer().LightModel.SetClearColor(0x0f0f0f0f);
 
-  FGlConsole = new TGlConsole(FXApp->GetRender(), "Console");
+  FGlConsole = new TGlConsole(FXApp->GetRenderer(), "Console");
   // the commands are posted from in Dispatch, SkipPosting is controlling the output
   FXApp->GetLog().AddStream(FGlConsole, false);
   FGlConsole->OnCommand.Add(this, ID_COMMAND);
@@ -1246,7 +1246,7 @@ void TMainForm::XApp(Olex2App *XA)  {
   FXApp->AddObjectToCreate(FGlConsole);
 ////////////////////////////////////////////////////////////////////////////////
   Library.AttachLibrary(FGlConsole->ExportLibrary());
-  Library.AttachLibrary(FXApp->GetRender().ExportLibrary());
+  Library.AttachLibrary(FXApp->GetRenderer().ExportLibrary());
 ////////////////////////////////////////////////////////////////////////////////
   FCmdLine = new TCmdLine(this, wxNO_BORDER);
 //  wxWindowDC wdc(this);
@@ -1255,14 +1255,14 @@ void TMainForm::XApp(Olex2App *XA)  {
   FCmdLine->OnKeyDown.Add(this, ID_CMDLINEKEYDOWN);
   FCmdLine->OnCommand.Add( this, ID_COMMAND);
 
-  FHelpWindow = new TGlTextBox(FXApp->GetRender(), "HelpWindow");
+  FHelpWindow = new TGlTextBox(FXApp->GetRenderer(), "HelpWindow");
   FXApp->AddObjectToCreate(FHelpWindow);
   FHelpWindow->SetVisible(false);
 
-  FInfoBox = new TGlTextBox(FXApp->GetRender(), "InfoBox");
+  FInfoBox = new TGlTextBox(FXApp->GetRenderer(), "InfoBox");
   FXApp->AddObjectToCreate(FInfoBox);
 
-  GlTooltip = new TGlTextBox(FXApp->GetRender(), "Tooltip");
+  GlTooltip = new TGlTextBox(FXApp->GetRenderer(), "Tooltip");
   FXApp->AddObjectToCreate(GlTooltip);
   GlTooltip->SetVisible(false);
   GlTooltip->SetZ(4.9);
@@ -1334,7 +1334,7 @@ void TMainForm::StartupInit()  {
     FGlCanvas->XApp(FXApp);
   wxFont Font(10, wxMODERN, wxNORMAL, wxNORMAL);//|wxFONTFLAG_ANTIALIASED);
   TGlMaterial glm("2049;0.698,0.698,0.698,1.000");
-  AGlScene& gls = FXApp->GetRender().GetScene();
+  AGlScene& gls = FXApp->GetRenderer().GetScene();
   gls.CreateFont("Default", Font.GetNativeFontInfoDesc()).SetMaterial(glm);
   gls.CreateFont("Help", Font.GetNativeFontInfoDesc()).SetMaterial(glm);
   gls.CreateFont("Notes", Font.GetNativeFontInfoDesc()).SetMaterial(glm);
@@ -1695,12 +1695,12 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
       }
     }
     if( (FMode & mRota) != 0  )  {
-      FXApp->GetRender().GetBasis().RotateX(
-        FXApp->GetRender().GetBasis().GetRX()+FRotationIncrement*FRotationVector[0]);
-      FXApp->GetRender().GetBasis().RotateY(
-        FXApp->GetRender().GetBasis().GetRY()+FRotationIncrement*FRotationVector[1]);
-      FXApp->GetRender().GetBasis().RotateZ(
-        FXApp->GetRender().GetBasis().GetRZ()+FRotationIncrement*FRotationVector[2]);
+      FXApp->GetRenderer().GetBasis().RotateX(
+        FXApp->GetRenderer().GetBasis().GetRX()+FRotationIncrement*FRotationVector[0]);
+      FXApp->GetRenderer().GetBasis().RotateY(
+        FXApp->GetRenderer().GetBasis().GetRY()+FRotationIncrement*FRotationVector[1]);
+      FXApp->GetRenderer().GetBasis().RotateZ(
+        FXApp->GetRenderer().GetBasis().GetRZ()+FRotationIncrement*FRotationVector[2]);
       FRotationAngle -= olx_abs(FRotationVector.Length()*FRotationIncrement);
       if( FRotationAngle < 0 )  FMode ^= mRota;
       Draw = true;
@@ -1708,7 +1708,7 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
     if( (FMode & mFade) != 0 )  {
       Draw = true;
       if( FFadeVector[0] == FFadeVector[1] )
-      {  FMode ^= mFade;  }//FXApp->GetRender().Ceiling()->Visible(false);  }
+      {  FMode ^= mFade;  }//FXApp->GetRenderer().Ceiling()->Visible(false);  }
 
       FFadeVector[0] += FFadeVector[2];
       if( FFadeVector[2] > 0 )  {
@@ -1725,17 +1725,17 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
       }
       if( (FMode & mFade) != 0 )  {
         TGlOption glO;
-        glO = FXApp->GetRender().Ceiling()->LT();  glO[3] = FFadeVector[0];
-        FXApp->GetRender().Ceiling()->LT(glO);
+        glO = FXApp->GetRenderer().Ceiling()->LT();  glO[3] = FFadeVector[0];
+        FXApp->GetRenderer().Ceiling()->LT(glO);
 
-        glO = FXApp->GetRender().Ceiling()->RT();  glO[3] = FFadeVector[0];
-        FXApp->GetRender().Ceiling()->RT(glO);
+        glO = FXApp->GetRenderer().Ceiling()->RT();  glO[3] = FFadeVector[0];
+        FXApp->GetRenderer().Ceiling()->RT(glO);
 
-        glO = FXApp->GetRender().Ceiling()->LB();  glO[3] = FFadeVector[0];
-        FXApp->GetRender().Ceiling()->LB(glO);
+        glO = FXApp->GetRenderer().Ceiling()->LB();  glO[3] = FFadeVector[0];
+        FXApp->GetRenderer().Ceiling()->LB(glO);
 
-        glO = FXApp->GetRender().Ceiling()->RB();  glO[3] = FFadeVector[0];
-        FXApp->GetRender().Ceiling()->RB(glO);
+        glO = FXApp->GetRenderer().Ceiling()->RB();  glO[3] = FFadeVector[0];
+        FXApp->GetRenderer().Ceiling()->RB(glO);
         Draw = true;
       }
     }
@@ -1764,13 +1764,13 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
           int x = MousePositionX-GlTooltip->GetWidth()/2,
             y = MousePositionY-GlTooltip->GetHeight()-4;
           if( x < 0 )  x = 0;
-          if( (size_t)(x + GlTooltip->GetWidth()) > (size_t)FXApp->GetRender().GetWidth() )
-            x = FXApp->GetRender().GetWidth() - GlTooltip->GetWidth();
+          if( (size_t)(x + GlTooltip->GetWidth()) > (size_t)FXApp->GetRenderer().GetWidth() )
+            x = FXApp->GetRenderer().GetWidth() - GlTooltip->GetWidth();
           if( y < 0 )
             y  = 0;
           GlTooltip->SetLeft(x); // put it off the mouse
           GlTooltip->SetTop(y);
-          GlTooltip->SetZ(FXApp->GetRender().GetMaxRasterZ());
+          GlTooltip->SetZ(FXApp->GetRenderer().GetMaxRasterZ());
           GlTooltip->SetVisible(true);
           Draw = true;
         }
@@ -2005,8 +2005,8 @@ void TMainForm::PreviewHelp(const olxstr& Cmd)  {
   //    FHelpWindow->SetTop(
   //      InfoWindowVisible ? FInfoBox->GetTop() + FInfoBox->GetHeight() + 5 : 1);
   //    FHelpWindow->SetMaxStringLength((uint16_t)(
-  //      FHelpWindow->GetFont().MaxTextLength(FXApp->GetRender().GetWidth())));
-  //    FHelpWindow->SetZ(FXApp->GetRender().CalcRasterZ(0.1));
+  //      FHelpWindow->GetFont().MaxTextLength(FXApp->GetRenderer().GetWidth())));
+  //    FHelpWindow->SetZ(FXApp->GetRenderer().CalcRasterZ(0.1));
   //    for( size_t i=0; i < macros.Count(); i++ )  {
   //      FHelpWindow->PostText(macros[i]->GetName(), &HelpFontColorCmd);
   //      if( !macros[i]->GetDescription().IsEmpty() )  {
@@ -2079,7 +2079,7 @@ bool TMainForm::ImportFrag(const olxstr& line)  {
     if( md != NULL )  {
       md->AddAtoms(xatoms);
       for( size_t i=0; i < xbonds.Count(); i++ )
-        FXApp->GetRender().Select(*xbonds[i], true);
+        FXApp->GetRenderer().Select(*xbonds[i], true);
     }
     if (FXApp->XFile().GetLattice().IsGenerated())
       Modes->OnModeExit.Add("fuse");
@@ -2131,36 +2131,36 @@ void TMainForm::OnChar(wxKeyEvent& m) {
       zoom_inc *= 3;
     }
     if( m.m_keyCode == WXK_UP )  {
-      FXApp->GetRender().RotateX(FXApp->GetRender().GetBasis().GetRX()+inc);
+      FXApp->GetRenderer().RotateX(FXApp->GetRenderer().GetBasis().GetRX()+inc);
       TimePerFrame = FXApp->Draw();
       return;
     }
     if( m.m_keyCode == WXK_DOWN )  {
-      FXApp->GetRender().RotateX(FXApp->GetRender().GetBasis().GetRX()-inc);
+      FXApp->GetRenderer().RotateX(FXApp->GetRenderer().GetBasis().GetRX()-inc);
       TimePerFrame = FXApp->Draw();
       return;
     }
     if( m.m_keyCode == WXK_LEFT )  {
-      FXApp->GetRender().RotateY(FXApp->GetRender().GetBasis().GetRY()-inc);
+      FXApp->GetRenderer().RotateY(FXApp->GetRenderer().GetBasis().GetRY()-inc);
       TimePerFrame = FXApp->Draw();
       return;
     }
     if( m.m_keyCode == WXK_RIGHT )  {
-      FXApp->GetRender().RotateY(FXApp->GetRender().GetBasis().GetRY()+inc);
+      FXApp->GetRenderer().RotateY(FXApp->GetRenderer().GetBasis().GetRY()+inc);
       TimePerFrame = FXApp->Draw();
       return;
     }
     if( m.m_keyCode == WXK_END )  {
-      if( FXApp->GetRender().GetZoom()+zoom_inc < 100 )  {
-        FXApp->GetRender().SetZoom(FXApp->GetRender().GetZoom()+zoom_inc);
+      if( FXApp->GetRenderer().GetZoom()+zoom_inc < 100 )  {
+        FXApp->GetRenderer().SetZoom(FXApp->GetRenderer().GetZoom()+zoom_inc);
         TimePerFrame = FXApp->Draw();
         return;
       }
     }
     if( m.m_keyCode == WXK_HOME )  {
-      double z = FXApp->GetRender().GetZoom()-zoom_inc;
+      double z = FXApp->GetRenderer().GetZoom()-zoom_inc;
       if( z <= 0 ) z = 0.001;
-      FXApp->GetRender().SetZoom(z);
+      FXApp->GetRenderer().SetZoom(z);
       TimePerFrame = FXApp->Draw();
       return;
     }
@@ -2416,7 +2416,7 @@ void TMainForm::OnMove(wxMoveEvent& evt) {
     return;
   }
   wxPoint p = FGlCanvas->GetScreenPosition();
-  FXApp->GetRender().SetAbsoluteTop(p.y);
+  FXApp->GetRenderer().SetAbsoluteTop(p.y);
 }
 //..............................................................................
 void TMainForm::OnSize(wxSizeEvent& event)  {
@@ -2477,7 +2477,7 @@ void TMainForm::OnResize()  {
   if( h <= 0 )  h = 5;
   FGlCanvas->SetSize(l, 0, w, h - (CmdLineVisible ? FCmdLine->WI.GetHeight() : 0));
   FGlCanvas->GetClientSize(&w, &h);
-  FXApp->GetRender().Resize(0, 0, w, h, 1);
+  FXApp->GetRenderer().Resize(0, 0, w, h, 1);
   FGlConsole->Resize(0, dheight, w, h - dheight);
   if (FInfoBox->IsCreated()) {
     FInfoBox->SetTop(1);
@@ -2621,8 +2621,8 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
 
   I->AddField("BgColor", FBgColor.ToString());
   I->AddField("WhiteOn",
-    (FXApp->GetRender().LightModel.GetClearColor().GetRGB() == 0xffffffff));
-  I->AddField("Gradient", FXApp->GetRender().Background()->IsVisible());
+    (FXApp->GetRenderer().LightModel.GetClearColor().GetRGB() == 0xffffffff));
+  I->AddField("Gradient", FXApp->GetRenderer().Background()->IsVisible());
   I->AddField("GradientPicture", TEFile::CreateRelativePath(GradientPicture));
   I->AddField("language", FXApp->Dictionary.GetCurrentLanguage());
   I->AddField("ExtraZoom", FXApp->GetExtraZoom());
@@ -2642,13 +2642,13 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
     it.AddField("value", olxstr().quote('"') << StoredParams.GetValue(i));
   }
 
-  SaveScene(DF.Root().AddItem("Scene"), FXApp->GetRender().LightModel);
+  SaveScene(DF.Root().AddItem("Scene"), FXApp->GetRenderer().LightModel);
   try {
-    FXApp->GetRender().GetStyles().ToDataItem(DF.Root().AddItem("Styles"));
+    FXApp->GetRenderer().GetStyles().ToDataItem(DF.Root().AddItem("Styles"));
   }
   catch (const TExceptionBase & e) {
     TBasicApp::NewLogEntry(logExceptionTrace) << e;
-    FXApp->GetRender().GetStyles().Clear();
+    FXApp->GetRenderer().GetStyles().Clear();
   }
   DF.SaveToXLFile(FN + ".tmp");
   TEFile::Rename(FN + ".tmp", FN);
@@ -2813,50 +2813,52 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
   DefSceneP = TEFile::ExpandRelativePath(I->FindField("Scene"));
     processFunction(DefSceneP);
   // loading default style if provided ?
-  if( TEFile::Exists(DefStyle) )  {
+  if (TEFile::Exists(DefStyle)) {
     TDataFile SDF;
     SDF.LoadFromXLFile(DefStyle, &Log);
-    FXApp->GetRender().GetStyles().FromDataItem(*SDF.Root().FindItem("style"),
-      false);
+    FXApp->GetRenderer().GetStyles().FromDataItem(
+      *SDF.Root().FindItem("style"), false);
   }
-  else  {
+  else {
     TDataItem& last_saved_style = DF.Root().GetItemByName("Styles");
     int l_version = TGraphicsStyles::ReadStyleVersion(last_saved_style);
     // old style override, let's hope it is newer!
-    if( l_version < TGraphicsStyles::CurrentVersion )  {
+    if (l_version < TGraphicsStyles::CurrentVersion()) {
       olxstr new_set = FXApp->GetBaseDir() + "last.osp";
-      if( TEFile::Exists(new_set) )  {
+      if (TEFile::Exists(new_set)) {
         TDataFile LF;
-        try  {
+        try {
           LF.LoadFromXLFile(new_set);
           TDataItem& distributed_style = LF.Root().GetItemByName("Styles");
           int d_version = TGraphicsStyles::ReadStyleVersion(distributed_style);
           // it would be weird if distributed version is not current... but might happen
-          FXApp->GetRender().GetStyles().FromDataItem(
-            (d_version <= l_version) ? last_saved_style : distributed_style, false);
+          FXApp->GetRenderer().GetStyles().FromDataItem(
+            (d_version <= l_version) ? last_saved_style : distributed_style,
+              false);
         }
-        catch(...)  {  // recover...
-          FXApp->GetRender().GetStyles().FromDataItem(last_saved_style, false);
+        catch (...) {  // recover...
+          FXApp->GetRenderer().GetStyles().FromDataItem(last_saved_style,
+            false);
         }
       }
     }
     else  // up-to-date then...
-      FXApp->GetRender().GetStyles().FromDataItem(last_saved_style, false);
+      FXApp->GetRenderer().GetStyles().FromDataItem(last_saved_style, false);
   }
   // default scene properties provided?
-  if( TEFile::Exists(DefSceneP) )  {
+  if (TEFile::Exists(DefSceneP)) {
     TDataFile SDF;
     SDF.LoadFromXLFile(DefSceneP, &Log);
-    LoadScene(SDF.Root(), FXApp->GetRender().LightModel);
+    LoadScene(SDF.Root(), FXApp->GetRenderer().LightModel);
   }
   else
-    LoadScene(DF.Root().GetItemByName("Scene"), FXApp->GetRender().LightModel);
+    LoadScene(DF.Root().GetItemByName("Scene"), FXApp->GetRenderer().LightModel);
   // restroring language or setting default
-  try  {
+  try {
     FXApp->SetCurrentLanguage(
       I->FindField("language", EmptyString()));
   }
-  catch(const TExceptionBase& e)  {
+  catch (const TExceptionBase& e) {
     ShowAlert(e, "Failed loading/processing dictionary file");
   }
   FXApp->SetExtraZoom(I->FindField("ExtraZoom", "1.25").ToDouble());
@@ -2878,7 +2880,7 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
     if( !T.IsEmpty() )  FBgColor.FromString(T);
   }
   bool whiteOn =  I->FindField("WhiteOn", FalseString()).ToBool();
-  FXApp->GetRender().LightModel.SetClearColor(
+  FXApp->GetRenderer().LightModel.SetClearColor(
     whiteOn ? 0xffffffff : FBgColor.GetRGB());
 
   GradientPicture = TEFile::ExpandRelativePath(
@@ -2911,9 +2913,9 @@ void TMainForm::LoadScene(const TDataItem& Root, TGlLightModel& FLM) {
     TDataItem& fi = I->GetItemByIndex(i);
     // compatibility conversion...
     if( fi.GetName() == "Console" )
-      FXApp->GetRender().GetScene().CreateFont("Default", fi.FindField("id"));
+      FXApp->GetRenderer().GetScene().CreateFont("Default", fi.FindField("id"));
     else
-      FXApp->GetRender().GetScene().CreateFont(fi.GetName(), fi.FindField("id"));
+      FXApp->GetRenderer().GetScene().CreateFont(fi.GetName(), fi.FindField("id"));
   }
   I = Root.FindItem("Materials");
   if( I != NULL )  {
@@ -2934,15 +2936,15 @@ void TMainForm::LoadScene(const TDataItem& Root, TGlLightModel& FLM) {
     ci = I->FindItem("Exception");
     if( ci != NULL ) ExceptionFontColor.FromDataItem(*ci);
   }
-  FXApp->GetRender().InitLights();
+  FXApp->GetRenderer().InitLights();
 }
 //..............................................................................
 void TMainForm::SaveScene(TDataItem &Root, const TGlLightModel &FLM) const {
   FLM.ToDataItem(Root.AddItem("Scene_Properties"));
   TDataItem *I = &Root.AddItem("Fonts");
-  for( size_t i=0; i < FXApp->GetRender().GetScene().FontCount(); i++ )  {
-    TDataItem& fi = I->AddItem(FXApp->GetRender().GetScene()._GetFont(i).GetName());
-    fi.AddField("id", FXApp->GetRender().GetScene()._GetFont(i).GetIdString());
+  for( size_t i=0; i < FXApp->GetRenderer().GetScene().FontCount(); i++ )  {
+    TDataItem& fi = I->AddItem(FXApp->GetRenderer().GetScene()._GetFont(i).GetName());
+    fi.AddField("id", FXApp->GetRenderer().GetScene()._GetFont(i).GetIdString());
   }
   I = &Root.AddItem("Materials");
   HelpFontColorTxt.ToDataItem(I->AddItem("Help_txt"));
@@ -3280,13 +3282,13 @@ bool TMainForm::OnMouseUp(int x, int y, short Flags, short Buttons)  {
     vec3d N(0, 0, 1), Z;
     TAsymmUnit *au = &FXApp->XFile().GetAsymmUnit();
     cellM = au->GetHklToCartesian();
-    cellM *= FXApp->GetRender().GetBasis().GetMatrix();
+    cellM *= FXApp->GetRenderer().GetBasis().GetMatrix();
     cellM.Transpose();
     // 4x4 -> 3x3 matrix
     Z = cellM[0];    M[0] = Z;
     Z = cellM[1];    M[1] = Z;
     Z = cellM[2];    M[2] = Z;
-    Z = FXApp->GetRender().GetBasis().GetMatrix()[2];
+    Z = FXApp->GetRenderer().GetBasis().GetMatrix()[2];
     olxstr  Tmp="current: ";
       Tmp << Z.ToString();
       TBasicApp::NewLogEntry() << Tmp;
@@ -3313,13 +3315,13 @@ bool TMainForm::OnMouseUp(int x, int y, short Flags, short Buttons)  {
       Tmp << Z.ToString() << "; HKL ";
       Tmp << iH << ' ' << iK << ' ' << iL << ' ';
       TBasicApp::NewLogEntry() << Tmp;
-      N = FXApp->GetRender().GetBasis().GetMatrix()[2];
+      N = FXApp->GetRenderer().GetBasis().GetMatrix()[2];
         double ca = N.CAngle(Z);
         if( ca < -1 )  ca = -1;
         if( ca > 1 )   ca = 1;
         vec3d V = Z.XProdVec(N);
-        FXApp->GetRender().GetBasis().Rotate(V, acos(ca));
-      N = FXApp->GetRender().GetBasis().GetMatrix()[2];
+        FXApp->GetRenderer().GetBasis().Rotate(V, acos(ca));
+      N = FXApp->GetRenderer().GetBasis().GetMatrix()[2];
       Tmp="got: ";
       Tmp << N.ToString();
       TBasicApp::NewLogEntry() << Tmp;
@@ -3504,10 +3506,10 @@ bool TMainForm::OnMouseDblClick(int x, int y, short Flags, short Buttons)  {
         if( b == glB )  break;
         Top += (b->GetHeight() + 2);
       }
-      const double r = ((double)FXApp->GetRender().GetWidth()/(double)glB->GetWidth()) / 10.0;
+      const double r = ((double)FXApp->GetRenderer().GetWidth()/(double)glB->GetWidth()) / 10.0;
       glB->SetZoom(r);
       glB->SetTop(Top);
-      glB->SetLeft(FXApp->GetRender().GetWidth() - glB->GetWidth());
+      glB->SetLeft(FXApp->GetRenderer().GetWidth() - glB->GetWidth());
     }
     else  {
       glB->SetLeft(0);

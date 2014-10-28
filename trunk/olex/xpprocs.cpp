@@ -428,7 +428,7 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options,
   }
 
   bool mask_bg = Options.Contains("nbg");
-  uint32_t clear_color = FXApp->GetRender().LightModel.GetClearColor().GetRGB();
+  uint32_t clear_color = FXApp->GetRenderer().LightModel.GetClearColor().GetRGB();
   unsigned char bg_r = OLX_GetRValue(clear_color),
     bg_g = OLX_GetGValue(clear_color),
     bg_b = OLX_GetBValue(clear_color);
@@ -436,10 +436,10 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options,
   short bits = mask_bg ? 32 : 24;
   // keep old size values
   const int
-    vpLeft = FXApp->GetRender().GetLeft(),
-    vpTop = FXApp->GetRender().GetTop(),
-    vpWidth = FXApp->GetRender().GetActualWidth(),
-    vpHeight = FXApp->GetRender().GetHeight();
+    vpLeft = FXApp->GetRenderer().GetLeft(),
+    vpTop = FXApp->GetRenderer().GetTop(),
+    vpWidth = FXApp->GetRenderer().GetActualWidth(),
+    vpHeight = FXApp->GetRenderer().GetHeight();
 
   double res = 2;
   if (Cmds.Count() == 2 && Cmds[1].IsNumber())
@@ -501,41 +501,41 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options,
   int PixelFormat = ChoosePixelFormat(dDC, &pfd);
   SetPixelFormat(dDC, PixelFormat, &pfd);
   HGLRC dglc = wglCreateContext(dDC);
-  FXApp->GetRender().BeforeContextChange();
-  FXApp->GetRender().Resize(0, 0, BmpWidth, BmpHeight, res);
+  FXApp->GetRenderer().BeforeContextChange();
+  FXApp->GetRenderer().Resize(0, 0, BmpWidth, BmpHeight, res);
   wglMakeCurrent(dDC, dglc);
-  FXApp->GetRender().AfterContextChange();
-  FXApp->GetRender().GetScene().SetEnabled(false);
+  FXApp->GetRenderer().AfterContextChange();
+  FXApp->GetRenderer().GetScene().SetEnabled(false);
   FBitmapDraw = true;
   FGlConsole->SetVisible(false);
   FXApp->BeginDrawBitmap(res);
-  FXApp->GetRender().EnableFog(FXApp->GetRender().IsFogEnabled());
+  FXApp->GetRenderer().EnableFog(FXApp->GetRenderer().IsFogEnabled());
 
   FXApp->Draw();
   GdiFlush();
   FBitmapDraw = false;
 
-  FXApp->GetRender().BeforeContextChange();
+  FXApp->GetRenderer().BeforeContextChange();
   wglDeleteContext(dglc);
   DeleteDC(dDC);
   wglMakeCurrent(hDC, glc);
-  FXApp->GetRender().GetScene().SetEnabled(true);
-  FXApp->GetRender().AfterContextChange();
-  FXApp->GetRender().Resize(vpLeft, vpTop, vpWidth, vpHeight, 1);
+  FXApp->GetRenderer().GetScene().SetEnabled(true);
+  FXApp->GetRenderer().AfterContextChange();
+  FXApp->GetRenderer().Resize(vpLeft, vpTop, vpWidth, vpHeight, 1);
   FGlConsole->SetVisible(true);
   FXApp->FinishDrawBitmap();
   if (PictureQuality)
     FXApp->Quality(previous_quality);
-  FXApp->GetRender().EnableFog(FXApp->GetRender().IsFogEnabled());
+  FXApp->GetRenderer().EnableFog(FXApp->GetRenderer().IsFogEnabled());
 
   if (Emboss) {
     if (EmbossColour) {
       TProcessImage::EmbossC(DIBits, BmpWidth, BmpHeight, 3,
-        FXApp->GetRender().LightModel.GetClearColor().GetRGB());
+        FXApp->GetRenderer().LightModel.GetClearColor().GetRGB());
     }
     else {
       TProcessImage::EmbossBW(DIBits, BmpWidth, BmpHeight, 3,
-        FXApp->GetRender().LightModel.GetClearColor().GetRGB());
+        FXApp->GetRenderer().LightModel.GetClearColor().GetRGB());
     }
   }
   olxstr bmpFN, outFN;
@@ -612,8 +612,8 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options,
 void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &Error)
 {
-  int orgHeight = FXApp->GetRender().GetHeight(),
-      orgWidth  = FXApp->GetRender().GetWidth();
+  int orgHeight = FXApp->GetRenderer().GetHeight(),
+      orgWidth  = FXApp->GetRenderer().GetWidth();
   uint32_t dpi=Options.FindValue("dpi", "0").ToUInt();
   double res = 1;
   if (Cmds.Count() == 2 && Cmds[1].IsNumber())
@@ -634,9 +634,9 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options,
     SrcHeight = BmpHeight;
   if (BmpWidth < SrcWidth)
     SrcWidth = BmpWidth;
-  FXApp->GetRender().Resize(0, 0, SrcWidth, SrcHeight, res);
+  FXApp->GetRenderer().Resize(0, 0, SrcWidth, SrcHeight, res);
   bool mask_bg = Options.Contains("nbg");
-  uint32_t clear_color = FXApp->GetRender().LightModel.GetClearColor().GetRGB();
+  uint32_t clear_color = FXApp->GetRenderer().LightModel.GetClearColor().GetRGB();
   unsigned char bg_r = OLX_GetRValue(clear_color),
     bg_g = OLX_GetGValue(clear_color),
     bg_b = OLX_GetBValue(clear_color);
@@ -647,19 +647,19 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options,
   const int bmpSize = BmpHeight*BmpWidth*3;
   unsigned char* bmpData = olx_malloc<unsigned char>(bmpSize);
   FGlConsole->SetVisible(false);
-  FXApp->GetRender().OnDraw.SetEnabled(false);
+  FXApp->GetRenderer().OnDraw.SetEnabled(false);
   int32_t previous_quality = -1;
   if (res != 1) {
-    FXApp->GetRender().GetScene().ScaleFonts(res);
+    FXApp->GetRenderer().GetScene().ScaleFonts(res);
     if (res != 1)
       previous_quality = FXApp->Quality(qaPict);
     FXApp->UpdateLabels();
   }
   for (int i=0; i < res; i++) {
     for (int j=0; j < res; j++) {
-      FXApp->GetRender().LookAt(j, i, (int)(res < 1 ? 1 : res));
-      FXApp->GetRender().Draw();
-      char *PP = FXApp->GetRender().GetPixels(false, 1);
+      FXApp->GetRenderer().LookAt(j, i, (int)(res < 1 ? 1 : res));
+      FXApp->GetRenderer().Draw();
+      char *PP = FXApp->GetRenderer().GetPixels(false, 1);
       int mj = j*SrcWidth;
       int mi = i*SrcHeight;
       for (int k=0; k < SrcWidth; k++) {
@@ -687,17 +687,17 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   if (res != 1) {
-    FXApp->GetRender().GetScene().RestoreFontScale();
+    FXApp->GetRenderer().GetScene().RestoreFontScale();
     FXApp->Quality(previous_quality);
     FXApp->UpdateLabels();
   }
 
-  FXApp->GetRender().OnDraw.SetEnabled(true);
+  FXApp->GetRenderer().OnDraw.SetEnabled(true);
   FGlConsole->SetVisible(true);
   // end drawing etc
-  FXApp->GetRender().Resize(orgWidth, orgHeight);
-  FXApp->GetRender().LookAt(0, 0, 1);
-  FXApp->GetRender().SetView(false, 1);
+  FXApp->GetRenderer().Resize(orgWidth, orgHeight);
+  FXApp->GetRenderer().LookAt(0, 0, 1);
+  FXApp->GetRenderer().SetView(false, 1);
   FXApp->Draw();
   olxstr bmpFN;
   if (FXApp->XFile().HasLastLoader() && !TEFile::IsAbsolutePath(Cmds[0])) {
@@ -870,11 +870,11 @@ void TMainForm::macRota(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   if( Cmds.Count() == 2 )  {  // rota x 90 syntax
     double angle = Cmds[1].ToDouble();
     if( Cmds[0] == "1" || Cmds[0] == "x"  || Cmds[0] == "a" )
-      FXApp->GetRender().GetBasis().RotateX(FXApp->GetRender().GetBasis().GetRX()+angle);
+      FXApp->GetRenderer().GetBasis().RotateX(FXApp->GetRenderer().GetBasis().GetRX()+angle);
     else if( Cmds[0] == "2" || Cmds[0] == "y"  || Cmds[0] == "b" )
-      FXApp->GetRender().GetBasis().RotateY(FXApp->GetRender().GetBasis().GetRY()+angle);
+      FXApp->GetRenderer().GetBasis().RotateY(FXApp->GetRenderer().GetBasis().GetRY()+angle);
     else if( Cmds[0] == "3" || Cmds[0] == "z"  || Cmds[0] == "c" )
-      FXApp->GetRender().GetBasis().RotateZ(FXApp->GetRender().GetBasis().GetRZ()+angle);
+      FXApp->GetRenderer().GetBasis().RotateZ(FXApp->GetRenderer().GetBasis().GetRZ()+angle);
   }
   /* rota x y z 90 1 syntax - rotation around (x,y,z) 90 degrees with 1 degree
   inc
@@ -950,14 +950,14 @@ void TMainForm::macWait(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void TMainForm::macSwapBg(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  FXApp->GetRender().Background()->SetVisible(false);  // hide the gradient background
-  if( FXApp->GetRender().LightModel.GetClearColor().GetRGB() == 0xffffffff )
-    FXApp->GetRender().LightModel.SetClearColor(FBgColor);
+  FXApp->GetRenderer().Background()->SetVisible(false);  // hide the gradient background
+  if( FXApp->GetRenderer().LightModel.GetClearColor().GetRGB() == 0xffffffff )
+    FXApp->GetRenderer().LightModel.SetClearColor(FBgColor);
   else  {
-    FBgColor = FXApp->GetRender().LightModel.GetClearColor();  // update if changed externally...
-    FXApp->GetRender().LightModel.SetClearColor(0xffffffff);
+    FBgColor = FXApp->GetRenderer().LightModel.GetClearColor();  // update if changed externally...
+    FXApp->GetRenderer().LightModel.SetClearColor(0xffffffff);
   }
-  FXApp->GetRender().InitLights();
+  FXApp->GetRenderer().InitLights();
 }
 //..............................................................................
 void TMainForm::macSilent(TStrObjList &Cmds, const TParamList &Options,
@@ -1288,7 +1288,7 @@ void TMainForm::macSave(TStrObjList &Cmds, const TParamList &Options,
     }
     FN = TEFile::ChangeFileExt(FN, "glds");
     TDataFile F;
-    FXApp->GetRender().GetStyles().ToDataItem(F.Root().AddItem("style"));
+    FXApp->GetRenderer().GetStyles().ToDataItem(F.Root().AddItem("style"));
     try  {  F.SaveToXLFile(FN); }
     catch( TExceptionBase& )  {
       Error.ProcessingError(__OlxSrcInfo, "failed to save file: ") << FN;
@@ -1319,7 +1319,7 @@ void TMainForm::macSave(TStrObjList &Cmds, const TParamList &Options,
     }
     FN = TEFile::ChangeFileExt(FN, "glsp");
     TDataFile F;
-    SaveScene(F.Root(), FXApp->GetRender().LightModel);
+    SaveScene(F.Root(), FXApp->GetRenderer().LightModel);
     try  {  F.SaveToXLFile(FN);  }
     catch( TExceptionBase& )  {
       Error.ProcessingError(__OlxSrcInfo, "failed to save file: ") << FN ;
@@ -1331,7 +1331,7 @@ void TMainForm::macSave(TStrObjList &Cmds, const TParamList &Options,
       Tmp = (Cmds.Count() == 1) ? TEFile::ChangeFileExt(Cmds[0], "xlv") :
                                   TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "xlv");
       TDataFile DF;
-      FXApp->GetRender().GetBasis().ToDataItem(DF.Root().AddItem("basis"));
+      FXApp->GetRenderer().GetBasis().ToDataItem(DF.Root().AddItem("basis"));
       DF.SaveToXLFile(Tmp);
     }
   }
@@ -1349,9 +1349,9 @@ void TMainForm::macSave(TStrObjList &Cmds, const TParamList &Options,
       TDataFile df;
       FXApp->SaveStructureStyle(df.Root().AddItem("GraphicsView"));
       TDataItem &dim = df.Root().AddItem("Dimensions");
-      dim.AddField("maxd", PersUtil::VecToStr(FXApp->GetRender().MaxDim()));
-      dim.AddField("mind", PersUtil::VecToStr(FXApp->GetRender().MinDim()));
-      FXApp->GetRender().GetBasis().ToDataItem(dim.AddItem("Basis"));
+      dim.AddField("maxd", PersUtil::VecToStr(FXApp->GetRenderer().MaxDim()));
+      dim.AddField("mind", PersUtil::VecToStr(FXApp->GetRenderer().MinDim()));
+      FXApp->GetRenderer().GetBasis().ToDataItem(dim.AddItem("Basis"));
       df.SaveToXLFile(Tmp);
     }
   }
@@ -1386,17 +1386,17 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options,
     TEFile::CheckFileExists(__OlxSourceInfo, FN);
     TDataFile F;
     F.LoadFromXLFile(FN, NULL);
-    FXApp->GetRender().ClearSelection();
+    FXApp->GetRenderer().ClearSelection();
     bool clear = Options.GetBoolOption('c', false, true);
-    const vec3d mid = FXApp->GetRender().MinDim();
-    const vec3d mad = FXApp->GetRender().MaxDim();
+    const vec3d mid = FXApp->GetRenderer().MinDim();
+    const vec3d mad = FXApp->GetRenderer().MaxDim();
     // this forces the object creation, so if there is anything wrong...
     try {
-      FXApp->GetRender().GetStyles().FromDataItem(
+      FXApp->GetRenderer().GetStyles().FromDataItem(
       *F.Root().FindItem("style"), false);
     }
     catch(const TExceptionBase &e) {
-      FXApp->GetRender().GetStyles().Clear();
+      FXApp->GetRenderer().GetStyles().Clear();
       TBasicApp::NewLogEntry(logError) << "Failed to load given style";
       TBasicApp::NewLogEntry(logExceptionTrace) << e;
     }
@@ -1408,14 +1408,14 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options,
       FXApp->CenterView(true);
     }
     else {
-      FXApp->GetRender().ClearMinMax();
-      FXApp->GetRender().UpdateMinMax(mid, mad);
+      FXApp->GetRenderer().ClearMinMax();
+      FXApp->GetRenderer().UpdateMinMax(mid, mad);
     }
-    FN = FXApp->GetRender().GetStyles().GetLinkFile();
+    FN = FXApp->GetRenderer().GetStyles().GetLinkFile();
     if (!FN.IsEmpty()) {
       if( TEFile::Exists(FN) )  {
         F.LoadFromXLFile(FN, NULL);
-        LoadScene(F.Root(), FXApp->GetRender().LightModel);
+        LoadScene(F.Root(), FXApp->GetRenderer().LightModel);
       }
       else
         TBasicApp::NewLogEntry(logError, false, __OlxSrcInfo) <<
@@ -1449,7 +1449,7 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options,
     TEFile::CheckFileExists(__OlxSourceInfo, FN);
     TDataFile DF;
     DF.LoadFromXLFile(FN, NULL);
-    LoadScene(DF.Root(), FXApp->GetRender().LightModel);
+    LoadScene(DF.Root(), FXApp->GetRenderer().LightModel);
     FXApp->UpdateLabels();
   }
   else if( Cmds[0].Equalsi("view") )  {
@@ -1463,7 +1463,7 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options,
     if( TEFile::Exists(FN) )  {
       TDataFile DF;
       DF.LoadFromXLFile(FN);
-      FXApp->GetRender().GetBasis().FromDataItem(
+      FXApp->GetRenderer().GetBasis().FromDataItem(
         DF.Root().GetItemByName("basis"));
     }
   }
@@ -1594,9 +1594,9 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options,
       if (dim != NULL) {
         vec3d mid = PersUtil::VecFromStr<vec3d>(dim->GetFieldByName("mind"));
         vec3d mad = PersUtil::VecFromStr<vec3d>(dim->GetFieldByName("maxd"));
-        FXApp->GetRender().GetBasis().FromDataItem(dim->GetItemByName("Basis"));
-        FXApp->GetRender().ClearMinMax();
-        FXApp->GetRender().UpdateMinMax(mid, mad);
+        FXApp->GetRenderer().GetBasis().FromDataItem(dim->GetItemByName("Basis"));
+        FXApp->GetRenderer().ClearMinMax();
+        FXApp->GetRenderer().UpdateMinMax(mid, mad);
       }
     }
   }
@@ -1620,7 +1620,7 @@ void TMainForm::macLink(TStrObjList &Cmds, const TParamList &Options,
     return;
   }
   if( FN == "none" )  {
-    FXApp->GetRender().GetStyles().SetLinkFile(EmptyString());
+    FXApp->GetRenderer().GetStyles().SetLinkFile(EmptyString());
     TBasicApp::NewLogEntry(logInfo) << "The link has been removed...";
     return;
   }
@@ -1634,7 +1634,7 @@ void TMainForm::macLink(TStrObjList &Cmds, const TParamList &Options,
   }
   FN = TEFile::ChangeFileExt(FN, "glsp");
   if( TEFile::Exists(FN) )
-    FXApp->GetRender().GetStyles().SetLinkFile(FN);
+    FXApp->GetRenderer().GetStyles().SetLinkFile(FN);
   else  {
     Error.ProcessingError(__OlxSrcInfo, "file does not exists : ") << FN;
     return;
@@ -1727,9 +1727,9 @@ void TMainForm::macScene(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 void TMainForm::macCeiling(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   if( Cmds.Count() == 1 )  {
     if( Cmds[0].Equalsi("on") )
-      FXApp->GetRender().Ceiling()->SetVisible(true);
+      FXApp->GetRenderer().Ceiling()->SetVisible(true);
     else if( Cmds[0].Equalsi("off") )
-      FXApp->GetRender().Ceiling()->SetVisible(false);
+      FXApp->GetRenderer().Ceiling()->SetVisible(false);
     else
       Error.ProcessingError(__OlxSrcInfo, "wrong arguments");
     FXApp->Draw();
@@ -1744,14 +1744,14 @@ void TMainForm::macFade(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     Error.ProcessingError(__OlxSrcInfo, "wrong arguments");
     return;
   }
-  TGlBackground *C = FXApp->GetRender().Ceiling();
-  TGlBackground *G = FXApp->GetRender().Background();
+  TGlBackground *C = FXApp->GetRenderer().Ceiling();
+  TGlBackground *G = FXApp->GetRenderer().Background();
   if( !C->IsVisible() )  {
     if( !G->IsVisible() )  {
-      C->LT(FXApp->GetRender().LightModel.GetClearColor());
-      C->RT(FXApp->GetRender().LightModel.GetClearColor());
-      C->LB(FXApp->GetRender().LightModel.GetClearColor());
-      C->RB(FXApp->GetRender().LightModel.GetClearColor());
+      C->LT(FXApp->GetRenderer().LightModel.GetClearColor());
+      C->RT(FXApp->GetRenderer().LightModel.GetClearColor());
+      C->LB(FXApp->GetRenderer().LightModel.GetClearColor());
+      C->RB(FXApp->GetRenderer().LightModel.GetClearColor());
     }
     else  {
       C->LT(G->LT());
@@ -1893,11 +1893,13 @@ void TMainForm::macHtmlPanelWidth(TStrObjList &Cmds, const TParamList &Options, 
   return;
 }
 //..............................................................................
-void TMainForm::macQPeakScale(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  if( Cmds.IsEmpty() )
+void TMainForm::macQPeakScale(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
+  if (Cmds.IsEmpty())
     TBasicApp::NewLogEntry() << "Current Q-Peak scale: " << FXApp->GetQPeakScale();
-  else  {
-    float scale = Cmds[0].ToFloat();
+  else {
+    double scale = Cmds[0].ToDouble();
     FXApp->SetQPeakScale(scale);
     return;
   }
@@ -2010,11 +2012,11 @@ void TMainForm::macBind(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 void TMainForm::macGrad(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   bool invert = Options.Contains('i');
   if( invert )  {
-    FXApp->GetRender().Background()->SetVisible(
-      !FXApp->GetRender().Background()->IsVisible());
+    FXApp->GetRenderer().Background()->SetVisible(
+      !FXApp->GetRenderer().Background()->IsVisible());
   }
   else if( Cmds.Count() == 1 )  {
-    FXApp->GetRender().Background()->SetVisible(Cmds[0].ToBool());
+    FXApp->GetRenderer().Background()->SetVisible(Cmds[0].ToBool());
   }
   else if( Cmds.IsEmpty() && !Options.Contains('p'))  {
     TdlgGradient *G = new TdlgGradient(this);
@@ -2023,15 +2025,15 @@ void TMainForm::macGrad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
   else if( Cmds.Count() == 4 )  {
     TGlOption v;
-    v = Cmds[0].ToInt();  FXApp->GetRender().Background()->RB(v);
-    v = Cmds[1].ToInt();  FXApp->GetRender().Background()->LB(v);
-    v = Cmds[2].ToInt();  FXApp->GetRender().Background()->RT(v);
-    v = Cmds[3].ToInt();  FXApp->GetRender().Background()->LT(v);
+    v = Cmds[0].ToInt();  FXApp->GetRenderer().Background()->RB(v);
+    v = Cmds[1].ToInt();  FXApp->GetRenderer().Background()->LB(v);
+    v = Cmds[2].ToInt();  FXApp->GetRenderer().Background()->RT(v);
+    v = Cmds[3].ToInt();  FXApp->GetRenderer().Background()->LT(v);
   }
   if (Options.Contains('p')) {
     GradientPicture = Options.FindValue("p", GradientPicture);
     if( GradientPicture.IsEmpty() )  {
-      TGlTexture* glt = FXApp->GetRender().Background()->GetTexture();
+      TGlTexture* glt = FXApp->GetRenderer().Background()->GetTexture();
       if( glt != NULL  )
         glt->SetEnabled(false);
     }
@@ -2075,18 +2077,18 @@ void TMainForm::macGrad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
             RGBData[indexa+3] = img.GetAlpha(j, i);
         }
       }
-      TGlTexture* glt = FXApp->GetRender().Background()->GetTexture();
+      TGlTexture* glt = FXApp->GetRenderer().Background()->GetTexture();
       if( glt != NULL  ) {
-        FXApp->GetRender().GetTextureManager().Replace2DTexture(
+        FXApp->GetRenderer().GetTextureManager().Replace2DTexture(
           *glt, 0, swidth, sheight, 0, bmpType, RGBData);
         glt->SetEnabled(true);
       }
       else  {
-        int glti = FXApp->GetRender().GetTextureManager().Add2DTexture(
+        int glti = FXApp->GetRenderer().GetTextureManager().Add2DTexture(
           "grad", 0, swidth, sheight, 0, bmpType, RGBData);
-        FXApp->GetRender().Background()->SetTexture(
-          FXApp->GetRender().GetTextureManager().FindTexture(glti));
-        glt = FXApp->GetRender().Background()->GetTexture();
+        FXApp->GetRenderer().Background()->SetTexture(
+          FXApp->GetRenderer().GetTextureManager().FindTexture(glti));
+        glt = FXApp->GetRenderer().Background()->GetTexture();
         glt->SetEnvMode(tpeDecal);
         glt->SetSCrdWrapping(tpCrdClamp);
         glt->SetTCrdWrapping(tpCrdClamp);
@@ -2099,7 +2101,7 @@ void TMainForm::macGrad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     }
   }
   TStateRegistry::GetInstance().SetState(FXApp->stateGradientOn,
-    FXApp->GetRender().Background()->IsVisible(), EmptyString(), true);
+    FXApp->GetRenderer().Background()->IsVisible(), EmptyString(), true);
 }
 //..............................................................................
 void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options,
@@ -2619,7 +2621,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
     }
     else  {
       if( TEFile::Exists(DefStyle) && ReadStyle )
-        FXApp->GetRender().GetStyles().LoadFromFile(DefStyle, false);
+        FXApp->GetRenderer().GetStyles().LoadFromFile(DefStyle, false);
     }
     // delete the Space groups information file
     if( !(TEFile::ChangeFileExt(file_n.file_name, EmptyString()) ==
@@ -3366,10 +3368,10 @@ void TMainForm::macCreateBitmap(TStrObjList &Cmds, const TParamList &Options,
   }
   glB->SetTop(Top);
   if( resize && Created ) {
-    double r = ((double)FXApp->GetRender().GetWidth()/(double)owidth)/10.0;
+    double r = ((double)FXApp->GetRenderer().GetWidth()/(double)owidth)/10.0;
     glB->SetZoom(r);
   }
-  glB->SetLeft(FXApp->GetRender().GetWidth() - glB->GetWidth());
+  glB->SetLeft(FXApp->GetRenderer().GetWidth() - glB->GetWidth());
   FXApp->Draw();
 }
 //..............................................................................
@@ -4526,7 +4528,7 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 
   //wxImage img;
   //img.LoadFile(wxT("c:/tmp/tex2d.jpg"));
-  //int tex_id = FXApp->GetRender().GetTextureManager().Add2DTexture("shared_site", 1, img.GetWidth(), img.GetHeight(), 0, GL_RGB, img.GetData());
+  //int tex_id = FXApp->GetRenderer().GetTextureManager().Add2DTexture("shared_site", 1, img.GetWidth(), img.GetHeight(), 0, GL_RGB, img.GetData());
   //if( tex_id != -1 )  {
   //  TXAtomPList xatoms;
   //  FindXAtoms(Cmds, xatoms, true, true);
@@ -4963,9 +4965,9 @@ void TMainForm::macIT(TStrObjList &Cmds, const TParamList &Options, TMacroError 
   io.sort();
   if (Options.Contains("o"))  {
     io.axis[2] = io.axis[0].XProdVec(io.axis[1]).Normalise();
-    FXApp->GetRender().GetBasis().Orient(io.axis, false);
-    FXApp->GetRender().GetBasis().SetCenter(
-      FXApp->GetRender().GetBasis().GetCenter() - io.center);
+    FXApp->GetRenderer().GetBasis().Orient(io.axis, false);
+    FXApp->GetRenderer().GetBasis().SetCenter(
+      FXApp->GetRenderer().GetBasis().GetCenter() - io.center);
   }
   else {
   TBasicApp::NewLogEntry() <<
@@ -5105,7 +5107,7 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
       delete bcf;
       throw TFunctionFailedException(__OlxSourceInfo, exc);
     }
-    TDUnitCell* duc = new TDUnitCell(FXApp->GetRender(),
+    TDUnitCell* duc = new TDUnitCell(FXApp->GetRenderer(),
       olxstr("cell") << (UserCells.Count()+1));
     const double cell[6] = {
       bcf->GetAsymmUnit().GetAxes()[0],
@@ -5147,7 +5149,7 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
     vec3d_list p, allPoints;
 
     if (Cmds[0].Equalsi("sphere")) {
-      TDUserObj* uo = new TDUserObj(FXApp->GetRender(), sgloSphere, Cmds[1]);
+      TDUserObj* uo = new TDUserObj(FXApp->GetRenderer(), sgloSphere, Cmds[1]);
       try  {
         if( Cmds.Count() == 4 )
           uo->Params().Resize(1)[0] = Cmds[3].ToDouble();
@@ -5178,7 +5180,7 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
       //TArrayList<vec3f>& data = *(new TArrayList<vec3f>(allPoints.Count()));
       //for( size_t i=0; i < allPoints.Count(); i++ )
       //  data[i] = allPoints[i] * uc->GetCellToCartesian();
-      //TDUserObj* uo = new TDUserObj(FXApp->GetRender(), sgloSphere, Cmds[1]);
+      //TDUserObj* uo = new TDUserObj(FXApp->GetRenderer(), sgloSphere, Cmds[1]);
       //uo->SetVertices(&data);
       //FXApp->AddObjectToCreate(uo);
       //uo->Create();
@@ -5196,7 +5198,7 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
       TArrayList<vec3f>& data = *(new TArrayList<vec3f>(allPoints.Count()));
       for (size_t i=0; i < allPoints.Count(); i++)
         data[i] = allPoints[i] * uc->GetCellToCartesian();
-      TDUserObj* uo = new TDUserObj(FXApp->GetRender(), sgloLines, Cmds[1]);
+      TDUserObj* uo = new TDUserObj(FXApp->GetRenderer(), sgloLines, Cmds[1]);
       uo->SetVertices(&data);
       FXApp->AddObjectToCreate(uo);
       uo->Create();
@@ -5216,7 +5218,7 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
       TArrayList<vec3f>& data = *(new TArrayList<vec3f>(allPoints.Count()));
       for (size_t i=0; i < allPoints.Count(); i++)
         data[i] = allPoints[i] * uc->GetCellToCartesian();
-      TDUserObj* uo = new TDUserObj(FXApp->GetRender(), sgloQuads, "user_plane");
+      TDUserObj* uo = new TDUserObj(FXApp->GetRenderer(), sgloQuads, "user_plane");
       uo->SetVertices(&data);
       FXApp->AddObjectToCreate(uo);
       uo->Create();
@@ -5296,7 +5298,7 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
             olx_swap(data[3*i], data[3*i+2]);
           normals[i] = n;
         }
-        TDUserObj* uo = new TDUserObj(FXApp->GetRender(), sgloTriangles,
+        TDUserObj* uo = new TDUserObj(FXApp->GetRenderer(), sgloTriangles,
           Cmds[1]);
         uo->SetVertices(&data);
         uo->SetNormals(&normals);
@@ -5388,7 +5390,7 @@ void TMainForm::macTestMT(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 }
 //..............................................................................
 void TMainForm::macSetFont(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  TwxGlScene& scene = dynamic_cast<TwxGlScene&>(FXApp->GetRender().GetScene());
+  TwxGlScene& scene = dynamic_cast<TwxGlScene&>(FXApp->GetRenderer().GetScene());
   TGlFont* glf = scene.FindFont(Cmds[0]);
   if( glf == NULL )  {
     E.ProcessingError(__OlxSrcInfo, olxstr("undefined font ") << Cmds[0]);
@@ -5436,12 +5438,12 @@ void TMainForm::funChooseFont(const TStrObjList &Params, TMacroError &E)  {
     else
       fntId = Params[0];
   }
-  olxstr rv(FXApp->GetRender().GetScene().ShowFontDialog(NULL, fntId));
+  olxstr rv(FXApp->GetRenderer().GetScene().ShowFontDialog(NULL, fntId));
   E.SetRetVal(rv);
 }
 //..............................................................................
 void TMainForm::funGetFont(const TStrObjList &Params, TMacroError &E)  {
-  TGlFont* glf = FXApp->GetRender().GetScene().FindFont(Params[0]);
+  TGlFont* glf = FXApp->GetRenderer().GetScene().FindFont(Params[0]);
   if( glf == NULL )  {
     E.ProcessingError(__OlxSrcInfo, olxstr("undefined font ") << Params[0]);
     return;
@@ -5463,11 +5465,11 @@ void TMainForm::macEditMaterial(TStrObjList &Cmds, const TParamList &Options, TM
   else if( Cmds[0] == "exception" )
     mat = &ExceptionFontColor;
   else  {
-    gpc = FXApp->GetRender().FindCollection(Cmds[0]);
+    gpc = FXApp->GetRenderer().FindCollection(Cmds[0]);
     if( gpc == NULL )  {
       const size_t di = Cmds[0].IndexOf('.');
       if( di != InvalidIndex )  {
-        TGPCollection* _gpc = FXApp->GetRender().FindCollection(Cmds[0].SubStringTo(di));
+        TGPCollection* _gpc = FXApp->GetRenderer().FindCollection(Cmds[0].SubStringTo(di));
         if( _gpc != NULL )  {
           TGlPrimitive* glp = _gpc->FindPrimitiveByName(Cmds[0].SubStringFrom(di+1));
           if( glp != NULL )  {
@@ -5476,7 +5478,7 @@ void TMainForm::macEditMaterial(TStrObjList &Cmds, const TParamList &Options, TM
           }
         }
         else  {  // modify the style if exists
-          TGraphicsStyle* gs = FXApp->GetRender().GetStyles().FindStyle(Cmds[0].SubStringTo(di));
+          TGraphicsStyle* gs = FXApp->GetRenderer().GetStyles().FindStyle(Cmds[0].SubStringTo(di));
           if( gs != NULL )
             mat = gs->FindMaterial(Cmds[0].SubStringFrom(di+1));
         }
@@ -5957,7 +5959,7 @@ void TMainForm::macTestStat(TStrObjList &Cmds, const TParamList &Options, TMacro
 }
 //..............................................................................
 void TMainForm::macExportFont(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  TwxGlScene* wxs = dynamic_cast<TwxGlScene*>(&FXApp->GetRender().GetScene());
+  TwxGlScene* wxs = dynamic_cast<TwxGlScene*>(&FXApp->GetRenderer().GetScene());
   if( wxs == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "invalid scene object");
     return;
@@ -5966,7 +5968,7 @@ void TMainForm::macExportFont(TStrObjList &Cmds, const TParamList &Options, TMac
 }
 //..............................................................................
 void TMainForm::macImportFont(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  TwxGlScene& wxs = dynamic_cast<TwxGlScene&>(FXApp->GetRender().GetScene());
+  TwxGlScene& wxs = dynamic_cast<TwxGlScene&>(FXApp->GetRenderer().GetScene());
   TGlFont* glf = wxs.FindFont(Cmds[0]);
   if( glf == NULL )  {
     E.ProcessingError(__OlxSrcInfo, olxstr("undefined font ") << Cmds[0]);
@@ -6100,7 +6102,7 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options,
   if (md != NULL) {
     md->AddAtoms(xatoms);
     for (size_t i=0; i < xbonds.Count(); i++)
-      FXApp->GetRender().Select(*xbonds[i], true);
+      FXApp->GetRenderer().Select(*xbonds[i], true);
   }
 }
 //..............................................................................
@@ -6203,8 +6205,8 @@ void TMainForm::funThreadCount(const TStrObjList& Params, TMacroError &E)  {
 }
 //..............................................................................
 void TMainForm::macPictS(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  int orgHeight = FXApp->GetRender().GetHeight(),
-      orgWidth  = FXApp->GetRender().GetWidth();
+  int orgHeight = FXApp->GetRenderer().GetHeight(),
+      orgWidth  = FXApp->GetRenderer().GetWidth();
   double res = 1,
     half_ang = Options.FindValue('a', "6").ToDouble()/2,
     sep_width = Options.FindValue('s', "10").ToDouble();
@@ -6231,25 +6233,25 @@ void TMainForm::macPictS(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     SrcHeight = BmpHeight;
   if( BmpWidth < SrcWidth )
     SrcWidth = BmpWidth;
-  FXApp->GetRender().Resize(0, 0, SrcWidth, SrcHeight, res);
+  FXApp->GetRenderer().Resize(0, 0, SrcWidth, SrcHeight, res);
 
   const int bmpSize = BmpHeight*ImgWidth*3;
   char* bmpData = (char*)malloc(bmpSize);
   memset(bmpData, ~0, bmpSize);
   FGlConsole->SetVisible(false);
-  FXApp->GetRender().OnDraw.SetEnabled(false);
+  FXApp->GetRenderer().OnDraw.SetEnabled(false);
   if( res != 1 )    {
-    FXApp->GetRender().GetScene().ScaleFonts(res);
+    FXApp->GetRenderer().GetScene().ScaleFonts(res);
     if( res >= 3 )
       FXApp->Quality(qaPict);
   }
-  const double RY = FXApp->GetRender().GetBasis().GetRY();
-  FXApp->GetRender().GetBasis().RotateY(RY-half_ang);
+  const double RY = FXApp->GetRenderer().GetBasis().GetRY();
+  FXApp->GetRenderer().GetBasis().RotateY(RY-half_ang);
   for( int i=0; i < res; i++ )  {
     for( int j=0; j < res; j++ )  {
-      FXApp->GetRender().LookAt(j, i, (int)(res < 1 ? 1 : res));
-      FXApp->GetRender().Draw();
-      char *PP = FXApp->GetRender().GetPixels(false, 1);
+      FXApp->GetRenderer().LookAt(j, i, (int)(res < 1 ? 1 : res));
+      FXApp->GetRenderer().Draw();
+      char *PP = FXApp->GetRenderer().GetPixels(false, 1);
       const int mj = j*SrcWidth;
       const int mi = i*SrcHeight;
       for( int k=0; k < SrcWidth; k++ )  {
@@ -6265,12 +6267,12 @@ void TMainForm::macPictS(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     }
   }
   // second half
-  FXApp->GetRender().GetBasis().RotateY(RY+half_ang);
+  FXApp->GetRenderer().GetBasis().RotateY(RY+half_ang);
   for( int i=0; i < res; i++ )  {
     for( int j=0; j < res; j++ )  {
-      FXApp->GetRender().LookAt(j, i, (int)(res < 1 ? 1 : res));
-      FXApp->GetRender().Draw();
-      char *PP = FXApp->GetRender().GetPixels(false, 1);
+      FXApp->GetRenderer().LookAt(j, i, (int)(res < 1 ? 1 : res));
+      FXApp->GetRenderer().Draw();
+      char *PP = FXApp->GetRenderer().GetPixels(false, 1);
       const int mj = j*SrcWidth;
       const int mi = i*SrcHeight;
       for( int k=0; k < SrcWidth; k++ )  {
@@ -6285,19 +6287,19 @@ void TMainForm::macPictS(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       delete [] PP;
     }
   }
-  FXApp->GetRender().GetBasis().RotateY(RY);
+  FXApp->GetRenderer().GetBasis().RotateY(RY);
   if( res != 1 ) {
-    FXApp->GetRender().GetScene().RestoreFontScale();
+    FXApp->GetRenderer().GetScene().RestoreFontScale();
     if( res >= 3 )
       FXApp->Quality(qaMedium);
   }
 
-  FXApp->GetRender().OnDraw.SetEnabled(true);
+  FXApp->GetRenderer().OnDraw.SetEnabled(true);
   FGlConsole->SetVisible(true);
   // end drawing etc
-  FXApp->GetRender().Resize(orgWidth, orgHeight);
-  FXApp->GetRender().LookAt(0,0,1);
-  FXApp->GetRender().SetView(false, 1);
+  FXApp->GetRenderer().Resize(orgWidth, orgHeight);
+  FXApp->GetRenderer().LookAt(0,0,1);
+  FXApp->GetRenderer().SetView(false, 1);
   FXApp->Draw();
   olxstr bmpFN;
   if( FXApp->XFile().HasLastLoader() && !TEFile::IsAbsolutePath(Cmds[0]) )

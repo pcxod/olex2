@@ -107,7 +107,7 @@ public:
     original_crds.SetCount(xatoms.Count());
     for( size_t i=0; i < xatoms.Count(); i++ )
       original_crds[i] = xatoms[i]->crd();
-    group = &gxapp.GetRender().ReplaceSelection<TXGroup>();
+    group = &gxapp.GetRenderer().ReplaceSelection<TXGroup>();
     AngleInc = Options.FindValue("r", "0").ToDouble();
     group->SetAngleInc(AngleInc*M_PI/180);
     AddAtoms(xatoms);
@@ -124,7 +124,7 @@ public:
     gxapp.EnableSelection(true);
   }
   void Finalise_() {
-    gxapp.GetRender().ReplaceSelection<TGlGroup>();
+    gxapp.GetRenderer().ReplaceSelection<TGlGroup>();
     Initialised = false;
     RefinementModel& rm = gxapp.XFile().GetRM();
     TAsymmUnit& au = gxapp.XFile().GetAsymmUnit();
@@ -226,7 +226,7 @@ public:
     if( !Initialised )  return false;
     TAsymmUnit& au = gxapp.XFile().GetAsymmUnit();
     if( msg == mode_fit_disassemble )  {
-      if( !EsdlInstanceOf(gxapp.GetRender().GetSelection(), TXGroup) )
+      if( !EsdlInstanceOf(gxapp.GetRenderer().GetSelection(), TXGroup) )
         return true;
       for( size_t i=0; i < Atoms.Count(); i++ )
         Atoms[i]->CAtom().ccrd() = au.Fractionalise(Atoms[i]->crd());
@@ -235,8 +235,8 @@ public:
       SetUserCursor('0', "<F>");
     }
     else if( msg == mode_fit_create )  {
-      if( !EsdlInstanceOf(gxapp.GetRender().GetSelection(), TXGroup) )  {
-        group = &gxapp.GetRender().ReplaceSelection<TXGroup>();
+      if( !EsdlInstanceOf(gxapp.GetRenderer().GetSelection(), TXGroup) )  {
+        group = &gxapp.GetRenderer().ReplaceSelection<TXGroup>();
         group->SetAngleInc(AngleInc*M_PI/180);
       }
       Atoms = group->Extract<TXAtom>();

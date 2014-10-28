@@ -356,11 +356,11 @@ public:
     float vp[4];
     olx_gl::get(GL_VIEWPORT, vp);
     TGXApp& app = TGXApp::GetInstance();
-    const TEBasis& basis = app.GetRender().GetBasis();
+    const TEBasis& basis = app.GetRenderer().GetBasis();
     LinearScale = 1; // reset now
-    DrawScale = app.GetRender().GetBasis().GetZoom()/(LinearScale*app.GetRender().GetScale());
-    AradScale = 0.5*DrawScale;///app.GetRender().GetScale(),
-    BondRad = 0.1*DrawScale;///app.GetRender().GetScale();
+    DrawScale = app.GetRenderer().GetBasis().GetZoom()/(LinearScale*app.GetRenderer().GetScale());
+    AradScale = 0.5*DrawScale;///app.GetRenderer().GetScale(),
+    BondRad = 0.1*DrawScale;///app.GetRenderer().GetScale();
     SceneOrigin = basis.GetCenter();
     //DrawOrigin = vec3f(pw.GetWidth()/2, pw.GetHeight()/2, 0);
     DrawOrigin = vec3f(vp[2]/2, vp[3]/2, 0);
@@ -482,7 +482,7 @@ public:
     ColourDic("Ar","white");
     olxcstr def_color = "white";
 
-    const TEBasis& basis = app.GetRender().GetBasis();
+    const TEBasis& basis = app.GetRenderer().GetBasis();
     TTypeList<OrtDrawTex::OrtAtom> atoms;
     TGXApp::AtomIterator ai = app.GetAtoms();
     atoms.SetCapacity(ai.count);
@@ -530,7 +530,7 @@ public:
         elpm[0] *= sa.GetEllipsoid()->GetSX();
         elpm[1] *= sa.GetEllipsoid()->GetSY();
         elpm[2] *= sa.GetEllipsoid()->GetSZ();
-        elpm *= TXAtom::TelpProb();
+        elpm *= TXAtom::GetSettings(app.GetRenderer()).GetTelpProb();
         elpm *= ProjMatr;
         mat3f& ielpm = *(new mat3f( (sa.GetEllipsoid()->GetMatrix() * basis.GetMatrix() ).Inverse()) );
         atoms.AddNew(&sa, (sa.crd() + SceneOrigin)*ProjMatr+DrawOrigin, &elpm, &(ielpm *= elpm));
@@ -606,7 +606,7 @@ public:
         const TXGlLabel& glxl = app.GetLabel(i);
         vec3d rp = glxl.GetRasterPosition();
         rp[1] += 4;
-        rp *= (DrawScale*app.GetRender().GetScale());
+        rp *= (DrawScale*app.GetRenderer().GetScale());
         //pw.drawText(glxl.GetLabel(), rp+DrawOrigin);
       }
     }

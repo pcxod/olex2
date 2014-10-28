@@ -52,7 +52,7 @@ TGlCanvas::TGlCanvas(TMainForm *parent, int* gl_attr, wxWindowID id,
 }
 //..............................................................................
 TGlCanvas::~TGlCanvas() {
-  TwxGlScene *wgls = dynamic_cast<TwxGlScene*>(&FXApp->GetRender().GetScene());
+  TwxGlScene *wgls = dynamic_cast<TwxGlScene*>(&FXApp->GetRenderer().GetScene());
   if (wgls != NULL) {
     wgls->SetCanvas(NULL);
     wgls->SetContext(NULL);
@@ -64,7 +64,7 @@ TGlCanvas::~TGlCanvas() {
 //..............................................................................
 void TGlCanvas::XApp(TGXApp *XA) {
   FXApp = XA;
-  TwxGlScene *wgls = dynamic_cast<TwxGlScene*>(&XA->GetRender().GetScene());
+  TwxGlScene *wgls = dynamic_cast<TwxGlScene*>(&XA->GetRenderer().GetScene());
   if (wgls == NULL)  return;
   wgls->SetCanvas(this);
 #if wxCHECK_VERSION(2,9,0) || !(defined(__WXX11__) || defined(__MAC__))

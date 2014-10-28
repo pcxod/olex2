@@ -20,14 +20,14 @@ BeginGxlNamespace()
 
 class TXBond;
 
-const uint16_t
+const int
   adsSphere       = 1,  // atom draw styles
   adsEllipsoid    = 2,
   adsStandalone   = 3,
   adsOrtep        = 4,
   adsSpecial      = 0x1000;
 
-const short
+const int
   darPers     = 0x0001, // default atom radii
   darIsot     = 0x0002,
   darPack     = 0x0004,
@@ -35,14 +35,14 @@ const short
   darIsotH    = 0x0010,  // only affects H, others as darIsot
   darVdW      = 0x0020,
   darCustom   = 0x0040;
-const short
+const int
   polyNone      = 0,
   polyAuto      = 1,  // polyhedron type
   polyRegular   = 2,
   polyPyramid   = 3,
   polyBipyramid = 4;
 
-const uint32_t
+const size_t
   xatom_PolyId        = 1,
   xatom_SphereId      = 2,
   xatom_SmallSphereId = 3,
@@ -59,26 +59,12 @@ public:
     TTypeList<vec3f> norms;
     TTypeList<TVector3<size_t> > faces;
   };
+  class Settings;
 private:
   short FDrawStyle, FRadius;
-  static uint8_t PolyhedronIndex,
-    SphereIndex,
-    SmallSphereIndex,
-    RimsIndex,
-    DisksIndex,
-    CrossIndex,
-    TetrahedronIndex
-    ;
-  static GLuint
-    OrtepSpheres, // 8 glLists
-    LockedAtomSphere, // 1 list
-    ConstrainedAtomSphere // 1 list
-    ;
-  static int16_t QualityValue;
   GLuint ActualSphere;
   // picks the correct sphere for rendering
   void InitActualSphere();
-  static float MinQAlpha;
   Poly* Polyhedron;
   TXGlLabel* Label;
   bool label_forced;
@@ -90,37 +76,17 @@ private:
     const vec3d* normal=NULL, const vec3d* center=NULL);
   // returns different names for isotropic and anisotropic atoms
 protected:
-  TStrList* FindPrimitiveParams(TGlPrimitive *P);
-  static TTypeList<TGlPrimitiveParams> FPrimitiveParams;
+  TStrList* FindPrimitiveParams(TGlPrimitive *P) const;
   void ValidateRadius(TGraphicsStyle& GS);
   void ValidateDS(TGraphicsStyle& GS);
-  static void ValidateAtomParams();
   vec3d Center;
   virtual bool DoTranslate(const vec3d& t) {  Center += t;  return true;  }
   virtual bool DoRotate(const vec3d&, double) {  return false;  }
   virtual bool DoZoom(double, bool)  {  return false;  }
-  static float FTelpProb, FQPeakScale, FQPeakSizeScale, FDefZoom;
-  static short FDefRad, FDefDS, FDefMask;
-  static TGraphicsStyle *FAtomParams;
-  static olxstr PolyTypeName;
-  static TStringToList<olxstr,TGlPrimitive*> FStaticObjects;
-
-  class TStylesClear: public AActionHandler  {
-  public:
-    TStylesClear(TGlRenderer& Render)  {  Render.OnStylesClear.Add(this);  }
-    virtual ~TStylesClear()  {}
-    bool Enter(const IEObject *Sender, const IEObject *Data, TActionQueue *);
-    bool Exit(const IEObject *Sender, const IEObject *Data, TActionQueue *);
-  };
-  static TStylesClear *OnStylesClear;
-  class TContextClear: public AActionHandler  {
-  public:
-    TContextClear(TGlRenderer& Render);
-    virtual ~TContextClear()  {}
-    bool Enter(const IEObject *Sender, const IEObject *Data, TActionQueue *);
-    bool Exit(const IEObject *Sender, const IEObject *Data, TActionQueue *);
-  };
-  static void ClearStaticObjects();
+  static const olxstr &PolyTypeName() {
+    static olxstr v = "PolyType";
+    return v;
+  }
 public:
   TXAtom(TNetwork* net, TGlRenderer& Render, const olxstr& collectionName);
   virtual ~TXAtom();
@@ -140,30 +106,18 @@ public:
   static olxstr GetLegend(const TSAtom& A, const short Level=2);
   // returns level of the given legend (number of '.', basically)
   static uint16_t LegendLevel(const olxstr& legend);
-  static olxstr GetLabelLegend(const TSAtom& A);
   // returns full legend for the label. e.g. "Q.Q1"
+  static olxstr GetLabelLegend(const TSAtom& A);
 
-  static void GetDefSphereMaterial(const TSAtom& A, TGlMaterial &M);
+  static void GetDefSphereMaterial(const TSAtom& A, TGlMaterial &M,
+    const Settings &defs);
+  static void GetDefSphereMaterial(const TSAtom& A, TGlMaterial &M,
+    TGlRenderer &r)
+  {
+    return GetDefSphereMaterial(A, M, GetSettings(r));
+  }
   static void GetDefRimMaterial(const TSAtom& A, TGlMaterial &M);
 
-  static void DefRad(short V);
-  static void DefDS(short V);
-  static void DefMask(int V);
-  static void TelpProb(float V);
-  static void DefZoom(float V);
-
-  static short DefRad(); // default radius
-  static short DefDS();     // default drawing style
-  static int   DefMask();  // default mas for elliptical atoms eith NPD ellipsoid
-  static float TelpProb();    // to use with ellipsoids
-  static float DefZoom();    // to use with ellipsoids
-
-  static float GetQPeakScale();    // to use with q-peaks
-  static void SetQPeakScale(float V);    // to use with q-peaks
-  static float GetQPeakSizeScale();    // to use with q-peaks
-  static void SetQPeakSizeScale(float V);    // to use with q-peaks
-  static float GetMinQAlpha() { return MinQAlpha; }
-  static void SetMinQAlpha(float v) { MinQAlpha = v; }
   void CalcRad(short DefAtomR);
 
   void ApplyStyle(TGraphicsStyle& S);
@@ -182,7 +136,7 @@ public:
   double GetDrawScale() const {
     double scale = FParams[1];
     if( (FRadius & (darIsot|darIsotH)) != 0 )
-      scale *= TelpProb();
+      scale *= GetSettings().GetTelpProb();
     if( (FDrawStyle == adsEllipsoid || FDrawStyle == adsOrtep) &&
       GetEllipsoid() != NULL )
     {
@@ -196,8 +150,8 @@ public:
   bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d& Max, vec3d& Min);
 
-  void ListParams(TStrList& List, TGlPrimitive* Primitive);
   // for parameters of a specific primitive
+  void ListParams(TStrList& List, TGlPrimitive* Primitive);
   void ListParams(TStrList& List);
   // fills the list with proposal primitives to construct object
   void ListPrimitives(TStrList& List) const;
@@ -227,25 +181,162 @@ public:
   void DrawStyle(short V);
 
   void UpdatePrimitiveParams(TGlPrimitive* GlP);
-  void OnPrimitivesCleared();
-  static int16_t Quality(int16_t Val);
+  static int Quality(TGlRenderer &r, int Val);
 
   void SetPolyhedronType(short type);
   int GetPolyhedronType() const;
   Poly *GetPolyhedron() const {  return Polyhedron;  }
 
   const_strlist ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const;
-  static const_strlist PovDeclare();
+  static const_strlist PovDeclare(TGlRenderer &r);
 
   const_strlist ToWrl(olx_cdict<TGlMaterial, olxstr> &materials) const;
-  static const_strlist WrlDeclare();
-
-  static TGraphicsStyle* GetParamStyle() {  return FAtomParams;  }
-  static void CreateStaticObjects(TGlRenderer& parent);
+  static const_strlist WrlDeclare(TGlRenderer &r);
 
   static olxstr_dict<olxstr> &NamesRegistry() {
     static olxstr_dict<olxstr> nr;
     return nr;
+  }
+
+  class Settings : public AGOSettings {
+    mutable double telp_prob, qpeak_scale, qpeak_size_scale, qpeak_min_alpha,
+    zoom, radius, rim_r, rim_w,
+    disk_or, disk_ir, // outer and inner radius
+    disk_s; // disk separation
+    mutable int r, quality, sphere_q, rim_q, disk_q,
+      draw_style, mask;
+    Settings(TGlRenderer &r)
+      : AGOSettings(r, "AtomParams")
+    {
+      set_defaults();
+    }
+    void set_defaults() {
+      telp_prob = qpeak_scale = qpeak_size_scale = qpeak_min_alpha = zoom =
+        radius = rim_r = rim_w = disk_or = disk_s = -1;
+      r = quality = sphere_q = rim_q = disk_q = draw_style = mask = -1;
+    }
+    void OnStyleChange() {
+      ClearPrimitives();
+      set_defaults();
+    }
+    void OnRendererClear() {
+      ClearPrimitives();
+    }
+    void CreatePrimitives();
+    TStringToList<olxstr, TGlPrimitive*> primitives;
+  public:
+    double GetRimR() const { return GetParam("RimR", rim_r, double(1.02)); }
+    void SetRimR(double v) { style->SetParam("RimR", (rim_r = v), true); }
+    double GetRimW() const { return GetParam("RimW", rim_w, double(0.05)); }
+    void SetRimW(double v) { style->SetParam("RimW", (rim_w = v), true); }
+    double GetDiskOR() const { return GetParam("DiskOR", disk_or, double(1.02)); }
+    void SetDiskOR(double v) { style->SetParam("DiskOR", (disk_or = v), true); }
+    double GetDiskIR() const { return GetParam("DiskIR", disk_ir, double(0)); }
+    void SetDiskIR(double v) { style->SetParam("DiskIR", (disk_ir = v), true); }
+    double GetDiskS() const { return GetParam("DiskS", disk_s, double(0.05)); }
+    void SetDiskS(double v) { style->SetParam("DiskS", (disk_s = v), true); }
+
+    double GetZoom() const { return GetParam("DefZ", zoom, double(1)); }
+    void SetZoom(double v) { style->SetParam("DefZ", (zoom = v), true); }
+
+    double GetTelpProb() const {
+      return GetParam("TelpP", telp_prob, double(1));
+    }
+    void SetTelpProb(double v) {
+      style->SetParam("TelpP", (telp_prob = v), true);
+    }
+    double GetQPeakScale() const {
+      return GetParam("QPeakScale", qpeak_scale, double(3));
+    }
+    void SetQPeakScale(double v) {
+      style->SetParam("QPeakScale", (qpeak_scale = v), true);
+    }
+    double GetQPeakSizeScale() const {
+      return GetParam("QPeakSizeScale", qpeak_size_scale, double(1));
+    }
+    void SetQPeakSizeScale(double v) {
+      style->SetParam("QPeakSizeScale", (qpeak_size_scale = v), true);
+    }
+    double GetQPeakMinAlpha() const {
+      return GetParam("QPeakMinAlpha", qpeak_min_alpha, double(0.1));
+    }
+    void SetQPeakMinAlpha(double v) {
+      style->SetParam("QPeakMinAlpha", (qpeak_min_alpha = v), true);
+    }
+
+    int GetR() const { return GetParam("DefR", r, int(darPers)); }
+    void SetR(int v) { style->SetParam("DefR", (r = v), true); }
+
+    int GetDS() const { return GetParam("DefDS", draw_style, int(adsSphere)); }
+    void SetDS(int v) { style->SetParam("DefDS", (draw_style = v), true); }
+
+    int GetMask() const { return GetParam("DefMask", mask, int(5)); }
+    void SetMask(int v) { style->SetParam("DefMask", (mask = v), true); }
+
+    int GetSphereQ() const { return GetParam("SphereQ", sphere_q, int(15)); }
+    void SetSphereQ(int v) const {
+      return style->SetParam("SphereQ", (sphere_q = v), true);
+    }
+    int GetRimsQ() const { return GetParam("RimQ", rim_q, int(15)); }
+    void SetRimQ(int v) const {
+      return style->SetParam("RimQ", (rim_q = v), true);
+    }
+    int GetDiskQ() const { return GetParam("DiskQ", disk_q, int(15)); }
+    void SetDiskQ(int v) const {
+      return style->SetParam("DiskQ", (disk_q = v), true);
+    }
+    size_t PolyhedronIndex,
+      SphereIndex,
+      SmallSphereIndex,
+      RimsIndex,
+      DisksIndex,
+      CrossIndex,
+      TetrahedronIndex
+      ;
+    GLuint
+      OrtepSpheres, // 8 glLists
+      LockedAtomSphere, // 1 list
+      ConstrainedAtomSphere // 1 list
+      ;
+    int QualityValue;
+    float TelpProb, QPeakScale, QPeakSizeScale, DefZoom;
+    TTypeList<TGlPrimitiveParams> PrimitiveParams;
+
+    const TStringToList<olxstr, TGlPrimitive*> &GetPrimitives() const {
+      return primitives;
+    }
+    const TStringToList<olxstr, TGlPrimitive*> &GetPrimitives(bool check)  {
+      if (check && primitives.IsEmpty()) {
+        CreatePrimitives();
+      }
+      return primitives;
+    }
+    void ClearPrimitives();
+    static Settings& GetInstance(TGlRenderer &r) {
+      AGOSettings *s = r.FindSettings("atoms");
+      if (s == NULL) {
+        return (Settings &)r.RegisterSettings(*(new Settings(r)), "atoms");
+      }
+      else {
+        return dynamic_cast<Settings &>(*s);
+      }
+    }
+  };
+protected:
+  mutable Settings *settings;
+public:
+  Settings &GetSettings() const {
+    return *(settings == 0 ? (settings=&Settings::GetInstance(Parent))
+      : settings);
+  }
+  static Settings &GetSettings(TGlRenderer &r) {
+    return Settings::GetInstance(r);
+  }
+  virtual void OnStyleChange() {
+    settings = &GetSettings(Parent);
+  }
+  virtual void OnPrimitivesCleared() {
+    GetSettings().ClearPrimitives();
   }
 };
 

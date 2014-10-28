@@ -406,7 +406,7 @@ void GXLibMacros::macName(TStrObjList &Cmds, const TParamList &Options,
       return;
     }
     bool create = false;
-    TGPCollection *gpc = app.GetRender().FindCollection(Cmds[1]);
+    TGPCollection *gpc = app.GetRenderer().FindCollection(Cmds[1]);
     if (gpc != NULL && gpc->ObjectCount() != 0) {
       if (typeid(old[0]->GetObject(0)) != typeid(gpc->GetObject(0))) {
         TBasicApp::NewLogEntry(logError) << "Destination collection is used "
@@ -419,7 +419,7 @@ void GXLibMacros::macName(TStrObjList &Cmds, const TParamList &Options,
         gpc->ClearPrimitives();
       }
       else {
-        gpc = &app.GetRender().NewCollection(Cmds[1]);
+        gpc = &app.GetRenderer().NewCollection(Cmds[1]);
       }
       create = true;
     }
@@ -702,7 +702,7 @@ void GXLibMacros::macMask(TStrObjList &Cmds, const TParamList &Options,
     Cmds.Delete(Cmds.Count() - 1);
     olxstr name = Cmds.Text(' ');
     if (!name.IsEmpty()) {
-      TGPCollection *GPC = app.GetRender().FindCollection(name);
+      TGPCollection *GPC = app.GetRenderer().FindCollection(name);
       if (GPC != NULL) {
         if (GPC->ObjectCount() != 0)
           GPC->GetObject(0).UpdatePrimitives(Mask);
@@ -799,9 +799,9 @@ void GXLibMacros::macBRad(TStrObjList &Cmds, const TParamList &Options,
         if (xb.GetType() != sotHBond)
           bonds.Add(xb);
       }
-      TXBond::DefR(r);
-      TDRing::SetDefTubeRadius(r / 13.3);
-      TDRing::CreateStaticObjects(app.GetRender());
+      TXBond::GetSettings(app.GetRenderer()).SetRadius(r);
+      TDRing::GetSettings(app.GetRenderer()).SetTubeR(r / 13.3);
+      TDRing::GetSettings(app.GetRenderer()).ClearPrimitives();
       app.GetRings().ForEach(ACollectionItem::IndexTagSetter(
         FunctionAccessor::MakeConst(&TDRing::GetPrimitives)));
       for (size_t i = 0; i < app.GetRings().Count(); i++) {
@@ -826,7 +826,7 @@ void GXLibMacros::macTelpV(TStrObjList &Cmds, const TParamList &Options,
   if (p > 0)
     app.CalcProbFactor(p);
   else {
-    TXAtom::TelpProb(-p);
+    TXAtom::GetSettings(app.GetRenderer()).SetTelpProb(-p);
     app.Draw();
   }
 }
@@ -1092,8 +1092,8 @@ void GXLibMacros::macLabel(TStrObjList &Cmds, const TParamList &Options,
     TXGlLabel& l = *labels[i];
     vec3d off(-l.GetRect().width/2, -l.GetRect().height/2, 0);
     const double scale1 =
-      l.GetFont().IsVectorFont() ? 1.0/app.GetRender().GetScale() : 1.0;
-    const double scale = scale1/app.GetRender().GetBasis().GetZoom();
+      l.GetFont().IsVectorFont() ? 1.0/app.GetRenderer().GetScale() : 1.0;
+    const double scale = scale1/app.GetRenderer().GetBasis().GetZoom();
     l.TranslateBasis(off*scale);
     l.SetVisible(true);
   }
@@ -1103,7 +1103,7 @@ void GXLibMacros::macLabel(TStrObjList &Cmds, const TParamList &Options,
 void GXLibMacros::macShowH(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &E)
 {
-  TEBasis basis = app.GetRender().GetBasis();
+  TEBasis basis = app.GetRenderer().GetBasis();
   if( Cmds.Count() == 2 )  {
     bool v = Cmds[1].ToBool();
     if( Cmds[0] == 'a' )  {
@@ -1139,7 +1139,7 @@ void GXLibMacros::macShowH(TStrObjList &Cmds, const TParamList &Options,
     app.AreHydrogensVisible(), EmptyString(), true);
   TStateRegistry::GetInstance().SetState(app.stateHydrogenBondsVisible,
     app.AreHBondsVisible(), EmptyString(), true);
-  app.GetRender().SetBasis(basis);
+  app.GetRenderer().SetBasis(basis);
 }
 //.............................................................................
 int GXLibMacros::QPeakSortA(const TCAtom &a, const TCAtom &b)  {
@@ -1162,7 +1162,7 @@ void GXLibMacros::macShowQ(TStrObjList &Cmds, const TParamList &Options,
     return; // quiet this down
   }
   double wheel = Options.FindValue("wheel", '0').ToDouble();
-  TEBasis basis = app.GetRender().GetBasis();
+  TEBasis basis = app.GetRenderer().GetBasis();
   if (wheel != 0) {
     //if( !app.QPeaksVisible() )  return;
     TAsymmUnit& au = app.XFile().GetAsymmUnit();
@@ -1241,7 +1241,7 @@ void GXLibMacros::macShowQ(TStrObjList &Cmds, const TParamList &Options,
     app.AreQPeaksVisible(), EmptyString(), true);
   TStateRegistry::GetInstance().SetState(app.stateQPeakBondsVisible,
     app.AreQPeakBondsVisible(), EmptyString(), true);
-  app.GetRender().SetBasis(basis);
+  app.GetRenderer().SetBasis(basis);
 }
 //.............................................................................
 void GXLibMacros::macLoad(TStrObjList &Cmds, const TParamList &Options,
@@ -1263,7 +1263,7 @@ void GXLibMacros::macMatr(TStrObjList &Cmds, const TParamList &Options,
 {
   if (Cmds.IsEmpty()) {
     TBasicApp::NewLogEntry() << "Current orientation matrix:";
-    const mat3d& Matr = app.GetRender().GetBasis().GetMatrix();
+    const mat3d& Matr = app.GetRenderer().GetBasis().GetMatrix();
     for (size_t i=0; i < 3; i++) {
       olxstr Tmp;
       for (size_t j=0; j < 3; j++) {
@@ -1302,7 +1302,7 @@ void GXLibMacros::macMatr(TStrObjList &Cmds, const TParamList &Options,
           "non zero expression is expected");
         return;
       }
-      app.GetRender().GetBasis().OrientNormal(n);
+      app.GetRenderer().GetBasis().OrientNormal(n);
     }
     else if (Cmds.Count() == 2) {  // from to view
       if ((Cmds[0].Length()%3) != 0 || (Cmds[1].Length()%3) != 0) {
@@ -1323,7 +1323,7 @@ void GXLibMacros::macMatr(TStrObjList &Cmds, const TParamList &Options,
           "from and to arguments must be different");
         return;
       }
-      app.GetRender().GetBasis().OrientNormal(n);
+      app.GetRenderer().GetBasis().OrientNormal(n);
     }
     else if (Cmds.Count() == 3) {  // view along
       vec3d n = M[0]*Cmds[0].ToDouble() +
@@ -1334,7 +1334,7 @@ void GXLibMacros::macMatr(TStrObjList &Cmds, const TParamList &Options,
           "a non-singular direction is expected");
         return;
       }
-      app.GetRender().GetBasis().OrientNormal(n);
+      app.GetRenderer().GetBasis().OrientNormal(n);
     }
     else if (Cmds.Count() == 9) {
       mat3d M(
@@ -1342,7 +1342,7 @@ void GXLibMacros::macMatr(TStrObjList &Cmds, const TParamList &Options,
         Cmds[3].ToDouble(), Cmds[4].ToDouble(), Cmds[5].ToDouble(),
         Cmds[6].ToDouble(), Cmds[7].ToDouble(), Cmds[8].ToDouble());
       M.Transpose();
-      app.GetRender().GetBasis().SetMatrix(M.Normalise());
+      app.GetRenderer().GetBasis().SetMatrix(M.Normalise());
     }
     app.Draw();
   }
@@ -1408,9 +1408,9 @@ void GXLibMacros::macSetView(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   if (process) {
-    app.GetRender().GetBasis().OrientNormal(normal);
+    app.GetRenderer().GetBasis().OrientNormal(normal);
     if (do_center && has_center)
-      app.GetRender().GetBasis().SetCenter(-center);
+      app.GetRenderer().GetBasis().SetCenter(-center);
     if (app.XGrid().IsVisible() && has_center)
       app.SetGridDepth(center);
     app.Draw();
@@ -1494,7 +1494,7 @@ void GXLibMacros::macLine(TStrObjList &Cmds, const TParamList &Options,
   }
   olxstr name = Options.FindValue('n');
   if (Options.Contains('n') && name.IsEmpty())
-    app.GetRender().GetBasis().OrientNormal(to-from);
+    app.GetRenderer().GetBasis().OrientNormal(to-from);
   else
     app.AddLine(name, from, to);
   app.Draw();
@@ -1534,7 +1534,7 @@ void GXLibMacros::macMpln(TStrObjList &Cmds, const TParamList &Options,
         mat3d m = plane->GetBasis();
         vec3d d1 = (m[2]+m[1]).Normalise();
         vec3d d2 = m[0].XProdVec(d1).Normalise();
-        app.GetRender().GetBasis().Orient(d1, d2, m[0]);
+        app.GetRenderer().GetBasis().Orient(d1, d2, m[0]);
         app.SetGridDepth(plane->GetCenter());
         delete plane;
         plane = NULL;
@@ -1652,7 +1652,7 @@ void GXLibMacros::macGroup(TStrObjList &Cmds, const TParamList &Options,
     app.SelectAll(true);
   if (name.IsEmpty())  {
     name = "group";
-    name << (app.GetRender().GroupCount()+1);
+    name << (app.GetRenderer().GroupCount()+1);
   }
   app.GroupSelection(name);
 }
@@ -1662,8 +1662,8 @@ void GXLibMacros::macFmol(TStrObjList &Cmds, const TParamList &Options,
 {
   app.AllVisible(true);
   app.CenterView();
-  app.GetRender().GetBasis().SetZoom(
-    app.GetRender().CalcZoom()*app.GetExtraZoom());
+  app.GetRenderer().GetBasis().SetZoom(
+    app.GetRenderer().CalcZoom()*app.GetExtraZoom());
 }
 //.............................................................................
 void GXLibMacros::macCell(TStrObjList &Cmds, const TParamList &Options,
@@ -1699,7 +1699,7 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
     app.SelectFragments(ACollectionItem::Unify(nets), !Options.Contains('u'));
   }
   else if( Cmds.Count() == 1 && Cmds[0].Equalsi("res") )  {
-    //app.GetRender().ClearSelection();
+    //app.GetRenderer().ClearSelection();
     //TStrList out;
     //TCAtomPList a_res;
     //TPtrList<TSimpleRestraint> b_res;
@@ -1713,7 +1713,7 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
     //  TXAtom& xa = ai.Next();
     //  if( xa.CAtom().GetTag() != 1 )  continue;
     //  if( xa.IsSelected() )  continue;
-    //  app.GetRender().Select(xa);
+    //  app.GetRenderer().Select(xa);
     //}
     //for( size_t i=0; i < b_res.Count(); i++ )  {
     //  const TSimpleRestraint& res = *b_res[i];
@@ -1730,7 +1730,7 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
     //      if( (ca1.GetId() == id1 && ca2.GetId() == id2) ||
     //          (ca1.GetId() == id2 && ca2.GetId() == id1) )
     //      {
-    //        app.GetRender().Select(xb);
+    //        app.GetRenderer().Select(xb);
     //        break;
     //      }
     //    }
@@ -1776,7 +1776,7 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
     while (ai.HasNext()) {
       TXAtom &a = ai.Next();
       if (a.IsVisible() && a.CAtom().GetTag() == 1)
-        app.GetRender().Select(a, true);
+        app.GetRenderer().Select(a, true);
     }
   }
   else if (Cmds.Count() > 1 && Cmds[0].Equalsi("ofile")) {
@@ -1797,12 +1797,12 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
       for (size_t j=0; j < op.atoms.Count(); j++) {
         TXAtom &a = (TXAtom &)op.atoms[j];
         if (!a.IsAvailable()) continue;
-        app.GetRender().Select(a, flag);
+        app.GetRenderer().Select(a, flag);
       }
       for (size_t j=0; j < op.bonds.Count(); j++) {
         TXBond &b = (TXBond &)op.bonds[j];
         if (!b.IsAvailable()) continue;
-        app.GetRender().Select(b, flag);
+        app.GetRenderer().Select(b, flag);
       }
     }
   }
@@ -1815,14 +1815,14 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
       TXAtom& a = ai.Next();
       if (a.IsDeleted() || !a.IsVisible() )  continue;
       if (a.IsGenerator(matr) )
-        app.GetRender().Select(a, flag);
+        app.GetRenderer().Select(a, flag);
     }
     TGXApp::BondIterator bi = app.GetBonds();
     while (bi.HasNext()) {
       TXBond& b = bi.Next();
       if (b.IsDeleted() || !b.IsVisible())  continue;
       if (b.A().IsGenerator(matr) && b.B().IsGenerator(matr))
-        app.GetRender().Select(b, flag);
+        app.GetRenderer().Select(b, flag);
     }
   }
   else if (Cmds.Count() > 1 && Cmds[0].Equalsi("part")) {
@@ -1861,7 +1861,7 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
       while (ai.HasNext()) {
         TXAtom& xa = ai.Next();
         if (afixes.Contains(xa.CAtom().GetAfix()))
-          app.GetRender().Select(xa, flag);
+          app.GetRenderer().Select(xa, flag);
       }
     }
   }
@@ -1889,7 +1889,7 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
           v *= -1;
         for (size_t i=0; i < fvars.Count(); i++) {
           if (fvars[i] == v)
-            app.GetRender().Select(a, flag);
+            app.GetRenderer().Select(a, flag);
         }
       }
     }
@@ -1900,7 +1900,7 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
     while (ai.HasNext()) {
       TXAtom& xa = ai.Next();
       if (xa.GetEllipsoid() == NULL)
-        app.GetRender().Select(xa, flag);
+        app.GetRenderer().Select(xa, flag);
     }
   }
   else if (Cmds.Count() == 1 && Cmds[0].Equalsi("anis")) {
@@ -1909,20 +1909,20 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
     while (ai.HasNext()) {
       TXAtom& xa = ai.Next();
       if (xa.GetEllipsoid() != NULL)
-        app.GetRender().Select(xa, flag);
+        app.GetRenderer().Select(xa, flag);
     }
   }
   else if (Cmds.Count() == 1 && Cmds[0].Equalsi("atoms")) {
     TGXApp::AtomIterator ai = app.GetAtoms();
     if (flag == glSelectionNone) flag = glSelectionSelect;
     while (ai.HasNext())
-      app.GetRender().Select(ai.Next(), flag);
+      app.GetRenderer().Select(ai.Next(), flag);
   }
   else if (Cmds.Count() == 1 && Cmds[0].Equalsi("bonds")) {
     if (flag == glSelectionNone) flag = glSelectionSelect;
     TGXApp::BondIterator bi = app.GetBonds();
     while (bi.HasNext())
-      app.GetRender().Select(bi.Next(), flag);
+      app.GetRenderer().Select(bi.Next(), flag);
   }
   else if (Cmds.Count() == 2 && Cmds[0].Equalsi("bond") &&
     Cmds[1].Equalsi("atoms"))
@@ -1932,8 +1932,8 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
     while (bi.HasNext()) {
       TXBond &b = bi.Next();
       if (b.IsSelected()) {
-        app.GetRender().Select(b.A(), flag);
-        app.GetRender().Select(b.B(), flag);
+        app.GetRenderer().Select(b.A(), flag);
+        app.GetRenderer().Select(b.B(), flag);
       }
     }
   }
@@ -1945,7 +1945,7 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
     while (bi.HasNext()) {
       TXBond &b = bi.Next();
       if (b.A().IsSelected() && b.B().IsSelected())
-        app.GetRender().Select(b, flag);
+        app.GetRenderer().Select(b, flag);
     }
   }
   else if (Cmds.Count() >= 1 && Cmds[0].Equalsi("wbox")) {
@@ -2016,10 +2016,10 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
     size_t period=5;
     TXAtomPList Atoms = app.FindXAtoms("sel", false, false);
     if (Atoms.IsEmpty() && Cmds.Count() == 1) {
-      TGPCollection* gpc = app.GetRender().FindCollection(Cmds[0]);
+      TGPCollection* gpc = app.GetRenderer().FindCollection(Cmds[0]);
       if (gpc != NULL) {
         for (size_t i=0; i < gpc->ObjectCount(); i++)
-          app.GetRender().Select(gpc->GetObject(i));
+          app.GetRenderer().Select(gpc->GetObject(i));
         return;
       }
     }
@@ -2071,11 +2071,11 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
       else if (flag == glSelectionUnselect)
         app.SelectAll(false);
       else if (flag == glSelectionInvert)
-        app.GetRender().InvertSelection();
+        app.GetRenderer().InvertSelection();
     }
     else {
       TXAtomPList atoms = app.FindXAtoms(Cmds.Text(' '), false, false);
-      TGlRenderer &r = app.GetRender();
+      TGlRenderer &r = app.GetRenderer();
       for (size_t i=0; i < atoms.Count(); i++) {
         if (flag == glSelectionSelect)
           r.Select(*atoms[i], true);
@@ -2112,46 +2112,47 @@ void GXLibMacros::macPiM(TStrObjList &Cmds, const TParamList &Options,
   TTypeList<TSAtomPList> ring_M;
   bool check_metal = true;
   ConstPtrList<TXAtom> atoms = app.FindXAtoms(Cmds, false, true);
-  if( atoms.IsEmpty() )  {
+  if (atoms.IsEmpty()) {
     app.FindRings("C4", rings);
     app.FindRings("C5", rings);
     app.FindRings("C6", rings);
-    for( size_t i=0; i < rings.Count(); i++ )  {
-      if( TSPlane::CalcRMSD(rings[i]) > 0.05 ||
-          !TNetwork::IsRingRegular(rings[i]) )
+    app.FindRings("NC5", rings);
+    for (size_t i = 0; i < rings.Count(); i++) {
+      if (TSPlane::CalcRMSD(rings[i]) > 0.05 ||
+          !TNetwork::IsRingRegular(rings[i]))
       {
         rings.NullItem(i);
       }
     }
     rings.Pack();
   }
-  else  {
+  else {
     rings.Add(new TSAtomPList(atoms, StaticCastAccessor<TSAtom>()));
     TSAtomPList &metals = ring_M.AddNew();
-    for( size_t i=0; i < rings[0].Count(); i++ )  {
-      if( XElementLib::IsMetal(rings[0][i]->GetType()) )  {
+    for (size_t i=0; i < rings[0].Count(); i++) {
+      if (XElementLib::IsMetal(rings[0][i]->GetType())) {
         check_metal = false;
         metals.Add(rings[0][i]);
         rings[0][i] = NULL;
       }
     }
     rings[0].Pack();
-    if( rings[0].IsEmpty() )  return;
-    if( check_metal )
+    if ( rings[0].IsEmpty())  return;
+    if (check_metal)
       ring_M.Delete(0);
   }
-  if( check_metal )  {
+  if (check_metal) {
     ring_M.SetCapacity(rings.Count());
-    for( size_t i=0; i < rings.Count(); i++ )  {
+    for (size_t i=0; i < rings.Count(); i++) {
       TSAtomPList &metals = ring_M.AddNew();
-      for( size_t j=0; j < rings[i].Count(); j++ )  {
-        for( size_t k=0; k < rings[i][j]->NodeCount(); k++ )  {
-          if( XElementLib::IsMetal(rings[i][j]->Node(k).GetType()) )  {
+      for (size_t j=0; j < rings[i].Count(); j++) {
+        for (size_t k=0; k < rings[i][j]->NodeCount(); k++) {
+          if (XElementLib::IsMetal(rings[i][j]->Node(k).GetType())) {
             metals.Add(rings[i][j]->Node(k));
           }
         }
       }
-      if( metals.IsEmpty() )  {
+      if (metals.IsEmpty()) {
         rings.NullItem(i);
         ring_M.NullItem(ring_M.Count()-1);
       }
@@ -2160,28 +2161,29 @@ void GXLibMacros::macPiM(TStrObjList &Cmds, const TParamList &Options,
     ring_M.Pack();
   }
   // process rings...
-  if( rings.IsEmpty() )  return;
+  if (rings.IsEmpty())  return;
   const bool label = Options.Contains('l');
   TGXApp::AtomIterator ai = app.GetAtoms();
-  while( ai.HasNext() )
+  while (ai.HasNext())
     ai.Next().SetTag(0);
-  for( size_t i=0; i < rings.Count(); i++ )  {
+  const olxstr sb_name = TXBond::GetSettings(app.GetRenderer())
+    .GetPrimitives(true)[9];
+  for (size_t i=0; i < rings.Count(); i++) {
     vec3d c;
-    for( size_t j=0; j < rings[i].Count(); j++ )  {
+    for (size_t j=0; j < rings[i].Count(); j++) {
       c += rings[i][j]->crd();
       rings[i][j]->SetTag(1);
     }
     c /= rings[i].Count();
     ACollectionItem::Unify(ring_M[i]);
-    for( size_t j=0; j < ring_M[i].Count(); j++ )  {
+    for (size_t j=0; j < ring_M[i].Count(); j++) {
       TXLine *l = app.AddLine(ring_M[i][j]->GetLabel()+olxstr(i),
         ring_M[i][j]->crd(), c);
       if (l == NULL) continue;
       TGraphicsStyle &ms = ((TXAtom*)ring_M[i][j])->GetPrimitives().GetStyle();
       TGlMaterial *sm = ms.FindMaterial("Sphere");
       if (sm != NULL) {
-        l->GetPrimitives().GetStyle().SetMaterial(
-          TXBond::GetStaticPrimitives()[9], *sm);
+        l->GetPrimitives().GetStyle().SetMaterial(sb_name, *sm);
       }
       l->UpdatePrimitives((1<<9)|(1<<10));
       l->SetRadius(0.5);
@@ -2274,7 +2276,7 @@ void main_CreateWBox(TGXApp& app, const TSAtomPList& atoms,
   }
   for( int i=0; i < 24; i++ )
     poly_d[i] = bs.center + faces[i];
-  TDUserObj* uo = new TDUserObj(app.GetRender(), sgloQuads,
+  TDUserObj* uo = new TDUserObj(app.GetRenderer(), sgloQuads,
     olxstr("wbox") << obj_cnt++);
   uo->SetVertices(&poly_d);
   uo->SetNormals(&poly_n);
@@ -2340,14 +2342,14 @@ void GXLibMacros::macCenter(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &E)
 {
   if (Cmds.Count() == 3 && olx_list_and(Cmds, &olxstr::IsNumber)) {
-    app.GetRender().GetBasis().SetCenter(
+    app.GetRenderer().GetBasis().SetCenter(
      -vec3d(Cmds[0].ToDouble(), Cmds[1].ToDouble(), Cmds[2].ToDouble()));
   }
   else  {
     if (Options.GetBoolOption('z')) {
       vec3d miv(100,100,100), mav(-100,-100,-100), miv_, mav_;
-      for (size_t i=0; i < app.GetRender().ObjectCount(); i++) {
-        AGDrawObject &o = app.GetRender().GetObject(i);
+      for (size_t i=0; i < app.GetRenderer().ObjectCount(); i++) {
+        AGDrawObject &o = app.GetRenderer().GetObject(i);
         if (!o.IsVisible()) continue;
         if (o.GetDimensions(mav_, miv_)) {
           vec3d::UpdateMinMax(miv_, miv, mav);
@@ -2355,7 +2357,7 @@ void GXLibMacros::macCenter(TStrObjList &Cmds, const TParamList &Options,
         }
       }
       double sd = olx_max(mav.DistanceTo(miv), 1.0);
-      app.GetRender().GetBasis().SetZoom(app.GetExtraZoom()/sd);
+      app.GetRenderer().GetBasis().SetZoom(app.GetExtraZoom()/sd);
     }
     TXAtomPList atoms = app.FindXAtoms(Cmds, true, true);
     vec3d center;
@@ -2366,7 +2368,7 @@ void GXLibMacros::macCenter(TStrObjList &Cmds, const TParamList &Options,
     }
     if (sum != 0) {
       center /= sum;
-      app.GetRender().GetBasis().SetCenter(-center);
+      app.GetRenderer().GetBasis().SetCenter(-center);
     }
   }
 }
@@ -2501,7 +2503,7 @@ void GXLibMacros::macCalcVoid(TStrObjList &Cmds, const TParamList &Options,
 void GXLibMacros::macDirection(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &E)
 {
-  const mat3d Basis = app.GetRender().GetBasis().GetMatrix();
+  const mat3d Basis = app.GetRenderer().GetBasis().GetMatrix();
   const vec3d Z(Basis[0][2], Basis[1][2], Basis[2][2]);
   if( app.XFile().HasLastLoader() )  {
     TAsymmUnit &au = app.XFile().GetAsymmUnit();
@@ -2543,7 +2545,7 @@ void GXLibMacros::macDirection(TStrObjList &Cmds, const TParamList &Options,
     if( !app.XGrid().IsEmpty() && app.XGrid().IsVisible() &&
       (app.XGrid().GetRenderMode()&(planeRenderModeContour|planeRenderModePlane)) != 0 )
     {
-      const vec3d center(app.GetRender().GetBasis().GetCenter());
+      const vec3d center(app.GetRenderer().GetBasis().GetCenter());
       vec3d p(0, 0, app.XGrid().GetDepth());
       p = au.Fractionalise(Basis*p - center);
       olxstr Tmp =  "Grid center: (";
@@ -2613,9 +2615,9 @@ void GXLibMacros::macLstGO(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &E)
 {
   TStrList output;
-  output.SetCapacity( app.GetRender().CollectionCount() );
-  for (size_t i=0; i < app.GetRender().CollectionCount(); i++) {
-    TGPCollection& gpc = app.GetRender().GetCollection(i);
+  output.SetCapacity( app.GetRenderer().CollectionCount() );
+  for (size_t i=0; i < app.GetRenderer().CollectionCount(); i++) {
+    TGPCollection& gpc = app.GetRenderer().GetCollection(i);
     output.Add( gpc.GetName() ) << '[';
     for (size_t j=0; j < gpc.PrimitiveCount(); j++) {
       output.GetLastString() << gpc.GetPrimitive(j).GetName();
@@ -3262,7 +3264,7 @@ void GXLibMacros::macKill(TStrObjList &Cmds, const TParamList &Options,
       TXAtomPList Atoms = app.FindXAtoms(Cmds.Text(' '), true, false),
         Selected;
       if (Atoms.IsEmpty() && Cmds.Count() == 1) {
-        TGPCollection *col = app.GetRender().FindCollection(Cmds[0]);
+        TGPCollection *col = app.GetRenderer().FindCollection(Cmds[0]);
         if (col != NULL) {
           for (size_t i = 0; i < col->ObjectCount(); i++) {
             col->GetObject(i).SetVisible(false);
@@ -3937,13 +3939,13 @@ void GXLibMacros::macSetMaterial(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   else {
-    TGPCollection* gpc = app.GetRender().FindCollection(col_name);
+    TGPCollection* gpc = app.GetRenderer().FindCollection(col_name);
     if (gpc != 0) {
       colls.Add(gpc);
     }
     else {  // try to modify the style then, if exists
       bool found = false;
-      TGraphicsStyle* gs = app.GetRender().GetStyles().FindStyle(col_name);
+      TGraphicsStyle* gs = app.GetRenderer().GetStyles().FindStyle(col_name);
       if (gs != NULL) {
         mat = gs->FindMaterial(prm_name);
         if (mat != NULL)  {
@@ -4010,7 +4012,7 @@ void GXLibMacros::funGetMaterial(const TStrObjList &Params, TMacroError &E) {
     }
   }
   else {  // check if the style exists
-    TGraphicsStyle* gs = app.GetRender().GetStyles().FindStyle(col_name);
+    TGraphicsStyle* gs = app.GetRenderer().GetStyles().FindStyle(col_name);
     if (gs != NULL) {
       if (prm_name.IsEmpty()) {
         mat = gs->FindMaterial("mat");
@@ -4155,7 +4157,7 @@ void GXLibMacros::macProjSph(TStrObjList &Cmds, const TParamList &Options,
         continue;
       TGlGroup *glg = groups.Find(a.CAtom().GetFragmentId(), NULL);
       if (glg == NULL) {
-        glg = &app.GetRender().NewGroup(
+        glg = &app.GetRenderer().NewGroup(
           olxstr("Ligand") << (groups.Count() + 1));
         groups.Add(a.CAtom().GetFragmentId(), glg)->Create();
       }
@@ -4168,7 +4170,7 @@ void GXLibMacros::macProjSph(TStrObjList &Cmds, const TParamList &Options,
         continue;
       TGlGroup *glg = groups.Find(b.A().CAtom().GetFragmentId(), NULL);
       if (glg == NULL) {
-        glg = &app.GetRender().NewGroup(
+        glg = &app.GetRenderer().NewGroup(
           olxstr("Ligand") << (groups.Count() + 1));
         groups.Add(b.A().CAtom().GetFragmentId(), glg)->Create();
       }

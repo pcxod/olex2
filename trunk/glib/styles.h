@@ -263,9 +263,8 @@ class TGraphicsStyles: public IEObject  {
   ObjectGroup<TGlMaterial,TPrimitiveStyle> PStyles;
   mutable TPtrList<TDataItem> DataItems;
   TGraphicsStyle* Root;
-  class TGlRenderer& Renderer;
 public:
-  TGraphicsStyles(TGlRenderer& R);
+  TGraphicsStyles();
   virtual ~TGraphicsStyles();
 
   void Clear();
@@ -301,9 +300,13 @@ public:
   void ToDataItem(TDataItem& item, const TPtrList<TGraphicsStyle>& styles);
 
   // sets ICollectionItem::Tag of styles to Tag
-  void SetStylesTag(int Tag)  {  Root->SetStylesTag(Tag);  }
+  void SetStylesTag(index_t Tag)  {  Root->SetStylesTag(Tag);  }
   // removes Styles with Style::Tag == Tag
-  void RemoveStylesByTag(int Tag)  {  Root->RemoveStylesByTag(Tag);  }
+  void RemoveStylesByTag(index_t Tag) {
+    OnClear.Enter(this);
+    Root->RemoveStylesByTag(Tag);
+    OnClear.Exit(this);
+  }
   // removes non-persisten styles
   void RemoveNonPersistent()  {  Root->RemoveNonPersistent();  }
   // removes non-saveable styles
@@ -311,13 +314,14 @@ public:
   // removes named styles, case sensitive
   void RemoveNamedStyles(const olxstr& name)  {  Root->RemoveNamedStyles(TStrList(name, '.'));  }
 
-  inline short GetVersion() const {  return Version;  }
+  short GetVersion() const {  return Version;  }
+  TActionQueue &OnClear;
   // reads the style version (0 - no version) from a dataitem
   static int ReadStyleVersion(const TDataItem& Item) {
     return Item.FindField("Version", "0").ToInt();
   }
   // this is the current version of the styles
-  static const int CurrentVersion;
+  static int CurrentVersion() { return 2; }
 };
 
 EndGlNamespace()

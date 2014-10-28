@@ -24,32 +24,13 @@ class TXBond: public TSBond, public AGDrawObject  {
 private:
   TXGlLabel* Label;
   bool label_forced;
-  short FDrawStyle;
-  static double FDefR;
-  static int FDefM;
-  static bool DefSelectable;
+  int FDrawStyle;
 protected:
   void GetDefSphereMaterial(TGlMaterial &M);
   void GetDefRimMaterial(TGlMaterial &M);
-  static void ValidateBondParams();
-  static TGraphicsStyle *FBondParams;
   virtual bool IsMaskSaveable() const {  return false;  }
   virtual bool IsStyleSaveable() const {  return false; }
   virtual bool IsRadiusSaveable() const {  return false; }
-  class TStylesClear: public AActionHandler  {
-  public:
-    TStylesClear(TGlRenderer& Render)  {  Render.OnStylesClear.Add(this);  }
-    bool Enter(const IEObject *Sender, const IEObject *Data, TActionQueue *);
-    bool Exit(const IEObject *Sender, const IEObject *Data, TActionQueue *);
-  };
-  static TStylesClear *OnStylesClear;
-  class TContextClear: public AActionHandler {
-  public:
-    TContextClear(TGlRenderer& Render);
-    bool Enter(const IEObject *Sender, const IEObject *Data, TActionQueue *);
-    bool Exit(const IEObject *Sender, const IEObject *Data, TActionQueue *);
-  };
-  static void ClearStaticObjects()  {  GetStaticPrimitives().Clear();  }
 public:
   TXBond(TNetwork* net, TGlRenderer& Render, const olxstr& collectionName);
   void Create(const olxstr& cName=EmptyString());
@@ -70,7 +51,7 @@ public:
   TXGlLabel& GetGlLabel() const {  return *Label;  }
   void UpdateLabel()  {  GetGlLabel().UpdateLabel();  }
   // creates legend up three levels (0 to 2)
-  static olxstr GetLegend(const TSBond& B, const short level);
+  static olxstr GetLegend(const TSBond& B, size_t level);
 
   void SetRadius(double V);
   double GetRadius() const {  return FParams[4]; }
@@ -84,14 +65,6 @@ public:
   void ListParams(TStrList &List);
   // fills the list with proposal primitives to construct object
   void ListPrimitives(TStrList &List) const;
-  /* returns a list of static primitives. This list has the same order as
-  primtives masks, so primitives names can be obtained for any particular mask
-  */
-  static TStringToList<olxstr, TGlPrimitive*> &GetStaticPrimitives() {
-    //static TArrayList<TGlPrimitiveParams> FPrimitiveParams;
-    static TStringToList<olxstr, TGlPrimitive*> sp;
-    return sp;
-  }
   // updates primitive properties from atoms
   void UpdateStyle();
 
@@ -99,7 +72,7 @@ public:
   bool OnMouseUp(const IEObject *Sender, const TMouseData& Data);
   bool OnMouseMove(const IEObject *Sender, const TMouseData& Data);
 
-  void SetVisible(bool v)  {
+  void SetVisible(bool v) {
     AGDrawObject::SetVisible(v);
     if (!v) {
       if (Label->IsVisible()) {
@@ -112,40 +85,104 @@ public:
       label_forced = false;
     }
   }
-  void Delete()  {
+  void Delete() {
     TSBond::SetDeleted(true);
     SetVisible(false);
   }
   void ListDrawingStyles(TStrList &List);
-
   uint32_t GetPrimitiveMask() const;
-  static void DefMask(int V);
-  static int DefMask();
-  static void DefR(double V);
-  static double DefR();
-  static bool IsSelectableByDef() { return DefSelectable; }
-  static void SetSelectableByDef(bool v) { DefSelectable=v; }
   short DrawStyle() const {  return FDrawStyle; }
 
   void UpdatePrimitiveParams(TGlPrimitive *Primitive);
-  void OnPrimitivesCleared();
-  static int16_t Quality(int16_t Val);
+  static int Quality(TGlRenderer &r, int Val);
   // should be called when atom coordinates have changed
   virtual void Update();
 
   const_strlist ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const;
-  static const_strlist PovDeclare();
+  static const_strlist PovDeclare(TGlRenderer &p);
 
   const_strlist ToWrl(olx_cdict<TGlMaterial, olxstr> &materials) const;
-  static const_strlist WrlDeclare();
+  static const_strlist WrlDeclare(TGlRenderer &p);
 
   virtual const vec3d &GetBaseCrd() const;
-  static TGraphicsStyle* GetParamStyle()  {  return FBondParams;  }
-  static void CreateStaticObjects(TGlRenderer& parent);
 
   static olxstr_dict<olxstr> &NamesRegistry() {
     static olxstr_dict<olxstr> nr;
     return nr;
+  }
+
+  class Settings : public AGOSettings {
+    mutable double radius;
+    mutable int mask, cone_q, cone_stipples, quality;
+    Settings(TGlRenderer &r)
+      : AGOSettings(r, "BondParams")
+    {
+      set_defaults();
+    }
+    void set_defaults() {
+      radius = -1;
+      mask = cone_q = cone_stipples = -1;
+    }
+    void OnStyleChange() {
+      set_defaults();
+      ClearPrimitives();
+    }
+    void OnRendererClear() {
+      ClearPrimitives();
+    }
+    void CreatePrimitives();
+    TStringToList<olxstr, TGlPrimitive*> primitives;
+  public:
+    double GetRadius() const { return GetParam("DefR", radius, double(1)); }
+    void SetRadius(double v) const {
+      return style->SetParam("DefR", (radius = v), true);
+    }
+    int GetConeQ() const { return GetParam("ConeQ", cone_q, int(15)); }
+    void SetConeQ(int v) const {
+      return style->SetParam("ConeQ", (cone_q = v), true);
+    }
+    int GetConeStipples() const {
+      return GetParam("ConeStipples", cone_stipples, int(6));
+    }
+    int GetMask() const { return GetParam("DefM", mask, int(7)); }
+    void SetMask(int v) { style->SetParam("DefM", (mask = v), true); }
+    const TStringToList<olxstr, TGlPrimitive*> &GetPrimitives() const {
+      return primitives;
+    }
+    const TStringToList<olxstr, TGlPrimitive*> &GetPrimitives(bool check) {
+      if (check && primitives.IsEmpty()) {
+        CreatePrimitives();
+      }
+      return primitives;
+    }
+    void ClearPrimitives() {
+      primitives.Clear();
+    }
+    static Settings& GetInstance(TGlRenderer &r) {
+      AGOSettings *s = r.FindSettings("bond");
+      if (s == NULL) {
+        return (Settings &)r.RegisterSettings(*(new Settings(r)), "bond");
+      }
+      else {
+        return dynamic_cast<Settings &>(*s);
+      }
+    }
+  };
+protected:
+  mutable Settings *settings;
+public:
+  Settings &GetSettings() const {
+    return *(settings == 0 ? (settings = &Settings::GetInstance(Parent))
+      : settings);
+  }
+  static Settings &GetSettings(TGlRenderer &r) {
+    return Settings::GetInstance(r);
+  }
+  virtual void OnStyleChange() {
+    settings = &GetSettings(Parent);
+  }
+  virtual void OnPrimitivesCleared() {
+    GetSettings().ClearPrimitives();
   }
 };
 
