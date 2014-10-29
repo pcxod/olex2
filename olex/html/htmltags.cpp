@@ -239,20 +239,23 @@ TAG_HANDLER_PROC(tag)  {
   try  {
     Tmp = tag.GetParam(wxT("WIDTH"));
     op->processFunction(Tmp, SrcInfo, false);
-    if( !Tmp.IsEmpty() )  {
-      if( Tmp.EndsWith('%') )
-        fl = Tmp.SubStringTo(Tmp.Length()-1).ToFloat();
-      else
+    if (!Tmp.IsEmpty()) {
+      if (Tmp.EndsWith('%')) {
+        fl = Tmp.SubStringTo(Tmp.Length() - 1).ToFloat();
+        ax = (int)(fl * html->GetClientSize().GetWidth() /100);
+      }
+      else {
         ax = (int)Tmp.ToDouble();
+      }
       width_set = true;
     }
     Tmp = tag.GetParam(wxT("HEIGHT"));
     op->processFunction(Tmp, SrcInfo, false);
-    if( !Tmp.IsEmpty() )  {
-      if( Tmp.EndsWith('%') )  {
+    if (!Tmp.IsEmpty()) {
+      if (Tmp.EndsWith('%')) {
         ay = 0;
-        float _ay = Tmp.SubStringTo(Tmp.Length()-1).ToFloat()/100;
-        _ay *= html->GetSize().GetHeight();
+        float _ay = Tmp.SubStringTo(Tmp.Length() - 1).ToFloat() / 100;
+        _ay *= html->GetClientSize().GetHeight();
         ay = (int)_ay;
       }
       else
@@ -495,6 +498,10 @@ TAG_HANDLER_PROC(tag)  {
     long flags = 0;
     if (GetBoolAttribute(tag, "FIT"))  flags |= wxBU_EXACTFIT;
     if (GetBoolAttribute(tag, "FLAT"))  flags |= wxNO_BORDER;
+    if (halign == wxHTML_ALIGN_LEFT)
+      flags |= wxBU_LEFT;
+    else if (halign == wxHTML_ALIGN_RIGHT)
+      flags |= wxBU_RIGHT;
     olxstr buttonImage = tag.GetParam(wxT("IMAGE"));
     if (!buttonImage.IsEmpty()) {
       if (buttonImage.IndexOf(',') != InvalidIndex) {
@@ -982,6 +989,13 @@ TAG_HANDLER_PROC(tag)  {
     hc->WI.SetHeight(ay);
     hc->SetPage(Value.u_str());
     hc->OnLink.Add(&html->Manager);
+    wxScrollbarVisibility v = wxSHOW_SB_DEFAULT,
+      h = wxSHOW_SB_DEFAULT;
+    if (GetBoolAttribute(tag, "vscroll"))
+      v = wxSHOW_SB_ALWAYS;
+    if (GetBoolAttribute(tag, "hscroll"))
+      h = wxSHOW_SB_ALWAYS;
+    hc->ShowScrollbars(h, v);
     m_WParser->GetContainer()->InsertCell(new THtmlWidgetCell(hc, fl));
   }
   /******************* END OF CONTROLS ******************************************/
