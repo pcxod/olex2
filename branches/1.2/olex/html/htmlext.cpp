@@ -161,6 +161,10 @@ bool THtml::Dispatch(int MsgId, short MsgSubId, const IEObject* Sender,
 //.............................................................................
 void THtml::OnKeyDown(wxKeyEvent& event)  {
   event.Skip();
+  if (event.GetModifiers() == wxMOD_CMD && event.GetKeyCode() == 'C') {
+    CopySelection();
+    return;
+  }
 }
 //.............................................................................
 void THtml::OnNavigation(wxNavigationKeyEvent& event)  {
@@ -168,12 +172,6 @@ void THtml::OnNavigation(wxNavigationKeyEvent& event)  {
 }
 //.............................................................................
 void THtml::OnChar(wxKeyEvent& event)  {
-  //Ctrl+c
-  if( event.m_controlDown && event.GetKeyCode() == 'c'-'a'+1 )  {
-    CopySelection();
-    event.Skip();
-    return;
-  }
   wxWindow* parent = GetParent();
   if (parent != NULL) {
     wxDialog* dlg = dynamic_cast<wxDialog*>(parent);
