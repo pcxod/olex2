@@ -1885,18 +1885,19 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
       TimePerFrame = FXApp->Draw();
       // enabling the timer back
       // retrun fucus to the main window, but let typing in the comboboxes
-      if( Sender != NULL )  {
-        if( ((olxstr*)Data)->IsEmpty() )
+      if (Sender != NULL) {
+        const type_info &ti = typeid(*Sender);
+        if (((olxstr*)Data)->IsEmpty())
           ;
-        else if( EsdlInstanceOf(*Sender, TComboBox) && !((TComboBox*)Sender)->IsReadOnly() )
+        else if (ti == typeid(TComboBox) && !((TComboBox*)Sender)->IsReadOnly())
           ;
-        else if( EsdlInstanceOf(*Sender, TTreeView) )
+        else if (ti == typeid(TTreeView))
           ;
-        else if( EsdlInstanceOf(*Sender, TTextEdit) )
+        else if (ti == typeid(TTextEdit))
           ;
-        else if( EsdlInstanceOf(*Sender, TSpinCtrl) )
+        else if (ti == typeid(TSpinCtrl))
           ;
-        else if( EsdlInstanceOf(*Sender, TDateCtrl) )
+        else if (ti == typeid(TDateCtrl))
           ;
         else {
           if (CmdLineVisible)

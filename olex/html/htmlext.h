@@ -28,12 +28,11 @@ enum {
 
 class THtmlManager;
 
-class THtml: public wxHtmlWindow, public AEventsDispatcher  {
+class THtml : public wxHtmlWindow, public AEventsDispatcher, public AOlxCtrl {
 private:
   bool Movable, PageLoadRequested, ShowTooltips;
   olxdict<const IEObject*, int, TPointerComparator> Locks;
   olxstr PageRequested;
-  TActionQList Actions;
   olxstr PopupName;
   static size_t &stateTooltipsVisible() {
     static size_t v=InvalidIndex;
@@ -97,7 +96,8 @@ protected:
   bool GetObjectState(const AOlxCtrl *Object, const olxstr& state);
   olxstr GetObjectImage(const AOlxCtrl *Object);
   olxstr GetObjectItems(const AOlxCtrl *Object);
-  void SetObjectValue(AOlxCtrl *AOlxCtrl, const olxstr& Value);
+  void SetObjectValue(AOlxCtrl *AOlxCtrl,
+    const olxstr& name, const olxstr& value);
   void SetObjectData(AOlxCtrl *AOlxCtrl, const olxstr& Data);
   void SetObjectState(AOlxCtrl *AOlxCtrl, bool State,
     const olxstr& state_name);
@@ -196,7 +196,6 @@ public:
   DefPropC(olxstr, OnSizeData)
   DefPropC(olxstr, OnDblClickData)
 
-  TWindowInterface WI;
   // global data for the HTML parsing....
   static olxstr &SwitchSource() {
     static olxstr src;

@@ -189,12 +189,12 @@ TAG_HANDLER_PROC(tag)  {
     WidthInPercent,
     HeightInPercent);
 
-  cell->SetText( text );
-  cell->SetSource( src );
+  cell->SetText(text);
+  cell->SetSource(src);
   cell->SetLink(m_WParser->GetLink());
   cell->SetId(tag.GetParam(wxT("id"))); // may be empty
   m_WParser->GetContainer()->InsertCell(cell);
-  if( !ObjectName.IsEmpty() )  {
+  if (!ObjectName.IsEmpty()) {
     THtml * html = dynamic_cast<THtml*>(
       m_WParser->GetWindowInterface()->GetHTMLWindow());
     if( !html->AddObject(ObjectName, cell, NULL) ) {
@@ -208,7 +208,7 @@ TAG_HANDLER_END(IMAGE)
 // helpe function
 olxstr ExpandMacroShortcuts(const olxstr &s, const olxstr_dict<olxstr> &map) {
   olxstr rv = s;
-  for( size_t i=0; i < map.Count(); i++ )
+  for (size_t i=0; i < map.Count(); i++)
     rv.Replace(map.GetKey(i), map.GetValue(i));
   return rv;
 }
@@ -404,7 +404,7 @@ TAG_HANDLER_PROC(tag)  {
     }
   }
 /******************* DATE CONTROL *****************************************/
-  if( TagName.Equalsi("date") )  {
+  else if( TagName.Equalsi("date") )  {
     int flags = wxDP_SPIN;
     if (GetBoolAttribute(tag, "dropdown")) {
       flags = wxDP_DROPDOWN;
@@ -449,7 +449,7 @@ TAG_HANDLER_PROC(tag)  {
     }
   }
 /******************* COLOR CONTROL *******************************************/
-  if( TagName.Equalsi("color") )  {
+  else if( TagName.Equalsi("color") )  {
     TColorCtrl *CC = new TColorCtrl(html);
     CC->SetFont(m_WParser->GetDC()->GetFont());
     CreatedObject = CC;
@@ -479,7 +479,7 @@ TAG_HANDLER_PROC(tag)  {
     }
   }
 /******************* LABEL ***************************************************/
-  else if( TagName.Equalsi("label") )  {
+  else if (TagName.Equalsi("label")) {
     TLabel *Text = new TLabel(html, Value);
     Text->SetFont(m_WParser->GetDC()->GetFont());
     CreatedObject = Text;
@@ -973,39 +973,50 @@ TAG_HANDLER_PROC(tag)  {
     // creating cell
     m_WParser->GetContainer()->InsertCell(new THtmlWidgetCell(List, fl));
   }
-/******************* END OF CONTROLS ******************************************/
-  if( LinkInfo != NULL )  delete LinkInfo;
-  if( ObjectName.IsEmpty() )  {  }  // create random name?
-  if( CreatedWindow != NULL )  {  // set default colors
-    if( m_WParser->GetActualColor().IsOk() )
+  /******************* HTML CONTROL *****************************************/
+  else if (TagName.Equalsi("html")) {
+    THtml *hc = new THtml(html->Manager, html);
+    CreatedObject = hc;
+    CreatedWindow = hc;
+    hc->WI.SetWidth(ax);
+    hc->WI.SetHeight(ay);
+    hc->SetPage(Value.u_str());
+    hc->OnLink.Add(&html->Manager);
+    m_WParser->GetContainer()->InsertCell(new THtmlWidgetCell(hc, fl));
+  }
+  /******************* END OF CONTROLS ******************************************/
+  if (LinkInfo != NULL)  delete LinkInfo;
+  if (ObjectName.IsEmpty()) {}  // create random name?
+  if (CreatedWindow != NULL) {  // set default colors
+    if (m_WParser->GetActualColor().IsOk())
       CreatedWindow->SetForegroundColour(m_WParser->GetActualColor());
-    if( m_WParser->GetContainer()->GetBackgroundColour().IsOk() ) {
+    if (m_WParser->GetContainer()->GetBackgroundColour().IsOk()) {
       CreatedWindow->SetBackgroundColour(
         m_WParser->GetContainer()->GetBackgroundColour());
     }
   }
-  if( CreatedObject != NULL )  {
+  if (CreatedObject != NULL) {
     bool manage = GetBoolAttribute(tag, "MANAGE");
-    if( !html->AddObject(
+    if (!html->AddObject(
       ObjectName, CreatedObject, CreatedWindow, manage))
     {
       TBasicApp::NewLogEntry(logError) << "HTML: duplicated object \'" <<
         ObjectName << '\'';
     }
-    if( CreatedWindow != NULL && !ObjectName.IsEmpty() )  {
+    if (CreatedWindow != NULL && !ObjectName.IsEmpty()) {
       CreatedWindow->Hide();
       olxstr bgc, fgc;
-      if( tag.HasParam(wxT("BGCOLOR")) )  {
+      if (tag.HasParam(wxT("BGCOLOR"))) {
         bgc = ExpandMacroShortcuts(tag.GetParam(wxT("BGCOLOR")), macro_map);
         op->processFunction(bgc, SrcInfo, false);
       }
-      if( tag.HasParam(wxT("FGCOLOR")) )  {
+      if (tag.HasParam(wxT("FGCOLOR"))) {
         fgc = ExpandMacroShortcuts(tag.GetParam(wxT("FGCOLOR")), macro_map);
         op->processFunction(fgc, SrcInfo, false);
       }
-      if( !bgc.IsEmpty() )
+      if (!bgc.IsEmpty())
         CreatedWindow->SetBackgroundColour(wxColor(bgc.u_str()));
-      if( !fgc.IsEmpty() )
+      if (!fgc.IsEmpty())
         CreatedWindow->SetForegroundColour(wxColor(fgc.u_str()));
     }
   }
