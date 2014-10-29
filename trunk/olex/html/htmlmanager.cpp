@@ -560,29 +560,29 @@ void THtmlManager::funGetValue(const TStrObjList &Params, TMacroError &E)  {
     E.SetRetVal(c.html->GetObjectValue(c.ctrl));
 }
 //.............................................................................
-void THtmlManager::funSetValue(const TStrObjList &Params, TMacroError &E)  {
+void THtmlManager::funSetValue(const TStrObjList &Params, TMacroError &E) {
   Control c = FindControl(Params[0], E, 0, __OlxSrcInfo);
-  if( c.html == NULL )  return;
-  if( c.ctrl == NULL )  {
+  if (c.html == NULL) return;
+  if (c.ctrl == NULL) {
     olxstr_dict<olxstr,false>* props =
       c.html->ObjectsState.FindProperties(c.ctrl_name);
-    if( props == NULL )  {
+    if (props == NULL) {
       E.ProcessingError(__OlxSrcInfo,
         "wrong html object name: ").quote() << c.ctrl_name;
       return;
     }
-    if( props->IndexOf("val") == InvalidIndex )  {
+    if (props->IndexOf("val") == InvalidIndex) {
       E.ProcessingError(__OlxSrcInfo,
         "object definition does not accept value for: ").quote() << c.ctrl_name;
       return;
     }
-    if( (*props)["type"] == EsdlClassName(TTrackBar) ||
-        (*props)["type"] == EsdlClassName(TSpinCtrl) )
+    if ((*props)["type"] == EsdlClassName(TTrackBar) ||
+        (*props)["type"] == EsdlClassName(TSpinCtrl))
     {
       const size_t si = Params[1].IndexOf(',');
-      if( si == InvalidIndex )
+      if (si == InvalidIndex)
         (*props)["val"] = Params[1];
-      else  {
+      else {
         (*props)["min"] = Params[1].SubStringTo(si);
         (*props)["max"] = Params[1].SubStringFrom(si+1);
       }
@@ -590,8 +590,8 @@ void THtmlManager::funSetValue(const TStrObjList &Params, TMacroError &E)  {
     else
       (*props)["val"] = Params[1];
   }
-  else  {
-    c.html->SetObjectValue(c.ctrl, Params[1]);
+  else {
+    c.html->SetObjectValue(c.ctrl, c.ctrl_name, Params[1]);
     wxWindow *w = dynamic_cast<wxWindow *>(c.ctrl);
     if (w != NULL)
       w->Refresh();
