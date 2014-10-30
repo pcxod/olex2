@@ -645,11 +645,10 @@ public:
   void RestoreSelection();
   void CopySelection() const;
   void PasteSelection();
-  TUndoData* Name(const olxstr& From, const olxstr& To, bool CheckLabels,
+  TUndoData* Name(const olxstr& From, const olxstr& To,
     bool ClearSelection, bool NameResi=false);
-  TUndoData* Name(TXAtom& Atom, const olxstr& Name, bool CheckLabels);
-  TUndoData* ChangeSuffix(const TXAtomPList& xatoms, const olxstr& To,
-    bool CheckLabels);
+  TUndoData* Name(TXAtom& Atom, const olxstr& Name);
+  TUndoData* ChangeSuffix(const TXAtomPList& xatoms, const olxstr& To);
   // makes sure that residues have the same labels as the reference atoms
   TUndoData* SynchroniseResidues(const TXAtomPList &reference);
 

@@ -254,6 +254,9 @@ public:
 
   olxstr CheckLabel(const TCAtom* ca, const olxstr &Label,
     char a='0', char b='a', char c='a') const;
+  /* finds labels duplicate for the given atom list
+  */
+  TCAtomPList::const_list_type FindDiplicateLabels(const TCAtomPList &atoms);
 
   bool IsQPeakMinMaxInitialised() const {  return MaxQPeak != -1000;  }
   DefPropP(double, MinQPeak)
