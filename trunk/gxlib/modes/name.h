@@ -69,7 +69,7 @@ protected:
   void DoNumber(TXAtom &a, TNameModeUndo* undo) {
     olxstr Labl =  Symbol.IsEmpty() ? a.GetType().symbol : Symbol;
     Labl << Prefix <<  Index << Suffix;
-    undo->AddAction(TGXApp::GetInstance().Name(a, Labl, false));
+    undo->AddAction(TGXApp::GetInstance().Name(a, Labl));
     undo->AddAtom(a);
     TGXApp::GetInstance().MarkLabel(a, true);
     Index++;
@@ -197,14 +197,14 @@ public:
       bi.Next().SetSelectable(true);
     gxapp.XFile().GetLattice().UpdateConnectivity();
   }
-  virtual bool OnObject_(AGDrawObject& obj)  {
+  virtual bool OnObject_(AGDrawObject& obj) {
     if( EsdlInstanceOf(obj, TXAtom) )  {
       TXAtom &XA = (TXAtom&)obj;
       olxstr Labl(Symbol.IsEmpty() ? XA.GetType().symbol : Symbol);
       Labl << Prefix <<  Index << Suffix;
       TNameModeUndo* undo = new TNameModeUndo(XA);
       gxapp.MarkLabel(XA, true);
-      undo->AddAction(gxapp.Name(XA, Labl, false));
+      undo->AddAction(gxapp.Name(XA, Labl));
       if (NameResidues) {
         undo->AddAction(gxapp.SynchroniseResidues(TXAtomPList() << XA));
       }

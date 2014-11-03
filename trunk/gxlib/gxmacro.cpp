@@ -50,7 +50,6 @@ void GXLibMacros::Export(TLibrary& lib) {
     );
 
   gxlib_InitMacro(Name,
-    "c-enables checking labels for duplications&;"
     "s-simply changes suffix of provided atoms to the provided one (or none)&;"
     "cs-leaves current selection unchanged&;"
     "r-synchronise names in the residues"
@@ -457,14 +456,13 @@ void GXLibMacros::macName(TStrObjList &Cmds, const TParamList &Options,
     sel.Clear();
     return;
   }
-  bool checkLabels = Options.GetBoolOption('c');
   bool changeSuffix = Options.Contains('s');
   bool nameResi = Options.GetBoolOption('r');
   if (changeSuffix) {
     TXAtomPList xatoms = app.FindXAtoms(Cmds, true, !Options.Contains("cs"));
     if (!xatoms.IsEmpty()) {
       TUndoData *ud = app.GetUndo().Push(app.ChangeSuffix(
-        xatoms, Options.FindValue('s'), checkLabels));
+        xatoms, Options.FindValue('s')));
       if (nameResi) {
         TUndoData *rud = app.SynchroniseResidues(xatoms);
         if (ud != NULL)
@@ -481,20 +479,18 @@ void GXLibMacros::macName(TStrObjList &Cmds, const TParamList &Options,
       if (spi != InvalidIndex) {
         app.GetUndo().Push(
           app.Name(Cmds[0].SubStringTo(spi),
-          Cmds[0].SubStringFrom(spi+1), checkLabels,
-          !Options.Contains("cs"), nameResi)
+          Cmds[0].SubStringFrom(spi+1), !Options.Contains("cs"), nameResi)
         );
       }
       else {
         app.GetUndo().Push(
-          app.Name("sel", Cmds[0], checkLabels, !Options.Contains("cs"),
+          app.Name("sel", Cmds[0], !Options.Contains("cs"),
           nameResi));
       }
       processed = true;
     }
     else if (Cmds.Count() == 2) {
-      app.GetUndo().Push(app.Name(
-        Cmds[0], Cmds[1], checkLabels, !Options.Contains("cs"),
+      app.GetUndo().Push(app.Name(Cmds[0], Cmds[1], !Options.Contains("cs"),
         nameResi));
       processed = true;
     }

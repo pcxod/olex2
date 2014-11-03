@@ -273,7 +273,7 @@ RefinementModel::HklStat TXApp::CalcFsq(TRefList &refs, evecd &Fsq,
   return rv;
 }
 //..............................................................................
-void TXApp::NameHydrogens(TSAtom& SA, TUndoData* ud, bool CheckLabel)  {
+void TXApp::NameHydrogens(TSAtom& SA, TUndoData* ud)  {
   TNameUndo* nu = static_cast<TNameUndo*>(ud);
   int lablInc = 0;
   olx_pdict<int,TSAtomPList> parts;
@@ -301,7 +301,7 @@ void TXApp::NameHydrogens(TSAtom& SA, TUndoData* ud, bool CheckLabel)  {
         Labl << (char)('a'+i);  // part ID
       if( al.Count() > 1 )
         Labl << (char)('a' + lablInc++);
-      if( CheckLabel )  {
+      if (true ) {
         if (lablInc > 25) {
           Labl = al[j]->CAtom().GetParent()->CheckLabel(&al[j]->CAtom(), Labl);
           continue;
@@ -395,7 +395,7 @@ TUndoData* TXApp::FixHL()  {
       TSAtomPList& al = frags.GetValue(i);
       for (size_t j = 0; j < al.Count(); j++) {
         if (!XElementLib::IsMetal(al[j]->GetType()))
-          NameHydrogens(*al[j], undo, true);
+          NameHydrogens(*al[j], undo);
       }
     }
   }
@@ -404,7 +404,7 @@ TUndoData* TXApp::FixHL()  {
       TSAtomPList& al = frags.Get(frag_id[i]);
       for (size_t j = 0; j < al.Count(); j++) {
         if (!XElementLib::IsMetal(al[j]->GetType()))
-          NameHydrogens(*al[j], undo, true);
+          NameHydrogens(*al[j], undo);
       }
     }
   }
@@ -413,7 +413,7 @@ TUndoData* TXApp::FixHL()  {
     TSAtom& sa = objects.atoms[i];
     if (!sa.CAtom().IsAvailable() || !sa.IsAUAtom())  continue;
     if (sa.GetType() == iHydrogenZ && sa.CAtom().GetTag() == -2)
-      NameHydrogens(sa, undo, true);
+      NameHydrogens(sa, undo);
   }
   return undo;
 }
