@@ -3051,23 +3051,23 @@ void GXLibMacros::macEsd(TStrObjList &Cmds, const TParamList &Options,
         transforms.Add(0, central_atom->crd() - face1_center);
         PlaneSort::Sorter::DoSort(atoms, transforms, central_atom->crd(),
           normal, sorted_atoms);
-        size_t min_id = sorted_atoms[0]->CAtom().GetId(), mi=0;
-        for (size_t ai = 1; ai < sorted_atoms.Count(); ai++) {
-          size_t id = sorted_atoms[ai]->CAtom().GetId();
-          if (id <= min_id) {
-            if (id == min_id) {
-              if (sorted_atoms[ai]->IsAUAtom()) {
-                mi = ai;
-              }
-              continue;
-            }
-            mi = ai;
-            min_id = id;
-          }
-        }
-        //if (sorted_atoms[0]->GetTag() != 1)
-        //  sorted_atoms.ShiftR(1);
-        sorted_atoms.ShiftL(mi);
+        //size_t min_id = sorted_atoms[0]->CAtom().GetId(), mi=0;
+        //for (size_t ai = 1; ai < sorted_atoms.Count(); ai++) {
+        //  size_t id = sorted_atoms[ai]->CAtom().GetId();
+        //  if (id <= min_id) {
+        //    if (id == min_id) {
+        //      if (sorted_atoms[ai]->IsAUAtom()) {
+        //        mi = ai;
+        //      }
+        //      continue;
+        //    }
+        //    mi = ai;
+        //    min_id = id;
+        //  }
+        //}
+        //sorted_atoms.ShiftL(mi);
+        if (sorted_atoms[0]->GetTag() != 1)
+          sorted_atoms.ShiftR(1);
         values.Add("Face ") << (i+1) << ": " <<
           olx_analysis::alg::label(sorted_atoms, true, ' ') << ' ';
         sorted_atoms.Insert(0, central_atom);
