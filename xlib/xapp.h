@@ -28,7 +28,7 @@ const uint32_t
   psCheckFileTypeP4P = 0x00080000,
   psCheckFileTypeCRS = 0x00100000;
 
-class TNameUndo : public TUndoData  {
+class TNameUndo : public TUndoData {
 public:
   struct NameRef {
     size_t catom_id;
@@ -47,9 +47,9 @@ public:
   void AddAtom(TCAtom& A, const olxstr& oldName)  {
     Data.Add(new NameRef(A.GetId(), &A.GetType(), A.GetQPeak(), oldName));
   }
-  inline size_t AtomCount() const {  return Data.Count();  }
-  inline size_t GetCAtomId(size_t i) const {  return  Data[i].catom_id;  }
-  inline const olxstr& GetLabel(size_t i) const {  return  Data[i].name;  }
+  size_t AtomCount() const {  return Data.Count();  }
+  size_t GetCAtomId(size_t i) const {  return  Data[i].catom_id;  }
+  const olxstr& GetLabel(size_t i) const {  return  Data[i].name;  }
   double GetPeakHeight(size_t i) const {  return Data[i].peak_height;  }
   const cm_Element& GetElement(size_t i) const {  return *Data[i].elm;  }
 };
@@ -122,7 +122,7 @@ public:
     bool scale) const;
   /* function undoes renaming atoms */
   void undoName(TUndoData *data);
-  void NameHydrogens(TSAtom& a, TUndoData* ud, bool CheckLabel);
+  void NameHydrogens(TSAtom& a, TUndoData* ud);
   // fixes hydrogen atom labels
   TUndoData* FixHL();
   static void RingContentFromStr(const olxstr& textDescr,

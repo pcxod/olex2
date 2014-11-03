@@ -484,32 +484,34 @@ TEllipsoid& TAsymmUnit::NewEllp() {
 //..............................................................................
 void TAsymmUnit::PackEllps() {
   size_t removed = 0;
-  for( size_t i=0; i < Ellipsoids.Count(); i++ )  {
-    if( Ellipsoids[i] == NULL )  {
-      for( size_t j=0; j < CAtoms.Count(); j++ )  {
-        if( olx_is_valid_index(CAtoms[j]->GetEllpId()) && CAtoms[j]->GetEllpId() > (i-removed) )
+  for (size_t i = 0; i < Ellipsoids.Count(); i++) {
+    if (Ellipsoids[i] == NULL)  {
+      for (size_t j = 0; j < CAtoms.Count(); j++) {
+        if (olx_is_valid_index(CAtoms[j]->GetEllpId()) &&
+          CAtoms[j]->GetEllpId() >(i - removed))
+        {
           CAtoms[j]->SetEllpId(CAtoms[j]->GetEllpId() - 1);
+        }
       }
       removed++;
     }
     else
-      Ellipsoids[i]->SetId(i-removed);
+      Ellipsoids[i]->SetId(i - removed);
   }
-  if( removed != 0 )
+  if (removed != 0)
     Ellipsoids.Pack();
 }
 //..............................................................................
-void TAsymmUnit::NullEllp(size_t i)  {
-  if( Ellipsoids[i] != NULL )  {
+void TAsymmUnit::NullEllp(size_t i) {
+  if (Ellipsoids[i] != NULL) {
     delete Ellipsoids[i];
     Ellipsoids[i] = NULL;
   }
 }
 //..............................................................................
-void TAsymmUnit::ClearEllps()  {
-  for( size_t i=0; i < Ellipsoids.Count(); i++ )
-    delete Ellipsoids[i];
-  for( size_t i=0; i < CAtoms.Count(); i++ )
+void TAsymmUnit::ClearEllps() {
+  Ellipsoids.DeleteItems(false);
+  for (size_t i=0; i < CAtoms.Count(); i++)
     CAtoms[i]->AssignEllp(NULL);
   Ellipsoids.Clear();
 }
@@ -517,15 +519,15 @@ void TAsymmUnit::ClearEllps()  {
 vec3d TAsymmUnit::GetOCenter(bool IncludeQ, bool IncludeH) const {
   vec3d P;
   double wght = 0;
-  for( size_t i=0; i < AtomCount(); i++ )  {
-    if( CAtoms[i]->IsDeleted() )  continue;
-    if( !IncludeQ && CAtoms[i]->GetType() == iQPeakZ )  continue;
-    if( !IncludeH && CAtoms[i]->GetType() == iHydrogenZ )  continue;
+  for (size_t i = 0; i < AtomCount(); i++) {
+    if (CAtoms[i]->IsDeleted())  continue;
+    if (!IncludeQ && CAtoms[i]->GetType() == iQPeakZ)  continue;
+    if (!IncludeH && CAtoms[i]->GetType() == iHydrogenZ)  continue;
     P += CAtoms[i]->ccrd()*CAtoms[i]->GetOccu();
     wght += CAtoms[i]->GetOccu();
   }
 
-  if( wght != 0 )
+  if (wght != 0)
     P /= wght;
   return P;
 }
@@ -536,11 +538,11 @@ up, atoms' degeracy should not be taken into account ...
 ContentList::const_list_type TAsymmUnit::GetContentList(double mult) const {
   ElementPList elements;
   ContentList rv;
-  for( size_t i=0; i < AtomCount(); i++ )  {
+  for (size_t i = 0; i < AtomCount(); i++) {
     const cm_Element& elm = CAtoms[i]->GetType();
-    if( CAtoms[i]->IsDeleted() || elm == iQPeakZ )  continue;
+    if (CAtoms[i]->IsDeleted() || elm == iQPeakZ)  continue;
     size_t ind = elements.IndexOf(elm);
-    if( ind == InvalidIndex )  {
+    if (ind == InvalidIndex) {
       rv.AddNew(elm, CAtoms[i]->GetOccu()*mult);
       elements.Add(elm);
     }
@@ -553,11 +555,11 @@ ContentList::const_list_type TAsymmUnit::GetContentList(double mult) const {
 olxstr TAsymmUnit::_SummFormula(const olxstr &Sep, double mult) const {
   ContentList cl = GetContentList(mult);
   olxstr rv;
-  for( size_t i=0; i < cl.Count(); i++)  {
+  for (size_t i = 0; i < cl.Count(); i++) {
     rv << cl[i].element.symbol;
-    if( olx_abs(cl[i].count-1.0) > 1e-3 )
+    if (olx_abs(cl[i].count - 1.0) > 1e-3)
       rv << olxstr::FormatFloat(3, cl[i].count).TrimFloat();
-    if( (i+1) < cl.Count() )
+    if ((i + 1) < cl.Count())
       rv << Sep;
   }
   return rv;
@@ -600,6 +602,35 @@ void TAsymmUnit::AddMatrix(const smatd& a)  {
     Matrices.InsertCopy(0, a);
   else
     Matrices.AddCopy(a);
+}
+//..............................................................................
+TCAtomPList::const_list_type TAsymmUnit::FindDiplicateLabels(
+  const TCAtomPList &atoms_)
+{
+  TCAtomPList duplicates;
+  olxstr_dict<TCAtom *, true> atoms;
+  CAtoms.ForEach(ACollectionItem::TagSetter(1));
+  // make sure the given list labels are unique
+  for (size_t i = 0; i < atoms_.Count(); i++) {
+    atoms.Add(atoms_[i]->GetResiLabel(), atoms_[i])->SetTag(0);
+  }
+
+  for (size_t i = 0; i < atoms.Count(); i++) {
+    const TCAtom &a = *atoms.GetValue(i);
+    const TResidue& resi = GetResidue(a.GetResiId());
+    for (size_t j = 0; j < resi.Count(); j++) {
+      TCAtom& b = resi[j];
+      if (b.GetTag() == 0 || (b.GetPart() != a.GetPart() &&
+        (b.GetPart() | a.GetPart()) != 0) || b.IsDeleted())
+      {
+        continue;
+      }
+      if (b.GetLabel().Equalsi(a.GetLabel())) {
+        duplicates << b;
+      }
+    }
+  }
+  return duplicates;
 }
 //..............................................................................
 olxstr TAsymmUnit::CheckLabel(const TCAtom* ca, const olxstr &Label,

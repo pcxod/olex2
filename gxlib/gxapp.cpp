@@ -2124,32 +2124,36 @@ void TGXApp::CheckQBonds(TXAtom& XA)  {
   }
 }
 //..............................................................................
-TUndoData* TGXApp::ChangeSuffix(const TXAtomPList& xatoms, const olxstr &To,
-  bool CheckLabels)
-{
+TUndoData* TGXApp::ChangeSuffix(const TXAtomPList& xatoms, const olxstr &To) {
   TNameUndo *undo = new TNameUndo(
     new TUndoActionImplMF<TGXApp>(this, &GxlObject(TGXApp::undoName)));
-  for( size_t i=0; i < xatoms.Count(); i++ )  {
+  TCAtomPList processed;
+  for (size_t i = 0; i < xatoms.Count(); i++) {
     const olxstr oldL = xatoms[i]->GetLabel();
     olxstr newL = xatoms[i]->GetType().symbol;
-    for( size_t j=newL.Length(); j < oldL.Length(); j++ )  {
+    for (size_t j=newL.Length(); j < oldL.Length(); j++) {
       if( olxstr::o_isdigit(oldL.CharAt(j)) )
         newL << oldL[j];
       else
         break;
     }
     newL << To;
-    if( newL == oldL )  continue;
-
-    if( CheckLabels )
-      newL = XFile().GetAsymmUnit().CheckLabel(&xatoms[i]->CAtom(), newL);
+    if (newL == oldL) continue;
     xatoms[i]->CAtom().SetLabel(newL, false);
+    processed << xatoms[i]->CAtom();
     undo->AddAtom(xatoms[i]->CAtom(), oldL);
+  }
+  TAsymmUnit &au = XFile().GetAsymmUnit();
+  TCAtomPList duplicates = au.FindDiplicateLabels(processed);
+  for (size_t i = 0; i < duplicates.Count(); i++) {
+    olxstr l = duplicates[i]->GetLabel();
+    duplicates[i]->SetLabel(au.CheckLabel(duplicates[i], l));
+    undo->AddAtom(*duplicates[i], l);
   }
   return undo;
 }
 //..............................................................................
-TUndoData* TGXApp::Name(TXAtom& XA, const olxstr& _Name, bool CheckLabel)  {
+TUndoData* TGXApp::Name(TXAtom& XA, const olxstr& _Name) {
   olxstr Name = _Name;
   bool checkBonds = (XA.GetType() == iQPeakZ);
   const cm_Element* elm;
@@ -2164,19 +2168,24 @@ TUndoData* TGXApp::Name(TXAtom& XA, const olxstr& _Name, bool CheckLabel)  {
     throw TFunctionFailedException(__OlxSourceInfo, "invalid element");
   TNameUndo *undo = new TNameUndo(
     new TUndoActionImplMF<TGXApp>(this, &GxlObject(TGXApp::undoName)));
+  TCAtomPList processed;
   olxstr oldL = XA.GetLabel();
   bool recreate = ((elm == NULL) ? true : XA.GetType() != *elm);
-  if( Name.Length() == elm->symbol.Length() && oldL.StartsFromi(XA.GetType().symbol) )
+  if (Name.Length() == elm->symbol.Length() &&
+    oldL.StartsFromi(XA.GetType().symbol))
+  {
     Name = elm->symbol + oldL.SubStringFrom(XA.GetType().symbol.Length());
-  XA.CAtom().SetLabel(
-    CheckLabel ? XFile().GetAsymmUnit().CheckLabel(&XA.CAtom(), Name) : Name, false);
-  if( oldL != XA.GetLabel() || *elm != XA.GetType() )
+  }
+  XA.CAtom().SetLabel(Name, false);
+  if (oldL != XA.GetLabel() || *elm != XA.GetType()) {
     undo->AddAtom(XA.CAtom(), oldL);
+    processed << XA.CAtom();
+  }
   XA.CAtom().SetType(*elm);
   // Dima's complaint - leave all in for manual naming
   //NameHydrogens(XA.Atom(), undo, CheckLabel);
-  if( checkBonds )  CheckQBonds(XA);
-  if( recreate )  {
+  if (checkBonds) CheckQBonds(XA);
+  if (recreate) {
     AGDObjList objects = XA.GetPrimitives().GetObjects();
     XA.GetPrimitives().ClearObjects();
     for (size_t i=0; i < objects.Count(); i++) {
@@ -2184,15 +2193,23 @@ TUndoData* TGXApp::Name(TXAtom& XA, const olxstr& _Name, bool CheckLabel)  {
     }
     SynchroniseBonds(TXAtomPList(objects, DynamicCastAccessor<TXAtom>()));
   }
+  TAsymmUnit &au = XFile().GetAsymmUnit();
+  TCAtomPList duplicates = au.FindDiplicateLabels(processed);
+  for (size_t i = 0; i < duplicates.Count(); i++) {
+    olxstr l = duplicates[i]->GetLabel();
+    duplicates[i]->SetLabel(au.CheckLabel(duplicates[i], l));
+    undo->AddAtom(*duplicates[i], l);
+  }
   UpdateDuplicateLabels();
   return undo;
 }
 //..............................................................................
-TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To, bool CheckLabel,
+TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To,
   bool ClearSelection, bool NameResi)
 {
   TXAtomPList Atoms;
   olx_object_ptr<TNameUndo> undo;
+  TCAtomPList processed;
   const cm_Element *to_elm = XElementLib::FindBySymbol(From);
   if (to_elm != NULL && To.IsNumber()) {
     undo = new TNameUndo(
@@ -2207,11 +2224,10 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To, bool CheckLabel,
       olxstr NL = XA->GetType().symbol;
       NL << j++;
       const olxstr oldL = XA->GetLabel();
-      XA->CAtom().SetLabel(
-        CheckLabel ? XFile().GetAsymmUnit().CheckLabel(&XA->CAtom(), NL) : NL,
-        false);
+      XA->CAtom().SetLabel(NL, false);
       undo().AddAtom(XA->CAtom(), oldL);
-      NameHydrogens(*XA, &undo(), CheckLabel);
+      processed << XA->CAtom();
+      NameHydrogens(*XA, &undo());
       if (checkBonds)
         CheckQBonds(*XA);
     }
@@ -2221,7 +2237,7 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To, bool CheckLabel,
     if (XA != NULL) {
       Atoms << XA;
       if (ClearSelection) SelectAll(false);
-      undo = dynamic_cast<TNameUndo *>(Name(*XA, To, CheckLabel));
+      undo = dynamic_cast<TNameUndo *>(Name(*XA, To));
     }
     else {
       undo = new TNameUndo(
@@ -2239,11 +2255,10 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To, bool CheckLabel,
           olxstr NL = XA->GetType().symbol;
           NL << j++;
           const olxstr oldL = XA->GetLabel();
-          XA->CAtom().SetLabel(
-            CheckLabel ? XFile().GetAsymmUnit().CheckLabel(&XA->CAtom(), NL) : NL,
-            false);
+          XA->CAtom().SetLabel(NL, false);
           undo().AddAtom(XA->CAtom(), oldL);
-          NameHydrogens(*XA, &undo(), CheckLabel);
+          processed << XA->CAtom();
+          NameHydrogens(*XA, &undo());
           if (checkBonds)
             CheckQBonds(*XA);
         }
@@ -2260,12 +2275,11 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To, bool CheckLabel,
             NL << Tmp.SubStringFrom(From.Length()-1);
             bool recreate = XA->GetType() != *elm;
             const olxstr oldL = XA->GetLabel();
-            XA->CAtom().SetLabel(
-              CheckLabel ? XFile().GetAsymmUnit().CheckLabel(&XA->CAtom(), NL)
-              : NL, false);
+            XA->CAtom().SetLabel(NL, false);
             undo().AddAtom(XA->CAtom(), oldL);
+            processed << XA->CAtom();
             XA->CAtom().SetType(*elm);
-            NameHydrogens(*XA, &undo(), CheckLabel);
+            NameHydrogens(*XA, &undo());
             if (recreate) {
               ChangedAtoms.Add(XA);
               if (checkBonds)
@@ -2282,12 +2296,11 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To, bool CheckLabel,
             olxstr NL = XA->GetType().symbol;
             NL << j++;
             const olxstr oldL = XA->GetLabel();
-            XA->CAtom().SetLabel(
-              CheckLabel ? XFile().GetAsymmUnit().CheckLabel(&XA->CAtom(), NL) : NL,
-              false);
+            XA->CAtom().SetLabel(NL, false);
+            processed << XA->CAtom();
             undo().AddAtom(XA->CAtom(), oldL);
-            NameHydrogens(*XA, &undo(), CheckLabel);
-            if( checkBonds )
+            NameHydrogens(*XA, &undo());
+            if (checkBonds)
               CheckQBonds(*XA);
           }
         }
@@ -2324,12 +2337,11 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To, bool CheckLabel,
             }
           }
           const olxstr oldL = XA->GetLabel();
-          XA->CAtom().SetLabel(
-            CheckLabel ? XFile().GetAsymmUnit().CheckLabel(&XA->CAtom(), NL) : NL,
-            false);
+          XA->CAtom().SetLabel(NL, false);
           undo().AddAtom(XA->CAtom(), oldL);
+          processed << XA->CAtom();
           XA->CAtom().SetType(*elm);
-          NameHydrogens(*XA, &undo(), CheckLabel);
+          NameHydrogens(*XA, &undo());
           if (recreate) {
             ChangedAtoms.Add(XA);
             if (checkBonds)
@@ -2345,6 +2357,13 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To, bool CheckLabel,
       }
       for (size_t i=0; i < objects.Count(); i++) {
         objects[i]->Create();
+      }
+      TAsymmUnit &au = XFile().GetAsymmUnit();
+      TCAtomPList duplicates = au.FindDiplicateLabels(processed);
+      for (size_t i = 0; i < duplicates.Count(); i++) {
+        olxstr l = duplicates[i]->GetLabel();
+        duplicates[i]->SetLabel(au.CheckLabel(duplicates[i], l));
+        undo().AddAtom(*duplicates[i], l);
       }
       SynchroniseBonds(TXAtomPList(objects, DynamicCastAccessor<TXAtom>()));
       UpdateDuplicateLabels();
@@ -3072,16 +3091,11 @@ void TGXApp::UpdateDuplicateLabels() {
       if (ld.GetValue(idx) != InvalidIndex) {
         if (FLabels->GetMaterialIndex(ld.GetValue(idx)) != lmiMark) {
           FLabels->SetMaterialIndex(ld.GetValue(idx), lmiDuplicateLabel);
-          TXAtom &b = GetXAtom(ld.GetValue(idx));
-          b.CAtom().SetLabel(
-            b.CAtom().GetParent()->CheckLabel(&b.CAtom(), b.GetLabel()), false);
           ld.GetValue(idx) = InvalidIndex;
         }
       }
       if (FLabels->GetMaterialIndex(a.GetOwnerId()) != lmiMark) {
         FLabels->SetMaterialIndex(a.GetOwnerId(), lmiDuplicateLabel);
-        a.CAtom().SetLabel(
-          a.CAtom().GetParent()->CheckLabel(&a.CAtom(), a.GetLabel()), false);
       }
     }
     else {

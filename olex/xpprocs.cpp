@@ -6390,9 +6390,31 @@ void TMainForm::macElevate(TStrObjList &Cmds, const TParamList &Options, TMacroE
 void TMainForm::macRestart(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   olxstr cd = TEFile::CurrentDir();
   TEFile::ChangeDir(TBasicApp::GetBaseDir());
-  wxExecute(TBasicApp::GetModuleName().u_str());
-  FXApp->UpdateOption("confirm_on_close", FalseString());
-  Close(false);
+  bool update = Options.GetBoolOption('u');
+  olxstr en;
+  if (!update) {
+    en = TBasicApp::GetModuleName();
+  }
+  else {
+#if defined(__WIN32__)
+    en = TEFile::ChangeFileExt(TBasicApp::GetModuleName(), "exe");
+    TStrList toks(TBasicApp::GetBaseDir(), TEFile::GetPathDelimeter());
+#elif defined(__MAC__)
+    if (toks.Count() > 2) {
+      en = toks.SubListTo(toks.Count()-2).Text(TEFile::GetPathDelimeter());
+    }
+#else
+    en = TBasicApp::GetBaseDir() + "start";
+#endif
+  }
+  if (TEFile::Exists(en)) {
+    wxExecute(en.u_str());
+    FXApp->UpdateOption("confirm_on_close", FalseString());
+    Close(false);
+  }
+  else {
+    E.ProcessingError(__OlxSrcInfo, "Could not locate the required file");
+  }
 }
 //..............................................................................
 double ProbFactorEx(double scale)  {
