@@ -1887,7 +1887,7 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
       // enabling the timer back
       // retrun fucus to the main window, but let typing in the comboboxes
       if (Sender != NULL) {
-        const type_info &ti = typeid(*Sender);
+        const std::type_info &ti = typeid(*Sender);
         if (((olxstr*)Data)->IsEmpty())
           ;
         else if (ti == typeid(TComboBox) && !((TComboBox*)Sender)->IsReadOnly())
