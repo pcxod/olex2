@@ -6398,11 +6398,8 @@ void TMainForm::macRestart(TStrObjList &Cmds, const TParamList &Options, TMacroE
   else {
 #if defined(__WIN32__)
     en = TEFile::ChangeFileExt(TBasicApp::GetModuleName(), "exe");
-    TStrList toks(TBasicApp::GetBaseDir(), TEFile::GetPathDelimeter());
 #elif defined(__MAC__)
-    if (toks.Count() > 2) {
-      en = toks.SubListTo(toks.Count()-2).Text(TEFile::GetPathDelimeter());
-    }
+    en = TBasicApp::GetBaseDir() + "olex2";
 #else
     en = TBasicApp::GetBaseDir() + "start";
 #endif
@@ -6413,7 +6410,8 @@ void TMainForm::macRestart(TStrObjList &Cmds, const TParamList &Options, TMacroE
     Close(false);
   }
   else {
-    E.ProcessingError(__OlxSrcInfo, "Could not locate the required file");
+    E.ProcessingError(__OlxSrcInfo, "Could not locate the required file: ")
+      .quote() << en;
   }
 }
 //..............................................................................
