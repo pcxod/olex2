@@ -663,7 +663,7 @@ void TMainForm::ObjectUnderMouse(AGDrawObject *G)  {
 void TMainForm::OnAtomTypeChange(wxCommandEvent& event)  {
   TXAtom *XA = (TXAtom*)FObjectUnderMouse;
   if (XA == NULL)  return;
-  olxstr Tmp("name -c ");
+  olxstr Tmp("name ");
   if (XA->IsSelected())
     Tmp << "sel";
   else
