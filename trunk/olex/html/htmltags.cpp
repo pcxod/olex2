@@ -23,7 +23,9 @@
   #define _StrFormat_ wxT("%s")
 #endif
 
-bool GetBoolAttribute(const wxHtmlTag &tag, const olxstr &attr) {
+bool GetBoolAttribute(const wxHtmlTag &tag, const olxstr &attr,
+  bool if_absent=false)
+{
   if (tag.HasParam(attr.u_str())) {
     olxstr v = tag.GetParam(attr.u_str());
     if (v.IsBool())
@@ -31,7 +33,7 @@ bool GetBoolAttribute(const wxHtmlTag &tag, const olxstr &attr) {
     else
       return true;
   }
-  return false;
+  return if_absent;
 }
 
 void AdjustSize(wxWindow &w, bool height=true, bool width=false) {
@@ -507,10 +509,7 @@ TAG_HANDLER_PROC(tag)  {
       if (buttonImage.IndexOf(',') != InvalidIndex) {
         TImgButton* ibtn = new TImgButton(html);
         ibtn->SetImages(buttonImage, width_set ? ax : -1, height_set ? ay : -1);
-        if( tag.HasParam(wxT("ENABLED")) )
-          ibtn->SetEnabled(olxstr(tag.GetParam(wxT("ENABLED"))).ToBool());
-        if( tag.HasParam(wxT("DOWN")) )
-          ibtn->SetDown(olxstr(tag.GetParam(wxT("DOWN"))).ToBool());
+        ibtn->SetDown(GetBoolAttribute(tag, "DOWN"));
         CreatedWindow = ibtn;
         Btn = ibtn;
       }
@@ -577,6 +576,7 @@ TAG_HANDLER_PROC(tag)  {
 #endif
       CreatedWindow = (TButton*)Btn;
     }
+    CreatedWindow->Enable(GetBoolAttribute(tag, "ENABLED", true));
     CreatedObject = Btn;
     Btn->SetData(Data);
     if (tag.HasParam(wxT("ONCLICK"))) {
