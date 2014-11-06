@@ -68,7 +68,7 @@ void TXAtom::Update()  {
 void TXAtom::InitActualSphere() {
   Settings &defs = GetSettings();
   ActualSphere = ~0;
-  if (defs.QualityValue == qaPict)
+  if (defs.GetQuality() == qaPict)
     return;
   if (CAtom().GetExyzGroup() != NULL && defs.ConstrainedAtomSphere != ~0)
     ActualSphere = defs.ConstrainedAtomSphere;
@@ -77,7 +77,6 @@ void TXAtom::InitActualSphere() {
 }
 //..............................................................................
 int TXAtom::Quality(TGlRenderer &r, int V) {
-  if (V == -1) V = qaMedium;
   Settings &defs = GetSettings(r);
   defs.SetRimR(1.02);
   defs.SetDiskS(defs.GetRimW());
@@ -88,6 +87,7 @@ int TXAtom::Quality(TGlRenderer &r, int V) {
       defs.SetDiskQ(30);
       break;
     case qaMedium:
+    default:
       defs.SetSphereQ(15);
       defs.SetRimQ(15);
       defs.SetDiskQ(15);
@@ -105,8 +105,8 @@ int TXAtom::Quality(TGlRenderer &r, int V) {
       break;
   }
   defs.SetDiskOR(defs.GetRimR());
-  int rv = defs.QualityValue;
-  defs.QualityValue = V;
+  int rv = defs.GetQuality();
+  defs.SetQuality(V);
   return rv;
 }
 //..............................................................................

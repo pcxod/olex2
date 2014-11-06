@@ -121,7 +121,7 @@ public:
     }
     void set_defaults() {
       radius = -1;
-      mask = cone_q = cone_stipples = -1;
+      mask = cone_q = cone_stipples = quality = -1;
     }
     void OnStyleChange() {
       set_defaults();
@@ -146,6 +146,10 @@ public:
     }
     int GetMask() const { return GetParam("DefM", mask, int(7)); }
     void SetMask(int v) { style->SetParam("DefM", (mask = v), true); }
+    int GetQuality() const { return GetParam("Quality", quality, qaMedium); }
+    void SetQuality(int v) const {
+      return style->SetParam("Quality", (quality = v), true);
+    }
     const TStringToList<olxstr, TGlPrimitive*> &GetPrimitives() const {
       return primitives;
     }

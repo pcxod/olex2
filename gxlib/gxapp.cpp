@@ -709,11 +709,11 @@ void TGXApp::Init() {
   }
 }
 //..............................................................................
-int32_t TGXApp::Quality(const short V)  {
+int32_t TGXApp::Quality(int V) {
   GetRenderer().GetScene().MakeCurrent();
   int aq = (uint16_t)(V >> 16);
   if (aq == 0) aq = V;
-  int rv = TXAtom::Quality(GetRenderer(), aq) << 16;
+  int32_t rv = TXAtom::Quality(GetRenderer(), aq) << 16;
   TXAtom::GetSettings(GetRenderer()).ClearPrimitives();
   rv |= TXBond::Quality(GetRenderer(), V & 0x0000FFFF);
   TXBond::GetSettings(GetRenderer()).ClearPrimitives();
