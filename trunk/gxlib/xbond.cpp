@@ -261,18 +261,18 @@ void TXBond::ListPrimitives(TStrList &List) const {
 }
 //..............................................................................
 int TXBond::Quality(TGlRenderer &r, int Val) {
-  static int previous_quality = -1;
-  if (Val == -1) Val = qaMedium;
   int q = 0;
   switch (Val) {
     case qaPict:
     case qaHigh:   q = 30;  break;
+    default:
     case qaMedium: q = 15;  break;
     case qaLow:    q = 5;  break;
   }
-  GetSettings(r).SetConeQ(q);
-  int pq = previous_quality;
-  previous_quality = Val;
+  Settings &defs = GetSettings(r);
+  defs.SetConeQ(q);
+  int pq = defs.GetQuality();
+  defs.SetQuality(Val);
   return pq;
 }
 //..............................................................................

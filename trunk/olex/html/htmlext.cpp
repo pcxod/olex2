@@ -542,7 +542,7 @@ void THtml::OnCellMouseHover(wxHtmlCell *Cell, wxCoord x, wxCoord y)  {
 }
 //.............................................................................
 olxstr THtml::GetObjectValue(const AOlxCtrl *Obj) {
-  const type_info &ti = typeid(*Obj);
+  const std::type_info &ti = typeid(*Obj);
   if (ti == typeid(TTextEdit)) { return ((TTextEdit*)Obj)->GetText(); }
   if (ti == typeid(TCheckBox)) { return ((TCheckBox*)Obj)->GetCaption(); }
   if (ti == typeid(TTrackBar)) { return ((TTrackBar*)Obj)->GetValue(); }
@@ -575,7 +575,7 @@ olxstr THtml::GetObjectValue(const AOlxCtrl *Obj) {
 void THtml::SetObjectValue(AOlxCtrl *Obj,
   const olxstr& name, const olxstr& Value)
 {
-  const type_info &ti = typeid(*Obj);
+  const std::type_info &ti = typeid(*Obj);
   if (ti == typeid(TTextEdit))
     ((TTextEdit*)Obj)->SetText(Value);
   else if (ti == typeid(TCheckBox))
@@ -633,7 +633,7 @@ void THtml::SetObjectValue(AOlxCtrl *Obj,
 }
 //.............................................................................
 const olxstr& THtml::GetObjectData(const AOlxCtrl *Obj)  {
-  const type_info &ti = typeid(*Obj);
+  const std::type_info &ti = typeid(*Obj);
   if (ti == typeid(TTextEdit)) { return ((TTextEdit*)Obj)->GetData(); }
   if (ti == typeid(TCheckBox)) { return ((TCheckBox*)Obj)->GetData(); }
   if (ti == typeid(TTrackBar)) { return ((TTrackBar*)Obj)->GetData(); }
@@ -647,7 +647,7 @@ const olxstr& THtml::GetObjectData(const AOlxCtrl *Obj)  {
 }
 //.............................................................................
 olxstr THtml::GetObjectImage(const AOlxCtrl* Obj)  {
-  const type_info &ti = typeid(*Obj);
+  const std::type_info &ti = typeid(*Obj);
   if (ti == typeid(TBmpButton))
     return ((TBmpButton*)Obj)->GetSource();
   else if (ti == typeid(THtmlImageCell))
@@ -658,7 +658,7 @@ olxstr THtml::GetObjectImage(const AOlxCtrl* Obj)  {
 bool THtml::SetObjectImage(AOlxCtrl* Obj, const olxstr& src) {
   if (src.IsEmpty())
     return false;
-  const type_info &ti = typeid(*Obj);
+  const std::type_info &ti = typeid(*Obj);
   if (ti == typeid(TBmpButton) || ti == typeid(THtmlImageCell)) {
     wxFSFile *fsFile = TFileHandlerManager::GetFSFileHandler(src);
     if (fsFile == NULL) {
@@ -696,7 +696,7 @@ bool THtml::SetObjectImage(AOlxCtrl* Obj, const olxstr& src) {
 }
 //.............................................................................
 olxstr THtml::GetObjectItems(const AOlxCtrl* Obj)  {
-  const type_info &ti = typeid(*Obj);
+  const std::type_info &ti = typeid(*Obj);
   if (ti == typeid(TComboBox)) {
     return ((TComboBox*)Obj)->ItemsToString(';');
   }
@@ -710,7 +710,7 @@ olxstr THtml::GetObjectItems(const AOlxCtrl* Obj)  {
 }
 //.............................................................................
 bool THtml::SetObjectItems(AOlxCtrl* Obj, const olxstr& src)  {
-  const type_info &ti = typeid(*Obj);
+  const std::type_info &ti = typeid(*Obj);
   if (ti == typeid(TComboBox)) {
     TComboBox *cb = ((TComboBox*)Obj);
     cb->Clear();
@@ -746,7 +746,7 @@ void THtml::SetObjectData(AOlxCtrl *Obj, const olxstr& Data)  {
 }
 //.............................................................................
 bool THtml::GetObjectState(const AOlxCtrl *Obj, const olxstr& state)  {
-  const type_info &ti = typeid(*Obj);
+  const std::type_info &ti = typeid(*Obj);
   if (ti == typeid(TCheckBox))
     return ((TCheckBox*)Obj)->IsChecked();
   else if( ti == typeid(TImgButton) )  {
@@ -764,7 +764,7 @@ bool THtml::GetObjectState(const AOlxCtrl *Obj, const olxstr& state)  {
 }
 //.............................................................................
 void THtml::SetObjectState(AOlxCtrl *Obj, bool State, const olxstr& state_name)  {
-  const type_info &ti = typeid(*Obj);
+  const std::type_info &ti = typeid(*Obj);
   if (ti == typeid(TCheckBox))
     ((TCheckBox*)Obj)->SetChecked(State);
   else if (ti == typeid(TImgButton)) {

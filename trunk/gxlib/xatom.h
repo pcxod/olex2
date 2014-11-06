@@ -212,7 +212,7 @@ public:
     }
     void set_defaults() {
       telp_prob = qpeak_scale = qpeak_size_scale = qpeak_min_alpha = zoom =
-        radius = rim_r = rim_w = disk_or = disk_s = -1;
+        radius = rim_r = rim_w = disk_or = disk_ir = disk_s = -1;
       r = quality = sphere_q = rim_q = disk_q = draw_style = mask = -1;
     }
     void OnStyleChange() {
@@ -285,6 +285,10 @@ public:
     void SetDiskQ(int v) const {
       return style->SetParam("DiskQ", (disk_q = v), true);
     }
+    int GetQuality() const { return GetParam("Quality", quality, qaMedium); }
+    void SetQuality(int v) const {
+      return style->SetParam("Quality", (quality = v), true);
+    }
     size_t PolyhedronIndex,
       SphereIndex,
       SmallSphereIndex,
@@ -298,7 +302,6 @@ public:
       LockedAtomSphere, // 1 list
       ConstrainedAtomSphere // 1 list
       ;
-    int QualityValue;
     float TelpProb, QPeakScale, QPeakSizeScale, DefZoom;
     TTypeList<TGlPrimitiveParams> PrimitiveParams;
 

@@ -258,8 +258,8 @@ void TFileHandlerManager::AddBaseDir(const olxstr& bd) {
   BaseDirs().Add(TEFile::AddPathDelimeter(bd));
 }
 //..............................................................................
-void TFileHandlerManager::_AddMemoryBlock(const olxstr& name, const char *bf,
-  size_t length, short persistenceId)
+TMemoryBlock * TFileHandlerManager::_AddMemoryBlock(const olxstr& name,
+  const char *bf, size_t length, short persistenceId)
 {
   olxstr fileName = TEFile::UnixPath(name);
   TMemoryBlock *mb = FMemoryBlocks.Find(fileName, NULL);
@@ -272,15 +272,22 @@ void TFileHandlerManager::_AddMemoryBlock(const olxstr& name, const char *bf,
   mb->Buffer = new char[length + 1];
   mb->Length = (uint32_t)length;
   mb->DateTime = TETime::Now();
-  if (length != 0)
+  if (length != 0 && bf != NULL)
     memcpy(mb->Buffer, bf, length);
   mb->PersistenceId = persistenceId;
+  return mb;
 }
 //..............................................................................
 void TFileHandlerManager::AddMemoryBlock(const olxstr& name, const char *bf,
   size_t length, short persistenceId)
 {
-  return Handler()->_AddMemoryBlock(name, bf, length, persistenceId);
+  Handler()->_AddMemoryBlock(name, bf, length, persistenceId);
+}
+//..............................................................................
+TMemoryBlock &TFileHandlerManager::AddMemoryBlock(const olxstr& name,
+  size_t length, short persistenceId)
+{
+  return *Handler()->_AddMemoryBlock(name, NULL, length, persistenceId);
 }
 //..............................................................................
 size_t TFileHandlerManager::Count() {
