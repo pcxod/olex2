@@ -2674,6 +2674,31 @@ public:
 int Esd_ThSort(const Esd_Tetrahedron &th1, const Esd_Tetrahedron &th2)  {
   return olx_cmp(th1.GetVolume(), th2.GetVolume());
 }
+olx_pair_t<size_t, size_t> Esd_FindOppositePair(TSAtomPList &atoms) {
+  double ma = 0;
+  size_t idx = InvalidIndex, for_ = InvalidIndex;
+  for (size_t i = 1; i < atoms.Count(); i++) {
+    if (atoms[i]->GetTag() != 0) continue;
+    if (for_ == InvalidIndex) {
+      for_ = i;
+      atoms[i]->SetTag(1);
+      continue;
+    }
+    double ang = olx_angle(
+      atoms[i]->crd(), atoms[0]->crd(), atoms[for_]->crd());
+    if (ang > ma) {
+      idx = i;
+      ma = ang;
+    }
+  }
+  if (idx == InvalidIndex) {
+    throw TFunctionFailedException(__OlxSourceInfo,
+      "could not locate the opposite atom");
+  }
+  atoms[idx]->SetTag(1);
+  return olx_pair::Make(for_-1, idx-1);
+}
+
 void GXLibMacros::macEsd(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &Error)
 {
@@ -2988,67 +3013,81 @@ void GXLibMacros::macEsd(TStrObjList &Cmds, const TParamList &Options,
     else if( sel.Count() == 7 &&
       olx_list_and_st(sel, &olx_is<TXAtom, TGlGroup::list_item_type>))
     {
-      TSAtomPList atoms(sel, DynamicCastAccessor<TSAtom>()),
-        face_atoms, sorted_atoms;
+      TSAtomPList atoms(sel, DynamicCastAccessor<TSAtom>());
       values.Add("Octahedral distortion is (for the selection): ")
         << vcovc.CalcOHDistortionBP(TSAtomCPList(atoms)).ToString();
+      atoms.ForEach(ACollectionItem::TagSetter(0));
+      olx_pair_t<size_t, size_t> opposites[3] = {
+        Esd_FindOppositePair(atoms),
+        Esd_FindOppositePair(atoms),
+        Esd_FindOppositePair(atoms)
+      };
       TSAtom* central_atom = atoms[0];
       atoms.Delete(0);
-      olx_pdict<index_t, vec3d> transforms;
-      int face_cnt = 0;
+      size_t faces[8][6] = {
+        { opposites[0].a, opposites[1].a, opposites[2].a,
+          opposites[0].b, opposites[1].b, opposites[2].b },
+        { opposites[0].a, opposites[1].a, opposites[2].b,
+          opposites[0].b, opposites[1].b, opposites[2].a },
+        { opposites[0].a, opposites[1].b, opposites[2].a,
+          opposites[0].b, opposites[1].a, opposites[2].b },
+        { opposites[0].a, opposites[1].b, opposites[2].b,
+          opposites[0].b, opposites[1].a, opposites[2].a },
+      };
       double total_val_bp=0, total_esd_bp=0;
-      for( size_t i=0; i < 6; i++ )  {
-        for( size_t j=i+1; j < 6; j++ )  {
-          for( size_t k=j+1; k < 6; k++ )  {
-            const double thv = olx_tetrahedron_volume_n(central_atom->crd(),
-              atoms[i]->crd(), atoms[j]->crd(), atoms[k]->crd());
-            if (thv < 0.1) continue;
-            sorted_atoms.Clear();
-            transforms.Clear();
-            atoms.ForEach(ACollectionItem::TagSetter(0));
-            atoms[i]->SetTag(1);
-            atoms[j]->SetTag(1);
-            atoms[k]->SetTag(1);
-            const vec3d face_center =
-              (atoms[i]->crd()+atoms[j]->crd()+atoms[k]->crd())/3;
-            const vec3d normal = vec3d::Normal(
-              atoms[i]->crd(), atoms[j]->crd(), atoms[k]->crd());
-            transforms.Add(1, central_atom->crd() - face_center);
-            vec3d face1_center;
-            for( size_t l=0; l < atoms.Count(); l++ )
-              if( atoms[l]->GetTag() == 0 )
-                face1_center += atoms[l]->crd();
-            face1_center /= 3;
-            transforms.Add(0, central_atom->crd() - face1_center);
-            PlaneSort::Sorter::DoSort(atoms, transforms, central_atom->crd(),
-              normal, sorted_atoms);
-            if (sorted_atoms[0]->GetTag() != 1)
-              sorted_atoms.ShiftR(1);
-            values.Add("Face ") << ++face_cnt << ": " <<
-              olx_analysis::alg::label(sorted_atoms, true, ' ') << ' ';
-            sorted_atoms.Insert(0, central_atom);
-            TEValue<double> rv = vcovc.CalcOHDistortionBP(
-              TSAtomCPList(sorted_atoms));
-            total_val_bp += rv.GetV()*3;
-            total_esd_bp += olx_sqr(rv.GetE());
-            values.GetLastString() << rv.ToString();
-          }
+      for (size_t i=0; i < 4; i++) {
+        TSAtomPList sorted_atoms;
+        olx_pdict<index_t, vec3d> transforms;
+        vec3d face_center, face1_center;
+        for (size_t j = 0; j < 3; j++) {
+          atoms[faces[i][j]]->SetTag(1);
+          face_center += atoms[faces[i][j]]->crd();
+          atoms[faces[i][j+3]]->SetTag(0);
+          face1_center += atoms[faces[i][j+3]]->crd();
         }
+        face_center /= 3;
+        face1_center /= 3;
+        const vec3d normal = vec3d::Normal(atoms[faces[i][0]]->crd(),
+          atoms[faces[i][1]]->crd(), atoms[faces[i][2]]->crd());
+        transforms.Add(1, central_atom->crd() - face_center);
+        transforms.Add(0, central_atom->crd() - face1_center);
+        PlaneSort::Sorter::DoSort(atoms, transforms, central_atom->crd(),
+          normal, sorted_atoms);
+        //size_t min_id = sorted_atoms[0]->CAtom().GetId(), mi=0;
+        //for (size_t ai = 1; ai < sorted_atoms.Count(); ai++) {
+        //  size_t id = sorted_atoms[ai]->CAtom().GetId();
+        //  if (id <= min_id) {
+        //    if (id == min_id) {
+        //      if (sorted_atoms[ai]->IsAUAtom()) {
+        //        mi = ai;
+        //      }
+        //      continue;
+        //    }
+        //    mi = ai;
+        //    min_id = id;
+        //  }
+        //}
+        //sorted_atoms.ShiftL(mi);
+        if (sorted_atoms[0]->GetTag() != 1)
+          sorted_atoms.ShiftR(1);
+        values.Add("Face ") << (i+1) << ": " <<
+          olx_analysis::alg::label(sorted_atoms, true, ' ') << ' ';
+        sorted_atoms.Insert(0, central_atom);
+        TEValue<double> rv = vcovc.CalcOHDistortionBP(
+          TSAtomCPList(sorted_atoms));
+        total_val_bp += rv.GetV()*3;
+        total_esd_bp += olx_sqr(3*rv.GetE());
+        values.GetLastString() << rv.ToString();
       }
-      if( face_cnt == 8 )  {
-        values.Add("Combined distortion: ") <<
-          TEValue<double>(total_val_bp, 3*sqrt(total_esd_bp)).ToString() <<
-          ", mean: " <<
-          TEValue<double>(total_val_bp/24, 3*sqrt(total_esd_bp)/24).ToString()
-          << " degrees";
-        olxstr_dict<TEValue<double> > od_c = vcovc.CalcOctahedralDistortion(
-          TSAtomCPList() << central_atom << atoms);
-        for (size_t ci = 0; ci < od_c.Count(); ci++) {
-          values.Add(od_c.GetKey(ci)) << ": " << od_c.GetValue(ci).ToString();
-        }
-      }
-      else  {
-        TBasicApp::NewLogEntry() << "Could not locate required 8 octahedron faces";
+      values.Add("Combined distortion: ") <<
+        TEValue<double>(2*total_val_bp, 2*sqrt(total_esd_bp)).ToString() <<
+        ", mean: " <<
+        TEValue<double>(total_val_bp/12, sqrt(total_esd_bp)/12).ToString()
+        << " degrees";
+      olxstr_dict<TEValue<double> > od_c = vcovc.CalcOctahedralDistortion(
+        TSAtomCPList() << central_atom << atoms);
+      for (size_t ci = 0; ci < od_c.Count(); ci++) {
+        values.Add(od_c.GetKey(ci)) << ": " << od_c.GetValue(ci).ToString();
       }
     }
   }

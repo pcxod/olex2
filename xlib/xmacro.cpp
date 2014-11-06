@@ -6600,13 +6600,15 @@ void XLibMacros::macPart(TStrObjList &Cmds, const TParamList &Options,
     {
       sorted::PointerPointer<TCAtom> atoms;
       atoms.Add(&Atoms[j]->CAtom());
-      for (size_t k=0; k <  Atoms[j]->CAtom().AttachedSiteCount(); k++) {
-        TCAtom &aa = Atoms[j]->CAtom().GetAttachedAtom(k);
-        if (aa.GetType() == iHydrogenZ) {
-          if (aa.GetParentAfixGroup() != NULL &&
-            aa.GetParentAfixGroup()->GetPivot() != Atoms[j]->CAtom())
-            continue;
-          atoms.AddUnique(&aa);
+      if (atoms[i]->GetType() > 1) {
+        for (size_t k = 0; k < Atoms[j]->CAtom().AttachedSiteCount(); k++) {
+          TCAtom &aa = Atoms[j]->CAtom().GetAttachedAtom(k);
+          if (aa.GetType() == iHydrogenZ) {
+            if (aa.GetParentAfixGroup() != NULL &&
+              aa.GetParentAfixGroup()->GetPivot() != Atoms[j]->CAtom())
+              continue;
+            atoms.AddUnique(&aa);
+          }
         }
       }
       for (size_t k=0; k < atoms.Count(); k++) {
