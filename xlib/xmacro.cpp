@@ -211,7 +211,11 @@ void XLibMacros::Export(TLibrary& lib)  {
     "minimal angle [150] might be provided");
 //_____________________________________________________________________________
   xlib_InitMacro(HAdd,
-    "r-use restraints vs constraints for water molecules [False]",
+    "r-use restraints vs constraints for water molecules [False]&;"
+    "p-put added H atoms to given part (sometimes needed when add/del bonds) "
+    "are used in conjunction with parts&;"
+    "a-changes AFIX to the given value (like 3 is needed sometimes for complex)"
+    " connectivity",
     fpAny,
     "Adds hydrogen atoms to all or provided atoms, however the ring atoms are "
     "treated separately and added all the time");
@@ -1491,7 +1495,7 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options,
     if (Hfix == 0) {
       latt.AnalyseHAdd(xlConGen, satoms);
     }
-    else  {
+    else {
       for (size_t aitr=0; aitr < satoms.Count(); aitr++) {
         TIntList parts;
         TDoubleList occu;
@@ -1513,10 +1517,18 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options,
             TCAtomPList generated;
             xlConGen.FixAtom(AE, afix, XElementLib::GetByIndex(iHydrogenIndex),
               NULL, &generated);
-            if( !generated.IsEmpty() &&  // hack to get desired Hfix...
-                generated[0]->GetParentAfixGroup() != NULL )
+            if (!generated.IsEmpty() &&  // hack to get desired Hfix...
+                generated[0]->GetParentAfixGroup() != NULL)
             {
-              generated[0]->GetParentAfixGroup()->SetAfix(Hfix);
+              generated[0]->GetParentAfixGroup()->SetAfix(
+                Options.FindValue('a', Hfix).ToInt());
+            }
+            olxstr str_part = Options.FindValue('p', EmptyString());
+            if (!str_part.IsEmpty()) {
+              int part = str_part.ToInt();
+              for (size_t hi = 0; hi < generated.Count(); hi++) {
+                generated[hi]->SetPart(part);
+              }
             }
           }
           else {

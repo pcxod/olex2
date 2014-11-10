@@ -926,29 +926,29 @@ void GXLibMacros::macLabel(TStrObjList &Cmds, const TParamList &Options,
   TXAtomPList atoms;
   TXBondPList bonds;
   TPtrList<TXLine> lines;
-  if( Cmds.IsEmpty() )  {
+  if (Cmds.IsEmpty()) {
     TGlGroup& sel = app.GetSelection();
-    for( size_t i=0; i < sel.Count(); i++)  {
-      if( EsdlInstanceOf(sel[i], TXAtom) )
+    for (size_t i=0; i < sel.Count(); i++) {
+      if (EsdlInstanceOf(sel[i], TXAtom))
         atoms.Add((TXAtom&)sel[i]);
-      else if( EsdlInstanceOf(sel[i], TXBond) )
+      else if (EsdlInstanceOf(sel[i], TXBond))
         bonds.Add((TXBond&)sel[i]);
-      else if( EsdlInstanceOf(sel[i], TXLine) )
+      else if (EsdlInstanceOf(sel[i], TXLine))
         lines.Add((TXLine&)sel[i]);
     }
-    if( atoms.IsEmpty() && bonds.IsEmpty() && lines.IsEmpty() )  {
+    if (atoms.IsEmpty() && bonds.IsEmpty() && lines.IsEmpty()) {
       TGXApp::AtomIterator ai = app.GetAtoms();
       atoms.SetCapacity(ai.count);
-      while( ai.HasNext() )  {
+      while (ai.HasNext())  {
         TXAtom& xa = ai.Next();
-        if( xa.IsVisible() )
+        if (xa.IsVisible())
           atoms.Add(xa);
       }
       TGXApp::BondIterator bi = app.GetBonds();
       bonds.SetCapacity(bi.count);
-      while( bi.HasNext() )  {
+      while (bi.HasNext())  {
         TXBond& xb = bi.Next();
-        if( xb.IsVisible() )
+        if (xb.IsVisible())
           bonds.Add(xb);
       }
     }
@@ -1014,7 +1014,7 @@ void GXLibMacros::macLabel(TStrObjList &Cmds, const TParamList &Options,
     gxl.SetVisible(true);
   }
   TPtrList<TXGlLabel> labels;
-  if( !bonds.IsEmpty() )  {
+  if (!bonds.IsEmpty())  {
     VcoVContainer vcovc(app.XFile().GetAsymmUnit());
     bool have_vcov = false;
     try  {
@@ -1023,11 +1023,11 @@ void GXLibMacros::macLabel(TStrObjList &Cmds, const TParamList &Options,
         " matrix for the calculation";
       have_vcov = true;
     }
-    catch(const TExceptionBase&)  {}
-    for( size_t i=0; i < bonds.Count(); i++ )  {
+    catch (const TExceptionBase&)  {}
+    for (size_t i = 0; i < bonds.Count(); i++) {
       TXGlLabel& l = bonds[i]->GetGlLabel();
       l.SetOffset(bonds[i]->GetCenter());
-      if( have_vcov ) {
+      if (have_vcov) {
         l.SetLabel(vcovc.CalcDistance(bonds[i]->A(),
           bonds[i]->B()).ToString());
       }
@@ -1037,33 +1037,33 @@ void GXLibMacros::macLabel(TStrObjList &Cmds, const TParamList &Options,
       l.TranslateBasis(-l.GetCenter());
     }
   }
-  for( size_t i=0; i < lines.Count(); i++ )
+  for (size_t i = 0; i < lines.Count(); i++)
     lines[i]->GetGlLabel().SetVisible(true);
 
-  for( size_t i=0; i < equivs.Count(); i++ )  {
+  for (size_t i = 0; i < equivs.Count(); i++) {
     smatd m = app.XFile().GetUnitCell().GetMatrix(
       smatd::GetContainerId(equivs[i]));
     m.t += smatd::GetT(equivs[i]);
     olxstr line("$");
-    line << (i+1);
+    line << (i + 1);
     line.RightPadding(4, ' ', true) << TSymmParser::MatrixToSymmEx(m);
-    if( i != 0 && (i%3) == 0 )
+    if (i != 0 && (i % 3) == 0)
       TBasicApp::GetLog() << NewLineSequence();
     TBasicApp::GetLog() << line.RightPadding(26, ' ');
   }
   TBasicApp::GetLog() << NewLineSequence();
 
   const olxstr _cif = Options.FindValue("cif");
-  if( !_cif.IsEmpty() )  {
-    if( app.CheckFileType<TCif>() )  {
+  if (!_cif.IsEmpty()) {
+    if (app.CheckFileType<TCif>()) {
       const TCifDataManager& cifdn =
         app.XFile().GetLastLoader<TCif>().GetDataManager();
       const TGlGroup& sel = app.GetSelection();
-      for( size_t i=0; i < sel.Count(); i++ )  {
-        if( EsdlInstanceOf(sel[i], TXBond) )  {
+      for (size_t i = 0; i < sel.Count(); i++) {
+        if (EsdlInstanceOf(sel[i], TXBond))  {
           TXBond& xb = (TXBond&)sel[i];
           ACifValue* v = cifdn.Match(xb.A(), xb.B());
-          if( v == NULL )  continue;
+          if (v == NULL)  continue;
           TXGlLabel& l = xb.GetGlLabel();
           l.SetOffset(xb.GetCenter());
           l.SetLabel(v->GetValue().ToString());
@@ -1071,10 +1071,10 @@ void GXLibMacros::macLabel(TStrObjList &Cmds, const TParamList &Options,
         }
       }
     }
-    else  {
+    else {
       const TGlGroup& sel = app.GetSelection();
-      for( size_t i=0; i < sel.Count(); i++ )  {
-        if( EsdlInstanceOf(sel[i], TXBond) )  {
+      for (size_t i = 0; i < sel.Count(); i++) {
+        if (EsdlInstanceOf(sel[i], TXBond)) {
           TXBond& xb = (TXBond&)sel[i];
           TXGlLabel& l = xb.GetGlLabel();
           l.SetOffset(xb.GetCenter());
@@ -1084,12 +1084,12 @@ void GXLibMacros::macLabel(TStrObjList &Cmds, const TParamList &Options,
       }
     }
   }
-  for( size_t i=0; i < labels.Count(); i++ )  {
+  for (size_t i = 0; i < labels.Count(); i++) {
     TXGlLabel& l = *labels[i];
-    vec3d off(-l.GetRect().width/2, -l.GetRect().height/2, 0);
+    vec3d off(-l.GetRect().width / 2, -l.GetRect().height / 2, 0);
     const double scale1 =
-      l.GetFont().IsVectorFont() ? 1.0/app.GetRenderer().GetScale() : 1.0;
-    const double scale = scale1/app.GetRenderer().GetBasis().GetZoom();
+      l.GetFont().IsVectorFont() ? 1.0 / app.GetRenderer().GetScale() : 1.0;
+    const double scale = scale1 / app.GetRenderer().GetBasis().GetZoom();
     l.TranslateBasis(off*scale);
     l.SetVisible(true);
   }

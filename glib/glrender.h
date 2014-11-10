@@ -199,6 +199,7 @@ public:
   DefPropP(float, FogDensity)
   DefPropC(TGlOption, FogColor)
   DefPropC(int, AbsoluteTop)
+  DefPropBIsSet(GLUSelection)
   double GetLineWidth() const {  return LineWidth;  }
   void SetLineWidth(double v);
   float GetExtraZoom() const {  return FZoom;  }
@@ -257,6 +258,7 @@ public:
   void ReleaseGlImage();
 
   void Draw();
+  void DrawSilhouette();
   // to be called if the underlying OpenGl Context is about to change
   void BeforeContextChange();
   // to be called if the underlying OpenGl Context has changed

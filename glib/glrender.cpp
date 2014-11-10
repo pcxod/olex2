@@ -358,13 +358,14 @@ TGlPrimitive& TGlRenderer::NewPrimitive(short type)  {
 }
 //..............................................................................
 void TGlRenderer::EnableFog(bool Set)  {
-  olx_gl::fog(GL_FOG_MODE, FogType);
-  olx_gl::fog(GL_FOG_DENSITY, FogDensity);
-  olx_gl::fog(GL_FOG_COLOR, FogColor.Data());
-  olx_gl::fog(GL_FOG_START, FogStart);
-  olx_gl::fog(GL_FOG_END, FogEnd);
-  if( Set )
+  if (Set) {
     olx_gl::enable(GL_FOG);
+    olx_gl::fog(GL_FOG_MODE, FogType);
+    olx_gl::fog(GL_FOG_DENSITY, FogDensity);
+    olx_gl::fog(GL_FOG_COLOR, FogColor.Data());
+    olx_gl::fog(GL_FOG_START, FogStart);
+    olx_gl::fog(GL_FOG_END, FogEnd);
+  }
   else
     olx_gl::disable(GL_FOG);
   Fog = Set;
@@ -616,6 +617,18 @@ void TGlRenderer::Draw()  {
   FGlImageChanged = true;
   OnDraw.Execute(this);
   OnDraw.Exit(this);
+}
+//..............................................................................
+void TGlRenderer::DrawSilhouette() {
+  bool glu_sel = GLUSelection;
+  GLUSelection = false;
+  GetScene().MakeCurrent();
+  GetScene().StartDraw();
+  for (size_t i = 0; i < ObjectCount(); i++)
+    GetObject(i).SetTag((index_t)(i + 1));
+  DrawObjects(0, 0, true, false);
+  GetScene().EndDraw();
+  GLUSelection = glu_sel;
 }
 //..............................................................................
 void TGlRenderer::HandleSelection(const AGDrawObject &o, const TGlPrimitive &p,
