@@ -24,6 +24,7 @@
 #include "povdraw.h"
 #include "wrldraw.h"
 #include "gltexture.h"
+#include "glbackground.h"
 
 //----------------------------------------------------------------------------//
 // TSAtom function bodies
@@ -1416,4 +1417,138 @@ void TXAtom::Settings::ClearPrimitives() {
     OrtepSpheres = -1;
   }
 }
+//..............................................................................
+//..............................................................................
+//..............................................................................
+TXAtomLabelAligner::TXAtomLabelAligner(const TPtrList<TXAtom> & atoms,
+  double offset, size_t positions)
+  : Atoms(atoms),
+  Offset(offset),
+  Positions(positions)
+{
+
+}
+void TXAtomLabelAligner::Align() {
+  if (Atoms.IsEmpty()) return;
+  for (size_t i = 0; i < Atoms.Count(); i++) {
+    Atoms[i]->GetGlLabel().SetVisible(false);
+  }
+  TGlRenderer &r = Atoms[0]->GetParent();
+  bool bg_vis = r.Background()->IsVisible(),
+    fog_e = r.IsFogEnabled();
+  TGlOption cc = r.LightModel.GetClearColor();
+  r.LightModel.SetClearColor(0);
+  r.EnableFog(false);
+  r.Background()->SetVisible(false);
+  r.InitLights();
+  r.DrawSilhouette();
+  olx_array_ptr<unsigned char> data = (unsigned char *)r.GetPixels(false, 1);
+  r.Background()->SetVisible(bg_vis);
+  r.EnableFog(fog_e);
+  r.LightModel.SetClearColor(cc);
+  r.InitLights();
+
+  int w = r.GetWidth(), h = r.GetHeight(), tw = 3 * w, hh = h / 2;
+  vec3d SceneOrigin = r.GetBasis().GetCenter();
+  mat3d ProjMatr = r.GetBasis().GetMatrix()*r.GetBasis().GetZoom()
+    / r.GetScale();
+  vec3d DrawOrigin(w / 2, hh, 0);
+  mat3d rm;
+  olx_create_rotation_matrix(rm, vec3d(0, 0, 1), cos(M_PI / (360/Positions)));
+  bool vector_font = Atoms[0]->GetGlLabel().GetFont().IsVectorFont();
+  for (size_t i = 0; i < Atoms.Count(); i++) {
+    TXGlLabel &l = Atoms[i]->GetGlLabel();
+    TTextRect rc = l.GetRect();
+    if (vector_font) {
+      double scale = r.GetBasis().GetZoom() / r.CalcZoom() / r.GetScale();
+      rc.top *= scale;
+      rc.left *= scale;
+      rc.width *= scale;
+      rc.height *= scale;
+    }
+    rc.height += 2;
+    sorted::PrimitiveAssociation<double, olx_pair_t<vec3d, vec3i> >
+      positions;
+    vec3d v(1, 0, 0);
+    for (int j = 0; j < 360 / Positions; j++) {
+      vec3d p = v;
+      p = r.GetBasis().GetMatrix()*p;
+      if ((Atoms[i]->DrawStyle() == adsEllipsoid ||
+        Atoms[i]->DrawStyle() == adsOrtep) &&
+        Atoms[i]->GetEllipsoid() != NULL)
+      {
+        p *= 1. / Atoms[i]->GetEllipsoid()->CalcScale(p);
+      }
+      p *= Atoms[i]->GetDrawScale();
+      vec3d off = (p*Offset)*ProjMatr;
+      vec3d vp = ((Atoms[i]->crd() + SceneOrigin)*ProjMatr
+        + DrawOrigin + off);
+      double ovr_extra = 0;
+      if (v[0] < 0 && v[0] < -1e-3) {
+        vp[0] -= rc.width;
+        off[0] -= rc.width;
+      }
+      else {
+        ovr_extra -= 1e-6;
+      }
+      if (v[1] < 0 && v[1] < -1e-3) {
+        vp[1] -= rc.height;
+        off[1] -= rc.height;
+      }
+      else {
+        ovr_extra -= 1e-6;
+      }
+      if (!vector_font)
+        off[1] -= rc.height / 2;
+      vec3i c = vp;
+      positions.Add(calc_overlap(data(), w, h, c[0], c[1], rc) + ovr_extra,
+        olx_pair::Make(off, c));
+      v = v*rm;
+    }
+    vec3i lr = positions.GetValue(0).b;
+    fill_rect(data(), w, h, lr[0], lr[1], rc);
+    l.TranslateBasis(positions.GetValue(0).a / r.GetZoom() - l.GetCenter());
+    l.SetVisible(true);
+  }
+}
+//..............................................................................
+double TXAtomLabelAligner::calc_overlap(unsigned const char *data, size_t w, size_t h,
+  size_t x_, size_t y_, const TTextRect &r_)
+{
+  size_t bw = static_cast<size_t>(r_.width),
+    bh = static_cast<size_t>(r_.height),
+    cnt = 0, max_idx = h*w * 3;
+  for (size_t i = 0; i < bw; i++) {
+    size_t x = x_ + i;
+    if (x >= w) break;
+    for (size_t j = 0; j < bh; j++) {
+      size_t y = y_ + j;
+      size_t idx = (y*w + x) * 3;
+      if (idx >= max_idx) continue;
+      if ((data[idx] | data[idx + 1] | data[idx + 2]) != 0) {
+        cnt++;
+      }
+    }
+  }
+  return double(cnt) / (bh*bw);
+}
+//..............................................................................
+void TXAtomLabelAligner::fill_rect(unsigned char *data, size_t w, size_t h,
+  size_t x_, size_t y_, const TTextRect &r_)
+{
+  size_t bw = static_cast<size_t>(r_.width),
+    bh = static_cast<size_t>(r_.height),
+    max_idx = h*w * 3;
+  for (size_t i = 0; i < bw; i++) {
+    size_t x = x_ + i;
+    if (x >= w) break;
+    for (size_t j = 0; j < bh; j++) {
+      size_t y = y_ + j;
+      size_t idx = (y*w + x) * 3;
+      if (idx >= max_idx) continue;
+      data[idx] = data[idx + 1] = data[idx + 2] = 0xfe;
+    }
+  }
+}
+
 //..............................................................................

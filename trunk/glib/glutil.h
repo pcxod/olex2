@@ -203,7 +203,7 @@ struct GlTorus {
       for( size_t j = 0; j <= tsc; j++ ) {
         for( int k = 1; k >= 0; k-- ) {
           double s = (i + k) % sc + 0.5;
-          double t = j % tsc;
+          double t = static_cast<double>(j % tsc);
           double a = cos(s*tpi/sc),
             b = cos(t*tpi/tsc),
             c = sin(t*tpi/tsc),

@@ -98,6 +98,8 @@ public:
   index_t DecTag()  {  return TSAtom::DecTag();  }
 
   TXGlLabel& GetGlLabel() const {  return *Label;  }
+  const TGlRenderer &GetParent() const { return Parent; }
+  TGlRenderer &GetParent() { return Parent; }
   virtual void Update();
   virtual void UpdateLabel()  {  GetGlLabel().UpdateLabel();  }
   inline TXAtom& Node(size_t i) const {  return (TXAtom&)TSAtom::Node(i); }
@@ -341,6 +343,24 @@ public:
   virtual void OnPrimitivesCleared() {
     GetSettings().ClearPrimitives();
   }
+};
+
+class TXAtomLabelAligner {
+  TPtrList<TXAtom> Atoms;
+  double Offset;
+  size_t Positions;
+public:
+  TXAtomLabelAligner(const TPtrList<TXAtom> & atoms,
+    double offset=1.3, size_t positions=15);
+  void Align();
+
+  DefPropP(double, Offset)
+  DefPropP(size_t, Positions)
+
+  static double calc_overlap(unsigned const char *data, size_t w, size_t h,
+    size_t x_, size_t y_, const TTextRect &r_);
+  static void fill_rect(unsigned char *data, size_t w, size_t h,
+    size_t x_, size_t y_, const TTextRect &r_);
 };
 
 EndGxlNamespace()
