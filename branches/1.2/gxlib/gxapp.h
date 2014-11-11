@@ -399,13 +399,8 @@ public:
   int32_t Quality(const short v);
   void Init();
 //..............................................................................
-  void ClearIndividualCollections()  {  IndividualCollections.Clear();  }
-  void ClearGroupDefinitions()  {
-    GroupDefs.Clear();
-    SelectionCopy[0].Clear();
-    SelectionCopy[1].Clear();
-    LabelInfo.Clear();
-  }
+  void ClearIndividualCollections();
+  void ClearGroupDefinitions();
   void ClearStructureRelated();
 //..............................................................................
 // GlRender interface

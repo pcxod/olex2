@@ -1360,7 +1360,7 @@ void TMainForm::macSave(TStrObjList &Cmds, const TParamList &Options,
 void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &Error)
 {
-  if( Cmds[0].Equalsi("style") )  {
+  if (Cmds[0].Equalsi("style")) {
     olxstr FN = Cmds.Text(' ', 1);
     if (FN.IsEmpty()) {
       FN = PickFile("Load drawing style", "Drawing styles|*.glds",

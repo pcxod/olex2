@@ -5388,6 +5388,20 @@ AGDrawObject* TGXApp::AddObjectToCreate(AGDrawObject* obj)  {
   return ObjectsToCreate.Add(obj);
 }
 //..............................................................................
+void TGXApp::ClearIndividualCollections()  {
+  IndividualCollections.Clear();
+  TXAtom::NamesRegistry().Clear();
+  TXBond::NamesRegistry().Clear();
+  TXPlane::NamesRegistry().Clear();
+}
+//..............................................................................
+void TGXApp::ClearGroupDefinitions()  {
+  GroupDefs.Clear();
+  SelectionCopy[0].Clear();
+  SelectionCopy[1].Clear();
+  LabelInfo.Clear();
+}
+//..............................................................................
 void TGXApp::ClearStructureRelated() {
   ClearIndividualCollections();
   GetRender().GetStyles().RemoveNamedStyles("Q");
