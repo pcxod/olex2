@@ -177,7 +177,7 @@ public:
   void RotateY(double V)  {  FBasis.RotateY(V); }
   void RotateZ(double V)  {  FBasis.RotateZ(V); }
   double GetZoom() const {  return FBasis.GetZoom(); }
-  void  SetZoom(double V);
+  void SetZoom(double V);
   void ResetBasis()  {  FBasis.Reset();  }
 
   TGlLightModel LightModel;
@@ -376,6 +376,9 @@ public:
   AGOSettings &RegisterSettings(AGOSettings &s, const olxstr &name) {
     return *ObjectSettings.Add(name, &s);
   }
+
+  TEBitArray::const_type GetVisibility();
+  void SetVisibility(const TEBitArray &v);
 
   void LibCompile(const TStrObjList& Params, TMacroError& E);
   void LibStereo(const TStrObjList& Params, TMacroError& E);

@@ -1287,6 +1287,23 @@ void TGlRenderer::AfterContextChange()  {
   TextureManager->AfterContextChange();
 }
 //..............................................................................
+TEBitArray::const_type TGlRenderer::GetVisibility() {
+  TEBitArray vis(FGObjects.Count());
+  for (size_t i = 0; i < FGObjects.Count(); i++) {
+    vis.Set(i, FGObjects[i]->IsVisible());
+  }
+  return vis;
+}
+//..............................................................................
+void TGlRenderer::SetVisibility(const TEBitArray &v) {
+  if (v.Count() != FGObjects.Count()) {
+    throw TInvalidArgumentException(__OlxSourceInfo, "visibility bit array");
+  }
+  for (size_t i = 0; i < FGObjects.Count(); i++) {
+    FGObjects[i]->SetVisible(v[i]);
+  }
+}
+//..............................................................................
 //..............................................................................
 //..............................................................................
 void TGlRenderer::LibCompile(const TStrObjList& Params, TMacroError& E)  {

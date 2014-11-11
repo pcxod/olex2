@@ -1454,7 +1454,7 @@ void TXAtomLabelAligner::Align() {
     / r.GetScale();
   vec3d DrawOrigin(w / 2, hh, 0);
   mat3d rm;
-  olx_create_rotation_matrix(rm, vec3d(0, 0, 1), cos(M_PI / (360/Positions)));
+  olx_create_rotation_matrix(rm, vec3d(0, 0, 1), cos(M_PI / (180/Positions)));
   bool vector_font = Atoms[0]->GetGlLabel().GetFont().IsVectorFont();
   for (size_t i = 0; i < Atoms.Count(); i++) {
     TXGlLabel &l = Atoms[i]->GetGlLabel();

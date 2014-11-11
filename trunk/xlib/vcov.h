@@ -280,9 +280,11 @@ public:
     const vec3d_alist& points;
     const TDoubleList& weights;
     AlignmentRMSD(const vec3d_alist& pts, const TDoubleList& wghts)
-      : points(pts), weights(wghts)  {}
+      : points(pts), weights(wghts)
+    {}
     double calc() const {
-      align::ListsToPairAdaptor<vec3d_alist, TDoubleList> l2p(points, weights);
+      align::ListsToPairAdaptorVW<vec3d_alist, TDoubleList>
+        l2p(points, weights);
       align::out ao = align::FindAlignmentQuaternions(l2p);
       return align::CalcRMSD(l2p, ao);
     }
@@ -599,7 +601,7 @@ protected:
     if (GetMatrix().IsEmpty())
       return TEValue<double>(e.calc(), sqrt(ced.DoCalc(e)));
     TDoubleList df(points.Count()*3);
-    CompositeVector::CompositeVector_<list> pts(points);
+    CompositeVector<list> pts(points);
     CalcDiff(pts, df, e);
     return TEValue<double>(e.calc(),
       sqrt(CalcEsd(points.Count(), vcov, df) + ced.DoCalc(e)));
@@ -634,7 +636,7 @@ public:
   // precise calculation
   TEValue<double> CalcDistance(const TSAtom& a1, const TSAtom& a2) {
     TSAtom const* as[] = {&a1,&a2};
-    CalcHelper ch(*this, ConstPlainVector<const TSAtom*>(as, 2));
+    CalcHelper ch(*this, Composite::ConstPlainVector(as, 2));
     mat3d vcov = ch.m[0] - ch.m[1] - ch.m[2] + ch.m[3];
     const vec3d v = ch.points[0] - ch.points[1];
     const double val = v.Length();
@@ -682,7 +684,7 @@ public:
     const TSAtom& a3)
   {
     TSAtom const * as[] = {&a1,&a2,&a3};
-    CalcHelper ch(*this, ConstPlainVector<const TSAtom*>(as, 3));
+    CalcHelper ch(*this, Composite::ConstPlainVector(as, 3));
     vec3d ij = (ch.points[0] - ch.points[1]);
     vec3d kj = (ch.points[2] - ch.points[1]);
     vec3d_alist grad(3);
@@ -700,7 +702,7 @@ public:
     grad[0] = (ij*ca - kj)*oos/ij_l;
     grad[2] = (kj*ca - ij)*oos/kj_l;
     grad[1] = -(grad[0] + grad[2]);
-    double qesd = CalcEsd(3, ch.m, CompositeVector::Make(grad));
+    double qesd = CalcEsd(3, ch.m, Composite::Vector(grad));
     qesd += cell_esd;
     const double a = acos(ca);
     return TEValue<double>(a,(qesd < 1e-15 ? 0 : sqrt(qesd)))*=180/M_PI;
@@ -709,7 +711,7 @@ public:
     const TSAtom& a3)
   {
     TSAtom const * as[] = {&a1,&a2,&a3};
-    CalcHelper ch(*this, ConstPlainVector<const TSAtom*>(as, 3));
+    CalcHelper ch(*this, Composite::ConstPlainVector(as, 3));
     return ch.DoCalc(
       Angle3<pnt_pt,pnt_pt,pnt_pt>(pnt_pt(ch.points[0]), pnt_pt(ch.points[1]),
         pnt_pt(ch.points[2])));
@@ -733,7 +735,7 @@ public:
     const TSAtom& a3, const TSAtom& a4)
   {
     TSAtom const * as[] = {&a1,&a2,&a3,&a4};
-    CalcHelper ch(*this, ConstPlainVector<const TSAtom*>(as, 4));
+    CalcHelper ch(*this, Composite::ConstPlainVector(as, 4));
     const vec3d ij = a1.crd() - a2.crd();
     const vec3d kj = a3.crd() - a2.crd();
     const vec3d kl = a4.crd() - a3.crd();
@@ -748,7 +750,7 @@ public:
       grad[0]*(ij.DotProd(kj)/kj_ql -1.0) - grad[3]*(kl.DotProd(kj)/kj_ql);
     grad[2] =
       grad[3]*(kl.DotProd(kj)/kj_ql -1.0) - grad[0]*(ij.DotProd(kj)/kj_ql);
-    double esd = CalcEsd(4, ch.m, CompositeVector::Make(grad));
+    double esd = CalcEsd(4, ch.m, Composite::Vector(grad));
     esd += CellEsd(*this, ch.points).DoCalc(
       TorsionAngle<pnt_pt,pnt_pt,pnt_pt,pnt_pt>(
         pnt_pt(ch.points[0]), pnt_pt(ch.points[1]),
@@ -762,7 +764,7 @@ public:
     const TSAtom& a3, const TSAtom& a4)
   {
     TSAtom const * as[] = {&a1,&a2,&a3,&a4};
-    CalcHelper ch(*this, ConstPlainVector<const TSAtom*>(as, 4));
+    CalcHelper ch(*this, Composite::ConstPlainVector(as, 4));
     TorsionAngle<pnt_pt,pnt_pt,pnt_pt,pnt_pt> tha(
       pnt_pt(ch.points[0]), pnt_pt(ch.points[1]), pnt_pt(ch.points[2]),
       pnt_pt(ch.points[3]));
@@ -775,7 +777,7 @@ public:
     const TSAtom& a3, const TSAtom& a4)
   {
     TSAtom const * as[] = {&a1,&a2,&a3,&a4};
-    CalcHelper ch(*this, ConstPlainVector<const TSAtom*>(as, 4));
+    CalcHelper ch(*this, Composite::ConstPlainVector(as, 4));
     return ch.DoCalc(
       Angle2<VectorProxy,VectorProxy>(
         VectorProxy(ch.points[0], ch.points[1]),
@@ -941,7 +943,7 @@ public:
     const TSAtom& a3, const TSAtom& a4)
   {
     TSAtom const * as[] = {&a1,&a2,&a3,&a4};
-    CalcHelper ch(*this, ConstPlainVector<const TSAtom*>(as, 4));
+    CalcHelper ch(*this, Composite::ConstPlainVector(as, 4));
     return ch.DoCalc(
       TetrahedronVolume<pnt_pt,pnt_pt,pnt_pt,pnt_pt>(
         pnt_pt(ch.points[0]), pnt_pt(ch.points[1]), pnt_pt(ch.points[2]),

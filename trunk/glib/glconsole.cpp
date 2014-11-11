@@ -51,6 +51,8 @@ TGlConsole::TGlConsole(TGlRenderer& R, const olxstr& collectionName) :
   FCursor = new TGlCursor(R, "Cursor");
   SetToDelete(false);
   R.OnDraw.Add(this);
+  SetPrintable(false);
+  SetVisible(true);
   // init size related valriables
   OnResize();
 }
@@ -61,9 +63,9 @@ TGlConsole::~TGlConsole()  {
   delete FCursor;
 }
 //..............................................................................
-void TGlConsole::Create(const olxstr& cName)  {
+void TGlConsole::Create(const olxstr& cName) {
   FontIndex = Parent.GetScene().FindFontIndexForType<TGlConsole>(FontIndex);
-  if( !cName.IsEmpty() )
+  if (!cName.IsEmpty())
     SetCollectionName(cName);
 
   TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
@@ -562,12 +564,17 @@ bool TGlConsole::Enter(const IEObject *Sender, const IEObject *Data,
   return true;
 }
 //..............................................................................
-void TGlConsole::SetVisible(bool v)  {
+void TGlConsole::SetVisible(bool v) {
   AGDrawObject::SetVisible(v);
-  if( !v )
+  if (!v)
     FCursor->SetVisible(false);
   else
     FCursor->SetVisible(PromptVisible);
+}
+//..............................................................................
+void TGlConsole::SetPrintable(bool v) {
+  AGDrawObject::SetPrintable(v);
+  FCursor->SetPrintable(v);
 }
 //..............................................................................
 void TGlConsole::SetPromptVisible(bool v)  {

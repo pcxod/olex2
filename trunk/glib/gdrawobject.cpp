@@ -13,16 +13,16 @@
 #include "styles.h"
 UseGlNamespace()
 
-AGDrawObject::AGDrawObject(TGlRenderer& parent, const olxstr& collectionName) :
-  Parent(parent)
+AGDrawObject::AGDrawObject(TGlRenderer& parent, const olxstr& collectionName)
+  : Parent(parent)
 {
   Primitives = NULL;
   ParentGroup = NULL;
-  sgdo_Flags = 0;
-  SetVisible(true);
+  sgdo_Flags = sgdoPrintable;
   SetGroupable(false);
   SetSelectable(true);
-  CollectionName = collectionName.IsEmpty() ? EsdlObjectName(*this) : collectionName;
+  CollectionName = collectionName.IsEmpty() ? EsdlObjectName(*this)
+    : collectionName;
 }
 //..............................................................................
 void AGDrawObject::Compile()  {

@@ -23,7 +23,6 @@
 TXBond::TXBond(TNetwork* net, TGlRenderer& R, const olxstr& collectionName)
   : TSBond(net),
   AGDrawObject(R, collectionName),
-  FDrawStyle(0x0001),
   settings(0)
 {
   SetGroupable(true);

@@ -568,10 +568,10 @@ const TRefList& RefinementModel::GetReflections() const {
     olx_object_ptr<TIns> ins = hf.LoadFromFile(HKLSource, true);
     if (ins.is_valid()) {
       evecd cell = evecd::FromAny(
-        CompositeVector::Make(vec3d_list() << aunit.GetAxes() <<
+        Composite::Vector(vec3d_list() << aunit.GetAxes() <<
           aunit.GetAngles()));
       evecd esd = evecd::FromAny(
-        CompositeVector::Make(vec3d_list() << aunit.GetAxisEsds() <<
+        Composite::Vector(vec3d_list() << aunit.GetAxisEsds() <<
           aunit.GetAngleEsds()));
       if (aunit.GetAxes().DistanceTo(ins().GetAsymmUnit().GetAxes()) > 1e-6 ||
         aunit.GetAngles().DistanceTo(ins().GetAsymmUnit().GetAngles()) > 1e-6 ||

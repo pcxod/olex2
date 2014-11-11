@@ -20,11 +20,10 @@ BeginGxlNamespace()
 
 class TXAtom;
 
-class TXBond: public TSBond, public AGDrawObject  {
+class TXBond: public TSBond, public AGDrawObject {
 private:
   TXGlLabel* Label;
   bool label_forced;
-  int FDrawStyle;
 protected:
   void GetDefSphereMaterial(TGlMaterial &M);
   void GetDefRimMaterial(TGlMaterial &M);
@@ -91,7 +90,6 @@ public:
   }
   void ListDrawingStyles(TStrList &List);
   uint32_t GetPrimitiveMask() const;
-  short DrawStyle() const {  return FDrawStyle; }
 
   void UpdatePrimitiveParams(TGlPrimitive *Primitive);
   static int Quality(TGlRenderer &r, int Val);

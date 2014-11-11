@@ -4151,6 +4151,7 @@ public:
     return new ExtractInfoTask(files, out);
   }
 };
+
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   {
     TDataFile df;
