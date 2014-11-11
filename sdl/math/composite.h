@@ -11,74 +11,62 @@
 #define __olx_sdl_composite_H
 #include "../emath.h"
 
+BeginEsdlNamespace()
+
 /* a wrapper class to present a list of matrices as a single matrix. To be used
 with non empty list and matrices of the same dimensions
 */
-struct CompositeMatrix {
-  template <class list_t> class CompositeMatrix_  {
-    const list_t& matrices;
-    typedef typename list_t::list_item_type::number_type number_type;
-    const size_t row_sz, col_sz, m_row_sz, m_col_sz, col_cnt, row_cnt;
-  public:
-    CompositeMatrix_(const list_t& _matrices, size_t _row_sz, size_t _col_sz)
-      : matrices(_matrices),
-        row_sz(_row_sz), col_sz(_col_sz),
-        m_row_sz(matrices[0].RowCount()), m_col_sz(matrices[0].RowCount()),
-        col_cnt(col_sz*m_col_sz), row_cnt(row_sz*m_row_sz)
-    {
-      if( matrices.Count() != row_sz*col_sz )
-        throw TInvalidArgumentException(__OlxSourceInfo, "size");
-    }
-    const number_type& operator ()(size_t i, size_t j) const {
-      return matrices[(i/m_row_sz)*row_sz+j/m_row_sz][i%m_col_sz][j%m_row_sz];
-    }
-    number_type& operator ()(size_t i, size_t j)  {
-      return matrices[(i/m_row_sz)*row_sz+j/m_row_sz][i%m_col_sz][j%m_row_sz];
-    }
-    size_t ColCount() const {  return col_cnt;  }
-    size_t RowCount() const {  return row_cnt;  }
-  };
-  template <class list_t>
-  static CompositeMatrix_<list_t> Make(const list_t &l,
-    size_t row_sz, size_t col_sz)
+template <class list_t> class CompositeMatrix {
+  const list_t& matrices;
+  typedef typename list_t::list_item_type::number_type number_type;
+  const size_t row_sz, col_sz, m_row_sz, m_col_sz, col_cnt, row_cnt;
+public:
+  CompositeMatrix(const list_t& _matrices, size_t _row_sz, size_t _col_sz)
+    : matrices(_matrices),
+      row_sz(_row_sz), col_sz(_col_sz),
+      m_row_sz(matrices[0].RowCount()), m_col_sz(matrices[0].RowCount()),
+      col_cnt(col_sz*m_col_sz), row_cnt(row_sz*m_row_sz)
   {
-    return CompositeMatrix_<list_t>(l, row_sz, col_sz);
+    if (matrices.Count() != row_sz*col_sz)
+      throw TInvalidArgumentException(__OlxSourceInfo, "size");
   }
+  const number_type& operator ()(size_t i, size_t j) const {
+    return matrices[(i/m_row_sz)*row_sz+j/m_row_sz][i%m_col_sz][j%m_row_sz];
+  }
+  number_type& operator ()(size_t i, size_t j)  {
+    return matrices[(i/m_row_sz)*row_sz+j/m_row_sz][i%m_col_sz][j%m_row_sz];
+  }
+  size_t ColCount() const {  return col_cnt;  }
+  size_t RowCount() const {  return row_cnt;  }
 };
 /* a wrapper class to represent a list of vectors as a single vector. To be
 used with non empty list and all vectors of the same size
 */
-struct CompositeVector {
-  template <class list_t> class CompositeVector_  {
-    const list_t& vertices;
-    const size_t vec_sz;
-    typedef typename list_t::list_item_type::list_item_type number_type;
-    typedef typename list_t::list_item_type::list_item_type list_item_type;
-  public:
-    CompositeVector_(const list_t& _vertices)
-      : vertices(_vertices), vec_sz(vertices[0].Count()) {}
-    size_t Count() const {  return vertices.Count()*vec_sz;  }
-    const number_type& Get(size_t i) const {
-      return  vertices[i/vec_sz][i%vec_sz];
-    }
-    number_type& Get(size_t i)  {  return  vertices[i/vec_sz][i%vec_sz];  }
-    void Set(size_t i, const number_type& v)  {
-      vertices[i/vec_sz][i%vec_sz] = v;
-    }
-    number_type& operator [] (size_t i)  {  return Get(i);  }
-    const number_type& operator [] (size_t i) const {  return Get(i);  }
-    number_type& operator () (size_t i)  {  return Get(i);  }
-    const number_type& operator () (size_t i) const {  return Get(i);  }
-  };
-  // convenience constructor
-  template <typename list_t>
-  static CompositeVector_<list_t> Make(const list_t &l) {
-    return CompositeVector_<list_t>(l);
+template <class list_t> class CompositeVector {
+  const list_t& vertices;
+  const size_t vec_sz;
+  typedef typename list_t::list_item_type::list_item_type number_type;
+  typedef typename list_t::list_item_type::list_item_type list_item_type;
+public:
+  CompositeVector(const list_t& _vertices)
+    : vertices(_vertices), vec_sz(vertices[0].Count())
+  {}
+  size_t Count() const {  return vertices.Count()*vec_sz;  }
+  const number_type& Get(size_t i) const {
+    return  vertices[i/vec_sz][i%vec_sz];
   }
+  number_type& Get(size_t i)  {  return  vertices[i/vec_sz][i%vec_sz];  }
+  void Set(size_t i, const number_type& v)  {
+    vertices[i/vec_sz][i%vec_sz] = v;
+  }
+  number_type& operator [] (size_t i)  {  return Get(i);  }
+  const number_type& operator [] (size_t i) const {  return Get(i);  }
+  number_type& operator () (size_t i)  {  return Get(i);  }
+  const number_type& operator () (size_t i) const {  return Get(i);  }
 };
 
 /* vector based on a matrix */
-template <class MatT> class MatrixVector  {
+template <class MatT> class MatrixVector {
 public:
   typedef typename MatT::number_type list_item_type;
   typedef typename MatT::number_type number_type;
@@ -87,7 +75,8 @@ private:
   const size_t size;
 public:
   MatrixVector(const MatT& _matrix) :
-    matrix(_matrix) , size(matrix.RowCount()*matrix.RowCount()) {}
+    matrix(_matrix) , size(matrix.RowCount()*matrix.RowCount())
+  {}
   size_t Count() const {  return size;  }
   const number_type& Get(size_t i) const {
     return  matrix[i/matrix.ColCout()][i%matrix.ColCout()];
@@ -103,12 +92,13 @@ public:
 };
 
 /* vector const plain array */
-template <typename NumT> class ConstPlainVector  {
+template <typename NumT> class ConstPlainVector {
   NumT const* data;
   const size_t size;
 public:
   ConstPlainVector(const NumT* _data, size_t sz)
-    :   data(_data) , size(sz) {}
+    : data(_data) , size(sz)
+  {}
   size_t Count() const {  return size;  }
   const NumT& Get(size_t i) const {  return  data[i];  }
   const NumT& operator [] (size_t i) const {  return Get(i);  }
@@ -119,11 +109,13 @@ public:
 };
 
 /* vector plain array */
-template <typename NumT> class PlainVector  {
-  NumT const *data;
+template <typename NumT> class PlainVector {
+  NumT *data;
   const size_t size;
 public:
-  PlainVector(const NumT* _data, size_t sz) : data(_data) , size(sz) {}
+  PlainVector(NumT *_data, size_t sz)
+    : data(_data) , size(sz)
+  {}
   size_t Count() const {  return size;  }
   const NumT& Get(size_t i) const {  return  data[i];  }
   NumT& Get(size_t i)  {  return  data[i];  }
@@ -141,11 +133,12 @@ template <class VT> class Slice {
 public:
   typedef typename VT::list_item_type list_item_type;
 private:
-  const VT& data;
+  VT& data;
   const size_t offset, size;
 public:
-  Slice(const VT& _data, size_t off, size_t sz)
-    : data(_data), offset(off), size(sz)  {}
+  Slice(VT& _data, size_t off, size_t sz)
+    : data(_data), offset(off), size(sz)
+  {}
   size_t Count() const {  return size;  }
   const list_item_type& Get(size_t i) const {  return  data[i+offset];  }
   list_item_type& Get(size_t i)  {  return  data[i+offset];  }
@@ -172,7 +165,7 @@ public:
 };
 
 /* matrix based on a vector */
-template <class VecT> class VectorMatrix  {
+template <class VecT> class VectorMatrix {
 public:
   typedef typename VecT::number_type number_type;
 private:
@@ -180,7 +173,8 @@ private:
   const size_t row_sz, col_sz;
 public:
   VectorMatrix(const VecT& _vector, size_t _row_sz, size_t _col_sz) :
-    vector(_vector), row_sz(_row_sz), col_sz(_col_sz)  {}
+    vector(_vector), row_sz(_row_sz), col_sz(_col_sz)
+  {}
   size_t ColCount() const {  return col_sz;  }
   size_t RowCount() const {  return row_sz;  }
   bool IsEmpty() const {  return col_sz == 0 || row_sz == 0;  }
@@ -205,7 +199,66 @@ template <typename NumT> class PlainMatrix
 public:
   PlainMatrix(NumT* _data, size_t row_sz, size_t col_sz)
     : vec(_data, row_sz*col_sz),
-      VectorMatrix<vec_t>(vec, row_sz, col_sz)  {}
+      VectorMatrix<vec_t>(vec, row_sz, col_sz)
+  {}
 };
 
+struct Composite {
+  template <class VT> static esdl::Slice<VT> Slice(
+  VT& data, size_t off, size_t sz)
+  {
+    return esdl::Slice<VT>(data, off, sz);
+  }
+
+  template <class VT> static esdl::ConstSlice<VT> ConstSlice(
+    const VT& data, size_t off, size_t sz)
+  {
+    return esdl::ConstSlice<VT>(data, off, sz);
+  }
+
+  template <class list_t>
+  static esdl::CompositeMatrix<list_t> Matrix(const list_t &l,
+    size_t row_sz, size_t col_sz)
+  {
+    return esdl::CompositeMatrix<list_t>(l, row_sz, col_sz);
+  }
+
+  template <typename list_t>
+  static esdl::CompositeVector<list_t> Vector(const list_t &l) {
+    return esdl::CompositeVector<list_t>(l);
+  }
+
+  template <typename mat_t>
+  static esdl::MatrixVector<mat_t> MatrixVector(const mat_t &l) {
+    return esdl::MatrixVector<mat_t>(l);
+  }
+
+  template <typename vec_t>
+  static esdl::VectorMatrix<vec_t> VectorMatrix(const vec_t &l,
+    size_t rows, size_t cols)
+  {
+    return esdl::VectorMatrix<vec_t>(l, rows, cols);
+  }
+
+  template <typename num_t>
+  static esdl::ConstPlainVector<num_t> ConstPlainVector(
+    const num_t *data, size_t sz)
+  {
+    return esdl::ConstPlainVector<num_t>(data, sz);
+  }
+
+  template <typename num_t>
+  static esdl::PlainVector<num_t> PlainVector(const num_t *data, size_t sz) {
+    return esdl::PlainVector<num_t>(data, sz);
+  }
+
+  template <typename num_t>
+  static esdl::PlainMatrix<num_t> PlainMatrix(const num_t *data,
+    size_t rows, size_t cols)
+  {
+    return esdl::PlainMatrix<num_t>(data, rows, cols);
+  }
+};
+
+EndEsdlNamespace()
 #endif

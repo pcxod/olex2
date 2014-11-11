@@ -128,6 +128,7 @@ public:
   bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d& Max, vec3d& Min);
   virtual void SetVisible(bool v);
+  virtual void SetPrintable(bool v);
   bool ProcessKey(int Key, short ShiftState);
   bool WillProcessKey(int Key, short ShiftState);
 

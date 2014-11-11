@@ -19,25 +19,26 @@
 BeginGlNamespace()
 
 const uint16_t
-  sgdoHidden     = 0x0100, // TGDrawObject flags, high byte
+  sgdoHidden     = 0x0100,
   sgdoSelected   = 0x0200,
   sgdoGroupable  = 0x0400,
   sgdoGroup      = 0x0800,
   sgdoGrouped    = 0x1000,
   sgdoSelectable = 0x2000,
-  sgdoCreated    = 0x4000;
+  sgdoCreated    = 0x4000,
+  sgdoPrintable  = 0x8000;
 
 /*  defines basic functionality of a graphic object */
 class AGDrawObject: public ACollectionItem  {
-protected:
-  short FDrawStyle;
   uint16_t sgdo_Flags;
+protected:
   class TGlGroup *ParentGroup;  // parent collection
   class TGlRenderer& Parent;
   TGPCollection *Primitives;
   evecd FParams;
   olxstr CollectionName;
   void SetCollectionName(const olxstr& nn)  {  CollectionName = nn;  }
+  void SetTypeGroup() { sgdo_Flags |= sgdoGroup; }
 public:
   AGDrawObject(TGlRenderer& parent, const olxstr& collectionName);
   // create object within the specified collection, using provided parameters
@@ -65,17 +66,30 @@ public:
   // mouse handlers, any object receives mouse down/up events; write appropriate
   //handlers to handle mouse; if the object returns true OnMouseDown, it receives
   //OnMouseMove as well; Objects must not change values of the Data!
-  virtual bool OnMouseDown(const IEObject *, const struct TMouseData&)  {  return false;  }
-  virtual bool OnMouseUp(const IEObject *, const struct TMouseData&)  {  return false;  }
-  virtual bool OnMouseMove(const IEObject *, const struct TMouseData&)  {  return false;  }
-  virtual bool OnDblClick(const IEObject *, const struct TMouseData&)  {  return false;  }
-  virtual bool OnZoom(const IEObject *, const struct TMouseData&)  {  return false;  }
+  virtual bool OnMouseDown(const IEObject *, const struct TMouseData&) {
+    return false;
+  }
+  virtual bool OnMouseUp(const IEObject *, const struct TMouseData&) {
+    return false;
+  }
+  virtual bool OnMouseMove(const IEObject *, const struct TMouseData&) {
+    return false;
+  }
+  virtual bool OnDblClick(const IEObject *, const struct TMouseData&) {
+    return false;
+  }
+  virtual bool OnZoom(const IEObject *, const struct TMouseData&) {
+    return false;
+  }
 
   // need a virtual setters for these
   virtual void SetVisible(bool v)  {  olx_set_bit(!v, sgdo_Flags, sgdoHidden);  }
   bool IsVisible() const {  return ((sgdo_Flags&sgdoHidden) == 0);  }
   virtual void SetSelected(bool v)  {  olx_set_bit(v, sgdo_Flags, sgdoSelected);  }
   bool IsSelected() const {  return ((sgdo_Flags&sgdoSelected) != 0);  }
+  /* returns true if the object is to end up in the picture output */
+  virtual void SetPrintable(bool v)  { olx_set_bit(v, sgdo_Flags, sgdoPrintable); }
+  bool IsPrintable() const { return ((sgdo_Flags&sgdoPrintable) != 0); }
 
   DefPropBFIsSet(Groupable, sgdo_Flags, sgdoGroupable)
   DefPropBFIsSet(Grouped, sgdo_Flags, sgdoGrouped)

@@ -19,7 +19,7 @@ TGlGroup::TGlGroup(TGlRenderer& R, const olxstr& collectionName) :
   AGDrawObject(R, collectionName)
 {
   SetGroupable(true);
-  sgdo_Flags |= sgdoGroup;
+  SetTypeGroup();
   DefaultColor = true;
   Blended = false;
 }

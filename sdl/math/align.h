@@ -57,10 +57,10 @@ namespace align  {
   the rmsds (and the quaternions) are sorted ascending
   Acta A45 (1989), 208.
   The resulting matrices map {b} set to {a} */
-  template <class List> out FindAlignmentQuaternions(const List& pairs)  {
+  template <class List> out FindAlignmentQuaternions(const List& pairs) {
     out ao;
     double swa = 0, swb = 0, sws = 0;
-    for( size_t i=0; i < pairs.Count(); i++ )  {
+    for (size_t i = 0; i < pairs.Count(); i++)  {
       ao.center_a += pairs[i].GetValueA()*pairs[i].GetWeightA();
       ao.center_b += pairs[i].GetValueB()*pairs[i].GetWeightB();
       swa += pairs[i].GetWeightA();
@@ -69,22 +69,22 @@ namespace align  {
     }
     ao.center_a /= swa;
     ao.center_b /= swb;
-    ematd evm(4,4);
-    for( size_t i=0; i < pairs.Count(); i++ )  {
+    ematd evm(4, 4);
+    for (size_t i = 0; i < pairs.Count(); i++)  {
       const vec3d v1 = (pairs[i].GetValueA() - ao.center_a)*pairs[i].GetWeightA();
       const vec3d v2 = (pairs[i].GetValueB() - ao.center_b)*pairs[i].GetWeightB();
-      const vec3d p = v1+v2;
-      const vec3d m = v1-v2;
-      evm[0][0] += (m[0]*m[0] + m[1]*m[1] + m[2]*m[2]);
-      evm[0][1] += (p[1]*m[2] - m[1]*p[2]);
-      evm[0][2] += (m[0]*p[2] - p[0]*m[2]);
-      evm[0][3] += (p[0]*m[1] - m[0]*p[1]);
-      evm[1][1] += (p[1]*p[1] + p[2]*p[2] + m[0]*m[0]);
-      evm[1][2] += (m[0]*m[1] - p[0]*p[1]);
-      evm[1][3] += (m[0]*m[2] - p[0]*p[2]);
-      evm[2][2] += (p[0]*p[0] + p[2]*p[2] + m[1]*m[1]);
-      evm[2][3] += (m[1]*m[2] - p[1]*p[2]);
-      evm[3][3] += (p[0]*p[0] + p[1]*p[1] + m[2]*m[2]);
+      const vec3d p = v1 + v2;
+      const vec3d m = v1 - v2;
+      evm[0][0] += (m[0] * m[0] + m[1] * m[1] + m[2] * m[2]);
+      evm[0][1] += (p[1] * m[2] - m[1] * p[2]);
+      evm[0][2] += (m[0] * p[2] - p[0] * m[2]);
+      evm[0][3] += (p[0] * m[1] - m[0] * p[1]);
+      evm[1][1] += (p[1] * p[1] + p[2] * p[2] + m[0] * m[0]);
+      evm[1][2] += (m[0] * m[1] - p[0] * p[1]);
+      evm[1][3] += (m[0] * m[2] - p[0] * p[2]);
+      evm[2][2] += (p[0] * p[0] + p[2] * p[2] + m[1] * m[1]);
+      evm[2][3] += (m[1] * m[2] - p[1] * p[2]);
+      evm[3][3] += (p[0] * p[0] + p[1] * p[1] + m[2] * m[2]);
     }
     evm[1][0] = evm[0][1];
     evm[2][0] = evm[0][2];
@@ -93,15 +93,15 @@ namespace align  {
     evm[3][1] = evm[1][3];
     evm[3][2] = evm[2][3];
     ematd::EigenValues(evm /= sws, ao.quaternions.I());
-    for( int i=0; i < 4; i++ )
+    for (int i = 0; i < 4; i++)
       ao.rmsd[i] = (evm[i][i] <= 0 ? 0 : sqrt(evm[i][i]));
     bool changes = true;
-    while( changes )  {
+    while (changes)  {
       changes = false;
-      for( int i=0; i < 3; i++ )  {
-        if( ao.rmsd[i+1] < ao.rmsd[i] )  {
-          ao.quaternions.SwapRows(i, i+1);
-          olx_swap(ao.rmsd[i], ao.rmsd[i+1]);
+      for (int i = 0; i < 3; i++)  {
+        if (ao.rmsd[i + 1] < ao.rmsd[i])  {
+          ao.quaternions.SwapRows(i, i + 1);
+          olx_swap(ao.rmsd[i], ao.rmsd[i + 1]);
           changes = true;
         }
       }
@@ -122,32 +122,70 @@ namespace align  {
     return sqrt(rmsd/pairs.Count());
   }
   // two lists to 'pair' adaptor
-  template <class ValueList, class WeightList> struct ListsToPairAdaptor  {
+  template <class ValueList>
+  struct ListsToPairAdaptorV {
     const ValueList& vlist;
-    const WeightList& wlist;
     const size_t count;
-    struct pair  {
-      const ListsToPairAdaptor& parent;
+    struct pair {
+      const ListsToPairAdaptorV& parent;
       size_t index;
-      pair(const ListsToPairAdaptor& _parent, size_t i)
+      pair(const ListsToPairAdaptorV& _parent, size_t i)
         : parent(_parent), index(i)  {}
-      vec3d GetValueA() const {  return parent.vlist[index];  }
-      double GetWeightA() const {  return parent.wlist[index];  }
-      vec3d GetValueB() const {  return parent.vlist[parent.count+index];  }
-      double GetWeightB() const {  return parent.wlist[parent.count+index];  }
+      vec3d GetValueA() const { return parent.vlist[index]; }
+      double GetWeightA() const { return 1; }
+      vec3d GetValueB() const { return parent.vlist[parent.count + index]; }
+      double GetWeightB() const { return 1; }
     };
-    ListsToPairAdaptor(const ValueList& _vlist, const WeightList& _wlist) :
-      vlist(_vlist), wlist(_wlist), count(vlist.Count()/2)
+    ListsToPairAdaptorV(const ValueList& _vlist) :
+      vlist(_vlist), count(vlist.Count() / 2)
     {
-      if( wlist.Count() < vlist.Count() )
-        throw TInvalidArgumentException(__OlxSourceInfo, "weights list");
-      if( (vlist.Count()%2) != 0 )
+      if ((vlist.Count() % 2) != 0)
         throw TInvalidArgumentException(__OlxSourceInfo, "list size");
     }
     pair operator [] (size_t i) const {
       return pair(*this, i);
     }
-    size_t Count() const {  return count;  }
+    size_t Count() const { return count; }
+  };
+  template <class ValueList, class WeightList>
+  struct ListsToPairAdaptorVW {
+    const ValueList& vlist;
+    const WeightList& wlist;
+    const size_t count;
+    struct pair {
+      const ListsToPairAdaptorVW& parent;
+      size_t index;
+      pair(const ListsToPairAdaptorVW& _parent, size_t i)
+        : parent(_parent), index(i)  {}
+      vec3d GetValueA() const { return parent.vlist[index]; }
+      double GetWeightA() const { return parent.wlist[index]; }
+      vec3d GetValueB() const { return parent.vlist[parent.count + index]; }
+      double GetWeightB() const { return parent.wlist[parent.count + index]; }
+    };
+    ListsToPairAdaptorVW(const ValueList& _vlist, const WeightList& _wlist) :
+      vlist(_vlist), wlist(_wlist), count(vlist.Count() / 2)
+    {
+      if (wlist.Count() < vlist.Count())
+        throw TInvalidArgumentException(__OlxSourceInfo, "weights list");
+      if ((vlist.Count() % 2) != 0)
+        throw TInvalidArgumentException(__OlxSourceInfo, "list size");
+    }
+    pair operator [] (size_t i) const {
+      return pair(*this, i);
+    }
+    size_t Count() const { return count; }
+  };
+  struct ListToPairAdaptor {
+    template <class ValueList, class WeightList> static
+      ListsToPairAdaptorVW<ValueList, WeightList> Make(
+      const ValueList& _vlist, const WeightList& _wlist)
+    {
+        return ListsToPairAdaptorVW<ValueList, WeightList>(_vlist, _wlist);
+    }
+    template <class ValueList> static
+      ListsToPairAdaptorV<ValueList> Make(const ValueList& _vlist) {
+        return ListsToPairAdaptorV<ValueList>(_vlist);
+      }
   };
 
 };  // end namespace align

@@ -61,7 +61,7 @@ public:
   };
   class Settings;
 private:
-  short FDrawStyle, FRadius;
+  int FDrawStyle, FRadius;
   GLuint ActualSphere;
   // picks the correct sphere for rendering
   void InitActualSphere();
