@@ -4557,6 +4557,7 @@ void TGXApp::DeleteOverlayedXFile(size_t index) {
       LabelInfo.bonds.NullItem(i);
   }
   LabelInfo.bonds.Pack();
+  GetRender().ClearGroups();
   OverlayedXFiles.Delete(index);
   CreateObjects(false);
   CenterView();
