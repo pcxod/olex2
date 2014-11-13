@@ -25,7 +25,7 @@ BeginEsdlNamespace()
  initialised arrays. These arrays are just for convinience, as the Data
  attribute is publically exposed for the performance issues
 */
-template <class AE> class TArray1D : public IEObject  {
+template <class AE> class TArray1D : public IEObject {
   index_t MinIndex;
   const size_t _Length;
 public:

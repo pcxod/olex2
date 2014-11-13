@@ -950,8 +950,8 @@ void OrtDraw::Render(const olxstr& fileName)  {
       all_points.Add(&c->center);
     }
   }
-  if (app.DUnitCell().IsVisible()) {
-    const TDUnitCell& uc = app.DUnitCell();
+  if (app.XFile().DUnitCell->IsVisible()) {
+    const TDUnitCell& uc = *app.XFile().DUnitCell;
     for (size_t i=0; i < uc.EdgeCount(); i+=2) {
       ort_poly* l = new ort_poly(*this, false);
       l->points.AddNew(ProjectPoint(uc.GetEdge(i)));
@@ -1104,9 +1104,9 @@ void OrtDraw::Render(const olxstr& fileName)  {
     if (xb.GetGlLabel().IsVisible())
       Labels.Add(xb.GetGlLabel());
   }
-  if (app.DUnitCell().IsVisible()) {
-    for (size_t i=0; i < app.DUnitCell().LabelCount(); i++) {
-      const TXGlLabel& glxl = app.DUnitCell().GetLabel(i);
+  if (app.XFile().DUnitCell->IsVisible()) {
+    for (size_t i=0; i < app.XFile().DUnitCell->LabelCount(); i++) {
+      const TXGlLabel& glxl = app.XFile().DUnitCell->GetLabel(i);
       if (glxl.IsVisible())
         Labels.Add(glxl);
     }

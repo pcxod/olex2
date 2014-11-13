@@ -91,12 +91,6 @@ public:
   TXAtom(TNetwork* net, TGlRenderer& Render, const olxstr& collectionName);
   virtual ~TXAtom();
   void Create(const olxstr& cName=EmptyString());
-  // multiple inheritance...
-  void SetTag(index_t v) {   TSAtom::SetTag(v);  }
-  index_t GetTag() const {  return TSAtom::GetTag();  }
-  index_t IncTag()  {  return TSAtom::IncTag();  }
-  index_t DecTag()  {  return TSAtom::DecTag();  }
-
   TXGlLabel& GetGlLabel() const {  return *Label;  }
   const TGlRenderer &GetParent() const { return Parent; }
   TGlRenderer &GetParent() { return Parent; }
@@ -362,6 +356,9 @@ public:
   static void fill_rect(unsigned char *data, size_t w, size_t h,
     size_t x_, size_t y_, const TTextRect &r_);
 };
+
+typedef TTypeList<TXAtom> TXAtomList;
+typedef TPtrList<TXAtom> TXAtomPList;
 
 EndGxlNamespace()
 #endif

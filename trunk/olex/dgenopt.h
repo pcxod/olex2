@@ -34,7 +34,5 @@ public:
   DefPropP(float, ATo)
   DefPropP(float, BTo)
   DefPropP(float, CTo)
-
-  DECLARE_EVENT_TABLE()
 };
 #endif

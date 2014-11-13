@@ -1187,11 +1187,11 @@ void TUnitCell::BuildDistanceMap_Masks(TArray3D<short>& map, double delta, short
 //..................................................................................
 //////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////
-void TUnitCell::LibVolumeEx(const TStrObjList& Params, TMacroError& E)  {
+void TUnitCell::LibVolumeEx(const TStrObjList& Params, TMacroData& E)  {
   E.SetRetVal(CalcVolumeEx().ToString());
 }
 //..............................................................................
-void TUnitCell::LibCellEx(const TStrObjList& Params, TMacroError& E)  {
+void TUnitCell::LibCellEx(const TStrObjList& Params, TMacroData& E)  {
   const TAsymmUnit& au = Lattice->GetAsymmUnit();
   if( Params[0].Equalsi('a') )
     E.SetRetVal(TEValueD(au.GetAxes()[0], au.GetAxisEsds()[0]).ToString());
@@ -1209,22 +1209,31 @@ void TUnitCell::LibCellEx(const TStrObjList& Params, TMacroError& E)  {
     E.ProcessingError(__OlxSrcInfo, "invalid argument");
 }
 //..............................................................................
-void TUnitCell::LibMatrixCount(const TStrObjList& Params, TMacroError& E)  {
+void TUnitCell::LibMatrixCount(const TStrObjList& Params, TMacroData& E)  {
   E.SetRetVal(Matrices.Count());
 }
 //..............................................................................
-class TLibrary* TUnitCell::ExportLibrary(const olxstr& name)  {
+//..............................................................................
+//..............................................................................
+IEObject *TUnitCell::VPtr::get_ptr() const {
+  return &TXApp::GetInstance().XFile().GetUnitCell();
+}
+//..............................................................................
+//..............................................................................
+//..............................................................................
+TLibrary* TUnitCell::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("uc") : name);
+  olx_vptr<TUnitCell> thip(new VPtr);
   lib->Register(
-    new TFunction<TUnitCell>(this, &TUnitCell::LibVolumeEx, "VolumeEx",
+    new TFunction<TUnitCell>(thip, &TUnitCell::LibVolumeEx, "VolumeEx",
       fpNone,
     "Returns unit cell volume with esd") );
   lib->Register(
-    new TFunction<TUnitCell>(this, &TUnitCell::LibCellEx, "CellEx",
+    new TFunction<TUnitCell>(thip, &TUnitCell::LibCellEx, "CellEx",
       fpOne,
     "Returns unit cell side/angle with esd") );
   lib->Register(
-    new TFunction<TUnitCell>(this, &TUnitCell::LibMatrixCount, "MatrixCount",
+    new TFunction<TUnitCell>(thip, &TUnitCell::LibMatrixCount, "MatrixCount",
       fpNone,
     "Returns the number of matrices in the unit cell") );
   return lib;

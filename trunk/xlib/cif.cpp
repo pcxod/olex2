@@ -1042,7 +1042,7 @@ bool TCif::ResolveParamsFromDictionary(TStrList &Dic, olxstr &String,
                 }
                 ABasicFunction *f = op->GetLibrary().FindFunction(Val.SubString(1, ob-1));
                 if (f != NULL) {
-                  TMacroError e;
+                  TMacroData e;
                   f->Run(TStrObjList(args), e);
                   if (e.IsSuccessful())
                     Tmp = e.GetRetVal();

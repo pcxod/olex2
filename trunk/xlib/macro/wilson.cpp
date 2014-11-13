@@ -52,7 +52,7 @@ struct TWilsonEBin {
     MinE = minE;
   }
 };
-void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroData &E)  {
   TXApp &XApp = TXApp::GetInstance();
   olxstr HklFN = XApp.XFile().LocateHklFile();
   if( !TEFile::Exists(HklFN) )  {

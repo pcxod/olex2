@@ -220,7 +220,7 @@ protected:
   TGlTextBox *FHelpWindow, *FInfoBox, *GlTooltip;
   // a list of commands called when a file is changed by another process
   TStrList FOnListenCmds;
-  TMacroError MacroError;
+  TMacroData MacroError;
 
   void PreviewHelp(const olxstr& Cmd);
   olxstr ExpandCommand(const olxstr &Cmd, bool inc_files);
@@ -682,7 +682,6 @@ public:
   void ObjectUnderMouse(AGDrawObject *G);
 //..............................................................................
   DECLARE_CLASS(TMainForm)
-  DECLARE_EVENT_TABLE()
 };
 
 #endif

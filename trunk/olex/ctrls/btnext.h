@@ -44,7 +44,7 @@ namespace ctrl_ext  {
     AOlxCtrl::ActionQueue &OnClick, &OnUp, &OnDown;
   };
 
-  class TButton: public wxButton, public AButtonBase {
+  class TButton : public AButtonBase, public wxButton {
     void MouseEnterEvent(wxMouseEvent& event);
     void MouseLeaveEvent(wxMouseEvent& event);
     void ClickEvent(wxCommandEvent&)  {  AButtonBase::_ClickEvent();  }

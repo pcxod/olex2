@@ -12,15 +12,11 @@
 #include "glbackground.h"
 #include "gxapp.h"
 
-// gradient colours properties dialog
-BEGIN_EVENT_TABLE(TdlgGradient, TDialog)
-  EVT_BUTTON(wxID_OK, TdlgGradient::OnOK)
-END_EVENT_TABLE()
-
 TdlgGradient::TdlgGradient(TMainFrame *ParentFrame):
   TDialog(ParentFrame, wxT("Gradient"), EsdlClassName(TdlgGradient).u_str())
 {
   AActionHandler::SetToDelete(false);
+  Bind(wxEVT_BUTTON, &TdlgGradient::OnOK, this, wxID_OK);
   short Border = 3;
 
   wxStaticText *stcA = new wxStaticText(this, -1, wxT("Bottom left"), wxDefaultPosition);
@@ -75,11 +71,12 @@ bool TdlgGradient::Execute(const IEObject *Sender, const IEObject *Data,
 {
   if( EsdlInstanceOf( *Sender, TTextEdit) )  {
     wxColourDialog *CD = new wxColourDialog(this);
-    wxColor wc = ((TTextEdit*)Sender)->GetBackgroundColour();
+    wxColor wc = dynamic_cast<const TTextEdit *>(Sender)->GetBackgroundColour();
     CD->GetColourData().SetColour(wc);
-    if( CD->ShowModal() == wxID_OK )  {
+    if (CD->ShowModal() == wxID_OK) {
       wc = CD->GetColourData().GetColour();
-      ((TTextEdit*)Sender)->WI.SetColor(OLX_RGB(wc.Red(), wc.Green(), wc.Blue()) );
+      dynamic_cast<TTextEdit *>(const_cast<IEObject *>(Sender))->WI
+        .SetColor(OLX_RGB(wc.Red(), wc.Green(), wc.Blue()));
     }
     delete CD;
   }

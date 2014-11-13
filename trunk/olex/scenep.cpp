@@ -316,26 +316,26 @@ TdlgSceneProps::~TdlgSceneProps()  {
 bool TdlgSceneProps::Execute(const IEObject* Sender, const IEObject* Data,
   TActionQueue *)
 {
-  if ((TTrackBar*)Sender == tbX)
+  if (Sender == tbX)
     teX->SetText(tbX->GetValue());
-  else if ((TTrackBar*)Sender == tbY)
+  else if (Sender == tbY)
     teY->SetText(tbY->GetValue());
-  else if ((TTrackBar*)Sender == tbZ)
+  else if (Sender == tbZ)
     teZ->SetText(tbZ->GetValue());
-  else if ((TTrackBar*)Sender == tbR)
+  else if (Sender == tbR)
     teR->SetText(tbR->GetValue());
   else if (EsdlInstanceOf(*Sender, TTextEdit)) {
     wxColourDialog *CD = new wxColourDialog(this);
-    wxColor wc = ((TTextEdit*)Sender)->GetBackgroundColour();
+    wxColor wc = dynamic_cast< const TTextEdit *>(Sender)->GetBackgroundColour();
     CD->GetColourData().SetColour(wc);
     if (CD->ShowModal() == wxID_OK) {
       wc = CD->GetColourData().GetColour();
-      ((TTextEdit*)Sender)->WI.SetColor(
-        OLX_RGB(wc.Red(), wc.Green(), wc.Blue()));
+      const_cast<TTextEdit *>(dynamic_cast<const TTextEdit *>(Sender))->WI
+        .SetColor(OLX_RGB(wc.Red(), wc.Green(), wc.Blue()));
     }
     CD->Destroy();
   }
-  else if ((TComboBox*)Sender == cbLights) {
+  else if (Sender == cbLights) {
     UpdateLight(FLightModel.GetLight(FCurrentLight));
     int i = cbLights->FindString(cbLights->GetValue());
     if (i >= 0) {
@@ -343,13 +343,13 @@ bool TdlgSceneProps::Execute(const IEObject* Sender, const IEObject* Data,
       InitLight(FLightModel.GetLight(FCurrentLight));
     }
   }
-  else if ((TSpinCtrl*)Sender == scSCO) {
+  else if (Sender == scSCO) {
     if (scSCO->GetValue() > 90)
       cbUniform->SetValue(true);
     else
       cbUniform->SetValue(false);
   }
-  else if ((TButton*)(AOlxCtrl*)Sender == tbEditFont) {
+  else if (Sender == tbEditFont) {
     int sel = cbFonts->GetSelection();
     if( sel == -1 )  return false;
     TGXApp::GetInstance().GetRenderer().GetScene().ShowFontDialog(

@@ -272,14 +272,12 @@ TGXApp::TGXApp(const olxstr &FileName, AGlScene *scene)
 //  TWGlScene *GlScene = new TWGlScene;
 //  TGlScene *GlScene = new TGlScene;
   GlRenderer = new TGlRenderer(GlScene, 1,1);
-  TXApp::Init(new XObjectProvider(*GlRenderer), this);
+  TXApp::Init(new XObjectProvider(*this), this);
   FDFrame = new TDFrame(*GlRenderer, "DFrame");
   Fader = new TXFader(*GlRenderer, "Fader");
   FDFrame->OnSelect.Add(this, ID_OnSelect);
   FGlMouse = new TGlMouse(GlRenderer, FDFrame);
   Library.AttachLibrary(FGlMouse->ExportLib());
-  FDUnitCell = new TDUnitCell(*GlRenderer, "DUnitCell");
-  FDUnitCell->SetVisible(false);
   FDBasis = new TDBasis(*GlRenderer, "DBasis");
   FDBasis->SetVisible(false);
   FDSphere = new TDSphere(*GlRenderer, olxstr("DSphere"));
@@ -289,7 +287,6 @@ TGXApp::TGXApp(const olxstr &FileName, AGlScene *scene)
   FLabels = new TXGlLabels(*GlRenderer, "Labels");
   ObjectsToCreate.Add(FDBasis);
   ObjectsToCreate.Add(FDSphere);
-  ObjectsToCreate.Add(FDUnitCell);
   ObjectsToCreate.Add(FDFrame);
   ObjectsToCreate.Add(Fader);
 
@@ -353,7 +350,7 @@ TGXApp::TGXApp(const olxstr &FileName, AGlScene *scene)
   );
   stateCellVisible = States->Register("cellvis",
     new TStateRegistry::Slot(
-      TStateRegistry::NewGetter<TDUnitCell>(this->DUnitCell(),
+      TStateRegistry::NewGetter<TDUnitCell>(*XFile().DUnitCell,
         &TDUnitCell::IsVisible),
       new TStateRegistry::TMacroSetter("cell")
     )
@@ -453,13 +450,13 @@ void TGXApp::CreateXRefs()  {
 //..............................................................................
 size_t TGXApp::GetNetworks(TNetPList& nets) {
   size_t c = XFile().GetLattice().FragmentCount();
-  for( size_t i=0; i < c; i++ )
+  for (size_t i=0; i < c; i++)
     nets.Add(XFile().GetLattice().GetFragment(i));
 
-  for( size_t i=0; i < OverlayedXFiles.Count(); i++ )  {
+  for (size_t i=0; i < OverlayedXFiles.Count(); i++) {
     size_t fc = OverlayedXFiles[i].GetLattice().FragmentCount();
     c += fc;
-    for( size_t j=0; j < fc; j++ )
+    for (size_t j=0; j < fc; j++)
       nets.Add(OverlayedXFiles[i].GetLattice().GetFragment(j));
   }
   return c;
@@ -522,36 +519,37 @@ void TGXApp::CreateObjects(bool centerModel, bool init_visibility)  {
     XFile().GetAsymmUnit().GetAngles()[1],
     XFile().GetAsymmUnit().GetAngles()[2]
   };
-  DUnitCell().Init(cell);
+  XFile().DUnitCell->Init(cell);
   DBasis().SetAsymmUnit(XFile().GetAsymmUnit());
 
-  for( size_t i=0; i < ObjectsToCreate.Count(); i++ )
+  for (size_t i=0; i < ObjectsToCreate.Count(); i++)
     ObjectsToCreate[i]->Create();
 
+  OnObjectsCreate.Execute(dynamic_cast<TBasicApp*>(this), NULL);
   /*somehow if the XLAbels are created before the DBasis (like after picture drawing),
   the 'disappear' from opengl selection... - the plane is drawn in different color and
   selection is inpossible, unless properties are changed, odd... could not figure out
   what is going wrong... */
 
   XLabels.Pack(AGDrawObject::FlagsAnalyser(sgdoHidden));
-  for( size_t i=0; i < XLabels.Count(); i++ )  {
-    if( XLabels[i].IsVisible() )
+  for (size_t i=0; i < XLabels.Count(); i++) {
+    if (XLabels[i].IsVisible())
       XLabels[i].Create();
     else
       XLabels.NullItem(i);
   }
   XLabels.Pack();
 
-  for( size_t i=0; i < Lines.Count(); i++ )  {
-    if( Lines[i].IsVisible() )
+  for (size_t i=0; i < Lines.Count(); i++) {
+    if (Lines[i].IsVisible())
       Lines[i].Create();
     else
       Lines.NullItem(i);
   }
   Lines.Pack();
 
-  for( size_t i=0; i < LooseObjects.Count(); i++ )  {
-    if( !LooseObjects[i]->IsVisible() )  {
+  for (size_t i=0; i < LooseObjects.Count(); i++) {
+    if (!LooseObjects[i]->IsVisible()) {
       delete LooseObjects[i];
       LooseObjects[i] = NULL;
     }
@@ -559,20 +557,20 @@ void TGXApp::CreateObjects(bool centerModel, bool init_visibility)  {
       LooseObjects[i]->Create();
   }
   LooseObjects.Pack();
-  for( size_t i=0; i < Rings.Count(); i++ )
+  for (size_t i=0; i < Rings.Count(); i++)
     Rings[i].Create();
 
   FLabels->Init(false);
   FLabels->Create();
 
-  if( FXGrowLinesVisible )  CreateXGrowLines();
-  if( XGrowPointsVisible )  CreateXGrowPoints();
+  if (FXGrowLinesVisible)  CreateXGrowLines();
+  if (XGrowPointsVisible)  CreateXGrowPoints();
   FXGrid->Create();
   // create hkls
   if( FHklVisible )  SetHklVisible(true);
   for (size_t i=0; i < UserObjects.Count(); i++)
     UserObjects[i].Create();
-  if( centerModel )
+  if (centerModel)
     CenterModel();
   else
     GlRenderer->GetBasis().SetCenter(glCenter);
@@ -585,35 +583,38 @@ void TGXApp::CreateObjects(bool centerModel, bool init_visibility)  {
   OnObjectsCreate.Exit(dynamic_cast<TBasicApp*>(this), NULL);
 }
 //..............................................................................
-void TGXApp::CenterModel()  {
+void TGXApp::CenterModel() {
   double weight = 0;
   vec3d center, maX(-100, -100, -100), miN(100, 100, 100);
-  for( size_t i=0; i <= OverlayedXFiles.Count(); i++ )  {
-    const TLattice& latt = (i == OverlayedXFiles.Count() ? XFile() : OverlayedXFiles[i]).GetLattice();
+  for (size_t i=0; i <= OverlayedXFiles.Count(); i++) {
+    const TLattice& latt = (i == OverlayedXFiles.Count() ? XFile()
+      : OverlayedXFiles[i]).GetLattice();
     const size_t ac = latt.GetObjects().atoms.Count();
-    for( size_t j=0; j < ac; j++ )  {
+    for (size_t j=0; j < ac; j++) {
       const TSAtom& a = latt.GetObjects().atoms[j];
-      if( a.IsAvailable() )  {
+      if (a.IsAvailable()) {
         center += a.crd();
         vec3d::UpdateMinMax(a.crd(), miN, maX);
         weight += 1;
       }
     }
-  }
-  if( FDUnitCell->IsVisible() )  {
-    for( size_t i=0; i < FDUnitCell->VertexCount(); i++ )  {
-      center += FDUnitCell->GetVertex(i);
-      weight += 1;
-      vec3d::UpdateMinMax(FDUnitCell->GetVertex(i), miN, maX);
+    TDUnitCell &uc = *(i == OverlayedXFiles.Count() ? XFile()
+      : OverlayedXFiles[i]).DUnitCell;
+    if (uc.IsVisible()) {
+      for (size_t j = 0; j < uc.VertexCount(); j++) {
+        center += uc.GetVertex(j);
+        weight += 1;
+        vec3d::UpdateMinMax(uc.GetVertex(j), miN, maX);
+      }
     }
   }
-  for( size_t i=0; i < XReflections.Count(); i++ )  {
+  for (size_t i=0; i < XReflections.Count(); i++) {
     if( !XReflections[i].IsVisible() )  continue;
     center += XReflections[i].GetCenter();
     weight += 1;
     vec3d::UpdateMinMax(XReflections[i].GetCenter(), miN, maX);
   }
-  if( weight == 0 )  return;
+  if (weight == 0)  return;
   center /= weight;
   center *= -1;
   GlRenderer->GetBasis().SetCenter(center);
@@ -628,34 +629,37 @@ void TGXApp::CenterView(bool calcZoom)  {
   vec3d center;
   vec3d maX(-100, -100, -100), miN(100, 100, 100);
   AtomIterator ai = GetAtoms();
-  while( ai.HasNext() )  {
+  while (ai.HasNext()) {
     const TXAtom& a = ai.Next();
-    if( a.IsVisible() )  {
-      center += a.crd();
-      vec3d::UpdateMinMax(a.crd(), miN, maX);
-      weight += 1;
+    if (!a.IsVisible()) continue;
+    center += a.crd();
+    vec3d::UpdateMinMax(a.crd(), miN, maX);
+    weight += 1;
+  }
+  if (weight == 0)  return;
+  for (size_t i = 0; i <= OverlayedXFiles.Count(); i++) {
+    TDUnitCell &uc = *(i == OverlayedXFiles.Count() ? XFile()
+      : OverlayedXFiles[i]).DUnitCell;
+    if (uc.IsVisible()) {
+      for (size_t j = 0; j < uc.VertexCount(); j++) {
+        center += uc.GetVertex(j);
+        weight += 1;
+        vec3d::UpdateMinMax(uc.GetVertex(j), miN, maX);
+      }
     }
   }
-  if( weight == 0 )  return;
-  if( FDUnitCell->IsVisible() )  {
-    for( size_t i=0; i < FDUnitCell->VertexCount(); i++ )  {
-      center += FDUnitCell->GetVertex(i);
-      weight += 1;
-      vec3d::UpdateMinMax(FDUnitCell->GetVertex(i), miN, maX);
-    }
-  }
-  for( size_t i=0; i < XReflections.Count(); i++ )  {
-    if( !XReflections[i].IsVisible() )  continue;
+  for (size_t i=0; i < XReflections.Count(); i++) {
+    if (!XReflections[i].IsVisible())  continue;
     center += XReflections[i].GetCenter();
     weight += 1;
     vec3d::UpdateMinMax(XReflections[i].GetCenter(), miN, maX);
   }
-  if( weight == 0 )  return;
+  if (weight == 0)  return;
   center /= weight;
   center *= -1;
   GlRenderer->ClearMinMax();
   GlRenderer->UpdateMinMax(miN+center, maX+center);
-  if( calcZoom )
+  if (calcZoom)
     GlRenderer->GetBasis().SetZoom(GlRenderer->CalcZoom()*ExtraZoom);
   GlRenderer->GetBasis().SetCenter(center);
 }
@@ -738,11 +742,11 @@ int32_t TGXApp::Quality(int V) {
 }
 //..............................................................................
 bool TGXApp::IsCellVisible() const {
-  return IsGraphicsVisible(FDUnitCell);
+  return IsGraphicsVisible(XFile().DUnitCell);
 }
 //..............................................................................
 void TGXApp::SetCellVisible(bool v)  {
-  GetUndo().Push(SetGraphicsVisible(FDUnitCell, v));
+  GetUndo().Push(SetGraphicsVisible(XFile().DUnitCell, v));
 }
 //..............................................................................
 bool TGXApp::IsBasisVisible() const {
@@ -2303,7 +2307,7 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To,
   if (NameResi) {
     undo().AddAction(SynchroniseResidues(Atoms));
   }
-  return &undo.release();
+  return undo.release();
 }
 //..............................................................................
 TUndoData* TGXApp::SynchroniseResidues(const TXAtomPList &reference) {
@@ -3543,11 +3547,13 @@ void TGXApp::SetHBondsVisible(bool v, bool update_groups)  {
 }
 //..............................................................................
 void TGXApp::SetHydrogensVisible(bool v)  {
-  if( FHydrogensVisible != v )  {
+  if (FHydrogensVisible != v) {
     FHydrogensVisible = v;
     XFile().GetAsymmUnit().DetachAtomType(iHydrogenZ, !FHydrogensVisible);
-    for( size_t i = 0; i < OverlayedXFiles.Count(); i++ )
-      OverlayedXFiles[i].GetAsymmUnit().DetachAtomType(iHydrogenZ, !FHydrogensVisible);
+    for (size_t i = 0; i < OverlayedXFiles.Count(); i++) {
+      OverlayedXFiles[i].GetAsymmUnit().DetachAtomType(
+        iHydrogenZ, !FHydrogensVisible);
+    }
     /* TODO: this is disabled because it causes problems with molecules
     disordered nearby an element of symmetry - need better treatment...
     */
@@ -3570,12 +3576,14 @@ void TGXApp::UpdateConnectivity()  {
 }
 //..............................................................................
 void TGXApp::SetQPeaksVisible(bool v)  {
-  if( FQPeaksVisible != v )  {
+  if (FQPeaksVisible != v) {
     FQPeaksVisible = v;
     XFile().GetAsymmUnit().DetachAtomType(iQPeakZ, !FQPeaksVisible);
-    for( size_t i = 0; i < OverlayedXFiles.Count(); i++ )
-      OverlayedXFiles[i].GetAsymmUnit().DetachAtomType(iQPeakZ, !FQPeaksVisible);
-    if( v && !XFile().GetLattice().IsGenerated() )
+    for (size_t i = 0; i < OverlayedXFiles.Count(); i++) {
+      OverlayedXFiles[i].GetAsymmUnit().DetachAtomType(
+        iQPeakZ, !FQPeaksVisible);
+    }
+    if (v && !XFile().GetLattice().IsGenerated())
       XFile().GetLattice().CompaqQ();
     else
       UpdateConnectivity();
@@ -3631,46 +3639,49 @@ void TGXApp::_maskInvisible()  {
 //..............................................................................
 void TGXApp::_syncBondsVisibility()  {
   BondIterator bi(*this);
-  while( bi.HasNext() )  {
+  while (bi.HasNext()) {
     TXBond& xb = bi.Next();
-    if( !FQPeakBondsVisible && (xb.A().GetType() == iQPeakZ || xb.B().GetType() == iQPeakZ) )
+    if (!FQPeakBondsVisible && (xb.A().GetType() == iQPeakZ ||
+      xb.B().GetType() == iQPeakZ))
+    {
       xb.SetVisible(false);
-    else if( !FHBondsVisible && xb.GetType() == sotHBond )
+    }
+    else if (!FHBondsVisible && xb.GetType() == sotHBond)
       xb.SetVisible(false);
     else
       xb.SetVisible(xb.A().IsVisible() && xb.B().IsVisible());
   }
-  if( FXGrowLinesVisible )  {
-    for( size_t i=0; i < XGrowLines.Count(); i++ )  {
-      if( XGrowLines[i].XAtom().GetType() == iQPeakZ )
+  if (FXGrowLinesVisible) {
+    for (size_t i=0; i < XGrowLines.Count(); i++) {
+      if (XGrowLines[i].XAtom().GetType() == iQPeakZ)
         XGrowLines[i].SetVisible(XGrowLines[i].XAtom().IsVisible());
     }
   }
 }
 //..............................................................................
-void TGXApp::SetStructureVisible(bool v)  {
+void TGXApp::SetStructureVisible(bool v) {
   FStructureVisible = v;
   AtomIterator ai(*this);
-  while( ai.HasNext() )  {
+  while (ai.HasNext()) {
     TXAtom& xa = ai.Next();
     if( !v )
       xa.SetVisible(v);
     else
       xa.SetVisible(xa.IsAvailable());
   }
-  for( size_t i=0; i < LooseObjects.Count(); i++ )
+  for (size_t i=0; i < LooseObjects.Count(); i++)
     LooseObjects[i]->SetVisible(v);
   for (size_t i=0; i < Lines.Count(); i++) {
     if (!Lines[i].IsDeleted())
       Lines[i].SetVisible(v);
   }
   PlaneIterator pi(*this);
-  while( pi.HasNext() )
+  while (pi.HasNext())
     pi.Next().SetVisible(v);
-  for( size_t i=0; i < XLabels.Count(); i++ )
+  for (size_t i=0; i < XLabels.Count(); i++)
     XLabels[i].SetVisible(v);
-  if( v )  {
-    if( !FXGrid->IsEmpty() )
+  if (v) {
+    if (!FXGrid->IsEmpty())
       FXGrid->SetVisible(true);
   }
   else
@@ -3678,7 +3689,7 @@ void TGXApp::SetStructureVisible(bool v)  {
   _syncBondsVisibility();
 }
 //..............................................................................
-void TGXApp::LoadXFile(const olxstr& fn)  {
+void TGXApp::LoadXFile(const olxstr& fn) {
   volatile TStopWatch sw(__FUNC__);
   FXFile->LoadFromFile(fn);
   if (CheckFileType<TIns>() && DoUseSafeAfix()) {
@@ -3687,9 +3698,9 @@ void TGXApp::LoadXFile(const olxstr& fn)  {
   if( !FStructureVisible )
     NewLogEntry() << "Note: structure is invisible";
   else {
-    if( !FQPeaksVisible )
+    if (!FQPeaksVisible)
       NewLogEntry() << "Note: Q-peaks are invisible";
-    if( !FHydrogensVisible )
+    if (!FHydrogensVisible)
       NewLogEntry() << "Note: H-atoms are invisible";
   }
   Draw();  // fixes native loader is not draw after load
@@ -3809,16 +3820,16 @@ void TGXApp::ShowResi(const TIntList& numbers, const TStrList &names,
 }
 //..............................................................................
 void TGXApp::SetHklVisible(bool v)  {
-  if( v )  {
+  if (v) {
     // default if could not load the hkl ...
-    FDUnitCell->SetReciprocal(false);
+    XFile().DUnitCell->SetReciprocal(false);
     FHklVisible = false;
     CreateXRefs();
   }
-  for( size_t i=0; i < XReflections.Count(); i++ )
+  for (size_t i=0; i < XReflections.Count(); i++)
     XReflections[i].SetVisible(v);
   FHklVisible = v;
-  FDUnitCell->SetReciprocal(v);
+  XFile().DUnitCell->SetReciprocal(v);
 }
 //..............................................................................
 void TGXApp::SetGridDepth(const vec3d& crd)  {  FXGrid->SetDepth(crd);  }
@@ -4418,19 +4429,19 @@ TGlBitmap* TGXApp::CreateGlBitmap(const olxstr& name,
   return glB;
 }
 //..............................................................................
-void TGXApp::DeleteGlBitmap(const olxstr& name)  {
+void TGXApp::DeleteGlBitmap(const olxstr& name) {
   TGlBitmap* glb = NULL;
-  for( size_t i=0; i < GlBitmaps.Count(); i++ )  {
-    if( GlBitmaps[i]->GetCollectionName() == name )  {
+  for (size_t i=0; i < GlBitmaps.Count(); i++) {
+    if (GlBitmaps[i]->GetCollectionName() == name) {
       glb = GlBitmaps[i];
       GlBitmaps.Delete(i);
       break;
     }
   }
-  if( glb != NULL )  {
+  if (glb != NULL) {
     //GlBitmaps.Delete(index);
     size_t ind = ObjectsToCreate.IndexOf((AGDrawObject*)glb);
-    if( ind != InvalidIndex )
+    if (ind != InvalidIndex)
       ObjectsToCreate.Delete(ind);
     glb->GetPrimitives().RemoveObject(*glb);
     GlRenderer->RemoveObject(*glb);
@@ -4438,38 +4449,45 @@ void TGXApp::DeleteGlBitmap(const olxstr& name)  {
   }
 }
 //..............................................................................
-TXFile& TGXApp::NewOverlayedXFile() {
-  return OverlayedXFiles.Add((TXFile*)FXFile->Replicate());
+TGXFile& TGXApp::NewOverlayedXFile() {
+  return OverlayedXFiles.Add(
+    dynamic_cast<TGXFile *>(FXFile->Replicate()));
 }
 //..............................................................................
-void TGXApp::SetActiveXFile(size_t i)  {
-  if( i >= OverlayedXFiles.Count() )  return;
-  FXFile = OverlayedXFiles.Replace(i, FXFile);
+void TGXApp::SetActiveXFile(size_t i) {
+  if (i >= OverlayedXFiles.Count())  return;
+  FXFile = OverlayedXFiles.Replace(i, (TGXFile *)FXFile);
   FXFile->OnFileLoad.TakeOver(OverlayedXFiles[i].OnFileLoad);
   FXFile->OnFileSave.TakeOver(OverlayedXFiles[i].OnFileSave);
-  FXFile->GetLattice().OnDisassemble.TakeOver(OverlayedXFiles[i].GetLattice().OnDisassemble);
-  FXFile->GetLattice().OnStructureGrow.TakeOver(OverlayedXFiles[i].GetLattice().OnStructureGrow);
-  FXFile->GetLattice().OnStructureUniq.TakeOver(OverlayedXFiles[i].GetLattice().OnStructureUniq);
-  FXFile->GetLattice().OnAtomsDeleted.TakeOver(OverlayedXFiles[i].GetLattice().OnAtomsDeleted);
+  FXFile->GetLattice().OnDisassemble.TakeOver(
+    OverlayedXFiles[i].GetLattice().OnDisassemble);
+  FXFile->GetLattice().OnStructureGrow.TakeOver(
+    OverlayedXFiles[i].GetLattice().OnStructureGrow);
+  FXFile->GetLattice().OnStructureUniq.TakeOver(
+    OverlayedXFiles[i].GetLattice().OnStructureUniq);
+  FXFile->GetLattice().OnAtomsDeleted.TakeOver(
+    OverlayedXFiles[i].GetLattice().OnAtomsDeleted);
   AlignOverlayedXFiles();
   CreateObjects(true);
-  DUnitCell().SetReciprocal(false);
+  XFile().DUnitCell->SetReciprocal(false);
 }
 //..............................................................................
-void TGXApp::CalcLatticeRandCenter(const TLattice& latt, double& maxR, vec3d& cnt)  {
+void TGXApp::CalcLatticeRandCenter(const TLattice& latt, double& maxR,
+  vec3d& cnt)
+{
   maxR = 0;
   cnt.Null();
   const size_t ac = latt.GetObjects().atoms.Count();
-  for( size_t i=0; i < ac; i++ )  {
+  for (size_t i=0; i < ac; i++) {
     TSAtom& sa = latt.GetObjects().atoms[i];
     cnt += (sa.crd() = latt.GetAsymmUnit().Orthogonalise(sa.ccrd()));
   }
 
-  if( ac != 0 )
+  if (ac != 0)
     cnt /= ac;
-  for( size_t i=0; i < ac; i++ )  {
+  for (size_t i=0; i < ac; i++) {
     const double r = cnt.QDistanceTo(latt.GetObjects().atoms[i].crd());
-    if( r > maxR )
+    if (r > maxR)
       maxR = r;
   }
   maxR = sqrt(maxR);
@@ -4566,6 +4584,7 @@ void TGXApp::DeleteOverlayedXFile(size_t index) {
       LabelInfo.bonds.NullItem(i);
   }
   LabelInfo.bonds.Pack();
+  GetRenderer().ClearGroups();
   OverlayedXFiles.Delete(index);
   CreateObjects(false);
   CenterView();
@@ -4738,7 +4757,7 @@ void TGXApp::ToDataItem(TDataItem& item, IOutputStream& zos) const {
   visibility.AddField("q_atoms", FQPeaksVisible);
   visibility.AddField("q_bonds", FQPeakBondsVisible);
   visibility.AddField("basis", FDBasis->IsVisible());
-  visibility.AddField("cell", FDUnitCell->IsVisible());
+  visibility.AddField("cell", XFile().DUnitCell->IsVisible());
   // store objects visibility
   size_t a_cnt = 0;
   AtomIterator ai(*this);
@@ -5004,10 +5023,12 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
   if (vis != FDBasis->IsVisible())
     OnGraphicsVisible.Execute(dynamic_cast<TBasicApp*>(this), FDBasis);
 
-  vis = FDUnitCell->IsVisible();
-  FDUnitCell->SetVisible(visibility.GetFieldByName("cell").ToBool());
-  if (vis != FDUnitCell->IsVisible())
-    OnGraphicsVisible.Execute(dynamic_cast<TBasicApp*>(this), FDUnitCell);
+  vis = XFile().DUnitCell->IsVisible();
+  XFile().DUnitCell->SetVisible(visibility.GetFieldByName("cell").ToBool());
+  if (vis != XFile().DUnitCell->IsVisible()) {
+    OnGraphicsVisible.Execute(dynamic_cast<TBasicApp*>(this),
+      XFile().DUnitCell);
+  }
 
   const TDataItem* atom_labels = item.FindItem("AtomLabels");
   if (atom_labels != NULL) {
@@ -5278,8 +5299,8 @@ const_strlist TGXApp::ToPov() const {
   for (size_t i=0; i < UserObjects.Count(); i++)
     out << UserObjects[i].ToPov(materials);
 
-  if (DUnitCell().IsVisible())
-    out << DUnitCell().ToPov(materials);
+  if (XFile().DUnitCell->IsVisible())
+    out << XFile().DUnitCell->ToPov(materials);
   out.Add("}");
   TStrList mat_out;
   for( size_t i=0; i < materials.Count(); i++ )  {
@@ -5314,8 +5335,8 @@ const_strlist TGXApp::ToWrl() const {
     if (XGrowLines[i].IsVisible())
       out << XGrowLines[i].ToWrl(materials);
   }
-  if (DUnitCell().IsVisible())
-    out << DUnitCell().ToWrl(materials);
+  if (XFile().DUnitCell->IsVisible())
+    out << XFile().DUnitCell->ToWrl(materials);
   out.Insert(0, "#Created by Olex2 ") << XLibMacros::GetCompilationInfo();
   out.Insert(0, "#VRML V2.0 utf8");
   return out;

@@ -48,11 +48,11 @@ public:
   void ToDataItem(TDataItem& Item) const;
   bool FromDataItem(const TDataItem& Item);
 
-  void LibClearColor(const TStrObjList& Params, TMacroError& E);
-  void LibAmbientColor(const TStrObjList& Params, TMacroError& E);
-  void LibLocalViewer(const TStrObjList& Params, TMacroError& E);
-  void LibSmoothShade(const TStrObjList& Params, TMacroError& E);
-  void LibTwoSides(const TStrObjList& Params, TMacroError& E);
+  void LibClearColor(const TStrObjList& Params, TMacroData& E);
+  void LibAmbientColor(const TStrObjList& Params, TMacroData& E);
+  void LibLocalViewer(const TStrObjList& Params, TMacroData& E);
+  void LibSmoothShade(const TStrObjList& Params, TMacroData& E);
+  void LibTwoSides(const TStrObjList& Params, TMacroData& E);
   TLibrary* ExportLibrary(const olxstr& name=EmptyString());
 };
 

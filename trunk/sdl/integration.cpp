@@ -19,7 +19,7 @@ struct ExternalMacro : public IEObject {
     : func(func), instance(inst)
   {}
   void Run(TStrObjList &Cmds, const TParamList &Options,
-    TMacroError &E)
+    TMacroData &E)
   {
     olx_array_ptr<const olxch *> argv(new const olxch*[Cmds.Count()+1]);
     for (size_t i=0; i < Cmds.Count(); i++) {
@@ -37,7 +37,7 @@ struct ExternalFunction : public IEObject {
     void *inst)
     : func(func), instance(inst)
   {}
-  void Run(const TStrObjList& Params, TMacroError &E) {
+  void Run(const TStrObjList& Params, TMacroData &E) {
     olx_array_ptr<const olxch *> argv(new const olxch*[Params.Count()+1]);
     for (size_t i=0; i < Params.Count(); i++) {
       argv()[i] = Params[i].u_str();

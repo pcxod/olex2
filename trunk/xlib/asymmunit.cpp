@@ -23,6 +23,7 @@
 #include "residue.h"
 #include "math/align.h"
 #include "label_corrector.h"
+#include "xapp.h"
 
 #undef GetObject
 
@@ -986,32 +987,32 @@ void TAsymmUnit::FromDataItem(TDataItem& item)  {
 //..............................................................................
 //..............................................................................
 //..............................................................................
-void TAsymmUnit::LibGetAtomCount(const TStrObjList& Params, TMacroError& E)  {
+void TAsymmUnit::LibGetAtomCount(const TStrObjList& Params, TMacroData& E)  {
   E.SetRetVal( AtomCount() );
 }
 //..............................................................................
-void TAsymmUnit::LibGetAtomCrd(const TStrObjList& Params, TMacroError& E)  {
+void TAsymmUnit::LibGetAtomCrd(const TStrObjList& Params, TMacroData& E)  {
   size_t index = Params[0].ToSizeT();
   if( index >= AtomCount() )
     throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, AtomCount());
   E.SetRetVal(GetAtom(index).ccrd().ToString());
 }
 //..............................................................................
-void TAsymmUnit::LibGetAtomName(const TStrObjList& Params, TMacroError& E)  {
+void TAsymmUnit::LibGetAtomName(const TStrObjList& Params, TMacroData& E)  {
   size_t index = Params[0].ToSizeT();
   if( index >= AtomCount() )
     throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, AtomCount());
   E.SetRetVal(GetAtom(index).GetLabel());
 }
 //..............................................................................
-void TAsymmUnit::LibGetAtomType(const TStrObjList& Params, TMacroError& E)  {
+void TAsymmUnit::LibGetAtomType(const TStrObjList& Params, TMacroData& E)  {
   size_t index = Params[0].ToSizeT();
   if( index >= AtomCount() )
     throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, AtomCount());
   E.SetRetVal(GetAtom(index).GetType().symbol);
 }
 //..............................................................................
-void TAsymmUnit::LibGetPeak(const TStrObjList& Params, TMacroError& E)  {
+void TAsymmUnit::LibGetPeak(const TStrObjList& Params, TMacroData& E)  {
   if( Params[0].IsNumber() )  {
     size_t index = Params[0].ToSizeT();
     if( index >= AtomCount() )
@@ -1029,7 +1030,7 @@ void TAsymmUnit::LibGetPeak(const TStrObjList& Params, TMacroError& E)  {
   }
 }
 //..............................................................................
-void TAsymmUnit::LibGetAtomU(const TStrObjList& Params, TMacroError& E)  {
+void TAsymmUnit::LibGetAtomU(const TStrObjList& Params, TMacroData& E)  {
   size_t index = Params[0].ToSizeT();
   if( index >= AtomCount() )
     throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, AtomCount());
@@ -1049,14 +1050,14 @@ void TAsymmUnit::LibGetAtomU(const TStrObjList& Params, TMacroError& E)  {
   E.SetRetVal(Q.ToString());
 }
 //..............................................................................
-void TAsymmUnit::LibGetAtomUiso(const TStrObjList& Params, TMacroError& E)  {
+void TAsymmUnit::LibGetAtomUiso(const TStrObjList& Params, TMacroData& E)  {
   size_t index = Params[0].ToSizeT();
   if( index >= AtomCount() )
     throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, AtomCount());
   E.SetRetVal(GetAtom(index).GetUiso());
 }
 //..............................................................................
-void TAsymmUnit::LibGetCell(const TStrObjList& Params, TMacroError& E)  {
+void TAsymmUnit::LibGetCell(const TStrObjList& Params, TMacroData& E)  {
   evecd V(6);
   if (Params.IsEmpty() || Params[0].Equalsi("cell")) {
     V[0] = Axes[0];    V[1] = Axes[1];    V[2] = Axes[2];
@@ -1069,16 +1070,16 @@ void TAsymmUnit::LibGetCell(const TStrObjList& Params, TMacroError& E)  {
   E.SetRetVal(V.ToString());
 }
 //..............................................................................
-void TAsymmUnit::LibGetVolume(const TStrObjList& Params, TMacroError& E)  {
+void TAsymmUnit::LibGetVolume(const TStrObjList& Params, TMacroData& E)  {
   double v = CalcCellVolume()/Lattice->GetUnitCell().MatrixCount();
   E.SetRetVal(v);
 }
 //..............................................................................
-void TAsymmUnit::LibGetCellVolume(const TStrObjList& Params, TMacroError& E)  {
+void TAsymmUnit::LibGetCellVolume(const TStrObjList& Params, TMacroData& E)  {
   E.SetRetVal(CalcCellVolume());
 }
 //..............................................................................
-void TAsymmUnit::LibGetSymm(const TStrObjList& Params, TMacroError& E)  {
+void TAsymmUnit::LibGetSymm(const TStrObjList& Params, TMacroData& E)  {
   TSpaceGroup& sg = TSymmLib::GetInstance().FindSG(*this);
   if (Params.IsEmpty())
     E.SetRetVal(sg.GetName());
@@ -1086,7 +1087,7 @@ void TAsymmUnit::LibGetSymm(const TStrObjList& Params, TMacroError& E)  {
     E.SetRetVal(sg.GetHallSymbol());
 }
 //..............................................................................
-void TAsymmUnit::LibSetAtomCrd(const TStrObjList& Params, TMacroError& E)  {
+void TAsymmUnit::LibSetAtomCrd(const TStrObjList& Params, TMacroData& E)  {
   size_t index = Params[0].ToSizeT();
   if( index >= AtomCount() )
     throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, AtomCount());
@@ -1107,7 +1108,7 @@ void TAsymmUnit::LibSetAtomCrd(const TStrObjList& Params, TMacroError& E)  {
   E.SetRetVal(true);
 }
 //..............................................................................
-void TAsymmUnit::LibSetAtomLabel(const TStrObjList& Params, TMacroError& E)  {
+void TAsymmUnit::LibSetAtomLabel(const TStrObjList& Params, TMacroData& E)  {
   size_t index = Params[0].ToSizeT();
   if (index >= AtomCount())
     throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, AtomCount());
@@ -1132,7 +1133,7 @@ void TAsymmUnit::LibSetAtomLabel(const TStrObjList& Params, TMacroError& E)  {
   GetAtom(index).SetLabel(newLabel);
 }
 //..............................................................................
-void TAsymmUnit::LibGetAtomLabel(const TStrObjList& Params, TMacroError& E)  {
+void TAsymmUnit::LibGetAtomLabel(const TStrObjList& Params, TMacroData& E)  {
   size_t index = Params[0].ToSizeT();
   if( index >= AtomCount() )
     throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, AtomCount());
@@ -1152,28 +1153,28 @@ void TAsymmUnit::LibGetAtomLabel(const TStrObjList& Params, TMacroError& E)  {
   }
 }
 //..............................................................................
-void TAsymmUnit::LibIsAtomDeleted(const TStrObjList& Params, TMacroError& E)  {
+void TAsymmUnit::LibIsAtomDeleted(const TStrObjList& Params, TMacroData& E)  {
   size_t index = Params[0].ToSizeT();
   if( index >= AtomCount() )
     throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, AtomCount());
   E.SetRetVal(GetAtom(index).IsDeleted());
 }
 //..............................................................................
-void TAsymmUnit::LibGetAtomOccu(const TStrObjList& Params, TMacroError& E)  {
+void TAsymmUnit::LibGetAtomOccu(const TStrObjList& Params, TMacroData& E)  {
   size_t index = Params[0].ToSizeT();
   if( index >= AtomCount() )
     throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, AtomCount());
   E.SetRetVal(GetAtom(index).GetOccu());
 }
 //..............................................................................
-void TAsymmUnit::LibGetAtomAfix(const TStrObjList& Params, TMacroError& E)  {
+void TAsymmUnit::LibGetAtomAfix(const TStrObjList& Params, TMacroData& E)  {
   size_t index = Params[0].ToSizeT();
   if( index >= AtomCount() )
     throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, AtomCount());
   E.SetRetVal(GetAtom(index).GetAfix());
 }
 //..............................................................................
-void TAsymmUnit::LibIsPeak(const TStrObjList& Params, TMacroError& E)  {
+void TAsymmUnit::LibIsPeak(const TStrObjList& Params, TMacroData& E)  {
   if( Params[0].IsNumber() )  {
     size_t index = Params[0].ToSizeT();
     if( index >= AtomCount() )
@@ -1189,7 +1190,7 @@ void TAsymmUnit::LibIsPeak(const TStrObjList& Params, TMacroError& E)  {
   }
 }
 //..............................................................................
-void TAsymmUnit::LibSetAtomU(const TStrObjList& Params, TMacroError& E)  {
+void TAsymmUnit::LibSetAtomU(const TStrObjList& Params, TMacroData& E)  {
   size_t index = Params[0].ToSizeT();
   if( index >= AtomCount() )
     throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, AtomCount());
@@ -1233,7 +1234,7 @@ void TAsymmUnit::LibSetAtomU(const TStrObjList& Params, TMacroError& E)  {
   }
 }
 //..............................................................................
-void TAsymmUnit::LibSetAtomOccu(const TStrObjList& Params, TMacroError& E)  {
+void TAsymmUnit::LibSetAtomOccu(const TStrObjList& Params, TMacroData& E)  {
   size_t index = Params[0].ToSizeT();
   if( index >= AtomCount() )
     throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, AtomCount());
@@ -1271,7 +1272,7 @@ void TAsymmUnit::_UpdateQPeaks() {
   }
 }
 //..............................................................................
-void TAsymmUnit::LibNewAtom(const TStrObjList& Params, TMacroError& E)  {
+void TAsymmUnit::LibNewAtom(const TStrObjList& Params, TMacroData& E)  {
   vec3d crd(Params[1].ToDouble(), Params[2].ToDouble(), Params[3].ToDouble());
   bool is_q_peak = Params[0].IsNumber(),
     validate = (Params.Count() == 5 ? Params[4].ToBool() : true);
@@ -1312,35 +1313,35 @@ void TAsymmUnit::LibNewAtom(const TStrObjList& Params, TMacroError& E)  {
   E.SetRetVal(AtomCount() - 1);
 }
 //..............................................................................
-void TAsymmUnit::LibGetAtomPart(const TStrObjList& Params, TMacroError& E)  {
+void TAsymmUnit::LibGetAtomPart(const TStrObjList& Params, TMacroData& E)  {
   size_t index = Params[0].ToSizeT();
   if (index >= AtomCount())
     throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, AtomCount());
   E.SetRetVal(GetAtom(index).GetPart());
 }
 //..............................................................................
-void TAsymmUnit::LibSetAtomPart(const TStrObjList& Params, TMacroError& E)  {
+void TAsymmUnit::LibSetAtomPart(const TStrObjList& Params, TMacroData& E)  {
   size_t index = Params[0].ToSizeT();
   if (index >= AtomCount())
     throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, AtomCount());
   GetAtom(index).SetPart(Params[1].ToInt());
 }
 //..............................................................................
-void TAsymmUnit::LibGetZ(const TStrObjList& Params, TMacroError& E)  {
+void TAsymmUnit::LibGetZ(const TStrObjList& Params, TMacroData& E)  {
   E.SetRetVal(Z);
 }
 //..............................................................................
-void TAsymmUnit::LibSetZ(const TStrObjList& Params, TMacroError& E)  {
+void TAsymmUnit::LibSetZ(const TStrObjList& Params, TMacroData& E)  {
   if (Params[0].IsEmpty()) return;
   Z = Params[0].ToInt();
   if( Z <= 0 )  Z = 1;
 }
 //..............................................................................
-void TAsymmUnit::LibGetZprime(const TStrObjList& Params, TMacroError& E)  {
+void TAsymmUnit::LibGetZprime(const TStrObjList& Params, TMacroData& E)  {
   E.SetRetVal(olxstr::FormatFloat(3,GetZPrime()));
 }
 //..............................................................................
-void TAsymmUnit::LibSetZprime(const TStrObjList& Params, TMacroError& E)  {
+void TAsymmUnit::LibSetZprime(const TStrObjList& Params, TMacroData& E)  {
   if (Params[0].IsEmpty()) return;
   double zp = Params[0].ToDouble();
   Z = (short)olx_round(
@@ -1348,17 +1349,17 @@ void TAsymmUnit::LibSetZprime(const TStrObjList& Params, TMacroError& E)  {
   if( Z <= 0 ) Z = 1;
 }
 //..............................................................................
-void TAsymmUnit::LibFormula(const TStrObjList& Params, TMacroError& E)  {
+void TAsymmUnit::LibFormula(const TStrObjList& Params, TMacroData& E)  {
   E.SetRetVal(_SummFormula(' ', 1./olx_max(GetZPrime(), 0.01)));
 }
 //..............................................................................
-void TAsymmUnit::LibWeight(const TStrObjList& Params, TMacroError& E)  {
+void TAsymmUnit::LibWeight(const TStrObjList& Params, TMacroData& E)  {
   double m = (Params.Count() == 1 ? Params[0].ToDouble()
     : 1./olx_max(GetZPrime(), 0.01));
   E.SetRetVal(olxstr::FormatFloat(2, MolWeight()*m));
 }
 //..............................................................................
-void TAsymmUnit::LibNPDCount(const TStrObjList& Params, TMacroError& E) {
+void TAsymmUnit::LibNPDCount(const TStrObjList& Params, TMacroData& E) {
   size_t cnt = 0;
   for (size_t i=0; i < CAtoms.Count(); i++) {
     if (CAtoms[i]->IsDeleted()) continue;
@@ -1371,7 +1372,7 @@ void TAsymmUnit::LibNPDCount(const TStrObjList& Params, TMacroError& E) {
   E.SetRetVal(cnt);
 }
 //..............................................................................
-void TAsymmUnit::LibOrthogonolise(const TStrObjList& Params, TMacroError& E) {
+void TAsymmUnit::LibOrthogonolise(const TStrObjList& Params, TMacroData& E) {
   vec3d rv;
   if (Params.Count() == 3) {
     rv = vec3d(
@@ -1388,7 +1389,7 @@ void TAsymmUnit::LibOrthogonolise(const TStrObjList& Params, TMacroError& E) {
   E.SetRetVal(Orthogonalise(rv).ToString());
 }
 //..............................................................................
-void TAsymmUnit::LibFractionalise(const TStrObjList& Params, TMacroError& E) {
+void TAsymmUnit::LibFractionalise(const TStrObjList& Params, TMacroData& E) {
   vec3d rv;
   if (Params.Count() == 3) {
     rv = vec3d(
@@ -1405,116 +1406,124 @@ void TAsymmUnit::LibFractionalise(const TStrObjList& Params, TMacroError& E) {
   E.SetRetVal(Fractionalise(rv).ToString());
 }
 //..............................................................................
-
+//..............................................................................
+//..............................................................................
+IEObject *TAsymmUnit::VPtr::get_ptr() const {
+  return &TXApp::GetInstance().XFile().GetAsymmUnit();
+}
+//..............................................................................
+//..............................................................................
+//..............................................................................
 TLibrary* TAsymmUnit::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("au") : name);
-  lib->Register(new TFunction<TAsymmUnit>(this,
+  olx_vptr<TAsymmUnit> thip(new VPtr);
+  lib->Register(new TFunction<TAsymmUnit>(thip,
     &TAsymmUnit::LibNewAtom, "NewAtom", fpFour|fpFive,
     "Adds a new atom to the asymmetric unit and return its ID, by which it can"
     " be referred. The function takes the atom name and coordinates, the "
     "optional 5th parameter specifies if the position has to be tested for an "
     "existing atoms. If -1 is returned, the atom is not created"));
-  lib->Register(new TFunction<TAsymmUnit>(this,
+  lib->Register(new TFunction<TAsymmUnit>(thip,
     &TAsymmUnit::LibGetAtomCount, "GetAtomCount", fpNone,
     "Returns the atom count in the asymmetric unit"));
-  lib->Register(new TFunction<TAsymmUnit>(this,
+  lib->Register(new TFunction<TAsymmUnit>(thip,
     &TAsymmUnit::LibGetSymm, "GetCellSymm", fpNone|fpOne,
     "Returns space group of currently loaded file as name: 'C2', 'I41/amd', "
     "etc. Optionally, Hall symbol may be returned if 'hall' is provided as an"
     " argument"));
-  lib->Register(new TFunction<TAsymmUnit>(this,
+  lib->Register(new TFunction<TAsymmUnit>(thip,
     &TAsymmUnit::LibGetAtomCrd, "GetAtomCrd", fpOne,
     "Returns a comma separated list of fractional coordinates for the "
     "specified atom"));
-  lib->Register(new TFunction<TAsymmUnit>(this,
+  lib->Register(new TFunction<TAsymmUnit>(thip,
     &TAsymmUnit::LibGetAtomPart, "GetAtomPart", fpOne,
     "Returns part of the specified atom"));
-  lib->Register(new TFunction<TAsymmUnit>(this,
+  lib->Register(new TFunction<TAsymmUnit>(thip,
     &TAsymmUnit::LibGetAtomName, "GetAtomName", fpOne,
     "Returns atom label"));
-  lib->Register(new TFunction<TAsymmUnit>(this,
+  lib->Register(new TFunction<TAsymmUnit>(thip,
     &TAsymmUnit::LibGetAtomType, "GetAtomType", fpOne,
     "Returns atom type (element)"));
-  lib->Register(new TFunction<TAsymmUnit>(this,
+  lib->Register(new TFunction<TAsymmUnit>(thip,
     &TAsymmUnit::LibGetAtomOccu, "GetAtomOccu", fpOne,
     "Returns atom occupancy"));
-  lib->Register(new TFunction<TAsymmUnit>(this,
+  lib->Register(new TFunction<TAsymmUnit>(thip,
     &TAsymmUnit::LibGetAtomAfix, "GetAtomAfix", fpOne,
     "Returns atom AFIX"));
-  lib->Register(new TFunction<TAsymmUnit>(this,
+  lib->Register(new TFunction<TAsymmUnit>(thip,
     &TAsymmUnit::LibGetPeak, "GetPeak", fpOne,
     "Returns peak intensity"));
-  lib->Register(new TFunction<TAsymmUnit>(this,
+  lib->Register(new TFunction<TAsymmUnit>(thip,
     &TAsymmUnit::LibGetAtomU, "GetAtomU", fpOne,
     "Returns a single number or six, comma separated values"));
-  lib->Register(new TFunction<TAsymmUnit>(this,
+  lib->Register(new TFunction<TAsymmUnit>(thip,
     &TAsymmUnit::LibGetAtomUiso, "GetAtomUiso", fpOne,
     "Returns a single number Uiso or (U11+U22+U33)/3"));
-  lib->Register(new TFunction<TAsymmUnit>(this,
+  lib->Register(new TFunction<TAsymmUnit>(thip,
     &TAsymmUnit::LibNPDCount, "NPDCount", fpNone,
     "Returns number of the NPD atoms"));
-  lib->Register(new TFunction<TAsymmUnit>(this,
+  lib->Register(new TFunction<TAsymmUnit>(thip,
     &TAsymmUnit::LibGetCell, "GetCell", fpNone|fpOne,
     "Returns six comma separated values for a, b, c and alpha, beta, gamma"));
-  lib->Register(new TFunction<TAsymmUnit>(this,
+  lib->Register(new TFunction<TAsymmUnit>(thip,
     &TAsymmUnit::LibGetVolume, "GetVolume", fpNone,
     "Returns volume of the unit cell divided by the number of symmetry "
     "elements"));
-  lib->Register(new TFunction<TAsymmUnit>(this,
+  lib->Register(new TFunction<TAsymmUnit>(thip,
     &TAsymmUnit::LibGetCellVolume, "GetCellVolume", fpNone,
     "Returns volume of the unit cell") );
-  lib->Register(new TFunction<TAsymmUnit>(this,
+  lib->Register(new TFunction<TAsymmUnit>(thip,
     &TAsymmUnit::LibSetAtomCrd, "SetAtomCrd", fpFour,
     "Sets atom coordinates to specified values, first parameters is the atom "
     "ID"));
-  lib->Register(new TFunction<TAsymmUnit>(this,
+  lib->Register(new TFunction<TAsymmUnit>(thip,
     &TAsymmUnit::LibSetAtomPart, "SetAtomPart", fpTwo,
     "Sets part of the atom specified atom"));
-  lib->Register(new TFunction<TAsymmUnit>(this,
+  lib->Register(new TFunction<TAsymmUnit>(thip,
     &TAsymmUnit::LibSetAtomU, "SetAtomU", fpSeven | fpTwo,
     "Sets atoms Uiso/anis first paramater is the atom ID followed by 1 or six "
     "parameters"));
-  lib->Register(new TFunction<TAsymmUnit>(this,
+  lib->Register(new TFunction<TAsymmUnit>(thip,
     &TAsymmUnit::LibSetAtomOccu, "SetAtomOccu", fpTwo,
     "Sets atom's occupancy; first parameter is the atom ID followed by "
     "occupancy"));
-  lib->Register(new TFunction<TAsymmUnit>(this,
+  lib->Register(new TFunction<TAsymmUnit>(thip,
     &TAsymmUnit::LibSetAtomLabel, "SetAtomlabel", fpTwo,
     "Sets atom labels to provided value. The first parameter is the atom ID"));
-  lib->Register(new TFunction<TAsymmUnit>(this,
+  lib->Register(new TFunction<TAsymmUnit>(thip,
     &TAsymmUnit::LibGetAtomLabel, "GetAtomlabel", fpTwo,
     "The takes two arguments - the atom ID and increment. The increment is "
     "used to navigate through the periodic table, so increment +1 will return "
     "next element and -1 the previous element in the periodic table"));
-  lib->Register(new TFunction<TAsymmUnit>(this,
+  lib->Register(new TFunction<TAsymmUnit>(thip,
     &TAsymmUnit::LibIsAtomDeleted, "IsAtomDeleted", fpOne,
     "Checks status of specified atom"));
-  lib->Register(new TFunction<TAsymmUnit>(this,
+  lib->Register(new TFunction<TAsymmUnit>(thip,
     &TAsymmUnit::LibIsPeak, "IsPeak", fpOne,
     "Checks if specified atom is  peak"));
-  lib->Register(new TFunction<TAsymmUnit>(this,
+  lib->Register(new TFunction<TAsymmUnit>(thip,
     &TAsymmUnit::LibGetZ, "GetZ", fpNone,
     "Returns current Z"));
-  lib->Register(new TFunction<TAsymmUnit>(this,
+  lib->Register(new TFunction<TAsymmUnit>(thip,
     &TAsymmUnit::LibSetZ, "SetZ", fpOne,
     "Sets current Z. Does not update content or whatsoever"));
-  lib->Register(new TFunction<TAsymmUnit>(this,
+  lib->Register(new TFunction<TAsymmUnit>(thip,
     &TAsymmUnit::LibGetZprime, "GetZprime", fpNone,
     "Returns current Z divided byt the number of matrices of current "
     "spacegroup"));
-  lib->Register(new TFunction<TAsymmUnit>(this,
+  lib->Register(new TFunction<TAsymmUnit>(thip,
     &TAsymmUnit::LibSetZprime, "SetZprime", fpOne,
     "Sets Z' for the structure"));
-  lib->Register(new TFunction<TAsymmUnit>(this,
+  lib->Register(new TFunction<TAsymmUnit>(thip,
     &TAsymmUnit::LibFormula, "GetFormula", fpNone,
     "Returns chemical formula of the asymmetric unit"));
-  lib->Register(new TFunction<TAsymmUnit>(this,
+  lib->Register(new TFunction<TAsymmUnit>(thip,
     &TAsymmUnit::LibWeight, "GetWeight", fpNone|fpOne,
     "Returns molecular mass of the asymmetric unit"));
-  lib->Register(new TFunction<TAsymmUnit>(this,
+  lib->Register(new TFunction<TAsymmUnit>(thip,
     &TAsymmUnit::LibOrthogonolise, "Orthogonalise", fpOne|fpThree,
     "Returns orthogonalised coordinates"));
-  lib->Register(new TFunction<TAsymmUnit>(this,
+  lib->Register(new TFunction<TAsymmUnit>(thip,
     &TAsymmUnit::LibFractionalise, "Fractionalise", fpOne|fpThree,
     "Returns fractional coordinates"));
   return lib;

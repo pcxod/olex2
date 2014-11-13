@@ -281,7 +281,7 @@ const_strlist TDUnitCell::ToWrl(olx_cdict<TGlMaterial, olxstr> &materials) const
   return out;
 }
 //..............................................................................
-void TDUnitCell::funThickness(const TStrObjList& Params, TMacroError& E) {
+void TDUnitCell::funThickness(const TStrObjList& Params, TMacroData& E) {
   if (Params.IsEmpty()) {
     E.SetRetVal(GetThickness());
   }
@@ -291,7 +291,7 @@ void TDUnitCell::funThickness(const TStrObjList& Params, TMacroError& E) {
   }
 }
 //..............................................................................
-void TDUnitCell::funDrawstyle(const TStrObjList& Params, TMacroError& E) {
+void TDUnitCell::funDrawstyle(const TStrObjList& Params, TMacroData& E) {
   if (Params.IsEmpty()) {
     bool rl = GetPrimitives().GetStyle().GetParam(
       "RenderLine", FalseString(), true).ToBool();

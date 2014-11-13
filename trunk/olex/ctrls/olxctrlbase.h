@@ -14,7 +14,7 @@
 
 namespace ctrl_ext  {
 
-  class AOlxCtrl : public IEObject {
+  class AOlxCtrl : public virtual IEObject {
   protected:
     AOlxCtrl(wxWindow* this_window) : WI(this_window) {}
     virtual ~AOlxCtrl() {}

@@ -74,7 +74,7 @@ TGlFont& TGlCursor::GetFont() const {
 //..............................................................................
 //..............................................................................
 
-void TGlCursor::LibSymbol(const TStrObjList& Params, TMacroError& E)  {
+void TGlCursor::LibSymbol(const TStrObjList& Params, TMacroData& E)  {
   if( Params.Count() == 0 )
     E.SetRetVal<olxstr>(Symbol);
   else

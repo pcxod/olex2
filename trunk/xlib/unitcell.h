@@ -509,10 +509,13 @@ protected:
     }
   };
 public:
-  void LibVolumeEx(const TStrObjList& Params, TMacroError& E);
-  void LibCellEx(const TStrObjList& Params, TMacroError& E);
-  void LibMatrixCount(const TStrObjList& Params, TMacroError& E);
+  void LibVolumeEx(const TStrObjList& Params, TMacroData& E);
+  void LibCellEx(const TStrObjList& Params, TMacroData& E);
+  void LibMatrixCount(const TStrObjList& Params, TMacroData& E);
   class TLibrary*  ExportLibrary(const olxstr& name=EmptyString());
+  struct VPtr : public olx_virtual_ptr<TUnitCell> {
+    virtual IEObject *get_ptr() const;
+  };
 };
 
 EndXlibNamespace()

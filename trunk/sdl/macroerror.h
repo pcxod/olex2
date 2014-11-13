@@ -28,20 +28,20 @@ const unsigned short
   // these are for special handling
   peUnhandled           = 0x1000;
 
-class TMacroError: public IEObject  {
+class TMacroData: public IEObject  {
   unsigned short ProcessError;
   bool DeleteObject;
   olxstr ErrorInfo, Location;
   IEObject* RetValue;
   str_stack Stack;
 public:
-  TMacroError();
-  virtual ~TMacroError()  {
+  TMacroData();
+  virtual ~TMacroData()  {
     if( DeleteObject )
       delete RetValue;
   }
 
-  void operator = (const TMacroError& ME);
+  void operator = (const TMacroData& ME);
   olxstr& ProcessingError(const olxstr& location, const olxstr& errMsg);
   void NonexitingMacroError(const olxstr& macroName);
   void WrongArgCount(const ABasicFunction& caller, size_t provided);
@@ -106,26 +106,26 @@ public:
     const olxstr &prefix=EmptyString()) const;
 
   // the type is validated
-  template <class EObj> EObj* GetRetObj()  {
-    if( !EsdlInstanceOf(*RetValue, EObj) ) {
+  template <class EObj> EObj* GetRetObj() {
+    if (!EsdlInstanceOf(*RetValue, EObj)) {
       throw TCastException(__OlxSourceInfo, EsdlObjectName(*RetValue),
         EsdlClassName(EObj));
     }
-    return (EObj*)RetValue;
+    return dynamic_cast<EObj *>(RetValue);
   }
-  template <class PT> void SetRetVal(const PT& val)  {
-    if( DeleteObject )  delete RetValue;
+  template <class PT> void SetRetVal(const PT& val) {
+    if (DeleteObject)  delete RetValue;
     DeleteObject = true;
     RetValue = new TEPType<PT>(val);
   }
 
-  template <class PT> void SetRetVal(PT* val)  {
-    if( DeleteObject )  delete RetValue;
+  template <class PT> void SetRetVal(PT* val) {
+    if (DeleteObject)  delete RetValue;
     DeleteObject = false;
     RetValue = val;
   }
 
-  class TCastException : public TBasicException  {
+  class TCastException : public TBasicException {
     public:
       TCastException(const olxstr& location, const olxstr& from,
         const olxstr& to)

@@ -606,13 +606,13 @@ void IndexManager::Update(const olxstr &cfg_name, const olxstr &folder_name,
 //.............................................................................
 //.............................................................................
 void IndexManager::Search(TStrObjList &Cmds, const TParamList &Options,
-  TMacroError &E)
+  TMacroData &E)
 {
   const double vd = Options.FindValue('d', '1').ToDouble();
   Index::PrintResults(Search(DefaultCfgName(), Cmds, vd));
 }
 //.............................................................................
-void IndexManager::Search(const TStrObjList &Params, TMacroError &E)  {
+void IndexManager::Search(const TStrObjList &Params, TMacroData &E)  {
   TTypeList<Index::ResultEntry> res = Search(DefaultCfgName(), Params, 1);
   if( !Params.IsEmpty() && Params[0].ToBool() )
     Index::PrintResults(res);
@@ -627,7 +627,7 @@ void IndexManager::Search(const TStrObjList &Params, TMacroError &E)  {
 }
 //.............................................................................
 void IndexManager::Update(TStrObjList &Cmds, const TParamList &Options,
-  TMacroError &E)
+  TMacroData &E)
 {
   olxstr cfg_name, folder_name, index_name;
   if( Cmds.Count() == 0 )  {

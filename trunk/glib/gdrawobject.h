@@ -29,7 +29,7 @@ const uint16_t
   sgdoPrintable  = 0x8000;
 
 /*  defines basic functionality of a graphic object */
-class AGDrawObject: public ACollectionItem  {
+class AGDrawObject: public virtual ACollectionItem  {
   uint16_t sgdo_Flags;
 protected:
   class TGlGroup *ParentGroup;  // parent collection
@@ -131,10 +131,10 @@ public:
   virtual void OnPrimitivesCleared() {}
   virtual void OnStyleChange() {}
 
-  void LibVisible(const TStrObjList& Params, TMacroError& E);
-  void LibIsGrouped(const TStrObjList& Params, TMacroError& E);
-  void LibIsSelected(const TStrObjList& Params, TMacroError& E);
-  void LibGetName(const TStrObjList& Params, TMacroError& E);
+  void LibVisible(const TStrObjList& Params, TMacroData& E);
+  void LibIsGrouped(const TStrObjList& Params, TMacroData& E);
+  void LibIsSelected(const TStrObjList& Params, TMacroData& E);
+  void LibGetName(const TStrObjList& Params, TMacroData& E);
   void ExportLibrary(TLibrary& lib);
 
   virtual void Individualize() {}

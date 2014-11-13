@@ -15,7 +15,7 @@
 #include "macroerror.h"
 BeginGlNamespace()
 
-class TGlCursor: public AGDrawObject, AEventsDispatcher  {
+class TGlCursor: public AGDrawObject, AEventsDispatcher {
   double X, Y, Z;
   bool TextStyle;
   class TGlPrimitive *Primitive;
@@ -47,8 +47,7 @@ public:
 
   virtual bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d& Max, vec3d& Min)  {  return false;  }
-
-  void LibSymbol(const TStrObjList& Params, TMacroError& E);
+  void LibSymbol(const TStrObjList& Params, TMacroData& E);
   class TLibrary* ExportLibrary(const olxstr& name="cursor");
 };
 

@@ -93,7 +93,7 @@ data:
 bool TPTableDlg::Execute(const IEObject *Sender, const IEObject *Data,
   TActionQueue *)
 {
-  TButton *S = (TButton*)(AOlxCtrl*)Sender;
+  const TButton *S = dynamic_cast<const TButton *>(Sender);
   Selected = &XElementLib::GetByIndex(S->GetTag()-1);
   wxDialog::EndModal(wxID_OK);
   return true;

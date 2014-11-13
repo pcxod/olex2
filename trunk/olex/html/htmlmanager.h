@@ -78,9 +78,9 @@ protected:
       : html(h), ctrl(c), wnd(w), ctrl_name(cn) {}
   };
   // needed = 0 - nothing, 1 - AOlxCtrl, 2 - wxWidow, 3 - both
-  Control FindControl(const olxstr &name, TMacroError& me,
+  Control FindControl(const olxstr &name, TMacroData& me,
     short needed, const char* location);
-  bool SetState(const TStrObjList &Params, TMacroError &E);
+  bool SetState(const TStrObjList &Params, TMacroData &E);
 public:
   THtml *main;
   struct TPopupData  {

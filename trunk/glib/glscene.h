@@ -143,7 +143,7 @@ public:
   const_strlist ToPov() const;
 
   void LibMakeCurrent(TStrObjList& Cmds, const TParamList& Options,
-    TMacroError& E);
+    TMacroData& E);
   TLibrary* ExportLibrary(const olxstr& name=EmptyString());
 };
 

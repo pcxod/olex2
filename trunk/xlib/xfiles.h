@@ -53,6 +53,12 @@ public:
 };
 //---------------------------------------------------------------------------
 
+enum {
+  XFILE_EVT_SG_Change,
+  XFILE_EVT_UNIQ,
+  XFILE_EVT_LAST
+};
+
 //---------------------------------------------------------------------------
 class TXFile: public AEventsDispatcher {
 private:
@@ -75,12 +81,12 @@ public:
     &OnFileSave,
     &OnFileClose; // OnEnter, LastLoader is passed as Data
 
-  inline const TLattice& GetLattice() const {  return Lattice;  }
-  inline TLattice& GetLattice()  {  return Lattice;  }
-  inline TUnitCell& GetUnitCell() const {  return Lattice.GetUnitCell();  }
+  const TLattice& GetLattice() const {  return Lattice;  }
+  TLattice& GetLattice()  {  return Lattice;  }
+  TUnitCell& GetUnitCell() const {  return Lattice.GetUnitCell();  }
   const RefinementModel& GetRM() const {  return RefMod;  }
   RefinementModel& GetRM()  {  return RefMod;  }
-  inline TAsymmUnit& GetAsymmUnit() const {  return Lattice.GetAsymmUnit();  }
+  TAsymmUnit& GetAsymmUnit() const {  return Lattice.GetAsymmUnit();  }
   /* a propper pointer, created with new should be passed
    the object will be deleted in the destructor !! */
   void RegisterFileFormat(TBasicCFile* F, const olxstr& Ext);
@@ -146,17 +152,22 @@ public:
   void ToDataItem(TDataItem& item);
   void FromDataItem(TDataItem& item);
 
-  void LibDataCount(const TStrObjList& Params, TMacroError& E);
-  void LibCurrentData(const TStrObjList& Params, TMacroError& E);
-  void LibDataName(const TStrObjList& Params, TMacroError& E);
-  void LibGetFormula(const TStrObjList& Params, TMacroError& E);
-  void LibSetFormula(const TStrObjList& Params, TMacroError& E);
+  void LibDataCount(const TStrObjList& Params, TMacroData& E);
+  void LibCurrentData(const TStrObjList& Params, TMacroData& E);
+  void LibDataName(const TStrObjList& Params, TMacroData& E);
+  void LibGetFormula(const TStrObjList& Params, TMacroData& E);
+  void LibSetFormula(const TStrObjList& Params, TMacroData& E);
   void LibEndUpdate(TStrObjList &Cmds, const TParamList &Options,
-    TMacroError &E);
-  void LibSaveSolution(const TStrObjList& Params, TMacroError& E);
-  void LibGetMu(const TStrObjList& Params, TMacroError& E);
-  void LibRefinementInfo(const TStrObjList& Params, TMacroError& E);
-  class TLibrary* ExportLibrary(const olxstr& name = EmptyString());
+    TMacroData &E);
+  void LibSaveSolution(const TStrObjList& Params, TMacroData& E);
+  void LibGetMu(const TStrObjList& Params, TMacroData& E);
+  void LibRefinementInfo(const TStrObjList& Params, TMacroData& E);
+
+  TLibrary* ExportLibrary(const olxstr& name=EmptyString());
+
+  struct VPtr : public olx_virtual_ptr<TXFile> {
+    virtual IEObject *get_ptr() const;
+  };
 
   /* describes a file name with which may carry reference to the dataset in the
   case of multiple-dataset files

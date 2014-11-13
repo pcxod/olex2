@@ -182,7 +182,7 @@ olxstr AGlScene::MetaFont::GetFileIdString() const {
 //.............................................................................
 //.............................................................................
 void AGlScene::LibMakeCurrent(TStrObjList& Cmds, const TParamList& Options,
-  TMacroError& E)
+  TMacroData& E)
 {
   MakeCurrent();
 }

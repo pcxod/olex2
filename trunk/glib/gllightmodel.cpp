@@ -87,7 +87,7 @@ void TGlLightModel::ToDataItem(TDataItem& Item) const {
     Lights[i].ToDataItem(Item.AddItem(olxstr("Light") << i ));
 }
 //..............................................................................
-void TGlLightModel::LibClearColor(const TStrObjList& Params, TMacroError& E)  {
+void TGlLightModel::LibClearColor(const TStrObjList& Params, TMacroData& E)  {
   if( Params.IsEmpty() )  E.SetRetVal(ClearColor.ToString());
   else  {
     const TGlOption v = ClearColor;
@@ -97,7 +97,7 @@ void TGlLightModel::LibClearColor(const TStrObjList& Params, TMacroError& E)  {
   }
 }
 //..............................................................................
-void TGlLightModel::LibAmbientColor(const TStrObjList& Params, TMacroError& E)  {
+void TGlLightModel::LibAmbientColor(const TStrObjList& Params, TMacroData& E)  {
   if( Params.IsEmpty() )  E.SetRetVal(AmbientColor.ToString());
   else  {
     const TGlOption v = AmbientColor;
@@ -107,7 +107,7 @@ void TGlLightModel::LibAmbientColor(const TStrObjList& Params, TMacroError& E)  
   }
 }
 //..............................................................................
-void TGlLightModel::LibLocalViewer(const TStrObjList& Params, TMacroError& E)  {
+void TGlLightModel::LibLocalViewer(const TStrObjList& Params, TMacroData& E)  {
   if( Params.IsEmpty() )  E.SetRetVal(IsLocalViewer());
   else  {
     const bool v = IsLocalViewer();
@@ -117,7 +117,7 @@ void TGlLightModel::LibLocalViewer(const TStrObjList& Params, TMacroError& E)  {
   }
 }
 //..............................................................................
-void TGlLightModel::LibSmoothShade(const TStrObjList& Params, TMacroError& E)  {
+void TGlLightModel::LibSmoothShade(const TStrObjList& Params, TMacroData& E)  {
   if( Params.IsEmpty() )  E.SetRetVal(IsSmoothShade());
   else  {
     const bool v = IsSmoothShade();
@@ -127,7 +127,7 @@ void TGlLightModel::LibSmoothShade(const TStrObjList& Params, TMacroError& E)  {
   }
 }
 //..............................................................................
-void TGlLightModel::LibTwoSides(const TStrObjList& Params, TMacroError& E)  {
+void TGlLightModel::LibTwoSides(const TStrObjList& Params, TMacroData& E)  {
   if( Params.IsEmpty() )  E.SetRetVal(IsTwoSides());
   else  {
     const bool v = IsTwoSides();

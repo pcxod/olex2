@@ -33,7 +33,7 @@ const short
 
 const float caDefIso = 0.05f;  // default atom isotropic parameter;
 
-template <class Net> class TSObject: public ACollectionItem  {
+template <class Net> class TSObject: public virtual ACollectionItem {
 protected:
   Net* Network;  // a pointer to parent Network
   short Type;  // object type: eg bond, atom, etc

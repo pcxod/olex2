@@ -733,7 +733,7 @@ bool THtml::SetObjectItems(AOlxCtrl* Obj, const olxstr& src)  {
 }
 //.............................................................................
 void THtml::SetObjectData(AOlxCtrl *Obj, const olxstr& Data)  {
-  const type_info &ti = typeid(*Obj);
+  const std::type_info &ti = typeid(*Obj);
   if (ti == typeid(TTextEdit))  { ((TTextEdit*)Obj)->SetData(Data);  return; }
   if (ti == typeid(TCheckBox))  { ((TCheckBox*)Obj)->SetData(Data);  return; }
   if( ti == typeid(TTrackBar) )  {  ((TTrackBar*)Obj)->SetData(Data);  return;  }

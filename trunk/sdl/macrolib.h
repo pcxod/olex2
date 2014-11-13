@@ -32,7 +32,7 @@ public:
   TEMacro(const olxstr& name, const olxstr& desc);
 
   virtual void DoRun(TStrObjList &Params, const TParamList &Options,
-    TMacroError& E);
+    TMacroData& E);
   void AddCmd(const olxstr& cmd);
   void AddOnAbortCmd(const olxstr& cmd);
   void AddArg(const olxstr& name, const olxstr& val)  {
@@ -41,7 +41,7 @@ public:
   virtual ABasicFunction *Replicate() const;
 };
 
-class TEMacroLib {
+class TEMacroLib : public IEObject {
   olex2::IOlex2Processor& OlexProcessor;
   static bool is_allowed_in_name(olxch ch) {
     return (olxstr::o_isalphanumeric(ch) || ch == '_' || ch == '.');
@@ -49,11 +49,11 @@ class TEMacroLib {
   uint8_t LogLevel;
   static olxstr_dict<void (*)(
     exparse::evaluator<exparse::expression_tree> *t,
-    TMacroError& E, const TStrList &argv)>& GetBuiltins()
+    TMacroData& E, const TStrList &argv)>& GetBuiltins()
   {
     static olxstr_dict<void (*)(
       exparse::evaluator<exparse::expression_tree> *t,
-      TMacroError& E, const TStrList &argv)> b_;
+      TMacroData& E, const TStrList &argv)> b_;
     return b_;
   }
   static olxstr SubstituteArgs(const olxstr &arg, const TStrList &argv,
@@ -72,13 +72,13 @@ protected:
   DefFunc(LogLevel)
   DefFunc(Process)
   static void funIF(exparse::evaluator<exparse::expression_tree> *t,
-    TMacroError& E, const TStrList &argv);
+    TMacroData& E, const TStrList &argv);
   static void funOr(exparse::evaluator<exparse::expression_tree> *t,
-    TMacroError& E, const TStrList &argv);
+    TMacroData& E, const TStrList &argv);
   static void funAnd(exparse::evaluator<exparse::expression_tree> *t,
-    TMacroError& E, const TStrList &argv);
+    TMacroData& E, const TStrList &argv);
   static void funNot(exparse::evaluator<exparse::expression_tree> *t,
-    TMacroError& E, const TStrList &argv);
+    TMacroData& E, const TStrList &argv);
 public:
   TEMacroLib(olex2::IOlex2Processor& olexProcessor);
   ~TEMacroLib() {}
@@ -94,24 +94,24 @@ public:
   reports non-existent macro/function
   */
   static olxstr ProcessEvaluator(exparse::expression_tree *e,
-    TMacroError& me, const TStrList &argv, bool allow_dummy=false);
+    TMacroData& me, const TStrList &argv, bool allow_dummy=false);
   static arg_t EvaluateArg(exparse::expression_tree *t,
-    TMacroError& me, const TStrList &argv);
+    TMacroData& me, const TStrList &argv);
   /* if has_owner is true, then in the case the function does not exist no
   flags are set in E
   */
-  bool ProcessFunction(olxstr& Cmd, TMacroError& E, bool has_owner,
+  bool ProcessFunction(olxstr& Cmd, TMacroData& E, bool has_owner,
     const TStrList &argv=TStrList());
   //..............................................................................
-  template <class Base> void ProcessTopMacro(const olxstr& Cmd, TMacroError& Error,
-    Base& base_instance, void (Base::*ErrorAnalyser)(TMacroError& error))
+  template <class Base> void ProcessTopMacro(const olxstr& Cmd, TMacroData& Error,
+    Base& base_instance, void (Base::*ErrorAnalyser)(TMacroData& error))
   {
     ProcessMacro(Cmd, Error);
     if (ErrorAnalyser != NULL)
       (base_instance.*ErrorAnalyser)(Error);
   }
   //..............................................................................
-  void ProcessMacro(const olxstr& Cmd, TMacroError& Error,
+  void ProcessMacro(const olxstr& Cmd, TMacroData& Error,
     const TStrList &argv=TStrList());
   DefPropP(uint8_t, LogLevel)
 };
