@@ -24,7 +24,8 @@
 #include "sfutil.h"
 
 TXApp::TXApp(const olxstr &basedir, bool)
-  : TBasicApp(basedir), Library(EmptyString(), this)
+  : TBasicApp(basedir), Library(EmptyString(), this),
+  FXFile(0)
 {
   min_hbond_angle = 120;
   min_hbond_angle_i = false;
@@ -37,7 +38,8 @@ TXApp::TXApp(const olxstr &basedir, bool)
 //..............................................................................
 TXApp::TXApp(const olxstr &basedir, ASObjectProvider* objectProvider,
   ASelectionOwner* selOwner)
-  : TBasicApp(basedir), Library(EmptyString(), this)
+  : TBasicApp(basedir), Library(EmptyString(), this),
+  FXFile(0)
 {
   Init(objectProvider, selOwner);
 }
@@ -51,8 +53,8 @@ void TXApp::Init(ASObjectProvider* objectProvider, ASelectionOwner* selOwner) {
   catch( const TIOException& exc )  {
     throw TFunctionFailedException(__OlxSourceInfo, exc);
   }
-  FXFile = new TXFile(*(objectProvider == NULL ? new SObjectProvider
-    : objectProvider));
+  FXFile = (objectProvider == NULL ? new SObjectProvider()
+    : objectProvider)->CreateXFile();
 
   DefineState(psFileLoaded, "Loaded file is expected");
   DefineState(psCheckFileTypeIns, "INS file is expected");

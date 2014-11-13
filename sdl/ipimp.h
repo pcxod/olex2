@@ -28,11 +28,11 @@ class OlexProcessorImp : public IOlex2Processor {
 protected:
   macrolib::TEMacroLib Macros;
 
-  virtual void AnalyseError(TMacroError &error) {
+  virtual void AnalyseError(TMacroData &error) {
     AnalyseErrorEx(error, false);
   }
 
-  virtual void AnalyseErrorEx(const TMacroError &error, bool quiet) {
+  virtual void AnalyseErrorEx(const TMacroData &error, bool quiet) {
     if (!error.IsSuccessful()) {
       if (error.IsProcessingException()) {
         TBasicApp::NewLogEntry(logException) << error.GetLocation() << ": " <<
@@ -113,7 +113,7 @@ public:
   {
     const olxstr cmd_ = cmd;
     beforeCall(cmd_);
-    TMacroError err;
+    TMacroData err;
     err.SetLocation(location);
     const bool rv = Macros.ProcessFunction(cmd, err, false);
     AnalyseErrorEx(err, quiet);
@@ -125,7 +125,7 @@ public:
     const olxstr& location=EmptyString(), bool quiet=false)
   {
     beforeCall(cmd);
-    TMacroError err;
+    TMacroData err;
     err.SetLocation(location);
     Macros.ProcessTopMacro(cmd, err, *this,
       quiet ? NULL : &OlexProcessorImp::AnalyseError);
@@ -133,7 +133,7 @@ public:
     return err.IsSuccessful();
   }
 
-  virtual bool processMacroEx(const olxstr& cmd, TMacroError &err,
+  virtual bool processMacroEx(const olxstr& cmd, TMacroData &err,
     const olxstr& location=EmptyString(), bool quiet=false)
   {
     beforeCall(cmd);
@@ -146,7 +146,7 @@ public:
   virtual void callCallbackFunc(const olxstr& cbEvent, const TStrList& params) {
     beforeCall(cbEvent);
     TSizeList indexes;
-    TMacroError me;
+    TMacroData me;
     CallbackFuncs.GetIndices(cbEvent, indexes);
     for( size_t i=0; i < indexes.Count(); i++ )  {
       CallbackFuncs.GetValue(indexes[i])->Run(params, me);

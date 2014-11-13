@@ -93,17 +93,21 @@ TdlgMsgBox::~TdlgMsgBox()  {
 bool TdlgMsgBox::Execute(const IEObject *Sender, const IEObject *Data,
   TActionQueue *)
 {
-  if( EsdlInstanceOf( *Sender, TButton) )
-    EndModal( ((TButton*)(AOlxCtrl*)Sender)->GetId() );
+  if (EsdlInstanceOf(*Sender, TButton)) {
+    EndModal(dynamic_cast<const TButton *>(Sender)->GetId());
+  }
   return true;
 }
 //..............................................................................
-olxstr TdlgMsgBox::Execute(TMainFrame* Parent, const olxstr& msg, const olxstr& title,
-                           const olxstr& tickBoxMsg, long flags, bool ShowRememberCheckBox)  {
-  TdlgMsgBox* dlg = new TdlgMsgBox(Parent, msg, title, tickBoxMsg, flags, ShowRememberCheckBox);
+olxstr TdlgMsgBox::Execute(TMainFrame* Parent, const olxstr& msg,
+  const olxstr& title, const olxstr& tickBoxMsg, long flags,
+  bool ShowRememberCheckBox)
+{
+  TdlgMsgBox* dlg = new TdlgMsgBox(Parent, msg, title, tickBoxMsg, flags,
+    ShowRememberCheckBox);
   int mv = dlg->ShowModal();
   olxstr rv;
-  if( ShowRememberCheckBox && dlg->cbRemember->IsChecked() )
+  if (ShowRememberCheckBox && dlg->cbRemember->IsChecked())
     rv = 'R';
   dlg->Destroy();
   if( mv == wxID_OK )  rv << 'O';

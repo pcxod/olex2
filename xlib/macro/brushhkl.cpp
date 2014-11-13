@@ -57,7 +57,7 @@ struct HklBrushRef  {
   }
 };
 
-void XLibMacros::macHklBrush(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+void XLibMacros::macHklBrush(TStrObjList &Cmds, const TParamList &Options, TMacroData &E)  {
   TXApp &XApp = TXApp::GetInstance();
   olxstr HklFN(XApp.XFile().LocateHklFile());
 

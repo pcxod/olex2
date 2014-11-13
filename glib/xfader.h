@@ -40,11 +40,11 @@ public:
     return true;
   }
 
-  void LibStep(const TStrObjList& Params, TMacroError& E);
-  void LibPosition(const TStrObjList& Params, TMacroError& E);
-  void LibInitFG(const TStrObjList& Params, TMacroError& E);
-  void LibInitBG(const TStrObjList& Params, TMacroError& E);
-  void LibBG2FG(const TStrObjList& Params, TMacroError& E);
+  void LibStep(const TStrObjList& Params, TMacroData& E);
+  void LibPosition(const TStrObjList& Params, TMacroData& E);
+  void LibInitFG(const TStrObjList& Params, TMacroData& E);
+  void LibInitBG(const TStrObjList& Params, TMacroData& E);
+  void LibBG2FG(const TStrObjList& Params, TMacroData& E);
   class TLibrary*  ExportLibrary(const olxstr& name="fader");
 };
 

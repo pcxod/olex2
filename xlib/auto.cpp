@@ -1848,7 +1848,8 @@ TAutoDB &TAutoDB::GetInstance()  {
       if (!TEFile::Exists(fn) && TEFile::Exists(bd_fn))
         TEFile::Copy(bd_fn, fn);
     }
-    TEGC::AddP(Instance=new TAutoDB(*((TXFile*)app.XFile().Replicate()), app));
+    TEGC::AddP(Instance=new TAutoDB(
+      *(dynamic_cast<TXFile *>(app.XFile().Replicate())), app));
     if( TEFile::Exists(fn) )  {
       TEFile dbf(fn, "rb");
       Instance->LoadFromStream(dbf);
@@ -1865,21 +1866,21 @@ TAutoDB &TAutoDB::GetInstance()  {
 //..............................................................................
 //..............................................................................
 //..............................................................................
-void TAutoDB::LibBAIDelta(const TStrObjList& Params, TMacroError& E)  {
+void TAutoDB::LibBAIDelta(const TStrObjList& Params, TMacroData& E)  {
   if( Params.IsEmpty() )
     E.SetRetVal(BAIDelta);
   else
     BAIDelta = Params[0].ToInt();
 }
 //..............................................................................
-void TAutoDB::LibURatio(const TStrObjList& Params, TMacroError& E)  {
+void TAutoDB::LibURatio(const TStrObjList& Params, TMacroData& E)  {
   if( Params.IsEmpty() )
     E.SetRetVal(URatio);
   else
     URatio = Params[0].ToDouble();
 }
 //..............................................................................
-void TAutoDB::LibEnforceFormula(const TStrObjList& Params, TMacroError& E)  {
+void TAutoDB::LibEnforceFormula(const TStrObjList& Params, TMacroData& E)  {
   if( Params.IsEmpty() )
     E.SetRetVal(EnforceFormula);
   else

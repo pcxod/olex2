@@ -10,64 +10,64 @@
 #include "libfile.h"
 #include "efile.h"
 
-void LibFile::FileExists(const TStrObjList& Params, TMacroError& E)  {
+void LibFile::FileExists(const TStrObjList& Params, TMacroData& E)  {
   E.SetRetVal(TEFile::Exists(Params[0]));
 }
 
-void LibFile::FileName(const TStrObjList& Params, TMacroError& E)  {
+void LibFile::FileName(const TStrObjList& Params, TMacroData& E)  {
   E.SetRetVal(TEFile::ExtractFileName(Params[0]));
 }
 
-void LibFile::FilePath(const TStrObjList& Params, TMacroError& E)  {
+void LibFile::FilePath(const TStrObjList& Params, TMacroData& E)  {
   E.SetRetVal(TEFile::ExtractFilePath(Params[0]));
 }
 
-void LibFile::FileDrive(const TStrObjList& Params, TMacroError& E)  {
+void LibFile::FileDrive(const TStrObjList& Params, TMacroData& E)  {
   E.SetRetVal(TEFile::ExtractFileDrive(Params[0]));
 }
 
-void LibFile::FileExt(const TStrObjList& Params, TMacroError& E)  {
+void LibFile::FileExt(const TStrObjList& Params, TMacroData& E)  {
   E.SetRetVal(TEFile::ExtractFileExt(Params[0]));
 }
 
-void LibFile::ChangeFileExt(const TStrObjList& Params, TMacroError& E)  {
+void LibFile::ChangeFileExt(const TStrObjList& Params, TMacroData& E)  {
   E.SetRetVal(TEFile::ChangeFileExt(Params[0], Params[1]));
 }
 
-void LibFile::Copy(const TStrObjList& Params, TMacroError& E)  {
+void LibFile::Copy(const TStrObjList& Params, TMacroData& E)  {
   TEFile::Copy(Params[0], Params[1]);
   E.SetRetVal(Params[1]);
 }
 
-void LibFile::Rename(const TStrObjList& Params, TMacroError& E)  {
+void LibFile::Rename(const TStrObjList& Params, TMacroData& E)  {
   E.SetRetVal(TEFile::Rename(Params[0], Params[1]));
 }
 
-void LibFile::Delete(const TStrObjList& Params, TMacroError& E)  {
+void LibFile::Delete(const TStrObjList& Params, TMacroData& E)  {
   E.SetRetVal(TEFile::DelFile(Params[0]));
 }
 
-void LibFile::CurDir(const TStrObjList& Params, TMacroError& E)  {
+void LibFile::CurDir(const TStrObjList& Params, TMacroData& E)  {
   E.SetRetVal(TEFile::CurrentDir());
 }
 
-void LibFile::ChDir(const TStrObjList& Params, TMacroError& E)  {
+void LibFile::ChDir(const TStrObjList& Params, TMacroData& E)  {
   E.SetRetVal(TEFile::ChangeDir(Params[0]));
 }
 
-void LibFile::MkDir(const TStrObjList& Params, TMacroError& E)  {
+void LibFile::MkDir(const TStrObjList& Params, TMacroData& E)  {
   E.SetRetVal(TEFile::MakeDir(Params[0]));
 }
 
-void LibFile::OSPath(const TStrObjList& Params, TMacroError& E)  {
+void LibFile::OSPath(const TStrObjList& Params, TMacroData& E)  {
   E.SetRetVal(TEFile::OSPath(Params[0]));
 }
 
-void LibFile::Which(const TStrObjList& Params, TMacroError& E)  {
+void LibFile::Which(const TStrObjList& Params, TMacroData& E)  {
   E.SetRetVal(TEFile::Which(Params[0]));
 }
 
-void LibFile::Age(const TStrObjList& Params, TMacroError& E)  {
+void LibFile::Age(const TStrObjList& Params, TMacroData& E)  {
   TEFile::CheckFileExists(__OlxSourceInfo, Params[0]);
   time_t v = TEFile::FileAge(Params[0]);
   if( Params.Count() == 1 )
@@ -76,7 +76,7 @@ void LibFile::Age(const TStrObjList& Params, TMacroError& E)  {
     E.SetRetVal(TETime::FormatDateTime(Params[1], v));
 }
 
-void LibFile::ListDirForGUI(const TStrObjList& Params, TMacroError& E)  {
+void LibFile::ListDirForGUI(const TStrObjList& Params, TMacroData& E)  {
   TEFile::CheckFileExists(__OlxSourceInfo, Params[0]);
   olxstr cd( TEFile::CurrentDir() );
   olxstr dn(Params[0]);
@@ -106,12 +106,12 @@ void LibFile::ListDirForGUI(const TStrObjList& Params, TMacroError& E)  {
   E.SetRetVal( output.Text(';') );
 }
 
-void LibFile::CreateRelativePath(const TStrObjList& Params, TMacroError& E)  {
+void LibFile::CreateRelativePath(const TStrObjList& Params, TMacroData& E)  {
   E.SetRetVal(TEFile::CreateRelativePath(Params[0],
     Params.Count() == 2 ? Params[1] : EmptyString()));
 }
 
-void LibFile::ExpandRelativePath(const TStrObjList& Params, TMacroError& E)  {
+void LibFile::ExpandRelativePath(const TStrObjList& Params, TMacroData& E)  {
   E.SetRetVal(TEFile::ExpandRelativePath(Params[0],
     Params.Count() == 2 ? Params[1] : EmptyString()));
 }

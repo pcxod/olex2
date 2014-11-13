@@ -329,13 +329,13 @@ bool TFileHandlerManager::Exists(const olxstr& fn) {
 //..............................................................................
 //..............................................................................
 void TFileHandlerManager::LibExists(const TStrObjList& Params,
-  TMacroError& E)
+  TMacroData& E)
 {
   E.SetRetVal<bool>(IsMemoryBlock(Params[0]));
 }
 //..............................................................................
 void TFileHandlerManager::LibDump(TStrObjList &Cmds, const TParamList &Options,
-  TMacroError &Error)
+  TMacroData &Error)
 {
   const TMemoryBlock *mb = FindMemoryBlock(Cmds[0]);
   if (mb == NULL) {
@@ -348,7 +348,7 @@ void TFileHandlerManager::LibDump(TStrObjList &Cmds, const TParamList &Options,
 }
 //..............................................................................
 void TFileHandlerManager::LibClear(TStrObjList &Cmds, const TParamList &Options,
-  TMacroError &Error)
+  TMacroData &Error)
 {
   int mask = -1;
   if (!Cmds.IsEmpty())

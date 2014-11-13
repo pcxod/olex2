@@ -2100,7 +2100,7 @@ TPtrList<TSRestraintList>::const_list_type RefinementModel::GetRestraints() {
 //..............................................................................
 //..............................................................................
 void RefinementModel::LibHasOccu(const TStrObjList& Params,
-  TMacroError& E)
+  TMacroData& E)
 {
   bool has = false;
   for (size_t i = 0; i < aunit.AtomCount(); i++) {
@@ -2117,7 +2117,7 @@ void RefinementModel::LibHasOccu(const TStrObjList& Params,
   E.SetRetVal(has);
 }
 //..............................................................................
-void RefinementModel::LibOSF(const TStrObjList& Params, TMacroError& E)  {
+void RefinementModel::LibOSF(const TStrObjList& Params, TMacroData& E)  {
   if( Params.IsEmpty() )
     E.SetRetVal(Vars.VarCount() == 0 ? 0.0 : Vars.GetVar(0).GetValue());
   else  {
@@ -2128,7 +2128,7 @@ void RefinementModel::LibOSF(const TStrObjList& Params, TMacroError& E)  {
   }
 }
 //..............................................................................
-void RefinementModel::LibFVar(const TStrObjList& Params, TMacroError& E)  {
+void RefinementModel::LibFVar(const TStrObjList& Params, TMacroData& E)  {
   size_t i = Params[0].ToSizeT();
   if (Vars.VarCount() <= i) {
     E.ProcessingError(__OlxSrcInfo, "FVar index out of bounds");
@@ -2143,7 +2143,7 @@ void RefinementModel::LibFVar(const TStrObjList& Params, TMacroError& E)  {
   }
 }
 //..............................................................................
-void RefinementModel::LibBASF(const TStrObjList& Params, TMacroError& E)  {
+void RefinementModel::LibBASF(const TStrObjList& Params, TMacroData& E)  {
   size_t i = Params[0].ToSizeT();
   if (BASF.Count() <= i) {
     E.ProcessingError(__OlxSrcInfo, "BASF index out of bounds");
@@ -2159,7 +2159,7 @@ void RefinementModel::LibBASF(const TStrObjList& Params, TMacroError& E)  {
   }
 }
 //..............................................................................
-void RefinementModel::LibEXTI(const TStrObjList& Params, TMacroError& E)  {
+void RefinementModel::LibEXTI(const TStrObjList& Params, TMacroData& E)  {
   if( Params.IsEmpty() )  {
     if( EXTI_set )
       E.SetRetVal(EXTI.ToString());
@@ -2173,7 +2173,7 @@ void RefinementModel::LibEXTI(const TStrObjList& Params, TMacroError& E)  {
 }
 //..............................................................................
 void RefinementModel::LibUpdateCRParams(const TStrObjList& Params,
-  TMacroError& E)
+  TMacroData& E)
 {
   IConstraintContainer* cc = rcRegister.Find(Params[0], NULL);
   if( cc == NULL )  {
@@ -2185,7 +2185,7 @@ void RefinementModel::LibUpdateCRParams(const TStrObjList& Params,
 }
 //..............................................................................
 void RefinementModel::LibShareADP(TStrObjList &Cmds, const TParamList &Options,
-  TMacroError &E)
+  TMacroData &E)
 {
   //size_t n = Cmds.Count();
   TSAtomPList atoms;
@@ -2278,19 +2278,19 @@ void RefinementModel::LibShareADP(TStrObjList &Cmds, const TParamList &Options,
 }
 //..............................................................................
 void RefinementModel::LibCalcCompleteness(const TStrObjList& Params,
-  TMacroError& E)
+  TMacroData& E)
 {
   E.SetRetVal(CalcCompletnessTo2Theta(Params[0].ToDouble()));
 }
 //..............................................................................
 void RefinementModel::LibMaxIndex(const TStrObjList& Params,
-  TMacroError& E)
+  TMacroData& E)
 {
   E.SetRetVal(olxstr(' ').Join(CalcMaxHklIndex(Params[0].ToDouble())));
 }
 //..............................................................................
 void RefinementModel::LibNewAfixGroup(TStrObjList &Cmds,
-  const TParamList &Options, TMacroError &E)
+  const TParamList &Options, TMacroData &E)
 {
   int afix = Cmds[0].ToInt();
   TCAtomPList atoms;
@@ -2326,7 +2326,7 @@ void RefinementModel::LibNewAfixGroup(TStrObjList &Cmds,
 }
 //..............................................................................
 void RefinementModel::LibNewRestraint(TStrObjList &Cmds,
-  const TParamList &Options, TMacroError &E)
+  const TParamList &Options, TMacroData &E)
 {
   size_t st = 1;
   TSimpleRestraint *sr = NULL;
@@ -2380,40 +2380,49 @@ void RefinementModel::LibNewRestraint(TStrObjList &Cmds,
   TBasicApp::NewLogEntry() << sr->ToString();
 }
 //..............................................................................
-TLibrary* RefinementModel::ExportLibrary(const olxstr& name)  {
+//..............................................................................
+//..............................................................................
+IEObject *RefinementModel::VPtr::get_ptr() const {
+  return &TXApp::GetInstance().XFile().GetRM();
+}
+//..............................................................................
+//..............................................................................
+//..............................................................................
+TLibrary* RefinementModel::ExportLibrary(const olxstr& name) {
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("rm") : name);
+  olx_vptr<RefinementModel> thip(new VPtr);
   lib->Register(
-    new TFunction<RefinementModel>(this, &RefinementModel::LibOSF,
+    new TFunction<RefinementModel>(thip, &RefinementModel::LibOSF,
       "OSF",
       fpNone|fpOne,
 "Returns/sets OSF"));
   lib->Register(
-    new TFunction<RefinementModel>(this, &RefinementModel::LibFVar,
+    new TFunction<RefinementModel>(thip, &RefinementModel::LibFVar,
       "FVar",
       fpOne|fpTwo|fpThree,
 "Returns/sets FVAR referred by index"));
   lib->Register(
-    new TFunction<RefinementModel>(this, &RefinementModel::LibBASF,
+    new TFunction<RefinementModel>(thip, &RefinementModel::LibBASF,
     "BASF",
     fpOne | fpTwo | fpThree,
     "Returns/sets BASF referred by index"));
   lib->Register(
-    new TFunction<RefinementModel>(this, &RefinementModel::LibEXTI,
+    new TFunction<RefinementModel>(thip, &RefinementModel::LibEXTI,
       "Exti",
       fpNone|fpOne|fpTwo,
 "Returns/sets EXTI"));
   lib->Register(
-    new TFunction<RefinementModel>(this, &RefinementModel::LibUpdateCRParams,
+    new TFunction<RefinementModel>(thip, &RefinementModel::LibUpdateCRParams,
       "UpdateCR",
       fpAny^(fpNone|fpOne|fpTwo),
 "Updates constraint or restraint parameters (name, index, {values})") );
   lib->Register(
-    new TFunction<RefinementModel>(this, &RefinementModel::LibCalcCompleteness,
+    new TFunction<RefinementModel>(thip, &RefinementModel::LibCalcCompleteness,
       "Completeness",
       fpOne,
 "Calculates completeness to the given 2 theta value") );
   lib->Register(
-    new TMacro<RefinementModel>(this, &RefinementModel::LibShareADP,
+    new TMacro<RefinementModel>(thip, &RefinementModel::LibShareADP,
       "ShareADP", EmptyString(),
       fpAny,
 "Creates a rotated ADP constraint for given atoms. Currently works only for "
@@ -2421,19 +2430,19 @@ TLibrary* RefinementModel::ExportLibrary(const olxstr& name)  {
 ));
 
   lib->Register(
-    new TFunction<RefinementModel>(this, &RefinementModel::LibHasOccu,
+    new TFunction<RefinementModel>(thip, &RefinementModel::LibHasOccu,
     "HasOccu",
     fpNone,
     "Returns true if occupancy of any of the atoms is refined or deviates from 1"));
 
   lib->Register(
-    new TFunction<RefinementModel>(this, &RefinementModel::LibMaxIndex,
+    new TFunction<RefinementModel>(thip, &RefinementModel::LibMaxIndex,
     "MaxIndex",
     fpOne,
     "Calculates largest Miller index for the given 2 theta value"));
 
   lib->Register(
-    new TMacro<RefinementModel>(this, &RefinementModel::LibNewAfixGroup,
+    new TMacro<RefinementModel>(thip, &RefinementModel::LibNewAfixGroup,
     "NewAfixGroup",
     "d-distance when applicable&;"
     "sof-occupancy [11]&;"
@@ -2442,7 +2451,7 @@ TLibrary* RefinementModel::ExportLibrary(const olxstr& name)  {
     "Creates a new AFIX group expects AFIX code and atom ids"));
 
   lib->Register(
-    new TMacro<RefinementModel>(this, &RefinementModel::LibNewRestraint,
+    new TMacro<RefinementModel>(thip, &RefinementModel::LibNewRestraint,
     "NewRestraint",
     "s1-standard deviation 1&;"
     "s2-standard deviation 2",

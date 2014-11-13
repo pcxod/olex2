@@ -1306,12 +1306,12 @@ void TGlRenderer::SetVisibility(const TEBitArray &v) {
 //..............................................................................
 //..............................................................................
 //..............................................................................
-void TGlRenderer::LibCompile(const TStrObjList& Params, TMacroError& E)  {
+void TGlRenderer::LibCompile(const TStrObjList& Params, TMacroData& E)  {
   Compile(Params[0].ToBool());
 }
 //..............................................................................
 void TGlRenderer::LibPerspective(TStrObjList &Cmds, const TParamList &Options,
-  TMacroError &E)
+  TMacroData &E)
 {
   if( Cmds.IsEmpty() )  {  EnablePerspective(false);  return;  }
   if( !Cmds[0].IsNumber() )  {
@@ -1327,7 +1327,7 @@ void TGlRenderer::LibPerspective(TStrObjList &Cmds, const TParamList &Options,
 }
 //..............................................................................
 void TGlRenderer::LibFog(TStrObjList &Cmds, const TParamList &Options,
-  TMacroError &E)
+  TMacroData &E)
 {
   if (Cmds.Count() == 1) {
     SetFogType(GL_LINEAR);
@@ -1348,7 +1348,7 @@ void TGlRenderer::LibFog(TStrObjList &Cmds, const TParamList &Options,
 }
 //..............................................................................
 void TGlRenderer::LibZoom(TStrObjList &Cmds, const TParamList &Options,
-  TMacroError &E)
+  TMacroData &E)
 {
   if( Cmds.IsEmpty() )  {
     SetZoom(CalcZoom());
@@ -1360,15 +1360,15 @@ void TGlRenderer::LibZoom(TStrObjList &Cmds, const TParamList &Options,
   }
 }
 //..............................................................................
-void TGlRenderer::LibCalcZoom(const TStrObjList& Params, TMacroError& E)  {
+void TGlRenderer::LibCalcZoom(const TStrObjList& Params, TMacroData& E)  {
   E.SetRetVal(CalcZoom());
 }
 //..............................................................................
-void TGlRenderer::LibGetZoom(const TStrObjList& Params, TMacroError& E)  {
+void TGlRenderer::LibGetZoom(const TStrObjList& Params, TMacroData& E)  {
   E.SetRetVal(GetZoom());
 }
 //..............................................................................
-void TGlRenderer::LibStereo(const TStrObjList& Params, TMacroError& E)  {
+void TGlRenderer::LibStereo(const TStrObjList& Params, TMacroData& E)  {
   if( Params.IsEmpty() )  {
     if( StereoFlag == glStereoColor )
       E.SetRetVal<olxstr>("color");
@@ -1437,7 +1437,7 @@ void TGlRenderer::LibStereo(const TStrObjList& Params, TMacroError& E)  {
   gs.SetParam("angle", StereoAngle, true);
 }
 //..............................................................................
-void TGlRenderer::LibStereoColor(const TStrObjList& Params, TMacroError& E)  {
+void TGlRenderer::LibStereoColor(const TStrObjList& Params, TMacroData& E)  {
   TGlOption* glo = Params[0].Equalsi("left") ? &StereoLeftColor :
     (Params[0].Equalsi("right") ? &StereoRightColor : NULL);
   if( glo == NULL )  {
@@ -1463,14 +1463,14 @@ void TGlRenderer::LibStereoColor(const TStrObjList& Params, TMacroError& E)  {
   gs.SetParam("right", StereoRightColor.ToString(), true);
 }
 //..............................................................................
-void TGlRenderer::LibLineWidth(const TStrObjList& Params, TMacroError& E)  {
+void TGlRenderer::LibLineWidth(const TStrObjList& Params, TMacroData& E)  {
   if( Params.IsEmpty() )
     E.SetRetVal(GetLineWidth());
   else
     SetLineWidth(Params[0].ToDouble());
 }
 //..............................................................................
-void TGlRenderer::LibBasis(const TStrObjList& Params, TMacroError& E)  {
+void TGlRenderer::LibBasis(const TStrObjList& Params, TMacroData& E)  {
   if( Params.IsEmpty() )  {
     TDataItem di(NULL, EmptyString());
     TEStrBuffer out;
@@ -1485,7 +1485,7 @@ void TGlRenderer::LibBasis(const TStrObjList& Params, TMacroError& E)  {
   }
 }
 //..............................................................................
-void TGlRenderer::LibRasterZ(const TStrObjList& Params, TMacroError& E)  {
+void TGlRenderer::LibRasterZ(const TStrObjList& Params, TMacroData& E)  {
   if( Params.IsEmpty() )
     E.SetRetVal(GetMaxRasterZ());
   else

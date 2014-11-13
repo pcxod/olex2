@@ -262,15 +262,15 @@ public:
 
   static const cm_Element &check_atom_type(TSAtom &a);
 
-  static void funTrim(const TStrObjList& Params, TMacroError& E)  {
+  static void funTrim(const TStrObjList& Params, TMacroData& E)  {
     E.SetRetVal(trim_18(TXApp::GetInstance().XFile().GetAsymmUnit()));
   }
 
-  static void funAnaluseUeq(const TStrObjList& Params, TMacroError& E)  {
+  static void funAnaluseUeq(const TStrObjList& Params, TMacroData& E)  {
     E.SetRetVal(analyse_u_eq(TXApp::GetInstance().XFile().GetAsymmUnit()));
   }
 
-  static void funFindScale(const TStrObjList& Params, TMacroError& E)  {
+  static void funFindScale(const TStrObjList& Params, TMacroData& E)  {
     bool apply = Params.IsEmpty() ? false : Params[0].ToBool();
     TLattice &latt = TXApp::GetInstance().XFile().GetLattice();
     double scale = find_scale(latt);

@@ -200,12 +200,12 @@ public:
   }
   TActionQueue &OnObject;
   void LibEnable(TStrObjList& Cmds, const TParamList& Options,
-    TMacroError &E);
+    TMacroData &E);
   void LibDisable(TStrObjList& Cmds, const TParamList& Options,
-    TMacroError &E);
+    TMacroData &E);
   void LibLock(TStrObjList& Cmds, const TParamList& Options,
-    TMacroError &E);
-  void LibIsEnabled(const TStrObjList& Params, TMacroError& E);
+    TMacroData &E);
+  void LibIsEnabled(const TStrObjList& Params, TMacroData& E);
 TLibrary *ExportLib(const olxstr &name="mouse");
 };
 

@@ -162,13 +162,13 @@ public:
 
   TActionQueue &OnCommand, &OnPost;
 
-  void LibClear(const TStrObjList& Params, TMacroError& E);
-  void LibLines(const TStrObjList& Params, TMacroError& E);
-  void LibShowBuffer(const TStrObjList& Params, TMacroError& E);
-  void LibPostText(const TStrObjList& Params, TMacroError& E);
-  void LibLineSpacing(const TStrObjList& Params, TMacroError& E);
-  void LibInviteString(const TStrObjList& Params, TMacroError& E);
-  void LibCommand(const TStrObjList& Params, TMacroError& E);
+  void LibClear(const TStrObjList& Params, TMacroData& E);
+  void LibLines(const TStrObjList& Params, TMacroData& E);
+  void LibShowBuffer(const TStrObjList& Params, TMacroData& E);
+  void LibPostText(const TStrObjList& Params, TMacroData& E);
+  void LibLineSpacing(const TStrObjList& Params, TMacroData& E);
+  void LibInviteString(const TStrObjList& Params, TMacroData& E);
+  void LibCommand(const TStrObjList& Params, TMacroData& E);
   class TLibrary* ExportLibrary(const olxstr& name=EmptyString());
 };
 

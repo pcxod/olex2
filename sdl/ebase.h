@@ -343,7 +343,7 @@ public:
 };
 
 // we need this class to throw exceptions from string with gcc ...
-class TExceptionBase : public IEObject  {
+class TExceptionBase : public IEObject {
 protected:
   static bool AutoLog;
   /* to prevent creation this class directly. All instances must be of the

@@ -51,17 +51,19 @@ public:
     }
   }
   size_t EdgeCount() const { return Edges.Count(); }
+  vec3d& GetEdge(size_t i) { return Edges[i]; }
   const vec3d& GetEdge(size_t i) const { return Edges[i]; }
-  bool IsReciprocal() const {  return Reciprocal;  }
+  bool IsReciprocal() const { return Reciprocal; }
   void SetReciprocal(bool v, double scale=1);
   virtual void SetVisible(bool v);
   const mat3d& GetCellToCartesian() const {  return CellToCartesian;  }
   const mat3d& GetHklToCartesian() const {  return HklToCartesian;  }
   DefPropP(double, Thickness)
   void ToDataItem(TDataItem& di) const;
+
   void FromDataItem(const TDataItem& di);
-  void funThickness(const TStrObjList& Params, TMacroError& E);
-  void funDrawstyle(const TStrObjList& Params, TMacroError& E);
+  void funThickness(const TStrObjList& Params, TMacroData& E);
+  void funDrawstyle(const TStrObjList& Params, TMacroData& E);
   TLibrary *ExportLibrary(const olxstr &name = EmptyString());
 
   const_strlist ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const;

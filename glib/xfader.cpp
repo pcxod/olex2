@@ -176,31 +176,31 @@ void TXFader::InitFG(bool v)  {
 
 
 //..............................................................................
-void TXFader::LibStep(const TStrObjList& Params, TMacroError& E)  {
+void TXFader::LibStep(const TStrObjList& Params, TMacroData& E)  {
   if( !Params.IsEmpty() )  SetStep(Params[0].ToDouble());
   else                      E.SetRetVal(GetStep());
 }
 //..............................................................................
-void TXFader::LibPosition(const TStrObjList& Params, TMacroError& E)  {
+void TXFader::LibPosition(const TStrObjList& Params, TMacroData& E)  {
   if( !Params.IsEmpty() )  SetPosition(Params[0].ToDouble());
   else                      E.SetRetVal(GetPosition());
 }
 //..............................................................................
-void TXFader::LibInitFG(const TStrObjList& Params, TMacroError& E)  {
+void TXFader::LibInitFG(const TStrObjList& Params, TMacroData& E)  {
   bool v = true;
   if( !Params.IsEmpty() )
     v = Params[0].ToBool();
   InitFG(v);
 }
 //..............................................................................
-void TXFader::LibInitBG(const TStrObjList& Params, TMacroError& E)  {
+void TXFader::LibInitBG(const TStrObjList& Params, TMacroData& E)  {
   bool v = true;
   if( !Params.IsEmpty() )
     v = Params[0].ToBool();
   InitBG(v);
 }
 //..............................................................................
-void TXFader::LibBG2FG(const TStrObjList& Params, TMacroError& E)  {
+void TXFader::LibBG2FG(const TStrObjList& Params, TMacroData& E)  {
   bool v = true;
   if( !Params.IsEmpty() )
     v = Params[0].ToBool();

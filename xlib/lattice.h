@@ -275,10 +275,10 @@ public:
   // intialise the data, must be called after the FromDataItem
   void FinaliseLoading();
 
-  void LibGetFragmentCount(const TStrObjList& Params, TMacroError& E);
-  void LibGetFragmentAtoms(const TStrObjList& Params, TMacroError& E);
-  void LibGetMoiety(const TStrObjList& Params, TMacroError& E);
-  void LibIsGrown(const TStrObjList& Params, TMacroError& E);
+  void LibGetFragmentCount(const TStrObjList& Params, TMacroData& E);
+  void LibGetFragmentAtoms(const TStrObjList& Params, TMacroData& E);
+  void LibGetMoiety(const TStrObjList& Params, TMacroData& E);
+  void LibIsGrown(const TStrObjList& Params, TMacroData& E);
   TLibrary* ExportLibrary(const olxstr& name=EmptyString());
 };
 

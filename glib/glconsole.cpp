@@ -673,37 +673,37 @@ void TGlConsole::SetCommands(const const_strlist &l) {
 //..............................................................................
 //..............................................................................
 //..............................................................................
-void TGlConsole::LibClear(const TStrObjList& Params, TMacroError& E)  {
+void TGlConsole::LibClear(const TStrObjList& Params, TMacroData& E)  {
   ClearBuffer();
 }
 //..............................................................................
-void TGlConsole::LibLines(const TStrObjList& Params, TMacroError& E)  {
+void TGlConsole::LibLines(const TStrObjList& Params, TMacroData& E)  {
   if( !Params.IsEmpty() )
     SetLinesToShow(Params[0].ToInt());
   else
     E.SetRetVal<olxstr>(FLinesToShow);
 }
 //..............................................................................
-void TGlConsole::LibShowBuffer(const TStrObjList& Params, TMacroError& E)  {
+void TGlConsole::LibShowBuffer(const TStrObjList& Params, TMacroData& E)  {
   if( !Params.IsEmpty() )
     ShowBuffer( Params[0].ToBool() );
   else
     E.SetRetVal<olxstr>(FShowBuffer);
 }
 //..............................................................................
-void TGlConsole::LibPostText(const TStrObjList& Params, TMacroError& E)  {
+void TGlConsole::LibPostText(const TStrObjList& Params, TMacroData& E)  {
   for( size_t i=0; i < Params.Count(); i++ )
     PrintText(Params[i]);
 }
 //..............................................................................
-void TGlConsole::LibLineSpacing(const TStrObjList& Params, TMacroError& E)  {
+void TGlConsole::LibLineSpacing(const TStrObjList& Params, TMacroData& E)  {
   if( !Params.IsEmpty() )
     SetLineSpacing(Params[0].ToDouble());
   else
     E.SetRetVal<olxstr>(FLineSpacing);
 }
 //..............................................................................
-void TGlConsole::LibInviteString(const TStrObjList& Params, TMacroError& E)  {
+void TGlConsole::LibInviteString(const TStrObjList& Params, TMacroData& E)  {
   if (!Params.IsEmpty()) {
     olxstr ps = Params[0];
     if (!olex2::IOlex2Processor::GetInstance()->processFunction(
@@ -721,7 +721,7 @@ void TGlConsole::LibInviteString(const TStrObjList& Params, TMacroError& E)  {
     E.SetRetVal(InviteStr);
 }
 //..............................................................................
-void TGlConsole::LibCommand(const TStrObjList& Params, TMacroError& E)  {
+void TGlConsole::LibCommand(const TStrObjList& Params, TMacroData& E)  {
   if( !Params.IsEmpty() )  {
     PromptStr = InviteStr;
     olex2::IOlex2Processor::GetInstance()->processFunction(PromptStr);

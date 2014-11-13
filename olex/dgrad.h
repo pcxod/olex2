@@ -27,6 +27,5 @@ public:
   DefPropP(int, B)
   DefPropP(int, C)
   DefPropP(int, D)
-  DECLARE_EVENT_TABLE()
 };
 #endif

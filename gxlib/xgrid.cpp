@@ -1103,7 +1103,7 @@ TXBlob* TXGrid::CreateBlob(int x, int) const {
 //.............................................................................
 //.............................................................................
 //.............................................................................
-void TXGrid::LibExtended(const TStrObjList& Params, TMacroError& E)  {
+void TXGrid::LibExtended(const TStrObjList& Params, TMacroData& E)  {
   if( Params.IsEmpty() )  E.SetRetVal(Extended);
   else if( Params.Count() == 1 )
     SetExtended(Params[0].ToBool());
@@ -1114,25 +1114,25 @@ void TXGrid::LibExtended(const TStrObjList& Params, TMacroError& E)  {
   }
 }
 //.............................................................................
-void TXGrid::LibScale(const TStrObjList& Params, TMacroError& E)  {
+void TXGrid::LibScale(const TStrObjList& Params, TMacroData& E)  {
   if( Params.IsEmpty() )  E.SetRetVal(Scale);
   else
     SetScale(Params[0].ToFloat());
 }
 //.............................................................................
-void TXGrid::LibSize(const TStrObjList& Params, TMacroError& E)  {
+void TXGrid::LibSize(const TStrObjList& Params, TMacroData& E)  {
   if( Params.IsEmpty() )  E.SetRetVal(Size);
   else
     Size = Params[0].ToFloat();
 }
 //.............................................................................
-void TXGrid::LibPlaneSize(const TStrObjList& Params, TMacroError& E)  {
+void TXGrid::LibPlaneSize(const TStrObjList& Params, TMacroData& E)  {
   if( Params.IsEmpty() )  E.SetRetVal(MaxDim);
   else
     SetPlaneSize(Params[0].ToSizeT());
 }
 //.............................................................................
-void TXGrid::LibDepth(const TStrObjList& Params, TMacroError& E)  {
+void TXGrid::LibDepth(const TStrObjList& Params, TMacroData& E)  {
   if (Params.IsEmpty())
     E.SetRetVal(Depth);
   else {
@@ -1149,29 +1149,29 @@ void TXGrid::LibDepth(const TStrObjList& Params, TMacroError& E)  {
   }
 }
 //.............................................................................
-void TXGrid::LibMaxDepth(const TStrObjList& Params, TMacroError& E)  {
+void TXGrid::LibMaxDepth(const TStrObjList& Params, TMacroData& E)  {
   E.SetRetVal(Parent.MaxDim().DistanceTo(Parent.MinDim())/2);
 }
 //.............................................................................
-void TXGrid::LibContours(const TStrObjList& Params, TMacroError& E)  {
+void TXGrid::LibContours(const TStrObjList& Params, TMacroData& E)  {
   if( Params.IsEmpty() )  E.SetRetVal(ContourLevelCount);
   else
     SetContourLevelCount(Params[0].ToSizeT());
 }
 //.............................................................................
-void TXGrid::LibIsvalid(const TStrObjList& Params, TMacroError& E)  {
+void TXGrid::LibIsvalid(const TStrObjList& Params, TMacroData& E)  {
   E.SetRetVal(ED != NULL);
 }
 //.............................................................................
-void TXGrid::LibGetMin(const TStrObjList& Params, TMacroError& E)  {
+void TXGrid::LibGetMin(const TStrObjList& Params, TMacroData& E)  {
   E.SetRetVal(MinVal);
 }
 //.............................................................................
-void TXGrid::LibGetMax(const TStrObjList& Params, TMacroError& E)  {
+void TXGrid::LibGetMax(const TStrObjList& Params, TMacroData& E)  {
   E.SetRetVal(MaxVal);
 }
 //.............................................................................
-void TXGrid::LibRenderMode(const TStrObjList& Params, TMacroError& E)  {
+void TXGrid::LibRenderMode(const TStrObjList& Params, TMacroData& E)  {
   if( Params.IsEmpty() )  {
     if( RenderMode == planeRenderModeFill )
       E.SetRetVal<olxstr>("fill");

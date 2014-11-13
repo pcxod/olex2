@@ -227,95 +227,7 @@ public:
 };
 #endif
 /******************************************************************************/
-//----------------------------------------------------------------------------//
 // TMainForm function bodies
-//----------------------------------------------------------------------------//
-BEGIN_EVENT_TABLE(TMainForm, wxFrame)  // basic interface
-  EVT_SIZE(TMainForm::OnSize)
-  EVT_MOVE(TMainForm::OnMove)
-  EVT_CLOSE(TMainForm::OnCloseWindow)
-
-  EVT_MENU(ID_HtmlPanel, TMainForm::OnHtmlPanel)
-
-  EVT_MENU(ID_StrGenerate, TMainForm::OnGenerate)
-
-  EVT_MENU(ID_DSBS, TMainForm::OnDrawStyleChange) // drawing styles
-  EVT_MENU(ID_DSWF, TMainForm::OnDrawStyleChange)
-  EVT_MENU(ID_DSSP, TMainForm::OnDrawStyleChange)
-  EVT_MENU(ID_DSES, TMainForm::OnDrawStyleChange)
-  EVT_MENU(ID_DSST, TMainForm::OnDrawStyleChange)
-  EVT_MENU(ID_SceneProps, TMainForm::OnDrawStyleChange)
-
-  EVT_MENU(ID_DQH, TMainForm::OnDrawQChange) // drawing quality
-  EVT_MENU(ID_DQM, TMainForm::OnDrawQChange)
-  EVT_MENU(ID_DQL, TMainForm::OnDrawQChange)
-
-  EVT_MENU(ID_CellVisible, TMainForm::OnCellVisible)  // model menu
-  EVT_MENU(ID_BasisVisible, TMainForm::OnBasisVisible)
-  EVT_MENU(ID_ShowAll, TMainForm::OnShowAll)
-  EVT_MENU(ID_ModelCenter, TMainForm::OnModelCenter)
-
-  EVT_MENU(ID_GraphicsHide, TMainForm::OnGraphics)
-  EVT_MENU(ID_GraphicsKill, TMainForm::OnGraphics)
-  EVT_MENU(ID_GraphicsDS, TMainForm::OnGraphics)
-  EVT_MENU(ID_GraphicsP, TMainForm::OnGraphics)
-  EVT_MENU(ID_GraphicsEdit, TMainForm::OnGraphics)
-  EVT_MENU(ID_GraphicsSelect, TMainForm::OnGraphics)
-  EVT_MENU(ID_GraphicsCollectivise, TMainForm::OnGraphics)
-  EVT_MENU(ID_GraphicsIndividualise, TMainForm::OnGraphics)
-  EVT_MENU(ID_FixLattice, TMainForm::OnGraphics)
-  EVT_MENU(ID_FreeLattice, TMainForm::OnGraphics)
-  EVT_MENU(ID_GridMenuCreateBlob, TMainForm::OnGraphics)
-
-  EVT_MENU(ID_FragmentHide, TMainForm::OnFragmentHide)
-  EVT_MENU(ID_FragmentShowOnly, TMainForm::OnFragmentShowOnly)
-  EVT_MENU(ID_FragmentSelectAtoms, TMainForm::OnFragmentSelectAtoms)
-  EVT_MENU(ID_FragmentSelectBonds, TMainForm::OnFragmentSelectBonds)
-  EVT_MENU(ID_FragmentSelectAll, TMainForm::OnFragmentSelectAll)
-
-  EVT_MENU(ID_AtomTypeChangeLast, TMainForm::OnAtomTypeChange)
-  EVT_MENU(ID_AtomGrow, TMainForm::OnAtom)
-  EVT_MENU(ID_AtomCenter, TMainForm::OnAtom)
-  EVT_MENU(ID_AtomSelRings, TMainForm::OnAtom)
-
-  EVT_MENU(ID_PlaneActivate, TMainForm::OnPlane)
-
-  EVT_MENU(ID_BondViewAlong, TMainForm::OnBond)
-  EVT_MENU(ID_BondRadius, TMainForm::OnBond)
-
-  EVT_MENU(ID_AtomOccuCustom, TMainForm::OnAtomOccuChange)
-  EVT_MENU(ID_AtomOccu1, TMainForm::OnAtomOccuChange)
-  EVT_MENU(ID_AtomOccu34, TMainForm::OnAtomOccuChange)
-  EVT_MENU(ID_AtomOccu12, TMainForm::OnAtomOccuChange)
-  EVT_MENU(ID_AtomOccu13, TMainForm::OnAtomOccuChange)
-  EVT_MENU(ID_AtomOccu14, TMainForm::OnAtomOccuChange)
-  EVT_MENU(ID_AtomOccuFree, TMainForm::OnAtomOccuChange)
-  EVT_MENU(ID_AtomOccuFix, TMainForm::OnAtomOccuChange)
-  EVT_MENU(ID_AtomOccuFixCurrent, TMainForm::OnAtomOccuChange)
-
-  EVT_MENU(ID_AtomConnChangeLast, TMainForm::OnAtomConnChange)
-
-  EVT_MENU(ID_AtomPolyNone, TMainForm::OnAtomPolyChange)
-  EVT_MENU(ID_AtomPolyAuto, TMainForm::OnAtomPolyChange)
-  EVT_MENU(ID_AtomPolyRegular, TMainForm::OnAtomPolyChange)
-  EVT_MENU(ID_AtomPolyPyramid, TMainForm::OnAtomPolyChange)
-  EVT_MENU(ID_AtomPolyBipyramid, TMainForm::OnAtomPolyChange)
-
-  EVT_MENU(ID_AtomPartChangeLast, TMainForm::OnAtomPartChange)
-
-  EVT_MENU(ID_AtomUisoCustom, TMainForm::OnAtomUisoChange)
-  EVT_MENU(ID_AtomUiso12, TMainForm::OnAtomUisoChange)
-  EVT_MENU(ID_AtomUiso15, TMainForm::OnAtomUisoChange)
-  EVT_MENU(ID_AtomUisoFree, TMainForm::OnAtomUisoChange)
-  EVT_MENU(ID_AtomUisoFix, TMainForm::OnAtomUisoChange)
-
-  EVT_MENU(ID_SelGroup, TMainForm::OnSelection)
-  EVT_MENU(ID_SelUnGroup, TMainForm::OnSelection)
-  EVT_MENU(ID_SelLabel, TMainForm::OnSelection)
-
-  EVT_MENU(ID_GStyleSave, TMainForm::OnGraphicsStyle)
-  EVT_MENU(ID_GStyleOpen, TMainForm::OnGraphicsStyle)
-END_EVENT_TABLE()
 //..............................................................................
 TMainForm::TMainForm(TGlXApp *Parent)
   : TMainFrame(wxT("Olex2"), wxPoint(0,0), wxDefaultSize, wxT("MainForm")),
@@ -323,7 +235,87 @@ TMainForm::TMainForm(TGlXApp *Parent)
   HtmlManager(*(new THtmlManager(this))),
   _ProcessHandler(*this)
 {
-  idle_time = idle_start = 0;
+  //Bindings
+  {
+    Bind(wxEVT_SIZE, &TMainForm::OnSize, this);
+    Bind(wxEVT_MOVE, &TMainForm::OnMove, this);
+    Bind(wxEVT_CLOSE_WINDOW, &TMainForm::OnCloseWindow, this);
+
+    Bind(wxEVT_MENU, &TMainForm::OnHtmlPanel, this, ID_HtmlPanel);
+
+    Bind(wxEVT_MENU, &TMainForm::OnGenerate, this, ID_StrGenerate);
+
+    Bind(wxEVT_MENU, &TMainForm::OnDrawStyleChange, this, ID_DSBS); // drawing styles
+    Bind(wxEVT_MENU, &TMainForm::OnDrawStyleChange, this, ID_DSWF);
+    Bind(wxEVT_MENU, &TMainForm::OnDrawStyleChange, this, ID_DSSP);
+    Bind(wxEVT_MENU, &TMainForm::OnDrawStyleChange, this, ID_DSES);
+    Bind(wxEVT_MENU, &TMainForm::OnDrawStyleChange, this, ID_DSST);
+    Bind(wxEVT_MENU, &TMainForm::OnDrawStyleChange, this, ID_SceneProps);
+
+    Bind(wxEVT_MENU, &TMainForm::OnDrawQChange, this, ID_DQH);// drawing quality
+    Bind(wxEVT_MENU, &TMainForm::OnDrawQChange, this, ID_DQM);
+    Bind(wxEVT_MENU, &TMainForm::OnDrawQChange, this, ID_DQL);
+
+    Bind(wxEVT_MENU, &TMainForm::OnCellVisible, this, ID_CellVisible); // model menu
+    Bind(wxEVT_MENU, &TMainForm::OnBasisVisible, this, ID_BasisVisible);
+    Bind(wxEVT_MENU, &TMainForm::OnShowAll, this, ID_ShowAll);
+    Bind(wxEVT_MENU, &TMainForm::OnModelCenter, this, ID_ModelCenter);
+
+    Bind(wxEVT_MENU, &TMainForm::OnGraphics, this, ID_GraphicsHide);
+    Bind(wxEVT_MENU, &TMainForm::OnGraphics, this, ID_GraphicsKill);
+    Bind(wxEVT_MENU, &TMainForm::OnGraphics, this, ID_GraphicsDS);
+    Bind(wxEVT_MENU, &TMainForm::OnGraphics, this, ID_GraphicsP);
+    Bind(wxEVT_MENU, &TMainForm::OnGraphics, this, ID_GraphicsEdit);
+    Bind(wxEVT_MENU, &TMainForm::OnGraphics, this, ID_GraphicsSelect);
+    Bind(wxEVT_MENU, &TMainForm::OnGraphics, this, ID_GraphicsCollectivise);
+    Bind(wxEVT_MENU, &TMainForm::OnGraphics, this, ID_GraphicsIndividualise);
+    Bind(wxEVT_MENU, &TMainForm::OnGraphics, this, ID_FixLattice);
+    Bind(wxEVT_MENU, &TMainForm::OnGraphics, this, ID_FreeLattice);
+    Bind(wxEVT_MENU, &TMainForm::OnGraphics, this, ID_GridMenuCreateBlob);
+
+    Bind(wxEVT_MENU, &TMainForm::OnFragmentHide, this, ID_FragmentHide);
+    Bind(wxEVT_MENU, &TMainForm::OnFragmentShowOnly, this, ID_FragmentShowOnly);
+    Bind(wxEVT_MENU, &TMainForm::OnFragmentSelectAtoms, this, ID_FragmentSelectAtoms);
+    Bind(wxEVT_MENU, &TMainForm::OnFragmentSelectBonds, this, ID_FragmentSelectBonds);
+    Bind(wxEVT_MENU, &TMainForm::OnFragmentSelectAll, this, ID_FragmentSelectAll);
+
+    Bind(wxEVT_MENU, &TMainForm::OnAtomTypeChange, this, ID_AtomTypeChangeLast);
+    Bind(wxEVT_MENU, &TMainForm::OnAtom, this, ID_AtomGrow);
+    Bind(wxEVT_MENU, &TMainForm::OnAtom, this, ID_AtomCenter);
+    Bind(wxEVT_MENU, &TMainForm::OnAtom, this, ID_AtomSelRings);
+
+    Bind(wxEVT_MENU, &TMainForm::OnPlane, this, ID_PlaneActivate);
+    Bind(wxEVT_MENU, &TMainForm::OnBond, this, ID_BondViewAlong);
+    Bind(wxEVT_MENU, &TMainForm::OnBond, this, ID_BondRadius);
+    Bind(wxEVT_MENU, &TMainForm::OnAtomOccuChange, this, ID_AtomOccuCustom);
+    Bind(wxEVT_MENU, &TMainForm::OnAtomOccuChange, this, ID_AtomOccu1);
+    Bind(wxEVT_MENU, &TMainForm::OnAtomOccuChange, this, ID_AtomOccu34);
+    Bind(wxEVT_MENU, &TMainForm::OnAtomOccuChange, this, ID_AtomOccu12);
+    Bind(wxEVT_MENU, &TMainForm::OnAtomOccuChange, this, ID_AtomOccu13);
+    Bind(wxEVT_MENU, &TMainForm::OnAtomOccuChange, this, ID_AtomOccu14);
+    Bind(wxEVT_MENU, &TMainForm::OnAtomOccuChange, this, ID_AtomOccuFree);
+    Bind(wxEVT_MENU, &TMainForm::OnAtomOccuChange, this, ID_AtomOccuFix);
+    Bind(wxEVT_MENU, &TMainForm::OnAtomOccuChange, this, ID_AtomOccuFixCurrent);
+    Bind(wxEVT_MENU, &TMainForm::OnAtomConnChange, this, ID_AtomConnChangeLast);
+    Bind(wxEVT_MENU, &TMainForm::OnAtomPolyChange, this, ID_AtomPolyNone);
+    Bind(wxEVT_MENU, &TMainForm::OnAtomPolyChange, this, ID_AtomPolyAuto);
+    Bind(wxEVT_MENU, &TMainForm::OnAtomPolyChange, this, ID_AtomPolyRegular);
+    Bind(wxEVT_MENU, &TMainForm::OnAtomPolyChange, this, ID_AtomPolyPyramid);
+    Bind(wxEVT_MENU, &TMainForm::OnAtomPolyChange, this, ID_AtomPolyBipyramid);
+    Bind(wxEVT_MENU, &TMainForm::OnAtomPartChange, this, ID_AtomPartChangeLast);
+    Bind(wxEVT_MENU, &TMainForm::OnAtomUisoChange, this, ID_AtomUisoCustom);
+    Bind(wxEVT_MENU, &TMainForm::OnAtomUisoChange, this, ID_AtomUiso12);
+    Bind(wxEVT_MENU, &TMainForm::OnAtomUisoChange, this, ID_AtomUiso15);
+    Bind(wxEVT_MENU, &TMainForm::OnAtomUisoChange, this, ID_AtomUisoFree);
+    Bind(wxEVT_MENU, &TMainForm::OnAtomUisoChange, this, ID_AtomUisoFix);
+    Bind(wxEVT_MENU, &TMainForm::OnSelection, this, ID_SelGroup);
+    Bind(wxEVT_MENU, &TMainForm::OnSelection, this, ID_SelUnGroup);
+    Bind(wxEVT_MENU, &TMainForm::OnSelection, this, ID_SelLabel);
+    Bind(wxEVT_MENU, &TMainForm::OnGraphicsStyle, this, ID_GStyleSave);
+    Bind(wxEVT_MENU, &TMainForm::OnGraphicsStyle, this, ID_GStyleOpen);
+  }
+    
+    idle_time = idle_start = 0;
   TEGC::AddP(&HtmlManager);
   nui_interface = NULL;
   _UpdateThread = NULL;
@@ -969,7 +961,7 @@ void TMainForm::XApp(Olex2App *XA)  {
   Library.AttachLibrary(XA->XFile().ExportLibrary());
   Library.AttachLibrary(XA->GetFader().ExportLibrary());
   Library.AttachLibrary(XA->XGrid().ExportLibrary());
-  Library.AttachLibrary(XA->DUnitCell().ExportLibrary());
+  Library.AttachLibrary(XA->XFile().DUnitCell->ExportLibrary());
   Library.AttachLibrary(TFileHandlerManager::ExportLibrary());
   TOlxVars::ExportLibrary(EmptyString(), &Library);
 
@@ -1417,7 +1409,7 @@ void TMainForm::StartupInit()  {
     sh = settings.Root().FindItemi("menus");
     ABasicFunction *cm_macro = GetLibrary().FindMacro("CreateMenu");
     if (sh != NULL && cm_macro != NULL) {
-      TMacroError me;
+      TMacroData me;
       me.SetLocation(__OlxSrcInfo);
       try {
         for (size_t i=0; i < sh->ItemCount(); i++) {
@@ -1890,8 +1882,10 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
         const std::type_info &ti = typeid(*Sender);
         if (((olxstr*)Data)->IsEmpty())
           ;
-        else if (ti == typeid(TComboBox) && !((TComboBox*)Sender)->IsReadOnly())
-          ;
+        else if (ti == typeid(TComboBox) &&
+          !(dynamic_cast<const TComboBox *>(Sender))->IsReadOnly())
+        {
+        }
         else if (ti == typeid(TTreeView))
           ;
         else if (ti == typeid(TTextEdit))
@@ -3947,7 +3941,7 @@ void TMainForm::ProcessHandler::OnWait() {
 }
 //..............................................................................
 void TMainForm::ProcessHandler::OnTerminate(const AProcess& p)  {
-  TMacroError err;
+  TMacroData err;
   for( size_t i=0; i < p.OnTerminateCmds().Count(); i++ ) {
     const olxstr& cmd = p.OnTerminateCmds()[i];
     parent.processMacro(cmd, olxstr("OnTerminate of: ") << p.GetCmdLine());

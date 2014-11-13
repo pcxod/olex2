@@ -91,11 +91,11 @@ public:
   static short GetPersistenceId(size_t i);
   static bool Exists(const olxstr& fn);
 
-  void LibExists(const TStrObjList& Params, TMacroError& E);
+  void LibExists(const TStrObjList& Params, TMacroData& E);
   void LibDump(TStrObjList &Cmds, const TParamList &Options,
-    TMacroError &Error);
+    TMacroData &Error);
   static void LibClear(TStrObjList &Cmds, const TParamList &Options,
-    TMacroError &Error);
+    TMacroData &Error);
   static TLibrary* ExportLibrary(const olxstr& name=EmptyString());
 protected:
 #ifdef _PYTHON

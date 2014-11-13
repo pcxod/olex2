@@ -48,15 +48,15 @@ public:
 
   TActionQueue& OnLibChange;
 
-  void LibEnabled(const TStrObjList& Params, TMacroError& E);
-  void LibSpotCutoff(const TStrObjList& Params, TMacroError& E);
-  void LibSpotExponent(const TStrObjList& Params, TMacroError& E);
-  void LibAmbient(const TStrObjList& Params, TMacroError& E);
-  void LibDiffuse(const TStrObjList& Params, TMacroError& E);
-  void LibSpecular(const TStrObjList& Params, TMacroError& E);
-  void LibPosition(const TStrObjList& Params, TMacroError& E);
-  void LibSpotDirection(const TStrObjList& Params, TMacroError& E);
-  void LibAttenuation(const TStrObjList& Params, TMacroError& E);
+  void LibEnabled(const TStrObjList& Params, TMacroData& E);
+  void LibSpotCutoff(const TStrObjList& Params, TMacroData& E);
+  void LibSpotExponent(const TStrObjList& Params, TMacroData& E);
+  void LibAmbient(const TStrObjList& Params, TMacroData& E);
+  void LibDiffuse(const TStrObjList& Params, TMacroData& E);
+  void LibSpecular(const TStrObjList& Params, TMacroData& E);
+  void LibPosition(const TStrObjList& Params, TMacroData& E);
+  void LibSpotDirection(const TStrObjList& Params, TMacroData& E);
+  void LibAttenuation(const TStrObjList& Params, TMacroData& E);
   TLibrary* ExportLibrary(const olxstr& name);
 };
 

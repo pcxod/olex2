@@ -406,9 +406,9 @@ protected:
     }
   };
 //  these are protected, but exposed in the constructor
-  void LibBAIDelta(const TStrObjList& Params, TMacroError& E);
-  void LibURatio(const TStrObjList& Params, TMacroError& E);
-  void LibEnforceFormula(const TStrObjList& Params, TMacroError& E);
+  void LibBAIDelta(const TStrObjList& Params, TMacroData& E);
+  void LibURatio(const TStrObjList& Params, TMacroData& E);
+  void LibEnforceFormula(const TStrObjList& Params, TMacroData& E);
   class TLibrary* ExportLibrary(const olxstr& name=EmptyString());
 ///////////////////////////////////////////////////////////////////////////////
 template <class NodeType>

@@ -216,9 +216,9 @@ namespace lcells {
     void Update(const olxstr &cfg_name, const olxstr &folder_name, const olxstr &index_name);
     static ConstTypeList<Index::ResultEntry> Search(const olxstr &cfg_name,
       const TStrObjList &Cmds, double vol_diff);
-    static void Search(TStrObjList &Params, const TParamList &Options, TMacroError &E);
-    static void Search(const TStrObjList &Params, TMacroError &E);
-    static void Update(TStrObjList &Params, const TParamList &Options, TMacroError &E);
+    static void Search(TStrObjList &Params, const TParamList &Options, TMacroData &E);
+    static void Search(const TStrObjList &Params, TMacroData &E);
+    static void Update(TStrObjList &Params, const TParamList &Options, TMacroData &E);
     static TLibrary* ExportLibrary(const olxstr &name=EmptyString());
   };
 };

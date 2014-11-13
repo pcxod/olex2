@@ -280,28 +280,30 @@ TdlgMatProp::~TdlgMatProp()  {
 bool TdlgMatProp::Execute(const IEObject *Sender, const IEObject *Data,
   TActionQueue *)
 {
-  if( EsdlInstanceOf( *Sender, TTextEdit) )  {
+  if (EsdlInstanceOf( *Sender, TTextEdit)) {
     wxColourDialog *CD = new wxColourDialog(this);
-    wxColor wc = ((TTextEdit*)Sender)->GetBackgroundColour();
+    wxColor wc = dynamic_cast<const TTextEdit *>(Sender)->GetBackgroundColour();
     CD->GetColourData().SetColour(wc);
     if( CD->ShowModal() == wxID_OK )  {
       wc = CD->GetColourData().GetColour();
-      ((TTextEdit*)Sender)->WI.SetColor(OLX_RGB(wc.Red(), wc.Green(), wc.Blue()));
+      const_cast<TTextEdit *>(dynamic_cast<const TTextEdit *>(Sender))->WI
+        .SetColor(OLX_RGB(wc.Red(), wc.Green(), wc.Blue()));
     }
     delete CD;
   }
-  if( (TComboBox*)Sender == cbPrimitives )  {
+  if (Sender == cbPrimitives) {
     Update(Materials[FCurrentMaterial]);
     int i = cbPrimitives->FindString(cbPrimitives->GetValue());
-    if( i >= 0 )  {
+    if (i >= 0) {
       FCurrentMaterial = i;
       Init(Materials[FCurrentMaterial]);
-      const TGlPrimitive* glp = (const TGlPrimitive*)cbPrimitives->GetObject(i);
+      const TGlPrimitive* glp = dynamic_cast<const TGlPrimitive*>(
+        cbPrimitives->GetObject(i));
       bEditFont->Enable(glp->GetFont() != NULL && !glp->GetFont()->IsVectorFont());
     }
   }
-  if( (TSpinCtrl*)Sender == scTrans )  {
-    for( size_t i=0; i < SpinCtrls.Count(); i++ )
+  if (Sender == scTrans) {
+    for (size_t i=0; i < SpinCtrls.Count(); i++)
       SpinCtrls[i]->SetValue(scTrans->GetValue());
   }
   return true;

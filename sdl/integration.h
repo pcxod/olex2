@@ -52,7 +52,7 @@ namespace olex2 {
     virtual bool processMacro(const olxstr& cmdLine,
       const olxstr &location=EmptyString(), bool quiet=false) = 0;
     virtual bool processMacroEx(const olxstr& cmdLine,
-      TMacroError& err, const olxstr &location=EmptyString(),
+      TMacroData& err, const olxstr &location=EmptyString(),
       bool quiet=false) = 0;
     virtual bool processFunction(olxstr& cmdl,
       const olxstr &location=EmptyString(), bool quiet=false) = 0;

@@ -25,11 +25,6 @@
 #include "analysis.h"
 #include "estopwatch.h"
 
-enum {
-  XFILE_SG_Change,
-  XFILE_UNIQ
-};
-
 TBasicCFile::TBasicCFile()
   : RefMod(AsymmUnit), AsymmUnit(NULL)
 {
@@ -129,8 +124,8 @@ TXFile::TXFile(ASObjectProvider& Objects) :
   OnFileClose(Actions.New("XFILECLOSE"))
 {
   Lattice.GetAsymmUnit().SetRefMod(&RefMod);
-  Lattice.GetAsymmUnit().OnSGChange.Add(this, XFILE_SG_Change);
-  Lattice.OnStructureUniq.Add(this, XFILE_UNIQ);
+  Lattice.GetAsymmUnit().OnSGChange.Add(this, XFILE_EVT_SG_Change);
+  Lattice.OnStructureUniq.Add(this, XFILE_EVT_UNIQ);
   FLastLoader = NULL;
   FSG = NULL;
 }
@@ -176,12 +171,12 @@ void TXFile::LastLoaderChanged() {
 bool TXFile::Dispatch(int MsgId, short MsgSubId, const IEObject* Sender,
   const IEObject* Data, TActionQueue *)
 {
-  if( MsgId == XFILE_SG_Change )  {
-    if( Data == NULL || !EsdlInstanceOf(*Data, TSpaceGroup) )
+  if (MsgId == XFILE_EVT_SG_Change) {
+    if (Data == NULL || !EsdlInstanceOf(*Data, TSpaceGroup))
       throw TInvalidArgumentException(__OlxSourceInfo, "space group");
-    FSG = const_cast<TSpaceGroup*>( dynamic_cast<const TSpaceGroup*>(Data) );
+    FSG = const_cast<TSpaceGroup*>(dynamic_cast<const TSpaceGroup*>(Data));
   }
-  else if( MsgId == XFILE_UNIQ && MsgSubId == msiEnter )  {
+  else if (MsgId == XFILE_EVT_UNIQ && MsgSubId == msiEnter) {
     //RefMod.Validate();
     //UpdateAsymmUnit();
     //GetAsymmUnit().PackAtoms();
@@ -294,7 +289,7 @@ void TXFile::LoadFromStrings(const TStrList& lines, const olxstr &nameToken) {
   TBasicCFile* Loader = FindFormat(ext);
   bool replicated = false;
   if( FLastLoader == Loader )  {
-    Loader = (TBasicCFile*)Loader->Replicate();
+    Loader = dynamic_cast<TBasicCFile *>(Loader->Replicate());
     replicated = true;
   }
   try  {
@@ -316,7 +311,7 @@ void TXFile::LoadFromStream(IInputStream& in, const olxstr &nameToken) {
   TBasicCFile* Loader = FindFormat(ext);
   bool replicated = false;
   if( FLastLoader == Loader )  {
-    Loader = (TBasicCFile*)Loader->Replicate();
+    Loader = dynamic_cast<TBasicCFile *>(Loader->Replicate());
     replicated = true;
   }
   try  {
@@ -337,15 +332,15 @@ void TXFile::LoadFromFile(const olxstr & _fn) {
   // this thows an exception if the file format loader does not exist
   TBasicCFile* Loader = FindFormat(ext);
   bool replicated = false;
-  if( FLastLoader == Loader )  {
-    Loader = (TBasicCFile*)Loader->Replicate();
+  if (FLastLoader == Loader) {
+    Loader = dynamic_cast<TBasicCFile *>(Loader->Replicate());
     replicated = true;
   }
-  try  {
+  try {
     Loader->LoadFromFile(_fn);
   }
-  catch( const TExceptionBase& exc )  {
-    if( replicated )
+  catch (const TExceptionBase& exc) {
+    if (replicated)
       delete Loader;
     throw TFunctionFailedException(__OlxSourceInfo, exc);
   }
@@ -641,9 +636,11 @@ void TXFile::Close()  {
 }
 //..............................................................................
 IEObject* TXFile::Replicate() const {
-  TXFile* xf = new TXFile(*(SObjectProvider*)Lattice.GetObjects().Replicate());
+  TXFile* xf = ((SObjectProvider*)Lattice.GetObjects().Replicate())->
+    CreateXFile();
   for (size_t i=0; i < FileFormats.Count(); i++) {
-    xf->RegisterFileFormat((TBasicCFile*)FileFormats.GetObject(i)->Replicate(),
+    xf->RegisterFileFormat(
+      dynamic_cast<TBasicCFile *>(FileFormats.GetObject(i)->Replicate()),
       FileFormats[i]);
   }
   return xf;
@@ -760,7 +757,13 @@ const_strlist TXFile::ToJSON() const {
 //..............................................................................
 //..............................................................................
 //..............................................................................
-void TXFile::LibGetFormula(const TStrObjList& Params, TMacroError& E)  {
+IEObject *TXFile::VPtr::get_ptr() const {
+  return &TXApp::GetInstance().XFile();
+}
+//..............................................................................
+//..............................................................................
+//..............................................................................
+void TXFile::LibGetFormula(const TStrObjList& Params, TMacroData& E)  {
   bool list = false, html = false, split = false, unit=false;
   int digits = -1;
   if( Params.Count() > 0 )  {
@@ -816,7 +819,7 @@ void TXFile::LibGetFormula(const TStrObjList& Params, TMacroError& E)  {
   E.SetRetVal(rv);
 }
 //..............................................................................
-void TXFile::LibSetFormula(const TStrObjList& Params, TMacroError& E) {
+void TXFile::LibSetFormula(const TStrObjList& Params, TMacroData& E) {
   if( Params[0].IndexOf(':') == InvalidIndex )
     GetRM().SetUserFormula(Params[0]);
   else  {
@@ -844,7 +847,7 @@ void TXFile::LibSetFormula(const TStrObjList& Params, TMacroError& E) {
 }
 //..............................................................................
 void TXFile::LibEndUpdate(TStrObjList &Cmds, const TParamList &Options,
-  TMacroError &E)
+  TMacroData &E)
 {
   EndUpdate();
   if (Cmds.Count() == 1 && Cmds[0].ToBool()) {
@@ -855,7 +858,7 @@ void TXFile::LibEndUpdate(TStrObjList &Cmds, const TParamList &Options,
   }
 }
 //..............................................................................
-void TXFile::LibSaveSolution(const TStrObjList& Params, TMacroError& E)  {
+void TXFile::LibSaveSolution(const TStrObjList& Params, TMacroData& E)  {
   TIns* oins = (TIns*)FLastLoader;
   TIns ins;
   // needs to be called to assign the loaderIds for new atoms
@@ -868,14 +871,14 @@ void TXFile::LibSaveSolution(const TStrObjList& Params, TMacroError& E)  {
   ins.GetRM().SetUserContent(oins->GetRM().GetUserContent());
   ins.SaveToFile(Params[0]);
 }
-void TXFile::LibDataCount(const TStrObjList& Params, TMacroError& E)  {
+void TXFile::LibDataCount(const TStrObjList& Params, TMacroData& E)  {
   if( EsdlInstanceOf(*FLastLoader, TCif) )
     E.SetRetVal(((TCif*)FLastLoader)->BlockCount());
   else
     E.SetRetVal(1);
 }
 //..............................................................................
-void TXFile::LibCurrentData(const TStrObjList& Params, TMacroError& E)  {
+void TXFile::LibCurrentData(const TStrObjList& Params, TMacroData& E)  {
   TCif &cif = *(TCif*)FLastLoader;
   if( Params.IsEmpty() )
     E.SetRetVal(cif.GetBlockIndex());
@@ -883,7 +886,7 @@ void TXFile::LibCurrentData(const TStrObjList& Params, TMacroError& E)  {
     cif.SetCurrentBlock(Params[0].ToInt());
 }
 //..............................................................................
-void TXFile::LibDataName(const TStrObjList& Params, TMacroError& E)  {
+void TXFile::LibDataName(const TStrObjList& Params, TMacroData& E)  {
   int i = Params[0].ToInt();
   TCif &cif = *(TCif*)FLastLoader;
   if( i < 0 )
@@ -895,7 +898,7 @@ void TXFile::LibDataName(const TStrObjList& Params, TMacroError& E)  {
   }
 }
 //..............................................................................
-void TXFile::LibGetMu(const TStrObjList& Params, TMacroError& E)  {
+void TXFile::LibGetMu(const TStrObjList& Params, TMacroData& E)  {
   cm_Absorption_Coefficient_Reg ac;
   ContentList cont = GetAsymmUnit().GetContentList();
   double mu=0;
@@ -915,7 +918,7 @@ void TXFile::LibGetMu(const TStrObjList& Params, TMacroError& E)  {
   E.SetRetVal(olxstr::FormatFloat(3,mu));
 }
 //..............................................................................
-void TXFile::LibRefinementInfo(const TStrObjList& Params, TMacroError& E) {
+void TXFile::LibRefinementInfo(const TStrObjList& Params, TMacroData& E) {
   TIns &ins = *(TIns*)FLastLoader;
   if (Params.IsEmpty()) {
     TStrList rv;
@@ -937,11 +940,11 @@ void TXFile::LibRefinementInfo(const TStrObjList& Params, TMacroError& E) {
   }
 }
 //..............................................................................
-TLibrary* TXFile::ExportLibrary(const olxstr& name)  {
+TLibrary* TXFile::ExportLibrary(const olxstr& name) {
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("xf") : name);
-
+  olx_vptr<TXFile> thip(new VPtr);
   lib->Register(
-    new TFunction<TXFile>(this, &TXFile::LibGetFormula, "GetFormula",
+    new TFunction<TXFile>(thip, &TXFile::LibGetFormula, "GetFormula",
       fpNone|fpOne|fpTwo|psFileLoaded,
       "Returns a string for content of the asymmetric unit. Takes single or "
       "none parameters. If parameter equals 'html' and html formatted string is"
@@ -950,14 +953,14 @@ TLibrary* TXFile::ExportLibrary(const olxstr& name)  {
    );
 
   lib->Register(
-    new TFunction<TXFile>(this,  &TXFile::LibSetFormula, "SetFormula",
+    new TFunction<TXFile>(thip, &TXFile::LibSetFormula, "SetFormula",
       fpOne|psCheckFileTypeIns|psCheckFileTypeP4P,
       "Sets formula for current file, takes a string of the following form "
       "'C:25,N:4'")
   );
 
   lib->Register(
-    new TMacro<TXFile>(this,  &TXFile::LibEndUpdate, "EndUpdate",
+    new TMacro<TXFile>(thip, &TXFile::LibEndUpdate, "EndUpdate",
       EmptyString(),
       fpNone|fpOne|psCheckFileTypeIns,
       "Must be called after the content of the asymmetric unit has changed - "
@@ -967,37 +970,37 @@ TLibrary* TXFile::ExportLibrary(const olxstr& name)  {
   );
 
   lib->Register(
-    new TFunction<TXFile>(this,  &TXFile::LibSaveSolution, "SaveSolution",
+    new TFunction<TXFile>(thip, &TXFile::LibSaveSolution, "SaveSolution",
       fpOne|psCheckFileTypeIns,
       "Saves current Q-peak model to provided file (res-file)")
   );
 
   lib->Register(
-    new TFunction<TXFile>(this,  &TXFile::LibDataCount, "DataCount",
+    new TFunction<TXFile>(thip, &TXFile::LibDataCount, "DataCount",
       fpNone|psFileLoaded,
       "Returns number of available data sets")
   );
 
   lib->Register(
-    new TFunction<TXFile>(this,  &TXFile::LibDataName, "DataName",
+    new TFunction<TXFile>(thip, &TXFile::LibDataName, "DataName",
       fpOne|psCheckFileTypeCif,
       "Returns data name for given CIF block")
   );
 
   lib->Register(
-    new TFunction<TXFile>(this,  &TXFile::LibCurrentData, "CurrentData",
+    new TFunction<TXFile>(thip, &TXFile::LibCurrentData, "CurrentData",
       fpNone|fpOne|psCheckFileTypeCif,
       "Returns current data index or changes current data block within the CIF")
   );
 
   lib->Register(
-    new TFunction<TXFile>(this,  &TXFile::LibGetMu, "GetMu",
+    new TFunction<TXFile>(thip, &TXFile::LibGetMu, "GetMu",
       fpNone|psFileLoaded,
       "Returns absorption coefficient for current model.")
   );
 
   lib->Register(
-    new TFunction<TXFile>(this, &TXFile::LibRefinementInfo, "RefinementInfo",
+    new TFunction<TXFile>(thip, &TXFile::LibRefinementInfo, "RefinementInfo",
     fpNone | fpOne | psCheckFileTypeIns,
     "Sets/returns refinement information.")
     );

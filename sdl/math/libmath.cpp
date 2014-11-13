@@ -11,7 +11,7 @@
 #include "evaln.h"
 #include "../integration.h"
 
-void LibMath::Eval(const TStrObjList& Params, TMacroError& E) {
+void LibMath::Eval(const TStrObjList& Params, TMacroData& E) {
   TStrList Vars;
   math_eval::ExpEvaluator evtr;
   olxstr param = Params[0];
@@ -34,7 +34,7 @@ void LibMath::Eval(const TStrObjList& Params, TMacroError& E) {
         << e->name;
       return;
     }
-    TMacroError rv;
+    TMacroData rv;
     bf->Run(Params, rv);
     if (!rv.IsSuccessful()) {
       E = rv;

@@ -584,6 +584,7 @@
     <ClCompile Include="..\..\..\gxlib\gllabel.cpp" />
     <ClCompile Include="..\..\..\gxlib\gllabels.cpp" />
     <ClCompile Include="..\..\..\gxlib\gxapp.cpp" />
+    <ClCompile Include="..\..\..\gxlib\gxfiles.cpp" />
     <ClCompile Include="..\..\..\gxlib\gxmacro.cpp" />
     <ClCompile Include="..\..\..\gxlib\olxstate.cpp" />
     <ClCompile Include="..\..\..\gxlib\ortdraw.cpp" />
@@ -635,6 +636,7 @@
     <ClInclude Include="..\..\..\glib\glutil.h" />
     <ClInclude Include="..\..\..\gxlib\gxapp.h" />
     <ClInclude Include="..\..\..\gxlib\gxbase.h" />
+    <ClInclude Include="..\..\..\gxlib\gxfiles.h" />
     <ClInclude Include="..\..\..\gxlib\gxmacro.h" />
     <ClInclude Include="..\..\..\gxlib\modes\fit.h" />
     <ClInclude Include="..\..\..\gxlib\modes\fixc.h" />

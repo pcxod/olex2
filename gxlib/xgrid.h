@@ -202,17 +202,17 @@ public:
 
   inline static TXGrid* GetInstance()  {  return Instance;  }
 
-  void LibScale(const TStrObjList& Params, TMacroError& E);
-  void LibExtended(const TStrObjList& Params, TMacroError& E);
-  void LibSize(const TStrObjList& Params, TMacroError& E);
-  void LibDepth(const TStrObjList& Params, TMacroError& E);
-  void LibMaxDepth(const TStrObjList& Params, TMacroError& E);
-  void LibContours(const TStrObjList& Params, TMacroError& E);
-  void LibPlaneSize(const TStrObjList& Params, TMacroError& E);
-  void LibGetMin(const TStrObjList& Params, TMacroError& E);
-  void LibGetMax(const TStrObjList& Params, TMacroError& E);
-  void LibRenderMode(const TStrObjList& Params, TMacroError& E);
-  void LibIsvalid(const TStrObjList& Params, TMacroError& E);
+  void LibScale(const TStrObjList& Params, TMacroData& E);
+  void LibExtended(const TStrObjList& Params, TMacroData& E);
+  void LibSize(const TStrObjList& Params, TMacroData& E);
+  void LibDepth(const TStrObjList& Params, TMacroData& E);
+  void LibMaxDepth(const TStrObjList& Params, TMacroData& E);
+  void LibContours(const TStrObjList& Params, TMacroData& E);
+  void LibPlaneSize(const TStrObjList& Params, TMacroData& E);
+  void LibGetMin(const TStrObjList& Params, TMacroData& E);
+  void LibGetMax(const TStrObjList& Params, TMacroData& E);
+  void LibRenderMode(const TStrObjList& Params, TMacroData& E);
+  void LibIsvalid(const TStrObjList& Params, TMacroData& E);
   class TLibrary*  ExportLibrary(const olxstr& name=EmptyString());
 #ifdef _PYTHON
   static void PyInit();

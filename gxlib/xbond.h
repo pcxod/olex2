@@ -35,12 +35,6 @@ public:
   void Create(const olxstr& cName=EmptyString());
   virtual ~TXBond();
 
-  // multiple inheritance...
-  void SetTag(index_t v) {  TSBond::SetTag(v);  }
-  index_t GetTag() const {  return TSBond::GetTag();  }
-  index_t IncTag()  {  return TSBond::IncTag();  }
-  index_t DecTag()  {  return TSBond::DecTag();  }
-
   TXAtom& A() const {  return (TXAtom&)TSBond::A();  }
   TXAtom& B() const {  return (TXAtom&)TSBond::B();  }
   TXAtom& Another(const TSAtom& a) const {
@@ -187,6 +181,9 @@ public:
     GetSettings().ClearPrimitives();
   }
 };
+
+typedef TTypeList<TXBond> TXBondList;
+typedef TPtrList<TXBond> TXBondPList;
 
 EndGxlNamespace()
 #endif

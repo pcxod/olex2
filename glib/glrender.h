@@ -380,18 +380,18 @@ public:
   TEBitArray::const_type GetVisibility();
   void SetVisibility(const TEBitArray &v);
 
-  void LibCompile(const TStrObjList& Params, TMacroError& E);
-  void LibStereo(const TStrObjList& Params, TMacroError& E);
-  void LibStereoColor(const TStrObjList& Params, TMacroError& E);
-  void LibFog(TStrObjList& Cmds, const TParamList& Options, TMacroError &E);
+  void LibCompile(const TStrObjList& Params, TMacroData& E);
+  void LibStereo(const TStrObjList& Params, TMacroData& E);
+  void LibStereoColor(const TStrObjList& Params, TMacroData& E);
+  void LibFog(TStrObjList& Cmds, const TParamList& Options, TMacroData &E);
   void LibPerspective(TStrObjList& Cmds, const TParamList& Options,
-    TMacroError& E);
-  void LibZoom(TStrObjList& Cmds, const TParamList& Options, TMacroError& E);
-  void LibCalcZoom(const TStrObjList& Params, TMacroError& E);
-  void LibGetZoom(const TStrObjList& Params, TMacroError& E);
-  void LibLineWidth(const TStrObjList& Params, TMacroError& E);
-  void LibBasis(const TStrObjList& Params, TMacroError& E);
-  void LibRasterZ(const TStrObjList& Params, TMacroError& E);
+    TMacroData& E);
+  void LibZoom(TStrObjList& Cmds, const TParamList& Options, TMacroData& E);
+  void LibCalcZoom(const TStrObjList& Params, TMacroData& E);
+  void LibGetZoom(const TStrObjList& Params, TMacroData& E);
+  void LibLineWidth(const TStrObjList& Params, TMacroData& E);
+  void LibBasis(const TStrObjList& Params, TMacroData& E);
+  void LibRasterZ(const TStrObjList& Params, TMacroData& E);
   TLibrary* ExportLibrary(const olxstr& name=EmptyString());
 };
 

@@ -24,7 +24,7 @@ olxstr ABasicLibrary::GetQualifiedName() const {
   return res;
 }
 //.............................................................................
-bool ABasicFunction::ValidateState(const TStrObjList &Params, TMacroError &E) {
+bool ABasicFunction::ValidateState(const TStrObjList &Params, TMacroData &E) {
   const size_t argC = Params.Count(),
     arg_m = (0x0001 << argC);
   if( (ArgStateMask&fpAny) < fpAny &&
@@ -128,7 +128,7 @@ olxstr ABasicFunction::OptionsToString(
   return rv;
 }
 //.............................................................................
-void AFunction::Run(const TStrObjList &Params, class TMacroError& E) {
+void AFunction::Run(const TStrObjList &Params, class TMacroData& E) {
   if( !ValidateState(Params, E) )  return;
   const size_t argC = Params.Count();
   try  {
@@ -148,7 +148,7 @@ void AFunction::Run(const TStrObjList &Params, class TMacroError& E) {
 
 //.............................................................................
 void AMacro::Run(TStrObjList &Params, const TParamList &Options,
-  TMacroError& E)
+  TMacroData& E)
 {
   if( !ValidateState(Params, E) )  return;
   const size_t argC = Params.Count();
@@ -197,7 +197,7 @@ olxstr AMacro::GetSignature() const {
 //.............................................................................
 //.............................................................................
 void FunctionChainer::RunMacro(TStrObjList &Params, const TParamList &Options,
-    TMacroError& E)
+    TMacroData& E)
 {
   for (size_t i=functions.Count()-1; i != InvalidIndex; i--) {
     functions[i]->Run(Params, Options, E);
@@ -210,7 +210,7 @@ void FunctionChainer::RunMacro(TStrObjList &Params, const TParamList &Options,
     E.ProcessingError(__OlxSourceInfo, "unhandled macro call");
 }
 //.............................................................................
-void FunctionChainer::RunFunction(const TStrObjList &Params, TMacroError& E) {
+void FunctionChainer::RunFunction(const TStrObjList &Params, TMacroData& E) {
   for (size_t i = functions.Count()-1; i != InvalidIndex; i--) {
     functions[i]->Run(Params, E);
     if (E.IsHandled() || !E.IsSuccessful())

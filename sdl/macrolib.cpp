@@ -27,7 +27,7 @@ void TEMacro::AddOnAbortCmd(const olxstr& cmd)  {
   OnAbort.AddNew(cmd).root->expand_cmd();
 }
 void TEMacro::DoRun(TStrObjList &Params, const TParamList &Options,
-  TMacroError& E)
+  TMacroData& E)
 {
   TStrList args;
   args.SetCapacity(Args.Count());
@@ -115,7 +115,7 @@ ABasicFunction *TEMacroLib::FindEvaluator(exparse::expression_tree *&e,
 }
 //.............................................................................
 olxstr TEMacroLib::ProcessEvaluator(
-  exparse::expression_tree *e, TMacroError& me,
+  exparse::expression_tree *e, TMacroData& me,
   const TStrList &argv, bool allow_dummy)
 {
   me.GetStack().Push(e->ToStringBuffer());
@@ -179,7 +179,7 @@ olxstr TEMacroLib::ProcessEvaluator(
 }
 //.............................................................................
 TEMacroLib::arg_t TEMacroLib::EvaluateArg(exparse::expression_tree *t,
-  TMacroError& me, const TStrList &argv)
+  TMacroData& me, const TStrList &argv)
 {
   if (t->data.StartsFrom('-')) {
     if (t->data.IsNumber() ||
@@ -263,7 +263,7 @@ void TEMacroLib::Init()  {
 }
 //.............................................................................
 
-bool TEMacroLib::ProcessFunction(olxstr& Cmd, TMacroError& E, bool has_owner,
+bool TEMacroLib::ProcessFunction(olxstr& Cmd, TMacroData& E, bool has_owner,
   const TStrList &argv)
 {
   if (Cmd.IndexOf('(') == InvalidIndex) {
@@ -335,7 +335,7 @@ bool TEMacroLib::ProcessFunction(olxstr& Cmd, TMacroError& E, bool has_owner,
   }
 }
 //.............................................................................
-void TEMacroLib::ProcessMacro(const olxstr& Cmd, TMacroError& Error,
+void TEMacroLib::ProcessMacro(const olxstr& Cmd, TMacroData& Error,
   const TStrList &argv)
 {
   if (Cmd.IsEmpty()) return;
@@ -416,7 +416,7 @@ void TEMacroLib::ParseMacro(const TDataItem& macro_def, TEMacro& macro)  {
 }
 //.............................................................................
 void TEMacroLib::funIF(exparse::evaluator<exparse::expression_tree> *t,
-  TMacroError &me, const TStrList &argv)
+  TMacroData &me, const TStrList &argv)
 {
   if (t->args.Count() < 2) {
     me.ProcessingError(__OlxSrcInfo,
@@ -468,7 +468,7 @@ void TEMacroLib::funIF(exparse::evaluator<exparse::expression_tree> *t,
 }
 //.............................................................................
 void TEMacroLib::funAnd(exparse::evaluator<exparse::expression_tree> *t,
-  TMacroError &E, const TStrList &argv)
+  TMacroData &E, const TStrList &argv)
 {
   if (t->args.Count() < 2) {
     E.ProcessingError(__OlxSrcInfo, "at least two arguments are expected");
@@ -486,7 +486,7 @@ void TEMacroLib::funAnd(exparse::evaluator<exparse::expression_tree> *t,
 }
 //.............................................................................
 void TEMacroLib::funOr(exparse::evaluator<exparse::expression_tree> *t,
-  TMacroError &E, const TStrList &argv)
+  TMacroData &E, const TStrList &argv)
 {
   if (t->args.Count() < 2) {
     E.ProcessingError(__OlxSrcInfo, "at least two arguments are expected");
@@ -504,7 +504,7 @@ void TEMacroLib::funOr(exparse::evaluator<exparse::expression_tree> *t,
 }
 //.............................................................................
 void TEMacroLib::funNot(exparse::evaluator<exparse::expression_tree> *t,
-  TMacroError &E, const TStrList &argv)
+  TMacroData &E, const TStrList &argv)
 {
   if (t->args.Count() != 1) {
     E.ProcessingError(__OlxSrcInfo, "one argument is expected");
@@ -515,11 +515,11 @@ void TEMacroLib::funNot(exparse::evaluator<exparse::expression_tree> *t,
   E.SetRetVal(!a.GetB().ToBool());
 }
 //..............................................................................
-void TEMacroLib::funLastError(const TStrObjList& Params, TMacroError &E) {
+void TEMacroLib::funLastError(const TStrObjList& Params, TMacroData &E) {
   E.SetRetVal(E.GetInfo());
 }
 //..............................................................................
-void TEMacroLib::funLogLevel(const TStrObjList& Params, TMacroError &E) {
+void TEMacroLib::funLogLevel(const TStrObjList& Params, TMacroData &E) {
   if( Params.IsEmpty() )  {
     olxstr ll;
     if( (GetLogLevel()&macro_log_macro) != 0 )  ll << 'm';
@@ -535,12 +535,12 @@ void TEMacroLib::funLogLevel(const TStrObjList& Params, TMacroError &E) {
 }
 //.............................................................................
 void TEMacroLib::macAbort(TStrObjList &Cmds, const TParamList &Options,
-  TMacroError &E)
+  TMacroData &E)
 {
   E.ProcessingError(__OlxSrcInfo, "abnormally terminated");
 }
 //.............................................................................
-void TEMacroLib::funProcess(const TStrObjList& Params, TMacroError &E) {
+void TEMacroLib::funProcess(const TStrObjList& Params, TMacroData &E) {
   olxstr cmd = Params[0];
   this->ProcessFunction(cmd, E, false);
 }

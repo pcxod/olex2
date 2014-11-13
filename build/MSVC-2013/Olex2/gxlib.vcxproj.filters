@@ -90,6 +90,9 @@
     <ClCompile Include="..\..\..\gxlib\solid_angles.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\gxlib\gxfiles.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\gxlib\dbasis.h">
@@ -222,6 +225,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\gxlib\solid_angles.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\gxlib\gxfiles.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

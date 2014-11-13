@@ -22,7 +22,8 @@ protected:
     this->Message = toReplicate.Message;
     this->Location = toReplicate.Location;
     this->Cause = toReplicate.Cause != NULL
-      ? (TBasicException*)toReplicate.Cause->Replicate() : NULL;
+      ? static_cast<TBasicException *>(toReplicate.Cause->Replicate())
+      : NULL;
   }
 public:
   TBasicException() : Cause(NULL) {}
@@ -31,13 +32,13 @@ public:
     const olxstr& msg=EmptyString())
     : Message(msg),
       Location(location),
-      Cause((TBasicException*)cause.GetException()->Replicate())
+      Cause(static_cast<TBasicException *>(cause.GetException()->Replicate()))
   {}
   /* caution: the expected object is an instance from a call to Replicate() !
     and will be deleted
   */
   TBasicException(const olxstr& location, IEObject* cause)
-    : Location(location), Cause((TBasicException*)cause)
+    : Location(location), Cause(static_cast<TBasicException *>(cause))
   {}
 
   TBasicException(const olxstr& location, const olxstr& Msg)

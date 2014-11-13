@@ -35,7 +35,7 @@ struct TGraphRSBin {
     Maxds = maxds;
   }
 };
-void XLibMacros::macGraphSR(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+void XLibMacros::macGraphSR(TStrObjList &Cmds, const TParamList &Options, TMacroData &E)  {
   TXApp &XApp = TXApp::GetInstance();
   TCif* C;
   if( XApp.CheckFileType<TCif>() )  C = &XApp.XFile().GetLastLoader<TCif>();

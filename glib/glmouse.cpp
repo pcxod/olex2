@@ -267,19 +267,19 @@ void TGlMouse::ClearObjectCache(IEObject *caller) {
 }
 //..............................................................................
 void TGlMouse::LibEnable(TStrObjList& Cmds, const TParamList& Options,
-  TMacroError &E)
+  TMacroData &E)
 {
   process_command_list(Cmds, true);
 }
 //..............................................................................
 void TGlMouse::LibDisable(TStrObjList& Cmds, const TParamList& Options,
-  TMacroError &E)
+  TMacroData &E)
 {
   process_command_list(Cmds, false);
 }
 //..............................................................................
 void TGlMouse::LibLock(TStrObjList& Cmds, const TParamList& Options,
-  TMacroError &E)
+  TMacroData &E)
 {
   bool v = Cmds.IsEmpty() ? false : !Cmds[0].ToBool();
   SetRotationEnabled(v);
@@ -287,7 +287,7 @@ void TGlMouse::LibLock(TStrObjList& Cmds, const TParamList& Options,
   SetZoomingEnabled(v);
 }
 //..............................................................................
-void TGlMouse::LibIsEnabled(const TStrObjList& Cmds, TMacroError& E) {
+void TGlMouse::LibIsEnabled(const TStrObjList& Cmds, TMacroData& E) {
   if (Cmds[0].Equalsi("selection"))
     E.SetRetVal(IsSelectionEnabled());
   else if (Cmds[0].Equalsi("rotation"))

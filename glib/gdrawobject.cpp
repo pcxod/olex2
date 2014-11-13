@@ -41,22 +41,22 @@ void AGDrawObject::UpdatePrimitives(int32_t Mask)  {
 //..............................................................................
 //..............................................................................
 //..............................................................................
-void AGDrawObject::LibVisible(const TStrObjList& Params, TMacroError& E)  {
+void AGDrawObject::LibVisible(const TStrObjList& Params, TMacroData& E)  {
   if( !Params.IsEmpty() )
     SetVisible(Params[0].ToBool());
   else
     E.SetRetVal<olxstr>(IsVisible());
 }
 //..............................................................................
-void AGDrawObject::LibIsGrouped(const TStrObjList& Params, TMacroError& E)  {
+void AGDrawObject::LibIsGrouped(const TStrObjList& Params, TMacroData& E)  {
   E.SetRetVal<olxstr>(IsGrouped());
 }
 //..............................................................................
-void AGDrawObject::LibIsSelected(const TStrObjList& Params, TMacroError& E)  {
+void AGDrawObject::LibIsSelected(const TStrObjList& Params, TMacroData& E)  {
   E.SetRetVal<olxstr>(IsSelected());
 }
 //..............................................................................
-void AGDrawObject::LibGetName(const TStrObjList& Params, TMacroError& E)  {
+void AGDrawObject::LibGetName(const TStrObjList& Params, TMacroData& E)  {
   E.SetRetVal<olxstr>(CollectionName);
 }
 //..............................................................................

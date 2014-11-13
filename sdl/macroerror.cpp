@@ -11,19 +11,19 @@
 #include "function.h"
 #include "bapp.h"
 
-TMacroError::TMacroError()  {
+TMacroData::TMacroData()  {
   DeleteObject = false;
   ProcessError = 0;
   RetValue = NULL;
 }
 //.............................................................................
-void TMacroError::operator = (const TMacroError& ME)  {
+void TMacroData::operator = (const TMacroData& ME)  {
   ProcessError = ME.ProcessError;
   ErrorInfo = ME.ErrorInfo;
   RetValue = ME.RetValue;
 }
 //.............................................................................
-olxstr& TMacroError::ProcessingError(const olxstr& location,
+olxstr& TMacroData::ProcessingError(const olxstr& location,
   const olxstr& errMsg)
 {
   ErrorInfo = errMsg;
@@ -32,21 +32,21 @@ olxstr& TMacroError::ProcessingError(const olxstr& location,
   return ErrorInfo;
 }
 //.............................................................................
-void TMacroError::NonexitingMacroError(const olxstr& macroName)  {
+void TMacroData::NonexitingMacroError(const olxstr& macroName)  {
   ErrorInfo = "Macro/function '";
   ErrorInfo << macroName;
   ErrorInfo << "' does not exist";
   ProcessError |= peNonexistingFunction;
 }
 //.............................................................................
-void TMacroError::WrongArgCount(const ABasicFunction& func, size_t ArgC)  {
+void TMacroData::WrongArgCount(const ABasicFunction& func, size_t ArgC)  {
   ErrorInfo = "Macro/function '";
   ErrorInfo << func.GetSignature() << "' is provided with " << ArgC <<
     " arguments";
   ProcessError |= peInvalidArgCount;
 }
 //.............................................................................
-void TMacroError::ProcessingException(const ABasicFunction& caller,
+void TMacroData::ProcessingException(const ABasicFunction& caller,
   const TExceptionBase& Exc)
 {
   ErrorInfo = caller.GetRuntimeSignature();
@@ -61,7 +61,7 @@ void TMacroError::ProcessingException(const ABasicFunction& caller,
   ProcessError |= peProcessingException;
 }
 //.............................................................................
-void TMacroError::ProcessingException(const olxstr& location,
+void TMacroData::ProcessingException(const olxstr& location,
   const TExceptionBase& Exc)
 {
   (ErrorInfo = location) << ':' << NewLineSequence();
@@ -71,7 +71,7 @@ void TMacroError::ProcessingException(const olxstr& location,
   ProcessError |= peProcessingException;
 }
 //.............................................................................
-void TMacroError::WrongOption(const ABasicFunction& func,
+void TMacroData::WrongOption(const ABasicFunction& func,
   const olxstr& option)
 {
   ErrorInfo = "Wrong option ";
@@ -79,7 +79,7 @@ void TMacroError::WrongOption(const ABasicFunction& func,
   ProcessError |= peInvalidOption;
 }
 //.............................................................................
-void TMacroError::WrongState(const ABasicFunction& func)  {
+void TMacroData::WrongState(const ABasicFunction& func)  {
   ErrorInfo = "Wrong program state ";
   ErrorInfo << func.GetParentLibrary()->GetOwner()->GetStateName(
     func.GetArgStateMask());
@@ -87,7 +87,7 @@ void TMacroError::WrongState(const ABasicFunction& func)  {
   ProcessError |= peIllegalState;
 }
 //.............................................................................
-olxstr TMacroError::GetRetVal() const  {
+olxstr TMacroData::GetRetVal() const  {
   if( RetValue == NULL )  return EmptyString();
 //  if( !EsdlInstanceOf(*RetValue, olxstr) )
 //    throw TCastException(*this, EsdlObjectName(RetValue), EsdlClassName(olxstr) );
@@ -96,7 +96,7 @@ olxstr TMacroError::GetRetVal() const  {
   return RetValue->ToString();
 }
 
-void TMacroError::PrintStack(int logEvt, bool annotate,
+void TMacroData::PrintStack(int logEvt, bool annotate,
   const olxstr &prefix) const
 {
   const str_stack::item *i = Stack.TopItem();

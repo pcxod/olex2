@@ -203,11 +203,11 @@ TOlxVars::TOlxVars()  {
 }
 #endif // _PYTHON
 //............................................................................
-void olxvar_funUnsetVar(const TStrObjList& Params, TMacroError &E)  {
+void olxvar_funUnsetVar(const TStrObjList& Params, TMacroData &E)  {
   TOlxVars::UnsetVar(Params[0]);
 }
 //.............................................................................
-void olxvar_funGetVar(const TStrObjList& Params, TMacroError &E)  {
+void olxvar_funGetVar(const TStrObjList& Params, TMacroData &E)  {
   const size_t ind = TOlxVars::VarIndex(Params[0]);
   if (ind == InvalidIndex) {
     if (Params.Count() == 2)
@@ -220,13 +220,13 @@ void olxvar_funGetVar(const TStrObjList& Params, TMacroError &E)  {
   else
     E.SetRetVal(TOlxVars::GetVarStr(ind));
 }
-void olxvar_funSetVar(const TStrObjList& Params, TMacroError &E) {
+void olxvar_funSetVar(const TStrObjList& Params, TMacroData &E) {
   TOlxVars::SetVar(Params[0], Params[1]);
 }
-void olxvar_funIsVar(const TStrObjList& Params, TMacroError &E) {
+void olxvar_funIsVar(const TStrObjList& Params, TMacroData &E) {
   E.SetRetVal(TOlxVars::IsVar(Params[0]));
 }
-void olxvar_funFlush(const TStrObjList& Params, TMacroError &E) {
+void olxvar_funFlush(const TStrObjList& Params, TMacroData &E) {
   TStrList settings;
   olxstr mask = (Params[1].IsEmpty() ? olxstr('*') : Params[1]);
   size_t from = Params.Count() == 3 ? Params[2].ToSizeT() : 0;

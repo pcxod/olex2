@@ -15,10 +15,10 @@ template <typename ptr> struct olx_ptr_  {
   int ref_cnt;
   olx_ptr_(ptr* _p) : p(_p), ref_cnt(1)  {}
   olx_ptr_* inc_ref()  {  ref_cnt++;  return this;  }
-  template <bool is_array> int dec_ref() {
+  template <bool do_del, bool is_array> int dec_ref() {
     int rc = --ref_cnt;
     if (rc <= 0) {
-      if (p != NULL) {
+      if (p != NULL && do_del) {
         if (is_array)
           delete [] p;
         else
@@ -30,14 +30,26 @@ template <typename ptr> struct olx_ptr_  {
   }
 };
 
-template <typename ptr> struct olx_object_ptr  {
+template <class ptr> struct olx_virtual_ptr {
+  virtual ~olx_virtual_ptr() {}
+  virtual IEObject *get_ptr() const = 0;
+  ptr &get() const {
+    return dynamic_cast<ptr &>(*get_ptr());
+  }
+  ptr &operator()() const {
+    return get();
+  }
+  operator ptr& () const { return get(); }
+};
+
+template <typename ptr> struct olx_object_ptr {
   olx_ptr_<ptr>* p;
   olx_object_ptr() { p = new olx_ptr_<ptr>(NULL); }
   olx_object_ptr(ptr* _p) { p = new olx_ptr_<ptr>(_p); }
   olx_object_ptr(const olx_object_ptr& _p) : p(_p.p->inc_ref())  {}
-  ~olx_object_ptr()  { p->template dec_ref<false>(); }
+  ~olx_object_ptr()  { p->template dec_ref<true, false>(); }
   olx_object_ptr& operator = (const olx_object_ptr& _p)  {
-    p->template dec_ref<false>();
+    p->template dec_ref<true, false>();
     p = _p.p->inc_ref();
     return *this;
   }
@@ -52,14 +64,44 @@ template <typename ptr> struct olx_object_ptr  {
   bool is_valid() const { return p->p != NULL; }
   operator ptr& () const {  return *p->p;  }
   // releases the object from ALL references
-  ptr &release() const {
+  ptr *release() const {
     ptr *p_ = p->p;
     p->p = NULL;
-    return *p_;
+    return p_;
   }
 };
 
-template <typename ptr> struct olx_array_ptr  {
+template <typename ptr> struct olx_vptr
+: public olx_object_ptr<olx_virtual_ptr<ptr> >
+{
+  typedef olx_object_ptr<olx_virtual_ptr<ptr> > parent_t;
+  struct actual_ptr : public olx_virtual_ptr<ptr> {
+    ptr *p;
+    actual_ptr(ptr *p) : p(p) {}
+    virtual IEObject *get_ptr() const {
+      return p;
+    }
+  };
+  olx_vptr(ptr *_p) : parent_t(new actual_ptr(_p)) {}
+  olx_vptr(olx_virtual_ptr<ptr> *_p)  : parent_t(_p) {}
+  olx_vptr(const olx_vptr& _p) : parent_t(_p) {}
+  olx_vptr& operator = (const olx_vptr& _p)  {
+    parent_t::p->template dec_ref<true, false>();
+    parent_t::p = _p.p->inc_ref();
+    return *this;
+  }
+  ptr& operator ()() const { return parent_t::p->p->get(); }
+  operator ptr& () const { return parent_t::p->p->get(); }
+  // releases the object from ALL references
+  ptr *release() const {
+    ptr *p_ = parent_t::p->p;
+    parent_t::p->p = NULL;
+    return p_;
+  }
+};
+
+
+template <typename ptr> struct olx_array_ptr {
   olx_ptr_<ptr>* p;
   olx_array_ptr() {  p = new olx_ptr_<ptr>(NULL);  }
   olx_array_ptr(ptr* _p) {  p = new olx_ptr_<ptr>(_p);  }
@@ -68,9 +110,9 @@ template <typename ptr> struct olx_array_ptr  {
   olx_array_ptr(size_t sz) : p(new olx_ptr_<ptr>(new ptr[sz]))
   {}
 
-  ~olx_array_ptr() { p->template dec_ref<true>(); }
+  ~olx_array_ptr() { p->template dec_ref<true, true>(); }
   olx_array_ptr& operator = (const olx_array_ptr& _p)  {
-    p->template dec_ref<true>();
+    p->template dec_ref<true, true>();
     p = _p.p->inc_ref();
     return *this;
   }
@@ -95,6 +137,39 @@ template <typename ptr> struct olx_array_ptr  {
     ptr *rv = new ptr[sz];
     memcpy(rv, p, sz*sizeof(ptr));
     return olx_array_ptr(rv);
+  }
+};
+
+/* the underlying object/array will not be deleted. This allows to have a single
+pointer to be shared between may objetc - replacing it becomes simple
+*/
+template <typename ptr> struct olx_shared_ptr {
+  olx_ptr_<ptr>* p;
+  olx_shared_ptr() { p = new olx_ptr_<ptr>(NULL); }
+  olx_shared_ptr(ptr* _p) { p = new olx_ptr_<ptr>(_p); }
+  olx_shared_ptr(const olx_shared_ptr& _p) : p(_p.p->inc_ref())
+  {}
+  ~olx_shared_ptr()  { p->template dec_ref<false, false>(); }
+  olx_shared_ptr& operator = (const olx_shared_ptr& _p)  {
+    p->template dec_ref<false, false>();
+    p = _p.p->inc_ref();
+    return *this;
+  }
+  /* simply replaces the underlying object pointer - it does not modify the
+  reference count (same as replace)
+  */
+  olx_shared_ptr& operator = (ptr *p_) {
+    p->p = p_;
+    return *this;
+  }
+  ptr& operator ()() const { return *p->p; }
+  bool is_valid() const { return p->p != NULL; }
+  operator ptr& () const { return *p->p; }
+  // replaces the object from ALL references and returns previous value
+  ptr *replace(ptr *_p) const {
+    ptr *p_ = p->p;
+    p->p = _p;
+    return p_;
   }
 };
 

@@ -840,22 +840,25 @@ Friedel opposites of components 1 ... m
   bool IsDefaultRestraint(const TSameGroup &restraint) const;
   // feeds on .options - instance static
   bool DoShowRestraintDefaults() const;
-  void LibHasOccu(const TStrObjList& Params, TMacroError& E);
-  void LibOSF(const TStrObjList& Params, TMacroError& E);
-  void LibBASF(const TStrObjList& Params, TMacroError& E);
-  void LibFVar(const TStrObjList& Params, TMacroError& E);
-  void LibEXTI(const TStrObjList& Params, TMacroError& E);
-  void LibUpdateCRParams(const TStrObjList& Params, TMacroError& E);
-  void LibCalcCompleteness(const TStrObjList& Params, TMacroError& E);
-  void LibMaxIndex(const TStrObjList& Params, TMacroError& E);
+  void LibHasOccu(const TStrObjList& Params, TMacroData& E);
+  void LibOSF(const TStrObjList& Params, TMacroData& E);
+  void LibBASF(const TStrObjList& Params, TMacroData& E);
+  void LibFVar(const TStrObjList& Params, TMacroData& E);
+  void LibEXTI(const TStrObjList& Params, TMacroData& E);
+  void LibUpdateCRParams(const TStrObjList& Params, TMacroData& E);
+  void LibCalcCompleteness(const TStrObjList& Params, TMacroData& E);
+  void LibMaxIndex(const TStrObjList& Params, TMacroData& E);
   // restraints & constraints related functions
-  void LibShareADP(TStrObjList &Cmds, const TParamList &Opts, TMacroError &E);
+  void LibShareADP(TStrObjList &Cmds, const TParamList &Opts, TMacroData &E);
   void LibNewAfixGroup(TStrObjList &Cmds, const TParamList &Options,
-    TMacroError &E);
+    TMacroData &E);
   void LibNewRestraint(TStrObjList &Cmds, const TParamList &Options,
-    TMacroError &E);
+    TMacroData &E);
 
   TLibrary* ExportLibrary(const olxstr& name=EmptyString());
+  struct VPtr : public olx_virtual_ptr<RefinementModel> {
+    virtual IEObject *get_ptr() const;
+  };
 
   struct ReleasedItems {
     TSimpleRestraintPList restraints;
