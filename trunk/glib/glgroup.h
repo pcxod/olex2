@@ -88,9 +88,9 @@ public:
 
   bool Orient(TGlPrimitive&)  {  return false;  }
   bool GetDimensions(vec3d&, vec3d&)  {  return false;  }
-  virtual bool OnMouseDown(const IEObject *Sender, const TMouseData& Data);
-  virtual bool OnMouseUp(const IEObject *Sender, const TMouseData& Data);
-  virtual bool OnMouseMove(const IEObject *Sender, const TMouseData& Data);
+  virtual bool OnMouseDown(const IOlxObject *Sender, const TMouseData& Data);
+  virtual bool OnMouseUp(const IOlxObject *Sender, const TMouseData& Data);
+  virtual bool OnMouseMove(const IOlxObject *Sender, const TMouseData& Data);
 
   virtual void SetVisible(bool On);
   virtual void SetSelected(bool On);

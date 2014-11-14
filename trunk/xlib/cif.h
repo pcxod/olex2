@@ -220,7 +220,7 @@ public:
   bool CreateTable(TDataItem* TableDefinitions, TTTable<TStrList>& Table,
     smatd_list& SymmList, int label_options=0) const;
   const TCifDataManager& GetDataManager() const {  return DataManager;  }
-  virtual IEObject* Replicate() const {  return new TCif;  }
+  virtual IOlxObject* Replicate() const {  return new TCif;  }
 };
 //---------------------------------------------------------------------------
 struct AtomCifEntry : public cif_dp::IStringCifEntry {

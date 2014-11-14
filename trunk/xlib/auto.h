@@ -119,7 +119,7 @@ public:
   TAutoDBNode(TSAtom& sa, TTypeList<olx_pair_t<TCAtom*, vec3d> >* atoms);
   TAutoDBNode(IDataInputStream& in)  {  LoadFromStream(in);  }
 
-  const olxstr& ToString() const;
+  olxstr ToString() const;
 
   void SaveToStream(IDataOutputStream& output) const;
   void LoadFromStream(IDataInputStream& input);
@@ -186,7 +186,7 @@ public:
   void SaveToStream(IDataOutputStream& output) const;
   void LoadFromStream(IDataInputStream& input);
 
-  const olxstr& ToString(int level) const;
+  olxstr ToString(int level) const;
 
   DefPropP(int32_t, Id)
   DefPropP(int32_t, Tag)
@@ -227,7 +227,7 @@ class TAutoDBSearchNode  {
   TAutoDBNodePList PossibleCentres;
 };
 ////////////////////////////////////////////////////////////////////////////////
-class TAutoDB : public IEObject  {
+class TAutoDB : public IOlxObject  {
   // a fixed size list 0 - nodes connected to one other node, 1 - two, etc
   TTypeList< TPtrList<TAutoDBNode> > Nodes;
   TXFile& XFile;

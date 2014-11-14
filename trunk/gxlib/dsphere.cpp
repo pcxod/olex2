@@ -153,7 +153,7 @@ bool TDSphere::Orient(TGlPrimitive& P) {
   return false;
 }
 //...........................................................................
-bool TDSphere::OnDblClick(const IEObject *obj_, const TMouseData& md) {
+bool TDSphere::OnDblClick(const IOlxObject *obj_, const TMouseData& md) {
   const TEBasis &b = Parent.GetBasis();
   vec3d l(md.DownX-Parent.GetWidth()/2,
     Parent.GetHeight()- md.DownY, 0),

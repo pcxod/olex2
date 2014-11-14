@@ -11,7 +11,7 @@
 #define __olx_gxlib_xmacro_H
 #include "gxapp.h"
 
-class GXLibMacros : public IEObject {
+class GXLibMacros : public IOlxObject {
 protected:
   TGXApp &app;
 public:

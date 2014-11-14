@@ -44,9 +44,9 @@ public:
   inline short GetSize() const {  return Size;  }
   void SetSize(short v);
 
-  bool OnMouseDown(const IEObject *Sender, const TMouseData& Data);
-  bool OnMouseUp(const IEObject *Sender, const TMouseData& Data);
-  bool OnMouseMove(const IEObject *Sender, const TMouseData& Data);
+  bool OnMouseDown(const IOlxObject *Sender, const TMouseData& Data);
+  bool OnMouseUp(const IOlxObject *Sender, const TMouseData& Data);
+  bool OnMouseMove(const IOlxObject *Sender, const TMouseData& Data);
 };
 
 EndGxlNamespace()

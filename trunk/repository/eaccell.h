@@ -12,7 +12,7 @@
 #include "edict.h"
 #include "bapp.h"
 
-template <class T> class TAccellList : public IEObject  {
+template <class T> class TAccellList : public IOlxObject  {
   olx_pdict<int32_t, T> Entries;
   protected:
     int32_t LastId;

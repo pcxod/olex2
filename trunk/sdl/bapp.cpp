@@ -367,7 +367,7 @@ void TBasicApp::PostAction(IOlxAction *a) {
   TBasicApp::GetInstance().Actions.Add(a);
 }
 //..............................................................................
-bool TBasicApp::TActionHandler::Execute(const IEObject *, const IEObject *,
+bool TBasicApp::TActionHandler::Execute(const IOlxObject *, const IOlxObject *,
   TActionQueue *)
 {
   olx_scope_cs cs_(TBasicApp::GetCriticalSection());

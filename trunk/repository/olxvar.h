@@ -75,14 +75,14 @@ public:
   void Set(const olxstr& str);
 };
 
-struct TOlxVarChangeData : public IEObject  {
+struct TOlxVarChangeData : public IOlxObject  {
   const olxstr& str_val, var_name;
   PyObject* py_val;
   TOlxVarChangeData(const olxstr& v_name, const olxstr& v_val, PyObject* p_val)
     : str_val(v_val), var_name(v_name), py_val(p_val) {}
 };
 
-class TOlxVars : public IEObject  {
+class TOlxVars : public IOlxObject  {
   // this object is a singleton
   static TOlxVars* Instance;
   static olx_critical_section & CS() {
@@ -230,7 +230,7 @@ public:
 };
 #else  // _PYTHON
 // use a very thin implementation with no python...
-class TOlxVars : public IEObject  {
+class TOlxVars : public IOlxObject  {
   static TOlxVars* Instance;
   static olx_critical_section & CS() {
     static olx_critical_section cs;

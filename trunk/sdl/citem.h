@@ -11,7 +11,7 @@
 #define __olx_sdl_collectionItem_H
 
 // implements data for collection item
-class ACollectionItem : public virtual IEObject {
+class ACollectionItem : public virtual IOlxObject {
   index_t CollectionItemTag;
 public:
   ACollectionItem() : CollectionItemTag(-1) {}

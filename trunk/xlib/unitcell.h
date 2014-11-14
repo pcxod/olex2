@@ -26,7 +26,7 @@
 
 BeginXlibNamespace()
 
-class TUnitCell: public IEObject  {
+class TUnitCell: public IOlxObject  {
   TNetwork*  Network;  // for internal use only
   smatd_list Matrices;  // list of unique matrices; FMatrices + centering
   TArrayList<TEllpPList> Ellipsoids;  // i - atoms index, j - matrix index
@@ -514,7 +514,7 @@ public:
   void LibMatrixCount(const TStrObjList& Params, TMacroData& E);
   class TLibrary*  ExportLibrary(const olxstr& name=EmptyString());
   struct VPtr : public olx_virtual_ptr<TUnitCell> {
-    virtual IEObject *get_ptr() const;
+    virtual IOlxObject *get_ptr() const;
   };
 };
 

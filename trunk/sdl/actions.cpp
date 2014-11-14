@@ -36,7 +36,7 @@ void TActionQueue::Add(AEventsDispatcher* D, int MsgId, short MsgSubId) {
   Dispatchers.AddNew(MsgId, MsgSubId, D);
 }
 //..............................................................................
-bool TActionQueue::Enter(const IEObject* Sender, const IEObject* Data,
+bool TActionQueue::Enter(const IOlxObject* Sender, const IOlxObject* Data,
   TActionQueue *caller)
 {
   if (!IsEnabled()) return false;
@@ -65,7 +65,7 @@ bool TActionQueue::Enter(const IEObject* Sender, const IEObject* Data,
   return res;
 }
 //..............................................................................
-void TActionQueue::UpdateData(const IEObject* Sender, const IEObject* Data,
+void TActionQueue::UpdateData(const IOlxObject* Sender, const IOlxObject* Data,
   TActionQueue *caller)
 {
   if (!IsEnabled()) return;
@@ -83,7 +83,7 @@ void TActionQueue::UpdateData(const IEObject* Sender, const IEObject* Data,
   }
 }
 //..............................................................................
-bool TActionQueue::Exit(const IEObject* Sender, const IEObject* Data,
+bool TActionQueue::Exit(const IOlxObject* Sender, const IOlxObject* Data,
   TActionQueue *caller)
 {
   if (!IsEnabled()) return false;
@@ -112,7 +112,7 @@ bool TActionQueue::Exit(const IEObject* Sender, const IEObject* Data,
   return res;
 }
 //..............................................................................
-bool TActionQueue::Execute(const IEObject* Sender, const IEObject* Data,
+bool TActionQueue::Execute(const IOlxObject* Sender, const IOlxObject* Data,
   TActionQueue *caller)
 {
   if (!IsEnabled()) return false;
@@ -198,8 +198,8 @@ TActionQueue& TActionQList::Add(TActionQueue *q)  {
   return *q;
 }
 //..............................................................................
-bool TActionQList::Execute(const olxstr& Name, const IEObject* Sender,
-  const IEObject* Data)
+bool TActionQList::Execute(const olxstr& Name, const IOlxObject* Sender,
+  const IOlxObject* Data)
 {
   TActionQueue* Q = Queues.Find(Name, NULL);
   if (Q == NULL)

@@ -21,7 +21,7 @@ BeginXlibNamespace()
 class RefinementModel;
 class ExplicitCAtomRef;
 
-typedef TTypeListExt<ExplicitCAtomRef, IEObject> TAtomRefList_;
+typedef TTypeListExt<ExplicitCAtomRef, IOlxObject> TAtomRefList_;
 
 class AAtomRef : public ACollectionItem {
 public:
@@ -90,7 +90,7 @@ public:
     return t;
   }
 };
-typedef TTypeListExt<ExplicitCAtomRef, IEObject> TAtomRefList;
+typedef TTypeListExt<ExplicitCAtomRef, IOlxObject> TAtomRefList;
 
 /*
 Last - last atom of a residue,

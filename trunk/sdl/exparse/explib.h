@@ -13,7 +13,7 @@
 BeginEsdlNamespace()
 
 namespace exparse  {
-  struct StringValue : public IEvaluable, public IEObject  {
+  struct StringValue : public IEvaluable, public IOlxObject  {
     olxstr val;
     static ClassInfo<StringValue, olxstr> info;
     StringValue() {}
@@ -81,7 +81,7 @@ namespace exparse  {
     }
   };
 
-  struct ListValue : public IEvaluable, public IEObject  {
+  struct ListValue : public IEvaluable, public IOlxObject  {
     typedef TPtrList<IEvaluable> list_t;
     list_t val;
     static ClassInfo<ListValue, list_t> info;

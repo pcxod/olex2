@@ -41,7 +41,7 @@ public:
   }
 };
 // string class, string container class
-template <class T> class TTStrList : public IEObject {
+template <class T> class TTStrList : public IOlxObject {
 public:
   typedef typename T::string_type string_type;
 protected:
@@ -841,9 +841,9 @@ public:
   }
 };
 
-typedef TStringToList<olxstr, IEObject*> TStrObjList;
-typedef TStringToList<olxcstr, IEObject*> TCStrObjList;
-typedef TStringToList<olxwstr, IEObject*> TWStrObjList;
+typedef TStringToList<olxstr, IOlxObject*> TStrObjList;
+typedef TStringToList<olxcstr, IOlxObject*> TCStrObjList;
+typedef TStringToList<olxwstr, IOlxObject*> TWStrObjList;
 typedef ConstStrObjList<TStrObjList> const_strobjlist;
 typedef ConstStrObjList<TCStrObjList> const_cstrobjlist;
 typedef ConstStrObjList<TWStrObjList> const_wstrobjlist;

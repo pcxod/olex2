@@ -109,7 +109,7 @@ typedef int (PolySort)(const TPolynomMember &P, const TPolynomMember &P1);
 //------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------
-class TPolynom: public IEObject  {
+class TPolynom: public IOlxObject  {
   TTypeList<TPolynomMember> FMembers;
 protected:
   void Clear()  {  FMembers.Clear();  }

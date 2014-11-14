@@ -17,7 +17,7 @@
 
 BeginGxlNamespace()
 
-class TStateChange: public IEObject {
+class TStateChange: public IOlxObject {
   const size_t State;
   const bool Status;
   const olxstr Data;
@@ -205,7 +205,7 @@ public:
   static TStateRegistry &GetInstance();
 };
 
-class AMode : public IEObject {
+class AMode : public IOlxObject {
 protected:
   size_t Id;
   TGXApp &gxapp;
@@ -219,7 +219,7 @@ protected:
   public:
     ObjectPicker_(AMode &mode) : mode(mode) {}
     AMode &mode;
-    virtual bool Execute(const IEObject *sender, const IEObject *data, TActionQueue *);
+    virtual bool Execute(const IOlxObject *sender, const IOlxObject *data, TActionQueue *);
   } ObjectPicker;
   bool Initialised;
   virtual bool Initialise_(TStrObjList &Cmds, const TParamList &Options) = 0;
@@ -325,7 +325,7 @@ public:
   static bool CheckMode(const olxstr &mode);
 };
 
-class TModeChange: public IEObject  {
+class TModeChange: public IOlxObject  {
   bool FStatus;
   size_t Mode;
 public:

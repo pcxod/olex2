@@ -42,7 +42,7 @@ public:
   virtual void Execute(TUndoData* data) = 0;
 };
 
-class TUndoData : public IEObject {
+class TUndoData : public IOlxObject {
   TPtrList<TUndoData> UndoList;
   IUndoAction* UndoAction;
 public:

@@ -43,20 +43,20 @@ public:
   AActionHandler() : Enabled(true), ToDelete(true) {}
   virtual ~AActionHandler() {}
   // handler before the event: sender, data, parent queue
-  virtual bool Enter(const IEObject *, const IEObject *, TActionQueue *) {
+  virtual bool Enter(const IOlxObject *, const IOlxObject *, TActionQueue *) {
     return false;
   }
   // handler after the event: sender, data, parent queue
-  virtual bool Exit(const IEObject *, const IEObject *, TActionQueue *) {
+  virtual bool Exit(const IOlxObject *, const IOlxObject *, TActionQueue *) {
     return false;
   }
   /* handler during the event, does some operation when Obj is changed;
      the action depends on the type of queue: sender, data, parent queue
   */
-  virtual void UpdateData(const IEObject *, const IEObject *, TActionQueue *)
+  virtual void UpdateData(const IOlxObject *, const IOlxObject *, TActionQueue *)
   {}
   //: sender, data, parent queue
-  virtual bool Execute(const IEObject *, const IEObject *, TActionQueue *) {
+  virtual bool Execute(const IOlxObject *, const IOlxObject *, TActionQueue *) {
     return false;
   }
   // the function is called the object is removed from the queue
@@ -84,8 +84,8 @@ public:
   the object sending the message, Data - is the object being changed or some
   data object
   */
-  virtual bool Dispatch(int MsgId, short MsgSubId, const IEObject* Sender,
-    const IEObject* Data, TActionQueue *)=0;
+  virtual bool Dispatch(int MsgId, short MsgSubId, const IOlxObject* Sender,
+    const IOlxObject* Data, TActionQueue *)=0;
   DefPropBIsSet(Enabled)
 };
 
@@ -121,13 +121,13 @@ public:
   */
   void Add(AEventsDispatcher* dispatcher, int MsgId, short MsgSubId=msiAll);
   //makes subsequent calls to the handlers stored in the list
-  bool Execute(const IEObject* Sender, const IEObject* Data=NULL,
+  bool Execute(const IOlxObject* Sender, const IOlxObject* Data=NULL,
     TActionQueue *caller=NULL);
-  bool Enter(const IEObject* Sender, const IEObject* Data=NULL,
+  bool Enter(const IOlxObject* Sender, const IOlxObject* Data=NULL,
     TActionQueue *caller=NULL);
-  bool Exit(const IEObject* Sender, const IEObject* Data=NULL,
+  bool Exit(const IOlxObject* Sender, const IOlxObject* Data=NULL,
     TActionQueue *caller=NULL);
-  void UpdateData(const IEObject* Sender, const IEObject* Data,
+  void UpdateData(const IOlxObject* Sender, const IOlxObject* Data,
     TActionQueue *caller=NULL);
   virtual void OnRemove(TActionQueue *caller=NULL) {}
   // empties the queue
@@ -144,7 +144,7 @@ public:
   const olxstr& GetName() const { return Name; }
 };
 
-class TActionQList: public IEObject {
+class TActionQList: public IOlxObject {
 private:
   olxstr_dict<TActionQueue*> Queues;
 public:
@@ -159,8 +159,8 @@ public:
   */
   TActionQueue& Add(TActionQueue *queue);
   // executes a named queue
-  bool Execute(const olxstr& Name, const IEObject* Sender,
-    const IEObject* Data=NULL);
+  bool Execute(const olxstr& Name, const IOlxObject* Sender,
+    const IOlxObject* Data=NULL);
 
   bool Exists(const olxstr& Name) const {
     return Queues.IndexOf(Name) != InvalidIndex;
@@ -187,22 +187,22 @@ class TActionProxy : public AActionHandler {
   TActionQueue& queue;
 public:
   TActionProxy(TActionQueue& q) : queue(q) {}
-  virtual bool Enter(const IEObject* Sender, const IEObject* Data,
+  virtual bool Enter(const IOlxObject* Sender, const IOlxObject* Data,
     TActionQueue *caller)
   {
     return queue.Enter(Sender, Data, caller);
   }
-  virtual bool Exit(const IEObject* Sender, const IEObject* Data,
+  virtual bool Exit(const IOlxObject* Sender, const IOlxObject* Data,
     TActionQueue *caller)
   {
     return queue.Exit(Sender, Data, caller);
   }
-  virtual void UpdateData(const IEObject* Sender, const IEObject* Data,
+  virtual void UpdateData(const IOlxObject* Sender, const IOlxObject* Data,
     TActionQueue *caller)
   {
     queue.UpdateData(Sender, Data, caller);
   }
-  virtual bool Execute(const IEObject* Sender, const IEObject* Data,
+  virtual bool Execute(const IOlxObject* Sender, const IOlxObject* Data,
     TActionQueue *caller)
   {
     return queue.Execute(Sender, Data, caller);
@@ -243,7 +243,7 @@ public:
 };
 
 // generic on progress data
-class TOnProgress: public IEObject {
+class TOnProgress: public IOlxObject {
   uint64_t Max, Pos;
   olxstr Action;
 public:

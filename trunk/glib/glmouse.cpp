@@ -240,7 +240,7 @@ void TGlMouse::process_command_list(TStrObjList& Cmds, bool enable) {
   }
 }
 //..............................................................................
-void TGlMouse::OnObjectDelete(IEObject *o) {
+void TGlMouse::OnObjectDelete(IOlxObject *o) {
   ClearObjectCache(o);
 }
 //..............................................................................
@@ -250,17 +250,18 @@ AGDrawObject *TGlMouse::find_object(int x, int y) {
     o = FParent->SelectObject(x, y);
     if (o != NULL) {
       object_cache.Add(TMouseRegion(x, y), o);
-      o->AddDestructionHandler(*this, &TGlMouse::OnObjectDelete);
+      o->AddDestructionObserver(
+        DestructionObserver::Make(this, &TGlMouse::OnObjectDelete));
     }
   }
   return o;
 }
 //..............................................................................
-void TGlMouse::ClearObjectCache(IEObject *caller) {
+void TGlMouse::ClearObjectCache(IOlxObject *caller) {
   for (size_t i=0; i < object_cache.Count(); i++) {
     if (object_cache.GetValue(i) != caller) {
-      object_cache.GetValue(i)->RemoveDestructionHandler(
-        *this, &TGlMouse::OnObjectDelete);
+      object_cache.GetValue(i)->RemoveDestructionObserver(
+        DestructionObserver::Make(this, &TGlMouse::OnObjectDelete));
     }
   }
   object_cache.Clear();

@@ -25,8 +25,8 @@ enum {
 
 class TGXFile : public TXFile {
 protected:
-  virtual bool Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
-    const IEObject *Data, TActionQueue *);
+  virtual bool Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
+    const IOlxObject *Data, TActionQueue *);
 public:
   TGXFile(struct XObjectProvider &);
   ~TGXFile();
@@ -60,7 +60,7 @@ struct XObjectProvider : public ASObjectProvider {
   virtual TXFile *CreateXFile() {
     return new TGXFile(*this);
   }
-  virtual IEObject* Replicate() const { return new XObjectProvider(app); }
+  virtual IOlxObject* Replicate() const { return new XObjectProvider(app); }
 };
 
 EndGxlNamespace()

@@ -23,7 +23,7 @@ const short
   infotab_bond = 4,
   infotab_conf = 5;
 
-class InfoTab : public IEObject {  // need to cast to delete
+class InfoTab : public IOlxObject {  // need to cast to delete
   RefinementModel& RM;
   short Type,
     AtomCount; // for MPLA, CONF

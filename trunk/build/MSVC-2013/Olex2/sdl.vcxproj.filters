@@ -557,6 +557,12 @@
     <ClInclude Include="..\..\..\sdl\eset.h">
       <Filter>Header Files\containers</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\sdl\destruction_obs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\olxvptr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />

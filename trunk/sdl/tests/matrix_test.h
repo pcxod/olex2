@@ -103,7 +103,7 @@ public:
     TBasicException(src, msg), m(_m), u(_u), v(_v), w(_w)  {}
     SVDTestException(const SVDTestException& src) : TBasicException(src),
       m(src.m), u(src.u), v(src.v), w(src.w)  {}
-  virtual IEObject* Replicate() const {
+  virtual IOlxObject* Replicate() const {
     return new SVDTestException(*this);
   }
 };

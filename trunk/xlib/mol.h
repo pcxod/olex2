@@ -33,7 +33,7 @@ public:
   virtual void SaveToStrings(TStrList& Strings);
   virtual void LoadFromStrings(const TStrList& Strings);
   virtual bool Adopt(TXFile& XF);
-  virtual IEObject* Replicate()  const {  return new TMol;  }
+  virtual IOlxObject* Replicate()  const {  return new TMol;  }
 };
 
 EndXlibNamespace()

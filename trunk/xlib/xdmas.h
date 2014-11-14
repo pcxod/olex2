@@ -22,7 +22,7 @@ public:
   virtual void SaveToStrings(TStrList& Strings)  {  throw TNotImplementedException(__OlxSourceInfo);  }
   virtual void LoadFromStrings(const TStrList& Strings);
   virtual bool Adopt(TXFile&)  {  throw TNotImplementedException(__OlxSourceInfo);  }
-  virtual IEObject* Replicate() const {  return new TXDMas;  }
+  virtual IOlxObject* Replicate() const {  return new TXDMas;  }
 };
 
 EndXlibNamespace()

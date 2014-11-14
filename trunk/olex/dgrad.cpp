@@ -66,7 +66,7 @@ TdlgGradient::~TdlgGradient()  {
   tcD->OnClick.Clear();
 }
 //..............................................................................
-bool TdlgGradient::Execute(const IEObject *Sender, const IEObject *Data,
+bool TdlgGradient::Execute(const IOlxObject *Sender, const IOlxObject *Data,
   TActionQueue *)
 {
   if( EsdlInstanceOf( *Sender, TTextEdit) )  {
@@ -75,7 +75,7 @@ bool TdlgGradient::Execute(const IEObject *Sender, const IEObject *Data,
     CD->GetColourData().SetColour(wc);
     if (CD->ShowModal() == wxID_OK) {
       wc = CD->GetColourData().GetColour();
-      dynamic_cast<TTextEdit *>(const_cast<IEObject *>(Sender))->WI
+      dynamic_cast<TTextEdit *>(const_cast<IOlxObject *>(Sender))->WI
         .SetColor(OLX_RGB(wc.Red(), wc.Green(), wc.Blue()));
     }
     delete CD;

@@ -32,7 +32,7 @@ public:
       pl1[i] = &al1[i];  pl2[i] = &al2[i];
       tl1.Set(i, &al1[i]);  tl2.Set(i, &al2[i]);
     }
-    IEObject *cause=NULL;
+    IOlxObject *cause=NULL;
     try {
       Cmp cmp;
       Sorter::Sort(al1, FunctionComparator::Make(icmp),

@@ -256,7 +256,7 @@ public:
   friend class TGraphicsStyles;
 };
 
-class TGraphicsStyles: public IEObject  {
+class TGraphicsStyles: public IOlxObject  {
   olxstr Name;
   olxstr LinkFile;
   short Version;

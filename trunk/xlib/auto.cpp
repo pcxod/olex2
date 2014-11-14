@@ -209,12 +209,12 @@ void TAutoDBNode::LoadFromStream(IDataInputStream& in)  {
   _PreCalc();
 }
 //..............................................................................
-const olxstr& TAutoDBNode::ToString() const {
-  olxstr& tmp = TEGC::New<olxstr>(EmptyString(), 100);
-  tmp << Element->symbol << '{';
-  for( size_t i=0; i < AttachedNodes.Count(); i++ )  {
+olxstr TAutoDBNode::ToString() const {
+  olxstr tmp = Element->symbol;
+  tmp << '{';
+  for (size_t i=0; i < AttachedNodes.Count(); i++) {
     tmp << AttachedNodes[i].GetType().symbol;
-    if( (i+1) < AttachedNodes.Count() )
+    if ((i+1) < AttachedNodes.Count())
       tmp << ',';
   }
   tmp << '}'; /* << '[';
@@ -447,9 +447,8 @@ void TAutoDBNetNode::LoadFromStream(IDataInputStream& input)  {
   }
 }
 //..............................................................................
-const olxstr& TAutoDBNetNode::ToString(int level) const  {
-  olxstr& tmp = TEGC::New<olxstr>(EmptyString(), 256);
-  tmp << FCenter->ToString();
+olxstr TAutoDBNetNode::ToString(int level) const {
+  olxstr tmp = FCenter->ToString();
   if( level == 1 )  {
     tmp << '{';
     for( size_t i=0; i < AttachedNodes.Count(); i++ )  {

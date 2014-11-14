@@ -90,7 +90,7 @@ TdlgMsgBox::~TdlgMsgBox()  {
     buttons[i]->OnClick.Clear();
 }
 //..............................................................................
-bool TdlgMsgBox::Execute(const IEObject *Sender, const IEObject *Data,
+bool TdlgMsgBox::Execute(const IOlxObject *Sender, const IOlxObject *Data,
   TActionQueue *)
 {
   if (EsdlInstanceOf(*Sender, TButton)) {

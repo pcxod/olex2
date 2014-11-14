@@ -86,7 +86,7 @@ TdlgGenerate::~TdlgGenerate()  {
   cbB->OnChange.Clear();
   cbC->OnChange.Clear();
 }
-bool TdlgGenerate::Execute(const IEObject *Sender, const IEObject *Data,
+bool TdlgGenerate::Execute(const IOlxObject *Sender, const IOlxObject *Data,
   TActionQueue *)
 {
   if (Sender == cbA)  OnAChange();

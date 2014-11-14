@@ -19,18 +19,6 @@
 #include "olxstate.h"
 #include "eutf8.h"
 #include "wxzipfs.h"
-
-BEGIN_EVENT_TABLE(THtml, wxHtmlWindow)
-  EVT_LEFT_DCLICK(THtml::OnMouseDblClick)
-  EVT_LEFT_DOWN(THtml::OnMouseDown)
-  EVT_LEFT_UP(THtml::OnMouseUp)
-  EVT_MOTION(THtml::OnMouseMotion)
-  EVT_SCROLL(THtml::OnScroll)
-  EVT_KEY_DOWN(THtml::OnKeyDown)
-  EVT_CHAR(THtml::OnChar)
-  EVT_SIZE(THtml::OnSizeEvt)
-  EVT_TEXT_COPY(-1, THtml::OnClipboard)
-END_EVENT_TABLE()
 //.............................................................................
 THtml::THtml(THtmlManager &manager, wxWindow *Parent,
   const olxstr &pop_name, int flags)
@@ -57,6 +45,14 @@ THtml::THtml(THtmlManager &manager, wxWindow *Parent,
       )
     );
   }
+  Bind(wxEVT_LEFT_DCLICK, &THtml::OnMouseDblClick, this);
+  Bind(wxEVT_LEFT_DOWN, &THtml::OnMouseDown, this);
+  Bind(wxEVT_LEFT_UP, &THtml::OnMouseUp, this);
+  Bind(wxEVT_MOTION, &THtml::OnMouseMotion, this);
+  Bind(wxEVT_KEY_DOWN, &THtml::OnKeyDown, this);
+  Bind(wxEVT_CHAR, &THtml::OnChar, this);
+  Bind(wxEVT_SIZE, &THtml::OnSizeEvt, this);
+  Bind(wxEVT_TEXT_COPY, &THtml::OnClipboard, this);
 }
 //.............................................................................
 THtml::~THtml()  {
@@ -78,7 +74,7 @@ void THtml::OnLinkClicked(const wxHtmlLinkInfo& link)  {
     Href.Insert(val, ind);
     ind = Href.FirstIndexOf('%');
   }
-  if (!OnLink.Execute((const AOlxCtrl *)this, (IEObject*)&Href)) {
+  if (!OnLink.Execute((const AOlxCtrl *)this, (IOlxObject*)&Href)) {
     wxHtmlLinkInfo NewLink(Href.u_str(), link.GetTarget());
     wxHtmlWindow::OnLinkClicked(NewLink);
   }
@@ -151,8 +147,8 @@ void THtml::OnSizeEvt(wxSizeEvent& event)  {
   OnSize.Execute((const AOlxCtrl *)this, &OnSizeData);
 }
 //.............................................................................
-bool THtml::Dispatch(int MsgId, short MsgSubId, const IEObject* Sender,
-  const IEObject* Data, TActionQueue *)
+bool THtml::Dispatch(int MsgId, short MsgSubId, const IOlxObject* Sender,
+  const IOlxObject* Data, TActionQueue *)
 {
   if( MsgId == html_parent_resize )  {
     volatile THtmlManager::DestructionLocker dm =
@@ -480,10 +476,6 @@ bool THtml::UpdatePage(bool update_indices)  {
       FocusedControl.SetLength(0);
   }
   return true;
-}
-//.............................................................................
-void THtml::OnScroll(wxScrollEvent& evt)  {  // this is never called at least on GTK
-  evt.Skip();
 }
 //.............................................................................
 void THtml::DoScroll(int x, int y) {

@@ -69,8 +69,8 @@ protected:
   TStringToList<olxstr,TBasicCFile*> FileFormats;
   TBasicCFile *FLastLoader;
   TSpaceGroup* FSG;
-  virtual bool Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
-    const IEObject *Data, TActionQueue *);
+  virtual bool Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
+    const IOlxObject *Data, TActionQueue *);
   void ValidateTabs();
   void PostLoad(const olxstr &fn, TBasicCFile *loader, bool replicated);
 public:
@@ -91,7 +91,7 @@ public:
    the object will be deleted in the destructor !! */
   void RegisterFileFormat(TBasicCFile* F, const olxstr& Ext);
 
-  virtual IEObject* Replicate() const;
+  virtual IOlxObject* Replicate() const;
   /* the space group is initialised upon file loading
    if the space group is unknow, TFunctionFailedException is thrown
   */
@@ -166,7 +166,7 @@ public:
   TLibrary* ExportLibrary(const olxstr& name=EmptyString());
 
   struct VPtr : public olx_virtual_ptr<TXFile> {
-    virtual IEObject *get_ptr() const;
+    virtual IOlxObject *get_ptr() const;
   };
 
   /* describes a file name with which may carry reference to the dataset in the

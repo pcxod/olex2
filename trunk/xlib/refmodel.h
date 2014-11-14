@@ -51,7 +51,7 @@ static uint32_t
   rm_clear_SAME|rm_clear_AFIX|rm_clear_VARS|rm_clear_BadRefs));
 
 class RefinementModel
-  : public IXVarReferencerContainer, public IXVarReferencer, public IEObject
+  : public IXVarReferencerContainer, public IXVarReferencer, public IOlxObject
 {
   // in INS file is EQUV command
   struct Equiv  {
@@ -91,7 +91,7 @@ protected:
   olxstr VarRefrencerId;
   olxstr_dict<IXVarReferencerContainer*, false> RefContainers;
   void SetDefaults();
-  TTypeListExt<class InfoTab, IEObject> InfoTables;
+  TTypeListExt<class InfoTab, IOlxObject> InfoTables;
   SelectedTableRows selectedTableRows;
   // adds a givin direction (if unique) and returns its name
   adirection *AddDirection(const TCAtomGroup &atoms, uint16_t type);
@@ -857,7 +857,7 @@ Friedel opposites of components 1 ... m
 
   TLibrary* ExportLibrary(const olxstr& name=EmptyString());
   struct VPtr : public olx_virtual_ptr<RefinementModel> {
-    virtual IEObject *get_ptr() const;
+    virtual IOlxObject *get_ptr() const;
   };
 
   struct ReleasedItems {

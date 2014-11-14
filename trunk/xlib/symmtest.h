@@ -28,7 +28,7 @@ struct TSymmTestData  {
   inline size_t Count() const {  return Atoms.Count();  }
 };
 
-class TSymmTest : public IEObject {
+class TSymmTest : public IOlxObject {
   TTypeList<olx_pair_t<vec3d,TCAtom*> > Atoms;
   vec3d GCenter;
   TTypeList<TSymmTestData> Vecs;

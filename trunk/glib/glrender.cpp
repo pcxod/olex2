@@ -35,12 +35,12 @@ AGOSettings::~AGOSettings() {
   parent.GetStyles().OnClear.Remove(this);
 }
 //..............................................................................
-bool AGOSettings::Enter(const IEObject *, const IEObject *, TActionQueue *) {
+bool AGOSettings::Enter(const IOlxObject *, const IOlxObject *, TActionQueue *) {
   style = NULL;
   return true;
 }
 //..............................................................................
-bool AGOSettings::Exit(const IEObject *, const IEObject *, TActionQueue *) {
+bool AGOSettings::Exit(const IOlxObject *, const IOlxObject *, TActionQueue *) {
   style = &parent.GetStyles().NewStyle(name, true);
   style->SetPersistent(true);
   OnStyleChange();
@@ -132,14 +132,14 @@ TGlRenderer::~TGlRenderer()  {
     delete [] poly_stipple;
 }
 //..............................................................................
-bool TGlRenderer::Enter(const IEObject *s, const IEObject *, TActionQueue *) {
+bool TGlRenderer::Enter(const IOlxObject *s, const IOlxObject *, TActionQueue *) {
   if (s != &Styles) return false;
   for (size_t i = 0; i < FCollections.Count(); i++)
     FCollections.GetValue(i)->SetStyle(NULL);
   return true;
 }
 //..............................................................................
-bool TGlRenderer::Exit(const IEObject *s, const IEObject *, TActionQueue *) {
+bool TGlRenderer::Exit(const IOlxObject *s, const IOlxObject *, TActionQueue *) {
   if (s != &Styles) return false;
   for (size_t i = 0; i < FCollections.Count(); i++) {
     FCollections.GetValue(i)->SetStyle(

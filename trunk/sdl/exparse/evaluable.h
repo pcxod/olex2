@@ -28,7 +28,7 @@ namespace exparse  {
     TCastException(const TCastException& ce)
       : TBasicException(ce), type(ce.type) {}
     const std::type_info& GetTypeInfo() const {  return type;  }
-    virtual IEObject* Replicate() const {  return new TCastException(*this);  }
+    virtual IOlxObject* Replicate() const {  return new TCastException(*this);  }
   };
 
   struct IEvaluable {

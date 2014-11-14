@@ -155,9 +155,9 @@ public:
   void UpdatePrimitives(int32_t Mask);
   uint32_t GetPrimitiveMask() const;
 
-  bool OnMouseDown(const IEObject* Sender, const TMouseData& Data);
-  bool OnMouseUp(const IEObject* Sender, const TMouseData& Data);
-  bool OnMouseMove(const IEObject* Sender, const TMouseData& Data);
+  bool OnMouseDown(const IOlxObject* Sender, const TMouseData& Data);
+  bool OnMouseUp(const IOlxObject* Sender, const TMouseData& Data);
+  bool OnMouseMove(const IOlxObject* Sender, const TMouseData& Data);
 
   void SetVisible(bool v)  {
     AGDrawObject::SetVisible(v);

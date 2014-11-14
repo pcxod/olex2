@@ -32,7 +32,7 @@ namespace ctrl_ext  {
     virtual ~AButtonBase() {  if( ActionQueue != NULL )  ActionQueue->Remove(this);  }
 
     void SetActionQueue(TActionQueue& q, const olxstr& dependMode);
-    bool Execute(const IEObject *Sender, const IEObject *Data, TActionQueue *);
+    bool Execute(const IOlxObject *Sender, const IOlxObject *Data, TActionQueue *);
     void OnRemove(TActionQueue *)  {  ActionQueue = NULL;  }
 
     DefPropC(olxstr, Data)
@@ -44,7 +44,7 @@ namespace ctrl_ext  {
     AOlxCtrl::ActionQueue &OnClick, &OnUp, &OnDown;
   };
 
-  class TButton : public AButtonBase, public wxButton {
+  class TButton: public wxButton, public AButtonBase {
     void MouseEnterEvent(wxMouseEvent& event);
     void MouseLeaveEvent(wxMouseEvent& event);
     void ClickEvent(wxCommandEvent&)  {  AButtonBase::_ClickEvent();  }

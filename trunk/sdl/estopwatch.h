@@ -60,7 +60,7 @@ public:
   static void Pop();
 };
 
-class TStopWatch : public IEObject {
+class TStopWatch : public IOlxObject {
   TStopWatchManager::Record &record;
   TOnProgress *pg;
 public:

@@ -27,8 +27,8 @@ TGXFile::~TGXFile() {
   delete DUnitCell;
 }
 //..............................................................................
-bool TGXFile::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
-  const IEObject *Data, TActionQueue *q)
+bool TGXFile::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
+  const IOlxObject *Data, TActionQueue *q)
 {
   if (MsgId == GXFILE_EVT_OBJETSCREATE) {
     if (MsgSubId == msiExecute) {

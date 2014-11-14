@@ -12,7 +12,7 @@
 
 namespace olex2 {
 
-struct ExternalMacro : public IEObject {
+struct ExternalMacro : public IOlxObject {
   bool (*func)(uint32_t arc, const olxch **, void *);
   void *instance;
   ExternalMacro(bool (*func)(uint32_t, const olxch **, void *), void *inst)
@@ -30,7 +30,7 @@ struct ExternalMacro : public IEObject {
   }
 };
 
-struct ExternalFunction : public IEObject {
+struct ExternalFunction : public IOlxObject {
   olx_dll_ptr<olxch> (*func)(uint32_t arc, const olxch **, void *);
   void *instance;
   ExternalFunction(olx_dll_ptr<olxch> (*func)(uint32_t, const olxch **, void *),

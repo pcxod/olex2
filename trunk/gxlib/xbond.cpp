@@ -519,15 +519,15 @@ uint32_t TXBond::GetPrimitiveMask() const {
       : GetSettings().GetMask(), IsMaskSaveable());
 }
 //..............................................................................
-bool TXBond::OnMouseDown(const IEObject *Sender, const TMouseData& Data)  {
+bool TXBond::OnMouseDown(const IOlxObject *Sender, const TMouseData& Data)  {
   return Label->IsVisible() ? Label->OnMouseDown(Sender, Data) : false;
 }
 //..............................................................................
-bool TXBond::OnMouseUp(const IEObject *Sender, const TMouseData& Data)  {
+bool TXBond::OnMouseUp(const IOlxObject *Sender, const TMouseData& Data)  {
   return Label->IsVisible() ? Label->OnMouseMove(Sender, Data) : false;
 }
 //..............................................................................
-bool TXBond::OnMouseMove(const IEObject *Sender, const TMouseData& Data)  {
+bool TXBond::OnMouseMove(const IOlxObject *Sender, const TMouseData& Data)  {
   return Label->IsVisible() ? Label->OnMouseMove(Sender, Data) : false;
 }
 //..............................................................................

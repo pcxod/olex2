@@ -47,7 +47,7 @@ const uint16_t
 
 typedef TTypeList< olx_pair_t<double, double> > TFixedValueList;
 
-class AConstraintGenerator : public IEObject {
+class AConstraintGenerator : public IOlxObject {
   bool UseRestrains;
 protected:
   olx_pdict<uint32_t,double> Distances;

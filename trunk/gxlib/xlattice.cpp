@@ -81,17 +81,17 @@ bool TXLattice::GetDimensions(vec3d &Max, vec3d &Min)  {
   return false;
 }
 //..............................................................................
-bool TXLattice::OnMouseDown(const IEObject *Sender, const TMouseData& Data)  {
+bool TXLattice::OnMouseDown(const IOlxObject *Sender, const TMouseData& Data)  {
   if( !IsMoveable() )  return true;
   return AGlMouseHandlerImp::OnMouseDown(Sender, Data);
 }
 //..............................................................................
-bool TXLattice::OnMouseUp(const IEObject *Sender, const TMouseData& Data)  {
+bool TXLattice::OnMouseUp(const IOlxObject *Sender, const TMouseData& Data)  {
   if( !IsMoveable() )  return true;
   return AGlMouseHandlerImp::OnMouseUp(Sender, Data);
 }
 //..............................................................................
-bool TXLattice::OnMouseMove(const IEObject *Sender, const TMouseData& Data)  {
+bool TXLattice::OnMouseMove(const IOlxObject *Sender, const TMouseData& Data)  {
   AGlMouseHandlerImp::OnMouseMove(Sender, Data);
   return true;
 }

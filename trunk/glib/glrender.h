@@ -53,8 +53,8 @@ protected:
   TGlRenderer &parent;
   olxstr name;
   TGraphicsStyle *style;
-  bool Enter(const IEObject *, const IEObject *, TActionQueue *);
-  bool Exit(const IEObject *, const IEObject *, TActionQueue *);
+  bool Enter(const IOlxObject *, const IOlxObject *, TActionQueue *);
+  bool Exit(const IOlxObject *, const IOlxObject *, TActionQueue *);
   virtual void OnStyleChange() = 0;;
 public:
   AGOSettings(TGlRenderer &p, const olxstr &name);
@@ -111,8 +111,8 @@ class TGlRenderer : public AActionHandler {
   void SetupStencilFoInterlacedDraw(bool even);
   GLubyte SelectionBuffer[4][4*3];
   olxstr_dict<AGOSettings *> ObjectSettings;
-  bool Enter(const IEObject *, const IEObject *, TActionQueue *);
-  bool Exit(const IEObject *, const IEObject *, TActionQueue *);
+  bool Enter(const IOlxObject *, const IOlxObject *, TActionQueue *);
+  bool Exit(const IOlxObject *, const IOlxObject *, TActionQueue *);
 protected:
   void DrawObjects(int x, int y, bool SelectObjects, bool SelectPrimitives);
 

@@ -27,7 +27,7 @@ class TFitMode : public AEventsDispatcher, public AMode  {
     TFitMode& fit_mode;
   public:
     OnUniqHandler(TFitMode& fm) : fit_mode(fm)  {}
-    bool Enter(const IEObject* Sender, const IEObject* Data, TActionQueue *) {
+    bool Enter(const IOlxObject* Sender, const IOlxObject* Data, TActionQueue *) {
       fit_mode.Dispatch(mode_fit_disassemble, msiEnter, NULL, NULL, NULL);
       return true;
     }
@@ -220,8 +220,8 @@ public:
     }
     return true;
   }
-  virtual bool Dispatch(int msg, short id, const IEObject* Sender,
-    const IEObject* Data, TActionQueue *)
+  virtual bool Dispatch(int msg, short id, const IOlxObject* Sender,
+    const IOlxObject* Data, TActionQueue *)
   {
     if( !Initialised )  return false;
     TAsymmUnit& au = gxapp.XFile().GetAsymmUnit();

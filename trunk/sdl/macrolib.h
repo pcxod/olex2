@@ -41,7 +41,7 @@ public:
   virtual ABasicFunction *Replicate() const;
 };
 
-class TEMacroLib : public IEObject {
+class TEMacroLib : public IOlxObject {
   olex2::IOlex2Processor& OlexProcessor;
   static bool is_allowed_in_name(olxch ch) {
     return (olxstr::o_isalphanumeric(ch) || ch == '_' || ch == '.');

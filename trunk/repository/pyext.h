@@ -18,7 +18,7 @@
 using namespace olex2;
 typedef void (*pyRegFunc)();
 
-class PythonExt : public IEObject {
+class PythonExt : public IOlxObject {
   static PythonExt *&Instance() {
     static PythonExt* inst=NULL;
     return inst;
@@ -35,7 +35,7 @@ class PythonExt : public IEObject {
   };
 //.............................................................................
 public:
-  class BasicWrapper : public IEObject  {
+  class BasicWrapper : public IOlxObject  {
     PythonExt::ProfileInfo *PI;
     uint64_t StartTime;
     int Recursion;  // specifies that the function is called recursively

@@ -9,11 +9,11 @@
 
 #include "egc.h"
 #include "bapp.h"
+#include "eset.h"
 
-TEGC* TEGC::Instance = NULL;
-volatile bool TEGC::RemovalManaged = false;
 //.............................................................................
 TEGC::TEGC() {
+  Instance_() = this;
   // force TBasicApp::OnIdle to delete this object
   AActionHandler::SetToDelete(true);
   ASAPOHead.Next = NULL;
@@ -23,10 +23,10 @@ TEGC::TEGC() {
   ATEOHead.Object = NULL;
   ATEOTail = NULL;
   if (!TBasicApp::HasInstance())
-    RemovalManaged = false;
-  else  {
+    RemovalManaged_() = false;
+  else {
     TBasicApp::GetInstance().OnIdle.Add(this);
-    RemovalManaged = true;
+    RemovalManaged_() = true;
   }
   Destructing = false;
 }
@@ -35,78 +35,87 @@ TEGC::~TEGC() {
   Destructing = true;
   ClearASAP();
   ClearATE();
-  Instance = NULL;
+  Instance_() = NULL;
 }
 //.............................................................................
 void TEGC::ManageRemoval() {
   if (TBasicApp::HasInstance()) {
-    RemovalManaged = true;
-    TBasicApp::GetInstance().OnIdle.Add(Instance);
+    RemovalManaged_() = true;
+    TBasicApp::GetInstance().OnIdle.Add(Instance_());
   }
 }
 //.............................................................................
-void TEGC::ClearASAP() {
-  if (ASAPOHead.Next == NULL)  return;
-  OEntry* entry = ASAPOHead.Next;
+void TEGC::Clear(OEntry *entry) {
   while (entry != NULL) {
-    entry->Object->RemoveDestructionHandler(&TEGC::AtObjectDestruct);
-    delete entry->Object;
+    ADestructionOservable *o =
+      dynamic_cast<ADestructionOservable *>(entry->Object);
+    if (o != 0) {
+      o->RemoveDestructionObserver(
+        DestructionObserver::Make(&TEGC::AtObjectDestruct));
+    }
+    AReferencible *ar = dynamic_cast<AReferencible *>(entry->Object);
+    if (ar != 0) {
+      if (ar->DecRef() == 0) {
+        delete entry->Object;
+      }
+    }
+    else {
+      delete entry->Object;
+    }
     OEntry* en = entry;
     entry = entry->Next;
     delete en;
   }
+}
+//.............................................................................
+void TEGC::ClearASAP() {
+  Clear(ASAPOHead.Next);
   ASAPOTail = NULL;
   ASAPOHead.Next = NULL;
 }
 //.............................................................................
 void TEGC::ClearATE() {
-  if (ATEOHead.Next == NULL)  return;
-  OEntry* entry = ATEOHead.Next;
-  while (entry != NULL) {
-    entry->Object->RemoveDestructionHandler(&TEGC::AtObjectDestruct);
-    delete entry->Object;
-    OEntry* en = entry;
-    entry = entry->Next;
-    delete en;
-  }
+  Clear(ATEOHead.Next);
   ATEOTail = NULL;
   ATEOHead.Next = NULL;
 }
 //.............................................................................
-void TEGC::_AddASAP(IEObject* object) {
-  if (!object->AddDestructionHandler(&TEGC::AtObjectDestruct)) {
-    throw TFunctionFailedException(__OlxSourceInfo,
-      "object is already managed");
+void TEGC::Add(IOlxObject* object, OEntry &head, OEntry *&tail) {
+  {
+    AReferencible *ar = dynamic_cast<AReferencible *>(object);
+    if (ar != 0) {
+      ar->IncRef();
+    }
   }
-  if (ASAPOTail == NULL)
-    ASAPOTail = ASAPOHead.Next = new OEntry;
+  {
+    ADestructionOservable *o = dynamic_cast<ADestructionOservable *>(object);
+    if (o != 0) {
+      o->AddDestructionObserver(
+        DestructionObserver::Make(&TEGC::AtObjectDestruct));
+    }
+  }
+  if (tail == NULL) {
+    tail = head.Next = new OEntry;
+  }
   else {
-    ASAPOTail->Next = new OEntry;
-    ASAPOTail = ASAPOTail->Next;
+    tail->Next = new OEntry;
+    tail = tail->Next;
   }
-  ASAPOTail->Next = NULL;
-  ASAPOTail->Object = object;
+  tail->Next = NULL;
+  tail->Object = object;
+}
+//.............................................................................
+void TEGC::_AddASAP(IOlxObject* object) {
+  Add(object, ASAPOHead, ASAPOTail);
   // check if the object was already placed to the ATE store ...
   RemoveObject(ATEOHead, object);
 }
 //.............................................................................
-void TEGC::_AddATE(IEObject* object) {
-  if (!object->AddDestructionHandler(&TEGC::AtObjectDestruct)) {
-    throw TFunctionFailedException(__OlxSourceInfo,
-      "object is already managed");
-  }
-  if (ATEOTail == NULL) {
-    ATEOTail = ATEOHead.Next = new OEntry;
-  }
-  else {
-    ATEOTail->Next = new OEntry;
-    ATEOTail = ATEOTail->Next;
-  }
-  ATEOTail->Next = NULL;
-  ATEOTail->Object = object;
+void TEGC::_AddATE(IOlxObject* object) {
+  Add(object, ATEOHead, ATEOTail);
 }
 //.............................................................................
-void TEGC::_AtObjectDestruct(IEObject* obj) {
+void TEGC::_AtObjectDestruct(IOlxObject* obj) {
   if (Destructing)  return;
   if (!RemoveObject(ASAPOHead, obj)) {
     if (!RemoveObject(ATEOHead, obj)) {
@@ -116,8 +125,7 @@ void TEGC::_AtObjectDestruct(IEObject* obj) {
   }
 }
 //.............................................................................
-bool TEGC::RemoveObject(OEntry& head, IEObject* obj) {
-  if (head.Next == NULL)  return false;
+bool TEGC::RemoveObject(OEntry& head, IOlxObject* obj) {
   OEntry* entry = &head;
   while (entry != NULL && entry->Next != NULL) {
     if (entry->Next->Object == obj) {

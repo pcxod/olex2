@@ -51,8 +51,8 @@ bool TGlCursor::Orient(TGlPrimitive& P)  {
   return true;
 }
 //..............................................................................
-bool TGlCursor::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender,
-  const IEObject *Data, TActionQueue *)
+bool TGlCursor::Dispatch( int MsgId, short MsgSubId, const IOlxObject *Sender,
+  const IOlxObject *Data, TActionQueue *)
 {
   static int count = 0;
   count ++;

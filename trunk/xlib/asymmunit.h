@@ -23,7 +23,7 @@ BeginXlibNamespace()
 
 class TResidue;
 
-class TAsymmUnit: public IXVarReferencerContainer, public IEObject  {
+class TAsymmUnit: public IXVarReferencerContainer, public IOlxObject  {
   TCAtomPList CAtoms;
   // list of unique SG matrices (no centering or inversion)
   smatd_list  Matrices;
@@ -54,7 +54,7 @@ class TAsymmUnit: public IXVarReferencerContainer, public IEObject  {
   vec3d RAngles;            // reciprical angles
 protected:
   TActionQList Actions;
-  TTypeListExt<TResidue, IEObject> Residues;
+  TTypeListExt<TResidue, IOlxObject> Residues;
   TResidue& MainResidue;
   olx_pdict<int, TResidue*> ResidueRegistry;
   class RefinementModel* RefMod;
@@ -346,7 +346,7 @@ public:
   void LibFractionalise(const TStrObjList& Params, TMacroData& E);
   class TLibrary*  ExportLibrary(const olxstr& name=EmptyString());
   struct VPtr : public olx_virtual_ptr<TAsymmUnit> {
-    virtual IEObject *get_ptr() const;
+    virtual IOlxObject *get_ptr() const;
   };
 
 };

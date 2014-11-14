@@ -34,7 +34,7 @@ struct TSortedListEntry {
 };
 //..............................................................................
 template <class A, class B, class ComparatorType>
-class TSTypeList : public IEObject {
+class TSTypeList : public IOlxObject {
   // not an ArrayList - inserts are too 'heavy'
   typedef TSortedListEntry<A,B> EntryType;
   TPtrList<EntryType> Data;

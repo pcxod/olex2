@@ -33,7 +33,7 @@ const short
   rptValue1 = 0x0008
   ;
 
-class TSimpleRestraint : public IEObject, public IXVarReferencer  {
+class TSimpleRestraint : public IOlxObject, public IXVarReferencer  {
   TSRestraintList& Parent;
   size_t Id;
   short ListType;
@@ -125,7 +125,7 @@ public:
   friend class TSRestraintList;
 };
 
-class TSRestraintList : public IEObject, public IXVarReferencerContainer  {
+class TSRestraintList : public IOlxObject, public IXVarReferencerContainer  {
   TTypeList<TSimpleRestraint> Restraints;
   short RestraintListType;
   RefinementModel& RefMod;

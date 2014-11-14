@@ -922,21 +922,21 @@ uint32_t TXAtom::GetPrimitiveMask() const {
   return GetPrimitives().GetStyle().GetNumParam(GetPrimitiveMaskName(), 0);
 }
 //..............................................................................
-bool TXAtom::OnMouseDown(const IEObject *Sender, const TMouseData& Data) {
+bool TXAtom::OnMouseDown(const IOlxObject *Sender, const TMouseData& Data) {
   if (!IsMoveable()) {
     return Label->IsVisible() ? Label->OnMouseDown(Sender, Data) : false;
   }
   return AGlMouseHandlerImp::OnMouseDown(Sender, Data);
 }
 //..............................................................................
-bool TXAtom::OnMouseUp(const IEObject *Sender, const TMouseData& Data)  {
+bool TXAtom::OnMouseUp(const IOlxObject *Sender, const TMouseData& Data)  {
   if (!IsMoveable()) {
     return Label->IsVisible() ? Label->OnMouseUp(Sender, Data) : false;
   }
   return AGlMouseHandlerImp::OnMouseUp(Sender, Data);
 }
 //..............................................................................
-bool TXAtom::OnMouseMove(const IEObject *Sender, const TMouseData& Data)  {
+bool TXAtom::OnMouseMove(const IOlxObject *Sender, const TMouseData& Data)  {
   if (!IsMoveable()) {
     return Label->IsVisible() ? Label->OnMouseMove(Sender, Data) : false;
   }

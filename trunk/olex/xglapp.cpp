@@ -55,18 +55,18 @@ public:
     if (Progress != NULL)
       Progress->Destroy();
   }
-  bool Enter(const IEObject *, const IEObject *, TActionQueue *) {
+  bool Enter(const IOlxObject *, const IOlxObject *, TActionQueue *) {
     start = TETime::msNow();
     return false;
   }
-  bool Exit(const IEObject *Sender, const IEObject *Data, TActionQueue *) {
+  bool Exit(const IOlxObject *Sender, const IOlxObject *Data, TActionQueue *) {
     if (Progress) {
       Progress->Destroy();
       Progress = NULL;
     }
     return false;
   }
-  bool Execute(const IEObject *Sender, const IEObject *Data, TActionQueue *) {
+  bool Execute(const IOlxObject *Sender, const IOlxObject *Data, TActionQueue *) {
     const TOnProgress *A = dynamic_cast<const TOnProgress*>(Data);
     if (A == NULL || A->GetPos() == 0) {
       return false;
@@ -95,6 +95,8 @@ public:
     return false;
   }
 };
+
+
 //----------------------------------------------------------------------------//
 // TGlApp function bodies
 //----------------------------------------------------------------------------//

@@ -51,7 +51,7 @@ protected:
   virtual IInputStream* _DoOpenFile(const olxstr& src)=0;
   virtual bool _DoAdoptStream(IInputStream& file, const olxstr& name) = 0;
   // handles OnBreak
-  virtual bool Execute(const IEObject* Sender, const IEObject* Data, TActionQueue *) {
+  virtual bool Execute(const IOlxObject* Sender, const IOlxObject* Data, TActionQueue *) {
     DoBreak();
     return true;
  }
@@ -176,7 +176,7 @@ public:
 //...........................................................................//
 //...........................................................................//
 //...........................................................................//
-class TFSItem: public IEObject {
+class TFSItem: public IOlxObject {
 public:
   struct SkipOptions {
     TStrList *extsToSkip,  // extenstions to skip
@@ -289,7 +289,7 @@ public:
 //...........................................................................//
 //...........................................................................//
 //...........................................................................//
-class TFSIndex: public IEObject {
+class TFSIndex: public IOlxObject {
 private:
   TFSItem *Root;
   bool IndexLoaded;

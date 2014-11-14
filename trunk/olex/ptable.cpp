@@ -90,7 +90,7 @@ data:
   B->SetTag( ii );
 }
 //..............................................................................
-bool TPTableDlg::Execute(const IEObject *Sender, const IEObject *Data,
+bool TPTableDlg::Execute(const IOlxObject *Sender, const IOlxObject *Data,
   TActionQueue *)
 {
   const TButton *S = dynamic_cast<const TButton *>(Sender);

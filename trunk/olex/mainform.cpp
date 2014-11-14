@@ -126,7 +126,7 @@ class TObjectVisibilityChange: public AActionHandler  {
 public:
   TObjectVisibilityChange(TMainForm *Parent){  FParent = Parent; }
   virtual ~TObjectVisibilityChange()  {  ;  }
-  bool Execute(const IEObject *Sender, const IEObject *Obj, TActionQueue *)  {
+  bool Execute(const IOlxObject *Sender, const IOlxObject *Obj, TActionQueue *)  {
     if( !Obj )  return false;
     if( EsdlInstanceOf(*Obj, TDBasis) )
       FParent->BasisVChange();
@@ -1525,8 +1525,8 @@ bool TMainForm::CreateUpdateThread(bool force) {
 #endif
 }
 //..............................................................................
-bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
-  const IEObject *Data, TActionQueue *)
+bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
+  const IOlxObject *Data, TActionQueue *)
 {
   if (Destroying) {
     FMode = 0;  // to release waitfor

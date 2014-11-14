@@ -96,7 +96,7 @@ protected:
   virtual void SetPosition(uint64_t newPos)  {
     throw TNotImplementedException(__OlxSourceInfo);
   }
-  virtual bool Enter(const IEObject *Sender, const IEObject *Data,
+  virtual bool Enter(const IOlxObject *Sender, const IOlxObject *Data,
     TActionQueue *);
   void OnResize();
 public:

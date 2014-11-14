@@ -28,7 +28,7 @@ namespace cif_dp {
       const olxstr& msg=EmptyString())
       : TBasicException(location, cause, msg )  {}
     virtual const char* GetNiceName() const {  return "CIF reading";  }
-    virtual IEObject* Replicate() const {
+    virtual IOlxObject* Replicate() const {
       return new ParsingException(*this);
     }
   };
@@ -289,7 +289,7 @@ namespace cif_dp {
     };
   };
 
-  class TCifDP : public IEObject  {
+  class TCifDP : public IOlxObject  {
   public:
   private:
     TTypeList<CifBlock> data;

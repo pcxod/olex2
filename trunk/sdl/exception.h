@@ -37,7 +37,7 @@ public:
   /* caution: the expected object is an instance from a call to Replicate() !
     and will be deleted
   */
-  TBasicException(const olxstr& location, IEObject* cause)
+  TBasicException(const olxstr& location, IOlxObject* cause)
     : Location(location), Cause(static_cast<TBasicException *>(cause))
   {}
 
@@ -52,7 +52,7 @@ public:
   virtual const char* GetNiceName() const { return NULL; }
   // traces back to the original cause
   TBasicException* GetSource() const;
-  virtual IEObject* Replicate() const = 0;
+  virtual IOlxObject* Replicate() const = 0;
   template <class List> List& GetStackTrace(List& output) const {
     TBasicException const* cause = this;
     while( cause != NULL )  {
@@ -93,7 +93,7 @@ public:
   size_t GetMax() const { return Max; }
 
   virtual const char* GetNiceName() const { return "Invalid index"; }
-  virtual IEObject* Replicate() const {
+  virtual IOlxObject* Replicate() const {
     return new TIndexOutOfRangeException(*this);
   }
 };
@@ -107,11 +107,11 @@ public:
     const olxstr& msg=EmptyString())
     : TBasicException(location, cause, msg )
   {}
-  TFunctionFailedException(const olxstr& location, IEObject* cause)
+  TFunctionFailedException(const olxstr& location, IOlxObject* cause)
     : TBasicException(location, cause )
   {}
   virtual const char* GetNiceName() const {  return "Failed";  }
-  virtual IEObject* Replicate() const {
+  virtual IOlxObject* Replicate() const {
     return new TFunctionFailedException(*this);
   }
 };
@@ -122,7 +122,7 @@ public:
     : TBasicException(location, argName)
   {}
   const olxstr& GetArgumentName() const { return GetError(); }
-  virtual IEObject* Replicate() const {
+  virtual IOlxObject* Replicate() const {
     return new TInvalidArgumentException(*this);
   }
 };
@@ -133,7 +133,7 @@ public:
     : TBasicException(location, EmptyString())
   {}
   virtual const char* GetNiceName() const { return "Not implemented"; }
-  virtual IEObject* Replicate() const {
+  virtual IOlxObject* Replicate() const {
     return new TNotImplementedException(*this);
   }
 };
@@ -155,7 +155,7 @@ public:
       FileName(fileName)
   {}
   const olxstr& GetFileName() const { return FileName; }
-  virtual IEObject* Replicate() const { return new TFileException(*this); }
+  virtual IOlxObject* Replicate() const { return new TFileException(*this); }
 };
 //.............................................................................
 class TFileDoesNotExistException: public TFileException {
@@ -164,7 +164,7 @@ public:
     : TFileException(location, fileName, EmptyString() )
   {}
   virtual const char* GetNiceName() const { return "File does not exist"; }
-  virtual IEObject* Replicate() const {
+  virtual IOlxObject* Replicate() const {
     return new TFileDoesNotExistException(*this);
   }
 };
@@ -175,7 +175,7 @@ public:
     : TFileException(location, fileName, EmptyString())
   {}
   virtual const char* GetNiceName() const { return "Empty file"; }
-  virtual IEObject* Replicate() const {
+  virtual IOlxObject* Replicate() const {
     return new TEmptyFileException(*this);
   }
 };
@@ -187,7 +187,7 @@ public:
   TMathException(const olxstr& location, const olxstr& msg)
     : TBasicException(location, msg)
   {}
-  virtual IEObject* Replicate() const {
+  virtual IOlxObject* Replicate() const {
     return new TMathException(*this);
   }
 };
@@ -198,7 +198,7 @@ public:
     : TMathException(location, EmptyString())
   {}
   virtual const char* GetNiceName() const { return "Division by zero"; }
-  virtual IEObject* Replicate() const { return new TDivException(*this); }
+  virtual IOlxObject* Replicate() const { return new TDivException(*this); }
 };
 //.............................................................................
 //.............................................................................
@@ -208,7 +208,7 @@ public:
   TInvalidFormatException(const olxstr& location, const olxstr& msg)
     : TBasicException(location, msg)
   {}
-  virtual IEObject* Replicate() const {
+  virtual IOlxObject* Replicate() const {
     return new TInvalidFormatException(*this);
   }
 };
@@ -218,7 +218,7 @@ public:
   TInvalidNumberException(const olxstr& location, const olxstr& msg)
     : TInvalidFormatException(location, msg)
   {}
-  virtual IEObject* Replicate() const {
+  virtual IOlxObject* Replicate() const {
     return new TInvalidNumberException(*this);
   }
 };
@@ -229,7 +229,7 @@ public:
     : TInvalidNumberException(location, str)
   {}
   virtual const char* GetNiceName() const { return "Invalid integer format"; }
-  virtual IEObject* Replicate() const {
+  virtual IOlxObject* Replicate() const {
     return new TInvalidIntegerNumberException(*this);
   }
 };
@@ -240,7 +240,7 @@ public:
     : TInvalidNumberException(location, str)
   {}
   virtual const char* GetNiceName() const { return "Invalid unsigned format"; }
-  virtual IEObject* Replicate() const {
+  virtual IOlxObject* Replicate() const {
     return new TInvalidUnsignedNumberException(*this);
   }
 };
@@ -251,7 +251,7 @@ public:
     : TInvalidNumberException(location, str)
   {}
   virtual const char* GetNiceName() const { return "Invalid float format"; }
-  virtual IEObject* Replicate() const {
+  virtual IOlxObject* Replicate() const {
     return new TInvalidFloatNumberException(*this);
   }
 };
@@ -262,7 +262,7 @@ public:
     : TInvalidFormatException(location, str)
   {}
   virtual const char* GetNiceName() const { return "Invalid boolean format"; }
-  virtual IEObject* Replicate() const {
+  virtual IOlxObject* Replicate() const {
     return new TInvalidBoolException(*this);
   }
 };
@@ -275,7 +275,7 @@ public:
     : TBasicException(location, EmptyString())
   {}
   virtual const char* GetNiceName() const { return "Out of memory"; }
-  virtual IEObject* Replicate() const {
+  virtual IOlxObject* Replicate() const {
     return new TOutOfMemoryException(*this);
   }
 };

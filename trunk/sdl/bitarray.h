@@ -16,7 +16,7 @@ BeginEsdlNamespace()
 
 class ConstBitArray;
 
-class TEBitArray: public IEObject {
+class TEBitArray: public IOlxObject {
   unsigned char *FData;
   size_t FCount, FCharCount;
 public:

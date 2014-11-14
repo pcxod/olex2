@@ -22,18 +22,13 @@ enum  {
   ID_EDITFONT
 };
 //..............................................................................
-BEGIN_EVENT_TABLE(TdlgMatProp, TDialog)
-  EVT_BUTTON(wxID_OK, TdlgMatProp::OnOK)
-  EVT_BUTTON(ID_COPY, TdlgMatProp::OnCopy)
-  EVT_BUTTON(ID_PASTE, TdlgMatProp::OnPaste)
-  EVT_BUTTON(ID_EDITFONT, TdlgMatProp::OnEditFont)
-END_EVENT_TABLE()
-//..............................................................................
-TGlMaterial TdlgMatProp::MaterialCopy;
-//..............................................................................
 TdlgMatProp::TdlgMatProp(TMainFrame *ParentFrame, AGDrawObject& object) :
   TDialog(ParentFrame, wxT("Material Parameters"), wxT("dlgMatProp"))
 {
+  Bind(wxEVT_BUTTON, &TdlgMatProp::OnOK, this, wxID_OK);
+  Bind(wxEVT_BUTTON, &TdlgMatProp::OnCopy, this, ID_COPY);
+  Bind(wxEVT_BUTTON, &TdlgMatProp::OnPaste, this, ID_PASTE);
+  Bind(wxEVT_BUTTON, &TdlgMatProp::OnEditFont, this, ID_EDITFONT);
   Object = &object;
   Init();
 }
@@ -277,7 +272,7 @@ TdlgMatProp::~TdlgMatProp()  {
   tcSpecB->OnClick.Clear();
 }
 //..............................................................................
-bool TdlgMatProp::Execute(const IEObject *Sender, const IEObject *Data,
+bool TdlgMatProp::Execute(const IOlxObject *Sender, const IOlxObject *Data,
   TActionQueue *)
 {
   if (EsdlInstanceOf( *Sender, TTextEdit)) {
@@ -490,12 +485,12 @@ void TdlgMatProp::OnOK(wxCommandEvent& event)  {
 //..............................................................................
 void TdlgMatProp::OnCopy(wxCommandEvent& event)  {
   Update(Materials[FCurrentMaterial]);
-  MaterialCopy = Materials[FCurrentMaterial];
+  MaterialCopy_() = Materials[FCurrentMaterial];
 }
 //..............................................................................
 void TdlgMatProp::OnPaste(wxCommandEvent& event)  {
 //  Materials[FCurrentMaterial] = MaterialCopy;
-  Init(MaterialCopy);
+  Init(MaterialCopy_());
 }
 //..............................................................................
 void TdlgMatProp::OnEditFont(wxCommandEvent& event)  {

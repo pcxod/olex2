@@ -20,7 +20,7 @@ namespace ctrl_ext {
     mtCheckItem = wxITEM_CHECK,
     mtRadioItem = wxITEM_RADIO;
 
-  class TMenu: public wxMenu, public IEObject  {
+  class TMenu: public wxMenu, public IOlxObject  {
   public:
     TMenu(const olxstr &Name=EmptyString()) : wxMenu(Name.u_str()) {}
     // the function creates a new clone of wxMenu
@@ -48,7 +48,7 @@ namespace ctrl_ext {
     virtual ~TMenuItem();
     void SetActionQueue(TActionQueue& q, const olxstr& dependMode,
       short dependentOn);
-    bool Execute(const IEObject *Sender, const IEObject *Data, TActionQueue *);
+    bool Execute(const IOlxObject *Sender, const IOlxObject *Data, TActionQueue *);
     // updates checked status
     void ValidateState();
     DefPropC(olxstr, Command)

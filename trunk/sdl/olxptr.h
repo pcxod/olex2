@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2014 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -28,18 +28,9 @@ template <typename ptr> struct olx_ptr_  {
     }
     return rc;
   }
-};
-
-template <class ptr> struct olx_virtual_ptr {
-  virtual ~olx_virtual_ptr() {}
-  virtual IEObject *get_ptr() const = 0;
-  ptr &get() const {
-    return dynamic_cast<ptr &>(*get_ptr());
+  bool operator == (const olx_ptr_ &ap) const {
+    return p == ap.p;
   }
-  ptr &operator()() const {
-    return get();
-  }
-  operator ptr& () const { return get(); }
 };
 
 template <typename ptr> struct olx_object_ptr {
@@ -69,37 +60,10 @@ template <typename ptr> struct olx_object_ptr {
     p->p = NULL;
     return p_;
   }
-};
-
-template <typename ptr> struct olx_vptr
-: public olx_object_ptr<olx_virtual_ptr<ptr> >
-{
-  typedef olx_object_ptr<olx_virtual_ptr<ptr> > parent_t;
-  struct actual_ptr : public olx_virtual_ptr<ptr> {
-    ptr *p;
-    actual_ptr(ptr *p) : p(p) {}
-    virtual IEObject *get_ptr() const {
-      return p;
-    }
-  };
-  olx_vptr(ptr *_p) : parent_t(new actual_ptr(_p)) {}
-  olx_vptr(olx_virtual_ptr<ptr> *_p)  : parent_t(_p) {}
-  olx_vptr(const olx_vptr& _p) : parent_t(_p) {}
-  olx_vptr& operator = (const olx_vptr& _p)  {
-    parent_t::p->template dec_ref<true, false>();
-    parent_t::p = _p.p->inc_ref();
-    return *this;
-  }
-  ptr& operator ()() const { return parent_t::p->p->get(); }
-  operator ptr& () const { return parent_t::p->p->get(); }
-  // releases the object from ALL references
-  ptr *release() const {
-    ptr *p_ = parent_t::p->p;
-    parent_t::p->p = NULL;
-    return p_;
+  bool operator == (const olx_object_ptr &ap) const {
+    return *p == *ap.p;
   }
 };
-
 
 template <typename ptr> struct olx_array_ptr {
   olx_ptr_<ptr>* p;
@@ -133,6 +97,9 @@ template <typename ptr> struct olx_array_ptr {
     p->p = NULL;
     return p_;
   }
+  bool operator == (const olx_array_ptr &ap) const {
+    return *p == *ap.p;
+  }
   static olx_array_ptr copy(const ptr *p, size_t sz) {
     ptr *rv = new ptr[sz];
     memcpy(rv, p, sz*sizeof(ptr));
@@ -165,6 +132,9 @@ template <typename ptr> struct olx_shared_ptr {
   ptr& operator ()() const { return *p->p; }
   bool is_valid() const { return p->p != NULL; }
   operator ptr& () const { return *p->p; }
+  bool operator == (const olx_shared_ptr &ap) const {
+    return *p == *ap->p;
+  }
   // replaces the object from ALL references and returns previous value
   ptr *replace(ptr *_p) const {
     ptr *p_ = p->p;

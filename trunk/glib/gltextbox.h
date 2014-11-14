@@ -59,7 +59,7 @@ public:
   }
   void NewLine()  {  FBuffer.Add();  }
   class TGlFont& GetFont() const;
-  bool OnMouseUp(const IEObject *Sender, const TMouseData& Data);
+  bool OnMouseUp(const IOlxObject *Sender, const TMouseData& Data);
 };
 
 

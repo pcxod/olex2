@@ -37,27 +37,31 @@ struct TGraphRSBin {
 };
 void XLibMacros::macGraphSR(TStrObjList &Cmds, const TParamList &Options, TMacroData &E)  {
   TXApp &XApp = TXApp::GetInstance();
-  TCif* C;
-  if( XApp.CheckFileType<TCif>() )  C = &XApp.XFile().GetLastLoader<TCif>();
-  else  {
+  olx_object_ptr<TCif> C;
+  if (XApp.CheckFileType<TCif>()) {
+    C = &XApp.XFile().GetLastLoader<TCif>();
+    C.p->inc_ref();
+  }
+  else {
     olxstr fcffn = TEFile::ChangeFileExt(XApp.XFile().GetFileName(), "fcf");
-    if( !TEFile::Exists(fcffn) )  {
+    if (!TEFile::Exists(fcffn)) {
       fcffn = TEFile::ChangeFileExt(XApp.XFile().GetFileName(), "fco");
-      if( !TEFile::Exists(fcffn) )  {
+      if (!TEFile::Exists(fcffn)) {
         E.ProcessingError(__OlxSrcInfo,
           "please load fcf file or make sure the one exists in current folder");
         return;
       }
     }
-    C = &TEGC::New<TCif>();
-    C->LoadFromFile(fcffn);
+    C = new TCif();
+    C().LoadFromFile(fcffn);
   }
-  cif_dp::cetTable* hklLoop = C->FindLoop("_refln");
-  if( hklLoop == NULL )  {
+  cif_dp::cetTable* hklLoop = C().FindLoop("_refln");
+  if (hklLoop == NULL) {
     E.ProcessingError(__OlxSrcInfo, "no hkl loop found");
     return;
   }
-  XApp.NewLogEntry() << "Processing file " << TEFile::ExtractFileName(C->GetFileName());
+  XApp.NewLogEntry() << "Processing file " <<
+    TEFile::ExtractFileName(C().GetFileName());
   short list = -1;
   const size_t hInd = hklLoop->ColIndex("_refln_index_h");
   const size_t kInd = hklLoop->ColIndex("_refln_index_k");
@@ -89,7 +93,7 @@ void XLibMacros::macGraphSR(TStrObjList &Cmds, const TParamList &Options, TMacro
     outputFileName << "graphsr";
   outputFileName = TEFile::ChangeFileExt(outputFileName, "csv");
 
-  TAsymmUnit& au = C->GetAsymmUnit();
+  TAsymmUnit& au = C().GetAsymmUnit();
   const mat3d& hkl2c = au.GetHklToCartesian();
   vec3d hkl;
   TPtrList<TGraphRSBin> bins;
@@ -127,10 +131,12 @@ void XLibMacros::macGraphSR(TStrObjList &Cmds, const TParamList &Options, TMacro
   double minds=refs[0].ds, maxds=refs.GetLast().ds;
   double step = (maxds-minds)/binsCnt,
          hstep = step/2;
-  for( size_t i=0; i < binsCnt; i++ )  {
+  for (size_t i=0; i < binsCnt; i++) {
     bins.Add( new TGraphRSBin( minds + i*step, minds+(i+1)*step ) );
-    if( (i+1) < binsCnt )
-      bins.Add( new TGraphRSBin( minds + (i+1)*step - hstep, minds+(i+1)*step + hstep ) );
+    if ((i + 1) < binsCnt) {
+      bins.Add(new TGraphRSBin(minds + (i + 1)*step - hstep,
+        minds + (i + 1)*step + hstep));
+    }
   }
 
   for( size_t i=0; i < refs.Count(); i++ )  {
@@ -173,7 +179,8 @@ void XLibMacros::macGraphSR(TStrObjList &Cmds, const TParamList &Options, TMacro
       tab[i][1] = olxstr::FormatFloat(3, binData[i].GetB());
       double pv = evecd::PolynomValue(line, binData[i].GetA());
       tab[i][2] = olxstr::FormatFloat(3, pv);
-      output.Add( olxstr(binData[i].GetA(), 50) << ',' << binData[i].GetB() << ',' << pv );
+      output.Add(olxstr(binData[i].GetA(), 50) << ',' << binData[i].GetB() <<
+        ',' << pv);
     }
     olxstr eq("y=");
     eq << olxstr::FormatFloat(3, line[0]);
@@ -188,7 +195,8 @@ void XLibMacros::macGraphSR(TStrObjList &Cmds, const TParamList &Options, TMacro
     }
     header.Add("Polynom ") << eq;
     header.Add("RMS = ") << olxstr::FormatFloat(3, rms);
-    tab.CreateTXTList(header, "Sum(|Fo|)/Sum(|Fc|) vs sin(theta)/lambda.", false, false, EmptyString());
+    tab.CreateTXTList(header, "Sum(|Fo|)/Sum(|Fc|) vs sin(theta)/lambda.",
+      false, false, EmptyString());
     XApp.NewLogEntry() << header;
     TEFile::WriteLines(outputFileName, TCStrList(output));
     XApp.NewLogEntry() << outputFileName << " file was created";

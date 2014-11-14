@@ -22,7 +22,7 @@
 BeginEsdlNamespace()
 
 /* this class uses reference counting to reduce number of memory reallocations*/
-class TCString : public TTIString<char>, public IEObject{
+class TCString : public TTIString<char>, public IOlxObject{
 public:
   class CharW : public linked_operators<char, CharW, wchar_t> {
     size_t Index;
