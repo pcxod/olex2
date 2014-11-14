@@ -39,8 +39,8 @@ void TTreeView::SelectionEvent(wxTreeEvent& event) {
 //..............................................................................
 void TTreeView::ItemEditEvent(wxTreeEvent& event) {
   event.Skip();
-  OnSelect.Execute(this, &TEGC::New<olxstr>(OnSelect.data)
-    .Replace("~label~", event.GetLabel()));
+  olxstr d = olxstr(OnSelect.data).Replace("~label~", event.GetLabel());
+  OnSelect.Execute(this, &d);
 }
 //..............................................................................
 size_t TTreeView::ReadStrings(size_t& index, const wxTreeItemId* thisCaller,

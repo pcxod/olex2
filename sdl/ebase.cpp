@@ -26,19 +26,33 @@ void *GlobalEsdlFunction(olx_realloc_)(void *a, size_t sz)  {
 //.............................................................................
 //.............................................................................
 //.............................................................................
-IEObject::~IEObject()  {
+#ifdef _DEBUG
+IOlxObject::IOlxObject() {
+}
+IOlxObject::~IOlxObject() {
+}
+#endif
+
+TIString IOlxObject::ToString() const {
+  return olxstr(typeid(*this).name());
+  //throw TNotImplementedException(__OlxSourceInfo);
+}
+//.............................................................................
+IOlxObject* IOlxObject::Replicate() const {
+  throw TNotImplementedException(__OlxSourceInfo);
+}
+//.............................................................................
+ADestructionOservable::~ADestructionOservable() {
   while (dsh_head != NULL) {
     dsh_head->call(this);
-    a_destruction_handler *dsh = dsh_head;
+    ADestructionObserver *dsh = dsh_head;
     dsh_head = dsh_head->next;
     delete dsh;
   }
 }
 //.............................................................................
-bool IEObject::_HasDestructionHandler(
-  IEObject::a_destruction_handler *dh) const
-{
-  a_destruction_handler *e = dsh_head;
+bool ADestructionOservable::HasDObserver(ADestructionObserver *dh) const {
+  ADestructionObserver *e = dsh_head;
   while (e != NULL) {
     if ((*e) == dh)
       return true;
@@ -47,18 +61,12 @@ bool IEObject::_HasDestructionHandler(
   return false;
 }
 //.............................................................................
-TIString IEObject::ToString() const {
-  throw TNotImplementedException(__OlxSourceInfo);
-}
-//.............................................................................
-IEObject* IEObject::Replicate() const {
-  throw TNotImplementedException(__OlxSourceInfo);
-}
-//.............................................................................
-void IEObject::_RemoveDestructionHandler(const a_destruction_handler &dh) {
-  a_destruction_handler *cr = dsh_head, *prev=NULL;
+void ADestructionOservable::RemoveDestructionObserver(
+  const ADestructionObserver &o)
+{
+  ADestructionObserver *cr = dsh_head, *prev = NULL;
   while (cr != NULL) {
-    if (dh == cr) {
+    if (o == cr) {
       if (prev != NULL)  prev->next = cr->next;
       if (cr == dsh_tail)  dsh_tail = prev;
       if (dsh_head == cr)  dsh_head = NULL;
@@ -70,13 +78,15 @@ void IEObject::_RemoveDestructionHandler(const a_destruction_handler &dh) {
   }
 }
 //.............................................................................
-bool IEObject::AddDestructionHandler(void (*func)(IEObject*)) {
+bool ADestructionOservable::AddDestructionObserver(
+  const ADestructionObserver &o)
+{
   if (dsh_head == NULL) {
-    dsh_head = dsh_tail = new static_destruction_handler(NULL, func);
+    dsh_head = dsh_tail = o.clone();
   }
   else {
-    a_destruction_handler *e = new static_destruction_handler(NULL, func);
-    if (_HasDestructionHandler(e)) {
+    ADestructionObserver *e = o.clone();
+    if (HasDObserver(e)) {
       delete e;
       return false;
     }
@@ -88,38 +98,37 @@ bool IEObject::AddDestructionHandler(void (*func)(IEObject*)) {
 //.............................................................................
 //.............................................................................
 //.............................................................................
-bool TExceptionBase::AutoLog = false;
 #ifdef __WIN32__
-  const TICString& EsdlObject(CNewLineSequence)()  {
+  const TICString& EsdlObject(CNewLineSequence)() {
     static olxcstr rv("\r\n");
     return rv;
   }
-  const TIWString& EsdlObject(WNewLineSequence)()  {
+  const TIWString& EsdlObject(WNewLineSequence)() {
     static olxwstr rv("\r\n");
     return rv;
   }
 #else
-  const TICString& EsdlObject(CNewLineSequence)()  {
+  const TICString& EsdlObject(CNewLineSequence)() {
     static olxcstr rv("\n");
     return rv;
   }
-  const TIWString& EsdlObject(WNewLineSequence)()  {
+  const TIWString& EsdlObject(WNewLineSequence)() {
     static olxwstr rv("\n");
     return rv;
   }
 #endif
 #ifdef _UNICODE
-  const TIString& EsdlObject(NewLineSequence)()  {
+  const TIString& EsdlObject(NewLineSequence)() {
     return WNewLineSequence();
   }
 #else
-  const TIString& EsdlObject(NewLineSequence)()  {
+  const TIString& EsdlObject(NewLineSequence)() {
     return CNewLineSequence();
   }
 #endif
 //.............................................................................
-AReferencible::~AReferencible()  {
-  if( This_RefCount != 0 ) {
+AReferencible::~AReferencible() {
+  if (This_RefCount != 0) {
     throw TFunctionFailedException(__OlxSourceInfo,
       "reference count is not zero");
   }

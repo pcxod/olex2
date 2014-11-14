@@ -59,7 +59,7 @@ bool TCmdLine::ProcessKey(wxKeyEvent& evt)  {
     else
       Commands.Add(GetCommand());
     CmdIndex = Commands.Count();
-    OnCommand.Execute(dynamic_cast<IEObject*>((AActionHandler*)this) );
+    OnCommand.Execute(dynamic_cast<IOlxObject*>((AActionHandler*)this) );
     return true;
   }
   else if( (evt.GetKeyCode() == WXK_ESCAPE) && evt.GetModifiers() == 0 )  {

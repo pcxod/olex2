@@ -313,7 +313,7 @@ TdlgSceneProps::~TdlgSceneProps()  {
   tbEditFont->OnClick.Clear();
 }
 //..............................................................................
-bool TdlgSceneProps::Execute(const IEObject* Sender, const IEObject* Data,
+bool TdlgSceneProps::Execute(const IOlxObject* Sender, const IOlxObject* Data,
   TActionQueue *)
 {
   if (Sender == tbX)

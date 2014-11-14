@@ -68,7 +68,7 @@ const uint32_t
   // .... 1 << n
   ;
 
-class ALibraryContainer: public IEObject {
+class ALibraryContainer: public ADestructionOservable {
 private:
   struct TProgramStateDescriptor {
     uint32_t StateBit;
@@ -121,7 +121,7 @@ public:
   olxstr GetQualifiedName() const;
 };
 
-class ABasicFunction: public IEObject {
+class ABasicFunction: public IOlxObject {
   ABasicLibrary* ParentLibrary;
   olxstr Name;
   olxstr Description;
@@ -305,7 +305,7 @@ protected:
 typedef TPtrList<ABasicFunction> TBasicFunctionPList;
 typedef TPtrList<ABasicLibrary> TBasicLibraryPList;
 
-class FunctionChainer: public IEObject {
+class FunctionChainer: public IOlxObject {
   TBasicFunctionPList functions;
   void Update(TMacro<FunctionChainer> &m);
   void Update(TFunction<FunctionChainer> &m);

@@ -15,7 +15,7 @@
 #include "evector.h"
 BeginEsdlNamespace()
 
-template <class T> class TTTable: public IEObject  {
+template <class T> class TTTable: public IOlxObject  {
   TTypeList<T> Rows;
   TStrList ColNames, RowNames;
 public:

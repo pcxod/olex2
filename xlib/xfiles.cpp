@@ -168,8 +168,8 @@ void TXFile::LastLoaderChanged() {
   OnFileLoad.Exit(this, &FLastLoader->GetFileName());
 }
 //..............................................................................
-bool TXFile::Dispatch(int MsgId, short MsgSubId, const IEObject* Sender,
-  const IEObject* Data, TActionQueue *)
+bool TXFile::Dispatch(int MsgId, short MsgSubId, const IOlxObject* Sender,
+  const IOlxObject* Data, TActionQueue *)
 {
   if (MsgId == XFILE_EVT_SG_Change) {
     if (Data == NULL || !EsdlInstanceOf(*Data, TSpaceGroup))
@@ -617,7 +617,7 @@ void TXFile::SaveToFile(const olxstr& FN, bool Sort)  {
       Loader->GetAsymmUnit().Sort();
   }
   OnFileSave.Enter(this);
-  IEObject* Cause = NULL;
+  IOlxObject* Cause = NULL;
   try  {  Loader->SaveToFile(FN);  }
   catch(const TExceptionBase& exc)  {
     Cause = exc.Replicate();
@@ -635,7 +635,7 @@ void TXFile::Close()  {
   OnFileClose.Exit(this, NULL);
 }
 //..............................................................................
-IEObject* TXFile::Replicate() const {
+IOlxObject* TXFile::Replicate() const {
   TXFile* xf = ((SObjectProvider*)Lattice.GetObjects().Replicate())->
     CreateXFile();
   for (size_t i=0; i < FileFormats.Count(); i++) {
@@ -757,7 +757,7 @@ const_strlist TXFile::ToJSON() const {
 //..............................................................................
 //..............................................................................
 //..............................................................................
-IEObject *TXFile::VPtr::get_ptr() const {
+IOlxObject *TXFile::VPtr::get_ptr() const {
   return &TXApp::GetInstance().XFile();
 }
 //..............................................................................

@@ -32,7 +32,7 @@ template <class IC>
   class TObjectFactory  {
   public:
     virtual ~TObjectFactory() {}
-    virtual IC *NewInstance(TPtrList<IEObject>* Arguments) = 0;
+    virtual IC *NewInstance(TPtrList<IOlxObject>* Arguments) = 0;
   };
 
 class TOperatorSignature  {
@@ -52,7 +52,7 @@ public:
   }
 };
 
-class IEvaluable : public IEObject {
+class IEvaluable : public IOlxObject {
 public:
   virtual ~IEvaluable() {}
   virtual bool Evaluate() = 0;
@@ -60,7 +60,7 @@ public:
 
 
 // an abstract class for evaluation simple expressions
-class IEvaluator: public IEObject  {
+class IEvaluator: public IOlxObject  {
 public:
   virtual ~IEvaluator() {}
 
@@ -68,7 +68,7 @@ public:
   public:
     TUnsupportedOperator(const olxstr& location):
         TBasicException(location, EmptyString()) {}
-    virtual IEObject* Replicate()  const {  return new TUnsupportedOperator(*this);  }
+    virtual IOlxObject* Replicate()  const {  return new TUnsupportedOperator(*this);  }
   };
   virtual bool operator == (const IEvaluator &) const {  throw TUnsupportedOperator(__OlxSourceInfo);  }
   virtual bool operator != (const IEvaluator &) const {  throw TUnsupportedOperator(__OlxSourceInfo);  }
@@ -76,7 +76,7 @@ public:
   virtual bool operator >= (const IEvaluator &) const {  throw TUnsupportedOperator(__OlxSourceInfo);  }
   virtual bool operator < (const IEvaluator &)  const {  throw TUnsupportedOperator(__OlxSourceInfo);  }
   virtual bool operator <= (const IEvaluator &) const {  throw TUnsupportedOperator(__OlxSourceInfo);  }
-//  virtual bool operator <= (const IEvaluator &val) const {  throw TUnsupportedOperator(*(IEObject*)this, "Unsupported operator");  }
+//  virtual bool operator <= (const IEvaluator &val) const {  throw TUnsupportedOperator(*(IOlxObject*)this, "Unsupported operator");  }
 
   virtual IEvaluator *NewInstance(IDataProvider *) = 0; // {  return NULL;  }
 
@@ -85,7 +85,7 @@ public:
   public:
     TCastException(const olxstr& location ):
         TBasicException(location, EmptyString()) { ;  }
-    virtual IEObject* Replicate()  const {  return new TCastException(*this);  }
+    virtual IOlxObject* Replicate()  const {  return new TCastException(*this);  }
   };
   virtual short EvaluateShort()         const {  throw TCastException(__OlxSourceInfo);  }
   virtual int EvaluateInt()             const {  throw TCastException(__OlxSourceInfo);  }
@@ -594,7 +594,7 @@ template <class OC, class IC, class AC>
   class TsaFactory: public TObjectFactory<OC> {
   public:
     ~TsaFactory() {}
-    OC *NewInstance(TPtrList<IEObject>* Args) {
+    OC *NewInstance(TPtrList<IOlxObject>* Args) {
       if( Args->Count() != 1 )
         throw TInvalidArgumentException(__OlxSourceInfo, "number of operands");
       return new IC((AC*)Args->GetItem(0));
@@ -605,7 +605,7 @@ template <class OC, class IC, class AC>
   class TtaFactory: public TObjectFactory<OC> {
   public:
     ~TtaFactory() {}
-    OC *NewInstance(TPtrList<IEObject>* Args) {
+    OC *NewInstance(TPtrList<IOlxObject>* Args) {
       if( Args->Count() != 2 )
         throw TInvalidArgumentException(__OlxSourceInfo, "number of operands");
       return new IC((AC*)Args->GetItem(0), (AC*)Args->GetItem(1));

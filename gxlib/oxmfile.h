@@ -35,7 +35,7 @@ public:
   virtual void SaveToFile(const olxstr& fn)  {
     gxapp.SaveModel(fn);
   }
-  virtual IEObject* Replicate() const {  return new TOXMFile(gxapp);  }
+  virtual IOlxObject* Replicate() const {  return new TOXMFile(gxapp);  }
 };
 
 EndGxlNamespace()

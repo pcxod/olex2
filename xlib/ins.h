@@ -349,7 +349,7 @@ public:
     return TBasicApp::GetInstance().GetOptions()
       .FindValue("preserve_invalid_ins", FalseString()).ToBool();
   }
-  virtual IEObject* Replicate() const {  return new TIns;  }
+  virtual IOlxObject* Replicate() const {  return new TIns;  }
 };
 
 EndXlibNamespace()

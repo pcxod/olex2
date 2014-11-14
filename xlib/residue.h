@@ -14,7 +14,7 @@
 BeginXlibNamespace()
 
 /* number and alias are unique numbers */
-class TResidue : public IEObject  {
+class TResidue : public IOlxObject  {
   TAsymmUnit& Parent;
   uint32_t Id;
   olxstr ClassName;

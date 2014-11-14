@@ -46,7 +46,7 @@ AMode::AMode(size_t id)
   gxapp.GetMouseHandler().OnObject.Add(&ObjectPicker);
 }
 //..............................................................................
-bool AMode::ObjectPicker_::Execute(const IEObject *sender, const IEObject *data,
+bool AMode::ObjectPicker_::Execute(const IOlxObject *sender, const IOlxObject *data,
   TActionQueue *)
 {
   const AGDrawObject *o = dynamic_cast<const AGDrawObject *>(data);

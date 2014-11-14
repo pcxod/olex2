@@ -75,7 +75,7 @@ void THtmlManager::ClearPopups() {
 }
 //.............................................................................
 void THtmlManager::LockWindowDestruction(wxWindow* wnd,
-  const IEObject* caller)
+  const IOlxObject* caller)
 {
   if (wnd == main)
     main->LockPageLoad(caller);
@@ -90,7 +90,7 @@ void THtmlManager::LockWindowDestruction(wxWindow* wnd,
 }
 //.............................................................................
 void THtmlManager::UnlockWindowDestruction(wxWindow* wnd,
-  const IEObject* caller)
+  const IOlxObject* caller)
 {
   if (wnd == main)
     main->UnlockPageLoad(caller);
@@ -110,7 +110,7 @@ THtml* THtmlManager::FindHtml(const olxstr& name) const {
   return pd == NULL ? NULL : pd->Html;
 }
 //.............................................................................
-bool THtmlManager::Enter(const IEObject *sender, const IEObject *data,
+bool THtmlManager::Enter(const IOlxObject *sender, const IOlxObject *data,
   TActionQueue *)
 {
   if (sender != NULL) {
@@ -127,7 +127,7 @@ bool THtmlManager::Enter(const IEObject *sender, const IEObject *data,
   return true;
 }
 //.............................................................................
-bool THtmlManager::Exit(const IEObject *sender, const IEObject *data,
+bool THtmlManager::Exit(const IOlxObject *sender, const IOlxObject *data,
   TActionQueue *)
 {
   if (sender != NULL) {
@@ -144,7 +144,7 @@ bool THtmlManager::Exit(const IEObject *sender, const IEObject *data,
   return true;
 }
 //.............................................................................
-bool THtmlManager::Execute(const IEObject *sender, const IEObject *data,
+bool THtmlManager::Execute(const IOlxObject *sender, const IOlxObject *data,
   TActionQueue *)
 {
   olxstr dt;

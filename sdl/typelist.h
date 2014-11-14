@@ -19,7 +19,7 @@ template <typename> class SharedTypeList;
 template <typename, typename> class ConstTypeListExt;
 template <typename> class ConstTypeList;
 
-template <class T, class DestructCast> class TTypeListExt : public IEObject  {
+template <class T, class DestructCast> class TTypeListExt : public IOlxObject  {
 protected:
   TPtrList<T> List;
   template <class Analyser> struct PackItemActor  {
@@ -111,7 +111,7 @@ public:
     return *this;
   }
 //..............................................................................
-  //virtual IEObject* Replicate() const {
+  //virtual IOlxObject* Replicate() const {
   //  TTypeListExt* list =
   //    new TTypeListExt(Count(), false);
   //  for( size_t i=0; i < Count(); i++ )

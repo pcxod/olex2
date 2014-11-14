@@ -22,7 +22,7 @@ void AButtonBase::SetActionQueue(TActionQueue& q, const olxstr& dependMode)  {
   DependMode = dependMode;
   ActionQueue->Add(this);
 }
-bool AButtonBase::Execute(const IEObject *Sender, const IEObject *Data,
+bool AButtonBase::Execute(const IOlxObject *Sender, const IOlxObject *Data,
   TActionQueue *)
 {
   if( Data && EsdlInstanceOf(*Data, TModeChange) )  {

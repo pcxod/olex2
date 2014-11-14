@@ -110,13 +110,13 @@ public:
           Latt = latt;
         }
       short GetLatt() const  {  return Latt;  }
-      virtual IEObject* Replicate() const {
+      virtual IOlxObject* Replicate() const {
         return new TIncorrectLattExc(*this);
       }
   };
 };
 
-class TSpaceGroup : public IEObject {
+class TSpaceGroup : public IOlxObject {
   smatd_list Matrices;
   olxstr Name, FullName, Axis, HallSymbol;
   int Number;
@@ -251,7 +251,7 @@ is lower and int > 0 - symmetry is higher (normally never returned :))
 */
 typedef olx_pair_t<TBravaisLattice*,int> TBravaisLatticeRef;
 
-class TSymmLib: public IEObject  {
+class TSymmLib: public IOlxObject  {
   sorted::StringAssociation<TSpaceGroup*, true> SpaceGroups;
   TStringToList<olxstr, TCLattice*> Lattices;
   TStringToList<olxstr, TBravaisLattice*> BravaisLattices;

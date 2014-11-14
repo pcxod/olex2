@@ -31,7 +31,7 @@ class THtmlManager;
 class THtml : public wxHtmlWindow, public AEventsDispatcher, public AOlxCtrl {
 private:
   bool Movable, PageLoadRequested, ShowTooltips;
-  olxdict<const IEObject*, int, TPointerComparator> Locks;
+  olxdict<const IOlxObject*, int, TPointerComparator> Locks;
   olxstr PageRequested;
   olxstr PopupName;
   static size_t &stateTooltipsVisible() {
@@ -54,12 +54,8 @@ protected:
   void OnCellMouseHover(wxHtmlCell *Cell, wxCoord x, wxCoord y);
   void OnClipboard(wxClipboardTextEvent& event);
   olxstr OnSizeData, OnDblClickData;
-  virtual bool Dispatch(int MsgId, short MsgSubId, const IEObject* Sender,
-    const IEObject* Data, TActionQueue *);
-  /* on GTK scrolling makes mess out of the controls so will try to "fix it"
-  here
-  */
-  void OnScroll(wxScrollEvent& evt);
+  virtual bool Dispatch(int MsgId, short MsgSubId, const IOlxObject* Sender,
+    const IOlxObject* Data, TActionQueue *);
   virtual void ScrollWindow(int dx, int dy, const wxRect* rect = NULL);
   virtual void DoScroll(int x_pos, int y_pos);
   // position of where the mous was down
@@ -130,11 +126,11 @@ public:
   void SetShowTooltips(bool v, const olxstr &html_name=EmptyString());
 
   bool IsPageLoadRequested() const {  return PageLoadRequested;  }
-  void LockPageLoad(const IEObject* caller)  {
+  void LockPageLoad(const IOlxObject* caller)  {
     volatile olx_scope_cs cs(TBasicApp::GetCriticalSection());
     Locks.Add(caller, 0)++;
   }
-  void UnlockPageLoad(const IEObject* caller)  {
+  void UnlockPageLoad(const IOlxObject* caller)  {
     volatile olx_scope_cs cs(TBasicApp::GetCriticalSection());
     const size_t pos = Locks.IndexOf(caller);
     if( pos == InvalidIndex )
@@ -214,7 +210,6 @@ public:
     void SetDescent(int v) {  m_Descent = v;  }
   };
 
-  DECLARE_EVENT_TABLE()
   friend class THtmlManager;
 };
 

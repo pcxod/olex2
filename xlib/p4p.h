@@ -36,7 +36,7 @@ public:
   virtual void SaveToStrings(TStrList& Strings);
   virtual void LoadFromStrings(const TStrList& Strings);
   virtual bool Adopt(TXFile&);
-  virtual IEObject* Replicate() const {  return new TP4PFile();  }
+  virtual IOlxObject* Replicate() const {  return new TP4PFile();  }
 };
 
 EndXlibNamespace()

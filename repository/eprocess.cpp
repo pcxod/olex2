@@ -224,8 +224,8 @@ void TWinProcess::Writenl() {
   GetOutput().Write('\n');
 }
 //.............................................................................
-bool TWinProcess::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
-  const IEObject *Data, TActionQueue *)
+bool TWinProcess::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
+  const IOlxObject *Data, TActionQueue *)
 {
   bool Terminated = false;
   if (MsgId == ID_Timer) {
@@ -380,8 +380,8 @@ bool TWxProcess::Execute() {
   return true;
 }
 //.............................................................................
-bool TWxProcess::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
-  const IEObject *Data, TActionQueue *)
+bool TWxProcess::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
+  const IOlxObject *Data, TActionQueue *)
 {
   bool Terminated = false;
   if (MsgId == ID_Timer) {

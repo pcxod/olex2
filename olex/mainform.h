@@ -526,8 +526,8 @@ public:
     ExecFontColor, InfoFontColor,
     WarningFontColor, ErrorFontColor, ExceptionFontColor;
 private:
-  bool Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
-    const IEObject *Data, TActionQueue *);
+  bool Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
+    const IOlxObject *Data, TActionQueue *);
   olxstr FLastSettingsFile;
 
   class ProcessHandler : public ProcessManager::IProcessHandler  {

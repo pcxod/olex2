@@ -1111,6 +1111,7 @@
     <ClInclude Include="..\..\..\xlib\network.h" />
     <ClInclude Include="..\..\..\xlib\p4p.h" />
     <ClInclude Include="..\..\..\xlib\packutil.h" />
+    <ClInclude Include="..\..\..\xlib\pdb.h" />
     <ClInclude Include="..\..\..\xlib\planesort.h" />
     <ClInclude Include="..\..\..\xlib\reflection.h" />
     <ClInclude Include="..\..\..\xlib\refmerge.h" />

@@ -28,11 +28,11 @@ const unsigned short
   // these are for special handling
   peUnhandled           = 0x1000;
 
-class TMacroData: public IEObject  {
+class TMacroData: public IOlxObject  {
   unsigned short ProcessError;
   bool DeleteObject;
   olxstr ErrorInfo, Location;
-  IEObject* RetValue;
+  IOlxObject* RetValue;
   str_stack Stack;
 public:
   TMacroData();
@@ -55,7 +55,7 @@ public:
     Location.SetLength(0);
     if( DeleteObject )  delete RetValue;
     DeleteObject = false;
-    RetValue = (IEObject*)NULL;
+    RetValue = (IOlxObject*)NULL;
     Stack.Clear();
   }
   void ClearErrorFlag()  {  ProcessError = 0;  }
@@ -98,7 +98,7 @@ public:
   olxstr GetRetVal() const;
 
   bool HasRetVal() const {  return RetValue != NULL;  }
-  IEObject* RetObj() const {  return RetValue;  }
+  IOlxObject* RetObj() const {  return RetValue;  }
 
   str_stack& GetStack() {  return Stack;  }
 
@@ -107,11 +107,12 @@ public:
 
   // the type is validated
   template <class EObj> EObj* GetRetObj() {
-    if (!EsdlInstanceOf(*RetValue, EObj)) {
+    EObj *r = dynamic_cast<EObj *>(RetValue);
+    if (r == 0) {
       throw TCastException(__OlxSourceInfo, EsdlObjectName(*RetValue),
         EsdlClassName(EObj));
     }
-    return dynamic_cast<EObj *>(RetValue);
+    return r;
   }
   template <class PT> void SetRetVal(const PT& val) {
     if (DeleteObject)  delete RetValue;
@@ -132,7 +133,7 @@ public:
         : TBasicException(location,
             olxstr("Cannot cast '") << from << "' to '"  << to << '\'')
       {}
-    virtual IEObject* Replicate() const {  return new TCastException(*this);  }
+    virtual IOlxObject* Replicate() const {  return new TCastException(*this);  }
   };
 
 };

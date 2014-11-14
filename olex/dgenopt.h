@@ -22,7 +22,7 @@ protected:
   void OnAChange();
   void OnBChange();
   void OnCChange();
-  bool Execute(const IEObject *Sender, const IEObject *Data, TActionQueue *);
+  bool Execute(const IOlxObject *Sender, const IOlxObject *Data, TActionQueue *);
 
   float AFrom, BFrom, CFrom, ATo, BTo, CTo;
 public:

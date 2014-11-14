@@ -17,7 +17,7 @@
 #undef QLength
 
 //simply a macro registry
-class XLibMacros : public IEObject {
+class XLibMacros : public IOlxObject {
 protected:
   static bool ParseResParam(TStrObjList &Cmds, double& esd, double* len=NULL,
     double* len1=NULL, double* ang=NULL);

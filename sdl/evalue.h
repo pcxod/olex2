@@ -17,7 +17,7 @@ BeginEsdlNamespace()
 
 template <typename> class TEVPoint;
 
-template <class EType> class TEValue: public IEObject  {
+template <class EType> class TEValue: public IOlxObject  {
   EType FV, FE;
 public:
 

@@ -19,7 +19,7 @@ BeginEsdlNamespace()
 template <typename> class SharedPtrList;
 template <typename> class ConstPtrList;
 
-template <class T> class TPtrList : public IEObject  {
+template <class T> class TPtrList : public IOlxObject  {
   size_t FCount, FCapacity;
   size_t FIncrement;
   T **Items;
@@ -134,7 +134,7 @@ public:
     return *this;
   }
 //..............................................................................
-  virtual IEObject* Replicate() const {  return new TPtrList(*this);  }
+  virtual IOlxObject* Replicate() const {  return new TPtrList(*this);  }
 //..............................................................................
   inline TPtrList& Assign(const TPtrList& list)  {
     if( (void*)this == (void*)&list )  return *this;

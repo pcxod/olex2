@@ -187,11 +187,11 @@ const olxstr& TOlxVars::GetVarStr(size_t index)  {
   PyObject *po = oo.GetObjVal();
   double fv;
   if( po->ob_type == &PyString_Type || po->ob_type == &PyUnicode_Type )
-    return TEGC::New<olxstr>( PythonExt::ParseStr(po) );
+    return TEGC::Add(new olxstr(PythonExt::ParseStr(po)));
   else if( po->ob_type == &PyFloat_Type && PyArg_Parse(po, "d", &fv) )
-    return TEGC::New<olxstr>(fv);
+    return TEGC::Add(new olxstr(fv));
   else
-    return TEGC::New<olxstr>(PyObject_REPR(po));
+    return TEGC::Add(new olxstr(PyObject_REPR(po)));
 }
 //.............................................................................
 TOlxVars::TOlxVars()  {

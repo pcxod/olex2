@@ -50,7 +50,7 @@ const short
 
 //typedef void (*MMoveHandler)(class TGlMouse *, int dx, int dy);
 
-struct TMouseData: public IEObject  {
+struct TMouseData: public IOlxObject  {
   TMouseData() :
     Button(0), Shift(0), Event(0),
     DownX(0), DownY(0), UpX(0), UpY(0),
@@ -138,7 +138,7 @@ struct MouseEvtHandler {
   }
 };
 
-class TGlMouse: public IEObject {
+class TGlMouse: public IOlxObject {
   class TGlRenderer *FParent;
   class TDFrame *FDFrame;
   TActionQList Actions;
@@ -158,9 +158,9 @@ protected:
   int ClickThreshold;
   void process_command_list(TStrObjList& Cmds, bool enable);
   olx_cdict<TMouseRegion, AGDrawObject *> object_cache;
-  void OnObjectDelete(IEObject *o);
+  void OnObjectDelete(IOlxObject *o);
   AGDrawObject *find_object(int x, int y);
-  void ClearObjectCache(IEObject *caller=NULL);
+  void ClearObjectCache(IOlxObject *caller=NULL);
 public:
   TGlMouse(TGlRenderer *Parent, TDFrame *Frame);
   virtual ~TGlMouse();

@@ -31,7 +31,7 @@ class PatchAPI  {
   public:
     DeletionExc(const olxstr& location, const olxstr& msg) :
       TBasicException(location, msg )  {}
-    virtual IEObject* Replicate() const {  return new DeletionExc(*this);  }
+    virtual IOlxObject* Replicate() const {  return new DeletionExc(*this);  }
   };
 
   static void CleanUp(AActionHandler* A, AActionHandler* B)  {

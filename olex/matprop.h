@@ -27,7 +27,7 @@ private:
   TPtrList<TSpinCtrl> SpinCtrls;
 protected:
   void OnOK(wxCommandEvent& event);
-  bool Execute(const IEObject *Sender, const IEObject *Data, TActionQueue *);
+  bool Execute(const IOlxObject *, const IOlxObject *, TActionQueue *);
   TTypeList<TGlMaterial> Materials;
   AGDrawObject* Object;
   int FCurrentMaterial;
@@ -35,7 +35,10 @@ protected:
   void Update(TGlMaterial& GlM);
   void Update()  {  wxWindow::Update();  }
 
-  static TGlMaterial MaterialCopy;
+  static TGlMaterial &MaterialCopy_() {
+    static TGlMaterial mc;
+    return mc;
+  }
   void OnCopy(wxCommandEvent& event);
   void OnPaste(wxCommandEvent& event);
   void OnEditFont(wxCommandEvent& event);
@@ -44,12 +47,13 @@ public:
   TdlgMatProp(TMainFrame *ParentFrame, AGDrawObject &GPC);
   TdlgMatProp(TMainFrame *ParentFrame, TGlMaterial& mat);
   ~TdlgMatProp();
-  const TGlMaterial& GetCurrent()  const {  return Materials[FCurrentMaterial];  }
-  void SetCurrent(const TGlMaterial& m)  {
+  const TGlMaterial& GetCurrent()  const {
+    return Materials[FCurrentMaterial];
+  }
+  void SetCurrent(const TGlMaterial& m) {
     Materials[FCurrentMaterial] = m;
     Init(m);
   }
-  DECLARE_EVENT_TABLE()
 };
 
 #endif

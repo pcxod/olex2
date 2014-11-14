@@ -337,7 +337,7 @@ bool TGlConsole::ProcessKey( int Key , short ShiftState)  {
       }
       FCmdPos = FCommands.Count();
     }
-    OnCommand.Execute(dynamic_cast<IEObject*>((AActionHandler*)this));
+    OnCommand.Execute(dynamic_cast<IOlxObject*>((AActionHandler*)this));
     if( FCommand.IsEmpty() )  {
       PromptStr = InviteStr;
       olex2::IOlex2Processor::GetInstance()->processFunction(PromptStr);
@@ -405,7 +405,7 @@ void TGlConsole::PrintText(const olxstr &S, TGlMaterial *M, bool Hyphenate) {
     }
     else
       FBuffer.Add(S, GlM);
-    OnPost.Execute(dynamic_cast<IEObject*>((AActionHandler*)this), &S);
+    OnPost.Execute(dynamic_cast<IOlxObject*>((AActionHandler*)this), &S);
   }
   KeepSize();
   FTxtPos = FBuffer.Count()-1;
@@ -432,7 +432,7 @@ void TGlConsole::PrintText(const TStrList &SL, TGlMaterial *M, bool Hyphenate)  
         }
         else
           FBuffer.Add(Txt[j], GlM);
-        OnPost.Execute(dynamic_cast<IEObject*>((AActionHandler*)this), &Txt[j] );
+        OnPost.Execute(dynamic_cast<IOlxObject*>((AActionHandler*)this), &Txt[j] );
       }
     }
     else  {
@@ -444,7 +444,7 @@ void TGlConsole::PrintText(const TStrList &SL, TGlMaterial *M, bool Hyphenate)  
       }
       else
         FBuffer.Add(SL[i], GlM);
-      OnPost.Execute(dynamic_cast<IEObject*>((AActionHandler*)this), &SL[i]);
+      OnPost.Execute(dynamic_cast<IOlxObject*>((AActionHandler*)this), &SL[i]);
     }
   }
   KeepSize();
@@ -556,7 +556,7 @@ TGlFont &TGlConsole::GetFont() const {
   return Parent.GetScene().GetFont(FontIndex, true);
 }
 //..............................................................................
-bool TGlConsole::Enter(const IEObject *Sender, const IEObject *Data,
+bool TGlConsole::Enter(const IOlxObject *Sender, const IOlxObject *Data,
   TActionQueue *)
 {
   if( IsVisible() )

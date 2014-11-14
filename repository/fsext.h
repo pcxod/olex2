@@ -32,7 +32,7 @@ struct TMemoryBlock {
   }
 };
 /*____________________________________________________________________________*/
-class TFileHandlerManager : public IEObject {
+class TFileHandlerManager : public IOlxObject {
 #ifdef __WXWIDGETS__
   olxstr_dict<TZipWrapper*, false> FZipFiles;
 #endif

@@ -61,7 +61,7 @@ class TXGrid: public AGDrawObject  {
     void Fit();
     virtual bool Orient(TGlPrimitive& P);
     virtual bool GetDimensions(vec3d &, vec3d &) { return false; }
-    bool OnMouseUp(const IEObject *Sender, const TMouseData& Data);
+    bool OnMouseUp(const IOlxObject *Sender, const TMouseData& Data);
     void UpdateLabel() { Fit(); }
     TStrList text;
   };
@@ -112,8 +112,8 @@ protected:
   public:
     TContextClear(TGlRenderer& Render);
     virtual ~TContextClear()  {}
-    bool Enter(const IEObject *Sender, const IEObject *Data, TActionQueue *);
-    bool Exit(const IEObject *Sender, const IEObject *Data, TActionQueue *);
+    bool Enter(const IOlxObject *Sender, const IOlxObject *Data, TActionQueue *);
+    bool Exit(const IOlxObject *Sender, const IOlxObject *Data, TActionQueue *);
   };
   static void _ResetLists()  {
     if( Instance != NULL )  {
@@ -196,9 +196,9 @@ public:
       Clear();
   }
 
-  bool OnMouseDown(const IEObject *Sender, const TMouseData& Data);
-  bool OnMouseUp(const IEObject *Sender, const TMouseData& Data);
-  bool OnMouseMove(const IEObject *Sender, const TMouseData& Data);
+  bool OnMouseDown(const IOlxObject *Sender, const TMouseData& Data);
+  bool OnMouseUp(const IOlxObject *Sender, const TMouseData& Data);
+  bool OnMouseMove(const IOlxObject *Sender, const TMouseData& Data);
 
   inline static TXGrid* GetInstance()  {  return Instance;  }
 

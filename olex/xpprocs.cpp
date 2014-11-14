@@ -3539,7 +3539,7 @@ public:
   TOnSync(TGXApp& xapp, const olxstr baseDir) : xa(xapp)  {
     BaseDir = baseDir;
   }
-  bool Execute(const IEObject *Sender, const IEObject *Data, TActionQueue *)  {
+  bool Execute(const IOlxObject *Sender, const IOlxObject *Data, TActionQueue *)  {
     if( !EsdlInstanceOf(*Data, olxstr) )  return false;
     olxstr cpath = olxstr::CommonString(BaseDir, *(const olxstr*)Data);
     TBasicApp::GetLog() << ( olxstr("\rInstalling /~/") << ((olxstr*)Data)->SubStringFrom(cpath.Length()) );
@@ -3552,19 +3552,19 @@ class TDownloadProgress: public AActionHandler  {
     TGXApp* xa;
 public:
   TDownloadProgress(TGXApp& xapp) : xa(&xapp) {  }
-  bool Enter(const IEObject *Sender, const IEObject *Data, TActionQueue *)  {
+  bool Enter(const IOlxObject *Sender, const IOlxObject *Data, TActionQueue *)  {
     if( Data != NULL && EsdlInstanceOf(*Data, TOnProgress) )
       TBasicApp::NewLogEntry() << ((TOnProgress*)Data)->GetAction();
     return true;
   }
-  bool Exit(const IEObject *Sender, const IEObject *Data, TActionQueue *)  {
+  bool Exit(const IOlxObject *Sender, const IOlxObject *Data, TActionQueue *)  {
     TBasicApp::NewLogEntry() << NewLineSequence() << "Done";
     return true;
   }
-  bool Execute(const IEObject *Sender, const IEObject *Data, TActionQueue *)  {
+  bool Execute(const IOlxObject *Sender, const IOlxObject *Data, TActionQueue *)  {
     if( !EsdlInstanceOf(*Data, TOnProgress) )
       return false;
-    IEObject* p_d = const_cast<IEObject*>(Data);
+    IOlxObject* p_d = const_cast<IOlxObject*>(Data);
     TOnProgress *A = dynamic_cast<TOnProgress*>(p_d);
     if( A->GetPos() <= 0 )  return false;
     if( A->GetMax() <= 0 )
@@ -3600,7 +3600,7 @@ void TMainForm::macInstallPlugin(TStrObjList &Cmds, const TParamList &Options,
       TOnSync* progressListener = new TOnSync(*FXApp, TBasicApp::GetBaseDir());
       osFS.OnAdoptFile.Add(progressListener);
 
-      IEObject* Cause = NULL;
+      IOlxObject* Cause = NULL;
       try  {  fsIndex.Synchronise(osFS, properties);  }
       catch( const TExceptionBase& exc )  {
         Cause = exc.Replicate();
@@ -3786,7 +3786,7 @@ void TMainForm::macUpdateFile(TStrObjList &Cmds, const TParamList &Options, TMac
   TOSFileSystem osFS(TBasicApp::GetBaseDir());
   TFSIndex fsIndex(httpFS);
 
-  IEObject* Cause = NULL;
+  IOlxObject* Cause = NULL;
   try {
     if (fsIndex.UpdateFile(osFS, Cmds[0], Force))
       TBasicApp::NewLogEntry() << "Updated '" << Cmds[0] << '\'';

@@ -22,8 +22,8 @@ class TGlCursor: public AGDrawObject, AEventsDispatcher {
   olxch Symbol;
   size_t FontIndex;
 protected:
-  bool Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
-    const IEObject *Data, TActionQueue *);
+  bool Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
+    const IOlxObject *Data, TActionQueue *);
 public:
   TGlCursor(TGlRenderer& Render, const olxstr& collectionName,
     bool TextStyle = true);

@@ -99,7 +99,7 @@ public:
 ////////////////////////////////////////////////////////////////////////////////
 //..............................................................................
 
-class xappXFileLoad: public AActionHandler  {
+class xappXFileLoad : public AActionHandler {
   TGXApp *FParent;
   TEBasis B;
   TStrList AtomNames;
@@ -120,7 +120,7 @@ public:
       delete GrowInfo;
     return;
   }
-  bool Enter(const IEObject *Sender, const IEObject *Data, TActionQueue *)  {
+  bool Enter(const IOlxObject *Sender, const IOlxObject *Data, TActionQueue *)  {
     state = 1;
     FParent->GetUndo().Clear();
     FParent->DSphere().SetAnalyser(NULL);
@@ -168,7 +168,7 @@ public:
     FParent->HklFile().Clear();
     return true;
   }
-  bool Execute(const IEObject *Sender, const IEObject *Data, TActionQueue *) {
+  bool Execute(const IOlxObject *Sender, const IOlxObject *Data, TActionQueue *) {
     state = 2;
     const TAsymmUnit& au = FParent->XFile().GetAsymmUnit();
     bool sameAU = true, hasNonQ = false;
@@ -213,7 +213,7 @@ public:
     AtomNames.Clear();
     return false;
   }
-  bool Exit(const IEObject *Sender, const IEObject *Data, TActionQueue *)  {
+  bool Exit(const IOlxObject *Sender, const IOlxObject *Data, TActionQueue *)  {
     if( state == 1 )  // somehing went not as expected? try to recover then...
       FParent->CreateObjects(true);
     state = 3;
@@ -303,7 +303,7 @@ TGXApp::TGXApp(const olxstr &FileName, AGlScene *scene)
   XFile().GetLattice().OnStructureGrow.Add(this, ID_OnGrow);
   XFile().GetLattice().OnAtomsDeleted.Add(this, ID_OnClear);
   XFile().OnFileLoad.Add(this, ID_OnFileLoad);
-  XFile().OnFileLoad.Add(&TEGC::NewG<xappXFileLoad>(this));
+  XFile().OnFileLoad.Add(&TEGC::AddP(new xappXFileLoad(this)));
   XFile().OnFileClose.Add(this, ID_OnFileClose);
   try {
     float ma = TBasicApp::GetInstance().GetOptions()
@@ -1305,7 +1305,7 @@ void TGXApp::SelectFragments(const TNetPList& frags, bool v)  {
 void TGXApp::FragmentVisible(TNetwork *N, bool V)  {
   TXAtomPList XA;
   sorted::PointerPointer<TGlGroup> groups;
-//  OnFragmentVisible->Enter(dynamic_cast<TBasicApp*>(this), dynamic_cast<IEObject*>(N));
+//  OnFragmentVisible->Enter(dynamic_cast<TBasicApp*>(this), dynamic_cast<IOlxObject*>(N));
   XA.SetCapacity(N->NodeCount());
   for( size_t i=0; i < N->NodeCount(); i++ )
     XA.Add(static_cast<TXAtom&>(N->Node(i)));
@@ -1328,17 +1328,17 @@ void TGXApp::FragmentVisible(TNetwork *N, bool V)  {
   }
   for( size_t i=0; i < groups.Count(); i++ )
     groups[i]->SetVisible(V);
-//  OnFragmentVisible->Exit(dynamic_cast<TBasicApp*>(this), dynamic_cast<IEObject*>(N));
+//  OnFragmentVisible->Exit(dynamic_cast<TBasicApp*>(this), dynamic_cast<IOlxObject*>(N));
 }
 //..............................................................................
 void TGXApp::FragmentsVisible(const TNetPList& Frags, bool V)  {
-//  OnFragmentsVisible->Enter(this, dynamic_cast<IEObject*>(Frags));
+//  OnFragmentsVisible->Enter(this, dynamic_cast<IOlxObject*>(Frags));
   for( size_t i=0; i < Frags.Count(); i++ )
     FragmentVisible(Frags[i], V);
   // synchronise the intermolecular bonds
   SetHBondsVisible(FHBondsVisible, false);
   _maskInvisible();
-  //  OnFragmentsVisible->Exit(this, dynamic_cast<IEObject*>(Frags));
+  //  OnFragmentsVisible->Exit(this, dynamic_cast<IOlxObject*>(Frags));
   Draw();
 }
 //..............................................................................
@@ -1500,8 +1500,8 @@ void TGXApp::Select(const vec3d& From, const vec3d& To )  {
   Draw();
 }
 //..............................................................................
-bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
-  const IEObject *Data, TActionQueue *)
+bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
+  const IOlxObject *Data, TActionQueue *)
 {
   static bool ObjectsStored = false, LoadingFile = false, Disassembling = false;
   if( MsgId == ID_OnSelect )  {

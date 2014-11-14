@@ -17,11 +17,11 @@ interface
 */
 namespace olex2 {
 
-class OlexProcessorImp : public IOlex2Processor {
+class OlexProcessorImp : public IOlex2Processor, public virtual IOlxObject {
   sorted::StringAssociation<ABasicFunction*> CallbackFuncs;
   ALibraryContainer *LibraryContainer;
   // object destruction handler
-  void ODH(IEObject *o) {
+  void ODH(IOlxObject *o) {
     if (o == LibraryContainer)
       LibraryContainer = NULL;
   }
@@ -55,8 +55,10 @@ public:
   virtual ~OlexProcessorImp() {
     for (size_t i=0; i < CallbackFuncs.Count(); i++)
       delete CallbackFuncs.GetValue(i);
-    if (LibraryContainer)
-      LibraryContainer->RemoveDestructionHandler(*this, &OlexProcessorImp::ODH);
+    if (LibraryContainer) {
+      LibraryContainer->RemoveDestructionObserver(
+        DestructionObserver::Make(this, &OlexProcessorImp::ODH));
+    }
   }
 
   virtual TLibrary&  GetLibrary() {
@@ -69,7 +71,8 @@ public:
 
   void SetLibraryContainer(ALibraryContainer &lc) {
     LibraryContainer = &lc;
-    lc.AddDestructionHandler(*this, &OlexProcessorImp::ODH);
+    lc.AddDestructionObserver
+      (DestructionObserver::Make(this, &OlexProcessorImp::ODH));
   }
 
   virtual bool registerCallbackFunc(const olxstr& cbEvent,

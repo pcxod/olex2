@@ -21,7 +21,7 @@
 #include "../linked_operators.h"
 BeginEsdlNamespace()
 
-class TWString : public TTIString<wchar_t>, public IEObject {
+class TWString : public TTIString<wchar_t>, public IOlxObject {
 public:
   class CharW : public linked_operators<wchar_t, CharW, char> {
     size_t Index;

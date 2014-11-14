@@ -19,7 +19,7 @@ BeginGlNamespace()
 
 class TGlFont;
 /* abstarct class */
-class AGlScene: public IEObject {
+class AGlScene: public IOlxObject {
 private:
   olxstr_dict<TGlFont*> FontsDict;
   TPtrList<TGlFont> Fonts, SmallFonts;

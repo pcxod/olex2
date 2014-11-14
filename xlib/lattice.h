@@ -33,7 +33,7 @@ public:
   void AddSAtom(const TSAtom& SA) { SAtomIds.AddCopy(SA.GetRef()); }
 };
 
-class TLattice: public IEObject  {
+class TLattice: public IOlxObject  {
 private:
   TNetwork* Network;  // for internal use only
   ASObjectProvider& Objects;

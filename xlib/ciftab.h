@@ -64,7 +64,7 @@ public:
   }
 };
 //---------------------------------------------------------------------------
-class TLinkedLoopTable: public IEObject  {
+class TLinkedLoopTable: public IOlxObject  {
   TPtrList<CifTabAtom> FAtoms;
   TPtrList<CifTabBond> FBonds;
   TPtrList<CifTabAngle> FAngles;

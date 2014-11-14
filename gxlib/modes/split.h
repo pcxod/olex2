@@ -108,8 +108,8 @@ public:
     gxapp.XFile().GetLattice().SetAnis(to_isot, false);
     gxapp.XFile().GetLattice().Uniq();
   }
-  virtual bool Dispatch(int msg, short id, const IEObject* Sender,
-    const IEObject* Data, TActionQueue *)
+  virtual bool Dispatch(int msg, short id, const IOlxObject* Sender,
+    const IOlxObject* Data, TActionQueue *)
   {
     if( msg == mode_split_ObjectsCreate )  {
       TGXApp::AtomIterator ai = gxapp.GetAtoms();

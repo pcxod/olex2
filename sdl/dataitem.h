@@ -180,7 +180,7 @@ public:
     TNonexistingDataItemException(const olxstr& location, const olxstr &Msg):
       TBasicException(location, Msg)
       {}
-    virtual IEObject* Replicate() const {
+    virtual IOlxObject* Replicate() const {
       return new TNonexistingDataItemException(*this);
     }
   };

@@ -17,12 +17,12 @@
 
 namespace ctrl_ext  {
 
-  class TTreeNodeData : public wxTreeItemData, public IEObject {
-    IEObject* Data;
+  class TTreeNodeData : public wxTreeItemData, public IOlxObject {
+    IOlxObject* Data;
   public:
-    TTreeNodeData(IEObject* obj) {  Data = obj;  }
+    TTreeNodeData(IOlxObject* obj) {  Data = obj;  }
     virtual ~TTreeNodeData()  { delete Data;  }
-    inline IEObject* GetData() const {  return Data;  }
+    inline IOlxObject* GetData() const {  return Data;  }
   };
 
   class TTreeView: public wxTreeCtrl, public AOlxCtrl  {

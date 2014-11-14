@@ -15,7 +15,7 @@
 #include "library.h"
 BeginGlNamespace()
 
-class TGlLight : public IEObject  {
+class TGlLight : public IOlxObject  {
   TGlOption Ambient;
   TGlOption Diffuse;
   TGlOption Specular;

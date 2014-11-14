@@ -22,7 +22,7 @@
 
 BeginXlibNamespace()
 
-class ExperimentalDetails : public IEObject {
+class ExperimentalDetails : public IOlxObject {
   double Radiation, RadiationEnergy;
   TEValueD TempValue;  // always in C
   vec3d CrystalSize;
@@ -72,7 +72,7 @@ public:
 
   class TLibrary* ExportLibrary(const olxstr& name=EmptyString());
   struct VPtr : public olx_virtual_ptr<ExperimentalDetails> {
-    virtual IEObject *get_ptr() const;
+    virtual IOlxObject *get_ptr() const;
   };
 };
 

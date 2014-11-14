@@ -79,7 +79,7 @@ void TMenuItem::ValidateState()  {
   }
 }
 //..............................................................................
-bool TMenuItem::Execute(const IEObject *Sender, const IEObject *Data,
+bool TMenuItem::Execute(const IOlxObject *Sender, const IOlxObject *Data,
   TActionQueue *)
 {
   if( Data && EsdlInstanceOf(*Data, TModeChange) )  {

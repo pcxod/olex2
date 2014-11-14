@@ -103,7 +103,7 @@ void TXGrid::TLegend::Fit()  {
   Height += (uint16_t)olx_round(LineSpacer*(text.Count()-1));
 }
 //.............................................................................
-bool TXGrid::TLegend::OnMouseUp(const IEObject *Sender,
+bool TXGrid::TLegend::OnMouseUp(const IOlxObject *Sender,
   const TMouseData& Data)
 {
   Left = olx_round(Left + GetCenter()[0]);
@@ -163,14 +163,14 @@ TXGrid::TContextClear::TContextClear(TGlRenderer& r)  {
   r.OnClear.Add(this);
 }
 //.............................................................................
-bool TXGrid::TContextClear::Enter(const IEObject *Sender, const IEObject *Data,
+bool TXGrid::TContextClear::Enter(const IOlxObject *Sender, const IOlxObject *Data,
   TActionQueue *)
 {
   TXGrid::_ResetLists();
   return true;
 }
 //.............................................................................
-bool TXGrid::TContextClear::Exit(const IEObject *Sender, const IEObject *Data,
+bool TXGrid::TContextClear::Exit(const IOlxObject *Sender, const IOlxObject *Data,
   TActionQueue *)
 {
   return true;
@@ -661,7 +661,7 @@ void TXGrid::SetContourLevelCount(size_t v)  {
   ContourLevels = new float[ContourLevelCount];
 }
 //.............................................................................
-bool TXGrid::OnMouseDown(const IEObject *Sender, const TMouseData& Data)  {
+bool TXGrid::OnMouseDown(const IOlxObject *Sender, const TMouseData& Data)  {
   if( (Data.Shift & sssCtrl) == 0 && (Data.Shift & sssShift) == 0 )
     return false;
   LastMouseX = Data.DownX;
@@ -670,12 +670,12 @@ bool TXGrid::OnMouseDown(const IEObject *Sender, const TMouseData& Data)  {
   return true;
 }
 //.............................................................................
-bool TXGrid::OnMouseUp(const IEObject *Sender, const TMouseData& Data) {
+bool TXGrid::OnMouseUp(const IOlxObject *Sender, const TMouseData& Data) {
   MouseDown = false;
   return !((Data.Shift & sssCtrl) == 0 && (Data.Shift & sssShift) == 0);
 }
 //.............................................................................
-bool TXGrid::OnMouseMove(const IEObject *Sender, const TMouseData& Data)  {
+bool TXGrid::OnMouseMove(const IOlxObject *Sender, const TMouseData& Data)  {
   if( !MouseDown )  return false;
   if( (Data.Button & smbLeft) != 0 ) {
     SetDepth(Depth+(float)((LastMouseX - Data.X)+(LastMouseY - Data.Y))/15);

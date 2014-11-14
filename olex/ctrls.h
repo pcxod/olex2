@@ -70,7 +70,7 @@ namespace ctrl_ext  {
     DECLARE_EVENT_TABLE()
   };
 
-  class TTimer: public wxTimer, public IEObject  {
+  class TTimer: public wxTimer, public IOlxObject  {
     void Notify()  {  OnTimer.Execute(this, NULL);  }
     TActionQList Actions;
   public:

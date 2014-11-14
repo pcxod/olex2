@@ -84,7 +84,7 @@ namespace olex2 {
     }
   };
 
-  class IOlex2Runnable : public IEObject {
+  class IOlex2Runnable : public IOlxObject {
   public:
     IOlex2Runnable() { GetOlex2Runnable() = this; }
     virtual ~IOlex2Runnable() {}

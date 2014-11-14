@@ -30,13 +30,13 @@ public:
   bool GetDimensions(vec3d &, vec3d &)  {  return false;  }
   void ListPrimitives(TStrList& List) const;
 
-  bool OnMouseDown(const IEObject *, const TMouseData &)  {
+  bool OnMouseDown(const IOlxObject *, const TMouseData &)  {
     return true;
   }
-  bool OnMouseUp(const IEObject *, const TMouseData &)  {
+  bool OnMouseUp(const IOlxObject *, const TMouseData &)  {
     return false;
   }
-  bool OnMouseMove(const IEObject *, const TMouseData &)  {
+  bool OnMouseMove(const IOlxObject *, const TMouseData &)  {
     return false;
   }
 

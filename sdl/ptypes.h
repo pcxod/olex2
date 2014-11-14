@@ -23,7 +23,7 @@ public:
   const PT& GetValue() const {  return Value;  }
   void SetValue(const PT& v)  {  Value = v;  }
   TIString ToString() const {   return olxstr(Value); }
-  virtual IEObject* Replicate() const {  return new TEPType(*this);  }
+  virtual IOlxObject* Replicate() const {  return new TEPType(*this);  }
 };
 
 template <> class TEPType<const wchar_t*> : public AReferencible  {
@@ -35,7 +35,7 @@ public:
   const olxstr& GetValue() const {  return Value;  }
   void SetValue(const wchar_t* v)  {  Value = v;  }
   TIString ToString() const {  return Value;  }
-  virtual IEObject* Replicate() const {  return new TEPType(*this);  }
+  virtual IOlxObject* Replicate() const {  return new TEPType(*this);  }
 };
 
 template <> class TEPType<const char*> : public AReferencible  {
@@ -47,19 +47,19 @@ public:
   const olxstr& GetValue() const {  return Value;  }
   void SetValue(const char* v)  {  Value = v;  }
   TIString ToString() const {  return Value;  }
-  virtual IEObject* Replicate() const {  return new TEPType(*this);  }
+  virtual IOlxObject* Replicate() const {  return new TEPType(*this);  }
 };
 
-template <> class TEPType<IEObject> : public AReferencible  {
+template <> class TEPType<IOlxObject> : public AReferencible  {
   olxstr Value;
 public:
-  TEPType(const IEObject &val) : Value(val.ToString())  {}
+  TEPType(const IOlxObject &val) : Value(val.ToString())  {}
   TEPType(const TEPType& val) : Value(val.GetValue())  {}
   olxstr& Val()  {  return Value;  }
   const olxstr& GetValue() const {  return Value;  }
   void SetValue(const char* v)  {  Value = v;  }
   TIString ToString() const {  return Value;  }
-  virtual IEObject* Replicate() const {  return new TEPType(*this);  }
+  virtual IOlxObject* Replicate() const {  return new TEPType(*this);  }
 };
 
 EndEsdlNamespace()

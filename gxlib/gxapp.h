@@ -85,7 +85,7 @@ class TGXApp : public TXApp, AEventsDispatcher, public ASelectionOwner {
   smatd_list UsedTransforms;
   TTypeListExt<TXReflection, AGDrawObject> XReflections;
   TPtrList<TGlBitmap> GlBitmaps;
-  TTypeListExt<TXGlLabel, IEObject> XLabels;
+  TTypeListExt<TXGlLabel, IOlxObject> XLabels;
   TTypeListExt<TDRing, AGDrawObject> Rings;
   TXGlLabels *FLabels;
   TTypeListExt<TXLine, AGDrawObject> Lines;
@@ -188,8 +188,8 @@ protected:
   TDSphere *FDSphere;
 
   void FragmentVisible( TNetwork *N, bool V);
-  bool Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
-    const IEObject *Data, TActionQueue *);
+  bool Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
+    const IOlxObject *Data, TActionQueue *);
   void GetGPCollections(AGDObjList& GDObjects, TPtrList<TGPCollection>& Result);
   struct BondRef  {
     const TLattice& latt;
