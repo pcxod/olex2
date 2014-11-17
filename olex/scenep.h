@@ -45,6 +45,5 @@ public:
   virtual ~TdlgSceneProps();
   void LoadFromFile(TGlLightModel &FLM, const olxstr &FN);
   void SaveToFile(TGlLightModel &FLM, const olxstr &FN);
-  DECLARE_EVENT_TABLE()
 };
 #endif

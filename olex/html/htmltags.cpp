@@ -608,7 +608,7 @@ TAG_HANDLER_PROC(tag)  {
 /******************* COMBOBOX *************************************************/
   else if (TagName.Equalsi("combo")) {
     if (GetBoolAttribute(tag, "READONLY")) {
-      TChoice *Box = new TChoice(html, wxSize(ax, ay));
+      TChoice *Box = new TChoice(html, -1, wxDefaultPosition, wxSize(ax, ay));
       Box->SetFont(m_WParser->GetDC()->GetFont());
       AdjustSize(*Box);
       CreatedObject = Box;
@@ -661,7 +661,8 @@ TAG_HANDLER_PROC(tag)  {
         m_WParser->GetContainer()->InsertCell(new THtmlWidgetCell(Box, fl));
     }
     else {
-      TComboBox *Box = new TComboBox(html, false, wxSize(ax, ay));
+      TComboBox *Box = new TComboBox(html, -1, wxEmptyString, wxDefaultPosition,
+        wxSize(ax, ay));
       Box->SetFont(m_WParser->GetDC()->GetFont());
       AdjustSize(*Box);
       CreatedObject = Box;

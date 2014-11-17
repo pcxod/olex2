@@ -24,17 +24,9 @@ namespace ctrl_ext {
     int entered_counter;
     bool OnChangeAlways, hasDefault;
   public:
-    TChoice(wxWindow *Parent, const wxSize& sz = wxDefaultSize) :
-      AOlxCtrl(this),
-      OnChange(AOlxCtrl::ActionQueue::New(Actions, evt_change_id)),
-      OnLeave(AOlxCtrl::ActionQueue::New(Actions, evt_on_mouse_leave_id)),
-      OnEnter(AOlxCtrl::ActionQueue::New(Actions, evt_on_mouse_enter_id))
-    {
-      wxChoice::Create(Parent, -1, wxDefaultPosition, sz);
-      OnLeave.SetEnabled(false);
-      entered_counter = 0;
-      OnChangeAlways = false;
-    }
+    TChoice(wxWindow *Parent, wxWindowID id = -1,
+      const wxPoint& pos = wxDefaultPosition,
+      const wxSize& size = wxDefaultSize, long style = 0);
     virtual ~TChoice();
 
     void Clear();
@@ -64,9 +56,6 @@ namespace ctrl_ext {
     void HandleOnEnter();
 
     ActionQueue &OnChange, &OnLeave, &OnEnter;
-
-    DECLARE_CLASS(TComboBox)
-    DECLARE_EVENT_TABLE()
   };
 };  // end namespace ctrl_ext
 #endif

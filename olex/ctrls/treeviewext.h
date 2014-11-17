@@ -33,22 +33,24 @@ namespace ctrl_ext  {
     void ItemEditEvent(wxTreeEvent& event);
     void OnMouseUp(wxMouseEvent& event);
     void OnContextMenu(wxCommandEvent& event);
-    size_t ReadStrings(size_t& index, const wxTreeItemId* thisCaller, const TStrList& strings);
+    size_t ReadStrings(size_t& index, const wxTreeItemId* thisCaller,
+      const TStrList& strings);
     void ClearData();
     wxMenu* Popup;
     // returns index of the selected item...
-    size_t _SaveState(TEBitArray& res, const wxTreeItemId& item, size_t& counter) const;
-    void _RestoreState(const TEBitArray& res, const wxTreeItemId& item, size_t& counter, size_t selected);
-    wxTreeItemId _FindByLabel(const wxTreeItemId& root, const olxstr& label) const;
-    wxTreeItemId _FindByData(const wxTreeItemId& root, const olxstr& data) const;
+    size_t _SaveState(TEBitArray& res, const wxTreeItemId& item,
+      size_t& counter) const;
+    void _RestoreState(const TEBitArray& res, const wxTreeItemId& item,
+      size_t& counter, size_t selected);
+    wxTreeItemId _FindByLabel(const wxTreeItemId& root,
+      const olxstr& label) const;
+    wxTreeItemId _FindByData(const wxTreeItemId& root,
+      const olxstr& data) const;
   public:
-    TTreeView(wxWindow* Parent, long flags=(wxTR_HAS_BUTTONS|wxTR_LINES_AT_ROOT)) :
-      wxTreeCtrl(Parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, flags),
-      AOlxCtrl(this),
-      Popup(NULL),
-      OnSelect(AOlxCtrl::ActionQueue::New(Actions, evt_on_select_id)),
-      OnDblClick(AOlxCtrl::ActionQueue::New(Actions, evt_on_dbl_click_id)),
-      OnEdit(AOlxCtrl::ActionQueue::New(Actions, evt_change_id))  {}
+    TTreeView(wxWindow* Parent, wxWindowID id = -1,
+      const wxPoint& pos = wxDefaultPosition,
+      const wxSize& size = wxDefaultSize,
+      long flags = (wxTR_HAS_BUTTONS | wxTR_LINES_AT_ROOT));
 
     virtual ~TTreeView()  {
       ClearData();
@@ -67,8 +69,6 @@ namespace ctrl_ext  {
 
     AOlxCtrl::ActionQueue &OnDblClick, &OnSelect, &OnEdit;
 
-    DECLARE_CLASS(TTreeView)
-    DECLARE_EVENT_TABLE()
   };
 }; // end namespace ctrl_ext
 #endif

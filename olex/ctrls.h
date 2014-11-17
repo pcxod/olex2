@@ -67,7 +67,6 @@ namespace ctrl_ext  {
     int ShowModalEx(bool manage_parent);
     TActionQueue &OnResize;
     DECLARE_CLASS(TDialog)
-    DECLARE_EVENT_TABLE()
   };
 
   class TTimer: public wxTimer, public IOlxObject  {

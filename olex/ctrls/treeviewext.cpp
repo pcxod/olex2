@@ -11,22 +11,30 @@
 #include "frameext.h"
 
 using namespace ctrl_ext;
-IMPLEMENT_CLASS(TTreeView, wxTreeCtrl)
 
 enum  {
   ID_ExpandAll = 1000,
   ID_CollapseAll
 };
-BEGIN_EVENT_TABLE(TTreeView, wxTreeCtrl)
-  EVT_TREE_ITEM_ACTIVATED(-1, TTreeView::ItemActivateEvent)
-  EVT_TREE_SEL_CHANGED(-1, TTreeView::SelectionEvent)
-  EVT_TREE_END_LABEL_EDIT(-1, TTreeView::ItemEditEvent)
-  EVT_LEFT_UP(TTreeView::OnMouseUp)
-  EVT_RIGHT_UP(TTreeView::OnMouseUp)
-  EVT_MENU(ID_ExpandAll, TTreeView::OnContextMenu)
-  EVT_MENU(ID_CollapseAll, TTreeView::OnContextMenu)
-END_EVENT_TABLE()
-
+//..............................................................................
+TTreeView::TTreeView(wxWindow* Parent, wxWindowID id,
+const wxPoint& pos, const wxSize& size, long flags)
+: wxTreeCtrl(Parent, id, pos, size, flags),
+  AOlxCtrl(this),
+  Popup(NULL),
+  OnSelect(AOlxCtrl::ActionQueue::New(Actions, evt_on_select_id)),
+  OnDblClick(AOlxCtrl::ActionQueue::New(Actions, evt_on_dbl_click_id)),
+  OnEdit(AOlxCtrl::ActionQueue::New(Actions, evt_change_id))
+{
+  Bind(wxEVT_TREE_ITEM_ACTIVATED, &TTreeView::ItemActivateEvent, this);
+  Bind(wxEVT_TREE_SEL_CHANGED, &TTreeView::SelectionEvent, this);
+  Bind(wxEVT_TREE_END_LABEL_EDIT, &TTreeView::ItemEditEvent, this);
+  Bind(wxEVT_LEFT_UP, &TTreeView::OnMouseUp, this);
+  Bind(wxEVT_RIGHT_UP, &TTreeView::OnMouseUp, this);
+  Bind(wxEVT_MENU, &TTreeView::OnContextMenu, this, ID_ExpandAll);
+  Bind(wxEVT_MENU, &TTreeView::OnContextMenu, this, ID_CollapseAll);
+}
+//..............................................................................
 void TTreeView::ItemActivateEvent(wxTreeEvent& event)  {
   event.Skip();
   OnDblClick.Execute(this);

@@ -12,17 +12,27 @@
 #include "olxvar.h"
 
 using namespace ctrl_ext;
-IMPLEMENT_CLASS(TTextEdit, wxTextCtrl)
-
-BEGIN_EVENT_TABLE(TTextEdit, wxTextCtrl)
-  EVT_LEFT_DCLICK(TTextEdit::ClickEvent)
-  EVT_TEXT(-1, TTextEdit::ChangeEvent)
-  EVT_CHAR(TTextEdit::CharEvent)
-  EVT_KEY_DOWN(TTextEdit::KeyDownEvent)
-  EVT_TEXT_ENTER(-1, TTextEdit::EnterPressedEvent)
-  EVT_KILL_FOCUS(TTextEdit::LeaveEvent)
-  EVT_SET_FOCUS(TTextEdit::EnterEvent)
-END_EVENT_TABLE()
+//..............................................................................
+TTextEdit::TTextEdit(wxWindow *Parent, wxWindowID id, const wxString& value,
+  const wxPoint& pos, const wxSize& size, long style)
+: wxTextCtrl(Parent, id, value, pos, size, style),
+  AOlxCtrl(this),
+  OnChange(AOlxCtrl::ActionQueue::New(Actions, evt_change_id)),
+  OnLeave(AOlxCtrl::ActionQueue::New(Actions, evt_on_mouse_leave_id)),
+  OnEnter(AOlxCtrl::ActionQueue::New(Actions, evt_on_mouse_enter_id)),
+  OnReturn(AOlxCtrl::ActionQueue::New(Actions, evt_on_return_id)),
+  OnClick(AOlxCtrl::ActionQueue::New(Actions, evt_on_click_id)),
+  OnChar(AOlxCtrl::ActionQueue::New(Actions, evt_on_char_id)),
+  OnKeyDown(AOlxCtrl::ActionQueue::New(Actions, evt_on_key_down_id))
+{
+  Bind(wxEVT_LEFT_DCLICK, &TTextEdit::ClickEvent, this);
+  Bind(wxEVT_TEXT, &TTextEdit::ChangeEvent, this);
+  Bind(wxEVT_CHAR, &TTextEdit::CharEvent, this);
+  Bind(wxEVT_KEY_DOWN, &TTextEdit::KeyDownEvent, this);
+  Bind(wxEVT_TEXT_ENTER, &TTextEdit::EnterPressedEvent, this);
+  Bind(wxEVT_KILL_FOCUS, &TTextEdit::LeaveEvent, this);
+  Bind(wxEVT_SET_FOCUS, &TTextEdit::EnterEvent, this);
+}
 //..............................................................................
 void TTextEdit::ClickEvent(wxMouseEvent& event)  {
   OnClick.Execute(this);

@@ -12,7 +12,7 @@
 #include "bapp.h"
 
 TCmdLine::TCmdLine(wxWindow* parent, int flags) :
-  TTextEdit(parent, flags),
+  TTextEdit(parent, -1, wxEmptyString, wxDefaultPosition, wxDefaultSize, flags),
   OnCommand(Actions.New("ONCOMMAND"))
 {
   PromptStr = ">>";

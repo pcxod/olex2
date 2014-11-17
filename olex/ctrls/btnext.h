@@ -11,9 +11,9 @@
 #define __olx_ctrl_btn_H
 #include "olxctrlbase.h"
 
-namespace ctrl_ext  {
+namespace ctrl_ext {
 
-  class AButtonBase: public AActionHandler, public AOlxCtrl  {
+  class AButtonBase: public AActionHandler, public AOlxCtrl {
     bool Down;
   protected:
     void _ClickEvent();
@@ -28,17 +28,23 @@ namespace ctrl_ext  {
       OnUp(AOlxCtrl::ActionQueue::New(Actions, evt_on_uncheck_id)),
       OnDown(AOlxCtrl::ActionQueue::New(Actions, evt_on_check_id)),
       Down(false),
-      ActionQueue(NULL)  {  SetToDelete(false);  }
-    virtual ~AButtonBase() {  if( ActionQueue != NULL )  ActionQueue->Remove(this);  }
+      ActionQueue(NULL)
+    {
+      SetToDelete(false);
+    }
+    virtual ~AButtonBase() {
+      if (ActionQueue != NULL)
+        ActionQueue->Remove(this);
+    }
 
     void SetActionQueue(TActionQueue& q, const olxstr& dependMode);
-    bool Execute(const IOlxObject *Sender, const IOlxObject *Data, TActionQueue *);
-    void OnRemove(TActionQueue *)  {  ActionQueue = NULL;  }
+    bool Execute(const IOlxObject *, const IOlxObject *, TActionQueue *);
+    void OnRemove(TActionQueue *) { ActionQueue = NULL; }
 
     DefPropC(olxstr, Data)
     DefPropC(olxstr, Hint)
 
-    bool IsDown() const {  return Down;  }
+    bool IsDown() const { return Down; }
     void SetDown(bool v);
 
     AOlxCtrl::ActionQueue &OnClick, &OnUp, &OnDown;
@@ -51,17 +57,13 @@ namespace ctrl_ext  {
   protected:
     virtual wxWindow* GetParent() const {  return wxButton::GetParent();  }
   public:
-    TButton(wxWindow* parent, wxWindowID id=-1, const wxString& label=wxEmptyString,
-      const wxPoint& pos=wxDefaultPosition,
-      const wxSize& size = wxDefaultSize, long style = 0) :
-        wxButton(parent, id, label, pos, size, style),
-        AButtonBase(this)  {}
+    TButton(wxWindow* parent, wxWindowID id = -1,
+      const wxString& label = wxEmptyString,
+      const wxPoint& pos = wxDefaultPosition,
+      const wxSize& size = wxDefaultSize, long style = 0);
 
     void SetCaption(const olxstr &l)  {  wxButton::SetLabel(l.u_str());  }
     olxstr GetCaption() const { return wxButton::GetLabel();  }
-
-    DECLARE_CLASS(TButton)
-    DECLARE_EVENT_TABLE()
   };
 
   class TBmpButton: public wxBitmapButton, public AButtonBase  {
@@ -70,18 +72,14 @@ namespace ctrl_ext  {
     void ClickEvent(wxCommandEvent&)  {  AButtonBase::_ClickEvent();  }
     olxstr Source;
   public:
-    virtual wxWindow* GetParent() const {  return wxBitmapButton::GetParent();  }
+    virtual wxWindow* GetParent() const { return wxBitmapButton::GetParent(); }
   public:
-    TBmpButton(wxWindow* parent, wxWindowID id=-1, const wxBitmap& bitmap=wxNullBitmap,
-      const wxPoint& pos=wxDefaultPosition,
-      const wxSize& size=wxDefaultSize, long style=wxBU_AUTODRAW) :
-        wxBitmapButton(parent, -1, bitmap, pos, size, style),
-        AButtonBase(this)  {}
+    TBmpButton(wxWindow* parent, wxWindowID id = -1,
+      const wxBitmap& bitmap = wxNullBitmap,
+      const wxPoint& pos = wxDefaultPosition,
+      const wxSize& size = wxDefaultSize, long style = wxBU_AUTODRAW);
 
     DefPropC(olxstr, Source)
-
-    DECLARE_CLASS(TBmpButton)
-    DECLARE_EVENT_TABLE()
   };
 
   class TImgButton : public wxPanel, public AButtonBase  {
@@ -102,7 +100,7 @@ namespace ctrl_ext  {
     wxBitmap BmpFromImage(const wxImage& img, int w, int h) const;
     void ClickEvent(wxCommandEvent&)  {  AButtonBase::_ClickEvent();  }
     void EraseBGEvent(wxEraseEvent&)  {}
-    void SetImages(const TTypeList<wxImage>& images, short imgState, int w=-1, int h=-1);
+    void SetImages(const TTypeList<wxImage>&, short , int w=-1, int h=-1);
   public:
     TImgButton(wxWindow* parent);
 
@@ -116,7 +114,8 @@ namespace ctrl_ext  {
     }
     bool IsEnabled() const {  return state != stDisabled;  }
     void SetEnabled(bool v)  {  state = (v ? stUp : stDisabled);  }
-    void SetDown(bool v);  // swaps Up and Down images if v is different to Down state...
+    // swaps Up and Down images if v is different to Down state...
+    void SetDown(bool v);
     const olxstr& GetSource() const {  return Source;  }
     short GetWidth() const {  return width;  }
     short GetHeight() const {  return height;  }
@@ -127,8 +126,6 @@ namespace ctrl_ext  {
     void MouseMoveEvent(wxMouseEvent& event);
     void MouseEnterEvent(wxMouseEvent& event);
     void MouseLeaveEvent(wxMouseEvent& event);
-
-    DECLARE_EVENT_TABLE()
   };
 }; //end namespace ctrl_ext
 #endif

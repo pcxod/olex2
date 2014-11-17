@@ -21,14 +21,6 @@
 #  define wxComp(a,b) (b)
 #endif
 
-
-BEGIN_EVENT_TABLE(TdlgSceneProps, TDialog)
-  EVT_BUTTON(wxID_OK, TdlgSceneProps::OnOK)
-  EVT_BUTTON(wxID_CANCEL, TdlgSceneProps::OnCancel)
-  EVT_BUTTON(wxID_OPEN, TdlgSceneProps::OnOpen)
-  EVT_BUTTON(wxID_SAVE, TdlgSceneProps::OnSave)
-  EVT_BUTTON(wxID_APPLY, TdlgSceneProps::OnApply)
-END_EVENT_TABLE()
 //..............................................................................
 TdlgSceneProps::TdlgSceneProps(TMainFrame *ParentFrame) :
   TDialog(ParentFrame, wxT("Scene Parameters"), EsdlClassName(TdlgSceneProps).u_str() )
@@ -54,25 +46,25 @@ TdlgSceneProps::TdlgSceneProps(TMainFrame *ParentFrame) :
   //    Light position ********************************************************
   wxStaticBox *boxLP = new wxStaticBox(wxComp(boxLS, this), -1, wxT("Light position"));
   wxStaticText *stX = new wxStaticText(wxComp(boxLP, this), -1, wxT("X"), wxDefaultPosition);
-  tbX = new TTrackBar(wxComp(boxLP, this), wxDefaultSize);
+  tbX = new TTrackBar(wxComp(boxLP, this));
     tbX->OnChange.Add(this);
     tbX->SetRange(-100,100);
   teX = new TTextEdit(wxComp(boxLP, this));
     teX->SetReadOnly(true);
   wxStaticText *stY = new wxStaticText(wxComp(boxLP, this), -1, wxT("Y"), wxDefaultPosition);
-  tbY = new TTrackBar(wxComp(boxLP, this), wxDefaultSize);
+  tbY = new TTrackBar(wxComp(boxLP, this));
     tbY->OnChange.Add(this);
     tbY->SetRange(-100,100);
   teY = new TTextEdit(wxComp(boxLP, this));
     teY->SetReadOnly(true);
   wxStaticText *stZ = new wxStaticText(wxComp(boxLP, this), -1, wxT("Z"), wxDefaultPosition);
-  tbZ = new TTrackBar(wxComp(boxLP, this), wxDefaultSize);
+  tbZ = new TTrackBar(wxComp(boxLP, this));
     tbZ->OnChange.Add(this);
     tbZ->SetRange(-100,100);
   teZ = new TTextEdit(wxComp(boxLP, this));
     teZ->SetReadOnly(true);
   wxStaticText *stR = new wxStaticText(wxComp(boxLP, this), -1, wxT("R"), wxDefaultPosition);
-  tbR  = new TTrackBar(wxComp(boxLP, this), wxDefaultSize);
+  tbR  = new TTrackBar(wxComp(boxLP, this));
     tbR->OnChange.Add(this);
     tbR->SetRange(-3,3);
   teR = new TTextEdit(wxComp(boxLP, this));
@@ -289,6 +281,11 @@ TdlgSceneProps::TdlgSceneProps(TMainFrame *ParentFrame) :
   TSizer3->SetSizeHints(this);
 
   Center();
+  Bind(wxEVT_BUTTON, &TdlgSceneProps::OnOK, this, wxID_OK);
+  Bind(wxEVT_BUTTON, &TdlgSceneProps::OnCancel, this, wxID_CANCEL);
+  Bind(wxEVT_BUTTON, &TdlgSceneProps::OnOpen, this, wxID_OPEN);
+  Bind(wxEVT_BUTTON, &TdlgSceneProps::OnSave, this, wxID_SAVE);
+  Bind(wxEVT_BUTTON, &TdlgSceneProps::OnApply, this, wxID_APPLY);
 
   FCurrentLight = 0;
   FLightModel = TGXApp::GetInstance().GetRenderer().LightModel;

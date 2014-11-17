@@ -101,15 +101,6 @@ public:
 // TGlApp function bodies
 //----------------------------------------------------------------------------//
 //..............................................................................
-BEGIN_EVENT_TABLE(TGlXApp, wxApp)
-  EVT_IDLE(TGlXApp::OnIdle)
-  EVT_CHAR(TGlXApp::OnChar)
-  EVT_KEY_DOWN(TGlXApp::OnKeyDown)
-  EVT_MOUSE_EVENTS(TGlXApp::OnMouse)
-  EVT_NAVIGATION_KEY(TGlXApp::OnNavigation)
-END_EVENT_TABLE()
-
-//..............................................................................
 bool TGlXApp::OnInit() {
   setlocale(LC_NUMERIC, "C");
   wxApp::SetAppName(wxT("olex2"));
@@ -242,6 +233,10 @@ bool TGlXApp::OnInit() {
   SetTopWindow(MainForm);
   //MainForm->Maximize(true);
   Bind(OLX_COMMAND_EVT, &TGlXApp::OnCmd, this);
+  Bind(wxEVT_IDLE, &TGlXApp::OnIdle, this);
+  Bind(wxEVT_CHAR, &TGlXApp::OnChar, this);
+  Bind(wxEVT_KEY_DOWN, &TGlXApp::OnKeyDown, this);
+  Bind(wxEVT_NAVIGATION_KEY, &TGlXApp::OnNavigation, this);
   MainForm->Show(true);
   return true;
 }
@@ -311,10 +306,6 @@ void TGlXApp::OnIdle(wxIdleEvent& event)  {
   if (GetMainForm()->idle_start == 0)
     GetMainForm()->idle_start = TETime::msNow();
   GetMainForm()->OnIdle();
-}
-//..............................................................................
-void TGlXApp::OnMouse(wxMouseEvent &evt) {
-  evt.Skip();
 }
 //..............................................................................
 void TGlXApp::OnCmd(olxCommandEvent &evt) {
