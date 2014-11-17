@@ -12,6 +12,7 @@
 #include "threex3.h"
 #include "gllabel.h"
 #include "glprimitive.h"
+#include "asymmunit.h"
 BeginGxlNamespace()
 
 class TDUnitCell: public AGDrawObject {
@@ -23,7 +24,9 @@ class TDUnitCell: public AGDrawObject {
 public:
   TDUnitCell(TGlRenderer& Render, const olxstr& collectionName);
   virtual ~TDUnitCell();
-  void Init(const double cell_params[6]);
+  // 6 parameters are expected
+  void Init(const double *cell_params);
+  void Init(const TAsymmUnit &au);
   void UpdateLabel();
   size_t LabelCount() const {  return 4;  }
   TXGlLabel& GetLabel(size_t i) const {  return *Labels[i];  }

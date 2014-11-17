@@ -39,41 +39,41 @@ public:
 
   template <class base_t>
   struct TMemberFunctionGetter_0 : public IGetter {
-    const base_t &instance;
+    const olx_vptr<base_t> instance;
     bool (base_t::*getter)() const;
-    TMemberFunctionGetter_0(const base_t &instance,
+    TMemberFunctionGetter_0(const olx_vptr<base_t> &instance,
       bool (base_t::*getter)() const)
       : instance(instance), getter(getter)
     {}
     virtual bool operator ()(const olxstr &data) const {
       if (!data.IsEmpty())
         throw TInvalidArgumentException(__OlxSourceInfo, "data");
-      return (instance.*getter)();
+      return (instance().*getter)();
     }
   };
   template <class base_t>
   struct TMemberFunctionGetter_1 : public IGetter {
-    const base_t &instance;
+    const olx_vptr<base_t> instance;
     bool (base_t::*getter)(const olxstr &) const;
-    TMemberFunctionGetter_1(const base_t &instance,
+    TMemberFunctionGetter_1(const olx_vptr<base_t> &instance,
       bool (base_t::*getter)(const olxstr &) const)
       : instance(instance), getter(getter)
     {}
     virtual bool operator ()(const olxstr &data) const {
-      return (instance.*getter)(data);
+      return (instance().*getter)(data);
     }
   };
   template <class base_t>
   struct TMemberFunctionGetter_2 : public IGetter {
-    const base_t &instance;
+    const olx_vptr<base_t> instance;
     const size_t state_id;
     bool (base_t::*getter)(size_t id, const olxstr &) const;
-    TMemberFunctionGetter_2(const base_t &instance, size_t state_id,
+    TMemberFunctionGetter_2(const olx_vptr<base_t> &instance, size_t state_id,
       bool (base_t::*getter)(size_t, const olxstr &) const)
       : instance(instance), state_id(state_id), getter(getter)
     {}
     virtual bool operator ()(const olxstr &data) const {
-      return (instance.*getter)(state_id, data);
+      return (instance().*getter)(state_id, data);
     }
   };
 
@@ -156,34 +156,40 @@ public:
     slots.Add(slot)->name = str_repr;
     return slots_d.Add(str_repr, slots.Count()-1);
   }
-  template <class base_t> static IGetter *NewGetter(const base_t &inst,
+  template <class base_t> static IGetter *NewGetter(
+    const olx_vptr<base_t> &inst,
     bool (base_t::*getter)() const)
   {
     return new TMemberFunctionGetter_0<base_t>(inst, getter);
   }
-  template <class base_t> static IGetter *NewGetter(const base_t &inst,
+  template <class base_t> static IGetter *NewGetter(
+    const olx_vptr<base_t> &inst,
     bool (base_t::*getter)(const olxstr &) const)
   {
     return new TMemberFunctionGetter_1<base_t>(inst, getter);
   }
   // special shortcut - the ID as assumed to be generated next step
-  template <class base_t> IGetter *NewGetter(const base_t &inst,
+  template <class base_t> IGetter *NewGetter(
+    const olx_vptr<base_t> &inst,
     bool (base_t::*getter)(size_t, const olxstr &) const) const
   {
     return new TMemberFunctionGetter_2<base_t>(inst, slots.Count(), getter);
   }
-  template <class base_t> static IGetter *NewGetter(const base_t &inst,
+  template <class base_t> static IGetter *NewGetter(
+    const olx_vptr<base_t> &inst,
     size_t state_id, bool (base_t::*getter)(size_t, const olxstr &) const)
   {
     return new TMemberFunctionGetter_2<base_t>(inst, state_id, getter);
   }
 
-  template <class base_t> static ISetter *NewSetter(base_t &inst,
+  template <class base_t> static ISetter *NewSetter(
+    const olx_vptr<base_t> &inst,
     void (base_t::*setter)(bool v, const olxstr &))
   {
     return new TMemberFunctionSetter_2<base_t>(inst, setter);
   }
-  template <class base_t> static ISetter *NewSetter(base_t &inst,
+  template <class base_t> static ISetter *NewSetter(
+    const olx_vptr<base_t> &inst,
     void (base_t::*setter)(bool v))
   {
     return new TMemberFunctionSetter_1<base_t>(inst, setter);

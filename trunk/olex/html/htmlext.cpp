@@ -40,7 +40,7 @@ THtml::THtml(THtmlManager &manager, wxWindow *Parent,
   if (stateTooltipsVisible() == InvalidIndex) {
     stateTooltipsVisible() = TStateRegistry::GetInstance().Register("htmlttvis",
       new TStateRegistry::Slot(
-        TStateRegistry::NewGetter(*this, &THtml::GetShowTooltips),
+        TStateRegistry::NewGetter<THtml>(this, &THtml::GetShowTooltips),
         new TStateRegistry::TMacroSetter("html.Tooltips")
       )
     );

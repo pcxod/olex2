@@ -3444,15 +3444,7 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
       gpc.GetStyle().SetMaterial("Sphere", dm);
       gpc.GetStyle().SetMaterial("Cylinder", dm);
       gpc.GetStyle().SetMaterial("Lines", dm);
-      const double cell[6] = {
-        latt.GetAsymmUnit().GetAxes()[0],
-        latt.GetAsymmUnit().GetAxes()[1],
-        latt.GetAsymmUnit().GetAxes()[2],
-        latt.GetAsymmUnit().GetAngles()[0],
-        latt.GetAsymmUnit().GetAngles()[1],
-        latt.GetAsymmUnit().GetAngles()[2]
-      };
-      duc->Init(cell);
+      duc->Init(latt.GetAsymmUnit());
       duc->Create(cname);
       for (size_t i = 0; i < duc->EdgeCount(); i++) {
         duc->GetEdge(i) = tm*duc->GetEdge(i);
@@ -3463,6 +3455,9 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
     for (size_t i = 0; i < latt.GetObjects().atoms.Count(); i++) {
       TSAtom &a = latt.GetObjects().atoms[i];
       a.crd() = tm*latt.GetAsymmUnit().Orthogonalise(a.ccrd());
+    }
+    for (size_t i = 0; i < latt.GetObjects().bonds.Count(); i++) {
+      dynamic_cast<TXBond &>(latt.GetObjects().bonds[i]).Update();
     }
     //v = tm*(v-tr);
     return;

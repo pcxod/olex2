@@ -21,7 +21,7 @@ static olxstr
   olxappevent_GL_CLEAR_STYLES("GLDSCLEAR"),
   olxappevent_UPDATE_GUI("UPDATE_GUI");
 
-class TBasicApp: public IOlxObject {
+class TBasicApp: public virtual IOlxObject {
   olxstr
 /* the directory from which the program is running */
     BaseDir,

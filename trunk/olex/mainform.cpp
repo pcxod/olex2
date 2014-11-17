@@ -1265,25 +1265,25 @@ void TMainForm::XApp(Olex2App *XA)  {
   TStateRegistry &states = FXApp->GetStatesRegistry();
   stateHtmlVisible = states.Register("htmlvis",
     new TStateRegistry::Slot(
-      states.NewGetter(*this, &TMainForm::CheckState),
+      states.NewGetter<TMainForm>(this, &TMainForm::CheckState),
       new TStateRegistry::TMacroSetter("HtmlPanelVisible")
     )
   );
   stateInfoWidnowVisible = states.Register("infovis",
     new TStateRegistry::Slot(
-      TStateRegistry::NewGetter<TGlTextBox>(*FInfoBox, &TGlTextBox::IsVisible),
+      TStateRegistry::NewGetter<TGlTextBox>(FInfoBox, &TGlTextBox::IsVisible),
       new TStateRegistry::TMacroSetter("ShowWindow info")
     )
   );
   stateHelpWindowVisible = states.Register("helpvis",
     new TStateRegistry::Slot(
-      TStateRegistry::NewGetter<TGlTextBox>(*FHelpWindow, &TGlTextBox::IsVisible),
+      TStateRegistry::NewGetter<TGlTextBox>(FHelpWindow, &TGlTextBox::IsVisible),
       new TStateRegistry::TMacroSetter("ShowWindow help")
     )
   );
   stateCmdLineVisible = states.Register("cmdlinevis",
     new TStateRegistry::Slot(
-      states.NewGetter(*this, &TMainForm::CheckState),
+      states.NewGetter<TMainForm>(this, &TMainForm::CheckState),
       new TStateRegistry::TMacroSetter("ShowWindow cmdline")
     )
   );

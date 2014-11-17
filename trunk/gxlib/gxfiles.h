@@ -31,6 +31,9 @@ public:
   TGXFile(struct XObjectProvider &);
   ~TGXFile();
 
+  void ToDataItem(TDataItem& item);
+  void FromDataItem(const TDataItem& item);
+
   TDUnitCell *DUnitCell;
 };
 

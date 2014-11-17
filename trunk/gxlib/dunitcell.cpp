@@ -30,12 +30,20 @@ AGDrawObject(R, collectionName), Edges(24)
     (Labels[i] = new TXGlLabel(Parent, label_cn))->SetVisible(false);
 }
 //...........................................................................
-TDUnitCell::~TDUnitCell()  {
-  for( int i=0; i < 4; i++ )
+TDUnitCell::~TDUnitCell() {
+  for (int i=0; i < 4; i++)
     delete Labels[i];
 }
 //...........................................................................
-void TDUnitCell::Init(const double cell[6])  {
+void TDUnitCell::Init(const TAsymmUnit &au) {
+  double cell[6] = {
+    au.GetAxes()[0], au.GetAxes()[1], au.GetAxes()[2],
+    au.GetAngles()[0], au.GetAngles()[1], au.GetAngles()[2]
+  };
+  Init(&cell[0]);
+}
+//...........................................................................
+void TDUnitCell::Init(const double *cell) {
   if( cell[0] == 0 )  return;
   const double cG = cos(cell[5]/180*M_PI),
          cB = cos(cell[4]/180*M_PI),
@@ -65,6 +73,7 @@ void TDUnitCell::Init(const double cell[6])  {
   HklToCartesian[0] /= V;
   HklToCartesian[1] /= V;
   HklToCartesian[2] /= V;
+  SetReciprocal(IsReciprocal());
 }
 //...........................................................................
 void TDUnitCell::SetReciprocal(bool v, double scale)  {

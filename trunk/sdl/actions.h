@@ -28,12 +28,14 @@ class AEventsDispatcher;
 class TActionQueue;
 class TActionQList;
 
-struct TDispatchInfo  {
+struct TDispatchInfo {
   int MsgId;
   int MsgSubId;
-  AEventsDispatcher* Dispatcher;
-  TDispatchInfo(int msgid, int subid, AEventsDispatcher* dispatcher) :
-    MsgId(msgid), MsgSubId(subid), Dispatcher(dispatcher) {}
+  olx_vptr<AEventsDispatcher> Dispatcher;
+  TDispatchInfo(int msgid, int subid,
+    const olx_vptr<AEventsDispatcher> &dispatcher)
+    : MsgId(msgid), MsgSubId(subid), Dispatcher(dispatcher)
+  {}
 };
 // abstract class;  an item of the actionqueue
 class AActionHandler : public ACollectionItem {
@@ -90,7 +92,7 @@ public:
 };
 
 class TActionQueue: public AActionHandler {
-  TPtrList<AActionHandler> Handlers;
+  TTypeList<olx_vptr<AActionHandler> > Handlers;
   TTypeList<TDispatchInfo> Dispatchers;
   olxstr Name;
   TActionQList* Parent;
@@ -104,22 +106,23 @@ public:
   void TakeOver(TActionQueue& aq);
 
   size_t HandlerCount() const { return Handlers.Count(); };
-  AActionHandler& GetHandler(size_t i) const { return *Handlers[i]; }
+  AActionHandler& GetHandler(size_t i) const { return Handlers[i](); }
 
   size_t DispatcherCount() const {  return Dispatchers.Count(); };
   AEventsDispatcher& GetDispatcher(size_t i) const {
-    return *Dispatchers[i].Dispatcher;
+    return Dispatchers[i].Dispatcher();
   }
   // adds new handler
-  void Add(AActionHandler* handler);
+  void Add(const olx_vptr<AActionHandler> &handler);
   /* inserts a new handler at the beginning of the list so that it will be
   executed first of all
   */
-  void AddFirst(AActionHandler* handler);
+  void AddFirst(const olx_vptr<AActionHandler> &handler);
   /* adds new dispatcher, no AddFirst - Handlers are executed before the
   dispatchers...
   */
-  void Add(AEventsDispatcher* dispatcher, int MsgId, short MsgSubId=msiAll);
+  void Add(const olx_vptr<AEventsDispatcher> &dispatcher,
+    int MsgId, short MsgSubId = msiAll);
   //makes subsequent calls to the handlers stored in the list
   bool Execute(const IOlxObject* Sender, const IOlxObject* Data=NULL,
     TActionQueue *caller=NULL);
@@ -134,12 +137,12 @@ public:
   void Clear();
   // removes specified handler from the queue
   void Remove(AActionHandler* handler);
-  bool Contains(const AActionHandler* handler);
+  bool Contains(const olx_vptr<AActionHandler> &handler);
 
   // removes specified dispatcher from the queue
   void Remove(const AEventsDispatcher* dispatcher);
   // returns true if a specified handler belongs to the queue
-  bool Contains(const AEventsDispatcher* dispatcher);
+  bool Contains(const olx_vptr<AEventsDispatcher> &dispatcher);
   // returns the name of the queue
   const olxstr& GetName() const { return Name; }
 };

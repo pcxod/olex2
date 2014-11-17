@@ -32,17 +32,29 @@ template <typename ptr> struct olx_vptr
 : public olx_object_ptr<olx_virtual_ptr<ptr> >
 {
   typedef olx_object_ptr<olx_virtual_ptr<ptr> > parent_t;
+  template <class dptr>
   struct actual_ptr : public olx_virtual_ptr<ptr> {
-    ptr *p;
-    actual_ptr(ptr *p) : p(p) {}
+    dptr *p;
+    actual_ptr(dptr *p) : p(p) {}
     virtual IOlxObject *get_ptr() const {
       return p;
     }
   };
-  olx_vptr(ptr *_p) : parent_t(new actual_ptr(_p)) {}
+  template <class dptr>
+  struct ptr_proxy : public olx_virtual_ptr<ptr> {
+    olx_object_ptr<olx_virtual_ptr<dptr> > proxied;
+    ptr_proxy(olx_virtual_ptr<dptr> *p) : proxied(p) {}
+    virtual IOlxObject *get_ptr() const {
+      return proxied().get_ptr();
+    }
+  };
+  olx_vptr(ptr *_p) : parent_t(new actual_ptr<ptr>(_p)) {}
   olx_vptr(olx_virtual_ptr<ptr> *_p) : parent_t(_p) {}
+  template <class dptr>
+  olx_vptr(olx_virtual_ptr<dptr> *_p) : parent_t(new ptr_proxy<dptr>(_p))
+  {}
   olx_vptr(const olx_vptr& _p) : parent_t(_p) {}
-  olx_vptr& operator = (const olx_vptr& _p)  {
+  olx_vptr& operator = (const olx_vptr& _p) {
     parent_t::p->template dec_ref<true, false>();
     parent_t::p = _p.p->inc_ref();
     return *this;
@@ -52,6 +64,9 @@ template <typename ptr> struct olx_vptr
   bool operator == (const olx_vptr &ap) const {
     return parent_t::p->p->get_ptr() == ap.p->p->get_ptr();
   }
+  bool operator == (const ptr *p) const {
+    return parent_t::p->p->get_ptr() == p;
+  }
   // releases the object from ALL references
   ptr *release() const {
     ptr *p_ = parent_t::p->p;
@@ -59,6 +74,5 @@ template <typename ptr> struct olx_vptr
     return p_;
   }
 };
-
 
 #endif
