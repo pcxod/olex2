@@ -317,76 +317,78 @@ TGXApp::TGXApp(const olxstr &FileName, AGlScene *scene)
   TEGC::AddP(macros);
   macros->Export(Library);
   States = new TStateRegistry();
+  olx_vptr<TGXApp> thip(this);
   stateStructureVisible = States->Register("strvis",
     new TStateRegistry::Slot(
-      TStateRegistry::NewGetter(*this, &TGXApp::IsStructureVisible),
+      TStateRegistry::NewGetter(thip, &TGXApp::IsStructureVisible),
       new TStateRegistry::TMacroSetter("ShowStr")
     )
   );
 
   stateHydrogensVisible = States->Register("hvis",
     new TStateRegistry::Slot(
-      TStateRegistry::NewGetter(*this, &TGXApp::AreHydrogensVisible),
+    TStateRegistry::NewGetter(thip, &TGXApp::AreHydrogensVisible),
       new TStateRegistry::TMacroSetter("ShowH a")
     )
   );
   stateHydrogenBondsVisible = States->Register("hbvis",
     new TStateRegistry::Slot(
-      TStateRegistry::NewGetter(*this, &TGXApp::AreHBondsVisible),
+      TStateRegistry::NewGetter(thip, &TGXApp::AreHBondsVisible),
       new TStateRegistry::TMacroSetter("ShowH b")
     )
   );
   stateQPeaksVisible = States->Register("qvis",
     new TStateRegistry::Slot(
-      TStateRegistry::NewGetter(*this, &TGXApp::AreQPeaksVisible),
+      TStateRegistry::NewGetter(thip, &TGXApp::AreQPeaksVisible),
       new TStateRegistry::TMacroSetter("ShowQ a")
     )
   );
   stateQPeakBondsVisible = States->Register("qbvis",
     new TStateRegistry::Slot(
-      TStateRegistry::NewGetter(*this, &TGXApp::AreQPeakBondsVisible),
+      TStateRegistry::NewGetter(thip, &TGXApp::AreQPeakBondsVisible),
       new TStateRegistry::TMacroSetter("ShowQ b")
     )
   );
   stateCellVisible = States->Register("cellvis",
     new TStateRegistry::Slot(
-      TStateRegistry::NewGetter<TDUnitCell>(*XFile().DUnitCell,
+      TStateRegistry::NewGetter<TDUnitCell>(
+          olx_vptr<TDUnitCell>(new DUnitCellPtr),
         &TDUnitCell::IsVisible),
       new TStateRegistry::TMacroSetter("cell")
     )
   );
   stateBasisVisible = States->Register("basisvis",
     new TStateRegistry::Slot(
-      TStateRegistry::NewGetter<TDBasis>(this->DBasis(),
+      TStateRegistry::NewGetter<TDBasis>(&this->DBasis(),
         &TDBasis::IsVisible),
       new TStateRegistry::TMacroSetter("basis")
     )
   );
   stateGradientOn = States->Register("gradBG",
     new TStateRegistry::Slot(
-      TStateRegistry::NewGetter<TGlBackground>(*this->GetRenderer().Background(),
+      TStateRegistry::NewGetter<TGlBackground>(this->GetRenderer().Background(),
         &TGlBackground::IsVisible),
       new TStateRegistry::TMacroSetter("grad")
     )
   );
   stateLabelsVisible = States->Register("labelsvis",
     new TStateRegistry::Slot(
-      TStateRegistry::NewGetter(*this, &TGXApp::AreLabelsVisible),
+      TStateRegistry::NewGetter(thip, &TGXApp::AreLabelsVisible),
       new TStateRegistry::TMacroSetter("labels")
     )
   );
   stateXGridVisible = States->Register("gridvis",
     new TStateRegistry::Slot(
-      TStateRegistry::NewGetter<TXGrid>(this->XGrid(),
+      TStateRegistry::NewGetter<TXGrid>(&this->XGrid(),
         &TXGrid::IsVisible),
       new TStateRegistry::TNoneSetter()
     )
   );
   stateWBoxVisible = States->Register("wboxvis",
     new TStateRegistry::Slot(
-      TStateRegistry::NewGetter<T3DFrameCtrl>(this->Get3DFrame(),
+      TStateRegistry::NewGetter<T3DFrameCtrl>(&this->Get3DFrame(),
         &T3DFrameCtrl::IsVisible),
-      TStateRegistry::NewSetter<T3DFrameCtrl>(this->Get3DFrame(),
+      TStateRegistry::NewSetter<T3DFrameCtrl>(&this->Get3DFrame(),
         &T3DFrameCtrl::SetVisible)
     )
   );
@@ -1498,10 +1500,10 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
   const IOlxObject *Data, TActionQueue *)
 {
   static bool ObjectsStored = false, LoadingFile = false, Disassembling = false;
-  if( MsgId == ID_OnSelect )  {
-    if( FGlMouse->IsSelectionEnabled() )  {
+  if (MsgId == ID_OnSelect) {
+    if (FGlMouse->IsSelectionEnabled()) {
       const TSelectionInfo* SData = dynamic_cast<const TSelectionInfo*>(Data);
-      if(  !(SData->From == SData->To) )
+      if (!(SData->From == SData->To))
         Select(SData->From, SData->To);
     }
   }
@@ -1511,7 +1513,7 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
       ClearXObjects();
     }
     else if (MsgSubId == msiExit) {
-      if (Files.Count() >1 ) {
+      if (Files.Count() >1) {
         AlignXFiles();
         UpdateBonds();
       }
@@ -1563,7 +1565,7 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
   }
   else if (MsgId == ID_OnClear) {
     if (MsgSubId == msiEnter) {  // backup the selection
-      if (!LoadingFile && !Disassembling)  {
+      if (!LoadingFile && !Disassembling) {
         SelectionCopy[0].Clear();
         StoreGroup(GetSelection(), SelectionCopy[0]);
         StoreLabels();
@@ -5625,5 +5627,9 @@ olxstr TGXApp::GetPlatformString_(bool full) const {
     wxMINOR_VERSION << wxRELEASE_NUMBER;
 #endif
   return rv;
+}
+//..............................................................................
+IOlxObject *TGXApp::DUnitCellPtr::get_ptr() const {
+  return TGXApp::GetInstance().XFile().DUnitCell;
 }
 //..............................................................................

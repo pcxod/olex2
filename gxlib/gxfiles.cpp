@@ -10,6 +10,17 @@
 #include "gxfiles.h"
 #include "gxapp.h"
 
+//..............................................................................
+XObjectProvider::XObjectProvider(TGXApp &app)
+: ASObjectProvider(
+    *(new TXObjectProvider<TSAtom, TXAtom>(app.GetRenderer())),
+    *(new TXObjectProvider<TSBond, TXBond>(app.GetRenderer())),
+    *(new TXObjectProvider<TSPlane, TXPlane>(app.GetRenderer()))),
+    app(app)
+{}
+//..............................................................................
+//..............................................................................
+//..............................................................................
 TGXFile::TGXFile(XObjectProvider & op)
 : TXFile(op)
 {
@@ -38,14 +49,18 @@ bool TGXFile::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
   return TXFile::Dispatch(MsgId, MsgSubId, Sender, Data, q);
 }
 //..............................................................................
+void TGXFile::ToDataItem(TDataItem& item) {
+  TXFile::ToDataItem(item);
+  DUnitCell->ToDataItem(item.AddItem("DUC"));
+}
 //..............................................................................
-//..............................................................................
-XObjectProvider::XObjectProvider(TGXApp &app) :
-  ASObjectProvider(
-  *(new TXObjectProvider<TSAtom, TXAtom>(app.GetRenderer())),
-  *(new TXObjectProvider<TSBond, TXBond>(app.GetRenderer())),
-  *(new TXObjectProvider<TSPlane, TXPlane>(app.GetRenderer()))),
-  app(app)
-{}
+void TGXFile::FromDataItem(const TDataItem& item) {
+  TXFile::FromDataItem(item);
+  DUnitCell->Init(GetAsymmUnit());
+  TDataItem *uc = item.FindItem("DUC");
+  if (uc != 0) {
+    DUnitCell->FromDataItem(*uc);
+  }
+}
 //..............................................................................
 

@@ -30,7 +30,7 @@ public:
     statePluginInstalled = TStateRegistry::GetInstance().Register(
       "pluginInstalled",
       new TStateRegistry::Slot(
-        states.NewGetter(*this, &Olex2App::CheckState),
+        states.NewGetter<Olex2App>(this, &Olex2App::CheckState),
         new TStateRegistry::TMacroSetter("HtmlPanelVisible")
       )
     );

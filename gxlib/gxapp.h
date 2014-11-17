@@ -324,6 +324,9 @@ protected:
   void SyncAtomAndBondVisiblity(short atom_type, bool show_a, bool show_b);
   void _maskInvisible();
   bool MainFormVisible;
+  struct DUnitCellPtr : public olx_virtual_ptr<TDUnitCell> {
+    virtual IOlxObject *get_ptr() const;
+  };
 public:
   // FileName - argv[0];
   TGXApp(const olxstr& FileName, AGlScene *scene=NULL);

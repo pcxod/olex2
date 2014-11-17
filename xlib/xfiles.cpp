@@ -124,8 +124,9 @@ TXFile::TXFile(ASObjectProvider& Objects) :
   OnFileClose(Actions.New("XFILECLOSE"))
 {
   Lattice.GetAsymmUnit().SetRefMod(&RefMod);
-  Lattice.GetAsymmUnit().OnSGChange.Add(this, XFILE_EVT_SG_Change);
-  Lattice.OnStructureUniq.Add(this, XFILE_EVT_UNIQ);
+  olx_vptr<AEventsDispatcher> vptr(new VPtr);
+  Lattice.GetAsymmUnit().OnSGChange.Add(vptr, XFILE_EVT_SG_Change);
+  Lattice.OnStructureUniq.Add(vptr, XFILE_EVT_UNIQ);
   FLastLoader = NULL;
   FSG = NULL;
 }
@@ -665,7 +666,7 @@ void TXFile::ToDataItem(TDataItem& item) {
   GetRM().ToDataItem(item.AddItem("RefModel"));
 }
 //..............................................................................
-void TXFile::FromDataItem(TDataItem& item) {
+void TXFile::FromDataItem(const TDataItem& item) {
   GetRM().Clear(rm_clear_ALL);
   GetLattice().FromDataItem(item.GetItemByName("Lattice"));
   GetRM().FromDataItem(item.GetItemByName("RefModel"));

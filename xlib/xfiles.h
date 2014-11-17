@@ -149,8 +149,8 @@ public:
   void LastLoaderChanged();  // performs complete reinitialisation
 
   const_strlist ToJSON() const;
-  void ToDataItem(TDataItem& item);
-  void FromDataItem(TDataItem& item);
+  virtual void ToDataItem(TDataItem& item);
+  virtual void FromDataItem(const TDataItem& item);
 
   void LibDataCount(const TStrObjList& Params, TMacroData& E);
   void LibCurrentData(const TStrObjList& Params, TMacroData& E);
