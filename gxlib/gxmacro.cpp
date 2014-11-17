@@ -335,6 +335,11 @@ void GXLibMacros::Export(TLibrary& lib) {
     "point on the sphere with a unique color corresponding to fragments. For "
     "referece see Guzei, I.A., Wendt, M.Dalton Trans., 2006, 3991–3999.");
 
+  gxlib_InitMacro(OFileDel, EmptyString(), fpOne,
+    "Deletes overlayed file specified by index");
+  gxlib_InitMacro(OFileSwap, EmptyString(), fpNone | fpOne,
+    "Sets current file to which all commands are applied");
+
   gxlib_InitFunc(ExtraZoom, fpNone|fpOne,
     "Sets/reads current extra zoom (default zoom correction)");
   gxlib_InitFunc(MatchFiles, fpTwo|fpThree,
@@ -1667,6 +1672,10 @@ void GXLibMacros::macCell(TStrObjList &Cmds, const TParamList &Options,
     bool r = Options.GetBoolOption('r');
     app.XFile().DUnitCell->SetReciprocal(r, r ? 100: 1);
   }
+  for (size_t i = 1; i < app.XFiles().Count(); i++) {
+    app.XFile(i).DUnitCell->SetVisible(
+      app.XFile().DUnitCell->IsVisible());
+  }
   app.CenterView();
 }
 //.............................................................................
@@ -1779,11 +1788,8 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
       fi << Cmds[i].ToSizeT();
     for (size_t i=0; i < fi.Count(); i++) {
       TXFile *f=NULL;
-      if (fi[i] == 0) {
-        f = &app.XFile();
-      }
-      else if (fi[i] <= app.OverlayedXFileCount()) {
-        f = &app.GetOverlayedXFile(fi[i]-1);
+      if (i < app.XFiles().Count()) {
+        f = &app.XFiles()[i];
       }
       if (f == NULL) continue;
       ASObjectProvider &op = f->GetLattice().GetObjects();
@@ -3391,23 +3397,23 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
   // restore if already applied
   TLattice& latt = app.XFile().GetLattice();
   const TAsymmUnit& au = app.XFile().GetAsymmUnit();
-  latt.RestoreADPs();
-  if (app.OverlayedXFileCount() != 0) {
-    for( size_t i=0; i < app.OverlayedXFileCount(); i++ )
-      app.GetOverlayedXFile(i).GetLattice().RestoreADPs();
-    app.AlignOverlayedXFiles();
+  for (size_t i = 0; i < app.XFiles().Count(); i++) {
+    app.XFile(i).GetLattice().RestoreADPs();
+  }
+  if (app.XFiles().Count() > 1) {
+    app.AlignXFiles();
     app.CenterView(true);
   }
   else
     app.CenterView();
   app.UpdateBonds();
   if (Cmds.Count() == 1 && Cmds[0].Equalsi("cell")) {
-    if (app.OverlayedXFileCount() == 0) {
+    if (app.XFiles().Count() < 2) {
       E.ProcessingError(__OlxSrcInfo, "an overlayed file is expected");
       return;
     }
     mat3d m1 = app.XFile().GetAsymmUnit().GetCellToCartesian();
-    mat3d m2 = app.GetOverlayedXFile(0).GetAsymmUnit().GetCellToCartesian();
+    mat3d m2 = app.XFile(1).GetAsymmUnit().GetCellToCartesian();
     vec3d_alist points(16);
     points[1] = m1[0]; //a
     points[2] = m1[1]; //b
@@ -3429,10 +3435,10 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
       align::ListToPairAdaptor::Make(points));
     QuaternionToMatrix(ao.quaternions[0], tm.r);
     tm.t = ao.center_a - tm.r * ao.center_b;
-    TLattice &latt = app.GetOverlayedXFile(0).GetLattice();
+    TLattice &latt = app.XFile(1).GetLattice();
     {
       olxstr cname = "DUnitCell1";
-      TDUnitCell* duc = app.GetOverlayedXFile(0).DUnitCell;
+      TDUnitCell* duc = app.XFile(1).DUnitCell;
       TGPCollection &gpc = app.GetRenderer().FindOrCreateCollection(cname);
       TGlMaterial dm("85;2147483392;4286611584;41975936;32");
       gpc.GetStyle().SetMaterial("Sphere", dm);
@@ -3451,6 +3457,7 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
       for (size_t i = 0; i < duc->EdgeCount(); i++) {
         duc->GetEdge(i) = tm*duc->GetEdge(i);
       }
+      duc->Update();
       duc->SetVisible(true);
     }
     for (size_t i = 0; i < latt.GetObjects().atoms.Count(); i++) {
@@ -4336,5 +4343,33 @@ void GXLibMacros::macProjSph(TStrObjList &Cmds, const TParamList &Options,
     table_o.CreateTXTList("Overlapping area (%)", false, false, ' ');
   TBasicApp::NewLogEntry() << "For the use of solid angles, see: "
     "Guzei, I.A., Wendt, M.Dalton Trans., 2006, 3991-3999.";
+}
+//..............................................................................
+void GXLibMacros::macOFileDel(TStrObjList &Cmds, const TParamList &Options,
+  TMacroData &Error)
+{
+  if (app.XFiles().Count() == 1) {
+    app.XFile().GetLattice().Uniq();
+    return;
+  }
+  int ind = Cmds[0].ToInt();
+  if (ind <= -1) {
+    if (app.XFiles().Count() > 1)
+      app.DeleteXFile(app.XFiles().Count() - 1);
+  }
+  else {
+    if ((size_t)ind < app.XFiles().Count())
+      app.DeleteXFile(ind);
+    else {
+      Error.ProcessingError(__OlxSrcInfo,
+        "no overlayed files at given position");
+    }
+  }
+}
+//..............................................................................
+void GXLibMacros::macOFileSwap(TStrObjList &Cmds, const TParamList &Options,
+  TMacroData &Error)
+{
+  app.SetActiveXFile(Cmds.IsEmpty() ? 0 : Cmds[0].ToSizeT());
 }
 //..............................................................................

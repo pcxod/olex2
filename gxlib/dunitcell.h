@@ -53,6 +53,13 @@ public:
   size_t EdgeCount() const { return Edges.Count(); }
   vec3d& GetEdge(size_t i) { return Edges[i]; }
   const vec3d& GetEdge(size_t i) const { return Edges[i]; }
+  void Translate(const vec3d &t) {
+    for (size_t i = 0; i < Edges.Count(); i++) {
+      Edges[i] += t;
+    }
+    Update();
+  }
+  void Update();
   bool IsReciprocal() const { return Reciprocal; }
   void SetReciprocal(bool v, double scale=1);
   virtual void SetVisible(bool v);

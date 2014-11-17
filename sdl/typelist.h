@@ -128,19 +128,23 @@ public:
       List.Add(new T(list[i]));
   }
 //..............................................................................
-  //adds a new object ito the list - will be deleted
-  T& Add(T& Obj)  {  return *List.Add(&Obj);  }
-  //adds a new object ito the list - will be deleted
-  T& Add(T* Obj)  {  return *List.Add(Obj);  }
+  //adds a new object into the list - will be deleted
+  template <class obj_t>
+  obj_t& Add(obj_t& Obj)  {  return *List.Add(&Obj);  }
+  //adds a new object into the list - will be deleted
+  template <class obj_t>
+  obj_t& Add(obj_t* Obj)  { return *List.Add(Obj); }
 //..............................................................................
   //sets the list item to an object, which will be deleted
-  T& Set(size_t index, T& Obj)  {
+  template <class obj_t>
+  obj_t& Set(size_t index, obj_t& Obj)  {
     if( List[index] != NULL )
       delete (DestructCast*)List[index];
     return *(T*)(List[index] = &Obj);
   }
   //sets the list item to an object, which will be deleted
-  T& Set(size_t index, T* Obj)  {
+  template <class obj_t>
+  obj_t& Set(size_t index, obj_t* Obj)  {
     if( List[index] != NULL )
       delete (DestructCast*)List[index];
     return *(T*)(List[index] = Obj);

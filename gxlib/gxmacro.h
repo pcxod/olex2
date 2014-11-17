@@ -68,6 +68,8 @@ public:
   DefMacro(SetMaterial)
   DefMacro(DefineVar)
   DefMacro(ProjSph)
+  DefMacro(OFileDel)
+  DefMacro(OFileSwap)
 
   DefFunc(MatchFiles)
   DefFunc(ExtraZoom)

@@ -13,8 +13,8 @@
 TGXFile::TGXFile(XObjectProvider & op)
 : TXFile(op)
 {
-  olxstr extra = (op.app.OverlayedXFileCount() == 0 ? EmptyString() :
-    olxstr(op.app.OverlayedXFileCount()));
+  olxstr extra = (op.app.XFiles().Count() == 0 ? EmptyString() :
+    olxstr(op.app.XFiles().Count()));
   DUnitCell = new TDUnitCell(op.app.GetRenderer(),
     olxstr("DUnitCell") << extra);
   DUnitCell->SetVisible(false);

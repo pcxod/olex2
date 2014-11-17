@@ -24,8 +24,7 @@
 #include "sfutil.h"
 
 TXApp::TXApp(const olxstr &basedir, bool)
-  : TBasicApp(basedir), Library(EmptyString(), this),
-  FXFile(0)
+  : TBasicApp(basedir), Library(EmptyString(), this)
 {
   min_hbond_angle = 120;
   min_hbond_angle_i = false;
@@ -38,8 +37,7 @@ TXApp::TXApp(const olxstr &basedir, bool)
 //..............................................................................
 TXApp::TXApp(const olxstr &basedir, ASObjectProvider* objectProvider,
   ASelectionOwner* selOwner)
-  : TBasicApp(basedir), Library(EmptyString(), this),
-  FXFile(0)
+  : TBasicApp(basedir), Library(EmptyString(), this)
 {
   Init(objectProvider, selOwner);
 }
@@ -53,8 +51,8 @@ void TXApp::Init(ASObjectProvider* objectProvider, ASelectionOwner* selOwner) {
   catch( const TIOException& exc )  {
     throw TFunctionFailedException(__OlxSourceInfo, exc);
   }
-  FXFile = (objectProvider == NULL ? new SObjectProvider()
-    : objectProvider)->CreateXFile();
+  Files.Add((objectProvider == NULL ? new SObjectProvider()
+    : objectProvider)->CreateXFile());
 
   DefineState(psFileLoaded, "Loaded file is expected");
   DefineState(psCheckFileTypeIns, "INS file is expected");
@@ -67,8 +65,7 @@ void TXApp::Init(ASObjectProvider* objectProvider, ASelectionOwner* selOwner) {
   XLibMacros::Export(Library);
 }
 //..............................................................................
-TXApp::~TXApp()  {
-  delete FXFile;
+TXApp::~TXApp() {
 }
 //..............................................................................
 bool TXApp::CheckProgramState(unsigned int specialCheck)  {
@@ -596,7 +593,7 @@ void TXApp::ProcessRingAfix(TSAtomPList& ring, int afix, bool pivot_last)  {
     ring[pivot]->GetLabel();
   if( ring[pivot]->CAtom().GetDependentAfixGroup() != NULL )
     ring[pivot]->CAtom().GetDependentAfixGroup()->Clear();
-  TAfixGroup& ag = FXFile->GetRM().AfixGroups.New( &ring[pivot]->CAtom(), afix);
+  TAfixGroup& ag = XFile().GetRM().AfixGroups.New( &ring[pivot]->CAtom(), afix);
   for( size_t i=0; i < ring.Count(); i++ )  {
     if (i == pivot)  continue;  // do not want to delete just created!
     TCAtom& ca = ring[i]->CAtom();
@@ -791,15 +788,17 @@ void TXApp::SetAtomUiso(TSAtom& sa, double val) {
 }
 //..............................................................................
 void TXApp::GetSymm(smatd_list& ml) const {
-  if( !FXFile->HasLastLoader() )
-    throw TFunctionFailedException(__OlxSourceInfo, "a loaded file is expected");
-  const TUnitCell& uc = FXFile->GetUnitCell();
-  ml.SetCapacity( ml.Count() + uc.MatrixCount() );
-  for( size_t i=0; i < uc.MatrixCount(); i++ )
+  if (!XFile().HasLastLoader()) {
+    throw TFunctionFailedException(__OlxSourceInfo,
+      "a loaded file is expected");
+  }
+  const TUnitCell& uc = XFile().GetUnitCell();
+  ml.SetCapacity(ml.Count() + uc.MatrixCount());
+  for (size_t i=0; i < uc.MatrixCount(); i++)
     ml.AddCopy(uc.GetMatrix(i));
 }
 //..............................................................................
-void TXApp::ToDataItem(TDataItem& item) const  {
+void TXApp::ToDataItem(TDataItem& item) const {
   throw TNotImplementedException(__OlxSourceInfo);
 }
 //..............................................................................
@@ -813,8 +812,8 @@ olxstr TXApp::InitVcoV(VcoVContainer& vcovc) const {
   bool shelx_exists = TEFile::Exists(shelx_fn),
     smtbx_exists = TEFile::Exists(smtbx_fn);
   olxstr src_mat;
-  if( shelx_exists && smtbx_exists )  {
-    if( TEFile::FileAge(shelx_fn) > TEFile::FileAge(smtbx_fn) )  {
+  if (shelx_exists && smtbx_exists) {
+    if (TEFile::FileAge(shelx_fn) > TEFile::FileAge(smtbx_fn)) {
       vcovc.ReadShelxMat(shelx_fn);
       src_mat = "shelxl";
     }
@@ -823,11 +822,11 @@ olxstr TXApp::InitVcoV(VcoVContainer& vcovc) const {
       vcovc.ReadSmtbxMat(smtbx_fn);
     }
   }
-  else if( shelx_exists )  {
+  else if (shelx_exists) {
     vcovc.ReadShelxMat(shelx_fn);
     src_mat = "shelxl";
   }
-  else if( smtbx_exists )  {
+  else if (smtbx_exists) {
     vcovc.ReadSmtbxMat(smtbx_fn);
     src_mat = "smtbx";
   }

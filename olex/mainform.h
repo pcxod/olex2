@@ -423,9 +423,6 @@ private:
 
   DefMacro(ShowWindow)
 
-  DefMacro(OFileDel)
-  DefMacro(OFileSwap)
-
   DefMacro(Schedule)
   DefMacro(Test)
 

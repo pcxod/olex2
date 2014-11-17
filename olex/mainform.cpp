@@ -747,12 +747,6 @@ void TMainForm::XApp(Olex2App *XA)  {
 
   this_InitMacro(ShowWindow, ,fpOne|fpTwo);
 
-  this_InitMacroD(OFileDel, EmptyString(), fpOne,
-    "Deletes overlayed file specified by index");
-  this_InitMacroD(OFileSwap, EmptyString(), fpNone|fpOne,
-    "Makes overlayed file, given by index the current file to which all "
-    "commands are applied");
-
   this_InitMacroD(Schedule,
     "r-repeatable&;"
     "g-requires GUI"
