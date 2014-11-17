@@ -13,25 +13,6 @@
 #include "wxglscene.h"
 
 IMPLEMENT_CLASS(TGlCanvas, wxGLCanvas)
-
-BEGIN_EVENT_TABLE(TGlCanvas, wxGLCanvas)
-  EVT_SIZE(TGlCanvas::OnSize)
-  EVT_PAINT(TGlCanvas::OnPaint)
-  EVT_ERASE_BACKGROUND(TGlCanvas::OnEraseBackground)
-
-  EVT_LEFT_UP(TGlCanvas::OnMouseUp)
-  EVT_RIGHT_UP(TGlCanvas::OnMouseUp)
-  EVT_LEFT_DOWN(TGlCanvas::OnMouseDown)
-  EVT_RIGHT_DOWN(TGlCanvas::OnMouseDown)
-  EVT_MOTION(TGlCanvas::OnMouseMove)
-  EVT_MOUSE_EVENTS(TGlCanvas::OnMouse)
-  EVT_LEFT_DCLICK(TGlCanvas::OnMouseDblClick)
-
-  EVT_KEY_UP(TGlCanvas::OnKeyUp)
-  EVT_CHAR(TGlCanvas::OnChar)
-  EVT_KEY_DOWN(TGlCanvas::OnKeyDown)
-
-END_EVENT_TABLE()
 //..............................................................................
 TGlCanvas::TGlCanvas(TMainForm *parent, int* gl_attr, wxWindowID id,
     const wxPoint& pos, const wxSize& size, long style, const wxString& name):
@@ -49,7 +30,23 @@ TGlCanvas::TGlCanvas(TMainForm *parent, int* gl_attr, wxWindowID id,
   FXApp = NULL;
   MouseButton = 0;
   FParent = parent;
-}
+  Bind(wxEVT_SIZE, &TGlCanvas::OnSize, this);
+  Bind(wxEVT_PAINT, &TGlCanvas::OnPaint, this);
+  Bind(wxEVT_ERASE_BACKGROUND, &TGlCanvas::OnEraseBackground, this);
+
+  Bind(wxEVT_LEFT_UP, &TGlCanvas::OnMouseUp, this);
+  Bind(wxEVT_RIGHT_UP, &TGlCanvas::OnMouseUp, this);
+  Bind(wxEVT_LEFT_DOWN, &TGlCanvas::OnMouseDown, this);
+  Bind(wxEVT_RIGHT_DOWN, &TGlCanvas::OnMouseDown, this);
+  Bind(wxEVT_MOTION, &TGlCanvas::OnMouseMove, this);
+  Bind(wxEVT_MOUSE_CAPTURE_CHANGED, &TGlCanvas::OnMouseCaptureChange, this);
+  Bind(wxEVT_MOUSEWHEEL, &TGlCanvas::OnMouseWheel, this);
+  Bind(wxEVT_LEFT_DCLICK, &TGlCanvas::OnMouseDblClick, this);
+
+  Bind(wxEVT_KEY_UP, &TGlCanvas::OnKeyUp, this);
+  Bind(wxEVT_CHAR, &TGlCanvas::OnChar, this);
+  Bind(wxEVT_KEY_DOWN, &TGlCanvas::OnKeyDown, this);
+  }
 //..............................................................................
 TGlCanvas::~TGlCanvas() {
   TwxGlScene *wgls = dynamic_cast<TwxGlScene*>(&FXApp->GetRenderer().GetScene());
@@ -102,7 +99,7 @@ void TGlCanvas::InitGL()  {
     FXApp->Init();
 }
 //..............................................................................
-short TGlCanvas::EncodeEvent(const wxMouseEvent &evt, bool update_button)  {
+short TGlCanvas::EncodeEvent(const wxMouseState &evt, bool update_button)  {
   short Fl = 0;
   if (evt.m_altDown)  Fl |= sssAlt;
   if (evt.m_shiftDown)  Fl |= sssShift;
@@ -210,15 +207,18 @@ void TGlCanvas::OnMouseDblClick(wxMouseEvent& me)  {
     FParent->OnMouseDblClick(me.m_x, me.m_y, Fl, MouseButton);
 }
 //..............................................................................
-void TGlCanvas::OnMouse(wxMouseEvent& me) {
-  if (me.Entering()) {
-    short fl = EncodeEvent(me, true);
-    FXApp->ResetMouseState(me.m_x, me.m_y, fl, MouseButton, true);
-  }
+void TGlCanvas::OnMouseWheel(wxMouseEvent& me) {
   if (me.GetWheelRotation() != 0) {
     FParent->OnMouseWheel(me.GetX(), me.GetY(),
     (double)me.GetWheelRotation()/me.GetWheelDelta());
   }
+  me.Skip();
+}
+//..............................................................................
+void TGlCanvas::OnMouseCaptureChange(wxMouseCaptureChangedEvent& me) {
+  wxMouseState ms = wxGetMouseState();
+  short fl = EncodeEvent(ms, true);
+  FXApp->ResetMouseState(ms.m_x, ms.m_y, fl, MouseButton, true);
   me.Skip();
 }
 //..............................................................................

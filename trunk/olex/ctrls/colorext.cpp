@@ -12,16 +12,21 @@
 #include "olxvar.h"
 
 using namespace ctrl_ext;
-IMPLEMENT_CLASS(TColorCtrl, wxColourPickerCtrl)
 
-BEGIN_EVENT_TABLE(TColorCtrl, wxColourPickerCtrl)
-  EVT_COLOURPICKER_CHANGED(-1, TColorCtrl::ChangeEvent)
-END_EVENT_TABLE()
 //..............................................................................
-void TColorCtrl::ChangeEvent(wxColourPickerEvent& event)  {
+TColorCtrl::TColorCtrl(wxWindow *Parent, wxWindowID id, const wxColor &value,
+  const wxPoint& pos, const wxSize& size, long style)
+: wxColourPickerCtrl(Parent, id, value, pos, size, style),
+  AOlxCtrl(this),
+  OnChange(AOlxCtrl::ActionQueue::New(Actions, evt_change_id))
+{
+  Bind(wxEVT_COLOURPICKER_CHANGED, &TColorCtrl::ChangeEvent, this);
+}
+//..............................................................................
+void TColorCtrl::ChangeEvent(wxColourPickerEvent& event) {
   event.Skip();
   wxColor c = GetColour();
-  if( Color == c ) return;
+  if (Color == c) return;
   Color = c;
   OnChange.Execute(this);
 }

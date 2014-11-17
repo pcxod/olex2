@@ -12,48 +12,53 @@
 #include "olxvar.h"
 
 using namespace ctrl_ext;
-IMPLEMENT_CLASS(TSpinCtrl, wxSpinCtrl)
+//..............................................................................
+TSpinCtrl::TSpinCtrl(wxWindow *Parent, wxWindowID id, const wxString &value,
+  const wxPoint& pos, const wxSize& size, long style)
+: wxSpinCtrl(Parent, id, value, pos, size, style),
+  AOlxCtrl(this),
+  OnChange(AOlxCtrl::ActionQueue::New(Actions, evt_change_id))
+{
+  Bind(wxEVT_TEXT, &TSpinCtrl::TextChangeEvent, this);
+  Bind(wxEVT_SPINCTRL, &TSpinCtrl::SpinChangeEvent, this);
+  Bind(wxEVT_TEXT_ENTER, &TSpinCtrl::EnterPressedEvent, this);
+  Bind(wxEVT_KILL_FOCUS, &TSpinCtrl::LeaveEvent, this);
+  Bind(wxEVT_SET_FOCUS, &TSpinCtrl::EnterEvent, this);
 
-BEGIN_EVENT_TABLE(TSpinCtrl, wxSpinCtrl)
-  EVT_TEXT(-1, TSpinCtrl::TextChangeEvent)
-  EVT_SPINCTRL(-1, TSpinCtrl::SpinChangeEvent)
-  EVT_TEXT_ENTER(-1, TSpinCtrl::EnterPressedEvent)
-  EVT_KILL_FOCUS(TSpinCtrl::LeaveEvent)
-  EVT_SET_FOCUS(TSpinCtrl::EnterEvent)
-END_EVENT_TABLE()
+}
 //..............................................................................
-void TSpinCtrl::SpinChangeEvent(wxSpinEvent& event)  {
+void TSpinCtrl::SpinChangeEvent(wxSpinEvent& event) {
   event.Skip();
   int val = GetValue();
-  if( val == Value ) return;
+  if (val == Value) return;
   Value = val;
   OnChange.Execute(this);
 }
 //..............................................................................
-void TSpinCtrl::TextChangeEvent(wxCommandEvent& event)  {
+void TSpinCtrl::TextChangeEvent(wxCommandEvent& event) {
   event.Skip();
   int val = GetValue();
-  if( val == Value ) return;
+  if (val == Value) return;
   Value = val;
   OnChange.Execute(this);
 }
 //..............................................................................
-void TSpinCtrl::LeaveEvent(wxFocusEvent& event)  {
+void TSpinCtrl::LeaveEvent(wxFocusEvent& event) {
   event.Skip();
   int val = GetValue();
-  if( val == Value ) return;
+  if (val == Value) return;
   Value = val;
   OnChange.Execute(this);
 }
 //..............................................................................
-void TSpinCtrl::EnterEvent(wxFocusEvent& event)  {
+void TSpinCtrl::EnterEvent(wxFocusEvent& event) {
   event.Skip();
 }
 //..............................................................................
-void TSpinCtrl::EnterPressedEvent(wxCommandEvent& event)  {
+void TSpinCtrl::EnterPressedEvent(wxCommandEvent& event) {
   event.Skip();
   int val = GetValue();
-  if( val == Value ) return;
+  if (val == Value) return;
   Value = val;
   OnChange.Execute(this);
 }

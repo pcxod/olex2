@@ -15,11 +15,20 @@
 using namespace ctrl_ext;
 IMPLEMENT_CLASS(TCheckBox, wxCheckBox)
 
-BEGIN_EVENT_TABLE(TCheckBox, wxCheckBox)
-  EVT_CHECKBOX(-1, TCheckBox::ClickEvent)
-  EVT_ENTER_WINDOW(TCheckBox::MouseEnterEvent)
-END_EVENT_TABLE()
-
+//..............................................................................
+TCheckBox::TCheckBox(wxWindow *Parent, wxWindowID id, const wxString& label,
+const wxPoint& pos, const wxSize& size, long style)
+: wxCheckBox(Parent, id, label, pos, size, style),
+  AOlxCtrl(this),
+  OnClick(AOlxCtrl::ActionQueue::New(Actions, evt_on_click_id)),
+  OnCheck(AOlxCtrl::ActionQueue::New(Actions, evt_on_check_id)),
+  OnUncheck(AOlxCtrl::ActionQueue::New(Actions, evt_on_uncheck_id)),
+  ActionQueue(NULL)
+{
+  Bind(wxEVT_CHECKBOX, &TCheckBox::ClickEvent, this);
+  Bind(wxEVT_ENTER_WINDOW, &TCheckBox::MouseEnterEvent, this);
+  SetToDelete(false);
+}
 //..............................................................................
 void TCheckBox::MouseEnterEvent(wxMouseEvent& event)  {
   event.Skip();

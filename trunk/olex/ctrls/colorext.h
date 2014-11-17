@@ -12,23 +12,22 @@
 #include "olxctrlbase.h"
 #include "wx/clrpicker.h"
 
-namespace ctrl_ext  {
+namespace ctrl_ext {
 
-  class TColorCtrl: public wxColourPickerCtrl, public AOlxCtrl  {
+  class TColorCtrl: public wxColourPickerCtrl, public AOlxCtrl {
   protected:
     void ChangeEvent(wxColourPickerEvent &event);
     olxstr Data;
     wxColor Color;
   public:
-    TColorCtrl(wxWindow *Parent, int style=0) :
-        wxColourPickerCtrl(Parent, -1, wxColor(), wxDefaultPosition, wxDefaultSize, style),
-      AOlxCtrl(this),
-      OnChange(AOlxCtrl::ActionQueue::New(Actions, evt_change_id))  {}
+    TColorCtrl(wxWindow *Parent, wxWindowID id = -1,
+      const wxColor &value = wxColour(),
+      const wxPoint& pos = wxDefaultPosition,
+      const wxSize& size = wxDefaultSize, long style = 0);
+    bool IsReadOnly() const {  return WI.HasWindowStyle(wxTE_READONLY); }
+    void SetReadOnly(bool v) { WI.AddWindowStyle(wxTE_READONLY); }
 
-    inline bool IsReadOnly() const {   return WI.HasWindowStyle(wxTE_READONLY);  }
-    inline void SetReadOnly(bool v)  {  WI.AddWindowStyle(wxTE_READONLY);  }
-
-    void SetValue(wxColor v)  {
+    void SetValue(wxColor v) {
       Color = v;
       wxColourPickerCtrl::SetColour(v);
     }
@@ -39,9 +38,6 @@ namespace ctrl_ext  {
     DefPropC(olxstr, Data)
 
     AOlxCtrl::ActionQueue &OnChange;
-
-    DECLARE_CLASS(TColorCtrl)
-    DECLARE_EVENT_TABLE()
   };
 }; // end namespace ctrl_ext
 #endif

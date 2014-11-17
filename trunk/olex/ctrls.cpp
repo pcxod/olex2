@@ -15,10 +15,6 @@ wxDEFINE_EVENT(OLX_COMMAND_EVT, olxCommandEvent);
 //..............................................................................
 IMPLEMENT_CLASS(TDialog, wxDialog)
 IMPLEMENT_CLASS(TTimer, wxTimer)
-
-BEGIN_EVENT_TABLE(TDialog, wxDialog)
-  EVT_SIZE(TDialog::OnSizeEvt)
-END_EVENT_TABLE()
 //..............................................................................
 TDialog::TDialog(TMainFrame *Parent, const wxString &Title,
   const wxString &ClassName, const wxPoint& position, const wxSize& size,
@@ -29,8 +25,9 @@ TDialog::TDialog(TMainFrame *Parent, const wxString &Title,
     Parent(Parent)
 {
   manage_parent = false;
-  if( Parent != NULL )
+  if (Parent != NULL)
     Parent->RestorePosition(this);
+  Bind(wxEVT_SIZE, &TDialog::OnSizeEvt, this);
 }
 //..............................................................................
 TDialog::TDialog(wxWindow *Parent, const wxString &Title,

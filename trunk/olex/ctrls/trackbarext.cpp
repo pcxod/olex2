@@ -12,21 +12,28 @@
 #include "olxvar.h"
 
 using namespace ctrl_ext;
-IMPLEMENT_CLASS(TTrackBar, wxSlider)
-
-BEGIN_EVENT_TABLE(TTrackBar, wxSlider)
-  EVT_SCROLL(TTrackBar::ScrollEvent)
-  EVT_LEFT_UP(TTrackBar::MouseUpEvent)
-END_EVENT_TABLE()
-
-void TTrackBar::ScrollEvent(wxScrollEvent& evt)  {
+//..............................................................................
+TTrackBar::TTrackBar(wxWindow *Parent, wxWindowID id,
+  int value, int min_v, int max_v,
+  const wxPoint& pos, const wxSize& size, long style)
+: wxSlider(Parent, id, value, min_v, max_v, pos, size, style),
+  AOlxCtrl(this),
+  this_Val(value),
+  OnChange(AOlxCtrl::ActionQueue::New(Actions, evt_change_id)),
+  OnMouseUp(AOlxCtrl::ActionQueue::New(Actions, evt_on_mouse_up_id))
+{
+  Bind(wxEVT_SLIDER, &TTrackBar::ScrollEvent, this);
+  Bind(wxEVT_LEFT_UP, &TTrackBar::MouseUpEvent, this);
+}
+//..............................................................................
+void TTrackBar::ScrollEvent(wxCommandEvent& evt) {
   evt.Skip();
-  if( this_Val == GetValue() )  return;
+  if (this_Val == GetValue())  return;
   this_Val = GetValue();
   OnChange.Execute((AOlxCtrl*)this);
 }
 //..............................................................................
-void TTrackBar::MouseUpEvent(wxMouseEvent& evt)  {
+void TTrackBar::MouseUpEvent(wxMouseEvent& evt) {
   evt.Skip();
   OnMouseUp.Execute((AOlxCtrl*)this);
 }

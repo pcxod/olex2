@@ -13,20 +13,19 @@
 
 namespace ctrl_ext  {
 
-  class TTrackBar: public wxSlider, public AOlxCtrl  {
+  class TTrackBar: public wxSlider, public AOlxCtrl {
   protected:
-    void ScrollEvent(wxScrollEvent& event);
+    void ScrollEvent(wxCommandEvent& event);
     void MouseUpEvent(wxMouseEvent& event);
     olxstr Data;
     int this_Val;  // needed to call events only if value has changed
   public:
     // on gtk, the size cannot be changed after the creation!
-    TTrackBar(wxWindow *Parent, const wxSize& sz=wxDefaultSize) :
-      wxSlider(Parent, -1, 0, 0, 100, wxDefaultPosition, sz, wxSL_HORIZONTAL|wxSL_AUTOTICKS),
-      AOlxCtrl(this),
-      OnChange(AOlxCtrl::ActionQueue::New(Actions, evt_change_id)),
-      OnMouseUp(AOlxCtrl::ActionQueue::New(Actions, evt_on_mouse_up_id)),
-      this_Val(0)  {  SetValue(0);  }
+    TTrackBar(wxWindow *Parent, wxWindowID id = -1,
+      int value = 0, int min_v = 0, int max_v = 100,
+      const wxPoint& pos = wxDefaultPosition,
+      const wxSize& size = wxDefaultSize,
+      long style = wxSL_HORIZONTAL | wxSL_AUTOTICKS);
 
     DefPropC(olxstr, Data)
 
@@ -38,9 +37,6 @@ namespace ctrl_ext  {
     inline void SetMax(int v) { wxSlider::SetRange(v, this->GetMin()); }
 
     AOlxCtrl::ActionQueue &OnChange, &OnMouseUp;
-
-    DECLARE_CLASS(TTrackBar)
-    DECLARE_EVENT_TABLE()
   };
 }; // end namespace ctrl_ext
 #endif

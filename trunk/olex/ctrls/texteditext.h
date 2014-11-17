@@ -25,16 +25,10 @@ namespace ctrl_ext  {
     olxstr Data;
     olxstr StrValue;
   public:
-    TTextEdit(wxWindow *Parent, int style=0) :
-      wxTextCtrl(Parent, -1, wxString(), wxDefaultPosition, wxDefaultSize, style),
-      AOlxCtrl(this),
-      OnChange(AOlxCtrl::ActionQueue::New(Actions, evt_change_id)),
-      OnLeave(AOlxCtrl::ActionQueue::New(Actions, evt_on_mouse_leave_id)),
-      OnEnter(AOlxCtrl::ActionQueue::New(Actions, evt_on_mouse_enter_id)),
-      OnReturn(AOlxCtrl::ActionQueue::New(Actions, evt_on_return_id)),
-      OnClick(AOlxCtrl::ActionQueue::New(Actions, evt_on_click_id)),
-      OnChar(AOlxCtrl::ActionQueue::New(Actions, evt_on_char_id)),
-      OnKeyDown(AOlxCtrl::ActionQueue::New(Actions, evt_on_key_down_id))  {}
+    TTextEdit(wxWindow *Parent, wxWindowID id = -1,
+      const wxString& value = wxEmptyString,
+      const wxPoint& pos = wxDefaultPosition,
+      const wxSize& size = wxDefaultSize, long style = 0);
 
     olxstr GetText() const {  return wxTextCtrl::GetValue(); }
     void SetText(const olxstr &T)  {
@@ -48,11 +42,8 @@ namespace ctrl_ext  {
 
     DefPropC(olxstr, Data)
 
-      AOlxCtrl::ActionQueue &OnChange, &OnReturn, &OnLeave, &OnEnter,
+    AOlxCtrl::ActionQueue &OnChange, &OnReturn, &OnLeave, &OnEnter,
         &OnClick, &OnChar, &OnKeyDown;
-
-    DECLARE_CLASS(TTextEdit)
-    DECLARE_EVENT_TABLE()
   };
 }; // end namespace ctrl_ext
 #endif

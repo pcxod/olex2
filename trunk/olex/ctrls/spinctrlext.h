@@ -13,7 +13,7 @@
 #include "wx/spinctrl.h"
 
 namespace ctrl_ext  {
-  class TSpinCtrl: public wxSpinCtrl, public AOlxCtrl  {
+  class TSpinCtrl: public wxSpinCtrl, public AOlxCtrl {
   private:
     int Value;
   protected:
@@ -24,10 +24,11 @@ namespace ctrl_ext  {
     void EnterPressedEvent(wxCommandEvent& event);
     olxstr Data;
   public:
-    TSpinCtrl(wxWindow *Parent, const wxSize& sz=wxDefaultSize):
-      wxSpinCtrl(Parent, -1, wxEmptyString, wxDefaultPosition, sz),
-      AOlxCtrl(this),
-      OnChange(AOlxCtrl::ActionQueue::New(Actions, evt_change_id))  {}
+    TSpinCtrl(wxWindow *Parent, wxWindowID id = -1,
+      const wxString &value = wxEmptyString,
+      const wxPoint& pos = wxDefaultPosition,
+      const wxSize& size = wxDefaultSize,
+      long style = wxSP_ARROW_KEYS | wxALIGN_RIGHT);
 
     DefPropC(olxstr, Data)
 
@@ -38,9 +39,6 @@ namespace ctrl_ext  {
     }
 
     AOlxCtrl::ActionQueue &OnChange;
-
-    DECLARE_CLASS(TSpinCtrl)
-    DECLARE_EVENT_TABLE()
   };
 }; // end namespace ctrl_ext
 #endif

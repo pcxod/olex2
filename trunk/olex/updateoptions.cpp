@@ -12,10 +12,6 @@
 #include "efile.h"
 #include "etime.h"
 
-BEGIN_EVENT_TABLE(TdlgUpdateOptions, TDialog)
-  EVT_BUTTON(wxID_OK, TdlgUpdateOptions::OnOK)
-END_EVENT_TABLE()
-
 //..............................................................................
 TdlgUpdateOptions::TdlgUpdateOptions(TMainFrame *ParentFrame) :
   TDialog(ParentFrame, wxT("Update options"), wxT("dlgAutoUpdate"))
@@ -87,6 +83,7 @@ TdlgUpdateOptions::TdlgUpdateOptions(TMainFrame *ParentFrame) :
   SetSizer(TopSiser); // use the sizer for layout
   TopSiser->SetSizeHints(this);   // set size hints to honour minimum size
   Center();
+  Bind(wxEVT_BUTTON, &TdlgUpdateOptions::OnOK, this, wxID_OK);
 }
 //..............................................................................
 TdlgUpdateOptions::~TdlgUpdateOptions() {}
