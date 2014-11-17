@@ -436,7 +436,7 @@ void TGXApp::CreateXRefs()  {
   for( size_t i=0; i < refs.Count(); i++ )  {
     TXReflection* xr = new TXReflection(*GlRenderer, "XReflection",
       stats.MinI, stats.MaxI, refs[i],
-      FXFile->GetAsymmUnit());
+      XFile().GetAsymmUnit());
     if (olx_abs(refs[i].GetI()-Fsq[i])/(refs[i].GetS() + 1e-2) > 8)
       xr->Params()[1] = -1;
     else
@@ -449,15 +449,12 @@ void TGXApp::CreateXRefs()  {
 }
 //..............................................................................
 size_t TGXApp::GetNetworks(TNetPList& nets) {
-  size_t c = XFile().GetLattice().FragmentCount();
-  for (size_t i=0; i < c; i++)
-    nets.Add(XFile().GetLattice().GetFragment(i));
-
-  for (size_t i=0; i < OverlayedXFiles.Count(); i++) {
-    size_t fc = OverlayedXFiles[i].GetLattice().FragmentCount();
+  size_t c = 0;
+  for (size_t i=0; i < Files.Count(); i++) {
+    size_t fc = Files[i].GetLattice().FragmentCount();
     c += fc;
     for (size_t j=0; j < fc; j++)
-      nets.Add(OverlayedXFiles[i].GetLattice().GetFragment(j));
+      nets.Add(Files[i].GetLattice().GetFragment(j));
   }
   return c;
 }
@@ -586,9 +583,8 @@ void TGXApp::CreateObjects(bool centerModel, bool init_visibility)  {
 void TGXApp::CenterModel() {
   double weight = 0;
   vec3d center, maX(-100, -100, -100), miN(100, 100, 100);
-  for (size_t i=0; i <= OverlayedXFiles.Count(); i++) {
-    const TLattice& latt = (i == OverlayedXFiles.Count() ? XFile()
-      : OverlayedXFiles[i]).GetLattice();
+  for (size_t i=0; i < Files.Count(); i++) {
+    const TLattice& latt = Files[i].GetLattice();
     const size_t ac = latt.GetObjects().atoms.Count();
     for (size_t j=0; j < ac; j++) {
       const TSAtom& a = latt.GetObjects().atoms[j];
@@ -598,8 +594,7 @@ void TGXApp::CenterModel() {
         weight += 1;
       }
     }
-    TDUnitCell &uc = *(i == OverlayedXFiles.Count() ? XFile()
-      : OverlayedXFiles[i]).DUnitCell;
+    TDUnitCell &uc = *XFile(i).DUnitCell;
     if (uc.IsVisible()) {
       for (size_t j = 0; j < uc.VertexCount(); j++) {
         center += uc.GetVertex(j);
@@ -637,9 +632,8 @@ void TGXApp::CenterView(bool calcZoom)  {
     weight += 1;
   }
   if (weight == 0)  return;
-  for (size_t i = 0; i <= OverlayedXFiles.Count(); i++) {
-    TDUnitCell &uc = *(i == OverlayedXFiles.Count() ? XFile()
-      : OverlayedXFiles[i]).DUnitCell;
+  for (size_t i = 0; i < Files.Count(); i++) {
+    TDUnitCell &uc = *XFile(i).DUnitCell;
     if (uc.IsVisible()) {
       for (size_t j = 0; j < uc.VertexCount(); j++) {
         center += uc.GetVertex(j);
@@ -1511,33 +1505,33 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
         Select(SData->From, SData->To);
     }
   }
-  else if( MsgId == ID_OnUniq || MsgId == ID_OnGrow )  {
-    if( MsgSubId == msiEnter )  {
+  else if (MsgId == ID_OnUniq || MsgId == ID_OnGrow) {
+    if (MsgSubId == msiEnter) {
       GlRenderer->ClearObjects();
       ClearXObjects();
     }
-    else if( MsgSubId == msiExit )  {
-      if( OverlayedXFileCount() != 0 )  {
-        AlignOverlayedXFiles();
+    else if (MsgSubId == msiExit) {
+      if (Files.Count() >1 ) {
+        AlignXFiles();
         UpdateBonds();
       }
-      if( ZoomAfterModelBuilt )
+      if (ZoomAfterModelBuilt)
         CenterView(true);
     }
   }
-  else if( MsgId == ID_OnFileLoad )  {
-    if( MsgSubId == msiEnter )  {
+  else if (MsgId == ID_OnFileLoad) {
+    if (MsgSubId == msiEnter)  {
       SelectionCopy[0].Clear();
       StoreGroup(GetSelection(), SelectionCopy[0]);
       StoreLabels();
       ClearLines();
       LoadingFile = true;
     }
-    else if( MsgSubId == msiExit )
+    else if (MsgSubId == msiExit)
       LoadingFile = false;
   }
-  else if( MsgId == ID_OnFileClose )  {
-    if( MsgSubId == msiExit )  {
+  else if (MsgId == ID_OnFileClose) {
+    if (MsgSubId == msiExit)  {
       ClearGroupDefinitions();
       ClearLabels();
       ClearLines();
@@ -1546,17 +1540,17 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
       GetRenderer().SetZoom(GetRenderer().CalcZoom());
     }
   }
-  else if( MsgId == ID_OnDisassemble ) {
-    if( MsgSubId == msiExit )  {
+  else if (MsgId == ID_OnDisassemble) {
+    if (MsgSubId == msiExit) {
       CreateRings();
       CreateObjects(false);
       Disassembling = false;
       UpdateDuplicateLabels();
     }
-    else if( MsgSubId == msiEnter )  {  // backup the selection
-      if( ObjectsStored )
+    else if (MsgSubId == msiEnter) {  // backup the selection
+      if (ObjectsStored)
         ObjectsStored = false;
-      else  if( !LoadingFile )  {
+      else  if (!LoadingFile) {
         SelectionCopy[0].Clear();
         StoreGroup(GetSelection(), SelectionCopy[0]);
         StoreLabels();
@@ -1567,9 +1561,9 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
       Disassembling = true;
     }
   }
-  else if( MsgId == ID_OnClear ) {
-    if( MsgSubId == msiEnter )  {  // backup the selection
-      if( !LoadingFile && !Disassembling )  {
+  else if (MsgId == ID_OnClear) {
+    if (MsgSubId == msiEnter) {  // backup the selection
+      if (!LoadingFile && !Disassembling)  {
         SelectionCopy[0].Clear();
         StoreGroup(GetSelection(), SelectionCopy[0]);
         StoreLabels();
@@ -1578,7 +1572,7 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
       GlRenderer->ClearObjects();
       ClearXObjects();
     }
-    else if( MsgSubId == msiExit )  {
+    else if (MsgSubId == msiExit) {
       //GetRenderer().SetBasis(basis);
     }
   }
@@ -1779,11 +1773,11 @@ ConstPtrList<TCAtom> TGXApp::CAtomsByMask(const olxstr &StrMask, int Mask)  {
 }
 //..............................................................................
 void TGXApp::GrowAtom(TXAtom *XA, bool Shell, TCAtomPList* Template)  {
-  FXFile->GetLattice().GrowAtom(*XA, Shell, Template);
+  XFile().GetLattice().GrowAtom(*XA, Shell, Template);
 }
 //..............................................................................
 void TGXApp::Grow(const TXAtomPList& atoms, const smatd_list& matrices)  {
-  FXFile->GetLattice().GrowAtoms(
+  XFile().GetLattice().GrowAtoms(
     TCAtomPList(atoms, FunctionAccessor::MakeConst(&TXAtom::CAtom)),
     matrices);
 }
@@ -1923,7 +1917,7 @@ bool TGXApp::FindSAtoms(const olxstr& condition, TSAtomPList& res,
   bool ReturnAll, bool ClearSelection)
 {
   TPtrList<TXAtom> al = FindXAtoms(condition, ReturnAll, ClearSelection);
-  if (!OverlayedXFiles.IsEmpty()) {
+  if (Files.Count() > 1) {
     TLattice &latt = XFile().GetLattice();
     for (size_t i=0; i < al.Count(); i++) {
       if (((TSAtom*)al[i])->GetParent() != latt)
@@ -2054,7 +2048,7 @@ void TGXApp::CheckQBonds(TXAtom& XA)  {
     /* check if any of the atoms still a Q-peak */
     if( xb->A().GetType() == iQPeakZ || xb->B().GetType() == iQPeakZ )  continue;
     /* check that the covalent bond really exists before showing it */
-    xb->SetVisible(FXFile->GetLattice().GetNetwork().CBondExistsQ(xb->A(),
+    xb->SetVisible(XFile().GetLattice().GetNetwork().CBondExistsQ(xb->A(),
                     xb->B(), xb->QLength()));
   }
 }
@@ -3354,7 +3348,7 @@ void TGXApp::GrowAtoms(const olxstr& AtomsStr, bool Shell,
   TCAtomPList* Template)
 {
   TSAtomPList satoms(FindXAtoms(AtomsStr, true));
-  FXFile->GetLattice().GrowAtoms(satoms, Shell, Template);
+  XFile().GetLattice().GrowAtoms(satoms, Shell, Template);
 }
 //..............................................................................
 void TGXApp::RestoreGroup(TGlGroup& glg, const GroupData& gd)  {
@@ -3503,25 +3497,25 @@ uint64_t TGXApp::Draw()  {
 //..............................................................................
 void TGXApp::MoveFragment(TXAtom* to, TXAtom* fragAtom, bool copy)  {
   if( copy )
-    FXFile->GetLattice().MoveFragmentG(*to, *fragAtom);
+    XFile().GetLattice().MoveFragmentG(*to, *fragAtom);
   else
-    FXFile->GetLattice().MoveFragment(*to, *fragAtom);
+    XFile().GetLattice().MoveFragment(*to, *fragAtom);
 }
 //..............................................................................
 void TGXApp::MoveFragment(const vec3d& to, TXAtom* fragAtom, bool copy)  {
   if( copy )
-    FXFile->GetLattice().MoveFragmentG(to, *fragAtom);
+    XFile().GetLattice().MoveFragmentG(to, *fragAtom);
   else
-    FXFile->GetLattice().MoveFragment(to, *fragAtom);
+    XFile().GetLattice().MoveFragment(to, *fragAtom);
 }
 //..............................................................................
-void TGXApp::MoveToCenter()  {  FXFile->GetLattice().MoveToCenter();  }
+void TGXApp::MoveToCenter()  {  XFile().GetLattice().MoveToCenter();  }
 //..............................................................................
 void TGXApp::Compaq(bool All)  {
   if( All )
-    FXFile->GetLattice().CompaqAll();
+    XFile().GetLattice().CompaqAll();
   else
-    FXFile->GetLattice().Compaq();
+    XFile().GetLattice().Compaq();
 }
 //..............................................................................
 void TGXApp::SetHBondsVisible(bool v, bool update_groups)  {
@@ -3549,9 +3543,8 @@ void TGXApp::SetHBondsVisible(bool v, bool update_groups)  {
 void TGXApp::SetHydrogensVisible(bool v)  {
   if (FHydrogensVisible != v) {
     FHydrogensVisible = v;
-    XFile().GetAsymmUnit().DetachAtomType(iHydrogenZ, !FHydrogensVisible);
-    for (size_t i = 0; i < OverlayedXFiles.Count(); i++) {
-      OverlayedXFiles[i].GetAsymmUnit().DetachAtomType(
+    for (size_t i = 0; i < Files.Count(); i++) {
+      Files[i].GetAsymmUnit().DetachAtomType(
         iHydrogenZ, !FHydrogensVisible);
     }
     /* TODO: this is disabled because it causes problems with molecules
@@ -3568,19 +3561,18 @@ void TGXApp::SetHydrogensVisible(bool v)  {
 void TGXApp::UpdateConnectivity()  {
   XFile().GetLattice().OnDisassemble.Enter(NULL);
   XFile().GetLattice().OnDisassemble.SetEnabled(false);
-  for (size_t i = 0; i < OverlayedXFiles.Count(); i++)
-    OverlayedXFiles[i].GetLattice().UpdateConnectivity();
-  XFile().GetLattice().UpdateConnectivity();
+  for (size_t i = 0; i < Files.Count(); i++) {
+    Files[i].GetLattice().UpdateConnectivity();
+  }
   XFile().GetLattice().OnDisassemble.SetEnabled(true);
   XFile().GetLattice().OnDisassemble.Exit(NULL);
 }
 //..............................................................................
-void TGXApp::SetQPeaksVisible(bool v)  {
+void TGXApp::SetQPeaksVisible(bool v) {
   if (FQPeaksVisible != v) {
     FQPeaksVisible = v;
-    XFile().GetAsymmUnit().DetachAtomType(iQPeakZ, !FQPeaksVisible);
-    for (size_t i = 0; i < OverlayedXFiles.Count(); i++) {
-      OverlayedXFiles[i].GetAsymmUnit().DetachAtomType(
+    for (size_t i = 0; i < Files.Count(); i++) {
+      Files[i].GetAsymmUnit().DetachAtomType(
         iQPeakZ, !FQPeaksVisible);
     }
     if (v && !XFile().GetLattice().IsGenerated())
@@ -3691,9 +3683,9 @@ void TGXApp::SetStructureVisible(bool v) {
 //..............................................................................
 void TGXApp::LoadXFile(const olxstr& fn) {
   volatile TStopWatch sw(__FUNC__);
-  FXFile->LoadFromFile(fn);
+  XFile().LoadFromFile(fn);
   if (CheckFileType<TIns>() && DoUseSafeAfix()) {
-    GetUndo().Push(FXFile->GetLattice().ValidateHGroups(true, true));
+    GetUndo().Push(XFile().GetLattice().ValidateHGroups(true, true));
   }
   if( !FStructureVisible )
     NewLogEntry() << "Note: structure is invisible";
@@ -4220,14 +4212,14 @@ void TGXApp::CreateXGrowLines()  {
     _CreateXGrowVLines();
     return;
   }
-  const TAsymmUnit& au = FXFile->GetAsymmUnit();
-  const TUnitCell& uc = FXFile->GetUnitCell();
+  const TAsymmUnit& au = XFile().GetAsymmUnit();
+  const TUnitCell& uc = XFile().GetUnitCell();
   TGXApp_CrdMap CrdMap;
   TXAtomPList AtomsToProcess;
   if( !AtomsToGrow.IsEmpty() )
     AtomsToProcess.AddList(FindXAtoms(AtomsToGrow));
   else if( (FGrowMode & gmSameAtoms) == 0 ) {
-    const size_t ac = FXFile->GetLattice().GetObjects().atoms.Count();
+    const size_t ac = XFile().GetLattice().GetObjects().atoms.Count();
     for( size_t i=0; i < ac; i++ )  {
       TSAtom& A = XFile().GetLattice().GetObjects().atoms[i];
       if( A.IsDeleted() || !A.CAtom().IsAvailable() )  continue;
@@ -4235,7 +4227,7 @@ void TGXApp::CreateXGrowLines()  {
     }
   }
   for( size_t i=0; i < AtomsToProcess.Count(); i++ )  {
-    if( AtomsToProcess[i]->GetNetwork().GetLattice() != FXFile->GetLattice() )  {
+    if( AtomsToProcess[i]->GetNetwork().GetLattice() != XFile().GetLattice() )  {
       AtomsToProcess[i] = NULL;
       continue;
     }
@@ -4267,7 +4259,7 @@ void TGXApp::CreateXGrowLines()  {
           *gi, &AttachedAtoms);
       }
       else if( FGrowMode == gmSInteractions )  {
-        uc.FindBindingAM(A->CAtom(), FXFile->GetLattice().GetDeltaI(), *gi,
+        uc.FindBindingAM(A->CAtom(), XFile().GetLattice().GetDeltaI(), *gi,
           &AttachedAtoms);
       }
       else  {
@@ -4320,21 +4312,21 @@ void TGXApp::CreateXGrowLines()  {
 //..............................................................................
 void TGXApp::_CreateXGrowVLines()  {
   if( !XGrowLines.IsEmpty() )  return;
-  const TAsymmUnit& au = FXFile->GetAsymmUnit();
-  const TUnitCell& uc = FXFile->GetUnitCell();
+  const TAsymmUnit& au = XFile().GetAsymmUnit();
+  const TUnitCell& uc = XFile().GetUnitCell();
   TGXApp_CrdMap CrdMap;
   TXAtomPList AtomsToProcess;
   if( !AtomsToGrow.IsEmpty() )  {
     AtomsToProcess.AddList(FindXAtoms(AtomsToGrow));
-    const size_t ac = FXFile->GetLattice().GetObjects().atoms.Count();
+    const size_t ac = XFile().GetLattice().GetObjects().atoms.Count();
     for( size_t i=0; i < ac; i++ )  {
-      TSAtom& A = FXFile->GetLattice().GetObjects().atoms[i];
+      TSAtom& A = XFile().GetLattice().GetObjects().atoms[i];
       if( A.IsDeleted() || !A.CAtom().IsAvailable() )  continue;
       CrdMap.Add(A.crd());
     }
   }
   else  {
-    const size_t ac = FXFile->GetLattice().GetObjects().atoms.Count();
+    const size_t ac = XFile().GetLattice().GetObjects().atoms.Count();
     for( size_t i=0; i < ac; i++ )  {
       TSAtom& A = XFile().GetLattice().GetObjects().atoms[i];
       if( A.IsDeleted() || !A.CAtom().IsAvailable() )  continue;
@@ -4449,25 +4441,24 @@ void TGXApp::DeleteGlBitmap(const olxstr& name) {
   }
 }
 //..............................................................................
-TGXFile& TGXApp::NewOverlayedXFile() {
-  return OverlayedXFiles.Add(
-    dynamic_cast<TGXFile *>(FXFile->Replicate()));
+TGXFile& TGXApp::NewXFile() {
+  return Files.Add(dynamic_cast<TGXFile *>(XFile().Replicate()));
 }
 //..............................................................................
 void TGXApp::SetActiveXFile(size_t i) {
-  if (i >= OverlayedXFiles.Count())  return;
-  FXFile = OverlayedXFiles.Replace(i, (TGXFile *)FXFile);
-  FXFile->OnFileLoad.TakeOver(OverlayedXFiles[i].OnFileLoad);
-  FXFile->OnFileSave.TakeOver(OverlayedXFiles[i].OnFileSave);
-  FXFile->GetLattice().OnDisassemble.TakeOver(
-    OverlayedXFiles[i].GetLattice().OnDisassemble);
-  FXFile->GetLattice().OnStructureGrow.TakeOver(
-    OverlayedXFiles[i].GetLattice().OnStructureGrow);
-  FXFile->GetLattice().OnStructureUniq.TakeOver(
-    OverlayedXFiles[i].GetLattice().OnStructureUniq);
-  FXFile->GetLattice().OnAtomsDeleted.TakeOver(
-    OverlayedXFiles[i].GetLattice().OnAtomsDeleted);
-  AlignOverlayedXFiles();
+  if (i == 0 || i >= Files.Count())  return;
+  Files.Swap(i, 0);
+  XFile().OnFileLoad.TakeOver(Files[i].OnFileLoad);
+  XFile().OnFileSave.TakeOver(Files[i].OnFileSave);
+  XFile().GetLattice().OnDisassemble.TakeOver(
+    Files[i].GetLattice().OnDisassemble);
+  XFile().GetLattice().OnStructureGrow.TakeOver(
+    Files[i].GetLattice().OnStructureGrow);
+  XFile().GetLattice().OnStructureUniq.TakeOver(
+    Files[i].GetLattice().OnStructureUniq);
+  XFile().GetLattice().OnAtomsDeleted.TakeOver(
+    Files[i].GetLattice().OnAtomsDeleted);
+  AlignXFiles();
   CreateObjects(true);
   XFile().DUnitCell->SetReciprocal(false);
 }
@@ -4493,137 +4484,143 @@ void TGXApp::CalcLatticeRandCenter(const TLattice& latt, double& maxR,
   maxR = sqrt(maxR);
 }
 //..............................................................................
-void TGXApp::AlignOverlayedXFiles() {
-  typedef AnAssociation3<double,vec3d,TLattice*> grid_type;
+void TGXApp::AlignXFiles() {
+  typedef AnAssociation3<double,vec3d,TGXFile*> grid_type;
   typedef TTypeList<grid_type> row_type;
   TTypeList<row_type> grid;
-  size_t dim = olx_round(sqrt((double)OverlayedXFiles.Count()+1));
-  if( (OverlayedXFiles.Count()+1) - dim*dim > 0 )
+  size_t dim = olx_round(sqrt((double)Files.Count()));
+  if ((Files.Count()) - dim*dim > 0)
     dim++;
   vec3d cnt;
   double maxR;
-  for( size_t i=0; i < dim; i++ )  {
+  for (size_t i=0; i < dim; i++) {
     row_type& row = grid.AddNew();
-    for( size_t j=0; j < dim; j++ )  {
+    for (size_t j=0; j < dim; j++) {
       const size_t ind = i*dim+j;
-      if( ind == 0 )  {
-        CalcLatticeRandCenter(XFile().GetLattice(), maxR, cnt);
-        row.Add(new grid_type(maxR, cnt, &XFile().GetLattice()));
-      }
-      else if( ind-1 >= OverlayedXFiles.Count() )
+      if (ind >= Files.Count())
         break;
-      else  {
-        CalcLatticeRandCenter(OverlayedXFiles[ind-1].GetLattice(), maxR, cnt);
-        row.Add(new grid_type(maxR, cnt, &OverlayedXFiles[ind-1].GetLattice()));
+      else {
+        CalcLatticeRandCenter(Files[ind].GetLattice(), maxR, cnt);
+        row.Add(new grid_type(maxR, cnt, &XFile(ind)));
       }
     }
   }
   TDoubleList row_height(dim), col_width(dim);
-  for( size_t i=0; i < dim; i++ )
+  for (size_t i = 0; i < dim; i++) {
     row_height[i] = col_width[0] = 0;
+  }
   // calc widths and heights
-  for( size_t i=0; i < dim; i++ )  {
-    for( size_t j=0; j < dim; j++ )  {
-      if( j+1 > grid[i].Count() )  break;
-      if( grid[i][j].GetA() > row_height[i] )
+  for (size_t i = 0; i < dim; i++) {
+    for (size_t j = 0; j < dim; j++) {
+      if (j + 1 > grid[i].Count())  break;
+      if (grid[i][j].GetA() > row_height[i])
         row_height[i] = grid[i][j].GetA();
-      if( grid[i][j].GetA() > col_width[j] )
+      if (grid[i][j].GetA() > col_width[j])
         col_width[j] = grid[i][j].GetA();
     }
   }
   // propagate widths and heights
   // wee need a sequence ( r1, r1+r2, (r1+r2)+(r2+r3), (r1+r2)+(r2+r3)+(r3+r4)...)
-  for( size_t i=dim-1; i >= 1; i-- )  {
+  for (size_t i=dim-1; i >= 1; i--) {
     row_height[i] += row_height[i-1];
     col_width[i] += col_width[i-1];
   }
-  for( size_t i=1; i < dim-1; i++ )  {
+  for (size_t i=1; i < dim-1; i++) {
     row_height[i+1] += row_height[i];
     col_width[i+1] += col_width[i];
   }
   col_width[0] = row_height[0] = 0;
 
   const vec3d right_shift = GlRenderer->GetBasis().GetMatrix()*vec3d(1, 0, 0);
-
   const vec3d up_shift = GlRenderer->GetBasis().GetMatrix()*vec3d(0, 1, 0);
-  for( size_t i=0; i < dim; i++ )  {
-    for( size_t j=0; j < dim; j++ )  {
-      if( i == 0 && j == 0 )  continue;
-      if( j+1 > grid[i].Count() )  break;
-      vec3d shift_vec = (grid[0][0].GetB()-grid[i][j].GetB());
+  for (size_t i = 0; i < dim; i++) {
+    for (size_t j = 0; j < dim; j++) {
+      if (i == 0 && j == 0)  continue;
+      if (j + 1 > grid[i].Count())  break;
+      vec3d shift_vec = (grid[0][0].GetB() - grid[i][j].GetB());
       shift_vec += up_shift*row_height[i];
       shift_vec += right_shift*col_width[j];
-      TLattice& latt = *grid[i][j].GetC();
-      for( size_t k=0; k < latt.GetObjects().atoms.Count(); k++ )
+      TGXFile &gxf = *grid[i][j].GetC();
+      TLattice& latt = gxf.GetLattice();
+      for (size_t k = 0; k < latt.GetObjects().atoms.Count(); k++)
         latt.GetObjects().atoms[k].crd() += shift_vec;
+      gxf.DUnitCell->Translate(shift_vec);
     }
   }
 }
 //..............................................................................
-void TGXApp::DeleteOverlayedXFile(size_t index) {
-  const TLattice& latt = OverlayedXFiles[index].GetLattice();
-  for( size_t i = 0; i < GroupDefs.Count(); i++ )  {
-    for( size_t j=0; j < GroupDefs[i].atoms.Count(); j++ )  {
-      if( GroupDefs[i].atoms[j].latt == latt )
+void TGXApp::DeleteXFile(size_t index) {
+  const TLattice& latt = Files[index].GetLattice();
+  for (size_t i = 0; i < GroupDefs.Count(); i++) {
+    for (size_t j=0; j < GroupDefs[i].atoms.Count(); j++) {
+      if (GroupDefs[i].atoms[j].latt == latt)
         GroupDefs[i].atoms.NullItem(j);
     }
     GroupDefs[i].atoms.Pack();
-    for( size_t j=0; j < GroupDefs[i].bonds.Count(); j++ )  {
-      if( GroupDefs[i].bonds[j].latt == latt )
+    for (size_t j=0; j < GroupDefs[i].bonds.Count(); j++) {
+      if (GroupDefs[i].bonds[j].latt == latt)
         GroupDefs[i].bonds.NullItem(j);
     }
     GroupDefs[i].bonds.Pack();
   }
-  for( size_t i=0; i < LabelInfo.atoms.Count(); i++ )  {
-    if( LabelInfo.atoms[i].latt == latt )
+  for (size_t i=0; i < LabelInfo.atoms.Count(); i++) {
+    if (LabelInfo.atoms[i].latt == latt)
       LabelInfo.atoms.NullItem(i);
   }
   LabelInfo.atoms.Pack();
-  for( size_t i=0; i < LabelInfo.bonds.Count(); i++ )  {
-    if( LabelInfo.bonds[i].latt == latt )
+  for (size_t i=0; i < LabelInfo.bonds.Count(); i++) {
+    if (LabelInfo.bonds[i].latt == latt)
       LabelInfo.bonds.NullItem(i);
   }
   LabelInfo.bonds.Pack();
   GetRenderer().ClearGroups();
-  OverlayedXFiles.Delete(index);
+  if (index == 0) {
+    SetActiveXFile(1);
+    Files.Delete(1);
+  }
+  else {
+    Files.Delete(index);
+  }
   CreateObjects(false);
   CenterView();
   Draw();
 }
 //..............................................................................
-void TGXApp::DeleteOverlayedXFiles() {
+void TGXApp::DeleteXFiles() {
+  if (Files.Count() < 2) return;
   const TLattice& latt = XFile().GetLattice();
-  for( size_t i = 0; i < GroupDefs.Count(); i++ )  {
-    for( size_t j=0; j < GroupDefs[i].atoms.Count(); j++ )  {
-      if( GroupDefs[i].atoms[j].latt != latt )
+  for (size_t i = 0; i < GroupDefs.Count(); i++) {
+    for (size_t j = 0; j < GroupDefs[i].atoms.Count(); j++) {
+      if (GroupDefs[i].atoms[j].latt != latt)
         GroupDefs[i].atoms.NullItem(j);
     }
     GroupDefs[i].atoms.Pack();
-    for( size_t j=0; j < GroupDefs[i].bonds.Count(); j++ )  {
-      if( GroupDefs[i].bonds[j].latt != latt )
+    for (size_t j = 0; j < GroupDefs[i].bonds.Count(); j++) {
+      if (GroupDefs[i].bonds[j].latt != latt)
         GroupDefs[i].bonds.NullItem(j);
     }
     GroupDefs[i].bonds.Pack();
   }
-  for( size_t i=0; i < LabelInfo.atoms.Count(); i++ )  {
-    if( LabelInfo.atoms[i].latt != latt )
+  for (size_t i = 0; i < LabelInfo.atoms.Count(); i++) {
+    if (LabelInfo.atoms[i].latt != latt)
       LabelInfo.atoms.NullItem(i);
   }
   LabelInfo.atoms.Pack();
-  for( size_t i=0; i < LabelInfo.bonds.Count(); i++ )  {
-    if( LabelInfo.bonds[i].latt != latt )
+  for (size_t i = 0; i < LabelInfo.bonds.Count(); i++) {
+    if (LabelInfo.bonds[i].latt != latt)
       LabelInfo.bonds.NullItem(i);
   }
   LabelInfo.bonds.Pack();
+  Files.DeleteRange(1, Files.Count() - 1);
 }
 //..............................................................................
-void TGXApp::UpdateBonds()  {
+void TGXApp::UpdateBonds() {
   BondIterator bi(*this);
-  while( bi.HasNext() )
+  while (bi.HasNext())
     bi.Next().Update();
 }
 //..............................................................................
-TXLattice& TGXApp::AddLattice(const olxstr& Name, const mat3d& basis)  {
+TXLattice& TGXApp::AddLattice(const olxstr& Name, const mat3d& basis) {
   TXLattice *XL = new TXLattice(*GlRenderer, Name);
   XL->SetLatticeBasis(basis);
   XL->Create();
@@ -4735,18 +4732,13 @@ void TGXApp::SaveStructureStyle(TDataItem& item) const {
 }
 //..............................................................................
 void TGXApp::ToDataItem(TDataItem& item, IOutputStream& zos) const {
-  TSizeList LattAtomSz(LattCount()),
-    LattBondSz(LattCount());
-  XFile().ToDataItem(item.AddItem("XFile"));
-  LattAtomSz[0] = CalcMaxAtomTag(XFile().GetLattice());
-  LattBondSz[0] = CalcMaxBondTag(XFile().GetLattice());
-  if( !OverlayedXFiles.IsEmpty() )  {
-    TDataItem& overlays = item.AddItem("Overlays");
-    for( size_t i=0; i < OverlayedXFiles.Count(); i++ )  {
-      OverlayedXFiles[i].ToDataItem(overlays.AddItem(i));
-      LattAtomSz[i+1] = CalcMaxAtomTag(OverlayedXFiles[i].GetLattice());
-      LattBondSz[i+1] = CalcMaxBondTag(OverlayedXFiles[i].GetLattice());
-    }
+  TSizeList LattAtomSz(Files.Count()),
+    LattBondSz(Files.Count());
+  TDataItem &xfiles = item.AddItem("XFiles");
+  for (size_t i = 0; i < Files.Count(); i++) {
+    Files[i].ToDataItem(xfiles.AddItem(i));
+    LattAtomSz[i] = CalcMaxAtomTag(Files[i].GetLattice());
+    LattBondSz[i] = CalcMaxBondTag(Files[i].GetLattice());
   }
   SaveStructureStyle(item);
   GlRenderer->GetBasis().ToDataItem(item.AddItem("Basis"));
@@ -4945,19 +4937,27 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
   ClearLines();
   LabelInfo.Clear();
   ClearGroupDefinitions();
-  OverlayedXFiles.Clear();
+  DeleteXFiles();
   UserObjects.Clear();
   Rings.Clear();
   TXAtom::NamesRegistry().Clear();
   TXBond::NamesRegistry().Clear();
   TXPlane::NamesRegistry().Clear();
-
-  FXFile->FromDataItem(item.GetItemByName("XFile"));
-  TDataItem* overlays = item.FindItem("Overlays");
-  if (overlays != NULL) {
-    for (size_t i=0; i < overlays->ItemCount(); i++)
-      NewOverlayedXFile().FromDataItem(overlays->GetItemByIndex(i));
+  TDataItem *xfiles = item.FindItem("XFiles");
+  if (xfiles == 0) {
+    XFile().FromDataItem(item.GetItemByName("XFile"));
+    TDataItem* overlays = item.FindItem("Overlays");
+    if (overlays != NULL) {
+      for (size_t i = 0; i < overlays->ItemCount(); i++)
+        NewXFile().FromDataItem(overlays->GetItemByIndex(i));
+    }
   }
+  else {
+    for (size_t i = 0; i < xfiles->ItemCount(); i++) {
+      (i == 0 ? XFile() : NewXFile()).FromDataItem(xfiles->GetItemByIndex(i));
+    }
+  }
+
   LoadStructureStyle(item);
   const TDataItem& labels = item.GetItemByName("Labels");
   for (size_t i=0; i < labels.ItemCount(); i++) {
@@ -5180,8 +5180,8 @@ void TGXApp::LoadModel(const olxstr& fileName) {
   }
   catch(const TExceptionBase& exc)  {
     NewLogEntry(logException) << "Failed to load model: " << exc.GetException()->GetError();
-    FXFile->SetLastLoader(NULL);
-    FXFile->LastLoaderChanged();
+    XFile().SetLastLoader(NULL);
+    XFile().LastLoaderChanged();
     CreateObjects(false);
   }
   delete model;

@@ -2605,10 +2605,10 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
     }
     if( OverlayXFile )  {
       sw.start("Loading overlayed file");
-      TXFile& xf = FXApp->NewOverlayedXFile();
+      TXFile& xf = FXApp->NewXFile();
       xf.LoadFromFile(file_n.ToString());
       FXApp->CreateObjects(false);
-      FXApp->AlignOverlayedXFiles();
+      FXApp->AlignXFiles();
       FXApp->CenterView(true);
       return;
     }
@@ -3875,30 +3875,6 @@ void TMainForm::funGetUserInput(const TStrObjList& Params, TMacroData &E) {
   else
     E.SetRetVal(EmptyString());
   dlg->Destroy();
-}
-//..............................................................................
-void TMainForm::macOFileDel(TStrObjList &Cmds, const TParamList &Options, TMacroData &Error)  {
-  if( FXApp->OverlayedXFileCount() == 0 )  {
-    Macros.ProcessMacro("fuse", Error);
-    return;
-  }
-  int ind = Cmds[0].ToInt();
-  if( ind <= -1 )  {
-    if( FXApp->OverlayedXFileCount() > 0 )
-      FXApp->DeleteOverlayedXFile(FXApp->OverlayedXFileCount()-1);
-  }
-  else  {
-    if( (size_t)ind < FXApp->OverlayedXFileCount() )
-      FXApp->DeleteOverlayedXFile(ind);
-    else
-      Error.ProcessingError(__OlxSrcInfo, "no overlayed files at given position");
-  }
-}
-//..............................................................................
-void TMainForm::macOFileSwap(TStrObjList &Cmds, const TParamList &Options,
-  TMacroData &Error)
-{
-  FXApp->SetActiveXFile(Cmds.IsEmpty() ? 0 : Cmds[0].ToSizeT());
 }
 //..............................................................................
 void TMainForm::funTranslatePhrase(const TStrObjList& Params, TMacroData &E) {

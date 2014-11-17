@@ -137,35 +137,26 @@ public:
   };
   struct AtomIterator : public TIterator<TSAtom, TXAtom> {
     AtomIterator(const TGXApp& app) {
-      objects.AddCopy(app.XFile().GetLattice().GetObjects().
-        atoms.GetAccessor<TXAtom>());
-      count += objects.GetLast().Count();
-      for (size_t i=0; i < app.OverlayedXFiles.Count(); i++) {
-        objects.AddCopy(app.OverlayedXFiles[i].GetLattice().GetObjects().
+      for (size_t i=0; i < app.XFiles().Count(); i++) {
+        objects.AddCopy(app.XFiles()[i].GetLattice().GetObjects().
           atoms.GetAccessor<TXAtom>());
         count += objects.GetLast().Count();
       }
     }
   };
-  struct BondIterator : public TIterator<TSBond, TXBond>  {
-    BondIterator(const TGXApp& app)  {
-      objects.AddCopy(app.XFile().GetLattice().GetObjects().
-        bonds.GetAccessor<TXBond>());
-      count += objects.GetLast().Count();
-      for( size_t i=0; i < app.OverlayedXFiles.Count(); i++ )  {
-        objects.AddCopy(app.OverlayedXFiles[i].GetLattice().GetObjects().
+  struct BondIterator : public TIterator<TSBond, TXBond> {
+    BondIterator(const TGXApp& app) {
+      for (size_t i=0; i < app.XFiles().Count(); i++) {
+        objects.AddCopy(app.XFiles()[i].GetLattice().GetObjects().
           bonds.GetAccessor<TXBond>());
         count += objects.GetLast().Count();
       }
     }
   };
-  struct PlaneIterator : public TIterator<TSPlane, TXPlane>  {
-    PlaneIterator(const TGXApp& app)  {
-      objects.AddCopy(app.XFile().GetLattice().GetObjects().
-        planes.GetAccessor<TXPlane>());
-      count += objects.GetLast().Count();
-      for( size_t i=0; i < app.OverlayedXFiles.Count(); i++ )  {
-        objects.AddCopy(app.OverlayedXFiles[i].GetLattice().GetObjects().
+  struct PlaneIterator : public TIterator<TSPlane, TXPlane> {
+    PlaneIterator(const TGXApp& app) {
+      for (size_t i=0; i < app.XFiles().Count(); i++ ) {
+        objects.AddCopy(app.XFiles()[i].GetLattice().GetObjects().
           planes.GetAccessor<TXPlane>());
         count += objects.GetLast().Count();
       }
@@ -177,8 +168,6 @@ public:
 protected:
   TGlRenderer* GlRenderer;
   TXFader* Fader;
-  TTypeList<TGXFile> OverlayedXFiles;
-
   THklFile* FHklFile;
   TGlMouse* FGlMouse;
   TDBasis* FDBasis;
@@ -245,11 +234,7 @@ protected:
   void RestoreGroups();
   void StoreGroup(const TGlGroup& glg, GroupData& group);
   void _UpdateGroupIds();
-  size_t LattCount() const { return OverlayedXFiles.Count() + 1; }
-  TLattice& GetLatt(size_t i) const {
-    return (i == 0 ? XFile() : OverlayedXFiles[i-1]).GetLattice();
-  }
-  static size_t CalcMaxAtomTag(const TLattice& latt)  {
+  static size_t CalcMaxAtomTag(const TLattice& latt) {
     size_t ac = 0;
     for( size_t i=0; i < latt.GetObjects().atoms.Count(); i++ )
       if( !latt.GetObjects().atoms[i].IsDeleted() )
@@ -265,8 +250,8 @@ protected:
   }
   size_t GetAtomTag(TSAtom& sa, TSizeList& latt_sz) const {
     size_t off = 0;
-    for (size_t i=0; i < LattCount(); i++) {
-      if (sa.GetNetwork().GetLattice() == GetLatt(i))
+    for (size_t i=0; i < Files.Count(); i++) {
+      if (sa.GetNetwork().GetLattice() == Files[i].GetLattice())
         return off+sa.GetTag();
       off += latt_sz[i];
     }
@@ -274,8 +259,8 @@ protected:
   }
   size_t GetBondTag(TSBond& sb, TSizeList& latt_sz) const {
     size_t off = 0;
-    for (size_t i=0; i < LattCount(); i++) {
-      if (sb.GetNetwork().GetLattice() == GetLatt(i))
+    for (size_t i=0; i < Files.Count(); i++) {
+      if (sb.GetNetwork().GetLattice() == Files[i].GetLattice())
         return off+sb.GetTag();
       off += latt_sz[i];
     }
@@ -283,23 +268,23 @@ protected:
   }
   TXAtom& GetXAtom(size_t ind) {
     size_t li=0;
-    while (ind >= GetLatt(li).GetObjects().atoms.Count()) {
-      ind -= GetLatt(li).GetObjects().atoms.Count();
-      if (++li >= LattCount()) {
+    while (ind >= Files[li].GetLattice().GetObjects().atoms.Count()) {
+      ind -= Files[li].GetLattice().GetObjects().atoms.Count();
+      if (++li >= Files.Count()) {
         throw TIndexOutOfRangeException(__OlxSourceInfo, ind, 0, 0);
       }
     }
-    return static_cast<TXAtom&>(GetLatt(li).GetObjects().atoms[ind]);
+    return static_cast<TXAtom&>(Files[li].GetLattice().GetObjects().atoms[ind]);
   }
   TXBond& GetXBond(size_t ind)  {
     size_t li=0;
-    while (ind >= GetLatt(li).GetObjects().bonds.Count()) {
-      ind -= GetLatt(li).GetObjects().bonds.Count();
-      if (++li >= LattCount()) {
+    while (ind >= Files[li].GetLattice().GetObjects().bonds.Count()) {
+      ind -= Files[li].GetLattice().GetObjects().bonds.Count();
+      if (++li >= Files.Count()) {
         throw TIndexOutOfRangeException(__OlxSourceInfo, ind, 0, 0);
       }
     }
-    return static_cast<TXBond&>(GetLatt(li).GetObjects().bonds[ind]);
+    return static_cast<TXBond&>(Files[li].GetLattice().GetObjects().bonds[ind]);
   }
   sorted::ObjectPrimitive<index_t>::cons_list_type GetVisibleCAtomTags();
   virtual olxstr GetPlatformString_(bool full) const;
@@ -401,22 +386,20 @@ public:
   TDSphere& DSphere() const { return *FDSphere; }
   T3DFrameCtrl& Get3DFrame() const { return *F3DFrame; }
   TGlMouse& GetMouseHandler() const { return *FGlMouse; }
-  TGXFile &XFile() const { return *(TGXFile *)FXFile; }
+  TGXFile &XFile() const { return (TGXFile &)Files[0]; }
+  TGXFile &XFile(size_t i) const { return (TGXFile &)Files[i]; }
 
   // this function to be used to get all networks, including th overlayed files
   size_t GetNetworks(TNetPList& nets);
-  // overlayed files
-  size_t OverlayedXFileCount() const {  return OverlayedXFiles.Count();  }
-  TGXFile& GetOverlayedXFile(size_t i)  {  return OverlayedXFiles[i];  }
   // sets current active XFile...
   void SetActiveXFile(size_t i);
-  TGXFile& NewOverlayedXFile();
+  TGXFile& NewXFile();
   // aligns overlayed structures on a 2D grid
-  void AlignOverlayedXFiles();
+  void AlignXFiles();
   // calculates maximum radius and center of given lattice
   void CalcLatticeRandCenter(const TLattice& latt, double& r, vec3d& cnt);
-  void DeleteOverlayedXFile(size_t index);
-  void DeleteOverlayedXFiles();
+  void DeleteXFile(size_t index);
+  void DeleteXFiles();
 
   void Select(const vec3d& From, const vec3d& To);
   void SelectAll(bool Select);
@@ -500,25 +483,25 @@ public:
 //..............................................................................
 // XFile interface
   void RegisterXFileFormat(TBasicCFile *Parser, const olxstr& ext)
-  {  FXFile->RegisterFileFormat(Parser, ext); }
+  {  XFile().RegisterFileFormat(Parser, ext); }
   void LoadXFile(const olxstr& fn);
-  void SaveXFile(const olxstr& fn, bool Sort)  {  FXFile->SaveToFile(fn, Sort); }
+  void SaveXFile(const olxstr& fn, bool Sort)  {  XFile().SaveToFile(fn, Sort); }
   void Generate( const vec3d& From, const vec3d& To,
     TCAtomPList* Template, bool ClearPrevCont)
-  {    FXFile->GetLattice().Generate(From, To, Template, ClearPrevCont);  }
+  {    XFile().GetLattice().Generate(From, To, Template, ClearPrevCont);  }
   void Generate( const vec3d& center, double rad,
     TCAtomPList* Template, bool ClearPrevCont)
-  {    FXFile->GetLattice().Generate(center, rad, Template, ClearPrevCont);  }
-  void Uniq()  {    FXFile->GetLattice().Uniq();  }
+  {    XFile().GetLattice().Generate(center, rad, Template, ClearPrevCont);  }
+  void Uniq()  {    XFile().GetLattice().Uniq();  }
   void GrowFragments(bool Shell, TCAtomPList* Template=NULL)  {
-    FXFile->GetLattice().GrowFragments(Shell, Template);
+    XFile().GetLattice().GrowFragments(Shell, Template);
   }
   void GrowAtoms(const olxstr& Atoms, bool Shell, TCAtomPList* Template=NULL);
   void GrowAtom(TXAtom *XA, bool Shell, TCAtomPList* Template=NULL);
   void Grow(const TXGrowPoint& growPoint);
   void ChangeAtomType(TXAtom *A, const olxstr& Element);
   void GrowWhole(TCAtomPList* Template=NULL) {
-    FXFile->GetLattice().GenerateWholeContent(Template);
+    XFile().GetLattice().GenerateWholeContent(Template);
   }
   void Grow(const TXAtomPList& atoms, const smatd_list& matrices);
   void GrowBonds();

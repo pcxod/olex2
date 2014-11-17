@@ -69,8 +69,11 @@ void TDUnitCell::Init(const double cell[6])  {
 //...........................................................................
 void TDUnitCell::SetReciprocal(bool v, double scale)  {
   mat3d M = v ? HklToCartesian : CellToCartesian;
+  Edges[0].Null();
   Edges[1] = M[0];  //000-A
+  Edges[2].Null();
   Edges[3] = M[1];  //000-B
+  Edges[4].Null();
   Edges[5] = M[2];  //000-C
 
   Edges[6] = M[0];  //A
@@ -109,6 +112,7 @@ void TDUnitCell::SetReciprocal(bool v, double scale)  {
     Labels[i]->SetOffset(Edges[i*2+1]);
     Labels[i]->SetLabel(olxstr((char)('a'+i)));
   }
+  Labels[3]->SetOffset(Edges[0]);
   Labels[3]->SetFontIndex(FontIndex);
   Labels[3]->SetLabel('o');
 }
@@ -211,6 +215,13 @@ void TDUnitCell::UpdatePrimitives(int32_t Mask)  {}
 void TDUnitCell::UpdateLabel() {
   for (int i=0; i < 4; i++)
     Labels[i]->Update();
+}
+//..............................................................................
+void TDUnitCell::Update() {
+  Labels[3]->SetOffset(Edges[0]);
+  for (size_t i = 0; i < 3; i++) {
+    Labels[i]->SetOffset(Edges[i * 2 + 1]);
+  }
 }
 //..............................................................................
 void TDUnitCell::SetVisible(bool v)  {

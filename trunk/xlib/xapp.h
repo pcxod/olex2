@@ -37,7 +37,8 @@ public:
     double peak_height;
     NameRef(size_t id, const cm_Element* _elm, double _peak_height,
       const olxstr& n)
-      : catom_id(id), name(n), elm(_elm), peak_height(_peak_height)   {}
+      : catom_id(id), name(n), elm(_elm), peak_height(_peak_height)
+    {}
   };
 
   TNameUndo(IUndoAction* action) : TUndoData(action)  {}
@@ -59,7 +60,7 @@ typedef TPtrList<SObject> SObjectPtrList;
 class TXApp : public TBasicApp, public ALibraryContainer  {
   TUndoStack UndoStack;
 protected:
-  TXFile *FXFile;
+  TTypeList<TXFile> Files;
   TLibrary Library;
   olxstr CifTemplatesDir;  // the folder with CIF templates/data
   ASelectionOwner* SelectionOwner;
@@ -82,7 +83,8 @@ public:
   TXApp(const olxstr &basedir, ASObjectProvider* objectProvider=NULL,
     ASelectionOwner* selOwner=NULL);
   virtual ~TXApp();
-  inline TXFile& XFile() const {  return *FXFile; }
+  TXFile& XFile() const { return Files[0]; }
+  const TTypeList<TXFile> &XFiles() const { return Files; }
 
   DefPropC(olxstr, CifTemplatesDir)
 
@@ -95,14 +97,14 @@ public:
 
   template <class FT>
     bool CheckFileType() const {
-      if( !FXFile->HasLastLoader() )  return false;
-      return EsdlInstanceOf(*FXFile->LastLoader(), FT);
+      if (!XFile().HasLastLoader())  return false;
+      return EsdlInstanceOf(*XFile().LastLoader(), FT);
     }
 
-  static TXApp& GetInstance()  {
+  static TXApp& GetInstance() {
     TBasicApp& bai = TBasicApp::GetInstance();
     TXApp* xai = dynamic_cast<TXApp*>(&bai);
-    if( xai == NULL ) {
+    if (xai == NULL) {
       throw TFunctionFailedException(__OlxSourceInfo,
         "unsuitable application instance");
     }
