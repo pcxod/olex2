@@ -233,15 +233,12 @@ void TActionQList::Clear()  {
   for (size_t i=0; i < Queues.Count(); i++) {
     TActionQueue* Q = Queues.GetValue(i);
     for (size_t j=0; j < Q->HandlerCount(); j++) {
-      hands.Add(Q->GetHandler(j));
-      ac++;
+      hands.Add(Q->GetHandler(j))->SetTag(ac++);
     }
     delete Q; // do not need them any more
   }
-  // ac = Handlers->Count(); - from previous loop
-  hands.ForEach(ACollectionItem::IndexTagSetter());
   for (size_t i=0; i < ac; i++) {
-    if ((size_t)hands[i]->GetTag() == i) {  // the object represents the last object ( out of dubs)
+    if ((size_t)hands[i]->GetTag() == i) {
       hands[i]->OnRemove(NULL);
       if (hands[i]->IsToDelete())
         delete hands[i];

@@ -123,7 +123,7 @@ protected:
 public:
   TwxZipFileSystem(const olxstr& filename, bool UseCache=false);
   TwxZipFileSystem(TEFile* file, bool UseCache);
-  virtual ~TwxZipFileSystem() {}
+  virtual ~TwxZipFileSystem();
 
   bool ExtractAll(const olxstr& dest);
 

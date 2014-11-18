@@ -51,7 +51,7 @@ protected:
   virtual IInputStream* _DoOpenFile(const olxstr& src)=0;
   virtual bool _DoAdoptStream(IInputStream& file, const olxstr& name) = 0;
   // handles OnBreak
-  virtual bool Execute(const IOlxObject* Sender, const IOlxObject* Data, TActionQueue *) {
+  virtual bool Execute(const IOlxObject* , const IOlxObject* , TActionQueue *) {
     DoBreak();
     return true;
  }
@@ -67,7 +67,9 @@ public:
     OnBreak.Add(this);
  }
 
-  virtual ~AFileSystem() {}
+  virtual ~AFileSystem() {
+    OnBreak.Clear();
+  }
 
   // called on progress
   TActionQueue &OnProgress,
