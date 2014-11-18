@@ -375,7 +375,7 @@ public:
       typedef typename vec_lt::list_item_type vec_t;
       vec_t tt, bt;
       if (width <= 0) {
-        const float w = render_middle ? 5 : 4;
+        const float w = render_middle ? 5.0f : 4.0f;
         tt = (sidea[tr] - sidea[tl]) / w;
         bt = (sideb[br] - sideb[bl]) / w;
       }

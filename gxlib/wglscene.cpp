@@ -123,8 +123,8 @@ TGlFont& TWGlScene::DoCreateFont(TGlFont& glf, bool half_size) const {
       size_t offt = ix*ImageW;
       size_t offb = (ImageW-ix-1)*ImageW;
       for (int jx=0; jx < ImageW; jx++) {
-        int off1 = (offt+jx)*3;
-        int off2 = (offb+jx)*3;
+        size_t off1 = (offt+jx)*3;
+        size_t off2 = (offb+jx)*3;
         olx_swap(Image[off1+0], Image[off2+0]);
         olx_swap(Image[off1+1], Image[off2+1]);
         olx_swap(Image[off1+2], Image[off2+2]);

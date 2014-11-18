@@ -21,6 +21,7 @@ class TDUnitCell: public AGDrawObject {
   TXGlLabel* Labels[4];
   vec3d_alist Edges;
   double Thickness;
+  void ExpandEdges();
 public:
   TDUnitCell(TGlRenderer& Render, const olxstr& collectionName);
   virtual ~TDUnitCell();
