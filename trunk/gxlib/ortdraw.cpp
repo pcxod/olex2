@@ -941,8 +941,8 @@ void OrtDraw::Render(const olxstr& fileName)  {
     for (size_t i = 0; i < rings.Count(); i++) {
       if (!rings[i].IsVisible()) continue;
       vec3f cnt = ProjectPoint(rings[i].Basis.GetCenter());
-      ort_circle *c = new ort_circle(
-        *this, cnt, rings[i].Basis.GetZoom()*DrawScale, false);
+      ort_circle *c = new ort_circle(*this, cnt,
+        static_cast<float>(rings[i].Basis.GetZoom())*DrawScale, false);
       c->basis = new mat3f(
         mat3d::Transpose(rings[i].Basis.GetMatrix())
           *app.GetRenderer().GetBasis().GetMatrix());

@@ -510,15 +510,6 @@ void TGXApp::CreateObjects(bool centerModel, bool init_visibility)  {
   for( size_t i=0; i < latt_planes.Count(); i++ )  {
     latt_planes[i].Create();
   }
-  double cell[] = {
-    XFile().GetAsymmUnit().GetAxes()[0],
-    XFile().GetAsymmUnit().GetAxes()[1],
-    XFile().GetAsymmUnit().GetAxes()[2],
-    XFile().GetAsymmUnit().GetAngles()[0],
-    XFile().GetAsymmUnit().GetAngles()[1],
-    XFile().GetAsymmUnit().GetAngles()[2]
-  };
-  XFile().DUnitCell->Init(cell);
   DBasis().SetAsymmUnit(XFile().GetAsymmUnit());
 
   for (size_t i=0; i < ObjectsToCreate.Count(); i++)
@@ -4546,6 +4537,7 @@ void TGXApp::AlignXFiles() {
       TLattice& latt = gxf.GetLattice();
       for (size_t k = 0; k < latt.GetObjects().atoms.Count(); k++)
         latt.GetObjects().atoms[k].crd() += shift_vec;
+      gxf.DUnitCell->SetReciprocal(gxf.DUnitCell->IsReciprocal());
       gxf.DUnitCell->Translate(shift_vec);
     }
   }

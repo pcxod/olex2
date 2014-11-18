@@ -15,6 +15,7 @@
 #include "styles.h"
 #include "povdraw.h"
 #include "wrldraw.h"
+#include "pers_util.h"
 
 TDUnitCell::TDUnitCell(TGlRenderer& R, const olxstr& collectionName) :
 AGDrawObject(R, collectionName), Edges(24)
@@ -76,54 +77,50 @@ void TDUnitCell::Init(const double *cell) {
   SetReciprocal(IsReciprocal());
 }
 //...........................................................................
+void TDUnitCell::ExpandEdges() {
+  Edges[1] -= Edges[0];
+  Edges[3] -= Edges[0];
+  Edges[5] -= Edges[0];
+  Edges[2] = Edges[4].Null();
+  Edges[6] = Edges[1];  //A
+  Edges[7] = Edges[3] + Edges[1];  //AB
+  Edges[8] = Edges[1];  //A
+  Edges[9] = Edges[5] + Edges[1];  //AC
+  Edges[10] = Edges[3];  //B
+  Edges[11] = Edges[3] + Edges[1];  //AB
+  Edges[12] = Edges[3];  //B
+  Edges[13] = Edges[5] + Edges[3];  //BC
+  Edges[14] = Edges[5];  //C
+  Edges[15] = Edges[5] + Edges[1];  //AC
+  Edges[16] = Edges[5];  //C
+  Edges[17] = Edges[5] + Edges[3];  //BC
+  Edges[18] = Edges[3] + Edges[1];  //AB
+  Edges[19] = Edges[5] + Edges[1] + Edges[3];  //ABC
+  Edges[20] = Edges[5] + Edges[3];  //BC
+  Edges[21] = Edges[5] + Edges[3] + Edges[1];  //ABC
+  Edges[22] = Edges[5] + Edges[1];  //AC
+  Edges[23] = Edges[5] + Edges[3] + Edges[1];  //ABC
+  for (size_t i = 1; i < 24; i++) {
+    Edges[i] += Edges[0];
+  }
+}
+//...........................................................................
 void TDUnitCell::SetReciprocal(bool v, double scale)  {
   mat3d M = v ? HklToCartesian : CellToCartesian;
   Edges[0].Null();
   Edges[1] = M[0];  //000-A
-  Edges[2].Null();
   Edges[3] = M[1];  //000-B
-  Edges[4].Null();
   Edges[5] = M[2];  //000-C
-
-  Edges[6] = M[0];  //A
-  Edges[7] = M[1]+M[0];  //AB
-
-  Edges[8] = M[0];  //A
-  Edges[9] = M[2]+M[0];  //AC
-
-  Edges[10] = M[1];  //B
-  Edges[11] = M[1]+M[0];  //AB
-
-  Edges[12] = M[1];  //B
-  Edges[13] = M[2]+M[1];  //BC
-
-  Edges[14] = M[2];  //C
-  Edges[15] = M[2]+M[0];  //AC
-
-  Edges[16] = M[2];  //C
-  Edges[17] = M[2]+M[1];  //BC
-
-  Edges[18] = M[1]+M[0];  //AB
-  Edges[19] = M[2]+M[0]+M[1] ;  //ABC
-
-  Edges[20] = M[2]+M[1];  //BC
-  Edges[21] = M[2]+M[1]+M[0] ;  //ABC
-
-  Edges[22] = M[2]+M[0];  //AC
-  Edges[23] = M[2]+M[1]+M[0];  //ABC
+  ExpandEdges();
   Reciprocal = v;
   for (size_t i=0; i < Edges.Count(); i++)
     Edges[i] *= scale;
   // reinitialise labels
   const size_t FontIndex = Parent.GetScene().FindFontIndexForType<TDUnitCell>();
   for (int i=0; i < 3; i++) {
-    Labels[i]->SetFontIndex(FontIndex);
     Labels[i]->SetOffset(Edges[i*2+1]);
-    Labels[i]->SetLabel(olxstr((char)('a'+i)));
   }
   Labels[3]->SetOffset(Edges[0]);
-  Labels[3]->SetFontIndex(FontIndex);
-  Labels[3]->SetLabel('o');
 }
 //...........................................................................
 void TDUnitCell::Create(const olxstr& cName)  {
@@ -157,10 +154,15 @@ void TDUnitCell::Create(const olxstr& cName)  {
     GlP->SetProperties(GS.GetMaterial(GlP->GetName(), GlM));
     Compile();
   }
-  SetReciprocal(IsReciprocal());
-
-  for (int i=0; i < 4; i++)
+  const size_t FontIndex = Parent.GetScene().FindFontIndexForType<TDUnitCell>();
+  for (int i = 0; i < 3; i++) {
+    Labels[i]->SetFontIndex(FontIndex);
+    Labels[i]->SetLabel(olxstr((char)('a' + i)));
     Labels[i]->Create();
+  }
+  Labels[3]->SetFontIndex(FontIndex);
+  Labels[3]->SetLabel('o');
+  Labels[3]->Create();
 }
 //..............................................................................
 bool TDUnitCell::GetDimensions(vec3d &Max, vec3d &Min) {
@@ -241,16 +243,34 @@ void TDUnitCell::SetVisible(bool v)  {
 //..............................................................................
 void TDUnitCell::ToDataItem(TDataItem& di) const {
   di.AddField("reciprocal", IsReciprocal());
+  di.AddField("visible", IsVisible());
   TDataItem& labels = di.AddItem("Labels");
   for (int i=0; i < 4; i++)
     Labels[i]->ToDataItem(labels.AddItem(olxstr((olxch)('x'+i))));
+  TDataItem& vertices = di.AddItem("Vertices");
+  vertices.AddField("o", PersUtil::VecToStr(Edges[0]));
+  vertices.AddField("a", PersUtil::VecToStr(Edges[1]));
+  vertices.AddField("b", PersUtil::VecToStr(Edges[3]));
+  vertices.AddField("c", PersUtil::VecToStr(Edges[5]));
 }
 //..............................................................................
 void TDUnitCell::FromDataItem(const TDataItem& di)  {
-  SetReciprocal(di.FindField("reciprocal").ToBool());
+  Reciprocal = di.FindField("reciprocal").ToBool();
+  SetVisible(di.FindField("visible", TrueString()).ToBool());
   const TDataItem& labels = di.GetItemByName("Labels");
   for (int i=0; i < 4; i++)
     Labels[i]->FromDataItem(labels.GetItemByIndex(i));
+  TDataItem* vertices = di.FindItem("Vertices");
+  if (vertices != 0) {
+    Edges[0] = PersUtil::VecFromStr<vec3d>(vertices->GetFieldByName('o'));
+    Edges[1] = PersUtil::VecFromStr<vec3d>(vertices->GetFieldByName('a'));
+    Edges[3] = PersUtil::VecFromStr<vec3d>(vertices->GetFieldByName('b'));
+    Edges[5] = PersUtil::VecFromStr<vec3d>(vertices->GetFieldByName('c'));
+    ExpandEdges();
+  }
+  else {
+    SetReciprocal(IsReciprocal());
+  }
 }
 //..............................................................................
 const_strlist TDUnitCell::ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const
