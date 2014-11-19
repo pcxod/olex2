@@ -30,11 +30,13 @@ TGXFile::TGXFile(XObjectProvider & op)
     olxstr("DUnitCell") << extra);
   DUnitCell->SetVisible(false);
   op.app.OnObjectsCreate.Add(this, GXFILE_EVT_OBJETSCREATE);
+  OnFileLoad.Add(this, GXFILE_EVT_FILELOAD);
 }
 //..............................................................................
 TGXFile::~TGXFile() {
   ((XObjectProvider &)GetLattice().GetObjects()).app
     .OnObjectsCreate.Remove(this);
+  OnFileLoad.Remove(this);
   delete DUnitCell;
 }
 //..............................................................................
@@ -44,6 +46,11 @@ bool TGXFile::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
   if (MsgId == GXFILE_EVT_OBJETSCREATE) {
     if (MsgSubId == msiExecute) {
       DUnitCell->Create();
+    }
+  }
+  if (MsgId == GXFILE_EVT_FILELOAD) {
+    if (MsgSubId == msiExit) {
+      DUnitCell->Init(GetAsymmUnit());
     }
   }
   return TXFile::Dispatch(MsgId, MsgSubId, Sender, Data, q);
