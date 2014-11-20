@@ -869,7 +869,7 @@ void TMainForm::macClear(TStrObjList &Cmds, const TParamList &Options,
     FGlConsole->ClearBuffer();
   }
   else {
-    if (Cmds[0].Equalsi("style")) {
+    if (Cmds[0].Equalsi("groups")) {
       FXApp->ClearIndividualCollections();
     }
   }

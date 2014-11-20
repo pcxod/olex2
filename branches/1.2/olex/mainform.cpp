@@ -535,7 +535,7 @@ void TMainForm::XApp(Olex2App *XA)  {
     "Prints a string, but only after a new line character is encountered");
 
   this_InitMacroD(Clear, EmptyString(), fpNone|fpOne,
-    "When no arguments is given, clears console buffer (text). If 'style' is"
+    "When no arguments is given, clears console buffer (text). If 'groups' is"
     " the first argument - all objects are put back to the default groups.");
   this_InitMacroD(Rota, EmptyString(), fpTwo|fpFive,
     "For two arguments the first one specifies axis of rotation (1,2,3 or "
