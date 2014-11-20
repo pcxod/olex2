@@ -2599,9 +2599,6 @@ void GXLibMacros::macCollectivise(TStrObjList &Cmds, const TParamList &Options,
     }
     if (atoms.IsEmpty() && bonds.IsEmpty()) {
       app.ClearIndividualCollections();
-      TXAtom::NamesRegistry().Clear();
-      TXBond::NamesRegistry().Clear();
-      app.CreateObjects(false, false);
     }
     app.Collectivise(atoms);
     app.Collectivise(bonds);

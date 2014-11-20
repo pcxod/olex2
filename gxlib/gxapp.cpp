@@ -3964,58 +3964,58 @@ void TGXApp::Collectivise(TXBond& XB, short level, int32_t mask)  {
     level == -1 ? TXAtom::LegendLevel(XB.GetPrimitives().GetName())+1 : level, mask);
 }
 //..............................................................................
-void TGXApp::Collectivise(const TXBondPList& bonds, short _level, int32_t mask)  {
-  if( bonds.IsEmpty() )  return;
-  for( size_t i=0; i < bonds.Count(); i++ )  {
+void TGXApp::Collectivise(const TXBondPList& bonds, short _level, int32_t mask) {
+  TPtrList<TGPCollection> colls;
+  for (size_t i = 0; i < bonds.Count(); i++) {
     TXBond& b = *bonds[i];
     const int cl = TXAtom::LegendLevel(b.GetPrimitives().GetName());
-    if( cl == 0 || (_level != -1 && cl < _level) )  continue;
+    if (cl == 0 || (_level != -1 && cl < _level))
+      continue;
     const olxstr leg = b.GetLegend(b, _level == -1 ? cl-1 : _level);
     TGPCollection* indCol = GlRenderer->FindCollection(leg);
-    if( &b.GetPrimitives() == indCol )
+    if (&b.GetPrimitives() == indCol)
       continue;
-    if( indCol == NULL )
+    if (indCol == NULL)
       indCol = &GlRenderer->NewCollection(leg);
-    const size_t index = IndividualCollections.IndexOf(b.GetPrimitives().GetName());
-    if( index != InvalidIndex )
-      IndividualCollections.Delete(index);
-    TPtrList<AGDrawObject> objects = b.GetPrimitives().GetObjects();
-    b.GetPrimitives().ClearObjects();
-    for( size_t oi=0; oi < objects.Count(); oi++ )  {
-      objects[oi]->Create(leg);
+    IndividualCollections.Remove(b.GetPrimitives().GetName());
+    TXBond::NamesRegistry().Remove(b.GetPrimitives().GetName());
+    TGPCollection &gpc = b.GetPrimitives();
+    if (colls.AddUnique(gpc)) {
+      TPtrList<AGDrawObject> objects = gpc.GetObjects();
+      gpc.ClearObjects();
+      for (size_t oi = 0; oi < objects.Count(); oi++)
+        objects[oi]->Create(leg);
+      if (mask >= 0)
+        b.UpdatePrimitives(mask);
     }
-    if( mask >= 0 )
-      b.UpdatePrimitives(mask);
   }
 }
 //..............................................................................
-void TGXApp::Collectivise(const TXAtomPList& atoms, short _level, int32_t mask)  {
-  if (atoms.IsEmpty())  return;
-  //TSBondPList sbonds;
+void TGXApp::Collectivise(const TXAtomPList& atoms, short _level, int32_t mask) {
   TPtrList<TGPCollection> colls;
-  for( size_t i=0; i < atoms.Count(); i++ )  {
+  for (size_t i=0; i < atoms.Count(); i++) {
     TXAtom& a = *atoms[i];
     const int cl = TXAtom::LegendLevel(a.GetPrimitives().GetName());
-    if (cl == 0 || (_level != -1 && cl < _level))  continue;
+    if (cl == 0 || (_level != -1 && cl < _level))
+      continue;
     const olxstr leg = a.GetLegend(a, _level == -1 ? cl-1 : _level);
     TGPCollection* indCol = GlRenderer->FindCollection(leg);
-    if (indCol != NULL && &a.GetPrimitives() == indCol)
+    if (&a.GetPrimitives() == indCol)
       continue;
-    else {
-      if (indCol == NULL)
-        indCol = &GlRenderer->NewCollection(leg);
-      IndividualCollections.Remove(a.GetPrimitives().GetName());
-      TGPCollection &gpc = a.GetPrimitives();
-      if (colls.AddUnique(gpc)) {
-        TPtrList<AGDrawObject> objects = gpc.GetObjects();
-        gpc.ClearObjects();
-        for (size_t oi = 0; oi < objects.Count(); oi++)
-          objects[oi]->Create(leg);
-        if (mask >= 0)
-          a.UpdatePrimitives(mask);
-        //for( size_t j=0; j < a.BondCount(); j++ )
-        //  sbonds.Add(a.Bond(j));
-      }
+    if (indCol == NULL)
+      indCol = &GetRenderer().NewCollection(leg);
+    IndividualCollections.Remove(a.GetPrimitives().GetName());
+    TXAtom::NamesRegistry().Remove(a.GetPrimitives().GetName());
+    TGPCollection &gpc = a.GetPrimitives();
+    if (colls.AddUnique(gpc)) {
+      TPtrList<AGDrawObject> objects = gpc.GetObjects();
+      gpc.ClearObjects();
+      for (size_t oi = 0; oi < objects.Count(); oi++)
+        objects[oi]->Create(leg);
+      if (mask >= 0)
+        a.UpdatePrimitives(mask);
+      //for( size_t j=0; j < a.BondCount(); j++ )
+      //  sbonds.Add(a.Bond(j));
     }
   }
   GetRenderer().RemoveCollections(colls);
@@ -5409,8 +5409,50 @@ AGDrawObject* TGXApp::AddObjectToCreate(AGDrawObject* obj)  {
   return ObjectsToCreate.Add(obj);
 }
 //..............................................................................
+void TGXApp::ClearIndividualCollections() {
+  sorted::PointerPointer<TGPCollection> cols;
+  sorted::ObjectComparable<olxstr> names;
+  for (size_t i = 0; i < IndividualCollections.Count(); i++) {
+    names.AddUnique(IndividualCollections[i]);
+  }
+  for (size_t i = 0; i < TXAtom::NamesRegistry().Count(); i++) {
+    names.AddUnique(TXAtom::NamesRegistry().GetValue(i));
+  }
+  for (size_t i = 0; i < TXBond::NamesRegistry().Count(); i++) {
+    names.AddUnique(TXBond::NamesRegistry().GetValue(i));
+  }
+  for (size_t i = 0; i < TXPlane::NamesRegistry().Count(); i++) {
+    names.AddUnique(TXPlane::NamesRegistry().GetValue(i));
+  }
+  for (size_t i = 0; i < names.Count(); i++) {
+    TGPCollection *gp = GetRenderer().FindCollection(names[i]);
+    if (gp != 0) {
+      cols.AddUnique(gp);
+    }
+  }
+  TPtrList<AGDrawObject> to_create;
+  for (size_t i = 0; i < cols.Count(); i++) {
+    to_create.AddList(cols[i]->GetObjects());
+  }
+  ACollectionItem::Unify(to_create);
+  GetRenderer().RemoveCollections(cols);
+  for (size_t i = 0; i < to_create.Count(); i++) {
+    to_create[i]->Create();
+  }
+  IndividualCollections.Clear();
+  TXPlane::NamesRegistry().Clear();
+  TXAtom::NamesRegistry().Clear();
+  TXBond::NamesRegistry().Clear();
+}
+//..............................................................................
+void TGXApp::ClearGroupDefinitions()  {
+  GroupDefs.Clear();
+  SelectionCopy[0].Clear();
+  SelectionCopy[1].Clear();
+  LabelInfo.Clear();
+}
+//..............................................................................
 void TGXApp::ClearStructureRelated() {
-  ClearIndividualCollections();
   GetRenderer().GetStyles().RemoveNamedStyles("Q");
   XFile().GetLattice().ClearPlaneDefinitions();
   ClearGroupDefinitions();
@@ -5420,6 +5462,7 @@ void TGXApp::ClearStructureRelated() {
   UserObjects.Clear();
   Rings.Clear();
   GetLabels().ClearLabelMarks(lmiDefault);
+  IndividualCollections.Clear();
   TXPlane::NamesRegistry().Clear();
   TXAtom::NamesRegistry().Clear();
   TXBond::NamesRegistry().Clear();
