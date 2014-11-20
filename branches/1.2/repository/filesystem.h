@@ -67,7 +67,9 @@ public:
     OnBreak.Add(this);
  }
 
-  virtual ~AFileSystem() {}
+  virtual ~AFileSystem() {
+    OnBreak.Remove(this);
+  }
 
   // called on progress
   TActionQueue &OnProgress,
