@@ -862,8 +862,17 @@ void TMainForm::macPictPR(TStrObjList &Cmds, const TParamList &Options,
   TEFile::WriteLines(file_name, TCStrList(FXApp->ToPov().GetObject()));
 }
 //..............................................................................
-void TMainForm::macClear(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error) {
-  FGlConsole->ClearBuffer();
+void TMainForm::macClear(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
+  if (Cmds.IsEmpty()) {
+    FGlConsole->ClearBuffer();
+  }
+  else {
+    if (Cmds[0].Equalsi("style")) {
+      FXApp->ClearIndividualCollections();
+    }
+  }
 }
 //..............................................................................
 void TMainForm::macRota(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
