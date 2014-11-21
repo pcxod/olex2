@@ -271,6 +271,7 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
         if (++i < SL.Count()) {
           Toks.Clear();
           Toks.Strtok(SL[i], ' ');
+          bool flack_found = false;
           if (!Toks.IsEmpty()) {
             if (Toks[0].Contains('*')) {
               if (++i < SL.Count()) {
@@ -281,11 +282,15 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
                 break;
               }
             }
-            TEValueD flack = Toks[0];
-            params("flack", flack.ToString());
+            if (!Toks.IsEmpty()) {
+              TEValueD flack = Toks[0];
+              params("flack", flack.ToString());
+              flack_found = true;
+            }
           }
-          else
+          if (!flack_found) {
             params("flack", flack_c.ToString());
+          }
         }
         else {
           params("flack", flack_c.ToString());
