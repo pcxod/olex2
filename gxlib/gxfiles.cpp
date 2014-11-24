@@ -34,8 +34,10 @@ TGXFile::TGXFile(XObjectProvider & op)
 }
 //..............................................................................
 TGXFile::~TGXFile() {
-  ((XObjectProvider &)GetLattice().GetObjects()).app
-    .OnObjectsCreate.Remove(this);
+  if (TBasicApp::HasInstance()) {
+    ((XObjectProvider &)GetLattice().GetObjects()).app
+      .OnObjectsCreate.Remove(this);
+  }
   OnFileLoad.Remove(this);
   delete DUnitCell;
 }
