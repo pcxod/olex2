@@ -809,6 +809,7 @@ TAG_HANDLER_PROC(tag)  {
   else if (TagName.Equalsi("checkbox")) {
     bool label_to_the_right = GetBoolAttribute(tag, "RIGHT");
     TCheckBox *Box = new TCheckBox(html,
+      -1, Value.u_str(), wxDefaultPosition, wxDefaultSize,
       (label_to_the_right ? wxALIGN_RIGHT : 0));
     Box->SetFont(m_WParser->GetDC()->GetFont());
     wxLayoutConstraints* wxa = new wxLayoutConstraints;
@@ -816,7 +817,6 @@ TAG_HANDLER_PROC(tag)  {
     Box->SetConstraints(wxa);
     Box->WI.SetWidth(ax);
     Box->WI.SetHeight(ay);
-    Box->SetCaption(Value);
     AdjustSize(*Box, true, true);
     CreatedObject = Box;
     CreatedWindow = Box;
@@ -849,7 +849,11 @@ TAG_HANDLER_PROC(tag)  {
         ExpandMacroShortcuts(tag.GetParam(wxT("ONUNCHECK")), macro_map);
       Box->OnUncheck.Add(&html->Manager);
     }
-    if (tag.HasParam(wxT("MODEDEPENDENT"))) {
+    if (tag.HasParam(wxT("STATEDEPENDENT"))) {
+      Box->SetActionQueue(TStateRegistry::GetInstance().OnChange,
+        tag.GetParam(wxT("STATEDEPENDENT")));
+    }
+    else if (tag.HasParam(wxT("MODEDEPENDENT"))) {
       Box->SetActionQueue(TModeRegistry::GetInstance().OnChange,
         tag.GetParam(wxT("MODEDEPENDENT")));
     }

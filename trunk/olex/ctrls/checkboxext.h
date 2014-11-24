@@ -36,13 +36,11 @@ namespace ctrl_ext  {
 
     AOlxCtrl::ActionQueue &OnClick, &OnCheck, &OnUncheck;
 
-    inline void SetCaption(const olxstr &T) { SetLabel(T.u_str()); }
-    inline olxstr GetCaption() const { return GetLabel(); }
+    void SetCaption(const olxstr &T) { SetLabel(T.u_str()); }
+    olxstr GetCaption() const { return GetLabel(); }
 
-    inline bool IsChecked() const { return wxCheckBox::IsChecked(); }
-    inline void SetChecked(bool v) { wxCheckBox::SetValue(v); }
-
-    DECLARE_CLASS(TCheckBox)
+    bool IsChecked() const { return wxCheckBox::IsChecked(); }
+    void SetChecked(bool v) { wxCheckBox::SetValue(v); }
   };
 }; // end namespace ctrl_ext
 #endif
