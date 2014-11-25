@@ -227,11 +227,21 @@ bool TEFile::Exists(const olxstr& F)  {
   return (access( OLXSTR(OLX_OS_PATH(F)), 0) != -1);
 }
 //..............................................................................
-bool TEFile::Existsi(const olxstr& F, olxstr& res)  {
-  if( F.IsEmpty() )
+bool TEFile::Existsi(const olxstr& F, olxstr& res) {
+  if (F.IsEmpty())
     return false;
 #ifdef __WIN32__
-  return Exists(F);
+  WIN32_FIND_DATA wfd = { 0 };
+  HANDLE fsh = FindFirstFile(F.u_str(), &wfd);
+  if (fsh != INVALID_HANDLE_VALUE) {
+    res = TEFile::ExtractFilePath(F);
+    if (!res.IsEmpty())
+      TEFile::AddPathDelimeterI(res);
+    res << &wfd.cFileName[0];
+    FindClose(fsh);
+    return true;
+  }
+  return false;
 #else
   olxstr path = ExtractFilePath(F);
   olxstr name = ExtractFileName(F);

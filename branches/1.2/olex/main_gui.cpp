@@ -550,7 +550,7 @@ void TMainForm::ObjectUnderMouse(AGDrawObject *G)  {
     else {
       pmAtom->Check(ID_AtomPartChangeLast, true);
       pmAtom->SetLabel(ID_AtomPartChangeLast, (olxstr("Custom: ") <<
-        XA->CAtom().GetPart()).u_str());
+        (int)XA->CAtom().GetPart()).u_str());
     }
     // Uiso
     if (XA->CAtom().GetEllipsoid() == NULL) {

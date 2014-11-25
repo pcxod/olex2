@@ -1057,16 +1057,16 @@ olxstr TXFile::NameArg::ToString() const {
   return olxstr(file_name) << (is_index ? '#' : '$') << data_name;
 }
 //..............................................................................
-olxstr TXFile::LocateHklFile()  {
+olxstr TXFile::LocateHklFile() {
   olxstr HklFN = GetRM().GetHKLSource();
-  if (TEFile::Existsi(olxstr(HklFN), HklFN))
+  if (TEFile::Existsi(HklFN, HklFN))
     return HklFN;
   const olxstr fn = GetFileName();
   HklFN = TEFile::ChangeFileExt(fn, "hkl");
-  if (TEFile::Existsi(olxstr(HklFN), HklFN))
+  if (TEFile::Existsi(HklFN, HklFN))
     return HklFN;
   HklFN = TEFile::ChangeFileExt(fn, "raw");
-  if (TEFile::Existsi(olxstr(HklFN), HklFN)) {
+  if (TEFile::Existsi(HklFN, HklFN)) {
     THklFile Hkl;
     Hkl.LoadFromFile(HklFN, false);
     HklFN = TEFile::ChangeFileExt(fn, "hkl");
