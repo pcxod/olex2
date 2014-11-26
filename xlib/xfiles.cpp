@@ -731,7 +731,7 @@ const_strlist TXFile::ToJSON() const {
     olxstr &l = out.Add();
     l << " {\"from\":" << b.A().GetTag() << ", \"to\":" << b.B().GetTag();
     if (b.GetType() == sotHBond)
-      l << ", \"hbond\": true";
+      l << ", \"stippled\": true";
     l << "},";
     cnt++;
   }

@@ -122,19 +122,19 @@ TAG_HANDLER_PROC(tag)  {
 TAG_HANDLER_END(CIRCLE)
 // extended image tag
 TAG_HANDLER_BEGIN(IMAGE, "ZIMG")
-TAG_HANDLER_PROC(tag)  {
+TAG_HANDLER_PROC(tag) {
   int ax=-1, ay=-1;
   bool WidthInPercent = false, HeightInPercent = false;
   int fl = 0;
   olex2::IOlex2Processor *op = olex2::IOlex2Processor::GetInstance();
   wxString text = tag.GetParam(wxT("TEXT")),
-           mapName = tag.GetParam(wxT("USEMAP"));
+    mapName = tag.GetParam(wxT("USEMAP"));
   olxstr ObjectName = tag.GetParam(wxT("NAME")),
     Tmp;
-  try  {
+  try {
     Tmp = tag.GetParam(wxT("WIDTH"));
-    if( !Tmp.IsEmpty() )  {
-      if( Tmp.EndsWith('%') )  {
+    if (!Tmp.IsEmpty()) {
+      if (Tmp.EndsWith('%')) {
         ax = (int)Tmp.SubStringTo(Tmp.Length()-1).ToDouble();
         WidthInPercent = true;
       }
@@ -142,8 +142,8 @@ TAG_HANDLER_PROC(tag)  {
         ax = (int)Tmp.ToDouble();
     }
     Tmp = tag.GetParam(wxT("HEIGHT"));
-    if( !Tmp.IsEmpty() )  {
-      if( Tmp.EndsWith('%') )  {
+    if (!Tmp.IsEmpty()) {
+      if (Tmp.EndsWith('%')) {
         ay = (int)Tmp.SubStringTo(Tmp.Length()-1).ToDouble();
         HeightInPercent = true;
       }
@@ -151,7 +151,7 @@ TAG_HANDLER_PROC(tag)  {
         ay = (int)Tmp.ToDouble();
     }
   }
-  catch(const TExceptionBase& e)  {
+  catch (const TExceptionBase& e) {
     TBasicApp::NewLogEntry(logException) << e.GetException()->GetFullMessage();
     TBasicApp::NewLogEntry() << "While processing Width/Height for zimg::" <<
       ObjectName;
@@ -160,26 +160,31 @@ TAG_HANDLER_PROC(tag)  {
 
   if (tag.HasParam(wxT("FLOAT"))) fl = ax;
 
-  if( !text.IsEmpty() )  {
+  if (!text.IsEmpty()) {
     int textW = 0, textH = 0;
     m_WParser->GetDC()->GetTextExtent( text, &textW, &textH );
-    if( textW > ax )  ax = textW;
-    if( textH > ay )  ay = textH;
+    if (textW > ax)  ax = textW;
+    if (textH > ay)  ay = textH;
   }
 
   olxstr src = tag.GetParam(wxT("SRC"));
   if (op != NULL)
     op->processFunction(src, EmptyString(), true);
 
-  if (TZipWrapper::IsZipFile(THtml::SwitchSource()) && !TZipWrapper::IsZipFile(src))
+  if (TZipWrapper::IsZipFile(THtml::SwitchSource()) &&
+    !TZipWrapper::IsZipFile(src))
+  {
     src = TZipWrapper::ComposeFileName(THtml::SwitchSource(), src);
+  }
 
   wxFSFile *fsFile = TFileHandlerManager::GetFSFileHandler( src );
-  if( fsFile == NULL )
-    TBasicApp::NewLogEntry(logError) << "Could not locate image: " << src;
+  if (fsFile == NULL) {
+    TBasicApp::NewLogEntry(logError) << "Could not locate image: '"
+      << src << '\'';
+  }
 
-  if( (mapName.Length() > 0) && mapName.GetChar(0) == '#')
-      mapName = mapName.Mid( 1 );
+  if ((mapName.Length() > 0) && mapName.GetChar(0) == '#')
+      mapName = mapName.Mid(1);
 
   THtmlImageCell *cell = new THtmlImageCell(
     m_WParser->GetWindowInterface()->GetHTMLWindow(),
@@ -199,7 +204,7 @@ TAG_HANDLER_PROC(tag)  {
   if (!ObjectName.IsEmpty()) {
     THtml * html = dynamic_cast<THtml*>(
       m_WParser->GetWindowInterface()->GetHTMLWindow());
-    if( !html->AddObject(ObjectName, cell, NULL) ) {
+    if (!html->AddObject(ObjectName, cell, NULL)) {
       TBasicApp::NewLogEntry(logError) << "THTML: object already exist: " <<
         ObjectName;
     }
@@ -216,7 +221,7 @@ olxstr ExpandMacroShortcuts(const olxstr &s, const olxstr_dict<olxstr> &map) {
 }
 // input tag
 TAG_HANDLER_BEGIN(INPUT, "INPUT")
-TAG_HANDLER_PROC(tag)  {
+TAG_HANDLER_PROC(tag) {
   const olxstr TagName = tag.GetParam(wxT("TYPE"));
   olex2::IOlex2Processor *op = olex2::IOlex2Processor::GetInstance();
   THtml * html = dynamic_cast<THtml*>(
@@ -238,7 +243,7 @@ TAG_HANDLER_PROC(tag)  {
     macro_map.Add("~name~", pn.IsEmpty() ? ObjectName
       : (pn << '.' << ObjectName));
   }
-  try  {
+  try {
     Tmp = tag.GetParam(wxT("WIDTH"));
     op->processFunction(Tmp, SrcInfo, false);
     if (!Tmp.IsEmpty()) {
@@ -265,84 +270,89 @@ TAG_HANDLER_PROC(tag)  {
       height_set = true;
     }
   }
-  catch(const TExceptionBase& e)  {
+  catch(const TExceptionBase& e) {
     TBasicApp::NewLogEntry(logException) << e.GetException()->GetFullMessage();
     TBasicApp::NewLogEntry() << "While processing Width/Height HTML tags for "
       << TagName << "::" << ObjectName;
     TBasicApp::NewLogEntry() << "Offending input: '" << Tmp << '\'';
   }
-  if( ax == 0 )  ax = 30;
-  if( ay == 0 )  ay = 20;
+  if (ax == 0)  ax = 30;
+  if (ay == 0)  ay = 20;
 
-  if( tag.HasParam(wxT("FLOAT")) )
+  if (tag.HasParam(wxT("FLOAT")))
     fl = ax;
 
   {  // parse h alignment
     wxString ha;
-    if( tag.HasParam(wxT("ALIGN")) )
+    if (tag.HasParam(wxT("ALIGN")))
       ha = tag.GetParam(wxT("ALIGN"));
-    else if( tag.HasParam(wxT("HALIGN")) )
+    else if (tag.HasParam(wxT("HALIGN")))
       ha = tag.GetParam(wxT("HALIGN"));
-    if( !ha.IsEmpty() )  {
-      if( ha.CmpNoCase(wxT("left")) == 0 )
+    if (!ha.IsEmpty()) {
+      if (ha.CmpNoCase(wxT("left")) == 0)
         halign = wxHTML_ALIGN_LEFT;
-      else if( ha.CmpNoCase(wxT("center")) == 0 ||
-               ha.CmpNoCase(wxT("middle")) == 0 )
+      else if (ha.CmpNoCase(wxT("center")) == 0 ||
+        ha.CmpNoCase(wxT("middle")) == 0)
+      {
         halign = wxHTML_ALIGN_CENTER;
-      else if( ha.CmpNoCase(wxT("right")) == 0 )
+      }
+      else if (ha.CmpNoCase(wxT("right")) == 0)
         halign = wxHTML_ALIGN_RIGHT;
     }
   }
-  if( tag.HasParam(wxT("VALIGN")) ){
+  if (tag.HasParam(wxT("VALIGN"))) {
     wxString va = tag.GetParam(wxT("VALIGN"));
-    if( va.CmpNoCase(wxT("top")) == 0 )
+    if (va.CmpNoCase(wxT("top")) == 0)
       valign = wxHTML_ALIGN_TOP;
-    else if( va.CmpNoCase(wxT("center")) == 0 ||
-             va.CmpNoCase(wxT("middle")) == 0 )
+    else if (va.CmpNoCase(wxT("center")) == 0 ||
+      va.CmpNoCase(wxT("middle")) == 0)
+    {
       valign = wxHTML_ALIGN_CENTER;
-    else if( va.CmpNoCase(wxT("bottom")) == 0 )
+    }
+    else if (va.CmpNoCase(wxT("bottom")) == 0)
       valign = wxHTML_ALIGN_BOTTOM;
   }
   Label = tag.GetParam(wxT("LABEL"));
 
   wxHtmlLinkInfo* LinkInfo = NULL;
-  if( !Label.IsEmpty() )  {
-    if( Label.StartsFromi("href=") )  {
+  if (!Label.IsEmpty()) {
+    if (Label.StartsFromi("href=")) {
       Label = Label.SubStringFrom(5);
       const size_t tagInd = Label.IndexOfi("&target=");
-      olxstr tag(EmptyString());
-      if( tagInd != InvalidIndex )  {
+      olxstr tag = EmptyString();
+      if (tagInd != InvalidIndex) {
         tag = Label.SubStringFrom(tagInd+8);
         Label.SetLength(tagInd);
       }
-      LinkInfo = new wxHtmlLinkInfo(Label.u_str(), tag.u_str() );
+      LinkInfo = new wxHtmlLinkInfo(Label.u_str(), tag.u_str());
     }
   }
-  if( !ObjectName.IsEmpty() )  {
+  if (!ObjectName.IsEmpty()) {
     wxWindow* wnd = html->FindObjectWindow(ObjectName);
-    if( wnd != NULL )  {
-      if( !tag.HasParam(wxT("reuse")) ) {
-        TBasicApp::NewLogEntry(logError) << "HTML: duplicated object \'" <<
+    if (wnd != NULL) {
+      if (!tag.HasParam(wxT("reuse"))) {
+        TBasicApp::NewLogEntry(logError) << "HTML: duplicated object '" <<
           ObjectName << '\'';
       }
-      else  {
-        if( !Label.IsEmpty() )  {
+      else {
+        if (!Label.IsEmpty()) {
           wxHtmlContainerCell* contC =
             new wxHtmlContainerCell(m_WParser->GetContainer());
           THtml::WordCell* wc =
             new THtml::WordCell(Label.u_str(), *m_WParser->GetDC());
-          if( LinkInfo != NULL ) {
+          if (LinkInfo != NULL) {
             wc->SetLink(*LinkInfo);
             delete LinkInfo;
           }
           wc->SetDescent(0);
-          contC->InsertCell( wc );
+          contC->InsertCell(wc);
           contC->InsertCell(new THtmlWidgetCell(wnd, fl));
-          if( valign != -1 )  contC->SetAlignVer(valign);
-          if( halign != -1 )  contC->SetAlignHor(halign);
+          if (valign != -1)  contC->SetAlignVer(valign);
+          if (halign != -1)  contC->SetAlignHor(halign);
         }
-        else
+        else {
           m_WParser->GetContainer()->InsertCell(new THtmlWidgetCell(wnd, fl));
+        }
       }
       return false;
     }
@@ -362,11 +372,11 @@ TAG_HANDLER_PROC(tag)  {
       flags |= wxTE_PASSWORD;
     if (GetBoolAttribute(tag, "READONLY"))
       flags |= wxTE_READONLY;
-    TTextEdit *Text = new TTextEdit(html, flags);
+    TTextEdit *Text = new TTextEdit(html, wxID_ANY, Value.u_str(),
+      wxDefaultPosition, wxSize(ax, ay), flags);
     Text->SetFont(m_WParser->GetDC()->GetFont());
     CreatedObject = Text;
     CreatedWindow = Text;
-    Text->SetText(Value);
     Text->SetSize(ax, ay);
     if ((flags&wxTE_MULTILINE) == 0)
       AdjustSize(*Text);
@@ -409,12 +419,13 @@ TAG_HANDLER_PROC(tag)  {
     }
   }
 /******************* DATE CONTROL *****************************************/
-  else if( TagName.Equalsi("date") )  {
+  else if (TagName.Equalsi("date")) {
     int flags = wxDP_SPIN;
     if (GetBoolAttribute(tag, "dropdown")) {
       flags = wxDP_DROPDOWN;
     }
-    TDateCtrl *DT = new TDateCtrl(html, flags);
+    TDateCtrl *DT = new TDateCtrl(html, wxID_ANY, wxDateTime::Now(),
+      wxDefaultPosition, wxSize(ax, ay), flags);
     DT->SetFont(m_WParser->GetDC()->GetFont());
     CreatedObject = DT;
     CreatedWindow = DT;
@@ -514,7 +525,7 @@ TAG_HANDLER_PROC(tag)  {
         Btn = ibtn;
       }
       else {
-        Btn = new TBmpButton(html, -1, wxNullBitmap,
+        Btn = new TBmpButton(html, wxID_ANY, wxNullBitmap,
           wxDefaultPosition, wxDefaultSize, flags );
         ((TBmpButton*)Btn)->SetSource( buttonImage );
         wxFSFile *fsFile = TFileHandlerManager::GetFSFileHandler(buttonImage);
@@ -554,7 +565,7 @@ TAG_HANDLER_PROC(tag)  {
       }
     }
     else {
-      Btn = new TButton(html, -1, Value.u_str(),
+      Btn = new TButton(html, wxID_ANY, Value.u_str(),
         wxDefaultPosition, wxDefaultSize, flags);
       ((TButton*)Btn)->SetFont(m_WParser->GetDC()->GetFont());
       if ((flags & wxBU_EXACTFIT) == 0) {
@@ -608,7 +619,8 @@ TAG_HANDLER_PROC(tag)  {
 /******************* COMBOBOX *************************************************/
   else if (TagName.Equalsi("combo")) {
     if (GetBoolAttribute(tag, "READONLY")) {
-      TChoice *Box = new TChoice(html, -1, wxDefaultPosition, wxSize(ax, ay));
+      TChoice *Box = new TChoice(html, wxID_ANY,
+        wxDefaultPosition, wxSize(ax, ay));
       Box->SetFont(m_WParser->GetDC()->GetFont());
       AdjustSize(*Box);
       CreatedObject = Box;
@@ -661,7 +673,7 @@ TAG_HANDLER_PROC(tag)  {
         m_WParser->GetContainer()->InsertCell(new THtmlWidgetCell(Box, fl));
     }
     else {
-      TComboBox *Box = new TComboBox(html, -1, wxEmptyString, wxDefaultPosition,
+      TComboBox *Box = new TComboBox(html, wxID_ANY, wxEmptyString, wxDefaultPosition,
         wxSize(ax, ay));
       Box->SetFont(m_WParser->GetDC()->GetFont());
       AdjustSize(*Box);
@@ -809,7 +821,7 @@ TAG_HANDLER_PROC(tag)  {
   else if (TagName.Equalsi("checkbox")) {
     bool label_to_the_right = GetBoolAttribute(tag, "RIGHT");
     TCheckBox *Box = new TCheckBox(html,
-      -1, Value.u_str(), wxDefaultPosition, wxDefaultSize,
+      wxID_ANY, Value.u_str(), wxDefaultPosition, wxDefaultSize,
       (label_to_the_right ? wxALIGN_RIGHT : 0));
     Box->SetFont(m_WParser->GetDC()->GetFont());
     wxLayoutConstraints* wxa = new wxLayoutConstraints;
@@ -860,14 +872,15 @@ TAG_HANDLER_PROC(tag)  {
     m_WParser->GetContainer()->InsertCell(new THtmlWidgetCell(Box, fl));
   }
 /******************* TREE CONTROL *********************************************/
-  else if( TagName.Equalsi("tree") )  {
+  else if (TagName.Equalsi("tree")) {
     long flags = wxTR_HAS_BUTTONS;
-    if( tag.HasParam(wxT("NOROOT")) )
+    if (tag.HasParam(wxT("NOROOT")))
       flags |= wxTR_HIDE_ROOT;
-    if( tag.HasParam(wxT("EDITABLE")) )
+    if (tag.HasParam(wxT("EDITABLE")))
       flags |= wxTR_EDIT_LABELS;
 
-    TTreeView *Tree = new TTreeView(html, flags);
+    TTreeView *Tree = new TTreeView(html, wxID_ANY, wxDefaultPosition,
+      wxSize(ax, ay), flags);
     if( (flags&wxTR_HIDE_ROOT) == 0 && tag.HasParam(wxT("ROOTLABEL")) )
       Tree->SetItemText(Tree->GetRootItem(), tag.GetParam(wxT("ROOTLABEL")));
     olxstr src = tag.GetParam(wxT("SRC"));
@@ -883,23 +896,23 @@ TAG_HANDLER_PROC(tag)  {
     menu->Append(1001, wxT("Collapse all"));
     Tree->SetPopup(menu);
     Tree->SetData( Data );
-    if( tag.HasParam(wxT("ONSELECT")) )  {
+    if (tag.HasParam(wxT("ONSELECT"))) {
       Tree->OnSelect.data =
         ExpandMacroShortcuts(tag.GetParam(wxT("ONSELECT")), macro_map);
       Tree->OnSelect.Add(&html->Manager);
     }
-    if( tag.HasParam(wxT("ONITEM")) )  {
+    if (tag.HasParam(wxT("ONITEM"))) {
       Tree->OnDblClick.data =
         ExpandMacroShortcuts(tag.GetParam(wxT("ONITEM")), macro_map);
       Tree->OnDblClick.Add(&html->Manager);
     }
-    if( (flags&wxTR_EDIT_LABELS) != 0 && tag.HasParam(wxT("ONEDIT")) )  {
+    if ((flags&wxTR_EDIT_LABELS) != 0 && tag.HasParam(wxT("ONEDIT"))) {
       Tree->OnEdit.data =
         ExpandMacroShortcuts(tag.GetParam(wxT("ONEDIT")), macro_map);
       Tree->OnEdit.Add(&html->Manager);
     }
     m_WParser->GetContainer()->InsertCell(new THtmlWidgetCell(Tree, fl));
-    if( ios == NULL )  {  // create test tree
+    if (ios == NULL) {  // create test tree
       TBasicApp::NewLogEntry(logError) <<
         "THTML: could not locate tree source: \'" << src <<  '\'';
       wxTreeItemId Root = Tree->AddRoot( wxT("Test data") );
@@ -910,7 +923,7 @@ TAG_HANDLER_PROC(tag)  {
         Tree->AppendItem(Root, wxT("child1")), wxT("subchild1"));
         Tree->AppendItem(Tree->AppendItem(sc2, wxT("child1")), wxT("subchild1"));
     }
-    else  {
+    else {
       TStrList list;
 #ifdef _UNICODE
       list = TUtf8File::ReadLines(*ios, false);
@@ -923,9 +936,9 @@ TAG_HANDLER_PROC(tag)  {
         Tree->ExpandAll();
       }
       wxString sel = tag.GetParam(wxT("SELECTED"));
-      if( sel.IsEmpty() )  {
+      if (sel.IsEmpty()) {
         sel = tag.GetParam(wxT("VALUE"));
-        if( !sel.IsEmpty() )
+        if (!sel.IsEmpty())
           Tree->SelectByLabel(sel);
       }
       else

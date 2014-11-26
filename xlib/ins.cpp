@@ -2105,6 +2105,7 @@ bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& _toks)  {
     RequiredParams = 0;  AcceptsParams = 3;
     Vals[0] = &esd;  Vals[1] = &esd1;  Vals[2] = &DefVal;
     AcceptsAll = true;
+    use_var_manager = false;
   }
   else if( ins_name.Equalsi("ISOR") )  {
     srl = &rm.rISOR;

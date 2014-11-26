@@ -150,7 +150,7 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TCStrList& SL, bool get_ins
       if (i == 0) {
         if (line.Length() >= 32) {
           HasBatch = true;
-          line_length = 32;
+          line_length = line.Length();
         }
         else if (line.Length() == 28) {
           line_length = 28;
