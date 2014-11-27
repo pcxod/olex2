@@ -1337,7 +1337,7 @@ void TAsymmUnit::LibSetZ(const TStrObjList& Params, TMacroError& E)  {
 }
 //..............................................................................
 void TAsymmUnit::LibGetZprime(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal(olxstr::FormatFloat(3,GetZPrime()));
+  E.SetRetVal(olxstr::FormatFloat(5, GetZPrime()).TrimFloat());
 }
 //..............................................................................
 void TAsymmUnit::LibSetZprime(const TStrObjList& Params, TMacroError& E)  {

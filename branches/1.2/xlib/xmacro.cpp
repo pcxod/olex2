@@ -2491,7 +2491,7 @@ void XLibMacros::macFixUnit(TStrObjList &Cmds, const TParamList &Options,
   for( size_t i=0; i < content.Count(); i++ )  {
     n_c << ' ' << content[i].element.symbol <<
       olxstr::FormatFloat(3,content[i].count/Zp).TrimFloat();
-    content[i].count *= Z_sg;
+    content[i].count = olx_round(content[i].count * Z_sg, 100);
   }
   TBasicApp::NewLogEntry() << "New content is:" << n_c;
   xf.GetRM().SetUserContent(content);
