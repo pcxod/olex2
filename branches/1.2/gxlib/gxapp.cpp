@@ -2392,14 +2392,15 @@ void TGXApp::InfoList(const olxstr &Atoms, TStrList &Info, bool sort,
   Table.ColName(10) = "R-VdW";
   if( have_q )
     Table.ColName(11) = "Peak";
-  olxdict<const cm_Element*, olx_pair_t<double,size_t>, TPointerComparator> elements;
+  typedef AnAssociation3<double, double, size_t> count_t;
+  olxdict<const cm_Element*, count_t, TPointerComparator> elements;
   for(size_t i = 0; i < atoms.Count(); i++ )  {
     const TCAtom& A = *atoms[i].GetB();
     if (A.GetType() != iQPeakZ) {
-      olx_pair_t<double, size_t> &ei = elements.Add(&A.GetType(),
-        olx_pair_t<double, size_t>(0, 0));
-      ei.a += A.GetChemOccu();
-      ei.b++;
+      count_t &ei = elements.Add(&A.GetType(), count_t(0, 0, 0));
+      ei.a += A.GetOccu();
+      ei.b += A.GetChemOccu();
+      ei.c++;
     }
     Table[i][0] = A.GetLabel();
     Table[i][1] = A.GetType().symbol;
@@ -2433,35 +2434,42 @@ void TGXApp::InfoList(const olxstr &Atoms, TStrList &Info, bool sort,
   Table.CreateTXTList(Info, "Atom information", true, true, ' ');
   if (elements.IsEmpty())
     return;
-  ContentList list, list_a;
+  // sorting sake
+  ContentList cl;
   for (size_t i = 0; i < elements.Count(); i++) {
-    list.Add(new ElementCount(*elements.GetKey(i), elements.GetValue(i).b));
-    list_a.Add(new ElementCount(*elements.GetKey(i), elements.GetValue(i).a));
+    cl.Add(new ElementCount(*elements.GetKey(i), elements.GetValue(i).a));
   }
-  XElementLib::SortContentList(list);
-  XElementLib::SortContentList(list_a);
-  olxstr formula, formula_a;
-  double ec = 0, ec_a = 0, mc = 0, mc_a = 0;
-  for (size_t i = 0; i < list.Count(); i++) {
-    formula << list[i].element.symbol;
-    if (list[i].count != 1)
-      formula << list[i].count;
-    ec += list[i].element.z * list[i].count;
-    mc += list[i].element.GetMr() * list[i].count;
-    // actual formula
-    formula_a << list_a[i].element.symbol;
-    if (list_a[i].count != 1)
-      formula_a << list_a[i].count;
-    ec_a += list_a[i].element.z *list_a[i].count;
-    mc_a += list_a[i].element.GetMr() * list_a[i].count;
+  XElementLib::SortContentList(cl);
+  olxstr formula[3];
+  double ec[3] = { 0, 0, 0 }, mc[3] = { 0, 0, 0 };
+  for (size_t i = 0; i < cl.Count(); i++) {
+    size_t idx = elements.IndexOf(&cl[i].element);
+    const cm_Element &e = cl[i].element;
+    const count_t &cnt = elements.GetValue(idx);
+    formula[0] << ' ' << e.symbol;
+    if (cnt.a != 1) formula[0] << cnt.a;
+    ec[0] += e.z * cnt.a;
+    mc[0] += e.GetMr() * cnt.a;
+
+    formula[1] << ' ' << e.symbol;
+    if (cnt.b != 1) formula[1] << cnt.b;
+    ec[1] += e.z * cnt.b;
+    mc[1] += e.GetMr() * cnt.b;
+
+    formula[2] << ' ' << e.symbol;
+    if (cnt.c != 1) formula[2] << cnt.c;
+    ec[2] += e.z * cnt.c;
+    mc[2] += e.GetMr() * cnt.c;
   }
-  Info.Add("Formula: ") << formula_a << ", e count: " <<
-    olxstr::FormatFloat(3, ec_a).TrimFloat() <<
-    ", mass: " << olxstr::FormatFloat(3, mc_a);
-  if (olx_abs(ec - ec_a) > 1e-2) {
-    Info.GetLastString() << " (for unit occupancy: " << formula << ", " <<
-      ec << ", " << olxstr::FormatFloat(3, mc) << ')';
-  }
+  Info.Add("Formula (chemical occupancy):") << formula[1] << ", e count: " <<
+    olxstr::FormatFloat(3, ec[1]).TrimFloat() <<
+    ", mass: " << olxstr::FormatFloat(3, mc[1]);
+  Info.Add("Formula (crystallographic occupancy):") << formula[0] << ", e count: " <<
+    olxstr::FormatFloat(3, ec[0]).TrimFloat() <<
+    ", mass: " << olxstr::FormatFloat(3, mc[0]);
+  Info.Add("Formula (unit occupancy):") << formula[2] << ", e count: " <<
+    olxstr::FormatFloat(3, ec[2]).TrimFloat() <<
+    ", mass: " << olxstr::FormatFloat(3, mc[2]);
 }
 //..............................................................................
 TXGlLabel& TGXApp::CreateLabel(const TXAtom& a, uint16_t FontIndex)  {
