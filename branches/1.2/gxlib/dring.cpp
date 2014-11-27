@@ -60,7 +60,7 @@ TDRing::TDRing(TGlRenderer& R, const olxstr& collectionName) :
 }
 //...........................................................................
 double TDRing::GetRadius() const {
-  return 1.0 + DefTubeRadius();
+  return 1.0 + GetDefTubeRadius();
 }
 //...........................................................................
 int16_t TDRing::Quality(int16_t v) {
