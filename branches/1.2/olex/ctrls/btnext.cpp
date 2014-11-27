@@ -61,6 +61,11 @@ BEGIN_EVENT_TABLE(TButton, wxButton)
   EVT_LEAVE_WINDOW(TButton::MouseLeaveEvent)
 END_EVENT_TABLE()
 //..............................................................................
+void TButton::ClickEvent(wxCommandEvent&) {
+  AButtonBase::_ClickEvent();
+  SetFocus();
+}
+//..............................................................................
 void TButton::MouseEnterEvent(wxMouseEvent& event)  {
   SetCursor( wxCursor(wxCURSOR_HAND) );
   if( !GetHint().IsEmpty() )
@@ -168,6 +173,7 @@ void TImgButton::MouseDownEvent(wxMouseEvent& event)  {
     state = stUp;
     Paint();
   }
+  SetFocus();
   ProcessingOnDown = false;
 }
 //..............................................................................
