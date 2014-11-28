@@ -897,8 +897,12 @@ bool TEFile::Copy(const olxstr& From, const olxstr& To, bool overwrite)  {
 //..............................................................................
 olxstr TEFile::ExpandRelativePath(const olxstr& path, const olxstr& _base) {
   if( path.IsEmpty() )  return path;
-  if(!path.StartsFrom('.'))
+  if (!path.StartsFrom('.')) {
+    if (!IsAbsolutePath(path) && !_base.IsEmpty()) {
+      return AddPathDelimeter(_base) << path;
+    }
     return OLX_OS_PATH(path);
+  }
   olxstr base = OLX_OS_PATH(_base);
   if( base.IsEmpty() )
     base = TBasicApp::GetBaseDir();
