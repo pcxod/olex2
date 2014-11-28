@@ -1910,11 +1910,13 @@ void XLibMacros::macGraphPD(TStrObjList &Cmds, const TParamList &Options,
   }
 }
 //.............................................................................
-void XLibMacros::macFile(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+void XLibMacros::macFile(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
   TXApp& XApp = TXApp::GetInstance();
   olxstr Tmp;
-  if( Cmds.IsEmpty() )  {  // res -> Ins rotation if ins file
-    if( XApp.CheckFileType<TIns>() )  {
+  if (Cmds.IsEmpty()) {  // res -> Ins rotation if ins file
+    if (XApp.CheckFileType<TIns>()) {
       Tmp = TEFile::ChangeFileExt(XApp.XFile().GetFileName(), "ins");
     }
     else
@@ -1925,28 +1927,28 @@ void XLibMacros::macFile(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 
   bool Sort = Options.Contains('s');
 
-  if( !TEFile::IsAbsolutePath(Tmp) ) {
-    if (CurrentDir().IsEmpty())
-      Tmp = TEFile::AddPathDelimeter(TEFile::CurrentDir()) + Tmp;
-    else
-      Tmp = TEFile::AddPathDelimeter(CurrentDir()) + Tmp;
+  if (!TEFile::IsAbsolutePath(Tmp)) {
+    olxstr root = (CurrentDir().IsEmpty() ? TEFile::CurrentDir()
+      : CurrentDir());
+    Tmp = TEFile::ExpandRelativePath(Tmp, root);
   }
   TEBitArray removedSAtoms, removedCAtoms;
-  if( TEFile::ExtractFileExt(Tmp).Equalsi("ins"))  {  // kill Q peak in the ins file
+  // kill Q peak in the ins file
+  if (TEFile::ExtractFileExt(Tmp).Equalsi("ins")) {
     ASObjectProvider& objects = XApp.XFile().GetLattice().GetObjects();
     removedSAtoms.SetSize(objects.atoms.Count());
-    for( size_t i=0; i < objects.atoms.Count(); i++ )  {
+    for (size_t i=0; i < objects.atoms.Count(); i++) {
       TSAtom& sa = objects.atoms[i];
-      if( sa.GetType() == iQPeakZ && !sa.IsDeleted() )  {
+      if (sa.GetType() == iQPeakZ && !sa.IsDeleted()) {
         sa.SetDeleted(true);
         removedSAtoms.SetTrue(i);
       }
     }
     TAsymmUnit& au = XApp.XFile().GetAsymmUnit();
     removedCAtoms.SetSize(au.AtomCount());
-    for( size_t i=0; i < au.AtomCount(); i++ )  {
+    for (size_t i=0; i < au.AtomCount(); i++) {
       TCAtom& ca = au.GetAtom(i);
-      if( ca.GetType() == iQPeakZ && !ca.IsDeleted() )  {
+      if (ca.GetType() == iQPeakZ && !ca.IsDeleted()) {
         ca.SetDeleted(true);
         removedCAtoms.SetTrue(i);
       }
@@ -1954,33 +1956,33 @@ void XLibMacros::macFile(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   }
 
   XApp.XFile().SaveToFile(Tmp, Sort);
-  if( XApp.XFile().HasLastLoader() )  {
+  if (XApp.XFile().HasLastLoader()) {
     olxstr fd = TEFile::ExtractFilePath(Tmp);
-    if( !fd.IsEmpty() && !fd.Equalsi(CurrentDir()) )  {
-      if( !TEFile::ChangeDir(fd) )
+    if (!fd.IsEmpty() && !fd.Equalsi(CurrentDir())) {
+      if (!TEFile::ChangeDir(fd))
         TBasicApp::NewLogEntry(logError) << "Cannot change current folder...";
       else
         CurrentDir() = fd;
     }
   }
-  else  if( !Sort )  {
+  else  if (!Sort) {
     Sort = true;  // forse reading the file
   }
-  if( !removedSAtoms.IsEmpty() )  {  // need to restore, a bit of mess here...
+  if (!removedSAtoms.IsEmpty()) {  // need to restore, a bit of mess here...
     ASObjectProvider& objects = XApp.XFile().GetLattice().GetObjects();
-    for( size_t i=0; i < objects.atoms.Count(); i++ )  {
-      if( removedSAtoms.Get(i) )
+    for (size_t i=0; i < objects.atoms.Count(); i++) {
+      if (removedSAtoms.Get(i))
         objects.atoms[i].SetDeleted(false);
     }
     TAsymmUnit& au = XApp.XFile().GetAsymmUnit();
-    for( size_t i=0; i < au.AtomCount(); i++ )  {
-      if( removedCAtoms[i] )
+    for (size_t i=0; i < au.AtomCount(); i++) {
+      if (removedCAtoms[i])
           au.GetAtom(i).SetDeleted(false);
     }
   }
-  if( Sort )  {
+  if (Sort) {
     olex2::IOlex2Processor* op = olex2::IOlex2Processor::GetInstance();
-      if( op != NULL )
+      if (op != NULL)
         op->processMacro(olxstr("reap \'") << Tmp << '\'');
   }
 }

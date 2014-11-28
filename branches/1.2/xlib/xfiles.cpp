@@ -631,8 +631,11 @@ void TXFile::SaveToFile(const olxstr& FN, bool Sort) {
       .FindValue("absolute_hkl_path", FalseString()).ToBool())
     {
       olxstr hkl_src = Loader->GetRM().GetHKLSource();
-      olxstr hs = TEFile::CreateRelativePath(hkl_src,
-        TEFile::ExtractFilePath(FLastLoader->GetFileName()));
+      olxstr root = TEFile::ExtractFilePath(FN);
+      if (root.IsEmpty()) {
+        root = TEFile::CurrentDir();
+      }
+      olxstr hs = TEFile::CreateRelativePath(hkl_src, root);
       Loader->GetRM().SetHKLSource(hs);
       Loader->SaveToFile(FN);
       Loader->GetRM().SetHKLSource(hkl_src);
@@ -641,7 +644,7 @@ void TXFile::SaveToFile(const olxstr& FN, bool Sort) {
       Loader->SaveToFile(FN);
     }
   }
-  catch (const TExceptionBase& exc)  {
+  catch (const TExceptionBase& exc) {
     Cause = exc.Replicate();
   }
   OnFileSave.Exit(this);
