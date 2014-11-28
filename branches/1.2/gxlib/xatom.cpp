@@ -219,37 +219,37 @@ void TXAtom::ListParams(TStrList &List)  {
   List.Add("Color");
 }
 //..............................................................................
-void TXAtom::CalcRad(short DefRadius)  {
+void TXAtom::CalcRad(short DefRadius) {
   /*  remember the value in the style */
   //DefRad(DefRadius);
   FRadius = DefRadius;
   GetPrimitives().GetStyle().SetParam("DR", DefRadius);
 
-  if( DefRadius == darPers )
+  if (DefRadius == darPers)
     SetR(GetType().r_pers);
-  else if( DefRadius == darPack )
+  else if (DefRadius == darPack)
     SetR(GetType().r_sfil);
-  else if( DefRadius == darVdW )
+  else if (DefRadius == darVdW)
     SetR(GetType().r_vdw);
-  else if( DefRadius == darBond )
-    SetR(sqrt(caDefIso)/2);
-  else if( DefRadius == darIsot )  {
-    if( GetType() == iHydrogenZ )
-      SetR(2*caDefIso);
-    else  {
-      if( GetType() == iQPeakZ )
+  else if (DefRadius == darBond)
+    SetR(sqrt(caDefIso) / 2);
+  else if (DefRadius == darIsot) {
+    if (GetType() == iHydrogenZ)
+      SetR(3 * caDefIso);
+    else {
+      if (GetType() == iQPeakZ)
         SetR(sqrt(CAtom().GetUiso())*GetQPeakSizeScale());
-      else if( CAtom().GetUiso() > 0 )
+      else if (CAtom().GetUiso() > 0)
         SetR(sqrt(CAtom().GetUiso()));
       else
-        SetR(2*caDefIso); //sqrt(caDefIso);
+        SetR(3 * caDefIso); //sqrt(caDefIso);
     }
   }
-  else if( DefRadius == darIsotH )  {
-    if( CAtom().GetUiso() > 0 )
+  else if (DefRadius == darIsotH) {
+    if (CAtom().GetUiso() > 0)
       SetR(sqrt(CAtom().GetUiso()));
     else
-      SetR(2*caDefIso); //sqrt(caDefIso);
+      SetR(3 * caDefIso); //sqrt(caDefIso);
   }
 }
 //..............................................................................
@@ -491,7 +491,11 @@ bool TXAtom::Orient(TGlPrimitive& GlP) {
   olx_gl::translate(c);
 
   double scale = GetZoom();
-  if ((FRadius & (darIsot|darIsotH)) != 0)
+  if ((FRadius & darIsot) != 0) {
+    if (GetType().z != 1)
+      scale *= TelpProb();
+  }
+  else if ((FRadius & darIsotH) != 0)
     scale *= TelpProb();
 
   if (FDrawStyle == adsEllipsoid || FDrawStyle == adsOrtep) {

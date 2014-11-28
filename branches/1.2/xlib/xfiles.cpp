@@ -335,15 +335,21 @@ void TXFile::LoadFromFile(const olxstr & _fn) {
   // this thows an exception if the file format loader does not exist
   TBasicCFile* Loader = FindFormat(ext);
   bool replicated = false;
-  if( FLastLoader == Loader )  {
+  if (FLastLoader == Loader) {
     Loader = (TBasicCFile*)Loader->Replicate();
     replicated = true;
   }
-  try  {
+  try {
     Loader->LoadFromFile(_fn);
+    olxstr hkl_src = Loader->GetRM().GetHKLSource();
+    if (!hkl_src.IsEmpty() && !TEFile::IsAbsolutePath(hkl_src)) {
+      hkl_src = TEFile::ExpandRelativePath(hkl_src,
+        TEFile::ExtractFilePath(_fn));
+      Loader->GetRM().SetHKLSource(hkl_src);
+    }
   }
-  catch( const TExceptionBase& exc )  {
-    if( replicated )
+  catch (const TExceptionBase& exc) {
+    if (replicated)
       delete Loader;
     throw TFunctionFailedException(__OlxSourceInfo, exc);
   }
@@ -602,34 +608,48 @@ void TXFile::ValidateTabs()  {
   }
 }
 //..............................................................................
-void TXFile::SaveToFile(const olxstr& FN, bool Sort)  {
+void TXFile::SaveToFile(const olxstr& FN, bool Sort) {
   olxstr Ext = TEFile::ExtractFileExt(FN);
   TBasicCFile *Loader = FindFormat(Ext);
   TBasicCFile *LL = FLastLoader;
-  if( !Loader->IsNative() )  {
-    if( LL != Loader ) {
-      if( !Loader->Adopt(*this) ) {
+  if (!Loader->IsNative()) {
+    if (LL != Loader) {
+      if (!Loader->Adopt(*this)) {
         throw TFunctionFailedException(__OlxSourceInfo,
           "could not adopt specified file format");
       }
     }
     else
       UpdateAsymmUnit();
-    if( Sort )
+    if (Sort)
       Loader->GetAsymmUnit().Sort();
   }
   OnFileSave.Enter(this);
   IEObject* Cause = NULL;
-  try  {  Loader->SaveToFile(FN);  }
-  catch(const TExceptionBase& exc)  {
+  try {
+    if (!TBasicApp::GetInstance().GetOptions()
+      .FindValue("absolute_hkl_path", FalseString()).ToBool())
+    {
+      olxstr hkl_src = Loader->GetRM().GetHKLSource();
+      olxstr hs = TEFile::CreateRelativePath(hkl_src,
+        TEFile::ExtractFilePath(FLastLoader->GetFileName()));
+      Loader->GetRM().SetHKLSource(hs);
+      Loader->SaveToFile(FN);
+      Loader->GetRM().SetHKLSource(hkl_src);
+    }
+    else {
+      Loader->SaveToFile(FN);
+    }
+  }
+  catch (const TExceptionBase& exc)  {
     Cause = exc.Replicate();
   }
   OnFileSave.Exit(this);
-  if( Cause != NULL )
+  if (Cause != NULL)
     throw TFunctionFailedException(__OlxSourceInfo, Cause);
 }
 //..............................................................................
-void TXFile::Close()  {
+void TXFile::Close() {
   OnFileClose.Enter(this, FLastLoader);
   FLastLoader = NULL;
   RefMod.Clear(rm_clear_ALL);

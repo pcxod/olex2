@@ -181,12 +181,18 @@ public:
 
   double GetDrawScale() const {
     double scale = FParams[1];
-    if( (FRadius & (darIsot|darIsotH)) != 0 )
+    if ((FRadius & darIsot) != 0) {
+      if (GetType().z != 1) {
+        scale *= TelpProb();
+      }
+    }
+    else if ((FRadius & darIsotH) != 0) {
       scale *= TelpProb();
-    if( (FDrawStyle == adsEllipsoid || FDrawStyle == adsOrtep) &&
-      GetEllipsoid() != NULL )
+    }
+    if ((FDrawStyle == adsEllipsoid || FDrawStyle == adsOrtep) &&
+      GetEllipsoid() != NULL)
     {
-      if( GetEllipsoid()->IsNPD() )
+      if (GetEllipsoid()->IsNPD())
         return (caDefIso*2*scale);
       return scale;
     }
