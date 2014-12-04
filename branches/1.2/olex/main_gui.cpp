@@ -442,6 +442,7 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
 }
 //..............................................................................
 void TMainForm::ObjectUnderMouse(AGDrawObject *G)  {
+  if (Destroying) return;
   FObjectUnderMouse = G;
   FCurrentPopup = NULL;
   if (G == NULL)  return;
