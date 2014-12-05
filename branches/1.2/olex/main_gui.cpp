@@ -461,10 +461,6 @@ void TMainForm::ObjectUnderMouse(AGDrawObject *G)  {
     if (XA->GetType() == iQPeakZ) {
       T << ": " << olxstr::FormatFloat(3, XA->CAtom().GetQPeak());
     }
-    else {
-      T << " Occu: " << TEValueD(XA->CAtom().GetOccu(),
-        XA->CAtom().GetOccuEsd()).ToString();
-    }
     pmAtom->SetLabel(ID_AtomInfo, T.u_str());
     pmAtom->Enable(ID_AtomGrow, !XA->IsGrown());
     pmAtom->Enable(ID_Selection, G->IsSelected() &&

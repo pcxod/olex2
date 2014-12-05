@@ -2031,7 +2031,7 @@ bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& _toks)  {
   TStrList toks(_toks);
   if( toks[0].Equalsi("EQIV") && toks.Count() >= 3 )  {
     try  {
-      rm.AddUsedSymm(TSymmParser::SymmToMatrix(toks.Text(EmptyString(), 2)));
+      rm.AddUsedSymm(TSymmParser::SymmToMatrix(toks.Text(EmptyString(), 2)), toks[1]);
     }
     catch(const TExceptionBase &e)  {
       throw TFunctionFailedException(__OlxSourceInfo, e, "to parse EQIV");

@@ -1467,15 +1467,15 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options,
 void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &Error)
 {
-  TXApp &XApp = TXApp::GetInstance();
-  if (XApp.XFile().GetLattice().IsGenerated()) {
-    Error.ProcessingError(__OlxSrcInfo, "not applicable to grown structures");
-    return;
-  }
   int Hfix = 0;
   if (!Cmds.IsEmpty() && Cmds[0].IsNumber()) {
     Hfix = Cmds[0].ToInt();
     Cmds.Delete(0);
+  }
+  TXApp &XApp = TXApp::GetInstance();
+  if (XApp.XFile().GetLattice().IsGenerated() && Hfix >= 0) {
+    Error.ProcessingError(__OlxSrcInfo, "not applicable to grown structures");
+    return;
   }
   TAsymmUnit &au = XApp.XFile().GetAsymmUnit();
   for (size_t i=0; i < au.AtomCount(); i++) {
@@ -1496,6 +1496,48 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options,
     if (Hfix == 0) {
       latt.AnalyseHAdd(xlConGen, satoms);
     }
+    else if (Hfix < 0) {
+      if (satoms.Count() > 1) {
+        TAtomEnvi AE;
+        AE.SetBase(*satoms[0]);
+        for (size_t ei = 1; ei < satoms.Count(); ei++) {
+          TSAtom &a = *satoms[ei];
+          AE.Add(a.CAtom(), a.GetMatrix(), a.crd());
+        }
+        int afix = TXlConGen::ShelxToOlex(-Hfix, AE);
+        if (afix != -1) {
+          TCAtomPList generated;
+          xlConGen.FixAtom(AE, afix, XElementLib::GetByIndex(iHydrogenIndex),
+            NULL, &generated);
+          if (!generated.IsEmpty()) {
+            if (generated[0]->GetParentAfixGroup() != NULL) {
+              generated[0]->GetParentAfixGroup()->SetAfix(3);
+            }
+            double occu = rm.Vars.GetParam(satoms[1]->CAtom(),
+              catom_var_name_Sof);
+            for (size_t hi = 0; hi < generated.Count(); hi++) {
+              generated[hi]->SetPart(satoms[1]->CAtom().GetPart());
+              rm.Vars.SetParam(*generated[hi], catom_var_name_Sof, occu);
+            }
+            olxstr str_part = Options.FindValue('p', EmptyString());
+            if (!str_part.IsEmpty()) {
+              int part = str_part.ToInt();
+              for (size_t hi = 0; hi < generated.Count(); hi++) {
+                generated[hi]->SetPart(part);
+              }
+            }
+          }
+        }
+        else {
+          XApp.NewLogEntry() << "Failed to translate HFIX code for " <<
+            satoms[0]->GetLabel() << " with " << AE.Count() << " bonds";
+        }
+      }
+      else {
+        Error.ProcessingError(__OlxSrcInfo, "at least 2 atoms are expected");
+        return;
+      }
+    }
     else {
       for (size_t aitr=0; aitr < satoms.Count(); aitr++) {
         TIntList parts;
@@ -1513,22 +1555,24 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options,
           }
         }
         if (parts.Count() < 2) {
+          TCAtomPList generated;
+          // special for symmetry generated disorder cases
           int afix = TXlConGen::ShelxToOlex(Hfix, AE);
           if (afix != -1) {
-            TCAtomPList generated;
             xlConGen.FixAtom(AE, afix, XElementLib::GetByIndex(iHydrogenIndex),
               NULL, &generated);
-            if (!generated.IsEmpty() &&  // hack to get desired Hfix...
-                generated[0]->GetParentAfixGroup() != NULL)
-            {
-              generated[0]->GetParentAfixGroup()->SetAfix(
-                Options.FindValue('a', Hfix).ToInt());
-            }
-            olxstr str_part = Options.FindValue('p', EmptyString());
-            if (!str_part.IsEmpty()) {
-              int part = str_part.ToInt();
-              for (size_t hi = 0; hi < generated.Count(); hi++) {
-                generated[hi]->SetPart(part);
+            if (!generated.IsEmpty()) {
+              // hack to get desired Hfix...
+              if (generated[0]->GetParentAfixGroup() != NULL) {
+                generated[0]->GetParentAfixGroup()->SetAfix(
+                  Options.FindValue('a', Hfix).ToInt());
+              }
+              olxstr str_part = Options.FindValue('p', EmptyString());
+              if (!str_part.IsEmpty()) {
+                int part = str_part.ToInt();
+                for (size_t hi = 0; hi < generated.Count(); hi++) {
+                  generated[hi]->SetPart(part);
+                }
               }
             }
           }
