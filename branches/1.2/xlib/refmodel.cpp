@@ -157,16 +157,22 @@ void RefinementModel::ClearVarRefs() {
   }
 }
 //.............................................................................
-const smatd& RefinementModel::AddUsedSymm(const smatd& matr, const olxstr& id)  {
-  for( size_t i=0;  i < UsedSymm.Count(); i++ )  {
-    if( UsedSymm.GetValue(i).symop == matr )  {
+const smatd& RefinementModel::AddUsedSymm(const smatd& matr, const olxstr& id_)
+{
+  for (size_t i=0;  i < UsedSymm.Count(); i++) {
+    if (UsedSymm.GetValue(i).symop == matr) {
       UsedSymm.GetValue(i).ref_cnt++;
       return UsedSymm.GetValue(i).symop;
     }
   }
-  return UsedSymm.Add(
-    id.IsEmpty() ? (olxstr("$") << (UsedSymm.Count()+1)) : id,
-      RefinementModel::Equiv(matr)).symop;
+  olxstr id = id_;
+  if (id.IsEmpty()) {
+    size_t idx = UsedSymm.Count();
+    while (UsedSymm.HasKey(olxstr("$") << ++idx))
+      ;
+    id = (olxstr("S") << idx);
+  }
+  return UsedSymm.Add(id, RefinementModel::Equiv(matr), true).symop;
 }
 //.............................................................................
 void RefinementModel::UpdateUsedSymm(const class TUnitCell& uc)  {
