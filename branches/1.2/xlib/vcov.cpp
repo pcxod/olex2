@@ -541,3 +541,24 @@ double VcoVContainer::TriangleTwistBP::calc() const {
 }
 //.............................................................................
 //.............................................................................
+double VcoVContainer::OctahedralDistortionBP::calc() const {
+  // translation for first face
+  const vec3d c1 = (points[1] + points[3] + points[5]) / 3;
+  // translation for second face
+  const vec3d c2 = (points[2] + points[4] + points[6]) / 3;
+  for (short i = 0; i < 6; i += 2)  {
+    pl[i] = (points[i + 1] - c1);
+    pl[i + 1] = (points[i + 2] - c2);
+  }
+  PlaneInfo pi = CalcPlane(pl, weights, 0);
+  pi.center += points[0];
+  double sum = 0;
+  for (int i = 0; i < 6; i += 2) {
+    const vec3d v1 = points[i + 1].Projection(pi.center, pi.normal);
+    const vec3d v2 = points[i + 2].Projection(pi.center, pi.normal);
+    const vec3d v3 = points[i == 4 ? 1 : i + 3].Projection(pi.center, pi.normal);
+    sum += olx_abs(M_PI / 3 - acos(v1.CAngle(v2)));
+    sum += olx_abs(M_PI / 3 - acos(v3.CAngle(v2)));
+  }
+  return (sum * 180 / 6) / M_PI;
+}
