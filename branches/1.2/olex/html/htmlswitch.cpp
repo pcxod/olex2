@@ -52,27 +52,29 @@ void THtmlSwitch::UpdateFileIndex()  {
           (olxstr("Invalid ignoreif construct: ").quote() << Strings[i]);
       }
       int oc=1;
-      size_t j=i;
+      size_t j=i+1;
+      bool delete_last = true;
       for (;j < Strings.Count(); j++) {
         if (Strings[j].StartsFrom(ignore_close)) {
-          if (--oc == 0) break;
-          break;
+          if (--oc == 0)
+            break;
         }
-        else if (Strings[i].StartsFrom(ignore_open))
+        else if (Strings[j].StartsFrom(ignore_open))
           oc++;
       }
       if (j >= Strings.Count()) {
         TBasicApp::NewLogEntry(logError) << "Missing closing ignoreif";
         j = Strings.Count()-1;
+        delete_last = false;
       }
       olxstr rv = fn;
       if (olex2::IOlex2Processor::GetInstance()->processFunction(rv) ) {
         if (rv.ToBool())
           Strings.DeleteRange(i, j-i+1);
         else {
-          Strings.Delete(i);
-          if (--j < Strings.Count())
+          if (delete_last)
             Strings.Delete(j);
+          Strings.Delete(i);
         }
       }
       else {
