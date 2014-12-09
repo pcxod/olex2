@@ -837,13 +837,13 @@ void TUnitCell::BuildStructureMap_Direct(TArray3D<short>& map, double delta,
   sorted::PrimitiveAssociation<short, double> scatterers;
   for( size_t i=0; i < au.AtomCount(); i++ )  {
     if( au.GetAtom(i).IsDeleted() )  continue;
-    const size_t ind = scatterers.IndexOf(au.GetAtom(i).GetType().index);
+    const size_t ind = scatterers.IndexOf(au.GetAtom(i).GetType().GetIndex());
     if( ind != InvalidIndex )  continue;
     const double r = TXApp::GetVdWRadius(au.GetAtom(i), radii) + delta;
-    scatterers.Add(au.GetAtom(i).GetType().index, r);
+    scatterers.Add(au.GetAtom(i).GetType().GetIndex(), r);
   }
   for( size_t i=0; i < allAtoms.Count(); i++ )  {
-    const double sr = scatterers.Find(allAtoms[i].GetB()->GetType().index);
+    const double sr = scatterers.Find(allAtoms[i].GetB()->GetType().GetIndex());
     if( sr > maxR )
       maxR = sr;
     allAtoms[i].c = sr*sr;
@@ -917,7 +917,7 @@ olx_pdict<short, TArray3D<bool>*>::const_dict_type
   olx_pdict<short, TArray3D<bool>*> scatterers;
   for( size_t i=0; i < au.AtomCount(); i++ )  {
     if( au.GetAtom(i).IsDeleted() || au.GetAtom(i).GetType() == iQPeakZ )  continue;
-    size_t ind = scatterers.IndexOf(au.GetAtom(i).GetType().index);
+    size_t ind = scatterers.IndexOf(au.GetAtom(i).GetType().GetIndex());
     if( ind != InvalidIndex )  continue;
     const double r = TXApp::GetVdWRadius(au.GetAtom(i), radii) + delta;
     const double sr = r*r;
@@ -934,7 +934,7 @@ olx_pdict<short, TArray3D<bool>*>::const_dict_type
         }
       }
     }
-    scatterers.Add(au.GetAtom(i).GetType().index, spm);
+    scatterers.Add(au.GetAtom(i).GetType().GetIndex(), spm);
   }
   return scatterers;
 }
@@ -950,7 +950,7 @@ void TUnitCell::BuildStructureMap_Masks(TArray3D<short>& map, double delta, shor
   olx_pdict<short, TArray3D<bool>*> scatterers = BuildAtomMasks(dim, radii, delta);
   vec3i aa[8];
   for( size_t i=0; i < allAtoms.Count(); i++ )  {
-    TArray3D<bool>* spm = scatterers.Get(allAtoms[i].GetB()->GetType().index);
+    TArray3D<bool>* spm = scatterers.Get(allAtoms[i].GetB()->GetType().GetIndex());
     vec3d center = allAtoms[i].GetA()*dim;
     const index_t ad = spm->Length1()/2;
     const index_t bd = spm->Length2()/2;
@@ -995,13 +995,13 @@ void TUnitCell::BuildDistanceMap_Direct(TArray3D<short>& _map, double delta, sho
   sorted::PrimitiveAssociation<short, float> radii;
   for( size_t i=0; i < au.AtomCount(); i++ )  {
     if( au.GetAtom(i).IsDeleted() )  continue;
-    const size_t ind = radii.IndexOf(au.GetAtom(i).GetType().index);
+    const size_t ind = radii.IndexOf(au.GetAtom(i).GetType().GetIndex());
     if( ind != InvalidIndex )  continue;
     const double r = TXApp::GetVdWRadius(au.GetAtom(i), _radii) + delta;
-    radii.Add(au.GetAtom(i).GetType().index, (float)r);
+    radii.Add(au.GetAtom(i).GetType().GetIndex(), (float)r);
   }
   for( size_t i=0; i < allAtoms.Count(); i++ )  {
-    allAtoms[i].c = radii.Find(allAtoms[i].GetB()->GetType().index);
+    allAtoms[i].c = radii.Find(allAtoms[i].GetB()->GetType().GetIndex());
     vec3d c = allAtoms[i].GetA();
     allAtoms[i].a = au.CellToCartesian(c);
   }
@@ -1115,16 +1115,16 @@ void TUnitCell::BuildDistanceMap_Masks(TArray3D<short>& map, double delta, short
   olx_pdict<short, short> scatterers;
   for( size_t i=0; i < au.AtomCount(); i++ )  {
     if( au.GetAtom(i).IsDeleted() )  continue;
-    size_t ind = scatterers.IndexOf(au.GetAtom(i).GetType().index);
+    size_t ind = scatterers.IndexOf(au.GetAtom(i).GetType().GetIndex());
     if( ind != InvalidIndex )  continue;
     const double r = TXApp::GetVdWRadius(au.GetAtom(i), radii) + delta;
-    scatterers.Add(au.GetAtom(i).GetType().index, short(r*shell_res));
+    scatterers.Add(au.GetAtom(i).GetType().GetIndex(), short(r*shell_res));
   }
   vec3i aa[8];
   // this builds the structure map
   for( size_t i=0; i < allAtoms.Count(); i++ )  {
     allAtoms[i].a *= dims;
-    short shell_cnt = scatterers.Get(allAtoms[i].GetB()->GetType().index);
+    short shell_cnt = scatterers.Get(allAtoms[i].GetB()->GetType().GetIndex());
     allAtoms[i].c = shell_cnt;
     for( short j=0; j < shell_cnt; j++ )  {
       for( size_t k=0; k < shells[j].Count(); k++ )  {

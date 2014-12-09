@@ -97,19 +97,24 @@ bool TGlMouse::MouseUp(int x, int y, short Shift, short button)  {
       }
     }
   }
-  else  {
-    if( Action == glmaRotateXY )  {
-/*      float Length = 24;
-      float Accel=2, Time=1, Path = Length;
-      while( Path > 0 )
-      {
-        Path -= Accel*Accel*Time;
-        Time++;
-        Parent()->RotateX(Parent()->Basis().RX() + Path);
-        Parent()->RotateY(Parent()->Basis().RY() + Path);
-        Parent()->Draw();
-      }                  */
-      ;
+  else {
+    if (Action == glmaRotateXY && 0) {
+      double Length = 100;
+      vec3d dir((MData.UpX - MData.DownX), MData.UpY - MData.DownY, 0);
+      if (!dir.IsNull()) {
+        dir.Normalise();
+        double Accel = 1.5, Time = 1, Path = Length;
+        while (Path > 0)
+        {
+          double inc = Accel*Accel*Time;
+          Path -= inc;
+          Time++;
+          Parent()->GetBasis().Rotate(dir, Path*M_PI / 1800);
+          Parent()->Draw();
+          TBasicApp::GetInstance().Update();
+          olx_sleep(100);
+        }
+      }
     }
   }
   MData.Button &= ~button;

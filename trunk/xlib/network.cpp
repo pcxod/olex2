@@ -1166,28 +1166,27 @@ void TNetwork::DoAlignAtoms(const TSAtomPList& atomsToTransform,
     m *= -1;
     center *= -1;
   }
-  DoAlignAtoms(atomsToTransform, center, m, ai.align_out.center_a);
+  DoAlignAtoms(atomsToTransform, center, m.Transpose(), ai.align_out.center_a);
 }
 //..............................................................................
 void TNetwork::DoAlignAtoms(const TSAtomPList& atomsToTransform,
     const vec3d &center,
     const mat3d &m, const vec3d &shift)
 {
-  if( atomsToTransform.IsEmpty() )  return;
+  if (atomsToTransform.IsEmpty())  return;
   TUnitCell& uc = atomsToTransform[0]->GetNetwork().GetLattice().GetUnitCell();
   const TAsymmUnit& au = uc.GetLattice().GetAsymmUnit();
-  for( size_t i=0; i < atomsToTransform.Count(); i++ )  {
+  for (size_t i=0; i < atomsToTransform.Count(); i++) {
     vec3d v = au.Orthogonalise(atomsToTransform[i]->ccrd());
-    atomsToTransform[i]->crd() = (v - center)*m + shift;
-    if( atomsToTransform[i]->GetEllipsoid() != NULL )  {
-      if( atomsToTransform[i]->GetEllipsoid()->GetTag() != 0 )  {
+    atomsToTransform[i]->crd() = m*(v - center) + shift;
+    if (atomsToTransform[i]->GetEllipsoid() != NULL) {
+      if (atomsToTransform[i]->GetEllipsoid()->GetTag() != 0) {
         TBasicApp::NewLogEntry(logError) << "Ellipsoid has already been rotated for: "
           << atomsToTransform[i]->GetLabel();
         continue;
       }
       uc.GetEllp(atomsToTransform[i]->GetEllipsoid()->GetId());
       atomsToTransform[i]->GetEllipsoid()->SetTag(1);
-      // ADP is ivariant under the inversion
       atomsToTransform[i]->GetEllipsoid()->Mult(m);
     }
   }

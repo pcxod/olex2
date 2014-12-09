@@ -339,6 +339,12 @@ void TXFile::LoadFromFile(const olxstr & _fn) {
   }
   try {
     Loader->LoadFromFile(_fn);
+    olxstr hkl_src = Loader->GetRM().GetHKLSource();
+    if (!hkl_src.IsEmpty() && !TEFile::IsAbsolutePath(hkl_src)) {
+      hkl_src = TEFile::ExpandRelativePath(hkl_src,
+        TEFile::ExtractFilePath(_fn));
+      Loader->GetRM().SetHKLSource(hkl_src);
+    }
   }
   catch (const TExceptionBase& exc) {
     if (replicated)
@@ -600,35 +606,52 @@ void TXFile::ValidateTabs()  {
   }
 }
 //..............................................................................
-void TXFile::SaveToFile(const olxstr& FN, bool Sort)  {
+void TXFile::SaveToFile(const olxstr& FN, bool Sort) {
   TStopWatch sw(__FUNC__);
   olxstr Ext = TEFile::ExtractFileExt(FN);
   TBasicCFile *Loader = FindFormat(Ext);
   TBasicCFile *LL = FLastLoader;
-  if( !Loader->IsNative() )  {
-    if( LL != Loader ) {
-      if( !Loader->Adopt(*this) ) {
+  if (!Loader->IsNative()) {
+    if (LL != Loader) {
+      if (!Loader->Adopt(*this)) {
         throw TFunctionFailedException(__OlxSourceInfo,
           "could not adopt specified file format");
       }
     }
     else
       UpdateAsymmUnit();
-    if( Sort )
+    if (Sort)
       Loader->GetAsymmUnit().Sort();
   }
   OnFileSave.Enter(this);
   IOlxObject* Cause = NULL;
-  try  {  Loader->SaveToFile(FN);  }
-  catch(const TExceptionBase& exc)  {
+  try {
+    if (!TBasicApp::GetInstance().GetOptions()
+      .FindValue("absolute_hkl_path", FalseString()).ToBool())
+    {
+      olxstr hkl_src = Loader->GetRM().GetHKLSource();
+      olxstr root = TEFile::ExtractFilePath(FN);
+      if (root.IsEmpty()) {
+        root = TEFile::CurrentDir();
+      }
+      olxstr hs = TEFile::CreateRelativePath(hkl_src, root);
+      Loader->GetRM().SetHKLSource(hs);
+      Loader->SaveToFile(FN);
+      Loader->GetRM().SetHKLSource(hkl_src);
+    }
+    else {
+      Loader->SaveToFile(FN);
+    }
+  }
+  catch (const TExceptionBase& exc) {
     Cause = exc.Replicate();
   }
   OnFileSave.Exit(this);
-  if( Cause != NULL )
+  if (Cause != NULL)
     throw TFunctionFailedException(__OlxSourceInfo, Cause);
 }
 //..............................................................................
-void TXFile::Close()  {
+void TXFile::Close() {
   OnFileClose.Enter(this, FLastLoader);
   FLastLoader = NULL;
   RefMod.Clear(rm_clear_ALL);
@@ -1064,16 +1087,16 @@ olxstr TXFile::NameArg::ToString() const {
   return olxstr(file_name) << (is_index ? '#' : '$') << data_name;
 }
 //..............................................................................
-olxstr TXFile::LocateHklFile()  {
+olxstr TXFile::LocateHklFile() {
   olxstr HklFN = GetRM().GetHKLSource();
-  if (TEFile::Existsi(olxstr(HklFN), HklFN))
+  if (TEFile::Existsi(HklFN, HklFN))
     return HklFN;
   const olxstr fn = GetFileName();
   HklFN = TEFile::ChangeFileExt(fn, "hkl");
-  if (TEFile::Existsi(olxstr(HklFN), HklFN))
+  if (TEFile::Existsi(HklFN, HklFN))
     return HklFN;
   HklFN = TEFile::ChangeFileExt(fn, "raw");
-  if (TEFile::Existsi(olxstr(HklFN), HklFN)) {
+  if (TEFile::Existsi(HklFN, HklFN)) {
     THklFile Hkl;
     Hkl.LoadFromFile(HklFN, false);
     HklFN = TEFile::ChangeFileExt(fn, "hkl");

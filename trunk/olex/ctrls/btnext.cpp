@@ -62,6 +62,11 @@ TButton::TButton(wxWindow* parent, wxWindowID id, const wxString& label,
   Bind(wxEVT_LEAVE_WINDOW, &TButton::MouseLeaveEvent, this);
 }
 //..............................................................................
+void TButton::ClickEvent(wxCommandEvent&) {
+  AButtonBase::_ClickEvent();
+  SetFocus();
+}
+//..............................................................................
 void TButton::MouseEnterEvent(wxMouseEvent& event)  {
   SetCursor( wxCursor(wxCURSOR_HAND) );
   if( !GetHint().IsEmpty() )
@@ -173,6 +178,7 @@ void TImgButton::MouseDownEvent(wxMouseEvent& event) {
     state = stUp;
     Paint();
   }
+  SetFocus();
   ProcessingOnDown = false;
 }
 //..............................................................................

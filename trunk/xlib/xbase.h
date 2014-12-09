@@ -31,7 +31,7 @@ const short
   sotTBond  = 0x0005,
   sotBBond  = 0x0006;
 
-const float caDefIso = 0.05f;  // default atom isotropic parameter;
+const double caDefIso = 0.05;  // default atom isotropic parameter;
 
 template <class Net> class TSObject: public virtual ACollectionItem {
 protected:

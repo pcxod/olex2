@@ -20,7 +20,7 @@ olxstr TCAtom::VarNames[] = {"Scale", "X", "Y", "Z", "Sof",
   "Uiso", "U11", "U22", "U33", "U23", "U13", "U12"};
 
 TCAtom::TCAtom(TAsymmUnit* _Parent) : Parent(_Parent)  {
-  Part   = 0;
+  PartAndCharge = 0;
   Occu   = 1;
   QPeak  = 0;
   SetId(0);
@@ -113,6 +113,7 @@ void TCAtom::Assign(const TCAtom& S)  {
   }
   ExyzGroup = NULL;  // also managed by the group
   SetPart(S.GetPart());
+  SetCharge(S.GetCharge());
   SetOccu(S.GetOccu());
   SetOccuEsd(S.GetOccuEsd());
   SetQPeak(S.GetQPeak());
@@ -122,7 +123,7 @@ void TCAtom::Assign(const TCAtom& S)  {
   SetUiso(S.GetUiso());
   SetUisoEsd(S.GetUisoEsd());
   SetUisoScale(S.GetUisoScale());
-  if( S.UisoOwner != NULL )  {
+  if (S.UisoOwner != NULL) {
     UisoOwner = Parent->FindCAtomById(S.UisoOwner->GetId());
     if( UisoOwner == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "asymmetric units mismatch");
@@ -130,7 +131,7 @@ void TCAtom::Assign(const TCAtom& S)  {
   else
     UisoOwner = NULL;
   Label   = S.Label;
-  if( Type != &S.GetType() )  {
+  if (Type != &S.GetType()) {
     Type = &S.GetType();
     Parent->_OnAtomTypeChanged(*this);
   }
@@ -188,7 +189,8 @@ void TCAtom::UpdateEllp(const TEllipsoid &NV) {
 void TCAtom::ToDataItem(TDataItem& item) const  {
   item.AddField("label", Label);
   item.AddField("type", Type->symbol);
-  item.AddField("part", (int)Part);
+  item.AddField("part", GetPart());
+  item.AddField("charge", GetCharge());
   item.AddField("sof", TEValue<double>(Occu, OccuEsd).ToString());
   item.AddField("flags", Flags);
   item.AddField("x", TEValue<double>(Center[0], Esd[0]).ToString());
@@ -222,7 +224,8 @@ PyObject* TCAtom::PyExport(bool export_attached_sites)  {
   PyObject* main = PyDict_New();
   PythonExt::SetDictItem(main, "label", PythonExt::BuildString(Label));
   PythonExt::SetDictItem(main, "type", PythonExt::BuildString(Type->symbol));
-  PythonExt::SetDictItem(main, "part", Py_BuildValue("i", Part));
+  PythonExt::SetDictItem(main, "part", Py_BuildValue("i", GetPart()));
+  PythonExt::SetDictItem(main, "charge", Py_BuildValue("i", GetCharge()));
   PythonExt::SetDictItem(main, "occu", Py_BuildValue("(dd)", Occu, OccuEsd));
   PythonExt::SetDictItem(main, "tag", Py_BuildValue("i", GetTag()));
   PythonExt::SetDictItem(main, "crd",
@@ -289,7 +292,8 @@ void TCAtom::FromDataItem(TDataItem& item)  {
     throw TFunctionFailedException(__OlxSourceInfo, "invalid atom type");
   TEValue<double> ev;
   Label = item.GetFieldByName("label");
-  Part = item.GetFieldByName("part").ToInt();
+  SetPart(item.GetFieldByName("part").ToInt());
+  SetCharge(item.FindField("charge", '0').ToInt());
   ev = item.GetFieldByName("sof");
   Occu = ev.GetV();  OccuEsd = ev.GetE();
   Flags = item.GetFieldByName("flags").ToInt();

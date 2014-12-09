@@ -53,7 +53,7 @@ namespace ctrl_ext {
   class TButton: public wxButton, public AButtonBase {
     void MouseEnterEvent(wxMouseEvent& event);
     void MouseLeaveEvent(wxMouseEvent& event);
-    void ClickEvent(wxCommandEvent&)  {  AButtonBase::_ClickEvent();  }
+    void ClickEvent(wxCommandEvent&);
   protected:
     virtual wxWindow* GetParent() const {  return wxButton::GetParent();  }
   public:

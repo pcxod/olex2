@@ -442,6 +442,7 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
 }
 //..............................................................................
 void TMainForm::ObjectUnderMouse(AGDrawObject *G)  {
+  if (Destroying) return;
   FObjectUnderMouse = G;
   FCurrentPopup = NULL;
   if (G == NULL)  return;
@@ -459,10 +460,6 @@ void TMainForm::ObjectUnderMouse(AGDrawObject *G)  {
     T << ':' << ' ' << XA->GetType().name;
     if (XA->GetType() == iQPeakZ) {
       T << ": " << olxstr::FormatFloat(3, XA->CAtom().GetQPeak());
-    }
-    else {
-      T << " Occu: " << TEValueD(XA->CAtom().GetOccu(),
-        XA->CAtom().GetOccuEsd()).ToString();
     }
     pmAtom->SetLabel(ID_AtomInfo, T.u_str());
     pmAtom->Enable(ID_AtomGrow, !XA->IsGrown());
@@ -550,7 +547,7 @@ void TMainForm::ObjectUnderMouse(AGDrawObject *G)  {
     else {
       pmAtom->Check(ID_AtomPartChangeLast, true);
       pmAtom->SetLabel(ID_AtomPartChangeLast, (olxstr("Custom: ") <<
-        XA->CAtom().GetPart()).u_str());
+        (int)XA->CAtom().GetPart()).u_str());
     }
     // Uiso
     if (XA->CAtom().GetEllipsoid() == NULL) {

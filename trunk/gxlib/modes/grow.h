@@ -12,7 +12,7 @@
 #include "xgrowline.h"
 #include "label_corrector.h"
 
-class TGrowMode : public AMode  {
+class TGrowMode : public AMode {
 protected:
   bool GrowShells;
   short mode, part;
@@ -29,17 +29,19 @@ public:
          Rad = Options.Contains('r');
     GrowShells = Options.Contains("shells");
     mode = 0;
-    if( SI )   mode = gmSInteractions;
-    if( Cov )  mode = gmCovalent;
-    else if( VdW )  {
+    if (SI)   mode = gmSInteractions;
+    if (Cov)  mode = gmCovalent;
+    else if (VdW) {
       mode = gmVanDerWaals;
       olxstr vr = Options.FindValue('v');
       gxapp.SetDeltaV(vr.IsEmpty() ? 2.0 : vr.ToDouble());
     }
-    else if( Rad )
+    else if (Rad) {
       mode = gmSameAtoms;
-    if( mode == 0 )
+    }
+    if (mode == 0) {
       mode = gmCovalent;
+    }
     if (Options.Contains('p')) {
       if (mode != gmCovalent || Options.Contains('a')) {
         TBasicApp::NewLogEntry(logError) << "Incompatible values";
@@ -50,12 +52,12 @@ public:
       GrowShells = true;
     }
     // the AU rebuilding mode, enfoces grow shells and covalent bonds only
-    if( Options.Contains('a') )  {
+    if (Options.Contains('a')) {
       TAsymmUnit &au = gxapp.XFile().GetAsymmUnit();
       detached.SetSize(au.AtomCount());
-      for( size_t i=0; i < au.AtomCount(); i++ )  {
+      for (size_t i=0; i < au.AtomCount(); i++) {
         TCAtom &a = au.GetAtom(i);
-        if( !a.IsDetached() && a.GetType() == iQPeakZ )  {
+        if (!a.IsDetached() && a.GetType() == iQPeakZ) {
           a.SetDetached(true);
           detached.SetTrue(i);
         }
@@ -74,10 +76,10 @@ public:
   void Finalise_() {
     gxapp.SetXGrowLinesVisible(false);
     gxapp.SetZoomAfterModelBuilt(true);
-    if( !detached.IsEmpty() )  {
+    if (!detached.IsEmpty()) {
       TAsymmUnit &au = gxapp.XFile().GetAsymmUnit();
-      for( size_t i=0; i < au.AtomCount(); i++ )  {
-        if( detached[i] )
+      for (size_t i=0; i < au.AtomCount(); i++) {
+        if (detached[i])
           au.GetAtom(i).SetDetached(false);
       }
       gxapp.XFile().GetLattice().CompaqQ();
@@ -102,39 +104,40 @@ public:
       latt.Init();
     }
   }
-  void UpdateAU(size_t ac)  {
-    if( detached.IsEmpty() )  return;
+  void UpdateAU(size_t ac) {
+    if (detached.IsEmpty())  return;
     TLattice& latt = gxapp.XFile().GetLattice();
-    for( size_t i=ac; i < latt.GetObjects().atoms.Count(); i++ )  {
+    for (size_t i = ac; i < latt.GetObjects().atoms.Count(); i++) {
       TSAtom &aa = latt.GetObjects().atoms[i];
-      for( size_t j=0; j < ac; j++ )  {
+      for (size_t j = 0; j < ac; j++) {
         TSAtom &ab = latt.GetObjects().atoms[j];
-        if( aa.CAtom().GetId() == ab.CAtom().GetId() )
+        if (aa.CAtom().GetId() == ab.CAtom().GetId())
           ab.SetDeleted(true);
       }
     }
-    if( ac != latt.GetObjects().atoms.Count() )  {
+    if (ac != latt.GetObjects().atoms.Count()) {
       latt.UpdateAsymmUnit();
       latt.Init();
     }
   }
-  virtual bool OnObject_(AGDrawObject& obj)  {
+  virtual bool OnObject_(AGDrawObject& obj) {
     TLattice& latt = gxapp.XFile().GetLattice();
-    if( EsdlInstanceOf(obj, TXGrowLine) )  {
+    if (EsdlInstanceOf(obj, TXGrowLine)) {
       TXGrowLine& xl = (TXGrowLine&)obj;
-      if( GrowShells && mode == gmCovalent )  {
+      if (GrowShells && (mode == gmCovalent || mode == gmVanDerWaals)) {
         size_t ac = latt.GetObjects().atoms.Count();
         latt.GrowAtom(xl.CAtom(), xl.GetTransform());
         UpdateAU(ac);
       }
-      else
+      else {
         latt.GrowFragment(xl.CAtom().GetFragmentId(), xl.GetTransform());
+      }
       return true;
     }
-    else if( EsdlInstanceOf(obj, TXAtom) )  {
+    else if (EsdlInstanceOf(obj, TXAtom)) {
       size_t ac = latt.GetObjects().atoms.Count();
       TXAtom& a = (TXAtom&)obj;
-      if( !a.IsGrown() )  {
+      if (!a.IsGrown()) {
         latt.GrowAtom(a, GrowShells, NULL);
         UpdateAU(ac);
       }

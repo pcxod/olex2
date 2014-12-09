@@ -191,18 +191,19 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
           Ins.Add(InsFile[i]);
           continue;
         }
-        uint32_t index = Toks[1].ToUInt();
-        if (index < 1 || index > cx.BasicAtoms.Count())  {  // wrong index in SFAC
+        const uint32_t sindex = Toks[1].ToUInt()-1;
+        if (sindex >= cx.BasicAtoms.Count()) {  // wrong index in SFAC
           Ins.Add(InsFile[i]);
           continue;
         }
         // should be four numbers
         if ((!Toks[2].IsNumber()) || (!Toks[3].IsNumber()) ||
-          (!Toks[4].IsNumber()) || (!Toks[5].IsNumber()))  {
+          (!Toks[4].IsNumber()) || (!Toks[5].IsNumber()))
+        {
           Ins.Add(InsFile[i]);
           continue;
         }
-        if (!cx.CellFound)  {
+        if (!cx.CellFound) {
           Clear();
           throw TFunctionFailedException(__OlxSourceInfo, "uninitialised cell");
         }
@@ -210,8 +211,11 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
         atom->SetLabel(Toks[0], false);
         if (qpeak)
           atom->SetType(elmQPeak);
-        else
-          atom->SetType(*cx.BasicAtoms.GetObject(Toks[1].ToInt() - 1));
+        else {
+          atom->SetType(*cx.BasicAtoms.GetObject(sindex));
+          atom->SetCharge(XScatterer::ChargeFromLabel(
+            cx.BasicAtoms[sindex], cx.BasicAtoms.GetObject(sindex)));
+        }
         if (atom->GetType().z > 1 &&
           (cx.AfixGroups.IsEmpty() || cx.AfixGroups.Top().GetB()->GetAfix() != 3))
         {
@@ -709,32 +713,33 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
         (Toks.Count() > 3) ? Toks[3].ToInt() : n);
     }
   }
-  else if( Toks[0].Equalsi("SFAC") )  {
+  else if (Toks[0].Equalsi("SFAC")) {
     bool expandedSfacProcessed = false;
-    if( Toks.Count() == 16 )  {  // a special case for expanded sfac
+    if (Toks.Count() == 16) {  // a special case for expanded sfac
       int NumberCount = 0;
-      for( size_t i=2; i < Toks.Count(); i++ )  {
-        if( Toks[i].IsNumber() )
+      for (size_t i=2; i < Toks.Count(); i++) {
+        if (Toks[i].IsNumber())
           NumberCount++;
       }
-      if( NumberCount > 0 && NumberCount < 14 )  {
+      if (NumberCount > 0 && NumberCount < 14) {
         TBasicApp::NewLogEntry(logError) << "Possibly not well formed SFAC "
           << Toks[0];
       }
-      else  if( NumberCount == 14 )  {
-        /* here we do not check if the Toks.String(1) is atom - itcould be a label ...
+      else  if (NumberCount == 14) {
+        /* here we do not check if the Toks.String(1) is atom - it could be a label ...
         so we keep it as it is to save in the ins file
         */
-        cx.rm.AddUserContent(Toks[1]);
-        cx.BasicAtoms.Add(Toks[1], XElementLib::FindBySymbol(Toks[1]));
-        if( cx.BasicAtoms.GetLast().Object == NULL )  {
-          throw TFunctionFailedException(__OlxSourceInfo,
-            olxstr("Could not find suitable scatterer for ").quote()
-              << Toks[1]);
-        }
-        expandedSfacProcessed = true;
         const olxstr lb(Toks[1].CharAt(0) == '$'
           ? Toks[1].SubStringFrom(1) : Toks[1]);
+        cm_Element *elm = XElementLib::FindBySymbolEx(lb);
+        if (elm == 0) {
+          throw TFunctionFailedException(__OlxSourceInfo,
+            olxstr("Could not find suitable scatterer for ").quote()
+            << Toks[1]);
+        }
+        cx.rm.AddUserContent(*elm);
+        cx.BasicAtoms.Add(Toks[1], elm);
+        expandedSfacProcessed = true;
         XScatterer* sc = new XScatterer(lb);
         sc->SetGaussians(
           cm_Gaussians(
@@ -749,26 +754,26 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
         cx.rm.AddSfac(*sc);
       }
     }
-    if( !expandedSfacProcessed )  {
-      for( size_t j=1; j < Toks.Count(); j++ )  {
-        if( XElementLib::IsElement(Toks[j]) )  {
+    if (!expandedSfacProcessed) {
+      for (size_t j = 1; j < Toks.Count(); j++) {
+        if (XElementLib::IsElement(Toks[j])) {
           cx.BasicAtoms.Add(Toks[j], XElementLib::FindBySymbol(Toks[j]));
-          if( cx.BasicAtoms.GetLast().Object == NULL )  {
+          if (cx.BasicAtoms.GetLast().Object == NULL) {
             throw TFunctionFailedException(__OlxSourceInfo,
               olxstr("Could not find suitable scatterer for ").quote()
-                << Toks[j]);
+              << Toks[j]);
           }
           cx.rm.AddUserContent(Toks[j]);
         }
       }
     }
   }
-  else if( Toks[0].Equalsi("DISP") && Toks.Count() >= 4 )  {
+  else if (Toks[0].Equalsi("DISP") && Toks.Count() >= 4) {
     const olxstr lb(Toks[1].CharAt(0) == '$'
       ? Toks[1].SubStringFrom(1) : Toks[1]);
     XScatterer* sc = new XScatterer(lb);
     sc->SetFpFdp(compd(Toks[2].ToDouble(), Toks[3].ToDouble()));
-    if( Toks.Count() >= 5 )
+    if (Toks.Count() >= 5)
       sc->SetMu(Toks[4].ToDouble());
     cx.rm.AddSfac(*sc);
   }
@@ -920,7 +925,7 @@ void TIns::HyphenateIns(const olxstr& Ins, TStrList& Res, int sz)  {
   olxstr Tmp(Ins), Tmp1;
   while( Tmp.Length() >= (size_t)sz )  {
     MultiLine = true;
-    size_t spindex = Tmp.LastIndexOf(' ', sz-3); // for the right hyphernation
+    size_t spindex = Tmp.LastIndexOf(' ', sz-3); // for the right hyphenation
     if( spindex != InvalidIndex && spindex > 0 )  {
       if( added )  Tmp1 = ' ';
       Tmp1 << Tmp.SubStringTo(spindex);
@@ -945,42 +950,39 @@ void TIns::HyphenateIns(const olxstr& Ins, TStrList& Res, int sz)  {
   }
 }
 //..............................................................................
-TStringToList<olxstr,const cm_Element*> TIns::FixTypeListAndLabels() {
-  TStringToList<olxstr,const cm_Element*> BasicAtoms;
-  for( size_t i=0; i < GetRM().GetUserContent().Count(); i++ )  {
-    BasicAtoms.Add(GetRM().GetUserContent()[i].element.symbol,
-      &GetRM().GetUserContent()[i].element);
+void TIns::FixTypeListAndLabels() {
+  sorted::PointerPointer<const cm_Element> elms;
+  for (size_t i=0; i < GetRM().GetUserContent().Count(); i++) {
+    elms.Add(&GetRM().GetUserContent()[i].element);
   }
-  for( size_t i=0; i < GetAsymmUnit().ResidueCount(); i++ )  {
+  for (size_t i=0; i < GetAsymmUnit().ResidueCount(); i++ ) {
     TResidue& residue = GetAsymmUnit().GetResidue(i);
     LabelCorrector lc;
-    for( size_t j=0; j < residue.Count(); j++ )  {
-      if( residue[j].IsDeleted() )  continue;
+    for (size_t j=0; j < residue.Count(); j++) {
+      if (residue[j].IsDeleted()) continue;
       residue[j].SetSaved(false);
       // fix the SFAC, if wrong
-      size_t spindex = BasicAtoms.IndexOfObject(&residue[j].GetType());
-      if( spindex == InvalidIndex )  {
-        if( residue[j].GetType() != iQPeakZ )  {
-          BasicAtoms.Add(residue[j].GetType().symbol, &residue[j].GetType());
-          GetRM().AddUserContent(residue[j].GetType().symbol, 1.0);
+      if (!elms.Contains(&residue[j].GetType())) {
+        if (residue[j].GetType() != iQPeakZ) {
+          elms.Add(&residue[j].GetType());
+          GetRM().AddUserContent(residue[j].GetType(), 1.0);
         }
       }
       lc.Correct(residue[j]);
     }
   }
-  return BasicAtoms;
 }
 //..............................................................................
 void TIns::SaveForSolution(const olxstr& FileName, const olxstr& sMethod,
   const olxstr& comments, bool rems, bool save_atoms)
 {
   TStrList SL, mtoks;
-  if( sMethod.IsEmpty() )
+  if (sMethod.IsEmpty())
     mtoks.Add("TREF");
-  else  {
+  else {
     mtoks.Strtok(sMethod, "\\n");
     size_t spi = mtoks[0].IndexOf(' ');
-    if( spi != InvalidIndex )
+    if (spi != InvalidIndex)
       RefMod.SetSolutionMethod(mtoks[0].SubStringTo(spi));
     else
       RefMod.SetSolutionMethod(mtoks[0]);
@@ -989,18 +991,14 @@ void TIns::SaveForSolution(const olxstr& FileName, const olxstr& sMethod,
   UpdateParams();
   SL.Add("TITL ") << GetTitle();
 
-  if( !comments.IsEmpty() && rems )
+  if (!comments.IsEmpty() && rems)
     SL.Add("REM ") << comments;
 // try to estimate Z'
   SL.Add(_CellToString());
   SL.Add(_ZerrToString());
   _SaveSymm(SL);
   SL.Add(EmptyString());
-  TStringToList<olxstr,const cm_Element*> BasicAtoms;
-  // if to save atoms - update the SFAC and fix labels
-  if (save_atoms)
-    BasicAtoms = FixTypeListAndLabels();
-  SaveSfacUnit(RefMod, RefMod.GetUserContent(), SL, SL.Count()-1, false);
+  TStrList sfac = SaveSfacUnit(RefMod, SL, SL.Count()-1, false);
 
   _SaveSizeTemp(SL);
   if( rems )
@@ -1016,7 +1014,7 @@ void TIns::SaveForSolution(const olxstr& FileName, const olxstr& sMethod,
       if( a.IsDeleted() || a.GetType().z < 2) continue;
       olxstr& aline = SL.Add(a.GetLabel());
       aline.RightPadding(6, ' ', true);
-      aline << (BasicAtoms.IndexOfObject(&a.GetType())+1);
+      aline << (sfac.IndexOf(a.GetType().symbol)+1);
       aline.RightPadding(aline.Length()+4, ' ', true);
       for( size_t j=0; j < 3; j++ )
         aline << olxstr::FormatFloat(-5, a.ccrd()[j] ) << ' ';
@@ -1033,24 +1031,88 @@ void TIns::SaveForSolution(const olxstr& FileName, const olxstr& sMethod,
 #endif
 }
 //..............................................................................
-void TIns::SaveSfacUnit(const RefinementModel& rm, const ContentList& content,
+TStrList::const_list_type TIns::SaveSfacUnit(const RefinementModel& rm,
+  TStrList& list, size_t pos)
+{
+  TStrList sfac;
+  sorted::ObjectComparable<olxstr> elms;
+  short state = 0;
+  for (size_t i = 0; i < rm.GetUserContent().Count(); i++) {
+    if (!elms.AddUnique(rm.GetUserContent()[i].element.symbol).b)
+      continue;
+    XScatterer* sd = rm.FindSfacData(rm.GetUserContent()[i].element.symbol);
+    if (sd != NULL && sd->IsSFAC()) {
+      TStrList lines;
+      HyphenateIns(sd->ToInsString(), lines);
+      list.Insert(pos, lines);
+      pos += lines.Count();
+    }
+    else {
+      if (state == 1) {
+        list.Insert(pos++, "SFAC ") << rm.GetUserContent()[i].element.symbol;
+        state = 2;
+      }
+      else  {
+        if (state == 2)  // SFAC added and pos incremented
+          list[pos - 1] << ' ' << rm.GetUserContent()[i].element.symbol;
+        else if (state == 0)  {  // nothing added yet
+          list[pos++] << "SFAC " << rm.GetUserContent()[i].element.symbol;
+          state = 2;
+        }
+      }
+    }
+    sfac << rm.GetUserContent()[i].element.symbol;
+  }
+  for (size_t i = 0; i < rm.aunit.AtomCount(); i++) {
+    TCAtom &a = rm.aunit.GetAtom(i);
+    if (a.IsDeleted()) continue;
+    int ch = a.GetCharge();
+    if (ch == 0) continue;
+    olxstr l = olxstr(a.GetType().symbol) << ch;
+    XScatterer* sd = rm.FindSfacData(l);
+    if (sd != NULL && sd->IsSFAC()) {
+      TStrList lines;
+      HyphenateIns(sd->ToInsString(), lines);
+      list.Insert(pos, lines);
+      pos += lines.Count();
+      sfac << l;
+    }
+  }
+  for (size_t i = 0; i < rm.SfacCount(); i++)  {
+    if (rm.GetSfacData(i).IsDISP() &&
+      elms.Contains(rm.GetSfacData(i).GetLabel()))
+    {
+      list.Insert(pos++, rm.GetSfacData(i).ToInsString());
+    }
+  }
+
+  olxstr& unit = list.Insert(pos++, "UNIT");
+  for (size_t i = 0; i < rm.GetUserContent().Count(); i++) {
+    unit << ' ' << rm.GetUserContent()[i].count;
+  }
+  for (size_t i = rm.GetUserContent().Count(); i < sfac.Count(); i++) {
+    unit << " 0";
+  }
+  return sfac;
+}
+//..............................................................................
+TStrList::const_list_type TIns::SaveSfacUnit(const RefinementModel& rm,
   TStrList& list, size_t pos, bool save_disp)
 {
-  TStrList lines;
+  TStrList sfac;
   short state = 0;
   SortedObjectList<olxstr, olxstrComparator<false> > elms;
-  for( size_t i=0; i < rm.GetUserContent().Count(); i++ )  {
+  for (size_t i=0; i < rm.GetUserContent().Count(); i++) {
     elms.AddUnique(rm.GetUserContent()[i].element.symbol);
     XScatterer* sd = rm.FindSfacData(rm.GetUserContent()[i].element.symbol);
-    if( sd != NULL && sd->IsSFAC() )  {
-      olxstr tmp = sd->ToInsString();
-      lines.Clear();
-      HyphenateIns(tmp, lines);
-      for( size_t j=0; j < lines.Count(); j++ )
-        list.Insert(pos++, lines[j]);
+    if (sd != NULL && sd->IsSFAC()) {
+      TStrList lines;
+      HyphenateIns(sd->ToInsString(), lines);
+      list.Insert(pos, lines);
+      pos += lines.Count();
       state = 1;
     }
-    else  {
+    else {
       if( state == 1 )  {
         list.Insert(pos++,  "SFAC ") << rm.GetUserContent()[i].element.symbol;
         state = 2;
@@ -1064,6 +1126,7 @@ void TIns::SaveSfacUnit(const RefinementModel& rm, const ContentList& content,
         }
       }
     }
+    sfac << rm.GetUserContent()[i].element.symbol;
   }
   if (save_disp) {
     for( size_t i=0; i < rm.SfacCount(); i++ )  {
@@ -1075,19 +1138,14 @@ void TIns::SaveSfacUnit(const RefinementModel& rm, const ContentList& content,
     }
   }
   olxstr& unit = list.Insert(pos++, "UNIT");
-
-  if( rm.SfacCount() == 0 )  {
-    for( size_t i=0; i < content.Count(); i++ )
-      unit << ' ' << content[i].count;
+  for (size_t i=0; i < rm.GetUserContent().Count(); i++) {
+    unit << ' ' << rm.GetUserContent()[i].count;
   }
-  else  {
-    for( size_t i=0; i < rm.GetUserContent().Count(); i++ )
-      unit << ' ' << rm.GetUserContent()[i].count;
-  }
+  return sfac;
 }
 //..............................................................................
 void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
-  TStringToList<olxstr,const cm_Element*>* sfac, TStrList& sl,
+  TStrList* sfac, TStrList& sl,
   TIndexList* index, bool checkSame, bool checkResi)
 {
   if( a.IsDeleted() || a.IsSaved() )  return;
@@ -1161,10 +1219,16 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
   afix = atom_afix;
   part = a.GetPart();
   index_t spindex;
-  if( a.GetType() == iQPeakZ )
-    spindex = (sfac == NULL ? -2 : (index_t)sfac->IndexOfi('c')+1);
-  else
-    spindex = (sfac == NULL ? -2 : (index_t)sfac->IndexOfObject(&a.GetType())+1);
+  if (a.GetType() == iQPeakZ)
+    spindex = (sfac == NULL ? -2 : (index_t)sfac->IndexOf('C')+1);
+  else {
+    int ch = a.GetCharge();
+    olxstr l = a.GetType().symbol;
+    if (ch != 0) {
+      l << ch;
+    }
+    spindex = (sfac == NULL ? -2 : (index_t)sfac->IndexOf(l) + 1);
+  }
   HyphenateIns(AtomToString(rm, a, spindex == 0 ? 1 : spindex), sl);
   a.SetSaved(true);
   if( index != NULL )  index->Add(a.GetId());
@@ -1197,9 +1261,8 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
   }
 }
 //..............................................................................
-void TIns::SaveToStrings(TStrList& SL)  {
-  TStringToList<olxstr,const cm_Element*> BasicAtoms =
-    FixTypeListAndLabels();
+void TIns::SaveToStrings(TStrList& SL) {
+  FixTypeListAndLabels();
   for (size_t i=0; i < GetAsymmUnit().AtomCount(); i++) {
     TCAtom &ca = GetAsymmUnit().GetAtom(i);
     if (ca.IsDeleted()) continue;
@@ -1213,29 +1276,32 @@ void TIns::SaveToStrings(TStrList& SL)  {
   }
   ValidateRestraintsAtomNames(GetRM());
   UpdateParams();
-  SaveHeader(SL, false);
+  TStrList sfac = SaveHeader(SL, false);
   SaveExtras(SL, NULL, NULL, GetRM());
   SL.Add(EmptyString());
   int afix = 0, part = 0;
   uint32_t fragmentId = ~0;
-  for( size_t i=0; i < GetAsymmUnit().ResidueCount(); i++ )  {
+  for (size_t i=0; i < GetAsymmUnit().ResidueCount(); i++) {
     TResidue& residue = GetAsymmUnit().GetResidue(i);
-    if( i != 0 && !residue.IsEmpty() )  {
+    if (i != 0 && !residue.IsEmpty()) {
       SL.Add();
       SL.Add(residue.ToString());
       fragmentId = ~0;
     }
-    for( size_t j=0; j < residue.Count(); j++ )  {
+    for (size_t j=0; j < residue.Count(); j++) {
       TCAtom& ac = residue[j];
-      if( ac.IsDeleted() || ac.IsSaved() )  continue;
-      if( ac.GetFragmentId() != fragmentId || !olx_is_valid_index(fragmentId) )  {
-        if( olx_is_valid_index(fragmentId) )
+      if (ac.IsDeleted() || ac.IsSaved())  continue;
+      if (ac.GetFragmentId() != fragmentId || !olx_is_valid_index(fragmentId)) {
+        if (olx_is_valid_index(fragmentId))
           SL.Add(EmptyString());
         fragmentId = ac.GetFragmentId();
       }
-      if( ac.GetParentAfixGroup() != NULL &&
-         !ac.GetParentAfixGroup()->GetPivot().IsDeleted() )  continue;
-      _SaveAtom(GetRM(), ac, part, afix, &BasicAtoms, SL, NULL, true, false);
+      if (ac.GetParentAfixGroup() != NULL &&
+        !ac.GetParentAfixGroup()->GetPivot().IsDeleted())
+      {
+        continue;
+      }
+      _SaveAtom(GetRM(), ac, part, afix, &sfac, SL, NULL, true, false);
     }
   }
   if( afix != 0 )  SL.Add("AFIX 0");
@@ -1405,18 +1471,22 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm,
 bool TIns::SaveAtomsToStrings(RefinementModel& rm, const TCAtomPList& CAtoms,
   TIndexList& index, TStrList& SL, RefinementModel::ReleasedItems* processed)
 {
-  if( CAtoms.IsEmpty() )  return false;
+  if (CAtoms.IsEmpty()) return false;
   int part = 0,
-      afix = 0;
+    afix = 0;
   SaveRestraints(SL, &CAtoms, processed, rm);
   _SaveFVar(rm, SL);
-  for( size_t i=0; i < CAtoms.Count(); i++ )
+  for (size_t i = 0; i < CAtoms.Count(); i++) {
     CAtoms[i]->SetSaved(false);
-  for( size_t i=0; i < CAtoms.Count(); i++ )  {
+  }
+  for (size_t i=0; i < CAtoms.Count(); i++) {
     if( CAtoms[i]->IsSaved() )  continue;
     TCAtom& ac = *CAtoms[i];
-    if( ac.GetParentAfixGroup() != NULL &&
-      !ac.GetParentAfixGroup()->GetPivot().IsDeleted() )  continue;
+    if (ac.GetParentAfixGroup() != NULL &&
+      !ac.GetParentAfixGroup()->GetPivot().IsDeleted())
+    {
+      continue;
+    }
     _SaveAtom(rm, ac, part, afix, NULL, SL, &index);
   }
   SaveExtras(SL, &CAtoms, processed, rm);
@@ -1454,7 +1524,7 @@ void TIns::SavePattSolution(const olxstr& FileName,
   SL.Add(_ZerrToString());
   _SaveSymm(SL);
   SL.Add(EmptyString());
-  SaveSfacUnit(GetRM(), GetRM().GetUserContent(), SL, SL.Count()-1);
+  SaveSfacUnit(GetRM(), SL, SL.Count()-1, true);
 
   _SaveRefMethod(SL);
   _SaveSizeTemp(SL);
@@ -1916,7 +1986,9 @@ void TIns::_SaveSizeTemp(TStrList& SL)  {
     SL.Add("TEMP ") << RefMod.expl.GetTempValue().ToString();
 }
 //..............................................................................
-void TIns::SaveHeader(TStrList& SL, bool ValidateRestraintNames) {
+TStrList::const_list_type TIns::SaveHeader(TStrList& SL,
+  bool ValidateRestraintNames)
+{
   SL.Add("TITL ") << GetTitle();
   for (size_t i = 0; i < Ins.Count(); i++) {
     TInsList* L = Ins.GetObject(i);
@@ -1929,7 +2001,7 @@ void TIns::SaveHeader(TStrList& SL, bool ValidateRestraintNames) {
   SL.Add(_ZerrToString());
   _SaveSymm(SL);
   SL.Add(EmptyString());
-  SaveSfacUnit(GetRM(), GetRM().GetUserContent(), SL, SL.Count()-1);
+  TStrList::const_list_type rv = SaveSfacUnit(GetRM(), SL, SL.Count() - 1);
   if (ValidateRestraintNames)
     ValidateRestraintsAtomNames(GetRM());
   SaveRestraints(SL, NULL, NULL, GetRM());
@@ -1961,7 +2033,7 @@ void TIns::SaveHeader(TStrList& SL, bool ValidateRestraintNames) {
   _SaveHklInfo(SL, false);
 
   olxstr& wght = SL.Add("WGHT ");
-  for (size_t i = 0; i < RefMod.used_weight.Count(); i++)  {
+  for (size_t i = 0; i < RefMod.used_weight.Count(); i++) {
     wght << RefMod.used_weight[i];
     if (i + 1 < RefMod.used_weight.Count())
       wght << ' ';
@@ -1969,6 +2041,7 @@ void TIns::SaveHeader(TStrList& SL, bool ValidateRestraintNames) {
   if (RefMod.used_weight.IsEmpty())
     wght << "0.1";
   _SaveFVar(RefMod, SL);
+  return rv;
 }
 //..............................................................................
 void TIns::ParseHeader(const TStrList& in)  {
@@ -2031,7 +2104,7 @@ bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& _toks)  {
   TStrList toks(_toks);
   if( toks[0].Equalsi("EQIV") && toks.Count() >= 3 )  {
     try  {
-      rm.AddUsedSymm(TSymmParser::SymmToMatrix(toks.Text(EmptyString(), 2)));
+      rm.AddUsedSymm(TSymmParser::SymmToMatrix(toks.Text(EmptyString(), 2)), toks[1]);
     }
     catch(const TExceptionBase &e)  {
       throw TFunctionFailedException(__OlxSourceInfo, e, "to parse EQIV");

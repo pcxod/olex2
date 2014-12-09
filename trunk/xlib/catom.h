@@ -81,7 +81,7 @@ private:
   uint32_t FragmentId,
     ResiId;
   uint16_t SameId, Flags;
-  int8_t Part;
+  int16_t PartAndCharge;
   double
     Occu,  // occupancy and its variable
     OccuEsd,
@@ -179,14 +179,22 @@ public:
   DefPropP(uint32_t, FragmentId)
   DefPropP(uint16_t, SameId)
   DefPropP(size_t, EllpId)
-  DefPropP(int8_t, Part)
   DefPropP(TExyzGroup*, ExyzGroup)
+
+  int GetPart() const { return (int)(int8_t)(PartAndCharge&0x00ff); }
+  void SetPart(int v) {
+    PartAndCharge = (PartAndCharge & 0xff00) | v;
+  }
+  int GetCharge() const { return (int)(int8_t)((PartAndCharge & 0xff00) >> 8); }
+  void SetCharge(int v) {
+    PartAndCharge = ((int16_t)v << 8) | (PartAndCharge & 0x00ff);
+  }
 
   // returns multiplicity of the position
   size_t GetDegeneracy() const {  return EquivCount()+1;  }
   // used by TUnitCell to initialise position symmetry
-  void AddEquiv(const smatd& m)  {
-    if( Equivs == NULL )  Equivs = new smatd_list;
+  void AddEquiv(const smatd& m) {
+    if (Equivs == NULL) Equivs = new smatd_list;
     Equivs->AddCopy(m);
   }
   // number of non identity symmops under which the position is invariant
@@ -226,20 +234,20 @@ public:
   DefPropP(double, Occu)
   // return chemical coccupancy, i.e. CrystOccu*site_multiplicity
   double GetChemOccu() const {  return GetOccu()*GetDegeneracy();  }
-  DefPropP(double, OccuEsd)
-  DefPropP(double, Uiso)
-  DefPropP(double, UisoEsd)
-  DefPropP(double, UisoScale)
-  DefPropP(TCAtom*, UisoOwner)
-  DefPropP(double, QPeak)
-  DefPropBFIsSet(Deleted,   Flags, catom_flag_Deleted)
-  DefPropBFIsSet(Saved,     Flags, catom_flag_Saved)
-  DefPropBFIsSet(HAttached, Flags, catom_flag_HAttached)
-  DefPropBFIsSet(Masked,    Flags, catom_flag_Masked)
-  DefPropBFIsSet(Detached,  Flags, catom_flag_Detached)
-  DefPropBFIsSet(Processed, Flags, catom_flag_Processed)
-  DefPropBFIsSet(FixedType, Flags, catom_flag_FixedType)
-  DefPropBFIsSet(RingAtom,  Flags, catom_flag_RingAtom)
+  DefPropP(double, OccuEsd);
+  DefPropP(double, Uiso);
+  DefPropP(double, UisoEsd);
+  DefPropP(double, UisoScale);
+  DefPropP(TCAtom*, UisoOwner);
+  DefPropP(double, QPeak);
+  DefPropBFIsSet(Deleted, Flags, catom_flag_Deleted);
+  DefPropBFIsSet(Saved, Flags, catom_flag_Saved);
+  DefPropBFIsSet(HAttached, Flags, catom_flag_HAttached);
+  DefPropBFIsSet(Masked, Flags, catom_flag_Masked);
+  DefPropBFIsSet(Detached, Flags, catom_flag_Detached);
+  DefPropBFIsSet(Processed, Flags, catom_flag_Processed);
+  DefPropBFIsSet(FixedType, Flags, catom_flag_FixedType);
+  DefPropBFIsSet(RingAtom, Flags, catom_flag_RingAtom);
   bool IsAvailable() const {
     return
       (Flags&(catom_flag_Detached|catom_flag_Masked|catom_flag_Deleted)) == 0;
