@@ -148,21 +148,21 @@ void TXAtom::CalcRad(short DefRadius) {
     SetR(sqrt(caDefIso) / 2);
   else if (DefRadius == darIsot) {
     if (GetType() == iHydrogenZ)
-      SetR(2 * caDefIso);
+      SetR(3 * caDefIso);
     else {
       if (GetType() == iQPeakZ)
         SetR(sqrt(CAtom().GetUiso())*GetSettings().GetQPeakSizeScale());
       else if (CAtom().GetUiso() > 0)
         SetR(sqrt(CAtom().GetUiso()));
       else
-        SetR(2 * caDefIso); //sqrt(caDefIso);
+        SetR(3 * caDefIso); //sqrt(caDefIso);
     }
   }
-  else if (DefRadius == darIsotH)  {
+  else if (DefRadius == darIsotH) {
     if (CAtom().GetUiso() > 0)
       SetR(sqrt(CAtom().GetUiso()));
     else
-      SetR(2 * caDefIso); //sqrt(caDefIso);
+      SetR(3 * caDefIso); //sqrt(caDefIso);
   }
 }
 //..............................................................................
@@ -411,7 +411,11 @@ bool TXAtom::Orient(TGlPrimitive& GlP) {
   olx_gl::translate(c);
 
   double scale = GetZoom();
-  if ((FRadius & (darIsot|darIsotH)) != 0)
+  if ((FRadius & darIsot) != 0) {
+    if (GetType().z != 1)
+      scale *= defs.GetTelpProb();
+  }
+  else if ((FRadius & darIsotH) != 0)
     scale *= defs.GetTelpProb();
 
   if (FDrawStyle == adsEllipsoid || FDrawStyle == adsOrtep) {

@@ -5884,7 +5884,7 @@ void TMainForm::macTestStat(TStrObjList &Cmds, const TParamList &Options, TMacro
       sl.Add( (double)j/100 ) << '\t' << data[j]*1000.0;  // normalised by 1000 square
     }
     TEFile::WriteLines((Cmds[0] + '_') << atomTypes.GetKey(i)->symbol << ".xlt", sl);
-    out << (int16_t)atomTypes.GetKey(i)->index;
+    out << (int16_t)atomTypes.GetKey(i)->GetIndex();
     out.Write(data, 600*sizeof(double));
     delete [] data;
   }

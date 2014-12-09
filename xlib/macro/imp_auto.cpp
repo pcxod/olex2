@@ -751,7 +751,7 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroData &E)  {
     if( atoms[i].GetA()->IsDeleted() || atoms[i].GetA()->GetType() == iQPeakZ )
       continue;
     vec3i p = (atoms[i].GetA()->ccrd()*map.GetSize()).Round<int>();
-    size_t ti = atom_masks.IndexOf(atoms[i].GetA()->GetType().index);
+    size_t ti = atom_masks.IndexOf(atoms[i].GetA()->GetType().GetIndex());
     atoms[i].b = MapUtil::IntegrateMask(map.Data, map.GetSize(), p,
       *atom_masks.GetValue(ti));
     atoms[i].c = mask_sizes[ti];
@@ -770,7 +770,7 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroData &E)  {
       }
       double p_ed = 0, n_ed  = 0;
       const cm_Element& original_type = atoms[i].GetA()->GetType();
-      const size_t ti = atom_masks.IndexOf(original_type.index);
+      const size_t ti = atom_masks.IndexOf(original_type.GetIndex());
       TArray3D<bool> &mask = *atom_masks.GetValue(ti);
       cm_Element* n_e = XElementLib::NextZ(original_type);
       if( n_e != NULL )  {

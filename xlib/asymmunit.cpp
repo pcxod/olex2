@@ -1115,7 +1115,7 @@ void TAsymmUnit::LibSetAtomLabel(const TStrObjList& Params, TMacroData& E)  {
   olxstr newLabel;
   if (Params[1].IsNumber()) {
     int inc = Params[1].ToInt();
-    int v = GetAtom(index).GetType().index + inc;
+    int v = GetAtom(index).GetType().GetIndex() + inc;
     if (v >= 0 && v <= iQPeakIndex) {
       newLabel << XElementLib::GetByIndex(v).symbol <<
         GetAtom(index).GetLabel().SubStringFrom(
@@ -1140,7 +1140,7 @@ void TAsymmUnit::LibGetAtomLabel(const TStrObjList& Params, TMacroData& E)  {
   olxstr newLabel;
   if( Params[1].IsNumber() )  {
     int inc = Params[1].ToInt();
-    int v = GetAtom(index).GetType().index + inc;
+    int v = GetAtom(index).GetType().GetIndex() + inc;
     if( v >= 0 && v <= iQPeakIndex )  {
       E.SetRetVal(XElementLib::GetByIndex(v).symbol);
       return;
@@ -1338,7 +1338,7 @@ void TAsymmUnit::LibSetZ(const TStrObjList& Params, TMacroData& E)  {
 }
 //..............................................................................
 void TAsymmUnit::LibGetZprime(const TStrObjList& Params, TMacroData& E)  {
-  E.SetRetVal(olxstr::FormatFloat(3,GetZPrime()));
+  E.SetRetVal(olxstr::FormatFloat(5, GetZPrime()).TrimFloat());
 }
 //..............................................................................
 void TAsymmUnit::LibSetZprime(const TStrObjList& Params, TMacroData& E)  {

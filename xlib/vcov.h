@@ -446,37 +446,14 @@ public:
     double calc() const {  return a.evaluate().DistanceTo(b.evaluate());  }
   };
   // octahedral distortion (in degrees), using best plane approach
-  struct OctahedralDistortionBP  {
+  struct OctahedralDistortionBP {
     const vec3d_alist& points;
     vec3d_alist pl;
     TDoubleList weights;
     OctahedralDistortionBP(const vec3d_alist& _points)
       : points(_points), pl(6), weights(6, olx_list_init::value(1.0))
     {}
-    double calc() const {
-      // translation for first face
-      const vec3d c1 = (points[1] + points[3] + points[5])/3;
-      // translation for second face
-      const vec3d c2 = (points[2] + points[4] + points[6])/3;
-      for( short i=0; i < 6; i+=2 )  {
-        pl[i] = (points[i+1] - c1);
-        pl[i+1] = (points[i+2] - c2);
-      }
-      const PlaneInfo pi = CalcPlane(pl, weights, 0);
-      double sum1 = 0;
-      for (int i=0; i < 6; i+=2) {
-        const vec3d v1 = pl[i].Projection(pi.center, pi.normal);
-        const vec3d v2 = pl[i+1].Projection(pi.center, pi.normal);
-        sum1 += olx_abs(M_PI/3-acos(v1.CAngle(v2)));
-      }
-      double sum2 = 0;
-      for (int i = 0; i < 6; i += 2)  {
-        const vec3d v2 = pl[i + 1].Projection(pi.center, pi.normal);
-        const vec3d v1 = pl[i == 4 ? 0 : i+2].Projection(pi.center, pi.normal);
-        sum2 += olx_abs(M_PI / 3 - acos(v1.CAngle(v2)));
-      }
-      return (olx_min(sum1, sum2) * 180 / 3) / M_PI;
-    }
+    double calc() const;
   };
   struct OctahedralDistortion {
     const vec3d_alist& points;

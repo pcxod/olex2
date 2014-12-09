@@ -94,8 +94,8 @@ void TSameGroup::FromDataItem(TDataItem& item) {
   Esd13 = item.GetFieldByName("esd13").ToDouble();
 
   if (item.FieldExists("AtomList")) {
-    Atoms.FromDataItem(item.GetItemByName("AtomList"));
-    IndexRange::RangeItr di(item.GetFieldByName("dependent_range"));
+    Atoms.Build(item.GetFieldByName("AtomList"));
+    IndexRange::RangeItr di(item.GetFieldByName("dependent"));
     while (di.HasNext()) {
       AddDependent(Parent[di.Next()]);
     }

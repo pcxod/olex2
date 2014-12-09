@@ -90,8 +90,8 @@ TAttachedNode::TAttachedNode(IDataInputStream& in)  {
   in >> val;  FCenter[2] = val;
 }
 //..............................................................................
-void TAttachedNode::SaveToStream( IDataOutputStream& output ) const {
-  output << (int32_t)Element->index;
+void TAttachedNode::SaveToStream(IDataOutputStream& output) const {
+  output << (int32_t)Element->GetIndex();
   output << (float)FCenter[0];
   output << (float)FCenter[1];
   output << (float)FCenter[2];
@@ -186,7 +186,7 @@ double TAutoDBNode::CalcAngle(size_t i, size_t j)  const {
 }
 //..............................................................................
 void TAutoDBNode::SaveToStream(IDataOutputStream& output) const {
-  output << (uint32_t)Element->index;
+  output << (uint32_t)Element->GetIndex();
   output << (float)Center[0];
   output << (float)Center[1];
   output << (float)Center[2];
@@ -1239,7 +1239,7 @@ ConstTypeList<TAutoDB::TAnalysisResult> TAutoDB::AnalyseNet(TNetwork& net)  {
             cindexes[j])->Center()->GetType();
         res[sn->Node(i).Node(j)->GetId()].enforced.AddNew(
           guessN[0].hits[0].Fom, t);
-        sn->Node(i).Node(j)->SetTag(t.index);
+        sn->Node(i).Node(j)->SetTag(t.GetIndex());
       }
       else  {
         const cm_Element &to = guessN[0].hits[0].Node->Node(
@@ -1373,12 +1373,12 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
           sn->Node(i).Node(j)->GetId() == 0)
       {
         sn->Node(i).Node(j)->SetTag(guessN[0].hits[0].Node->Node(
-            cindexes[j])->Center()->GetType().index);
+          cindexes[j])->Center()->GetType().GetIndex());
       }
       else {
         index_t from = sn->Node(i).Node(j)->GetTag();
         index_t to = guessN[0].hits[0].Node->Node(
-          cindexes[j])->Center()->GetType().index;
+          cindexes[j])->Center()->GetType().GetIndex();
         if (from != -1 && from != to)
           log.Add("Oups ...");
       }
@@ -1411,7 +1411,7 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
         if (alg::check_connectivity(*guesses[i].atom,
             *guesses[i].list1[0].Type))
         {
-          sn->Node(i).SetTag(guesses[i].list1[0].Type->index);
+          sn->Node(i).SetTag(guesses[i].list1[0].Type->GetIndex());
         }
         continue;
       }
@@ -1421,7 +1421,7 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
     const cm_Element* type = NULL;
     if (sn->Node(i).GetId() != 0) {
       type = guessN[0].Type;
-      sn->Node(i).SetTag(type->index);
+      sn->Node(i).SetTag(type->GetIndex());
       for (size_t j=0; j < guessN.Count(); j++) {
         log.Add(guessN[j].Type->symbol) << '(' <<
           olxstr::FormatFloat(2,1.0/(guessN[j].MeanFomN(1)+0.001)) << ")";
@@ -1452,7 +1452,7 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
         if (AnalyseUiso(*guesses[i].atom, guessN, stat, searchHeavier,
           searchLighter, proposed_atoms))
         {
-          sn->Node(i).SetTag(guesses[i].atom->GetType().index);
+          sn->Node(i).SetTag(guesses[i].atom->GetType().GetIndex());
           processed.AddUnique(&sn->Node(i));
         }
       }

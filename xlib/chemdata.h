@@ -122,8 +122,8 @@ struct cm_Gaussians {
 struct cm_Element {
 protected:
   double Mr;
+  short index;
 public:
-  const short index;
   const olxstr symbol, name;
   uint32_t def_color;
   const short z, isotope_count, henke_count;
@@ -134,13 +134,13 @@ public:
   const cm_Isotope* isotopes;
   const cm_Anomalous_Henke* henke_data;
   const cm_Neutron_Scattering* neutron_scattering;
-  cm_Element(short _index, const char* _symbol, const char* _name,
+  cm_Element(const char* _symbol, const char* _name,
     uint32_t _def_color, short _z, double _r_vdw, double _r_cov, double _r_pers,
     double _r_bonding, double _r_sfil, const cm_Gaussians* _gaussians,
     const cm_Isotope* _isotopes, short _isotope_count,
     const cm_Anomalous_Henke* _henke_data, short _henke_count,
     const cm_Neutron_Scattering* _neutron_scattering) :
-    Mr(0), index(_index),
+    Mr(0), index(-1),
     symbol(_symbol), name(_name), def_color(_def_color), z(_z),
     isotope_count(_isotope_count), henke_count(_henke_count), r_pers(_r_pers),
     r_cov(_r_cov), r_vdw(_r_vdw), r_bonding(_r_bonding), r_sfil(_r_sfil),
@@ -152,29 +152,32 @@ public:
   }
 
   compd CalcFpFdp(double eV) const {
-    if( henke_data == NULL )
-      throw TFunctionFailedException(__OlxSourceInfo, "undefined f\' f\" data");
-    if( eV < henke_data[0].energy || eV > henke_data[henke_count-1].energy )
-      throw TInvalidArgumentException(__OlxSourceInfo, "energy is out of range");
-    if( eV == henke_data[0].energy )  return compd(henke_data[0].fp, henke_data[0].fdp);
-    if( eV == henke_data[henke_count-1].energy )  return compd(henke_data[henke_count-1].fp, henke_data[henke_count-1].fdp);
-    for( int i=0; i < henke_count; i++ )  {
-      if( henke_data[i].energy > eV )  {
-        double k = (eV-henke_data[i-1].energy)/(henke_data[i].energy - henke_data[i-1].energy);
-        double fp  = cm_Anomalous_Henke::Undefined;
+    if (henke_data == NULL) {
+      throw TFunctionFailedException(__OlxSourceInfo,
+        "undefined f\' f\" data");
+    }
+    if (eV < henke_data[0].energy || eV > henke_data[henke_count - 1].energy) {
+      throw TInvalidArgumentException(__OlxSourceInfo,
+        "energy is out of range");
+    }
+    for (int i = 0; i < henke_count; i++) {
+      if (henke_data[i].energy == eV)
+        return compd(henke_data[i].fp, henke_data[i].fdp);
+      if (henke_data[i].energy > eV) {
+        double k = (eV - henke_data[i - 1].energy) /
+          (henke_data[i].energy - henke_data[i - 1].energy);
+        double fp = cm_Anomalous_Henke::Undefined;
         double fdp = cm_Anomalous_Henke::Undefined;
-        if( henke_data[i-1].fp != cm_Anomalous_Henke::Undefined &&
-          henke_data[i].fp != cm_Anomalous_Henke::Undefined )
-          fp = henke_data[i-1].fp + k*(henke_data[i].fp-henke_data[i-1].fp);
-        if( henke_data[i-1].fdp != cm_Anomalous_Henke::Undefined &&
-          henke_data[i].fdp != cm_Anomalous_Henke::Undefined )
-          fdp = henke_data[i-1].fdp + k*(henke_data[i].fdp-henke_data[i-1].fdp);
+        if (henke_data[i - 1].fp != cm_Anomalous_Henke::Undefined &&
+          henke_data[i].fp != cm_Anomalous_Henke::Undefined)
+          fp = henke_data[i - 1].fp + k*(henke_data[i].fp - henke_data[i - 1].fp);
+        if (henke_data[i - 1].fdp != cm_Anomalous_Henke::Undefined &&
+          henke_data[i].fdp != cm_Anomalous_Henke::Undefined)
+          fdp = henke_data[i - 1].fdp + k*(henke_data[i].fdp - henke_data[i - 1].fdp);
         return compd(fp, fdp);
       }
-      else if( henke_data[i].energy == eV )
-        return compd(henke_data[i].fp, henke_data[i].fdp);
     }
-    throw TFunctionFailedException(__OlxSourceInfo, "cannot happen");
+    return compd();
   }
   double GetMr() const {  return Mr;  }
   bool operator >  (const cm_Element& ce) const {  return z >  ce.z;  }
@@ -191,6 +194,8 @@ public:
   bool operator != (short _z) const {  return z != _z;  }
   int Compare(const cm_Element &e) const { return z - e.z; }
   const olxstr &GetSymbol() const { return symbol; }
+  short GetIndex() const { return index; }
+  friend class XElementLib;
 };
 
 struct ElementCount {
@@ -249,6 +254,8 @@ class XElementLib {
       c.Equalsi("Et") || c.Equalsi("Bu") ||
       c.Equalsi("Py") || c.Equalsi("Tf");
   }
+  static TPtrList<cm_Element> &GetElementList();
+  static olxstr_dict<cm_Element *, true> &GetElementDict();
 public:
   static double Wavelength2eV(double lambda) {
     static const double ev_angstrom  = 6626.0755 * 2.99792458 / 1.60217733;

@@ -684,6 +684,7 @@
     <ClCompile Include="..\..\..\xlib\xfiles.cpp" />
     <ClCompile Include="..\..\..\xlib\xlcongen.cpp" />
     <ClCompile Include="..\..\..\xlib\xmacro.cpp" />
+    <ClCompile Include="..\..\..\xlib\xscatterer.cpp" />
     <ClCompile Include="..\..\..\xlib\xyz.cpp" />
     <ClCompile Include="..\..\..\xlib\henke\henke_Ac.cpp">
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
