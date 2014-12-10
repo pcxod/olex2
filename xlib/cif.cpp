@@ -398,12 +398,17 @@ void TCif::Initialize()  {
     }
     // no sym ops, check hall symbol
     else {
-      olxstr hs = GetParamAsString("_symmetry_space_group_name_Hall");
+      olxstr hs = GetParamAsString("_space_group_name_Hall");
+      if (hs.IsEmpty()) {
+        hs = GetParamAsString("_symmetry_space_group_name_Hall");
+      }
       if (!hs.IsEmpty()) {
         TSpaceGroup *sg = TSymmLib::GetInstance().FindGroupByHallSymbol(hs);
         if (sg != NULL) {
           GetAsymmUnit().ChangeSpaceGroup(*sg);
           sg_initialised = true;
+          TBasicApp::NewLogEntry() << "Note the symmetry operators were deduced"
+            " from the Hall symbol and may differ from the intendent ones.";
         }
         else {
           try {
