@@ -3563,6 +3563,9 @@ bool TMainForm::OnMouseDblClick(int x, int y, short Flags, short Buttons)  {
 bool TMainForm::Show(bool v)  {
   bool res = wxFrame::Show(v);
   FXApp->SetMainFormVisible(v);
+  if (v) {
+    FXApp->GetRender().GetScene().SetEnabled(true);
+  }
   if (CmdLineVisible)
     FCmdLine->SetFocus();
   else

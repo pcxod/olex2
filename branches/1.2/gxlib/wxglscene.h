@@ -44,15 +44,9 @@ public:
     const olxstr& fontDesc=EmptyString());
 
   virtual void Destroy()  { AGlScene::Destroy();  }
-  virtual void StartSelect(int x, int y, GLuint *Bf) {
-    AGlScene::StartSelect(x, y, Bf);
-  }
-  virtual int EndSelect()  {  return AGlScene::EndSelect();  }
   /* the canvas must be set for this operation to succeed.
   */
   virtual bool MakeCurrent();
-  virtual void StartDraw()  {  AGlScene::StartDraw();  }
-  virtual void EndDraw()  {  AGlScene::EndDraw();  }
   DefPropP(wxGLCanvas *, Canvas)
   DefPropP(wxGLContext *, Context)
   // final object (at least the constructor calls only the SetIdString of THIS object
