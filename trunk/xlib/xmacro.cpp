@@ -540,10 +540,13 @@ void XLibMacros::Export(TLibrary& lib)  {
     fpAny|psFileLoaded,
     "Creates rigid bond (RIGU) restraint for a group of provided atoms"
     "(or selection)");
-  xlib_InitMacro(RESI, "a-alias", (fpAny^fpNone)|psFileLoaded,
+  xlib_InitMacro(RESI,
+    "a-alias&;"
+    "all-searches selected subfragment and creates residues",
+    (fpAny^fpNone)|psFileLoaded,
     "Creates residue with given class name and optionally number and adds "
     "selected or provided atoms into the residue. If provided residue class "
-    "name is 'none', provided atoms are removed from their residues");
+    "name is 'none', provided atoms are removed from their curent residues");
   xlib_InitMacro(Restrain,
     EmptyString(),
     (fpAny^fpNone)|psFileLoaded,
@@ -8205,7 +8208,7 @@ void XLibMacros::macRESI(TStrObjList &Cmds, const TParamList &Options,
   TXApp &app = TXApp::GetInstance();
   olxstr resi_class = Cmds[0];
   int resi_number = 0;
-  if( resi_class.IsNumber() )  {
+  if (resi_class.IsNumber()) {
     resi_number = resi_class.ToInt();
     resi_class.SetLength(0);
   }
@@ -8229,12 +8232,31 @@ void XLibMacros::macRESI(TStrObjList &Cmds, const TParamList &Options,
         main_resi.Add(ca);
     }
   }
-  else  {
-    TResidue& resi = au.NewResidue(resi_class, resi_number,
-      Options.FindValue('a', resi_number).ToInt());
-    resi.SetCapacity(atoms.Count());
-    for (size_t i=0; i < atoms.Count(); i++)
-      resi.Add(atoms[i]->CAtom());
+  else {
+    if (Options.GetBoolOption("all")) {
+      using namespace olx_analysis;
+      TCAtomPList fa(atoms, FunctionAccessor::MakeConst(&TSAtom::CAtom));
+      ACollectionItem::Unify(fa);
+      fragments::fragment fr(fa);
+      TTypeList<fragments::fragment> frags =
+        fragments::extract(app.XFile().GetAsymmUnit(), fr);
+      for (size_t fi = 0; fi <= frags.Count(); fi++) {
+        fragments::fragment *f = (fi == 0 ? &fr : &frags[fi - 1]);
+        TResidue& resi = au.NewResidue(resi_class, resi_number++);
+        resi.SetCapacity(f->count());
+        for (size_t i = 0; i < f->count(); i++) {
+          resi.Add((*f)[i]);
+        }
+      }
+    }
+    else {
+      TResidue& resi = au.NewResidue(resi_class, resi_number,
+        Options.FindValue('a', resi_number).ToInt());
+      resi.SetCapacity(atoms.Count());
+      for (size_t i = 0; i < atoms.Count(); i++) {
+        resi.Add(atoms[i]->CAtom());
+      }
+    }
   }
 }
 //.............................................................................

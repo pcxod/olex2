@@ -13,6 +13,7 @@
 #include "symmlib.h"
 #include "xapp.h"
 #include "filetree.h"
+#include "egraph.h"
 
 BeginXlibNamespace()
 namespace olx_analysis {
@@ -126,6 +127,16 @@ public:
       : atom(*a), xyz(c), matrix(m)
     {}
   };
+  // identifies an atomic site, matrix*atom.ccrd()
+  struct node : public ACollectionItem {
+    TCAtom& atom;
+    smatd matrix;
+    TTypeList<node> nodes;
+    node(TCAtom &a, const smatd& m) : atom(a), matrix(m) {}
+    node(const TCAtom::Site &s) : atom(*s.atom), matrix(s.matrix)
+    {}
+  };
+
   struct cart_plane {
     vec3d center, normal;
     double rmsd;
@@ -191,6 +202,7 @@ public:
     cart_ring to_cart() const;
   };
   struct fragment {
+    typedef TEGraphNode<uint64_t, TCAtom *> node_t;
   protected:
     mutable double u_eq;
     TCAtomPList atoms_;
@@ -199,7 +211,12 @@ public:
     static void build_coordinate(
       TCAtom &a, const smatd &m, vec3d_list &res);
     ConstTypeList<vec3d> build_coordinates() const;
-    ConstPtrList<TCAtom> trace_ring(TCAtom &a);
+    // traces a ring from breadth-first expansion
+    ConstPtrList<TCAtom> trace_ring_b(TCAtom &a);
+    /* traces a ring from depth-first expansion. The ring tags must go in
+    descending order
+    */
+    static ConstPtrList<TCAtom> trace_ring_d(TCAtom &a);
     void trace_substituent(ring::substituent &s);
     static ConstPtrList<TCAtom> ring_sorter(const TCAtomPList &r);
     void init_ring(size_t i, TTypeList<ring> &rings);
@@ -209,9 +226,47 @@ public:
     */
     static TCAtom *trace_branch(TCAtom *a, tree_node &b);
     static tree_node &trace_tree(TCAtomPList &atoms, tree_node &root);
+    uint64_t calc_node_hash(node_t& node) const;
+    static uint64_t mix_node_hash(node_t& node,
+      const olxdict<TCAtom*, node_t *, TPointerComparator>& map);
+    static void mix_hashes(node_t& node,
+      const olxdict<TCAtom *, node_t *, TPointerComparator>& map,
+      olxdict<node_t *, uint64_t, TPointerComparator>& vs)
+    {
+      vs(&node, mix_node_hash(node, map));
+      for (size_t i = 0; i < node.Count(); i++) {
+        mix_hashes(node[i], map, vs);
+      }
+    }
+    void calc_hashes(node_t& node) const {
+      node.SetData(calc_node_hash(node));
+      for (size_t i = 0; i < node.Count(); i++) {
+        calc_hashes(node[i]);
+      }
+      //graphNode.GetObject()->CAtom().SetLabel(graphNode.GetData(), false);
+    }
+    static void assign_hashes(node_t& node,
+      const olxdict<node_t *, uint64_t, TPointerComparator>& vs)
+    {
+      node.SetData(vs.Get(&node));
+      for (size_t i = 0; i < node.Count(); i++) {
+        assign_hashes(node[i], vs);
+      }
+      //graphNode.GetObject()->CAtom().SetLabel(graphNode.GetData(), false);
+    }
+    /* assumes that all atoms are masked with 0, atoms of B - 2, neighbours of
+    B - 1. After finishing - matching set is marked with 3, atoms of B - with 4
+    */
+    static bool does_match(TCAtom &a, TCAtom &b, TCAtomPList &p);
   public:
     fragment() : u_eq(0) {}
-    double get_mean_u_eq(bool update=false) const {
+    fragment(const fragment &f)
+      : u_eq(f.u_eq), atoms_(f.atoms_), generators(f.generators)
+    {}
+    fragment(const TCAtomPList &atoms) : u_eq(0) {
+      set_atoms(atoms);
+    }
+    double get_mean_u_eq(bool update = false) const {
       return (u_eq != 0 && !update) ? u_eq : (u_eq=alg::mean_u_eq(atoms_));
     }
     TCAtomPList &atoms() { return atoms_; }
@@ -222,6 +277,7 @@ public:
       atoms_ = atoms;
       init_generators();
     }
+    bool is_disjoint() const;
     bool is_regular() const;
     bool is_flat() const;
     bool is_polymeric() const;
@@ -232,15 +288,64 @@ public:
     // works only for a group of atoms distributed around the central one
     size_t find_central_index() const;
     olxstr formula() const { return alg::formula(atoms_); }
-    void breadth_first_tags(size_t start=InvalidIndex,
-      TCAtomPList *ring_atoms=NULL);
+    void breadth_first_tags(size_t start = InvalidIndex,
+      TCAtomPList *ring_atoms = NULL)
+    {
+      breadth_first_tags(atoms(), start, ring_atoms);
+    }
+    void depth_first_tags() const {
+      depth_first_tags(atoms());
+    }
     /* traces the rings back from the breadth-first tag assignment */
     ConstTypeList<ring> get_rings(const TCAtomPList &r_atoms);
     /* finds ring substituents and sorts substituents and the rings */
     void init_rings(TTypeList<ring> &rings);
     tree_node build_tree();
+    void mask_neighbours(index_t a_tag, index_t nbh_tag) const {
+      mask_neighbours(atoms(), a_tag, nbh_tag);
+    }
+    /* recursively sets atom's tag to the tag value and then sets incremented
+    value of the tag to the neighbpurs of the atom. Only affects atoms with tag
+    value of -1
+    */
+    static void depth_first_tag(TCAtom &a, index_t tag);
+    /* sets all atoms tags to -1 and then does depth first expansion incremental
+    assignment of tags starting from 0.
+    */
+    static void depth_first_tags(const TCAtomPList &atoms);
+    /* atoms should reprent connected set, the expansion starts 0th atom or
+    atom given by start.
+    */
+    static void breadth_first_tags(const TCAtomPList &atoms,
+      size_t start = InvalidIndex, TCAtomPList *ring_atoms = NULL);
+    olx_object_ptr<node_t> build_graph() const;
+    /* orders the list in such a way elemets with larger Z come and more bonds
+    come first
+    */
+    static void order_list(TCAtomPList &l);
+    /* builds a graph matching the given one and based on the root atom. The
+    function succeeds if the returned list item count equals to the number of
+    atoms in the reference graph. For efficiency, the atoms of the reference
+    fragment should be ordered using order_list function and should represent
+    a connected set of atoms.
+    */
+    static TCAtomPList::const_list_type get_matching_set(TCAtom &root,
+      const fragment &f);
+    /* counts the number of valid (real type and not deleted) neighbours with
+    the given tag the atom has
+    */
+    static size_t get_neighbour_count(const TCAtom &a, index_t tag);
+    /* sets tags for the atoms and their neighbours - this is enought to mask
+    the atoms out of the whole AU
+    */
+    static void mask_neighbours(const TCAtomPList &atoms,
+      index_t a_tag, index_t nbh_tag);
+    friend struct fragments;
   };
   static ConstTypeList<fragment> extract(TAsymmUnit &au);
+  /* extarcts all given fragemts from the asymmetric unit
+  */
+  static ConstTypeList<fragment> extract(TAsymmUnit &au, const fragment &f);
 };
 
 class Analysis {
@@ -262,60 +367,17 @@ public:
 
   static const cm_Element &check_atom_type(TSAtom &a);
 
-  static void funTrim(const TStrObjList& Params, TMacroData& E)  {
+  static void funTrim(const TStrObjList& Params, TMacroData& E) {
     E.SetRetVal(trim_18(TXApp::GetInstance().XFile().GetAsymmUnit()));
   }
 
-  static void funAnaluseUeq(const TStrObjList& Params, TMacroData& E)  {
+  static void funAnaluseUeq(const TStrObjList& Params, TMacroData& E) {
     E.SetRetVal(analyse_u_eq(TXApp::GetInstance().XFile().GetAsymmUnit()));
   }
 
-  static void funFindScale(const TStrObjList& Params, TMacroData& E)  {
-    bool apply = Params.IsEmpty() ? false : Params[0].ToBool();
-    TLattice &latt = TXApp::GetInstance().XFile().GetLattice();
-    double scale = find_scale(latt);
-    if (scale > 0) {
-      for (size_t i=0; i < latt.GetObjects().atoms.Count(); i++) {
-        TSAtom &a = latt.GetObjects().atoms[i];
-        if (a.GetType() == iQPeakZ && apply) {
-          int z = olx_round(a.CAtom().GetQPeak()*scale);
-          cm_Element *tp = XElementLib::FindByZ(z),
-             *tp1 = NULL;
-          // find previous halogen vs noble gas or alkaline metal
-          if (tp != NULL) {
-            if (XElementLib::IsGroup8(*tp) ||
-                XElementLib::IsGroup1(*tp) ||
-                XElementLib::IsGroup2(*tp))
-            {
-              tp1 = XElementLib::PrevGroup(7, tp);
-            }
-            a.CAtom().SetType(tp1 == NULL ? *tp : *tp1);
-          }
-        }
-      }
-    }
-    E.SetRetVal(scale);
-  }
+  static void funFindScale(const TStrObjList& Params, TMacroData& E);
 
-  static TLibrary *ExportLibrary(const olxstr& name="analysis")  {
-    TLibrary* lib = new TLibrary(name);
-    lib->Register(
-      new TStaticFunction(&Analysis::funTrim, "Trim", fpNone|fpOne,
-      "Trims the size of the assymetric unit according to the 18 A^3 rule."
-      "Returns true if any atoms were deleted")
-    );
-    lib->Register(
-      new TStaticFunction(&Analysis::funFindScale, "Scale", fpNone|fpOne,
-      "Scales the Q-peaks according to found fragments."
-      "Returns the scale or 0")
-    );
-    lib->Register(
-      new TStaticFunction(&Analysis::funAnaluseUeq, "AnalyseUeq", fpNone|fpOne,
-      ""
-      "")
-    );
-    return lib;
-  }
+  static TLibrary *ExportLibrary(const olxstr& name = "analysis");
 };
 }; // end namespace olx_analysis
 EndXlibNamespace()
