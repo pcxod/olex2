@@ -58,7 +58,7 @@ class RefinementModel;
 
 class TCAtom: public ACollectionItem, public IXVarReferencer  {
 public:
-  struct Site  {  // identifies an atomic site, matrix*atom.ccrd()
+  struct Site {  // identifies an atomic site, matrix*atom.ccrd()
     TCAtom* atom;
     smatd matrix;
     Site(TCAtom* a, const smatd& m) : atom(a), matrix(m)  {}
@@ -67,6 +67,13 @@ public:
       atom = s.atom;
       matrix = s.matrix;
       return *this;
+    }
+    int Compare(const Site &s) const {
+      int r = olx_cmp(atom->GetId(), s.atom->GetId());
+      if (r == 0) {
+        return olx_cmp(matrix.GetId(), s.matrix.GetId());
+      }
+      return r;
     }
   };
 private:

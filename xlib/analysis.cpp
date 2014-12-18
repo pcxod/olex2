@@ -541,6 +541,63 @@ int fragments::ring::substituent::Compare(
 }
 //.............................................................................
 //.............................................................................
+//.............................................................................
+void fragments::fragment::mask_neighbours(const TCAtomPList &atoms, index_t at,
+  index_t nt)
+{
+  for (size_t i = 0; i < atoms.Count(); i++) {
+    TCAtom &a = *atoms[i];
+    for (size_t j = 0; j < a.AttachedSiteCount(); j++) {
+      a.GetAttachedAtom(j).SetTag(nt);
+    }
+  }
+  for (size_t i = 0; i < atoms.Count(); i++) {
+    atoms[i]->SetTag(at);
+  }
+}
+//.............................................................................
+size_t fragments::fragment::get_neighbour_count(const TCAtom &a, index_t t) {
+  size_t rv = 0;
+  for (size_t i = 0; i < a.AttachedSiteCount(); i++) {
+    TCAtom &aa = a.GetAttachedAtom(i);
+    if (aa.IsDeleted() || aa.GetType().z < 0 || aa.GetTag() != t) {
+      continue;
+    }
+    rv++;
+  }
+  return rv;
+}
+//.............................................................................
+void fragments::fragment::order_list(TCAtomPList &inp) {
+  sorted::PrimitiveAssociation<short, TCAtomPList> zo;
+  for (size_t i = 0; i < inp.Count(); i++) {
+    size_t idx = zo.IndexOf(inp[i]->GetType().z);
+    if (idx == InvalidIndex) {
+      zo.Add(inp[i]->GetType().z, TCAtomPList()).Value.Add(inp[i]);
+    }
+    else {
+      zo.GetValue(idx).Add(inp[i]);
+    }
+  }
+  mask_neighbours(inp, 1, 0);
+  for (size_t i = 0; i < zo.Count(); i++) {
+    TCAtomPList &l = zo.GetValue(i);
+    TSizeList bc(l.Count());
+    for (size_t j = 0; j < l.Count(); j++) {
+      bc[j] = get_neighbour_count(*l[j], 1);
+    }
+    QuickSorter::Sort(bc, TPrimitiveComparator(), SyncSortListener::MakeSingle(l));
+  }
+  size_t idx = 0;
+  for (size_t i = 0; i < zo.Count(); i++) {
+    TCAtomPList &l = zo.GetValue(zo.Count()-i-1);
+    // reverse here - guessing that more bonds is more unique
+    for (size_t j = 0; j < l.Count(); j++) {
+      inp[idx++] = l[l.Count()-j-1];
+    }
+  }
+}
+//.............................................................................
 void fragments::fragment::build_coordinate(
   TCAtom &a, const smatd &m_, vec3d_list &res)
 {
@@ -591,6 +648,16 @@ void fragments::fragment::init_generators() {
   generators.AddList(
     atoms_[0]->GetParent()->GetLattice().GetFragmentGrowMatrices(atoms_,
       true));
+}
+//.............................................................................
+bool fragments::fragment::is_disjoint() const {
+  depth_first_tags();
+  for (size_t i = 0; i < atoms_.Count(); i++) {
+    if (atoms_[i]->GetTag() == -1) {
+      return true;
+    }
+  }
+  return false;
 }
 //.............................................................................
 bool fragments::fragment::is_polymeric() const {
@@ -717,15 +784,32 @@ bool fragments::fragment::is_flat() const {
   }
 }
 //.............................................................................
-void fragments::fragment::breadth_first_tags(size_t start,
-  TCAtomPList *ring_atoms)
+void fragments::fragment::depth_first_tag(TCAtom &a, index_t v) {
+  a.SetTag(v);
+  for (size_t i = 0; i < a.AttachedSiteCount(); i++) {
+    TCAtom &aa = a.GetAttachedAtom(i);
+    if (aa.GetTag() != -1) {
+      continue;
+    }
+    depth_first_tag(aa, v+1);
+  }
+}
+//.............................................................................
+void fragments::fragment::depth_first_tags(const TCAtomPList &atoms) {
+  if (atoms.IsEmpty()) return;
+  atoms.ForEach(ACollectionItem::TagSetter(-1));
+  depth_first_tag(*atoms[0], 0);
+}
+//.............................................................................
+void fragments::fragment::breadth_first_tags(const TCAtomPList &atoms,
+  size_t start, TCAtomPList *ring_atoms)
 {
-  if (atoms_.IsEmpty()) return;
-  atoms_.ForEach(ACollectionItem::TagSetter(-1));
+  if (atoms.IsEmpty()) return;
+  atoms.ForEach(ACollectionItem::TagSetter(-1));
   TQueue<TCAtom*> queue;
-  if (start >= atoms_.Count())
+  if (start >= atoms.Count())
     start = 0;
-  queue.Push(atoms_[start]);
+  queue.Push(atoms[start]);
   queue.Push(NULL);
   index_t tv = 0;
   while (!queue.IsEmpty()) {
@@ -736,7 +820,7 @@ void fragments::fragment::breadth_first_tags(size_t start,
       queue.Push(NULL);
       continue;
     }
-    if (a->GetTag() != -1 ) {
+    if (a->GetTag() != -1) {
       if (a->GetTag() >= tv) {
         a->SetRingAtom(true);
         if (ring_atoms != NULL)
@@ -876,7 +960,43 @@ fragments::tree_node &fragments::fragment::trace_tree(TCAtomPList &atoms,
   return tree;
 }
 //.............................................................................
-ConstPtrList<TCAtom> fragments::fragment::trace_ring(TCAtom &a) {
+ConstPtrList<TCAtom> fragments::fragment::trace_ring_d(TCAtom &ra) {
+  TCAtomPList ring;
+  TCAtom *a = &ra;
+  ring.Add(a);
+  index_t trim_tag = -1;
+  while (a != 0) {
+    bool added = false;
+    TCAtom *b = a;
+    size_t ring_c = ring.Count();
+    for (size_t i = 0; i < b->AttachedSiteCount(); i++) {
+      TCAtom &aa = b->GetAttachedAtom(i);
+      if (aa.GetTag() == b->GetTag() - 1) {
+        a = ring.Add(aa);
+        added = true;
+      }
+      if (ring_c > 2 && &aa == ring[0]) {
+        trim_tag = b->GetTag() - 1;
+        a = 0;
+        break;
+      }
+    }
+    if (!added && trim_tag == -1) {
+      ring.Clear();
+      break;
+      //throw TFunctionFailedException(__OlxSourceInfo, "assert");
+    }
+  }
+  // trim
+  while (!ring.IsEmpty() &&
+    ring.GetLast()->GetTag() == trim_tag)
+  {
+    ring.SetCount(ring.Count() - 1);
+  }
+  return ring;
+}
+//.............................................................................
+ConstPtrList<TCAtom> fragments::fragment::trace_ring_b(TCAtom &a) {
   TCAtomPList ring;
   TQueue<TCAtom*> queue;
   atoms_.ForEach(
@@ -962,13 +1082,164 @@ fragments::tree_node fragments::fragment::build_tree() {
   return trace_tree(atoms_, b);
 }
 //.............................................................................
+uint64_t fragments::fragment::calc_node_hash(
+  TEGraphNode<uint64_t, TCAtom *> &nd) const
+{
+  mask_neighbours(-1, -2);
+  TQueue<TCAtom *> aqueue;
+  aqueue.Push(nd.GetObject());
+  aqueue.Push(NULL);
+  index_t v = 0;
+  TArrayList<size_t> counts(16, olx_list_init::zero());
+  while (!aqueue.IsEmpty()) {
+    TCAtom *n = aqueue.Pop();
+    if (n == NULL) {
+      if (aqueue.IsEmpty()) break;
+      v++;
+      aqueue.Push(NULL);
+      continue;
+    }
+    if (n->GetTag() != -1) continue;
+    n->SetTag(v);
+    if (counts.Count() <= (size_t)v)
+      counts.SetCount(v + 1, olx_list_init::zero());
+    counts[v] += (size_t)n->GetType().z;
+    for (size_t i = 0; i < n->AttachedSiteCount(); i++) {
+      TCAtom &aa = n->GetAttachedAtom(i);
+      if (aa.GetTag() == -1) {
+        aqueue.Push(&aa);
+      }
+    }
+  }
+  uint64_t rv = ((uint64_t)nd.GetObject()->GetType().z) << 56;
+  rv |= ((uint64_t)v) << 48;
+  int64_t h = 0;
+  for (size_t i = counts.Count(); i != 0; i--) {
+    h = (h << 4) | counts[i - 1];
+  }
+  rv |= (h & 0x0000ffffffffffffULL);
+  return rv;
+}
+//.............................................................................
+uint64_t fragments::fragment::mix_node_hash(
+  TEGraphNode<uint64_t, TCAtom *>& node,
+  const olxdict<TCAtom*, TEGraphNode<uint64_t, TCAtom *>*,
+  TPointerComparator>& map)
+{
+  TArrayList<uint64_t> ids(node.Count());
+  for (size_t i = 0; i < node.Count(); i++) {
+    ids[i] = map.Get(node[i].GetObject())->GetData();
+  }
+  BubbleSorter::Sort(ids, TPrimitiveComparator());
+  uint64_t id = 0;
+  for (size_t i = 0; i < ids.Count(); i++) {
+    if ((id & 1) == 1)
+      id |= (ids[i] << 16);
+    else
+      id ^= (ids[i] >> 16);
+  }
+  uint64_t rv = (node.GetData() & 0xffff000000000000ULL);
+  rv |= (id & 0x0000ffffffffffffULL);
+  return rv;
+}
+//.............................................................................
+olx_object_ptr<TEGraphNode<uint64_t, TCAtom *> >
+fragments::fragment::build_graph() const
+{
+  typedef TEGraphNode<uint64_t, TCAtom *> node_t;
+  // mask out atoms of this fragment
+  mask_neighbours(atoms_, -1, -2);
+  olx_object_ptr<node_t> root(new node_t(0, atoms_[0]));
+  TQueue<TCAtom *> aqueue;
+  aqueue.Push(root().GetObject());
+  aqueue.Push(NULL);
+  index_t v = 0;
+  while (!aqueue.IsEmpty()) {
+    TCAtom *n = aqueue.Pop();
+    if (n == NULL) {
+      if (aqueue.IsEmpty()) break;
+      v++;
+      aqueue.Push(NULL);
+      continue;
+    }
+    if (n->GetTag() != -1) continue;
+    n->SetTag(v);
+    for (size_t i = 0; i < n->AttachedSiteCount(); i++) {
+      TCAtom &aa = n->GetAttachedAtom(i);
+      if (aa.GetTag() == -1)
+        aqueue.Push(&aa);
+    }
+  }
+  TQueue<node_t*> queue;
+  queue.Push(&root());
+  olxdict<TCAtom*, node_t*, TPointerComparator> map;
+  map.Add(root().GetObject(), &root());
+  while (!queue.IsEmpty()) {
+    node_t *n = queue.Pop();
+    for (size_t i = 0; i < n->GetObject()->AttachedSiteCount(); i++) {
+      TCAtom &aa = n->GetObject()->GetAttachedAtom(i);
+      if (aa.GetTag() < 0) continue;
+      if (aa.GetTag() > n->GetObject()->GetTag()) {
+        map.Add(&aa, queue.Push(&n->NewNode(0, &aa)));
+      }
+    }
+  }
+  calc_hashes(root());
+  olxdict<node_t *, uint64_t, TPointerComparator> h2s;
+  mix_hashes(root(), map, h2s);
+  assign_hashes(root(), h2s);
+  root().SetRoot(true);
+  return root;
+}
+//.............................................................................
+bool fragments::fragment::does_match(TCAtom &a, TCAtom &b, TCAtomPList &p) {
+  if (a.GetType() != b.GetType() || a.IsRingAtom() != b.IsRingAtom())
+    return false;
+  a.SetTag(4);
+  b.SetTag(3);
+  TEBitArray used(b.AttachedSiteCount());
+  for (size_t i = 0; i < a.AttachedSiteCount(); i++) {
+    TCAtom &aa = a.GetAttachedAtom(i);
+    if (aa.GetTag() != 2) continue;
+    bool matched = false;
+    for (size_t j = 0; j < b.AttachedSiteCount(); j++) {
+      TCAtom &ba = b.GetAttachedAtom(j);
+      if (ba.GetTag() > 1 || ba.GetType() != aa.GetType() || used[j])
+        continue;
+      if (does_match(aa, ba, p)) {
+        matched = true;
+        used.SetTrue(j);
+        break;
+      }
+    }
+    if (!matched) {
+      a.SetTag(2);
+      b.SetTag(0);
+      return false;
+    }
+  }
+  p.Add(b);
+  return true;
+}
+//.............................................................................
+TCAtomPList::const_list_type fragments::fragment::get_matching_set(
+  TCAtom &root, const fragments::fragment &f)
+{
+  TCAtomPList rv;
+  does_match(f[0], root, rv);
+  if (rv.Count() != f.count()) {
+    rv.Clear();
+  }
+  return rv;
+}
+//.............................................................................
 ConstTypeList<fragments::ring> fragments::fragment::get_rings(
   const TCAtomPList &r_atoms)
 {
   TTypeList<fragments::ring> rv;
   if (r_atoms.IsEmpty()) return rv;
   for (size_t i=0; i < r_atoms.Count(); i++)
-    rv.AddNew(trace_ring(*r_atoms[i]));
+    rv.AddNew(trace_ring_b(*r_atoms[i]));
   atoms_.ForEach(TCAtom::FlagSetter(catom_flag_Processed, false));
   // sort the ring according to the connectivity
   for (size_t i=0; i < rv.Count(); i++) {
@@ -1032,13 +1303,234 @@ ConstTypeList<fragments::fragment> fragments::extract(TAsymmUnit &au) {
       TCAtomPList catoms;
       expand_node(*atoms[i], catoms);
       rv.AddNew().set_atoms(catoms);
-      if ( (cnt+=catoms.Count()) == atoms.Count())
+      if ((cnt+=catoms.Count()) == atoms.Count())
         break;
     }
   }
   return rv;
 }
+//.............................................................................
+struct CAtomGraphAnalyser  {
+  TEGraphNode<uint64_t, TCAtom *> &RootA, &RootB;
+  size_t CallsCount;
+  bool Invert;
+  double permutations;
+  time_t start_time;
+  struct TagSetter {
+    size_t calls;
+    TagSetter() : calls(0) {}
+    bool OnItem(const TEGraphNode<uint64_t, TCAtom *> &v) {
+      calls++;
+      v.GetObject()->SetTag(1);
+      return true;
+    }
+  };
+  CAtomGraphAnalyser(TEGraphNode<uint64_t, TCAtom *> &rootA,
+    TEGraphNode<uint64_t, TCAtom *> &rootB)
+    : RootA(rootA), RootB(rootB), CallsCount(0), Invert(false)
+  {}
 
+  static TArrayList<align::pair>& AtomsToPairs(
+    const TTypeList<olx_pair_t<TCAtom*, TCAtom*> >& atoms,
+    TArrayList<align::pair>& pairs,
+    bool invert)
+  {
+    if (atoms.IsEmpty()) return pairs;
+    pairs.SetCount(atoms.Count());
+    const TAsymmUnit& au1 = *atoms[0].GetA()->GetParent();
+    const TAsymmUnit& au2 = *atoms[0].GetB()->GetParent();
+    for (size_t i = 0; i < atoms.Count(); i++) {
+      vec3d v1 = atoms[i].GetA()->ccrd(),
+        v2 = atoms[i].GetB()->ccrd();
+      if (invert)  v2 *= -1;
+      pairs[i].a.value = au1.CellToCartesian(v1);
+      pairs[i].a.weight = 1;
+      pairs[i].b.value = au2.CellToCartesian(v2);
+      pairs[i].b.weight = 1;
+    }
+    return pairs;
+  }
+  //..............................................................................
+  static align::out GetAlignmentInfo(
+    const TTypeList<olx_pair_t<TCAtom*, TCAtom*> > &atoms,
+    bool invert)
+  {
+    TArrayList<align::pair> pairs;
+    return align::FindAlignmentQuaternions(AtomsToPairs(atoms,
+      pairs, invert));
+  }
+
+  static TTypeList< olx_pair_t<TCAtom *, TCAtom *> >::const_list_type
+    CollectResult(TEGraphNode<uint64_t, TCAtom*> &a,
+    TEGraphNode<uint64_t, TCAtom*> &b)
+  {
+    TTypeList< olx_pair_t<TCAtom *, TCAtom *> > rv;
+    TagSetter tag_s;
+    a.Traverser.Traverse(a, tag_s);
+    rv.SetCapacity(tag_s.calls);
+    b.Traverser.Traverse(b, tag_s);
+    CollectResult(a, b, rv);
+     return rv;
+  }
+
+  static void CollectResult(
+    TEGraphNode<uint64_t, TCAtom*> &subRoot,
+    TEGraphNode<uint64_t, TCAtom*> &Root,
+    TTypeList< olx_pair_t<TCAtom *, TCAtom *> > &res)
+  {
+    if (!subRoot.ShallowEquals(Root))  return;
+    res.AddNew(subRoot.GetObject(), Root.GetObject());
+    subRoot.GetObject()->SetTag(0);
+    Root.GetObject()->SetTag(0);
+    for (size_t i = 0; i < subRoot.Count(); i++) {
+      if (subRoot[i].GetObject()->GetTag() != 0 &&
+        Root[i].GetObject()->GetTag() != 0)
+      {
+        CollectResult(subRoot[i], Root[i], res);
+      }
+    }
+  }
+
+  void OnStart(double perms) {
+    permutations = perms;
+    start_time = TETime::msNow();
+  }
+
+  double CalcRMS() {
+    TTypeList< olx_pair_t<TCAtom*, TCAtom*> > matchedAtoms;
+    TagSetter tag_s;
+    RootA.Traverser.Traverse(RootA, tag_s);
+    matchedAtoms.SetCapacity(tag_s.calls);
+    RootB.Traverser.Traverse(RootB, tag_s);
+    CollectResult(RootA, RootB, matchedAtoms);
+    matchedAtoms.Pack();
+    CallsCount++;
+    align::out ao = GetAlignmentInfo(matchedAtoms, Invert);
+    return ao.rmsd[0];
+  }
+
+  double CalcRMS(const TEGraphNode<uint64_t, TCAtom *> &src,
+    const TEGraphNode<uint64_t, TCAtom *> &dest)
+  {
+    if ((TETime::msNow() - start_time) >= 60000) {
+      throw TFunctionFailedException(__OlxSourceInfo,
+        olxstr("the procedure was terminated. Number of permutations: ") <<
+        permutations << ", number of calls: " << CallsCount
+        );
+    }
+    return CalcRMS();
+  }
+
+  void OnFinish() {}
+};
+
+ConstTypeList<fragments::fragment> fragments::extract(TAsymmUnit &au,
+  const fragment &f_)
+{
+  if (f_.is_disjoint()) {
+    throw TInvalidArgumentException(__OlxSourceInfo,
+      "set of atoms is disconnected");
+  }
+  TCAtomPList &aua = au.GetAtoms();
+  // mark ring atoms
+  {
+    for (size_t i = 0; i < aua.Count(); i++) {
+      TCAtom &a = *aua[i];
+      if (a.IsDeleted() || a.GetType().z < 0) {
+        a.SetTag(-2);
+      }
+      else {
+        a.SetTag(-1);
+      }
+    }
+    TCAtomPList ring_atoms;
+    for (size_t i = 0; i < aua.Count(); i++) {
+      if (aua[i]->GetTag() == -2) continue;
+      if (aua[i]->GetTag() == -1) {
+        fragment::depth_first_tag(*aua[i], 0);
+      }
+      for (size_t j = 0; j < aua[i]->AttachedSiteCount(); j++) {
+        TCAtom &aa = aua[i]->GetAttachedAtom(j);
+        index_t df = aa.GetTag() - aua[i]->GetTag();
+        // the next ring atoms will have tag-1
+        if (aa.GetTag() >= 0 && df < -1) {
+          ring_atoms << aua[i];
+        }
+      }
+    }
+    for (size_t i = 0; i < ring_atoms.Count(); i++) {
+      TCAtomPList ring = fragment::trace_ring_d(*ring_atoms[i]);
+      ring.ForEach(TCAtom::FlagSetter(catom_flag_RingAtom, true));
+    }
+    //for (size_t i = 0; i < aua.Count(); i++) {
+    //  if (aua[i]->GetTag() == -2) continue;
+    //  if (aua[i]->IsRingAtom()) {
+    //    aua[i]->SetLabel(aua[i]->GetLabel()+'r', false);
+    //  }
+    //  //aua[i]->SetLabel(aua[i]->GetTag(), false);
+    //}
+  }
+  fragment f = f_;
+  fragment::order_list(f.atoms());
+  f.mask_neighbours(2, 1);
+  const size_t bc = fragment::get_neighbour_count(f[0], 2);
+  olx_object_ptr<fragment::node_t> fr = f.build_graph();
+  aua.ForEach(ACollectionItem::TagSetter(0));
+  TCAtomPList of_interest;
+  for (size_t i = 0; i < aua.Count(); i++) {
+    TCAtom &a = *aua[i];
+    if (a.IsDeleted() || a.GetType() != f[0].GetType() ||
+      fragment::get_neighbour_count(a, 0) < bc)
+    {
+      continue;
+    }
+    of_interest.Add(a);
+  }
+  TTypeList<TCAtomPList> matching;
+  for (size_t i = 0; i < of_interest.Count(); i++) {
+    aua.ForEach(ACollectionItem::TagSetter(0));
+    f.mask_neighbours(2, 1);
+    for (size_t j = 0; j < matching.Count(); j++) {
+      matching[j].ForEach(ACollectionItem::TagSetter(4));
+    }
+    if (of_interest[i]->GetTag() != 0) {
+      continue;
+    }
+    TCAtomPList &matching_set = matching.Add(
+      fragment::get_matching_set(*of_interest[i], f).Release());
+    if (!matching_set.IsEmpty()) {
+      olx_reverse(matching_set);
+      fragment f1(matching_set);
+      olx_object_ptr<fragment::node_t> fr1 = f1.build_graph();
+      CAtomGraphAnalyser ga(fr(), fr1());
+      ga.Invert = false;
+      if (!fr1().FullMatchEx(fr, ga)) { // should not happen
+        matching.Delete(matching.Count() - 1);
+      }
+      else {
+        TTypeList<olx_pair_t<TCAtom *, TCAtom *> > m =
+          ga.CollectResult(fr(), fr1());
+        if (m.Count() != f_.count()) {
+          throw TFunctionFailedException(__OlxSourceInfo, "assert");
+        }
+        f_.atoms().ForEach(ACollectionItem::IndexTagSetter());
+        
+        for (size_t j = 0; j < m.Count(); j++) {
+          matching_set[m[j].a->GetTag()] = m[j].b;
+        }
+      }
+    }
+    else {
+      matching.Delete(matching.Count() - 1);
+    }
+  }
+  TTypeList<fragments::fragment> rv;
+  for (size_t i = 0; i < matching.Count(); i++) {
+    rv.Add(new fragment(matching[i]));
+  }
+  return rv;
+}
+//.............................................................................
 //.............................................................................
 //.............................................................................
 bool Analysis::trim_18(TAsymmUnit &au) {
@@ -1135,7 +1627,7 @@ const cm_Element &Analysis::check_proposed_element(
 }
 //.............................................................................
 const cm_Element &Analysis::check_atom_type(TSAtom &a) {
-  static SortedObjectList<short, TPrimitiveComparator> types;
+  static sorted::ObjectPrimitive<short> types;
   if (types.IsEmpty()) {
     types.Add(iCarbonZ);
     types.Add(iOxygenZ);
@@ -1200,3 +1692,50 @@ const cm_Element &Analysis::check_atom_type(TSAtom &a) {
   return a.GetType();
 }
 //.............................................................................
+void Analysis::funFindScale(const TStrObjList& Params, TMacroData& E) {
+  bool apply = Params.IsEmpty() ? false : Params[0].ToBool();
+  TLattice &latt = TXApp::GetInstance().XFile().GetLattice();
+  double scale = find_scale(latt);
+  if (scale > 0) {
+    for (size_t i = 0; i < latt.GetObjects().atoms.Count(); i++) {
+      TSAtom &a = latt.GetObjects().atoms[i];
+      if (a.GetType() == iQPeakZ && apply) {
+        int z = olx_round(a.CAtom().GetQPeak()*scale);
+        cm_Element *tp = XElementLib::FindByZ(z),
+          *tp1 = NULL;
+        // find previous halogen vs noble gas or alkaline metal
+        if (tp != NULL) {
+          if (XElementLib::IsGroup8(*tp) ||
+            XElementLib::IsGroup1(*tp) ||
+            XElementLib::IsGroup2(*tp))
+          {
+            tp1 = XElementLib::PrevGroup(7, tp);
+          }
+          a.CAtom().SetType(tp1 == NULL ? *tp : *tp1);
+        }
+      }
+    }
+  }
+  E.SetRetVal(scale);
+}
+//.............................................................................
+
+TLibrary *Analysis::ExportLibrary(const olxstr& name) {
+  TLibrary* lib = new TLibrary(name);
+  lib->Register(
+    new TStaticFunction(&Analysis::funTrim, "Trim", fpNone | fpOne,
+    "Trims the size of the assymetric unit according to the 18 A^3 rule."
+    "Returns true if any atoms were deleted")
+    );
+  lib->Register(
+    new TStaticFunction(&Analysis::funFindScale, "Scale", fpNone | fpOne,
+    "Scales the Q-peaks according to found fragments."
+    "Returns the scale or 0")
+    );
+  lib->Register(
+    new TStaticFunction(&Analysis::funAnaluseUeq, "AnalyseUeq", fpNone | fpOne,
+    ""
+    "")
+    );
+  return lib;
+}
