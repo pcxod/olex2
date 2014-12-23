@@ -111,7 +111,8 @@ TwxGlScene::~TwxGlScene()  {
   Destroy();
 }
 bool TwxGlScene::MakeCurrent() {
-  if (Canvas == NULL || Context == NULL || !IsEnabled()) return false;
+  if (!IsEnabled() || Canvas == NULL || Context == NULL || !Canvas->IsShown())
+    return false;
 #if wxCHECK_VERSION(2,9,0) || !(defined(__WXX11__) || defined(__MAC__))
   return Canvas->SetCurrent(*Context);
 #elif defined(__WXX11__) || defined(__MAC__)

@@ -39,8 +39,7 @@ public:
 
   void OnPaint(wxPaintEvent& event);
   void OnEraseBackground(wxEraseEvent& event);
-  void OnMouse( wxMouseEvent& event );
-  void InitGL(void);
+  void OnMouse(wxMouseEvent& event);
   void XApp(TGXApp *XA);
   TGXApp *GetXApp() { return FXApp; }
 
