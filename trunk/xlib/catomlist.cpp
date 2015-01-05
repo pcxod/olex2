@@ -126,6 +126,16 @@ void ExplicitCAtomRef::ToDataItem(TDataItem &di) const {
     AddField("eqiv_id", matrix == NULL ? uint32_t(~0) : matrix->GetId());
 }
 //.............................................................................
+AAtomRef *ExplicitCAtomRef::ToImplicit(const olxstr &resi) const {
+  olxstr exp = GetAtom().GetLabel();
+  TResidue &rs =
+    GetAtom().GetParent()->GetResidue(GetAtom().GetResiId());
+  if (!rs.GetClassName().IsEmpty() && !rs.GetClassName().Equalsi(resi)) {
+    exp << '_' << rs.GetClassName();
+  }
+  return new ImplicitCAtomRef(exp);
+}
+//.............................................................................
 int ExplicitCAtomRef::Compare(const ExplicitCAtomRef &r) const {
   int rv = olx_cmp(atom->GetId(), r.atom->GetId());
   if (rv == 0) {
@@ -286,6 +296,15 @@ void ImplicitCAtomRef::ToDataItem(TDataItem &di) const {
   di.SetValue(Name);
 }
 //.............................................................................
+AAtomRef *ImplicitCAtomRef::ToImplicit(const olxstr &resi) const {
+  if (resi.IsEmpty()) {
+    return new ImplicitCAtomRef(*this);
+  }
+  olxstr ed = olxstr('_') << resi;
+  return new ImplicitCAtomRef(
+    Name.EndsWithi(ed) ? Name.SubStringFrom(0, ed.Length()) : Name);
+}
+//.............................................................................
 //.............................................................................
 //.............................................................................
 ListAtomRef::ListAtomRef(const TDataItem &di, RefinementModel& rm)
@@ -348,6 +367,44 @@ AtomRefList::AtomRefList(RefinementModel& _rm, const olxstr& exp,
   Build(exp, resi);
 }
 //.............................................................................
+void AtomRefList::Build(const TSAtomPList &atoms, bool implicit) {
+  Clear();
+  if (atoms.IsEmpty()) {
+    return;
+  }
+  if (implicit) {
+    olxstr resi = rm.aunit.GetResidue(atoms[0]->CAtom().GetResiId())
+      .GetClassName();
+    for (size_t i = 1; i < atoms.Count(); i++) {
+      TResidue &r = rm.aunit.GetResidue(atoms[i]->CAtom().GetResiId());
+      if (!r.GetClassName().Equalsi(resi)) {
+        resi.SetLength(0);
+        break;
+      }
+    }
+    if (resi.IsEmpty()) {
+      for (size_t i = 0; i < atoms.Count(); i++) {
+        TResidue &r = rm.aunit.GetResidue(atoms[i]->CAtom().GetResiId());
+        olxstr nm = atoms[i]->CAtom().GetLabel();
+        refs.Add(new ImplicitCAtomRef(nm << (r.GetId() == 0 ? EmptyString()
+          : (olxstr('_') << r.GetClassName()))));
+      }
+    }
+    else {
+      residue = resi;
+      for (size_t i = 0; i < atoms.Count(); i++) {
+        refs.Add(new ExplicitCAtomRef(atoms[i]->CAtom(), &atoms[i]->GetMatrix()));
+      }
+    }
+  }
+  else {
+    for (size_t i = 0; i < atoms.Count(); i++) {
+      refs.Add(new ExplicitCAtomRef(atoms[i]->CAtom(), &atoms[i]->GetMatrix()));
+    }
+    UpdateResi();
+  }
+}
+//.............................................................................
 void AtomRefList::Build(const olxstr& exp, const olxstr& resi_) {
   Clear();
   olxstr r_c;
@@ -359,39 +416,38 @@ void AtomRefList::Build(const olxstr& exp, const olxstr& resi_) {
   expression = exp;
   residue = resi_;
   Valid = true;
-  ContainsImplicitAtoms = false;
   TStrList toks(exp, ' ');
-  for( size_t i=0; i < toks.Count(); i++ )  {
+  for (size_t i = 0; i < toks.Count(); i++) {
     if (!Valid) break;
-    if( (i+2) < toks.Count() )  {
-      if( toks[i+1] == '>' || toks[i+1] == '<' )  {
+    if ((i + 2) < toks.Count()) {
+      if (toks[i + 1] == '>' || toks[i + 1] == '<') {
         AAtomRef* start = ImplicitCAtomRef::NewInstance(rm, toks[i], r_c, r_r);
-        if( start == NULL )  {
+        if (start == NULL)  {
           Valid = false;
           break;
         }
-        AAtomRef* end = ImplicitCAtomRef::NewInstance(rm, toks[i+2], r_c, r_r);
-        if( end == NULL )  {
+        AAtomRef* end = ImplicitCAtomRef::NewInstance(rm, toks[i + 2], r_c, r_r);
+        if (end == NULL) {
           delete start;
           Valid = false;
           break;
         }
-        refs.Add(new ListAtomRef(*start, *end, toks[i+1]));
+        refs.Add(new ListAtomRef(*start, *end, toks[i + 1]));
         i += 2;
         continue;
       }
     }
     AAtomRef* ar = ImplicitCAtomRef::NewInstance(rm, toks[i], r_c, r_r);
-    if( ar == NULL )  {
+    if (ar == NULL) {
       Valid = false;
       break;
     }
     refs.Add(ar);
   }
-  if( !Valid )
+  if (!Valid)
     refs.Clear();
-  for( size_t i=0; i < refs.Count(); i++ )  {
-    if( !refs[i].IsExplicit() )  {
+  for (size_t i = 0; i < refs.Count(); i++) {
+    if (!refs[i].IsExplicit())  {
       ContainsImplicitAtoms = true;
       break;
     }
@@ -539,31 +595,41 @@ void AtomRefList::FromDataItem(const TDataItem &di) {
 //.............................................................................
 void AtomRefList::UpdateResi() {
   if (!IsExplicit()) return;
+  // special, easy to handle case
   uint32_t r_id = 0;
-  for (size_t i=0; i < refs.Count(); i++) {
-    ExplicitCAtomRef * r = dynamic_cast<ExplicitCAtomRef *>(&refs[i]);
-    if (r == NULL) return;
-    uint32_t ri = r->GetAtom().GetResiId();
-    if (ri != r_id) {
-      if (refs.Count() == 2) {  // special case, 'easy' to handle
-        ExplicitCAtomRef * r0 = dynamic_cast<ExplicitCAtomRef *>(&refs[0]);
-        if (r->GetMatrix() != NULL && r0->GetMatrix() != NULL)
-          return;
-        if (r->GetMatrix() == NULL && r0->GetMatrix() == NULL)
-          return;
-        if (r->GetMatrix() != NULL)
-          r_id = r->GetAtom().GetResiId();
-        else if (r0->GetMatrix() != NULL)
-          r_id = r0->GetAtom().GetResiId();
-        break;
-      }
+  if (refs.Count() == 2) {
+    ExplicitCAtomRef &r0 = dynamic_cast<ExplicitCAtomRef &>(refs[0]);
+    ExplicitCAtomRef &r1 = dynamic_cast<ExplicitCAtomRef &>(refs[1]);
+    if (r1.GetMatrix() != NULL && r0.GetMatrix() != NULL)
       return;
+    if (r1.GetMatrix() == NULL && r0.GetMatrix() == NULL)
+      return;
+    if (r1.GetMatrix() != NULL)
+      r_id = r1.GetAtom().GetResiId();
+    else if (r0.GetMatrix() != NULL)
+      r_id = r0.GetAtom().GetResiId();
+  }
+  else {
+    for (size_t i = 0; i < refs.Count(); i++) {
+      ExplicitCAtomRef &r = dynamic_cast<ExplicitCAtomRef &>(refs[i]);
+      uint32_t ri = r.GetAtom().GetResiId();
+      if (ri != r_id) {
+        return;
+      }
+      r_id = ri;
     }
-    r_id = ri;
   }
   if (r_id != 0) {
-    residue = this->rm.aunit.GetResidue(r_id).GetNumber();
+    residue = rm.aunit.GetResidue(r_id).GetNumber();
   }
+}
+//.............................................................................
+void AtomRefList::Clear() {
+  refs.Clear();
+  Valid = true;
+  ContainsImplicitAtoms = false;
+  residue.SetLength(0);
+  expression.SetLength(0);
 }
 //.............................................................................
 olxstr AtomRefList::GetExpression() const {
@@ -616,6 +682,31 @@ AtomRefList &AtomRefList::ConvertToExplicit() {
     lrefs.ReleaseAll();
   }
   refs.TakeOver(nrefs);
+  return *this;
+}
+//.............................................................................
+AtomRefList &AtomRefList::ConvertToImplicit() {
+  if (!IsExplicit()) {
+    return *this;
+  }
+  olxstr resi;
+  for (size_t i = 0; i < refs.Count(); i++) {
+    ExplicitCAtomRef *r = dynamic_cast<ExplicitCAtomRef *>(&refs[i]);
+    if (r == 0) continue;
+    TResidue &rs = rm.aunit.GetResidue(r->GetAtom().GetResiId());
+    if (resi.IsEmpty()) {
+      resi = rs.GetClassName();
+    }
+    else if (!rs.GetClassName().Equalsi(resi)) {
+      resi.SetLength(0);
+      break;
+    }
+  }
+  residue = resi;
+  for (size_t i = 0; i < refs.Count(); i++) {
+    refs.Set(i, refs[i].ToImplicit(resi));
+  }
+  ContainsImplicitAtoms = true;
   return *this;
 }
 //.............................................................................

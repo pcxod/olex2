@@ -16,20 +16,25 @@ AGlScene::~AGlScene()  {
   SmallFonts.DeleteItems();
 }
 //.............................................................................
-void AGlScene::StartDraw()  {
-  MakeCurrent();
+bool AGlScene::StartDraw() {
+  if (!MakeCurrent()) {
+    return false;
+  }
   olx_gl::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  return true;
 }
 //.............................................................................
 void AGlScene::EndDraw()  {  olx_gl::flush();  }
 //.............................................................................
-void AGlScene::StartSelect(int x, int y, GLuint *Bf)  {
-  MakeCurrent();
+bool AGlScene::StartSelect(int x, int y, GLuint *Bf) {
+  if (!MakeCurrent())
+    return false;
   olx_gl::selectBuffer(MAXSELECT, Bf);
   olx_gl::renderMode(GL_SELECT);
   olx_gl::initNames();
   olx_gl::pushName(~0);
   FParent->SetView(x, y, false, true, 1);
+  return true;
 }
 //.............................................................................
 int AGlScene::EndSelect()  {

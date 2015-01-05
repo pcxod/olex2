@@ -58,6 +58,10 @@ public:
     return AddAtom(ab, mb);
   }
   void AtomsFromExpression(const olxstr &e, const olxstr &resi=EmptyString());
+  void SetAtoms(const TPtrList<class TSAtom> &atoms) {
+    Atoms.Build(atoms);
+  }
+  void ConvertToImplicit() { Atoms.ConvertToImplicit(); }
 
   const TSRestraintList& GetParent() const {  return Parent;  }
   TSRestraintList& GetParent()  {  return Parent;  }

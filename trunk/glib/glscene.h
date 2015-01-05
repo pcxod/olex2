@@ -31,7 +31,8 @@ protected:
   */
   virtual TGlFont& DoCreateFont(TGlFont& glf, bool half_size) const = 0;
 public:
-  AGlScene() : FParent(NULL), Enabled(true) {}
+  AGlScene() : FParent(NULL), Enabled(false)
+  {}
   virtual ~AGlScene();
   TGlRenderer *Parent() { return FParent; }
   /* must be called by TGlRender */
@@ -50,14 +51,14 @@ public:
   */
   virtual olxstr ShowFontDialog(TGlFont* glf = NULL,
     const olxstr& fontDescription=EmptyString()) = 0;
-  virtual void StartSelect(int x, int y, GLuint *Bf);
+  virtual bool StartSelect(int x, int y, GLuint *Bf);
   // returns number of selection hits
   virtual int EndSelect();
   // returns true if successful
   virtual bool MakeCurrent() = 0;
   // if the Scene is disabled, MakeCurrent should not do anything
   DefPropBIsSet(Enabled)
-  virtual void StartDraw();
+  virtual bool StartDraw();
   virtual void EndDraw();
 
   size_t FontCount() const { return Fonts.Count(); }

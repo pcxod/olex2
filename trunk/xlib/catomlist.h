@@ -25,7 +25,7 @@ typedef TTypeListExt<ExplicitCAtomRef, IOlxObject> TAtomRefList_;
 
 class AAtomRef : public ACollectionItem {
 public:
-  virtual ~AAtomRef()  {}
+  virtual ~AAtomRef() {}
   // returns either an atom label or a string of C1_tol kind or $C
   virtual olxstr GetExpression(TResidue *r=NULL) const = 0;
   virtual bool IsExpandable() const = 0;
@@ -35,6 +35,7 @@ public:
   virtual AAtomRef* Clone(RefinementModel& rm) const = 0;
   virtual void ToDataItem(TDataItem &di) const = 0;
   virtual bool IsValid() const { return true; }
+  virtual AAtomRef *ToImplicit(const olxstr &resi) const = 0;
   static AAtomRef &FromDataItem(const TDataItem &di, RefinementModel& rm);
 };
 
@@ -66,7 +67,8 @@ public:
     res.Add(new ExplicitCAtomRef(*this));
     return 1;
   }
-  TCAtom& GetAtom() const {  return *atom;  }
+  virtual AAtomRef *ToImplicit(const olxstr &resi) const;
+  TCAtom& GetAtom() const { return *atom; }
   const smatd* GetMatrix() const {  return matrix;  }
   void UpdateMatrix(const smatd *m);
   vec3d GetCCrd() const {
@@ -123,6 +125,7 @@ public:
     return new ImplicitCAtomRef(Name);
   }
   virtual void ToDataItem(TDataItem &di) const;
+  virtual AAtomRef *ToImplicit(const olxstr &resi) const;
   static const olxstr &GetTypeId() {
     static olxstr t = "implicit";
     return t;
@@ -159,13 +162,17 @@ public:
     return new ListAtomRef(*start.Clone(rm), *end.Clone(rm), op);
   }
   virtual void ToDataItem(TDataItem &di) const;
+  AAtomRef *ToImplicit(const olxstr &resi) const {
+    return new ListAtomRef(*start.ToImplicit(resi),
+      *end.ToImplicit(resi), op);
+  }
   static const olxstr &GetTypeId() {
     static olxstr t = "list";
     return t;
   }
 };
 
-class AtomRefList  {
+class AtomRefList {
   TTypeList<AAtomRef> refs;
   RefinementModel& rm;
   olxstr residue;
@@ -216,8 +223,11 @@ public:
   TAtomRefList::const_list_type ExpandList(const RefinementModel& rm,
     size_t group_size=InvalidSize) const;
   /* parses the expression into a list */
-  void Build(const olxstr& exp,
-    const olxstr& resi=EmptyString());
+  void Build(const olxstr& exp, const olxstr& resi=EmptyString());
+  /* if implicit is true - the residue class of the atoms is used to build an
+  implicit atom list.
+  */
+  void Build(const TPtrList<class TSAtom> &atoms, bool implicit=false);
   /* recreates the expression for the object. If there are any explicit atom
   names - the new names will come from the updated model. Implicit atoms will
   stay as provided in the constructor
@@ -232,13 +242,15 @@ public:
   }
   /* converts this list to list of exlicit references */
   AtomRefList &ConvertToExplicit();
-  void AddExplicit(TCAtom &a, const smatd *m=NULL) {
+  /* converts this list to list of implicit references */
+  AtomRefList &ConvertToImplicit();
+  void AddExplicit(TCAtom &a, const smatd *m = NULL) {
     refs.Add(new ExplicitCAtomRef(a, m));
   }
   void AddExplicit(class TSAtom &a);
   // checks if all atoms are in the same RESI
   void UpdateResi();
-  void Clear() { refs.Clear(); }
+  void Clear();
   bool IsEmpty() const { return refs.IsEmpty(); }
   AtomRefList &Validate(size_t group_size = InvalidSize);
   void Assign(const AtomRefList &arl);

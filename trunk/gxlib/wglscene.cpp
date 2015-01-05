@@ -181,33 +181,6 @@ bool TWGlScene::MakeCurrent() {
   return false;
 }
 //..............................................................................
-void TWGlScene::StartDraw() {
-  AGlScene::StartDraw();
-}
-//..............................................................................
-void TWGlScene::EndDraw() {
-  AGlScene::EndDraw();
-}
-//..............................................................................
-void TWGlScene::StartSelect(int x, int y, GLuint *Bf) {
-  AGlScene::StartSelect(x, y, Bf);
-}
-//..............................................................................
-int TWGlScene::EndSelect() {
-  const int rv = AGlScene::EndSelect();
-  return rv;
-  //if( FBitmap == NULL )  {
-  //  if( FWContext != NULL )
-  //    SwapBuffers(FWContext);
-  //  FParent->SetView();
-  //}
-  //else if( FWContext != NULL )  {
-  //  SelectObject(FWContext, NULL);
-  //  DeleteDC(FWContext);
-  //  FWContext = NULL;
-  //}
-}
-//..............................................................................
 void TWGlScene::Destroy() {
   if (FGlContext != NULL) {
     wglMakeCurrent(NULL, NULL);
