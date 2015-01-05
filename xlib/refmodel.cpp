@@ -109,8 +109,19 @@ void RefinementModel::Clear(uint32_t clear_mask) {
   ExyzGroups.Clear();
   for( size_t i=0; i < rcRegister.Count(); i++ )
     rcRegister.GetValue(i)->Clear();
-  if( (clear_mask & rm_clear_SAME) != 0 )
+  if ((clear_mask & rm_clear_SAME) != 0)
     rSAME.Clear();
+  else if ((clear_mask & rm_clear_ISAME) != 0) {
+    TPtrList<TSameGroup> to_del;
+    for (size_t i = 0; i < rSAME.Count(); i++) {
+      if (!rSAME[i].GetAtoms().IsExplicit()) {
+        to_del << rSAME[i];
+      }
+    }
+    if (!to_del.IsEmpty()) {
+      rSAME.Delete(to_del);
+    }
+  }
   //ExyzGroups.Clear();
   //AfixGroups.Clear();
   InfoTables.Clear();

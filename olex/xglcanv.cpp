@@ -71,18 +71,18 @@ void TGlCanvas::XApp(TGXApp *XA) {
 #endif
 }
 //..............................................................................
-void TGlCanvas::Render()  {
+void TGlCanvas::Render() {
 #if !defined(__WXMOTIF__) && !defined(__WIN32__) && !defined(__WXGTK__)
   if( !GetContext() ) return;
 #endif
+  if (FXApp == NULL || !IsShown()) {
+    return;
+  }
 #if defined(__WXX11__) || defined(__MAC__)  // context is null
   SetCurrent();
 #else
   Context->SetCurrent(*this);
 #endif
-
-  /* init OpenGL once, but after SetCurrent */
-  if( FXApp == NULL )  return;
   FXApp->Draw();
 }
 //..............................................................................
@@ -92,11 +92,6 @@ void TGlCanvas::OnPaint(wxPaintEvent& event)  {
 }
 //..............................................................................
 void TGlCanvas::OnEraseBackground(wxEraseEvent& event)  {
-}
-//..............................................................................
-void TGlCanvas::InitGL()  {
-  if( FXApp != NULL )
-    FXApp->Init();
 }
 //..............................................................................
 short TGlCanvas::EncodeEvent(const wxMouseState &evt, bool update_button)  {

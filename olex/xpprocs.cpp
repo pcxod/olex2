@@ -2324,11 +2324,11 @@ void TMainForm::macEditIns(TStrObjList &Cmds, const TParamList &Options, TMacroD
   Ins.SaveExtras(SL, NULL, NULL, Ins.GetRM());
   TdlgEdit *dlg = new TdlgEdit(this, true);
   dlg->SetText(SL.Text('\n'));
-  try  {
-    if (dlg->ShowModal() == wxID_OK)  {
+  try {
+    if (dlg->ShowModal() == wxID_OK) {
       // clear rems, as they are recreated
-      for (size_t i = 0; i < Ins.InsCount(); i++)  {
-        if (Ins.InsName(i).Equalsi("REM"))  {
+      for (size_t i = 0; i < Ins.InsCount(); i++) {
+        if (Ins.InsName(i).Equalsi("REM")) {
           Ins.DelIns(i--);  continue;
         }
       }

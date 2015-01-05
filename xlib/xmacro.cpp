@@ -456,7 +456,8 @@ void XLibMacros::Export(TLibrary& lib)  {
     "sets atoms afix, special cases are 56,69,66,69,76,79,106,109,116 and "
     "119");
   xlib_InitMacro(Dfix,
-    "cs-do not clear selection&;e",
+    "cs-do not clear selection&;"
+    "i-[false] makes an implicit restaraint",
     fpAny,
     "Restrains distancesto the given value");
   xlib_InitMacro(Tria,
@@ -465,11 +466,12 @@ void XLibMacros::Export(TLibrary& lib)  {
     "Adds a distance restraint for bonds and 'angle' restraint for the angle."
     "Takes bond pairs or atom triplets.");
   xlib_InitMacro(Dang,
-    "cs-do not clear selection",
+    "cs-do not clear selection&;"
+    "i-[false] makes an implicit restaraint",
     fpAny|psCheckFileTypeIns,
     "Adds a ShelX compatible angle restraint");
   xlib_InitMacro(Sadi,
-    EmptyString(),
+    "i-[false] makes an implicit restaraint",
     fpAny|psCheckFileTypeIns,
     "Similar distances restraint");
   xlib_InitMacro(RRings,
@@ -529,8 +531,10 @@ void XLibMacros::Export(TLibrary& lib)  {
     fpNone|psFileLoaded,
     "Prints symmetry codes for current structure");
   xlib_InitMacro(Same,
-    "i-invert the graphs&;"
-    "e-expand SAME into the list of SADI",
+    "i-if one atom is given - generates an implicit restraint for the atom's "
+    "residue class, for 2 atoms - invert the graphs when doing automatic "
+    "matching&;"
+    "e-expand SAME into the list of SADI [not implemented]",
     fpAny|psFileLoaded,
     "Creates SAME instruction for two fragments (two selected atoms or two "
     "atoms provided) or number_of_groups and groups following each another "
@@ -6929,15 +6933,17 @@ bool XLibMacros::ParseResParam(TStrObjList &Cmds, double& esd, double* len,
   return esd_set;
 }
 //.............................................................................
-XLibMacros::MacroInput XLibMacros::ExtractSelection(const TStrObjList &Cmds,
+XLibMacros::MacroInput XLibMacros::ExtractSelection(const TStrObjList &Cmds_,
     bool unselect)
 {
+  TStrObjList Cmds = Cmds_;
   TSAtomPList atoms;
   TSBondPList bonds;
   TSPlanePList planes;
   TXApp &app = TXApp::GetInstance();
-  if (!Cmds.IsEmpty())
+  if (!Cmds.IsEmpty()) {
     atoms = app.FindSAtoms(Cmds, false, unselect);
+  }
   else {
     SObjectPtrList sel = app.GetSelected(unselect);
     for( size_t i=0; i < sel.Count(); i++ )  {
@@ -6962,7 +6968,7 @@ void XLibMacros::macDfix(TStrObjList &Cmds, const TParamList &Options,
 {
   double fixLen = 0, esd = 0.02;  // length and esd for dfix
   bool esd_set = ParseResParam(Cmds, esd, &fixLen);
-  if( fixLen == 0 )  {
+  if (fixLen == 0) {
     E.ProcessingError(__OlxSrcInfo,
       "please specify the distance to restrain to");
     return;
@@ -6983,15 +6989,16 @@ void XLibMacros::macDfix(TStrObjList &Cmds, const TParamList &Options,
   esd = dfix.GetEsd();
   if (Atoms.Count() == 1) {  // special case
     TSAtom* A = Atoms[0];
-    for( size_t i=0; i < A->NodeCount(); i++ )  {
+    for (size_t i=0; i < A->NodeCount(); i++) {
       TSAtom* SA = &A->Node(i);
-      if( SA->IsDeleted() || SA->GetType() == iQPeakZ )  continue;
+      if (SA->IsDeleted() || SA->GetType() == iQPeakZ)
+        continue;
       dfix.AddAtomPair(
         A->CAtom(), &A->GetMatrix(),
         SA->CAtom(), &SA->GetMatrix());
     }
   }
-  else if( Atoms.Count() == 3 )  {  // special case
+  else if (Atoms.Count() == 3) {  // special case
     dfix.AddAtomPair(
       Atoms[0]->CAtom(), &Atoms[0]->GetMatrix(),
       Atoms[1]->CAtom(), &Atoms[1]->GetMatrix());
@@ -7010,6 +7017,10 @@ void XLibMacros::macDfix(TStrObjList &Cmds, const TParamList &Options,
         Atoms[i+1]->CAtom(), &Atoms[i+1]->GetMatrix());
     }
   }
+  dfix.UpdateResi();
+  if (Options.GetBoolOption('i')) {
+    dfix.ConvertToImplicit();
+  }
   app.XFile().GetRM().rDFIX.ValidateRestraint(dfix);
   TBasicApp::NewLogEntry() << dfix.ToString();
 }
@@ -7019,13 +7030,14 @@ void XLibMacros::macDang(TStrObjList &Cmds, const TParamList &Options,
 {
   double fixLen = 0, esd = 0.04;  // length and esd for dang
   bool esd_set = ParseResParam(Cmds, esd, &fixLen);
-  if( fixLen == 0 )  {
-    E.ProcessingError(__OlxSrcInfo, "please specify the distance to restrain to");
+  if (fixLen == 0) {
+    E.ProcessingError(__OlxSrcInfo,
+      "please specify the distance to restrain to");
     return;
   }
   TXApp &app = TXApp::GetInstance();
   TSAtomPList Atoms = app.FindSAtoms(Cmds, false, !Options.Contains("cs"));
-  if( Atoms.IsEmpty() )  {
+  if (Atoms.IsEmpty()) {
     E.ProcessingError(__OlxSrcInfo, "no atoms or bonds provided");
     return;
   }
@@ -7037,10 +7049,9 @@ void XLibMacros::macDang(TStrObjList &Cmds, const TParamList &Options,
     E.ProcessingError(__OlxSrcInfo, "even number of atoms is expected");
     return;
   }
-  for( size_t i=0; i < Atoms.Count(); i += 2 )  {
-    dang.AddAtomPair(
-      Atoms[i]->CAtom(), &Atoms[i]->GetMatrix(),
-      Atoms[i+1]->CAtom(), &Atoms[i+1]->GetMatrix());
+  dang.SetAtoms(Atoms);
+  if (Options.GetBoolOption('i')) {
+    dang.ConvertToImplicit();
   }
   app.XFile().GetRM().rDANG.ValidateRestraint(dang);
   TBasicApp::NewLogEntry() << dang.ToString();
@@ -7146,11 +7157,14 @@ void XLibMacros::macSadi(TStrObjList &Cmds, const TParamList &Options,
     for (size_t i=0; i < mi.bonds.Count(); i++)
       Atoms << mi.bonds[i]->A() << mi.bonds[i]->B();
   }
+  TPtrList<TSimpleRestraint> restraints;
   TSimpleRestraint &sr = app.XFile().GetRM().rSADI.AddNew();
+  restraints << sr;
   if (esd_set) sr.SetEsd(esd);
   esd = sr.GetEsd();
   if (Atoms.Count() == 1) {  // special case
     TSimpleRestraint &sr1 = app.XFile().GetRM().rSADI.AddNew();
+    restraints << sr1;
     sr1.SetEsd(esd);
     sr.SetEsd(esd*2);
     TSAtom* A = Atoms[0];
@@ -7181,7 +7195,6 @@ void XLibMacros::macSadi(TStrObjList &Cmds, const TParamList &Options,
           SA1.CAtom(), &SA1.GetMatrix());
       }
     }
-    TBasicApp::NewLogEntry() << sr1.ToString();
   }
   else if (Atoms.Count() == 2) {  // 'rotor;
     for (size_t i = 0; i < Atoms[0]->NodeCount(); i++) {
@@ -7194,6 +7207,7 @@ void XLibMacros::macSadi(TStrObjList &Cmds, const TParamList &Options,
     }
     TSimpleRestraint &sr1 = app.XFile().GetRM().rSADI.AddNew();
     if (esd_set) sr1.SetEsd(esd);
+    restraints << sr1;
     olx_pdict<int, TSAtomPList> parts;
     for (size_t i = 0; i < Atoms[0]->NodeCount(); i++) {
       TSAtom& n = Atoms[0]->Node(i);
@@ -7206,6 +7220,7 @@ void XLibMacros::macSadi(TStrObjList &Cmds, const TParamList &Options,
     }
     TSimpleRestraint &sr2 = app.XFile().GetRM().rSADI.AddNew();
     if (esd_set) sr2.SetEsd(esd);
+    restraints << sr2;
     for (size_t i = 0; i < parts.Count(); i++) {
       TSAtomPList &atoms = parts.GetValue(i);
       vec3d normal, center;
@@ -7224,8 +7239,6 @@ void XLibMacros::macSadi(TStrObjList &Cmds, const TParamList &Options,
           atoms.GetLast()->CAtom(), &atoms.GetLast()->GetMatrix());
       }
     }
-    TBasicApp::NewLogEntry() << sr1.ToString();
-    TBasicApp::NewLogEntry() << sr2.ToString();
   }
   else if (Atoms.Count() == 3) {  // special case
     sr.AddAtomPair(
@@ -7245,8 +7258,12 @@ void XLibMacros::macSadi(TStrObjList &Cmds, const TParamList &Options,
         Atoms[i+1]->CAtom(), &Atoms[i+1]->GetMatrix());
     }
   }
-  app.XFile().GetRM().rSADI.ValidateRestraint(sr);
-  TBasicApp::NewLogEntry() << sr.ToString();
+  bool to_impl = Options.GetBoolOption('i');
+  for (size_t i = 0; i < restraints.Count(); i++) {
+    if (to_impl)
+      restraints[i]->ConvertToImplicit();
+    TBasicApp::NewLogEntry() << restraints[i]->ToString();
+  }
 }
 //.............................................................................
 void XLibMacros::macFlat(TStrObjList &Cmds, const TParamList &Options,
@@ -8085,14 +8102,27 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
   const bool invert = Options.Contains("i"),
     expand = Options.Contains("e");
   size_t groups_count = InvalidSize;
-  if( !Cmds.IsEmpty() && Cmds[0].IsNumber() )  {
+  if (!Cmds.IsEmpty() && Cmds[0].IsNumber()) {
     groups_count = Cmds[0].ToSizeT();
     Cmds.Delete(0);
   }
   TXApp &app = TXApp::GetInstance();
   TSAtomPList atoms = app.FindSAtoms(Cmds, false, true);
   TSameGroup *created = NULL;
-  if (atoms.Count() == 2) {
+  if (atoms.Count() == 1 && invert) {
+    if (atoms[0]->CAtom().GetResiId() != 0) {
+      TSameGroup& sg = app.XFile().GetRM().rSAME.New();
+      TSAtomPList atms;
+      TResidue &r = atoms[0]->CAtom().GetParent()->GetResidue(
+        atoms[0]->CAtom().GetResiId());
+      for (size_t i = 0; i < r.Count(); i++) {
+        if (r[i].GetType().z > 1)
+          sg.GetAtoms().AddExplicit(r[i]);
+      }
+      sg.GetAtoms().ConvertToImplicit();
+    }
+  }
+  else if (atoms.Count() == 2) {
     TTypeList< olx_pair_t<size_t, size_t> > res;
     TNetwork &netA = atoms[0]->GetNetwork(),
       &netB = atoms[1]->GetNetwork();
@@ -8245,7 +8275,11 @@ void XLibMacros::macRESI(TStrObjList &Cmds, const TParamList &Options,
         TResidue& resi = au.NewResidue(resi_class, resi_number++);
         resi.SetCapacity(f->count());
         for (size_t i = 0; i < f->count(); i++) {
-          resi.Add((*f)[i]);
+          TCAtom &a = (*f)[i];
+          resi.Add(a);
+          if (fi > 0) {
+            a.SetLabel(fr[i].GetLabel(), false);
+          }
         }
       }
     }

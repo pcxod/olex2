@@ -781,15 +781,15 @@ protected:
   symmetric matices only
   */
   static T MatMaxX(const TMatrix33& m, size_t &i, size_t &j )  {
-    const T c = olx_abs(m[0][1]);
+    T c = olx_abs(m[0][1]);
     i = 0;  j = 1;
-    if( olx_abs(m[0][2]) > c )  {
+    if (olx_abs(m[0][2]) > c) {
       j = 2;
-      return olx_abs(m[0][2]);
+      c = olx_abs(m[0][2]);
     }
-    if( olx_abs(m[1][2]) > c )  {
+    if (olx_abs(m[1][2]) > c) {
        i = 1;  j = 2;
-       return olx_abs(m[1][2]);
+       c = olx_abs(m[1][2]);
     }
     return c;
   }

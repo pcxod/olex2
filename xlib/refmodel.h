@@ -46,7 +46,8 @@ static uint32_t
   rm_clear_AFIX = 0x00000002,
   rm_clear_VARS = 0x00000004,
   rm_clear_BadRefs = 0x00000008,
-  rm_clear_ALL  = 0xFFFFFFFF,
+  rm_clear_ISAME = 0x00000010, // implicit SAME
+  rm_clear_ALL = 0xFFFFFFFF,
   rm_clear_DEF = (rm_clear_ALL^(
   rm_clear_SAME|rm_clear_AFIX|rm_clear_VARS|rm_clear_BadRefs));
 

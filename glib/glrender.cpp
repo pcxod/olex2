@@ -498,8 +498,8 @@ void TGlRenderer::SetupStencilFoInterlacedDraw(bool even) {
 }
 //..............................................................................
 void TGlRenderer::Draw()  {
-  if( Width < 50 || Height < 50 )  return;
-  GetScene().MakeCurrent();
+  if (Width < 50 || Height < 50 || !GetScene().MakeCurrent())
+    return;
   olx_gl::enable(GL_NORMALIZE);
   OnDraw.Enter(this);
   //glLineWidth( (float)(0.07/GetScale()) );
@@ -610,7 +610,8 @@ void TGlRenderer::Draw()  {
     Left = _l;
   }
   else  {
-    GetScene().StartDraw();
+    if (!GetScene().StartDraw())
+      return;
     DrawObjects(0, 0, false, false);
   }
   GetScene().EndDraw();
@@ -809,40 +810,41 @@ AGDrawObject* TGlRenderer::SelectObject(int x, int y) {
     GetObject(i).SetTag((int)(i+1));
   if (GLUSelection) {
     AGDrawObject *Result=NULL;
-    GLuint *selectBuf = new GLuint [MAXSELECT];
-    GetScene().StartSelect(x, y, selectBuf);
+    olx_array_ptr<GLuint> selectBuf(new GLuint [MAXSELECT]);
+    if (!GetScene().StartSelect(x, y, selectBuf()))
+      return NULL;
     DrawObjects(x, y, true, false);
     int hits = GetScene().EndSelect();
-    if (hits >= 1)  {
-      if( hits == 1 )  {
-        GLuint in = selectBuf[(hits-1)*4+3];
+    if (hits >= 1) {
+      if (hits == 1) {
+        GLuint in = selectBuf()[(hits-1)*4+3];
         if( in >=1 && in <= ObjectCount() )
           Result = &GetObject(in-1);
       }
-      else  {
+      else {
         unsigned int maxz = ~0;
         GLuint in=0;
         for( int i=0; i < hits; i++ )  {
-          if( selectBuf[i*4+1] < maxz )  {
+          if( selectBuf()[i*4+1] < maxz )  {
             in = i;
-            maxz = selectBuf[i*4+1];
+            maxz = selectBuf()[i*4+1];
           }
         }
-        if( (int)(in)*4+3 < 0 )  return NULL;
-        in = selectBuf[(in)*4+3] - 1;
-        if( in < ObjectCount() )
+        if ((int)(in)*4+3 < 0) return NULL;
+        in = selectBuf()[(in)*4+3] - 1;
+        if (in < ObjectCount())
           Result = &GetObject(in);
       }
     }
-    delete [] selectBuf;
     return Result;
   }
   else {
+    if (!GetScene().StartDraw())
+      return NULL;
     bool fe = olx_gl::isEnabled(GL_FOG);
     if (fe)
       olx_gl::disable(GL_FOG);
     SetView(x, y, false, true, 1);
-    GetScene().StartDraw();
     DrawObjects(x, y, true, false);
     GetScene().EndDraw();
     if (fe)
@@ -873,37 +875,38 @@ TGlPrimitive* TGlRenderer::SelectPrimitive(int x, int y) {
     Primitives.GetObject(i).SetTag((index_t)(i+1));
   if (GLUSelection) {
     TGlPrimitive *Result=NULL;
-    GLuint *selectBuf = new GLuint [MAXSELECT];
-    GetScene().StartSelect(x, y, selectBuf);
+    olx_array_ptr<GLuint> selectBuf(new GLuint [MAXSELECT]);
+    if (!GetScene().StartSelect(x, y, selectBuf()))
+      return NULL;
     DrawObjects(x, y, false, true);
     GetScene().EndSelect();
     int hits = olx_gl::renderMode(GL_RENDER);
-    if( hits >= 1 )  {
-      if( hits == 1 )  {
-        GLuint in = selectBuf[(hits-1)*4+3];
-        if( in >=1 && in <= (PrimitiveCount()+1) )
+    if (hits >= 1) {
+      if (hits == 1) {
+        GLuint in = selectBuf()[(hits-1)*4+3];
+        if (in >=1 && in <= (PrimitiveCount()+1))
           Result = &GetPrimitive(in-1);
       }
-      else  {
+      else {
         unsigned int maxz = ~0;
         GLuint in=0;
-        for( int i=0; i < hits; i++ )  {
-          if( selectBuf[i*4+1] < maxz )  {
+        for (int i=0; i < hits; i++) {
+          if (selectBuf()[i*4+1] < maxz) {
             in = i;
-            maxz = selectBuf[i*4+1];
+            maxz = selectBuf()[i*4+1];
           }
         }
-        in = selectBuf[in*4+3];
-        if( in >=1 && in <= (PrimitiveCount()+1) )
+        in = selectBuf()[in*4+3];
+        if (in >=1 && in <= (PrimitiveCount()+1))
           Result = &GetPrimitive(in-1);
       }
     }
-    delete [] selectBuf;
     return Result;
   }
   else {
+    if (!GetScene().StartDraw())
+      return NULL;
     SetView(x, y, false, true, 1);
-    GetScene().StartDraw();
     DrawObjects(x, y, false, true);
     GetScene().EndDraw();
     memset(&SelectionBuffer, 0, sizeof(SelectionBuffer));
