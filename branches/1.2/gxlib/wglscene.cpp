@@ -181,16 +181,16 @@ bool TWGlScene::MakeCurrent() {
   return false;
 }
 //..............................................................................
-void TWGlScene::StartDraw() {
-  AGlScene::StartDraw();
+bool TWGlScene::StartDraw() {
+  return AGlScene::StartDraw();
 }
 //..............................................................................
 void TWGlScene::EndDraw() {
   AGlScene::EndDraw();
 }
 //..............................................................................
-void TWGlScene::StartSelect(int x, int y, GLuint *Bf) {
-  AGlScene::StartSelect(x, y, Bf);
+bool TWGlScene::StartSelect(int x, int y, GLuint *Bf) {
+  return AGlScene::StartSelect(x, y, Bf);
 }
 //..............................................................................
 int TWGlScene::EndSelect() {

@@ -26,9 +26,9 @@ public:
   void InitialiseHDC(HDC Dc);
   HDC GetDC() const { return FWContext; }
   void Destroy();
-  void StartSelect(int x, int y, GLuint *Bf);
+  bool StartSelect(int x, int y, GLuint *Bf);
   int EndSelect();
-  void StartDraw();
+  bool StartDraw();
   void EndDraw();
   virtual void ScaleFonts(double scale)  {
     throw TNotImplementedException(__OlxSourceInfo);
