@@ -171,6 +171,22 @@ bool THtmlManager::Execute(const IOlxObject *sender, const IOlxObject *data,
       olxstr cmd = *(const olxstr *)data;
       if (!cmd.IsEmpty()) {
         TBasicApp::PostAction(new olxCommandAction(cmd));
+        const std::type_info &ti = typeid(*sender);
+        if (ti == typeid(TComboBox) &&
+          !(dynamic_cast<const TComboBox *>(sender))->IsReadOnly())
+        {
+        }
+        else if (ti == typeid(TTreeView))
+          ;
+        else if (ti == typeid(TTextEdit))
+          ;
+        else if (ti == typeid(TSpinCtrl))
+          ;
+        else if (ti == typeid(TDateCtrl))
+          ;
+        else {
+          olex2::IOlex2Processor::GetInstance()->processMacro("focus");
+        }
         //OnLink.Execute(sender, data);
       }
       return true;
