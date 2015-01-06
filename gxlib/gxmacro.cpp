@@ -816,6 +816,13 @@ void GXLibMacros::macBRad(TStrObjList &Cmds, const TParamList &Options,
       for (size_t i = 0; i < app.GetRings().Count(); i++) {
         app.GetRings()[i].Create();
       }
+      TGXApp::PlaneIterator pi = app.GetPlanes();
+      while (pi.HasNext()) {
+        TXPlane &p = pi.Next();
+        p.GetPrimitives().ClearPrimitives();
+        p.GetPrimitives().ClearObjects();
+        p.Create();
+      }
     }
     app.BondRad(r, &bonds);
   }
