@@ -698,6 +698,7 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Unicode-release|Win32'">$(IntDir)</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Unicode-release|x64'">$(IntDir)</ObjectFileName>
     </ClCompile>
+    <ClCompile Include="..\..\..\xlib\xscatterer.cpp" />
     <ClCompile Include="..\..\..\xlib\xyz.cpp" />
     <ClCompile Include="..\..\..\xlib\henke\henke_Ac.cpp" />
     <ClCompile Include="..\..\..\xlib\henke\henke_Ag.cpp" />

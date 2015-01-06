@@ -597,9 +597,24 @@ void AtomRefList::UpdateResi() {
   if (!IsExplicit()) return;
   // special, easy to handle case
   uint32_t r_id = 0;
-  if (refs.Count() == 2) {
-    ExplicitCAtomRef &r0 = dynamic_cast<ExplicitCAtomRef &>(refs[0]);
-    ExplicitCAtomRef &r1 = dynamic_cast<ExplicitCAtomRef &>(refs[1]);
+  TPtrList<ExplicitCAtomRef> atom_refs;
+  for (size_t i = 0; i < refs.Count(); i++) {
+    ExplicitCAtomRef *r = dynamic_cast<ExplicitCAtomRef *>(&refs[0]);
+    if (r == 0) {
+      ListAtomRef *rl = dynamic_cast<ListAtomRef *>(&refs[0]);
+      if (rl == 0) {
+        throw TFunctionFailedException(__OlxSourceInfo, "assert");
+      }
+      atom_refs << dynamic_cast<ExplicitCAtomRef &>(rl->GetStart()) <<
+        dynamic_cast<ExplicitCAtomRef &>(rl->GetEnd());
+    }
+    else {
+      atom_refs << r;
+    }
+  }
+  if (atom_refs.Count() == 2) {
+    ExplicitCAtomRef &r0 = *atom_refs[0];
+    ExplicitCAtomRef &r1 = *atom_refs[1];
     if (r1.GetMatrix() != NULL && r0.GetMatrix() != NULL)
       return;
     if (r1.GetMatrix() == NULL && r0.GetMatrix() == NULL)
@@ -610,8 +625,8 @@ void AtomRefList::UpdateResi() {
       r_id = r0.GetAtom().GetResiId();
   }
   else {
-    for (size_t i = 0; i < refs.Count(); i++) {
-      ExplicitCAtomRef &r = dynamic_cast<ExplicitCAtomRef &>(refs[i]);
+    for (size_t i = 0; i < atom_refs.Count(); i++) {
+      ExplicitCAtomRef &r = *atom_refs[i];
       uint32_t ri = r.GetAtom().GetResiId();
       if (ri != r_id) {
         return;
