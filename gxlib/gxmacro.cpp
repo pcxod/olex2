@@ -462,14 +462,15 @@ void GXLibMacros::macName(TStrObjList &Cmds, const TParamList &Options,
     return;
   }
   bool changeSuffix = Options.Contains('s');
-  bool nameResi = Options.GetBoolOption('r');
+  bool nameResi = Options.GetBoolOption('r', false, true);
   if (changeSuffix) {
     TXAtomPList xatoms = app.FindXAtoms(Cmds, true, !Options.Contains("cs"));
     if (!xatoms.IsEmpty()) {
       TUndoData *ud = app.GetUndo().Push(app.ChangeSuffix(
         xatoms, Options.FindValue('s')));
       if (nameResi) {
-        TUndoData *rud = app.SynchroniseResidues(xatoms);
+        TUndoData *rud = app.SynchroniseResidues(
+          TCAtomPList(xatoms, FunctionAccessor::MakeConst(&TXAtom::CAtom)));
         if (ud != NULL)
           ud->AddAction(rud);
         else

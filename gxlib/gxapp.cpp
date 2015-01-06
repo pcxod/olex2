@@ -2292,53 +2292,65 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To,
     }
   }
   if (NameResi) {
-    undo().AddAction(SynchroniseResidues(Atoms));
+    undo().AddAction(SynchroniseResidues(
+      TCAtomPList(Atoms, FunctionAccessor::MakeConst(&TXAtom::CAtom))));
   }
   return undo.release();
 }
 //..............................................................................
-TUndoData* TGXApp::SynchroniseResidues(const TXAtomPList &reference) {
-  TNameUndo *undo = new TNameUndo(
+TUndoData* TGXApp::SynchroniseResidues(const TCAtomPList &refs) {
+  olx_object_ptr<TNameUndo> undo = new TNameUndo(
     new TUndoActionImplMF<TGXApp>(this, &GxlObject(TGXApp::undoName)));
   olxstr_dict<TTypeList<TCAtomPList>, true> groups;
   TAsymmUnit &au = XFile().GetAsymmUnit();
-  for (size_t i=1; i < au.ResidueCount(); i++) {
-    TResidue &r = au.GetResidue(i);
-    TCAtomPList &l = groups.Add(r.GetClassName()).AddNew();
-    l.SetCapacity(r.Count());
-    for (size_t j=0; j < r.Count(); j++) {
-      if (r[j].IsDeleted()) continue;
-      l.Add(r[j])->SetTag((index_t)l.Count());
-    }
-
-  }
-  for (size_t i=0; i < reference.Count(); i++) {
-    TCAtom &a = reference[i]->CAtom();
-    if (a.GetResiId() == 0) continue;
-    TTypeList<TCAtomPList> &g = groups.Get(
-      au.GetResidue(a.GetResiId()).GetClassName());
-    size_t idx = InvalidIndex;
-    for (size_t j=0; j < g.Count(); j++) {
-      if ((size_t)a.GetTag() < g[j].Count() &&
-          g[j][a.GetTag()]->GetId() == a.GetId())
-      {
-        idx = j;
-        break;
-      }
-    }
-    if (idx == InvalidIndex) { // how could it?
+  for (size_t i = 0; i < refs.Count(); i++) {
+    if (refs[i]->GetResiId() == 0 || refs[i]->GetType().z < 2) {
       continue;
     }
-    for (size_t j=0; j < g.Count(); j++) {
-      if (j == idx || g[j].Count() != g[idx].Count())
-        continue;
-      if (g[j][a.GetTag()]->GetLabel() != a.GetLabel()) {
-        undo->AddAtom(*g[j][a.GetTag()], g[j][a.GetTag()]->GetLabel());
-        g[j][a.GetTag()]->SetLabel(a.GetLabel());
+    TResidue &rr = au.GetResidue(refs[i]->GetResiId());
+    TTypeList<TCAtomPList> &rg = groups.Add(rr.GetClassName());
+    if (rg.IsEmpty()) {
+      size_t rl_idx = InvalidIndex;
+      for (size_t j = 1; j < au.ResidueCount(); j++) {
+        TResidue &r = au.GetResidue(j);
+        if (!r.GetClassName().Equalsi(rr.GetClassName())) {
+          continue;
+        }
+        TCAtomPList &l = rg.AddNew();
+        l.SetCapacity(r.Count());
+        for (size_t k = 0; k < r.Count(); k++) {
+          if (r[k].IsDeleted() || r[k].GetType().z < 2) {
+            continue;
+          }
+          l.Add(r[k])->SetTag((index_t)l.Count());
+        }
+        if (&r == &rr) {
+          rl_idx = rg.Count() - 1;
+        }
+      }
+      if (rl_idx == InvalidIndex ||
+        refs[i]->GetTag() < 0 ||
+        refs[i]->GetTag() >= (index_t)rg[rl_idx].Count())
+      {
+        throw TFunctionFailedException(__OlxSourceInfo, "assert");
+      }
+      for (size_t j = 0; j < rg.Count(); j++) {
+        if (j == rl_idx) continue;
+        if (rg[j].Count() != rg[rl_idx].Count()) {
+          rg.NullItem(j);
+        }
+      }
+      rg.Pack();
+    }
+    for (size_t j = 0; j < rg.Count(); j++) {
+      TCAtom *a = rg[j][refs[i]->GetTag()];
+      if (a->GetLabel() != refs[i]->GetLabel()) {
+        undo().AddAtom(*a, a->GetLabel());
+        a->SetLabel(refs[i]->GetLabel(), false);
       }
     }
   }
-  return undo;
+  return undo.release();
 }
 //..............................................................................
 int XAtomLabelSort(const TXAtom &I1, const TXAtom &I2)  {
