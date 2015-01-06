@@ -278,8 +278,6 @@ void TIns::_ProcessSame(ParseContext& cx)  {
   for (size_t i=0; i < cx.Same.Count(); i++) {
     TCAtom* ca = cx.Same[i].b;
     TStrList& sl = cx.Same[i].a;
-    if (ca == NULL) // should not happen
-      continue;
     TPtrList<TSameGroup> all_groups;
     size_t max_atoms = 0;
     for (size_t j=0; j < sl.Count(); j++) {
@@ -308,7 +306,7 @@ void TIns::_ProcessSame(ParseContext& cx)  {
       }
     }
     // now process the reference group
-    if (max_atoms != 0) {
+    if (max_atoms != 0 && ca != 0) {
       bool valid = true;
       TSameGroup& sg = sgl.New();  // main, reference, group
       for (size_t j = 0; j < max_atoms; j++) {
@@ -2096,6 +2094,7 @@ void TIns::ParseHeader(const TStrList& in)  {
   Ins.Pack();
   ParseRestraints(cx.rm, Ins);
   Ins.Pack();
+  _ProcessSame(cx);
   _FinishParsing(cx);
 }
 //..............................................................................

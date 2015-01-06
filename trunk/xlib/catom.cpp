@@ -55,51 +55,55 @@ void TCAtom::SetConnInfo(CXConnInfo& ci) {
   ConnInfo = &ci;
 }
 //..............................................................................
-void TCAtom::SetLabel(const olxstr& L, bool validate)  {
-  if( validate )  {
-    if( L.IsEmpty() )
+void TCAtom::SetLabel(const olxstr& L, bool validate) {
+  if (validate) {
+    if (L.IsEmpty())
       throw TInvalidArgumentException(__OlxSourceInfo, "empty label");
     cm_Element *atype = XElementLib::FindBySymbolEx(L);
-    if( atype == NULL )
-      throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Unknown element: '") << L << '\'' );
-    if( Type != atype )  {
-      if( Type != NULL && *Type == iQPeakZ )
+    if (atype == NULL) {
+      throw TInvalidArgumentException(__OlxSourceInfo,
+        olxstr("Unknown element: '") << L << '\'');
+    }
+    if (Type != atype) {
+      if (Type != NULL && *Type == iQPeakZ)
         SetQPeak(0);
       Type = atype;
       Parent->_OnAtomTypeChanged(*this);
     }
     Label = L;
-    if( Type->symbol.Length() == 2 )
+    if (Type->symbol.Length() == 2)
       Label[1] = Label.o_tolower(Label.CharAt(1));
   }
-  else
+  else {
     Label = L;
+  }
 }
 //..............................................................................
-void TCAtom::SetType(const cm_Element& t)  {
-  if( Type != &t )  {
-    if( Type != NULL && *Type == iQPeakZ )
+void TCAtom::SetType(const cm_Element& t) {
+  if (Type != &t) {
+    if (Type != NULL && *Type == iQPeakZ) {
       SetQPeak(0);
+    }
     Type = &t;
     Parent->_OnAtomTypeChanged(*this);
   }
 }
 //..............................................................................
 void TCAtom::AssignEquivs(const TCAtom& S)  {
-  if( S.Equivs != NULL )  {
-    if( Equivs == NULL )
+  if (S.Equivs != NULL) {
+    if (Equivs == NULL)
       Equivs = new smatd_list(*S.Equivs);
     else
       *Equivs = *S.Equivs;
   }
-  else if( Equivs != NULL )  {
+  else if (Equivs != NULL) {
     delete Equivs;
     Equivs = NULL;
   }
 }
 //..............................................................................
-void TCAtom::ClearEquivs()  {
-  if(Equivs != NULL )  {
+void TCAtom::ClearEquivs() {
+  if (Equivs != NULL) {
     delete Equivs;
     Equivs = NULL;
   }

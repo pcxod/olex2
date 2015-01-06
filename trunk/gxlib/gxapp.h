@@ -313,7 +313,7 @@ public:
     return TBasicApp::ToClipboard(l);
   }
 protected:
-  float FProbFactor;
+  double FProbFactor;
   // the default is 1, Calculated Zoom is multiplid by this number
   double ExtraZoom;
   /* intialises SAtom::Tag to XAtom::Id and checks if any atom with
@@ -587,7 +587,7 @@ public:
   TUndoData* Name(TXAtom& Atom, const olxstr& Name);
   TUndoData* ChangeSuffix(const TXAtomPList& xatoms, const olxstr& To);
   // makes sure that residues have the same labels as the reference atoms
-  TUndoData* SynchroniseResidues(const TXAtomPList &reference);
+  TUndoData* SynchroniseResidues(const TCAtomPList &reference);
 
 
   void InfoList(const olxstr& Atoms, TStrList& Info, bool Sort,
