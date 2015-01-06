@@ -81,7 +81,7 @@ public:
     void SetTubeS(int v) const {
       return style->SetParam("TubeSections", (tube_s = v), true);
     }
-    int GetTorusS() const { return GetParam("TorusSections", torus_s, int(8)); }
+    int GetTorusS() const { return GetParam("TorusSections", torus_s, int(25)); }
     void SetTorusS(int v) const {
       return style->SetParam("TorusSections", (torus_s = v), true);
     }
