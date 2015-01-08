@@ -81,6 +81,10 @@ public:
     &OnFileSave,
     &OnFileClose; // OnEnter, LastLoader is passed as Data
 
+  /* takes over the object event queues
+  */
+  virtual void TakeOver(TXFile &f);
+
   const TLattice& GetLattice() const {  return Lattice;  }
   TLattice& GetLattice()  {  return Lattice;  }
   TUnitCell& GetUnitCell() const {  return Lattice.GetUnitCell();  }

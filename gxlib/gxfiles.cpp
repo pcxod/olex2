@@ -34,9 +34,8 @@ TGXFile::TGXFile(XObjectProvider & op)
 }
 //..............................................................................
 TGXFile::~TGXFile() {
-  if (TBasicApp::HasInstance()) {
-    ((XObjectProvider &)GetLattice().GetObjects()).app
-      .OnObjectsCreate.Remove(this);
+  if (TGXApp::HasInstance()) {
+    TGXApp::GetInstance().OnObjectsCreate.Remove(this);
   }
   OnFileLoad.Remove(this);
   delete DUnitCell;
@@ -56,6 +55,12 @@ bool TGXFile::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
     }
   }
   return TXFile::Dispatch(MsgId, MsgSubId, Sender, Data, q);
+}
+//..............................................................................
+void TGXFile::TakeOver(TXFile &f) {
+  TXFile::TakeOver(f);
+  OnFileLoad.Remove(&f);
+  OnFileLoad.Add(this, GXFILE_EVT_FILELOAD);
 }
 //..............................................................................
 void TGXFile::ToDataItem(TDataItem& item) {

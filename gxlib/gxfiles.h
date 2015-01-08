@@ -31,7 +31,7 @@ protected:
 public:
   TGXFile(struct XObjectProvider &);
   ~TGXFile();
-
+  void TakeOver(TXFile &f);
   void ToDataItem(TDataItem& item);
   void FromDataItem(const TDataItem& item);
 

@@ -140,6 +140,19 @@ TXFile::~TXFile()  {
       delete FileFormats.GetObject(i);
 }
 //..............................................................................
+void TXFile::TakeOver(TXFile &f) {
+  OnFileLoad.TakeOver(f.OnFileLoad);
+  OnFileSave.TakeOver(f.OnFileSave);
+  GetLattice().OnDisassemble.TakeOver(
+    f.GetLattice().OnDisassemble);
+  GetLattice().OnStructureGrow.TakeOver(
+    f.GetLattice().OnStructureGrow);
+  GetLattice().OnStructureUniq.TakeOver(
+    f.GetLattice().OnStructureUniq);
+  GetLattice().OnAtomsDeleted.TakeOver(
+    f.GetLattice().OnAtomsDeleted);
+}
+//..............................................................................
 void TXFile::RegisterFileFormat(TBasicCFile *F, const olxstr &Ext)  {
   if( FileFormats.IndexOf(Ext) != InvalidIndex )
     throw TInvalidArgumentException(__OlxSourceInfo, "Ext");
