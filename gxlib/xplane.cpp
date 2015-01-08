@@ -92,7 +92,7 @@ void TXPlane::Create(const olxstr& cName)  {
     TGlPrimitive& GlP = GPC.NewPrimitive("Plane", sgloPolygon);
     GlP.SetProperties(GS.GetMaterial(GlP.GetName(), GlM));
   }
-  TGlMaterial glm = "511;5460819;0;12632256;6250335;4292861919;4294967295;12;12";
+  TGlMaterial glm("511;5460819;0;12632256;6250335;4292861919;4294967295;12;12");
   if ((PMask & 2) != 0)  {
     TGlPrimitive& glpC = GPC.NewPrimitive("Centroid", sgloSphere);
     glpC.SetProperties(GS.GetMaterial(glpC.GetName(), glm));
