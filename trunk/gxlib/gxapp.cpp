@@ -397,7 +397,8 @@ TGXApp::TGXApp(const olxstr &FileName, AGlScene *scene)
   PointAnalyser::Register();
 }
 //..............................................................................
-TGXApp::~TGXApp()  {
+TGXApp::~TGXApp() {
+  Instance = 0;
   delete States;
   XFile().GetLattice().OnAtomsDeleted.Remove(this);
   Clear();
@@ -4461,16 +4462,7 @@ TGXFile& TGXApp::NewXFile() {
 void TGXApp::SetActiveXFile(size_t i) {
   if (i == 0 || i >= Files.Count())  return;
   Files.Swap(i, 0);
-  XFile().OnFileLoad.TakeOver(Files[i].OnFileLoad);
-  XFile().OnFileSave.TakeOver(Files[i].OnFileSave);
-  XFile().GetLattice().OnDisassemble.TakeOver(
-    Files[i].GetLattice().OnDisassemble);
-  XFile().GetLattice().OnStructureGrow.TakeOver(
-    Files[i].GetLattice().OnStructureGrow);
-  XFile().GetLattice().OnStructureUniq.TakeOver(
-    Files[i].GetLattice().OnStructureUniq);
-  XFile().GetLattice().OnAtomsDeleted.TakeOver(
-    Files[i].GetLattice().OnAtomsDeleted);
+  XFile().TakeOver(Files[i]);
   AlignXFiles();
   CreateObjects(true);
   XFile().DUnitCell->SetReciprocal(false);

@@ -58,10 +58,10 @@ TBasicApp::TBasicApp(const olxstr& FileName, bool read_options)
 }
 //..............................................................................
 TBasicApp::~TBasicApp()  {
+  Instance = 0;
   delete Log;
   if (LogFile != NULL)
     delete LogFile;
-  Instance = NULL;
 }
 //..............................................................................
 olxstr TBasicApp::GetModuleName() {
