@@ -400,15 +400,21 @@ void TdlgSceneProps::InitLight(TGlLight& L)  {
 }
 //..............................................................................
 void TdlgSceneProps::UpdateLight(TGlLight& L)  {
-  L.SetPosition(TGlOption(tbX->GetValue(), tbY->GetValue(), tbZ->GetValue(), tbR->GetValue()));
-  L.SetAmbient(teAmb->WI.GetColor() | (uint32_t)((256*scAmbA->GetValue()/100) << 24));
-  L.SetDiffuse(teDiff->WI.GetColor() | (uint32_t)((256*scDiffA->GetValue()/100) << 24));
-  L.SetSpecular(teSpec->WI.GetColor() | (uint32_t)((256*scSpecA->GetValue()/100) << 24));
-  L.SetAttenuation(TGlOption(teAC->GetText().ToDouble(), teAB->GetText().ToDouble(), teAA->GetText().ToDouble()));
+  L.SetPosition(TGlOption(tbX->GetValue(), tbY->GetValue(),
+    tbZ->GetValue(), tbR->GetValue()));
+  L.SetAmbient(
+    teAmb->WI.GetColor() | (uint32_t)((256*scAmbA->GetValue()/100) << 24));
+  L.SetDiffuse(
+    teDiff->WI.GetColor() | (uint32_t)((256*scDiffA->GetValue()/100) << 24));
+  L.SetSpecular(
+    teSpec->WI.GetColor() | (uint32_t)((256*scSpecA->GetValue()/100) << 24));
+  L.SetAttenuation(TGlOption(teAC->GetText().ToDouble(),
+    teAB->GetText().ToDouble(), teAA->GetText().ToDouble()));
   L.SetEnabled(cbEnabled->GetValue());
   L.SetSpotExponent(scSExp->GetValue());
   L.SetSpotCutoff(cbUniform->GetValue() ? 180 : scSCO->GetValue());
-  L.SetSpotDirection(TGlOption(teSCX->GetText().ToDouble(), teSCY->GetText().ToDouble(), teSCZ->GetText().ToDouble()));
+  L.SetSpotDirection(TGlOption(teSCX->GetText().ToDouble(),
+    teSCY->GetText().ToDouble(), teSCZ->GetText().ToDouble()));
 }
 //..............................................................................
 void TdlgSceneProps::OnApply(wxCommandEvent& event)  {
@@ -455,12 +461,15 @@ void TdlgSceneProps::OnSave(wxCommandEvent& event)  {
 void TdlgSceneProps::LoadFromFile(TGlLightModel &FLM, const olxstr &FN)  {
   TDataFile F;
   F.LoadFromXLFile(FN, NULL);
-  Parent->LoadScene(F.Root(), FLM);
+  TGlRenderer &gr = TGXApp::GetInstance().GetRenderer();
+  gr.GetScene().FromDataItem(F.Root());
+  FLightModel = gr.LightModel;
 }
 //..............................................................................
 void TdlgSceneProps::SaveToFile(TGlLightModel &FLM, const olxstr &FN)  {
   TDataFile DF;
-  Parent->SaveScene(DF.Root(), FLM);
+  TGlRenderer &gr = TGXApp::GetInstance().GetRenderer();
+  gr.GetScene().ToDataItem(DF.Root());
   try{  DF.SaveToXLFile(FN); }
   catch(...)  {
     TBasicApp::NewLogEntry(logError) << "Failed to save scene parameters!";

@@ -1317,8 +1317,8 @@ void TMainForm::XApp(Olex2App *XA)  {
     .Add(this, ID_UPDATE_GUI);
 }
 //..............................................................................
-void TMainForm::StartupInit()  {
-  if( StartupInitialised )  return;
+void TMainForm::StartupInit() {
+  if (StartupInitialised)  return;
   StartupInitialised = true;
   if (FGlCanvas != NULL)
     FGlCanvas->XApp(FXApp);
@@ -1351,6 +1351,14 @@ void TMainForm::StartupInit()  {
     TEFile::AddPathDelimeterI(T);
     T << FLastSettingsFile;
   }
+  AGlScene &sc = FXApp->GetRenderer().GetScene();
+  sc.materials.Add("Help_txt", &HelpFontColorTxt);
+  sc.materials.Add("Help_cmd", &HelpFontColorCmd);
+  sc.materials.Add("Exec", &ExecFontColor);
+  sc.materials.Add("Info", &InfoFontColor);
+  sc.materials.Add("Warning", &WarningFontColor);
+  sc.materials.Add("Error", &ErrorFontColor);
+  sc.materials.Add("Exception", &ExceptionFontColor);
   try  {
     LoadSettings(T);
     olxstr hfn = FXApp->GetConfigDir() + "history.txt";
@@ -2623,7 +2631,7 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
   I->AddField("ThreadCount", FXApp->GetMaxThreadCount());
 
   I = &DF.Root().AddItem("Recent_files");
-  for( size_t i=0; i < olx_min(FRecentFilesToShow, FRecentFiles.Count()); i++ )
+  for (size_t i=0; i < olx_min(FRecentFilesToShow, FRecentFiles.Count()); i++)
   {
     I->AddField(olxstr("file") << i,
       olxstr().quote('"') << TEFile::CreateRelativePath(FRecentFiles[i]));
@@ -2634,8 +2642,8 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
     TDataItem& it = I->AddItem(StoredParams.GetKey(i));
     it.AddField("value", olxstr().quote('"') << StoredParams.GetValue(i));
   }
-
-  SaveScene(DF.Root().AddItem("Scene"), FXApp->GetRenderer().LightModel);
+  FXApp->GetRenderer().GetScene().ToDataItem(
+    DF.Root().AddItem("Scene"));
   try {
     FXApp->GetRenderer().GetStyles().ToDataItem(DF.Root().AddItem("Styles"));
   }
@@ -2842,10 +2850,13 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
   if (TEFile::Exists(DefSceneP)) {
     TDataFile SDF;
     SDF.LoadFromXLFile(DefSceneP, &Log);
-    LoadScene(SDF.Root(), FXApp->GetRenderer().LightModel);
+    FXApp->GetRenderer().GetScene().FromDataItem(SDF.Root());
   }
-  else
-    LoadScene(DF.Root().GetItemByName("Scene"), FXApp->GetRenderer().LightModel);
+  else {
+    FXApp->GetRenderer().GetScene().FromDataItem(
+      DF.Root().GetItemByName("Scene"));
+  }
+  FBgColor = FXApp->GetRenderer().LightModel.GetClearColor();
   // restroring language or setting default
   try {
     FXApp->SetCurrentLanguage(
@@ -2893,60 +2904,6 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
       StoredParams.Add(pd.GetName(), v);
     }
   }
-}
-//..............................................................................
-void TMainForm::LoadScene(const TDataItem& Root, TGlLightModel& FLM) {
-  TDataFile F;
-  olxstr FntData;
-  FLM.FromDataItem(Root.GetItemByName("Scene_Properties"));
-  FBgColor = FLM.GetClearColor();
-  TDataItem *I = Root.FindItem("Fonts");
-  if( I == NULL )  return;
-  for( size_t i=0; i < I->ItemCount(); i++ )  {
-    TDataItem& fi = I->GetItemByIndex(i);
-    // compatibility conversion...
-    if( fi.GetName() == "Console" )
-      FXApp->GetRenderer().GetScene().CreateFont("Default", fi.FindField("id"));
-    else
-      FXApp->GetRenderer().GetScene().CreateFont(fi.GetName(), fi.FindField("id"));
-  }
-  I = Root.FindItem("Materials");
-  if( I != NULL )  {
-    TDataItem *ci;
-    ci = I->FindItem("Help_txt");
-    if( ci != NULL )  HelpFontColorTxt.FromDataItem(*ci);
-    ci = I->FindItem("Help_cmd");
-    if( ci != NULL ) HelpFontColorCmd.FromDataItem(*ci);
-
-    ci = I->FindItem("Exec");
-    if( ci != NULL ) ExecFontColor.FromDataItem(*ci);
-    ci = I->FindItem("Info");
-    if( ci != NULL ) InfoFontColor.FromDataItem(*ci);
-    ci =I->FindItem("Warning");
-    if( ci != NULL ) WarningFontColor.FromDataItem(*ci);
-    ci = I->FindItem("Error");
-    if( ci != NULL ) ErrorFontColor.FromDataItem(*ci);
-    ci = I->FindItem("Exception");
-    if( ci != NULL ) ExceptionFontColor.FromDataItem(*ci);
-  }
-  FXApp->GetRenderer().InitLights();
-}
-//..............................................................................
-void TMainForm::SaveScene(TDataItem &Root, const TGlLightModel &FLM) const {
-  FLM.ToDataItem(Root.AddItem("Scene_Properties"));
-  TDataItem *I = &Root.AddItem("Fonts");
-  for( size_t i=0; i < FXApp->GetRenderer().GetScene().FontCount(); i++ )  {
-    TDataItem& fi = I->AddItem(FXApp->GetRenderer().GetScene()._GetFont(i).GetName());
-    fi.AddField("id", FXApp->GetRenderer().GetScene()._GetFont(i).GetIdString());
-  }
-  I = &Root.AddItem("Materials");
-  HelpFontColorTxt.ToDataItem(I->AddItem("Help_txt"));
-  HelpFontColorCmd.ToDataItem(I->AddItem("Help_cmd"));
-  ExecFontColor.ToDataItem(I->AddItem("Exec"));
-  InfoFontColor.ToDataItem(I->AddItem("Info"));
-  WarningFontColor.ToDataItem(I->AddItem("Warning"));
-  ErrorFontColor.ToDataItem(I->AddItem("Error"));
-  ExceptionFontColor.ToDataItem(I->AddItem("Exception"));
 }
 //..............................................................................
 void TMainForm::UpdateRecentFile(const olxstr& fn)  {
