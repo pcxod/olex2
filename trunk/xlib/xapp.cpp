@@ -22,6 +22,7 @@
 #include "vcov.h"
 #include "twinning.h"
 #include "sfutil.h"
+#include "datafile.h"
 
 TXApp::TXApp(const olxstr &basedir, bool)
   : TBasicApp(basedir), Library(EmptyString(), this)
