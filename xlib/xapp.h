@@ -157,6 +157,11 @@ public:
   olxstr GetLastSGResult() const { return LastSGResult; }
   // for the internal use
   void SetLastSGResult_(const olxstr &r) { LastSGResult = r; }
+  /* loads specified radii from an element-radius a line file or from structured
+  xld file
+  */
+  void UpdateRadii(const olxstr &fn, const olxstr &rtype=EmptyString(),
+    bool log=false);
   /* reads a simple 'element radius' a line text file
   */
   static ElementRadii::const_dict_type ReadRadii(const olxstr& fn);

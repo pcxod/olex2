@@ -594,8 +594,6 @@ public:
   void SaveSettings(const olxstr &FN);
   virtual const olxstr& GetScenesFolder() const {  return ScenesDir;  }
   virtual void SetScenesFolder(const olxstr &sf)  {  ScenesDir = sf;  }
-  virtual void LoadScene(const TDataItem& Root, TGlLightModel &FLM);
-  virtual void SaveScene(TDataItem& Root, const TGlLightModel &FLM) const;
   void UpdateUserOptions(const olxstr &option, const olxstr &value);
 
   // fires the state change as well

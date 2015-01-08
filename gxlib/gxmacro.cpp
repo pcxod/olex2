@@ -1253,15 +1253,20 @@ void GXLibMacros::macShowQ(TStrObjList &Cmds, const TParamList &Options,
 void GXLibMacros::macLoad(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
-  if (Cmds.IsEmpty() || !Cmds[0].Equalsi("textures")) {
+  if (Cmds.IsEmpty()) {
     Error.SetUnhandled(true);
     return;
   }
-  Cmds.Delete(0);
-  if (Cmds.IsEmpty())
-    app.ClearTextures(~0);
-  else
-    app.LoadTextures(Cmds.Text(' '));
+  if (Cmds[0].Equalsi("textures")) {
+    Cmds.Delete(0);
+    if (Cmds.IsEmpty())
+      app.ClearTextures(~0);
+    else
+      app.LoadTextures(Cmds.Text(' '));
+  }
+  else {
+    Error.SetUnhandled(true);
+  }
 }
 //.............................................................................
 void GXLibMacros::macMatr(TStrObjList &Cmds, const TParamList &Options,

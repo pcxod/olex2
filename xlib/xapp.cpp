@@ -841,6 +841,97 @@ olxstr TXApp::InitVcoV(VcoVContainer& vcovc) const {
   return src_mat;
 }
 //..............................................................................
+void TXApp::UpdateRadii(const olxstr &fn, const olxstr &rtype, bool log) {
+  if (fn.EndsWithi(".xld")) {
+    TDataFile df;
+    df.LoadFromXLFile(fn);
+    TDataItem &elements = df.Root().GetItemByName("elements");
+    for (size_t i = 0; i < elements.ItemCount(); i++) {
+      TDataItem &e = elements.GetItemByIndex(i);
+      cm_Element* cme = XElementLib::FindBySymbol(e.GetName());
+      if (cme == NULL) {
+        TBasicApp::NewLogEntry(logError) << "Undefined element: '" <<
+          e.GetName() << '\'';
+        continue;
+      }
+      for (size_t j = 0; j < e.FieldCount(); j++) {
+        if (e.GetFieldName(j).Equals("sfil"))
+          cme->r_sfil = e.GetFieldByIndex(j).ToDouble();
+        else if (e.GetFieldName(j).Equals("pers"))
+          cme->r_pers = e.GetFieldByIndex(j).ToDouble();
+        else if (e.GetFieldName(j).Equals("vdw"))
+          cme->r_vdw = e.GetFieldByIndex(j).ToDouble();
+        else if (e.GetFieldName(j).Equals("bonding"))
+          cme->r_bonding = e.GetFieldByIndex(j).ToDouble();
+      }
+    }
+    if (log) {
+      TBasicApp::NewLogEntry() <<
+        "Custom radii file loaded: '" << fn << '\'';
+    }
+  }
+  else {
+    olxstr_dict<double> radii;
+    TStrList sl = TEFile::ReadLines(fn),
+      changed;
+    // parse the file and fill the dictionary
+    for (size_t i = 0; i < sl.Count(); i++)  {
+      size_t idx = sl[i].IndexOf(' ');
+      if (idx != InvalidIndex) {
+        radii(sl[i].SubStringTo(idx), sl[i].SubStringFrom(idx + 1).ToDouble());
+      }
+    }
+    // end the file parsing
+    if (rtype.Equalsi("sfil")) {
+      for (size_t i = 0; i < radii.Count(); i++) {
+        cm_Element* cme = XElementLib::FindBySymbol(radii.GetKey(i));
+        if (cme != NULL && cme->r_sfil != radii.GetValue(i)) {
+          cme->r_sfil = radii.GetValue(i);
+          changed << cme->symbol;
+        }
+      }
+    }
+    else if (rtype.Equalsi("pers")) {
+      for (size_t i = 0; i < radii.Count(); i++) {
+        cm_Element* cme = XElementLib::FindBySymbol(radii.GetKey(i));
+        if (cme != NULL && cme->r_pers != radii.GetValue(i)) {
+          cme->r_pers = radii.GetValue(i);
+          changed << cme->symbol;
+        }
+      }
+    }
+    else if (rtype.Equalsi("vdw")) {
+      for (size_t i = 0; i < radii.Count(); i++) {
+        cm_Element* cme = XElementLib::FindBySymbol(radii.GetKey(i));
+        if (cme != NULL && cme->r_vdw != radii.GetValue(i)) {
+          cme->r_vdw = radii.GetValue(i);
+          changed << cme->symbol;
+        }
+      }
+    }
+    else if (rtype.Equalsi("bonding")) {
+      for (size_t i = 0; i < radii.Count(); i++) {
+        cm_Element* cme = XElementLib::FindBySymbol(radii.GetKey(i));
+        if (cme != NULL && cme->r_bonding != radii.GetValue(i)) {
+          cme->r_bonding = radii.GetValue(i);
+          changed << cme->symbol;
+        }
+      }
+    }
+    else {
+      TBasicApp::NewLogEntry(logError) <<
+        (olxstr("Undefined radii name: ").quote() << rtype);
+    }
+    if (log && !changed.IsEmpty()) {
+      TBasicApp::NewLogEntry() << "Using user defined " << rtype <<
+        " radii for:";
+      olxstr all = changed.Text(' ');
+      changed.Clear();
+      TBasicApp::NewLogEntry() << changed.Hyphenate(all, 80, true);
+    }
+  }
+}
+//..............................................................................
 ElementRadii::const_dict_type TXApp::ReadRadii(const olxstr& fileName) {
   ElementRadii radii;
   if (TEFile::Exists(fileName)) {

@@ -139,10 +139,14 @@ public:
     DefPropP(short, Size)
   };
 
+  /* named set of user defined materials.
+  */
+  olxstr_dict<TGlMaterial *> materials;
+
   void ToDataItem(TDataItem &di) const;
   void FromDataItem(const TDataItem &di);
+  
   const_strlist ToPov() const;
-
   void LibMakeCurrent(TStrObjList& Cmds, const TParamList& Options,
     TMacroData& E);
   TLibrary* ExportLibrary(const olxstr& name=EmptyString());

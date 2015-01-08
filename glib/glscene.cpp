@@ -72,16 +72,40 @@ TGlFont& AGlScene::CreateFont(const olxstr& name, const olxstr& fntDescription)
 void AGlScene::ToDataItem(TDataItem &di) const {
   FParent->LightModel.ToDataItem(di.AddItem("LightModel"));
   TDataItem &fonts = di.AddItem("Fonts");
-  for( size_t i=0; i < FontCount(); i++ )
+  for (size_t i = 0; i < FontCount(); i++) {
     fonts.AddItem(_GetFont(i).GetName(), _GetFont(i).GetIdString());
+  }
+  TDataItem &mats = di.AddItem("Materials");
+  for (size_t i = 0; i < materials.Count(); i++) {
+    materials.GetValue(i)->ToDataItem(mats.AddItem(materials.GetKey(i)));
+  }
 }
 //.............................................................................
-void AGlScene::FromDataItem(const TDataItem &di)  {
-  FParent->LightModel.FromDataItem(di.GetItemByName("LightModel"));
+void AGlScene::FromDataItem(const TDataItem &di) {
+  TDataItem *lm = di.FindItem("LightModel");
+  if (lm == 0) {
+    lm = di.FindItem("Scene_Properties");
+  }
+  if (lm != 0) {
+    FParent->LightModel.FromDataItem(*lm);
+  }
   TDataItem &fonts = di.GetItemByName("Fonts");
   for (size_t i = 0; i < fonts.ItemCount(); i++) {
-    CreateFont(fonts.GetItemByIndex(i).GetName(),
-      fonts.GetItemByIndex(i).GetValue());
+    olxstr fd = fonts.GetItemByIndex(i).GetValue();
+    if (fd.IsEmpty()) {
+      fd = fonts.GetItemByIndex(i).FindField("id");
+    }
+    CreateFont(fonts.GetItemByIndex(i).GetName(), fd);
+  }
+  TDataItem *mats = di.FindItem("Materials");
+  if (mats != 0) {
+    for (size_t i = 0; i < mats->ItemCount(); i++) {
+      TDataItem &mi = mats->GetItemByIndex(i);
+      TGlMaterial *m = materials.Find(mi.GetName(), 0);
+      if (m != 0) {
+        m->FromDataItem(mi);
+      }
+    }
   }
 }
 //.............................................................................
