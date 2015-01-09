@@ -121,6 +121,8 @@ enum  {
   ID_AtomPolyPyramid,
   ID_AtomPolyBipyramid,
 
+  ID_AtomExploreEnvi,
+
   ID_Selection,
   ID_SelGroup,
   ID_SelUnGroup,
