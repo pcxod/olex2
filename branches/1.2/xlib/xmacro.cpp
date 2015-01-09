@@ -6683,7 +6683,7 @@ void XLibMacros::macPart(TStrObjList &Cmds, const TParamList &Options,
     {
       sorted::PointerPointer<TCAtom> atoms;
       atoms.Add(&Atoms[j]->CAtom());
-      if (atoms[i]->GetType() > 1) {
+      if (Atoms[j]->GetType() > 1) {
         for (size_t k = 0; k < Atoms[j]->CAtom().AttachedSiteCount(); k++) {
           TCAtom &aa = Atoms[j]->CAtom().GetAttachedAtom(k);
           if (aa.GetType() == iHydrogenZ) {
