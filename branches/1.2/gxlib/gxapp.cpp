@@ -247,7 +247,6 @@ TGXApp::TGXApp(const olxstr &FileName, AGlScene *scene)
 {
   FQPeaksVisible = FHydrogensVisible = FStructureVisible = FHBondsVisible
     = true;
-  ShowChemicalOccu = true;
   XGrowPointsVisible = FXGrowLinesVisible = FQPeakBondsVisible = false;
   DisplayFrozen = MainFormVisible = false;
   ZoomAfterModelBuilt = FXPolyVisible = true;
@@ -698,14 +697,14 @@ void TGXApp::Init()  {
     }
     TBasicApp::NewLogEntry(logExceptionTrace) << e;
   }
-  try {
-    ShowChemicalOccu = GetOptions().FindValue(
-      "tooltip_occu_chem", TrueString()).ToBool();
-  }
-  catch(...) {
-    TBasicApp::NewLogEntry(logInfo) <<
-      (olxstr("Invalid boolean value for ").quote() << "tooltip_occu_chem");
-  }
+  //try {
+  //  ShowChemicalOccu = GetOptions().FindValue(
+  //    "tooltip_occu_chem", TrueString()).ToBool();
+  //}
+  //catch (...) {
+  //  TBasicApp::NewLogEntry(logInfo) <<
+  //    (olxstr("Invalid boolean value for ").quote() << "tooltip_occu_chem");
+  //}
 }
 //..............................................................................
 int32_t TGXApp::Quality(const short V)  {
@@ -1122,59 +1121,70 @@ olxstr TGXApp::GetObjectInfoAt(int x, int y) const {
     const TXAtom &xa = *(TXAtom*)G;
     const TCAtom& ca = xa.CAtom();
     rv = xa.GetGuiLabelEx();
-    if (xa.GetType() == iQPeakZ)
+    if (xa.GetType() == iQPeakZ) {
       rv << ':' << xa.CAtom().GetQPeak();
-    double occu = (ShowChemicalOccu ? ca.GetChemOccu() : ca.GetOccu());
-    rv << (ShowChemicalOccu ? "\nChem occu(" : "\nXtal occu(");
-    if (ca.GetVarRef(catom_var_name_Sof) != NULL) {
-      if (ca.GetVarRef(catom_var_name_Sof)->relation_type == relation_None) {
-        rv << "fixed): ";
-        if (olx_abs(occu-olx_round(occu)) < 1e-3)
+    }
+    {
+      rv << "\nOccu: ";
+      double occu = ca.GetChemOccu();
+      if (olx_abs(occu - olx_round(occu)) < 1e-3) {
+        occu = olx_round(occu);
+      }
+      rv << TEValueD(occu, ca.GetOccuEsd()*ca.GetDegeneracy()).ToString();
+      if (olx_abs(ca.GetChemOccu() - ca.GetOccu()) > 1e-3) {
+        double occu = ca.GetOccu();
+        if (olx_abs(occu - olx_round(occu)) < 1e-3)
           occu = olx_round(occu);
+        rv << " (Xtal: " <<
+          TEValueD(occu, ca.GetOccuEsd()).ToString() << ')';
       }
-      else {
-        rv << "linked to ";
-        if (olx_abs(ca.GetVarRef(catom_var_name_Sof)->coefficient-1.0) > 1e-6) {
-          rv << olxstr(ca.GetVarRef(catom_var_name_Sof)->coefficient)
-            .TrimFloat() << 'x';
+
+      if (ca.GetVarRef(catom_var_name_Sof) != NULL) {
+        if (ca.GetVarRef(catom_var_name_Sof)->relation_type == relation_None) {
+          rv << ", fixed";
         }
-        if (ca.GetVarRef(catom_var_name_Sof)->relation_type == relation_AsVar)
-          rv << "[FVAR#";
-        else
-          rv << "[1-FVAR #";
-        rv << (ca.GetVarRef(catom_var_name_Sof)->Parent.GetId()+1) << "]): ";
+        else {
+          rv << ", linked to ";
+          if (olx_abs(ca.GetVarRef(catom_var_name_Sof)->coefficient - 1.0) > 1e-6) {
+            rv << olxstr(ca.GetVarRef(catom_var_name_Sof)->coefficient)
+              .TrimFloat() << 'x';
+          }
+          if (ca.GetVarRef(catom_var_name_Sof)->relation_type == relation_AsVar)
+            rv << "[FVAR#";
+          else
+            rv << "[1-FVAR #";
+          rv << (ca.GetVarRef(catom_var_name_Sof)->Parent.GetId() + 1) << "])";
+        }
       }
-    }
-    else
-      rv << "free): ";
-    rv << TEValueD(occu, ca.GetOccuEsd()*ca.GetDegeneracy()).ToString();
-    if (ca.GetEllipsoid() == NULL) {
-      rv << "\nUiso (";
-      if (ca.GetVarRef(catom_var_name_Uiso) != NULL &&
-        ca.GetVarRef(catom_var_name_Uiso)->relation_type == relation_None &&
-        ca.GetUisoOwner() == NULL)
-      {
-        rv << "fixed): " << olxstr::FormatFloat(3, ca.GetUiso());
-      }
-      else if( ca.GetUisoOwner() != NULL )
-        rv << "riding): " << olxstr::FormatFloat(3, ca.GetUiso());
       else
-        rv << "free): " << TEValueD(ca.GetUiso(), ca.GetUisoEsd()).ToString();
+        rv << ", free";
     }
-    else
-      rv << "\nUeq " << olxstr::FormatFloat(3, ca.GetEllipsoid()->GetUeq());
-#ifdef _DEBUG
-    rv << "\nBonds: " << xa.BondCount() << ", nodes: " << xa.NodeCount();
-    if (xa.GetEllipsoid() == NULL) {
-      rv << "\nV: " << olxstr::FormatFloat(3,
-        pow(xa.CAtom().GetUiso(), 3./2)*4*M_PI/3, true);
+    {
+      if (ca.GetEllipsoid() == NULL) {
+        rv << "\nUiso: ";
+        if (ca.GetVarRef(catom_var_name_Uiso) != NULL &&
+          ca.GetVarRef(catom_var_name_Uiso)->relation_type == relation_None &&
+          ca.GetUisoOwner() == NULL)
+        {
+          rv << olxstr::FormatFloat(3, ca.GetUiso()) << ", fixed";
+        }
+        else if (ca.GetUisoOwner() != NULL)
+          rv << olxstr::FormatFloat(3, ca.GetUiso()) << ", riding";
+        else
+          rv << TEValueD(ca.GetUiso(), ca.GetUisoEsd()).ToString() << ", free";
+      }
+      else
+        rv << "\nUeq: " << olxstr::FormatFloat(3, ca.GetEllipsoid()->GetUeq());
     }
-    else {
-      rv << "\nV: " << olxstr::FormatFloat(3,
-        xa.GetEllipsoid()->GetSX()*xa.GetEllipsoid()->GetSY()*
-        xa.GetEllipsoid()->GetSZ()*4*M_PI/3, true);
+    if (ca.GetAfix() != 0) {
+      rv << "\nAFIX: " << ca.GetAfix();
     }
-#endif
+    if (ca.GetPart() != 0) {
+      rv << "\nPart: " << ca.GetPart();
+    }
+    rv << "\nCrd: (" << olxstr::FormatFloat(3, xa.ccrd()[0]) << ", " <<
+      olxstr::FormatFloat(3, xa.ccrd()[1]) << ", " <<
+      olxstr::FormatFloat(3, xa.ccrd()[2]) << ')';
   }
   else if (EsdlInstanceOf(*G, TXBond)) {
     TXBond& xb = *(TXBond*)G;

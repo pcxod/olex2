@@ -650,6 +650,7 @@
     <ClCompile Include="..\..\..\sdl\poly.cpp" />
     <ClCompile Include="..\..\..\sdl\settingsfile.cpp" />
     <ClCompile Include="..\..\..\sdl\sha.cpp" />
+    <ClCompile Include="..\..\..\sdl\roman.cpp" />
     <ClCompile Include="..\..\..\sdl\sparser.cpp" />
     <ClCompile Include="..\..\..\sdl\testsuit.cpp" />
     <ClCompile Include="..\..\..\sdl\undo.cpp" />
@@ -734,6 +735,7 @@
     <ClInclude Include="..\..\..\sdl\math\spline.h" />
     <ClInclude Include="..\..\..\sdl\md5.h" />
     <ClInclude Include="..\..\..\sdl\olxptr.h" />
+    <ClInclude Include="..\..\..\sdl\roman.h" />
     <ClInclude Include="..\..\..\sdl\shared.h" />
     <ClInclude Include="..\..\..\sdl\smart\olx_cstring.h" />
     <ClInclude Include="..\..\..\sdl\smart\olx_istring.h" />
@@ -766,6 +768,7 @@
     <ClInclude Include="..\..\..\sdl\tests\file_test.h" />
     <ClInclude Include="..\..\..\sdl\tests\irange_test.h" />
     <ClInclude Include="..\..\..\sdl\tests\matrix_test.h" />
+    <ClInclude Include="..\..\..\sdl\tests\roman_test.h" />
     <ClInclude Include="..\..\..\sdl\tests\sort_test.h" />
     <ClInclude Include="..\..\..\sdl\tests\spline_test.h" />
     <ClInclude Include="..\..\..\sdl\tests\string_test.h" />

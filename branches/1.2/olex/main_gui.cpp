@@ -452,9 +452,9 @@ void TMainForm::ObjectUnderMouse(AGDrawObject *G)  {
     // bang
     TStrList SL = FXApp->BangList(*XA);
     pmBang->Clear();
+    pmBang->Append(ID_AtomExploreEnvi, "Explore");
     for (size_t i = 0; i < SL.Count(); i++)
       pmBang->Append(-1, SL[i].u_str());
-    pmAtom->Enable(ID_MenuBang, SL.Count() != 0);
     olxstr T = XA->GetLabel();
     // label + basic peak/occu
     T << ':' << ' ' << XA->GetType().name;
@@ -760,15 +760,22 @@ void TMainForm::OnModelCenter(wxCommandEvent& event)  {
 void TMainForm::OnAtom(wxCommandEvent& event)  {
   if( FObjectUnderMouse == NULL )  return;
   TXAtom *XA = (TXAtom*)FObjectUnderMouse;
-  if( event.GetId() == ID_AtomGrow )
+  switch (event.GetId()) {
+  case ID_AtomGrow:
     processMacro(olxstr("grow #s") << XA->GetOwnerId());
-  else if( event.GetId() == ID_AtomSelRings )
+    break;
+  case ID_AtomSelRings:
     processMacro(olxstr("sel rings *#s") << XA->GetOwnerId());
-  else if( event.GetId() == ID_AtomCenter )  {
+    break;
+  case ID_AtomCenter:
     if( !XA->IsSelected() )
       processMacro(olxstr("center #s") << XA->GetOwnerId());
     else
       processMacro("center");  // center of the selection
+    break;
+  case ID_AtomExploreEnvi:
+    processMacro(olxstr("mode grow -v=3.5 #s") << XA->GetOwnerId());
+    break;
   }
   TimePerFrame = FXApp->Draw();
 }

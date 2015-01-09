@@ -503,8 +503,7 @@ protected:
        XGrowPointsVisible,
        FXPolyVisible,
        DisplayFrozen,
-       ZoomAfterModelBuilt,
-       ShowChemicalOccu;
+       ZoomAfterModelBuilt;
   short FGrowMode, PackMode;
 public:
   TXGlLabels& GetLabels() const {  return *FLabels; }

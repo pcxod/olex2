@@ -18,6 +18,7 @@
 #include "cif.h"
 #include "dsphere.h"
 #include "dring.h"
+#include "roman.h"
 
 #define gxlib_InitMacro(macroName, validOptions, argc, desc)\
   lib.Register(\
@@ -124,7 +125,7 @@ void GXLibMacros::Export(TLibrary& lib) {
     "labels visibility or a boolean value");
   gxlib_InitMacro(Label,
     "type-type of labels to make - subscript, brackers, default&;"
-    "symm-symmetry dependent tag type {[$], #, full}&;"
+    "symm-symmetry dependent tag type {[$], #, X, full}&;"
     "cif-creates labels for CIF data a combination of {b,a,t,h}",
     fpAny,
     "Creates moveable labels for provided atoms/bonds/angles (selection)");
@@ -966,13 +967,13 @@ void GXLibMacros::macLabel(TStrObjList &Cmds, const TParamList &Options,
   if (str_lt.Containsi("superscript") || str_lt.Containsi("sp"))
     lt |= 4;
   // have to kill labels in this case, for consistency of _$ or ^#
-  if (str_symm_tag =='$' || str_symm_tag == '#') {
+  if (str_symm_tag == '$' || str_symm_tag == '#' || str_symm_tag == 'X') {
     for (size_t i=0; i < app.LabelCount(); i++)
       app.GetLabel(i).SetVisible(false);
-    symm_tag = (str_symm_tag =='$' ? 1 : 2);
+    symm_tag = (str_symm_tag == '$' ? 1 : (str_symm_tag == '#' ? 2 : 3));
   }
   else if (str_symm_tag.Equals("full"))
-    symm_tag = 3;
+    symm_tag = 4;
   TTypeList<uint32_t> equivs;
   for (size_t i = 0; i < atoms.Count(); i++) {
     TXGlLabel& gxl = atoms[i]->GetGlLabel();
@@ -995,7 +996,7 @@ void GXLibMacros::macLabel(TStrObjList &Cmds, const TParamList &Options,
     else
       lb = atoms[i]->GetLabel();
     if (!atoms[i]->IsAUAtom()) {
-      if (symm_tag == 1 || symm_tag == 2) {
+      if (symm_tag >= 1  && symm_tag <= 3) {
         size_t pos = equivs.IndexOf(atoms[i]->GetMatrix().GetId());
         if (pos == InvalidIndex)  {
           equivs.AddCopy(atoms[i]->GetMatrix().GetId());
@@ -1003,11 +1004,15 @@ void GXLibMacros::macLabel(TStrObjList &Cmds, const TParamList &Options,
         }
         if (symm_tag == 1)
           lb << "_$" << (pos + 1);
-        else
+        else if (symm_tag == 1)
           lb << "\\+" << (pos + 1);
+        else {
+          lb << "\\+" << RomanNumber::To(pos + 1).ToLowerCase();
+        }
       }
-      else if (symm_tag == 3)
+      else if (symm_tag == 4) {
         lb << ' ' << TSymmParser::MatrixToSymmEx(atoms[i]->GetMatrix());
+      }
     }
     gxl.SetOffset(atoms[i]->crd());
     gxl.SetLabel(lb);

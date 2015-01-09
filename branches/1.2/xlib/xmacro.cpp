@@ -7479,7 +7479,10 @@ void XLibMacros::macExport(TStrObjList &Cmds, const TParamList &Options,
     E.ProcessingError(__OlxSrcInfo, "the hkl file already exists");
     return;
   }
-  cif_dp::cetTable* hklLoop = C->FindLoopGlobal("_refln", true);
+  cif_dp::cetTable* hklLoop = C->FindLoop("_refln");
+  //if (hklLoop == 0) {
+  //  hklLoop = C->FindLoopGlobal("_refln", true);
+  //}
   if (hklLoop == NULL) {
     cif_dp::cetStringList *ci = dynamic_cast<cif_dp::cetStringList *>(
       C->FindEntry("_shelx_hkl_file"));

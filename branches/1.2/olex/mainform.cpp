@@ -277,6 +277,7 @@ BEGIN_EVENT_TABLE(TMainForm, wxFrame)  // basic interface
   EVT_MENU(ID_AtomGrow, TMainForm::OnAtom)
   EVT_MENU(ID_AtomCenter, TMainForm::OnAtom)
   EVT_MENU(ID_AtomSelRings, TMainForm::OnAtom)
+  EVT_MENU(ID_AtomExploreEnvi, TMainForm::OnAtom)
 
   EVT_MENU(ID_PlaneActivate, TMainForm::OnPlane)
 

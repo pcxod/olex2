@@ -23,6 +23,7 @@
 #include "tests/container_test.h"
 #include "tests/sort_test.h"
 #include "tests/encoding_test.h"
+#include "tests/roman_test.h"
 #include "tests/string_test.h"
 #include "tests/file_test.h"
 #include "tests/sys_test.h"
@@ -91,6 +92,7 @@ int main(int argc, char* argv[]) {
   tests.Add(&test::HallTests);
   tests.Add(&test::FormulaTests);
   tests.Add(&test::ShellUtilTests);
+  tests.Add(&test::TestRoman);
   tests.run();
   if( argc > 1 )  {
     olxstr data_dir = argv[1];
