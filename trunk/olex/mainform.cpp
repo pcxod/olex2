@@ -283,6 +283,7 @@ TMainForm::TMainForm(TGlXApp *Parent)
     Bind(wxEVT_MENU, &TMainForm::OnAtom, this, ID_AtomGrow);
     Bind(wxEVT_MENU, &TMainForm::OnAtom, this, ID_AtomCenter);
     Bind(wxEVT_MENU, &TMainForm::OnAtom, this, ID_AtomSelRings);
+    Bind(wxEVT_MENU, &TMainForm::OnAtom, this, ID_AtomExploreEnvi);
 
     Bind(wxEVT_MENU, &TMainForm::OnPlane, this, ID_PlaneActivate);
     Bind(wxEVT_MENU, &TMainForm::OnBond, this, ID_BondViewAlong);
