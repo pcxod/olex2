@@ -1180,7 +1180,7 @@ olxstr TGXApp::GetObjectInfoAt(int x, int y) const {
       rv << "\nAFIX: " << ca.GetAfix();
     }
     if (ca.GetPart() != 0) {
-      rv << "\nPart: " << ca.GetPart();
+      rv << "\nPart: " << (int)ca.GetPart();
     }
     rv << "\nCrd: (" << olxstr::FormatFloat(3, xa.ccrd()[0]) << ", " <<
       olxstr::FormatFloat(3, xa.ccrd()[1]) << ", " <<
