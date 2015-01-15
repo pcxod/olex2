@@ -452,7 +452,11 @@ void XLibMacros::Export(TLibrary& lib)  {
     fpAny|psFileLoaded,
     "Sets part(s) to given atoms, also if -lo is given and -p > 1 allows linking "
     "occupancy of given atoms throw FVAR and/or SUMP in cases when -p > 2");
-  xlib_InitMacro(Afix,"n-to accept N atoms in the rings for afix 66" ,
+  xlib_InitMacro(Spec, EmptyString(),
+    fpAny | psFileLoaded,
+    "Sets SPEC (special position eforcing) command for given atoms with default"
+    " deviation from the special position 0.2 A");
+  xlib_InitMacro(Afix, "n-to accept N atoms in the rings for afix 66",
     (fpAny^fpNone)|psCheckFileTypeIns,
     "sets atoms afix, special cases are 56,69,66,69,76,79,106,109,116 and "
     "119");
@@ -1922,7 +1926,7 @@ void XLibMacros::macGraphPD(TStrObjList &Cmds, const TParamList &Options,
 {
   TXApp& xapp = TXApp::GetInstance();
   double res = Options.FindValue("r", "0.1").ToDouble();
-  vec3i max_index = xapp.XFile().GetRM().CalcMaxHklIndex(20);
+  vec3i max_index = xapp.XFile().GetRM().CalcMaxHklIndexFor2Theta(20);
   MillerIndexArray indices(vec3i(0), max_index);
   TArrayList<compd> F(indices.Count());
   SFUtil::CalcSF(xapp.XFile(), indices, F);
@@ -6720,6 +6724,18 @@ void XLibMacros::macPart(TStrObjList &Cmds, const TParamList &Options,
     part++;
   }
   app.XFile().GetLattice().UpdateConnectivityInfo();
+}
+//.............................................................................
+void XLibMacros::macSpec(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
+  double spec = 0.2;
+  XLibMacros::Parse(Cmds, "d", &spec);
+  TXApp &app = TXApp::GetInstance();
+  TSAtomPList atoms = app.FindSAtoms(Cmds, false, !Options.Contains("cs"));
+  for (size_t i = 0; i < atoms.Count(); i++) {
+    atoms[i]->CAtom().SetSpecialPositionDeviation(spec);
+  }
 }
 //.............................................................................
 void XLibMacros::macAfix(TStrObjList &Cmds, const TParamList &Options,

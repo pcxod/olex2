@@ -283,11 +283,11 @@ namespace SymmSpace  {
     return rv;
   }
   // returns a compact form of SymmSpace
-  template <class SP> static InfoEx Compact(const SP& sp)  {
+  template <class SP> static InfoEx Compact(const SP& sp) {
     InfoEx rv;
     Info info = GetInfo(sp, &rv.vertices);
     rv.centrosymmetric = info.centrosymmetric;
-    for (size_t i=0; i < info.matrices.Count(); i++)  {
+    for (size_t i=0; i < info.matrices.Count(); i++) {
       if (!info.matrices[i].IsI())
         rv.matrices.AddCopy(info.matrices[i]);
     }

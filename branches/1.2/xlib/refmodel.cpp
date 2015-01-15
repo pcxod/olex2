@@ -621,48 +621,61 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
       FilterHkl(refs, _HklStat);
       TUnitCell::SymmSpace sp =
         aunit.GetLattice().GetUnitCell().GetSymmSpace();
-      if (MERG != 0 && HKLF != 5) {
-        bool mergeFP = (MERG == 4 || MERG == 3 || sp.IsCentrosymmetric());
+      bool mergeFP = (MERG == 4 || MERG == 3 || sp.IsCentrosymmetric());
+      if (HKLF == 5) {
+        TRefList fr = refs.Filter(olx_alg::olx_eq(
+          1, FunctionAccessor::MakeConst(&TReflection::GetBatch)));
         _HklStat = RefMerger::DryMerge<RefMerger::ShelxMerger>(
-            sp, refs, Omits, mergeFP);
+          sp, fr, Omits, mergeFP);
       }
       else {
-        _HklStat = RefMerger::DrySGFilter(sp, refs, Omits);
+        _HklStat = RefMerger::DryMerge<RefMerger::ShelxMerger>(
+          sp, refs, Omits, mergeFP);
       }
       _HklStat.HKLF_mat = HKLF_mat;
       _HklStat.HKLF_m = HKLF_m;
       _HklStat.HKLF_s = HKLF_s;
       _HklStat.MERG = MERG;
+      OMITs_Modified = false;
       sw.start("Analysing reflections: absent, completeness, limits");
       mat3d h2c = aunit.GetHklToCartesian();
-      size_t e_cnt=0;
+      size_t e_cnt = 0;
       SymmSpace::InfoEx info_ex = SymmSpace::Compact(sp);
-      info_ex.centrosymmetric = _HklStat.FriedelOppositesMerged;
-      for (int h=_HklStat.MinIndexes[0]; h <= _HklStat.MaxIndexes[0]; h++) {
-        for (int k=_HklStat.MinIndexes[1]; k <= _HklStat.MaxIndexes[1]; k++) {
-          for (int l=_HklStat.MinIndexes[2]; l <= _HklStat.MaxIndexes[2]; l++) {
+      info_ex.centrosymmetric = sp.IsCentrosymmetric();
+      double min_ds_sq = olx_sqr(1. / _HklStat.MinD),
+        max_ds_sq = olx_sqr(1. / _HklStat.MaxD);
+      olx_pair_t<vec3i, vec3i> range = CalcIndicesToD(_HklStat.MinD, &info_ex);
+      for (int h = range.a[0]; h <= range.b[0]; h++) {
+        for (int k = range.a[1]; k <= range.b[1]; k++) {
+          for (int l = range.a[2]; l <= range.b[2]; l++) {
             if (h==0 && k==0 && l==0) continue;
             vec3i hkl(h,k,l);
             vec3i shkl = TReflection::Standardise(hkl, info_ex);
             if (shkl != hkl) continue;
-            if (TReflection::IsAbsent(hkl, info_ex)) continue;
-            double d = 1/TReflection::ToCart(hkl, h2c).Length();
-            if (d <= _HklStat.MaxD && d >= _HklStat.MinD)
+            if (TReflection::IsAbsent(hkl, info_ex)) {
+              continue;
+            }
+            double qd = TReflection::ToCart(hkl, h2c).QLength();
+            if (qd <= min_ds_sq && qd >= max_ds_sq)
               e_cnt++;
           }
         }
       }
       if (HKLF == 5) {
         TSizeList cnts(BASF.Count() + 1, olx_list_init::zero());
-        for (size_t i = 0; i < BASF.Count(); i++) {
+        cnts[0] = _HklStat.UniqueReflections;
+        for (size_t i = 1; i <= BASF.Count(); i++) {
           TRefList fr = refs.Filter(olx_alg::olx_eq(
             i+1, FunctionAccessor::MakeConst(&TReflection::GetBatch)));
           if (!fr.IsEmpty()) {
             MergeStats st =
-              RefMerger::DryMergeInP1<RefMerger::ShelxMerger>(fr, Omits);
+              RefMerger::DryMerge<RefMerger::ShelxMerger>(sp, fr, Omits,
+                info_ex.centrosymmetric);
             cnts[i] = st.UniqueReflections;
           }
         }
+        _HklStat.UniqueReflections = RefMerger::DrySGFilter(sp, refs, Omits)
+          .UniqueReflections;
         BubbleSorter::Sort(cnts, ReverseComparator::Make(TPrimitiveComparator()));
         for (size_t i = 0; i < cnts.Count(); i++) {
           _HklStat.Completeness.Add(double(cnts[i]) / (e_cnt));
@@ -1649,11 +1662,41 @@ bool RefinementModel::Update(const RefinementModel& rm)  {
   return true;
 }
 //..............................................................................
-vec3i RefinementModel::CalcMaxHklIndex(double two_theta) const {
-  double t = 2*sin(two_theta*M_PI/360)/expl.GetRadiation();
-  const mat3d& f2c = aunit.GetCellToCartesian();
-  vec3d rv = vec3d(f2c[0][0], f2c[1][1], f2c[2][2])*t;
-  return rv.Round<int>();
+olx_pair_t<vec3i, vec3i> RefinementModel::CalcIndicesToD(double d,
+  const SymmSpace::InfoEx *si) const
+{
+  olx_object_ptr<const SymmSpace::InfoEx> tmp_info;
+  if (si == 0) {
+    TUnitCell::SymmSpace sp =
+      aunit.GetLattice().GetUnitCell().GetSymmSpace();
+    tmp_info = new SymmSpace::InfoEx(SymmSpace::Compact(sp));
+    si = &tmp_info();
+  }
+
+  vec3i mini(100), maxi(-100);
+  vec3i mx = CalcMaxHklIndexForD(d);
+  vec3i_list vs(4);
+  vs[0] = mx;
+  vs[1][0] = mx[0]; vs[1][1] = mx[1]; vs[1][2] = -mx[2]; //++-
+  vs[2][0] = mx[0]; vs[2][1] = -mx[1]; vs[2][2] = mx[2]; //+-+
+  vs[3][0] = -mx[0]; vs[3][1] = mx[1]; vs[3][2] = mx[2]; //-++
+
+  vs.AddNew(mx[0], 0, 0);
+  vs.AddNew(0, mx[1], 0);
+  vs.AddNew(0, 0, mx[2]);
+
+  vs.AddNew(mx[0], mx[1], 0);
+  vs.AddNew(mx[0], -mx[1], 0);
+  vs.AddNew(mx[0], 0, mx[2]);
+  vs.AddNew(mx[0], 0, -mx[2]);
+  vs.AddNew(0, mx[1], mx[2]);
+  vs.AddNew(0, mx[1], -mx[2]);
+
+  for (int i = 0; i < vs.Count(); i++) {
+    vec3i::UpdateMinMax(TReflection::Standardise(vs[i], *si), mini, maxi);
+    vec3i::UpdateMinMax(TReflection::Standardise(-vs[i], *si), mini, maxi);
+  }
+  return olx_pair::Make(mini, maxi);
 }
 //..............................................................................
 double RefinementModel::CalcCompletnessTo2Theta(double tt) const {
@@ -1661,38 +1704,37 @@ double RefinementModel::CalcCompletnessTo2Theta(double tt) const {
     aunit.GetLattice().GetUnitCell().GetSymmSpace();
   mat3d h2c = aunit.GetHklToCartesian();
   SymmSpace::InfoEx info_ex = SymmSpace::Compact(sp);
-
+  
   double two_sin_2t = 2*sin(tt*M_PI/360.0);
-  double max_d = expl.GetRadiation()/(two_sin_2t == 0 ? 1e-6 : two_sin_2t);
-
+  double min_d = expl.GetRadiation()/(two_sin_2t == 0 ? 1e-6 : two_sin_2t);
+  double min_ds_sq = olx_sqr(1.0 / min_d);
   TRefList refs = GetReflections();
   for (size_t i=0; i < refs.Count(); i++)
     refs[i].Standardise(info_ex);
-  TReflection::SortList(refs);
+  QuickSorter::SortSF(refs, &TReflection::CompareIndices);
   size_t u_cnt = 0;
   for (size_t i=0; i < refs.Count(); i++) {
     TReflection &r = refs[i];
-    while (++i < refs.Count() && r.CompareTo(refs[i]) == 0)
+    while (++i < refs.Count() && r.CompareToIndices(refs[i]) == 0)
       ;
     i--;
     if (r.IsAbsent()) continue;
-    double d = 1/r.ToCart(h2c).Length();
-    if (d >= max_d) u_cnt++;
+    double qd = r.ToCart(h2c).QLength();
+    if (qd <= min_ds_sq) u_cnt++;
   }
 
-  vec3i mx = CalcMaxHklIndex(tt);
-  vec3i mn = -mx;
+  olx_pair_t<vec3i, vec3i> range = CalcIndicesToD(min_d);
   size_t e_cnt=0;
-  for (int h=mn[0]; h <= mx[0]; h++) {
-    for (int k=mn[1]; k <= mx[1]; k++) {
-      for (int l=mn[2]; l <= mx[2]; l++) {
+  for (int h = range.a[0]; h <= range.b[0]; h++) {
+    for (int k = range.a[1]; k <= range.b[1]; k++) {
+      for (int l = range.a[2]; l <= range.b[2]; l++) {
         if (l == 0 && k == 0 && h == 0) continue;
         vec3i hkl(h,k,l);
         vec3i shkl = TReflection::Standardise(hkl, info_ex);
         if (shkl != hkl) continue;
         if (TReflection::IsAbsent(hkl, info_ex)) continue;
-        double d = 1/TReflection::ToCart(hkl, h2c).Length();
-        if (d >= max_d) e_cnt++;
+        double qd = TReflection::ToCart(hkl, h2c).QLength();
+        if (qd <= min_ds_sq) e_cnt++;
       }
     }
   }
@@ -2292,7 +2334,14 @@ void RefinementModel::LibCalcCompleteness(const TStrObjList& Params,
 void RefinementModel::LibMaxIndex(const TStrObjList& Params,
   TMacroError& E)
 {
-  E.SetRetVal(olxstr(' ').Join(CalcMaxHklIndex(Params[0].ToDouble())));
+  vec3i mi;
+  if (Params.IsEmpty()) {
+    mi = CalcMaxHklIndexForD(GetMergeStat().MinD);
+  }
+  else {
+    mi = CalcMaxHklIndexFor2Theta(Params[0].ToDouble());
+  }
+  E.SetRetVal(olxstr(' ').Join(mi));
 }
 //..............................................................................
 void RefinementModel::LibNewAfixGroup(TStrObjList &Cmds,
@@ -2435,8 +2484,9 @@ TLibrary* RefinementModel::ExportLibrary(const olxstr& name)  {
   lib->Register(
     new TFunction<RefinementModel>(this, &RefinementModel::LibMaxIndex,
     "MaxIndex",
-    fpOne,
-    "Calculates largest Miller index for the given 2 theta value"));
+    fpNone|fpOne,
+    "Calculates largest Miller index for current structure or the given 2 "
+    "theta value"));
 
   lib->Register(
     new TMacro<RefinementModel>(this, &RefinementModel::LibNewAfixGroup,
