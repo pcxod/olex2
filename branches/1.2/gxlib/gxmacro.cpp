@@ -108,6 +108,7 @@ void GXLibMacros::Export(TLibrary& lib) {
   gxlib_InitMacro(Labels,
     "p-part&;"
     "l-label&;"
+    "s-SPEC&;"
     "v-variables&;"
     "o-occupancy&;"
     "co-chemical occupancy&;"
@@ -872,6 +873,7 @@ void GXLibMacros::macLabels(TStrObjList &Cmds, const TParamList &Options,
     if (Options.Contains("qi"))  lmode |= lmQPeakI;
     if (Options.Contains('i'))   lmode |= lmIdentity;
     if (Options.Contains("co"))  lmode |= lmCOccu;
+    if (Options.Contains("s"))  lmode |= lmSpec;
     if (Options.Contains("b"))  lmode |= lmBonds;
   }
   if (lmode == 0) {

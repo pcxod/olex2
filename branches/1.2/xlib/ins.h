@@ -37,7 +37,7 @@ class TIns: public TBasicCFile  {
     int Part, ToAnis;
     // number of atoms (left), pivot, Hydrogens or not
     esdl::TStack< AnAssociation3<int,TAfixGroup*, bool> > AfixGroups;
-    double PartOccu;
+    double PartOccu, SPEC;
     TResidue* Resi;
     TCAtom* Last,
       // this are used to evaluate riding H Uiso coded like -1.5
@@ -49,7 +49,7 @@ class TIns: public TBasicCFile  {
       Resi(NULL), Last(NULL), LastWithU(NULL), LastRideable(NULL)
     {
       End = SetNextPivot = CellFound = false;
-      PartOccu = 0;
+      SPEC = PartOccu = 0;
       ToAnis = Part = 0;
       ins = NULL;
     }
@@ -78,7 +78,7 @@ protected:
   static void _ProcessAfix0(ParseContext& cx);
   // if atoms is saved, its Tag is added to the index (if not NULL)
   static void _SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
-    TStringToList<olxstr, const cm_Element*>* sfac, TStrList& sl,
+    double &spec, TStringToList<olxstr, const cm_Element*>* sfac, TStrList& sl,
     TIndexList* index=NULL, bool checkSame=true, bool checkResi=true);
   static void _DrySaveAtom(TCAtom& a, TSizeList &indices,
     bool checkSame = true, bool checkResi = true);

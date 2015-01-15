@@ -108,6 +108,8 @@ private:
   int SortSitesByDistanceDsc(const Site &s1, const Site &s2) const {
     return -SortSitesByDistanceAsc(s1, s2);
   }
+  // Shelxl SPEC
+  double SpecialPositionDeviation;
   typedef TDirectAccessor<TCAtom> DirectAccessor;
 public:
   TCAtom(TAsymmUnit* Parent);
@@ -181,6 +183,7 @@ public:
   DefPropP(size_t, EllpId)
   DefPropP(int8_t, Part)
   DefPropP(TExyzGroup*, ExyzGroup)
+  DefPropP(double, SpecialPositionDeviation)
 
   // returns multiplicity of the position
   size_t GetDegeneracy() const {  return EquivCount()+1;  }
