@@ -29,8 +29,9 @@ class TGlGroup: public AGDrawObject {
 protected:
   void InitMaterial() const;
   virtual void DoDraw(bool SelectPrimitives, bool SelectObjects) const;
-  struct ObjectReleaser  {
-    static bool OnItem(AGDrawObject& o, size_t)  {
+  struct ObjectReleaser {
+    template <typename item_t> static bool OnItem(item_t &o_, size_t) {
+      AGDrawObject &o = olx_ref::get(o_);
       o.SetParentGroup(NULL);
       o.SetGrouped(false);
       return true;

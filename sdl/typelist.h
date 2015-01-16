@@ -24,10 +24,11 @@ protected:
   TPtrList<T> List;
   template <class Analyser> struct PackItemActor  {
     const Analyser& analyser;
-    PackItemActor(const Analyser& _analyser) : analyser(_analyser)  {}
-    bool OnItem(T& o, size_t i) const {
+    PackItemActor(const Analyser& _analyser) : analyser(_analyser)
+    {}
+    bool OnItem(T* o, size_t i) const {
       if( analyser.OnItem(o, i) )  {
-        delete &o;
+        delete o;
         return true;
       }
       return false;
@@ -43,7 +44,10 @@ public:
   }
   TTypeListExt(int size, bool do_allocate=true) : List(size)  {
     if (do_allocate) {
-      for (size_t i=0; i < size; i++) List[i] = new T();
+      if (size < 0) {
+        throw TInvalidArgumentException(__OlxSourceInfo, "size");
+      }
+      for (size_t i=0; i < (size_t)size; i++) List[i] = new T();
     }
   }
 //..............................................................................
@@ -473,7 +477,17 @@ public:
     return rv;
   }
 //..............................................................................
-  size_t Count() const {  return List.Count();  }
+  template <class Analyser> size_t Count(const Analyser& a) const {
+    size_t cnt = 0;
+    for (size_t i = 0; i < List.Count(); i++) {
+      if (a.OnItem(GetItem(i), i)) {
+        cnt++;
+      }
+    }
+    return cnt;
+  }
+//..............................................................................
+  size_t Count() const { return List.Count(); }
 //..............................................................................
   // same as shrink if list size is larger
   TTypeListExt& SetCount(size_t v) {

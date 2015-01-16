@@ -394,16 +394,53 @@ protected:
     }
   };
 
-  template <typename to_t, class Accessor> struct eq_ {
+  struct op_eq {
+    template <typename item_to, typename item_t>
+    static bool op(const item_to &to, const item_t &t) {
+      return t == to;
+    }
+  };
+  struct op_neq {
+    template <typename item_to, typename item_t>
+    static bool op(const item_to &to, const item_t &t) {
+      return t != to;
+    }
+  };
+  struct op_lt {
+    template <typename item_to, typename item_t>
+    static bool op(const item_to &to, const item_t &t) {
+      return t < to;
+    }
+  };
+  struct op_le {
+    template <typename item_to, typename item_t>
+    static bool op(const item_to &to, const item_t &t) {
+      return t <= to;
+    }
+  };
+  struct op_gt {
+    template <typename item_to, typename item_t>
+    static bool op(const item_to &to, const item_t &t) {
+      return t > to;
+    }
+  };
+  struct op_ge {
+    template <typename item_to, typename item_t>
+    static bool op(const item_to &to, const item_t &t) {
+      return t >= to;
+    }
+  };
+
+  template <typename to_t, class Accessor, class op_t> struct op_ {
     to_t to;
     const Accessor &accessor;
-    eq_(const to_t &t, const Accessor &accessor_) : to(t), accessor(accessor_)
+    op_(const to_t &t, const Accessor &accessor_) : to(t), accessor(accessor_)
     {}
     template <class Item> bool OnItem(const Item& o) const {
-      return accessor(o) == to;
+      return op_t::op(to, accessor(o));
     }
     template <class Item> bool OnItem(const Item& o, size_t) const {
-      return accessor(o) == to;
+      return op_t::op(to, accessor(o));
     }
   };
 public:
@@ -431,11 +468,60 @@ public:
     return chsig_<Accessor>(a);
   }
   /* creates a new equality checker */
-  template <typename to_t, class Accessor>
-  static eq_<to_t, Accessor> olx_eq(const to_t &to, const Accessor& a) {
-    return eq_<to_t, Accessor>(to, a);
+  template <typename to_t>
+  static op_<to_t, DummyAccessor, op_eq> olx_eq(const to_t &to) {
+    return op_<to_t, DummyAccessor, op_eq>(to, DummyAccessor());
   }
-  };
+  template <typename to_t, class Accessor>
+  static op_<to_t, Accessor, op_eq> olx_eq(const to_t &to, const Accessor& a) {
+    return op_<to_t, Accessor, op_eq>(to, a);
+  }
+  /* creates a new non-equality checker */
+  template <typename to_t>
+  static op_<to_t, DummyAccessor, op_neq> olx_neq(const to_t &to) {
+    return op_<to_t, DummyAccessor, op_neq>(to, DummyAccessor());
+  }
+  template <typename to_t, class Accessor>
+  static op_<to_t, Accessor, op_neq> olx_neq(const to_t &to, const Accessor& a) {
+    return op_<to_t, Accessor, op_neq>(to, a);
+  }
+  /* creates a LT checker */
+  template <typename to_t>
+  static op_<to_t, DummyAccessor, op_lt> olx_lt(const to_t &to) {
+    return op_<to_t, DummyAccessor, op_lt>(to, DummyAccessor());
+  }
+  template <typename to_t, class Accessor>
+  static op_<to_t, Accessor, op_lt> olx_lt(const to_t &to, const Accessor& a) {
+    return op_<to_t, Accessor, op_lt>(to, a);
+  }
+  /* creates a LE checker */
+  template <typename to_t>
+  static op_<to_t, DummyAccessor, op_le> olx_le(const to_t &to) {
+    return op_<to_t, DummyAccessor, op_le>(to, DummyAccessor());
+  }
+  template <typename to_t, class Accessor>
+  static op_<to_t, Accessor, op_le> olx_le(const to_t &to, const Accessor& a) {
+    return op_<to_t, Accessor, op_le>(to, a);
+  }
+  /* creates a GT checker */
+  template <typename to_t>
+  static op_<to_t, DummyAccessor, op_gt> olx_gt(const to_t &to) {
+    return op_<to_t, DummyAccessor, op_gt>(to, DummyAccessor());
+  }
+  template <typename to_t, class Accessor>
+  static op_<to_t, Accessor, op_gt> olx_gt(const to_t &to, const Accessor& a) {
+    return op_<to_t, Accessor, op_gt>(to, a);
+  }
+  /* creates a GE checker */
+  template <typename to_t>
+  static op_<to_t, DummyAccessor, op_ge> olx_ge(const to_t &to) {
+    return op_<to_t, DummyAccessor, op_ge>(to, DummyAccessor());
+  }
+  template <typename to_t, class Accessor>
+  static op_<to_t, Accessor, op_ge> olx_ge(const to_t &to, const Accessor& a) {
+    return op_<to_t, Accessor, op_ge>(to, a);
+  }
+};
 
 /* swaps two objects using a temporary variable (copy constructor must be
  available for complex types) */

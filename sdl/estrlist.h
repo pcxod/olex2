@@ -599,6 +599,16 @@ public:
     return rv;
   }
 
+  template <class Analyser> size_t Count(const Analyser& a) const {
+    size_t cnt = 0;
+    for (size_t i = 0; i < Strings.Count(); i++) {
+      if (a.OnItem(*Strings[i], i)) {
+        cnt++;
+      }
+    }
+    return cnt;
+  }
+
 public:
   struct InternalAccessor : public TPtrList<T>::InternalAccessor {
     InternalAccessor(TTStrList &l)
