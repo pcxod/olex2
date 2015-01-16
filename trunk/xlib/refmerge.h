@@ -69,47 +69,43 @@ class RefMerger {
   static MergeStats _DoMerge(const SymmSpace::InfoEx& info_ex, TRefPList& refs,
     const vec3i_list& omits, TRefList& output, const Comparator &cmp)
   {
-    if( refs.IsEmpty() )
-      throw TInvalidArgumentException(__OlxSourceInfo, "empty reflection list");
-    MergeStats stats;
     const size_t ref_cnt = refs.Count();
+    if (ref_cnt == 0) {
+      throw TInvalidArgumentException(__OlxSourceInfo,
+        "empty reflection list");
+    }
     for (size_t i=0; i < ref_cnt; i++)
       refs[i]->Standardise(info_ex);
+    MergeStats stats;
     stats.FriedelOppositesMerged = info_ex.centrosymmetric;
-    /* standartise reflection indexes according to provided list of symmetry
+    /* standardise reflection indices according to provided list of symmetry
     operators
     */
     QuickSorter::Sort(refs, cmp);
-    TReflection::SortList(refs);
-    output.SetCapacity(ref_cnt); // better more that none :)
+    output.SetCapacity(ref_cnt);
     // merge reflections
     double Sdiff = 0, SI = 0, SS = 0, SI_tot = 0;
-    TReflection* ref = refs[0];  // reference reflection
-    for( size_t i=0; i < ref_cnt; )  {
-      const size_t from = i++;
-      while ((i < ref_cnt) && (cmp.Compare(ref, refs[i]) == 0)) {
-        i++;
-      }
+    size_t mi_o_sig_cnt = 0;
+    for (size_t i=0; i < ref_cnt;) {
+      TReflection* ref = refs[i];
+      const size_t from = i;
+      while ((++i < ref_cnt) && (cmp.Compare(ref, refs[i]) == 0))
+        ;
       const size_t merged_count = i - from;
-      bool omitted = false;
-      for( size_t j=0; j < omits.Count(); j++ )  {
-        if( ref->GetHkl() == omits[j] )  {
-          stats.OmittedByUser += merged_count;
-          omitted = true;
-          break;
-        }
+      if (omits.Contains(ref->GetHkl())) {
+        stats.OmittedByUser += merged_count;
       }
-      if( !omitted )  {
-        if( merged_count > stats.ReflectionAPotMax )
+      else {
+        if (merged_count > stats.ReflectionAPotMax)
           stats.ReflectionAPotMax = merged_count;
-        if( !ref->IsAbsent() )  {
+        if (!ref->IsAbsent()) {
           // the reflection is replicated if only one in the list
           MergerOut mo = RefListMerger::Merge(refs, from, i);
-          if( merged_count > 1 )  {
+          if (merged_count > 1) {
             SI_tot += mo.sumI;
             Sdiff += mo.sumDiff;
-            if( mo.sigInt > mo.ref->GetS() )  {
-              if( mo.sigInt > 5*mo.ref->GetS() )  {
+            if (mo.sigInt > mo.ref->GetS()) {
+              if (mo.sigInt > 5*mo.ref->GetS()) {
                 stats.InconsistentEquivalents ++;
                 mo.ref->SetTag(-1);  // mark as unusable
               }
@@ -118,11 +114,14 @@ class RefMerger {
             mo.ref->SetBatch(ref->GetBatch());
           }
           output.Add(mo.ref).Analyse(info_ex);
-          if( mo.ref->IsCentric() )
+          if (mo.ref->IsCentric())
             stats.CentricReflections++;
           SS += mo.ref->GetS();
           SI += mo.ref->GetI();
-          stats.MeanIOverSigma += mo.ref->GetI()/mo.ref->GetS();
+          if (mo.ref->GetS() > 0) {
+            stats.MeanIOverSigma += mo.ref->GetI() / mo.ref->GetS();
+            mi_o_sig_cnt++;
+          }
           vec3i::UpdateMinMax(ref->GetHkl(), stats.MinIndexes,
             stats.MaxIndexes);
           stats.IndependentReflections += 1./mo.ref->GetMultiplicity();
@@ -132,14 +131,12 @@ class RefMerger {
           stats.UniqueSystematicAbsencesRemoved++;
         }
       }
-      if( i >= ref_cnt )  break;
-      ref = refs[i];
     }
     stats.Rint = (SI_tot != 0) ? Sdiff/SI_tot : 0.0;
     stats.Rsigma = (SI != 0) ? SS/SI : 0.0;
     stats.UniqueReflections = output.Count();
-    stats.MeanIOverSigma /= (stats.UniqueReflections == 0 ? 1
-      : stats.UniqueReflections);
+    if (mi_o_sig_cnt > 0)
+      stats.MeanIOverSigma /= mi_o_sig_cnt;
     return stats;
   }
 
@@ -147,58 +144,52 @@ class RefMerger {
   static MergeStats _DryMerge(const SymmSpace::InfoEx& info_ex,
     TRefPList& refs, const vec3i_list& omits, const Comparator &cmp)
   {
-    if( refs.IsEmpty() ) {
+    const size_t ref_cnt = refs.Count();
+    if (ref_cnt == 0) {
       throw TInvalidArgumentException(__OlxSourceInfo,
         "empty reflection list");
     }
-    MergeStats stats;
-    /* standartise reflection indexes according to provided list of symmetry
-    operators
-    */
-    const size_t ref_cnt = refs.Count();
-    for( size_t i=0; i < ref_cnt; i++ )
+    for (size_t i=0; i < ref_cnt; i++)
       refs[i]->Standardise(info_ex);
+    MergeStats stats;
     stats.FriedelOppositesMerged = info_ex.centrosymmetric;
     // sort the list
     QuickSorter::Sort(refs, cmp);
-    // merge reflections
     double Sdiff = 0, SI = 0, SS = 0, SI_tot = 0;
-    TReflection* ref = refs[0];  // reference reflection
-    for( size_t i=0; i < ref_cnt; )  {
-      size_t from = i++;
-      while ((i < ref_cnt) && (cmp.Compare(ref, refs[i]) == 0)) {
-        i++;
-      }
-      bool omitted = false;
+    size_t mi_o_sig_cnt = 0;
+    for (size_t i=0; i < ref_cnt;) {
+      TReflection* ref = refs[i];
+      size_t from = i;
+      while ((++i < ref_cnt) && (cmp.Compare(ref, refs[i]) == 0))
+        ;
       const size_t merged_count = i - from;
-      for( size_t j=0; j < omits.Count(); j++ )  {
-        if( ref->GetHkl() == omits[j] )  {
-          stats.OmittedByUser += merged_count;
-          omitted = true;
-          break;
-        }
+      if (omits.Contains(ref->GetHkl())) {
+        stats.OmittedByUser += merged_count;
       }
-      if( !omitted )  {
-        if( merged_count > stats.ReflectionAPotMax )
+      else {
+        if (merged_count > stats.ReflectionAPotMax)
           stats.ReflectionAPotMax = merged_count;
-        if( !ref->IsAbsent() )  {
+        if (!ref->IsAbsent()) {
           // the reflection is replicated if only one in the list
           DryMergerOut mo = RefListMerger::DryMerge(refs, from, i);
-          if( merged_count > 1 )  {
+          if (merged_count > 1) {
             SI_tot += mo.sumI;
             Sdiff += mo.sumDiff;
-            if( mo.sigInt > mo.rSig )  {
-              if( mo.sigInt > 5*mo.rSig )
+            if (mo.sigInt > mo.rSig) {
+              if (mo.sigInt > 5*mo.rSig)
                 stats.InconsistentEquivalents ++;
               mo.rSig = mo.sigInt;
             }
           }
           ref->Analyse(info_ex);
-          if( ref->IsCentric() )
+          if (ref->IsCentric())
             stats.CentricReflections++;
           SS += mo.rSig;
           SI += mo.rI;
-          stats.MeanIOverSigma += mo.rI/mo.rSig;
+          if (mo.rSig > 0) {
+            stats.MeanIOverSigma += mo.rI / mo.rSig;
+            mi_o_sig_cnt++;
+          }
           vec3i::UpdateMinMax(ref->GetHkl(), stats.MinIndexes,
             stats.MaxIndexes);
           stats.UniqueReflections++;
@@ -209,79 +200,11 @@ class RefMerger {
           stats.UniqueSystematicAbsencesRemoved++;
         }
       }
-      if( i >= ref_cnt )  break;
-      ref = refs[i];
     }
     stats.Rint = (SI_tot != 0) ? Sdiff/SI_tot : 0.0;
     stats.Rsigma = (SI != 0) ? SS/SI : 0.0;
-    stats.MeanIOverSigma /= (stats.UniqueReflections == 0 ? 1
-      : stats.UniqueReflections);
-    return stats;
-  }
-
-  template <class MatList, class Comparator>
-  static MergeStats _DoSGFilter(const MatList& ml, TRefPList& refs,
-    const vec3i_list& omits, TRefList& output, const Comparator &cmp)
-  {
-    if( refs.IsEmpty() ) {
-      throw TInvalidArgumentException(__OlxSourceInfo,
-        "empty reflection list");
-    }
-    MergeStats stats;
-    stats.FriedelOppositesMerged = false;
-    const size_t ref_cnt = refs.Count();
-    // sort the list
-    QuickSorter::Sort(refs, cmp);
-    output.SetCapacity(ref_cnt); // better more that none :)
-    TReflection* ref = refs[0];  // reference reflection
-    for( size_t i=0; i < ref_cnt; )  {
-      ref->Analyse(ml);
-      const size_t from = i++;
-      size_t real_count=ref->GetBatch() > 0 ? 1 : 0;
-      while ((i < ref_cnt) && (cmp.Compare(ref, refs[i]) == 0)) {
-        if (refs[i]->GetBatch() > 0) real_count++;
-        i++;
-      }
-      const size_t merged_count = i - from;
-      bool omitted = false;
-      for( size_t j=0; j < omits.Count(); j++ )  {
-        if( ref->GetHkl() == omits[j] )  {
-          stats.OmittedByUser += real_count;
-          omitted = true;
-          break;
-        }
-      }
-      if (!omitted && real_count > 0) {
-        if( merged_count > stats.ReflectionAPotMax )
-          stats.ReflectionAPotMax = real_count;
-        if( !ref->IsAbsent() )  {
-          for( size_t j=from; j < i; j++ )  {
-            TReflection& _r = output.AddCopy(*refs[j]);
-            _r.SetCentric(ref->IsCentric());
-            _r.SetMultiplicity(ref->GetMultiplicity());
-             vec3i::UpdateMinMax(_r.GetHkl(), stats.MinIndexes,
-                stats.MaxIndexes);
-             if (refs[j]->GetBatch() > 0)
-              stats.MeanIOverSigma += _r.GetI()/_r.GetS();
-         }
-          if( ref->IsCentric() )
-            stats.CentricReflections += real_count;
-          stats.UniqueReflections += real_count;
-          stats.IndependentReflections +=
-            (double)real_count/ref->GetMultiplicity();
-        }
-        else {
-          stats.SystematicAbsencesRemoved += real_count;
-          stats.UniqueSystematicAbsencesRemoved++;
-        }
-      }
-      if( i >= ref_cnt )  break;
-      ref = refs[i];
-    }
-    stats.Rint = -1;
-    stats.Rsigma = -1;
-    stats.MeanIOverSigma /= (stats.UniqueReflections == 0 ? 1
-      : stats.UniqueReflections);
+    if (mi_o_sig_cnt > 0)
+      stats.MeanIOverSigma /= mi_o_sig_cnt;
     return stats;
   }
 
@@ -289,42 +212,39 @@ class RefMerger {
   static MergeStats _DoDrySGFilter(const MatList& ml, TRefPList& refs,
     const vec3i_list& omits, const Comparator &cmp)
   {
-    if( refs.IsEmpty() ) {
+    const size_t ref_cnt = refs.Count();
+    if (ref_cnt == 0) {
       throw TInvalidArgumentException(__OlxSourceInfo,
         "empty reflection list");
     }
     MergeStats stats;
     stats.FriedelOppositesMerged = false;
-    const size_t ref_cnt = refs.Count();
     // sort the list
     QuickSorter::Sort(refs, cmp);
-    TReflection* ref = refs[0];  // reference reflection
-    for( size_t i=0; i < ref_cnt; )  {
+    size_t mi_o_sig_cnt = 0;
+    for (size_t i=0; i < ref_cnt;) {
+      TReflection* ref = refs[i];
+      if (ref->GetBatch() < 0) continue;
       ref->Analyse(ml);
-      const size_t from = i++;
-      size_t real_count=ref->GetBatch() > 0 ? 1 : 0;
-      while ((i < ref_cnt) && (cmp.Compare(ref, refs[i]) == 0)) {
-        if (refs[i]->GetBatch() > 0) real_count++;
-        i++;
+      size_t from = i, real_count = 1;
+      while ((++i < ref_cnt) && (cmp.Compare(ref, refs[i]) == 0)) {
+        if (refs[i]->GetBatch() > 0)
+          real_count++;
       }
-      const size_t merged_count = i - from;
-      bool omitted = false;
-      for( size_t j=0; j < omits.Count(); j++ )  {
-        if( ref->GetHkl() == omits[j] )  {
-          stats.OmittedByUser += real_count;
-          omitted = true;
-          break;
-        }
+      if (omits.Contains(ref->GetHkl())) {
+        stats.OmittedByUser += real_count;
       }
-      if (!omitted && real_count > 0) {
-        if( merged_count > stats.ReflectionAPotMax )
+      else {
+        if (real_count > stats.ReflectionAPotMax)
           stats.ReflectionAPotMax = real_count;
-        if( !ref->IsAbsent() )  {
-          for( size_t j=from; j < i; j++ )  {
+        if (!ref->IsAbsent()) {
+          for (size_t j=from; j < i; j++) {
             vec3i::UpdateMinMax(refs[j]->GetHkl(), stats.MinIndexes,
               stats.MaxIndexes);
-            if (refs[j]->GetBatch() >0)
-              stats.MeanIOverSigma += refs[j]->GetI()/refs[j]->GetS();
+            if (refs[j]->GetBatch() > 0 && refs[j]->GetS() > 0) {
+              stats.MeanIOverSigma += refs[j]->GetI() / refs[j]->GetS();
+              mi_o_sig_cnt++;
+            }
           }
           if (ref->IsCentric())
             stats.CentricReflections += real_count;
@@ -337,13 +257,11 @@ class RefMerger {
           stats.UniqueSystematicAbsencesRemoved++;
         }
       }
-      if( i >= ref_cnt )  break;
-      ref = refs[i];
     }
     stats.Rint = -1;
     stats.Rsigma = -1;
-    stats.MeanIOverSigma /= (stats.UniqueReflections == 0 ? 1
-      : stats.UniqueReflections);
+    if (mi_o_sig_cnt > 0)
+      stats.MeanIOverSigma /= mi_o_sig_cnt;
     return stats;
   }
 
@@ -581,25 +499,6 @@ public:
   {
     TStopWatch sw(__FUNC__);
     return DryMergeInP1Ex<RefListMerger>(Refs, omits,
-      FunctionComparator::Make(&TReflection::Compare));
-  }
-
-  /* The function filters out systematic absences */
-  template <class MatList, class RefList, class Comparator>
-  static MergeStats SGFilterEx(const MatList& ml, RefList& Refs,
-    TRefList& output, const vec3i_list& omits, const Comparator &cmp)
-  {
-    TStopWatch sw(__FUNC__);
-    TRefPList refs(Refs);
-    return _DoSGFilter<MatList>(ml.SubListFrom(ml[0].IsI() ? 1 : 0),
-      refs, omits, output, cmp);
-  }
-  template <class MatList, class RefList>
-  static MergeStats SGFilter(const MatList& ml, RefList& Refs,
-    TRefList& output, const vec3i_list& omits)
-  {
-    TStopWatch sw(__FUNC__);
-    return SGFilterEx(ml, Refs, omits, output,
       FunctionComparator::Make(&TReflection::Compare));
   }
 

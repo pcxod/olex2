@@ -40,6 +40,7 @@ TCAtom::TCAtom(TAsymmUnit* _Parent) : Parent(_Parent)  {
   ExyzGroup = NULL;
   Flags = 0;
   ConnInfo = NULL;
+  SpecialPositionDeviation = 0;
   memset(Vars, 0, sizeof(Vars));
 }
 //..............................................................................
@@ -118,6 +119,7 @@ void TCAtom::Assign(const TCAtom& S)  {
   ExyzGroup = NULL;  // also managed by the group
   SetPart(S.GetPart());
   SetCharge(S.GetCharge());
+  SetSpecialPositionDeviation(S.GetSpecialPositionDeviation());
   SetOccu(S.GetOccu());
   SetOccuEsd(S.GetOccuEsd());
   SetQPeak(S.GetQPeak());

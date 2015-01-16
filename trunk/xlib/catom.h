@@ -115,6 +115,8 @@ private:
   int SortSitesByDistanceDsc(const Site &s1, const Site &s2) const {
     return -SortSitesByDistanceAsc(s1, s2);
   }
+  // Shelxl SPEC
+  double SpecialPositionDeviation;
 public:
   TCAtom(TAsymmUnit* Parent);
   virtual ~TCAtom();
@@ -186,6 +188,7 @@ public:
   DefPropP(uint16_t, SameId)
   DefPropP(size_t, EllpId)
   DefPropP(TExyzGroup*, ExyzGroup)
+  DefPropP(double, SpecialPositionDeviation)
 
   int GetPart() const { return (int)(int8_t)(PartAndCharge&0x00ff); }
   void SetPart(int v) {

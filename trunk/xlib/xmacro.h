@@ -126,6 +126,7 @@ public:
   static DefMacro(Sump)
   static DefMacro(Afix)
   static DefMacro(Part)
+  static DefMacro(Spec)
 
   static DefMacro(Dfix)
   static DefMacro(Dang)

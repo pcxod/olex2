@@ -34,6 +34,7 @@ const uint32_t
   lmConRes   = 0x00001000,  // restraints, constraints
   lmIdentity = 0x00002000,  // only for identity atoms
   lmCOccu    = 0x00004000,  // chemical occupancy
+  lmSpec     = 0x00008000,  // enforced special position 
 
   lmBonds    = 0x00010000;  // exclusive for bond lengths
 
