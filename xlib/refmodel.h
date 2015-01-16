@@ -773,7 +773,15 @@ Friedel opposites of components 1 ... m
     GetReflections();
     return _FriedelPairCount;
   }
-  vec3i CalcMaxHklIndex(double two_theta=60) const;
+  olx_pair_t<vec3i, vec3i> CalcIndicesToD(double d,
+    const SymmSpace::InfoEx *si=0) const;
+  vec3i CalcMaxHklIndexFor2Theta(double two_theta=60, double tol=1e-3) const {
+    return CalcMaxHklIndexForD(expl.GetRadiation()/(2*sin(two_theta*M_PI/360)),
+      tol);
+  }
+  vec3i CalcMaxHklIndexForD(double d, double tol=1e-3) const {
+    return vec3i(aunit.GetAxes()/d + tol);
+  }
   double CalcCompletnessTo2Theta(double tt) const;
   IXVarReferencerContainer& GetRefContainer(const olxstr& id_name)  {
     try {  return *RefContainers.Get(id_name);  }

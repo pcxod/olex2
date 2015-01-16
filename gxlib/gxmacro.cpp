@@ -108,6 +108,7 @@ void GXLibMacros::Export(TLibrary& lib) {
   gxlib_InitMacro(Labels,
     "p-part&;"
     "l-label&;"
+    "s-SPEC&;"
     "v-variables&;"
     "o-occupancy&;"
     "co-chemical occupancy&;"
@@ -410,7 +411,6 @@ void GXLibMacros::macName(TStrObjList &Cmds, const TParamList &Options,
     if (old.IsEmpty()) {
       return;
     }
-    bool create = false;
     TGPCollection *gpc = app.GetRenderer().FindCollection(Cmds[1]);
     if (gpc != NULL && gpc->ObjectCount() != 0) {
       if (typeid(old[0]->GetObject(0)) != typeid(gpc->GetObject(0))) {
@@ -426,12 +426,9 @@ void GXLibMacros::macName(TStrObjList &Cmds, const TParamList &Options,
       else {
         gpc = &app.GetRenderer().NewCollection(Cmds[1]);
       }
-      create = true;
     }
-
     for (size_t i = 0; i < sel.Count(); i++) {
       sel[i].GetPrimitives().RemoveObject(sel[i]);
-      gpc->AddObject(sel[i]);
     }
     if (EsdlInstanceOf(sel[0], TXAtom)) {
       for (size_t i = 0; i < sel.Count(); i++) {
@@ -454,10 +451,8 @@ void GXLibMacros::macName(TStrObjList &Cmds, const TParamList &Options,
         TXPlane::NamesRegistry().Add(p.GetDefId(), Cmds[1]);
       }
     }
-    if (create) {
-      AGDrawObject & o = gpc->GetObject(0);
-      gpc->DeleteObject(0);
-      o.Create();
+    for (size_t i = 0; i < sel.Count(); i++) {
+      sel[i].Create(Cmds[1]);
     }
     sel.Clear();
     return;
@@ -885,6 +880,7 @@ void GXLibMacros::macLabels(TStrObjList &Cmds, const TParamList &Options,
     if (Options.Contains("qi"))  lmode |= lmQPeakI;
     if (Options.Contains('i'))   lmode |= lmIdentity;
     if (Options.Contains("co"))  lmode |= lmCOccu;
+    if (Options.Contains("s"))  lmode |= lmSpec;
     if (Options.Contains("b"))  lmode |= lmBonds;
   }
   if (lmode == 0) {

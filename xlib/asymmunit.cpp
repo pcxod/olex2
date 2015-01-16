@@ -315,6 +315,9 @@ void TAsymmUnit::Release(const TPtrList<TResidue> &rs) {
     if (idx == InvalidIndex)
       throw TInvalidArgumentException(__OlxSourceInfo, "residue");
     ResidueRegistry.Delete(idx);
+    for (size_t j = 0; j < rs[i]->Count(); j++) {
+      (*rs[i])[j].SetResiId(0);
+    }
     if (rs[i]->HasAlias()) {
       idx = ResidueRegistry.IndexOf(rs[i]->GetAlias());
       if (idx == InvalidIndex)
@@ -328,28 +331,38 @@ void TAsymmUnit::Release(const TPtrList<TResidue> &rs) {
       }
     }
   }
-  for (size_t i=0; i < Residues.Count(); i++)
-    Residues[i].SetId((uint32_t)i+1);
+  for (size_t i = 0; i < Residues.Count(); i++) {
+    uint32_t r_id = (uint32_t)i + 1;
+    Residues[i].SetId(r_id);
+    for (size_t j = 0; j < Residues[i].Count(); j++) {
+      Residues[i][j].SetResiId(r_id);
+    }
+  }
 }
 //..............................................................................
 void TAsymmUnit::Restore(const TPtrList<TResidue> &rs) {
   // validate if unique
-  for (size_t i=0; i < rs.Count(); i++) {
+  for (size_t i = 0; i < rs.Count(); i++) {
     size_t idx = ResidueRegistry.IndexOf(rs[i]->GetNumber());
     if (idx == InvalidIndex && rs[i]->HasAlias())
       idx = ResidueRegistry.IndexOf(rs[i]->GetAlias());
     if (idx != InvalidIndex)
       throw TInvalidArgumentException(__OlxSourceInfo, "residue number/alias");
   }
-  for (size_t i=0; i < rs.Count(); i++) {
+  for (size_t i = 0; i < rs.Count(); i++) {
     Residues.Add(rs[i]);
     ResidueRegistry.Add(rs[i]->GetNumber(), rs[i]);
     if (rs[i]->HasAlias())
       ResidueRegistry.Add(rs[i]->GetAlias(), rs[i]);
   }
   BubbleSorter::Sort(Residues);
-  for (size_t i=0; i < Residues.Count(); i++)
-    Residues[i].SetId((uint32_t)i+1);
+  for (size_t i = 0; i < Residues.Count(); i++) {
+    uint32_t r_id = (uint32_t)i + 1;
+    Residues[i].SetId(r_id);
+    for (size_t j = 0; j < Residues[i].Count(); j++) {
+      Residues[i][j].SetResiId(r_id);
+    }
+  }
 }
 //..............................................................................
 void TAsymmUnit::AssignResidues(const TAsymmUnit& au) {

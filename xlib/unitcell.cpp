@@ -50,9 +50,9 @@ smatd& TUnitCell::InitMatrixId(smatd& m) const {
   for( size_t i=0; i < Matrices.Count(); i++ )  {
     if( Matrices[i].r == m.r )  {
       const vec3d dt = m.t-Matrices[i].t;
-      const int8_t ta = (int8_t)(m.t[0]-Matrices[i].t[0]);
-      const int8_t tb = (int8_t)(m.t[1]-Matrices[i].t[1]);
-      const int8_t tc = (int8_t)(m.t[2]-Matrices[i].t[2]);
+      const int8_t ta = olx_round_t<int8_t>(m.t[0]-Matrices[i].t[0]);
+      const int8_t tb = olx_round_t<int8_t>(m.t[1] - Matrices[i].t[1]);
+      const int8_t tc = olx_round_t<int8_t>(m.t[2] - Matrices[i].t[2]);
       if( olx_abs(dt[0]-ta) < 1e-6 &&
           olx_abs(dt[1]-tb) < 1e-6 &&
           olx_abs(dt[2]-tc) < 1e-6 )
@@ -72,9 +72,9 @@ smatd_list TUnitCell::MulMatrices(const smatd_list& in,
   for( size_t i=0; i < in.Count(); i++ )  {
     out.Set(i, new smatd(transform*in[i]));
     const uint8_t index = MulDest[transform.GetContainerId()][in[i].GetContainerId()];
-    const int8_t ta = (int8_t)(out[i].t[0]-Matrices[index].t[0]);
-    const int8_t tb = (int8_t)(out[i].t[1]-Matrices[index].t[1]);
-    const int8_t tc = (int8_t)(out[i].t[2]-Matrices[index].t[2]);
+    const int8_t ta = olx_round_t<int8_t>(out[i].t[0] - Matrices[index].t[0]);
+    const int8_t tb = olx_round_t<int8_t>(out[i].t[1] - Matrices[index].t[1]);
+    const int8_t tc = olx_round_t<int8_t>(out[i].t[2] - Matrices[index].t[2]);
     out[i].SetId(index, ta, tb, tc);
   }
   return out;

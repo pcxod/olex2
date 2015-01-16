@@ -451,7 +451,11 @@ void XLibMacros::Export(TLibrary& lib)  {
     fpAny|psFileLoaded,
     "Sets part(s) to given atoms, also if -lo is given and -p > 1 allows linking "
     "occupancy of given atoms throw FVAR and/or SUMP in cases when -p > 2");
-  xlib_InitMacro(Afix,"n-to accept N atoms in the rings for afix 66" ,
+  xlib_InitMacro(Spec, EmptyString(),
+    fpAny | psFileLoaded,
+    "Sets SPEC (special position eforcing) command for given atoms with default"
+    " deviation from the special position 0.2 A");
+  xlib_InitMacro(Afix, "n-to accept N atoms in the rings for afix 66",
     (fpAny^fpNone)|psCheckFileTypeIns,
     "sets atoms afix, special cases are 56,69,66,69,76,79,106,109,116 and "
     "119");
@@ -1928,7 +1932,7 @@ void XLibMacros::macGraphPD(TStrObjList &Cmds, const TParamList &Options,
 {
   TXApp& xapp = TXApp::GetInstance();
   double res = Options.FindValue("r", "0.1").ToDouble();
-  vec3i max_index = xapp.XFile().GetRM().CalcMaxHklIndex(20);
+  vec3i max_index = xapp.XFile().GetRM().CalcMaxHklIndexFor2Theta(20);
   MillerIndexArray indices(vec3i(0), max_index);
   TArrayList<compd> F(indices.Count());
   SFUtil::CalcSF(xapp.XFile(), indices, F);
@@ -3317,12 +3321,14 @@ olxstr XLibMacros_funSGNameToHtml(const olxstr& name)  {
   }
   return res;
 }
-olxstr XLibMacros_funSGNameToHtmlX(const olxstr& name)  {
+olxstr XLibMacros_funSGNameToHtmlX(const olxstr& name) {
   TStrList toks(name, ' ');
   olxstr res;
   for( size_t i=0; i < toks.Count(); i++ )  {
-    if( toks[i].Length() >= 2 && XLibMacros_funSGNameIsNextSub(toks[i], 0) )
-      res << toks[i].CharAt(0) << "<sub>" << toks[i].CharAt(1) << "</sub>" << toks[i].SubStringFrom(2);
+    if (toks[i].Length() >= 2 && XLibMacros_funSGNameIsNextSub(toks[i], 0)) {
+      res << toks[i].CharAt(0) << "<sub>" << toks[i].CharAt(1) << "</sub>" <<
+        toks[i].SubStringFrom(2);
+    }
     else
       res << toks[i];
   }
@@ -3330,18 +3336,22 @@ olxstr XLibMacros_funSGNameToHtmlX(const olxstr& name)  {
 }
 void XLibMacros::funSG(const TStrObjList &Cmds, TMacroData &E)  {
   TSpaceGroup* sg = NULL;
-  try  { sg = &TXApp::GetInstance().XFile().GetLastLoaderSG();  }
+  try {
+    if (TXApp::GetInstance().XFile().HasLastLoader()) {
+      sg = &TXApp::GetInstance().XFile().GetLastLoaderSG();
+    }
+  }
   catch(...)  {}
-  if( sg != NULL )  {
+  if (sg != NULL) {
     olxstr Tmp;
-    if( Cmds.IsEmpty() )  {
+    if (Cmds.IsEmpty()) {
       Tmp = sg->GetName();
-      if( !sg->GetFullName().IsEmpty() )  {
+      if (!sg->GetFullName().IsEmpty()) {
         Tmp << " (" << sg->GetFullName() << ')';
       }
       Tmp << " #" << sg->GetNumber();
     }
-    else  {
+    else {
       Tmp = Cmds[0];
       Tmp.Replace("%#", olxstr(sg->GetNumber())).\
         Replace("%n", sg->GetName()).\
@@ -3357,9 +3367,8 @@ void XLibMacros::funSG(const TStrObjList &Cmds, TMacroData &E)  {
     }
     E.SetRetVal(Tmp);
   }
-  else  {
+  else {
     E.SetRetVal(NAString());
-//    E.ProcessingError(__OlxSrcInfo, "could not find space group for the file");
     return;
   }
 }
@@ -6702,6 +6711,18 @@ void XLibMacros::macPart(TStrObjList &Cmds, const TParamList &Options,
   app.XFile().GetLattice().UpdateConnectivityInfo();
 }
 //.............................................................................
+void XLibMacros::macSpec(TStrObjList &Cmds, const TParamList &Options,
+  TMacroData &E)
+{
+  double spec = 0.2;
+  XLibMacros::Parse(Cmds, "d", &spec);
+  TXApp &app = TXApp::GetInstance();
+  TSAtomPList atoms = app.FindSAtoms(Cmds, false, !Options.Contains("cs"));
+  for (size_t i = 0; i < atoms.Count(); i++) {
+    atoms[i]->CAtom().SetSpecialPositionDeviation(spec);
+  }
+}
+//.............................................................................
 void XLibMacros::macAfix(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &E)
 {
@@ -7500,7 +7521,33 @@ void XLibMacros::macExport(TStrObjList &Cmds, const TParamList &Options,
     const size_t bInd = hklLoop->ColIndex("_refln_scale_group_code");
 
     if( (hInd|kInd|lInd|mInd|sInd) == InvalidIndex ) {
-      TBasicApp::NewLogEntry() << "Could not locate <h k l meas sigma> data";
+      const size_t mFInd = hklLoop->ColIndex("_refln_F_meas");
+      const size_t sFInd = hklLoop->ColIndex("_refln_F_sigma");
+      if ((mFInd | sFInd) == InvalidIndex) {
+        TBasicApp::NewLogEntry() << "Could not locate <h k l meas sigma> data";
+      }
+      else {
+        TBasicApp::NewLogEntry() << "Exporting HKLF 4 file";
+        THklFile file;
+        for (size_t i = 0; i < hklLoop->RowCount(); i++)  {
+          double F = hklLoop->Get(i, mFInd).GetStringValue().ToDouble(),
+            sF = hklLoop->Get(i, sFInd).GetStringValue().ToDouble(),
+            Fsq = F*F;
+          TReflection* r = new TReflection(
+            hklLoop->Get(i, hInd).GetStringValue().ToInt(),
+            hklLoop->Get(i, kInd).GetStringValue().ToInt(),
+            hklLoop->Get(i, lInd).GetStringValue().ToInt(),
+            Fsq,
+            // shelxl-like
+            2*(olx_max(0.01, sF)*olx_max(olx_max(0.01, olx_abs(F)), sF))
+          );
+          if (bInd != InvalidIndex) {
+            r->SetBatch(hklLoop->Get(i, bInd).GetStringValue().ToInt());
+          }
+          file.Append(*r);
+        }
+        file.SaveToFile(hkl_name);
+      }
     }
     else {
       THklFile file;

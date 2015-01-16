@@ -133,7 +133,12 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
         if( !Tmp.IsEmpty() )  Tmp << ", ";
         Tmp << (int)ca.GetPart();
       }
-      if( (Mode & lmAfix) != 0 && ca.GetAfix() != 0 ) {
+      if ((Mode & lmSpec) != 0 && ca.GetSpecialPositionDeviation() > 1e-3) {
+        if (!Tmp.IsEmpty())  Tmp << ", ";
+        Tmp << olxstr::FormatFloat(3, ca.GetSpecialPositionDeviation())
+          .TrimFloat();
+      }
+      if ((Mode & lmAfix) != 0 && ca.GetAfix() != 0) {
         if( !Tmp.IsEmpty() )  Tmp << ", ";
         Tmp << ca.GetAfix();
       }

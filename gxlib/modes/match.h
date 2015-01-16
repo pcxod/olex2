@@ -29,9 +29,11 @@ public:
     return true;
   }
   void Finalise_()  {}
-  virtual bool OnObject_(AGDrawObject& obj)  {
-    if( EsdlInstanceOf(obj, TXAtom) && AtomsToMatch.Count() < 7 )  {
-      AtomsToMatch.Add((TXAtom&)obj);
+  virtual bool OnObject_(AGDrawObject& obj) {
+    if (EsdlInstanceOf(obj, TXAtom) && AtomsToMatch.Count() < 7) {
+      if (!AtomsToMatch.AddUnique((TXAtom&)obj)) {
+        return false;
+      }
       FitAtoms(AtomsToMatch, true);
       SetUserCursor(AtomsToMatch.Count(), "<M>");
       return true;
