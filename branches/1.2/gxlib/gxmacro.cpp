@@ -406,7 +406,6 @@ void GXLibMacros::macName(TStrObjList &Cmds, const TParamList &Options,
     if (old.IsEmpty()) {
       return;
     }
-    bool create = false;
     TGPCollection *gpc = app.GetRender().FindCollection(Cmds[1]);
     if (gpc != NULL && gpc->ObjectCount() != 0) {
       if (typeid(old[0]->GetObject(0)) != typeid(gpc->GetObject(0))) {
@@ -422,12 +421,9 @@ void GXLibMacros::macName(TStrObjList &Cmds, const TParamList &Options,
       else {
         gpc = &app.GetRender().NewCollection(Cmds[1]);
       }
-      create = true;
     }
-
     for (size_t i = 0; i < sel.Count(); i++) {
       sel[i].GetPrimitives().RemoveObject(sel[i]);
-      gpc->AddObject(sel[i]);
     }
     if (EsdlInstanceOf(sel[0], TXAtom)) {
       for (size_t i = 0; i < sel.Count(); i++) {
@@ -450,10 +446,8 @@ void GXLibMacros::macName(TStrObjList &Cmds, const TParamList &Options,
         TXPlane::NamesRegistry().Add(p.GetDefId(), Cmds[1]);
       }
     }
-    if (create) {
-      AGDrawObject & o = gpc->GetObject(0);
-      gpc->DeleteObject(0);
-      o.Create();
+    for (size_t i = 0; i < sel.Count(); i++) {
+      sel[i].Create(Cmds[1]);
     }
     sel.Clear();
     return;

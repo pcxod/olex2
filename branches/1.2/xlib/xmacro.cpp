@@ -3317,31 +3317,37 @@ olxstr XLibMacros_funSGNameToHtml(const olxstr& name)  {
   }
   return res;
 }
-olxstr XLibMacros_funSGNameToHtmlX(const olxstr& name)  {
+olxstr XLibMacros_funSGNameToHtmlX(const olxstr& name) {
   TStrList toks(name, ' ');
   olxstr res;
   for( size_t i=0; i < toks.Count(); i++ )  {
-    if( toks[i].Length() >= 2 && XLibMacros_funSGNameIsNextSub(toks[i], 0) )
-      res << toks[i].CharAt(0) << "<sub>" << toks[i].CharAt(1) << "</sub>" << toks[i].SubStringFrom(2);
+    if (toks[i].Length() >= 2 && XLibMacros_funSGNameIsNextSub(toks[i], 0)) {
+      res << toks[i].CharAt(0) << "<sub>" << toks[i].CharAt(1) << "</sub>" <<
+        toks[i].SubStringFrom(2);
+    }
     else
       res << toks[i];
   }
   return res;
 }
-void XLibMacros::funSG(const TStrObjList &Cmds, TMacroError &E)  {
+void XLibMacros::funSG(const TStrObjList &Cmds, TMacroError &E) {
   TSpaceGroup* sg = NULL;
-  try  { sg = &TXApp::GetInstance().XFile().GetLastLoaderSG();  }
+  try {
+    if (TXApp::GetInstance().XFile().HasLastLoader()) {
+      sg = &TXApp::GetInstance().XFile().GetLastLoaderSG();
+    }
+  }
   catch(...)  {}
-  if( sg != NULL )  {
+  if (sg != NULL) {
     olxstr Tmp;
-    if( Cmds.IsEmpty() )  {
+    if (Cmds.IsEmpty()) {
       Tmp = sg->GetName();
-      if( !sg->GetFullName().IsEmpty() )  {
+      if (!sg->GetFullName().IsEmpty()) {
         Tmp << " (" << sg->GetFullName() << ')';
       }
       Tmp << " #" << sg->GetNumber();
     }
-    else  {
+    else {
       Tmp = Cmds[0];
       Tmp.Replace("%#", olxstr(sg->GetNumber())).\
         Replace("%n", sg->GetName()).\
@@ -3357,9 +3363,8 @@ void XLibMacros::funSG(const TStrObjList &Cmds, TMacroError &E)  {
     }
     E.SetRetVal(Tmp);
   }
-  else  {
+  else {
     E.SetRetVal(NAString());
-//    E.ProcessingError(__OlxSrcInfo, "could not find space group for the file");
     return;
   }
 }

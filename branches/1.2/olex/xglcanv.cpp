@@ -52,12 +52,13 @@ TGlCanvas::TGlCanvas(TMainForm *parent, int* gl_attr, wxWindowID id,
 }
 //..............................................................................
 TGlCanvas::~TGlCanvas() {
-  TwxGlScene *wgls = dynamic_cast<TwxGlScene*>(&FXApp->GetRender().GetScene());
-  if (wgls != NULL) {
-    wgls->SetCanvas(NULL);
-    wgls->SetContext(NULL);
+  if (TBasicApp::HasInstance()) {
+    TwxGlScene *wgls = dynamic_cast<TwxGlScene*>(&FXApp->GetRender().GetScene());
+    if (wgls != NULL) {
+      wgls->SetCanvas(NULL);
+      wgls->SetContext(NULL);
+    }
   }
-
   if (Context != NULL)
     delete Context;
 }
