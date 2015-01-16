@@ -145,17 +145,21 @@ public:
   struct FlagsAnalyser  {
     const short ref_flags;
     FlagsAnalyser(short _ref_flags) : ref_flags(_ref_flags)  {}
-    bool OnItem(const AGDrawObject& o, size_t) const {
-      return o.MaskFlags(ref_flags) != 0;
+    template <typename item_t>
+    bool OnItem(const item_t& o, size_t) const {
+      return olx_ref::get(o).MaskFlags(ref_flags) != 0;
     }
   };
-  template <class Actor> struct FlagsAnalyserEx  {
+  template <class Actor> struct FlagsAnalyserEx {
     const short ref_flags;
     const Actor actor;
     FlagsAnalyserEx(short _ref_flags, const Actor& _actor)
-      : ref_flags(_ref_flags), actor(_actor)  {}
-    bool OnItem(AGDrawObject& o, size_t i) const {
-      if( o.MaskFlags(ref_flags) != 0 )
+      : ref_flags(_ref_flags), actor(_actor)
+    {}
+    template <typename item_t>
+    bool OnItem(item_t& o_, size_t i) const {
+      AGDrawObject &o = olx_ref::get(o_);
+      if (o.MaskFlags(ref_flags) != 0)
         return actor.OnItem(o, i);
       return false;
     }

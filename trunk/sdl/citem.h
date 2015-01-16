@@ -32,7 +32,7 @@ public:
       : accessor(accessor_), ref_tag(_ref_tag) {}
     template <class Item>
     bool OnItem(const Item& o, size_t) const {
-      return GetTag(accessor(o)) == ref_tag;
+      return olx_ref::get(accessor(o)).GetTag() == ref_tag;
     }
   };
   template <class Accessor>

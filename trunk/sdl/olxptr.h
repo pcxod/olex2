@@ -149,8 +149,8 @@ struct olx_ref {
   static char *get(char *p)  {  return p;  }
   static wchar_t *get(wchar_t *p)  {  return p;  }
   template <class P>
-  static const P& get(const P* p)  {  return *p;  }
-  static const char *get(const char *p)  {  return p;  }
+  static const P& get(const P *p)  {  return *p;  }
+  static const char *get(const char *p)  { return p; }
   static const wchar_t *get(const wchar_t *p)  {  return p;  }
   template <class P>
   static P& get(P& p)  {  return p;  }

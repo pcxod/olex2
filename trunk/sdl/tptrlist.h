@@ -473,23 +473,12 @@ public:
     Items[to] = D;
   }
 //..............................................................................
-  TPtrList& Pack()  {
-    size_t nc = 0;  // count null pointers
-    for( size_t i=0; i < FCount; i++, nc++ )  {
-      if( Items[i] == NULL )  {
-        nc--;
-        continue;
-      }
-      Items[nc] = Items[i];
-    }
-    FCount = nc;
-    return *this;
-  }
+  TPtrList& Pack() { return Pack(olx_alg::olx_eq((const T*)0)); }
 //..............................................................................
-  template <class PackAnalyser> TPtrList& Pack(const PackAnalyser& pa)  {
+  template <class PackAnalyser> TPtrList& Pack(const PackAnalyser& pa) {
     size_t nc = 0;  // count null pointers
-    for( size_t i=0; i < FCount; i++, nc++ )  {
-      if( pa.OnItem(*Items[i], i) )  {
+    for (size_t i=0; i < FCount; i++, nc++) {
+      if (pa.OnItem(Items[i], i)) {
         nc--;
         continue;
       }
@@ -501,7 +490,7 @@ public:
 //..............................................................................
   template <class Functor> const TPtrList& ForEach(const Functor& f) const {
     for (size_t i=0; i < FCount; i++)
-      f.OnItem(*Items[i], i);
+      f.OnItem(Items[i], i);
     return *this;
   }
 //..............................................................................
@@ -509,11 +498,21 @@ public:
     TPtrList rv;
     rv.SetCapacity(Count());
     for (size_t i = 0; i < FCount; i++) {
-      if (f.OnItem(*Items[i], i)) {
+      if (f.OnItem(Items[i], i)) {
         rv.Add(Items[i]);
       }
     }
     return rv.Fit();
+  }
+//..............................................................................
+  template <class Analyser> size_t Count(const Analyser& a) const {
+    size_t cnt = 0;
+    for (size_t i = 0; i < FCount; i++) {
+      if (a.OnItem(Items[i], i)) {
+        cnt++;
+      }
+    }
+    return cnt;
   }
 //..............................................................................
   // make list capcity equal to its size
