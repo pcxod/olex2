@@ -399,6 +399,7 @@ TGXApp::TGXApp(const olxstr &FileName, AGlScene *scene)
 TGXApp::~TGXApp() {
   Instance = 0;
   delete States;
+  XFile().OnFileLoad.Remove(this);
   XFile().GetLattice().OnAtomsDeleted.Remove(this);
   Clear();
   delete FLabels;

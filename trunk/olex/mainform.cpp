@@ -393,13 +393,11 @@ TMainForm::TMainForm(TGlXApp *Parent)
 //..............................................................................
 bool TMainForm::Destroy()  {
   Destroying = true;
-  if (FXApp != NULL) {
-    SaveVFS(plGlobal);  // save virtual db to file
-    SaveVFS(plStructure);
-    FXApp->OnObjectsDestroy.Remove(this);
-    processMacro("onexit");
-    SaveSettings(FXApp->GetConfigDir() + FLastSettingsFile);
-  }
+  SaveVFS(plGlobal);  // save virtual db to file
+  SaveVFS(plStructure);
+  FXApp->OnObjectsDestroy.Remove(this);
+  processMacro("onexit");
+  SaveSettings(FXApp->GetConfigDir() + FLastSettingsFile);
   HtmlManager.Destroy();
   if (_UpdateThread != NULL)  {
     _UpdateThread->OnTerminate.Remove(this);
@@ -410,6 +408,11 @@ bool TMainForm::Destroy()  {
     delete UpdateProgress;
   // clean up it here
   FXApp->GetStatesRegistry().OnChange.Clear();
+  FXApp->XFile().OnFileLoad.Remove(this);
+  FXApp->XFile().OnFileClose.Remove(this);
+  FXApp->XFile().GetRM().OnSetBadReflections.Remove(this);
+  FXApp->XFile().GetRM().OnCellDifference.Remove(this);
+
   delete Modes;
   // delete FIOExt;
 
