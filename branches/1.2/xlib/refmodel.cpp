@@ -1696,6 +1696,9 @@ olx_pair_t<vec3i, vec3i> RefinementModel::CalcIndicesToD(double d,
     vec3i::UpdateMinMax(TReflection::Standardise(vs[i], *si), mini, maxi);
     vec3i::UpdateMinMax(TReflection::Standardise(-vs[i], *si), mini, maxi);
   }
+  for (size_t i = 0; i < 3; i++) {
+    if (mini[i] > 0) mini[i] = 0;
+  }
   return olx_pair::Make(mini, maxi);
 }
 //..............................................................................
