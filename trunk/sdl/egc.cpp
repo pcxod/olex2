@@ -47,8 +47,7 @@ void TEGC::ManageRemoval() {
 //.............................................................................
 void TEGC::Clear(OEntry *entry) {
   while (entry != NULL) {
-    ADestructionOservable *o =
-      dynamic_cast<ADestructionOservable *>(entry->Object);
+    APerishable *o = dynamic_cast<APerishable *>(entry->Object);
     if (o != 0) {
       o->RemoveDestructionObserver(
         DestructionObserver::Make(&TEGC::AtObjectDestruct));
@@ -88,10 +87,10 @@ void TEGC::Add(IOlxObject* object, OEntry &head, OEntry *&tail) {
     }
   }
   {
-    ADestructionOservable *o = dynamic_cast<ADestructionOservable *>(object);
+    APerishable *o = dynamic_cast<APerishable *>(object);
     if (o != 0) {
       o->AddDestructionObserver(
-        DestructionObserver::Make(&TEGC::AtObjectDestruct));
+        DestructionObserver::MakeNew(&TEGC::AtObjectDestruct));
     }
   }
   if (tail == NULL) {
@@ -115,7 +114,7 @@ void TEGC::_AddATE(IOlxObject* object) {
   Add(object, ATEOHead, ATEOTail);
 }
 //.............................................................................
-void TEGC::_AtObjectDestruct(IOlxObject* obj) {
+void TEGC::_AtObjectDestruct(APerishable* obj) {
   if (Destructing)  return;
   if (!RemoveObject(ASAPOHead, obj)) {
     if (!RemoveObject(ATEOHead, obj)) {

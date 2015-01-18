@@ -244,7 +244,7 @@ struct ADestructionObserver {
   ADestructionObserver() : next(0)
   {}
   virtual ~ADestructionObserver() {}
-  virtual void call(class IOlxObject* obj) const = 0;
+  virtual void call(class APerishable* obj) const = 0;
   virtual bool operator == (const ADestructionObserver *) const = 0;
   virtual ADestructionObserver *clone() const = 0;
 };
@@ -267,15 +267,16 @@ public:
 #include "olxvptr.h"
 #include "destruction_obs.h"
 
-class ADestructionOservable : public virtual IOlxObject {
+class APerishable : public virtual IOlxObject {
   bool HasDObserver(ADestructionObserver *dh) const;
 protected:
   ADestructionObserver *dsh_head, *dsh_tail;
 public:
-  ADestructionOservable() : dsh_head(0), dsh_tail(0)
+  APerishable() : dsh_head(0), dsh_tail(0)
   {}
-  virtual ~ADestructionOservable();
-  bool AddDestructionObserver(const ADestructionObserver &);
+  virtual ~APerishable();
+  // must be created with new
+  bool AddDestructionObserver(ADestructionObserver &);
   void RemoveDestructionObserver(const ADestructionObserver &);
 };
 

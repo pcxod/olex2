@@ -245,7 +245,7 @@ void TGlMouse::process_command_list(TStrObjList& Cmds, bool enable) {
   }
 }
 //..............................................................................
-void TGlMouse::OnObjectDelete(IOlxObject *o) {
+void TGlMouse::OnObjectDelete(APerishable *o) {
   ClearObjectCache(o);
 }
 //..............................................................................
@@ -256,7 +256,7 @@ AGDrawObject *TGlMouse::find_object(int x, int y) {
     if (o != NULL) {
       object_cache.Add(TMouseRegion(x, y), o);
       o->AddDestructionObserver(
-        DestructionObserver::Make(this, &TGlMouse::OnObjectDelete));
+        DestructionObserver::MakeNew(this, &TGlMouse::OnObjectDelete));
     }
   }
   return o;

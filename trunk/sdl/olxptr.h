@@ -51,9 +51,11 @@ template <typename ptr> struct olx_object_ptr {
     p->ref_cnt = 1;
     return *this;
   }
-  ptr& operator ()() const {  return *p->p;  }
   bool is_valid() const { return p->p != NULL; }
-  operator ptr& () const {  return *p->p;  }
+  ptr* get_ptr() const { return p->p; }
+  ptr& get() const { return *p->p; }
+  ptr& operator ()() const { return *p->p; }
+  operator ptr& () const { return *p->p; }
   // releases the object from ALL references
   ptr *release() const {
     ptr *p_ = p->p;
@@ -89,7 +91,8 @@ template <typename ptr> struct olx_array_ptr {
   }
   bool is_null() const { return p->p == NULL; }
   bool is_valid() const { return p->p != NULL; }
-  ptr* operator ()() const {  return p->p;  }
+  ptr* get() const { return p->p; }
+  ptr* operator ()() const { return p->p; }
   operator ptr* () const {  return p->p;  }
   // releases the array from ALL references
   ptr *release() const {

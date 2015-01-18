@@ -15,10 +15,10 @@
 #include "edict.h"
 BeginGxlNamespace()
 
-class TDUserObj: public AGlMouseHandlerImp  {
+class TDUserObj: public AGlMouseHandlerImp {
   short Type;
-  TArrayList<vec3f>* Vertices, *Normals;
-  TArrayList<uint32_t> *Colors;
+  olx_object_ptr<TArrayList<vec3f> > Vertices, Normals;
+  olx_object_ptr<TArrayList<uint32_t> > Colors;
   TGlMaterial GlM;
 protected:
   virtual bool DoTranslate(const vec3d& t) {
@@ -35,28 +35,21 @@ protected:
 public:
   TDUserObj(TGlRenderer& Render, short type, const olxstr& collectionName);
   TDUserObj(TGlRenderer& Render, const TDataItem &di);
-  virtual ~TDUserObj()  {
-    if (Vertices != NULL) delete Vertices;
-    if (Normals != NULL) delete Normals;
-    if (Colors != NULL) delete Colors;
-  }
-  void SetVertices(TArrayList<vec3f>* vertices)  {
-    if (Vertices != NULL) delete Vertices;
+  virtual ~TDUserObj() {}
+  void SetVertices(TArrayList<vec3f>* vertices) {
     Vertices = vertices;
   }
-  void SetNormals(TArrayList<vec3f>* normals)  {
-    if (Normals != NULL) delete Normals;
+  void SetNormals(TArrayList<vec3f>* normals) {
     Normals = normals;
   }
-  void SetColors(TArrayList<uint32_t>* colors)  {
-    if (Colors != NULL) delete Colors;
+  void SetColors(TArrayList<uint32_t>* colors) {
     Colors = colors;
   }
-  void SetMaterial(const olxstr& mat)  {  GlM.FromString(mat);  }
-  void SetMaterial(const TGlMaterial& glm)  {  GlM = glm;  }
+  void SetMaterial(const olxstr& mat) { GlM.FromString(mat); }
+  void SetMaterial(const TGlMaterial& glm) { GlM = glm; }
   void Create(const olxstr& cName=EmptyString());
   bool Orient(TGlPrimitive& P);
-  bool GetDimensions(vec3d &Max, vec3d &Min){  return false;  }
+  bool GetDimensions(vec3d &Max, vec3d &Min) { return false; }
   void ToDataItem(TDataItem &di) const;
   void FromDataItem(const TDataItem &di);
   const_strlist ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const;

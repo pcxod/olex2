@@ -104,30 +104,22 @@ class xappXFileLoad : public AActionHandler {
   TEBasis B;
   TStrList AtomNames;
   TEBitArray CAtomMasks;
-  TLattice::GrowInfo* GrowInfo;
+  olx_object_ptr<TLattice::GrowInfo> GrowInfo;
   bool SameFile, EmptyFile;
   int state;
 public:
   xappXFileLoad(TGXApp *Parent) {
     FParent = Parent;
     AActionHandler::SetToDelete(false);
-    GrowInfo = NULL;
     SameFile = false;
     state = 0;
   }
-  ~xappXFileLoad()  {
-    if( GrowInfo != NULL )
-      delete GrowInfo;
-    return;
-  }
+  ~xappXFileLoad() {}
   bool Enter(const IOlxObject *Sender, const IOlxObject *Data, TActionQueue *)  {
     state = 1;
     FParent->GetUndo().Clear();
     FParent->DSphere().SetAnalyser(NULL);
-    if( GrowInfo != NULL )  {
-      delete GrowInfo;
-      GrowInfo = NULL;
-    }
+    GrowInfo = NULL;
     EmptyFile = SameFile = false;
     if (Data != NULL && EsdlInstanceOf(*Data, olxstr)) {
       olxstr s1 = TEFile::UnixPath(TEFile::ChangeFileExt(
@@ -197,7 +189,7 @@ public:
         if (ca.IsDeleted() || ca.GetType() == iQPeakZ) continue;
         ca.SetMasked(CAtomMasks[ac++]);
       }
-      FParent->XFile().GetLattice().SetGrowInfo(GrowInfo);
+      FParent->XFile().GetLattice().SetGrowInfo(&GrowInfo());
       GrowInfo = NULL;
     }
     else {  // definition will get broken otherwise
@@ -205,10 +197,7 @@ public:
     }
     if (!hasNonQ && !FParent->AreQPeaksVisible())
       FParent->SetQPeaksVisible(true);
-    if (GrowInfo != NULL) {
-      delete GrowInfo;
-      GrowInfo = NULL;
-    }
+    GrowInfo = NULL;
     CAtomMasks.Clear();
     AtomNames.Clear();
     return false;

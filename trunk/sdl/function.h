@@ -68,7 +68,7 @@ const uint32_t
   // .... 1 << n
   ;
 
-class ALibraryContainer: public ADestructionOservable {
+class ALibraryContainer : public APerishable {
 private:
   struct TProgramStateDescriptor {
     uint32_t StateBit;
@@ -184,7 +184,7 @@ public:
   TFunction(const olx_vptr<Base> &instance,
     void (Base::*func)(const TStrObjList& Params, TMacroData& E),
     const olxstr& funcName, uint32_t argc,
-    const olxstr& desc=EmptyString())
+    const olxstr& desc = EmptyString())
     : AFunction(funcName, argc, desc),
     BaseInstance(instance),
     Func(func)
@@ -257,7 +257,7 @@ public:
     void (Base::*macro)(TStrObjList& Params,
     const TParamList &Options, TMacroData& E),
     const olxstr& macroName, const olxstr& validOptions,
-    uint32_t argc, const olxstr& desc=EmptyString())
+    uint32_t argc, const olxstr& desc = EmptyString())
     : AMacro(macroName, validOptions, argc, desc),
     BaseInstance(instance),
     Macro(macro)

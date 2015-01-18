@@ -42,7 +42,7 @@ IOlxObject* IOlxObject::Replicate() const {
   throw TNotImplementedException(__OlxSourceInfo);
 }
 //.............................................................................
-ADestructionOservable::~ADestructionOservable() {
+APerishable::~APerishable() {
   while (dsh_head != NULL) {
     dsh_head->call(this);
     ADestructionObserver *dsh = dsh_head;
@@ -51,7 +51,7 @@ ADestructionOservable::~ADestructionOservable() {
   }
 }
 //.............................................................................
-bool ADestructionOservable::HasDObserver(ADestructionObserver *dh) const {
+bool APerishable::HasDObserver(ADestructionObserver *dh) const {
   ADestructionObserver *e = dsh_head;
   while (e != NULL) {
     if ((*e) == dh)
@@ -61,15 +61,19 @@ bool ADestructionOservable::HasDObserver(ADestructionObserver *dh) const {
   return false;
 }
 //.............................................................................
-void ADestructionOservable::RemoveDestructionObserver(
-  const ADestructionObserver &o)
-{
+void APerishable::RemoveDestructionObserver(const ADestructionObserver &o) {
   ADestructionObserver *cr = dsh_head, *prev = NULL;
   while (cr != NULL) {
     if (o == cr) {
-      if (prev != NULL)  prev->next = cr->next;
-      if (cr == dsh_tail)  dsh_tail = prev;
-      if (dsh_head == cr)  dsh_head = NULL;
+      if (prev != NULL) {
+        prev->next = cr->next;
+      }
+      if (cr == dsh_tail) {
+        dsh_tail = prev;
+      }
+      if (dsh_head == cr) {
+        dsh_head = cr->next;
+      }
       delete cr;
       break;
     }
@@ -78,14 +82,12 @@ void ADestructionOservable::RemoveDestructionObserver(
   }
 }
 //.............................................................................
-bool ADestructionOservable::AddDestructionObserver(
-  const ADestructionObserver &o)
-{
+bool APerishable::AddDestructionObserver(ADestructionObserver &o) {
   if (dsh_head == NULL) {
-    dsh_head = dsh_tail = o.clone();
+    dsh_head = dsh_tail = &o;
   }
   else {
-    ADestructionObserver *e = o.clone();
+    ADestructionObserver *e = &o;
     if (HasDObserver(e)) {
       delete e;
       return false;

@@ -65,10 +65,10 @@ protected:
   void ClearATE();
   void _AddASAP(IOlxObject* object);
   void _AddATE(IOlxObject* object);
-  static void AtObjectDestruct(IOlxObject* obj) {
+  static void AtObjectDestruct(APerishable* obj) {
     Instance_()->_AtObjectDestruct(obj);
   }
-  void _AtObjectDestruct(IOlxObject* obj);
+  void _AtObjectDestruct(APerishable* obj);
 public:
   TEGC();
   virtual ~TEGC();

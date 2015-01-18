@@ -28,7 +28,7 @@ template <class T> struct ThreadFunctionConverter  {
   }
 };
 
-class AOlxThread : public ADestructionOservable {
+class AOlxThread : public APerishable {
 protected:
   int volatile RetVal;
   bool volatile Terminate, Detached, Running;

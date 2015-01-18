@@ -10,11 +10,11 @@
 #define __olx_sdl_desobs_H
 
 struct StaticDestructionObserver : public ADestructionObserver {
-  void(*des_obs)(IOlxObject* obj);
-  StaticDestructionObserver(void(*des_obs)(IOlxObject* obj))
+  void(*des_obs)(APerishable* obj);
+  StaticDestructionObserver(void(*des_obs)(APerishable* obj))
     : des_obs(des_obs)
   {}
-  virtual void call(IOlxObject* obj) const { (*des_obs)(obj); }
+  virtual void call(APerishable* obj) const { (*des_obs)(obj); }
   virtual bool operator == (const ADestructionObserver *p_) const {
     const StaticDestructionObserver *p =
       dynamic_cast<const StaticDestructionObserver *>(p_);
@@ -26,14 +26,19 @@ struct StaticDestructionObserver : public ADestructionObserver {
 };
 template <class base>
 struct MemberDestructionObserver : public ADestructionObserver {
-  void (base::*des_obs)(IOlxObject* obj);
+  void (base::*des_obs)(APerishable* obj);
   olx_vptr<base> instance;
   MemberDestructionObserver(const olx_vptr<base> &inst,
-    void (base::*des_obs)(IOlxObject* obj))
+    void (base::*des_obs)(APerishable* obj))
     : instance(inst),
       des_obs(des_obs)
   {}
-  virtual void call(IOlxObject* obj) const {
+  MemberDestructionObserver(base *inst,
+    void (base::*des_obs)(APerishable* obj))
+    : instance(inst),
+    des_obs(des_obs)
+  {}
+  virtual void call(APerishable* obj) const {
     (instance().*des_obs)(obj);
   }
   virtual bool operator == (const ADestructionObserver *p_) const {
@@ -48,14 +53,23 @@ struct MemberDestructionObserver : public ADestructionObserver {
 };
 
 struct DestructionObserver {
-  template <class T> static MemberDestructionObserver<T> Make( T* inst,
-    void (T::*f)(IOlxObject* obj))
+  template <class T> static MemberDestructionObserver<T> Make(T* inst,
+    void (T::*f)(APerishable* obj))
   {
     return MemberDestructionObserver<T>(inst, f);
   }
 
-  static StaticDestructionObserver Make(void(*f)(IOlxObject *)) {
+  static StaticDestructionObserver Make(void(*f)(APerishable *)) {
     return StaticDestructionObserver(f);
+  }
+  template <class T> static MemberDestructionObserver<T> &MakeNew(T* inst,
+    void (T::*f)(APerishable* obj))
+  {
+    return *(new MemberDestructionObserver<T>(inst, f));
+  }
+
+  static StaticDestructionObserver &MakeNew(void(*f)(APerishable *)) {
+    return *(new StaticDestructionObserver(f));
   }
 };
 
