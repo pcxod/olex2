@@ -48,9 +48,9 @@ struct ort_atom : public a_ort_object {
   uint32_t sphere_color, rim_color, mask;
   ort_atom(const OrtDraw& parent, const TXAtom& a);
   ~ort_atom()  {
-    if( p_elpm != NULL )  delete p_elpm;
-    if( p_ielpm != NULL )  delete p_ielpm;
-    if( elpm != NULL )  delete elpm;
+    olx_del_obj(p_elpm);
+    olx_del_obj(p_ielpm);
+    olx_del_obj(elpm);
   }
   virtual void render(PSWriter&) const;
   virtual float get_z() const {  return crd[2];  }
@@ -157,7 +157,7 @@ struct ort_circle : public a_ort_object {
       basis(NULL),
       color(0) {}
   ~ort_circle()  {
-    if( basis != NULL )  delete basis;
+    olx_del_obj(basis);
   }
   virtual void render(PSWriter&) const;
   virtual float get_z() const {  return center[2];  }

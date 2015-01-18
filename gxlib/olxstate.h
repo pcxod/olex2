@@ -83,23 +83,23 @@ public:
   };
   template <class base_t>
   struct TMemberFunctionSetter_1 : public ISetter {
-    base_t &instance;
+    const olx_vptr<base_t> instance;
     void (base_t::*setter)(bool v);
-    TMemberFunctionSetter_1(base_t &instance,
+    TMemberFunctionSetter_1(const olx_vptr<base_t> &instance,
       void (base_t::*setter)(bool v))
       : instance(instance), setter(setter)
     {}
     virtual void operator ()(bool v, const olxstr &data) {
       if (!data.IsEmpty())
         throw TInvalidArgumentException(__OlxSourceInfo, "data");
-      (instance.*setter)(v);
+      (instance().*setter)(v);
     }
   };
   template <class base_t>
   struct TMemberFunctionSetter_2 : public ISetter {
-    base_t &instance;
+    const olx_vptr<base_t> instance;
     void (base_t::*setter)(bool v, const olxstr &);
-    TMemberFunctionSetter_2(base_t &instance,
+    TMemberFunctionSetter_2(const olx_vptr<base_t> &instance,
       void (base_t::*setter)(bool v, const olxstr &))
       : instance(instance), setter(setter)
     {}

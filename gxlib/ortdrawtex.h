@@ -23,10 +23,8 @@ private:
     OrtAtom(const OrtAtom& a) :
     atom(a.atom), crd(a.crd), elpm(a.elpm), ielpm(a.ielpm) {  }
     ~OrtAtom()  {
-      if( elpm != NULL )
-        delete elpm;
-      if( ielpm != NULL )
-        delete ielpm;
+      olx_del_obj(elpm);
+      olx_del_obj(ielpm);
     }
   };
   static int OrtAtomZSort(const OrtAtom &a1, const OrtAtom &a2)  {

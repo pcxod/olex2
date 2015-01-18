@@ -30,7 +30,7 @@ const uint16_t
 
 /*  defines basic functionality of a graphic object */
 class AGDrawObject
-  : public virtual ACollectionItem, public ADestructionOservable
+  : public virtual ACollectionItem, public APerishable
 {
   uint16_t sgdo_Flags;
 protected:

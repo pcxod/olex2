@@ -79,8 +79,8 @@ public:
     gxapp.OnObjectsCreate.Add(this, mode_fit_create, msiExit);
     gxapp.XFile().GetLattice().OnDisassemble.Add(this, mode_fit_disassemble,
       msiEnter);
-    gxapp.XFile().GetLattice().OnStructureUniq.AddFirst(uniq_handler);
-    gxapp.XFile().GetLattice().OnStructureGrow.AddFirst(uniq_handler);
+    gxapp.XFile().GetLattice().OnStructureUniq.InsertFirst(uniq_handler);
+    gxapp.XFile().GetLattice().OnStructureGrow.InsertFirst(uniq_handler);
     gxapp.EnableSelection(false);
   }
   bool Initialise_(TStrObjList& Cmds, const TParamList& Options) {

@@ -21,7 +21,7 @@ class OlexProcessorImp : public IOlex2Processor, public virtual IOlxObject {
   sorted::StringAssociation<ABasicFunction*> CallbackFuncs;
   ALibraryContainer *LibraryContainer;
   // object destruction handler
-  void ODH(IOlxObject *o) {
+  void ODH(APerishable *o) {
     if (o == LibraryContainer)
       LibraryContainer = NULL;
   }
@@ -72,7 +72,7 @@ public:
   void SetLibraryContainer(ALibraryContainer &lc) {
     LibraryContainer = &lc;
     lc.AddDestructionObserver
-      (DestructionObserver::Make(this, &OlexProcessorImp::ODH));
+      (DestructionObserver::MakeNew(this, &OlexProcessorImp::ODH));
   }
 
   virtual bool registerCallbackFunc(const olxstr& cbEvent,

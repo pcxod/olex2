@@ -13,10 +13,20 @@
 
 /* a class that represent a virtual pointer */
 template <class ptr> struct olx_virtual_ptr {
+protected:
+  mutable ptr *cached;
+public:
+  olx_virtual_ptr() : cached(0) {}
   virtual ~olx_virtual_ptr() {}
   virtual IOlxObject *get_ptr() const = 0;
   ptr &get() const {
-    return dynamic_cast<ptr &>(*get_ptr());
+    IOlxObject *p = get_ptr();
+    if (p == cached) {
+      return *cached;
+    }
+    ptr &rv = dynamic_cast<ptr &>(*p);
+    cached = &rv;
+    return rv;
   }
   ptr &operator()() const {
     return get();
@@ -59,6 +69,8 @@ template <typename ptr> struct olx_vptr
     parent_t::p = _p.p->inc_ref();
     return *this;
   }
+  IOlxObject *get_ptr() const { return parent_t::p->p->get_ptr(); }
+  ptr& get() const { return parent_t::p->p->get(); }
   ptr& operator ()() const { return parent_t::p->p->get(); }
   operator ptr& () const { return parent_t::p->p->get(); }
   bool operator == (const olx_vptr &ap) const {

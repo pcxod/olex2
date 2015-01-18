@@ -30,9 +30,9 @@ TOlxPyVar::TOlxPyVar(const TOlxPyVar& oo)  {
   if( Obj != NULL )  Py_INCREF(Obj);
 }
 //.............................................................................
-TOlxPyVar::~TOlxPyVar()  {
-  if( Str != NULL )  delete Str;
-  if( Obj != NULL && Obj != Py_None)
+TOlxPyVar::~TOlxPyVar() {
+  olx_del_obj(Str);
+  if (Obj != NULL && Obj != Py_None)
     Py_DECREF(Obj);
 }
 //.............................................................................

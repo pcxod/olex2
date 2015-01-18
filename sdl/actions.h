@@ -117,7 +117,7 @@ public:
   /* inserts a new handler at the beginning of the list so that it will be
   executed first of all
   */
-  void AddFirst(const olx_vptr<AActionHandler> &handler);
+  void InsertFirst(const olx_vptr<AActionHandler> &handler);
   /* adds new dispatcher, no AddFirst - Handlers are executed before the
   dispatchers...
   */
@@ -137,12 +137,12 @@ public:
   void Clear();
   // removes specified handler from the queue
   void Remove(AActionHandler* handler);
-  bool Contains(const olx_vptr<AActionHandler> &handler);
+  bool Contains(AActionHandler *handler);
 
   // removes specified dispatcher from the queue
   void Remove(const AEventsDispatcher* dispatcher);
   // returns true if a specified handler belongs to the queue
-  bool Contains(const olx_vptr<AEventsDispatcher> &dispatcher);
+  bool Contains(AEventsDispatcher *dispatcher);
   // returns the name of the queue
   const olxstr& GetName() const { return Name; }
 };

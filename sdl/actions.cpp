@@ -21,22 +21,16 @@ TActionQueue::TActionQueue(TActionQList* parent, const olxstr& name)
 }
 //..............................................................................
 void TActionQueue::Add(const olx_vptr<AActionHandler> &a) {
-  if (Contains(a))
-    throw TInvalidArgumentException(__OlxSourceInfo, "handler");
   Handlers.Add(new olx_vptr<AActionHandler>(a));
 }
 //..............................................................................
-void TActionQueue::AddFirst(const olx_vptr<AActionHandler> &a) {
-  if (Contains(a))
-    throw TInvalidArgumentException(__OlxSourceInfo, "handler");
+void TActionQueue::InsertFirst(const olx_vptr<AActionHandler> &a) {
   Handlers.Insert(0, new olx_vptr<AActionHandler>(a));
 }
 //..............................................................................
 void TActionQueue::Add(const olx_vptr<AEventsDispatcher> &D,
   int MsgId, short MsgSubId)
 {
-  if (Contains(D))
-    throw TInvalidArgumentException(__OlxSourceInfo, "dispatcher");
   Dispatchers.AddNew(MsgId, MsgSubId, D);
 }
 //..............................................................................
@@ -154,14 +148,14 @@ void TActionQueue::Clear() {
 void TActionQueue::Remove(AActionHandler* a) {
   for (size_t i = 0; i < Handlers.Count(); i++) {
     if (Handlers[i] == a) {
-        a->OnRemove(this);
-        Handlers.Delete(i);
-        return;
+      a->OnRemove(this);
+      Handlers.Delete(i);
+      return;
     }
   }
 }
 //..............................................................................
-bool TActionQueue::Contains(const olx_vptr<AActionHandler> &a) {
+bool TActionQueue::Contains(AActionHandler *a) {
   for (size_t i = 0; i < Handlers.Count(); i++) {
     if (Handlers[i] == a) {
       return true;
@@ -179,10 +173,12 @@ void TActionQueue::Remove(const AEventsDispatcher* D) {
   }
 }
 //..............................................................................
-bool TActionQueue::Contains(const olx_vptr<AEventsDispatcher> &D) {
-  for (size_t i=0; i < DispatcherCount(); i++)
-    if (Dispatchers[i].Dispatcher == D)
+bool TActionQueue::Contains(AEventsDispatcher *D) {
+  for (size_t i = 0; i < DispatcherCount(); i++) {
+    if (Dispatchers[i].Dispatcher == D) {
       return true;
+    }
+  }
   return false;
 }
 //..............................................................................

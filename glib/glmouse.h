@@ -158,7 +158,7 @@ protected:
   int ClickThreshold;
   void process_command_list(TStrObjList& Cmds, bool enable);
   olx_cdict<TMouseRegion, AGDrawObject *> object_cache;
-  void OnObjectDelete(IOlxObject *o);
+  void OnObjectDelete(APerishable *o);
   AGDrawObject *find_object(int x, int y);
   void ClearObjectCache(IOlxObject *caller=NULL);
 public:
