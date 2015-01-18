@@ -201,6 +201,9 @@
     <ClCompile Include="..\..\..\olex\html\htmlmanager.cpp">
       <Filter>html\sources</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\olex\ctrls\choiceext.cpp">
+      <Filter>ctrl\sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\olex\cmdline.h">
