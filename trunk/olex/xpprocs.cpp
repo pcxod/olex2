@@ -4055,7 +4055,43 @@ public:
   }
 };
 
+#include "olxpptr.h"
+class Perishable : public APerishable {
+};
+
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroData &Error)  {
+  {
+    TRefList refs = FXApp->XFile().GetRM().GetReflections();
+    refs.ForEach(
+      olx_func::make(&TReflection::SetBatch, 1)
+      );
+    TStrList strl;
+    strl.ForEachString(
+      olx_func::make(&olxstr::SubString, 0, 1)
+      );
+  }
+  return;
+  {
+    Perishable p, p1;
+    olx_perishable_ptr<Perishable> ptr(new Perishable);
+    delete &ptr();
+    ptr = new Perishable();
+    delete ptr.release();
+    if (!ptr.is_valid()) {
+      Perishable p1;
+      ptr = &p;
+      ptr = &p1;
+      ptr = &p1;
+      ptr = 0;
+    }
+    //{
+    //  olx_perishable_ptr<Perishable> ptr_(new Perishable);
+    //  ptr_ = ptr;
+    //  ptr.is_valid();
+    //}
+    return;
+  }
+  return;
   {
     TDataFile df;
     FXApp->XFile().GetLastLoader<TCif>().ToDataItem(df.Root().AddItem("CIF"));
