@@ -95,15 +95,8 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TCStrList& SL, bool get_ins
           throw TFunctionFailedException(__OlxSrcInfo, e,
             "unsupported file format");
         }
-        // find firt data block with reflections...
-        cif_dp::cetTable* hklLoop = NULL;
-        for (size_t i = 0; i < cif.BlockCount(); i++) {
-          hklLoop = cif.GetBlock(i).table_map.Find("_refln", NULL);
-          if (hklLoop != NULL) {
-            cif.SetCurrentBlock(i);
-            break;
-          }
-        }
+        // find first data block with reflections...
+        cif_dp::cetTable* hklLoop = cif.FindLoopGlobal("_refln", true);
         if (hklLoop == NULL)
           throw TInvalidArgumentException(__OlxSourceInfo, "no hkl loop found");
         const size_t hInd = hklLoop->ColIndex("_refln_index_h");
@@ -194,7 +187,7 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TCStrList& SL, bool get_ins
         ref->SetTag(Refs.Count());
       }
       catch(const TExceptionBase& e) {
-        TBasicApp::NewLogEntry(logError) <<
+        TBasicApp::NewLogEntry(logInfo) <<
           olxstr("Not an HKL line ") << (i+1) << ", breaking";
         break;
       }

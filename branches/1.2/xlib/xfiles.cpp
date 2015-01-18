@@ -207,7 +207,7 @@ void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
   }
   if( !Loader->IsNative() )  {
     OnFileLoad.Enter(this, &fn);
-    try  {
+    try {
       GetRM().Clear(rm_clear_ALL);
       GetLattice().Clear(true);
       GetRM().Assign(Loader->GetRM(), true);

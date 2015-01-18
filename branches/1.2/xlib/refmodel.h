@@ -82,7 +82,7 @@ protected:
   TEValueD EXTI;
   mat3d TWIN_mat;
   int TWIN_n;
-  bool TWIN_set, OMIT_set, MERG_set, HKLF_set, SHEL_set, OMITs_Modified,
+  bool TWIN_set, OMIT_set, MERG_set, HKLF_set, SHEL_set,
     EXTI_set, DEFS_set;
   vec3i_list Omits;
   TDoubleList DEFS;
@@ -102,59 +102,28 @@ public:
   struct HklStat : public MergeStats {
     double MaxD, MinD, LimDmin, LimDmax,
       OMIT_s, OMIT_2t, SHEL_lr, SHEL_hr, MaxI, MinI, HKLF_m, HKLF_s;
-    TDoubleList Completeness;
+    double Completeness;
     mat3d HKLF_mat;
-    int MERG;
-    //vec3i maxInd, minInd;
+    int MERG, HKLF;
+    vec3i_list omits;
     size_t FilteredOff, // by LimD, OMIT_2t, SHEL_hr, SHEL_lr
       OmittedReflections, // refs after 0 0 0
       TotalReflections, // reflections read = OmittedRefs + TotalRefs
-      IntensityTransformed;  // by OMIT_s
+      IntensityTransformed,  // by OMIT_s
+      DataCount; // number of reflections for the refinemenmt
     vec3i FileMinInd, FileMaxInd;  // hkl range in the file (all before 0 0 0)
     HklStat()  {  SetDefaults();  }
     HklStat(const HklStat& hs) {  this->operator = (hs);  }
-    HklStat& operator = (const HklStat& hs)  {
-      MergeStats::operator = (hs);
-      FileMinInd = hs.FileMinInd;
-      FileMaxInd = hs.FileMaxInd;
-      MaxD = hs.MaxD;         MinD = hs.MinD;
-      OMIT_s = hs.OMIT_s;     OMIT_2t = hs.OMIT_2t;
-      SHEL_lr = hs.SHEL_lr;   SHEL_hr = hs.SHEL_hr;
-      LimDmin = hs.LimDmin;   LimDmax = hs.LimDmax;
-      MaxI = hs.MaxI;         MinI = hs.MinI;
-      HKLF_m = hs.HKLF_m;     HKLF_s = hs.HKLF_s;
-      HKLF_mat = hs.HKLF_mat;
-      FilteredOff = hs.FilteredOff;
-      IntensityTransformed = hs.IntensityTransformed;
-      TotalReflections = hs.TotalReflections;
-      OmittedReflections = hs.OmittedReflections;
-      MERG = hs.MERG;
-      Completeness = hs.Completeness;
-      return *this;
-    }
-    HklStat& operator = (const MergeStats& ms)  {
+    HklStat& operator = (const HklStat& hs);
+    HklStat& operator = (const MergeStats& ms) {
       MergeStats::operator = (ms);
       return *this;
     }
-    void SetDefaults()  {
-      MergeStats::SetDefaults();
-      MaxD = MinD = LimDmax = LimDmin = 0;
-      MaxI = MinI = 0;
-      HKLF_m = def_HKLF_m;
-      HKLF_s = def_HKLF_s;
-      HKLF_mat.I();
-      FilteredOff = IntensityTransformed = OmittedByUser = 0;
-      TotalReflections = OmittedReflections = 0;
-      MERG = def_MERG;
-      OMIT_s = def_OMIT_s;
-      OMIT_2t = def_OMIT_2t;
-      SHEL_lr = def_SHEL_lr;
-      SHEL_hr = def_SHEL_hr;
-      Completeness.Clear();
-    }
+    void SetDefaults();
     size_t GetReadReflections() const {
       return TotalReflections+OmittedReflections;
     }
+    bool need_updating(const RefinementModel &r) const;
   };
 
   struct BadReflection {
@@ -338,8 +307,8 @@ public:
   bool HasOMIT() const {  return OMIT_set;  }
   size_t OmittedCount() const {  return Omits.Count();  }
   const vec3i& GetOmitted(size_t i) const {  return Omits[i];  }
-  void Omit(const vec3i& r)  {  Omits.AddCopy(r);  OMITs_Modified = true;  }
-  void ClearOmits()  {  Omits.Clear();  OMITs_Modified = true;  }
+  void Omit(const vec3i& r)  {  Omits.AddCopy(r);  }
+  void ClearOmits()  {  Omits.Clear();  }
   const vec3i_list& GetOmits() const {  return Omits;  }
   template <class list> void AddOMIT(const list& omit)  {
     if (!omit.IsEmpty() && !omit[0].IsNumber()) {
@@ -347,7 +316,6 @@ public:
     }
     else if( omit.Count() == 3 )  {  // reflection omit
       Omits.AddNew(omit[0].ToInt(), omit[1].ToInt(), omit[2].ToInt());
-      OMITs_Modified = true;
     }
     else  {  // reflection transformation/filtering
       if( omit.Count() > 0 )
@@ -719,6 +687,7 @@ Friedel opposites of components 1 ... m
   const HklStat& GetReflectionStat() const {  return _HklStat;  }
   // filters the reflections according to the parameters
   HklStat& FilterHkl(TRefList& out, HklStat& stats);
+  TRefPList::const_list_type GetNonoverlappingRefs(const TRefList& refs);
   // adjust intensity of reflections according to OMIT
   HklStat& AdjustIntensity(TRefList& out, HklStat& stats) const;
   /* returns redundancy information, like list[0] is the number of reflections

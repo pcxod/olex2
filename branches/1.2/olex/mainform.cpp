@@ -3120,8 +3120,9 @@ void TMainForm::BadReflectionsTable(bool TableDef, bool Create)  {
     QuickSorter::Sort(bad_refs,
       ReverseComparator::Make(&RefinementModel::BadReflection::CompareDirect));
   }
+  bool editable = (FXApp->XFile().GetRM().GetHKLF() <= 4);
   TTTable<TStrList> Table;
-  Table.Resize(bad_refs.Count(), 6);
+  Table.Resize(bad_refs.Count(), editable ? 6 : 5);
   Table.ColName(0) = "H";
   Table.ColName(1) = "K";
   Table.ColName(2) = "L";
@@ -3143,12 +3144,14 @@ void TMainForm::BadReflectionsTable(bool TableDef, bool Create)  {
         bad_refs[i].index[1] << ' ' << bad_refs[i].index[2] << "\'>" <<
         "omit" << "</a>";
     }
-    if (Hkl.AllRefs(bad_refs[i].index, matrices).Count() > 1) {
-      Table[i][5].stream(' ') << "<a href='HklEdit" << bad_refs[i].index[0]
-        << bad_refs[i].index[1] << bad_refs[i].index[2] << "'>Edit...</a>";
-    }
-    else {
-      Table[i][5] = "---";
+    if (editable) {
+      if (Hkl.AllRefs(bad_refs[i].index, matrices).Count() > 1) {
+        Table[i][5].stream(' ') << "<a href='HklEdit" << bad_refs[i].index[0]
+          << bad_refs[i].index[1] << bad_refs[i].index[2] << "'>Edit...</a>";
+      }
+      else {
+        Table[i][5] = "---";
+      }
     }
   }
   TStrList Output = Table.CreateHTMLList(EmptyString(), true, false, TableDef);

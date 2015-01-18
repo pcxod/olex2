@@ -1121,8 +1121,8 @@ void XLibMacros::macHklStat(TStrObjList &Cmds, const TParamList &Options,
     TTTable<TStrList> tab(22, 2);
     tab[0][0] << "Total reflections (after filtering)";
       tab[0][1] << hs.TotalReflections;
-    tab[1][0] << "Unique reflections";
-      tab[1][1] << hs.UniqueReflections;
+    tab[1][0] << "Data/Unique reflections";
+      tab[1][1] << hs.DataCount << '/' << hs.UniqueReflections;
     tab[2][0] << "Centric reflections";
       tab[2][1] << hs.CentricReflections;
     tab[3][0] << "Friedel pairs merged";
@@ -1137,9 +1137,11 @@ void XLibMacros::macHklStat(TStrObjList &Cmds, const TParamList &Options,
     tab[7][0] << "Max d";
       tab[7][1] << olxstr::FormatFloat(3, hs.MaxD);
     tab[8][0] << "Limiting d min (SHEL)";
-      tab[8][1] << (hs.LimDmin == 0 ? NAString() : olxstr::FormatFloat(3, hs.LimDmin));
+      tab[8][1] << (hs.LimDmin == 0 ? NAString()
+        : olxstr::FormatFloat(3, hs.LimDmin));
     tab[9][0] << "Limiting d max (SHEL/OMIT_2t)";
-      tab[9][1] << (hs.LimDmax == 100 ? NAString() : olxstr::FormatFloat(3, hs.LimDmax));
+      tab[9][1] << (hs.LimDmax == 100 ? NAString()
+        : olxstr::FormatFloat(3, hs.LimDmax));
     tab[10][0] << "Filtered off reflections (SHEL/OMIT_s/OMIT_2t)";
       tab[10][1] << hs.FilteredOff;
     tab[11][0] << "Reflections omitted by user (OMIT_hkl)";
@@ -1149,14 +1151,13 @@ void XLibMacros::macHklStat(TStrObjList &Cmds, const TParamList &Options,
     tab[13][0] << "Intensity transformed for (OMIT_s)";
       tab[13][1] << hs.IntensityTransformed << " reflections";
     tab[14][0] << "Rint, %";
-      tab[14][1] << (hs.Rint < 0 ? NAString() : olxstr::FormatFloat(2, hs.Rint*100));
+      tab[14][1] << (hs.Rint < 0 ? NAString()
+        : olxstr::FormatFloat(2, hs.Rint*100));
     tab[15][0] << "Rsigma, %";
-      tab[15][1] << (hs.Rsigma < 0 ? NAString() : olxstr::FormatFloat(2, hs.Rsigma*100));
+      tab[15][1] << (hs.Rsigma < 0 ? NAString()
+        : olxstr::FormatFloat(2, hs.Rsigma*100));
     tab[16][0] << "Completeness, [d_min-d_max] %";
-    for (size_t ti = 0; ti < hs.Completeness.Count(); ti++) {
-      if (!tab[16][1].IsEmpty()) tab[16][1] << ", ";
-      tab[16][1] << olxstr::FormatFloat(2, hs.Completeness[ti] * 100);
-    }
+    tab[16][1] << olxstr::FormatFloat(2, hs.Completeness * 100);
     tab[17][0] << "Mean I/sig";
       tab[17][1] << olxstr::FormatFloat(3, hs.MeanIOverSigma);
     tab[18][0] << "HKL range (refinement)";
@@ -1168,13 +1169,20 @@ void XLibMacros::macHklStat(TStrObjList &Cmds, const TParamList &Options,
                  << "k=[" << hs.FileMinInd[1] << ',' << hs.FileMaxInd[1] << "] "
                  << "l=[" << hs.FileMinInd[2] << ',' << hs.FileMaxInd[2] << "] ";
     tab[20][0] << "Maximum redundancy (+symm eqivs)";
+    if (hs.HKLF >= 5)
+      tab[20][1] = NAString();
+    else
       tab[20][1] << hs.ReflectionAPotMax;
     tab[21][0] << "Average redundancy (+symm eqivs)";
-      tab[21][1] << olxstr::FormatFloat(2, (double)hs.TotalReflections/hs.UniqueReflections);
+    if (hs.HKLF >= 5)
+      tab[20][1] = NAString();
+    else {
+      tab[21][1] << olxstr::FormatFloat(2,
+        (double)hs.TotalReflections / hs.UniqueReflections);
+    }
 
-    TStrList Output;
-    tab.CreateTXTList(Output, olxstr("Refinement reflection statistsics"), true, false, "  ");
-    xapp.NewLogEntry() << Output;
+    TStrList Output = tab.CreateTXTList(
+      "Refinement reflection statistsics", true, false, "  ");
     const TIntList& redInfo = xapp.XFile().GetRM().GetRedundancyInfo();
     int red_cnt = 0;
     for( size_t i=0; i < redInfo.Count(); i++ )
@@ -1184,17 +1192,20 @@ void XLibMacros::macHklStat(TStrObjList &Cmds, const TParamList &Options,
     tab.ColName(0) = "Times measured";
     tab.ColName(1) = "Count";
     red_cnt = 0;
-    for( size_t i=0; i < redInfo.Count(); i++ )  {
-      if( redInfo[i] == 0 )  continue;
+    for (size_t i=0; i < redInfo.Count(); i++) {
+      if (redInfo[i] == 0)  continue;
       tab[red_cnt][0] = i+1;
       tab[red_cnt++][1] = redInfo[i];
     }
-    Output.Clear();
-    tab.CreateTXTList(Output, olxstr("All reflection statistics"), true, false, "  ");
+    Output << tab.CreateTXTList(
+      "All reflection statistics", true, false, "  ");
     xapp.NewLogEntry() << Output;
-    //const vec3i_list empty_omits;
-    //MergeStats fr_ms = RefMerger::DryMergeInP1<RefMerger::UnitMerger>(xapp.XFile().GetRM().GetFriedelPairs(), empty_omits);
-    xapp.NewLogEntry() << "Friedel pairs measured (in P1): " << xapp.XFile().GetRM().GetFriedelPairCount();
+    xapp.NewLogEntry() << "Friedel pairs measured (in P1): " <<
+      xapp.XFile().GetRM().GetFriedelPairCount();
+    if (hs.HKLF >= 5) {
+      xapp.NewLogEntry() << "Note that the merging stats are given for batch "
+        "#1 only";
+    }
     return;
   }
   bool list = Options.Contains("l"),

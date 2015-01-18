@@ -84,7 +84,6 @@ void RefinementModel::SetDefaults() {
   MERG = def_MERG;
   OMIT_s = def_OMIT_s;
   OMIT_2t = def_OMIT_2t;
-  OMITs_Modified = false;
   SHEL_hr = def_SHEL_hr;
   SHEL_lr = def_SHEL_lr;
   HKLF_set = MERG_set = OMIT_set = TWIN_set = SHEL_set = false;
@@ -228,7 +227,6 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm,
   OMIT_s = rm.OMIT_s;
   OMIT_2t = rm.OMIT_2t;
   OMIT_set = rm.OMIT_set;
-  OMITs_Modified = rm.OMITs_Modified;
   SHEL_lr = rm.SHEL_lr;
   SHEL_hr = rm.SHEL_hr;
   SHEL_set = rm.SHEL_set;
@@ -529,15 +527,15 @@ void RefinementModel::SetReflections(const TRefList &refs) const {
   sw.start("Analysing redundancy and Friedel pairs");
   _Redundancy.SetCount(maxRedundancy);
   _Redundancy.ForEach(olx_list_init::zero());
-  for (int h = _HklStat.FileMinInd[0]; h <= _HklStat.FileMaxInd[0]; h++)  {
-    for (int k = _HklStat.FileMinInd[1]; k <= _HklStat.FileMaxInd[1]; k++)  {
-      for (int l = _HklStat.FileMinInd[2]; l <= _HklStat.FileMaxInd[2]; l++)  {
+  for (int h = _HklStat.FileMinInd[0]; h <= _HklStat.FileMaxInd[0]; h++) {
+    for (int k = _HklStat.FileMinInd[1]; k <= _HklStat.FileMaxInd[1]; k++) {
+      for (int l = _HklStat.FileMinInd[2]; l <= _HklStat.FileMaxInd[2]; l++) {
         TRefPList* rl1 = hkl3d(h, k, l);
         if (rl1 == NULL)  continue;
         const vec3i ind(-h, -k, -l);
-        if (hkl3d.IsInRange(ind))  {
+        if (hkl3d.IsInRange(ind)) {
           TRefPList* rl2 = hkl3d(ind);
-          if (rl2 != NULL && rl2 != rl1)  {
+          if (rl2 != NULL && rl2 != rl1) {
             _FriedelPairCount++;
             _Redundancy[rl2->Count() - 1]++;
             delete rl2;
@@ -601,17 +599,8 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
   TStopWatch sw(__FUNC__);
   try {
     GetReflections();
-    bool update = (HklStatFileID != HklFileID);
-    if( !update &&
-      _HklStat.OMIT_s == OMIT_s &&
-      _HklStat.OMIT_2t == OMIT_2t &&
-      _HklStat.SHEL_lr == SHEL_lr &&
-      _HklStat.SHEL_hr == SHEL_hr &&
-      _HklStat.HKLF_m == HKLF_m &&
-      _HklStat.HKLF_s == HKLF_s &&
-      _HklStat.HKLF_mat == HKLF_mat &&
-      _HklStat.MERG == MERG && !OMITs_Modified )
-    {
+    bool update = (HklStatFileID != HklFileID || _HklStat.need_updating(*this));
+    if (!update) {
       return _HklStat;
     }
     else  {
@@ -619,24 +608,28 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
       _HklStat.SetDefaults();
       TRefList refs;
       FilterHkl(refs, _HklStat);
+      TRefPList non_overlapping_1;
+      if (HKLF >= 5) {
+        non_overlapping_1 = GetNonoverlappingRefs(refs).GetObject()
+          .Filter(olx_alg::olx_eq(1,
+          FunctionAccessor::MakeConst(&TReflection::GetBatch)));
+        for (size_t i = 0; i < refs.Count(); i++) {
+          if (refs[i].GetBatch() >= 0)
+            _HklStat.DataCount++;
+          refs[i].SetBatch(TReflection::NoBatchSet);
+        }
+      }
       TUnitCell::SymmSpace sp =
         aunit.GetLattice().GetUnitCell().GetSymmSpace();
       bool mergeFP = (MERG == 4 || MERG == 3 || sp.IsCentrosymmetric());
-      if (HKLF == 5) {
-        TRefList fr = refs.Filter(olx_alg::olx_eq(
-          1, FunctionAccessor::MakeConst(&TReflection::GetBatch)));
-        _HklStat = RefMerger::DryMerge<RefMerger::ShelxMerger>(
-          sp, fr, Omits, mergeFP);
-      }
-      else {
-        _HklStat = RefMerger::DryMerge<RefMerger::ShelxMerger>(
-          sp, refs, Omits, mergeFP);
-      }
+      _HklStat = RefMerger::DryMerge<RefMerger::ShelxMerger>(
+        sp, refs, (HKLF >= 5 ? vec3i_list() : Omits), mergeFP);
+      _HklStat.HKLF = HKLF;
       _HklStat.HKLF_mat = HKLF_mat;
       _HklStat.HKLF_m = HKLF_m;
       _HklStat.HKLF_s = HKLF_s;
       _HklStat.MERG = MERG;
-      OMITs_Modified = false;
+      _HklStat.omits = Omits;
       sw.start("Analysing reflections: absent, completeness, limits");
       mat3d h2c = aunit.GetHklToCartesian();
       size_t e_cnt = 0;
@@ -661,32 +654,28 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
           }
         }
       }
-      if (HKLF == 5) {
-        TSizeList cnts(BASF.Count() + 1, olx_list_init::zero());
-        cnts[0] = _HklStat.UniqueReflections;
-        for (size_t i = 1; i <= BASF.Count(); i++) {
-          TRefList fr = refs.Filter(olx_alg::olx_eq(
-            i+1, FunctionAccessor::MakeConst(&TReflection::GetBatch)));
-          if (!fr.IsEmpty()) {
-            MergeStats st =
-              RefMerger::DryMerge<RefMerger::ShelxMerger>(sp, fr, Omits,
-                info_ex.centrosymmetric);
-            cnts[i] = st.UniqueReflections;
-          }
+      if (HKLF >= 5) {
+        if (!non_overlapping_1.IsEmpty()) {
+          MergeStats st =
+            RefMerger::DryMerge<RefMerger::ShelxMerger>(sp, non_overlapping_1,
+              Omits, info_ex.centrosymmetric);
+          _HklStat.Rint = st.Rint;
+          _HklStat.Rsigma = st.Rsigma;
+          _HklStat.InconsistentEquivalents = st.InconsistentEquivalents;
         }
-        _HklStat.UniqueReflections = RefMerger::DrySGFilter(sp, refs, Omits)
-          .UniqueReflections;
-        BubbleSorter::Sort(cnts, ReverseComparator::Make(TPrimitiveComparator()));
-        for (size_t i = 0; i < cnts.Count(); i++) {
-          _HklStat.Completeness.Add(double(cnts[i]) / (e_cnt));
+        else {
+          _HklStat.Rint = _HklStat.Rsigma = -1;
+          _HklStat.InconsistentEquivalents = 0;
         }
+        _HklStat.ReflectionAPotMax = 0;
       }
       else {
-        _HklStat.Completeness.Add(double(_HklStat.UniqueReflections) / (e_cnt));
+        _HklStat.DataCount = _HklStat.UniqueReflections;
       }
+     _HklStat.Completeness = double(_HklStat.UniqueReflections) / e_cnt;
     }
   }
-  catch(const TExceptionBase& e)  {
+  catch(const TExceptionBase& e) {
     _HklStat.SetDefaults();
     throw TFunctionFailedException(__OlxSourceInfo, e);
   }
@@ -699,24 +688,62 @@ RefinementModel::HklStat& RefinementModel::FilterHkl(TRefList& out,
   TStopWatch sw(__FUNC__);
   const TRefList& all_refs = GetReflections();
   // swap the values if in wrong order
-  if( SHEL_hr > SHEL_lr )
+  if (SHEL_hr > SHEL_lr)
     olx_swap(SHEL_hr, SHEL_lr);
   RefUtil::ResolutionAndSigmaFilter rsf(*this);
   rsf.SetStats(stats);
   const size_t ref_cnt = all_refs.Count();
   out.SetCapacity(ref_cnt);
   for( size_t i=0; i < ref_cnt; i++ )  {
-    const TReflection& r = all_refs[i];
-    if (r.GetBatch() < 0) continue;
-    if (r.IsOmitted()) {
-      stats.OmittedReflections++;
-      continue;
+    size_t start = i;
+    if (all_refs[i].GetBatch() < 0) {
+      while (++i < ref_cnt && all_refs[i].GetBatch() < 0)
+        ;
+      i--;
     }
-    if (!rsf.IsOutside(r))
-      out.AddCopy(r);
+    bool add = true;
+    for (size_t j = start; j <= i; j++) {
+      if (all_refs[j].IsOmitted()) {
+        stats.OmittedReflections++;
+        add = false;
+        break;
+      }
+      if (rsf.IsOutside(all_refs[j])) {
+        add = false;
+        break;
+      }
+      if (HKLF >= 5 && Omits.Contains(all_refs[j].GetHkl())) {
+        add = false;
+        break;
+      }
+    }
+    if (add) {
+      for (size_t j = start; j <= i; j++) {
+        out.AddCopy(all_refs[j]);
+      }
+    }
   }
   stats.TotalReflections = out.Count();
   return stats;
+}
+//.............................................................................
+TRefPList::const_list_type RefinementModel::GetNonoverlappingRefs(
+  const TRefList& refs)
+{
+  TStopWatch sw(__FUNC__);
+  TRefPList out;
+  const size_t ref_cnt = refs.Count();
+  out.SetCapacity(ref_cnt);
+  for (size_t i = 0; i < ref_cnt; i++) {
+    if (refs[i].GetBatch() < 0) {
+      // skip overlapped reflection
+      while (++i < ref_cnt && refs[i].GetBatch() < 0)
+        ;
+      continue;
+    }
+    out.Add(refs[i]);
+  }
+  return out;
 }
 //.............................................................................
 RefinementModel::HklStat& RefinementModel::AdjustIntensity(TRefList& out,
@@ -2510,3 +2537,72 @@ TLibrary* RefinementModel::ExportLibrary(const olxstr& name)  {
     "and atom ids"));
   return lib;
 }
+//..............................................................................
+//..............................................................................
+//..............................................................................
+RefinementModel::HklStat& RefinementModel::HklStat::operator = (
+  const RefinementModel::HklStat& hs)
+{
+  MergeStats::operator = (hs);
+  FileMinInd = hs.FileMinInd;
+  FileMaxInd = hs.FileMaxInd;
+  MaxD = hs.MaxD;         MinD = hs.MinD;
+  OMIT_s = hs.OMIT_s;     OMIT_2t = hs.OMIT_2t;
+  SHEL_lr = hs.SHEL_lr;   SHEL_hr = hs.SHEL_hr;
+  LimDmin = hs.LimDmin;   LimDmax = hs.LimDmax;
+  MaxI = hs.MaxI;         MinI = hs.MinI;
+  HKLF = hs.HKLF;
+  HKLF_m = hs.HKLF_m;     HKLF_s = hs.HKLF_s;
+  HKLF_mat = hs.HKLF_mat;
+  FilteredOff = hs.FilteredOff;
+  IntensityTransformed = hs.IntensityTransformed;
+  TotalReflections = hs.TotalReflections;
+  OmittedReflections = hs.OmittedReflections;
+  DataCount = hs.DataCount;
+  MERG = hs.MERG;
+  Completeness = hs.Completeness;
+  omits = hs.omits;
+  return *this;
+}
+//..............................................................................
+void RefinementModel::HklStat::SetDefaults() {
+  MergeStats::SetDefaults();
+  MaxD = MinD = LimDmax = LimDmin = 0;
+  MaxI = MinI = 0;
+  HKLF_m = def_HKLF_m;
+  HKLF_s = def_HKLF_s;
+  HKLF_mat.I();
+  HKLF = -1;
+  FilteredOff = IntensityTransformed = OmittedByUser = 0;
+  DataCount = TotalReflections = OmittedReflections = 0;
+  MERG = def_MERG;
+  OMIT_s = def_OMIT_s;
+  OMIT_2t = def_OMIT_2t;
+  SHEL_lr = def_SHEL_lr;
+  SHEL_hr = def_SHEL_hr;
+  Completeness = 0;
+  omits.Clear();
+}
+//..............................................................................
+bool RefinementModel::HklStat::need_updating(const RefinementModel &r) const {
+  bool eq = r.OMIT_s == OMIT_s &&
+    r.OMIT_2t == OMIT_2t &&
+    r.SHEL_lr == SHEL_lr &&
+    r.SHEL_hr == SHEL_hr &&
+    r.HKLF == HKLF &&
+    r.HKLF_m == HKLF_m &&
+    r.HKLF_s == HKLF_s &&
+    r.HKLF_mat == HKLF_mat &&
+    r.MERG == MERG;
+  if (!eq || omits.Count() != r.Omits.Count())
+    return true;
+  for (size_t i = 0; i < omits.Count(); i++) {
+    if (omits[i] != r.Omits[i]) {
+      return true;
+      break;
+    }
+  }
+  return false;
+}
+//..............................................................................
+
