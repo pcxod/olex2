@@ -2385,22 +2385,22 @@ void TMainForm::macViewGrid(TStrObjList &Cmds, const TParamList &Options, TMacro
 //..............................................................................
 void TMainForm::macHklExtract(TStrObjList &Cmds, const TParamList &Options, TMacroData &E)  {
   throw TNotImplementedException(__OlxSourceInfo);
-  TGlGroup& sel = FXApp->GetSelection();
-  if( sel.Count() == 0 )  {
-    E.ProcessingError(__OlxSrcInfo, "please select some reflections");
-    return;
-  }
-  TRefPList Refs;
-  for( size_t i=0; i < sel.Count(); i++ )  {
-    AGDrawObject& obj = sel[i];
-    if( EsdlInstanceOf(obj, TXReflection) )
-      ;//Refs.Add( ((TXReflection*)obj)->Reflection() );
-  }
-  if( Refs.IsEmpty() )  {
-    E.ProcessingError(__OlxSrcInfo, "please select some reflections");
-    return;
-  }
-  THklFile::SaveToFile(Cmds[0], Refs, true);
+  //TGlGroup& sel = FXApp->GetSelection();
+  //if( sel.Count() == 0 )  {
+  //  E.ProcessingError(__OlxSrcInfo, "please select some reflections");
+  //  return;
+  //}
+  //TRefPList Refs;
+  //for( size_t i=0; i < sel.Count(); i++ )  {
+  //  AGDrawObject& obj = sel[i];
+  //  if( EsdlInstanceOf(obj, TXReflection) )
+  //    ;//Refs.Add( ((TXReflection*)obj)->Reflection() );
+  //}
+  //if( Refs.IsEmpty() )  {
+  //  E.ProcessingError(__OlxSrcInfo, "please select some reflections");
+  //  return;
+  //}
+  //THklFile::SaveToFile(Cmds[0], Refs, true);
 }
 //..............................................................................
 void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,

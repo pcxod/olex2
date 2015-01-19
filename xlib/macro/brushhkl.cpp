@@ -114,5 +114,5 @@ void XLibMacros::macHklBrush(TStrObjList &Cmds, const TParamList &Options, TMacr
     delete refs[i];
   }
   XApp.NewLogEntry() << "Ommited " << deletedRefs << " reflections";
-  Hkl.SaveToFile("brushed.hkl", toSave, false);
+  Hkl.SaveToFile("brushed.hkl", toSave);
 }

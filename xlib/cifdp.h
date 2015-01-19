@@ -198,6 +198,7 @@ namespace cif_dp {
     }
     size_t RowCount() const {  return data.RowCount();  }
     void SetRowCount(size_t sz) { data.SetRowCount(sz); }
+    void SetRowCapacity(size_t sz) { data.SetRowCapacity(sz); }
     virtual void ToStrings(TStrList& list) const;
     virtual void Format()  {}
     virtual const olxstr& GetName() const {  return name;  }

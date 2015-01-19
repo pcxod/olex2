@@ -20,7 +20,7 @@
 #include "math/composite.h"
 
 //..............................................................................
-THklFile::THklFile()  {
+THklFile::THklFile() {
   Basis.I();
   Init();
 }
@@ -33,35 +33,34 @@ THklFile::THklFile(const mat3d& hkl_transformation)
 //..............................................................................
 void THklFile::Init() {
   Hkl3D = NULL;
+  HKLF = -1;
 }
 //..............................................................................
-void THklFile::Clear()  {
+void THklFile::Clear() {
+  HKLF = -1;
   Refs.Clear();
   Clear3D();
 }
 //..............................................................................
-void THklFile::UpdateMinMax(const TReflection& r)  {
-  if( Refs.IsEmpty() )  {
-    // set starting values
-    MinHkl[0] = MaxHkl[0] = r.GetH();
-    MinHkl[1] = MaxHkl[1] = r.GetK();
-    MinHkl[2] = MaxHkl[2] = r.GetL();
+void THklFile::UpdateMinMax(const TReflection& r) {
+  if (Refs.IsEmpty()) {
+    MinHkl = MaxHkl = r.GetHkl();
     MinI = MaxI = r.GetI();
     MinIS = MaxIS = r.GetS();
   }
-  else  {
+  else {
     vec3i::UpdateMinMax(r.GetHkl(), MinHkl, MaxHkl);
-    if( r.GetI() < MinI )  {  MinI = r.GetI();  MinIS = r.GetS();  }
-    if( r.GetI() > MaxI )  {  MaxI = r.GetI();  MaxIS = r.GetS();  }
+    if (r.GetI() < MinI) { MinI = r.GetI();  MinIS = r.GetS(); }
+    if (r.GetI() > MaxI) {  MaxI = r.GetI();  MaxIS = r.GetS(); }
   }
 }
 //..............................................................................
-void THklFile::Clear3D()  {
-  if( Hkl3D == NULL )  return;
-  for( int i=MinHkl[0]; i <= MaxHkl[0]; i++ ) {
-    for( int j=MinHkl[1]; j <= MaxHkl[1]; j++ )
-      for( int k=MinHkl[2]; k <= MaxHkl[2]; k++ )
-        if( Hkl3D->Value(i,j,k) != NULL )
+void THklFile::Clear3D() {
+  if (Hkl3D == NULL)  return;
+  for (int i=MinHkl[0]; i <= MaxHkl[0]; i++) {
+    for (int j=MinHkl[1]; j <= MaxHkl[1]; j++)
+      for (int k=MinHkl[2]; k <= MaxHkl[2]; k++)
+        if (Hkl3D->Value(i,j,k) != NULL)
           delete Hkl3D->Value(i,j,k);
   }
   delete Hkl3D;
@@ -71,7 +70,6 @@ void THklFile::Clear3D()  {
 olx_object_ptr<TIns> THklFile::LoadFromFile(const olxstr& FN, bool get_ins)
 {
   try {
-    Clear();
     TEFile::CheckFileExists(__OlxSourceInfo, FN);
     TCStrList SL = TEFile::ReadCLines(FN);
     if (SL.IsEmpty())
@@ -103,18 +101,23 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TCStrList& SL, bool get_ins
         const size_t kInd = hklLoop->ColIndex("_refln_index_k");
         const size_t lInd = hklLoop->ColIndex("_refln_index_l");
         size_t mInd = hklLoop->ColIndex("_refln_F_squared_meas");
-        if (mInd == InvalidIndex)
-          mInd = hklLoop->ColIndex("_refln_F_meas");
         size_t sInd = hklLoop->ColIndex("_refln_F_squared_sigma");
-        if (sInd == InvalidIndex)
+        if (mInd == InvalidIndex) {
+          mInd = hklLoop->ColIndex("_refln_F_meas");
           sInd = hklLoop->ColIndex("_refln_F_sigma");
+          HKLF = 3;
+        }
+        else {
+          HKLF = 4;
+        }
         if ((hInd|kInd|lInd|mInd|sInd) == InvalidIndex) {
           throw TInvalidArgumentException(__OlxSourceInfo,
             "could not locate <h k l meas sigma> data");
         }
+        bool zero_found = false;
         for (size_t i=0; i < hklLoop->RowCount(); i++) {
           const cif_dp::CifRow& r = (*hklLoop)[i];
-          Refs.Add(
+          TReflection &ref = Refs.Add(
             new TReflection(
             r[hInd]->GetStringValue().ToInt(),
             r[kInd]->GetStringValue().ToInt(),
@@ -122,7 +125,12 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TCStrList& SL, bool get_ins
             r[mInd]->GetStringValue().ToDouble(),
             r[sInd]->GetStringValue().ToDouble()
             ));
-          UpdateMinMax(Refs.GetLast());
+          if (!zero_found && ref.GetHkl().IsNull()) {
+            zero_found = true;
+            continue;
+          }
+          ref.SetOmitted(zero_found);
+          UpdateMinMax(ref);
         }
         if (get_ins && cif.FindEntry("_cell_length_a") != NULL) {
           rv = new TIns;
@@ -219,24 +227,11 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TCStrList& SL, bool get_ins
   return rv;
 }
 //..............................................................................
-bool THklFile::SaveToFile(const olxstr& FN)  {
-  return THklFile::SaveToFile(FN, Refs, false);
-}
-//..............................................................................
 void THklFile::UpdateRef(const TReflection& R)  {
   size_t ind = olx_abs(R.GetTag())-1;
   if( ind >= Refs.Count() )
     throw TInvalidArgumentException(__OlxSourceInfo, "reflection tag");
   Refs[ind].SetOmitted(R.IsOmitted());
-}
-//..............................................................................
-int THklFile::HklCmp(const TReflection &R1, const TReflection &R2)  {
-  int r = R1.CompareTo(R2);
-  if( r == 0 )  {  // for unmerged data ...
-    if( R1.GetI() < R2.GetI() )  return -1;
-    if( R1.GetI() > R2.GetI() )  return 1;
-  }
-  return r;
 }
 //..............................................................................
 void THklFile::InitHkl3D() {
@@ -280,81 +275,25 @@ void THklFile::EndAppend()  {
   //Refs.QuickSorter.SortSF(Refs, HklCmp);
 }
 //..............................................................................
-void THklFile::Append(const TRefPList& hkls)  {
-  if( hkls.IsEmpty() )  return;
-  for( size_t i=0; i < hkls.Count(); i++ )  {
-    UpdateMinMax(*hkls[i]);
-    Refs.Add(new TReflection(*hkls[i])).SetTag(Refs.Count());
-  }
-  EndAppend();
-}
-//..............................................................................
 void THklFile::Append(const THklFile& hkls)  {
   if( !hkls.RefCount() )  return;
   Append(hkls.Refs);
 }
 //..............................................................................
-bool THklFile::SaveToFile(const olxstr& FN, const TRefPList& refs,
-  bool Append)
-{
-  if( refs.IsEmpty() )  return true;
-  if( Append && TEFile::Exists(FN) )  {
-    THklFile F;
-    F.LoadFromFile(FN, false);
-    F.Append(refs);
-    F.SaveToFile(FN);
-  }
-  else  {
-    double scale = 0;
-    for( size_t i=0; i < refs.Count(); i++ )  {
-      if( refs[i]->GetI() > scale )
-        scale = refs[i]->GetI();
-    }
-    scale = (scale > 99999 ? 99999/scale : 1);
-    TEFile out(FN, "w+b");
-    TReflection NullRef(0, 0, 0, 0, 0);
-    if( refs[0]->GetBatch() != TReflection::NoBatchSet )
-      NullRef.SetBatch(0);
-    const size_t ref_str_len = NullRef.ToString().Length();
-    const size_t bf_sz = ref_str_len+1;
-    olx_array_ptr<char> ref_bf(new char[bf_sz]);
-    for( size_t i=0; i < refs.Count(); i++ )  {
-      if( !refs[i]->IsOmitted() )
-        out.Writecln(refs[i]->ToCBuffer(ref_bf, bf_sz, scale), ref_str_len);
-    }
-    out.Writecln(NullRef.ToCBuffer(ref_bf, bf_sz, 1), ref_str_len);
-    for( size_t i=0; i < refs.Count(); i++ )  {
-      if( refs[i]->IsOmitted() )
-        out.Writecln(refs[i]->ToCBuffer(ref_bf, bf_sz, scale), ref_str_len);
-    }
-  }
-  return true;
+void THklFile::SaveToFile(const olxstr& FN, const TRefPList& refs) {
+  if (refs.IsEmpty()) return;
+  //if (Append && TEFile::Exists(FN)) {
+  //  THklFile F;
+  //  F.LoadFromFile(FN, false);
+  //  F.Append(refs);
+  //  F.SaveToFile(FN);
+  //}
+  TEFile out(FN, "w+b");
+  SaveToStream(refs, out);
 }
 //..............................................................................
-bool THklFile::SaveToFile(const olxstr& FN, const TRefList& refs)  {
-  if( refs.IsEmpty() )  return true;
-  double scale = 0;
-  for( size_t i=0; i < refs.Count(); i++ )  {
-    if( refs[i].GetI() > scale )
-      scale = refs[i].GetI();
-  }
-  scale = (scale > 99999 ? 99999/scale : 1);
+void THklFile::SaveToFile(const olxstr& FN, const TRefList& refs) {
   TEFile out(FN, "w+b");
-  TReflection NullRef(0, 0, 0, 0, 0);
-  if( refs[0].GetBatch() != TReflection::NoBatchSet )
-    NullRef.SetBatch(0);
-  const size_t ref_str_len = NullRef.ToString().Length();
-  const size_t bf_sz = ref_str_len+1;
-  olx_array_ptr<char> ref_bf(new char[bf_sz]);
-  for( size_t i=0; i < refs.Count(); i++ )  {
-    if( !refs[i].IsOmitted() )
-      out.Writecln(refs[i].ToCBuffer(ref_bf, bf_sz, scale), ref_str_len);
-  }
-  out.Writecln(NullRef.ToCBuffer(ref_bf, bf_sz, 1), ref_str_len);
-  for( size_t i=0; i < refs.Count(); i++ )  {
-    if( refs[i].IsOmitted() )
-      out.Writecln(refs[i].ToCBuffer(ref_bf, bf_sz, scale), ref_str_len);
-  }
-  return true;
+  SaveToStream(refs, out);
 }
 //..............................................................................

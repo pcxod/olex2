@@ -86,6 +86,11 @@ public:
 
   void SetColCount(size_t NCC)  {  Resize(RowCount(), NCC);  }
   void SetRowCount(size_t NRC)  {  Resize(NRC, ColNames.Count() );  }
+  /* sets capacity for rows */
+  void SetRowCapacity(size_t row_cap) {
+    Rows.SetCapacity(row_cap);
+    RowNames.SetCapacity(row_cap);
+  }
   void InsertCol(size_t index, const olxstr& Caption=EmptyString())  {
     for( size_t i=0; i < RowCount(); i++ )
       Rows[i].Insert(index);
