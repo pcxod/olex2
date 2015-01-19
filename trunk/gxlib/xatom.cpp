@@ -1506,7 +1506,7 @@ void TXAtomLabelAligner::Align() {
         off[1] -= rc.height / 2;
       vec3i c = vp;
       positions.Add(calc_overlap(data(), w, h, c[0], c[1], rc) + ovr_extra,
-        olx_pair::Make(off, c));
+        olx_pair::make(off, c));
       v = v*rm;
     }
     vec3i lr = positions.GetValue(0).b;

@@ -2710,7 +2710,7 @@ olx_pair_t<size_t, size_t> Esd_FindOppositePair(TSAtomPList &atoms) {
       "could not locate the opposite atom");
   }
   atoms[idx]->SetTag(1);
-  return olx_pair::Make(for_-1, idx-1);
+  return olx_pair::make(for_-1, idx-1);
 }
 
 void GXLibMacros::macEsd(TStrObjList &Cmds, const TParamList &Options,

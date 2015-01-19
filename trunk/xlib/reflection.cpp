@@ -124,41 +124,55 @@ bool TReflection::FromNString(const olxstr& str) {
   // returns a string: h k l I S [f]
 //..............................................................................
 TIString TReflection::ToString() const {
-  static char bf[128];
+  olx_array_ptr<olxch> bf(new olxch[128]);
+  const olxch *f1 = olxT("%4i%4i%4i%8.2lf%8.2lf");
+  const olxch *f2 = olxT("%4i%4i%4i%8.2lf%8.2lf%4i");
+  int16_t batch = GetBatch();
+#ifdef _UNICODE
 #ifdef _MSC_VER
-  if( GetBatch() == NoBatchSet )
-    sprintf_s(bf, 128, "%4i%4i%4i%8.2lf%8.2lf", hkl[0], hkl[1], hkl[2], I, S);
-  else {
-    sprintf_s(bf, 128, "%4i%4i%4i%8.2lf%8.2lf%4i",
-      hkl[0], hkl[1], hkl[2], I, S, GetBatch());
-  }
+  if (batch == NoBatchSet)
+    swprintf_s(bf, 128, f1, hkl[0], hkl[1], hkl[2], I, S);
+  else
+    swprintf_s(bf, 128, f2, hkl[0], hkl[1], hkl[2], I, S, batch);
 #else
-  if( GetBatch() == NoBatchSet )
-    sprintf(bf, "%4i%4i%4i%8.2lf%8.2lf", hkl[0], hkl[1], hkl[2], I, S);
-  else {
-    sprintf(bf, "%4i%4i%4i%8.2lf%8.2lf%4i",
-      hkl[0], hkl[1], hkl[2], I, S, GetBatch());
-  }
+  if (batch == NoBatchSet)
+    swprintf(bf, f1, hkl[0], hkl[1], hkl[2], I, S);
+  else
+    swprintf(bf, f2, hkl[0], hkl[1], hkl[2], I, S, batch);
 #endif
-  return olxstr(bf);
+#else
+#ifdef _MSC_VER
+  if (batch == NoBatchSet)
+    sprintf_s(bf, 128, f1, hkl[0], hkl[1], hkl[2], I, S);
+  else
+    sprintf_s(bf, 128, f2, hkl[0], hkl[1], hkl[2], I, S, batch);
+#else
+  if (batch == NoBatchSet)
+    sprintf(bf, f1, hkl[0], hkl[1], hkl[2], I, S);
+  else
+    sprintf(bf, f2, hkl[0], hkl[1], hkl[2], I, S, batch);
+#endif
+#endif
+  return olxstr::FromExternal(bf.release());
 }
 //..............................................................................
 char* TReflection::ToCBuffer(char* bf, size_t sz, double k) const {
+  const char *f1 = "%4i%4i%4i%8.2lf%8.2lf";
+  const char *f2 = "%4i%4i%4i%8.2lf%8.2lf%4i";
+  int16_t batch = GetBatch();
 #ifdef _MSC_VER
-  if( GetBatch() == NoBatchSet ) {
-    sprintf_s(bf, sz, "%4i%4i%4i%8.2lf%8.2lf",
-      hkl[0], hkl[1], hkl[2], I*k, S*k);
+  if (batch == NoBatchSet) {
+    sprintf_s(bf, sz, f1, hkl[0], hkl[1], hkl[2], I*k, S*k);
   }
   else {
-    sprintf_s(bf, sz, "%4i%4i%4i%8.2lf%8.2lf%4i",
-      hkl[0], hkl[1], hkl[2], I*k, S*k, GetBatch());
+    sprintf_s(bf, sz, f2, hkl[0], hkl[1], hkl[2], I*k, S*k, batch);
   }
 #else
-  if( GetBatch() == NoBatchSet )
-    sprintf(bf, "%4i%4i%4i%8.2lf%8.2lf", hkl[0], hkl[1], hkl[2], I*k, S*k);
+  if (batch == NoBatchSet) {
+    sprintf(bf, f1, hkl[0], hkl[1], hkl[2], I*k, S*k);
+  }
   else {
-    sprintf(bf, "%4i%4i%4i%8.2lf%8.2lf%4i",
-      hkl[0], hkl[1], hkl[2], I*k, S*k, GetBatch());
+    sprintf(bf, f2, hkl[0], hkl[1], hkl[2], I*k, S*k, batch);
   }
 #endif
   return bf;

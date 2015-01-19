@@ -1745,7 +1745,7 @@ olx_pair_t<vec3i, vec3i> RefinementModel::CalcIndicesToD(double d,
   for (size_t i = 0; i < 3; i++) {
     if (mini[i] > 0) mini[i] = 0;
   }
-  return olx_pair::Make(mini, maxi);
+  return olx_pair::make(mini, maxi);
 }
 //..............................................................................
 double RefinementModel::CalcCompletnessTo2Theta(double tt) const {

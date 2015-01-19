@@ -4136,21 +4136,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
           "_refln_F_squared_meas,_refln_F_squared_sigma");
         THklFile hkl;
         hkl.LoadFromFile(hkl_src, false);
-        bool batch_set = false;
-        if (hkl.RefCount() > 0 && hkl[0].IsBatchSet()) {
-          batch_set = hkl[0].IsBatchSet();
-          t.AddCol("_refln_scale_group_code");
-        }
-        t.SetRowCount(hkl.RefCount());
-        for (size_t hi=0; hi < hkl.RefCount(); hi++) {
-          t[hi][0] = new cetString(hkl[hi].GetH());
-          t[hi][1] = new cetString(hkl[hi].GetK());
-          t[hi][2] = new cetString(hkl[hi].GetL());
-          t[hi][3] = new cetString(hkl[hi].GetI());
-          t[hi][4] = new cetString(hkl[hi].GetS());
-          if (batch_set)
-            t[hi][5] = new cetString(hkl[hi].GetBatch());
-        }
+        THklFile::ToCIF(hkl.RefList(), *Cif, true);
       }
     }
   }
@@ -9190,7 +9176,7 @@ void XLibMacros::macTestR(TStrObjList &Cmds, const TParamList &Options,
           double R = sqrt(bup / (olx_max(1e-3, bdn)));
           if (R > oR) continue;
           //hits.Add(R,
-          //  olx_pair::Make(vec3i(h, k, l), cnt));
+          //  olx_pair::make(vec3i(h, k, l), cnt));
           hits.Add(ds / cnt, Association::Create(
             vec3i(h, k, l), cnt, R, direct));
         }

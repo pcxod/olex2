@@ -53,16 +53,16 @@ namespace sorted {
       else if (cr > 0)
         to  = index;
       else {
-        return olx_pair::Make(index, true);
+        return olx_pair::make(index, true);
       }
     }
     if (cmp.Compare(list[from], entity) == 0) {
-      return olx_pair::Make(from, true);
+      return olx_pair::make(from, true);
     }
     else if (cmp.Compare(list[to], entity) == 0) {
-      return olx_pair::Make(to, true);
+      return olx_pair::make(to, true);
     }
-    return olx_pair::Make(to, false);
+    return olx_pair::make(to, false);
   }
 
   template <class ListClass, class Comparator, typename KeyC>
@@ -142,30 +142,30 @@ namespace sorted {
     const size_t lc = list.Count();
     if (lc == 0) {
       list.Add(entry);
-      return olx_pair::Make(0, true);
+      return olx_pair::make(0, true);
     }
     const int cmp_val0 = cmp.Compare(list[0], entry);
     if (lc == 1) {
       if (cmp_val0 < 0) {
         list.Add(entry);
-        return olx_pair::Make(1, true);
+        return olx_pair::make(1, true);
       }
       else if (cmp_val0 > 0) {
         list.Insert(0, entry);
-        return olx_pair::Make(0, true);
+        return olx_pair::make(0, true);
       }
       else {
-        return olx_pair::Make(0, false);
+        return olx_pair::make(0, false);
       }
     }
     if (cmp_val0 > 0) {  // smaller than the first
       list.Insert(0, entry);
-      return olx_pair::Make(0, true);
+      return olx_pair::make(0, true);
     }
     // larger than the last
     if (cmp.Compare(list.GetLast(), entry) < 0) {
       list.Add(entry);
-      return olx_pair::Make(lc, true);
+      return olx_pair::make(lc, true);
     }
     olx_pair_t<size_t, bool> ps = FindInsertIndexEx(list, cmp, entry);
     if (!(ps.b = !ps.b)) {

@@ -19,6 +19,7 @@ template <typename ptr> struct olx_perishable_ptr
   : public olx_object_ptr<olx_virtual_ptr<ptr> >, public virtual IOlxObject
 {
   typedef olx_object_ptr<olx_virtual_ptr<ptr> > parent_t;
+  typedef olx_vptr<ptr> vptr_t;
 
   void on_object_delete(APerishable* o) {
     parent_t::operator = (0);
@@ -34,7 +35,7 @@ template <typename ptr> struct olx_perishable_ptr
     }
   }
   olx_perishable_ptr(ptr *_p)
-    : parent_t(new olx_vptr<ptr>::actual_ptr<ptr>(_p))
+    : parent_t(new typename vptr_t::template actual_ptr<ptr>(_p))
   {
     if (_p != 0)
       add_handler(*_p);
@@ -47,7 +48,7 @@ template <typename ptr> struct olx_perishable_ptr
   }
   template <class dptr>
   olx_perishable_ptr(olx_virtual_ptr<dptr> *_p)
-    : parent_t(new olx_vptr<ptr>::ptr_proxy<dptr>(_p))
+    : parent_t(new typename vptr_t:: template ptr_proxy<dptr>(_p))
   {
     if (_p->get_ptr() != 0)
       add_handler(_p->get());
@@ -68,7 +69,7 @@ template <typename ptr> struct olx_perishable_ptr
   }
   olx_perishable_ptr& operator = (ptr *_p) {
     remove_handler();
-    parent_t::operator = (new olx_vptr<ptr>::actual_ptr<ptr>(_p));
+    parent_t::operator = (new typename vptr_t:: template actual_ptr<ptr>(_p));
     if (is_valid()) {
       add_handler(parent_t::p->p->get());
     }

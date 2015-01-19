@@ -10,25 +10,26 @@
 #ifndef __olx_sdl_association_H
 #define __olx_sdl_association_H
 
-// an association template; association of any complexity can be build from this :)
-// but for more flexibility still Association3 is provided
+/* an association template; association of any complexity can be build from
+this :), but for more flexibility still Association3 is provided
+*/
 
-template <class Ac, class Bc>
+template <typename Ac, typename Bc>
 struct olx_pair_t {
   Ac a;
   Bc b;
   olx_pair_t() {}
-  olx_pair_t(const Ac& a)
+  olx_pair_t(const Ac &a)
     : a(a)
   {}
-  olx_pair_t(const Ac& a, const Bc& b)
+  olx_pair_t(const Ac &a, const Bc &b)
     : a(a), b(b)
   {}
-  olx_pair_t(const olx_pair_t& an)
+  olx_pair_t(const olx_pair_t &an)
     : a(an.GetA()), b(an.GetB())
   {}
   template <typename T>
-  olx_pair_t(const T& an)
+  olx_pair_t(const T &an)
     : a(an.GetA()), b(an.GetB())
   {}
   template <typename T>
@@ -48,12 +49,13 @@ struct olx_pair_t {
 };
 
 namespace olx_pair {
-  template <class Ac, class Bc>
-  olx_pair_t<Ac, Bc> Make(const Ac& a, const Bc& b) {
+  template <typename Ac, typename Bc>
+  olx_pair_t<Ac, Bc> make(const Ac& a, const Bc& b) {
     return olx_pair_t<Ac, Bc>(a, b);
   }
-  template <class Ac, class Bc>
-  olx_pair_t<Ac, Bc> *New(const Ac& a, const Bc& b) {
+
+  template <typename Ac, typename Bc>
+  olx_pair_t<Ac, Bc> *New(const Ac &a, const Bc &b) {
     return new olx_pair_t<Ac, Bc>(a, b);
   }
 }
