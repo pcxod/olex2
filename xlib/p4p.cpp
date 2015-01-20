@@ -150,7 +150,7 @@ void TP4PFile::LoadFromStrings(const TStrList& Strings)  {
   catch(...)  {  }  // just skip...
 }
 
-bool TP4PFile::Adopt(TXFile& f)  {
+bool TP4PFile::Adopt(TXFile &f, int) {
   GetRM().Assign(f.GetRM(), false);
   GetAsymmUnit().GetAxes() = f.GetAsymmUnit().GetAxes();
   GetAsymmUnit().GetAxisEsds() = f.GetAsymmUnit().GetAxisEsds();

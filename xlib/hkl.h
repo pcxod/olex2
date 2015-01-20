@@ -30,7 +30,6 @@ class THklFile: public IOlxObject {
   int HKLF;
 protected:
   vec3i MaxHkl, MinHkl;
-  double MaxI, MaxIS, MinI, MinIS;
   /* the function must be caled before the reflection is added to the list, as
   it needs to initialise the starting values of min and max
   */
@@ -65,10 +64,6 @@ public:
 
   const vec3i& GetMaxHkl() const {  return MaxHkl;  }
   const vec3i& GetMinHkl() const {  return MinHkl;  }
-  double GetMaxI() const { return MaxI;  }
-  double GetMaxIS() const { return MaxIS;  }
-  double GetMinI() const { return MinI;  }
-  double GetMinIS() const { return MinIS;  }
   /* -1 - unknown 3 - amplitudes, 4 - intensities;
   gets initialised when reading from a CIF or can be set externally
   */
@@ -80,7 +75,7 @@ public:
   Returns all remaining information information as an Ins file or NULL
   */
   olx_object_ptr<TIns> LoadFromFile(const olxstr& FN, bool get_ins);
-  olx_object_ptr<TIns> LoadFromStrings(const TCStrList& lines, bool get_ins);
+  olx_object_ptr<TIns> LoadFromStrings(const TStrList& lines, bool get_ins);
   void SaveToFile(const olxstr& FN) {
     THklFile::SaveToFile(FN, Refs);
   }
@@ -135,6 +130,7 @@ public:
         out.Writecln(r.ToCBuffer(ref_bf, bf_sz, scale), ref_str_len);
     }
   }
+  protected:
   // helper functions
   static void RefToRow_(const TReflection &r, cif_dp::CifRow &row, bool batch) {
     row[0] = new cif_dp::cetString(r.GetH());
@@ -145,8 +141,10 @@ public:
     if (batch)
       row[5] = new cif_dp::cetString(r.GetBatch());
   }
+  public:
   /* saves given reflections to standard CIF table. If intensity is true,
-  reflections I is marked as Fsq, otherwise - as F
+  reflections I is marked as Fsq, otherwise - as F. In the case of empty
+  reflection list return NULL.
   */
   template <class ref_list_t>
   static cif_dp::cetTable *ToCIF(const ref_list_t& refs, TCif &out,
@@ -192,6 +190,21 @@ public:
     }
     return &t;
   }
+
+  // reflection list + data type, false - F, true - Fsq
+  typedef olx_pair_t<TRefList, bool> ref_list;
+
+  /* reads data from a CIF table and returns read reflections and a boolean
+  flag indicateing if the reflections I is amplitudes (F, false) or intensity
+  (Fsq, true). Throws TInvalidArgumentException if required columns are not
+  found.
+  */
+  static olx_object_ptr<ref_list> FromCifTable(const cif_dp::cetTable &);
+  /* tries to read Tonto like reflcetions file. The function fails if the
+  returned pointer is NOT valid. if the reflections I is amplitudes (F, false)
+  or intensity (Fsq, true).
+ */
+  static olx_object_ptr<ref_list> FromTonto(const TStrList &);
 };
 //---------------------------------------------------------------------------
 

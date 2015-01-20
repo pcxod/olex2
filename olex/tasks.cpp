@@ -47,7 +47,7 @@ void P4PTask::Run() {
         }
         if (!cell_src_exists) {
           TIns ins;
-          ins.Adopt(TXApp::GetInstance().XFile());
+          ins.Adopt(TXApp::GetInstance().XFile(), 0);
           ins.SaveForSolution(TEFile::ChangeFileExt(loaded_fn, "ins"), "TREF",
             "Imported by Olex2");
         }

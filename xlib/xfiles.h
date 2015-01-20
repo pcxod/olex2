@@ -49,7 +49,7 @@ public:
   // only oxm loader is native
   virtual bool IsNative() const {  return false;  }
   // adopts the content of the AsemmUnit to the virtual format
-  virtual bool Adopt(class TXFile&) = 0;
+  virtual bool Adopt(class TXFile &, int flags) = 0;
 };
 //---------------------------------------------------------------------------
 

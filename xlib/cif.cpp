@@ -37,21 +37,21 @@ void TCif::Clear()  {
   MatrixMap.Clear();
 }
 //..............................................................................
-void TCif::LoadFromStrings(const TStrList& Strings)  {
-  block_index = 0;
+void TCif::LoadFromStrings(const TStrList& Strings) {
+  block_index = InvalidIndex;
   data_provider.LoadFromStrings(Strings);
-  for( size_t i=0; i < data_provider.Count(); i++ )  {
+  for (size_t i=0; i < data_provider.Count(); i++) {
     CifBlock& cb = data_provider[i];
     if( cb.param_map.IndexOf("_cell_length_a") == InvalidIndex )
       continue;
     bool valid = false;
-    for( size_t j=0; j < cb.table_map.Count(); j++ )  {
-      if( cb.table_map.GetKey(j).StartsFrom("_atom_site") )  {
+    for (size_t j = 0; j < cb.table_map.Count(); j++) {
+      if (cb.table_map.GetKey(j).StartsFrom("_atom_site")) {
         valid = true;
         break;
       }
     }
-    if( valid )  {
+    if (valid) {
       block_index = i;
       break;
     }
@@ -806,10 +806,32 @@ cetTable& TCif::GetPublicationInfoLoop()  {
     "_publ_author_name,_publ_author_email,_publ_author_address");
 }
 //..............................................................................
-bool TCif::Adopt(TXFile& XF)  {
+bool TCif::Adopt(TXFile &XF, int flags) {
   Clear();
   double Q[6], E[6];  // quadratic form of s thermal ellipsoid
-  GetRM().Assign(XF.GetRM(), true);
+  GetRM().Assign(XF.GetRM(), flags == 0);
+  if (flags != 0) {
+    ASObjectProvider &objects = XF.GetLattice().GetObjects();
+    for (size_t i = 0; i < objects.atoms.Count(); i++) {
+      TSAtom &a = objects.atoms[i];
+      if (!a.IsAvailable()) continue;
+      TCAtom & ca = AsymmUnit.NewAtom();
+      ca.SetLabel(a.GetLabel(), false);
+      ca.SetPart(a.CAtom().GetPart());
+      ca.SetType(a.GetType());
+      ca.ccrd() = a.ccrd();
+      ca.ccrdEsd() = a.GetMatrix()*a.CAtom().ccrdEsd();
+      ca.SetOccu(a.CAtom().GetOccu());
+      ca.SetOccuEsd(a.CAtom().GetOccuEsd());
+      ca.SetUiso(a.CAtom().GetUiso());
+      ca.SetUisoEsd(a.CAtom().GetUisoEsd());
+      if (a.GetEllipsoid() != 0) {
+        TEllipsoid &e = AsymmUnit.NewEllp();
+        e = *a.GetEllipsoid();
+        ca.SetEllpId(AsymmUnit.EllpCount() - 1);
+      }
+    }
+  }
   Title = TEFile::ChangeFileExt(
     TEFile::ExtractFileName(XF.GetFileName()), EmptyString());
   data_provider.Clear();
@@ -903,12 +925,6 @@ bool TCif::Adopt(TXFile& XF)  {
     }
   }
 
-  SetParam("_computing_structure_solution", "?", true);
-  SetParam("_computing_molecular_graphics", "?", true);
-  SetParam("_computing_publication_material", "?", true);
-
-  SetParam("_atom_sites_solution_primary", "?", false);
-
   cetTable& atom_loop = AddLoopDef(
     "_atom_site_label,_atom_site_type_symbol,_atom_site_fract_x,"
     "_atom_site_fract_y,_atom_site_fract_z,_atom_site_U_iso_or_equiv,"
@@ -920,37 +936,37 @@ bool TCif::Adopt(TXFile& XF)  {
     "_atom_site_aniso_U_22,_atom_site_aniso_U_33,_atom_site_aniso_U_23,"
     "_atom_site_aniso_U_13,_atom_site_aniso_U_12");
 
-  for( size_t i = 0; i < GetAsymmUnit().AtomCount(); i++ )  {
+  for (size_t i = 0; i < GetAsymmUnit().AtomCount(); i++) {
     TCAtom& A = GetAsymmUnit().GetAtom(i);
-    if( A.IsDeleted() || A.GetType() == iQPeakZ )  continue;
+    if (A.IsDeleted() || A.GetType() == iQPeakZ)  continue;
     CifRow& Row = atom_loop.AddRow();
     Row[0] = new cetString(A.GetResiLabel());
     Row[1] = new cetString(A.GetType().symbol);
-    for( int j=0; j < 3; j++ ) {
-      Row.Set(j+2,
+    for (int j = 0; j < 3; j++) {
+      Row.Set(j + 2,
         new cetString(TEValueD(A.ccrd()[j], A.ccrdEsd()[j]).ToString()));
     }
     Row.Set(5, new cetString(TEValueD(A.GetUiso(), A.GetUisoEsd()).ToString()));
     Row.Set(6, new cetString(A.GetEllipsoid() == NULL ? "Uiso" : "Uani"));
     Row.Set(7, new cetString(TEValueD(olx_round(A.GetChemOccu(), 1000),
       A.GetOccuEsd()*A.GetDegeneracy()).ToString()));
-    if( A.GetParentAfixGroup() != NULL && A.GetParentAfixGroup()->IsRiding() )
+    if (A.GetParentAfixGroup() != NULL && A.GetParentAfixGroup()->IsRiding())
       Row.Set(8, new cetString("R"));
     else
       Row.Set(8, new cetString('.'));
     Row.Set(9, new cetString(A.GetDegeneracy()));
     // process part as well
-    if( A.GetPart() != 0 )
+    if (A.GetPart() != 0)
       Row[10] = new cetString((int)A.GetPart());
     else
       Row[10] = new cetString('.');
-    if( A.GetEllipsoid() != NULL )  {
+    if (A.GetEllipsoid() != NULL)  {
       A.GetEllipsoid()->GetShelxQuad(Q, E);
       GetAsymmUnit().UcartToUcif(Q);
       CifRow& Row1 = u_loop.AddRow();
       Row1[0] = new AtomCifEntry(A);
-      for( int j=0; j < 6; j++ )
-        Row1.Set(j+1, new cetString(TEValueD(Q[j], E[j]).ToString()));
+      for (int j = 0; j < 6; j++)
+        Row1.Set(j + 1, new cetString(TEValueD(Q[j], E[j]).ToString()));
     }
   }
   return true;

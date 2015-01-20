@@ -1390,16 +1390,16 @@ TSizeList::const_list_type TIns::DrySave(const TCAtomPList& atoms) {
   return rv;
 }
 //..............................................................................
-bool TIns::Adopt(TXFile& XF)  {
+bool TIns::Adopt(TXFile &XF, int) {
   Clear();
   GetRM().Assign(XF.GetRM(), true);
-  try  {
+  try {
     TSpaceGroup& sg = XF.GetLastLoaderSG();
     Title << " in " << sg.GetFullName();
   }
-  catch( ... )  {}
+  catch (...)  {}
   Title = XF.LastLoader()->GetTitle();
-  if( RefMod.GetRefinementMethod().IsEmpty() )
+  if (RefMod.GetRefinementMethod().IsEmpty())
     RefMod.SetRefinementMethod("L.S.");
   return true;
 }

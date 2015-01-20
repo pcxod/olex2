@@ -125,7 +125,7 @@ void TCRSFile::LoadFromStrings(const TStrList& Strings)  {
   GetRM().SetUserContent(sfac, unit);
 }
 //..............................................................................
-bool TCRSFile::Adopt(TXFile& f)  {
+bool TCRSFile::Adopt(TXFile &f, int) {
   GetAsymmUnit().GetAxes() = f.GetAsymmUnit().GetAxes();
   GetAsymmUnit().GetAxisEsds() = f.GetAsymmUnit().GetAxisEsds();
   GetAsymmUnit().GetAngles() = f.GetAsymmUnit().GetAngles();
