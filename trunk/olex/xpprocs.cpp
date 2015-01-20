@@ -2711,7 +2711,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
             if( !er.IsProcessingError() )  {
               if( !TEFile::Exists(insFileName) )  {
                 TIns ins;
-                ins.Adopt(FXApp->XFile());
+                ins.Adopt(FXApp->XFile(), 0);
                 ins.GetRM().SetHKLSource(hklFileName);
                 ins.SaveToFile(insFileName);
                 Macros.ProcessMacro(olxstr("@reap \'") << insFileName << '\'', er);

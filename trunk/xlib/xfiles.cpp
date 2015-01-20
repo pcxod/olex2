@@ -250,37 +250,29 @@ void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
       if (src.IsEmpty() && EsdlInstanceOf(*FLastLoader, TCif)) {
         TCif &cif = GetLastLoader<TCif>();
         cif_dp::cetTable* hklLoop = cif.FindLoop("_refln");
-        if (hklLoop != NULL) {
-          const size_t hInd = hklLoop->ColIndex("_refln_index_h");
-          const size_t kInd = hklLoop->ColIndex("_refln_index_k");
-          const size_t lInd = hklLoop->ColIndex("_refln_index_l");
-          const size_t mInd = hklLoop->ColIndex("_refln_F_squared_meas");
-          const size_t sInd = hklLoop->ColIndex("_refln_F_squared_sigma");
-          const size_t bInd = hklLoop->ColIndex("_refln_scale_group_code");
-          if ((hInd | kInd | lInd | mInd | sInd) != InvalidIndex) {
-            TRefList refs;
-            refs.SetCapacity(hklLoop->RowCount());
-            for (size_t i = 0; i < hklLoop->RowCount(); i++) {
-              TReflection* r = new TReflection(
-                hklLoop->Get(i, hInd).GetStringValue().ToInt(),
-                hklLoop->Get(i, kInd).GetStringValue().ToInt(),
-                hklLoop->Get(i, lInd).GetStringValue().ToInt(),
-                hklLoop->Get(i, mInd).GetStringValue().ToDouble(),
-                hklLoop->Get(i, sInd).GetStringValue().ToDouble());
-              if (bInd != InvalidIndex) {
-                r->SetBatch(hklLoop->Get(i, bInd).GetStringValue().ToInt());
-              }
-              refs.Add(r);
+        if (hklLoop == 0) {
+          // sorting out tonto loop
+          hklLoop = cif.FindLoop("_diffrn_refln");
+        }
+        if (hklLoop != 0) {
+          try {
+            olx_object_ptr<THklFile::ref_list> refs =
+              THklFile::FromCifTable(*hklLoop);
+            if (refs.is_valid()) {
+              GetRM().SetReflections(refs().a);
             }
-            GetRM().SetReflections(refs);
+            //if (!refs.b) {
+            //  GetRM().SetHKLF(3);
+            //}
           }
+          catch (TExceptionBase &) {}
         }
         else {
           cif_dp::cetStringList *ci = dynamic_cast<cif_dp::cetStringList *>(
             cif.FindEntry("_shelx_hkl_file"));
           if (ci != NULL) {
             THklFile hkf;
-            hkf.LoadFromStrings(TCStrList(ci->lines), false);
+            hkf.LoadFromStrings(ci->lines, false);
             GetRM().SetReflections(hkf.RefList());
           }
         }
@@ -626,7 +618,7 @@ void TXFile::SaveToFile(const olxstr& FN, bool Sort) {
   TBasicCFile *LL = FLastLoader;
   if (!Loader->IsNative()) {
     if (LL != Loader) {
-      if (!Loader->Adopt(*this)) {
+      if (!Loader->Adopt(*this, 1)) {
         throw TFunctionFailedException(__OlxSourceInfo,
           "could not adopt specified file format");
       }

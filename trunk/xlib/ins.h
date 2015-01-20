@@ -243,7 +243,7 @@ public:
   virtual void LoadFromFile(const olxstr& fileName);
   virtual void SaveToStrings(TStrList& Strings);
   virtual void LoadFromStrings(const TStrList& Strings);
-  virtual bool Adopt(TXFile& XF);
+  virtual bool Adopt(TXFile &, int);
 
   TInsList* FindIns(const olxstr& name);
   void ClearIns();

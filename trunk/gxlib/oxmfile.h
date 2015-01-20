@@ -26,7 +26,9 @@ public:
     throw TNotImplementedException(__OlxSourceInfo);
   }
   virtual bool IsNative() const {  return true;  }
-  virtual bool Adopt(TXFile&)  {  throw TNotImplementedException(__OlxSourceInfo);  }
+  virtual bool Adopt(TXFile &, int) {
+    throw TNotImplementedException(__OlxSourceInfo);
+  }
   virtual void LoadFromFile(const olxstr& fn)  {
     gxapp.LoadModel(fn);
     RefMod.Assign( gxapp.XFile().GetRM(), true);

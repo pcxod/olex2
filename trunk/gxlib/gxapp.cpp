@@ -189,8 +189,7 @@ public:
         if (ca.IsDeleted() || ca.GetType() == iQPeakZ) continue;
         ca.SetMasked(CAtomMasks[ac++]);
       }
-      FParent->XFile().GetLattice().SetGrowInfo(&GrowInfo());
-      GrowInfo = NULL;
+      FParent->XFile().GetLattice().SetGrowInfo(GrowInfo.release());
     }
     else {  // definition will get broken otherwise
       FParent->ClearStructureRelated();

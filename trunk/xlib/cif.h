@@ -56,9 +56,10 @@ public:
   */
   void FromDataItem(const TDataItem &i);
   /* Adopts the content of a file (asymmetric unit, loops, etc) to a specified
-  source file
+  source file. If the second argument is 0 - the atoms are taken from the AU
+  otherwise - from the latttice (allows saving grown structures)
   */
-  virtual bool Adopt(TXFile& XF);
+  virtual bool Adopt(TXFile &, int);
   //Finds a value by name
   cif_dp::ICifEntry* FindEntry(const olxstr& name) const {
     return (block_index == InvalidIndex) ? NULL :

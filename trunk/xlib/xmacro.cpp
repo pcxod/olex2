@@ -4312,7 +4312,7 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   TCif cif;
-  cif.Adopt(xapp.XFile());
+  cif.Adopt(xapp.XFile(), 0);
   TAsymmUnit& au = cif.GetAsymmUnit();
   for( size_t i=0; i < au.AtomCount(); i++ )  {
     if( au.GetAtom(i).GetType() == iQPeakZ )
@@ -5464,7 +5464,7 @@ void XLibMacros::macReset(TStrObjList &Cmds, const TParamList &Options,
          fileName(Options.FindValue('f'));
   xapp.XFile().UpdateAsymmUnit();
   TIns ins;
-  ins.Adopt(xapp.XFile());
+  ins.Adopt(xapp.XFile(), 0);
   if( xapp.CheckFileType<TP4PFile>() )  {
     if( newSg.IsEmpty() )  {
       E.ProcessingError(__OlxSrcInfo,

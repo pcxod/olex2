@@ -32,7 +32,7 @@ public:
   inline TMolBond& Bond(size_t index) {  return Bonds[index];  }
   virtual void SaveToStrings(TStrList& Strings);
   virtual void LoadFromStrings(const TStrList& Strings);
-  virtual bool Adopt(TXFile& XF);
+  virtual bool Adopt(TXFile &, int);
   virtual IOlxObject* Replicate()  const {  return new TMol;  }
 };
 
