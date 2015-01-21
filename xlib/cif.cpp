@@ -19,6 +19,7 @@
 #include "symmlib.h"
 #include "etime.h"
 #include "integration.h"
+#include "label_corrector.h"
 
 using namespace exparse::parser_util;
 using namespace cif_dp;
@@ -809,12 +810,12 @@ cetTable& TCif::GetPublicationInfoLoop()  {
 bool TCif::Adopt(TXFile &XF, int flags) {
   Clear();
   double Q[6], E[6];  // quadratic form of s thermal ellipsoid
-  GetRM().Assign(XF.GetRM(), flags == 0);
+  GetRM().Assign(XF.GetRM(), true);
   if (flags != 0) {
     ASObjectProvider &objects = XF.GetLattice().GetObjects();
     for (size_t i = 0; i < objects.atoms.Count(); i++) {
       TSAtom &a = objects.atoms[i];
-      if (!a.IsAvailable()) continue;
+      if (!a.IsAvailable() || a.IsAUAtom()) continue;
       TCAtom & ca = AsymmUnit.NewAtom();
       ca.SetLabel(a.GetLabel(), false);
       ca.SetPart(a.CAtom().GetPart());
@@ -832,12 +833,29 @@ bool TCif::Adopt(TXFile &XF, int flags) {
       }
     }
   }
+  {
+    LabelCorrector lc(GetAsymmUnit());
+    for (size_t i = 0; i < AsymmUnit.AtomCount(); i++) {
+      lc.Correct(AsymmUnit.GetAtom(i));
+    }
+  }
+
   Title = TEFile::ChangeFileExt(
     TEFile::ExtractFileName(XF.GetFileName()), EmptyString());
   data_provider.Clear();
   data_provider.Add(Title.Replace(' ', "%20"));
   block_index = 0;
-  SetParam("_audit_creation_method", "OLEX2", true);
+  {
+    olex2::IOlex2Processor *op = olex2::IOlex2Processor::GetInstance();
+    olxstr ad = "Olex2";
+    if (op != 0) {
+      olxstr ci = "GetCompilationInfo('full')";
+      if (op->processFunction(ci, EmptyString(), true)) {
+        ad << ": " << ci;
+      }
+    }
+    SetParam("_audit_creation_method", ad, true);
+  }
   SetParam("_chemical_name_systematic", "?", true);
   SetParam("_chemical_name_common", "?", true);
   SetParam("_chemical_melting_point", "?", false);
@@ -918,7 +936,7 @@ bool TCif::Adopt(TXFile &XF, int flags) {
     cetTable& Loop = AddLoopDef("_space_group_symop_id,"
       "_space_group_symop_operation_xyz");
     sg.GetMatrices(Matrices, mattAll);
-    for( size_t i=0; i < Matrices.Count(); i++ )  {
+    for (size_t i=0; i < Matrices.Count(); i++) {
       CifRow& row = Loop.AddRow();
       row[0] = new cetString(i+1);
       row[1] = new cetString(TSymmParser::MatrixToSymmEx(Matrices[i]));
@@ -960,7 +978,7 @@ bool TCif::Adopt(TXFile &XF, int flags) {
       Row[10] = new cetString((int)A.GetPart());
     else
       Row[10] = new cetString('.');
-    if (A.GetEllipsoid() != NULL)  {
+    if (A.GetEllipsoid() != NULL) {
       A.GetEllipsoid()->GetShelxQuad(Q, E);
       GetAsymmUnit().UcartToUcif(Q);
       CifRow& Row1 = u_loop.AddRow();

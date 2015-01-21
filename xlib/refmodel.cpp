@@ -605,6 +605,9 @@ const TRefList& RefinementModel::GetReflections() const {
       }
     }
     SetReflections(hf.RefList());
+    if (hf.GetHKLF() != -1) {
+      HKLF = hf.GetHKLF();
+    }
     return _Reflections;
   }
   catch(TExceptionBase& exc) {
