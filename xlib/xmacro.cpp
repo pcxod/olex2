@@ -244,7 +244,7 @@ void XLibMacros::Export(TLibrary& lib)  {
     "Fixes hydrogen atom labels");
   xlib_InitMacro(Fix, EmptyString(), (fpAny^fpNone)|psCheckFileTypeIns,
     "Fixes specified parameters of atoms: XYZ, Uiso, Occu");
-  xlib_InitMacro(Free, EmptyString(), (fpAny^fpNone)|psCheckFileTypeIns,
+  xlib_InitMacro(Free, EmptyString(), (fpAny^fpNone)|psFileLoaded,
     "Frees specified parameters of atoms: XYZ, Uiso, Occu");
   xlib_InitMacro(Isot, "npd-makes all NPD atoms isotropic",
     fpAny|psFileLoaded,
@@ -1854,13 +1854,13 @@ void XLibMacros::macFree(TStrObjList &Cmds, const TParamList &Options,
   TXApp& xapp = TXApp::GetInstance();
   if (!xapp.FindSAtoms(Cmds.Text(' '), atoms, true, true))
     return;
-  if (vars.Equalsi( "XYZ")) {
+  if (vars.Containsi("XYZ")) {
     for (size_t i=0; i < atoms.Count(); i++) {
       for (short j=0; j < 3; j++)
         xapp.XFile().GetRM().Vars.FreeParam(atoms[i]->CAtom(), catom_var_name_X+j);
     }
   }
-  else if (vars.Equalsi( "UISO")) {
+  if (vars.Containsi("UISO")) {
     for (size_t i=0; i < atoms.Count(); i++) {
       if (atoms[i]->CAtom().GetEllipsoid() == NULL) {  // isotropic atom
         xapp.XFile().GetRM().Vars.FreeParam(atoms[i]->CAtom(),
@@ -1879,7 +1879,7 @@ void XLibMacros::macFree(TStrObjList &Cmds, const TParamList &Options,
       }
     }
   }
-  else if (vars.Equalsi( "OCCU")) {
+  if (vars.Containsi( "OCCU")) {
     xapp.XFile().GetAsymmUnit().GetAtoms().ForEach(
       ACollectionItem::TagSetter(0));
     for (size_t i = 0; i < atoms.Count(); i++) {
@@ -1912,7 +1912,6 @@ void XLibMacros::macFree(TStrObjList &Cmds, const TParamList &Options,
         }
       }
     }
-
   }
 }
 //.............................................................................
@@ -7501,9 +7500,9 @@ void XLibMacros::macExport(TStrObjList &Cmds, const TParamList &Options,
     return;
   }
   cif_dp::cetTable* hklLoop = C->FindLoop("_refln");
-  //if (hklLoop == 0) {
-  //  hklLoop = C->FindLoopGlobal("_refln", true);
-  //}
+  if (hklLoop == 0) {
+    hklLoop = C->FindLoopGlobal("_diffrn_refln", true);
+  }
   if (hklLoop == NULL) {
     cif_dp::cetStringList *ci = dynamic_cast<cif_dp::cetStringList *>(
       C->FindEntry("_shelx_hkl_file"));
@@ -7520,57 +7519,14 @@ void XLibMacros::macExport(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   else {
-    const size_t hInd = hklLoop->ColIndex("_refln_index_h");
-    const size_t kInd = hklLoop->ColIndex("_refln_index_k");
-    const size_t lInd = hklLoop->ColIndex("_refln_index_l");
-    const size_t mInd = hklLoop->ColIndex("_refln_F_squared_meas");
-    const size_t sInd = hklLoop->ColIndex("_refln_F_squared_sigma");
-    const size_t bInd = hklLoop->ColIndex("_refln_scale_group_code");
-
-    if( (hInd|kInd|lInd|mInd|sInd) == InvalidIndex ) {
-      const size_t mFInd = hklLoop->ColIndex("_refln_F_meas");
-      const size_t sFInd = hklLoop->ColIndex("_refln_F_sigma");
-      if ((mFInd | sFInd) == InvalidIndex) {
-        TBasicApp::NewLogEntry() << "Could not locate <h k l meas sigma> data";
+    olx_object_ptr<THklFile::ref_list> refs =
+      THklFile::FromCifTable(*hklLoop);
+    if (refs.is_valid()) {
+      THklFile::SaveToFile(hkl_name, refs().a);
+      if (!refs().b) {
+        C->GetRM().SetHKLF(3);
+        app.XFile().GetRM().SetHKLF(3);
       }
-      else {
-        TBasicApp::NewLogEntry() << "Exporting HKLF 4 file";
-        THklFile file;
-        for (size_t i = 0; i < hklLoop->RowCount(); i++)  {
-          double F = hklLoop->Get(i, mFInd).GetStringValue().ToDouble(),
-            sF = hklLoop->Get(i, sFInd).GetStringValue().ToDouble(),
-            Fsq = F*F;
-          TReflection* r = new TReflection(
-            hklLoop->Get(i, hInd).GetStringValue().ToInt(),
-            hklLoop->Get(i, kInd).GetStringValue().ToInt(),
-            hklLoop->Get(i, lInd).GetStringValue().ToInt(),
-            Fsq,
-            // shelxl-like
-            2*(olx_max(0.01, sF)*olx_max(olx_max(0.01, olx_abs(F)), sF))
-          );
-          if (bInd != InvalidIndex) {
-            r->SetBatch(hklLoop->Get(i, bInd).GetStringValue().ToInt());
-          }
-          file.Append(*r);
-        }
-        file.SaveToFile(hkl_name);
-      }
-    }
-    else {
-      THklFile file;
-      for( size_t i=0; i < hklLoop->RowCount(); i++ )  {
-        TReflection* r = new TReflection(
-          hklLoop->Get(i, hInd).GetStringValue().ToInt(),
-          hklLoop->Get(i, kInd).GetStringValue().ToInt(),
-          hklLoop->Get(i, lInd).GetStringValue().ToInt(),
-          hklLoop->Get(i, mInd).GetStringValue().ToDouble(),
-          hklLoop->Get(i, sInd).GetStringValue().ToDouble());
-        if (bInd != InvalidIndex) {
-          r->SetBatch(hklLoop->Get(i, bInd).GetStringValue().ToInt());
-        }
-        file.Append(*r);
-      }
-      file.SaveToFile(hkl_name);
     }
   }
   // check if the res file is there
