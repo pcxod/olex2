@@ -135,10 +135,17 @@ TIString TReflection::ToString() const {
   else
     swprintf_s(bf, 128, f2, hkl[0], hkl[1], hkl[2], I, S, batch);
 #else
+#ifdef __WIN32__ // gcc on windows - different signature!
   if (batch == NoBatchSet)
     swprintf(bf, f1, hkl[0], hkl[1], hkl[2], I, S);
   else
     swprintf(bf, f2, hkl[0], hkl[1], hkl[2], I, S, batch);
+#else
+  if (batch == NoBatchSet)
+    swprintf(bf, 128, f1, hkl[0], hkl[1], hkl[2], I, S);
+  else
+    swprintf(bf, 128, f2, hkl[0], hkl[1], hkl[2], I, S, batch);
+#endif
 #endif
 #else
 #ifdef _MSC_VER
