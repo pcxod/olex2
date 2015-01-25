@@ -2453,7 +2453,8 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
   }
 
   TXFile::NameArg file_n;
-  bool Blind = Options.Contains('b'); // a switch showing if the last file is remembered
+  // a switch showing if the last file is remembered
+  bool Blind = Options.GetBoolOption('b');
   bool ReadStyle = !Options.Contains('r');
   bool OverlayXFile = Options.Contains('*');
   if( Cmds.Count() >= 1 && !Cmds[0].IsEmpty() )  {  // merge the file name if a long one...
@@ -2477,14 +2478,16 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
         Error.ProcessingError(__OlxSrcInfo, "Could not locate specified file");
       return;
     }
-    if( !file_n.data_name.IsEmpty() && file_n.file_name.IsEmpty() )
+    if (!file_n.data_name.IsEmpty() && file_n.file_name.IsEmpty())
       file_n.file_name = FXApp->XFile().GetFileName();
-    if( TEFile::ExtractFileExt(file_n.file_name).IsEmpty() )  {
+    if (TEFile::ExtractFileExt(file_n.file_name).IsEmpty()) {
       olxstr res_fn = TEFile::ChangeFileExt(file_n.file_name, "res"),
              ins_fn = TEFile::ChangeFileExt(file_n.file_name, "ins");
-      if( TEFile::Exists(res_fn) )  {
-        if( TEFile::Exists(ins_fn) )
-          file_n.file_name = TEFile::FileAge(ins_fn) < TEFile::FileAge(res_fn) ? res_fn : ins_fn;
+      if (TEFile::Exists(res_fn)) {
+        if (TEFile::Exists(ins_fn)) {
+          file_n.file_name = (TEFile::FileAge(ins_fn) < TEFile::FileAge(res_fn))
+            ? res_fn : ins_fn;
+        }
         else
           file_n.file_name = res_fn;
       }
@@ -2508,29 +2511,29 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
         + file_n.file_name;
     }
   }
-  else  {
-    if( !IsVisible() )  return;
+  else {
+    if (!IsVisible())  return;
     FileFilter ff;
     ff.AddAll("ins;cif;cmf;res;xyz;p4p;crs;pdb;fco;fcf;hkl");
     ff.Add("*.mol", "MDL MOL");
     ff.Add("*.mas", "XD master");
     ff.Add("*.mol2", "Tripos MOL2");
-    if( !OverlayXFile )
+    if (!OverlayXFile)
       ff.Add("*.oxm", "Olex2 model");
     file_n.file_name = PickFile("Open File",
       ff.GetString(),
       XLibMacros::CurrentDir(), EmptyString(), true);
   }
   // the dialog has been successfully executed
-  if( !file_n.file_name.IsEmpty() )  {
+  if (!file_n.file_name.IsEmpty()) {
     /* FN might be a dir on windows when a file does not exist - the code above
     will get the folder name instead...
     */
-    if( !TEFile::Exists(file_n.file_name) || TEFile::IsDir(file_n.file_name) )  {
+    if (!TEFile::Exists(file_n.file_name) || TEFile::IsDir(file_n.file_name)) {
       Error.ProcessingError(__OlxSrcInfo, "Could not locate specified file");
       return;
     }
-    if( OverlayXFile )  {
+    if (OverlayXFile) {
       sw.start("Loading overlayed file");
       TXFile& xf = FXApp->NewXFile();
       xf.LoadFromFile(file_n.ToString());
@@ -2539,22 +2542,16 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
       FXApp->CenterView(true);
       return;
     }
-    if( Modes->GetCurrent() != NULL )
+    if (Modes->GetCurrent() != NULL)
       Macros.ProcessMacro("mode off", Error);
     olxstr ds_fn = TEFile::ChangeFileExt(file_n.file_name, "xlds");
-    if( TEFile::Exists(ds_fn) )  {
+    if (TEFile::Exists(ds_fn)) {
       Macros.ProcessMacro(olxstr("load view '") <<
         TEFile::ChangeFileExt(file_n.file_name, EmptyString()) << '\'', Error);
     }
-    else  {
-      if( TEFile::Exists(DefStyle) && ReadStyle )
+    else {
+      if (TEFile::Exists(DefStyle) && ReadStyle)
         FXApp->GetRenderer().GetStyles().LoadFromFile(DefStyle, false);
-    }
-    // delete the Space groups information file
-    if( !(TEFile::ChangeFileExt(file_n.file_name, EmptyString()) ==
-      TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), EmptyString())) )
-    {
-      TEFile::DelFile(FXApp->GetInstanceDir()+"spacegroups.htm");
     }
     // special treatment of the kl files
     if (TEFile::ExtractFileExt(file_n.file_name).Equalsi("hkl")) {
@@ -2677,7 +2674,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
           "p4p_automate", FalseString()).ToBool())
         {
           TMacroData er;
-          if( TEFile::Exists(TEFile::ChangeFileExt(file_n.file_name, "ins")))
+          if (TEFile::Exists(TEFile::ChangeFileExt(file_n.file_name, "ins")))
             Macros.ProcessMacro("SG", er);
           else
             Macros.ProcessMacro("SGE", er);
@@ -2687,15 +2684,15 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
           RunWhenVisibleTasks.Add(new P4PTask(p4p));
         }
       }
-    // automatic export for kappa cif
-      if( FXApp->CheckFileType<TCif>() )  {
+    // automatic export for cif
+      if (FXApp->CheckFileType<TCif>()) {
         TCif& cif = FXApp->XFile().GetLastLoader<TCif>();
-        if( cif.BlockCount() > 1 )  {
+        if (cif.BlockCount() > 1) {
           FXApp->NewLogEntry() << "The following data blocks are available:";
           for( size_t i=0; i < cif.BlockCount(); i++ )
             FXApp->NewLogEntry() << '#' << i << ": " << cif.GetBlock(i).GetName();
         }
-        if( !file_n.data_name.IsEmpty() )
+        if (!file_n.data_name.IsEmpty())
           FXApp->NewLogEntry() << "Loading: " << file_n.data_name;
         FXApp->Draw();
         olxstr hklFileName = TEFile::ChangeFileExt(file_n.file_name, "hkl");
@@ -2706,16 +2703,15 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
           if (cif.FindLoopGlobal("_refln", true) != NULL ||
               cif.FindEntry("_shelx_hkl_file") != NULL)
           {
-            er.SetRetVal(&cif);
             Macros.ProcessMacro(olxstr("export ").quote() << hklFileName, er);
-            if( !er.IsProcessingError() )  {
-              if( !TEFile::Exists(insFileName) )  {
+            if (!er.IsProcessingError()) {
+              if (!TEFile::Exists(insFileName)) {
                 TIns ins;
                 ins.Adopt(FXApp->XFile(), 0);
                 ins.GetRM().SetHKLSource(hklFileName);
                 ins.SaveToFile(insFileName);
                 Macros.ProcessMacro(olxstr("@reap \'") << insFileName << '\'', er);
-                if( !er.IsProcessingError() )
+                if (!er.IsProcessingError())
                   Macros.ProcessMacro("reset", er);
                 FXApp->Draw();
                 return;
