@@ -482,7 +482,9 @@ public:
   void RegisterXFileFormat(TBasicCFile *Parser, const olxstr& ext)
   {  XFile().RegisterFileFormat(Parser, ext); }
   void LoadXFile(const olxstr& fn);
-  void SaveXFile(const olxstr& fn, bool Sort)  {  XFile().SaveToFile(fn, Sort); }
+  void SaveXFile(const olxstr &fn, int flags=0)  {
+    XFile().SaveToFile(fn, flags);
+  }
   void Generate( const vec3d& From, const vec3d& To,
     TCAtomPList* Template, bool ClearPrevCont)
   {    XFile().GetLattice().Generate(From, To, Template, ClearPrevCont);  }

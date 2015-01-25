@@ -72,7 +72,7 @@ class RefinementModel
   olx_pdict<int, Fragment*> Frags;
   ContentList UserContent;
 protected:
-  olxstr HKLSource;
+  olxstr HKLSource, ModelSource;
   olxstr RefinementMethod,  // L.S. or CGLS
          SolutionMethod;
   int MERG;
@@ -217,9 +217,10 @@ public:
   ConnInfo Conn;     // extra connectivity information
 
   CalculatedVars CVars;
-  const olxstr& GetHKLSource() const {  return HKLSource;  }
-  //TODO: handle the change
-  void SetHKLSource(const olxstr& src);
+  const olxstr &GetModelSource() const { return ModelSource; }
+  void SetModelSource(const olxstr &src);
+  const olxstr &GetHKLSource() const { return HKLSource; }
+  void SetHKLSource(const olxstr &src);
   olxstr GetHKLFStr() const {
     olxstr rv(HKLF, 80);
     if( HKLF_m == def_HKLF_m )  {
@@ -833,6 +834,7 @@ Friedel opposites of components 1 ... m
     TMacroData &E);
   void LibNewRestraint(TStrObjList &Cmds, const TParamList &Options,
     TMacroData &E);
+  void LibModelSrc(const TStrObjList &Params, TMacroData &E);
 
   TLibrary* ExportLibrary(const olxstr& name=EmptyString());
   struct VPtr : public olx_virtual_ptr<RefinementModel> {

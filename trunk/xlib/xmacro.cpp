@@ -2021,7 +2021,9 @@ void XLibMacros::macGraphPD(TStrObjList &Cmds, const TParamList &Options,
   }
 }
 //.............................................................................
-void XLibMacros::macFile(TStrObjList &Cmds, const TParamList &Options, TMacroData &Error)  {
+void XLibMacros::macFile(TStrObjList &Cmds, const TParamList &Options,
+  TMacroData &Error)
+{
   TXApp& XApp = TXApp::GetInstance();
   olxstr Tmp;
   if (Cmds.IsEmpty()) {  // res -> Ins rotation if ins file
@@ -2033,8 +2035,6 @@ void XLibMacros::macFile(TStrObjList &Cmds, const TParamList &Options, TMacroDat
   }
   else
     Tmp = Cmds[0];
-
-  bool Sort = Options.Contains('s');
 
   if (!TEFile::IsAbsolutePath(Tmp)) {
     olxstr root = (CurrentDir().IsEmpty() ? TEFile::CurrentDir()
@@ -2063,20 +2063,13 @@ void XLibMacros::macFile(TStrObjList &Cmds, const TParamList &Options, TMacroDat
       }
     }
   }
-
-  XApp.XFile().SaveToFile(Tmp, Sort);
-  if (XApp.XFile().HasLastLoader()) {
-    olxstr fd = TEFile::ExtractFilePath(Tmp);
-    if (!fd.IsEmpty() && !fd.Equalsi(CurrentDir())) {
-      if (!TEFile::ChangeDir(fd))
-        TBasicApp::NewLogEntry(logError) << "Cannot change current folder...";
-      else
-        CurrentDir() = fd;
+  if (Options.GetBoolOption('s')) {
+    olex2::IOlex2Processor *op = olex2::IOlex2Processor::GetInstance();
+    if (op != 0) {
+      op->processMacro("sort +ml moiety");
     }
   }
-  else  if (!Sort) {
-    Sort = true;  // forse reading the file
-  }
+  XApp.XFile().SaveToFile(Tmp);
   if (!removedSAtoms.IsEmpty()) {  // need to restore, a bit of mess here...
     ASObjectProvider& objects = XApp.XFile().GetLattice().GetObjects();
     for (size_t i=0; i < objects.atoms.Count(); i++) {
@@ -2088,11 +2081,6 @@ void XLibMacros::macFile(TStrObjList &Cmds, const TParamList &Options, TMacroDat
       if (removedCAtoms[i])
           au.GetAtom(i).SetDeleted(false);
     }
-  }
-  if (Sort) {
-    olex2::IOlex2Processor* op = olex2::IOlex2Processor::GetInstance();
-      if (op != NULL)
-        op->processMacro(olxstr("reap \'") << Tmp << '\'');
   }
 }
 //.............................................................................
@@ -2318,10 +2306,12 @@ void XLibMacros::macLstFun(TStrObjList &Cmds, const TParamList &Options, TMacroD
   }
 }
 //.............................................................................
-void XLibMacros::ChangeCell(const mat3d& tm, const TSpaceGroup& new_sg, const olxstr& resHKL_FN)  {
+void XLibMacros::ChangeCell(const mat3d& tm, const TSpaceGroup& new_sg,
+  const olxstr& resHKL_FN)
+{
   TXApp& xapp = TXApp::GetInstance();
-  TBasicApp::NewLogEntry() << "Cell choice trasformation matrix:" << NewLineSequence() <<
-    tm[0].ToString() << NewLineSequence() <<
+  TBasicApp::NewLogEntry() << "Cell choice trasformation matrix:" <<
+    NewLineSequence() << tm[0].ToString() << NewLineSequence() <<
     tm[1].ToString() << NewLineSequence() <<
     tm[2].ToString();
   TBasicApp::NewLogEntry() << "New space group: " << new_sg.GetName();
@@ -2329,7 +2319,8 @@ void XLibMacros::ChangeCell(const mat3d& tm, const TSpaceGroup& new_sg, const ol
   xapp.XFile().UpdateAsymmUnit();
   TAsymmUnit& au = xapp.XFile().LastLoader()->GetAsymmUnit();
   const mat3d i_tm(tm.Inverse());
-  const mat3d f2c = mat3d::Transpose((mat3d::Transpose(au.GetCellToCartesian())*tm));
+  const mat3d f2c = mat3d::Transpose((
+    mat3d::Transpose(au.GetCellToCartesian())*tm));
   mat3d ax_err;
   ax_err[0] = vec3d::Qrt(au.GetAxisEsds());
   ax_err[1] = ax_err[0];  ax_err[2] = ax_err[0];
@@ -2395,8 +2386,8 @@ void XLibMacros::ChangeCell(const mat3d& tm, const TSpaceGroup& new_sg, const ol
   au.ChangeSpaceGroup(new_sg);
   au.InitMatrices();
   xapp.XFile().LastLoaderChanged();
-  if( save )
-    xapp.XFile().SaveToFile(xapp.XFile().GetFileName(), false);
+  if (save)
+    xapp.XFile().SaveToFile(xapp.XFile().GetFileName());
 }
 //.............................................................................
 TSpaceGroup* XLibMacros_macSGS_FindSG(TPtrList<TSpaceGroup>& sgs,
@@ -3447,7 +3438,7 @@ void XLibMacros::funSGS(const TStrObjList &Cmds, TMacroData &E) {
   }
 }
 //.............................................................................
-void XLibMacros::funHKLSrc(const TStrObjList& Params, TMacroData &E)  {
+void XLibMacros::funHKLSrc(const TStrObjList& Params, TMacroData &E) {
   TXApp& xapp = TXApp::GetInstance();
   if (Params.Count() == 1)
     xapp.XFile().GetRM().SetHKLSource(Params[0]);
@@ -3462,6 +3453,7 @@ void XLibMacros::funHKLSrc(const TStrObjList& Params, TMacroData &E)  {
         if (!TEFile::Exists(fn)) {
           TBasicApp::NewLogEntry() << "Creating HKL file...";
           THklFile::SaveToFile(fn, xapp.XFile().GetRM().GetReflections());
+          xapp.XFile().GetRM().SetHKLSource(fn);
         }
       }
     }
@@ -9441,6 +9433,6 @@ void XLibMacros::macConvert(TStrObjList &Cmds, const TParamList &Options,
   xf.RegisterFileFormat(dynamic_cast<TBasicCFile *>(otp_->Replicate()),
     TEFile::ExtractFileExt(Cmds[1]));
   xf.LoadFromFile(Cmds[0]);
-  xf.SaveToFile(Cmds[1], false);
+  xf.SaveToFile(Cmds[1]);
 }
 //..............................................................................
