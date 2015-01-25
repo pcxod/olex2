@@ -1345,7 +1345,7 @@ void TMainForm::macSave(TStrObjList &Cmds, const TParamList &Options,
     if (FXApp->XFile().HasLastLoader()) {
       Tmp = (Cmds.Count() == 1) ? TEFile::ChangeFileExt(Cmds[0], "oxm")
         : TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "oxm");
-      FXApp->SaveModel(Tmp);
+      FXApp->XFile().SaveToFile(Tmp);
     }
   }
   else if (Tmp == "gview") {

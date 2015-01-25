@@ -611,7 +611,7 @@ void TXFile::ValidateTabs()  {
   }
 }
 //..............................................................................
-void TXFile::SaveToFile(const olxstr& FN, bool Sort) {
+void TXFile::SaveToFile(const olxstr& FN, int flags) {
   TStopWatch sw(__FUNC__);
   olxstr Ext = TEFile::ExtractFileExt(FN);
   TBasicCFile *Loader = FindFormat(Ext);
@@ -625,8 +625,8 @@ void TXFile::SaveToFile(const olxstr& FN, bool Sort) {
     }
     else
       UpdateAsymmUnit();
-    if (Sort)
-      Loader->GetAsymmUnit().Sort();
+    //if (Sort)
+    //  Loader->GetAsymmUnit().Sort();
   }
   OnFileSave.Enter(this);
   IOlxObject* Cause = NULL;

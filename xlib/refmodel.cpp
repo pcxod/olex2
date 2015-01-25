@@ -251,8 +251,9 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm,
   DEFS_set = rm.DEFS_set;
   EXTI_set = rm.EXTI_set;
   EXTI = rm.EXTI;
-  for( size_t i=0; i < BASF.Count(); i++ )
+  for (size_t i=0; i < BASF.Count(); i++)
     BASF_Vars.Add(NULL);
+  ModelSource = rm.ModelSource;
   HKLSource = rm.HKLSource;
   RefinementMethod = rm.RefinementMethod;
   SolutionMethod = rm.SolutionMethod;
@@ -496,7 +497,11 @@ double RefinementModel::FindRestrainedDistance(const TCAtom& a1,
   return -1;
 }
 //.............................................................................
-void RefinementModel::SetHKLSource(const olxstr& src) {
+void RefinementModel::SetModelSource(const olxstr &src) {
+  ModelSource = src;
+}
+//.............................................................................
+void RefinementModel::SetHKLSource(const olxstr &src) {
   HKLSource = src;
 }
 //.............................................................................
@@ -1367,20 +1372,22 @@ void RefinementModel::ProcessFrags()  {
 //.............................................................................
 void RefinementModel::ToDataItem(TDataItem& item) {
   // fields
-  item.AddField("RefOutArg", PersUtil::NumberListToStr(PLAN));
-  item.AddField("Weight", PersUtil::NumberListToStr(used_weight));
-  item.AddField("ProposedWeight", PersUtil::NumberListToStr(proposed_weight));
-  item.AddField("HklSrc", HKLSource);
-  item.AddField("RefMeth", RefinementMethod);
-  item.AddField("SolMeth", SolutionMethod);
-  item.AddField("BatchScales", PersUtil::ComplexListToStr(BASF));
-  item.AddField("RefInArg", PersUtil::NumberListToStr(LS));
+  item.AddField("RefOutArg", PersUtil::NumberListToStr(PLAN))
+    .AddField("Weight", PersUtil::NumberListToStr(used_weight))
+    .AddField("ProposedWeight", PersUtil::NumberListToStr(proposed_weight))
+    .AddField("ModelSrc", ModelSource)
+    .AddField("HklSrc", HKLSource)
+    .AddField("RefMeth", RefinementMethod)
+    .AddField("SolMeth", SolutionMethod)
+    .AddField("BatchScales", PersUtil::ComplexListToStr(BASF))
+    .AddField("RefInArg", PersUtil::NumberListToStr(LS));
 
   // save used equivalent positions
   TArrayList<uint32_t> mat_tags(UsedSymm.Count());
   TDataItem& eqiv = item.AddItem("EQIV");
-  for( size_t i=0; i < UsedSymm.Count(); i++ )  {
-    eqiv.AddItem(UsedSymm.GetKey(i), TSymmParser::MatrixToSymmEx(UsedSymm.GetValue(i).symop));
+  for (size_t i=0; i < UsedSymm.Count(); i++) {
+    eqiv.AddItem(UsedSymm.GetKey(i),
+      TSymmParser::MatrixToSymmEx(UsedSymm.GetValue(i).symop));
     mat_tags[i] = UsedSymm.GetValue(i).symop.GetId();
     UsedSymm.GetValue(i).symop.SetRawId((uint32_t)i);
   }
@@ -1396,33 +1403,34 @@ void RefinementModel::ToDataItem(TDataItem& item) {
   for( size_t i=0; i < rcList.Count(); i++ )
     rcList[i]->ToDataItem(item.AddItem(rcList[i]->GetName()));
 
-  TDataItem& hklf = item.AddItem("HKLF", HKLF);
-  hklf.AddField("s", HKLF_s);
-  hklf.AddField("wt", HKLF_wt);
-  hklf.AddField("m", HKLF_m);
-  hklf.AddField("mat", TSymmParser::MatrixToSymmEx(HKLF_mat));
+  item.AddItem("HKLF", HKLF)
+    .AddField("s", HKLF_s)
+    .AddField("wt", HKLF_wt)
+    .AddField("m", HKLF_m)
+    .AddField("mat", TSymmParser::MatrixToSymmEx(HKLF_mat));
 
-  TDataItem& omits = item.AddItem("OMIT", OMIT_set);
-  omits.AddField("s", OMIT_s);
-  omits.AddField("two_theta", OMIT_2t);
-  omits.AddField("hkl", PersUtil::VecListToStr(Omits));
+  item.AddItem("OMIT", OMIT_set)
+    .AddField("s", OMIT_s)
+    .AddField("two_theta", OMIT_2t)
+    .AddField("hkl", PersUtil::VecListToStr(Omits));
   item.AddItem("TWIN", TWIN_set).AddField("mat",
     TSymmParser::MatrixToSymmEx(TWIN_mat)).AddField("n", TWIN_n);
   item.AddItem("MERG", MERG_set).AddField("val", MERG);
-  item.AddItem("SHEL", SHEL_set).AddField("high", SHEL_hr).AddField("low", SHEL_lr);
+  item.AddItem("SHEL", SHEL_set).AddField("high",
+    SHEL_hr).AddField("low", SHEL_lr);
   item.AddItem("EXTI", EXTI_set).AddField("val", EXTI.ToString());
   Conn.ToDataItem(item.AddItem("CONN"));
   item.AddField("UserContent", GetUserContentStr());
   TDataItem& info_tables = item.AddItem("INFO_TABLES");
   size_t info_tab_cnt=0;
-  for( size_t i=0; i < InfoTables.Count(); i++ )  {
-    if( InfoTables[i].IsValid() )
+  for (size_t i=0; i < InfoTables.Count(); i++) {
+    if (InfoTables[i].IsValid())
       InfoTables[i].ToDataItem(info_tables.AddItem("item"));
   }
 
-  if( !SfacData.IsEmpty() )  {
+  if (!SfacData.IsEmpty()) {
     TDataItem& sfacs = item.AddItem("SFAC");
-    for( size_t i=0; i < SfacData.Count(); i++ )
+    for (size_t i=0; i < SfacData.Count(); i++)
       SfacData.GetValue(i)->ToDataItem(sfacs);
   }
   selectedTableRows.ToDataItem(item.AddItem("selected_cif_records"));
@@ -1430,7 +1438,7 @@ void RefinementModel::ToDataItem(TDataItem& item) {
     CVars.ToDataItem(item.AddItem("to_calculate"), true);
   }
   // restore matrix tags
-  for( size_t i=0; i < UsedSymm.Count(); i++ )
+  for (size_t i=0; i < UsedSymm.Count(); i++)
     UsedSymm.GetValue(i).symop.SetRawId(mat_tags[i]);
 }
 //.............................................................................
@@ -1438,7 +1446,9 @@ void RefinementModel::FromDataItem(TDataItem& item) {
   Clear(rm_clear_ALL);
   PersUtil::NumberListFromStr(item.GetFieldByName("RefOutArg"), PLAN);
   PersUtil::NumberListFromStr(item.GetFieldByName("Weight"), used_weight);
-  PersUtil::NumberListFromStr(item.GetFieldByName("ProposedWeight"), proposed_weight);
+  PersUtil::NumberListFromStr(item.GetFieldByName("ProposedWeight"),
+    proposed_weight);
+  ModelSource = item.FindField("ModelSrc");
   HKLSource = item.GetFieldByName("HklSrc");
   RefinementMethod = item.GetFieldByName("RefMeth");
   SolutionMethod = item.GetFieldByName("SolMeth");
@@ -2487,6 +2497,15 @@ void RefinementModel::LibNewRestraint(TStrObjList &Cmds,
   TBasicApp::NewLogEntry() << sr->ToString();
 }
 //..............................................................................
+void RefinementModel::LibModelSrc(const TStrObjList &Params, TMacroData &E) {
+  if (Params.IsEmpty()) {
+    E.SetRetVal(GetModelSource());
+  }
+  else {
+    SetModelSource(Params[0]);
+  }
+}
+//..............................................................................
 //..............................................................................
 //..............................................................................
 IOlxObject *RefinementModel::VPtr::get_ptr() const {
@@ -2566,6 +2585,14 @@ TLibrary* RefinementModel::ExportLibrary(const olxstr& name) {
     fpAny ^ (fpNone|fpOne),
     "Creates a new restraint expects restraint name, parameters if required "
     "and atom ids"));
+
+  lib->Register(
+    new TFunction<RefinementModel>(thip, &RefinementModel::LibModelSrc,
+    "ModelSrc",
+    fpNone | fpOne,
+    "Sets the source for this model - an identifier for the external code when "
+    "reading a model file."));
+
   return lib;
 }
 //..............................................................................

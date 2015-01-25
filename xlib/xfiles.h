@@ -49,7 +49,7 @@ public:
   // only oxm loader is native
   virtual bool IsNative() const {  return false;  }
   // adopts the content of the AsemmUnit to the virtual format
-  virtual bool Adopt(class TXFile &, int flags) = 0;
+  virtual bool Adopt(class TXFile &, int flags=0) = 0;
 };
 //---------------------------------------------------------------------------
 
@@ -136,8 +136,8 @@ public:
   // nameToken is build is similar way to the NameArg!
   void LoadFromStream(IInputStream &is, const olxstr &nameToken);
   void LoadFromStrings(const TStrList& lines, const olxstr &nameToken);
-  void LoadFromFile(const olxstr& FN);
-  void SaveToFile(const olxstr& FN, bool Sort);
+  void LoadFromFile(const olxstr&FN);
+  void SaveToFile(const olxstr &FN, int flags = 0);
   // clears the last loader and the model
   void Close();
   // returns last loaded file name (if any) or empty string
