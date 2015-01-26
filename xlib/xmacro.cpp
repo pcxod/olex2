@@ -3208,34 +3208,40 @@ void XLibMacros::funTitle(const TStrObjList& Params, TMacroData &E)  {
 }
 //.............................................................................
 void XLibMacros::funIsFileType(const TStrObjList& Params, TMacroData &E) {
-  if( Params[0].Equalsi("ins") )  {
-    E.SetRetVal( TXApp::GetInstance().CheckFileType<TIns>() &&
-      TEFile::ExtractFileExt(TXApp::GetInstance().XFile().GetFileName()).Equalsi("ins"));
+  if (Params[0].Equalsi("ins")) {
+    E.SetRetVal(TXApp::GetInstance().CheckFileType<TIns>() &&
+      TEFile::ExtractFileExt(TXApp::GetInstance().XFile().GetFileName())
+        .Equalsi("ins"));
   }
-  else if( Params[0].Equalsi("res") )  {
-    E.SetRetVal( TXApp::GetInstance().CheckFileType<TIns>() &&
-      TEFile::ExtractFileExt(TXApp::GetInstance().XFile().GetFileName()).Equalsi("res"));
+  else if (Params[0].Equalsi("res")) {
+    E.SetRetVal(TXApp::GetInstance().CheckFileType<TIns>() &&
+      TEFile::ExtractFileExt(TXApp::GetInstance().XFile().GetFileName())
+        .Equalsi("res"));
   }
-  else if( Params[0].Equalsi("ires") )  {
+  else if (Params[0].Equalsi("ires")) {
     E.SetRetVal(TXApp::GetInstance().CheckFileType<TIns>());
   }
-  else if( Params[0].Equalsi("cif") )  {
+  else if (Params[0].Equalsi("cif")) {
     E.SetRetVal(TXApp::GetInstance().CheckFileType<TCif>());
   }
-  else if( Params[0].Equalsi("cmf") )  {
+  else if (Params[0].Equalsi("cmf")) {
     E.SetRetVal(TXApp::GetInstance().CheckFileType<TCif>());
   }
-  else if( Params[0].Equalsi("p4p") )  {
+  else if (Params[0].Equalsi("p4p")) {
     E.SetRetVal(TXApp::GetInstance().CheckFileType<TP4PFile>());
   }
-  else if( Params[0].Equalsi("mol") )  {
+  else if (Params[0].Equalsi("mol")) {
     E.SetRetVal(TXApp::GetInstance().CheckFileType<TMol>());
   }
-  else if( Params[0].Equalsi("xyz") )  {
+  else if (Params[0].Equalsi("xyz")) {
     E.SetRetVal(TXApp::GetInstance().CheckFileType<TMol>());
   }
-  else if( Params[0].Equalsi("crs") )  {
+  else if (Params[0].Equalsi("crs")) {
     E.SetRetVal(TXApp::GetInstance().CheckFileType<TCRSFile>());
+  }
+  else if (Params[0].Equalsi("oxm")) {
+    E.SetRetVal(TXApp::GetInstance().XFile().HasLastLoader() &&
+      TXApp::GetInstance().XFile().LastLoader()->IsNative());
   }
   else
     E.SetRetVal(false);
@@ -4309,10 +4315,6 @@ void XLibMacros::macCifExtract(TStrObjList &Cmds, const TParamList &Options,
   }
   
   if (export_metacif) {
-    if (!xapp.CheckFileType<TCif>()) {
-      E.ProcessingError(__OlxSrcInfo, "invalid loaded file type");
-      return;
-    }
     olxstr CifCustomisationFN = xapp.GetCifTemplatesDir() +
       "customisation.xlt";
     TTypeList<Wildcard> to_extract, to_skip;
