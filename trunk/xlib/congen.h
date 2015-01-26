@@ -15,21 +15,22 @@ BeginXlibNamespace()
 
 // groups
 const uint16_t
-  fgCH3  = 1,
-  fgCH2  = 2,
-  fgCH1  = 3,
-  fgOH3  = 4,
-  fgOH2  = 5,
+  fgCH3 = 1,
+  fgCH2 = 2,
+  fgCH1 = 3,
+  fgOH3 = 4,
+  fgOH2 = 5,
   fgOH1 = 6,
-  fgNH4  = 7,
-  fgNH3  = 8,
-  fgNH2  = 9,
-  fgNH1  = 10,
-  fgNH1t  = 11,
-  fgBH1  = 12,
+  fgNH4 = 7,
+  fgNH3 = 8,
+  fgNH2 = 9,
+  fgNH1 = 10,
+  fgNH1t = 11,
+  fgBH1 = 12,
   fgSiH1 = 13,
   fgSiH2 = 14,
-  fgSH1  = 15;
+  fgSH1 = 15,
+  fgCH3x2 = 16;
 
 // parameters
 const uint16_t
