@@ -2115,6 +2115,10 @@ TUndoData* TGXApp::Name(TXAtom& XA, const olxstr& _Name) {
     oldL.StartsFromi(XA.GetType().symbol))
   {
     Name = elm->symbol + oldL.SubStringFrom(XA.GetType().symbol.Length());
+    // generate unique label if the user does not care
+    if (checkBonds && _Name.Length() == elm->symbol.Length()) {
+      Name = XFile().GetAsymmUnit().CheckLabel(&XA.CAtom(), Name);
+    }
   }
   XA.CAtom().SetLabel(Name, false);
   if (oldL != XA.GetLabel() || *elm != XA.GetType()) {
