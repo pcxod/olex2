@@ -192,7 +192,7 @@ public:
 
   int GetPart() const { return (int)(int8_t)(PartAndCharge&0x00ff); }
   void SetPart(int v) {
-    PartAndCharge = (PartAndCharge & 0xff00) | v;
+    PartAndCharge = (PartAndCharge & 0xff00) | (uint8_t)v;
   }
   int GetCharge() const { return (int)(int8_t)((PartAndCharge & 0xff00) >> 8); }
   void SetCharge(int v) {

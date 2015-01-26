@@ -38,7 +38,9 @@ public:
   virtual void SaveToFile(const olxstr& fn) {
     if (gxapp.XFile().GetRM().GetModelSource().IsEmpty()) {
       gxapp.XFile().GetRM().SetModelSource(
-        TEFile::ExtractFileName(gxapp.XFile().GetFileName()));
+        TEFile::ChangeFileExt(
+          TEFile::ExtractFileName(gxapp.XFile().GetFileName()),
+          EmptyString()));
     }
     gxapp.SaveModel(fn);
   }

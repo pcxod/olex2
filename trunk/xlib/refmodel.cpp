@@ -130,6 +130,7 @@ void RefinementModel::Clear(uint32_t clear_mask) {
   RefinementMethod = "L.S.";
   SolutionMethod.SetLength(0);
   HKLSource.SetLength(0);
+  ModelSource.SetLength(0);
   Omits.Clear();
   BASF.Clear();
   for (size_t i = 0; i < BASF_Vars.Count(); i++) {
@@ -668,7 +669,7 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
       for (int h = range.a[0]; h <= range.b[0]; h++) {
         for (int k = range.a[1]; k <= range.b[1]; k++) {
           for (int l = range.a[2]; l <= range.b[2]; l++) {
-            if (h==0 && k==0 && l==0) continue;
+            if (h == 0 && k == 0 && l == 0) continue;
             vec3i hkl(h,k,l);
             vec3i shkl = TReflection::Standardise(hkl, info_ex);
             if (shkl != hkl) continue;
@@ -1724,41 +1725,8 @@ bool RefinementModel::Update(const RefinementModel& rm)  {
 olx_pair_t<vec3i, vec3i> RefinementModel::CalcIndicesToD(double d,
   const SymmSpace::InfoEx *si) const
 {
-  olx_object_ptr<const SymmSpace::InfoEx> tmp_info;
-  if (si == 0) {
-    TUnitCell::SymmSpace sp =
-      aunit.GetLattice().GetUnitCell().GetSymmSpace();
-    tmp_info = new SymmSpace::InfoEx(SymmSpace::Compact(sp));
-    si = &tmp_info();
-  }
-
-  vec3i mini(100), maxi(-100);
   vec3i mx = CalcMaxHklIndexForD(d);
-  vec3i_list vs(4);
-  vs[0] = mx;
-  vs[1][0] = mx[0]; vs[1][1] = mx[1]; vs[1][2] = -mx[2]; //++-
-  vs[2][0] = mx[0]; vs[2][1] = -mx[1]; vs[2][2] = mx[2]; //+-+
-  vs[3][0] = -mx[0]; vs[3][1] = mx[1]; vs[3][2] = mx[2]; //-++
-
-  vs.AddNew(mx[0], 0, 0);
-  vs.AddNew(0, mx[1], 0);
-  vs.AddNew(0, 0, mx[2]);
-
-  vs.AddNew(mx[0], mx[1], 0);
-  vs.AddNew(mx[0], -mx[1], 0);
-  vs.AddNew(mx[0], 0, mx[2]);
-  vs.AddNew(mx[0], 0, -mx[2]);
-  vs.AddNew(0, mx[1], mx[2]);
-  vs.AddNew(0, mx[1], -mx[2]);
-
-  for (int i = 0; i < vs.Count(); i++) {
-    vec3i::UpdateMinMax(TReflection::Standardise(vs[i], *si), mini, maxi);
-    vec3i::UpdateMinMax(TReflection::Standardise(-vs[i], *si), mini, maxi);
-  }
-  for (size_t i = 0; i < 3; i++) {
-    if (mini[i] > 0) mini[i] = 0;
-  }
-  return olx_pair::make(mini, maxi);
+  return olx_pair::make(-mx, mx);
 }
 //..............................................................................
 double RefinementModel::CalcCompletnessTo2Theta(double tt) const {
