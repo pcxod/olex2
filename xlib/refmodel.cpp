@@ -651,7 +651,8 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
         aunit.GetLattice().GetUnitCell().GetSymmSpace();
       bool mergeFP = (MERG == 4 || MERG == 3 || sp.IsCentrosymmetric());
       _HklStat = RefMerger::DryMerge<RefMerger::ShelxMerger>(
-        sp, refs, (HKLF >= 5 ? vec3i_list() : Omits), mergeFP);
+        sp, refs, (HKLF >= 5 ? vec3i_list() : Omits), mergeFP,
+        2);
       _HklStat.HKLF = HKLF;
       _HklStat.HKLF_mat = HKLF_mat;
       _HklStat.HKLF_m = HKLF_m;
@@ -2576,9 +2577,11 @@ RefinementModel::HklStat& RefinementModel::HklStat::operator = (
   OMIT_s = hs.OMIT_s;     OMIT_2t = hs.OMIT_2t;
   SHEL_lr = hs.SHEL_lr;   SHEL_hr = hs.SHEL_hr;
   LimDmin = hs.LimDmin;   LimDmax = hs.LimDmax;
-  MaxI = hs.MaxI;         MinI = hs.MinI;
+  MaxI = hs.MaxI;
+  MinI = hs.MinI;
   HKLF = hs.HKLF;
-  HKLF_m = hs.HKLF_m;     HKLF_s = hs.HKLF_s;
+  HKLF_m = hs.HKLF_m;
+  HKLF_s = hs.HKLF_s;
   HKLF_mat = hs.HKLF_mat;
   FilteredOff = hs.FilteredOff;
   IntensityTransformed = hs.IntensityTransformed;
