@@ -56,7 +56,7 @@ const uint32_t
   tpQGen    = 0x00010000
   ;
 
-class TGlTexture : public IOlxObject {
+class TGlTexture : public IEObject {
   GLint MinFilter, MagFilter, SCrd, TCrd, EnvMode, Level;
   unsigned short SetParams;
   TGlOption BorderColor, EnvColor,
@@ -154,7 +154,7 @@ parameters applied to the same texture). So the AddTexture function returns an
 integer which allows to access the texture object, but must not be used to bind
 textures - just use texture::SetCurrent()
 */
-class TTextureManager : public IOlxObject  {
+class TTextureManager : public IEObject  {
   sorted::PrimitiveAssociation<GLuint, TGlTexture*> Textures;
   TTypeList<TGlTexture::Data> TextureData;
 public:

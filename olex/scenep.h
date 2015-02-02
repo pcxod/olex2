@@ -32,7 +32,7 @@ protected:
   void OnOpen(wxCommandEvent& event);
   void OnSave(wxCommandEvent& event);
   void OnApply(wxCommandEvent& event);
-  bool Execute(const IOlxObject *Sender, const IOlxObject *Data, TActionQueue *);
+  bool Execute(const IEObject *Sender, const IEObject *Data, TActionQueue *);
   TGlLightModel FLightModel, FOriginalModel;
   int FCurrentLight;
   void InitLight( TGlLight &GlL );
@@ -45,5 +45,6 @@ public:
   virtual ~TdlgSceneProps();
   void LoadFromFile(TGlLightModel &FLM, const olxstr &FN);
   void SaveToFile(TGlLightModel &FLM, const olxstr &FN);
+  DECLARE_EVENT_TABLE()
 };
 #endif

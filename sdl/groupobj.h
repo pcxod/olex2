@@ -73,7 +73,7 @@ public:
   virtual AGOProperties& SetProperties(const AGOProperties& C);
 };
 
-class TObjectGroup: public IOlxObject  {
+class TObjectGroup: public IEObject  {
 protected:
   AGOProperties* FindProps(const AGOProperties& C);
   TPtrList<AGroupObject> Objects;

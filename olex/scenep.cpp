@@ -21,6 +21,14 @@
 #  define wxComp(a,b) (b)
 #endif
 
+
+BEGIN_EVENT_TABLE(TdlgSceneProps, TDialog)
+  EVT_BUTTON(wxID_OK, TdlgSceneProps::OnOK)
+  EVT_BUTTON(wxID_CANCEL, TdlgSceneProps::OnCancel)
+  EVT_BUTTON(wxID_OPEN, TdlgSceneProps::OnOpen)
+  EVT_BUTTON(wxID_SAVE, TdlgSceneProps::OnSave)
+  EVT_BUTTON(wxID_APPLY, TdlgSceneProps::OnApply)
+END_EVENT_TABLE()
 //..............................................................................
 TdlgSceneProps::TdlgSceneProps(TMainFrame *ParentFrame) :
   TDialog(ParentFrame, wxT("Scene Parameters"), EsdlClassName(TdlgSceneProps).u_str() )
@@ -30,7 +38,7 @@ TdlgSceneProps::TdlgSceneProps(TMainFrame *ParentFrame) :
   // Fonts ********************************************************************
   wxStaticBox *boxFonts = new wxStaticBox(this, -1, wxT("Fonts"));
   cbFonts = new TComboBox(wxComp(boxFonts, this));
-  AGlScene& ascene = TGXApp::GetInstance().GetRenderer().GetScene();
+  AGlScene& ascene = TGXApp::GetInstance().GetRender().GetScene();
   for (size_t i=0; i < ascene.FontCount(); i++)
     cbFonts->AddObject(ascene._GetFont(i).GetName(), &ascene._GetFont(i));
   cbFonts->SetSelection(0);
@@ -46,25 +54,25 @@ TdlgSceneProps::TdlgSceneProps(TMainFrame *ParentFrame) :
   //    Light position ********************************************************
   wxStaticBox *boxLP = new wxStaticBox(wxComp(boxLS, this), -1, wxT("Light position"));
   wxStaticText *stX = new wxStaticText(wxComp(boxLP, this), -1, wxT("X"), wxDefaultPosition);
-  tbX = new TTrackBar(wxComp(boxLP, this));
+  tbX = new TTrackBar(wxComp(boxLP, this), wxDefaultSize);
     tbX->OnChange.Add(this);
     tbX->SetRange(-100,100);
   teX = new TTextEdit(wxComp(boxLP, this));
     teX->SetReadOnly(true);
   wxStaticText *stY = new wxStaticText(wxComp(boxLP, this), -1, wxT("Y"), wxDefaultPosition);
-  tbY = new TTrackBar(wxComp(boxLP, this));
+  tbY = new TTrackBar(wxComp(boxLP, this), wxDefaultSize);
     tbY->OnChange.Add(this);
     tbY->SetRange(-100,100);
   teY = new TTextEdit(wxComp(boxLP, this));
     teY->SetReadOnly(true);
   wxStaticText *stZ = new wxStaticText(wxComp(boxLP, this), -1, wxT("Z"), wxDefaultPosition);
-  tbZ = new TTrackBar(wxComp(boxLP, this));
+  tbZ = new TTrackBar(wxComp(boxLP, this), wxDefaultSize);
     tbZ->OnChange.Add(this);
     tbZ->SetRange(-100,100);
   teZ = new TTextEdit(wxComp(boxLP, this));
     teZ->SetReadOnly(true);
   wxStaticText *stR = new wxStaticText(wxComp(boxLP, this), -1, wxT("R"), wxDefaultPosition);
-  tbR  = new TTrackBar(wxComp(boxLP, this));
+  tbR  = new TTrackBar(wxComp(boxLP, this), wxDefaultSize);
     tbR->OnChange.Add(this);
     tbR->SetRange(-3,3);
   teR = new TTextEdit(wxComp(boxLP, this));
@@ -281,15 +289,10 @@ TdlgSceneProps::TdlgSceneProps(TMainFrame *ParentFrame) :
   TSizer3->SetSizeHints(this);
 
   Center();
-  Bind(wxEVT_BUTTON, &TdlgSceneProps::OnOK, this, wxID_OK);
-  Bind(wxEVT_BUTTON, &TdlgSceneProps::OnCancel, this, wxID_CANCEL);
-  Bind(wxEVT_BUTTON, &TdlgSceneProps::OnOpen, this, wxID_OPEN);
-  Bind(wxEVT_BUTTON, &TdlgSceneProps::OnSave, this, wxID_SAVE);
-  Bind(wxEVT_BUTTON, &TdlgSceneProps::OnApply, this, wxID_APPLY);
 
   FCurrentLight = 0;
-  FLightModel = TGXApp::GetInstance().GetRenderer().LightModel;
-  FOriginalModel = TGXApp::GetInstance().GetRenderer().LightModel;
+  FLightModel = TGXApp::GetInstance().GetRender().LightModel;
+  FOriginalModel = TGXApp::GetInstance().GetRender().LightModel;
   InitLight(FLightModel.GetLight(0));
   InitLightModel(FLightModel);
 }
@@ -310,29 +313,29 @@ TdlgSceneProps::~TdlgSceneProps()  {
   tbEditFont->OnClick.Clear();
 }
 //..............................................................................
-bool TdlgSceneProps::Execute(const IOlxObject* Sender, const IOlxObject* Data,
+bool TdlgSceneProps::Execute(const IEObject* Sender, const IEObject* Data,
   TActionQueue *)
 {
-  if (Sender == tbX)
+  if ((TTrackBar*)Sender == tbX)
     teX->SetText(tbX->GetValue());
-  else if (Sender == tbY)
+  else if ((TTrackBar*)Sender == tbY)
     teY->SetText(tbY->GetValue());
-  else if (Sender == tbZ)
+  else if ((TTrackBar*)Sender == tbZ)
     teZ->SetText(tbZ->GetValue());
-  else if (Sender == tbR)
+  else if ((TTrackBar*)Sender == tbR)
     teR->SetText(tbR->GetValue());
   else if (EsdlInstanceOf(*Sender, TTextEdit)) {
     wxColourDialog *CD = new wxColourDialog(this);
-    wxColor wc = dynamic_cast< const TTextEdit *>(Sender)->GetBackgroundColour();
+    wxColor wc = ((TTextEdit*)Sender)->GetBackgroundColour();
     CD->GetColourData().SetColour(wc);
     if (CD->ShowModal() == wxID_OK) {
       wc = CD->GetColourData().GetColour();
-      const_cast<TTextEdit *>(dynamic_cast<const TTextEdit *>(Sender))->WI
-        .SetColor(OLX_RGB(wc.Red(), wc.Green(), wc.Blue()));
+      ((TTextEdit*)Sender)->WI.SetColor(
+        OLX_RGB(wc.Red(), wc.Green(), wc.Blue()));
     }
     CD->Destroy();
   }
-  else if (Sender == cbLights) {
+  else if ((TComboBox*)Sender == cbLights) {
     UpdateLight(FLightModel.GetLight(FCurrentLight));
     int i = cbLights->FindString(cbLights->GetValue());
     if (i >= 0) {
@@ -340,16 +343,16 @@ bool TdlgSceneProps::Execute(const IOlxObject* Sender, const IOlxObject* Data,
       InitLight(FLightModel.GetLight(FCurrentLight));
     }
   }
-  else if (Sender == scSCO) {
+  else if ((TSpinCtrl*)Sender == scSCO) {
     if (scSCO->GetValue() > 90)
       cbUniform->SetValue(true);
     else
       cbUniform->SetValue(false);
   }
-  else if (Sender == tbEditFont) {
+  else if ((TButton*)(AOlxCtrl*)Sender == tbEditFont) {
     int sel = cbFonts->GetSelection();
     if( sel == -1 )  return false;
-    TGXApp::GetInstance().GetRenderer().GetScene().ShowFontDialog(
+    TGXApp::GetInstance().GetRender().GetScene().ShowFontDialog(
       (TGlFont*)cbFonts->GetObject(sel));
   }
 
@@ -400,34 +403,28 @@ void TdlgSceneProps::InitLight(TGlLight& L)  {
 }
 //..............................................................................
 void TdlgSceneProps::UpdateLight(TGlLight& L)  {
-  L.SetPosition(TGlOption(tbX->GetValue(), tbY->GetValue(),
-    tbZ->GetValue(), tbR->GetValue()));
-  L.SetAmbient(
-    teAmb->WI.GetColor() | (uint32_t)((256*scAmbA->GetValue()/100) << 24));
-  L.SetDiffuse(
-    teDiff->WI.GetColor() | (uint32_t)((256*scDiffA->GetValue()/100) << 24));
-  L.SetSpecular(
-    teSpec->WI.GetColor() | (uint32_t)((256*scSpecA->GetValue()/100) << 24));
-  L.SetAttenuation(TGlOption(teAC->GetText().ToDouble(),
-    teAB->GetText().ToDouble(), teAA->GetText().ToDouble()));
+  L.SetPosition(TGlOption(tbX->GetValue(), tbY->GetValue(), tbZ->GetValue(), tbR->GetValue()));
+  L.SetAmbient(teAmb->WI.GetColor() | (uint32_t)((256*scAmbA->GetValue()/100) << 24));
+  L.SetDiffuse(teDiff->WI.GetColor() | (uint32_t)((256*scDiffA->GetValue()/100) << 24));
+  L.SetSpecular(teSpec->WI.GetColor() | (uint32_t)((256*scSpecA->GetValue()/100) << 24));
+  L.SetAttenuation(TGlOption(teAC->GetText().ToDouble(), teAB->GetText().ToDouble(), teAA->GetText().ToDouble()));
   L.SetEnabled(cbEnabled->GetValue());
   L.SetSpotExponent(scSExp->GetValue());
   L.SetSpotCutoff(cbUniform->GetValue() ? 180 : scSCO->GetValue());
-  L.SetSpotDirection(TGlOption(teSCX->GetText().ToDouble(),
-    teSCY->GetText().ToDouble(), teSCZ->GetText().ToDouble()));
+  L.SetSpotDirection(TGlOption(teSCX->GetText().ToDouble(), teSCY->GetText().ToDouble(), teSCZ->GetText().ToDouble()));
 }
 //..............................................................................
 void TdlgSceneProps::OnApply(wxCommandEvent& event)  {
   UpdateLight(FLightModel.GetLight(FCurrentLight));
   UpdateLightModel(FLightModel);
-  TGXApp::GetInstance().GetRenderer().LightModel = FLightModel;
-  TGXApp::GetInstance().GetRenderer().InitLights();
+  TGXApp::GetInstance().GetRender().LightModel = FLightModel;
+  TGXApp::GetInstance().GetRender().InitLights();
   TGXApp::GetInstance().Draw();
 }
 //..............................................................................
 void TdlgSceneProps::OnCancel(wxCommandEvent& event)  {
-  TGXApp::GetInstance().GetRenderer().LightModel = FOriginalModel;
-  TGXApp::GetInstance().GetRenderer().InitLights();
+  TGXApp::GetInstance().GetRender().LightModel = FOriginalModel;
+  TGXApp::GetInstance().GetRender().InitLights();
   EndModal(wxID_OK);
 }
 //..............................................................................
@@ -461,15 +458,12 @@ void TdlgSceneProps::OnSave(wxCommandEvent& event)  {
 void TdlgSceneProps::LoadFromFile(TGlLightModel &FLM, const olxstr &FN)  {
   TDataFile F;
   F.LoadFromXLFile(FN, NULL);
-  TGlRenderer &gr = TGXApp::GetInstance().GetRenderer();
-  gr.GetScene().FromDataItem(F.Root());
-  FLightModel = gr.LightModel;
+  Parent->LoadScene(F.Root(), FLM);
 }
 //..............................................................................
 void TdlgSceneProps::SaveToFile(TGlLightModel &FLM, const olxstr &FN)  {
   TDataFile DF;
-  TGlRenderer &gr = TGXApp::GetInstance().GetRenderer();
-  gr.GetScene().ToDataItem(DF.Root());
+  Parent->SaveScene(DF.Root(), FLM);
   try{  DF.SaveToXLFile(FN); }
   catch(...)  {
     TBasicApp::NewLogEntry(logError) << "Failed to save scene parameters!";

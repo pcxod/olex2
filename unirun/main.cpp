@@ -34,26 +34,26 @@ using namespace std;
 class TProgress: public AActionHandler  {
 public:
   TProgress(){}
-  bool Exit(const IOlxObject *Sender, const IOlxObject *Data)  {  return true;  }
-  bool Enter(const IOlxObject *Sender, const IOlxObject *Data)  {
+  bool Exit(const IEObject *Sender, const IEObject *Data)  {  return true;  }
+  bool Enter(const IEObject *Sender, const IEObject *Data)  {
     if( Data == NULL )  {  return false;  }
     const TOnProgress *A = dynamic_cast<const TOnProgress*>(Data);
     TBasicApp::NewLogEntry(logInfo) << A->GetAction();
     return true;
   }
-  bool Execute(const IOlxObject *Sender, const IOlxObject *Data)  {
+  bool Execute(const IEObject *Sender, const IEObject *Data)  {
     return true;
   }
 };
 class TEProgress: public AActionHandler  {
 public:
   TEProgress(){}
-  bool Exit(const IOlxObject *Sender, const IOlxObject *Data)  {
+  bool Exit(const IEObject *Sender, const IEObject *Data)  {
     TBasicApp::GetLog() << "Done\n";
     return true;
   }
-  bool Enter(const IOlxObject *Sender, const IOlxObject *Data)  {  return true;  }
-  bool Execute(const IOlxObject *Sender, const IOlxObject *Data)  {
+  bool Enter(const IEObject *Sender, const IEObject *Data)  {  return true;  }
+  bool Execute(const IEObject *Sender, const IEObject *Data)  {
     if( Data == NULL )  {  return false;  }
     const TOnProgress *A = dynamic_cast<const TOnProgress*>(Data);
     TBasicApp::GetLog() << (olxstr("Extracting: ") << A->GetAction() << '\n');
@@ -63,12 +63,12 @@ public:
 class TUProgress: public AActionHandler  {
 public:
   TUProgress(){}
-  bool Exit(const IOlxObject *Sender, const IOlxObject *Data)  {
+  bool Exit(const IEObject *Sender, const IEObject *Data)  {
     TBasicApp::NewLogEntry() << "Done";
     return true;
   }
-  bool Enter(const IOlxObject *Sender, const IOlxObject *Data)  {  return true;  }
-  bool Execute(const IOlxObject *Sender, const IOlxObject *Data)  {
+  bool Enter(const IEObject *Sender, const IEObject *Data)  {  return true;  }
+  bool Execute(const IEObject *Sender, const IEObject *Data)  {
     if( Data == NULL )  {  return false;  }
     const TOnProgress *A = dynamic_cast<const TOnProgress*>(Data);
     TBasicApp::NewLogEntry() << "Copying: " << A->GetAction();
@@ -78,18 +78,18 @@ public:
 class TDProgress: public AActionHandler  {
 public:
   TDProgress(){}
-  bool Exit(const IOlxObject *Sender, const IOlxObject *Data)  {
+  bool Exit(const IEObject *Sender, const IEObject *Data)  {
     TBasicApp::NewLogEntry() << "\rDone";
     return true;
   }
-  bool Enter(const IOlxObject *Sender, const IOlxObject *Data)  {
+  bool Enter(const IEObject *Sender, const IEObject *Data)  {
     if( Data == NULL )  {  return false;  }
     const TOnProgress *A = dynamic_cast<const TOnProgress*>(Data);
     TBasicApp::GetLog() <<
       (olxstr("Downloading ") << A->GetAction() << "\n0%");
     return true;
   }
-  bool Execute(const IOlxObject *Sender, const IOlxObject *Data)  {
+  bool Execute(const IEObject *Sender, const IEObject *Data)  {
     if( Data == NULL )  {  return false;  }
     const TOnProgress *A = dynamic_cast<const TOnProgress*>(Data);
     TBasicApp::GetLog() <<

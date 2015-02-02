@@ -181,7 +181,7 @@ public:
         items(content)
     {}
     const char* GetNiceName() const { return "File tree exception"; }
-    IOlxObject* Replicate() const { return new TFileTreeException(*this); }
+    IEObject* Replicate() const { return new TFileTreeException(*this); }
     olxstr GetFullMessage() const;
     TStrList items;
   };

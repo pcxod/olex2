@@ -108,19 +108,8 @@ void RefinementModel::Clear(uint32_t clear_mask) {
   ExyzGroups.Clear();
   for( size_t i=0; i < rcRegister.Count(); i++ )
     rcRegister.GetValue(i)->Clear();
-  if ((clear_mask & rm_clear_SAME) != 0)
+  if( (clear_mask & rm_clear_SAME) != 0 )
     rSAME.Clear();
-  else if ((clear_mask & rm_clear_ISAME) != 0) {
-    TPtrList<TSameGroup> to_del;
-    for (size_t i = 0; i < rSAME.Count(); i++) {
-      if (!rSAME[i].GetAtoms().IsExplicit()) {
-        to_del << rSAME[i];
-      }
-    }
-    if (!to_del.IsEmpty()) {
-      rSAME.Delete(to_del);
-    }
-  }
   //ExyzGroups.Clear();
   //AfixGroups.Clear();
   InfoTables.Clear();
@@ -130,7 +119,6 @@ void RefinementModel::Clear(uint32_t clear_mask) {
   RefinementMethod = "L.S.";
   SolutionMethod.SetLength(0);
   HKLSource.SetLength(0);
-  ModelSource.SetLength(0);
   Omits.Clear();
   BASF.Clear();
   for (size_t i = 0; i < BASF_Vars.Count(); i++) {
@@ -252,9 +240,8 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm,
   DEFS_set = rm.DEFS_set;
   EXTI_set = rm.EXTI_set;
   EXTI = rm.EXTI;
-  for (size_t i=0; i < BASF.Count(); i++)
+  for( size_t i=0; i < BASF.Count(); i++ )
     BASF_Vars.Add(NULL);
-  ModelSource = rm.ModelSource;
   HKLSource = rm.HKLSource;
   RefinementMethod = rm.RefinementMethod;
   SolutionMethod = rm.SolutionMethod;
@@ -498,11 +485,7 @@ double RefinementModel::FindRestrainedDistance(const TCAtom& a1,
   return -1;
 }
 //.............................................................................
-void RefinementModel::SetModelSource(const olxstr &src) {
-  ModelSource = src;
-}
-//.............................................................................
-void RefinementModel::SetHKLSource(const olxstr &src) {
+void RefinementModel::SetHKLSource(const olxstr& src) {
   HKLSource = src;
 }
 //.............................................................................
@@ -518,16 +501,8 @@ void RefinementModel::SetReflections(const TRefList &refs) const {
     TReflection& r = _Reflections.AddNew(refs[i]);
     if (HKLF < 5)  // enforce to clear the batch number...
       r.SetBatch(TReflection::NoBatchSet);
-    if (HKLF == 3) {
-      double F = r.GetI()*HKLF_s;
-      double sF = r.GetS()*HKLF_s / HKLF_wt;
-      r.SetI(F*F);
-      r.SetS(2 * (olx_max(0.01, sF)*olx_max(olx_max(0.01, olx_abs(F)), sF)));
-    }
-    else {
-      r.SetI(r.GetI()*HKLF_s);
-      r.SetS(r.GetS()*HKLF_s / HKLF_wt);
-    }
+    r.SetI(r.GetI()*HKLF_s);
+    r.SetS(r.GetS()*HKLF_s / HKLF_wt);
     vec3i::UpdateMinMax(r.GetHkl(), _HklStat.FileMinInd, _HklStat.FileMaxInd);
   }
   size_t maxRedundancy = 0;
@@ -597,10 +572,10 @@ const TRefList& RefinementModel::GetReflections() const {
     olx_object_ptr<TIns> ins = hf.LoadFromFile(HKLSource, true);
     if (ins.is_valid()) {
       evecd cell = evecd::FromAny(
-        Composite::Vector(vec3d_list() << aunit.GetAxes() <<
+        CompositeVector::Make(vec3d_list() << aunit.GetAxes() <<
           aunit.GetAngles()));
       evecd esd = evecd::FromAny(
-        Composite::Vector(vec3d_list() << aunit.GetAxisEsds() <<
+        CompositeVector::Make(vec3d_list() << aunit.GetAxisEsds() <<
           aunit.GetAngleEsds()));
       if (aunit.GetAxes().DistanceTo(ins().GetAsymmUnit().GetAxes()) > 1e-6 ||
         aunit.GetAngles().DistanceTo(ins().GetAsymmUnit().GetAngles()) > 1e-6 ||
@@ -611,9 +586,6 @@ const TRefList& RefinementModel::GetReflections() const {
       }
     }
     SetReflections(hf.RefList());
-    if (hf.GetHKLF() != -1) {
-      HKLF = hf.GetHKLF();
-    }
     return _Reflections;
   }
   catch(TExceptionBase& exc) {
@@ -651,8 +623,7 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
         aunit.GetLattice().GetUnitCell().GetSymmSpace();
       bool mergeFP = (MERG == 4 || MERG == 3 || sp.IsCentrosymmetric());
       _HklStat = RefMerger::DryMerge<RefMerger::ShelxMerger>(
-        sp, refs, (HKLF >= 5 ? vec3i_list() : Omits), mergeFP,
-        2);
+        sp, refs, (HKLF >= 5 ? vec3i_list() : Omits), mergeFP);
       _HklStat.HKLF = HKLF;
       _HklStat.HKLF_mat = HKLF_mat;
       _HklStat.HKLF_m = HKLF_m;
@@ -670,7 +641,7 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
       for (int h = range.a[0]; h <= range.b[0]; h++) {
         for (int k = range.a[1]; k <= range.b[1]; k++) {
           for (int l = range.a[2]; l <= range.b[2]; l++) {
-            if (h == 0 && k == 0 && l == 0) continue;
+            if (h==0 && k==0 && l==0) continue;
             vec3i hkl(h,k,l);
             vec3i shkl = TReflection::Standardise(hkl, info_ex);
             if (shkl != hkl) continue;
@@ -1374,22 +1345,20 @@ void RefinementModel::ProcessFrags()  {
 //.............................................................................
 void RefinementModel::ToDataItem(TDataItem& item) {
   // fields
-  item.AddField("RefOutArg", PersUtil::NumberListToStr(PLAN))
-    .AddField("Weight", PersUtil::NumberListToStr(used_weight))
-    .AddField("ProposedWeight", PersUtil::NumberListToStr(proposed_weight))
-    .AddField("ModelSrc", ModelSource)
-    .AddField("HklSrc", HKLSource)
-    .AddField("RefMeth", RefinementMethod)
-    .AddField("SolMeth", SolutionMethod)
-    .AddField("BatchScales", PersUtil::ComplexListToStr(BASF))
-    .AddField("RefInArg", PersUtil::NumberListToStr(LS));
+  item.AddField("RefOutArg", PersUtil::NumberListToStr(PLAN));
+  item.AddField("Weight", PersUtil::NumberListToStr(used_weight));
+  item.AddField("ProposedWeight", PersUtil::NumberListToStr(proposed_weight));
+  item.AddField("HklSrc", HKLSource);
+  item.AddField("RefMeth", RefinementMethod);
+  item.AddField("SolMeth", SolutionMethod);
+  item.AddField("BatchScales", PersUtil::ComplexListToStr(BASF));
+  item.AddField("RefInArg", PersUtil::NumberListToStr(LS));
 
   // save used equivalent positions
   TArrayList<uint32_t> mat_tags(UsedSymm.Count());
   TDataItem& eqiv = item.AddItem("EQIV");
-  for (size_t i=0; i < UsedSymm.Count(); i++) {
-    eqiv.AddItem(UsedSymm.GetKey(i),
-      TSymmParser::MatrixToSymmEx(UsedSymm.GetValue(i).symop));
+  for( size_t i=0; i < UsedSymm.Count(); i++ )  {
+    eqiv.AddItem(UsedSymm.GetKey(i), TSymmParser::MatrixToSymmEx(UsedSymm.GetValue(i).symop));
     mat_tags[i] = UsedSymm.GetValue(i).symop.GetId();
     UsedSymm.GetValue(i).symop.SetRawId((uint32_t)i);
   }
@@ -1405,34 +1374,33 @@ void RefinementModel::ToDataItem(TDataItem& item) {
   for( size_t i=0; i < rcList.Count(); i++ )
     rcList[i]->ToDataItem(item.AddItem(rcList[i]->GetName()));
 
-  item.AddItem("HKLF", HKLF)
-    .AddField("s", HKLF_s)
-    .AddField("wt", HKLF_wt)
-    .AddField("m", HKLF_m)
-    .AddField("mat", TSymmParser::MatrixToSymmEx(HKLF_mat));
+  TDataItem& hklf = item.AddItem("HKLF", HKLF);
+  hklf.AddField("s", HKLF_s);
+  hklf.AddField("wt", HKLF_wt);
+  hklf.AddField("m", HKLF_m);
+  hklf.AddField("mat", TSymmParser::MatrixToSymmEx(HKLF_mat));
 
-  item.AddItem("OMIT", OMIT_set)
-    .AddField("s", OMIT_s)
-    .AddField("two_theta", OMIT_2t)
-    .AddField("hkl", PersUtil::VecListToStr(Omits));
+  TDataItem& omits = item.AddItem("OMIT", OMIT_set);
+  omits.AddField("s", OMIT_s);
+  omits.AddField("two_theta", OMIT_2t);
+  omits.AddField("hkl", PersUtil::VecListToStr(Omits));
   item.AddItem("TWIN", TWIN_set).AddField("mat",
     TSymmParser::MatrixToSymmEx(TWIN_mat)).AddField("n", TWIN_n);
   item.AddItem("MERG", MERG_set).AddField("val", MERG);
-  item.AddItem("SHEL", SHEL_set).AddField("high",
-    SHEL_hr).AddField("low", SHEL_lr);
+  item.AddItem("SHEL", SHEL_set).AddField("high", SHEL_hr).AddField("low", SHEL_lr);
   item.AddItem("EXTI", EXTI_set).AddField("val", EXTI.ToString());
   Conn.ToDataItem(item.AddItem("CONN"));
   item.AddField("UserContent", GetUserContentStr());
   TDataItem& info_tables = item.AddItem("INFO_TABLES");
   size_t info_tab_cnt=0;
-  for (size_t i=0; i < InfoTables.Count(); i++) {
-    if (InfoTables[i].IsValid())
+  for( size_t i=0; i < InfoTables.Count(); i++ )  {
+    if( InfoTables[i].IsValid() )
       InfoTables[i].ToDataItem(info_tables.AddItem("item"));
   }
 
-  if (!SfacData.IsEmpty()) {
+  if( !SfacData.IsEmpty() )  {
     TDataItem& sfacs = item.AddItem("SFAC");
-    for (size_t i=0; i < SfacData.Count(); i++)
+    for( size_t i=0; i < SfacData.Count(); i++ )
       SfacData.GetValue(i)->ToDataItem(sfacs);
   }
   selectedTableRows.ToDataItem(item.AddItem("selected_cif_records"));
@@ -1440,7 +1408,7 @@ void RefinementModel::ToDataItem(TDataItem& item) {
     CVars.ToDataItem(item.AddItem("to_calculate"), true);
   }
   // restore matrix tags
-  for (size_t i=0; i < UsedSymm.Count(); i++)
+  for( size_t i=0; i < UsedSymm.Count(); i++ )
     UsedSymm.GetValue(i).symop.SetRawId(mat_tags[i]);
 }
 //.............................................................................
@@ -1448,9 +1416,7 @@ void RefinementModel::FromDataItem(TDataItem& item) {
   Clear(rm_clear_ALL);
   PersUtil::NumberListFromStr(item.GetFieldByName("RefOutArg"), PLAN);
   PersUtil::NumberListFromStr(item.GetFieldByName("Weight"), used_weight);
-  PersUtil::NumberListFromStr(item.GetFieldByName("ProposedWeight"),
-    proposed_weight);
-  ModelSource = item.FindField("ModelSrc");
+  PersUtil::NumberListFromStr(item.GetFieldByName("ProposedWeight"), proposed_weight);
   HKLSource = item.GetFieldByName("HklSrc");
   RefinementMethod = item.GetFieldByName("RefMeth");
   SolutionMethod = item.GetFieldByName("SolMeth");
@@ -1727,7 +1693,7 @@ olx_pair_t<vec3i, vec3i> RefinementModel::CalcIndicesToD(double d,
   const SymmSpace::InfoEx *si) const
 {
   vec3i mx = CalcMaxHklIndexForD(d);
-  return olx_pair::make(-mx, mx);
+  return olx_pair::Make(-mx, mx);
 }
 //..............................................................................
 double RefinementModel::CalcCompletnessTo2Theta(double tt) const {
@@ -2179,7 +2145,7 @@ TPtrList<TSRestraintList>::const_list_type RefinementModel::GetRestraints() {
 //..............................................................................
 //..............................................................................
 void RefinementModel::LibHasOccu(const TStrObjList& Params,
-  TMacroData& E)
+  TMacroError& E)
 {
   bool has = false;
   for (size_t i = 0; i < aunit.AtomCount(); i++) {
@@ -2196,7 +2162,7 @@ void RefinementModel::LibHasOccu(const TStrObjList& Params,
   E.SetRetVal(has);
 }
 //..............................................................................
-void RefinementModel::LibOSF(const TStrObjList& Params, TMacroData& E)  {
+void RefinementModel::LibOSF(const TStrObjList& Params, TMacroError& E)  {
   if( Params.IsEmpty() )
     E.SetRetVal(Vars.VarCount() == 0 ? 0.0 : Vars.GetVar(0).GetValue());
   else  {
@@ -2207,7 +2173,7 @@ void RefinementModel::LibOSF(const TStrObjList& Params, TMacroData& E)  {
   }
 }
 //..............................................................................
-void RefinementModel::LibFVar(const TStrObjList& Params, TMacroData& E)  {
+void RefinementModel::LibFVar(const TStrObjList& Params, TMacroError& E)  {
   size_t i = Params[0].ToSizeT();
   if (Vars.VarCount() <= i) {
     E.ProcessingError(__OlxSrcInfo, "FVar index out of bounds");
@@ -2222,7 +2188,7 @@ void RefinementModel::LibFVar(const TStrObjList& Params, TMacroData& E)  {
   }
 }
 //..............................................................................
-void RefinementModel::LibBASF(const TStrObjList& Params, TMacroData& E)  {
+void RefinementModel::LibBASF(const TStrObjList& Params, TMacroError& E)  {
   size_t i = Params[0].ToSizeT();
   if (BASF.Count() <= i) {
     E.ProcessingError(__OlxSrcInfo, "BASF index out of bounds");
@@ -2238,7 +2204,7 @@ void RefinementModel::LibBASF(const TStrObjList& Params, TMacroData& E)  {
   }
 }
 //..............................................................................
-void RefinementModel::LibEXTI(const TStrObjList& Params, TMacroData& E)  {
+void RefinementModel::LibEXTI(const TStrObjList& Params, TMacroError& E)  {
   if( Params.IsEmpty() )  {
     if( EXTI_set )
       E.SetRetVal(EXTI.ToString());
@@ -2252,7 +2218,7 @@ void RefinementModel::LibEXTI(const TStrObjList& Params, TMacroData& E)  {
 }
 //..............................................................................
 void RefinementModel::LibUpdateCRParams(const TStrObjList& Params,
-  TMacroData& E)
+  TMacroError& E)
 {
   IConstraintContainer* cc = rcRegister.Find(Params[0], NULL);
   if( cc == NULL )  {
@@ -2264,7 +2230,7 @@ void RefinementModel::LibUpdateCRParams(const TStrObjList& Params,
 }
 //..............................................................................
 void RefinementModel::LibShareADP(TStrObjList &Cmds, const TParamList &Options,
-  TMacroData &E)
+  TMacroError &E)
 {
   //size_t n = Cmds.Count();
   TSAtomPList atoms;
@@ -2357,13 +2323,13 @@ void RefinementModel::LibShareADP(TStrObjList &Cmds, const TParamList &Options,
 }
 //..............................................................................
 void RefinementModel::LibCalcCompleteness(const TStrObjList& Params,
-  TMacroData& E)
+  TMacroError& E)
 {
   E.SetRetVal(CalcCompletnessTo2Theta(Params[0].ToDouble()));
 }
 //..............................................................................
 void RefinementModel::LibMaxIndex(const TStrObjList& Params,
-  TMacroData& E)
+  TMacroError& E)
 {
   vec3i mi;
   if (Params.IsEmpty()) {
@@ -2376,7 +2342,7 @@ void RefinementModel::LibMaxIndex(const TStrObjList& Params,
 }
 //..............................................................................
 void RefinementModel::LibNewAfixGroup(TStrObjList &Cmds,
-  const TParamList &Options, TMacroData &E)
+  const TParamList &Options, TMacroError &E)
 {
   int afix = Cmds[0].ToInt();
   TCAtomPList atoms;
@@ -2412,7 +2378,7 @@ void RefinementModel::LibNewAfixGroup(TStrObjList &Cmds,
 }
 //..............................................................................
 void RefinementModel::LibNewRestraint(TStrObjList &Cmds,
-  const TParamList &Options, TMacroData &E)
+  const TParamList &Options, TMacroError &E)
 {
   size_t st = 1;
   TSimpleRestraint *sr = NULL;
@@ -2466,58 +2432,40 @@ void RefinementModel::LibNewRestraint(TStrObjList &Cmds,
   TBasicApp::NewLogEntry() << sr->ToString();
 }
 //..............................................................................
-void RefinementModel::LibModelSrc(const TStrObjList &Params, TMacroData &E) {
-  if (Params.IsEmpty()) {
-    E.SetRetVal(GetModelSource());
-  }
-  else {
-    SetModelSource(Params[0]);
-  }
-}
-//..............................................................................
-//..............................................................................
-//..............................................................................
-IOlxObject *RefinementModel::VPtr::get_ptr() const {
-  return &TXApp::GetInstance().XFile().GetRM();
-}
-//..............................................................................
-//..............................................................................
-//..............................................................................
-TLibrary* RefinementModel::ExportLibrary(const olxstr& name) {
+TLibrary* RefinementModel::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("rm") : name);
-  olx_vptr<RefinementModel> thip(new VPtr);
   lib->Register(
-    new TFunction<RefinementModel>(thip, &RefinementModel::LibOSF,
+    new TFunction<RefinementModel>(this, &RefinementModel::LibOSF,
       "OSF",
       fpNone|fpOne,
 "Returns/sets OSF"));
   lib->Register(
-    new TFunction<RefinementModel>(thip, &RefinementModel::LibFVar,
+    new TFunction<RefinementModel>(this, &RefinementModel::LibFVar,
       "FVar",
       fpOne|fpTwo|fpThree,
 "Returns/sets FVAR referred by index"));
   lib->Register(
-    new TFunction<RefinementModel>(thip, &RefinementModel::LibBASF,
+    new TFunction<RefinementModel>(this, &RefinementModel::LibBASF,
     "BASF",
     fpOne | fpTwo | fpThree,
     "Returns/sets BASF referred by index"));
   lib->Register(
-    new TFunction<RefinementModel>(thip, &RefinementModel::LibEXTI,
+    new TFunction<RefinementModel>(this, &RefinementModel::LibEXTI,
       "Exti",
       fpNone|fpOne|fpTwo,
 "Returns/sets EXTI"));
   lib->Register(
-    new TFunction<RefinementModel>(thip, &RefinementModel::LibUpdateCRParams,
+    new TFunction<RefinementModel>(this, &RefinementModel::LibUpdateCRParams,
       "UpdateCR",
       fpAny^(fpNone|fpOne|fpTwo),
 "Updates constraint or restraint parameters (name, index, {values})") );
   lib->Register(
-    new TFunction<RefinementModel>(thip, &RefinementModel::LibCalcCompleteness,
+    new TFunction<RefinementModel>(this, &RefinementModel::LibCalcCompleteness,
       "Completeness",
       fpOne,
 "Calculates completeness to the given 2 theta value") );
   lib->Register(
-    new TMacro<RefinementModel>(thip, &RefinementModel::LibShareADP,
+    new TMacro<RefinementModel>(this, &RefinementModel::LibShareADP,
       "ShareADP", EmptyString(),
       fpAny,
 "Creates a rotated ADP constraint for given atoms. Currently works only for "
@@ -2525,20 +2473,20 @@ TLibrary* RefinementModel::ExportLibrary(const olxstr& name) {
 ));
 
   lib->Register(
-    new TFunction<RefinementModel>(thip, &RefinementModel::LibHasOccu,
+    new TFunction<RefinementModel>(this, &RefinementModel::LibHasOccu,
     "HasOccu",
     fpNone,
     "Returns true if occupancy of any of the atoms is refined or deviates from 1"));
 
   lib->Register(
-    new TFunction<RefinementModel>(thip, &RefinementModel::LibMaxIndex,
+    new TFunction<RefinementModel>(this, &RefinementModel::LibMaxIndex,
     "MaxIndex",
     fpNone|fpOne,
     "Calculates largest Miller index for current structure or the given 2 "
     "theta value"));
 
   lib->Register(
-    new TMacro<RefinementModel>(thip, &RefinementModel::LibNewAfixGroup,
+    new TMacro<RefinementModel>(this, &RefinementModel::LibNewAfixGroup,
     "NewAfixGroup",
     "d-distance when applicable&;"
     "sof-occupancy [11]&;"
@@ -2547,21 +2495,13 @@ TLibrary* RefinementModel::ExportLibrary(const olxstr& name) {
     "Creates a new AFIX group expects AFIX code and atom ids"));
 
   lib->Register(
-    new TMacro<RefinementModel>(thip, &RefinementModel::LibNewRestraint,
+    new TMacro<RefinementModel>(this, &RefinementModel::LibNewRestraint,
     "NewRestraint",
     "s1-standard deviation 1&;"
     "s2-standard deviation 2",
     fpAny ^ (fpNone|fpOne),
     "Creates a new restraint expects restraint name, parameters if required "
     "and atom ids"));
-
-  lib->Register(
-    new TFunction<RefinementModel>(thip, &RefinementModel::LibModelSrc,
-    "ModelSrc",
-    fpNone | fpOne,
-    "Sets the source for this model - an identifier for the external code when "
-    "reading a model file."));
-
   return lib;
 }
 //..............................................................................
@@ -2577,11 +2517,9 @@ RefinementModel::HklStat& RefinementModel::HklStat::operator = (
   OMIT_s = hs.OMIT_s;     OMIT_2t = hs.OMIT_2t;
   SHEL_lr = hs.SHEL_lr;   SHEL_hr = hs.SHEL_hr;
   LimDmin = hs.LimDmin;   LimDmax = hs.LimDmax;
-  MaxI = hs.MaxI;
-  MinI = hs.MinI;
+  MaxI = hs.MaxI;         MinI = hs.MinI;
   HKLF = hs.HKLF;
-  HKLF_m = hs.HKLF_m;
-  HKLF_s = hs.HKLF_s;
+  HKLF_m = hs.HKLF_m;     HKLF_s = hs.HKLF_s;
   HKLF_mat = hs.HKLF_mat;
   FilteredOff = hs.FilteredOff;
   IntensityTransformed = hs.IntensityTransformed;

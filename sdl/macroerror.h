@@ -28,20 +28,20 @@ const unsigned short
   // these are for special handling
   peUnhandled           = 0x1000;
 
-class TMacroData: public IOlxObject  {
+class TMacroError: public IEObject  {
   unsigned short ProcessError;
   bool DeleteObject;
   olxstr ErrorInfo, Location;
-  IOlxObject* RetValue;
+  IEObject* RetValue;
   str_stack Stack;
 public:
-  TMacroData();
-  virtual ~TMacroData()  {
+  TMacroError();
+  virtual ~TMacroError()  {
     if( DeleteObject )
       delete RetValue;
   }
 
-  void operator = (const TMacroData& ME);
+  void operator = (const TMacroError& ME);
   olxstr& ProcessingError(const olxstr& location, const olxstr& errMsg);
   void NonexitingMacroError(const olxstr& macroName);
   void WrongArgCount(const ABasicFunction& caller, size_t provided);
@@ -55,7 +55,7 @@ public:
     Location.SetLength(0);
     if( DeleteObject )  delete RetValue;
     DeleteObject = false;
-    RetValue = (IOlxObject*)NULL;
+    RetValue = (IEObject*)NULL;
     Stack.Clear();
   }
   void ClearErrorFlag()  {  ProcessError = 0;  }
@@ -98,7 +98,7 @@ public:
   olxstr GetRetVal() const;
 
   bool HasRetVal() const {  return RetValue != NULL;  }
-  IOlxObject* RetObj() const {  return RetValue;  }
+  IEObject* RetObj() const {  return RetValue;  }
 
   str_stack& GetStack() {  return Stack;  }
 
@@ -106,34 +106,33 @@ public:
     const olxstr &prefix=EmptyString()) const;
 
   // the type is validated
-  template <class EObj> EObj* GetRetObj() {
-    EObj *r = dynamic_cast<EObj *>(RetValue);
-    if (r == 0) {
+  template <class EObj> EObj* GetRetObj()  {
+    if( !EsdlInstanceOf(*RetValue, EObj) ) {
       throw TCastException(__OlxSourceInfo, EsdlObjectName(*RetValue),
         EsdlClassName(EObj));
     }
-    return r;
+    return (EObj*)RetValue;
   }
-  template <class PT> void SetRetVal(const PT& val) {
-    if (DeleteObject)  delete RetValue;
+  template <class PT> void SetRetVal(const PT& val)  {
+    if( DeleteObject )  delete RetValue;
     DeleteObject = true;
     RetValue = new TEPType<PT>(val);
   }
 
-  template <class PT> void SetRetVal(PT* val) {
-    if (DeleteObject)  delete RetValue;
+  template <class PT> void SetRetVal(PT* val)  {
+    if( DeleteObject )  delete RetValue;
     DeleteObject = false;
     RetValue = val;
   }
 
-  class TCastException : public TBasicException {
+  class TCastException : public TBasicException  {
     public:
       TCastException(const olxstr& location, const olxstr& from,
         const olxstr& to)
         : TBasicException(location,
             olxstr("Cannot cast '") << from << "' to '"  << to << '\'')
       {}
-    virtual IOlxObject* Replicate() const {  return new TCastException(*this);  }
+    virtual IEObject* Replicate() const {  return new TCastException(*this);  }
   };
 
 };

@@ -97,24 +97,19 @@ bool TGlMouse::MouseUp(int x, int y, short Shift, short button)  {
       }
     }
   }
-  else {
-    if (Action == glmaRotateXY && 0) {
-      double Length = 100;
-      vec3d dir((MData.UpX - MData.DownX), MData.UpY - MData.DownY, 0);
-      if (!dir.IsNull()) {
-        dir.Normalise();
-        double Accel = 1.5, Time = 1, Path = Length;
-        while (Path > 0)
-        {
-          double inc = Accel*Accel*Time;
-          Path -= inc;
-          Time++;
-          Parent()->GetBasis().Rotate(dir, Path*M_PI / 1800);
-          Parent()->Draw();
-          TBasicApp::GetInstance().Update();
-          olx_sleep(100);
-        }
-      }
+  else  {
+    if( Action == glmaRotateXY )  {
+/*      float Length = 24;
+      float Accel=2, Time=1, Path = Length;
+      while( Path > 0 )
+      {
+        Path -= Accel*Accel*Time;
+        Time++;
+        Parent()->RotateX(Parent()->Basis().RX() + Path);
+        Parent()->RotateY(Parent()->Basis().RY() + Path);
+        Parent()->Draw();
+      }                  */
+      ;
     }
   }
   MData.Button &= ~button;
@@ -245,7 +240,7 @@ void TGlMouse::process_command_list(TStrObjList& Cmds, bool enable) {
   }
 }
 //..............................................................................
-void TGlMouse::OnObjectDelete(APerishable *o) {
+void TGlMouse::OnObjectDelete(IEObject *o) {
   ClearObjectCache(o);
 }
 //..............................................................................
@@ -255,37 +250,36 @@ AGDrawObject *TGlMouse::find_object(int x, int y) {
     o = FParent->SelectObject(x, y);
     if (o != NULL) {
       object_cache.Add(TMouseRegion(x, y), o);
-      o->AddDestructionObserver(
-        DestructionObserver::MakeNew(this, &TGlMouse::OnObjectDelete));
+      o->AddDestructionHandler(*this, &TGlMouse::OnObjectDelete);
     }
   }
   return o;
 }
 //..............................................................................
-void TGlMouse::ClearObjectCache(IOlxObject *caller) {
+void TGlMouse::ClearObjectCache(IEObject *caller) {
   for (size_t i=0; i < object_cache.Count(); i++) {
     if (object_cache.GetValue(i) != caller) {
-      object_cache.GetValue(i)->RemoveDestructionObserver(
-        DestructionObserver::Make(this, &TGlMouse::OnObjectDelete));
+      object_cache.GetValue(i)->RemoveDestructionHandler(
+        *this, &TGlMouse::OnObjectDelete);
     }
   }
   object_cache.Clear();
 }
 //..............................................................................
 void TGlMouse::LibEnable(TStrObjList& Cmds, const TParamList& Options,
-  TMacroData &E)
+  TMacroError &E)
 {
   process_command_list(Cmds, true);
 }
 //..............................................................................
 void TGlMouse::LibDisable(TStrObjList& Cmds, const TParamList& Options,
-  TMacroData &E)
+  TMacroError &E)
 {
   process_command_list(Cmds, false);
 }
 //..............................................................................
 void TGlMouse::LibLock(TStrObjList& Cmds, const TParamList& Options,
-  TMacroData &E)
+  TMacroError &E)
 {
   bool v = Cmds.IsEmpty() ? false : !Cmds[0].ToBool();
   SetRotationEnabled(v);
@@ -293,7 +287,7 @@ void TGlMouse::LibLock(TStrObjList& Cmds, const TParamList& Options,
   SetZoomingEnabled(v);
 }
 //..............................................................................
-void TGlMouse::LibIsEnabled(const TStrObjList& Cmds, TMacroData& E) {
+void TGlMouse::LibIsEnabled(const TStrObjList& Cmds, TMacroError& E) {
   if (Cmds[0].Equalsi("selection"))
     E.SetRetVal(IsSelectionEnabled());
   else if (Cmds[0].Equalsi("rotation"))

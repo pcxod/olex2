@@ -17,14 +17,14 @@ namespace ctrl_ext {
   template <class parent_t>
   class TItemList : public parent_t {
     struct TDataObj {
-      IOlxObject* Data;
+      IEObject* Data;
       bool Delete;
-      TDataObj(IOlxObject *Data, bool Delete)
+      TDataObj(IEObject *Data, bool Delete)
         : Data(Data), Delete(Delete)
       {}
     };
   protected:
-    void _AddObject(const olxstr &Item, IOlxObject* Data, bool Delete) {
+    void _AddObject(const olxstr &Item, IEObject* Data, bool Delete) {
       parent_t::Append(Item.u_str());
       if (Data != NULL)  {
         TDataObj* d_o = new TDataObj(Data, Delete);
@@ -45,13 +45,13 @@ namespace ctrl_ext {
       }
     }
   public:
-    void AddObject(const olxstr &Item, IOlxObject *Data = NULL) {
+    void AddObject(const olxstr &Item, IEObject *Data = NULL) {
       _AddObject(Item, Data, false);
     }
 
     olxstr GetItem(size_t i) const { return parent_t::GetString(i); }
 
-    const IOlxObject* GetObject(size_t i) const {
+    const IEObject* GetObject(size_t i) const {
       TDataObj* res = (TDataObj*)parent_t::GetClientData(i);
       return (res != NULL && !res->Delete) ? res->Data : NULL;
     }

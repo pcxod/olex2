@@ -78,7 +78,7 @@ protected:
   static void _ProcessAfix0(ParseContext& cx);
   // if atoms is saved, its Tag is added to the index (if not NULL)
   static void _SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
-      double &spec, TStrList* sfac, TStrList& sl,
+    double &spec, TStringToList<olxstr, const cm_Element*>* sfac, TStrList& sl,
     TIndexList* index=NULL, bool checkSame=true, bool checkResi=true);
   static void _DrySaveAtom(TCAtom& a, TSizeList &indices,
     bool checkSame = true, bool checkResi = true);
@@ -89,7 +89,7 @@ protected:
   // processes CONN, FREE and BIND, called from _FinishParsing
   void __ProcessConn(ParseContext& cx);
   // also updates the RM user content if any of the types missing
-  void FixTypeListAndLabels();
+  TStringToList<olxstr, const cm_Element*> FixTypeListAndLabels();
 public:
   TIns();
   virtual ~TIns();
@@ -243,7 +243,7 @@ public:
   virtual void LoadFromFile(const olxstr& fileName);
   virtual void SaveToStrings(TStrList& Strings);
   virtual void LoadFromStrings(const TStrList& Strings);
-  virtual bool Adopt(TXFile &, int);
+  virtual bool Adopt(TXFile& XF);
 
   TInsList* FindIns(const olxstr& name);
   void ClearIns();
@@ -274,10 +274,8 @@ protected:
     ParseContext& cx, size_t& index);
 public:
   // helper function...
-  static TStrList::const_list_type SaveSfacUnit(const RefinementModel& rm,
-    TStrList& list, size_t sfac_pos, bool save_disp);
-  static TStrList::const_list_type SaveSfacUnit(const RefinementModel& rm,
-    TStrList& list, size_t sfac_pos);
+  static void SaveSfacUnit(const RefinementModel& rm, const ContentList& content,
+    TStrList& list, size_t sfac_pos, bool save_disp=true);
   template <class List> static List& Preprocess(List& l)  {
     // combine lines
     for( size_t i=0; i < l.Count(); i++ )  {
@@ -309,11 +307,8 @@ public:
     }
     return l;
   }
-  /* spits out all instructions, including CELL, FVAR, etc, returns the list
-  of SFAC
-  */
-  TStrList::const_list_type SaveHeader(TStrList& out,
-    bool ValidateRestraintNames);
+  // spits out all instructions, including CELL, FVAR, etc
+  void SaveHeader(TStrList& out, bool ValidateRestraintNames);
   // Parses all instructions, exclusing atoms, throws if fails
   void ParseHeader(const TStrList& in);
   /* parsed out from REMS if refined with Olex2, typically listed like:
@@ -354,7 +349,7 @@ public:
     return TBasicApp::GetInstance().GetOptions()
       .FindValue("preserve_invalid_ins", FalseString()).ToBool();
   }
-  virtual IOlxObject* Replicate() const {  return new TIns;  }
+  virtual IEObject* Replicate() const {  return new TIns;  }
 };
 
 EndXlibNamespace()

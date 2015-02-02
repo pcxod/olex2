@@ -19,28 +19,25 @@
 BeginGlNamespace()
 
 const uint16_t
-  sgdoHidden     = 0x0100,
+  sgdoHidden     = 0x0100, // TGDrawObject flags, high byte
   sgdoSelected   = 0x0200,
   sgdoGroupable  = 0x0400,
   sgdoGroup      = 0x0800,
   sgdoGrouped    = 0x1000,
   sgdoSelectable = 0x2000,
-  sgdoCreated    = 0x4000,
-  sgdoPrintable  = 0x8000;
+  sgdoCreated    = 0x4000;
 
 /*  defines basic functionality of a graphic object */
-class AGDrawObject
-  : public virtual ACollectionItem, public APerishable
-{
-  uint16_t sgdo_Flags;
+class AGDrawObject: public ACollectionItem  {
 protected:
+  short FDrawStyle;
+  uint16_t sgdo_Flags;
   class TGlGroup *ParentGroup;  // parent collection
   class TGlRenderer& Parent;
   TGPCollection *Primitives;
   evecd FParams;
   olxstr CollectionName;
   void SetCollectionName(const olxstr& nn)  {  CollectionName = nn;  }
-  void SetTypeGroup() { sgdo_Flags |= sgdoGroup; }
 public:
   AGDrawObject(TGlRenderer& parent, const olxstr& collectionName);
   // create object within the specified collection, using provided parameters
@@ -68,30 +65,17 @@ public:
   // mouse handlers, any object receives mouse down/up events; write appropriate
   //handlers to handle mouse; if the object returns true OnMouseDown, it receives
   //OnMouseMove as well; Objects must not change values of the Data!
-  virtual bool OnMouseDown(const IOlxObject *, const struct TMouseData&) {
-    return false;
-  }
-  virtual bool OnMouseUp(const IOlxObject *, const struct TMouseData&) {
-    return false;
-  }
-  virtual bool OnMouseMove(const IOlxObject *, const struct TMouseData&) {
-    return false;
-  }
-  virtual bool OnDblClick(const IOlxObject *, const struct TMouseData&) {
-    return false;
-  }
-  virtual bool OnZoom(const IOlxObject *, const struct TMouseData&) {
-    return false;
-  }
+  virtual bool OnMouseDown(const IEObject *, const struct TMouseData&)  {  return false;  }
+  virtual bool OnMouseUp(const IEObject *, const struct TMouseData&)  {  return false;  }
+  virtual bool OnMouseMove(const IEObject *, const struct TMouseData&)  {  return false;  }
+  virtual bool OnDblClick(const IEObject *, const struct TMouseData&)  {  return false;  }
+  virtual bool OnZoom(const IEObject *, const struct TMouseData&)  {  return false;  }
 
   // need a virtual setters for these
   virtual void SetVisible(bool v)  {  olx_set_bit(!v, sgdo_Flags, sgdoHidden);  }
   bool IsVisible() const {  return ((sgdo_Flags&sgdoHidden) == 0);  }
   virtual void SetSelected(bool v)  {  olx_set_bit(v, sgdo_Flags, sgdoSelected);  }
   bool IsSelected() const {  return ((sgdo_Flags&sgdoSelected) != 0);  }
-  /* returns true if the object is to end up in the picture output */
-  virtual void SetPrintable(bool v)  { olx_set_bit(v, sgdo_Flags, sgdoPrintable); }
-  bool IsPrintable() const { return ((sgdo_Flags&sgdoPrintable) != 0); }
 
   DefPropBFIsSet(Groupable, sgdo_Flags, sgdoGroupable)
   DefPropBFIsSet(Grouped, sgdo_Flags, sgdoGrouped)
@@ -130,13 +114,12 @@ public:
   // fills the list with primitives from which the object can be constructed
   virtual void ListPrimitives(TStrList&) const {}
   virtual void UpdatePrimitives(int32_t Mask);
-  virtual void OnPrimitivesCleared() {}
-  virtual void OnStyleChange() {}
+  virtual void OnPrimitivesCleared()  {}
 
-  void LibVisible(const TStrObjList& Params, TMacroData& E);
-  void LibIsGrouped(const TStrObjList& Params, TMacroData& E);
-  void LibIsSelected(const TStrObjList& Params, TMacroData& E);
-  void LibGetName(const TStrObjList& Params, TMacroData& E);
+  void LibVisible(const TStrObjList& Params, TMacroError& E);
+  void LibIsGrouped(const TStrObjList& Params, TMacroError& E);
+  void LibIsSelected(const TStrObjList& Params, TMacroError& E);
+  void LibGetName(const TStrObjList& Params, TMacroError& E);
   void ExportLibrary(TLibrary& lib);
 
   virtual void Individualize() {}
@@ -145,21 +128,17 @@ public:
   struct FlagsAnalyser  {
     const short ref_flags;
     FlagsAnalyser(short _ref_flags) : ref_flags(_ref_flags)  {}
-    template <typename item_t>
-    bool OnItem(const item_t& o, size_t) const {
-      return olx_ref::get(o).MaskFlags(ref_flags) != 0;
+    bool OnItem(const AGDrawObject& o, size_t) const {
+      return o.MaskFlags(ref_flags) != 0;
     }
   };
-  template <class Actor> struct FlagsAnalyserEx {
+  template <class Actor> struct FlagsAnalyserEx  {
     const short ref_flags;
     const Actor actor;
     FlagsAnalyserEx(short _ref_flags, const Actor& _actor)
-      : ref_flags(_ref_flags), actor(_actor)
-    {}
-    template <typename item_t>
-    bool OnItem(item_t& o_, size_t i) const {
-      AGDrawObject &o = olx_ref::get(o_);
-      if (o.MaskFlags(ref_flags) != 0)
+      : ref_flags(_ref_flags), actor(_actor)  {}
+    bool OnItem(AGDrawObject& o, size_t i) const {
+      if( o.MaskFlags(ref_flags) != 0 )
         return actor.OnItem(o, i);
       return false;
     }

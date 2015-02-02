@@ -143,10 +143,10 @@ protected:
   }
   virtual bool DoZoom(double, bool)  {  return false;  }
   virtual const TGlRenderer& DoGetRenderer() const {  return GetParent();  }
-  bool OnMouseDown(const IOlxObject *Sender, const TMouseData& Data)  {
+  bool OnMouseDown(const IEObject *Sender, const TMouseData& Data)  {
     return GetHandler().OnMouseDown(*this, Data);
   }
-  bool OnMouseUp(const IOlxObject *Sender, const TMouseData& Data)  {
+  bool OnMouseUp(const IEObject *Sender, const TMouseData& Data)  {
     if (Data.Button == smbRight) {
       if (Data.Object != NULL)  {
         if (EsdlInstanceOf(*Data.Object, TXAtom)) {
@@ -178,10 +178,10 @@ protected:
     }
     return GetHandler().OnMouseUp(*this, Data);
   }
-  bool OnMouseMove(const IOlxObject *Sender, const TMouseData& Data)  {
+  bool OnMouseMove(const IEObject *Sender, const TMouseData& Data)  {
     return GetHandler().OnMouseMove(*this, Data);
   }
-  bool OnDblClick(const IOlxObject *Sender, const TMouseData& Data)  {
+  bool OnDblClick(const IEObject *Sender, const TMouseData& Data)  {
     return GetHandler().OnDblClick(*this, Data);
   }
 public:

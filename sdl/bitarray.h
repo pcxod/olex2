@@ -11,12 +11,9 @@
 #define __olx_sdl_bitarray_H
 #include "exception.h"
 #include "istream.h"
-#include "constlist.h"
 BeginEsdlNamespace()
 
-class ConstBitArray;
-
-class TEBitArray: public IOlxObject {
+class TEBitArray: public IEObject  {
   unsigned char *FData;
   size_t FCount, FCharCount;
 public:
@@ -25,9 +22,7 @@ public:
   TEBitArray(size_t size);
   // if own is true, data [created with new!] will be deleted automatically
   TEBitArray(unsigned char* data, size_t size, bool own);
-  TEBitArray(const ConstBitArray &a);
-  virtual ~TEBitArray() { olx_del_arr(FData); }
-  TEBitArray &TakeOver(TEBitArray &l, bool do_delete = false);
+  virtual ~TEBitArray();
   void Clear();
   void SetSize(size_t newSize);
   inline size_t Count() const {  return FCount;  }
@@ -36,8 +31,7 @@ public:
     size_t intIndex = index/8;
     size_t bitIndex = 1 << index%8;
 #ifdef _DEBUG
-    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, intIndex,
-      0, FCharCount);
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, intIndex, 0, FCharCount);
 #endif
     return (FData[intIndex] & bitIndex) != 0;
   }
@@ -45,8 +39,7 @@ public:
     size_t intIndex = index/8;
     size_t bitIndex = 1 << index%8;
 #ifdef _DEBUG
-    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, intIndex,
-      0, FCharCount);
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, intIndex, 0, FCharCount);
 #endif
     return (FData[intIndex] & bitIndex) != 0;
   }
@@ -54,8 +47,7 @@ public:
     size_t intIndex = index/8;
     size_t bitIndex = 1 << index%8;
 #ifdef _DEBUG
-    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, intIndex,
-      0, FCharCount);
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, intIndex, 0, FCharCount);
 #endif
     if( !v )  FData[intIndex] &= ~bitIndex;
     else      FData[intIndex] |= bitIndex;
@@ -64,8 +56,7 @@ public:
     size_t intIndex = index/8;
     size_t bitIndex = 1 << index%8;
 #ifdef _DEBUG
-    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, intIndex,
-      0, FCharCount);
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, intIndex, 0, FCharCount);
 #endif
     FData[intIndex] |= bitIndex;
   }
@@ -73,8 +64,7 @@ public:
     size_t intIndex = index/8;
     size_t bitIndex = 1 << index%8;
 #ifdef _DEBUG
-    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, intIndex,
-      0, FCharCount);
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, intIndex, 0, FCharCount);
 #endif
     FData[intIndex] &= ~bitIndex;
   }
@@ -91,7 +81,6 @@ public:
   void operator >> (IOutputStream& out) const;
 
   TEBitArray& operator = (const TEBitArray& arr);
-  TEBitArray& operator = (const ConstBitArray& a);
   bool operator == (const TEBitArray& arr)  const;
   int Compare(const TEBitArray& arr)  const;
   // base64 based string + one char {'0'+size%8}
@@ -100,22 +89,6 @@ public:
 
   virtual TIString ToString() const;
   olxstr FormatString(uint16_t bitsInSegment) const;
-  typedef ConstBitArray const_type;
-  typedef bool list_item_type;
-};
-
-class ConstBitArray : public const_list<TEBitArray> {
-  typedef const_list<TEBitArray> parent_t;
-public:
-  ConstBitArray(const ConstBitArray &l) : parent_t(l) {}
-  ConstBitArray(TEBitArray *arr) : parent_t(arr) {}
-  ConstBitArray(TEBitArray &arr) : parent_t(arr) {}
-  ConstBitArray &operator = (const ConstBitArray &l) {
-    parent_t::operator = (l);
-    return *this;
-  }
-public:
-  typedef bool list_item_type;
 };
 
 EndEsdlNamespace()

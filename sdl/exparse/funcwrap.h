@@ -30,7 +30,7 @@ namespace exparse  {
     virtual const type_info& get_RV_type() const = 0;
   };
   struct IMemberFunction : public IBasicFunction  {
-    virtual IEvaluable* run(IOlxObject *self, const EvaluableFactory& factory,
+    virtual IEvaluable* run(IEObject *self, const EvaluableFactory& factory,
       const TPtrList<IEvaluable>& params) = 0;
   };
   struct IStaticFunction : public IBasicFunction  {
@@ -87,7 +87,7 @@ namespace exparse  {
   public:
     VoidMemberFunction(const olxstr& name, void (base_class::*f)() )
       : AFunction<IMemberFunction,void>(name), func(f)  {}
-    virtual IEvaluable* run(IOlxObject *self, const EvaluableFactory&,
+    virtual IEvaluable* run(IEObject *self, const EvaluableFactory&,
       const TPtrList<IEvaluable>& params )
     {
       IEvaluable *b = dynamic_cast<IEvaluable *>(self);
@@ -127,7 +127,7 @@ namespace exparse  {
     {
       arg_types.Add(typeid(argt_1));
     }
-    virtual IEvaluable* run(IOlxObject *self, const EvaluableFactory&,
+    virtual IEvaluable* run(IEObject *self, const EvaluableFactory&,
       const TPtrList<IEvaluable>& params )
     {
       IEvaluable *b = dynamic_cast<IEvaluable *>(self);
@@ -169,7 +169,7 @@ namespace exparse  {
       arg_types.Add(typeid(argt_1));
       arg_types.Add(typeid(argt_2));
     }
-    virtual IEvaluable* run(IOlxObject *self, const EvaluableFactory&,
+    virtual IEvaluable* run(IEObject *self, const EvaluableFactory&,
       const TPtrList<IEvaluable>&params )
     {
       IEvaluable *b = dynamic_cast<IEvaluable *>(self);
@@ -207,7 +207,7 @@ namespace exparse  {
   public:
     MemberFunction(const olxstr& name, rvt (base_class::*f)() )
       : AFunction<IMemberFunction,rvt>(name), func(f) {}
-    virtual IEvaluable* run(IOlxObject *self, const EvaluableFactory& factory,
+    virtual IEvaluable* run(IEObject *self, const EvaluableFactory& factory,
       const TPtrList<IEvaluable>& params)
     {
       IEvaluable *b = dynamic_cast<IEvaluable *>(self);
@@ -244,7 +244,7 @@ namespace exparse  {
     {
       AFunction<IMemberFunction,rvt>::arg_types.Add(typeid(argt_1));
     }
-    virtual IEvaluable* run(IOlxObject *self, const EvaluableFactory& factory,
+    virtual IEvaluable* run(IEObject *self, const EvaluableFactory& factory,
       const TPtrList<IEvaluable>& params)
     {
       IEvaluable *b = dynamic_cast<IEvaluable *>(self);
@@ -285,7 +285,7 @@ namespace exparse  {
       AFunction<IMemberFunction,rvt>::arg_types.Add(typeid(argt_1));
       AFunction<IMemberFunction,rvt>::arg_types.Add(typeid(argt_2));
     }
-    virtual IEvaluable* run(IOlxObject *self, const EvaluableFactory& factory,
+    virtual IEvaluable* run(IEObject *self, const EvaluableFactory& factory,
       const TPtrList<IEvaluable>& params)
     {
       IEvaluable *b = dynamic_cast<IEvaluable *>(self);

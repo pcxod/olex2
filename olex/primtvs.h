@@ -23,6 +23,7 @@ public:
   virtual ~TdlgPrimitive()  {}
   int32_t Mask;
   short Level;
+  DECLARE_EVENT_TABLE()
 };
 
 #endif

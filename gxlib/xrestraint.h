@@ -86,9 +86,9 @@ public:
   TGraphicsStyle* Style();
   void UpdatePrimitives(__int32 Mask);
 
-  bool OnMouseDown(const IOlxObject *Sender, const TMouseData *Data);
-  bool OnMouseUp(const IOlxObject *Sender, const TMouseData *Data);
-  bool OnMouseMove(const IOlxObject *Sender, const TMouseData *Data);
+  bool OnMouseDown(const IEObject *Sender, const TMouseData *Data);
+  bool OnMouseUp(const IEObject *Sender, const TMouseData *Data);
+  bool OnMouseMove(const IEObject *Sender, const TMouseData *Data);
 
   inline bool Deleted()  const {  return AGDrawObject::Deleted(); }
   void Deleted(bool v)         {  AGDrawObject::Deleted(v);  FAtom->Deleted(v); }

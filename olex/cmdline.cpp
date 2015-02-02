@@ -12,7 +12,7 @@
 #include "bapp.h"
 
 TCmdLine::TCmdLine(wxWindow* parent, int flags) :
-  TTextEdit(parent, -1, wxEmptyString, wxDefaultPosition, wxDefaultSize, flags),
+  TTextEdit(parent, flags),
   OnCommand(Actions.New("ONCOMMAND"))
 {
   PromptStr = ">>";
@@ -59,7 +59,7 @@ bool TCmdLine::ProcessKey(wxKeyEvent& evt)  {
     else
       Commands.Add(GetCommand());
     CmdIndex = Commands.Count();
-    OnCommand.Execute(dynamic_cast<IOlxObject*>((AActionHandler*)this) );
+    OnCommand.Execute(dynamic_cast<IEObject*>((AActionHandler*)this) );
     return true;
   }
   else if( (evt.GetKeyCode() == WXK_ESCAPE) && evt.GetModifiers() == 0 )  {

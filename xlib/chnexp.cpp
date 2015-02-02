@@ -59,7 +59,7 @@ double TCHNExp::CHN(olx_pdict<short, double>& rv) const {
   for( size_t i=0; i < rv.Count(); i++ )
     rv.GetValue(i) = 0.0;
   for( size_t i=0; i < E1.Count(); i++ )  {
-    size_t ei = rv.IndexOf(bais[i]->GetIndex());
+    size_t ei = rv.IndexOf(bais[i]->index);
     if( ei == InvalidIndex )  continue;
     rv.GetValue(ei) = E1.GetObject(i)*bais[i]->GetMr();
   }
@@ -79,7 +79,7 @@ void TCHNExp::CHN(double &C, double &H, double &N, double &Mr) const {
   for( size_t i=0; i < E1.Count(); i++ )  {
     if( *elms[i] == iCarbonZ )
       C = E1.GetObject(i) * elms[i]->GetMr();
-    else if (elms[i]->GetIndex() == iHydrogenIndex)  // careful H and D are not same here!
+    else if( elms[i]->index == iHydrogenIndex )  // careful H and D are not same here!
       H = E1.GetObject(i) * elms[i]->GetMr();
     else if( *elms[i] == iNitrogenZ )
       N = E1.GetObject(i) * elms[i]->GetMr();

@@ -60,16 +60,16 @@ public:
 
   ~AGlMouseHandlerImp()  {}
 
-  bool OnMouseDown(const IOlxObject *, const TMouseData& Data)  {
+  bool OnMouseDown(const IEObject *, const TMouseData& Data)  {
     return GetHandler().OnMouseDown(*this, Data);
   }
-  bool OnMouseUp(const IOlxObject *, const TMouseData& Data)  {
+  bool OnMouseUp(const IEObject *, const TMouseData& Data)  {
     return GetHandler().OnMouseUp(*this, Data);
   }
-  bool OnMouseMove(const IOlxObject *, const TMouseData& Data)  {
+  bool OnMouseMove(const IEObject *, const TMouseData& Data)  {
     return GetHandler().OnMouseMove(*this, Data);
   }
-  bool OnDblClick(const IOlxObject *, const TMouseData& Data)  {
+  bool OnDblClick(const IEObject *, const TMouseData& Data)  {
     return GetHandler().OnDblClick(*this, Data);
   }
 };

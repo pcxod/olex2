@@ -231,7 +231,7 @@ struct ConstListTest {
     TPtrList<int> pl = f();
     if( pl.Count() != 10 )
       throw TFunctionFailedException(__OlxSourceInfo, "Unexpected result");
-    for( size_t i=0; i < pl.Count(); i++ )  {
+    for( int i=0; i < pl.Count(); i++ )  {
       if( *pl[i] != i )
         throw TFunctionFailedException(__OlxSourceInfo, "Unexpected result");
     }

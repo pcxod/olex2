@@ -38,7 +38,7 @@ public:
   }
   virtual ~TFuncWrapper()  {  Py_XDECREF(PyFunction);  }
 
-  void Call(const TStrObjList& Params, TMacroData& E)  {
+  void Call(const TStrObjList& Params, TMacroError& E)  {
     OnCallEnter();
     PyObject* arglist = NULL;
     if( !Params.IsEmpty() )  {
@@ -75,7 +75,7 @@ public:
   virtual ~TMacroWrapper()  {
       Py_XDECREF(PyFunction);
   }
-  void Call(TStrObjList& Params, const TParamList &Options, TMacroData& E)  {
+  void Call(TStrObjList& Params, const TParamList &Options, TMacroError& E)  {
     OnCallEnter();
     PyObject* arglist = PyTuple_New(Params.Count() + 1);
     for( size_t i=0; i < Params.Count(); i++ )
@@ -311,7 +311,7 @@ PyObject* runOlexFunctionEx(PyObject* self, PyObject* args)  {
       }
       Py_DECREF(keys_);
     }
-    TMacroData er;
+    TMacroError er;
     macro->Run(params, options, er);
     if ((PythonExt::GetInstance()->GetLogLevel() & macro_log_macro) != 0){
       TBasicApp::NewLogEntry(logInfo) << "@py: " <<
@@ -330,7 +330,7 @@ PyObject* runOlexFunctionEx(PyObject* self, PyObject* args)  {
     if (func == NULL)
       return PythonExt::SetErrorMsg(PyExc_RuntimeError, __OlxSourceInfo,
         olxstr("Undefined function '") << name << '\'');
-    TMacroData er;
+    TMacroError er;
     func->Run(params, er);
     if ((PythonExt::GetInstance()->GetLogLevel() & macro_log_function) != 0) {
       TBasicApp::NewLogEntry(logInfo) << "@py: " <<
@@ -510,7 +510,7 @@ void ExportLib(const olxstr &_root, const TLibrary& Lib,
   }
 }
 //.............................................................................
-void PythonExt::funExport(const TStrObjList& Cmds, TMacroData& E)  {
+void PythonExt::funExport(const TStrObjList& Cmds, TMacroError& E)  {
   IOlex2Processor* o_r = PythonExt::GetInstance()->GetOlexProcessor();
   if( o_r == NULL )  return;
   // clean up legacy export
@@ -534,7 +534,7 @@ void PythonExt::funExport(const TStrObjList& Cmds, TMacroData& E)  {
 }
 //.............................................................................
 void PythonExt::macReset(TStrObjList& Cmds, const TParamList &Options,
-  TMacroData& E)
+  TMacroError& E)
 {
   if( Py_IsInitialized() )
     Py_Finalize();
@@ -542,7 +542,7 @@ void PythonExt::macReset(TStrObjList& Cmds, const TParamList &Options,
 }
 //.............................................................................
 void PythonExt::macRun(TStrObjList& Cmds, const TParamList &Options,
-  TMacroData& E)
+  TMacroError& E)
 {
   olxstr fn = TEFile::OSPath(Cmds.Text(' '));
   if( !TEFile::Exists(fn) )  {
@@ -562,7 +562,7 @@ void PythonExt::macRun(TStrObjList& Cmds, const TParamList &Options,
   TEFile::ChangeDir(cd);
 }
 //.............................................................................
-void PythonExt::funLogLevel(const TStrObjList& Params, TMacroData& E)  {
+void PythonExt::funLogLevel(const TStrObjList& Params, TMacroError& E)  {
   using namespace macrolib;
   if( Params.IsEmpty() )  {
     olxstr ll;

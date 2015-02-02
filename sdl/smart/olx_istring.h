@@ -2011,7 +2011,7 @@ public:
   static olxwstr CStr2WStr(const char* mbs, size_t len=~0);
   static olxwstr CStr2WStr(const olxcstr& str);
   //...........................................................................
-  virtual IOlxObject* Replicate() const {  return new TTSString<T,TC>(*this);  }
+  virtual IEObject* Replicate() const {  return new TTSString<T,TC>(*this);  }
   //...........................................................................
   // streaming and enclosing (quotation in particular) helpers
   template <typename sep_t> struct SeperatedStream {

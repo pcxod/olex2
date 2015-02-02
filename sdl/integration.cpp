@@ -12,14 +12,14 @@
 
 namespace olex2 {
 
-struct ExternalMacro : public IOlxObject {
+struct ExternalMacro : public IEObject {
   bool (*func)(uint32_t arc, const olxch **, void *);
   void *instance;
   ExternalMacro(bool (*func)(uint32_t, const olxch **, void *), void *inst)
     : func(func), instance(inst)
   {}
   void Run(TStrObjList &Cmds, const TParamList &Options,
-    TMacroData &E)
+    TMacroError &E)
   {
     olx_array_ptr<const olxch *> argv(new const olxch*[Cmds.Count()+1]);
     for (size_t i=0; i < Cmds.Count(); i++) {
@@ -30,14 +30,14 @@ struct ExternalMacro : public IOlxObject {
   }
 };
 
-struct ExternalFunction : public IOlxObject {
+struct ExternalFunction : public IEObject {
   olx_dll_ptr<olxch> (*func)(uint32_t arc, const olxch **, void *);
   void *instance;
   ExternalFunction(olx_dll_ptr<olxch> (*func)(uint32_t, const olxch **, void *),
     void *inst)
     : func(func), instance(inst)
   {}
-  void Run(const TStrObjList& Params, TMacroData &E) {
+  void Run(const TStrObjList& Params, TMacroError &E) {
     olx_array_ptr<const olxch *> argv(new const olxch*[Params.Count()+1]);
     for (size_t i=0; i < Params.Count(); i++) {
       argv()[i] = Params[i].u_str();

@@ -24,7 +24,7 @@ bool test_0()  {  return true;  }
 bool test_1(bool v)  {  return !v;  }
 bool test_2(bool v1, bool v2)  {  return v1 && v2;  }
 
-struct test_struct : public IOlxObject  {
+struct test_struct : public IEObject  {
   void vtest_0() {}
   void vtest_1(bool v)  {}
   void vtest_2(bool v1, bool v2)  {}

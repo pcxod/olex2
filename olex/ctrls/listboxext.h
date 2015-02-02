@@ -22,10 +22,13 @@ namespace ctrl_ext {
     void ItemSelectEvent(wxCommandEvent& event);
     olxstr Data;
   public:
-    TListBox(wxWindow *Parent, wxWindowID id = -1,
-      const wxPoint& pos = wxDefaultPosition,
-      const wxSize& size = wxDefaultSize, long style = 0);
-    
+    TListBox(wxWindow *Parent)
+      : AOlxCtrl(this),
+      OnSelect(AOlxCtrl::ActionQueue::New(Actions, evt_on_select_id)),
+      OnDblClick(AOlxCtrl::ActionQueue::New(Actions, evt_on_dbl_click_id))
+    {
+      wxListBox::Create(Parent, -1);
+    }
     ~TListBox() {
       _Clear();
     }
@@ -59,6 +62,9 @@ namespace ctrl_ext {
     }
 
     ActionQueue &OnDblClick, &OnSelect;
+
+    DECLARE_CLASS(TListBox)
+    DECLARE_EVENT_TABLE()
   };
 }; // end namespace ctrl_ext
 #endif

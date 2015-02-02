@@ -14,7 +14,7 @@
 class TdlgMsgBox: public TDialog, public AActionHandler  {
 protected:
   wxCheckBox* cbRemember;
-  bool Execute(const IOlxObject *Sender, const IOlxObject *Data, TActionQueue *);
+  bool Execute(const IEObject *Sender, const IEObject *Data, TActionQueue *);
   TPtrList<TButton> buttons;
 public:
   TdlgMsgBox(TMainFrame* Parent, const olxstr& msg, const olxstr& title,

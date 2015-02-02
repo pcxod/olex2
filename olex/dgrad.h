@@ -17,7 +17,7 @@ private:
   wxStaticText *stcA, *stcB, *stcC, *stcD;
 protected:
   void OnOK(wxCommandEvent& event);
-  bool Execute(const IOlxObject *Sender, const IOlxObject *Data, TActionQueue *);
+  bool Execute(const IEObject *Sender, const IEObject *Data, TActionQueue *);
   int A, B, C, D;
   void Init();
 public:
@@ -27,5 +27,6 @@ public:
   DefPropP(int, B)
   DefPropP(int, C)
   DefPropP(int, D)
+  DECLARE_EVENT_TABLE()
 };
 #endif

@@ -75,7 +75,7 @@ void THtmlManager::ClearPopups() {
 }
 //.............................................................................
 void THtmlManager::LockWindowDestruction(wxWindow* wnd,
-  const IOlxObject* caller)
+  const IEObject* caller)
 {
   if (wnd == main)
     main->LockPageLoad(caller);
@@ -90,7 +90,7 @@ void THtmlManager::LockWindowDestruction(wxWindow* wnd,
 }
 //.............................................................................
 void THtmlManager::UnlockWindowDestruction(wxWindow* wnd,
-  const IOlxObject* caller)
+  const IEObject* caller)
 {
   if (wnd == main)
     main->UnlockPageLoad(caller);
@@ -110,7 +110,7 @@ THtml* THtmlManager::FindHtml(const olxstr& name) const {
   return pd == NULL ? NULL : pd->Html;
 }
 //.............................................................................
-bool THtmlManager::Enter(const IOlxObject *sender, const IOlxObject *data,
+bool THtmlManager::Enter(const IEObject *sender, const IEObject *data,
   TActionQueue *)
 {
   if (sender != NULL) {
@@ -127,7 +127,7 @@ bool THtmlManager::Enter(const IOlxObject *sender, const IOlxObject *data,
   return true;
 }
 //.............................................................................
-bool THtmlManager::Exit(const IOlxObject *sender, const IOlxObject *data,
+bool THtmlManager::Exit(const IEObject *sender, const IEObject *data,
   TActionQueue *)
 {
   if (sender != NULL) {
@@ -144,7 +144,7 @@ bool THtmlManager::Exit(const IOlxObject *sender, const IOlxObject *data,
   return true;
 }
 //.............................................................................
-bool THtmlManager::Execute(const IOlxObject *sender, const IOlxObject *data,
+bool THtmlManager::Execute(const IEObject *sender, const IEObject *data,
   TActionQueue *)
 {
   olxstr dt;
@@ -215,7 +215,7 @@ item_nameb ... if there are more than 1 state for an item the function does the
 rotation if one of the states correspond to current - the next one is selected
 */
 void THtmlManager::macItemState(TStrObjList &Cmds, const TParamList &Options,
-  TMacroData &Error)
+  TMacroError &Error)
 {
   THtml *html = NULL;
   if( Cmds.Count() > 2 && !Cmds[1].IsNumber() )  {
@@ -316,7 +316,7 @@ void THtmlManager::macItemState(TStrObjList &Cmds, const TParamList &Options,
   return;
 }
 //.............................................................................
-void THtmlManager::funGetItemState(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funGetItemState(const TStrObjList &Params, TMacroError &E)  {
   size_t di = Params[0].IndexOf('.');
   olxstr hn = di == InvalidIndex ? EmptyString() : Params[0].SubStringTo(di);
   olxstr in = di == InvalidIndex ? Params[0] : Params[0].SubStringFrom(di+1);
@@ -340,12 +340,12 @@ void THtmlManager::funGetItemState(const TStrObjList &Params, TMacroData &E)  {
     E.SetRetVal(sw->GetFileIndex());
 }
 //.............................................................................
-void THtmlManager::funIsPopup(const TStrObjList& Params, TMacroData &E)  {
+void THtmlManager::funIsPopup(const TStrObjList& Params, TMacroError &E)  {
   THtml *html = FindHtml(Params[0]);
   E.SetRetVal(html != NULL && html->GetParent()->IsShown());
 }
 //.............................................................................
-void THtmlManager::funIsEnabled(const TStrObjList& Params, TMacroData &E)  {
+void THtmlManager::funIsEnabled(const TStrObjList& Params, TMacroError &E)  {
   Control c = FindControl(Params[0], E, 0, __OlxSrcInfo);
   if (c.ctrl == NULL) {
     E.ProcessingError(__OlxSrcInfo, "undefined control: ").quote() << Params[0];
@@ -354,7 +354,7 @@ void THtmlManager::funIsEnabled(const TStrObjList& Params, TMacroData &E)  {
   E.SetRetVal(c.ctrl->WI.IsEnabled());
 }
 //.............................................................................
-void THtmlManager::funIsItem(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funIsItem(const TStrObjList &Params, TMacroError &E)  {
   THtml *html = (Params.Count() == 2) ? FindHtml(Params[0]) : main;
   if( html == NULL )  {
     E.ProcessingError(__OlxSrcInfo,
@@ -372,7 +372,7 @@ void THtml::SetShowTooltips(bool v, const olxstr& html_name)  {
 }
 //.............................................................................
 void THtmlManager::macTooltips(TStrObjList &Cmds, const TParamList &Options,
-  TMacroData &E)
+  TMacroError &E)
 {
   THtml *html = main;
   olxstr hname;
@@ -393,7 +393,7 @@ void THtmlManager::macTooltips(TStrObjList &Cmds, const TParamList &Options,
 }
 //.............................................................................
 void THtmlManager::macUpdate(TStrObjList &Cmds, const TParamList &Options,
-  TMacroData &E)
+  TMacroError &E)
 {
   THtml *html = (Cmds.Count() == 1) ? FindHtml(Cmds[0]) : main;
   if( html == NULL )  {
@@ -405,7 +405,7 @@ void THtmlManager::macUpdate(TStrObjList &Cmds, const TParamList &Options,
 }
 //.............................................................................
 void THtmlManager::macSetFonts(TStrObjList &Cmds, const TParamList &Options,
-  TMacroData &Error)
+  TMacroError &Error)
 {
   olxstr hn = Cmds.Count() == 2 ? EmptyString() : Cmds[0];
   THtml *html = Cmds.Count() == 3 ? FindHtml(hn) : main;
@@ -421,7 +421,7 @@ void THtmlManager::macSetFonts(TStrObjList &Cmds, const TParamList &Options,
 }
 //.............................................................................
 void THtmlManager::macSetBorders(TStrObjList &Cmds, const TParamList &Options,
-  TMacroData &E)
+  TMacroError &E)
 {
   olxstr hn = Cmds.Count() == 1 ? EmptyString() : Cmds[0];
   THtml *html = Cmds.Count() == 2 ? FindHtml(hn) : main;
@@ -434,7 +434,7 @@ void THtmlManager::macSetBorders(TStrObjList &Cmds, const TParamList &Options,
 }
 //.............................................................................
 void THtmlManager::macHome(TStrObjList &Cmds, const TParamList &Options,
-  TMacroData &E)
+  TMacroError &E)
 {
   olxstr hn = Cmds.Count() == 0 ? EmptyString() : Cmds[0];
   THtml *html = (Cmds.Count() == 1) ? FindHtml(Cmds[0]) : main;
@@ -447,7 +447,7 @@ void THtmlManager::macHome(TStrObjList &Cmds, const TParamList &Options,
 }
 //.............................................................................
 void THtmlManager::macLoad(TStrObjList &Cmds, const TParamList &Options,
-  TMacroData &E)
+  TMacroError &E)
 {
   olxstr hn = Cmds.Count() == 1 ? EmptyString() : Cmds[0];
   THtml *html = (Cmds.Count() == 2) ? FindHtml(Cmds[0]) : main;
@@ -460,7 +460,7 @@ void THtmlManager::macLoad(TStrObjList &Cmds, const TParamList &Options,
 }
 //.............................................................................
 void THtmlManager::macHide(TStrObjList &Cmds, const TParamList &Options,
-  TMacroData &E)
+  TMacroError &E)
 {
   THtmlManager::TPopupData *html = Popups.Find(Cmds[0], NULL);
   if( html == NULL )  {
@@ -479,7 +479,7 @@ void THtmlManager::macHide(TStrObjList &Cmds, const TParamList &Options,
 }
 //.............................................................................
 void THtmlManager::macDump(TStrObjList &Cmds, const TParamList &Options,
-  TMacroData &E)
+  TMacroError &E)
 {
   olxstr hn = Cmds.Count() == 1 ? EmptyString() : Cmds[0];
   THtml *html = (Cmds.Count() == 2) ? FindHtml(Cmds[0]) : main;
@@ -494,7 +494,7 @@ void THtmlManager::macDump(TStrObjList &Cmds, const TParamList &Options,
 }
 //.............................................................................
 void THtmlManager::macDefineControl(TStrObjList &Cmds,
-  const TParamList &Options, TMacroData &E)
+  const TParamList &Options, TMacroError &E)
 {
   const size_t ind = Cmds[0].IndexOf('.');
   THtml* html = (ind == InvalidIndex) ? main : FindHtml(Cmds[0].SubStringTo(ind));
@@ -554,7 +554,7 @@ void THtmlManager::macDefineControl(TStrObjList &Cmds,
   }
 }
 //.............................................................................
-void THtmlManager::funGetValue(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funGetValue(const TStrObjList &Params, TMacroError &E)  {
   Control c = FindControl(Params[0], E, 0, __OlxSrcInfo);
   if( c.html == NULL )  return;
   if( c.ctrl == NULL )  {
@@ -576,29 +576,29 @@ void THtmlManager::funGetValue(const TStrObjList &Params, TMacroData &E)  {
     E.SetRetVal(c.html->GetObjectValue(c.ctrl));
 }
 //.............................................................................
-void THtmlManager::funSetValue(const TStrObjList &Params, TMacroData &E) {
+void THtmlManager::funSetValue(const TStrObjList &Params, TMacroError &E)  {
   Control c = FindControl(Params[0], E, 0, __OlxSrcInfo);
-  if (c.html == NULL) return;
-  if (c.ctrl == NULL) {
+  if( c.html == NULL )  return;
+  if( c.ctrl == NULL )  {
     olxstr_dict<olxstr,false>* props =
       c.html->ObjectsState.FindProperties(c.ctrl_name);
-    if (props == NULL) {
+    if( props == NULL )  {
       E.ProcessingError(__OlxSrcInfo,
         "wrong html object name: ").quote() << c.ctrl_name;
       return;
     }
-    if (props->IndexOf("val") == InvalidIndex) {
+    if( props->IndexOf("val") == InvalidIndex )  {
       E.ProcessingError(__OlxSrcInfo,
         "object definition does not accept value for: ").quote() << c.ctrl_name;
       return;
     }
-    if ((*props)["type"] == EsdlClassName(TTrackBar) ||
-        (*props)["type"] == EsdlClassName(TSpinCtrl))
+    if( (*props)["type"] == EsdlClassName(TTrackBar) ||
+        (*props)["type"] == EsdlClassName(TSpinCtrl) )
     {
       const size_t si = Params[1].IndexOf(',');
-      if (si == InvalidIndex)
+      if( si == InvalidIndex )
         (*props)["val"] = Params[1];
-      else {
+      else  {
         (*props)["min"] = Params[1].SubStringTo(si);
         (*props)["max"] = Params[1].SubStringFrom(si+1);
       }
@@ -606,15 +606,15 @@ void THtmlManager::funSetValue(const TStrObjList &Params, TMacroData &E) {
     else
       (*props)["val"] = Params[1];
   }
-  else {
-    c.html->SetObjectValue(c.ctrl, c.ctrl_name, Params[1]);
+  else  {
+    c.html->SetObjectValue(c.ctrl, Params[1]);
     wxWindow *w = dynamic_cast<wxWindow *>(c.ctrl);
     if (w != NULL)
       w->Refresh();
   }
 }
 //.............................................................................
-void THtmlManager::funGetData(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funGetData(const TStrObjList &Params, TMacroError &E)  {
   Control c = FindControl(Params[0], E, 0, __OlxSrcInfo);
   if( c.html == NULL )  return;
   if( c.ctrl == NULL )  {
@@ -631,20 +631,20 @@ void THtmlManager::funGetData(const TStrObjList &Params, TMacroData &E)  {
     E.SetRetVal(c.html->GetObjectData(c.ctrl));
 }
 //.............................................................................
-void THtmlManager::funGetItems(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funGetItems(const TStrObjList &Params, TMacroError &E)  {
   Control c = FindControl(Params[0], E, 1, __OlxSrcInfo);
   if( c.html == NULL || c.ctrl == NULL )  return;
   E.SetRetVal(c.html->GetObjectItems(c.ctrl));
 }
 //.............................................................................
-void THtmlManager::funSetData(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funSetData(const TStrObjList &Params, TMacroError &E)  {
   Control c = FindControl(Params[0], E, 1, __OlxSrcInfo);
   if( c.html == NULL || c.ctrl == NULL )  return;
   c.html->SetObjectData(c.ctrl, Params[1]);
 }
 //.............................................................................
 THtmlManager::Control THtmlManager::FindControl(const olxstr &name,
-  TMacroData& me, short needs, const char* location)
+  TMacroError& me, short needs, const char* location)
 {
   const size_t ind = name.IndexOf('.');
   olxstr hn = (ind == InvalidIndex) ? EmptyString() : name.SubStringTo(ind);
@@ -671,7 +671,7 @@ THtmlManager::Control THtmlManager::FindControl(const olxstr &name,
     ci == InvalidIndex ? NULL : html->GetWindow(ci), objName);
 }
 //.............................................................................
-void THtmlManager::funGetState(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funGetState(const TStrObjList &Params, TMacroError &E)  {
   Control c = FindControl(Params[0], E, 0, __OlxSrcInfo);
   if( c.html == NULL )  return;
   if( c.ctrl == NULL )  {
@@ -693,7 +693,7 @@ void THtmlManager::funGetState(const TStrObjList &Params, TMacroData &E)  {
   }
 }
 //.............................................................................
-void THtmlManager::funGetLabel(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funGetLabel(const TStrObjList &Params, TMacroError &E)  {
   Control c = FindControl(Params[0], E, 1, __OlxSrcInfo);
   if( c.html == NULL || c.ctrl == NULL )  return;
   olxstr rV;
@@ -716,7 +716,7 @@ void THtmlManager::funGetLabel(const TStrObjList &Params, TMacroData &E)  {
   E.SetRetVal(rV);
 }
 //.............................................................................
-void THtmlManager::funSetLabel(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funSetLabel(const TStrObjList &Params, TMacroError &E)  {
   Control c = FindControl(Params[0], E, 1, __OlxSrcInfo);
   if( c.html == NULL || c.ctrl == NULL )  return;
   if( EsdlInstanceOf(*c.ctrl, TButton) )
@@ -736,7 +736,7 @@ void THtmlManager::funSetLabel(const TStrObjList &Params, TMacroData &E)  {
     return;
   }
 //.............................................................................
-}void THtmlManager::funCall(const TStrObjList &Params, TMacroData &E)  {
+}void THtmlManager::funCall(const TStrObjList &Params, TMacroError &E)  {
   const size_t d_cnt = Params[0].CharCount('.');
   olxstr ctrl_name, evt_name;
   if( d_cnt >= 1 )  {
@@ -757,7 +757,7 @@ void THtmlManager::funSetLabel(const TStrObjList &Params, TMacroData &E)  {
 }
 //.............................................................................
 void THtmlManager::macLstObj(TStrObjList &Cmds, const TParamList &Options,
-  TMacroData &E)
+  TMacroError &E)
 {
   THtml* html = Cmds.Count() == 0 ? main : FindHtml(Cmds[1]);
   const olxstr &hn = Cmds.Count() == 0 ? EmptyString() : Cmds[0];
@@ -779,7 +779,7 @@ void THtmlManager::macLstObj(TStrObjList &Cmds, const TParamList &Options,
   TBasicApp::NewLogEntry() << all;
 }
 //.............................................................................
-void THtmlManager::funSetImage(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funSetImage(const TStrObjList &Params, TMacroError &E)  {
   Control c = FindControl(Params[0], E, 1, __OlxSrcInfo);
   if( c.html == NULL || c.ctrl == NULL )  return;
   if( !c.html->SetObjectImage(c.ctrl, Params[1]) ) {
@@ -788,13 +788,13 @@ void THtmlManager::funSetImage(const TStrObjList &Params, TMacroData &E)  {
   }
 }
 //.............................................................................
-void THtmlManager::funGetImage(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funGetImage(const TStrObjList &Params, TMacroError &E)  {
   Control c = FindControl(Params[0], E, 1, __OlxSrcInfo);
   if( c.html == NULL || c.ctrl == NULL )  return;
   E.SetRetVal(c.html->GetObjectImage(c.ctrl));
 }
 //.............................................................................
-void THtmlManager::funSetFocus(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funSetFocus(const TStrObjList &Params, TMacroError &E)  {
   Control c = FindControl(Params[0], E, 0, __OlxSrcInfo);
   if( c.html == NULL )  return;
   if( c.wnd == NULL )  // not created yet?
@@ -808,7 +808,7 @@ void THtmlManager::funSetFocus(const TStrObjList &Params, TMacroData &E)  {
   c.wnd->SetFocus();
 }
 //.............................................................................
-void THtmlManager::funSelect(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funSelect(const TStrObjList &Params, TMacroError &E)  {
   bool by_label = Params.Count() == 3 ? Params[2].ToBool() : true;
   Control c = FindControl(Params[0], E, 1, __OlxSrcInfo);
   if( c.html == NULL || c.ctrl == NULL )  return;
@@ -823,7 +823,7 @@ void THtmlManager::funSelect(const TStrObjList &Params, TMacroData &E)  {
     tv->SelectByData(Params[1]);
 }
 //.............................................................................
-bool THtmlManager::SetState(const TStrObjList &Params, TMacroData &E)  {
+bool THtmlManager::SetState(const TStrObjList &Params, TMacroError &E)  {
   Control c = FindControl(Params[0], E, 0, __OlxSrcInfo);
   if( c.html == NULL )  return false;
   const bool state = Params.GetLastString().ToBool();
@@ -852,13 +852,13 @@ bool THtmlManager::SetState(const TStrObjList &Params, TMacroData &E)  {
   return true;
 }
 //.............................................................................
-void THtmlManager::funSetState(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funSetState(const TStrObjList &Params, TMacroError &E)  {
   if( !SetState(Params, E) )
     return;
   //if( Params.GetLastString().ToBool() )  {
   //  TStrObjList params(Params);
   //  params.GetLastString() = FalseString();
-  //  TMacroData e;
+  //  TMacroError e;
   //  for( size_t i=0; i < Groups.Count(); i++ )  {
   //    if( Groups[i].IndexOf(Params[0]) == InvalidIndex )  continue;
   //    const TStrList& group = Groups[i];
@@ -871,7 +871,7 @@ void THtmlManager::funSetState(const TStrObjList &Params, TMacroData &E)  {
   //}
 }
 //.............................................................................
-void THtmlManager::funSetEnabled(const TStrObjList &Params, TMacroData &E) {
+void THtmlManager::funSetEnabled(const TStrObjList &Params, TMacroError &E) {
   Control c = FindControl(Params[0], E, 1, __OlxSrcInfo);
   if (c.ctrl == NULL) {
     E.ProcessingError(__OlxSrcInfo, "undefined control: ").quote() << Params[0];
@@ -880,13 +880,13 @@ void THtmlManager::funSetEnabled(const TStrObjList &Params, TMacroData &E) {
   c.ctrl->WI.SetEnabled(Params[1].ToBool());
 }
 //.............................................................................
-void THtmlManager::funSetItems(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funSetItems(const TStrObjList &Params, TMacroError &E)  {
   Control c = FindControl(Params[0], E, 1, __OlxSrcInfo);
   if( c.html == NULL || c.ctrl == NULL )  return;
   c.html->SetObjectItems(c.ctrl, Params[1]);
 }
 //.............................................................................
-void THtmlManager::funSaveData(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funSaveData(const TStrObjList &Params, TMacroError &E)  {
   olxstr hn = Params.Count() == 1 ? EmptyString() : Params[0];
   THtml* html = Params.Count() == 1 ? main : FindHtml(Params[0]);
   if (html == NULL) {
@@ -898,7 +898,7 @@ void THtmlManager::funSaveData(const TStrObjList &Params, TMacroData &E)  {
   html->ObjectsState.SaveToFile(fn);
 }
 //.............................................................................
-void THtmlManager::funLoadData(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funLoadData(const TStrObjList &Params, TMacroError &E)  {
   olxstr hn = Params.Count() == 1 ? EmptyString() : Params[0];
   THtml* html = Params.Count() == 1 ? main : FindHtml(Params[0]);
   if (html == NULL) {
@@ -918,7 +918,7 @@ void THtmlManager::funLoadData(const TStrObjList &Params, TMacroData &E)  {
   }
 }
 //.............................................................................
-void THtmlManager::funSetFG(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funSetFG(const TStrObjList &Params, TMacroError &E)  {
   Control c = FindControl(Params[0], E, 2, __OlxSrcInfo);
   if( c.html == NULL || c.wnd == NULL )  return;
   const wxColor fgc = wxColor(Params[1].u_str());
@@ -930,7 +930,7 @@ void THtmlManager::funSetFG(const TStrObjList &Params, TMacroData &E)  {
   c.wnd->Refresh();
 }
 //.............................................................................
-void THtmlManager::funSetBG(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funSetBG(const TStrObjList &Params, TMacroError &E)  {
   Control c = FindControl(Params[0], E, 2, __OlxSrcInfo);
   if( c.html == NULL || c.wnd == NULL )  return;
   const wxColor bgc(Params[1].u_str());
@@ -944,7 +944,7 @@ void THtmlManager::funSetBG(const TStrObjList &Params, TMacroData &E)  {
   c.wnd->Refresh();
 }
 //.............................................................................
-void THtmlManager::funGetFontName(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funGetFontName(const TStrObjList &Params, TMacroError &E)  {
   olxstr hn = Params.IsEmpty() ? EmptyString() : Params[0];
   THtml* html = Params.IsEmpty() ? main : FindHtml(Params[0]);
   if (html == NULL) {
@@ -955,7 +955,7 @@ void THtmlManager::funGetFontName(const TStrObjList &Params, TMacroData &E)  {
   E.SetRetVal<olxstr>(html->GetParser()->GetFontFace());
 }
 //.............................................................................
-void THtmlManager::funGetBorders(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funGetBorders(const TStrObjList &Params, TMacroError &E)  {
   olxstr hn = Params.IsEmpty() ? EmptyString() : Params[0];
   THtml* html = Params.IsEmpty() ? main : FindHtml(Params[0]);
   if (html == NULL) {
@@ -966,7 +966,7 @@ void THtmlManager::funGetBorders(const TStrObjList &Params, TMacroData &E)  {
   E.SetRetVal(html->GetBorders());
 }
 //.............................................................................
-void THtmlManager::funEndModal(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funEndModal(const TStrObjList &Params, TMacroError &E)  {
   THtmlManager::TPopupData *pd = Popups.Find(Params[0], NULL);
   if( pd == NULL )  {
     E.ProcessingError(__OlxSrcInfo,
@@ -981,7 +981,7 @@ void THtmlManager::funEndModal(const TStrObjList &Params, TMacroData &E)  {
   pd->Dialog->EndModal(Params[1].ToInt());
 }
 //.............................................................................
-void THtmlManager::funShowModal(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funShowModal(const TStrObjList &Params, TMacroError &E)  {
   THtmlManager::TPopupData *pd = Popups.Find(Params[0], NULL);
   if (pd == NULL) {
     E.ProcessingError(__OlxSrcInfo,
@@ -992,7 +992,7 @@ void THtmlManager::funShowModal(const TStrObjList &Params, TMacroData &E)  {
     pd->Dialog->ShowModalEx(Params.Count() == 1 ? false : Params[1].ToBool()));
 }
 //.............................................................................
-void THtmlManager::funWidth(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funWidth(const TStrObjList &Params, TMacroError &E)  {
   Control c = FindControl(Params[0], E, 2, __OlxSrcInfo);
   if( c.html == NULL || c.wnd == NULL )  return;
   if( Params.Count() == 1 )
@@ -1001,7 +1001,7 @@ void THtmlManager::funWidth(const TStrObjList &Params, TMacroData &E)  {
     c.wnd->SetSize(-1, -1, Params[1].ToInt(), -1);
 }
 //.............................................................................
-void THtmlManager::funHeight(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funHeight(const TStrObjList &Params, TMacroError &E)  {
   Control c = FindControl(Params[0], E, 2, __OlxSrcInfo);
   if( c.html == NULL || c.wnd == NULL )  return;
   if( Params.Count() == 1 )
@@ -1010,7 +1010,7 @@ void THtmlManager::funHeight(const TStrObjList &Params, TMacroData &E)  {
     c.wnd->SetSize(-1, -1, -1, Params[1].ToInt());
 }
 //.............................................................................
-void THtmlManager::funClientWidth(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funClientWidth(const TStrObjList &Params, TMacroError &E)  {
   Control c = FindControl(Params[0], E, 2, __OlxSrcInfo);
   if( c.html == NULL || c.wnd == NULL )  {
     if( Params.Count() == 1 ) {
@@ -1025,7 +1025,7 @@ void THtmlManager::funClientWidth(const TStrObjList &Params, TMacroData &E)  {
     c.wnd->SetClientSize(Params[1].ToInt(), -1);
 }
 //.............................................................................
-void THtmlManager::funClientHeight(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funClientHeight(const TStrObjList &Params, TMacroError &E)  {
   Control c = FindControl(Params[0], E, 2, __OlxSrcInfo);
   if( c.html == NULL || c.wnd == NULL )  {
     if( Params.Count() == 1 ) {
@@ -1040,7 +1040,7 @@ void THtmlManager::funClientHeight(const TStrObjList &Params, TMacroData &E)  {
     c.wnd->SetClientSize(-1, Params[1].ToInt());
 }
 //.............................................................................
-void THtmlManager::funContainerWidth(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funContainerWidth(const TStrObjList &Params, TMacroError &E)  {
   THtmlManager::TPopupData *pd = Popups.Find(Params[0], NULL);
   if( pd == NULL )  {
     E.ProcessingError(__OlxSrcInfo,
@@ -1053,7 +1053,7 @@ void THtmlManager::funContainerWidth(const TStrObjList &Params, TMacroData &E)  
     pd->Dialog->SetClientSize(Params[1].ToInt(), -1);
 }
 //.............................................................................
-void THtmlManager::funContainerHeight(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funContainerHeight(const TStrObjList &Params, TMacroError &E)  {
   THtmlManager::TPopupData *pd = Popups.Find(Params[0], NULL);
   if( pd == NULL )  {
     E.ProcessingError(__OlxSrcInfo,
@@ -1067,7 +1067,7 @@ void THtmlManager::funContainerHeight(const TStrObjList &Params, TMacroData &E) 
 }
 //.............................................................................
 void THtmlManager::macGroup(TStrObjList &Cmds, const TParamList &Options,
-  TMacroData &E)
+  TMacroError &E)
 {
   //bool intersects = false;
   //for( size_t i=0; i < Groups.Count(); i++ )  {
@@ -1087,7 +1087,7 @@ void THtmlManager::macGroup(TStrObjList &Cmds, const TParamList &Options,
 }
 //.............................................................................
 void THtmlManager::funSnippet(const TStrObjList &Params,
-  TMacroData &E)
+  TMacroError &E)
 {
   IInputStream *is = TFileHandlerManager::GetInputStream(Params[0]);
   if (is == NULL) {

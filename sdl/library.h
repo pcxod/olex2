@@ -19,7 +19,7 @@ const uint16_t
   libReturn  = 0x0002,
   libChain   = 0x0004;
 
-class TLibrary: public IOlxObject, public ABasicLibrary  {
+class TLibrary: public IEObject, public ABasicLibrary  {
   sorted::StringAssociation<ABasicFunction*, true> Functions, Macros;
   TTypeList<FunctionChainer> Chains;
   olxstr LibraryName;
@@ -141,7 +141,7 @@ public:
       const olxstr& entryType) :
       TBasicException(location, olxstr("Duplicate ") << entryType << '-' << entry)
       {}
-    virtual IOlxObject* Replicate() const {  return new TDuplicateEntry(*this);  }
+    virtual IEObject* Replicate() const {  return new TDuplicateEntry(*this);  }
   };
 
   class TLibraryNotFound : public TBasicException  {
@@ -149,7 +149,7 @@ public:
     TLibraryNotFound(const olxstr& location, const olxstr& libName) :
       TBasicException(location, olxstr("Library ") << libName << " not found")
       {}
-    virtual IOlxObject* Replicate() const {  return new TLibraryNotFound(*this);  }
+    virtual IEObject* Replicate() const {  return new TLibraryNotFound(*this);  }
   };
 };
 

@@ -13,38 +13,29 @@
 BeginGxlNamespace()
 
 // Olex2 model file
-class TOXMFile : public TBasicCFile {
+class TOXMFile : public TBasicCFile  {
   TGXApp& gxapp;
 public:
-  TOXMFile(TGXApp& app) : gxapp(app)
-  {}
-  virtual ~TOXMFile() {}
+  TOXMFile(TGXApp& app) : gxapp(app) {  }
+  virtual ~TOXMFile() {  }
 
-  virtual void SaveToStrings(TStrList &) {
+  virtual void SaveToStrings(TStrList& Strings)  {
     throw TNotImplementedException(__OlxSourceInfo);
   }
-  virtual void LoadFromStrings(const TStrList &) {
+  virtual void LoadFromStrings(const TStrList& Strings)  {
     throw TNotImplementedException(__OlxSourceInfo);
   }
-  virtual bool IsNative() const { return true; }
-  virtual bool Adopt(TXFile &, int) {
-    throw TNotImplementedException(__OlxSourceInfo);
-  }
-  virtual void LoadFromFile(const olxstr &fn) {
+  virtual bool IsNative() const {  return true;  }
+  virtual bool Adopt(TXFile&)  {  throw TNotImplementedException(__OlxSourceInfo);  }
+  virtual void LoadFromFile(const olxstr& fn)  {
     gxapp.LoadModel(fn);
     RefMod.Assign( gxapp.XFile().GetRM(), true);
     FileName = fn;
   }
-  virtual void SaveToFile(const olxstr& fn) {
-    if (gxapp.XFile().GetRM().GetModelSource().IsEmpty()) {
-      gxapp.XFile().GetRM().SetModelSource(
-        TEFile::ChangeFileExt(
-          TEFile::ExtractFileName(gxapp.XFile().GetFileName()),
-          EmptyString()));
-    }
+  virtual void SaveToFile(const olxstr& fn)  {
     gxapp.SaveModel(fn);
   }
-  virtual IOlxObject* Replicate() const {  return new TOXMFile(gxapp);  }
+  virtual IEObject* Replicate() const {  return new TOXMFile(gxapp);  }
 };
 
 EndGxlNamespace()

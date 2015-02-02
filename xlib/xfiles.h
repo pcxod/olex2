@@ -49,15 +49,9 @@ public:
   // only oxm loader is native
   virtual bool IsNative() const {  return false;  }
   // adopts the content of the AsemmUnit to the virtual format
-  virtual bool Adopt(class TXFile &, int flags=0) = 0;
+  virtual bool Adopt(class TXFile&) = 0;
 };
 //---------------------------------------------------------------------------
-
-enum {
-  XFILE_EVT_SG_Change,
-  XFILE_EVT_UNIQ,
-  XFILE_EVT_LAST
-};
 
 //---------------------------------------------------------------------------
 class TXFile: public AEventsDispatcher {
@@ -69,8 +63,8 @@ protected:
   TStringToList<olxstr,TBasicCFile*> FileFormats;
   TBasicCFile *FLastLoader;
   TSpaceGroup* FSG;
-  virtual bool Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
-    const IOlxObject *Data, TActionQueue *);
+  virtual bool Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
+    const IEObject *Data, TActionQueue *);
   void ValidateTabs();
   void PostLoad(const olxstr &fn, TBasicCFile *loader, bool replicated);
 public:
@@ -81,21 +75,17 @@ public:
     &OnFileSave,
     &OnFileClose; // OnEnter, LastLoader is passed as Data
 
-  /* takes over the object event queues
-  */
-  virtual void TakeOver(TXFile &f);
-
-  const TLattice& GetLattice() const {  return Lattice;  }
-  TLattice& GetLattice()  {  return Lattice;  }
-  TUnitCell& GetUnitCell() const {  return Lattice.GetUnitCell();  }
+  inline const TLattice& GetLattice() const {  return Lattice;  }
+  inline TLattice& GetLattice()  {  return Lattice;  }
+  inline TUnitCell& GetUnitCell() const {  return Lattice.GetUnitCell();  }
   const RefinementModel& GetRM() const {  return RefMod;  }
   RefinementModel& GetRM()  {  return RefMod;  }
-  TAsymmUnit& GetAsymmUnit() const {  return Lattice.GetAsymmUnit();  }
+  inline TAsymmUnit& GetAsymmUnit() const {  return Lattice.GetAsymmUnit();  }
   /* a propper pointer, created with new should be passed
    the object will be deleted in the destructor !! */
   void RegisterFileFormat(TBasicCFile* F, const olxstr& Ext);
 
-  virtual IOlxObject* Replicate() const;
+  virtual IEObject* Replicate() const;
   /* the space group is initialised upon file loading
    if the space group is unknow, TFunctionFailedException is thrown
   */
@@ -136,8 +126,8 @@ public:
   // nameToken is build is similar way to the NameArg!
   void LoadFromStream(IInputStream &is, const olxstr &nameToken);
   void LoadFromStrings(const TStrList& lines, const olxstr &nameToken);
-  void LoadFromFile(const olxstr&FN);
-  void SaveToFile(const olxstr &FN, int flags = 0);
+  void LoadFromFile(const olxstr& FN);
+  void SaveToFile(const olxstr& FN, bool Sort);
   // clears the last loader and the model
   void Close();
   // returns last loaded file name (if any) or empty string
@@ -153,25 +143,20 @@ public:
   void LastLoaderChanged();  // performs complete reinitialisation
 
   const_strlist ToJSON() const;
-  virtual void ToDataItem(TDataItem& item);
-  virtual void FromDataItem(const TDataItem& item);
+  void ToDataItem(TDataItem& item);
+  void FromDataItem(TDataItem& item);
 
-  void LibDataCount(const TStrObjList& Params, TMacroData& E);
-  void LibCurrentData(const TStrObjList& Params, TMacroData& E);
-  void LibDataName(const TStrObjList& Params, TMacroData& E);
-  void LibGetFormula(const TStrObjList& Params, TMacroData& E);
-  void LibSetFormula(const TStrObjList& Params, TMacroData& E);
+  void LibDataCount(const TStrObjList& Params, TMacroError& E);
+  void LibCurrentData(const TStrObjList& Params, TMacroError& E);
+  void LibDataName(const TStrObjList& Params, TMacroError& E);
+  void LibGetFormula(const TStrObjList& Params, TMacroError& E);
+  void LibSetFormula(const TStrObjList& Params, TMacroError& E);
   void LibEndUpdate(TStrObjList &Cmds, const TParamList &Options,
-    TMacroData &E);
-  void LibSaveSolution(const TStrObjList& Params, TMacroData& E);
-  void LibGetMu(const TStrObjList& Params, TMacroData& E);
-  void LibRefinementInfo(const TStrObjList& Params, TMacroData& E);
-
-  TLibrary* ExportLibrary(const olxstr& name=EmptyString());
-
-  struct VPtr : public olx_virtual_ptr<TXFile> {
-    virtual IOlxObject *get_ptr() const;
-  };
+    TMacroError &E);
+  void LibSaveSolution(const TStrObjList& Params, TMacroError& E);
+  void LibGetMu(const TStrObjList& Params, TMacroError& E);
+  void LibRefinementInfo(const TStrObjList& Params, TMacroError& E);
+  class TLibrary* ExportLibrary(const olxstr& name = EmptyString());
 
   /* describes a file name with which may carry reference to the dataset in the
   case of multiple-dataset files

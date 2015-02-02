@@ -21,8 +21,8 @@ public:
   virtual ~TPdb()  {  Clear();  }
   virtual void SaveToStrings(TStrList& Strings);
   virtual void LoadFromStrings(const TStrList& Strings);
-  virtual bool Adopt(TXFile &, int);
-  virtual IOlxObject* Replicate() const {  return new TPdb;  }
+  virtual bool Adopt(TXFile& XF);
+  virtual IEObject* Replicate() const {  return new TPdb;  }
 };
 
 EndXlibNamespace()

@@ -37,8 +37,7 @@ public:
     double peak_height;
     NameRef(size_t id, const cm_Element* _elm, double _peak_height,
       const olxstr& n)
-      : catom_id(id), name(n), elm(_elm), peak_height(_peak_height)
-    {}
+      : catom_id(id), name(n), elm(_elm), peak_height(_peak_height)   {}
   };
 
   TNameUndo(IUndoAction* action) : TUndoData(action)  {}
@@ -60,7 +59,7 @@ typedef TPtrList<SObject> SObjectPtrList;
 class TXApp : public TBasicApp, public ALibraryContainer  {
   TUndoStack UndoStack;
 protected:
-  TTypeList<TXFile> Files;
+  TXFile *FXFile;
   TLibrary Library;
   olxstr CifTemplatesDir;  // the folder with CIF templates/data
   ASelectionOwner* SelectionOwner;
@@ -83,8 +82,7 @@ public:
   TXApp(const olxstr &basedir, ASObjectProvider* objectProvider=NULL,
     ASelectionOwner* selOwner=NULL);
   virtual ~TXApp();
-  TXFile& XFile() const { return Files[0]; }
-  const TTypeList<TXFile> &XFiles() const { return Files; }
+  inline TXFile& XFile() const {  return *FXFile; }
 
   DefPropC(olxstr, CifTemplatesDir)
 
@@ -97,14 +95,14 @@ public:
 
   template <class FT>
     bool CheckFileType() const {
-      if (!XFile().HasLastLoader())  return false;
-      return EsdlInstanceOf(*XFile().LastLoader(), FT);
+      if( !FXFile->HasLastLoader() )  return false;
+      return EsdlInstanceOf(*FXFile->LastLoader(), FT);
     }
 
-  static TXApp& GetInstance() {
+  static TXApp& GetInstance()  {
     TBasicApp& bai = TBasicApp::GetInstance();
     TXApp* xai = dynamic_cast<TXApp*>(&bai);
-    if (xai == NULL) {
+    if( xai == NULL ) {
       throw TFunctionFailedException(__OlxSourceInfo,
         "unsuitable application instance");
     }
@@ -157,11 +155,6 @@ public:
   olxstr GetLastSGResult() const { return LastSGResult; }
   // for the internal use
   void SetLastSGResult_(const olxstr &r) { LastSGResult = r; }
-  /* loads specified radii from an element-radius a line file or from structured
-  xld file
-  */
-  void UpdateRadii(const olxstr &fn, const olxstr &rtype=EmptyString(),
-    bool log=false);
   /* reads a simple 'element radius' a line text file
   */
   static ElementRadii::const_dict_type ReadRadii(const olxstr& fn);

@@ -14,9 +14,9 @@
 class THtmlManager : public AActionHandler {
   wxWindow *mainWindow;
   TActionQList Actions;
-  virtual bool Enter(const IOlxObject *, const IOlxObject *, TActionQueue *);
-  virtual bool Exit(const IOlxObject *, const IOlxObject *, TActionQueue *);
-  virtual bool Execute(const IOlxObject *, const IOlxObject *, TActionQueue *);
+  virtual bool Enter(const IEObject *, const IEObject *, TActionQueue *);
+  virtual bool Exit(const IEObject *, const IEObject *, TActionQueue *);
+  virtual bool Execute(const IEObject *, const IEObject *, TActionQueue *);
   bool destroyed;
 protected:
   // library
@@ -78,9 +78,9 @@ protected:
       : html(h), ctrl(c), wnd(w), ctrl_name(cn) {}
   };
   // needed = 0 - nothing, 1 - AOlxCtrl, 2 - wxWidow, 3 - both
-  Control FindControl(const olxstr &name, TMacroData& me,
+  Control FindControl(const olxstr &name, TMacroError& me,
     short needed, const char* location);
-  bool SetState(const TStrObjList &Params, TMacroData &E);
+  bool SetState(const TStrObjList &Params, TMacroError &E);
 public:
   THtml *main;
   struct TPopupData  {
@@ -90,8 +90,8 @@ public:
   struct DestructionLocker {
     THtmlManager &manager;
     wxWindow *wnd;
-    IOlxObject *sender;
-    DestructionLocker(THtmlManager &manager, wxWindow *wnd, IOlxObject *sender)
+    IEObject *sender;
+    DestructionLocker(THtmlManager &manager, wxWindow *wnd, IEObject *sender)
       : manager(manager), wnd(wnd), sender(sender)
     {
       manager.LockWindowDestruction(wnd, sender);
@@ -106,11 +106,11 @@ public:
   void InitialiseMain(long flags);
   void ProcessPageLoadRequests();
   void ClearPopups();
-  DestructionLocker LockDestruction(wxWindow *wnd, IOlxObject *sender) {
+  DestructionLocker LockDestruction(wxWindow *wnd, IEObject *sender) {
     return DestructionLocker(*this, wnd, sender);
   }
-  void LockWindowDestruction(wxWindow* wnd, const IOlxObject* caller);
-  void UnlockWindowDestruction(wxWindow* wnd, const IOlxObject* caller);
+  void LockWindowDestruction(wxWindow* wnd, const IEObject* caller);
+  void UnlockWindowDestruction(wxWindow* wnd, const IEObject* caller);
   THtml* FindHtml(const olxstr& name) const;
   TPopupData &NewPopup(TDialog *owner, const olxstr &name, long flags=4);
   TLibrary* ExportLibrary(const olxstr &name="html");

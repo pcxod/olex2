@@ -22,13 +22,18 @@ enum  {
   ID_EDITFONT
 };
 //..............................................................................
+BEGIN_EVENT_TABLE(TdlgMatProp, TDialog)
+  EVT_BUTTON(wxID_OK, TdlgMatProp::OnOK)
+  EVT_BUTTON(ID_COPY, TdlgMatProp::OnCopy)
+  EVT_BUTTON(ID_PASTE, TdlgMatProp::OnPaste)
+  EVT_BUTTON(ID_EDITFONT, TdlgMatProp::OnEditFont)
+END_EVENT_TABLE()
+//..............................................................................
+TGlMaterial TdlgMatProp::MaterialCopy;
+//..............................................................................
 TdlgMatProp::TdlgMatProp(TMainFrame *ParentFrame, AGDrawObject& object) :
   TDialog(ParentFrame, wxT("Material Parameters"), wxT("dlgMatProp"))
 {
-  Bind(wxEVT_BUTTON, &TdlgMatProp::OnOK, this, wxID_OK);
-  Bind(wxEVT_BUTTON, &TdlgMatProp::OnCopy, this, ID_COPY);
-  Bind(wxEVT_BUTTON, &TdlgMatProp::OnPaste, this, ID_PASTE);
-  Bind(wxEVT_BUTTON, &TdlgMatProp::OnEditFont, this, ID_EDITFONT);
   Object = &object;
   Init();
 }
@@ -272,33 +277,31 @@ TdlgMatProp::~TdlgMatProp()  {
   tcSpecB->OnClick.Clear();
 }
 //..............................................................................
-bool TdlgMatProp::Execute(const IOlxObject *Sender, const IOlxObject *Data,
+bool TdlgMatProp::Execute(const IEObject *Sender, const IEObject *Data,
   TActionQueue *)
 {
-  if (EsdlInstanceOf( *Sender, TTextEdit)) {
+  if( EsdlInstanceOf( *Sender, TTextEdit) )  {
     wxColourDialog *CD = new wxColourDialog(this);
-    wxColor wc = dynamic_cast<const TTextEdit *>(Sender)->GetBackgroundColour();
+    wxColor wc = ((TTextEdit*)Sender)->GetBackgroundColour();
     CD->GetColourData().SetColour(wc);
     if( CD->ShowModal() == wxID_OK )  {
       wc = CD->GetColourData().GetColour();
-      const_cast<TTextEdit *>(dynamic_cast<const TTextEdit *>(Sender))->WI
-        .SetColor(OLX_RGB(wc.Red(), wc.Green(), wc.Blue()));
+      ((TTextEdit*)Sender)->WI.SetColor(OLX_RGB(wc.Red(), wc.Green(), wc.Blue()));
     }
     delete CD;
   }
-  if (Sender == cbPrimitives) {
+  if( (TComboBox*)Sender == cbPrimitives )  {
     Update(Materials[FCurrentMaterial]);
     int i = cbPrimitives->FindString(cbPrimitives->GetValue());
-    if (i >= 0) {
+    if( i >= 0 )  {
       FCurrentMaterial = i;
       Init(Materials[FCurrentMaterial]);
-      const TGlPrimitive* glp = dynamic_cast<const TGlPrimitive*>(
-        cbPrimitives->GetObject(i));
+      const TGlPrimitive* glp = (const TGlPrimitive*)cbPrimitives->GetObject(i);
       bEditFont->Enable(glp->GetFont() != NULL && !glp->GetFont()->IsVectorFont());
     }
   }
-  if (Sender == scTrans) {
-    for (size_t i=0; i < SpinCtrls.Count(); i++)
+  if( (TSpinCtrl*)Sender == scTrans )  {
+    for( size_t i=0; i < SpinCtrls.Count(); i++ )
       SpinCtrls[i]->SetValue(scTrans->GetValue());
   }
   return true;
@@ -485,16 +488,16 @@ void TdlgMatProp::OnOK(wxCommandEvent& event)  {
 //..............................................................................
 void TdlgMatProp::OnCopy(wxCommandEvent& event)  {
   Update(Materials[FCurrentMaterial]);
-  MaterialCopy_() = Materials[FCurrentMaterial];
+  MaterialCopy = Materials[FCurrentMaterial];
 }
 //..............................................................................
 void TdlgMatProp::OnPaste(wxCommandEvent& event)  {
 //  Materials[FCurrentMaterial] = MaterialCopy;
-  Init(MaterialCopy_());
+  Init(MaterialCopy);
 }
 //..............................................................................
 void TdlgMatProp::OnEditFont(wxCommandEvent& event)  {
-  TGXApp::GetInstance().GetRenderer().GetScene().ShowFontDialog(
+  TGXApp::GetInstance().GetRender().GetScene().ShowFontDialog(
     Object->GetPrimitives().GetPrimitive(FCurrentMaterial).GetFont());
   TGPCollection& gpc = Object->GetPrimitives();
   for( size_t i=0; i < gpc.ObjectCount(); i++ )

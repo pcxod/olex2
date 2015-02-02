@@ -28,13 +28,13 @@ template <class T> struct ThreadFunctionConverter  {
   }
 };
 
-class AOlxThread : public APerishable {
+class AOlxThread : public IEObject {
 protected:
   int volatile RetVal;
   bool volatile Terminate, Detached, Running;
   //...........................................................................
 #ifdef __WIN32__
-  struct HandleRemover  : public IOlxObject  {
+  struct HandleRemover  : public IEObject  {
     HANDLE handle;
     HandleRemover(HANDLE _handle) : handle(_handle) {}
     ~HandleRemover()  {

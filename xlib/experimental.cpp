@@ -10,7 +10,6 @@
 #include "experimental.h"
 #include "dataitem.h"
 #include "pers_util.h"
-#include "xapp.h"
 
 bool ExperimentalDetails::SetTemp(const olxstr& t)  {
   if( t.IsEmpty() )  return false;
@@ -68,7 +67,7 @@ void ExperimentalDetails::FromDataItem(const TDataItem& item) {
 }
 //.............................................................................
 void ExperimentalDetails::LibTemperature(const TStrObjList& Params,
-  TMacroData& E)
+  TMacroError& E)
 {
   if( Params.IsEmpty() )
     E.SetRetVal( IsTemperatureSet() ? TempValue.ToString() : olxstr("n/a"));
@@ -77,7 +76,7 @@ void ExperimentalDetails::LibTemperature(const TStrObjList& Params,
 }
 //.............................................................................
 void ExperimentalDetails::LibRadiation(const TStrObjList& Params,
-  TMacroData& E)
+  TMacroError& E)
 {
   if( Params.IsEmpty() )
     E.SetRetVal(olxstr(Radiation));
@@ -85,7 +84,7 @@ void ExperimentalDetails::LibRadiation(const TStrObjList& Params,
     SetWL(Params[0]);
 }
 //.............................................................................
-void ExperimentalDetails::LibSize(const TStrObjList& Params, TMacroData& E)  {
+void ExperimentalDetails::LibSize(const TStrObjList& Params, TMacroError& E)  {
   if( Params.IsEmpty() ) {
     E.SetRetVal(olxstr(CrystalSize[0]) << 'x' << CrystalSize[1] << 'x' <<
       CrystalSize[2]);
@@ -94,28 +93,19 @@ void ExperimentalDetails::LibSize(const TStrObjList& Params, TMacroData& E)  {
     SetSize(Params[0]);
 }
 //.............................................................................
-//.............................................................................
-//.............................................................................
-IOlxObject *ExperimentalDetails::VPtr::get_ptr() const {
-  return &TXApp::GetInstance().XFile().GetRM().expl;
-}
-//.............................................................................
-//.............................................................................
-//.............................................................................
-TLibrary* ExperimentalDetails::ExportLibrary(const olxstr& name) {
-  TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("exptl") : name);
-  olx_vptr<ExperimentalDetails> thip(new VPtr);;
+TLibrary* ExperimentalDetails::ExportLibrary(const olxstr& name)  {
+  TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("exptl") : name );
   lib->Register(
-    new TFunction<ExperimentalDetails>(thip,
+    new TFunction<ExperimentalDetails>(this,
     &ExperimentalDetails::LibTemperature, "Temperature", fpNone|fpOne,
     "Returns/sets experiment temperature. Returns value in C, accepts strings"
     " like 120K, 10F. Default scale is C"));
   lib->Register(
-    new TFunction<ExperimentalDetails>(thip,
+    new TFunction<ExperimentalDetails>(this,
     &ExperimentalDetails::LibRadiation, "Radiation", fpNone|fpOne,
     "Returns/sets experiment wavelength in angstrems") );
   lib->Register(
-    new TFunction<ExperimentalDetails>(thip,
+    new TFunction<ExperimentalDetails>(this,
     &ExperimentalDetails::LibSize, "Size", fpNone|fpOne,
     "Returns/sets crystal size. Returns/accepts strings line 0.5x0.5x0.5 "
     "(in mm)"));

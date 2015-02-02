@@ -21,7 +21,7 @@ static olxstr
   olxappevent_GL_CLEAR_STYLES("GLDSCLEAR"),
   olxappevent_UPDATE_GUI("UPDATE_GUI");
 
-class TBasicApp: public virtual IOlxObject {
+class TBasicApp: public IEObject {
   olxstr
 /* the directory from which the program is running */
     BaseDir,
@@ -50,7 +50,7 @@ protected:
   TTypeList<IOlxAction> Actions;
   class TActionHandler : public AActionHandler {
   public:
-    bool Execute(const IOlxObject *, const IOlxObject *, TActionQueue *);
+    bool Execute(const IEObject *, const IEObject *, TActionQueue *);
   };
 public:
   // the file name of the application with full path

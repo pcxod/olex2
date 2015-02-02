@@ -102,25 +102,38 @@ void TGlPrimitive::SetType(short T)  {
 }
 //..............................................................................
 void TGlPrimitive::ListParams(TStrList &List)  {
-  switch (Type) {
+  switch( Type )  {
     case sgloSphere:
-      List << "Radius"  << "Slices" <<"Stacks";
+      List.Add("Radius");
+      List.Add("Slices");
+      List.Add("Stacks");
       break;
     case sgloDisk:
-      List << "Inner radius" << "Outer radius" << "Slices" << "Loops";
+      List.Add("Inner radius");
+      List.Add("Outer radius");
+      List.Add("Slices");
+      List.Add("Loops");
       break;
     case sgloDiskSlice:
-      List << "Inner radius" << "Outer radius" << "Slices" << "Loops" <<
-        "Start angle" << "Sweep angle";
+      List.Add("Inner radius");
+      List.Add("Outer radius");
+      List.Add("Slices");
+      List.Add("Loops");
+      List.Add("Start angle");
+      List.Add("Sweep angle");
       break;
     case sgloCylinder:
-      List << "Base radius" << "Top radius" << "Height" << "Slices" << "Loops";
+      List.Add("Base radius");
+      List.Add("Top radius");
+      List.Add("Height");
+      List.Add("Slices");
+      List.Add("Loops");
       break;
     case sgloPoints:
-      List << "Point size";
+      List.Add("Point size");
       break;
     case sgloLines:
-      List << "Line width";
+      List.Add("Line width");
       break;
     default:
       ParentCollection->ListParams(List, this);

@@ -40,6 +40,8 @@ namespace ctrl_ext  {
       const olxstr &DefFolder, const olxstr &DefFile, bool Open);
     virtual void SetScenesFolder(const olxstr& sf) = 0;
     virtual const olxstr& GetScenesFolder() const = 0;
+    virtual void LoadScene(const TDataItem &root, TGlLightModel &scene) = 0;
+    virtual void SaveScene(TDataItem &root, const TGlLightModel &scene) const = 0;
 
     static TMainFrame& GetMainFrameInstance() {  return *MainFrameInstance;  }
     static int ShowAlert(const olxstr &msg, const olxstr &title, int flags);

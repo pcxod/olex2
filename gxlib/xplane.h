@@ -26,17 +26,23 @@ public:
   virtual ~TXPlane()  {}
   void Create(const olxstr& cName=EmptyString());
 
+  // multiple inheritance...
+  void SetTag(index_t v) {   TSPlane::SetTag(v);  }
+  index_t GetTag() const {  return TSPlane::GetTag();  }
+  index_t IncTag()  {  return TSPlane::IncTag();  }
+  index_t DecTag()  {  return TSPlane::DecTag();  }
+
   bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d &, vec3d &)  {  return false;  }
   void ListPrimitives(TStrList& List) const;
 
-  bool OnMouseDown(const IOlxObject *, const TMouseData &)  {
+  bool OnMouseDown(const IEObject *, const TMouseData &)  {
     return true;
   }
-  bool OnMouseUp(const IOlxObject *, const TMouseData &)  {
+  bool OnMouseUp(const IEObject *, const TMouseData &)  {
     return false;
   }
-  bool OnMouseMove(const IOlxObject *, const TMouseData &)  {
+  bool OnMouseMove(const IEObject *, const TMouseData &)  {
     return false;
   }
 
@@ -54,9 +60,6 @@ public:
     return nr;
   }
 };
-
-typedef TTypeList<TXPlane> TXPlaneList;
-typedef TPtrList<TXPlane> TXPlanePList;
 
 EndGxlNamespace()
 #endif

@@ -15,8 +15,7 @@
 #include "emath.h"
 #include "edict.h"
 
-template <class IC, class AssociatedOC>
-class TEGraphNode : public ACollectionItem {
+template <class IC, class AssociatedOC> class TEGraphNode : ACollectionItem  {
   IC Data;
   typedef TEGraphNode<IC, AssociatedOC> NodeType;
   typedef olx_pair_t<TSizeList,TSizeList> ConnInfo;
@@ -127,17 +126,7 @@ public:
     Object = object;
     Permutations = NULL;
   }
-  TEGraphNode(const TEGraphNode &n) : Data(n.Data),
-    RingNode(n.RingNode), Root(n.Root), GroupIndex(n.GroupIndex),
-    Passed(n.Passed), Mutable(n.Mutable), Object(n.Object),
-    Connectivity(n.Connectivity),
-    Permutations(n.Permutations == 0 ? 0 : new TTypeList<TSizeList>(*n.Permutations))
-  {
-    for (size_t i = 0; i < n.Count(); i++) {
-      Nodes.Add(new TEGraphNode(n[i]));
-    }
-  }
-  ~TEGraphNode() {
+  ~TEGraphNode()  {
     Nodes.DeleteItems(false);
     if (Permutations != NULL)
       delete Permutations;

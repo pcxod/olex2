@@ -12,20 +12,15 @@
 #include "olxvar.h"
 
 using namespace ctrl_ext;
+IMPLEMENT_CLASS(TDateCtrl, wxDatePickerCtrl)
+
+BEGIN_EVENT_TABLE(TDateCtrl, wxDatePickerCtrl)
+  EVT_DATE_CHANGED(-1, TDateCtrl::ChangeEvent)
+END_EVENT_TABLE()
 //..............................................................................
-TDateCtrl::TDateCtrl(wxWindow *Parent, wxWindowID id, const wxDateTime& value,
-const wxPoint& pos, const wxSize& size, long style)
-: wxDatePickerCtrl(Parent, id, value, pos, size, style),
-  AOlxCtrl(this),
-  OnChange(AOlxCtrl::ActionQueue::New(Actions, evt_change_id))
-{
-  Value = GetValue();
-  Bind(wxEVT_DATE_CHANGED, &TDateCtrl::ChangeEvent, this);
-}
-//..............................................................................
-void TDateCtrl::ChangeEvent(wxDateEvent& event) {
+void TDateCtrl::ChangeEvent(wxDateEvent& event)  {
   event.Skip();
-  if (event.GetDate() == Value)
+  if( event.GetDate() == Value )
     return;
   Value = event.GetDate();
   OnChange.Execute(this);

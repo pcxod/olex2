@@ -51,8 +51,6 @@ TGlConsole::TGlConsole(TGlRenderer& R, const olxstr& collectionName) :
   FCursor = new TGlCursor(R, "Cursor");
   SetToDelete(false);
   R.OnDraw.Add(this);
-  SetPrintable(false);
-  SetVisible(true);
   // init size related valriables
   OnResize();
 }
@@ -63,9 +61,9 @@ TGlConsole::~TGlConsole()  {
   delete FCursor;
 }
 //..............................................................................
-void TGlConsole::Create(const olxstr& cName) {
+void TGlConsole::Create(const olxstr& cName)  {
   FontIndex = Parent.GetScene().FindFontIndexForType<TGlConsole>(FontIndex);
-  if (!cName.IsEmpty())
+  if( !cName.IsEmpty() )
     SetCollectionName(cName);
 
   TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
@@ -337,7 +335,7 @@ bool TGlConsole::ProcessKey( int Key , short ShiftState)  {
       }
       FCmdPos = FCommands.Count();
     }
-    OnCommand.Execute(dynamic_cast<IOlxObject*>((AActionHandler*)this));
+    OnCommand.Execute(dynamic_cast<IEObject*>((AActionHandler*)this));
     if( FCommand.IsEmpty() )  {
       PromptStr = InviteStr;
       olex2::IOlex2Processor::GetInstance()->processFunction(PromptStr);
@@ -405,7 +403,7 @@ void TGlConsole::PrintText(const olxstr &S, TGlMaterial *M, bool Hyphenate) {
     }
     else
       FBuffer.Add(S, GlM);
-    OnPost.Execute(dynamic_cast<IOlxObject*>((AActionHandler*)this), &S);
+    OnPost.Execute(dynamic_cast<IEObject*>((AActionHandler*)this), &S);
   }
   KeepSize();
   FTxtPos = FBuffer.Count()-1;
@@ -432,7 +430,7 @@ void TGlConsole::PrintText(const TStrList &SL, TGlMaterial *M, bool Hyphenate)  
         }
         else
           FBuffer.Add(Txt[j], GlM);
-        OnPost.Execute(dynamic_cast<IOlxObject*>((AActionHandler*)this), &Txt[j] );
+        OnPost.Execute(dynamic_cast<IEObject*>((AActionHandler*)this), &Txt[j] );
       }
     }
     else  {
@@ -444,7 +442,7 @@ void TGlConsole::PrintText(const TStrList &SL, TGlMaterial *M, bool Hyphenate)  
       }
       else
         FBuffer.Add(SL[i], GlM);
-      OnPost.Execute(dynamic_cast<IOlxObject*>((AActionHandler*)this), &SL[i]);
+      OnPost.Execute(dynamic_cast<IEObject*>((AActionHandler*)this), &SL[i]);
     }
   }
   KeepSize();
@@ -556,7 +554,7 @@ TGlFont &TGlConsole::GetFont() const {
   return Parent.GetScene().GetFont(FontIndex, true);
 }
 //..............................................................................
-bool TGlConsole::Enter(const IOlxObject *Sender, const IOlxObject *Data,
+bool TGlConsole::Enter(const IEObject *Sender, const IEObject *Data,
   TActionQueue *)
 {
   if( IsVisible() )
@@ -564,17 +562,12 @@ bool TGlConsole::Enter(const IOlxObject *Sender, const IOlxObject *Data,
   return true;
 }
 //..............................................................................
-void TGlConsole::SetVisible(bool v) {
+void TGlConsole::SetVisible(bool v)  {
   AGDrawObject::SetVisible(v);
-  if (!v)
+  if( !v )
     FCursor->SetVisible(false);
   else
     FCursor->SetVisible(PromptVisible);
-}
-//..............................................................................
-void TGlConsole::SetPrintable(bool v) {
-  AGDrawObject::SetPrintable(v);
-  FCursor->SetPrintable(v);
 }
 //..............................................................................
 void TGlConsole::SetPromptVisible(bool v)  {
@@ -673,37 +666,37 @@ void TGlConsole::SetCommands(const const_strlist &l) {
 //..............................................................................
 //..............................................................................
 //..............................................................................
-void TGlConsole::LibClear(const TStrObjList& Params, TMacroData& E)  {
+void TGlConsole::LibClear(const TStrObjList& Params, TMacroError& E)  {
   ClearBuffer();
 }
 //..............................................................................
-void TGlConsole::LibLines(const TStrObjList& Params, TMacroData& E)  {
+void TGlConsole::LibLines(const TStrObjList& Params, TMacroError& E)  {
   if( !Params.IsEmpty() )
     SetLinesToShow(Params[0].ToInt());
   else
     E.SetRetVal<olxstr>(FLinesToShow);
 }
 //..............................................................................
-void TGlConsole::LibShowBuffer(const TStrObjList& Params, TMacroData& E)  {
+void TGlConsole::LibShowBuffer(const TStrObjList& Params, TMacroError& E)  {
   if( !Params.IsEmpty() )
     ShowBuffer( Params[0].ToBool() );
   else
     E.SetRetVal<olxstr>(FShowBuffer);
 }
 //..............................................................................
-void TGlConsole::LibPostText(const TStrObjList& Params, TMacroData& E)  {
+void TGlConsole::LibPostText(const TStrObjList& Params, TMacroError& E)  {
   for( size_t i=0; i < Params.Count(); i++ )
     PrintText(Params[i]);
 }
 //..............................................................................
-void TGlConsole::LibLineSpacing(const TStrObjList& Params, TMacroData& E)  {
+void TGlConsole::LibLineSpacing(const TStrObjList& Params, TMacroError& E)  {
   if( !Params.IsEmpty() )
     SetLineSpacing(Params[0].ToDouble());
   else
     E.SetRetVal<olxstr>(FLineSpacing);
 }
 //..............................................................................
-void TGlConsole::LibInviteString(const TStrObjList& Params, TMacroData& E)  {
+void TGlConsole::LibInviteString(const TStrObjList& Params, TMacroError& E)  {
   if (!Params.IsEmpty()) {
     olxstr ps = Params[0];
     if (!olex2::IOlex2Processor::GetInstance()->processFunction(
@@ -721,7 +714,7 @@ void TGlConsole::LibInviteString(const TStrObjList& Params, TMacroData& E)  {
     E.SetRetVal(InviteStr);
 }
 //..............................................................................
-void TGlConsole::LibCommand(const TStrObjList& Params, TMacroData& E)  {
+void TGlConsole::LibCommand(const TStrObjList& Params, TMacroError& E)  {
   if( !Params.IsEmpty() )  {
     PromptStr = InviteStr;
     olex2::IOlex2Processor::GetInstance()->processFunction(PromptStr);

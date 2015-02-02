@@ -34,7 +34,7 @@ struct TSortedListEntry {
 };
 //..............................................................................
 template <class A, class B, class ComparatorType>
-class TSTypeList : public IOlxObject {
+class TSTypeList : public IEObject {
   // not an ArrayList - inserts are too 'heavy'
   typedef TSortedListEntry<A,B> EntryType;
   TPtrList<EntryType> Data;
@@ -154,10 +154,6 @@ public:
   template <class Functor> TSTypeList& ForEach(const Functor& f) const {
     Data.ForEach(f);
     return *this;
-  }
-//..............................................................................
-  template <class Analyser> size_t Count(const Analyser& a) const {
-    return Data.Count(a);
   }
 //..............................................................................
   void Delete(size_t i)  {

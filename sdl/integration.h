@@ -52,7 +52,7 @@ namespace olex2 {
     virtual bool processMacro(const olxstr& cmdLine,
       const olxstr &location=EmptyString(), bool quiet=false) = 0;
     virtual bool processMacroEx(const olxstr& cmdLine,
-      TMacroData& err, const olxstr &location=EmptyString(),
+      TMacroError& err, const olxstr &location=EmptyString(),
       bool quiet=false) = 0;
     virtual bool processFunction(olxstr& cmdl,
       const olxstr &location=EmptyString(), bool quiet=false) = 0;
@@ -84,7 +84,7 @@ namespace olex2 {
     }
   };
 
-  class IOlex2Runnable : public IOlxObject {
+  class IOlex2Runnable : public IEObject {
   public:
     IOlex2Runnable() { GetOlex2Runnable() = this; }
     virtual ~IOlex2Runnable() {}

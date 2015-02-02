@@ -21,6 +21,6 @@ public:
   TPTableDlg(TMainFrame *Parent);
   virtual ~TPTableDlg();
   cm_Element* GetSelected()  {  return Selected; }
-  bool Execute(const IOlxObject *Sender, const IOlxObject *Data, TActionQueue *);
+  bool Execute(const IEObject *Sender, const IEObject *Data, TActionQueue *);
 };
 #endif

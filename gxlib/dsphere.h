@@ -31,11 +31,11 @@ protected:
   }
   APointAnalyser* analyser;
   size_t Generation;  //6
-  bool OnDblClick(const IOlxObject *, const TMouseData& Data);
-  bool OnMouseDown(const IOlxObject *, const TMouseData& Data)  {
+  bool OnDblClick(const IEObject *, const TMouseData& Data);
+  bool OnMouseDown(const IEObject *, const TMouseData& Data)  {
     return AGlMouseHandlerImp::OnMouseDown(this, Data);
   }
-  bool OnMouseUp(const IOlxObject *, const TMouseData& Data)  {
+  bool OnMouseUp(const IEObject *, const TMouseData& Data)  {
     return AGlMouseHandlerImp::OnMouseUp(this, Data);
   }
   TGlPrimitive &CreatePrimitive(TGPCollection &collection,

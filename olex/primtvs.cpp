@@ -12,6 +12,9 @@
 #include "xbond.h"
 #include "xatom.h"
 
+BEGIN_EVENT_TABLE(TdlgPrimitive, TDialog)
+  EVT_BUTTON(wxID_OK, TdlgPrimitive::OnOK)
+END_EVENT_TABLE()
 //..............................................................................
 TdlgPrimitive::TdlgPrimitive(TMainFrame *P, AGDrawObject& object) :
   TDialog(P, wxT("Primitives"), wxT("dlgPrimitives")),
@@ -60,7 +63,6 @@ TdlgPrimitive::TdlgPrimitive(TMainFrame *P, AGDrawObject& object) :
   TopSizer->SetSizeHints(this);   // set size hints to honour minimum size
   SetSizer(TopSizer);
   Center();
-  Bind(wxEVT_BUTTON, &TdlgPrimitive::OnOK, this, wxID_OK);
 }
 //..............................................................................
 void TdlgPrimitive::OnOK(wxCommandEvent& event) {

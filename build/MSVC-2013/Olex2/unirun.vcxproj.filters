@@ -42,6 +42,9 @@
     <ClCompile Include="..\..\..\repository\wxzipfs.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\repository\zipfs.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\repository\httpfs.h">

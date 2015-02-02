@@ -275,7 +275,7 @@ TGlTexture::Data TGlTexture::ReadData(const TGlTexture& tex) {
   if (rv.width == 0 || rv.height == 0)
     return rv;
   rv.data = new unsigned char[rv.width*rv.height*4];
-  if (rv.data.is_null())
+  if( rv.data == NULL )
     throw TOutOfMemoryException(__OlxSourceInfo);
   olx_gl::pixelStore(GL_PACK_ALIGNMENT, 4);
   olx_gl::getTexImage(tex.GetType(), tex.GetLevel(), GL_RGBA,

@@ -804,12 +804,6 @@
     <ClCompile Include="..\..\..\xlib\calc_ext.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\xlib\atomregistry.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\xlib\xscatterer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\xlib\afixgroup.h">
@@ -1090,9 +1084,6 @@
     </ClInclude>
     <ClInclude Include="..\..\..\xlib\cifdata.h">
       <Filter>Header Files\CIF</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\xlib\pdb.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -448,7 +448,6 @@ struct GraphAnalyser  {
     size_t calls;
     TagSetter() : calls(0)  {}
     bool OnItem(const TEGraphNode<uint64_t, TSAtom*>& v) {
-      calls++;
       v.GetObject()->SetTag(1);
       return true;
     }

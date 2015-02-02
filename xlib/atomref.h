@@ -35,7 +35,7 @@ public:
   DefPropP(bool, DoClearSelection)
 };
 
-class TAtomReference : public IOlxObject  {
+class TAtomReference : public IEObject  {
   olxstr Expression;
 protected:
   inline bool IsValidAtom(TCAtom* ca)  {

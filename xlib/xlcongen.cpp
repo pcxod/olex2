@@ -62,7 +62,7 @@ bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group,
     switch( Group )  {
       case fgNH3:
       case fgCH3:
-        if (envi.Count() == 1) {
+        if( envi.Count() == 1 )  {
           afix = 137;
           negative_part = (envi.GetBase().CAtom().GetDegeneracy() != 1);
         }
@@ -196,39 +196,30 @@ bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group,
           afix = 153;
         break;
     }
-    if (afix != 0) {
+    if( afix != 0 )  {
       TAfixGroup& ag = RefMod.AfixGroups.New(&envi.GetBase().CAtom(), afix);
-      for (size_t i = 0; i < CreatedAtoms.Count(); i++)
+      for( size_t i=0; i < CreatedAtoms.Count(); i++ )
         ag.AddDependent(*CreatedAtoms[i]);
     }
-    for (size_t i = 0; i < CreatedAtoms.Count(); i++) {
-      if (negative_part)
+    for( size_t i=0; i < CreatedAtoms.Count(); i++ )  {
+      if( negative_part )
         CreatedAtoms[i]->SetPart(-1);
       else
         CreatedAtoms[i]->SetPart(envi.GetBase().CAtom().GetPart());
       CreatedAtoms[i]->SetUisoOwner(&envi.GetBase().CAtom());
-      if (envi.GetBase().GetType() == iOxygenZ || Group == fgCH3)
+      if( envi.GetBase().GetType() == iOxygenZ || Group == fgCH3 )
         CreatedAtoms[i]->SetUisoScale(1.5);
       else
         CreatedAtoms[i]->SetUisoScale(1.2);
-      CreatedAtoms[i]->SetUiso(4 * caDefIso*caDefIso);
+      CreatedAtoms[i]->SetUiso(4*caDefIso*caDefIso);
       RefMod.Vars.SetParam(*CreatedAtoms[i], catom_var_name_Sof,
         RefMod.Vars.GetParam(envi.GetBase().CAtom(), catom_var_name_Sof));
       CreatedAtoms[i]->SetOccu(CreatedAtoms[i]->GetOccu()*occu_mult);
-      if (generated != NULL)
+      if( generated != NULL )
         generated->Add(CreatedAtoms[i]);
     }
-    if (Group == fgCH3x2 && CreatedAtoms.Count() == 6) {
-      XVar &v = RefMod.Vars.NewVar();
-      for (int i = 0; i < 3; i++) {
-        RefMod.Vars.AddVarRef(v, *CreatedAtoms[i], catom_var_name_Sof,
-          relation_AsVar, 1);
-        RefMod.Vars.AddVarRef(v, *CreatedAtoms[3+i], catom_var_name_Sof,
-          relation_AsOneMinusVar, 1);
-      }
-    }
   }
-  catch (TExceptionBase &) {}
+  catch( TExceptionBase& )  {}
   return false;
 }
 //..............................................................................

@@ -43,7 +43,7 @@ void TDFrame::Create(const olxstr& cName) {
   FPrimitive->Params[0] = 1;              // line width
 }
 //..............................................................................
-bool TDFrame::OnMouseDown(const IOlxObject *Sender, const TMouseData& Data)  {
+bool TDFrame::OnMouseDown(const IEObject *Sender, const TMouseData& Data)  {
   if( FPrimitive == NULL )  return false;
   float Scale = (float)Parent.GetScale();
   int hW = Parent.GetWidth()/2 + Parent.GetLeft(),
@@ -67,7 +67,7 @@ bool TDFrame::OnMouseDown(const IOlxObject *Sender, const TMouseData& Data)  {
   return true;
 }
 //..............................................................................
-bool TDFrame::OnMouseUp(const IOlxObject *Sender, const TMouseData& Data)  {
+bool TDFrame::OnMouseUp(const IEObject *Sender, const TMouseData& Data)  {
   if( FPrimitive == NULL )  return false;
   SetVisible(false);
   Parent.Draw();
@@ -82,7 +82,7 @@ bool TDFrame::OnMouseUp(const IOlxObject *Sender, const TMouseData& Data)  {
   return true;
 }
 //..............................................................................
-bool TDFrame::OnMouseMove(const IOlxObject *Sender, const TMouseData& Data)  {
+bool TDFrame::OnMouseMove(const IEObject *Sender, const TMouseData& Data)  {
   if( FPrimitive == NULL )  return false;
   float Scale = (float)Parent.GetScale();
   int hW = Parent.GetWidth()/2 + Parent.GetLeft(),

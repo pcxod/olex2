@@ -84,12 +84,11 @@ PyObject* hkl_py::Write(PyObject* self, PyObject* args)  {
     }
     rf.Add(new TReflection(h, k, l, I, S, flag)).SetTag(1);
   }
+  bool res = false;
   olxstr error;
-  try { THklFile::SaveToFile(fn, rf); }
-  catch (const TExceptionBase &e) {
-    error = e.GetException()->GetError();
-  }
-  if (error.IsEmpty()) {
+  try  {  res = THklFile::SaveToFile(fn, rf);  }
+  catch( const TExceptionBase& e )  {  error = e.GetException()->GetError();  }
+  if( !res )  {
     return PythonExt::SetErrorMsg(PyExc_IOError, __OlxSourceInfo,
       olxstr("Failed to save the HKL file: ") << fn << '\n' << error);
   }

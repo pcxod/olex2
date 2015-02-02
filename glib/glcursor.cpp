@@ -51,8 +51,8 @@ bool TGlCursor::Orient(TGlPrimitive& P)  {
   return true;
 }
 //..............................................................................
-bool TGlCursor::Dispatch( int MsgId, short MsgSubId, const IOlxObject *Sender,
-  const IOlxObject *Data, TActionQueue *)
+bool TGlCursor::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender,
+  const IEObject *Data, TActionQueue *)
 {
   static int count = 0;
   count ++;
@@ -67,14 +67,12 @@ void TGlCursor::SetSymbol(olxch v)  {
   Symbol = v;
 }
 //..............................................................................
-TGlFont& TGlCursor::GetFont() const {
-  return Parent.GetScene().GetFont(FontIndex, true);
-}
+TGlFont& TGlCursor::GetFont() const { return Parent.GetScene().GetFont(FontIndex, true);  }
 //..............................................................................
 //..............................................................................
 //..............................................................................
 
-void TGlCursor::LibSymbol(const TStrObjList& Params, TMacroData& E)  {
+void TGlCursor::LibSymbol(const TStrObjList& Params, TMacroError& E)  {
   if( Params.Count() == 0 )
     E.SetRetVal<olxstr>(Symbol);
   else

@@ -63,7 +63,7 @@ public:
 
 };
 
-class TLst: public IOlxObject  {
+class TLst: public IEObject  {
 protected:
   TTypeList<TLstRef> FDRefs;
   TTypeList<TTrefTry> TrefTries;

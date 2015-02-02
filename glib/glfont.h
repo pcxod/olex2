@@ -32,7 +32,7 @@ struct TTextRect  {
   TTextRect() : top(0), left(0), width(0), height(0) {}
 };
 
-class TGlFont: public IOlxObject  {
+class TGlFont: public IEObject  {
 public:
   static const short
     fntFixedWidth = 0x0001,

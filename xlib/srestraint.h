@@ -33,7 +33,7 @@ const short
   rptValue1 = 0x0008
   ;
 
-class TSimpleRestraint : public IOlxObject, public IXVarReferencer  {
+class TSimpleRestraint : public IEObject, public IXVarReferencer  {
   TSRestraintList& Parent;
   size_t Id;
   short ListType;
@@ -58,10 +58,6 @@ public:
     return AddAtom(ab, mb);
   }
   void AtomsFromExpression(const olxstr &e, const olxstr &resi=EmptyString());
-  void SetAtoms(const TPtrList<class TSAtom> &atoms) {
-    Atoms.Build(atoms);
-  }
-  void ConvertToImplicit() { Atoms.ConvertToImplicit(); }
 
   const TSRestraintList& GetParent() const {  return Parent;  }
   TSRestraintList& GetParent()  {  return Parent;  }
@@ -129,7 +125,7 @@ public:
   friend class TSRestraintList;
 };
 
-class TSRestraintList : public IOlxObject, public IXVarReferencerContainer  {
+class TSRestraintList : public IEObject, public IXVarReferencerContainer  {
   TTypeList<TSimpleRestraint> Restraints;
   short RestraintListType;
   RefinementModel& RefMod;

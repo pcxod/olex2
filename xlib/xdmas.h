@@ -19,14 +19,10 @@ BeginXlibNamespace()
 class TXDMas: public TBasicCFile  {
 public:
   TXDMas()  {  }
-  virtual void SaveToStrings(TStrList& Strings) {
-    throw TNotImplementedException(__OlxSourceInfo);
-  }
+  virtual void SaveToStrings(TStrList& Strings)  {  throw TNotImplementedException(__OlxSourceInfo);  }
   virtual void LoadFromStrings(const TStrList& Strings);
-  virtual bool Adopt(TXFile &, int) {
-    throw TNotImplementedException(__OlxSourceInfo);
-  }
-  virtual IOlxObject* Replicate() const {  return new TXDMas;  }
+  virtual bool Adopt(TXFile&)  {  throw TNotImplementedException(__OlxSourceInfo);  }
+  virtual IEObject* Replicate() const {  return new TXDMas;  }
 };
 
 EndXlibNamespace()

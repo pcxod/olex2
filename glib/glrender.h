@@ -25,7 +25,6 @@
 #include "paramlist.h"
 #include "gpcollection.h"
 #include "glgroup.h"
-#include "styles.h"
 #undef DrawText
 #undef GetObject
 BeginGlNamespace()
@@ -46,31 +45,8 @@ enum glSelectionFlag {
 
 class AGDrawObject;
 class TGlGroup;
-class TGlRenderer;
 
-class AGOSettings : public AActionHandler {
-protected:
-  TGlRenderer &parent;
-  olxstr name;
-  TGraphicsStyle *style;
-  bool Enter(const IOlxObject *, const IOlxObject *, TActionQueue *);
-  bool Exit(const IOlxObject *, const IOlxObject *, TActionQueue *);
-  virtual void OnStyleChange() = 0;;
-public:
-  AGOSettings(TGlRenderer &p, const olxstr &name);
-  virtual ~AGOSettings();
-  virtual void OnRendererClear() = 0;
-  TGraphicsStyle *GetStyle() const { return style;  }
-
-  template <typename value_t, typename name_t>
-  value_t GetParam(const name_t &name, value_t &v, const value_t &def) const {
-    if (style == 0) { return def; }
-    return v != -1 ? v
-      : (v = style->GetNumParam(name, def, true));
-  }
-};
-
-class TGlRenderer : public AActionHandler {
+class TGlRenderer : public IEObject  {
   // a list of all groups of primitives
   ObjectGroup<TGlMaterial, TGlPrimitive>  Primitives;
   olxstr_dict<TGPCollection*, false> FCollections;
@@ -110,9 +86,6 @@ class TGlRenderer : public AActionHandler {
   bool poly_even;
   void SetupStencilFoInterlacedDraw(bool even);
   GLubyte SelectionBuffer[4][4*3];
-  olxstr_dict<AGOSettings *> ObjectSettings;
-  bool Enter(const IOlxObject *, const IOlxObject *, TActionQueue *);
-  bool Exit(const IOlxObject *, const IOlxObject *, TActionQueue *);
 protected:
   void DrawObjects(int x, int y, bool SelectObjects, bool SelectPrimitives);
 
@@ -120,7 +93,7 @@ protected:
   TEBasis FBasis;
   class AGlScene *FScene;
 
-  TGraphicsStyles Styles;
+  static class TGraphicsStyles* FStyles;
   class TGlBackground *FBackground, *FCeiling;
   bool FGlImageChanged; // true if DrawMethod was used
   char *FGlImage;
@@ -131,7 +104,7 @@ protected:
   mutable double SceneDepth;
   bool ATI, GLUSelection;
 
-  class TGlListManager {
+  class TGlListManager  {
     GLuint Inc, Pos;
     TArrayList<GLuint> Lists;
   public:
@@ -153,10 +126,13 @@ public:
   */
   void SetView(bool Identity, short Res=1);
 
-  const TGraphicsStyles& GetStyles() const { return Styles; }
-  TGraphicsStyles& GetStyles() { return Styles; }
+  TGraphicsStyles& GetStyles() const {  return *FStyles; }
   // removes styles, which are not used by any collection
   void CleanUpStyles();
+  // is called by the FStyles only!
+  void _OnStylesClear();
+  // is called by the FStyles only!
+  void _OnStylesLoaded();
 
   bool IsCompiled() const {  return CompiledListId != -1; }
   void Compile(bool v);
@@ -177,11 +153,12 @@ public:
   void RotateY(double V)  {  FBasis.RotateY(V); }
   void RotateZ(double V)  {  FBasis.RotateZ(V); }
   double GetZoom() const {  return FBasis.GetZoom(); }
-  void SetZoom(double V);
+  void  SetZoom(double V);
   void ResetBasis()  {  FBasis.Reset();  }
 
   TGlLightModel LightModel;
   TActionQueue &OnDraw, // register your handler to swap buffers etc
+    &OnStylesClear,  // Enter and Exit are called
     &OnClear;
 
   void Resize(size_t w, size_t h);
@@ -199,7 +176,6 @@ public:
   DefPropP(float, FogDensity)
   DefPropC(TGlOption, FogColor)
   DefPropC(int, AbsoluteTop)
-  DefPropBIsSet(GLUSelection)
   double GetLineWidth() const {  return LineWidth;  }
   void SetLineWidth(double v);
   float GetExtraZoom() const {  return FZoom;  }
@@ -258,7 +234,6 @@ public:
   void ReleaseGlImage();
 
   void Draw();
-  void DrawSilhouette();
   // to be called if the underlying OpenGl Context is about to change
   void BeforeContextChange();
   // to be called if the underlying OpenGl Context has changed
@@ -368,30 +343,20 @@ public:
   */
   void LookAt(double x, double y, short res);
 
-  template <class n_t>
-  AGOSettings *FindSettings(const n_t &name) {
-    return ObjectSettings.Find(name, NULL);
-  }
+  static TGraphicsStyles& _GetStyles();
 
-  AGOSettings &RegisterSettings(AGOSettings &s, const olxstr &name) {
-    return *ObjectSettings.Add(name, &s);
-  }
-
-  TEBitArray::const_type GetVisibility();
-  void SetVisibility(const TEBitArray &v);
-
-  void LibCompile(const TStrObjList& Params, TMacroData& E);
-  void LibStereo(const TStrObjList& Params, TMacroData& E);
-  void LibStereoColor(const TStrObjList& Params, TMacroData& E);
-  void LibFog(TStrObjList& Cmds, const TParamList& Options, TMacroData &E);
+  void LibCompile(const TStrObjList& Params, TMacroError& E);
+  void LibStereo(const TStrObjList& Params, TMacroError& E);
+  void LibStereoColor(const TStrObjList& Params, TMacroError& E);
+  void LibFog(TStrObjList& Cmds, const TParamList& Options, TMacroError &E);
   void LibPerspective(TStrObjList& Cmds, const TParamList& Options,
-    TMacroData& E);
-  void LibZoom(TStrObjList& Cmds, const TParamList& Options, TMacroData& E);
-  void LibCalcZoom(const TStrObjList& Params, TMacroData& E);
-  void LibGetZoom(const TStrObjList& Params, TMacroData& E);
-  void LibLineWidth(const TStrObjList& Params, TMacroData& E);
-  void LibBasis(const TStrObjList& Params, TMacroData& E);
-  void LibRasterZ(const TStrObjList& Params, TMacroData& E);
+    TMacroError& E);
+  void LibZoom(TStrObjList& Cmds, const TParamList& Options, TMacroError& E);
+  void LibCalcZoom(const TStrObjList& Params, TMacroError& E);
+  void LibGetZoom(const TStrObjList& Params, TMacroError& E);
+  void LibLineWidth(const TStrObjList& Params, TMacroError& E);
+  void LibBasis(const TStrObjList& Params, TMacroError& E);
+  void LibRasterZ(const TStrObjList& Params, TMacroError& E);
   TLibrary* ExportLibrary(const olxstr& name=EmptyString());
 };
 

@@ -22,7 +22,7 @@ protected:
   void OnAChange();
   void OnBChange();
   void OnCChange();
-  bool Execute(const IOlxObject *Sender, const IOlxObject *Data, TActionQueue *);
+  bool Execute(const IEObject *Sender, const IEObject *Data, TActionQueue *);
 
   float AFrom, BFrom, CFrom, ATo, BTo, CTo;
 public:
@@ -34,5 +34,7 @@ public:
   DefPropP(float, ATo)
   DefPropP(float, BTo)
   DefPropP(float, CTo)
+
+  DECLARE_EVENT_TABLE()
 };
 #endif

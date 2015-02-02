@@ -13,34 +13,38 @@
 
 namespace ctrl_ext  {
 
-  class TCheckBox: public wxCheckBox, public AActionHandler, public AOlxCtrl {
+  class TCheckBox: public wxCheckBox, public AActionHandler, public AOlxCtrl  {
     void ClickEvent(wxCommandEvent& event);
     void MouseEnterEvent(wxMouseEvent& event);
     olxstr Data, OnCheckStr, OnUncheckStr, OnClickStr, DependMode;
     TActionQueue *ActionQueue;
   public:
-    TCheckBox(wxWindow *Parent, wxWindowID id = -1,
-      const wxString& label = wxEmptyString,
-      const wxPoint& pos = wxDefaultPosition,
-      const wxSize& size = wxDefaultSize, long style = 0);
+    TCheckBox(wxWindow *Parent, long style=0) :
+      wxCheckBox(Parent, -1, wxString(), wxDefaultPosition, wxDefaultSize, style),
+      AOlxCtrl(this),
+      OnClick(AOlxCtrl::ActionQueue::New(Actions, evt_on_click_id)),
+      OnCheck(AOlxCtrl::ActionQueue::New(Actions, evt_on_check_id)),
+      OnUncheck(AOlxCtrl::ActionQueue::New(Actions, evt_on_uncheck_id)),
+      ActionQueue(NULL)  {  SetToDelete(false);  }
 
-    virtual ~TCheckBox() {
-      if (ActionQueue != NULL)  ActionQueue->Remove(this);
-    }
+    virtual ~TCheckBox()  {  if( ActionQueue != NULL )  ActionQueue->Remove(this);  }
 
     void SetActionQueue(TActionQueue& q, const olxstr& dependMode);
-    bool Execute(const IOlxObject *, const IOlxObject *, TActionQueue *);
-    void OnRemove(TActionQueue *) { ActionQueue = NULL; }
+    bool Execute(const IEObject *Sender, const IEObject *Data, TActionQueue *);
+    void OnRemove(TActionQueue *)  {  ActionQueue = NULL;  }
 
     DefPropC(olxstr, Data)
 
     AOlxCtrl::ActionQueue &OnClick, &OnCheck, &OnUncheck;
 
-    void SetCaption(const olxstr &T) { SetLabel(T.u_str()); }
-    olxstr GetCaption() const { return GetLabel(); }
+    inline void SetCaption(const olxstr &T)  {  SetLabel(T.u_str()); }
+    inline olxstr GetCaption() const {  return GetLabel(); }
 
-    bool IsChecked() const { return wxCheckBox::IsChecked(); }
-    void SetChecked(bool v) { wxCheckBox::SetValue(v); }
+    inline bool IsChecked() const {  return wxCheckBox::IsChecked();  }
+    inline void SetChecked(bool v)  {  wxCheckBox::SetValue(v);  }
+
+    DECLARE_CLASS(TCheckBox)
+    DECLARE_EVENT_TABLE()
   };
 }; // end namespace ctrl_ext
 #endif

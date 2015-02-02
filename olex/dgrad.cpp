@@ -12,11 +12,15 @@
 #include "glbackground.h"
 #include "gxapp.h"
 
+// gradient colours properties dialog
+BEGIN_EVENT_TABLE(TdlgGradient, TDialog)
+  EVT_BUTTON(wxID_OK, TdlgGradient::OnOK)
+END_EVENT_TABLE()
+
 TdlgGradient::TdlgGradient(TMainFrame *ParentFrame):
   TDialog(ParentFrame, wxT("Gradient"), EsdlClassName(TdlgGradient).u_str())
 {
   AActionHandler::SetToDelete(false);
-  Bind(wxEVT_BUTTON, &TdlgGradient::OnOK, this, wxID_OK);
   short Border = 3;
 
   wxStaticText *stcA = new wxStaticText(this, -1, wxT("Bottom left"), wxDefaultPosition);
@@ -66,17 +70,16 @@ TdlgGradient::~TdlgGradient()  {
   tcD->OnClick.Clear();
 }
 //..............................................................................
-bool TdlgGradient::Execute(const IOlxObject *Sender, const IOlxObject *Data,
+bool TdlgGradient::Execute(const IEObject *Sender, const IEObject *Data,
   TActionQueue *)
 {
   if( EsdlInstanceOf( *Sender, TTextEdit) )  {
     wxColourDialog *CD = new wxColourDialog(this);
-    wxColor wc = dynamic_cast<const TTextEdit *>(Sender)->GetBackgroundColour();
+    wxColor wc = ((TTextEdit*)Sender)->GetBackgroundColour();
     CD->GetColourData().SetColour(wc);
-    if (CD->ShowModal() == wxID_OK) {
+    if( CD->ShowModal() == wxID_OK )  {
       wc = CD->GetColourData().GetColour();
-      dynamic_cast<TTextEdit *>(const_cast<IOlxObject *>(Sender))->WI
-        .SetColor(OLX_RGB(wc.Red(), wc.Green(), wc.Blue()));
+      ((TTextEdit*)Sender)->WI.SetColor(OLX_RGB(wc.Red(), wc.Green(), wc.Blue()) );
     }
     delete CD;
   }
@@ -84,18 +87,18 @@ bool TdlgGradient::Execute(const IOlxObject *Sender, const IOlxObject *Data,
 }
 //..............................................................................
 void TdlgGradient::Init()  {
-  tcA->WI.SetColor(TGXApp::GetInstance().GetRenderer().Background()->LT().GetRGB());
-  tcB->WI.SetColor(TGXApp::GetInstance().GetRenderer().Background()->RT().GetRGB());
-  tcC->WI.SetColor(TGXApp::GetInstance().GetRenderer().Background()->RB().GetRGB());
-  tcD->WI.SetColor(TGXApp::GetInstance().GetRenderer().Background()->LB().GetRGB());
+  tcA->WI.SetColor(TGXApp::GetInstance().GetRender().Background()->LT().GetRGB());
+  tcB->WI.SetColor(TGXApp::GetInstance().GetRender().Background()->RT().GetRGB());
+  tcC->WI.SetColor(TGXApp::GetInstance().GetRender().Background()->RB().GetRGB());
+  tcD->WI.SetColor(TGXApp::GetInstance().GetRender().Background()->LB().GetRGB());
 }
 //..............................................................................
 void TdlgGradient::OnOK(wxCommandEvent& event)  {
   TGlOption opt;
-  opt = tcA->WI.GetColor();  TGXApp::GetInstance().GetRenderer().Background()->LT(opt);
-  opt = tcB->WI.GetColor();  TGXApp::GetInstance().GetRenderer().Background()->RT(opt);
-  opt = tcC->WI.GetColor();  TGXApp::GetInstance().GetRenderer().Background()->RB(opt);
-  opt = tcD->WI.GetColor();  TGXApp::GetInstance().GetRenderer().Background()->LB(opt);
+  opt = tcA->WI.GetColor();  TGXApp::GetInstance().GetRender().Background()->LT(opt);
+  opt = tcB->WI.GetColor();  TGXApp::GetInstance().GetRender().Background()->RT(opt);
+  opt = tcC->WI.GetColor();  TGXApp::GetInstance().GetRender().Background()->RB(opt);
+  opt = tcD->WI.GetColor();  TGXApp::GetInstance().GetRender().Background()->LB(opt);
   EndModal(wxID_OK);
 }
 //..............................................................................

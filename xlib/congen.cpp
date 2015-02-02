@@ -101,11 +101,10 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
   if( tmp.Length() > 3 )
     tmp.SetLength(3);
 
-  switch (Group) {
+  switch( Group )  {
     case fgCH3:
-    case fgCH3x2:
-      dis = Distances.Get(GenId(fgCH3, 1));
-      if (envi.Count() == 1) {
+      dis = Distances.Get(GenId(fgCH3,1));
+      if( envi.Count() == 1 )  {
         NA = envi.GetBase().GetNetwork().GetLattice().FindSAtom(
           envi.GetCAtom(0));
         envi.GetBase().GetNetwork().GetLattice().GetUnitCell().GetAtomEnviList(
@@ -114,17 +113,17 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
         /* best approximation, though not really required (one atom in plane of
         the subs and two - out)...
         */
-        if (NEnvi.Count() >= 2) {
+        if( NEnvi.Count() >= 2 )  {
           RotVec = (NEnvi.GetBase().crd() - envi.GetBase().crd()).Normalise();
           olx_create_rotation_matrix(M, RotVec, -0.5);
 
-          Vec1 = NEnvi.GetCrd(0) - NEnvi.GetBase().crd();
-          if (olx_abs(olx_abs(Vec1.CAngle(RotVec)) - 1) < 1e-6)
-            Vec1 = NEnvi.GetCrd(1) - NEnvi.GetBase().crd();
+          Vec1 = NEnvi.GetCrd(0)  - NEnvi.GetBase().crd();
+          if (olx_abs(olx_abs(Vec1.CAngle(RotVec))-1) < 1e-6)
+            Vec1 = NEnvi.GetCrd(1)  - NEnvi.GetBase().crd();
           Vec1 = M * Vec1;
 
           Vec2 = RotVec.XProdVec(Vec1).Normalise();
-          olx_create_rotation_matrix(M1, Vec2, cos(M_PI*THA / 180));
+          olx_create_rotation_matrix(M1, Vec2, cos(M_PI*THA/180));
 
           RotVec = M1 * RotVec;
           RotVec *= dis;
@@ -133,31 +132,22 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
           crds.AddNew(RotVec);
           RotVec = M * RotVec;  // 240 degree
           crds.AddNew(RotVec);
-          for (int i = 0; i < 3; i++)
+          for( int i=0; i < 3; i++ )
             crds[i] += envi.GetBase().crd();
         }
       }
-      if (crds.IsEmpty()) {
+      if( crds.IsEmpty() )  {
         PlaneN = (envi.GetCrd(0) - envi.GetBase().crd()).Normalise();
         RotVec = PlaneN.XProdVec(Z).Normalise();
-        olx_create_rotation_matrix(M, RotVec, cos(M_PI*THA / 180));
+        olx_create_rotation_matrix(M, RotVec, cos(M_PI*THA/180));
         crds.AddNew(M*PlaneN);
-        olx_create_rotation_matrix(M, PlaneN, cos(M_PI*120. / 180));
+        olx_create_rotation_matrix(M, PlaneN, cos(M_PI*120./180));
         crds.AddNew(M*crds[0]);
         crds.AddNew(M*crds[1]);
 
-        for (size_t i = 0; i < crds.Count(); i++) {
+        for( size_t i=0; i < crds.Count(); i++ )  {
           crds[i] *= dis;
           crds[i] += envi.GetBase().crd();
-        }
-      }
-      if (Group == fgCH3x2) {
-        RotVec = (olx_mean(crds) - envi.GetBase().crd()).Normalise();
-        olx_create_rotation_matrix(M, RotVec, cos(M_PI*60. / 180));
-        size_t cnt = crds.Count();
-        for (size_t i = 0; i < cnt; i++) {
-          crds.AddCopy(M*(crds[i] - envi.GetBase().crd())
-            + envi.GetBase().crd());
         }
       }
       break;

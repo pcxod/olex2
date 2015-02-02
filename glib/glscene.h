@@ -19,7 +19,7 @@ BeginGlNamespace()
 
 class TGlFont;
 /* abstarct class */
-class AGlScene: public IOlxObject {
+class AGlScene: public IEObject {
 private:
   olxstr_dict<TGlFont*> FontsDict;
   TPtrList<TGlFont> Fonts, SmallFonts;
@@ -139,16 +139,12 @@ public:
     DefPropP(short, Size)
   };
 
-  /* named set of user defined materials.
-  */
-  olxstr_dict<TGlMaterial *> materials;
-
   void ToDataItem(TDataItem &di) const;
   void FromDataItem(const TDataItem &di);
-  
   const_strlist ToPov() const;
+
   void LibMakeCurrent(TStrObjList& Cmds, const TParamList& Options,
-    TMacroData& E);
+    TMacroError& E);
   TLibrary* ExportLibrary(const olxstr& name=EmptyString());
 };
 

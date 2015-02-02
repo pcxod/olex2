@@ -338,7 +338,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>sdl.lib;wxexpatd.lib;wxjpegd.lib;wxbase$(OLX_WX_VER_V12)ud.lib;wxbase$(OLX_WX_VER_V12)ud_net.lib;wxmsw$(OLX_WX_VER_V12)ud_gl.lib;wxmsw$(OLX_WX_VER_V12)ud_richtext.lib;wxmsw$(OLX_WX_VER_V12)ud_html.lib;wxmsw$(OLX_WX_VER_V12)ud_core.lib;wxmsw$(OLX_WX_VER_V12)ud_adv.lib;wxpngd.lib;wxregexud.lib;wxtiffd.lib;wxzlibd.lib;mapi32.lib;glu32.lib;user32.lib;opengl32.lib;gdi32.lib;ole32.lib;advapi32.lib;comdlg32.lib;comctl32.lib;shell32.lib;rpcrt4.lib;oleaut32.lib;kernel32.lib;wsock32.lib;Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(OLX_WX_DIR_V12)\lib\vc_lib;$(SolutionDir)$(Platform)\$(Configuration)\lib\</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(OLX_WX_DIR_V12)\lib\vc_lib;$(SolutionDir)$(Configuration)\lib;</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AssemblyDebug>true</AssemblyDebug>
       <SubSystem>Console</SubSystem>
@@ -549,6 +549,7 @@
     <ClCompile Include="..\..\..\repository\filesystem.cpp" />
     <ClCompile Include="..\..\..\repository\httpfs.cpp" />
     <ClCompile Include="..\..\..\repository\wxzipfs.cpp" />
+    <ClCompile Include="..\..\..\repository\zipfs.cpp" />
     <ClCompile Include="..\..\..\unirun\main.cpp" />
     <ClCompile Include="..\..\..\repository\patchapi.cpp" />
     <ClCompile Include="..\..\..\repository\shellutil.cpp" />

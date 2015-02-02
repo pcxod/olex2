@@ -258,8 +258,8 @@ void TFileHandlerManager::AddBaseDir(const olxstr& bd) {
   BaseDirs().Add(TEFile::AddPathDelimeter(bd));
 }
 //..............................................................................
-TMemoryBlock * TFileHandlerManager::_AddMemoryBlock(const olxstr& name,
-  const char *bf, size_t length, short persistenceId)
+void TFileHandlerManager::_AddMemoryBlock(const olxstr& name, const char *bf,
+  size_t length, short persistenceId)
 {
   olxstr fileName = TEFile::UnixPath(name);
   TMemoryBlock *mb = FMemoryBlocks.Find(fileName, NULL);
@@ -272,22 +272,15 @@ TMemoryBlock * TFileHandlerManager::_AddMemoryBlock(const olxstr& name,
   mb->Buffer = new char[length + 1];
   mb->Length = (uint32_t)length;
   mb->DateTime = TETime::Now();
-  if (length != 0 && bf != NULL)
+  if (length != 0)
     memcpy(mb->Buffer, bf, length);
   mb->PersistenceId = persistenceId;
-  return mb;
 }
 //..............................................................................
 void TFileHandlerManager::AddMemoryBlock(const olxstr& name, const char *bf,
   size_t length, short persistenceId)
 {
-  Handler()->_AddMemoryBlock(name, bf, length, persistenceId);
-}
-//..............................................................................
-TMemoryBlock &TFileHandlerManager::AddMemoryBlock(const olxstr& name,
-  size_t length, short persistenceId)
-{
-  return *Handler()->_AddMemoryBlock(name, NULL, length, persistenceId);
+  return Handler()->_AddMemoryBlock(name, bf, length, persistenceId);
 }
 //..............................................................................
 size_t TFileHandlerManager::Count() {
@@ -329,13 +322,13 @@ bool TFileHandlerManager::Exists(const olxstr& fn) {
 //..............................................................................
 //..............................................................................
 void TFileHandlerManager::LibExists(const TStrObjList& Params,
-  TMacroData& E)
+  TMacroError& E)
 {
   E.SetRetVal<bool>(IsMemoryBlock(Params[0]));
 }
 //..............................................................................
 void TFileHandlerManager::LibDump(TStrObjList &Cmds, const TParamList &Options,
-  TMacroData &Error)
+  TMacroError &Error)
 {
   const TMemoryBlock *mb = FindMemoryBlock(Cmds[0]);
   if (mb == NULL) {
@@ -348,7 +341,7 @@ void TFileHandlerManager::LibDump(TStrObjList &Cmds, const TParamList &Options,
 }
 //..............................................................................
 void TFileHandlerManager::LibClear(TStrObjList &Cmds, const TParamList &Options,
-  TMacroData &Error)
+  TMacroError &Error)
 {
   int mask = -1;
   if (!Cmds.IsEmpty())

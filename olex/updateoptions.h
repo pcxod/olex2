@@ -26,5 +26,7 @@ public:
 
   TdlgUpdateOptions(TMainFrame *ParentFrame);
   virtual ~TdlgUpdateOptions();
+
+  DECLARE_EVENT_TABLE()
 };
 #endif

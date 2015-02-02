@@ -13,7 +13,7 @@
 #include "estrlist.h"
 BeginEsdlNamespace()
 
-class TDataFile: public IOlxObject  {
+class TDataFile: public IEObject  {
 protected:
   class TDataItem *FRoot;
   olxstr FileName;

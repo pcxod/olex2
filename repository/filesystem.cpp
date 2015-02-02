@@ -61,34 +61,32 @@ bool TOSFileSystem::_DoAdoptStream(IInputStream& f, const olxstr& name)  {
   catch( const TExceptionBase& )  {  return false;  }
 }
 //.............................................................................
-bool TOSFileSystem::_DoAdoptFile(const TFSItem& Src) {
+bool TOSFileSystem::_DoAdoptFile(const TFSItem& Src)  {
   const olxstr _fn = GetBase() + Src.GetFullName();
   OnAdoptFile.Execute(this, &_fn);
 
   olxstr DFN = GetBase() + Src.GetFullName();
   // vlidate if already on the disk and with the same size and timestamp
-  if (TEFile::Exists(DFN)) {
-    if (TEFile::FileLength(DFN) == Src.GetSize()) {
+  if( TEFile::Exists(DFN) )  {
+    if( TEFile::FileLength(DFN) == Src.GetSize() )  {
       TEFile f = TEFile(DFN, "rb");
-      if (MD5::Digest(f) == Src.GetDigest())
+      if( MD5::Digest(f) == Src.GetDigest() )
         return true;
     }
   }
-  olx_object_ptr<IInputStream> is;
-  try {
+  IInputStream* is = NULL;
+  try  {
     is = Src.GetIndexFS().OpenFile(
       Src.GetIndexFS().GetBase() + Src.GetFullName());
   }
-  catch(const TExceptionBase &) {
-    return false;
-  }
-  if (!is.is_valid())  return false;
+  catch(const TExceptionBase& )  {  return false;  }
+  if( is == NULL )  return false;
 
   try {
     olxstr path = TEFile::ExtractFilePath(DFN);
-    if (!TEFile::Exists(path)) {
-      if (!TEFile::MakeDir(path)) {
-        if (!TEFile::MakeDirs(path)) {
+    if( !TEFile::Exists(path) ) {
+      if( !TEFile::MakeDir(path) ) {
+        if( !TEFile::MakeDirs(path) )  {
           TBasicApp::NewLogEntry(logError) << "MKdir failed on \'" << path
             << "\'";
           return false;
@@ -96,16 +94,18 @@ bool TOSFileSystem::_DoAdoptFile(const TFSItem& Src) {
       }
     }
     TEFile destFile(DFN, "wb+");
-    destFile << is();
+    destFile << *is;
     destFile.SetPosition(0);
-    if (MD5::Digest(destFile) != Src.GetDigest()) {
+    delete is;
+    if( MD5::Digest(destFile) != Src.GetDigest() )  {
       TBasicApp::NewLogEntry(logError) << "Digest mismatch for " << DFN <<
         ", skipping";
       destFile.Delete();
       return false;
     }
   }
-  catch (const TExceptionBase& exc) {
+  catch( const TExceptionBase& exc )  {
+    delete is;
     TBasicApp::NewLogEntry(logException) <<
       exc.GetException()->GetFullMessage();
     return false;
@@ -498,8 +498,10 @@ TFSItem* TFSItem::UpdateFile(TFSItem& item)  {
   }
 }
 //.............................................................................
-void TFSItem::DeleteItem(TFSItem* item) {
-  if (Items.Remove(item->GetName())) {
+void TFSItem::DeleteItem(TFSItem* item)  {
+  const size_t ind = Items.IndexOf(item->GetName());
+  if( ind != InvalidIndex )  {
+    Items.Delete(ind);
     item->DelFile();
     delete item;
   }
@@ -647,18 +649,19 @@ void TFSIndex::LoadIndex(const olxstr& IndexFile,
   //if( !IndexFS.Exists(IndexFile) )
   //  throw TFileDoesNotExistException(__OlxSourceInfo, IndexFile);
 
-  olx_object_ptr<IInputStream> is;
-  try  { is = IndexFS.OpenFile(IndexFile); }
-  catch (TExceptionBase &exc) {
+  IInputStream* is = NULL;
+  try {  is = IndexFS.OpenFile(IndexFile);  }
+  catch( TExceptionBase &exc )  {
     throw TFunctionFailedException(__OlxSourceInfo,
       exc.GetException()->GetFullMessage());
   }
-  if (!is.is_valid()) {
+  if( is == NULL ) {
     throw TFunctionFailedException(__OlxSourceInfo,
       "could not load index file");
   }
   TStrList strings;
-  strings.LoadFromTextStream(is());
+  strings.LoadFromTextStream(*is);
+  delete is;
   size_t index = 0;
   GetRoot().ReadStrings(index, NULL, strings, toSkip);
   Properties.Clear();
@@ -668,19 +671,21 @@ void TFSIndex::LoadIndex(const olxstr& IndexFile,
   IndexLoaded = true;
 }
 //.............................................................................
-void TFSIndex::SaveIndex(const olxstr &IndexFile) {
+void TFSIndex::SaveIndex(const olxstr &IndexFile)  {
   TStrList strings;
   GetRoot().ClearEmptyFolders();
   for( size_t i=0; i < GetRoot().Count(); i++ )
     GetRoot().Item(i) >> strings;
-  olx_object_ptr<TEFile> tmp_f(TEFile::TmpFile(EmptyString()));
-  TCStrList(strings).SaveToTextStream(tmp_f());
-  tmp_f().SetPosition(0);
-  try { IndexFS.AdoptStream(tmp_f(), IndexFile); }
+  TEFile* tmp_f = TEFile::TmpFile(EmptyString());
+  TCStrList(strings).SaveToTextStream(*tmp_f);
+  tmp_f->SetPosition(0);
+  try  {  IndexFS.AdoptStream(*tmp_f, IndexFile);  }
   catch(const TExceptionBase& exc)  {
+    delete tmp_f;
     throw TFunctionFailedException(__OlxSourceInfo, exc,
       "could not save index");
   }
+  delete tmp_f;
 }
 //.............................................................................
 uint64_t TFSIndex::Synchronise(AFileSystem& To, const TStrList& properties,

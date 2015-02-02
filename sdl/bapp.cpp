@@ -58,10 +58,10 @@ TBasicApp::TBasicApp(const olxstr& FileName, bool read_options)
 }
 //..............................................................................
 TBasicApp::~TBasicApp()  {
-  Instance = 0;
   delete Log;
   if (LogFile != NULL)
     delete LogFile;
+  Instance = NULL;
 }
 //..............................................................................
 olxstr TBasicApp::GetModuleName() {
@@ -367,7 +367,7 @@ void TBasicApp::PostAction(IOlxAction *a) {
   TBasicApp::GetInstance().Actions.Add(a);
 }
 //..............................................................................
-bool TBasicApp::TActionHandler::Execute(const IOlxObject *, const IOlxObject *,
+bool TBasicApp::TActionHandler::Execute(const IEObject *, const IEObject *,
   TActionQueue *)
 {
   olx_scope_cs cs_(TBasicApp::GetCriticalSection());
@@ -385,18 +385,18 @@ bool TBasicApp::TActionHandler::Execute(const IOlxObject *, const IOlxObject *,
 }
 //..............................................................................
 //..............................................................................
-void BAPP_GetArgCount(const TStrObjList&, TMacroData& E)  {
+void BAPP_GetArgCount(const TStrObjList&, TMacroError& E)  {
   E.SetRetVal(TBasicApp::GetArgCount());
 }
-void BAPP_GetArg(const TStrObjList& Params, TMacroData& E)  {
+void BAPP_GetArg(const TStrObjList& Params, TMacroError& E)  {
   size_t i = Params[0].ToSizeT();
   E.SetRetVal(i < TBasicApp::GetArgCount() ? TBasicApp::GetArg(i) : EmptyString());
 }
 //..............................................................................
-void BAPP_GetOptCount(const TStrObjList&, TMacroData& E)  {
+void BAPP_GetOptCount(const TStrObjList&, TMacroError& E)  {
   E.SetRetVal(TBasicApp::GetInstance().GetOptions().Count());
 }
-void BAPP_GetOpt(const TStrObjList& Params, TMacroData& E)  {
+void BAPP_GetOpt(const TStrObjList& Params, TMacroError& E)  {
   size_t i = Params[0].ToSizeT();
   TBasicApp &a = TBasicApp::GetInstance();
   if (i >= a.GetOptions().Count()) {
@@ -407,59 +407,59 @@ void BAPP_GetOpt(const TStrObjList& Params, TMacroData& E)  {
     v = a.GetOptions().GetValue(i);
   E.SetRetVal(v.IsEmpty() ? n : (n << '=' << v));
 }
-void BAPP_GetOptValue(const TStrObjList& Params, TMacroData& E)  {
+void BAPP_GetOptValue(const TStrObjList& Params, TMacroError& E)  {
   E.SetRetVal(TBasicApp::GetInstance().GetOptions().FindValue(
     Params[0], Params.Count() == 2 ? Params[1] : EmptyString()));
 }
-void BAPP_SaveOptions(const TStrObjList&, TMacroData& E)  {
+void BAPP_SaveOptions(const TStrObjList&, TMacroError& E)  {
   TBasicApp::GetInstance().SaveOptions();
 }
 //..............................................................................
-void BAPP_Profiling(const TStrObjList& Params, TMacroData &E)  {
+void BAPP_Profiling(const TStrObjList& Params, TMacroError &E)  {
   if( Params.IsEmpty() )
     E.SetRetVal(TBasicApp::IsProfiling());
   else
     TBasicApp::SetProfiling(Params[0].ToBool());
 }
 //..............................................................................
-void BAPP_LogFileName(const TStrObjList& Params, TMacroData &E)  {
+void BAPP_LogFileName(const TStrObjList& Params, TMacroError &E)  {
   TEFile *f = TBasicApp::GetInstance().GetLogFile();
   E.SetRetVal(f == NULL ? EmptyString() : f->GetName());
 }
 //..............................................................................
-void BAPP_BaseDir(const TStrObjList& Params, TMacroData &E)  {
+void BAPP_BaseDir(const TStrObjList& Params, TMacroError &E)  {
   E.SetRetVal(
     TBasicApp::GetInstance().GetBaseDir().SubStringFrom(0,1));
 }
 //..............................................................................
-void BAPP_InstanceDir(const TStrObjList& Params, TMacroData &E)  {
+void BAPP_InstanceDir(const TStrObjList& Params, TMacroError &E)  {
   E.SetRetVal(
     TBasicApp::GetInstance().GetInstanceDir().SubStringFrom(0,1));
 }
 //..............................................................................
-void BAPP_SharedDir(const TStrObjList& Params, TMacroData &E)  {
+void BAPP_SharedDir(const TStrObjList& Params, TMacroError &E)  {
   E.SetRetVal(
     TBasicApp::GetInstance().GetSharedDir().SubStringFrom(0,1));
 }
 //..............................................................................
-void BAPP_ConfigDir(const TStrObjList& Params, TMacroData &E)  {
+void BAPP_ConfigDir(const TStrObjList& Params, TMacroError &E)  {
   E.SetRetVal(
     TBasicApp::GetInstance().GetConfigDir().SubStringFrom(0,1));
 }
 //..............................................................................
-void BAPP_Platform(const TStrObjList& Params, TMacroData &E)  {
+void BAPP_Platform(const TStrObjList& Params, TMacroError &E)  {
   E.SetRetVal(TBasicApp::GetPlatformString(true));
 }
 //..............................................................................
-void BAPP_ModuleHash(const TStrObjList& Params, TMacroData &E)  {
+void BAPP_ModuleHash(const TStrObjList& Params, TMacroError &E)  {
   E.SetRetVal(TBasicApp::GetModuleMD5Hash());
 }
 //..............................................................................
-void BAPP_IsBaseDirWritable(const TStrObjList& Params, TMacroData &E)  {
+void BAPP_IsBaseDirWritable(const TStrObjList& Params, TMacroError &E)  {
   E.SetRetVal(TBasicApp::IsBaseDirWriteable());
 }
 //..............................................................................
-void BAPP_IsDebugBuild(const TStrObjList& Params, TMacroData &E)  {
+void BAPP_IsDebugBuild(const TStrObjList& Params, TMacroError &E)  {
 #ifdef _DEBUG
   E.SetRetVal(TrueString());
 #else

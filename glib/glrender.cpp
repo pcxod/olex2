@@ -21,38 +21,10 @@
 #define GL_MULTISAMPLE  0x809D
 #endif
 
-//..............................................................................
-AGOSettings::AGOSettings(TGlRenderer &p, const olxstr &name)
-  : parent(p), name(name), style(0)
-{
-  SetToDelete(false);
-  style = &parent.GetStyles().NewStyle(name, true);
-  style->SetPersistent(true);
-  parent.GetStyles().OnClear.Add(this);
-}
-//..............................................................................
-AGOSettings::~AGOSettings() {
-  parent.GetStyles().OnClear.Remove(this);
-}
-//..............................................................................
-bool AGOSettings::Enter(const IOlxObject *, const IOlxObject *, TActionQueue *) {
-  style = NULL;
-  return true;
-}
-//..............................................................................
-bool AGOSettings::Exit(const IOlxObject *, const IOlxObject *, TActionQueue *) {
-  style = &parent.GetStyles().NewStyle(name, true);
-  style->SetPersistent(true);
-  OnStyleChange();
-  return true;
-}
-//..............................................................................
-//..............................................................................
-//..............................................................................
-GLuint TGlRenderer::TGlListManager::NewList() {
-  if (Pos >= Lists.Count()*Inc) {
+GLuint TGlRenderer::TGlListManager::NewList()  {
+  if( Pos >= Lists.Count()*Inc )  {
     GLuint s = olx_gl::genLists(Inc);
-    if (s == GL_INVALID_VALUE || s == GL_INVALID_OPERATION)
+    if( s == GL_INVALID_VALUE || s == GL_INVALID_OPERATION )
       throw TFunctionFailedException(__OlxSourceInfo, "glGenLists");
     Lists.Add(s);
   }
@@ -62,7 +34,7 @@ GLuint TGlRenderer::TGlListManager::NewList() {
 }
 //..............................................................................
 void TGlRenderer::TGlListManager::Clear()  {
-  for (size_t i=0; i < Lists.Count(); i+= Inc)
+  for( size_t i=0; i < Lists.Count(); i+= Inc )
     olx_gl::deleteLists(Lists[i], Inc);
   Pos = 0;
   Lists.Clear();
@@ -70,13 +42,15 @@ void TGlRenderer::TGlListManager::Clear()  {
 //..............................................................................
 //..............................................................................
 //..............................................................................
+TGraphicsStyles* TGlRenderer::FStyles = NULL;
+//..............................................................................
 TGlRenderer::TGlRenderer(AGlScene *S, size_t width, size_t height) :
   Top(0), Left(0), Width((int)width), Height((int)height), OWidth(0),
   StereoLeftColor(0, 1, 1, 1), StereoRightColor(1, 0, 0, 1),
   OnDraw(TBasicApp::GetInstance().NewActionQueue(olxappevent_GL_DRAW)),
+  OnStylesClear(TBasicApp::GetInstance().NewActionQueue(olxappevent_GL_CLEAR_STYLES)),
   OnClear(TBasicApp::GetInstance().NewActionQueue("GL_CLEAR"))
 {
-  SetToDelete(false);
   poly_stipple = NULL;
   AbsoluteTop = 0;
   CompiledListId = -1;
@@ -98,6 +72,8 @@ TGlRenderer::TGlRenderer(AGlScene *S, size_t width, size_t height) :
   FogEnd = 10;
   SceneDepth = -1;
 
+  FStyles = new TGraphicsStyles(*this);
+
   FSelection = new TGlGroup(*this, "Selection");
   FSelection->SetSelected(true);
   FBackground = new TGlBackground(*this, "Background", false);
@@ -112,17 +88,12 @@ TGlRenderer::TGlRenderer(AGlScene *S, size_t width, size_t height) :
   FGObjects.SetIncrement(16);
   MaxRasterZ = 1;
   GLUSelection = true;
-  Styles.OnClear.Add(this);
 }
 //..............................................................................
 TGlRenderer::~TGlRenderer()  {
-  //Styles.OnClear.Remove(this);
-  Styles.OnClear.Clear();
-  for (size_t i = 0; i < ObjectSettings.Count(); i++) {
-    delete ObjectSettings.GetValue(i);
-  }
-  ObjectSettings.Clear();
   Clear();
+  //GraphicsStyles = NULL;
+  delete FStyles;
   delete FBackground;
   delete FCeiling;
   delete FSelection;
@@ -132,51 +103,7 @@ TGlRenderer::~TGlRenderer()  {
     delete [] poly_stipple;
 }
 //..............................................................................
-bool TGlRenderer::Enter(const IOlxObject *s, const IOlxObject *, TActionQueue *) {
-  if (s != &Styles) return false;
-  for (size_t i = 0; i < FCollections.Count(); i++)
-    FCollections.GetValue(i)->SetStyle(NULL);
-  return true;
-}
-//..............................................................................
-bool TGlRenderer::Exit(const IOlxObject *s, const IOlxObject *, TActionQueue *) {
-  if (s != &Styles) return false;
-  for (size_t i = 0; i < FCollections.Count(); i++) {
-    FCollections.GetValue(i)->SetStyle(
-      &Styles.NewStyle(FCollections.GetValue(i)->GetName(), true));
-  }
-  // groups are deleted by Clear, so should be removed!
-  for (size_t i = 0; i < FGroups.Count(); i++)
-    FGObjects.Remove(FGroups[i]);
-  AGDObjList GO = FGObjects.GetList();
-  for (size_t i = 0; i < GO.Count(); i++) {
-    GO[i]->OnPrimitivesCleared();
-    GO[i]->SetCreated(false);
-  }
-  Clear();
-  /* this has to be called before create so that dependent objects cause no
-  problems
-  */
-  for (size_t i = 0; i < GO.Count(); i++) {
-    GO[i]->OnStyleChange();
-  }
-  for (size_t i = 0; i < GO.Count(); i++) {
-    // some loose objects as labels can be created twice otherwise
-    if (!GO[i]->IsCreated()) {
-      GO[i]->Create();
-      GO[i]->SetCreated(true);
-    }
-  }
-  TGraphicsStyle* gs = Styles.FindStyle("GL.Stereo");
-  if (gs != NULL) {
-    StereoLeftColor = gs->GetParam("left", StereoLeftColor.ToString(), true);
-    StereoRightColor = gs->GetParam("right", StereoRightColor.ToString(), true);
-    StereoAngle = gs->GetParam("angle", StereoAngle, true).ToDouble();
-  }
-  return true;
-}
-//..............................................................................
-void TGlRenderer::Initialise() {
+void TGlRenderer::Initialise()  {
   GetScene().MakeCurrent();
   InitLights();
   for( size_t i=0; i < Primitives.ObjectCount(); i++ )
@@ -209,9 +136,6 @@ void TGlRenderer::InitLights()  {
 void TGlRenderer::Clear()  {
   GetScene().MakeCurrent();
   OnClear.Enter(this);
-  for (size_t i = 0; i < ObjectSettings.Count(); i++) {
-    ObjectSettings.GetValue(i)->OnRendererClear();
-  }
   FSelection->Clear();
   for( size_t i=0; i < FGroups.Count(); i++ )
     delete FGroups[i];
@@ -288,9 +212,46 @@ void TGlRenderer::UpdateMinMax(const vec3d& Min, const vec3d& Max)  {
 //..............................................................................
 void TGlRenderer::operator = (const TGlRenderer &G)  { ; }
 //..............................................................................
-TGPCollection& TGlRenderer::NewCollection(const olxstr &Name) {
-  TGPCollection *GPC = FCollections.Add(Name, new TGPCollection(*this, Name));
-  GPC->SetStyle(&Styles.NewStyle(Name, true));
+void TGlRenderer::_OnStylesClear()  {
+  OnStylesClear.Enter(this);
+  for( size_t i=0; i < FCollections.Count(); i++ )
+    FCollections.GetValue(i)->SetStyle(NULL);
+}
+//..............................................................................
+void TGlRenderer::_OnStylesLoaded()  {
+  for( size_t i=0; i < FCollections.Count(); i++ ) {
+    FCollections.GetValue(i)->SetStyle(
+      &FStyles->NewStyle(FCollections.GetValue(i)->GetName(), true));
+  }
+  // groups are deleted by Clear, so should be removed!
+  for( size_t i=0; i < FGroups.Count(); i++ )
+    FGObjects.Remove(FGroups[i]);
+  AGDObjList GO = FGObjects.GetList();
+  for( size_t i=0; i < GO.Count(); i++ )  {
+    GO[i]->OnPrimitivesCleared();
+    GO[i]->SetCreated(false);
+  }
+  Clear();
+  for( size_t i=0; i < GO.Count(); i++ )  {
+    // some loose objects as labels can be created twice otherwise
+    if( !GO[i]->IsCreated() )   {
+      GO[i]->Create();
+      GO[i]->SetCreated(true);
+    }
+  }
+  TGraphicsStyle* gs = FStyles->FindStyle("GL.Stereo");
+  if( gs != NULL )  {
+    StereoLeftColor = gs->GetParam("left", StereoLeftColor.ToString(), true);
+    StereoRightColor = gs->GetParam("right", StereoRightColor.ToString(), true);
+    StereoAngle = gs->GetParam("angle", StereoAngle, true).ToDouble();
+  }
+  OnStylesClear.Exit(this);
+}
+//..............................................................................
+TGPCollection& TGlRenderer::NewCollection(const olxstr &Name)  {
+  TGPCollection *GPC =
+    FCollections.Add(Name, new TGPCollection(*this, Name));
+  GPC->SetStyle(&FStyles->NewStyle(Name, true));
   return *GPC;
 }
 //..............................................................................
@@ -358,14 +319,13 @@ TGlPrimitive& TGlRenderer::NewPrimitive(short type)  {
 }
 //..............................................................................
 void TGlRenderer::EnableFog(bool Set)  {
-  if (Set) {
+  olx_gl::fog(GL_FOG_MODE, FogType);
+  olx_gl::fog(GL_FOG_DENSITY, FogDensity);
+  olx_gl::fog(GL_FOG_COLOR, FogColor.Data());
+  olx_gl::fog(GL_FOG_START, FogStart);
+  olx_gl::fog(GL_FOG_END, FogEnd);
+  if( Set )
     olx_gl::enable(GL_FOG);
-    olx_gl::fog(GL_FOG_MODE, FogType);
-    olx_gl::fog(GL_FOG_DENSITY, FogDensity);
-    olx_gl::fog(GL_FOG_COLOR, FogColor.Data());
-    olx_gl::fog(GL_FOG_START, FogStart);
-    olx_gl::fog(GL_FOG_END, FogEnd);
-  }
   else
     olx_gl::disable(GL_FOG);
   Fog = Set;
@@ -618,18 +578,6 @@ void TGlRenderer::Draw()  {
   FGlImageChanged = true;
   OnDraw.Execute(this);
   OnDraw.Exit(this);
-}
-//..............................................................................
-void TGlRenderer::DrawSilhouette() {
-  bool glu_sel = GLUSelection;
-  GLUSelection = false;
-  GetScene().MakeCurrent();
-  GetScene().StartDraw();
-  for (size_t i = 0; i < ObjectCount(); i++)
-    GetObject(i).SetTag((index_t)(i + 1));
-  DrawObjects(0, 0, true, false);
-  GetScene().EndDraw();
-  GLUSelection = glu_sel;
 }
 //..............................................................................
 void TGlRenderer::HandleSelection(const AGDrawObject &o, const TGlPrimitive &p,
@@ -1216,10 +1164,18 @@ void TGlRenderer::RemovePrimitiveByTag(int in)  {
 }
 //..............................................................................
 void TGlRenderer::CleanUpStyles()  {// removes styles, which are not used by any collection
-  Styles.SetStylesTag(0);
-  for (size_t i=0; i < FCollections.Count(); i++)
+  OnStylesClear.Enter(this);
+  GetStyles().SetStylesTag(0);
+  for( size_t i=0; i < FCollections.Count(); i++ )
     FCollections.GetValue(i)->GetStyle().SetTag(1);
-  Styles.RemoveStylesByTag(0);
+  GetStyles().RemoveStylesByTag(0);
+  OnStylesClear.Exit(this);
+}
+//............................................................................//
+TGraphicsStyles& TGlRenderer::_GetStyles()  {
+  if( TGlRenderer::FStyles == NULL )
+    throw TFunctionFailedException(__OlxSourceInfo, "Object is not initialised");
+  return *TGlRenderer::FStyles;
 }
 //..............................................................................
 void TGlRenderer::Compile(bool v)  {
@@ -1282,39 +1238,26 @@ void TGlRenderer::SetLineWidth(double lw) {
 }
 //..............................................................................
 void TGlRenderer::BeforeContextChange()  {
+  //OnClear.Enter(this);
   Clear();
+  //OnClear.SetEnabled(false);
   TextureManager->BeforeContextChange();
 }
 //..............................................................................
 void TGlRenderer::AfterContextChange()  {
   TextureManager->AfterContextChange();
-}
-//..............................................................................
-TEBitArray::const_type TGlRenderer::GetVisibility() {
-  TEBitArray vis(FGObjects.Count());
-  for (size_t i = 0; i < FGObjects.Count(); i++) {
-    vis.Set(i, FGObjects[i]->IsVisible());
-  }
-  return vis;
-}
-//..............................................................................
-void TGlRenderer::SetVisibility(const TEBitArray &v) {
-  if (v.Count() != FGObjects.Count()) {
-    throw TInvalidArgumentException(__OlxSourceInfo, "visibility bit array");
-  }
-  for (size_t i = 0; i < FGObjects.Count(); i++) {
-    FGObjects[i]->SetVisible(v[i]);
-  }
+  //OnClear.SetEnabled(true);
+  //OnClear.Exit(this);
 }
 //..............................................................................
 //..............................................................................
 //..............................................................................
-void TGlRenderer::LibCompile(const TStrObjList& Params, TMacroData& E)  {
+void TGlRenderer::LibCompile(const TStrObjList& Params, TMacroError& E)  {
   Compile(Params[0].ToBool());
 }
 //..............................................................................
 void TGlRenderer::LibPerspective(TStrObjList &Cmds, const TParamList &Options,
-  TMacroData &E)
+  TMacroError &E)
 {
   if( Cmds.IsEmpty() )  {  EnablePerspective(false);  return;  }
   if( !Cmds[0].IsNumber() )  {
@@ -1330,7 +1273,7 @@ void TGlRenderer::LibPerspective(TStrObjList &Cmds, const TParamList &Options,
 }
 //..............................................................................
 void TGlRenderer::LibFog(TStrObjList &Cmds, const TParamList &Options,
-  TMacroData &E)
+  TMacroError &E)
 {
   if (Cmds.Count() == 1) {
     SetFogType(GL_LINEAR);
@@ -1351,7 +1294,7 @@ void TGlRenderer::LibFog(TStrObjList &Cmds, const TParamList &Options,
 }
 //..............................................................................
 void TGlRenderer::LibZoom(TStrObjList &Cmds, const TParamList &Options,
-  TMacroData &E)
+  TMacroError &E)
 {
   if( Cmds.IsEmpty() )  {
     SetZoom(CalcZoom());
@@ -1363,15 +1306,15 @@ void TGlRenderer::LibZoom(TStrObjList &Cmds, const TParamList &Options,
   }
 }
 //..............................................................................
-void TGlRenderer::LibCalcZoom(const TStrObjList& Params, TMacroData& E)  {
+void TGlRenderer::LibCalcZoom(const TStrObjList& Params, TMacroError& E)  {
   E.SetRetVal(CalcZoom());
 }
 //..............................................................................
-void TGlRenderer::LibGetZoom(const TStrObjList& Params, TMacroData& E)  {
+void TGlRenderer::LibGetZoom(const TStrObjList& Params, TMacroError& E)  {
   E.SetRetVal(GetZoom());
 }
 //..............................................................................
-void TGlRenderer::LibStereo(const TStrObjList& Params, TMacroData& E)  {
+void TGlRenderer::LibStereo(const TStrObjList& Params, TMacroError& E)  {
   if( Params.IsEmpty() )  {
     if( StereoFlag == glStereoColor )
       E.SetRetVal<olxstr>("color");
@@ -1436,11 +1379,11 @@ void TGlRenderer::LibStereo(const TStrObjList& Params, TMacroData& E)  {
     if( Params.Count() == 2 )
       StereoAngle = Params[1].ToDouble();
   }
-  TGraphicsStyle& gs = Styles.NewStyle("GL.Stereo", true);
+  TGraphicsStyle& gs = FStyles->NewStyle("GL.Stereo", true);
   gs.SetParam("angle", StereoAngle, true);
 }
 //..............................................................................
-void TGlRenderer::LibStereoColor(const TStrObjList& Params, TMacroData& E)  {
+void TGlRenderer::LibStereoColor(const TStrObjList& Params, TMacroError& E)  {
   TGlOption* glo = Params[0].Equalsi("left") ? &StereoLeftColor :
     (Params[0].Equalsi("right") ? &StereoRightColor : NULL);
   if( glo == NULL )  {
@@ -1461,19 +1404,19 @@ void TGlRenderer::LibStereoColor(const TStrObjList& Params, TMacroData& E)  {
     (*glo)[2] = Params[3].ToFloat();
     (*glo)[3] = 1;
   }
-  TGraphicsStyle& gs = Styles.NewStyle("GL.Stereo", true);
+  TGraphicsStyle& gs = FStyles->NewStyle("GL.Stereo", true);
   gs.SetParam("left", StereoLeftColor.ToString(), true);
   gs.SetParam("right", StereoRightColor.ToString(), true);
 }
 //..............................................................................
-void TGlRenderer::LibLineWidth(const TStrObjList& Params, TMacroData& E)  {
+void TGlRenderer::LibLineWidth(const TStrObjList& Params, TMacroError& E)  {
   if( Params.IsEmpty() )
     E.SetRetVal(GetLineWidth());
   else
     SetLineWidth(Params[0].ToDouble());
 }
 //..............................................................................
-void TGlRenderer::LibBasis(const TStrObjList& Params, TMacroData& E)  {
+void TGlRenderer::LibBasis(const TStrObjList& Params, TMacroError& E)  {
   if( Params.IsEmpty() )  {
     TDataItem di(NULL, EmptyString());
     TEStrBuffer out;
@@ -1488,7 +1431,7 @@ void TGlRenderer::LibBasis(const TStrObjList& Params, TMacroData& E)  {
   }
 }
 //..............................................................................
-void TGlRenderer::LibRasterZ(const TStrObjList& Params, TMacroData& E)  {
+void TGlRenderer::LibRasterZ(const TStrObjList& Params, TMacroError& E)  {
   if( Params.IsEmpty() )
     E.SetRetVal(GetMaxRasterZ());
   else

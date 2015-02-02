@@ -22,7 +22,6 @@
 #include "vcov.h"
 #include "twinning.h"
 #include "sfutil.h"
-#include "datafile.h"
 
 TXApp::TXApp(const olxstr &basedir, bool)
   : TBasicApp(basedir), Library(EmptyString(), this)
@@ -52,8 +51,8 @@ void TXApp::Init(ASObjectProvider* objectProvider, ASelectionOwner* selOwner) {
   catch( const TIOException& exc )  {
     throw TFunctionFailedException(__OlxSourceInfo, exc);
   }
-  Files.Add((objectProvider == NULL ? new SObjectProvider()
-    : objectProvider)->CreateXFile());
+  FXFile = new TXFile(*(objectProvider == NULL ? new SObjectProvider
+    : objectProvider));
 
   DefineState(psFileLoaded, "Loaded file is expected");
   DefineState(psCheckFileTypeIns, "INS file is expected");
@@ -66,8 +65,8 @@ void TXApp::Init(ASObjectProvider* objectProvider, ASelectionOwner* selOwner) {
   XLibMacros::Export(Library);
 }
 //..............................................................................
-TXApp::~TXApp() {
-  Instance = 0;
+TXApp::~TXApp()  {
+  delete FXFile;
 }
 //..............................................................................
 bool TXApp::CheckProgramState(unsigned int specialCheck)  {
@@ -595,7 +594,7 @@ void TXApp::ProcessRingAfix(TSAtomPList& ring, int afix, bool pivot_last)  {
     ring[pivot]->GetLabel();
   if( ring[pivot]->CAtom().GetDependentAfixGroup() != NULL )
     ring[pivot]->CAtom().GetDependentAfixGroup()->Clear();
-  TAfixGroup& ag = XFile().GetRM().AfixGroups.New( &ring[pivot]->CAtom(), afix);
+  TAfixGroup& ag = FXFile->GetRM().AfixGroups.New( &ring[pivot]->CAtom(), afix);
   for( size_t i=0; i < ring.Count(); i++ )  {
     if (i == pivot)  continue;  // do not want to delete just created!
     TCAtom& ca = ring[i]->CAtom();
@@ -790,17 +789,15 @@ void TXApp::SetAtomUiso(TSAtom& sa, double val) {
 }
 //..............................................................................
 void TXApp::GetSymm(smatd_list& ml) const {
-  if (!XFile().HasLastLoader()) {
-    throw TFunctionFailedException(__OlxSourceInfo,
-      "a loaded file is expected");
-  }
-  const TUnitCell& uc = XFile().GetUnitCell();
-  ml.SetCapacity(ml.Count() + uc.MatrixCount());
-  for (size_t i=0; i < uc.MatrixCount(); i++)
+  if( !FXFile->HasLastLoader() )
+    throw TFunctionFailedException(__OlxSourceInfo, "a loaded file is expected");
+  const TUnitCell& uc = FXFile->GetUnitCell();
+  ml.SetCapacity( ml.Count() + uc.MatrixCount() );
+  for( size_t i=0; i < uc.MatrixCount(); i++ )
     ml.AddCopy(uc.GetMatrix(i));
 }
 //..............................................................................
-void TXApp::ToDataItem(TDataItem& item) const {
+void TXApp::ToDataItem(TDataItem& item) const  {
   throw TNotImplementedException(__OlxSourceInfo);
 }
 //..............................................................................
@@ -814,8 +811,8 @@ olxstr TXApp::InitVcoV(VcoVContainer& vcovc) const {
   bool shelx_exists = TEFile::Exists(shelx_fn),
     smtbx_exists = TEFile::Exists(smtbx_fn);
   olxstr src_mat;
-  if (shelx_exists && smtbx_exists) {
-    if (TEFile::FileAge(shelx_fn) > TEFile::FileAge(smtbx_fn)) {
+  if( shelx_exists && smtbx_exists )  {
+    if( TEFile::FileAge(shelx_fn) > TEFile::FileAge(smtbx_fn) )  {
       vcovc.ReadShelxMat(shelx_fn);
       src_mat = "shelxl";
     }
@@ -824,11 +821,11 @@ olxstr TXApp::InitVcoV(VcoVContainer& vcovc) const {
       vcovc.ReadSmtbxMat(smtbx_fn);
     }
   }
-  else if (shelx_exists) {
+  else if( shelx_exists )  {
     vcovc.ReadShelxMat(shelx_fn);
     src_mat = "shelxl";
   }
-  else if (smtbx_exists) {
+  else if( smtbx_exists )  {
     vcovc.ReadSmtbxMat(smtbx_fn);
     src_mat = "smtbx";
   }
@@ -840,97 +837,6 @@ olxstr TXApp::InitVcoV(VcoVContainer& vcovc) const {
     return "NO (just cell e.s.d)";
   }
   return src_mat;
-}
-//..............................................................................
-void TXApp::UpdateRadii(const olxstr &fn, const olxstr &rtype, bool log) {
-  if (fn.EndsWithi(".xld")) {
-    TDataFile df;
-    df.LoadFromXLFile(fn);
-    TDataItem &elements = df.Root().GetItemByName("elements");
-    for (size_t i = 0; i < elements.ItemCount(); i++) {
-      TDataItem &e = elements.GetItemByIndex(i);
-      cm_Element* cme = XElementLib::FindBySymbol(e.GetName());
-      if (cme == NULL) {
-        TBasicApp::NewLogEntry(logError) << "Undefined element: '" <<
-          e.GetName() << '\'';
-        continue;
-      }
-      for (size_t j = 0; j < e.FieldCount(); j++) {
-        if (e.GetFieldName(j).Equals("sfil"))
-          cme->r_sfil = e.GetFieldByIndex(j).ToDouble();
-        else if (e.GetFieldName(j).Equals("pers"))
-          cme->r_pers = e.GetFieldByIndex(j).ToDouble();
-        else if (e.GetFieldName(j).Equals("vdw"))
-          cme->r_vdw = e.GetFieldByIndex(j).ToDouble();
-        else if (e.GetFieldName(j).Equals("bonding"))
-          cme->r_bonding = e.GetFieldByIndex(j).ToDouble();
-      }
-    }
-    if (log) {
-      TBasicApp::NewLogEntry() <<
-        "Custom radii file loaded: '" << fn << '\'';
-    }
-  }
-  else {
-    olxstr_dict<double> radii;
-    TStrList sl = TEFile::ReadLines(fn),
-      changed;
-    // parse the file and fill the dictionary
-    for (size_t i = 0; i < sl.Count(); i++)  {
-      size_t idx = sl[i].IndexOf(' ');
-      if (idx != InvalidIndex) {
-        radii(sl[i].SubStringTo(idx), sl[i].SubStringFrom(idx + 1).ToDouble());
-      }
-    }
-    // end the file parsing
-    if (rtype.Equalsi("sfil")) {
-      for (size_t i = 0; i < radii.Count(); i++) {
-        cm_Element* cme = XElementLib::FindBySymbol(radii.GetKey(i));
-        if (cme != NULL && cme->r_sfil != radii.GetValue(i)) {
-          cme->r_sfil = radii.GetValue(i);
-          changed << cme->symbol;
-        }
-      }
-    }
-    else if (rtype.Equalsi("pers")) {
-      for (size_t i = 0; i < radii.Count(); i++) {
-        cm_Element* cme = XElementLib::FindBySymbol(radii.GetKey(i));
-        if (cme != NULL && cme->r_pers != radii.GetValue(i)) {
-          cme->r_pers = radii.GetValue(i);
-          changed << cme->symbol;
-        }
-      }
-    }
-    else if (rtype.Equalsi("vdw")) {
-      for (size_t i = 0; i < radii.Count(); i++) {
-        cm_Element* cme = XElementLib::FindBySymbol(radii.GetKey(i));
-        if (cme != NULL && cme->r_vdw != radii.GetValue(i)) {
-          cme->r_vdw = radii.GetValue(i);
-          changed << cme->symbol;
-        }
-      }
-    }
-    else if (rtype.Equalsi("bonding")) {
-      for (size_t i = 0; i < radii.Count(); i++) {
-        cm_Element* cme = XElementLib::FindBySymbol(radii.GetKey(i));
-        if (cme != NULL && cme->r_bonding != radii.GetValue(i)) {
-          cme->r_bonding = radii.GetValue(i);
-          changed << cme->symbol;
-        }
-      }
-    }
-    else {
-      TBasicApp::NewLogEntry(logError) <<
-        (olxstr("Undefined radii name: ").quote() << rtype);
-    }
-    if (log && !changed.IsEmpty()) {
-      TBasicApp::NewLogEntry() << "Using user defined " << rtype <<
-        " radii for:";
-      olxstr all = changed.Text(' ');
-      changed.Clear();
-      TBasicApp::NewLogEntry() << changed.Hyphenate(all, 80, true);
-    }
-  }
 }
 //..............................................................................
 ElementRadii::const_dict_type TXApp::ReadRadii(const olxstr& fileName) {

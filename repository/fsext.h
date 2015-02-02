@@ -19,12 +19,13 @@
 #endif
 
 class TZipWrapper;
-struct TMemoryBlock {
-  char *Buffer;
+//class TOZPFS;
+struct TMemoryBlock  {
+  char * Buffer;
   uint32_t Length;
   uint64_t DateTime;
   short PersistenceId; // dynamic property - not saved to a file
-  TMemoryBlock() {
+  TMemoryBlock()  {
     Buffer = NULL;
     Length = 0;
     DateTime = 0;
@@ -32,9 +33,10 @@ struct TMemoryBlock {
   }
 };
 /*____________________________________________________________________________*/
-class TFileHandlerManager : public IOlxObject {
+class TFileHandlerManager : public IEObject  {
 #ifdef __WXWIDGETS__
   olxstr_dict<TZipWrapper*, false> FZipFiles;
+//  TSStrPObjList<olxstr,TOZPFS*, false> FOZPFiles;
 #endif
   olxstr_dict<TMemoryBlock*, false> FMemoryBlocks;
   static const int16_t Version() { return 0x0001; }
@@ -57,8 +59,8 @@ protected:
 #ifdef __WXWIDGETS__
   wxFSFile *_GetFSFileHandler( const olxstr &FN );
 #endif
-  TMemoryBlock *_AddMemoryBlock(const olxstr& name, const char *bf,
-    size_t length, short persistenceId);
+  void _AddMemoryBlock(const olxstr& name, const char *bf, size_t length,
+    short persistenceId);
   static olxstr LocateFile(const olxstr& fn);
   void _SaveToStream(IDataOutputStream& os, short persistenceMask);
   void _LoadFromStream(IDataInputStream& is, short persistenceId);
@@ -74,11 +76,6 @@ public:
   static void AddBaseDir(const olxstr& bd);
   static void AddMemoryBlock(const olxstr& name, const char *bf, size_t length,
     short persistenceId);
-  /* adds or replaces existing memory block and allocates an uninitialised
-  storage for it
-  */
-  static TMemoryBlock& AddMemoryBlock(const olxstr& name, size_t length,
-    short persistenceId);
 
   static void SaveToStream(IDataOutputStream& os, short persistenceMask);
   static void LoadFromStream(IDataInputStream& is, short persistenceId);
@@ -91,11 +88,11 @@ public:
   static short GetPersistenceId(size_t i);
   static bool Exists(const olxstr& fn);
 
-  void LibExists(const TStrObjList& Params, TMacroData& E);
+  void LibExists(const TStrObjList& Params, TMacroError& E);
   void LibDump(TStrObjList &Cmds, const TParamList &Options,
-    TMacroData &Error);
+    TMacroError &Error);
   static void LibClear(TStrObjList &Cmds, const TParamList &Options,
-    TMacroData &Error);
+    TMacroError &Error);
   static TLibrary* ExportLibrary(const olxstr& name=EmptyString());
 protected:
 #ifdef _PYTHON

@@ -17,14 +17,24 @@
 #include "wx/clipbrd.h"
 #include "../xglapp.h"
 #include "olxstate.h"
-#include "eutf8.h"
 #include "wxzipfs.h"
+
+BEGIN_EVENT_TABLE(THtml, wxHtmlWindow)
+  EVT_LEFT_DCLICK(THtml::OnMouseDblClick)
+  EVT_LEFT_DOWN(THtml::OnMouseDown)
+  EVT_LEFT_UP(THtml::OnMouseUp)
+  EVT_MOTION(THtml::OnMouseMotion)
+  EVT_SCROLL(THtml::OnScroll)
+  EVT_KEY_DOWN(THtml::OnKeyDown)
+  EVT_CHAR(THtml::OnChar)
+  EVT_SIZE(THtml::OnSizeEvt)
+  EVT_TEXT_COPY(-1, THtml::OnClipboard)
+END_EVENT_TABLE()
 //.............................................................................
 THtml::THtml(THtmlManager &manager, wxWindow *Parent,
   const olxstr &pop_name, int flags)
   : wxHtmlWindow(Parent, -1, wxDefaultPosition, wxDefaultSize, flags),
-    AOlxCtrl(this),
-    PopupName(pop_name), ObjectsState(*this),
+    PopupName(pop_name), WI(this), ObjectsState(*this),
     Manager(manager),
     OnLink(Actions.New("ONLINK")),
     OnURL(Actions.New("ONURL")),
@@ -40,22 +50,15 @@ THtml::THtml(THtmlManager &manager, wxWindow *Parent,
   if (stateTooltipsVisible() == InvalidIndex) {
     stateTooltipsVisible() = TStateRegistry::GetInstance().Register("htmlttvis",
       new TStateRegistry::Slot(
-        TStateRegistry::NewGetter<THtml>(this, &THtml::GetShowTooltips),
+        TStateRegistry::NewGetter(*this, &THtml::GetShowTooltips),
         new TStateRegistry::TMacroSetter("html.Tooltips")
       )
     );
   }
-  Bind(wxEVT_LEFT_DCLICK, &THtml::OnMouseDblClick, this);
-  Bind(wxEVT_LEFT_DOWN, &THtml::OnMouseDown, this);
-  Bind(wxEVT_LEFT_UP, &THtml::OnMouseUp, this);
-  Bind(wxEVT_MOTION, &THtml::OnMouseMotion, this);
-  Bind(wxEVT_KEY_DOWN, &THtml::OnKeyDown, this);
-  Bind(wxEVT_CHAR, &THtml::OnChar, this);
-  Bind(wxEVT_SIZE, &THtml::OnSizeEvt, this);
-  Bind(wxEVT_TEXT_COPY, &THtml::OnClipboard, this);
 }
 //.............................................................................
 THtml::~THtml()  {
+  TFileHandlerManager::Clear();
   delete Root;
   ClearSwitchStates();
 }
@@ -74,7 +77,7 @@ void THtml::OnLinkClicked(const wxHtmlLinkInfo& link)  {
     Href.Insert(val, ind);
     ind = Href.FirstIndexOf('%');
   }
-  if (!OnLink.Execute((const AOlxCtrl *)this, (IOlxObject*)&Href)) {
+  if (!OnLink.Execute(this, (IEObject*)&Href)) {
     wxHtmlLinkInfo NewLink(Href.u_str(), link.GetTarget());
     wxHtmlWindow::OnLinkClicked(NewLink);
   }
@@ -83,9 +86,7 @@ void THtml::OnLinkClicked(const wxHtmlLinkInfo& link)  {
 wxHtmlOpeningStatus THtml::OnOpeningURL(wxHtmlURLType type, const wxString& url,
   wxString *redirect) const {
   olxstr Url = url;
-  if (!OnURL.Execute((const AOlxCtrl *)this, &Url)) {
-    return wxHTML_OPEN;
-  }
+  if( !OnURL.Execute(this, &Url) )  return wxHTML_OPEN;
   return wxHTML_BLOCK;
 }
 //.............................................................................
@@ -133,27 +134,27 @@ void THtml::OnMouseMotion(wxMouseEvent& event)  {
   parent->SetSize(x+dx, y+dy, -1, -1, wxSIZE_USE_EXISTING);
 }
 //.............................................................................
-void THtml::OnMouseDblClick(wxMouseEvent& event) {
+void THtml::OnMouseDblClick(wxMouseEvent& event)  {
   event.Skip();
   volatile THtmlManager::DestructionLocker dm =
-    Manager.LockDestruction(this, (AOlxCtrl *)this);
-  OnDblClick.Execute((const AOlxCtrl *)this, &OnDblClickData);
+    Manager.LockDestruction(this, this);
+  OnDblClick.Execute(this, &OnDblClickData);
 }
 //.............................................................................
 void THtml::OnSizeEvt(wxSizeEvent& event)  {
   event.Skip();
   volatile THtmlManager::DestructionLocker dm =
-    Manager.LockDestruction(this, (AOlxCtrl *)this);
-  OnSize.Execute((const AOlxCtrl *)this, &OnSizeData);
+    Manager.LockDestruction(this, this);
+  OnSize.Execute(this, &OnSizeData);
 }
 //.............................................................................
-bool THtml::Dispatch(int MsgId, short MsgSubId, const IOlxObject* Sender,
-  const IOlxObject* Data, TActionQueue *)
+bool THtml::Dispatch(int MsgId, short MsgSubId, const IEObject* Sender,
+  const IEObject* Data, TActionQueue *)
 {
   if( MsgId == html_parent_resize )  {
     volatile THtmlManager::DestructionLocker dm =
-      Manager.LockDestruction(this, (AOlxCtrl *)this);
-    OnSize.Execute((const AOlxCtrl *)this, &OnSizeData);
+      Manager.LockDestruction(this, this);
+    OnSize.Execute(this, &OnSizeData);
   }
   return true;
 }
@@ -170,9 +171,15 @@ void THtml::OnNavigation(wxNavigationKeyEvent& event)  {
   event.Skip();
 }
 //.............................................................................
-void THtml::OnChar(wxKeyEvent& event) {
+void THtml::OnChar(wxKeyEvent& event)  {
+  wxWindow* parent = GetParent();
+  if (parent != NULL) {
+    wxDialog* dlg = dynamic_cast<wxDialog*>(parent);
+    if (dlg != NULL)
+      return;
+  }
   TKeyEvent KE(event);
-  OnKey.Execute((const AOlxCtrl *)this, &KE);
+  OnKey.Execute(this, &KE);
 }
 //.............................................................................
 void THtml::UpdateSwitchState(THtmlSwitch &Switch, olxstr &String)  {
@@ -343,7 +350,7 @@ bool THtml::ProcessPageLoadRequest()  {
   return res;
 }
 //.............................................................................
-bool THtml::LoadPage(const wxString &file) {
+bool THtml::LoadPage(const wxString &file)  {
   if (file.IsEmpty())
     return false;
 
@@ -358,24 +365,22 @@ bool THtml::LoadPage(const wxString &file) {
   olxstr File(file), TestFile(file);
   olxstr Path = TEFile::ExtractFilePath(File);
   TestFile = TEFile::ExtractFileName(File);
-  if (Path.Length() > 1) {
+  if( Path.Length() > 1 )  {
     Path = TEFile::OSPath(Path);
     if( TEFile::IsAbsolutePath(Path) )
       WebFolder = Path;
   }
   else
     Path = WebFolder;
-  if (Path == WebFolder)
+  if( Path == WebFolder )
     TestFile = WebFolder + TestFile;
   else
     TestFile = WebFolder + Path + TestFile;
 
-  if (!TZipWrapper::IsValidFileName(TestFile) &&
+  if( !TZipWrapper::IsValidFileName(TestFile) &&
       !TFileHandlerManager::Exists(file) )
   {
-    TBasicApp::NewLogEntry(logError) << "File does not exists: '" <<
-      file << '\'';
-    return false;
+    throw TFileDoesNotExistException(__OlxSourceInfo, file);
   }
   Root->Clear();
   Root->ClearFiles();
@@ -478,6 +483,10 @@ bool THtml::UpdatePage(bool update_indices)  {
   return true;
 }
 //.............................................................................
+void THtml::OnScroll(wxScrollEvent& evt)  {  // this is never called at least on GTK
+  evt.Skip();
+}
+//.............................................................................
 void THtml::DoScroll(int x, int y) {
   // disable automatic horizontal scrolling
   wxHtmlWindow::DoScroll(0, y);
@@ -533,17 +542,16 @@ void THtml::OnCellMouseHover(wxHtmlCell *Cell, wxCoord x, wxCoord y)  {
     SetToolTip(NULL);
 }
 //.............................................................................
-olxstr THtml::GetObjectValue(const AOlxCtrl *Obj) {
-  const std::type_info &ti = typeid(*Obj);
-  if (ti == typeid(TTextEdit)) { return ((TTextEdit*)Obj)->GetText(); }
-  if (ti == typeid(TCheckBox)) { return ((TCheckBox*)Obj)->GetCaption(); }
-  if (ti == typeid(TTrackBar)) { return ((TTrackBar*)Obj)->GetValue(); }
-  if (ti == typeid(TSpinCtrl)) { return ((TSpinCtrl*)Obj)->GetValue(); }
-  if (ti == typeid(TButton)) { return ((TButton*)Obj)->GetCaption(); }
-  if (ti == typeid(TComboBox)) { return ((TComboBox*)Obj)->GetText(); }
-  if (ti == typeid(TChoice)) { return ((TChoice*)Obj)->GetText(); }
-  if (ti == typeid(TListBox)) { return ((TListBox*)Obj)->GetValue(); }
-  if (ti == typeid(TTreeView)) {
+olxstr THtml::GetObjectValue(const AOlxCtrl *Obj)  {
+  if( EsdlInstanceOf(*Obj, TTextEdit) )  {  return ((TTextEdit*)Obj)->GetText();  }
+  if( EsdlInstanceOf(*Obj, TCheckBox) )  {  return ((TCheckBox*)Obj)->GetCaption();  }
+  if( EsdlInstanceOf(*Obj, TTrackBar) )  {  return ((TTrackBar*)Obj)->GetValue(); }
+  if( EsdlInstanceOf(*Obj, TSpinCtrl) )  {  return ((TSpinCtrl*)Obj)->GetValue(); }
+  if( EsdlInstanceOf(*Obj, TButton) )    {  return ((TButton*)Obj)->GetCaption();    }
+  if( EsdlInstanceOf(*Obj, TComboBox) )  {  return ((TComboBox*)Obj)->GetText();  }
+  if (EsdlInstanceOf(*Obj, TChoice))  { return ((TChoice*)Obj)->GetText(); }
+  if (EsdlInstanceOf(*Obj, TListBox))   { return ((TListBox*)Obj)->GetValue(); }
+  if( EsdlInstanceOf(*Obj, TTreeView) )  {
     TTreeView* T = (TTreeView*)Obj;
     wxTreeItemId ni = T->GetSelection();
     wxTreeItemData* td = T->GetItemData(ni);
@@ -554,133 +562,119 @@ olxstr THtml::GetObjectValue(const AOlxCtrl *Obj) {
       return EmptyString();
     return olx_td->GetData()->ToString();
   }
-  if (ti == typeid(TDateCtrl)) {
+  if( EsdlInstanceOf(*Obj, TDateCtrl) )  {
     return ((TDateCtrl*)Obj)->GetValue().Format(wxT("%Y-%m-%d"));
   }
-  if (ti == typeid(TColorCtrl)) {
+  if( EsdlInstanceOf(*Obj, TColorCtrl) )  {
     wxColor c = ((TColorCtrl*)Obj)->GetColour();
     return OLX_RGBA(c.Red(), c.Green(), c.Blue(), c.Alpha());
   }
   return EmptyString();
 }
 //.............................................................................
-void THtml::SetObjectValue(AOlxCtrl *Obj,
-  const olxstr& name, const olxstr& Value)
-{
-  const std::type_info &ti = typeid(*Obj);
-  if (ti == typeid(TTextEdit))
+void THtml::SetObjectValue(AOlxCtrl *Obj, const olxstr& Value)  {
+  if( EsdlInstanceOf(*Obj, TTextEdit) )
     ((TTextEdit*)Obj)->SetText(Value);
-  else if (ti == typeid(TCheckBox))
+  else if( EsdlInstanceOf(*Obj, TCheckBox) )
     ((TCheckBox*)Obj)->SetCaption(Value);
-  else if (ti == typeid(TTrackBar)) {
+  else if( EsdlInstanceOf(*Obj, TTrackBar) )  {
     const size_t si = Value.IndexOf(',');
-    if (si == InvalidIndex)
+    if( si == InvalidIndex )
       ((TTrackBar*)Obj)->SetValue(olx_round(Value.ToDouble()));
     else
       ((TTrackBar*)Obj)->SetRange(olx_round(Value.SubStringTo(si).ToDouble()),
-      olx_round(Value.SubStringFrom(si + 1).ToDouble()));
+      olx_round(Value.SubStringFrom(si+1).ToDouble()));
   }
-  else if (ti == typeid(TSpinCtrl)) {
+  else if( EsdlInstanceOf(*Obj, TSpinCtrl) )  {
     const size_t si = Value.IndexOf(',');
-    if (si == InvalidIndex)
+    if( si == InvalidIndex )
       ((TSpinCtrl*)Obj)->SetValue(olx_round(Value.ToDouble()));
     else
       ((TSpinCtrl*)Obj)->SetRange(olx_round(Value.SubStringTo(si).ToDouble()),
-      olx_round(Value.SubStringFrom(si + 1).ToDouble()));
+      olx_round(Value.SubStringFrom(si+1).ToDouble()));
   }
-  else if (ti == typeid(TButton))
+  else if( EsdlInstanceOf(*Obj, TButton) )
     ((TButton*)Obj)->SetLabel(Value.u_str());
-  else if (ti == typeid(TComboBox)) {
+  else if( EsdlInstanceOf(*Obj, TComboBox) )  {
     ((TComboBox*)Obj)->SetText(Value);
     ((TComboBox*)Obj)->Update();
   }
-  else if (ti == typeid(TChoice)) {
+  else if (EsdlInstanceOf(*Obj, TChoice))  {
     ((TChoice*)Obj)->SetText(Value);
     ((TChoice*)Obj)->Update();
   }
-  else if (ti == typeid(TListBox)) {
+  else if (EsdlInstanceOf(*Obj, TListBox))  {
     TListBox *L = (TListBox*)Obj;
     int index = L->GetSelection();
-    if (index >= 0 && index < L->Count())
+    if( index >=0 && index < L->Count() )
       L->SetString(index, Value.u_str());
   }
-  else if (ti == typeid(TDateCtrl)) {
+  else if( EsdlInstanceOf(*Obj, TDateCtrl) )  {
     wxDateTime dt;
     dt.ParseDateTime(Value.u_str());
     ((TDateCtrl*)Obj)->SetValue(dt);
   }
-  else if (ti == typeid(TColorCtrl)) {
+  else if( EsdlInstanceOf(*Obj, TColorCtrl) )  {
     ((TColorCtrl*)Obj)->SetColour(wxColor(Value.u_str()));
-  }
-  else if (ti == typeid(THtml)) {
-    THtml *h = (THtml*)Obj;
-    olxstr fn = name + "_content.htm";
-    olxcstr cont = TUtf8::Encode(Value);
-    TFileHandlerManager::AddMemoryBlock(fn, cont.c_str(), cont.Length(), 0);
-    h->LoadPage(fn.u_str());
-    //h->SetPage(Value.u_str());
   }
   else
     return;
 }
 //.............................................................................
 const olxstr& THtml::GetObjectData(const AOlxCtrl *Obj)  {
-  const std::type_info &ti = typeid(*Obj);
-  if (ti == typeid(TTextEdit)) { return ((TTextEdit*)Obj)->GetData(); }
-  if (ti == typeid(TCheckBox)) { return ((TCheckBox*)Obj)->GetData(); }
-  if (ti == typeid(TTrackBar)) { return ((TTrackBar*)Obj)->GetData(); }
-  if (ti == typeid(TSpinCtrl)) { return ((TSpinCtrl*)Obj)->GetData(); }
-  if (ti == typeid(TButton)) { return ((TButton*)Obj)->GetData(); }
-  if (ti == typeid(TComboBox)) { return ((TComboBox*)Obj)->GetData(); }
-  if (ti == typeid(TChoice)) { return ((TChoice*)Obj)->GetData(); }
-  if (ti == typeid(TListBox)) { return ((TListBox*)Obj)->GetData(); }
-  if (ti == typeid(TTreeView)) { return ((TTreeView*)Obj)->GetData(); }
+  if( EsdlInstanceOf(*Obj, TTextEdit) )  {  return ((TTextEdit*)Obj)->GetData();  }
+  if( EsdlInstanceOf(*Obj, TCheckBox) )  {  return ((TCheckBox*)Obj)->GetData();  }
+  if( EsdlInstanceOf(*Obj, TTrackBar) )  {  return ((TTrackBar*)Obj)->GetData(); }
+  if( EsdlInstanceOf(*Obj, TSpinCtrl) )  {  return ((TSpinCtrl*)Obj)->GetData(); }
+  if( EsdlInstanceOf(*Obj, TButton) )    {  return ((TButton*)Obj)->GetData();    }
+  if( EsdlInstanceOf(*Obj, TComboBox) )  {  return ((TComboBox*)Obj)->GetData();  }
+  if (EsdlInstanceOf(*Obj, TChoice))  { return ((TChoice*)Obj)->GetData(); }
+  if (EsdlInstanceOf(*Obj, TListBox))  { return ((TListBox*)Obj)->GetData(); }
+  if( EsdlInstanceOf(*Obj, TTreeView) )  {  return ((TTreeView*)Obj)->GetData();  }
   return EmptyString();
 }
 //.............................................................................
 olxstr THtml::GetObjectImage(const AOlxCtrl* Obj)  {
-  const std::type_info &ti = typeid(*Obj);
-  if (ti == typeid(TBmpButton))
+  if( EsdlInstanceOf(*Obj, TBmpButton) )
     return ((TBmpButton*)Obj)->GetSource();
-  else if (ti == typeid(THtmlImageCell))
+  else if( EsdlInstanceOf(*Obj, THtmlImageCell) )
     return ((THtmlImageCell*)Obj)->GetSource();
   return EmptyString();
 }
 //.............................................................................
-bool THtml::SetObjectImage(AOlxCtrl* Obj, const olxstr& src) {
-  if (src.IsEmpty())
+bool THtml::SetObjectImage(AOlxCtrl* Obj, const olxstr& src)  {
+  if( src.IsEmpty() )
     return false;
-  const std::type_info &ti = typeid(*Obj);
-  if (ti == typeid(TBmpButton) || ti == typeid(THtmlImageCell)) {
+  if( EsdlInstanceOf(*Obj, TBmpButton) || EsdlInstanceOf(*Obj, THtmlImageCell) )  {
     wxFSFile *fsFile = TFileHandlerManager::GetFSFileHandler(src);
-    if (fsFile == NULL) {
+    if( fsFile == NULL )  {
       TBasicApp::NewLogEntry(logError) <<
         "Setimage: could not locate specified file: " << src;
       return false;
     }
     wxImage image(*(fsFile->GetStream()), wxBITMAP_TYPE_ANY);
     delete fsFile;
-    if (!image.Ok()) {
+    if ( !image.Ok() )  {
       TBasicApp::NewLogEntry(logError) <<
         "Setimage: could not read specified file: " << src;
       return false;
     }
-    if (ti == typeid(TBmpButton)) {
+    if( EsdlInstanceOf(*Obj, TBmpButton) )  {
       ((TBmpButton*)Obj)->SetBitmapLabel(image);
       ((TBmpButton*)Obj)->SetSource(src);
       ((TBmpButton*)Obj)->Refresh(true);
     }
-    else if (ti == typeid(THtmlImageCell)) {
+    else if( EsdlInstanceOf(*Obj, THtmlImageCell) )  {
       ((THtmlImageCell*)Obj)->SetImage(image);
       ((THtmlImageCell*)Obj)->SetSource(src);
       ((THtmlImageCell*)Obj)->GetWindow()->Refresh(true);
     }
   }
-  else if (ti == typeid(TImgButton)) {
+  else if( EsdlInstanceOf(*Obj, TImgButton) )  {
     ((TImgButton*)Obj)->SetImages(src);
     ((TImgButton*)Obj)->Refresh(true);
   }
-  else {
+  else  {
     TBasicApp::NewLogEntry(logError) << "Setimage: unsupported object type";
     return false;
   }
@@ -688,32 +682,30 @@ bool THtml::SetObjectImage(AOlxCtrl* Obj, const olxstr& src) {
 }
 //.............................................................................
 olxstr THtml::GetObjectItems(const AOlxCtrl* Obj)  {
-  const std::type_info &ti = typeid(*Obj);
-  if (ti == typeid(TComboBox)) {
+  if( EsdlInstanceOf(*Obj, TComboBox) )  {
     return ((TComboBox*)Obj)->ItemsToString(';');
   }
-  if (ti == typeid(TChoice)) {
+  if (EsdlInstanceOf(*Obj, TChoice))  {
     return ((TChoice*)Obj)->ItemsToString(';');
   }
-  if (ti == typeid(TListBox)) {
+  if (EsdlInstanceOf(*Obj, TListBox))  {
     return ((TListBox*)Obj)->ItemsToString(';');
   }
   return EmptyString();
 }
 //.............................................................................
 bool THtml::SetObjectItems(AOlxCtrl* Obj, const olxstr& src)  {
-  const std::type_info &ti = typeid(*Obj);
-  if (ti == typeid(TComboBox)) {
+  if (EsdlInstanceOf(*Obj, TComboBox)) {
     TComboBox *cb = ((TComboBox*)Obj);
     cb->Clear();
     cb->AddItems(TStrList(src, ';'));
   }
-  else if (ti == typeid(TChoice)) {
+  else if (EsdlInstanceOf(*Obj, TChoice)) {
     TChoice *cb = ((TChoice*)Obj);
     cb->Clear();
     cb->AddItems(TStrList(src, ';'));
   }
-  else if (ti == typeid(TListBox)) {
+  else if (EsdlInstanceOf(*Obj, TListBox)) {
     ((TListBox*)Obj)->Clear();
     ((TListBox*)Obj)->AddItems(TStrList(src, ';'));
   }
@@ -725,23 +717,21 @@ bool THtml::SetObjectItems(AOlxCtrl* Obj, const olxstr& src)  {
 }
 //.............................................................................
 void THtml::SetObjectData(AOlxCtrl *Obj, const olxstr& Data)  {
-  const std::type_info &ti = typeid(*Obj);
-  if (ti == typeid(TTextEdit))  { ((TTextEdit*)Obj)->SetData(Data);  return; }
-  if (ti == typeid(TCheckBox))  { ((TCheckBox*)Obj)->SetData(Data);  return; }
-  if( ti == typeid(TTrackBar) )  {  ((TTrackBar*)Obj)->SetData(Data);  return;  }
-  if( ti == typeid(TSpinCtrl) )  {  ((TSpinCtrl*)Obj)->SetData(Data);  return;  }
-  if( ti == typeid(TButton) )    {  ((TButton*)Obj)->SetData(Data);    return;  }
-  if( ti == typeid(TComboBox) )  {  ((TComboBox*)Obj)->SetData(Data);  return;  }
-  if (ti == typeid(TChoice))  { ((TChoice*)Obj)->SetData(Data);  return; }
-  if (ti == typeid(TListBox))  { ((TListBox*)Obj)->SetData(Data);  return; }
-  if( ti == typeid(TTreeView) )  {  ((TTreeView*)Obj)->SetData(Data);  return;  }
+  if( EsdlInstanceOf(*Obj, TTextEdit) )  {  ((TTextEdit*)Obj)->SetData(Data);  return;  }
+  if( EsdlInstanceOf(*Obj, TCheckBox) )  {  ((TCheckBox*)Obj)->SetData(Data);  return;  }
+  if( EsdlInstanceOf(*Obj, TTrackBar) )  {  ((TTrackBar*)Obj)->SetData(Data);  return;  }
+  if( EsdlInstanceOf(*Obj, TSpinCtrl) )  {  ((TSpinCtrl*)Obj)->SetData(Data);  return;  }
+  if( EsdlInstanceOf(*Obj, TButton) )    {  ((TButton*)Obj)->SetData(Data);    return;  }
+  if( EsdlInstanceOf(*Obj, TComboBox) )  {  ((TComboBox*)Obj)->SetData(Data);  return;  }
+  if (EsdlInstanceOf(*Obj, TChoice))  { ((TChoice*)Obj)->SetData(Data);  return; }
+  if (EsdlInstanceOf(*Obj, TListBox))  { ((TListBox*)Obj)->SetData(Data);  return; }
+  if( EsdlInstanceOf(*Obj, TTreeView) )  {  ((TTreeView*)Obj)->SetData(Data);  return;  }
 }
 //.............................................................................
 bool THtml::GetObjectState(const AOlxCtrl *Obj, const olxstr& state)  {
-  const std::type_info &ti = typeid(*Obj);
-  if (ti == typeid(TCheckBox))
+  if( EsdlInstanceOf(*Obj, TCheckBox) )
     return ((TCheckBox*)Obj)->IsChecked();
-  else if( ti == typeid(TImgButton) )  {
+  else if( EsdlInstanceOf(*Obj, TImgButton) )  {
     if( state.Equalsi("enabled") )
       return ((TImgButton*)Obj)->IsEnabled();
     else if( state.Equalsi("down") )
@@ -749,24 +739,23 @@ bool THtml::GetObjectState(const AOlxCtrl *Obj, const olxstr& state)  {
     else
       return false;
   }
-  else if( ti == typeid(TButton) )
+  else if( EsdlInstanceOf(*Obj, TButton) )
     return ((TButton*)Obj)->IsDown();
   else
     return false;
 }
 //.............................................................................
 void THtml::SetObjectState(AOlxCtrl *Obj, bool State, const olxstr& state_name)  {
-  const std::type_info &ti = typeid(*Obj);
-  if (ti == typeid(TCheckBox))
+  if( EsdlInstanceOf(*Obj, TCheckBox) )
     ((TCheckBox*)Obj)->SetChecked(State);
-  else if (ti == typeid(TImgButton)) {
+  else if( EsdlInstanceOf(*Obj, TImgButton) )  {
     if( state_name.Equalsi("enabled") )
       ((TImgButton*)Obj)->SetEnabled(State);
-    else if (state_name.Equalsi("down"))
+    else if( state_name.Equalsi("down") )
       ((TImgButton*)Obj)->SetDown(State);
     ((TImgButton*)Obj)->Refresh(true);
   }
-  else if (ti == typeid(TButton))
+  else if( EsdlInstanceOf(*Obj, TButton) )
     ((TButton*)Obj)->SetDown(State);
 }
 //.............................................................................

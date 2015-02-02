@@ -57,7 +57,7 @@ void TGlLight::ToDataItem(TDataItem& Item) const {
   Item.AddField("Enabled", Enabled);
 }
 //..............................................................................
-void TGlLight::LibEnabled(const TStrObjList& Params, TMacroData& E)  {
+void TGlLight::LibEnabled(const TStrObjList& Params, TMacroError& E)  {
   if( Params.IsEmpty() )  E.SetRetVal(Enabled);
   else  {
     const bool v = Enabled;
@@ -67,7 +67,7 @@ void TGlLight::LibEnabled(const TStrObjList& Params, TMacroData& E)  {
   }
 }
 //..............................................................................
-void TGlLight::LibSpotCutoff(const TStrObjList& Params, TMacroData& E)  {
+void TGlLight::LibSpotCutoff(const TStrObjList& Params, TMacroError& E)  {
   if( Params.IsEmpty() )  E.SetRetVal(SpotCutoff);
   else  {
     const short v = SpotCutoff;
@@ -77,7 +77,7 @@ void TGlLight::LibSpotCutoff(const TStrObjList& Params, TMacroData& E)  {
   }
 }
 //..............................................................................
-void TGlLight::LibSpotExponent(const TStrObjList& Params, TMacroData& E)  {
+void TGlLight::LibSpotExponent(const TStrObjList& Params, TMacroError& E)  {
   if( Params.IsEmpty() )  E.SetRetVal(SpotExponent);
   else  {
     const short v = SpotExponent;
@@ -87,7 +87,7 @@ void TGlLight::LibSpotExponent(const TStrObjList& Params, TMacroData& E)  {
   }
 }
 //..............................................................................
-void TGlLight::LibAmbient(const TStrObjList& Params, TMacroData& E)  {
+void TGlLight::LibAmbient(const TStrObjList& Params, TMacroError& E)  {
   if( Params.IsEmpty() )  E.SetRetVal(Ambient.ToString());
   else  {
     const TGlOption v = Ambient;
@@ -97,7 +97,7 @@ void TGlLight::LibAmbient(const TStrObjList& Params, TMacroData& E)  {
   }
 }
 //..............................................................................
-void TGlLight::LibDiffuse(const TStrObjList& Params, TMacroData& E)  {
+void TGlLight::LibDiffuse(const TStrObjList& Params, TMacroError& E)  {
   if( Params.IsEmpty() )  E.SetRetVal(Diffuse.ToString());
   else  {
     const TGlOption v = Diffuse;
@@ -107,7 +107,7 @@ void TGlLight::LibDiffuse(const TStrObjList& Params, TMacroData& E)  {
   }
 }
 //..............................................................................
-void TGlLight::LibSpecular(const TStrObjList& Params, TMacroData& E)  {
+void TGlLight::LibSpecular(const TStrObjList& Params, TMacroError& E)  {
   if( Params.IsEmpty() )  E.SetRetVal(Specular.ToString());
   else  {
     const TGlOption v = Specular;
@@ -117,7 +117,7 @@ void TGlLight::LibSpecular(const TStrObjList& Params, TMacroData& E)  {
   }
 }
 //..............................................................................
-void TGlLight::LibPosition(const TStrObjList& Params, TMacroData& E)  {
+void TGlLight::LibPosition(const TStrObjList& Params, TMacroError& E)  {
   if( Params.IsEmpty() )  E.SetRetVal(Position.ToString());
   else  {
     const TGlOption v = Position;
@@ -127,7 +127,7 @@ void TGlLight::LibPosition(const TStrObjList& Params, TMacroData& E)  {
   }
 }
 //..............................................................................
-void TGlLight::LibSpotDirection(const TStrObjList& Params, TMacroData& E)  {
+void TGlLight::LibSpotDirection(const TStrObjList& Params, TMacroError& E)  {
   if( Params.IsEmpty() )  E.SetRetVal(SpotDirection.ToString());
   else  {
     const TGlOption v = SpotDirection;
@@ -137,7 +137,7 @@ void TGlLight::LibSpotDirection(const TStrObjList& Params, TMacroData& E)  {
   }
 }
 //..............................................................................
-void TGlLight::LibAttenuation(const TStrObjList& Params, TMacroData& E)  {
+void TGlLight::LibAttenuation(const TStrObjList& Params, TMacroError& E)  {
   if( Params.IsEmpty() )  E.SetRetVal(Attenuation.ToString());
   else  {
     const TGlOption v = Attenuation;

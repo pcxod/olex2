@@ -12,7 +12,6 @@
 #include "threex3.h"
 #include "gllabel.h"
 #include "glprimitive.h"
-#include "asymmunit.h"
 BeginGxlNamespace()
 
 class TDUnitCell: public AGDrawObject {
@@ -21,13 +20,10 @@ class TDUnitCell: public AGDrawObject {
   TXGlLabel* Labels[4];
   vec3d_alist Edges;
   double Thickness;
-  void ExpandEdges();
 public:
   TDUnitCell(TGlRenderer& Render, const olxstr& collectionName);
   virtual ~TDUnitCell();
-  // 6 parameters are expected
-  void Init(const double *cell_params);
-  void Init(const TAsymmUnit &au);
+  void Init(const double cell_params[6]);
   void UpdateLabel();
   size_t LabelCount() const {  return 4;  }
   TXGlLabel& GetLabel(size_t i) const {  return *Labels[i];  }
@@ -55,26 +51,17 @@ public:
     }
   }
   size_t EdgeCount() const { return Edges.Count(); }
-  vec3d& GetEdge(size_t i) { return Edges[i]; }
   const vec3d& GetEdge(size_t i) const { return Edges[i]; }
-  void Translate(const vec3d &t) {
-    for (size_t i = 0; i < Edges.Count(); i++) {
-      Edges[i] += t;
-    }
-    Update();
-  }
-  void Update();
-  bool IsReciprocal() const { return Reciprocal; }
+  bool IsReciprocal() const {  return Reciprocal;  }
   void SetReciprocal(bool v, double scale=1);
   virtual void SetVisible(bool v);
   const mat3d& GetCellToCartesian() const {  return CellToCartesian;  }
   const mat3d& GetHklToCartesian() const {  return HklToCartesian;  }
   DefPropP(double, Thickness)
   void ToDataItem(TDataItem& di) const;
-
   void FromDataItem(const TDataItem& di);
-  void funThickness(const TStrObjList& Params, TMacroData& E);
-  void funDrawstyle(const TStrObjList& Params, TMacroData& E);
+  void funThickness(const TStrObjList& Params, TMacroError& E);
+  void funDrawstyle(const TStrObjList& Params, TMacroError& E);
   TLibrary *ExportLibrary(const olxstr &name = EmptyString());
 
   const_strlist ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const;

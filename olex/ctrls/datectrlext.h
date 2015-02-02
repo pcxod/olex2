@@ -13,18 +13,21 @@
 #include "wx/datectrl.h"
 #include "wx/dateevt.h"
 
-namespace ctrl_ext {
+namespace ctrl_ext  {
 
-  class TDateCtrl: public wxDatePickerCtrl, public AOlxCtrl {
+  class TDateCtrl: public wxDatePickerCtrl, public AOlxCtrl  {
   protected:
     void ChangeEvent(wxDateEvent& event);
     olxstr Data;
     wxDateTime Value;
   public:
-    TDateCtrl(wxWindow *Parent, wxWindowID id = -1,
-      const wxDateTime& value = wxDateTime::Now(),
-      const wxPoint& pos = wxDefaultPosition,
-      const wxSize& size = wxDefaultSize, long style = 0);
+    TDateCtrl(wxWindow *Parent, int style=0) :
+        wxDatePickerCtrl(Parent, -1, wxDateTime::Now(), wxDefaultPosition, wxDefaultSize, style),
+      AOlxCtrl(this),
+      OnChange(AOlxCtrl::ActionQueue::New(Actions, evt_change_id))
+    {
+      Value = GetValue();
+    }
 
     void SetValue(const wxDateTime &T)  {
       Value = T;
@@ -34,6 +37,9 @@ namespace ctrl_ext {
     DefPropC(olxstr, Data)
 
     AOlxCtrl::ActionQueue &OnChange;
+
+    DECLARE_CLASS(TDateTime)
+    DECLARE_EVENT_TABLE()
   };
 }; // end namespace ctrl_ext
 #endif

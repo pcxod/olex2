@@ -23,14 +23,14 @@ TMenu *TMenu::CopyMenu(const wxMenu &menu)  {
       TMenu *nm = CopyMenu(*mi->GetSubMenu());
       int miId = mi->GetId();
       wxItemKind miKind = mi->GetKind();
-      const wxString &miText = mi->GetItemLabel();
+      const wxString &miText = mi->GetText();
       const wxString &miHelpStr = mi->GetHelp();
       M->Append(miId, miText, nm, miHelpStr);
     }
     else  {
       int miId = mi->GetId();
       wxItemKind miKind = mi->GetKind();
-      const wxString &miText = mi->GetItemLabel();
+      const wxString &miText = mi->GetText();
       const wxString &miHelpStr = mi->GetHelp();
       wxMenuItem *nmi = new wxMenuItem(M, miId, miText, miHelpStr, miKind);
       M->Append(nmi);
@@ -79,7 +79,7 @@ void TMenuItem::ValidateState()  {
   }
 }
 //..............................................................................
-bool TMenuItem::Execute(const IOlxObject *Sender, const IOlxObject *Data,
+bool TMenuItem::Execute(const IEObject *Sender, const IEObject *Data,
   TActionQueue *)
 {
   if( Data && EsdlInstanceOf(*Data, TModeChange) )  {

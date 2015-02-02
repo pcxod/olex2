@@ -229,7 +229,7 @@ public:
   }
 };
 
-struct ASObjectProvider : public IOlxObject {
+struct ASObjectProvider : public IEObject {
   AtomRegistry atomRegistry;
   TIObjectProvider<TSAtom>& atoms;
   TIObjectProvider<TSBond>& bonds;
@@ -238,18 +238,16 @@ struct ASObjectProvider : public IOlxObject {
     TIObjectProvider<TSAtom>& _as,
     TIObjectProvider<TSBond>& _bs,
     TIObjectProvider<TSPlane>& _ps)
-    : atoms(_as), bonds(_bs), planes(_ps)
-  {}
-  virtual class TXFile* CreateXFile() = 0;
-  virtual IOlxObject* Replicate() const = 0;
+    : atoms(_as), bonds(_bs), planes(_ps)  {}
+  //TObjectProvider<TNetwork> fragments;
+  virtual IEObject* Replicate() const = 0;
 
 };
 
 struct SObjectProvider : public ASObjectProvider {
   SObjectProvider() : ASObjectProvider(*(new TObjectProvider<TSAtom>),
-    *(new TObjectProvider<TSBond>), *(new TObjectProvider<TSPlane>))
-  {}
-  ~SObjectProvider() {
+    *(new TObjectProvider<TSBond>), *(new TObjectProvider<TSPlane>)) {}
+  ~SObjectProvider()  {
     atoms.Clear();
     bonds.Clear();
     planes.Clear();
@@ -257,8 +255,7 @@ struct SObjectProvider : public ASObjectProvider {
     delete &bonds;
     delete &planes;
   }
-  virtual TXFile *CreateXFile();
-  virtual IOlxObject* Replicate() const {  return new SObjectProvider();  }
+  virtual IEObject* Replicate() const {  return new SObjectProvider;  }
 };
 
 EndXlibNamespace()

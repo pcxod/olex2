@@ -28,7 +28,7 @@ namespace cif_dp {
       const olxstr& msg=EmptyString())
       : TBasicException(location, cause, msg )  {}
     virtual const char* GetNiceName() const {  return "CIF reading";  }
-    virtual IOlxObject* Replicate() const {
+    virtual IEObject* Replicate() const {
       return new ParsingException(*this);
     }
   };
@@ -198,7 +198,6 @@ namespace cif_dp {
     }
     size_t RowCount() const {  return data.RowCount();  }
     void SetRowCount(size_t sz) { data.SetRowCount(sz); }
-    void SetRowCapacity(size_t sz) { data.SetRowCapacity(sz); }
     virtual void ToStrings(TStrList& list) const;
     virtual void Format()  {}
     virtual const olxstr& GetName() const {  return name;  }
@@ -290,7 +289,7 @@ namespace cif_dp {
     };
   };
 
-  class TCifDP : public IOlxObject  {
+  class TCifDP : public IEObject  {
   public:
   private:
     TTypeList<CifBlock> data;

@@ -142,9 +142,6 @@ olxstr TSimpleRestraint::GetVarName(size_t var_index) const {
 //..............................................................................
 TIString TSimpleRestraint::ToString() const {
   olxstr rv = Parent.GetIdName();
-  if (!Atoms.GetResi().IsEmpty()) {
-    rv << '_' << Atoms.GetResi();
-  }
   if ((Parent.GetParameters() & rptValue) != 0) rv << ' ' << Value;
   if ((Parent.GetParameters() & rptEsd) != 0) rv << ' ' << Esd;
   if ((Parent.GetParameters() & rptEsd1) != 0) rv << ' ' << Esd1;

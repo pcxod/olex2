@@ -11,7 +11,7 @@
 #define __olx_urlH
 #include "exception.h"
 
-class TUrl : public IOlxObject  {
+class TUrl : public IEObject  {
   unsigned int Port;
   olxstr Protocol, Host, Path, User, Password;
   TUrl* Proxy;

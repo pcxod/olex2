@@ -20,7 +20,7 @@
 #include "math/composite.h"
 
 //..............................................................................
-THklFile::THklFile() {
+THklFile::THklFile()  {
   Basis.I();
   Init();
 }
@@ -33,30 +33,35 @@ THklFile::THklFile(const mat3d& hkl_transformation)
 //..............................................................................
 void THklFile::Init() {
   Hkl3D = NULL;
-  HKLF = -1;
 }
 //..............................................................................
-void THklFile::Clear() {
-  HKLF = -1;
+void THklFile::Clear()  {
   Refs.Clear();
   Clear3D();
 }
 //..............................................................................
-void THklFile::UpdateMinMax(const TReflection& r) {
-  if (Refs.IsEmpty()) {
-    MinHkl = MaxHkl = r.GetHkl();
+void THklFile::UpdateMinMax(const TReflection& r)  {
+  if( Refs.IsEmpty() )  {
+    // set starting values
+    MinHkl[0] = MaxHkl[0] = r.GetH();
+    MinHkl[1] = MaxHkl[1] = r.GetK();
+    MinHkl[2] = MaxHkl[2] = r.GetL();
+    MinI = MaxI = r.GetI();
+    MinIS = MaxIS = r.GetS();
   }
-  else {
+  else  {
     vec3i::UpdateMinMax(r.GetHkl(), MinHkl, MaxHkl);
+    if( r.GetI() < MinI )  {  MinI = r.GetI();  MinIS = r.GetS();  }
+    if( r.GetI() > MaxI )  {  MaxI = r.GetI();  MaxIS = r.GetS();  }
   }
 }
 //..............................................................................
-void THklFile::Clear3D() {
-  if (Hkl3D == NULL)  return;
-  for (int i=MinHkl[0]; i <= MaxHkl[0]; i++) {
-    for (int j=MinHkl[1]; j <= MaxHkl[1]; j++)
-      for (int k=MinHkl[2]; k <= MaxHkl[2]; k++)
-        if (Hkl3D->Value(i,j,k) != NULL)
+void THklFile::Clear3D()  {
+  if( Hkl3D == NULL )  return;
+  for( int i=MinHkl[0]; i <= MaxHkl[0]; i++ ) {
+    for( int j=MinHkl[1]; j <= MaxHkl[1]; j++ )
+      for( int k=MinHkl[2]; k <= MaxHkl[2]; k++ )
+        if( Hkl3D->Value(i,j,k) != NULL )
           delete Hkl3D->Value(i,j,k);
   }
   delete Hkl3D;
@@ -66,8 +71,9 @@ void THklFile::Clear3D() {
 olx_object_ptr<TIns> THklFile::LoadFromFile(const olxstr& FN, bool get_ins)
 {
   try {
+    Clear();
     TEFile::CheckFileExists(__OlxSourceInfo, FN);
-    TStrList SL = TEFile::ReadLines(FN);
+    TCStrList SL = TEFile::ReadCLines(FN);
     if (SL.IsEmpty())
       throw TEmptyFileException(__OlxSrcInfo, FN);
     return LoadFromStrings(SL, get_ins);
@@ -77,49 +83,51 @@ olx_object_ptr<TIns> THklFile::LoadFromFile(const olxstr& FN, bool get_ins)
   }
 }
 //..............................................................................
-olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
-  bool get_ins)
-{
+olx_object_ptr<TIns> THklFile::LoadFromStrings(const TCStrList& SL, bool get_ins) {
   olx_object_ptr<TIns> rv;
   try {
     Clear();
     {  // validate if 'real' HKL, not fcf
       if (!IsHKLFileLine(SL[0])) {
         TCif cif;
-        try {
-          cif.LoadFromStrings(SL);
-          // find first data block with reflections...
-          cif_dp::cetTable* hklLoop = cif.FindLoopGlobal("_refln", true);
-          if (hklLoop == NULL) {
-            // tonto mess?
-            hklLoop = cif.FindLoopGlobal("_diffrn_refln", true);
-            if (hklLoop == 0) {
-              throw TInvalidArgumentException(__OlxSourceInfo,
-                "no reflection loop found");
-            }
-          }
-          olx_object_ptr<ref_list> refs = FromCifTable(*hklLoop);
-          if (refs.is_valid()) {
-            Refs = refs().a;
-            HKLF = (refs().b ? 4 : 3);
-          }
-          if (get_ins && cif.FindEntry("_cell_length_a") != NULL) {
-            rv = new TIns;
-            rv().GetRM().Assign(cif.GetRM(), true);
-          }
-        }
+        try  {  cif.LoadFromStrings(SL);  }
         catch(TExceptionBase& e) {
-          olx_object_ptr<ref_list> refs = FromTonto(SL);
-          if (!refs.is_valid()) {
-            throw TFunctionFailedException(__OlxSrcInfo, e,
-              "unsupported file format");
-          }
-          Refs = refs().a;
-          HKLF = (refs().b ? 4 : 3);
+          throw TFunctionFailedException(__OlxSrcInfo, e,
+            "unsupported file format");
         }
-        MaxHkl = vec3i(-100);
-        MinHkl = vec3i(100);
-        Refs.ForEach(olx_func::make(this, &THklFile::UpdateMinMax));
+        // find first data block with reflections...
+        cif_dp::cetTable* hklLoop = cif.FindLoopGlobal("_refln", true);
+        if (hklLoop == NULL)
+          throw TInvalidArgumentException(__OlxSourceInfo, "no hkl loop found");
+        const size_t hInd = hklLoop->ColIndex("_refln_index_h");
+        const size_t kInd = hklLoop->ColIndex("_refln_index_k");
+        const size_t lInd = hklLoop->ColIndex("_refln_index_l");
+        size_t mInd = hklLoop->ColIndex("_refln_F_squared_meas");
+        if (mInd == InvalidIndex)
+          mInd = hklLoop->ColIndex("_refln_F_meas");
+        size_t sInd = hklLoop->ColIndex("_refln_F_squared_sigma");
+        if (sInd == InvalidIndex)
+          sInd = hklLoop->ColIndex("_refln_F_sigma");
+        if ((hInd|kInd|lInd|mInd|sInd) == InvalidIndex) {
+          throw TInvalidArgumentException(__OlxSourceInfo,
+            "could not locate <h k l meas sigma> data");
+        }
+        for (size_t i=0; i < hklLoop->RowCount(); i++) {
+          const cif_dp::CifRow& r = (*hklLoop)[i];
+          Refs.Add(
+            new TReflection(
+            r[hInd]->GetStringValue().ToInt(),
+            r[kInd]->GetStringValue().ToInt(),
+            r[lInd]->GetStringValue().ToInt(),
+            r[mInd]->GetStringValue().ToDouble(),
+            r[sInd]->GetStringValue().ToDouble()
+            ));
+          UpdateMinMax(Refs.GetLast());
+        }
+        if (get_ins && cif.FindEntry("_cell_length_a") != NULL) {
+          rv = new TIns;
+          rv().GetRM().Assign(cif.GetRM(), true);
+        }
         return rv;
       }
     }
@@ -131,7 +139,7 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
     const size_t line_cnt = SL.Count();
     Refs.SetCapacity(line_cnt);
     for (; i < line_cnt; i++) {
-      const olxstr& line = SL[i];
+      const olxcstr& line = SL[i];
       if (i == 0) {
         if (line.Length() >= 32) {
           HasBatch = true;
@@ -211,11 +219,24 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
   return rv;
 }
 //..............................................................................
+bool THklFile::SaveToFile(const olxstr& FN)  {
+  return THklFile::SaveToFile(FN, Refs, false);
+}
+//..............................................................................
 void THklFile::UpdateRef(const TReflection& R)  {
   size_t ind = olx_abs(R.GetTag())-1;
   if( ind >= Refs.Count() )
     throw TInvalidArgumentException(__OlxSourceInfo, "reflection tag");
   Refs[ind].SetOmitted(R.IsOmitted());
+}
+//..............................................................................
+int THklFile::HklCmp(const TReflection &R1, const TReflection &R2)  {
+  int r = R1.CompareTo(R2);
+  if( r == 0 )  {  // for unmerged data ...
+    if( R1.GetI() < R2.GetI() )  return -1;
+    if( R1.GetI() > R2.GetI() )  return 1;
+  }
+  return r;
 }
 //..............................................................................
 void THklFile::InitHkl3D() {
@@ -259,148 +280,81 @@ void THklFile::EndAppend()  {
   //Refs.QuickSorter.SortSF(Refs, HklCmp);
 }
 //..............................................................................
+void THklFile::Append(const TRefPList& hkls)  {
+  if( hkls.IsEmpty() )  return;
+  for( size_t i=0; i < hkls.Count(); i++ )  {
+    UpdateMinMax(*hkls[i]);
+    Refs.Add(new TReflection(*hkls[i])).SetTag(Refs.Count());
+  }
+  EndAppend();
+}
+//..............................................................................
 void THklFile::Append(const THklFile& hkls)  {
   if( !hkls.RefCount() )  return;
   Append(hkls.Refs);
 }
 //..............................................................................
-void THklFile::SaveToFile(const olxstr& FN, const TRefPList& refs) {
-  if (refs.IsEmpty()) return;
-  //if (Append && TEFile::Exists(FN)) {
-  //  THklFile F;
-  //  F.LoadFromFile(FN, false);
-  //  F.Append(refs);
-  //  F.SaveToFile(FN);
-  //}
-  TEFile out(FN, "w+b");
-  SaveToStream(refs, out);
-}
-//..............................................................................
-void THklFile::SaveToFile(const olxstr& FN, const TRefList& refs) {
-  TEFile out(FN, "w+b");
-  SaveToStream(refs, out);
-}
-//..............................................................................
-olx_object_ptr<THklFile::ref_list> THklFile::FromCifTable(
-  const cif_dp::cetTable &t)
+bool THklFile::SaveToFile(const olxstr& FN, const TRefPList& refs,
+  bool Append)
 {
-  bool intensity;
-  TRefList refs;
-  olxstr prefix = t.GetName();
-  const size_t hInd = t.ColIndex(prefix + "_index_h");
-  const size_t kInd = t.ColIndex(prefix + "_index_k");
-  const size_t lInd = t.ColIndex(prefix + "_index_l");
-  size_t mInd = t.ColIndex(prefix + "_F_squared_meas");
-  size_t sInd = t.ColIndex(prefix + "_F_squared_sigma");
-  if (mInd == InvalidIndex) {
-    mInd = t.ColIndex(prefix + "_F_meas");
-    sInd = t.ColIndex(prefix + "_F_sigma");
-    intensity = false;
+  if( refs.IsEmpty() )  return true;
+  if( Append && TEFile::Exists(FN) )  {
+    THklFile F;
+    F.LoadFromFile(FN, false);
+    F.Append(refs);
+    F.SaveToFile(FN);
   }
-  else {
-    intensity = true;
-  }
-  if ((hInd | kInd | lInd | mInd | sInd) == InvalidIndex) {
-    throw TInvalidArgumentException(__OlxSourceInfo,
-      "could not locate <h k l meas sigma> data");
-  }
-  bool zero_found = false;
-  for (size_t i = 0; i < t.RowCount(); i++) {
-    const cif_dp::CifRow& r = t[i];
-    TReflection &ref = refs.Add(
-      new TReflection(
-      r[hInd]->GetStringValue().ToInt(),
-      r[kInd]->GetStringValue().ToInt(),
-      r[lInd]->GetStringValue().ToInt(),
-      r[mInd]->GetStringValue().ToDouble(),
-      r[sInd]->GetStringValue().ToDouble()
-      ));
-    if (!zero_found && ref.GetHkl().IsNull()) {
-      zero_found = true;
-      continue;
+  else  {
+    double scale = 0;
+    for( size_t i=0; i < refs.Count(); i++ )  {
+      if( refs[i]->GetI() > scale )
+        scale = refs[i]->GetI();
     }
-    ref.SetOmitted(zero_found);
+    scale = (scale > 99999 ? 99999/scale : 1);
+    TEFile out(FN, "w+b");
+    TReflection NullRef(0, 0, 0, 0, 0);
+    if( refs[0]->GetBatch() != TReflection::NoBatchSet )
+      NullRef.SetBatch(0);
+    const size_t ref_str_len = NullRef.ToString().Length();
+    const size_t bf_sz = ref_str_len+1;
+    olx_array_ptr<char> ref_bf(new char[bf_sz]);
+    for( size_t i=0; i < refs.Count(); i++ )  {
+      if( !refs[i]->IsOmitted() )
+        out.Writecln(refs[i]->ToCBuffer(ref_bf, bf_sz, scale), ref_str_len);
+    }
+    out.Writecln(NullRef.ToCBuffer(ref_bf, bf_sz, 1), ref_str_len);
+    for( size_t i=0; i < refs.Count(); i++ )  {
+      if( refs[i]->IsOmitted() )
+        out.Writecln(refs[i]->ToCBuffer(ref_bf, bf_sz, scale), ref_str_len);
+    }
   }
-  olx_object_ptr<ref_list> rv(new ref_list);
-  rv().a.TakeOver(refs);
-  rv().b = intensity;
-  return rv;
+  return true;
 }
 //..............................................................................
-olx_object_ptr<THklFile::ref_list> THklFile::FromTonto(const TStrList &l_) {
-  /* despite the fact the format is structured, here we do a simplistic parsing
-  */
-  // make a single line
-  TStrList l = l_;
-  for (size_t i = 0; i < l.Count(); i++) {
-    size_t ci = l[i].FirstIndexOf('!');
-    if (ci != InvalidIndex) {
-      l[i].SetLength(ci);
-    }
-    l[i].Replace('\t', ' ')
-      .Trim(' ')
-      .DeleteSequencesOf(' ');
+bool THklFile::SaveToFile(const olxstr& FN, const TRefList& refs)  {
+  if( refs.IsEmpty() )  return true;
+  double scale = 0;
+  for( size_t i=0; i < refs.Count(); i++ )  {
+    if( refs[i].GetI() > scale )
+      scale = refs[i].GetI();
   }
-  olx_object_ptr<ref_list> rv;
-  TRefList refs;
-  using namespace exparse;
-  olxstr data = l.Pack().Text(' ');
-  olxstr key_rdata("reflection_data="),
-    key_keys("keys="),
-    key_data("data=");
-  size_t idx = data.IndexOf(key_rdata);
-  if (idx == InvalidIndex) return rv;
-  idx = data.FirstIndexOf(key_keys, idx+key_rdata.Length());
-  if (idx == InvalidIndex) return rv;
-  // extract the key legend
-  idx = data.FirstIndexOf('{', idx+key_keys.Length());
-  if (idx == InvalidIndex) return rv;
-  olxstr keys;
-  if (!parser_util::parse_brackets(data, keys, idx))
-    return rv;
-  TStrList ktoks(keys, ' ');
-  const size_t hi = ktoks.IndexOfi("h=");
-  const size_t ki = ktoks.IndexOfi("k=");
-  const size_t li = ktoks.IndexOfi("l=");
-  size_t fi = ktoks.IndexOfi("f_exp=");
-  size_t si = ktoks.IndexOfi("f_sigma=");
-  bool intensity;
-  if ((fi | si) == InvalidIndex) {
-    fi = ktoks.IndexOfi("i_exp=");
-    si = ktoks.IndexOfi("i_sigma=");
-    intensity = true;
+  scale = (scale > 99999 ? 99999/scale : 1);
+  TEFile out(FN, "w+b");
+  TReflection NullRef(0, 0, 0, 0, 0);
+  if( refs[0].GetBatch() != TReflection::NoBatchSet )
+    NullRef.SetBatch(0);
+  const size_t ref_str_len = NullRef.ToString().Length();
+  const size_t bf_sz = ref_str_len+1;
+  olx_array_ptr<char> ref_bf(new char[bf_sz]);
+  for( size_t i=0; i < refs.Count(); i++ )  {
+    if( !refs[i].IsOmitted() )
+      out.Writecln(refs[i].ToCBuffer(ref_bf, bf_sz, scale), ref_str_len);
   }
-  else {
-    intensity = false;
+  out.Writecln(NullRef.ToCBuffer(ref_bf, bf_sz, 1), ref_str_len);
+  for( size_t i=0; i < refs.Count(); i++ )  {
+    if( refs[i].IsOmitted() )
+      out.Writecln(refs[i].ToCBuffer(ref_bf, bf_sz, scale), ref_str_len);
   }
-  if ((hi|ki|li|fi|si) == InvalidIndex) {
-    return rv;
-  }
-  idx = data.FirstIndexOfi(key_data, idx);
-  if (idx == InvalidIndex) return rv;
-  idx = data.FirstIndexOf('{', idx + key_data.Length());
-  if (idx == InvalidIndex) return rv;
-  olxstr data_data;
-  if (!parser_util::parse_brackets(data, data_data, idx))
-    return rv;
-  TStrList dtoks(data_data, ' ');
-  if ((dtoks.Count() % ktoks.Count()) != 0) {
-    return rv;
-  }
-  const size_t rc = dtoks.Count() / ktoks.Count();
-  for (size_t i = 0; i < rc; i++) {
-    size_t off = i*ktoks.Count();
-    TReflection &r = refs.AddNew(
-      dtoks[off + hi].ToInt(),
-      dtoks[off + ki].ToInt(),
-      dtoks[off + li].ToInt(),
-      dtoks[off + fi].ToDouble(),
-      dtoks[off + si].ToDouble()
-      );
-  }
-  rv = new ref_list;
-  rv().a.TakeOver(refs);
-  rv().b = intensity;
-  return rv;
+  return true;
 }
 //..............................................................................

@@ -672,7 +672,6 @@
     <ClInclude Include="..\..\..\sdl\dataitem.h" />
     <ClInclude Include="..\..\..\sdl\datastream.h" />
     <ClInclude Include="..\..\..\sdl\defs.h" />
-    <ClInclude Include="..\..\..\sdl\destruction_obs.h" />
     <ClInclude Include="..\..\..\sdl\eaccessor.h" />
     <ClInclude Include="..\..\..\sdl\ebase.h" />
     <ClInclude Include="..\..\..\sdl\ebasis.h" />
@@ -735,11 +734,7 @@
     <ClInclude Include="..\..\..\sdl\math\plane.h" />
     <ClInclude Include="..\..\..\sdl\math\spline.h" />
     <ClInclude Include="..\..\..\sdl\md5.h" />
-    <ClInclude Include="..\..\..\sdl\olxalg.h" />
-    <ClInclude Include="..\..\..\sdl\olxfunc.h" />
-    <ClInclude Include="..\..\..\sdl\olxpptr.h" />
     <ClInclude Include="..\..\..\sdl\olxptr.h" />
-    <ClInclude Include="..\..\..\sdl\olxvptr.h" />
     <ClInclude Include="..\..\..\sdl\roman.h" />
     <ClInclude Include="..\..\..\sdl\shared.h" />
     <ClInclude Include="..\..\..\sdl\smart\olx_cstring.h" />

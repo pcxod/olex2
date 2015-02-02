@@ -19,7 +19,7 @@ TGlGroup::TGlGroup(TGlRenderer& R, const olxstr& collectionName) :
   AGDrawObject(R, collectionName)
 {
   SetGroupable(true);
-  SetTypeGroup();
+  sgdo_Flags |= sgdoGroup;
   DefaultColor = true;
   Blended = false;
 }
@@ -257,7 +257,7 @@ bool TGlGroup::TryToGroup(AGDObjList& ungroupable)  {
   return true;
 }
 //..............................................................................
-bool TGlGroup::OnMouseDown(const IOlxObject *Sender, const struct TMouseData& Data)  {
+bool TGlGroup::OnMouseDown(const IEObject *Sender, const struct TMouseData& Data)  {
   bool res = false;
   for( size_t i=0; i < Objects.Count(); i++ )
     if( Objects[i]->OnMouseDown(Sender, Data) )
@@ -265,7 +265,7 @@ bool TGlGroup::OnMouseDown(const IOlxObject *Sender, const struct TMouseData& Da
   return res;
 }
 //..............................................................................
-bool TGlGroup::OnMouseUp(const IOlxObject *Sender, const struct TMouseData& Data)  {
+bool TGlGroup::OnMouseUp(const IEObject *Sender, const struct TMouseData& Data)  {
   bool res = false;
   for( size_t i=0; i < Objects.Count(); i++ )
     if( Objects[i]->OnMouseUp(Sender, Data) )
@@ -273,7 +273,7 @@ bool TGlGroup::OnMouseUp(const IOlxObject *Sender, const struct TMouseData& Data
   return res;
 }
 //..............................................................................
-bool TGlGroup::OnMouseMove(const IOlxObject *Sender, const struct TMouseData& Data)  {
+bool TGlGroup::OnMouseMove(const IEObject *Sender, const struct TMouseData& Data)  {
   bool res = false;
   for( size_t i=0; i < Objects.Count(); i++ )
     if( Objects[i]->OnMouseMove(Sender, Data) )

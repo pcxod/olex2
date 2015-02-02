@@ -19,7 +19,7 @@ parameter names and values. The file structure will be peserved upon saving
 (besides white spaces for param name/value). If there are duplicate entries,
 the most recent value will be kept
 */
-class TSettingsFile: public IOlxObject  {
+class TSettingsFile: public IEObject  {
   olxstr_dict<olxstr, true> Params;
   TStringToList<olxstr, bool> Lines;
 protected:

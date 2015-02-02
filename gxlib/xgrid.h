@@ -61,7 +61,7 @@ class TXGrid: public AGDrawObject  {
     void Fit();
     virtual bool Orient(TGlPrimitive& P);
     virtual bool GetDimensions(vec3d &, vec3d &) { return false; }
-    bool OnMouseUp(const IOlxObject *Sender, const TMouseData& Data);
+    bool OnMouseUp(const IEObject *Sender, const TMouseData& Data);
     void UpdateLabel() { Fit(); }
     TStrList text;
   };
@@ -112,8 +112,8 @@ protected:
   public:
     TContextClear(TGlRenderer& Render);
     virtual ~TContextClear()  {}
-    bool Enter(const IOlxObject *Sender, const IOlxObject *Data, TActionQueue *);
-    bool Exit(const IOlxObject *Sender, const IOlxObject *Data, TActionQueue *);
+    bool Enter(const IEObject *Sender, const IEObject *Data, TActionQueue *);
+    bool Exit(const IEObject *Sender, const IEObject *Data, TActionQueue *);
   };
   static void _ResetLists()  {
     if( Instance != NULL )  {
@@ -196,23 +196,23 @@ public:
       Clear();
   }
 
-  bool OnMouseDown(const IOlxObject *Sender, const TMouseData& Data);
-  bool OnMouseUp(const IOlxObject *Sender, const TMouseData& Data);
-  bool OnMouseMove(const IOlxObject *Sender, const TMouseData& Data);
+  bool OnMouseDown(const IEObject *Sender, const TMouseData& Data);
+  bool OnMouseUp(const IEObject *Sender, const TMouseData& Data);
+  bool OnMouseMove(const IEObject *Sender, const TMouseData& Data);
 
   inline static TXGrid* GetInstance()  {  return Instance;  }
 
-  void LibScale(const TStrObjList& Params, TMacroData& E);
-  void LibExtended(const TStrObjList& Params, TMacroData& E);
-  void LibSize(const TStrObjList& Params, TMacroData& E);
-  void LibDepth(const TStrObjList& Params, TMacroData& E);
-  void LibMaxDepth(const TStrObjList& Params, TMacroData& E);
-  void LibContours(const TStrObjList& Params, TMacroData& E);
-  void LibPlaneSize(const TStrObjList& Params, TMacroData& E);
-  void LibGetMin(const TStrObjList& Params, TMacroData& E);
-  void LibGetMax(const TStrObjList& Params, TMacroData& E);
-  void LibRenderMode(const TStrObjList& Params, TMacroData& E);
-  void LibIsvalid(const TStrObjList& Params, TMacroData& E);
+  void LibScale(const TStrObjList& Params, TMacroError& E);
+  void LibExtended(const TStrObjList& Params, TMacroError& E);
+  void LibSize(const TStrObjList& Params, TMacroError& E);
+  void LibDepth(const TStrObjList& Params, TMacroError& E);
+  void LibMaxDepth(const TStrObjList& Params, TMacroError& E);
+  void LibContours(const TStrObjList& Params, TMacroError& E);
+  void LibPlaneSize(const TStrObjList& Params, TMacroError& E);
+  void LibGetMin(const TStrObjList& Params, TMacroError& E);
+  void LibGetMax(const TStrObjList& Params, TMacroError& E);
+  void LibRenderMode(const TStrObjList& Params, TMacroError& E);
+  void LibIsvalid(const TStrObjList& Params, TMacroError& E);
   class TLibrary*  ExportLibrary(const olxstr& name=EmptyString());
 #ifdef _PYTHON
   static void PyInit();

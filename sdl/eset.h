@@ -126,9 +126,6 @@ public:
     }
     return rv;
   }
-
-  void SetIncrement(size_t v) { list_t::SetIncrement(v); }
-  void SetCapacity(size_t v) { list_t::SetCapacity(v); }
 public:
   typedef object_t list_item_type;
   typedef object_t set_item_type;

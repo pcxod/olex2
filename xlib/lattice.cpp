@@ -2718,15 +2718,15 @@ TUndoData *TLattice::ValidateHGroups(bool reinit, bool report) {
 //..............................................................................
 //..............................................................................
 //..............................................................................
-void TLattice::LibGetFragmentCount(const TStrObjList& Params, TMacroData& E)  {
+void TLattice::LibGetFragmentCount(const TStrObjList& Params, TMacroError& E)  {
   E.SetRetVal(olxstr(FragmentCount()));
 }
 //..............................................................................
-void TLattice::LibGetMoiety(const TStrObjList& Params, TMacroData& E)  {
+void TLattice::LibGetMoiety(const TStrObjList& Params, TMacroError& E)  {
   E.SetRetVal(CalcMoiety());
 }
 //..............................................................................
-void TLattice::LibGetFragmentAtoms(const TStrObjList& Params, TMacroData& E)  {
+void TLattice::LibGetFragmentAtoms(const TStrObjList& Params, TMacroError& E)  {
   size_t index = Params[0].ToSizeT();
   if( index >= FragmentCount() )
     throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, FragmentCount());
@@ -2739,7 +2739,7 @@ void TLattice::LibGetFragmentAtoms(const TStrObjList& Params, TMacroData& E)  {
   E.SetRetVal( rv );
 }
 //..............................................................................
-void TLattice::LibIsGrown(const TStrObjList& Params, TMacroData& E)  {
+void TLattice::LibIsGrown(const TStrObjList& Params, TMacroError& E)  {
   E.SetRetVal(IsGenerated());
 }
 //..............................................................................

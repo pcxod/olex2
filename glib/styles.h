@@ -256,15 +256,16 @@ public:
   friend class TGraphicsStyles;
 };
 
-class TGraphicsStyles: public IOlxObject  {
+class TGraphicsStyles: public IEObject  {
   olxstr Name;
   olxstr LinkFile;
   short Version;
   ObjectGroup<TGlMaterial,TPrimitiveStyle> PStyles;
   mutable TPtrList<TDataItem> DataItems;
   TGraphicsStyle* Root;
+  class TGlRenderer& Renderer;
 public:
-  TGraphicsStyles();
+  TGraphicsStyles(TGlRenderer& R);
   virtual ~TGraphicsStyles();
 
   void Clear();
@@ -300,13 +301,9 @@ public:
   void ToDataItem(TDataItem& item, const TPtrList<TGraphicsStyle>& styles);
 
   // sets ICollectionItem::Tag of styles to Tag
-  void SetStylesTag(index_t Tag)  {  Root->SetStylesTag(Tag);  }
+  void SetStylesTag(int Tag)  {  Root->SetStylesTag(Tag);  }
   // removes Styles with Style::Tag == Tag
-  void RemoveStylesByTag(index_t Tag) {
-    OnClear.Enter(this);
-    Root->RemoveStylesByTag(Tag);
-    OnClear.Exit(this);
-  }
+  void RemoveStylesByTag(int Tag)  {  Root->RemoveStylesByTag(Tag);  }
   // removes non-persisten styles
   void RemoveNonPersistent()  {  Root->RemoveNonPersistent();  }
   // removes non-saveable styles
@@ -314,14 +311,13 @@ public:
   // removes named styles, case sensitive
   void RemoveNamedStyles(const olxstr& name)  {  Root->RemoveNamedStyles(TStrList(name, '.'));  }
 
-  short GetVersion() const {  return Version;  }
-  TActionQueue &OnClear;
+  inline short GetVersion() const {  return Version;  }
   // reads the style version (0 - no version) from a dataitem
   static int ReadStyleVersion(const TDataItem& Item) {
     return Item.FindField("Version", "0").ToInt();
   }
   // this is the current version of the styles
-  static int CurrentVersion() { return 2; }
+  static const int CurrentVersion;
 };
 
 EndGlNamespace()

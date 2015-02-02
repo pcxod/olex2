@@ -52,7 +52,7 @@ protected:
   static void Initialise();
   // should not be called directly, look below
   static void Finalise();
-  class Finaliser : public IOlxObject {
+  class Finaliser : public IEObject {
   public:
     ~Finaliser() { THttpFileSystem::Finalise(); }
   };

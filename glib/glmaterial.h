@@ -46,7 +46,7 @@ const uint16_t
   sglmLighting   =0x2000,
   sglmColorMat   =0x4000;
 
-class TGlMaterial: public AGOProperties, public IOlxObject  {
+class TGlMaterial: public AGOProperties, public IEObject  {
   uint16_t Flags;
 public:
   TGlOption EmissionF;

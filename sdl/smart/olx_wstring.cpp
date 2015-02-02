@@ -18,9 +18,7 @@ TWString::TWString()  {
   _Increment = 8;
 }
 //..............................................................................
-TWString::TWString(const bool& v)
-: TTIString<wchar_t>(v ? WTrueString(): WFalseString()) 
-{}
+TWString::TWString(const bool& v) : TTIString<wchar_t>(v ? WTrueString(): WFalseString())  {}
 //..............................................................................
 TWString::TWString(const char *str)  {
   _Start = 0;
@@ -67,9 +65,7 @@ TWString::TWString(const char& v)                  {
 //  return WStrRV(*this);
 //}
 
-const char * TWString::c_str() const {
-  return TEGC::Add(new TCString(*this)).c_str();
-}
+const char * TWString::c_str() const  {  return TEGC::New<TCString>(*this).c_str();  }
 
 TWString& TWString::operator << (const CharW &v)  {
   checkBufferForModification(_Length + 1);

@@ -20,7 +20,7 @@ BeginEsdlNamespace()
 template <typename> class SharedArrayList;
 template <typename> class ConstArrayList;
 
-template <class T> class TArrayList : public IOlxObject {
+template <class T> class TArrayList : public IEObject {
 private:
   size_t FCount, FCapacity;
   size_t FIncrement;
@@ -119,7 +119,7 @@ public:
     return *this;
   }
 //..............................................................................
-  virtual IOlxObject* Replicate() const {  return new TArrayList(*this);  }
+  virtual IEObject* Replicate() const {  return new TArrayList(*this);  }
 //..............................................................................
   template <class List> TArrayList& Assign(const List& list)  {
     if( (void*)this == (void*)&list )  return *this;
@@ -230,16 +230,6 @@ public:
       }
     }
     return rv;
-  }
-//..............................................................................
-  template <class Analyser> size_t Count(const Analyser& a) const {
-    size_t cnt = 0;
-    for (size_t i = 0; i < FCount; i++) {
-      if (a.OnItem(GetItem(i), i)) {
-        cnt++;
-      }
-    }
-    return cnt;
   }
 //..............................................................................
   TArrayList& SetCapacity(size_t v) {

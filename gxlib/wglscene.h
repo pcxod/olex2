@@ -12,7 +12,7 @@
 #include "glscene.h"
 
 #if defined(__WIN32__)
-class TWGlScene : public AGlScene {
+class TWGlScene:public AGlScene  {
   HGLRC FGlContext;
   HDC   FWContext;
   HBITMAP FBitmap;
@@ -26,6 +26,10 @@ public:
   void InitialiseHDC(HDC Dc);
   HDC GetDC() const { return FWContext; }
   void Destroy();
+  bool StartSelect(int x, int y, GLuint *Bf);
+  int EndSelect();
+  bool StartDraw();
+  void EndDraw();
   virtual void ScaleFonts(double scale)  {
     throw TNotImplementedException(__OlxSourceInfo);
   }

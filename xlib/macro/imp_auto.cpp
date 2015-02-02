@@ -40,7 +40,7 @@ size_t imp_auto_AtomCount(const TAsymmUnit& au)  {
   return ac;
 }
 
-void XLibMacros::funATA(const TStrObjList &Cmds, TMacroData &Error)  {
+void XLibMacros::funATA(const TStrObjList &Cmds, TMacroError &Error)  {
   TXApp& xapp = TXApp::GetInstance();
   olxstr folder(Cmds.IsEmpty() ? EmptyString() : Cmds[0]);
   int arg = 0;
@@ -78,7 +78,7 @@ void XLibMacros::funATA(const TStrObjList &Cmds, TMacroData &Error)  {
 }
 //..............................................................................
 void XLibMacros::macAtomInfo(TStrObjList &Cmds, const TParamList &Options,
-  TMacroData &Error)
+  TMacroError &Error)
 {
   TXApp& xapp = TXApp::GetInstance();
   TSAtomPList satoms;
@@ -90,7 +90,7 @@ void XLibMacros::macAtomInfo(TStrObjList &Cmds, const TParamList &Options,
 }
 //..............................................................................
 void XLibMacros::macVATA(TStrObjList &Cmds, const TParamList &Options,
-  TMacroData &Error)
+  TMacroError &Error)
 {
   TXApp& xapp = TXApp::GetInstance();
   TEFile log(Cmds.Text(' '), "a+b");
@@ -123,7 +123,7 @@ void helper_CleanBaiList(TStringToList<olxstr, const cm_Element*>& list,
 }
 
 void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
-  TMacroData &Error)
+  TMacroError &Error)
 {
   TXApp& xapp = TXApp::GetInstance();
   TStringToList<olxstr, const cm_Element*> sfac;
@@ -512,7 +512,7 @@ struct Main_SfacComparator {
       return olx_ref::get(b).GetB()->z - olx_ref::get(a).GetB()->z;
   }
 };
-void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroData &Error)  {
+void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
   using namespace olx_analysis;
   TXApp& xapp = TXApp::GetInstance();
   TLattice& latt = xapp.XFile().GetLattice();
@@ -692,7 +692,7 @@ double TryPoint(TArray3D<float>& map, const TUnitCell& uc, const vec3i& p,
   return MapUtil::IntegrateMask(map.Data, map.GetSize(), p, mask);
 }
 
-void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroData &E)  {
+void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
   TXApp& xapp = TXApp::GetInstance();
   TStopWatch sw(__FUNC__);
   double resolution = 0.2;
@@ -751,7 +751,7 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroData &E)  {
     if( atoms[i].GetA()->IsDeleted() || atoms[i].GetA()->GetType() == iQPeakZ )
       continue;
     vec3i p = (atoms[i].GetA()->ccrd()*map.GetSize()).Round<int>();
-    size_t ti = atom_masks.IndexOf(atoms[i].GetA()->GetType().GetIndex());
+    size_t ti = atom_masks.IndexOf(atoms[i].GetA()->GetType().index);
     atoms[i].b = MapUtil::IntegrateMask(map.Data, map.GetSize(), p,
       *atom_masks.GetValue(ti));
     atoms[i].c = mask_sizes[ti];
@@ -770,7 +770,7 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroData &E)  {
       }
       double p_ed = 0, n_ed  = 0;
       const cm_Element& original_type = atoms[i].GetA()->GetType();
-      const size_t ti = atom_masks.IndexOf(original_type.GetIndex());
+      const size_t ti = atom_masks.IndexOf(original_type.index);
       TArray3D<bool> &mask = *atom_masks.GetValue(ti);
       cm_Element* n_e = XElementLib::NextZ(original_type);
       if( n_e != NULL )  {

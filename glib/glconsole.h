@@ -96,7 +96,7 @@ protected:
   virtual void SetPosition(uint64_t newPos)  {
     throw TNotImplementedException(__OlxSourceInfo);
   }
-  virtual bool Enter(const IOlxObject *Sender, const IOlxObject *Data,
+  virtual bool Enter(const IEObject *Sender, const IEObject *Data,
     TActionQueue *);
   void OnResize();
 public:
@@ -128,7 +128,6 @@ public:
   bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d& Max, vec3d& Min);
   virtual void SetVisible(bool v);
-  virtual void SetPrintable(bool v);
   bool ProcessKey(int Key, short ShiftState);
   bool WillProcessKey(int Key, short ShiftState);
 
@@ -162,13 +161,13 @@ public:
 
   TActionQueue &OnCommand, &OnPost;
 
-  void LibClear(const TStrObjList& Params, TMacroData& E);
-  void LibLines(const TStrObjList& Params, TMacroData& E);
-  void LibShowBuffer(const TStrObjList& Params, TMacroData& E);
-  void LibPostText(const TStrObjList& Params, TMacroData& E);
-  void LibLineSpacing(const TStrObjList& Params, TMacroData& E);
-  void LibInviteString(const TStrObjList& Params, TMacroData& E);
-  void LibCommand(const TStrObjList& Params, TMacroData& E);
+  void LibClear(const TStrObjList& Params, TMacroError& E);
+  void LibLines(const TStrObjList& Params, TMacroError& E);
+  void LibShowBuffer(const TStrObjList& Params, TMacroError& E);
+  void LibPostText(const TStrObjList& Params, TMacroError& E);
+  void LibLineSpacing(const TStrObjList& Params, TMacroError& E);
+  void LibInviteString(const TStrObjList& Params, TMacroError& E);
+  void LibCommand(const TStrObjList& Params, TMacroError& E);
   class TLibrary* ExportLibrary(const olxstr& name=EmptyString());
 };
 

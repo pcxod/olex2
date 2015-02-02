@@ -44,6 +44,7 @@ protected:
   }
   static int _SortBondsByLengthAsc(const TSBond &b1, const TSBond &b2);
   static int _SortBondsByLengthDsc(const TSBond &b1, const TSBond &b2);
+  typedef TDirectAccessor<TSAtom> DirectAccessor;
 public:
   TSAtom(TNetwork *N);
   virtual ~TSAtom()  {}
@@ -196,16 +197,16 @@ public:
       : accessor(accessor_), ref_flags(_ref_flags)  {}
     template <class Item>
     bool OnItem(const Item& o, size_t) const {
-      return (olx_ref::get(Accessor::Access(o)).Flags&ref_flags) != 0;
+      return (Accessor::Access(o).Flags&ref_flags) != 0;
     }
   };
   template <class acc_t> static FlagsAnalyser_<acc_t>
   FlagsAnalyser(const acc_t &acc, short flag) {
     return FlagsAnalyser_<acc_t>(acc, flag);
   }
-  static FlagsAnalyser_<DummyAccessor>
+  static FlagsAnalyser_<DirectAccessor>
   FlagsAnalyser(short flags) {
-    return FlagsAnalyser_<DummyAccessor>(DummyAccessor(), flags);
+    return FlagsAnalyser_<DirectAccessor>(DirectAccessor(), flags);
   }
 
   template <class Accessor> struct FlagSetter_ {
@@ -213,20 +214,19 @@ public:
     const short ref_flags;
     bool set;
     FlagSetter_(const Accessor &accessor_, short ref_flags_, bool set_)
-      : accessor(accessor_), ref_flags(ref_flags_), set(set_)
-    {}
+      : accessor(accessor_), ref_flags(ref_flags_), set(set_)  {}
     template <class Item>
     void OnItem(Item& o, size_t) const {
-      return olx_set_bit(set, olx_ref::get(accessor(o)).Flags, ref_flags);
+      return olx_set_bit(set, accessor(o).Flags, ref_flags);
     }
   };
   template <class acc_t> static FlagSetter_<acc_t>
   FlagSetter(const acc_t &acc, short ref_flags, bool set) {
     return FlagSetter_<acc_t>(acc, ref_flags, set);
   }
-  static FlagSetter_<DummyAccessor>
+  static FlagSetter_<DirectAccessor>
   FlagSetter(short ref_flags, bool set) {
-    return FlagSetter_<DummyAccessor>(DummyAccessor(), ref_flags, set);
+    return FlagSetter_<DirectAccessor>(DirectAccessor(), ref_flags, set);
   }
 
   template <class Accessor> struct TypeAnalyser_ {
@@ -235,7 +235,7 @@ public:
     TypeAnalyser_(const Accessor &accessor_, short _ref_type)
       : accessor(accessor_), ref_type(_ref_type)  {}
     template <class Item> bool OnItem(const Item& o, size_t) const {
-      return olx_ref::get(accessor(o)).GetType() == ref_type;
+      return accessor(o).GetType() == ref_type;
     }
   };
   template <class acc_t> static TypeAnalyser_<acc_t>
@@ -246,13 +246,13 @@ public:
   TypeAnalyser(const acc_t &acc, const cm_Element &e) {
     return TypeAnalyser_<acc_t>(acc, e.z);
   }
-  static TypeAnalyser_<DummyAccessor>
+  static TypeAnalyser_<DirectAccessor>
   TypeAnalyser(short z) {
-    return TypeAnalyser_<DummyAccessor>(DummyAccessor(), z);
+    return TypeAnalyser_<DirectAccessor>(DirectAccessor(), z);
   }
-  static TypeAnalyser_<DummyAccessor>
+  static TypeAnalyser_<DirectAccessor>
   TypeAnalyser(const cm_Element &e) {
-    return TypeAnalyser_<DummyAccessor>(DummyAccessor(), e.z);
+    return TypeAnalyser_<DirectAccessor>(DirectAccessor(), e.z);
   }
 
 };

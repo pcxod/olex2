@@ -90,8 +90,8 @@ TAttachedNode::TAttachedNode(IDataInputStream& in)  {
   in >> val;  FCenter[2] = val;
 }
 //..............................................................................
-void TAttachedNode::SaveToStream(IDataOutputStream& output) const {
-  output << (int32_t)Element->GetIndex();
+void TAttachedNode::SaveToStream( IDataOutputStream& output ) const {
+  output << (int32_t)Element->index;
   output << (float)FCenter[0];
   output << (float)FCenter[1];
   output << (float)FCenter[2];
@@ -186,7 +186,7 @@ double TAutoDBNode::CalcAngle(size_t i, size_t j)  const {
 }
 //..............................................................................
 void TAutoDBNode::SaveToStream(IDataOutputStream& output) const {
-  output << (uint32_t)Element->GetIndex();
+  output << (uint32_t)Element->index;
   output << (float)Center[0];
   output << (float)Center[1];
   output << (float)Center[2];
@@ -209,12 +209,12 @@ void TAutoDBNode::LoadFromStream(IDataInputStream& in)  {
   _PreCalc();
 }
 //..............................................................................
-olxstr TAutoDBNode::ToString() const {
-  olxstr tmp = Element->symbol;
-  tmp << '{';
-  for (size_t i=0; i < AttachedNodes.Count(); i++) {
+const olxstr& TAutoDBNode::ToString() const {
+  olxstr& tmp = TEGC::New<olxstr>(EmptyString(), 100);
+  tmp << Element->symbol << '{';
+  for( size_t i=0; i < AttachedNodes.Count(); i++ )  {
     tmp << AttachedNodes[i].GetType().symbol;
-    if ((i+1) < AttachedNodes.Count())
+    if( (i+1) < AttachedNodes.Count() )
       tmp << ',';
   }
   tmp << '}'; /* << '[';
@@ -447,8 +447,9 @@ void TAutoDBNetNode::LoadFromStream(IDataInputStream& input)  {
   }
 }
 //..............................................................................
-olxstr TAutoDBNetNode::ToString(int level) const {
-  olxstr tmp = FCenter->ToString();
+const olxstr& TAutoDBNetNode::ToString(int level) const  {
+  olxstr& tmp = TEGC::New<olxstr>(EmptyString(), 256);
+  tmp << FCenter->ToString();
   if( level == 1 )  {
     tmp << '{';
     for( size_t i=0; i < AttachedNodes.Count(); i++ )  {
@@ -1239,7 +1240,7 @@ ConstTypeList<TAutoDB::TAnalysisResult> TAutoDB::AnalyseNet(TNetwork& net)  {
             cindexes[j])->Center()->GetType();
         res[sn->Node(i).Node(j)->GetId()].enforced.AddNew(
           guessN[0].hits[0].Fom, t);
-        sn->Node(i).Node(j)->SetTag(t.GetIndex());
+        sn->Node(i).Node(j)->SetTag(t.index);
       }
       else  {
         const cm_Element &to = guessN[0].hits[0].Node->Node(
@@ -1373,12 +1374,12 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
           sn->Node(i).Node(j)->GetId() == 0)
       {
         sn->Node(i).Node(j)->SetTag(guessN[0].hits[0].Node->Node(
-          cindexes[j])->Center()->GetType().GetIndex());
+            cindexes[j])->Center()->GetType().index);
       }
       else {
         index_t from = sn->Node(i).Node(j)->GetTag();
         index_t to = guessN[0].hits[0].Node->Node(
-          cindexes[j])->Center()->GetType().GetIndex();
+          cindexes[j])->Center()->GetType().index;
         if (from != -1 && from != to)
           log.Add("Oups ...");
       }
@@ -1411,7 +1412,7 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
         if (alg::check_connectivity(*guesses[i].atom,
             *guesses[i].list1[0].Type))
         {
-          sn->Node(i).SetTag(guesses[i].list1[0].Type->GetIndex());
+          sn->Node(i).SetTag(guesses[i].list1[0].Type->index);
         }
         continue;
       }
@@ -1421,7 +1422,7 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
     const cm_Element* type = NULL;
     if (sn->Node(i).GetId() != 0) {
       type = guessN[0].Type;
-      sn->Node(i).SetTag(type->GetIndex());
+      sn->Node(i).SetTag(type->index);
       for (size_t j=0; j < guessN.Count(); j++) {
         log.Add(guessN[j].Type->symbol) << '(' <<
           olxstr::FormatFloat(2,1.0/(guessN[j].MeanFomN(1)+0.001)) << ")";
@@ -1452,7 +1453,7 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
         if (AnalyseUiso(*guesses[i].atom, guessN, stat, searchHeavier,
           searchLighter, proposed_atoms))
         {
-          sn->Node(i).SetTag(guesses[i].atom->GetType().GetIndex());
+          sn->Node(i).SetTag(guesses[i].atom->GetType().index);
           processed.AddUnique(&sn->Node(i));
         }
       }
@@ -1847,8 +1848,7 @@ TAutoDB &TAutoDB::GetInstance()  {
       if (!TEFile::Exists(fn) && TEFile::Exists(bd_fn))
         TEFile::Copy(bd_fn, fn);
     }
-    TEGC::AddP(Instance=new TAutoDB(
-      *(dynamic_cast<TXFile *>(app.XFile().Replicate())), app));
+    TEGC::AddP(Instance=new TAutoDB(*((TXFile*)app.XFile().Replicate()), app));
     if( TEFile::Exists(fn) )  {
       TEFile dbf(fn, "rb");
       Instance->LoadFromStream(dbf);
@@ -1865,21 +1865,21 @@ TAutoDB &TAutoDB::GetInstance()  {
 //..............................................................................
 //..............................................................................
 //..............................................................................
-void TAutoDB::LibBAIDelta(const TStrObjList& Params, TMacroData& E)  {
+void TAutoDB::LibBAIDelta(const TStrObjList& Params, TMacroError& E)  {
   if( Params.IsEmpty() )
     E.SetRetVal(BAIDelta);
   else
     BAIDelta = Params[0].ToInt();
 }
 //..............................................................................
-void TAutoDB::LibURatio(const TStrObjList& Params, TMacroData& E)  {
+void TAutoDB::LibURatio(const TStrObjList& Params, TMacroError& E)  {
   if( Params.IsEmpty() )
     E.SetRetVal(URatio);
   else
     URatio = Params[0].ToDouble();
 }
 //..............................................................................
-void TAutoDB::LibEnforceFormula(const TStrObjList& Params, TMacroData& E)  {
+void TAutoDB::LibEnforceFormula(const TStrObjList& Params, TMacroError& E)  {
   if( Params.IsEmpty() )
     E.SetRetVal(EnforceFormula);
   else

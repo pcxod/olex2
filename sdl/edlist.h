@@ -14,7 +14,7 @@
 BeginEsdlNamespace()
 
 template <typename T>
-class TDirectionalListEntry : public IOlxObject  {
+class TDirectionalListEntry : public IEObject  {
   TTBuffer<T>* Data;
   TDirectionalListEntry<T>* NextEntry;
 public:
@@ -82,7 +82,7 @@ public:
 };
 
 template <typename T>
-  class TDirectionalList : public IOlxObject  {
+  class TDirectionalList : public IEObject  {
     TDirectionalListEntry<T>* Head, *Tail;
     size_t Length;
     size_t SegmentSize;

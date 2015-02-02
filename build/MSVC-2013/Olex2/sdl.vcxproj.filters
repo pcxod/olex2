@@ -560,26 +560,11 @@
     <ClInclude Include="..\..\..\sdl\eset.h">
       <Filter>Header Files\containers</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\sdl\destruction_obs.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\sdl\olxvptr.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\sdl\roman.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\sdl\tests\roman_test.h">
       <Filter>tests</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\sdl\olxpptr.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\sdl\olxalg.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\sdl\olxfunc.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

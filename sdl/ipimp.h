@@ -17,22 +17,22 @@ interface
 */
 namespace olex2 {
 
-class OlexProcessorImp : public IOlex2Processor, public virtual IOlxObject {
+class OlexProcessorImp : public IOlex2Processor {
   sorted::StringAssociation<ABasicFunction*> CallbackFuncs;
   ALibraryContainer *LibraryContainer;
   // object destruction handler
-  void ODH(APerishable *o) {
+  void ODH(IEObject *o) {
     if (o == LibraryContainer)
       LibraryContainer = NULL;
   }
 protected:
   macrolib::TEMacroLib Macros;
 
-  virtual void AnalyseError(TMacroData &error) {
+  virtual void AnalyseError(TMacroError &error) {
     AnalyseErrorEx(error, false);
   }
 
-  virtual void AnalyseErrorEx(const TMacroData &error, bool quiet) {
+  virtual void AnalyseErrorEx(const TMacroError &error, bool quiet) {
     if (!error.IsSuccessful()) {
       if (error.IsProcessingException()) {
         TBasicApp::NewLogEntry(logException) << error.GetLocation() << ": " <<
@@ -55,10 +55,8 @@ public:
   virtual ~OlexProcessorImp() {
     for (size_t i=0; i < CallbackFuncs.Count(); i++)
       delete CallbackFuncs.GetValue(i);
-    if (LibraryContainer) {
-      LibraryContainer->RemoveDestructionObserver(
-        DestructionObserver::Make(this, &OlexProcessorImp::ODH));
-    }
+    if (LibraryContainer)
+      LibraryContainer->RemoveDestructionHandler(*this, &OlexProcessorImp::ODH);
   }
 
   virtual TLibrary&  GetLibrary() {
@@ -71,8 +69,7 @@ public:
 
   void SetLibraryContainer(ALibraryContainer &lc) {
     LibraryContainer = &lc;
-    lc.AddDestructionObserver
-      (DestructionObserver::MakeNew(this, &OlexProcessorImp::ODH));
+    lc.AddDestructionHandler(*this, &OlexProcessorImp::ODH);
   }
 
   virtual bool registerCallbackFunc(const olxstr& cbEvent,
@@ -116,7 +113,7 @@ public:
   {
     const olxstr cmd_ = cmd;
     beforeCall(cmd_);
-    TMacroData err;
+    TMacroError err;
     err.SetLocation(location);
     const bool rv = Macros.ProcessFunction(cmd, err, false);
     AnalyseErrorEx(err, quiet);
@@ -128,7 +125,7 @@ public:
     const olxstr& location=EmptyString(), bool quiet=false)
   {
     beforeCall(cmd);
-    TMacroData err;
+    TMacroError err;
     err.SetLocation(location);
     Macros.ProcessTopMacro(cmd, err, *this,
       quiet ? NULL : &OlexProcessorImp::AnalyseError);
@@ -136,7 +133,7 @@ public:
     return err.IsSuccessful();
   }
 
-  virtual bool processMacroEx(const olxstr& cmd, TMacroData &err,
+  virtual bool processMacroEx(const olxstr& cmd, TMacroError &err,
     const olxstr& location=EmptyString(), bool quiet=false)
   {
     beforeCall(cmd);
@@ -149,7 +146,7 @@ public:
   virtual void callCallbackFunc(const olxstr& cbEvent, const TStrList& params) {
     beforeCall(cbEvent);
     TSizeList indexes;
-    TMacroData me;
+    TMacroError me;
     CallbackFuncs.GetIndices(cbEvent, indexes);
     for( size_t i=0; i < indexes.Count(); i++ )  {
       CallbackFuncs.GetValue(indexes[i])->Run(params, me);

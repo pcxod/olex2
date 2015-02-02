@@ -29,9 +29,8 @@ class TGlGroup: public AGDrawObject {
 protected:
   void InitMaterial() const;
   virtual void DoDraw(bool SelectPrimitives, bool SelectObjects) const;
-  struct ObjectReleaser {
-    template <typename item_t> static bool OnItem(item_t &o_, size_t) {
-      AGDrawObject &o = olx_ref::get(o_);
+  struct ObjectReleaser  {
+    static bool OnItem(AGDrawObject& o, size_t)  {
       o.SetParentGroup(NULL);
       o.SetGrouped(false);
       return true;
@@ -89,9 +88,9 @@ public:
 
   bool Orient(TGlPrimitive&)  {  return false;  }
   bool GetDimensions(vec3d&, vec3d&)  {  return false;  }
-  virtual bool OnMouseDown(const IOlxObject *Sender, const TMouseData& Data);
-  virtual bool OnMouseUp(const IOlxObject *Sender, const TMouseData& Data);
-  virtual bool OnMouseMove(const IOlxObject *Sender, const TMouseData& Data);
+  virtual bool OnMouseDown(const IEObject *Sender, const TMouseData& Data);
+  virtual bool OnMouseUp(const IEObject *Sender, const TMouseData& Data);
+  virtual bool OnMouseMove(const IEObject *Sender, const TMouseData& Data);
 
   virtual void SetVisible(bool On);
   virtual void SetSelected(bool On);

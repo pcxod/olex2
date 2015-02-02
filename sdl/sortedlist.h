@@ -67,12 +67,12 @@ public:
   // allows to remove multiple items using a condition
   template <class PackAnalyser>
   void Pack(const PackAnalyser& pa)  {  list.Pack(pa);  }
+  template <class PackAnalyser>
+  void PackEx(const PackAnalyser& pa)  {  list.PackEx(pa);  }
   template <class Functor>
   void ForEach(const Functor& f) const {  list.ForEach(f);  }
-  template <class Analyser> size_t Count(const Analyser& a) const {
-    return list.Count(a);
-  }
-  //..............................................................................
+  template <class Functor>
+  void ForEachEx(const Functor& f) const {  list.ForEachEx(f);  }
 };
 
 template <class ListClass, class Comparator, typename TypeClass>

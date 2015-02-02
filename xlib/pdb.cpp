@@ -231,7 +231,7 @@ void TPdb::LoadFromStrings(const TStrList& Strings)  {
   }
 }
 //..............................................................................
-bool TPdb::Adopt(TXFile& XF, int)  {
+bool TPdb::Adopt(TXFile& XF)  {
   Clear();
   // init AU
   GetAsymmUnit().GetAxes() = XF.GetAsymmUnit().GetAxes();

@@ -24,7 +24,7 @@ enum  {
   logException,
   logExceptionTrace
 };
-class TLog: public IOlxObject, public IDataOutputStream  {
+class TLog: public IEObject, public IDataOutputStream  {
   // stream, to delete at the end
   TArrayList<olx_pair_t<IDataOutputStream*, bool> > Streams;
   TActionQList Actions;

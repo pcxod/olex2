@@ -48,9 +48,9 @@ struct ort_atom : public a_ort_object {
   uint32_t sphere_color, rim_color, mask;
   ort_atom(const OrtDraw& parent, const TXAtom& a);
   ~ort_atom()  {
-    olx_del_obj(p_elpm);
-    olx_del_obj(p_ielpm);
-    olx_del_obj(elpm);
+    if( p_elpm != NULL )  delete p_elpm;
+    if( p_ielpm != NULL )  delete p_ielpm;
+    if( elpm != NULL )  delete elpm;
   }
   virtual void render(PSWriter&) const;
   virtual float get_z() const {  return crd[2];  }
@@ -157,7 +157,7 @@ struct ort_circle : public a_ort_object {
       basis(NULL),
       color(0) {}
   ~ort_circle()  {
-    olx_del_obj(basis);
+    if( basis != NULL )  delete basis;
   }
   virtual void render(PSWriter&) const;
   virtual float get_z() const {  return center[2];  }
@@ -242,7 +242,7 @@ protected:
   };
   TPtrList<ort_atom> atoms;
 public:
-  OrtDraw() : app(TGXApp::GetInstance()), basis(app.GetRenderer().GetBasis()) {
+  OrtDraw() : app(TGXApp::GetInstance()), basis(app.GetRender().GetBasis()) {
     ElpDiv = 36;
     BondDiv = 12;
     PieDiv = 4;

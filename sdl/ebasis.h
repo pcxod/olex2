@@ -19,7 +19,7 @@
 
 BeginEsdlNamespace()
 
-class TEBasis: public IOlxObject  {
+class TEBasis: public IEObject  {
 protected:
   static float FMData[16], FMDataT[16];  // matrix to call OpenGlDirectly
   double   FRX, FRY, FRZ, // the rotaion angles

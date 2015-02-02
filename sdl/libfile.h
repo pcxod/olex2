@@ -13,24 +13,24 @@
 BeginEsdlNamespace()
 
 struct LibFile {
-  static void FileExists(const TStrObjList& Params, TMacroData& E);
-  static void FileName(const TStrObjList& Params, TMacroData& E);
-  static void FilePath(const TStrObjList& Params, TMacroData& E);
-  static void FileDrive(const TStrObjList& Params, TMacroData& E);
-  static void FileExt(const TStrObjList& Params, TMacroData& E);
-  static void ChangeFileExt(const TStrObjList& Params, TMacroData& E);
-  static void Copy(const TStrObjList& Params, TMacroData& E);
-  static void Rename(const TStrObjList& Params, TMacroData& E);
-  static void Delete(const TStrObjList& Params, TMacroData& E);
-  static void CurDir(const TStrObjList& Params, TMacroData& E);
-  static void ChDir(const TStrObjList& Params, TMacroData& E);
-  static void MkDir(const TStrObjList& Params, TMacroData& E);
-  static void OSPath(const TStrObjList& Params, TMacroData& E);
-  static void Which(const TStrObjList& Params, TMacroData& E);
-  static void Age(const TStrObjList& Params, TMacroData& E);
-  static void ListDirForGUI(const TStrObjList& Params, TMacroData& E);
-  static void CreateRelativePath(const TStrObjList& Params, TMacroData& E);
-  static void ExpandRelativePath(const TStrObjList& Params, TMacroData& E);
+  static void FileExists(const TStrObjList& Params, TMacroError& E);
+  static void FileName(const TStrObjList& Params, TMacroError& E);
+  static void FilePath(const TStrObjList& Params, TMacroError& E);
+  static void FileDrive(const TStrObjList& Params, TMacroError& E);
+  static void FileExt(const TStrObjList& Params, TMacroError& E);
+  static void ChangeFileExt(const TStrObjList& Params, TMacroError& E);
+  static void Copy(const TStrObjList& Params, TMacroError& E);
+  static void Rename(const TStrObjList& Params, TMacroError& E);
+  static void Delete(const TStrObjList& Params, TMacroError& E);
+  static void CurDir(const TStrObjList& Params, TMacroError& E);
+  static void ChDir(const TStrObjList& Params, TMacroError& E);
+  static void MkDir(const TStrObjList& Params, TMacroError& E);
+  static void OSPath(const TStrObjList& Params, TMacroError& E);
+  static void Which(const TStrObjList& Params, TMacroError& E);
+  static void Age(const TStrObjList& Params, TMacroError& E);
+  static void ListDirForGUI(const TStrObjList& Params, TMacroError& E);
+  static void CreateRelativePath(const TStrObjList& Params, TMacroError& E);
+  static void ExpandRelativePath(const TStrObjList& Params, TMacroError& E);
   static TLibrary *ExportLibrary(const olxstr &name=EmptyString());
 };
 

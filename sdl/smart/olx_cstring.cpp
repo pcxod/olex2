@@ -68,9 +68,7 @@ TCString::TCString(const TTIString<wchar_t>& wstr )  {
     SData->Data[i] = wstr[i];
 }
 
-const wchar_t * TCString::wc_str() const {
-  return TEGC::Add(new TWString(*this)).wc_str();
-}
+const wchar_t * TCString::wc_str() const  {  return TEGC::New<TWString>(*this).wc_str();  }
 
 TCString& TCString::operator << (const CharW &v)  {
   checkBufferForModification(_Length + 1);

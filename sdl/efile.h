@@ -54,7 +54,7 @@ const short
   accessWrite  = 0x0002,
   accessRead   = 0x0004;
 
-class TEFile: public IOlxObject, public IDataInputStream,
+class TEFile: public IEObject, public IDataInputStream,
   public IDataOutputStream
 {
   FILE *FHandle;

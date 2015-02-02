@@ -12,23 +12,13 @@
 #include "olxvar.h"
 
 using namespace ctrl_ext;
-//..............................................................................
-TChoice::TChoice(wxWindow *Parent, wxWindowID id, const wxPoint& pos,
-  const wxSize& size, long style)
-: AOlxCtrl(this),
-  OnChange(AOlxCtrl::ActionQueue::New(Actions, evt_change_id)),
-  OnLeave(AOlxCtrl::ActionQueue::New(Actions, evt_on_mouse_leave_id)),
-  OnEnter(AOlxCtrl::ActionQueue::New(Actions, evt_on_mouse_enter_id))
-{
-  wxChoice::Create(Parent, id, pos, size, 0, 0, style);
-  Bind(wxEVT_CHOICE, &TChoice::ChangeEvent, this);
-  Bind(wxEVT_KILL_FOCUS, &TChoice::LeaveEvent, this);
-  Bind(wxEVT_SET_FOCUS, &TChoice::EnterEvent, this);
-    OnLeave.SetEnabled(false);
-  entered_counter = 0;
-  OnChangeAlways = false;
-}
-//..............................................................................
+IMPLEMENT_CLASS(TChoice, wxChoice)
+BEGIN_EVENT_TABLE(TChoice, wxChoice)
+EVT_CHOICE(-1, TChoice::ChangeEvent)
+EVT_KILL_FOCUS(TChoice::LeaveEvent)
+EVT_SET_FOCUS(TChoice::EnterEvent)
+END_EVENT_TABLE()
+
 TChoice::~TChoice() {
   _Clear();
 }

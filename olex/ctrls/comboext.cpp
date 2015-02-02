@@ -12,25 +12,15 @@
 #include "olxvar.h"
 
 using namespace ctrl_ext;
-//..............................................................................
-TComboBox::TComboBox(wxWindow *Parent, wxWindowID id, const wxString &value,
-const wxPoint& pos, const wxSize& size, long style)
-: AOlxCtrl(this),
-  OnChange(AOlxCtrl::ActionQueue::New(Actions, evt_change_id)),
-  OnLeave(AOlxCtrl::ActionQueue::New(Actions, evt_on_mouse_leave_id)),
-  OnEnter(AOlxCtrl::ActionQueue::New(Actions, evt_on_mouse_enter_id)),
-  OnReturn(AOlxCtrl::ActionQueue::New(Actions, evt_on_return_id))
-{
-  wxComboBox::Create(Parent, id, value, pos, size, 0, NULL, style);
-  Bind(wxEVT_COMBOBOX, &TComboBox::ChangeEvent, this);
-  Bind(wxEVT_TEXT_ENTER, &TComboBox::EnterPressedEvent, this);
-  Bind(wxEVT_KILL_FOCUS, &TComboBox::LeaveEvent, this);
-  Bind(wxEVT_SET_FOCUS, &TComboBox::EnterEvent, this);
-  OnLeave.SetEnabled(false);
-  entered_counter = 0;
-  OnChangeAlways = false;
-}
-//..............................................................................
+IMPLEMENT_CLASS(TComboBox, wxComboBox)
+
+BEGIN_EVENT_TABLE(TComboBox, wxComboBox)
+  EVT_COMBOBOX(-1, TComboBox::ChangeEvent)
+  EVT_TEXT_ENTER(-1, TComboBox::EnterPressedEvent)
+  EVT_KILL_FOCUS(TComboBox::LeaveEvent)
+  EVT_SET_FOCUS(TComboBox::EnterEvent)
+END_EVENT_TABLE()
+
 TComboBox::~TComboBox() {
   _Clear();
 }

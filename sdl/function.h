@@ -10,8 +10,8 @@
 #ifndef __olx_sdl_function_H
 #define __olx_sdl_function_H
 
-#define DefMacro(macroName) void mac##macroName(TStrObjList &Cmds, const TParamList &Options, TMacroData &E);
-#define DefFunc(funcName) void fun##funcName(const TStrObjList &Cmds, TMacroData &E);
+#define DefMacro(macroName) void mac##macroName(TStrObjList &Cmds, const TParamList &Options, TMacroError &E);
+#define DefFunc(funcName) void fun##funcName(const TStrObjList &Cmds, TMacroError &E);
 
 #define InitFunc(library, baseClass, funcName, argc) \
   (library).Register( new TFunction<baseClass>(this, &baseClass::fun##funcName, #funcName, argc))
@@ -68,21 +68,21 @@ const uint32_t
   // .... 1 << n
   ;
 
-class ALibraryContainer : public APerishable {
+class ALibraryContainer: public IEObject  {
 private:
   struct TProgramStateDescriptor {
     uint32_t StateBit;
     olxstr StateDescription;
   };
   TPtrList<TProgramStateDescriptor> ProgramStates;
-  TProgramStateDescriptor* FindState(uint32_t stateBit) {
+  TProgramStateDescriptor* FindState(uint32_t stateBit)  {
     for( size_t i=0; i < ProgramStates.Count(); i++ )
       if( ProgramStates[i]->StateBit == stateBit )
         return ProgramStates[i];
     return NULL;
   }
 protected:
-  void DefineState(uint32_t specialCheck, const olxstr& description) {
+  void DefineState(uint32_t specialCheck, const olxstr& description)  {
     TProgramStateDescriptor* ps = new TProgramStateDescriptor;
     ps->StateBit = specialCheck;
     ps->StateDescription = description;
@@ -93,11 +93,11 @@ public:
     for( size_t i=0; i < ProgramStates.Count(); i++ )
       delete ProgramStates[i];
   }
-  olxstr GetStateName(uint32_t specialCheck) {
+  olxstr GetStateName(uint32_t specialCheck)  {
     olxstr stateDescr;
-    for (int i=16; i < 32; i++) {
-      if (specialCheck & (1 << i)) {
-        TProgramStateDescriptor* ps = FindState(1 << i);
+    for( int i=16; i < 32; i++ )  {
+      if( specialCheck & (1 << i) )  {
+        TProgramStateDescriptor* ps = FindState( 1 << i );
         if( ps != NULL )
           stateDescr << '[' << ps->StateDescription << ']';
         else
@@ -111,9 +111,9 @@ public:
   virtual bool CheckProgramState(uint32_t specialCheck) = 0;
 };
 
-class ABasicLibrary {
+class ABasicLibrary  {
 public:
-  virtual ~ABasicLibrary() {}
+  virtual ~ABasicLibrary()  {}
   virtual bool CheckProgramState(uint32_t state) = 0;
   virtual ALibraryContainer* GetOwner() const = 0;
   virtual ABasicLibrary* GetParentLibrary() const = 0;
@@ -121,21 +121,21 @@ public:
   olxstr GetQualifiedName() const;
 };
 
-class ABasicFunction: public IOlxObject {
+class ABasicFunction: public IEObject  {
   ABasicLibrary* ParentLibrary;
   olxstr Name;
   olxstr Description;
 protected:
-  void SetName(const olxstr& n) {  Name = n;  }
+  void SetName(const olxstr& n)  {  Name = n;  }
   void ParseOptions(const olxstr& Options, olxstr_dict<olxstr>& list);
   olxstr OptionsToString(const olxstr_dict<olxstr>& list) const;
   uint32_t ArgStateMask;
   olxstr RunSignature;
 public:
-  virtual ~ABasicFunction() {}
-  virtual void Run(const TStrObjList& Params, TMacroData& E) = 0;
+  virtual ~ABasicFunction()  {}
+  virtual void Run(const TStrObjList& Params, TMacroError& E) = 0;
   virtual void Run(TStrObjList& Params, const TParamList& options,
-    TMacroData& E) = 0;
+    TMacroError& E) = 0;
   DefPropP(uint32_t, ArgStateMask)
   const olxstr& GetName() const {  return Name;  }
   const olxstr& GetDescription() const {  return Description;  }
@@ -146,18 +146,18 @@ public:
   virtual olxstr GetSignature() const;
   virtual bool HasOptions() const = 0;
   virtual const olxstr_dict<olxstr>& GetOptions() const = 0;
-  virtual void SetOptions(const olxstr_dict<olxstr>&) {
+  virtual void SetOptions(const olxstr_dict<olxstr>&)  {
     if (!HasOptions())
       throw TNotImplementedException(__OlxSourceInfo);
   }
   const olxstr& GetRuntimeSignature() const { return RunSignature; }
   virtual ABasicFunction* Replicate() const = 0;
-  bool ValidateState(const TStrObjList &Params, TMacroData &E);
+  bool ValidateState(const TStrObjList &Params, TMacroError &E);
 };
 //------------------------------------------------------------------------------
-class AFunction: public ABasicFunction {
+class AFunction: public ABasicFunction  {
 protected:
-  virtual void DoRun(const TStrObjList &Params, TMacroData& E) = 0;
+  virtual void DoRun(const TStrObjList &Params, TMacroError& E) = 0;
 public:
   AFunction(const olxstr& funcName, uint32_t argc,
     const olxstr& desc=EmptyString())
@@ -166,44 +166,45 @@ public:
     SetName(funcName);
     SetDescription(desc);
   }
-  virtual void Run(TStrObjList&, const TParamList&, TMacroData&) {
+  virtual void Run(TStrObjList&, const TParamList&, TMacroError&)  {
     throw TNotImplementedException(__OlxSourceInfo);
   }
   virtual bool HasOptions() const { return false; }
   virtual const olxstr_dict<olxstr>& GetOptions() const {
     throw TNotImplementedException(__OlxSourceInfo);
   }
-  virtual void Run(const TStrObjList &Params, class TMacroData& E);
+  virtual void Run(const TStrObjList &Params, class TMacroError& E);
 };
 //------------------------------------------------------------------------------
 template <class Base>
-class TFunction: public AFunction {
-  olx_vptr<Base> BaseInstance;
-  void (Base::*Func)(const TStrObjList& Params, TMacroData& E);
+class TFunction: public AFunction  {
+  Base* BaseClassInstance;
+  void (Base::*Func)(const TStrObjList& Params, TMacroError& E);
 public:
-  TFunction(const olx_vptr<Base> &instance,
-    void (Base::*func)(const TStrObjList& Params, TMacroData& E),
+  TFunction(Base* baseClassInstance,
+    void (Base::*func)(const TStrObjList& Params, TMacroError& E),
     const olxstr& funcName, uint32_t argc,
-    const olxstr& desc = EmptyString())
-    : AFunction(funcName, argc, desc),
-    BaseInstance(instance),
-    Func(func)
-  {}
-  virtual ABasicFunction* Replicate() const {
-    return new TFunction<Base>(BaseInstance, Func, GetName(),
+    const olxstr& desc=EmptyString())
+    : AFunction(funcName, argc, desc)
+  {
+    BaseClassInstance = baseClassInstance;
+    Func = func;
+  }
+  virtual ABasicFunction* Replicate() const  {
+    return new TFunction<Base>(BaseClassInstance, Func, GetName(),
       ArgStateMask, GetDescription());
   }
-  Base &GetBaseInstance() const { return BaseInstance(); }
+  Base &GetBaseInstance() const { return *BaseClassInstance; }
 protected:
-  virtual void DoRun(const TStrObjList &Params, TMacroData& E)  {
-    (BaseInstance().*Func)(Params, E);
+  virtual void DoRun(const TStrObjList &Params, TMacroError& E)  {
+    (BaseClassInstance->*Func)(Params, E);
   };
 };
 //------------------------------------------------------------------------------
-class TStaticFunction: public AFunction {
-  void (*Func)(const TStrObjList& Params, TMacroData& E);
+class TStaticFunction: public AFunction  {
+  void (*Func)(const TStrObjList& Params, TMacroError& E);
 public:
-  TStaticFunction(void (*func)(const TStrObjList& Params, TMacroData& E),
+  TStaticFunction(void (*func)(const TStrObjList& Params, TMacroError& E),
     const olxstr& funcName, uint32_t argc,
     const olxstr& desc=EmptyString())
     : AFunction(funcName, argc, desc), Func(func)
@@ -213,16 +214,16 @@ public:
     return new TStaticFunction(Func, GetName(), ArgStateMask, GetDescription());
   }
 protected:
-  virtual void DoRun(const TStrObjList &Params, TMacroData& E)  {
+  virtual void DoRun(const TStrObjList &Params, TMacroError& E)  {
     Func(Params, E);
   };
 };
 //------------------------------------------------------------------------------
-class AMacro: public ABasicFunction {
+class AMacro: public ABasicFunction  {
 protected:
   olxstr_dict<olxstr> ValidOptions;
   virtual void DoRun(TStrObjList &Params, const TParamList &Options,
-    TMacroData& E) = 0;
+    TMacroError& E) = 0;
 public:
   AMacro(const olxstr& macroName, const olxstr& validOptions,
     uint32_t argc, const olxstr& desc=EmptyString())
@@ -239,55 +240,55 @@ public:
   virtual void SetOptions(const olxstr_dict<olxstr> &opts)  {
     ValidOptions = opts;
   }
-  virtual void Run(const TStrObjList& Params, TMacroData& E)  {
+  virtual void Run(const TStrObjList& Params, TMacroError& E)  {
     throw TNotImplementedException(__OlxSourceInfo);
   }
   virtual void Run(TStrObjList &Params, const TParamList &Options,
-    TMacroData& E);
+    TMacroError& E);
   virtual olxstr GetSignature() const;
 };
 //------------------------------------------------------------------------------
 template <class Base>
 class TMacro: public AMacro {
-  olx_vptr<Base> BaseInstance;
+  Base* BaseClassInstance;
   void (Base::*Macro)(TStrObjList& Params, const TParamList &Options,
-    TMacroData& E);
+    TMacroError& E);
 public:
-  TMacro(const olx_vptr<Base> &instance,
+  TMacro(Base* baseClassInstance,
     void (Base::*macro)(TStrObjList& Params,
-    const TParamList &Options, TMacroData& E),
+    const TParamList &Options, TMacroError& E),
     const olxstr& macroName, const olxstr& validOptions,
-    uint32_t argc, const olxstr& desc = EmptyString())
-    : AMacro(macroName, validOptions, argc, desc),
-    BaseInstance(instance),
-    Macro(macro)
-  {}
+    uint32_t argc, const olxstr& desc=EmptyString())
+    : AMacro(macroName, validOptions, argc, desc)
+  {
+    BaseClassInstance = baseClassInstance;
+    Macro = macro;
+  }
 
   virtual ABasicFunction* Replicate() const {
     return new TMacro<Base>(
-      BaseInstance, Macro, GetName(),
+      BaseClassInstance, Macro, GetName(),
       OptionsToString(ValidOptions), ArgStateMask,
       GetDescription());
   }
-  Base &GetBaseInstance() const { return BaseInstance(); }
+  Base &GetBaseInstance() const { return *BaseClassInstance; }
 protected:
   virtual void DoRun(TStrObjList &Params, const TParamList &Options,
-    TMacroData& E)
+    TMacroError& E)
   {
-    (BaseInstance().*Macro)(Params, Options, E);
+    (BaseClassInstance->*Macro)(Params, Options, E);
   }
 };
 //------------------------------------------------------------------------------
 class TStaticMacro: public AMacro {
   void (*Macro)(TStrObjList& Params, const TParamList &Options,
-    TMacroData& E);
+    TMacroError& E);
 public:
   TStaticMacro(void (*macro)(TStrObjList& Params,
-    const TParamList &Options, TMacroData& E),
+    const TParamList &Options, TMacroError& E),
     const olxstr& macroName, const olxstr& validOptions,
     uint32_t argc, const olxstr& desc=EmptyString())
-    : AMacro(macroName, validOptions, argc, desc),
-    Macro(macro)
+    : AMacro(macroName, validOptions, argc, desc), Macro(macro)
   {}
 
   virtual ABasicFunction* Replicate() const {
@@ -296,7 +297,7 @@ public:
   }
 protected:
   virtual void DoRun(TStrObjList &Params, const TParamList &Options,
-    TMacroData& E)
+    TMacroError& E)
   {
     (*Macro)(Params, Options, E);
   };
@@ -305,7 +306,7 @@ protected:
 typedef TPtrList<ABasicFunction> TBasicFunctionPList;
 typedef TPtrList<ABasicLibrary> TBasicLibraryPList;
 
-class FunctionChainer: public IOlxObject {
+class FunctionChainer {
   TBasicFunctionPList functions;
   void Update(TMacro<FunctionChainer> &m);
   void Update(TFunction<FunctionChainer> &m);
@@ -317,8 +318,8 @@ public:
     return *this;
   }
   void RunMacro(TStrObjList &Params, const TParamList &Options,
-    TMacroData& E);
-  void RunFunction(const TStrObjList &Params, TMacroData& E);
+    TMacroError& E);
+  void RunFunction(const TStrObjList &Params, TMacroError& E);
   void Update(ABasicFunction *f);
 };
 

@@ -13,16 +13,16 @@
 #include "styles.h"
 UseGlNamespace()
 
-AGDrawObject::AGDrawObject(TGlRenderer& parent, const olxstr& collectionName)
-  : Parent(parent)
+AGDrawObject::AGDrawObject(TGlRenderer& parent, const olxstr& collectionName) :
+  Parent(parent)
 {
   Primitives = NULL;
   ParentGroup = NULL;
-  sgdo_Flags = sgdoPrintable;
+  sgdo_Flags = 0;
+  SetVisible(true);
   SetGroupable(false);
   SetSelectable(true);
-  CollectionName = collectionName.IsEmpty() ? EsdlObjectName(*this)
-    : collectionName;
+  CollectionName = collectionName.IsEmpty() ? EsdlObjectName(*this) : collectionName;
 }
 //..............................................................................
 void AGDrawObject::Compile()  {
@@ -41,22 +41,22 @@ void AGDrawObject::UpdatePrimitives(int32_t Mask)  {
 //..............................................................................
 //..............................................................................
 //..............................................................................
-void AGDrawObject::LibVisible(const TStrObjList& Params, TMacroData& E)  {
+void AGDrawObject::LibVisible(const TStrObjList& Params, TMacroError& E)  {
   if( !Params.IsEmpty() )
     SetVisible(Params[0].ToBool());
   else
     E.SetRetVal<olxstr>(IsVisible());
 }
 //..............................................................................
-void AGDrawObject::LibIsGrouped(const TStrObjList& Params, TMacroData& E)  {
+void AGDrawObject::LibIsGrouped(const TStrObjList& Params, TMacroError& E)  {
   E.SetRetVal<olxstr>(IsGrouped());
 }
 //..............................................................................
-void AGDrawObject::LibIsSelected(const TStrObjList& Params, TMacroData& E)  {
+void AGDrawObject::LibIsSelected(const TStrObjList& Params, TMacroError& E)  {
   E.SetRetVal<olxstr>(IsSelected());
 }
 //..............................................................................
-void AGDrawObject::LibGetName(const TStrObjList& Params, TMacroData& E)  {
+void AGDrawObject::LibGetName(const TStrObjList& Params, TMacroError& E)  {
   E.SetRetVal<olxstr>(CollectionName);
 }
 //..............................................................................

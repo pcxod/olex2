@@ -215,7 +215,7 @@ void T3DFrameCtrl::SetType(int t) {
   }
 }
 //.............................................................................
-void T3DFrameCtrl::LibType(const TStrObjList& Params, TMacroData& E) {
+void T3DFrameCtrl::LibType(const TStrObjList& Params, TMacroError& E) {
   if (Params.IsEmpty()) {
     E.SetRetVal<olxstr>(sphere ? "sphere" : "box");
   }

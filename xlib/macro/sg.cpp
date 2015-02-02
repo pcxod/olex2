@@ -17,7 +17,7 @@
 using namespace olex2;
 
 void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options,
-  TMacroData &E)
+  TMacroError &E)
 {
   TXApp &XApp = TXApp::GetInstance();
   TPtrList<TSpaceGroup>* rv = NULL;

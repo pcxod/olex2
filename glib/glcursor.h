@@ -15,15 +15,15 @@
 #include "macroerror.h"
 BeginGlNamespace()
 
-class TGlCursor: public AGDrawObject, AEventsDispatcher {
+class TGlCursor: public AGDrawObject, AEventsDispatcher  {
   double X, Y, Z;
   bool TextStyle;
   class TGlPrimitive *Primitive;
   olxch Symbol;
   size_t FontIndex;
 protected:
-  bool Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
-    const IOlxObject *Data, TActionQueue *);
+  bool Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
+    const IEObject *Data, TActionQueue *);
 public:
   TGlCursor(TGlRenderer& Render, const olxstr& collectionName,
     bool TextStyle = true);
@@ -42,12 +42,13 @@ public:
   class TGlFont& GetFont() const;
 
   bool IsText() const {  return TextStyle;  }
-  olxch GetSymbol() const {  return Symbol;  }
+  inline olxch GetSymbol() const {  return Symbol;  }
   void SetSymbol(olxch v);
 
   virtual bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d& Max, vec3d& Min)  {  return false;  }
-  void LibSymbol(const TStrObjList& Params, TMacroData& E);
+
+  void LibSymbol(const TStrObjList& Params, TMacroError& E);
   class TLibrary* ExportLibrary(const olxstr& name="cursor");
 };
 

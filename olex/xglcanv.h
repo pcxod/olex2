@@ -20,8 +20,6 @@ private:
   void OnMouseUp(wxMouseEvent& event);
   void OnMouseMove(wxMouseEvent& event);
   void OnMouseDblClick(wxMouseEvent& event);
-  void OnMouseCaptureChange(wxMouseCaptureChangedEvent& event);
-  void OnMouseWheel(wxMouseEvent& event);
 
   void OnKeyUp(wxKeyEvent& event);
   void OnKeyDown(wxKeyEvent& event);
@@ -31,7 +29,7 @@ private:
   short MouseButton;
   class TMainForm *FParent;
   wxGLContext* Context;
-  short EncodeEvent(const wxMouseState &evt, bool update_button=true);
+  short EncodeEvent(const wxMouseEvent &evt, bool update_button=true);
 public:
   TGlCanvas(TMainForm *parent, int* gl_attr, const wxWindowID id = -1,
     const wxPoint& pos = wxDefaultPosition,
@@ -52,5 +50,6 @@ public:
   static olx_array_ptr<int> GetGlAttributes(bool _default, bool stereo,
     bool multisampling, short depth_bits);
   DECLARE_CLASS(wxGLCanvas)
+  DECLARE_EVENT_TABLE()
 };
 #endif

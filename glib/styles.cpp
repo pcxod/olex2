@@ -10,7 +10,9 @@
 #include "bapp.h"
 #include "styles.h"
 #include "glmaterial.h"
+#include "glrender.h"
 
+const int TGraphicsStyles::CurrentVersion = 2;
 //------------------------------------------------------------------------------
 //TPrimitiveStyle implementation
 //------------------------------------------------------------------------------
@@ -292,11 +294,9 @@ void TGraphicsStyle::_TrimFloats() {
 //TGraphicsStyles implementation
 //------------------------------------------------------------------------------
 //..............................................................................
-TGraphicsStyles::TGraphicsStyles() :
-  OnClear(TBasicApp::GetInstance().NewActionQueue(olxappevent_GL_CLEAR_STYLES))
-{
+TGraphicsStyles::TGraphicsStyles(TGlRenderer& R) : Renderer(R)  {
   Root = new TGraphicsStyle(*this, NULL, "Root");
-  Version = CurrentVersion();
+  Version = CurrentVersion;
 }
 //..............................................................................
 TGraphicsStyles::~TGraphicsStyles()  {
@@ -305,14 +305,13 @@ TGraphicsStyles::~TGraphicsStyles()  {
 }
 //..............................................................................
 void TGraphicsStyles::Clear() {
-  OnClear.Enter(this);
-  for (size_t i = 0; i < PStyles.ObjectCount(); i++)
+  for (size_t i=0; i < PStyles.ObjectCount(); i++)
     delete &PStyles.GetObject(i);
   for (size_t i=0; i < PStyles.PropertiesCount(); i++)
     delete &PStyles.GetProperties(i);
   PStyles.Clear();
   Root->Clear();
-  OnClear.Exit(this);
+  Renderer._OnStylesClear();
 }
 //..............................................................................
 void TGraphicsStyles::ToDataItem(TDataItem& Item) const {
@@ -325,7 +324,7 @@ void TGraphicsStyles::ToDataItem(TDataItem& Item) const {
   }
   Item.AddField("Name", Name);
   Item.AddField("LinkFile", LinkFile);
-  Item.AddField("Version", CurrentVersion());
+  Item.AddField("Version", CurrentVersion);
   Root->ToDataItem(Item.AddItem("Root"));
   DataItems.Clear();
 }
@@ -363,7 +362,7 @@ void TGraphicsStyles::ToDataItem(TDataItem& item,
   }
   item.AddField("Name", Name);
   item.AddField("LinkFile", LinkFile);
-  item.AddField("Version", CurrentVersion());
+  item.AddField("Version", CurrentVersion);
   root.ToDataItem(item.AddItem("Root"), true);
   DataItems.Clear();
   root.ReleaseStyles();
@@ -372,8 +371,6 @@ void TGraphicsStyles::ToDataItem(TDataItem& item,
 bool TGraphicsStyles::FromDataItem(const TDataItem& Item, bool merge) {
   if (&Item == NULL)
     throw TInvalidArgumentException(__OlxSourceInfo, "item=NULL");
-  OnClear.Enter(this);
-  TActionQueueLock ql_(&OnClear);
   if (!merge) Clear();
   TDataItem* SI = Item.FindItem("Materials");
   TPtrList<TGlMaterial> mats;
@@ -395,8 +392,13 @@ bool TGraphicsStyles::FromDataItem(const TDataItem& Item, bool merge) {
   }
   for (size_t i=0; i < mats.Count(); i++)
     delete mats[i];
-  ql_.Unlock();
-  OnClear.Exit(this);
+  try {
+    Renderer._OnStylesLoaded();
+  }
+  catch (const TExceptionBase &e) {
+    Renderer.Clear();
+    throw TFunctionFailedException(__OlxSourceInfo, e);
+  }
   return true;
 }
 //..............................................................................

@@ -28,6 +28,7 @@ private:
   void OnKeyDown(wxKeyEvent& event);
   void OnNavigation(wxNavigationKeyEvent& event);
   void OnIdle(wxIdleEvent& event);
+  void OnMouse(wxMouseEvent &evt);
   void OnCmd(olxCommandEvent &evt);
 public:
   TGlXApp() : pid_file(NULL)  {}
@@ -37,6 +38,8 @@ public:
   static TGlXApp* GetInstance() { return Instance(); }
   static TMainForm* GetMainForm() { return GetInstance()->MainForm; }
   static TGXApp* GetGXApp() { return GetInstance()->XApp; }
+
+  DECLARE_EVENT_TABLE()
 };
 
 DECLARE_APP(TGlXApp);

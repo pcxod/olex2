@@ -119,7 +119,7 @@ public:
   TAutoDBNode(TSAtom& sa, TTypeList<olx_pair_t<TCAtom*, vec3d> >* atoms);
   TAutoDBNode(IDataInputStream& in)  {  LoadFromStream(in);  }
 
-  olxstr ToString() const;
+  const olxstr& ToString() const;
 
   void SaveToStream(IDataOutputStream& output) const;
   void LoadFromStream(IDataInputStream& input);
@@ -186,7 +186,7 @@ public:
   void SaveToStream(IDataOutputStream& output) const;
   void LoadFromStream(IDataInputStream& input);
 
-  olxstr ToString(int level) const;
+  const olxstr& ToString(int level) const;
 
   DefPropP(int32_t, Id)
   DefPropP(int32_t, Tag)
@@ -227,7 +227,7 @@ class TAutoDBSearchNode  {
   TAutoDBNodePList PossibleCentres;
 };
 ////////////////////////////////////////////////////////////////////////////////
-class TAutoDB : public IOlxObject  {
+class TAutoDB : public IEObject  {
   // a fixed size list 0 - nodes connected to one other node, 1 - two, etc
   TTypeList< TPtrList<TAutoDBNode> > Nodes;
   TXFile& XFile;
@@ -406,9 +406,9 @@ protected:
     }
   };
 //  these are protected, but exposed in the constructor
-  void LibBAIDelta(const TStrObjList& Params, TMacroData& E);
-  void LibURatio(const TStrObjList& Params, TMacroData& E);
-  void LibEnforceFormula(const TStrObjList& Params, TMacroData& E);
+  void LibBAIDelta(const TStrObjList& Params, TMacroError& E);
+  void LibURatio(const TStrObjList& Params, TMacroError& E);
+  void LibEnforceFormula(const TStrObjList& Params, TMacroError& E);
   class TLibrary* ExportLibrary(const olxstr& name=EmptyString());
 ///////////////////////////////////////////////////////////////////////////////
 template <class NodeType>

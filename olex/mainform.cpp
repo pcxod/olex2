@@ -126,7 +126,7 @@ class TObjectVisibilityChange: public AActionHandler  {
 public:
   TObjectVisibilityChange(TMainForm *Parent){  FParent = Parent; }
   virtual ~TObjectVisibilityChange()  {  ;  }
-  bool Execute(const IOlxObject *Sender, const IOlxObject *Obj, TActionQueue *)  {
+  bool Execute(const IEObject *Sender, const IEObject *Obj, TActionQueue *)  {
     if( !Obj )  return false;
     if( EsdlInstanceOf(*Obj, TDBasis) )
       FParent->BasisVChange();
@@ -227,7 +227,96 @@ public:
 };
 #endif
 /******************************************************************************/
+//----------------------------------------------------------------------------//
 // TMainForm function bodies
+//----------------------------------------------------------------------------//
+BEGIN_EVENT_TABLE(TMainForm, wxFrame)  // basic interface
+  EVT_SIZE(TMainForm::OnSize)
+  EVT_MOVE(TMainForm::OnMove)
+  EVT_CLOSE(TMainForm::OnCloseWindow)
+
+  EVT_MENU(ID_HtmlPanel, TMainForm::OnHtmlPanel)
+
+  EVT_MENU(ID_StrGenerate, TMainForm::OnGenerate)
+
+  EVT_MENU(ID_DSBS, TMainForm::OnDrawStyleChange) // drawing styles
+  EVT_MENU(ID_DSWF, TMainForm::OnDrawStyleChange)
+  EVT_MENU(ID_DSSP, TMainForm::OnDrawStyleChange)
+  EVT_MENU(ID_DSES, TMainForm::OnDrawStyleChange)
+  EVT_MENU(ID_DSST, TMainForm::OnDrawStyleChange)
+  EVT_MENU(ID_SceneProps, TMainForm::OnDrawStyleChange)
+
+  EVT_MENU(ID_DQH, TMainForm::OnDrawQChange) // drawing quality
+  EVT_MENU(ID_DQM, TMainForm::OnDrawQChange)
+  EVT_MENU(ID_DQL, TMainForm::OnDrawQChange)
+
+  EVT_MENU(ID_CellVisible, TMainForm::OnCellVisible)  // model menu
+  EVT_MENU(ID_BasisVisible, TMainForm::OnBasisVisible)
+  EVT_MENU(ID_ShowAll, TMainForm::OnShowAll)
+  EVT_MENU(ID_ModelCenter, TMainForm::OnModelCenter)
+
+  EVT_MENU(ID_GraphicsHide, TMainForm::OnGraphics)
+  EVT_MENU(ID_GraphicsKill, TMainForm::OnGraphics)
+  EVT_MENU(ID_GraphicsDS, TMainForm::OnGraphics)
+  EVT_MENU(ID_GraphicsP, TMainForm::OnGraphics)
+  EVT_MENU(ID_GraphicsEdit, TMainForm::OnGraphics)
+  EVT_MENU(ID_GraphicsSelect, TMainForm::OnGraphics)
+  EVT_MENU(ID_GraphicsCollectivise, TMainForm::OnGraphics)
+  EVT_MENU(ID_GraphicsIndividualise, TMainForm::OnGraphics)
+  EVT_MENU(ID_FixLattice, TMainForm::OnGraphics)
+  EVT_MENU(ID_FreeLattice, TMainForm::OnGraphics)
+  EVT_MENU(ID_GridMenuCreateBlob, TMainForm::OnGraphics)
+
+  EVT_MENU(ID_FragmentHide, TMainForm::OnFragmentHide)
+  EVT_MENU(ID_FragmentShowOnly, TMainForm::OnFragmentShowOnly)
+  EVT_MENU(ID_FragmentSelectAtoms, TMainForm::OnFragmentSelectAtoms)
+  EVT_MENU(ID_FragmentSelectBonds, TMainForm::OnFragmentSelectBonds)
+  EVT_MENU(ID_FragmentSelectAll, TMainForm::OnFragmentSelectAll)
+
+  EVT_MENU(ID_AtomTypeChangeLast, TMainForm::OnAtomTypeChange)
+  EVT_MENU(ID_AtomGrow, TMainForm::OnAtom)
+  EVT_MENU(ID_AtomCenter, TMainForm::OnAtom)
+  EVT_MENU(ID_AtomSelRings, TMainForm::OnAtom)
+  EVT_MENU(ID_AtomExploreEnvi, TMainForm::OnAtom)
+
+  EVT_MENU(ID_PlaneActivate, TMainForm::OnPlane)
+
+  EVT_MENU(ID_BondViewAlong, TMainForm::OnBond)
+  EVT_MENU(ID_BondRadius, TMainForm::OnBond)
+
+  EVT_MENU(ID_AtomOccuCustom, TMainForm::OnAtomOccuChange)
+  EVT_MENU(ID_AtomOccu1, TMainForm::OnAtomOccuChange)
+  EVT_MENU(ID_AtomOccu34, TMainForm::OnAtomOccuChange)
+  EVT_MENU(ID_AtomOccu12, TMainForm::OnAtomOccuChange)
+  EVT_MENU(ID_AtomOccu13, TMainForm::OnAtomOccuChange)
+  EVT_MENU(ID_AtomOccu14, TMainForm::OnAtomOccuChange)
+  EVT_MENU(ID_AtomOccuFree, TMainForm::OnAtomOccuChange)
+  EVT_MENU(ID_AtomOccuFix, TMainForm::OnAtomOccuChange)
+  EVT_MENU(ID_AtomOccuFixCurrent, TMainForm::OnAtomOccuChange)
+
+  EVT_MENU(ID_AtomConnChangeLast, TMainForm::OnAtomConnChange)
+
+  EVT_MENU(ID_AtomPolyNone, TMainForm::OnAtomPolyChange)
+  EVT_MENU(ID_AtomPolyAuto, TMainForm::OnAtomPolyChange)
+  EVT_MENU(ID_AtomPolyRegular, TMainForm::OnAtomPolyChange)
+  EVT_MENU(ID_AtomPolyPyramid, TMainForm::OnAtomPolyChange)
+  EVT_MENU(ID_AtomPolyBipyramid, TMainForm::OnAtomPolyChange)
+
+  EVT_MENU(ID_AtomPartChangeLast, TMainForm::OnAtomPartChange)
+
+  EVT_MENU(ID_AtomUisoCustom, TMainForm::OnAtomUisoChange)
+  EVT_MENU(ID_AtomUiso12, TMainForm::OnAtomUisoChange)
+  EVT_MENU(ID_AtomUiso15, TMainForm::OnAtomUisoChange)
+  EVT_MENU(ID_AtomUisoFree, TMainForm::OnAtomUisoChange)
+  EVT_MENU(ID_AtomUisoFix, TMainForm::OnAtomUisoChange)
+
+  EVT_MENU(ID_SelGroup, TMainForm::OnSelection)
+  EVT_MENU(ID_SelUnGroup, TMainForm::OnSelection)
+  EVT_MENU(ID_SelLabel, TMainForm::OnSelection)
+
+  EVT_MENU(ID_GStyleSave, TMainForm::OnGraphicsStyle)
+  EVT_MENU(ID_GStyleOpen, TMainForm::OnGraphicsStyle)
+END_EVENT_TABLE()
 //..............................................................................
 TMainForm::TMainForm(TGlXApp *Parent)
   : TMainFrame(wxT("Olex2"), wxPoint(0,0), wxDefaultSize, wxT("MainForm")),
@@ -235,88 +324,7 @@ TMainForm::TMainForm(TGlXApp *Parent)
   HtmlManager(*(new THtmlManager(this))),
   _ProcessHandler(*this)
 {
-  //Bindings
-  {
-    Bind(wxEVT_SIZE, &TMainForm::OnSize, this);
-    Bind(wxEVT_MOVE, &TMainForm::OnMove, this);
-    Bind(wxEVT_CLOSE_WINDOW, &TMainForm::OnCloseWindow, this);
-
-    Bind(wxEVT_MENU, &TMainForm::OnHtmlPanel, this, ID_HtmlPanel);
-
-    Bind(wxEVT_MENU, &TMainForm::OnGenerate, this, ID_StrGenerate);
-
-    Bind(wxEVT_MENU, &TMainForm::OnDrawStyleChange, this, ID_DSBS); // drawing styles
-    Bind(wxEVT_MENU, &TMainForm::OnDrawStyleChange, this, ID_DSWF);
-    Bind(wxEVT_MENU, &TMainForm::OnDrawStyleChange, this, ID_DSSP);
-    Bind(wxEVT_MENU, &TMainForm::OnDrawStyleChange, this, ID_DSES);
-    Bind(wxEVT_MENU, &TMainForm::OnDrawStyleChange, this, ID_DSST);
-    Bind(wxEVT_MENU, &TMainForm::OnDrawStyleChange, this, ID_SceneProps);
-
-    Bind(wxEVT_MENU, &TMainForm::OnDrawQChange, this, ID_DQH);// drawing quality
-    Bind(wxEVT_MENU, &TMainForm::OnDrawQChange, this, ID_DQM);
-    Bind(wxEVT_MENU, &TMainForm::OnDrawQChange, this, ID_DQL);
-
-    Bind(wxEVT_MENU, &TMainForm::OnCellVisible, this, ID_CellVisible); // model menu
-    Bind(wxEVT_MENU, &TMainForm::OnBasisVisible, this, ID_BasisVisible);
-    Bind(wxEVT_MENU, &TMainForm::OnShowAll, this, ID_ShowAll);
-    Bind(wxEVT_MENU, &TMainForm::OnModelCenter, this, ID_ModelCenter);
-
-    Bind(wxEVT_MENU, &TMainForm::OnGraphics, this, ID_GraphicsHide);
-    Bind(wxEVT_MENU, &TMainForm::OnGraphics, this, ID_GraphicsKill);
-    Bind(wxEVT_MENU, &TMainForm::OnGraphics, this, ID_GraphicsDS);
-    Bind(wxEVT_MENU, &TMainForm::OnGraphics, this, ID_GraphicsP);
-    Bind(wxEVT_MENU, &TMainForm::OnGraphics, this, ID_GraphicsEdit);
-    Bind(wxEVT_MENU, &TMainForm::OnGraphics, this, ID_GraphicsSelect);
-    Bind(wxEVT_MENU, &TMainForm::OnGraphics, this, ID_GraphicsCollectivise);
-    Bind(wxEVT_MENU, &TMainForm::OnGraphics, this, ID_GraphicsIndividualise);
-    Bind(wxEVT_MENU, &TMainForm::OnGraphics, this, ID_FixLattice);
-    Bind(wxEVT_MENU, &TMainForm::OnGraphics, this, ID_FreeLattice);
-    Bind(wxEVT_MENU, &TMainForm::OnGraphics, this, ID_GridMenuCreateBlob);
-
-    Bind(wxEVT_MENU, &TMainForm::OnFragmentHide, this, ID_FragmentHide);
-    Bind(wxEVT_MENU, &TMainForm::OnFragmentShowOnly, this, ID_FragmentShowOnly);
-    Bind(wxEVT_MENU, &TMainForm::OnFragmentSelectAtoms, this, ID_FragmentSelectAtoms);
-    Bind(wxEVT_MENU, &TMainForm::OnFragmentSelectBonds, this, ID_FragmentSelectBonds);
-    Bind(wxEVT_MENU, &TMainForm::OnFragmentSelectAll, this, ID_FragmentSelectAll);
-
-    Bind(wxEVT_MENU, &TMainForm::OnAtomTypeChange, this, ID_AtomTypeChangeLast);
-    Bind(wxEVT_MENU, &TMainForm::OnAtom, this, ID_AtomGrow);
-    Bind(wxEVT_MENU, &TMainForm::OnAtom, this, ID_AtomCenter);
-    Bind(wxEVT_MENU, &TMainForm::OnAtom, this, ID_AtomSelRings);
-    Bind(wxEVT_MENU, &TMainForm::OnAtom, this, ID_AtomExploreEnvi);
-
-    Bind(wxEVT_MENU, &TMainForm::OnPlane, this, ID_PlaneActivate);
-    Bind(wxEVT_MENU, &TMainForm::OnBond, this, ID_BondViewAlong);
-    Bind(wxEVT_MENU, &TMainForm::OnBond, this, ID_BondRadius);
-    Bind(wxEVT_MENU, &TMainForm::OnAtomOccuChange, this, ID_AtomOccuCustom);
-    Bind(wxEVT_MENU, &TMainForm::OnAtomOccuChange, this, ID_AtomOccu1);
-    Bind(wxEVT_MENU, &TMainForm::OnAtomOccuChange, this, ID_AtomOccu34);
-    Bind(wxEVT_MENU, &TMainForm::OnAtomOccuChange, this, ID_AtomOccu12);
-    Bind(wxEVT_MENU, &TMainForm::OnAtomOccuChange, this, ID_AtomOccu13);
-    Bind(wxEVT_MENU, &TMainForm::OnAtomOccuChange, this, ID_AtomOccu14);
-    Bind(wxEVT_MENU, &TMainForm::OnAtomOccuChange, this, ID_AtomOccuFree);
-    Bind(wxEVT_MENU, &TMainForm::OnAtomOccuChange, this, ID_AtomOccuFix);
-    Bind(wxEVT_MENU, &TMainForm::OnAtomOccuChange, this, ID_AtomOccuFixCurrent);
-    Bind(wxEVT_MENU, &TMainForm::OnAtomConnChange, this, ID_AtomConnChangeLast);
-    Bind(wxEVT_MENU, &TMainForm::OnAtomPolyChange, this, ID_AtomPolyNone);
-    Bind(wxEVT_MENU, &TMainForm::OnAtomPolyChange, this, ID_AtomPolyAuto);
-    Bind(wxEVT_MENU, &TMainForm::OnAtomPolyChange, this, ID_AtomPolyRegular);
-    Bind(wxEVT_MENU, &TMainForm::OnAtomPolyChange, this, ID_AtomPolyPyramid);
-    Bind(wxEVT_MENU, &TMainForm::OnAtomPolyChange, this, ID_AtomPolyBipyramid);
-    Bind(wxEVT_MENU, &TMainForm::OnAtomPartChange, this, ID_AtomPartChangeLast);
-    Bind(wxEVT_MENU, &TMainForm::OnAtomUisoChange, this, ID_AtomUisoCustom);
-    Bind(wxEVT_MENU, &TMainForm::OnAtomUisoChange, this, ID_AtomUiso12);
-    Bind(wxEVT_MENU, &TMainForm::OnAtomUisoChange, this, ID_AtomUiso15);
-    Bind(wxEVT_MENU, &TMainForm::OnAtomUisoChange, this, ID_AtomUisoFree);
-    Bind(wxEVT_MENU, &TMainForm::OnAtomUisoChange, this, ID_AtomUisoFix);
-    Bind(wxEVT_MENU, &TMainForm::OnSelection, this, ID_SelGroup);
-    Bind(wxEVT_MENU, &TMainForm::OnSelection, this, ID_SelUnGroup);
-    Bind(wxEVT_MENU, &TMainForm::OnSelection, this, ID_SelLabel);
-    Bind(wxEVT_MENU, &TMainForm::OnGraphicsStyle, this, ID_GStyleSave);
-    Bind(wxEVT_MENU, &TMainForm::OnGraphicsStyle, this, ID_GStyleOpen);
-  }
-    
-    idle_time = idle_start = 0;
+  idle_time = idle_start = 0;
   TEGC::AddP(&HtmlManager);
   nui_interface = NULL;
   _UpdateThread = NULL;
@@ -393,11 +401,13 @@ TMainForm::TMainForm(TGlXApp *Parent)
 //..............................................................................
 bool TMainForm::Destroy()  {
   Destroying = true;
-  SaveVFS(plGlobal);  // save virtual db to file
-  SaveVFS(plStructure);
-  FXApp->OnObjectsDestroy.Remove(this);
-  processMacro("onexit");
-  SaveSettings(FXApp->GetConfigDir() + FLastSettingsFile);
+  if (FXApp != NULL) {
+    SaveVFS(plGlobal);  // save virtual db to file
+    SaveVFS(plStructure);
+    FXApp->OnObjectsDestroy.Remove(this);
+    processMacro("onexit");
+    SaveSettings(FXApp->GetConfigDir() + FLastSettingsFile);
+  }
   HtmlManager.Destroy();
   if (_UpdateThread != NULL)  {
     _UpdateThread->OnTerminate.Remove(this);
@@ -408,11 +418,6 @@ bool TMainForm::Destroy()  {
     delete UpdateProgress;
   // clean up it here
   FXApp->GetStatesRegistry().OnChange.Clear();
-  FXApp->XFile().OnFileLoad.Remove(this);
-  FXApp->XFile().OnFileClose.Remove(this);
-  FXApp->XFile().GetRM().OnSetBadReflections.Remove(this);
-  FXApp->XFile().GetRM().OnCellDifference.Remove(this);
-
   delete Modes;
   // delete FIOExt;
 
@@ -752,6 +757,12 @@ void TMainForm::XApp(Olex2App *XA)  {
 
   this_InitMacro(ShowWindow, ,fpOne|fpTwo);
 
+  this_InitMacroD(OFileDel, EmptyString(), fpOne,
+    "Deletes overlayed file specified by index");
+  this_InitMacroD(OFileSwap, EmptyString(), fpNone|fpOne,
+    "Makes overlayed file, given by index the current file to which all "
+    "commands are applied");
+
   this_InitMacroD(Schedule,
     "r-repeatable&;"
     "g-requires GUI"
@@ -836,8 +847,7 @@ void TMainForm::XApp(Olex2App *XA)  {
     fpNone|fpOne,
     "Runs Olex2 in elevated/desktop mode [true]/false- only available on "
     "Windows");
-  this_InitMacroD(Restart,
-    "u-update [false]",
+  this_InitMacroD(Restart, EmptyString(),
     fpNone,
     "Restarts Olex2");
   this_InitMacroD(ADPDisp, EmptyString(),
@@ -960,7 +970,7 @@ void TMainForm::XApp(Olex2App *XA)  {
   Library.AttachLibrary(XA->XFile().ExportLibrary());
   Library.AttachLibrary(XA->GetFader().ExportLibrary());
   Library.AttachLibrary(XA->XGrid().ExportLibrary());
-  Library.AttachLibrary(XA->XFile().DUnitCell->ExportLibrary());
+  Library.AttachLibrary(XA->DUnitCell().ExportLibrary());
   Library.AttachLibrary(TFileHandlerManager::ExportLibrary());
   TOlxVars::ExportLibrary(EmptyString(), &Library);
 
@@ -1196,7 +1206,7 @@ void TMainForm::XApp(Olex2App *XA)  {
 
   SetMenuBar(MenuBar);
 //////////////////////////////////////////////////////////////
-  FXApp->GetRenderer().OnDraw.Add(this, ID_GLDRAW, msiExit);
+  FXApp->GetRender().OnDraw.Add(this, ID_GLDRAW, msiExit);
   TObjectVisibilityChange* VC = new TObjectVisibilityChange(this);
   XA->OnGraphicsVisible.Add(VC);
   // put correct captions to the menu
@@ -1230,9 +1240,9 @@ void TMainForm::XApp(Olex2App *XA)  {
   HtmlManager.main->OnKey.Add(this, ID_HTMLKEY);
 
   FXApp->SetLabelsVisible(false);
-  FXApp->GetRenderer().LightModel.SetClearColor(0x0f0f0f0f);
+  FXApp->GetRender().LightModel.SetClearColor(0x0f0f0f0f);
 
-  FGlConsole = new TGlConsole(FXApp->GetRenderer(), "Console");
+  FGlConsole = new TGlConsole(FXApp->GetRender(), "Console");
   // the commands are posted from in Dispatch, SkipPosting is controlling the output
   FXApp->GetLog().AddStream(FGlConsole, false);
   FGlConsole->OnCommand.Add(this, ID_COMMAND);
@@ -1240,7 +1250,7 @@ void TMainForm::XApp(Olex2App *XA)  {
   FXApp->AddObjectToCreate(FGlConsole);
 ////////////////////////////////////////////////////////////////////////////////
   Library.AttachLibrary(FGlConsole->ExportLibrary());
-  Library.AttachLibrary(FXApp->GetRenderer().ExportLibrary());
+  Library.AttachLibrary(FXApp->GetRender().ExportLibrary());
 ////////////////////////////////////////////////////////////////////////////////
   FCmdLine = new TCmdLine(this, wxNO_BORDER);
 //  wxWindowDC wdc(this);
@@ -1249,14 +1259,14 @@ void TMainForm::XApp(Olex2App *XA)  {
   FCmdLine->OnKeyDown.Add(this, ID_CMDLINEKEYDOWN);
   FCmdLine->OnCommand.Add( this, ID_COMMAND);
 
-  FHelpWindow = new TGlTextBox(FXApp->GetRenderer(), "HelpWindow");
+  FHelpWindow = new TGlTextBox(FXApp->GetRender(), "HelpWindow");
   FXApp->AddObjectToCreate(FHelpWindow);
   FHelpWindow->SetVisible(false);
 
-  FInfoBox = new TGlTextBox(FXApp->GetRenderer(), "InfoBox");
+  FInfoBox = new TGlTextBox(FXApp->GetRender(), "InfoBox");
   FXApp->AddObjectToCreate(FInfoBox);
 
-  GlTooltip = new TGlTextBox(FXApp->GetRenderer(), "Tooltip");
+  GlTooltip = new TGlTextBox(FXApp->GetRender(), "Tooltip");
   FXApp->AddObjectToCreate(GlTooltip);
   GlTooltip->SetVisible(false);
   GlTooltip->SetZ(4.9);
@@ -1270,25 +1280,25 @@ void TMainForm::XApp(Olex2App *XA)  {
   TStateRegistry &states = FXApp->GetStatesRegistry();
   stateHtmlVisible = states.Register("htmlvis",
     new TStateRegistry::Slot(
-      states.NewGetter<TMainForm>(this, &TMainForm::CheckState),
+      states.NewGetter(*this, &TMainForm::CheckState),
       new TStateRegistry::TMacroSetter("HtmlPanelVisible")
     )
   );
   stateInfoWidnowVisible = states.Register("infovis",
     new TStateRegistry::Slot(
-      TStateRegistry::NewGetter<TGlTextBox>(FInfoBox, &TGlTextBox::IsVisible),
+      TStateRegistry::NewGetter<TGlTextBox>(*FInfoBox, &TGlTextBox::IsVisible),
       new TStateRegistry::TMacroSetter("ShowWindow info")
     )
   );
   stateHelpWindowVisible = states.Register("helpvis",
     new TStateRegistry::Slot(
-      TStateRegistry::NewGetter<TGlTextBox>(FHelpWindow, &TGlTextBox::IsVisible),
+      TStateRegistry::NewGetter<TGlTextBox>(*FHelpWindow, &TGlTextBox::IsVisible),
       new TStateRegistry::TMacroSetter("ShowWindow help")
     )
   );
   stateCmdLineVisible = states.Register("cmdlinevis",
     new TStateRegistry::Slot(
-      states.NewGetter<TMainForm>(this, &TMainForm::CheckState),
+      states.NewGetter(*this, &TMainForm::CheckState),
       new TStateRegistry::TMacroSetter("ShowWindow cmdline")
     )
   );
@@ -1321,14 +1331,14 @@ void TMainForm::XApp(Olex2App *XA)  {
     .Add(this, ID_UPDATE_GUI);
 }
 //..............................................................................
-void TMainForm::StartupInit() {
-  if (StartupInitialised)  return;
+void TMainForm::StartupInit()  {
+  if( StartupInitialised )  return;
   StartupInitialised = true;
   if (FGlCanvas != NULL)
     FGlCanvas->XApp(FXApp);
   wxFont Font(10, wxMODERN, wxNORMAL, wxNORMAL);//|wxFONTFLAG_ANTIALIASED);
   TGlMaterial glm("2049;0.698,0.698,0.698,1.000");
-  AGlScene& gls = FXApp->GetRenderer().GetScene();
+  AGlScene& gls = FXApp->GetRender().GetScene();
   gls.CreateFont("Default", Font.GetNativeFontInfoDesc()).SetMaterial(glm);
   gls.CreateFont("Help", Font.GetNativeFontInfoDesc()).SetMaterial(glm);
   gls.CreateFont("Notes", Font.GetNativeFontInfoDesc()).SetMaterial(glm);
@@ -1355,14 +1365,6 @@ void TMainForm::StartupInit() {
     TEFile::AddPathDelimeterI(T);
     T << FLastSettingsFile;
   }
-  AGlScene &sc = FXApp->GetRenderer().GetScene();
-  sc.materials.Add("Help_txt", &HelpFontColorTxt);
-  sc.materials.Add("Help_cmd", &HelpFontColorCmd);
-  sc.materials.Add("Exec", &ExecFontColor);
-  sc.materials.Add("Info", &InfoFontColor);
-  sc.materials.Add("Warning", &WarningFontColor);
-  sc.materials.Add("Error", &ErrorFontColor);
-  sc.materials.Add("Exception", &ExceptionFontColor);
   try  {
     LoadSettings(T);
     olxstr hfn = FXApp->GetConfigDir() + "history.txt";
@@ -1416,7 +1418,7 @@ void TMainForm::StartupInit() {
     sh = settings.Root().FindItemi("menus");
     ABasicFunction *cm_macro = GetLibrary().FindMacro("CreateMenu");
     if (sh != NULL && cm_macro != NULL) {
-      TMacroData me;
+      TMacroError me;
       me.SetLocation(__OlxSrcInfo);
       try {
         for (size_t i=0; i < sh->ItemCount(); i++) {
@@ -1532,8 +1534,8 @@ bool TMainForm::CreateUpdateThread(bool force) {
 #endif
 }
 //..............................................................................
-bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
-  const IOlxObject *Data, TActionQueue *)
+bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
+  const IEObject *Data, TActionQueue *)
 {
   if (Destroying) {
     FMode = 0;  // to release waitfor
@@ -1697,12 +1699,12 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
       }
     }
     if( (FMode & mRota) != 0  )  {
-      FXApp->GetRenderer().GetBasis().RotateX(
-        FXApp->GetRenderer().GetBasis().GetRX()+FRotationIncrement*FRotationVector[0]);
-      FXApp->GetRenderer().GetBasis().RotateY(
-        FXApp->GetRenderer().GetBasis().GetRY()+FRotationIncrement*FRotationVector[1]);
-      FXApp->GetRenderer().GetBasis().RotateZ(
-        FXApp->GetRenderer().GetBasis().GetRZ()+FRotationIncrement*FRotationVector[2]);
+      FXApp->GetRender().GetBasis().RotateX(
+        FXApp->GetRender().GetBasis().GetRX()+FRotationIncrement*FRotationVector[0]);
+      FXApp->GetRender().GetBasis().RotateY(
+        FXApp->GetRender().GetBasis().GetRY()+FRotationIncrement*FRotationVector[1]);
+      FXApp->GetRender().GetBasis().RotateZ(
+        FXApp->GetRender().GetBasis().GetRZ()+FRotationIncrement*FRotationVector[2]);
       FRotationAngle -= olx_abs(FRotationVector.Length()*FRotationIncrement);
       if( FRotationAngle < 0 )  FMode ^= mRota;
       Draw = true;
@@ -1710,7 +1712,7 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
     if( (FMode & mFade) != 0 )  {
       Draw = true;
       if( FFadeVector[0] == FFadeVector[1] )
-      {  FMode ^= mFade;  }//FXApp->GetRenderer().Ceiling()->Visible(false);  }
+      {  FMode ^= mFade;  }//FXApp->GetRender().Ceiling()->Visible(false);  }
 
       FFadeVector[0] += FFadeVector[2];
       if( FFadeVector[2] > 0 )  {
@@ -1727,17 +1729,17 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
       }
       if( (FMode & mFade) != 0 )  {
         TGlOption glO;
-        glO = FXApp->GetRenderer().Ceiling()->LT();  glO[3] = FFadeVector[0];
-        FXApp->GetRenderer().Ceiling()->LT(glO);
+        glO = FXApp->GetRender().Ceiling()->LT();  glO[3] = FFadeVector[0];
+        FXApp->GetRender().Ceiling()->LT(glO);
 
-        glO = FXApp->GetRenderer().Ceiling()->RT();  glO[3] = FFadeVector[0];
-        FXApp->GetRenderer().Ceiling()->RT(glO);
+        glO = FXApp->GetRender().Ceiling()->RT();  glO[3] = FFadeVector[0];
+        FXApp->GetRender().Ceiling()->RT(glO);
 
-        glO = FXApp->GetRenderer().Ceiling()->LB();  glO[3] = FFadeVector[0];
-        FXApp->GetRenderer().Ceiling()->LB(glO);
+        glO = FXApp->GetRender().Ceiling()->LB();  glO[3] = FFadeVector[0];
+        FXApp->GetRender().Ceiling()->LB(glO);
 
-        glO = FXApp->GetRenderer().Ceiling()->RB();  glO[3] = FFadeVector[0];
-        FXApp->GetRenderer().Ceiling()->RB(glO);
+        glO = FXApp->GetRender().Ceiling()->RB();  glO[3] = FFadeVector[0];
+        FXApp->GetRender().Ceiling()->RB(glO);
         Draw = true;
       }
     }
@@ -1766,13 +1768,13 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
           int x = MousePositionX-GlTooltip->GetWidth()/2,
             y = MousePositionY-GlTooltip->GetHeight()-4;
           if( x < 0 )  x = 0;
-          if( (size_t)(x + GlTooltip->GetWidth()) > (size_t)FXApp->GetRenderer().GetWidth() )
-            x = FXApp->GetRenderer().GetWidth() - GlTooltip->GetWidth();
+          if( (size_t)(x + GlTooltip->GetWidth()) > (size_t)FXApp->GetRender().GetWidth() )
+            x = FXApp->GetRender().GetWidth() - GlTooltip->GetWidth();
           if( y < 0 )
             y  = 0;
           GlTooltip->SetLeft(x); // put it off the mouse
           GlTooltip->SetTop(y);
-          GlTooltip->SetZ(FXApp->GetRenderer().GetMaxRasterZ());
+          GlTooltip->SetZ(FXApp->GetRender().GetMaxRasterZ());
           GlTooltip->SetVisible(true);
           Draw = true;
         }
@@ -1885,21 +1887,18 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
       TimePerFrame = FXApp->Draw();
       // enabling the timer back
       // retrun fucus to the main window, but let typing in the comboboxes
-      if (Sender != NULL) {
-        const std::type_info &ti = typeid(*Sender);
-        if (((olxstr*)Data)->IsEmpty())
+      if( Sender != NULL )  {
+        if( ((olxstr*)Data)->IsEmpty() )
           ;
-        else if (ti == typeid(TComboBox) &&
-          !(dynamic_cast<const TComboBox *>(Sender))->IsReadOnly())
-        {
-        }
-        else if (ti == typeid(TTreeView))
+        else if( EsdlInstanceOf(*Sender, TComboBox) && !((TComboBox*)Sender)->IsReadOnly() )
           ;
-        else if (ti == typeid(TTextEdit))
+        else if( EsdlInstanceOf(*Sender, TTreeView) )
           ;
-        else if (ti == typeid(TSpinCtrl))
+        else if( EsdlInstanceOf(*Sender, TTextEdit) )
           ;
-        else if (ti == typeid(TDateCtrl))
+        else if( EsdlInstanceOf(*Sender, TSpinCtrl) )
+          ;
+        else if( EsdlInstanceOf(*Sender, TDateCtrl) )
           ;
         else {
           if (CmdLineVisible)
@@ -2010,8 +2009,8 @@ void TMainForm::PreviewHelp(const olxstr& Cmd)  {
   //    FHelpWindow->SetTop(
   //      InfoWindowVisible ? FInfoBox->GetTop() + FInfoBox->GetHeight() + 5 : 1);
   //    FHelpWindow->SetMaxStringLength((uint16_t)(
-  //      FHelpWindow->GetFont().MaxTextLength(FXApp->GetRenderer().GetWidth())));
-  //    FHelpWindow->SetZ(FXApp->GetRenderer().CalcRasterZ(0.1));
+  //      FHelpWindow->GetFont().MaxTextLength(FXApp->GetRender().GetWidth())));
+  //    FHelpWindow->SetZ(FXApp->GetRender().CalcRasterZ(0.1));
   //    for( size_t i=0; i < macros.Count(); i++ )  {
   //      FHelpWindow->PostText(macros[i]->GetName(), &HelpFontColorCmd);
   //      if( !macros[i]->GetDescription().IsEmpty() )  {
@@ -2084,7 +2083,7 @@ bool TMainForm::ImportFrag(const olxstr& line)  {
     if( md != NULL )  {
       md->AddAtoms(xatoms);
       for( size_t i=0; i < xbonds.Count(); i++ )
-        FXApp->GetRenderer().Select(*xbonds[i], true);
+        FXApp->GetRender().Select(*xbonds[i], true);
     }
     if (FXApp->XFile().GetLattice().IsGenerated())
       Modes->OnModeExit.Add("fuse");
@@ -2136,36 +2135,36 @@ void TMainForm::OnChar(wxKeyEvent& m) {
       zoom_inc *= 3;
     }
     if( m.m_keyCode == WXK_UP )  {
-      FXApp->GetRenderer().RotateX(FXApp->GetRenderer().GetBasis().GetRX()+inc);
+      FXApp->GetRender().RotateX(FXApp->GetRender().GetBasis().GetRX()+inc);
       TimePerFrame = FXApp->Draw();
       return;
     }
     if( m.m_keyCode == WXK_DOWN )  {
-      FXApp->GetRenderer().RotateX(FXApp->GetRenderer().GetBasis().GetRX()-inc);
+      FXApp->GetRender().RotateX(FXApp->GetRender().GetBasis().GetRX()-inc);
       TimePerFrame = FXApp->Draw();
       return;
     }
     if( m.m_keyCode == WXK_LEFT )  {
-      FXApp->GetRenderer().RotateY(FXApp->GetRenderer().GetBasis().GetRY()-inc);
+      FXApp->GetRender().RotateY(FXApp->GetRender().GetBasis().GetRY()-inc);
       TimePerFrame = FXApp->Draw();
       return;
     }
     if( m.m_keyCode == WXK_RIGHT )  {
-      FXApp->GetRenderer().RotateY(FXApp->GetRenderer().GetBasis().GetRY()+inc);
+      FXApp->GetRender().RotateY(FXApp->GetRender().GetBasis().GetRY()+inc);
       TimePerFrame = FXApp->Draw();
       return;
     }
     if( m.m_keyCode == WXK_END )  {
-      if( FXApp->GetRenderer().GetZoom()+zoom_inc < 100 )  {
-        FXApp->GetRenderer().SetZoom(FXApp->GetRenderer().GetZoom()+zoom_inc);
+      if( FXApp->GetRender().GetZoom()+zoom_inc < 100 )  {
+        FXApp->GetRender().SetZoom(FXApp->GetRender().GetZoom()+zoom_inc);
         TimePerFrame = FXApp->Draw();
         return;
       }
     }
     if( m.m_keyCode == WXK_HOME )  {
-      double z = FXApp->GetRenderer().GetZoom()-zoom_inc;
+      double z = FXApp->GetRender().GetZoom()-zoom_inc;
       if( z <= 0 ) z = 0.001;
-      FXApp->GetRenderer().SetZoom(z);
+      FXApp->GetRender().SetZoom(z);
       TimePerFrame = FXApp->Draw();
       return;
     }
@@ -2421,7 +2420,7 @@ void TMainForm::OnMove(wxMoveEvent& evt) {
     return;
   }
   wxPoint p = FGlCanvas->GetScreenPosition();
-  FXApp->GetRenderer().SetAbsoluteTop(p.y);
+  FXApp->GetRender().SetAbsoluteTop(p.y);
 }
 //..............................................................................
 void TMainForm::OnSize(wxSizeEvent& event)  {
@@ -2482,7 +2481,7 @@ void TMainForm::OnResize()  {
   if( h <= 0 )  h = 5;
   FGlCanvas->SetSize(l, 0, w, h - (CmdLineVisible ? FCmdLine->WI.GetHeight() : 0));
   FGlCanvas->GetClientSize(&w, &h);
-  FXApp->GetRenderer().Resize(0, 0, w, h, 1);
+  FXApp->GetRender().Resize(0, 0, w, h, 1);
   FGlConsole->Resize(0, dheight, w, h - dheight);
   if (FInfoBox->IsCreated()) {
     FInfoBox->SetTop(1);
@@ -2626,8 +2625,8 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
 
   I->AddField("BgColor", FBgColor.ToString());
   I->AddField("WhiteOn",
-    (FXApp->GetRenderer().LightModel.GetClearColor().GetRGB() == 0xffffffff));
-  I->AddField("Gradient", FXApp->GetRenderer().Background()->IsVisible());
+    (FXApp->GetRender().LightModel.GetClearColor().GetRGB() == 0xffffffff));
+  I->AddField("Gradient", FXApp->GetRender().Background()->IsVisible());
   I->AddField("GradientPicture", TEFile::CreateRelativePath(GradientPicture));
   I->AddField("language", FXApp->Dictionary.GetCurrentLanguage());
   I->AddField("ExtraZoom", FXApp->GetExtraZoom());
@@ -2635,7 +2634,7 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
   I->AddField("ThreadCount", FXApp->GetMaxThreadCount());
 
   I = &DF.Root().AddItem("Recent_files");
-  for (size_t i=0; i < olx_min(FRecentFilesToShow, FRecentFiles.Count()); i++)
+  for( size_t i=0; i < olx_min(FRecentFilesToShow, FRecentFiles.Count()); i++ )
   {
     I->AddField(olxstr("file") << i,
       olxstr().quote('"') << TEFile::CreateRelativePath(FRecentFiles[i]));
@@ -2646,14 +2645,14 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
     TDataItem& it = I->AddItem(StoredParams.GetKey(i));
     it.AddField("value", olxstr().quote('"') << StoredParams.GetValue(i));
   }
-  FXApp->GetRenderer().GetScene().ToDataItem(
-    DF.Root().AddItem("Scene"));
+
+  SaveScene(DF.Root().AddItem("Scene"), FXApp->GetRender().LightModel);
   try {
-    FXApp->GetRenderer().GetStyles().ToDataItem(DF.Root().AddItem("Styles"));
+    FXApp->GetRender().GetStyles().ToDataItem(DF.Root().AddItem("Styles"));
   }
   catch (const TExceptionBase & e) {
     TBasicApp::NewLogEntry(logExceptionTrace) << e;
-    FXApp->GetRenderer().GetStyles().Clear();
+    FXApp->GetRender().GetStyles().Clear();
   }
   DF.SaveToXLFile(FN + ".tmp");
   TEFile::Rename(FN + ".tmp", FN);
@@ -2818,55 +2817,50 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
   DefSceneP = TEFile::ExpandRelativePath(I->FindField("Scene"));
     processFunction(DefSceneP);
   // loading default style if provided ?
-  if (TEFile::Exists(DefStyle)) {
+  if( TEFile::Exists(DefStyle) )  {
     TDataFile SDF;
     SDF.LoadFromXLFile(DefStyle, &Log);
-    FXApp->GetRenderer().GetStyles().FromDataItem(
-      *SDF.Root().FindItem("style"), false);
+    FXApp->GetRender().GetStyles().FromDataItem(*SDF.Root().FindItem("style"),
+      false);
   }
-  else {
+  else  {
     TDataItem& last_saved_style = DF.Root().GetItemByName("Styles");
     int l_version = TGraphicsStyles::ReadStyleVersion(last_saved_style);
     // old style override, let's hope it is newer!
-    if (l_version < TGraphicsStyles::CurrentVersion()) {
+    if( l_version < TGraphicsStyles::CurrentVersion )  {
       olxstr new_set = FXApp->GetBaseDir() + "last.osp";
-      if (TEFile::Exists(new_set)) {
+      if( TEFile::Exists(new_set) )  {
         TDataFile LF;
-        try {
+        try  {
           LF.LoadFromXLFile(new_set);
           TDataItem& distributed_style = LF.Root().GetItemByName("Styles");
           int d_version = TGraphicsStyles::ReadStyleVersion(distributed_style);
           // it would be weird if distributed version is not current... but might happen
-          FXApp->GetRenderer().GetStyles().FromDataItem(
-            (d_version <= l_version) ? last_saved_style : distributed_style,
-              false);
+          FXApp->GetRender().GetStyles().FromDataItem(
+            (d_version <= l_version) ? last_saved_style : distributed_style, false);
         }
-        catch (...) {  // recover...
-          FXApp->GetRenderer().GetStyles().FromDataItem(last_saved_style,
-            false);
+        catch(...)  {  // recover...
+          FXApp->GetRender().GetStyles().FromDataItem(last_saved_style, false);
         }
       }
     }
     else  // up-to-date then...
-      FXApp->GetRenderer().GetStyles().FromDataItem(last_saved_style, false);
+      FXApp->GetRender().GetStyles().FromDataItem(last_saved_style, false);
   }
   // default scene properties provided?
-  if (TEFile::Exists(DefSceneP)) {
+  if( TEFile::Exists(DefSceneP) )  {
     TDataFile SDF;
     SDF.LoadFromXLFile(DefSceneP, &Log);
-    FXApp->GetRenderer().GetScene().FromDataItem(SDF.Root());
+    LoadScene(SDF.Root(), FXApp->GetRender().LightModel);
   }
-  else {
-    FXApp->GetRenderer().GetScene().FromDataItem(
-      DF.Root().GetItemByName("Scene"));
-  }
-  FBgColor = FXApp->GetRenderer().LightModel.GetClearColor();
+  else
+    LoadScene(DF.Root().GetItemByName("Scene"), FXApp->GetRender().LightModel);
   // restroring language or setting default
-  try {
+  try  {
     FXApp->SetCurrentLanguage(
       I->FindField("language", EmptyString()));
   }
-  catch (const TExceptionBase& e) {
+  catch(const TExceptionBase& e)  {
     ShowAlert(e, "Failed loading/processing dictionary file");
   }
   FXApp->SetExtraZoom(I->FindField("ExtraZoom", "1.25").ToDouble());
@@ -2888,7 +2882,7 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
     if( !T.IsEmpty() )  FBgColor.FromString(T);
   }
   bool whiteOn =  I->FindField("WhiteOn", FalseString()).ToBool();
-  FXApp->GetRenderer().LightModel.SetClearColor(
+  FXApp->GetRender().LightModel.SetClearColor(
     whiteOn ? 0xffffffff : FBgColor.GetRGB());
 
   GradientPicture = TEFile::ExpandRelativePath(
@@ -2908,6 +2902,60 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
       StoredParams.Add(pd.GetName(), v);
     }
   }
+}
+//..............................................................................
+void TMainForm::LoadScene(const TDataItem& Root, TGlLightModel& FLM) {
+  TDataFile F;
+  olxstr FntData;
+  FLM.FromDataItem(Root.GetItemByName("Scene_Properties"));
+  FBgColor = FLM.GetClearColor();
+  TDataItem *I = Root.FindItem("Fonts");
+  if( I == NULL )  return;
+  for( size_t i=0; i < I->ItemCount(); i++ )  {
+    TDataItem& fi = I->GetItemByIndex(i);
+    // compatibility conversion...
+    if( fi.GetName() == "Console" )
+      FXApp->GetRender().GetScene().CreateFont("Default", fi.FindField("id"));
+    else
+      FXApp->GetRender().GetScene().CreateFont(fi.GetName(), fi.FindField("id"));
+  }
+  I = Root.FindItem("Materials");
+  if( I != NULL )  {
+    TDataItem *ci;
+    ci = I->FindItem("Help_txt");
+    if( ci != NULL )  HelpFontColorTxt.FromDataItem(*ci);
+    ci = I->FindItem("Help_cmd");
+    if( ci != NULL ) HelpFontColorCmd.FromDataItem(*ci);
+
+    ci = I->FindItem("Exec");
+    if( ci != NULL ) ExecFontColor.FromDataItem(*ci);
+    ci = I->FindItem("Info");
+    if( ci != NULL ) InfoFontColor.FromDataItem(*ci);
+    ci =I->FindItem("Warning");
+    if( ci != NULL ) WarningFontColor.FromDataItem(*ci);
+    ci = I->FindItem("Error");
+    if( ci != NULL ) ErrorFontColor.FromDataItem(*ci);
+    ci = I->FindItem("Exception");
+    if( ci != NULL ) ExceptionFontColor.FromDataItem(*ci);
+  }
+  FXApp->GetRender().InitLights();
+}
+//..............................................................................
+void TMainForm::SaveScene(TDataItem &Root, const TGlLightModel &FLM) const {
+  FLM.ToDataItem(Root.AddItem("Scene_Properties"));
+  TDataItem *I = &Root.AddItem("Fonts");
+  for( size_t i=0; i < FXApp->GetRender().GetScene().FontCount(); i++ )  {
+    TDataItem& fi = I->AddItem(FXApp->GetRender().GetScene()._GetFont(i).GetName());
+    fi.AddField("id", FXApp->GetRender().GetScene()._GetFont(i).GetIdString());
+  }
+  I = &Root.AddItem("Materials");
+  HelpFontColorTxt.ToDataItem(I->AddItem("Help_txt"));
+  HelpFontColorCmd.ToDataItem(I->AddItem("Help_cmd"));
+  ExecFontColor.ToDataItem(I->AddItem("Exec"));
+  InfoFontColor.ToDataItem(I->AddItem("Info"));
+  WarningFontColor.ToDataItem(I->AddItem("Warning"));
+  ErrorFontColor.ToDataItem(I->AddItem("Error"));
+  ExceptionFontColor.ToDataItem(I->AddItem("Exception"));
 }
 //..............................................................................
 void TMainForm::UpdateRecentFile(const olxstr& fn)  {
@@ -3239,13 +3287,13 @@ bool TMainForm::OnMouseUp(int x, int y, short Flags, short Buttons)  {
     vec3d N(0, 0, 1), Z;
     TAsymmUnit *au = &FXApp->XFile().GetAsymmUnit();
     cellM = au->GetHklToCartesian();
-    cellM *= FXApp->GetRenderer().GetBasis().GetMatrix();
+    cellM *= FXApp->GetRender().GetBasis().GetMatrix();
     cellM.Transpose();
     // 4x4 -> 3x3 matrix
     Z = cellM[0];    M[0] = Z;
     Z = cellM[1];    M[1] = Z;
     Z = cellM[2];    M[2] = Z;
-    Z = FXApp->GetRenderer().GetBasis().GetMatrix()[2];
+    Z = FXApp->GetRender().GetBasis().GetMatrix()[2];
     olxstr  Tmp="current: ";
       Tmp << Z.ToString();
       TBasicApp::NewLogEntry() << Tmp;
@@ -3272,13 +3320,13 @@ bool TMainForm::OnMouseUp(int x, int y, short Flags, short Buttons)  {
       Tmp << Z.ToString() << "; HKL ";
       Tmp << iH << ' ' << iK << ' ' << iL << ' ';
       TBasicApp::NewLogEntry() << Tmp;
-      N = FXApp->GetRenderer().GetBasis().GetMatrix()[2];
+      N = FXApp->GetRender().GetBasis().GetMatrix()[2];
         double ca = N.CAngle(Z);
         if( ca < -1 )  ca = -1;
         if( ca > 1 )   ca = 1;
         vec3d V = Z.XProdVec(N);
-        FXApp->GetRenderer().GetBasis().Rotate(V, acos(ca));
-      N = FXApp->GetRenderer().GetBasis().GetMatrix()[2];
+        FXApp->GetRender().GetBasis().Rotate(V, acos(ca));
+      N = FXApp->GetRender().GetBasis().GetMatrix()[2];
       Tmp="got: ";
       Tmp << N.ToString();
       TBasicApp::NewLogEntry() << Tmp;
@@ -3463,10 +3511,10 @@ bool TMainForm::OnMouseDblClick(int x, int y, short Flags, short Buttons)  {
         if( b == glB )  break;
         Top += (b->GetHeight() + 2);
       }
-      const double r = ((double)FXApp->GetRenderer().GetWidth()/(double)glB->GetWidth()) / 10.0;
+      const double r = ((double)FXApp->GetRender().GetWidth()/(double)glB->GetWidth()) / 10.0;
       glB->SetZoom(r);
       glB->SetTop(Top);
-      glB->SetLeft(FXApp->GetRenderer().GetWidth() - glB->GetWidth());
+      glB->SetLeft(FXApp->GetRender().GetWidth() - glB->GetWidth());
     }
     else  {
       glB->SetLeft(0);
@@ -3520,7 +3568,7 @@ bool TMainForm::Show(bool v)  {
   bool res = wxFrame::Show(v);
   FXApp->SetMainFormVisible(v);
   if (v) {
-    FXApp->GetRenderer().GetScene().SetEnabled(true);
+    FXApp->GetRender().GetScene().SetEnabled(true);
   }
   if (CmdLineVisible)
     FCmdLine->SetFocus();
@@ -3903,7 +3951,7 @@ void TMainForm::ProcessHandler::OnWait() {
 }
 //..............................................................................
 void TMainForm::ProcessHandler::OnTerminate(const AProcess& p)  {
-  TMacroData err;
+  TMacroError err;
   for( size_t i=0; i < p.OnTerminateCmds().Count(); i++ ) {
     const olxstr& cmd = p.OnTerminateCmds()[i];
     parent.processMacro(cmd, olxstr("OnTerminate of: ") << p.GetCmdLine());

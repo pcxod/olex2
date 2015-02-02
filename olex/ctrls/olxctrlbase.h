@@ -14,7 +14,7 @@
 
 namespace ctrl_ext  {
 
-  class AOlxCtrl : public virtual IOlxObject {
+  class AOlxCtrl : public IEObject {
   protected:
     AOlxCtrl(wxWindow* this_window) : WI(this_window) {}
     virtual ~AOlxCtrl() {}
@@ -28,7 +28,7 @@ namespace ctrl_ext  {
         {
           parent.Add(this);
         }
-        bool Execute(const IOlxObject *Sender, const IOlxObject *Data=NULL,
+        bool Execute(const IEObject *Sender, const IEObject *Data=NULL,
           TActionQueue *caller=NULL)
         {
           return TActionQueue::Execute(Sender, Data == NULL ? &data : Data);
@@ -72,7 +72,7 @@ namespace ctrl_ext  {
     evt_on_uncheck_id("ONUNCKECK")
     ;
 
-  class TKeyEvent: public IOlxObject  {
+  class TKeyEvent: public IEObject  {
     wxKeyEvent* Event;
   public:
     TKeyEvent(wxKeyEvent& evt)  {  Event = &evt;  }

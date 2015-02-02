@@ -15,7 +15,6 @@
 #include "glprimitive.h"
 #include "styles.h"
 #include "gpcollection.h"
-#include "dring.h"
 #include "povdraw.h"
 
 void TXPlane::Create(const olxstr& cName)  {
@@ -54,20 +53,16 @@ void TXPlane::Create(const olxstr& cName)  {
   GPC.AddObject(*this);
   const TSPlane::Def &def =
     GetNetwork().GetLattice().GetPlaneDefinitions()[this->GetDefId()];
-  double maxrs = (GetAtom(0).crd() - GetCenter()).QLength(),
-    minrs = maxrs;
-  size_t maxr_i = 0;
-  for (size_t i = 1; i < Count(); i++) {
-    const double qd = (GetAtom(i).crd() - GetCenter()).QLength();
-    if (qd > maxrs) {
-      maxrs = qd;
-      maxr_i = i;
-    }
-    if (qd < minrs) {
-      minrs = qd;
-    }
-  }
   if (def.GetSides() > 2) {
+    double maxrs = (GetAtom(0).crd()-GetCenter()).QLength();
+    size_t maxr_i = 0;
+    for (size_t i=1; i < Count(); i++) {
+      const double qd = (GetAtom(i).crd()-GetCenter()).QLength();
+      if (qd > maxrs) {
+        maxrs = qd;
+        maxr_i = i;
+      }
+    }
     MaxV = (GetAtom(maxr_i).crd()-GetCenter());
     olx_create_rotation_matrix(RM, GetNormal(),
       cos(2*M_PI / def.GetSides()));
@@ -92,29 +87,19 @@ void TXPlane::Create(const olxstr& cName)  {
     TGlPrimitive& GlP = GPC.NewPrimitive("Plane", sgloPolygon);
     GlP.SetProperties(GS.GetMaterial(GlP.GetName(), GlM));
   }
-  TGlMaterial glm("511;5460819;0;12632256;6250335;4292861919;4294967295;12;12");
-  if ((PMask & 2) != 0)  {
+  if( (PMask & 2) != 0 )  {
+    TGlMaterial GlM1;
+    GlM1.SetFlags(sglmAmbientF);
+    GlM1.AmbientF = 0;
     TGlPrimitive& glpC = GPC.NewPrimitive("Centroid", sgloSphere);
-    glpC.SetProperties(GS.GetMaterial(glpC.GetName(), glm));
+    glpC.SetProperties(GS.GetMaterial(glpC.GetName(), GlM1));
     glpC.Params[0] = 0.25;  glpC.Params[1] = 10;  glpC.Params[2] = 10;
-  }
-  if ((PMask & 4) != 0) {
-    TGlPrimitive& GlP = GPC.NewPrimitive("Ring", sgloCommandList);
-    GlP.SetProperties(GS.GetMaterial("Ring", glm));
-    TDRing::Settings &rset = TDRing::GetSettings(Parent);
-    const TStringToList<olxstr, TGlPrimitive*> &primtives =
-      rset.GetPrimitives(true);
-    GlP.StartList();
-    minrs = sqrt(minrs)*cos(M_PI / Count()) / (rset.GetTubeR() + 1);
-    olx_gl::scale(minrs*0.85);
-    GlP.CallList(primtives.GetObject(0));
-    GlP.EndList();
   }
   Compile();
 }
 //..............................................................................
 bool TXPlane::Orient(TGlPrimitive& P)  {
-  if (P.GetType() == sgloPolygon) {
+  if (P.GetType() != sgloSphere) {
     olx_gl::FlagDisabler fc(GL_CULL_FACE);
     const TSPlane::Def &def =
       GetNetwork().GetLattice().GetPlaneDefinitions()[this->GetDefId()];
@@ -138,13 +123,6 @@ bool TXPlane::Orient(TGlPrimitive& P)  {
       olx_gl::end();
     }
     return true;
-  }
-  else if (P.GetType() == sgloCommandList) {
-    olx_gl::translate(GetCenter());
-    mat3d m = GetBasis();
-    m.SwapRows(0, 2);
-    m[1] = m[2].XProdVec(m[0]).Normalise();//m[0] *= -1;
-    olx_gl::orient(m);
   }
   else
     olx_gl::translate(GetCenter());

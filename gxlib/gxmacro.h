@@ -11,7 +11,7 @@
 #define __olx_gxlib_xmacro_H
 #include "gxapp.h"
 
-class GXLibMacros : public IOlxObject {
+class GXLibMacros : public IEObject {
 protected:
   TGXApp &app;
 public:
@@ -68,8 +68,6 @@ public:
   DefMacro(SetMaterial)
   DefMacro(DefineVar)
   DefMacro(ProjSph)
-  DefMacro(OFileDel)
-  DefMacro(OFileSwap)
 
   DefFunc(MatchFiles)
   DefFunc(ExtraZoom)

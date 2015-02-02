@@ -242,21 +242,21 @@ time_t TETime::ParseTime(const olxstr& time)  {
 }
 //..............................................................................
 
-void FormatDateTime(const TStrObjList& Params, TMacroData& E)  {
+void FormatDateTime(const TStrObjList& Params, TMacroError& E)  {
   if( Params.Count() == 1 )
     E.SetRetVal( TETime::FormatDateTime("ddd MMM dd hh:mm:ss yyyy", Params[0].RadInt<time_t>()) );
   else
     E.SetRetVal( TETime::FormatDateTime(Params[1], Params[0].RadInt<time_t>()) );
 }
 
-void Now(const TStrObjList& Params, TMacroData& E)  {
+void Now(const TStrObjList& Params, TMacroError& E)  {
   if( Params.Count() == 0 )
     E.SetRetVal( TETime::EpochTime() );
   else
     E.SetRetVal( TETime::FormatDateTime(Params[0], TETime::EpochTime()) );
 }
 
-void DF(const TStrObjList& Params, TMacroData& E)  {
+void DF(const TStrObjList& Params, TMacroError& E)  {
   E.SetRetVal( olxstr("yyyy.MM.dd hh:mm:ss") );
 }
 

@@ -159,7 +159,7 @@ public:
     Symbol = Options.FindValue('t');  // type
     Lock = Options.GetBoolOption('l');
     AutoComplete = (short)Options.FindValue('a', '0').ToInt();
-    NameResidues = Options.GetBoolOption('r', false, true);
+    NameResidues = Options.GetBoolOption('r');
     // validate if type is correct
     if( !Symbol.IsEmpty() && !XElementLib::IsElement(Symbol) )
       throw TInvalidArgumentException(__OlxSourceInfo, "element type");
@@ -206,7 +206,7 @@ public:
       gxapp.MarkLabel(XA, true);
       undo->AddAction(gxapp.Name(XA, Labl));
       if (NameResidues) {
-        undo->AddAction(gxapp.SynchroniseResidues(TCAtomPList() << XA.CAtom()));
+        undo->AddAction(gxapp.SynchroniseResidues(TXAtomPList() << XA));
       }
       if (Lock) {
         undo->AddAction(new TLockUndo(XA.CAtom()));

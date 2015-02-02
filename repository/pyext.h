@@ -18,7 +18,7 @@
 using namespace olex2;
 typedef void (*pyRegFunc)();
 
-class PythonExt : public IOlxObject {
+class PythonExt  {
   static PythonExt *&Instance() {
     static PythonExt* inst=NULL;
     return inst;
@@ -35,7 +35,7 @@ class PythonExt : public IOlxObject {
   };
 //.............................................................................
 public:
-  class BasicWrapper : public IOlxObject  {
+  class BasicWrapper : public IEObject  {
     PythonExt::ProfileInfo *PI;
     uint64_t StartTime;
     int Recursion;  // specifies that the function is called recursively
@@ -87,10 +87,10 @@ public:
       delete ToDelete[i];
   }
 //.............................................................................
-  void macReset(TStrObjList& Cmds, const TParamList &Options, TMacroData& E);
-  void macRun(TStrObjList& Cmds, const TParamList &Options, TMacroData& E);
-  void funLogLevel(const TStrObjList& Params, TMacroData& E);
-  void funExport(const TStrObjList& Params, TMacroData& E);
+  void macReset(TStrObjList& Cmds, const TParamList &Options, TMacroError& E);
+  void macRun(TStrObjList& Cmds, const TParamList &Options, TMacroError& E);
+  void funLogLevel(const TStrObjList& Params, TMacroError& E);
+  void funExport(const TStrObjList& Params, TMacroError& E);
   olxstr module_name;
   PythonExt(IOlex2Processor* olexProcessor, const olxstr &module_name);
   uint16_t LogLevel;

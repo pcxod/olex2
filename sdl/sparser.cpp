@@ -153,7 +153,7 @@ IEvaluable* TSyntaxParser::SimpleParse(const olxstr& Exp)  {
         Evaluators.Add(RightEvaluator);
       }
       //RightEvaluator = EvaluatorFactory->NewEvaluator( RightExp.Length() ? RightExp : RightStr );
-      TPtrList<IOlxObject> Args(2);
+      TPtrList<IEObject> Args(2);
       Args[0] = LeftEvaluator;
       Args[1] = RightEvaluator;
       try {
@@ -178,7 +178,7 @@ IEvaluable* TSyntaxParser::SimpleParse(const olxstr& Exp)  {
     // if there is a logical operator on the left (on the right it can be only
     // in the case of brackets)
     if (loFactory && RightCondition) {
-      TPtrList<IOlxObject> Args;
+      TPtrList<IEObject> Args;
       if (LogicalOperator != NULL) {
         Args.Add(LogicalOperator);
         Args.Add(RightCondition);

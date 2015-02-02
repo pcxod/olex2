@@ -74,7 +74,7 @@ void ElimateSGFromList(TPtrList<TSpaceGroup>& sglist, smatd& symm, vec3d_list& t
   sglist.Pack();
 }
 //..............................................................................
-void XLibMacros::macTestSymm(TStrObjList &Cmds, const TParamList &Options, TMacroData &E)  {
+void XLibMacros::macTestSymm(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TXApp &XApp = TXApp::GetInstance();
 
   TUnitCell& uc = XApp.XFile().GetLattice().GetUnitCell();

@@ -15,7 +15,7 @@
 BeginGlNamespace()
 
 // this class is passed a aparameter to the OSelect handlers
-class TSelectionInfo: public IOlxObject  {
+class TSelectionInfo: public IEObject  {
 public:
   vec3d From, To;
 };
@@ -32,9 +32,9 @@ public:
   bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d&, vec3d&){  return false; }
 
-  bool OnMouseDown(const IOlxObject *Sender, const TMouseData& Data);
-  bool OnMouseUp(const IOlxObject *Sender, const TMouseData& Data);
-  bool OnMouseMove(const IOlxObject *Sender, const TMouseData& Data);
+  bool OnMouseDown(const IEObject *Sender, const TMouseData& Data);
+  bool OnMouseUp(const IEObject *Sender, const TMouseData& Data);
+  bool OnMouseMove(const IEObject *Sender, const TMouseData& Data);
 
   TActionQueue& OnSelect;
 };

@@ -14,7 +14,7 @@
 #include "satom.h"
 
 BeginXlibNamespace()
-class ACifValue : public IOlxObject  {
+class ACifValue : public IEObject  {
   TEValueD Value;
 public:
   ACifValue(const TEValueD& v) : Value(v)  {}

@@ -19,16 +19,15 @@ template <typename> class SharedTypeList;
 template <typename, typename> class ConstTypeListExt;
 template <typename> class ConstTypeList;
 
-template <class T, class DestructCast> class TTypeListExt : public IOlxObject  {
+template <class T, class DestructCast> class TTypeListExt : public IEObject  {
 protected:
   TPtrList<T> List;
   template <class Analyser> struct PackItemActor  {
     const Analyser& analyser;
-    PackItemActor(const Analyser& _analyser) : analyser(_analyser)
-    {}
-    bool OnItem(T* o, size_t i) const {
+    PackItemActor(const Analyser& _analyser) : analyser(_analyser)  {}
+    bool OnItem(T& o, size_t i) const {
       if( analyser.OnItem(o, i) )  {
-        delete o;
+        delete &o;
         return true;
       }
       return false;
@@ -44,10 +43,7 @@ public:
   }
   TTypeListExt(int size, bool do_allocate=true) : List(size)  {
     if (do_allocate) {
-      if (size < 0) {
-        throw TInvalidArgumentException(__OlxSourceInfo, "size");
-      }
-      for (size_t i=0; i < (size_t)size; i++) List[i] = new T();
+      for (size_t i=0; i < size; i++) List[i] = new T();
     }
   }
 //..............................................................................
@@ -115,7 +111,7 @@ public:
     return *this;
   }
 //..............................................................................
-  //virtual IOlxObject* Replicate() const {
+  //virtual IEObject* Replicate() const {
   //  TTypeListExt* list =
   //    new TTypeListExt(Count(), false);
   //  for( size_t i=0; i < Count(); i++ )
@@ -132,23 +128,19 @@ public:
       List.Add(new T(list[i]));
   }
 //..............................................................................
-  //adds a new object into the list - will be deleted
-  template <class obj_t>
-  obj_t& Add(obj_t& Obj)  {  return *List.Add(&Obj);  }
-  //adds a new object into the list - will be deleted
-  template <class obj_t>
-  obj_t& Add(obj_t* Obj)  { return *List.Add(Obj); }
+  //adds a new object ito the list - will be deleted
+  T& Add(T& Obj)  {  return *List.Add(&Obj);  }
+  //adds a new object ito the list - will be deleted
+  T& Add(T* Obj)  {  return *List.Add(Obj);  }
 //..............................................................................
   //sets the list item to an object, which will be deleted
-  template <class obj_t>
-  obj_t& Set(size_t index, obj_t& Obj)  {
+  T& Set(size_t index, T& Obj)  {
     if( List[index] != NULL )
       delete (DestructCast*)List[index];
     return *(T*)(List[index] = &Obj);
   }
   //sets the list item to an object, which will be deleted
-  template <class obj_t>
-  obj_t& Set(size_t index, obj_t* Obj)  {
+  T& Set(size_t index, T* Obj)  {
     if( List[index] != NULL )
       delete (DestructCast*)List[index];
     return *(T*)(List[index] = Obj);
@@ -477,17 +469,7 @@ public:
     return rv;
   }
 //..............................................................................
-  template <class Analyser> size_t Count(const Analyser& a) const {
-    size_t cnt = 0;
-    for (size_t i = 0; i < List.Count(); i++) {
-      if (a.OnItem(GetItem(i), i)) {
-        cnt++;
-      }
-    }
-    return cnt;
-  }
-//..............................................................................
-  size_t Count() const { return List.Count(); }
+  size_t Count() const {  return List.Count();  }
 //..............................................................................
   // same as shrink if list size is larger
   TTypeListExt& SetCount(size_t v) {

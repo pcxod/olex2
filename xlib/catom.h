@@ -58,7 +58,7 @@ class RefinementModel;
 
 class TCAtom: public ACollectionItem, public IXVarReferencer  {
 public:
-  struct Site {  // identifies an atomic site, matrix*atom.ccrd()
+  struct Site  {  // identifies an atomic site, matrix*atom.ccrd()
     TCAtom* atom;
     smatd matrix;
     Site(TCAtom* a, const smatd& m) : atom(a), matrix(m)  {}
@@ -67,13 +67,6 @@ public:
       atom = s.atom;
       matrix = s.matrix;
       return *this;
-    }
-    int Compare(const Site &s) const {
-      int r = olx_cmp(atom->GetId(), s.atom->GetId());
-      if (r == 0) {
-        return olx_cmp(matrix.GetId(), s.matrix.GetId());
-      }
-      return r;
     }
   };
 private:
@@ -88,7 +81,7 @@ private:
   uint32_t FragmentId,
     ResiId;
   uint16_t SameId, Flags;
-  int16_t PartAndCharge;
+  int8_t Part;
   double
     Occu,  // occupancy and its variable
     OccuEsd,
@@ -117,6 +110,7 @@ private:
   }
   // Shelxl SPEC
   double SpecialPositionDeviation;
+  typedef TDirectAccessor<TCAtom> DirectAccessor;
 public:
   TCAtom(TAsymmUnit* Parent);
   virtual ~TCAtom();
@@ -187,23 +181,15 @@ public:
   DefPropP(uint32_t, FragmentId)
   DefPropP(uint16_t, SameId)
   DefPropP(size_t, EllpId)
+  DefPropP(int8_t, Part)
   DefPropP(TExyzGroup*, ExyzGroup)
   DefPropP(double, SpecialPositionDeviation)
-
-  int GetPart() const { return (int)(int8_t)(PartAndCharge&0x00ff); }
-  void SetPart(int v) {
-    PartAndCharge = (PartAndCharge & 0xff00) | (uint8_t)v;
-  }
-  int GetCharge() const { return (int)(int8_t)((PartAndCharge & 0xff00) >> 8); }
-  void SetCharge(int v) {
-    PartAndCharge = ((int16_t)v << 8) | (PartAndCharge & 0x00ff);
-  }
 
   // returns multiplicity of the position
   size_t GetDegeneracy() const {  return EquivCount()+1;  }
   // used by TUnitCell to initialise position symmetry
-  void AddEquiv(const smatd& m) {
-    if (Equivs == NULL) Equivs = new smatd_list;
+  void AddEquiv(const smatd& m)  {
+    if( Equivs == NULL )  Equivs = new smatd_list;
     Equivs->AddCopy(m);
   }
   // number of non identity symmops under which the position is invariant
@@ -243,20 +229,20 @@ public:
   DefPropP(double, Occu)
   // return chemical coccupancy, i.e. CrystOccu*site_multiplicity
   double GetChemOccu() const {  return GetOccu()*GetDegeneracy();  }
-  DefPropP(double, OccuEsd);
-  DefPropP(double, Uiso);
-  DefPropP(double, UisoEsd);
-  DefPropP(double, UisoScale);
-  DefPropP(TCAtom*, UisoOwner);
-  DefPropP(double, QPeak);
-  DefPropBFIsSet(Deleted, Flags, catom_flag_Deleted);
-  DefPropBFIsSet(Saved, Flags, catom_flag_Saved);
-  DefPropBFIsSet(HAttached, Flags, catom_flag_HAttached);
-  DefPropBFIsSet(Masked, Flags, catom_flag_Masked);
-  DefPropBFIsSet(Detached, Flags, catom_flag_Detached);
-  DefPropBFIsSet(Processed, Flags, catom_flag_Processed);
-  DefPropBFIsSet(FixedType, Flags, catom_flag_FixedType);
-  DefPropBFIsSet(RingAtom, Flags, catom_flag_RingAtom);
+  DefPropP(double, OccuEsd)
+  DefPropP(double, Uiso)
+  DefPropP(double, UisoEsd)
+  DefPropP(double, UisoScale)
+  DefPropP(TCAtom*, UisoOwner)
+  DefPropP(double, QPeak)
+  DefPropBFIsSet(Deleted,   Flags, catom_flag_Deleted)
+  DefPropBFIsSet(Saved,     Flags, catom_flag_Saved)
+  DefPropBFIsSet(HAttached, Flags, catom_flag_HAttached)
+  DefPropBFIsSet(Masked,    Flags, catom_flag_Masked)
+  DefPropBFIsSet(Detached,  Flags, catom_flag_Detached)
+  DefPropBFIsSet(Processed, Flags, catom_flag_Processed)
+  DefPropBFIsSet(FixedType, Flags, catom_flag_FixedType)
+  DefPropBFIsSet(RingAtom,  Flags, catom_flag_RingAtom)
   bool IsAvailable() const {
     return
       (Flags&(catom_flag_Detached|catom_flag_Masked|catom_flag_Deleted)) == 0;
@@ -307,20 +293,19 @@ public:
     const Accessor &accessor;
     const short ref_flags;
     FlagsAnalyser_(const Accessor &accessor_, short _ref_flags)
-      : accessor(accessor_), ref_flags(_ref_flags)
-    {}
+      : accessor(accessor_), ref_flags(_ref_flags)  {}
     template <class Item>
     bool OnItem(const Item& o, size_t) const {
-      return (olx_ref::get(accessor(o)).Flags&ref_flags) != 0;
+      return (accessor(o).Flags&ref_flags) != 0;
     }
   };
   template <class acc_t> static FlagsAnalyser_<acc_t>
   FlagsAnalyser(const acc_t &acc, short flag) {
     return FlagsAnalyser_<acc_t>(acc, flag);
   }
-  static FlagsAnalyser_<DummyAccessor>
+  static FlagsAnalyser_<DirectAccessor>
   FlagsAnalyser(short flags) {
-    return FlagsAnalyser_<DummyAccessor>(DummyAccessor(), flags);
+    return FlagsAnalyser_<DirectAccessor>(DirectAccessor(), flags);
   }
 
   template <class Accessor> struct FlagSetter_ {
@@ -328,30 +313,28 @@ public:
     const short ref_flags;
     bool set;
     FlagSetter_(const Accessor &accessor_, short ref_flags_, bool set_)
-      : accessor(accessor_), ref_flags(ref_flags_), set(set_)
-    {}
+      : accessor(accessor_), ref_flags(ref_flags_), set(set_)  {}
     template <class Item>
     void OnItem(Item& o, size_t) const {
-      return olx_set_bit(set, olx_ref::get(accessor(o)).Flags, ref_flags);
+      return olx_set_bit(set, accessor(o).Flags, ref_flags);
     }
   };
   template <class acc_t> static FlagSetter_<acc_t>
   FlagSetter(const acc_t &acc, short ref_flags, bool set) {
     return FlagSetter_<acc_t>(acc, ref_flags, set);
   }
-  static FlagSetter_<DummyAccessor>
+  static FlagSetter_<DirectAccessor>
   FlagSetter(short ref_flags, bool set) {
-    return FlagSetter_<DummyAccessor>(DummyAccessor(), ref_flags, set);
+    return FlagSetter_<DirectAccessor>(DirectAccessor(), ref_flags, set);
   }
 
   template <class Accessor> struct TypeAnalyser_ {
     const Accessor &accessor;
     const short ref_type;
     TypeAnalyser_(const Accessor &accessor_, short _ref_type)
-      : accessor(accessor_), ref_type(_ref_type)
-    {}
+      : accessor(accessor_), ref_type(_ref_type)  {}
     template <class Item> bool OnItem(const Item& o, size_t) const {
-      return olx_ref::get(accessor(o)).GetType() == ref_type;
+      return accessor(o).GetType() == ref_type;
     }
   };
   template <class acc_t> static TypeAnalyser_<acc_t>
@@ -362,13 +345,13 @@ public:
   TypeAnalyser(const acc_t &acc, short z) {
     return TypeAnalyser_<acc_t>(acc, z);
   }
-  static TypeAnalyser_<DummyAccessor>
+  static TypeAnalyser_<DirectAccessor>
   TypeAnalyser(short z) {
-    return TypeAnalyser_<DummyAccessor>(DummyAccessor(), z);
+    return TypeAnalyser_<DirectAccessor>(DirectAccessor(), z);
   }
-  static TypeAnalyser_<DummyAccessor>
+  static TypeAnalyser_<DirectAccessor>
   TypeAnalyser(const cm_Element &e) {
-    return TypeAnalyser_<DummyAccessor>(DummyAccessor(), e.z);
+    return TypeAnalyser_<DirectAccessor>(DirectAccessor(), e.z);
   }
 
   /* recursive tag setter, uses Processed property to define the ermination

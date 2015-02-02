@@ -11,7 +11,7 @@
 #define __olx_sdl_collectionItem_H
 
 // implements data for collection item
-class ACollectionItem : public virtual IOlxObject {
+class ACollectionItem : public IEObject  {
   index_t CollectionItemTag;
 public:
   ACollectionItem() : CollectionItemTag(-1) {}
@@ -32,7 +32,7 @@ public:
       : accessor(accessor_), ref_tag(_ref_tag) {}
     template <class Item>
     bool OnItem(const Item& o, size_t) const {
-      return olx_ref::get(accessor(o)).GetTag() == ref_tag;
+      return GetTag(accessor(o)) == ref_tag;
     }
   };
   template <class Accessor>

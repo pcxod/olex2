@@ -55,7 +55,7 @@ void TCRSFile::SaveToStrings(TStrList& SL)  {
   else
     throw TFunctionFailedException(__OlxSourceInfo, "unknown space group");
   SL.Add();
-  TIns::SaveSfacUnit(GetRM(), SL, SL.Count()-1, false);
+  TIns::SaveSfacUnit(GetRM(), GetRM().GetUserContent(), SL, SL.Count()-1);
 }
 //..............................................................................
 void TCRSFile::LoadFromStrings(const TStrList& Strings)  {
@@ -125,7 +125,7 @@ void TCRSFile::LoadFromStrings(const TStrList& Strings)  {
   GetRM().SetUserContent(sfac, unit);
 }
 //..............................................................................
-bool TCRSFile::Adopt(TXFile &f, int) {
+bool TCRSFile::Adopt(TXFile& f)  {
   GetAsymmUnit().GetAxes() = f.GetAsymmUnit().GetAxes();
   GetAsymmUnit().GetAxisEsds() = f.GetAsymmUnit().GetAxisEsds();
   GetAsymmUnit().GetAngles() = f.GetAsymmUnit().GetAngles();

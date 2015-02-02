@@ -23,7 +23,7 @@ UseEsdlNamespace()
 //  /* caution: the expeceted object is an instance from a call to Replicate() !
 //    and will be deleted
 //  */
-//  TBasicException(const olxstr& location, IOlxObject* cause)  {
+//  TBasicException(const olxstr& location, IEObject* cause)  {
 //    Message = "Inherited exception";
 //    Location = location;
 //    Cause = (TBasicException*)cause;

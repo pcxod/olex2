@@ -15,7 +15,7 @@
 
 BeginChemNamespace()
 
-class TCHNExp: public IOlxObject  {
+class TCHNExp: public IEObject  {
   TStringToList<olxstr, double> Exp; // Objects - double for content
   TTypeList<TCHNExp> Dependencies; // TCHNExp list of dependencies
   double FMult;

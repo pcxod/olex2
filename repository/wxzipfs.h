@@ -79,7 +79,7 @@ class TwxZipFileSystem: public AZipFS  {
   }
 protected:
   // proxying functions
-  virtual bool Enter(const IOlxObject *Sender, const IOlxObject *Data,
+  virtual bool Enter(const IEObject *Sender, const IEObject *Data,
     TActionQueue * caller)
   {
     if( Data != NULL && EsdlInstanceOf(*Data, TOnProgress) )  {
@@ -89,7 +89,7 @@ protected:
     else
       return AFileSystem::Enter(Sender, Data, caller);
   }
-  virtual bool Exit(const IOlxObject *Sender, const IOlxObject *Data,
+  virtual bool Exit(const IEObject *Sender, const IEObject *Data,
     TActionQueue *caller)
   {
     if( Data != NULL && EsdlInstanceOf(*Data, TOnProgress) )  {
@@ -99,7 +99,7 @@ protected:
     else
       return AFileSystem::Exit(Sender, Data, caller);
   }
-  virtual bool Execute(const IOlxObject *Sender, const IOlxObject *Data,
+  virtual bool Execute(const IEObject *Sender, const IEObject *Data,
     TActionQueue *caller)
   {
     if( Data != NULL && EsdlInstanceOf(*Data, TOnProgress) )  {
@@ -123,7 +123,7 @@ protected:
 public:
   TwxZipFileSystem(const olxstr& filename, bool UseCache=false);
   TwxZipFileSystem(TEFile* file, bool UseCache);
-  virtual ~TwxZipFileSystem();
+  virtual ~TwxZipFileSystem() {}
 
   bool ExtractAll(const olxstr& dest);
 

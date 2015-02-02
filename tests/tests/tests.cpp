@@ -44,14 +44,14 @@
 
 class Listener : public AActionHandler  {
 public:
-  virtual bool Execute(const IOlxObject *Sender, const IOlxObject *Data) {
+  virtual bool Execute(const IEObject *Sender, const IEObject *Data) {
     if( EsdlInstanceOf(*Data, TOnProgress) )  {
       TBasicApp::GetLog() << '\r' << ((TOnProgress*)Data)->GetAction() << "     ";
       return true;
     }
     return false;
   }
-  virtual bool OnExit(const IOlxObject *Sender, const IOlxObject *Data)  {
+  virtual bool OnExit(const IEObject *Sender, const IEObject *Data)  {
     TBasicApp::NewLogEntry();
     return true;
   }

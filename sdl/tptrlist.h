@@ -19,11 +19,11 @@ BeginEsdlNamespace()
 template <typename> class SharedPtrList;
 template <typename> class ConstPtrList;
 
-template <class T> class TPtrList : public IOlxObject  {
+template <class T> class TPtrList : public IEObject  {
   size_t FCount, FCapacity;
   size_t FIncrement;
   T **Items;
-  void Allocate() {
+  inline void Allocate() {
     if (FCapacity == 0) {
       olx_free(Items);
       Items = NULL;
@@ -43,7 +43,7 @@ template <class T> class TPtrList : public IOlxObject  {
       memset(Items, 0, FCapacity*sizeof(T*));
     }
   }
-  void checkSize()  {
+  inline void checkSize()  {
     if( FCapacity == FCount )
       SetCapacity((size_t)(1.5*FCount + FIncrement));
   }
@@ -95,7 +95,7 @@ public:
   }
 //..............................................................................
   //deletes the objects and clears the list
-  void Clear()  {
+  inline void Clear()  {
     if( Items != NULL )  {
       olx_free(Items);
       Items = NULL;
@@ -134,9 +134,9 @@ public:
     return *this;
   }
 //..............................................................................
-  virtual IOlxObject* Replicate() const {  return new TPtrList(*this);  }
+  virtual IEObject* Replicate() const {  return new TPtrList(*this);  }
 //..............................................................................
-  TPtrList& Assign(const TPtrList& list)  {
+  inline TPtrList& Assign(const TPtrList& list)  {
     if( (void*)this == (void*)&list )  return *this;
     SetCount(list.Count());
     memcpy(Items, list.Items, list.Count()*sizeof(T*));
@@ -161,7 +161,7 @@ public:
 //..............................................................................
   TPtrList& operator = (const TPtrList& l)  {  return Assign(l);  }
 //..............................................................................
-  template <class List> TPtrList& operator = (const List& l)  {
+  template <class List> inline TPtrList& operator = (const List& l)  {
     return Assign(l);
   }
 //..............................................................................
@@ -206,52 +206,44 @@ public:
     return *this;
   }
 //..............................................................................
-  TPtrList& operator += (const TPtrList& l)  {  return AddList(l);  }
+  inline TPtrList& operator += (const TPtrList& l)  {  return AddList(l);  }
 //..............................................................................
-  template <class List> TPtrList& operator += (const List& l)  {
+  template <class List> inline TPtrList& operator += (const List& l)  {
     return AddList(l);
   }
 //..............................................................................
-  template <class obj_t>
-  obj_t *&Add(obj_t* pObj=NULL) {
+  inline T*& Add(T* pObj=NULL)  {
     checkSize();
-    return (obj_t *&)(Items[FCount++] = pObj);
+    Items[FCount] = pObj;
+    return Items[FCount++];
   }
 //..............................................................................
-  template <class obj_t>
-  obj_t *&Add(obj_t& Obj)  { return Add(&Obj); }
+  inline T*& Add(T& Obj)  {  return Add(&Obj);  }
 //..............................................................................
-  T *&Add(T* pObj = NULL) {
-    checkSize();
-    return (Items[FCount++] = pObj);
-  }
-  //..............................................................................
-  T *&Add(T& Obj)  { return Add(&Obj); }
-  //..............................................................................
-  TPtrList& operator << (T& o)  { Add(o);  return *this; }
-  TPtrList& operator << (T* o)  {  Add(o);  return *this;  }
+  inline TPtrList& operator << (T& o)  {  Add(o);  return *this;  }
+  inline TPtrList& operator << (T* o)  {  Add(o);  return *this;  }
 //..............................................................................
-  TPtrList& operator << (const TPtrList& l)  {  return AddList(l);  }
+  inline TPtrList& operator << (const TPtrList& l)  {  return AddList(l);  }
 //..............................................................................
-  T*& Set(size_t i, T* pObj)  {
+  inline T*& Set(size_t i, T* pObj)  {
 #ifdef _DEBUG
   TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, i, 0, FCount);
 #endif
     return (Items[i] = pObj);
   }
 //..............................................................................
-  T*& Set(size_t i, T& Obj)  {  return Set(i , &Obj);  }
+  inline T*& Set(size_t i, T& Obj)  {  return Set(i , &Obj);  }
 //..............................................................................
-  T*& AddUnique(T* pObj)  {
+  inline T*& AddUnique(T* pObj)  {
     const size_t ind = IndexOf(pObj);
     if( ind != InvalidIndex )
       return Items[ind];
     return Add(pObj);
   }
 //..............................................................................
-  T*& AddUnique(T& Obj)  {  return AddUnique(&Obj);  }
+  inline T*& AddUnique(T& Obj)  {  return AddUnique(&Obj);  }
 //..............................................................................
-  T*& Insert(size_t index, T* pObj=NULL)  {
+  inline T*& Insert(size_t index, T* pObj=NULL)  {
 #ifdef _DEBUG
   TIndexOutOfRangeException::ValidateRange(
     __POlxSourceInfo, index, 0, FCount+1);
@@ -263,7 +255,7 @@ public:
     return Items[index];
   }
 //..............................................................................
-  T*& Insert(size_t index, T& Obj)  {  return Insert(index, &Obj);  }
+  inline T*& Insert(size_t index, T& Obj)  {  return Insert(index, &Obj);  }
 //..............................................................................
   TPtrList& Insert(size_t index, const TPtrList& list)  {
 #ifdef _DEBUG
@@ -292,7 +284,7 @@ public:
     return *this;
   }
 //..............................................................................
-  TPtrList& Insert(size_t index, size_t cnt)  {
+  inline TPtrList& Insert(size_t index, size_t cnt)  {
 #ifdef _DEBUG
   TIndexOutOfRangeException::ValidateRange(
     __POlxSourceInfo, index, 0, FCount+1);
@@ -303,7 +295,7 @@ public:
     return *this;
   }
 //..............................................................................
-  void NullItem(size_t index) const {
+  inline void NullItem(size_t index) const {
 #ifdef _DEBUG
   TIndexOutOfRangeException::ValidateRange(
     __POlxSourceInfo, index, 0, FCount);
@@ -311,21 +303,21 @@ public:
     Items[index] = NULL;
   }
 //..............................................................................
-  T*& operator [] (size_t index) const {
+  inline T*& operator [] (size_t index) const {
 #ifdef _DEBUG
   TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, index, 0, FCount);
 #endif
     return Items[index];
   }
 //..............................................................................
-  T*& GetItem(size_t index) const {
+  inline T*& GetItem(size_t index) const {
 #ifdef _DEBUG
   TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, index, 0, FCount);
 #endif
     return Items[index];
   }
 //..............................................................................
-  T*& GetLast() const {
+  inline T*& GetLast() const {
 #ifdef _DEBUG
   TIndexOutOfRangeException::ValidateRange(
     __POlxSourceInfo, FCount-1, 0, FCount);
@@ -333,7 +325,7 @@ public:
     return Items[FCount-1];
   }
 //..............................................................................
-  TPtrList& SetCapacity(size_t v)  {
+  inline TPtrList& SetCapacity(size_t v)  {
     if( v < FCapacity )  return *this;
     FCapacity = v;
     Allocate();
@@ -342,7 +334,7 @@ public:
     return *this;
   }
 //..............................................................................
-  TPtrList& SetIncrement(size_t v)  {
+  inline TPtrList& SetIncrement(size_t v)  {
     FIncrement = v;
     return *this;
   }
@@ -391,14 +383,14 @@ public:
   /*removes given item from the list, returns if the item existed. If there
   are more than 1 the same item in the list, only the first one will be removed
   */
-  bool Remove(const T* pObj)  {
+  inline bool Remove(const T* pObj)  {
     const size_t i = IndexOf(pObj);
     if( i == InvalidIndex )  return false;
     Delete(i);
     return true;
   }
 //..............................................................................
-  bool Remove(const T& Obj)  {  return Remove(&Obj);   }
+  inline bool Remove(const T& Obj)  {  return Remove(&Obj);   }
 //..............................................................................
   // cyclic shift to the left
   TPtrList& ShiftL(size_t cnt)  {
@@ -445,7 +437,7 @@ public:
     return *this;
   }
 //..............................................................................
-  void Swap(size_t i, size_t j)  {
+  inline void Swap(size_t i, size_t j)  {
 #ifdef _DEBUG
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, i, 0, FCount);
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, j, 0, FCount);
@@ -473,12 +465,23 @@ public:
     Items[to] = D;
   }
 //..............................................................................
-  TPtrList& Pack() { return Pack(olx_alg::olx_eq((const T*)0)); }
-//..............................................................................
-  template <class PackAnalyser> TPtrList& Pack(const PackAnalyser& pa) {
+  TPtrList& Pack()  {
     size_t nc = 0;  // count null pointers
-    for (size_t i=0; i < FCount; i++, nc++) {
-      if (pa.OnItem(Items[i], i)) {
+    for( size_t i=0; i < FCount; i++, nc++ )  {
+      if( Items[i] == NULL )  {
+        nc--;
+        continue;
+      }
+      Items[nc] = Items[i];
+    }
+    FCount = nc;
+    return *this;
+  }
+//..............................................................................
+  template <class PackAnalyser> TPtrList& Pack(const PackAnalyser& pa)  {
+    size_t nc = 0;  // count null pointers
+    for( size_t i=0; i < FCount; i++, nc++ )  {
+      if( pa.OnItem(*Items[i], i) )  {
         nc--;
         continue;
       }
@@ -490,7 +493,7 @@ public:
 //..............................................................................
   template <class Functor> const TPtrList& ForEach(const Functor& f) const {
     for (size_t i=0; i < FCount; i++)
-      f.OnItem(Items[i], i);
+      f.OnItem(*Items[i], i);
     return *this;
   }
 //..............................................................................
@@ -498,35 +501,25 @@ public:
     TPtrList rv;
     rv.SetCapacity(Count());
     for (size_t i = 0; i < FCount; i++) {
-      if (f.OnItem(Items[i], i)) {
+      if (f.OnItem(*Items[i], i)) {
         rv.Add(Items[i]);
       }
     }
     return rv.Fit();
   }
 //..............................................................................
-  template <class Analyser> size_t Count(const Analyser& a) const {
-    size_t cnt = 0;
-    for (size_t i = 0; i < FCount; i++) {
-      if (a.OnItem(Items[i], i)) {
-        cnt++;
-      }
-    }
-    return cnt;
-  }
-//..............................................................................
   // make list capcity equal to its size
-  TPtrList& Fit() {
+  inline TPtrList& Fit() {
     FCapacity = FCount;
     Allocate();
     return *this;
   }
 //..............................................................................
-  size_t Count() const {  return FCount;  }
+  inline size_t Count() const {  return FCount;  }
 //..............................................................................
-  bool IsEmpty() const {  return (FCount == 0);  }
+  inline bool IsEmpty() const {  return (FCount == 0);  }
 //..............................................................................
-  TPtrList& SetCount(size_t v)  {
+  inline TPtrList& SetCount(size_t v)  {
     if( v == FCount )  return *this;
     if( v > FCount )  {
       if( v > FCapacity )

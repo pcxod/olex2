@@ -12,12 +12,7 @@
 #include "symmspace.h"
 BeginXlibNamespace()
 
-const int
-  reflection_convert_None = 0,
-  reflection_convert_F_to_Fsq = 1,
-  reflection_convert_Fsq_toF = 2;
-
-class TReflection: public ACollectionItem {
+class TReflection: public ACollectionItem  {
 public:
   static const int16_t NoBatchSet = 0xFE;
   static const uint32_t
@@ -33,63 +28,33 @@ private:
   double I, S;
   // first 8 bits - flags, next 8 - multiplicity, then batch number
   uint32_t Flags;
-  void _init(int batch=NoBatchSet) {
+  void _init(int batch=NoBatchSet)  {
     _reset_flags(0, 1, batch);
     SetTag(1);
   }
-  void _reset_flags(int flags, int mult, int batch) {
+  void _reset_flags(int flags, int mult, int batch)  {
     Flags = flags|(mult<<MultOff)|(batch<<BatchOff);
   }
 public:
-  TReflection()
-    : I(0), S(0)
-  {
-    _init();
-  }
-  TReflection(const TReflection& r)  { *this = r; }
+  TReflection(const TReflection& r)  {  *this = r;  }
   TReflection(const TReflection& r, int bacth_n)  {
     *this = r;
     SetBatch(bacth_n);
   }
   TReflection(const TReflection& r, const vec3i& _hkl, int batch_n=NoBatchSet)
-    : hkl(_hkl), I(r.I), S(r.S), Flags(r.Flags)
   {
+    *this = r;
+    hkl = _hkl;
     SetBatch(batch_n);
   }
-  TReflection(int h, int k, int l)
-    : hkl(h,k,l), I(0), S(0)
-  {
-    _init();
-  }
-  TReflection(const vec3i& _hkl)
-    : hkl(_hkl), I(0), S(0)
-  {
-    _init();
-  }
+  TReflection(int h, int k, int l) : hkl(h,k,l), I(0), S(0)  {  _init();  }
+  TReflection(const vec3i& _hkl) : hkl(_hkl), I(0), S(0)  {  _init();  }
   TReflection(int h, int k, int l, double _I, double _S, int batch=NoBatchSet)
-    : hkl(h,k,l), I(_I), S(_S)
-  {
-    _init(batch);
-  }
-  TReflection(int h, int k, int l, const olx_pair_t<double, double> &IS,
-    int batch = NoBatchSet)
-    : hkl(h, k, l), I(IS.a), S(IS.b)
-  {
-    _init(batch);
-  }
-  TReflection(const vec3i& _hkl, double _I, double _S, int batch = NoBatchSet)
-    : hkl(_hkl), I(_I), S(_S)
-  {
-    _init(batch);
-  }
-  TReflection(const vec3i& _hkl, olx_pair_t<double, double> &IS,
-    int batch = NoBatchSet)
-    : hkl(_hkl), I(IS.a), S(IS.a)
-  {
-    _init(batch);
-  }
+    : hkl(h,k,l), I(_I), S(_S)  {  _init(batch);  }
+  TReflection(const vec3i& _hkl, double _I, double _S, int batch=NoBatchSet)
+    : hkl(_hkl), I(_I), S(_S)  {  _init(batch);  }
   virtual ~TReflection()  {}
-  TReflection& operator = (const TReflection &r) {
+  TReflection& operator = (const TReflection &r)  {
     hkl = r.hkl;
     I = r.I;
     S = r.S;
@@ -97,28 +62,13 @@ public:
     SetTag(r.GetTag());
     return *this;
   }
-  int GetH() const {  return hkl[0];  }
-  void SetH(int v)   {  hkl[0] = v;  }
-  int GetK() const {  return hkl[1];  }
-  void SetK(int v)   {  hkl[1] = v;  }
-  int GetL() const {  return hkl[2];  }
-  void SetL(int v)   {  hkl[2] = v;  }
-  vec3i& GetHkl()  { return hkl; }
-  const vec3i& GetHkl() const { return hkl; }
-  TReflection& SetHkl(const vec3i& _hkl)  { hkl = _hkl;  return *this; }
-  //...........................................................................
-  DefPropP(double, I)
-  DefPropP(double, S)
-  void SetI(const olx_pair_t<double, double> &IS) {
-    I = IS.a;
-    S = IS.b;
-  }
-  //...........................................................................
-  // these values are intialised by Analyse
-  DefPropBFIsSet(Centric, Flags, bitCentric)
-  DefPropBFIsSet(Absent, Flags, bitAbsent)
-  DefPropBFIsSet(Omitted, Flags, bitOmitted)
-  //...........................................................................
+  inline int GetH() const {  return hkl[0];  }
+  inline void SetH(int v)   {  hkl[0] = v;  }
+  inline int GetK() const {  return hkl[1];  }
+  inline void SetK(int v)   {  hkl[1] = v;  }
+  inline int GetL() const {  return hkl[2];  }
+  inline void SetL(int v)   {  hkl[2] = v;  }
+
   template <class VC>
   bool EqHkl(const VC& v) const {
     return ((int)v[0] == hkl[0]) && ((int)v[1] == hkl[1]) &&
@@ -278,6 +228,11 @@ public:
     return hkl == hkl_;
   }
 //..............................................................................
+  // these values are intialised by Analyse
+  DefPropBFIsSet(Centric, Flags, bitCentric)
+  DefPropBFIsSet(Absent, Flags, bitAbsent)
+  DefPropBFIsSet(Omitted, Flags, bitOmitted)
+//..............................................................................
   uint8_t GetMultiplicity() const {
     return (uint8_t)((Flags&0xff00)>>MultOff);
   }
@@ -291,6 +246,12 @@ public:
     Flags = (Flags&~BatchMask)|((uint32_t)v<<BatchOff);
   }
   bool IsBatchSet() const { return GetBatch() != NoBatchSet; }
+//..............................................................................
+  vec3i& GetHkl()  {  return hkl;  }
+  const vec3i& GetHkl() const {  return hkl;  }
+  TReflection& SetHkl(const vec3i& _hkl)  {  hkl = _hkl;  return *this;  }
+  DefPropP(double, I)
+  DefPropP(double, S)
 //..............................................................................
   // returns a string: h k l I S [f]
   TIString ToString() const;
@@ -331,22 +292,6 @@ public:
   }
   static const vec3i& GetHkl(const vec3i& _hkl) {  return _hkl;  }
   static vec3i& GetHkl(vec3i& _hkl) {  return _hkl;  }
-  //............................................................................
-  // using Shelxl-like conversion
-  static olx_pair_t<double, double> F_as_Fsq(double F, double sF) {
-    return olx_pair::make(F*F,
-      2 * (olx_max(0.01, sF)*olx_max(olx_max(0.01, olx_abs(F)), sF)));
-  }
-  // using xtal 3.7.2 like conversion
-  static olx_pair_t<double, double> Fsq_as_F(double Fsq, double sFsq) {
-    if (Fsq <= 0) {
-      return olx_pair::make(0.0, sqrt(sFsq));
-    }
-    else {
-      double F = sqrt(Fsq);
-      return olx_pair::make(F, sqrt(Fsq + sFsq) - F);
-    }
-  }
 };
 
 class IMillerIndexList {
@@ -385,62 +330,6 @@ public:
 
 typedef TPtrList<TReflection> TRefPList;
 typedef TTypeList<TReflection> TRefList;
-
-struct RefListUtil {
-  template <class list_t>
-  static olx_pair_t<double, double> FindIRange(const list_t &l) {
-    if (l.IsEmpty()) {
-      return olx_pair::make(0.0, 0.0);
-    }
-    olx_pair_t<double, double> m;
-    m.b = m.a = olx_ref::get(l[0]).GetI();
-    for (size_t i = 1; i < l.Count(); i++) {
-      TReflection &r = olx_ref::get(l[i]);
-      if (r.GetI() > m.b)
-        m.b = r.GetI();
-      if (r.GetI() < m.a)
-        m.a = r.GetI();
-    }
-    return m;
-  }
-
-  // considers only positive MAX value!
-  template <class list_t>
-  static double CalcScale(const list_t &l) {
-    olx_pair_t<double, double> m = FindIRange(l);
-    return (m.b > 99999 ? 99999 / m.b : 1);
-  }
-
-  template <class list_t>
-  static TRefList::const_list_type Convert(const list_t &l, int ct) {
-    TRefList rv;
-    for (size_t i = 0; i < l.Count(); i++) {
-      TReflection &r = olx_ref::get(l[i]);
-      TReflection &rc = rv.AddCopy(r);
-      if (ct == reflection_convert_F_to_Fsq) {
-        rc.SetI(TReflection::F_as_Fsq(r.GetI(), r.GetS()));
-      }
-      else if (ct == reflection_convert_Fsq_toF) {
-        rc.SetI(TReflection::Fsq_as_F(r.GetI(), r.GetS()));
-      }
-    }
-    return rv;
-  }
-
-  template <class list_t>
-  static list_t &ConvertInPlace(list_t &l, int ct) {
-    for (size_t i = 0; i < l.Count(); i++) {
-      TReflection &r = olx_ref::get(l[i]);
-      if (ct == reflection_convert_F_to_Fsq) {
-        r.SetI(TReflection::F_as_Fsq(r.GetI(), r.GetS()));
-      }
-      else if (ct == reflection_convert_Fsq_toF) {
-        r.SetI(TReflection::Fsq_as_F(r.GetI(), r.GetS()));
-      }
-    }
-    return l;
-  }
-};
 
 EndXlibNamespace()
 

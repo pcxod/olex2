@@ -50,7 +50,7 @@ const short
 
 //typedef void (*MMoveHandler)(class TGlMouse *, int dx, int dy);
 
-struct TMouseData: public IOlxObject  {
+struct TMouseData: public IEObject  {
   TMouseData() :
     Button(0), Shift(0), Event(0),
     DownX(0), DownY(0), UpX(0), UpY(0),
@@ -138,7 +138,7 @@ struct MouseEvtHandler {
   }
 };
 
-class TGlMouse: public IOlxObject {
+class TGlMouse: public IEObject {
   class TGlRenderer *FParent;
   class TDFrame *FDFrame;
   TActionQList Actions;
@@ -158,9 +158,9 @@ protected:
   int ClickThreshold;
   void process_command_list(TStrObjList& Cmds, bool enable);
   olx_cdict<TMouseRegion, AGDrawObject *> object_cache;
-  void OnObjectDelete(APerishable *o);
+  void OnObjectDelete(IEObject *o);
   AGDrawObject *find_object(int x, int y);
-  void ClearObjectCache(IOlxObject *caller=NULL);
+  void ClearObjectCache(IEObject *caller=NULL);
 public:
   TGlMouse(TGlRenderer *Parent, TDFrame *Frame);
   virtual ~TGlMouse();
@@ -200,12 +200,12 @@ public:
   }
   TActionQueue &OnObject;
   void LibEnable(TStrObjList& Cmds, const TParamList& Options,
-    TMacroData &E);
+    TMacroError &E);
   void LibDisable(TStrObjList& Cmds, const TParamList& Options,
-    TMacroData &E);
+    TMacroError &E);
   void LibLock(TStrObjList& Cmds, const TParamList& Options,
-    TMacroData &E);
-  void LibIsEnabled(const TStrObjList& Params, TMacroData& E);
+    TMacroError &E);
+  void LibIsEnabled(const TStrObjList& Params, TMacroError& E);
 TLibrary *ExportLib(const olxstr &name="mouse");
 };
 

@@ -205,8 +205,7 @@ ort_bond<draw_t>::ort_bond(const OrtDraw& parent,
 template <class draw_t>
 uint32_t ort_bond<draw_t>::get_color(int primitive, uint32_t def) const {
   TGlPrimitive *glp = object.GetPrimitives().FindPrimitiveByName(
-    TXBond::GetSettings(parent.app.GetRenderer())
-      .GetPrimitives(true)[primitive]);
+    TXBond::GetStaticPrimitives()[primitive]);
   if( (draw_style&ortep_color_bond) == 0 )  {
     return glp == NULL ? 0 :
     (glp->GetProperties().AmbientF.GetRGB() == def ? 0
@@ -487,9 +486,8 @@ ort_bond_line::ort_bond_line(const OrtDraw& parent, const TXLine& line,
 
 uint32_t ort_bond_line::get_color(int primitive, uint32_t def) const {
   TGlPrimitive *glp = line.GetPrimitives().FindPrimitiveByName(
-    TXBond::GetSettings(this->parent.app.GetRenderer())
-      .GetPrimitives(true)[primitive]);
-  if ((draw_style&ortep_color_bond) == 0) {
+    TXBond::GetStaticPrimitives()[primitive]);
+  if( (draw_style&ortep_color_bond) == 0 )  {
     return glp == NULL ? 0 :
     (glp->GetProperties().AmbientF.GetRGB() == def ? 0
     : glp->GetProperties().AmbientF.GetRGB());
@@ -823,13 +821,13 @@ void OrtDraw::Init(PSWriter& pw)  {
   GLfloat vp[4];
   olx_gl::get(GL_VIEWPORT, vp);
   TGXApp& app = TGXApp::GetInstance();
-  const TEBasis& basis = app.GetRenderer().GetBasis();
+  const TEBasis& basis = app.GetRender().GetBasis();
   LinearScale = olx_min((float)pw.GetWidth()/vp[2],
     (float)pw.GetHeight()/vp[3]);
 
   {
     olxcstr fnt("/Verdana findfont ");
-    AGlScene& sc = app.GetRenderer().GetScene();
+    AGlScene& sc = app.GetRender().GetScene();
     fnt << olx_round(
       sc.GetFont(sc.FindFontIndexForType<TXAtom>(), true).
         GetPointSize()/sqrt(LinearScale))
@@ -840,8 +838,8 @@ void OrtDraw::Init(PSWriter& pw)  {
   YOffset = ((float)pw.GetHeight()-LinearScale*vp[3])/2;
   pw.translate(0.0f, YOffset);
   pw.scale(LinearScale, LinearScale);
-  DrawScale = (float)(app.GetRenderer().GetBasis().GetZoom()
-    /(app.GetRenderer().GetScale()));
+  DrawScale = (float)(app.GetRender().GetBasis().GetZoom()
+    /(app.GetRender().GetScale()));
   BondRad = 0.03f*DrawScale;
   SceneOrigin = basis.GetCenter();
   DrawOrigin = vec3f(vp[2]/2, vp[3]/2, 0);
@@ -941,17 +939,17 @@ void OrtDraw::Render(const olxstr& fileName)  {
     for (size_t i = 0; i < rings.Count(); i++) {
       if (!rings[i].IsVisible()) continue;
       vec3f cnt = ProjectPoint(rings[i].Basis.GetCenter());
-      ort_circle *c = new ort_circle(*this, cnt,
-        static_cast<float>(rings[i].Basis.GetZoom())*DrawScale, false);
+      ort_circle *c = new ort_circle(
+        *this, cnt, rings[i].Basis.GetZoom()*DrawScale, false);
       c->basis = new mat3f(
         mat3d::Transpose(rings[i].Basis.GetMatrix())
-          *app.GetRenderer().GetBasis().GetMatrix());
+          *app.GetRender().GetBasis().GetMatrix());
       objects.Add(c);
       all_points.Add(&c->center);
     }
   }
-  if (app.XFile().DUnitCell->IsVisible()) {
-    const TDUnitCell& uc = *app.XFile().DUnitCell;
+  if (app.DUnitCell().IsVisible()) {
+    const TDUnitCell& uc = app.DUnitCell();
     for (size_t i=0; i < uc.EdgeCount(); i+=2) {
       ort_poly* l = new ort_poly(*this, false);
       l->points.AddNew(ProjectPoint(uc.GetEdge(i)));
@@ -966,10 +964,10 @@ void OrtDraw::Render(const olxstr& fileName)  {
     vec3f len(cm[0].Length(), cm[1].Length(), cm[2].Length());
     cm[0].Normalise();  cm[1].Normalise();  cm[2].Normalise();
     cm *= ProjMatr;
-    vec3d T = app.GetRenderer().GetBasis().GetMatrix()*b.GetCenter();
-    T /= app.GetRenderer().GetZoom();
-    T *= app.GetRenderer().GetScale();
-    T -= app.GetRenderer().GetBasis().GetCenter();
+    vec3d T = app.GetRender().GetBasis().GetMatrix()*b.GetCenter();
+    T /= app.GetRender().GetZoom();
+    T *= app.GetRender().GetScale();
+    T -= app.GetRender().GetBasis().GetCenter();
     vec3f cnt = ProjectPoint(T);
     const float sph_rad = (float)(0.2*DrawScale*b.GetZoom());
     ort_circle* center = new ort_circle(*this, cnt, sph_rad, true);
@@ -1056,9 +1054,9 @@ void OrtDraw::Render(const olxstr& fileName)  {
     const size_t contour_cnt = grid.GetContourLevelCount();
     olx_array_ptr<float> z(new float[contour_cnt]);
     float minZ = 1000, maxZ = -1000;
-    const mat3f bm(app.GetRenderer().GetBasis().GetMatrix());
+    const mat3f bm(app.GetRender().GetBasis().GetMatrix());
     const mat3f c2c(app.XFile().GetAsymmUnit().GetCartesianToCell());
-    const vec3f center(app.GetRenderer().GetBasis().GetCenter());
+    const vec3f center(app.GetRender().GetBasis().GetCenter());
     MapUtil::MapGetter<float, 2>
       map_getter(grid.Data()->Data, grid.Data()->GetSize());
     for (size_t i=0; i < MaxDim; i++) {
@@ -1104,9 +1102,9 @@ void OrtDraw::Render(const olxstr& fileName)  {
     if (xb.GetGlLabel().IsVisible())
       Labels.Add(xb.GetGlLabel());
   }
-  if (app.XFile().DUnitCell->IsVisible()) {
-    for (size_t i=0; i < app.XFile().DUnitCell->LabelCount(); i++) {
-      const TXGlLabel& glxl = app.XFile().DUnitCell->GetLabel(i);
+  if (app.DUnitCell().IsVisible()) {
+    for (size_t i=0; i < app.DUnitCell().LabelCount(); i++) {
+      const TXGlLabel& glxl = app.DUnitCell().GetLabel(i);
       if (glxl.IsVisible())
         Labels.Add(glxl);
     }
@@ -1136,7 +1134,7 @@ void OrtDraw::Render(const olxstr& fileName)  {
     TCStrList output;
     uint32_t prev_ps_color = 0;
     output.Add(pw.color_str(prev_ps_color));
-    const float vector_scale = (float)(1./app.GetRenderer().GetScale());
+    const float vector_scale = (float)(1./app.GetRender().GetScale());
     for (size_t i=0; i < Labels.Count(); i++) {
       const TGlFont& glf = Labels[i]->GetFont();
       uint32_t color = 0;
@@ -1146,7 +1144,7 @@ void OrtDraw::Render(const olxstr& fileName)  {
         color = glm->AmbientF.GetRGB();
       pw.color(color);
       if (glf.IsVectorFont()) {
-        const float font_scale = (float)(DrawScale/app.GetRenderer().CalcZoom());
+        const float font_scale = (float)(DrawScale/app.GetRender().CalcZoom());
         vec3f crd = Labels[i]->GetVectorPosition()*vector_scale + DrawOrigin;
         const TTextRect &r = Labels[i]->GetRect();
         a_ort_object::update_min_max(boundary,

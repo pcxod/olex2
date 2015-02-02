@@ -58,7 +58,7 @@ void TMainForm::OnDrawStyleChange(wxCommandEvent& event)  {
     case ID_SceneProps:
       TdlgSceneProps *Dlg = new TdlgSceneProps(this);
       if( Dlg->ShowModal() == wxID_OK )  {
-        FBgColor = FXApp->GetRenderer().LightModel.GetClearColor();
+        FBgColor = FXApp->GetRender().LightModel.GetClearColor();
       }
       Dlg->Destroy();
     break;
@@ -329,7 +329,7 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
           for (size_t j = 0; j < gpc.ObjectCount(); j++) {
             AGDrawObject &go = gpc.GetObject(j);
             if (go.IsVisible())
-              FXApp->GetRenderer().Select(go, true);
+              FXApp->GetRender().Select(go, true);
           }
         }
       }
@@ -338,7 +338,7 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
       for (size_t i = 0; i < FObjectUnderMouse->GetPrimitives().ObjectCount(); i++) {
         AGDrawObject &go = FObjectUnderMouse->GetPrimitives().GetObject(i);
         if (go.IsVisible())
-          FXApp->GetRenderer().Select(go, true);
+          FXApp->GetRender().Select(go, true);
       }
     }
     TimePerFrame = FXApp->Draw();

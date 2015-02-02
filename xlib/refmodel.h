@@ -46,13 +46,12 @@ static uint32_t
   rm_clear_AFIX = 0x00000002,
   rm_clear_VARS = 0x00000004,
   rm_clear_BadRefs = 0x00000008,
-  rm_clear_ISAME = 0x00000010, // implicit SAME
-  rm_clear_ALL = 0xFFFFFFFF,
+  rm_clear_ALL  = 0xFFFFFFFF,
   rm_clear_DEF = (rm_clear_ALL^(
   rm_clear_SAME|rm_clear_AFIX|rm_clear_VARS|rm_clear_BadRefs));
 
 class RefinementModel
-  : public IXVarReferencerContainer, public IXVarReferencer, public IOlxObject
+  : public IXVarReferencerContainer, public IXVarReferencer, public IEObject
 {
   // in INS file is EQUV command
   struct Equiv  {
@@ -72,11 +71,10 @@ class RefinementModel
   olx_pdict<int, Fragment*> Frags;
   ContentList UserContent;
 protected:
-  olxstr HKLSource, ModelSource;
+  olxstr HKLSource;
   olxstr RefinementMethod,  // L.S. or CGLS
          SolutionMethod;
-  int MERG;
-  mutable int HKLF; // can be modified by GetReflections!
+  int MERG, HKLF;
   mat3d HKLF_mat;
   double HKLF_s, HKLF_wt, HKLF_m;
   double OMIT_s, OMIT_2t;
@@ -93,7 +91,7 @@ protected:
   olxstr VarRefrencerId;
   olxstr_dict<IXVarReferencerContainer*, false> RefContainers;
   void SetDefaults();
-  TTypeListExt<class InfoTab, IOlxObject> InfoTables;
+  TTypeListExt<class InfoTab, IEObject> InfoTables;
   SelectedTableRows selectedTableRows;
   // adds a givin direction (if unique) and returns its name
   adirection *AddDirection(const TCAtomGroup &atoms, uint16_t type);
@@ -217,10 +215,9 @@ public:
   ConnInfo Conn;     // extra connectivity information
 
   CalculatedVars CVars;
-  const olxstr &GetModelSource() const { return ModelSource; }
-  void SetModelSource(const olxstr &src);
-  const olxstr &GetHKLSource() const { return HKLSource; }
-  void SetHKLSource(const olxstr &src);
+  const olxstr& GetHKLSource() const {  return HKLSource;  }
+  //TODO: handle the change
+  void SetHKLSource(const olxstr& src);
   olxstr GetHKLFStr() const {
     olxstr rv(HKLF, 80);
     if( HKLF_m == def_HKLF_m )  {
@@ -820,26 +817,22 @@ Friedel opposites of components 1 ... m
   bool IsDefaultRestraint(const TSameGroup &restraint) const;
   // feeds on .options - instance static
   bool DoShowRestraintDefaults() const;
-  void LibHasOccu(const TStrObjList& Params, TMacroData& E);
-  void LibOSF(const TStrObjList& Params, TMacroData& E);
-  void LibBASF(const TStrObjList& Params, TMacroData& E);
-  void LibFVar(const TStrObjList& Params, TMacroData& E);
-  void LibEXTI(const TStrObjList& Params, TMacroData& E);
-  void LibUpdateCRParams(const TStrObjList& Params, TMacroData& E);
-  void LibCalcCompleteness(const TStrObjList& Params, TMacroData& E);
-  void LibMaxIndex(const TStrObjList& Params, TMacroData& E);
+  void LibHasOccu(const TStrObjList& Params, TMacroError& E);
+  void LibOSF(const TStrObjList& Params, TMacroError& E);
+  void LibBASF(const TStrObjList& Params, TMacroError& E);
+  void LibFVar(const TStrObjList& Params, TMacroError& E);
+  void LibEXTI(const TStrObjList& Params, TMacroError& E);
+  void LibUpdateCRParams(const TStrObjList& Params, TMacroError& E);
+  void LibCalcCompleteness(const TStrObjList& Params, TMacroError& E);
+  void LibMaxIndex(const TStrObjList& Params, TMacroError& E);
   // restraints & constraints related functions
-  void LibShareADP(TStrObjList &Cmds, const TParamList &Opts, TMacroData &E);
+  void LibShareADP(TStrObjList &Cmds, const TParamList &Opts, TMacroError &E);
   void LibNewAfixGroup(TStrObjList &Cmds, const TParamList &Options,
-    TMacroData &E);
+    TMacroError &E);
   void LibNewRestraint(TStrObjList &Cmds, const TParamList &Options,
-    TMacroData &E);
-  void LibModelSrc(const TStrObjList &Params, TMacroData &E);
+    TMacroError &E);
 
   TLibrary* ExportLibrary(const olxstr& name=EmptyString());
-  struct VPtr : public olx_virtual_ptr<RefinementModel> {
-    virtual IOlxObject *get_ptr() const;
-  };
 
   struct ReleasedItems {
     TSimpleRestraintPList restraints;

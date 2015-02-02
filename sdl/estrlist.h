@@ -41,7 +41,7 @@ public:
   }
 };
 // string class, string container class
-template <class T> class TTStrList : public IOlxObject {
+template <class T> class TTStrList : public IEObject {
 public:
   typedef typename T::string_type string_type;
 protected:
@@ -599,16 +599,6 @@ public:
     return rv;
   }
 
-  template <class Analyser> size_t Count(const Analyser& a) const {
-    size_t cnt = 0;
-    for (size_t i = 0; i < Strings.Count(); i++) {
-      if (a.OnItem(*Strings[i], i)) {
-        cnt++;
-      }
-    }
-    return cnt;
-  }
-
 public:
   struct InternalAccessor : public TPtrList<T>::InternalAccessor {
     InternalAccessor(TTStrList &l)
@@ -851,9 +841,9 @@ public:
   }
 };
 
-typedef TStringToList<olxstr, IOlxObject*> TStrObjList;
-typedef TStringToList<olxcstr, IOlxObject*> TCStrObjList;
-typedef TStringToList<olxwstr, IOlxObject*> TWStrObjList;
+typedef TStringToList<olxstr, IEObject*> TStrObjList;
+typedef TStringToList<olxcstr, IEObject*> TCStrObjList;
+typedef TStringToList<olxwstr, IEObject*> TWStrObjList;
 typedef ConstStrObjList<TStrObjList> const_strobjlist;
 typedef ConstStrObjList<TCStrObjList> const_cstrobjlist;
 typedef ConstStrObjList<TWStrObjList> const_wstrobjlist;

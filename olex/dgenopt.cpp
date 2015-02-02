@@ -10,12 +10,14 @@
 #include "dgenopt.h"
 #include "ctrls/frameext.h"
 
+BEGIN_EVENT_TABLE(TdlgGenerate, TDialog)
+  EVT_BUTTON(wxID_OK, TdlgGenerate::OnOK)
+END_EVENT_TABLE()
 //..............................................................................
 TdlgGenerate::TdlgGenerate(TMainFrame *ParentFrame) :
   TDialog(ParentFrame, wxT("Generation options"), wxT("dlgGenerate"))
 {
   AActionHandler::SetToDelete(false);
-  Bind(wxEVT_BUTTON, &TdlgGenerate::OnOK, this, wxID_OK);
   AFrom = BFrom = CFrom = -1;
   ATo = BTo = CTo = 1;
   short Border = 2, i;
@@ -86,12 +88,12 @@ TdlgGenerate::~TdlgGenerate()  {
   cbB->OnChange.Clear();
   cbC->OnChange.Clear();
 }
-bool TdlgGenerate::Execute(const IOlxObject *Sender, const IOlxObject *Data,
+bool TdlgGenerate::Execute(const IEObject *Sender, const IEObject *Data,
   TActionQueue *)
 {
-  if (Sender == cbA)  OnAChange();
-  if (Sender == cbB)  OnBChange();
-  if (Sender == cbC)  OnCChange();
+  if( (TComboBox*)Sender == cbA )  OnAChange();
+  if( (TComboBox*)Sender == cbB )  OnBChange();
+  if( (TComboBox*)Sender == cbC )  OnCChange();
   return true;
 }
 void TdlgGenerate::OnAChange()  {

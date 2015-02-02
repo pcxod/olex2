@@ -19,7 +19,6 @@
 #include "symmlib.h"
 #include "etime.h"
 #include "integration.h"
-#include "label_corrector.h"
 
 using namespace exparse::parser_util;
 using namespace cif_dp;
@@ -38,21 +37,21 @@ void TCif::Clear()  {
   MatrixMap.Clear();
 }
 //..............................................................................
-void TCif::LoadFromStrings(const TStrList& Strings) {
-  block_index = InvalidIndex;
+void TCif::LoadFromStrings(const TStrList& Strings)  {
+  block_index = 0;
   data_provider.LoadFromStrings(Strings);
-  for (size_t i=0; i < data_provider.Count(); i++) {
+  for( size_t i=0; i < data_provider.Count(); i++ )  {
     CifBlock& cb = data_provider[i];
     if( cb.param_map.IndexOf("_cell_length_a") == InvalidIndex )
       continue;
     bool valid = false;
-    for (size_t j = 0; j < cb.table_map.Count(); j++) {
-      if (cb.table_map.GetKey(j).StartsFrom("_atom_site")) {
+    for( size_t j=0; j < cb.table_map.Count(); j++ )  {
+      if( cb.table_map.GetKey(j).StartsFrom("_atom_site") )  {
         valid = true;
         break;
       }
     }
-    if (valid) {
+    if( valid )  {
       block_index = i;
       break;
     }
@@ -399,17 +398,12 @@ void TCif::Initialize()  {
     }
     // no sym ops, check hall symbol
     else {
-      olxstr hs = GetParamAsString("_space_group_name_Hall");
-      if (hs.IsEmpty()) {
-        hs = GetParamAsString("_symmetry_space_group_name_Hall");
-      }
+      olxstr hs = GetParamAsString("_symmetry_space_group_name_Hall");
       if (!hs.IsEmpty()) {
         TSpaceGroup *sg = TSymmLib::GetInstance().FindGroupByHallSymbol(hs);
         if (sg != NULL) {
           GetAsymmUnit().ChangeSpaceGroup(*sg);
           sg_initialised = true;
-          TBasicApp::NewLogEntry() << "Note the symmetry operators were deduced"
-            " from the Hall symbol and may differ from the intendent ones.";
         }
         else {
           try {
@@ -807,55 +801,16 @@ cetTable& TCif::GetPublicationInfoLoop()  {
     "_publ_author_name,_publ_author_email,_publ_author_address");
 }
 //..............................................................................
-bool TCif::Adopt(TXFile &XF, int flags) {
+bool TCif::Adopt(TXFile& XF)  {
   Clear();
   double Q[6], E[6];  // quadratic form of s thermal ellipsoid
   GetRM().Assign(XF.GetRM(), true);
-  if (flags != 0) {
-    ASObjectProvider &objects = XF.GetLattice().GetObjects();
-    for (size_t i = 0; i < objects.atoms.Count(); i++) {
-      TSAtom &a = objects.atoms[i];
-      if (!a.IsAvailable() || a.IsAUAtom()) continue;
-      TCAtom & ca = AsymmUnit.NewAtom();
-      ca.SetLabel(a.GetLabel(), false);
-      ca.SetPart(a.CAtom().GetPart());
-      ca.SetType(a.GetType());
-      ca.ccrd() = a.ccrd();
-      ca.ccrdEsd() = a.GetMatrix()*a.CAtom().ccrdEsd();
-      ca.SetOccu(a.CAtom().GetOccu());
-      ca.SetOccuEsd(a.CAtom().GetOccuEsd());
-      ca.SetUiso(a.CAtom().GetUiso());
-      ca.SetUisoEsd(a.CAtom().GetUisoEsd());
-      if (a.GetEllipsoid() != 0) {
-        TEllipsoid &e = AsymmUnit.NewEllp();
-        e = *a.GetEllipsoid();
-        ca.SetEllpId(AsymmUnit.EllpCount() - 1);
-      }
-    }
-  }
-  {
-    LabelCorrector lc(GetAsymmUnit());
-    for (size_t i = 0; i < AsymmUnit.AtomCount(); i++) {
-      lc.Correct(AsymmUnit.GetAtom(i));
-    }
-  }
-
   Title = TEFile::ChangeFileExt(
     TEFile::ExtractFileName(XF.GetFileName()), EmptyString());
   data_provider.Clear();
   data_provider.Add(Title.Replace(' ', "%20"));
   block_index = 0;
-  {
-    olex2::IOlex2Processor *op = olex2::IOlex2Processor::GetInstance();
-    olxstr ad = "Olex2";
-    if (op != 0) {
-      olxstr ci = "GetCompilationInfo('full')";
-      if (op->processFunction(ci, EmptyString(), true)) {
-        ad << ": " << ci;
-      }
-    }
-    SetParam("_audit_creation_method", ad, true);
-  }
+  SetParam("_audit_creation_method", "OLEX2", true);
   SetParam("_chemical_name_systematic", "?", true);
   SetParam("_chemical_name_common", "?", true);
   SetParam("_chemical_melting_point", "?", false);
@@ -936,12 +891,18 @@ bool TCif::Adopt(TXFile &XF, int flags) {
     cetTable& Loop = AddLoopDef("_space_group_symop_id,"
       "_space_group_symop_operation_xyz");
     sg.GetMatrices(Matrices, mattAll);
-    for (size_t i=0; i < Matrices.Count(); i++) {
+    for( size_t i=0; i < Matrices.Count(); i++ )  {
       CifRow& row = Loop.AddRow();
       row[0] = new cetString(i+1);
       row[1] = new cetString(TSymmParser::MatrixToSymmEx(Matrices[i]));
     }
   }
+
+  SetParam("_computing_structure_solution", "?", true);
+  SetParam("_computing_molecular_graphics", "?", true);
+  SetParam("_computing_publication_material", "?", true);
+
+  SetParam("_atom_sites_solution_primary", "?", false);
 
   cetTable& atom_loop = AddLoopDef(
     "_atom_site_label,_atom_site_type_symbol,_atom_site_fract_x,"
@@ -954,37 +915,37 @@ bool TCif::Adopt(TXFile &XF, int flags) {
     "_atom_site_aniso_U_22,_atom_site_aniso_U_33,_atom_site_aniso_U_23,"
     "_atom_site_aniso_U_13,_atom_site_aniso_U_12");
 
-  for (size_t i = 0; i < GetAsymmUnit().AtomCount(); i++) {
+  for( size_t i = 0; i < GetAsymmUnit().AtomCount(); i++ )  {
     TCAtom& A = GetAsymmUnit().GetAtom(i);
-    if (A.IsDeleted() || A.GetType() == iQPeakZ)  continue;
+    if( A.IsDeleted() || A.GetType() == iQPeakZ )  continue;
     CifRow& Row = atom_loop.AddRow();
     Row[0] = new cetString(A.GetResiLabel());
     Row[1] = new cetString(A.GetType().symbol);
-    for (int j = 0; j < 3; j++) {
-      Row.Set(j + 2,
+    for( int j=0; j < 3; j++ ) {
+      Row.Set(j+2,
         new cetString(TEValueD(A.ccrd()[j], A.ccrdEsd()[j]).ToString()));
     }
     Row.Set(5, new cetString(TEValueD(A.GetUiso(), A.GetUisoEsd()).ToString()));
     Row.Set(6, new cetString(A.GetEllipsoid() == NULL ? "Uiso" : "Uani"));
     Row.Set(7, new cetString(TEValueD(olx_round(A.GetChemOccu(), 1000),
       A.GetOccuEsd()*A.GetDegeneracy()).ToString()));
-    if (A.GetParentAfixGroup() != NULL && A.GetParentAfixGroup()->IsRiding())
+    if( A.GetParentAfixGroup() != NULL && A.GetParentAfixGroup()->IsRiding() )
       Row.Set(8, new cetString("R"));
     else
       Row.Set(8, new cetString('.'));
     Row.Set(9, new cetString(A.GetDegeneracy()));
     // process part as well
-    if (A.GetPart() != 0)
+    if( A.GetPart() != 0 )
       Row[10] = new cetString((int)A.GetPart());
     else
       Row[10] = new cetString('.');
-    if (A.GetEllipsoid() != NULL) {
+    if( A.GetEllipsoid() != NULL )  {
       A.GetEllipsoid()->GetShelxQuad(Q, E);
       GetAsymmUnit().UcartToUcif(Q);
       CifRow& Row1 = u_loop.AddRow();
       Row1[0] = new AtomCifEntry(A);
-      for (int j = 0; j < 6; j++)
-        Row1.Set(j + 1, new cetString(TEValueD(Q[j], E[j]).ToString()));
+      for( int j=0; j < 6; j++ )
+        Row1.Set(j+1, new cetString(TEValueD(Q[j], E[j]).ToString()));
     }
   }
   return true;
@@ -1081,7 +1042,7 @@ bool TCif::ResolveParamsFromDictionary(TStrList &Dic, olxstr &String,
                 }
                 ABasicFunction *f = op->GetLibrary().FindFunction(Val.SubString(1, ob-1));
                 if (f != NULL) {
-                  TMacroData e;
+                  TMacroError e;
                   f->Run(TStrObjList(args), e);
                   if (e.IsSuccessful())
                     Tmp = e.GetRetVal();

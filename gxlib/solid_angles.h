@@ -14,7 +14,7 @@
 
 BeginGxlNamespace()
 /* 'generic' point analyser - */
-class APointAnalyser : public IOlxObject {
+class APointAnalyser : public IEObject {
 protected:
   virtual void ToDataItem_(TDataItem &di) const = 0;
 public:
@@ -73,7 +73,7 @@ public:
       &PointAnalyser::Load);
   }
   void ToDataItem_(TDataItem &di) const;
-  IOlxObject *Replicate() const {
+  IEObject *Replicate() const {
     return new PointAnalyser(*this);
   }
   static APointAnalyser *Load(const TDataItem &di);

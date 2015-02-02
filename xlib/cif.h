@@ -56,10 +56,9 @@ public:
   */
   void FromDataItem(const TDataItem &i);
   /* Adopts the content of a file (asymmetric unit, loops, etc) to a specified
-  source file. If the second argument is 0 - the atoms are taken from the AU
-  otherwise - from the latttice (allows saving grown structures)
+  source file
   */
-  virtual bool Adopt(TXFile &, int);
+  virtual bool Adopt(TXFile& XF);
   //Finds a value by name
   cif_dp::ICifEntry* FindEntry(const olxstr& name) const {
     return (block_index == InvalidIndex) ? NULL :
@@ -221,7 +220,7 @@ public:
   bool CreateTable(TDataItem* TableDefinitions, TTTable<TStrList>& Table,
     smatd_list& SymmList, int label_options=0) const;
   const TCifDataManager& GetDataManager() const {  return DataManager;  }
-  virtual IOlxObject* Replicate() const {  return new TCif;  }
+  virtual IEObject* Replicate() const {  return new TCif;  }
 };
 //---------------------------------------------------------------------------
 struct AtomCifEntry : public cif_dp::IStringCifEntry {

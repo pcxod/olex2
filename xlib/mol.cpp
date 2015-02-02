@@ -121,7 +121,7 @@ void TMol::LoadFromStrings(const TStrList& Strings)  {
 }
 
 //..............................................................................
-bool TMol::Adopt(TXFile& XF, int) {
+bool TMol::Adopt(TXFile& XF)  {
   Clear();
   const ASObjectProvider& objects = XF.GetLattice().GetObjects();
   size_t id = 0;

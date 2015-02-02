@@ -57,7 +57,7 @@ struct HklBrushRef  {
   }
 };
 
-void XLibMacros::macHklBrush(TStrObjList &Cmds, const TParamList &Options, TMacroData &E)  {
+void XLibMacros::macHklBrush(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TXApp &XApp = TXApp::GetInstance();
   olxstr HklFN(XApp.XFile().LocateHklFile());
 
@@ -114,5 +114,5 @@ void XLibMacros::macHklBrush(TStrObjList &Cmds, const TParamList &Options, TMacr
     delete refs[i];
   }
   XApp.NewLogEntry() << "Ommited " << deletedRefs << " reflections";
-  Hkl.SaveToFile("brushed.hkl", toSave);
+  Hkl.SaveToFile("brushed.hkl", toSave, false);
 }

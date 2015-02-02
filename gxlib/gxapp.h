@@ -20,15 +20,15 @@
 #include "3dframe.h"
 #include "glfont.h"
 #include "styles.h"
+#include "xatom.h"
+#include "xbond.h"
+#include "xplane.h"
 #include "glbitmap.h"
 #include "typelist.h"
 #include "hkl.h"
 #include "fracmask.h"
 #include "glrender.h"
-#include "xatom.h"
-#include "xbond.h"
-#include "xplane.h"
-#include "gxfiles.h"
+
 #ifdef __WXWIDGETS__
 #include "wx/zipstrm.h"
 #endif
@@ -66,6 +66,9 @@ class TDUnitCell;
 class TDBasis;
 class TGraphicsObjects;
 class TXGlLabels;
+class TXAtom;
+class TXBond;
+class TXPlane;
 class TXLine;
 class TDRing;
 class TXGrowLine;
@@ -77,7 +80,47 @@ class TXLattice;
 class TDUserObj;
 class TDSphere;
 
-class TGXApp : public TXApp, AEventsDispatcher, public ASelectionOwner {
+  typedef TTypeListExt<TXAtom, TSAtom> TXAtomList;
+  typedef TTypeListExt<TXBond, TSBond> TXBondList;
+  typedef TTypeListExt<TXPlane,TSPlane> TXPlaneList;
+
+typedef TPtrList<TXPlane> TXPlanePList;
+typedef TPtrList<TXAtom> TXAtomPList;
+typedef TPtrList<TXBond> TXBondPList;
+
+template <class obj_t, class act_t> class TXObjectProvider
+  : public TObjectProvider<obj_t>
+{
+  TGlRenderer& renderer;
+public:
+  TXObjectProvider(TGlRenderer& _renderer) : renderer(_renderer)  {}
+  virtual obj_t& New(TNetwork* n)  {
+    return TObjectProvider<obj_t>::AddNew(new act_t(n, renderer, EmptyString()));
+  }
+};
+
+struct XObjectProvider : public ASObjectProvider {
+  TGlRenderer& renderer;
+  XObjectProvider(TGlRenderer& _renderer) :
+    ASObjectProvider(
+      *(new TXObjectProvider<TSAtom,TXAtom>(_renderer)),
+      *(new TXObjectProvider<TSBond,TXBond>(_renderer)),
+      *(new TXObjectProvider<TSPlane,TXPlane>(_renderer))),
+    renderer(_renderer)
+  {}
+  ~XObjectProvider()  {
+    atoms.Clear();
+    bonds.Clear();
+    planes.Clear();
+    delete &atoms;
+    delete &bonds;
+    delete &planes;
+  }
+  virtual IEObject* Replicate() const {  return new XObjectProvider(renderer);  }
+};
+
+
+class TGXApp : public TXApp, AEventsDispatcher, public ASelectionOwner  {
   TTypeListExt<TXGrowPoint, AGDrawObject> XGrowPoints;
   TTypeListExt<TXGrowLine, AGDrawObject> XGrowLines;
   TTypeListExt<TDUserObj, AGDrawObject> UserObjects;
@@ -85,7 +128,7 @@ class TGXApp : public TXApp, AEventsDispatcher, public ASelectionOwner {
   smatd_list UsedTransforms;
   TTypeListExt<TXReflection, AGDrawObject> XReflections;
   TPtrList<TGlBitmap> GlBitmaps;
-  TTypeListExt<TXGlLabel, IOlxObject> XLabels;
+  TTypeListExt<TXGlLabel, IEObject> XLabels;
   TTypeListExt<TDRing, AGDrawObject> Rings;
   TXGlLabels *FLabels;
   TTypeListExt<TXLine, AGDrawObject> Lines;
@@ -110,17 +153,17 @@ class TGXApp : public TXApp, AEventsDispatcher, public ASelectionOwner {
   class TStateRegistry *States;
   TStrList TextureNames;
 public:
-  template <class obj_t, class act_t> struct TIterator {
+  template <class obj_t, class act_t> struct TIterator  {
     size_t offset, count;
     TTypeList<ObjectCaster<obj_t,act_t> > objects;
     TIterator() : offset(0), count(0)  {}
     bool HasNext() const {  return (offset < count);  }
     act_t& Next()  {
       size_t off = offset;
-      for (size_t i=0; i < objects.Count(); i++ ) {
-        if (off >= objects[i].Count())
+      for( size_t i=0; i < objects.Count(); i++ )  {
+        if( off >= objects[i].Count() )
           off -= objects[i].Count();
-        else {
+        else  {
           offset++;
           return objects[i][off];
         }
@@ -130,33 +173,42 @@ public:
     void Reset()  {  offset = 0;  }
     template <class Functor>
     const TIterator& ForEach(const Functor& f) const {
-    for (size_t i=0; i < objects.Count(); i++)
+    for( size_t i=0; i < objects.Count(); i++ )
       objects[i].ForEach(f);
     return *this;
     }
   };
-  struct AtomIterator : public TIterator<TSAtom, TXAtom> {
-    AtomIterator(const TGXApp& app) {
-      for (size_t i=0; i < app.XFiles().Count(); i++) {
-        objects.AddCopy(app.XFiles()[i].GetLattice().GetObjects().
+  struct AtomIterator : public TIterator<TSAtom, TXAtom>  {
+    AtomIterator(const TGXApp& app)  {
+      objects.AddCopy(app.XFile().GetLattice().GetObjects().
+        atoms.GetAccessor<TXAtom>());
+      count += objects.GetLast().Count();
+      for( size_t i=0; i < app.OverlayedXFiles.Count(); i++ )  {
+        objects.AddCopy(app.OverlayedXFiles[i].GetLattice().GetObjects().
           atoms.GetAccessor<TXAtom>());
         count += objects.GetLast().Count();
       }
     }
   };
-  struct BondIterator : public TIterator<TSBond, TXBond> {
-    BondIterator(const TGXApp& app) {
-      for (size_t i=0; i < app.XFiles().Count(); i++) {
-        objects.AddCopy(app.XFiles()[i].GetLattice().GetObjects().
+  struct BondIterator : public TIterator<TSBond, TXBond>  {
+    BondIterator(const TGXApp& app)  {
+      objects.AddCopy(app.XFile().GetLattice().GetObjects().
+        bonds.GetAccessor<TXBond>());
+      count += objects.GetLast().Count();
+      for( size_t i=0; i < app.OverlayedXFiles.Count(); i++ )  {
+        objects.AddCopy(app.OverlayedXFiles[i].GetLattice().GetObjects().
           bonds.GetAccessor<TXBond>());
         count += objects.GetLast().Count();
       }
     }
   };
-  struct PlaneIterator : public TIterator<TSPlane, TXPlane> {
-    PlaneIterator(const TGXApp& app) {
-      for (size_t i=0; i < app.XFiles().Count(); i++ ) {
-        objects.AddCopy(app.XFiles()[i].GetLattice().GetObjects().
+  struct PlaneIterator : public TIterator<TSPlane, TXPlane>  {
+    PlaneIterator(const TGXApp& app)  {
+      objects.AddCopy(app.XFile().GetLattice().GetObjects().
+        planes.GetAccessor<TXPlane>());
+      count += objects.GetLast().Count();
+      for( size_t i=0; i < app.OverlayedXFiles.Count(); i++ )  {
+        objects.AddCopy(app.OverlayedXFiles[i].GetLattice().GetObjects().
           planes.GetAccessor<TXPlane>());
         count += objects.GetLast().Count();
       }
@@ -166,10 +218,13 @@ public:
   BondIterator GetBonds() const {  return BondIterator(*this);  }
   PlaneIterator GetPlanes() const {  return PlaneIterator(*this);  }
 protected:
-  TGlRenderer* GlRenderer;
+  TGlRenderer* FGlRender;
   TXFader* Fader;
+  TTypeList<TXFile> OverlayedXFiles;
+
   THklFile* FHklFile;
   TGlMouse* FGlMouse;
+  TDUnitCell* FDUnitCell;
   TDBasis* FDBasis;
   TDFrame* FDFrame;
   T3DFrameCtrl* F3DFrame;
@@ -177,8 +232,8 @@ protected:
   TDSphere *FDSphere;
 
   void FragmentVisible( TNetwork *N, bool V);
-  bool Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
-    const IOlxObject *Data, TActionQueue *);
+  bool Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
+    const IEObject *Data, TActionQueue *);
   void GetGPCollections(AGDObjList& GDObjects, TPtrList<TGPCollection>& Result);
   struct BondRef  {
     const TLattice& latt;
@@ -234,24 +289,28 @@ protected:
   void RestoreGroups();
   void StoreGroup(const TGlGroup& glg, GroupData& group);
   void _UpdateGroupIds();
-  static size_t CalcMaxAtomTag(const TLattice& latt) {
+  size_t LattCount() const {  return OverlayedXFiles.Count()+1;  }
+  TLattice& GetLatt(size_t i) const {
+    return (i == 0 ? XFile() : OverlayedXFiles[i-1]).GetLattice();
+  }
+  static size_t CalcMaxAtomTag(const TLattice& latt)  {
     size_t ac = 0;
     for( size_t i=0; i < latt.GetObjects().atoms.Count(); i++ )
       if( !latt.GetObjects().atoms[i].IsDeleted() )
         ac++;
     return ac;
   }
-  static size_t CalcMaxBondTag(const TLattice& latt) {
+  static size_t CalcMaxBondTag(const TLattice& latt)  {
     size_t bc = 0;
-    for (size_t i=0; i < latt.GetObjects().bonds.Count(); i++)
-      if (!latt.GetObjects().bonds[i].IsDeleted())
+    for( size_t i=0; i < latt.GetObjects().bonds.Count(); i++ )
+      if( !latt.GetObjects().bonds[i].IsDeleted() )
         bc++;
     return bc;
   }
   size_t GetAtomTag(TSAtom& sa, TSizeList& latt_sz) const {
     size_t off = 0;
-    for (size_t i=0; i < Files.Count(); i++) {
-      if (sa.GetNetwork().GetLattice() == Files[i].GetLattice())
+    for( size_t i=0; i < LattCount(); i++ )  {
+      if( sa.GetNetwork().GetLattice() == GetLatt(i) )
         return off+sa.GetTag();
       off += latt_sz[i];
     }
@@ -259,32 +318,32 @@ protected:
   }
   size_t GetBondTag(TSBond& sb, TSizeList& latt_sz) const {
     size_t off = 0;
-    for (size_t i=0; i < Files.Count(); i++) {
-      if (sb.GetNetwork().GetLattice() == Files[i].GetLattice())
+    for( size_t i=0; i < LattCount(); i++ )  {
+      if( sb.GetNetwork().GetLattice() == GetLatt(i) )
         return off+sb.GetTag();
       off += latt_sz[i];
     }
     return InvalidIndex;
   }
-  TXAtom& GetXAtom(size_t ind) {
+  TXAtom& GetXAtom(size_t ind)  {
     size_t li=0;
-    while (ind >= Files[li].GetLattice().GetObjects().atoms.Count()) {
-      ind -= Files[li].GetLattice().GetObjects().atoms.Count();
-      if (++li >= Files.Count()) {
+    while (ind >= GetLatt(li).GetObjects().atoms.Count()) {
+      ind -= GetLatt(li).GetObjects().atoms.Count();
+      if (++li >= LattCount()) {
         throw TIndexOutOfRangeException(__OlxSourceInfo, ind, 0, 0);
       }
     }
-    return static_cast<TXAtom&>(Files[li].GetLattice().GetObjects().atoms[ind]);
+    return static_cast<TXAtom&>(GetLatt(li).GetObjects().atoms[ind]);
   }
   TXBond& GetXBond(size_t ind)  {
     size_t li=0;
-    while (ind >= Files[li].GetLattice().GetObjects().bonds.Count()) {
-      ind -= Files[li].GetLattice().GetObjects().bonds.Count();
-      if (++li >= Files.Count()) {
+    while (ind >= GetLatt(li).GetObjects().bonds.Count()) {
+      ind -= GetLatt(li).GetObjects().bonds.Count();
+      if (++li >= LattCount()) {
         throw TIndexOutOfRangeException(__OlxSourceInfo, ind, 0, 0);
       }
     }
-    return static_cast<TXBond&>(Files[li].GetLattice().GetObjects().bonds[ind]);
+    return static_cast<TXBond&>(GetLatt(li).GetObjects().bonds[ind]);
   }
   sorted::ObjectPrimitive<index_t>::cons_list_type GetVisibleCAtomTags();
   virtual olxstr GetPlatformString_(bool full) const;
@@ -313,7 +372,7 @@ public:
     return TBasicApp::ToClipboard(l);
   }
 protected:
-  double FProbFactor;
+  float FProbFactor;
   // the default is 1, Calculated Zoom is multiplid by this number
   double ExtraZoom;
   /* intialises SAtom::Tag to XAtom::Id and checks if any atom with
@@ -324,9 +383,6 @@ protected:
   void SyncAtomAndBondVisiblity(short atom_type, bool show_a, bool show_b);
   void _maskInvisible();
   bool MainFormVisible;
-  struct DUnitCellPtr : public olx_virtual_ptr<TDUnitCell> {
-    virtual IOlxObject *get_ptr() const;
-  };
 public:
   // FileName - argv[0];
   TGXApp(const olxstr& FileName, AGlScene *scene=NULL);
@@ -340,7 +396,7 @@ public:
   void Clear();
   void ClearXGrowPoints();
   // changes the graphics quality
-  int32_t Quality(int v);
+  int32_t Quality(const short v);
   void Init();
 //..............................................................................
   void ClearIndividualCollections();
@@ -348,11 +404,11 @@ public:
   void ClearStructureRelated();
 //..............................................................................
 // GlRender interface
-  void ClearColor(int Color) {  GlRenderer->LightModel.SetClearColor(Color); }
+  void ClearColor(int Color) {  FGlRender->LightModel.SetClearColor(Color); }
   uint32_t ClearColor() const {
-    return GlRenderer->LightModel.GetClearColor().GetRGB();
+    return FGlRender->LightModel.GetClearColor().GetRGB();
   }
-  TGlRenderer& GetRenderer() const {  return *GlRenderer; }
+  TGlRenderer& GetRender() const {  return *FGlRender; }
   TXFader& GetFader() {  return *Fader; }
   void InitFadeMode();
 
@@ -367,16 +423,17 @@ public:
   void BeginDrawBitmap(double res);
   // restores the on-screen rendering
   void FinishDrawBitmap();
-  void Resize(int new_w, int new_h)  {  GlRenderer->Resize(new_w, new_h); }
+  void Resize(int new_w, int new_h)  {  FGlRender->Resize(new_w, new_h); }
   AGDrawObject* SelectObject(int x, int y) const {
-    return GlRenderer->SelectObject(x, y);
+    return FGlRender->SelectObject(x, y);
   }
   TGlPrimitive *SelectPrimitive(int x, int y) const {
-    return GlRenderer->SelectPrimitive(x, y);
+    return FGlRender->SelectPrimitive(x, y);
   }
   DefPropP(double, ExtraZoom)
 //..............................................................................
 // TXApp interface
+  TDUnitCell& DUnitCell() const {  return *FDUnitCell; }
   TDBasis& DBasis() const {  return *FDBasis; }
   THklFile& HklFile()  {  return *FHklFile; }
   TDFrame& DFrame() const {  return *FDFrame; }
@@ -384,31 +441,32 @@ public:
   TDSphere& DSphere() const { return *FDSphere; }
   T3DFrameCtrl& Get3DFrame() const { return *F3DFrame; }
   TGlMouse& GetMouseHandler() const { return *FGlMouse; }
-  TGXFile &XFile() const { return (TGXFile &)Files[0]; }
-  TGXFile &XFile(size_t i) const { return (TGXFile &)Files[i]; }
 
   // this function to be used to get all networks, including th overlayed files
   size_t GetNetworks(TNetPList& nets);
+  // overlayed files
+  size_t OverlayedXFileCount() const {  return OverlayedXFiles.Count();  }
+  TXFile& GetOverlayedXFile(size_t i)  {  return OverlayedXFiles[i];  }
   // sets current active XFile...
   void SetActiveXFile(size_t i);
-  TGXFile& NewXFile();
+  TXFile& NewOverlayedXFile();
   // aligns overlayed structures on a 2D grid
-  void AlignXFiles();
+  void AlignOverlayedXFiles();
   // calculates maximum radius and center of given lattice
   void CalcLatticeRandCenter(const TLattice& latt, double& r, vec3d& cnt);
-  void DeleteXFile(size_t index);
-  void DeleteXFiles();
+  void DeleteOverlayedXFile(size_t index);
+  void DeleteOverlayedXFiles();
 
   void Select(const vec3d& From, const vec3d& To);
   void SelectAll(bool Select);
-  void InvertSelection()  {  GetRenderer().InvertSelection();  Draw();  }
+  void InvertSelection()  {  GetRender().InvertSelection();  Draw();  }
   TGlGroup* FindObjectGroup(AGDrawObject& G)  {
-    return GetRenderer().FindObjectGroup(G);
+    return GetRender().FindObjectGroup(G);
   }
   TGlGroup* FindGroup(const olxstr& colName)  {
-    return GetRenderer().FindGroupByName(colName);
+    return GetRender().FindGroupByName(colName);
   }
-  TGlGroup& GetSelection() const {  return GetRenderer().GetSelection();  }
+  TGlGroup& GetSelection() const {  return GetRender().GetSelection();  }
   /* returns the newly created group or NULL if the grouping has failed */
   TGlGroup *GroupSelection(const olxstr& name);
   void UngroupSelection();
@@ -480,27 +538,25 @@ public:
 //..............................................................................
 // XFile interface
   void RegisterXFileFormat(TBasicCFile *Parser, const olxstr& ext)
-  {  XFile().RegisterFileFormat(Parser, ext); }
+  {  FXFile->RegisterFileFormat(Parser, ext); }
   void LoadXFile(const olxstr& fn);
-  void SaveXFile(const olxstr &fn, int flags=0)  {
-    XFile().SaveToFile(fn, flags);
-  }
+  void SaveXFile(const olxstr& fn, bool Sort)  {  FXFile->SaveToFile(fn, Sort); }
   void Generate( const vec3d& From, const vec3d& To,
     TCAtomPList* Template, bool ClearPrevCont)
-  {    XFile().GetLattice().Generate(From, To, Template, ClearPrevCont);  }
+  {    FXFile->GetLattice().Generate(From, To, Template, ClearPrevCont);  }
   void Generate( const vec3d& center, double rad,
     TCAtomPList* Template, bool ClearPrevCont)
-  {    XFile().GetLattice().Generate(center, rad, Template, ClearPrevCont);  }
-  void Uniq()  {    XFile().GetLattice().Uniq();  }
+  {    FXFile->GetLattice().Generate(center, rad, Template, ClearPrevCont);  }
+  void Uniq()  {    FXFile->GetLattice().Uniq();  }
   void GrowFragments(bool Shell, TCAtomPList* Template=NULL)  {
-    XFile().GetLattice().GrowFragments(Shell, Template);
+    FXFile->GetLattice().GrowFragments(Shell, Template);
   }
   void GrowAtoms(const olxstr& Atoms, bool Shell, TCAtomPList* Template=NULL);
   void GrowAtom(TXAtom *XA, bool Shell, TCAtomPList* Template=NULL);
   void Grow(const TXGrowPoint& growPoint);
   void ChangeAtomType(TXAtom *A, const olxstr& Element);
   void GrowWhole(TCAtomPList* Template=NULL) {
-    XFile().GetLattice().GenerateWholeContent(Template);
+    FXFile->GetLattice().GenerateWholeContent(Template);
   }
   void Grow(const TXAtomPList& atoms, const smatd_list& matrices);
   void GrowBonds();
@@ -588,7 +644,7 @@ public:
   TUndoData* Name(TXAtom& Atom, const olxstr& Name);
   TUndoData* ChangeSuffix(const TXAtomPList& xatoms, const olxstr& To);
   // makes sure that residues have the same labels as the reference atoms
-  TUndoData* SynchroniseResidues(const TCAtomPList &reference);
+  TUndoData* SynchroniseResidues(const TXAtomPList &reference);
 
 
   void InfoList(const olxstr& Atoms, TStrList& Info, bool Sort,
@@ -662,10 +718,10 @@ public:
   void UpdateLabels();
   static olxstr Label(const TXAtomPList &atoms, const olxstr &sep= ' ');
 //..............................................................................
-  void SetQPeakScale(double V);
-  double GetQPeakScale();
-  void SetQPeakSizeScale(double V);
-  double GetQPeakSizeScale();
+  void SetQPeakScale(float V);
+  float GetQPeakScale();
+  void SetQPeakSizeScale(float V);
+  float GetQPeakSizeScale();
 //..............................................................................
 // GlMouse interface
   bool MouseDown(int x, int y, short Shift, short Button)  {

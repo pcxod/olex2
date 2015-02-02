@@ -20,7 +20,7 @@ olxstr TCAtom::VarNames[] = {"Scale", "X", "Y", "Z", "Sof",
   "Uiso", "U11", "U22", "U33", "U23", "U13", "U12"};
 
 TCAtom::TCAtom(TAsymmUnit* _Parent) : Parent(_Parent)  {
-  PartAndCharge = 0;
+  Part   = 0;
   Occu   = 1;
   QPeak  = 0;
   SetId(0);
@@ -56,55 +56,51 @@ void TCAtom::SetConnInfo(CXConnInfo& ci) {
   ConnInfo = &ci;
 }
 //..............................................................................
-void TCAtom::SetLabel(const olxstr& L, bool validate) {
-  if (validate) {
-    if (L.IsEmpty())
+void TCAtom::SetLabel(const olxstr& L, bool validate)  {
+  if( validate )  {
+    if( L.IsEmpty() )
       throw TInvalidArgumentException(__OlxSourceInfo, "empty label");
     cm_Element *atype = XElementLib::FindBySymbolEx(L);
-    if (atype == NULL) {
-      throw TInvalidArgumentException(__OlxSourceInfo,
-        olxstr("Unknown element: '") << L << '\'');
-    }
-    if (Type != atype) {
-      if (Type != NULL && *Type == iQPeakZ)
+    if( atype == NULL )
+      throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Unknown element: '") << L << '\'' );
+    if( Type != atype )  {
+      if( Type != NULL && *Type == iQPeakZ )
         SetQPeak(0);
       Type = atype;
       Parent->_OnAtomTypeChanged(*this);
     }
     Label = L;
-    if (Type->symbol.Length() == 2)
+    if( Type->symbol.Length() == 2 )
       Label[1] = Label.o_tolower(Label.CharAt(1));
   }
-  else {
+  else
     Label = L;
-  }
 }
 //..............................................................................
-void TCAtom::SetType(const cm_Element& t) {
-  if (Type != &t) {
-    if (Type != NULL && *Type == iQPeakZ) {
+void TCAtom::SetType(const cm_Element& t)  {
+  if( Type != &t )  {
+    if( Type != NULL && *Type == iQPeakZ )
       SetQPeak(0);
-    }
     Type = &t;
     Parent->_OnAtomTypeChanged(*this);
   }
 }
 //..............................................................................
 void TCAtom::AssignEquivs(const TCAtom& S)  {
-  if (S.Equivs != NULL) {
-    if (Equivs == NULL)
+  if( S.Equivs != NULL )  {
+    if( Equivs == NULL )
       Equivs = new smatd_list(*S.Equivs);
     else
       *Equivs = *S.Equivs;
   }
-  else if (Equivs != NULL) {
+  else if( Equivs != NULL )  {
     delete Equivs;
     Equivs = NULL;
   }
 }
 //..............................................................................
-void TCAtom::ClearEquivs() {
-  if (Equivs != NULL) {
+void TCAtom::ClearEquivs()  {
+  if(Equivs != NULL )  {
     delete Equivs;
     Equivs = NULL;
   }
@@ -118,7 +114,6 @@ void TCAtom::Assign(const TCAtom& S)  {
   }
   ExyzGroup = NULL;  // also managed by the group
   SetPart(S.GetPart());
-  SetCharge(S.GetCharge());
   SetSpecialPositionDeviation(S.GetSpecialPositionDeviation());
   SetOccu(S.GetOccu());
   SetOccuEsd(S.GetOccuEsd());
@@ -129,7 +124,7 @@ void TCAtom::Assign(const TCAtom& S)  {
   SetUiso(S.GetUiso());
   SetUisoEsd(S.GetUisoEsd());
   SetUisoScale(S.GetUisoScale());
-  if (S.UisoOwner != NULL) {
+  if( S.UisoOwner != NULL )  {
     UisoOwner = Parent->FindCAtomById(S.UisoOwner->GetId());
     if( UisoOwner == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "asymmetric units mismatch");
@@ -137,7 +132,7 @@ void TCAtom::Assign(const TCAtom& S)  {
   else
     UisoOwner = NULL;
   Label   = S.Label;
-  if (Type != &S.GetType()) {
+  if( Type != &S.GetType() )  {
     Type = &S.GetType();
     Parent->_OnAtomTypeChanged(*this);
   }
@@ -195,8 +190,7 @@ void TCAtom::UpdateEllp(const TEllipsoid &NV) {
 void TCAtom::ToDataItem(TDataItem& item) const  {
   item.AddField("label", Label);
   item.AddField("type", Type->symbol);
-  item.AddField("part", GetPart());
-  item.AddField("charge", GetCharge());
+  item.AddField("part", (int)Part);
   item.AddField("sof", TEValue<double>(Occu, OccuEsd).ToString());
   item.AddField("flags", Flags);
   item.AddField("x", TEValue<double>(Center[0], Esd[0]).ToString());
@@ -230,8 +224,7 @@ PyObject* TCAtom::PyExport(bool export_attached_sites)  {
   PyObject* main = PyDict_New();
   PythonExt::SetDictItem(main, "label", PythonExt::BuildString(Label));
   PythonExt::SetDictItem(main, "type", PythonExt::BuildString(Type->symbol));
-  PythonExt::SetDictItem(main, "part", Py_BuildValue("i", GetPart()));
-  PythonExt::SetDictItem(main, "charge", Py_BuildValue("i", GetCharge()));
+  PythonExt::SetDictItem(main, "part", Py_BuildValue("i", Part));
   PythonExt::SetDictItem(main, "occu", Py_BuildValue("(dd)", Occu, OccuEsd));
   PythonExt::SetDictItem(main, "tag", Py_BuildValue("i", GetTag()));
   PythonExt::SetDictItem(main, "crd",
@@ -298,8 +291,7 @@ void TCAtom::FromDataItem(TDataItem& item)  {
     throw TFunctionFailedException(__OlxSourceInfo, "invalid atom type");
   TEValue<double> ev;
   Label = item.GetFieldByName("label");
-  SetPart(item.GetFieldByName("part").ToInt());
-  SetCharge(item.FindField("charge", '0').ToInt());
+  Part = item.GetFieldByName("part").ToInt();
   ev = item.GetFieldByName("sof");
   Occu = ev.GetV();  OccuEsd = ev.GetE();
   Flags = item.GetFieldByName("flags").ToInt();

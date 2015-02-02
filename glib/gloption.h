@@ -13,7 +13,7 @@
 #include "emath.h"
 BeginGlNamespace()
 
-class TGlOption: public IOlxObject  {
+class TGlOption: public IEObject  {
   float data[4];
 public:
   TGlOption()  {

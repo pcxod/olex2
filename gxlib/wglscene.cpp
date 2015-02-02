@@ -123,8 +123,8 @@ TGlFont& TWGlScene::DoCreateFont(TGlFont& glf, bool half_size) const {
       size_t offt = ix*ImageW;
       size_t offb = (ImageW-ix-1)*ImageW;
       for (int jx=0; jx < ImageW; jx++) {
-        size_t off1 = (offt+jx)*3;
-        size_t off2 = (offb+jx)*3;
+        int off1 = (offt+jx)*3;
+        int off2 = (offb+jx)*3;
         olx_swap(Image[off1+0], Image[off2+0]);
         olx_swap(Image[off1+1], Image[off2+1]);
         olx_swap(Image[off1+2], Image[off2+2]);
@@ -179,6 +179,33 @@ bool TWGlScene::MakeCurrent() {
   if (FWContext != NULL && FGlContext != NULL)
     return wglMakeCurrent(FWContext, FGlContext) != FALSE;
   return false;
+}
+//..............................................................................
+bool TWGlScene::StartDraw() {
+  return AGlScene::StartDraw();
+}
+//..............................................................................
+void TWGlScene::EndDraw() {
+  AGlScene::EndDraw();
+}
+//..............................................................................
+bool TWGlScene::StartSelect(int x, int y, GLuint *Bf) {
+  return AGlScene::StartSelect(x, y, Bf);
+}
+//..............................................................................
+int TWGlScene::EndSelect() {
+  const int rv = AGlScene::EndSelect();
+  return rv;
+  //if( FBitmap == NULL )  {
+  //  if( FWContext != NULL )
+  //    SwapBuffers(FWContext);
+  //  FParent->SetView();
+  //}
+  //else if( FWContext != NULL )  {
+  //  SelectObject(FWContext, NULL);
+  //  DeleteDC(FWContext);
+  //  FWContext = NULL;
+  //}
 }
 //..............................................................................
 void TWGlScene::Destroy() {

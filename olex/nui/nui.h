@@ -20,10 +20,10 @@ public:
   NUIInitFaieldEx(const olxstr &location, const olxstr &msg=EmptyString())
     : TBasicException(location, msg) {}
   const char* GetNiceName() const {  return "NUI initialisation failed";  }
-  IOlxObject* Replicate() const {  return new NUIInitFaieldEx(*this);  }
+  IEObject* Replicate() const {  return new NUIInitFaieldEx(*this);  }
 };
 
-class INUI : public IOlxObject {
+class INUI : public IEObject {
 public:
   static const short
     processVideo    = 0x0001,

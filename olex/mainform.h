@@ -222,7 +222,7 @@ protected:
   TGlTextBox *FHelpWindow, *FInfoBox, *GlTooltip;
   // a list of commands called when a file is changed by another process
   TStrList FOnListenCmds;
-  TMacroData MacroError;
+  TMacroError MacroError;
 
   void PreviewHelp(const olxstr& Cmd);
   olxstr ExpandCommand(const olxstr &Cmd, bool inc_files);
@@ -425,6 +425,9 @@ private:
 
   DefMacro(ShowWindow)
 
+  DefMacro(OFileDel)
+  DefMacro(OFileSwap)
+
   DefMacro(Schedule)
   DefMacro(Test)
 
@@ -525,8 +528,8 @@ public:
     ExecFontColor, InfoFontColor,
     WarningFontColor, ErrorFontColor, ExceptionFontColor;
 private:
-  bool Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
-    const IOlxObject *Data, TActionQueue *);
+  bool Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
+    const IEObject *Data, TActionQueue *);
   olxstr FLastSettingsFile;
 
   class ProcessHandler : public ProcessManager::IProcessHandler  {
@@ -596,6 +599,8 @@ public:
   void SaveSettings(const olxstr &FN);
   virtual const olxstr& GetScenesFolder() const {  return ScenesDir;  }
   virtual void SetScenesFolder(const olxstr &sf)  {  ScenesDir = sf;  }
+  virtual void LoadScene(const TDataItem& Root, TGlLightModel &FLM);
+  virtual void SaveScene(TDataItem& Root, const TGlLightModel &FLM) const;
   void UpdateUserOptions(const olxstr &option, const olxstr &value);
 
   // fires the state change as well
@@ -679,6 +684,7 @@ public:
   void ObjectUnderMouse(AGDrawObject *G);
 //..............................................................................
   DECLARE_CLASS(TMainForm)
+  DECLARE_EVENT_TABLE()
 };
 
 #endif

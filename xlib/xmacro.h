@@ -17,7 +17,7 @@
 #undef QLength
 
 //simply a macro registry
-class XLibMacros : public IOlxObject {
+class XLibMacros : public IEObject {
 protected:
   static bool ParseResParam(TStrObjList &Cmds, double& esd, double* len=NULL,
     double* len1=NULL, double* ang=NULL);
@@ -159,7 +159,6 @@ public:
   static DefMacro(CalcVars)
   static DefMacro(Pack)
   static DefMacro(Grow)
-  static DefMacro(Convert)
 
   static DefFunc(Lst)
   static DefFunc(FileName)

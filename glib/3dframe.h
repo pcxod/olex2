@@ -127,7 +127,7 @@ public:
   bool IsSpherical() const { return sphere; }
   // ftSphere/ftBox
   void SetType(int t);
-  void LibType(const TStrObjList& Params, TMacroData& E);
+  void LibType(const TStrObjList& Params, TMacroError& E);
   class TLibrary* ExportLibrary(const olxstr& name = EmptyString());
 
   TTypeList<TFaceCtrl> Faces;
