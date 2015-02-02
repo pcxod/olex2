@@ -9,6 +9,7 @@
 
 #ifndef __olx_console_interface_H
 #define __olx_console_interface_H
+#include <iostream>
 #include "estack.h"
 
 #ifdef __WIN32__
@@ -51,8 +52,12 @@ class ConsoleInterface  { // : public IConsoleInterface {
   TStack<CONSOLE_SCREEN_BUFFER_INFO> TextAttrib;
 public:
   ConsoleInterface()  {
-    conin = CreateFile(olxT("CONIN$"), GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-    conout  = CreateFile(olxT("CONOUT$"), GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    conin = CreateFile(olxT("CONIN$"), GENERIC_READ|GENERIC_WRITE,
+      FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_ALWAYS,
+      FILE_ATTRIBUTE_NORMAL, NULL);
+    conout  = CreateFile(olxT("CONOUT$"), GENERIC_READ|GENERIC_WRITE,
+      FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_ALWAYS,
+      FILE_ATTRIBUTE_NORMAL, NULL);
     CONSOLE_SCREEN_BUFFER_INFO pi;
     GetConsoleScreenBufferInfo(conout, &pi);
     TextAttrib.Push(pi);
@@ -80,25 +85,25 @@ public:
   }
 };
 #else
-class ConsoleInterface  { // : public IConsoleInterface {
+class ConsoleInterface { // : public IConsoleInterface {
 public:
-  ConsoleInterface()  {
+  ConsoleInterface() {
 
   }
-  ~ConsoleInterface()  {
+  ~ConsoleInterface() {
   }
-  void Push()  {
+  void Push() {
   }
-  void Pop()  {  // just reset the values to default
-    cout << "\033[0";
+  void Pop() { // just reset the values to default
+    sdt::cout << "\033[0";
   }
-  void SetTextBackground(const int cl, bool intensity=false)  {
-    cout << "\033[" << cl;
-    if( intensity )
-      cout << ";1";
-    cout << "m";
+  void SetTextBackground(const int cl, bool intensity=false) {
+    std::cout << "\033[" << cl;
+    if (intensity)
+      sdt::cout << ";1";
+    sdt::cout << "m";
   }
-  void SetTextForeground(const int cl, bool intensity=false)  {
+  void SetTextForeground(const int cl, bool intensity=false) {
     SetTextBackground(cl, intensity);
   }
 };
