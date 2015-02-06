@@ -120,6 +120,18 @@ void TP4PFile::LoadFromStrings(const TStrList& Strings)  {
     GetAsymmUnit().GetAngleEsds()[2] = params[5].ToDouble();
   }
   params.Clear();
+  params.Strtok(Bravais, ' ');
+  if (!params.IsEmpty()) {
+    olxstr c = params.GetLastString();
+    if (c.Length() == 1) { // centering?
+      try {
+        GetAsymmUnit().SetLatt(
+          TCLattice::LattForSymbol(c.CharAt(0)));
+      }
+      catch (const TExceptionBase &e) {}
+    }
+  }
+  params.Clear();
   params.Strtok( Size, ' ');
   if( params.Count() == 5 )  {
     if( !params[4].IsNumber() )  {
@@ -131,7 +143,7 @@ void TP4PFile::LoadFromStrings(const TStrList& Strings)  {
       GetRM().expl.SetTemp(params[4]);
     params.Delete(4);
   }
-  while( params.Count() > 3 )
+  while (params.Count() > 3)
     params.Delete(params.Count() - 1);
 
   if( params.Count() == 3 )  {
