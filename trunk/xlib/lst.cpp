@@ -73,8 +73,19 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
       }
       header_found = true;
     }
+    else if (!CellInfo && SL[start].Contains("F(000) = ") &&
+      SL[start].Contains("Mu = ") && SL[start].Contains("Rho = "))
+    {
+      Toks.Clear();
+      Toks.Strtok(SL[start], ' ');
+      if (Toks.Count() == 17) {
+        params("F000", Toks[5]);
+        params("Mu", Toks[8]);
+        params("Rho", Toks[16]);
+        CellInfo = true;
+      }
+    }
     start++;
-    continue;
   }
   for( size_t i=start; i < SL.Count(); i++ )  {
     Toks.Clear();
@@ -296,18 +307,6 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
           params("flack", flack_c.ToString());
         }
         FlackF = true;
-      }
-    }
-    else if (!CellInfo && SL[i].Contains("F(000) = ") &&
-      SL[i].Contains("Mu = ") && SL[i].Contains("Rho = "))
-    {
-      Toks.Clear();
-      Toks.Strtok(SL[i], ' ');
-      if (Toks.Count() == 17) {
-        params("F000", Toks[5]);
-        params("Mu", Toks[8]);
-        params("Rho", Toks[16]);
-        CellInfo = true;
       }
     }
     else if (!HasTwin && SL[i].StartsFromi(" TWIN ")) {
