@@ -25,10 +25,6 @@ enum  {
 TdlgMatProp::TdlgMatProp(TMainFrame *ParentFrame, AGDrawObject& object) :
   TDialog(ParentFrame, wxT("Material Parameters"), wxT("dlgMatProp"))
 {
-  Bind(wxEVT_BUTTON, &TdlgMatProp::OnOK, this, wxID_OK);
-  Bind(wxEVT_BUTTON, &TdlgMatProp::OnCopy, this, ID_COPY);
-  Bind(wxEVT_BUTTON, &TdlgMatProp::OnPaste, this, ID_PASTE);
-  Bind(wxEVT_BUTTON, &TdlgMatProp::OnEditFont, this, ID_EDITFONT);
   Object = &object;
   Init();
 }
@@ -41,7 +37,11 @@ TdlgMatProp::TdlgMatProp(TMainFrame *ParentFrame, TGlMaterial& mat) :
   Init();
 }
 //..............................................................................
-void TdlgMatProp::Init()  {
+void TdlgMatProp::Init() {
+  Bind(wxEVT_BUTTON, &TdlgMatProp::OnOK, this, wxID_OK);
+  Bind(wxEVT_BUTTON, &TdlgMatProp::OnCopy, this, ID_COPY);
+  Bind(wxEVT_BUTTON, &TdlgMatProp::OnPaste, this, ID_PASTE);
+  Bind(wxEVT_BUTTON, &TdlgMatProp::OnEditFont, this, ID_EDITFONT);
   AActionHandler::SetToDelete(false);
   bEditFont = NULL;
   cbApplyTo = NULL;
