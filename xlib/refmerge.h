@@ -90,9 +90,9 @@ class RefMerger {
     size_t mi_o_sig_cnt = 0;
     for (size_t i=0; i < ref_cnt;) {
       TReflection* ref = refs[i];
-      const size_t from = i;
-      while ((++i < ref_cnt) && (cmp.Compare(ref, refs[i]) == 0))
-        ;
+      const size_t from = i++;
+      while ((i < ref_cnt) && (cmp.Compare(ref, refs[i]) == 0))
+        i++;
       const size_t merged_count = i - from;
       if (omits.Contains(ref->GetHkl())) {
         stats.OmittedByUser += merged_count;
@@ -165,9 +165,9 @@ class RefMerger {
     size_t mi_o_sig_cnt = 0;
     for (size_t i=0; i < ref_cnt;) {
       TReflection* ref = refs[i];
-      size_t from = i;
-      while ((++i < ref_cnt) && (cmp.Compare(ref, refs[i]) == 0))
-        ;
+      size_t from = i++;
+      while ((i < ref_cnt) && (cmp.Compare(ref, refs[i]) == 0))
+        i++;
       const size_t merged_count = i - from;
       if (omits.Contains(ref->GetHkl())) {
         stats.OmittedByUser += merged_count;
@@ -236,10 +236,11 @@ class RefMerger {
       TReflection* ref = refs[i];
       if (ref->GetBatch() < 0) continue;
       ref->Analyse(ml);
-      size_t from = i, real_count = 1;
-      while ((++i < ref_cnt) && (cmp.Compare(ref, refs[i]) == 0)) {
+      size_t from = i++, real_count = 1;
+      while ((i < ref_cnt) && (cmp.Compare(ref, refs[i]) == 0)) {
         if (refs[i]->GetBatch() > 0)
           real_count++;
+        i++;
       }
       if (omits.Contains(ref->GetHkl())) {
         stats.OmittedByUser += real_count;
@@ -297,9 +298,9 @@ class RefMerger {
     size_t mi_o_sig_cnt = 0;
     for (size_t i=0; i < ref_cnt; ) {
       const TReflection *ref = refs[i];
-      const size_t from = i;
-      while ((++i < ref_cnt) && (cmp.Compare(ref, refs[i]) == 0))
-        ;
+      const size_t from = i++;
+      while ((i < ref_cnt) && (cmp.Compare(ref, refs[i]) == 0))
+        i++;
       const size_t merged_count = i - from;
       if (omits.Contains(ref->GetHkl())) {
         stats.OmittedByUser += merged_count;
@@ -361,9 +362,9 @@ class RefMerger {
     size_t mi_o_sig_cnt = 0;
     for (size_t i = 0; i < ref_cnt;) {
       const TReflection* ref = refs[i];
-      const size_t from = i;
-      while ((++i < ref_cnt) && (cmp.Compare(ref, refs[i]) == 0))
-        ;
+      const size_t from = i++;
+      while ((i < ref_cnt) && (cmp.Compare(ref, refs[i]) == 0))
+        i++;
       const size_t merged_count = i - from;
       if (omits.Contains(ref->GetHkl())) {
         stats.OmittedByUser += merged_count;
