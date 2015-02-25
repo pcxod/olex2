@@ -98,7 +98,7 @@ public:
   static bool IsHKLFileLine(const olxstr& l) {
     if (l.Length() >= 28) {
       return (l.SubString(0, 4).IsNumber() && l.SubString(4, 4).IsNumber() &&
-        l.SubString(8, 4).IsNumber() || l.SubString(12, 8).IsNumber() &&
+        l.SubString(8, 4).IsNumber() && l.SubString(12, 8).IsNumber() &&
         l.SubString(20, 8).IsNumber());
     }
     return false;
