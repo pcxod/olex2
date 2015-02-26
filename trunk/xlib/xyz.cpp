@@ -39,24 +39,39 @@ void TXyz::SaveToStrings(TStrList& Strings)  {
   Strings[0] = cnt;
 }
 //..............................................................................
-void TXyz::LoadFromStrings(const TStrList& Strings)  {
-  Clear();
+void TXyz::LoadFromStrings(const TStrList &Strings) {
+  TAsymmUnit &au = GetAsymmUnit();
+  au.Clear();
   Title = "OLEX2: imported from XYZ";
-  for( size_t i=0; i < Strings.Count(); i++ )  {
+  vec3d miv(1000), mav(-1000);
+  for (size_t i=0; i < Strings.Count(); i++) {
     olxstr line = Strings[i];
-    if( line.IsEmpty() )  continue;
+    if (line.IsEmpty())  continue;
     TStrList toks(line, ' ');
-    if( toks.Count() != 4 )  continue;
+    if (toks.Count() != 4) continue;
     const cm_Element* elm = XElementLib::FindBySymbolEx(toks[0]);
-    if( elm != NULL )  {
+    if (elm != NULL) {
       TCAtom& CA = GetAsymmUnit().NewAtom();
       CA.ccrd()[0] = toks[1].ToDouble();
       CA.ccrd()[1] = toks[2].ToDouble();
       CA.ccrd()[2] = toks[3].ToDouble();
+      vec3d::UpdateMinMax(CA.ccrd(), miv, mav);
       CA.SetType(*elm);
       CA.SetLabel(olxstr(elm->symbol) << (GetAsymmUnit().AtomCount()+1), false);
     }
   }
+  au.GetAngles() = vec3d(90, 90, 90);
+  au.GetAxes() = mav - miv;
+  if (au.GetAxes().IsNull()) {
+    au.GetAxes() = vec3d(1);
+  }
+  else {
+    for (size_t i = 0; i < au.AtomCount(); i++) {
+      TCAtom &a = au.GetAtom(i);
+      a.ccrd() /= au.GetAxes();
+    }
+  }
+  au.InitMatrices();
 }
 //..............................................................................
 bool TXyz::Adopt(TXFile &XF, int flags) {
