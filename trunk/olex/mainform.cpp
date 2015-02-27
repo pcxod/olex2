@@ -1471,8 +1471,10 @@ void TMainForm::StartupInit() {
   processMacro("onstartup", __OlxSrcInfo);
   processMacro("user_onstartup", __OlxSrcInfo);
   if (FXApp->GetArguments().Count() >= 2) {
-    processMacro(olxstr("reap \"") << FXApp->GetArguments().Text(' ', 1) <<
-      '\"', __OlxSrcInfo);
+    if (!FXApp->GetArguments().GetLastString().EndsWith(".py")) {
+      processMacro(olxstr("reap \"") << FXApp->GetArguments().Text(' ', 1) <<
+        '\"', __OlxSrcInfo);
+    }
   }
   // load html in last call - it might call some destructive functions on uninitialised data
   HtmlManager.main->LoadPage(FHtmlIndexFile.u_str());

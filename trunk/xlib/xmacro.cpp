@@ -7626,6 +7626,11 @@ void XLibMacros::macExport(TStrObjList &Cmds, const TParamList &Options,
   TXApp &app = TXApp::GetInstance();
   TCif& C = app.XFile().GetLastLoader<TCif>();
   olxstr hkl_name = (!Cmds.IsEmpty() ? Cmds[0]: C.GetDataName() + ".hkl");
+  if (!Cmds.IsEmpty()) {
+    if (TEFile::ExtractFileExt(hkl_name).IsEmpty()) {
+      hkl_name << ".hkl";
+    }
+  }
   if (TEFile::Exists(hkl_name)) {
     E.ProcessingError(__OlxSrcInfo, "the hkl file already exists");
     return;

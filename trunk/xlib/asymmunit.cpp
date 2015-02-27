@@ -411,15 +411,29 @@ TCAtom * TAsymmUnit::FindCAtom(const olxstr &Label, TResidue* resi)  const {
   int part = DefNoPart;
   olxstr lb(Label);
   size_t us_ind = Label.IndexOf('_');
-  if( us_ind != InvalidIndex && ++us_ind < Label.Length() )  {
-    if (Label.SubStringFrom(us_ind).IsNumber()) {  // residue number?
+  if (us_ind != InvalidIndex && ++us_ind < Label.Length()) {
+    olxstr sfx = Label.SubStringFrom(us_ind);
+    if (sfx.IsNumber()) {  // residue number?
       int resi_num = Label.SubStringFrom(us_ind).ToInt();
       resi = ResidueRegistry.Find(resi_num, resi);
       if (resi == NULL)
         return NULL;
     }
-    else
-      part = olxstr::o_tolower(Label.CharAt(us_ind)) - 'a' + 1;
+    else {
+      if (sfx.Length() == 1) {
+        part = olxstr::o_tolower(Label.CharAt(us_ind)) - 'a' + 1;
+      }
+      else {
+        olxstr resi_str = sfx.SubString(0, 1);
+        if (resi_str.IsNumber()) {
+          int resi_num = resi_str.ToInt();
+          resi = ResidueRegistry.Find(resi_num, resi);
+          if (resi == NULL)
+            return NULL;
+        }
+        part = olxstr::o_tolower(sfx.GetLast()) - 'a' + 1;
+      }
+    }
     lb = lb.SubStringTo(us_ind-1);
   }
   if( resi != NULL )  {
