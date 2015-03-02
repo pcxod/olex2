@@ -287,10 +287,14 @@ void TCif::Initialize()  {
     GetAsymmUnit().GetAngles()[2] = EValue.GetV();
     GetAsymmUnit().GetAngleEsds()[2] = EValue.GetE();
     if( ParamExists("_cell_formula_units_Z") )
-      GetAsymmUnit().SetZ((short)olx_round(GetParamAsString("_cell_formula_units_Z").ToDouble()));
+      GetAsymmUnit().SetZ(
+      (short)olx_round(GetParamAsString("_cell_formula_units_Z").ToDouble()));
   }
   catch(...)  {
-    TBasicApp::NewLogEntry(logInfo) << "CIF initialising failed: unknown cell parameters";
+    GetAsymmUnit().GetAxes() = vec3d(0);
+    GetAsymmUnit().GetAngles() = vec3d(0);
+    TBasicApp::NewLogEntry(logInfo) <<
+      "CIF initialising failed: unknown cell parameters";
     return;
   }
   // check if the cif file contains valid parameters
