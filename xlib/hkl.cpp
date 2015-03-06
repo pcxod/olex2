@@ -81,6 +81,9 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
   bool get_ins)
 {
   olx_object_ptr<TIns> rv;
+  if (SL.IsEmpty()) {
+    return rv;
+  }
   try {
     Clear();
     {  // validate if 'real' HKL, not fcf

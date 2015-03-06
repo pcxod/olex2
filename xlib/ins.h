@@ -161,8 +161,10 @@ public:
       else if( Toks[0].Equalsi("WGHT") )  {
         if( rm.used_weight.Count() != 0 )  {
           rm.proposed_weight.SetCount(Toks.Count()-1);
-          for( size_t j=1; j < Toks.Count(); j++ )
-            rm.proposed_weight[j-1] = Toks[j].ToDouble();
+          for (size_t j = 1; j < Toks.Count(); j++) {
+            rm.proposed_weight[j-1] = Toks[j].IsNumber() ? Toks[j].ToDouble()
+              : 0.1;
+          }
         }
         else  {
           /* shelxl proposes wght in .0000 but print in .000000 format, need
@@ -180,8 +182,15 @@ public:
             }
           }
           rm.used_weight.SetCount(toks.Count()-1);
-          for( size_t j=1; j < toks.Count(); j++ )
+          for (size_t j = 1; j < toks.Count(); j++) {
+            if (!toks[j].IsNumber() && toks[j].EndsWith('*')){
+              if (!toks[j].TrimR('*').IsNumber()) {
+                rm.used_weight[j-1] = 0.1;
+                continue;
+              }
+            }
             rm.used_weight[j-1] = toks[j].ToDouble();
+          }
           rm.proposed_weight = rm.used_weight;
         }
       }
