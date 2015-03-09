@@ -95,13 +95,13 @@ public:
   void Push() {
   }
   void Pop() { // just reset the values to default
-    sdt::cout << "\033[0";
+    std::cout << "\033[0";
   }
   void SetTextBackground(const int cl, bool intensity=false) {
     std::cout << "\033[" << cl;
     if (intensity)
-      sdt::cout << ";1";
-    sdt::cout << "m";
+      std::cout << ";1";
+    std::cout << "m";
   }
   void SetTextForeground(const int cl, bool intensity=false) {
     SetTextBackground(cl, intensity);
