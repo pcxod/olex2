@@ -2509,8 +2509,7 @@ TXGlLabel *TGXApp::AddLabel(const olxstr& Name, const vec3d& center, const olxst
 TXLine *TGXApp::AddLine(const olxstr& Name, const vec3d& base, const vec3d& edge)  {
   TGPCollection *gpc = GetRenderer().FindCollection(Name);
   if (gpc != NULL && gpc->ObjectCount() != 0) {
-    TXLine *xp = dynamic_cast<TXLine *>(&gpc->GetObject(0));
-    if (xp == NULL) {
+    if (!EsdlInstanceOf(gpc->GetObject(0), TXLine)) {
       TBasicApp::NewLogEntry(logError) << "The given collection name is alreay"
         " in use by other object type";
       return NULL;
@@ -2557,8 +2556,7 @@ TXPlane *TGXApp::AddPlane(const olxstr &name, const TXAtomPList &Atoms,
   if (Atoms.Count() < 3) return NULL;
   TGPCollection *gpc = GetRenderer().FindCollection(name);
   if (gpc != NULL && gpc->ObjectCount() != 0) {
-    TXPlane *xp = dynamic_cast<TXPlane *>(&gpc->GetObject(0));
-    if (xp == NULL) {
+    if (!EsdlInstanceOf(gpc->GetObject(0), TXPlane)) {
       TBasicApp::NewLogEntry(logError) << "The given collection name is alreay"
         " in use by other object type";
       return NULL;
