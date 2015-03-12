@@ -194,23 +194,23 @@ bool TGlGroup::CheckBlended() const {
 void TGlGroup::BlendMaterialDraw(bool SelectPrimitives,
   bool SelectObjects) const
 {
-  if( !CheckBlended() )  {
+  if (!CheckBlended()) {
     OverrideMaterialDraw(SelectPrimitives, SelectObjects);
     return;
   }
-  for( size_t i=0; i < Count(); i++ )  {
+  for (size_t i=0; i < Count(); i++) {
     AGDrawObject& G = GetObject(i);
-    if( G.MaskFlags(sgdoHidden) != 0 )  continue;
-    if( G.IsGroup() )  {
+    if (G.MaskFlags(sgdoHidden) != 0) continue;
+    if (G.IsGroup()) {
       TGlGroup* group = dynamic_cast<TGlGroup*>(&G);
-      if( group != NULL )  {
+      if (group != NULL) {
         group->Draw(SelectPrimitives, SelectObjects);
         continue;
       }
     }
     bool Select = (SelectPrimitives|SelectObjects);
     const size_t pc = G.GetPrimitives().PrimitiveCount();
-    for( size_t j=0; j < pc; j++ )  {
+    for (size_t j=0; j < pc; j++) {
       TGlPrimitive& GlP = G.GetPrimitives().GetPrimitive(j);
       if (!Select) {
         TGlMaterial glm = GlP.GetProperties();
@@ -220,11 +220,16 @@ void TGlGroup::BlendMaterialDraw(bool SelectPrimitives,
         glm.AmbientF[1] = BlendColor[1]*m1 + glm.AmbientF[1]*m2;
         glm.AmbientF[2] = BlendColor[2]*m1 + glm.AmbientF[2]*m2;
         glm.AmbientF[3] = 1.0f;
+        if (GlM.IsTransparent() && GlM.HasDiffuseF()) {
+          glm.SetTransparent(true);
+          glm.SetDiffuseF(true);
+          glm.DiffuseF = GlM.DiffuseF;
+        }
         glm.Init(false);
       }
       Parent.HandleSelection(G, GlP, SelectObjects, SelectPrimitives);
       olx_gl::pushMatrix();
-      if( G.Orient(GlP) )  {
+      if (G.Orient(GlP)) {
         olx_gl::popMatrix();
         continue;
       }
