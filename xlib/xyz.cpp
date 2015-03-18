@@ -66,6 +66,12 @@ void TXyz::LoadFromStrings(const TStrList &Strings) {
     au.GetAxes() = vec3d(1);
   }
   else {
+    for (int i = 0; i < 3; i++) {
+      if (au.GetAxes()[i] < 1e-3) {
+        au.GetAxes()[i] = 1;
+      }
+    }
+    au.GetAxes() += 0.5;
     for (size_t i = 0; i < au.AtomCount(); i++) {
       TCAtom &a = au.GetAtom(i);
       a.ccrd() /= au.GetAxes();
