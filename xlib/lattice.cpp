@@ -2652,7 +2652,9 @@ TUndoData *TLattice::ValidateHGroups(bool reinit, bool report) {
           dependent_cnt++;
           continue;
         }
-        if (part == 0 || a.GetPart() == 0 || a.GetPart() == part) {
+        if (part == 0 || a.GetPart() == 0 || a.GetPart() == part
+          || rm.Conn.ArePartsGroupped(part, a.GetPart()))
+        {
           if (XElementLib::IsMetal(a.GetType()))
             metal_cnt++;
           attached_cnt++;
