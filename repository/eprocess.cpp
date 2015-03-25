@@ -312,16 +312,19 @@ TWxProcess::TWxProcess(const olxstr& cmdl, short flags)
 {}
 //.............................................................................
 TWxProcess::~TWxProcess() {
-  if (TBasicApp::HasInstance())
+  if (TBasicApp::HasInstance()) {
     TBasicApp::GetInstance().OnTimer.Remove(this);
-  if (IsTerminateOnDelete())
+  }
+  if (IsTerminateOnDelete()) {
     Terminate();
+  }
 }
 //.............................................................................
-bool TWxProcess::Terminate()  {
+bool TWxProcess::Terminate() {
   SetTerminated();
-  if (TBasicApp::HasInstance())
+  if (TBasicApp::HasInstance()) {
     TBasicApp::GetInstance().OnTimer.Remove(this);
+  }
   AProcess::OnTerminate.Execute((AProcess *)this);
   if (ProcessId >= 0) {
     int pid = ProcessId;
@@ -340,9 +343,9 @@ void TWxProcess::Detach() {
 }
 //.............................................................................
 bool TWxProcess::Execute() {
-  if( GetCmdLine().IsEmpty() )  return false;
-  if( AProcess::IsRedirected() )  Redirect();
-  if( AProcess::IsRedirected() )  {  // must be async
+  if (GetCmdLine().IsEmpty())  return false;
+  if (AProcess::IsRedirected())  Redirect();
+  if (AProcess::IsRedirected()) {  // must be async
     TStrList toks;
     TParamList::StrtokParams(GetCmdLine(), ' ', toks);
 #ifdef __WIN32__
@@ -375,13 +378,14 @@ bool TWxProcess::Execute() {
       SetTerminated();
     }
   }
-  if (!IsSynchronised())
+  if (!IsSynchronised()) {
     TBasicApp::GetInstance().OnTimer.Add(this, ID_Timer);
+  }
   return true;
 }
 //.............................................................................
 bool TWxProcess::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
-  const IOlxObject *Data, TActionQueue *)
+  const IOlxObject *Data, TActionQueue *q)
 {
   bool Terminated = false;
   if (MsgId == ID_Timer) {
@@ -404,10 +408,18 @@ bool TWxProcess::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
     }
   }
   if (Terminated) {
+    if (TBasicApp::HasInstance()) {
+      TBasicApp::GetInstance().OnTimer.Remove(this);
+    }
+  }
+  return true;
+}
+//.............................................................................
+void TWxProcess::OnTerminate(int pid, int status) {
+  if (ProcessId == pid) {
     ProcessId = -1;
     Terminate();
   }
-  return true;
 }
 //.............................................................................
 void TWxProcess::Write(const olxstr &Cmd) {
