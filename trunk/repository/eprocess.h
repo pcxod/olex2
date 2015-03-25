@@ -157,7 +157,7 @@ class TWxProcess
   bool Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
     const IOlxObject *Data, TActionQueue *);
   // override to stop automatic deletion of the object
-  virtual void OnTerminate(int pid, int status) {}
+  virtual void OnTerminate(int pid, int status);
 public:
   TWxProcess(const olxstr& cmdl, short flags);
   ~TWxProcess();
