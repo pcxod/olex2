@@ -483,13 +483,6 @@ int fragments::ring::Compare(const ring &r) const {
   return substituents[0].Compare(r.substituents[0]);
 }
 //.............................................................................
-void fragments::ring::reverse() {
-  if (atoms.IsEmpty()) return;
-  const size_t hs = (atoms.Count()-1)/2;
-  for (size_t i=0; i < hs; i++)
-    atoms.Swap(i+1, atoms.Count()-i-1);
-}
-//.............................................................................
 fragments::cart_ring fragments::ring::to_cart() const {
   cart_ring r;
   if (atoms.IsEmpty()) return r;
@@ -823,8 +816,9 @@ void fragments::fragment::breadth_first_tags(const TCAtomPList &atoms,
     if (a->GetTag() != -1) {
       if (a->GetTag() >= tv) {
         a->SetRingAtom(true);
-        if (ring_atoms != NULL)
-         ring_atoms->Add(a);
+        if (ring_atoms != NULL) {
+          ring_atoms->AddUnique(a);
+        }
       }
       continue;
     }
@@ -836,8 +830,9 @@ void fragments::fragment::breadth_first_tags(const TCAtomPList &atoms,
         queue.Push(st.atom);
       else if (st.atom->GetTag() >= tv) {
         st.atom->SetRingAtom(true);
-        if (ring_atoms != NULL)
-          ring_atoms->Add(st.atom);
+        if (ring_atoms != NULL) {
+          ring_atoms->AddUnique(st.atom);
+        }
       }
     }
   }
@@ -996,29 +991,81 @@ ConstPtrList<TCAtom> fragments::fragment::trace_ring_d(TCAtom &ra) {
   return ring;
 }
 //.............................................................................
-ConstPtrList<TCAtom> fragments::fragment::trace_ring_b(TCAtom &a) {
-  TCAtomPList ring;
-  TQueue<TCAtom*> queue;
+TTypeList<TCAtomPList>::const_list_type fragments::fragment::trace_ring_b(
+  TQueue<TCAtom*> &queue, TCAtomPList &ring, bool flag)
+{
+  TTypeList<TCAtomPList> rv;
+  typedef TQueue<TCAtom *> queue_t;
   atoms_.ForEach(
     TCAtom::FlagSetter(catom_flag_Processed, false));
-  queue.Push(ring.Add(a))->SetProcessed(true);
-  for (size_t i=0; i < a.AttachedSiteCount(); i++) {
-    TCAtom::Site &st = a.GetAttachedSite(i);
-    if (!st.atom->IsAvailable()) continue;
-    if (st.atom->GetTag() == a.GetTag())
-      queue.Push(ring.Add(st.atom))->SetProcessed(true);
-  }
+  ring.ForEach(
+    TCAtom::FlagSetter(catom_flag_Processed, true));
+
   TCAtom *la = NULL;
   while (!queue.IsEmpty()) {
     TCAtom *a = queue.Pop();
-    for (size_t i=0; i < a->AttachedSiteCount(); i++) {
+    TCAtomPList to_queue;
+    bool stop = false;
+    for (size_t i = 0; i < a->AttachedSiteCount(); i++) {
       TCAtom::Site &st = a->GetAttachedSite(i);
       if (!st.atom->IsAvailable()) continue;
       if (st.atom->GetTag() < a->GetTag()) {
-        if (st.atom->IsProcessed())
+        if (st.atom->IsProcessed()) {
           la = st.atom;
-        else
-          queue.Push(ring.Add(st.atom))->SetProcessed(true);
+        }
+        else {
+          to_queue << st.atom;
+        }
+      }
+      else if (st.atom->GetTag() == a->GetTag()) {
+        if (st.atom->IsProcessed() && ring.Count() > 3) {
+          stop = true;
+        }
+      }
+    }
+    if (stop) {
+      break;
+    }
+    if (to_queue.Count() > 2) {
+      for (size_t i = 0; i < to_queue.Count(); i++) {
+        for (size_t j = i+1; j < to_queue.Count(); j++) {
+          queue_t q(queue);
+          TCAtomPList &r = rv.AddCopy(ring);
+          q.Push(r.Add(to_queue[i]));
+          q.Push(r.Add(to_queue[j]));
+          TTypeList<TCAtomPList> nrings = trace_ring_b(q, r);
+          if (r.IsEmpty()) {
+            rv.Delete(rv.Count()-1);
+          }
+          for (size_t k = 0; k < nrings.Count(); k++) {
+            rv.Add(nrings[k]);
+          }
+          nrings.ReleaseAll();
+        }
+      }
+      ring.Clear();
+      return rv;
+    }
+    else {
+      if (!flag && to_queue.Count() > 1 && la == 0) {
+        for (size_t i = 0; i < to_queue.Count(); i++) {
+          queue_t q(queue);
+          TCAtomPList &r = rv.AddCopy(ring);
+          q.Push(r.Add(to_queue[i]));
+          TTypeList<TCAtomPList> nrings = trace_ring_b(q, r);
+          if (r.IsEmpty()) {
+            rv.Delete(rv.Count()-1);
+          }
+          for (size_t k = 0; k < nrings.Count(); k++) {
+            rv.Add(nrings[k]);
+          }
+          nrings.ReleaseAll();
+        }
+        ring.Clear();
+        return rv;
+      }
+      for (size_t i = 0; i < to_queue.Count(); i++) {
+        queue.Push(ring.Add(to_queue[i]))->SetProcessed(true);
       }
     }
     if (la != NULL) break;
@@ -1033,7 +1080,31 @@ ConstPtrList<TCAtom> fragments::fragment::trace_ring_b(TCAtom &a) {
     }
     ring.Add(la)->SetProcessed(true);
   }
-  return ring;
+  return rv;
+}
+//.............................................................................
+TTypeList<TCAtomPList>::const_list_type fragments::fragment::trace_ring_b(
+  TCAtom &a)
+{
+  TTypeList<TCAtomPList> rings;
+  TCAtomPList &ring = rings.AddNew();
+  TQueue<TCAtom*> queue;
+  queue.Push(ring.Add(a));
+  for (size_t i = 0; i < a.AttachedSiteCount(); i++) {
+    TCAtom::Site &st = a.GetAttachedSite(i);
+    if (!st.atom->IsAvailable()) continue;
+    if (st.atom->GetTag() == a.GetTag())
+      queue.Push(ring.Add(st.atom));
+  }
+  TTypeList<TCAtomPList> nrings = trace_ring_b(queue, ring, true);
+  if (ring.IsEmpty()) {
+    rings.Delete(rings.Count()-1);
+  }
+  for (size_t i = 0; i < nrings.Count(); i++) {
+    rings.Add(nrings[i]);
+  }
+  nrings.ReleaseAll();
+  return rings;
 }
 //.............................................................................
 void fragments::fragment::trace_substituent(ring::substituent &s) {
@@ -1238,8 +1309,14 @@ ConstTypeList<fragments::ring> fragments::fragment::get_rings(
 {
   TTypeList<fragments::ring> rv;
   if (r_atoms.IsEmpty()) return rv;
-  for (size_t i=0; i < r_atoms.Count(); i++)
-    rv.AddNew(trace_ring_b(*r_atoms[i]));
+  for (size_t i = 0; i < r_atoms.Count(); i++) {
+    TTypeList<TCAtomPList> nrings = trace_ring_b(*r_atoms[i]);
+    for (size_t j = 0; j < nrings.Count(); j++) {
+      if (nrings[j].Count() > 2) {
+        rv.AddNew(nrings[j]);
+      }
+    }
+  }
   atoms_.ForEach(TCAtom::FlagSetter(catom_flag_Processed, false));
   // sort the ring according to the connectivity
   for (size_t i=0; i < rv.Count(); i++) {

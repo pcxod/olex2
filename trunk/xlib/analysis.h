@@ -187,6 +187,9 @@ public:
     ring(ConstPtrList<TCAtom> atoms_)
       : fused_count(0), atoms(atoms_)
     {}
+    ring(const TCAtomPList &atoms_)
+      : fused_count(0), atoms(atoms_)
+    {}
     TTypeList<substituent> substituents;
     TCAtomPList atoms;
     bool is_leq(const ring &r) const;
@@ -198,7 +201,9 @@ public:
     static int SizeCompare(const ring &r1, const ring &r2) {
       return olx_cmp(r1.atoms.Count(), r2.atoms.Count());
     }
-    void reverse();
+    void reverse() {
+      olx_reverse(atoms);
+    }
     cart_ring to_cart() const;
   };
   struct fragment {
@@ -212,7 +217,10 @@ public:
       TCAtom &a, const smatd &m, vec3d_list &res);
     ConstTypeList<vec3d> build_coordinates() const;
     // traces a ring from breadth-first expansion
-    ConstPtrList<TCAtom> trace_ring_b(TCAtom &a);
+    TTypeList<TCAtomPList>::const_list_type trace_ring_b(TQueue<TCAtom*> &q,
+      TCAtomPList &ring, bool flag=false);
+    // traces a ring from breadth-first expansion
+    TTypeList<TCAtomPList>::const_list_type trace_ring_b(TCAtom &a);
     /* traces a ring from depth-first expansion. The ring tags must go in
     descending order
     */
