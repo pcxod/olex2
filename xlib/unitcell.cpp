@@ -448,23 +448,24 @@ smatd* TUnitCell::GetClosest(const vec3d& to, const vec3d& from,
     const smatd& matr = Matrices[i];
     vec3d v = matr * from - to;
     const vec3i shift = -v.Round<int>();
-    v += shift;
-    // check for identity matrix
-    if( i == 0 && shift.IsNull() )  continue;
-    const double D = au.CellToCartesian(v).QLength();
-    if (D < minD) {
-      minD = D;
-      minMatr = &matr;
-      mint = shift;
-    }
-    else {
-      if (D == minD && minMatr == NULL) {
-        minMatr = &matr;
-        mint = shift;
+    for (int ii = -1; ii <= 1; ii++) {
+      for (int ij = -1; ij <= 1; ij++) {
+        for (int ik = -1; ik <= 1; ik++) {
+          const vec3i shift1(shift[0] + ii, shift[1] + ij, shift[2] + ik);
+          const double D = au.Orthogonalise(v + shift1).QLength();
+          if (D < minD) {
+            minD = D;
+            minMatr = &matr;
+            mint = shift1;
+          }
+        }
       }
     }
   }
   if (minMatr != NULL) {
+    if (minMatr->IsFirst() && mint.IsNull()) {
+      return 0;
+    }
     smatd* retVal = new smatd(*minMatr);
     retVal->t += mint;
     retVal->SetId(minMatr->GetContainerId(), mint);

@@ -902,18 +902,29 @@ void TXFile::LibSaveSolution(const TStrObjList& Params, TMacroData& E)  {
   ins.SaveToFile(Params[0]);
 }
 void TXFile::LibDataCount(const TStrObjList& Params, TMacroData& E)  {
-  if( EsdlInstanceOf(*FLastLoader, TCif) )
+  if (EsdlInstanceOf(*FLastLoader, TCif)) {
     E.SetRetVal(((TCif*)FLastLoader)->BlockCount());
+  }
   else
     E.SetRetVal(1);
 }
 //..............................................................................
 void TXFile::LibCurrentData(const TStrObjList& Params, TMacroData& E)  {
-  TCif &cif = *(TCif*)FLastLoader;
-  if( Params.IsEmpty() )
-    E.SetRetVal(cif.GetBlockIndex());
-  else
-    cif.SetCurrentBlock(Params[0].ToInt());
+  if (EsdlInstanceOf(*FLastLoader, TCif)) {
+    TCif &cif = *(TCif*)FLastLoader;
+    if (Params.IsEmpty())
+      E.SetRetVal(cif.GetBlockIndex());
+    else
+      cif.SetCurrentBlock(Params[0].ToInt());
+  }
+  else {
+    if (Params.IsEmpty()) {
+      E.SetRetVal(0);
+    }
+    else {
+      E.ProcessingError(__OlxSrcInfo, "not-applicable");
+    }
+  }
 }
 //..............................................................................
 void TXFile::LibDataName(const TStrObjList& Params, TMacroData& E)  {
@@ -1019,7 +1030,7 @@ TLibrary* TXFile::ExportLibrary(const olxstr& name) {
 
   lib->Register(
     new TFunction<TXFile>(thip, &TXFile::LibCurrentData, "CurrentData",
-      fpNone|fpOne|psCheckFileTypeCif,
+      fpNone|fpOne|psFileLoaded,
       "Returns current data index or changes current data block within the CIF")
   );
 

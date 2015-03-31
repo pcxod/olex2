@@ -1112,12 +1112,25 @@ void TLattice::MoveToCenter()  {
     if (ac == 0)  continue;
     molCenter /= ac;
     smatd* m = GetUnitCell().GetClosest(cnt, molCenter, true);
-    if (m == NULL)  continue;
-    double d1 = GetAsymmUnit().Orthogonalise(molCenter).DistanceTo(ocnt);
-    double d2 = GetAsymmUnit().Orthogonalise(*m*molCenter).DistanceTo(ocnt);
-    if (olx_abs(d1 - d2) < 1e-6) {
-      delete m;
-      continue;
+    if (m == NULL)  {
+      vec3i nt = molCenter.Floor<int>();
+      if (!nt.IsNull()) {
+        m = new smatd(GetUnitCell().GetMatrix(0));
+        m->t -= nt;
+      }
+      else {
+        continue;
+      }
+    }
+    else {
+      vec3d nc = *m*molCenter;
+      double d1 = GetAsymmUnit().Orthogonalise(molCenter).DistanceTo(ocnt);
+      double d2 = GetAsymmUnit().Orthogonalise(nc).DistanceTo(ocnt);
+      if (olx_abs(d1 - d2) < 1e-6) {
+        delete m;
+        continue;
+      }
+      m->t -= nc.Floor<int>();
     }
     for (size_t j = 0; j < frag->NodeCount(); j++) {
       TSAtom& SA = frag->Node(j);
