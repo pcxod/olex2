@@ -428,7 +428,8 @@ void XLibMacros::Export(TLibrary& lib)  {
     "c-copy moved atom",
     fpNone|fpTwo,
     "Moves two atoms as close to each other as possible; if no atoms given, "
-    "moves all fragments as close to the cell center as possible");
+    "moves all fragments as close to the cell center as possible and makes "
+    "sure that the center of fragments gravity stays inside the cell.");
 
   xlib_InitMacro(Fvar, EmptyString(), fpAny|psCheckFileTypeIns,
     "Assigns/release occupancy for given atoms. Examples:"
