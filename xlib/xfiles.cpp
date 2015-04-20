@@ -247,36 +247,38 @@ void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
       src.SetLength(0);
     GetRM().SetHKLSource(src);
     try {
-      if (src.IsEmpty() && EsdlInstanceOf(*FLastLoader, TCif)) {
-        TCif &cif = GetLastLoader<TCif>();
-        cif_dp::cetTable* hklLoop = cif.FindLoop("_refln");
-        if (hklLoop == 0) {
-          // sorting out tonto loop
-          hklLoop = cif.FindLoop("_diffrn_refln");
-        }
-        if (hklLoop != 0) {
-          try {
-            olx_object_ptr<THklFile::ref_list> refs =
-              THklFile::FromCifTable(*hklLoop);
-            if (refs.is_valid()) {
-              GetRM().SetReflections(refs().a);
+      if (src.IsEmpty()) {
+        GetRM().SetReflections(TRefList());
+        if (EsdlInstanceOf(*FLastLoader, TCif)) {
+          TCif &cif = GetLastLoader<TCif>();
+          cif_dp::cetTable* hklLoop = cif.FindLoop("_refln");
+          if (hklLoop == 0) {
+            // sorting out tonto loop
+            hklLoop = cif.FindLoop("_diffrn_refln");
+          }
+          if (hklLoop != 0) {
+            try {
+              olx_object_ptr<THklFile::ref_list> refs =
+                THklFile::FromCifTable(*hklLoop);
+              if (refs.is_valid()) {
+                GetRM().SetReflections(refs().a);
+              }
+              //if (!refs.b) {
+              //  GetRM().SetHKLF(3);
+              //}
             }
-            //if (!refs.b) {
-            //  GetRM().SetHKLF(3);
-            //}
+            catch (TExceptionBase &) {}
           }
-          catch (TExceptionBase &) {}
-        }
-        else {
-          cif_dp::cetStringList *ci = dynamic_cast<cif_dp::cetStringList *>(
-            cif.FindEntry("_shelx_hkl_file"));
-          if (ci != NULL) {
-            THklFile hkf;
-            hkf.LoadFromStrings(ci->lines, false);
-            GetRM().SetReflections(hkf.RefList());
+          else {
+            cif_dp::cetStringList *ci = dynamic_cast<cif_dp::cetStringList *>(
+              cif.FindEntry("_shelx_hkl_file"));
+            if (ci != NULL) {
+              THklFile hkf;
+              hkf.LoadFromStrings(ci->lines, false);
+              GetRM().SetReflections(hkf.RefList());
+            }
           }
         }
-
       }
     }
     catch (const TExceptionBase &e) {

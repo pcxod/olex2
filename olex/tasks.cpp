@@ -13,7 +13,7 @@
 #include "ins.h"
 
 void P4PTask::Run() {
-  if (file_id.Contains("Rigaku CrystalClear")) {
+  if (file_id.Contains("Rigaku")) {
     TMainForm *mf = TGlXApp::GetMainForm();
     olxstr cmd = "spy.xplain.exists()";
     mf->processFunction(cmd, __OlxSrcInfo);
