@@ -508,6 +508,14 @@ void RefinementModel::SetHKLSource(const olxstr &src) {
 //.............................................................................
 void RefinementModel::SetReflections(const TRefList &refs) const {
   TStopWatch sw(__FUNC__);
+  if (HKLSource.IsEmpty()) {
+    HklFileID.name = HKLSource;
+    HklFileID.timestamp = TETime::msNow();
+  }
+  if (refs.IsEmpty()) {
+    _Reflections.Clear();
+    return;
+  }
   _HklStat.FileMinInd = vec3i(100);
   _HklStat.FileMaxInd = vec3i(-100);
   _Reflections.Clear();
@@ -573,15 +581,12 @@ void RefinementModel::SetReflections(const TRefList &refs) const {
       }
     }
   }
-  if (HKLSource.IsEmpty()) {
-    HklFileID.timestamp = TETime::msNow();
-  }
 }
 //.............................................................................
 const TRefList& RefinementModel::GetReflections() const {
   TStopWatch sw(__FUNC__);
   try {
-    if (!_Reflections.IsEmpty() && HKLSource.IsEmpty()) {
+    if (HKLSource.IsEmpty()) {
       return _Reflections;
     }
     TEFile::FileID hkl_src_id = TEFile::GetFileID(HKLSource);
@@ -649,16 +654,21 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
       }
       TUnitCell::SymmSpace sp =
         aunit.GetLattice().GetUnitCell().GetSymmSpace();
-      bool mergeFP = (MERG == 4 || MERG == 3 || sp.IsCentrosymmetric());
-      _HklStat = RefMerger::DryMerge<RefMerger::ShelxMerger>(
-        sp, refs, (HKLF >= 5 ? vec3i_list() : Omits), mergeFP,
-        2);
+      if (!refs.IsEmpty()) {
+        bool mergeFP = (MERG == 4 || MERG == 3 || sp.IsCentrosymmetric());
+        _HklStat = RefMerger::DryMerge<RefMerger::ShelxMerger>(
+          sp, refs, (HKLF >= 5 ? vec3i_list() : Omits), mergeFP,
+          2);
+      }
       _HklStat.HKLF = HKLF;
       _HklStat.HKLF_mat = HKLF_mat;
       _HklStat.HKLF_m = HKLF_m;
       _HklStat.HKLF_s = HKLF_s;
       _HklStat.MERG = MERG;
       _HklStat.omits = Omits;
+      if (refs.IsEmpty()) {
+        return _HklStat;
+      }
       sw.start("Analysing reflections: absent, completeness, limits");
       mat3d h2c = aunit.GetHklToCartesian();
       size_t e_cnt = 0;
