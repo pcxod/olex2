@@ -1860,8 +1860,9 @@ void TMainForm::macMode(TStrObjList &Cmds, const TParamList &Options,
   olxstr name = Cmds[0], args;
   Cmds.Delete(0);
   args << Cmds.Text(' ');
-  for (size_t i=0; i < Options.Count(); i++)
+  for (size_t i = 0; i < Options.Count(); i++) {
     args << " -" << Options.GetName(i) << '=' << Options.GetValue(i);
+  }
   AMode* md = Modes->SetMode(name, args);
   if (md != NULL) {
     try {
@@ -5975,7 +5976,7 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options,
   TXBondPList xbonds;
   LabelCorrector lc(FXApp->XFile().GetAsymmUnit());
   FXApp->AdoptAtoms(xyz.GetAsymmUnit(), xatoms, xbonds);
-  const int part = Options.FindValue("p", "-100").ToInt();
+  int part = Options.FindValue("p", "-100").ToInt();
   const double occu = Options.FindValue("o", "-1").ToDouble();
   for (size_t i=0; i < xatoms.Count(); i++) {
     if (occu > 0)
@@ -5983,8 +5984,7 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options,
     FXApp->XFile().GetRM().Vars.FixParam(
       xatoms[i]->CAtom(), catom_var_name_Sof);
     lc.Correct(xatoms[i]->CAtom());
-    if (part != -100)
-      xatoms[i]->CAtom().SetPart(part);
+    xatoms[i]->CAtom().SetPart(-1);
   }
   if (xatoms.IsEmpty())  return;
   Macros.ProcessMacro("mode fit", E);
@@ -5994,8 +5994,9 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options,
       : NULL;
     TAfixGroup& ag = FXApp->XFile().GetRM().AfixGroups.New(pivot, afix);
     const size_t start = pivot != NULL ? 1 : 0;
-    for (size_t i=start; i < xatoms.Count(); i++)
+    for (size_t i = start; i < xatoms.Count(); i++) {
       ag.AddDependent(xatoms[i]->CAtom());
+    }
   }
   else if (Options.Contains('d')) {
     RefinementModel& rm = FXApp->XFile().GetRM();
@@ -6037,8 +6038,18 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options,
   AMode *md = Modes->GetCurrent();
   if (md != NULL) {
     md->AddAtoms(xatoms);
-    for (size_t i=0; i < xbonds.Count(); i++)
+    for (size_t i = 0; i < xbonds.Count(); i++) {
       FXApp->GetRenderer().Select(*xbonds[i], true);
+    }
+    if (part == -100) {
+      part = 0;
+    }
+    olxstr cmd = "part ";
+    cmd << part;
+    for (size_t i = 0; i < xatoms.Count(); i++) {
+      cmd << " #s" << xatoms[i]->GetOwnerId();
+    }
+    Modes->OnModeExit.Add(cmd);
   }
 }
 //..............................................................................
