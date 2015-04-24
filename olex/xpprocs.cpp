@@ -1860,7 +1860,12 @@ void TMainForm::macMode(TStrObjList &Cmds, const TParamList &Options,
   olxstr name = Cmds[0], args;
   Cmds.Delete(0);
   args << Cmds.Text(' ');
+  olxstr on_exit;
   for (size_t i = 0; i < Options.Count(); i++) {
+    if (Options.GetName(i) == 'e') {
+      on_exit = Options.GetValue(i);
+      continue;
+    }
     args << " -" << Options.GetName(i) << '=' << Options.GetValue(i);
   }
   AMode* md = Modes->SetMode(name, args);
@@ -1870,6 +1875,9 @@ void TMainForm::macMode(TStrObjList &Cmds, const TParamList &Options,
         E.ProcessingError(__OlxSrcInfo, "Current mode is unavailable");
         Modes->ClearMode(false);
         return;
+      }
+      if (!on_exit.IsEmpty()) {
+        Modes->OnModeExit.Add(on_exit);
       }
     }
     catch (const TExceptionBase& e) {

@@ -317,6 +317,8 @@ void GXLibMacros::Export(TLibrary& lib) {
     "h-excludes H atoms from matching and the RMSD calculation&;"
     "cm-copies the transformation matrix suitable for sgen to clipboard&;"
     "o-matches overlayed lattices&;"
+    "m-moves the atoms to the overlaleyd position permanently. Only valid for "
+    "two atoms groups and selection of at least three atom pairs&;"
     ,
     fpNone|fpOne|fpTwo,
     "Fragment matching, alignment and label transfer routine");
@@ -3780,7 +3782,39 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
           TNetwork::AlignInfo align_info =
             GXLibMacros_MatchAtomPairsQT(satomp, TryInvert, weight_calculator);
           TNetwork::DoAlignAtoms(atomsToTransform, align_info);
+          if (Options.GetBoolOption('m')) {
+            for (size_t ai = 0; ai < atomsToTransform.Count(); ai++) {
+              atomsToTransform[ai]->ccrd() =
+                netB.GetLattice().GetAsymmUnit().Fractionalise(
+                atomsToTransform[ai]->crd());
+              atomsToTransform[ai]->CAtom().ccrd() =
+                atomsToTransform[ai]->ccrd();
+            }
+          }
           GXLibMacros_CallMatchCallbacks(netA, netB, align_info.rmsd.GetV());
+          if (group_cnt == 2 && Options.GetBoolOption("cm")) {
+            mat3d m;
+            QuaternionToMatrix(align_info.align_out.quaternions[0], m);
+            vec3d center = align_info.align_out.center_b;
+            if (align_info.inverted) {
+              m *= -1;
+              center *= -1;
+            }
+            vec3d total_t = align_info.align_out.center_a-center*m;
+            mat3d m1 = mat3d::Transpose(
+              au.GetCellToCartesian()*m*au.GetCartesianToCell());
+            olxstr_buf mo;
+            for (int i = 0; i < 3; i++) {
+              for (int j = 0; j < 3; j++) {
+                mo << olxstr::FormatFloat(-3, m1[i][j]) << ' ';
+              }
+            }
+            vec3d center1 = au.Fractionalise(total_t);
+            for (int i = 0; i < 3; i++) {
+              mo << olxstr::FormatFloat(-3, center1[i]) << ' ';
+            }
+            app.ToClipboard(olxstr(mo));
+          }
         }
       }
     }

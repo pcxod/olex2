@@ -646,11 +646,11 @@ void TMainForm::XApp(Olex2App *XA)  {
 
   this_InitMacroD(Mode,
     "a-[name] autocomplete; [grow] grow (rebuild) asymmetric unit only; [fit] "
-      "afix\n&;"
+    "afix\n&;"
     "p-[name] prefix; [grow] inserts the new atoms into the AU with given [-1]"
-      " part value\n&;"
+    " part value\n&;"
     "s-[grow] short interactions; [name] suffix;"
-      " [fit] split, atoms to split offset [0]&;"
+    " [fit] split, atoms to split offset [0]&;"
     "t-[name] type\n&;"
     "c-[grow] covalent bonds; [move] copy fragments instead of moving\n&;"
     "r-[split] a restraint/constraint for split atoms; [grow] show radial "
@@ -658,7 +658,8 @@ void TMainForm::XApp(Olex2App *XA)  {
     "rotation by default); [name] synchronise names in the residues\n&;"
     "v-[grow] use user provided delta for connectivity analysis, default 2A\n&;"
     "shells-[grow] grow atom shells vs fragments&;"
-    "l-[name] lock atom types after naming\n&;",
+    "l-[name] lock atom types after naming\n&;"
+    "e-a macro to run on mode exit\n&;",
     (fpAny^fpNone)|psFileLoaded,
     "Turns specified mode on. Valid mode: fixu, fixc, grow, himp, match, move,"
     " name, occu, pack, part, split, fit");
