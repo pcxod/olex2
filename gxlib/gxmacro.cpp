@@ -120,7 +120,10 @@ void GXLibMacros::Export(TLibrary& lib) {
     "ao-actual occupancy (as in the ins file)&;"
     "qi-Q peak intensity&;"
     "i-display labels for identity atoms only&;"
-    "b-bond lengths&;",
+    "b-bond lengths&;"
+    "rn-residue number&;"
+    "rc-residue class&;"
+    ,
     fpAny,
     "Shows/hides atom labels. Takes no argument is given to invert current "
     "labels visibility or a boolean value");
@@ -884,6 +887,8 @@ void GXLibMacros::macLabels(TStrObjList &Cmds, const TParamList &Options,
     if (Options.Contains("co"))  lmode |= lmCOccu;
     if (Options.Contains("s"))  lmode |= lmSpec;
     if (Options.Contains("b"))  lmode |= lmBonds;
+    if (Options.Contains("rn"))  lmode |= lmResiNumber;
+    if (Options.Contains("rc"))  lmode |= lmResiName;
   }
   if (lmode == 0) {
     lmode |= lmLabels;
