@@ -279,10 +279,18 @@ void TXBond::ListDrawingStyles(TStrList &L) {
   return;
 }
 //..............................................................................
-const vec3d &TXBond::GetBaseCrd() const {
-  if (!IsValid())
+const vec3d &TXBond::GetFromCrd() const {
+  if (!IsValid()) {
     throw TFunctionFailedException(__OlxSourceInfo, "atoms are not defined");
+  }
   return A().crd();
+}
+//..............................................................................
+const vec3d &TXBond::GetToCrd() const {
+  if (!IsValid()) {
+    throw TFunctionFailedException(__OlxSourceInfo, "atoms are not defined");
+  }
+  return B().crd();
 }
 //..............................................................................
 const_strlist TXBond::ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const {
@@ -307,14 +315,14 @@ const_strlist TXBond::ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const {
   vec3d x(1, 0, 0), v = x*m;
   if (!v.IsParallel(x)) {
     mat3d cm;
-    vec3d d = vec3d(B().crd() - A().crd()).Normalise()*b;
+    vec3d d = vec3d(GetToCrd() - GetFromCrd()).Normalise()*b;
     olx_create_rotation_matrix(cm, -d, v.CAngle(d.Normal(x)));
     m *= cm;
   }
   m[0] *= Params()[4];
   m[1] *= Params()[4];
   m[2] *= Params()[3];
-  vec3d t = pov::CrdTransformer(Parent.GetBasis()).crd(GetBaseCrd());
+  vec3d t = pov::CrdTransformer(Parent.GetBasis()).crd(GetFromCrd());
   out.Add("  transform {");
   out.Add("   matrix") << pov::to_str(m, t);
   out.Add("   }");
@@ -400,7 +408,7 @@ const_strlist TXBond::ToWrl(olx_cdict<TGlMaterial, olxstr> &materials) const {
     return out;
   out.Add(" Group{ children[ Transform{");
   wrl::CrdTransformer crdt(Parent.GetBasis());
-  vec3d t = crdt.crd(GetBaseCrd());
+  vec3d t = crdt.crd(GetFromCrd());
   mat3d m;
   olx_create_rotation_matrix(m, vec3d(Params()[1], Params()[2], 0).Normalise(),
     cos(Params()[0]*M_PI/180));

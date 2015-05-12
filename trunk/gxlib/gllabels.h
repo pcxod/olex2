@@ -36,7 +36,9 @@ const uint32_t
   lmCOccu    = 0x00004000,  // chemical occupancy
   lmSpec     = 0x00008000,  // enforced special position 
 
-  lmBonds    = 0x00010000;  // exclusive for bond lengths
+  lmBonds    = 0x00010000,  // exclusive for bond lengths
+  lmResiName = 0x00020000,  // residue name
+  lmResiNumber = 0x00040000;  // residue number
 
 enum LabelMaterialIndex {
   lmiMark,

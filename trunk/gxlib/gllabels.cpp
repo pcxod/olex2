@@ -127,10 +127,22 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
       const TCAtom& ca = XA.CAtom();
       olxstr Tmp(EmptyString(), 48);
       if( (Mode & lmLabels) != 0 )  {
-        Tmp << XA.CAtom().GetResiLabel();
+        Tmp << XA.CAtom().GetLabel();
       }
-      if( (Mode & lmPart) != 0 && ca.GetPart() != 0 )  {
-        if( !Tmp.IsEmpty() )  Tmp << ", ";
+      if ((Mode & lmResiName) != 0 && XA.CAtom().GetResiId() != 0) {
+        if (!Tmp.IsEmpty()) Tmp << ", ";
+        Tmp << rm.aunit.GetResidue(XA.CAtom().GetResiId()).GetClassName();
+      }
+      if ((Mode & lmResiNumber) != 0 && XA.CAtom().GetResiId() != 0) {
+        if (!Tmp.IsEmpty()) Tmp << ", ";
+        TResidue &r = rm.aunit.GetResidue(XA.CAtom().GetResiId());
+        Tmp << r.GetNumber();
+        if (r.GetAlias() != r.GetNumber()) {
+          Tmp << '(' << r.GetAlias() << ')';
+        }
+      }
+      if ((Mode & lmPart) != 0 && ca.GetPart() != 0)  {
+        if (!Tmp.IsEmpty()) Tmp << ", ";
         Tmp << (int)ca.GetPart();
       }
       if ((Mode & lmSpec) != 0 && ca.GetSpecialPositionDeviation() > 1e-3) {

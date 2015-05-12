@@ -27,6 +27,9 @@ public:
 
   vec3d& Base()  {  return FBase;  }
   vec3d& Edge()  {  return FEdge;  }
+  
+  virtual const vec3d& GetFromCrd() const { return FBase; }
+  virtual const vec3d& GetToCrd() const { return FEdge; }
 
   bool IsVisible() const {  return TXBond::IsVisible();  }
   void SetVisible(bool v) {  TXBond::SetVisible(v);  }
@@ -40,7 +43,6 @@ public:
   void SetLength(double V)  {  Params()[3] = V;  }
   double GetLength() const {  return Params()[3]; }
 
-  const vec3d &GetBaseCrd() const {  return FBase;  }
   void ToDataItem(TDataItem &di) const;
   void FromDataItem(const TDataItem &di);
   const_strlist ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const {

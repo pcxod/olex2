@@ -3751,7 +3751,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
       throw TFunctionFailedException(__OlxSourceInfo, e);
     }
   }
-  TStrList _loop_names_to_skip("_atom_site;_geom;_space_group", ';');
+  TStrList _loop_names_to_skip("_atom;_geom;_space_group", ';');
   TCif *Cif;
   olx_object_ptr<TCif> Cif2(new TCif);
   if (xapp.CheckFileType<TCif>())

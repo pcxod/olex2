@@ -96,7 +96,8 @@ public:
   const_strlist ToWrl(olx_cdict<TGlMaterial, olxstr> &materials) const;
   static const_strlist WrlDeclare(TGlRenderer &p);
 
-  virtual const vec3d &GetBaseCrd() const;
+  virtual const vec3d &GetFromCrd() const;
+  virtual const vec3d &GetToCrd() const;
 
   static olxstr_dict<olxstr> &NamesRegistry() {
     static olxstr_dict<olxstr> nr;
