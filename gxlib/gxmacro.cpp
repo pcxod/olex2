@@ -2860,7 +2860,16 @@ void GXLibMacros::macEsd(TStrObjList &Cmds, const TParamList &Options,
           b2.A().GetLabel() << '-' << b2.B().GetLabel() << " angle: " <<
           v.ToString() << '(' << v1.ToString() << ')';
       }
-      else if(
+      else if ((EsdlInstanceOf(sel[0], TXBond) && EsdlInstanceOf(sel[1], TXAtom)) ||
+        (EsdlInstanceOf(sel[1], TXBond) && EsdlInstanceOf(sel[0], TXAtom)))
+      {
+        const TXBond &b = (TXBond&)(EsdlInstanceOf(sel[0], TXBond) ? sel[0] : sel[1]);
+        const TXAtom &a = (TXAtom&)(EsdlInstanceOf(sel[0], TXBond) ? sel[1] : sel[0]);
+        values.Add(a.GetLabel()) << " to " <<
+          b.A().GetLabel() << '-' << b.B().GetLabel() << " distance: " <<
+          vcovc.CalcAtomToVectorDistance(a, b.A(), b.B()).ToString();
+      }
+      else if (
         (EsdlInstanceOf(sel[0], TXAtom) && EsdlInstanceOf(sel[1], TXPlane)) ||
         (EsdlInstanceOf(sel[1], TXAtom) && EsdlInstanceOf(sel[0], TXPlane)))
       {
@@ -2961,6 +2970,10 @@ void GXLibMacros::macEsd(TStrObjList &Cmds, const TParamList &Options,
           << " angle (numerical): " << vcovc.CalcAngle(a1, a2, a3).ToString();
         values.Add(a1.GetLabel()) << '-' << a2.GetLabel() << '-' << a3.GetLabel()
           << " angle (analytical): " << vcovc.CalcAngleA(a1, a2, a3).ToString();
+
+        values.Add(a1.GetLabel()) << " to " <<
+          a2.GetLabel() << '-' << a3.GetLabel() << " distance: " <<
+          vcovc.CalcAtomToVectorDistance(a1, a2, a3).ToString();
       }
       else if(
         (EsdlInstanceOf(sel[0], TXPlane) && EsdlInstanceOf(sel[1], TXAtom) &&
