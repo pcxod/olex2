@@ -317,5 +317,13 @@ void TGlXApp::OnCmd(olxCommandEvent &evt) {
   }
 }
 //..............................................................................
+void TGlXApp::MacOpenFile(const wxString &fileName) {
+  try {
+    GetMainForm()->processMacro(olxstr("reap ").quote('"') << fileName);
+  }
+  catch (const TExceptionBase &e) {
+    TBasicApp::NewLogEntry(logException) << e;
+  }
+}
 
 IMPLEMENT_APP(TGlXApp)

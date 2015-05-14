@@ -29,6 +29,7 @@ private:
   void OnNavigation(wxNavigationKeyEvent& event);
   void OnIdle(wxIdleEvent& event);
   void OnCmd(olxCommandEvent &evt);
+  void MacOpenFile(const wxString &fileName);
 public:
   TGlXApp() : pid_file(NULL)  {}
   bool Dispatch();
