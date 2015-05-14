@@ -28,7 +28,9 @@ AGOSettings::AGOSettings(TGlRenderer &p, const olxstr &name)
   SetToDelete(false);
   style = &parent.GetStyles().NewStyle(name, true);
   style->SetPersistent(true);
-  parent.GetStyles().OnClear.Add(this);
+  // manage this from the parent object just to make sure
+  // make sure this is called first!
+  //parent.GetStyles().OnClear.InsertFirst(this);
 }
 //..............................................................................
 AGOSettings::~AGOSettings() {
@@ -132,15 +134,22 @@ TGlRenderer::~TGlRenderer()  {
     delete [] poly_stipple;
 }
 //..............................................................................
-bool TGlRenderer::Enter(const IOlxObject *s, const IOlxObject *, TActionQueue *) {
+bool TGlRenderer::Enter(const IOlxObject *s, const IOlxObject *d, TActionQueue *q) {
   if (s != &Styles) return false;
-  for (size_t i = 0; i < FCollections.Count(); i++)
+  for (size_t i = 0; i < ObjectSettings.Count(); i++) {
+    ObjectSettings.GetValue(i)->Enter(s, d, q);
+  }
+  for (size_t i = 0; i < FCollections.Count(); i++) {
     FCollections.GetValue(i)->SetStyle(NULL);
+  }
   return true;
 }
 //..............................................................................
-bool TGlRenderer::Exit(const IOlxObject *s, const IOlxObject *, TActionQueue *) {
+bool TGlRenderer::Exit(const IOlxObject *s, const IOlxObject *d, TActionQueue *q) {
   if (s != &Styles) return false;
+  for (size_t i = 0; i < ObjectSettings.Count(); i++) {
+    ObjectSettings.GetValue(i)->Exit(s, d, q);
+  }
   for (size_t i = 0; i < FCollections.Count(); i++) {
     FCollections.GetValue(i)->SetStyle(
       &Styles.NewStyle(FCollections.GetValue(i)->GetName(), true));

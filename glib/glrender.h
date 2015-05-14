@@ -53,8 +53,6 @@ protected:
   TGlRenderer &parent;
   olxstr name;
   TGraphicsStyle *style;
-  bool Enter(const IOlxObject *, const IOlxObject *, TActionQueue *);
-  bool Exit(const IOlxObject *, const IOlxObject *, TActionQueue *);
   virtual void OnStyleChange() = 0;;
 public:
   AGOSettings(TGlRenderer &p, const olxstr &name);
@@ -68,6 +66,8 @@ public:
     return v != -1 ? v
       : (v = style->GetNumParam(name, def, true));
   }
+  bool Enter(const IOlxObject *, const IOlxObject *, TActionQueue *);
+  bool Exit(const IOlxObject *, const IOlxObject *, TActionQueue *);
 };
 
 class TGlRenderer : public AActionHandler {
