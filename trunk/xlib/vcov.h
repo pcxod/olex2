@@ -438,12 +438,27 @@ public:
       return acos(ca)*180.0/M_PI;
     }
   };
-  // point centroid to point distance
+  // point to point distance
   template <class aT, class bT> struct Distance  {
     aT a;
     bT b;
     Distance(const aT& _a, const bT& _b) : a(_a), b(_b)  {}
     double calc() const {  return a.evaluate().DistanceTo(b.evaluate());  }
+  };
+  // point to vector distance
+  template <class aT, class bT, class cT> struct PointToVectorDistance  {
+    aT p;
+    bT a;
+    cT b;
+    PointToVectorDistance(const aT& _p, const bT& _a, const cT& _b)
+      : p(_p), a(_a), b(_b)
+    {}
+    double calc() const {
+      vec3d ap = a.evaluate(),
+        av = p.evaluate() - ap,
+        bv = (b.evaluate() - ap).Normalise();
+      return (av - (bv*bv.DotProd(av))).Length();
+    }
   };
   // octahedral distortion (in degrees), using best plane approach
   struct OctahedralDistortionBP {
@@ -962,6 +977,17 @@ public:
       ch.DoCalc(CalcWrapper::Make(od, &OctahedralDistortion::calc_d_cent)));
     return rv;
   }
+  //atom to vector distance
+  TEValue<double> CalcAtomToVectorDistance(const TSAtom& p, const TSAtom& a,
+    const TSAtom& b)
+  {
+    TSAtom const * as[] = { &p, &a, &b };
+    CalcHelper ch(*this, Composite::ConstPlainVector(as, 3));
+    return ch.DoCalc(
+      PointToVectorDistance<pnt_pt, pnt_pt, pnt_pt>(
+      pnt_pt(ch.points[0]), pnt_pt(ch.points[1]), pnt_pt(ch.points[2])));
+  }
+
   const VcoVMatrix& GetMatrix() const { return vcov; }
 };
 
