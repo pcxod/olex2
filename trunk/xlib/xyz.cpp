@@ -71,7 +71,7 @@ void TXyz::LoadFromStrings(const TStrList &Strings) {
         au.GetAxes()[i] = 1;
       }
     }
-    au.GetAxes() += 0.5;
+    au.GetAxes() += 2;
     for (size_t i = 0; i < au.AtomCount(); i++) {
       TCAtom &a = au.GetAtom(i);
       a.ccrd() /= au.GetAxes();
