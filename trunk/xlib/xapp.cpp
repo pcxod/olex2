@@ -809,8 +809,16 @@ void TXApp::FromDataItem(TDataItem& item)  {
 }
 //..............................................................................
 olxstr TXApp::InitVcoV(VcoVContainer& vcovc) const {
-  const olxstr shelx_fn = TEFile::ChangeFileExt(XFile().GetFileName(), "mat");
-  const olxstr smtbx_fn = TEFile::ChangeFileExt(XFile().GetFileName(), "vcov");
+  olxstr fn = XFile().GetFileName();
+  if (XFile().LastLoader()->IsNative()) {
+    olxstr md = XFile().LastLoader()->GetRM().GetModelSource();
+    if (!md.IsEmpty()) {
+      fn = TEFile::ExtractFilePath(XFile().GetFileName());
+      TEFile::AddPathDelimeterI(fn) << md;
+    }
+  }
+  const olxstr shelx_fn = TEFile::ChangeFileExt(fn, "mat");
+  const olxstr smtbx_fn = TEFile::ChangeFileExt(fn, "vcov");
   bool shelx_exists = TEFile::Exists(shelx_fn),
     smtbx_exists = TEFile::Exists(smtbx_fn);
   olxstr src_mat;

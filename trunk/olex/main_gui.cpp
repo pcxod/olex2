@@ -130,6 +130,16 @@ void TMainForm::OnAtomConnChange(wxCommandEvent& event)  {
       return;
     }
   }
+  else if (event.GetId() == ID_AtomFree || event.GetId() == ID_AtomBind) {
+    tmp = (event.GetId() == ID_AtomBind ? "AddBond" : "DelBond");
+    TXAtomPList atoms = FXApp->GetRenderer().GetSelection().Extract<TXAtom>();
+    if (atoms.Count() == 2) {
+      tmp << " #s" << atoms[0]->GetOwnerId() << " #s" << atoms[1]->GetOwnerId();
+      processMacro(tmp);
+      TimePerFrame = FXApp->Draw();
+    }
+    return;
+  }
   else {
     tmp << TStrList(pmAtomConn->GetLabel(event.GetId()), ' ')[0];
   }
@@ -528,6 +538,18 @@ void TMainForm::ObjectUnderMouse(AGDrawObject *G)  {
         pmAtomConn->Check(ID_AtomConnChangeLast, true);
         pmAtom->SetLabel(ID_AtomConnChangeLast,
           wxString("Custom: ") << bonds);
+      }
+    }
+    // free/bind
+    {
+      pmAtomConn->Enable(ID_AtomFree, false);
+      pmAtomConn->Enable(ID_AtomBind, false);
+      TGlGroup &sel = FXApp->GetRenderer().GetSelection();
+      if (sel.Count() == 2 && (&sel[0] == XA || &sel[1] == XA)) {
+        TXAtom &a = (TXAtom &)(&sel[0] == XA ? sel[1] : sel[0]);
+        bool v = a.IsConnectedTo(*XA);
+        pmAtomConn->Enable(ID_AtomFree, v);
+        pmAtomConn->Enable(ID_AtomBind, !v);
       }
     }
     // poly

@@ -160,7 +160,7 @@ void TSRestraintList::Assign(const TSRestraintList& rl)  {
     throw TInvalidArgumentException(__OlxSourceInfo, "list type mismatch");
 
   Clear();
-  for( size_t i=0; i < rl.Count(); i++)  {
+  for (size_t i=0; i < rl.Count(); i++) {
     AddNew().Assign(rl.Restraints[i]);
   }
 }

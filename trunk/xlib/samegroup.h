@@ -40,7 +40,7 @@ public:
   // this is called internally by the RM
   void OnAUUpdate() { Atoms.OnAUUpdate(); }
   void BeginAUSort() { Atoms.BeginAUSort(); }
-  void EndAUSort() { Atoms.EndAUSort(); }
+  void EndAUSort() { Atoms.EndAUSort(true); }
 
   void Clear() {
     SetAtomIds(~0);

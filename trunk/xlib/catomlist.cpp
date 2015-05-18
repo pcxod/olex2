@@ -758,9 +758,10 @@ void AtomRefList::BeginAUSort() {
   expression = BuildExpression(NULL);
 }
 //.............................................................................
-void AtomRefList::EndAUSort() {
+void AtomRefList::EndAUSort(bool allow_implicit) {
   /* In order to avoid the H atoms, Tags are used */
-  if (!IsExplicit() || refs.Count() <= 3) return;
+  if (!IsExplicit() || refs.Count() <= 3 || !allow_implicit)
+    return;
   index_t start_id = ((ExplicitCAtomRef &)refs[0]).GetAtom().GetTag(),
     end_id = ((ExplicitCAtomRef &)refs.GetLast()).GetAtom().GetTag(),
     start=0, cur_id = start_id;
