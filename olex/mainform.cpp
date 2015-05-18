@@ -298,6 +298,8 @@ TMainForm::TMainForm(TGlXApp *Parent)
     Bind(wxEVT_MENU, &TMainForm::OnAtomOccuChange, this, ID_AtomOccuFix);
     Bind(wxEVT_MENU, &TMainForm::OnAtomOccuChange, this, ID_AtomOccuFixCurrent);
     Bind(wxEVT_MENU, &TMainForm::OnAtomConnChange, this, ID_AtomConnChangeLast);
+    Bind(wxEVT_MENU, &TMainForm::OnAtomConnChange, this, ID_AtomFree);
+    Bind(wxEVT_MENU, &TMainForm::OnAtomConnChange, this, ID_AtomBind);
     Bind(wxEVT_MENU, &TMainForm::OnAtomPolyChange, this, ID_AtomPolyNone);
     Bind(wxEVT_MENU, &TMainForm::OnAtomPolyChange, this, ID_AtomPolyAuto);
     Bind(wxEVT_MENU, &TMainForm::OnAtomPolyChange, this, ID_AtomPolyRegular);
@@ -1120,6 +1122,9 @@ void TMainForm::XApp(Olex2App *XA)  {
       Bind(wxEVT_COMMAND_MENU_SELECTED,
         &TMainForm::OnAtomConnChange, this, ID_AtomConnChange + i);
     }
+    pmAtomConn->AppendSeparator();
+    pmAtomConn->Append(ID_AtomBind, wxT("Create bond"));
+    pmAtomConn->Append(ID_AtomFree, wxT("Remove bond"));
 
     pmAtomPoly->AppendRadioItem(ID_AtomPolyNone, wxT("None"));
     pmAtomPoly->AppendRadioItem(ID_AtomPolyAuto, wxT("Auto"));

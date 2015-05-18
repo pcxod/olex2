@@ -262,7 +262,7 @@ public:
   /* sorts the references by atom tag */
   void SortByTag(const TPtrList<AtomRefList> &sync);
   void BeginAUSort();
-  void EndAUSort();
+  void EndAUSort(bool allow_implicit);
 };
 
 EndXlibNamespace()

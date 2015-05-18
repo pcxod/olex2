@@ -122,8 +122,9 @@ void TXBond::Create(const olxstr& cName) {
       GlP.StartList();
       GlP.CallList(SGlP);
       GlP.EndList();
-      TGlMaterial* style_mat =
-        legend_level == 3 ? GS.FindMaterial(primitives[i]) : NULL;
+      //TGlMaterial* style_mat =
+      //  legend_level == 3 ? GS.FindMaterial(primitives[i]) : NULL;
+      TGlMaterial* style_mat = GS.FindMaterial(primitives[i]);
       if (IsValid()) {
         if( style_mat != NULL )
           GlP.SetProperties(*style_mat);

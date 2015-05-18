@@ -102,6 +102,8 @@ enum  {
   ID_MenuAtomConn,
   ID_AtomConnChange,
   ID_AtomConnChangeLast = ID_AtomConnChange + 8,
+  ID_AtomBind,
+  ID_AtomFree,
 
   ID_MenuAtomUiso,
   ID_AtomUisoCustom,
