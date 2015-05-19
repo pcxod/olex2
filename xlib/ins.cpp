@@ -2118,7 +2118,7 @@ bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& _toks)  {
     try  {
       rm.AddUsedSymm(TSymmParser::SymmToMatrix(toks.Text(EmptyString(), 2)), toks[1]);
     }
-    catch(const TExceptionBase &e)  {
+    catch(const TExceptionBase &e) {
       throw TFunctionFailedException(__OlxSourceInfo, e, "to parse EQIV");
     }
     return true;
@@ -2186,7 +2186,7 @@ bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& _toks)  {
   else if( ins_name.Equalsi("SIMU") )  {
     srl = &rm.rSIMU;
     Esd1Mult = 2;
-    DefVal = 1.7;
+    DefVal = 2;
     RequiredParams = 0;  AcceptsParams = 3;
     Vals[0] = &esd;  Vals[1] = &esd1;  Vals[2] = &DefVal;
     AcceptsAll = true;

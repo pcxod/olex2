@@ -30,6 +30,7 @@ protected:
   virtual bool IsMaskSaveable() const {  return false;  }
   virtual bool IsStyleSaveable() const {  return false; }
   virtual bool IsRadiusSaveable() const {  return false; }
+  void EvaluatePrimitiveMaterial(TGlPrimitive &p, TGraphicsStyle &s) const;
 public:
   TXBond(TNetwork* net, TGlRenderer& Render, const olxstr& collectionName);
   void Create(const olxstr& cName=EmptyString());

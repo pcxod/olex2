@@ -12,19 +12,17 @@
 #include "ctrls.h"
 #include "gxapp.h"
 
-class TdlgMatProp: public TDialog, public AActionHandler  {
+class TdlgMatProp: public TDialog, public AActionHandler {
 private:
   wxCheckBox *cbAmbF, *cbAmbB, *cbDiffF, *cbDiffB, *cbEmmF, *cbEmmB,
       *cbSpecF, *cbSpecB, *cbShnF, *cbShnB, *cbTrans, *cbIDraw,
       *cbBlend;
   TTextEdit *tcAmbF, *tcAmbB, *tcDiffF, *tcDiffB, *tcEmmF, *tcEmmB,
       *tcSpecF, *tcSpecB, *tcShnF, *tcShnB;
-  TSpinCtrl *scAmbF, *scAmbB, *scDiffF, *scDiffB, *scEmmF, *scEmmB,
-      *scSpecF, *scSpecB, *scTrans;
+  TSpinCtrl *scBlend, *scTrans;
   wxButton* bEditFont;
   wxComboBox *cbApplyTo;
-  TComboBox *cbPrimitives;
-  TPtrList<TSpinCtrl> SpinCtrls;
+  TChoice *cbPrimitives;
 protected:
   void OnOK(wxCommandEvent& event);
   bool Execute(const IOlxObject *, const IOlxObject *, TActionQueue *);

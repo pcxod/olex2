@@ -188,7 +188,7 @@ void Index::Create(const olxstr &folder, const olxstr& index_name)  {
       << masks[i]) << ' ' << masks[i].ToUpperCase();
   }
   TBasicApp::NewLogEntry() << "  files";
-  root.name = TEFile::UnixPath(folder);
+  root.name = TEFile::OSPath(folder);
   root.Init(ft.GetRoot());
   LastUpdated = TETime::EpochTime();
   SaveToFile(index_name);
@@ -521,7 +521,7 @@ void IndexManager::LoadConfig(const olxstr &file_name)  {
       }
       Item &itm = indices.AddNew();
       itm.index_file_name = fn;
-      itm.root = TEFile::UnixPathI(TEFile::TrimPathDelimeterI(root_dir));
+      itm.root = TEFile::OSPathI(TEFile::TrimPathDelimeterI(root_dir));
       itm.update = idx.GetFieldByName("update").ToBool();
     }
   }
@@ -557,7 +557,7 @@ void IndexManager::Update(const olxstr &cfg_name, const olxstr &folder_name,
       if( TEFile::Exists(indices[i].index_file_name) )  {
         indices[i].root =
           Index::Update(indices[i].index_file_name, indices[i].root);
-        roots.Add(TEFile::UnixPath(indices[i].root));
+        roots.Add(TEFile::OSPath(indices[i].root));
       }
     }
     catch(...)  {
@@ -568,7 +568,7 @@ void IndexManager::Update(const olxstr &cfg_name, const olxstr &folder_name,
   if( !folder_name.IsEmpty() && TEFile::Exists(folder_name) &&
       !index_name.IsEmpty() )
   {
-    if( roots.IndexOf(TEFile::UnixPath(folder_name)) != InvalidIndex )  {
+    if( roots.IndexOf(TEFile::OSPath(folder_name)) != InvalidIndex )  {
       TBasicApp::NewLogEntry() <<
         (olxstr("Skipping duplicate mounting point: ").quote() << folder_name);
     }
@@ -583,7 +583,7 @@ void IndexManager::Update(const olxstr &cfg_name, const olxstr &folder_name,
     if( !indices[i].update ) continue;
     try  {
       if( !TEFile::Exists(indices[i].index_file_name) )  {
-        if( roots.IndexOf(TEFile::UnixPath(indices[i].root)) !=
+        if( roots.IndexOf(TEFile::OSPath(indices[i].root)) !=
             InvalidIndex )
         {
           TBasicApp::NewLogEntry() <<
