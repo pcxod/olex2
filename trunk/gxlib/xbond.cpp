@@ -60,6 +60,37 @@ void TXBond::Update() {
   }
 }
 //..............................................................................
+void TXBond::EvaluatePrimitiveMaterial(TGlPrimitive &p, TGraphicsStyle &s) const {
+  if (IsValid()) {
+    TGlMaterial m;
+    if (p.Params.GetLast() == ddsDefAtomA ||
+      p.Params.GetLast() == ddsDef)
+    {
+      if (!A().IsCreated())
+        A().Create();
+      const size_t mi = A().Style().IndexOfMaterial("Sphere");
+      if (mi != InvalidIndex)
+        m = A().Style().GetPrimitiveStyle(mi).GetProperties();
+      else
+        TXAtom::GetDefSphereMaterial(A(), m, A().GetSettings());
+    }
+    else {
+      if (!B().IsCreated())
+        B().Create();
+      const size_t mi = B().Style().IndexOfMaterial("Sphere");
+      if (mi != InvalidIndex)
+        m = B().Style().GetPrimitiveStyle(mi).GetProperties();
+      else
+        TXAtom::GetDefSphereMaterial(B(), m, B().GetSettings());
+    }
+    p.SetProperties(s.GetMaterial(p.GetName(), m));
+  }
+  else {  // no atoms
+    p.SetProperties(s.GetMaterial(p.GetName(),
+      TGlMaterial("85;2155839359;2155313015;1.000,1.000,1.000,0.502;36")));
+  }
+}
+//..............................................................................
 void TXBond::Create(const olxstr& cName) {
   SetCreated(true);
   olxstr Legend;
@@ -92,24 +123,42 @@ void TXBond::Create(const olxstr& cName) {
   // find collection
   olxstr NewL;
   TGPCollection* GPC = Parent.FindCollectionX(Legend, NewL);
-  if( GPC == NULL )
+  if (GPC == NULL)
     GPC = &Parent.NewCollection(NewL);
-  else if( GPC->PrimitiveCount() != 0 )  {
+  else if (GPC->PrimitiveCount() != 0) {
     GPC->AddObject(*this);
     Params()[4] = GPC->GetStyle().GetNumParam('R', defs.GetRadius());
     return;
   }
   TGraphicsStyle& GS = GPC->GetStyle();
   GS.SetSaveable(IsStyleSaveable());
+  Params()[4] = GS.GetNumParam('R', defs.GetRadius());
   GPC->AddObject(*this);
   const int PrimitiveMask = GetPrimitiveMask();
-  if (PrimitiveMask == 0)
-    return;  // nothing to create then...
+  if (PrimitiveMask == 0 || primitives.IsEmpty()) { // nothing to create
+    return;
+  }
+  else if (PrimitiveMask == 1) { // special case
+    TGlPrimitive* SGlP = primitives.GetObject(0);
+    TGlPrimitive& GlP = GPC->NewPrimitive(primitives[0], sgloCommandList);
+    GlP.Params.Resize(GlP.Params.Count()+1);
+    GlP.Params.GetLast() = SGlP->Params.GetLast();
+    GlP.StartList();
+    GlP.CallList(SGlP);
+    GlP.EndList();
+    TGlMaterial * m = defs.GetStyle()->FindMaterial("Single cone", 0);
+    if (m != 0) {
+      GlP.SetProperties(GS.GetMaterial(primitives[0], *m));
+    }
+    else {
+      EvaluatePrimitiveMaterial(GlP, GS);
+    }
+    return;
+  }
 
-  Params()[4]= GS.GetNumParam('R', defs.GetRadius());
   const uint16_t legend_level = TXAtom::LegendLevel(GetPrimitives().GetName());
-  for (size_t i=0; i < primitives.Count(); i++) {
-    if( (PrimitiveMask & (1<<i)) != 0 ) {
+  for (size_t i = 0; i < primitives.Count(); i++) {
+    if ((PrimitiveMask & (1<<i)) != 0) {
       TGlPrimitive* SGlP = primitives.GetObject(i);
       TGlPrimitive& GlP = GPC->NewPrimitive(primitives[i], sgloCommandList);
       if (i >= 14) {
@@ -122,43 +171,14 @@ void TXBond::Create(const olxstr& cName) {
       GlP.StartList();
       GlP.CallList(SGlP);
       GlP.EndList();
-      //TGlMaterial* style_mat =
-      //  legend_level == 3 ? GS.FindMaterial(primitives[i]) : NULL;
-      TGlMaterial* style_mat = GS.FindMaterial(primitives[i]);
-      if (IsValid()) {
-        if( style_mat != NULL )
-          GlP.SetProperties(*style_mat);
-        else {
-          TGlMaterial RGlM;
-          if (SGlP->Params.GetLast() == ddsDefAtomA ||
-              SGlP->Params.GetLast() == ddsDef)
-          {
-            if (!A().IsCreated())
-              A().Create();
-            const size_t mi = A().Style().IndexOfMaterial("Sphere");
-            if (mi != InvalidIndex)
-              RGlM = A().Style().GetPrimitiveStyle(mi).GetProperties();
-            else
-              TXAtom::GetDefSphereMaterial(A(), RGlM, A().GetSettings());
-          }
-          else if (SGlP->Params.GetLast() == ddsDefAtomB) {
-            if (!B().IsCreated())
-              B().Create();
-            const size_t mi = B().Style().IndexOfMaterial("Sphere");
-            if (mi != InvalidIndex)
-              RGlM = B().Style().GetPrimitiveStyle(mi).GetProperties();
-            else
-              TXAtom::GetDefSphereMaterial(B(), RGlM, B().GetSettings());
-          }
-          if (legend_level == 4)
-            GlP.SetProperties(GS.GetMaterial(primitives[i], RGlM));
-          else // must be updated from atoms always
-            GlP.SetProperties(RGlM);
-        }
+      TGlMaterial* style_mat =
+        legend_level == 3 ? GS.FindMaterial(primitives[i]) : NULL;
+      //TGlMaterial* style_mat = GS.FindMaterial(primitives[i]);
+      if (style_mat != NULL) {
+        GlP.SetProperties(*style_mat);
       }
-      else {  // no atoms
-        GlP.SetProperties(GS.GetMaterial(primitives[i],
-          TGlMaterial("85;2155839359;2155313015;1.000,1.000,1.000,0.502;36")));
+      else {
+        EvaluatePrimitiveMaterial(GlP, GS);
       }
     }
   }
@@ -167,44 +187,18 @@ void TXBond::Create(const olxstr& cName) {
 void TXBond::UpdateStyle() {
   TGPCollection &gpc = GetPrimitives();
   const uint16_t legend_level = TXAtom::LegendLevel(gpc.GetName());
-  if( legend_level == 3 )  // is user managed?
+  if (legend_level == 3)  // is user managed?
     return;
   TGraphicsStyle& GS = gpc.GetStyle();
   const int PrimitiveMask = GetPrimitiveMask();
   const TStringToList<olxstr, TGlPrimitive*> &primitives =
     GetSettings().GetPrimitives();
   for (size_t i = 0; i < primitives.Count(); i++) {
-    if( (PrimitiveMask & (1<<i)) != 0 )  {
-      TGlPrimitive *SGlP = primitives.GetObject(i);
+    if ((PrimitiveMask & (1<<i)) != 0) {
       TGlPrimitive *GlP = gpc.FindPrimitiveByName(primitives[i]);
       if (GlP == NULL)  // must not ever happen...
         continue;
-      if( IsValid() )  {
-        TGlMaterial RGlM;
-        if( SGlP->Params.GetLast() == ddsDefAtomA || SGlP->Params.GetLast() == ddsDef )  {
-          if( !A().IsCreated() )
-            A().Create();
-          const size_t mi = A().Style().IndexOfMaterial("Sphere");
-          if( mi != InvalidIndex )
-            RGlM = A().Style().GetPrimitiveStyle(mi).GetProperties();
-          else
-            TXAtom::GetDefSphereMaterial(A(), RGlM, A().GetSettings());
-        }
-        else if( SGlP->Params.GetLast() == ddsDefAtomB )  {
-          if( !B().IsCreated() )
-            B().Create();
-          const size_t mi = B().Style().IndexOfMaterial("Sphere");
-          if( mi != InvalidIndex )
-            RGlM = B().Style().GetPrimitiveStyle(mi).GetProperties();
-          else
-            TXAtom::GetDefSphereMaterial(B(), RGlM, B().GetSettings());
-        }
-        GlP->SetProperties(RGlM);
-      }
-      else {  // no atoms
-        GlP->SetProperties(GS.GetMaterial(primitives[i],
-          TGlMaterial("85;2155839359;2155313015;1.000,1.000,1.000,0.502;36")));
-      }
+      EvaluatePrimitiveMaterial(*GlP, GS);
     }
   }
 }

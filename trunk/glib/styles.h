@@ -142,8 +142,8 @@ public:
   }
   // finds primitive material index (in local primitive styles)
   template <class T> size_t IndexOfMaterial(const T& PName) const {
-    for( size_t i=0; i < PStyles.Count(); i++ )
-      if( PStyles[i]->GetName() == PName )
+    for (size_t i=0; i < PStyles.Count(); i++)
+      if (PStyles[i]->GetName() == PName)
         return i;
     return InvalidIndex;
   }
@@ -229,7 +229,25 @@ public:
       Styles.Delete(index);
     }
   }
-  TGraphicsStyle& NewStyle(const olxstr& Name, bool Force=false);
+  //removes a style by name
+  template <typename T> bool RemoveStyle(const T &name) {
+    const size_t index = Styles.IndexOf(name);
+    if (index != InvalidIndex) {
+      delete Styles.GetValue(index);
+      Styles.Delete(index);
+      return true;
+    }
+    return false;
+  }
+  template <typename T> bool RemoveMaterial(const T &name) {
+    const size_t index = IndexOfMaterial(name);
+    if (index != InvalidIndex) {
+      PStyles.Delete(index); // managed by Parent
+      return true;
+    }
+    return false;
+  }
+  TGraphicsStyle& NewStyle(const olxstr& Name, bool Force = false);
   // if force = true, then whole path "a.b.c" will be created
   inline uint16_t GetLevel() const {  return Level; }
 

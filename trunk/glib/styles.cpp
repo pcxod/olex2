@@ -44,6 +44,7 @@ void TGraphicsStyle::Clear() {
   for (size_t i =0; i < Styles.Count(); i++)
     delete Styles.GetValue(i);
   Styles.Clear();
+  PStyles.Clear();
   Params.Clear();
 }
 //..............................................................................
@@ -266,7 +267,7 @@ void TGraphicsStyle::RemoveNonSaveable() {
 }
 //..............................................................................
 void TGraphicsStyle::RemoveNamedStyles(const TStrList& toks) {
-  if (toks.Count() < Level) return;
+  if (toks.Count() <= Level) return;
   const size_t i = Styles.IndexOf(toks[Level]);
   if (i != InvalidIndex) {
     if (toks.Count() == size_t(Level+1)) {

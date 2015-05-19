@@ -5461,6 +5461,48 @@ void TMainForm::macSetMaterial(TStrObjList &Cmds, const TParamList &Options, TMa
     mat = &ErrorFontColor;
   else if (Cmds[0] == "exception")
     mat = &ExceptionFontColor;
+  else if (Cmds[0].Equalsi("SingleCone")) {
+    const olxstr sn = "Single cone";
+    TXBond::Settings &st = TXBond::Settings::GetInstance(FXApp->GetRenderer());
+    olx_object_ptr<TGlMaterial> m;
+    if (Cmds[1].Equalsi("None")) {
+      st.GetStyle()->RemoveMaterial(sn);
+    }
+    else {
+      m = new TGlMaterial(Cmds[1]);
+      st.GetStyle()->SetMaterial(sn, m.get());
+    }
+    TGXApp::BondIterator bi = FXApp->GetBonds();
+    sorted::PointerPointer<TGPCollection> processed;
+    if (m.is_valid()) {
+      while (bi.HasNext()) {
+        TXBond &b = bi.Next();
+        if (b.GetPrimitiveMask() != 1) continue;
+        TGPCollection &gpc = b.GetPrimitives();
+        if (processed.Contains(&gpc)) {
+          continue;
+        }
+        processed.Add(&gpc);
+        gpc.GetStyle().SetMaterial(sn, m);
+        gpc.GetPrimitive(0).SetProperties(m);
+      }
+    }
+    else {
+      while (bi.HasNext()) {
+        TXBond &b = bi.Next();
+        if (b.GetPrimitiveMask() != 1) continue;
+        TGPCollection &gpc = b.GetPrimitives();
+        if (!processed.Contains(&gpc)) {
+          gpc.GetStyle().Clear();
+          gpc.ClearPrimitives();
+          gpc.ClearObjects();
+          processed.Add(&gpc);
+        }
+        b.Create();
+      }
+    }
+    return;
+  }
   if (mat == NULL) {
     E.SetUnhandled(true);
   }

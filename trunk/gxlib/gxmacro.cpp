@@ -320,7 +320,7 @@ void GXLibMacros::Export(TLibrary& lib) {
     "h-excludes H atoms from matching and the RMSD calculation&;"
     "cm-copies the transformation matrix suitable for sgen to clipboard&;"
     "o-matches overlayed lattices&;"
-    "m-moves the atoms to the overlaleyd position permanently. Only valid for "
+    "m-moves the atoms to the overlayed position permanently. Only valid for "
     "two atoms groups and selection of at least three atom pairs&;"
     ,
     fpNone|fpOne|fpTwo,
@@ -1941,8 +1941,12 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
   else if (Cmds.Count() == 1 && Cmds[0].Equalsi("bonds")) {
     if (flag == glSelectionNone) flag = glSelectionSelect;
     TGXApp::BondIterator bi = app.GetBonds();
-    while (bi.HasNext())
-      app.GetRenderer().Select(bi.Next(), flag);
+    while (bi.HasNext()) {
+      TXBond &b = bi.Next();
+      if (b.IsVisible()) {
+        app.GetRenderer().Select(b, flag);
+      }
+    }
   }
   else if (Cmds.Count() == 2 && Cmds[0].Equalsi("bond") &&
     Cmds[1].Equalsi("atoms"))
