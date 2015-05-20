@@ -1440,6 +1440,14 @@ void TLattice::TransformFragments(const TSAtomPList& fragAtoms,
       "Cannot perform this operation on grown structure";
     return;
   }
+  bool update_equiv = true;
+  try {
+    smatd m = transform;
+    GetUnitCell().InitMatrixId(m);
+  }
+  catch (const TExceptionBase &e) {
+    update_equiv = false;
+  }
   /* transform may come with random Tag, so need to process ADP's manually -
   cannot pick from UC
   */
@@ -1448,7 +1456,9 @@ void TLattice::TransformFragments(const TSAtomPList& fragAtoms,
   const mat3d etm = abc2xyz*transform.r*xyz2abc;
   ematd J = TEllipsoid::GetTransformationJ(etm),
     Jt = ematd::Transpose(J);
-  GetAsymmUnit().GetRefMod()->BeforeAUUpdate_();
+  if (update_equiv) {
+    GetAsymmUnit().GetRefMod()->BeforeAUUpdate_();
+  }
   for (size_t i = 0; i < fragAtoms.Count(); i++)
     fragAtoms[i]->GetNetwork().SetTag(i);
 
@@ -1465,7 +1475,9 @@ void TLattice::TransformFragments(const TSAtomPList& fragAtoms,
   OnStructureUniq.Enter(this);
   Init();
   OnStructureUniq.Exit(this);
-  GetAsymmUnit().GetRefMod()->AfterAUUpdate_();
+  if (update_equiv) {
+    GetAsymmUnit().GetRefMod()->AfterAUUpdate_();
+  }
 }
 //..............................................................................
 void TLattice::UpdateConnectivity()  {
