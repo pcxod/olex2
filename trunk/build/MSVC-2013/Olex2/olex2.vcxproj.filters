@@ -147,9 +147,6 @@
     <ClCompile Include="..\..\..\olex\ctrls\labelext.cpp">
       <Filter>ctrl\sources</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\olex\ctrls\listboext.cpp">
-      <Filter>ctrl\sources</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\olex\ctrls\menuext.cpp">
       <Filter>ctrl\sources</Filter>
     </ClCompile>
@@ -202,6 +199,9 @@
       <Filter>html\sources</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\olex\ctrls\choiceext.cpp">
+      <Filter>ctrl\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\olex\ctrls\listboxext.cpp">
       <Filter>ctrl\sources</Filter>
     </ClCompile>
   </ItemGroup>

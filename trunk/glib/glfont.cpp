@@ -369,12 +369,22 @@ void TGlFont::CreateGlyphsFromRGBArray(bool FW,
   uint16_t BWidth = (MaxWidth/8+1);
   olx_gl::pixelStore(GL_UNPACK_ALIGNMENT, 1);  // byte alignment
   unsigned char *BmpData = new unsigned char [(NHeight+1)*BWidth];
-  TFontCharSize* cs = CharSize('W');
-  uint16_t maxCharW = cs->Right - cs->Left + CharOffset;
+  uint16_t rightmost=0, leftmost=Width;
+  for (size_t i = 0; i < 256; i++) {
+    TFontCharSize* cs = this->CharSizes[i];
+    if (cs->Data == 0) continue;
+    if (cs->Left < leftmost) {
+      leftmost = cs->Left;
+    }
+    if (cs->Right > rightmost) {
+      rightmost = cs->Right;
+    }
+  }
+  uint16_t maxCharW = rightmost - leftmost + CharOffset;
   if( MaxWidth > maxCharW ) // makes a lot of difference on lInux with its crappy fonts...
     MaxWidth = maxCharW;
   for( int i=0; i < 256; i++ )  {
-    cs = CharSize(i);
+    TFontCharSize* cs = CharSize(i);
     memset(BmpData, 0, NHeight*BWidth); // initialise the bits array
     if( cs->Data != NULL )  {  // check if bitmap is not empty
       for( int16_t j=cs->Left; j <= cs->Right; j++ )  {
