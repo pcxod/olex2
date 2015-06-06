@@ -832,6 +832,7 @@
     <ClCompile Include="..\..\..\olex\ctrls\choiceext.cpp" />
     <ClCompile Include="..\..\..\olex\ctrls\colorext.cpp" />
     <ClCompile Include="..\..\..\olex\ctrls\datectrlext.cpp" />
+    <ClCompile Include="..\..\..\olex\ctrls\listboxext.cpp" />
     <ClCompile Include="..\..\..\olex\dgenopt.cpp" />
     <ClCompile Include="..\..\..\olex\dgrad.cpp" />
     <ClCompile Include="..\..\..\olex\html\htmlmanager.cpp" />
@@ -880,7 +881,6 @@
     <ClCompile Include="..\..\..\olex\ctrls\comboext.cpp" />
     <ClCompile Include="..\..\..\olex\ctrls\frameext.cpp" />
     <ClCompile Include="..\..\..\olex\ctrls\labelext.cpp" />
-    <ClCompile Include="..\..\..\olex\ctrls\listboext.cpp" />
     <ClCompile Include="..\..\..\olex\ctrls\menuext.cpp" />
     <ClCompile Include="..\..\..\olex\ctrls\spinctrlext.cpp" />
     <ClCompile Include="..\..\..\olex\ctrls\texteditext.cpp" />
