@@ -216,6 +216,7 @@ public:
       telp_prob = qpeak_scale = qpeak_size_scale = qpeak_min_alpha = zoom =
         radius = rim_r = rim_w = disk_or = disk_ir = disk_s = -1;
       r = quality = sphere_q = rim_q = disk_q = draw_style = mask = -1;
+      ConstrainedAtomSphere = LockedAtomSphere = OrtepSpheres = ~0;
     }
     void OnStyleChange() {
       ClearPrimitives();
