@@ -1,0 +1,1080 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Source Files\henke">
+      <UniqueIdentifier>{54cc5121-cf07-453c-bcac-002acd684d08}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\CIF">
+      <UniqueIdentifier>{080c5ec7-bb96-4510-b8cb-ebbe496b770d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Header Files\CIF">
+      <UniqueIdentifier>{92d2636a-90b8-4b47-a2f3-d8f8e4618914}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
+    </Filter>
+    <Filter Include="Source Files\absorpc">
+      <UniqueIdentifier>{28d8c66d-46cd-4e44-9b50-9556b6fda351}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\lcells">
+      <UniqueIdentifier>{7f143de7-37ff-4d81-8194-390e95395d11}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\lcells">
+      <UniqueIdentifier>{1b488925-7e9b-4510-b686-18a23cfbe044}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="tests">
+      <UniqueIdentifier>{b0df0d83-cc94-446a-9c85-e150d33c7284}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\xlib\afixgroup.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\asymmunit.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\auto.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\macro\brushhkl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\catom.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\catomlist.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\chemdata.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\chnexp.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\congen.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\conninfo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\crs.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\ellipsoid.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\envilist.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\experimental.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\exyzgroup.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\fastsymm.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\fracmask.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\macro\graphsr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\hkl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\idistribution.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\macro\imp_auto.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\ins.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\ipattern.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\lattice.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\leq.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\lst.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\mol.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\mol2.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\network.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\p4p.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\pdb.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\refmodel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\rm_base.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\samegroup.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\satom.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\sbond.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\seval.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\sfutil.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\macro\sg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\sgtest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\splane.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\srestraint.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\symmlib.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\symmparser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\macro\testsymm.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\tls.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\unitcell.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\vcov.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\macro\wilson.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\xapp.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\xdmas.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\xfiles.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\xlcongen.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\xmacro.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\xyz.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Ac.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Ag.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Al.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Ar.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_As.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_At.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Au.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_B.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Ba.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Be.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Bi.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Br.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_C.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Ca.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Cd.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Ce.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Cl.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Co.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Cr.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Cs.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Cu.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_D.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Dy.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Er.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Eu.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_F.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Fe.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Fr.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Ga.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Gd.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Ge.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_H.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_He.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Hf.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Hg.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Ho.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_I.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_In.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Ir.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_K.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Kr.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_La.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Li.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Lu.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Mg.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Mn.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Mo.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_N.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Na.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Nb.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Nd.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Ne.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Ni.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_O.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Os.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_P.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Pa.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Pb.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Pd.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Pm.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Po.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Pr.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Pt.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Ra.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Rb.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Re.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Rh.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Rn.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Ru.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_S.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Sb.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Sc.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Se.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Si.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Sm.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Sn.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Sr.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Ta.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Tb.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Tc.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Te.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Th.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Ti.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Tl.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Tm.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_U.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_V.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_W.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Xe.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Y.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Yb.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Zn.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\henke\henke_Zr.cpp">
+      <Filter>Source Files\henke</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\cif.cpp">
+      <Filter>Source Files\CIF</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\cifdata.cpp">
+      <Filter>Source Files\CIF</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\cifdp.cpp">
+      <Filter>Source Files\CIF</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\ciftab.cpp">
+      <Filter>Source Files\CIF</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\hall.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\symmcon.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ac.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ag.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Al.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ar.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_As.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_At.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Au.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_B.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ba.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Be.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Bi.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Br.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_C.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ca.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Cd.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ce.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Cl.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Co.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Cr.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Cs.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Cu.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Dy.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Er.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Eu.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_F.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Fe.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Fr.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ga.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Gd.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ge.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_H.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_He.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Hf.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Hg.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ho.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_I.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_In.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ir.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_K.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Kr.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_La.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Li.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Lu.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Mg.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Mn.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Mo.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_N.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Na.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Nb.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Nd.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ne.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ni.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_O.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Os.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_P.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Pa.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Pb.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Pd.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Pm.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Po.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Pr.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Pt.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ra.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Rb.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Re.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Rh.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Rn.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ru.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_S.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Sb.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Sc.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Se.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Si.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Sm.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Sn.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Sr.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ta.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Tb.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Tc.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Te.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Th.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ti.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Tl.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Tm.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_U.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_V.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_W.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Xe.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Y.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Yb.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Zn.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Zr.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\reflection.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\constraints_ext.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\lcells.cpp">
+      <Filter>Source Files\lcells</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\analysis.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\symmspace.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\infotab.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\atomref.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\selected.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\xlib\afixgroup.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\asymmunit.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\atomref.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\atomregistry.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\atomsort.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\auto.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\beevers-lipson.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\catom.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\catomlist.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\chembase.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\chemdata.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\chnexp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\congen.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\connext.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\conninfo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\crs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\ellipsoid.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\envilist.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\exlib.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\experimental.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\exyzgroup.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\fastsymm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\fracmask.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\fragment.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\henke.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\hkl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\idistribution.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\infotab.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\ins.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\ipattern.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\lattice.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\leq.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\lst.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\maputil.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\mol.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\mol2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\network.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\p4p.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\packutil.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\reflection.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\refmerge.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\refmodel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\refutil.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\residue.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\rm_base.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\samegroup.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\satom.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\sbond.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\seval.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\sfutil.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\sgset.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\sgtest.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\splane.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\srestraint.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\symmat.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\symmlib.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\symmparser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\symmtest.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\tls.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\unitcell.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\vcov.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\xapp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\xbase.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\xdmas.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\xfiles.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\xlcongen.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\xmacro.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\xscatterer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\xyz.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\cif.h">
+      <Filter>Header Files\CIF</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\cifdp.h">
+      <Filter>Header Files\CIF</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\mat_id.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\hall.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\symmcon.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\twinning.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\cell_reduction.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\lcells.h">
+      <Filter>Header Files\lcells</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\constraints_ext.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\label_corrector.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\tests\cell_reduction_test.h">
+      <Filter>tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\tests\mat_id_test.h">
+      <Filter>tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\tests\reflection_test.h">
+      <Filter>tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\tests\symmparser_test.h">
+      <Filter>tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\tests\vcov_test.h">
+      <Filter>tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\analysis.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\tests\hall_test.h">
+      <Filter>tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\symmspace.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\tests\formula_test.h">
+      <Filter>tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\tests\smat_test.h">
+      <Filter>tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\planesort.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ReadMe.txt" />
+  </ItemGroup>
+</Project>
