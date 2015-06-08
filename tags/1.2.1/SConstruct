@@ -357,7 +357,7 @@ unirun_env.Append(CCFLAGS = ['-D_NO_PYTHON'])
 if sys.platform[:3] == 'win':
   unirun_env.Append(LINKFLAGS=['/MANIFEST', '/MANIFESTUAC:"level=\'asInvoker\'"',
     '/PDB:' + out_dir + 'exe/unirun.pdb'])
-unirun_env.Program(out_dir+'exe/unirun', unirun_files)
+#unirun_env.Program(out_dir+'exe/unirun', unirun_files)
 
 tests_env.Append(CCFLAGS = ['-D_NO_PYTHON'])
 tests_files = generic_files_list + fileListToStringList('tests/tests', tests)
@@ -366,7 +366,7 @@ tests_files.append('./repository/fsext.cpp')
 if sys.platform[:3] == 'win':
   tests_env.Append(LINKFLAGS=['/MANIFEST', '/PDB:' + out_dir + 'exe/tests.pdb'])
 tests_files = processFileNameList(tests_files, tests_env, out_dir+'tests')
-tests_env.Program(out_dir+'exe/tests', tests_files)
+#tests_env.Program(out_dir+'exe/tests', tests_files)
 
 try:
   import _imaging

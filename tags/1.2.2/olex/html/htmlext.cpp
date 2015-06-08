@@ -1202,7 +1202,7 @@ void THtml::OnClipboard(wxClipboardTextEvent& evt) {
       text = tc->GetStringSelection();
   }
   else if(EsdlInstanceOf(*w, TComboBox))
-    text = ((TComboBox*)w)->GetStringSelection();
+    text = ((TComboBox*)w)->GetValue();
   else
     processed = false;
   if (processed && !text.IsEmpty() && wxTheClipboard->Open()) {

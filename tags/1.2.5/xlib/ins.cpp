@@ -78,21 +78,21 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
   Clear();
   ParseContext cx(GetRM());
   TStrList Toks, InsFile(FileContent);
-  for( size_t i=0; i < InsFile.Count(); i++ )  {
-    InsFile[i].Trim(' ').
-      Trim('\0').
-      Trim('\r').
-      Replace('\t', ' ').
-      DeleteSequencesOf(' ').
-      Trim(' ');
+  for (size_t i = 0; i < InsFile.Count(); i++) {
+    InsFile[i].Replace('\t', ' ')
+      .TrimR(' ')
+      .TrimR('\0')
+      .TrimR('\r')
+      .TrimR(' ');
   }
   Preprocess(InsFile);
   cm_Element& elmQPeak = XElementLib::GetByIndex(iQPeakIndex);
   cx.Resi = &GetAsymmUnit().GetResidue(0);
   cx.ins = this;
-  for( size_t i=0; i < InsFile.Count(); i++ )  {
-    try  {
-      if( InsFile[i].IsEmpty() )      continue;
+  for (size_t i = 0; i < InsFile.Count(); i++) {
+    try {
+      if (InsFile[i].IsEmpty() || InsFile[i].StartsFrom(' '))
+        continue;
       const size_t exi = InsFile[i].IndexOf('!');
       if( exi != InvalidIndex )
         InsFile[i].SetLength(exi);

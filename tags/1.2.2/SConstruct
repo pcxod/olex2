@@ -347,28 +347,6 @@ if sys.platform[:3] == 'win':
     '/PDB:' + out_dir + 'exe/olex2.pdb'])
 olex2_env.Program(out_dir+'exe/olex2', generic_files + olex2_files)
 
-unirun_files = np_repository + fileListToStringList('unirun', unirun)
-unirun_files.append('./repository/patchapi.cpp')
-unirun_files.append('./repository/updateapi.cpp')
-#unirun_files.append('./repository/shellutil.cpp')
-unirun_files = processFileNameList(unirun_files, unirun_env, out_dir+'unirun')
-
-unirun_env.Append(CCFLAGS = ['-D_NO_PYTHON'])
-if sys.platform[:3] == 'win':
-  unirun_env.Append(LINKFLAGS=['/MANIFEST', '/MANIFESTUAC:"level=\'asInvoker\'"',
-    '/PDB:' + out_dir + 'exe/unirun.pdb'])
-unirun_env.Program(out_dir+'exe/unirun', unirun_files)
-
-tests_env.Append(CCFLAGS = ['-D_NO_PYTHON'])
-tests_files = generic_files_list + fileListToStringList('tests/tests', tests)
-tests_files.append('./repository/olxvar.cpp')
-tests_files.append('./repository/fsext.cpp')
-tests_files.append('./repository/shellutil.cpp')
-if sys.platform[:3] == 'win':
-  tests_env.Append(LINKFLAGS=['/MANIFEST', '/PDB:' + out_dir + 'exe/tests.pdb'])
-tests_files = processFileNameList(tests_files, tests_env, out_dir+'tests')
-tests_env.Program(out_dir+'exe/tests', tests_files)
-
 try:
   import _imaging
 except:
