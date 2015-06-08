@@ -1416,9 +1416,17 @@ void TXAtom::Settings::CreatePrimitives() {
 void TXAtom::Settings::ClearPrimitives() {
   primitives.Clear();
   PrimitiveParams.Clear();
-  if (OrtepSpheres != -1) {
+  if (OrtepSpheres != ~0) {
     olx_gl::deleteLists(OrtepSpheres, 9);
-    OrtepSpheres = -1;
+    OrtepSpheres = ~0;
+  }
+  if (ConstrainedAtomSphere != ~0) {
+    olx_gl::deleteLists(ConstrainedAtomSphere, 1);
+    ConstrainedAtomSphere = ~0;
+  }
+  if (LockedAtomSphere != ~0) {
+    olx_gl::deleteLists(LockedAtomSphere, 1);
+    LockedAtomSphere = ~0;
   }
 }
 //..............................................................................
