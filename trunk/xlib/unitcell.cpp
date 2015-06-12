@@ -723,7 +723,7 @@ void TUnitCell::GetAtomQEnviList(TSAtom& atom, TAtomEnvi& envi)  {
 void TUnitCell::GetAtomPossibleHBonds(const TAtomEnvi& ae, TAtomEnvi& envi)  {
   envi.SetBase(ae.GetBase());
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();
-  const double D = 3.1, qD = D*D;
+  const double D = 3.3, qD = D*D;
   const size_t ac = au.AtomCount();
   SortedObjectList<int, TPrimitiveComparator> types;
   types.Add(iNitrogenZ);
