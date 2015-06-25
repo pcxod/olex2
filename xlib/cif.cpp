@@ -816,16 +816,19 @@ bool TCif::Adopt(TXFile &XF, int flags) {
   double Q[6], E[6];  // quadratic form of s thermal ellipsoid
   GetRM().Assign(XF.GetRM(), true);
   if (flags != 0) {
+    GetAsymmUnit().GetAtoms().ForEach(TCAtom::FlagSetter(catom_flag_Deleted, true));
     ASObjectProvider &objects = XF.GetLattice().GetObjects();
     for (size_t i = 0; i < objects.atoms.Count(); i++) {
       TSAtom &a = objects.atoms[i];
-      if (!a.IsAvailable() || a.IsAUAtom()) continue;
+      if (!a.IsAvailable()) continue;
       TCAtom & ca = AsymmUnit.NewAtom();
       ca.SetLabel(a.GetLabel(), false);
       ca.SetPart(a.CAtom().GetPart());
       ca.SetType(a.GetType());
       ca.ccrd() = a.ccrd();
-      ca.ccrdEsd() = a.GetMatrix()*a.CAtom().ccrdEsd();
+      if (a.IsAUAtom()) {
+        ca.ccrdEsd() = a.CAtom().ccrdEsd();
+      }
       ca.SetOccu(a.CAtom().GetOccu());
       ca.SetOccuEsd(a.CAtom().GetOccuEsd());
       ca.SetUiso(a.CAtom().GetUiso());
