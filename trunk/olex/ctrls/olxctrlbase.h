@@ -46,6 +46,10 @@ namespace ctrl_ext  {
       q->Execute(this, &data, NULL);
       return true;
     }
+
+    void ClearActionQueues() {
+      Actions.Clear();
+    }
   protected:
     // use this to do any required substitutions
     virtual olxstr GetActionQueueData(const ActionQueue &q) const {

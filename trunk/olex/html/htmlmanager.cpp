@@ -68,6 +68,7 @@ void THtmlManager::ProcessPageLoadRequests() {
 void THtmlManager::ClearPopups() {
   for( size_t i=0; i < Popups.Count(); i++ )  {
     Popups.GetValue(i)->Html->OnLink.Remove(this);
+    Popups.GetValue(i)->Html->Destroy();
     Popups.GetValue(i)->Dialog->Destroy();
     delete Popups.GetValue(i);
   }
