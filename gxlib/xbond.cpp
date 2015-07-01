@@ -113,6 +113,7 @@ void TXBond::Create(const olxstr& cName) {
     }
     else {
       Legend = cName;
+      SetCollectionName(cName);
     }
   }
   Settings &defs = GetSettings();
