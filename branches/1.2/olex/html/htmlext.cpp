@@ -60,6 +60,13 @@ THtml::~THtml()  {
   ClearSwitchStates();
 }
 //.............................................................................
+bool THtml::Destroy() {
+  for (size_t i = 0; i < Objects.Count(); i++) {
+    Objects.GetValue(i).a->ClearActionQueues();
+  }
+  return wxHtmlWindow::Destroy();
+}
+//.............................................................................
 void THtml::OnLinkClicked(const wxHtmlLinkInfo& link)  {
   if (!MouseDown)  return;
   MouseDown = false;
