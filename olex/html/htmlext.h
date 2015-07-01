@@ -149,6 +149,7 @@ public:
   }
 
   bool ProcessPageLoadRequest();
+  virtual bool Destroy();
 
   const olxstr& GetHomePage() const  {  return HomePage;  }
   void SetHomePage(const olxstr& hp)  {  HomePage = hp;  }
