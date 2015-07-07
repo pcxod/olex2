@@ -28,7 +28,8 @@ namespace ctrl_ext {
     TComboBox(wxWindow *Parent, wxWindowID id = -1,
       const wxString &value = wxEmptyString,
       const wxPoint& pos = wxDefaultPosition,
-      const wxSize& size = wxDefaultSize, long style = 0);
+      const wxSize& size = wxDefaultSize,
+      long style = wxTE_PROCESS_ENTER);
     virtual ~TComboBox();
 
     void Clear();
