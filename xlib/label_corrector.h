@@ -85,9 +85,6 @@ struct LabelCorrector  {
       a.SetLabel(a.GetLabel().SubStringTo(4), false);
     TCAtom* lo = uniq_labels.Find(a.GetResiLabel(), NULL);
     if (lo != NULL) {
-      // is diplicate allowed?
-      if (a.GetPart() != lo->GetPart() && a.GetPart() != 0 && lo->GetPart() != 0)
-        return;
       LabelIterator *li;
       if (labels.HasKey(&a.GetType()))
         li = &labels.Get(&a.GetType());

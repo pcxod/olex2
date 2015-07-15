@@ -2263,7 +2263,8 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To,
             }
           }
           const olxstr oldL = XA->GetLabel();
-          XA->CAtom().SetLabel(NL, false);
+          // aloways create new label when renaming to type
+          XA->CAtom().SetLabel(NL, true);
           undo().AddAtom(XA->CAtom(), oldL);
           processed << XA->CAtom();
           XA->CAtom().SetType(*elm);

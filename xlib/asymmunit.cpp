@@ -648,9 +648,7 @@ TCAtomPList::const_list_type TAsymmUnit::FindDiplicateLabels(
     const TResidue& resi = GetResidue(a.GetResiId());
     for (size_t j = 0; j < resi.Count(); j++) {
       TCAtom& b = resi[j];
-      if (b.GetTag() == 0 || (b.GetPart() != a.GetPart() &&
-        (b.GetPart() | a.GetPart()) != 0) || b.IsDeleted())
-      {
+      if (b.GetTag() == 0 || b.IsDeleted()) {
         continue;
       }
       if (b.GetLabel().Equalsi(a.GetLabel())) {
@@ -669,11 +667,6 @@ olxstr TAsymmUnit::CheckLabel(const TCAtom* ca, const olxstr &Label,
     const TResidue& resi = GetResidue(ca->GetResiId());
     for (size_t i=0; i < resi.Count(); i++) {
       const TCAtom& atom = resi[i];
-      if( atom.GetPart() != ca->GetPart() &&
-          (atom.GetPart()|ca->GetPart()) != 0)
-      {
-        continue;
-      }
       if (!atom.IsDeleted() && (atom.GetLabel().Equalsi(Label) ) &&
         (atom.GetId() != ca->GetId()))
       {
