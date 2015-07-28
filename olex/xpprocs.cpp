@@ -160,15 +160,11 @@
 #include "pers_util.h"
 //#include "gl2ps/gl2ps.c"
 
-static const olxstr OnModeChangeCBName("modechange");
-
-int CalcL( int v )  {
+int CalcL(int v) {
   int r = 0;
-  while( (v/=2) > 2 )  r++;
+  while ((v/=2) > 2)  r++;
   return r+2;
 }
-
-//olex::IBasicMacroProcessor *olex::OlexPort::MacroProcessor;
 
 //..............................................................................
 void TMainForm::funFileLast(const TStrObjList& Params, TMacroData &E)  {
@@ -6094,12 +6090,15 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options,
     if (part == -100) {
       part = 0;
     }
-    olxstr cmd = "part ";
+    olxstr cmd = "part ", atoms;
     cmd << part;
     for (size_t i = 0; i < xatoms.Count(); i++) {
       cmd << " #s" << xatoms[i]->GetOwnerId();
+      atoms << ' ' << xatoms[i]->CAtom().GetId();
     }
     Modes->OnModeExit.Add(cmd);
+    Modes->OnModeExit.Add(olxstr("Callback onFragmentImport \'") << atoms
+      .SubStringFrom(1) << '\'');
   }
 }
 //..............................................................................
