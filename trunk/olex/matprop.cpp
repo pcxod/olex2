@@ -58,6 +58,7 @@ void TdlgMatProp::Init() {
       Materials.AddCopy(GlP.GetProperties());
     }
     cbPrimitives->OnChange.Add(this);
+    cbPrimitives->SetSelection(0);
   }
   else {
     cbPrimitives = NULL;

@@ -68,6 +68,7 @@ protected:
   }
   void ParseMacro(const TDataItem& macro_def, TEMacro& macro);
   DefMacro(Abort)
+  DefMacro(Callback)
   DefFunc(LastError)
   DefFunc(LogLevel)
   DefFunc(Process)
