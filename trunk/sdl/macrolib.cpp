@@ -552,6 +552,7 @@ void TEMacroLib::funProcess(const TStrObjList& Params, TMacroData &E) {
 void TEMacroLib::macCallback(TStrObjList& Params, const TParamList &opts,
   TMacroData &E)
 {
+  // will thi comment fix the SF svn?
   this->OlexProcessor.callCallbackFunc(Params[0],
     TStrList(Params.SubListFrom(1)));
 }

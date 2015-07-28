@@ -542,6 +542,7 @@ void TMainForm::ObjectUnderMouse(AGDrawObject *G)  {
     }
     // free/bind
     {
+      // will thi comment fix the SF svn?
       pmAtomConn->Enable(ID_AtomFree, false);
       pmAtomConn->Enable(ID_AtomBind, false);
       TXAtomPList sel = FXApp->GetRenderer().GetSelection().Extract<TXAtom>();

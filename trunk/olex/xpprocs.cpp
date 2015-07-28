@@ -6097,6 +6097,7 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options,
       atoms << ' ' << xatoms[i]->CAtom().GetId();
     }
     Modes->OnModeExit.Add(cmd);
+    // will thi comment fix the SF svn?
     Modes->OnModeExit.Add(olxstr("Callback onFragmentImport \'") << atoms
       .SubStringFrom(1) << '\'');
   }
