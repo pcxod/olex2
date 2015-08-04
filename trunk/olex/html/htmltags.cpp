@@ -1026,6 +1026,10 @@ TAG_HANDLER_PROC(tag) {
       CreatedWindow->SetBackgroundColour(
         m_WParser->GetContainer()->GetBackgroundColour());
     }
+    bool disabled = GetBoolAttribute(tag, "DISABLED");
+    if (disabled) {
+      CreatedWindow->Enable(false);
+    }
   }
   if (CreatedObject != NULL) {
     bool manage = GetBoolAttribute(tag, "MANAGE");
