@@ -260,6 +260,10 @@ void TEMacroLib::Init()  {
     new TMacro<TEMacroLib>(this,  &TEMacroLib::macAbort, "Abort",
     EmptyString(), fpNone,
     "'abort' statement to terminate a macro execution"));
+  lib.Register(
+    new TMacro<TEMacroLib>(this, &TEMacroLib::macCallback, "Callback",
+    EmptyString(), (fpAny^fpNone)|fpAny_Options,
+    "Internal use for calling registered callback functions"));
 }
 //.............................................................................
 
@@ -543,5 +547,13 @@ void TEMacroLib::macAbort(TStrObjList &Cmds, const TParamList &Options,
 void TEMacroLib::funProcess(const TStrObjList& Params, TMacroData &E) {
   olxstr cmd = Params[0];
   this->ProcessFunction(cmd, E, false);
+}
+//..............................................................................
+void TEMacroLib::macCallback(TStrObjList& Params, const TParamList &opts,
+  TMacroData &E)
+{
+  // will thi comment fix the SF svn?
+  this->OlexProcessor.callCallbackFunc(Params[0],
+    TStrList(Params.SubListFrom(1)));
 }
 //..............................................................................

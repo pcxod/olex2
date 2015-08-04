@@ -68,6 +68,8 @@ protected:
   }
   void ParseMacro(const TDataItem& macro_def, TEMacro& macro);
   DefMacro(Abort)
+  // will thi comment fix the SF svn?
+  DefMacro(Callback)
   DefFunc(LastError)
   DefFunc(LogLevel)
   DefFunc(Process)

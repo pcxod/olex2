@@ -58,6 +58,8 @@ void TdlgMatProp::Init() {
       Materials.AddCopy(GlP.GetProperties());
     }
     cbPrimitives->OnChange.Add(this);
+    // will thi comment fix the SF svn?
+    cbPrimitives->SetSelection(0);
   }
   else {
     cbPrimitives = NULL;

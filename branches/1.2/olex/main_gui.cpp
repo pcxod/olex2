@@ -542,11 +542,12 @@ void TMainForm::ObjectUnderMouse(AGDrawObject *G)  {
     }
     // free/bind
     {
+      // will thi comment fix the SF svn?
       pmAtomConn->Enable(ID_AtomFree, false);
       pmAtomConn->Enable(ID_AtomBind, false);
-      TGlGroup &sel = FXApp->GetRenderer().GetSelection();
-      if (sel.Count() == 2 && (&sel[0] == XA || &sel[1] == XA)) {
-        TXAtom &a = (TXAtom &)(&sel[0] == XA ? sel[1] : sel[0]);
+      TXAtomPList sel = FXApp->GetRenderer().GetSelection().Extract<TXAtom>();
+      if (sel.Count() == 2 && (sel[0] == XA || sel[1] == XA)) {
+        TXAtom &a = *(TXAtom *)(sel[0] == XA ? sel[1] : sel[0]);
         bool v = a.IsConnectedTo(*XA);
         pmAtomConn->Enable(ID_AtomFree, v);
         pmAtomConn->Enable(ID_AtomBind, !v);

@@ -160,15 +160,11 @@
 #include "pers_util.h"
 //#include "gl2ps/gl2ps.c"
 
-static const olxstr OnModeChangeCBName("modechange");
-
-int CalcL( int v )  {
+int CalcL(int v) {
   int r = 0;
-  while( (v/=2) > 2 )  r++;
+  while ((v/=2) > 2)  r++;
   return r+2;
 }
-
-//olex::IBasicMacroProcessor *olex::OlexPort::MacroProcessor;
 
 //..............................................................................
 void TMainForm::funFileLast(const TStrObjList& Params, TMacroData &E)  {
@@ -6027,6 +6023,7 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options,
   LabelCorrector lc(FXApp->XFile().GetAsymmUnit());
   FXApp->AdoptAtoms(xyz.GetAsymmUnit(), xatoms, xbonds);
   int part = Options.FindValue("p", "-100").ToInt();
+  const int npart = FXApp->XFile().GetAsymmUnit().GetNextPart(true);
   const double occu = Options.FindValue("o", "-1").ToDouble();
   for (size_t i=0; i < xatoms.Count(); i++) {
     if (occu > 0)
@@ -6034,7 +6031,7 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options,
     FXApp->XFile().GetRM().Vars.FixParam(
       xatoms[i]->CAtom(), catom_var_name_Sof);
     lc.Correct(xatoms[i]->CAtom());
-    xatoms[i]->CAtom().SetPart(-1);
+    xatoms[i]->CAtom().SetPart(npart);
   }
   if (xatoms.IsEmpty())  return;
   Macros.ProcessMacro("mode fit", E);
@@ -6094,12 +6091,14 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options,
     if (part == -100) {
       part = 0;
     }
-    olxstr cmd = "part ";
+    olxstr cmd = "part ", atoms;
     cmd << part;
     for (size_t i = 0; i < xatoms.Count(); i++) {
       cmd << " #s" << xatoms[i]->GetOwnerId();
+      atoms << ' ' << xatoms[i]->CAtom().GetId();
     }
-    Modes->OnModeExit.Add(cmd);
+    Modes->OnModeExit.Add(olxstr("Callback onFragmentImport \'") << atoms
+      .SubStringFrom(1) << '\'');
   }
 }
 //..............................................................................
