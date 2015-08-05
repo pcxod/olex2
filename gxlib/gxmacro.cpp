@@ -340,7 +340,7 @@ void GXLibMacros::Export(TLibrary& lib) {
     fpAny | psFileLoaded,
     "Creates a projection from the selected atom onto a sphere, coloring each "
     "point on the sphere with a unique color corresponding to fragments. For "
-    "referece see Guzei, I.A., Wendt, M.Dalton Trans., 2006, 3991–3999.");
+    "referece see Guzei, I.A., Wendt, M.Dalton Trans., 2006, 3991-3999.");
 
   gxlib_InitMacro(OFileDel, EmptyString(), fpOne,
     "Deletes overlayed file specified by index");

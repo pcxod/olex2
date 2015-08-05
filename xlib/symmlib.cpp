@@ -1300,7 +1300,7 @@ TSpaceGroup &TSymmLib::InitSpaceGroup(TSpaceGroup &sg) {
     }
     if( found )  break;
   }
-  if (&sg.GetBravaisLattice() == NULL) {
+  if (!sg.HasBravaisLattice()) {
     throw TFunctionFailedException(__OlxSourceInfo,
       "Failed to locate space group Laue class/Bravias lattice");
   }
@@ -1311,10 +1311,10 @@ TSpaceGroup &TSymmLib::InitSpaceGroup(TSpaceGroup &sg) {
         break;
       }
     }
-    if (&sg.GetPointGroup() != NULL)
+    if (sg.HasPointGroup())
       break;
   }
-  if (&sg.GetPointGroup() == NULL) {
+  if (!sg.HasPointGroup()) {
     throw TFunctionFailedException(__OlxSourceInfo,
       "Failed to locate space group point group");
   }
@@ -1451,7 +1451,7 @@ void TSymmLib::InitRelations()  {
       bl.GetLattice(j).AddBravaiseLattice(&bl);
     for (size_t j = 0; j < SGCount(); j++) {
       TSpaceGroup& sg = GetGroup(j);
-      if (sg.HasBraviasLattice())  continue;
+      if (sg.HasBravaisLattice())  continue;
       bool found = false;
       for (size_t k = 0; k < bl.SymmetryCount(); k++) {
         if (bl.GetSymmetry(k).EqualsWithoutTranslation(sg)) {
@@ -1507,7 +1507,7 @@ void TSymmLib::InitRelations()  {
       throw TFunctionFailedException(__OlxSourceInfo, "assert point group");
     if (!sg.HasLaueClass())
       throw TFunctionFailedException(__OlxSourceInfo, "assert laue class");
-    if (!sg.HasBraviasLattice())
+    if (!sg.HasBravaisLattice())
       throw TFunctionFailedException(__OlxSourceInfo, "assert bravais lattice");
   }
 #endif

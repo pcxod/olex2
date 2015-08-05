@@ -502,7 +502,7 @@ const smatd* ConnInfo::GetCorrectMatrix(const smatd* eqiv1, const smatd* eqiv2,
       NULL : eqiv2);
   }
   smatd mat;
-  if( &rm.aunit.GetLattice() == NULL )  {  // no lattice?
+  if (!rm.aunit.HasLattice()) {  // no lattice?
     if( eqiv2 == NULL || (eqiv2->r.IsI() && eqiv2->t.IsNull()) )  {
       mat = eqiv1->Inverse();
       if( release )  {

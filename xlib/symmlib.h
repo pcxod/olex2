@@ -137,7 +137,7 @@ public:
 
   void SetBravaisLattice(TBravaisLattice& bl)  {  BravaisLattice = &bl;  }
   TBravaisLattice& GetBravaisLattice() const {  return *BravaisLattice;  }
-  bool HasBraviasLattice() const { return BravaisLattice != 0; }
+  bool HasBravaisLattice() const { return BravaisLattice != 0; }
   void SetLaueClass(TSpaceGroup& lc)  {  LaueClass = &lc;  }
   TSpaceGroup& GetLaueClass() const {  return *LaueClass;  }
   bool HasLaueClass() const { return LaueClass != 0; }

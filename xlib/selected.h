@@ -26,16 +26,16 @@ public:
 //.............................................................................
 //.............................................................................
 class AtomNameMask : public IAtomMask {
-  const TCAtom &atom;
+  const TCAtom *atom;
 public:
   AtomNameMask(const AtomNameMask &m, const TAsymmUnit &au);
   AtomNameMask(const TCAtom &atom)
-    : atom(atom)
+    : atom(&atom)
   {}
   virtual bool matches(const TCAtom &a) const;
-  virtual bool isValid() const { return !atom.IsDeleted(); }
+  virtual bool isValid() const { return !atom->IsDeleted(); }
   virtual bool equals(const IAtomMask &m_) const;
-  virtual olxstr toString() const { return atom.GetLabel(); }
+  virtual olxstr toString() const { return atom->GetLabel(); }
   virtual IAtomMask *replicate(const TAsymmUnit &au) const {
     return new AtomNameMask(*this, au);
   }
