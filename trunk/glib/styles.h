@@ -39,12 +39,7 @@ public:
     return dynamic_cast<TGlMaterial&>(AGroupObject::SetProperties(C));
   }
   TGlMaterial& GetProperties() const {
-    TGlMaterial &m = (TGlMaterial&)AGroupObject::GetProperties();
-    if (&m == 0) {
-      throw TFunctionFailedException(__OlxSourceInfo,
-        "uninitialised properties");
-    }
-    return m;
+    return (TGlMaterial &)AGroupObject::GetProperties();
   }
 
   bool operator == (const TPrimitiveStyle &S ) const  {
