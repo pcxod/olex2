@@ -1064,6 +1064,7 @@
     <ClCompile Include="..\..\..\xlib\ciftab.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\sdl\tests\file_test.h" />
     <ClInclude Include="..\..\..\xlib\afixgroup.h" />
     <ClInclude Include="..\..\..\xlib\analysis.h" />
     <ClInclude Include="..\..\..\xlib\asymmunit.h" />

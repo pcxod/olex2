@@ -217,6 +217,8 @@ public:
         radius = rim_r = rim_w = disk_or = disk_ir = disk_s = -1;
       r = quality = sphere_q = rim_q = disk_q = draw_style = mask = -1;
       ConstrainedAtomSphere = LockedAtomSphere = OrtepSpheres = ~0;
+      PolyhedronIndex = SphereIndex = SmallSphereIndex = RimsIndex =
+        DisksIndex = CrossIndex = TetrahedronIndex = InvalidIndex;
     }
     void OnStyleChange() {
       ClearPrimitives();

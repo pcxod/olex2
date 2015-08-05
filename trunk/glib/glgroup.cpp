@@ -90,14 +90,12 @@ bool TGlGroup::Add(AGDrawObject& GO, bool remove)  {
     /* GO.Primitives can be NULL when hierarchy of groups being restored before
     creating them check the compatibility of the selection
     */
-    if( &GO.GetPrimitives() != NULL &&
-      GO.GetPrimitives().PrimitiveCount() != 0 )
-    {
-      bool idd =
-        GO.GetPrimitives().GetPrimitive(0).GetProperties().IsIdentityDraw();
-      if( Objects.IsEmpty() )
+    if (GO.HasPrimitives() && GO.GetPrimitives().PrimitiveCount() != 0) {
+      bool idd = GO.GetPrimitives().GetPrimitive(0).GetProperties()
+        .IsIdentityDraw();
+      if (Objects.IsEmpty())
         GlM.SetIdentityDraw(idd);
-      else if( GlM.IsIdentityDraw() != idd )
+      else if (GlM.IsIdentityDraw() != idd)
         return false;
     }
     go->SetGrouped(true);
@@ -105,7 +103,7 @@ bool TGlGroup::Add(AGDrawObject& GO, bool remove)  {
     go->SetParentGroup(this);
     return true;
   }
-  else if( remove )  {
+  else if (remove) {
     Objects.Delete(i);
     go->SetParentGroup(NULL);
     go->SetGrouped(false);

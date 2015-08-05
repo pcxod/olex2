@@ -66,6 +66,7 @@ public:
   virtual ~TAsymmUnit();
 
   TLattice& GetLattice() const {  return *Lattice;  }
+  bool HasLattice() const { return Lattice != 0; }
   vec3d& GetAxes()  {  return Axes;  }
   vec3d& GetAxisEsds()  {  return AxisEsds;  }
   vec3d& GetAngles()  {  return Angles;  }

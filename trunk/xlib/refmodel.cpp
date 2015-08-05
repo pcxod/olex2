@@ -1513,18 +1513,18 @@ void RefinementModel::FromDataItem(TDataItem& item) {
     MERG = merge.GetFieldByName("val").ToInt();
   }
   {
-    TDataItem& shel = *item.FindItem("SHEL");
-    if (&shel != NULL)  {
-      SHEL_set = shel.GetValue().ToBool();
-      SHEL_lr = shel.GetFieldByName("low").ToDouble();
-      SHEL_hr = shel.GetFieldByName("high").ToDouble();
+    TDataItem* shel = item.FindItem("SHEL");
+    if (shel != 0) {
+      SHEL_set = shel->GetValue().ToBool();
+      SHEL_lr = shel->GetFieldByName("low").ToDouble();
+      SHEL_hr = shel->GetFieldByName("high").ToDouble();
     }
   }
   {
-    TDataItem& exti = *item.FindItem("EXTI");
-    if (&exti != NULL) {
-      EXTI_set = exti.GetValue().ToBool();
-      EXTI = exti.GetFieldByName("val");
+    TDataItem *exti = item.FindItem("EXTI");
+    if (exti != 0) {
+      EXTI_set = exti->GetValue().ToBool();
+      EXTI = exti->GetFieldByName("val");
     }
   }
   // restraints and BASF may use some of the vars...
