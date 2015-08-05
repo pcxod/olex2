@@ -139,9 +139,9 @@ void TMatchMode::FitAtoms(TXAtomPList& AtomsToMatch, bool group){
       TGlGroup& ga = gxapp.GroupFragments(na, "FragmentA");
       TGlGroup& gb = gxapp.GroupFragments(nb, "FragmentB");
       gxapp.SelectAll(false);
-      if( &ga != NULL && ga.IsDefaultColor() )
+      if (ga.IsDefaultColor())
         ga.SetGlM(TGlMaterial("85;0.000,1.000,0.000,0.000;4144959;1.000,1.000,1.000,0.500;36"));
-      if( &gb != NULL && gb.IsDefaultColor() )
+      if (gb.IsDefaultColor())
         gb.SetGlM(TGlMaterial("85;1.000,0.000,0.000,0.000;4144959;1.000,1.000,1.000,0.500;36"));
     }
   }
