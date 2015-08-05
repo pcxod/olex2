@@ -1445,27 +1445,27 @@ size_t TSymmLib::FindPointGroupGroups(const TSpaceGroup& PointGroup,
 }
 //..............................................................................
 void TSymmLib::InitRelations()  {
-  for( size_t i=0; i < BravaisLatticeCount(); i++ )  {
+  for (size_t i = 0; i < BravaisLatticeCount(); i++) {
     TBravaisLattice& bl = GetBravaisLattice(i);
-    for( size_t j=0; j < bl.LatticeCount(); j++ )
+    for (size_t j = 0; j < bl.LatticeCount(); j++)
       bl.GetLattice(j).AddBravaiseLattice(&bl);
-    for( size_t j=0; j < SGCount(); j++ )  {
+    for (size_t j = 0; j < SGCount(); j++) {
       TSpaceGroup& sg = GetGroup(j);
-      if( &(sg.GetBravaisLattice()) != NULL )  continue;
+      if (sg.HasBraviasLattice())  continue;
       bool found = false;
-      for( size_t k=0; k < bl.SymmetryCount(); k++ )  {
-        if( bl.GetSymmetry(k).EqualsWithoutTranslation(sg) )  {
+      for (size_t k = 0; k < bl.SymmetryCount(); k++) {
+        if (bl.GetSymmetry(k).EqualsWithoutTranslation(sg)) {
           sg.SetBravaisLattice(bl);
           sg.SetLaueClass(bl.GetSymmetry(k));
           found = true;
           break;
         }
-        if( found )  break;
+        if (found)  break;
       }
     }
   }
-//  TStrList o;
-  for( size_t i=0; i < SGCount(); i++ )  {
+  //  TStrList o;
+  for (size_t i=0; i < SGCount(); i++) {
     TSpaceGroup& sg = GetGroup(i);
 //    olxstr &l = o.Add("{\"") << sg.GetName() << "\", \"" <<
 //      sg.GetFullName() << "\", \"" << sg.GetAxis() << "\", " <<
@@ -1484,29 +1484,31 @@ void TSymmLib::InitRelations()  {
 //      }
 //    }
 //    l << arr.ToBase64String() << "\"},";
-    if( &sg.GetPointGroup() != NULL )  continue;
+    if (sg.HasPointGroup())  continue;
     TSpaceGroup* pg = NULL;
-    for( size_t j=0; j < _PointGroups.Count(); j++ )  {
-      for (size_t k=0; k < _PointGroups[j].Count(); k++) {
-        if( GetGroup(i).ContainsGroup(_PointGroups[j][k]) )  {
+    for (size_t j = 0; j < _PointGroups.Count(); j++) {
+      for (size_t k = 0; k < _PointGroups[j].Count(); k++) {
+        if (GetGroup(i).ContainsGroup(_PointGroups[j][k])) {
           pg = PointGroups[j];
           break;
         }
       }
       if (pg != NULL) break;
     }
-//    TCStrList(o).SaveToFile("e:/2.txt");
-    if( pg != NULL )
+    //    TCStrList(o).SaveToFile("e:/2.txt");
+    if (pg != NULL)
       sg.SetPointGroup(*pg);
   }
   // test
 #ifdef _DEBUG
-  for( size_t i=0; i < SGCount(); i++ )  {
+  for (size_t i = 0; i < SGCount(); i++)  {
     TSpaceGroup& sg = GetGroup(i);
-    if( &sg.GetPointGroup() == NULL )
+    if (!sg.HasPointGroup())
       throw TFunctionFailedException(__OlxSourceInfo, "assert point group");
-    if( &sg.GetLaueClass() == NULL )
+    if (!sg.HasLaueClass())
       throw TFunctionFailedException(__OlxSourceInfo, "assert laue class");
+    if (!sg.HasBraviasLattice())
+      throw TFunctionFailedException(__OlxSourceInfo, "assert bravais lattice");
   }
 #endif
 }

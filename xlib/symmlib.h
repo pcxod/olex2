@@ -137,10 +137,13 @@ public:
 
   void SetBravaisLattice(TBravaisLattice& bl)  {  BravaisLattice = &bl;  }
   TBravaisLattice& GetBravaisLattice() const {  return *BravaisLattice;  }
+  bool HasBraviasLattice() const { return BravaisLattice != 0; }
   void SetLaueClass(TSpaceGroup& lc)  {  LaueClass = &lc;  }
   TSpaceGroup& GetLaueClass() const {  return *LaueClass;  }
+  bool HasLaueClass() const { return LaueClass != 0; }
   void SetPointGroup(TSpaceGroup& lc)  {  PointGroup = &lc;  }
   TSpaceGroup& GetPointGroup() const {  return *PointGroup;  }
+  bool HasPointGroup() const { return PointGroup != 0; }
 
   SymmSpace::Info GetInfo() const;
   // compares m.R and summs (delta(m.t))^2 into st;
