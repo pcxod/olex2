@@ -19,22 +19,22 @@ IAtomMask *IAtomMask::build(const olxstr &mask, const TAsymmUnit &au) {
 //.............................................................................
 //.............................................................................
 AtomNameMask::AtomNameMask(const AtomNameMask &m, const TAsymmUnit &au)
-: atom(*au.FindCAtomById(m.atom.GetId()))
+: atom(au.FindCAtomById(m.atom->GetId()))
 {
-  if (&atom == 0) {
+  if (atom == 0) {
     throw TInvalidArgumentException(__OlxSourceInfo,
       "aysmmetric units missmatch");
   }
 }
 //.............................................................................
 bool AtomNameMask::matches(const TCAtom &a) const {
-  return atom.GetLabel() == a.GetLabel();
+  return atom->GetLabel() == a.GetLabel();
 }
 //.............................................................................
 bool AtomNameMask::equals(const IAtomMask &m_) const {
   const AtomNameMask *m = dynamic_cast<const AtomNameMask *>(&m_);
   if (m == 0) return false;
-  return &atom == &m->atom;
+  return atom == m->atom;
 }
 //.............................................................................
 //.............................................................................

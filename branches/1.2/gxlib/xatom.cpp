@@ -749,7 +749,7 @@ const_strlist TXAtom::PovDeclare(TGlRenderer &r) {
   out.Add(" cylinder {<0,-1,0>, <0,1,0>, 0.05}");
   out.Add(" cylinder {<0,0,-1>, <0,0,1>, 0.05}");
   out.Add("}}");
-  if (defs.TetrahedronIndex < 0) {
+  if (defs.TetrahedronIndex == InvalidIndex) {
     throw TInvalidArgumentException(__OlxSourceInfo, "uninitialised object");
   }
   TGlPrimitive *glp = defs.GetPrimitives().GetObject(defs.TetrahedronIndex);
@@ -879,7 +879,7 @@ const_strlist TXAtom::WrlDeclare(TGlRenderer &r) {
   out.Add(" Transform{ rotation 1 0 0 1.5708 children USE stick}");
   out.Add("]}}");
 
-  if (defs.TetrahedronIndex < 0) {
+  if (defs.TetrahedronIndex == InvalidIndex) {
     throw TInvalidArgumentException(__OlxSourceInfo, "uninitialised object");
   }
   TGlPrimitive *glp = defs.GetPrimitives().GetObject(defs.TetrahedronIndex);

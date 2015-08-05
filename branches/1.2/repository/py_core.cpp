@@ -476,7 +476,7 @@ PyObject* pySetBadReflections(PyObject* self, PyObject* args)  {
   if( !PythonExt::ParseTuple(args, "O", &l) || !PyIter_Check(l) )
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "O");
   TTypeList<RefinementModel::BadReflection> bad_refs;
-  while (r = PyIter_Next(l)) {
+  while ((r = PyIter_Next(l)) != 0) {
     RefinementModel::BadReflection br;
     if (!PythonExt::ParseTuple(r, "iiiddd",
           &br.index[0], &br.index[1], &br.index[2],

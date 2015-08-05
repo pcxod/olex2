@@ -55,6 +55,7 @@ public:
 
   void SetPrimitives(TGPCollection& GPC)  {  Primitives = &GPC;  }
   TGPCollection& GetPrimitives() const {  return *Primitives;  }
+  bool HasPrimitives() const { return Primitives != 0; }
 
   const olxstr& GetCollectionName() const {  return CollectionName;  }
 

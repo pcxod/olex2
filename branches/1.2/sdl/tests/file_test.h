@@ -51,7 +51,7 @@ void RelativePathTest(OlxTests& t)  {
 //...................................................................................................
 void PathQuoteTest(OlxTests& t)  {
   t.description = __FUNC__;
-  char *paths[] = {
+  const char *paths[] = {
     "x", "x",
     "x\\", "x\\",
     "x\"", "\"x\\\"\"",

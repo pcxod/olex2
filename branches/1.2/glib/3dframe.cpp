@@ -229,9 +229,10 @@ void T3DFrameCtrl::LibType(const TStrObjList& Params, TMacroData& E) {
     else {
       E.ProcessingError(__OlxSrcInfo, "Sphere/Box is expected");
     }
-    TGraphicsStyle &s = GetPrimitives().GetStyle();
-    if (&s == 0) return;
-    s.SetParam("spherical", sphere, true);
+    if (GetPrimitives().HasStyle()) {
+      TGraphicsStyle &s = GetPrimitives().GetStyle();
+      s.SetParam("spherical", sphere, true);
+    }
   }
 }
 //.............................................................................

@@ -2436,12 +2436,13 @@ void XLibMacros::macSGS(TStrObjList &Cmds, const TParamList &Options,
     }
     return;
   }
-  TSpaceGroup& sg = Cmds.Count() == 1 ? xapp.XFile().GetLastLoaderSG() :
-    *TSymmLib::GetInstance().FindGroupByName(Cmds[1]);
-  if( &sg == NULL )  {
+  TSpaceGroup* sg_ = Cmds.Count() == 1 ? &xapp.XFile().GetLastLoaderSG() :
+    TSymmLib::GetInstance().FindGroupByName(Cmds[1]);
+  if (sg_ == NULL)  {
     E.ProcessingError(__OlxSrcInfo, "undefined space group");
     return;
   }
+  TSpaceGroup &sg = *sg_;
   SGSettings sg_set(sg);
   olxstr axis = sg_set.axisInfo.GetAxis();
   TBasicApp::NewLogEntry() << "Current setting: " <<

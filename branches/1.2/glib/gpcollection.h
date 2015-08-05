@@ -67,6 +67,7 @@ public:
   virtual void SetStyle(TGraphicsStyle* S);
   // it might be NULL
   inline TGraphicsStyle& GetStyle() const {  return *Style;  }
+  inline bool HasStyle() const { return Style != 0; }
 };
 
 

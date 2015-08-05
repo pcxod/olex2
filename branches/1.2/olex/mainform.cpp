@@ -1853,8 +1853,8 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
     if( Data != NULL && EsdlInstanceOf(*Data, TKeyEvent) )
       this->OnKeyDown(((TKeyEvent*)Data)->GetEvent());
   }
-  else if( MsgId == ID_INFO || MsgId == ID_WARNING || MsgId == ID_ERROR ||
-           MsgId == ID_EXCEPTION && (MsgSubId == msiEnter))
+  else if ((MsgId == ID_INFO || MsgId == ID_WARNING || MsgId == ID_ERROR ||
+           MsgId == ID_EXCEPTION) && (MsgSubId == msiEnter))
   {
     if( Data != NULL )  {
       TGlMaterial *glm = NULL;
