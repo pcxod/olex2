@@ -15,14 +15,14 @@
 BeginXlibNamespace()
 
 const short
+  mol2btUnknown      = 0,
   mol2btSingle       = 1,
   mol2btDouble       = 2,
   mol2btTriple       = 3,
-  mol2btAmide        = 4,
-  mol2btAromatic     = 5,
+  mol2btAromatic     = 4,
+  mol2btAmide        = 5,
   mol2btDummy        = 6,
-  mol2btUnknown      = 7,
-  mol2btNotConnected = 8;
+  mol2btNotConnected = 7;
 
 struct TMol2Bond  {
 private:
@@ -40,7 +40,7 @@ private:
   TTypeList<TMol2Bond> Bonds;
 
   static const TStrList &BondNames() {
-    static TStrList rv("1;2;3;am;ar;du;un;nc", ';');
+    static TStrList rv("un;1;2;3;ar;am;du;nc", ';');
     return rv;
   }
 protected:

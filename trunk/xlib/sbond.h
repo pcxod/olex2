@@ -20,7 +20,8 @@ const short
   sboUndefined = 0,
   sboSingle = 1,
   sboDouble = 2,
-  sboTripple = 3;
+  sboTripple = 3,
+  sboAromatic = 4;
 
 
 class TSBond: public TBasicBond<class TNetwork, TSAtom>  {
@@ -34,7 +35,9 @@ public:
   virtual ~TSBond() {}
 
   DefPropBIsSet(Deleted)
-  bool IsAvailable() const {  return (!IsDeleted() && FA->IsAvailable() && FB->IsAvailable()); }
+  bool IsAvailable() const {
+    return (!IsDeleted() && FA->IsAvailable() && FB->IsAvailable());
+  }
   vec3d GetCenter() const {  return (FA->crd()+FB->crd())/2;  }
   double Length() const {  return FA->crd().DistanceTo(FB->crd());  }
   double QLength() const {  return FA->crd().QDistanceTo(FB->crd());  }
@@ -81,6 +84,12 @@ public:
     return (*FA == r.a && *FB == r.b) || (*FA == r.b && *FB == r.a);
   }
   DefPropP(short, Order)
+  /* returns MOL file compatible bond order:
+  1 = Single, 2 = Double, 3 = Triple, 4 = Aromatic, 0 - undefined
+  The first element argument is the heavier one
+  */
+  static short PercieveOrder(const cm_Element &a,
+  const cm_Element &b, double d);
   void ToDataItem(TDataItem& item) const;
   void FromDataItem(const TDataItem& item, class TLattice& parent);
 };
