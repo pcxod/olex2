@@ -40,8 +40,8 @@ olxstr TMol::MOLAtom(TCAtom& A) {
 //..............................................................................
 olxstr TMol::MOLBond(TMolBond& B) {
   olxstr_buf tmp;
-  tmp = olxstr(B.AtomA+1).LeftPadding(3, ' ');
-  tmp << olxstr(B.AtomB+1).LeftPadding(3, ' ')
+  tmp << olxstr(B.AtomA+1).LeftPadding(3, ' ')
+    << olxstr(B.AtomB+1).LeftPadding(3, ' ')
     << olxstr(B.BondType).LeftPadding(3, ' ');
   for (int j = 0; j < 4; j++) {
     tmp << padding();
