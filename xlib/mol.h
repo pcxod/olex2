@@ -17,13 +17,17 @@ struct TMolBond  {
   size_t AtomA, AtomB, BondType;
 };
 
-class TMol: public TBasicCFile  {
+class TMol: public TBasicCFile {
 private:
   void Clear();
   TTypeList<TMolBond> Bonds;
 protected:
   olxstr MOLAtom(TCAtom& CA);
   olxstr MOLBond(TMolBond& B);
+  static const olxstr &padding() {
+    static const olxstr p= "  0";
+    return p;
+  }
 public:
   TMol();
   virtual ~TMol();

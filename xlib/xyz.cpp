@@ -22,7 +22,7 @@ void TXyz::Clear()  {
   GetAsymmUnit().InitMatrices();
 }
 //..............................................................................
-void TXyz::SaveToStrings(TStrList& Strings)  {
+void TXyz::SaveToStrings(TStrList& Strings) {
   Strings.Add();
   Strings.Add("Exported from Olex2");
   size_t cnt = 0;
@@ -31,7 +31,7 @@ void TXyz::SaveToStrings(TStrList& Strings)  {
     if( CA.IsDeleted() )  continue;
     olxstr& aline = Strings.Add(CA.GetType().symbol);
     aline << ' ';
-    const vec3d& v = CA.ccrd();
+    vec3d v = GetAsymmUnit().Orthogonalise(CA.ccrd());
     for( int j=0; j < 3; j++ )
       aline << olxstr::FormatFloat(4, v[j]).LeftPadding(10, ' ');
     cnt++;
@@ -43,7 +43,6 @@ void TXyz::LoadFromStrings(const TStrList &Strings) {
   TAsymmUnit &au = GetAsymmUnit();
   au.Clear();
   Title = "OLEX2: imported from XYZ";
-  vec3d miv(1000), mav(-1000);
   for (size_t i=0; i < Strings.Count(); i++) {
     olxstr line = Strings[i];
     if (line.IsEmpty())  continue;
@@ -55,29 +54,11 @@ void TXyz::LoadFromStrings(const TStrList &Strings) {
       CA.ccrd()[0] = toks[1].ToDouble();
       CA.ccrd()[1] = toks[2].ToDouble();
       CA.ccrd()[2] = toks[3].ToDouble();
-      vec3d::UpdateMinMax(CA.ccrd(), miv, mav);
       CA.SetType(*elm);
       CA.SetLabel(olxstr(elm->symbol) << (GetAsymmUnit().AtomCount()+1), false);
     }
   }
-  au.GetAngles() = vec3d(90, 90, 90);
-  au.GetAxes() = mav - miv;
-  if (au.GetAxes().IsNull()) {
-    au.GetAxes() = vec3d(1);
-  }
-  else {
-    for (int i = 0; i < 3; i++) {
-      if (au.GetAxes()[i] < 1e-3) {
-        au.GetAxes()[i] = 1;
-      }
-    }
-    au.GetAxes() += 2;
-    for (size_t i = 0; i < au.AtomCount(); i++) {
-      TCAtom &a = au.GetAtom(i);
-      a.ccrd() /= au.GetAxes();
-    }
-  }
-  au.InitMatrices();
+  GenerateCellForCartesianFormat();
 }
 //..............................................................................
 bool TXyz::Adopt(TXFile &XF, int flags) {

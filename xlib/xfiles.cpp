@@ -113,6 +113,32 @@ void TBasicCFile::LoadFromFile(const olxstr& _fn)  {
   }
   FileName = file_n.file_name;
 }
+//..............................................................................
+void TBasicCFile::GenerateCellForCartesianFormat() {
+  TAsymmUnit &au = GetAsymmUnit();
+  vec3d miv(1000), mav(-1000);
+  for (size_t i = 0; i < au.AtomCount(); i++) {
+    vec3d::UpdateMinMax(au.GetAtom(i).ccrd(), miv, mav);
+  }
+  au.GetAngles() = vec3d(90, 90, 90);
+  au.GetAxes() = mav - miv;
+  if (au.GetAxes().IsNull()) {
+    au.GetAxes() = vec3d(1);
+  }
+  else {
+    for (int i = 0; i < 3; i++) {
+      if (au.GetAxes()[i] < 1e-3) {
+        au.GetAxes()[i] = 1;
+      }
+    }
+    au.GetAxes() += 2;
+    for (size_t i = 0; i < au.AtomCount(); i++) {
+      TCAtom &a = au.GetAtom(i);
+      a.ccrd() /= au.GetAxes();
+    }
+  }
+  au.InitMatrices();
+}
 //----------------------------------------------------------------------------//
 // TXFile function bodies
 //----------------------------------------------------------------------------//
