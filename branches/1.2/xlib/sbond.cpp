@@ -44,3 +44,41 @@ void TSBond::FromDataItem(const TDataItem& item, TLattice& parent) {
   SetOrder(item.FindField("order", '0').ToInt());
 }
 //..............................................................................
+short TSBond::PercieveOrder(const cm_Element &a,
+  const cm_Element &b, double l)
+{
+  if (a == iOxygenZ || b == iOxygenZ) {
+    if (a == iSulphurZ) {
+      if (l < 1.48) return 2;
+    }
+    if (b == iNitrogenZ) {
+      if (l < 1.10) return 3;
+      if (l < 1.22) return 2;
+    }
+    if (b == iCarbonZ) {
+      if (l < 1.15) return 3;
+      if (l < 1.30) return 2;
+    }
+  }
+  else if (a == iNitrogenZ || b == iNitrogenZ) {
+    if (a == iNitrogenZ && b == iNitrogenZ) {
+      if (l < 1.15) return 3;
+      if (l < 1.22) return 2;
+      if (l < 1.41) return 4;
+    }
+    else if (b == iCarbonZ) {
+      if (l < 1.20) return 3;
+      if (l < 1.30) return 2;
+      if (l < 1.43) return 4;
+    }
+  }
+  else if (a == iCarbonZ || b == iCarbonZ) {
+    if (a == iCarbonZ && b == iCarbonZ) {
+      if (l < 1.20) return 3;
+      if (l < 1.36) return 2;
+      if (l < 1.45) return 4;
+    }
+  }
+  return 0;
+}
+//..............................................................................

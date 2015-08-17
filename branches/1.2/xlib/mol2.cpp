@@ -25,24 +25,27 @@ void TMol2::Clear() {
 //..............................................................................
 olxstr TMol2::MOLAtom(TCAtom& A) {
   olxstr rv(A.GetId(), 64);
+  vec3d c = GetAsymmUnit().Orthogonalise(A.ccrd());
   rv << '\t' << A.GetLabel()
-     << '\t' << A.ccrd()[0]
-     << '\t' << A.ccrd()[1]
-     << '\t' << A.ccrd()[2]
-     << '\t' << A.GetType().symbol;
+     << '\t' << c[0] << '\t' << c[1] << '\t' << c[2]
+     << '\t' << A.GetType().symbol
+     << '\t' << (A.GetFragmentId()+1)
+     << '\t' << "FRAG_" << (A.GetFragmentId()+1)
+     << "\t0";
   return rv;
 }
 //..............................................................................
 const olxstr& TMol2::EncodeBondType(size_t type) const {
   if (BondNames().Count() < type)
     throw TInvalidArgumentException(__OlxSourceInfo, "bond type");
-  return BondNames()[type-1];
+  return BondNames()[type];
 }
 //..............................................................................
 size_t TMol2::DecodeBondType(const olxstr& name) const {
-  for (int i=0; i < 8; i++ )
+  for (int i = 0; i < 8; i++) {
     if (BondNames()[i].Equalsi(name))
-      return i+1;
+      return i;
+  }
   return mol2btUnknown;
 }
 //..............................................................................
@@ -53,20 +56,35 @@ olxstr TMol2::MOLBond(TMol2Bond& B) {
 }
 //..............................................................................
 void TMol2::SaveToStrings(TStrList& Strings) {
+  const TAsymmUnit &au = GetAsymmUnit();
   Strings.Add("@<TRIPOS>MOLECULE");
   Strings.Add(GetTitle());
-  Strings.Add(GetAsymmUnit().AtomCount())  << '\t' << Bonds.Count() << "\t1";
+  Strings.Add(au.AtomCount())  << '\t' << Bonds.Count() << "\t1";
   Strings.Add("SMALL");
   Strings.Add("NO_CHARGES");
-  Strings.Add(EmptyString());
+  Strings.Add("= OLEX2 =");
   Strings.Add("@<TRIPOS>ATOM");
-  for (size_t i = 0; i < GetAsymmUnit().AtomCount(); i++)
-    Strings.Add(MOLAtom(GetAsymmUnit().GetAtom(i)));
+  //olxdict<uint32_t, size_t, TPrimitiveComparator> frag_atoms;
+  sorted::PrimitiveAssociation<uint32_t, size_t> frag_atoms;
+  for (size_t i = 0; i < au.AtomCount(); i++) {
+    TCAtom &a = au.GetAtom(i);
+    Strings.Add(MOLAtom(a));
+    size_t idx = frag_atoms.IndexOf(a.GetFragmentId());
+    if (idx == InvalidIndex) {
+      frag_atoms.Add(a.GetFragmentId(), a.GetId());
+    }
+  }
   if (!Bonds.IsEmpty()) {
     Strings.Add(EmptyString());
     Strings.Add("@<TRIPOS>BOND");
     for (size_t i=0; i < Bonds.Count(); i++)
       Strings.Add(MOLBond(Bonds[i]));
+  }
+  Strings.Add("@<TRIPOS>SUBSTRUCTURE");
+  for (uint32_t i = 0; i < frag_atoms.Count(); i++) {
+    Strings.Add(i+1) << '\t' << "FRAG_" << (frag_atoms.GetKey(i)+1)
+      << '\t' << frag_atoms.GetValue(i)
+      << "\tGROUP\t0\t****\t****\t0";
   }
 }
 //..............................................................................
@@ -115,6 +133,7 @@ void TMol2::LoadFromStrings(const TStrList& Strings) {
       continue;
     }
   }
+  GenerateCellForCartesianFormat();
 }
 
 //..............................................................................
@@ -129,6 +148,7 @@ bool TMol2::Adopt(TXFile &XF, int) {
     a.SetLabel(sa.GetLabel(), false);
     a.ccrd() = sa.crd();
     a.SetType(sa.GetType());
+    a.SetFragmentId(sa.CAtom().GetFragmentId());
     sa.SetTag(id++);
   }
   for (size_t i=0; i < objects.bonds.Count(); i++) {
@@ -137,7 +157,9 @@ bool TMol2::Adopt(TXFile &XF, int) {
     TMol2Bond& mb = Bonds.AddNew(Bonds.Count());
     mb.a1 = sb.A().GetTag();
     mb.a2 = sb.B().GetTag();
-    mb.BondType = 1; // singlel bond, a proper encoding is required...
+    mb.BondType = TSBond::PercieveOrder(sb.A().GetType(), sb.B().GetType(),
+      sb.Length());
+    if (mb.BondType == 0) mb.BondType = 1;
   }
   GetAsymmUnit().SetZ((short)XF.GetLattice().GetUnitCell().MatrixCount());
   return true;

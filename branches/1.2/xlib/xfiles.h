@@ -25,6 +25,7 @@ protected:
   TAsymmUnit AsymmUnit;
   // do not use it directly - use LoadStrings instead
   virtual void LoadFromStrings(const TStrList& Strings) = 0;
+  void GenerateCellForCartesianFormat();
 public:
   TBasicCFile();
   virtual ~TBasicCFile();
