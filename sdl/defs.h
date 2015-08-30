@@ -64,7 +64,7 @@
     '(' << __FUNC__ << "):" << __LINE__ << ']')
 #else
   #define  __OlxSourceInfo (olxstr(EmptyString(), 384) <<\
-    "["__FILE__"("__FUNC__"):" << __LINE__ << ']')
+    "[" << __FILE__ << "(" << __FUNC__ << "):" << __LINE__ << ']')
 #endif
 #define  __POlxSourceInfo __FILE__,__FUNC__,__LINE__
 //#define  __OlxSourceInfo __FILE__" in "__FUNC__

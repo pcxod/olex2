@@ -491,7 +491,9 @@ void XLibMacros::Export(TLibrary& lib)  {
     "Makes all provided rings [like C6 or NC5] regular (flat and all distances"
     " similar). If a selection is given - the whole rings must be selected");
   xlib_InitMacro(Flat,
-    "cs-do not clear selection",
+    "cs-do not clear selection&;"
+    "i-place implicit restraint"
+    ,
     fpAny|psCheckFileTypeIns,
     "Flat group restraint for at least 4 provided atoms");
   xlib_InitMacro(Chiv,
@@ -7445,7 +7447,13 @@ void XLibMacros::macFlat(TStrObjList &Cmds, const TParamList &Options,
     sr.AddAtom(Atoms[i]->CAtom(), &Atoms[i]->GetMatrix());
   app.XFile().GetRM().rFLAT.ValidateRestraint(sr);
   TBasicApp::NewLogEntry() << "Placing the following restraints: ";
-  TBasicApp::NewLogEntry() << sr.ToString();
+  if (Options.GetBoolOption('i')) {
+    sr.ConvertToImplicit();
+    TBasicApp::NewLogEntry() << sr.ToString();
+  }
+  else {
+    TBasicApp::NewLogEntry() << sr.ToString();
+  }
 }
 //.............................................................................
 void XLibMacros::macSIMU(TStrObjList &Cmds, const TParamList &Options,
