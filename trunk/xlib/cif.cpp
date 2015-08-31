@@ -103,23 +103,24 @@ void TCif::_LoadCurrent()  {
   }
   CifBlock& cif_data = data_provider[block_index];
   Clear();
-  /*search for the weigting sceme*************************************/
+  /*search for the weigting scheme*************************************/
   const size_t ws_i = cif_data.param_map.IndexOf("_refine_ls_weighting_details");
   if( ws_i != InvalidIndex )  {
     IStringCifEntry* ci = dynamic_cast<IStringCifEntry*>(cif_data.param_map.GetValue(ws_i));
-    if( ci != NULL && ci->Count() == 1 )  {
+    if (ci != NULL && ci->Count() == 1) {
       const olxstr& tmp = (*ci)[0];
-      for( size_t k=0; k < tmp.Length(); k++ )  {
-        if( tmp[k] == '+' )  {
-          if( WeightA.IsEmpty() )  {
-            const size_t st = k+2;
-            while( tmp[k] != ')' && ++k < tmp.Length() )  ;
-            WeightA = tmp.SubString(st, --k-st);
+      for (size_t k = 0; k < tmp.Length(); k++) {
+        if (tmp[k] == '+') {
+          if (WeightA.IsEmpty()) {
+            const size_t st = k + 2;
+            while (tmp[k] != ')' && ++k < tmp.Length())
+              ;
+            WeightA = tmp.SubString(st, --k - st);
           }
-          else if( WeightB.IsEmpty() )  {
+          else if (WeightB.IsEmpty()) {
             const size_t st = k;
-            while( tmp[k] != ']' && ++k < tmp.Length() )  ;
-            WeightB = tmp.SubString(st, k-st-1);
+            while (tmp[k] != ']' && ++k < tmp.Length());
+            WeightB = tmp.SubString(st, k - st - 1);
           }
           else
             break;
@@ -187,8 +188,9 @@ void TCif::SaveToStrings(TStrList& Strings)  {
     }
   }
   GetAsymmUnit().ComplyToResidues();
-  for( size_t i=0; i < data_provider[block_index].table_map.Count(); i++ )
+  for (size_t i = 0; i < data_provider[block_index].table_map.Count(); i++) {
     data_provider[block_index].table_map.GetValue(i)->Sort();
+  }
   data_provider[block_index].Sort(pivots, endings);
   data_provider.SaveToStrings(Strings);
 }
@@ -579,36 +581,54 @@ void TCif::Initialize()  {
       }
     }
   }
+  if ((ALoop = FindLoop("_atom_site_aniso")) != 0) {
+    ALabel = ALoop->ColIndex("_atom_site_aniso_label");
+    double scale;
+    TSizeList Ui;
+    Ui.SetCapacity(6);
+    size_t x = ALoop->ColIndex("_atom_site_aniso_U_11");
+    if (x == InvalidIndex) {
+      x = ALoop->ColIndex("_atom_site_aniso_B_11");
+      if (x != InvalidIndex) {
+        scale = 1. / (8 * M_PI*M_PI);
+        Ui << ALoop->ColIndex("_atom_site_aniso_B_11")
+          << ALoop->ColIndex("_atom_site_aniso_B_22")
+          << ALoop->ColIndex("_atom_site_aniso_B_33")
+          << ALoop->ColIndex("_atom_site_aniso_B_23")
+          << ALoop->ColIndex("_atom_site_aniso_B_13")
+          << ALoop->ColIndex("_atom_site_aniso_B_12");
+      }
+    }
+    else {
+      scale = 1;
+      Ui << ALoop->ColIndex("_atom_site_aniso_U_11")
+        << ALoop->ColIndex("_atom_site_aniso_U_22")
+        << ALoop->ColIndex("_atom_site_aniso_U_33")
+        << ALoop->ColIndex("_atom_site_aniso_U_23")
+        << ALoop->ColIndex("_atom_site_aniso_U_13")
+        << ALoop->ColIndex("_atom_site_aniso_U_12");
+    }
 
-  ALoop = FindLoop("_atom_site_aniso");
-  if( ALoop == NULL )  return;
-  ALabel =  ALoop->ColIndex("_atom_site_aniso_label");
-  const size_t Ui[] = {
-    ALoop->ColIndex("_atom_site_aniso_U_11"),
-    ALoop->ColIndex("_atom_site_aniso_U_22"),
-    ALoop->ColIndex("_atom_site_aniso_U_33"),
-    ALoop->ColIndex("_atom_site_aniso_U_23"),
-    ALoop->ColIndex("_atom_site_aniso_U_13"),
-    ALoop->ColIndex("_atom_site_aniso_U_12")
-  };
-
-  if( (ALabel|Ui[0]|Ui[1]|Ui[2]|Ui[3]|Ui[4]|Ui[5]) != InvalidIndex )  {
-    for( size_t i=0; i < ALoop->RowCount(); i++ )  {
-      TCAtom* A = GetAsymmUnit().FindCAtomDirect(
-        ALoop->Get(i, ALabel).GetStringValue());
-      if( A == NULL ) {
-        throw TInvalidArgumentException(__OlxSourceInfo,
-          olxstr("wrong atom in the aniso loop ").quote() <<
+    if (ALabel != InvalidIndex && Ui.Count() == 6 &&
+      (Ui[0] | Ui[1] | Ui[2] | Ui[3] | Ui[4] | Ui[5]) != InvalidIndex)
+    {
+      for (size_t i = 0; i < ALoop->RowCount(); i++) {
+        TCAtom* A = GetAsymmUnit().FindCAtomDirect(
+          ALoop->Get(i, ALabel).GetStringValue());
+        if (A == NULL) {
+          throw TInvalidArgumentException(__OlxSourceInfo,
+            olxstr("wrong atom in the aniso loop ").quote() <<
             ALoop->Get(i, ALabel).GetStringValue());
+        }
+        for (int j = 0; j < 6; j++) {
+          EValue = ALoop->Get(i, Ui[j]).GetStringValue();
+          Q[j] = EValue.GetV()*scale;  E[j] = EValue.GetE()*scale;
+          if (EValue.GetE() == 0)
+            GetRM().Vars.FixParam(*A, catom_var_name_U11 + j);
+        }
+        GetAsymmUnit().UcifToUcart(Q);
+        A->AssignEllp(&GetAsymmUnit().NewEllp().Initialise(Q, E));
       }
-      for( int j=0; j < 6; j++ )  {
-        EValue = ALoop->Get(i, Ui[j]).GetStringValue();
-        Q[j] = EValue.GetV();  E[j] = EValue.GetE();
-        if( EValue.GetE() == 0 )
-          GetRM().Vars.FixParam(*A, catom_var_name_U11+j);
-      }
-      GetAsymmUnit().UcifToUcart(Q);
-      A->AssignEllp(&GetAsymmUnit().NewEllp().Initialise(Q, E));
     }
   }
   // geometric parameters
