@@ -1047,15 +1047,30 @@ void GXLibMacros::macLabel(TStrObjList &Cmds, const TParamList &Options,
       have_vcov = true;
     }
     catch (const TExceptionBase&) {}
+    const TCifDataManager *dm = 0;
+    if (app.CheckFileType<TCif>()) {
+      dm = &app.XFile().GetLastLoader<TCif>().GetDataManager();
+    }
     for (size_t i = 0; i < bonds.Count(); i++) {
       TXGlLabel& l = bonds[i]->GetGlLabel();
       l.SetOffset(bonds[i]->GetCenter());
-      if (have_vcov) {
-        l.SetLabel(vcovc.CalcDistance(bonds[i]->A(),
-          bonds[i]->B()).ToString());
+      bool matched = false;
+      if (dm != 0) {
+        ACifValue *v = dm->Match(bonds[i]->A(), bonds[i]->B());
+        if (v != 0) {
+          matched = true;
+          l.SetLabel(v->GetValue().ToString());
+        }
       }
-      else
-        l.SetLabel(olxstr::FormatFloat(3, bonds[i]->Length()));
+      if (!matched) {
+        if (have_vcov) {
+          l.SetLabel(vcovc.CalcDistance(bonds[i]->A(),
+            bonds[i]->B()).ToString());
+        }
+        else {
+          l.SetLabel(olxstr::FormatFloat(3, bonds[i]->Length()));
+        }
+      }
       labels.Add(l)->SetVisible(true);
       l.TranslateBasis(-l.GetCenter());
     }
