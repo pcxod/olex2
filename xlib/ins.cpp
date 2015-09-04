@@ -400,17 +400,17 @@ void TIns::_ReadExtras(TStrList &l, ParseContext &cx) {
   }
 }
 //..............................................................................
-void TIns::_FinishParsing(ParseContext& cx)  {
+void TIns::_FinishParsing(ParseContext& cx) {
   __ProcessConn(cx);
-  for( size_t i=0; i < Ins.Count(); i++ )  {
+  for (size_t i = 0; i < Ins.Count(); i++)  {
     TStrList toks(Ins[i], ' ');
     if (toks.Count() == 1 && toks[0].Equalsi("END")) {
       Ins.DeleteRange(i, Ins.Count()-i);
       break;
     }
-    else if( (toks[0].StartsFromi("HTAB") || toks[0].StartsFromi("RTAB") ||
+    else if ((toks[0].StartsFromi("HTAB") || toks[0].StartsFromi("RTAB") ||
       toks[0].StartsFromi("MPLA") || toks[0].StartsFromi("CONF")) &&
-      toks.Count() > 2 )
+      toks.Count() > 2)
     {
       cx.rm.AddInfoTab(toks);
       Ins.Delete(i--);
@@ -419,34 +419,34 @@ void TIns::_FinishParsing(ParseContext& cx)  {
       cx.rm.AddOMIT(toks.SubListFrom(1));
       Ins.Delete(i--);
     }
-    else if( toks[0].StartsFromi("ANIS") )  {
+    else if (toks[0].StartsFromi("ANIS")) {
       Ins.Delete(i--);
-      try  {
+      try {
         double Q[6];
         memset(&Q[0], 0, sizeof(Q));
         AtomRefList rl(cx.rm, toks.Text(' ', 1));
         TTypeList<TAtomRefList> atoms;
         rl.Expand(cx.rm, atoms);
-        for( size_t j=0; j < atoms.Count(); j++ )  {
-          for( size_t k=0; k < atoms[j].Count(); k++ )  {
+        for (size_t j = 0; j < atoms.Count(); j++) {
+          for (size_t k = 0; k < atoms[j].Count(); k++) {
             TCAtom& ca = atoms[j][k].GetAtom();
-            if( ca.GetEllipsoid() == NULL )  {
+            if (ca.GetEllipsoid() == NULL) {
               Q[0] = Q[1] = Q[2] = ca.GetUiso();
               ca.UpdateEllp(Q);
             }
           }
         }
       }
-      catch(const TExceptionBase& e)  {
+      catch (const TExceptionBase& e) {
         TBasicApp::NewLogEntry(logError) << e.GetException()->GetFullMessage();
       }
     }
-    else  {
+    else {
       TInsList* Param = new TInsList(toks);
       Ins.GetObject(i) = Param;
       Ins[i] = Param->GetString(0);
       Param->Delete(0);
-      for( size_t j=0; j < Param->Count(); j++ )
+      for (size_t j = 0; j < Param->Count(); j++)
         Param->GetObject(j) = GetAsymmUnit().FindCAtom(Param->GetString(j));
     }
   }
@@ -474,7 +474,7 @@ void TIns::_ProcessAfix0(ParseContext& cx)  {
     int old_m = cx.AfixGroups.Top().GetB()->GetM();
     bool valid = true;
     if (cx.AfixGroups.Top().GetA() > 0) {
-      if( old_m != 0 ) {
+      if (old_m != 0) {
         TBasicApp::NewLogEntry(logError) << olxstr("Incomplete AFIX group") <<
         (cx.Last != NULL ? (olxstr(" at ") << cx.Last->GetLabel())
           : EmptyString());
@@ -571,29 +571,33 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
     const int afix = Toks[1].ToInt();
     TAfixGroup* afixg = NULL;
     int n = 0, m = 0;
-    if( afix != 0 )  {
+    if (afix != 0) {
       double d = 0, u = 0, sof = 0;
-      if( Toks.Count() > 2 && Toks[2].IsNumber() )
+      if (Toks.Count() > 2 && Toks[2].IsNumber()) {
         d = Toks[2].ToDouble();
-      if( Toks.Count() > 3 )
+      }
+      if (Toks.Count() > 3) {
         sof = Toks[3].ToDouble();
-      if( Toks.Count() > 4 )
+      }
+      if (Toks.Count() > 4) {
         u = Toks[3].ToDouble();
+      }
       n = TAfixGroup::GetN(afix);
       m = TAfixGroup::GetM(afix);
-      if( !TAfixGroup::IsDependent(afix) )  {
+      if (!TAfixGroup::IsDependent(afix)) {
         /*shelxl produces 'broken' res files (by removing termitating AFIX 0
         for fitted groups) limiting the construction of rigid groups... so to
         read them correctly we have to pop the last rigid group if encounter
         a new one
         */
-        if( !cx.AfixGroups.IsEmpty() &&
+        if (!cx.AfixGroups.IsEmpty() &&
             !cx.AfixGroups.Top().b->IsFixedGroup() &&
-            !TAfixGroup::IsFixedGroup(afix) )
+            !TAfixGroup::IsFixedGroup(afix))
         {
           cx.AfixGroups.Pop();
         }
-        afixg = &cx.rm.AfixGroups.New(NULL, afix, d, sof == 11 ? 0 : sof, u == 10.08 ? 0 : u);
+        afixg = &cx.rm.AfixGroups.New(NULL, afix, d, sof == 11 ? 0 : sof,
+          u == 10.08 ? 0 : u);
       }
       else {
         if( !cx.AfixGroups.IsEmpty() &&
@@ -607,14 +611,15 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
     /* Shelx manual: n is always a single digit; m may be two, one or zero
     digits (the last corresponds to m = 0).
     */
-    if( afix == 0 )
+    if (afix == 0) {
       _ProcessAfix0(cx);
-    else  {
+    }
+    else {
       // pop m = 0 as well
-      if( !cx.AfixGroups.IsEmpty() && cx.AfixGroups.Top().GetA() == 0 )  {
+      if (!cx.AfixGroups.IsEmpty() && cx.AfixGroups.Top().GetA() == 0) {
         cx.AfixGroups.Pop();
       }
-      if( afixg != NULL )  {
+      if (afixg != NULL) {
         switch( m )  {
         case 1:
         case 4:
@@ -686,6 +691,7 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
     }
   }
   else if (Toks[0].Equalsi("RESI")) {
+    _ProcessAfix0(cx);
     if (Toks.Count() < 2) {
       throw TInvalidArgumentException(__OlxSourceInfo,
         "number of arguments for RESI");
@@ -778,65 +784,79 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
       sc->SetMu(Toks[4].ToDouble());
     cx.rm.AddSfac(*sc);
   }
-  else if( Toks[0].Equalsi("REM") )  {
-    if( Toks.Count() > 1 )  {
-      if( Toks[1].Equalsi("R1") && Toks.Count() > 4 && Toks[3].IsNumber() )  {
-        if( cx.ins != NULL )  cx.ins->R1 = Toks[3].ToDouble();
+  else if (Toks[0].Equalsi("REM")) {
+    if (Toks.Count() > 1) {
+      if (Toks[1].Equalsi("R1") && Toks.Count() > 4 && Toks[3].IsNumber()) {
+        if (cx.ins != NULL) {
+          cx.ins->R1 = Toks[3].ToDouble();
+        }
       }
-      else if( Toks[1].Equalsi("olex2.stop_parsing") )  {
-        while( i < ins.Count() )  {
-          if( cx.ins != NULL )
+      else if (Toks[1].Equalsi("olex2.stop_parsing")) {
+        while (i < ins.Count()) {
+          if (cx.ins != NULL) {
             cx.ins->Skipped.Add(ins[i]);
-          if( ins[i].StartsFromi("REM") &&
-              ins[i].IndexOf("olex2.resume_parsing") != InvalidIndex )
+          }
+          if (ins[i].StartsFromi("REM") &&
+              ins[i].IndexOf("olex2.resume_parsing") != InvalidIndex)
           {
             break;
           }
           i++;
         }
       }
-      else if( Toks[1].StartsFromi("<HKL>") )  {
+      else if (Toks[1].StartsFromi("<HKL>")) {
         olxstr hklsrc = Toks.Text(' ', 1);
         size_t index = hklsrc.FirstIndexOf('>');
         size_t iv = hklsrc.IndexOf("</HKL>");
-        if( iv == InvalidIndex )  {
-          while( (i+1) < ins.Count() )  {
+        if (iv == InvalidIndex) {
+          while ((i+1) < ins.Count()) {
             i++;
-            if( !ins[i].StartsFromi("rem") )  break;
+            if (!ins[i].StartsFromi("rem")) {
+              break;
+            }
             hklsrc << ins[i].SubStringFrom(4);
-            iv = hklsrc.IndexOf("</HKL>");
-            if( iv != InvalidIndex )  break;
+            if ((iv = hklsrc.IndexOf("</HKL>")) != InvalidIndex) {
+              break;
+            }
           }
         }
-        if( iv != InvalidIndex )
+        if (iv != InvalidIndex) {
           hklsrc = hklsrc.SubString(index+1, iv-index-1).Replace("%20", ' ');
-        else
+        }
+        else {
           hklsrc.SetLength(0);
+        }
         cx.rm.SetHKLSource(hklsrc);
       }
-      else if( !cx.End  && !cx.rm.IsHKLFSet() )
-        if( cx.ins != NULL )
+      else if (!cx.End  && !cx.rm.IsHKLFSet()) {
+        if (cx.ins != NULL) {
           cx.ins->Ins.Add(Toks.Text(' '));
+        }
+      }
     }
   }
-  else if( Toks[0].StartsFromi("SAME") )  {
+  else if (Toks[0].StartsFromi("SAME")) {
     // no atom so far, add to the list of Same
-    if( !cx.Same.IsEmpty() && cx.Same.GetLast().GetB() == NULL )
+    if (!cx.Same.IsEmpty() && cx.Same.GetLast().GetB() == NULL) {
       cx.Same.GetLast().a.Add(Toks.Text(' '));
-    else  {
+    }
+    else {
       cx.Same.Add(new olx_pair_t<TStrList,TCAtom*>);
       cx.Same.GetLast().b = NULL;
       cx.Same.GetLast().a.Add(Toks.Text(' '));
     }
   }
-  else if( Toks[0].Equalsi("ANIS") )  {
-    if( Toks.Count() == 2 && Toks[1].IsNumber() )
+  else if (Toks[0].Equalsi("ANIS")) {
+    if (Toks.Count() == 2 && Toks[1].IsNumber()) {
       cx.ToAnis = olx_abs(Toks[1].ToInt());
-    else
+    }
+    else {
       return false;
+    }
   }
-  else
+  else {
     return false;
+  }
   return true;
 }
 //..............................................................................
