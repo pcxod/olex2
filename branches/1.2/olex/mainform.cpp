@@ -1506,16 +1506,8 @@ bool TMainForm::CreateUpdateThread(bool force) {
         wxYES_NO | wxCANCEL | wxYES_DEFAULT | wxICON_QUESTION);
       TCStrList sl;
       if (answer == wxYES) {
-        TShellUtil::MACInfo mi;
-        TShellUtil::ListMACAddresses(mi);
-        if (!mi.IsEmpty()) {
-          sl.Add("at=") << MD5::Digest((const char *)mi.GetObject(0).GetData(),
-            mi.GetObject(0).Count());
-        }
-        else {
-          sl.Add("at=") << MD5::Digest(
-            olxcstr(rand()) << TETime::msNow() << rand());
-        }
+        sl.Add("at=") << MD5::Digest(
+          olxcstr(rand()) << TETime::msNow() << rand());
       }
       if (answer != wxCANCEL) {
         TEFile::WriteLines(tfn, sl); // NO creates empty file
