@@ -467,22 +467,26 @@ void XLibMacros::Export(TLibrary& lib)  {
     "sets atoms afix, special cases are 56,69,66,69,76,79,106,109,116 and "
     "119");
   xlib_InitMacro(Dfix,
-    "cs-do not clear selection&;"
-    "i-[false] makes an implicit restaraint",
+    "i-[false] places implicit restraint&;"
+    "cs-do not clear selection",
     fpAny,
     "Restrains distancesto the given value");
   xlib_InitMacro(Tria,
+    "i-[false] places implicit restraint&;"
     "cs-do not clear selection",
     fpAny,
     "Adds a distance restraint for bonds and 'angle' restraint for the angle."
     "Takes bond pairs or atom triplets.");
   xlib_InitMacro(Dang,
-    "cs-do not clear selection&;"
-    "i-[false] makes an implicit restaraint",
+    "i-[false] places implicit restraint&;"
+    "cs-do not clear selection",
     fpAny|psCheckFileTypeIns,
     "Adds a ShelX compatible angle restraint");
   xlib_InitMacro(Sadi,
-    "i-[false] makes an implicit restaraint",
+    "i-[false] makes an implicit restaraint&;"
+    "r-[true] when two atoms selected creates a rotor restraint, can be false"
+    " when -i is used&;"
+    "cs-do not clear selection",
     fpAny|psCheckFileTypeIns,
     "Similar distances restraint");
   xlib_InitMacro(RRings,
@@ -497,19 +501,23 @@ void XLibMacros::Export(TLibrary& lib)  {
     fpAny|psCheckFileTypeIns,
     "Flat group restraint for at least 4 provided atoms");
   xlib_InitMacro(Chiv,
+    "i-[false] places implicit restraint&;"
     "cs- do not clear selection",
     fpAny|psCheckFileTypeIns,
     "Restrains chiral volume of atom(s) to '0' or provided value");
   xlib_InitMacro(DELU,
+    "i-[false] places implicit restraint&;"
     "cs-do not clear selection",
     fpAny|psCheckFileTypeIns,
     "Rigid bond constraint. If no atoms provided, all non-H atoms considered");
   xlib_InitMacro(SIMU,
+    "i-[false] places implicit restraint&;"
     "cs-do not clear selection",
     fpAny|psCheckFileTypeIns,
     "Similarity restraint for Uij of provided atoms. If no atoms provided, "
     "all non-H atoms considered");
   xlib_InitMacro(ISOR,
+    "i-[false] places implicit restraint&;"
     "cs-do not clear selection",
     fpAny|psCheckFileTypeIns,
     "Forses Uij of provided atoms to behave in isotropic manner. If no atoms "
@@ -553,7 +561,8 @@ void XLibMacros::Export(TLibrary& lib)  {
     "atoms provided) or number_of_groups and groups following each another "
     "(or selection)");
   xlib_InitMacro(RIGU,
-    EmptyString(),
+    "i-[false] places implicit restraint&;"
+    ,
     fpAny|psFileLoaded,
     "Creates rigid bond (RIGU) restraint for a group of provided atoms"
     "(or selection)");
@@ -7261,7 +7270,7 @@ void XLibMacros::macTria(TStrObjList &Cmds, const TParamList &Options,
     E.ProcessingError(__OlxSrcInfo, "Please provide atom triplets");
     return;
   }
-  TBasicApp::NewLogEntry() << "Placing the following restraints: ";
+  TPtrList<TSimpleRestraint> restraints;
   for (size_t i=0; i < atoms.Count(); i+=3) {
     if (dfixLenA == 0) {
       dfixLenA = app.XFile().GetRM().FindRestrainedDistance(
@@ -7277,23 +7286,26 @@ void XLibMacros::macTria(TStrObjList &Cmds, const TParamList &Options,
     }
     TSimpleRestraint *dfix = &app.XFile().GetRM().rDFIX.AddNew();
     dfix->SetValue(dfixLenA);
-    if( esd_set )
+    if (esd_set) {
       dfix->SetEsd(esd);
+    }
     esd = dfix->GetEsd();
     dfix->AddAtomPair(atoms[i]->CAtom(), &atoms[i]->GetMatrix(),
       atoms[i+1]->CAtom(), &atoms[i+1]->GetMatrix());
-    if( dfixLenB != dfixLenA )  {
+    if (dfixLenB != dfixLenA) {
       app.XFile().GetRM().rDFIX.ValidateRestraint(*dfix);
-      if (!dfix->IsEmpty())
-        TBasicApp::NewLogEntry() << dfix->ToString();
+      if (!dfix->IsEmpty()) {
+        restraints << dfix;
+      }
       dfix = &app.XFile().GetRM().rDFIX.AddNew();
       dfix->SetEsd(esd);
     }
     dfix->AddAtomPair(atoms[i+1]->CAtom(), &atoms[i+1]->GetMatrix(),
       atoms[i+2]->CAtom(), &atoms[i+2]->GetMatrix());
     app.XFile().GetRM().rDFIX.ValidateRestraint(*dfix);
-    if (!dfix->IsEmpty())
-      TBasicApp::NewLogEntry() << dfix->ToString();
+    if (!dfix->IsEmpty()) {
+      restraints << dfix;
+    }
     TSimpleRestraint &dang = app.XFile().GetRM().rDANG.AddNew();
     dang.SetValue(
       olx_round(
@@ -7305,14 +7317,23 @@ void XLibMacros::macTria(TStrObjList &Cmds, const TParamList &Options,
     dang.AddAtom(atoms[i]->CAtom(), &atoms[i]->GetMatrix());
     dang.AddAtom(atoms[i+2]->CAtom(), &atoms[i+2]->GetMatrix());
     app.XFile().GetRM().rDANG.ValidateRestraint(dang);
-    TBasicApp::NewLogEntry() << dang.ToString();
+    if (!dang.IsEmpty()) {
+      restraints << dang;
+    }
+  }
+  const bool impl = Options.GetBoolOption('i');
+  TBasicApp::NewLogEntry() << "Placing the following restraints: ";
+  for (size_t i = 0; i < restraints.Count(); i++) {
+    if (impl) {
+      restraints[i]->ConvertToImplicit();
+    }
+    TBasicApp::NewLogEntry() << restraints[i]->ToString();
   }
 }
 //.............................................................................
 void XLibMacros::macSadi(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &E)
 {
-  TBasicApp::NewLogEntry() << "Placing the following restraints: ";
   double esd = 0.02;  // esd for sadi
   bool esd_set = ParseResParam(Cmds, esd);
   MacroInput mi = ExtractSelection(Cmds, !Options.Contains("cs"));
@@ -7364,47 +7385,59 @@ void XLibMacros::macSadi(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   else if (Atoms.Count() == 2) {  // 'rotor;
-    for (size_t i = 0; i < Atoms[0]->NodeCount(); i++) {
-      TSAtom& n = Atoms[0]->Node(i);
-      if (n.IsDeleted() || n.GetType() == iQPeakZ || &n == Atoms[1])
-        continue;
-      sr.AddAtomPair(
-        Atoms[0]->CAtom(), &Atoms[0]->GetMatrix(),
-        n.CAtom(), &n.GetMatrix());
-    }
-    TSimpleRestraint &sr1 = app.XFile().GetRM().rSADI.AddNew();
-    if (esd_set) sr1.SetEsd(esd);
-    restraints << sr1;
-    olx_pdict<int, TSAtomPList> parts;
-    for (size_t i = 0; i < Atoms[0]->NodeCount(); i++) {
-      TSAtom& n = Atoms[0]->Node(i);
-      if (n.IsDeleted() || n.GetType() == iQPeakZ || &n == Atoms[1])
-        continue;
-      parts.Add(n.CAtom().GetPart()).Add(n);
-      sr1.AddAtomPair(
-        Atoms[1]->CAtom(), &Atoms[1]->GetMatrix(),
-        n.CAtom(), &n.GetMatrix());
-    }
-    TSimpleRestraint &sr2 = app.XFile().GetRM().rSADI.AddNew();
-    if (esd_set) sr2.SetEsd(esd);
-    restraints << sr2;
-    for (size_t i = 0; i < parts.Count(); i++) {
-      TSAtomPList &atoms = parts.GetValue(i);
-      vec3d normal, center;
-      TSPlane::CalcPlane(atoms, normal , center);
-      olx_plane::Sort(atoms, FunctionAccessor::MakeConst(
-        (const vec3d& (TSAtom::*)() const)&TSAtom::crd),
-        center, normal);
-      for (size_t j = 1; j < atoms.Count(); j++) {
-        sr2.AddAtomPair(
-          atoms[j-1]->CAtom(), &atoms[j-1]->GetMatrix(),
-          atoms[j]->CAtom(), &atoms[j]->GetMatrix());
+    if (Options.GetBoolOption('r')) {
+      for (size_t i = 0; i < Atoms[0]->NodeCount(); i++) {
+        TSAtom& n = Atoms[0]->Node(i);
+        if (n.IsDeleted() || n.GetType() == iQPeakZ || &n == Atoms[1])
+          continue;
+        sr.AddAtomPair(
+          Atoms[0]->CAtom(), &Atoms[0]->GetMatrix(),
+          n.CAtom(), &n.GetMatrix());
       }
-      if (atoms.Count() > 2) {
-        sr2.AddAtomPair(
-          atoms[0]->CAtom(), &atoms[0]->GetMatrix(),
-          atoms.GetLast()->CAtom(), &atoms.GetLast()->GetMatrix());
+      TSimpleRestraint &sr1 = app.XFile().GetRM().rSADI.AddNew();
+      if (esd_set) sr1.SetEsd(esd);
+      restraints << sr1;
+      olx_pdict<int, TSAtomPList> parts;
+      for (size_t i = 0; i < Atoms[0]->NodeCount(); i++) {
+        TSAtom& n = Atoms[0]->Node(i);
+        if (n.IsDeleted() || n.GetType() == iQPeakZ || &n == Atoms[1])
+          continue;
+        parts.Add(n.CAtom().GetPart()).Add(n);
+        sr1.AddAtomPair(
+          Atoms[1]->CAtom(), &Atoms[1]->GetMatrix(),
+          n.CAtom(), &n.GetMatrix());
       }
+      TSimpleRestraint &sr2 = app.XFile().GetRM().rSADI.AddNew();
+      if (esd_set) sr2.SetEsd(esd);
+      restraints << sr2;
+      for (size_t i = 0; i < parts.Count(); i++) {
+        TSAtomPList &atoms = parts.GetValue(i);
+        vec3d normal, center;
+        TSPlane::CalcPlane(atoms, normal, center);
+        olx_plane::Sort(atoms, FunctionAccessor::MakeConst(
+          (const vec3d& (TSAtom::*)() const)&TSAtom::crd),
+          center, normal);
+        for (size_t j = 1; j < atoms.Count(); j++) {
+          sr2.AddAtomPair(
+            atoms[j-1]->CAtom(), &atoms[j-1]->GetMatrix(),
+            atoms[j]->CAtom(), &atoms[j]->GetMatrix());
+        }
+        if (atoms.Count() > 2) {
+          sr2.AddAtomPair(
+            atoms[0]->CAtom(), &atoms[0]->GetMatrix(),
+            atoms.GetLast()->CAtom(), &atoms.GetLast()->GetMatrix());
+        }
+      }
+    }
+    else {
+      if (!Options.GetBoolOption('i')) {
+        E.ProcessingError(__OlxSrcInfo, "not applicable to explicit restraints");
+        return;
+      }
+      TSimpleRestraint &sr1 = app.XFile().GetRM().rSADI.AddNew();
+      if (esd_set) sr1.SetEsd(esd);
+      restraints << sr1;
+      sr1.AddAtomPair(Atoms[0]->CAtom(), 0, Atoms[1]->CAtom(), 0);
     }
   }
   else if (Atoms.Count() == 3) {  // special case
@@ -7426,6 +7459,7 @@ void XLibMacros::macSadi(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   bool to_impl = Options.GetBoolOption('i');
+  TBasicApp::NewLogEntry() << "Placing the following restraints: ";
   for (size_t i = 0; i < restraints.Count(); i++) {
     if (to_impl)
       restraints[i]->ConvertToImplicit();
@@ -7446,12 +7480,11 @@ void XLibMacros::macFlat(TStrObjList &Cmds, const TParamList &Options,
   for (size_t i=0; i < Atoms.Count(); i++)
     sr.AddAtom(Atoms[i]->CAtom(), &Atoms[i]->GetMatrix());
   app.XFile().GetRM().rFLAT.ValidateRestraint(sr);
-  TBasicApp::NewLogEntry() << "Placing the following restraints: ";
-  if (Options.GetBoolOption('i')) {
-    sr.ConvertToImplicit();
-    TBasicApp::NewLogEntry() << sr.ToString();
-  }
-  else {
+  if (!sr.IsEmpty()) {
+    if (Options.GetBoolOption('i')) {
+      sr.ConvertToImplicit();
+    }
+    TBasicApp::NewLogEntry() << "Placing the following restraints: ";
     TBasicApp::NewLogEntry() << sr.ToString();
   }
 }
@@ -7459,7 +7492,7 @@ void XLibMacros::macFlat(TStrObjList &Cmds, const TParamList &Options,
 void XLibMacros::macSIMU(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &E)
 {
-  double esd1 = 0.04, esd2=0.08, val = 1.7;  // esd
+  double esd1 = 0.04, esd2 = 0.08, val = 1.7;  // esd
   size_t cnt = XLibMacros::Parse(Cmds, "ddd", &esd1, &esd2, &val);
   if (cnt == 1) esd2 = esd1 * 2;
   TXApp &app = TXApp::GetInstance();
@@ -7467,17 +7500,23 @@ void XLibMacros::macSIMU(TStrObjList &Cmds, const TParamList &Options,
   // validate that atoms of the same type
   TSimpleRestraint& sr = app.XFile().GetRM().rSIMU.AddNew();
   sr.SetAllNonHAtoms(Atoms.IsEmpty());
-  if( cnt > 0 )  {
+  if (cnt > 0) {
     sr.SetEsd(esd1);
     sr.SetEsd1(esd2);
-    if( cnt == 3 )
+    if (cnt == 3)
       sr.SetValue(val);
   }
-  for( size_t i=0; i < Atoms.Count(); i++ )
+  for (size_t i = 0; i < Atoms.Count(); i++) {
     sr.AddAtom(Atoms[i]->CAtom(), NULL);
+  }
   app.XFile().GetRM().rSIMU.ValidateRestraint(sr);
-  TBasicApp::NewLogEntry() << "Placing the following restraints: ";
-  TBasicApp::NewLogEntry() << sr.ToString();
+  if (!sr.IsEmpty()) {
+    if (Options.GetBoolOption('i')) {
+      sr.ConvertToImplicit();
+    }
+    TBasicApp::NewLogEntry() << "Placing the following restraints: ";
+    TBasicApp::NewLogEntry() << sr.ToString();
+  }
 }
 //.............................................................................
 void XLibMacros::macDELU(TStrObjList &Cmds, const TParamList &Options,
@@ -7495,11 +7534,17 @@ void XLibMacros::macDELU(TStrObjList &Cmds, const TParamList &Options,
     sr.SetEsd1(esd2);
   }
   sr.SetAllNonHAtoms(Atoms.IsEmpty());
-  for (size_t i=0; i < Atoms.Count(); i++)
+  for (size_t i = 0; i < Atoms.Count(); i++) {
     sr.AddAtom(Atoms[i]->CAtom(), NULL);
+  }
   app.XFile().GetRM().rDELU.ValidateRestraint(sr);
-  TBasicApp::NewLogEntry() << "Placing the following restraints: ";
-  TBasicApp::NewLogEntry() << sr.ToString();
+  if (!sr.IsEmpty()) {
+    if (Options.GetBoolOption('i')) {
+      sr.ConvertToImplicit();
+    }
+    TBasicApp::NewLogEntry() << "Placing the following restraints: ";
+    TBasicApp::NewLogEntry() << sr.ToString();
+  }
 }
 //.............................................................................
 void XLibMacros::macISOR(TStrObjList &Cmds, const TParamList &Options,
@@ -7518,11 +7563,17 @@ void XLibMacros::macISOR(TStrObjList &Cmds, const TParamList &Options,
     sr.SetEsd1(esd2);
   }
   sr.SetAllNonHAtoms(Atoms.IsEmpty());
-  for( size_t i=0; i < Atoms.Count(); i++ )
+  for (size_t i = 0; i < Atoms.Count(); i++) {
     sr.AddAtom(Atoms[i]->CAtom(), NULL);
+  }
   app.XFile().GetRM().rISOR.ValidateRestraint(sr);
-  TBasicApp::NewLogEntry() << "Placing the following restraints: ";
-  TBasicApp::NewLogEntry() << sr.ToString();
+  if (!sr.IsEmpty()) {
+    if (Options.GetBoolOption('i')) {
+      sr.ConvertToImplicit();
+    }
+    TBasicApp::NewLogEntry() << "Placing the following restraints: ";
+    TBasicApp::NewLogEntry() << sr.ToString();
+  }
 }
 //.............................................................................
 void XLibMacros::macChiv(TStrObjList &Cmds, const TParamList &Options,
@@ -7536,11 +7587,17 @@ void XLibMacros::macChiv(TStrObjList &Cmds, const TParamList &Options,
   TSimpleRestraint& sr = app.XFile().GetRM().rCHIV.AddNew();
   sr.SetValue(val);
   if (cnt == 2) sr.SetEsd(esd);
-  for( size_t i=0; i < Atoms.Count(); i++ )
+  for (size_t i = 0; i < Atoms.Count(); i++) {
     sr.AddAtom(Atoms[i]->CAtom(), &Atoms[i]->GetMatrix());
+  }
   app.XFile().GetRM().rCHIV.ValidateRestraint(sr);
-  TBasicApp::NewLogEntry() << "Placing the following restraints: ";
-  TBasicApp::NewLogEntry() << sr.ToString();
+  if (!sr.IsEmpty()) {
+    if (Options.GetBoolOption('i')) {
+      sr.ConvertToImplicit();
+    }
+    TBasicApp::NewLogEntry() << "Placing the following restraints: ";
+    TBasicApp::NewLogEntry() << sr.ToString();
+  }
 }
 //.............................................................................
 void XLibMacros::macRRings(TStrObjList &Cmds, const TParamList &Options,
@@ -8299,9 +8356,9 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
   else  {
     E.ProcessingError(__OlxSrcInfo, "invalid input arguments");
   }
-  if (created != NULL) {
+  //if (created != NULL) {
 
-  }
+  //}
 }
 //.............................................................................
 void XLibMacros::macRIGU(TStrObjList &Cmds, const TParamList &Options,
@@ -8319,11 +8376,17 @@ void XLibMacros::macRIGU(TStrObjList &Cmds, const TParamList &Options,
     sr.SetEsd1(esd2);
   }
   sr.SetAllNonHAtoms(Atoms.IsEmpty());
-  for (size_t i=0; i < Atoms.Count(); i++)
+  for (size_t i = 0; i < Atoms.Count(); i++) {
     sr.AddAtom(Atoms[i]->CAtom(), NULL);
+  }
   app.XFile().GetRM().rDELU.ValidateRestraint(sr);
-  TBasicApp::NewLogEntry() << "Placing the following restraints: ";
-  TBasicApp::NewLogEntry() << sr.ToString();
+  if (!sr.IsEmpty()) {
+    if (Options.GetBoolOption('i')) {
+      sr.ConvertToImplicit();
+    }
+    TBasicApp::NewLogEntry() << "Placing the following restraints: ";
+    TBasicApp::NewLogEntry() << sr.ToString();
+  }
 }
 //.............................................................................
 void XLibMacros::macRESI(TStrObjList &Cmds, const TParamList &Options,
