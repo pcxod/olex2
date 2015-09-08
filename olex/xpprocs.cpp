@@ -6143,11 +6143,13 @@ void TMainForm::funCheckState(const TStrObjList& Params, TMacroData &E)  {
     Params.Count() == 2 ? Params[1] : EmptyString()));
 }
 //..............................................................................
-void TMainForm::funGlTooltip(const TStrObjList& Params, TMacroData &E)  {
-  if( Params.IsEmpty() )
-    E.SetRetVal( _UseGlTooltip );
-  else
-    UseGlTooltip( Params[0].ToBool() );
+void TMainForm::funGlTooltip(const TStrObjList& Params, TMacroData &E) {
+  if (Params.IsEmpty()) {
+    E.SetRetVal(_UseGlTooltip);
+  }
+  else {
+    UseGlTooltip(Params[0].ToBool());
+  }
 }
 //..............................................................................
 void TMainForm::funCurrentLanguage(const TStrObjList& Params, TMacroData &E)  {

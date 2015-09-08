@@ -1298,7 +1298,13 @@ void TMainForm::XApp(Olex2App *XA)  {
       new TStateRegistry::TMacroSetter("ShowWindow cmdline")
     )
   );
-  //stateGlTooltips = States->Register("GLTT");
+  stateGlTooltips = states.Register("GLTT",
+    new TStateRegistry::Slot(
+    states.NewGetter<TMainForm>(this, &TMainForm::CheckState),
+    new TStateRegistry::TMacroSetter("GlTooltip")
+    )
+  );
+
 
   // synchronise if value is different in settings file...
   miHtmlPanel->Check(!FHtmlMinimized);
@@ -3299,12 +3305,18 @@ bool TMainForm::CheckMode(size_t mode, const olxstr& modeData)  {
 //..............................................................................
 bool TMainForm::CheckState(size_t state, const olxstr& stateData) const {
   if (state == stateHtmlVisible) {
-    if (stateData.IsEmpty()) return FHtmlMinimized;
+    if (stateData.IsEmpty()) {
+      return FHtmlMinimized;
+    }
     THtmlManager::TPopupData* pp = HtmlManager.Popups.Find(stateData, NULL);
     return (pp != NULL) ? pp->Dialog->IsShown() : false;
   }
-  if( state == stateCmdLineVisible )
+  if (state == stateCmdLineVisible) {
     return CmdLineVisible;
+  }
+  if (state == stateGlTooltips) {
+    return _UseGlTooltip;
+  }
   return false;
 }
 //..............................................................................
@@ -3530,12 +3542,14 @@ bool TMainForm::Show(bool v)  {
 }
 //..............................................................................
 void TMainForm::UseGlTooltip(bool v)  {
-  if( v == _UseGlTooltip )
+  if (v == _UseGlTooltip) {
     return;
-  TStateRegistry::GetInstance().SetState(stateGlTooltips, v, EmptyString(), false);
+  }
+  TStateRegistry::GetInstance().SetState(stateGlTooltips, v, EmptyString(), v);
   _UseGlTooltip = v;
-  if( v )
+  if (v) {
     FGlCanvas->SetToolTip(wxT(""));
+  }
 }
 //..............................................................................
 //..............................................................................
