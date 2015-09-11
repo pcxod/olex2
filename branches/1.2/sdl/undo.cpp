@@ -14,7 +14,7 @@ void TUndoStack::Clear() {
 }
 //..............................................................................
 TUndoData* TUndoStack::Pop() {
-  if (UndoList.IsEmpty()) {
+  if (!UndoList.IsEmpty()) {
     TUndoData* retVal = UndoList.GetLast();
     UndoList.Delete(UndoList.Count()-1);
     return retVal;
