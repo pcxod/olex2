@@ -70,6 +70,10 @@ void TSimpleRestraint::Assign(const TSimpleRestraint& sr)  {
   AllNonHAtoms = sr.AllNonHAtoms;
 }
 //..............................................................................
+void TSimpleRestraint::EndAUSort() {
+  Atoms.EndAUSort(ListType == rltAtoms && !Parent.GetIdName().Equalsi("RIGU"));
+}
+//..............................................................................
 void TSimpleRestraint::ToDataItem(TDataItem& item) const {
   item.AddField("allNonH", AllNonHAtoms);
   item.AddField("esd", Esd);

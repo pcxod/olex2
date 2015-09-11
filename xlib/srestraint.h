@@ -74,7 +74,7 @@ public:
   // this is called internally by the RM
   void OnAUUpdate() { Atoms.OnAUUpdate(); }
   void BeginAUSort() { Atoms.BeginAUSort(); }
-  void EndAUSort() { Atoms.EndAUSort(ListType == rltAtoms); }
+  void EndAUSort();
   void Sort() { Atoms.SortByTag(TPtrList<AtomRefList>()); }
   // copies data from a restrain, but with atoms from the thisAU
   void Assign(const TSimpleRestraint&);
