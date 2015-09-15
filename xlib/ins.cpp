@@ -619,6 +619,13 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
       if (!cx.AfixGroups.IsEmpty() && cx.AfixGroups.Top().GetA() == 0) {
         cx.AfixGroups.Pop();
       }
+      // terminate afix 1, 2, 3 etc when any other afix encountered
+      if (!cx.AfixGroups.IsEmpty() &&
+        cx.AfixGroups.Top().GetB()->GetAfix() != afix &&
+        cx.AfixGroups.Top().GetA() < 0)
+      {
+        cx.AfixGroups.Pop();
+      }
       if (afixg != NULL) {
         switch( m )  {
         case 1:

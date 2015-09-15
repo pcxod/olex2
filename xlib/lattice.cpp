@@ -2685,15 +2685,16 @@ TUndoData *TLattice::ValidateHGroups(bool reinit, bool report) {
           attached_cnt++;
         }
       }
+      size_t acnt = attached_cnt + dependent_cnt;
       bool valid = true;
       int m = ag.GetM();
       switch (m) {
       case 1: // XYZC-H
-        valid = (attached_cnt == 3) || (attached_cnt-metal_cnt == 3);
+        valid = (acnt == 3) || (acnt-metal_cnt == 3);
         break;
       case 2: // XYC-H2
       case 4: // XYC-H
-        valid = (attached_cnt == 2) || (attached_cnt-metal_cnt == 2);
+        valid = (acnt == 2) || (acnt-metal_cnt == 2);
         break;
       case 3: // X-H3
       case 8: // O-H
@@ -2702,11 +2703,11 @@ TUndoData *TLattice::ValidateHGroups(bool reinit, bool report) {
       case 13: // X-H3
       case 14: // O-H
       case 16: // CC-H
-        valid = (attached_cnt == 1) || (attached_cnt-metal_cnt == 1);
+        valid = (acnt == 1) || (acnt-metal_cnt == 1);
         break;
       case 15: // {R4/5}B-H
-        valid = (attached_cnt == 4 || attached_cnt == 5) || (
-          (attached_cnt-metal_cnt == 4) || (attached_cnt-metal_cnt == 5));
+        valid = (acnt == 4 || acnt == 5) || (
+          (acnt-metal_cnt == 4) || (acnt-metal_cnt == 5));
         break;
       }
       if (!valid) {

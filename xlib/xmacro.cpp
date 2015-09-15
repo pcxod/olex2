@@ -6883,12 +6883,12 @@ void XLibMacros::macAfix(TStrObjList &Cmds, const TParamList &Options,
 {
   int afix = -1;
   XLibMacros::Parse(Cmds, "i", &afix);
-  if( afix == -1 )  {
+  if (afix == -1) {
     E.ProcessingError(__OlxSrcInfo, "afix should be specified");
     return;
   }
   olxstr positions;
-  if( Cmds.Count() > 0 && Cmds[0].IndexOf(',') != InvalidIndex )  {
+  if (Cmds.Count() > 0 && Cmds[0].Contains(',')) {
     positions = Cmds[0];
     Cmds.Delete(0);
   }
@@ -7006,44 +7006,30 @@ void XLibMacros::macAfix(TStrObjList &Cmds, const TParamList &Options,
       }
     }
   }
-  else  {
+  else {
     if (afix == 0) {
       for (size_t i=0; i < Atoms.Count(); i++) {
         TCAtom& ca = Atoms[i]->CAtom();
-        if (ca.GetAfix() == -1) continue;
+        if (ca.GetAfix() == -1) {
+          continue;
+        }
         if (ca.GetAfix() == 1 || ca.GetAfix() == 2) {
           if (ca.GetDependentAfixGroup() != NULL)
             ca.GetDependentAfixGroup()->Clear();
           continue;
         }
-        if (ca.GetDependentAfixGroup() != NULL)
+        if (ca.GetDependentAfixGroup() != NULL) {
           ca.GetDependentAfixGroup()->Clear();
+        }
         else if (ca.DependentHfixGroupCount() != 0) {
           for (size_t j=0; j < ca.DependentHfixGroupCount(); j++) {
             if (ca.GetDependentHfixGroup(j).GetAfix() != -1)
               ca.GetDependentHfixGroup(j).Clear();
           }
         }
-        else if (ca.GetParentAfixGroup() != NULL)
+        else if (ca.GetParentAfixGroup() != NULL) {
           ca.GetParentAfixGroup()->Clear();
-      }
-    }
-    else if (afix == 1 || afix == 2) {
-      olxstr atom_names;
-      for (size_t i=0; i < Atoms.Count(); i++) {
-        TCAtom& ca = Atoms[i]->CAtom();
-        if (ca.GetAfix() == 0)
-          rm.AfixGroups.New(&ca, afix);
-        else {
-          if (!atom_names.IsEmpty())
-            atom_names << ' ';
-          atom_names << ca.GetLabel();
         }
-      }
-      if (!atom_names.IsEmpty()) {
-        TBasicApp::NewLogEntry(logError) <<
-          "Could not process AFIX for the following atoms:";
-        TBasicApp::NewLogEntry() << atom_names;
       }
     }
     else if (!Atoms.IsEmpty() ) {
