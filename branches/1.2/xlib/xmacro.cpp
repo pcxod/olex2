@@ -3459,8 +3459,9 @@ void XLibMacros::funSGS(const TStrObjList &Cmds, TMacroData &E) {
 //.............................................................................
 void XLibMacros::funHKLSrc(const TStrObjList& Params, TMacroData &E) {
   TXApp& xapp = TXApp::GetInstance();
-  if (Params.Count() == 1)
+  if (Params.Count() == 1) {
     xapp.XFile().GetRM().SetHKLSource(Params[0]);
+  }
   else {
     olxstr fn = xapp.XFile().GetRM().GetHKLSource();
     if (TEFile::Exists(fn)) {  // check the format...
@@ -5607,69 +5608,75 @@ void XLibMacros::macReset(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &E)
 {
   TXApp& xapp = TXApp::GetInstance();
-  if( !(xapp.CheckFileType<TIns>() ||
-        xapp.CheckFileType<TP4PFile>() ||
-        xapp.CheckFileType<TCRSFile>()  )  )  return;
-  if( TOlxVars::IsVar(VarName_InternalTref()) ||
+  if (!(xapp.CheckFileType<TIns>() ||
+    xapp.CheckFileType<TP4PFile>() ||
+    xapp.CheckFileType<TCRSFile>()))
+  {
+    return;
+  }
+  if (TOlxVars::IsVar(VarName_InternalTref()) ||
       TOlxVars::IsVar(VarName_ResetLock()))
   {
     return;
   }
   using namespace olex2;
   IOlex2Processor* op = IOlex2Processor::GetInstance();
-  olxstr newSg(Options.FindValue('s')),
-         content( olxstr::DeleteChars(Options.FindValue('c'), ' ')),
-         fileName(Options.FindValue('f'));
+  olxstr newSg = Options.FindValue('s'),
+         content = olxstr::DeleteChars(Options.FindValue('c'), ' '),
+         fileName = Options.FindValue('f');
   xapp.XFile().UpdateAsymmUnit();
   TIns ins;
   ins.Adopt(xapp.XFile(), 0);
-  if( xapp.CheckFileType<TP4PFile>() )  {
-    if( newSg.IsEmpty() )  {
+  if (xapp.CheckFileType<TP4PFile>()) {
+    if (newSg.IsEmpty()) {
       E.ProcessingError(__OlxSrcInfo,
         "please specify a space group with -s=SG switch");
       return;
     }
   }
-  else if( xapp.CheckFileType<TCRSFile>() )  {
+  else if (xapp.CheckFileType<TCRSFile>()) {
     TSpaceGroup* sg = xapp.XFile().GetLastLoader<TCRSFile>().GetSG();
-    if( newSg.IsEmpty() )  {
-      if( sg == NULL )  {
+    if (newSg.IsEmpty()) {
+      if (sg == NULL) {
         E.ProcessingError(__OlxSrcInfo,
           "please specify a space group with -s=SG switch");
         return;
       }
-      else  {
+      else {
         TBasicApp::NewLogEntry() << "The CRS file format space group is: "
           << sg->GetName();
       }
     }
   }
-  if( !content.IsEmpty() )
+  if (!content.IsEmpty()) {
     ins.GetRM().SetUserFormula(content);
-  if( ins.GetRM().GetUserContent().IsEmpty() )  {
-    if( op != NULL )  {
+  }
+  if (ins.GetRM().GetUserContent().IsEmpty()) {
+    if (op != NULL) {
       content = "getuserinput(1, \'Please, enter structure composition\', \'C1\')";
-      if( op->processFunction(content) )
+      if (op->processFunction(content)) {
         ins.GetRM().SetUserFormula(content);
-      if( ins.GetRM().GetUserContent().IsEmpty() )  {
+      }
+      if (ins.GetRM().GetUserContent().IsEmpty()) {
         E.ProcessingError(__OlxSrcInfo,
           "empty SFAC instruction, please use -c=Content to specify");
         return;
       }
     }
   }
-  if( !newSg.IsEmpty() )  {
+  if (!newSg.IsEmpty()) {
     TStrList sg_toks(newSg, '~', false);
     TSpaceGroup* sg = NULL;
-    if (sg_toks.Count() == 1)  {
+    if (sg_toks.Count() == 1) {
       sg = TSymmLib::GetInstance().FindGroupByName(sg_toks[0]);
     }
     else {
       if (sg_toks.Count() == 5) {
         TStrList toks(sg_toks[0], ' ');
         SymmSpace::Info sg_info;
-        for (size_t i=0; i < toks.Count(); i++)
+        for (size_t i = 0; i < toks.Count(); i++) {
           sg_info.matrices.AddCopy(TSymmParser::SymmToMatrix(toks[i]));
+        }
         short latt = sg_toks[1].ToInt();
         sg_info.latt = olx_abs(latt);
         sg_info.centrosymmetric = latt > 0;
@@ -5677,10 +5684,12 @@ void XLibMacros::macReset(TStrObjList &Cmds, const TParamList &Options,
         TStrList cell_toks(sg_toks[2], ' '),
           esd_toks(sg_toks[3], ' '),
           hklf_toks(sg_toks[4], ' ');
-        if (cell_toks.Count() != 6 || esd_toks.Count() != 6)
+        if (cell_toks.Count() != 6 || esd_toks.Count() != 6) {
           throw TInvalidArgumentException(__OlxSourceInfo, "CELL");
-        if (hklf_toks.Count() != 9)
+        }
+        if (hklf_toks.Count() != 9) {
           throw TInvalidArgumentException(__OlxSourceInfo, "HKLF");
+        }
         for (size_t i=0; i < 3; i++) {
           ins.GetAsymmUnit().GetAxes()[i] = cell_toks[i].ToDouble();
           ins.GetAsymmUnit().GetAngles()[i] = cell_toks[i+3].ToDouble();
@@ -5688,14 +5697,15 @@ void XLibMacros::macReset(TStrObjList &Cmds, const TParamList &Options,
           ins.GetAsymmUnit().GetAngleEsds()[i] = esd_toks[i+3].ToDouble();
         }
         mat3d m;
-        for ( size_t i=0; i < 9; i++)
+        for (size_t i = 0; i < 9; i++) {
           m[i/3][i%3] = hklf_toks[i].ToDouble();
+        }
         // assume absolute value!
         ins.GetRM().SetHKLF_mat(m);
         //ins.GetRM().SetHKLF_mat(ins.GetRM().GetHKLF_mat()*m);
       }
     }
-    if( !sg )  {
+    if (sg == 0) {
       E.ProcessingError(__OlxSrcInfo, "could not find space group: ") << newSg;
       return;
     }
@@ -5706,24 +5716,29 @@ void XLibMacros::macReset(TStrObjList &Cmds, const TParamList &Options,
       TEFile::ExtractFileName(xapp.XFile().GetFileName()), EmptyString()));
     ins.SetTitle(titl << " in " << sg->GetName() << " #" << sg->GetNumber());
   }
-  if( fileName.IsEmpty() )
+  if (fileName.IsEmpty()) {
     fileName = xapp.XFile().GetFileName();
-  olxstr FN(TEFile::ChangeFileExt(fileName, "ins"));
-  olxstr lstFN(TEFile::ChangeFileExt(fileName, "lst"));
+  }
+  olxstr FN = TEFile::ChangeFileExt(fileName, "ins"),
+    lstFN = TEFile::ChangeFileExt(fileName, "lst");
 
   ins.SaveForSolution(FN, Cmds.Text(' '), newSg, !Options.Contains("rem"),
     Options.Contains("atoms"));
-  if( TEFile::Exists(lstFN) )  {
+  if (TEFile::Exists(lstFN)) {
     olxstr lstTmpFN(lstFN);
     lstTmpFN << ".tmp";
     TEFile::Rename(lstFN, lstTmpFN);
   }
-  if( op != NULL )  {
+  if (op != NULL) {
+    olxstr hkl_src = xapp.XFile().GetRM().GetHKLSource();
     op->processMacroEx(olxstr("@reap \'") << FN << '\'', E);
-    if( E.IsSuccessful() ) {
+    if (E.IsSuccessful()) {
       TActionQueue *q =
         TBasicApp::GetInstance().FindActionQueue(olxappevent_UPDATE_GUI);
-      if (q != NULL) q->Execute(NULL);
+      if (q != NULL) {
+        q->Execute(NULL);
+      }
+      xapp.XFile().GetRM().SetHKLSource(hkl_src);
     }
   }
 }
