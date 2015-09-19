@@ -457,22 +457,29 @@ TCAtom * TAsymmUnit::FindCAtom(const olxstr &Label, TResidue* resi)  const {
         }
     }
   }
-  else  {  // global search
-    if( Label.Equalsi("first") )  {
-      for( size_t i=0; i < CAtoms.Count(); i++ )
-        if( !CAtoms[i]->IsDeleted() )
-          return CAtoms[i];
+  else {  // main residue search
+    if (Label.Equalsi("first")) {
+      for (size_t i = 0; i < MainResidue.Count(); i++) {
+        if (!MainResidue[i].IsDeleted()) {
+          return &MainResidue[i];
+        }
+      }
     }
     else if( Label.Equalsi("last") )  {
-      for( size_t i = CAtoms.Count(); i > 0; i-- )
-        if( !CAtoms[i-1]->IsDeleted() )
-          return CAtoms[i-1];
+      for (size_t i = CAtoms.Count(); i > 0; i--) {
+        if (!MainResidue[i-1].IsDeleted()) {
+          return &MainResidue[i-1];
+        }
+      }
     }
-    else  {
-      for( size_t i=0; i < CAtoms.Count(); i++ )
-        if( !CAtoms[i]->IsDeleted() && CAtoms[i]->GetLabel().Equalsi(lb) )
-          if( part == DefNoPart || CAtoms[i]->GetPart() == part )
-            return CAtoms[i];
+    else {
+      for (size_t i = 0; i < MainResidue.Count(); i++) {
+        if (!MainResidue[i].IsDeleted() && MainResidue[i].GetLabel().Equalsi(lb)) {
+          if (part == DefNoPart || CAtoms[i]->GetPart() == part) {
+            return &MainResidue[i];
+          }
+        }
+      }
     }
   }
   return NULL;
