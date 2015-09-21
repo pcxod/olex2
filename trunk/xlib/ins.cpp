@@ -1875,15 +1875,39 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
   // equivalent EADP constraint
   restraints.Add("EADP", ResInfo(&rm.rEADP, RCInfo(0, 0, 2, false)));
 
-  if (rm.IsDEFSSet())
+  if (rm.IsDEFSSet()) {
     SL.Add("DEFS ") << rm.GetDEFSStr();
-  for (size_t i = 0; i < restraints.Count(); i++) {
-    ResInfo& r = restraints.GetObject(i);
-    for (size_t j = 0; j < r.GetA()->Count(); j++) {
-      TSimpleRestraint& sr = (*r.a)[j];
-      sr.UpdateResi();
+  }
+
+  if (TBasicApp::GetInstance().GetOptions().GetBoolOption("group_restraints")) {
+    typedef AnAssociation3<size_t, size_t, size_t> triple_t;
+    TTypeList<triple_t> sorted_res;
+
+    for (size_t i = 0; i < restraints.Count(); i++) {
+      ResInfo& r = restraints.GetObject(i);
+      for (size_t j = 0; j < r.GetA()->Count(); j++) {
+        TSimpleRestraint& sr = (*r.a)[j];
+        sr.UpdateResi();
+        const RCInfo& ri = r.GetB();
+        TTypeList<ExplicitCAtomRef> ra = sr.Validate().GetAtoms().ExpandList(rm);
+        size_t min_id = InvalidIndex;
+        for (size_t k = 0; k < ra.Count(); k++) {
+          if (ra[k].GetAtom().GetId() < min_id) {
+            min_id = ra[k].GetAtom().GetId();
+          }
+        }
+        sorted_res.Add(Association::New(min_id, i, j));
+      }
+    }
+    QuickSorter::Sort(sorted_res,
+      ComplexComparator::Make(FunctionAccessor::MakeConst(&triple_t::GetA),
+      TPrimitiveComparator()));
+
+    for (size_t i = 0; i < sorted_res.Count(); i++) {
+      const triple_t &t = sorted_res[i];
+      ResInfo& r = restraints.GetObject(t.GetB());
       const RCInfo& ri = r.GetB();
-      sr.Validate();
+      TSimpleRestraint& sr = (*r.a)[t.GetC()];
       olxstr line = RestraintToString(sr, ri, atoms);
       if (line.IsEmpty())  continue;
       HyphenateIns(line, SL);
@@ -1891,6 +1915,23 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
         processed->restraints.Add(sr);
     }
   }
+  else {
+    for (size_t i = 0; i < restraints.Count(); i++) {
+      ResInfo& r = restraints.GetObject(i);
+      for (size_t j = 0; j < r.GetA()->Count(); j++) {
+        TSimpleRestraint& sr = (*r.a)[j];
+        sr.UpdateResi();
+        const RCInfo& ri = r.GetB();
+        sr.Validate();
+        olxstr line = RestraintToString(sr, ri, atoms);
+        if (line.IsEmpty())  continue;
+        HyphenateIns(line, SL);
+        if (processed != NULL)
+          processed->restraints.Add(sr);
+      }
+    }
+  }
+
   // equivalent EXYZ constraint
   for (size_t i = 0; i < rm.ExyzGroups.Count(); i++) {
     TExyzGroup& sr = rm.ExyzGroups[i];
