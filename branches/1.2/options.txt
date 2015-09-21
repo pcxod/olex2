@@ -25,3 +25,4 @@ profile [False] - switches application profiling on/off
 interactions_from [H] - sets a list of atoms for which to display short contacts
 interactions_to [N,O,F,Cl,S,Br,Se] - sets a list of atoms for which to display short contacts
 absolute_hkl_path [false] - saves absolute path in the INS file
+group_restraints [false] - groups restraints by involved atoms
