@@ -35,15 +35,20 @@ InfoTab& InfoTab::operator = (const InfoTab& it)  {
 }
 //.............................................................................
 bool InfoTab::IsValid() const {
- TTypeList<ExplicitCAtomRef> a = atoms.ExpandList(RM);
- size_t ac = a.Count();
- if (ac == 0) return false;
+  if (!atoms.IsExplicit()) { // leave implicit as they are
+    return true;
+  }
+  TTypeList<ExplicitCAtomRef> a = atoms.ExpandList(RM);
+  size_t ac = a.Count();
+  if (ac == 0) return false;
   if ((Type == infotab_htab || Type == infotab_bond) && (ac%2) == 0)
     return true;
   if (Type == infotab_rtab) {
-    if (ac >= 1 && !ParamName.IsEmpty()) { // leave it alone
+    if (ac >= 1 && ac <= 4 && !ParamName.IsEmpty()) {
       return true;
     }
+    else if (ac > 4 && ParamName.Equalsi("D2CG")) // == covered above
+      return true;
     return false;
   }
   if (Type == infotab_mpla && ac >= 3) return true;
