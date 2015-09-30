@@ -436,51 +436,27 @@ TCAtom * TAsymmUnit::FindCAtom(const olxstr &Label, TResidue* resi)  const {
     }
     lb = lb.SubStringTo(us_ind-1);
   }
-  if( resi != NULL )  {
-    if( Label.Equalsi("first") )  {
-      for( size_t i=0; i < resi->Count(); i++ )
-        if( !resi->GetAtom(i).IsDeleted() )
-          return &resi->GetAtom(i);
-    }
-    else if( Label.Equalsi("last") )  {
-      for( size_t i=resi->Count(); i > 0; i-- )
-        if( !resi->GetAtom(i-1).IsDeleted() )
-          return &resi->GetAtom(i-1);
-    }
-    else  {
-      for( size_t i=0; i < resi->Count(); i++ )
-        if( !resi->GetAtom(i).IsDeleted() &&
-            resi->GetAtom(i).GetLabel().Equalsi(lb) )
-        {
-          if( part == DefNoPart || resi->GetAtom(i).GetPart() == part )
-            return &resi->GetAtom(i);
-        }
-    }
+  if (resi == 0) {
+    resi = &MainResidue;
   }
-  else {  // main residue search
-    if (Label.Equalsi("first")) {
-      for (size_t i = 0; i < MainResidue.Count(); i++) {
-        if (!MainResidue[i].IsDeleted()) {
-          return &MainResidue[i];
-        }
+  if( Label.Equalsi("first") )  {
+    for( size_t i=0; i < resi->Count(); i++ )
+      if( !resi->GetAtom(i).IsDeleted() )
+        return &resi->GetAtom(i);
+  }
+  else if( Label.Equalsi("last") )  {
+    for( size_t i=resi->Count(); i > 0; i-- )
+      if( !resi->GetAtom(i-1).IsDeleted() )
+        return &resi->GetAtom(i-1);
+  }
+  else  {
+    for( size_t i=0; i < resi->Count(); i++ )
+      if( !resi->GetAtom(i).IsDeleted() &&
+          resi->GetAtom(i).GetLabel().Equalsi(lb) )
+      {
+        if( part == DefNoPart || resi->GetAtom(i).GetPart() == part )
+          return &resi->GetAtom(i);
       }
-    }
-    else if( Label.Equalsi("last") )  {
-      for (size_t i = CAtoms.Count(); i > 0; i--) {
-        if (!MainResidue[i-1].IsDeleted()) {
-          return &MainResidue[i-1];
-        }
-      }
-    }
-    else {
-      for (size_t i = 0; i < MainResidue.Count(); i++) {
-        if (!MainResidue[i].IsDeleted() && MainResidue[i].GetLabel().Equalsi(lb)) {
-          if (part == DefNoPart || CAtoms[i]->GetPart() == part) {
-            return &MainResidue[i];
-          }
-        }
-      }
-    }
   }
   return NULL;
 }
