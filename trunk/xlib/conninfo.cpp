@@ -215,22 +215,24 @@ void ConnInfo::ToInsList(TStrList& ins) const {
     const AtomConnInfo& aci = AtomInfo.GetValue(i);
     if (aci.atom->IsDeleted())
       continue;
-    if( !aci.temporary &&
-      (aci.r != -1 || aci.maxBonds != def_max_bonds) )
+    if (!aci.temporary &&
+      (aci.r != -1 || aci.maxBonds != def_max_bonds))
     {
-      olxstr& str = ins.Add("CONN ");
-      if( aci.maxBonds != def_max_bonds || aci.r != -1 )
-        str << aci.maxBonds << ' ';
-      if( aci.r != -1 )
-        str << aci.r << ' ';
-      str << aci.atom->GetLabel();
+      olxstr &str = ins.Add("CONN");
+      if (aci.maxBonds != def_max_bonds || aci.r != -1) {
+        str << ' ' << aci.maxBonds;
+      }
+      if (aci.r != -1) {
+        str << ' ' << aci.r;
+      }
+      str << ' ' << aci.atom->GetResiLabel();
     }
     for( size_t j=0; j < aci.BondsToCreate.Count(); j++ )  {
       const CXBondInfo& bi = aci.BondsToCreate[j];
       if( bi.to.IsDeleted() )
         continue;
       olxstr& str = ins.Add("BIND ");
-      str << aci.atom->GetLabel() << ' ' << bi.to.GetLabel();
+      str << aci.atom->GetResiLabel() << ' ' << bi.to.GetResiLabel();
       if( bi.matr != NULL )  {
         size_t si = rm.UsedSymmIndex(*bi.matr);
         if( si == InvalidIndex ) {
@@ -245,7 +247,7 @@ void ConnInfo::ToInsList(TStrList& ins) const {
       if( bi.to.IsDeleted() )
         continue;
       olxstr& str = ins.Add("FREE ");
-      str << aci.atom->GetLabel() << ' ' << bi.to.GetLabel();
+      str << aci.atom->GetResiLabel() << ' ' << bi.to.GetResiLabel();
       if( bi.matr != NULL )  {
         size_t si = rm.UsedSymmIndex(*bi.matr);
         if( si == InvalidIndex ) {
