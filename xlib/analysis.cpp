@@ -638,9 +638,11 @@ ConstTypeList<vec3d> fragments::fragment::build_coordinates() const {
 //.............................................................................
 void fragments::fragment::init_generators() {
   if (atoms_.IsEmpty()) return;
-  generators.AddList(
-    atoms_[0]->GetParent()->GetLattice().GetFragmentGrowMatrices(atoms_,
+  if (atoms_[0]->GetParent()->HasLattice()) {
+    generators.AddList(
+      atoms_[0]->GetParent()->GetLattice().GetFragmentGrowMatrices(atoms_,
       true));
+  }
 }
 //.............................................................................
 bool fragments::fragment::is_disjoint() const {
@@ -1501,14 +1503,13 @@ struct CAtomGraphAnalyser  {
   void OnFinish() {}
 };
 
-ConstTypeList<fragments::fragment> fragments::extract(TAsymmUnit &au,
+ConstTypeList<fragments::fragment> fragments::extract(const TCAtomPList &aua,
   const fragment &f_)
 {
   if (f_.is_disjoint()) {
     throw TInvalidArgumentException(__OlxSourceInfo,
       "set of atoms is disconnected");
   }
-  TCAtomPList &aua = au.GetAtoms();
   // mark ring atoms
   {
     for (size_t i = 0; i < aua.Count(); i++) {

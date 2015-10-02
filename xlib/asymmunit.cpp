@@ -255,8 +255,9 @@ TResidue& TAsymmUnit::NewResidue(const olxstr& RClass, int number, int alias)  {
     return MainResidue;
   }
   TResidue *er = ResidueRegistry.Find(number, NULL);
-  if (er == NULL && alias != number)
+  if (er == NULL && alias != number) {
     er = ResidueRegistry.Find(alias, NULL);
+  }
   if (er != NULL) {
     if (!er->GetClassName().Equalsi(RClass)) {
       throw TInvalidArgumentException(__OlxSourceInfo,
