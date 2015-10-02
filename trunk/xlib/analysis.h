@@ -351,9 +351,13 @@ public:
     friend struct fragments;
   };
   static ConstTypeList<fragment> extract(TAsymmUnit &au);
-  /* extarcts all given fragemts from the asymmetric unit
+  /* extracts all given fragemts from the asymmetric unit
   */
-  static ConstTypeList<fragment> extract(TAsymmUnit &au, const fragment &f);
+  static ConstTypeList<fragment> extract(const TCAtomPList &atoms,
+    const fragment &f);
+  static ConstTypeList<fragment> extract(TAsymmUnit &au, const fragment &f) {
+    return extract(au.GetAtoms(), f);
+  }
 };
 
 class Analysis {

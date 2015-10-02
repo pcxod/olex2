@@ -705,12 +705,14 @@ AtomRefList &AtomRefList::ConvertToImplicit() {
     return *this;
   }
   olxstr resi;
+  bool res_set = false;
   for (size_t i = 0; i < refs.Count(); i++) {
     ExplicitCAtomRef *r = dynamic_cast<ExplicitCAtomRef *>(&refs[i]);
     if (r == 0) continue;
     TResidue &rs = rm.aunit.GetResidue(r->GetAtom().GetResiId());
-    if (resi.IsEmpty()) {
+    if (!res_set) {
       resi = rs.GetClassName();
+      res_set = true;
     }
     else if (!rs.GetClassName().Equalsi(resi)) {
       resi.SetLength(0);
