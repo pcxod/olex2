@@ -338,8 +338,14 @@ void GlobalGlFunction( meMoveXY(const TMouseData &md) )  {
   TGlRenderer *R = md.GlMouse->Parent();
   const int dx = (md.X-md.GlMouse->SX()), dy = (md.GlMouse->SY()-md.Y);
   double v = R->GetScale();
-  vec3d t = R->GetBasis().GetMatrix()*vec3d(dx*v, dy*v, 0);
-  R->Translate(t/R->GetBasis().GetZoom());
+  vec3d t = vec3d(dx*v, dy*v, 0) / R->GetBasis().GetZoom();
+  if (R->GetStereoFlag() == glStereoMatrix) {
+    t = R->GetStereoMatrix()*R->GetBasis().GetMatrix()*t;
+    R->SetStereoTranslation(R->GetStereoTranslation() + t);
+  }
+  else {
+    R->Translate(R->GetBasis().GetMatrix()*t);
+  }
   md.GlMouse->SetAction(glmaTranslateXY);
 }
 //..............................................................................

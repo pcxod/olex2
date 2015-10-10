@@ -70,6 +70,7 @@ public:
   DefMacro(ProjSph)
   DefMacro(OFileDel)
   DefMacro(OFileSwap)
+  DefMacro(TwinView)
 
   DefFunc(MatchFiles)
   DefFunc(ExtraZoom)

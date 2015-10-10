@@ -347,6 +347,13 @@ void GXLibMacros::Export(TLibrary& lib) {
   gxlib_InitMacro(OFileSwap, EmptyString(), fpNone | fpOne,
     "Sets current file to which all commands are applied");
 
+  gxlib_InitMacro(TwinView,
+    "c-Cartesian matrix is provided[true]&;"
+    "t-transpose the input matrix [false]"
+    ,
+    fpAny,
+    "Sets special rendering mode");
+
   gxlib_InitFunc(ExtraZoom, fpNone|fpOne,
     "Sets/reads current extra zoom (default zoom correction)");
   gxlib_InitFunc(MatchFiles, fpTwo|fpThree,
@@ -4409,5 +4416,31 @@ void GXLibMacros::macOFileSwap(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
   app.SetActiveXFile(Cmds.IsEmpty() ? 0 : Cmds[0].ToSizeT());
+}
+//.............................................................................
+void GXLibMacros::macTwinView(TStrObjList &Cmds, const TParamList &Options,
+  TMacroData &Error)
+{
+  mat3d m(0, 1, 0, -1, 0, 0, 0, 0, 1);
+  vec3d t;
+  if (Cmds.Count() > 8 && olx_list_and(Cmds, &olxstr::IsNumber)) {
+    for (int i = 0; i < 9; i++) {
+      m[i / 3][i % 3] = Cmds[i].ToDouble();
+    }
+    if (Options.GetBoolOption('t')) {
+      m = mat3d::Transpose(m);
+    }
+  }
+  if (!Options.GetBoolOption('c', true, true)) {
+    const TAsymmUnit &au = app.XFile().GetAsymmUnit();
+    m = au.GetCartesianToCell()*m*au.GetCellToCartesian();
+  }
+  if (m.Determinant() < 1) {
+    m *= -1;
+  }
+  m.Normalise();
+  app.GetRenderer().SetStereoMatrix(m);
+  app.GetRenderer().SetStereoTranslation(t);
+  app.GetRenderer().SetStereoFlag(glStereoMatrix);
 }
 //..............................................................................
