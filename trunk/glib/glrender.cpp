@@ -513,8 +513,8 @@ void TGlRenderer::Draw()  {
   OnDraw.Enter(this);
   //glLineWidth( (float)(0.07/GetScale()) );
   //glPointSize( (float)(0.07/GetScale()) );
-  if( StereoFlag == glStereoColor )  {
-    olx_gl::clearColor(0.0,0.0,0.0,0.0);
+  if (StereoFlag == glStereoColor) {
+    olx_gl::clearColor(0.0, 0.0, 0.0, 0.0);
     olx_gl::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     const double ry = GetBasis().GetRY();
     olx_gl::disable(GL_ALPHA_TEST);
@@ -523,7 +523,7 @@ void TGlRenderer::Draw()  {
     olx_gl::enable(GL_COLOR_MATERIAL);
     olx_gl::colorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
     // right eye
-    GetBasis().RotateY(ry+StereoAngle);
+    GetBasis().RotateY(ry + StereoAngle);
     olx_gl::colorMask(
       StereoRightColor[0] != 0,
       StereoRightColor[1] != 0,
@@ -532,7 +532,7 @@ void TGlRenderer::Draw()  {
     olx_gl::color(StereoRightColor.Data());
     DrawObjects(0, 0, false, false);
     //left eye
-    GetBasis().RotateY(ry-StereoAngle);
+    GetBasis().RotateY(ry - StereoAngle);
     olx_gl::clear(GL_DEPTH_BUFFER_BIT);
     olx_gl::enable(GL_BLEND);
     olx_gl::blendFunc(GL_ONE, GL_ONE);
@@ -547,14 +547,14 @@ void TGlRenderer::Draw()  {
     olx_gl::colorMask(true, true, true, true);
   }
   // http://local.wasp.uwa.edu.au/~pbourke/texture_colour/anaglyph/
-  else if( StereoFlag == glStereoAnaglyph )  {
+  else if (StereoFlag == glStereoAnaglyph) {
     const double ry = GetBasis().GetRY();
-    olx_gl::clearColor(0.0,0.0,0.0,0.0);
-    olx_gl::clearAccum(0.0,0.0,0.0,0.0);
+    olx_gl::clearColor(0.0, 0.0, 0.0, 0.0);
+    olx_gl::clearAccum(0.0, 0.0, 0.0, 0.0);
     olx_gl::colorMask(true, true, true, true);
     olx_gl::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     // right eye
-    GetBasis().RotateY(ry+StereoAngle);
+    GetBasis().RotateY(ry + StereoAngle);
     olx_gl::colorMask(
       StereoRightColor[0] != 0,
       StereoRightColor[1] != 0,
@@ -564,7 +564,7 @@ void TGlRenderer::Draw()  {
     olx_gl::colorMask(true, true, true, true);
     olx_gl::accum(GL_LOAD, 1);
     // left eye
-    GetBasis().RotateY(ry-StereoAngle);
+    GetBasis().RotateY(ry - StereoAngle);
     olx_gl::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     olx_gl::colorMask(
       StereoLeftColor[0] != 0,
@@ -577,48 +577,81 @@ void TGlRenderer::Draw()  {
     olx_gl::accum(GL_RETURN, 1.0);
     GetBasis().RotateY(ry);
   }
-  else if( StereoFlag == glStereoHardware )  {
+  else if (StereoFlag == glStereoHardware) {
     const double ry = GetBasis().GetRY();
-    GetBasis().RotateY(ry+StereoAngle);
+    GetBasis().RotateY(ry + StereoAngle);
     olx_gl::drawBuffer(GL_BACK_LEFT);
     olx_gl::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     DrawObjects(0, 0, false, false);
-    GetBasis().RotateY(ry-StereoAngle);
+    GetBasis().RotateY(ry - StereoAngle);
     olx_gl::drawBuffer(GL_BACK_RIGHT);
     olx_gl::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     DrawObjects(0, 0, false, false);
     olx_gl::drawBuffer(GL_BACK);
     GetBasis().RotateY(ry);
   }
-  else if( StereoFlag == glStereoInterlace )  {
+  else if (StereoFlag == glStereoInterlace) {
     olx_gl::drawBuffer(GL_BACK);
-    SetupStencilFoInterlacedDraw((AbsoluteTop%2) != 0);
+    SetupStencilFoInterlacedDraw((AbsoluteTop % 2) != 0);
     olx_gl::enable(GL_STENCIL_TEST);
     olx_gl::stencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
     const double ry = GetBasis().GetRY();
-    GetBasis().RotateY(ry+StereoAngle);
+    GetBasis().RotateY(ry + StereoAngle);
     olx_gl::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     olx_gl::stencilFunc(GL_EQUAL, 0, ~0);
     DrawObjects(0, 0, false, false);
-    GetBasis().RotateY(ry-StereoAngle);
+    GetBasis().RotateY(ry - StereoAngle);
     olx_gl::stencilFunc(GL_NOTEQUAL, 0, ~0);
     DrawObjects(0, 0, false, false);
     GetBasis().RotateY(ry);
     olx_gl::disable(GL_STENCIL_TEST);
   }
-  else if( StereoFlag == glStereoCross )  {
+  else if (StereoFlag == glStereoCross) {
     const double ry = GetBasis().GetRY();
     olx_gl::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     const int _l = Left;
-    GetBasis().RotateY(ry+StereoAngle);
+    GetBasis().RotateY(ry + StereoAngle);
     DrawObjects(0, 0, false, false);
-    GetBasis().RotateY(ry-StereoAngle);
+    GetBasis().RotateY(ry - StereoAngle);
     Left = Width;
     DrawObjects(0, 0, false, false);
     GetBasis().RotateY(ry);
     Left = _l;
   }
-  else  {
+  else if (StereoFlag == glStereoMatrix) {
+    mat3d m = GetBasis().GetMatrix();
+    vec3d t = GetBasis().GetCenter();
+
+    olx_gl::clearColor(0.0, 0.0, 0.0, 0.0);
+    olx_gl::clearAccum(0.0, 0.0, 0.0, 0.0);
+    olx_gl::colorMask(true, true, true, true);
+    olx_gl::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    olx_gl::colorMask(
+      StereoRightColor[0] != 0,
+      StereoRightColor[1] != 0,
+      StereoRightColor[2] != 0,
+      StereoRightColor[3] != 0);
+    DrawObjects(0, 0, false, false);
+    olx_gl::colorMask(true, true, true, true);
+    olx_gl::accum(GL_LOAD, 1);
+
+    GetBasis().SetMatrix(StereoMatrix*m);
+    GetBasis().Translate(StereoTranslation);
+    olx_gl::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    olx_gl::colorMask(
+      StereoLeftColor[0] != 0,
+      StereoLeftColor[1] != 0,
+      StereoLeftColor[2] != 0,
+      StereoLeftColor[3] != 0);
+    DrawObjects(0, 0, false, false);
+    olx_gl::colorMask(true, true, true, true);
+    olx_gl::accum(GL_ACCUM, 1);
+    olx_gl::accum(GL_RETURN, 1.0);
+
+    GetBasis().SetCenter(t);
+    GetBasis().SetMatrix(m);
+  }
+  else {
     if (!GetScene().StartDraw())
       return;
     DrawObjects(0, 0, false, false);
