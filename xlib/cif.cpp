@@ -910,7 +910,7 @@ bool TCif::Adopt(TXFile &XF, int flags) {
   SetParam("_chemical_name_systematic", "?", true);
   SetParam("_chemical_name_common", "?", true);
   SetParam("_chemical_melting_point", "?", false);
-  SetParam("_chemical_formula_moiety", XF.GetLattice().CalcMoiety(), true);
+  SetParam("_chemical_formula_moiety", XF.GetLattice().CalcMoietyStr(), true);
   SetParam("_chemical_formula_sum", GetAsymmUnit()._SummFormula(' ',
     1./olx_max(GetAsymmUnit().GetZPrime(), 0.01)), true);
   SetParam("_chemical_formula_weight",
