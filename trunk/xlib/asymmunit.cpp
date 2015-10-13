@@ -41,7 +41,7 @@ TAsymmUnit::TAsymmUnit(TLattice *L) : MainResidue(*(new TResidue(*this, 0))),
   OnSGChange(Actions.New("AU_SG_CHANGE"))
 {
   Lattice = L;
-  Latt = -1;
+  Latt = 1;
   Assigning = false;
   Z = 1;
   RefMod = NULL;
