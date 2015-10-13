@@ -356,14 +356,17 @@ bool TGlFont::CharFromRGBArray(size_t Char, unsigned char *RGBData,
 void TGlFont::CreateGlyphsFromRGBArray(bool FW,
   uint16_t Width, uint16_t Height)
 {
-  if( Width < MaxWidth ||
-      Height < MaxHeight ||
-      MaxWidth == 0 || MaxHeight == 0 )
+  if (Width < MaxWidth ||
+    Height < MaxHeight ||
+    MaxWidth == 0 || MaxHeight == 0)
+  {
     throw TInvalidArgumentException(__OlxSourceInfo, olxstr("font size w:") <<
-    Width << "; h:" << Height);
-
-  if( !olx_is_valid_index(FontBase) )
+      Width << "; h:" << Height);
+  }
+  CharOffset = 2+MaxWidth/10;
+  if (!olx_is_valid_index(FontBase)) {
     FontBase = olx_gl::genLists(256);
+  }
   olx_set_bit(FW, Flags, fntFixedWidth);
   uint16_t NHeight = MaxHeight;
   uint16_t BWidth = (MaxWidth/8+1);
