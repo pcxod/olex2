@@ -35,36 +35,37 @@ TTextEdit::TTextEdit(wxWindow *Parent, wxWindowID id, const wxString& value,
 }
 //..............................................................................
 void TTextEdit::ClickEvent(wxMouseEvent& event)  {
-  OnClick.Execute(this);
   event.Skip();
+  OnClick.Execute(this);
 }
 //..............................................................................
 void TTextEdit::ChangeEvent(wxCommandEvent& event)  {
+  event.Skip();
   //StrValue = GetText();
   OnChange.Execute(this);
-  event.Skip();
 }
 //..............................................................................
 void TTextEdit::EnterPressedEvent(wxCommandEvent& event)  {
+  event.Skip();
   if (!IsMultiLine()) {
     OnReturn.Execute(this);
   }
-  event.Skip();
 }
 //..............................................................................
 void TTextEdit::KeyDownEvent(wxKeyEvent& event)  {
+  event.Skip();
   TKeyEvent evt(event);
   OnKeyDown.Execute(this, &evt);
-  event.Skip();
 }
 //..............................................................................
 void TTextEdit::CharEvent(wxKeyEvent& event)  {
+  event.Skip();
   TKeyEvent evt(event);
   OnChar.Execute(this, &evt);
-  event.Skip();
 }
 //..............................................................................
 void TTextEdit::LeaveEvent(wxFocusEvent& event)  {
+  event.Skip();
   olxstr v = GetText();
   bool changed = (v != StrValue);
   if( changed )  {
@@ -72,11 +73,10 @@ void TTextEdit::LeaveEvent(wxFocusEvent& event)  {
     StrValue = v;
   }
   OnLeave.Execute(this);
-  event.Skip();
 }
 //..............................................................................
 void TTextEdit::EnterEvent(wxFocusEvent& event)  {
-  OnEnter.Execute(this);
   event.Skip();
+  OnEnter.Execute(this);
 }
 //..............................................................................
