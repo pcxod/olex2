@@ -217,21 +217,23 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
     Lst[i].Replace("~popup_name~", PopupName);
     olxstr tmp = olxstr(Lst[i]).TrimWhiteChars();
     // skip comments
-    if( tmp.StartsFrom(comment_open) && !tmp.StartsFrom(Tag2) )  {
+    if (tmp.StartsFrom(comment_open) && !tmp.StartsFrom(Tag2)) {
       //tag_parse_info tpi = skip_tag(Lst, Tag2, Tag3, i, 0);
-      if( tmp.EndsWith(comment_close) )  continue;
+      if (tmp.EndsWith(comment_close))  continue;
       bool tag_found = false;
-      while( ++i < Lst.Count() )  {
-        if( olxstr(Lst[i]).TrimWhiteChars().EndsWith(comment_close) )  {
+      while (++i < Lst.Count())  {
+        if (olxstr(Lst[i]).TrimWhiteChars().EndsWith(comment_close)) {
           tag_found = true;
           break;
         }
       }
-      if( tag_found )  continue;
-      else
+      if (tag_found) {
+        continue;
+      }
+      else {
         break;
+      }
     }
-
     // TRANSLATION START
     if (app != NULL) {
       Lst[i] = app->TranslateString(Lst[i]);
@@ -405,12 +407,13 @@ bool THtml::ItemState(const olxstr &ItemName, short State)  {
   return true;
 }
 //.............................................................................
-bool THtml::UpdatePage(bool update_indices)  {
+bool THtml::UpdatePage(bool update_indices) {
   if (IsPageLocked()) {
     PageLoadRequested = true;
     PageRequested.SetLength(0);
     return true;
   }
+  LockPageLoad(this);
 
   olxstr Path = TEFile::ExtractFilePath(FileName);
   if (TEFile::IsAbsolutePath(FileName)) {
@@ -482,6 +485,7 @@ bool THtml::UpdatePage(bool update_indices)  {
     else
       FocusedControl.SetLength(0);
   }
+  UnlockPageLoad(this);
   return true;
 }
 //.............................................................................

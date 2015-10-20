@@ -29,10 +29,12 @@ void THtmlSwitch::SetFileIndex(size_t ind)  {
 //..............................................................................
 void THtmlSwitch::UpdateFileIndex()  {
   Clear();
-  if( FileIndex == InvalidIndex || FileIndex >= FileCount() )  return;
+  if (FileIndex == InvalidIndex || FileIndex >= FileCount()) {
+    return;
+  }
   olxstr FN = Files[FileIndex];
   IInputStream *is = TFileHandlerManager::GetInputStream(FN);
-  if( is == NULL )  {
+  if (is == NULL)  {
     TBasicApp::NewLogEntry(logError) <<
       (olxstr("THtmlSwitch::File does not exist: ").quote() << FN);
     return;
@@ -44,17 +46,17 @@ void THtmlSwitch::UpdateFileIndex()  {
 #endif
   delete is;
   const olxstr ignore_open= "<!-- #ignoreif", ignore_close = "#ignoreif -->";
-  for( size_t i=0; i < Strings.Count(); i++ )  {
+  for (size_t i = 0; i < Strings.Count(); i++)  {
     if (Strings[i].StartsFrom(ignore_open)) {
       olxstr fn = Strings[i].SubStringFrom(ignore_open.Length()).TrimWhiteChars();
       if (fn.IsEmpty()) {
         TBasicApp::NewLogEntry(logError) <<
           (olxstr("Invalid ignoreif construct: ").quote() << Strings[i]);
       }
-      int oc=1;
-      size_t j=i+1;
+      int oc = 1;
+      size_t j = i+1;
       bool delete_last = true;
-      for (;j < Strings.Count(); j++) {
+      for (; j < Strings.Count(); j++) {
         if (Strings[j].StartsFrom(ignore_close)) {
           if (--oc == 0)
             break;
@@ -68,7 +70,7 @@ void THtmlSwitch::UpdateFileIndex()  {
         delete_last = false;
       }
       olxstr rv = fn;
-      if (olex2::IOlex2Processor::GetInstance()->processFunction(rv) ) {
+      if (olex2::IOlex2Processor::GetInstance()->processFunction(rv)) {
         if (rv.ToBool())
           Strings.DeleteRange(i, j-i+1);
         else {
@@ -85,14 +87,14 @@ void THtmlSwitch::UpdateFileIndex()  {
       i--;
     }
     // replace the parameters with their values
-    else if( Strings[i].IndexOf('#') != InvalidIndex )  {
+    else if (Strings[i].IndexOf('#') != InvalidIndex)  {
       // "key word parameter"
       Strings[i].Replace("#switch_name", Name);
-      if( ParentSwitch != NULL )  {
+      if (ParentSwitch != NULL)  {
         Strings[i].Replace("#parent_name", ParentSwitch->GetName()).\
-                   Replace( "#parent_file", ParentSwitch->GetCurrentFile());
+          Replace("#parent_file", ParentSwitch->GetCurrentFile());
       }
-      for( size_t j=0; j < Params.Count(); j++ ) {
+      for (size_t j = 0; j < Params.Count(); j++) {
         Strings[i].Replace(
           olxstr().Allocate(Params.GetName(j).Length()+2) <<
           '#' << Params.GetName(j),
@@ -101,8 +103,9 @@ void THtmlSwitch::UpdateFileIndex()  {
     } // end of parameter replacement
   }
   ParentHtml->CheckForSwitches(*this, TZipWrapper::IsZipFile(FN));
-  for( size_t i=0; i < Switches.Count(); i++ )
+  for (size_t i = 0; i < Switches.Count(); i++) {
     Switches[i].UpdateFileIndex();
+  }
 }
 //..............................................................................
 bool THtmlSwitch::ToFile()  {
