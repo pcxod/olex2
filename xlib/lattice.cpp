@@ -770,21 +770,23 @@ TSAtom* TLattice::FindSAtom(const TCAtom& ca) const {
 //..............................................................................
 TSAtomPList TLattice::NewCentroid(const TSAtomPList& Atoms)  {
   TSAtomPList rv;
-  if( Atoms.IsEmpty() )  return rv;
+  if (Atoms.IsEmpty()) {
+    return rv;
+  }
   vec3d cc, ce;
   const smatd itm = UnitCell->InvMatrix(Atoms[0]->GetMatrix());
-  for( size_t i=0; i < Atoms.Count(); i++ )  {
+  for (size_t i=0; i < Atoms.Count(); i++) {
     cc += itm*Atoms[i]->ccrd();
     ce += vec3d::Qrt(Atoms[i]->CAtom().ccrdEsd());
   }
   ce.Sqrt();
   ce /= Atoms.Count();
   cc /= Atoms.Count();
-  try  {
+  try {
     TCAtom& CCent = AsymmUnit->NewCentroid(cc);
     GetUnitCell().AddEllipsoid();
     rv.SetCapacity(Matrices.Count());
-    for( size_t i=0; i < Matrices.Count(); i++ )  {
+    for (size_t i=0; i < Matrices.Count(); i++ ) {
       TSAtom& c = GenerateAtom(CCent, *Matrices[i]);
       CCent.ccrdEsd() = ce;
       GetUnitCell().AddEllipsoid();

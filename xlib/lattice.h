@@ -264,8 +264,10 @@ public:
   */
   TUndoData *ValidateHGroups(bool reinit, bool report=false);
   // returns a chemical moiety string for CIF
-  olxstr CalcMoiety() const;
-  double GetDelta() const {  return Delta;  }
+  olxstr CalcMoietyStr(bool html=false) const;
+  TTypeList<AnAssociation3<double, ContentList, size_t> >::const_list_type
+    CalcMoiety() const;
+  double GetDelta() const { return Delta; }
   double GetDeltaI() const {  return DeltaI;  }
   void SetDelta(double v);
   void SetDeltaI(double v);
