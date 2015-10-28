@@ -41,7 +41,7 @@ TAsymmUnit::TAsymmUnit(TLattice *L) : MainResidue(*(new TResidue(*this, 0))),
   OnSGChange(Actions.New("AU_SG_CHANGE"))
 {
   Lattice = L;
-  Latt = -1;
+  Latt = 1;
   Assigning = false;
   Z = 1;
   RefMod = NULL;
@@ -255,14 +255,20 @@ TResidue& TAsymmUnit::NewResidue(const olxstr& RClass, int number, int alias)  {
     return MainResidue;
   }
   TResidue *er = ResidueRegistry.Find(number, NULL);
-  if (er == NULL && alias != number)
+  if (er == NULL && alias != number) {
     er = ResidueRegistry.Find(alias, NULL);
+  }
   if (er != NULL) {
     if (!er->GetClassName().Equalsi(RClass)) {
-      throw TInvalidArgumentException(__OlxSourceInfo,
-        olx_print("Residue number %d is already assigned class %w", number,
+      if (er->IsEmpty()) {
+        er->SetClassName(RClass);
+      }
+      else {
+        throw TInvalidArgumentException(__OlxSourceInfo,
+          olx_print("Residue number %d is already assigned class %w", number,
           &er->GetClassName())
-        );
+          );
+      }
     }
     return *er;
   }

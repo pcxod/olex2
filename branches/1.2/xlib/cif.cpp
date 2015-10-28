@@ -234,7 +234,7 @@ void TCif::Rename(const olxstr& old_name, const olxstr& new_name)  {
 ConstPtrList<TCAtom> TCif::FindAtoms(const TStrList &names) {
   TCAtomPList atoms;
   for (size_t i=0; i < names.Count(); i++) {
-    if (atoms.Add(GetAsymmUnit().FindCAtomDirect(names[i])) == NULL) {
+    if (atoms.Add(GetAsymmUnit().FindCAtom(names[i])) == NULL) {
       TBasicApp::NewLogEntry(logError) <<
         (olxstr("Undefined atom :").quote() << names[i]);
       atoms.Clear();
@@ -494,42 +494,66 @@ void TCif::Initialize()  {
     return;
   }
   const MatrixListAdaptor<TCif> MatrixList(*this);
-  for( size_t i=0; i < ALoop->RowCount(); i++ )  {
-    TCAtom& A = GetAsymmUnit().NewAtom();
-    A.SetLabel(ALoop->Get(i, ALabel).GetStringValue(), false);
+  for (size_t i=0; i < ALoop->RowCount(); i++) {
+    olxstr label = ALoop->Get(i, ALabel).GetStringValue();
+    TResidue *resi = 0;
+    {
+      size_t ui = label.IndexOf('_');
+      if (ui != InvalidIndex) {
+        olxstr rn = label.SubStringFrom(ui+1);
+        if (rn.IsInt()) {
+          int rni = rn.ToInt();
+          resi = GetAsymmUnit().FindResidue(rni);
+          if (resi == 0) {
+            resi = &GetAsymmUnit().NewResidue(
+              olxstr("unk") << GetAsymmUnit().ResidueCount(), rni);
+          }
+          label.SetLength(ui);
+        }
+      }
+    }
+    TCAtom& A = GetAsymmUnit().NewAtom(resi);
+    A.SetLabel(label, false);
     cm_Element* type = NULL;
-    if( ASymbol != InvalidIndex )
+    if (ASymbol != InvalidIndex) {
       type = XElementLib::FindBySymbolEx(ALoop->Get(i, ASymbol).GetStringValue());
-    else
+    }
+    else {
       type = XElementLib::FindBySymbolEx(ALoop->Get(i, ALabel).GetStringValue());
-    if( type == NULL )  {
+    }
+    if (type == NULL) {
       throw TInvalidArgumentException(__OlxSourceInfo,
         olxstr("Undefined element: ").quote() <<
           ALoop->Get(i, ASymbol).GetStringValue());
     }
     A.SetType(*type);
-    for( int j=0; j < 3; j++ )  {
+    for (int j=0; j < 3; j++) {
       EValue = ALoop->Get(i, ACi[j]).GetStringValue();
       A.ccrd()[j] = EValue.GetV();  A.ccrdEsd()[j] = EValue.GetE();
-      if( EValue.GetE() == 0 )
+      if (EValue.GetE() == 0) {
         GetRM().Vars.FixParam(A, catom_var_name_X+j);
+      }
     }
-    if( ACUiso != InvalidIndex )  {
+    if (ACUiso != InvalidIndex) {
       EValue = ALoop->Get(i, ACUiso).GetStringValue();
       A.SetUisoEsd(EValue.GetE());
       A.SetUiso(EValue.GetV());
-      if( EValue.GetE() == 0 )  GetRM().Vars.FixParam(A, catom_var_name_Uiso);
+      if (EValue.GetE() == 0) {
+        GetRM().Vars.FixParam(A, catom_var_name_Uiso);
+      }
     }
-    if( APart != InvalidIndex &&
-        ALoop->Get(i, APart).GetStringValue().IsNumber() )
+    if (APart != InvalidIndex &&
+        ALoop->Get(i, APart).GetStringValue().IsNumber())
     {
       A.SetPart(ALoop->Get(i, APart).GetStringValue().ToInt());
     }
-    if( SiteOccu != InvalidIndex )  {
+    if (SiteOccu != InvalidIndex) {
       EValue = ALoop->Get(i, SiteOccu).GetStringValue();
       A.SetOccu(EValue.GetV());
       A.SetOccuEsd(EValue.GetE());
-      if( EValue.GetE() == 0 )  GetRM().Vars.FixParam(A, catom_var_name_Sof);
+      if (EValue.GetE() == 0) {
+        GetRM().Vars.FixParam(A, catom_var_name_Sof);
+      }
     }
     // try to guess what it is
     if (Degen != InvalidIndex && DegenFunction == 0) {
@@ -613,7 +637,7 @@ void TCif::Initialize()  {
       (Ui[0] | Ui[1] | Ui[2] | Ui[3] | Ui[4] | Ui[5]) != InvalidIndex)
     {
       for (size_t i = 0; i < ALoop->RowCount(); i++) {
-        TCAtom* A = GetAsymmUnit().FindCAtomDirect(
+        TCAtom* A = GetAsymmUnit().FindCAtom(
           ALoop->Get(i, ALabel).GetStringValue());
         if (A == NULL) {
           throw TInvalidArgumentException(__OlxSourceInfo,
@@ -886,7 +910,7 @@ bool TCif::Adopt(TXFile &XF, int flags) {
   SetParam("_chemical_name_systematic", "?", true);
   SetParam("_chemical_name_common", "?", true);
   SetParam("_chemical_melting_point", "?", false);
-  SetParam("_chemical_formula_moiety", XF.GetLattice().CalcMoiety(), true);
+  SetParam("_chemical_formula_moiety", XF.GetLattice().CalcMoietyStr(), true);
   SetParam("_chemical_formula_sum", GetAsymmUnit()._SummFormula(' ',
     1./olx_max(GetAsymmUnit().GetZPrime(), 0.01)), true);
   SetParam("_chemical_formula_weight",
