@@ -260,10 +260,15 @@ TResidue& TAsymmUnit::NewResidue(const olxstr& RClass, int number, int alias)  {
   }
   if (er != NULL) {
     if (!er->GetClassName().Equalsi(RClass)) {
-      throw TInvalidArgumentException(__OlxSourceInfo,
-        olx_print("Residue number %d is already assigned class %w", number,
+      if (er->IsEmpty()) {
+        er->SetClassName(RClass);
+      }
+      else {
+        throw TInvalidArgumentException(__OlxSourceInfo,
+          olx_print("Residue number %d is already assigned class %w", number,
           &er->GetClassName())
-        );
+          );
+      }
     }
     return *er;
   }
