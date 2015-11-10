@@ -1025,6 +1025,9 @@ void TIns::SaveForSolution(const olxstr& FileName, const olxstr& sMethod,
   SL.Add(_CellToString());
   SL.Add(_ZerrToString());
   _SaveSymm(SL);
+  if (this->FindIns("NEUT") != 0) {
+    SL.Add("NEUT");
+  }
   SL.Add(EmptyString());
   TStrList sfac = SaveSfacUnit(RefMod, SL, SL.Count()-1, false);
 
@@ -2079,6 +2082,9 @@ TStrList::const_list_type TIns::SaveHeader(TStrList& SL,
   SL.Add(_CellToString());
   SL.Add(_ZerrToString());
   _SaveSymm(SL);
+  if (FindIns("NEUT") != 0) {
+    SL.Add("NEUT");
+  }
   SL.Add(EmptyString());
   TStrList::const_list_type rv = SaveSfacUnit(GetRM(), SL, SL.Count() - 1);
   if (ValidateRestraintNames)
@@ -2097,8 +2103,10 @@ TStrList::const_list_type TIns::SaveHeader(TStrList& SL,
 
   for (size_t i=0; i < Ins.Count(); i++) {
     TInsList* L = Ins.GetObject(i);
-    if( L == NULL )  continue;  // if load failed
-    if (!Ins[i].Equalsi("REM")) {
+    if (L == NULL) {  // if load failed
+      continue;
+    }
+    if (!Ins[i].Equalsi("REM") && !Ins[i].Equalsi("NEUT")) {
       HyphenateIns(Ins[i] + ' ', L->Text(' '), SL);
     }
   }
