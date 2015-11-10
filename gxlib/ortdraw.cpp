@@ -1033,7 +1033,7 @@ void OrtDraw::Render(const olxstr& fileName)  {
     TXLine &l = app.GetLine(i);
     if (!l.IsVisible()) continue;
     ort_bond_line *ol = new ort_bond_line(*this,
-      l, l.Base(), l.Edge());
+      l, l.GetBase(), l.GetEdge());
     objects.Add(ol);
   }
   const TXGrid& grid = app.XGrid();

@@ -877,21 +877,21 @@ olxstr TGXApp::GetSelectionInfo(bool list) const {
       else if( EsdlInstanceOf(Sel[0], TXLine) && EsdlInstanceOf(Sel[1], TXLine) )  {
         TXLine& A = (TXLine&)Sel[0], &B =(TXLine&)Sel[1];
         Tmp = "Angle: ";
-        v = olx_angle(A.Edge(), A.Base(), B.Edge(), B.Base());
+        v = olx_angle(A.GetEdge(), A.GetBase(), B.GetEdge(), B.GetBase());
         Tmp << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ")";
       }
       else if( EsdlInstanceOf(Sel[0], TXLine) && EsdlInstanceOf(Sel[1], TXBond) )  {
         TXLine& A = (TXLine&)Sel[0];
         TXBond& B =(TXBond&)Sel[1];
         Tmp = "Angle: ";
-        v = olx_angle(A.Edge(), A.Base(), B.A().crd(), B.B().crd());
+        v = olx_angle(A.GetEdge(), A.GetBase(), B.A().crd(), B.B().crd());
         Tmp << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ")";
       }
       else if( EsdlInstanceOf(Sel[0], TXBond) && EsdlInstanceOf(Sel[1], TXLine) )  {
         TXLine& A = (TXLine&)Sel[1];
         TXBond& B =(TXBond&)Sel[0];
         Tmp = "Angle: ";
-        v = olx_angle(A.Edge(), A.Base(), B.A().crd(), B.B().crd());
+        v = olx_angle(A.GetEdge(), A.GetBase(), B.A().crd(), B.B().crd());
         Tmp << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ")";
       }
       else if ((EsdlInstanceOf(Sel[0], TXBond) && EsdlInstanceOf(Sel[1], TXAtom)) ||
@@ -911,8 +911,8 @@ olxstr TGXApp::GetSelectionInfo(bool list) const {
         TXLine &l = (TXLine&)(EsdlInstanceOf(Sel[0], TXLine) ? Sel[0] : Sel[1]);
         const TXAtom &a = (TXAtom&)(EsdlInstanceOf(Sel[0], TXLine) ? Sel[1] : Sel[0]);
         Tmp = "Distance (line-atom): ";
-        vec3d av = a.crd() - l.Base(),
-          bv = (l.Edge() - l.Base()).Normalise();
+        vec3d av = a.crd() - l.GetBase(),
+          bv = (l.GetEdge() - l.GetBase()).Normalise();
         v = (av - (bv*bv.DotProd(av))).Length();
         Tmp << olxstr::FormatFloat(3, v);
       }
@@ -948,13 +948,13 @@ olxstr TGXApp::GetSelectionInfo(bool list) const {
       else if( EsdlInstanceOf(Sel[0], TXLine) && EsdlInstanceOf(Sel[1], TXPlane) )  {
         TXLine& xl = (TXLine&)Sel[0];
         Tmp = "Angle (plane-line): ";
-        v = ((TXPlane&)Sel[1]).Angle(xl.Edge()-xl.Base());
+        v = ((TXPlane&)Sel[1]).Angle(xl.GetEdge()-xl.GetBase());
         Tmp << olxstr::FormatFloat(3, v);
       }
       else if( EsdlInstanceOf(Sel[1], TXLine) && EsdlInstanceOf(Sel[0], TXPlane) )  {
         TXLine& xl = (TXLine&)Sel[1];
         Tmp = "Angle (plane-line): ";
-        v = ((TXPlane&)Sel[0]).Angle(xl.Edge()-xl.Base());
+        v = ((TXPlane&)Sel[0]).Angle(xl.GetEdge()-xl.GetBase());
         Tmp << olxstr::FormatFloat(3, v);
       }
       if( EsdlInstanceOf(Sel[1], TXPlane) && EsdlInstanceOf(Sel[0], TXPlane) )  {
@@ -1196,7 +1196,7 @@ olxstr TGXApp::GetObjectInfoAt(int x, int y) const {
       << ((TXReflection*)G)->GetI();
   }
   else if (EsdlInstanceOf(*G, TXLine)) {
-    rv = olxstr::FormatFloat(3, ((TXLine*)G)->Length());
+    rv = olxstr::FormatFloat(3, ((TXLine*)G)->GetLength());
   }
   else if (EsdlInstanceOf(*G, TXGrowLine)) {
     rv = ((TXGrowLine*)G)->XAtom().GetLabel();
@@ -2603,17 +2603,20 @@ void TGXApp::ClearPlanes()  {
 }
 //..............................................................................
 ConstPtrList<TXAtom> TGXApp::AddCentroid(const TXAtomPList& Atoms)  {
-  if( Atoms.Count() < 2 )  return new TXAtomPList;
+  if (Atoms.Count() < 2) {
+    return new TXAtomPList;
+  }
   TXAtomPList centroids(
     XFile().GetLattice().NewCentroid(TSAtomPList(Atoms)),
     StaticCastAccessor<TXAtom>());
-  for( size_t i=0; i < centroids.Count(); i++ )  {
-    XFile().GetRM().Conn.Disconnect(centroids[i]->CAtom());
+  for (size_t i=0; i < centroids.Count(); i++) {
+    //XFile().GetRM().Conn.Disconnect(centroids[i]->CAtom());
     centroids[i]->Create();
     centroids[i]->Params()[0] = centroids[i]->GetType().r_pers;
   }
-  if (FLabels->IsVisible())
+  if (FLabels->IsVisible()) {
     FLabels->Init();
+  }
   return centroids;
 }
 //..............................................................................

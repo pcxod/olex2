@@ -514,10 +514,12 @@ void PythonExt::funExport(const TStrObjList& Cmds, TMacroData& E)  {
   IOlex2Processor* o_r = PythonExt::GetInstance()->GetOlexProcessor();
   if( o_r == NULL )  return;
   // clean up legacy export
-  if( TEFile::Exists(Cmds[0]+".py") )
+  if (TEFile::Exists(Cmds[0]+".py")) {
     TEFile::DelFile(Cmds[0]+".py");
-  if( TEFile::Exists(Cmds[0]+".pyc") )
+  }
+  if (TEFile::Exists(Cmds[0]+".pyc")) {
     TEFile::DelFile(Cmds[0]+".pyc");
+  }
   bool do_export = true;
   olxstr last_exp_fn = Cmds[0] + ".cache";
   if (TEFile::Exists(last_exp_fn)) {
