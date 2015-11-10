@@ -126,6 +126,8 @@ public:
     }
     void CreatePrimitives();
     TStringToList<olxstr, TGlPrimitive*> primitives;
+    // primitives used in the "dynamic" rendering
+    TStringToList<olxstr, TGlPrimitive*> stockPrimitives;
   public:
     double GetRadius() const { return GetParam("DefR", radius, double(1)); }
     void SetRadius(double v) const {
@@ -144,6 +146,9 @@ public:
     void SetQuality(int v) const {
       return style->SetParam("Quality", (quality = v), true);
     }
+    const TStringToList<olxstr, TGlPrimitive*> &GetStockPrimitives() const {
+      return stockPrimitives;
+    }
     const TStringToList<olxstr, TGlPrimitive*> &GetPrimitives() const {
       return primitives;
     }
@@ -155,6 +160,7 @@ public:
     }
     void ClearPrimitives() {
       primitives.Clear();
+      stockPrimitives.Clear();
     }
     static Settings& GetInstance(TGlRenderer &r) {
       AGOSettings *s = r.FindSettings("bond");

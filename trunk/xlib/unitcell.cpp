@@ -218,11 +218,15 @@ TUnitCell::TSearchSymmEqTask::TSearchSymmEqTask(TPtrList<TCAtom>& atoms,
 }
 //..............................................................................
 void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
-  if (Atoms[ind]->IsDeleted())  return;
+  if (Atoms[ind]->IsDeleted()) {
+    return;
+  }
   const size_t ac = Atoms.Count();
   const size_t mc = Matrices.Count();
   for (size_t i=ind+1; i < ac; i++) {
-    if (Atoms[i]->IsDeleted())  continue;
+    if (Atoms[i]->IsDeleted()) {
+      continue;
+    }
     if (Atoms[i]->GetExyzGroup() != NULL &&
       Atoms[i]->GetExyzGroup() == Atoms[ind]->GetExyzGroup())
     {
@@ -244,19 +248,21 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
           volatile olx_scope_cs cs_(GetCriticalSection());
           Atoms[i]->SetDeleted(true);
         }
-        else if (TNetwork::BondExistsQ(*Atoms[ind], *Atoms[i], qd,
-          Latt->GetDelta()))  // covalent bond
-        {
-          volatile olx_scope_cs cs_(GetCriticalSection());
-          Atoms[ind]->AttachSite(Atoms[i], Matrices[j]);
-          Atoms[i]->AttachSite(Atoms[ind], Matrices[j]);
-        }
-        else if( TNetwork::BondExistsQ(*Atoms[ind], *Atoms[i], qd,
-          Latt->GetDeltaI()) )  // interaction
-        {
-          volatile olx_scope_cs cs_(GetCriticalSection());
-          Atoms[ind]->AttachSiteI(Atoms[i], Matrices[j]);
-          Atoms[i]->AttachSiteI(Atoms[ind], Matrices[j]);
+        else {
+          if (TNetwork::BondExistsQ(*Atoms[ind], *Atoms[i], qd,
+            Latt->GetDelta()))  // covalent bond
+          {
+            volatile olx_scope_cs cs_(GetCriticalSection());
+            Atoms[ind]->AttachSite(Atoms[i], Matrices[j]);
+            Atoms[i]->AttachSite(Atoms[ind], Matrices[j]);
+          }
+          else if (TNetwork::BondExistsQ(*Atoms[ind], *Atoms[i], qd,
+            Latt->GetDeltaI()))  // interaction
+          {
+            volatile olx_scope_cs cs_(GetCriticalSection());
+            Atoms[ind]->AttachSiteI(Atoms[i], Matrices[j]);
+            Atoms[i]->AttachSiteI(Atoms[ind], Matrices[j]);
+          }
         }
         continue;
       }
@@ -332,7 +338,9 @@ void TUnitCell::TSearchSymmEqTask::InitEquiv() const {
   const size_t ac = Atoms.Count();
   const size_t mc = Matrices.Count();
   for( size_t i=0; i < ac; i++ )  {
-    if( Atoms[i]->IsDeleted() )  continue;
+    if (Atoms[i]->IsDeleted()) {
+      continue;
+    }
     for( size_t j=1; j < mc; j++ )  {
       vec3d v = Atoms[i]->ccrd() - Matrices[j] * Atoms[i]->ccrd();
       const vec3i shift = v.Round<int>();
@@ -344,7 +352,7 @@ void TUnitCell::TSearchSymmEqTask::InitEquiv() const {
         eqm.SetId((uint8_t)j, shift);
         Atoms[i]->AddEquiv(eqm);
       }
-      else  {
+      else {
         smatd matr = Matrices[j];
         matr.t += shift;
         matr.SetId((uint8_t)j, shift);
@@ -370,23 +378,28 @@ void TUnitCell::FindSymmEq() const {
   ACA.SetCapacity(GetLattice().GetAsymmUnit().AtomCount());
   for( size_t i=0; i < GetLattice().GetAsymmUnit().AtomCount(); i++ )  {
     TCAtom& A1 = GetLattice().GetAsymmUnit().GetAtom(i);
-    if( A1.IsDeleted() )  continue;
+    if (A1.IsDeleted()) {
+      continue;
+    }
     A1.ClearAttachedSites();
     A1.ClearEquivs();
-    if (A1.GetConnInfo().maxBonds != 0)
+    if (A1.GetConnInfo().maxBonds != 0) {
       ACA.Add(A1)->SetTag(0);
+    }
   }
   // searching for symmetrical equivalents; the search could be optimised by
   // removing the translational equivalents in the firts order; however the task is not
   // very common, so it should be OK. (An identity (E) matrix is in the list
   // so translational equivalents will be removed too
-  if( ACA.IsEmpty() )  return;
-  if( olx_abs(CalcVolume()-1.0) < 1e-3 )  {  // cartesian coordinates?
+  if (ACA.IsEmpty()) {
+    return;
+  }
+  if (olx_abs(CalcVolume()-1.0) < 1e-3) {  // cartesian coordinates?
     const double delta = GetLattice().GetDelta();
-    for( size_t i=0; i < ACA.Count(); i++ )  {
-      for( size_t j=i+1; j < ACA.Count(); j++ )  {
+    for (size_t i = 0; i < ACA.Count(); i++) {
+      for (size_t j = i+1; j < ACA.Count(); j++) {
         const double qd = ACA[i]->ccrd().QDistanceTo(ACA[j]->ccrd());
-        if( TNetwork::BondExistsQ(*ACA[i], *ACA[j], Matrices[0], qd, delta) )  {
+        if (TNetwork::BondExistsQ(*ACA[i], *ACA[j], Matrices[0], qd, delta)) {
           ACA[i]->AttachSite(ACA[j], Matrices[0]);
           ACA[j]->AttachSite(ACA[i], Matrices[0]);
         }
@@ -397,8 +410,9 @@ void TUnitCell::FindSymmEq() const {
     TSearchSymmEqTask searchTask(ACA, Matrices);
     searchTask.InitEquiv();
     OlxListTask::Run(searchTask, ACA.Count(), tQuadraticTask, 1000);
-    for( size_t i=0; i < ACA.Count(); i++ )
+    for (size_t i = 0; i < ACA.Count(); i++) {
       ACA[i]->UpdateAttachedSites();
+    }
   }
   RefinementModel *rm = GetLattice().GetAsymmUnit().GetRefMod();
   if (rm != NULL) {

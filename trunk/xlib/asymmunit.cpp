@@ -409,6 +409,7 @@ TCAtom& TAsymmUnit::NewCentroid(const vec3d& CCenter)  {
   TCAtom& A = NewAtom();
   A.SetType(XElementLib::GetByIndex(iCarbonIndex));
   A.ccrd() = CCenter;
+  A.SetCentroid(true);
   A.SetLabel(olxstr("Cnt") << CAtoms.Count(), false);
   return A;
 }

@@ -288,6 +288,7 @@ TMainForm::TMainForm(TGlXApp *Parent)
     Bind(wxEVT_MENU, &TMainForm::OnPlane, this, ID_PlaneActivate);
     Bind(wxEVT_MENU, &TMainForm::OnBond, this, ID_BondViewAlong);
     Bind(wxEVT_MENU, &TMainForm::OnBond, this, ID_BondRadius);
+    Bind(wxEVT_MENU, &TMainForm::OnBond, this, ID_BondInfo);
     Bind(wxEVT_MENU, &TMainForm::OnAtomOccuChange, this, ID_AtomOccuCustom);
     Bind(wxEVT_MENU, &TMainForm::OnAtomOccuChange, this, ID_AtomOccu1);
     Bind(wxEVT_MENU, &TMainForm::OnAtomOccuChange, this, ID_AtomOccu34);
@@ -2230,16 +2231,18 @@ void TMainForm::OnChar(wxKeyEvent& m) {
     }
   }
   else {
-    if( FCmdLine->ProcessKey(m) )  {
+    if (FCmdLine->ProcessKey(m)) {
       PreviewHelp(FCmdLine->GetCommand());
       TimePerFrame = FXApp->Draw();
       return;
     }
     else {
-      if( !FGlConsole->ProcessKey(m.GetKeyCode(), Fl))
+      if (!FGlConsole->ProcessKey(m.GetKeyCode(), Fl)) {
         m.Skip();
-      else
+      }
+      else {
         TimePerFrame = FXApp->Draw();
+      }
     }
   }
 
