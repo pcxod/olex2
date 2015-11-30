@@ -275,7 +275,8 @@ bool TXBond::Orient(TGlPrimitive& GlP)  {
       Settings &st = GetSettings();
       olx_gl::translate(GetFromCrd());
       olx_gl::rotate(Params()[0], Params()[1], Params()[2], 0.0);
-      olx_gl::scale(Params()[4], Params()[4], Params()[3]*Params()[5]);
+      //olx_gl::scale(Params()[4], Params()[4], Params()[3]*Params()[5]);
+      olx_gl::scale(Params()[4], Params()[4], st.GetUnitLength()*Params()[5]);
       st.GetStockPrimitives().GetObject(6)->Draw();
       return true;
     }
@@ -285,7 +286,8 @@ bool TXBond::Orient(TGlPrimitive& GlP)  {
       Settings &st = GetSettings();
       olx_gl::translate(GetToCrd());
       olx_gl::rotate(Params()[0], Params()[1], Params()[2], 0.0);
-      olx_gl::scale(Params()[4], Params()[4], Params()[3]*Params()[5]);
+      //olx_gl::scale(Params()[4], Params()[4], Params()[3]*Params()[5]);
+      olx_gl::scale(Params()[4], Params()[4], st.GetUnitLength()*Params()[5]);
       st.GetStockPrimitives().GetObject(7)->Draw();
       return true;
     }
@@ -983,5 +985,20 @@ void TXBond::Settings::CreatePrimitives() {
   primitives.Add("Top arrow", GlP);
   GlP->Params.Resize(GlP->Params.Count() + 1);  //
   GlP->Params.GetLast() = ddsDefAtomB;
+}
+//..............................................................................
+void TXBond::ToDataItem(TDataItem& item) const {
+  TSBond::ToDataItem(item);
+  if (Params()[5] != 0) {
+    item.AddField("fbond", Params()[5]);
+  }
+}
+//..............................................................................
+void TXBond::FromDataItem(const TDataItem& item, class TLattice& parent) {
+  TSBond::FromDataItem(item, parent);
+  olxstr v = item.FindField("fbond", EmptyString());
+  if (!v.IsEmpty()) {
+    Params()[5] = v.ToDouble();
+  }
 }
 //..............................................................................

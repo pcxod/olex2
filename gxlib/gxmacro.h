@@ -76,6 +76,7 @@ public:
   DefFunc(ExtraZoom)
   DefFunc(SelName)
   DefFunc(GetMaterial)
+  DefFunc(FBond)
 
   static int QPeakSortA(const TCAtom &a, const TCAtom &b);
   static int QPeakSortD(const TCAtom &a, const TCAtom &b) {
