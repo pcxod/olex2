@@ -100,13 +100,16 @@ public:
   virtual const vec3d &GetFromCrd() const;
   virtual const vec3d &GetToCrd() const;
 
+  virtual void ToDataItem(TDataItem& item) const;
+  virtual void FromDataItem(const TDataItem& item, class TLattice& parent);
+
   static olxstr_dict<olxstr> &NamesRegistry() {
     static olxstr_dict<olxstr> nr;
     return nr;
   }
 
   class Settings : public AGOSettings {
-    mutable double radius;
+    mutable double radius, unit_length;
     mutable int mask, cone_q, cone_stipples, quality;
     Settings(TGlRenderer &r)
       : AGOSettings(r, "BondParams")
@@ -114,7 +117,7 @@ public:
       set_defaults();
     }
     void set_defaults() {
-      radius = -1;
+      unit_length = radius = -1;
       mask = cone_q = cone_stipples = quality = -1;
     }
     void OnStyleChange() {
@@ -132,6 +135,10 @@ public:
     double GetRadius() const { return GetParam("DefR", radius, double(1)); }
     void SetRadius(double v) const {
       return style->SetParam("DefR", (radius = v), true);
+    }
+    double GetUnitLength() const { return GetParam("UnitL", unit_length, double(1)); }
+    void SetUnitLength(double v) const {
+      return style->SetParam("UnitL", (unit_length = v), true);
     }
     int GetConeQ() const { return GetParam("ConeQ", cone_q, int(15)); }
     void SetConeQ(int v) const {

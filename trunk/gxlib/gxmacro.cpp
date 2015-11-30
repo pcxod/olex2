@@ -362,6 +362,8 @@ void GXLibMacros::Export(TLibrary& lib) {
     "Returns name for the selected object group");
   gxlib_InitFunc(GetMaterial, fpOne | fpTwo,
     "Returns material of specified object");
+  gxlib_InitFunc(FBond, fpNone | fpOne,
+    "Sets/prints bond unit length");
 }
 //.............................................................................
 void GXLibMacros::macGrow(TStrObjList &Cmds, const TParamList &Options,
@@ -4442,5 +4444,49 @@ void GXLibMacros::macTwinView(TStrObjList &Cmds, const TParamList &Options,
   app.GetRenderer().SetStereoMatrix(m);
   app.GetRenderer().SetStereoTranslation(t);
   app.GetRenderer().SetStereoFlag(glStereoMatrix);
+}
+//..............................................................................
+void GXLibMacros::funFBond(const TStrObjList &Params, TMacroData &E) {
+  if (Params.IsEmpty()) {
+    TXBond::Settings &st = TXBond::GetSettings(app.GetRenderer());
+    E.SetRetVal(st.GetUnitLength());
+  }
+  else {
+    TXBondPList bonds = app.GetRenderer().GetSelection().Extract<TXBond>();
+    if (bonds.IsEmpty()) {
+      E.ProcessingError(__OlxSrcInfo, "Some bonds are expected");
+      return;
+    }
+    double v = Params[0].ToDouble();
+    if (v < 0 || v > 1) {
+      E.ProcessingError(__OlxSrcInfo, "Value in range of [0-1] is expected");
+      return;
+    }
+    if (v == 1) {
+      TXBond::GetSettings(app.GetRenderer()).SetUnitLength(
+        bonds[0]->Length());
+    }
+    smatd cm = bonds[0]->B().GetMatrix();
+    if (!bonds[0]->A().GetMatrix().IsFirst()) {
+      cm = bonds[0]->A().GetMatrix().Inverse()*cm;
+    }
+    TGXApp::BondIterator bi = app.GetBonds();
+    while (bi.HasNext()) {
+      TXBond &b = bi.Next();
+      if (&b == bonds[0] || b.A().GetType() != bonds[0]->A().GetType() ||
+        b.B().GetType() != bonds[0]->B().GetType())
+      {
+        continue;
+      }
+      smatd m = b.B().GetMatrix();
+      if (!b.A().GetMatrix().IsFirst()) {
+        m = b.A().GetMatrix().Inverse()*m;
+      }
+      if (m.Equals(cm)) {
+        b.Params()[5] = v;
+      }
+    }
+    bonds[0]->Params()[5] = v;
+  }
 }
 //..............................................................................
