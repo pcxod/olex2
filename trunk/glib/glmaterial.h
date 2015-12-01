@@ -101,7 +101,7 @@ public:
   TIString ToString() const;
   void FromString(const olxstr& str, bool safe=false);
   olxstr ToPOV() const;
-  olxstr ToWRL() const;
+  olxstr ToWRL(bool back) const;
 };
 
 EndGlNamespace()

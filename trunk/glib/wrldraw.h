@@ -83,11 +83,11 @@ struct wrl {
 
   static olxstr get_mat_str(const olxstr &primitive_name,
     TGraphicsStyle &style, olx_cdict<TGlMaterial, olxstr> &materials,
-    const AGDrawObject *sender=NULL);
+    const AGDrawObject *sender=NULL, bool back=false);
 
   static olxstr get_mat_str(const TGlMaterial& glm,
     olx_cdict<TGlMaterial, olxstr> &materials,
-    const AGDrawObject *sender=NULL);
+    const AGDrawObject *sender=NULL, bool back=false);
 
   struct CrdTransformer {
     TEBasis basis;

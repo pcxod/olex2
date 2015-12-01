@@ -282,36 +282,65 @@ olxstr TGlMaterial::ToPOV() const {
   return bf.ToString();
 }
 //..............................................................................
-olxstr TGlMaterial::ToWRL() const {
-  TEStrBuffer bf;
+olxstr TGlMaterial::ToWRL(bool back) const {
+  olxstr_buf bf;
   bf << olxT("Appearance{ material Material{");
-  if ((Flags & sglmAmbientF) != 0) {
-    float ds=0;
-    if ((Flags & sglmDiffuseF) != 0) {
-      ds = DiffuseF.GetMean();
-    }
-    if (ds == 0) {
+  if (back) {
+    if ((Flags & sglmAmbientB) != 0) {
+      float ds = 0;
+      if ((Flags & sglmDiffuseB) != 0) {
+        ds = DiffuseB.GetMean();
+      }
+      if (ds == 0) {
+      }
+      else {
+      }
+      bf << olxT("  ambientIntensity 1");
+      bf << olxT("  diffuseColor ") << wrl::to_str(AmbientB);
+      if ((Flags & sglmDiffuseB) != 0 && (Flags & sglmTransparent) != 0 && DiffuseB[3] != 1)
+        bf << olxT("  transparency ") << olxstr(DiffuseB[3]);
     }
     else {
+      bf << olxT("  ambientIntensity 0");
     }
-    bf << olxT("  ambientIntensity 1");
-    bf << olxT("  diffuseColor ") << wrl::to_str(AmbientF);
-    if ((Flags & sglmDiffuseF) != 0 && (Flags & sglmTransparent) != 0 && DiffuseF[3] != 1)
-      bf << olxT("  transparency ") << olxstr(DiffuseF[3]);
+    if ((Flags & sglmSpecularB) != 0) {
+      bf << olxT("  specularColor ") << wrl::to_str(SpecularB);
+    }
+    if ((Flags & sglmShininessB) != 0) {
+      bf << olxT("  shininess ") << olxstr(double(ShininessB)/128);
+    }
+    if ((Flags & sglmEmissionB) != 0) {
+      bf << olxT("  emissiveColor ") << wrl::to_str(EmissionB);
+    }
   }
   else {
-    bf << olxT("  ambientIntensity 0");
+    if ((Flags & sglmAmbientF) != 0) {
+      float ds = 0;
+      if ((Flags & sglmDiffuseF) != 0) {
+        ds = DiffuseF.GetMean();
+      }
+      if (ds == 0) {
+      }
+      else {
+      }
+      bf << olxT("  ambientIntensity 1");
+      bf << olxT("  diffuseColor ") << wrl::to_str(AmbientF);
+      if ((Flags & sglmDiffuseF) != 0 && (Flags & sglmTransparent) != 0 && DiffuseF[3] != 1)
+        bf << olxT("  transparency ") << olxstr(DiffuseF[3]);
+    }
+    else {
+      bf << olxT("  ambientIntensity 0");
+    }
+    if ((Flags & sglmSpecularF) != 0) {
+      bf << olxT("  specularColor ") << wrl::to_str(SpecularF);
+    }
+    if ((Flags & sglmShininessF) != 0) {
+      bf << olxT("  shininess ") << olxstr(double(ShininessF)/128);
+    }
+    if ((Flags & sglmEmissionF) != 0) {
+      bf << olxT("  emissiveColor ") << wrl::to_str(EmissionF);
+    }
   }
-  if ((Flags & sglmSpecularF) != 0) {
-    bf << olxT("  specularColor ") << wrl::to_str(SpecularF);
-  }
-  if ((Flags & sglmShininessF) != 0) {
-    bf << olxT("  shininess ") << olxstr(double(ShininessF)/128);
-  }
-  if ((Flags & sglmEmissionF) != 0) {
-    bf << olxT("  emissiveColor ") << wrl::to_str(EmissionF);
-  }
-  bf << olxT("}}");
-  return bf.ToString();
+  return (bf << olxT("}}"));
 }
 //..............................................................................

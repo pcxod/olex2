@@ -798,7 +798,7 @@ const_strlist TXAtom::ToWrl(olx_cdict<TGlMaterial, olxstr> &materials) const
     double ds = GetDrawScale();
     out.Add("   scale").stream(' ') << ds << ds << ds;
   }
-    out.Add("   translation ") << wrl::to_str(crdc.crd(crd()));
+  out.Add("   translation ") << wrl::to_str(crdc.crd(crd()));
   out.Add("   children [");
   const TGPCollection &gpc = GetPrimitives();
   bool th_drawn = false;
