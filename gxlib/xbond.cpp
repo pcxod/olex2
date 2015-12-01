@@ -225,7 +225,7 @@ bool TXBond::Orient(TGlPrimitive& GlP)  {
       olx_gl::scale(Params()[4], Params()[4], Params()[3]);
       GlP.Draw();
       olx_gl::popMatrix();
-      olx_gl::translate(GetToCrd() - v);
+      olx_gl::translate(GetFromCrd() - v);
       olx_gl::rotate(Params()[0], Params()[1], Params()[2], 0.0);
       olx_gl::scale(Params()[4], Params()[4], Params()[3]);
       GlP.Draw();

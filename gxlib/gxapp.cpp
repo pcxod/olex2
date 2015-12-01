@@ -5282,14 +5282,19 @@ const_strlist TGXApp::ToPov() const {
   TGXApp::AtomIterator ai = GetAtoms();
   while( ai.HasNext() )  {
     TXAtom &a = ai.Next();
-    if( a.IsVisible() )
+    if (a.IsVisible()) {
+      out.Add("//") << a.CAtom().GetResiLabel();
       out << a.ToPov(materials);
+    }
   }
   TGXApp::BondIterator bi = GetBonds();
   while( bi.HasNext() )  {
     TXBond &b = bi.Next();
-    if( b.IsVisible() )
+    if (b.IsVisible()) {
+      out.Add("//") << b.A().CAtom().GetResiLabel() << '-' <<
+        b.B().CAtom().GetResiLabel();
       out << b.ToPov(materials);
+    }
   }
   TGXApp::PlaneIterator pi = GetPlanes();
   while( pi.HasNext() )  {
@@ -5324,45 +5329,50 @@ const_strlist TGXApp::ToPov() const {
 const_strlist TGXApp::ToWrl() const {
   olx_cdict<TGlMaterial, olxstr> materials;
   TStrList out;// = GetRenderer().GetScene().ToPov();
+  out << "#Created by Olex2 " << XLibMacros::GetCompilationInfo();
+  out << "#VRML V2.0 utf8";
   out << TXAtom::WrlDeclare(GetRenderer());
   out << TXBond::WrlDeclare(GetRenderer());
+  out << TXPlane::WrlDeclare(GetRenderer());
   TGXApp::AtomIterator ai = GetAtoms();
   while (ai.HasNext()) {
     TXAtom &a = ai.Next();
-    if (a.IsVisible())
+    if (a.IsVisible()) {
       out << a.ToWrl(materials);
+    }
   }
   TGXApp::BondIterator bi = GetBonds();
   while (bi.HasNext()) {
     TXBond &b = bi.Next();
-    if (b.IsVisible())
+    if (b.IsVisible()) {
       out << b.ToWrl(materials);
+    }
   }
   for (size_t i=0; i < Lines.Count(); i++) {
-    if (Lines[i].IsVisible())
+    if (Lines[i].IsVisible()) {
       out << Lines[i].ToWrl(materials);
+    }
   }
   for (size_t i=0; i < XGrowLines.Count(); i++) {
-    if (XGrowLines[i].IsVisible())
+    if (XGrowLines[i].IsVisible()) {
       out << XGrowLines[i].ToWrl(materials);
+    }
   }
-  if (XFile().DUnitCell->IsVisible())
+  if (XFile().DUnitCell->IsVisible()) {
     out << XFile().DUnitCell->ToWrl(materials);
-  out.Insert(0, "#Created by Olex2 ") << XLibMacros::GetCompilationInfo();
-  out.Insert(0, "#VRML V2.0 utf8");
-  return out;
-  //TGXApp::PlaneIterator pi = GetPlanes();
-  //while( pi.HasNext() )  {
-  //  TXPlane &p = pi.Next();
-  //  if( p.IsVisible() )
-  //    out << p.ToPov(materials);
-  //}
+  }
+  TGXApp::PlaneIterator pi = GetPlanes();
+  while (pi.HasNext()) {
+    TXPlane &p = pi.Next();
+    if (p.IsVisible()) {
+      out << p.ToWrl(materials);
+    }
+  }
   //if( XGrid().IsVisible() && !XGrid().IsEmpty() )
   //  out << XGrid().ToPov(materials);
   //for (size_t i=0; i < UserObjects.Count(); i++)
   //  out << UserObjects[i].ToPov(materials);
-
-  //out.Add("}");
+  return out;
 }
 //..............................................................................
 void TGXApp::CreateRings(bool force, bool create) {
