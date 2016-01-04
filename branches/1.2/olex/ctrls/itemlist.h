@@ -82,7 +82,7 @@ namespace ctrl_ext {
         if (res != NULL && res->Delete)
           rv << vs << res->Data->ToString();
       }
-      return olxstr(rv).SubStringFrom(sep.Length());
+      return parent_t::GetCount() > 0 ? olxstr(rv).SubStringFrom(sep.Length()) : EmptyString();
     }
 
     size_t Count() const { return parent_t::GetCount(); }
