@@ -832,8 +832,8 @@ void TMainForm::OnBond(wxCommandEvent& event)  {
   TXBond *xb = dynamic_cast<TXBond*>(FObjectUnderMouse);
   if (xb == NULL) return;
   if (event.GetId() == ID_BondViewAlong) {
-    const vec3d n = (xb->B().crd()-xb->A().crd()).Normalise();
-    const vec3d c = (xb->B().crd()+xb->A().crd())/2;
+    const vec3d n = (xb->GetToCrd()-xb->GetFromCrd()).Normalise();
+    const vec3d c = (xb->GetToCrd()+xb->GetFromCrd())/2;
     processMacro(olxstr("SetView -c ") << n[0] << ' ' << n[1] << ' ' << n[2]
      << ' ' << c[0] << ' ' << c[1] << ' ' << c[2]);
   }
