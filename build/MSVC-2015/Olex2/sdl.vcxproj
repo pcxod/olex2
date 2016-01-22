@@ -62,6 +62,7 @@
     <ProjectGuid>{01EB4F8B-6F6E-4FD4-908E-37E02AA6EA63}</ProjectGuid>
     <RootNamespace>sdl</RootNamespace>
     <Keyword>ManagedCProj</Keyword>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-static|Win32'" Label="Configuration">

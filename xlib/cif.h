@@ -141,6 +141,8 @@ public:
   cif_dp::cetTable& GetLoop(size_t i) const {
     return *data_provider[block_index].table_map.GetValue(i);
   }
+  // Finds an item in any of the loops and returns the loop and the item index
+  olx_object_ptr<olx_pair_t<cif_dp::cetTable*, size_t> > FindLoopItem(const olxstr &name);
   //Returns a loop specified by name or NULL
   template <class T>
   cif_dp::cetTable* FindLoop(const T& name) const {

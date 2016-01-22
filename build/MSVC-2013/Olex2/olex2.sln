@@ -1,6 +1,8 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual C++ Express 2010
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.31101.0
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sdl", "sdl.vcxproj", "{01EB4F8B-6F6E-4FD4-908E-37E02AA6EA63}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gllib", "gllib.vcxproj", "{F91183CE-E72E-4B45-A7E3-EE23C4B62338}"
@@ -10,6 +12,12 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gxlib", "gxlib.vcxproj", "{DE8F09F2-84B2-4114-AA86-950FCC923CD9}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "olex2", "olex2.vcxproj", "{E77DD146-78F9-4A48-8BC6-8792226C1670}"
+	ProjectSection(ProjectDependencies) = postProject
+		{61C58785-8535-4CD3-B84A-F324CFA4E27F} = {61C58785-8535-4CD3-B84A-F324CFA4E27F}
+		{01EB4F8B-6F6E-4FD4-908E-37E02AA6EA63} = {01EB4F8B-6F6E-4FD4-908E-37E02AA6EA63}
+		{F91183CE-E72E-4B45-A7E3-EE23C4B62338} = {F91183CE-E72E-4B45-A7E3-EE23C4B62338}
+		{DE8F09F2-84B2-4114-AA86-950FCC923CD9} = {DE8F09F2-84B2-4114-AA86-950FCC923CD9}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "xlib", "xlib.vcxproj", "{61C58785-8535-4CD3-B84A-F324CFA4E27F}"
 EndProject
