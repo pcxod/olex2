@@ -1582,6 +1582,7 @@ void DataItemToCifEntry(const TDataItem &root, const TDataItem &di,
     }
   }
 }
+//..............................................................................
 void TCif::FromDataItem(const TDataItem &di_) {
   olxstr_dict<olxstr> translations;
   {
@@ -1602,3 +1603,20 @@ void TCif::FromDataItem(const TDataItem &di_) {
     DataItemToCifEntry(data, data, translations, cb);
   }
 }
+//..............................................................................
+olx_object_ptr<olx_pair_t<cif_dp::cetTable*, size_t> >
+  TCif::FindLoopItem(const olxstr &name)
+{
+  if (block_index == InvalidIndex) {
+    return NULL;
+  }
+  for (size_t i = 0; i < data_provider[block_index].table_map.Count(); i++) {
+    cetTable *tab = data_provider[block_index].table_map.GetValue(i);
+    size_t ci = tab->ColIndex(name);
+    if (ci != InvalidIndex) {
+      return olx_pair::New(tab, ci);
+    }
+  }
+  return NULL;
+}
+//..............................................................................

@@ -3785,7 +3785,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
     shelxl_version_number =
       Cif->GetParamAsString("_shelx_SHELXL_version_number");
   }
-  const bool shelxl2014 = shelxl_version_number.StartsFrom("2014");
+  const bool shelxl2014 = shelxl_version_number.StartsFrom("201"); //3/4/5...
   // normalise
   for (size_t i=0; i < Translations.Count(); i++)
     Cif->Rename(Translations[i].GetA(), Translations[i].GetB());
@@ -4257,25 +4257,49 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
   }
   // batch scales
   if (!xapp.XFile().GetRM().GetBASF().IsEmpty()) {
-    cetTable *l = Cif->FindLoop("_twin_individual");
-    if (l == NULL) {
-      const TArrayList<TEValueD> &basf = xapp.XFile().GetRM().GetBASF();
-      double esd = 0, sum = 0;
-      for (size_t i = 0; i < basf.Count(); i++) {
-        sum += basf[i].GetV();
-        esd += olx_sqr(basf[i].GetE());
+    olx_object_ptr<olx_pair_t<cetTable *, size_t> > tw_lip =
+      Cif->FindLoopItem("_twin_individual_mass_fraction_refined");
+    cetTable *l = 0;
+    size_t id_col_idx, fraction_col_idx;
+    if (tw_lip.is_valid()) {
+      fraction_col_idx = tw_lip().b;
+      id_col_idx = tw_lip().a->ColIndex("_twin_individual_id");
+      if (id_col_idx != InvalidIndex) {
+        l = tw_lip().a;
       }
+    }
+    if (l == 0) {
       l = &Cif->AddLoopDef("_twin_individual_id,"
         "_twin_individual_mass_fraction_refined");
-      for (size_t i = 0; i <= basf.Count(); i++) {
-        CifRow &r = l->AddRow();
-        r[0] = new cetString(i + 1);
-        if (i == 0) {
-          r[1] = new cetString(TEValueD(1-sum, sqrt(esd)).ToString());
+      id_col_idx = 0;
+      fraction_col_idx = 1;
+    }
+    
+    const TArrayList<TEValueD> &basf = xapp.XFile().GetRM().GetBASF();
+    double esd = 0, sum = 0;
+    for (size_t i = 0; i < basf.Count(); i++) {
+      sum += basf[i].GetV();
+      esd += olx_sqr(basf[i].GetE());
+    }
+    for (size_t i = 0; i <= basf.Count(); i++) {
+      olxstr id_val = olxstr(i + 1);
+      size_t row_id = InvalidIndex;
+      for (size_t j = 0; j < l->RowCount(); j++) {
+        if ((*l)[j][id_col_idx]->GetStringValue().Equals(id_val)) {
+          row_id = j;
+          break;
         }
-        else {
-          r[1] = new cetString(basf[i-1].ToString());
-        }
+      }
+      if (row_id == InvalidIndex) {
+        row_id = l->RowCount();
+        l->AddRow()[id_col_idx] = new cetString(id_val);
+      }
+      if (i == 0) {
+        l->Set(row_id, fraction_col_idx, 
+          new cetString(TEValueD(1 - sum, sqrt(esd)).ToString()));
+      }
+      else {
+        l->Set(row_id, fraction_col_idx, new cetString(basf[i-1].ToString()));
       }
     }
   }

@@ -139,7 +139,7 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
       }
       if (crds.IsEmpty()) {
         PlaneN = (envi.GetCrd(0) - envi.GetBase().crd()).Normalise();
-        RotVec = PlaneN.XProdVec(Z).Normalise();
+        RotVec = PlaneN.XProdVec(PlaneN.IsParallel(Z) ? X : Z).Normalise();
         olx_create_rotation_matrix(M, RotVec, cos(M_PI*THA / 180));
         crds.AddNew(M*PlaneN);
         olx_create_rotation_matrix(M, PlaneN, cos(M_PI*120. / 180));
@@ -284,10 +284,12 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
           }
           else if( pivoting->Count() == 1 )  {
             PlaneN = (envi.GetBase().crd()-pivoting->GetCrd(0)).Normalise();
-            if (PlaneN.Equals(Z, 1e-3))
-              RotVec = vec3d(1,0,0);
-            else
+            if (PlaneN.Equals(Z, 1e-3)) {
+              RotVec = X;
+            }
+            else {
               RotVec = Z;
+            }
             RotVec = RotVec.XProdVec(PlaneN).Normalise();
             PlaneN.NormaliseTo(dis);
             double ang = M_PI*THA/360;
@@ -301,10 +303,12 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
       else if( envi.Count() == 1 )  {
         if (pivoting == NULL || pivoting->IsEmpty()) {
           PlaneN = (envi.GetBase().crd()-envi.GetCrd(0)).Normalise();
-          if (PlaneN.Equals(Z, 1e-3))
-            RotVec = vec3d(1,0,0);
-          else
+          if (PlaneN.Equals(Z, 1e-3)) {
+            RotVec = X;
+          }
+          else {
             RotVec = Z;
+          }
           RotVec = RotVec.XProdVec(PlaneN).Normalise();
           PlaneN.NormaliseTo(dis);
           double ang = M_PI*THA/360;
@@ -420,8 +424,9 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
         }
         if( crds.IsEmpty() )  {  // generic case, random placement...
           PlaneN = envi.GetCrd(0) - envi.GetBase().crd();
-          ca = Z.CAngle(PlaneN);
-          RotVec = PlaneN.XProdVec(Z).Normalise();
+          vec3d ov = PlaneN.IsParallel(Z) ? X : Z;
+          ca = ov.CAngle(PlaneN);
+          RotVec = PlaneN.XProdVec(ov).Normalise();
           olx_create_rotation_matrix(M, RotVec, ca);
           crds.AddNew(0, -sin(M_PI*THA/180), cos(M_PI*THA/180));
           crds[0] = M * crds[0];
@@ -436,7 +441,7 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
       if( envi.Count() == 1 )  {
         dis = Distances.Get(GenId(fgNH3,0));
         PlaneN = (envi.GetCrd(0) - envi.GetBase().crd()).Normalise();
-        RotVec = PlaneN.XProdVec(Z).Normalise();
+        RotVec = PlaneN.XProdVec(PlaneN.IsParallel(Z) ? X : Z).Normalise();
         olx_create_rotation_matrix(M, RotVec, cos(M_PI*THA/180));
         crds.AddNew(M*PlaneN);
         olx_create_rotation_matrix(M, PlaneN, cos(M_PI*120./180));
@@ -454,8 +459,9 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
       if( envi.Count() == 1 )  {
         if( pivoting == NULL )  {
           PlaneN = (envi.GetCrd(0) - envi.GetBase().crd()).Normalise();
-          ca = Z.CAngle(PlaneN);
-          RotVec = PlaneN.XProdVec(Z);
+          vec3d ov = PlaneN.IsParallel(Z) ? X : Z;
+          ca = ov.CAngle(PlaneN);
+          RotVec = PlaneN.XProdVec(ov);
           RotVec.Normalise();
           olx_create_rotation_matrix(M, RotVec, ca);
 
@@ -650,8 +656,9 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
       }
       if( crds.IsEmpty() )  {  // generic case - random placement ...
         PlaneN = envi.GetCrd(0) - envi.GetBase().crd();
-        ca = Z.CAngle(PlaneN);
-        RotVec = PlaneN.XProdVec(Z).Normalise();
+        vec3d ov = PlaneN.IsParallel(Z) ? X : Z;
+        ca = ov.CAngle(PlaneN);
+        RotVec = PlaneN.XProdVec(ov).Normalise();
         olx_create_rotation_matrix(M, RotVec, ca);
 
         crds.AddNew(0, -sin(M_PI*THA/180), cos(M_PI*THA/180));

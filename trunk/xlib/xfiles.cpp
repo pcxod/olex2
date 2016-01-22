@@ -340,7 +340,7 @@ void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
           r2.GetAtomList().ForEach(ACollectionItem::IndexTagSetter());
           TSizeList new_order = TSizeList::FromList(
             matching[0].atoms(),
-            FunctionAccessor::MakeConst(&TCAtom::GetTag));
+            FunctionAccessor::MakeConst<index_t,TCAtom>(&TCAtom::GetTag));
           r2.GetAtomList().Rearrange(new_order);
         }
       }

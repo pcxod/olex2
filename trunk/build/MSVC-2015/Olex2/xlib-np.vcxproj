@@ -54,6 +54,7 @@
     <ProjectGuid>{C664746C-BA54-47ED-8CEC-58C2C9D859FD}</ProjectGuid>
     <RootNamespace>xlib</RootNamespace>
     <Keyword>ManagedCProj</Keyword>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-release-d|Win32'" Label="Configuration">
