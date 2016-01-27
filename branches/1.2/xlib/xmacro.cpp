@@ -4134,7 +4134,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
           }
         }
       }
-      if (!skip) {
+      if (!skip && EsdlInstanceOf(e, cetTable)) {
         for (size_t k = 0; k < _loop_names_to_skip.Count(); k++) {
           const olxstr &i_name = e.GetName();
           if (i_name.StartsFromi(_loop_names_to_skip[k]) &&
