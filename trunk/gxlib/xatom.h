@@ -58,6 +58,7 @@ public:
     TArrayList<vec3f> vecs;
     TTypeList<vec3f> norms;
     TTypeList<TVector3<size_t> > faces;
+    TTypeList<olx_pair_t<size_t, size_t> > edges;
   };
   class Settings;
 private:
