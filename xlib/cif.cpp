@@ -132,6 +132,7 @@ void TCif::_LoadCurrent()  {
 }
 //..............................................................................
 void TCif::SaveToStrings(TStrList& Strings)  {
+  TStopWatch sw(__FUNC__);
   static olxstr def_pivots(
     "_audit_creation,_publ,_chemical_name,_chemical_formula,_chemical,_atom_type,"
     "_space_group,_space_group_symop,_symmetry,"
@@ -177,6 +178,7 @@ void TCif::SaveToStrings(TStrList& Strings)  {
     pivots.Strtok(def_pivots, ',');
     endings.Strtok(def_endings, ',');
   }
+  sw.start("Fixing labels");
   for (size_t i=0; i < GetAsymmUnit().AtomCount(); i++) {
     TCAtom &ca = GetAsymmUnit().GetAtom(i);
     olxstr lb = ca.GetLabel();
@@ -188,10 +190,12 @@ void TCif::SaveToStrings(TStrList& Strings)  {
     }
   }
   GetAsymmUnit().ComplyToResidues();
+  sw.start("Sorting");
   for (size_t i = 0; i < data_provider[block_index].table_map.Count(); i++) {
     data_provider[block_index].table_map.GetValue(i)->Sort();
   }
   data_provider[block_index].Sort(pivots, endings);
+  sw.start("Saving");
   data_provider.SaveToStrings(Strings);
 }
 //..............................................................................

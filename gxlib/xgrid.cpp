@@ -235,8 +235,9 @@ void TXGrid::Clear()  {
 }
 //.............................................................................
 void TXGrid::Create(const olxstr& cName)  {
-  if( !cName.IsEmpty() )
+  if (!cName.IsEmpty()) {
     SetCollectionName(cName);
+  }
   TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
   GPC.AddObject(*this);
   TGraphicsStyle& GS = GPC.GetStyle();
@@ -297,22 +298,28 @@ void TXGrid::TPlaneCalculationTask::Run(size_t ind)  {
 //.............................................................................
 bool TXGrid::Orient(TGlPrimitive& GlP)  {
   if( ED == NULL )  return true;
-  if( Is3D() )  {
-    if( ED == NULL )  return true;
-    if( &GlP == glpN )  // draw once only
+  if (Is3D()) {
+    if (ED == NULL) {
+      return true;
+    }
+    if (&GlP == glpN) { // draw once only
       olx_gl::callList(PListId);
-    else if( &GlP == glpP )  // draw once only
+    }
+    else if (&GlP == glpP) { // draw once only
       olx_gl::callList(NListId);
+    }
     return true;
   }
-  if( &GlP == glpP || &GlP == glpN )  return true;
+  if (&GlP == glpP || &GlP == glpN) {
+    return true;
+  }
   if( &GlP == glpC )  {
     if( (RenderMode&planeRenderModePlane) != 0 )
       return true;
   }
   else  {
-    if( (RenderMode&planeRenderModeContour) != 0 &&
-        (RenderMode&planeRenderModePlane) == 0 )
+    if ((RenderMode&planeRenderModeContour) != 0 &&
+        (RenderMode&planeRenderModePlane) == 0)
     {
       return true;
     }
@@ -326,10 +333,12 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
   float Z;
   // if only contours are drawn - render plane at the background
   if( (RenderMode&planeRenderModeContour) != 0 )  {
-    if( (RenderMode&planeRenderModePlane) == 0 )
+    if ((RenderMode&planeRenderModePlane) == 0) {
       Z = (float)-Parent.CalcRasterZ(0.003);
-    else  // render the plane just a bit behind
+    }
+    else { // render the plane just a bit behind
       Z = Depth - 0.001f;
+    }
   }
   else  // no adjustment is required
     Z = Depth;
@@ -346,29 +355,45 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
   TListIteratorManager<TPlaneCalculationTask> tasks(calc_task, MaxDim,
     tLinearTask, MaxDim > 64);
   float minVal = 1000, maxVal = -1000;
-  for( size_t i = 0; i < tasks.Count(); i++ )  {
-    if( tasks[i].minVal < minVal )
+  for ( size_t i = 0; i < tasks.Count(); i++ ) {
+    if (tasks[i].minVal < minVal) {
       minVal = tasks[i].minVal;
-    if( tasks[i].maxVal > maxVal )
+    }
+    if (tasks[i].maxVal > maxVal) {
       maxVal = tasks[i].maxVal;
+    }
   }
   const TGlOption& start_p =
     GetPrimitives().FindPrimitiveByName("-Surface")->GetProperties().AmbientF;
   const TGlOption& end_p =
     GetPrimitives().FindPrimitiveByName("+Surface")->GetProperties().AmbientF;
-  vec3f h_color(end_p[0]-start_p[0], end_p[1]-start_p[1], end_p[2]-start_p[2]);
-  vec3f m_color(end_p[0]+start_p[0], end_p[1]+start_p[1], end_p[2]+start_p[2]);
-  h_color /= 2;
-  m_color /= 2;
+  vec3f sp(start_p[0], start_p[1], start_p[2]),
+    ep(end_p[0], end_p[1], end_p[2]);
+  vec3f mc(1.f);
+  vec3f nc1 = (sp - mc);
+  vec3f nc2 = (ep -mc);
+  //vc /= 2;
   olx_gl::normal(bm[0][2], bm[1][2], bm[2][2]);
+  //m_color1 = vec3f(0.5f);
+  const float max_v = olx_max(olx_abs(minVal), olx_abs(maxVal));
   if( (RenderMode&planeRenderModePlane) != 0 )  {
     for (size_t i=0; i < MaxDim; i++) {
       for (size_t j=0; j < MaxDim; j++) {
-        float s = ContourData[i][j] < 0 ? -ContourData[i][j]/minVal
-          : ContourData[i][j]/maxVal;
-        const size_t off = (i+j*MaxDim)*3;
-        for (int ci=0; ci < 3; ci++)
-          TextData[off+ci] = (char)(255.0f*(m_color[ci]+s*h_color[ci]));
+        const size_t off = (i + j*MaxDim) * 3;
+        const vec3f *c;
+        float s;
+        if (ContourData[i][j] < 0) {
+          s = -ContourData[i][j] / max_v;
+          c = &nc1;
+        }
+        else {
+          s = ContourData[i][j] / max_v;
+          c = &nc2;
+        }
+        for (int ci = 0; ci < 3; ci++) {
+          float x = 255.0f*(mc[ci] + s*(*c)[ci]);
+          TextData[off + ci] = (char)(x);
+        }
       }
     }
     if( !olx_is_valid_index(TextIndex) )  {
@@ -410,11 +435,22 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
     float legend_step = (maxVal-minVal)/32;
     for (int i=0; i < 32; i++) {
       float val = minVal + legend_step*i;
-      float s = val < 0 ? -val/minVal : val/maxVal;
+      const vec3f *c;
+      float s;
+      if (val < 0) {
+        s = -val / max_v;
+        c = &nc1;
+      }
+      else {
+        s = val / max_v;
+        c = &nc2;
+      }
       size_t off = i*32*3;
       for (int j=0; j < 32*3; j+=3) {
-        for (int ci=0; ci < 3; ci++)
-          LegendData[off+j+ci] = (char)(255.0f*(m_color[ci]+s*h_color[ci]));
+        for (int ci = 0; ci < 3; ci++) {
+          float x = 255.0f*(mc[ci] + s*(*c)[ci]);
+          LegendData[off + j + ci] = x;
+        }
       }
     }
     Legend->SetData((unsigned char*)LegendData, 32, 32, GL_RGB);

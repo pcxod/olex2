@@ -136,7 +136,7 @@ public:
   /* closes the file, if was open - returns true, might throw an exception if
   fclose failed
   */
-  bool Close();
+  virtual bool Close();
   uint64_t Length() const;
   virtual void Flush();
   FILE* Handle() const {  return FHandle;  }
