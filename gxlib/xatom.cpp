@@ -25,6 +25,7 @@
 #include "wrldraw.h"
 #include "gltexture.h"
 #include "glbackground.h"
+#include "eset.h"
 
 //----------------------------------------------------------------------------//
 // TSAtom function bodies
@@ -356,6 +357,12 @@ bool TXAtom::Orient(TGlPrimitive& GlP) {
       olx_gl::vertex(pl.vecs[pl.faces[j][0]]);
       olx_gl::vertex(pl.vecs[pl.faces[j][1]]);
       olx_gl::vertex(pl.vecs[pl.faces[j][2]]);
+    }
+    olx_gl::end();
+    olx_gl::begin(GL_LINES);
+    for (size_t j = 0; j < pl.edges.Count(); j++) {
+      olx_gl::vertex(pl.vecs[pl.edges[j].a]);
+      olx_gl::vertex(pl.vecs[pl.edges[j].b]);
     }
     olx_gl::end();
     return true;
@@ -961,9 +968,10 @@ void TXAtom::CreateNormals(TXAtom::Poly& pl, const vec3f& cnt) {
       pl.norms.Clear();
       return;
     }
-    const float d = n.DotProd((v1+v2+v3)/3)/n.Length();
-    n.Normalise();
-    if ((n.DotProd(cnt) - d) > 0) { // normal looks inside?
+    float nl = n.Length();
+    const float d = n.DotProd((v1+v2+v3)/3-cnt)/nl;
+    n /= nl;
+    if (d < 0) { // normal looks inside?
       olx_swap(pl.faces[i][0], pl.faces[i][1]);
       n *= -1;
     }
@@ -974,15 +982,12 @@ vec3f TXAtom::TriangulateType2(Poly& pl, const TSAtomPList& atoms) {
   TSPlane plane(NULL);
   TTypeList< olx_pair_t<TSAtom*, double> > pa;
   vec3f cnt;
-  double wght = 0;
   for (size_t i=0; i < atoms.Count(); i++ ) {
-    pa.AddNew( atoms[i], atoms[i]->CAtom().GetOccu());
-    cnt += atoms[i]->crd()*atoms[i]->CAtom().GetOccu();
-    wght += atoms[i]->CAtom().GetOccu();
+    pa.AddNew(atoms[i], 1);
+    cnt += atoms[i]->crd();
   }
   cnt += crd();
-  wght += CAtom().GetOccu();
-  cnt /= (float)wght;
+  cnt /= (atoms.Count()+1);
   plane.Init(pa);
   plane.GetCenter();
   // this might fail if one of the atoms is at the center
@@ -1090,6 +1095,31 @@ void TXAtom::CreatePoly(const TSAtomPList& bound, short type,
       if( sideb.Count() > 2 )  {
         vec3f cnt = TriangulateType2(pl, sideb);
         CreateNormals(pl, cnt);
+      }
+    }
+    // deal with edges
+    {
+      olxdict<size_t, olxset<size_t, TPrimitiveComparator>,
+        TPrimitiveComparator> edges;
+      for (size_t i = 0; i < pl.faces.Count(); i++) {
+        for (size_t j = 0; j < 3; j++) {
+          size_t a, b, idx = (j+1)%3;
+          if (pl.faces[i][j] < pl.faces[i][idx]) {
+            a = pl.faces[i][0];
+            b = pl.faces[i][idx];
+          }
+          else {
+            a = pl.faces[i][idx];
+            b = pl.faces[i][0];
+          }
+          edges.Add(a).Add(b);
+        }
+      }
+      pl.edges.SetCapacity(edges.Count() * 4);
+      for (size_t i = 0; i < edges.Count(); i++) {
+        for (size_t j = 0; j < edges.GetValue(i).Count(); j++) {
+          pl.edges.Add(olx_pair::New(edges.GetKey(i), edges.GetValue(i).Get(j)));
+        }
       }
     }
   }
