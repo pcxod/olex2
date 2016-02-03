@@ -3713,6 +3713,7 @@ bool XLibMacros::ProcessExternalFunction(olxstr& func)  {
 void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
+  TStopWatch sw(__FUNC__);
   TXApp& xapp = TXApp::GetInstance();
   cif_dp::TCifDP src;
   TTypeList<olx_pair_t<olxstr,olxstr> > Translations;
@@ -3720,6 +3721,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
   typedef SortedObjectList<olxstr, olxstrComparator<true> > SortedStrList;
   SortedStrList items_to_skip, items_to_merge;
   TTypeList<Wildcard> masks_to_skip, masks_to_merge;
+  sw.start("Reading customisation");
   if (TEFile::Exists(CifCustomisationFN)) {
     try {
       TDataFile df;
@@ -3771,8 +3773,10 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
     Cif = &xapp.XFile().GetLastLoader<TCif>();
   else {
     olxstr cifFN = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "cif");
-    if (TEFile::Exists(cifFN))
+    if (TEFile::Exists(cifFN)) {
+      sw.start("Loading CIF");
       Cif2().LoadFromFile(cifFN);
+    }
     else {
       throw TFunctionFailedException(__OlxSourceInfo,
         "existing cif is expected");
@@ -3787,10 +3791,12 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
   }
   const bool shelxl2014 = shelxl_version_number.StartsFrom("201"); //3/4/5...
   // normalise
-  for (size_t i=0; i < Translations.Count(); i++)
+  for (size_t i = 0; i < Translations.Count(); i++) {
     Cif->Rename(Translations[i].GetA(), Translations[i].GetB());
+  }
   // update the atom_site loop and H treatment if AU match
   if (Options.Contains('u')) {
+    sw.start("Processing -u option");
     if (xapp.CheckFileType<TCif>()) {
       TBasicApp::NewLogEntry() <<
         "Cannot update the CIF - the real refinement model is unknown";
@@ -4093,6 +4099,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   olex2::IOlex2Processor *op = olex2::IOlex2Processor::GetInstance();
+  sw.start("Do the merging");
   for (size_t i=0; i < Cmds.Count(); i++) {
     try {
       IInputStream *is = TFileHandlerManager::GetInputStream(Cmds[i]);
@@ -4134,7 +4141,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
           }
         }
       }
-      if (!skip) {
+      if (!skip && EsdlInstanceOf(e, cetTable)) {
         for (size_t k = 0; k < _loop_names_to_skip.Count(); k++) {
           const olxstr &i_name = e.GetName();
           if (i_name.StartsFromi(_loop_names_to_skip[k]) &&
@@ -4171,6 +4178,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   if (Options.Contains('f')) {
+    sw.start("Processing -f option");
     olxstr i_v = Options.FindValue('f');
     bool insert = i_v.IsEmpty() ? true : i_v.ToBool();
     // emmbedding the RES file into the CIF
@@ -4199,6 +4207,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
       }
     }
   }
+  sw.start("Updating commonly mising parameters");
   // generate moiety string if does not exist
   const olxstr cif_moiety = Cif->GetParamAsString("_chemical_formula_moiety");
   if (cif_moiety.IsEmpty() || cif_moiety == '?') {
@@ -4310,7 +4319,9 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
     description.lines.Hyphenate(ri[i].Replace(" ~ ", " \\\\sim "), 80, true);
   }
   Cif->SetParam(description);
+  sw.start("Processing selected geometric measuremenets");
   xapp.XFile().GetRM().GetSelectedTableRows().Process(*Cif);
+  sw.start("Saving the result");
   Cif->SaveToFile(Cif->GetFileName());
 }
 //.............................................................................

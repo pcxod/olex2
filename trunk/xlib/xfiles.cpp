@@ -41,7 +41,9 @@ TBasicCFile::~TBasicCFile()  {
 void TBasicCFile::SaveToFile(const olxstr& fn)  {
   TStopWatch sw(__FUNC__);
   TStrList L;
+  sw.start("Saving to strings...");
   SaveToStrings(L);
+  sw.start("UTF8 encoding to file");
   TUtf8File::WriteLines(fn, L, false);
   FileName = fn;
 };

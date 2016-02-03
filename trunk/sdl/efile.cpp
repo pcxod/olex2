@@ -147,14 +147,16 @@ bool TEFile::Open(const olxstr& F, const olxstr& Attribs)  {
   return true;
 }
 //..............................................................................
-bool TEFile::Close()  {
-  if( FHandle != NULL )  {
-    if( fclose(FHandle) != 0 )
+bool TEFile::Close() {
+  if (FHandle != NULL) {
+    if (fclose(FHandle) != 0) {
       throw TFileException(__OlxSourceInfo, FName, "fclose failed");
+    }
     FHandle = NULL;
-    if( Temporary )  {
-      if( !DelFile(FName) )
+    if (Temporary) {
+      if (!DelFile(FName)) {
         throw TFileException(__OlxSourceInfo, FName, "could not remove temporary file");
+      }
     }
     return true;
   }
