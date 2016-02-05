@@ -350,8 +350,8 @@ bool TXAtom::Orient(TGlPrimitive& GlP) {
 
   if (GlP.GetOwnerId() == xatom_PolyId) {
     if (Polyhedron == NULL) return true;
-    olx_gl::begin(GL_TRIANGLES);
     const TXAtom::Poly& pl = *Polyhedron;
+    olx_gl::begin(GL_TRIANGLES);
     for (size_t j=0; j < pl.faces.Count(); j++) {
       olx_gl::normal(pl.norms[j]);
       olx_gl::vertex(pl.vecs[pl.faces[j][0]]);

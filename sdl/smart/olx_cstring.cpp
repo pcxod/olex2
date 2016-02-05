@@ -7,6 +7,7 @@
 * the root folder.                                                            *
 ******************************************************************************/
 
+#include <string>
 #include "olx_wstring.h"
 #include "olx_cstring.h"
 #include "../egc.h"
