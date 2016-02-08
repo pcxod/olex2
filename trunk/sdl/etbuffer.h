@@ -60,27 +60,31 @@ public:
     return new TTBuffer(olx_malloc<T>(count), count);
   }
 
-  void SetCapacity(size_t newSize)  {
-    if( (newSize == 0)  || (newSize <= Capacity) )  return;
+  void SetCapacity(size_t newSize) {
+    if ((newSize == 0) || (newSize <= Capacity)) {
+      return;
+    }
     _Data = olx_realloc(_Data, newSize);
     Capacity = newSize;
   }
 
-  void SetSize(size_t newSize )  {
-    if( newSize > Capacity ) {
+  void SetSize(size_t newSize) {
+    if (newSize > Capacity) {
       SetCapacity(newSize);
       Size = newSize;
     }
-    else
+    else {
       Size = newSize;
+    }
   }
 
   /* writes data starting from specified offset, if necessary expand the size
   to the required one plus the increment
   returns the new size of the buffer */
   inline size_t Insert(const T* arr, size_t offset, size_t count, size_t increment=0)  {
-    if( (Capacity - Size) < count )
+    if ((Capacity - Size) < count) {
       SetCapacity((Capacity - Size) + count + increment);
+    }
     // move the region to overwrite
     olx_memcpy(&_Data[offset+count], &_Data[offset], count);
     // write the memory block
@@ -91,14 +95,14 @@ public:
 
   /* writes data to the end of the buffer
   returns the number of written elements if capacity-size < count*/
-  inline size_t Write(const T* arr, size_t count)  {
+  inline size_t Write(const T* arr, size_t count) {
     size_t written = count;
-    if( Capacity-Size < count )  {
-      written = Capacity-Size;
+    if (Capacity - Size < count) {
+      written = Capacity - Size;
       olx_memcpy(&_Data[Size], arr, written);
       Size = Capacity;
     }
-    else  {
+    else {
       olx_memcpy(&_Data[Size], arr, written);
       Size += written;
     }
@@ -107,38 +111,41 @@ public:
 
   /* writes data starting from specified offset
   returns the number of written elements if capacity-size < count*/
-  inline size_t Write(const T* arr, size_t offset, size_t count)  {
+  inline size_t Write(const T* arr, size_t offset, size_t count) {
     size_t written = count;
-    if( Capacity-offset < count )  {
-      written = Capacity-offset;
+    if (Capacity - offset < count) {
+      written = Capacity - offset;
       olx_memcpy(&_Data[offset], arr, written);
       Size = Capacity;
     }
-    else  {
+    else {
       olx_memcpy(&_Data[offset], arr, written);
-      if( offset+count > Size )
-        Size = offset+count;
+      if (offset + count > Size) {
+        Size = offset + count;
+      }
     }
     return written;
   }
   // returns the number read elements
-  inline size_t Read( T* arr, size_t offset, size_t count) const {
+  inline size_t Read(T* arr, size_t offset, size_t count) const {
     size_t read = count;
-    if( (Size-offset) < count )  {
-      read = Size-offset;
+    if ((Size - offset) < count) {
+      read = Size - offset;
       olx_memcpy(arr, &_Data[offset], read);
     }
-    else  {
+    else {
       olx_memcpy(arr, &_Data[offset], read);
     }
     return read;
   }
 
   // returns 1 if written and 0 if not
-  inline size_t Write(const T& entity)  {
-    if( Size == Capacity )  return 0;
+  inline size_t Write(const T& entity) {
+    if (Size == Capacity) {
+      return 0;
+    }
     _Data[Size] = entity;
-    Size ++;
+    Size++;
     return 1;
   }
 
@@ -149,21 +156,21 @@ public:
     return _Data[ind];
   }
 
-  inline void Set(size_t ind, T& val )  {
+  inline void Set(size_t ind, T& val) {
 #ifdef _DEBUG
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, ind, 0, Size);
 #endif
     _Data[ind] = val;
   }
 
-  inline T& Item(size_t ind )  {
+  inline T& Item(size_t ind) {
 #ifdef _DEBUG
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, ind, 0, Size);
 #endif
     return _Data[ind];
   }
 
-  inline T& operator [](size_t ind )  {
+  inline T& operator [](size_t ind) {
 #ifdef _DEBUG
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, ind, 0, Size);
 #endif

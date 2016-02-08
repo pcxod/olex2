@@ -72,8 +72,9 @@ public:
     return (NextEntry = new TDirectionalListEntry<T>(entry));
   }
 
-  void ClearNextEntry() {
+  void Reset() {
     NextEntry = NULL;
+    Data->SetSize(0);
   }
 
   TDirectionalListEntry* GetNext() const {  return NextEntry;  }
@@ -92,21 +93,6 @@ template <typename T>
     size_t Length;
     size_t SegmentSize;
   protected:
-    void AddEntry(const TDirectionalListEntry<T>& entry) {
-      if (Head == NULL) {
-        Tail = Head = new TDirectionalListEntry<T>(entry);
-      }
-      else {
-        Tail = Tail->AddEntry(entry);
-      }
-      Length += entry.GetSize();
-    }
-
-    void CheckInitialised() {
-      if (Head == NULL) {
-        Tail = Head = new TDirectionalListEntry<T>(SegmentSize);
-      }
-    }
 
     size_t GetSegmentSize() const {  return SegmentSize;  }
     // updates the tail and the length of this object
@@ -115,7 +101,10 @@ template <typename T>
       Length = 0;
       while (entry != NULL) {
         Length += entry->GetSize();
-        if( entry->GetNext() == NULL )  Tail = entry;
+        if (entry->GetNext() == NULL) {
+          Tail = entry;
+          break;
+        }
         entry = entry->GetNext();
       }
     }
@@ -128,17 +117,17 @@ template <typename T>
   }
 
   TDirectionalList(const TDirectionalList& list)  {
-     Length = 0;
-     Head = Tail = NULL;
      TDirectionalListEntry<T>* entry = list.GetHead();
+     Tail = Head = new TDirectionalListEntry<T>(*entry);
      SegmentSize = list.GetSegmentSize();
      while (entry != NULL) {
-       AddEntry(*entry);
+       Tail->AddEntry(*entry);
        entry = entry->GetNext();
      }
+     Length = list.Length;
   }
 
-  virtual ~TDirectionalList()  {
+  virtual ~TDirectionalList() {
     Clear();
     delete Head;
   }
@@ -150,8 +139,8 @@ template <typename T>
       delete entry;
       entry = en;
     }
-    Head->ClearNextEntry();
     Tail = Head;
+    Head->Reset();
     Length = 0;
   }
 
@@ -173,9 +162,9 @@ template <typename T>
   bool IsEmpty() const {  return (Length == 0);  }
 
   T& Get(size_t index) {
-#ifdef _DEBUG
-    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, index, 0, Length+1);
-#endif
+    if (index >= Length) {
+      TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, index, 0, Length + 1);
+    }
     TDirectionalListEntry<T>* entry = Head;
     size_t ind = 0;
     while ((ind + entry->GetSize()) <= index) {
@@ -202,9 +191,10 @@ template <typename T>
 
   // writes starting from offset overwriting existing data
   TDirectionalList& Write(const T* Data, size_t offset, size_t length) {
-#ifdef _DEBUG
-    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, offset, 0, Length+1);
-#endif
+    if (offset >= Length) {
+      TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, offset,
+        0, Length + 1);
+    }
     size_t firstOffset = offset;
     TDirectionalListEntry<T> *entry = GetEntryAtPosition(firstOffset);
     if (offset + length > Length) {
