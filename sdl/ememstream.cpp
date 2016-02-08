@@ -21,37 +21,39 @@ TEMemoryStream::TEMemoryStream(IInputStream& is) :
   SetPosition(0);
 }
 //..............................................................................
-void TEMemoryStream::operator >> (IOutputStream &os)  {
+void TEMemoryStream::operator >> (IOutputStream &os) {
   size_t pos = Position;
   TDirectionalListEntry<char>* en = GetEntryAtPosition(pos);
-  if( en == NULL )
-    throw TFunctionFailedException(__OlxSourceInfo, "no entry at specified position");
-  os.Write( en->GetData(), en->GetSize()-pos );
-  while( (en = en->GetNext()) != NULL )
-    os.Write( en->GetData(), en->GetSize() );
+  if (en == NULL) {
+    throw TFunctionFailedException(__OlxSourceInfo,
+      "no entry at specified position");
+  }
+  os.Write(en->GetData(), en->GetSize() - pos);
+  while ((en = en->GetNext()) != NULL) {
+    os.Write(en->GetData(), en->GetSize());
+  }
   Position = GetLength();
 }
 //..............................................................................
-TEMemoryStream& TEMemoryStream::operator << (IInputStream &is)  {
-  this->CheckInitialised();
+TEMemoryStream& TEMemoryStream::operator << (IInputStream &is) {
   const size_t _off = GetLength() - Position;
   // we are not at the end of the stream ..
-  if( _off != 0 )  {
+  if (_off != 0) {
     const size_t _asize = is.GetAvailableSizeT();
-    if( _asize < _off )  {  // have enough room for the is
+    if (_asize < _off) {  // have enough room for the is
       char* mem = new char[_asize];
       is.Read(mem, _asize);
       TDirectionalList<char>::Write(mem, Position, _asize);
-      delete [] mem;
+      delete[] mem;
       UpdateLength();
       Position += _asize;
     }
-    else  {  // have to created a new segment
+    else {  // have to created a new segment
       size_t size = GetLength() - Position;
       char* mem = new char[size];
       is.Read(mem, size);
       TDirectionalList<char>::Write(mem, Position, size);
-      delete [] mem;
+      delete[] mem;
       size = is.GetAvailableSizeT();
       mem = TTBuffer<char>::Alloc(size);
       TDirectionalListEntry<char>* en = GetTail();
@@ -62,22 +64,22 @@ TEMemoryStream& TEMemoryStream::operator << (IInputStream &is)  {
       Position += _asize;
     }
   }
-  else  {
+  else {
     TDirectionalListEntry<char>* en = GetTail();
     size_t size = is.GetAvailableSizeT();
-    if( (en->GetCapacity() - en->GetSize()) != 0 )  {
+    if ((en->GetCapacity() - en->GetSize()) != 0) {
       size_t towrite = olx_min(en->GetCapacity() - en->GetSize(), size);
       char* bf = new char[towrite];
       is.Read(bf, towrite);
       en->Write(bf, towrite);
-      delete [] bf;
+      delete[] bf;
       size -= towrite;
       Position = towrite;
     }
-    if( size != 0 )  {
+    if (size != 0) {
       char* mem = TTBuffer<char>::Alloc(size);
-      is.Read( mem, size );
-      en->AddEntry( mem, size );
+      is.Read(mem, size);
+      en->AddEntry(mem, size);
       UpdateLength();
       Position = GetLength();
     }
