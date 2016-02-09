@@ -84,9 +84,11 @@ void TXLine::FromDataItem(const TDataItem &di)  {
 }
 //..............................................................................
 void TXLine::UpdateLabel() {
-  GetGlLabel().SetOffset((FBase+(FEdge-FBase).NormaliseTo(Params()[3]))/2);
-  GetGlLabel().SetLabel(olxstr::FormatFloat(3, GetLength()));
-  GetGlLabel().SetVisible(true);
+  if (GetGlLabel().IsVisible() && this->IsMoveable()) {
+    GetGlLabel().SetOffset((FBase + (FEdge - FBase).NormaliseTo(Params()[3])) / 2);
+    GetGlLabel().SetLabel(olxstr::FormatFloat(3, GetLength()));
+  }
+  //GetGlLabel().SetVisible(true);
   TXBond::UpdateLabel();
 }
 //..............................................................................

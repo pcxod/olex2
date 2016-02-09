@@ -823,6 +823,30 @@ public:
           0, plane.Count())),
         VectorProxy(ch.points[plane.Count()], ch.points[plane.Count()+1])));
   }
+  // plane centroid, atom, atom angle
+  TEValue<double> CalcPCAngle(const TSAtomCPList& plane, const TSAtom& a1,
+    const TSAtom& a2)
+  {
+    CalcWHelper ch(*this, TSAtomCPList(plane) << a1 << a2);
+    return ch.DoCalc(
+      Angle3<cnt_et, pnt_pt, pnt_pt>(
+        cnt_et(crd_slice(ch.points, 0, plane.Count()), weight_slice(ch.weights,
+          0, plane.Count())),
+        pnt_pt(ch.points[plane.Count()]),
+        pnt_pt(ch.points[plane.Count() + 1])));
+  }
+  // atom, plane centroid, atom angle
+  TEValue<double> CalcPCAngle(const TSAtom& a1, const TSAtomCPList& plane,
+    const TSAtom& a2)
+  {
+    CalcWHelper ch(*this, TSAtomCPList() << a1 << plane << a2);
+    return ch.DoCalc(
+      Angle3<pnt_pt, cnt_et, pnt_pt>(
+        pnt_pt(ch.points[0]),
+        cnt_et(crd_slice(ch.points, 1, plane.Count()), weight_slice(ch.weights,
+          0, plane.Count())),
+        pnt_pt(ch.points[plane.Count()+1])));
+  }
   TEValue<double> CalcP2VAngle(const TSAtomCPList& plane,
     const TSAtomCPList &ln)
   {
