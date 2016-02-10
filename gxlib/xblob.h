@@ -27,6 +27,7 @@ public:
 
   TTypeList<vec3f> vertices;
   TTypeList<vec3f> normals;
+  TTypeList<TGlOption> colors;
   TTypeList<IsoTriangle> triangles;
 };
 

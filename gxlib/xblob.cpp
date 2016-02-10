@@ -42,10 +42,26 @@ void TXBlob::Create(const olxstr& cName)  {
 bool TXBlob::Orient(TGlPrimitive& P)  {
   //olx_gl::translate(Basis.GetCenter());
   olx_gl::polygonMode(GL_FRONT_AND_BACK, PolygonMode);
+  bool use_color = colors.Count() == vertices.Count();
+  if (use_color) {
+    olx_gl::enable(GL_COLOR_MATERIAL);
+  }
+  bool transparent = P.GetProperties().IsTransparent();
   olx_gl::begin(GL_TRIANGLES);
   for( size_t i=0; i < triangles.Count(); i++ )  {
-    for( int j=0; j < 3; j++ )  {
+    for (int j = 0; j < 3; j++) {
       olx_gl::normal(normals[triangles[i].pointID[j]]);
+      if (use_color) {
+        if (transparent) {
+          olx_gl::color(colors[triangles[i].pointID[j]][0],
+            colors[triangles[i].pointID[j]][1],
+            colors[triangles[i].pointID[j]][2],
+            0.5f);
+        }
+        else {
+          olx_gl::color(colors[triangles[i].pointID[j]].Data());
+        }
+      }
       olx_gl::vertex(vertices[triangles[i].pointID[j]]);  // cell drawing
     }
   }
