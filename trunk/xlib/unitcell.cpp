@@ -1023,7 +1023,7 @@ void TUnitCell::BuildDistanceMap_Direct(TArray3D<short>& _map, double delta, sho
   mat3f tm = au.GetCellToCartesian();
   TArray3D<float> map(0, dims[0]-1, 0, dims[1]-1, 0, dims[2]-1);
   map.InitWith(10000);
-  TBuildDistanceMapTask task(tm, map.Data, dims, allAtoms);
+  TBuildDistanceMapTask task(tm, map.Data, allAtoms);
   OlxListTask::Run(task, dims[0], tLinearTask, 0);
   task.clear_loop_data();
   float scale = (float)dims[0]/(float)Lattice->GetAsymmUnit().GetAxes()[0];

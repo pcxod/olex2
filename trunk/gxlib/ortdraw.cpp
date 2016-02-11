@@ -1059,8 +1059,7 @@ void OrtDraw::Render(const olxstr& fileName)  {
     const mat3f bm(app.GetRenderer().GetBasis().GetMatrix());
     const mat3f c2c(app.XFile().GetAsymmUnit().GetCartesianToCell());
     const vec3f center(app.GetRenderer().GetBasis().GetCenter());
-    MapUtil::MapGetter<float, 2>
-      map_getter(grid.Data()->Data, grid.Data()->GetSize());
+    MapUtil::MapGetter<float, 2> map_getter(grid.Data()->Data);
     for (size_t i=0; i < MaxDim; i++) {
       for (size_t j=0; j < MaxDim; j++) {
         vec3f p(((float)i-hh)/Size, ((float)j-hh)/Size,  Depth);

@@ -592,7 +592,7 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
   const vec3i dim(au.GetAxes()*resolution);
   TArray3D<float> map(0, dim[0]-1, 0, dim[1]-1, 0, dim[2]-1);
   st.start("Calcuating ED map");
-  mi = BVFourier::CalcEDM(P1SF, map.Data, dim, vol);
+  mi = BVFourier::CalcEDM(P1SF, map.Data, vol);
 ///////////////////////////////////////////////////////////////////////////////
   st.start("Map operations");
   app.XGrid().InitGrid(dim);
@@ -604,7 +604,8 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
   app.XGrid().SetMinVal((float)mi.minVal);
   app.XGrid().SetMaxVal((float)mi.maxVal);
   // copy map
-  MapUtil::CopyMap(app.XGrid().Data()->Data, map.Data, dim);
+  olx_array::copy_map_segment_3(map.Data, app.XGrid().Data()->Data,
+    vec3s(0), map.GetSize());
   app.XGrid().AdjustMap();
 
   TBasicApp::NewLogEntry() <<
@@ -616,7 +617,7 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
     TArrayList<MapUtil::peak> Peaks;
     TTypeList<MapUtil::peak> MergedPeaks;
     vec3d norm(1. / dim[0], 1. / dim[1], 1. / dim[2]);
-    MapUtil::Integrate<float>(map.Data, dim, (float)(mi.sigma * 6), Peaks);
+    MapUtil::Integrate<float>(map.Data, (float)(mi.sigma * 6), Peaks);
     MapUtil::MergePeaks(uc.GetSymmSpace(), norm, Peaks, MergedPeaks);
     QuickSorter::SortSF(MergedPeaks, MapUtil::PeakSortBySum);
     for (size_t i = 0; i < MergedPeaks.Count(); i++) {
@@ -686,7 +687,7 @@ void GXLibMacros::macCalcPatt(TStrObjList &Cmds, const TParamList &Options,
   const vec3i dim(au.GetAxes()*resolution);
   app.XGrid().InitGrid(dim);
   BVFourier::MapInfo mi = BVFourier::CalcPatt(
-    P1SF, app.XGrid().Data()->Data, dim, vol);
+    P1SF, app.XGrid().Data()->Data, vol);
   app.XGrid().AdjustMap();
   app.XGrid().SetMinVal((float)mi.minVal);
   app.XGrid().SetMaxVal((float)mi.maxVal);
@@ -2479,7 +2480,7 @@ void GXLibMacros::macCalcVoid(TStrObjList &Cmds, const TParamList &Options,
   }
   size_t structureGridPoints = 0;
   TIntList levels;
-  short*** amap = map.Data;
+  short*** amap = map.Data.data;
   short MaxLevel = 0;
   for( int i=0; i < dim[0]; i++ )  {
     for( int j=0; j < dim[1]; j++ )  {
@@ -2497,13 +2498,14 @@ void GXLibMacros::macCalcVoid(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   vec3d_list void_centers =
-    MapUtil::FindLevelCenters<short>(amap, dim, MaxLevel, -MaxLevel);
-  const vec3i MaxXCh = MapUtil::AnalyseChannels1(map.Data, dim, MaxLevel);
-  for( int i=0; i < 3; i++ )  {
-    if( MaxXCh[i] != 0 )
-      TBasicApp::NewLogEntry() << (olxstr((olxch)('a'+i)) <<
+    MapUtil::FindLevelCenters<short>(map.Data, MaxLevel, -MaxLevel);
+  const vec3i MaxXCh = MapUtil::AnalyseChannels1(map.Data, MaxLevel);
+  for (int i = 0; i < 3; i++) {
+    if (MaxXCh[i] != 0) {
+      TBasicApp::NewLogEntry() << (olxstr((olxch)('a' + i)) <<
         " direction can be penetrated by a sphere of " <<
-        olxstr::FormatFloat(2, MaxXCh[i]/resolution) << "A radius");
+        olxstr::FormatFloat(2, MaxXCh[i] / resolution) << "A radius");
+    }
   }
   TBasicApp::NewLogEntry() <<
     "Cell volume (A^3) " << olxstr::FormatFloat(3, vol);
@@ -4554,169 +4556,6 @@ struct TSurfCalculationTask : public TaskBase {
   }
 };
 
-struct surface_reducer {
-  struct vertex {
-    vec3f v;
-    int d;
-  };
-  TTypeList<vec3f> &vertices;
-  TArrayList<int> &vertex_data;
-  TTypeList<IsoTriangle> &triangles;
-  TArrayList<olxset<size_t, TPrimitiveComparator> > vt_map;
-  surface_reducer(TTypeList<vec3f> &vertices_,
-    TArrayList<int> &vertex_data_,
-    TTypeList<IsoTriangle> &triangles_)
-    : vertices(vertices_),
-    vertex_data(vertex_data_),
-    triangles(triangles_),
-    vt_map(vertices_.Count())
-  {
-    for (size_t i = 0; i < triangles.Count(); i++) {
-      const int *p = &triangles[i].pointID[0];
-      vt_map[p[0]].Add(i);
-      vt_map[p[1]].Add(i);
-      vt_map[p[2]].Add(i);
-    }
-  }
-
-  void reduce_to_line(size_t a, size_t b) {
-    if (a == b) {
-      return;
-    }
-    for (size_t i = 0; i < vt_map[b].Count(); i++) {
-      if (triangles.IsNull(vt_map[b].Get(i))) {
-        continue;
-      }
-      IsoTriangle &t = triangles[vt_map[b].Get(i)];
-      for (int j = 0; j < 3; j++) {
-        if (t[j] == b) {
-          t[j] = a;
-        }
-      }
-      vt_map[a].Add(vt_map[b].Get(i));
-    }
-    vertices[a] = (vertices[a] + vertices[b]) / 2;
-    vertices.NullItem(b);
-  }
-
-  void cut_triangle(size_t a, size_t b, size_t c) {
-    if (a != b) {
-      for (size_t i = 0; i < vt_map[b].Count(); i++) {
-        if (triangles.IsNull(vt_map[b].Get(i))) {
-          continue;
-        }
-        IsoTriangle &t = triangles[vt_map[b].Get(i)];
-        for (int j = 0; j < 3; j++) {
-          if (t[j] == b) {
-            t[j] = a;
-          }
-        }
-        vt_map[a].Add(vt_map[b].Get(i));
-      }
-    }
-    if (a != c) {
-      for (size_t i = 0; i < vt_map[c].Count(); i++) {
-        if (triangles.IsNull(vt_map[c].Get(i))) {
-          continue;
-        }
-        IsoTriangle &t = triangles[vt_map[c].Get(i)];
-        for (int j = 0; j < 3; j++) {
-          if (t[j] == c) {
-            t[j] = a;
-          }
-        }
-        vt_map[a].Add(vt_map[c].Get(i));
-      }
-      if (a != b) {
-        vertices[a] = (vertices[a] + vertices[b] + vertices[c]) / 3;
-        vertices.NullItem(b);
-        vertices.NullItem(c);
-      }
-    }
-  }
-  
-  TArrayList<int>::const_list_type reduce(float th=0.025f) {
-    for (size_t i = 0; i < triangles.Count(); i++) {
-      IsoTriangle &t = triangles[i];
-      int cond = 0;
-      float d0, d1, d2;
-      if ((d0 = vertices[t[0]].QDistanceTo(vertices[t[1]])) < th) {
-        cond |= 1;
-      }
-      if ((d1 = vertices[t[1]].QDistanceTo(vertices[t[2]])) < th) {
-        cond |= 2;
-      }
-      if ((d2 = vertices[t[0]].QDistanceTo(vertices[t[2]])) < th) {
-        cond |= 4;
-      }
-      switch (cond) {
-      case 1:
-        reduce_to_line(t[0], t[1]);
-        break;
-      case 2:
-        reduce_to_line(t[1], t[2]);
-        break;
-      case 3:
-        if (d0 < d1) {
-          reduce_to_line(t[0], t[1]);
-        }
-        else {
-          reduce_to_line(t[1], t[2]);
-        }
-        break;
-      case 4:
-        reduce_to_line(t[0], t[2]);
-        break;
-      case 5:
-        if (d0 < d2) {
-          reduce_to_line(t[0], t[1]);
-        }
-        else {
-          reduce_to_line(t[0], t[2]);
-        }
-        break;
-      case 6:
-        if (d1 < d2) {
-          reduce_to_line(t[1], t[2]);
-        }
-        else {
-          reduce_to_line(t[0], t[2]);
-        }
-        break;
-      case 7:
-        cut_triangle(t[0], t[1], t[2]);
-        break;
-      }
-      if (cond != 0) {
-        triangles.NullItem(i);
-      }
-    }
-    triangles.Pack();
-    TSizeList indices(vertices.Count(), olx_list_init::zero());
-    size_t off = 0;
-    for (size_t i = 0; i < vertices.Count(); i++) {
-      indices[i] = off;
-      if (!vertices.IsNull(i)) {
-        off++;
-      }
-    }
-    vertices.Pack();
-    TArrayList<int> rv(vertices.Count(), olx_list_init::zero());
-    for (size_t i = 0; i < vertex_data.Count(); i++) {
-      if (indices[i] < vertices.Count()) {
-        rv[indices[i]] = vertex_data[i];
-      }
-    }
-    for (size_t i = 0; i < triangles.Count(); i++) {
-      triangles[i][0] = indices[triangles[i][0]];
-      triangles[i][1] = indices[triangles[i][1]];
-      triangles[i][2] = indices[triangles[i][2]];
-    }
-    return rv;
-  }
-
-};
-
 void GXLibMacros::macCalcSurf(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &E)
 {
@@ -4729,6 +4568,7 @@ void GXLibMacros::macCalcSurf(TStrObjList &Cmds, const TParamList &Options,
   radii.SetCapacity(ai.count);
   vec3d min_v_(1000), max_v_(-1000);
   float max_r = 0;
+  vec3d center;
   while (ai.HasNext()) {
     TXAtom &a = ai.Next();
     if (a.IsDeleted() || a.GetType() == iQPeakZ) {
@@ -4748,7 +4588,9 @@ void GXLibMacros::macCalcSurf(TStrObjList &Cmds, const TParamList &Options,
     if (r > max_r) {
       max_r = r;
     }
+    center += a.crd();
   }
+  center /= atoms.Count();
   const float pr = 1.2f;
   max_v_ += pr*2;
   min_v_ -= pr*2;
@@ -4817,7 +4659,7 @@ void GXLibMacros::macCalcSurf(TStrObjList &Cmds, const TParamList &Options,
   //    }
   //  }
   //}
-  CIsoSurface sf(arr, &data);
+  CIsoSurface sf(arr.Data, &data.Data);
   
   sf.GenerateSurface(Cmds.IsEmpty() ? -1.9 : Cmds[0].ToDouble());
   TXBlob *blob = new TXBlob(app.GetRenderer(), "Blob");
@@ -4834,49 +4676,65 @@ void GXLibMacros::macCalcSurf(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   blob->triangles = sf.TriangleList();
-
-  { // smooth
-    TArrayList<olxset<size_t, TPrimitiveComparator> > nl(blob->vertices.Count());
-    for (size_t i = 0; i < blob->triangles.Count(); i++) {
-      int *p = &blob->triangles[i].pointID[0];
-      nl[p[0]].Add(p[1]);    nl[p[0]].Add(p[2]);
-      nl[p[1]].Add(p[0]);    nl[p[1]].Add(p[2]);
-      nl[p[2]].Add(p[0]);    nl[p[2]].Add(p[1]);
-    }
-
-    for (int li = 0; li < 3; li++) {
-      TArrayList<vec3f> ov = TArrayList<vec3f>::FromList(
-        blob->vertices, TDirectAccessor<vec3f>());
-      for (size_t i = 0; i < ov.Count(); i++) {
-        if (nl[i].IsEmpty()) {
-          continue;
-        }
-        blob->vertices[i] *= 0.5f;
-        float fr = 0.5f / nl[i].Count();
-        for (size_t j = 0; j < nl[i].Count(); j++) {
-          size_t x = nl[i].Get(j);
-          blob->vertices[i] += ov[x] * fr;
+  TArrayList<int> owners = sf.GetVertexData();
+  if (true) {
+    for (int i = 0; i < 3; i++) {
+      olx_grid_util::smoother sm(blob->vertices, blob->triangles);
+      sm.smooth(0.2f);
+      TArrayList<size_t> indices = olx_grid_util::reducer(
+        blob->vertices, blob->triangles).reduce(0.07);
+      TArrayList<int> owners_o = owners;
+      owners.SetCount(blob->vertices.Count());
+      for (size_t j = 0; j < owners_o.Count(); j++) {
+        if (indices[j] < owners.Count()) {
+          owners[indices[j]] = owners_o[j];
         }
       }
     }
   }
 
-  TArrayList<int> owners = surface_reducer(
-    blob->vertices, sf.GetVertexData(), blob->triangles).reduce();
-  
-
-  blob->colors.SetCount(blob->vertices.Count());
-  for (size_t i = 0; i < blob->vertices.Count(); i++) {
-    if (owners[i] == -1) {
-      continue;
+  {
+    blob->colors.SetCount(blob->vertices.Count());
+    float min_qd = 1e6, max_qd = 0;
+    for (size_t i = 0; i < blob->vertices.Count(); i++) {
+      float qd = blob->vertices[i].QDistanceTo(center);
+      if (qd > max_qd) {
+        max_qd = qd;
+      }
+      if (qd < min_qd) {
+        min_qd = qd;
+      }
+      //if (owners[i] == -1) {
+      //  continue;
+      //}
+      //TGlMaterial *m = atoms[owners[i]]->GetPrimitives()
+      //  .GetStyle().FindMaterial("Sphere");
+      //if (m != 0) {
+      //  blob->colors[i] = m->AmbientF;
+      //}
     }
-    TGlMaterial *m = atoms[owners[i]]->GetPrimitives()
-      .GetStyle().FindMaterial("Sphere");
-    if (m != 0) {
-      blob->colors[i] = m->AmbientF;
+    float mid_dq = (max_qd + min_qd) / 2,
+      dq_max = (max_qd - min_qd) / 2;
+    vec3f mc(1.f), sp(1, 0, 0), ep(0, 0, 1),
+      nc1(sp - mc), nc2(ep - mc);
+    for (size_t i = 0; i < blob->vertices.Count(); i++) {
+      float qd = blob->vertices[i].QDistanceTo(center);
+      float v = (qd - mid_dq) / dq_max;
+      const vec3f *c;
+      float s;
+      if (v < 0) {
+        s = -v;
+        c = &nc1;
+      }
+      else {
+        s = v;
+        c = &nc2;
+      }
+      for (int ci = 0; ci < 3; ci++) {
+        blob->colors[i][ci] = mc[ci] + s*(*c)[ci];
+      }
     }
   }
-
   for (size_t i = 0; i < blob->normals.Count(); i++) {
     blob->normals[i].Null();
   }
@@ -4899,19 +4757,5 @@ void GXLibMacros::macCalcSurf(TStrObjList &Cmds, const TParamList &Options,
 
   blob->Create();
   app.AddObjectToCreate(blob);
-
-  //const WBoxInfo bs = TXApp::CalcWBox(atoms, NULL, TSAtom::weight_unit);
-  //const vec3d nx = bs.normals[0] * bs.s_from[0];
-  //const vec3d px = bs.normals[0] * bs.s_to[0];
-  //const vec3d ny = bs.normals[1] * bs.s_from[1];
-  //const vec3d py = bs.normals[1] * bs.s_to[1];
-  //const vec3d nz = bs.normals[2] * bs.s_from[2];
-  //const vec3d pz = bs.normals[2] * bs.s_to[2];
-  //int scale = 10;
-  //vec3i from = bs.s_from.Round<int>(),
-  //  to = bs.s_to.Round<int>();
-  //TArray3D<float> *arr = new TArray3D<float>(from*scale, to*scale);
-  //TSymmMat<float, float> tm(mat3f(bs.normals), vec3f(bs.center));
-
 }
 //..............................................................................
