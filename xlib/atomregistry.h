@@ -127,7 +127,7 @@ public:
 the asymmetric unit*/
 class AtomRegistry  {
   struct DataStruct  {
-    TArray3D<TArrayList<TSAtomPList*>*> registry;
+    olx_array::TArray3D<TArrayList<TSAtomPList*>*> registry;
     mutable int ref_cnt;
     DataStruct(const vec3i& mind, const vec3i& maxd)
       : registry(mind, maxd), ref_cnt(1) {}
@@ -136,10 +136,14 @@ class AtomRegistry  {
         for( size_t j=0; j < registry.Length2(); j++ )  {
           for( size_t k=0; k < registry.Length3(); k++ )  {
             TArrayList<TSAtomPList*>* aum_slice = registry.Data[i][j][k];
-            if( aum_slice == NULL )  continue;
-            for( size_t l=0; l < aum_slice->Count(); l++ )
-              if( (*aum_slice)[l] != NULL )
+            if (aum_slice == NULL) {
+              continue;
+            }
+            for (size_t l = 0; l < aum_slice->Count(); l++) {
+              if ((*aum_slice)[l] != NULL) {
                 delete (*aum_slice)[l];
+              }
+            }
             delete aum_slice;
           }
         }
@@ -149,7 +153,7 @@ class AtomRegistry  {
 protected:
   DataStruct* data;
 public:
-  typedef TArray3D<TArrayList<TSAtomPList*>*> RegistryType;
+  typedef olx_array::TArray3D<TArrayList<TSAtomPList*>*> RegistryType;
   //...........................................................................
   AtomRegistry() : data(NULL) {}
   //...........................................................................

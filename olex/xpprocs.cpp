@@ -2346,7 +2346,7 @@ bool InvestigateVoid(short x, short y, short z, TArray3D<short>& map, T3DIndexLi
 const index_t mapX = map.Length1(),
               mapY = map.Length2(),
               mapZ = map.Length3();
-  short*** D = map.Data;
+  short*** D = map.Data.data;
   const short refVal = D[x][y][z]-1;
   // skip the surface points
   if( refVal < 0 )  return false;

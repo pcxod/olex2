@@ -19,6 +19,7 @@
 #include "symmlib.h"
 #include "math/composite.h"
 
+using namespace olx_array;
 //..............................................................................
 THklFile::THklFile() {
   Basis.I();

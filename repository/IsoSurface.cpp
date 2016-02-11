@@ -20,6 +20,8 @@
 #include <math.h>
 #include "IsoSurface.h"
 
+using namespace olx_grid_util;
+
 const unsigned int CIsoSurface::m_edgeTable[256] = {
   0x0  , 0x109, 0x203, 0x30a, 0x406, 0x50f, 0x605, 0x70c,
   0x80c, 0x905, 0xa0f, 0xb06, 0xc0a, 0xd03, 0xe09, 0xf00,
@@ -314,9 +316,8 @@ const int CIsoSurface::m_triTable[256][16] = {
   {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1}
 };
 //..............................................................................
-CIsoSurface::CIsoSurface(TArray3D<float>& points, const TArray3D<int>* data)
-  : DimmX(points.Length1()), DimmY(points.Length2()), DimmZ(points.Length3()),
-  ZSlice(DimmY*DimmX),
+CIsoSurface::CIsoSurface(array_3d<float>& points, const array_3d<int>* data)
+  : ZSlice(points.width*points.height),
   Points(points),
   PointData(data)
 {
@@ -324,20 +325,20 @@ CIsoSurface::CIsoSurface(TArray3D<float>& points, const TArray3D<int>* data)
   m_bValidSurface = false;
 }
 //..............................................................................
-void CIsoSurface::GenerateSurface(float tIsoLevel)  {
+void CIsoSurface::GenerateSurface(float tIsoLevel) {
   DeleteSurface();
-//  IsoPoints.SetCapacity(DimmX*DimmY);
-  AllTriangles.SetCapacity(DimmX*DimmY);
+  //  IsoPoints.SetCapacity(DimmX*DimmY);
+  AllTriangles.SetCapacity(ZSlice);
 
   m_tIsoLevel = tIsoLevel;
-  float*** D = Points.Data;
-  const int xmo = DimmX-2,
-            ymo = DimmY-2,
-            zmo = DimmZ-2;
+  float*** D = Points.data;
+  const int xmo = Points.width - 2,
+    ymo = Points.height - 2,
+    zmo = Points.depth - 2;
   // Generate isosurface.
-  for (int x = 0; x < DimmX - 1; x++) {
-    for (int y = 0; y < DimmY - 1; y++) {
-      for (int z = 0; z < DimmZ - 1; z++) {
+  for (size_t x = 0; x < Points.width - 1; x++) {
+    for (size_t y = 0; y < Points.height - 1; y++) {
+      for (size_t z = 0; z < Points.depth - 1; z++) {
         // Calculate table lookup index from those vertices which are below the isolevel.
         unsigned int tableIndex = 0;
         if (m_tIsoLevel > 0) {
@@ -480,10 +481,10 @@ void CIsoSurface::AddSurfacePoint(unsigned int nX, unsigned int nY,
   default:  // Invalid edge no.
     return;
   }
-  float val1 = Points.Data[v1x][v1y][v1z];
-  int p_data1 = PointData != 0 ? PointData->Data[v1x][v1y][v1z] : -1;
-  float val2 = Points.Data[v2x][v2y][v2z];
-  int p_data2 = PointData != 0 ? PointData->Data[v2x][v2y][v2z] : -1;
+  float val1 = Points[v1x][v1y][v1z];
+  int p_data1 = PointData != 0 ? PointData->data[v1x][v1y][v1z] : -1;
+  float val2 = Points[v2x][v2y][v2z];
+  int p_data2 = PointData != 0 ? PointData->data[v2x][v2y][v2z] : -1;
   if (olx_abs(m_tIsoLevel - val1) < 0.01f) {
     IsoPoints.Add(nX, nY, nZ, nEdgeNo, (float)v1x, (float)v1y, (float)v1z, p_data1);
   }
@@ -491,7 +492,6 @@ void CIsoSurface::AddSurfacePoint(unsigned int nX, unsigned int nY,
     IsoPoints.Add(nX, nY, nZ, nEdgeNo, (float)v2x, (float)v2y, (float)v2z, p_data2);
   }
   else if (olx_abs(val1 - val2) < 0.01f) {
-    int p_data = PointData != 0 ? PointData->Data[v1x][v1y][v1z] : -1;
     IsoPoints.Add(nX, nY, nZ, nEdgeNo, (float)v1x, (float)v1y, (float)v1z, p_data1);
   }
   else {
@@ -557,5 +557,180 @@ void CIsoSurface::CalculateNormals() {
     else
       Normals[i][2] = 1;
   }
+}
+//..............................................................................
+//..............................................................................
+//..............................................................................
+reducer::reducer(TTypeList<vec3f>& vertices_,
+  TTypeList<IsoTriangle>& triangles_)
+  : vertices(vertices_), triangles(triangles_), vt_map(vertices.Count())
+{
+  for (size_t i = 0; i < triangles.Count(); i++) {
+    const int *p = &triangles[i].pointID[0];
+    vt_map[p[0]].Add(i);
+    vt_map[p[1]].Add(i);
+    vt_map[p[2]].Add(i);
+  }
+}
+//..............................................................................
+void reducer::reduce_to_line(size_t a, size_t b) {
+  if (a == b) {
+    return;
+  }
+  for (size_t i = 0; i < vt_map[b].Count(); i++) {
+    if (triangles.IsNull(vt_map[b].Get(i))) {
+      continue;
+    }
+    IsoTriangle &t = triangles[vt_map[b].Get(i)];
+    for (int j = 0; j < 3; j++) {
+      if (t[j] == b) {
+        t[j] = a;
+      }
+    }
+    vt_map[a].Add(vt_map[b].Get(i));
+  }
+  vertices[a] = (vertices[a] + vertices[b]) / 2;
+  vertices.NullItem(b);
+}
+//..............................................................................
+void reducer::cut_triangle(size_t a, size_t b, size_t c) {
+  if (a != b) {
+    for (size_t i = 0; i < vt_map[b].Count(); i++) {
+      if (triangles.IsNull(vt_map[b].Get(i))) {
+        continue;
+      }
+      IsoTriangle &t = triangles[vt_map[b].Get(i)];
+      for (int j = 0; j < 3; j++) {
+        if (t[j] == b) {
+          t[j] = a;
+        }
+      }
+      vt_map[a].Add(vt_map[b].Get(i));
+    }
+  }
+  if (a != c) {
+    for (size_t i = 0; i < vt_map[c].Count(); i++) {
+      if (triangles.IsNull(vt_map[c].Get(i))) {
+        continue;
+      }
+      IsoTriangle &t = triangles[vt_map[c].Get(i)];
+      for (int j = 0; j < 3; j++) {
+        if (t[j] == c) {
+          t[j] = a;
+        }
+      }
+      vt_map[a].Add(vt_map[c].Get(i));
+    }
+    if (a != b) {
+      vertices[a] = (vertices[a] + vertices[b] + vertices[c]) / 3;
+      vertices.NullItem(b);
+      vertices.NullItem(c);
+    }
+  }
+}
+//..............................................................................
+TArrayList<size_t>::const_list_type reducer::reduce(float th) {
+  for (size_t i = 0; i < triangles.Count(); i++) {
+    IsoTriangle &t = triangles[i];
+    int cond = 0;
+    float d0, d1, d2;
+    if ((d0 = vertices[t[0]].QDistanceTo(vertices[t[1]])) < th) {
+      cond |= 1;
+    }
+    if ((d1 = vertices[t[1]].QDistanceTo(vertices[t[2]])) < th) {
+      cond |= 2;
+    }
+    if ((d2 = vertices[t[0]].QDistanceTo(vertices[t[2]])) < th) {
+      cond |= 4;
+    }
+    switch (cond) {
+    case 1:
+      reduce_to_line(t[0], t[1]);
+      break;
+    case 2:
+      reduce_to_line(t[1], t[2]);
+      break;
+    case 3:
+      if (d0 < d1) {
+        reduce_to_line(t[0], t[1]);
+      }
+      else {
+        reduce_to_line(t[1], t[2]);
+      }
+      break;
+    case 4:
+      reduce_to_line(t[0], t[2]);
+      break;
+    case 5:
+      if (d0 < d2) {
+        reduce_to_line(t[0], t[1]);
+      }
+      else {
+        reduce_to_line(t[0], t[2]);
+      }
+      break;
+    case 6:
+      if (d1 < d2) {
+        reduce_to_line(t[1], t[2]);
+      }
+      else {
+        reduce_to_line(t[0], t[2]);
+      }
+      break;
+    case 7:
+      cut_triangle(t[0], t[1], t[2]);
+      break;
+    }
+    if (cond != 0) {
+      triangles.NullItem(i);
+    }
+  }
+  triangles.Pack();
+  TSizeList indices(vertices.Count(), olx_list_init::zero());
+  size_t off = 0;
+  for (size_t i = 0; i < vertices.Count(); i++) {
+    indices[i] = off;
+    if (!vertices.IsNull(i)) {
+      off++;
+    }
+  }
+  vertices.Pack();
+  for (size_t i = 0; i < triangles.Count(); i++) {
+    triangles[i][0] = indices[triangles[i][0]];
+    triangles[i][1] = indices[triangles[i][1]];
+    triangles[i][2] = indices[triangles[i][2]];
+  }
+  return indices;
+}
+//..............................................................................
+//..............................................................................
+//..............................................................................
+smoother::smoother(TTypeList<vec3f> &v,
+  const TTypeList<IsoTriangle> &triangles)
+  : vertices(v),
+  n_map(v.Count())
+{
+  for (size_t i = 0; i < triangles.Count(); i++) {
+    const int *p = &triangles[i].pointID[0];
+    n_map[p[0]].Add(p[1]);    n_map[p[0]].Add(p[2]);
+    n_map[p[1]].Add(p[0]);    n_map[p[1]].Add(p[2]);
+    n_map[p[2]].Add(p[0]);    n_map[p[2]].Add(p[1]);
+  }
+}
+//..............................................................................
+void smoother::smooth(float ratio) {
+  TTypeList<vec3f> ov = vertices;
+  for (size_t i = 0; i < ov.Count(); i++) {
+    if (n_map[i].IsEmpty()) {
+      continue;
+    }
+    vertices[i] *= ratio;
+    float fr = (1.0f-ratio) / n_map[i].Count();
+    for (size_t j = 0; j < n_map[i].Count(); j++) {
+      size_t x = n_map[i].Get(j);
+      vertices[i] += ov[x] * fr;
+    }
+  }
+
 }
 //..............................................................................

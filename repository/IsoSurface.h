@@ -24,7 +24,9 @@
 #include "arrays.h"
 #include "estlist.h"
 #include "threex3.h"
+#include "eset.h"
 
+using namespace olx_array;
 struct IsoTriangle {
   int pointID[3];
   int operator [] (int i) const { return pointID[i]; }
@@ -33,7 +35,7 @@ struct IsoTriangle {
 
 class CIsoSurface {
 public:
-  CIsoSurface(TArray3D<float>& points, const TArray3D<int>* data=0);
+  CIsoSurface(array_3d<float>& points, const array_3d<int>* data=0);
   ~CIsoSurface()  {  DeleteSurface();  }
 
   /*Generates the isosurface from the scalar field contained in the buffer
@@ -208,7 +210,7 @@ protected:
     }
   };
 ///////////////////////////////////////////////////////////////////////////////////
-  const int DimmX, DimmY, DimmZ, ZSlice;
+  const int ZSlice;
 
   TArrayList<vec3f> Normals;
   TArrayList<vec3f> Vertices;
@@ -231,9 +233,9 @@ protected:
   void CalculateNormals();
 
   /* The buffer holding the scalar field. */
-  TArray3D<float>& Points;
+  array_3d<float>& Points;
   /* data associated with points */
-  const TArray3D<int>* PointData;
+  const array_3d<int>* PointData;
 
   // The isosurface value.
   float m_tIsoLevel;
@@ -245,4 +247,34 @@ protected:
   static const unsigned int m_edgeTable[256];
   static const int m_triTable[256][16];
 };
+
+namespace olx_grid_util {
+  /* inspired by the JACGrid library */
+  class reducer {
+    TTypeList<vec3f> &vertices;
+    TTypeList<IsoTriangle> &triangles;
+    TArrayList<olxset<size_t, TPrimitiveComparator> > vt_map;
+    void reduce_to_line(size_t a, size_t b);
+    void cut_triangle(size_t a, size_t b, size_t c);
+  public:
+    reducer(TTypeList<vec3f> &vertices_,
+      TTypeList<IsoTriangle> &triangles_);
+    /* eliminates triangles with sides smaller than the given threshold
+    and returns the new vertex index mapping
+    */
+    TArrayList<size_t>::const_list_type reduce(float th = 0.03f);
+  };
+
+  class smoother {
+    TTypeList<vec3f> &vertices;
+    TArrayList<olxset<size_t, TPrimitiveComparator> > n_map;
+  public:
+    smoother(TTypeList<vec3f> &vertices,
+      const TTypeList<IsoTriangle> &triangles);
+    /* smmoth the surface using a ratio contribution of any particular vertex
+    and 1-ratio contribution of neighbouring vertoces
+    */
+    void smooth(float ratio=0.5f);
+  };
+} // end namespace olx_grid_util
 #endif // guard
