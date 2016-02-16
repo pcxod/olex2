@@ -434,8 +434,9 @@ void TdlgMatProp::OnOK(wxCommandEvent& event) {
     }
     if (EsdlInstanceOf(*Object, TXAtom)) {
       TGXApp::BondIterator bi = app.GetBonds();
-      while (bi.HasNext())
+      while (bi.HasNext()) {
         bi.Next().UpdateStyle();
+      }
     }
   }
   //  FDrawObject->UpdatePrimitives(24);

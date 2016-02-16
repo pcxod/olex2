@@ -43,8 +43,9 @@ TXBond::~TXBond() {
 void TXBond::Update() {
   if( !IsValid() )  return;
   vec3d C = B().crd() - A().crd();
-  if (C.IsNull())
+  if (C.IsNull()) {
     Params().Null();
+  }
   else {
     Params()[3] = C.Length();
     C /= Params()[3];
@@ -66,24 +67,30 @@ void TXBond::EvaluatePrimitiveMaterial(TGlPrimitive &p, TGraphicsStyle &s) const
     if (p.Params.GetLast() == ddsDefAtomA ||
       p.Params.GetLast() == ddsDef)
     {
-      if (!A().IsCreated())
+      if (!A().IsCreated()) {
         A().Create();
+      }
       const size_t mi = A().Style().IndexOfMaterial("Sphere");
-      if (mi != InvalidIndex)
+      if (mi != InvalidIndex) {
         m = A().Style().GetPrimitiveStyle(mi).GetProperties();
-      else
+      }
+      else {
         TXAtom::GetDefSphereMaterial(A(), m, A().GetSettings());
+      }
     }
     else {
-      if (!B().IsCreated())
+      if (!B().IsCreated()) {
         B().Create();
+      }
       const size_t mi = B().Style().IndexOfMaterial("Sphere");
-      if (mi != InvalidIndex)
+      if (mi != InvalidIndex) {
         m = B().Style().GetPrimitiveStyle(mi).GetProperties();
-      else
+      }
+      else {
         TXAtom::GetDefSphereMaterial(B(), m, B().GetSettings());
+      }
     }
-    p.SetProperties(s.GetMaterial(p.GetName(), m));
+    p.SetProperties(s.SetMaterial(p.GetName(), m));
   }
   else {  // no atoms
     p.SetProperties(s.GetMaterial(p.GetName(),
