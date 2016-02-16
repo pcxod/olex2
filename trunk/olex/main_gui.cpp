@@ -364,29 +364,33 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
     if (Primitives->ShowModal() == wxID_OK) {
       if (EsdlInstanceOf(*FObjectUnderMouse, TXBond)) {
         TXBondPList bonds;
-        if (FObjectUnderMouse->IsSelected())  {
+        if (FObjectUnderMouse->IsSelected()) {
           for (size_t i = 0; i < FXApp->GetSelection().Count(); i++) {
-            if (EsdlInstanceOf(FXApp->GetSelection()[i], TXBond))
+            if (EsdlInstanceOf(FXApp->GetSelection()[i], TXBond)) {
               bonds.Add((TXBond&)FXApp->GetSelection()[i]);
+            }
           }
         }
-        else
+        else {
           bonds.Add((TXBond*)FObjectUnderMouse);
+        }
         FXApp->Individualise(bonds, Primitives->Level, Primitives->Mask);
       }
       else if (EsdlInstanceOf(*FObjectUnderMouse, TXAtom)) {
         TXAtomPList atoms;
-        if (FObjectUnderMouse->IsSelected())  {
+        if (FObjectUnderMouse->IsSelected()) {
           for (size_t i = 0; i < FXApp->GetSelection().Count(); i++) {
-            if (EsdlInstanceOf(FXApp->GetSelection()[i], TXAtom))
+            if (EsdlInstanceOf(FXApp->GetSelection()[i], TXAtom)) {
               atoms.Add((TXAtom&)FXApp->GetSelection()[i]);
+            }
           }
         }
-        else
+        else {
           atoms.Add((TXAtom*)FObjectUnderMouse);
+        }
         FXApp->Individualise(atoms, Primitives->Level, Primitives->Mask);
       }
-      else  {
+      else {
         olxstr TmpStr = "mask ";
         TmpStr << FObjectUnderMouse->GetPrimitives().GetName() << ' ' << Primitives->Mask;
         processMacro(TmpStr);
@@ -622,7 +626,7 @@ void TMainForm::ObjectUnderMouse(AGDrawObject *G)  {
     {
       int level = TXAtom::LegendLevel(XB->GetPrimitives().GetName());
       pmBond->Enable(ID_GraphicsCollectivise, level > 0);
-      pmBond->Enable(ID_GraphicsIndividualise, level < 2);
+      pmBond->Enable(ID_GraphicsIndividualise, level < 3);
     }
     TStrList SL = FXApp->TangList(XB);
     pmTang->Clear();

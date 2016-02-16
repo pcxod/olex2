@@ -619,10 +619,15 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
       if (!cx.AfixGroups.IsEmpty() && cx.AfixGroups.Top().GetA() == 0) {
         cx.AfixGroups.Pop();
       }
-      // terminate afix 1, 2, 3 etc when any other afix encountered
+      /* terminate afix 1, 2, 3 when any other afix encountered
+      or any other when the same or other, independent and without implicit
+      pivot is encountered
+      */
       if (!cx.AfixGroups.IsEmpty() &&
-        cx.AfixGroups.Top().GetB()->GetAfix() != afix &&
-        cx.AfixGroups.Top().GetA() < 0)
+        ((cx.AfixGroups.Top().GetA() < 0 &&
+        !TAfixGroup::IsDependent(afix) &&
+        !TAfixGroup::HasImplicitPivot(afix)) ||
+        (cx.AfixGroups.Top().GetB()->GetAfix() < 4)))
       {
         cx.AfixGroups.Pop();
       }
