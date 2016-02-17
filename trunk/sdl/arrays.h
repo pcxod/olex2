@@ -38,10 +38,10 @@ namespace olx_array {
     {
       (*this) = a;
     }
-    array_1d(size_t width_, bool init = true)
+    array_1d(size_t width_, bool init = true, int iv=0)
       : data(0)
     {
-      resize(width_, init);
+      resize(width_, init, iv);
     }
     ~array_1d() { free_(); }
     void free_() {
@@ -54,12 +54,12 @@ namespace olx_array {
       data = 0;
       width = 0;
     }
-    array_1d &resize(size_t w, bool init) {
+    array_1d &resize(size_t w, bool init, int iv=0) {
       free_();
       width = w;
       data = new item_t[width];
       if (init) {
-        memset(data, 0, width*sizeof(item_t));
+        memset(data, iv, width*sizeof(item_t));
       }
       return *this;
     }
@@ -67,7 +67,7 @@ namespace olx_array {
     const item_t &operator [] (size_t i) const { return data[i]; }
     array_1d &operator = (const array_1d<item_t> &a) {
       if (width != a.width) {
-        resize(a.width);
+        resize(a.width, false);
       }
       memcpy(data, a.data, sizeof(item_t)*width);
       return *this;
@@ -98,10 +98,10 @@ namespace olx_array {
     {
       (*this) = a;
     }
-    array_2d(size_t width_, size_t height_, bool init = true)
+    array_2d(size_t width_, size_t height_, bool init = true, int iv=0)
       : data(0)
     {
-      resize(width_, height_, init);
+      resize(width_, height_, init, iv);
     }
     ~array_2d() { free_(); }
     void free_() {
@@ -117,7 +117,7 @@ namespace olx_array {
       data = 0;
       width = height = 0;
     }
-    array_2d &resize(size_t w, size_t h, bool init) {
+    array_2d &resize(size_t w, size_t h, bool init, int iv=0) {
       free_();
       width = w;
       height = h;
@@ -125,7 +125,7 @@ namespace olx_array {
       for (size_t i = 0; i < width; i++) {
         data[i] = new item_t[height];
         if (init) {
-          memset(data[i], 0, height*sizeof(item_t));
+          memset(data[i], iv, height*sizeof(item_t));
         }
       }
       return *this;
@@ -166,10 +166,11 @@ namespace olx_array {
     {
       (*this) = a;
     }
-    array_3d(size_t width_, size_t height_, size_t depth_, bool init = true)
+    array_3d(size_t width_, size_t height_, size_t depth_,
+      bool init = true, int iv=0)
       : data(0)
     {
-      resize(width_, height_, depth_, init);
+      resize(width_, height_, depth_, init, iv);
     }
     ~array_3d() { free_(); }
     void free_() {
@@ -188,7 +189,11 @@ namespace olx_array {
       data = 0;
       width = height = depth = 0;
     }
-    array_3d & resize(size_t w, size_t h, size_t d, bool init) {
+    template <typename vec_t>
+    array_3d & resize(const vec_t &d, bool init, int iv=0) {
+      return resize(d[0], d[1], d[2], init, iv);
+    }
+    array_3d & resize(size_t w, size_t h, size_t d, bool init, int iv=0) {
       free_();
       width = w;
       height = h;
@@ -199,7 +204,7 @@ namespace olx_array {
         for (size_t j = 0; j < height; j++) {
           data[i][j] = new item_t[depth];
           if (init) {
-            memset(data[i][j], 0, depth*sizeof(item_t));
+            memset(data[i][j], iv, depth*sizeof(item_t));
           }
         }
       }
@@ -363,7 +368,7 @@ namespace olx_array {
           maxd[2] - mind[2] + 1, true);
       }
       // the indexes provided are inclusive
-        TArray3D(index_t minWidth, index_t maxWidth, index_t minHeight,
+      TArray3D(index_t minWidth, index_t maxWidth, index_t minHeight,
           index_t maxHeight, index_t minDepth, index_t maxDepth)
         : MinWidth(minWidth), MinHeight(minHeight), MinDepth(minDepth)
       {

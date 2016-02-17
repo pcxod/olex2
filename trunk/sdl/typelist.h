@@ -489,14 +489,14 @@ public:
 //..............................................................................
   size_t Count() const { return List.Count(); }
 //..............................................................................
-  // same as shrink if list size is larger
-  TTypeListExt& SetCount(size_t v) {
+  TTypeListExt& SetCount(size_t v, bool shrink=true) {
     if (v < List.Count()) {
       for (size_t i=v; i < List.Count(); i++) {
-        if (List[i] != NULL)
+        if (List[i] != NULL) {
           delete (DestructCast*)List[i];
+        }
       }
-      List.SetCount(v);
+      List.SetCount(v, shrink);
     }
     else {
       size_t cnt = List.Count();
