@@ -19,7 +19,7 @@
 #include "dsphere.h"
 #include "dring.h"
 #include "roman.h"
-#include "eset.h"
+#include "olxsurf.h"
 
 #define gxlib_InitMacro(macroName, validOptions, argc, desc)\
   lib.Register(\
@@ -355,7 +355,8 @@ void GXLibMacros::Export(TLibrary& lib) {
     fpAny,
     "Sets special rendering mode");
   gxlib_InitMacro(CalcSurf,
-    EmptyString()
+    "pr-probe radius [1.2 A]&;"
+    "c-surface colour [m],d,a,e&;"
     ,
     fpAny,
     "For testing only for now");
@@ -4508,217 +4509,121 @@ void GXLibMacros::funFBond(const TStrObjList &Params, TMacroData &E) {
   }
 }
 //..............................................................................
-struct TSurfCalculationTask : public TaskBase {
-  const TXAtomPList &atoms;
-  TArray3D<float> &array;
-  TArray3D<int> &data;
-  const vec3f &min_val;
-  float res;
-  float pr;
-  const vec3f_alist &crds;
-  const TArrayList<float> &radii;
-  TSurfCalculationTask(
-    const TXAtomPList &atoms_,
-    TArray3D<float> &array_,
-    TArray3D<int> &data_,
-    const vec3f &min_val_,
-    float res_,
-    const vec3f_alist &crds_,
-    const TArrayList<float> &radii_, float pr_)
-    : atoms(atoms_),
-    array(array_),
-    data(data_),
-    min_val(min_val_),
-    res(res_), crds(crds_), radii(radii_), pr(pr_)
-  {}
-  void Run(size_t i1) {
-    float x = (min_val[0] + i1) / res;
-    for (size_t i2 = 0; i2 < array.GetHeight(); i2++) {
-      const float y = (min_val[1] + i2) / res;
-      for (size_t i3 = 0; i3 < array.GetDepth(); i3++) {
-        if (array.Data[i1][i2][i3] != 0) {
-          continue;
-        }
-        vec3f p(x, y, (min_val[2] + i3) / res);
-        for (size_t i = 0; i < atoms.Count(); i++) {
-          float qd = crds[i].QDistanceTo(p);
-          if (qd < olx_sqr(radii[i] + pr)) {
-            data.Data[i1][i2][i3] = i;
-            array.Data[i1][i2][i3] = -1;
-          }
-        }
-      }
-    }
-  }
-  TSurfCalculationTask * Replicate() const {
-    return new TSurfCalculationTask(atoms, array, data,
-      min_val, res, crds, radii, pr);
-  }
-};
 
 void GXLibMacros::macCalcSurf(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &E)
 {
+  const float pr = Options.FindValue("pr", "1.2").ToFloat();
   TGXApp::AtomIterator ai = app.GetAtoms();
   TXAtomPList atoms;
   atoms.SetCapacity(ai.count);
-  vec3f_alist crds;
-  crds.SetCapacity(ai.count);
-  TArrayList<float> radii;
-  radii.SetCapacity(ai.count);
-  vec3d min_v_(1000), max_v_(-1000);
-  float max_r = 0;
-  vec3d center;
   while (ai.HasNext()) {
     TXAtom &a = ai.Next();
     if (a.IsDeleted() || a.GetType() == iQPeakZ) {
       continue;
     }
     atoms.Add(a);
-    crds.Add(a.crd());
-    float &r = radii.Add(a.GetType().r_vdw);
-    for (int i = 0; i < 3; i++) {
-      if ((a.crd()[i]+r) > max_v_[i]) {
-        max_v_[i] = a.crd()[i]+r;
-      }
-      if ((a.crd()[i]-r) < min_v_[i]) {
-        min_v_[i] = a.crd()[i]-r;
-      }
-    }
-    if (r > max_r) {
-      max_r = r;
-    }
-    center += a.crd();
   }
-  center /= atoms.Count();
-  const float pr = 1.2f;
-  max_v_ += pr*2;
-  min_v_ -= pr*2;
-  vec3d sz_ = max_v_ - min_v_;
-  double max_d_ = olx_max(sz_[2], olx_max(sz_[0], sz_[1]));
-  int res_ = olx_round(96 / max_d_);
-  vec3f min_v = min_v_*res_;
-  TArray3D<float> arr(vec3i(0), vec3d(sz_*res_).Round<int>());
-  TArray3D<int> data(vec3i(0), vec3d(sz_*res_).Round<int>());
-  arr.FastInitWith(1);
-  data.FastInitWith(-1);
+  TMolSurf ms(atoms, pr);
+  olx_object_ptr<CIsoSurface> sf = ms.Calculate(
+    Cmds.IsEmpty() ? -0.1f : Cmds[0].ToFloat());
 
-  int pid = (max_r + pr)*res_,
-    pidq = pid*pid,
-    tpid = 2 * pid;
-  TArray3D<bool> mask(vec3i(0), vec3d(tpid).Round<int>());
-  mask.FastInitWith(0);
-  for (int i1 = 0; i1 <= pid; i1++) {
-    for (int i2 = 0; i2 <= pid; i2++) {
-      for (int i3 = 0; i3 < pid; i3++) {
-        if (i1*i1 + i2*i2 + i3*i3 < pidq) {
-          mask.Data[pid - i1][pid - i2][pid - i3] = true;
-          mask.Data[pid - i1][pid - i2][pid + i3] = true;
-          mask.Data[pid - i1][pid + i2][pid - i3] = true;
-          mask.Data[pid - i1][pid + i2][pid + i3] = true;
-          mask.Data[pid + i1][pid - i2][pid - i3] = true;
-          mask.Data[pid + i1][pid - i2][pid + i3] = true;
-          mask.Data[pid + i1][pid + i2][pid - i3] = true;
-          mask.Data[pid + i1][pid + i2][pid + i3] = true;
-        }
-      }
-    }
-  }
-  for (size_t i = 0; i < atoms.Count(); i++) {
-    vec3i v = atoms[i]->crd()*res_ - min_v;
-    for (int i1 = -pid; i1 <= pid; i1++) {
-      for (int i2 = -pid; i2 <=pid; i2++) {
-        for (int i3 = -pid; i3 <= pid; i3++) {
-          if (!mask.Data[i1+pid][i2+pid][i3+pid]) {
-            continue;
-          }
-          int x = v[0] + i1,
-            y = v[1] + i2,
-            z = v[2] + i3;
-          if (x >=0 && x <arr.GetWidth() &&
-            y >= 0 && y < arr.GetHeight() &&
-            z >= 0 && z < arr.GetDepth())
-          {
-            arr.Data[x][y][z] = 0;
-          }
-        }
-      }
-    }
-  }
-
-
-  TSurfCalculationTask calc_task(atoms, arr, data,
-    min_v, res_, crds, radii, pr);
-  TListIteratorManager<TSurfCalculationTask> tasks(calc_task, arr.GetWidth(),
-    tLinearTask, 8);
-
-  //for (size_t i1 = 0; i1 < arr.GetWidth(); i1++) {
-  //  for (size_t i2 = 0; i2 < arr.GetHeight(); i2++) {
-  //    for (size_t i3 = 0; i3 < arr.GetDepth(); i3++) {
-  //      arr.Data[i1][i2][i3] = -arr.Data[i1][i2][i3];
-  //    }
-  //  }
-  //}
-  CIsoSurface sf(arr.Data, &data.Data);
-  
-  sf.GenerateSurface(Cmds.IsEmpty() ? -1.9 : Cmds[0].ToDouble());
   TXBlob *blob = new TXBlob(app.GetRenderer(), "Blob");
-  blob->vertices.SetCapacity(sf.VertexList().Count());
-  for (size_t i = 0; i < sf.VertexList().Count(); i++) {
-    blob->vertices.AddCopy((sf.VertexList()[i] + min_v)/res_);
-  }
-  blob->normals = sf.NormalList();
-  for (size_t i = 0; i < sf.GetVertexData().Count(); i++) {
-    if (sf.GetVertexData()[i] != -1) {
-      int idx = sf.GetVertexData()[i];
-      blob->normals[i] = (blob->vertices[i] - crds[idx]).Normalise();
-      blob->vertices[i] = crds[idx] + blob->normals[i] * (radii[idx]+pr);
-    }
-  }
-  blob->triangles = sf.TriangleList();
-  TArrayList<int> owners = sf.GetVertexData();
+  blob->vertices = sf().VertexList();
+  blob->normals = sf().NormalList();
+  blob->triangles = sf().TriangleList();
+  TArrayList<int> owners = sf().GetVertexData();
   if (true) {
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 2; i++) {
       olx_grid_util::smoother sm(blob->vertices, blob->triangles);
-      sm.smooth(0.2f);
-      TArrayList<size_t> indices = olx_grid_util::reducer(
-        blob->vertices, blob->triangles).reduce(0.07);
-      TArrayList<int> owners_o = owners;
-      owners.SetCount(blob->vertices.Count());
-      for (size_t j = 0; j < owners_o.Count(); j++) {
-        if (indices[j] < owners.Count()) {
-          owners[indices[j]] = owners_o[j];
-        }
+      sm.smooth(0.5f);
+    }
+    TArrayList<size_t> indices = olx_grid_util::reducer(
+      blob->vertices, blob->triangles).reduce(0.05);
+    TArrayList<int> owners_o = owners;
+    owners.SetCount(blob->vertices.Count());
+    for (size_t j = 0; j < owners_o.Count(); j++) {
+      if (indices[j] < owners.Count()) {
+        owners[indices[j]] = owners_o[j];
+      }
+    }
+    {
+      olx_grid_util::smoother sm(blob->vertices, blob->triangles);
+      for (int i = 0; i < 10; i++) {
+        sm.smooth(0.8f);
       }
     }
   }
+  blob->UpdateNormals();
+  blob->colors.SetCount(blob->vertices.Count());
 
-  {
-    blob->colors.SetCount(blob->vertices.Count());
-    float min_qd = 1e6, max_qd = 0;
+  olxstr mc = Options.FindValue('c', "m");
+  if (mc.Equals('a')) {
     for (size_t i = 0; i < blob->vertices.Count(); i++) {
-      float qd = blob->vertices[i].QDistanceTo(center);
-      if (qd > max_qd) {
-        max_qd = qd;
+      if (owners[i] == -1) {
+        continue;
       }
-      if (qd < min_qd) {
-        min_qd = qd;
+      TGlMaterial *m = atoms[owners[i]]->GetPrimitives()
+        .GetStyle().FindMaterial("Sphere");
+      if (m != 0) {
+        blob->colors[i] = m->AmbientF;
       }
-      //if (owners[i] == -1) {
-      //  continue;
-      //}
-      //TGlMaterial *m = atoms[owners[i]]->GetPrimitives()
-      //  .GetStyle().FindMaterial("Sphere");
-      //if (m != 0) {
-      //  blob->colors[i] = m->AmbientF;
-      //}
+    }
+  }
+  else  {
+    array_1d<float> values(blob->vertices.Count());
+    TUnitCell& uc = app.XFile().GetUnitCell();
+    if (mc.Equals('e')) {
+      TRefList refs;
+      TArrayList<compd> F;
+      olxstr err = SFUtil::GetSF(refs, F, SFUtil::mapTypeDiff,
+        Options.Contains("fcf") ? SFUtil::sfOriginFcf : SFUtil::sfOriginOlex2,
+        (Options.FindValue("scale", "r").ToLowerCase().CharAt(0) == 'r') ?
+        SFUtil::scaleRegression : SFUtil::scaleSimple);
+      if (!err.IsEmpty()) {
+        E.ProcessingError(__OlxSrcInfo, err);
+        return;
+      }
+      TAsymmUnit& au = app.XFile().GetAsymmUnit();
+      TArrayList<SFUtil::StructureFactor> P1SF;
+      SFUtil::ExpandToP1(refs, F, uc.GetMatrixList(), P1SF);
+      const double vol = app.XFile().GetLattice().GetUnitCell().CalcVolume();
+      BVFourier::MapInfo mi;
+      // init map
+      const vec3i dim(au.GetAxes() * 5);
+      TArray3D<float> map(0, dim[0] - 1, 0, dim[1] - 1, 0, dim[2] - 1);
+      mi = BVFourier::CalcEDM(P1SF, map.Data, vol);
+      MapUtil::MapGetter<float, 1> mg(map.Data);
+
+      for (size_t i = 0; i < blob->vertices.Count(); i++) {
+        values[i] = mg.Get(au.Fractionalise(blob->vertices[i]));
+      }
+    }
+    else if (mc.Equals('d')) {
+      for (size_t i = 0; i < blob->vertices.Count(); i++) {
+        values[i] = blob->vertices[i].QDistanceTo(ms.GetCenter());
+      }
+    }
+    else if (mc.Equals('m')) {
+      TSurfCalculationTask1 calc_task1(blob->vertices, values, uc);
+      TListIteratorManager<TSurfCalculationTask1> tasks(calc_task1,
+        blob->vertices.Count(), tLinearTask, 8);
+    }
+    float min_qd = 1e6, max_qd = 0;
+    for (size_t i = 0; i < values.width; i++) {
+      if (values[i] > max_qd) {
+        max_qd = values[i];
+      }
+      if (values[i] < min_qd) {
+        min_qd = values[i];
+      }
     }
     float mid_dq = (max_qd + min_qd) / 2,
       dq_max = (max_qd - min_qd) / 2;
-    vec3f mc(1.f), sp(1, 0, 0), ep(0, 0, 1),
+    vec3f mc(1.f), sp(0, 1, 0), ep(1, 0, 0),
       nc1(sp - mc), nc2(ep - mc);
     for (size_t i = 0; i < blob->vertices.Count(); i++) {
-      float qd = blob->vertices[i].QDistanceTo(center);
+      float qd = values[i];
       float v = (qd - mid_dq) / dq_max;
       const vec3f *c;
       float s;
@@ -4735,26 +4640,6 @@ void GXLibMacros::macCalcSurf(TStrObjList &Cmds, const TParamList &Options,
       }
     }
   }
-  for (size_t i = 0; i < blob->normals.Count(); i++) {
-    blob->normals[i].Null();
-  }
-  for (size_t i = 0; i < blob->triangles.Count(); i++) {
-    vec3f vec1 = blob->vertices[blob->triangles[i].pointID[1]] -
-      blob->vertices[blob->triangles[i].pointID[0]];
-    vec3f vec2 = blob->vertices[blob->triangles[i].pointID[2]] -
-      blob->vertices[blob->triangles[i].pointID[0]];
-    vec3f normal = vec1.XProdVec(vec2);
-    blob->normals[blob->triangles[i].pointID[0]] += normal;
-    blob->normals[blob->triangles[i].pointID[1]] += normal;
-    blob->normals[blob->triangles[i].pointID[2]] += normal;
-  }
-  for (size_t i = 0; i < blob->normals.Count(); i++) {
-    float d = blob->normals[i].Length();
-    if (d != 0) {
-      blob->normals[i] /= d;
-    }
-  }
-
   blob->Create();
   app.AddObjectToCreate(blob);
 }

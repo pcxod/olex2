@@ -588,6 +588,7 @@
     <ClCompile Include="..\..\..\gxlib\gxfiles.cpp" />
     <ClCompile Include="..\..\..\gxlib\gxmacro.cpp" />
     <ClCompile Include="..\..\..\gxlib\olxstate.cpp" />
+    <ClCompile Include="..\..\..\gxlib\olxsurf.cpp" />
     <ClCompile Include="..\..\..\gxlib\ortdraw.cpp" />
     <ClCompile Include="..\..\..\gxlib\solid_angles.cpp" />
     <ClCompile Include="..\..\..\gxlib\wxglscene.cpp" />
@@ -654,6 +655,7 @@
     <ClInclude Include="..\..\..\gxlib\modes\part.h" />
     <ClInclude Include="..\..\..\gxlib\modes\split.h" />
     <ClInclude Include="..\..\..\gxlib\olxstate.h" />
+    <ClInclude Include="..\..\..\gxlib\olxsurf.h" />
     <ClInclude Include="..\..\..\gxlib\ortdraw.h" />
     <ClInclude Include="..\..\..\gxlib\ortdrawtex.h" />
     <ClInclude Include="..\..\..\gxlib\oxmfile.h" />

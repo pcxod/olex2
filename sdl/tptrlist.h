@@ -526,24 +526,29 @@ public:
 //..............................................................................
   bool IsEmpty() const {  return (FCount == 0);  }
 //..............................................................................
-  TPtrList& SetCount(size_t v)  {
-    if( v == FCount )  return *this;
-    if( v > FCount )  {
-      if( v > FCapacity )
+  TPtrList& SetCount(size_t v, bool shrink = true) {
+    if (v == FCount)  return *this;
+    if (v > FCount) {
+      if (v > FCapacity) {
         SetCapacity(v + FIncrement);
+      }
       FCount = v;
     }
-    else  {  // shrinking to exact size
+    else {  // shrinking to exact size if requested
       FCount = v;
-      Fit();
+      if (shrink) {
+        Fit();
+      }
     }
     return *this;
   }
 //..............................................................................
   size_t IndexOf(const T* val) const {
-    for( size_t i=0; i < FCount; i++ )
-      if( Items[i] == val )
+    for (size_t i = 0; i < FCount; i++) {
+      if (Items[i] == val) {
         return i;
+      }
+    }
     return InvalidIndex;
   }
 //..............................................................................
