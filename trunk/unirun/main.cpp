@@ -126,6 +126,7 @@ class MyApp: public wxAppConsole {
 };
 IMPLEMENT_APP_NO_MAIN(MyApp)
 int main(int argc, char** argv)  {
+  setlocale(LC_CTYPE, "utf-8");
   MyApp app;
   int res = 0;
   /* as soon as we create TBasicApp, this instance gets attached to it
@@ -148,9 +149,10 @@ int main(int argc, char** argv)  {
   ZipFS::RegisterFactory();
   try  {
     bool print_help = false;
-    olxstr base_dir = argv[0], var_name = "OLEX2_DIR";
+    olxstr base_dir = olxcstr(argv[0]).ToWStr(),
+      var_name = "OLEX2_DIR";
     if( argc > 1 )  {
-      olxstr arg(argv[1]);
+      olxstr arg = olxcstr(argv[1]).ToWStr();
       print_help = (arg == "-help" || arg == "/help" || arg == "--help");
       if (!print_help && TEFile::Exists(arg) && TEFile::IsDir(arg)) {
         base_dir = arg;
