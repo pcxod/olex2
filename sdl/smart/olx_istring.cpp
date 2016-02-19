@@ -52,7 +52,7 @@ olxwstr esdl::TTSString<T, TC>::CStr2WStr(const olxcstr& str) {
 }
 
 template <class T, typename TC>
-olxcstr esdl::TTSString<T, TC>::WStr2CStr(const char* wstr, size_t len = ~0) {
+olxcstr esdl::TTSString<T, TC>::WStr2CStr(const char* wstr, size_t len) {
   return olxcstr(wstr, len == InvalidIndex ? olxstr::o_strlen(wstr) : len);
 }
 
