@@ -130,7 +130,6 @@ protected:  // functions below are unsafe to use if wchar_t size is unknown!!
   static olxcstr Encode2(const void* vinput, size_t len)  {
     TEMemoryStream bf(len);
     EncodeStream2(vinput, len, bf).SetPosition(0);
-    olxcstr str(CEmptyString(), (size_t)bf.GetSize());
     return bf.ToCString();
   }
 
@@ -203,7 +202,6 @@ protected:  // functions below are unsafe to use if wchar_t size is unknown!!
   static olxcstr Encode4(const void* vinput, size_t len) {
     TEMemoryStream bf(len);
     EncodeStream4(vinput, len, bf).SetPosition(0);
-    olxcstr str(CEmptyString(), (size_t)bf.GetSize());
     return bf.ToCString();
   }
 

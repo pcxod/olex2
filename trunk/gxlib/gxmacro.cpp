@@ -578,7 +578,7 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
     Options.Contains("fcf") ? SFUtil::sfOriginFcf : SFUtil::sfOriginOlex2,
     (Options.FindValue("scale", "r").ToLowerCase().CharAt(0) == 'r') ?
       SFUtil::scaleRegression : SFUtil::scaleSimple);
-  if( !err.IsEmpty() )  {
+  if (!err.IsEmpty()) {
     E.ProcessingError(__OlxSrcInfo, err);
     return;
   }
@@ -594,7 +594,7 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
   TArray3D<float> map(0, dim[0]-1, 0, dim[1]-1, 0, dim[2]-1);
   st.start("Calcuating ED map");
   mi = BVFourier::CalcEDM(P1SF, map.Data, vol);
-///////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////
   st.start("Map operations");
   app.XGrid().InitGrid(dim);
 

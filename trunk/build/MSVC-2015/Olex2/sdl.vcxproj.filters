@@ -242,9 +242,6 @@
     <ClInclude Include="..\..\..\sdl\sparser.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\sdl\strconv.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\sdl\strmask.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -580,6 +577,9 @@
     </ClInclude>
     <ClInclude Include="..\..\..\sdl\olxfunc.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\strconv.h">
+      <Filter>Header Files\string</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
