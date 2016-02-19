@@ -114,7 +114,9 @@ public:
   greater or equal to the ref.Count. This function uses direct approach and is
   to be used for testing mainly
  */
-  void CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F) const;
+  void CalcSF(const TRefList &refs, TArrayList<TEComplex<double> > &F) const;
+  void CalcSFEx(const TRefList &refs, TArrayList<TEComplex<double> > &F,
+    const TSAtomPList &atoms, const smatd_list &ml, int sg_order) const;
   /* calculates Fsq and fills the reflection list. spacial handling of twinned
   data is used - the resulting Fsq are 'twinned'. It uses SFUtil functions to
   calculate Fc. if scale is true, the refs i and S are scaled using the OSF
@@ -192,21 +194,17 @@ public:
  */
   static WBoxInfo CalcWBox(const TSAtomPList& atoms, const TDoubleList* radii,
     double (*weight_calculator)(const TSAtom&));
-  struct CalcVolumeInfo  {
+  struct CalcVolumeInfo {
     double total, overlapping;
-    CalcVolumeInfo(double _total, double _overlapping) : total(_total),
-      overlapping(_overlapping)  {}
+    CalcVolumeInfo(double _total, double _overlapping)
+      : total(_total),
+      overlapping(_overlapping)
+    {}
   };
   CalcVolumeInfo CalcVolume(const ElementRadii* radii);
 
   template <class atom_list> static void UnifyPAtomList(atom_list& alist) {
-    const size_t ac = alist.Count();
-    for( size_t i=0; i < ac; i++ )
-      alist[i]->SetTag(i);
-    for( size_t i=0; i < ac; i++ )
-      if( alist[i]->GetTag() != i || alist[i]->IsDeleted() )
-        alist[i] = NULL;
-    alist.Pack();
+    ACollectionItem::Unify(alist);
   }
   // the returned value (in degrees) must be cached if used in loops etc
   static double GetMinHBondAngle();

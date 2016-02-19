@@ -2007,9 +2007,16 @@ public:
   // (using current locale)
   static olxcstr WStr2CStr(const wchar_t* wstr, size_t len=~0);
   static olxcstr WStr2CStr(const olxwstr& str);
+  // dummy for templates
+  static const olxcstr &WStr2CStr(const olxcstr& str) { return str; }
   // converts a multibyte string into wide char string properly
   static olxwstr CStr2WStr(const char* mbs, size_t len=~0);
   static olxwstr CStr2WStr(const olxcstr& str);
+  // dummy for templates
+  static const olxwstr &CStr2WStr(const olxwstr& str) { return str; }
+
+  olxcstr ToCStr() const { return WStr2CStr(*this); }
+  olxwstr ToWStr() const { return CStr2WStr(*this); }
   //...........................................................................
   virtual IOlxObject* Replicate() const {  return new TTSString<T,TC>(*this);  }
   //...........................................................................
