@@ -80,7 +80,7 @@ olxstr TBasicApp::GetModuleName() {
 #else
   Dl_info dl_info;
   dladdr((const void *)&TBasicApp::GetModuleMD5Hash, &dl_info);
-  name = dl_info.dli_fname;
+  name = olxstr::CStr2WStr(dl_info.dli_fname);
   if (!TEFile::IsAbsolutePath(name)) {
     if (HasInstance())
       name = TEFile::ExpandRelativePath(name, GetBaseDir());

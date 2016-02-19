@@ -111,7 +111,7 @@ char **ListToArgs(TStrList &args_list) {
       args_list[i].IndexOf('=') != InvalidIndex;
     if (!option && args_list[i].IndexOf(' ') != InvalidIndex)
       args_list[i] = olxstr('"') << args_list[i] << '"';
-    olxcstr v = TUtf8::Encode(args_list[i]);
+    olxcstr v = args_list[i].ToCStr();
     args[i] = new char [v.Length()+1];
     strcpy(args[i], v.c_str());
   }
@@ -360,8 +360,7 @@ void DoRun()  {
             }
           }
           char **args = ListToArgs(args_list);
-          olxstr c_cmdl = TUtf8::Encode(tmp_exe_name);
-          execv(c_cmdl.c_str(), args);
+          execv(tmp_exe_name.ToCStr().c_str(), args);
           TBasicApp::NewLogEntry(logError) <<
             "Could re-launch itself";
           return;
@@ -378,7 +377,7 @@ void DoRun()  {
 }
 
 void DoLaunch(const TStrList &args_)  {
-  olxcstr bd = TBasicApp::GetBaseDir();
+  olxstr bd = TBasicApp::GetBaseDir();
   olxstr path = olx_getenv("PATH");
   path.Insert(bd.SubStringTo(bd.Length()-1) + ':', 0);
   olx_setenv("PATH", path);
@@ -404,7 +403,7 @@ void DoLaunch(const TStrList &args_)  {
 #  else
   static const olxcstr ld_var = "LD_LIBRARY_PATH";
 #  endif
-  olxcstr ld_path;
+  olxstr ld_path;
   ld_path << bd << "lib:" << bd << "cctbx/cctbx_build/lib";
   olx_setenv(ld_var, ld_path);
   olx_setenv("PYTHONHOME", bd);
@@ -416,7 +415,6 @@ void DoLaunch(const TStrList &args_)  {
   args_list << cmdl;
   args_list << args_;
   char **args = ListToArgs(args_list);
-  olxstr c_cmdl = TUtf8::Encode(cmdl);
-  execv(c_cmdl.c_str(), args);
+  execv(cmdl.ToCStr().c_str(), args);
   TBasicApp::NewLogEntry(logError) << "Failed to launch '" << cmdl << '\'';
 }

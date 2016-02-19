@@ -82,10 +82,11 @@ HANDLE Module::SetHandle(HANDLE h) {
 //.............................................................................
 #else  // not WIN
 bool EsdlObject(olx_setenv)(const olxstr& name, const olxstr& val)  {
-  return setenv(name.c_str(), val.c_str(), 1) == 0;
+  return setenv(name.ToCStr().c_str(), val.ToCStr().c_str(), 1) == 0;
 }
 olxstr EsdlObject(olx_getenv)(const olxstr& name)  {
-  return getenv(name.c_str());
+  const char*p = getenv(name.ToCStr().c_str());
+  return p == 0 ? EmptyString() : olxstr::CStr2WStr(p);
 }
 #endif
 
