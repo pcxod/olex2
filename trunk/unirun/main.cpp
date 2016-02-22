@@ -111,7 +111,7 @@ char **ListToArgs(TStrList &args_list) {
       args_list[i].IndexOf('=') != InvalidIndex;
     if (!option && args_list[i].IndexOf(' ') != InvalidIndex)
       args_list[i] = olxstr('"') << args_list[i] << '"';
-    olxcstr v = args_list[i].ToCStr();
+    olxcstr v = args_list[i].ToMBStr();
     args[i] = new char [v.Length()+1];
     strcpy(args[i], v.c_str());
   }
@@ -149,10 +149,10 @@ int main(int argc, char** argv)  {
   ZipFS::RegisterFactory();
   try  {
     bool print_help = false;
-    olxstr base_dir = olxcstr(argv[0]).ToWStr(),
+    olxstr base_dir = olxstr::FromCStr(argv[0]),
       var_name = "OLEX2_DIR";
     if( argc > 1 )  {
-      olxstr arg = olxcstr(argv[1]).ToWStr();
+      olxstr arg = olxstr::FromCStr(argv[1]);
       print_help = (arg == "-help" || arg == "/help" || arg == "--help");
       if (!print_help && TEFile::Exists(arg) && TEFile::IsDir(arg)) {
         base_dir = arg;
@@ -390,8 +390,9 @@ void DoLaunch(const TStrList &args_)  {
   olx_setenv("BOOST_ADAPTBX_FPE_DEFAULT", "1");
   olx_setenv("BOOST_ADAPTBX_SIGNALS_DEFAULT", "1");
   olxstr gl_stereo = olx_getenv("OLEX2_GL_STEREO");
-  if (gl_stereo.IsEmpty())
+  if (gl_stereo.IsEmpty()) {
     olx_setenv("OLEX2_GL_STEREO", "FALSE");
+  }
 #  ifdef __MAC__
   olx_setenv("OLEX2_DIR", bd);
   olxstr data_dir = olx_getenv("OLEX2_DATADIR");
@@ -415,6 +416,6 @@ void DoLaunch(const TStrList &args_)  {
   args_list << cmdl;
   args_list << args_;
   char **args = ListToArgs(args_list);
-  execv(cmdl.ToCStr().c_str(), args);
+  execv(cmdl.ToMBStr().c_str(), args);
   TBasicApp::NewLogEntry(logError) << "Failed to launch '" << cmdl << '\'';
 }

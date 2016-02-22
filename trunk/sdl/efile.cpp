@@ -76,7 +76,7 @@
   #include <dirent.h>
   #include <utime.h>
 
-  #define OLXSTR(A) A.ToCStr().c_str()  //have to make it thread safe
+  #define OLXSTR(A) A.ToMBStr().c_str()  //have to make it thread safe
   #ifndef __MAC__  // could not find these on MAC...
     #define ftell ftello64
     #define fseek fseeko64
