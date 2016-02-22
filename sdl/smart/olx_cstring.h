@@ -138,8 +138,12 @@ public:
       }
     }
     if( fp_pos == InvalidIndex )  return *this;
-    while( _Length > 1 && CharAt(_Length-1) == '0' )  _Length--;
-    if( _Length > 0 && CharAt(_Length-1) == '.'  )  _Length--;
+    while (_Length > 1 && CharAt(_Length - 1) == '0') {
+      _Length--;
+    }
+    if (_Length > 0 && CharAt(_Length - 1) == '.') {
+      _Length--;
+    }
     return *this;
   }
   inline TCString& operator << (const float &v) {

@@ -68,7 +68,7 @@ public:
   void InitArguments(int argc, ch_t **argv) {
     ValidateArgs(); // throw an excaption if Arguments are not empty
     for (int i=0; i < argc; i++) {
-      olxstr arg = olxstr::CStr2WStr(argv[i]);
+      olxstr arg = olxstr::FromCStr(argv[i]);
       if (arg.Contains('=') || arg.StartsFrom('-')) {
         Options.FromString(arg, '=');
       }

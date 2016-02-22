@@ -9,35 +9,48 @@
 
 #include "../ebase.h"
 
-template <class T, typename TC>
-olxcstr esdl::TTSString<T,TC>::WStr2CStr(const wchar_t* wstr, size_t len)  {
+template<> olxstr esdl::TTSString<TCString, char>::FromCStr(
+  const wchar_t* wstr, size_t len)
+{
   const size_t sz = (len == InvalidSize ? wcslen(wstr) : len);
   if (sz == 0) {
     return CEmptyString();
   }
   const size_t res = wcstombs(NULL, wstr, sz);
-  if (res == (size_t)-1) {
+  if (res == InvalidSize) {
     TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo,
       "could not convert wcs to mbs");
   }
   olxcstr str;
-  str.Allocate(res, true);
+  str.Allocate(res+1, false);
   wcstombs(str.raw_str(), wstr, res);
+  str.SetLength(res);
   return str;
 }
-template <class T, typename TC>
-olxcstr esdl::TTSString<T,TC>::WStr2CStr(const olxwstr& str)  {
-  return WStr2CStr(str.wc_str(), str.Length());
+
+template<> olxstr esdl::TTSString<TCString, char>::FromCStr(
+  const char* str, size_t len)
+{
+  return olxcstr(str, len);
 }
 
-template <class T, typename TC>
-olxwstr esdl::TTSString<T,TC>::CStr2WStr(const char* mbs, size_t len)  {
+template<> olxcstr esdl::TTSString<TCString, char>::ToMBStr() const {
+  return *this;
+}
+
+template<> olxwstr esdl::TTSString<TCString, char>::ToWCStr() const {
+  return olxwstr::FromCStr(this->raw_str(), this->Length());
+}
+
+template<> olxstr esdl::TTSString<TWString, wchar_t >::FromCStr(
+  const char* mbs, size_t len)
+{
   const size_t sz = (len == InvalidSize ? strlen(mbs) : len);
   if (sz == 0) {
     return WEmptyString();
   }
   const size_t res = mbstowcs(NULL, mbs, sz);
-  if (res == (size_t)-1) {
+  if (res == InvalidSize) {
     TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo,
       "could not convert mbs to wcs");
   }
@@ -46,29 +59,19 @@ olxwstr esdl::TTSString<T,TC>::CStr2WStr(const char* mbs, size_t len)  {
   mbstowcs(str.raw_str(), mbs, res);
   return str;
 }
-template <class T, typename TC>
-olxwstr esdl::TTSString<T, TC>::CStr2WStr(const olxcstr& str) {
-  return CStr2WStr(str.c_str(), str.Length());
+
+template<> olxstr esdl::TTSString<TWString, wchar_t >::FromCStr(
+  const wchar_t* str, size_t len)
+{
+  return olxwstr(str, len);
 }
 
-template <class T, typename TC>
-olxcstr esdl::TTSString<T, TC>::WStr2CStr(const char* wstr, size_t len) {
-  return olxcstr(wstr, len == InvalidIndex ? olxstr::o_strlen(wstr) : len);
+template<> olxcstr esdl::TTSString<TWString, wchar_t>::ToMBStr() const {
+  return olxcstr::FromCStr(this->raw_str(), this->Length());
 }
 
-
-template <class T, typename TC>
-olxcstr esdl::TTSString<T, TC>::ToCStr() const {
-  return WStr2CStr(*this);
-}
-template <class T, typename TC>
-olxwstr esdl::TTSString<T, TC>::CStr2WStr(const wchar_t* mbs, size_t len) {
-  return olxwstr(mbs, len == InvalidIndex ? olxstr::o_strlen(mbs) : len);
-}
-
-template <class T, typename TC>
-olxwstr esdl::TTSString<T, TC>::ToWStr() const {
-  return CStr2WStr(*this);
+template<> olxwstr esdl::TTSString<TWString, wchar_t>::ToWCStr() const {
+  return *this;
 }
 
 
