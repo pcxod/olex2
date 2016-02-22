@@ -360,7 +360,7 @@ void DoRun()  {
             }
           }
           char **args = ListToArgs(args_list);
-          execv(tmp_exe_name.ToCStr().c_str(), args);
+          execv(tmp_exe_name.ToMBStr().c_str(), args);
           TBasicApp::NewLogEntry(logError) <<
             "Could re-launch itself";
           return;

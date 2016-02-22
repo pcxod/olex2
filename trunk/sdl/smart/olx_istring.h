@@ -2235,8 +2235,8 @@ public:
   }
   // converts a wide char string into multibyte string properly
   // (using current locale)
-  static olxstr FromCStr(const wchar_t* wstr, size_t len=~0);
-  static olxstr FromCStr(const char* mbs, size_t len=~0);
+  static TTSString FromCStr(const wchar_t* wstr, size_t len=~0);
+  static TTSString FromCStr(const char* mbs, size_t len=~0);
 
   olxcstr ToMBStr() const;
   olxwstr ToWCStr() const;

@@ -126,7 +126,7 @@ public:
 #endif
     return TEFile::AddPathDelimeterI(
       new_shared_dir << MD5::Digest(
-        esdl::olxcstr(base_dir + ReadRepositoryTag(base_dir))));
+        base_dir.ToMBStr() + ReadRepositoryTag(base_dir)));
   }
   /* checks for OLEX2_DATADIR, if OLEX2_DATADIR_STATIC is set to true, the root
   folder is returned and used (for all versions of programs which may be
