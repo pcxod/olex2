@@ -699,7 +699,7 @@ olxstr TEFile::CurrentDir()  {
   
 #else
   char *Dp = getcwd(NULL, MAX_PATH);
-  olxstr Dir = olxcstr(Dp).ToWStr();
+  olxstr Dir = olxstr::FromCStr(Dp);
   free(Dp);
   return Dir;
 #endif

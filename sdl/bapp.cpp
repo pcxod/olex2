@@ -80,7 +80,7 @@ olxstr TBasicApp::GetModuleName() {
 #else
   Dl_info dl_info;
   dladdr((const void *)&TBasicApp::GetModuleMD5Hash, &dl_info);
-  name = olxstr::CStr2WStr(dl_info.dli_fname);
+  name = olxstr::FromCStr(dl_info.dli_fname);
   if (!TEFile::IsAbsolutePath(name)) {
     if (HasInstance())
       name = TEFile::ExpandRelativePath(name, GetBaseDir());
@@ -102,9 +102,9 @@ const olxstr &TBasicApp::GetModuleMD5Hash() {
     TCStrList l = TEFile::ReadCLines(last_dg_fn);
     if (l.Count() > 3) {
       TEFile::FileID fd = TEFile::GetFileID(name);
-      if (l[0] == name &&
-          l[1] == olxstr(fd.size) &&
-          l[2] == olxstr(fd.timestamp))
+      if (l[0] == name.ToMBStr() &&
+          l[1] == olxcstr(fd.size) &&
+          l[2] == olxcstr(fd.timestamp))
       {
         Digest = l[3];
         do_calculate = false;
@@ -117,7 +117,7 @@ const olxstr &TBasicApp::GetModuleMD5Hash() {
       Digest = MD5::Digest(f);
       TCStrList l;
       TEFile::FileID fd = TEFile::GetFileID(name);
-      l << name;
+      l << name.ToMBStr();
       l << fd.size;
       l << fd.timestamp;
       l << Digest;
