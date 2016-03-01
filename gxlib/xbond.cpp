@@ -829,7 +829,7 @@ void TXBond::Settings::CreatePrimitives() {
   primitives.Add("Balls bond", GlP);
 
   GlPRC1 = &parent.NewPrimitive(sgloSphere);
-  GlPRC1->Params[0] = 0.02;    GlPRC1->Params[1] = 5;  GlPRC1->Params[2] = 5;
+  GlPRC1->Params[0] = 0.04;    GlPRC1->Params[1] = 5;  GlPRC1->Params[2] = 5;
   GlPRC1->Compile();
   stockPrimitives.Add("Balls bond sphere", GlPRC1);
 

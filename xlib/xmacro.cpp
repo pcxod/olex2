@@ -351,7 +351,9 @@ void XLibMacros::Export(TLibrary& lib)  {
     "Calculates CHN composition of current structure or for provided formula");
   xlib_InitMacro(CalcMass, EmptyString(), fpNone|fpOne,
     "Calculates Mass spectrum of current structure or for provided formula");
-  xlib_InitMacro(Omit, EmptyString(), fpOne|fpTwo|fpThree|psCheckFileTypeIns,
+  xlib_InitMacro(Omit,
+    "u-removes puts the omitted reflection back (only for OMIT lines)",
+    fpOne|fpTwo|fpThree|psCheckFileTypeIns,
     "Removes any particular reflection from the refinement list. If a single "
     "number is provided, all reflections with delta(F^2)/esd greater than "
     "given number are omitted");
@@ -5626,6 +5628,15 @@ void XLibMacros::macOmit(TStrObjList &Cmds, const TParamList &Options,
     processed = true;
   }
   if (!processed) {
+    if (Options.GetBoolOption('u')) {
+      if (Cmds.Count() == 3) {
+        rm.DelOMIT(Cmds);
+      }
+      else {
+        Error.ProcessingError(__OlxSrcInfo, "3 integers are expected");
+      }
+      return;
+    }
     rm.AddOMIT(Cmds);
   }
   OnAddIns().Exit(NULL, &sig);

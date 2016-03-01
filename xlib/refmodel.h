@@ -313,19 +313,26 @@ public:
   void Omit(const vec3i& r)  {  Omits.AddCopy(r);  }
   void ClearOmits()  {  Omits.Clear();  }
   const vec3i_list& GetOmits() const {  return Omits;  }
-  template <class list> void AddOMIT(const list& omit)  {
+  template <class list> void AddOMIT(const list& omit) {
     if (!omit.IsEmpty() && !omit[0].IsNumber()) {
       Omitted.Build(omit.Text(' '));
     }
-    else if( omit.Count() == 3 )  {  // reflection omit
+    else if (omit.Count() == 3) {  // reflection omit
       Omits.AddNew(omit[0].ToInt(), omit[1].ToInt(), omit[2].ToInt());
     }
-    else  {  // reflection transformation/filtering
-      if( omit.Count() > 0 )
+    else {  // reflection transformation/filtering
+      if (omit.Count() > 0) {
         OMIT_s = omit[0].ToDouble();
-      if( omit.Count() > 1 )
+      }
+      if (omit.Count() > 1) {
         OMIT_2t = omit[1].ToDouble();
+      }
       OMIT_set = true;
+    }
+  }
+  template <class list> void DelOMIT(const list& omit) {
+    if (omit.Count() == 3) {
+      Omits.Remove(vec3i(omit[0].ToInt(), omit[1].ToInt(), omit[2].ToInt()));
     }
   }
   const AtomRefList &OmittedAtoms() const { return Omitted; }
