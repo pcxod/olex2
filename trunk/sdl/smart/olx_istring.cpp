@@ -8,7 +8,7 @@
 ******************************************************************************/
 
 #include "../ebase.h"
-
+#include "../eutf8.h"
 namespace esdl {
 
   template<> olxcstr olxcstr::FromCStr(
@@ -20,8 +20,9 @@ namespace esdl {
     }
     const size_t res = wcstombs(NULL, wstr, sz);
     if (res == InvalidSize) {
-      TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo,
-        "could not convert wcs to mbs");
+      return TUtf8::Encode(wstr, sz);
+      //TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo,
+      //  "could not convert wcs to mbs");
     }
     olxcstr str;
     str.Allocate(res + 1, false);
@@ -49,8 +50,9 @@ namespace esdl {
     }
     const size_t res = mbstowcs(NULL, mbs, sz);
     if (res == InvalidSize) {
-      TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo,
-        "could not convert mbs to wcs");
+      return TUtf8::Decode(mbs, sz);
+      //TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo,
+      //  "could not convert mbs to wcs");
     }
     olxwstr str;
     str.Allocate(res+1, false);
