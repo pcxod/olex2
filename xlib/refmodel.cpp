@@ -607,11 +607,22 @@ const TRefList& RefinementModel::GetReflections() const {
       evecd esd = evecd::FromAny(
         Composite::Vector(vec3d_list() << aunit.GetAxisEsds() <<
           aunit.GetAngleEsds()));
-      if (aunit.GetAxes().DistanceTo(ins().GetAsymmUnit().GetAxes()) > 1e-6 ||
-        aunit.GetAngles().DistanceTo(ins().GetAsymmUnit().GetAngles()) > 1e-6 ||
-        aunit.GetAxisEsds().DistanceTo(ins().GetAsymmUnit().GetAxisEsds()) > 1e-6 ||
-        aunit.GetAngleEsds().DistanceTo(ins().GetAsymmUnit().GetAngleEsds()))
-      {
+      bool cell_changed = false;
+      for (int i = 0; i < 3; i++) {
+        if (olx_abs(aunit.GetAxes()[i] - ins().GetAsymmUnit().GetAxes()[i]) >
+          olx_min(aunit.GetAxisEsds()[i], ins().GetAsymmUnit().GetAxisEsds()[i]))
+        {
+          cell_changed = true;
+          break;
+        }
+        if (olx_abs(aunit.GetAngles()[i] - ins().GetAsymmUnit().GetAngles()[i]) >
+          olx_min(aunit.GetAngleEsds()[i], ins().GetAsymmUnit().GetAngleEsds()[i]))
+        {
+          cell_changed = true;
+          break;
+        }
+      }
+      if (cell_changed) {
         OnCellDifference.Execute(this, &ins());
       }
     }

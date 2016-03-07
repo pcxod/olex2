@@ -1326,6 +1326,7 @@ void TIns::SaveToStrings(TStrList& SL) {
   int afix = 0, part = 0;
   double spec = 0;
   uint32_t fragmentId = ~0;
+  TCAtomPList peaks;
   for (size_t i=0; i < GetAsymmUnit().ResidueCount(); i++) {
     TResidue& residue = GetAsymmUnit().GetResidue(i);
     if (i != 0 && !residue.IsEmpty()) {
@@ -1335,7 +1336,13 @@ void TIns::SaveToStrings(TStrList& SL) {
     }
     for (size_t j=0; j < residue.Count(); j++) {
       TCAtom& ac = residue[j];
-      if (ac.IsDeleted() || ac.IsSaved())  continue;
+      if (ac.IsDeleted() || ac.IsSaved()) {
+        continue;
+      }
+      if (ac.GetType() == iQPeakZ) {
+        peaks << ac;
+        continue;
+      }
       if (ac.GetFragmentId() != fragmentId || !olx_is_valid_index(fragmentId)) {
         if (olx_is_valid_index(fragmentId))
           SL.Add(EmptyString());
@@ -1349,10 +1356,17 @@ void TIns::SaveToStrings(TStrList& SL) {
       _SaveAtom(GetRM(), ac, part, afix, spec, &sfac, SL, NULL, true, false);
     }
   }
-  if( afix != 0 )  SL.Add("AFIX 0");
+  if (afix != 0) {
+    SL.Add("AFIX 0");
+  }
   SL.Add("HKLF ") << RefMod.GetHKLFStr();
   SL.Add(EmptyString());
   SL.Add("END");
+  for (size_t i = 0; i < peaks.Count(); i++) {
+    TCAtom &p = *peaks[i];
+    SL.Add(p.GetLabel()).stream(' ') << "1" <<
+      p.ccrd()[0] << p.ccrd()[1] << p.ccrd()[2] << "11" << "0.05" << p.GetQPeak();
+  }
 }
 //..............................................................................
 void TIns::_DrySaveAtom(TCAtom& a, TSizeList &indices,
