@@ -197,6 +197,10 @@ public:
   }
   // returns given block
   const cif_dp::CifBlock& GetBlock(size_t i) const {
+    if (i > data_provider.Count()) {
+      throw TIndexOutOfRangeException(__OlxSourceInfo,
+        i, 0, data_provider.Count());
+    }
     return data_provider[i];
   }
   // returns current block index, might be InvalidIndex
