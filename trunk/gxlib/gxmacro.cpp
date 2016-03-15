@@ -1935,14 +1935,20 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
       TGXApp::AtomIterator ai = app.GetAtoms();
       while (ai.HasNext()) {
         TXAtom &a = ai.Next();
+        if (!a.IsVisible()) {
+          continue;
+        }
         XVarReference *ref = a.CAtom().GetVarRef(catom_var_name_Sof);
-        if (ref == NULL) continue;
+        if (ref == NULL) {
+          continue;
+        }
         int v = int(ref->Parent.GetId());
         if (ref->relation_type == relation_AsOneMinusVar)
           v *= -1;
         for (size_t i=0; i < fvars.Count(); i++) {
-          if (fvars[i] == v)
+          if (fvars[i] == v) {
             app.GetRenderer().Select(a, flag);
+          }
         }
       }
     }
@@ -1952,8 +1958,12 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
     TGXApp::AtomIterator ai = app.GetAtoms();
     while (ai.HasNext()) {
       TXAtom& xa = ai.Next();
-      if (xa.GetEllipsoid() == NULL)
+      if (!xa.IsVisible()) {
+        continue;
+      }
+      if (xa.GetEllipsoid() == NULL) {
         app.GetRenderer().Select(xa, flag);
+      }
     }
   }
   else if (Cmds.Count() == 1 && Cmds[0].Equalsi("anis")) {
@@ -1961,15 +1971,22 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
     TGXApp::AtomIterator ai = app.GetAtoms();
     while (ai.HasNext()) {
       TXAtom& xa = ai.Next();
-      if (xa.GetEllipsoid() != NULL)
+      if (!xa.IsVisible()) {
+        continue;
+      }
+      if (xa.GetEllipsoid() != NULL) {
         app.GetRenderer().Select(xa, flag);
+      }
     }
   }
   else if (Cmds.Count() == 1 && Cmds[0].Equalsi("atoms")) {
     TGXApp::AtomIterator ai = app.GetAtoms();
-    if (flag == glSelectionNone) flag = glSelectionSelect;
-    while (ai.HasNext())
+    if (flag == glSelectionNone) {
+      flag = glSelectionSelect;
+    }
+    while (ai.HasNext()) {
       app.GetRenderer().Select(ai.Next(), flag);
+    }
   }
   else if (Cmds.Count() == 1 && Cmds[0].Equalsi("bonds")) {
     if (flag == glSelectionNone) flag = glSelectionSelect;

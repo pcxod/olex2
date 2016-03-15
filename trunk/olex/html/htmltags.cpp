@@ -1005,7 +1005,7 @@ TAG_HANDLER_PROC(tag) {
     CreatedWindow = hc;
     hc->WI.SetWidth(ax);
     hc->WI.SetHeight(ay);
-    hc->SetPage(Value.u_str());
+    hc->LoadPage(Value.u_str());
     hc->OnLink.Add(&html->Manager);
     wxScrollbarVisibility v = wxSHOW_SB_DEFAULT,
       h = wxSHOW_SB_DEFAULT;
