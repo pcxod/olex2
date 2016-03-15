@@ -494,19 +494,19 @@ bool TEFile::ListCurrentDir(TStrList& Out, const olxstr &Mask, const uint16_t sF
     return false;
   bool done = true;
   while (done) {
-    if ((sF & sefDir) != 0 && (sF & sefRelDir) == 0 &&
-      (sd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
-    {
+    if ((sd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0) {
       size_t len = olxstr::o_strlen(sd.cFileName);
-      if ((len == 1 && sd.cFileName[0] == '.') ||
-          (len == 2 && sd.cFileName[0] == '.' && sd.cFileName[1] == '.'))
+      if ((sF & sefDir) == 0 ||
+           ((sF & sefRelDir) == 0 && ((len == 1 && sd.cFileName[0] == '.') ||
+            (len == 2 && sd.cFileName[0] == '.' && sd.cFileName[1] == '.'))))
       {
         done = (FindNextFile(hn, &sd) != 0);
         continue;
       }
     }
-    if (DoesMatchMasks(sd.cFileName, masks))
+    if (DoesMatchMasks(sd.cFileName, masks)) {
       Out.Add(sd.cFileName);
+    }
     done = (FindNextFile(hn, &sd) != 0);
   }
   FindClose(hn);
