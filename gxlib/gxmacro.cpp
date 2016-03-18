@@ -1741,12 +1741,15 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
     return;
   }
   glSelectionFlag flag=glSelectionNone;
-  if (Options.Contains('a'))
+  if (Options.Contains('a')) {
     flag = glSelectionSelect;
-  else if (Options.Contains('u'))
+  }
+  else if (Options.Contains('u')) {
     flag = glSelectionUnselect;
-  else if (Options.Contains('i'))
+  }
+  else if (Options.Contains('i')) {
     flag = glSelectionInvert;
+  }
 
   if (Cmds.Count() >= 1 && Cmds[0].Equalsi("frag")) {
     TNetPList nets(
@@ -1801,10 +1804,12 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
     TSizeList nums;
     TStrList names;
     for (size_t i=1; i < Cmds.Count(); i++) {
-      if (Cmds[i].IsInt())
+      if (Cmds[i].IsInt()) {
         nums << Cmds[i].ToSizeT();
-      else
+      }
+      else {
         names << Cmds[i];
+      }
     }
     for (size_t i=0; i < au.ResidueCount(); i++) {
       TResidue &r = au.GetResidue(i);
@@ -1823,10 +1828,12 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
           }
         }
       }
-      if (!found) continue;
-      for (size_t j=0; j < r.Count(); j++)
+      if (!found) {
+        continue;
+      }
+      for (size_t j = 0; j < r.Count(); j++) {
         r[j].SetTag(1);
-
+      }
     }
     TGXApp::AtomIterator ai = app.GetAtoms();
     while (ai.HasNext()) {
@@ -2001,7 +2008,9 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
   else if (Cmds.Count() == 2 && Cmds[0].Equalsi("bond") &&
     Cmds[1].Equalsi("atoms"))
   {
-    if (flag == glSelectionNone) flag = glSelectionSelect;
+    if (flag == glSelectionNone) {
+      flag = glSelectionSelect;
+    }
     TGXApp::BondIterator bi = app.GetBonds();
     while (bi.HasNext()) {
       TXBond &b = bi.Next();
@@ -2014,12 +2023,33 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
   else if (Cmds.Count() == 2 && Cmds[0].Equalsi("atom") &&
     Cmds[1].Equalsi("bonds"))
   {
-    if (flag == glSelectionNone) flag = glSelectionSelect;
+    if (flag == glSelectionNone) {
+      flag = glSelectionSelect;
+    }
     TGXApp::BondIterator bi = app.GetBonds();
     while (bi.HasNext()) {
       TXBond &b = bi.Next();
-      if (b.A().IsSelected() && b.B().IsSelected())
+      if (b.A().IsSelected() && b.B().IsSelected()) {
         app.GetRenderer().Select(b, flag);
+      }
+    }
+  }
+  else if (Cmds.Count() > 0 && Cmds[0].Equalsi("planes")) {
+    if (flag == glSelectionNone) {
+      flag = glSelectionSelect;
+    }
+    int pc = -1;
+    if (Cmds.Count() > 1 && Cmds[1].IsNumber()) {
+      pc = Cmds[1].ToInt();
+    }
+    TGXApp::PlaneIterator pi = app.GetPlanes();
+    while (pi.HasNext()) {
+      TXPlane &p = pi.Next();
+      if (p.IsVisible()) {
+        if (pc < 0 || pc == p.Count()) {
+          app.GetRenderer().Select(p, flag);
+        }
+      }
     }
   }
   else if (Cmds.Count() >= 1 && Cmds[0].Equalsi("wbox")) {
@@ -2112,51 +2142,81 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
       if (whereIndex >= 1 && whereIndex != InvalidIndex) {
         olxstr Tmp = Cmds[whereIndex-1];
         while (olx_is_valid_index(whereIndex)) { Cmds.Delete(whereIndex--); }
-        if (Tmp.Equalsi("atoms"))
+        if (Tmp.Equalsi("atoms")) {
           app.SelectAtomsWhere(Cmds.Text(' '));
-        else if (Tmp.Equalsi("bonds"))
+        }
+        else if (Tmp.Equalsi("bonds")) {
           app.SelectBondsWhere(Cmds.Text(' '));
-        else
-          Error.ProcessingError(__OlxSrcInfo, "undefined keyword: " ) << Tmp;
+        }
+        else {
+          Error.ProcessingError(__OlxSrcInfo, "undefined keyword: ") << Tmp;
+        }
         return;
       }
       else {
-        size_t ringsIndex = Cmds.IndexOf("rings");
-        if (ringsIndex != InvalidIndex) {
-          Cmds.Delete( ringsIndex );
+        size_t idx;
+        if ((idx = Cmds.IndexOf("rings")) != InvalidIndex) {
+          Cmds.Delete(idx);
           app.SelectRings(Cmds.Text(' '));
         }
-        else
+        else if ((idx = Cmds.IndexOf("collection")) != InvalidIndex) {
+          TTypeList<Wildcard> masks;
+          for (size_t i = 0; i < Cmds.Count(); i++) {
+            if (i == idx) {
+              continue;
+            }
+            masks.AddNew(Cmds[i]);
+          }
+          for (size_t i = 0; i < app.GetRenderer().CollectionCount(); i++) {
+            TGPCollection &c = app.GetRenderer().GetCollection(i);
+            for (size_t j = 0; j < masks.Count(); j++) {
+              if (masks[j].DoesMatch(c.GetName())) {
+                for (size_t oi = 0; oi < c.ObjectCount(); oi++) {
+                  app.GetRenderer().Select(c.GetObject(oi));
+                }
+              }
+            }
+          }
+        }
+        else {
           app.SelectAtoms(Cmds.Text(' '));
+        }
         return;
       }
     }
     olxstr seli = app.GetSelectionInfo(Options.Contains('l'));
     if (!seli.IsEmpty()) {
       app.NewLogEntry() << seli;
-      if (Options.Contains('c'))
+      if (Options.Contains('c')) {
         app.ToClipboard(seli);
+      }
     }
   }
   else {
     if (Cmds.IsEmpty()) {
-      if (flag == glSelectionSelect)
+      if (flag == glSelectionSelect) {
         app.SelectAll(true);
-      else if (flag == glSelectionUnselect)
+      }
+      else if (flag == glSelectionUnselect) {
         app.SelectAll(false);
-      else if (flag == glSelectionInvert)
+      }
+      else if (flag == glSelectionInvert) {
         app.GetRenderer().InvertSelection();
+      }
     }
     else {
       TXAtomPList atoms = app.FindXAtoms(Cmds.Text(' '), false, false);
       TGlRenderer &r = app.GetRenderer();
       for (size_t i=0; i < atoms.Count(); i++) {
-        if (flag == glSelectionSelect)
+        if (flag == glSelectionSelect) {
           r.Select(*atoms[i], true);
-        else if (flag == glSelectionUnselect)
+        }
+        else if (flag == glSelectionUnselect) {
           r.Select(*atoms[i], false);
-        else if (flag == glSelectionInvert || flag == glSelectionNone)
+        }
+        else if (flag == glSelectionInvert || flag == glSelectionNone) {
           r.Select(*atoms[i], !atoms[i]->IsSelected());
+        }
       }
     }
   }

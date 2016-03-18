@@ -68,96 +68,102 @@ uint64_t TETime::msNow()  {
 return rv;
 }
 //..............................................................................
-olxstr TETime::FormatDateTime(const olxstr& format, time_t v )  {
+olxstr TETime::FormatDateTime(const olxstr& format, time_t v) {
   struct tm * tm = localtime(&v);
   olxstr rv;
+  if (tm == 0) {
+    return rv;
+  }
 
-  for( size_t i=0; i < format.Length(); i++ )  {
-    switch( format[i] )  {
-      case 's':
-        if( (i+1) < format.Length() && format[i+1] == 's' )  {
-          if( tm->tm_sec < 10 )  rv << '0';
+  for (size_t i = 0; i < format.Length(); i++) {
+    switch (format[i]) {
+    case 's':
+      if ((i + 1) < format.Length() && format[i + 1] == 's') {
+        if (tm->tm_sec < 10)  rv << '0';
+        i++;
+      }
+      rv << tm->tm_sec;
+      break;
+    case 'm':
+      if ((i + 1) < format.Length() && format[i + 1] == 'm') {
+        if (tm->tm_min < 10)  rv << '0';
+        i++;
+      }
+      rv << tm->tm_min;
+      break;
+    case 'h':
+      if ((i + 1) < format.Length() && format[i + 1] == 'h') {
+        if (tm->tm_hour < 10)  rv << '0';
+        i++;
+      }
+      rv << tm->tm_hour;
+      break;
+    case 'd':
+      if ((i + 1) < format.Length() && format[i + 1] == 'd')
+        if ((i + 2) < format.Length() && format[i + 2] == 'd')
+          if ((i + 3) < format.Length() && format[i + 3] == 'd') {
+            rv << WeekDaysLong[tm->tm_wday];
+            i += 3;
+          }
+          else {
+            rv.Append(WeekDaysLong[tm->tm_wday], 3);
+            i += 2;
+          }
+        else {
+          if (tm->tm_mday < 10)
+            rv << '0' << tm->tm_mday;
+          else
+            rv << tm->tm_mday;
           i++;
         }
-        rv << tm->tm_sec;
-        break;
-      case 'm':
-        if( (i+1) < format.Length() && format[i+1] == 'm')  {
-          if( tm->tm_min  < 10 )  rv << '0';
+      else
+        rv << tm->tm_mday;
+      break;
+    case 'M':
+      if ((i + 1) < format.Length() && format[i + 1] == 'M')
+        if ((i + 2) < format.Length() && format[i + 2] == 'M')
+          if ((i + 3) < format.Length() && format[i + 3] == 'M') {
+            rv << MonthsLong[tm->tm_mon];
+            i += 3;
+          }
+          else {
+            rv.Append(MonthsLong[tm->tm_mon], 3);
+            i += 2;
+          }
+        else {
+          if (tm->tm_mon < 9)
+            rv << '0' << (tm->tm_mon + 1);
+          else
+            rv << (tm->tm_mon + 1);
           i++;
         }
-        rv << tm->tm_min;
-        break;
-      case 'h':
-        if( (i+1) < format.Length() && format[i+1] == 'h')  {
-          if( tm->tm_hour < 10 )  rv << '0';
+      else
+        rv << (tm->tm_mon + 1);
+      break;
+    case 'y':
+      if ((i + 1) < format.Length() && format[i + 1] == 'y') {
+        if ((i + 2) < format.Length() && format[i + 2] == 'y') {
+          if ((i + 3) < format.Length() && format[i + 3] == 'y') {
+            rv << (tm->tm_year + 1900);
+            i += 3;
+          }
+        }
+        else {
+          if ((tm->tm_year - 100) < 10) {
+            rv << '0' << (tm->tm_year - 100);
+          }
+          else {
+            rv << (tm->tm_year - 100);
+          }
           i++;
         }
-        rv << tm->tm_hour;
-        break;
-      case 'd':
-        if( (i+1) < format.Length() && format[i+1] == 'd' )
-          if( (i+2) < format.Length() && format[i+2] == 'd' )
-            if( (i+3) < format.Length() && format[i+3] == 'd' )  {
-              rv << WeekDaysLong[ tm->tm_wday ];
-              i+=3;
-            }
-            else  {
-              rv.Append(WeekDaysLong[ tm->tm_wday ], 3);
-              i+=2;
-            }
-          else  {
-            if( tm->tm_mday < 10 )
-              rv << '0' << tm->tm_mday;
-            else
-              rv << tm->tm_mday;
-            i++;
-          }
-        else
-          rv << tm->tm_mday;
-        break;
-      case 'M':
-        if( (i+1) < format.Length() && format[i+1] == 'M' )
-          if( (i+2) < format.Length() && format[i+2] == 'M' )
-            if( (i+3) < format.Length() && format[i+3] == 'M' )  {
-              rv << MonthsLong[ tm->tm_mon ];
-              i+=3;
-            }
-            else  {
-              rv.Append(MonthsLong[ tm->tm_mon ], 3);
-              i+=2;
-            }
-          else  {
-            if( tm->tm_mon < 9 )
-              rv << '0' << (tm->tm_mon+1);
-            else
-              rv << (tm->tm_mon+1);
-            i++;
-          }
-        else
-          rv << (tm->tm_mon+1);
-        break;
-      case 'y':
-        if( (i+1) < format.Length() && format[i+1] == 'y' )
-          if( (i+2) < format.Length() && format[i+2] == 'y' )
-            if( (i+3) < format.Length() && format[i+3] == 'y' )  {
-              rv << ( tm->tm_year+1900);
-              i+=3;
-            }
-            else
-              ;
-          else  {
-            if( (tm->tm_year-100) < 10 )
-              rv << '0' << (tm->tm_year-100);
-            else
-              rv << (tm->tm_year-100);
-            i++;
-          }
-        else
-          rv << (tm->tm_year-100);
-        break;
-      default:
-        rv << format[i];
+      }
+      else {
+        rv << (tm->tm_year - 100);
+      }
+      break;
+    default:
+      rv << format[i];
     }
   }
   return rv;
