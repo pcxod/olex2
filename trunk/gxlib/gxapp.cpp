@@ -385,7 +385,7 @@ TGXApp::TGXApp(const olxstr &FileName, AGlScene *scene)
 }
 //..............................................................................
 TGXApp::~TGXApp() {
-  Instance = 0;
+  Instance_() = 0;
   delete States;
   XFile().OnFileLoad.Remove(this);
   XFile().GetLattice().OnAtomsDeleted.Remove(this);

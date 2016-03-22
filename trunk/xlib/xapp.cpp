@@ -67,7 +67,7 @@ void TXApp::Init(ASObjectProvider* objectProvider, ASelectionOwner* selOwner) {
 }
 //..............................................................................
 TXApp::~TXApp() {
-  Instance = 0;
+  Instance_() = 0;
 }
 //..............................................................................
 bool TXApp::CheckProgramState(unsigned int specialCheck)  {
