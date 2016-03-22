@@ -202,7 +202,7 @@ void GXLibMacros::Export(TLibrary& lib) {
   gxlib_InitMacro(Sel,
     "a-select all&;"
     "u-unselect all&;"
-    "l-consider the list of bonds as independent&;"
+    "l-consider the list of bonds as independent when printing info&;"
     "c-copies printed values to the clipboard&;"
     "i-invert selection&;",
     fpAny,
@@ -211,7 +211,9 @@ void GXLibMacros::Export(TLibrary& lib) {
     "Selects atoms fulfilling provided conditions, like"
     "\nsel $type - selects any particular atom type; type can be one of the "
     "following shortcuts - * - for all atoms, M - for metals, X - for halogens"
-    "\nsel $*,type - selects all but type atoms"
+    "\nsel $*,type - selects all but specified type atoms"
+    "\n sel isot/anis - selects isotropic or anisotropic atoms"
+    "\n sel fvar 1 - selects all atoms parameters of which depend on the fvar 1"
     "\n\n"
     "An extended syntax include keyword 'where' and 'rings' which "
     "allow selecting atoms and bonds according to their properties, like type "
@@ -221,7 +223,8 @@ void GXLibMacros::Export(TLibrary& lib) {
     "\nsel atoms where xatom.bai.z > 2 - to select all atoms heavier after H"
     "\nsel bonds where xbond.length > 2 - to select all bonds longer than 2 A"
     "\nsel bonds where xbond.b.bai.z == 1 - to select all bonds where the "
-    "lightest atoms is H"
+    "lightest atoms is H. Other extensions include 'sel atom bonds' and "
+    "'sel bond atoms' and 'sel collection [wildcards]'"
     );
   gxlib_InitMacro(Uniq, EmptyString(), fpAny | psFileLoaded,
     "Shows only fragments specified by atom name(s) or selection");

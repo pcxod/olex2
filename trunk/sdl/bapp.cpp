@@ -25,18 +25,16 @@
 #endif
 UseEsdlNamespace()
 
-TBasicApp* TBasicApp::Instance = NULL;
-
 TBasicApp::TBasicApp(const olxstr& FileName, bool read_options)
   : OnProgress(ActionList.New("PROGRESS")),
     OnTimer(ActionList.New("TIMER")),
     OnIdle(ActionList.New("IDLE"))
 {
-  if (Instance != NULL) {
+  if (Instance_() != NULL) {
     throw TFunctionFailedException(__OlxSourceInfo,
       "an application instance already exists");
   }
-  Instance = this;
+  Instance_() = this;
 
   MaxThreadCount = 1;
 #ifdef __WIN32__
@@ -58,10 +56,11 @@ TBasicApp::TBasicApp(const olxstr& FileName, bool read_options)
 }
 //..............................................................................
 TBasicApp::~TBasicApp()  {
-  Instance = 0;
+  Instance_() = 0;
   delete Log;
-  if (LogFile != NULL)
+  if (LogFile != NULL) {
     delete LogFile;
+  }
 }
 //..............................................................................
 olxstr TBasicApp::GetModuleName() {
@@ -133,7 +132,7 @@ const olxstr &TBasicApp::GetModuleMD5Hash() {
 }
 //..............................................................................
 bool TBasicApp::HasInstance()  {
-  return Instance != NULL;
+  return Instance_() != NULL;
 }
 //..............................................................................
 void TBasicApp::ReadOptions(const olxstr &fn) {
