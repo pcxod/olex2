@@ -34,7 +34,10 @@ class TBasicApp: public virtual IOlxObject {
     ConfigDir;
 protected:
   class TActionQList ActionList;
-  static TBasicApp *Instance;
+  static TBasicApp *&Instance_() {
+    static TBasicApp *app = 0;
+    return app;
+  }
   class TLog *Log;
   class TEFile *LogFile;
   short MaxThreadCount;
@@ -141,11 +144,11 @@ public:
   // valid only if correct string is passed to the constructor
   static const olxstr& GetExeName()  {  return GetInstance().ExeName;  }
   static TBasicApp& GetInstance() {
-    if( Instance == NULL ) {
+    if (Instance_() == NULL) {
       throw TFunctionFailedException(__OlxSourceInfo,
         "Uninitialised application layer...");
     }
-    return *Instance;
+    return *Instance_();
   }
 
   static bool HasInstance();
