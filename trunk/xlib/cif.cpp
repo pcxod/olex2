@@ -868,7 +868,9 @@ bool TCif::Adopt(TXFile &XF, int flags) {
     ASObjectProvider &objects = XF.GetLattice().GetObjects();
     for (size_t i = 0; i < objects.atoms.Count(); i++) {
       TSAtom &a = objects.atoms[i];
-      if (!a.IsAvailable()) continue;
+      if (!a.IsAvailable()) {
+        continue;
+      }
       TCAtom & ca = AsymmUnit.NewAtom();
       ca.SetLabel(a.GetLabel(), false);
       ca.SetPart(a.CAtom().GetPart());
@@ -885,6 +887,9 @@ bool TCif::Adopt(TXFile &XF, int flags) {
         TEllipsoid &e = AsymmUnit.NewEllp();
         e = *a.GetEllipsoid();
         ca.SetEllpId(AsymmUnit.EllpCount() - 1);
+      }
+      for (size_t ei = 0; ei < a.CAtom().EquivCount(); ei++) {
+        ca.AddEquiv(a.CAtom().GetEquiv(ei));
       }
     }
   }
@@ -1025,23 +1030,28 @@ bool TCif::Adopt(TXFile &XF, int flags) {
     Row.Set(6, new cetString(A.GetEllipsoid() == NULL ? "Uiso" : "Uani"));
     Row.Set(7, new cetString(TEValueD(olx_round(A.GetChemOccu(), 1000),
       A.GetOccuEsd()*A.GetDegeneracy()).ToString()));
-    if (A.GetParentAfixGroup() != NULL && A.GetParentAfixGroup()->IsRiding())
+    if (A.GetParentAfixGroup() != NULL && A.GetParentAfixGroup()->IsRiding()) {
       Row.Set(8, new cetString("R"));
-    else
+    }
+    else {
       Row.Set(8, new cetString('.'));
+    }
     Row.Set(9, new cetString(A.GetDegeneracy()));
     // process part as well
-    if (A.GetPart() != 0)
+    if (A.GetPart() != 0) {
       Row[10] = new cetString((int)A.GetPart());
-    else
+    }
+    else {
       Row[10] = new cetString('.');
+    }
     if (A.GetEllipsoid() != NULL) {
       A.GetEllipsoid()->GetShelxQuad(Q, E);
       GetAsymmUnit().UcartToUcif(Q);
       CifRow& Row1 = u_loop.AddRow();
       Row1[0] = new AtomCifEntry(A);
-      for (int j = 0; j < 6; j++)
+      for (int j = 0; j < 6; j++) {
         Row1.Set(j + 1, new cetString(TEValueD(Q[j], E[j]).ToString()));
+      }
     }
   }
   return true;
