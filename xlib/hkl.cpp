@@ -142,7 +142,7 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
           line_length = line.Length();
         }
         else if (line.Length() >= 28) {
-          line_length = 28;
+          line_length = line.Length();
         }
         else {
           throw TInvalidArgumentException(__OlxSourceInfo, "file content");
