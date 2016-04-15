@@ -2595,21 +2595,24 @@ void XLibMacros::macFixUnit(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
   double Zp = Cmds.IsEmpty() ? 1 : Cmds[0].ToDouble();
-  if( Zp <= 0 )  Zp = 1;
+  if (Zp <= 0) {
+    Zp = 1;
+  }
   TXFile &xf = TXApp::GetInstance().XFile();
   xf.UpdateAsymmUnit();
   TAsymmUnit& au = xf.GetAsymmUnit();
   TUnitCell& uc = xf.GetUnitCell();
   ContentList content = au.GetContentList();
-  if (content.IsEmpty())
+  if (content.IsEmpty()) {
     content = xf.GetRM().GetUserContent();
+  }
   const int Z_sg = (int)uc.MatrixCount();
   int Z = olx_max(olx_round(Z_sg*Zp), 1);
   au.SetZ(Z);
   olxstr n_c;
-  for( size_t i=0; i < content.Count(); i++ )  {
-    n_c << ' ' << content[i].element.symbol <<
-      olxstr::FormatFloat(3,content[i].count/Zp).TrimFloat();
+  for (size_t i = 0; i < content.Count(); i++) {
+    n_c << ' ' << ElementCount::ToString(content[i].element,
+      content[i].count/Zp, content[i].charge);
     content[i].count = olx_round(content[i].count * Z_sg, 100);
   }
   TBasicApp::NewLogEntry() << "New content is:" << n_c;

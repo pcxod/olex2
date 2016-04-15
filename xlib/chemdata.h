@@ -201,23 +201,54 @@ public:
 struct ElementCount {
   const cm_Element& element;
   double count;
+  int charge;
   ElementCount()
-    : element(*((const cm_Element*)NULL)), count(0) {}
-  ElementCount(const cm_Element& _e, double _c) : element(_e), count(_c)  {}
-  ElementCount(const ElementCount& e) : element(e.element), count(e.count)  {}
+    : element(*((const cm_Element*)NULL)), count(0), charge(0)
+  {}
+  ElementCount(const cm_Element& _e, double _c, int ch)
+    : element(_e), count(_c), charge(ch)
+  {}
+  ElementCount(const cm_Element& _e, double _c)
+    : element(_e), count(_c), charge(0)
+  {}
+  ElementCount(const ElementCount& e)
+    : element(e.element), count(e.count), charge(e.charge)
+  {}
   ElementCount& operator += (double v) {
     count += v;
     return *this;
   }
   ElementCount& operator += (const ElementCount& v) {
 #ifdef _DEBUG
-    if( element != v.element )
+    if (element != v.element || v.charge != charge) {
       throw TInvalidArgumentException(__OlxSourceInfo, "elements must match");
+    }
 #endif
     count += v.count;
     return *this;
   }
-  bool operator == (const ElementCount& e) const {  return element == e.element;  }
+  bool operator == (const ElementCount& e) const {
+    return element == e.element && charge == e.charge;
+  }
+  olxstr ToString() const {
+    return ToString(element, count, charge);
+  }
+
+  static olxstr ToString(const cm_Element &element, double count, int charge) {
+    olxstr rv;
+    if (charge != 0) {
+      rv << '(' << element.symbol << olx_sign_char(charge);
+      int ch = olx_abs(charge);
+      if (ch > 1) {
+        rv << ch;
+      }
+      rv << ')';
+    }
+    else {
+      rv = element.symbol;
+    }
+    return rv << olxstr::FormatFloat(3, count).TrimFloat();
+  }
 };
 
 typedef TPtrList<const cm_Element> ElementPList;

@@ -122,6 +122,9 @@ public:
   PyObject* PyExport();
 #endif
   static int ChargeFromLabel(const olxstr &l, const cm_Element *e_ = 0);
+  /* Normalises a charged label from O2- to O-2 etc
+  */
+  static olxstr NormaliseCharge(const olxstr &l, const cm_Element *e_ = 0);
 };
 
 EndXlibNamespace()

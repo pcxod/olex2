@@ -22,7 +22,7 @@ void XScatterer::SetSource(const cm_Element& src, double energy) {
   source = &src;
   set_items = setAll^setMu;
 }
-
+//.............................................................................
 void XScatterer::Merge(const XScatterer& sc) {
   if ((sc.set_items & setGaussian))
     SetGaussians(sc.gaussians);
@@ -35,6 +35,7 @@ void XScatterer::Merge(const XScatterer& sc) {
   if ((sc.set_items & setWt))
     SetWeight(sc.wt);
 }
+//.............................................................................
 XScatterer& XScatterer::operator = (const XScatterer& sc) {
   gaussians = sc.gaussians;
   fpfdp = sc.fpfdp;
@@ -44,7 +45,7 @@ XScatterer& XScatterer::operator = (const XScatterer& sc) {
   set_items = sc.set_items;
   return *this;
 }
-
+//.............................................................................
 olxstr XScatterer::ToInsString() const {
   if (set_items == setDispersion || set_items == (setDispersion | setMu)) {
     olxstr rv("DISP", 80);
@@ -76,7 +77,7 @@ olxstr XScatterer::ToInsString() const {
   throw TInvalidArgumentException(__OlxSourceInfo,
     "failed to produce INS string");
 }
-
+//.............................................................................
 void XScatterer::ToDataItem(TDataItem& _di) const {
   TDataItem& di = _di.AddItem(Label, set_items);
   olxstr data;
@@ -103,7 +104,8 @@ void XScatterer::ToDataItem(TDataItem& _di) const {
   }
   di.AddField("data", data);
 }
-
+//.............................................................................
+//.............................................................................
 void XScatterer::FromDataItem(const TDataItem& di) {
   Label = di.GetName();
   set_items = di.GetValue().ToInt();
@@ -132,7 +134,7 @@ void XScatterer::FromDataItem(const TDataItem& di) {
     wt = toks[ind++].ToDouble();
   source = XElementLib::FindBySymbol(Label);
 }
-
+//.............................................................................
 #ifdef _PYTHON
 PyObject* XScatterer::PyExport() {
   PyObject* main = PyDict_New();
@@ -155,7 +157,7 @@ PyObject* XScatterer::PyExport() {
   return main;
 }
 #endif
-
+//.............................................................................
 int XScatterer::ChargeFromLabel(const olxstr &l, const cm_Element *e_) {
   const cm_Element *e = (e_ == 0 ? XElementLib::FindBySymbolEx(l) : e_);
   if (e == 0) {
@@ -166,10 +168,54 @@ int XScatterer::ChargeFromLabel(const olxstr &l, const cm_Element *e_) {
   if (cs.IsEmpty()) {
     return 0;
   }
-  if (!olxstr::o_isoneof(cs.CharAt(0), '+', '-')) {
-    throw TInvalidArgumentException(__OlxSourceInfo,
-      olxstr("charge designator: ").quote() << l);
+  bool st = olxstr::o_isoneof(cs.CharAt(0), '+', '-'),
+    ed = olxstr::o_isoneof(cs.GetLast(), '+', '-');
+  if (!st && !ed) {
+    return 0;
   }
-  int s = (cs.CharAt(0) == '-' ? -1 : 1);
-  return (cs.Length() == 1 ? s : s*cs.SubStringFrom(1).ToInt());
+  if (st) {
+    int s = (cs.CharAt(0) == '-' ? -1 : 1);
+    return (cs.Length() == 1 ? s : s*cs.SubStringFrom(1).ToInt());
+  }
+  else {
+    int s = (cs.GetLast() == '-' ? -1 : 1);
+    return (cs.Length() == 1 ? s : s*cs.SubStringFrom(0,1).ToInt());
+  }
 }
+//.............................................................................
+olxstr XScatterer::NormaliseCharge(const olxstr &l, const cm_Element *e_) {
+  const cm_Element *e = (e_ == 0 ? XElementLib::FindBySymbolEx(l) : e_);
+  if (e == 0) {
+    throw TInvalidArgumentException(__OlxSourceInfo,
+      olxstr("element symbol: ").quote() << l);
+  }
+  olxstr cs = l.SubStringFrom(e->symbol.Length());
+  if (cs.IsEmpty()) {
+    return l;
+  }
+  bool st = olxstr::o_isoneof(cs.CharAt(0), '+', '-');
+  if (st) {
+    return l;
+  }
+  bool ed = olxstr::o_isoneof(cs.GetLast(), '+', '-');
+  if (st) {
+    int s = (cs.CharAt(0) == '-' ? -1 : 1);
+    if (cs.Length() == 1) {
+      return l;
+    }
+    if (cs.SubStringFrom(1) == '1') {
+      return olxstr(e->symbol) << (s < 0 ? '-' : '+');
+    }
+    return l;
+  }
+  else if (ed) {
+    int s = (cs.GetLast() == '-' ? -1 : 1);
+    int ch = cs.SubStringFrom(0, 1).ToInt();
+    if (ch == 1) {
+      return olxstr(e->symbol) << (s < 0 ? '-' : '+');
+    }
+    return olxstr(e->symbol) << (s < 0 ? '-' : '+') << ch;
+  }
+  return l;
+}
+//.............................................................................
