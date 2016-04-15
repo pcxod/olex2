@@ -13,11 +13,12 @@
 
 void TExyzGroup::Clear()  {  Parent.Delete(Id);  }
 //..............................................................................
-void TExyzGroup::Assign(const TExyzGroup& ag)  {
-  for( size_t i=0; i < ag.Atoms.Count(); i++ )  {
+void TExyzGroup::Assign(const TExyzGroup& ag) {
+  for (size_t i = 0; i < ag.Atoms.Count(); i++) {
     Atoms.Add(Parent.RM.aunit.FindCAtomById(ag.Atoms[i]->GetId()));
-    if( Atoms.GetLast() == NULL )
+    if (Atoms.GetLast() == NULL) {
       throw TFunctionFailedException(__OlxSourceInfo, "asymmetric units mismatch");
+    }
     Atoms.GetLast()->SetExyzGroup(this);
   }
 }
@@ -25,24 +26,27 @@ void TExyzGroup::Assign(const TExyzGroup& ag)  {
 void TExyzGroup::ToDataItem(TDataItem& item) const {
   IndexRange::Builder rb;
   for (size_t i=0; i < Atoms.Count(); i++) {
-    if (!Atoms[i]->IsDeleted())
+    if (!Atoms[i]->IsDeleted()) {
       rb << Atoms[i]->GetTag();
+    }
   }
   item.AddField("atom_range", rb.GetString());
 }
 //..............................................................................
 #ifdef _PYTHON
-PyObject* TExyzGroup::PyExport(TPtrList<PyObject>& atoms)  {
+PyObject* TExyzGroup::PyExport(TPtrList<PyObject>& atoms) {
   int atom_cnt = 0;
-  for( size_t i=0; i < Atoms.Count(); i++ )  {
-    if( Atoms[i]->IsDeleted() )  continue;
-    atom_cnt++;
+  for (size_t i = 0; i < Atoms.Count(); i++) {
+    if (!Atoms[i]->IsDeleted()) {
+      atom_cnt++;
+    }
   }
   PyObject* main = PyTuple_New(atom_cnt);
   atom_cnt = 0;
-  for( size_t i=0; i < Atoms.Count(); i++ )  {
-    if( Atoms[i]->IsDeleted() )  continue;
-    PyTuple_SetItem(main, atom_cnt++, Py_BuildValue("i", Atoms[i]->GetTag()));
+  for (size_t i = 0; i < Atoms.Count(); i++) {
+    if (!Atoms[i]->IsDeleted()) {
+      PyTuple_SetItem(main, atom_cnt++, Py_BuildValue("i", Atoms[i]->GetTag()));
+    }
   }
   return main;
 }
@@ -69,8 +73,8 @@ void TExyzGroup::FromDataItem(TDataItem& item) {
 //..............................................................................
 void TExyzGroups::ToDataItem(TDataItem& item) {
   size_t group_id = 0;
-  for( size_t i=0; i < Groups.Count(); i++ )  {
-    if( Groups[i].IsEmpty() )  {
+  for (size_t i = 0; i < Groups.Count(); i++) {
+    if (Groups[i].IsEmpty()) {
       Groups.NullItem(i);
       continue;
     }
@@ -78,15 +82,16 @@ void TExyzGroups::ToDataItem(TDataItem& item) {
   }
   Groups.Pack();
   item.AddField("n", Groups.Count());
-  for (size_t i=0; i < Groups.Count(); i++)
+  for (size_t i = 0; i < Groups.Count(); i++) {
     Groups[i].ToDataItem(item.AddItem("group"));
+  }
 }
 //..............................................................................
 #ifdef _PYTHON
-PyObject* TExyzGroups::PyExport(TPtrList<PyObject>& atoms)  {
+PyObject* TExyzGroups::PyExport(TPtrList<PyObject>& atoms) {
   size_t group_id = 0;
-  for( size_t i=0; i < Groups.Count(); i++ )  {
-    if( Groups[i].IsEmpty() )  {
+  for (size_t i = 0; i < Groups.Count(); i++) {
+    if (Groups[i].IsEmpty()) {
       Groups.NullItem(i);
       continue;
     }
@@ -94,8 +99,8 @@ PyObject* TExyzGroups::PyExport(TPtrList<PyObject>& atoms)  {
   }
   Groups.Pack();
 
-  PyObject* main = PyTuple_New( Groups.Count() );
-  for( size_t i=0; i < Groups.Count(); i++ )  {
+  PyObject* main = PyTuple_New(Groups.Count());
+  for (size_t i = 0; i < Groups.Count(); i++) {
     PyTuple_SetItem(main, i, Groups[i].PyExport(atoms));
   }
   return main;
@@ -105,8 +110,9 @@ PyObject* TExyzGroups::PyExport(TPtrList<PyObject>& atoms)  {
 void TExyzGroups::FromDataItem(TDataItem& item) {
   Clear();
   size_t n = item.GetFieldByName("n").ToSizeT();
-  if (n != item.ItemCount())
+  if (n != item.ItemCount()) {
     throw TFunctionFailedException(__OlxSourceInfo, "number of items mismatch");
+  }
   for (size_t i=0; i < n; i++) {
     New().FromDataItem(item.GetItemByIndex(i));
   }

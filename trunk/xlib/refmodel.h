@@ -223,61 +223,68 @@ public:
   void SetHKLSource(const olxstr &src);
   olxstr GetHKLFStr() const {
     olxstr rv(HKLF, 80);
-    if( HKLF_m == def_HKLF_m )  {
-      if( HKLF_wt == def_HKLF_wt )  {
-        if( HKLF_mat.IsI() )  {
-          if( HKLF_s != def_HKLF_s )
+    if (HKLF_m == def_HKLF_m) {
+      if (HKLF_wt == def_HKLF_wt) {
+        if (HKLF_mat.IsI()) {
+          if (HKLF_s != def_HKLF_s)
             rv << ' ' << HKLF_s;
         }
         else {
           rv << ' ' << HKLF_s;
-          for( int i=0; i < 9; i++ )
-            rv << ' ' << HKLF_mat[i/3][i%3];
+          for (int i = 0; i < 9; i++)
+            rv << ' ' << HKLF_mat[i / 3][i % 3];
         }
       }
-      else  {
+      else {
         rv << ' ' << HKLF_s;
-        for( int i=0; i < 9; i++ )
-          rv << ' ' << HKLF_mat[i/3][i%3];
+        for (int i = 0; i < 9; i++)
+          rv << ' ' << HKLF_mat[i / 3][i % 3];
         rv << ' ' << HKLF_wt;
       }
     }
-    else  {
+    else {
       rv << ' ' << HKLF_s;
-      for( int i=0; i < 9; i++ )
-        rv << ' ' << HKLF_mat[i/3][i%3];
+      for (int i = 0; i < 9; i++)
+        rv << ' ' << HKLF_mat[i / 3][i % 3];
       rv << ' ' << HKLF_wt << ' ' << HKLF_m;
     }
     return rv;
   }
   template <class list> void SetHKLF(const list& hklf) {
-    if( hklf.IsEmpty() )
+    if (hklf.IsEmpty()) {
       throw TInvalidArgumentException(__OlxSourceInfo, "empty HKLF");
-    HKLF = hklf[0].ToInt();
-    if( HKLF > 4 )
-      MERG = 0;
-    if( hklf.Count() > 1 )
-      HKLF_s = hklf[1].ToDouble();
-    if( hklf.Count() > 10 )  {
-      for( int i=0; i < 9; i++ )
-        HKLF_mat[i/3][i%3] = hklf[2+i].ToDouble();
     }
-    else if( hklf.Count() > 2 )  {
+    HKLF = hklf[0].ToInt();
+    if (HKLF > 4) {
+      MERG = 0;
+    }
+    if (hklf.Count() > 1) {
+      HKLF_s = hklf[1].ToDouble();
+    }
+    if( hklf.Count() > 10 )  {
+      for (int i = 0; i < 9; i++) {
+        HKLF_mat[i / 3][i % 3] = hklf[2 + i].ToDouble();
+      }
+    }
+    else if (hklf.Count() > 2) {
       TBasicApp::NewLogEntry(logError) <<
         (olxstr("Invalid HKLF matrix ignored: ").quote() << hklf.Text(' ', 2));
     }
-    if( hklf.Count() > 11 )
+    if (hklf.Count() > 11) {
       HKLF_wt = hklf[11].ToDouble();
-    if( hklf.Count() > 12 )
+    }
+    if (hklf.Count() > 12) {
       HKLF_wt = hklf[12].ToDouble();
+    }
     HKLF_set = true;
   }
   int GetHKLF() const {  return HKLF;  }
   void SetHKLF(int v)  {  HKLF = v;  HKLF_set = true;  }
   const mat3d& GetHKLF_mat() const {  return HKLF_mat;  }
   void SetHKLF_mat(const mat3d& v) {
-    if( HKLF_mat != v ) // make sure it gets applied to the reflections
+    if (HKLF_mat != v) { // make sure it gets applied to the reflections
       _Reflections.Clear();
+    }
     HKLF_mat = v;
     HKLF_set = true;
   }
@@ -297,7 +304,8 @@ public:
 
   const TEValueD& GetEXTI() const {  return EXTI;  }
   void SetEXTI(double v, double e) {
-    EXTI.V() = v;  EXTI.E() = e;
+    EXTI.V() = v;
+    EXTI.E() = e;
     EXTI_set = true;
   }
   bool HasEXTI() const {  return EXTI_set;  }
@@ -360,11 +368,12 @@ public:
   double GetSHEL_hr() const {  return SHEL_hr;  }
   void SetSHEL_hr(double v)  {  SHEL_hr = v;  SHEL_set = true;  }
   bool HasSHEL() const {  return SHEL_set;  }
-  template <class list> void SetSHEL(const list& shel)  {
-    if( shel.Count() > 0 )  {
+  template <class list> void SetSHEL(const list& shel) {
+    if (shel.Count() > 0) {
       SHEL_lr = shel[0].ToDouble();
-      if( shel.Count() > 1 )
+      if (shel.Count() > 1) {
         SHEL_hr = shel[1].ToDouble();
+      }
       SHEL_set = true;
     }
   }
@@ -381,16 +390,18 @@ public:
     TDoubleList rv;
     if (!GetBASF().IsEmpty()) {
       double pi = 0;  // 'prime' reflection fraction
-      for (size_t bi=0; bi < GetBASF().Count(); bi++)
+      for (size_t bi = 0; bi < GetBASF().Count(); bi++) {
         pi += GetBASF()[bi].GetV();
-      rv << 1-pi << GetBASFAsDoubleList();
+      }
+      rv << 1 - pi << GetBASFAsDoubleList();
     }
     else {
-      if (GetTWIN_n() != 0 ) {  // all the fractions are the same
-        double f = 1./olx_abs(GetTWIN_n());
+      if (GetTWIN_n() != 0) {  // all the fractions are the same
+        double f = 1. / olx_abs(GetTWIN_n());
         rv.SetCount(olx_abs(GetTWIN_n()));
-        for (size_t i=0; i < rv.Count(); i++)
+        for (size_t i = 0; i < rv.Count(); i++) {
           rv[i] = f;
+        }
       }
     }
     return rv;
@@ -398,12 +409,14 @@ public:
   olxstr GetBASFStr() const;
 
   template <class list> void SetTWIN(const list& twin) {
-    if( twin.Count() > 8 )  {
-      for( size_t i=0; i < 9; i++ )
-        TWIN_mat[i/3][i%3] = twin[i].ToDouble();
+    if (twin.Count() > 8) {
+      for (size_t i = 0; i < 9; i++) {
+        TWIN_mat[i / 3][i % 3] = twin[i].ToDouble();
+      }
     }
-    if( twin.Count() > 9 )
+    if (twin.Count() > 9) {
       TWIN_n = twin[9].ToInt();
+    }
     TWIN_set = true;
   }
   olxstr GetTWINStr() const;
@@ -442,10 +455,11 @@ Friedel opposites of components 1 ... m
     BASF_Vars.Clear();
   }
   // sets default esd values for restraints
-  template <class list> void SetDEFS(const list& bs)  {
+  template <class list> void SetDEFS(const list& bs) {
     size_t mc = olx_min(bs.Count(), DEFS.Count());
-    for( size_t i=0; i < mc; i++ )
+    for (size_t i = 0; i < mc; i++) {
       DEFS[i] = bs[i].ToDouble();
+    }
     DEFS_set = true;
   }
   olxstr GetDEFSStr() const;
@@ -537,32 +551,35 @@ Friedel opposites of components 1 ... m
   }
   // finds scatterer by label, returns NULL if nothing found
   XScatterer* FindSfacData(const olxstr& label) const {
-    size_t ind = SfacData.IndexOf(label);
-    return ind == InvalidIndex ? NULL : SfacData.GetValue(ind);
+    return SfacData.Find(label, 0);
   }
   // user content management
   const ContentList& GetUserContent() const {  return UserContent;  }
   const olxstr GetUserContentStr() const {
     olxstr rv;
-    for( size_t i=0; i < UserContent.Count(); i++ )
-      rv << UserContent[i].element.symbol << UserContent[i].count;
-    return rv;
+    for (size_t i = 0; i < UserContent.Count(); i++) {
+      rv << ' ' << UserContent[i].ToString();
+    }
+    return rv.IsEmpty() ? rv : rv.SubStringFrom(1);
   }
-  template <class StrLst> void SetUserContentType(const StrLst& sfac)  {
+  template <class StrLst> void SetUserContentType(const StrLst& sfac) {
     UserContent.Clear();
-    for( size_t i=0; i < sfac.Count(); i++ )
+    for (size_t i = 0; i < sfac.Count(); i++) {
       AddUserContent(sfac[i], 0);
+    }
   }
   template <class StrLst> void SetUserContent(const StrLst& sfac,
     const StrLst& unit)
   {
-    if( sfac.Count() != unit.Count() ) {
+    if (sfac.Count() != unit.Count()) {
       throw TInvalidArgumentException(__OlxSourceInfo,
         "UNIT/SFAC lists mismatch");
     }
     UserContent.Clear();
-    for( size_t i=0; i < sfac.Count(); i++ )
-      AddUserContent(sfac[i], unit[i].ToDouble());
+    for (size_t i = 0; i < sfac.Count(); i++) {
+      AddUserContent(sfac[i], unit[i].ToDouble(),
+        XScatterer::ChargeFromLabel(sfac[i]));
+    }
   }
   void SetUserContent(const olxstr& sfac, const olxstr& unit)  {
     SetUserContent(TStrList(sfac, ' '), TStrList(unit, ' '));
@@ -571,38 +588,42 @@ Friedel opposites of components 1 ... m
     UserContent = cnt;
   }
   template <class StrLst> void SetUserContentSize(const StrLst& unit)  {
-    if( UserContent.Count() != unit.Count() ) {
+    if (UserContent.Count() != unit.Count()) {
       throw TInvalidArgumentException(__OlxSourceInfo,
         "UNIT/SFAC lists mismatch");
     }
-    for( size_t i=0; i < UserContent.Count(); i++ )
+    for (size_t i = 0; i < UserContent.Count(); i++) {
       UserContent[i].count = unit[i].ToDouble();
+    }
   }
-  void AddUserContent(const olxstr& type, double amount=0)  {
-    const cm_Element* elm = XElementLib::FindBySymbol(type);
-    if( elm == NULL )
+  void AddUserContent(const olxstr& type, double amount=0, int charge=0) {
+    const cm_Element* elm = XElementLib::FindBySymbolEx(type);
+    if (elm == NULL) {
       throw TInvalidArgumentException(__OlxSourceInfo, "element");
-    UserContent.AddNew(*elm, amount);
+    }
+    UserContent.AddNew(*elm, amount, XScatterer::ChargeFromLabel(type));
   }
-  void AddUserContent(const cm_Element& elm, double amount=0)  {
-    UserContent.AddNew(elm, amount);
+  void AddUserContent(const cm_Element& elm, double amount = 0, int charge = 0) {
+    UserContent.AddNew(elm, amount, charge);
   }
   void SetUserFormula(const olxstr& frm, bool mult_z=true)  {
     UserContent.Clear();
     XElementLib::ParseElementString(frm, UserContent);
-    for( size_t i=0; i < UserContent.Count(); i++ )
+    for (size_t i = 0; i < UserContent.Count(); i++) {
       UserContent[i].count *= (mult_z ? aunit.GetZ() : 1.0);
+    }
   }
   // returns the restrained distance or -1
   double FindRestrainedDistance(const TCAtom& a1, const TCAtom& a2);
 
   template <class list> void AddEXYZ(const list& exyz) {
-    if( exyz.Count() < 2 )
+    if (exyz.Count() < 2) {
       throw TFunctionFailedException(__OlxSourceInfo, "incomplete EXYZ group");
+    }
     TExyzGroup& gr = ExyzGroups.New();
-    for( size_t i=0; i < exyz.Count(); i++ )  {
+    for (size_t i = 0; i < exyz.Count(); i++) {
       TCAtom* ca = aunit.FindCAtom(exyz[i]);
-      if( ca == NULL )  {
+      if (ca == NULL) {
         gr.Clear();
         throw TFunctionFailedException(__OlxSourceInfo,
           olxstr("unknown atom: ") << exyz[i]);
