@@ -329,8 +329,9 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
       size_t switchState = GetSwitchState(Sw->GetName()), index = InvalidIndex;
       if( switchState == UnknownSwitchState )  {
         index_t iv = Toks.GetLastString().RadInt<index_t>();
-        if( iv < 0 )
+        if (iv < 0) {
           Sw->SetUpdateSwitch(false);
+        }
         index = olx_abs(iv)-1;
       }
       else
@@ -344,17 +345,20 @@ bool THtml::ProcessPageLoadRequest()  {
   if (!PageLoadRequested || IsPageLocked()) return false;
   PageLoadRequested = false;
   bool res = false;
-  if( !PageRequested.IsEmpty() )
+  if (!PageRequested.IsEmpty()) {
     res = LoadPage(PageRequested.u_str());
-  else
+  }
+  else {
     res = UpdatePage();
+  }
   PageRequested.SetLength(0);
   return res;
 }
 //.............................................................................
 bool THtml::LoadPage(const wxString &file) {
-  if (file.IsEmpty())
+  if (file.IsEmpty()) {
     return false;
+  }
 
   if (IsPageLocked()) {
     PageLoadRequested = true;
@@ -374,10 +378,12 @@ bool THtml::LoadPage(const wxString &file) {
   }
   else
     Path = WebFolder;
-  if (Path == WebFolder)
+  if (Path == WebFolder) {
     TestFile = WebFolder + TestFile;
-  else
+  }
+  else {
     TestFile = WebFolder + Path + TestFile;
+  }
 
   if (!TZipWrapper::IsValidFileName(TestFile) &&
       !TFileHandlerManager::Exists(file) )
@@ -426,8 +432,9 @@ bool THtml::UpdatePage(bool update_indices) {
   olxstr oldPath = TEFile::CurrentDir();
   TEFile::ChangeDir(WebFolder);
   if (update_indices) { // reload switches
-    for (size_t i = 0; i < Root->SwitchCount(); i++)
+    for (size_t i = 0; i < Root->SwitchCount(); i++) {
       Root->GetSwitch(i).UpdateFileIndex();
+    }
   }
 
   int xPos = -1, yPos = -1, xWnd = -1, yWnd = -1;
@@ -498,13 +505,21 @@ void THtml::ScrollWindow(int dx, int dy, const wxRect* rect)  {
   wxHtmlWindow::ScrollWindow(dx, dy,rect);
 } 
 //.............................................................................
-bool THtml::AddObject(const olxstr& Name, AOlxCtrl *Object, wxWindow* wxWin,
+bool THtml::AddControl(const olxstr& Name, AOlxCtrl *Object, wxWindow* wxWin,
   bool Manage)
 {
   if (Name.IsEmpty())  return true;  // an anonymous object
-  if (Objects.HasKey(Name))  return false;
-  Objects.Add(Name, Association::Create(Object, wxWin, Manage));
-  return true;
+  size_t idx = Objects.IndexOf(Name);
+  if (idx != InvalidIndex) {
+    Objects.GetEntry(idx).val.a = Object;
+    Objects.GetEntry(idx).val.b = wxWin;
+    Objects.GetEntry(idx).val.c = Manage;
+    return true;
+  }
+  else {
+    Objects.Add(Name, Association::Create(Object, wxWin, Manage));
+    return false;
+  }
 }
 //.............................................................................
 void THtml::OnCellMouseHover(wxHtmlCell *Cell, wxCoord x, wxCoord y)  {
@@ -1096,3 +1111,10 @@ void THtml::OnClipboard(wxClipboardTextEvent& evt) {
   evt.Skip(processed);
 }
 //.............................................................................
+void THtml::SetFonts(const olxstr &normal, const olxstr &fixed) {
+  NormalFont = normal;
+  FixedFont = fixed;
+  Root->Clear();
+  Objects.Clear();
+  wxHtmlWindow::SetFonts(normal.u_str(), fixed.u_str());
+}

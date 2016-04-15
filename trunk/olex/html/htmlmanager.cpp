@@ -410,15 +410,17 @@ void THtmlManager::macSetFonts(TStrObjList &Cmds, const TParamList &Options,
 {
   olxstr hn = Cmds.Count() == 2 ? EmptyString() : Cmds[0];
   THtml *html = Cmds.Count() == 3 ? FindHtml(hn) : main;
-  if( html == NULL )  {
+  if (html == NULL) {
     Error.ProcessingError(__OlxSrcInfo,
       "undefined html window: ").quote() << hn;
     return;
   }
-  if (Cmds.Count() == 3)
+  if (Cmds.Count() == 3) {
     html->SetFonts(Cmds[1], Cmds[2]);
-  else
+  }
+  else {
     html->SetFonts(Cmds[0], Cmds[1]);
+  }
 }
 //.............................................................................
 void THtmlManager::macSetBorders(TStrObjList &Cmds, const TParamList &Options,
