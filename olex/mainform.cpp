@@ -861,6 +861,10 @@ void TMainForm::XApp(Olex2App *XA)  {
     "structures are expected to have identical labelling scheme. If no "
     "arguments is given - the procedure prints lengths cut by ADPs on the "
     "bonds.");
+  this_InitMacroD(RegisterFonts,
+    EmptyString(),
+    fpOne,
+    "Registers fonts in the given folder for the application use");
 
   // FUNCTIONS _________________________________________________________________
 

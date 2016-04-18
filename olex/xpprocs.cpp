@@ -160,6 +160,10 @@
 #include "pers_util.h"
 //#include "gl2ps/gl2ps.c"
 
+#ifndef __WIN32__
+#include <fontconfig.h>
+#endif
+
 int CalcL(int v) {
   int r = 0;
   while ((v/=2) > 2)  r++;
@@ -6513,3 +6517,40 @@ void TMainForm::macADPDisp(TStrObjList &Cmds, const TParamList &Options,
   }
 }
 //..............................................................................
+#ifdef __WIN32__
+struct UnregisterFonts : public IOlxObject {
+  TStrList fonts;
+  ~UnregisterFonts() {
+    for (size_t i = 0; i < fonts.Count(); i++) {
+      RemoveFontResource(fonts[i].u_str());
+    }
+  }
+};
+#endif
+void TMainForm::macRegisterFonts(TStrObjList &Cmds, const TParamList &Options,
+  TMacroData &E)
+{
+#ifdef __WIN32__
+  TStrList fonts = TEFile::ListDir(Cmds[0], "*.ttf;*.otf", sefFile);
+  olx_object_ptr<UnregisterFonts> toRemove(new UnregisterFonts);
+  olxstr base_dir = TEFile::AddPathDelimeter(Cmds[0]);
+  for (size_t i = 0; i < fonts.Count(); i++) {
+    olxstr fnt = base_dir + fonts[i];
+    if (AddFontResource(fnt.u_str()) >= 1) {
+      toRemove().fonts.Add(fnt);
+      TBasicApp::NewLogEntry(logInfo) << "Registered '" <<
+        fonts[i] << "'";
+    }
+  }
+  if (!toRemove().fonts.IsEmpty()) {
+    TEGC::AddP(toRemove.release());
+  }
+#else
+  if (FcConfigAppFontAddDir(Cmds[0].ToMBStr().c_str())) {
+    TBasicApp::NewLogEntry(logInfo) << "Successfully registered the font directory";
+  }
+  else {
+    TBasicApp::NewLogEntry(logInfo) << "Failed to register the font directory";
+  }
+#endif
+}
