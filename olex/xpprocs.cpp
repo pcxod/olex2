@@ -161,7 +161,7 @@
 //#include "gl2ps/gl2ps.c"
 
 #ifndef __WIN32__
-#include <fontconfig.h>
+#include <fontconfig/fontconfig.h>
 #endif
 
 int CalcL(int v) {
@@ -6546,7 +6546,7 @@ void TMainForm::macRegisterFonts(TStrObjList &Cmds, const TParamList &Options,
     TEGC::AddP(toRemove.release());
   }
 #else
-  if (FcConfigAppFontAddDir(Cmds[0].ToMBStr().c_str())) {
+  if (FcConfigAppFontAddDir(0, (const FcChar8 *)Cmds[0].ToMBStr().c_str())) {
     TBasicApp::NewLogEntry(logInfo) << "Successfully registered the font directory";
   }
   else {
