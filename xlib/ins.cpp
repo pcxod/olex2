@@ -28,6 +28,7 @@
 #include "catomlist.h"
 #include "label_corrector.h"
 #include "estopwatch.h"
+#include "absorpc.h"
 
 #undef AddAtom
 #undef GetObject
@@ -1130,7 +1131,25 @@ TStrList::const_list_type TIns::SaveSfacUnit(const RefinementModel& rm,
       l << olx_abs(ch);
     }
     XScatterer* sd = rm.FindSfacData(l);
-    if (sd != NULL && sd->IsSFAC() && !elms.Contains(l)) {
+    if (!elms.Contains(l)) {
+      olx_object_ptr<XScatterer> scp;
+      if (sd == 0) {
+        cm_Absorption_Coefficient_Reg ac;
+        double en = rm.expl.GetRadiationEnergy();
+        scp = (sd = new XScatterer(a.GetType(), en));
+        sd->SetLabel(l);
+        sd->SetFpFdp(a.GetType().CalcFpFdp(en) - a.GetType().z);
+        try {
+          double absorpc =
+            ac.CalcMuOverRhoForE(en, *ac.locate(a.GetType().symbol));
+          sd->SetMu(absorpc*a.GetType().GetMr() / 0.6022142);
+        }
+        catch (...) {
+          TBasicApp::NewLogEntry() << "Could not locate absorption data for: " <<
+            l;
+          sd->SetMu(0);
+        }
+      }
       TStrList lines;
       HyphenateIns(sd->ToInsString(), lines);
       list.Insert(pos, lines);
