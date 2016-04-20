@@ -122,6 +122,7 @@
 
 #ifdef __linux__
 #include <signal.h>
+#include <fontconfig/fontconfig.h>
 #endif
 
 #include "olxmps.h"
@@ -159,10 +160,6 @@
 #include "ememstream.h"
 #include "pers_util.h"
 //#include "gl2ps/gl2ps.c"
-
-#ifndef __WIN32__
-#include <fontconfig/fontconfig.h>
-#endif
 
 int CalcL(int v) {
   int r = 0;
@@ -6545,7 +6542,7 @@ void TMainForm::macRegisterFonts(TStrObjList &Cmds, const TParamList &Options,
   if (!toRemove().fonts.IsEmpty()) {
     TEGC::AddP(toRemove.release());
   }
-#else
+#elif __linux__
   if (FcConfigAppFontAddDir(0, (const FcChar8 *)Cmds[0].ToMBStr().c_str())) {
     TBasicApp::NewLogEntry(logInfo) << "Successfully registered the font directory";
   }
