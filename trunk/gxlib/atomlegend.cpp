@@ -17,29 +17,6 @@ TAtomLegend::TAtomLegend(TGlRenderer& Render, const olxstr& collectionName)
   TextureId = ~0;
 }
 //.............................................................................
-void TAtomLegend::SetData(unsigned char *rgb,
-  GLsizei width, GLsizei height, GLenum format)
-{
-  if (olx_is_valid_index(TextureId)) {
-    TGlTexture* tex = Parent.GetTextureManager().FindTexture(TextureId);
-    Parent.GetTextureManager().Replace2DTexture(
-      *tex, 0, width, height, 0, format, rgb);
-  }
-  else {
-    TextureId = Parent.GetTextureManager().Add2DTexture(
-      GetCollectionName(), 0, width, height, 0,
-      format, rgb);
-    TGlTexture* tex = Parent.GetTextureManager().FindTexture(TextureId);
-    tex->SetEnvMode(tpeDecal);
-    tex->SetSCrdWrapping(tpCrdClamp);
-    tex->SetTCrdWrapping(tpCrdClamp);
-
-    tex->SetMagFilter(tpFilterNearest);
-    tex->SetMinFilter(tpFilterLinear);
-    tex->SetEnabled(true);
-  }
-}
-//.............................................................................
 void TAtomLegend::Create(const olxstr& cName) {
   if (!cName.IsEmpty()) {
     SetCollectionName(cName);
@@ -53,27 +30,20 @@ void TAtomLegend::Create(const olxstr& cName) {
   Left = GS.GetParam("Left", Left, true).ToInt();
   Top = GS.GetParam("Top", Top, true).ToInt();
   Z = GS.GetParam("Z", Z).ToDouble();
-
+  TGlMaterial glm("3077;0;0");
   TGlPrimitive& GlP = GPC.NewPrimitive("Plane", sgloQuads);
-  GlM.SetIdentityDraw(true);
-  GlP.SetProperties(GlM);
-  // texture coordinates
-  GlP.TextureCrds.SetCount(4);
+  GlP.SetProperties(GS.GetMaterial("Plane", glm));
   GlP.Vertices.SetCount(4);
-  GlP.TextureCrds[0].s = 0;  GlP.TextureCrds[0].t = 1;
-  GlP.TextureCrds[1].s = 0;  GlP.TextureCrds[1].t = 0;
-  GlP.TextureCrds[2].s = 1;  GlP.TextureCrds[2].t = 0;
-  GlP.TextureCrds[3].s = 1;  GlP.TextureCrds[3].t = 1;
-
   TGlFont &glf = Parent.GetScene().GetFont(
     Parent.GetScene().FindFontIndexForType<TXAtom>(), true);
   TGlPrimitive& glpText = GPC.NewPrimitive("Text", sgloText);
   glpText.SetProperties(GS.GetMaterial("Text", glf.GetMaterial()));
   glpText.SetFont(&glf);
   glpText.Params[0] = -1;
-  if (tex_data.is_valid()) {
-    SetData(tex_data(), 32, text.Count()*32, GL_RGB);
-  }
+
+  TGlPrimitive& sp = GPC.NewPrimitive("Sphere", sgloSphere);
+  sp.Params[0] = glf.GetMaxHeight()/2; sp.Params[1] = sp.Params[2] = 10;
+  sp.SetProperties(glm);
 }
 //.............................................................................
 void TAtomLegend::Fit() {
@@ -81,12 +51,7 @@ void TAtomLegend::Fit() {
     Parent.GetScene().FindFontIndexForType<TXAtom>(), true);
   const uint16_t th = glf.TextHeight(EmptyString());
   const double LineSpacer = 0.05*th;
-  Height = 0;
-  for (size_t i = 0; i < text.Count(); i++) {
-    const TTextRect tr = glf.GetTextRect(text[i]);
-    Height -= (uint16_t)olx_round(tr.top);
-    Height += (uint16_t)olx_round(olx_max(tr.height, glf.GetMaxHeight()));
-  }
+  Height = glf.GetMaxHeight() * text.Count();
   Height += (uint16_t)olx_round(LineSpacer*(text.Count() - 1));
 }
 //.............................................................................
@@ -123,13 +88,14 @@ bool TAtomLegend::Orient(TGlPrimitive& P) {
       olxstr line = text[ii].SubStringTo(
         glf.LengthForWidth(text[ii], Parent.GetWidth()));
       const TTextRect tr = glf.GetTextRect(line);
-      T[1] -= tr.top*scale;
+      //T[1] -= tr.top*scale;
       Parent.DrawTextSafe(T, line, glf);
-      T[1] += (olx_max(tr.height, glf.GetMaxHeight()) + LineSpacer)*scale;
+      //T[1] += (olx_max(tr.height, glf.GetMaxHeight()) + LineSpacer)*scale;
+      T[1] += (glf.GetMaxHeight() + LineSpacer)*scale;
     }
     return true;
   }
-  else {
+  else if (P.GetType() == sgloQuads) {
     P.SetTextureId(TextureId);
     double Scale = Parent.GetScale()*es;
     const double hw = Parent.GetWidth() / (2 * es);
@@ -144,20 +110,50 @@ bool TAtomLegend::Orient(TGlPrimitive& P) {
     P.Vertices[3] = vec3d(P.Vertices[2][0], -(Top + h + xy - hh)*Scale, z);
     return false;
   }
+  else if (P.GetType() == sgloSphere) {
+    TGlFont &glf = Parent.GetScene().GetFont(
+      Parent.GetScene().FindFontIndexForType<TXAtom>(), true);
+    const uint16_t th = glf.TextHeight(EmptyString());
+    const double LineSpacer = 0.05*th;
+    double Scale = Parent.GetScale();
+    olx_gl::scale(Scale);
+    const double hw = Parent.GetWidth() / (2 * es);
+    const double hh = Parent.GetHeight() / (2 * es);
+    double xx = GetCenter()[0], xy = -GetCenter()[1];
+    const double scale = Parent.GetViewZoom() == 1.0 ? 1.0 : 1. / Parent.GetExtraZoom();
+    const double z = Z - 0.01;
+    double w = Width,
+      h = Height / Parent.GetExtraZoom();
+    vec3d t((Left + w/2 + xx - hw)*es,
+      -(Top + xy - hh)*es - scale*glf.GetMaxHeight() / 2, z);
+    olx_gl::translate(t);
+    for (size_t i = 0; i < materials.Count(); i++) {
+      materials[i].Init(false);
+      P.Draw();
+      olx_gl::translate(0.0, -(glf.GetMaxHeight()+LineSpacer)*scale, 0.0);
+    }
+    return true;
+  }
+  return false;
 }
 //.............................................................................
 void TAtomLegend::Update() {
   TGXApp &app = TGXApp::GetInstance();
   olxset<const cm_Element * , TPointerComparator> elms;
   const TAsymmUnit &au = app.XFile().GetAsymmUnit();
+  TCAtom *q1 = 0;
   for (size_t i = 0; i < au.AtomCount(); i++) {
     TCAtom &a = au.GetAtom(i);
     if (a.IsDeleted()) {
       continue;
     }
+    if (q1 == 0 && a.GetType() == iQPeakZ) {
+      q1 = &a;
+    }
     elms.Add(&a.GetType());
   }
   text.Clear();
+  materials.Clear();
   if (elms.IsEmpty()) {
     return;
   }
@@ -165,26 +161,30 @@ void TAtomLegend::Update() {
   for (size_t i = 0; i < elms.Count(); i++) {
     text.Add(elms.Get(i)->symbol);
     uint32_t cl = elms.Get(i)->def_color;
-    TGraphicsStyle *st = app.GetRenderer().GetStyles().FindStyle(
-      elms.Get(i)->symbol);
-    if (st != 0) {
-      TGlMaterial *m = st->FindMaterial("Sphere");
-      if (m != 0) {
-        cl = m->AmbientF.GetRGB();
+    bool set = false;
+    if (elms.Get(i)->z == iQPeakZ && q1 != 0) {
+      TXAtom::GetDefSphereMaterial(*q1, materials.Add(TGlMaterial()),
+        app.GetRenderer());
+      set = true;
+    }
+    else {
+      TGraphicsStyle *st = app.GetRenderer().GetStyles().FindStyle(
+        elms.Get(i)->symbol);
+      if (st != 0) {
+        TGlMaterial *m = st->FindMaterial("Sphere");
+        if (m != 0) {
+          cl = m->AmbientF.GetRGB();
+          materials.Add(*m);
+          set = true;
+        }
       }
     }
-    const size_t off = 32 * 32 * 3 * i;
-    for (size_t x = 0; x < 32; x++) {
-      for (size_t y = 0; y < 32; y++) {
-        const size_t off1 = off + (x*32 + y) * 3;
-        ld()[off1 + 0] = OLX_GetRValue(cl);
-        ld()[off1 + 1] = OLX_GetGValue(cl);
-        ld()[off1 + 2] = OLX_GetBValue(cl);
-      }
+    if (!set) {
+      TGlMaterial &m = materials.Add(TGlMaterial());
+      m.SetFlags(sglmAmbientF);
+      m.AmbientF = cl;
     }
   }
-  SetData(ld(), 32, 32 * elms.Count(), GL_RGB);
-  tex_data = ld;
   Fit();
 }
 //.............................................................................

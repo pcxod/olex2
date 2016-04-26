@@ -294,7 +294,7 @@ void TXAtom::Create(const olxstr& cName) {
       GlP.EndList();
 
       if (GetType() == iQPeakZ) {
-        GetDefSphereMaterial(*this, RGlM, defs);
+        GetDefSphereMaterial(this->CAtom(), RGlM, defs);
         GlP.SetProperties(RGlM);
       }
       else {
@@ -306,14 +306,14 @@ void TXAtom::Create(const olxstr& cName) {
           if (lmi != InvalidIndex)
             RGlM = GS.GetPrimitiveStyle(lmi).GetProperties();
           else
-            GetDefSphereMaterial(*this, RGlM, defs);
+            GetDefSphereMaterial(this->CAtom(), RGlM, defs);
         }
         else if (SGlP->Params.GetLast() == ddsDefRim) {
           const size_t lmi = GS.IndexOfMaterial("Rims");
           if (lmi != InvalidIndex)
             RGlM = GS.GetPrimitiveStyle(lmi).GetProperties();
           else
-            GetDefRimMaterial(*this, RGlM);
+            GetDefRimMaterial(this->CAtom(), RGlM);
         }
         GlP.SetProperties(GS.GetMaterial(primitives[i], RGlM));
       }
@@ -501,15 +501,15 @@ bool TXAtom::GetDimensions(vec3d& Max, vec3d& Min)  {
   return true;
 }
 //..............................................................................
-void TXAtom::GetDefSphereMaterial(const TSAtom& Atom, TGlMaterial& M,
+void TXAtom::GetDefSphereMaterial(const TCAtom& Atom, TGlMaterial& M,
   const Settings &defs)
 {
   uint32_t Mask = OLX_RGBA(0x5f, 0x5f, 0x5f, 0x00);
   uint32_t Cl = Atom.GetType().def_color;
 ///////////
   if (Atom.GetType() == iQPeakZ) {
-    const double peak = Atom.CAtom().GetQPeak();
-    const TAsymmUnit &au = *Atom.CAtom().GetParent();
+    const double peak = Atom.GetQPeak();
+    const TAsymmUnit &au = *Atom.GetParent();
     M.SetFlags(sglmAmbientF|sglmDiffuseF|sglmSpecularF|sglmShininessF|
       sglmTransparent);
     M.DiffuseF = 0x00007f;
@@ -528,7 +528,7 @@ void TXAtom::GetDefSphereMaterial(const TSAtom& Atom, TGlMaterial& M,
       }
       else {
         M.AmbientF = 0x7f007f;
-        if (Atom.CAtom().GetParent()->GetMaxQPeak() < 0) {
+        if (au.GetMaxQPeak() < 0) {
           M.DiffuseF[3] = (float)(atan(
             defs.GetQPeakScale()*peak / au.GetMinQPeak()) * 2 / M_PI);
         }
@@ -553,7 +553,7 @@ void TXAtom::GetDefSphereMaterial(const TSAtom& Atom, TGlMaterial& M,
   M.SpecularB = M.SpecularF;
 }
 //..............................................................................
-void TXAtom::GetDefRimMaterial(const TSAtom& Atom, TGlMaterial &M) {
+void TXAtom::GetDefRimMaterial(const TCAtom& Atom, TGlMaterial &M) {
   uint32_t Mask = OLX_RGBA(0x5f, 0x5f, 0x5f, 0x00);
   M.SetFlags( sglmAmbientF|sglmDiffuseF|sglmSpecularF|sglmShininessF|sglmEmissionF);
 //  |  sglmAmbientB|sglmDiffuseB|sglmSpecularB|sglmShininessB|sglmEmissionB);

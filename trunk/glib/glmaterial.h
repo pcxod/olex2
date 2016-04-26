@@ -65,6 +65,7 @@ public:
 
   TGlMaterial() : Flags(0), ShininessF(0), ShininessB(0) {}
   TGlMaterial(const olxstr& str)  {  FromString(str);  }
+  ~TGlMaterial() {}
 
   void Init(bool skip) const;
   const TGlMaterial& Intensity(TGlOption& ClearColor, double intensity) const;

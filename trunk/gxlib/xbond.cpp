@@ -75,7 +75,7 @@ void TXBond::EvaluatePrimitiveMaterial(TGlPrimitive &p, TGraphicsStyle &s) const
         m = A().Style().GetPrimitiveStyle(mi).GetProperties();
       }
       else {
-        TXAtom::GetDefSphereMaterial(A(), m, A().GetSettings());
+        TXAtom::GetDefSphereMaterial(A().CAtom(), m, A().GetSettings());
       }
     }
     else {
@@ -87,7 +87,7 @@ void TXBond::EvaluatePrimitiveMaterial(TGlPrimitive &p, TGraphicsStyle &s) const
         m = B().Style().GetPrimitiveStyle(mi).GetProperties();
       }
       else {
-        TXAtom::GetDefSphereMaterial(B(), m, B().GetSettings());
+        TXAtom::GetDefSphereMaterial(B().CAtom(), m, B().GetSettings());
       }
     }
     p.SetProperties(s.SetMaterial(p.GetName(), m));
