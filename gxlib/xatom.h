@@ -106,14 +106,14 @@ public:
   // returns full legend for the label. e.g. "Q.Q1"
   static olxstr GetLabelLegend(const TSAtom& A);
 
-  static void GetDefSphereMaterial(const TSAtom& A, TGlMaterial &M,
+  static void GetDefSphereMaterial(const TCAtom& A, TGlMaterial &M,
     const Settings &defs);
-  static void GetDefSphereMaterial(const TSAtom& A, TGlMaterial &M,
+  static void GetDefSphereMaterial(const TCAtom& A, TGlMaterial &M,
     TGlRenderer &r)
   {
     return GetDefSphereMaterial(A, M, GetSettings(r));
   }
-  static void GetDefRimMaterial(const TSAtom& A, TGlMaterial &M);
+  static void GetDefRimMaterial(const TCAtom& A, TGlMaterial &M);
 
   void CalcRad(short DefAtomR);
 

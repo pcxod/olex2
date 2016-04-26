@@ -202,12 +202,15 @@ public:
     AtomNames.Clear();
     return false;
   }
-  bool Exit(const IOlxObject *Sender, const IOlxObject *Data, TActionQueue *)  {
-    if( state == 1 )  // somehing went not as expected? try to recover then...
+  bool Exit(const IOlxObject *Sender, const IOlxObject *Data, TActionQueue *) {
+    if (state == 1)  // somehing went not as expected? try to recover then...
       FParent->CreateObjects(true);
     state = 3;
     FParent->GetRenderer().SetBasis(B);
     FParent->CenterView(!SameFile);
+    if (FParent->AtomLegend().IsVisible()) {
+      FParent->AtomLegend().Update();
+    }
     FParent->Draw();
     return true;
   }
@@ -3711,10 +3714,12 @@ void TGXApp::LoadXFile(const olxstr& fn) {
   if( !FStructureVisible )
     NewLogEntry() << "Note: structure is invisible";
   else {
-    if (!FQPeaksVisible)
+    if (!FQPeaksVisible) {
       NewLogEntry() << "Note: Q-peaks are invisible";
-    if (!FHydrogensVisible)
+    }
+    if (!FHydrogensVisible) {
       NewLogEntry() << "Note: H-atoms are invisible";
+    }
   }
   Draw();  // fixes native loader is not draw after load
 }
