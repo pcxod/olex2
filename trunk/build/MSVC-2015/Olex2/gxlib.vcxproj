@@ -577,6 +577,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\gxlib\atomlegend.cpp" />
     <ClCompile Include="..\..\..\gxlib\dbasis.cpp" />
     <ClCompile Include="..\..\..\gxlib\dring.cpp" />
     <ClCompile Include="..\..\..\gxlib\dsphere.cpp" />
@@ -628,6 +629,7 @@
     <ClCompile Include="..\..\..\gxlib\xreflection.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\gxlib\atomlegend.h" />
     <ClInclude Include="..\..\..\gxlib\dbasis.h" />
     <ClInclude Include="..\..\..\gxlib\dring.h" />
     <ClInclude Include="..\..\..\gxlib\dsphere.h" />

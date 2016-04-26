@@ -20,6 +20,7 @@
 #include "dring.h"
 #include "roman.h"
 #include "olxsurf.h"
+#include "atomlegend.h"
 
 #define gxlib_InitMacro(macroName, validOptions, argc, desc)\
   lib.Register(\
@@ -363,6 +364,9 @@ void GXLibMacros::Export(TLibrary& lib) {
     ,
     fpAny,
     "For testing only for now");
+  gxlib_InitMacro(Legend, EmptyString(),
+    fpNone | fpOne,
+    "Shows atom legend");
 
 
   gxlib_InitFunc(ExtraZoom, fpNone|fpOne,
@@ -4724,3 +4728,14 @@ void GXLibMacros::macCalcSurf(TStrObjList &Cmds, const TParamList &Options,
   app.AddObjectToCreate(blob);
 }
 //..............................................................................
+void GXLibMacros::macLegend(TStrObjList &Cmds, const TParamList &Options,
+  TMacroData &Error)
+{
+  if (app.AtomLegend().IsVisible()) {
+    app.AtomLegend().SetVisible(false);
+    return;
+  }
+  app.AtomLegend().Update();
+  app.AtomLegend().SetVisible(true);
+}
+//.............................................................................

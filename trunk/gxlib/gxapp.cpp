@@ -57,6 +57,7 @@
   #include "wglscene.h"
   #include <WinGDI.h>
 #endif
+#include "atomlegend.h"
 #define ConeStipple  6.0
 #define LineStipple  0xf0f0
 
@@ -281,6 +282,7 @@ TGXApp::TGXApp(const olxstr &FileName, AGlScene *scene)
   FHklVisible = false;
 
   FXGrid = new TXGrid("XGrid", this);
+  ObjectsToCreate.Add(FAtomLegend = new TAtomLegend(GetRenderer(), "AtomLegend"));
 
   ObjectsToCreate.Add(F3DFrame=new T3DFrameCtrl(*GlRenderer, "3DFrame"));
   F3DFrame->SetVisible(false);

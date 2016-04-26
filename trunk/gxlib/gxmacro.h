@@ -72,6 +72,7 @@ public:
   DefMacro(OFileSwap)
   DefMacro(TwinView)
   DefMacro(CalcSurf)
+  DefMacro(Legend)
 
   DefFunc(MatchFiles)
   DefFunc(ExtraZoom)

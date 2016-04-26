@@ -96,6 +96,9 @@
     <ClCompile Include="..\..\..\gxlib\olxsurf.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\gxlib\atomlegend.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\gxlib\dbasis.h">
@@ -234,6 +237,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\gxlib\olxsurf.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\gxlib\atomlegend.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
