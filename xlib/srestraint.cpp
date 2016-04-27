@@ -20,22 +20,23 @@ TSimpleRestraint::TSimpleRestraint(TSRestraintList& parent, size_t id,
   VarRef = NULL;
 }
 //..............................................................................
-void TSimpleRestraint::AddAtoms(const TCAtomGroup& atoms)  {
-  for( size_t i=0; i < atoms.Count(); i++ )
+void TSimpleRestraint::AddAtoms(const TCAtomGroup& atoms) {
+  for (size_t i = 0; i < atoms.Count(); i++) {
     Atoms.AddExplicit(*atoms[i].GetAtom(), atoms[i].GetMatrix());
+  }
 }
 //..............................................................................
-void TSimpleRestraint::AtomsFromExpression(const olxstr& e, const olxstr &resi)  {
+void TSimpleRestraint::AtomsFromExpression(const olxstr& e, const olxstr &resi) {
   Atoms.Build(e, resi);
 }
 //..............................................................................
-TSimpleRestraint &TSimpleRestraint::AddAtom(TCAtom& aa, const smatd* ma)  {
-  if( aa.GetParent() != &Parent.GetRM().aunit ) {
+TSimpleRestraint &TSimpleRestraint::AddAtom(TCAtom& aa, const smatd* ma) {
+  if (aa.GetParent() != &Parent.GetRM().aunit) {
     throw TInvalidArgumentException(__OlxSourceInfo,
       "mismatching asymmetric unit");
   }
   if (ma != NULL) {
-    for (size_t i=0; i < aa.EquivCount(); i++) {
+    for (size_t i = 0; i < aa.EquivCount(); i++) {
       if (aa.GetEquiv(i).GetId() == ma->GetId()) {
         ma = NULL;
         break;
@@ -46,7 +47,7 @@ TSimpleRestraint &TSimpleRestraint::AddAtom(TCAtom& aa, const smatd* ma)  {
   return *this;
 }
 //..............................................................................
-void TSimpleRestraint::Delete()  {
+void TSimpleRestraint::Delete() {
   Atoms.Clear();
 }
 //..............................................................................
@@ -61,7 +62,7 @@ TSimpleRestraint &TSimpleRestraint::Validate() {
   return *this;
 }
 //..............................................................................
-void TSimpleRestraint::Assign(const TSimpleRestraint& sr)  {
+void TSimpleRestraint::Assign(const TSimpleRestraint& sr) {
   Atoms.Assign(sr.Atoms);
   ListType = sr.GetListType();
   Value = sr.Value;
@@ -117,7 +118,7 @@ void TSimpleRestraint::FromDataItem(const TDataItem& item) {
   Esd1 = item.GetFieldByName("esd1").ToDouble();
   Value = item.GetFieldByName("val").ToDouble();
   TDataItem* atoms = item.FindItem("atoms");
-  if ( atoms != NULL) {
+  if (atoms != NULL) {
     for( size_t i=0; i < atoms->ItemCount(); i++ )  {
       TDataItem& ai = atoms->GetItemByIndex(i);
       size_t aid = ai.GetFieldByName("atom_id").ToSizeT();
@@ -139,8 +140,9 @@ olxstr TSimpleRestraint::GetIdName() const {  return Parent.GetIdName();  }
 //..............................................................................
 olxstr TSimpleRestraint::GetVarName(size_t var_index) const {
   const static olxstr vm("1");
-  if( var_index != 0 )
+  if (var_index != 0) {
     throw TInvalidArgumentException(__OlxSourceInfo, "var index");
+  }
   return vm;
 }
 //..............................................................................
@@ -149,10 +151,18 @@ TIString TSimpleRestraint::ToString() const {
   if (!Atoms.GetResi().IsEmpty()) {
     rv << '_' << Atoms.GetResi();
   }
-  if ((Parent.GetParameters() & rptValue) != 0) rv << ' ' << Value;
-  if ((Parent.GetParameters() & rptEsd) != 0) rv << ' ' << Esd;
-  if ((Parent.GetParameters() & rptEsd1) != 0) rv << ' ' << Esd1;
-  if ((Parent.GetParameters() & rptValue1) != 0) rv << ' ' << Value;
+  if ((Parent.GetParameters() & rptValue) != 0) {
+    rv << ' ' << Value;
+  }
+  if ((Parent.GetParameters() & rptEsd) != 0) {
+    rv << ' ' << Esd;
+  }
+  if ((Parent.GetParameters() & rptEsd1) != 0) {
+    rv << ' ' << Esd1;
+  }
+  if ((Parent.GetParameters() & rptValue1) != 0) {
+    rv << ' ' << Value;
+  }
   return (rv << ' ' << Atoms.GetExpression());
 }
 //..............................................................................
@@ -160,8 +170,9 @@ TIString TSimpleRestraint::ToString() const {
 //..............................................................................
 //..............................................................................
 void TSRestraintList::Assign(const TSRestraintList& rl)  {
-  if( rl.GetRestraintListType() != RestraintListType )
+  if (rl.GetRestraintListType() != RestraintListType) {
     throw TInvalidArgumentException(__OlxSourceInfo, "list type mismatch");
+  }
 
   Clear();
   for (size_t i=0; i < rl.Count(); i++) {
@@ -170,56 +181,97 @@ void TSRestraintList::Assign(const TSRestraintList& rl)  {
 }
 //..............................................................................
 void TSRestraintList::ValidateRestraint(TSimpleRestraint& sr)  {
-  if( sr.GetListType() != RestraintListType )
+
+  if (sr.GetListType() != RestraintListType) {
     throw TInvalidArgumentException(__OlxSourceInfo, "list type mismatch");
-  size_t AllAtomsInd = InvalidIndex;
-  for( size_t i=0; i < Restraints.Count(); i++ )  {
-    if( Restraints[i].IsAllNonHAtoms() )  {
-      AllAtomsInd = i;
-      break;
+  }
+  // check if there is a restraint for all non-H atoms and locate the sr
+  size_t ri = InvalidIndex;
+  {
+    size_t AllAtomsInd = InvalidIndex;
+    for (size_t i = 0; i < Restraints.Count(); i++) {
+      if (Restraints[i].IsAllNonHAtoms()) {
+        AllAtomsInd = i;
+      }
+      if (&Restraints[i] == &sr) {
+        ri = i;
+      }
+      if (AllAtomsInd != InvalidIndex && ri != InvalidIndex) {
+        break;
+      }
+    }
+    if (AllAtomsInd != InvalidIndex) {
+      for (size_t i = 0; i < Restraints.Count(); i++) {
+        if (i != AllAtomsInd) {
+          Restraints[i].Delete();
+        }
+      }
+      TBasicApp::NewLogEntry(logWarning) <<
+        "There is a restraint for all non-H atoms, removing any others for "
+        << GetIdName() << " list";
+      return;
     }
   }
-  if( AllAtomsInd != InvalidIndex )  {
-    for( size_t i=0; i < Restraints.Count(); i++ )
-      if( i != AllAtomsInd )
+  // check uniqueness
+  {
+    olxstr exp = sr.GetAtoms().GetExpression();
+    size_t dc = 0;
+    for (size_t i = 0; i < Restraints.Count(); i++) {
+      if (i == ri) {
+        continue;
+      }
+      if (Restraints[i].GetAtoms().GetExpression() == exp) {
         Restraints[i].Delete();
+        dc++;
+      }
+    }
+    if (dc != 0) {
+      TBasicApp::NewLogEntry(logWarning) << "Some duplicate restraints removed in "
+        << GetIdName() << " list";
+    }
   }
 }
 //..............................................................................
-void TSRestraintList::Clear()  {
-  for( size_t i=0; i < Restraints.Count(); i++ )  {
-    if( Restraints[i].GetVarRef(0) != NULL )
+void TSRestraintList::Clear() {
+  for (size_t i = 0; i < Restraints.Count(); i++) {
+    if (Restraints[i].GetVarRef(0) != NULL) {
       delete RefMod.Vars.ReleaseRef(Restraints[i], 0);
+    }
   }
   Restraints.Clear();
 }
 //..............................................................................
 TSimpleRestraint& TSRestraintList::Release(size_t i)  {
-  if( Restraints[i].GetVarRef(0) != NULL )
+  if (Restraints[i].GetVarRef(0) != NULL) {
     RefMod.Vars.ReleaseRef(Restraints[i], 0);
+  }
   return Restraints.Release(i);
 }
 //..............................................................................
 void TSRestraintList::Restore(TSimpleRestraint& sr)  {
-  if( &sr.GetParent() != this )
+  if (&sr.GetParent() != this) {
     throw TInvalidArgumentException(__OlxSourceInfo, "restraint parent differs");
+  }
   Restraints.Add(sr);
-  if( sr.GetVarRef(0) != NULL )
+  if (sr.GetVarRef(0) != NULL) {
     RefMod.Vars.RestoreRef(sr, 0, sr.GetVarRef(0));
+  }
 }
 //..............................................................................
 void TSRestraintList::Release(TSimpleRestraint& sr)  {
   size_t ind = Restraints.IndexOf(sr);
-  if( ind == InvalidIndex )
+  if (ind == InvalidIndex) {
     throw TInvalidArgumentException(__OlxSourceInfo, "restraint");
+  }
   Release(ind);
 }
 //..............................................................................
 void TSRestraintList::ToDataItem(TDataItem& item) const {
   size_t rs_id = 0;
-  for( size_t i=0; i < Restraints.Count(); i++ )  {
-    if( !Restraints[i].IsAllNonHAtoms() && Restraints[i].Validate().IsEmpty() )
+  for (size_t i = 0; i < Restraints.Count(); i++) {
+    if (!Restraints[i].IsAllNonHAtoms() && Restraints[i].Validate().IsEmpty()) {
       continue;
+    }
     Restraints[i].ToDataItem(item.AddItem("item"));
   }
 }
@@ -229,13 +281,14 @@ PyObject* TSRestraintList::PyExport(TPtrList<PyObject>& atoms,
   TPtrList<PyObject>& equiv)
 {
   TPtrList<PyObject> all;
-  for( size_t i=0; i < Restraints.Count(); i++ )  {
-    if( !Restraints[i].IsAllNonHAtoms() && Restraints[i].Validate().IsEmpty() )
+  for (size_t i = 0; i < Restraints.Count(); i++) {
+    if (!Restraints[i].IsAllNonHAtoms() && Restraints[i].Validate().IsEmpty()) {
       continue;
+    }
     all << Restraints[i].PyExport(atoms, equiv);
   }
   PyObject* main = PyTuple_New(all.Count());
-  for (size_t i=0; i < all.Count(); i++) {
+  for (size_t i = 0; i < all.Count(); i++) {
     PyTuple_SetItem(main, i, all[i]);
   }
   return main;
