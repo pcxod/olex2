@@ -9,7 +9,7 @@ TAtomLegend::TAtomLegend(TGlRenderer& Render, const olxstr& collectionName)
   SetMove2D(true);
   SetMoveable(true);
   SetSelectable(false);
-  SetVisible(false);
+  SetVisible(true);
   Top = Left = 0;
   Width = 32;
   Height = 128;
