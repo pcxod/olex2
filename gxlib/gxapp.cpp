@@ -3542,25 +3542,28 @@ void TGXApp::Compaq(bool All)  {
     XFile().GetLattice().Compaq();
 }
 //..............................................................................
-void TGXApp::SetHBondsVisible(bool v, bool update_groups)  {
+void TGXApp::SetHBondsVisible(bool v, bool update_groups) {
   FHBondsVisible = v;
-  if( !v )  {
+  if (!v) {
     BondIterator bi(*this);
-    while( bi.HasNext() )  {
+    while (bi.HasNext()) {
       TXBond& xb = bi.Next();
-      if( xb.GetType() == sotHBond )
+      if (xb.GetType() == sotHBond) {
         xb.SetVisible(false);
+      }
     }
   }
-  else  {
+  else {
     BondIterator bi(*this);
-    while( bi.HasNext() )  {
+    while (bi.HasNext()) {
       TXBond& xb = bi.Next();
-      if( xb.GetType() == sotHBond )
+      if (xb.GetType() == sotHBond) {
         xb.SetVisible(xb.A().IsVisible() && xb.B().IsVisible());
+      }
     }
-    if( update_groups )
+    if (update_groups) {
       RestoreGroups();
+    }
   }
 }
 //..............................................................................
@@ -3578,11 +3581,14 @@ void TGXApp::SetHydrogensVisible(bool v)  {
     //  XFile().GetLattice().CompaqH();
     //else
     UpdateConnectivity();
+    if (AtomLegend().IsVisible()) {
+      AtomLegend().Update();
+    }
     CenterView(true);
   }
 }
 //..............................................................................
-void TGXApp::UpdateConnectivity()  {
+void TGXApp::UpdateConnectivity() {
   XFile().GetLattice().OnDisassemble.Enter(NULL);
   XFile().GetLattice().OnDisassemble.SetEnabled(false);
   for (size_t i = 0; i < Files.Count(); i++) {
@@ -3599,10 +3605,15 @@ void TGXApp::SetQPeaksVisible(bool v) {
       Files[i].GetAsymmUnit().DetachAtomType(
         iQPeakZ, !FQPeaksVisible);
     }
-    if (v && !XFile().GetLattice().IsGenerated())
+    if (v && !XFile().GetLattice().IsGenerated()) {
       XFile().GetLattice().CompaqQ();
-    else
+    }
+    else {
       UpdateConnectivity();
+    }
+    if (AtomLegend().IsVisible()) {
+      AtomLegend().Update();
+    }
     CenterView(true);
   }
 }
