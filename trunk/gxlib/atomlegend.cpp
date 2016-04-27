@@ -42,7 +42,7 @@ void TAtomLegend::Create(const olxstr& cName) {
   glpText.Params[0] = -1;
 
   TGlPrimitive& sp = GPC.NewPrimitive("Sphere", sgloSphere);
-  sp.Params[0] = glf.GetMaxHeight()/2; sp.Params[1] = sp.Params[2] = 10;
+  sp.Params[0] = 1; sp.Params[1] = sp.Params[2] = 10;
   sp.SetProperties(glm);
 }
 //.............................................................................
@@ -120,13 +120,16 @@ bool TAtomLegend::Orient(TGlPrimitive& P) {
     const double hw = Parent.GetWidth() / (2 * es);
     const double hh = Parent.GetHeight() / (2 * es);
     double xx = GetCenter()[0], xy = -GetCenter()[1];
-    const double scale = Parent.GetViewZoom() == 1.0 ? 1.0 : 1. / Parent.GetExtraZoom();
+    double scale = Parent.GetViewZoom() == 1.0 ? 1.0 : 1. / Parent.GetExtraZoom();
     const double z = Z - 0.01;
     double w = Width,
       h = Height / Parent.GetExtraZoom();
     vec3d t((Left + w/2 + xx - hw)*es,
       -(Top + xy - hh)*es - scale*glf.GetMaxHeight() / 2, z);
+    double sph_scale = scale * glf.GetMaxHeight() / 2;
+    scale /= sph_scale; // glf.GetMaxHeight() / 2
     olx_gl::translate(t);
+    olx_gl::scale(sph_scale);
     for (size_t i = 0; i < materials.Count(); i++) {
       materials[i].Init(false);
       P.Draw();
@@ -139,7 +142,7 @@ bool TAtomLegend::Orient(TGlPrimitive& P) {
 //.............................................................................
 void TAtomLegend::Update() {
   TGXApp &app = TGXApp::GetInstance();
-  olxset<const cm_Element * , TPointerComparator> elms;
+  olxset<const cm_Element * , TPointerComparator> elm_set;
   const TAsymmUnit &au = app.XFile().GetAsymmUnit();
   TCAtom *q1 = 0;
   for (size_t i = 0; i < au.AtomCount(); i++) {
@@ -150,26 +153,52 @@ void TAtomLegend::Update() {
     if (q1 == 0 && a.GetType() == iQPeakZ) {
       q1 = &a;
     }
-    elms.Add(&a.GetType());
+    elm_set.Add(&a.GetType());
   }
   text.Clear();
   materials.Clear();
-  if (elms.IsEmpty()) {
+  if (elm_set.IsEmpty()) {
     return;
   }
-  olx_array_ptr<uint8_t> ld(elms.Count()*32*32*3);
+  ElementPList elms(elm_set);
+  QuickSorter::Sort(elms, ElementSymbolSorter());
+  size_t idx_h = InvalidIndex, idx_c = InvalidIndex;
   for (size_t i = 0; i < elms.Count(); i++) {
-    text.Add(elms.Get(i)->symbol);
-    uint32_t cl = elms.Get(i)->def_color;
+    if (elms[i]->z == iCarbonZ) {
+      idx_c = i;
+    }
+    else if (elms[i]->z == iHydrogenZ) {
+      idx_h = i;
+    }
+  }
+  if (idx_h != InvalidIndex && idx_c != InvalidIndex) {
+    if (idx_c != 0) {
+      elms.Move(idx_c, 0);
+    }
+    if (idx_h != 1) {
+      elms.Move(idx_h, 1);
+    }
+  }
+  olx_array_ptr<uint8_t> ld(elms.Count() * 32 * 32 * 3);
+  for (size_t i = 0; i < elms.Count(); i++) {
+    uint32_t cl = elms[i]->def_color;
     bool set = false;
-    if (elms.Get(i)->z == iQPeakZ && q1 != 0) {
+    if (elms[i]->z == iQPeakZ && q1 != 0) {
+      if (!app.AreQPeaksVisible()) {
+        continue;
+      }
       TXAtom::GetDefSphereMaterial(*q1, materials.Add(TGlMaterial()),
         app.GetRenderer());
       set = true;
     }
     else {
+      if (elms[i]->z == iHydrogenZ) {
+        if (!app.AreHydrogensVisible()) {
+          continue;
+        }
+      }
       TGraphicsStyle *st = app.GetRenderer().GetStyles().FindStyle(
-        elms.Get(i)->symbol);
+        elms[i]->symbol);
       if (st != 0) {
         TGlMaterial *m = st->FindMaterial("Sphere");
         if (m != 0) {
@@ -184,6 +213,7 @@ void TAtomLegend::Update() {
       m.SetFlags(sglmAmbientF);
       m.AmbientF = cl;
     }
+    text.Add(elms[i]->symbol);
   }
   Fit();
 }
