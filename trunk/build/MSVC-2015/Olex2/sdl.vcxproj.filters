@@ -581,6 +581,15 @@
     <ClInclude Include="..\..\..\sdl\strconv.h">
       <Filter>Header Files\string</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\sdl\tests\olx_func_test.h">
+      <Filter>tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\tests\ptr_test.h">
+      <Filter>tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\tests\binding_test.h">
+      <Filter>tests</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />

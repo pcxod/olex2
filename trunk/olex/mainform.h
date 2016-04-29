@@ -444,7 +444,6 @@ private:
   DefMacro(SetFont)
   DefMacro(EditMaterial)
   DefMacro(SetMaterial)
-  DefMacro(TestBinding)
   DefMacro(ShowSymm)
   DefMacro(Textm)
   DefMacro(TestStat)

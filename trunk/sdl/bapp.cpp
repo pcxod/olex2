@@ -15,6 +15,9 @@
 #include "settingsfile.h"
 #include "utf8file.h"
 #include "md5.h"
+#include "estopwatch.h"
+#include "sha.h"
+#include "encodings.h"
 
 #ifdef __WIN32__
   #define OLX_STR(a) (a).u_str()
@@ -466,6 +469,27 @@ void BAPP_IsDebugBuild(const TStrObjList& Params, TMacroData &E)  {
 #endif
 }
 //..............................................................................
+void BAPP_Digest(const TStrObjList& Params, TMacroData &E) {
+  TStopWatch sw(__FUNC__);
+  TEFile f(Params[0], "rb");
+  if (Params[1].Equalsi("MD5")) {
+    E.SetRetVal(MD5::Digest(f));
+  }
+  else if (Params[1].Equalsi("SHA1")) {
+    E.SetRetVal(SHA1::Digest(f));
+  }
+  else if (Params[1].Equalsi("SHA224")) {
+    E.SetRetVal(SHA224::Digest(f));
+  }
+  else if (Params[1].Equalsi("SHA256")) {
+    E.SetRetVal(SHA256::Digest(f));
+  }
+  else {
+    E.ProcessingError(__OlxSrcInfo, "Unknow digest requested");
+  }
+  sw.stop();
+}
+//..............................................................................
 TLibrary* TBasicApp::ExportLibrary(const olxstr& lib_name)  {
   TLibrary* lib = new TLibrary(lib_name);
   lib->Register(new TStaticFunction(BAPP_GetArgCount,
@@ -517,5 +541,9 @@ TLibrary* TBasicApp::ExportLibrary(const olxstr& lib_name)  {
   lib->Register(new TStaticFunction(BAPP_IsDebugBuild,
     "IsDebugBuild", fpNone,
     "Returns true if the application is built with debug info"));
- return lib;
+  lib->Register(new TStaticFunction(BAPP_Digest,
+    "Digest", fpTwo,
+    "Returns euested digest for a file. Use: 'digest file code', code is MD5, "
+    "SHA1, SHA224 or SHA256"));
+  return lib;
 }

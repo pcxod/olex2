@@ -814,8 +814,6 @@ void TMainForm::XApp(Olex2App *XA)  {
     libChain
     );
 
-  this_InitMacroD(TestBinding, EmptyString(), fpAny,
-    "Internal tests");
   this_InitMacroD(ShowSymm, EmptyString(), fpNone|fpOne,
     "Shows symmetry elements of the unitcell");
   this_InitMacroD(Textm, EmptyString(), fpOne,
