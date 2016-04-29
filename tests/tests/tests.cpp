@@ -41,6 +41,9 @@
 #include "tests/smat_test.h"
 #include "tests/exparse_test.h"
 #include "../repository/tests/shellutil_test.h"
+#include "tests/olx_func_test.h"
+#include "tests/ptr_test.h"
+#include "tests/binding_test.h"
 
 class Listener : public AActionHandler  {
 public:
@@ -93,6 +96,9 @@ int main(int argc, char* argv[]) {
   tests.Add(&test::FormulaTests);
   tests.Add(&test::ShellUtilTests);
   tests.Add(&test::TestRoman);
+  tests.Add(&test::FuncTests);
+  tests.Add(&test::PtrTests);
+  tests.Add(&test::BindingTests);
   tests.run();
   if( argc > 1 )  {
     olxstr data_dir = argv[1];

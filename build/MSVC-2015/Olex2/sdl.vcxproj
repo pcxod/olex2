@@ -768,12 +768,15 @@
     <ClInclude Include="..\..\..\sdl\talist.h" />
     <ClInclude Include="..\..\..\sdl\testsuit.h" />
     <ClInclude Include="..\..\..\sdl\tests\alg_test.h" />
+    <ClInclude Include="..\..\..\sdl\tests\binding_test.h" />
     <ClInclude Include="..\..\..\sdl\tests\container_test.h" />
     <ClInclude Include="..\..\..\sdl\tests\encoding_test.h" />
     <ClInclude Include="..\..\..\sdl\tests\exparse_test.h" />
     <ClInclude Include="..\..\..\sdl\tests\file_test.h" />
     <ClInclude Include="..\..\..\sdl\tests\irange_test.h" />
     <ClInclude Include="..\..\..\sdl\tests\matrix_test.h" />
+    <ClInclude Include="..\..\..\sdl\tests\olx_func_test.h" />
+    <ClInclude Include="..\..\..\sdl\tests\ptr_test.h" />
     <ClInclude Include="..\..\..\sdl\tests\roman_test.h" />
     <ClInclude Include="..\..\..\sdl\tests\sort_test.h" />
     <ClInclude Include="..\..\..\sdl\tests\spline_test.h" />

@@ -144,10 +144,7 @@
 // FOR DEBUG only
 #include "egraph.h"
 #include "olxth.h"
-#include "md5.h"
 #include "sha.h"
-#include "exparse/expbuilder.h"
-#include "encodings.h"
 #include "cifdp.h"
 #include "glutil.h"
 #include "refutil.h"
@@ -4057,42 +4054,8 @@ public:
   }
 };
 
-#include "olxpptr.h"
-class Perishable : public APerishable {
-};
 
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroData &Error)  {
-  {
-    TRefList refs = FXApp->XFile().GetRM().GetReflections();
-    refs.ForEach(
-      olx_func::make(&TReflection::SetBatch, 1)
-      );
-    TStrList strl;
-    strl.ForEachString(
-      olx_func::make(&olxstr::SubString, 0, 1)
-      );
-  }
-  return;
-  {
-    Perishable p, p1;
-    olx_perishable_ptr<Perishable> ptr(new Perishable);
-    delete &ptr();
-    ptr = new Perishable();
-    delete ptr.release();
-    if (!ptr.is_valid()) {
-      Perishable p1;
-      ptr = &p;
-      ptr = &p1;
-      ptr = &p1;
-      ptr = 0;
-    }
-    //{
-    //  olx_perishable_ptr<Perishable> ptr_(new Perishable);
-    //  ptr_ = ptr;
-    //  ptr.is_valid();
-    //}
-    return;
-  }
   return;
   {
     TDataFile df;
@@ -5582,108 +5545,6 @@ void TMainForm::funGetWindowSize(const TStrObjList &Params, TMacroData &E)  {
 //..............................................................................
 void TMainForm::macShowSymm(TStrObjList &Cmds, const TParamList &Options, TMacroData &E)  {
   throw TNotImplementedException(__OlxSourceInfo);
-}
-//..............................................................................
-void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options,
-  TMacroData &E)
-{
-  TStrList lll;
-  lll << "aa" << EmptyString() << "2";
-  bool bool_v = olx_list_and(lll, &olxstr::IsEmpty);
-  bool_v = list_or(lll, &olxstr::IsEmpty);
-  bool_v = list_or(lll, &olxstr::IsNumber);
-  olxstr empty;
-  AtomRefList arl(FXApp->XFile().GetRM(), Cmds.Text(' '), "suc");
-  TTypeList<TAtomRefList> res;
-  TResidue& main_resi = FXApp->XFile().GetAsymmUnit().GetResidue(0);
-  arl.Expand(FXApp->XFile().GetRM(), res);
-  for( size_t i=0; i < res.Count(); i++ )  {
-    TBasicApp::GetLog() << NewLineSequence();
-    for( size_t j=0; j < res[i].Count(); j++ )
-      TBasicApp::GetLog() << res[i][j].GetExpression(NULL);
-  }
-  TBasicApp::NewLogEntry() << NewLineSequence() << arl.GetExpression();
-  if( Cmds.Count() == 1 && TEFile::Exists(Cmds[0]) )  {
-    TEFile f(Cmds[0], "rb");
-    uint64_t st = TETime::msNow();
-    TBasicApp::NewLogEntry() << "MD5: " << MD5::Digest(f);
-    TBasicApp::GetLog() <<
-      olxstr::FormatFloat(3, ((double)f.Length()/(((TETime::msNow() - st) + 1)*1.024*1024))) << " Mb/s";
-    f.SetPosition(0);
-    st = TETime::msNow();
-    TBasicApp::NewLogEntry() << "SHA1: " << SHA1::Digest(f);
-    TBasicApp::GetLog() <<
-      olxstr::FormatFloat(3, ((double)f.Length()/(((TETime::msNow() - st) + 1)*1.024*1024))) << " Mb/s";
-    f.SetPosition(0);
-    st = TETime::msNow();
-    TBasicApp::NewLogEntry() << "SHA224: " << SHA224::Digest(f);
-    TBasicApp::GetLog() <<
-      olxstr::FormatFloat(3, ((double)f.Length()/(((TETime::msNow() - st) + 1)*1.024*1024))) << " Mb/s";
-    f.SetPosition(0);
-    st = TETime::msNow();
-    TBasicApp::NewLogEntry() << "SHA256: " << SHA256::Digest(f);
-    TBasicApp::GetLog() <<
-      olxstr::FormatFloat(3, ((double)f.Length()/(((TETime::msNow() - st) + 1)*1.024*1024))) << " Mb/s";
-  }
-  using namespace esdl::exparse;
-  EvaluableFactory evf;
-  context cx;
-  context::init_global(cx);
-  evf.types.Add(&typeid(olxstr), new StringValue);
-  evf.classes.Add(&typeid(olxstr), &StringValue::info);
-  evf.types.Add(&typeid(ListValue::list_t), new ListValue);
-  evf.classes.Add(&typeid(ListValue::list_t), &ListValue::info);
-  //evf.classes.Add(&typeid(StringValue), &StringValue::info);
-  StringValue::init_library();
-  ListValue::init_library();
-
-  exp_builder _exp(evf, cx);
-  IEvaluable* iv = _exp.build("a = 'ab c, de\\';()'");
-  iv = _exp.build("b = 'ab c'");
-  //_exp.scope.add_var("a", new StringValue("abcdef"));
-  iv = _exp.build("a.sub(0,4).sub(1,3).len()");
-  if( !iv->is_final() )  {
-    IEvaluable* iv1 = iv->_evaluate();
-    delete iv1;
-  }
-  if( iv->ref_cnt() == 0 )  delete iv;
-  //iv = _exp.build("x = a.sub (0,4).len() + b.len()");
-  //iv = _exp.build("c = a.sub(0,3) == b.sub(0,3)", false);
-  //iv = _exp.build("c = a.sub(0,3) != b.sub(0,3)");
-  //iv = _exp.build("c = !(a.sub(0,3) == b.sub(0,3))");
-  //iv = _exp.build("c = !(a.sub(0,4) == b.sub(0,3))");
-  //iv = _exp.build("c = b.sub(0,3) + 'dfg'");
-  //iv = _exp.build("c = c + 100");
-  //iv = _exp.build("c = 1.2 + 1.1 - .05");
-  iv = _exp.build("a.len() + 1.2 + 1.1 - abs(-.05)*cos(PI/2)");
-  if (iv->ref_cnt() == 0) delete iv;
-  iv = _exp.build("a='AaBc'.charAt(2)");
-  iv = _exp.build("a='AaBc'[1].toUpper()");
-  iv = _exp.build("a='100'.atoi()");
-  //iv = _exp.build("a=['aBc',a,b, 1.2].add(4)");
-  iv = _exp.build("a=['aBc',a,b, 1.2]");
-  iv = _exp.build("a.add(['ab','ac'])");
-  if (iv->ref_cnt() == 0)
-    delete iv;
-  iv = _exp.build("a=a[4][1][1].toUpper()");
-
-  iv = _exp.build("cos pi*30/180");
-  if( !iv->is_final() )  {
-    IEvaluable* iv1 = iv->_evaluate();
-    delete iv1;
-  }
-  //iv = _exp.build("if(a){ a = a.sub(0,3); }else{ a = a.sub(0,4); }");
-  if( !iv->is_final() && false )  {
-    IEvaluable* iv1 = iv->_evaluate();
-    delete iv1;
-    iv1 = _exp.build("a = 'cos(a)'");
-    iv1 = iv->_evaluate();
-    delete iv1;
-    iv1 = _exp.build("a = cos(c)");
-    iv1 = iv->_evaluate();
-    delete iv1;
-  }
-  if( iv->ref_cnt() == 0 )  delete iv;
 }
 //..............................................................................
 double Main_FindClosestDistance(const smatd_list& ml, vec3d& o_from, const TCAtom& a_to) {
