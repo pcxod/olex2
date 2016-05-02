@@ -576,7 +576,6 @@ namespace exparse  {
       }
       return gf->run(&self, factory, args);
     }
-    static void CompileTest();
   };
 
   template <class wrapper_class, class base_class> struct ClassInfo
