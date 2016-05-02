@@ -153,9 +153,6 @@
     <ClCompile Include="..\..\..\sdl\exparse\exptree.cpp">
       <Filter>Source Files\exparse</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\sdl\exparse\funcwrap.cpp">
-      <Filter>Source Files\exparse</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\sdl\os_util.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

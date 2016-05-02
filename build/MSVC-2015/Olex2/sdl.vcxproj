@@ -658,7 +658,6 @@
     <ClCompile Include="..\..\..\sdl\exparse\evaluable.cpp" />
     <ClCompile Include="..\..\..\sdl\exparse\expbuilder.cpp" />
     <ClCompile Include="..\..\..\sdl\exparse\exptree.cpp" />
-    <ClCompile Include="..\..\..\sdl\exparse\funcwrap.cpp" />
     <ClCompile Include="..\..\..\sdl\wildcard.cpp" />
   </ItemGroup>
   <ItemGroup>
