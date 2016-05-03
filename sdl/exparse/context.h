@@ -17,7 +17,7 @@ namespace exparse {
   struct context {
     LibraryRegistry functions;
     //olxdict<std::type_info const*, IClassRegistry*, TPointerComparator> classes;
-    olxdict<olxstr, IClassRegistry*, olxstrComparator<false> > classes;
+    olxdict<olxstr, IClassInfo*, olxstrComparator<false> > classes;
     olxstr_dict<IEvaluable*, true> consts;
     olxstr_dict<VarProxy*, false> vars;
     context* parent;

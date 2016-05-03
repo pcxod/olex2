@@ -226,10 +226,12 @@ namespace exparse {
         false);
     }
     virtual cast_operator get_cast_operator(const std::type_info& ti) const {
-      if (typeid(Type) == ti)
+      if (typeid(Type) == ti) {
         return &val_cast;
-      else if (typeid(olxstr) == ti)
+      }
+      else if (typeid(olxstr) == ti) {
         return &str_cast;
+      }
       return ANumberEvaluator::get_cast_operator(ti);
     }
     TPrimitiveEvaluator(const Type& val) : ANumberEvaluator(true), BC(val) {}
@@ -268,13 +270,17 @@ namespace exparse {
         value->inc_ref();
     }
     ~VarProxy() {
-      if (value != NULL && value->dec_ref() == 0)
+      if (value != NULL && value->dec_ref() == 0) {
         delete value;
+      }
     }
     void update_value(IEvaluable* _value) {
-      if (value == _value)  return;
-      if (value->dec_ref() == 0)
+      if (value == _value) {
+        return;
+      }
+      if (value->dec_ref() == 0) {
         delete value;
+      }
       value = _value;
       _value->inc_ref();
     }
@@ -344,8 +350,9 @@ namespace exparse {
       }
     }
     ~EvaluableFactory() {
-      for (size_t i = 0; i < types.Count(); i++)
+      for (size_t i = 0; i < types.Count(); i++) {
         delete types.GetValue(i);
+      }
     }
 
     template <class T> IEvaluable* create_(const T& val) const {

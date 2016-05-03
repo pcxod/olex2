@@ -132,7 +132,20 @@ namespace test {
   bool test_1(bool v) { return !v; }
   bool test_2(bool v1, bool v2) { return v1 && v2; }
 
-  struct test_struct : public IOlxObject {
+  struct test_struct : public exparse::IEvaluable, public IOlxObject {
+    int test_val;
+    test_struct() {
+      test_val = 0;
+    }
+    test_struct(int v) {
+      test_val = v;
+    }
+    static test_struct &create0() {
+      return *(new test_struct());
+    }
+    static test_struct &create1(int v) {
+      return *(new test_struct(v));
+    }
     void vtest_0() {}
     void vtest_1(bool v) {}
     void vtest_2(bool v1, bool v2) {}
@@ -140,7 +153,19 @@ namespace test {
     bool test_0() { return true; }
     bool test_1(bool v) { return !v; }
     bool test_2(bool v1, bool v2) { return v1 && v2; }
+    int get_val() const { return test_val; }
+    void set_val(int v)  { test_val = v; }
+
+    virtual IEvaluable* _evaluate() const {
+      return create_proxy_();
+    }
+
+    virtual bool is_final() const {
+      return true;
+    }
+
   };
+
 
   void BindingTest2(OlxTests& t) {
     t.description = __FUNC__;
@@ -163,34 +188,48 @@ namespace test {
     cx.functions.add("test", &test_1);
     cx.functions.add("test", &test_2);
 
-    ClassRegistry<test_struct> &cr = *(new ClassRegistry<test_struct>());
-    cr.add("vtest", &test_struct::vtest_0);
-    cr.add("vtest", &test_struct::vtest_1);
-    cr.add("vtest", &test_struct::vtest_2);
-    cr.add("test", &test_struct::test_0);
-    cr.add("test", &test_struct::test_1);
-    cr.add("test", &test_struct::test_2);
-    cx.classes.Add("tst", &cr);
+    ClassInfo<test_struct, test_struct> &cr = *(new ClassInfo<test_struct, test_struct>());
+    cr.globals.add("__init__", &test_struct::create0);
+    cr.globals.add("__init__", &test_struct::create1);
+    cr.functions.add("vtest", &test_struct::vtest_0);
+    cr.functions.add("vtest", &test_struct::vtest_1);
+    cr.functions.add("vtest", &test_struct::vtest_2);
+    cr.functions.add("test", &test_struct::test_0);
+    cr.functions.add("test", &test_struct::test_1);
+    cr.functions.add("test", &test_struct::test_2);
+    cr.functions.add("get_val", &test_struct::get_val);
+    cr.functions.add("set_val", &test_struct::set_val);
+
+    evf.types.Add(&typeid(test_struct &), new VarProxy(0));
+    cx.classes.Add("test_struct", &cr);
+    evf.classes.Add(&typeid(test_struct &), &cr);
     TPtrList<IEvaluable> args;
     test_struct ts;
     EvaluableFactory factory;
-    IEvaluableHolder i = cr.call(factory, ts, "test", args);
+    IEvaluableHolder i = cr.functions.call(factory, ts, "test", args);
     if (i.cast<bool>() != true) {
       throw TFunctionFailedException(__OlxSourceInfo, "value");
     }
     args.Add(_exp.build("a = 1"));
     args.Add(_exp.build("b = 0"));
-    i = cr.call(factory, ts, "test", args);
+    i = cr.functions.call(factory, ts, "test", args);
     if (i.cast<bool>() != false) {
       throw TFunctionFailedException(__OlxSourceInfo, "value");
     }
     args[0] = cx.find_var('a');
     args[1] = _exp.build("b = 1");
-    i = cr.call(factory, ts, "test", args);
+    i = cr.functions.call(factory, ts, "test", args);
     if (i.cast<bool>() != true) {
       throw TFunctionFailedException(__OlxSourceInfo, "value");
     }
-    //i = _exp.build("");
+    i = _exp.build("t = test_struct()");
+    i = _exp.build("t = test_struct(1)");
+    _exp.build("t.set_val(5)");
+    i = _exp.build("t.get_val() == 4");
+    i = _exp.build("t.get_val() == 5");
+    i = _exp.build("t.test(true,true)");
+    i = _exp.build("t.test(true,false)");
+    i = _exp.build("t.test(false,false)");
     return;
   }
   //...................................................................................................
