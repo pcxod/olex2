@@ -744,9 +744,9 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitFunc(Cell, fpOne|psFileLoaded,
     "Returns value of teh given parameter: a, b, c, alpha, beta, gamma, volume"
   );
-  xlib_InitFunc(Cif, fpOne|psCheckFileTypeCif,
+  xlib_InitFunc(Cif, fpOne| fpTwo |psCheckFileTypeCif,
     "Returns instruction value (all data after the instruction). In case the "
-    "instruction does not exist it return 'n/a' string");
+    "instruction does not exist it return 'n/a' string.");
   xlib_InitFunc(P4p, fpOne|psCheckFileTypeP4P,
     "Returns instruction value (all data after the instruction). In case the "
     "instruction does not exist it return 'n/a' string");
@@ -8666,10 +8666,32 @@ void XLibMacros::funCell(const TStrObjList& Params, TMacroData &E)  {
 void XLibMacros::funCif(const TStrObjList& Params, TMacroData &E)  {
   TXApp &app = TXApp::GetInstance();
   TCif& cf = app.XFile().GetLastLoader<TCif>();
-  if( cf.ParamExists(Params[0]) )
+  if (cf.ParamExists(Params[0])) {
     E.SetRetVal(cf.GetParamAsString(Params[0]));
-  else
-    E.SetRetVal(XLibMacros::NAString());
+  }
+  else {
+    size_t idx = InvalidIndex;
+    if (Params.Count() == 2) {
+      idx = Params[1].ToSizeT();
+    }
+    olx_object_ptr<olx_pair_t<cif_dp::cetTable*, size_t> > t = cf.FindLoopItem(Params[0]);
+    
+    if (!t.is_valid() || (idx != InvalidIndex && t().a->RowCount() < idx)) {
+      E.SetRetVal(XLibMacros::NAString());
+      return;
+    }
+    // return all values
+    if (idx == InvalidIndex) {
+      TStrList rv;
+      for (size_t i = 0; i < t().a->RowCount(); i++) {
+        rv << (*t().a)[i][t().b]->GetStringValue();
+      }
+      E.SetRetVal(olxstr(",").Join(rv));
+    }
+    else {
+      E.SetRetVal((*t().a)[idx][t().b]->GetStringValue());
+    }
+  }
 }
 //..............................................................................
 void XLibMacros::funP4p(const TStrObjList& Params, TMacroData &E)  {
