@@ -410,6 +410,19 @@ namespace exparse  {
     virtual IMemberFunction* find(const olxstr& name, size_t argc) const = 0;
   };
 
+  struct IClassInfo {
+    virtual ~IClassInfo() {
+    }
+    virtual IStaticFunction* find_static_function(const olxstr& name,
+      size_t argc) const = 0;
+    virtual IMemberFunction* find_member_function(const olxstr& name,
+      size_t argc) const = 0;
+
+    virtual const IClassRegistry &get_functions() const = 0;
+    virtual const IClassRegistry &get_wrapper_functions() const = 0;
+    virtual const LibraryRegistry &get_static_functions() const = 0;
+  };
+
   struct AClassFuncEvaluator : public IEvaluable {
     const EvaluableFactory& factory;
     IEvaluable& self;
@@ -581,17 +594,6 @@ namespace exparse  {
       }
       return gf->run(&self, factory, args);
     }
-  };
-
-  struct IClassInfo {
-    virtual IStaticFunction* find_static_function(const olxstr& name,
-      size_t argc) const = 0;
-    virtual IMemberFunction* find_member_function(const olxstr& name,
-      size_t argc) const = 0;
-
-    virtual const IClassRegistry &get_functions() const = 0;
-    virtual const IClassRegistry &get_wrapper_functions() const = 0;
-    virtual const LibraryRegistry &get_static_functions() const = 0;
   };
 
   template <class wrapper_class, class base_class> struct ClassInfo

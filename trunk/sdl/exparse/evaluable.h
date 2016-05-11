@@ -17,7 +17,6 @@ BeginEsdlNamespace()
 
 namespace exparse {
   struct VarProxy;
-  struct EvaluableFactory;
 
   class TCastException : public TBasicException {
     const std::type_info& type;
@@ -322,13 +321,7 @@ namespace exparse {
     static IEvaluable* create(const EvaluableFactory &f, IEvaluable &v);
   };
   template <class T> struct creator<T &> {
-    static IEvaluable* create(const EvaluableFactory &f, T &v) {
-      IEvaluable * e = dynamic_cast<IEvaluable *>(&v);
-      if (e != 0) {
-        return f.create_ref(*e);
-      }
-      return f.create_(v);
-    }
+    static IEvaluable* create(const EvaluableFactory &f, T &v);
   };
 
   struct EvaluableFactory {
@@ -390,6 +383,14 @@ namespace exparse {
   template <class T> IEvaluable* creator<T>::create(
     const EvaluableFactory &f, const T &v)
   {
+    return f.create_(v);
+  }
+
+  template <class T> IEvaluable* creator<T &>::create(const EvaluableFactory &f, T &v) {
+    IEvaluable * e = dynamic_cast<IEvaluable *>(&v);
+    if (e != 0) {
+      return f.create_ref(*e);
+    }
     return f.create_(v);
   }
 
