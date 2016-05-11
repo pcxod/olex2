@@ -31,14 +31,16 @@ BeginXlibNamespace()
 static const double
   def_HKLF_s  = 1,
   def_HKLF_wt = 1,
-  def_HKLF_m  = 0,
   def_OMIT_s  = -2,
   def_OMIT_2t = 180.0,
   def_SHEL_hr = 0,
   def_SHEL_lr = 100;  // ['infinity' in A]
-static const short
-  def_MERG   = 2,
-  def_TWIN_n = 2;
+
+enum {
+  def_HKLF_m = 0,
+  def_MERG = 2,
+  def_TWIN_n = 2
+};
 
 // clear constants...
 static uint32_t
@@ -78,7 +80,8 @@ protected:
   int MERG;
   mutable int HKLF; // can be modified by GetReflections!
   mat3d HKLF_mat;
-  double HKLF_s, HKLF_wt, HKLF_m;
+  double HKLF_s, HKLF_wt;
+  int HKLF_m;
   double OMIT_s, OMIT_2t;
   double SHEL_lr, SHEL_hr;
   TEValueD EXTI;
@@ -221,35 +224,9 @@ public:
   void SetModelSource(const olxstr &src);
   const olxstr &GetHKLSource() const { return HKLSource; }
   void SetHKLSource(const olxstr &src);
-  olxstr GetHKLFStr() const {
-    olxstr rv(HKLF, 80);
-    if (HKLF_m == def_HKLF_m) {
-      if (HKLF_wt == def_HKLF_wt) {
-        if (HKLF_mat.IsI()) {
-          if (HKLF_s != def_HKLF_s)
-            rv << ' ' << HKLF_s;
-        }
-        else {
-          rv << ' ' << HKLF_s;
-          for (int i = 0; i < 9; i++)
-            rv << ' ' << HKLF_mat[i / 3][i % 3];
-        }
-      }
-      else {
-        rv << ' ' << HKLF_s;
-        for (int i = 0; i < 9; i++)
-          rv << ' ' << HKLF_mat[i / 3][i % 3];
-        rv << ' ' << HKLF_wt;
-      }
-    }
-    else {
-      rv << ' ' << HKLF_s;
-      for (int i = 0; i < 9; i++)
-        rv << ' ' << HKLF_mat[i / 3][i % 3];
-      rv << ' ' << HKLF_wt << ' ' << HKLF_m;
-    }
-    return rv;
-  }
+  
+  olxstr GetHKLFStr() const;
+
   template <class list> void SetHKLF(const list& hklf) {
     if (hklf.IsEmpty()) {
       throw TInvalidArgumentException(__OlxSourceInfo, "empty HKLF");
@@ -274,7 +251,7 @@ public:
       HKLF_wt = hklf[11].ToDouble();
     }
     if (hklf.Count() > 12) {
-      HKLF_wt = hklf[12].ToDouble();
+      HKLF_m = hklf[12].ToInt();
     }
     HKLF_set = true;
   }
@@ -293,7 +270,7 @@ public:
   double GetHKLF_wt() const {  return HKLF_wt;  }
   void SetHKLF_wt(double v)  {  HKLF_wt = v;  HKLF_set = true;  }
   double GetHKLF_m() const {  return HKLF_m;  }
-  void SetHKLF_m(double v)  {  HKLF_m = v;  HKLF_set = true;  }
+  void SetHKLF_m(int v)  {  HKLF_m = v;  HKLF_set = true;  }
   bool IsHKLFSet() const {  return HKLF_set;  }
 
   int GetMERG() const {  return MERG;  }
