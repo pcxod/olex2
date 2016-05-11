@@ -2655,4 +2655,37 @@ bool RefinementModel::HklStat::need_updating(const RefinementModel &r) const {
   return false;
 }
 //..............................................................................
-
+olxstr RefinementModel::GetHKLFStr() const {
+  olxstr rv(HKLF, 80);
+  if (HKLF_m == def_HKLF_m) {
+    if (HKLF_wt == def_HKLF_wt) {
+      if (HKLF_mat.IsI()) {
+        if (HKLF_s != def_HKLF_s) {
+          rv << ' ' << HKLF_s;
+        }
+      }
+      else {
+        rv << ' ' << HKLF_s;
+        for (int i = 0; i < 9; i++) {
+          rv << ' ' << HKLF_mat[i / 3][i % 3];
+        }
+      }
+    }
+    else {
+      rv << ' ' << HKLF_s;
+      for (int i = 0; i < 9; i++) {
+        rv << ' ' << HKLF_mat[i / 3][i % 3];
+      }
+      rv << ' ' << HKLF_wt;
+    }
+  }
+  else {
+    rv << ' ' << HKLF_s;
+    for (int i = 0; i < 9; i++) {
+      rv << ' ' << HKLF_mat[i / 3][i % 3];
+    }
+    rv << ' ' << HKLF_wt << ' ' << HKLF_m;
+  }
+  return rv;
+}
+//..............................................................................

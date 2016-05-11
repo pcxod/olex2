@@ -44,4 +44,3 @@ IEvaluable* creator<IEvaluable &>::create(
 {
   return f.create_ref(v);
 }
-

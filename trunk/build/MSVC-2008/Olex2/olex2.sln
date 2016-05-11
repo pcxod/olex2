@@ -74,7 +74,8 @@ Global
 		{01EB4F8B-6F6E-4FD4-908E-37E02AA6EA63}.Unicode-debug|x64.Build.0 = Unicode-debug|x64
 		{01EB4F8B-6F6E-4FD4-908E-37E02AA6EA63}.Unicode-release|Win32.ActiveCfg = Unicode-release|Win32
 		{01EB4F8B-6F6E-4FD4-908E-37E02AA6EA63}.Unicode-release|Win32.Build.0 = Unicode-release|Win32
-		{01EB4F8B-6F6E-4FD4-908E-37E02AA6EA63}.Unicode-release|x64.ActiveCfg = Unicode-release|Win32
+		{01EB4F8B-6F6E-4FD4-908E-37E02AA6EA63}.Unicode-release|x64.ActiveCfg = Unicode-release|x64
+		{01EB4F8B-6F6E-4FD4-908E-37E02AA6EA63}.Unicode-release|x64.Build.0 = Unicode-release|x64
 		{01EB4F8B-6F6E-4FD4-908E-37E02AA6EA63}.Unicode-release-d|Win32.ActiveCfg = Unicode-release-d|Win32
 		{01EB4F8B-6F6E-4FD4-908E-37E02AA6EA63}.Unicode-release-d|Win32.Build.0 = Unicode-release-d|Win32
 		{01EB4F8B-6F6E-4FD4-908E-37E02AA6EA63}.Unicode-release-d|x64.ActiveCfg = Unicode-release-d|x64
@@ -234,10 +235,12 @@ Global
 		{F32F8997-7CEA-489A-9A59-3119CE043C7C}.Release|x64.ActiveCfg = Release|Win32
 		{F32F8997-7CEA-489A-9A59-3119CE043C7C}.Unicode-debug|Win32.ActiveCfg = Unicode-debug|Win32
 		{F32F8997-7CEA-489A-9A59-3119CE043C7C}.Unicode-debug|Win32.Build.0 = Unicode-debug|Win32
-		{F32F8997-7CEA-489A-9A59-3119CE043C7C}.Unicode-debug|x64.ActiveCfg = Release|Win32
+		{F32F8997-7CEA-489A-9A59-3119CE043C7C}.Unicode-debug|x64.ActiveCfg = Unicode-debug|x64
+		{F32F8997-7CEA-489A-9A59-3119CE043C7C}.Unicode-debug|x64.Build.0 = Unicode-debug|x64
 		{F32F8997-7CEA-489A-9A59-3119CE043C7C}.Unicode-release|Win32.ActiveCfg = Unicode-release|Win32
 		{F32F8997-7CEA-489A-9A59-3119CE043C7C}.Unicode-release|Win32.Build.0 = Unicode-release|Win32
-		{F32F8997-7CEA-489A-9A59-3119CE043C7C}.Unicode-release|x64.ActiveCfg = Release|Win32
+		{F32F8997-7CEA-489A-9A59-3119CE043C7C}.Unicode-release|x64.ActiveCfg = Unicode-release|x64
+		{F32F8997-7CEA-489A-9A59-3119CE043C7C}.Unicode-release|x64.Build.0 = Unicode-release|x64
 		{F32F8997-7CEA-489A-9A59-3119CE043C7C}.Unicode-release-d|Win32.ActiveCfg = Release|Win32
 		{F32F8997-7CEA-489A-9A59-3119CE043C7C}.Unicode-release-d|Win32.Build.0 = Release|Win32
 		{F32F8997-7CEA-489A-9A59-3119CE043C7C}.Unicode-release-d|x64.ActiveCfg = Release|Win32

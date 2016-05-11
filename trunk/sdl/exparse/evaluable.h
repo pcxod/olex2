@@ -321,6 +321,15 @@ namespace exparse {
   template <> struct creator<IEvaluable &> {
     static IEvaluable* create(const EvaluableFactory &f, IEvaluable &v);
   };
+  template <class T> struct creator<T &> {
+    static IEvaluable* create(const EvaluableFactory &f, T &v) {
+      IEvaluable * e = dynamic_cast<IEvaluable *>(&v);
+      if (e != 0) {
+        return f.create_ref(*e);
+      }
+      return f.create_(v);
+    }
+  };
 
   struct EvaluableFactory {
     olxdict<std::type_info const*, IEvaluable*, TPointerComparator> types;
@@ -383,6 +392,7 @@ namespace exparse {
   {
     return f.create_(v);
   }
+
 }  // end namespace exparse
 
 EndEsdlNamespace()
