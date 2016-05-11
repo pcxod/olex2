@@ -1501,7 +1501,7 @@ void RefinementModel::FromDataItem(TDataItem& item) {
   HKLF = hklf.GetValue().ToInt();
   HKLF_s = hklf.GetFieldByName("s").ToDouble();
   HKLF_wt = hklf.GetFieldByName("wt").ToDouble();
-  HKLF_m = hklf.GetFieldByName("m").ToDouble();
+  HKLF_m = hklf.GetFieldByName("m").ToInt();
   HKLF_mat = TSymmParser::SymmToMatrix(hklf.GetFieldByName("mat")).r;
 
   TDataItem& omits = item.GetItemByName("OMIT");
