@@ -2222,8 +2222,9 @@ TStrList::const_list_type TIns::SaveHeader(TStrList& SL,
   if (!GetRM().OmittedAtoms().IsEmpty())
     SL.Add("OMIT ") << GetRM().OmittedAtoms().GetExpression();
 
-  if (GetRM().HasEXTI())
-    SL.Add("EXTI ") << GetRM().GetEXTI().ToString();
+  if (GetRM().HasEXTI()) {
+    SL.Add("EXTI ") << GetRM().GetEXTI().GetV();
+  }
 
   _SaveHklInfo(SL, false);
 

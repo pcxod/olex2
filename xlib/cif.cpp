@@ -418,8 +418,9 @@ void TCif::Initialize()  {
         if (sg != NULL) {
           GetAsymmUnit().ChangeSpaceGroup(*sg);
           sg_initialised = true;
-          TBasicApp::NewLogEntry() << "Note the symmetry operators were deduced"
-            " from the Hall symbol and may differ from the intendent ones.";
+          TBasicApp::NewLogEntry(logWarning) <<
+            "Note the symmetry operators were deduced from the Hall symbol and"
+            " may differ from the intendent ones.";
         }
         else {
           try {
@@ -644,9 +645,11 @@ void TCif::Initialize()  {
         TCAtom* A = GetAsymmUnit().FindCAtom(
           ALoop->Get(i, ALabel).GetStringValue());
         if (A == NULL) {
-          throw TInvalidArgumentException(__OlxSourceInfo,
-            olxstr("wrong atom in the aniso loop ").quote() <<
-            ALoop->Get(i, ALabel).GetStringValue());
+          TBasicApp::NewLogEntry(logError) <<
+          (olxstr("Wrong atom in the aniso loop ").quote() <<
+            ALoop->Get(i, ALabel).GetStringValue() << " removing");
+          ALoop->DelRow(i--);
+          continue;
         }
         for (int j = 0; j < 6; j++) {
           EValue = ALoop->Get(i, Ui[j]).GetStringValue();
