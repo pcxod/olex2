@@ -293,15 +293,29 @@ void cetTable::AddCol(const olxstr& col_name)  {
           name.SetLength(d_ind);
       }
     }
-    if( name.IsEmpty() )
+    if (name.IsEmpty()) {
       throw TFunctionFailedException(__OlxSourceInfo, "mismatching loop columns");
+    }
   }
 }
 
+void cetTable::DelRow(size_t idx) {
+  if (idx >= data.RowCount()) {
+    return;
+  }
+  for (size_t i = 0; i < data.ColCount(); i++) {
+    delete data[idx][i];
+  }
+  data.DelRow(idx);
+}
+
 bool cetTable::DelCol(size_t idx) {
-  if (idx == InvalidIndex) return false;
-  for (size_t i=0; i < data.RowCount(); i++)
+  if (idx >= data.ColCount()) {
+    return false;
+  }
+  for (size_t i = 0; i < data.RowCount(); i++) {
     delete data[i][idx];
+  }
   data.DelCol(idx);
   // shall we update the table name here?
   return true;
@@ -309,42 +323,54 @@ bool cetTable::DelCol(size_t idx) {
 
 cetTable::cetTable(const olxstr& cols, size_t row_count)  {
   const TStrList toks(cols, ',');
-  for( size_t i=0; i < toks.Count(); i++ )
+  for (size_t i = 0; i < toks.Count(); i++) {
     AddCol(toks[i]);
-  if (row_count != InvalidSize)
+  }
+  if (row_count != InvalidSize) {
     data.SetRowCount(row_count);
+  }
 }
 void cetTable::Clear()  {
-  for( size_t i=0; i < data.RowCount(); i++ )
+  for (size_t i = 0; i < data.RowCount(); i++) {
     data[i].DeleteItems();
+  }
   data.Clear();
 }
 void cetTable::ToStrings(TStrList& list) const {
-  if( data.RowCount() == 0 )  return;
+  if (data.RowCount() == 0) {
+    return;
+  }
   TStrList out;
   out.Add("loop_");
-  for( size_t i=0; i < data.ColCount(); i++ )  // loop header
+  for (size_t i = 0; i < data.ColCount(); i++) { // loop header
     out.Add("  ") << data.ColName(i);
-  for( size_t i=0; i < data.RowCount(); i++ ) {  // loop content
+  }
+  for (size_t i = 0; i < data.RowCount(); i++) {  // loop content
     bool saveable = true;
-    for( size_t j=0; j < data.ColCount(); j++ )  {
-      if( !data[i][j]->IsSaveable() )  {
+    for (size_t j = 0; j < data.ColCount(); j++) {
+      if (!data[i][j]->IsSaveable()) {
         saveable = false;
         break;
       }
     }
-    if( !saveable )  continue;
+    if (!saveable) {
+      continue;
+    }
     out.Add();
-    for( size_t j=0; j < data.ColCount(); j++ )
+    for (size_t j = 0; j < data.ColCount(); j++) {
       data[i][j]->ToStrings(out);
+    }
   }
-  if( out.Count() == data.ColCount() +1 )  // no content is added
+  if (out.Count() == data.ColCount() + 1) { // no content is added
     return;
+  }
   list.AddList(out);
   list.Add();  // add an empty string after loop for better formating
 }
 void cetTable::DataFromStrings(TStrList& lines)  {
-  if( data.ColCount() == 0 )  return;
+  if (data.ColCount() == 0) {
+    return;
+  }
   TPtrList<ICifEntry> cells;
   TStrList toks;
   for( size_t i=0; i < lines.Count(); i++ )  {
