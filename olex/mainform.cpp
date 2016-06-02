@@ -3572,15 +3572,20 @@ void TMainForm::SaveVFS(short persistenceId) {
   try {
     olxstr dbFN;
     if (persistenceId == plStructure) {
-      if (!FXApp->XFile().HasLastLoader())  return;
+      if (!FXApp->XFile().HasLastLoader()) {
+        return;
+      }
       dbFN = FXApp->XFile().GetStructureDataFolder();
       dbFN << TEFile::ChangeFileExt(
         TEFile::ExtractFileName(FXApp->XFile().GetFileName()) , "odb");
     }
-    else if (persistenceId == plGlobal)
+    else if (persistenceId == plGlobal) {
       dbFN << FXApp->GetInstanceDir() << "global.odb";
-    else
-      throw TFunctionFailedException(__OlxSourceInfo, "undefined persistence level");
+    }
+    else {
+      throw TFunctionFailedException(__OlxSourceInfo,
+        "undefined persistence level");
+    }
 
     TEFile dbf(dbFN + ".tmp", "wb");
     TFileHandlerManager::SaveToStream(dbf, persistenceId);
@@ -3596,19 +3601,24 @@ void TMainForm::LoadVFS(short persistenceId) {
   try {
     olxstr dbFN;
     if (persistenceId == plStructure) {
-      if (!FXApp->XFile().HasLastLoader()) return;
+      if (!FXApp->XFile().HasLastLoader()) {
+        return;
+      }
       dbFN = FXApp->XFile().GetStructureDataFolder();
       dbFN << TEFile::ChangeFileExt(
         TEFile::ExtractFileName(FXApp->XFile().GetFileName()) , "odb");
     }
-    else if (persistenceId == plGlobal)
+    else if (persistenceId == plGlobal) {
       dbFN << FXApp->GetInstanceDir() << "global.odb";
+    }
     else {
       throw TFunctionFailedException(__OlxSourceInfo,
         "undefined persistence level");
     }
 
-    if (!TEFile::Exists(dbFN))  return;
+    if (!TEFile::Exists(dbFN)) {
+      return;
+    }
     try {
       TEFile dbf(dbFN, "rb");
       TFileHandlerManager::LoadFromStream(dbf, persistenceId);
@@ -3619,7 +3629,7 @@ void TMainForm::LoadVFS(short persistenceId) {
     }
   }
   catch (const TExceptionBase &e) {
-    ShowAlert(e, "Failed to read VFS");
+    TBasicApp::NewLogEntry(logInfo) << "Failed to read VFS";
   }
 }
 //..............................................................................
