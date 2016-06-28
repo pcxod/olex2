@@ -53,12 +53,13 @@ TBasicApp::TBasicApp(const olxstr& FileName, bool read_options)
   // attach GC to the instance, if detached...
   TEGC::Initialise();
   SetBaseDir(FileName);
-  if (read_options)
+  if (read_options) {
     ReadOptions(GetBaseDir() + ".options");
+  }
   OnIdle.Add(new TActionHandler());
 }
 //..............................................................................
-TBasicApp::~TBasicApp()  {
+TBasicApp::~TBasicApp() {
   Instance_() = 0;
   delete Log;
   if (LogFile != NULL) {
@@ -146,6 +147,16 @@ void TBasicApp::ReadOptions(const olxstr &fn) {
         Options.AddParam(sf.ParamName(i), sf.ParamValue(i), true);
         if (sf.ParamName(i) == "profiling" && sf.ParamValue(i).IsBool()) {
           SetProfiling(sf.ParamValue(i).ToBool());
+        }
+        else if (sf.ParamName(i).Equalsi("PATH")) {
+          olxstr path_ext = olxstr(sf.ParamValue(i)).TrimWhiteChars();
+          if (!path_ext.IsEmpty()) {
+            olxstr path = olx_getenv("PATH");
+            if (!path_ext.EndsWith(olx_env_sep())) {
+              path_ext << olx_env_sep();
+            }
+            olx_setenv("PATH", path_ext << path);
+          }
         }
       }
     }
