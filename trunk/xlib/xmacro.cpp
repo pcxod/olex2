@@ -5091,9 +5091,6 @@ void XLibMacros::macChangeSG(TStrObjList &Cmds, const TParamList &Options,
   TLattice& latt = xapp.XFile().GetLattice();
   TUnitCell& uc = latt.GetUnitCell();
   TAsymmUnit& au = latt.GetAsymmUnit();
-  if (xapp.XFile().GetRM().UsedSymmCount() != 0) {
-    xapp.XFile().GetRM().ClearUsedSymm();
-  }
   TSpaceGroup& from_sg = xapp.XFile().GetLastLoaderSG();
   TSpaceGroup* sg;
   if (Cmds.GetLastString().Contains(' ')) {

@@ -188,16 +188,18 @@ const smatd& RefinementModel::AddUsedSymm(const smatd& matr, const olxstr& id_)
 //.............................................................................
 void RefinementModel::UpdateUsedSymm(const class TUnitCell& uc)  {
   try {
-    for( size_t i=0;  i < UsedSymm.Count(); i++ )
+    for (size_t i = 0; i < UsedSymm.Count(); i++) {
       uc.InitMatrixId(UsedSymm.GetValue(i).symop);
+    }
   }
   catch (const TExceptionBase &) {
     TBasicApp::NewLogEntry(logError) <<
       "Failed to update EQIV list, resetting to identity";
     TBasicApp::NewLogEntry(logError) <<
       "This could have happened as a result of the space group change";
-    for( size_t i=0;  i < UsedSymm.Count(); i++ )
+    for (size_t i = 0; i < UsedSymm.Count(); i++) {
       UsedSymm.GetValue(i).symop = uc.GetMatrix(0);
+    }
   }
 }
 //.............................................................................
