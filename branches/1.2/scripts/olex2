@@ -1,0 +1,233 @@
+#!/bin/sh
+
+# Important if you overide this variable this file will try and update to whatever the variable states using the Olex2-GUI!
+# This could end up in broken Olex2 and endless update looping!
+OLEX2_TAG=1.1
+
+# Current possible OLEX2_TAG values are:
+# 1.1
+# 1.1-alpha
+# 1.1-beta
+
+# These defaults can be overridden by the file $HOME/.oleg-config.
+# $HOME/.oleg-config is created on first run of Olex2 Version 1.0x
+
+# The location where olex2 files will live in your home directory
+OLEX2_DEFAULT_DIR=$HOME/olex2
+
+# Location where you installed CCTBX - this is correct as per the debroglie cctbx rpm
+OLEX2_CCTBX_DEFAULT_DIR=/usr/local/cctbx
+
+# Location where the CCTBX library is kept
+CCTBX_LIBRARY_PATH=/usr/local/cctbx/cctbx_build/lib
+
+# Location where the CCTBX binary directory is kept
+CCTBX_BIN_PATH=/usr/local/cctbx/cctbx_build/bin
+
+# You shouldn't need to edit again below here.
+# --------------------------------------------------------------------------- #
+# Checking for existence of $HOME/.olex2-config
+if test -f "$HOME/.olex2-config"; then
+	echo "$HOME/.olex2-config present"
+	source $HOME/.olex2-config
+else
+	echo "Moving default olex2-config to: $HOME"
+	install -m 644 /usr/share/olex2/olex2-config $HOME/.olex2-config
+	wait;
+	if test -f "$HOME/.olex2-config"; then
+		echo "$HOME/.olex2-config has been moved"
+		source $HOME/.olex2-config
+	else
+		zenity --error --title="Olex2" --text="Olex2 configuration has failed, please check for the presence of $HOME/.olex2-config and try again"
+		exit 0
+	fi
+fi
+
+echo "Olex2 directory		: $OLEX2_DEFAULT_DIR"
+echo "Olex2 cctbx directory	: $OLEX2_CCTBX_DEFAULT_DIR"
+echo "Olex2 cctbx library	: $CCTBX_LIBRARY_PATH"
+echo "Olex2 cctbx bin		: $CCTBX_BIN_PATH"
+
+# SETUP CCTBX SETTINGS
+# N.B. from cctbx_build/dispatcher_head.sh
+if [ -n "$LD_LIBRARY_PATH" ]; then
+	export LD_LIBRARY_PATH="$CCTBX_LIBRARY_PATH:$LD_LIBRARY_PATH"
+else
+	export LD_LIBRARY_PATH=$CCTBX_LIBRARY_PATH
+fi
+if [ -n "$PATH" ]; then
+	PATH="$CCTBX_BIN_PATH:$PATH"
+	export PATH
+else
+	PATH="$CCTBX_BIN_PATH"
+	export PATH
+fi
+
+# --------------------------------------------------------------------------- #
+# SETUP OLEX2 SETTINGS
+# Set olex home directory - default is user $HOME
+if [ -n "$OLEX2_DIR" ]; then
+	echo "OLEX2_DIR already defined:" $OLEX2_DIR
+else
+	export OLEX2_DIR=$OLEX2_DEFAULT_DIR
+	echo "Using defaults, Setting OLEX2_DIR:" $OLEX2_DIR
+fi
+
+if [ -n "$PATH" ]; then
+	export PATH="$PATH:$OLEX2_DIR"
+else
+	export PATH="$OLEX2_DIR"
+fi
+
+# This defines the location of cctbx -again needs some automation to allow setting from env
+if [ -n "$OLEX2_CCTBX_DIR" ]; then
+        echo "OLEX2_CCTBX_DIR already defined:" $OLEX2_CCTBX_DIR
+else
+	# This path is currently using the debroglie.net cctbx path
+	export OLEX2_CCTBX_DIR=$OLEX2_CCTBX_DEFAULT_DIR
+fi
+
+# Olex2 GUI file management and tests from here down
+
+# Testing for presence of Olex2-GUI directory
+if test -d "$OLEX2_DIR"; then
+	echo "$OLEX2_DIR olex2 home present"
+else
+	echo "No olex2 dir, creating here: $OLEX2_DIR"
+	mkdir $OLEX2_DIR
+	# If there is no Olex2 directory then we must also assume that there is no install and create a fresh install from the RPM
+	(cp -ur usr/share/olex2/olex2_template/* $OLEX2_DIR/) | zenity --width=360 \
+  --progress \
+	--window-icon=/usr/share/icons/olex2.xpm \
+	--title="Installing Olex2 GUI" \
+	--text="Installing Olex2 GUI files to userspace" \
+	--auto-close
+  wait;
+  if [ "$?" = -1 ] ; then
+		zenity --error --text="Install cancelled!"
+		exit 0;
+	fi
+fi
+
+# Check if the rpm version.txt and thus rpm version is newer than the users one and upgrade if necessary
+
+if test -f "$OLEX2_DIR/version.txt"; then
+	echo "userspace version.txt present - reading"
+	exec<"$OLEX2_DIR/version.txt"
+   	read uversionline
+    echo "Current version.txt reads as: " $uversionline;
+    versiontxt=${uversionline: -4};
+	if test -f "/usr/share/olex2/svnversion"; then
+		exec<"/usr/share/olex2/svnversion"
+   	read rversionline
+    echo "Current rpm version reads as: " $rversionline;
+# We need to compare the version values!
+    echo "Latest RPM Olex2 version is defined as: " $rversionline;
+	  if test $rversionline -gt $versiontxt; then
+		  echo "The RPM is newer than the user space GUI";
+		  echo "so we do copy";
+		  (cp -ur /usr/share/olex2/olex2_template $OLEX2_DIR) | zenity --width=360 \
+  		--progress\
+			--window-icon=/usr/share/icons/olex2.xpm \
+			--title="Updating Olex2 GUI" \
+			--text="Updating Olex2 GUI files to latest version" \
+			--auto-close
+  		wait;
+			if [ "$?" = -1 ] ; then
+				zenity --error --text="Update cancelled!"
+				exit 0;
+			fi
+		else
+	   	echo "The current RPM is older than the latest web release of Olex2";
+	   	echo "No need to update";
+		fi
+   else
+		echo "rpm version file not found - not doing anything";
+	fi
+else
+	echo "version.txt file not found - not doing anything";
+fi
+
+# USETTINGS.DAT
+# usettings.dat comparison and move if necessary
+# Check to see if the usettings.dat is the present and the same as the one from the rpm
+if test -f "$OLEX2_DIR/usettings.dat"; then # This tests if the file is present
+	echo "$OLEX2_DIR/usettings.dat present";
+	cmp -s $OLEX2_DIR/usettings.dat /usr/share/olex2/usettings.dat > /dev/null
+		if [ $? -eq 1 ]; then # This is testing if it is the same
+    	echo "usettings.dat file is different - a new usettings.dat file has been saved as usettings.dat.rpmnew - please compare";
+    	#cp /usr/share/olex2/usettings.dat $OLEX2_DIR/usettings.dat.rpmnew
+		else
+    	echo "usettings.dat file is the same - no updating";
+	fi
+else # Here we are movign because the file is NOT present
+	echo "No usettings.dat file present in: $OLEX2_DIR";
+	echo "Moving default usettings.dat to: $OLEX2_DIR";
+  cp /usr/share/olex2/usettings.dat $OLEX2_DIR;
+  wait;
+fi
+
+# This is an attempt to find a clean upgrade path to the new update
+# format of olex2
+
+if test -f "$OLEX2_DIR/olex2.tag"; then
+	echo "olex2.tag present this is a new install"
+# We need to compare the tag values!
+	exec<"$OLEX2_DIR/olex2.tag"
+   	read line
+        echo "Current Olex2.tag reads as: " $line;
+	        echo "Latest Olex2 tag is defined as: " $OLEX2_TAG
+	        if test $line != $OLEX2_TAG; then
+	                rm "$OLEX2_DIR/olex2.tag";
+		        echo -e "$OLEX2_TAG" >> "$OLEX2_DIR/olex2.tag";
+          fi
+else
+	echo "olex2.tag file is not present - this suggests an older Olex2 install which needs upgrading";
+	echo "Modifying default usettings.dat and updating from rpm template to: $OLEX2_DIR"
+	cp $OLEX2_DIR/usettings.dat $OLEX2_DIR/usettings.dat.rpmsave;
+	wait;
+	cp /usr/share/olex2/usettings.dat $OLEX2_DIR;
+	wait;
+  (cp -ur /usr/share/olex2/olex2_template $OLEX2_DIR) | zenity --width=360 \
+  --progress\
+	--window-icon=/usr/share/icons/olex2.xpm \
+	--title="Updating Olex2 GUI" \
+	--text="Updating Olex2 GUI files to latest version" \
+	--auto-close
+  wait;
+	if [ "$?" = -1 ] ; then
+		zenity --error --text="Update cancelled!"
+		exit 0;
+	fi
+fi
+
+# This is the default logic if on an existing install
+# I may need to alter the update notice from unirun
+
+(/usr/libexec/olex2/unirun $OLEX2_DIR -tag=$OLEX2_TAG &
+	pid2=$!
+	i=0
+	while [ -n "`ps -p $pid2 | grep $pid2`" ] ; do
+		echo $i
+		sleep 1
+		i=$(($i +10))
+	done
+	wait $pid2;
+	sleep 1
+	echo 100)|
+zenity --width=360 \
+	--progress \
+	--window-icon=/usr/share/icons/olex2.xpm \
+	--title="Updating Olex2" \
+	--text="Applying Olex2 Downloaded Updates" \
+	--percentage=0 \
+	--auto-close
+
+if [ "$?" = -1 ] ; then
+	zenity --error --text="Update cancelled."
+	exit 1
+fi
+
+wait
+# Finally calling olex2
+/usr/libexec/olex2/olex2 &
