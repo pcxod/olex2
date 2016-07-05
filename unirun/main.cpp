@@ -111,7 +111,7 @@ char **ListToArgs(TStrList &args_list) {
       args_list[i].IndexOf('=') != InvalidIndex;
     if (!option && args_list[i].IndexOf(' ') != InvalidIndex)
       args_list[i] = olxstr('"') << args_list[i] << '"';
-    olxcstr v = args_list[i].ToMBStr();
+    olxcstr v = TUtf8::Encode(args_list[i]);
     args[i] = new char [v.Length()+1];
     strcpy(args[i], v.c_str());
   }
@@ -126,7 +126,6 @@ class MyApp: public wxAppConsole {
 };
 IMPLEMENT_APP_NO_MAIN(MyApp)
 int main(int argc, char** argv)  {
-  setlocale(LC_CTYPE, "utf-8");
   MyApp app;
   int res = 0;
   /* as soon as we create TBasicApp, this instance gets attached to it
@@ -149,10 +148,9 @@ int main(int argc, char** argv)  {
   ZipFS::RegisterFactory();
   try  {
     bool print_help = false;
-    olxstr base_dir = olxstr::FromCStr(argv[0]),
-      var_name = "OLEX2_DIR";
+    olxstr base_dir = argv[0], var_name = "OLEX2_DIR";
     if( argc > 1 )  {
-      olxstr arg = olxstr::FromCStr(argv[1]);
+      olxstr arg(argv[1]);
       print_help = (arg == "-help" || arg == "/help" || arg == "--help");
       if (!print_help && TEFile::Exists(arg) && TEFile::IsDir(arg)) {
         base_dir = arg;
@@ -360,9 +358,10 @@ void DoRun()  {
             }
           }
           char **args = ListToArgs(args_list);
-          execv(tmp_exe_name.ToMBStr().c_str(), args);
+          olxstr c_cmdl = TUtf8::Encode(tmp_exe_name);
+          execv(c_cmdl.c_str(), args);
           TBasicApp::NewLogEntry(logError) <<
-            "Could not re-launch itself";
+            "Could re-launch itself";
           return;
         }
       }
@@ -377,7 +376,7 @@ void DoRun()  {
 }
 
 void DoLaunch(const TStrList &args_)  {
-  olxstr bd = TBasicApp::GetBaseDir();
+  olxcstr bd = TBasicApp::GetBaseDir();
   olxstr path = olx_getenv("PATH");
   path.Insert(bd.SubStringTo(bd.Length()-1) + ':', 0);
   olx_setenv("PATH", path);
@@ -390,9 +389,8 @@ void DoLaunch(const TStrList &args_)  {
   olx_setenv("BOOST_ADAPTBX_FPE_DEFAULT", "1");
   olx_setenv("BOOST_ADAPTBX_SIGNALS_DEFAULT", "1");
   olxstr gl_stereo = olx_getenv("OLEX2_GL_STEREO");
-  if (gl_stereo.IsEmpty()) {
+  if (gl_stereo.IsEmpty())
     olx_setenv("OLEX2_GL_STEREO", "FALSE");
-  }
 #  ifdef __MAC__
   olx_setenv("OLEX2_DIR", bd);
   olxstr data_dir = olx_getenv("OLEX2_DATADIR");
@@ -404,7 +402,7 @@ void DoLaunch(const TStrList &args_)  {
 #  else
   static const olxcstr ld_var = "LD_LIBRARY_PATH";
 #  endif
-  olxstr ld_path;
+  olxcstr ld_path;
   ld_path << bd << "lib:" << bd << "cctbx/cctbx_build/lib";
   olx_setenv(ld_var, ld_path);
   olx_setenv("PYTHONHOME", bd);
@@ -416,6 +414,7 @@ void DoLaunch(const TStrList &args_)  {
   args_list << cmdl;
   args_list << args_;
   char **args = ListToArgs(args_list);
-  execv(cmdl.ToMBStr().c_str(), args);
+  olxstr c_cmdl = TUtf8::Encode(cmdl);
+  execv(c_cmdl.c_str(), args);
   TBasicApp::NewLogEntry(logError) << "Failed to launch '" << cmdl << '\'';
 }

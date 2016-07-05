@@ -71,7 +71,7 @@ class TXGrid: public AGDrawObject  {
   // if mask is specified
   GLuint PListId, NListId;
   char *TextData, *LegendData;
-  array_2d<float> ContourData;
+  float **ContourData;
   float *ContourCrds[2], *ContourLevels;
   size_t ContourLevelCount;
   //TGlPrimitive *FPrimitive;
@@ -225,33 +225,30 @@ public:
 protected:
   struct TPlaneCalculationTask : public TaskBase {
     TXGrid& parent;
-    olx_array::array_2d<float> &data;
-    olx_array::array_3d<float> &src_data;
+    float **data, ***src_data;
     char *text_data;
     const mat3f &proj_m, &c2c;
     const vec3f& center;
+    const vec3s& dim;
     float minVal, maxVal, size, depth, hh;
     size_t max_dim;
     short mode;
     MapUtil::MapGetter<float,2> map_getter;
     void Run(size_t index);
-    TPlaneCalculationTask(TXGrid& _parent,
-      olx_array::array_3d<float> &_src_data,
-      olx_array::array_2d<float> &_data,
+    TPlaneCalculationTask(TXGrid& _parent, float*** _src_data, float** _data,
       char* _text_data, size_t _max_dim, float _size,
       float _depth, const mat3f& _proj_m, const mat3f& _c2c,
-      const vec3f& _center, short _mode) :
+      const vec3f& _center, const vec3s& _dim, short _mode) :
         parent(_parent),
         data(_data), src_data(_src_data), text_data(_text_data),
-        proj_m(_proj_m), c2c(_c2c), center(_center),
+        proj_m(_proj_m), c2c(_c2c), center(_center), dim(_dim),
         minVal(1000), maxVal(-1000),
         size(_size), depth(_depth), hh((float)_max_dim/2), max_dim(_max_dim),
         mode(_mode),
-        map_getter(src_data)
-    {}
+        map_getter(src_data, dim) {}
     TPlaneCalculationTask* Replicate() const {
       return new TPlaneCalculationTask(parent, src_data, data, text_data,
-        max_dim, size, depth, proj_m, c2c, center, mode);
+        max_dim, size, depth, proj_m, c2c, center, dim, mode);
     }
   };
 };

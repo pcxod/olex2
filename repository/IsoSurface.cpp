@@ -20,8 +20,6 @@
 #include <math.h>
 #include "IsoSurface.h"
 
-using namespace olx_grid_util;
-
 const unsigned int CIsoSurface::m_edgeTable[256] = {
   0x0  , 0x109, 0x203, 0x30a, 0x406, 0x50f, 0x605, 0x70c,
   0x80c, 0x905, 0xa0f, 0xb06, 0xc0a, 0xd03, 0xe09, 0xf00,
@@ -316,87 +314,86 @@ const int CIsoSurface::m_triTable[256][16] = {
   {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1}
 };
 //..............................................................................
-CIsoSurface::CIsoSurface(array_3d<float>& points, const array_3d<int>* data)
-  : ZSlice(points.width*points.height),
-  Points(points),
-  PointData(data)
+CIsoSurface::CIsoSurface(TArray3D<float>& points) :
+  DimmX(points.Length1()), DimmY(points.Length2()), DimmZ(points.Length3()),
+  ZSlice(DimmY*DimmX),
+  Points(points)
 {
   m_tIsoLevel = 0;
   m_bValidSurface = false;
 }
 //..............................................................................
-void CIsoSurface::GenerateSurface(float tIsoLevel) {
+void CIsoSurface::GenerateSurface(float tIsoLevel)  {
   DeleteSurface();
-  //  IsoPoints.SetCapacity(DimmX*DimmY);
-  AllTriangles.SetCapacity(ZSlice);
+//  IsoPoints.SetCapacity(DimmX*DimmY);
+  AllTriangles.SetCapacity(DimmX*DimmY);
 
   m_tIsoLevel = tIsoLevel;
-  float*** D = Points.data;
-  const int xmo = Points.width - 2,
-    ymo = Points.height - 2,
-    zmo = Points.depth - 2;
+  float*** D = Points.Data;
+  const int xmo = DimmX-2,
+            ymo = DimmY-2,
+            zmo = DimmZ-2;
   // Generate isosurface.
-  for (size_t x = 0; x < Points.width - 1; x++) {
-    for (size_t y = 0; y < Points.height - 1; y++) {
-      for (size_t z = 0; z < Points.depth - 1; z++) {
+  for( int x = 0; x < DimmX-1; x++)
+    for( int y = 0; y < DimmY-1; y++)
+      for( int z = 0; z < DimmZ-1; z++) {
         // Calculate table lookup index from those vertices which are below the isolevel.
         unsigned int tableIndex = 0;
-        if (m_tIsoLevel > 0) {
-          if (D[x][y][z] > m_tIsoLevel)        tableIndex |= 1;
-          if (D[x][y + 1][z] > m_tIsoLevel)      tableIndex |= 2;
-          if (D[x + 1][y + 1][z] > m_tIsoLevel)    tableIndex |= 4;
-          if (D[x + 1][y][z] > m_tIsoLevel)      tableIndex |= 8;
-          if (D[x][y][z + 1] > m_tIsoLevel)      tableIndex |= 16;
-          if (D[x][y + 1][z + 1] > m_tIsoLevel)    tableIndex |= 32;
-          if (D[x + 1][y + 1][z + 1] > m_tIsoLevel)  tableIndex |= 64;
-          if (D[x + 1][y][z + 1] > m_tIsoLevel)    tableIndex |= 128;
+        if( m_tIsoLevel > 0 )  {
+          if( D[x][y][z] > m_tIsoLevel)        tableIndex |= 1;
+          if( D[x][y+1][z] > m_tIsoLevel)      tableIndex |= 2;
+          if( D[x+1][y+1][z] > m_tIsoLevel)    tableIndex |= 4;
+          if( D[x+1][y][z] > m_tIsoLevel)      tableIndex |= 8;
+          if( D[x][y][z+1] > m_tIsoLevel)      tableIndex |= 16;
+          if( D[x][y+1][z+1] > m_tIsoLevel)    tableIndex |= 32;
+          if( D[x+1][y+1][z+1] > m_tIsoLevel)  tableIndex |= 64;
+          if( D[x+1][y][z+1] > m_tIsoLevel)    tableIndex |= 128;
         }
         else {
-          if (D[x][y][z] < m_tIsoLevel)        tableIndex |= 1;
-          if (D[x][y + 1][z] < m_tIsoLevel)      tableIndex |= 2;
-          if (D[x + 1][y + 1][z] < m_tIsoLevel)    tableIndex |= 4;
-          if (D[x + 1][y][z] < m_tIsoLevel)      tableIndex |= 8;
-          if (D[x][y][z + 1] < m_tIsoLevel)      tableIndex |= 16;
-          if (D[x][y + 1][z + 1] < m_tIsoLevel)    tableIndex |= 32;
-          if (D[x + 1][y + 1][z + 1] < m_tIsoLevel)  tableIndex |= 64;
-          if (D[x + 1][y][z + 1] < m_tIsoLevel)    tableIndex |= 128;
+          if( D[x][y][z] < m_tIsoLevel)        tableIndex |= 1;
+          if( D[x][y+1][z] < m_tIsoLevel)      tableIndex |= 2;
+          if( D[x+1][y+1][z] < m_tIsoLevel)    tableIndex |= 4;
+          if( D[x+1][y][z] < m_tIsoLevel)      tableIndex |= 8;
+          if( D[x][y][z+1] < m_tIsoLevel)      tableIndex |= 16;
+          if( D[x][y+1][z+1] < m_tIsoLevel)    tableIndex |= 32;
+          if( D[x+1][y+1][z+1] < m_tIsoLevel)  tableIndex |= 64;
+          if( D[x+1][y][z+1] < m_tIsoLevel)    tableIndex |= 128;
         }
         const unsigned int eid = m_edgeTable[tableIndex];
         // Now create a triangulation of the isosurface in this cell.
-        if (eid == 0)  continue;
-        if (eid & 1)    AddSurfacePoint(x, y, z, 0);
-        if (eid & 8)    AddSurfacePoint(x, y, z, 3);
-        if (eid & 256)  AddSurfacePoint(x, y, z, 8);
+        if( eid == 0 )  continue;
+        if( eid & 1 )    AddSurfacePoint(x,y,z, 0);
+        if( eid & 8 )    AddSurfacePoint(x,y,z, 3);
+        if( eid & 256 )  AddSurfacePoint(x,y,z, 8);
 
-        if (x == xmo) {
-          if (eid & 4)    AddSurfacePoint(x, y, z, 2);
-          if (eid & 2048) AddSurfacePoint(x, y, z, 11);
-          if ((y == ymo) && (eid & 1024)) AddSurfacePoint(x, y, z, 10);
-          if ((z == zmo) && (eid & 64))   AddSurfacePoint(x, y, z, 6);
+        if( x == xmo ) {
+          if( eid & 4 )    AddSurfacePoint(x,y,z, 2);
+          if( eid & 2048 ) AddSurfacePoint(x,y,z, 11);
+          if( (y == ymo) && (eid & 1024) ) AddSurfacePoint(x,y,z, 10);
+          if( (z == zmo) && (eid & 64) )   AddSurfacePoint(x,y,z, 6);
         }
-        if (y == ymo) {
-          if (eid & 2)  AddSurfacePoint(x, y, z, 1);
-          if (eid & 512) AddSurfacePoint(x, y, z, 9);
-          if ((z == zmo) && (eid & 32))  AddSurfacePoint(x, y, z, 5);
+        if( y == ymo ) {
+          if( eid & 2 )  AddSurfacePoint(x,y,z, 1);
+          if( eid & 512 ) AddSurfacePoint(x,y,z, 9);
+          if( (z == zmo) && (eid & 32) )  AddSurfacePoint(x,y,z, 5);
         }
 
-        if (z == zmo) {
-          if (eid & 16)  AddSurfacePoint(x, y, z, 4);
-          if (eid & 128) AddSurfacePoint(x, y, z, 7);
+        if( z == zmo ) {
+          if( eid & 16 )  AddSurfacePoint(x,y,z, 4);
+          if( eid & 128 ) AddSurfacePoint(x,y,z, 7);
         }
         for (unsigned int i = 0; m_triTable[tableIndex][i] != -1; i += 3) {
           IsoTriangle triangle;
-          triangle[0] =
-            T4DIndex::encode(x, y, z, m_triTable[tableIndex][i]);
-          triangle[1] =
-            T4DIndex::encode(x, y, z, m_triTable[tableIndex][i + 1]);
-          triangle[2] =
-            T4DIndex::encode(x, y, z, m_triTable[tableIndex][i + 2]);
+          triangle.pointID[0] =
+              T4DIndex::encode(x, y, z, m_triTable[tableIndex][i]);
+          triangle.pointID[1] =
+              T4DIndex::encode(x, y, z, m_triTable[tableIndex][i+1]);
+          triangle.pointID[2] =
+              T4DIndex::encode(x, y, z, m_triTable[tableIndex][i+2]);
           AllTriangles.Add(triangle);
         }
       }
-    }
-  }
+
   RenameVerticesAndTriangles();
   CalculateNormals();
   m_bValidSurface = true;
@@ -406,7 +403,6 @@ void CIsoSurface::DeleteSurface()  {
   m_tIsoLevel = 0;
   m_bValidSurface = false;
   Vertices.Clear();
-  VertexData.Clear();
   Triangles.Clear();
   AllTriangles.Clear();
   IsoPoints.Clear();
@@ -481,48 +477,43 @@ void CIsoSurface::AddSurfacePoint(unsigned int nX, unsigned int nY,
   default:  // Invalid edge no.
     return;
   }
-  float val1 = Points[v1x][v1y][v1z];
-  int p_data1 = PointData != 0 ? PointData->data[v1x][v1y][v1z] : -1;
-  float val2 = Points[v2x][v2y][v2z];
-  int p_data2 = PointData != 0 ? PointData->data[v2x][v2y][v2z] : -1;
-  if (olx_abs(m_tIsoLevel - val1) < 0.01f) {
-    IsoPoints.Add(nX, nY, nZ, nEdgeNo, (float)v1x, (float)v1y, (float)v1z, p_data1);
-  }
-  else if (olx_abs(m_tIsoLevel - val2) < 0.01f) {
-    IsoPoints.Add(nX, nY, nZ, nEdgeNo, (float)v2x, (float)v2y, (float)v2z, p_data2);
-  }
-  else if (olx_abs(val1 - val2) < 0.01f) {
-    IsoPoints.Add(nX, nY, nZ, nEdgeNo, (float)v1x, (float)v1y, (float)v1z, p_data1);
-  }
-  else {
-    const float mu = (m_tIsoLevel - val1) / (val2 - val1);
-    IsoPoints.Add(nX, nY, nZ, nEdgeNo, (float)v1x + mu*(v2x - v1x),
-      (float)v1y + mu*(v2y - v1y), (float)v1z + mu*(v2z - v1z),
-      p_data1 == -1 ? p_data2 : p_data1);
+  float val1 = Points.Data[v1x][v1y][v1z];
+  float val2 = Points.Data[v2x][v2y][v2z];
+  if( olx_abs(m_tIsoLevel-val1) < 0.01 )
+    IsoPoints.Add(nX, nY, nZ, nEdgeNo, (float)v1x, (float)v1y, (float)v1z);
+  else if( olx_abs(m_tIsoLevel-val2) < 0.01 )
+    IsoPoints.Add(nX, nY, nZ, nEdgeNo, (float)v2x, (float)v2y, (float)v2z);
+  else if( olx_abs(val1-val2) < 0.01 )
+    IsoPoints.Add(nX, nY, nZ, nEdgeNo, (float)v1x, (float)v1y, (float)v1z);
+  else  {
+    const float mu =  (m_tIsoLevel-val1)/(val2-val1);
+    IsoPoints.Add(nX, nY, nZ, nEdgeNo, (float)v1x + mu*(v2x-v1x),
+      (float)v1y + mu*(v2y-v1y),(float)v1z + mu*(v2z-v1z));
   }
 }
 //..............................................................................
-void CIsoSurface::RenameVerticesAndTriangles() {
-  IsoPoints.GetVertices(Vertices, PointData == 0 ? 0 : &VertexData);
+void CIsoSurface::RenameVerticesAndTriangles()  {
+  IsoPoints.GetVertices(Vertices);
   Triangles.SetCapacity(AllTriangles.Count());
-  for (size_t i = 0; i < AllTriangles.Count(); i++) {
+  for( size_t i=0; i < AllTriangles.Count(); i++ )  {
     IsoTriangle& ta = AllTriangles[i];
-    ta[0] = IsoPoints.Get(ta[0]).newID;
-    ta[1] = IsoPoints.Get(ta[1]).newID;
-    ta[2] = IsoPoints.Get(ta[2]).newID;
-    const vec3f& v1 = Vertices[ta[0]];
-    const vec3f& v2 = Vertices[ta[1]];
-    const vec3f& v3 = Vertices[ta[2]];
+    ta.pointID[0] = IsoPoints.Get(ta.pointID[0]).newID;
+    ta.pointID[1] = IsoPoints.Get(ta.pointID[1]).newID;
+    ta.pointID[2] = IsoPoints.Get(ta.pointID[2]).newID;
+    const vec3f& v1 = Vertices[ta.pointID[0]];
+    const vec3f& v2 = Vertices[ta.pointID[1]];
+    const vec3f& v3 = Vertices[ta.pointID[2]];
     float d = v1.QDistanceTo(v2);
-    if (d == 0) {
+    if( d == 0 )
       continue;
-    }
-    else {
-      if ((d = v1.QDistanceTo(v3)) == 0) {
+    else  {
+      d = v1.QDistanceTo(v3);
+      if( d == 0 )
         continue;
-      }
-      else if ((d = v2.QDistanceTo(v3)) == 0) {
-        continue;
+      else  {
+        d = v2.QDistanceTo(v3);
+        if( d == 0 )
+          continue;
       }
     }
     Triangles.Add(ta);
@@ -531,206 +522,30 @@ void CIsoSurface::RenameVerticesAndTriangles() {
   AllTriangles.Clear();
 }
 //..............................................................................
-void CIsoSurface::CalculateNormals() {
+void CIsoSurface::CalculateNormals()  {
   Normals.SetCount(Vertices.Count());
-  for (size_t i = 0; i < Triangles.Count(); i++) {
-    const vec3f vec1 = Vertices[Triangles[i][1]] -
-      Vertices[Triangles[i][0]];
-    const vec3f vec2 = Vertices[Triangles[i][2]] -
-      Vertices[Triangles[i][0]];
+  for( size_t i = 0; i < Triangles.Count(); i++ ) {
+    const vec3f vec1 = Vertices[Triangles[i].pointID[1]] -
+      Vertices[Triangles[i].pointID[0]];
+    const vec3f vec2 = Vertices[Triangles[i].pointID[2]] -
+      Vertices[Triangles[i].pointID[0]];
     const float S = vec1.XProdVal(vec2);
     vec3f normal = vec1.XProdVec(vec2);
-    if (S > 0) { // weight up normals of little triangles (hight curvature)
+    if( S > 0 )  // weight up normals of little triangles (hight curvature)
       normal /= sqrt(S);
-    }
-    Normals[Triangles[i][0]] += normal;
-    Normals[Triangles[i][1]] += normal;
-    Normals[Triangles[i][2]] += normal;
+    Normals[Triangles[i].pointID[0]] += normal;
+    Normals[Triangles[i].pointID[1]] += normal;
+    Normals[Triangles[i].pointID[2]] += normal;
   }
 
   // Normalize normals.
-  for (size_t i = 0; i < Normals.Count(); i++) {
-    if (Normals[i].QLength() > 1e-6f) {
+  for( size_t i = 0; i < Normals.Count(); i++ )  {
+    if( Normals[i].QLength() > 1e-6 )  {
       Normals[i].Normalise();
-      //Normals[i] *= -1;
+       //Normals[i] *= -1;
     }
     else
       Normals[i][2] = 1;
   }
-}
-//..............................................................................
-//..............................................................................
-//..............................................................................
-reducer::reducer(TTypeList<vec3f>& vertices_,
-  TTypeList<IsoTriangle>& triangles_)
-  : vertices(vertices_), triangles(triangles_), vt_map(vertices.Count())
-{
-  for (size_t i = 0; i < triangles.Count(); i++) {
-    const int *p = &triangles[i].pointID[0];
-    vt_map[p[0]].Add(i);
-    vt_map[p[1]].Add(i);
-    vt_map[p[2]].Add(i);
-  }
-}
-//..............................................................................
-void reducer::reduce_to_line(size_t a, size_t b) {
-  if (a == b) {
-    return;
-  }
-  for (size_t i = 0; i < vt_map[b].Count(); i++) {
-    if (triangles.IsNull(vt_map[b].Get(i))) {
-      continue;
-    }
-    IsoTriangle &t = triangles[vt_map[b].Get(i)];
-    for (int j = 0; j < 3; j++) {
-      if (t[j] == b) {
-        t[j] = a;
-      }
-    }
-    vt_map[a].Add(vt_map[b].Get(i));
-  }
-  vertices[a] = (vertices[a] + vertices[b]) / 2;
-  vertices.NullItem(b);
-}
-//..............................................................................
-void reducer::cut_triangle(size_t a, size_t b, size_t c) {
-  if (a != b) {
-    for (size_t i = 0; i < vt_map[b].Count(); i++) {
-      if (triangles.IsNull(vt_map[b].Get(i))) {
-        continue;
-      }
-      IsoTriangle &t = triangles[vt_map[b].Get(i)];
-      for (int j = 0; j < 3; j++) {
-        if (t[j] == b) {
-          t[j] = a;
-        }
-      }
-      vt_map[a].Add(vt_map[b].Get(i));
-    }
-  }
-  if (a != c) {
-    for (size_t i = 0; i < vt_map[c].Count(); i++) {
-      if (triangles.IsNull(vt_map[c].Get(i))) {
-        continue;
-      }
-      IsoTriangle &t = triangles[vt_map[c].Get(i)];
-      for (int j = 0; j < 3; j++) {
-        if (t[j] == c) {
-          t[j] = a;
-        }
-      }
-      vt_map[a].Add(vt_map[c].Get(i));
-    }
-    if (a != b) {
-      vertices[a] = (vertices[a] + vertices[b] + vertices[c]) / 3;
-      vertices.NullItem(b);
-      vertices.NullItem(c);
-    }
-  }
-}
-//..............................................................................
-TArrayList<size_t>::const_list_type reducer::reduce(float th) {
-  for (size_t i = 0; i < triangles.Count(); i++) {
-    IsoTriangle &t = triangles[i];
-    int cond = 0;
-    float d0, d1, d2;
-    if ((d0 = vertices[t[0]].QDistanceTo(vertices[t[1]])) < th) {
-      cond |= 1;
-    }
-    if ((d1 = vertices[t[1]].QDistanceTo(vertices[t[2]])) < th) {
-      cond |= 2;
-    }
-    if ((d2 = vertices[t[0]].QDistanceTo(vertices[t[2]])) < th) {
-      cond |= 4;
-    }
-    switch (cond) {
-    case 1:
-      reduce_to_line(t[0], t[1]);
-      break;
-    case 2:
-      reduce_to_line(t[1], t[2]);
-      break;
-    case 3:
-      if (d0 < d1) {
-        reduce_to_line(t[0], t[1]);
-      }
-      else {
-        reduce_to_line(t[1], t[2]);
-      }
-      break;
-    case 4:
-      reduce_to_line(t[0], t[2]);
-      break;
-    case 5:
-      if (d0 < d2) {
-        reduce_to_line(t[0], t[1]);
-      }
-      else {
-        reduce_to_line(t[0], t[2]);
-      }
-      break;
-    case 6:
-      if (d1 < d2) {
-        reduce_to_line(t[1], t[2]);
-      }
-      else {
-        reduce_to_line(t[0], t[2]);
-      }
-      break;
-    case 7:
-      cut_triangle(t[0], t[1], t[2]);
-      break;
-    }
-    if (cond != 0) {
-      triangles.NullItem(i);
-    }
-  }
-  triangles.Pack();
-  TSizeList indices(vertices.Count(), olx_list_init::zero());
-  size_t off = 0;
-  for (size_t i = 0; i < vertices.Count(); i++) {
-    indices[i] = off;
-    if (!vertices.IsNull(i)) {
-      off++;
-    }
-  }
-  vertices.Pack();
-  for (size_t i = 0; i < triangles.Count(); i++) {
-    triangles[i][0] = indices[triangles[i][0]];
-    triangles[i][1] = indices[triangles[i][1]];
-    triangles[i][2] = indices[triangles[i][2]];
-  }
-  return indices;
-}
-//..............................................................................
-//..............................................................................
-//..............................................................................
-smoother::smoother(TTypeList<vec3f> &v,
-  const TTypeList<IsoTriangle> &triangles)
-  : vertices(v),
-  n_map(v.Count())
-{
-  for (size_t i = 0; i < triangles.Count(); i++) {
-    const int *p = &triangles[i].pointID[0];
-    n_map[p[0]].Add(p[1]);    n_map[p[0]].Add(p[2]);
-    n_map[p[1]].Add(p[0]);    n_map[p[1]].Add(p[2]);
-    n_map[p[2]].Add(p[0]);    n_map[p[2]].Add(p[1]);
-  }
-}
-//..............................................................................
-void smoother::smooth(float ratio) {
-  TTypeList<vec3f> ov = vertices;
-  for (size_t i = 0; i < ov.Count(); i++) {
-    if (n_map[i].IsEmpty()) {
-      continue;
-    }
-    vertices[i] *= ratio;
-    float fr = (1.0f-ratio) / n_map[i].Count();
-    for (size_t j = 0; j < n_map[i].Count(); j++) {
-      size_t x = n_map[i].Get(j);
-      vertices[i] += ov[x] * fr;
-    }
-  }
-
 }
 //..............................................................................

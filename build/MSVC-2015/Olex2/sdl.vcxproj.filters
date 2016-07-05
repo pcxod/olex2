@@ -153,6 +153,9 @@
     <ClCompile Include="..\..\..\sdl\exparse\exptree.cpp">
       <Filter>Source Files\exparse</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\sdl\exparse\funcwrap.cpp">
+      <Filter>Source Files\exparse</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\..\sdl\os_util.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -237,6 +240,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\sdl\sparser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\strconv.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\sdl\strmask.h">
@@ -574,18 +580,6 @@
     </ClInclude>
     <ClInclude Include="..\..\..\sdl\olxfunc.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\sdl\strconv.h">
-      <Filter>Header Files\string</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\sdl\tests\olx_func_test.h">
-      <Filter>tests</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\sdl\tests\ptr_test.h">
-      <Filter>tests</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\sdl\tests\binding_test.h">
-      <Filter>tests</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

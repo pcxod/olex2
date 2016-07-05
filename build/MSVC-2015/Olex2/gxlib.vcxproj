@@ -62,7 +62,6 @@
     <ProjectGuid>{DE8F09F2-84B2-4114-AA86-950FCC923CD9}</ProjectGuid>
     <RootNamespace>gxlib</RootNamespace>
     <Keyword>ManagedCProj</Keyword>
-    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-release-d|Win32'" Label="Configuration">
@@ -577,7 +576,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\gxlib\atomlegend.cpp" />
     <ClCompile Include="..\..\..\gxlib\dbasis.cpp" />
     <ClCompile Include="..\..\..\gxlib\dring.cpp" />
     <ClCompile Include="..\..\..\gxlib\dsphere.cpp" />
@@ -589,7 +587,6 @@
     <ClCompile Include="..\..\..\gxlib\gxfiles.cpp" />
     <ClCompile Include="..\..\..\gxlib\gxmacro.cpp" />
     <ClCompile Include="..\..\..\gxlib\olxstate.cpp" />
-    <ClCompile Include="..\..\..\gxlib\olxsurf.cpp" />
     <ClCompile Include="..\..\..\gxlib\ortdraw.cpp" />
     <ClCompile Include="..\..\..\gxlib\solid_angles.cpp" />
     <ClCompile Include="..\..\..\gxlib\wxglscene.cpp" />
@@ -629,7 +626,6 @@
     <ClCompile Include="..\..\..\gxlib\xreflection.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\gxlib\atomlegend.h" />
     <ClInclude Include="..\..\..\gxlib\dbasis.h" />
     <ClInclude Include="..\..\..\gxlib\dring.h" />
     <ClInclude Include="..\..\..\gxlib\dsphere.h" />
@@ -657,7 +653,6 @@
     <ClInclude Include="..\..\..\gxlib\modes\part.h" />
     <ClInclude Include="..\..\..\gxlib\modes\split.h" />
     <ClInclude Include="..\..\..\gxlib\olxstate.h" />
-    <ClInclude Include="..\..\..\gxlib\olxsurf.h" />
     <ClInclude Include="..\..\..\gxlib\ortdraw.h" />
     <ClInclude Include="..\..\..\gxlib\ortdrawtex.h" />
     <ClInclude Include="..\..\..\gxlib\oxmfile.h" />

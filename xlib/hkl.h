@@ -25,7 +25,7 @@ class THklFile: public IOlxObject {
     return (d == 0 ? olx_cmp(r1.GetI(), r2.GetI()) : d);
   }
   TRefList Refs;
-  olx_array::TArray3D< TRefPList* > *Hkl3D;
+  TArray3D< TRefPList* > *Hkl3D;
   mat3d Basis;
   int HKLF;
 protected:

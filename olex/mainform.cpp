@@ -148,7 +148,6 @@ class SplashDlg : public wxDialog  {
   wxBitmap *bmp;
   int imgHeight, imgWidth, txtHeight, txtWidth;
   bool has_alpha;
-  wxString to_render;
 public:
   SplashDlg(wxWindow *parent) :
       wxDialog(parent, -1, wxT("Initialising"), wxDefaultPosition, wxSize(100, 100),
@@ -160,16 +159,15 @@ public:
     imgWidth = 200;
     has_alpha = false;
     olxstr splash_img = TBasicApp::GetBaseDir() + "splash.jpg";
-    if (TEFile::Exists(splash_img)) {
+    if( TEFile::Exists(splash_img) )  {
       wxImage img;
       {
         wxLogNull nl;
         img.LoadFile(splash_img.u_str());
       }
       has_alpha = img.HasAlpha();
-      if (has_alpha) {
+      if (has_alpha)
         img.ConvertAlphaToMask();
-      }
       bmp = new wxBitmap(img);
       imgWidth = img.GetWidth();
       imgHeight = img.GetHeight();
@@ -179,14 +177,7 @@ public:
       }
     }
     wxWindowDC dc(this);
-    olxstr tag = patcher::PatchAPI::ReadRepositoryTag();
-    if (tag.IsEmpty()) {
-      to_render = "Olex2 is initialising";
-    }
-    else {
-      to_render << "Olex2 " << tag.u_str() << " is initialising";
-    }
-    wxSize sz = dc.GetTextExtent(to_render);
+    wxSize sz = dc.GetTextExtent(wxT("Olex2 is initialising"));
     int ScreenW = wxSystemSettings::GetMetric(wxSYS_SCREEN_X),
         ScreenH = wxSystemSettings::GetMetric(wxSYS_SCREEN_Y);
     const int ch = imgHeight + sz.y; // combined height
@@ -204,10 +195,11 @@ public:
     dc.SetBackgroundMode(wxTRANSPARENT);
     dc.SetBackground(*wxTRANSPARENT_BRUSH);//*wxWHITE_BRUSH);
     //dc.Clear();
-    if (bmp != NULL) {
+    if( bmp != NULL )
       dc.DrawBitmap(*bmp, 0, 0, true);
-    }
-    wxString str = to_render + olxstr::CharStr('.', generation).u_str();
+    wxString str(wxT("Olex2 is initialising"));
+    for( size_t i=0; i < generation; i++ )
+      str += '.';
     wxColor cl(0x8b7566);
     //wxColor cl(0xb4);
     dc.SetBrush(wxBrush(cl));//*wxWHITE_BRUSH);
@@ -216,9 +208,8 @@ public:
     dc.DrawRectangle(0, h, imgWidth, h);
     dc.SetTextForeground(*wxWHITE);
     dc.DrawText(str, (imgWidth-olx_round(txtWidth*1.5))/2, h);
-    if (++generation > 20) {
+    if( ++generation > 20 )
       generation = 0;
-    }
   }
 };
 class RefreshTh : public AOlxThread  {
@@ -297,7 +288,6 @@ TMainForm::TMainForm(TGlXApp *Parent)
     Bind(wxEVT_MENU, &TMainForm::OnPlane, this, ID_PlaneActivate);
     Bind(wxEVT_MENU, &TMainForm::OnBond, this, ID_BondViewAlong);
     Bind(wxEVT_MENU, &TMainForm::OnBond, this, ID_BondRadius);
-    Bind(wxEVT_MENU, &TMainForm::OnBond, this, ID_BondInfo);
     Bind(wxEVT_MENU, &TMainForm::OnAtomOccuChange, this, ID_AtomOccuCustom);
     Bind(wxEVT_MENU, &TMainForm::OnAtomOccuChange, this, ID_AtomOccu1);
     Bind(wxEVT_MENU, &TMainForm::OnAtomOccuChange, this, ID_AtomOccu34);
@@ -814,6 +804,8 @@ void TMainForm::XApp(Olex2App *XA)  {
     libChain
     );
 
+  this_InitMacroD(TestBinding, EmptyString(), fpAny,
+    "Internal tests");
   this_InitMacroD(ShowSymm, EmptyString(), fpNone|fpOne,
     "Shows symmetry elements of the unitcell");
   this_InitMacroD(Textm, EmptyString(), fpOne,
@@ -859,10 +851,6 @@ void TMainForm::XApp(Olex2App *XA)  {
     "structures are expected to have identical labelling scheme. If no "
     "arguments is given - the procedure prints lengths cut by ADPs on the "
     "bonds.");
-  this_InitMacroD(RegisterFonts,
-    EmptyString(),
-    fpOne,
-    "Registers fonts in the given folder for the application use");
 
   // FUNCTIONS _________________________________________________________________
 
@@ -2242,18 +2230,16 @@ void TMainForm::OnChar(wxKeyEvent& m) {
     }
   }
   else {
-    if (FCmdLine->ProcessKey(m)) {
+    if( FCmdLine->ProcessKey(m) )  {
       PreviewHelp(FCmdLine->GetCommand());
       TimePerFrame = FXApp->Draw();
       return;
     }
     else {
-      if (!FGlConsole->ProcessKey(m.GetKeyCode(), Fl)) {
+      if( !FGlConsole->ProcessKey(m.GetKeyCode(), Fl))
         m.Skip();
-      }
-      else {
+      else
         TimePerFrame = FXApp->Draw();
-      }
     }
   }
 
@@ -3572,20 +3558,15 @@ void TMainForm::SaveVFS(short persistenceId) {
   try {
     olxstr dbFN;
     if (persistenceId == plStructure) {
-      if (!FXApp->XFile().HasLastLoader()) {
-        return;
-      }
+      if (!FXApp->XFile().HasLastLoader())  return;
       dbFN = FXApp->XFile().GetStructureDataFolder();
       dbFN << TEFile::ChangeFileExt(
         TEFile::ExtractFileName(FXApp->XFile().GetFileName()) , "odb");
     }
-    else if (persistenceId == plGlobal) {
+    else if (persistenceId == plGlobal)
       dbFN << FXApp->GetInstanceDir() << "global.odb";
-    }
-    else {
-      throw TFunctionFailedException(__OlxSourceInfo,
-        "undefined persistence level");
-    }
+    else
+      throw TFunctionFailedException(__OlxSourceInfo, "undefined persistence level");
 
     TEFile dbf(dbFN + ".tmp", "wb");
     TFileHandlerManager::SaveToStream(dbf, persistenceId);
@@ -3601,24 +3582,19 @@ void TMainForm::LoadVFS(short persistenceId) {
   try {
     olxstr dbFN;
     if (persistenceId == plStructure) {
-      if (!FXApp->XFile().HasLastLoader()) {
-        return;
-      }
+      if (!FXApp->XFile().HasLastLoader()) return;
       dbFN = FXApp->XFile().GetStructureDataFolder();
       dbFN << TEFile::ChangeFileExt(
         TEFile::ExtractFileName(FXApp->XFile().GetFileName()) , "odb");
     }
-    else if (persistenceId == plGlobal) {
+    else if (persistenceId == plGlobal)
       dbFN << FXApp->GetInstanceDir() << "global.odb";
-    }
     else {
       throw TFunctionFailedException(__OlxSourceInfo,
         "undefined persistence level");
     }
 
-    if (!TEFile::Exists(dbFN)) {
-      return;
-    }
+    if (!TEFile::Exists(dbFN))  return;
     try {
       TEFile dbf(dbFN, "rb");
       TFileHandlerManager::LoadFromStream(dbf, persistenceId);
@@ -3629,7 +3605,7 @@ void TMainForm::LoadVFS(short persistenceId) {
     }
   }
   catch (const TExceptionBase &e) {
-    TBasicApp::NewLogEntry(logInfo) << "Failed to read VFS";
+    ShowAlert(e, "Failed to read VFS");
   }
 }
 //..............................................................................

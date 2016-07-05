@@ -8,7 +8,6 @@
 ******************************************************************************/
 
 #include "chemdata.h"
-#include "xscatterer.h"
 
 const double cm_Anomalous_Henke::Undefined = -999.0;
 
@@ -1090,16 +1089,14 @@ ContentList& XElementLib::ParseElementString(const olxstr& su,
   for (size_t i=0; i < su.Length(); i++) {
     if (olxstr::o_iswhitechar(su[i]))  continue;
     if (nowCnt) {
-      if (olxstr::o_isdigit(su[i]) || su[i] == '.') {
+      if (olxstr::o_isdigit(su[i]) || su[i] == '.')
         cnt << su[i];
-      }
       else {
         if (!elm.IsEmpty() && !cnt.IsEmpty()) {
           toks.Clear();
           ParseSimpleElementStr(elm, toks);
-          for (size_t i = 0; i < toks.Count() - 1; i++) {
+          for (size_t i=0; i < toks.Count()-1; i++)
             ExpandShortcut(toks[i], res);
-          }
           ExpandShortcut(toks.GetLastString(), res, cnt.ToDouble());
           cnt.SetLength(0);
         }
@@ -1108,9 +1105,8 @@ ContentList& XElementLib::ParseElementString(const olxstr& su,
       }
     }
     else {
-      if (!((su[i] >= '0' && su[i] <= '9') || su[i] == '.')) {
+      if (!( (su[i] >= '0' && su[i] <= '9') || su[i] == '.'))
         elm << su[i];
-      }
       else {
         nowCnt = true;
         cnt = su[i];
@@ -1120,20 +1116,18 @@ ContentList& XElementLib::ParseElementString(const olxstr& su,
   if (!elm.IsEmpty()) {
     toks.Clear();
     ParseSimpleElementStr(elm, toks);
-    for (size_t i = 0; i < toks.Count() - 1; i++) {
+    for (size_t i=0; i < toks.Count()-1; i++)
       ExpandShortcut(toks[i], res);
-    }
     ExpandShortcut(toks.GetLastString(), res,
       cnt.IsEmpty() ? 1 : cnt.ToDouble());
   }
   return res;
 }
 //..............................................................................
-void XElementLib::ParseSimpleElementStr(const olxstr& str, TStrList& toks) {
+void XElementLib::ParseSimpleElementStr(const olxstr& str, TStrList& toks)  {
   if (str.Length() == 1) {
-    if (IsElement(str) || IsShortcut(str)) {
+    if (IsElement(str) || IsShortcut(str))
       toks.Add(str);
-    }
   }
   else if (str.Length() == 2) {
     // both capital? prioritise two elements
@@ -1158,19 +1152,19 @@ void XElementLib::ParseSimpleElementStr(const olxstr& str, TStrList& toks) {
     }
   }
   else {
-    size_t st = 0;
-    for (size_t i = 1; i < str.Length(); i++) {
+    size_t st=0;
+    for (size_t i=1; i < str.Length(); i++)  {
       if (olxstr::o_isalpha(str[i])) {
         if (st != i) {
           if (str[i] >= 'a' && str[i] <= 'z') {
-            olxstr tmp = str.SubString(st, i - st + 1);
+            olxstr tmp = str.SubString(st, i-st+1);
             if (IsElement(tmp) || IsShortcut(tmp)) {
               toks.Add(tmp);
               st = ++i;
               continue;
             }
           }
-          olxstr tmp = str.SubString(st, i - st);
+          olxstr tmp = str.SubString(st, i-st);
           if (!IsElement(tmp) && !IsShortcut(tmp)) {
             throw TFunctionFailedException(__OlxSourceInfo,
               olxstr("Unknown element: ").quote() << tmp);
@@ -1185,7 +1179,7 @@ void XElementLib::ParseSimpleElementStr(const olxstr& str, TStrList& toks) {
     }
     if (st < str.Length()) {
       olxstr tmp = str.SubStringFrom(st);
-      if (!IsElement(tmp) && !IsShortcut(tmp)) {
+      if(!IsElement(tmp) && !IsShortcut(tmp)) {
         throw TFunctionFailedException(__OlxSourceInfo,
           olxstr("Unknown element: ").quote() << tmp);
       }
@@ -1232,11 +1226,10 @@ void XElementLib::ExpandShortcut(const olxstr& sh, ContentList& res, double cnt)
     shc.AddNew(XElementLib::GetByIndex(iHydrogenIndex), 9);
   }
   else  {  // just add whatever is provided
-    cm_Element* elm = XElementLib::FindBySymbolEx(sh);
-    if (elm == NULL) {
+    cm_Element* elm = XElementLib::FindBySymbol(sh);
+    if( elm == NULL )
       throw TInvalidArgumentException(__OlxSourceInfo, "element/shortcut");
-    }
-    shc.AddNew(*elm, 1, XScatterer::ChargeFromLabel(sh));
+    shc.AddNew(*elm, 1);
   }
 
   for( size_t i=0; i < shc.Count(); i++ )  {

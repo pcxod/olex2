@@ -21,7 +21,7 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\lib"
+			OutputDirectory="$(SolutionDir)\lib_d"
 			IntermediateDirectory="$(ConfigurationName)\no-python"
 			ConfigurationType="4"
 			CharacterSet="0"
@@ -89,7 +89,7 @@
 		</Configuration>
 		<Configuration
 			Name="Debug|x64"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\lib"
+			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)\no_py"
 			ConfigurationType="4"
 			CharacterSet="0"
@@ -158,7 +158,7 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\lib"
+			OutputDirectory="$(SolutionDir)\lib"
 			IntermediateDirectory="$(ConfigurationName)\no-python"
 			ConfigurationType="4"
 			CharacterSet="0"
@@ -227,7 +227,7 @@
 		</Configuration>
 		<Configuration
 			Name="Release|x64"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\lib"
+			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)\no_py"
 			ConfigurationType="4"
 			CharacterSet="0"
@@ -297,7 +297,7 @@
 		</Configuration>
 		<Configuration
 			Name="Unicode-debug|Win32"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\lib"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)\lib"
 			IntermediateDirectory="$(ConfigurationName)\no-python"
 			ConfigurationType="4"
 			CharacterSet="1"
@@ -368,7 +368,7 @@
 		</Configuration>
 		<Configuration
 			Name="Unicode-debug|x64"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\lib"
+			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)\no_py"
 			ConfigurationType="4"
 			CharacterSet="1"
@@ -440,7 +440,7 @@
 		</Configuration>
 		<Configuration
 			Name="Unicode-release|Win32"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\lib"
+			OutputDirectory="$(SolutionDir)\lib_u"
 			IntermediateDirectory="$(ConfigurationName)\no-python"
 			ConfigurationType="4"
 			CharacterSet="1"
@@ -513,12 +513,12 @@
 		</Configuration>
 		<Configuration
 			Name="Unicode-release|x64"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\lib"
+			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)\no_py"
 			ConfigurationType="4"
 			CharacterSet="1"
 			ManagedExtensions="0"
-			WholeProgramOptimization="0"
+			WholeProgramOptimization="1"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -587,7 +587,7 @@
 		</Configuration>
 		<Configuration
 			Name="Unicode-release-static|Win32"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\lib"
+			OutputDirectory="$(SolutionDir)\lib_us"
 			IntermediateDirectory="$(ConfigurationName)\no-python"
 			ConfigurationType="4"
 			CharacterSet="1"
@@ -660,7 +660,7 @@
 		</Configuration>
 		<Configuration
 			Name="Unicode-release-static|x64"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\lib"
+			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)\no_py"
 			ConfigurationType="4"
 			CharacterSet="1"
@@ -734,7 +734,7 @@
 		</Configuration>
 		<Configuration
 			Name="Unicode-release-d|Win32"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\lib"
+			OutputDirectory="$(SolutionDir)\lib_u-d"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="4"
 			CharacterSet="1"
@@ -807,7 +807,7 @@
 		</Configuration>
 		<Configuration
 			Name="Unicode-release-d|x64"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\lib"
+			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)\no_py"
 			ConfigurationType="4"
 			CharacterSet="1"
@@ -912,19 +912,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\xlib\analysis.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\xlib\asymmunit.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\xlib\atomref.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\xlib\atomregistry.cpp"
 				>
 			</File>
 			<File
@@ -933,10 +921,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\xlib\macro\brushhkl.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\xlib\calc_ext.cpp"
 				>
 			</File>
 			<File
@@ -1032,6 +1016,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\evaln.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\experimental.cpp"
 				>
 			</File>
@@ -1065,10 +1053,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\xlib\macro\imp_auto.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\xlib\infotab.cpp"
 				>
 			</File>
 			<File
@@ -1132,10 +1116,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\xlib\selected.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\xlib\seval.cpp"
 				>
 			</File>
@@ -1169,10 +1149,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\xlib\symmparser.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\xlib\symmspace.cpp"
 				>
 			</File>
 			<File
@@ -1310,10 +1286,6 @@
 						ObjectFile="$(IntDir)\"
 					/>
 				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\..\..\xlib\xscatterer.cpp"
-				>
 			</File>
 			<File
 				RelativePath="..\..\..\xlib\xyz.cpp"

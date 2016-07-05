@@ -41,9 +41,7 @@ TBasicCFile::~TBasicCFile()  {
 void TBasicCFile::SaveToFile(const olxstr& fn)  {
   TStopWatch sw(__FUNC__);
   TStrList L;
-  sw.start("Saving to strings...");
   SaveToStrings(L);
-  sw.start("UTF8 encoding to file");
   TUtf8File::WriteLines(fn, L, false);
   FileName = fn;
 };
@@ -244,7 +242,7 @@ void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
         olxstr("atom coordinates for ").quote() << a.GetLabel());
     }
   }
-  if (!Loader->IsNative()) {
+  if( !Loader->IsNative() )  {
     OnFileLoad.Enter(this, &fn);
     try {
       GetRM().Clear(rm_clear_ALL);
@@ -260,12 +258,10 @@ void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
     OnFileLoad.Exit(this);
   }
   FSG = &TSymmLib::GetInstance().FindSG(Loader->GetAsymmUnit());
-  if (replicated) {
-    for (size_t i = 0; i < FileFormats.Count(); i++) {
-      if (FileFormats.GetObject(i) == FLastLoader) {
+  if( replicated )  {
+    for( size_t i=0; i < FileFormats.Count(); i++ )
+      if( FileFormats.GetObject(i) == FLastLoader )
         FileFormats.GetObject(i) = Loader;
-      }
-    }
     delete FLastLoader;
   }
   FLastLoader = Loader;
@@ -273,9 +269,8 @@ void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
      !TEFile::Exists(GetRM().GetHKLSource()))
   {
     olxstr src = LocateHklFile();
-    if (!src.IsEmpty() && !TEFile::Existsi(olxstr(src), src)) {
+    if (!src.IsEmpty() && !TEFile::Existsi(olxstr(src), src))
       src.SetLength(0);
-    }
     GetRM().SetHKLSource(src);
     try {
       if (src.IsEmpty()) {
@@ -317,39 +312,6 @@ void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
         "CIF";
     }
   }
-  // try resolve the residues
-  if (false && EsdlInstanceOf(*FLastLoader, TCif)) {
-    using namespace olx_analysis;
-    TAsymmUnit &au = GetAsymmUnit();
-    TEBitArray processed(au.ResidueCount());
-    for (size_t i = 1; i < au.ResidueCount(); i++) {
-      if (processed[i]) {
-        continue;
-      }
-      TResidue &r1 = au.GetResidue(i);
-      fragments::fragment fr1(r1.GetAtomList());
-      for (size_t j = i+1; j < au.ResidueCount(); j++) {
-        if (processed[j]) {
-          continue;
-        }
-        TResidue &r2 = au.GetResidue(j);
-        if (r1.Count() != r2.Count()) {
-          continue;
-        }
-        TTypeList<fragments::fragment> matching =
-          fragments::extract(r2.GetAtomList(), fr1);
-        if (!matching.IsEmpty()) {
-          r2.GetAtomList().ForEach(ACollectionItem::IndexTagSetter());
-          TSizeList new_order = TSizeList::FromList(
-            matching[0].atoms(),
-            FunctionAccessor::MakeConst<index_t,TCAtom>(&TCAtom::GetTag));
-          r2.GetAtomList().Rearrange(new_order);
-        }
-      }
-    }
-
-  }
-
   TXApp::GetInstance().SetLastSGResult_(EmptyString());
 }
 //..............................................................................

@@ -90,8 +90,8 @@ public:
   */
   static short PercieveOrder(const cm_Element &a,
   const cm_Element &b, double d);
-  virtual void ToDataItem(TDataItem& item) const;
-  virtual void FromDataItem(const TDataItem& item, TLattice& parent);
+  void ToDataItem(TDataItem& item) const;
+  void FromDataItem(const TDataItem& item, class TLattice& parent);
 };
 
 typedef TTypeList<TSBond> TSBondList;

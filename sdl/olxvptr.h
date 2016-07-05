@@ -21,7 +21,7 @@ public:
   virtual IOlxObject *get_ptr() const = 0;
   ptr &get() const {
     IOlxObject *p = get_ptr();
-    if ((uint64_t)p == (uint64_t)cached) {
+    if (p == cached) {
       return *cached;
     }
     ptr &rv = dynamic_cast<ptr &>(*p);

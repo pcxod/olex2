@@ -112,7 +112,11 @@ public:
   void SetSwitchState(THtmlSwitch &sw, size_t state);
 
   int GetBorders() const {  return wxHtmlWindow::m_Borders;  }
-  void SetFonts(const olxstr &normal, const olxstr &fixed);
+  void SetFonts(const olxstr &normal, const olxstr &fixed)  {
+    this->NormalFont = normal;
+    this->FixedFont = fixed;
+    wxHtmlWindow::SetFonts(normal.u_str(), fixed.u_str());
+  }
   void GetFonts(olxstr &normal, olxstr &fixed)  {
     normal = this->NormalFont;
     fixed = this->FixedFont;
@@ -158,11 +162,8 @@ public:
   void UpdateSwitchState(THtmlSwitch& Switch, olxstr& String);
   THtmlSwitch& GetRoot() const {  return *Root; }
   bool ItemState(const olxstr& ItemName, short State);
-  /*
-  adds an object to container and return true if an existing control
-  has been replaced
-  */
-  bool AddControl(const olxstr& Name, AOlxCtrl *Obj, wxWindow* wxObj,
+  // object operations
+  bool AddObject(const olxstr& Name, AOlxCtrl *Obj, wxWindow* wxObj,
     bool Manage = false);
   AOlxCtrl *FindObject(const olxstr& Name)  {
     const size_t ind = Objects.IndexOf(Name);

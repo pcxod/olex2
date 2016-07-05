@@ -202,6 +202,7 @@ TXGrid::TXGrid(const olxstr& collectionName, TGXApp* xapp)
   TextIndex = ~0;
   TextData = NULL;
   // contour related data
+  ContourData = NULL;
   ContourCrds[0] = ContourCrds[1] = NULL;
   ContourLevels = NULL;
   ContourLevelCount = 14;
@@ -234,9 +235,8 @@ void TXGrid::Clear()  {
 }
 //.............................................................................
 void TXGrid::Create(const olxstr& cName)  {
-  if (!cName.IsEmpty()) {
+  if( !cName.IsEmpty() )
     SetCollectionName(cName);
-  }
   TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
   GPC.AddObject(*this);
   TGraphicsStyle& GS = GPC.GetStyle();
@@ -280,47 +280,39 @@ void TXGrid::Create(const olxstr& cName)  {
     RescaleSurface();
 }
 //.............................................................................
-void TXGrid::TPlaneCalculationTask::Run(size_t ind) {
-  for (size_t j = 0; j < max_dim; j++) {  // (i,j,Depth)
-    vec3f p((float)(ind - hh) / size, (float)(j - hh) / size, depth);
+void TXGrid::TPlaneCalculationTask::Run(size_t ind)  {
+  for( size_t j=0; j < max_dim; j++ )  {  // (i,j,Depth)
+    vec3f p((float)(ind-hh)/size, (float)(j-hh)/size,  depth);
     p = proj_m*p;
     p -= center;
     p *= c2c;
     const float val = map_getter.Get(p);
-    if (val < minVal) {
+    if( val < minVal )
       minVal = val;
-    }
-    if (val > maxVal) {
+    if( val > maxVal )
       maxVal = val;
-    }
     data[ind][j] = val;
   }
 }
 //.............................................................................
 bool TXGrid::Orient(TGlPrimitive& GlP)  {
   if( ED == NULL )  return true;
-  if (Is3D()) {
-    if (ED == NULL) {
-      return true;
-    }
-    if (&GlP == glpN) { // draw once only
+  if( Is3D() )  {
+    if( ED == NULL )  return true;
+    if( &GlP == glpN )  // draw once only
       olx_gl::callList(PListId);
-    }
-    else if (&GlP == glpP) { // draw once only
+    else if( &GlP == glpP )  // draw once only
       olx_gl::callList(NListId);
-    }
     return true;
   }
-  if (&GlP == glpP || &GlP == glpN) {
-    return true;
-  }
+  if( &GlP == glpP || &GlP == glpN )  return true;
   if( &GlP == glpC )  {
     if( (RenderMode&planeRenderModePlane) != 0 )
       return true;
   }
   else  {
-    if ((RenderMode&planeRenderModeContour) != 0 &&
-        (RenderMode&planeRenderModePlane) == 0)
+    if( (RenderMode&planeRenderModeContour) != 0 &&
+        (RenderMode&planeRenderModePlane) == 0 )
     {
       return true;
     }
@@ -334,12 +326,10 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
   float Z;
   // if only contours are drawn - render plane at the background
   if( (RenderMode&planeRenderModeContour) != 0 )  {
-    if ((RenderMode&planeRenderModePlane) == 0) {
+    if( (RenderMode&planeRenderModePlane) == 0 )
       Z = (float)-Parent.CalcRasterZ(0.003);
-    }
-    else { // render the plane just a bit behind
+    else  // render the plane just a bit behind
       Z = Depth - 0.001f;
-    }
   }
   else  // no adjustment is required
     Z = Depth;
@@ -352,49 +342,33 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
     return false;
   }
   TPlaneCalculationTask calc_task(*this, ED->Data, ContourData, TextData,
-    MaxDim, Size, Depth, bm, c2c, center, RenderMode);
+    MaxDim, Size, Depth, bm, c2c, center, dim, RenderMode);
   TListIteratorManager<TPlaneCalculationTask> tasks(calc_task, MaxDim,
     tLinearTask, MaxDim > 64);
   float minVal = 1000, maxVal = -1000;
-  for ( size_t i = 0; i < tasks.Count(); i++ ) {
-    if (tasks[i].minVal < minVal) {
+  for( size_t i = 0; i < tasks.Count(); i++ )  {
+    if( tasks[i].minVal < minVal )
       minVal = tasks[i].minVal;
-    }
-    if (tasks[i].maxVal > maxVal) {
+    if( tasks[i].maxVal > maxVal )
       maxVal = tasks[i].maxVal;
-    }
   }
   const TGlOption& start_p =
     GetPrimitives().FindPrimitiveByName("-Surface")->GetProperties().AmbientF;
   const TGlOption& end_p =
     GetPrimitives().FindPrimitiveByName("+Surface")->GetProperties().AmbientF;
-  vec3f sp(start_p[0], start_p[1], start_p[2]),
-    ep(end_p[0], end_p[1], end_p[2]);
-  vec3f mc(1.f);
-  vec3f nc1 = (sp - mc);
-  vec3f nc2 = (ep -mc);
-  //vc /= 2;
+  vec3f h_color(end_p[0]-start_p[0], end_p[1]-start_p[1], end_p[2]-start_p[2]);
+  vec3f m_color(end_p[0]+start_p[0], end_p[1]+start_p[1], end_p[2]+start_p[2]);
+  h_color /= 2;
+  m_color /= 2;
   olx_gl::normal(bm[0][2], bm[1][2], bm[2][2]);
-  //m_color1 = vec3f(0.5f);
-  const float max_v = olx_max(olx_abs(minVal), olx_abs(maxVal));
   if( (RenderMode&planeRenderModePlane) != 0 )  {
     for (size_t i=0; i < MaxDim; i++) {
       for (size_t j=0; j < MaxDim; j++) {
-        const size_t off = (i + j*MaxDim) * 3;
-        const vec3f *c;
-        float s;
-        if (ContourData[i][j] < 0) {
-          s = -ContourData[i][j] / max_v;
-          c = &nc1;
-        }
-        else {
-          s = ContourData[i][j] / max_v;
-          c = &nc2;
-        }
-        for (int ci = 0; ci < 3; ci++) {
-          float x = 255.0f*(mc[ci] + s*(*c)[ci]);
-          TextData[off + ci] = (char)(x);
-        }
+        float s = ContourData[i][j] < 0 ? -ContourData[i][j]/minVal
+          : ContourData[i][j]/maxVal;
+        const size_t off = (i+j*MaxDim)*3;
+        for (int ci=0; ci < 3; ci++)
+          TextData[off+ci] = (char)(255.0f*(m_color[ci]+s*h_color[ci]));
       }
     }
     if( !olx_is_valid_index(TextIndex) )  {
@@ -427,7 +401,7 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
 
     GlP.PrepareColorRendering(GL_LINES);
     olx_gl::color(0, 0, 0);
-    cm.DoContour(ContourData.data, 0, (int)MaxDim-1, 0, (int)MaxDim-1,
+    cm.DoContour(ContourData, 0, (int)MaxDim-1, 0, (int)MaxDim-1,
       ContourCrds[0], ContourCrds[1],
       ContourLevelCount, ContourLevels, mf);
     GlP.EndColorRendering();
@@ -436,22 +410,11 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
     float legend_step = (maxVal-minVal)/32;
     for (int i=0; i < 32; i++) {
       float val = minVal + legend_step*i;
-      const vec3f *c;
-      float s;
-      if (val < 0) {
-        s = -val / max_v;
-        c = &nc1;
-      }
-      else {
-        s = val / max_v;
-        c = &nc2;
-      }
+      float s = val < 0 ? -val/minVal : val/maxVal;
       size_t off = i*32*3;
       for (int j=0; j < 32*3; j+=3) {
-        for (int ci = 0; ci < 3; ci++) {
-          float x = 255.0f*(mc[ci] + s*(*c)[ci]);
-          LegendData[off + j + ci] = x;
-        }
+        for (int ci=0; ci < 3; ci++)
+          LegendData[off+j+ci] = (char)(255.0f*(m_color[ci]+s*h_color[ci]));
       }
     }
     Legend->SetData((unsigned char*)LegendData, 32, 32, GL_RGB);
@@ -489,28 +452,28 @@ void TXGrid::InitGrid(size_t maxX, size_t maxY, size_t maxZ)  {
   MaxY = maxY;
   MaxZ = maxZ;
   MaxVal = MinVal = 0;
-  if (ED != NULL) {
+  if( ED != NULL )
     delete ED;
-  }
   ED = new TArray3D<float>(0, MaxX, 0,MaxY, 0, MaxZ);
   TextData = new char[MaxDim*MaxDim*3+1];
-  ContourData.resize(MaxDim, MaxDim, false);
+  ContourData = new float*[MaxDim];
   ContourCrds[0] = new float[MaxDim];
   ContourCrds[1] = new float[MaxDim];
   for( int i=0; i < (int)MaxDim; i++ )  {
+    ContourData[i] = new float[MaxDim];
     ContourCrds[0][i] = ContourCrds[1][i] = (float)(i-(int)MaxDim/2);
   }
   ContourLevels = new float[ContourLevelCount];
   MaxHole = MinHole = 0;
 }
 //.............................................................................
-void TXGrid::DeleteObjects() {
-  if (ED != NULL) {
+void TXGrid::DeleteObjects()  {
+  if( ED != NULL )  {
     delete ED;
     MaxX = MaxY = MaxZ = 0;
     ED = NULL;
   }
-  if (TextData != NULL) {
+  if( TextData != NULL )  {
     delete TextData;
     TextData = NULL;
   }
@@ -521,15 +484,18 @@ void TXGrid::DeleteObjects() {
   n_normals.Clear();
   n_vertices.Clear();
 
-  if (Mask != NULL) {
+  if( Mask != NULL )  {
     delete Mask;
     Mask = NULL;
   }
-  ContourData.clear();
-  if (ContourLevels != NULL) {
-    delete[] ContourCrds[0];
-    delete[] ContourCrds[1];
-    delete[] ContourLevels;
+  if( ContourData != NULL )  {
+    for( size_t i=0; i < MaxDim; i++ )
+      delete [] ContourData[i];
+    delete [] ContourData;
+    delete [] ContourCrds[0];
+    delete [] ContourCrds[1];
+    delete [] ContourLevels;
+    ContourData = NULL;
     ContourLevels = NULL;
   }
 }
@@ -591,9 +557,9 @@ void TXGrid::SetScale(float v)  {
       const smatdd g2c(XApp->Get3DFrame().GetNormals()/SZ,
         XApp->Get3DFrame().GetEdge(0));
       const mat3d c2c = XApp->XFile().GetAsymmUnit().GetCartesianToCell();
-      MapUtil::Cell2Cart(MapUtil::MapGetter<float,2>(ED->Data),
-        points.Data, g2c, c2c);
-      CIsoSurface IS(points.Data);
+      MapUtil::Cell2Cart(MapUtil::MapGetter<float,2>(ED->Data, ED->GetSize()),
+        points.Data, points.GetSize(), g2c, c2c);
+      CIsoSurface IS(points);
       IS.GenerateSurface(Scale);
       p_vertices = IS.VertexList();
       p_normals = IS.NormalList();
@@ -616,7 +582,7 @@ void TXGrid::SetScale(float v)  {
       Boxed = true;
     }
     else  {
-      CIsoSurface IS(ED->Data);
+      CIsoSurface IS(*ED);
       IS.GenerateSurface(Scale);
       p_vertices = IS.VertexList();
       p_normals = IS.NormalList();
@@ -668,14 +634,18 @@ void TXGrid::SetPlaneSize(size_t _v)  {
     delete TextData;
     TextData = new char[_v*_v*3+1];
   }
-  ContourData.resize(_v, _v, false);
-  if(ContourLevels != NULL )  {
+  if( ContourData != NULL )  {
+    for( size_t i=0; i < MaxDim; i++ )
+      delete [] ContourData[i];
+    delete [] ContourData;
     delete [] ContourCrds[0];
     delete [] ContourCrds[1];
+    ContourData = new float*[_v];
     ContourCrds[0] = new float[_v];
     ContourCrds[1] = new float[_v];
     const float hh = (float)_v/2;
     for( size_t i=0; i < _v; i++ )  {
+      ContourData[i] = new float[_v];
       ContourCrds[0][i] = ContourCrds[1][i] = (float)i-hh;
     }
   }

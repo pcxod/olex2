@@ -188,18 +188,16 @@ const smatd& RefinementModel::AddUsedSymm(const smatd& matr, const olxstr& id_)
 //.............................................................................
 void RefinementModel::UpdateUsedSymm(const class TUnitCell& uc)  {
   try {
-    for (size_t i = 0; i < UsedSymm.Count(); i++) {
+    for( size_t i=0;  i < UsedSymm.Count(); i++ )
       uc.InitMatrixId(UsedSymm.GetValue(i).symop);
-    }
   }
   catch (const TExceptionBase &) {
     TBasicApp::NewLogEntry(logError) <<
       "Failed to update EQIV list, resetting to identity";
     TBasicApp::NewLogEntry(logError) <<
       "This could have happened as a result of the space group change";
-    for (size_t i = 0; i < UsedSymm.Count(); i++) {
+    for( size_t i=0;  i < UsedSymm.Count(); i++ )
       UsedSymm.GetValue(i).symop = uc.GetMatrix(0);
-    }
   }
 }
 //.............................................................................
@@ -609,22 +607,11 @@ const TRefList& RefinementModel::GetReflections() const {
       evecd esd = evecd::FromAny(
         Composite::Vector(vec3d_list() << aunit.GetAxisEsds() <<
           aunit.GetAngleEsds()));
-      bool cell_changed = false;
-      for (int i = 0; i < 3; i++) {
-        if (olx_abs(aunit.GetAxes()[i] - ins().GetAsymmUnit().GetAxes()[i]) >
-          olx_min(aunit.GetAxisEsds()[i], ins().GetAsymmUnit().GetAxisEsds()[i]))
-        {
-          cell_changed = true;
-          break;
-        }
-        if (olx_abs(aunit.GetAngles()[i] - ins().GetAsymmUnit().GetAngles()[i]) >
-          olx_min(aunit.GetAngleEsds()[i], ins().GetAsymmUnit().GetAngleEsds()[i]))
-        {
-          cell_changed = true;
-          break;
-        }
-      }
-      if (cell_changed) {
+      if (aunit.GetAxes().DistanceTo(ins().GetAsymmUnit().GetAxes()) > 1e-6 ||
+        aunit.GetAngles().DistanceTo(ins().GetAsymmUnit().GetAngles()) > 1e-6 ||
+        aunit.GetAxisEsds().DistanceTo(ins().GetAsymmUnit().GetAxisEsds()) > 1e-6 ||
+        aunit.GetAngleEsds().DistanceTo(ins().GetAsymmUnit().GetAngleEsds()))
+      {
         OnCellDifference.Execute(this, &ins());
       }
     }
@@ -1503,7 +1490,7 @@ void RefinementModel::FromDataItem(TDataItem& item) {
   HKLF = hklf.GetValue().ToInt();
   HKLF_s = hklf.GetFieldByName("s").ToDouble();
   HKLF_wt = hklf.GetFieldByName("wt").ToDouble();
-  HKLF_m = hklf.GetFieldByName("m").ToInt();
+  HKLF_m = hklf.GetFieldByName("m").ToDouble();
   HKLF_mat = TSymmParser::SymmToMatrix(hklf.GetFieldByName("mat")).r;
 
   TDataItem& omits = item.GetItemByName("OMIT");
@@ -2657,37 +2644,4 @@ bool RefinementModel::HklStat::need_updating(const RefinementModel &r) const {
   return false;
 }
 //..............................................................................
-olxstr RefinementModel::GetHKLFStr() const {
-  olxstr rv(HKLF, 80);
-  if (HKLF_m == def_HKLF_m) {
-    if (HKLF_wt == def_HKLF_wt) {
-      if (HKLF_mat.IsI()) {
-        if (HKLF_s != def_HKLF_s) {
-          rv << ' ' << HKLF_s;
-        }
-      }
-      else {
-        rv << ' ' << HKLF_s;
-        for (int i = 0; i < 9; i++) {
-          rv << ' ' << HKLF_mat[i / 3][i % 3];
-        }
-      }
-    }
-    else {
-      rv << ' ' << HKLF_s;
-      for (int i = 0; i < 9; i++) {
-        rv << ' ' << HKLF_mat[i / 3][i % 3];
-      }
-      rv << ' ' << HKLF_wt;
-    }
-  }
-  else {
-    rv << ' ' << HKLF_s;
-    for (int i = 0; i < 9; i++) {
-      rv << ' ' << HKLF_mat[i / 3][i % 3];
-    }
-    rv << ' ' << HKLF_wt << ' ' << HKLF_m;
-  }
-  return rv;
-}
-//..............................................................................
+

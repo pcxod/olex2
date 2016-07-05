@@ -204,8 +204,8 @@ TAG_HANDLER_PROC(tag) {
   if (!ObjectName.IsEmpty()) {
     THtml * html = dynamic_cast<THtml*>(
       m_WParser->GetWindowInterface()->GetHTMLWindow());
-    if (html->AddControl(ObjectName, cell, NULL)) {
-      TBasicApp::NewLogEntry(logInfo) << "THTML: control has been replaced: " <<
+    if (!html->AddObject(ObjectName, cell, NULL)) {
+      TBasicApp::NewLogEntry(logError) << "THTML: object already exist: " <<
         ObjectName;
     }
   }
@@ -325,6 +325,36 @@ TAG_HANDLER_PROC(tag) {
         Label.SetLength(tagInd);
       }
       LinkInfo = new wxHtmlLinkInfo(Label.u_str(), tag.u_str());
+    }
+  }
+  if (!ObjectName.IsEmpty()) {
+    wxWindow* wnd = html->FindObjectWindow(ObjectName);
+    if (wnd != NULL) {
+      if (!tag.HasParam(wxT("reuse"))) {
+        TBasicApp::NewLogEntry(logError) << "HTML: duplicated object '" <<
+          ObjectName << '\'';
+      }
+      else {
+        if (!Label.IsEmpty()) {
+          wxHtmlContainerCell* contC =
+            new wxHtmlContainerCell(m_WParser->GetContainer());
+          THtml::WordCell* wc =
+            new THtml::WordCell(Label.u_str(), *m_WParser->GetDC());
+          if (LinkInfo != NULL) {
+            wc->SetLink(*LinkInfo);
+            delete LinkInfo;
+          }
+          wc->SetDescent(0);
+          contC->InsertCell(wc);
+          contC->InsertCell(new THtmlWidgetCell(wnd, fl));
+          if (valign != -1)  contC->SetAlignVer(valign);
+          if (halign != -1)  contC->SetAlignHor(halign);
+        }
+        else {
+          m_WParser->GetContainer()->InsertCell(new THtmlWidgetCell(wnd, fl));
+        }
+      }
+      return false;
     }
   }
 
@@ -975,23 +1005,19 @@ TAG_HANDLER_PROC(tag) {
     CreatedWindow = hc;
     hc->WI.SetWidth(ax);
     hc->WI.SetHeight(ay);
-    hc->LoadPage(Value.u_str());
+    hc->SetPage(Value.u_str());
     hc->OnLink.Add(&html->Manager);
     wxScrollbarVisibility v = wxSHOW_SB_DEFAULT,
       h = wxSHOW_SB_DEFAULT;
-    if (GetBoolAttribute(tag, "vscroll")) {
+    if (GetBoolAttribute(tag, "vscroll"))
       v = wxSHOW_SB_ALWAYS;
-    }
-    if (GetBoolAttribute(tag, "hscroll")) {
+    if (GetBoolAttribute(tag, "hscroll"))
       h = wxSHOW_SB_ALWAYS;
-    }
     hc->ShowScrollbars(h, v);
     m_WParser->GetContainer()->InsertCell(new THtmlWidgetCell(hc, fl));
   }
   /******************* END OF CONTROLS ******************************************/
-  if (LinkInfo != NULL) {
-    delete LinkInfo;
-  }
+  if (LinkInfo != NULL)  delete LinkInfo;
   if (ObjectName.IsEmpty()) {}  // create random name?
   if (CreatedWindow != NULL) {  // set default colors
     if (m_WParser->GetActualColor().IsOk())
@@ -1000,14 +1026,17 @@ TAG_HANDLER_PROC(tag) {
       CreatedWindow->SetBackgroundColour(
         m_WParser->GetContainer()->GetBackgroundColour());
     }
-    CreatedWindow->Enable(!GetBoolAttribute(tag, "DISABLED"));
+    bool disabled = GetBoolAttribute(tag, "DISABLED");
+    if (disabled) {
+      CreatedWindow->Enable(false);
+    }
   }
   if (CreatedObject != NULL) {
     bool manage = GetBoolAttribute(tag, "MANAGE");
-    if (html->AddControl(
+    if (!html->AddObject(
       ObjectName, CreatedObject, CreatedWindow, manage))
     {
-      TBasicApp::NewLogEntry(logInfo) << "HTML: control has been replaced: \'" <<
+      TBasicApp::NewLogEntry(logError) << "HTML: duplicated object \'" <<
         ObjectName << '\'';
     }
     if (CreatedWindow != NULL && !ObjectName.IsEmpty()) {

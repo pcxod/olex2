@@ -15,25 +15,22 @@
 #include "dataitem.h"
 
 class FractMask {
-  olx_array::TArray3D<bool>* Mask;
+  TArray3D<bool>* Mask;
   vec3d Norm;
 public:
-  FractMask()
-    : Mask(NULL)
-  {}
-  ~FractMask() {
-    if (Mask != NULL) {
+  FractMask() : Mask(NULL)  {  }
+  ~FractMask()  {
+    if( Mask != NULL )
       delete Mask;
-    }
   }
   /* min and max - fractional coordinates, norm - length of the sides,
   resolution - the mask resolution in anstrems */
   void Init(const vec3d& _min, const vec3d& _max, const vec3d& norms,
-    double resolution = 1.0);
+    double resolution=1.0);
   // takes fractional coordinates
-  inline void Set(const vec3d& fc, bool v) {
+  inline void Set(const vec3d& fc, bool v)  {
     const vec3d ind = fc * Norm;
-    if (Mask->IsInRange(ind))
+    if( Mask->IsInRange(ind) )
       Mask->Value(ind) = v;
   }
   // takes fractional coordinates
@@ -41,7 +38,7 @@ public:
     const vec3d ind = fc*Norm;
     return Mask->IsInRange(ind) ? Mask->Value(ind) : false;
   }
-  inline olx_array::TArray3D<bool>* GetMask() const { return Mask; }
+  inline TArray3D<bool>* GetMask() const {  return Mask;  }
 
   void ToDataItem(TDataItem& di, IOutputStream& os) const;
   void FromDataItem(const TDataItem& di, IInputStream& is);

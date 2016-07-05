@@ -54,7 +54,6 @@
     <ProjectGuid>{F91183CE-E72E-4B45-A7E3-EE23C4B62338}</ProjectGuid>
     <RootNamespace>gllib</RootNamespace>
     <Keyword>ManagedCProj</Keyword>
-    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-release-d|Win32'" Label="Configuration">

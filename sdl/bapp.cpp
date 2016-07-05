@@ -15,9 +15,6 @@
 #include "settingsfile.h"
 #include "utf8file.h"
 #include "md5.h"
-#include "estopwatch.h"
-#include "sha.h"
-#include "encodings.h"
 
 #ifdef __WIN32__
   #define OLX_STR(a) (a).u_str()
@@ -28,16 +25,18 @@
 #endif
 UseEsdlNamespace()
 
+TBasicApp* TBasicApp::Instance = NULL;
+
 TBasicApp::TBasicApp(const olxstr& FileName, bool read_options)
   : OnProgress(ActionList.New("PROGRESS")),
     OnTimer(ActionList.New("TIMER")),
     OnIdle(ActionList.New("IDLE"))
 {
-  if (Instance_() != NULL) {
+  if (Instance != NULL) {
     throw TFunctionFailedException(__OlxSourceInfo,
       "an application instance already exists");
   }
-  Instance_() = this;
+  Instance = this;
 
   MaxThreadCount = 1;
 #ifdef __WIN32__
@@ -53,18 +52,16 @@ TBasicApp::TBasicApp(const olxstr& FileName, bool read_options)
   // attach GC to the instance, if detached...
   TEGC::Initialise();
   SetBaseDir(FileName);
-  if (read_options) {
+  if (read_options)
     ReadOptions(GetBaseDir() + ".options");
-  }
   OnIdle.Add(new TActionHandler());
 }
 //..............................................................................
-TBasicApp::~TBasicApp() {
-  Instance_() = 0;
+TBasicApp::~TBasicApp()  {
+  Instance = 0;
   delete Log;
-  if (LogFile != NULL) {
+  if (LogFile != NULL)
     delete LogFile;
-  }
 }
 //..............................................................................
 olxstr TBasicApp::GetModuleName() {
@@ -83,7 +80,7 @@ olxstr TBasicApp::GetModuleName() {
 #else
   Dl_info dl_info;
   dladdr((const void *)&TBasicApp::GetModuleMD5Hash, &dl_info);
-  name = olxstr::FromCStr(dl_info.dli_fname);
+  name = dl_info.dli_fname;
   if (!TEFile::IsAbsolutePath(name)) {
     if (HasInstance())
       name = TEFile::ExpandRelativePath(name, GetBaseDir());
@@ -105,9 +102,9 @@ const olxstr &TBasicApp::GetModuleMD5Hash() {
     TCStrList l = TEFile::ReadCLines(last_dg_fn);
     if (l.Count() > 3) {
       TEFile::FileID fd = TEFile::GetFileID(name);
-      if (l[0] == name.ToMBStr() &&
-          l[1] == olxcstr(fd.size) &&
-          l[2] == olxcstr(fd.timestamp))
+      if (l[0] == name &&
+          l[1] == olxstr(fd.size) &&
+          l[2] == olxstr(fd.timestamp))
       {
         Digest = l[3];
         do_calculate = false;
@@ -120,7 +117,7 @@ const olxstr &TBasicApp::GetModuleMD5Hash() {
       Digest = MD5::Digest(f);
       TCStrList l;
       TEFile::FileID fd = TEFile::GetFileID(name);
-      l << name.ToMBStr();
+      l << name;
       l << fd.size;
       l << fd.timestamp;
       l << Digest;
@@ -136,7 +133,7 @@ const olxstr &TBasicApp::GetModuleMD5Hash() {
 }
 //..............................................................................
 bool TBasicApp::HasInstance()  {
-  return Instance_() != NULL;
+  return Instance != NULL;
 }
 //..............................................................................
 void TBasicApp::ReadOptions(const olxstr &fn) {
@@ -147,16 +144,6 @@ void TBasicApp::ReadOptions(const olxstr &fn) {
         Options.AddParam(sf.ParamName(i), sf.ParamValue(i), true);
         if (sf.ParamName(i) == "profiling" && sf.ParamValue(i).IsBool()) {
           SetProfiling(sf.ParamValue(i).ToBool());
-        }
-        else if (sf.ParamName(i).Equalsi("PATH")) {
-          olxstr path_ext = olxstr(sf.ParamValue(i)).TrimWhiteChars();
-          if (!path_ext.IsEmpty()) {
-            olxstr path = olx_getenv("PATH");
-            if (!path_ext.EndsWith(olx_env_sep())) {
-              path_ext << olx_env_sep();
-            }
-            olx_setenv("PATH", path_ext << path);
-          }
         }
       }
     }
@@ -480,27 +467,6 @@ void BAPP_IsDebugBuild(const TStrObjList& Params, TMacroData &E)  {
 #endif
 }
 //..............................................................................
-void BAPP_Digest(const TStrObjList& Params, TMacroData &E) {
-  TStopWatch sw(__FUNC__);
-  TEFile f(Params[0], "rb");
-  if (Params[1].Equalsi("MD5")) {
-    E.SetRetVal(MD5::Digest(f));
-  }
-  else if (Params[1].Equalsi("SHA1")) {
-    E.SetRetVal(SHA1::Digest(f));
-  }
-  else if (Params[1].Equalsi("SHA224")) {
-    E.SetRetVal(SHA224::Digest(f));
-  }
-  else if (Params[1].Equalsi("SHA256")) {
-    E.SetRetVal(SHA256::Digest(f));
-  }
-  else {
-    E.ProcessingError(__OlxSrcInfo, "Unknow digest requested");
-  }
-  sw.stop();
-}
-//..............................................................................
 TLibrary* TBasicApp::ExportLibrary(const olxstr& lib_name)  {
   TLibrary* lib = new TLibrary(lib_name);
   lib->Register(new TStaticFunction(BAPP_GetArgCount,
@@ -552,9 +518,5 @@ TLibrary* TBasicApp::ExportLibrary(const olxstr& lib_name)  {
   lib->Register(new TStaticFunction(BAPP_IsDebugBuild,
     "IsDebugBuild", fpNone,
     "Returns true if the application is built with debug info"));
-  lib->Register(new TStaticFunction(BAPP_Digest,
-    "Digest", fpTwo,
-    "Returns euested digest for a file. Use: 'digest file code', code is MD5, "
-    "SHA1, SHA224 or SHA256"));
-  return lib;
+ return lib;
 }

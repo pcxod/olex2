@@ -26,7 +26,6 @@
 
 BeginXlibNamespace()
 
-using namespace olx_array;
 class TUnitCell: public IOlxObject  {
   TNetwork*  Network;  // for internal use only
   smatd_list Matrices;  // list of unique matrices; FMatrices + centering
@@ -486,9 +485,9 @@ protected:
     }
   };
   class TBuildDistanceMapTask : public TaskBase {
-    array_3d<float> &map;
+    float*** map;
     TTypeList<AnAssociation3<vec3f,TCAtom*, float> >& atoms;
-    const vec3s dims;
+    const vec3s& dims;
     const mat3f& tm;
     float** loop_data;
     bool owns_data;
@@ -496,9 +495,9 @@ protected:
       : map(parent.map), atoms(parent.atoms), dims(parent.dims), tm(parent.tm),
         loop_data(parent.loop_data), owns_data(false)  {}
   public:
-    TBuildDistanceMapTask(const mat3f& _tm, array_3d<float> &_map,
+    TBuildDistanceMapTask(const mat3f& _tm, float*** _map, const vec3s& _dims,
       TTypeList<AnAssociation3<vec3f,TCAtom*, float> >& _atoms)
-      : map(_map), atoms(_atoms), dims(_map.dim()), tm(_tm), owns_data(true)
+      : map(_map), atoms(_atoms), dims(_dims), tm(_tm), owns_data(true)
     {
       init_loop_data();
     }

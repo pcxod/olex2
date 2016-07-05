@@ -49,8 +49,6 @@ public:
   const_strlist ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const;
   static const_strlist PovDeclare();
 
-  const_strlist ToWrl(olx_cdict<TGlMaterial, olxstr> &materials) const;
-  static const_strlist WrlDeclare(TGlRenderer &);
   static olx_pdict<size_t, olxstr> &NamesRegistry() {
     static olx_pdict<size_t, olxstr> nr;
     return nr;

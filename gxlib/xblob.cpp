@@ -14,20 +14,6 @@
 #include "gpcollection.h"
 #include "styles.h"
 
-struct TriangleComparator {
-  mat3f orientation;
-  const TTypeList<vec3f> &vertices;
-  TriangleComparator(const mat3f & orientation_,
-    const TTypeList<vec3f> &vertices_)
-    : orientation(orientation_),
-    vertices(vertices_)
-  {}
-  int Compare(const IsoTriangle *t1, const IsoTriangle *t2) const {
-    return olx_cmp((vertices[t2->pointID[0]]*orientation)[2],
-      (vertices[t1->pointID[0]] * orientation)[2]);
-  }
-};
-//...........................................................................
 TXBlob::TXBlob(TGlRenderer& R, const olxstr& collectionName) :
   AGDrawObject(R, collectionName)
 {
@@ -53,35 +39,13 @@ void TXBlob::Create(const olxstr& cName)  {
   GlM.SetTransparent(false);
   GlP.SetProperties( GS.GetMaterial("Blob", GlM) );
 }
-//...........................................................................
 bool TXBlob::Orient(TGlPrimitive& P)  {
   //olx_gl::translate(Basis.GetCenter());
   olx_gl::polygonMode(GL_FRONT_AND_BACK, PolygonMode);
-  bool use_color = colors.Count() == vertices.Count();
-  if (use_color) {
-    olx_gl::enable(GL_COLOR_MATERIAL);
-  }
-  bool transparent = P.GetProperties().IsTransparent();
-  float to = P.GetProperties().DiffuseF[3];
-  if (transparent) {
-    QuickSorter::Sort(triangles, TriangleComparator(Parent.GetBasis().GetMatrix(),
-      vertices));
-  }
   olx_gl::begin(GL_TRIANGLES);
   for( size_t i=0; i < triangles.Count(); i++ )  {
-    for (int j = 0; j < 3; j++) {
+    for( int j=0; j < 3; j++ )  {
       olx_gl::normal(normals[triangles[i].pointID[j]]);
-      if (use_color) {
-        if (transparent) {
-          olx_gl::color(colors[triangles[i].pointID[j]][0],
-            colors[triangles[i].pointID[j]][1],
-            colors[triangles[i].pointID[j]][2],
-            to);
-        }
-        else {
-          olx_gl::color(colors[triangles[i].pointID[j]].Data());
-        }
-      }
       olx_gl::vertex(vertices[triangles[i].pointID[j]]);  // cell drawing
     }
   }
@@ -89,27 +53,3 @@ bool TXBlob::Orient(TGlPrimitive& P)  {
   olx_gl::polygonMode(GL_FRONT_AND_BACK, GL_FILL);
   return true;
 }
-//...........................................................................
-void TXBlob::UpdateNormals() {
-  normals.SetCount(vertices.Count());
-  for (size_t i = 0; i < normals.Count(); i++) {
-    normals[i].Null();
-  }
-  for (size_t i = 0; i < triangles.Count(); i++) {
-    vec3f vec1 = vertices[triangles[i].pointID[1]] -
-      vertices[triangles[i].pointID[0]];
-    vec3f vec2 = vertices[triangles[i].pointID[2]] -
-      vertices[triangles[i].pointID[0]];
-    vec3f normal = vec1.XProdVec(vec2);
-    normals[triangles[i].pointID[0]] += normal;
-    normals[triangles[i].pointID[1]] += normal;
-    normals[triangles[i].pointID[2]] += normal;
-  }
-  for (size_t i = 0; i < normals.Count(); i++) {
-    float d = normals[i].Length();
-    if (d != 0) {
-      normals[i] /= d;
-    }
-  }
-}
-

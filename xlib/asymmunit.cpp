@@ -409,7 +409,6 @@ TCAtom& TAsymmUnit::NewCentroid(const vec3d& CCenter)  {
   TCAtom& A = NewAtom();
   A.SetType(XElementLib::GetByIndex(iCarbonIndex));
   A.ccrd() = CCenter;
-  A.SetCentroid(true);
   A.SetLabel(olxstr("Cnt") << CAtoms.Count(), false);
   return A;
 }
@@ -554,25 +553,18 @@ vec3d TAsymmUnit::GetOCenter(bool IncludeQ, bool IncludeH) const {
 up, atoms' degeracy should not be taken into account ...
 */
 ContentList::const_list_type TAsymmUnit::GetContentList(double mult) const {
+  ElementPList elements;
   ContentList rv;
   for (size_t i = 0; i < AtomCount(); i++) {
     const cm_Element& elm = CAtoms[i]->GetType();
-    if (CAtoms[i]->IsDeleted() || elm == iQPeakZ) {
-      continue;
-    }
-    size_t ind = InvalidIndex;
-    for (size_t j = 0; j < rv.Count(); j++) {
-      if (rv[j].element == elm && rv[j].charge == CAtoms[i]->GetCharge()) {
-        ind = j;
-        break;
-      }
-    }
+    if (CAtoms[i]->IsDeleted() || elm == iQPeakZ)  continue;
+    size_t ind = elements.IndexOf(elm);
     if (ind == InvalidIndex) {
-      rv.AddNew(elm, CAtoms[i]->GetOccu()*mult, CAtoms[i]->GetCharge());
+      rv.AddNew(elm, CAtoms[i]->GetOccu()*mult);
+      elements.Add(elm);
     }
-    else {
+    else
       rv[ind] += CAtoms[i]->GetOccu()*mult;
-    }
   }
   return XElementLib::SortContentList(rv);
 }

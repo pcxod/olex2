@@ -14,7 +14,7 @@
 #include "primtvs.h"
 #include "ptable.h"
 #include "xatom.h"
-#include "xline.h"
+#include "xbond.h"
 #include "xplane.h"
 #include "xlattice.h"
 #include "xgrid.h"
@@ -620,7 +620,7 @@ void TMainForm::ObjectUnderMouse(AGDrawObject *G)  {
     }
     FCurrentPopup = pmAtom;
   }
-  else if (EsdlInstanceOf(*G, TXBond)) {
+  else if (EsdlInstanceOf(*G, TXBond))  {
     olxstr T;
     TXBond *XB = (TXBond*)G;
     {
@@ -641,20 +641,6 @@ void TMainForm::ObjectUnderMouse(AGDrawObject *G)  {
     pmBond->Enable(ID_Selection, G->IsSelected() &&
       EsdlInstanceOf(*G->GetParentGroup(), TGlGroup));
     pmBond->SetLabel(ID_BondRadius, wxString("Radius: ") << XB->GetRadius());
-    pmBond->Enable(ID_BondInfo, false);
-    FCurrentPopup = pmBond;
-  }
-  else if (EsdlInstanceOf(*G, TXLine)) {
-    TXLine *l = (TXLine *)G;
-    pmBond->SetLabel(ID_BondInfo, wxString("Length: ") <<
-      olxstr::FormatFloat(3, l->GetLength()).u_str());
-    pmBond->Enable(ID_BondInfo, true);
-    pmBond->Enable(ID_GraphicsCollectivise, false);
-    pmBond->Enable(ID_GraphicsIndividualise, false);
-    pmTang->Clear();
-    pmBond->Enable(ID_MenuTang, false);
-    pmBond->Enable(ID_Selection, false);
-    pmBond->SetLabel(ID_BondRadius, wxString("Radius: ") << l->GetRadius());
     FCurrentPopup = pmBond;
   }
   else if (EsdlInstanceOf(*G, TXPlane))  {
@@ -836,8 +822,8 @@ void TMainForm::OnBond(wxCommandEvent& event)  {
   TXBond *xb = dynamic_cast<TXBond*>(FObjectUnderMouse);
   if (xb == NULL) return;
   if (event.GetId() == ID_BondViewAlong) {
-    const vec3d n = (xb->GetToCrd()-xb->GetFromCrd()).Normalise();
-    const vec3d c = (xb->GetToCrd()+xb->GetFromCrd())/2;
+    const vec3d n = (xb->B().crd()-xb->A().crd()).Normalise();
+    const vec3d c = (xb->B().crd()+xb->A().crd())/2;
     processMacro(olxstr("SetView -c ") << n[0] << ' ' << n[1] << ' ' << n[2]
      << ' ' << c[0] << ' ' << c[1] << ' ' << c[2]);
   }
@@ -858,20 +844,6 @@ void TMainForm::OnBond(wxCommandEvent& event)  {
         bl << xb;
       }
       FXApp->BondRad(r, &bl);
-      FXApp->Draw();
-    }
-    dlg->Destroy();
-  }
-  else if (event.GetId() == ID_BondInfo) {
-    TXLine *l = (TXLine *)(xb);
-    TdlgEdit *dlg = new TdlgEdit(this, false);
-    dlg->SetTitle(wxT("Please input the line length"));
-    olxstr txt = l->GetLength();
-    dlg->SetText(txt);
-    if (dlg->ShowModal() == wxID_OK) {
-      double r = dlg->GetText().ToDouble();
-      l->SetLength(r);
-      l->UpdateLabel();
       FXApp->Draw();
     }
     dlg->Destroy();

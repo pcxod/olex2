@@ -35,8 +35,7 @@ const uint8_t
   glStereoCross = 0x0002,
   glStereoAnaglyph = 0x0003,
   glStereoHardware = 0x0004,
-  glStereoInterlace = 0x0005,
-  glStereoMatrix = 0x0006;
+  glStereoInterlace = 0x0005;
 
 enum glSelectionFlag {
   glSelectionNone, // does nothing
@@ -112,8 +111,6 @@ class TGlRenderer : public AActionHandler {
   void SetupStencilFoInterlacedDraw(bool even);
   GLubyte SelectionBuffer[4][4*3];
   olxstr_dict<AGOSettings *> ObjectSettings;
-  mat3d StereoMatrix;
-  vec3d StereoTranslation;
   bool Enter(const IOlxObject *, const IOlxObject *, TActionQueue *);
   bool Exit(const IOlxObject *, const IOlxObject *, TActionQueue *);
 protected:
@@ -201,10 +198,7 @@ public:
   DefPropP(int, FogType)
   DefPropP(float, FogDensity)
   DefPropC(TGlOption, FogColor)
-  DefPropC(mat3d, StereoMatrix)
-  DefPropC(vec3d, StereoTranslation)
-  DefPropP(int, AbsoluteTop)
-  DefPropP(uint8_t, StereoFlag)
+  DefPropC(int, AbsoluteTop)
   DefPropBIsSet(GLUSelection)
   double GetLineWidth() const {  return LineWidth;  }
   void SetLineWidth(double v);

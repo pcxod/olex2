@@ -132,7 +132,6 @@ void TCif::_LoadCurrent()  {
 }
 //..............................................................................
 void TCif::SaveToStrings(TStrList& Strings)  {
-  TStopWatch sw(__FUNC__);
   static olxstr def_pivots(
     "_audit_creation,_publ,_chemical_name,_chemical_formula,_chemical,_atom_type,"
     "_space_group,_space_group_symop,_symmetry,"
@@ -178,7 +177,6 @@ void TCif::SaveToStrings(TStrList& Strings)  {
     pivots.Strtok(def_pivots, ',');
     endings.Strtok(def_endings, ',');
   }
-  sw.start("Fixing labels");
   for (size_t i=0; i < GetAsymmUnit().AtomCount(); i++) {
     TCAtom &ca = GetAsymmUnit().GetAtom(i);
     olxstr lb = ca.GetLabel();
@@ -190,12 +188,10 @@ void TCif::SaveToStrings(TStrList& Strings)  {
     }
   }
   GetAsymmUnit().ComplyToResidues();
-  sw.start("Sorting");
   for (size_t i = 0; i < data_provider[block_index].table_map.Count(); i++) {
     data_provider[block_index].table_map.GetValue(i)->Sort();
   }
   data_provider[block_index].Sort(pivots, endings);
-  sw.start("Saving");
   data_provider.SaveToStrings(Strings);
 }
 //..............................................................................
@@ -418,9 +414,8 @@ void TCif::Initialize()  {
         if (sg != NULL) {
           GetAsymmUnit().ChangeSpaceGroup(*sg);
           sg_initialised = true;
-          TBasicApp::NewLogEntry(logWarning) <<
-            "Note the symmetry operators were deduced from the Hall symbol and"
-            " may differ from the intendent ones.";
+          TBasicApp::NewLogEntry() << "Note the symmetry operators were deduced"
+            " from the Hall symbol and may differ from the intendent ones.";
         }
         else {
           try {
@@ -645,11 +640,9 @@ void TCif::Initialize()  {
         TCAtom* A = GetAsymmUnit().FindCAtom(
           ALoop->Get(i, ALabel).GetStringValue());
         if (A == NULL) {
-          TBasicApp::NewLogEntry(logError) <<
-          (olxstr("Wrong atom in the aniso loop ").quote() <<
-            ALoop->Get(i, ALabel).GetStringValue() << " removing");
-          ALoop->DelRow(i--);
-          continue;
+          throw TInvalidArgumentException(__OlxSourceInfo,
+            olxstr("wrong atom in the aniso loop ").quote() <<
+            ALoop->Get(i, ALabel).GetStringValue());
         }
         for (int j = 0; j < 6; j++) {
           EValue = ALoop->Get(i, Ui[j]).GetStringValue();
@@ -871,9 +864,7 @@ bool TCif::Adopt(TXFile &XF, int flags) {
     ASObjectProvider &objects = XF.GetLattice().GetObjects();
     for (size_t i = 0; i < objects.atoms.Count(); i++) {
       TSAtom &a = objects.atoms[i];
-      if (!a.IsAvailable()) {
-        continue;
-      }
+      if (!a.IsAvailable()) continue;
       TCAtom & ca = AsymmUnit.NewAtom();
       ca.SetLabel(a.GetLabel(), false);
       ca.SetPart(a.CAtom().GetPart());
@@ -890,9 +881,6 @@ bool TCif::Adopt(TXFile &XF, int flags) {
         TEllipsoid &e = AsymmUnit.NewEllp();
         e = *a.GetEllipsoid();
         ca.SetEllpId(AsymmUnit.EllpCount() - 1);
-      }
-      for (size_t ei = 0; ei < a.CAtom().EquivCount(); ei++) {
-        ca.AddEquiv(a.CAtom().GetEquiv(ei));
       }
     }
   }
@@ -1033,28 +1021,23 @@ bool TCif::Adopt(TXFile &XF, int flags) {
     Row.Set(6, new cetString(A.GetEllipsoid() == NULL ? "Uiso" : "Uani"));
     Row.Set(7, new cetString(TEValueD(olx_round(A.GetChemOccu(), 1000),
       A.GetOccuEsd()*A.GetDegeneracy()).ToString()));
-    if (A.GetParentAfixGroup() != NULL && A.GetParentAfixGroup()->IsRiding()) {
+    if (A.GetParentAfixGroup() != NULL && A.GetParentAfixGroup()->IsRiding())
       Row.Set(8, new cetString("R"));
-    }
-    else {
+    else
       Row.Set(8, new cetString('.'));
-    }
     Row.Set(9, new cetString(A.GetDegeneracy()));
     // process part as well
-    if (A.GetPart() != 0) {
+    if (A.GetPart() != 0)
       Row[10] = new cetString((int)A.GetPart());
-    }
-    else {
+    else
       Row[10] = new cetString('.');
-    }
     if (A.GetEllipsoid() != NULL) {
       A.GetEllipsoid()->GetShelxQuad(Q, E);
       GetAsymmUnit().UcartToUcif(Q);
       CifRow& Row1 = u_loop.AddRow();
       Row1[0] = new AtomCifEntry(A);
-      for (int j = 0; j < 6; j++) {
+      for (int j = 0; j < 6; j++)
         Row1.Set(j + 1, new cetString(TEValueD(Q[j], E[j]).ToString()));
-      }
     }
   }
   return true;

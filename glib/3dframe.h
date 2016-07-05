@@ -65,22 +65,22 @@ class T3DFrameCtrl : public AGlMouseHandlerImp, public A3DFrameCtrl {
   vec3d edges[8], norms[6], center;
   double zoom;
 protected:
-  virtual bool DoTranslate(const vec3d& t) { Translate(t);  return true; }
+  virtual bool DoTranslate(const vec3d& t)  {  Translate(t);  return true;  }
   virtual bool DoRotate(const vec3d& vec, double angle);
   virtual bool DoZoom(double zoom, bool inc);
   virtual bool OnTranslate(size_t sender, const vec3d& t);
-  virtual bool OnRotate(size_t sender, const vec3d&, double angle) {
+  virtual bool OnRotate(size_t sender, const vec3d&, double angle)  {
     return DoRotate(Faces[sender].GetN(), angle);
   }
-  virtual bool OnZoom(size_t, double, bool) {
+  virtual bool OnZoom(size_t, double, bool)  {
     return true;
   }
   bool sphere;
 public:
   T3DFrameCtrl(TGlRenderer& prnt, const olxstr& cName);
   void Create(const olxstr& cName);
-  virtual bool GetDimensions(vec3d& _mn, vec3d& _mx) {
-    for (int i = 0; i < 8; i++)
+  virtual bool GetDimensions(vec3d& _mn, vec3d& _mx)  {
+    for (int i=0; i < 8; i++)
       vec3d::UpdateMinMax(edges[i], _mn, _mx);
     return true;
   }
@@ -88,39 +88,39 @@ public:
   virtual void SetVisible(bool v);
   virtual bool Orient(TGlPrimitive& p);
   const vec3d& GetEdge(size_t i) const {
-    if (i >= 8)
+    if( i >= 8 )
       throw TIndexOutOfRangeException(__OlxSourceInfo, i, 0, 8);
     return edges[i];
   }
-  void SetEdge(size_t i, const vec3d& val) {
-    if (i >= 8)
+  void SetEdge(size_t i, const vec3d& val)  {
+    if( i >= 8 )
       throw TIndexOutOfRangeException(__OlxSourceInfo, i, 0, 8);
     edges[i] = val;
   }
   // recalculates normals etc for the new edges
   void UpdateEdges();
-  void Translate(const vec3d& t) {
-    for (int i = 0; i < 8; i++)
+  void Translate(const vec3d& t)  {
+    for( int i=0; i < 8; i++ )
       edges[i] += t;
     center += t;
   }
   double GetVolume() const {
-    return sqrt((edges[1] - edges[0]).QLength()*(edges[3] - edges[0]).QLength()
-      *(edges[4] - edges[0]).QLength());
+    return sqrt((edges[1]-edges[0]).QLength()*(edges[3]-edges[0]).QLength()
+      *(edges[4]-edges[0]).QLength());
   }
   vec3d GetSize() const {
     return vec3d(
-      (edges[3] - edges[0]).Length(),
-      (edges[1] - edges[0]).Length(),
-      (edges[4] - edges[0]).Length());
+      (edges[3]-edges[0]).Length(),
+      (edges[1]-edges[0]).Length(),
+      (edges[4]-edges[0]).Length());
   }
   const vec3d &GetCenter() const { return center; }
   const double GetZoom() const { return zoom; }
   mat3d GetNormals() const {
     return mat3d(
-      (edges[3] - edges[0]).Normalise(),
-      (edges[1] - edges[0]).Normalise(),
-      (edges[4] - edges[0]).Normalise());
+      (edges[3]-edges[0]).Normalise(),
+      (edges[1]-edges[0]).Normalise(),
+      (edges[4]-edges[0]).Normalise());
   }
   void ToDataItem(TDataItem &di) const;
   void FromDataItem(const TDataItem &di);
@@ -132,10 +132,9 @@ public:
 
   TTypeList<TFaceCtrl> Faces;
 
-  enum {
+  static const int
     ftSphere = 1,
-    ftBox = 2
-  };
+    ftBox = 2;
 };
 
 EndGlNamespace()

@@ -444,6 +444,7 @@ private:
   DefMacro(SetFont)
   DefMacro(EditMaterial)
   DefMacro(SetMaterial)
+  DefMacro(TestBinding)
   DefMacro(ShowSymm)
   DefMacro(Textm)
   DefMacro(TestStat)
@@ -455,8 +456,7 @@ private:
   DefMacro(Elevate)
   DefMacro(Restart)
   DefMacro(ADPDisp)
-  DefMacro(RegisterFonts)
-    ////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////FUNCTIONS/////////////////////////////////////////
   DefFunc(FileLast)
   DefFunc(FileSave)

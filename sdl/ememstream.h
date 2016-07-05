@@ -17,28 +17,24 @@ BeginEsdlNamespace()
 
 class TEMemoryStream: protected TDirectionalList<char>,
                       public IDataInputStream,
-                      public IDataOutputStream
-{
+                      public IDataOutputStream  {
   size_t Position;
 protected:
+  void Clear()  {  TDirectionalList<char>::Clear();  Position = 0;  }
+  // returns updated position
 public:
-  TEMemoryStream(size_t BufferSize=DefBufferSize)
+  TEMemoryStream(long BufferSize=DefBufferSize)
     : TDirectionalList<char>(BufferSize), Position(0)
   {}
   TEMemoryStream(IInputStream& is);
   virtual ~TEMemoryStream()  {}
-  void Clear() {
-    TDirectionalList<char>::Clear();
-    Position = 0;
-  }
+  //void operator >> (IEOutputStream *os);
 
   virtual size_t Write(const void *D, size_t count)  {
-    if (Position == GetLength()) {
-      TDirectionalList<char>::Write((const char*)D, count);
-    }
-    else {
+    if( Position == GetLength() )
+        TDirectionalList<char>::Write((const char*)D, count);
+    else
       TDirectionalList<char>::Write((const char*)D, Position, count);
-    }
     return (Position += count);
   }
   template <class T> inline size_t Write(const T& data) {
@@ -54,11 +50,10 @@ public:
     Position = OlxIStream::CheckSizeT(pos);
   }
   // returns updated position
-  virtual void Read(void *D, size_t count) {
+  virtual void Read(void *D, size_t count)  {
     TDirectionalList<char>::Read((char*)D, Position, count);
     Position += count;
   }
-
   void operator >> (IOutputStream &os);
 
   TEMemoryStream& operator << (IInputStream &is);
@@ -87,25 +82,6 @@ public:
     v >> *this;
     return *this;
   }
-
-  olxcstr ToString(olxcstr &x) const {
-    return TDirectionalList<char>::ToString(x, Position);
-  }
-
-  olxcstr ToCString() const {
-    olxcstr x;
-    return TDirectionalList<char>::ToString(x, Position);
-  }
-
-  olxwstr ToString(olxwstr &x) const {
-    return TDirectionalList<char>::ToString(x, Position);
-  }
-
-  TIString ToString() const {
-    olxstr x;
-    return ToString(x);
-  }
-
 };
 // a simple class to read from a memory array
 class TEMemoryInputStream : public IDataInputStream {

@@ -67,7 +67,7 @@ void TXApp::Init(ASObjectProvider* objectProvider, ASelectionOwner* selOwner) {
 }
 //..............................................................................
 TXApp::~TXApp() {
-  Instance_() = 0;
+  Instance = 0;
 }
 //..............................................................................
 bool TXApp::CheckProgramState(unsigned int specialCheck)  {
@@ -89,37 +89,20 @@ bool TXApp::CheckProgramState(unsigned int specialCheck)  {
  return false;
 }
 //..............................................................................
-void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)
-  const
-{
+void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F) const {
+  // initialise newly created atoms
   XFile().UpdateAsymmUnit();
+  TAsymmUnit& au = XFile().GetAsymmUnit();
+  const mat3d hkl2c = au.GetHklToCartesian();
+  // space group matrix list
   TSpaceGroup* sg = NULL;
-  try { sg = &XFile().GetLastLoaderSG(); }
-  catch (...) {
+  try  { sg = &XFile().GetLastLoaderSG();  }
+  catch(...)  {
     throw TFunctionFailedException(__OlxSourceInfo, "unknown spacegroup");
   }
   smatd_list ml;
-  sg->GetMatrices(ml, mattAll ^ (mattCentering));
-  int sg_order = (int)sg->GetLattice().GetVectors().Count() + 1;
-  TSAtomPList atoms;
-  TIObjectProvider<TSAtom> &atoms_ = XFile().GetLattice().GetObjects().atoms;
-  atoms.SetCapacity(atoms_.Count());
-  for (size_t i = 0; i < atoms_.Count(); i++) {
-    TSAtom &a = atoms_[i];
-    if (a.IsDeleted() || a.GetType() == iQPeakZ || !a.IsAUAtom()) {
-      continue;
-    }
-    atoms.Add(a);
-  }
-  CalcSFEx(refs, F, atoms, ml, sg_order);
-}
-//..............................................................................
-  void TXApp::CalcSFEx(const TRefList& refs, TArrayList<TEComplex<double> >& F,
-  const TSAtomPList &atoms, const smatd_list &ml, int sg_order) const
-{
-  // initialise newly created atoms
-  TAsymmUnit& au = XFile().GetAsymmUnit();
-  const mat3d hkl2c = au.GetHklToCartesian();
+  sg->GetMatrices(ml, mattAll^(mattCentering));
+  const int multiplier = (int)sg->GetLattice().GetVectors().Count()+1;
   evecd quad(6);
   const static double EQ_PI = 8*M_PI*M_PI;
   const static double T_PI = 2*M_PI;
@@ -137,35 +120,36 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)
   BM[2] *= BM[2];
 
   ElementPList bais;
-  olx_array_ptr<double> Ucifs(6*atoms.Count() + 1);
+  TPtrList<TCAtom> alist;
+  double *Ucifs = new double[6*au.AtomCount() + 1];
   TTypeList< AnAssociation3<const cm_Element*, compd, compd> > scatterers;
-  for (size_t i = 0; i < atoms.Count(); i++) {
-    TSAtom& a = *atoms[i];
-    size_t ind = bais.IndexOf(a.GetType());
-    if (ind == InvalidIndex) {
-      scatterers.AddNew<const cm_Element*, compd, compd>(&a.GetType(), 0, 0);
-      bais.Add(a.GetType());
+  for( size_t i=0; i < au.AtomCount(); i++ )  {
+    TCAtom& ca = au.GetAtom(i);
+    if( ca.IsDeleted() || ca.GetType() == iQPeakZ )  continue;
+    size_t ind = bais.IndexOf(ca.GetType());
+    if( ind == InvalidIndex )  {
+      scatterers.AddNew<const cm_Element*,compd,compd>(&ca.GetType(), 0, 0);
+      bais.Add(ca.GetType());
       scatterers.GetLast().c =
         scatterers.GetLast().GetA()->CalcFpFdp(r_e);
       scatterers.GetLast().c -= scatterers.GetLast().GetA()->z;
       ind = scatterers.Count() - 1;
     }
-    a.SetTag(ind);
-    ind = i * 6;
-    TEllipsoid* elp = a.GetEllipsoid();
-    if (elp != NULL) {
+    ca.SetTag(ind);
+    ind = alist.Count()*6;
+    alist.Add(&ca);
+    TEllipsoid* elp = ca.GetEllipsoid();
+    if( elp != NULL )  {
       elp->GetShelxQuad(quad);  // default is Ucart
       au.UcartToUcif(quad);
-      for (int k = 0; k < 6; k++) {
-        Ucifs[ind + k] = -TQ_PI*quad[k] * BM[k];
-      }
+      for( int k=0; k < 6; k++ )
+        Ucifs[ind+k] = -TQ_PI*quad[k]*BM[k];
     }
-    else {
-      Ucifs[ind] = -EQ_PI*a.CAtom().GetUiso();
-    }
+    else
+      Ucifs[ind] = -EQ_PI*ca.GetUiso();
   }
 
-  const size_t a_cnt = atoms.Count(),
+  const size_t a_cnt = alist.Count(),
             m_cnt = ml.Count();
   for( size_t i=0; i < refs.Count(); i++ )  {
     const TReflection& ref = refs[i];
@@ -179,11 +163,11 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)
       compd l;
       for( size_t k=0; k < m_cnt; k++ )  {
         const vec3d hkl = ref.GetHkl()*ml[k].r;
-        double tv = T_PI*(atoms[j]->ccrd().DotProd(hkl) +
+        double tv = T_PI*(alist[j]->ccrd().DotProd(hkl) +
           ml[k].t.DotProd(ref.GetHkl()));  // scattering vector + phase shift
         double ca, sa;
         olx_sincos(tv, &sa, &ca);
-        if( atoms[j]->GetEllipsoid() != NULL )  {
+        if( alist[j]->GetEllipsoid() != NULL )  {
           const double* Q = &Ucifs[j*6];  // pick up the correct ellipsoid
           double B = (hkl[0]*(Q[0]*hkl[0]+Q[4]*hkl[2]+Q[5]*hkl[1]) +
                       hkl[1]*(Q[1]*hkl[1]+Q[3]*hkl[2]) +
@@ -197,17 +181,17 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)
           l.Im() += sa;
         }
       }
-      compd scv = scatterers[atoms[j]->GetTag()].GetB();
-      if (atoms[j]->GetEllipsoid() == NULL) {
-        scv *= exp(Ucifs[j * 6] * d_s2);
-      }
+      compd scv = scatterers[alist[j]->GetTag()].GetB();
+      if( alist[j]->GetEllipsoid() == NULL )
+        scv *= exp(Ucifs[j*6]*d_s2);
 
-      scv *= atoms[j]->CAtom().GetOccu();
+      scv *= alist[j]->GetOccu();
       scv *= l;
       ir += scv;
     }
-    F[i] = ir*sg_order;
+    F[i] = ir*multiplier;
   }
+  delete [] Ucifs;
 }
 //..............................................................................
 RefinementModel::HklStat TXApp::CalcFsq(TRefList &refs, evecd &Fsq,

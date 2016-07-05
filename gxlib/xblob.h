@@ -22,13 +22,11 @@ public:
   void Create(const olxstr& cName=EmptyString());
   bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d &Max, vec3d &Min)  {  return false;  }
-  void UpdateNormals();
 
   DefPropP(uint32_t, PolygonMode)
 
   TTypeList<vec3f> vertices;
   TTypeList<vec3f> normals;
-  TTypeList<TGlOption> colors;
   TTypeList<IsoTriangle> triangles;
 };
 

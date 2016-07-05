@@ -421,10 +421,7 @@ void TCAtom::UpdateAttachedSites()  {
   // check if any symm eqivs were removed
   bool removed = false;
   for (size_t i=0; i < AttachedSites.Count(); i++) {
-    if (AttachedSites[i].atom->IsDeleted() ||
-      (IsCentroid() && !AttachedSites[i].atom->IsCentroid()) ||
-      (!IsCentroid() && AttachedSites[i].atom->IsCentroid()))
-    {
+    if (AttachedSites[i].atom->IsDeleted()) {
       AttachedSites.NullItem(i);
       removed = true;
     }

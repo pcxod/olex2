@@ -101,37 +101,36 @@ extern const olxwstr &WTrueString();
 #endif
 
 template <class T, typename TC> class TTSString : public T  {
-  void InitFromCharStr(const TC* str, size_t len) {
+  void InitFromCharStr(const TC* str, size_t len)  {
     T::_Start = 0;
     T::_Increment = 8;
-    T::_Length = len == InvalidIndex ? o_strlen(str) : len;
-    T::SData = new struct T::Buffer(T::_Length + T::_Increment, str, T::_Length);
+    T::_Length = len;
+    T::SData = new struct T::Buffer(T::_Length+T::_Increment, str, T::_Length);
   }
 template <class SC>
   void InitFromString(const SC& str)  {
     T::SData = str.Data_();
     T::_Length = str.Length();
     T::_Start = str.Start_();
-    if (T::SData != NULL) {
+    if( T::SData != NULL )
       T::SData->RefCnt++;
-    }
     T::_Increment = 8;
   }
-  TTSString& AssignCharStr(const TC* str, size_t len = ~0) {
+  TTSString& AssignCharStr(const TC* str, size_t len=~0)  {
     T::_Start = 0;
     T::_Increment = 8;
     T::_Length = ((len == InvalidIndex) ? o_strlen(str) : len);
-    if (T::SData != NULL) {
-      if (T::SData->RefCnt == 1) { // owed by this object
+    if( T::SData != NULL )  {
+      if( T::SData->RefCnt == 1 )  { // owed by this object
         T::SData->SetCapacity(T::_Length);
         olx_memcpy(T::SData->Data, str, T::_Length);
       }
-      else {
+      else  {
         T::SData->RefCnt--;
         T::SData = NULL;
       }
     }
-    if (T::SData == NULL) {
+    if( T::SData == NULL )  {
       T::SData = new struct T::Buffer(T::_Length + T::_Increment, str,
         T::_Length);
     }
@@ -153,17 +152,15 @@ public:
   //...........................................................................
   TTSString(const TTSString& str, size_t capacity)  {
     InitFromString(str);
-    if (capacity != 0) {
+    if( capacity != 0 )
       T::checkBufferForModification(T::_Length + capacity);
-    }
   }
   //...........................................................................
-  TTSString(const TC* str, size_t len=InvalidIndex)  {
-    InitFromCharStr(str, len);
-  }
-  TTSString(TC* const& str, size_t len=InvalidIndex) {
-    InitFromCharStr(str, len);
-  }
+  TTSString(const TC* str)  { InitFromCharStr(str, o_strlen(str));  }
+  TTSString(TC* const& str) { InitFromCharStr(str, o_strlen(str));  }
+  //...........................................................................
+  TTSString(const TC* str, size_t len)  { InitFromCharStr(str, len);  }
+  TTSString(TC* const& str, size_t len) { InitFromCharStr(str, len);  }
   //...........................................................................
   TTSString(const TC& v) {
     T::_Start = 0;
@@ -189,8 +186,7 @@ public:
   }
 
   template <class T1, typename TC1> TTSString(const TTSString<T1,TC1>& v)
-    : T((const T1&)v)
-  {}
+    : T((const T1&)v)  {}
   //...........................................................................
 #if defined(__WXWIDGETS__)
   TTSString(const wxString& v)  {
@@ -256,15 +252,11 @@ public:
   //...........................................................................
   //...........................................................................
   TTSString& operator = (const TTIString<TC>& v)   {
-    if (T::SData != NULL && --T::SData->RefCnt == 0) {
-      delete T::SData;
-    }
+    if( T::SData != NULL && --T::SData->RefCnt == 0 )  delete T::SData;
     T::_Start = v.Start_();
     T::_Length = v.Length();
     T::SData = v.Data_();
-    if (T::SData != NULL) {
-      T::SData->RefCnt++;
-    }
+    if( T::SData != NULL )  T::SData->RefCnt++;
     return *this;
   }
 #if defined(__WXWIDGETS__)
@@ -286,21 +278,21 @@ public:
     return *this;
   }
   //...........................................................................
-  TTSString& operator = (const TC& ch) {
+  TTSString& operator = (const TC& ch)  {
     T::_Start = 0;
     T::_Increment = 8;
     T::_Length = 1;
-    if (T::SData != NULL) {
-      if (T::SData->RefCnt == 1) { // owed by this object
+    if( T::SData != NULL )  {
+      if( T::SData->RefCnt == 1 )  { // owed by this object
         T::SData->SetCapacity(T::_Length);
         T::SData->Data[0] = ch;
       }
-      else {
+      else  {
         T::SData->RefCnt--;
         T::SData = NULL;
       }
     }
-    if (T::SData == NULL) {
+    if( T::SData == NULL )  {
       T::SData = new struct T::Buffer(T::_Length + T::_Increment);
       T::SData->Data[0] = ch;
     }
@@ -314,18 +306,13 @@ public:
     return *this;
   }
   TTSString& operator = (const TTSString& v)  {
-    if (&v == this) {
+    if( &v == this )
       return *this;
-    }
-    if (T::SData != NULL && --T::SData->RefCnt == 0) {
-      delete T::SData;
-    }
+    if( T::SData != NULL && --T::SData->RefCnt == 0 )  delete T::SData;
     T::_Start = v._Start;
     T::_Length = v._Length;
     T::SData = v.SData;
-    if (T::SData != NULL) {
-      T::SData->RefCnt++;
-    }
+    if( T::SData != NULL )  T::SData->RefCnt++;
     return *this;
   }
   //...........................................................................
@@ -405,10 +392,9 @@ public:
     for( size_t i=0; i < wht_len; i++ )
       wht[i] = o_toupper(wht[i]);
   }
-  static void o_strtlw(TC* wht, size_t wht_len) {
-    for (size_t i = 0; i < wht_len; i++) {
+  static void o_strtlw(TC* wht, size_t wht_len)  {
+    for( size_t i=0; i < wht_len; i++ )
       wht[i] = o_tolower(wht[i]);
-    }
   }
   // returns length of common string
   template <typename OC, typename AC>
@@ -416,11 +402,8 @@ public:
     size_t str2_len)
   {
     size_t mlen = olx_min(str1_len, str2_len);
-    for (size_t i = 0; i < mlen; i++) {
-      if (str1[i] != str2[i]) {
-        return i;
-      }
-    }
+    for( size_t i=0; i < mlen; i++ )
+      if( str1[i] != str2[i] )  return i;
     return mlen;
   }
   //...........................................................................
@@ -432,15 +415,13 @@ public:
   {
     size_t max_l = 0;
     start1 = 0;
-    for (size_t i = 0; i < str1_len; i++) {
-      const size_t l = olx_min(str1_len - i, str2_len);
-      if (l < max_l) { // cannot be longer...
-        break;
-      }
+    for( size_t i=0; i < str1_len; i++ )  {
+      const size_t l = olx_min(str1_len-i, str2_len);
+      if( l < max_l )  break;  // cannot be longer...
       bool equal = true;
-      for (size_t j = 0; j < l; j++) {
-        if (str1[j + i] != str2[j]) {
-          if (j > max_l) {
+      for( size_t j=0; j < l; j++ )  {
+        if( str1[j+i] != str2[j] )  {
+          if( j > max_l )  {
             max_l = j;
             start1 = i;
           }
@@ -448,7 +429,7 @@ public:
           break;
         }
       }
-      if (equal) {
+      if( equal )  {
         max_l = l;
         start1 = i;
         break;
@@ -457,15 +438,15 @@ public:
     return max_l;
   }
   //...........................................................................
-  TTSString& UpperCase() {
+  TTSString& UpperCase()  {
     T::checkBufferForModification(T::_Length);
     o_strtup(T::Data(), T::_Length);
     return *this;
   }
   //...........................................................................
-  TTSString& LowerCase() {
+  TTSString& LowerCase()  {
     T::checkBufferForModification(T::_Length);
-    o_strtlw(T::Data(), T::_Length);
+    o_strtlw( T::Data(), T::_Length );
     return *this;
   }
   //...........................................................................
@@ -492,12 +473,10 @@ public:
       str.Length(), s_ta);
     const size_t l_at = o_cmnsubstr(str.Data(), str.Length(), T::Data(),
       T::_Length, s_at);
-    if (l_ta > l_at) {
+    if( l_ta > l_at )
       return SubString(s_ta, l_ta);
-    }
-    else {
+    else
       return str.SubString(s_at, l_at);
-    }
   }
   //...........................................................................
   static TTSString CommonSubString(const TTSString& s1, const TTSString& s2) {
@@ -511,11 +490,9 @@ public:
   template <typename OC, typename AC> static int o_memcmp(const OC* wht,
     const AC* with, size_t len)
   {
-    for (size_t i = 0; i < len; i++) {
-      if (wht[i] != with[i]) {
-        return wht[i] - with[i];
-      }
-    }
+    for( size_t i=0; i < len; i++ )
+      if( wht[i] != with[i])
+        return wht[i]-with[i];
     return 0;
   }
   //static int o_memcmp(const char* wht, const char* with, size_t len) {
@@ -528,11 +505,10 @@ public:
   template <typename OC, typename AC> static int o_memcmpi(const OC* wht,
     const AC* with, size_t len)
   {
-    for (size_t i = 0; i < len; i++) {
-      const int diff = o_tolower(wht[i]) - o_tolower(with[i]);
-      if (diff != 0) {
+    for( size_t i=0; i < len; i++ )  {
+      const int diff = o_tolower(wht[i])-o_tolower(with[i]);
+      if( diff != 0 )
         return diff;
-      }
     }
     return 0;
   }
@@ -546,18 +522,12 @@ public:
   static int o_strcmp(const OC* wht, size_t len_a, const AC* with,
     size_t len_b)
   {
-    if (len_a == len_b) {
-      if (len_a == 0) {
-        return 0;
-      }
+    if( len_a == len_b )  {
+      if( len_a == 0 )  return 0;
       return o_memcmp(wht, with, len_a);
     }
-    if (len_a == 0) {
-      return -1;
-    }
-    if (len_b == 0) {
-      return 1;
-    }
+    if( len_a == 0 )  return -1;
+    if( len_b == 0 )  return 1;
     const int res = o_memcmp(wht, with, olx_min(len_a, len_b));
     return (res != 0 ? res : (len_a < len_b ? -1 : 1));
   }
@@ -566,17 +536,11 @@ public:
     size_t len_b)
   {
     if( len_a == len_b )  {
-      if (len_a == 0) {
-        return 0;
-      }
+      if( len_a == 0 )  return 0;
       return o_memcmpi(wht, with, len_a);
     }
-    if (len_a == 0) {
-      return -1;
-    }
-    if (len_b == 0) {
-      return 1;
-    }
+    if( len_a == 0 )  return -1;
+    if( len_b == 0 )  return 1;
     const int res = o_memcmpi(wht, with, olx_min(len_a, len_b));
     return (res != 0 ? res : (len_a < len_b ? -1 : 1));
   }
@@ -592,9 +556,7 @@ public:
     return o_strcmp(T::Data(), T::_Length, v.Data(), v._Length);
   }
   int Compare(const wchar_t& v) const {
-    if (T::_Length == 0) {
-      return -1;
-    }
+    if( T::_Length == 0 )  return -1;
     const int df = T::Data()[0] - v;
     return df != 0 ? df : (T::_Length == 1 ? 0 : 1);
   }
@@ -617,17 +579,13 @@ public:
     return o_strcmpi(T::Data(), T::_Length, v.Data(), v._Length);
   }
   int Comparei(const wchar_t& v) const {
-    if (T::_Length == 0) {
-      return -1;
-    }
+    if( T::_Length == 0 )  return -1;
     int df = 0;
-    if (T::Data()[0] != v) {
-      if (o_isalpha(T::Data()[0]) && o_isalpha(v)) {
+    if( T::Data()[0] != v )  {
+      if( o_isalpha(T::Data()[0]) && o_isalpha(v) )
         df = o_toupper(T::Data()[0]) - o_toupper(v);
-      }
-      else {
+      else
         df = T::Data()[0] - v;
-      }
     }
     return df != 0 ? df : (T::_Length == 1 ? 0 : 1);
   }
@@ -730,19 +688,15 @@ public:
   static size_t o_strpos(const OC* whr, size_t whr_len, const AC* wht,
     size_t wht_len)
   {
-    for (size_t i = 0; i < whr_len; i++) {
-      if (i + wht_len > whr_len) {
-        return InvalidIndex;
-      }
+    for( size_t i=0; i < whr_len; i++ )  {
+      if( i+wht_len > whr_len )  return InvalidIndex;
       bool found = true;
-      for (size_t j = 0; j < wht_len; j++)
-        if (whr[i + j] != wht[j]) {
+      for( size_t j=0;  j < wht_len; j++ )
+        if( whr[i+j] != wht[j] )  {
           found = false;
           break;
         }
-      if (found) {
-        return i;
-      }
+      if( found ) return i;
     }
     return InvalidIndex;
   }
@@ -751,24 +705,18 @@ public:
   static bool o_issubstr(const OC* whr, size_t whr_len, size_t pos,
     const AC* wht, size_t wht_len)
   {
-    if (pos + wht_len > whr_len) {
-      return false;
-    }
-    for (size_t i = 0; i < wht_len; i++) {
-      if (whr[pos + i] != wht[i]) {
+    if( pos + wht_len > whr_len )  return false;
+    for( size_t i=0; i < wht_len; i++ )
+      if( whr[pos+i] != wht[i] )
         return false;
-      }
-    }
     return true;
   }
   //...........................................................................
   template <typename OC, typename AC>
   static size_t o_chrpos(const OC* whr, size_t whr_len, AC wht) {
-    for (size_t i = 0; i < whr_len; i++) {
-      if (whr[i] == wht) {
+    for( size_t i=0; i < whr_len; i++ )
+      if( whr[i] == wht )
         return i;
-      }
-    }
     return InvalidIndex;
   }
   //...........................................................................
@@ -777,12 +725,10 @@ public:
   static size_t o_chrseqpos(const OC* whr, size_t whr_len,
     AC* seq, size_t seq_len)
   {
-    for (size_t i = 0; i < whr_len; i++) {
-      for (size_t j = 0; j < seq_len; j++) {
-        if (whr[i] == seq[j]) {
+    for (size_t i=0; i < whr_len; i++) {
+      for (size_t j=0; j < seq_len; j++)
+        if (whr[i] == seq[j])
           return i;
-        }
-      }
     }
     return InvalidIndex;
   }
@@ -791,20 +737,15 @@ public:
   static size_t o_strposi(const OC* whr, size_t whr_len, const AC* wht,
     size_t wht_len)
   {
-    for (size_t i = 0; i < whr_len; i++) {
-      if (i + wht_len > whr_len) {
-        return InvalidIndex;
-      }
+    for( size_t i=0; i < whr_len; i++ )  {
+      if( i+wht_len > whr_len )  return InvalidIndex;
       bool found = true;
-      for (size_t j = 0; j < wht_len; j++) {
-        if (o_toupper(whr[i + j]) != o_toupper(wht[j])) {
+      for( size_t j=0;  j < wht_len; j++ )
+        if( o_toupper(whr[i+j]) != o_toupper(wht[j]) )  {
           found = false;
           break;
         }
-      }
-      if (found) {
-        return i;
-      }
+      if( found ) return i;
     }
     return InvalidIndex;
   }
@@ -813,25 +754,19 @@ public:
   static bool o_issubstri(const OC* whr, size_t whr_len, size_t pos,
     const AC* wht, size_t wht_len)
   {
-    if (pos + wht_len >= whr_len) {
-      return false;
-    }
-    for (size_t i = 0; i < wht_len; i++) {
-      if (o_toupper(whr[pos + i]) != o_toupper(wht[i])) {
+    if( pos + wht_len >= whr_len )  return false;
+    for( size_t i=0; i < wht_len; i++ )
+      if( o_toupper(whr[pos+i]) != o_toupper(wht[i]) )
         return false;
-      }
-    }
     return true;
   }
   //...........................................................................
   template <typename OC, typename AC>
   static size_t o_chrposi(const OC* whr, size_t whr_len, AC wht) {
     wht = o_toupper(wht);
-    for (size_t i = 0; i < whr_len; i++) {
-      if (o_toupper(whr[i]) == wht) {
+    for( size_t i=0; i < whr_len; i++ )
+      if( o_toupper(whr[i]) == wht )
         return i;
-      }
-    }
     return InvalidIndex;
   }
   //...........................................................................
@@ -839,37 +774,27 @@ public:
   static size_t o_strposr(const OC* whr, size_t whr_len, const AC* wht,
     size_t wht_len)
   {
-    if (wht_len > whr_len || whr_len == 0 || wht_len == 0) {
+    if( wht_len > whr_len || whr_len == 0 || wht_len == 0)
       return InvalidIndex;
-    }
-    for (size_t i = whr_len - 1; i != InvalidIndex; i--) {
-      if (i < wht_len) {
-        return InvalidIndex;
-      }
+    for( size_t i=whr_len-1; i != InvalidIndex; i-- )  {
+      if( i < wht_len )  return InvalidIndex;
       bool found = true;
-      for (size_t j = wht_len - 1; j != InvalidIndex; j--) {
-        if (whr[i - j] != wht[j]) {
+      for( size_t j=wht_len-1;  j != InvalidIndex; j-- )
+        if( whr[i-j] != wht[j] )  {
           found = false;
           break;
         }
-      }
-      if (found) {
-        return i - 1;
-      }
+      if( found ) return i-1;
     }
     return InvalidIndex;
   }
   //...........................................................................
   template <typename OC, typename AC>
   static size_t o_chrposr(const OC* whr, size_t whr_len, AC wht) {
-    if (whr_len == 0) {
-      return InvalidIndex;
-    }
-    for (size_t i = whr_len - 1; i != InvalidIndex; i--) {
-      if (whr[i] == wht) {
+    if( whr_len == 0 )  return InvalidIndex;
+    for( size_t i=whr_len-1; i != InvalidIndex; i-- )
+      if( whr[i] == wht )
         return i;
-      }
-    }
     return InvalidIndex;
   }
   //...........................................................................
@@ -877,38 +802,28 @@ public:
   static size_t o_strposri(const OC* whr, size_t whr_len, const AC* wht,
     size_t wht_len)
   {
-    if (wht_len > whr_len || whr_len == 0 || wht_len == 0) {
+    if( wht_len > whr_len || whr_len == 0 || wht_len == 0 )
       return InvalidIndex;
-    }
-    for (size_t i = whr_len - 1; i != InvalidIndex; i--) {
-      if (i < wht_len) {
-        return InvalidIndex;
-      }
+    for( size_t i=whr_len-1; i != InvalidIndex; i-- )  {
+      if( i < wht_len )  return InvalidIndex;
       bool found = true;
-      for (size_t j = wht_len - 1; j != InvalidIndex; j--) {
-        if (o_toupper(whr[i - j]) != o_toupper(wht[j])) {
+      for( size_t j=wht_len-1;  j != InvalidIndex ; j-- )
+        if( o_toupper(whr[i-j]) != o_toupper(wht[j]) )  {
           found = false;
           break;
         }
-      }
-      if (found) {
-        return i;
-      }
+      if( found ) return i;
     }
     return InvalidIndex;
   }
   //...........................................................................
   template <typename OC, typename AC>
   static size_t o_chrposri(const OC* whr, size_t whr_len, AC wht) {
-    if (whr_len == 0) {
-      return InvalidIndex;
-    }
+    if( whr_len == 0 )  return InvalidIndex;
     wht = o_toupper(wht);
-    for (size_t i = whr_len - 1; i != InvalidIndex; i--) {
-      if (o_toupper(whr[i]) == wht) {
+    for( size_t i=whr_len-1; i != InvalidIndex; i-- )
+      if( o_toupper(whr[i]) == wht )
         return i;
-      }
-    }
     return InvalidIndex;
   }
   //...........................................................................
@@ -1017,62 +932,51 @@ public:
   // function checks for preceding radix encoding
   template <typename IT>
   static IT o_atois(const TC* data, size_t len, bool& negative,
-    unsigned short Rad = 10)
+    unsigned short Rad=10)
   {
-    if (len == 0) {
+    if( len == 0 )
       TExceptionBase::ThrowInvalidIntegerFormat(__POlxSourceInfo, data, len);
-    }
     size_t sts = 0; // string start, end
-    while (o_iswhitechar(data[sts]) && ++sts < len) {
-    }
-    if (sts >= len) {
+    while( o_iswhitechar(data[sts]) && ++sts < len )
+    if( sts >= len )
       TExceptionBase::ThrowInvalidIntegerFormat(__POlxSourceInfo, data, len);
-    }
-    // test for any particluar format specifier, here just '0x', for hexadecimal
-    if (len > sts + 1 && data[sts] == '0' &&
-      (data[sts + 1] == 'x' || data[sts + 1] == 'X'))
+  // test for any particluar format specifier, here just '0x', for hexadecimal
+    if( len > sts+1 && data[sts] == '0' &&
+        (data[sts+1] == 'x' || data[sts+1] == 'X') )
     {
       Rad = 16;
       sts += 2;
     }
-    else if (data[sts] == 'o' || data[sts] == 'O') {
+    else if( data[sts] == 'o' || data[sts] == 'O' )  {
       Rad = 8;
       sts++;
     }
-    return o_atoi_s<IT>(&data[sts], len - sts, negative, Rad);
+    return o_atoi_s<IT>(&data[sts], len-sts, negative, Rad);
   }
   //...........................................................................
   // function checks for preceding radix encoding
   static bool o_isints(const TC* data, size_t len, bool& negative) {
-    if (len == 0) {
-      return false;
-    }
+    if( len == 0 )  return false;
     size_t sts = 0; // string start, end
-    while (o_iswhitechar(data[sts]) && ++sts < len) {
-    }
-    if (sts >= len) {
+    while( o_iswhitechar(data[sts]) && ++sts < len )
+    if( sts >= len )
       return false;
-    }
-    // test for any particluar format specifier, here just '0x', for hexadecimal
-    unsigned short Rad = 10;
-    if (data[sts] == '0') {
+  // test for any particluar format specifier, here just '0x', for hexadecimal
+    unsigned short Rad=10;
+    if( data[sts] == '0' )  {
       negative = false;
-      if (len == 1) {
-        return true;
-      }
-      if (data[sts + 1] == 'x' || data[sts + 1] == 'X') {
-        if (len == 2) {
-          return false;
-        }
+      if( len == 1 )  return true;
+      if( data[sts+1] == 'x' || data[sts+1] == 'X' )  {
+        if( len == 2 )  return false;
         Rad = 16;
         sts += 2;
       }
-      else if (data[sts] == '0') {
+      else if( data[sts] == '0' )  {
         Rad = 8;
         sts++;
       }
     }
-    return o_isint_s(&data[sts], len - sts, negative, Rad);
+    return o_isint_s(&data[sts], len-sts, negative, Rad);
   }
   //...........................................................................
   template <typename IT> static IT o_atoi_safe(const TC* data, size_t len,
@@ -1088,9 +992,8 @@ public:
   {
     bool negative;
     IT val = o_atois<IT>(data, len, negative, Rad);
-    if (negative) {
+    if( negative )
       TExceptionBase::ThrowInvalidUnsignedFormat(__POlxSourceInfo, data, len);
-    }
     return val;
   }
   //...........................................................................
@@ -1107,116 +1010,92 @@ public:
   /* no '\0' at the end, got to do it ourselves, returns the value without
   applying chsig */
   template <typename IT> static IT o_atoi_s(const TC* data, size_t len,
-    bool& negative, unsigned short Rad = 10)
+    bool& negative, unsigned short Rad=10)
   {
-    if (len == 0) {
+    if( len == 0 )
       TExceptionBase::ThrowInvalidIntegerFormat(__POlxSourceInfo, data, len);
-    }
     size_t sts = 0, ste = len; // string start, end
-    while (o_iswhitechar(data[sts]) && ++sts < len) {
-    }
-    while (--ste > sts && o_iswhitechar(data[ste])) {
-    }
-    if (++ste <= sts) {
+    while( o_iswhitechar(data[sts]) && ++sts < len ) ;
+    while( --ste > sts && o_iswhitechar(data[ste]) ) ;
+    if( ++ste <= sts )
       TExceptionBase::ThrowInvalidIntegerFormat(__POlxSourceInfo, data, len);
-    }
-    IT val = 0;
+    IT val=0;
     negative = false;
-    if (data[sts] == '-') {
+    if( data[sts] == '-' )  {
       negative = true;
       sts++;
     }
-    else if (data[sts] == '+') {
+    else if( data[sts] == '+' )
       sts++;
-    }
-    if (sts == ste) {
+    if( sts == ste )
       TExceptionBase::ThrowInvalidIntegerFormat(__POlxSourceInfo, data, len);
-    }
-    if (Rad > 10) {
-      for (size_t i = sts; i < ste; i++) {
+    if( Rad > 10 )  {
+      for( size_t i=sts; i < ste; i++ )  {
         short pv = 0;
         // the order is important, chars are rearer
-        if (data[i] <= '9' && data[i] >= '0') {
+        if( data[i] <= '9' && data[i] >= '0' )
           pv = data[i] - '0';
-        }
-        else if (data[i] <= 'Z' && data[i] >= 'A') {
+        else if( data[i] <= 'Z' && data[i] >= 'A' )
           pv = data[i] - 'A' + 10;
-        }
-        else if (data[i] <= 'z' && data[i] >= 'a') {
+        else if( data[i] <= 'z' && data[i] >= 'a' )
           pv = data[i] - 'a' + 10;
-        }
-        else {
+        else  {
           TExceptionBase::ThrowInvalidIntegerFormat(__POlxSourceInfo, data,
             len);
         }
-        if (pv >= Rad) {
+        if( pv >= Rad )  {
           TExceptionBase::ThrowInvalidIntegerFormat(__POlxSourceInfo, data,
             len);
         }
         val = val*Rad + pv;
-      }
-    }
-    else {
-      for (size_t i = sts; i < ste; i++) {
-        if (data[i] <= '9' && data[i] >= '0') {
-          const short pv = data[i] - '0';
-          if (pv >= Rad) {
-            TExceptionBase::ThrowInvalidIntegerFormat(__POlxSourceInfo, data,
-              len);
-          }
-          val = val*Rad + pv;
-        }
-        else {
-          TExceptionBase::ThrowInvalidIntegerFormat(__POlxSourceInfo, data,
-            len);
-        }
-      }
-    }
-    return val;
+       }
+     }
+     else  {
+       for( size_t i=sts; i < ste; i++ )  {
+         if( data[i] <= '9' && data[i] >= '0' )  {
+           const short pv = data[i] - '0';
+            if( pv >= Rad )  {
+              TExceptionBase::ThrowInvalidIntegerFormat(__POlxSourceInfo, data,
+                len);
+            }
+           val = val*Rad + pv;
+         }
+         else  {
+           TExceptionBase::ThrowInvalidIntegerFormat(__POlxSourceInfo, data,
+             len);
+         }
+       }
+     }
+     return val;
   }
   //...........................................................................
   /** no '\0' at the end, got to do it ourselves, returns the value without
   applying chsig */
   static bool o_isint_s(const TC* data, size_t len, bool& negative,
-    unsigned short Rad = 10)
+    unsigned short Rad=10)
   {
-    if (len == 0) {
-      return false;
-    }
+    if( len == 0 )  return false;
     size_t sts = 0, ste = len; // string start, end
-    while (o_iswhitechar(data[sts]) && ++sts < len) {
-    }
-    while (--ste > sts && o_iswhitechar(data[ste])) {
-    }
-    if (++ste <= sts) {
+    while( o_iswhitechar(data[sts]) && ++sts < len ) ;
+    while( --ste > sts && o_iswhitechar(data[ste]) ) ;
+    if( ++ste <= sts )
       return false;
-    }
     negative = false;
-    if (data[sts] == '-') {
+    if( data[sts] == '-' )  {
       negative = true;
       sts++;
     }
-    else if (data[sts] == '+') {
+    else if( data[sts] == '+' )
       sts++;
-    }
-    if (sts == ste) {
-      return false;
-    }
-    for (size_t i = sts; i < ste; i++) {
+    if( sts == ste )  return false;
+    for( size_t i=sts; i < ste; i++ )  {
       short pv = 0;
-      if (data[i] <= '9' && data[i] >= '0') {
-        pv = data[i] - '0';
-      }
-      else if (data[i] <= 'Z' && data[i] >= 'A') {
-        pv = data[i] - 'A' + 10;
-      }
-      else if (data[i] <= 'z' && data[i] >= 'a') {
-        pv = data[i] - 'a' + 10;
-      }
+      if( data[i] <= '9' && data[i] >= '0' )  pv = data[i] - '0';
+      else if( data[i] <= 'Z' && data[i] >= 'A' )  pv = data[i] - 'A' + 10;
+      else if( data[i] <= 'z' && data[i] >= 'a' )  pv = data[i] - 'a' + 10;
       else  return false;
-      if (pv >= Rad) {
+      if( pv >= Rad )
         return false;
-      }
     }
     return true;
   }
@@ -1239,9 +1118,8 @@ public:
   {
     bool negative;
     IT val = o_atoi_s<IT>(data, len, negative, Rad);
-    if (negative) {
+    if( negative )
       TExceptionBase::ThrowInvalidIntegerFormat(__POlxSourceInfo, data, len);
-    }
     return val;
   }
   //...........................................................................
@@ -1272,13 +1150,9 @@ public:
   }
   //...........................................................................
   bool ToBool() const {
-    if (Equalsi(TrueString())) {
-      return true;
-    }
-    else if (Equalsi(FalseString())) {
-      return false;
-    }
-    else {
+    if( Equalsi(TrueString()) )  return true;
+    else if( Equalsi(FalseString()) )  return false;
+    else  {
       TExceptionBase::ThrowInvalidBoolFormat(__POlxSourceInfo, T::Data(),
         T::_Length);
     }
@@ -1291,76 +1165,55 @@ public:
   //...........................................................................
   // no '\0' at the end, got to do it ourselves
   template <class FT> static FT o_atof(const TC* data, size_t len) {
-    if (len == 0) {
+    if( len == 0 )
       TExceptionBase::ThrowInvalidFloatFormat(__POlxSourceInfo, data, len);
-    }
     size_t sts = 0, ste = len; // string start, end
-    while (o_iswhitechar(data[sts]) && ++sts < len) {
-    }
-    while (--ste > sts && o_iswhitechar(data[ste])) {
-    }
-    if (++ste <= sts) {
+    while( o_iswhitechar(data[sts]) && ++sts < len ) ;
+    while( --ste > sts && o_iswhitechar(data[ste]) ) ;
+    if( ++ste <= sts )
       TExceptionBase::ThrowInvalidFloatFormat(__POlxSourceInfo, data, len);
-    }
     bool negative = false;
-    if (data[sts] == '-') {
-      negative = true;
-      sts++;
-    }
-    else if (data[sts] == '+') {
-      sts++;
-    }
-    if (sts == ste) {
+    if( data[sts] == '-' )  {  negative = true;  sts++;  }
+    else if( data[sts] == '+' )  sts++;
+    if( sts == ste )
       TExceptionBase::ThrowInvalidFloatFormat(__POlxSourceInfo, data, len);
-    }
-    FT bp = 0, ap = 0, apexp = 1;
+    FT bp=0, ap=0, apexp=1;
     size_t exp = 0;
     bool fpfound = false, expfound = false, expneg = false;
-    for (size_t i = sts; i < ste; i++) {
-      if (data[i] <= '9' && data[i] >= '0') {
-        if (expfound) {
-          exp = exp * 10 + (data[i] - '0');
-        }
-        else if (fpfound) {
-          ap = ap * 10 + (data[i] - '0');
+    for( size_t i=sts; i < ste; i++ )  {
+      if( data[i] <= '9' && data[i] >= '0' )
+        if( expfound )
+          exp = exp*10 + (data[i] - '0');
+        else if( fpfound  )  {
+          ap = ap*10 + (data[i] - '0');
           apexp *= 10;
         }
-        else {
-          bp = bp * 10 + (data[i] - '0');
-        }
-      }
-      else if (data[i] == '.') {
-        if (fpfound) {
+        else
+          bp = bp*10 + (data[i] - '0');
+      else if( data[i] == '.' )  {
+        if( fpfound )
           TExceptionBase::ThrowInvalidFloatFormat(__POlxSourceInfo, data, len);
-        }
         fpfound = true;
       }
-      else if (data[i] == 'e' || data[i] == 'E') {
-        if (expfound) {
+      else if( data[i] == 'e' || data[i] == 'E' )  {
+        if( expfound )
           TExceptionBase::ThrowInvalidFloatFormat(__POlxSourceInfo, data, len);
-        }
         expfound = true;
-        if (++i == len) {
-          break;
-        }
-        if (data[i] == '-') {
+        if( ++i == len )  break;
+        if( data[i] == '-' )
           expneg = true;
-        }
-        else if (data[i] == '+') {
-        }
-        else if (data[i] >= '0' && data[i] <= '9') { // anonymous positive exp
-          i--;
-        }
-        else { // invalid dddd.ddddE-/+/ddd format
+        else if( data[i] == '+' )
+          ;
+        else if( data[i] >= '0' && data[i] <= '9' )  // anonymous positive exp
+         i--;
+        else  // invalid dddd.ddddE-/+/ddd format
           TExceptionBase::ThrowInvalidFloatFormat(__POlxSourceInfo, data, len);
-        }
       }
-      else { // invalid char for a number
+      else  // invalid char for a number
         TExceptionBase::ThrowInvalidFloatFormat(__POlxSourceInfo, data, len);
-      }
     }
-    bp = (expneg) ? (bp + ap / apexp) / olx_pow10<FT>(exp)
-      : (bp + ap / apexp)*olx_pow10<FT>(exp);
+    bp = (expneg) ? (bp + ap/apexp)/olx_pow10<FT>(exp)
+      : (bp + ap/apexp)*olx_pow10<FT>(exp);
     return negative ? -bp : bp;
   }
   //...........................................................................
@@ -1404,46 +1257,41 @@ public:
     return ToNumber(n);
   }
   //...........................................................................
-  void SetLength(size_t newLen) {
-    if (newLen < T::_Length) {
+  void SetLength(size_t newLen)  {
+    if( newLen < T::_Length )
       T::DecLength(T::_Length - newLen);
-    }
-    else {
+    else  {
       T::checkBufferForModification(newLen);
       T::_Length = newLen;
     }
   }
   //...........................................................................
-  TTSString& Delete(size_t from, size_t count) {
-    const size_t dv = from + count;
+  TTSString& Delete(size_t from, size_t count)  {
+    const size_t dv = from+count;
 #ifdef _DEBUG
-    if (from >= T::_Length) {
+    if( from >= T::_Length )  {
       TExceptionBase::ThrowIndexOutOfRange(__POlxSourceInfo, from, 0,
         T::_Length);
     }
-    if (dv > T::_Length) {
+    if( dv > T::_Length )  {
       TExceptionBase::ThrowIndexOutOfRange(__POlxSourceInfo, dv, 0,
         T::_Length);
     }
 #endif
-    if (dv == T::_Length) {
-      if (from != 0) {
-        T::_Length -= count;  // substring to
-      }
-      else {
-        T::_Length = 0;  // empty string ...
-      }
+    if( dv == T::_Length )  {
+      if( from != 0 )  T::_Length -= count;  // substring to
+      else            T::_Length = 0;  // empty string ...
       return *this;
     }
     // delete from start - just substring from
-    if (from == 0) {
+    if( from == 0 )  {
       T::_Start += count;
       T::_Length -= count;
     }
-    else {
+    else  {
       T::checkBufferForModification(T::_Length);
-      olx_memmove(&T::Data()[from], &T::Data()[from + count],
-        T::_Length - from - count);
+      olx_memmove( &T::Data()[from], &T::Data()[from+count],
+        T::_Length-from-count);
       T::DecLength(count);
     }
     return *this;
@@ -1454,14 +1302,12 @@ public:
     AC wht)
   {
     size_t ni = 0;
-    for (size_t i = 0; i < whr_len; i++, ni++) {
-      if (whr[i] == wht && ((i + 1) < whr_len && whr[i + 1] == wht)) {
+    for( size_t i=0; i < whr_len; i++, ni++ )  {
+      if( whr[i] == wht && ((i+1) < whr_len && whr[i+1] == wht) )  {
         ni--;
         continue;
       }
-      else if (ni != i) {
-        whr[ni] = whr[i];
-      }
+      else if( ni != i )  whr[ni] = whr[i];
     }
     return whr_len - ni;
   }
@@ -1483,14 +1329,13 @@ public:
     AC wht)
   {
     size_t rn = 0;
-    for (size_t i = 0; i < whr_len; i++) {
-      if (whr[i] == wht) {
+    for( size_t i=0; i < whr_len; i++ )  {
+      if( whr[i] == wht )  {
         rn++;
         continue;
       }
-      else {
-        whr[i - rn] = whr[i];
-      }
+      else
+        whr[i-rn] = whr[i];
     }
     return rn;
   }
@@ -1501,23 +1346,20 @@ public:
     size_t wht_len)
   {
     size_t cnt = 0;
-    for (size_t i = 0; i < whr_len; i++) {
-      if (i + wht_len > whr_len) {
-        return cnt;
-      }
+    for( size_t i=0; i < whr_len; i++ )  {
+      if( i+wht_len > whr_len )  return cnt;
       bool found = true;
-      for (size_t j = 0; j < wht_len; j++) {
-        if (whr[i + j] != wht[j]) {
+      for( size_t j=0;  j < wht_len; j++ )  {
+        if( whr[i+j] != wht[j] )  {
           found = false;
           break;
         }
       }
-      if (found) {
+      if( found )  {
         cnt++;
-        const size_t si = i + wht_len;
-        for (size_t j = si; j < whr_len; j++) {
-          whr[j - wht_len] = whr[j];
-        }
+        const size_t si = i+wht_len;
+        for( size_t j=si; j < whr_len; j++ )
+          whr[j-wht_len] = whr[j];
         whr_len -= wht_len;
         i--;
       }
@@ -1530,29 +1372,28 @@ public:
     size_t wht_len)
   {
     size_t rn = 0;
-    for (size_t i = 0; i < whr_len; i++) {
+    for( size_t i=0; i < whr_len; i++ )  {
       bool found = false;
-      for (size_t j = 0; j < wht_len; j++) {
-        if (whr[i] == wht[j]) {
+      for( size_t j=0; j < wht_len; j++ )  {
+        if( whr[i] == wht[j] )  {
           rn++;
           found = true;
           break;
         }
       }
-      if (!found) {
-        whr[i - rn] = whr[i];
-      }
+      if( !found )
+        whr[i-rn] = whr[i];
     }
     return rn;
   }
   //...........................................................................
-  template <typename AC> TTSString& DeleteChars(AC wht) {
+  template <typename AC> TTSString& DeleteChars(AC wht)  {
     T::checkBufferForModification(T::_Length);
     T::DecLength(o_strdch(T::Data(), T::_Length, wht));
     return *this;
   }
   //...........................................................................
-  TTSString& DeleteStrings(const TTSString& wht) {
+  TTSString& DeleteStrings(const TTSString& wht)  {
     T::checkBufferForModification(T::_Length);
     T::DecLength(o_strdstr(T::Data(), T::_Length, wht.Data(),
       wht._Length)*wht._Length);
@@ -1560,7 +1401,7 @@ public:
   }
   //...........................................................................
   // deletes a set of chars
-  TTSString& DeleteCharSet(const TTSString& wht) {
+  TTSString& DeleteCharSet(const TTSString& wht)  {
     T::checkBufferForModification(T::_Length);
     T::DecLength(o_strdchs(T::Data(), T::_Length, wht.raw_str(),
       wht.Length()));
@@ -1583,31 +1424,27 @@ public:
     size_t at, size_t amount=1)
   {
     size_t toshift = wht_len*amount;
-    if (at < to_len) {
-      olx_memmove(&to[at + toshift], &to[at], to_len - at);
-    }
-    for (size_t i = 0; i < amount; i++) {
-      olx_memcpy(&to[at + wht_len*i], wht, wht_len);
-    }
+    if( at < to_len )
+      olx_memmove(&to[at+toshift], &to[at], to_len - at);
+    for( size_t i=0; i < amount; i++ )
+      olx_memcpy(&to[at+wht_len*i], wht, wht_len);
     return toshift;
   }
   //...........................................................................
   static size_t o_chrins(TC wht, TC* to, size_t to_len, size_t at,
-    size_t amount = 1)
+    size_t amount=1)
   {
-    if (at < to_len) {
-      olx_memmove(&to[at + amount], &to[at], to_len - at);
-    }
+    if( at < to_len )
+      olx_memmove(&to[at+amount], &to[at], to_len - at);
     //memset(to, wht, CharSize*amount);
-    for (size_t i = 0; i < amount; i++) {
-      to[at + i] = wht;
-    }
+    for( size_t i=0; i < amount; i++ )
+      to[at+i] = wht;
     return amount;
   }
   //...........................................................................
-  TTSString& Insert(const TTSString& wht, size_t whr, size_t amount = 1) {
+  TTSString& Insert(const TTSString& wht, size_t whr, size_t amount=1)  {
 #ifdef _DEBUG
-    if (whr > T::_Length) {
+    if( whr > T::_Length )  {
       TExceptionBase::ThrowIndexOutOfRange(__POlxSourceInfo, whr, 0,
         T::_Length);
     }
@@ -1618,9 +1455,9 @@ public:
     return *this;
   }
   //...........................................................................
-  TTSString& Insert(const TC* wht, size_t whr, size_t amount = 1) {
+  TTSString& Insert(const TC* wht, size_t whr, size_t amount=1)  {
 #ifdef _DEBUG
-    if (whr > T::_Length) {
+    if( whr > T::_Length )  {
       TExceptionBase::ThrowIndexOutOfRange(__POlxSourceInfo, whr, 0,
         T::_Length);
     }
@@ -1631,9 +1468,9 @@ public:
     return *this;
   }
   //...........................................................................
-  TTSString& Insert(TC wht, size_t whr, size_t amount = 1) {
+  TTSString& Insert(TC wht, size_t whr, size_t amount=1)  {
 #ifdef _DEBUG
-    if (whr > T::_Length) {
+    if( whr > T::_Length )  {
       TExceptionBase::ThrowIndexOutOfRange(__POlxSourceInfo, whr, 0,
         T::_Length);
     }
@@ -1645,12 +1482,11 @@ public:
   //...........................................................................
   // counts number of occurences of chars
   template <typename OC>
-  static size_t o_chrcnt(OC wht, const TC* whr, size_t whr_len) {
+  static size_t o_chrcnt(OC wht, const TC* whr, size_t whr_len)  {
     size_t cnt = 0;
-    for (size_t i = 0; i < whr_len; i++) {
-      if (whr[i] == wht) {
+    for( size_t i=0; i < whr_len; i++ )  {
+      if( whr[i] == wht )
         cnt++;
-      }
     }
     return cnt;
   }
@@ -1663,24 +1499,17 @@ public:
   static size_t o_strcnt(const OC* wht, size_t wht_len, const TC* whr,
     size_t whr_len)
   {
-    if (wht_len > whr_len) {
-      return 0;
-    }
+    if( wht_len > whr_len )  return 0;
     size_t cnt = 0;
-    for (size_t i = 0; i < whr_len; i++) {
-      if (i + wht_len > whr_len) {
-        return cnt;
-      }
+    for( size_t i=0; i < whr_len; i++ )  {
+      if( i+wht_len > whr_len )  return cnt;
       bool found = true;
-      for (size_t j = 0; j < wht_len; j++) {
-        if (whr[i + j] != wht[j]) {
+      for( size_t j=0;  j < wht_len; j++ )
+        if( whr[i+j] != wht[j] )  {
           found = false;
           break;
         }
-      }
-      if (found) {
-        cnt++;
-      }
+      if( found ) cnt++;
     }
     return cnt;
   }
@@ -1689,60 +1518,50 @@ public:
   static size_t o_strrplstr(const OC* wht, size_t wht_len,
     const AC* with, size_t with_len, TC* whr, size_t whr_len)
   {
-    if (wht_len > whr_len) {
-      return 0;
-    }
+    if( wht_len > whr_len )  return 0;
     size_t cnt = 0;
-    for (size_t i = 0; i < whr_len; i++) {
-      if (i + wht_len > whr_len) {
-        return cnt;
-      }
+    for( size_t i=0; i < whr_len; i++ )  {
+      if( i+wht_len > whr_len )  return cnt;
       bool found = true;
-      for (size_t j = 0; j < wht_len; j++) {
-        if (whr[i + j] != wht[j]) {
+      for( size_t j=0;  j < wht_len; j++ )  {
+        if( whr[i+j] != wht[j] )  {
           found = false;
           break;
         }
       }
-      if (found) {
-        if (with_len != wht_len) {
-          olx_memmove(&whr[i + with_len], &whr[i + wht_len],
-            whr_len - i - wht_len);
-          whr_len -= (wht_len - with_len);
+      if( found )  {
+        if( with_len != wht_len )  {
+          olx_memmove(&whr[i+with_len], &whr[i+wht_len], whr_len-i-wht_len);
+          whr_len -= (wht_len-with_len);
         }
-        for (size_t j = 0; j < with_len; j++) {
-          whr[i + j] = with[j];
-        }
+        for( size_t j=0;  j < with_len; j++ )
+          whr[i+j] = with[j];
         cnt++;
-        i += (with_len - 1);
+        i += (with_len-1);
       }
     }
     return cnt;
   }
   //...........................................................................
   template <typename OC, typename AC>
-  static size_t o_strrplch(const OC* wht, size_t wht_len, AC with,
-    TC* whr, size_t whr_len)
-  {
-    if (wht_len > whr_len) {
-      return 0;
-    }
+  static size_t o_strrplch(const OC* wht, size_t wht_len,
+                         AC with,
+                         TC* whr, size_t whr_len)  {
+    if( wht_len > whr_len )  return 0;
     size_t cnt = 0;
-    for (size_t i = 0; i < whr_len; i++) {
-      if (i + wht_len > whr_len) {
-        return cnt;
-      }
+    for( size_t i=0; i < whr_len; i++ )  {
+      if( i+wht_len > whr_len )  return cnt;
       bool found = true;
-      for (size_t j = 0; j < wht_len; j++) {
-        if (whr[i + j] != wht[j]) {
+      for( size_t j=0;  j < wht_len; j++ )  {
+        if( whr[i+j] != wht[j] )  {
           found = false;
           break;
         }
       }
-      if (found) {
-        if (wht_len != 1) {
-          olx_memmove(&whr[i + 1], &whr[i + wht_len], whr_len - i - wht_len);
-          whr_len -= (wht_len - 1);
+      if( found )  {
+        if( wht_len != 1 )  {
+          olx_memmove(&whr[i+1], &whr[i+wht_len], whr_len-i-wht_len);
+          whr_len -= (wht_len-1);
         }
         whr[i] = with;
         cnt++;
@@ -1752,31 +1571,32 @@ public:
   }
   //...........................................................................
   template <typename OC, typename AC>
-  static size_t o_chrplstr(OC wht, const AC* with, size_t with_len,
-    TC* whr, size_t whr_len) {
+  static size_t o_chrplstr(OC wht,
+                         const AC* with, size_t with_len,
+                         TC* whr, size_t whr_len)  {
     size_t cnt = 0;
-    for (size_t i = 0; i < whr_len; i++) {
-      if (whr[i] == wht) {
-        if (with_len != 1) {
-          olx_memmove(&whr[i + with_len], &whr[i + 1], whr_len - i - 1);
-          whr_len -= (1 - with_len);
+    for( size_t i=0; i < whr_len; i++ )  {
+      if( whr[i] == wht )  {
+        if( with_len != 1 )  {
+          olx_memmove(&whr[i+with_len], &whr[i+1], whr_len-i-1);
+          whr_len -= (1-with_len);
         }
-        for (size_t j = 0; j < with_len; j++) {
-          whr[i + j] = with[j];
-        }
+        for( size_t j=0;  j < with_len; j++ )
+          whr[i+j] = with[j];
         cnt++;
-        i += (with_len - 1);
+        i += (with_len-1);
       }
     }
     return cnt;
   }
   //...........................................................................
   template <typename OC, typename AC> // replace chars
-  static size_t o_chrplch(OC wht, AC with, TC* whr, size_t whr_len) {
+  static size_t o_chrplch(OC wht,  AC with,
+                         TC* whr, size_t whr_len)  {
     size_t cnt = 0;
-    for (size_t i = 0; i < whr_len; i++) {
-      if (whr[i] == wht) {
-        whr[i] = with;
+    for( size_t i=0; i < whr_len; i++ )  {
+      if( whr[i] == wht )  {
+          whr[i] = with;
         cnt++;
       }
     }
@@ -1785,7 +1605,7 @@ public:
 #ifndef __BORLANDC__ // what use of templates when this does not get them???
   //...........................................................................
 #if defined(__WXWIDGETS__)
-  template <typename OC> TTSString& Replace(OC wht, const wxString &with) {
+  template <typename OC> TTSString& Replace(OC wht, const wxString &with)  {
     return Replace(wht, (const TC*)with.c_str(), with.Length());
   }
   template <typename OC> TTSString& Replace(const OC* wht,
@@ -1793,13 +1613,13 @@ public:
   {
     return Replace(wht, ~0, (const TC*)with.c_str(), with.Length());
   }
-  TTSString& Replace(const TTSString &wht, const wxString &with) {
+  TTSString& Replace(const TTSString &wht, const wxString &with)  {
     return Replace(wht.Data(), wht._Length,
       (const TC*)with.c_str(), with.Length());
   }
 #endif
   //...........................................................................
-  TTSString& Replace(const TTSString& wht, const TTSString& with) {
+  TTSString& Replace(const TTSString& wht, const TTSString& with)  {
     return Replace(wht.Data(), wht._Length, with.Data(), with._Length);
   }
   //...........................................................................
@@ -1809,7 +1629,7 @@ public:
     return Replace(wht.Data(), wht._Length, with, ~0);
   }
   //...........................................................................
-  template <typename AC> TTSString& Replace(const TTSString& wht, AC with) {
+  template <typename AC> TTSString& Replace(const TTSString& wht, AC with)  {
     return Replace(wht.Data(), wht._Length, with);
   }
   //...........................................................................
@@ -1819,23 +1639,23 @@ public:
     return Replace(wht, ~0, with.Data(), with._Length);
   }
   //...........................................................................
-  template <typename OC> TTSString& Replace(OC wht, const TTSString& with) {
+  template <typename OC> TTSString& Replace(OC wht, const TTSString& with)  {
     return Replace(wht, with.Data(), with._Length);
   }
   //...........................................................................
-  template <typename OC, typename AC> TTSString& Replace(OC wht, AC with) {
+  template <typename OC, typename AC> TTSString& Replace(OC wht, AC with)  {
     T::checkBufferForModification(T::_Length);
     o_chrplch(wht, with, T::Data(), T::_Length);
     return *this;
   }
   //...........................................................................
   template <typename OC, typename AC>
-  TTSString& Replace(const OC* wht, AC with) {
+  TTSString& Replace(const OC* wht, AC with)  {
     return Replace(wht, ~0, with);
   }
   //...........................................................................
   template <typename OC, typename AC>
-  TTSString& Replace(const OC* wht, size_t wht_l, AC with) {
+  TTSString& Replace(const OC* wht, size_t wht_l, AC with)  {
     size_t wht_len = wht_l == InvalidIndex ? o_strlen(wht) : wht_l;
     T::checkBufferForModification(T::_Length);
     size_t rv = o_strrplch(wht, wht_len, with, T::Data(), T::_Length);
@@ -1844,20 +1664,18 @@ public:
   }
   //...........................................................................
   template <typename OC, typename AC>
-  TTSString& Replace(OC wht, const AC* with, size_t with_l = ~0) {
+  TTSString& Replace(OC wht, const AC* with, size_t with_l=~0)  {
     size_t extra_len = 0,
       with_len = (with_l == InvalidIndex ? o_strlen(with) : with_l);
-    if (with_len == 0) {
+    if( with_len == 0 )  {
       T::_Length -= o_strdch(T::Data(), T::_Length, wht);
       return *this;
     }
-    if (with_len > 1) {
+    if( with_len > 1 )  {
       extra_len = (with_len - 1) * o_chrcnt(wht, T::Data(), T::_Length);
-      if (extra_len == 0) {
-        return *this;
-      }
+      if( extra_len == 0 )  return *this;
     }
-    T::checkBufferForModification(T::_Length + extra_len);
+    T::checkBufferForModification(T::_Length+extra_len);
     size_t rv = o_chrplstr(wht, with, with_len, T::Data(), T::_Length);
     T::_Length -= (1 - with_len)*rv;
     return *this;
@@ -1920,35 +1738,26 @@ public:
 #endif // __BORLANDC__
   //...........................................................................
   template <typename AC> TTSString& Trim(AC wht)  {
-    if (T::_Length == 0) {
-      return *this;
-    }
+    if( T::_Length == 0 )  return *this;
     size_t start = 0, end = T::_Length;
-    while (TTIString<TC>::CharAt(start) == wht && ++start < end) {
-    }
-    while (--end > start && TTIString<TC>::CharAt(end) == wht) {
-    }
+    while( TTIString<TC>::CharAt(start) == wht && ++start < end )  ;
+    while( --end > start && TTIString<TC>::CharAt(end) == wht )  ;
     T::_Start += start;
     T::_Length = (end + 1 - start);
     return *this;
   }
   //...........................................................................
   template <typename AC> TTSString& TrimL(AC wht) {
-    if (T::_Length == 0) {
-      return *this;
-    }
+    if (T::_Length == 0)  return *this;
     size_t start = 0;
-    while (TTIString<TC>::CharAt(start) == wht && ++start < T::_Length) {
-    }
+    while (TTIString<TC>::CharAt(start) == wht && ++start < T::_Length)  ;
     T::_Start += start;
     T::_Length = (T::_Length + 1 - start);
     return *this;
   }
   //...........................................................................
-  template <typename AC> TTSString& TrimR(AC wht) {
-    if (T::_Length == 0) {
-      return *this;
-    }
+  template <typename AC> TTSString& TrimR(AC wht)  {
+    if( T::_Length == 0 )  return *this;
     if (T::_Length == 1) {
       if (TTIString<TC>::CharAt(0) == wht) {
         T::_Length = 0;
@@ -1956,36 +1765,26 @@ public:
       return *this;
     }
     size_t end = T::_Length;
-    while (--end > 0 && TTIString<TC>::CharAt(end) == wht) {
-    }
+    while (--end > 0 && TTIString<TC>::CharAt(end) == wht)  ;
     T::_Length = (end + 1);
     return *this;
   }
   //...........................................................................
   bool IsWhiteCharString() const {
     const TC* data = T::Data();
-    for (size_t i = 0; i < T::_Length; i++) {
-      if (!o_iswhitechar(data[i])) {
+    for( size_t i=0; i < T::_Length; i++ )
+      if( !o_iswhitechar(data[i]) )
         return false;
-      }
-    }
     return true;
   }
   //...........................................................................
-  TTSString& TrimWhiteChars(bool leading = true, bool trailing = true) {
-    if (T::_Length == 0) {
-      return *this;
-    }
-    size_t start = 0, end = T::_Length - 1;
-    if (leading) {
-      while (o_iswhitechar(TTIString<TC>::CharAt(start)) && ++start < end) {
-      }
-    }
-    if (trailing) {
-      while (end > start && o_iswhitechar(TTIString<TC>::CharAt(end))) {
-        end--;
-      }
-    }
+  TTSString& TrimWhiteChars(bool leading=true, bool trailing=true)  {
+    if( T::_Length == 0 )  return *this;
+    size_t start = 0, end = T::_Length-1;
+    if( leading )
+      while( o_iswhitechar(TTIString<TC>::CharAt(start)) && ++start < end )  ;
+    if( trailing )
+      while( end > start && o_iswhitechar(TTIString<TC>::CharAt(end)) )  end--;
     T::_Start += start;
     T::_Length = (end + 1 - start);
     return *this;
@@ -1997,14 +1796,14 @@ public:
   }
   //...........................................................................
   TTSString& Padding(size_t count, const TTSString& sep, bool right,
-    bool ensure_sep = false)
+    bool ensure_sep=false)
   {
-    size_t extra = ((T::_Length >= count) ? 0 : count - T::_Length);
+    size_t extra = ((T::_Length >= count) ? 0 : count-T::_Length);
     if (ensure_sep && extra == 0) {
       if (!EndsWith(sep))
         extra = 1;
     }
-    if (extra != 0) {
+    if (extra !=0 ) {
       T::checkBufferForModification(T::_Length + extra*sep._Length);
       Insert(sep, right ? T::_Length : 0, extra);
     }
@@ -2012,13 +1811,13 @@ public:
   }
   //...........................................................................
   template <typename AC>
-  TTSString& Padding(size_t count, AC sep, bool right, bool ensure_sep = false) {
-    size_t extra = ((T::_Length >= count) ? 0 : count - T::_Length);
+  TTSString& Padding(size_t count, AC sep, bool right, bool ensure_sep=false)  {
+    size_t extra = ((T::_Length >= count) ? 0 : count-T::_Length);
     if (ensure_sep && extra == 0) {
       if (!StartsFrom(sep))
         extra = 1;
     }
-    if (extra != 0) {
+    if (extra !=0) {
       T::checkBufferForModification(T::_Length + extra);
       Insert(sep, right ? T::_Length : 0, extra);
     }
@@ -2027,27 +1826,25 @@ public:
   //...........................................................................
   template <typename sep_t>
   TTSString& LeftPadding(size_t count, const sep_t& sep,
-    bool ensure_sep=false)
-  {
+    bool ensure_sep=false)  {
     return Padding(count, sep, false, ensure_sep);
   }
   //...........................................................................
   template <typename sep_t>
   TTSString& RightPadding(size_t count, const sep_t& sep,
-    bool ensure_sep=false)
-  {
+    bool ensure_sep=false)  {
     return Padding(count, sep, true, ensure_sep);
   }
   //...........................................................................
   static TTSString FormatFloat(int NumberOfDigits, double v,
-    bool Exponent = false)
+    bool Exponent=false)
   {
-    TTSString<T, TC> fmt, rv;
-    if (NumberOfDigits < 0) {
+    TTSString<T,TC> fmt, rv;
+    if( NumberOfDigits < 0 )  {
       NumberOfDigits = -NumberOfDigits;
-      if (v >= 0)  fmt = ' ';
+      if( v >= 0 )  fmt = ' ';
     }
-    fmt << "%." << NumberOfDigits << ((Exponent) ? 'e' : 'f') << '\0';
+    fmt << "%." << NumberOfDigits << ( (Exponent) ? 'e' : 'f') << '\0';
     rv.setTypeValue(fmt.Data(), v);
     return rv;
   }
@@ -2055,86 +1852,68 @@ public:
   /* checks if provided string represent an integer or float point number (inc
   exponental form) */
   static bool o_isnumber(const TC* data, size_t len) {
-    if (len == 0)  return false;
+    if( len == 0 )  return false;
     size_t sts = 0, ste = len; // string start
-    while (o_iswhitechar(data[sts]) && ++sts < len) {
-    }
-    while (--ste > sts && o_iswhitechar(data[ste])) {
-    }
-    if (++ste <= sts) {
+    while( o_iswhitechar(data[sts]) && ++sts < len ) ;
+    while( --ste > sts && o_iswhitechar(data[ste]) ) ;
+    if( ++ste <= sts )
       return false;
-    }
-    if (data[sts] == '0') {
-      len = ste - sts;
-      if (len == 1) {
-        return true;
-      }
-      // hex notation
-      if (data[sts + 1] == 'x' || data[sts + 1] == 'X') {
-        if (len == 2) {
-          return false;
-        }
-        for (size_t i = sts + 2; i < ste; i++) {
-          if (!o_ishexdigit(data[i])) {
+    if( data[sts] == '0' )  {
+      len = ste-sts;
+      if( len == 1 )  return true;
+    // hex notation
+      if( data[sts+1] == 'x' || data[sts+1] == 'X' )  {
+        if( len == 2 )  return false;
+        for( size_t i=sts+2; i < ste; i++ )  {
+          if( !o_ishexdigit(data[i]) )
             return false;
-          }
         }
         return true;
       }
       // octal or float (0e-5 0.nnn) then...
-      if (data[sts + 1] != '.' && !(data[sts + 1] == 'e' ||
-        data[sts + 1] == 'E'))
-      {
-        for (size_t i = sts + 1; i < ste; i++) {
-          if (data[i] < '0' || data[i] > '7') {
+      if( data[sts+1] != '.' && !(data[sts+1] == 'e' || data[sts+1] == 'E') ) {
+        for( size_t i=sts+1; i < ste; i++ )  {
+          if( data[i] < '0' || data[i] > '7' )
             return false;
-          }
         }
         return true;
       }
     }
     bool expfound = false, fpfound = false;
     short digit_cnt = 0;
-    if (data[sts] == '+' || data[sts] == '-') {
+    if( data[sts] == '+' || data[sts] == '-' )
       sts++;
-    }
-    for (size_t i = sts; i < ste; i++) {
+    for( size_t i = sts; i < ste; i++ )  {
       TC ch = data[i];
-      if (o_isdigit(ch)) {
+      if( o_isdigit(ch) )  {
         digit_cnt++;
         continue;
       }
-      else if (ch == '.') {
-        if (fpfound) {
+      else if( ch == '.' )  {
+        if( fpfound )
           return false;
-        }
         fpfound = true;
       }
-      else if (ch == 'e' || ch == 'E') {
-        if (expfound) {
+      else if( ch == 'e' || ch == 'E' )  {
+        if( expfound )
           return false;
-        }
         expfound = true;
-        if (++i == ste) { // exponent cannot be the last char
+        if( ++i == ste )  // exponent cannot be the last char
           return false;
-        }
         ch = data[i];
-        if (ch == '-') {
-        }
-        else if (ch == '+') {
+        if( ch == '-' )
           ;
-        }
-        else if (o_isdigit(ch)) { // anonymously positive exp
+        else if( ch == '+' )
+          ;
+        else if( o_isdigit(ch) )  { // anonymously positive exp
           digit_cnt++;
           i--;
         }
-        else { // invalid dddd.ddddE-/+/ddd format
+        else  // invalid dddd.ddddE-/+/ddd format
           return false;
-        }
       }
-      else {
+      else
         return false;
-      }
     }
     return (digit_cnt != 0);
   }
@@ -2144,12 +1923,10 @@ public:
   //...........................................................................
   void SetIncrement(size_t ni)  {  T::_Increment = ni;  }
   void SetCapacity(size_t newc)  {
-    if (T::SData == NULL) {
-      T::SData = new struct T::Buffer(newc + T::_Increment);
-    }
-    else if (newc > T::GetCapacity()) {
+    if( T::SData == NULL )
+      T::SData = new struct T::Buffer(newc+T::_Increment);
+    else if( newc > T::GetCapacity() )
       T::checkBufferForModification(newc);
-    }
   }
   //...........................................................................
   TTSString& AppendFromStream(IInputStream& ios, size_t len)  {
@@ -2159,36 +1936,33 @@ public:
     return *this;
   }
   //...........................................................................
-  TTSString& FromBinaryStream(IInputStream& ios) {
+  TTSString& FromBinaryStream(IInputStream& ios)  {
     uint32_t code, len, charsize;
     ios.Read(&code, sizeof(uint32_t));
     charsize = ExtractCharSize(code);
-    if (sizeof(TC) != charsize) {
-      if (charsize != 0 || sizeof(TC) == 2) {
+    if( sizeof(TC) != charsize )  {
+      if( charsize != 0 || sizeof(TC) == 2 )  {
         TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo,
           "incompatible Char size");
       }
     }
     len = ExtractLength(code);
-    if (len > (uint32_t)(ios.GetSize() - ios.GetPosition())) {
+    if( len > (uint32_t)(ios.GetSize() - ios.GetPosition()) )  {
       TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo,
         "invalid stream content");
     }
     T::_Start = 0;
     T::_Increment = 8;
     T::_Length = len;
-    if (T::SData != NULL) {
-      if (T::SData->RefCnt == 1) { // owed by this object
+    if( T::SData != NULL )  {
+      if( T::SData->RefCnt == 1 )  // owed by this object
         T::SData->SetCapacity(T::_Length);
-      }
-      else {
+      else  {
         T::SData->RefCnt--;
         T::SData = NULL;
       }
     }
-    if (T::SData == NULL) {
-      T::SData = new struct T::Buffer(T::_Length);
-    }
+    if( T::SData == NULL )  T::SData = new struct T::Buffer(T::_Length);
     ios.Read((void*)T::SData->Data, T::_Length*sizeof(TC));
     return *this;
   }
@@ -2206,22 +1980,18 @@ public:
   }
   //...........................................................................
   olxch GetLast() const {
-    if (T::_Length == 0) {
+    if( T::_Length == 0 )
       TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "empty string");
-    }
     return T::SData->Data[T::_Start+T::_Length-1];
   }
   //...........................................................................
   // just checks if string contains any chars > 127
-  static bool o_needs_converting(const wchar_t* data, size_t len) {
-    for (size_t i = 0; i < len; i++) {
-      if (data[i] > 127 || data[i] < 0) {
+  template <class AC> static bool o_needs_converting(const AC* data,
+    size_t len)
+  {
+    for( size_t i=0; i < len; i++ )
+      if( data[i] > 127 || data[i] < 0 )
         return true;
-      }
-    }
-    return false;
-  }
-  static bool o_needs_converting(const char* data, size_t) {
     return false;
   }
   //...........................................................................
@@ -2235,11 +2005,11 @@ public:
   }
   // converts a wide char string into multibyte string properly
   // (using current locale)
-  static TTSString FromCStr(const wchar_t* wstr, size_t len=~0);
-  static TTSString FromCStr(const char* mbs, size_t len=~0);
-
-  olxcstr ToMBStr() const;
-  olxwstr ToWCStr() const;
+  static olxcstr WStr2CStr(const wchar_t* wstr, size_t len=~0);
+  static olxcstr WStr2CStr(const olxwstr& str);
+  // converts a multibyte string into wide char string properly
+  static olxwstr CStr2WStr(const char* mbs, size_t len=~0);
+  static olxwstr CStr2WStr(const olxcstr& str);
   //...........................................................................
   virtual IOlxObject* Replicate() const {  return new TTSString<T,TC>(*this);  }
   //...........................................................................

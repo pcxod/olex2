@@ -297,10 +297,10 @@ namespace exparse  {
     }
   };
   /////////////////////////////////////////////////////////////////////////////
-  class LibraryRegistry {
+  class LibraryRegistry  {
     olxstr_dict<IStaticFunction*> funcs;
-    void _add(const olxstr& name, IStaticFunction* f) {
-      if (funcs.IndexOf(name) != InvalidIndex) {
+    void _add(const olxstr& name, IStaticFunction* f)  {
+      if( funcs.IndexOf(name) != InvalidIndex )  {
         delete f;
         throw TFunctionFailedException(__OlxSourceInfo,
           olxstr("Duplicate function instance: ").quote() << name);
@@ -308,96 +308,99 @@ namespace exparse  {
       funcs.Add(name, f);
     }
   public:
-    ~LibraryRegistry() {
-      for (size_t i = 0; i < funcs.Count(); i++) {
+    ~LibraryRegistry()  {
+      for( size_t i=0; i < funcs.Count(); i++ )
         delete funcs.GetValue(i);
-      }
     }
-    inline bool is_empty() const { return funcs.IsEmpty(); }
+    inline bool is_empty() const {  return funcs.IsEmpty();  }
     inline IStaticFunction* find(const olxstr& name, size_t argc) const {
-      size_t ind = funcs.IndexOf(olxstr(name) << '#' << argc);
+      size_t ind = funcs.IndexOf( olxstr(name) << '#' << argc);
       return ind == InvalidIndex ? NULL : funcs.GetValue(ind);
     }
     inline size_t index_of(const olxstr& name, size_t argc) const {
-      return funcs.IndexOf(olxstr(name) << '#' << argc);
+      return funcs.IndexOf( olxstr(name) << '#' << argc);
     }
-    void add(const olxstr& name, void(*f)(void)) {
+    void add(const olxstr& name, void (*f)(void))  {
       _add(name + "#0", new VoidFunction(name, f));
     }
     template<class argt_1>
-    void add(const olxstr& name, void(*f)(argt_1)) {
+    void add(const olxstr& name, void (*f)(argt_1) )  {
       _add(name + "#1", new VoidFunction1<argt_1>(name, f));
     }
     template<class argt_1, class argt_2>
-    void add(const olxstr& name, void(*f)(argt_1, argt_2)) {
-      _add(name + "#2", new VoidFunction2<argt_1, argt_2>(name, f));
+    void add(const olxstr& name, void (*f)(argt_1,argt_2) )  {
+      _add(name + "#2", new VoidFunction2<argt_1,argt_2>(name, f));
     }
     template <class rvt>
-    void add(const olxstr& name, rvt(*f)(void)) {
+    void add(const olxstr& name, rvt (*f)(void))  {
       _add(name + "#0", new Function<rvt>(name, f));
     }
     template<class rvt, class argt_1>
-    void add(const olxstr& name, rvt(*f)(argt_1)) {
-      _add(name + "#1", new Function1<rvt, argt_1>(name, f));
+    void add(const olxstr& name, rvt (*f)(argt_1) )  {
+      _add(name + "#1", new Function1<rvt,argt_1>(name, f));
     }
     template<class rvt, class argt_1, class argt_2>
-    void add(const olxstr& name, rvt(*f)(argt_1, argt_2)) {
-      _add(name + "#2", new Function2<rvt, argt_1, argt_2>(name, f));
+    void add(const olxstr& name, rvt (*f)(argt_1,argt_2) )  {
+      _add(name + "#2", new Function2<rvt,argt_1,argt_2>(name, f));
     }
 
-    struct FuncEvaluator : public IEvaluable {
+    struct FuncEvaluator : public IEvaluable  {
       IStaticFunction* func;
       TPtrList<IEvaluable> args;
       const EvaluableFactory& factory;
       FuncEvaluator(const EvaluableFactory& fc, IStaticFunction* f,
         const TPtrList<IEvaluable>& a) : func(f), args(a), factory(fc)
       {
-        for (size_t i = 0; i < args.Count(); i++) {
+        for( size_t i=0; i < args.Count(); i++ )
           args[i]->inc_ref();
-        }
       }
-      ~FuncEvaluator() {
-        for (size_t i = 0; i < args.Count(); i++) {
-          if (args[i]->dec_ref() == 0) {
+      ~FuncEvaluator()  {
+        for( size_t i=0; i < args.Count(); i++ )
+          if( args[i]->dec_ref() == 0 )
             delete args[i];
-          }
-        }
       }
       virtual IEvaluable* _evaluate() const {
         return func->run(factory, args);
       }
-      virtual bool is_function() const { return true; }
+      virtual bool is_function() const {  return true;  }
     };
     IEvaluable* create_from_name(const EvaluableFactory& factory,
-      const olxstr& name, const TPtrList<IEvaluable>& args) const
+      const olxstr& name, const TPtrList<IEvaluable>& args)
     {
       IStaticFunction* gf = find(name, args.Count());
-      if (gf == 0) {
+      if( gf == NULL ) {
         throw TInvalidArgumentException(__OlxSourceInfo,
           olxstr("could not locate specified function: ").quote() << name);
       }
       return new FuncEvaluator(factory, gf, args);
     }
     IEvaluable* create_from_index(const EvaluableFactory& factory,
-      size_t index, const TPtrList<IEvaluable>& args) const
+      size_t index, const TPtrList<IEvaluable>& args)
     {
       return new FuncEvaluator(factory, funcs.GetValue(index), args);
     }
     IEvaluable* call(const EvaluableFactory& factory, const olxstr& name,
-      const TPtrList<IEvaluable>& args) const
+      const TPtrList<IEvaluable>& args)
     {
       IStaticFunction* gf = find(name, args.Count());
-      if (gf == 0) {
+      if( gf == NULL ) {
         throw TInvalidArgumentException(__OlxSourceInfo,
           olxstr("could not locate specified function: ").quote() << name);
       }
       return gf->run(factory, args);
     }
+    static void CompileTest();
   };
 
-  struct IClassRegistry {
-    virtual ~IClassRegistry()
-    {}
+  struct IClassInfo  {
+    virtual IStaticFunction* find_static_function(const olxstr& name,
+      size_t argc) const = 0;
+    virtual IMemberFunction* find_member_function(const olxstr& name,
+      size_t argc) const = 0;
+  };
+
+  struct IClassRegistry  {
+    virtual ~IClassRegistry() {}
     virtual IEvaluable* create_from_name(IEvaluable& self,
       const EvaluableFactory& factory,
       const olxstr& name,
@@ -410,20 +413,7 @@ namespace exparse  {
     virtual IMemberFunction* find(const olxstr& name, size_t argc) const = 0;
   };
 
-  struct IClassInfo {
-    virtual ~IClassInfo() {
-    }
-    virtual IStaticFunction* find_static_function(const olxstr& name,
-      size_t argc) const = 0;
-    virtual IMemberFunction* find_member_function(const olxstr& name,
-      size_t argc) const = 0;
-
-    virtual const IClassRegistry &get_functions() const = 0;
-    virtual const IClassRegistry &get_wrapper_functions() const = 0;
-    virtual const LibraryRegistry &get_static_functions() const = 0;
-  };
-
-  struct AClassFuncEvaluator : public IEvaluable {
+  struct AClassFuncEvaluator : public IEvaluable  {
     const EvaluableFactory& factory;
     IEvaluable& self;
     const std::type_info& self_rtti;
@@ -434,29 +424,25 @@ namespace exparse  {
       : factory(fc), self(s), self_rtti(s.get_type_info()), func(f), args(a)
     {
       s.inc_ref();
-      for (size_t i = 0; i < args.Count(); i++) {
+      for( size_t i=0; i < args.Count(); i++ )
         args[i]->inc_ref();
-      }
     }
-    ~AClassFuncEvaluator() {
-      if (self.dec_ref() == 0) {
+    ~AClassFuncEvaluator()  {
+      if( self.dec_ref() == 0 )
         delete &self;
-      }
-      for (size_t i = 0; i < args.Count(); i++) {
-        if (args[i]->dec_ref() == 0) {
+      for( size_t i=0; i < args.Count(); i++ )
+        if( args[i]->dec_ref() == 0 )
           delete args[i];
-        }
-      }
     }
-    virtual bool is_function() const { return true; }
+    virtual bool is_function() const {  return true;  }
   };
 
   template <class base_class> class ClassRegistry
     : public IClassRegistry
   {
     olxstr_dict<IMemberFunction*> funcs;
-    void _add(const olxstr& name, IMemberFunction* f) {
-      if (funcs.IndexOf(name) != InvalidIndex) {
+    void _add(const olxstr& name, IMemberFunction* f)  {
+      if( funcs.IndexOf(name) != InvalidIndex )  {
         delete f;
         throw TFunctionFailedException(__OlxSourceInfo,
           olxstr("Duplicate function instance: ").quote() << name);
@@ -464,73 +450,72 @@ namespace exparse  {
       funcs.Add(name, f);
     }
   public:
-    ~ClassRegistry() {
-      for (size_t i = 0; i < funcs.Count(); i++) {
+    ~ClassRegistry()  {
+      for( size_t i=0; i < funcs.Count(); i++ )
         delete funcs.GetValue(i);
-      }
     }
-    virtual inline bool is_empty() const { return funcs.IsEmpty(); }
+    virtual inline bool is_empty() const {  return funcs.IsEmpty();  }
     inline IMemberFunction* find(const olxstr& name, size_t argc) const {
       size_t ind = funcs.IndexOf(olxstr(name) << '#' << argc);
       return ind == InvalidIndex ? NULL : funcs.GetValue(ind);
     }
     inline size_t index_of(const olxstr& name, size_t argc) const {
-      return funcs.IndexOf(olxstr(name) << '#' << argc);
+      return funcs.IndexOf( olxstr(name) << '#' << argc);
     }
-    void add(const olxstr& name, void (base_class::*f)()) {
+    void add(const olxstr& name, void (base_class::*f)())  {
       _add(name + "#0", new VoidMemberFunction<base_class>(name, f));
     }
-    void add(const olxstr& name, void (base_class::*f)() const) {
+    void add(const olxstr& name, void (base_class::*f)() const)  {
       _add(name + "#0", new VoidMemberFunction<base_class>(name,
         (void (base_class::*)())f));
     }
     template<class argt_1>
-    void add(const olxstr& name, void (base_class::*f)(argt_1)) {
-      _add(name + "#1", new VoidMemberFunction1<base_class, argt_1>(
+    void add(const olxstr& name, void (base_class::*f)(argt_1) )  {
+      _add(name + "#1", new VoidMemberFunction1<base_class,argt_1>(
         name, f));
     }
     template<class argt_1>
-    void add(const olxstr& name, void (base_class::*f)(argt_1) const) {
-      _add(name + "#1", new VoidMemberFunction1<base_class, argt_1>(name,
+    void add(const olxstr& name, void (base_class::*f)(argt_1) const)  {
+      _add(name + "#1", new VoidMemberFunction1<base_class,argt_1>(name,
         (void (base_class::*)(argt_1))f));
     }
     template<class argt_1, class argt_2>
-    void add(const olxstr& name, void (base_class::*f)(argt_1, argt_2)) {
-      _add(name + "#2", new VoidMemberFunction2<base_class, argt_1, argt_2>(
+    void add(const olxstr& name, void (base_class::*f)(argt_1,argt_2) )  {
+      _add(name + "#2", new VoidMemberFunction2<base_class,argt_1,argt_2>(
         name, f));
     }
     template<class argt_1, class argt_2>
-    void add(const olxstr& name, void (base_class::*f)(argt_1, argt_2) const) {
-      _add(name + "#2", new VoidMemberFunction2<base_class, argt_1, argt_2>(name,
-        (void (base_class::*)(argt_1, argt_2))f));
+    void add(const olxstr& name, void (base_class::*f)(argt_1,argt_2) const)  {
+      _add(name + "#2", new VoidMemberFunction2<base_class,argt_1,argt_2>(name,
+        (void (base_class::*)(argt_1,argt_2))f));
     }
     template <class rvt>
-    void add(const olxstr& name, rvt(base_class::*f)()) {
-      _add(name + "#0", new MemberFunction<rvt, base_class>(name, f));
+    void add(const olxstr& name, rvt (base_class::*f)())  {
+      _add(name + "#0", new MemberFunction<rvt,base_class>(name, f));
     }
     template <class rvt>
-    void add(const olxstr& name, rvt(base_class::*f)() const) {
-      _add(name + "#0", new MemberFunction<rvt, base_class>(name,
-        (rvt(base_class::*)())f));
+    void add(const olxstr& name, rvt (base_class::*f)() const)  {
+      _add(name + "#0", new MemberFunction<rvt,base_class>(name,
+        (rvt (base_class::*)())f));
     }
     template<class rvt, class argt_1>
-    void add(const olxstr& name, rvt(base_class::*f)(argt_1)) {
-      _add(name + "#1", new MemberFunction1<rvt, base_class, argt_1>(name, f));
+    void add(const olxstr& name, rvt (base_class::*f)(argt_1) )  {
+      _add(name + "#1", new MemberFunction1<rvt,base_class,argt_1>(name, f));
     }
     template<class rvt, class argt_1>
-    void add(const olxstr& name, rvt(base_class::*f)(argt_1) const) {
-      _add(name + "#1", new MemberFunction1<rvt, base_class, argt_1>(name,
-        (rvt(base_class::*)(argt_1))f));
+    void add(const olxstr& name, rvt (base_class::*f)(argt_1) const)  {
+      _add(name + "#1", new MemberFunction1<rvt,base_class,argt_1>(name,
+        (rvt (base_class::*)(argt_1))f));
     }
     template<class rvt, class argt_1, class argt_2>
-    void add(const olxstr& name, rvt(base_class::*f)(argt_1, argt_2)) {
-      _add(name + "#2", new MemberFunction2<rvt, base_class, argt_1, argt_2>(
+    void add(const olxstr& name, rvt (base_class::*f)(argt_1,argt_2) )  {
+      _add(name + "#2", new MemberFunction2<rvt,base_class,argt_1,argt_2>(
         name, f));
     }
     template<class rvt, class argt_1, class argt_2>
-    void add(const olxstr& name, rvt(base_class::*f)(argt_1, argt_2) const) {
-      _add(name + "#2", new MemberFunction2<rvt, base_class, argt_1, argt_2>(
-        name, (rvt(base_class::*)(argt_1, argt_2))f));
+    void add(const olxstr& name, rvt (base_class::*f)(argt_1,argt_2) const)  {
+      _add(name + "#2", new MemberFunction2<rvt,base_class,argt_1,argt_2>(
+        name, (rvt (base_class::*)(argt_1,argt_2))f));
     }
 
     struct FuncEvaluator : public AClassFuncEvaluator {
@@ -541,26 +526,23 @@ namespace exparse  {
       virtual IEvaluable* find_method(const olxstr& name,
         const EvaluableFactory& f,
         const TPtrList<IEvaluable>& args,
-        IEvaluable* proxy = NULL)
+        IEvaluable* proxy=NULL)
       {
         size_t i = f.classes.IndexOf(&func->get_RV_type());
-        if (i == InvalidIndex) {
-          return NULL;
-        }
+        if( i == InvalidIndex )  return NULL;
         IMemberFunction* mf = f.classes.GetValue(i)->find_member_function(
           name, args.Count());
-        if (mf == NULL) {
+        if( mf == NULL )  {
           IStaticFunction* sf = f.classes.GetValue(i)->find_static_function(
             name, args.Count());
           return sf == NULL ? NULL : new LibraryRegistry::FuncEvaluator(
             f, sf, args);
         }
-        else {
+        else
           return new FuncEvaluator(f, *this, mf, args);
-        }
       }
       virtual IEvaluable* _evaluate() const {
-        if (self_rtti != self.get_type_info()) {
+        if( self_rtti != self.get_type_info() ) {
           throw TInvalidArgumentException(__OlxSourceInfo,
             "the underlying object type has changed");
         }
@@ -572,7 +554,7 @@ namespace exparse  {
       const olxstr& name, const TPtrList<IEvaluable>& args) const
     {
       IMemberFunction* gf = find(name, args.Count());
-      if (gf == NULL) {
+      if( gf == NULL ) {
         throw TInvalidArgumentException(__OlxSourceInfo,
           olxstr("could not locate specified function: ").quote() << name);
       }
@@ -588,12 +570,13 @@ namespace exparse  {
       const olxstr& name, const TPtrList<IEvaluable>& args)
     {
       IMemberFunction* gf = find(name, args.Count());
-      if (gf == NULL) {
+      if( gf == NULL ) {
         throw TInvalidArgumentException(__OlxSourceInfo,
           olxstr("could not locate specified function: ").quote() << name);
       }
       return gf->run(&self, factory, args);
     }
+    static void CompileTest();
   };
 
   template <class wrapper_class, class base_class> struct ClassInfo
@@ -611,23 +594,12 @@ namespace exparse  {
       size_t argc) const
     {
       IMemberFunction* mf = functions.find(name, argc);
-      if (mf != 0) {
-        return mf;
-      }
+      if( mf != NULL )  return mf;
       return wrap_functions.find(name, argc);
     }
     bool is_empty() const {
       return functions.is_empty() && globals.is_empty() &&
         wrap_functions.is_empty();
-    }
-    virtual const IClassRegistry &get_functions() const {
-      return functions;
-    }
-    virtual const IClassRegistry &get_wrapper_functions() const {
-      return wrap_functions;
-    }
-    virtual const LibraryRegistry &get_static_functions() const {
-      return globals;
     }
   };
 };  // end exparse namespace

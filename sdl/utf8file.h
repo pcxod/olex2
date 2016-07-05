@@ -18,7 +18,7 @@ class TUtf8File : public TEFile  {
 protected:
   static bool validate_stream(IInputStream& io, bool check_header) {
     io.SetPosition(0);
-    if (io.GetSize() >= 3) {
+    if (io.GetSize() >= 3)  {
       uint32_t header = 0;
       io.Read(&header, 3);
       if (header != TUtf8::GetFileSignature())  {
@@ -49,21 +49,12 @@ protected:
   virtual size_t WritelnFor(const char*)  {
     return Write(CNewLineSequence());
   }
-
-  static olxcstr GetlnFor(const TICString& l) {
-    return CNewLineSequence();
-  }
-
-  static olxcstr GetlnFor(const TIWString& l) {
-    return WNewLineSequence();
-  }
 public:
   // pointer must be deleted
   static TUtf8File* Create(const olxstr& name, bool write_header=true)  {
     TUtf8File* file = new TUtf8File(name, "w+b");
-    if (write_header) {
+    if( write_header )
       ((TEFile*)file)->Write(&TUtf8::GetFileSignature(), 3);
-    }
     return file;
   }
 
@@ -95,16 +86,13 @@ public:
   }
 
   size_t Write(const olxwstr &S)  {
-    uint64_t p = GetPosition();
-    return TUtf8::Encode(S, *this).GetPosition() - p;
+    return IDataOutputStream::Write(TUtf8::Encode(S));
   }
   virtual size_t Write(const TIWString& S)  {
-    uint64_t p = GetPosition();
-    return TUtf8::Encode(S, *this).GetPosition() - p;
+    return IDataOutputStream::Write(TUtf8::Encode(S));
   }
   size_t Write(const wchar_t* bf, size_t size)  {
-    uint64_t p = GetPosition();
-    return TUtf8::Encode(bf, *this, size).GetPosition() - p;
+    return IDataOutputStream::Write(TUtf8::Encode(bf, size));
   }
   virtual size_t Write(const void* bf, size_t size)  {
     return TEFile::Write(bf, size);
@@ -153,28 +141,10 @@ public:
     bool WriteHeader=false)
   {
     TUtf8File file(fn, "w+b");
-    if (WriteHeader) {
+    if (WriteHeader)
       ((TEFile&)file).Write(&TUtf8::GetFileSignature(), 3);
-    }
-    if (list.IsEmpty()) {
-      return;
-    }
-    const size_t sz = 16 * 1024;
-    TEMemoryStream ms (sz);
-    olxcstr ln = GetlnFor(list[0]);
-    for (size_t i = 0; i < list.Count(); i++) {
-      TUtf8::Encode(list[i], ms);
-      ms.Write(ln.c_str(), ln.Length());
-      if (ms.GetSize() > sz) {
-        ms.SetPosition(0);
-        file << ms;
-        ms.Clear();
-      }
-    }
-    if (ms.GetSize() > 0) {
-      ms.SetPosition(0);
-      file << ms;
-    }
+    for (size_t i=0; i < list.Count(); i++)
+      file.Writeln(list[i]);
   }
 
 };

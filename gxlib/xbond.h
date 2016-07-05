@@ -100,16 +100,13 @@ public:
   virtual const vec3d &GetFromCrd() const;
   virtual const vec3d &GetToCrd() const;
 
-  virtual void ToDataItem(TDataItem& item) const;
-  virtual void FromDataItem(const TDataItem& item, class TLattice& parent);
-
   static olxstr_dict<olxstr> &NamesRegistry() {
     static olxstr_dict<olxstr> nr;
     return nr;
   }
 
   class Settings : public AGOSettings {
-    mutable double radius, unit_length;
+    mutable double radius;
     mutable int mask, cone_q, cone_stipples, quality;
     Settings(TGlRenderer &r)
       : AGOSettings(r, "BondParams")
@@ -117,7 +114,7 @@ public:
       set_defaults();
     }
     void set_defaults() {
-      unit_length = radius = -1;
+      radius = -1;
       mask = cone_q = cone_stipples = quality = -1;
     }
     void OnStyleChange() {
@@ -129,16 +126,10 @@ public:
     }
     void CreatePrimitives();
     TStringToList<olxstr, TGlPrimitive*> primitives;
-    // primitives used in the "dynamic" rendering
-    TStringToList<olxstr, TGlPrimitive*> stockPrimitives;
   public:
     double GetRadius() const { return GetParam("DefR", radius, double(1)); }
     void SetRadius(double v) const {
       return style->SetParam("DefR", (radius = v), true);
-    }
-    double GetUnitLength() const { return GetParam("UnitL", unit_length, double(1)); }
-    void SetUnitLength(double v) const {
-      return style->SetParam("UnitL", (unit_length = v), true);
     }
     int GetConeQ() const { return GetParam("ConeQ", cone_q, int(15)); }
     void SetConeQ(int v) const {
@@ -153,9 +144,6 @@ public:
     void SetQuality(int v) const {
       return style->SetParam("Quality", (quality = v), true);
     }
-    const TStringToList<olxstr, TGlPrimitive*> &GetStockPrimitives() const {
-      return stockPrimitives;
-    }
     const TStringToList<olxstr, TGlPrimitive*> &GetPrimitives() const {
       return primitives;
     }
@@ -167,7 +155,6 @@ public:
     }
     void ClearPrimitives() {
       primitives.Clear();
-      stockPrimitives.Clear();
     }
     static Settings& GetInstance(TGlRenderer &r) {
       AGOSettings *s = r.FindSettings("bond");

@@ -21,7 +21,7 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\lib"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)\lib"
 			IntermediateDirectory="$(SolutionDir)$(ConfigurationName)\obj"
 			ConfigurationType="4"
 			CharacterSet="0"
@@ -90,7 +90,7 @@
 		</Configuration>
 		<Configuration
 			Name="Debug|x64"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\lib"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)\lib"
 			IntermediateDirectory="$(SolutionDir)$(ConfigurationName)\obj"
 			ConfigurationType="4"
 			CharacterSet="0"
@@ -160,7 +160,7 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\lib"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)\lib"
 			IntermediateDirectory="$(SolutionDir)$(ConfigurationName)\obj"
 			ConfigurationType="4"
 			CharacterSet="0"
@@ -229,7 +229,7 @@
 		</Configuration>
 		<Configuration
 			Name="Release|x64"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\lib"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)\lib"
 			IntermediateDirectory="$(SolutionDir)$(ConfigurationName)\obj"
 			ConfigurationType="4"
 			CharacterSet="0"
@@ -299,7 +299,7 @@
 		</Configuration>
 		<Configuration
 			Name="Unicode-debug|Win32"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\lib"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)\lib"
 			IntermediateDirectory="$(SolutionDir)$(ConfigurationName)\obj"
 			ConfigurationType="4"
 			CharacterSet="1"
@@ -370,7 +370,7 @@
 		</Configuration>
 		<Configuration
 			Name="Unicode-debug|x64"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\lib"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)\lib"
 			IntermediateDirectory="$(SolutionDir)$(ConfigurationName)\obj"
 			ConfigurationType="4"
 			CharacterSet="1"
@@ -408,7 +408,7 @@
 				FloatingPointModel="2"
 				FloatingPointExceptions="false"
 				UsePrecompiledHeader="0"
-				BrowseInformation="0"
+				BrowseInformation="1"
 				WarningLevel="3"
 				DebugInformationFormat="3"
 			/>
@@ -442,7 +442,7 @@
 		</Configuration>
 		<Configuration
 			Name="Unicode-release|Win32"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\lib"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)\lib"
 			IntermediateDirectory="$(SolutionDir)$(ConfigurationName)\obj"
 			ConfigurationType="4"
 			CharacterSet="1"
@@ -516,12 +516,12 @@
 		</Configuration>
 		<Configuration
 			Name="Unicode-release|x64"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\lib"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)\lib"
 			IntermediateDirectory="$(SolutionDir)$(ConfigurationName)\obj"
 			ConfigurationType="4"
 			CharacterSet="1"
 			ManagedExtensions="0"
-			WholeProgramOptimization="0"
+			WholeProgramOptimization="1"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -591,7 +591,7 @@
 		</Configuration>
 		<Configuration
 			Name="Unicode-release-static|Win32"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\lib"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)\lib"
 			IntermediateDirectory="$(SolutionDir)$(ConfigurationName)\obj"
 			ConfigurationType="4"
 			CharacterSet="1"
@@ -665,7 +665,7 @@
 		</Configuration>
 		<Configuration
 			Name="Unicode-release-static|x64"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\lib"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)\lib"
 			IntermediateDirectory="$(SolutionDir)$(ConfigurationName)\obj"
 			ConfigurationType="4"
 			CharacterSet="1"
@@ -741,7 +741,7 @@
 		</Configuration>
 		<Configuration
 			Name="Unicode-release-d|Win32"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\lib"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)\lib"
 			IntermediateDirectory="$(SolutionDir)$(ConfigurationName)\obj"
 			ConfigurationType="4"
 			CharacterSet="1"
@@ -815,7 +815,7 @@
 		</Configuration>
 		<Configuration
 			Name="Unicode-release-d|x64"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\lib"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)\lib"
 			IntermediateDirectory="$(SolutionDir)$(ConfigurationName)\obj"
 			ConfigurationType="4"
 			CharacterSet="1"
@@ -890,7 +890,7 @@
 		</Configuration>
 		<Configuration
 			Name="Unicode-debug-static|Win32"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\lib"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)\lib"
 			IntermediateDirectory="$(SolutionDir)$(ConfigurationName)\obj"
 			ConfigurationType="4"
 			CharacterSet="1"
@@ -965,7 +965,7 @@
 		</Configuration>
 		<Configuration
 			Name="Unicode-debug-static|x64"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\lib"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)\lib"
 			IntermediateDirectory="$(SolutionDir)$(ConfigurationName)\obj"
 			ConfigurationType="4"
 			CharacterSet="1"
@@ -1109,10 +1109,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\sdl\estopwatch.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\sdl\etime.cpp"
 				>
 			</File>
@@ -1190,10 +1186,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\sdl\poly.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\sdl\roman.cpp"
 				>
 			</File>
 			<File
@@ -1682,6 +1674,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\sdl\exparse\exptree.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\sdl\exparse\funcwrap.cpp"
 				>
 			</File>
 			<Filter

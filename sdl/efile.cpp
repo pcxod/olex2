@@ -76,7 +76,7 @@
   #include <dirent.h>
   #include <utime.h>
 
-  #define OLXSTR(A) A.ToMBStr().c_str()  //have to make it thread safe
+  #define OLXSTR(A) olxcstr(A).c_str()  //have to make it thread safe
   #ifndef __MAC__  // could not find these on MAC...
     #define ftell ftello64
     #define fseek fseeko64
@@ -147,16 +147,14 @@ bool TEFile::Open(const olxstr& F, const olxstr& Attribs)  {
   return true;
 }
 //..............................................................................
-bool TEFile::Close() {
-  if (FHandle != NULL) {
-    if (fclose(FHandle) != 0) {
+bool TEFile::Close()  {
+  if( FHandle != NULL )  {
+    if( fclose(FHandle) != 0 )
       throw TFileException(__OlxSourceInfo, FName, "fclose failed");
-    }
     FHandle = NULL;
-    if (Temporary) {
-      if (!DelFile(FName)) {
+    if( Temporary )  {
+      if( !DelFile(FName) )
         throw TFileException(__OlxSourceInfo, FName, "could not remove temporary file");
-      }
     }
     return true;
   }
@@ -494,19 +492,19 @@ bool TEFile::ListCurrentDir(TStrList& Out, const olxstr &Mask, const uint16_t sF
     return false;
   bool done = true;
   while (done) {
-    if ((sd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0) {
+    if ((sF & sefDir) != 0 && (sF & sefRelDir) == 0 &&
+      (sd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
+    {
       size_t len = olxstr::o_strlen(sd.cFileName);
-      if ((sF & sefDir) == 0 ||
-           ((sF & sefRelDir) == 0 && ((len == 1 && sd.cFileName[0] == '.') ||
-            (len == 2 && sd.cFileName[0] == '.' && sd.cFileName[1] == '.'))))
+      if ((len == 1 && sd.cFileName[0] == '.') ||
+          (len == 2 && sd.cFileName[0] == '.' && sd.cFileName[1] == '.'))
       {
         done = (FindNextFile(hn, &sd) != 0);
         continue;
       }
     }
-    if (DoesMatchMasks(sd.cFileName, masks)) {
+    if (DoesMatchMasks(sd.cFileName, masks))
       Out.Add(sd.cFileName);
-    }
     done = (FindNextFile(hn, &sd) != 0);
   }
   FindClose(hn);
@@ -514,97 +512,91 @@ bool TEFile::ListCurrentDir(TStrList& Out, const olxstr &Mask, const uint16_t sF
 }
 #else
 //..............................................................................
-bool TEFile::ListCurrentDirEx(TFileList &Out, const olxstr &Mask,
-  const uint16_t sF)
-{
-  DIR *d = opendir(OLXSTR(TEFile::CurrentDir()));
-  if (d == NULL) {
-    return false;
-  }
+bool TEFile::ListCurrentDirEx(TFileList &Out, const olxstr &Mask, const uint16_t sF)  {
+  DIR *d = opendir( olxcstr(TEFile::CurrentDir()).c_str() );
+  if( d == NULL ) return false;
   MaskList masks;
   BuildMaskList(Mask, masks);
   int access = 0;
-  if ((sF & sefReadOnly) != 0)  access |= S_IRUSR;
-  if ((sF & sefWriteOnly) != 0) access |= S_IWUSR;
-  if ((sF & sefExecute) != 0)   access |= S_IXUSR;
+  if( (sF & sefReadOnly) != 0 )  access |= S_IRUSR;
+  if( (sF & sefWriteOnly) != 0 ) access |= S_IWUSR;
+  if( (sF & sefExecute) != 0 )   access |= S_IXUSR;
 
   struct stat the_stat;
   struct dirent* de;
-  while ((de = readdir(d)) != NULL) {
+  while((de = readdir(d)) != NULL) {
     stat(de->d_name, &the_stat);
-    if (sF != sefAll) {
-      if (access != 0) {
+    if( sF != sefAll )  {
+      if( access != 0 )  {
         int faccess = 0;
-        if ((the_stat.st_mode & S_IRUSR) != 0)  faccess |= S_IRUSR;
-        if ((the_stat.st_mode & S_IWUSR) != 0)  faccess |= S_IWUSR;
-        if ((the_stat.st_mode & S_IXUSR) != 0)  faccess |= S_IXUSR;
-        if ((faccess & access) == 0)  continue;
+        if( (the_stat.st_mode & S_IRUSR) != 0 )  faccess |= S_IRUSR;
+        if( (the_stat.st_mode & S_IWUSR) != 0 )  faccess |= S_IWUSR;
+        if( (the_stat.st_mode & S_IXUSR) != 0 )  faccess |= S_IXUSR;
+        if( (faccess & access) == 0 )  continue;
       }
-      if ((sF & sefDir) != 0) {
-        if (S_ISDIR(the_stat.st_mode)) {
-          if ((sF & sefRelDir) == 0)
-            if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0)
+      if( (sF & sefDir) != 0 )  {
+        if( S_ISDIR(the_stat.st_mode) )  {
+          if( (sF & sefRelDir) == 0 )
+            if( strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0 )
               continue;
         }
-        else if ((sF & sefFile) == 0)  continue;
+        else if( (sF & sefFile) == 0 )  continue;
       }
-      else if ((sF & sefFile) == 0 || S_ISDIR(the_stat.st_mode))  continue;
+      else if( (sF & sefFile) == 0 || S_ISDIR(the_stat.st_mode) )  continue;
     }
-    if (DoesMatchMasks(de->d_name, masks)) {
+    if( DoesMatchMasks(de->d_name, masks) )  {
       TFileListItem& li = Out.AddNew();
-      li.SetName(de->d_name);
-      li.SetSize(the_stat.st_size);
-      li.SetCreationTime(the_stat.st_ctime);
-      li.SetModificationTime(the_stat.st_mtime);
-      li.SetLastAccessTime(the_stat.st_atime);
+      li.SetName( de->d_name );
+      li.SetSize( the_stat.st_size );
+      li.SetCreationTime( the_stat.st_ctime );
+      li.SetModificationTime( the_stat.st_mtime );
+      li.SetLastAccessTime( the_stat.st_atime );
       uint16_t attrib = 0;
-      if (S_ISDIR(the_stat.st_mode))           attrib |= sefDir;
+      if( S_ISDIR(the_stat.st_mode) )           attrib |= sefDir;
       else                                      attrib |= sefFile;
-      if ((the_stat.st_mode & S_IRUSR) != 0)  attrib |= sefReadOnly;
-      if ((the_stat.st_mode & S_IWUSR) != 0)  attrib |= sefWriteOnly;
-      if ((the_stat.st_mode & S_IXUSR) != 0)  attrib |= sefExecute;
-      li.SetAttributes(attrib);
+      if( (the_stat.st_mode & S_IRUSR) != 0 )  attrib |= sefReadOnly;
+      if( (the_stat.st_mode & S_IWUSR) != 0 )  attrib |= sefWriteOnly;
+      if( (the_stat.st_mode & S_IXUSR) != 0 )  attrib |= sefExecute;
+      li.SetAttributes( attrib );
     }
   }
   return closedir(d) == 0;
 }
 //..............................................................................
-bool TEFile::ListCurrentDir(TStrList &Out, const olxstr &Mask,
-  const uint16_t sF)
-{
-  DIR *d = opendir(OLXSTR(TEFile::CurrentDir()));
-  if (d == NULL) return false;
+bool TEFile::ListCurrentDir(TStrList &Out, const olxstr &Mask, const uint16_t sF)  {
+  DIR *d = opendir( olxcstr(TEFile::CurrentDir()).c_str() );
+  if( d == NULL ) return false;
   MaskList masks;
   BuildMaskList(Mask, masks);
   olxstr tmp, fn;
   int access = 0;
-  if ((sF & sefReadOnly) != 0)  access |= S_IRUSR;
-  if ((sF & sefWriteOnly) != 0) access |= S_IWUSR;
-  if ((sF & sefExecute) != 0)   access |= S_IXUSR;
+  if( (sF & sefReadOnly) != 0 )  access |= S_IRUSR;
+  if( (sF & sefWriteOnly) != 0 ) access |= S_IWUSR;
+  if( (sF & sefExecute) != 0 )   access |= S_IXUSR;
 
   struct stat the_stat;
   struct dirent* de;
-  while ((de = readdir(d)) != NULL) {
-    if (sF != sefAll) {
+  while((de = readdir(d)) != NULL) {
+    if( sF != sefAll )  {
       stat(de->d_name, &the_stat);
-      if (access != 0) {
+      if( access != 0 )  {
         int faccess = 0;
-        if ((the_stat.st_mode & S_IRUSR) != 0)  faccess |= S_IRUSR;
-        if ((the_stat.st_mode & S_IWUSR) != 0)  faccess |= S_IWUSR;
-        if ((the_stat.st_mode & S_IXUSR) != 0)  faccess |= S_IXUSR;
-        if ((faccess & access) == 0)  continue;
+        if( (the_stat.st_mode & S_IRUSR) != 0 )  faccess |= S_IRUSR;
+        if( (the_stat.st_mode & S_IWUSR) != 0 )  faccess |= S_IWUSR;
+        if( (the_stat.st_mode & S_IXUSR) != 0 )  faccess |= S_IXUSR;
+        if( (faccess & access) == 0 )  continue;
       }
-      if ((sF & sefDir) != 0) {
-        if (S_ISDIR(the_stat.st_mode)) {
-          if ((sF & sefRelDir) == 0)
-            if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0)
+      if( (sF & sefDir) != 0 )  {
+        if( S_ISDIR(the_stat.st_mode) )  {
+          if( (sF & sefRelDir) == 0 )
+            if( strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0 )
               continue;
         }
-        else if ((sF & sefFile) == 0)  continue;
+        else if( (sF & sefFile) == 0 )  continue;
       }
-      else if ((sF & sefFile) == 0 || S_ISDIR(the_stat.st_mode))  continue;
+      else if( (sF & sefFile) == 0 || S_ISDIR(the_stat.st_mode) )  continue;
     }
-    if (DoesMatchMasks(de->d_name, masks))
+    if( DoesMatchMasks(de->d_name, masks) )
       Out.Add(de->d_name);
   }
   return closedir(d) == 0;
@@ -686,7 +678,7 @@ bool TEFile::ChangeDir(const olxstr& To)  {
 #ifdef __WIN32__
   return SetCurrentDirectory(path.u_str()) != 0;
 #else
-  return chdir(OLXSTR(path)) != -1;
+  return chdir(olxcstr(path).c_str()) != -1;
 #endif
 }
 //..............................................................................
@@ -696,10 +688,9 @@ olxstr TEFile::CurrentDir()  {
   if( GetCurrentDirectory(MAX_PATH, bf) == 0 )
     return EmptyString();
   return olxstr(bf);
-  
 #else
   char *Dp = getcwd(NULL, MAX_PATH);
-  olxstr Dir = olxstr::FromCStr(Dp);
+  olxstr Dir( Dp );
   free(Dp);
   return Dir;
 #endif

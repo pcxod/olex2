@@ -65,7 +65,6 @@ public:
 
   TGlMaterial() : Flags(0), ShininessF(0), ShininessB(0) {}
   TGlMaterial(const olxstr& str)  {  FromString(str);  }
-  ~TGlMaterial() {}
 
   void Init(bool skip) const;
   const TGlMaterial& Intensity(TGlOption& ClearColor, double intensity) const;
@@ -102,7 +101,7 @@ public:
   TIString ToString() const;
   void FromString(const olxstr& str, bool safe=false);
   olxstr ToPOV() const;
-  olxstr ToWRL(bool back) const;
+  olxstr ToWRL() const;
 };
 
 EndGlNamespace()

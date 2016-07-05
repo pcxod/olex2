@@ -26,7 +26,7 @@ TXBond::TXBond(TNetwork* net, TGlRenderer& R, const olxstr& collectionName)
   settings(0)
 {
   SetGroupable(true);
-  Params().Resize(6);
+  Params().Resize(5);
   Params()[4] = 0.8;
   Label = new TXGlLabel(GetParent(), PLabelsCollectionName());
   Label->SetVisible(false);
@@ -75,7 +75,7 @@ void TXBond::EvaluatePrimitiveMaterial(TGlPrimitive &p, TGraphicsStyle &s) const
         m = A().Style().GetPrimitiveStyle(mi).GetProperties();
       }
       else {
-        TXAtom::GetDefSphereMaterial(A().CAtom(), m, A().GetSettings());
+        TXAtom::GetDefSphereMaterial(A(), m, A().GetSettings());
       }
     }
     else {
@@ -87,7 +87,7 @@ void TXBond::EvaluatePrimitiveMaterial(TGlPrimitive &p, TGraphicsStyle &s) const
         m = B().Style().GetPrimitiveStyle(mi).GetProperties();
       }
       else {
-        TXAtom::GetDefSphereMaterial(B().CAtom(), m, B().GetSettings());
+        TXAtom::GetDefSphereMaterial(B(), m, B().GetSettings());
       }
     }
     p.SetProperties(s.SetMaterial(p.GetName(), m));
@@ -169,7 +169,9 @@ void TXBond::Create(const olxstr& cName) {
     if ((PrimitiveMask & (1<<i)) != 0) {
       TGlPrimitive* SGlP = primitives.GetObject(i);
       TGlPrimitive& GlP = GPC->NewPrimitive(primitives[i], sgloCommandList);
-      GlP.SetOwnerId(i);
+      if (i >= 14) {
+        GlP.SetOwnerId(i);
+      }
       /* copy the default drawing style tag source */
       GlP.Params.Resize(GlP.Params.Count()+1);
       GlP.Params.GetLast() = SGlP->Params.GetLast();
@@ -210,8 +212,8 @@ void TXBond::UpdateStyle() {
 }
 //..............................................................................
 bool TXBond::Orient(TGlPrimitive& GlP)  {
-  if (GlP.GetOwnerId() >= 14 && GlP.GetOwnerId() <= 17) {
-    vec3d v = (GetToCrd() - GetFromCrd()).Normalise();
+  if (GlP.GetOwnerId() >= 14 && GlP.GetOwnerId() <= 18) {
+    vec3d v = (B().crd() - A().crd()).Normalise();
     const mat3d& m = Parent.GetBasis().GetMatrix();
     v = m*v*m;
     v = vec3d(m[0][2], m[1][2], m[2][2]).XProdVec(v);
@@ -220,88 +222,30 @@ bool TXBond::Orient(TGlPrimitive& GlP)  {
       v *= (0.1*Params()[4] / vl);
       if (GlP.GetOwnerId() > 15) {
         olx_gl::pushMatrix();
-        olx_gl::translate(GetFromCrd());
+        olx_gl::translate(A().crd());
         olx_gl::rotate(Params()[0], Params()[1], Params()[2], 0.0);
         olx_gl::scale(Params()[4], Params()[4], Params()[3]);
         GlP.Draw();
         olx_gl::popMatrix();
       }
       olx_gl::pushMatrix();
-      olx_gl::translate(GetFromCrd() + v);
+      olx_gl::translate(A().crd() + v);
       olx_gl::rotate(Params()[0], Params()[1], Params()[2], 0.0);
       olx_gl::scale(Params()[4], Params()[4], Params()[3]);
       GlP.Draw();
       olx_gl::popMatrix();
-      olx_gl::translate(GetFromCrd() - v);
+      olx_gl::translate(A().crd() - v);
       olx_gl::rotate(Params()[0], Params()[1], Params()[2], 0.0);
       olx_gl::scale(Params()[4], Params()[4], Params()[3]);
       GlP.Draw();
     }
     return true;
   }
-  else if (GlP.GetOwnerId() == 11) {
-    Settings &st = GetSettings();
-    olx_gl::translate(GetFromCrd());
-    olx_gl::scale(Params()[4], Params()[4], Params()[4]);
-    vec3d v = (GetToCrd() - GetFromCrd()).NormaliseTo(Params()[3]/(Params()[4]*10));
-    for (int i = 0; i < 10; i++) {
-      st.GetStockPrimitives().GetObject(0)->Draw();
-      olx_gl::translate(v);
-    }
-    return true;
-  }
-  else if (GlP.GetOwnerId() == 18) {
-    vec3d v = (GetToCrd() - GetFromCrd()).Normalise();
-    Settings &st = GetSettings();
-    olx_gl::translate(GetFromCrd());
+  else {
+    olx_gl::translate(A().crd());
     olx_gl::rotate(Params()[0], Params()[1], Params()[2], 0.0);
-    olx_gl::scale(Params()[4], Params()[4], 1.0);
-    st.GetStockPrimitives().GetObject(2)->Draw();
-    olx_gl::translate(0.0, 0.0, 0.2);
-    st.GetStockPrimitives().GetObject(3)->Draw();
-    olx_gl::scale(1.0, 1.0, Params()[3]/2-0.2);
-    st.GetStockPrimitives().GetObject(1)->Draw();
-    return true;
+    olx_gl::scale(Params()[4], Params()[4], Params()[3]);
   }
-  else if (GlP.GetOwnerId() == 19) {
-    vec3d v = (GetToCrd() - GetFromCrd()).Normalise();
-    double scale = Params()[3]/2-0.2;
-    Settings &st = GetSettings();
-    olx_gl::translate(GetFromCrd()+v*Params()[3]/2);
-    olx_gl::rotate(Params()[0], Params()[1], Params()[2], 0.0);
-    olx_gl::scale(Params()[4], Params()[4], scale);
-    st.GetStockPrimitives().GetObject(1)->Draw();
-    olx_gl::scale(1.0, 1.0, 1./scale);
-    olx_gl::translate(0.0, 0.0, scale);
-    st.GetStockPrimitives().GetObject(5)->Draw();
-    st.GetStockPrimitives().GetObject(4)->Draw();
-    return true;
-  }
-  else if (GlP.GetOwnerId() == 4) {
-    if (Params()[5] != 0) {
-      Settings &st = GetSettings();
-      olx_gl::translate(GetFromCrd());
-      olx_gl::rotate(Params()[0], Params()[1], Params()[2], 0.0);
-      //olx_gl::scale(Params()[4], Params()[4], Params()[3]*Params()[5]);
-      olx_gl::scale(Params()[4], Params()[4], st.GetUnitLength()*Params()[5]);
-      st.GetStockPrimitives().GetObject(6)->Draw();
-      return true;
-    }
-  }
-  else if (GlP.GetOwnerId() == 5) {
-    if (Params()[5] != 0) {
-      Settings &st = GetSettings();
-      olx_gl::translate(GetToCrd());
-      olx_gl::rotate(Params()[0], Params()[1], Params()[2], 0.0);
-      //olx_gl::scale(Params()[4], Params()[4], Params()[3]*Params()[5]);
-      olx_gl::scale(Params()[4], Params()[4], st.GetUnitLength()*Params()[5]);
-      st.GetStockPrimitives().GetObject(7)->Draw();
-      return true;
-    }
-  }
-  olx_gl::translate(GetFromCrd());
-  olx_gl::rotate(Params()[0], Params()[1], Params()[2], 0.0);
-  olx_gl::scale(Params()[4], Params()[4], Params()[3]);
   return false;
 }
 //..............................................................................
@@ -756,7 +700,7 @@ void TXBond::Settings::CreatePrimitives() {
   GlP->Params.GetLast() = ddsDefAtomB;
   //..............................
   // create stipple cone
-  double CL = (double)(1.0 / (2 * ConeStipples));
+  float CL = (float)(1.0 / (2 * ConeStipples));
   GlP = &parent.NewPrimitive(sgloCommandList);
   primitives.Add("Stipple cone", GlP);
 
@@ -781,9 +725,9 @@ void TXBond::Settings::CreatePrimitives() {
     if (i != 0)
       GlP->CallList(GlPRD2);
     GlP->CallList(GlPRC1);
-    olx_gl::translate(0.0, 0.0, CL);
+    olx_gl::translate(0.0f, 0.0f, CL);
     GlP->CallList(GlPRD1);
-    olx_gl::translate(0.0, 0.0, CL);
+    olx_gl::translate(0.0f, 0.0f, CL);
   }
   GlP->EndList();
   GlP->Params.Resize(GlP->Params.Count() + 1);  //
@@ -793,14 +737,14 @@ void TXBond::Settings::CreatePrimitives() {
   primitives.Add("Bottom stipple cone", GlP);
 
   GlP->StartList();
-  olx_gl::translate(0.0, 0.0, CL / 2);
+  olx_gl::translate(0.0f, 0.0f, CL / 2);
   for (int i = 0; i < ConeStipples / 2; i++)  {
     if (i != 0)
       GlP->CallList(GlPRD2);
     GlP->CallList(GlPRC1);
-    olx_gl::translate(0.0, 0.0, CL);
+    olx_gl::translate(0.0f, 0.0f, CL);
     GlP->CallList(GlPRD1);
-    olx_gl::translate(0.0, 0.0, CL);
+    olx_gl::translate(0.0f, 0.0f, CL);
   }
   GlP->EndList();
   GlP->Params.Resize(GlP->Params.Count() + 1);  //
@@ -810,13 +754,13 @@ void TXBond::Settings::CreatePrimitives() {
   primitives.Add("Top stipple cone", GlP);
 
   GlP->StartList();
-  olx_gl::translate(0.0, 0.0, (0.5 + CL / 2));
+  olx_gl::translate(0.0f, 0.0f, (float)(0.5 + CL / 2));
   for (int i = 0; i < ConeStipples / 2; i++)  {
     GlP->CallList(GlPRD2);
     GlP->CallList(GlPRC1);
-    olx_gl::translate(0.0, 0.0, CL);
+    olx_gl::translate(0.0f, 0.0f, CL);
     GlP->CallList(GlPRD1);
-    olx_gl::translate(0.0, 0.0, CL);
+    olx_gl::translate(0.0f, 0.0f, CL);
   }
   GlP->EndList();
   GlP->Params.Resize(GlP->Params.Count() + 1);  //
@@ -824,18 +768,17 @@ void TXBond::Settings::CreatePrimitives() {
 
   //..............................
   // create stipped ball bond
-  CL = (double)(1.0 / (12.0));
+  CL = (float)(1.0 / (12.0));
   GlP = &parent.NewPrimitive(sgloCommandList);
   primitives.Add("Balls bond", GlP);
 
   GlPRC1 = &parent.NewPrimitive(sgloSphere);
-  GlPRC1->Params[0] = 0.04;    GlPRC1->Params[1] = 5;  GlPRC1->Params[2] = 5;
+  GlPRC1->Params[0] = 0.02;    GlPRC1->Params[1] = 5;  GlPRC1->Params[2] = 5;
   GlPRC1->Compile();
-  stockPrimitives.Add("Balls bond sphere", GlPRC1);
 
   GlP->StartList();
   for (int i = 0; i < 12; i++)  {
-    olx_gl::translate(0.0, 0.0, CL);
+    olx_gl::translate(0.0f, 0.0f, CL);
     GlP->CallList(GlPRC1);
   }
   GlP->EndList();
@@ -913,99 +856,10 @@ void TXBond::Settings::CreatePrimitives() {
   GlPRC1->Compile();
 
   GlP->StartList();
-  olx_gl::translate(0.0, 0.0, 0.5);
+  olx_gl::translate(0.0f, 0.0f, 0.5f);
   GlP->CallList(GlPRC1);
   GlP->EndList();
   GlP->Params.Resize(GlP->Params.Count() + 1);  //
   GlP->Params.GetLast() = ddsDefAtomB;
-
-  // create arrows
-  GlPRC1 = &parent.NewPrimitive(sgloCylinder);
-  GlPRC1->Params[0] = 0.1;    GlPRC1->Params[1] = 0.1;  GlPRC1->Params[2] = 1;
-  GlPRC1->Params[3] = ConeQ;  GlPRC1->Params[4] = 1;
-  GlPRC1->Compile();
-  stockPrimitives.Add("Arrow cylinder", GlPRC1);
-  
-  TGlPrimitive *GlPRC2 = &parent.NewPrimitive(sgloCylinder);
-  GlPRC2->Params[0] = 0.0;    GlPRC2->Params[1] = 0.15;  GlPRC2->Params[2] = 0.2;
-  GlPRC2->Params[3] = ConeQ;   GlPRC2->Params[4] = 1;
-  GlPRC2->Compile();
-  stockPrimitives.Add("Arrow bottom head", GlPRC2);
-  GlPRD1 = &parent.NewPrimitive(sgloDisk);
-  GlPRD1->Params[0] = 0;  GlPRD1->Params[1] = 0.15;  GlPRD1->Params[2] = ConeQ;
-  GlPRD1->Params[3] = 1;
-  GlPRD1->Compile();
-  stockPrimitives.Add("Bottom arrow disk", GlPRD1);
-
-  GlPRC2 = &parent.NewPrimitive(sgloCylinder);
-  GlPRC2->Params[0] = 0.15;    GlPRC2->Params[1] = 0;  GlPRC2->Params[2] = 0.2;
-  GlPRC2->Params[3] = ConeQ;   GlPRC2->Params[4] = 1;
-  GlPRC2->Compile();
-  stockPrimitives.Add("Arrow top head", GlPRC2);
-  GlPRD1 = &parent.NewPrimitive(sgloDisk);
-  GlPRD1->Params[0] = 0;  GlPRD1->Params[1] = 0.15;  GlPRD1->Params[2] = ConeQ;
-  GlPRD1->Params[3] = 1;  GlPRD1->SetQuadricOrientation(GLU_INSIDE);
-  GlPRD1->Compile();
-  stockPrimitives.Add("Top arrow disk", GlPRD1);
-
-  GlPRC1 = &parent.NewPrimitive(sgloCylinder);
-  GlPRC1->Params[0] = 0.1;    GlPRC1->Params[1] = 0.1;  GlPRC1->Params[2] = 0.5;
-  GlPRC1->Params[3] = ConeQ;  GlPRC1->Params[4] = 1;
-  GlPRC1->Compile();
-  GlPRD1 = &parent.NewPrimitive(sgloDisk);
-  GlPRD1->Params[0] = 0;  GlPRD1->Params[1] = 0.1;  GlPRD1->Params[2] = ConeQ;
-  GlPRD1->Params[3] = 1;
-  GlPRD1->Compile();
-  GlPRD2 = &parent.NewPrimitive(sgloDisk);
-  GlPRD2->Params[0] = 0;  GlPRD2->Params[1] = 0.1;  GlPRD2->Params[2] = ConeQ;
-  GlPRD2->Params[3] = 1;  GlPRD2->SetQuadricOrientation(GLU_INSIDE);
-  GlPRD2->Compile();
-
-  GlP = &parent.NewPrimitive(sgloCommandList);
-  GlP->StartList();
-  GlP->CallList(GlPRC1);
-  olx_gl::translate(0.0, 0.0, 0.5);
-  GlP->CallList(GlPRD1);
-  GlP->EndList();
-  GlP->Params.Resize(GlP->Params.Count() + 1);  //
-  GlP->Params.GetLast() = ddsDefAtomA;
-  stockPrimitives.Add("Custom bottom cylinder", GlP);
-
-  GlP = &parent.NewPrimitive(sgloCommandList);
-  GlP->StartList();
-  olx_gl::translate(0.0, 0.0, -0.5);
-  GlP->CallList(GlPRC1);
-  GlP->CallList(GlPRD2);
-  GlP->EndList();
-  GlP->Params.Resize(GlP->Params.Count() + 1);  //
-  GlP->Params.GetLast() = ddsDefAtomB;
-  stockPrimitives.Add("Custom top cylinder", GlP);
-
-  // create bottom arrow
-  GlP = &parent.NewPrimitive(sgloCommandList);
-  primitives.Add("Bottom arrow", GlP);
-  GlP->Params.Resize(GlP->Params.Count() + 1);  //
-  GlP->Params.GetLast() = ddsDefAtomA;
-  //..............................
-  // create top cylinder
-  GlP = &parent.NewPrimitive(sgloCommandList);
-  primitives.Add("Top arrow", GlP);
-  GlP->Params.Resize(GlP->Params.Count() + 1);  //
-  GlP->Params.GetLast() = ddsDefAtomB;
-}
-//..............................................................................
-void TXBond::ToDataItem(TDataItem& item) const {
-  TSBond::ToDataItem(item);
-  if (Params()[5] != 0) {
-    item.AddField("fbond", Params()[5]);
-  }
-}
-//..............................................................................
-void TXBond::FromDataItem(const TDataItem& item, class TLattice& parent) {
-  TSBond::FromDataItem(item, parent);
-  olxstr v = item.FindField("fbond", EmptyString());
-  if (!v.IsEmpty()) {
-    Params()[5] = v.ToDouble();
-  }
 }
 //..............................................................................

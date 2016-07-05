@@ -184,7 +184,6 @@ namespace cif_dp {
     void AddCol(const olxstr& col_name);
     template <class SC>
     bool RemoveCol(const SC& col_name) { return DelCol(ColIndex(col_name)); }
-    void DelRow(size_t idx);
     bool DelCol(size_t idx);
     CifRow& AddRow()  {  return data.AddRow();  }
     ICifEntry& Set(size_t i, size_t j, ICifEntry* v);

@@ -24,23 +24,17 @@
 #include "arrays.h"
 #include "estlist.h"
 #include "threex3.h"
-#include "eset.h"
 
-using namespace olx_array;
 struct IsoTriangle {
   int pointID[3];
-  int operator [] (int i) const { return pointID[i]; }
-  int &operator [] (int i) { return pointID[i]; }
 };
 
 class CIsoSurface {
 public:
-  CIsoSurface(array_3d<float>& points, const array_3d<int>* data=0);
+  CIsoSurface(TArray3D<float>& points);
   ~CIsoSurface()  {  DeleteSurface();  }
 
-  /*Generates the isosurface from the scalar field contained in the buffer
-  ptScalarField[].
-  */
+  // Generates the isosurface from the scalar field contained in the buffer ptScalarField[].
   void GenerateSurface(float tIsoLevel);
 
   // Returns true if a valid surface has been generated
@@ -52,20 +46,15 @@ public:
   inline TArrayList<vec3f>& NormalList()  {  return Normals;  }
   inline TArrayList<IsoTriangle>& TriangleList() {  return Triangles;  }
   inline TArrayList<vec3f>& VertexList()  {  return Vertices;  }
-  /* This list may be empty if no data was provided */
-  inline TArrayList<int>& GetVertexData() { return VertexData; }
 protected:
 ////////////////////////////////////////////////////////////////////////
   struct IsoPoint {
     size_t newID;
-    int data;
-    vec3f crd;
+    float x, y, z;
     bool initialised;
-    IsoPoint()
-      : initialised(false), data(-1)
-    {}
+    IsoPoint(): initialised(false) {  }
   };
-  class T4DIndex {
+  class T4DIndex  {
     struct Points3  {
       IsoPoint ps[3];
     };
@@ -77,40 +66,36 @@ protected:
   public:
     T4DIndex() : Count(0) {  }
     ~T4DIndex()  {  Clear();  }
-    IsoPoint &Add(int x, int y, int z, int edgeId,
-      float vx, float vy, float vz, int p_data)
-    {
-      adjust(x, y, z, edgeId);
+    void Add(int x, int y, int z, int edgeId, float vx, float vy, float vz)  {
+      adjust(x,y,z,edgeId);
       IsoPoint* ip;
       const size_t yi = Data.IndexOf(x);
-      if (yi == InvalidIndex) {
+      if( yi == InvalidIndex )  {
         ip = &Data.Add(x, new IsoPointListY)->Add(y, new IsoPointListZ)->
           Add(z, Points3()).ps[edgeId];
       }
-      else {
+      else  {
         IsoPointListY* ly = Data.GetValue(yi);
         const size_t zi = ly->IndexOf(y);
-        if (zi == InvalidIndex) {
+        if( zi == InvalidIndex )  {
           ip = &ly->Add(y, new IsoPointListZ)->Add(z, Points3()).ps[edgeId];
         }
-        else {
+        else  {
           IsoPointListZ* lz = ly->GetValue(zi);
           const size_t pi = lz->IndexOf(z);
-          if (pi == InvalidIndex) {
+          if( pi == InvalidIndex )  {
             ip = &lz->Add(z, Points3()).ps[edgeId];
           }
-          else {
+          else  {
             ip = &lz->GetValue(pi).ps[edgeId];
           }
         }
       }
-      ip->crd[0] = vx;
-      ip->crd[1] = vy;
-      ip->crd[2] = vz;
-      ip->data = p_data;
+      ip->x = vx;
+      ip->y = vy;
+      ip->z = vz;
       ip->initialised = true;
       Count++;
-      return *ip;
     }
     const IsoPoint& Get(int x, int y, int z, int extra) const {
       return Data.Get(x)->Get(y)->Get(z).ps[extra];
@@ -120,81 +105,76 @@ protected:
       decode(crd, x, y, z, e);
       return Data.Get(x)->Get(y)->Get(z).ps[e];
     }
-    void Clear() {
-      for (size_t i = 0; i < Data.Count(); i++) {
+    void Clear()  {
+      for( size_t i=0; i < Data.Count(); i++ )  {
         IsoPointListY* ly = Data.GetValue(i);
-        for (size_t j = 0; j < ly->Count(); j++) {
+        for( size_t j=0; j < ly->Count(); j++ )
           delete ly->GetValue(j);
-        }
         delete ly;
       }
       Data.Clear();
       Count = 0;
     }
-    void GetVertices(TArrayList<vec3f>& v, TArrayList<int> *d) {
+    void GetVertices(TArrayList<vec3f>& v) {  // an upper estimate
       v.SetCount(Count);
-      if (d != 0) {
-        d->SetCount(Count);
-      }
       size_t ind = 0;
-      for (size_t i = 0; i < Data.Count(); i++) {
+      for( size_t i=0; i < Data.Count(); i++ )  {
         IsoPointListY* ly = Data.GetValue(i);
-        for (size_t j = 0; j < ly->Count(); j++) {
+        for( size_t j=0; j < ly->Count(); j++ )  {
           IsoPointListZ* lz = ly->GetValue(j);
-          for (size_t k = 0; k < lz->Count(); k++) {
+          for( size_t k=0; k < lz->Count(); k++ )  {
             Points3& p = lz->GetValue(k);
-            for (int l = 0; l < 3; l++) {
-              if (p.ps[l].initialised) {
+            for(int l=0; l < 3; l++ )  {
+              if( p.ps[l].initialised )  {
                 p.ps[l].newID = ind;
-                v[ind] = p.ps[l].crd;
-                if (d != 0) {
-                  (*d)[ind] = p.ps[l].data;
-                }
+                vec3f& fp = v[ind];
+                fp[0] = p.ps[l].x;
+                fp[1] = p.ps[l].y;
+                fp[2] = p.ps[l].z;
                 ind++;
               }
-              else {
+              else
                 p.ps[l].newID = ind;
-              }
             }
           }
         }
       }
     }
-    static void adjust(int& x, int& y, int& z, int& edgeId) {
+    static inline void adjust(int& x, int& y, int& z, int& edgeId) {
       int extra = 0;
-      switch (edgeId) {
-      case 0:  extra = 1;              break; // (x,y,z) + 1
-      case 1:  y++;                    break; // (x,y+1,z)
-      case 2:  x++;  extra = 1;        break;  // (x+1,y,z) + 1;
-      case 3:                          break; // (x,y,z)
-      case 4:  z++;  extra = 1;        break;  // (x,y,z+1) + 1
-      case 5:  y++;  z++;              break; //(x,y+1,z+1)
-      case 6:  x++;  z++;  extra = 1;  break;  //(x+1,y,z+1) + 1
-      case 7:  z++;                    break;  //(x,y,z+1)
-      case 8:  extra = 2;              break;  //(x,y,z)+2;
-      case 9:  y++;  extra = 2;        break;  //(x,y+1,z) + 2;
-      case 10: x++;  y++;  extra = 2;  break;  //(x+1,y+1,z) + 2;
-      case 11: x++;  extra = 2;        break;  //(x+1,y,z) + 2
-      default: break;         // Invalid edge no.
+      switch( edgeId ) {
+        case 0:  extra = 1;              break; // (x,y,z) + 1
+        case 1:  y++;                    break; // (x,y+1,z)
+        case 2:  x++;  extra = 1;        break;  // (x+1,y,z) + 1;
+        case 3:                          break; // (x,y,z)
+        case 4:  z++;  extra = 1;        break;  // (x,y,z+1) + 1
+        case 5:  y++;  z++;              break; //(x,y+1,z+1)
+        case 6:  x++;  z++;  extra = 1;  break;  //(x+1,y,z+1) + 1
+        case 7:  z++;                    break;  //(x,y,z+1)
+        case 8:  extra = 2;              break;  //(x,y,z)+2;
+        case 9:  y++;  extra = 2;        break;  //(x,y+1,z) + 2;
+        case 10: x++;  y++;  extra = 2;  break;  //(x+1,y+1,z) + 2;
+        case 11: x++;  extra = 2;        break;  //(x+1,y,z) + 2
+        default: break;         // Invalid edge no.
       }
       edgeId = extra;
     }
-    static uint32_t encode(int x, int y, int z, int edgeId) {
+    static inline uint32_t encode(int x, int y, int z, int edgeId) {
       int extra = 0;
-      switch (edgeId) {
-      case 0:  extra = 1;              break; // (x,y,z) + 1
-      case 1:  y++;                    break; // (x,y+1,z)
-      case 2:  x++;  extra = 1;        break;  // (x+1,y,z) + 1;
-      case 3:                          break; // (x,y,z)
-      case 4:  z++;  extra = 1;        break;  // (x,y,z+1) + 1
-      case 5:  y++;  z++;              break; //(x,y+1,z+1)
-      case 6:  x++;  z++;  extra = 1;  break;  //(x+1,y,z+1) + 1
-      case 7:  z++;                    break;  //(x,y,z+1)
-      case 8:  extra = 2;              break;  //(x,y,z)+2;
-      case 9:  y++;  extra = 2;        break;  //(x,y+1,z) + 2;
-      case 10: x++;  y++;  extra = 2;  break;  //(x+1,y+1,z) + 2;
-      case 11: x++;  extra = 2;        break;  //(x+1,y,z) + 2
-      default: return ~0;         // Invalid edge no.
+      switch( edgeId ) {
+        case 0:  extra = 1;              break; // (x,y,z) + 1
+        case 1:  y++;                    break; // (x,y+1,z)
+        case 2:  x++;  extra = 1;        break;  // (x+1,y,z) + 1;
+        case 3:                          break; // (x,y,z)
+        case 4:  z++;  extra = 1;        break;  // (x,y,z+1) + 1
+        case 5:  y++;  z++;              break; //(x,y+1,z+1)
+        case 6:  x++;  z++;  extra = 1;  break;  //(x+1,y,z+1) + 1
+        case 7:  z++;                    break;  //(x,y,z+1)
+        case 8:  extra = 2;              break;  //(x,y,z)+2;
+        case 9:  y++;  extra = 2;        break;  //(x,y+1,z) + 2;
+        case 10: x++;  y++;  extra = 2;  break;  //(x+1,y+1,z) + 2;
+        case 11: x++;  extra = 2;        break;  //(x+1,y,z) + 2
+        default: return ~0;         // Invalid edge no.
       }
       // max grid size is 1024x1024x1022
       return (uint32_t)extra     |
@@ -210,32 +190,27 @@ protected:
     }
   };
 ///////////////////////////////////////////////////////////////////////////////////
-  const int ZSlice;
-
+  const int DimmX, DimmY, DimmZ, ZSlice;
+  // The normals.
   TArrayList<vec3f> Normals;
+  // The vertices
   TArrayList<vec3f> Vertices;
-  TArrayList<int> VertexData;
-
   // List of POINT3Ds which form the isosurface.
   T4DIndex IsoPoints;
 
   // List of IsoTriangleS which form the triangulation of the isosurface.
   TArrayList<IsoTriangle> Triangles, AllTriangles;
 
-  void AddSurfacePoint(unsigned int nX, unsigned int nY,
-    unsigned int nZ, unsigned int nEdgeNo);
-  /* Renames vertices and triangles so that they can be accessed more
-   efficiently.
-   */
+  void AddSurfacePoint(unsigned int nX, unsigned int nY, unsigned int nZ, unsigned int nEdgeNo);
+  // Renames vertices and triangles so that they can be accessed more
+  // efficiently.
   void RenameVerticesAndTriangles();
 
   // Calculates the normals.
   void CalculateNormals();
 
-  /* The buffer holding the scalar field. */
-  array_3d<float>& Points;
-  /* data associated with points */
-  const array_3d<int>* PointData;
+  // The buffer holding the scalar field.
+  TArray3D<float>& Points;
 
   // The isosurface value.
   float m_tIsoLevel;
@@ -247,34 +222,4 @@ protected:
   static const unsigned int m_edgeTable[256];
   static const int m_triTable[256][16];
 };
-
-namespace olx_grid_util {
-  /* inspired by the JACGrid library */
-  class reducer {
-    TTypeList<vec3f> &vertices;
-    TTypeList<IsoTriangle> &triangles;
-    TArrayList<olxset<size_t, TPrimitiveComparator> > vt_map;
-    void reduce_to_line(size_t a, size_t b);
-    void cut_triangle(size_t a, size_t b, size_t c);
-  public:
-    reducer(TTypeList<vec3f> &vertices_,
-      TTypeList<IsoTriangle> &triangles_);
-    /* eliminates triangles with sides smaller than the given threshold
-    and returns the new vertex index mapping
-    */
-    TArrayList<size_t>::const_list_type reduce(float th = 0.03f);
-  };
-
-  class smoother {
-    TTypeList<vec3f> &vertices;
-    TArrayList<olxset<size_t, TPrimitiveComparator> > n_map;
-  public:
-    smoother(TTypeList<vec3f> &vertices,
-      const TTypeList<IsoTriangle> &triangles);
-    /* smmoth the surface using a ratio contribution of any particular vertex
-    and 1-ratio contribution of neighbouring vertoces
-    */
-    void smooth(float ratio=0.5f);
-  };
-} // end namespace olx_grid_util
 #endif // guard

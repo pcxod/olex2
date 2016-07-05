@@ -58,7 +58,6 @@ public:
     TArrayList<vec3f> vecs;
     TTypeList<vec3f> norms;
     TTypeList<TVector3<size_t> > faces;
-    TTypeList<olx_pair_t<size_t, size_t> > edges;
   };
   class Settings;
 private:
@@ -106,14 +105,14 @@ public:
   // returns full legend for the label. e.g. "Q.Q1"
   static olxstr GetLabelLegend(const TSAtom& A);
 
-  static void GetDefSphereMaterial(const TCAtom& A, TGlMaterial &M,
+  static void GetDefSphereMaterial(const TSAtom& A, TGlMaterial &M,
     const Settings &defs);
-  static void GetDefSphereMaterial(const TCAtom& A, TGlMaterial &M,
+  static void GetDefSphereMaterial(const TSAtom& A, TGlMaterial &M,
     TGlRenderer &r)
   {
     return GetDefSphereMaterial(A, M, GetSettings(r));
   }
-  static void GetDefRimMaterial(const TCAtom& A, TGlMaterial &M);
+  static void GetDefRimMaterial(const TSAtom& A, TGlMaterial &M);
 
   void CalcRad(short DefAtomR);
 

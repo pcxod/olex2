@@ -12,29 +12,21 @@
 #include "xatom.h"
 #include "pers_util.h"
 
-TXLine::TXLine(TGlRenderer& r, const olxstr& collectionName,
-  const vec3d& base, const vec3d& edge)
-  : TXBond(NULL, r, collectionName),
+TXLine::TXLine(TGlRenderer& r, const olxstr& collectionName, const vec3d& base, const vec3d& edge):
+  TXBond(NULL, r, collectionName),
   FBase(base), FEdge(edge)
 {
-  SetMoveable(true);
   Init();
-}
-//..............................................................................
-TXLine::TXLine(TGlRenderer& Renderer) 
-  : TXBond(NULL, Renderer, EmptyString())
-{
-  SetMoveable(true);
 }
 //..............................................................................
 void TXLine::Init(bool update_label) {
   vec3d C(FEdge - FBase);
-  if (update_label) {
+  if( update_label )  {
     GetGlLabel().SetOffset((FBase+FEdge)/2);
     GetGlLabel().SetLabel(olxstr::FormatFloat(3, C.Length()));
     GetGlLabel().SetVisible(true);
   }
-  if (!C.IsNull()) {
+  if( !C.IsNull() )  {
     Params()[3] = C.Length();
     C.Normalise();
     Params()[0] = (float)(acos(C[2])*180/M_PI);
@@ -45,7 +37,7 @@ void TXLine::Init(bool update_label) {
 //..............................................................................
 bool TXLine::Orient(TGlPrimitive& GlP)  {
   olxstr Length = olxstr::FormatFloat(3, Params()[3]);
-  if (GlP.GetType() == sgloText) {
+  if( GlP.GetType() == sgloText )  {
     vec3d V;
     V = (FEdge+FBase)/2;
     V += Parent.GetBasis().GetCenter();
@@ -56,11 +48,10 @@ bool TXLine::Orient(TGlPrimitive& GlP)  {
     GlP.SetString(NULL);
     return true;
   }
-  else {
-    return TXBond::Orient(GlP);
-    //olx_gl::translate(FBase);
-    //olx_gl::rotate(Params()[0], Params()[1], Params()[2], 0.0);
-    //olx_gl::scale(Params()[4], Params()[4], Params()[3]);
+  else  {
+    olx_gl::translate(FBase);
+    olx_gl::rotate(Params()[0], Params()[1], Params()[2], 0.0);
+    olx_gl::scale(Params()[4], Params()[4], Params()[3]);
   }
   return false;
 }
@@ -81,30 +72,5 @@ void TXLine::FromDataItem(const TDataItem &di)  {
   SetRadius(di.GetFieldByName("r").ToDouble());
   GetGlLabel().FromDataItem(di.GetItemByName("Label"));
   Init(false);
-}
-//..............................................................................
-void TXLine::UpdateLabel() {
-  if (GetGlLabel().IsVisible() && this->IsMoveable()) {
-    GetGlLabel().SetOffset((FBase + (FEdge - FBase).NormaliseTo(Params()[3])) / 2);
-    GetGlLabel().SetLabel(olxstr::FormatFloat(3, GetLength()));
-  }
-  //GetGlLabel().SetVisible(true);
-  TXBond::UpdateLabel();
-}
-//..............................................................................
-void TXLine::Update() {
-  Init(true);
-}
-//..............................................................................
-bool TXLine::DoTranslate(const vec3d& t) {
-  FBase += t;
-  FEdge += t;
-  GetGlLabel().SetOffset((FBase*2+(FEdge-FBase).NormaliseTo(Params()[3]))/2);
-  return true;
-}
-//..............................................................................
-void TXLine::SetLength(double V)  {
-  Params()[3] = V;
-  GetGlLabel().SetOffset((FBase*2+(FEdge-FBase).NormaliseTo(Params()[3]))/2);
 }
 //..............................................................................

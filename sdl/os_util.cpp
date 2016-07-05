@@ -9,29 +9,46 @@
 
 #include "os_util.h"
 #include "exception.h"
-#include "bapp.h"
 
 // simple OS utilities...
 #ifdef __WIN32__
-
-bool EsdlObject(olx_setenv)(const olxstr& name, const olxstr& val) {
-  return SetEnvironmentVariable(name.u_str(), val.u_str()) != 0;
-}
-//.............................................................................
-olxstr EsdlObject(olx_getenv)(const olxstr& name) {
-  olxch* val = olx_malloc<olxch>(1024);
-  DWORD sz_;
-  if ((sz_ = GetEnvironmentVariable(name.u_str(), val, 1024)) > 1024) {
-    val = olx_realloc<>(val, sz_);
-    GetEnvironmentVariable(name.u_str(), val, sz_);
-    return olxstr::FromExternal(val, sz_ - 1);
-  }
-  else {
-    olx_free(val);
-    return EmptyString();
-  }
-}
-
+#  if defined(_MSC_VER)
+#    ifdef _UNICODE
+#      define OLX_GETENV _wgetenv_s
+#      define OLX_PUTENV _wputenv_s
+#    else
+#      define OLX_GETENV getenv_s
+#      define OLX_PUTENV _putenv_s
+#    endif
+   bool EsdlObject(olx_setenv)(const olxstr& name, const olxstr& val)  {
+     return OLX_PUTENV(name.u_str(), val.u_str()) == 0;
+   }
+   //.............................................................................
+   //.............................................................................
+   olxstr EsdlObject(olx_getenv)(const olxstr& name)  {
+     olxch* val=NULL;
+     size_t sz;
+     OLX_GETENV(&sz, NULL, 0, name.u_str());
+     if( sz == 0 )  return EmptyString();
+     val = olx_malloc<olxch>(sz);
+     OLX_GETENV(&sz, val, sz, name.u_str());
+     return olxstr::FromExternal(val, sz-1);
+   }
+#  else // not MSVC
+#    ifdef _UNICODE
+#      define OLX_GETENV _wgetenv
+#      define OLX_PUTENV _wputenv
+#    else
+#      define OLX_GETENV getenv
+#      define OLX_PUTENV putenv
+#    endif
+  bool EsdlObject(olx_setenv)(const olxstr& name, const olxstr& val)  {
+     return OLX_GETENV((olxstr(name) << '=' << val).u_str()) == 0;
+   }
+   olxstr EsdlObject(olx_getenv)(const olxstr& name)  {
+     return OLX_PUTENV(name.u_str());
+   }
+#  endif  // MSVC and others WIN compilers
 /*http://msdn.microsoft.com/en-us/library/ms684139.aspx
 return true if the process is running under wow64 - ie on x64 bit Windows,
 might throw an exception... */
@@ -51,9 +68,8 @@ bool EsdlObject(IsWow64)()  {
 //.............................................................................
 HANDLE EsdlObject(Module::handle) = NULL;
 HANDLE Module::GetHandle() const {
-  if (handle == NULL) {
+  if (handle == NULL)
     handle = ::GetModuleHandle(NULL);
-  }
   return handle;
 }
 //.............................................................................
@@ -66,11 +82,10 @@ HANDLE Module::SetHandle(HANDLE h) {
 //.............................................................................
 #else  // not WIN
 bool EsdlObject(olx_setenv)(const olxstr& name, const olxstr& val)  {
-  return setenv(name.ToMBStr().c_str(), val.ToMBStr().c_str(), 1) == 0;
+  return setenv(name.c_str(), val.c_str(), 1) == 0;
 }
 olxstr EsdlObject(olx_getenv)(const olxstr& name)  {
-  const char*p = getenv(name.ToMBStr().c_str());
-  return p == 0 ? EmptyString() : olxstr::FromCStr(p);
+  return getenv(name.c_str());
 }
 #endif
 

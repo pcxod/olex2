@@ -76,7 +76,6 @@ class TXGrid;
 class TXLattice;
 class TDUserObj;
 class TDSphere;
-class TAtomLegend;
 
 class TGXApp : public TXApp, AEventsDispatcher, public ASelectionOwner {
   TTypeListExt<TXGrowPoint, AGDrawObject> XGrowPoints;
@@ -176,7 +175,6 @@ protected:
   T3DFrameCtrl* F3DFrame;
   TXGrid* FXGrid;
   TDSphere *FDSphere;
-  TAtomLegend *FAtomLegend;
 
   void FragmentVisible( TNetwork *N, bool V);
   bool Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
@@ -384,7 +382,6 @@ public:
   TDFrame& DFrame() const {  return *FDFrame; }
   TXGrid& XGrid() const {  return *FXGrid;  }
   TDSphere& DSphere() const { return *FDSphere; }
-  TAtomLegend &AtomLegend() const { return *FAtomLegend; }
   T3DFrameCtrl& Get3DFrame() const { return *F3DFrame; }
   TGlMouse& GetMouseHandler() const { return *FGlMouse; }
   TGXFile &XFile() const { return (TGXFile &)Files[0]; }

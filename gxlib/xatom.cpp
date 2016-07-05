@@ -25,7 +25,6 @@
 #include "wrldraw.h"
 #include "gltexture.h"
 #include "glbackground.h"
-#include "eset.h"
 
 //----------------------------------------------------------------------------//
 // TSAtom function bodies
@@ -294,7 +293,7 @@ void TXAtom::Create(const olxstr& cName) {
       GlP.EndList();
 
       if (GetType() == iQPeakZ) {
-        GetDefSphereMaterial(this->CAtom(), RGlM, defs);
+        GetDefSphereMaterial(*this, RGlM, defs);
         GlP.SetProperties(RGlM);
       }
       else {
@@ -306,14 +305,14 @@ void TXAtom::Create(const olxstr& cName) {
           if (lmi != InvalidIndex)
             RGlM = GS.GetPrimitiveStyle(lmi).GetProperties();
           else
-            GetDefSphereMaterial(this->CAtom(), RGlM, defs);
+            GetDefSphereMaterial(*this, RGlM, defs);
         }
         else if (SGlP->Params.GetLast() == ddsDefRim) {
           const size_t lmi = GS.IndexOfMaterial("Rims");
           if (lmi != InvalidIndex)
             RGlM = GS.GetPrimitiveStyle(lmi).GetProperties();
           else
-            GetDefRimMaterial(this->CAtom(), RGlM);
+            GetDefRimMaterial(*this, RGlM);
         }
         GlP.SetProperties(GS.GetMaterial(primitives[i], RGlM));
       }
@@ -350,19 +349,13 @@ bool TXAtom::Orient(TGlPrimitive& GlP) {
 
   if (GlP.GetOwnerId() == xatom_PolyId) {
     if (Polyhedron == NULL) return true;
-    const TXAtom::Poly& pl = *Polyhedron;
     olx_gl::begin(GL_TRIANGLES);
+    const TXAtom::Poly& pl = *Polyhedron;
     for (size_t j=0; j < pl.faces.Count(); j++) {
       olx_gl::normal(pl.norms[j]);
       olx_gl::vertex(pl.vecs[pl.faces[j][0]]);
       olx_gl::vertex(pl.vecs[pl.faces[j][1]]);
       olx_gl::vertex(pl.vecs[pl.faces[j][2]]);
-    }
-    olx_gl::end();
-    olx_gl::begin(GL_LINES);
-    for (size_t j = 0; j < pl.edges.Count(); j++) {
-      olx_gl::vertex(pl.vecs[pl.edges[j].a]);
-      olx_gl::vertex(pl.vecs[pl.edges[j].b]);
     }
     olx_gl::end();
     return true;
@@ -501,15 +494,15 @@ bool TXAtom::GetDimensions(vec3d& Max, vec3d& Min)  {
   return true;
 }
 //..............................................................................
-void TXAtom::GetDefSphereMaterial(const TCAtom& Atom, TGlMaterial& M,
+void TXAtom::GetDefSphereMaterial(const TSAtom& Atom, TGlMaterial& M,
   const Settings &defs)
 {
   uint32_t Mask = OLX_RGBA(0x5f, 0x5f, 0x5f, 0x00);
   uint32_t Cl = Atom.GetType().def_color;
 ///////////
   if (Atom.GetType() == iQPeakZ) {
-    const double peak = Atom.GetQPeak();
-    const TAsymmUnit &au = *Atom.GetParent();
+    const double peak = Atom.CAtom().GetQPeak();
+    const TAsymmUnit &au = *Atom.CAtom().GetParent();
     M.SetFlags(sglmAmbientF|sglmDiffuseF|sglmSpecularF|sglmShininessF|
       sglmTransparent);
     M.DiffuseF = 0x00007f;
@@ -528,7 +521,7 @@ void TXAtom::GetDefSphereMaterial(const TCAtom& Atom, TGlMaterial& M,
       }
       else {
         M.AmbientF = 0x7f007f;
-        if (au.GetMaxQPeak() < 0) {
+        if (Atom.CAtom().GetParent()->GetMaxQPeak() < 0) {
           M.DiffuseF[3] = (float)(atan(
             defs.GetQPeakScale()*peak / au.GetMinQPeak()) * 2 / M_PI);
         }
@@ -553,7 +546,7 @@ void TXAtom::GetDefSphereMaterial(const TCAtom& Atom, TGlMaterial& M,
   M.SpecularB = M.SpecularF;
 }
 //..............................................................................
-void TXAtom::GetDefRimMaterial(const TCAtom& Atom, TGlMaterial &M) {
+void TXAtom::GetDefRimMaterial(const TSAtom& Atom, TGlMaterial &M) {
   uint32_t Mask = OLX_RGBA(0x5f, 0x5f, 0x5f, 0x00);
   M.SetFlags( sglmAmbientF|sglmDiffuseF|sglmSpecularF|sglmShininessF|sglmEmissionF);
 //  |  sglmAmbientB|sglmDiffuseB|sglmSpecularB|sglmShininessB|sglmEmissionB);
@@ -805,7 +798,7 @@ const_strlist TXAtom::ToWrl(olx_cdict<TGlMaterial, olxstr> &materials) const
     double ds = GetDrawScale();
     out.Add("   scale").stream(' ') << ds << ds << ds;
   }
-  out.Add("   translation ") << wrl::to_str(crdc.crd(crd()));
+    out.Add("   translation ") << wrl::to_str(crdc.crd(crd()));
   out.Add("   children [");
   const TGPCollection &gpc = GetPrimitives();
   bool th_drawn = false;
@@ -968,10 +961,9 @@ void TXAtom::CreateNormals(TXAtom::Poly& pl, const vec3f& cnt) {
       pl.norms.Clear();
       return;
     }
-    float nl = n.Length();
-    const float d = n.DotProd((v1+v2+v3)/3-cnt)/nl;
-    n /= nl;
-    if (d < 0) { // normal looks inside?
+    const float d = n.DotProd((v1+v2+v3)/3)/n.Length();
+    n.Normalise();
+    if ((n.DotProd(cnt) - d) > 0) { // normal looks inside?
       olx_swap(pl.faces[i][0], pl.faces[i][1]);
       n *= -1;
     }
@@ -982,12 +974,15 @@ vec3f TXAtom::TriangulateType2(Poly& pl, const TSAtomPList& atoms) {
   TSPlane plane(NULL);
   TTypeList< olx_pair_t<TSAtom*, double> > pa;
   vec3f cnt;
+  double wght = 0;
   for (size_t i=0; i < atoms.Count(); i++ ) {
-    pa.AddNew(atoms[i], 1);
-    cnt += atoms[i]->crd();
+    pa.AddNew( atoms[i], atoms[i]->CAtom().GetOccu());
+    cnt += atoms[i]->crd()*atoms[i]->CAtom().GetOccu();
+    wght += atoms[i]->CAtom().GetOccu();
   }
   cnt += crd();
-  cnt /= (atoms.Count()+1);
+  wght += CAtom().GetOccu();
+  cnt /= (float)wght;
   plane.Init(pa);
   plane.GetCenter();
   // this might fail if one of the atoms is at the center
@@ -1095,31 +1090,6 @@ void TXAtom::CreatePoly(const TSAtomPList& bound, short type,
       if( sideb.Count() > 2 )  {
         vec3f cnt = TriangulateType2(pl, sideb);
         CreateNormals(pl, cnt);
-      }
-    }
-    // deal with edges
-    {
-      olxdict<size_t, olxset<size_t, TPrimitiveComparator>,
-        TPrimitiveComparator> edges;
-      for (size_t i = 0; i < pl.faces.Count(); i++) {
-        for (size_t j = 0; j < 3; j++) {
-          size_t a, b, idx = (j+1)%3;
-          if (pl.faces[i][j] < pl.faces[i][idx]) {
-            a = pl.faces[i][0];
-            b = pl.faces[i][idx];
-          }
-          else {
-            a = pl.faces[i][idx];
-            b = pl.faces[i][0];
-          }
-          edges.Add(a).Add(b);
-        }
-      }
-      pl.edges.SetCapacity(edges.Count() * 4);
-      for (size_t i = 0; i < edges.Count(); i++) {
-        for (size_t j = 0; j < edges.GetValue(i).Count(); j++) {
-          pl.edges.Add(olx_pair::New(edges.GetKey(i), edges.GetValue(i).Get(j)));
-        }
       }
     }
   }

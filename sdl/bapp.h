@@ -34,10 +34,7 @@ class TBasicApp: public virtual IOlxObject {
     ConfigDir;
 protected:
   class TActionQList ActionList;
-  static TBasicApp *&Instance_() {
-    static TBasicApp *app = 0;
-    return app;
-  }
+  static TBasicApp *Instance;
   class TLog *Log;
   class TEFile *LogFile;
   short MaxThreadCount;
@@ -71,13 +68,11 @@ public:
   void InitArguments(int argc, ch_t **argv) {
     ValidateArgs(); // throw an excaption if Arguments are not empty
     for (int i=0; i < argc; i++) {
-      olxstr arg = olxstr::FromCStr(argv[i]);
-      if (arg.Contains('=') || arg.StartsFrom('-')) {
+      olxstr arg = argv[i];
+      if (arg.Contains('=') || arg.StartsFrom('-'))
         Options.FromString(arg, '=');
-      }
-      else {
+      else
         Arguments.Add(arg);
-      }
     }
   }
   /*The options are read when the object is constructed, calling it
@@ -144,11 +139,11 @@ public:
   // valid only if correct string is passed to the constructor
   static const olxstr& GetExeName()  {  return GetInstance().ExeName;  }
   static TBasicApp& GetInstance() {
-    if (Instance_() == NULL) {
+    if( Instance == NULL ) {
       throw TFunctionFailedException(__OlxSourceInfo,
         "Uninitialised application layer...");
     }
-    return *Instance_();
+    return *Instance;
   }
 
   static bool HasInstance();
