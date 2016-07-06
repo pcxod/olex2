@@ -251,14 +251,16 @@ const olxstr& TBasicApp::SetSharedDir(const olxstr& cd) {
 }
 //..............................................................................
 const olxstr& TBasicApp::GetSharedDir() {
-  if( GetInstance().SharedDir.IsEmpty() )
+  if (GetInstance().SharedDir.IsEmpty()) {
     return GetInstance().BaseDir;
+  }
   return GetInstance().SharedDir;
 }
 //..............................................................................
 void TBasicApp::SetInstanceDir(const olxstr &d) {
-  if (!TEFile::Exists(d))
+  if (!TEFile::Exists(d)) {
     TEFile::MakeDirs(d);
+  }
   InstanceDir = TEFile::AddPathDelimeter(d);
   //2013.06.25 - do it manually only!
   //// read user settings
@@ -267,10 +269,7 @@ void TBasicApp::SetInstanceDir(const olxstr &d) {
 }
 //..............................................................................
 void TBasicApp::SetConfigdDir(const olxstr &cd) {
-  if (TEFile::IsAbsolutePath(cd))
-    ConfigDir = cd;
-  else
-    ConfigDir = _GetInstanceDir() + cd;
+  ConfigDir = (TEFile::IsAbsolutePath(cd) ? cd : _GetInstanceDir() + cd);
   TEFile::AddPathDelimeterI(ConfigDir);
   if (!TEFile::Exists(ConfigDir)) {
     if (!TEFile::MakeDirs(ConfigDir))
@@ -362,17 +361,21 @@ void TBasicApp::CleanupLogs(const olxstr &dir_name) {
   TEFile::AddPathDelimeterI(dn);
   time_t now = TETime::EpochTime();
   for (size_t i=0; i < log_files.Count(); i++) {
-    if (!log_files[i].EndsWith("olx.log")) continue;
+    if (!log_files[i].EndsWith("olx.log")) {
+      continue;
+    }
     olxstr fn = dn+log_files[i];
     time_t fa = TEFile::FileAge(fn);
-    if ((fa+(3600*24)) < now) // 1 days in seconds
+    if ((fa + (3600 * 24)) < now) { // 1 days in seconds
       TEFile::DelFile(fn);
+    }
   }
 }
 //..............................................................................
 void TBasicApp::ValidateArgs() const {
-  if (!Arguments.IsEmpty())
+  if (!Arguments.IsEmpty()) {
     throw TFunctionFailedException(__OlxSourceInfo, "already initialised");
+  }
 }
 //..............................................................................
 void TBasicApp::PostAction(IOlxAction *a) {
@@ -424,15 +427,41 @@ void BAPP_GetOptValue(const TStrObjList& Params, TMacroData& E)  {
   E.SetRetVal(TBasicApp::GetInstance().GetOptions().FindValue(
     Params[0], Params.Count() == 2 ? Params[1] : EmptyString()));
 }
+void BAPP_SetOpt(const TStrObjList& Params, TMacroData& E) {
+  olxstr key, value;
+  if (Params.Count() == 1) {
+    size_t idx = Params[0].IndexOf('=');
+    if (idx == InvalidIndex) {
+      E.ProcessingError(__OlxSrcInfo, "name=value string is expected");
+      return;
+    }
+    key = Params[0].SubStringTo(idx);
+    value = Params[0].SubStringFrom(idx+1);
+  }
+  else {
+    key = Params[0];
+    value = Params[1];
+  }
+  TBasicApp &a = TBasicApp::GetInstance();
+  a.UpdateOption(key, value);
+  try {
+    a.SaveOptions();
+  }
+  catch (const TExceptionBase &e) {
+    E.ProcessingException(__OlxSourceInfo, e);
+  }
+}
 void BAPP_SaveOptions(const TStrObjList&, TMacroData& E)  {
   TBasicApp::GetInstance().SaveOptions();
 }
 //..............................................................................
 void BAPP_Profiling(const TStrObjList& Params, TMacroData &E)  {
-  if( Params.IsEmpty() )
+  if (Params.IsEmpty()) {
     E.SetRetVal(TBasicApp::IsProfiling());
-  else
+  }
+  else {
     TBasicApp::SetProfiling(Params[0].ToBool());
+  }
 }
 //..............................................................................
 void BAPP_LogFileName(const TStrObjList& Params, TMacroData &E)  {
@@ -512,6 +541,11 @@ TLibrary* TBasicApp::ExportLibrary(const olxstr& lib_name)  {
   lib->Register(new TStaticFunction(BAPP_GetOptCount,
     "OptCount", fpNone,
     "Returns number of options passed to the application"));
+  lib->Register(new TStaticFunction(BAPP_SetOpt,
+    "SetOption", fpOne|fpTwo,
+    "Sets application given like 'option=value' or name and value pair and saves"
+    " the options. Application may need to be restarted for the options to take "
+    "effect"));
   lib->Register(new TStaticFunction(BAPP_GetOpt,
     "GetOpt", fpOne,
     "Returns application 'option=value' value by index. '=' only added if the"
