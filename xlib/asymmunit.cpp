@@ -233,15 +233,13 @@ void  TAsymmUnit::InitMatrices()  {
   //DG[0][5] = c*(cA*(-cB-cB*cG*cG+cG*cA)+cG*cB*cB)/(Vp*sG*sG);
 }
 //..............................................................................
-void TAsymmUnit::InitData()  {
+void TAsymmUnit::InitData() {
   // init QPeak intensities
   MaxQPeak = -1000;
   MinQPeak = 1000;
-  for( size_t i =0; i < AtomCount(); i++ )  {
-    if( !CAtoms[i]->IsDeleted() && CAtoms[i]->GetType() == iQPeakZ )  {
-      const double qpeak = CAtoms[i]->GetQPeak();
-      if( qpeak < MinQPeak )  MinQPeak = qpeak;
-      if( qpeak > MaxQPeak )  MaxQPeak = qpeak;
+  for (size_t i = 0; i < AtomCount(); i++) {
+    if (!CAtoms[i]->IsDeleted() && CAtoms[i]->GetType() == iQPeakZ) {
+      olx_update_min_max(CAtoms[i]->GetQPeak(), MinQPeak, MaxQPeak);
     }
   }
 }
@@ -253,6 +251,20 @@ TResidue& TAsymmUnit::NewResidue(const olxstr& RClass, int number, int alias)  {
         "Cannot rename main residue");
     }
     return MainResidue;
+  }
+  if (number == -1 && alias == -1) {
+    for (size_t i = 0; i < Residues.Count(); i++) {
+      if (Residues[i].GetNumber() > number) {
+        number = Residues[i].GetNumber();
+      }
+      if (Residues[i].GetAlias() > number) {
+        number = Residues[i].GetAlias();
+      }
+    }
+    if (number == -1) {
+      number = 0;
+    }
+    alias = ++number;
   }
   TResidue *er = ResidueRegistry.Find(number, NULL);
   if (er == NULL && alias != number) {
@@ -276,8 +288,9 @@ TResidue& TAsymmUnit::NewResidue(const olxstr& RClass, int number, int alias)  {
     new TResidue(*this, (uint32_t)Residues.Count()+1, RClass, number, alias)
   );
   ResidueRegistry(number, &r);
-  if (alias != number)
+  if (alias != number) {
     ResidueRegistry(alias, &r);
+  }
   return r;
 }
 //..............................................................................
