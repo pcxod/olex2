@@ -2159,15 +2159,18 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To,
       undo().AddAtom(XA->CAtom(), oldL);
       processed << XA->CAtom();
       NameHydrogens(*XA, &undo());
-      if (checkBonds)
+      if (checkBonds) {
         CheckQBonds(*XA);
+      }
     }
   }
   else {
     TXAtom* XA = GetXAtom(From, false);
     if (XA != NULL) {
       Atoms << XA;
-      if (ClearSelection) SelectAll(false);
+      if (ClearSelection) {
+        SelectAll(false);
+      }
       undo = dynamic_cast<TNameUndo *>(Name(*XA, To));
     }
     else {
@@ -2190,8 +2193,9 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To,
           undo().AddAtom(XA->CAtom(), oldL);
           processed << XA->CAtom();
           NameHydrogens(*XA, &undo());
-          if (checkBonds)
+          if (checkBonds) {
             CheckQBonds(*XA);
+          }
         }
       }
       else if (From.CharAt(0) == '$') {
@@ -2213,8 +2217,9 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To,
             NameHydrogens(*XA, &undo());
             if (recreate) {
               ChangedAtoms.Add(XA);
-              if (checkBonds)
+              if (checkBonds) {
                 CheckQBonds(*XA);
+              }
             }
           }
         }
@@ -2231,8 +2236,9 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To,
             processed << XA->CAtom();
             undo().AddAtom(XA->CAtom(), oldL);
             NameHydrogens(*XA, &undo());
-            if (checkBonds)
+            if (checkBonds) {
               CheckQBonds(*XA);
+            }
           }
         }
         else
@@ -2240,8 +2246,9 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To,
       }
       else {  // C2? to C3? ; Q? to Ni? ...
         const cm_Element* elm = XElementLib::FindBySymbolEx(To);
-        if (elm == NULL)
+        if (elm == NULL) {
           throw TFunctionFailedException(__OlxSourceInfo, "wrong syntax");
+        }
         const bool to_element = XElementLib::IsElement(To);
         for (size_t i=0; i < Atoms.Count(); i++) {
           XA = (TXAtom*)Atoms[i];
@@ -2250,8 +2257,12 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To,
           olxstr NL = To;
           const bool recreate = XA->GetType() != *elm;
           if (to_element) {
-            if (XA->GetLabel().StartsFrom(XA->GetType().symbol))
+            if (XA->GetLabel().StartsFrom(XA->GetType().symbol)) {
               NL << XA->GetLabel().SubStringFrom(XA->GetType().symbol.Length());
+              if (XA->GetType() == iQPeakZ) {
+                NL = XA->CAtom().GetParent()->CheckLabel(&XA->CAtom(), NL);
+              }
+            }
           }
           else {
             for (size_t j=0; j < NL.Length(); j++) {
@@ -2262,8 +2273,9 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To,
                   NL[j] = Tmp.CharAt(qmi);
                   qmi++;
                 }
-                else
+                else {
                   NL[j] = '_';
+                }
               }
             }
           }
@@ -2276,8 +2288,9 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To,
           NameHydrogens(*XA, &undo());
           if (recreate) {
             ChangedAtoms.Add(XA);
-            if (checkBonds)
+            if (checkBonds) {
               CheckQBonds(*XA);
+            }
           }
         }
       }
