@@ -8473,7 +8473,7 @@ void XLibMacros::macRESI(TStrObjList &Cmds, const TParamList &Options,
     resi_class.SetLength(0);
   }
   Cmds.Delete(0);
-  if (resi_number == 0 && (Cmds.Count() > 0  && Cmds[0].IsNumber())) {
+  if (resi_number == -1 && (Cmds.Count() > 0  && Cmds[0].IsNumber())) {
     resi_number = olx_abs(Cmds[0].ToInt());
     Cmds.Delete(0);
   }
