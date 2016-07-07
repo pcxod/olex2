@@ -2332,7 +2332,8 @@ TUndoData* TGXApp::SynchroniseResidues(const TCAtomPList &refs) {
           if (r[k].IsDeleted() || r[k].GetType().z < 2) {
             continue;
           }
-          l.Add(r[k])->SetTag((index_t)l.Count());
+          r[k].SetTag((index_t)l.Count());
+          l.Add(r[k]);
         }
         if (&r == &rr) {
           rl_idx = rg.Count() - 1;

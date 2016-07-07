@@ -2526,16 +2526,18 @@ void GXLibMacros::macCalcVoid(TStrObjList &Cmds, const TParamList &Options,
   TCAtomPList catoms;
   // consider the selection if any
   TGlGroup& sel = app.GetSelection();
-  for( size_t i=0; i < sel.Count(); i++ )  {
-    if( EsdlInstanceOf(sel[i], TXAtom) )
-      catoms.Add(((TXAtom&)sel[i]).CAtom())->SetTag(catoms.Count());
+  for (size_t i = 0; i < sel.Count(); i++) {
+    if (EsdlInstanceOf(sel[i], TXAtom)) {
+      ((TXAtom&)sel[i]).CAtom().SetTag(catoms.Count());
+      catoms.Add(((TXAtom&)sel[i]).CAtom());
+    }
   }
   catoms.Pack(olx_alg::olx_not(ACollectionItem::IndexTagAnalyser()));
   if( catoms.IsEmpty() ) {
     TBasicApp::NewLogEntry() <<
      "Calculating for all atoms of the asymmetric unit";
   }
-  else  {
+  else {
     TBasicApp::NewLogEntry() << "Calculating for " <<
       olx_analysis::alg::label(catoms);
   }

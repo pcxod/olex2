@@ -254,9 +254,10 @@ ConstPtrList<TReflection> THklFile::AllRefs(const vec3i& idx,
   return rv;
 }
 //..............................................................................
-void THklFile::Append(TReflection& hkl)  {
+void THklFile::Append(TReflection& hkl) {
   UpdateMinMax(hkl);
-  Refs.Add(hkl).SetTag(Refs.Count());
+  hkl.SetTag(Refs.Count());
+  Refs.Add(hkl);
 }
 //..............................................................................
 void THklFile::EndAppend()  {
