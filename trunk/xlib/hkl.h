@@ -49,7 +49,8 @@ public:
     for (size_t i = 0; i < hkls.Count(); i++) {
       TReflection &r = olx_ref::get(hkls[i]);
       UpdateMinMax(r);
-      Refs.AddCopy(r).SetTag(Refs.Count());
+      index_t t = Refs.Count();
+      Refs.AddCopy(r).SetTag(t);
     }
     EndAppend();
   }

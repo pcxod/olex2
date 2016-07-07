@@ -224,7 +224,8 @@ public:
     short relation, double coefficient);
   // for parsing...
   XVarReference& AddVarRef(XVarReference& ref) {
-    References.Add(ref).SetId(References.Count());
+    ref.SetId(References.Count());
+    References.Add(ref);
     return ref;
   }
   // releases a reference to the variable, must be deleted, unless restored
