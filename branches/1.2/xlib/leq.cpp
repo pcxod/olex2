@@ -466,13 +466,15 @@ void XVarManager::FromDataItem(const TDataItem& item) {
   ClearAll();
   TDataItem& vars = item.GetItemByName("vars");
   for (size_t i = 0; i < vars.ItemCount(); i++) {
+    size_t cnt = Vars.Count();
     Vars.Add(XVar::FromDataItem(vars.GetItemByIndex(i), *this))
-      .SetId(Vars.Count());
+      .SetId(cnt);
   }
   TDataItem& eqs = item.GetItemByName("eqs");
   for( size_t i=0; i < eqs.ItemCount(); i++ ) {
+    size_t cnt = Equations.Count();
     Equations.Add(XLEQ::FromDataItem(eqs.GetItemByIndex(i), *this))
-      .SetId(Vars.Count());
+      .SetId(cnt);
   }
   for( size_t i=0; i < References.Count(); i++ ) {
     References[i].referencer.SetVarRef(

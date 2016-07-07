@@ -574,7 +574,7 @@ void XLibMacros::Export(TLibrary& lib)  {
     (fpAny^fpNone)|psFileLoaded,
     "Creates residue with given class name and optionally number and adds "
     "selected or provided atoms into the residue. If provided residue class "
-    "name is 'none', provided atoms are removed from their curent residues");
+    "name is 'none', provided atoms are removed from their current residues");
   xlib_InitMacro(Restrain,
     EmptyString(),
     (fpAny^fpNone)|psFileLoaded,
@@ -8467,13 +8467,13 @@ void XLibMacros::macRESI(TStrObjList &Cmds, const TParamList &Options,
 {
   TXApp &app = TXApp::GetInstance();
   olxstr resi_class = Cmds[0];
-  int resi_number = 0;
+  int resi_number = -1;
   if (resi_class.IsNumber()) {
     resi_number = resi_class.ToInt();
     resi_class.SetLength(0);
   }
   Cmds.Delete(0);
-  if (resi_number == 0 && (Cmds.Count() > 0  && Cmds[0].IsNumber())) {
+  if (resi_number == -1 && (Cmds.Count() > 0  && Cmds[0].IsNumber())) {
     resi_number = olx_abs(Cmds[0].ToInt());
     Cmds.Delete(0);
   }
