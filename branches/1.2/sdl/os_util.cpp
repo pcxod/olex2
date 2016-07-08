@@ -24,11 +24,14 @@ olxstr EsdlObject(olx_getenv)(const olxstr& name) {
   if ((sz_ = GetEnvironmentVariable(name.u_str(), val, 1024)) > 1024) {
     val = olx_realloc<>(val, sz_);
     GetEnvironmentVariable(name.u_str(), val, sz_);
-    return olxstr::FromExternal(val, sz_ - 1);
+    return olxstr::FromExternal(val, sz_-1, sz_);
   }
   else {
-    olx_free(val);
-    return EmptyString();
+    if (sz_ == 0) {
+      olx_free(val);
+      return EmptyString();
+    }
+    return olxstr::FromExternal(val, sz_, 1024);
   }
 }
 
