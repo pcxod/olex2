@@ -3522,8 +3522,9 @@ void TGXApp::FinishDrawBitmap()  {
 //..............................................................................
 void TGXApp::UpdateLabels()  {
   TGlRenderer& r = GetRenderer();
-  for( size_t i=0; i < r.ObjectCount(); i++ )
+  for (size_t i = 0; i < r.ObjectCount(); i++) {
     r.GetObject(i).UpdateLabel();
+  }
 }
 //..............................................................................
 uint64_t TGXApp::Draw()  {
@@ -4809,6 +4810,7 @@ void TGXApp::ToDataItem(TDataItem& item, IOutputStream& zos) const {
   visibility.AddField("q_bonds", FQPeakBondsVisible);
   visibility.AddField("basis", FDBasis->IsVisible());
   visibility.AddField("cell", XFile().DUnitCell->IsVisible());
+  visibility.AddField("legend", FAtomLegend->IsVisible());
   // store objects visibility
   size_t a_cnt = 0;
   AtomIterator ai(*this);
@@ -5079,14 +5081,22 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
   CreateObjects(true);
   vis = FDBasis->IsVisible();
   FDBasis->SetVisible(visibility.GetFieldByName("basis").ToBool());
-  if (vis != FDBasis->IsVisible())
+  if (vis != FDBasis->IsVisible()) {
     OnGraphicsVisible.Execute(dynamic_cast<TBasicApp*>(this), FDBasis);
+  }
 
   vis = XFile().DUnitCell->IsVisible();
   XFile().DUnitCell->SetVisible(visibility.GetFieldByName("cell").ToBool());
   if (vis != XFile().DUnitCell->IsVisible()) {
     OnGraphicsVisible.Execute(dynamic_cast<TBasicApp*>(this),
       XFile().DUnitCell);
+  }
+
+  vis = FAtomLegend->IsVisible();
+  FAtomLegend->SetVisible(visibility.FindField("legend", TrueString()).ToBool());
+  if (vis != FAtomLegend->IsVisible()) {
+    OnGraphicsVisible.Execute(dynamic_cast<TBasicApp*>(this),
+      FAtomLegend);
   }
 
   const TDataItem* atom_labels = item.FindItem("AtomLabels");
