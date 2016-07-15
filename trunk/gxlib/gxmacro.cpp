@@ -132,6 +132,7 @@ void GXLibMacros::Export(TLibrary& lib) {
   gxlib_InitMacro(Label,
     "type-type of labels to make - subscript, brackers, default&;"
     "symm-symmetry dependent tag type {[$], #, X, full}&;"
+    "resi-add residue number(#) or name (n) like -resi=_# or -resi=@n"
     "a-aligns labels trying to avoid overlapping",
     fpAny,
     "Creates moveable labels for provided atoms/bonds/angles (selection)");
@@ -999,24 +1000,39 @@ void GXLibMacros::macLabel(TStrObjList &Cmds, const TParamList &Options,
   else {
     atoms = app.FindXAtoms(Cmds, true, false);
   }
-  short lt = 0, symm_tag = 0;
+  short lt = 0, symm_tag = 0, resi = 0;
   const olxstr str_lt = Options.FindValue("type");
   olxstr str_symm_tag = Options.FindValue("symm");
   // enforce the default
-  if (str_lt.Containsi("brackets"))
+  if (str_lt.Containsi("brackets")) {
     lt = 1;
-  if (str_lt.Containsi("subscript") || str_lt.Containsi("sb"))
+  }
+  if (str_lt.Containsi("subscript") || str_lt.Containsi("sb")) {
     lt |= 2;
-  if (str_lt.Containsi("superscript") || str_lt.Containsi("sp"))
+  }
+  if (str_lt.Containsi("superscript") || str_lt.Containsi("sp")) {
     lt |= 4;
+  }
+  olxstr resi_sep = Options.FindValue("resi");
+  if (!resi_sep.IsEmpty()) {
+    if (resi_sep.GetLast() == '#') {
+      resi = 1;
+    }
+    else {
+      resi = 2;
+    }
+    resi_sep.SetLength(resi_sep.Length() - 1);
+  }
   // have to kill labels in this case, for consistency of _$ or ^#
   if (str_symm_tag == '$' || str_symm_tag == '#' || str_symm_tag == 'X') {
-    for (size_t i=0; i < app.LabelCount(); i++)
+    for (size_t i = 0; i < app.LabelCount(); i++) {
       app.GetLabel(i).SetVisible(false);
+    }
     symm_tag = (str_symm_tag == '$' ? 1 : (str_symm_tag == '#' ? 2 : 3));
   }
-  else if (str_symm_tag.Equals("full"))
+  else if (str_symm_tag.Equals("full")) {
     symm_tag = 4;
+  }
   TTypeList<uint32_t> equivs;
   for (size_t i = 0; i < atoms.Count(); i++) {
     TXGlLabel& gxl = atoms[i]->GetGlLabel();
@@ -1027,17 +1043,32 @@ void GXLibMacros::macLabel(TStrObjList &Cmds, const TParamList &Options,
       olxstr bcc = atoms[i]->GetLabel().SubStringFrom(
         atoms[i]->GetType().symbol.Length());
       lb = atoms[i]->GetType().symbol;
-      if ((lt & 1) == 1)
-        bcc =  olxstr('(') << bcc << ')';
-      if ((lt & 2) == 2)
+      if ((lt & 1) == 1) {
+        bcc = olxstr('(') << bcc << ')';
+      }
+      if ((lt & 2) == 2) {
         lb << "\\-" << bcc;
-      else if ((lt & 4) == 4)
+      }
+      else if ((lt & 4) == 4) {
         lb << "\\+" << bcc;
-      else
+      }
+      else {
         lb << bcc;
+      }
     }
-    else
+    else {
       lb = atoms[i]->GetLabel();
+    }
+    if (resi != 0 && atoms[i]->CAtom().GetResiId() != 0) {
+      lb << resi_sep;
+      if (resi == 1) {
+        lb << atoms[i]->CAtom().GetResiId();
+      }
+      else {
+        lb << atoms[i]->CAtom().GetParent()->GetResidue(
+          atoms[i]->CAtom().GetResiId()).GetClassName();
+      }
+    }
     if (!atoms[i]->IsAUAtom()) {
       if (symm_tag >= 1  && symm_tag <= 3) {
         size_t pos = equivs.IndexOf(atoms[i]->GetMatrix().GetId());
@@ -1045,10 +1076,12 @@ void GXLibMacros::macLabel(TStrObjList &Cmds, const TParamList &Options,
           equivs.AddCopy(atoms[i]->GetMatrix().GetId());
           pos = equivs.Count() - 1;
         }
-        if (symm_tag == 1)
+        if (symm_tag == 1) {
           lb << "_$" << (pos + 1);
-        else if (symm_tag == 1)
+        }
+        else if (symm_tag == 1) {
           lb << "\\+" << (pos + 1);
+        }
         else {
           lb << "\\+" << RomanNumber::To(pos + 1).ToLowerCase();
         }
