@@ -2159,15 +2159,18 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To,
       undo().AddAtom(XA->CAtom(), oldL);
       processed << XA->CAtom();
       NameHydrogens(*XA, &undo());
-      if (checkBonds)
+      if (checkBonds) {
         CheckQBonds(*XA);
+      }
     }
   }
   else {
     TXAtom* XA = GetXAtom(From, false);
     if (XA != NULL) {
       Atoms << XA;
-      if (ClearSelection) SelectAll(false);
+      if (ClearSelection) {
+        SelectAll(false);
+      }
       undo = dynamic_cast<TNameUndo *>(Name(*XA, To));
     }
     else {
@@ -2190,8 +2193,9 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To,
           undo().AddAtom(XA->CAtom(), oldL);
           processed << XA->CAtom();
           NameHydrogens(*XA, &undo());
-          if (checkBonds)
+          if (checkBonds) {
             CheckQBonds(*XA);
+          }
         }
       }
       else if (From.CharAt(0) == '$') {
@@ -2213,8 +2217,9 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To,
             NameHydrogens(*XA, &undo());
             if (recreate) {
               ChangedAtoms.Add(XA);
-              if (checkBonds)
+              if (checkBonds) {
                 CheckQBonds(*XA);
+              }
             }
           }
         }
@@ -2231,8 +2236,9 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To,
             processed << XA->CAtom();
             undo().AddAtom(XA->CAtom(), oldL);
             NameHydrogens(*XA, &undo());
-            if (checkBonds)
+            if (checkBonds) {
               CheckQBonds(*XA);
+            }
           }
         }
         else
@@ -2240,8 +2246,9 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To,
       }
       else {  // C2? to C3? ; Q? to Ni? ...
         const cm_Element* elm = XElementLib::FindBySymbolEx(To);
-        if (elm == NULL)
+        if (elm == NULL) {
           throw TFunctionFailedException(__OlxSourceInfo, "wrong syntax");
+        }
         const bool to_element = XElementLib::IsElement(To);
         for (size_t i=0; i < Atoms.Count(); i++) {
           XA = (TXAtom*)Atoms[i];
@@ -2250,8 +2257,12 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To,
           olxstr NL = To;
           const bool recreate = XA->GetType() != *elm;
           if (to_element) {
-            if (XA->GetLabel().StartsFrom(XA->GetType().symbol))
+            if (XA->GetLabel().StartsFrom(XA->GetType().symbol)) {
               NL << XA->GetLabel().SubStringFrom(XA->GetType().symbol.Length());
+              if (XA->GetType() == iQPeakZ) {
+                NL = XA->CAtom().GetParent()->CheckLabel(&XA->CAtom(), NL);
+              }
+            }
           }
           else {
             for (size_t j=0; j < NL.Length(); j++) {
@@ -2262,8 +2273,9 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To,
                   NL[j] = Tmp.CharAt(qmi);
                   qmi++;
                 }
-                else
+                else {
                   NL[j] = '_';
+                }
               }
             }
           }
@@ -2276,8 +2288,9 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To,
           NameHydrogens(*XA, &undo());
           if (recreate) {
             ChangedAtoms.Add(XA);
-            if (checkBonds)
+            if (checkBonds) {
               CheckQBonds(*XA);
+            }
           }
         }
       }
@@ -3509,8 +3522,9 @@ void TGXApp::FinishDrawBitmap()  {
 //..............................................................................
 void TGXApp::UpdateLabels()  {
   TGlRenderer& r = GetRenderer();
-  for( size_t i=0; i < r.ObjectCount(); i++ )
+  for (size_t i = 0; i < r.ObjectCount(); i++) {
     r.GetObject(i).UpdateLabel();
+  }
 }
 //..............................................................................
 uint64_t TGXApp::Draw()  {
@@ -4796,6 +4810,7 @@ void TGXApp::ToDataItem(TDataItem& item, IOutputStream& zos) const {
   visibility.AddField("q_bonds", FQPeakBondsVisible);
   visibility.AddField("basis", FDBasis->IsVisible());
   visibility.AddField("cell", XFile().DUnitCell->IsVisible());
+  visibility.AddField("legend", FAtomLegend->IsVisible());
   // store objects visibility
   size_t a_cnt = 0;
   AtomIterator ai(*this);
@@ -5066,14 +5081,22 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
   CreateObjects(true);
   vis = FDBasis->IsVisible();
   FDBasis->SetVisible(visibility.GetFieldByName("basis").ToBool());
-  if (vis != FDBasis->IsVisible())
+  if (vis != FDBasis->IsVisible()) {
     OnGraphicsVisible.Execute(dynamic_cast<TBasicApp*>(this), FDBasis);
+  }
 
   vis = XFile().DUnitCell->IsVisible();
   XFile().DUnitCell->SetVisible(visibility.GetFieldByName("cell").ToBool());
   if (vis != XFile().DUnitCell->IsVisible()) {
     OnGraphicsVisible.Execute(dynamic_cast<TBasicApp*>(this),
       XFile().DUnitCell);
+  }
+
+  vis = FAtomLegend->IsVisible();
+  FAtomLegend->SetVisible(visibility.FindField("legend", TrueString()).ToBool());
+  if (vis != FAtomLegend->IsVisible()) {
+    OnGraphicsVisible.Execute(dynamic_cast<TBasicApp*>(this),
+      FAtomLegend);
   }
 
   const TDataItem* atom_labels = item.FindItem("AtomLabels");

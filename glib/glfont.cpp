@@ -23,8 +23,9 @@ TGlFont::TGlFont(AGlScene& parent, size_t _Id, const olxstr& name, size_t _Small
 {
   FontBase = ~0;
   CharSizes.SetCount(256);
-  for( int i=0; i < 256; i++ )
+  for (int i = 0; i < 256; i++) {
     CharSizes[i] = new TFontCharSize();
+  }
   CharOffset = 2;
   Flags = 0;
   Textures = NULL;
@@ -36,27 +37,28 @@ TGlFont::TGlFont(AGlScene& parent, size_t _Id, const olxstr& name, size_t _Small
   VectorScale = 700;
 }
 //..............................................................................
-TGlFont::~TGlFont()  {
+TGlFont::~TGlFont() {
   CharSizes.DeleteItems();
-  if( olx_is_valid_index(FontBase) )
+  if (olx_is_valid_index(FontBase)) {
     olx_gl::deleteLists(FontBase, 256);
-  if( Textures != NULL )  {
+  }
+  if (Textures != NULL) {
     olx_gl::deleteTextures(256, Textures);
-    delete [] Textures;
+    delete[] Textures;
   }
 }
 //..............................................................................
-void TGlFont::ClearData()  {
-  for( int i=0; i < 256; i++ )  {
+void TGlFont::ClearData() {
+  for (int i = 0; i < 256; i++) {
     TFontCharSize* cs = CharSizes[i];
     cs->Top = -1;     cs->Left = -1;
     cs->Bottom = -1;  cs->Right = -1;
   }
   MaxWidth = MaxHeight = 0;
   Leftmost = 1000; // an arbitrary value
-  Topmost  = 1000;
+  Topmost = 1000;
   Flags = 0;
-  if( olx_is_valid_index(FontBase) )  {
+  if (olx_is_valid_index(FontBase)) {
     olx_gl::deleteLists(FontBase, 256);
     FontBase = (GLuint)~0;
   }
@@ -70,14 +72,14 @@ void TGlFont::ClearData()  {
 size_t TGlFont::TextWidth(const olxstr& Text, short& state) const {
   size_t w = 0;
   const size_t tl = Text.Length();
-  for( size_t i=0; i < tl; i++ )  {
-    if( Text.CharAt(i) == '\\' && !is_escaped(Text, i) && (i+1) < tl )  {
-      if( Text.CharAt(i+1) == '+' || Text.CharAt(i+1) == '-' )  {
+  for (size_t i = 0; i < tl; i++) {
+    if (Text.CharAt(i) == '\\' && !is_escaped(Text, i) && (i + 1) < tl) {
+      if (Text.CharAt(i + 1) == '+' || Text.CharAt(i + 1) == '-') {
         state = 1;
         i++;
         continue;
       }
-      else if( Text.CharAt(i+1) == '0' )  {
+      else if (Text.CharAt(i + 1) == '0') {
         i++;
         state = 0;
         continue;
@@ -86,23 +88,28 @@ size_t TGlFont::TextWidth(const olxstr& Text, short& state) const {
     const TGlFont& glf = (state != 0 && olx_is_valid_index(SmallId))
       ? Parent.GetSmallFont(SmallId) : *this;
     TFontCharSize* cs = glf.CharSize(Text[i]);
-    if( cs == NULL )  cs = glf.CharSize('?');
-    if( glf.IsFixedWidth() )
+    if (cs == NULL)  cs = glf.CharSize('?');
+    if (glf.IsFixedWidth())
       w += glf.MaxWidth;
-    else  {
-      if( i < (tl-1) )
+    else {
+      if (i < (tl - 1))
         w += (cs->Right + glf.CharOffset);
       else
         w += cs->Right;
     }
   }
-  return w;
+  return AdjustVectorFontSize(w);
 }
 //..............................................................................
 double TGlFont::GetCharHalfWidth(short state) const {
-  if( state == 0 || !olx_is_valid_index(SmallId) )
-    return (double)MaxWidth/2;
-  return (double)(Parent.GetSmallFont(SmallId).MaxWidth)/2;
+  double rv;
+  if (state == 0 || !olx_is_valid_index(SmallId)) {
+    rv = (double)MaxWidth / 2;
+  }
+  else {
+    rv = (double)(Parent.GetSmallFont(SmallId).MaxWidth) / 2;
+  }
+  return AdjustVectorFontSize(rv);
 }
 //..............................................................................
 size_t TGlFont::TextWidth(const olxstr &Text) const {
@@ -111,7 +118,7 @@ size_t TGlFont::TextWidth(const olxstr &Text) const {
 }
 //..............................................................................
 size_t TGlFont::MaxTextLength(size_t width) const {
-  return width/MaxWidth;
+  return AdjustVectorFontSize(width/MaxWidth);
 }
 //..............................................................................
 size_t TGlFont::LengthForWidth(const olxstr& str, size_t width) const {
@@ -122,17 +129,18 @@ size_t TGlFont::LengthForWidth(const olxstr& str, size_t width) const {
 size_t TGlFont::LengthForWidth(const olxstr& str,
   size_t width, short& state) const
 {
-  if( width/MaxWidth > str.Length() )
+  if (MaxTextLength(width) > str.Length()) {
     return str.Length();
+  }
   size_t w = 0;
-  for( size_t i=0; i < str.Length(); i++ )  {
-    if( str.CharAt(i) == '\\' && !is_escaped(str, i) && (i+1) < str.Length() )  {
-      if( str.CharAt(i+1) == '+' || str.CharAt(i+1) == '-' )  {
+  for (size_t i = 0; i < str.Length(); i++) {
+    if (str.CharAt(i) == '\\' && !is_escaped(str, i) && (i + 1) < str.Length()) {
+      if (str.CharAt(i + 1) == '+' || str.CharAt(i + 1) == '-') {
         state = 1;
         i++;
         continue;
       }
-      else if( str.CharAt(i+1) == '0' )  {
+      else if (str.CharAt(i + 1) == '0') {
         i++;
         state = 0;
         continue;
@@ -141,58 +149,64 @@ size_t TGlFont::LengthForWidth(const olxstr& str,
     const TGlFont& glf = (state != 0 && olx_is_valid_index(SmallId))
       ? Parent.GetSmallFont(SmallId) : *this;
     TFontCharSize* cs = glf.CharSize(str.CharAt(i));
-    if( cs == NULL )  cs = glf.CharSize('?');
-    if( str.CharAt(i) == '\t' && !is_escaped(str, i) )  {
-      const int count = 8-i%8-1;
-      if( count != 0 )  {
-        if( IsFixedWidth() )
+    if (cs == NULL)  cs = glf.CharSize('?');
+    if (str.CharAt(i) == '\t' && !is_escaped(str, i)) {
+      const int count = 8 - i % 8 - 1;
+      if (count != 0) {
+        if (IsFixedWidth()) {
           w += count*cs->Right;
-        else
-          w += count*(cs->Right+glf.CharOffset);
+        }
+        else {
+          w += count*(cs->Right + glf.CharOffset);
+        }
       }
     }
-    else  {
-      if( glf.IsFixedWidth() )
+    else {
+      if (glf.IsFixedWidth()) {
         w += glf.MaxWidth;
-      else  {
-        if( (i+1) < str.Length() )
+      }
+      else {
+        if ((i + 1) < str.Length()) {
           w += (cs->Right + glf.CharOffset);
-        else
+        }
+        else {
           w += cs->Right;
+        }
       }
     }
-    if( w >= width )
+    if (AdjustVectorFontSize(w) >= width) {
       return i;
+    }
   }
   return str.Length();
 }
 //..............................................................................
 uint16_t TGlFont::TextHeight(const olxstr &Text) const {
-  if( Text.IsEmpty() )  {
-    if( olx_is_valid_index(SmallId) )  {
-      return (uint16_t)olx_round((double)MaxHeight*0.75+
-        Parent.GetSmallFont(SmallId).MaxHeight);
+  if (Text.IsEmpty()) {
+    if (olx_is_valid_index(SmallId)) {
+      return (uint16_t)AdjustVectorFontSize(olx_round((double)MaxHeight*0.75 +
+        Parent.GetSmallFont(SmallId).MaxHeight));
     }
-    return MaxHeight;
+    return AdjustVectorFontSize(MaxHeight);
   }
-  uint16_t w = 0, y_shift=0;
-  const uint16_t st = MaxHeight/4;
+  uint16_t w = 0, y_shift = 0;
+  const uint16_t st = MaxHeight / 4;
   bool small_font = false;
-  for( size_t i=0; i < Text.Length(); i++ )  {
-    if( Text.CharAt(i) == '\\' && !is_escaped(Text, i) && (i+1) < Text.Length() )  {
-      if( Text.CharAt(i+1) == '+' )  {
-        y_shift = 2*st;
+  for (size_t i = 0; i < Text.Length(); i++) {
+    if (Text.CharAt(i) == '\\' && !is_escaped(Text, i) && (i + 1) < Text.Length()) {
+      if (Text.CharAt(i + 1) == '+') {
+        y_shift = 2 * st;
         small_font = true;
         i++;
         continue;
       }
-      else if( Text.CharAt(i+1) == '-' )  {
+      else if (Text.CharAt(i + 1) == '-') {
         y_shift = -st;
         small_font = true;
         i++;
         continue;
       }
-      else if( Text.CharAt(i+1) == '0' )  {
+      else if (Text.CharAt(i + 1) == '0') {
         y_shift = 0;
         small_font = false;
         i++;
@@ -202,34 +216,37 @@ uint16_t TGlFont::TextHeight(const olxstr &Text) const {
     const TGlFont& glf = (small_font && olx_is_valid_index(SmallId))
       ? Parent.GetSmallFont(SmallId) : *this;
     TFontCharSize* cs = glf.CharSize(Text.CharAt(i));
-    if( cs == NULL )  cs = glf.CharSize('?');
+    if (cs == NULL)  cs = glf.CharSize('?');
     const short df = cs->Bottom - cs->Top + y_shift;
-    if( df > w )
+    if (df > w) {
       w = df;
+    }
   }
-  return w;
+  return AdjustVectorFontSize(w);
 }
 //..............................................................................
 TTextRect TGlFont::GetTextRect(const olxstr& str) const {
   TTextRect tr;
   tr.top = str.IsEmpty() ? MaxHeight : 100;
-  const double st = (double)MaxHeight/4;
-  if( IsVectorFont() )  {
-    double scale = 1, y_shift=0;
-    for( size_t i=0; i < str.Length(); i++ )  {
+  const double st = (double)MaxHeight / 4;
+  if (IsVectorFont()) {
+    double scale = 1, y_shift = 0;
+    for (size_t i = 0; i < str.Length(); i++) {
       TFontCharSize* cs = CharSize(str.CharAt(i));
-      if( cs == NULL )  cs = CharSize('?');
-      if( str.CharAt(i) == '\\' && !is_escaped(str, i) && (i+1) < str.Length() )  {
-        if( str.CharAt(i+1) == '+' || str.CharAt(i+1) == '-' )  {
+      if (cs == NULL) {
+        cs = CharSize('?');
+      }
+      if (str.CharAt(i) == '\\' && !is_escaped(str, i) && (i + 1) < str.Length()) {
+        if (str.CharAt(i + 1) == '+' || str.CharAt(i + 1) == '-') {
           scale = 0.75;
-          if( str.CharAt(i+1) == '+' )
-            y_shift = 2*st;
+          if (str.CharAt(i + 1) == '+')
+            y_shift = 2 * st;
           else
             y_shift = -st;
           i++;
           continue;
         }
-        else if( str.CharAt(i+1) == '0' )  {
+        else if (str.CharAt(i + 1) == '0') {
           scale = 1;
           y_shift = 0;
           i++;
@@ -237,34 +254,38 @@ TTextRect TGlFont::GetTextRect(const olxstr& str) const {
         }
       }
       //const double dt = cs->Top+y_shift*scale;
-      const double dt = (cs->Top+y_shift)*scale;
-      if( dt < tr.top )  tr.top = dt;
+      const double dt = (cs->Top + y_shift)*scale;
+      if (dt < tr.top) {
+        tr.top = dt;
+      }
       const double dy = (cs->Bottom - cs->Top + y_shift)*scale;
-      if( dy > tr.height )  tr.height = dy;
-      tr.width += (cs->Right+CharOffset)*scale;  // left is unused in drawing
+      if (dy > tr.height) {
+        tr.height = dy;
+      }
+      tr.width += (cs->Right + CharOffset)*scale;  // left is unused in drawing
     }
-    const double scalex = (double)PointSize/(15*VectorScale);
+    const double scalex = (double)PointSize / (15 * VectorScale);
     tr.height -= tr.top;
     tr.left *= scalex;
     tr.top *= scalex;
     tr.width *= scalex;
     tr.height *= scalex;
   }
-  else  {
+  else {
     double y_shift = 0;
     bool small_fnt = false;
-    for( size_t i=0; i < str.Length(); i++ )  {
-      if( str.CharAt(i) == '\\' && !is_escaped(str, i) && (i+1) < str.Length() )  {
-        if( str.CharAt(i+1) == '+' || str.CharAt(i+1) == '-' )  {
-          if( str.CharAt(i+1) == '+' )
-            y_shift = 2*st;
+    for (size_t i = 0; i < str.Length(); i++) {
+      if (str.CharAt(i) == '\\' && !is_escaped(str, i) && (i + 1) < str.Length()) {
+        if (str.CharAt(i + 1) == '+' || str.CharAt(i + 1) == '-') {
+          if (str.CharAt(i + 1) == '+')
+            y_shift = 2 * st;
           else
             y_shift = -st;
           small_fnt = true;
           i++;
           continue;
         }
-        else if( str.CharAt(i+1) == '0' )  {
+        else if (str.CharAt(i + 1) == '0') {
           small_fnt = false;
           y_shift = 0;
           i++;
@@ -274,14 +295,21 @@ TTextRect TGlFont::GetTextRect(const olxstr& str) const {
       const TGlFont& glf = (small_fnt && olx_is_valid_index(SmallId))
         ? Parent.GetSmallFont(SmallId) : *this;
       TFontCharSize* cs = glf.CharSize(str.CharAt(i));
-      if( cs == NULL )  cs = glf.CharSize('?');
-      const double dt = (glf.MaxHeight-cs->Bottom) + y_shift;
-      if( dt < tr.top )  tr.top = dt;
-      const double dy = (glf.MaxHeight-cs->Top) + y_shift;
-      if( dy > tr.height )  tr.height = dy;
-      if( glf.IsFixedWidth() )
+      if (cs == NULL) {
+        cs = glf.CharSize('?');
+      }
+      const double dt = (glf.MaxHeight - cs->Bottom) + y_shift;
+      if (dt < tr.top) {
+        tr.top = dt;
+      }
+      const double dy = (glf.MaxHeight - cs->Top) + y_shift;
+      if (dy > tr.height) {
+        tr.height = dy;
+      }
+      if (glf.IsFixedWidth()) {
         tr.width += glf.MaxWidth;
-      else  {
+      }
+      else {
         tr.width += (cs->Right + glf.CharOffset);
       }
     }

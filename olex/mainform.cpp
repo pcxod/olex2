@@ -591,7 +591,13 @@ void TMainForm::XApp(Olex2App *XA)  {
   this_InitMacroD(Help, "c-specifies commands category", fpAny,
     "Prints available information. If no arguments provided prints available "
     "commands");
-  this_InitMacro(AddLabel, , fpThree|fpFive);
+  this_InitMacroD(AddLabel,
+    EmptyString(),
+    fpThree|fpFive,
+    "Adds a new label to the collection named by the first argument.\n"
+    "For 3 arguments: [collection_name] 'x y z' label, where 'x y z' may be "
+    "obtained by a call to crd() function\n"
+    "For 5 arguments: [collection_name] x y z label");
 
   this_InitMacroD(Hide,
     "b-also hides all bonds atatched to the selected atoms",

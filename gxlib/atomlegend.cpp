@@ -51,6 +51,7 @@ void TAtomLegend::Fit() {
     Parent.GetScene().FindFontIndexForType<TXAtom>(), true);
   const uint16_t th = glf.TextHeight(EmptyString());
   const double LineSpacer = 0.05*th;
+  Width = glf.GetMaxHeight();
   Height = glf.GetMaxHeight() * text.Count();
   Height += (uint16_t)olx_round(LineSpacer*(text.Count() - 1));
 }
@@ -80,7 +81,8 @@ bool TAtomLegend::Orient(TGlPrimitive& P) {
     const double hh = Parent.GetHeight() / 2;
     const double GlLeft = ((Left + Width + GetCenter()[0])*es - hw) + 5;
     const double scale = Parent.GetViewZoom() == 1.0 ? 1.0 : 1. / Parent.GetExtraZoom();
-    const double GlTop = (hh - (Top - GetCenter()[1])*es - Height*scale) + 0.1;
+    const double GlTop = (hh - (Top - GetCenter()[1])*es - Height*scale) +
+      (glf.IsVectorFont() ? glf.GetPointSize()*scale/2.5 : 0.1);
     const double LineSpacer = 0.05*th;
     vec3d T(GlLeft, GlTop, Z);
     for (size_t i = 0; i < text.Count(); i++) {
@@ -89,7 +91,12 @@ bool TAtomLegend::Orient(TGlPrimitive& P) {
         glf.LengthForWidth(text[ii], Parent.GetWidth()));
       const TTextRect tr = glf.GetTextRect(line);
       //T[1] -= tr.top*scale;
-      Parent.DrawTextSafe(T, line, glf);
+      if (glf.IsVectorFont()) {
+        glf.DrawVectorText(T * Parent.GetScale(), line, scale);
+      }
+      else {
+        Parent.DrawTextSafe(T, line, glf);
+      }
       //T[1] += (olx_max(tr.height, glf.GetMaxHeight()) + LineSpacer)*scale;
       T[1] += (glf.GetMaxHeight() + LineSpacer)*scale;
     }

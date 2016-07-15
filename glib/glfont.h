@@ -73,16 +73,29 @@ protected:
   const olxcstr& DefinePSChar(olxch ch, const double& drawScale,
     PSRenderContext& context) const;
   void _DrawText(const vec3d& from, const olxstr& text, double scale) const;
+  template <class type_t>
+  type_t AdjustVectorFontSize(type_t v) const {
+    return (IsVectorFont() && GetPointSize() != 15)
+      ? (type_t)(v*GetPointSize()/15.0) : v;
+  }
 public:
   TGlFont(AGlScene& parent, size_t _Id, const olxstr& name, size_t _SmallId=~0);
   virtual ~TGlFont();
 
   void ClearData(); // must be called to reset all data
 
-  inline uint16_t GetMaxWidth() const {  return MaxWidth;  }
-  inline uint16_t GetMaxHeight() const {  return MaxHeight;  }
-  inline int16_t GetLeftmost() const {  return Leftmost;  }
-  inline int16_t GetTopmost() const {  return Topmost;  }
+  inline uint16_t GetMaxWidth() const {
+    return AdjustVectorFontSize(MaxWidth);
+  }
+  inline uint16_t GetMaxHeight() const {
+    return AdjustVectorFontSize(MaxHeight);
+  }
+  inline int16_t GetLeftmost() const {
+    return AdjustVectorFontSize(Leftmost);
+  }
+  inline int16_t GetTopmost() const {
+    return AdjustVectorFontSize(Topmost);
+  }
   inline double GetVectorScale() const {  return VectorScale;  }
   size_t GetId() const {  return Id;  }
   DefPropP(uint16_t, PointSize)
