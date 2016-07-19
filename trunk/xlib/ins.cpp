@@ -1899,7 +1899,7 @@ void TIns::_SaveHklInfo(TStrList& SL, bool solution) {
       SL.Add("MERG ") << GetRM().GetMERG();
     }
     if (!GetRM().GetBASF().IsEmpty()) {
-      HyphenateIns("BASF", GetRM().GetBASFStr(), SL);
+      HyphenateIns("BASF ", GetRM().GetBASFStr(), SL);
     }
     if (GetRM().HasSHEL()) {
       SL.Add("SHEL ") << GetRM().GetSHELStr();
