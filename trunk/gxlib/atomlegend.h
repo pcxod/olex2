@@ -38,6 +38,7 @@ public:
   bool OnMouseUp(const IOlxObject *Sender, const TMouseData& Data);
   virtual void Update();
   virtual void UpdateLabel() { Fit(); }
+  virtual void SetVisible(bool v);
 };
 EndGxlNamespace()
 

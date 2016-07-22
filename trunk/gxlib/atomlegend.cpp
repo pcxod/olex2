@@ -9,7 +9,6 @@ TAtomLegend::TAtomLegend(TGlRenderer& Render, const olxstr& collectionName)
   SetMove2D(true);
   SetMoveable(true);
   SetSelectable(false);
-  SetVisible(true);
   Top = Left = 0;
   Width = 32;
   Height = 128;
@@ -44,6 +43,7 @@ void TAtomLegend::Create(const olxstr& cName) {
   TGlPrimitive& sp = GPC.NewPrimitive("Sphere", sgloSphere);
   sp.Params[0] = 1; sp.Params[1] = sp.Params[2] = 10;
   sp.SetProperties(glm);
+  AGDrawObject::SetVisible(GS.GetParam("visible", TrueString(), true).ToBool());
 }
 //.............................................................................
 void TAtomLegend::Fit() {
@@ -223,5 +223,11 @@ void TAtomLegend::Update() {
     text.Add(elms[i]->symbol);
   }
   Fit();
+}
+//.............................................................................
+void TAtomLegend::SetVisible(bool v) {
+  AGDrawObject::SetVisible(v);
+  GetPrimitives().GetStyle().SetParam("visible",
+    v ? TrueString() : FalseString(), true);
 }
 //.............................................................................
