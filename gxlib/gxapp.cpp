@@ -2132,6 +2132,9 @@ TUndoData* TGXApp::Name(TXAtom& XA, const olxstr& _Name) {
     undo->AddAtom(*duplicates[i], l);
   }
   UpdateDuplicateLabels();
+  if (FAtomLegend->IsVisible()) {
+    FAtomLegend->Update();
+  }
   return undo;
 }
 //..............................................................................
@@ -2241,8 +2244,9 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To,
             }
           }
         }
-        else
+        else {
           throw TFunctionFailedException(__OlxSourceInfo, "wrong syntax");
+        }
       }
       else {  // C2? to C3? ; Q? to Ni? ...
         const cm_Element* elm = XElementLib::FindBySymbolEx(To);
@@ -2317,6 +2321,9 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To,
   if (NameResi) {
     undo().AddAction(SynchroniseResidues(
       TCAtomPList(Atoms, FunctionAccessor::MakeConst(&TXAtom::CAtom))));
+  }
+  if (FAtomLegend->IsVisible()) {
+    FAtomLegend->Update();
   }
   return undo.release();
 }
@@ -2747,27 +2754,34 @@ TUndoData* TGXApp::DeleteXObjects(const AGDObjList& L)  {
   return DeleteXAtoms(atoms);
 }
 //..............................................................................
-TUndoData* TGXApp::DeleteXAtoms(TXAtomPList& L)  {
-  if (L.IsEmpty()) return NULL;
+TUndoData* TGXApp::DeleteXAtoms(TXAtomPList& L) {
+  if (L.IsEmpty()) {
+    return 0;
+  }
   TSAtomPList deleted;
   bool safe_afix = TXApp::DoUseSafeAfix();
-  for( size_t i=0; i < L.Count(); i++ )  {
+  for (size_t i = 0; i < L.Count(); i++) {
     TXAtom* XA = L[i];
-    if (XA->IsDeleted())  continue;
+    if (XA->IsDeleted()) {
+      continue;
+    }
     deleted.Add(XA);
     if (XA->GetType().z > 1) {
-      for (size_t j=0; j < XA->NodeCount();j++) {
+      for (size_t j = 0; j < XA->NodeCount(); j++) {
         TXAtom& SH = XA->Node(j);
-        if (SH.IsDeleted() || SH.GetType() == iQPeakZ)
+        if (SH.IsDeleted() || SH.GetType() == iQPeakZ) {
           continue;
+        }
         if (SH.GetType() == iHydrogenZ) {
           SH.SetDeleted(true);
           deleted.Add(SH);
         }
         else if (safe_afix) { // go one level deeper
-          for (size_t k=0; k < SH.NodeCount(); k++) {
+          for (size_t k = 0; k < SH.NodeCount(); k++) {
             TXAtom& SH1 = SH.Node(k);
-            if (SH1.IsDeleted() || SH1.GetType() != iHydrogenZ) continue;
+            if (SH1.IsDeleted() || SH1.GetType() != iHydrogenZ) {
+              continue;
+            }
             if (SH1.CAtom().GetParentAfixGroup() != NULL &&
               SH1.CAtom().GetParentAfixGroup()->GetM() != 0 &&
               TNetwork::IsBondAllowed(XA->CAtom(), SH1.CAtom()))
@@ -2784,11 +2798,11 @@ TUndoData* TGXApp::DeleteXAtoms(TXAtomPList& L)  {
   //CenterView();
   TUndoData *undo = new TDeleteUndo(NULL);
   olxdict<const TLattice *, TDeleteUndo *, TPointerComparator> lud;
-  for (size_t i=0; i < deleted.Count(); i++) {
+  for (size_t i = 0; i < deleted.Count(); i++) {
     TDeleteUndo *du = lud.Find(&deleted[i]->GetParent(), NULL);
     if (du == NULL) {
       lud(&deleted[i]->GetParent(),
-        (du=new TDeleteUndo(
+        (du = new TDeleteUndo(
           UndoAction::New(&deleted[i]->GetParent(), &TLattice::undoDelete))));
       undo->AddAction(du);
     }
@@ -2796,10 +2810,13 @@ TUndoData* TGXApp::DeleteXAtoms(TXAtomPList& L)  {
   }
   GetSelection().Clear();
   UpdateConnectivity();
+  if (FAtomLegend->IsVisible()) {
+    FAtomLegend->Update();
+  }
   return undo;
 }
 //..............................................................................
-void TGXApp::SelectBondsWhere(const olxstr &Where, bool Invert)  {
+void TGXApp::SelectBondsWhere(const olxstr &Where, bool Invert) {
   olxstr str = Where.ToLowerCase();
   if (str.Contains("xatom") || str.Contains("satom")) {
     NewLogEntry(logError) << "SelectBonds: xatom/satom are not allowed here";
@@ -2828,8 +2845,9 @@ void TGXApp::SelectBondsWhere(const olxstr &Where, bool Invert)  {
         GetRenderer().Select(xb);
     }
   }
-  else
+  else {
     NewLogEntry(logError) << SyntaxParser.Errors().Text(NewLineSequence());
+  }
 }
 //..............................................................................
 void TGXApp::SelectAtomsWhere(const olxstr &Where, bool Invert)  {
