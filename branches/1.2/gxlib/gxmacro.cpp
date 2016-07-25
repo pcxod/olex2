@@ -4766,11 +4766,16 @@ void GXLibMacros::macCalcSurf(TStrObjList &Cmds, const TParamList &Options,
 void GXLibMacros::macLegend(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
-  if (app.AtomLegend().IsVisible()) {
-    app.AtomLegend().SetVisible(false);
-    return;
+  bool v = !app.AtomLegend().IsVisible();
+  if (!Cmds.IsEmpty()) {
+    v = Cmds[0].ToBool();
   }
-  app.AtomLegend().Update();
-  app.AtomLegend().SetVisible(true);
+  if (!v) {
+    app.AtomLegend().SetVisible(false);
+  }
+  else {
+    app.AtomLegend().Update();
+    app.AtomLegend().SetVisible(true);
+  }
 }
 //.............................................................................
