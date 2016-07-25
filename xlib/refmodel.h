@@ -420,11 +420,12 @@ Friedel opposites of components 1 ... m
     BASF_Vars.Add(NULL);
   }
   template <class list> void SetBASF(const list& bs)  {
-    BASF.SetCount(bs.Count());
-    BASF_Vars.SetCount(bs.Count());
+    size_t cnt = BASF.Count();
+    BASF.SetCount(cnt+bs.Count());
+    BASF_Vars.SetCount(BASF.Count());
     for (size_t i=0; i < bs.Count(); i++) {
-      BASF_Vars[i] = NULL;
-      Vars.SetParam(*this, (short)i, bs[i].ToDouble());
+      BASF_Vars[cnt+i] = NULL;
+      Vars.SetParam(*this, (short)(cnt+i), bs[i].ToDouble());
     }
   }
   void ClearBASF() {

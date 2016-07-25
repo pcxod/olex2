@@ -531,8 +531,9 @@ void TIns::_ProcessAfix0(ParseContext& cx)  {
 bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
   ParseContext& cx, size_t& i)
 {
-  if( _ParseIns(cx.rm, Toks) )
+  if (_ParseIns(cx.rm, Toks)) {
     return true;
+  }
   else if( !cx.CellFound && Toks[0].Equalsi("CELL") )  {
     if( Toks.Count() == 8 )  {
       cx.rm.expl.SetRadiation( Toks[1].ToDouble() );
@@ -1892,19 +1893,24 @@ void TIns::_SaveRefMethod(TStrList& SL)  {
   }
 }
 //..............................................................................
-void TIns::_SaveHklInfo(TStrList& SL, bool solution)  {
-  if( !solution )  {
-    if( GetRM().HasMERG() )
+void TIns::_SaveHklInfo(TStrList& SL, bool solution) {
+  if (!solution) {
+    if (GetRM().HasMERG()) {
       SL.Add("MERG ") << GetRM().GetMERG();
-    if( !GetRM().GetBASF().IsEmpty() )
-      SL.Add("BASF ") << GetRM().GetBASFStr();
-    if( GetRM().HasSHEL() )
+    }
+    if (!GetRM().GetBASF().IsEmpty()) {
+      HyphenateIns("BASF ", GetRM().GetBASFStr(), SL);
+    }
+    if (GetRM().HasSHEL()) {
       SL.Add("SHEL ") << GetRM().GetSHELStr();
-    if( GetRM().HasTWIN() )
+    }
+    if (GetRM().HasTWIN()) {
       SL.Add("TWIN ") << GetRM().GetTWINStr();
-    if( GetRM().HasOMIT() )
+    }
+    if (GetRM().HasOMIT()) {
       SL.Add("OMIT ") << GetRM().GetOMITStr();
-    for( size_t i=0; i < GetRM().OmittedCount(); i++ )  {
+    }
+    for (size_t i = 0; i < GetRM().OmittedCount(); i++) {
       const vec3i& r = GetRM().GetOmitted(i);
       SL.Add("OMIT ") << r[0] << ' ' << r[1] << ' ' << r[2];
     }

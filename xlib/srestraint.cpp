@@ -200,7 +200,7 @@ void TSRestraintList::ValidateRestraint(TSimpleRestraint& sr)  {
         break;
       }
     }
-    if (AllAtomsInd != InvalidIndex) {
+    if (AllAtomsInd != InvalidIndex && Restraints.Count() > 1) {
       for (size_t i = 0; i < Restraints.Count(); i++) {
         if (i != AllAtomsInd) {
           Restraints[i].Delete();
