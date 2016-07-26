@@ -132,8 +132,8 @@ void GXLibMacros::Export(TLibrary& lib) {
   gxlib_InitMacro(Label,
     "type-type of labels to make - subscript, brackers, default&;"
     "symm-symmetry dependent tag type {[$], #, X, full}&;"
-    "resi-add residue number(#) or name (n) like -resi=_# or -resi=@n"
-    "a-aligns labels trying to avoid overlapping",
+    "resi-add residue number(#) or name (n) like -resi=_# or -resi=@n&;"
+    "a-aligns labels trying to avoid overlapping&;",
     fpAny,
     "Creates moveable labels for provided atoms/bonds/angles (selection)");
   gxlib_InitMacro(ShowH,

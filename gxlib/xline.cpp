@@ -58,9 +58,6 @@ bool TXLine::Orient(TGlPrimitive& GlP)  {
   }
   else {
     return TXBond::Orient(GlP);
-    //olx_gl::translate(FBase);
-    //olx_gl::rotate(Params()[0], Params()[1], Params()[2], 0.0);
-    //olx_gl::scale(Params()[4], Params()[4], Params()[3]);
   }
   return false;
 }
@@ -84,11 +81,6 @@ void TXLine::FromDataItem(const TDataItem &di)  {
 }
 //..............................................................................
 void TXLine::UpdateLabel() {
-  if (GetGlLabel().IsVisible() && this->IsMoveable()) {
-    GetGlLabel().SetOffset((FBase + (FEdge - FBase).NormaliseTo(Params()[3])) / 2);
-    GetGlLabel().SetLabel(olxstr::FormatFloat(3, GetLength()));
-  }
-  //GetGlLabel().SetVisible(true);
   TXBond::UpdateLabel();
 }
 //..............................................................................
@@ -99,12 +91,12 @@ void TXLine::Update() {
 bool TXLine::DoTranslate(const vec3d& t) {
   FBase += t;
   FEdge += t;
-  GetGlLabel().SetOffset((FBase*2+(FEdge-FBase).NormaliseTo(Params()[3]))/2);
+  GetGlLabel().SetOffset((FBase + FEdge) / 2);
   return true;
 }
 //..............................................................................
 void TXLine::SetLength(double V)  {
   Params()[3] = V;
-  GetGlLabel().SetOffset((FBase*2+(FEdge-FBase).NormaliseTo(Params()[3]))/2);
+  GetGlLabel().SetOffset(FBase + (FEdge- FBase).NormaliseTo(V/2));
 }
 //..............................................................................
