@@ -34,6 +34,7 @@ TXApp::TXApp(const olxstr &basedir, bool)
   safe_afix = true;
   safe_afix_i = false;
   interactions_i = false;
+  max_label_length = 0;
 }
 //..............................................................................
 TXApp::TXApp(const olxstr &basedir, ASObjectProvider* objectProvider,
@@ -1106,13 +1107,31 @@ bool TXApp::DoPreserveFVARs() {
 //..............................................................................
 bool TXApp::DoUseSafeAfix() {
   TXApp &a = GetInstance();
-  if (a.safe_afix_i)
+  if (a.safe_afix_i) {
     return a.safe_afix;
+  }
   else {
     a.safe_afix = TBasicApp::GetInstance().GetOptions()
     .FindValue("safe_afix", TrueString()).ToBool();
     a.safe_afix_i = true;
     return a.safe_afix;
+  }
+}
+//..............................................................................
+size_t TXApp::GetMaxLabelLength() {
+  TXApp &a = GetInstance();
+  if (a.max_label_length != 0) {
+    return a.max_label_length;
+  }
+  else {
+    try {
+      a.max_label_length = TBasicApp::GetInstance().GetOptions()
+        .FindValue("max_label_length", "4").ToSizeT();
+    }
+    catch (...) {
+      a.max_label_length = 4;
+    }
+    return a.max_label_length;
   }
 }
 //..............................................................................

@@ -1021,9 +1021,11 @@ void TIns::FixTypeListAndLabels() {
   }
   for (size_t i=0; i < GetAsymmUnit().ResidueCount(); i++ ) {
     TResidue& residue = GetAsymmUnit().GetResidue(i);
-    LabelCorrector lc;
+    LabelCorrector lc(TXApp::GetMaxLabelLength());
     for (size_t j=0; j < residue.Count(); j++) {
-      if (residue[j].IsDeleted()) continue;
+      if (residue[j].IsDeleted()) {
+        continue;
+      }
       residue[j].SetSaved(false);
       // fix the SFAC, if wrong
       if (!elms.Contains(&residue[j].GetType())) {
@@ -2137,7 +2139,7 @@ void TIns::ValidateRestraintsAtomNames(RefinementModel& rm, bool report)  {
   restraints.Add(&rm.rDihedralAngle);
   restraints.Add(&rm.rFixedUeq);
   restraints.Add(&rm.rSimilarUeq);
-  LabelCorrector lc(rm.aunit);
+  LabelCorrector lc(rm.aunit, TXApp::GetMaxLabelLength());
   olxstr err_names;
   for (size_t i=0; i < restraints.Count(); i++) {
     TSRestraintList& srl = *restraints[i];
