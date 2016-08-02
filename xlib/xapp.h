@@ -68,6 +68,7 @@ protected:
   double min_hbond_angle;
   bool min_hbond_angle_i;
   bool safe_afix, safe_afix_i;
+  size_t max_label_length;
   bool interactions_i;
   SortedObjectList<int, TPrimitiveComparator> interactions_from,
     interactions_to;
@@ -212,6 +213,7 @@ public:
   static bool DoPreserveFVARs();
   // if true - AFIX are validated adter naming, deleting and HADD
   static bool DoUseSafeAfix();
+  static size_t GetMaxLabelLength();
   // used in the analysis of what short interactions to display
   static SortedObjectList<int, TPrimitiveComparator>& GetInteractionsFrom();
   static SortedObjectList<int, TPrimitiveComparator>& GetInteractionsTo();

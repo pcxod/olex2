@@ -29,3 +29,4 @@ group_restraints [false] - groups restraints by involved atoms
 use_hkl_cell [true] - if HKL file has CELL instruction - Olex2 overrdes current file CELL with the
   parameters
 path [] - extensions to the system PATH (prepended)
+max_label_length [4] - new Shelxl will support longer labels in the INS file

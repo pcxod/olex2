@@ -5885,7 +5885,7 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options,
   xyz.LoadFromStrings(content);
   TXAtomPList xatoms;
   TXBondPList xbonds;
-  LabelCorrector lc(FXApp->XFile().GetAsymmUnit());
+  LabelCorrector lc(FXApp->XFile().GetAsymmUnit(), TXApp::GetMaxLabelLength());
   FXApp->AdoptAtoms(xyz.GetAsymmUnit(), xatoms, xbonds);
   int part = Options.FindValue("p", "-100").ToInt();
   const int npart = FXApp->XFile().GetAsymmUnit().GetNextPart(true);
