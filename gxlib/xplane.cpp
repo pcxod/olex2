@@ -18,8 +18,9 @@
 #include "dring.h"
 #include "povdraw.h"
 #include "wrldraw.h"
+#include "xline.h"
 
-void TXPlane::Create(const olxstr& cName)  {
+void TXPlane::Create(const olxstr& cName) {
   olxstr colName = cName;
   if (colName.IsEmpty()) {
     colName = NamesRegistry().Find(GetDefId(), EmptyString());
@@ -43,15 +44,16 @@ void TXPlane::Create(const olxstr& cName)  {
   if (GPC.ObjectCount() == 0 && GPC.PrimitiveCount() != 0)
     GPC.ClearPrimitives();
   size_t deleted_cnt = 0;
-  for (size_t i=0; i < GPC.ObjectCount(); i++) {
+  for (size_t i = 0; i < GPC.ObjectCount(); i++) {
     if (EsdlInstanceOf(GPC.GetObject(i), TXPlane) &&
       ((TXPlane&)GPC.GetObject(i)).IsDeleted())
     {
       deleted_cnt++;
     }
   }
-  if (deleted_cnt == GPC.ObjectCount())
+  if (deleted_cnt == GPC.ObjectCount()) {
     GPC.ClearPrimitives();
+  }
   GPC.AddObject(*this);
   const TSPlane::Def &def =
     GetNetwork().GetLattice().GetPlaneDefinitions()[this->GetDefId()];
@@ -69,35 +71,40 @@ void TXPlane::Create(const olxstr& cName)  {
     }
   }
   if (def.GetSides() > 2) {
-    MaxV = (GetAtom(maxr_i).crd()-GetCenter());
+    MaxV = (GetAtom(maxr_i).crd() - GetCenter());
     olx_create_rotation_matrix(RM, GetNormal(),
-      cos(2*M_PI / def.GetSides()));
+      cos(2 * M_PI / def.GetSides()));
   }
   else {
     PlaneSort::Sorter::SortPlane(*this);
   }
-  if (GPC.PrimitiveCount() != 0)
+  if (GPC.PrimitiveCount() != 0) {
     return;
+  }
 
   TGraphicsStyle& GS = GPC.GetStyle();
   GS.SetPersistent(true);
   const int PMask = GS.GetParam(GetPrimitiveMaskName(), "3", true).ToInt();
-  if( PMask == 0 )  return;
-  if( (PMask & 1) != 0 )  {
+  if (PMask == 0) {
+    return;
+  }
+  if ((PMask & 1) != 0) {
     TGlMaterial GlM;
-    GlM.SetFlags(sglmAmbientF|sglmDiffuseF|sglmAmbientB|sglmDiffuseB|sglmTransparent);
+    GlM.SetFlags(sglmAmbientF | sglmDiffuseF | sglmAmbientB | sglmDiffuseB | sglmTransparent);
     GlM.AmbientF = 0x7f00007f;
     GlM.DiffuseF = 0x7f3f3f3f;
     GlM.AmbientB = 0x7f00007f;
     GlM.DiffuseB = 0x7f3f3f3f;
     TGlPrimitive& GlP = GPC.NewPrimitive("Plane", sgloPolygon);
     GlP.SetProperties(GS.GetMaterial(GlP.GetName(), GlM));
+    GlP.SetOwnerId(0);
   }
   TGlMaterial glm("511;5460819;0;12632256;6250335;4292861919;4294967295;12;12");
-  if ((PMask & 2) != 0)  {
+  if ((PMask & 2) != 0) {
     TGlPrimitive& glpC = GPC.NewPrimitive("Centroid", sgloSphere);
     glpC.SetProperties(GS.GetMaterial(glpC.GetName(), glm));
     glpC.Params[0] = 0.25;  glpC.Params[1] = 10;  glpC.Params[2] = 10;
+    glpC.SetOwnerId(1);
   }
   if ((PMask & 4) != 0) {
     TGlPrimitive& GlP = GPC.NewPrimitive("Ring", sgloCommandList);
@@ -110,12 +117,23 @@ void TXPlane::Create(const olxstr& cName)  {
     olx_gl::scale(minrs*0.85);
     GlP.CallList(primtives.GetObject(0));
     GlP.EndList();
+    GlP.SetOwnerId(2);
+  }
+  if ((PMask & 8) != 0) {
+    TXBond::Settings st = TXBond::GetSettings(Parent);
+    TGlPrimitive& GlP = GPC.NewPrimitive("Normal", sgloCommandList);
+    GlP.SetProperties(GS.GetMaterial("Normal", glm));
+    GlP.StartList();
+    GlP.CallList(st.GetPrimitives(true).GetObject(4));
+    GlP.CallList(st.GetPrimitives().GetObject(19));
+    GlP.EndList();
+    GlP.SetOwnerId(3);
   }
   Compile();
 }
 //..............................................................................
-bool TXPlane::Orient(TGlPrimitive& P)  {
-  if (P.GetType() == sgloPolygon) {
+bool TXPlane::Orient(TGlPrimitive& P) {
+  if (P.GetOwnerId() == 0) {
     olx_gl::FlagDisabler fc(GL_CULL_FACE);
     const TSPlane::Def &def =
       GetNetwork().GetLattice().GetPlaneDefinitions()[this->GetDefId()];
@@ -133,22 +151,37 @@ bool TXPlane::Orient(TGlPrimitive& P)  {
     else {
       olx_gl::normal(GetNormal());
       olx_gl::begin(GL_POLYGON);
-      for (size_t i=0; i < Count(); i++) {
+      for (size_t i = 0; i < Count(); i++) {
         olx_gl::vertex(GetAtom(i).crd());
       }
       olx_gl::end();
     }
     return true;
   }
-  else if (P.GetType() == sgloCommandList) {
+  else if (P.GetOwnerId() == 2) {
     olx_gl::translate(GetCenter());
     mat3d m = GetBasis();
     m.SwapRows(0, 2);
     m[1] = m[2].XProdVec(m[0]).Normalise();//m[0] *= -1;
     olx_gl::orient(m);
   }
-  else
+  else if (P.GetOwnerId() == 3) {
+    TXBond::Settings st = TXBond::GetSettings(Parent);
+    vec3d v = GetNormal();
+    double scale = 1.5 - 0.2;
     olx_gl::translate(GetCenter());
+    olx_gl::rotate(acos(v[2])*180/M_PI, -v[1], v[0], 0.0);
+    olx_gl::scale(0.5, 0.5, scale);
+    st.GetStockPrimitives().GetObject(1)->Draw();
+    olx_gl::scale(1.0, 1.0, 1. / scale);
+    olx_gl::translate(0.0, 0.0, scale);
+    st.GetStockPrimitives().GetObject(5)->Draw();
+    st.GetStockPrimitives().GetObject(4)->Draw();
+    return true;
+  }
+  else {
+    olx_gl::translate(GetCenter());
+  }
   return false;
 }
 //..............................................................................
@@ -156,6 +189,7 @@ void TXPlane::ListPrimitives(TStrList &List) const {
   List.Add("Plane");
   List.Add("Centroid");
   List.Add("Ring");
+  List.Add("Normal");
 }
 //..............................................................................
 const_strlist TXPlane::PovDeclare()  {

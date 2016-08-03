@@ -179,7 +179,7 @@ void GXLibMacros::Export(TLibrary& lib) {
     "n-just orient, do not create plane&;"
     "r-create regular plane&;"
     "we-use weights proportional to the (atomic mass)^we&;"
-    "rings-creates planes for rings template, like NC5",
+    "rings-creates planes for rings template, like NC5&;",
     fpAny,
     "Sets current view along the normal of the best plane");
   gxlib_InitMacro(Cent,
