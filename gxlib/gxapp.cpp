@@ -5479,6 +5479,9 @@ void TGXApp::CreateRings(bool force, bool create) {
     if (p != 0) {
       p->UpdatePrimitives(4);
     }
+    for (size_t ai = 0; ai < rings[i].Count(); ai++) {
+      rings[i][ai]->CAtom().SetRingAtom(true);
+    }
     //TDRing &r = *(new TDRing(GetRenderer(), "ARing"));
     //Rings.Add(r);
     //r.Basis.OrientNormal(normal);
