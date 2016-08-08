@@ -57,11 +57,12 @@ void TXPlane::Create(const olxstr& cName) {
   GPC.AddObject(*this);
   const TSPlane::Def &def =
     GetNetwork().GetLattice().GetPlaneDefinitions()[this->GetDefId()];
-  double maxrs = (GetAtom(0).crd() - GetCenter()).QLength(),
+  double maxrs = (GetAtom(0).crd() - GetCenter()).Project(GetNormal()).QLength(),
     minrs = maxrs;
   size_t maxr_i = 0;
   for (size_t i = 1; i < Count(); i++) {
-    const double qd = (GetAtom(i).crd() - GetCenter()).QLength();
+    const double qd = (GetAtom(i).crd() - GetCenter()).Project(GetNormal())
+      .QLength();
     if (qd > maxrs) {
       maxrs = qd;
       maxr_i = i;
@@ -72,6 +73,7 @@ void TXPlane::Create(const olxstr& cName) {
   }
   if (def.GetSides() > 2) {
     MaxV = (GetAtom(maxr_i).crd() - GetCenter());
+    MaxV.Project(GetNormal());
     olx_create_rotation_matrix(RM, GetNormal(),
       cos(2 * M_PI / def.GetSides()));
   }
