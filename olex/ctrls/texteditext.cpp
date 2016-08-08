@@ -15,7 +15,7 @@ using namespace ctrl_ext;
 //..............................................................................
 TTextEdit::TTextEdit(wxWindow *Parent, wxWindowID id, const wxString& value,
   const wxPoint& pos, const wxSize& size, long style)
-: wxTextCtrl(Parent, id, value, pos, size, style),
+: wxTextCtrl(Parent, id, value, pos, size, style|wxTE_PROCESS_ENTER),
   AOlxCtrl(this),
   OnChange(AOlxCtrl::ActionQueue::New(Actions, evt_change_id)),
   OnLeave(AOlxCtrl::ActionQueue::New(Actions, evt_on_mouse_leave_id)),

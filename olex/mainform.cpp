@@ -2981,7 +2981,7 @@ void TMainForm::UpdateRecentFile(const olxstr& fn)  {
     Items.Add( FRecentFiles.GetObject(i) );
   for( size_t i=0; i < FRecentFiles.Count(); i++ )  { // put items in the right position
     FRecentFiles.GetObject(Items[i]->GetId()-ID_FILE0) = Items[i];
-    Items[i]->SetText(FRecentFiles[Items[i]->GetId()-ID_FILE0].u_str());
+    Items[i]->SetItemLabel(FRecentFiles[Items[i]->GetId()-ID_FILE0].u_str());
     Items[i]->Check(false);
   }
   FRecentFiles.GetObject(0)->Check( true );
