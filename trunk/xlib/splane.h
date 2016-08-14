@@ -72,6 +72,8 @@ public:
   double GetD() const {  return Distance;  }
   // direct calculation with unit weights
   double CalcRMSD() const;
+  // inverts the plane normal
+  void Invert();
   // calculation with actual weights (should be the same as GetWeightedRMSD)
   double CalcWeightedRMSD() const;
   double GetWeightedRMSD() const {  return wRMSD;  }
@@ -101,7 +103,7 @@ public:
   worst - at [2] Returns true if the function succeded (point cound > 2)
   */
   template <class List> static bool CalcPlanes(const List& Points,
-    mat3d& params, vec3d& rms, vec3d& center, bool sort=true);
+    mat3d& params, vec3d& rms, vec3d& center);
   // a convinience function for non-weighted plane
   static bool CalcPlanes(const TSAtomPList& atoms, mat3d& params, vec3d& rms,
     vec3d& center);
@@ -159,12 +161,16 @@ public:
       return *this;
     }
     bool operator == (const Def& d)  const {
-      if( atoms.Count() != d.atoms.Count() )  return false;
+      if (atoms.Count() != d.atoms.Count()) {
+        return false;
+      }
       for( size_t i=0; i < atoms.Count(); i++ )  {
-        if( atoms[i].ref.catom_id != d.atoms[i].ref.catom_id ||
+        if (atoms[i].ref.catom_id != d.atoms[i].ref.catom_id ||
           atoms[i].ref.matrix_id != d.atoms[i].ref.matrix_id ||
-          atoms[i].weight != d.atoms[i].weight )
+          atoms[i].weight != d.atoms[i].weight)
+        {
           return false;
+        }
       }
       return true;
     }
@@ -204,45 +210,48 @@ higher weights... there are functions to calculate both values
 */
 template <class List>  // olx_pair_t<vec3d, double> list, returning & on []
 bool TSPlane::CalcPlanes(const List& Points, mat3d& Params, vec3d& rms,
-  vec3d& center, bool sort)
+  vec3d& center)
 {
-  if( Points.Count() < 3 )  return false;
+  if (Points.Count() < 3) {
+    return false;
+  }
   center.Null();
   double mass = 0, qmass = 0;
   center.Null();
-  for( size_t i=0; i < Points.Count(); i++ )  {
+  for (size_t i = 0; i < Points.Count(); i++) {
     center += Points[i].GetA()*Points[i].GetB();
     mass += Points[i].GetB();
     qmass += olx_sqr(Points[i].GetB());
   }
-  if( mass == 0 )  return false;
+  if (mass == 0) {
+    return false;
+  }
   center /= mass;
   mat3d m;
-  for( size_t i=0; i < Points.Count(); i++ )  {
+  for (size_t i = 0; i < Points.Count(); i++) {
     const vec3d t = (Points[i].GetA() - center)*Points[i].GetB();
-    m[0][0] += (t[0]*t[0]);
-    m[0][1] += (t[0]*t[1]);
-    m[0][2] += (t[0]*t[2]);
-    m[1][1] += (t[1]*t[1]);
-    m[1][2] += (t[1]*t[2]);
-    m[2][2] += (t[2]*t[2]);
+    m[0][0] += (t[0] * t[0]);
+    m[0][1] += (t[0] * t[1]);
+    m[0][2] += (t[0] * t[2]);
+    m[1][1] += (t[1] * t[1]);
+    m[1][2] += (t[1] * t[2]);
+    m[2][2] += (t[2] * t[2]);
   }
   m[1][0] = m[0][1];
   m[2][0] = m[0][2];
   m[2][1] = m[1][2];
   mat3d::EigenValues(m /= qmass, Params.I());
-  if( sort )  {
-    for( int i=0; i < 3; i++ )
-      rms[i] = (m[i][i] < 0 ? 0 : sqrt(m[i][i]));
-    bool swaps = true;
-    while( swaps )  {
-      swaps = false;
-      for( int i=0; i < 2; i++ )  {
-        if( rms[i] > rms[i+1] )  {
-          olx_swap(Params[i], Params[i+1]);
-          olx_swap(rms[i], rms[i+1]);
-          swaps = true;
-        }
+  for (int i = 0; i < 3; i++) {
+    rms[i] = (m[i][i] < 0 ? 0 : sqrt(m[i][i]));
+  }
+  bool swaps = true;
+  while (swaps) {
+    swaps = false;
+    for (int i = 0; i < 2; i++) {
+      if (rms[i] > rms[i + 1]) {
+        olx_swap(Params[i], Params[i + 1]);
+        olx_swap(rms[i], rms[i + 1]);
+        swaps = true;
       }
     }
   }
@@ -256,12 +265,12 @@ double TSPlane::CalcPlane(const List& Points, vec3d& Params, vec3d& center,
 {
   mat3d normals;
   vec3d rms;
-  if( CalcPlanes(Points, normals, rms, center) )  {
-    if( type == plane_best )  {
+  if (CalcPlanes(Points, normals, rms, center)) {
+    if (type == plane_best) {
       Params = normals[0];
       return rms[0];
     }
-    else if( type == plane_worst )  {
+    else if (type == plane_worst) {
       Params = normals[2];
       return rms[2];
     }
