@@ -941,24 +941,24 @@ olxstr TGXApp::GetSelectionInfo(bool list) const {
           acos((a.crd() - p.GetCenter()).CAngle(x)) * 180 / M_PI);
       }
       else if (EsdlInstanceOf(Sel[0], TXBond) && EsdlInstanceOf(Sel[1], TXPlane))  {
-        Tmp = "Angle (plane-bond): ";
+        Tmp = "Angle (plane normal-bond): ";
         v = ((TXPlane&)Sel[1]).Angle(((TXBond&)Sel[0]));
         Tmp << olxstr::FormatFloat(3, v);
       }
       else if( EsdlInstanceOf(Sel[1], TXBond) && EsdlInstanceOf(Sel[0], TXPlane) )  {
-        Tmp = "Angle (plane-bond): ";
+        Tmp = "Angle (plane normal-bond): ";
         v = ((TXPlane&)Sel[0]).Angle(((TXBond&)Sel[1]));
         Tmp << olxstr::FormatFloat(3, v);
       }
       else if( EsdlInstanceOf(Sel[0], TXLine) && EsdlInstanceOf(Sel[1], TXPlane) )  {
         TXLine& xl = (TXLine&)Sel[0];
-        Tmp = "Angle (plane-line): ";
+        Tmp = "Angle (plane normal-line): ";
         v = ((TXPlane&)Sel[1]).Angle(xl.GetEdge()-xl.GetBase());
         Tmp << olxstr::FormatFloat(3, v);
       }
       else if( EsdlInstanceOf(Sel[1], TXLine) && EsdlInstanceOf(Sel[0], TXPlane) )  {
         TXLine& xl = (TXLine&)Sel[1];
-        Tmp = "Angle (plane-line): ";
+        Tmp = "Angle (plane normal-vector): ";
         v = ((TXPlane&)Sel[0]).Angle(xl.GetEdge()-xl.GetBase());
         Tmp << olxstr::FormatFloat(3, v);
       }
@@ -967,28 +967,8 @@ olxstr TGXApp::GetSelectionInfo(bool list) const {
           &b = ((TXPlane&)Sel[1]);
 
         const double ang = a.Angle(b);
-        Tmp = "Angle (plane-plane): ";
+        Tmp = "Angle (plane normal-plane normal): ";
         Tmp << olxstr::FormatFloat(3, ang) <<
-          "\nTwist Angle (plane-plane, experimental): ";
-        try {
-          Tmp << olxstr::FormatFloat(3, olx_dihedral_angle(a.GetCenter()+a.GetNormal(),
-            a.GetCenter(), b.GetCenter(), b.GetCenter()+b.GetNormal()));
-        }
-        catch (const TDivException &) {
-          Tmp << "n/a";
-        }
-        Tmp << "\nFold Angle (plane-plane, experimental): ";
-        try {
-          vec3d n_c = (b.GetCenter()-a.GetCenter()).XProdVec(
-            a.GetNormal()+b.GetNormal()).Normalise();
-          vec3d p_a = a.GetNormal() -  n_c*n_c.DotProd(a.GetNormal());
-          vec3d p_b = b.GetNormal() -  n_c*n_c.DotProd(b.GetNormal());
-          Tmp << olxstr::FormatFloat(3, acos(p_a.CAngle(p_b))*180/M_PI);
-        }
-        catch (const TDivException &) {
-          Tmp << "n/a";
-        }
-        Tmp <<
           "\nDistance (plane centroid-plane centroid): " <<
           olxstr::FormatFloat(3, a.GetCenter().DistanceTo(b.GetCenter()))  <<
           "\nDistance (plane[" << macSel_GetPlaneName(a) << "]-centroid): " <<
@@ -5199,8 +5179,9 @@ void TGXApp::SaveModel(const olxstr& fileName) const {
   try  {
     TDataFile df;
     wxFileOutputStream fos(fileName.u_str());
-    if( !fos.IsOk() )
+    if (!fos.IsOk()) {
       throw TFunctionFailedException(__OlxSourceInfo, "to save model");
+    }
     fos.Write("oxm", 3);
     wxZipOutputStream zos(fos, 9);
     TDataItem& mi = df.Root().AddItem("olex_model");

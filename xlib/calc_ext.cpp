@@ -15,6 +15,7 @@
 #include "unitcell.h"
 #include "symmparser.h"
 #include "mat_id.h"
+#include "pers_util.h"
 //.............................................................................
 CalculatedVars::Object::Object(const CalculatedVars::Object &o,
   CalculatedVars &parent)
@@ -44,7 +45,7 @@ olxstr CalculatedVars::Object::GetQualifiedName() const {
   return rv << '.' << name;
 }
 //.............................................................................
-void CalculatedVars::Object::ToDataItem(TDataItem &i_, bool use_id) const {
+TDataItem& CalculatedVars::Object::ToDataItem(TDataItem &i_, bool use_id) const {
   TDataItem *i;
   if (type == cv_ot_centroid) {
     i = &i_.AddItem("centroid");
@@ -69,9 +70,25 @@ void CalculatedVars::Object::ToDataItem(TDataItem &i_, bool use_id) const {
     atoms_str << '-' << atoms[j].GetMatrix()->GetId();
   }
   i->AddField("atoms", atoms_str.SubStringFrom(1));
+  return *i;
 }
 //.............................................................................
-void CalculatedVars::Object::FromDataItem(const TDataItem &di,
+olx_object_ptr<CalculatedVars::Object>
+CalculatedVars::Object::FromDataItem(const TDataItem &di,
+  CalculatedVars &parent, bool use_id)
+{
+  olx_object_ptr<Object> x;
+  if (di.GetName().Equals("plane")) {
+    x = new Plane();
+  }
+  else {
+    x = new Object();
+  }
+  x().FromDataItem_(di, parent, use_id);
+  return x;
+}
+//.............................................................................
+void CalculatedVars::Object::FromDataItem_(const TDataItem &di,
   CalculatedVars &parent, bool use_id)
 {
   if (di.GetName().Equals("plane")) {
@@ -162,7 +179,7 @@ CalculatedVars::Object *CalculatedVars::Object::create(TSBond &b,
 CalculatedVars::Object *CalculatedVars::Object::create(TSPlane &sp,
   CalculatedVars &parent)
 {
-  CalculatedVars::Object *p = new CalculatedVars::Object();
+  CalculatedVars::Plane *p = new CalculatedVars::Plane();
   size_t si = 0;
   for (size_t i = 0; i < sp.Count(); i++) {
     p->atoms.Add(new TGroupCAtom(
@@ -173,8 +190,23 @@ CalculatedVars::Object *CalculatedVars::Object::create(TSPlane &sp,
   }
   p->name << si;
   p->type = cv_ot_plane;
-  p = &parent.AddObject(p);
-  return p;
+  p->normal = sp.GetNormal();
+  return &parent.AddObject(p);
+}
+//.............................................................................
+//.............................................................................
+//.............................................................................
+TDataItem& CalculatedVars::Plane::ToDataItem(TDataItem &i_, bool use_id) const {
+  TDataItem& i = Object::ToDataItem(i_, use_id);
+  i.AddField("normal", PersUtil::VecToStr(normal));
+  return i;
+}
+//.............................................................................
+void CalculatedVars::Plane::FromDataItem_(const TDataItem &i,
+  CalculatedVars &parent, bool use_id)
+{
+  Object::FromDataItem_(i, parent, use_id);
+  normal = PersUtil::VecFromStr<vec3d>(i.GetFieldByName("normal"));
 }
 //.............................................................................
 //.............................................................................
@@ -294,11 +326,13 @@ TEValueD CalculatedVars::Var::Calculate(class VcoVContainer &vcov) const {
     }
     else {
       if (r1.object.type == cv_ot_plane && r2.object.type == cv_ot_plane) {
+        Plane &p1 = dynamic_cast<CalculatedVars::Plane &>(r1.object),
+          &p2 = dynamic_cast<CalculatedVars::Plane &>(r2.object);
         if (r1.prop.Equalsi('n') && r1.prop.Equalsi('n')) {
-          rv = vcov.CalcP2PAngle(atoms[0], atoms[1]);
+          rv = vcov.CalcP2PAngle(atoms[0], p1.normal, atoms[1], p2.normal);
         }
         else if (r1.prop.IsEmpty() && r2.prop.IsEmpty()) {
-          rv = vcov.CalcP2PAngle(atoms[0], atoms[1]);
+          rv = vcov.CalcP2PAngle(atoms[0], p1.normal, atoms[1], p2.normal);
           rv.V() = 180 - rv.GetV();
         }
       }
@@ -307,10 +341,14 @@ TEValueD CalculatedVars::Var::Calculate(class VcoVContainer &vcov) const {
       {
         const ObjectRef &plane = (r1.object.type == cv_ot_plane ? r1 : r2);
         const ObjectRef &line = (r1.object.type == cv_ot_plane ? r2 : r1);
-        if (r1.object.type == cv_ot_plane)
-          rv = vcov.CalcP2VAngle(atoms[0], atoms[1]);
-        else
-          rv = vcov.CalcP2VAngle(atoms[1], atoms[0]);
+        if (r1.object.type == cv_ot_plane) {
+          Plane &p = dynamic_cast<CalculatedVars::Plane &>(r1.object);
+          rv = vcov.CalcP2VAngle(atoms[0], p.normal, atoms[1]);
+        }
+        else {
+          Plane &p = dynamic_cast<CalculatedVars::Plane &>(r2.object);
+          rv = vcov.CalcP2VAngle(atoms[1], p.normal, atoms[0]);
+        }
         if (plane.prop.IsEmpty()) {
           rv.V() = 180 - rv.GetV();
         }
@@ -426,13 +464,14 @@ void CalculatedVars::FromDataItem(const TDataItem &di, bool use_id) {
   }
   TDataItem &os = di.GetItemByName("objects");
   for (size_t i = 0; i < os.ItemCount(); i++) {
-    Object *o = new Object;
-    o->FromDataItem(os.GetItemByIndex(i), *this, use_id);
-    Object *& ao = objects.Add(o->GetQualifiedName(), o);
-    if (ao != o) {
+    olx_object_ptr<Object> o = Object::FromDataItem(
+      os.GetItemByIndex(i), *this, use_id);
+    Object *& ao = objects.Add(o().GetQualifiedName(), o.get_ptr());
+    if (ao != o.get_ptr()) {
       delete ao;
-      ao = o;
+      ao = o.get_ptr();
     }
+    o.release();
   }
   TDataItem &vs = di.GetItemByName("vars");
   for (size_t i = 0; i < vs.ItemCount(); i++) {

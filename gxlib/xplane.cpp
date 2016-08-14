@@ -312,3 +312,8 @@ const_strlist TXPlane::ToWrl(olx_cdict<TGlMaterial, olxstr> &materials) const {
   return out;
 }
 //..............................................................................
+void TXPlane::Invert() {
+  TSPlane::Invert();
+  RM.Transpose();
+}
+//..............................................................................

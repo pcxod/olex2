@@ -29,7 +29,8 @@ public:
   bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d &, vec3d &)  {  return false;  }
   void ListPrimitives(TStrList& List) const;
-
+  /* Inverts the plane normal */
+  void Invert();
   bool OnMouseDown(const IOlxObject *, const TMouseData &)  {
     return true;
   }
@@ -42,8 +43,9 @@ public:
 
   void Delete(bool v) {
     TSPlane::SetDeleted(v);
-    if (v)
+    if (v) {
       SetVisible(false);
+    }
   }
 
   const_strlist ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const;
