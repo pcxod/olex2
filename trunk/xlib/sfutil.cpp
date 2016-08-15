@@ -147,8 +147,9 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
   }
   else {  // olex2 calculated SF
     olxstr hklFileName = xapp.XFile().LocateHklFile();
-    if (!TEFile::Exists(hklFileName))
+    if (!TEFile::Exists(hklFileName)) {
       return "could not locate hkl file";
+    }
     sw.start("Loading/Filtering/Merging HKL");
     TUnitCell::SymmSpace sp = xapp.XFile().GetUnitCell().GetSymmSpace();
     SymmSpace::InfoEx info_ex = SymmSpace::Compact(sp);
@@ -185,8 +186,9 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
     if (mapType != mapTypeCalc) {
       // find a linear scale between F
       double a = 0, k = 1;
-      if (scaleType == scaleExternal)
+      if (scaleType == scaleExternal) {
         k = scale;
+      }
       else if (scaleType == scaleRegression) {
         CalcFScale(F, refs, k, a);
         if (TBasicApp::GetInstance().IsProfiling()) {
@@ -201,13 +203,14 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
       }
       const size_t f_cnt = F.Count();
       for (size_t i=0; i < f_cnt; i++) {
-        double dI = refs[i].GetI() < 0 ? 0 : sqrt(refs[i].GetI());
+        const TReflection &r = refs[i];
+        double dI = r.GetI() < 0 ? 0 : sqrt(r.GetI());
         dI *= k;
-        if (scaleType == scaleRegression)
+        if (scaleType == scaleRegression) {
           dI += a;
+        }
         if (mapType == mapTypeDiff) {
-          dI -= F[i].mod();
-          F[i] = compd::polar(dI, F[i].arg());
+          F[i] = compd::polar(dI, F[i].arg()) - F[i];
         }
         else if (mapType == mapType2OmC) {
           dI *= 2;
@@ -276,11 +279,12 @@ void SFUtil::_CalcSF(const TXFile& xfile, const IMillerIndexList& refs,
   catch(...)  {
     throw TFunctionFailedException(__OlxSourceInfo, "unknown space group");
   }
-  ISF_Util* sf_util = GetSF_Util_Instance(*sg);
-  if( sf_util == NULL )
+  olx_object_ptr<ISF_Util> sf_util = GetSF_Util_Instance(*sg);
+  if (!sf_util.is_valid()) {
     throw TFunctionFailedException(__OlxSourceInfo, "invalid space group");
+  }
   TAsymmUnit& au = xfile.GetAsymmUnit();
-  double *U = new double[6*au.AtomCount() + 1];
+  olx_array_ptr<double> U = new double[6*au.AtomCount() + 1];
   TPtrList<TCAtom> alist;
   ElementPList scatterers;
   PrepareCalcSF(au, U, scatterers, alist);
@@ -303,7 +307,7 @@ void SFUtil::_CalcSF(const TXFile& xfile, const IMillerIndexList& refs,
     if (!UseFdp)
       fpfdp[i].SetIm(0);
   }
-  sf_util->Calculate(
+  sf_util().Calculate(
     refs,
     au.GetHklToCartesian(),
     F, scatterers,
@@ -311,7 +315,51 @@ void SFUtil::_CalcSF(const TXFile& xfile, const IMillerIndexList& refs,
     U,
     fpfdp
   );
-  delete sf_util;
-  delete [] U;
+  // apply modifications
+  try {
+    TXApp &xapp = TXApp::GetInstance();
+    TUnitCell::SymmSpace sp = xapp.XFile().GetUnitCell().GetSymmSpace();
+    SymmSpace::InfoEx info_ex = SymmSpace::Compact(sp);
+    olxdict<uint32_t, compd, TPrimitiveComparator> fab;
+    if (xapp.CheckFileType<TIns>()) {
+      TIns &ins = xapp.XFile().GetLastLoader<TIns>();
+      if (ins.InsExists("ABIN")) {
+        olxstr fab_name = TEFile::ChangeFileExt(xapp.XFile().LocateHklFile(),
+          "fab");
+        if (!TEFile::Exists(fab_name)) {
+          TBasicApp::NewLogEntry(logError) << "FAB file is missing";
+        }
+        else {
+          THklFile hkl;
+          hkl.LoadFromFile(fab_name, false, "5,5,5,10,10");
+          for (size_t i = 0; i < hkl.RefCount(); i++) {
+            TReflection &r = hkl[i];
+            r.Standardise(info_ex);
+            uint32_t key = r.GetHKLHash();
+#ifdef _DEBUG
+            if (fab.HasKey(key)) {
+              TBasicApp::NewLogEntry(logError) <<
+                "Duplicate modifications in the FAB";
+            }
+#endif
+            fab.Add(key, compd(r.GetI(), r.GetS()));
+          }
+          for (size_t i = 0; i < F.Count(); i++) {
+            size_t idx = fab.IndexOf(TReflection::CalcHKLHash(refs[i]));
+            if (idx == InvalidIndex) {
+              TBasicApp::NewLogEntry(logError) << "Missing modification";
+            }
+            else {
+              F[i] += fab.GetValue(idx);
+            }
+          }
+        }
+      }
+    }
+  }
+  catch (const TExceptionBase &e) {
+    TBasicApp::NewLogEntry(logError) << "Failed to apply Fc modifications";
+    TBasicApp::NewLogEntry(logExceptionTrace) << e;
+  }
 }
 //..............................................................................

@@ -75,8 +75,10 @@ public:
   /* reads the HKL file, marking reflections after 000 or new line as omitted.
   Returns all remaining information information as an Ins file or NULL
   */
-  olx_object_ptr<TIns> LoadFromFile(const olxstr& FN, bool get_ins);
-  olx_object_ptr<TIns> LoadFromStrings(const TStrList& lines, bool get_ins);
+  olx_object_ptr<TIns> LoadFromFile(const olxstr& FN, bool get_ins,
+    const olxstr &format=EmptyString());
+  olx_object_ptr<TIns> LoadFromStrings(const TStrList& lines, bool get_ins,
+    const olxstr &format=EmptyString());
   void SaveToFile(const olxstr& FN) {
     THklFile::SaveToFile(FN, Refs);
   }
@@ -96,14 +98,8 @@ public:
   /* a primitive check if a line is an HKL file line - this is used on the
   first line to check wether the file is a proper HKL
   */
-  static bool IsHKLFileLine(const olxstr& l) {
-    if (l.Length() >= 28) {
-      return (l.SubString(0, 4).IsNumber() && l.SubString(4, 4).IsNumber() &&
-        l.SubString(8, 4).IsNumber() && l.SubString(12, 8).IsNumber() &&
-        l.SubString(20, 8).IsNumber());
-    }
-    return false;
-  }
+  static bool IsHKLFileLine(const olxstr& l, const olxstr &format = EmptyString());
+  static bool IsHKLFileLine(const olxstr& l, const TSizeList &format);
 
   // saves to file a list of reflections
   static void SaveToFile(const olxstr& FN, const TRefPList& Reflections);

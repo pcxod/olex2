@@ -213,3 +213,35 @@ void TReflection::Analyse(const SymmSpace::InfoEx& info)  {
     SetCentric(true);
 }
 //..............................................................................
+uint32_t TReflection::CalcHKLHash(const vec3i &hkl) {
+  uint32_t r = ((uint32_t)olx_abs(hkl[0]) << 23)
+    | ((uint32_t)olx_abs(hkl[1]) << 14)
+    | ((uint32_t)olx_abs(hkl[2]) << 5);
+  if (hkl[0] < 0) {
+    r |= 1;
+  }
+  if (hkl[1] < 0) {
+    r |= 2;
+  }
+  if (hkl[2] < 0) {
+    r |= 4;
+  }
+  return r;
+}
+//..............................................................................
+uint64_t TReflection::CalcHKLHash64(const vec3i &hkl) {
+  uint64_t r = ((uint64_t)olx_abs(hkl[0]) << 44)
+    | ((uint64_t)olx_abs(hkl[1]) << 24)
+    | ((uint64_t)olx_abs(hkl[2]) << 4);
+  if (hkl[0] < 0) {
+    r |= 1;
+  }
+  if (hkl[1] < 0) {
+    r |= 2;
+  }
+  if (hkl[2] < 0) {
+    r |= 4;
+  }
+  return r;
+}
+//..............................................................................

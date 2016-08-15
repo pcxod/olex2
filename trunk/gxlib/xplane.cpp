@@ -105,7 +105,7 @@ void TXPlane::Create(const olxstr& cName) {
   if ((PMask & 2) != 0) {
     TGlPrimitive& glpC = GPC.NewPrimitive("Centroid", sgloSphere);
     glpC.SetProperties(GS.GetMaterial(glpC.GetName(), glm));
-    glpC.Params[0] = 0.25;  glpC.Params[1] = 10;  glpC.Params[2] = 10;
+    glpC.Params[0] = 0.1;  glpC.Params[1] = 10;  glpC.Params[2] = 10;
     glpC.SetOwnerId(1);
   }
   if ((PMask & 4) != 0) {
