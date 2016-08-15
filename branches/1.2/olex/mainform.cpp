@@ -591,7 +591,13 @@ void TMainForm::XApp(Olex2App *XA)  {
   this_InitMacroD(Help, "c-specifies commands category", fpAny,
     "Prints available information. If no arguments provided prints available "
     "commands");
-  this_InitMacro(AddLabel, , fpThree|fpFive);
+  this_InitMacroD(AddLabel,
+    EmptyString(),
+    fpThree|fpFive,
+    "Adds a new label to the collection named by the first argument.\n"
+    "For 3 arguments: [collection_name] 'x y z' label, where 'x y z' may be "
+    "obtained by a call to crd() function\n"
+    "For 5 arguments: [collection_name] x y z label");
 
   this_InitMacroD(Hide,
     "b-also hides all bonds atatched to the selected atoms",
@@ -2062,19 +2068,19 @@ void TMainForm::PreviewHelp(const olxstr& Cmd)  {
   //}
 }
 //..............................................................................
-bool TMainForm::ImportFrag(const olxstr& line)  {
+bool TMainForm::ImportFrag(const olxstr& line) {
   olxstr trimmed_content = line;
   trimmed_content.Trim(' ').Replace('\r', '\n').Trim('\n').DeleteSequencesOf('\n');
-  if( !trimmed_content.StartsFromi("FRAG") || !trimmed_content.EndsWithi("FEND") )
+  if (!trimmed_content.StartsFromi("FRAG") || !trimmed_content.EndsWithi("FEND"))
     return false;
   TStrList lines(trimmed_content, '\n');
   if (lines.Count() < 4)
     return false;
-  lines.Delete(lines.Count()-1);
+  lines.Delete(lines.Count() - 1);
   lines.Delete(0);
-  for( size_t i=0; i < lines.Count(); i++ )  {
+  for (size_t i = 0; i < lines.Count(); i++) {
     TStrList toks(lines[i].Trim('\r'), ' ');
-    if( toks.Count() != 5 )  {
+    if (toks.Count() != 5) {
       lines[i].SetLength(0);
       continue;
     }
@@ -2084,14 +2090,14 @@ bool TMainForm::ImportFrag(const olxstr& line)  {
   try {
     TXyz xyz;
     xyz.LoadFromStrings(lines);
-    if( xyz.GetAsymmUnit().AtomCount() == 0 )
+    if (xyz.GetAsymmUnit().AtomCount() == 0)
       return false;
     processMacro("mode fit -a=6");
     TXAtomPList xatoms;
     TXBondPList xbonds;
-    LabelCorrector lc(FXApp->XFile().GetAsymmUnit());
+    LabelCorrector lc(FXApp->XFile().GetAsymmUnit(), TXApp::GetMaxLabelLength());
     FXApp->AdoptAtoms(xyz.GetAsymmUnit(), xatoms, xbonds);
-    for (size_t i=0; i < xatoms.Count(); i++) {
+    for (size_t i = 0; i < xatoms.Count(); i++) {
       FXApp->XFile().GetRM().Vars.FixParam(
         xatoms[i]->CAtom(), catom_var_name_Sof);
       lc.Correct(xatoms[i]->CAtom());
@@ -2099,16 +2105,20 @@ bool TMainForm::ImportFrag(const olxstr& line)  {
     }
     FXApp->CenterView(true);
     AMode *md = Modes->GetCurrent();
-    if( md != NULL )  {
+    if (md != NULL) {
       md->AddAtoms(xatoms);
-      for( size_t i=0; i < xbonds.Count(); i++ )
+      for (size_t i = 0; i < xbonds.Count(); i++) {
         FXApp->GetRenderer().Select(*xbonds[i], true);
+      }
     }
-    if (FXApp->XFile().GetLattice().IsGenerated())
+    if (FXApp->XFile().GetLattice().IsGenerated()) {
       Modes->OnModeExit.Add("fuse");
+    }
     return true;
   }
-  catch(...)  {  return false;  }
+  catch (...) {
+    return false;
+  }
 }
 //..............................................................................
 bool TMainForm::ProcessTab() {
@@ -2971,7 +2981,7 @@ void TMainForm::UpdateRecentFile(const olxstr& fn)  {
     Items.Add( FRecentFiles.GetObject(i) );
   for( size_t i=0; i < FRecentFiles.Count(); i++ )  { // put items in the right position
     FRecentFiles.GetObject(Items[i]->GetId()-ID_FILE0) = Items[i];
-    Items[i]->SetText(FRecentFiles[Items[i]->GetId()-ID_FILE0].u_str());
+    Items[i]->SetItemLabel(FRecentFiles[Items[i]->GetId()-ID_FILE0].u_str());
     Items[i]->Check(false);
   }
   FRecentFiles.GetObject(0)->Check( true );

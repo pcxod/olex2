@@ -34,14 +34,27 @@ public:
     Object() {}
     Object(const Object &o, CalculatedVars &parent);
     ConstPtrList<const class TSAtom> GetAtoms() const;
-    void ToDataItem(TDataItem &i, bool use_id) const;
-    void FromDataItem(const TDataItem &i, CalculatedVars &parent, bool use_id);
+    virtual TDataItem& ToDataItem(TDataItem &i, bool use_id) const;
+    virtual void FromDataItem_(const TDataItem &i,
+      CalculatedVars &parent, bool use_id);
+    static olx_object_ptr<Object> FromDataItem(const TDataItem &i,
+      CalculatedVars &parent, bool use_id);
     olxstr GetQualifiedName() const;
     bool IsValid() const;
 
     static Object *create(class TSAtom &a, CalculatedVars &parent);
     static Object *create(class TSBond &b, CalculatedVars &parent);
     static Object *create(class TSPlane &p, CalculatedVars &parent);
+  };
+
+  struct Plane : public Object {
+    vec3d normal;
+    Plane() {}
+    Plane(const Plane &o, CalculatedVars &parent)
+      : Object(o, parent), normal(o.normal)
+    {}
+    TDataItem& ToDataItem(TDataItem &i, bool use_id) const;
+    void FromDataItem_(const TDataItem &i, CalculatedVars &parent, bool use_id);
   };
 
   struct ObjectRef {

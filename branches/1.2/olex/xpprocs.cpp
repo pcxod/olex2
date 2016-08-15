@@ -5294,34 +5294,37 @@ void TMainForm::macTestMT(TStrObjList &Cmds, const TParamList &Options, TMacroDa
   FXApp->SetMaxThreadCount(max_th);
 }
 //..............................................................................
-void TMainForm::macSetFont(TStrObjList &Cmds, const TParamList &Options, TMacroData &E)  {
+void TMainForm::macSetFont(TStrObjList &Cmds, const TParamList &Options, TMacroData &E) {
   TwxGlScene& scene = dynamic_cast<TwxGlScene&>(FXApp->GetRenderer().GetScene());
   TGlFont* glf = scene.FindFont(Cmds[0]);
-  if( glf == NULL )  {
+  if (glf == NULL) {
     E.ProcessingError(__OlxSrcInfo, olxstr("undefined font ") << Cmds[0]);
     return;
   }
-  try  {
+  try {
     TwxGlScene::MetaFont mf(Cmds[1]);
     olxstr ps(Options.FindValue("ps"));
-    if( !ps.IsEmpty() )  {
-      if( ps.CharAt(0) == '+' || ps.CharAt(0) == '-' )
+    if (!ps.IsEmpty()) {
+      if (ps.CharAt(0) == '+' || ps.CharAt(0) == '-') {
         mf.SetSize(mf.GetSize() + ps.ToInt());
-      else
+      }
+      else {
         mf.SetSize(ps.ToInt());
+      }
     }
-    if( Options.Contains('i') )
+    if (Options.GetBoolOption('i')) {
       mf.SetItalic(true);
-    if( Options.Contains('b') )
+    }
+    if (Options.GetBoolOption('b')) {
       mf.SetBold(true);
+    }
     scene.CreateFont(glf->GetName(), mf.GetIdString());
     FXApp->UpdateLabels();
   }
-  catch(const TExceptionBase& e)  {
+  catch (const TExceptionBase& e) {
     E.ProcessingError(__OlxSrcInfo, e.GetException()->GetError());
   }
 }
-
 //..............................................................................
 void TMainForm::funChooseFont(const TStrObjList &Params, TMacroData &E)  {
   olxstr fntId;
@@ -5882,7 +5885,7 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options,
   xyz.LoadFromStrings(content);
   TXAtomPList xatoms;
   TXBondPList xbonds;
-  LabelCorrector lc(FXApp->XFile().GetAsymmUnit());
+  LabelCorrector lc(FXApp->XFile().GetAsymmUnit(), TXApp::GetMaxLabelLength());
   FXApp->AdoptAtoms(xyz.GetAsymmUnit(), xatoms, xbonds);
   int part = Options.FindValue("p", "-100").ToInt();
   const int npart = FXApp->XFile().GetAsymmUnit().GetNextPart(true);

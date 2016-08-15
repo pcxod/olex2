@@ -11,7 +11,7 @@
 #include "refmodel.h"
 
 TSimpleRestraint::TSimpleRestraint(TSRestraintList& parent, size_t id,
-  const short listType)
+  short listType)
   : Parent(parent), Id(id), ListType(listType), Atoms(parent.GetRM())
 {
   Value = 0;
@@ -166,6 +166,9 @@ TIString TSimpleRestraint::ToString() const {
   return (rv << ' ' << Atoms.GetExpression());
 }
 //..............................................................................
+void TSimpleRestraint::OnAUUpdate() {
+  Atoms.OnAUUpdate();
+}
 //..............................................................................
 //..............................................................................
 //..............................................................................
@@ -315,6 +318,9 @@ TSimpleRestraint& TSRestraintList::AddNew()  {
 }
 //..............................................................................
 void TSRestraintList::OnAUUpdate() {
+  if (!AllowSymm) {
+    return;
+  }
   for (size_t i = 0; i < Restraints.Count(); i++) {
     Restraints[i].OnAUUpdate();
   }
@@ -335,6 +341,12 @@ void TSRestraintList::EndAUSort() {
 void TSRestraintList::SortAtomsByTags() {
   for (size_t i = 0; i < Restraints.Count(); i++) {
     Restraints[i].Sort();
+  }
+}
+//..............................................................................
+void TSRestraintList::UpdateResi() {
+  for (size_t i = 0; i < Restraints.Count(); i++) {
+    Restraints[i].UpdateResi();
   }
 }
 //..............................................................................
