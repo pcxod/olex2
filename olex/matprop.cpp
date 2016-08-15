@@ -166,13 +166,17 @@ void TdlgMatProp::Init() {
   wxFlexGridSizer *grid = new wxFlexGridSizer(4, 3, 6);
 #endif
   grid->Add(new wxStaticText(this, -1,
-    wxT("Destination"), wxDefaultPosition), 0, wxALIGN_CENTRE | wxEXPAND | wxALL, Border);
+    wxT("Destination"), wxDefaultPosition), 0,
+    wxALIGN_CENTRE_HORIZONTAL | wxEXPAND | wxALL, Border);
   grid->Add(new wxStaticText(this, -1,
-    wxT("Colour"), wxDefaultPosition), 0, wxALIGN_CENTRE | wxEXPAND | wxALL, Border);
+    wxT("Colour"), wxDefaultPosition), 0,
+    wxALIGN_CENTRE_HORIZONTAL | wxEXPAND | wxALL, Border);
   grid->Add(new wxStaticText(this, -1,
-    wxT("Destination"), wxDefaultPosition), 0, wxALIGN_CENTRE | wxEXPAND | wxALL, Border);
+    wxT("Destination"), wxDefaultPosition), 0,
+    wxALIGN_CENTRE_HORIZONTAL | wxEXPAND | wxALL, Border);
   grid->Add(new wxStaticText(this, -1,
-    wxT("Colour"), wxDefaultPosition), 0, wxALIGN_CENTRE | wxEXPAND | wxALL, Border);
+    wxT("Colour"), wxDefaultPosition), 0,
+    wxALIGN_CENTRE_HORIZONTAL | wxEXPAND | wxALL, Border);
 
   grid->Add(cbAmbF, 0, wxALL, Border);
   grid->Add(tcAmbF, 0, wxEXPAND | wxALL, Border);

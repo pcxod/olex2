@@ -67,22 +67,32 @@ struct LabelCorrector  {
   olxstr_dict<TCAtom*, true> uniq_labels;
   olxdict<const cm_Element*, LabelIterator, TPointerComparator>
     labels;
-  bool trim;
-  LabelCorrector(bool trim=true) : trim(trim)  {}
-  LabelCorrector(TAsymmUnit& au, bool trim=true) : trim(trim) {
+  size_t trim_size;
+  LabelCorrector(size_t trim_size)
+    : trim_size(trim_size)
+  {}
+  LabelCorrector(TAsymmUnit& au, size_t trim_size)
+    : trim_size(trim_size)
+  {
     uniq_labels.SetCapacity(au.AtomCount());
     for( size_t i=0; i < au.AtomCount(); i++ )  {
       TCAtom& a = au.GetAtom(i);
-      if( a.IsDeleted() )  continue;
-      if( trim && a.GetLabel().Length() > 4 )
-        a.SetLabel(a.GetLabel().SubStringTo(4), false);
+      if (a.IsDeleted()) {
+        continue;
+      }
+      if (a.GetLabel().Length() > trim_size) {
+        a.SetLabel(a.GetLabel().SubStringTo(trim_size), false);
+      }
       uniq_labels.Add(a.GetResiLabel(), &a);
     }
   }
   void Correct(TCAtom& a) {
-    if (a.IsDeleted()) return;
-    if (trim && a.GetLabel().Length() > 4)
-      a.SetLabel(a.GetLabel().SubStringTo(4), false);
+    if (a.IsDeleted()) {
+      return;
+    }
+    if (a.GetLabel().Length() > trim_size) {
+      a.SetLabel(a.GetLabel().SubStringTo(trim_size), false);
+    }
     TCAtom* lo = uniq_labels.Find(a.GetResiLabel(), NULL);
     if (lo != NULL) {
       LabelIterator *li;
@@ -104,24 +114,29 @@ struct LabelCorrector  {
   }
   void CorrectAll(TResidue& r) {
     uniq_labels.SetCapacity(r.Count());
-    for (size_t i=0; i < r.Count(); i++)
+    for (size_t i = 0; i < r.Count(); i++) {
       Correct(r[i]);
+    }
   }
   // must be initialised with AsymmUnit!
   void CorrectGlobal(TCAtom& a) {
-    if (a.IsDeleted()) return;
+    if (a.IsDeleted()) {
+      return;
+    }
     TCAtom* lo = uniq_labels.Find(a.GetResiLabel(), NULL);
     if (lo != &a) {
       LabelIterator *li;
-      if (labels.HasKey(&a.GetType()))
+      if (labels.HasKey(&a.GetType())) {
         li = &labels.Get(&a.GetType());
+      }
       else {
         const size_t off = a.GetType().symbol.Length();
         li = &labels(&a.GetType(),
           LabelIterator(olxstr(a.GetType().symbol) << '1', off));
       }
-      while (uniq_labels.IndexOf(li->label) != InvalidIndex)
+      while (uniq_labels.IndexOf(li->label) != InvalidIndex) {
         li->inc();
+      }
       a.SetLabel(li->label, false);
       uniq_labels.Add(li->label);
       li->inc();
@@ -133,8 +148,9 @@ struct LabelCorrector  {
   }
   bool IsGlobal(const TCAtom& a) const {
     TCAtom* lo = uniq_labels.Find(a.GetResiLabel(), NULL);
-    if (lo != &a)
+    if (lo != &a) {
       return false;
+    }
     else if (lo == NULL) {
       throw TFunctionFailedException(__OlxSourceInfo,
         "Incorrectly intialised object - use the right constructor");

@@ -42,6 +42,7 @@ public:
   DefMacro(Undo)
   DefMacro(LstGO)
   DefMacro(Kill)
+  DefMacro(Inv)
 
   DefMacro(Qual)
   DefMacro(Load)

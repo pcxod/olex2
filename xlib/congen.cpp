@@ -14,6 +14,7 @@
 #include "unitcell.h"
 #include "lattice.h"
 #include "label_corrector.h"
+#include "xapp.h"
 
 static const double THA = acos(-1./3)*180/M_PI;
 
@@ -57,20 +58,21 @@ AConstraintGenerator::AConstraintGenerator(RefinementModel& rm)
 }
 
 void AConstraintGenerator::DoGenerateAtom(TCAtomPList& created, TAsymmUnit& au,
-    vec3d_list& Crds, const olxstr& StartingName)
+  vec3d_list& Crds, const olxstr& StartingName)
 {
-  LabelCorrector lc(au);
+  LabelCorrector lc(au, TXApp::GetMaxLabelLength());
   const bool IncLabel = (Crds.Count() != 1);
-  for( size_t i=0; i < Crds.Count(); i++ )  {
+  for (size_t i = 0; i < Crds.Count(); i++) {
     TCAtom& CA = au.NewAtom();
     CA.ccrd() = au.Fractionalise(Crds[i]);
     CA.SetType(XElementLib::GetByIndex(iHydrogenIndex));
-    if( IncLabel )  {
+    if (IncLabel) {
       olxstr lbl = (StartingName + (char)('a' + i));
       CA.SetLabel(lbl, false);
     }
-    else
+    else {
       CA.SetLabel(StartingName, false);
+    }
     lc.CorrectGlobal(CA);
     created.Add(CA);
   }

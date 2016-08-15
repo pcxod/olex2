@@ -30,7 +30,6 @@ TGlCanvas::TGlCanvas(TMainForm *parent, int* gl_attr, wxWindowID id,
   FXApp = NULL;
   MouseButton = 0;
   FParent = parent;
-  Bind(wxEVT_SIZE, &TGlCanvas::OnSize, this);
   Bind(wxEVT_PAINT, &TGlCanvas::OnPaint, this);
   Bind(wxEVT_ERASE_BACKGROUND, &TGlCanvas::OnEraseBackground, this);
 
@@ -74,13 +73,15 @@ void TGlCanvas::XApp(TGXApp *XA) {
 }
 //..............................................................................
 void TGlCanvas::Render() {
-#if !defined(__WXMOTIF__) && !defined(__WIN32__) && !defined(__WXGTK__)
-  if( !GetContext() ) return;
-#endif
-  if (FXApp == NULL || !IsShown()) {
+#if !defined(__WXMOTIF__) && !defined(__WIN32__) && !defined(__WXGTK__) && !wxCHECK_VERSION(3,1,0)
+  if (GetContext() == 0) {
     return;
   }
-#if defined(__WXX11__) || defined(__MAC__)  // context is null
+#endif
+  if (FXApp == 0 || !IsShown()) {
+    return;
+  }
+#if (defined(__WXX11__) || defined(__MAC__))  && !wxCHECK_VERSION(3,1,0)
   SetCurrent();
 #else
   Context->SetCurrent(*this);

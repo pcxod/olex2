@@ -64,14 +64,16 @@ void THklFile::Clear3D() {
   Hkl3D = NULL;
 }
 //..............................................................................
-olx_object_ptr<TIns> THklFile::LoadFromFile(const olxstr& FN, bool get_ins)
+olx_object_ptr<TIns> THklFile::LoadFromFile(const olxstr& FN, bool get_ins,
+  const olxstr &format)
 {
   try {
     TEFile::CheckFileExists(__OlxSourceInfo, FN);
     TStrList SL = TEFile::ReadLines(FN);
-    if (SL.IsEmpty())
+    if (SL.IsEmpty()) {
       throw TEmptyFileException(__OlxSrcInfo, FN);
-    return LoadFromStrings(SL, get_ins);
+    }
+    return LoadFromStrings(SL, get_ins, format);
   }
   catch (const TExceptionBase& e) {
     throw TFunctionFailedException(__OlxSourceInfo, e);
@@ -79,7 +81,7 @@ olx_object_ptr<TIns> THklFile::LoadFromFile(const olxstr& FN, bool get_ins)
 }
 //..............................................................................
 olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
-  bool get_ins)
+  bool get_ins, const olxstr &format)
 {
   olx_object_ptr<TIns> rv;
   if (SL.IsEmpty()) {
@@ -87,8 +89,24 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
   }
   try {
     Clear();
+    TSizeList fl = TSizeList::FromList(TStrList(format, ","),
+      FunctionAccessor::MakeConst(&olxstr::ToSizeT));
+    if (fl.IsEmpty()) {
+      fl << 4 << 4 << 4 << 8 << 8;
+    }
+    else {
+      if (fl.Count() < 5) {
+        throw TInvalidArgumentException(__OlxSourceInfo, "line format");
+      }
+    }
+    const size_t fmt_len = olx_sum(fl);
+    const size_t fidx2 = fl[0] + fl[1],
+      fidx3 = fidx2 + fl[2],
+      fidx4 = fidx3 + fl[3],
+      fidx5 = fidx4 + fl[4]
+      ;
     {  // validate if 'real' HKL, not fcf
-      if (!IsHKLFileLine(SL[0])) {
+      if (!IsHKLFileLine(SL[0], fl)) {
         TCif cif;
         try {
           cif.LoadFromStrings(SL);
@@ -137,11 +155,11 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
     for (; i < line_cnt; i++) {
       const olxstr& line = SL[i];
       if (i == 0) {
-        if (line.Length() >= 32) {
+        if (line.Length() >= fmt_len +4) {
           HasBatch = true;
           line_length = line.Length();
         }
-        else if (line.Length() >= 28) {
+        else if (line.Length() >= fmt_len) {
           line_length = line.Length();
         }
         else {
@@ -152,21 +170,21 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
         break;
       }
       try {
-        int h = line.SubString(0, 4).ToInt(),
-          k = line.SubString(4,4).ToInt(),
-          l = line.SubString(8,4).ToInt();
+        int h = line.SubString(0, fl[0]).ToInt(),
+          k = line.SubString(fl[0],fl[1]).ToInt(),
+          l = line.SubString(fidx2,fl[2]).ToInt();
         if (h == 0 && k == 0 && l == 0) {
           ZeroRead = true;
           continue;
         }
         TReflection* ref = HasBatch ?
-          new TReflection(h, k, l, line.SubString(12,8).ToDouble(),
-            line.SubString(20,8).ToDouble(),
-            line.SubString(28,4).IsNumber() ? line.SubString(28,4).ToInt()
+          new TReflection(h, k, l, line.SubString(fidx3,fl[3]).ToDouble(),
+            line.SubString(fidx4,fl[4]).ToDouble(),
+            line.SubString(fidx5,4).IsNumber() ? line.SubString(fidx5,4).ToInt()
             : 1)
           :
-          new TReflection(h, k, l, line.SubString(12,8).ToDouble(),
-            line.SubString(20,8).ToDouble());
+          new TReflection(h, k, l, line.SubString(fidx3,fl[3]).ToDouble(),
+            line.SubString(fidx4,fl[4]).ToDouble());
         ref->SetOmitted(ZeroRead);
         if (apply_basis) {
           vec3d nh = Basis*vec3d(ref->GetHkl());
@@ -407,5 +425,46 @@ olx_object_ptr<THklFile::ref_list> THklFile::FromTonto(const TStrList &l_) {
   rv().a.TakeOver(refs);
   rv().b = intensity;
   return rv;
+}
+//..............................................................................
+bool THklFile::IsHKLFileLine(const olxstr& l, const olxstr &format) {
+  if (format.IsEmpty()) {
+    if (l.Length() >= 28) {
+      return (l.SubString(0, 4).IsNumber() && l.SubString(4, 4).IsNumber() &&
+        l.SubString(8, 4).IsNumber() && l.SubString(12, 8).IsNumber() &&
+        l.SubString(20, 8).IsNumber());
+    }
+    else {
+      return false;
+    }
+  }
+  TSizeList fl = TSizeList::FromList(TStrList(format, ","),
+    FunctionAccessor::MakeConst(&olxstr::ToSizeT));
+  size_t ll = olx_sum(fl);
+  if (l.Length() >= ll) {
+    size_t idx = 0;
+    for (size_t i = 0; i < fl.Count(); i++) {
+      if (!l.SubString(idx, fl[i]).IsNumber()) {
+        return false;
+      }
+      idx += fl[i];
+    }
+    return true;
+  }
+  return false;
+}
+//..............................................................................
+bool THklFile::IsHKLFileLine(const olxstr& l, const TSizeList &format) {
+  size_t idx = 0;
+  for (size_t i = 0; i < format.Count(); i++) {
+    if (idx + format[i] > l.Length()) {
+      return false;
+    }
+    if (!l.SubString(idx, format[i]).IsNumber()) {
+      return false;
+    }
+    idx += format[i];
+  }
+  return true;
 }
 //..............................................................................

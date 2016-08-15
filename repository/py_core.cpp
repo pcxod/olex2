@@ -213,7 +213,7 @@ PyObject* pyRefModel(PyObject* self, PyObject* args)  {
   -represented
   */
   TStrList o_labels(au.AtomCount());
-  LabelCorrector lc;
+  LabelCorrector lc(TXApp::GetMaxLabelLength());
   for (size_t i=0; i < au.AtomCount(); i++) {
     lc.Correct(au.GetAtom(i));
     o_labels[i] = au.GetAtom(i).GetLabel();
