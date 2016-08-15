@@ -4236,6 +4236,24 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
         hkl.LoadFromFile(hkl_src, false);
         THklFile::ToCIF(hkl.RefList(), *Cif, true);
       }
+      // try inserting FAB file
+      if (xapp.CheckFileType<TIns>()) {
+        TIns &ins = xapp.XFile().GetLastLoader<TIns>();
+        if (ins.InsExists("ABIN")) {
+          if (Cif->FindEntry("_shelx_fab_file") == 0) {
+            olxstr fab_name = TEFile::ChangeFileExt(xapp.XFile().LocateHklFile(),
+              "fab");
+            if (!TEFile::Exists(fab_name)) {
+              TBasicApp::NewLogEntry(logError) << "FAB file is missing";
+            }
+            else {
+              cetNamedStringList fab("_shelx_fab_file");
+              fab.lines = TEFile::ReadLines(fab_name);
+              Cif->SetParam(fab);
+            }
+          }
+        }
+      }
     }
   }
   sw.start("Updating commonly mising parameters");
@@ -6602,19 +6620,22 @@ void XLibMacros::funCalcR(const TStrObjList& Params, TMacroData &E)  {
   double scale_k = 1./olx_sqr(rm.Vars.GetVar(0).GetValue());
   xapp.CalcFsq(refs, Fsq, false);
   if (!Params.IsEmpty() && Params[0].Contains("scale")) {
-    double sup=0, sdn=0;
-    for( size_t i=0; i < refs.Count(); i++ )  {
-      if (refs[i].GetI() < 3*refs[i].GetS()) continue;
+    double sup = 0, sdn = 0;
+    for (size_t i = 0; i < refs.Count(); i++) {
+      if (refs[i].GetI() < 3 * refs[i].GetS()) {
+        continue;
+      }
       sup += refs[i].GetI();
       sdn += Fsq[i];
     }
-    scale_k = sdn/sup;
+    scale_k = sdn / sup;
   }
   double wR2u=0, wR2d=0, R1u=0, R1d=0, R1up = 0, R1dp = 0;
   size_t r1p_cnt=0;
   TDoubleList wght = rm.used_weight;
-  while( wght.Count() < 6 )
+  while (wght.Count() < 6) {
     wght.Add(0);
+  }
   wght[5] = 1./3;
   evecd wsqd(refs.Count());
   for (size_t i=0; i < refs.Count(); i++) {

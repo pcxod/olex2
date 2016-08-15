@@ -563,18 +563,24 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
   TStopWatch st(__FUNC__);
   double resolution = Options.FindValue("r", "0.25").ToDouble(),
     maskInc = 1.0;
-  if( resolution < 0.005 )  resolution = 0.05;
+  if (resolution < 0.005) {
+    resolution = 0.05;
+  }
   resolution = 1./resolution;
   short mapType = SFUtil::mapTypeCalc;
-  if( Options.Contains("tomc") )
+  if (Options.Contains("tomc")) {
     mapType = SFUtil::mapType2OmC;
-  else if( Options.Contains("obs") )
+  }
+  else if (Options.Contains("obs")) {
     mapType = SFUtil::mapTypeObs;
-  else if( Options.Contains("diff") )
+  }
+  else if (Options.Contains("diff")) {
     mapType = SFUtil::mapTypeDiff;
+  }
   olxstr strMaskInc = Options.FindValue("m");
-  if( !strMaskInc.IsEmpty() )
+  if (!strMaskInc.IsEmpty()) {
     maskInc = strMaskInc.ToDouble();
+  }
 
   TOnProgress pg;
   // link the two

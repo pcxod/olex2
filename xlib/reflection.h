@@ -105,7 +105,13 @@ public:
   void SetL(int v)   {  hkl[2] = v;  }
   vec3i& GetHkl()  { return hkl; }
   const vec3i& GetHkl() const { return hkl; }
-  TReflection& SetHkl(const vec3i& _hkl)  { hkl = _hkl;  return *this; }
+  TReflection& SetHkl(const vec3i& _hkl) { hkl = _hkl;  return *this; }
+  /* returns HKL identifying hash for individual values up to 9 bits*/
+  static uint32_t CalcHKLHash(const vec3i &hkl);
+  uint32_t GetHKLHash() const { return CalcHKLHash(hkl); }
+  /* returns HKL identifying hash for individual values up to 20 bits*/
+  static uint64_t CalcHKLHash64(const vec3i &hkl);
+  uint64_t GetHKLHash64() const { return CalcHKLHash64(hkl); }
   //...........................................................................
   DefPropP(double, I)
   DefPropP(double, S)
