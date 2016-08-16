@@ -97,9 +97,40 @@ namespace test {
     }
   }
   //...................................................................................................
+  void Base85Test(OlxTests& t) {
+    t.description = __FUNC__;
+    olxstr msgs[] = { L"The quick brown fox",
+      L"%% %%% % \u2045" };
+    uint8_t test_data_1[8] = {0x86, 0x4F, 0xD2, 0x6F, 0xB5, 0x59, 0xF7, 0x5B};
+    olxcstr x1 = encoding::base85::decode("HelloWorld");
+    if (x1.Length() != 8) {
+      throw TFunctionFailedException(__OlxSourceInfo, "encoding failed");
+    }
+    for (int i = 0; i < 8; i++) {
+      if (test_data_1[i] != (uint8_t)x1.CharAt(i)) {
+        throw TFunctionFailedException(__OlxSourceInfo, "encoding failed");
+      }
+    }
+    olxcstr x = encoding::base85::encode(&test_data_1[0], 8);
+    if (x != "HelloWorld") {
+      throw TFunctionFailedException(__OlxSourceInfo, "encoding failed");
+    }
+    for (int i = 0; i < 2; i++) {
+      olxcstr toe = TUtf8::Encode(msgs[i]);
+      olxcstr eres = encoding::base85::encode(msgs[i].ToMBStr());
+      olxcstr tod = encoding::base85::decode(eres);
+      olxstr dres = TUtf8::Decode(tod);
+      if (dres != msgs[i]) {
+        throw TFunctionFailedException(__OlxSourceInfo,
+          "Non reversble encoding");
+      }
+    }
+  }
+  //...................................................................................................
   void EncodingTests(OlxTests& t) {
     t.Add(&test::BaseEncodingTest)
-      .Add(&test::PercentEncodingTest);
+      .Add(&test::PercentEncodingTest)
+      .Add(&test::Base85Test);
   }
   //...................................................................................................
 };  //namespace test
