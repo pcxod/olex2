@@ -50,11 +50,9 @@ protected:
     }
   }
 public:
-  static olxcstr Encode(const olxcstr& str) {
-    olxcstr r = str.NeedsConverting() ? Encode(str.ToWCStr()) : str;
-    r.SetUTF8(true);
-    return r;
-  }
+  /* body defined in olx_istring.cpp
+  */
+  static olxcstr Encode(const olxcstr& str);
   static IDataOutputStream &Encode(const olxcstr& str,
     IDataOutputStream &out)
   { 
