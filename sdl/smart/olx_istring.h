@@ -147,15 +147,20 @@ public:
     T::_Start = str._Start + start;
     T::_Length = length;
     T::_Increment = 8;
+    T::OnCopy(str);
   }
   //...........................................................................
-  TTSString(const TTSString& str)  {  InitFromString(str);  }
+  TTSString(const TTSString& str) {
+    InitFromString(str);
+    T::OnCopy(str);
+  }
   //...........................................................................
   TTSString(const TTSString& str, size_t capacity)  {
     InitFromString(str);
     if (capacity != 0) {
       T::checkBufferForModification(T::_Length + capacity);
     }
+    T::OnCopy(str);
   }
   //...........................................................................
   TTSString(const TC* str, size_t len=InvalidIndex)  {
@@ -179,12 +184,15 @@ public:
   of the string stays the same and ony the capacity is increased
   */
   TTSString &Allocate(size_t sz, bool change_size=false)  {
-    if( T::SData == NULL )
+    if (T::SData == NULL) {
       T::SData = new struct T::Buffer(sz);
-    else
+    }
+    else {
       T::SData->SetCapacity(sz);
-    if( change_size )
+    }
+    if (change_size) {
       T::_Length = sz;
+    }
     return *this;
   }
 
@@ -197,8 +205,12 @@ public:
     InitFromCharStr((const TC*)v.c_str(), v.Length());
   }
 #endif
-  TTSString(const std::string &v)  {  T::Append(v.c_str(), v.length());  }
-  template <typename AC> TTSString(const AC& v) : T(v)  {}
+  TTSString(const std::string &v) {
+    T::Append(v.c_str(), v.length());
+  }
+  template <typename AC> TTSString(const AC& v)
+    : T(v)
+  {}
   //...........................................................................
   // creates a string from external array allocated with alloc
   static TTSString FromExternal(TC* data, size_t len,
@@ -313,7 +325,7 @@ public:
     T::operator = ((const T1&)v);
     return *this;
   }
-  TTSString& operator = (const TTSString& v)  {
+  TTSString& operator = (const TTSString& v) {
     if (&v == this) {
       return *this;
     }
@@ -326,21 +338,22 @@ public:
     if (T::SData != NULL) {
       T::SData->RefCnt++;
     }
+    T::OnCopy(v);
     return *this;
   }
   //...........................................................................
   TTSString SubString(size_t from, size_t count) const {
 #ifdef _DEBUG
-    if( from > T::_Length )  {
+    if (from > T::_Length) {
       TExceptionBase::ThrowIndexOutOfRange(__POlxSourceInfo, from, 0,
         T::_Length);
     }
-    if( from+count > T::_Length )  {
-      TExceptionBase::ThrowIndexOutOfRange(__POlxSourceInfo, from+count, 0,
+    if (from + count > T::_Length) {
+      TExceptionBase::ThrowIndexOutOfRange(__POlxSourceInfo, from + count, 0,
         T::_Length);
     }
 #endif
-    return TTSString<T,TC>(*this, from, count);
+    return TTSString<T, TC> (*this, from, count);
   }
   TTSString SubStringFrom(size_t from, size_t indexFromEnd=0) const {
     return SubString(from, T::_Length-from-indexFromEnd);
@@ -1466,9 +1479,9 @@ public:
     return whr_len - ni;
   }
   //...........................................................................
-  template <typename OC> TTSString& DeleteSequencesOf(OC wht)  {
+  template <typename OC> TTSString& DeleteSequencesOf(OC wht) {
     T::checkBufferForModification(T::_Length);
-    T::DecLength( o_strdcs(T::Data(), T::_Length, wht) );
+    T::DecLength(o_strdcs(T::Data(), T::_Length, wht));
     return *this;
   }
   //...........................................................................
@@ -1919,7 +1932,7 @@ public:
   }
 #endif // __BORLANDC__
   //...........................................................................
-  template <typename AC> TTSString& Trim(AC wht)  {
+  template <typename AC> TTSString& Trim(AC wht) {
     if (T::_Length == 0) {
       return *this;
     }
@@ -2221,9 +2234,14 @@ public:
     }
     return false;
   }
-  static bool o_needs_converting(const char* data, size_t) {
+  static bool o_needs_converting(const char* data, size_t len) {
+    for (size_t i = 0; i < len; i++) {
+      if ((uint8_t)data[i] > 127) {
+        return true;
+      }
+    }
     return false;
-  }
+      }
   //...........................................................................
 #ifdef __BORLANDC__
   typedef TTSString<TCString, char> olxcstr;
@@ -2233,13 +2251,16 @@ public:
   bool NeedsConverting() const {
     return o_needs_converting(T::Data(), T::_Length);
   }
-  // converts a wide char string into multibyte string properly
-  // (using current locale)
+  /* converts a wide char string into multibyte string properly
+   (using current locale)
+   */
   static TTSString FromCStr(const wchar_t* wstr, size_t len=~0);
   static TTSString FromCStr(const char* mbs, size_t len=~0);
+  static olxstr FromUTF8(const char* mbs, size_t len = ~0);
 
   olxcstr ToMBStr() const;
   olxwstr ToWCStr() const;
+  olxcstr ToUTF8() const;
   //...........................................................................
   virtual IOlxObject* Replicate() const {  return new TTSString<T,TC>(*this);  }
   //...........................................................................

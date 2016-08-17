@@ -575,9 +575,6 @@
     <ClInclude Include="..\..\..\sdl\olxfunc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\sdl\strconv.h">
-      <Filter>Header Files\string</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\sdl\tests\olx_func_test.h">
       <Filter>tests</Filter>
     </ClInclude>
