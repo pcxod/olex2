@@ -762,7 +762,6 @@
     <ClInclude Include="..\..\..\sdl\sorted.h" />
     <ClInclude Include="..\..\..\sdl\sortedlist.h" />
     <ClInclude Include="..\..\..\sdl\sparser.h" />
-    <ClInclude Include="..\..\..\sdl\strconv.h" />
     <ClInclude Include="..\..\..\sdl\strmask.h" />
     <ClInclude Include="..\..\..\sdl\talist.h" />
     <ClInclude Include="..\..\..\sdl\testsuit.h" />

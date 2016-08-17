@@ -36,67 +36,77 @@ class TUtf8  {
   }
 
 protected:
-  TUtf8()  {
+  TUtf8() {
     short sz = sizeof(wchar_t);
     if (sz == 2) {
       EncodeFunc = &Encode2;
       EncodeStreamFunc = &EncodeStream2;
       DecodeFunc = &Decode2;
     }
-    else if( sz == 4 )  {
+    else if (sz == 4) {
       EncodeFunc = &Encode4;
       EncodeStreamFunc = &EncodeStream4;
       DecodeFunc = &Decode4;
     }
   }
 public:
-  static inline olxcstr Encode(const olxcstr& str) { return str; }
-  static inline IDataOutputStream &Encode(const olxcstr& str,
+  static olxcstr Encode(const olxcstr& str) {
+    olxcstr r = str.NeedsConverting() ? Encode(str.ToWCStr()) : str;
+    r.SetUTF8(true);
+    return r;
+  }
+  static IDataOutputStream &Encode(const olxcstr& str,
     IDataOutputStream &out)
   { 
     return out << str;
   }
-  static inline olxcstr Encode(const olxwstr& str) {
-    return (*GetInstance().EncodeFunc)(str.raw_str(), str.Length());
+  static olxcstr Encode(const olxwstr& str) {
+    olxcstr r = (*GetInstance().EncodeFunc)(str.raw_str(), str.Length());
+    r.SetUTF8(true);
+    return r;
   }
 
-  static inline olxcstr Encode(const TTIString<wchar_t>& str)  {
-    return (*GetInstance().EncodeFunc)(str.raw_str(), str.Length());
+  static olxcstr Encode(const TTIString<wchar_t>& str) {
+    olxcstr r = (*GetInstance().EncodeFunc)(str.raw_str(), str.Length());
+    r.SetUTF8(true);
+    return r;
   }
 
-  static inline IDataOutputStream& Encode(const olxwstr& str,
+  static IDataOutputStream& Encode(const olxwstr& str,
     IDataOutputStream& out)
   {
     return (*GetInstance().EncodeStreamFunc)(str.raw_str(), str.Length(), out);
   }
-  static inline IDataOutputStream& Encode(const TTIString<wchar_t>& str,
+  static IDataOutputStream& Encode(const TTIString<wchar_t>& str,
     IDataOutputStream& out)
   {
     return (*GetInstance().EncodeStreamFunc)(str.raw_str(), str.Length(), out);
   }
 
-  static inline olxcstr Encode(const wchar_t* wstr, size_t len=InvalidSize)  {
-    return (*GetInstance().EncodeFunc)(wstr,
+  static olxcstr Encode(const wchar_t* wstr, size_t len=InvalidSize)  {
+    olxcstr r = (*GetInstance().EncodeFunc)(wstr,
       len == InvalidSize ? olxstr::o_strlen(wstr) : len);
+    r.SetUTF8(true);
+    return r;
   }
-  static inline IDataOutputStream& Encode(const wchar_t* wstr,
+  static IDataOutputStream& Encode(const wchar_t* wstr,
     IDataOutputStream& out, size_t len=InvalidSize)
   {
     return (*GetInstance().EncodeStreamFunc)(wstr,
       len == InvalidSize ? olxstr::o_strlen(wstr) : len, out);
   }
 
-  static inline olxwstr Decode(const olxwstr& str)  {  return str;  }
-  static inline olxwstr Decode(const olxcstr& str)  {
+  static olxwstr Decode(const olxwstr& str)  {  return str;  }
+  static olxwstr Decode(const olxcstr& str)  {
     return (*GetInstance().DecodeFunc)(str.raw_str(), str.Length());
   }
-  static inline olxwstr Decode(const TTIString<char>& str)  {
+  static olxwstr Decode(const TTIString<char>& str)  {
     return (*GetInstance().DecodeFunc)(str.raw_str(), str.Length());
   }
-  static inline olxwstr Decode(const char* str)  {
+  static olxwstr Decode(const char* str)  {
     return (*GetInstance().DecodeFunc)(str, olxstr::o_strlen(str));
   }
-  static inline olxwstr Decode(const char* str, size_t len) {
+  static olxwstr Decode(const char* str, size_t len) {
     return (*GetInstance().DecodeFunc)(str, len);
   }
 

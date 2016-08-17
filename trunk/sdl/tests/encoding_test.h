@@ -10,6 +10,7 @@
 #include "md5.h"
 #include "sha.h"
 #include "../encodings.h"
+#include <locale>
 namespace test {
   void MD5Test(OlxTests& t)  {
     t.description = __FUNC__;
@@ -117,7 +118,7 @@ namespace test {
     }
     for (int i = 0; i < 2; i++) {
       olxcstr toe = TUtf8::Encode(msgs[i]);
-      olxcstr eres = encoding::base85::encode(msgs[i].ToMBStr());
+      olxcstr eres = encoding::base85::encode(toe);
       olxcstr tod = encoding::base85::decode(eres);
       olxstr dres = TUtf8::Decode(tod);
       if (dres != msgs[i]) {
@@ -127,10 +128,46 @@ namespace test {
     }
   }
   //...................................................................................................
+  void MBStest(OlxTests &t) {
+    t.description = __FUNC__;
+    olxstr cm[] = { L"The quick brown fox",
+      L"\u00e9 \u00df \u00de "
+    },
+      fm[] = {L"%% \u2045",  L"\u06de \u20a9"};
+    for (int i = 0; i < 2; i++) {
+      olxcstr e = cm[i].ToMBStr();
+      olxstr d = e.ToWCStr();
+      if (d != cm[i]) {
+        throw TFunctionFailedException(__OlxSourceInfo, "MBS-WStr conversion failed");
+      }
+    }
+    for (int i = 0; i < 2; i++) {
+      try {
+        olxcstr e = fm[i].ToMBStr();
+        olxstr d = e.ToWCStr();
+        throw TFunctionFailedException(__OlxSourceInfo, "MBS-WStr did not fail but should have");
+      }
+      catch (const TExceptionBase &e) {
+      }
+    }
+    for (int i = 0; i < 2; i++) {
+      olxcstr e = fm[i].ToUTF8(), e1;
+      e1 = e;
+      if (!e.IsUTF8() || !e.SubString(0, 1).IsUTF8() || !olxcstr(e).IsUTF8() || !e1.IsUTF8()) {
+        throw TFunctionFailedException(__OlxSourceInfo, "UTF8 flag is not set or not copied over");
+      }
+      olxstr d = e.ToWCStr();
+      if (d != fm[i] || d != TUtf8::Decode(e)) {
+        throw TFunctionFailedException(__OlxSourceInfo, "UTF8 conversion failed");
+      }
+    }
+  }
+  //...................................................................................................
   void EncodingTests(OlxTests& t) {
     t.Add(&test::BaseEncodingTest)
       .Add(&test::PercentEncodingTest)
-      .Add(&test::Base85Test);
+      .Add(&test::Base85Test).
+      Add(&test::MBStest);
   }
   //...................................................................................................
 };  //namespace test

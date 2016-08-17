@@ -46,17 +46,17 @@ protected:
   TWString& AssignCharStr(const char*str, size_t len=~0);
 //..............................................................................
   template <class T> inline TWString& writeType(const wchar_t *format, T v)  {
-    wchar_t bf[80];
+    olx_array_ptr<wchar_t> bf(80);
 #if defined(_MSC_VER)
-    swprintf_s(bf, 80, format, v);
+    swprintf_s(bf(), 80, format, v);
 #elif defined(__GNUC__) && !defined(__WIN32__)
     swprintf(bf, 80, format, v);
 #else
     swprintf(bf, format, v);
 #endif
-    size_t len = wcslen(bf);
+    size_t len = wcslen(bf());
     checkBufferForModification(_Length + len);
-    olx_memcpy(&SData->Data[_Length], bf, len);
+    olx_memcpy(&SData->Data[_Length], bf(), len);
     _Length += len;
     return *this;
   }
@@ -64,41 +64,43 @@ protected:
   template <class T> inline void setTypeValue(const wchar_t *format, T v)  {
     _Start = 0;
     _Increment = 8;
-    wchar_t bf[80]; // we could use dynamic memory with TTBuffer<T>::Alloc instead
+    olx_array_ptr<wchar_t> bf(80);
 #if defined(_MSC_VER)
-    swprintf_s(bf, 80, format, v);
+    swprintf_s(bf(), 80, format, v);
 #elif defined(__GNUC__) && !defined(__WIN32__)
     swprintf(bf, 80, format, v);
 #else
     swprintf(bf, format, v);
 #endif
-    _Length = wcslen(bf);
-    SData = new Buffer(_Length +_Increment, bf, _Length);
+    _Length = wcslen(bf());
+    SData = new Buffer(_Length +_Increment, bf(), _Length);
   }
 //..............................................................................
-  template <class T> inline TWString& assignTypeValue(const wchar_t *format, T v)  {
-    wchar_t bf[80]; // we could use dynamic memory with TTBuffer<T>::Alloc instead
+  template <class T> inline TWString& assignTypeValue(const wchar_t *format, T v) {
+    olx_array_ptr<wchar_t> bf(80);
 #if defined(_MSC_VER)
-    swprintf_s(bf, 80, format, v);
+    swprintf_s(bf(), 80, format, v);
 #elif defined(__GNUC__) &&!defined(__WIN32__)
-    swprintf(bf, 80, format, v);
+    swprintf(bf(), 80, format, v);
 #else
-    swprintf(bf, format, v);
+    swprintf(bf(), format, v);
 #endif
     _Start = 0;
     _Increment = 8;
-    _Length = wcslen(bf);
-    if( SData != NULL )  {
-      if( SData->RefCnt == 1 )  { // owed by this object
+    _Length = wcslen(bf());
+    if (SData != NULL) {
+      if (SData->RefCnt == 1) { // owed by this object
         SData->SetCapacity(_Length);
-        olx_memcpy(SData->Data, bf, _Length);
+        olx_memcpy(SData->Data, bf(), _Length);
       }
-      else  {
+      else {
         SData->RefCnt--;
         SData = NULL;
       }
     }
-    if( SData == NULL )  SData = new Buffer(_Length +_Increment, bf, _Length);
+    if (SData == NULL) {
+      SData = new Buffer(_Length + _Increment, bf(), _Length);
+    }
     return *this;
   }
   inline const wchar_t* printFormat(const char)                   const {  return L"%c";  }
@@ -113,6 +115,8 @@ protected:
   inline const wchar_t* printFormat(const float)                  const {  return L"%f";  }
   inline const wchar_t* printFormat(const double)                 const {  return L"%lf";  }
   inline const wchar_t* printFormat(const long double)            const {  return L"%Lf";  }
+  
+  void OnCopy(const TWString &);
 public:
   TWString();
   // simple convertion constructors
