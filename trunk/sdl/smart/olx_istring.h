@@ -2256,7 +2256,7 @@ public:
    */
   static TTSString FromCStr(const wchar_t* wstr, size_t len=~0);
   static TTSString FromCStr(const char* mbs, size_t len=~0);
-  static olxstr FromUTF8(const char* mbs, size_t len = ~0);
+  static olxwstr FromUTF8(const char* mbs, size_t len = ~0);
 
   olxcstr ToMBStr() const;
   olxwstr ToWCStr() const;

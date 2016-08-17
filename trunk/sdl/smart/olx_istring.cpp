@@ -23,11 +23,9 @@ namespace esdl {
       TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo,
         "could not convert wcs to mbs");
     }
-    olxcstr str;
-    str.Allocate(res + 1, false);
-    wcstombs(str.raw_str(), wstr, res);
-    str.SetLength(res);
-    return str;
+    olx_array_ptr<char> out = olx_malloc<char>(res + 1);
+    wcstombs(out(), wstr, res);
+    return olxcstr::FromExternal(out.release(), res, res+1);
   }
 
   template<> olxcstr olxcstr::FromCStr(
@@ -50,7 +48,7 @@ namespace esdl {
     }
     olx_array_ptr<wchar_t> out = olx_malloc<wchar_t>(res + 1);
     mbstowcs(out(), mbs, res);
-    return olxwstr::FromExternal(out.release(), len, len+1);
+    return olxwstr::FromExternal(out.release(), res, res+1);
   }
 
   template<> olxwstr olxwstr::FromCStr(
@@ -96,6 +94,15 @@ namespace esdl {
 
   template<> olxcstr olxcstr::ToUTF8() const {
     return TUtf8::Encode(*this);
+  }
+///////////////////////////////////////////////////////////////////////////////
+  olxcstr TUtf8::Encode(const olxcstr& str) {
+    if (str.NeedsConverting()) {
+      olxcstr r = Encode(str.ToWCStr());
+      r.SetUTF8(true);
+      return r;
+    }
+    return str;
   }
 
   template class TTSString<TCString, char>;
