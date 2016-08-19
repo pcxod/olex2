@@ -7825,6 +7825,15 @@ void XLibMacros::macExport(TStrObjList &Cmds, const TParamList &Options,
       }
     }
   }
+  // extract FAB if any
+  {
+    cif_dp::cetStringList *ci = dynamic_cast<cif_dp::cetStringList *>(
+      C.FindEntry("_shelx_fab_file"));
+    if (ci != NULL) {
+      TEFile::WriteLines(TEFile::ChangeFileExt(hkl_name, "fab"),
+        TCStrList(ci->lines));
+    }
+  }
   // check if the res file is there
   olxstr res_name = TEFile::ChangeFileExt(hkl_name, "res");
   if (!TEFile::Exists(res_name)) {

@@ -12,30 +12,38 @@
 #include "olx_cstring.h"
 #include "../egc.h"
 
-TCString::TCString() {
+TCString::TCString()
+  : utf8(false)
+{
   SData = NULL;
   _Start = _Length = 0;
   _Increment = 8;
+  utf8 = false;
 }
 
 TCString::TCString(const bool& v)
-  : TTIString<char>(v ? CTrueString(): CFalseString())
+  : TTIString<char>(v ? CTrueString(): CFalseString()), utf8(false)
 {}
 
-TCString::TCString( const wchar_t *wstr ) {
+TCString::TCString(const wchar_t *wstr)
+  : utf8(false)
+{
   _Start = 0;
   _Increment = 8;
   _Length = wcslen(wstr);
-  SData = new Buffer(_Length+_Increment);
+  SData = new Buffer(_Length + _Increment);
   for (size_t i = 0; i < _Length; i++) {
     if (((unsigned)wstr[i]) > 255) {
       throw TInvalidArgumentException(__OlxSourceInfo,
         "Char out of range for MBStr");
     }
-    SData->Data[i] = wstr[i];
+    SData->Data[i] = (char)wstr[i];
   }
 }
-TCString::TCString(const TWString& wstr) {
+
+TCString::TCString(const TWString& wstr)
+  : utf8(false)
+{
   _Start = 0;
   _Increment = 8;
   _Length = wstr.Length();
@@ -45,8 +53,28 @@ TCString::TCString(const TWString& wstr) {
       throw TInvalidArgumentException(__OlxSourceInfo,
         "Char out of range for MBStr");
     }
-    SData->Data[i] = wstr[i];
+    SData->Data[i] = (char)wstr[i];
   }
+}
+
+TCString::TCString(const TTIString<wchar_t>& wstr)
+  : utf8(false)
+{
+  _Start = 0;
+  _Increment = 8;
+  _Length = wstr.Length();
+  SData = new Buffer(_Length + _Increment);
+  for (size_t i = 0; i < _Length; i++) {
+    if (((unsigned)wstr[i]) > 255) {
+      throw TInvalidArgumentException(__OlxSourceInfo,
+        "Char out of range for MBStr");
+    }
+    SData->Data[i] = (char)wstr[i];
+  }
+}
+
+void TCString::OnCopy(const TCString& cstr) {
+  utf8 = cstr.IsUTF8();
 }
 
 TCString& TCString::AssignWCharStr(const wchar_t* wstr, size_t len) {
@@ -70,27 +98,13 @@ TCString& TCString::AssignWCharStr(const wchar_t* wstr, size_t len) {
       throw TInvalidArgumentException(__OlxSourceInfo,
         "Char out of range for MBStr");
     }
-    SData->Data[i] = wstr[i];
+    SData->Data[i] = (char)wstr[i];
   }
   return *this;
 }
 
 TCString& TCString::operator = (const TWString& astr)  {
   return AssignWCharStr(astr.raw_str(), astr.Length());
-}
-
-TCString::TCString(const TTIString<wchar_t>& wstr )  {
-  _Start = 0;
-  _Increment = 8;
-  _Length = wstr.Length();
-  SData = new Buffer(_Length+_Increment);
-  for (size_t i = 0; i < _Length; i++) {
-    if (((unsigned)wstr[i]) > 255) {
-      throw TInvalidArgumentException(__OlxSourceInfo,
-        "Char out of range for MBStr");
-    }
-    SData->Data[i] = wstr[i];
-  }
 }
 
 const wchar_t * TCString::wc_str() const {
