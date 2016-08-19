@@ -44,54 +44,56 @@ protected:
 //..............................................................................
   TCString& AssignWCharStr(const wchar_t* str, size_t len=~0);
 //..............................................................................
-  template <class T> inline TCString& writeType(const char *format, T v)  {
-    char bf[80];
+  template <class T> inline TCString& writeType(const char *format, T v) {
+    olx_array_ptr<char> bf(80);
 #if defined(_MSC_VER)
-    sprintf_s(bf, 80, format, v);
+    sprintf_s(bf(), 80, format, v);
 #else
-    sprintf(bf, format, v);
+    sprintf(bf(), format, v);
 #endif
-    size_t len = strlen(bf);
+    size_t len = strlen(bf());
     checkBufferForModification(_Length + len);
-    olx_memcpy(&SData->Data[_Length], bf, len);
+    olx_memcpy(&SData->Data[_Length], bf(), len);
     _Length += len;
     return *this;
   }
 //..............................................................................
-  template <class T> inline void setTypeValue(const char *format, T v)  {
+  template <class T> inline void setTypeValue(const char *format, T v) {
     _Start = 0;
     _Increment = 8;
-    char bf[80]; // we could use dynamic memory with TTBuffer<T>::Alloc instead
+    olx_array_ptr<char> bf(80);
 #if defined(_MSC_VER)
-    sprintf_s(bf, 80, format, v);
+    sprintf_s(bf(), 80, format, v);
 #else
-    sprintf(bf, format, v);
+    sprintf(bf(), format, v);
 #endif
-    _Length = strlen(bf);
-    SData = new Buffer(_Length +_Increment, bf, _Length);
+    _Length = strlen(bf());
+    SData = new Buffer(_Length + _Increment, bf(), _Length);
   }
 //..............................................................................
-  template <class T> inline TCString& assignTypeValue(const char *format, T v)  {
-    char bf[80]; // we could use dynamic memory with TTBuffer<T>::Alloc instead
+  template <class T> inline TCString& assignTypeValue(const char *format, T v) {
+    olx_array_ptr<char> bf(80);
 #if defined(_MSC_VER)
-    sprintf_s(bf, 80, format, v);
+    sprintf_s(bf(), 80, format, v);
 #else
-    sprintf(bf, format, v);
+    sprintf(bf(), format, v);
 #endif
     _Start = 0;
     _Increment = 8;
-    _Length = strlen(bf);
-    if( SData != NULL )  {
-      if( SData->RefCnt == 1 )  { // owed by this object
+    _Length = strlen(bf());
+    if (SData != NULL) {
+      if (SData->RefCnt == 1) { // owed by this object
         SData->SetCapacity(_Length);
-        olx_memcpy(SData->Data, bf, _Length);
+        olx_memcpy(SData->Data, bf(), _Length);
       }
-      else  {
+      else {
         SData->RefCnt--;
         SData = NULL;
       }
     }
-    if( SData == NULL )  SData = new Buffer(_Length +_Increment, bf, _Length);
+    if (SData == NULL) {
+      SData = new Buffer(_Length + _Increment, bf(), _Length);
+    }
     return *this;
   }
   inline const char* printFormat(const char)                   const {  return "%c";  }
@@ -106,6 +108,8 @@ protected:
   inline const char* printFormat(const float)                  const {  return "%f";  }
   inline const char* printFormat(const double)                 const {  return "%lf";  }
   inline const char* printFormat(const long double)            const {  return "%Lf";  }
+  bool utf8;
+  void OnCopy(const TCString& cstr);
 public:
   TCString();
   TCString(const wchar_t *wstr);
@@ -113,14 +117,16 @@ public:
   TCString(const class TWString& astr);
 //..........................................................................................
   TCString(const bool& v);
-  TCString(const TTIString<wchar_t>& wstr );
-  template <typename T> TCString(const T& v)  { setTypeValue( printFormat(v), v);  }
+  TCString(const TTIString<wchar_t>& wstr);
+  template <typename T> TCString(const T& v)  {
+    setTypeValue( printFormat(v), v);
+  }
   // float numbers need trimming of the 0000
-  TCString(const float& v)  {
+  TCString(const float& v) {
     setTypeValue(printFormat(v), v);
     TrimFloat();
   }
-  TCString(const double& v)  {
+  TCString(const double& v) {
     setTypeValue(printFormat(v), v);
     TrimFloat();
   }
@@ -129,15 +135,15 @@ public:
   template <typename T> inline TCString& operator << (const T &v) {
     return writeType(printFormat(v), v);
   }
-  TCString& TrimFloat()  {
+  TCString& TrimFloat() {
     size_t fp_pos = InvalidIndex;
-    for( size_t i=0; i < _Length; i++ )  {
-      if( CharAt(i) == '.' )  {
+    for (size_t i = 0; i < _Length; i++) {
+      if (CharAt(i) == '.') {
         fp_pos = i;
         break;
       }
     }
-    if( fp_pos == InvalidIndex )  return *this;
+    if (fp_pos == InvalidIndex)  return *this;
     while (_Length > 1 && CharAt(_Length - 1) == '0') {
       _Length--;
     }
@@ -158,9 +164,9 @@ public:
   }
   /* there is just no way with borland to put it TTIString as it would swear about
     [C++ Error] olx_istring.h(112): E2034 Cannot convert 'const wchar_t *' to 'const char *' */
-  inline TCString& Append(const char *data, size_t len)  {
+  inline TCString& Append(const char *data, size_t len) {
     checkBufferForModification(_Length + len);
-    olx_memcpy( &SData->Data[_Start+_Length], data, len);
+    olx_memcpy(&SData->Data[_Start + _Length], data, len);
     _Length += len;
     return *this;
   }
@@ -218,6 +224,12 @@ public:
 #endif
     checkBufferForModification(_Length);
     SData->Data[_Start+i] = v;
+  }
+  bool IsUTF8() const {
+    return utf8;
+  }
+  void SetUTF8(bool v) {
+    utf8 = true;
   }
   //............................................................................
   virtual TIString ToString() const;

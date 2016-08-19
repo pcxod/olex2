@@ -12,7 +12,7 @@
 #include <locale.h>
 #include "../egc.h"
 
-TWString::TWString()  {
+TWString::TWString() {
   SData = NULL;
   _Start = _Length = 0;
   _Increment = 8;
@@ -55,7 +55,7 @@ TWString::TWString( const TTIString<char>& str )  {
     SData->Data[i] = str[i];
 }
 // primitive Type constructor
-TWString::TWString(const char& v)                  {
+TWString::TWString(const char& v) {
   _Start = 0;
   _Increment = 8;
   _Length = 1;  // one entity!!
@@ -63,65 +63,67 @@ TWString::TWString(const char& v)                  {
   SData->Data[0] = v;
 }
 
-//TWString::operator TTIString<wchar_t> () const  {
-//  return WStrRV(*this);
-//}
+
+void TWString::OnCopy(const TWString &) {
+}
 
 const char * TWString::c_str() const {
   return TEGC::Add(new TCString(*this)).c_str();
 }
 
-TWString& TWString::operator << (const CharW &v)  {
+TWString& TWString::operator << (const CharW &v) {
   checkBufferForModification(_Length + 1);
   SData->Data[_Length] = v.GetValue();
-  _Length ++;
+  _Length++;
   return *this;
 }
-TWString& TWString::operator << (const char &v)  {
+
+TWString& TWString::operator << (const char &v) {
   checkBufferForModification(_Length + 1);
   SData->Data[_Length] = v;
   _Length++;
   return *this;
 }
 
-TWString& TWString::AssignCharStr(const char *str, size_t len)  {
+TWString& TWString::AssignCharStr(const char *str, size_t len) {
   _Start = 0;
   _Increment = 5;
   _Length = ((len == InvalidSize) ? strlen(str) : len);
-  if( SData != NULL )  {
-    if( SData->RefCnt == 1 )  // owed by this object
+  if (SData != NULL) {
+    if (SData->RefCnt == 1)  // owed by this object
       SData->SetCapacity(_Length);
-    else  {
+    else {
       SData->RefCnt--;
       SData = NULL;
     }
   }
-  if( SData == NULL )
-    SData = new Buffer(_Length +_Increment);
-  for( size_t i=0; i < _Length; i++ )
+  if (SData == NULL)
+    SData = new Buffer(_Length + _Increment);
+  for (size_t i = 0; i < _Length; i++) {
     SData->Data[i] = str[i];
+  }
   return *this;
 }
 
-TWString& TWString::operator = (const char &ch)          {
+TWString& TWString::operator = (const char &ch) {
   _Start = 0;
   _Increment = 8;
   _Length = 1;
-  if( SData != NULL )  {
-    if( SData->RefCnt == 1 )  { // owed by this object
+  if (SData != NULL) {
+    if (SData->RefCnt == 1) { // owed by this object
       SData->SetCapacity(_Length);
     }
-    else  {
+    else {
       SData->RefCnt--;
       SData = NULL;
     }
   }
-  if( SData == NULL )  SData = new Buffer(_Increment);
+  if (SData == NULL)  SData = new Buffer(_Increment);
   SData->Data[0] = ch;
   return *this;
 }
 //..............................................................................
-TWString& TWString::operator = (const TCString& astr)  {
+TWString& TWString::operator = (const TCString& astr) {
   return AssignCharStr(astr.raw_str(), astr.Length());
 }
 //..............................................................................

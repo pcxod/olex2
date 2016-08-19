@@ -331,7 +331,7 @@ void SFUtil::_CalcSF(const TXFile& xfile, const IMillerIndexList& refs,
         }
         else {
           THklFile hkl;
-          hkl.LoadFromFile(fab_name, false, "5,5,5,10,10");
+          hkl.LoadFromFile(fab_name, false, "free");
           for (size_t i = 0; i < hkl.RefCount(); i++) {
             TReflection &r = hkl[i];
             r.Standardise(info_ex);

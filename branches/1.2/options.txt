@@ -30,3 +30,4 @@ use_hkl_cell [true] - if HKL file has CELL instruction - Olex2 overrdes current 
   parameters
 path [] - extensions to the system PATH (prepended)
 max_label_length [4] - new Shelxl will support longer labels in the INS file
+locale.ctype [en_US.utf8] - default locale for Linux/Mac
