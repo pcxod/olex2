@@ -603,28 +603,36 @@ olxstr TXBond::GetLegend(const TSBond& Bnd, size_t level) {
   const TSAtom *A = &Bnd.A(),
     *B = &Bnd.B();
   if (A->GetType() != B->GetType()) {
-    if (A->GetType() < B->GetType())
+    if (A->GetType() < B->GetType()) {
       olx_swap(A, B);
+    }
   }
   else {
     if (A->GetLabel().Compare(B->GetLabel()) < 0)
       olx_swap(A, B);
   }
   L << A->GetType().symbol << '-' << B->GetType().symbol;
-  if (Bnd.GetType() == sotHBond)
+  if (Bnd.GetType() == sotHBond) {
     L << "@H";
+  }
   if (Bnd.GetOrder() > sboSingle) {
     L << "*" << Bnd.GetOrder();
   }
-  if (level == 0)  return L;
-  L << '.' << A->GetLabel() << '-' << B->GetLabel();
-  if (level == 1)  return L;
+  if (level == 0) {
+    return L;
+  }
+  L << '.' << A->CAtom().GetResiLabel() << '-' << B->CAtom().GetResiLabel();
+  if (level == 1) {
+    return L;
+  }
   TUnitCell::SymmSpace sp =
     A->GetNetwork().GetLattice().GetUnitCell().GetSymmSpace();
   L << '.' << TSymmParser::MatrixToSymmCode(sp, A->GetMatrix()) <<
     '-' <<
     TSymmParser::MatrixToSymmCode(sp, B->GetMatrix());
-  if (level == 2)  return L;
+  if (level == 2) {
+    return L;
+  }
   return L << ".u";
 }
 //..............................................................................
