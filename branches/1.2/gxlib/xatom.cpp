@@ -327,12 +327,17 @@ olxstr TXAtom::GetLabelLegend(const TSAtom& A) {
 }
 //..............................................................................
 olxstr TXAtom::GetLegend(const TSAtom& A, const short Level) {
-  if (A.GetType() == iQPeakZ)
+  if (A.GetType() == iQPeakZ) {
     return GetLabelLegend(A);
+  }
   olxstr L(A.GetType().symbol, 16);
-  if (Level == 0 ) return L;
-  L << '.' << A.CAtom().GetLabel();
-  if (Level == 1)  return L;
+  if (Level == 0) {
+    return L;
+  }
+  L << '.' << A.CAtom().GetResiLabel();
+  if (Level == 1) {
+    return L;
+  }
   L << '.';
   L << TSymmParser::MatrixToSymmCode(
     A.GetNetwork().GetLattice().GetUnitCell().GetSymmSpace(), A.GetMatrix());
