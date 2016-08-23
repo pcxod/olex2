@@ -161,6 +161,7 @@ public:
   static DefMacro(Grow)
   static DefMacro(Convert)
   static DefMacro(SetCharge)
+  static DefMacro(Lowdin)
 
   static DefFunc(Lst)
   static DefFunc(FileName)
