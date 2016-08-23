@@ -665,6 +665,13 @@ void XLibMacros::Export(TLibrary& lib)  {
     EmptyString(),
     fpAny^fpNone,
     "Sets charge to the provided (selected) atoms");
+  xlib_InitMacro(Lowdin,
+    EmptyString(),
+    fpSix|fpOne|fpNone,
+    "Calculates orthogonalised unit cell axis lengths using Lowdin method."
+    "Does the calculation for the curretly loaded file, 6 cell parameters or"
+    "for a file that has space-separated lines starting with Id followed by"
+    " the 6 cell parameters");
   //_____________________________________________________________________________
 
   xlib_InitFunc(FileName, fpNone|fpOne,
@@ -9652,5 +9659,78 @@ void XLibMacros::macSetCharge(TStrObjList &Cmds, const TParamList &Options,
       atoms[i]->CAtom().SetCharge(ch);
     }
   }
+}
+//..............................................................................
+vec3d Orthogonalise(const vec3d &ax, const vec3d &an) {
+  TAsymmUnit au(0);
+  au.GetAxes() = ax;
+  au.GetAngles() = an;
+  au.InitMatrices();
+  mat3d S = au.GetCellToCartesian()*mat3d::Transpose(au.GetCellToCartesian()),
+    S_sq = S, I;
+  mat3d::EigenValues(S_sq, I.I());
+  S_sq[0][0] = 1. / sqrt(S_sq[0][0]);
+  S_sq[1][1] = 1. / sqrt(S_sq[1][1]);
+  S_sq[2][2] = 1. / sqrt(S_sq[2][2]);
+  S_sq = mat3d::Transpose(I)*S_sq*I;
+  return vec3d(
+    S_sq[0].DotProd(S[0]), S_sq[1].DotProd(S[1]), S_sq[2].DotProd(S[2]));
+}
+//..............................................................................
+//Acta Cryst. (1999). B55, 1099-1108
+void XLibMacros::macLowdin(TStrObjList &Cmds, const TParamList &Options,
+  TMacroData &Error)
+{
+  mat3d S, S_sq, I;
+  if (Cmds.Count() == 6) {
+    TAsymmUnit au(0);
+    au.GetAxes() = vec3d(
+      Cmds[0].ToDouble(), Cmds[1].ToDouble(), Cmds[2].ToDouble());
+    au.GetAngles() = vec3d(
+      Cmds[3].ToDouble(), Cmds[4].ToDouble(), Cmds[5].ToDouble());
+    au.InitMatrices();
+    S = au.GetCellToCartesian();
+  }
+  else if (Cmds.Count() == 1) {
+    TStrList lines = TEFile::ReadLines(Cmds[0]);
+    for (size_t i = 0; i < lines.Count(); i++) {
+      TStrList toks(lines[i], ' ');
+      if (toks.Count() < 7) {
+        TBasicApp::NewLogEntry(logError) << "Skipping line #" << (i + 1);
+      }
+      else {
+        try {
+          vec3d x = Orthogonalise(
+            vec3d(toks[1].ToDouble(), toks[2].ToDouble(), toks[3].ToDouble()),
+            vec3d(toks[4].ToDouble(), toks[5].ToDouble(), toks[6].ToDouble()));
+          TBasicApp::NewLogEntry() << toks[0]
+            << ": " << olxstr::FormatFloat(4, x[0])
+            << " " << olxstr::FormatFloat(4, x[1])
+            << " " << olxstr::FormatFloat(4, x[2]);
+        }
+        catch (const TExceptionBase &e) {
+          TBasicApp::NewLogEntry(logError) << "Failed at line #" << (i+1);
+        }
+      }
+    }
+    return;
+  }
+  else {
+    if (!TXApp::GetInstance().XFile().HasLastLoader()) {
+      Error.ProcessingError(__OlxSrcInfo, "Loaded file is expected");
+      return;
+    }
+    S = TXApp::GetInstance().XFile().GetAsymmUnit().GetCellToCartesian();
+  }
+  S_sq = S = S*mat3d::Transpose(S);
+  mat3d::EigenValues(S_sq, I.I());
+  S_sq[0][0] = 1. / sqrt(S_sq[0][0]);
+  S_sq[1][1] = 1. / sqrt(S_sq[1][1]);
+  S_sq[2][2] = 1. / sqrt(S_sq[2][2]);
+  S_sq = mat3d::Transpose(I)*S_sq*I;
+  TBasicApp::NewLogEntry() << "Orthogonalised cell axis lengths:";
+  TBasicApp::NewLogEntry() << "(" << olxstr::FormatFloat(3, S_sq[0].DotProd(S[0]))
+    << ", " << olxstr::FormatFloat(3, S_sq[1].DotProd(S[1]))
+    << ", " << olxstr::FormatFloat(3, S_sq[2].DotProd(S[2])) << ')';
 }
 //..............................................................................
