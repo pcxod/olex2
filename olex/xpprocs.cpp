@@ -382,13 +382,13 @@ void TMainForm::funColor(const TStrObjList& Params, TMacroData &E)  {
 }
 //..............................................................................
 void TMainForm::funLoadDll(const TStrObjList &Cmds, TMacroData &E) {
-  wxDynamicLibrary dl(Cmds[0].u_str());
-  if (!dl.IsLoaded()) {
+  olx_object_ptr<wxDynamicLibrary>  dl = new wxDynamicLibrary(Cmds[0].u_str());
+  if (!dl().IsLoaded()) {
     E.ProcessingError(__OlxSrcInfo, "could not load the library");
     return;
   }
   typedef olex2::IOlex2Runnable* (*GOR)();
-  GOR gor = (GOR)dl.GetSymbol(wxT("GetOlex2Runnable"));
+  GOR gor = (GOR)dl().GetSymbol(wxT("GetOlex2Runnable"));
   if (gor == NULL) {
     E.ProcessingError(__OlxSrcInfo, "could not locate initialisation point");
     return;
@@ -398,9 +398,13 @@ void TMainForm::funLoadDll(const TStrObjList &Cmds, TMacroData &E) {
     E.ProcessingError(__OlxSrcInfo, "NULL runnable");
     return;
   }
-  if (!runnable->Init(this)) {
-    dl.Detach();
+  if (!runnable->Initialise(this)) {
+    dl().Detach();
   }
+  else {
+    loadedDll << runnable;
+  }
+
 }
 //..............................................................................
 void TMainForm::macLines(TStrObjList &Cmds, const TParamList &Options, TMacroData &E)  {

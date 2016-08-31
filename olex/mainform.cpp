@@ -32,6 +32,7 @@
 #include "wx/fontdlg.h"
 #include "wx/tooltip.h"
 #include "wx/clipbrd.h"
+#include "wx/dynlib.h"
 
 #include "gpcollection.h"
 #include "glgroup.h"
@@ -409,15 +410,21 @@ bool TMainForm::Destroy()  {
   SaveVFS(plStructure);
   FXApp->OnObjectsDestroy.Remove(this);
   processMacro("onexit");
+  {
+    for (size_t i = 0; i < loadedDll.Count(); i++) {
+      loadedDll[i]->Finalise();
+    }
+  }
   SaveSettings(FXApp->GetConfigDir() + FLastSettingsFile);
   HtmlManager.Destroy();
-  if (_UpdateThread != NULL)  {
+  if (_UpdateThread != NULL) {
     _UpdateThread->OnTerminate.Remove(this);
     _UpdateThread->Join(true);
     delete _UpdateThread;
   }
-  if (UpdateProgress != NULL)
+  if (UpdateProgress != NULL) {
     delete UpdateProgress;
+  }
   // clean up it here
   FXApp->GetStatesRegistry().OnChange.Clear();
   FXApp->XFile().OnFileLoad.Remove(this);
@@ -1352,10 +1359,13 @@ void TMainForm::XApp(Olex2App *XA)  {
 }
 //..............................................................................
 void TMainForm::StartupInit() {
-  if (StartupInitialised)  return;
+  if (StartupInitialised) {
+    return;
+  }
   StartupInitialised = true;
-  if (FGlCanvas != NULL)
+  if (FGlCanvas != NULL) {
     FGlCanvas->XApp(FXApp);
+  }
   wxFont Font(10, wxMODERN, wxNORMAL, wxNORMAL);//|wxFONTFLAG_ANTIALIASED);
   TGlMaterial glm("2049;0.698,0.698,0.698,1.000");
   AGlScene& gls = FXApp->GetRenderer().GetScene();
