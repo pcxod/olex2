@@ -411,18 +411,9 @@ bool TMainForm::Destroy()  {
   FXApp->OnObjectsDestroy.Remove(this);
   processMacro("onexit");
   {
-    typedef olex2::IOlex2Runnable* (*GOR)();
     for (size_t i = 0; i < loadedDll.Count(); i++) {
-      GOR gor = (GOR)loadedDll[i]->GetSymbol(wxT("GetOlex2Runnable"));
-      if (gor != 0) {
-        olex2::IOlex2Runnable* runnable = (*gor)();
-        if (runnable != 0) {
-          runnable->Finalise();
-        }
-      }
-      loadedDll[i]->Detach();
+      loadedDll[i]->Finalise();
     }
-    loadedDll.DeleteItems(false);
   }
   SaveSettings(FXApp->GetConfigDir() + FLastSettingsFile);
   HtmlManager.Destroy();
