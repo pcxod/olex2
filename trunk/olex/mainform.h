@@ -251,6 +251,7 @@ protected:
 
   virtual void beforeCall(const olxstr &cmd);
   virtual void afterCall(const olxstr &cmd);
+  TPtrList<class wxDynamicLibrary> loadedDll;
 public:
   void OnMouseMove(int x, int y);
   void OnMouseWheel(int x, int y, double delta);
