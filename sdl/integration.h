@@ -89,7 +89,8 @@ namespace olex2 {
     IOlex2Runnable() { GetOlex2Runnable() = this; }
     virtual ~IOlex2Runnable() {}
     /* if run returns true - the library can be unloaded, otherwise */
-    virtual bool Init(IDllOlex2 *dll_olex2_inst) = 0;
+    virtual bool Initialise(IDllOlex2 *dll_olex2_inst) = 0;
+    virtual bool Finalise() = 0;
 
     static IOlex2Runnable *&GetOlex2Runnable() {
       static IOlex2Runnable *Olex2Runnable = NULL;
