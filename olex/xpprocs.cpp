@@ -402,7 +402,7 @@ void TMainForm::funLoadDll(const TStrObjList &Cmds, TMacroData &E) {
     dl().Detach();
   }
   else {
-    loadedDll.Add(dl.release());
+    loadedDll << runnable;
   }
 
 }
