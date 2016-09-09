@@ -14,28 +14,31 @@
 
 using namespace ctrl_ext;
 //..............................................................................
-void AButtonBase::SetActionQueue(TActionQueue& q, const olxstr& dependMode)  {
+void AButtonBase::SetActionQueue(TActionQueue& q, const olxstr& dependMode) {
   ActionQueue = &q;
   DependMode = dependMode;
   ActionQueue->Add(this);
 }
+//..............................................................................
 bool AButtonBase::Execute(const IOlxObject *Sender, const IOlxObject *Data,
   TActionQueue *)
 {
-  if( Data && EsdlInstanceOf(*Data, TModeChange) )  {
+  if (Data && EsdlInstanceOf(*Data, TModeChange)) {
     const TModeChange* mc = (const TModeChange*)Data;
     SetDown(TModeRegistry::CheckMode(DependMode));
   }
   return true;
 }
 //..............................................................................
-void AButtonBase::SetDown(bool v)  {
-  if( Down == v )  return;
-  if( Down )  {
+void AButtonBase::SetDown(bool v) {
+  if (Down == v) {
+    return;
+  }
+  if (Down) {
     Down = false;
     OnUp.Execute((AOlxCtrl*)this);
   }
-  else  {
+  else {
     Down = true;
     OnDown.Execute((AOlxCtrl*)this);
   }
@@ -45,8 +48,9 @@ void AButtonBase::_ClickEvent()  {
   if( Down )
     OnUp.Execute((AOlxCtrl*)this);
   OnClick.Execute((AOlxCtrl*)this);
-  if( !Down )
+  if (!Down) {
     OnDown.Execute((AOlxCtrl*)this);
+  }
   Down = !Down;
 }
 //..............................................................................
@@ -69,8 +73,9 @@ void TButton::ClickEvent(wxCommandEvent&) {
 //..............................................................................
 void TButton::MouseEnterEvent(wxMouseEvent& event)  {
   SetCursor( wxCursor(wxCURSOR_HAND) );
-  if( !GetHint().IsEmpty() )
+  if (!GetHint().IsEmpty()) {
     SetToolTip(GetHint().u_str());
+  }
   event.Skip();
 }
 //..............................................................................
@@ -97,7 +102,7 @@ void TBmpButton::MouseEnterEvent(wxMouseEvent& event)  {
   event.Skip();
 }
 //..............................................................................
-void TBmpButton::MouseLeaveEvent(wxMouseEvent& event)  {
+void TBmpButton::MouseLeaveEvent(wxMouseEvent& event) {
   event.Skip();
 }
 //..............................................................................
@@ -123,21 +128,22 @@ TImgButton::TImgButton(wxWindow* parent) : wxPanel(parent), AButtonBase(this) {
   ProcessingOnDown = MouseIn = false;
 }
 //..............................................................................
-void TImgButton::MouseEnterEvent(wxMouseEvent& event)  {
+void TImgButton::MouseEnterEvent(wxMouseEvent& event) {
   SetCursor(wxCursor(wxCURSOR_HAND));
-  if( !GetHint().IsEmpty() )
+  if (!GetHint().IsEmpty()) {
     SetToolTip(GetHint().u_str());
+  }
   MouseIn = true;
-  if( state != stDisabled && state != stDown )  {
+  if (state != stDisabled && state != stDown) {
     state = stHover;
     Paint();
   }
   event.Skip();
 }
 //..............................................................................
-void TImgButton::MouseLeaveEvent(wxMouseEvent& event)  {
+void TImgButton::MouseLeaveEvent(wxMouseEvent& event) {
   MouseIn = false;
-  if( state != stDisabled && state != stUp && !ProcessingOnDown )  {
+  if (state != stDisabled && state != stUp && !ProcessingOnDown) {
     state = stUp;
     Paint();
   }
@@ -167,8 +173,9 @@ void TImgButton::Render(wxDC& dc) const {
 }
 //..............................................................................
 void TImgButton::MouseDownEvent(wxMouseEvent& event) {
-  if (state == stDisabled || state == stDown)
+  if (state == stDisabled || state == stDown) {
     return;
+  }
   state = stDown;
   Paint();
   ProcessingOnDown = true;
@@ -183,8 +190,9 @@ void TImgButton::MouseDownEvent(wxMouseEvent& event) {
 }
 //..............................................................................
 void TImgButton::MouseUpEvent(wxMouseEvent& event) {
-  if (state == stDisabled || state == stUp || state == stHover)
+  if (state == stDisabled || state == stUp || state == stHover) {
     return;
+  }
   OnUp.Execute(this);
   OnClick.Execute(this);
   state = stUp;
@@ -213,7 +221,9 @@ void TImgButton::SetImages(const olxstr& src, int w, int h) {
   short imgState = 0;
   for (size_t i = 0; i < toks.Count(); i++)  {
     const size_t ei = toks[i].IndexOf('=');
-    if (ei == InvalidIndex)  continue;
+    if (ei == InvalidIndex) {
+      continue;
+    }
     const olxstr dest = toks[i].SubStringTo(ei),
       fn = toks[i].SubStringFrom(ei + 1);
     wxFSFile *fsFile = TFileHandlerManager::GetFSFileHandler(fn);
@@ -254,24 +264,35 @@ void TImgButton::SetImages(const olxstr& src, int w, int h) {
 void TImgButton::SetImages(const TTypeList<wxImage>& images, short imgState,
   int w, int h)
 {
-  if (images.IsEmpty())  return;
-  if (w == -1)  w = images[0].GetWidth();
-  if (h == -1)  h = images[0].GetHeight();
+  if (images.IsEmpty()) {
+    return;
+  }
+  if (w == -1) {
+    w = images[0].GetWidth();
+  }
+  if (h == -1) {
+    h = images[0].GetHeight();
+  }
   wxPanel::SetSize(w, h);
   size_t img_index = 0;
-  if ((imgState & stUp) != 0)
+  if ((imgState & stUp) != 0) {
     bmpUp = BmpFromImage(images[img_index++], w, h);
-  if (img_index < images.Count() && (imgState & stDown) != 0)
+  }
+  if (img_index < images.Count() && (imgState & stDown) != 0) {
     bmpDown = BmpFromImage(images[img_index++], w, h);
-  if (img_index < images.Count() && (imgState & stHover) != 0)
+  }
+  if (img_index < images.Count() && (imgState & stHover) != 0) {
     bmpHover = BmpFromImage(images[img_index++], w, h);
-  if (img_index < images.Count() && (imgState & stDisabled) != 0)
+  }
+  if (img_index < images.Count() && (imgState & stDisabled) != 0) {
     bmpDisabled = BmpFromImage(images[img_index++], w, h);
+  }
 }
 //..............................................................................
-void TImgButton::SetDown(bool v)  {
-  if (IsDown() != v)
+void TImgButton::SetDown(bool v) {
+  if (IsDown() != v) {
     olx_swap(bmpUp, bmpDown);
+  }
   _SetDown(v);
 }
 //..............................................................................

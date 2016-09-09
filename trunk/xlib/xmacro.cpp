@@ -459,7 +459,7 @@ void XLibMacros::Export(TLibrary& lib)  {
     "automatically links occupancies with the original atoms",
     fpAny|psFileLoaded,
     "Sets part(s) to given atoms, also if -lo is given and -p > 1 allows linking "
-    "occupancy of given atoms throw FVAR and/or SUMP in cases when -p > 2");
+    "occupancy of given atoms through FVAR and/or SUMP in cases when -p > 2");
   xlib_InitMacro(Spec, EmptyString(),
     fpAny | psFileLoaded,
     "Sets SPEC (special position eforcing) command for given atoms with default"
