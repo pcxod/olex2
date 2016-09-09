@@ -41,11 +41,17 @@ public:
     int Recursion;  // specifies that the function is called recursively
   protected:
     PyObject *PyFunction;
-    bool IsProfilingEnabled()  const  {  return PI != NULL;  }
+    bool IsProfilingEnabled()  const {
+      return PI != NULL;
+    }
     void OnCallEnter()  {
-      if( PI == NULL )  return;
+      if (PI == 0) {
+        return;
+      }
       PI->CallCount++;
-      if( ++Recursion > 1 )  return;
+      if (++Recursion > 1) {
+        return;
+      }
       StartTime = TETime::msNow();
      }
     void OnCallLeave()  {
@@ -57,11 +63,13 @@ public:
     }
     //..........................................................................
     void EnableProfiling(bool enable) {
-      if( enable )  {
-        if( PI == NULL )  PI = new PythonExt::ProfileInfo();
+      if (enable) {
+        if (PI == NULL) {
+          PI = new PythonExt::ProfileInfo();
+        }
         else  PI->Reset();
       }
-      else  {
+      else {
         delete PI;
         PI = NULL;
       }
@@ -82,9 +90,10 @@ public:
 //.............................................................................
   TPtrList<BasicWrapper> ToDelete;
 //.............................................................................
-  void ClearToDelete()  {
-    for( size_t i=0; i < ToDelete.Count(); i++ )
+  void ClearToDelete() {
+    for (size_t i = 0; i < ToDelete.Count(); i++) {
       delete ToDelete[i];
+    }
   }
 //.............................................................................
   void macReset(TStrObjList& Cmds, const TParamList &Options, TMacroData& E);
@@ -113,9 +122,9 @@ public:
   template <class T>
     T * AddToDelete(T* td)  {  return (T*)ToDelete.Add(td);  }
 
-  void Register(pyRegFunc regFunc)  {
+  void Register(pyRegFunc regFunc) {
     ToRegister.AddCopy(regFunc);
-    if( Py_IsInitialized() )  {
+    if (Py_IsInitialized()) {
       (*regFunc)();
     }
   }
@@ -126,16 +135,18 @@ public:
   void CheckInitialised();
 
   static PythonExt* GetInstance() {
-    if (Instance() == NULL)
+    if (Instance() == 0) {
       throw TFunctionFailedException(__OlxSourceInfo, "Uninitialised object");
+    }
     return Instance();
   }
   PyObject* GetProfileInfo();
 // building string
   static PyObject* BuildString(const olxstr& str)  {
 #ifdef _UNICODE
-    if( str.IsEmpty() ) // silly Py...
+    if (str.IsEmpty()) { // silly Py...
       return PyUnicode_FromWideChar(L"", 0);
+    }
     return PyUnicode_FromWideChar(str.raw_str(), str.Length());
 #else
     if( str.IsEmpty() ) // silly Py...
@@ -144,31 +155,35 @@ public:
 #endif
   }
   static PyObject* BuildCString(const olxcstr& str)  {
-    if( str.IsEmpty() ) // silly Py...
+    if (str.IsEmpty()) { // silly Py...
       return PyString_FromStringAndSize("", 0);
+    }
     return PyString_FromStringAndSize(str.raw_str(), str.Length());
   }
   static PyObject* BuildWString(const olxwstr& str) {
-    if( str.IsEmpty() ) // silly Py...
+    if (str.IsEmpty()) { // silly Py...
       return PyUnicode_FromWideChar(L"", 0);
+    }
     return PyUnicode_FromWideChar(str.raw_str(), str.Length());
   }
 // parsing string
   static olxstr ParseStr(PyObject *pobj) {
     char*  crv;
     olxstr rv;
-    if( pobj->ob_type == &PyString_Type && PyArg_Parse(pobj, "s", &crv) )  {
+    if (pobj->ob_type == &PyString_Type && PyArg_Parse(pobj, "s", &crv)) {
       rv = crv;
     }
-    else if( pobj->ob_type == &PyUnicode_Type )  {
-      size_t sz =  PyUnicode_GetSize(pobj);
-      TTBuffer<wchar_t> wc_bf(sz+1);
+    else if (pobj->ob_type == &PyUnicode_Type) {
+      size_t sz = PyUnicode_GetSize(pobj);
+      TTBuffer<wchar_t> wc_bf(sz + 1);
       sz = PyUnicode_AsWideChar((PyUnicodeObject*)pobj, wc_bf.Data(), sz);
-      if( sz > 0 )
-        rv.Append( wc_bf.Data(), sz);
+      if (sz > 0) {
+        rv.Append(wc_bf.Data(), sz);
+      }
     }
-    else
+    else {
       rv = PyObject_REPR(pobj);
+    }
     return rv;
   }
   /* to tackle the difference with list and tuple... it steals the reference

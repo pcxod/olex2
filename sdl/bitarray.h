@@ -34,7 +34,7 @@ public:
   inline bool IsEmpty() const {  return FCount == 0;  }
   inline bool operator [] (size_t index) const  {
     size_t intIndex = index/8;
-    size_t bitIndex = 1 << index%8;
+    size_t bitIndex = (size_t)1 << index%8;
 #ifdef _DEBUG
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, intIndex,
       0, FCharCount);
@@ -43,7 +43,7 @@ public:
   }
   bool Get(size_t index) const  {
     size_t intIndex = index/8;
-    size_t bitIndex = 1 << index%8;
+    size_t bitIndex = (size_t)1 << index%8;
 #ifdef _DEBUG
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, intIndex,
       0, FCharCount);
@@ -52,7 +52,7 @@ public:
   }
   inline void Set(size_t index, bool v)  {
     size_t intIndex = index/8;
-    size_t bitIndex = 1 << index%8;
+    size_t bitIndex = (size_t)1 << index%8;
 #ifdef _DEBUG
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, intIndex,
       0, FCharCount);
@@ -62,7 +62,7 @@ public:
   }
   inline void SetTrue(size_t index)   {
     size_t intIndex = index/8;
-    size_t bitIndex = 1 << index%8;
+    size_t bitIndex = (size_t)1 << index%8;
 #ifdef _DEBUG
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, intIndex,
       0, FCharCount);
@@ -71,7 +71,7 @@ public:
   }
   inline void SetFalse(size_t index)  {
     size_t intIndex = index/8;
-    size_t bitIndex = 1 << index%8;
+    size_t bitIndex = (size_t)1 << index%8;
 #ifdef _DEBUG
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, intIndex,
       0, FCharCount);

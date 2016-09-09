@@ -32,7 +32,9 @@ THtmlManager::~THtmlManager() {
 }
 //.............................................................................
 void THtmlManager::Destroy() {
-  if (destroyed) return;
+  if (destroyed) {
+    return;
+  }
   destroyed = true;
   if (main != NULL) {
     main->OnLink.Remove(this);
@@ -66,7 +68,7 @@ void THtmlManager::ProcessPageLoadRequests() {
 }
 //.............................................................................
 void THtmlManager::ClearPopups() {
-  for( size_t i=0; i < Popups.Count(); i++ )  {
+  for (size_t i = 0; i < Popups.Count(); i++) {
     Popups.GetValue(i)->Html->OnLink.Remove(this);
     Popups.GetValue(i)->Html->Destroy();
     Popups.GetValue(i)->Dialog->Destroy();
@@ -78,8 +80,9 @@ void THtmlManager::ClearPopups() {
 void THtmlManager::LockWindowDestruction(wxWindow* wnd,
   const IOlxObject* caller)
 {
-  if (wnd == main)
+  if (wnd == main) {
     main->LockPageLoad(caller);
+  }
   else  {
     for (size_t i=0; i < Popups.Count(); i++) {
       if (Popups.GetValue(i)->Html == wnd) {
