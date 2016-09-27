@@ -459,15 +459,16 @@ void cetTable::Sort()  {
 }
 //.............................................................................
 cetString::cetString(const olxstr& _val) : value(_val), quoted(false)  {
-  if( _val.Length() > 1 )  {
+  if (_val.Length() > 1) {
     const olxch ch = _val[0];
-    if( (ch == '\'' || ch == '"') && _val.EndsWith(ch) )  {
-      value = _val.SubStringFrom(1,1);
+    if ((ch == '\'' || ch == '"') && _val.EndsWith(ch)) {
+      value = _val.SubStringFrom(1, 1);
       quoted = true;
     }
   }
-  if( !quoted && value.IndexOf(' ') != InvalidIndex )
+  if (!quoted && (value.IsEmpty() || value.ContainAnyOf(" \t"))) {
     quoted = true;
+  }
 }
 void cetString::ToStrings(TStrList& list) const {
   olxstr& line =
@@ -475,10 +476,12 @@ void cetString::ToStrings(TStrList& list) const {
      (list.GetLastString().Length() + value.Length() + 3 > 80) ||
      list.GetLastString().StartsFrom(';')) ?
     list.Add(' ') : (list.GetLastString() << ' ');
-  if( quoted )
+  if (quoted) {
     line << '\'' << value << '\'';
-  else
+  }
+  else {
     line << (value.IsEmpty() ? empty_value : value);
+  }
 }
 //..............................................................................
 void cetNamedString::ToStrings(TStrList& list) const {
