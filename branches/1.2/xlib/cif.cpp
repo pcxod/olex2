@@ -897,7 +897,7 @@ bool TCif::Adopt(TXFile &XF, int flags) {
     }
   }
   {
-    LabelCorrector lc(GetAsymmUnit(), false);
+    LabelCorrector lc(GetAsymmUnit(), TXApp::GetMaxLabelLength());
     for (size_t i = 0; i < AsymmUnit.AtomCount(); i++) {
       lc.CorrectGlobal(AsymmUnit.GetAtom(i));
     }
