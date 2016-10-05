@@ -591,21 +591,23 @@ void TCif::Initialize()  {
       }
     }
     ALoop->Set(i, ALabel, new AtomCifEntry(A));
-    if( Part != InvalidIndex )
+    if (Part != InvalidIndex) {
       ALoop->Set(i, Part, new AtomPartCifEntry(A));
+    }
   }
-  for( size_t i=0; i < LoopCount(); i++ )  {
-    if( &GetLoop(i) == ALoop )  continue;
+  for (size_t i = 0; i < LoopCount(); i++) {
+    if (&GetLoop(i) == ALoop)  continue;
     cetTable& tab = GetLoop(i);
-    for( size_t j=0; j < tab.ColCount(); j++ )  {
-      if( tab.ColName(j).IndexOf("atom_site") != InvalidIndex &&
-        tab.ColName(j).IndexOf("label") != InvalidIndex )
+    for (size_t j = 0; j < tab.ColCount(); j++) {
+      if (tab.ColName(j).IndexOf("atom_site") != InvalidIndex &&
+        tab.ColName(j).IndexOf("label") != InvalidIndex)
       {
-        for( size_t k=0; k < tab.RowCount(); k++ )  {
-          TCAtom* ca = GetAsymmUnit().FindCAtomDirect(
+        for (size_t k = 0; k < tab.RowCount(); k++) {
+          TCAtom* ca = GetAsymmUnit().FindCAtom(
             tab[k][j]->GetStringValue());
-          if( ca != NULL )
+          if (ca != 0) {
             tab.Set(k, j, new AtomCifEntry(*ca));
+          }
         }
       }
     }
@@ -644,7 +646,7 @@ void TCif::Initialize()  {
       for (size_t i = 0; i < ALoop->RowCount(); i++) {
         TCAtom* A = GetAsymmUnit().FindCAtom(
           ALoop->Get(i, ALabel).GetStringValue());
-        if (A == NULL) {
+        if (A == 0) {
           TBasicApp::NewLogEntry(logError) <<
           (olxstr("Wrong atom in the aniso loop ").quote() <<
             ALoop->Get(i, ALabel).GetStringValue() << " removing");
@@ -654,8 +656,9 @@ void TCif::Initialize()  {
         for (int j = 0; j < 6; j++) {
           EValue = ALoop->Get(i, Ui[j]).GetStringValue();
           Q[j] = EValue.GetV()*scale;  E[j] = EValue.GetE()*scale;
-          if (EValue.GetE() == 0)
+          if (EValue.GetE() == 0) {
             GetRM().Vars.FixParam(*A, catom_var_name_U11 + j);
+          }
         }
         GetAsymmUnit().UcifToUcart(Q);
         A->AssignEllp(&GetAsymmUnit().NewEllp().Initialise(Q, E));
@@ -1366,11 +1369,16 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table,
         continue;
       }
       size_t ls = ae->data.GetType().GetSymbol().Length();
-      const olxstr al = ae->data.GetResiLabel();
+      const olxstr al = ae->data.GetLabel();
       olxstr sf = al.Length() > ls ? al.SubStringFrom(ls) : EmptyString();
-      if (sf.IsEmpty()) continue;
+      if (sf.IsEmpty()) {
+        continue;
+      }
       if ((label_options & 1) == 1) {
         sf = olxstr('(') << sf << ')';
+      }
+      if (ae->data.GetResiId() != 0) {
+        sf << '_' << ae->data.GetResiId();
       }
       if ((label_options & 2) == 2) {
         Table[j][i] = olxstr(ae->data.GetType().GetSymbol()) <<
