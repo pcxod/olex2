@@ -441,8 +441,9 @@ bool TXAtom::Orient(TGlPrimitive& GlP) {
           defs.GetPrimitives().GetObject(defs.TetrahedronIndex)->Draw();
           return true;
         }
-        if (GlP.GetOwnerId() == xatom_SmallSphereId)
+        if (GlP.GetOwnerId() == xatom_SmallSphereId) {
           return true;
+        }
       }
       else {
         olx_gl::orient(GetEllipsoid()->GetMatrix());
