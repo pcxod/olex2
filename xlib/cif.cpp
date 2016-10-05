@@ -1339,28 +1339,35 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table,
     }
     size_t defcnt = 0;
     for (size_t j=0; j < LT->ColCount(); j++) {
-      if (TD->FindItemi(LT->ColName(j)) != NULL)
-        defcnt ++;
+      if (TD->FindItemi(LT->ColName(j)) != NULL) {
+        defcnt++;
+      }
     }
-    if (defcnt == TD->ItemCount()) break;
-    else
+    if (defcnt == TD->ItemCount()) {
+      break;
+    }
+    else {
       LT = NULL;
+    }
   }
-  if (LT == NULL || LT->RowCount() == 0)
+  if (LT == NULL || LT->RowCount() == 0) {
     return false;
+  }
   Table.Resize(LT->RowCount(), LT->ColCount());
   for (size_t i =0; i < Table.ColCount(); i++) {
     Table.ColName(i) = LT->ColName(i);
     for (size_t j = 0; j < Table.RowCount(); j++) {
       Table[j][i] = (*LT)[j][i]->GetStringValue();
-      if (label_options == 0) continue;
+      if (label_options == 0) {
+        continue;
+      }
       AtomCifEntry *ae = dynamic_cast<AtomCifEntry *>((*LT)[j][i]);
       if (ae == 0) {
         continue;
       }
       size_t ls = ae->data.GetType().GetSymbol().Length();
-      olxstr sf = ae->data.GetLabel().Length() > ls
-        ? ae->data.GetLabel().SubStringFrom(ls) : EmptyString();
+      const olxstr al = ae->data.GetResiLabel();
+      olxstr sf = al.Length() > ls ? al.SubStringFrom(ls) : EmptyString();
       if (sf.IsEmpty()) continue;
       if ((label_options & 1) == 1) {
         sf = olxstr('(') << sf << ')';
@@ -1384,9 +1391,9 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table,
     for (size_t j=0; j < LT->ColCount(); j++) {
       TDataItem *DI = TD->FindItemi(LT->ColName(j));
       if (LT->ColName(j).StartsFrom("_geom_") &&
-          LT->ColName(j).IndexOf("site_symmetry") != InvalidIndex)
+          LT->ColName(j).Contains("site_symmetry"))
       {
-        if ((*LT)[i][j]->GetStringValue() != '.')  {  // 1_555
+        if ((*LT)[i][j]->GetStringValue() != '.') {  // 1_555
           olxstr tmp = LT->ColName(j).SubStringFrom(
             LT->ColName(j).LastIndexOf('_')+1);
           //if( !tmp.IsNumber() ) continue;
@@ -1406,7 +1413,9 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table,
           }
         }
       }
-      if (DI == NULL)  continue;
+      if (DI == NULL) {
+        continue;
+      }
       if (!Cif_ValidateColumn(*DI, *(*LT)[i][j])) {
         AddRow = false;
         break;
