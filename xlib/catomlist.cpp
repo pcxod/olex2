@@ -594,14 +594,14 @@ void AtomRefList::FromDataItem(const TDataItem &di) {
 }
 //.............................................................................
 void AtomRefList::UpdateResi() {
-  if (!IsExplicit()) return;
-  // special, easy to handle case
-  uint32_t r_id = 0;
+  if (!IsExplicit()) {
+    return;
+  }
   TPtrList<ExplicitCAtomRef> atom_refs;
   for (size_t i = 0; i < refs.Count(); i++) {
-    ExplicitCAtomRef *r = dynamic_cast<ExplicitCAtomRef *>(&refs[0]);
+    ExplicitCAtomRef *r = dynamic_cast<ExplicitCAtomRef *>(&refs[i]);
     if (r == 0) {
-      ListAtomRef *rl = dynamic_cast<ListAtomRef *>(&refs[0]);
+      ListAtomRef *rl = dynamic_cast<ListAtomRef *>(&refs[i]);
       if (rl == 0) {
         throw TFunctionFailedException(__OlxSourceInfo, "assert");
       }
@@ -612,20 +612,30 @@ void AtomRefList::UpdateResi() {
       atom_refs << r;
     }
   }
+  if (atom_refs.IsEmpty()) {
+    return;
+  }
+  uint32_t r_id = 0;
+  // special, easy to handle case
   if (atom_refs.Count() == 2) {
     ExplicitCAtomRef &r0 = *atom_refs[0];
     ExplicitCAtomRef &r1 = *atom_refs[1];
-    if (r1.GetMatrix() != NULL && r0.GetMatrix() != NULL)
+    if (r1.GetMatrix() != 0 && r0.GetMatrix() != 0) {
       return;
-    if (r1.GetMatrix() == NULL && r0.GetMatrix() == NULL)
+    }
+    if (r1.GetMatrix() == 0 && r0.GetMatrix() == 0) {
       return;
-    if (r1.GetMatrix() != NULL)
+    }
+    if (r1.GetMatrix() != 0) {
       r_id = r1.GetAtom().GetResiId();
-    else if (r0.GetMatrix() != NULL)
+    }
+    else if (r0.GetMatrix() != 0) {
       r_id = r0.GetAtom().GetResiId();
+    }
   }
   else {
-    for (size_t i = 0; i < atom_refs.Count(); i++) {
+    r_id = atom_refs[0]->GetAtom().GetResiId();
+    for (size_t i = 1; i < atom_refs.Count(); i++) {
       ExplicitCAtomRef &r = *atom_refs[i];
       uint32_t ri = r.GetAtom().GetResiId();
       if (ri != r_id) {
