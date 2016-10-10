@@ -3641,7 +3641,7 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options,
     RF << "_tables";
   }
   TDataItem* Root = DF.Root().FindItemi("Cif_Tables");
-  if (Root == NULL) {
+  if (Root == 0) {
     Error.ProcessingError(__OlxSrcInfo, "wrong root for table definitions");
     return;
   }
@@ -3653,25 +3653,29 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options,
   smatd_list SymmList;
   size_t tab_count = 1;
   for (size_t i=0; i < Cmds.Count(); i++) {
-    TDataItem* TD = NULL;
+    TDataItem* TD = 0;
     if (Cmds[i].IsNumber()) {
       size_t index = Cmds[i].ToSizeT();
-      if (index < Root->ItemCount())
+      if (index < Root->ItemCount()) {
         TD = &Root->GetItemByIndex(index);
+      }
     }
-    if (TD == NULL)
+    if (TD == 0) {
       TD = Root->FindItem(Cmds[i]);
-    if (TD == NULL) {
+    }
+    if (TD == 0) {
       xapp.NewLogEntry(logWarning) << "Could not find table definition: " <<
         Cmds[i];
       continue;
     }
     if (TD->GetName().Equalsi("footer") || TD->GetName().Equalsi("header")) {
       olxstr fn = TD->FindField("source");
-      if (fn.Contains('$'))
+      if (fn.Contains('$')) {
         ProcessExternalFunction(fn);
-      if (!TEFile::IsAbsolutePath(fn))
+      }
+      if (!TEFile::IsAbsolutePath(fn)) {
         fn = xapp.GetCifTemplatesDir() + fn;
+      }
       TStrList SL1 = TEFile::ReadLines(fn);
       for (size_t j=0; j < SL1.Count(); j++) {
         Cif->ResolveParamsFromDictionary(Dic, SL1[j], '%', &XLibMacros::CifResolve);
@@ -3685,8 +3689,9 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options,
       olxstr Tmp = "Table ";
       Tmp << ++tab_count << ' ' << TD->FindField("caption");
       Tmp.Replace("%DATA_NAME%", Cif->GetDataName());
-      if (Tmp.Contains('$'))
+      if (Tmp.Contains('$')) {
         ProcessExternalFunction(Tmp);
+      }
       // attributes
       TStrList CLA, THA;
       CLA.Add(TD->FindField("tha"));
@@ -8539,7 +8544,15 @@ void XLibMacros::macRESI(TStrObjList &Cmds, const TParamList &Options,
         fragments::extract(app.XFile().GetAsymmUnit(), fr);
       for (size_t fi = 0; fi <= frags.Count(); fi++) {
         fragments::fragment *f = (fi == 0 ? &fr : &frags[fi - 1]);
-        TResidue& resi = au.NewResidue(resi_class, resi_number++);
+        TResidue *resi_;
+        if (resi_number == -1) {
+          resi_ = &au.NewResidue(resi_class, -1);
+          resi_number = resi_->GetNumber() + 1;
+        }
+        else {
+          resi_ = &au.NewResidue(resi_class, resi_number++);
+        }
+        TResidue &resi = *resi_;
         resi.SetCapacity(f->count());
         for (size_t i = 0; i < f->count(); i++) {
           TCAtom &a = (*f)[i];

@@ -55,13 +55,16 @@ void Kinect::InitProcessing(short flags)  {
   }
 }
 /*****************************************************************************/
-void Kinect::DoProcessing()  {
-  if( HasVideoFrame )
+void Kinect::DoProcessing() {
+  if (HasVideoFrame) {
     processVideo();
-  if( HasDepthFrame )
+  }
+  if (HasDepthFrame) {
     processDepth();
-  if( HasSkeleton )
+  }
+  if (HasSkeleton) {
     processSkeleton();
+  }
 }
 /*****************************************************************************/
 Kinect *Kinect::Initialise()  {
@@ -86,12 +89,14 @@ Kinect *Kinect::Initialise()  {
     2,
     hDepthFrameEvt,
     &hDepthStream);
-  if( FAILED(hr) )
+  if (FAILED(hr)) {
     throw_failed(__OlxSourceInfo, hr, "depth stream");
+  }
 
   hr = NuiSkeletonTrackingEnable(hSkeletonEvt, 0);
-  if( FAILED(hr) )
+  if (FAILED(hr)) {
     throw_failed(__OlxSourceInfo, hr, "skeleton tracking");
+  }
 
   hr = NuiImageStreamOpen(
     NUI_IMAGE_TYPE_COLOR,
@@ -100,17 +105,18 @@ Kinect *Kinect::Initialise()  {
     2,
     hVideoFrameEvt,
     &hVideoStream);
-  if( FAILED(hr) )
+  if (FAILED(hr)) {
     throw_failed(__OlxSourceInfo, hr, "video stream");
+  }
 
   const olxstr fn = TBasicApp::GetBaseDir() + ".nui";
-  if( TEFile::Exists(fn) )  {
-    TStrList sl;
-    sl.LoadFromFile(fn);
-    for( size_t i=0; i < sl.Count(); i++ )  {
+  if (TEFile::Exists(fn)) {
+    TStrList sl = TEFile::ReadLines(fn);
+    for (size_t i = 0; i < sl.Count(); i++) {
       size_t ei = sl[i].IndexOf('=');
-      if( ei != InvalidIndex )
-        commands.Add(sl[i].SubStringTo(ei), sl[i].SubStringFrom(ei+1));
+      if (ei != InvalidIndex) {
+        commands.Add(sl[i].SubStringTo(ei), sl[i].SubStringFrom(ei + 1));
+      }
     }
   }
 
@@ -119,24 +125,24 @@ Kinect *Kinect::Initialise()  {
   return this;
 }
 /*****************************************************************************/
-void Kinect::Finalise()  {
-  if( Initialised )  {
+void Kinect::Finalise() {
+  if (Initialised) {
     NuiShutdown();
     Initialised = false;
   }
-  if( hDepthFrameEvt != INVALID_HANDLE_VALUE )  {
+  if (hDepthFrameEvt != INVALID_HANDLE_VALUE) {
     CloseHandle(hDepthFrameEvt);
     hDepthFrameEvt = INVALID_HANDLE_VALUE;
   }
-  if( hVideoFrameEvt != INVALID_HANDLE_VALUE )  {
+  if (hVideoFrameEvt != INVALID_HANDLE_VALUE) {
     CloseHandle(hVideoFrameEvt);
     hVideoFrameEvt = INVALID_HANDLE_VALUE;
   }
-  if( hSkeletonEvt != INVALID_HANDLE_VALUE )  {
+  if (hSkeletonEvt != INVALID_HANDLE_VALUE) {
     CloseHandle(hSkeletonEvt);
     hSkeletonEvt = INVALID_HANDLE_VALUE;
   }
-  if( listener != NULL )  {
+  if (listener != NULL) {
     listener->Join(true);
     delete listener;
     listener = NULL;
@@ -192,20 +198,20 @@ void Kinect::processVideo()  {
   TGXApp::GetInstance().Draw();
 }
 /*****************************************************************************/
-void Kinect::processSkeleton()  {
+void Kinect::processSkeleton() {
   static bool left_down = false, right_down = false;
-  if( !HasSkeleton || skeleton == NULL )   return;
+  if (!HasSkeleton || skeleton == NULL)   return;
   HasSkeleton = false;
   NUI_SKELETON_FRAME SkeletonFrame;
   HRESULT hr = NuiSkeletonGetNextFrame(0, &SkeletonFrame);
   bool bFoundSkeleton = true;
-  for( int i = 0 ; i < NUI_SKELETON_COUNT ; i++ )  {
-    if( SkeletonFrame.SkeletonData[i].eTrackingState == NUI_SKELETON_TRACKED )  {
+  for (int i = 0; i < NUI_SKELETON_COUNT; i++) {
+    if (SkeletonFrame.SkeletonData[i].eTrackingState == NUI_SKELETON_TRACKED) {
       bFoundSkeleton = false;
     }
   }
 
-  if( bFoundSkeleton )
+  if (bFoundSkeleton)
     return;
 
   // smooth out the skeleton data
@@ -213,7 +219,7 @@ void Kinect::processSkeleton()  {
   double scale = r.GetScale(),
     max_z = r.GetMaxRasterZ();
   vec3d vs1(r.GetWidth(), r.GetHeight(), 0);
-  vec3d vs(-vs1/2), pvs(-vs);
+  vec3d vs(-vs1 / 2), pvs(-vs);
   vs1[2] = 1;
   vec3d_alist points(5);
   vec3d &lh_p = points[0],
@@ -223,91 +229,91 @@ void Kinect::processSkeleton()  {
     &le_p = points[4];
 
   NuiTransformSmooth(&SkeletonFrame, NULL);
-  for( int i = 0; i < NUI_SKELETON_COUNT; i++ )  {
-    if( SkeletonFrame.SkeletonData[i].eTrackingState == NUI_SKELETON_TRACKED )  {
+  for (int i = 0; i < NUI_SKELETON_COUNT; i++) {
+    if (SkeletonFrame.SkeletonData[i].eTrackingState == NUI_SKELETON_TRACKED) {
       float x, y;
       USHORT z;
       skeleton->points[i].SetCount(NUI_SKELETON_POSITION_COUNT);
-      for( int j=0; j < NUI_SKELETON_POSITION_COUNT; j++ )  {
+      for (int j = 0; j < NUI_SKELETON_POSITION_COUNT; j++) {
         NuiTransformSkeletonToDepthImageF(
           SkeletonFrame.SkeletonData[i].SkeletonPositions[j], &x, &y, &z);
-        vec3d pt = (vs + vec3d(x, 1-y, z)*vs1)*scale;
-        if( j == NUI_SKELETON_POSITION_HAND_RIGHT )
+        vec3d pt = (vs + vec3d(x, 1 - y, z)*vs1)*scale;
+        if (j == NUI_SKELETON_POSITION_HAND_RIGHT)
           rh_p = pt*vs1;
-        else if( j == NUI_SKELETON_POSITION_HAND_LEFT )
+        else if (j == NUI_SKELETON_POSITION_HAND_LEFT)
           lh_p = pt*vs1;
-        else if( j == NUI_SKELETON_POSITION_HEAD )
+        else if (j == NUI_SKELETON_POSITION_HEAD)
           h_p = pt*vs1;
-        else if( j == NUI_SKELETON_POSITION_ELBOW_RIGHT )
+        else if (j == NUI_SKELETON_POSITION_ELBOW_RIGHT)
           re_p = pt*vs1;
-        else if( j == NUI_SKELETON_POSITION_ELBOW_LEFT )
+        else if (j == NUI_SKELETON_POSITION_ELBOW_LEFT)
           le_p = pt*vs1;
-        pt[2] = max_z-0.01;
+        pt[2] = max_z - 0.01;
         skeleton->points[i][j] = pt;
       }
     }
     else
       skeleton->points[i].Clear();
   }
-  for( size_t i=0; i < points.Count(); i++ )  {
+  for (size_t i = 0; i < points.Count(); i++) {
     points[i][1] = pvs[1] - points[i][1];
     points[i][0] = pvs[0] + points[i][0];
   }
   // hands crossed up
-  if( rh_p[0] < lh_p[0] && re_p[1] > rh_p[1]  && le_p[1] > lh_p[1] )  {
-    if( last_command != "cross_up" )  {
+  if (rh_p[0] < lh_p[0] && re_p[1] > rh_p[1] && le_p[1] > lh_p[1]) {
+    if (last_command != "cross_up") {
       olxstr cmd = commands.Find("cross_up", EmptyString());
       last_command = "cross_up";
-      if( !cmd.IsEmpty() )  {
+      if (!cmd.IsEmpty()) {
         olex2::IOlex2Processor *op = IOlex2Processor::GetInstance();
-        op->executeMacro(cmd);
+        op->processMacro(cmd);
       }
     }
   }
-  if( rh_p[0] < lh_p[0] && re_p[1] < rh_p[1]  && le_p[1] < lh_p[1] )  {
-    if( last_command != "cross_down" )  {
+  if (rh_p[0] < lh_p[0] && re_p[1] < rh_p[1] && le_p[1] < lh_p[1]) {
+    if (last_command != "cross_down") {
       olxstr cmd = commands.Find("cross_down", EmptyString());
       last_command = "cross_down";
-      if( !cmd.IsEmpty() )  {
+      if (!cmd.IsEmpty()) {
         olex2::IOlex2Processor *op = IOlex2Processor::GetInstance();
-        op->executeMacro(cmd);
+        op->processMacro(cmd);
       }
     }
   }
-  else  {
+  else {
     last_command.SetLength(0);
-    if( h_p[2]-rh_p[2] > 3 )  {
-      if( !right_down )  {
+    if (h_p[2] - rh_p[2] > 3) {
+      if (!right_down) {
         r.Background()->RB(0xff00);
         right_down = true;
         short f = smbRight;
-        if( left_down )
+        if (left_down)
           f |= smbLeft;
         TGXApp::GetInstance().MouseDown(rh_p[0], rh_p[1], 0, f);
       }
-      else  {
+      else {
         TGXApp::GetInstance().MouseMove(rh_p[0], rh_p[1], 0);
       }
     }
-    else if( right_down )  {
+    else if (right_down) {
       r.Background()->RB(0xffffff);
       TGXApp::GetInstance().MouseUp(rh_p[0], rh_p[1], 0, smbRight);
       right_down = false;
     }
-    if( h_p[2]-lh_p[2] > 3 )  {
-      if( !left_down )  {
+    if (h_p[2] - lh_p[2] > 3) {
+      if (!left_down) {
         r.Background()->LT(0xff00);
         left_down = true;
         short f = smbLeft;
-        if( right_down )
+        if (right_down)
           f |= smbRight;
         TGXApp::GetInstance().MouseDown(lh_p[0], lh_p[1], 0, f);
       }
-      else  {
+      else {
         TGXApp::GetInstance().MouseMove(lh_p[0], lh_p[1], 0);
       }
     }
-    else if( left_down )  {
+    else if (left_down) {
       r.Background()->LT(0xffffff);
       TGXApp::GetInstance().MouseUp(lh_p[0], lh_p[1], 0, smbLeft);
       left_down = false;
@@ -318,19 +324,19 @@ void Kinect::processSkeleton()  {
 /*****************************************************************************/
 /*****************************************************************************/
 /*****************************************************************************/
-int Kinect::ListenerThread::Run()  {
-  while( true )  {
-    if( Terminate )  break;
+int Kinect::ListenerThread::Run() {
+  while (true) {
+    if (Terminate)  break;
     DWORD evt_id = WaitForMultipleObjects(
-      sizeof(events)/sizeof(events[0]), events, FALSE, 100);
-    switch( evt_id )  {
+      sizeof(events) / sizeof(events[0]), events, FALSE, 100);
+    switch (evt_id) {
     case WAIT_OBJECT_0:
       instance.HasDepthFrame = true;
       break;
-    case WAIT_OBJECT_0+1:
+    case WAIT_OBJECT_0 + 1:
       instance.HasVideoFrame = true;
       break;
-    case WAIT_OBJECT_0+2:
+    case WAIT_OBJECT_0 + 2:
       instance.HasSkeleton = true;
       break;
     }

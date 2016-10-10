@@ -246,15 +246,17 @@ struct AtomCifEntry : public cif_dp::IStringCifEntry {
     return new AtomCifEntry(*this);
   }
   virtual void ToStrings(TStrList& list) const {
+    olxstr al = data.GetResiLabel();
     if( list.IsEmpty() ||
-        (list.GetLastString().Length() + data.GetLabel().Length() + 1 > 80) )
+        (list.GetLastString().Length() + al.Length() + 1 > 80) )
     {
-      list.Add(' ') << data.GetResiLabel();
+      list.Add(' ') << al;
     }
-    else
+    else {
       list.GetLastString() << ' ' << data.GetResiLabel();
+    }
   }
-  virtual olxstr GetStringValue() const {  return data.GetLabel();  }
+  virtual olxstr GetStringValue() const {  return data.GetResiLabel();  }
 };
 struct AtomPartCifEntry : public cif_dp::IStringCifEntry {
   TCAtom& data;
