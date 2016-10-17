@@ -33,7 +33,9 @@ bool AtomNameMask::matches(const TCAtom &a) const {
 //.............................................................................
 bool AtomNameMask::equals(const IAtomMask &m_) const {
   const AtomNameMask *m = dynamic_cast<const AtomNameMask *>(&m_);
-  if (m == 0) return false;
+  if (m == 0) {
+    return false;
+  }
   return atom == m->atom;
 }
 //.............................................................................
@@ -92,11 +94,13 @@ bool AtomTypeMask::matches(const TCAtom &a) const {
 //.............................................................................
 bool AtomTypeMask::equals(const IAtomMask &m_) const {
   const AtomTypeMask *m = dynamic_cast<const AtomTypeMask *>(&m_);
-  if (m == 0 || types.Count() != m->types.Count())
+  if (m == 0 || types.Count() != m->types.Count()) {
     return false;
+  }
   for (size_t i = 0; i < types.Count(); i++) {
-    if (types[i].Compare(m->types[i]) != 0) // pointer comparator!
+    if (types[i].Compare(m->types[i]) != 0) { // pointer comparator!
       return false;
+    }
   }
   return true;
 }
@@ -156,14 +160,17 @@ void SelectedTableRows::ToDataItem(const TTypeList<SelectedTableRows::row_t> &wh
 void SelectedTableRows::ToDataItem(TDataItem &di) const {
   TDataItem *i;
   ToDataItem(bonds, *(i = &di.AddItem("bonds")));
-  if (i->ItemCount() == 0)
+  if (i->ItemCount() == 0) {
     di.DeleteItem(i);
+  }
   ToDataItem(angles, *(i = &di.AddItem("angles")));
-  if (i->ItemCount() == 0)
+  if (i->ItemCount() == 0) {
     di.DeleteItem(i);
+  }
   ToDataItem(dihedrals, *(i = &di.AddItem("dihedrals")));
-  if (i->ItemCount() == 0)
+  if (i->ItemCount() == 0) {
     di.DeleteItem(i);
+  }
 }
 //.............................................................................
 void SelectedTableRows::FromDataItem(TTypeList<row_t> &what,
@@ -190,13 +197,15 @@ void SelectedTableRows::FromDataItem(const TDataItem &di,
   const TAsymmUnit &au)
 {
   TDataItem *i;
-  if ((i = di.FindItem("bonds")) !=0 )
+  if ((i = di.FindItem("bonds")) != 0) {
     FromDataItem(bonds, *i, au);
-  if ((i = di.FindItem("bonds")) !=0 )
-  if ((i = di.FindItem("angles")) != 0)
+  }
+  if ((i = di.FindItem("angles")) != 0) {
     FromDataItem(angles, *i, au);
-  if ((i = di.FindItem("dihedrals")) != 0)
+  }
+  if ((i = di.FindItem("dihedrals")) != 0) {
     FromDataItem(dihedrals, *i, au);
+  }
 }
 //.............................................................................
 void SelectedTableRows::Assign(TTypeList<SelectedTableRows::row_t> &dest,
@@ -282,9 +291,11 @@ void SelectedTableRows::Process(TCif &cif) {
       }
       for (size_t tr = 0; tr < tab->RowCount(); tr++) {
         const CifRow& row = (*tab)[tr];
-        TCAtom *a1 = au.FindCAtomDirect(row[i1]->GetStringValue());
-        TCAtom *a2 = au.FindCAtomDirect(row[i2]->GetStringValue());
-        if (a1 == 0 || a2 == 0) continue;
+        TCAtom *a1 = au.FindCAtom(row[i1]->GetStringValue());
+        TCAtom *a2 = au.FindCAtom(row[i2]->GetStringValue());
+        if (a1 == 0 || a2 == 0) {
+          continue;
+        }
         if (MatchRows(TCAtomPList() << a1 << a2, bonds)) {
           tab->Set(tr, pfi, new cetString('y'));
         }
@@ -307,10 +318,12 @@ void SelectedTableRows::Process(TCif &cif) {
       }
       for (size_t tr = 0; tr < tab->RowCount(); tr++) {
         const CifRow& row = (*tab)[tr];
-        TCAtom *a1 = au.FindCAtomDirect(row[i1]->GetStringValue());
-        TCAtom *a2 = au.FindCAtomDirect(row[i2]->GetStringValue());
-        TCAtom *a3 = au.FindCAtomDirect(row[i3]->GetStringValue());
-        if (a1 == 0 || a2 == 0 || a3 == 0) continue;
+        TCAtom *a1 = au.FindCAtom(row[i1]->GetStringValue());
+        TCAtom *a2 = au.FindCAtom(row[i2]->GetStringValue());
+        TCAtom *a3 = au.FindCAtom(row[i3]->GetStringValue());
+        if (a1 == 0 || a2 == 0 || a3 == 0) {
+          continue;
+        }
         if (MatchRows(TCAtomPList() << a1 << a2 << a3, angles)) {
           tab->Set(tr, pfi, new cetString('y'));
         }
@@ -334,11 +347,13 @@ void SelectedTableRows::Process(TCif &cif) {
       }
       for (size_t tr = 0; tr < tab->RowCount(); tr++) {
         const CifRow& row = (*tab)[tr];
-        TCAtom *a1 = au.FindCAtomDirect(row[i1]->GetStringValue());
-        TCAtom *a2 = au.FindCAtomDirect(row[i2]->GetStringValue());
-        TCAtom *a3 = au.FindCAtomDirect(row[i3]->GetStringValue());
-        TCAtom *a4 = au.FindCAtomDirect(row[i4]->GetStringValue());
-        if (a1 == 0 || a2 == 0 || a3 == 0 || a4 == 0) continue;
+        TCAtom *a1 = au.FindCAtom(row[i1]->GetStringValue());
+        TCAtom *a2 = au.FindCAtom(row[i2]->GetStringValue());
+        TCAtom *a3 = au.FindCAtom(row[i3]->GetStringValue());
+        TCAtom *a4 = au.FindCAtom(row[i4]->GetStringValue());
+        if (a1 == 0 || a2 == 0 || a3 == 0 || a4 == 0) {
+          continue;
+        }
         if (MatchRows(TCAtomPList() << a1 << a2 << a3 << a4, dihedrals)) {
           tab->Set(tr, pfi, new cetString('y'));
         }
