@@ -120,19 +120,40 @@ void TAsymmUnit::Assign(const TAsymmUnit& C)  {
   Assigning = false;
 }
 //..............................................................................
-void TAsymmUnit::ComplyToResidues()  {
+void TAsymmUnit::ComplyToResidues() {
   CAtoms.ForEach(ACollectionItem::TagSetter(-1));
   size_t ac = 0;
-  for( size_t i=0; i < MainResidue.Count(); i++ )
+  for (size_t i = 0; i < MainResidue.Count(); i++) {
     MainResidue[i].SetTag(ac++);
-  for( size_t i=0; i < Residues.Count(); i++ )  {
+  }
+  for (size_t i = 0; i < Residues.Count(); i++) {
     TResidue& resi = Residues[i];
-    for( size_t j=0; j < resi.Count(); j++ )
+    for (size_t j = 0; j < resi.Count(); j++) {
       resi[j].SetTag(ac++);
+    }
   }
   QuickSorter::Sort(CAtoms, ACollectionItem::TagComparator());
-  for( size_t i=0; i < CAtoms.Count(); i++ )
+  for (size_t i = 0; i < CAtoms.Count(); i++) {
     CAtoms[i]->SetId(i);
+  }
+}
+//..............................................................................
+int AU_residue_sort(const TResidue &r1, const TResidue &r2) {
+  int df = r1.GetClassName().Comparei(r2.GetClassName());
+  if (df == 0) {
+    df = r1.GetNumber() - r2.GetNumber();
+  }
+  return df;
+}
+void TAsymmUnit::SortResidues() {
+  QuickSorter::SortSF(Residues, &AU_residue_sort);
+  for (size_t i = 0; i < Residues.Count(); i++) {
+    uint32_t r_id = (uint32_t)i + 1;
+    Residues[i].SetId(r_id);
+    for (size_t j = 0; j < Residues[i].Count(); j++) {
+      Residues[i][j].SetResiId(r_id);
+    }
+  }
 }
 //..............................................................................
 void TAsymmUnit::_UpdateConnInfo()  {
@@ -403,17 +424,19 @@ void TAsymmUnit::AssignResidues(const TAsymmUnit& au) {
   }
 }
 //..............................................................................
-void TAsymmUnit::_OnAtomTypeChanged(TCAtom& caller)  {
-  if( !Assigning )
-    caller.SetConnInfo( RefMod->Conn.GetConnInfo(caller) );
+void TAsymmUnit::_OnAtomTypeChanged(TCAtom& caller) {
+  if (!Assigning) {
+    caller.SetConnInfo(RefMod->Conn.GetConnInfo(caller));
+  }
 }
 //..............................................................................
 TCAtom& TAsymmUnit::NewAtom(TResidue* resi)  {
   TCAtom *A = new TCAtom(this);
   A->SetId(CAtoms.Count());
   CAtoms.Add(A);
-  if( resi == NULL )
+  if (resi == NULL) {
     resi = &MainResidue;
+  }
   resi->_Add(*A);
   return *A;
 }
