@@ -194,6 +194,8 @@ public:
   void AssignResidues(const TAsymmUnit& au);
   // changes the atom order as in residues
   void ComplyToResidues();
+  // sorts residues by class and number
+  void SortResidues();
   // if a number is provided, searches by Number otherwise - by ClassName
   ConstPtrList<TResidue> FindResidues(const olxstr& resi) const;
   // this is called internally by the TCAtom, to sync connectivity info

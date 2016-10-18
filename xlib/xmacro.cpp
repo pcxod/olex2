@@ -214,7 +214,8 @@ void XLibMacros::Export(TLibrary& lib)  {
     "Defaults are [N,O,F,Cl,S,Br]&;g-generates found interactions",
     fpNone|fpOne|fpTwo|psFileLoaded,
     "Adds HTAB instructions to the ins file, maximum bond length [2.9] and "
-    "minimal angle [150] might be provided");
+    "minimal angle [150] might be provided. If the default length is changed"
+    " 'fuse' may be required to show the newly available bonds");
 //_____________________________________________________________________________
   xlib_InitMacro(HAdd,
     "r-use restraints vs constraints for water molecules [False]&;"
@@ -291,7 +292,11 @@ void XLibMacros::Export(TLibrary& lib)  {
     " case of non-centrosymmetric structure");
   xlib_InitMacro(Describe, EmptyString(), fpNone^psFileLoaded,
     "Describes current refinement in a human readable form");
-  xlib_InitMacro(Sort, EmptyString(), fpAny^psFileLoaded,
+  xlib_InitMacro(Sort,
+    "r-use default sorting for atoms inside residues [true]&;"
+    "rn-sort residues by number [true]&;"
+    ,
+    fpAny^psFileLoaded,
   "Sorts atoms of the default residue. Atom sort arguments: "
   "\n\tm - atomic mass"
   "\n\tz - atomic number"
@@ -1116,7 +1121,7 @@ void XLibMacros::macSort(TStrObjList &Cmds, const TParamList &Options,
 {
   TStrList cmds = (Cmds.IsEmpty() ? TStrList("+ml moiety", ' ')
     : TStrList(Cmds));
-  TXApp::GetInstance().XFile().Sort(cmds);
+  TXApp::GetInstance().XFile().Sort(cmds, Options);
   TBasicApp::NewLogEntry() << "Atom order after sorting :";
   olxstr_buf atoms;
   olxstr ws = ' ';
@@ -8566,6 +8571,10 @@ void XLibMacros::macRESI(TStrObjList &Cmds, const TParamList &Options,
     else {
       TResidue& resi = au.NewResidue(resi_class, resi_number,
         Options.FindValue('a', resi_number).ToInt());
+      if (!resi.IsEmpty()) {
+        TBasicApp::NewLogEntry(logWarning) <<
+          "Warning - appending atoms to existing, non-empty residue!";
+      }
       resi.SetCapacity(atoms.Count());
       for (size_t i = 0; i < atoms.Count(); i++) {
         resi.Add(atoms[i]->CAtom());

@@ -57,10 +57,11 @@ void GXLibMacros::Export(TLibrary& lib) {
     "cs-leaves current selection unchanged&;"
     "r-synchronise names in the residues"
     ,
-    fpNone|fpOne|fpTwo,
+    fpNone|fpOne|fpTwo|fpThree,
     "Names atoms. If the 'sel' keyword is used and a number (or just the number)"
     " is provided as second argument the numbering will happen in the order the"
-    " atoms were selected");
+    " atoms were selected. Can be used as alternative to name and rename residues:"
+    "\nname resi 1 or name resi 1 2");
 
   gxlib_InitMacro(CalcPatt, EmptyString(), fpNone|psFileLoaded,
     "Calculates Patterson map");
@@ -488,6 +489,30 @@ void GXLibMacros::macName(TStrObjList &Cmds, const TParamList &Options,
       sel[i].Create(Cmds[1]);
     }
     sel.Clear();
+    return;
+  }
+  // special keyword
+  else if (Cmds.Count() > 1 && Cmds[0].Equalsi("resi")) {
+    if (Cmds.Count() == 3 && Cmds[1].IsNumber() && Cmds[2].IsNumber()) {
+      TAsymmUnit & au = app.XFile().GetAsymmUnit();
+      TResidue *r = au.FindResidue(Cmds[1].ToInt());
+      if (r == 0) {
+        Error.ProcessingError(__OlxSrcInfo, "could not locate specified residue");
+        return;
+      }
+      TResidue& resi = au.NewResidue(r->GetClassName(), Cmds[2].ToInt());
+      if (!resi.IsEmpty()) {
+        TBasicApp::NewLogEntry(logWarning) <<
+          "Warning - appending atoms to existing, non-empty residue!";
+      }
+      resi.SetCapacity(r->Count());
+      while(r->Count() != 0) {
+        resi.Add((*r)[0]);
+      }
+      TBasicApp::NewLogEntry(logInfo) << "The residue has been renamed";
+      return;
+    }
+    XLibMacros::macRESI(Cmds, Options, Error);
     return;
   }
   bool changeSuffix = Options.Contains('s');
