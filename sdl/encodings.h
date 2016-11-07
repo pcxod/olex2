@@ -207,10 +207,10 @@ namespace encoding  {
       return encode((const uint8_t *)data, len);
     }
     static olxcstr decode(const uint8_t* data, size_t len) {
-      return encode(data, len);
+      return decode((const char*)data, len);
     }
     static olxcstr decode(const olxcstr& str) {
-      return decode(str.raw_str(), str.RawLen());
+      return decode((const char*)str.raw_str(), str.RawLen());
     }
     static olxcstr encode(const olxcstr& str) {
       return encode((const uint8_t *)str.raw_str(), str.RawLen());

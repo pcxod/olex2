@@ -92,6 +92,7 @@ class TXGrid: public AGDrawObject  {
   TTypeList<IsoTriangle> p_triangles, n_triangles;
 protected:
   float MaxVal, MinVal, Depth, Size, Scale;
+  float box_min, box_step;
   size_t MaxX, MaxY, MaxZ, MaxDim;
   float MinHole, MaxHole;  // the values of scale to skip
   int LastMouseX, LastMouseY;
@@ -203,6 +204,7 @@ public:
   inline static TXGrid* GetInstance()  {  return Instance;  }
 
   void LibScale(const TStrObjList& Params, TMacroData& E);
+  void LibFix(const TStrObjList& Params, TMacroData& E);
   void LibExtended(const TStrObjList& Params, TMacroData& E);
   void LibSize(const TStrObjList& Params, TMacroData& E);
   void LibDepth(const TStrObjList& Params, TMacroData& E);
