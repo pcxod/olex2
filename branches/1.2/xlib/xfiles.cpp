@@ -450,18 +450,23 @@ void TXFile::UpdateAsymmUnit()  {
   LL->GetAsymmUnit().GetAngleEsds() = GetAsymmUnit().GetAngleEsds();
 }
 //..............................................................................
-void TXFile::Sort(const TStrList& ins) {
-  if (FLastLoader == NULL) return;
+void TXFile::Sort(const TStrList& ins, const TParamList &options) {
+  if (FLastLoader == 0) {
+    return;
+  }
   if (!FLastLoader->IsNative()) {
     UpdateAsymmUnit();
   }
+  const bool sort_resi_n = options.GetBoolOption("rn", false, true);
   GetRM().BeforeAUSort_();
-
+  AtomSorter::CombiSort default_sorter;
+  default_sorter.sequence.AddNew(&AtomSorter::atom_cmp_Mw);
+  default_sorter.sequence.AddNew(&AtomSorter::atom_cmp_Label);
   TStrList labels;
   TCAtomPList &list = GetAsymmUnit().GetResidue(0).GetAtomList();
-  size_t moiety_index = InvalidIndex, h_cnt=0, del_h_cnt = 0, free_h_cnt = 0;
+  size_t moiety_index = InvalidIndex, h_cnt = 0, del_h_cnt = 0, free_h_cnt = 0;
   bool keeph = true;
-  for (size_t i=0; i < list.Count(); i++) {
+  for (size_t i = 0; i < list.Count(); i++) {
     if (list[i]->GetType() == iHydrogenZ) {
       if (!list[i]->IsDeleted()) {
         h_cnt++;
@@ -483,7 +488,7 @@ void TXFile::Sort(const TStrList& ins) {
   try {
     AtomSorter::CombiSort acs;
     olxstr sort;
-    for (size_t i=0; i < ins.Count(); i++) {
+    for (size_t i = 0; i < ins.Count(); i++) {
       if (ins[i].CharAt(0) == '+')
         sort << ins[i].SubStringFrom(1);
       else if (ins[i].Equalsi("moiety")) {
@@ -495,7 +500,7 @@ void TXFile::Sort(const TStrList& ins) {
     }
     bool insert_at_fisrt_label = false,
       label_swap = false;
-    for (size_t i=0; i < sort.Length(); i++) {
+    for (size_t i = 0; i < sort.Length(); i++) {
       if (sort.CharAt(i) == 'm')
         acs.sequence.AddNew(&AtomSorter::atom_cmp_Mw);
       else if (sort.CharAt(i) == 'z')
@@ -519,7 +524,7 @@ void TXFile::Sort(const TStrList& ins) {
     }
     if (!acs.sequence.IsEmpty()) {
       if (!labels.IsEmpty()) {
-        for (size_t i=0; i < acs.sequence.Count(); i++)
+        for (size_t i = 0; i < acs.sequence.Count(); i++)
           acs.sequence[i].AddExceptions(labels);
       }
       AtomSorter::Sort(list, acs);
@@ -567,27 +572,45 @@ void TXFile::Sort(const TStrList& ins) {
       AtomSorter::KeepH(list, GetAsymmUnit(), &AtomSorter::atom_cmp_Label);
     }
   }
-  catch(const TExceptionBase& exc)  {
+  catch (const TExceptionBase& exc) {
     TBasicApp::NewLogEntry(logError) << exc.GetException()->GetError();
   }
-  list.ForEach(ACollectionItem::IndexTagSetter());
-  GetRM().Sort_();
-  TSizeList indices = TIns::DrySave(list);
-  if (indices.Count() != list.Count()) {
-    throw TFunctionFailedException(__OlxSourceInfo, "assert");
+  
+  if (sort_resi_n) {
+    GetAsymmUnit().SortResidues();
   }
-  list.Rearrange(indices);
+  if (options.GetBoolOption("r", false, true)) {
+    // apply default sorting to the residues
+    for (size_t i = 1; i < GetAsymmUnit().ResidueCount(); i++) {
+      AtomSorter::Sort(GetAsymmUnit().GetResidue(i).GetAtomList(),
+        default_sorter);
+    }
+  }
+  GetAsymmUnit().GetAtoms().ForEach(ACollectionItem::IndexTagSetter());
+  {
+    TSizeList indices = TIns::DrySave(GetAsymmUnit().GetAtoms());
+    if (indices.Count() != GetAsymmUnit().GetAtoms().Count()) {
+      throw TFunctionFailedException(__OlxSourceInfo, "assert");
+    }
+    GetAsymmUnit().GetAtoms().Rearrange(indices);
+  }
   if (!FLastLoader->IsNative()) {
-    AtomSorter::SyncLists(list,
-      FLastLoader->GetAsymmUnit().GetResidue(0).GetAtomList());
+    if (sort_resi_n) {
+      FLastLoader->GetAsymmUnit().SortResidues();
+    }
+    AtomSorter::SyncLists(GetAsymmUnit().GetAtoms(),
+      FLastLoader->GetAsymmUnit().GetAtoms());
     FLastLoader->GetAsymmUnit().ComplyToResidues();
   }
+  GetRM().Sort_();
   // this changes Id's !!! so must be called after the SyncLists
   GetAsymmUnit().ComplyToResidues();
   index_t idx = 0;
   for (size_t i = 0; i < GetAsymmUnit().AtomCount(); i++) {
     TCAtom &a = GetAsymmUnit().GetAtom(i);
-    if (a.GetType() == iHydrogenZ) continue;
+    if (a.GetType() == iHydrogenZ) {
+      continue;
+    }
     a.SetTag(idx++);
   }
   GetRM().AfterAUSort_();

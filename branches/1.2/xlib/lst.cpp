@@ -215,15 +215,21 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
     else if (!RF && SL[i].Contains("Final Structure Factor")) {
       // extract total number of LS parameters
       Toks.Clear();
-      if ((i+=2) >= SL.Count()) break;
+      if ((i += 2) >= SL.Count()) {
+        break;
+      }
       Toks.Strtok(SL[i], ' ');
-      if (Toks.Count() > 5)
+      if (Toks.Count() > 5) {
         params("param_n", Toks[6]);
+      }
       // extract R1 or 4sigma, R1a for all data and number of refs with Fo > 4sig(Fo)
       Toks.Clear();
-      while (i < SL.Count() && !SL[i].Contains("R1 = "))
+      while (i < SL.Count() && !SL[i].Contains("R1 = ")) {
         i++;
-      if (i >= SL.Count()) break;
+      }
+      if (i >= SL.Count()) {
+        break;
+      }
       Toks.Strtok(SL[i], ' ');
       if (Toks.Count() > 8) {
         params("R1", Toks[2]);
@@ -232,12 +238,21 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
       }
       // extract wR2 && Goof && restrained GooF
       Toks.Clear();
-      if (++i >= SL.Count()) break;
-      Toks.Strtok(SL[i].Replace(',', EmptyString()), ' ');
-      if (Toks.Count() > 11) {
-        params("wR2", Toks[2]);
-        params("S", Toks[7]);
-        params("rS", Toks[11]);
+      {
+        olxstr wr2_l;
+        if (i + 1 < SL.Count() && SL[i+1].Contains("wR2 =")) {
+          wr2_l = SL[i+1];
+        }
+        // 2016/6 version swapped lines for whatever reason
+        else if (i-1 < SL.Count() && SL[i-1].Contains("wR2 =")) {
+          wr2_l = SL[i-1];
+        }
+        Toks.Strtok(wr2_l.Replace(',', EmptyString()), ' ');
+        if (Toks.Count() > 11) {
+          params("wR2", Toks[2]);
+          params("S", Toks[7]);
+          params("rS", Toks[11]);
+        }
       }
     }
     else if (!SA && SL[i].Contains("square atomic displacements")) {

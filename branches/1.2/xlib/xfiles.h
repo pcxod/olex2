@@ -129,7 +129,7 @@ public:
   /* Generic sort procedure, taking string instructions...
     instructions: Mw, Label, Label1, moiety size, weight, heaviest
   */
-  void Sort(const TStrList& instructions);
+  void Sort(const TStrList& instructions, const TParamList &options);
   /* this function checks how the atom sequence will change when saving to a
   file and synchronise it with the atom Ids
   */
