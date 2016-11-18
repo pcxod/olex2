@@ -74,18 +74,25 @@ void TXGrid::TLegend::Create(const olxstr& cName) {
   Left = GS.GetParam("Left", Left, true).ToInt();
   Top = GS.GetParam("Top", Top, true).ToInt();
   Z = GS.GetParam("Z", Z).ToDouble();
-
-  TGlPrimitive& GlP = GPC.NewPrimitive("Plane", sgloQuads);
-  GlP.SetTextureId(TextureId);
-  GlM.SetIdentityDraw(true);
-  GlP.SetProperties(GlM);
-  // texture coordinates
-  GlP.TextureCrds.SetCount(4);
-  GlP.Vertices.SetCount(4);
-  GlP.TextureCrds[0].s = 0;  GlP.TextureCrds[0].t = 1;
-  GlP.TextureCrds[1].s = 0;  GlP.TextureCrds[1].t = 0;
-  GlP.TextureCrds[2].s = 1;  GlP.TextureCrds[2].t = 0;
-  GlP.TextureCrds[3].s = 1;  GlP.TextureCrds[3].t = 1;
+  {
+    TGlPrimitive& GlP = GPC.NewPrimitive("Plane", sgloQuads);
+    GlP.SetTextureId(TextureId);
+    GlM.SetIdentityDraw(true);
+    GlP.SetProperties(GlM);
+    // texture coordinates
+    GlP.TextureCrds.SetCount(4);
+    GlP.Vertices.SetCount(4);
+    GlP.TextureCrds[0].s = 0;  GlP.TextureCrds[0].t = 1;
+    GlP.TextureCrds[1].s = 0;  GlP.TextureCrds[1].t = 0;
+    GlP.TextureCrds[2].s = 1;  GlP.TextureCrds[2].t = 0;
+    GlP.TextureCrds[3].s = 1;  GlP.TextureCrds[3].t = 1;
+  }
+  {
+    TGlPrimitive& GlP = GPC.NewPrimitive("Plane-text", sgloQuads);
+    TGlMaterial* gm = GS.FindMaterial(GlP.GetName(), &GlM);
+    GlP.SetProperties(*gm);
+    GlP.Vertices.SetCount(4);
+  }
 
   TGlFont &glf = Parent.GetScene().GetFont(~0, true);
   TGlPrimitive& glpText = GPC.NewPrimitive("Text", sgloText);
@@ -123,6 +130,7 @@ bool TXGrid::TLegend::Orient(TGlPrimitive& P) {
     return true;
   }
   olx_gl::normal(0, 0, 1);
+  Z = Parent.CalcRasterZ(0.1);
   const double es = Parent.GetExtraZoom()*Parent.GetViewZoom();
   if (P.GetType() == sgloText) {
     TGlFont &glf = Parent.GetScene().GetFont(~0, true);
@@ -145,7 +153,7 @@ bool TXGrid::TLegend::Orient(TGlPrimitive& P) {
     }
     return true;
   }
-  else {
+  else if (P.GetName() == "Plane") {
     P.SetTextureId(TextureId);
     double Scale = Parent.GetScale()*es;
     const double hw = Parent.GetWidth() / (2 * es);
@@ -156,8 +164,24 @@ bool TXGrid::TLegend::Orient(TGlPrimitive& P) {
       h = Height / Parent.GetExtraZoom();
     P.Vertices[0] = vec3d((Left + w + xx - hw)*Scale, -(Top + h + xy - hh)*Scale, z);
     P.Vertices[1] = vec3d(P.Vertices[0][0], -(Top + xy - hh)*Scale, z);
-    P.Vertices[2] = vec3d((Left + xx - hw)*Scale, -(Top + xy - hh)*Scale, z);
-    P.Vertices[3] = vec3d(P.Vertices[2][0], -(Top + h + xy - hh)*Scale, z);
+    P.Vertices[2] = vec3d((Left + xx - hw)*Scale, P.Vertices[1][1], z);
+    P.Vertices[3] = vec3d(P.Vertices[2][0], P.Vertices[0][1], z);
+    return false;
+  }
+  else {
+    TGlFont &glf = Parent.GetScene().GetFont(~0, true);
+    double tw = glf.TextWidth(text[0]);
+    double Scale = Parent.GetScale()*es;
+    const double hw = Parent.GetWidth() / (2 * es);
+    const double hh = Parent.GetHeight() / (2 * es);
+    double xx = GetCenter()[0], xy = -GetCenter()[1];
+    const double z = Z - 0.01;
+    double w = Width,
+      h = Height / Parent.GetExtraZoom();
+    P.Vertices[0] = vec3d((Left + xx - hw + w)*Scale, -(Top + h + xy - hh)*Scale, z);
+    P.Vertices[1] = vec3d(P.Vertices[0][0] + tw*Scale, P.Vertices[0][1], z);
+    P.Vertices[2] = vec3d(P.Vertices[1][0], -(Top + xy - hh)*Scale, z);
+    P.Vertices[3] = vec3d(P.Vertices[0][0], P.Vertices[2][1], z);
     return false;
   }
 }
@@ -343,14 +367,8 @@ bool TXGrid::Orient(TGlPrimitive& GlP) {
   const vec3f center(Parent.GetBasis().GetCenter());
   const vec3s dim(MaxX, MaxY, MaxZ);
   float Z;
-  // if only contours are drawn - render plane at the background
   if ((RenderMode&planeRenderModeContour) != 0) {
-    if ((RenderMode&planeRenderModePlane) == 0) {
-      Z = (float)-Parent.CalcRasterZ(0.003);
-    }
-    else { // render the plane just a bit behind
-      Z = Depth - 0.001f;
-    }
+    Z = Depth - 0.001f;
   }
   else { // no adjustment is required
     Z = Depth;
@@ -1313,12 +1331,15 @@ void TXGrid::LibRenderMode(const TStrObjList& Params, TMacroData& E) {
   }
   else if (Params[0] == "plane") {
     RenderMode = planeRenderModePlane;
+    this->Legend->SetVisible(true);
   }
   else if (Params[0] == "contour") {
     RenderMode = planeRenderModeContour;
+    this->Legend->SetVisible(false);
   }
   else if (Params[0] == "contour+plane") {
     RenderMode = planeRenderModeContour | planeRenderModePlane;
+    this->Legend->SetVisible(true);
   }
   else {
     throw TInvalidArgumentException(__OlxSourceInfo,
