@@ -529,7 +529,7 @@ void TCif::Initialize()  {
     if (type == NULL) {
       throw TInvalidArgumentException(__OlxSourceInfo,
         olxstr("Undefined element: ").quote() <<
-          ALoop->Get(i, ASymbol).GetStringValue());
+          ALoop->Get(i, ASymbol != InvalidIndex ? ASymbol : ALabel).GetStringValue());
     }
     A.SetType(*type);
     for (int j=0; j < 3; j++) {
