@@ -687,8 +687,8 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
       size_t e_cnt = 0;
       SymmSpace::InfoEx info_ex = SymmSpace::Compact(sp);
       info_ex.centrosymmetric = sp.IsCentrosymmetric();
-      double min_ds_sq = olx_sqr(1. / _HklStat.MinD),
-        max_ds_sq = olx_sqr(1. / _HklStat.MaxD);
+      double min_ds_sq = olx_sqr(1. / _HklStat.MinD)+1e-5,
+        max_ds_sq = olx_sqr(1. / _HklStat.MaxD)-1e-5;
       olx_pair_t<vec3i, vec3i> range = CalcIndicesToD(_HklStat.MinD, &info_ex);
       for (int h = range.a[0]; h <= range.b[0]; h++) {
         for (int k = range.a[1]; k <= range.b[1]; k++) {
@@ -701,8 +701,9 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
               continue;
             }
             double qd = TReflection::ToCart(hkl, h2c).QLength();
-            if (qd <= min_ds_sq && qd >= max_ds_sq)
+            if (qd <= min_ds_sq && qd >= max_ds_sq) {
               e_cnt++;
+            }
           }
         }
       }
