@@ -2681,8 +2681,11 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
   I = &DF.Root().AddItem("Recent_files");
   for (size_t i=0; i < olx_min(FRecentFilesToShow, FRecentFiles.Count()); i++)
   {
-    I->AddField(olxstr("file") << i,
-      olxstr().quote('"') << TEFile::CreateRelativePath(FRecentFiles[i]));
+    olxstr x = TEFile::CreateRelativePath(FRecentFiles[i]);
+    if (x.Length() > FRecentFiles[i].Length()) {
+      x = FRecentFiles[i];
+    }
+    I->AddField(olxstr("file") << i, olxstr().quote('"') << x);
   }
 
   I = &DF.Root().AddItem("Stored_params");
@@ -2957,15 +2960,20 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
 }
 //..............................................................................
 void TMainForm::UpdateRecentFile(const olxstr& fn)  {
-  if( fn.IsEmpty() )  {
-    for( size_t i=0; i < FRecentFiles.Count(); i++ )  // change item captions
+  if (fn.IsEmpty()) {
+    for (size_t i = 0; i < FRecentFiles.Count(); i++) { // change item captions
       FRecentFiles.GetObject(i)->Check(false);
+    }
     return;
   }
   TPtrList<wxMenuItem> Items;
-  olxstr FN( (fn.EndsWithi(".ins") || fn.EndsWithi(".res")) ?
-    TEFile::ChangeFileExt(fn, EmptyString()) : fn );
+  olxstr FN = (fn.EndsWithi(".ins") || fn.EndsWithi(".res")) ?
+    TEFile::ChangeFileExt(fn, EmptyString()) : fn;
   TEFile::OSPathI(FN);
+  olxstr x = TEFile::CreateRelativePath(FN);
+  if (x.Length() < FN.Length()) {
+    FN = x;
+  }
   size_t index = FRecentFiles.IndexOf(FN);
   wxMenuItem* mi=NULL;
   if( index == InvalidIndex )  {
