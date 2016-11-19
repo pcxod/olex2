@@ -3652,8 +3652,10 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options,
   }
   { // guess format
     const olxstr str_format = Root->FindField("format", "html");
-    const bool html = str_format.Equalsi("html");
-    RF = TEFile::ChangeFileExt(RF, html ? "html" : "tex");
+    const char* ext = str_format.Equalsi("html") ? "html" : "tex";
+    if (!RF.EndsWithi(ext)) {
+      RF << '.' << ext;
+    }
   }
   smatd_list SymmList;
   size_t tab_count = 1;
