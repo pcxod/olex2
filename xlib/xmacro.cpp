@@ -3159,28 +3159,24 @@ void XLibMacros::macEnvi(TStrObjList &Cmds, const TParamList &Options,
   }
 }
 //.............................................................................
-void XLibMacros::funRemoveSE(const TStrObjList &Params, TMacroData &E)  {
+void XLibMacros::funRemoveSE(const TStrObjList &Params, TMacroData &E) {
   TXApp& xapp = TXApp::GetInstance();
-  TSpaceGroup* sg = NULL;
-  try  { sg = &xapp.XFile().GetLastLoaderSG();  }
-  catch(...)  {
-    E.ProcessingError(__OlxSrcInfo, "could not identify current space group");
-    return;
-  }
-  if( Params[0] == "-1" )  {
-    if( !sg->IsCentrosymmetric() )  {
-      E.SetRetVal(sg->GetName());
+  TSpaceGroup& sg = xapp.XFile().GetLastLoaderSG();
+  if (Params[0] == "-1") {
+    if (!sg.IsCentrosymmetric()) {
+      E.SetRetVal(sg.GetName());
       return;
     }
     smatd_list ml;
-    sg->GetMatrices(ml, mattAll^mattInversion);
+    sg.GetMatrices(ml, mattAll^mattInversion);
     sorted::PrimitiveAssociation<double, TSpaceGroup*> sglist;
-    for( size_t i=0; i < TSymmLib::GetInstance().SGCount(); i++ )  {
-      double st=0;
-      if( TSymmLib::GetInstance().GetGroup(i).Compare(ml, st) )
+    for (size_t i = 0; i < TSymmLib::GetInstance().SGCount(); i++) {
+      double st = 0;
+      if (TSymmLib::GetInstance().GetGroup(i).Compare(ml).is_valid()) {
         sglist.Add(st, &TSymmLib::GetInstance().GetGroup(i));
+      }
     }
-    E.SetRetVal(sglist.IsEmpty() ? sg->GetName()
+    E.SetRetVal(sglist.IsEmpty() ? sg.GetName()
       : sglist.GetValue(0)->GetName());
   }
 }
