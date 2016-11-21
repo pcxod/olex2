@@ -684,6 +684,10 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options,
       delete [] PP;
     }
   }
+  // end drawing etc
+  FXApp->GetRenderer().Resize(orgWidth, orgHeight);
+  FXApp->GetRenderer().LookAt(0, 0, 1);
+  FXApp->GetRenderer().SetView(false, 1);
   if (res != 1) {
     FXApp->GetRenderer().GetScene().RestoreFontScale();
     FXApp->Quality(previous_quality);
@@ -692,10 +696,6 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options,
 
   FXApp->GetRenderer().OnDraw.SetEnabled(true);
   FGlConsole->SetVisible(true);
-  // end drawing etc
-  FXApp->GetRenderer().Resize(orgWidth, orgHeight);
-  FXApp->GetRenderer().LookAt(0, 0, 1);
-  FXApp->GetRenderer().SetView(false, 1);
   FXApp->Draw();
   olxstr bmpFN;
   if (FXApp->XFile().HasLastLoader() && !TEFile::IsAbsolutePath(Cmds[0])) {

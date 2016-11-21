@@ -41,7 +41,7 @@ void TAtomLegend::Create(const olxstr& cName) {
   glpText.Params[0] = -1;
 
   TGlPrimitive& sp = GPC.NewPrimitive("Sphere", sgloSphere);
-  sp.Params[0] = 1; sp.Params[1] = sp.Params[2] = 10;
+  sp.Params[0] = 1; sp.Params[1] = sp.Params[2] = 16;
   sp.SetProperties(glm);
   AGDrawObject::SetVisible(GS.GetParam("visible", TrueString(), true).ToBool());
 }
@@ -73,14 +73,15 @@ bool TAtomLegend::Orient(TGlPrimitive& P) {
   }
   olx_gl::normal(0, 0, 1);
   const double es = Parent.GetExtraZoom()*Parent.GetViewZoom();
+  TGlFont &glf = Parent.GetScene().GetFont(
+    Parent.GetScene().FindFontIndexForType<TXAtom>(), true);
   if (P.GetType() == sgloText) {
-    TGlFont &glf = Parent.GetScene().GetFont(
-      Parent.GetScene().FindFontIndexForType<TXAtom>(), true);
-    const uint16_t th = glf.TextHeight(EmptyString());
+    uint16_t th = glf.TextHeight(EmptyString());
     const double hw = Parent.GetWidth() / 2;
     const double hh = Parent.GetHeight() / 2;
-    const double GlLeft = ((Left + Width + GetCenter()[0])*es - hw) + 5;
-    const double scale = Parent.GetViewZoom() == 1.0 ? 1.0 : 1. / Parent.GetExtraZoom();
+    double scale = glf.IsVectorFont() ? es
+      : (Parent.GetViewZoom() == 1.0 ? 1.0 : 1. / Parent.GetExtraZoom());
+    const double GlLeft = ((Left + GetCenter()[0])*es + Width*scale - hw) + 5;
     const double GlTop = (hh - (Top - GetCenter()[1])*es - Height*scale) +
       (glf.IsVectorFont() ? glf.GetPointSize()*scale/2.5 : 0.1);
     const double LineSpacer = 0.05*th;
@@ -90,15 +91,15 @@ bool TAtomLegend::Orient(TGlPrimitive& P) {
       olxstr line = text[ii].SubStringTo(
         glf.LengthForWidth(text[ii], Parent.GetWidth()));
       const TTextRect tr = glf.GetTextRect(line);
-      //T[1] -= tr.top*scale;
       if (glf.IsVectorFont()) {
-        glf.DrawVectorText(T * Parent.GetScale(), line, scale);
+        glf.DrawVectorText(T * Parent.GetScale(), line, 1);
+        T[1] += (glf.GetMaxHeight() + LineSpacer)*scale;
       }
       else {
         Parent.DrawTextSafe(T, line, glf);
+        T[1] += (glf.GetMaxHeight() + LineSpacer)*scale;
       }
       //T[1] += (olx_max(tr.height, glf.GetMaxHeight()) + LineSpacer)*scale;
-      T[1] += (glf.GetMaxHeight() + LineSpacer)*scale;
     }
     return true;
   }
@@ -109,8 +110,11 @@ bool TAtomLegend::Orient(TGlPrimitive& P) {
     const double hh = Parent.GetHeight() / (2 * es);
     double xx = GetCenter()[0], xy = -GetCenter()[1];
     const double z = Z - 0.01;
-    double w = Width,
-      h = Height / Parent.GetExtraZoom();
+    double w = Width, h = Height;
+    if (!glf.IsVectorFont()) {
+      w /= Parent.GetExtraZoom();
+      h /= Parent.GetExtraZoom();
+    }
     P.Vertices[0] = vec3d((Left + w + xx - hw)*Scale, -(Top + h + xy - hh)*Scale, z);
     P.Vertices[1] = vec3d(P.Vertices[0][0], -(Top + xy - hh)*Scale, z);
     P.Vertices[2] = vec3d((Left + xx - hw)*Scale, -(Top + xy - hh)*Scale, z);
@@ -118,19 +122,21 @@ bool TAtomLegend::Orient(TGlPrimitive& P) {
     return false;
   }
   else if (P.GetType() == sgloSphere) {
-    TGlFont &glf = Parent.GetScene().GetFont(
-      Parent.GetScene().FindFontIndexForType<TXAtom>(), true);
-    const uint16_t th = glf.TextHeight(EmptyString());
+    uint16_t th = glf.TextHeight(EmptyString());
     const double LineSpacer = 0.05*th;
     double Scale = Parent.GetScale();
     olx_gl::scale(Scale);
     const double hw = Parent.GetWidth() / (2 * es);
     const double hh = Parent.GetHeight() / (2 * es);
     double xx = GetCenter()[0], xy = -GetCenter()[1];
-    double scale = Parent.GetViewZoom() == 1.0 ? 1.0 : 1. / Parent.GetExtraZoom();
+    double scale = glf.IsVectorFont() ? es
+      : (Parent.GetViewZoom() == 1.0 ? 1.0 : 1. / Parent.GetExtraZoom());
     const double z = Z - 0.01;
-    double w = Width,
-      h = Height / Parent.GetExtraZoom();
+    double w = Width, h = Height;
+    if (!glf.IsVectorFont()) {
+      w /= Parent.GetExtraZoom();
+      h /= Parent.GetExtraZoom();
+    }
     vec3d t((Left + w/2 + xx - hw)*es,
       -(Top + xy - hh)*es - scale*glf.GetMaxHeight() / 2, z);
     double sph_scale = scale * glf.GetMaxHeight() / 2;

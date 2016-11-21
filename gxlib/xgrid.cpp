@@ -212,8 +212,10 @@ bool TXGrid::TLegend::Orient(TGlPrimitive& P) {
   }
   else {
     TGlFont &glf = Parent.GetScene().GetFont(~0, true);
-    double tw = glf.TextWidth(text[0]);
-    double Scale = Parent.GetScale()*es;
+    double Scale = Parent.GetScale();
+    double tw = glf.TextWidth(text[0]) * Scale *
+     (Parent.GetViewZoom() == 1.0 ? 1.0 : 1. / Parent.GetExtraZoom());
+    Scale *= es;
     const double hw = Parent.GetWidth() / (2 * es);
     const double hh = Parent.GetHeight() / (2 * es);
     double xx = GetCenter()[0], xy = -GetCenter()[1];
@@ -221,7 +223,7 @@ bool TXGrid::TLegend::Orient(TGlPrimitive& P) {
     double w = Width,
       h = Height / Parent.GetExtraZoom();
     P.Vertices[0] = vec3d((Left + xx - hw + w)*Scale, -(Top + h + xy - hh)*Scale, z);
-    P.Vertices[1] = vec3d(P.Vertices[0][0] + tw*Scale, P.Vertices[0][1], z);
+    P.Vertices[1] = vec3d(P.Vertices[0][0] + tw, P.Vertices[0][1], z);
     P.Vertices[2] = vec3d(P.Vertices[1][0], -(Top + xy - hh)*Scale, z);
     P.Vertices[3] = vec3d(P.Vertices[0][0], P.Vertices[2][1], z);
     return false;
