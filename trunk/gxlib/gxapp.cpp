@@ -5172,6 +5172,9 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
   GlRenderer->UpdateMinMax(min, max);
   GlRenderer->GetBasis().FromDataItem(item.GetItemByName("Basis"));
   GlRenderer->SetSceneComplete(true);
+  if (FAtomLegend->IsVisible()) {
+    FAtomLegend->Update();
+  }
 }
 //..............................................................................
 void TGXApp::SaveModel(const olxstr& fileName) const {
