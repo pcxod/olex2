@@ -25,6 +25,48 @@
   #include "pyext.h"
 #endif
 
+/* heatmap colours:
+http://www.andrewnoske.com/wiki/Code_-_heatmaps_and_color_gradients
+*/
+
+vec3i CalculateColour(float v, size_t colour_count, const vec3i* colours) {
+  v = ((v + 1) / 2) * (colour_count - 1);
+  // should not happen, but
+  if (v < 0) {
+    v = 0;
+  }
+  int idx1 = olx_floor(v),
+    idx2 = idx1 + 1;
+  if (idx2 >= colour_count) {
+    idx2 = 0;
+  }
+  v = v - idx1;
+  vec3i rv;
+  for (int ci = 0; ci < 3; ci++) {
+    float x = ((colours[idx2][ci] - colours[idx1][ci])*v + colours[idx1][ci]);
+    rv[ci] = (char)(x);
+  }
+  return rv;
+}
+
+const vec3i* Get7Colours() {
+  const int NUM_COLORS = 7;
+  static const vec3i colours[NUM_COLORS] = {
+    vec3i(0,0,0), vec3i(0,0,255),vec3i(0,255,255), vec3i(0,255,0),
+    vec3i(255,255,0), vec3i(255,0,0), vec3i(255,255,255)
+  };
+  return colours;
+}
+
+const vec3i* Get5Colours() {
+  const int NUM_COLORS = 5;
+  static vec3i colours[NUM_COLORS] = {
+    vec3i(0,0,255), vec3i(0,255,255), vec3i(0,255,0), vec3i(255,255,0),
+    vec3i(255,0,0)
+  };
+  return colours;
+}
+
 TXGrid::TLegend::TLegend(TGlRenderer& Render, const olxstr& collectionName)
   : AGlMouseHandlerImp(Render, collectionName)
 {
@@ -170,8 +212,10 @@ bool TXGrid::TLegend::Orient(TGlPrimitive& P) {
   }
   else {
     TGlFont &glf = Parent.GetScene().GetFont(~0, true);
-    double tw = glf.TextWidth(text[0]);
-    double Scale = Parent.GetScale()*es;
+    double Scale = Parent.GetScale();
+    double tw = glf.TextWidth(text[0]) * Scale *
+     (Parent.GetViewZoom() == 1.0 ? 1.0 : 1. / Parent.GetExtraZoom());
+    Scale *= es;
     const double hw = Parent.GetWidth() / (2 * es);
     const double hh = Parent.GetHeight() / (2 * es);
     double xx = GetCenter()[0], xy = -GetCenter()[1];
@@ -179,7 +223,7 @@ bool TXGrid::TLegend::Orient(TGlPrimitive& P) {
     double w = Width,
       h = Height / Parent.GetExtraZoom();
     P.Vertices[0] = vec3d((Left + xx - hw + w)*Scale, -(Top + h + xy - hh)*Scale, z);
-    P.Vertices[1] = vec3d(P.Vertices[0][0] + tw*Scale, P.Vertices[0][1], z);
+    P.Vertices[1] = vec3d(P.Vertices[0][0] + tw, P.Vertices[0][1], z);
     P.Vertices[2] = vec3d(P.Vertices[1][0], -(Top + xy - hh)*Scale, z);
     P.Vertices[3] = vec3d(P.Vertices[0][0], P.Vertices[2][1], z);
     return false;
@@ -410,32 +454,49 @@ bool TXGrid::Orient(TGlPrimitive& GlP) {
     GetPrimitives().FindPrimitiveByName("-Surface")->GetProperties().AmbientF;
   const TGlOption& end_p =
     GetPrimitives().FindPrimitiveByName("+Surface")->GetProperties().AmbientF;
-  vec3f sp(start_p[0], start_p[1], start_p[2]),
-    ep(end_p[0], end_p[1], end_p[2]);
-  vec3f mc(1.f);
-  vec3f nc1 = (sp - mc);
-  vec3f nc2 = (ep - mc);
-  //vc /= 2;
+  vec3i colours2[] = {
+    vec3i(start_p[0] * 255, start_p[1] * 255, start_p[2] * 255),
+    vec3i(end_p[0] * 255, end_p[1] * 255, end_p[2] * 255)
+  };
+  vec3i colours3[] = { colours2[0], vec3i(255,255,255), colours2[1]};
+  const vec3i *colours;
+  size_t colour_count;
+  short render_m = (RenderMode & 0xff00) >> 8;
+  switch (render_m) {
+    case 2: {
+      colours = &colours2[0];
+      colour_count = 2;
+      break;
+    }
+    case 3: {
+      colours = &colours3[0];
+      colour_count = 3;
+      break;
+    }
+    case 5: {
+      colours = Get5Colours();
+      colour_count = 5;
+      break;
+    }
+    case 7: {
+      colours = Get7Colours();
+      colour_count = 7;
+      break;
+    }
+    default: {
+      colours = &colours3[0];
+      colour_count = 3;
+    }
+  }
   olx_gl::normal(bm[0][2], bm[1][2], bm[2][2]);
-  //m_color1 = vec3f(0.5f);
   const float max_v = olx_max(olx_abs(minVal), olx_abs(maxVal));
   if ((RenderMode&planeRenderModePlane) != 0) {
     for (size_t i = 0; i < MaxDim; i++) {
       for (size_t j = 0; j < MaxDim; j++) {
         const size_t off = (i + j*MaxDim) * 3;
-        const vec3f *c;
-        float s;
-        if (ContourData[i][j] < 0) {
-          s = -ContourData[i][j] / max_v;
-          c = &nc1;
-        }
-        else {
-          s = ContourData[i][j] / max_v;
-          c = &nc2;
-        }
+        vec3i cl = CalculateColour(ContourData[i][j] / max_v, colour_count, colours);
         for (int ci = 0; ci < 3; ci++) {
-          float x = 255.0f*(mc[ci] + s*(*c)[ci]);
-          TextData[off + ci] = (char)(x);
+          TextData[off + ci] = cl[ci];
         }
       }
     }
@@ -479,21 +540,11 @@ bool TXGrid::Orient(TGlPrimitive& GlP) {
     float legend_step = (maxVal - minVal) / 32;
     for (int i = 0; i < 32; i++) {
       float val = minVal + legend_step*i;
-      const vec3f *c;
-      float s;
-      if (val < 0) {
-        s = -val / max_v;
-        c = &nc1;
-      }
-      else {
-        s = val / max_v;
-        c = &nc2;
-      }
+      vec3i cl = CalculateColour(val / max_v, colour_count, colours);
       size_t off = i * 32 * 3;
       for (int j = 0; j < 32 * 3; j += 3) {
         for (int ci = 0; ci < 3; ci++) {
-          float x = 255.0f*(mc[ci] + s*(*c)[ci]);
-          LegendData[off + j + ci] = x;
+          LegendData[off + j + ci] = cl[ci];
         }
       }
     }
@@ -1300,22 +1351,23 @@ void TXGrid::LibGetMax(const TStrObjList& Params, TMacroData& E) {
 //.............................................................................
 void TXGrid::LibRenderMode(const TStrObjList& Params, TMacroData& E) {
   if (Params.IsEmpty()) {
-    if (RenderMode == planeRenderModeFill) {
+    short rm = RenderMode & 0xFF;
+    if (rm == planeRenderModeFill) {
       E.SetRetVal<olxstr>("fill");
     }
-    else if (RenderMode == planeRenderModePoint) {
+    else if (rm == planeRenderModePoint) {
       E.SetRetVal<olxstr>("point");
     }
-    else if (RenderMode == planeRenderModeLine) {
+    else if (rm == planeRenderModeLine) {
       E.SetRetVal<olxstr>("line");
     }
-    else if (RenderMode == planeRenderModePlane) {
+    else if (rm == planeRenderModePlane) {
       E.SetRetVal<olxstr>("plane");
     }
-    else if (RenderMode == planeRenderModeContour) {
+    else if (rm == planeRenderModeContour) {
       E.SetRetVal<olxstr>("contour");
     }
-    else if (RenderMode == (planeRenderModeContour | planeRenderModePlane)) {
+    else if (rm == (planeRenderModeContour | planeRenderModePlane)) {
       E.SetRetVal<olxstr>("contour+plane");
     }
     return;
@@ -1330,16 +1382,28 @@ void TXGrid::LibRenderMode(const TStrObjList& Params, TMacroData& E) {
     RenderMode = planeRenderModeLine;
   }
   else if (Params[0] == "plane") {
-    RenderMode = planeRenderModePlane;
-    this->Legend->SetVisible(true);
+    RenderMode = planeRenderModePlane | (3 << 8);
+    if (IsVisible()) {
+      this->Legend->SetVisible(true);
+    }
+    if (Params.Count() == 2) {
+      RenderMode = (RenderMode & 0xff) | (short)(Params[1].ToInt() << 8);
+    }
   }
   else if (Params[0] == "contour") {
     RenderMode = planeRenderModeContour;
-    this->Legend->SetVisible(false);
+    if (IsVisible()) {
+      this->Legend->SetVisible(false);
+    }
   }
   else if (Params[0] == "contour+plane") {
-    RenderMode = planeRenderModeContour | planeRenderModePlane;
-    this->Legend->SetVisible(true);
+    RenderMode = planeRenderModeContour | planeRenderModePlane | (3 << 8);
+    if (IsVisible()) {
+      this->Legend->SetVisible(true);
+    }
+    if (Params.Count() == 2) {
+      RenderMode = (RenderMode&0xff)|(short)(Params[1].ToInt() << 8);
+    }
   }
   else {
     throw TInvalidArgumentException(__OlxSourceInfo,
@@ -1468,9 +1532,10 @@ TLibrary*  TXGrid::ExportLibrary(const olxstr& name)  {
     fpNone|fpOne, "Returns true if grid data is initialised") );
   lib->Register(new TFunction<TXGrid>(this,
     &TXGrid::LibRenderMode, "RenderMode",
-    fpNone|fpOne,
+    fpNone|fpOne|fpTwo,
     "Returns/sets grid rendering mode. Supported values: point, line, fill, "
-    "plane, contour") );
+    "plane, contour. Second argument may specify the number of colours in the "
+    "plane gradient (2,3,5,7)") );
 
   AGDrawObject::ExportLibrary(*lib);
   Info->ExportLibrary(*lib->AddLibrary("label"));

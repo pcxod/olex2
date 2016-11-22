@@ -3159,28 +3159,24 @@ void XLibMacros::macEnvi(TStrObjList &Cmds, const TParamList &Options,
   }
 }
 //.............................................................................
-void XLibMacros::funRemoveSE(const TStrObjList &Params, TMacroData &E)  {
+void XLibMacros::funRemoveSE(const TStrObjList &Params, TMacroData &E) {
   TXApp& xapp = TXApp::GetInstance();
-  TSpaceGroup* sg = NULL;
-  try  { sg = &xapp.XFile().GetLastLoaderSG();  }
-  catch(...)  {
-    E.ProcessingError(__OlxSrcInfo, "could not identify current space group");
-    return;
-  }
-  if( Params[0] == "-1" )  {
-    if( !sg->IsCentrosymmetric() )  {
-      E.SetRetVal(sg->GetName());
+  TSpaceGroup& sg = xapp.XFile().GetLastLoaderSG();
+  if (Params[0] == "-1") {
+    if (!sg.IsCentrosymmetric()) {
+      E.SetRetVal(sg.GetName());
       return;
     }
     smatd_list ml;
-    sg->GetMatrices(ml, mattAll^mattInversion);
+    sg.GetMatrices(ml, mattAll^mattInversion);
     sorted::PrimitiveAssociation<double, TSpaceGroup*> sglist;
-    for( size_t i=0; i < TSymmLib::GetInstance().SGCount(); i++ )  {
-      double st=0;
-      if( TSymmLib::GetInstance().GetGroup(i).Compare(ml, st) )
+    for (size_t i = 0; i < TSymmLib::GetInstance().SGCount(); i++) {
+      double st = 0;
+      if (TSymmLib::GetInstance().GetGroup(i).Compare(ml).is_valid()) {
         sglist.Add(st, &TSymmLib::GetInstance().GetGroup(i));
+      }
     }
-    E.SetRetVal(sglist.IsEmpty() ? sg->GetName()
+    E.SetRetVal(sglist.IsEmpty() ? sg.GetName()
       : sglist.GetValue(0)->GetName());
   }
 }
@@ -3652,8 +3648,10 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options,
   }
   { // guess format
     const olxstr str_format = Root->FindField("format", "html");
-    const bool html = str_format.Equalsi("html");
-    RF = TEFile::ChangeFileExt(RF, html ? "html" : "tex");
+    const char* ext = str_format.Equalsi("html") ? "html" : "tex";
+    if (!RF.EndsWithi(ext)) {
+      RF << '.' << ext;
+    }
   }
   smatd_list SymmList;
   size_t tab_count = 1;
@@ -3763,6 +3761,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
 {
   TStopWatch sw(__FUNC__);
   TXApp& xapp = TXApp::GetInstance();
+  const bool use_md5 = xapp.GetOptions().FindValue("cif.use_md5", FalseString()).ToBool();
   cif_dp::TCifDP src;
   TTypeList<olx_pair_t<olxstr,olxstr> > Translations;
   olxstr CifCustomisationFN = xapp.GetCifTemplatesDir() + "customisation.xlt";
@@ -4149,55 +4148,90 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
   olex2::IOlex2Processor *op = olex2::IOlex2Processor::GetInstance();
   sw.start("Do the merging");
   for (size_t i=0; i < Cmds.Count(); i++) {
+    bool force_merge = false;
     try {
-      IInputStream *is = TFileHandlerManager::GetInputStream(Cmds[i]);
+      TStrList toks(Cmds[i], '&');
+      olxstr fn = toks[0];
+      IInputStream *is = TFileHandlerManager::GetInputStream(fn);
       if (is == NULL) {
-        TBasicApp::NewLogEntry(logError) << "Could not find file: " << Cmds[i];
+        TBasicApp::NewLogEntry(logError) << "Could not find file: " << fn;
         continue;
       }
       TStrList sl;
       sl.LoadFromTextStream(*is);
       delete is;
       src.LoadFromStrings(sl);
-    }
-    catch(...) {}  // most like the cif does not have cell, so pass it
-    if (src.Count() == 0) continue;
-    // normalise
-    for (size_t i=0; i < Translations.Count(); i++)
-      src[0].Rename(Translations[i].GetA(), Translations[i].GetB());
-    for (size_t j = 0; j < src[0].param_map.Count(); j++)  {
-      const cif_dp::ICifEntry& e = *src[0].param_map.GetValue(j);
-      if (!e.HasName())  continue;
-      if (items_to_skip.Contains(e.GetName()) &&
-          !items_to_merge.Contains(e.GetName()))
-      {
-        TBasicApp::NewLogEntry(logInfo) << "Skipping '" << e.GetName() << '\'';
-        continue;
-      }
-      bool skip = false;
-      for (size_t k = 0; k < masks_to_skip.Count(); k++) {
-        if (masks_to_skip[k].DoesMatch(e.GetName())) {
-          skip = true;
-          break;
-        }
-      }
-      if (skip) {
-        for (size_t k = 0; k < masks_to_merge.Count(); k++) {
-          if (masks_to_merge[k].DoesMatch(e.GetName())) {
-            skip = false;
+      for (size_t i=1; i < toks.Count(); i++) {
+        size_t idx = toks[i].IndexOf('=');
+        if (idx != InvalidIndex) {
+          if (toks[i].SubStringTo(idx) == "force") {
+            force_merge = toks[i].SubStringFrom(idx + 1).ToBool();
             break;
           }
         }
       }
-      if (!skip && EsdlInstanceOf(e, cetTable)) {
-        for (size_t k = 0; k < _loop_names_to_skip.Count(); k++) {
-          const olxstr &i_name = e.GetName();
-          if (i_name.StartsFromi(_loop_names_to_skip[k]) &&
-            (i_name.Length()>_loop_names_to_skip[k].Length() &&
-            i_name.CharAt(_loop_names_to_skip[k].Length()) == '_'))
+    }
+    catch(...) {}  // most like the cif does not have cell, so pass it
+    if (src.Count() == 0) {
+      continue;
+    }
+    // normalise
+    for (size_t i = 0; i < Translations.Count(); i++) {
+      src[0].Rename(Translations[i].GetA(), Translations[i].GetB());
+    }
+    for (size_t j = 0; j < src[0].param_map.Count(); j++) {
+      const cif_dp::ICifEntry& e = *src[0].param_map.GetValue(j);
+      if (!e.HasName()) {
+        continue;
+      }
+      bool skip = false;
+      if (!force_merge) {
+        bool contains = false;
+        {
+          ICifEntry *ie = Cif->FindEntry(e.GetName());
+          if (ie != 0) {
+            try {
+              olxstr v = ie->GetStringValue();
+              if (!(v.IsEmpty() || v == '?' || v == '.')) {
+                contains = true;
+              }
+            }
+            catch (...) {
+            }
+          }
+        }
+        if (contains) {
+          if (items_to_skip.Contains(e.GetName()) &&
+            !items_to_merge.Contains(e.GetName()))
           {
-            skip = true;
-            break;
+            TBasicApp::NewLogEntry(logInfo) << "Skipping '" << e.GetName() << '\'';
+            continue;
+          }
+          for (size_t k = 0; k < masks_to_skip.Count(); k++) {
+            if (masks_to_skip[k].DoesMatch(e.GetName())) {
+              skip = true;
+              break;
+            }
+          }
+          if (skip) {
+            for (size_t k = 0; k < masks_to_merge.Count(); k++) {
+              if (masks_to_merge[k].DoesMatch(e.GetName())) {
+                skip = false;
+                break;
+              }
+            }
+          }
+          if (!skip && EsdlInstanceOf(e, cetTable)) {
+            for (size_t k = 0; k < _loop_names_to_skip.Count(); k++) {
+              const olxstr &i_name = e.GetName();
+              if (i_name.StartsFromi(_loop_names_to_skip[k]) &&
+                (i_name.Length() > _loop_names_to_skip[k].Length() &&
+                  i_name.CharAt(_loop_names_to_skip[k].Length()) == '_'))
+              {
+                skip = true;
+                break;
+              }
+            }
           }
         }
       }
@@ -4217,8 +4251,9 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
             }
           }
         }
-        if (!processed)
+        if (!processed) {
           Cif->SetParam(e);
+        }
       }
       else {
         TBasicApp::NewLogEntry() << "Skipping '" << e.GetName() << '\'';
@@ -4235,6 +4270,11 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
     Cif->Remove("_iucr_refine_instructions_details");
     Cif->Remove("_shelx_hkl_file");
     Cif->Remove("_shelx_hkl_checksum");
+    if (use_md5) {
+      Cif->Remove("_olex2_res_file_MD5");
+      Cif->Remove("_olex2_hkl_file_MD5");
+      Cif->Remove("_olex2_fab_file_MD5");
+    }
     Cif->Remove("_refln");
     if (insert) {
       olxstr res_fn = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "res");
@@ -4243,15 +4283,32 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
         TEFile res_f(res_fn, "rb");
         res.lines.LoadFromTextStream(res_f);
         Cif->SetParam(res);
+        if (use_md5) {
+          res_f.SetPosition(0);
+          size_t as = res_f.GetAvailableSizeT();
+          olx_array_ptr<char> bf(as);
+          res_f.Read(bf(), as);
+          olxcstr s = olxcstr::FromExternal(bf.release(), as);
+          s.DeleteCharSet("\n\r\t ");
+          Cif->SetParam("_olex2_res_file_MD5", MD5::Digest(s), false);
+        }
       }
       // embedd HKL
       olxstr hkl_src = xapp.XFile().LocateHklFile();
       if (TEFile::Exists(hkl_src)) {
-        cetTable &t = Cif->AddLoopDef("_refln_index_h,_refln_index_k,_refln_index_l,"
-          "_refln_F_squared_meas,_refln_F_squared_sigma");
         THklFile hkl;
         hkl.LoadFromFile(hkl_src, false);
-        THklFile::ToCIF(hkl.RefList(), *Cif, true);
+        cetTable &t = *THklFile::ToCIF(hkl.RefList(), *Cif, true);
+        if (use_md5) {
+          olxstr_buf bf;
+          for (size_t i = 0; i < t.RowCount(); i++) {
+            for (size_t j = 0; j < t.ColCount(); j++) {
+              bf << t[i][j]->GetStringValue();
+            }
+          }
+          Cif->SetParam("_olex2_hkl_file_MD5",
+            MD5::Digest(olxcstr(olxstr(bf).DeleteChars(' '))), false);
+        }
       }
       // try inserting FAB file
       if (xapp.CheckFileType<TIns>()) {
@@ -4267,6 +4324,11 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
               cetNamedStringList fab("_shelx_fab_file");
               fab.lines = TEFile::ReadLines(fab_name);
               Cif->SetParam(fab);
+              if (use_md5) {
+                olxcstr s = fab.lines.Text(EmptyString()).c_str();
+                s.DeleteCharSet("\n\r\t ");
+                Cif->SetParam("_olex2_fab_file_MD5", MD5::Digest(s), false);
+              }
             }
           }
         }
@@ -7802,6 +7864,7 @@ void XLibMacros::macExport(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &E)
 {
   TXApp &app = TXApp::GetInstance();
+  const bool use_md5 = app.GetOptions().FindValue("cif.use_md5", FalseString()).ToBool();
   TCif& C = app.XFile().GetLastLoader<TCif>();
   olxstr hkl_name = (!Cmds.IsEmpty() ? Cmds[0]: C.GetDataName() + ".hkl");
   if (!Cmds.IsEmpty()) {
@@ -7820,10 +7883,12 @@ void XLibMacros::macExport(TStrObjList &Cmds, const TParamList &Options,
   if (hklLoop == NULL) {
     cif_dp::cetStringList *ci = dynamic_cast<cif_dp::cetStringList *>(
       C.FindEntry("_shelx_hkl_file"));
-    if (ci == NULL)
+    if (ci == 0) {
       TBasicApp::NewLogEntry() << "No hkl loop or data found";
+    }
     else {
-      TEFile::WriteLines(hkl_name, TCStrList(ci->lines));
+      TCStrList lines(ci->lines);
+      TEFile::WriteLines(hkl_name, lines);
       ci = dynamic_cast<cif_dp::cetStringList *>(
         C.FindEntry("_shelx_fab_file"));
       if (ci != NULL) {
@@ -7835,6 +7900,26 @@ void XLibMacros::macExport(TStrObjList &Cmds, const TParamList &Options,
   else {
     olx_object_ptr<THklFile::ref_list> refs = THklFile::FromCifTable(*hklLoop);
     if (refs.is_valid()) {
+      olxstr md5;
+      cif_dp::ICifEntry * md5i = C.FindEntry("_olex2_hkl_file_MD5");
+      if (md5i != 0) {
+        md5 = md5i->GetStringValue();
+        olxstr_buf bf;
+        for (size_t i = 0; i < hklLoop->RowCount(); i++) {
+          for (size_t j = 0; j < hklLoop->ColCount(); j++) {
+            bf << (*hklLoop)[i][j]->GetStringValue();
+          }
+        }
+        if (MD5::Digest(olxcstr(olxstr(bf).DeleteCharSet("\n\r\t "))) != md5) {
+          TBasicApp::NewLogEntry(logWarning) << "HKL MD5: mismatch";
+        }
+        else {
+          TBasicApp::NewLogEntry() << "HKL MD5: OK";
+        }
+      }
+      else if (use_md5) {
+        TBasicApp::NewLogEntry(logWarning) << "HKL MD5: missing";
+      }
       THklFile::SaveToFile(hkl_name, refs().a);
       if (!refs().b) {
         C.GetRM().SetHKLF(3);
@@ -7856,13 +7941,31 @@ void XLibMacros::macExport(TStrObjList &Cmds, const TParamList &Options,
   if (!TEFile::Exists(res_name)) {
     cif_dp::cetStringList *ci = dynamic_cast<cif_dp::cetStringList *>(
       C.FindEntry("_shelx_res_file"));
+    bool check_md5 = false;
     if (ci == 0) {
+      check_md5 = true;
       ci = dynamic_cast<cif_dp::cetStringList *>(
         C.FindEntry("_iucr_refine_instructions_details"));
     }
     if (ci != NULL) {
-      TBasicApp::NewLogEntry() << "Exporting RES file";
-      TEFile::WriteLines(res_name, TCStrList(ci->lines));
+      TCStrList lines(ci->lines);
+      TEFile::WriteLines(res_name, lines);
+      if (check_md5) {
+        olxstr md5;
+        cif_dp::ICifEntry * md5i = C.FindEntry("_olex2_res_file_MD5");
+        if (md5i != 0) {
+          md5 = md5i->GetStringValue();
+          if (MD5::Digest(lines.Text(CEmptyString()).DeleteCharSet("\n\r\t ")) != md5) {
+            TBasicApp::NewLogEntry(logWarning) << "RES MD5: mismatch";
+          }
+          else {
+            TBasicApp::NewLogEntry() << "RES MD5: OK";
+          }
+        }
+        else if (use_md5) {
+          TBasicApp::NewLogEntry(logWarning) << "RES MD5: missing";
+        }
+      }
       olex2::IOlex2Processor *op = olex2::IOlex2Processor::GetInstance();
       if (op != 0) {
         op->processMacro("CifExtract");
