@@ -1351,22 +1351,23 @@ void TXGrid::LibGetMax(const TStrObjList& Params, TMacroData& E) {
 //.............................................................................
 void TXGrid::LibRenderMode(const TStrObjList& Params, TMacroData& E) {
   if (Params.IsEmpty()) {
-    if (RenderMode == planeRenderModeFill) {
+    short rm = RenderMode & 0xFF;
+    if (rm == planeRenderModeFill) {
       E.SetRetVal<olxstr>("fill");
     }
-    else if (RenderMode == planeRenderModePoint) {
+    else if (rm == planeRenderModePoint) {
       E.SetRetVal<olxstr>("point");
     }
-    else if (RenderMode == planeRenderModeLine) {
+    else if (rm == planeRenderModeLine) {
       E.SetRetVal<olxstr>("line");
     }
-    else if (RenderMode == planeRenderModePlane) {
+    else if (rm == planeRenderModePlane) {
       E.SetRetVal<olxstr>("plane");
     }
-    else if (RenderMode == planeRenderModeContour) {
+    else if (rm == planeRenderModeContour) {
       E.SetRetVal<olxstr>("contour");
     }
-    else if (RenderMode == (planeRenderModeContour | planeRenderModePlane)) {
+    else if (rm == (planeRenderModeContour | planeRenderModePlane)) {
       E.SetRetVal<olxstr>("contour+plane");
     }
     return;
