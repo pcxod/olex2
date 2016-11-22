@@ -93,13 +93,11 @@ bool TAtomLegend::Orient(TGlPrimitive& P) {
       const TTextRect tr = glf.GetTextRect(line);
       if (glf.IsVectorFont()) {
         glf.DrawVectorText(T * Parent.GetScale(), line, 1);
-        T[1] += (glf.GetMaxHeight() + LineSpacer)*scale;
       }
       else {
         Parent.DrawTextSafe(T, line, glf);
-        T[1] += (glf.GetMaxHeight() + LineSpacer)*scale;
       }
-      //T[1] += (olx_max(tr.height, glf.GetMaxHeight()) + LineSpacer)*scale;
+      T[1] += (glf.GetMaxHeight() + LineSpacer)*scale;
     }
     return true;
   }

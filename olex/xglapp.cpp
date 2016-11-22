@@ -237,15 +237,19 @@ bool TGlXApp::OnInit() {
   Bind(wxEVT_CHAR, &TGlXApp::OnChar, this);
   Bind(wxEVT_KEY_DOWN, &TGlXApp::OnKeyDown, this);
   Bind(wxEVT_NAVIGATION_KEY, &TGlXApp::OnNavigation, this);
-#ifndef __WIN32__
-  // need to set correct locale for Linux to deal with the file paths
+  /* need to set correct locale for Linux to deal with the file paths
+   however not all of them like it - Suse crashes the program straight off
+   disregarding the choice (enUS.UTF8, C or whatever), so making this upto the
+   user
+  */
   {
-    olxstr lc = XApp->GetOptions().FindValue("locale.ctype", "en_US.utf8");
-    olxcstr old = setlocale(LC_CTYPE, lc.c_str());
-    TBasicApp::NewLogEntry(logInfo) << "Changing locale from '" << old
-      << "' to " << lc;
+    olxstr lc = XApp->GetOptions().FindValue("locale.ctype", EmptyString());
+    if (!lc.IsEmpty()) {
+      olxcstr old = setlocale(LC_CTYPE, lc.c_str());
+      TBasicApp::NewLogEntry(logInfo) << "Changing locale from '" << old
+        << "' to " << lc;
+    }
   }
-#endif
   MainForm->Show(true);
   return true;
 }
