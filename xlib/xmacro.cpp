@@ -4269,6 +4269,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
     Cif->Remove("_shelx_res_checksum");
     Cif->Remove("_iucr_refine_instructions_details");
     Cif->Remove("_shelx_hkl_file");
+    Cif->Remove("_shelx_fab_file");
     Cif->Remove("_shelx_hkl_checksum");
     if (use_md5) {
       Cif->Remove("_olex2_res_file_MD5");
