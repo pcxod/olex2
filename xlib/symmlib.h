@@ -146,8 +146,10 @@ public:
   bool HasPointGroup() const { return PointGroup != 0; }
 
   SymmSpace::Info GetInfo() const;
-  // compares m.R and summs (delta(m.t))^2 into st;
-  bool Compare(const smatd_list& matrices, double& st) const;
+  /* compares m.R and translations for positive rotation matrix
+  elements. If the origin shift is identified - it is returned
+  */
+  olx_object_ptr<vec3d> Compare(const smatd_list& matrices) const;
   bool EqualsWithoutTranslation(const TSpaceGroup& sg) const;
   bool IsSubElement(TSpaceGroup* symme )  const;
   // decomoses space group into symmetry elements using reference as the basis

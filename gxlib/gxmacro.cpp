@@ -3085,15 +3085,15 @@ void GXLibMacros::macEsd(TStrObjList &Cmds, const TParamList &Options,
       {
         TSAtomCPList atoms;
         TXPlane& xp = (TXPlane&)sel[EsdlInstanceOf(sel[0], TXPlane) ? 0 : 1];
-        olxstr pld;
+        olxstr_buf pld;
         for (size_t i = 0; i < xp.Count(); i++) {
           atoms.Add(xp.GetAtom(i));
           pld << atoms.GetLast()->GetLabel() << ' ';
         }
         TSBond& sb = ((TXBond&)sel[EsdlInstanceOf(sel[0], TXBond) ? 0 : 1]);
         TEValue<double> v(vcovc.CalcP2VAngle(atoms, xp.GetNormal(), sb.A(), sb.B()));
-        values.Add(sb.A().GetLabel()) << '-' << sb.B().GetLabel() << " to plane normal "
-          << pld << "angle: " << v.ToString();
+        values.Add(sb.A().GetLabel()) << '-' << sb.B().GetLabel() <<
+          " to plane normal " << olxstr(pld) << "angle: " << v.ToString();
       }
       else if (EsdlInstanceOf(sel[0], TXPlane) &&
         EsdlInstanceOf(sel[1], TXPlane))
@@ -3112,7 +3112,8 @@ void GXLibMacros::macEsd(TStrObjList &Cmds, const TParamList &Options,
         }
         const TEValue<double> angle = vcovc.CalcP2PAngle(p1, xp1.GetNormal(),
           p2, xp2.GetNormal());
-        values.Add("Plane ") << pld1 << "normal to plane normal angle: " << angle.ToString();
+        values.Add("Plane ") << pld1 << "normal to plane normal angle: " <<
+          angle.ToString();
         values.Add("Plane centroid to plane centroid distance: ") <<
           vcovc.CalcPC2PCDistance(p1, p2).ToString() << " A";
         values.Add("Plane [") << pld1 << "] to plane centroid distance: " <<

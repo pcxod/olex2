@@ -684,6 +684,10 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options,
       delete [] PP;
     }
   }
+  // end drawing etc
+  FXApp->GetRenderer().Resize(orgWidth, orgHeight);
+  FXApp->GetRenderer().LookAt(0, 0, 1);
+  FXApp->GetRenderer().SetView(false, 1);
   if (res != 1) {
     FXApp->GetRenderer().GetScene().RestoreFontScale();
     FXApp->Quality(previous_quality);
@@ -692,10 +696,6 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options,
 
   FXApp->GetRenderer().OnDraw.SetEnabled(true);
   FGlConsole->SetVisible(true);
-  // end drawing etc
-  FXApp->GetRenderer().Resize(orgWidth, orgHeight);
-  FXApp->GetRenderer().LookAt(0, 0, 1);
-  FXApp->GetRenderer().SetView(false, 1);
   FXApp->Draw();
   olxstr bmpFN;
   if (FXApp->XFile().HasLastLoader() && !TEFile::IsAbsolutePath(Cmds[0])) {
@@ -2414,7 +2414,9 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
   // a Open dialog appearing breaks the wxWidgets sizing...
-  if( !IsShown() && Cmds.IsEmpty() )  return;
+  if (!IsShown() && Cmds.IsEmpty()) {
+    return;
+  }
   TStopWatch sw(__FUNC__);
   olxstr cmdl_fn = TOlxVars::FindValue("olx_reap_cmdl");
   if (!cmdl_fn.IsEmpty()) {
@@ -2438,18 +2440,24 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
 #endif
     for (size_t i=0; i < pid_files.Count(); i++) {
       olxstr fn = conf_dir + pid_files[i];
-      if (fn == spidfn) continue;
+      if (fn == spidfn) {
+        continue;
+      }
 #ifdef __linux__
-      if (ext_len >= pid_files[i].Length()) continue;
+      if (ext_len >= pid_files[i].Length()) {
+        continue;
+      }
       olxstr spid = pid_files[i].SubStringTo(pid_files[i].Length()-ext_len);
       if (spid.IsInt()) {
          int pid = spid.ToInt();
-         if (kill(pid, 0) == 0)
+         if (kill(pid, 0) == 0) {
            continue;
+         }
       }
 #endif
-      if (TEFile::DelFile(fn))
+      if (TEFile::DelFile(fn)) {
         del_cnt++;
+      }
     }
     if (del_cnt != 0) {
       TBasicApp::NewLogEntry(logError) << "It appears that Olex2 has crashed "
@@ -2481,34 +2489,40 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
           Macros.ProcessMacro(olxstr("@reap '") << dest_fn << '\'', Error);
         }
       }
-      else
+      else {
         Error.ProcessingError(__OlxSrcInfo, "Could not locate specified file");
+      }
       return;
     }
-    if (!file_n.data_name.IsEmpty() && file_n.file_name.IsEmpty())
+    if (!file_n.data_name.IsEmpty() && file_n.file_name.IsEmpty()) {
       file_n.file_name = FXApp->XFile().GetFileName();
-    if (TEFile::ExtractFileExt(file_n.file_name).IsEmpty()) {
-      olxstr res_fn = TEFile::ChangeFileExt(file_n.file_name, "res"),
-             ins_fn = TEFile::ChangeFileExt(file_n.file_name, "ins");
+    }
+    bool exists = TEFile::Exists(file_n.file_name);
+    if (TEFile::ExtractFileExt(file_n.file_name).IsEmpty() || !exists) {
+      olxstr res_fn = file_n.file_name + ".res",
+             ins_fn = file_n.file_name + ".ins";
       if (TEFile::Exists(res_fn)) {
         if (TEFile::Exists(ins_fn)) {
           file_n.file_name = (TEFile::FileAge(ins_fn) < TEFile::FileAge(res_fn))
             ? res_fn : ins_fn;
         }
-        else
+        else {
           file_n.file_name = res_fn;
+        }
       }
-      else
+      else {
         file_n.file_name = ins_fn;
+      }
     }
 #ifdef __WIN32__ // tackle short path names problem
     WIN32_FIND_DATA wfd;
     ZeroMemory(&wfd, sizeof(wfd));
     HANDLE fsh = FindFirstFile(file_n.file_name.u_str(), &wfd);
-    if( fsh != INVALID_HANDLE_VALUE )  {
+    if (fsh != INVALID_HANDLE_VALUE) {
       file_n.file_name = TEFile::ExtractFilePath(file_n.file_name);
-      if( !file_n.file_name.IsEmpty() )
+      if (!file_n.file_name.IsEmpty()) {
         TEFile::AddPathDelimeterI(file_n.file_name);
+      }
       file_n.file_name << &wfd.cFileName[0];
       FindClose(fsh);
     }
@@ -2519,7 +2533,9 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   else {
-    if (!IsVisible())  return;
+    if (!IsVisible()) {
+      return;
+    }
     FileFilter ff;
     ff.AddAll("ins;cif;cmf;res;xyz;p4p;crs;pdb;fco;fcf;hkl");
     ff.Add("*.mol", "MDL MOL");
