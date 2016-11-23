@@ -90,7 +90,7 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
   try {
     Clear();
     if (format.Equals("free")) {
-      bool HasBatch = false, ZeroRead = false;;
+      bool HasBatch = false;
       {
         TStrList toks(SL[0], ' ');
         if (toks.Count() == 6 && toks[5].IsInt()) {
@@ -99,19 +99,26 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
       }
       for (size_t i = 0; i < SL.Count(); i++) {
         TStrList toks(SL[i], ' ');
-        TReflection* ref = new TReflection(
-          toks[0].ToInt(), toks[1].ToInt(), toks[2].ToInt(),
-          toks[3].ToDouble(),
-          toks[4].ToDouble());
+        if (toks.Count() < 5 || (HasBatch && toks.Count() < 6)) {
+          break;
+        }
+        TReflection* ref;
+        try {
+          ref = new TReflection(
+            toks[0].ToInt(), toks[1].ToInt(), toks[2].ToInt(),
+            toks[3].ToDouble(),
+            toks[4].ToDouble());
+        }
+        catch (const TExceptionBase &) {
+          break;
+        }
         if (HasBatch) {
           ref->SetBatch(toks[5].ToInt());
         }
         if (ref->GetHkl().IsNull()) {
-          ZeroRead = true;
           delete ref;
-          continue;
+          break;
         }
-        ref->SetOmitted(ZeroRead);
         UpdateMinMax(*ref);
         Refs.Add(ref);
         ref->SetTag(Refs.Count());
