@@ -148,10 +148,33 @@ void TXGrid::TLegend::Fit() {
   const uint16_t th = glf.TextHeight(EmptyString());
   const double LineSpacer = 0.05*th;
   Height = 0;
+  size_t trim_l = 10;
   for (size_t i = 0; i < text.Count(); i++) {
+    {
+      size_t x = text[i].Length();
+      while (--x != InvalidIndex) {
+        if (text[i][x] != '0') {
+          if (text[i][x] == '.') {
+            x--;
+          }
+          break;
+        }
+      }
+      x = text[i].Length() - x - 1;
+      if (x < trim_l) {
+        trim_l = x;
+      }
+    }
     const TTextRect tr = glf.GetTextRect(text[i]);
     Height -= (uint16_t)olx_round(tr.top);
     Height += (uint16_t)olx_round(olx_max(tr.height, glf.GetMaxHeight()));
+  }
+  if (trim_l != 0) {
+    for (size_t i = 0; i < text.Count(); i++) {
+      if (text[i].Length() > trim_l) {
+        text[i].SetLength(text[i].Length() - trim_l);
+      }
+    }
   }
   Height += (uint16_t)olx_round(LineSpacer*(text.Count() - 1));
 }
@@ -432,8 +455,8 @@ bool TXGrid::Orient(TGlPrimitive& GlP) {
   float minVal = 1000, maxVal = -1000;
   if (!olx_feq(box_step, 0.0f)) {
     if (box_step < 0) {
-      minVal = box_min + box_step*ContourLevelCount;
-      maxVal = box_min;
+      minVal = box_min + box_step*(ContourLevelCount-1);
+      maxVal = box_min - box_step;
     }
     else {
       minVal = box_min;
@@ -552,7 +575,16 @@ bool TXGrid::Orient(TGlPrimitive& GlP) {
     legend_step = (maxVal - minVal) / ContourLevelCount;
     Legend->text.Clear();
     for (int i = 0; i < (int)ContourLevelCount; i++) {
-      Legend->text << olxstr::FormatFloat(-3, minVal + legend_step*i);
+      double v = minVal + legend_step*i;
+      int av = (int)olx_abs(v);
+      int positions = 3;
+      while (av >= 10) {
+        if(--positions == 1) {
+          break;
+        }
+        av /= 10;
+      }
+      Legend->text << olxstr::FormatFloat(-positions, v);
     }
     Legend->Fit();
     UpdateInfo();
