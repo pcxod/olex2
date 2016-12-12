@@ -4271,6 +4271,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
     Cif->Remove("_shelx_hkl_file");
     Cif->Remove("_shelx_fab_file");
     Cif->Remove("_shelx_hkl_checksum");
+    Cif->Remove("_shelx_fab_checksum");
     if (use_md5) {
       Cif->Remove("_olex2_res_file_MD5");
       Cif->Remove("_olex2_hkl_file_MD5");
@@ -4324,6 +4325,28 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
             else {
               cetNamedStringList fab("_shelx_fab_file");
               fab.lines = TEFile::ReadLines(fab_name);
+              for (size_t fi = 0; fi < fab.lines.Count(); fi++) {
+                olxstr &l = fab.lines[fi];
+                if (l.StartsFrom("loop_") || l.StartsFrom('_')) {
+                  try {
+                    cif_dp::TCifDP fabc;
+                    fabc.LoadFromStrings(fab.lines.SubListFrom(fi).GetObject());
+                    for (size_t bc = 0; bc < fabc.Count(); bc++) {
+                      for (size_t fj = 0; fj < fabc[bc].param_map.Count(); fj++) {
+                        Cif->SetParam(*fabc[bc].param_map.GetValue(fj));
+                      }
+                    }
+                    fab.lines.SetCount(fi);
+                    break;
+                  }
+                  catch (const TExceptionBase &e) {
+                    break;
+                  }
+                }
+                else {
+                  l.DeleteSequencesOf(' ');
+                }
+              }
               Cif->SetParam(fab);
               if (use_md5) {
                 olxcstr s = fab.lines.Text(EmptyString()).c_str();
