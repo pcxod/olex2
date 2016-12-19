@@ -1,6 +1,7 @@
 #include "analysis.h"
 #include "equeue.h"
 #include "auto.h"
+#include "eset.h"
 
 using namespace olx_analysis;
 
@@ -9,7 +10,9 @@ double alg::mean_peak(const TCAtomPList &peaks) {
   double v = 0;
   size_t cnt = 0;
   for (size_t i=0; i < peaks.Count(); i++) {
-    if(peaks[i]->IsDeleted()) continue;
+    if (peaks[i]->IsDeleted()) {
+      continue;
+    }
     cnt++;
     v += peaks[i]->GetQPeak();
   }
@@ -20,7 +23,9 @@ double alg::mean_u_eq(const TCAtomPList &atoms) {
   double v = 0;
   size_t cnt = 0;
   for (size_t i=0; i < atoms.Count(); i++) {
-    if(atoms[i]->IsDeleted()|| atoms[i]->GetType().z < 2 ) continue;
+    if (atoms[i]->IsDeleted() || atoms[i]->GetType().z < 2) {
+      continue;
+    }
     cnt++;
     v += atoms[i]->GetUiso();
   }
@@ -30,47 +35,55 @@ double alg::mean_u_eq(const TCAtomPList &atoms) {
 olxstr alg::formula(const TCAtomPList &atoms, double mult) {
   ElementPList elements;
   ContentList cl;
-  for( size_t i=0; i < atoms.Count(); i++ )  {
+  for (size_t i = 0; i < atoms.Count(); i++) {
     const cm_Element& elm = atoms[i]->GetType();
-    if (atoms[i]->IsDeleted() || elm == iQPeakZ) continue;
+    if (atoms[i]->IsDeleted() || elm == iQPeakZ) {
+      continue;
+    }
     const size_t ind = elements.IndexOf(elm);
-    if (ind == InvalidIndex)  {
+    if (ind == InvalidIndex) {
       cl.AddNew(elm, atoms[i]->GetOccu()*mult);
       elements.Add(elm);
     }
-    else
+    else {
       cl[ind] += atoms[i]->GetOccu()*mult;
+    }
   }
   XElementLib::SortContentList(cl);
   olxstr rv;
-  for (size_t i=0; i < cl.Count(); i++)  {
+  for (size_t i = 0; i < cl.Count(); i++) {
     rv << cl[i].element.symbol;
-    if( olx_abs(cl[i].count-1.0) > 1e-3 )
+    if (olx_abs(cl[i].count - 1.0) > 1e-3) {
       rv << olxstr::FormatFloat(3, cl[i].count).TrimFloat();
-    if( (i+1) < cl.Count() )
+    }
+    if ((i + 1) < cl.Count()) {
       rv << ' ';
+    }
   }
   return rv;
 }
 //.............................................................................
 olxstr alg::label(const TCAtomPList &atoms, const olxstr &sp) {
   olxstr_buf rv;
-  for( size_t i=0; i < atoms.Count(); i++ ) {
-    if (!rv.IsEmpty())  rv << sp;
-    rv << atoms[i]->GetResiLabel();
+  if (atoms.IsEmpty()) {
+    return rv;
   }
-  return rv;
+  for( size_t i=0; i < atoms.Count(); i++ ) {
+    rv << sp << atoms[i]->GetResiLabel();
+  }
+  return olxstr(rv).SubStringFrom(sp.Length());
 }
 //.............................................................................
 olxstr alg::label(const TCAtomGroup &atoms, const olxstr &sp) {
   olxstr_buf rv;
-  if (atoms.IsEmpty()) return rv;
+  if (atoms.IsEmpty()) {
+    return rv;
+  }
   RefinementModel &rm = *atoms[0].GetAtom()->GetParent()->GetRefMod();
   for( size_t i=0; i < atoms.Count(); i++ ) {
-    if (!rv.IsEmpty())  rv << sp;
-    rv << atoms[i].GetFullLabel(rm);
+    rv << sp << atoms[i].GetFullLabel(rm);
   }
-  return rv;
+  return olxstr(rv).SubStringFrom(sp.Length());
 }
 //.............................................................................
 const cm_Element &alg::find_heaviest(const TCAtomPList &atoms) {
@@ -78,8 +91,9 @@ const cm_Element &alg::find_heaviest(const TCAtomPList &atoms) {
     return XElementLib::GetByIndex(iQPeakIndex);
   size_t ind=0;
   for (size_t i=1; i < atoms.Count(); i++) {
-    if (atoms[i]->GetType().z > atoms[ind]->GetType().z)
+    if (atoms[i]->GetType().z > atoms[ind]->GetType().z) {
       ind = i;
+    }
   }
   return atoms[ind]->GetType();
 }
@@ -99,42 +113,55 @@ bool alg::check_connectivity(const TCAtom &a, const cm_Element &e) {
     TCAtom &aa = a.GetAttachedAtom(i);
     if (aa.GetType() != iQPeakZ && !aa.IsDeleted()) {
       cc++;
-      if (XElementLib::IsMetal(aa.GetType()))
-        metal_c ++;
-      else if (XElementLib::IsHalogen(aa.GetType()))
-        halogen_c ++;
+      if (XElementLib::IsMetal(aa.GetType())) {
+        metal_c++;
+      }
+      else if (XElementLib::IsHalogen(aa.GetType())) {
+        halogen_c++;
+      }
       else if (XElementLib::IsChalcogen(aa.GetType())) {
         calcogen_c ++;
-        if (aa.GetType() == iOxygenZ)
-          oxygen_c ++;
+        if (aa.GetType() == iOxygenZ) {
+          oxygen_c++;
+        }
       }
     }
   }
-  if (e == iHydrogenZ)
+  if (e == iHydrogenZ) {
     return cc == 1;
+  }
   if (XElementLib::IsMetal(e)) {
-    if (cc <= 1) return false;
-    if (cc ==2) return XElementLib::IsTtransitionalGroup(1, e);
+    if (cc <= 1) {
+      return false;
+    }
+    if (cc == 2) {
+      return XElementLib::IsTtransitionalGroup(1, e);
+    }
   }
   else {
     cc -= metal_c;
     if (XElementLib::IsChalcogen(e)) {
-      if (e == iOxygenZ)
+      if (e == iOxygenZ) {
         return cc <= 2;
+      }
       return cc > 0;
     }
     if (XElementLib::IsHalogen(e)) {
       cc -= halogen_c; // I3 I-Cl-I etc
-      if (e.z == iChlorineZ)
-        cc -= oxygen_c; // ClO4 etc
-      else // BrSe3 is common
-        cc -= (calcogen_c-oxygen_c);
+      if (e.z == iChlorineZ) { // ClO4 etc
+        cc -= oxygen_c;
+      }
+      else { // BrSe3 is common
+        cc -= (calcogen_c - oxygen_c);
+      }
       return cc <= 1;
     }
-    if (XElementLib::IsGroup4(e))
+    if (XElementLib::IsGroup4(e)) {
       return cc > 0 || metal_c > 1; // carbides?
-    if (XElementLib::IsGroup5(e) && e != iNitrogenZ)
+    }
+    if (XElementLib::IsGroup5(e) && e != iNitrogenZ) {
       return cc > 0;
+    }
   }
   return true;
 }
@@ -153,7 +180,7 @@ double alg::rate_envi(const TUnitCell &uc, const vec3d& fcrd, double r) {
   TArrayList<olx_pair_t<TCAtom const*, vec3d> > res;
   uc.FindInRangeAC(fcrd, r, res);
   const vec3d center = uc.GetLattice().GetAsymmUnit().Orthogonalise(fcrd);
-  for (size_t j=0; j < res.Count(); j++) {
+  for (size_t j = 0; j < res.Count(); j++) {
     if (center.QDistanceTo(res[j].GetB()) < 1e-4 ||
       res[j].GetA()->GetType() < 2)
     {
@@ -161,22 +188,23 @@ double alg::rate_envi(const TUnitCell &uc, const vec3d& fcrd, double r) {
     }
   }
   double wght = 1;
-  if (res.Count() > 1)  {
-    double awght = 1./(res.Count()*(res.Count()-1));
-    for (size_t j=0; j < res.Count(); j++)  {
+  if (res.Count() > 1) {
+    double awght = 1. / (res.Count()*(res.Count() - 1));
+    for (size_t j = 0; j < res.Count(); j++) {
       if (res[j].GetB().QLength() < 0.8)
-        wght -= 0.5/res.Count();
-      for (size_t k=j+1; k < res.Count(); k++)  {
-        double cang = (res[j].GetB()-center).CAngle(res[k].GetB()-center);
-        if( cang > 0.588 )  { // less than 56 degrees
+        wght -= 0.5 / res.Count();
+      for (size_t k = j + 1; k < res.Count(); k++) {
+        double cang = (res[j].GetB() - center).CAngle(res[k].GetB() - center);
+        if (cang > 0.588) { // less than 56 degrees
           wght -= awght;
         }
       }
     }
   }
   else if (res.Count() == 1) {  // just one bond
-    if (res[0].GetB().QLength() < 0.8)
+    if (res[0].GetB().QLength() < 0.8) {
       wght = 0;
+    }
   }
   //else  // no bonds, cannot say anything
   //  wght = 0;
@@ -188,27 +216,32 @@ ConstSortedElementPList helper::get_user_elements() {
   TXApp& xapp = TXApp::GetInstance();
   const ContentList& cl = xapp.XFile().GetRM().GetUserContent();
   SortedElementPList rv;
-  for (size_t i=0; i < cl.Count(); i++)
+  for (size_t i = 0; i < cl.Count(); i++) {
     rv.AddUnique(&cl[i].element);
+  }
   return rv;
 }
 //.............................................................................
 void helper::reset_u(TCAtom &a, double r) {
   a.SetUiso(r);
-  if (a.GetEllipsoid() != NULL)
+  if (a.GetEllipsoid() != 0) {
     a.GetEllipsoid()->ToSpherical(r);
+  }
 }
 //.............................................................................
 void helper::delete_atom(TCAtom &a) {
   a.SetDeleted(true);
   TPtrList<TAfixGroup> ags;
-  if (a.GetDependentAfixGroup() != NULL)
+  if (a.GetDependentAfixGroup() != 0) {
     ags.Add(a.GetDependentAfixGroup());
-  for (size_t i=0; i < a.DependentHfixGroupCount(); i++)
+  }
+  for (size_t i = 0; i < a.DependentHfixGroupCount(); i++) {
     ags.Add(a.GetDependentHfixGroup(i));
+  }
   for (size_t i=0; i < ags.Count(); i++) {
-    for (size_t j=0; j < ags[i]->Count(); j++)
+    for (size_t j = 0; j < ags[i]->Count(); j++) {
       delete_atom((*ags[i])[j]);
+    }
   }
 }
 //.............................................................................
@@ -217,17 +250,21 @@ size_t helper::get_demoted_index(const cm_Element &e, const SortedElementPList &
   if (idx == InvalidIndex) {
     for (size_t i=0; i < elms.Count(); i++) {
       if (elms[i]->z > e.z) {
-        if (i==0) return InvalidIndex;
-        if (i>0 && elms[i-1]->z == iHydrogenZ)
+        if (i == 0) {
           return InvalidIndex;
+        }
+        if (i > 0 && elms[i - 1]->z == iHydrogenZ) {
+          return InvalidIndex;
+        }
         return i;
       }
     }
     return InvalidIndex;
   }
   else {
-    if ((idx == 1 && elms[0]->z == iHydrogenZ) || idx == 0)
+    if ((idx == 1 && elms[0]->z == iHydrogenZ) || idx == 0) {
       return InvalidIndex;
+    }
     return idx;
   }
 }
@@ -242,20 +279,30 @@ bool helper::can_demote(const TCAtom &a, const SortedElementPList &elms) {
   if (idx == InvalidIndex) {
     for (size_t i=0; i < elms.Count(); i++) {
       if (elms[i]->z > a.GetType().z) {
-        if (i==0) return false;
-        if (i>0 && elms[i-1]->z == iHydrogenZ)
+        if (i == 0) {
           return false;
-        if (return_any || alg::check_connectivity(a, *elms[i])) return true;
+        }
+        if (i > 0 && elms[i - 1]->z == iHydrogenZ) {
+          return false;
+        }
+        if (return_any || alg::check_connectivity(a, *elms[i])) {
+          return true;
+        }
       }
     }
     return false;
   }
   else {
-    if (idx == 0) return false;
+    if (idx == 0) {
+      return false;
+    }
     for (size_t i=idx-1; i != InvalidIndex; i--) {
-      if (elms[i]->z == iHydrogenZ) return false;
-      if (return_any || alg::check_connectivity(a, *elms[i]))
+      if (elms[i]->z == iHydrogenZ) {
+        return false;
+      }
+      if (return_any || alg::check_connectivity(a, *elms[i])) {
         return true;
+      }
     }
     return false;
   }
@@ -270,19 +317,25 @@ void peaks::range::delete_all() {
 //.............................................................................
 ConstTypeList<peaks::range> peaks::analyse(const TCAtomPList &_peaks) {
   TTypeList<range> ranges;
-  if (_peaks.IsEmpty()) return ranges;
+  if (_peaks.IsEmpty()) {
+    return ranges;
+  }
   TCAtomPList peaks = _peaks;
   QuickSorter::SortSF(peaks, peak_sort);
-  if (!peaks.IsEmpty())
+  if (!peaks.IsEmpty()) {
     ranges.AddNew().peaks.Add(peaks.GetLast());
+  }
   for (size_t i=peaks.Count()-2; i != InvalidIndex; i--) {
     TCAtomPList &range = ranges.GetLast().peaks;
     TCAtom *cmpr = range.GetLast();
-    if (peaks[i]->GetQPeak()/cmpr->GetQPeak() < 1.25 &&
-      peaks[i]->GetQPeak()/range[0]->GetQPeak() < 2)
+    if (peaks[i]->GetQPeak() / cmpr->GetQPeak() < 1.25 &&
+      peaks[i]->GetQPeak() / range[0]->GetQPeak() < 2)
+    {
       range.Add(peaks[i]);
-    else
+    }
+    else {
       ranges.AddNew().peaks.Add(peaks[i]);
+    }
   }
   return ranges;
 }
@@ -296,13 +349,16 @@ ConstPtrList<TCAtom> peaks::extract(TAsymmUnit &au,
   for (size_t i=0; i < au.AtomCount(); i++) {
     TCAtom &a = au.GetAtom(i);
     if (a.IsDeleted()) continue;
-    if (a.GetType() == iQPeakZ)
+    if (a.GetType() == iQPeakZ) {
       peaks.Add(a);
-    else
+    }
+    else {
       all_peaks = false;
+    }
   }
-  if (_all_peaks != NULL)
+  if (_all_peaks != 0) {
     *_all_peaks = all_peaks;
+  }
   return peaks;
 }
 //.............................................................................
@@ -316,25 +372,34 @@ peaks::result peaks::analyse_full(TAsymmUnit &au) {
 }
 //.............................................................................
 TCAtomPList &peaks::proximity_clean(TCAtomPList &peaks) {
-  if (peaks.IsEmpty()) return peaks;
+  if (peaks.IsEmpty()) {
+    return peaks;
+  }
   const TAsymmUnit &au = *peaks[0]->GetParent();
   for (size_t i=0; i < peaks.Count(); i++) {
-    if (peaks[i]->IsDeleted()) continue;
+    if (peaks[i]->IsDeleted()) {
+      continue;
+    }
     for (size_t si=0; si < peaks[i]->AttachedSiteCount(); si++) {
       TCAtom::Site &st = peaks[i]->GetAttachedSite(si);
       double d = au.Orthogonalise(
         peaks[i]->ccrd()-st.matrix*st.atom->ccrd()).Length();
       if (d < 0.95) {
         if (st.atom->GetType() == iQPeakZ) {
-          if( peaks[i]->GetQPeak() < st.atom->GetQPeak())
+          if (peaks[i]->GetQPeak() < st.atom->GetQPeak()) {
             peaks[i]->SetDeleted(true);
-          else
+          }
+          else {
             st.atom->SetDeleted(true);
+          }
         }
-        else
+        else {
           peaks[i]->SetDeleted(true);
+        }
       }
-      if (peaks[i]->IsDeleted()) break;
+      if (peaks[i]->IsDeleted()) {
+        break;
+      }
     }
   }
   return peaks.Pack(TCAtom::FlagsAnalyser(catom_flag_Deleted));
@@ -350,8 +415,9 @@ void fragments::tree_node::reverse() {
 //.............................................................................
 vec3d fragments::cart_ring::calc_center() const {
   vec3d cent;
-  for (size_t i = 0; i < atoms.Count(); i++)
+  for (size_t i = 0; i < atoms.Count(); i++) {
     cent += atoms[i].xyz;
+  }
   return (cent /= atoms.Count());
 }
 //.............................................................................
@@ -359,7 +425,7 @@ fragments::cart_plane fragments::cart_ring::calc_plane() const {
   cart_plane cp;
   cp.center = calc_center();
   mat3d m;
-  for (size_t i = 0; i < atoms.Count(); i++)  {
+  for (size_t i = 0; i < atoms.Count(); i++) {
     const vec3d t = (atoms[i].xyz - cp.center);
     m[0][0] += (t[0] * t[0]);
     m[0][1] += (t[0] * t[1]);
@@ -374,8 +440,12 @@ fragments::cart_plane fragments::cart_ring::calc_plane() const {
   mat3d normals;
   mat3d::EigenValues(m, normals.I());
   int mi = 0;
-  if (m[1][1] < m[mi][mi]) mi = 1;
-  if (m[2][2] < m[mi][mi]) mi = 2;
+  if (m[1][1] < m[mi][mi]) {
+    mi = 1;
+  }
+  if (m[2][2] < m[mi][mi]) {
+    mi = 2;
+  }
   cp.normal = normals[mi];
   cp.rmsd = sqrt(olx_max(0, m[mi][mi]));
   return cp;
@@ -385,28 +455,37 @@ bool fragments::cart_ring::is_regular() const {
   vec3d cent = calc_center();
   double avAng = 2 * M_PI / atoms.Count(),
     avDis = 0;
-  for (size_t i = 0; i < atoms.Count(); i++)
+  for (size_t i = 0; i < atoms.Count(); i++) {
     avDis += cent.DistanceTo(atoms[i].xyz);
-  avDis /= atoms.Count();
-  for (size_t i = 0; i < atoms.Count(); i++)  {
-    double d = cent.DistanceTo(atoms[i].xyz);
-    if (olx_abs(d - avDis) > 0.2)
-      return false;
   }
-  for (size_t i = 0; i < atoms.Count(); i++)  {
+  avDis /= atoms.Count();
+  for (size_t i = 0; i < atoms.Count(); i++) {
+    double d = cent.DistanceTo(atoms[i].xyz);
+    if (olx_abs(d - avDis) > 0.2) {
+      return false;
+    }
+  }
+  for (size_t i = 0; i < atoms.Count(); i++) {
     vec3d a = atoms[i].xyz, b;
-    if ((i + 1) == atoms.Count())
+    if ((i + 1) == atoms.Count()) {
       b = atoms[0].xyz;
-    else
+    }
+    else {
       b = atoms[i + 1].xyz;
+    }
     a -= cent;
     b -= cent;
     double ca = a.CAngle(b);
-    if (ca < -1)  ca = -1;
-    if (ca > 1) ca = 1;
+    if (ca < -1) {
+      ca = -1;
+    }
+    if (ca > 1) {
+      ca = 1;
+    }
     ca = acos(ca);
-    if (olx_abs(ca - avAng) > 5. / M_PI)
+    if (olx_abs(ca - avAng) > 5. / M_PI) {
       return false;
+    }
   }
   return true;
 }
@@ -415,9 +494,11 @@ bool fragments::cart_ring::is_regular() const {
 bool fragments::ring::is_leq(const ring &r) const {
   atoms.ForEach(TCAtom::FlagSetter(catom_flag_Processed, false));
   r.atoms.ForEach(TCAtom::FlagSetter(catom_flag_Processed, true));
-  for (size_t i=0; i < atoms.Count(); i++)
-    if (!atoms[i]->IsProcessed())
+  for (size_t i = 0; i < atoms.Count(); i++) {
+    if (!atoms[i]->IsProcessed()) {
       return false;
+    }
+  }
   return true;
 }
 //.............................................................................
@@ -428,8 +509,9 @@ bool fragments::ring::is_fused_with(const ring &r) const {
   for (size_t i=0; i < atoms.Count(); i++) {
     if (atoms[i]->IsProcessed()) {
       if (prev_ind != InvalidIndex) {
-        if (i == prev_ind+1 || (prev_ind==0 && i==atoms.Count()-1))
+        if (i == prev_ind + 1 || (prev_ind == 0 && i == atoms.Count() - 1)) {
           return true;
+        }
       }
       prev_ind = i;
     }
@@ -441,29 +523,43 @@ bool fragments::ring::merge(ring &r) {
   atoms.ForEach(TCAtom::FlagSetter(catom_flag_Processed, false));
   r.atoms.ForEach(TCAtom::FlagSetter(catom_flag_Processed, true));
   TSizeList tii, tai;
-  for (size_t i=0; i < atoms.Count(); i++)
-    if (atoms[i]->IsProcessed()) tii << i;
-  if (tii.Count() != 2) return false;
+  for (size_t i = 0; i < atoms.Count(); i++) {
+    if (atoms[i]->IsProcessed()) {
+      tii << i;
+    }
+  }
+  if (tii.Count() != 2) {
+    return false;
+  }
 
   atoms.ForEach(TCAtom::FlagSetter(catom_flag_Processed, false));
-  for (size_t i=0; i < r.atoms.Count(); i++)
-    if (!r.atoms[i]->IsProcessed()) tai << i;
-
-  if (tii[0] == 0 && tii[1] == atoms.Count()-1)
+  for (size_t i = 0; i < r.atoms.Count(); i++) {
+    if (!r.atoms[i]->IsProcessed()) {
+      tai << i;
+    }
+  }
+  if (tii[0] == 0 && tii[1] == atoms.Count() - 1) {
     ;//atoms.ShiftR(1);
-  else if (tii[0]+1 == tii[1])
-    atoms.ShiftL(tii[0]+1);
-  else
+  }
+  else if (tii[0] + 1 == tii[1]) {
+    atoms.ShiftL(tii[0] + 1);
+  }
+  else {
     return false;
+  }
 
-  if (tai[0] == 0 && tai[1] == r.atoms.Count()-1)
+  if (tai[0] == 0 && tai[1] == r.atoms.Count() - 1) {
     r.atoms.ShiftR(1);
-  else if (tai[0]+1 == tai[1])
+  }
+  else if (tai[0] + 1 == tai[1]) {
     r.atoms.ShiftL(tai[0]);
-  else
+  }
+  else {
     return false;
-  if (atoms[0] != r.atoms[1])
+  }
+  if (atoms[0] != r.atoms[1]) {
     atoms.AddList(r.atoms.SubListFrom(2));
+  }
   else
     atoms.AddList(olx_list_reverse::MakeConst(r.atoms.SubListFrom(2)));
   for (size_t i=0; i < r.substituents.Count(); i++) {
@@ -476,16 +572,24 @@ bool fragments::ring::merge(ring &r) {
 //.............................................................................
 int fragments::ring::Compare(const ring &r) const {
   int d = olx_cmp(atoms.Count(), r.atoms.Count());
-  if (d != 0) return d;
+  if (d != 0) {
+    return d;
+  }
   d = olx_cmp(substituents.Count(), r.substituents.Count());
-  if (d != 0) return d;
-  if (substituents.IsEmpty()) return 0;
+  if (d != 0) {
+    return d;
+  }
+  if (substituents.IsEmpty()) {
+    return 0;
+  }
   return substituents[0].Compare(r.substituents[0]);
 }
 //.............................................................................
 fragments::cart_ring fragments::ring::to_cart() const {
   cart_ring r;
-  if (atoms.IsEmpty()) return r;
+  if (atoms.IsEmpty()) {
+    return r;
+  }
   TAsymmUnit &au = *atoms[0]->GetParent();
   smatd m = smatd::Identity();
   r.atoms.Add(new cart_atom(atoms[0], au.Orthogonalise(atoms[0]->ccrd()), m));
@@ -526,10 +630,14 @@ int fragments::ring::substituent::Compare(
   if (r != 0) return r;
   if (ring_count == 1) {
     r = -olx_cmp(atoms.Count(), s.atoms.Count());
-    if (r != 0) return r;
+    if (r != 0) {
+      return r;
+    }
   }
   r = olx_cmp(alg::find_heaviest(atoms).z, alg::find_heaviest(s.atoms).z);
-  if (r != 0) return r;
+  if (r != 0) {
+    return r;
+  }
   return olx_cmp(atoms.Count(), s.atoms.Count());
 }
 //.............................................................................
@@ -600,7 +708,9 @@ void fragments::fragment::build_coordinate(
   const TUnitCell &uc = a.GetParent()->GetLattice().GetUnitCell();
   for (size_t i=0; i < a.AttachedSiteCount(); i++) {
     TCAtom::Site &st = a.GetAttachedSite(i);
-    if (st.atom->GetTag() < 0) continue;
+    if (st.atom->GetTag() < 0) {
+      continue;
+    }
     smatd m = uc.MulMatrix(m_, st.matrix);
     build_coordinate(*st.atom, m, res);
   }
@@ -608,7 +718,9 @@ void fragments::fragment::build_coordinate(
 //.............................................................................
 ConstTypeList<vec3d> fragments::fragment::build_coordinates() const {
   vec3d_list crds(atoms_.Count(), true);
-  if (atoms_.IsEmpty()) return crds;
+  if (atoms_.IsEmpty()) {
+    return crds;
+  }
   atoms_.ForEach(ACollectionItem::IndexTagSetter());
   build_coordinate(*atoms_[0],
     atoms_[0]->GetParent()->GetLattice().GetUnitCell().GetMatrix(0),
@@ -628,8 +740,9 @@ ConstTypeList<vec3d> fragments::fragment::build_coordinates() const {
             break;
           }
         }
-        if (uniq)
+        if (uniq) {
           crds.AddNew(v);
+        }
       }
     }
   }
@@ -637,7 +750,9 @@ ConstTypeList<vec3d> fragments::fragment::build_coordinates() const {
 }
 //.............................................................................
 void fragments::fragment::init_generators() {
-  if (atoms_.IsEmpty()) return;
+  if (atoms_.IsEmpty()) {
+    return;
+  }
   if (atoms_[0]->GetParent()->HasLattice()) {
     generators.AddList(
       atoms_[0]->GetParent()->GetLattice().GetFragmentGrowMatrices(atoms_,
@@ -656,7 +771,9 @@ bool fragments::fragment::is_disjoint() const {
 }
 //.............................................................................
 bool fragments::fragment::is_polymeric() const {
-  if (generators.Count() < 3) return false;
+  if (generators.Count() < 3) {
+    return false;
+  }
   smatd_list set(generators);
   for (size_t i=1; i < set.Count(); i++) {
     for (size_t j=i; j < set.Count(); j++) {
@@ -668,12 +785,14 @@ bool fragments::fragment::is_polymeric() const {
             uniq = false;
             break;
           }
-          else
+          else {
             return true;
+          }
         }
       }
-      if (uniq)
+      if (uniq) {
         set.Add(m);
+      }
     }
   }
   return false;
@@ -681,9 +800,13 @@ bool fragments::fragment::is_polymeric() const {
 //.............................................................................
 bool fragments::fragment::is_regular() const {
   size_t ci = find_central_index();
-  if (ci == InvalidIndex) return false;
+  if (ci == InvalidIndex) {
+    return false;
+  }
   vec3d_list crds = build_coordinates();
-  if (crds.Count() < 3) return true;
+  if (crds.Count() < 3) {
+    return true;
+  }
   if (crds.Count() == 3) { // check if 180 +- 10 degrees, linear arrangement
     TSizeList indices(3, olx_list_init::index());
     indices.Remove(ci);
@@ -699,14 +822,20 @@ bool fragments::fragment::is_regular() const {
     if (rc.Length() > 0.1) {
       for (size_t i=0; i < 3; i++) {
         double ca = (crds[indices[i]]-cnt).CAngle(rc);
-        if (olx_abs(ca) > 0.17) return false;
+        if (olx_abs(ca) > 0.17) {
+          return false;
+        }
       }
     }
     // finally - check the angles...
     vec3d v1 = crds[indices[0]]-cnt;
     // cos 120 = -0.5, +- 10
-    if ((v1.CAngle(crds[indices[1]]-cnt)+0.5) > 0.16) return false;
-    if ((v1.CAngle(crds[indices[2]]-cnt)+0.5) > 0.16) return false;
+    if ((v1.CAngle(crds[indices[1]] - cnt) + 0.5) > 0.16) {
+      return false;
+    }
+    if ((v1.CAngle(crds[indices[2]] - cnt) + 0.5) > 0.16) {
+      return false;
+    }
     return true;
   }
   // some spherical arrangement test
@@ -715,14 +844,17 @@ bool fragments::fragment::is_regular() const {
     indices.Remove(ci);
     vec3d cnt = olx_mean(indices, IndexAccessor::MakeConst(crds));
     // check central atom is nearby the geometrical center
-    if (cnt.DistanceTo(crds[ci]) > 0.1) return false;
+    if (cnt.DistanceTo(crds[ci]) > 0.1) {
+      return false;
+    }
     if (crds.Count() == 5) {
       for (size_t i=0; i < indices.Count(); i++) {
         vec3d pv = (crds[indices[i]]-crds[ci]);
         for (size_t j=i+1; j < indices.Count(); j++) {
           double ca = pv.CAngle((crds[indices[j]]-crds[ci]));
-          if ( olx_abs(ca+1./3) > 0.16) // cos(THA) = -1./3, +- 10
+          if (olx_abs(ca + 1. / 3) > 0.16) { // cos(THA) = -1./3, +- 10
             return false;
+          }
         }
       }
       return true;
@@ -733,12 +865,15 @@ bool fragments::fragment::is_regular() const {
         vec3d pv = (crds[indices[i]]-crds[ci]);
         for (size_t j=i+1; j < indices.Count(); j++) {
           double ca = pv.CAngle((crds[indices[j]]-crds[ci]));
-          if ( olx_abs(ca) < 0.17) // 90 +- 10
+          if (olx_abs(ca) < 0.17) { // 90 +- 10
             a90_cnt++;
-          else if ((ca+1) < 0.03) // 180 +- 10
+          }
+          else if ((ca + 1) < 0.03) { // 180 +- 10
             a180_cnt++;
-          else
+          }
+          else {
             return false;
+          }
         }
       }
       return a180_cnt == 3;
@@ -751,16 +886,20 @@ size_t fragments::fragment::find_central_index() const {
   size_t idx = InvalidIndex;
   for (size_t i=0; i < atoms_.Count(); i++) {
     size_t sc = atoms_[i]->AttachedSiteCount();
-    if (sc >= atoms_.Count()-1 && sc != 1)
+    if (sc >= atoms_.Count() - 1 && sc != 1) {
       idx = i;
-    else if (sc != 1)
+    }
+    else if (sc != 1) {
       return InvalidIndex;
+    }
   }
   return idx;
 }
 //.............................................................................
 bool fragments::fragment::is_flat() const {
-  if (atoms_.IsEmpty()) return true;
+  if (atoms_.IsEmpty()) {
+    return true;
+  }
   vec3d n;
   vec3d_list crds = build_coordinates();
   double rmsd = 0;
@@ -786,12 +925,14 @@ void fragments::fragment::depth_first_tag(TCAtom &a, index_t v) {
     if (aa.GetTag() != -1) {
       continue;
     }
-    depth_first_tag(aa, v+1);
+    depth_first_tag(aa, v + 1);
   }
 }
 //.............................................................................
 void fragments::fragment::depth_first_tags(const TCAtomPList &atoms) {
-  if (atoms.IsEmpty()) return;
+  if (atoms.IsEmpty()) {
+    return;
+  }
   atoms.ForEach(ACollectionItem::TagSetter(-1));
   depth_first_tag(*atoms[0], 0);
 }
@@ -799,18 +940,23 @@ void fragments::fragment::depth_first_tags(const TCAtomPList &atoms) {
 void fragments::fragment::breadth_first_tags(const TCAtomPList &atoms,
   size_t start, TCAtomPList *ring_atoms)
 {
-  if (atoms.IsEmpty()) return;
+  if (atoms.IsEmpty()) {
+    return;
+  }
   atoms.ForEach(ACollectionItem::TagSetter(-1));
   TQueue<TCAtom*> queue;
-  if (start >= atoms.Count())
+  if (start >= atoms.Count()) {
     start = 0;
+  }
   queue.Push(atoms[start]);
   queue.Push(NULL);
   index_t tv = 0;
   while (!queue.IsEmpty()) {
     TCAtom *a = queue.Pop();
     if (a == NULL) {
-      if (queue.IsEmpty()) break;
+      if (queue.IsEmpty()) {
+        break;
+      }
       tv++;
       queue.Push(NULL);
       continue;
@@ -827,9 +973,12 @@ void fragments::fragment::breadth_first_tags(const TCAtomPList &atoms,
     a->SetTag(tv);
     for (size_t i=0; i < a->AttachedSiteCount(); i++) {
       TCAtom::Site &st = a->GetAttachedSite(i);
-      if (!st.atom->IsAvailable()) continue;
-      if (st.atom->GetTag() == -1)
+      if (!st.atom->IsAvailable()) {
+        continue;
+      }
+      if (st.atom->GetTag() == -1) {
         queue.Push(st.atom);
+      }
       else if (st.atom->GetTag() >= tv) {
         st.atom->SetRingAtom(true);
         if (ring_atoms != NULL) {
@@ -880,31 +1029,42 @@ void fragments::fragment::init_rings(TTypeList<fragments::ring> &rings) {
 }
 //.............................................................................
 void fragments::fragment::init_ring(size_t i, TTypeList<ring> &rings) {
-  if (atoms_.IsEmpty()) return;
+  if (atoms_.IsEmpty()) {
+    return;
+  }
   atoms_.ForEach(ACollectionItem::TagSetter(-1));
   ring &r = rings[i];
   TQueue<TCAtom*> queue;
-  for (size_t i=0; i < rings.Count(); i++)
+  for (size_t i = 0; i < rings.Count(); i++) {
     rings[i].atoms.ForEach(ACollectionItem::TagSetter(-2));
-  for (size_t i=0; i < r.atoms.Count(); i++)
+  }
+  for (size_t i = 0; i < r.atoms.Count(); i++) {
     queue.Push(r.atoms[i])->SetTag(-1);
+  }
   queue.Push(NULL);
   index_t tv = 0;
   while (!queue.IsEmpty()) {
     TCAtom *a = queue.Pop();
     if (a == NULL) {
-      if (queue.IsEmpty()) break;
+      if (queue.IsEmpty()) {
+        break;
+      }
       tv++;
       queue.Push(NULL);
       continue;
     }
-    if (a->GetTag() != -1 ) continue;
+    if (a->GetTag() != -1) {
+      continue;
+    }
     a->SetTag(tv);
     for (size_t i=0; i < a->AttachedSiteCount(); i++) {
       TCAtom::Site &st = a->GetAttachedSite(i);
-      if (!st.atom->IsAvailable()) continue;
-      if (st.atom->GetTag() == -1)
+      if (!st.atom->IsAvailable()) {
+        continue;
+      }
+      if (st.atom->GetTag() == -1) {
         queue.Push(st.atom);
+      }
     }
   }
   for (size_t i=0; i < r.atoms.Count(); i++) {
@@ -1070,7 +1230,9 @@ TTypeList<TCAtomPList>::const_list_type fragments::fragment::trace_ring_b(
         queue.Push(ring.Add(to_queue[i]))->SetProcessed(true);
       }
     }
-    if (la != NULL) break;
+    if (la != 0) {
+      break;
+    }
   }
   // trim
   if (la != NULL) {
@@ -1094,9 +1256,12 @@ TTypeList<TCAtomPList>::const_list_type fragments::fragment::trace_ring_b(
   queue.Push(ring.Add(a));
   for (size_t i = 0; i < a.AttachedSiteCount(); i++) {
     TCAtom::Site &st = a.GetAttachedSite(i);
-    if (!st.atom->IsAvailable()) continue;
-    if (st.atom->GetTag() == a.GetTag())
+    if (!st.atom->IsAvailable()) {
+      continue;
+    }
+    if (st.atom->GetTag() == a.GetTag()) {
       queue.Push(ring.Add(st.atom));
+    }
   }
   TTypeList<TCAtomPList> nrings = trace_ring_b(queue, ring, true);
   if (ring.IsEmpty()) {
@@ -1115,13 +1280,18 @@ void fragments::fragment::trace_substituent(ring::substituent &s) {
   s.parent.atoms.ForEach(
     TCAtom::FlagSetter(catom_flag_Processed, true));
   for (size_t i=1; i < s.atoms.Count(); i++) { // hidden recursion
-    if (s.atoms[i]->IsProcessed()) continue;
+    if (s.atoms[i]->IsProcessed()) {
+      continue;
+    }
     for (size_t j=0; j < s.atoms[i]->AttachedSiteCount(); j++) {
       TCAtom &a = s.atoms[i]->GetAttachedAtom(j);
-      if (a.IsProcessed() || !a.IsAvailable()) continue;
+      if (a.IsProcessed() || !a.IsAvailable()) {
+        continue;
+      }
       if (a.GetTag() <= s.atoms[i]->GetTag()) {
-        if (a.GetTag() == -2)
+        if (a.GetTag() == -2) {
           s.ring_count++;
+        }
         continue;
       }
       s.atoms.Add(a);
@@ -1131,12 +1301,15 @@ void fragments::fragment::trace_substituent(ring::substituent &s) {
 //.............................................................................
 TCAtom *fragments::fragment::trace_branch(TCAtom *a, tree_node &b) {
   while (true) {
-    if (b.trunk.Count() > 1 && b.trunk.GetLast() == a)
+    if (b.trunk.Count() > 1 && b.trunk.GetLast() == a) {
       throw TFunctionFailedException(__OlxSourceInfo, "internal error");
+    }
     b.trunk.Add(a);
     for (size_t i=0; i < a->AttachedSiteCount(); i++) {
       TCAtom &st = a->GetAttachedAtom(i);
-      if (!st.IsAvailable()) continue;
+      if (!st.IsAvailable()) {
+        continue;
+      }
       if (st.IsProcessed() || st.GetTag() == 0) {
         b.trunk.Add(st);
         b.trunk.ForEach(TCAtom::FlagSetter(catom_flag_Processed, true));
@@ -1167,15 +1340,20 @@ uint64_t fragments::fragment::calc_node_hash(
   while (!aqueue.IsEmpty()) {
     TCAtom *n = aqueue.Pop();
     if (n == NULL) {
-      if (aqueue.IsEmpty()) break;
+      if (aqueue.IsEmpty()) {
+        break;
+      }
       v++;
       aqueue.Push(NULL);
       continue;
     }
-    if (n->GetTag() != -1) continue;
+    if (n->GetTag() != -1) {
+      continue;
+    }
     n->SetTag(v);
-    if (counts.Count() <= (size_t)v)
+    if (counts.Count() <= (size_t)v) {
       counts.SetCount(v + 1, olx_list_init::zero());
+    }
     counts[v] += (size_t)n->GetType().z;
     for (size_t i = 0; i < n->AttachedSiteCount(); i++) {
       TCAtom &aa = n->GetAttachedAtom(i);
@@ -1206,10 +1384,12 @@ uint64_t fragments::fragment::mix_node_hash(
   BubbleSorter::Sort(ids, TPrimitiveComparator());
   uint64_t id = 0;
   for (size_t i = 0; i < ids.Count(); i++) {
-    if ((id & 1) == 1)
+    if ((id & 1) == 1) {
       id |= (ids[i] << 16);
-    else
+    }
+    else {
       id ^= (ids[i] >> 16);
+    }
   }
   uint64_t rv = (node.GetData() & 0xffff000000000000ULL);
   rv |= (id & 0x0000ffffffffffffULL);
@@ -1230,17 +1410,22 @@ fragments::fragment::build_graph() const
   while (!aqueue.IsEmpty()) {
     TCAtom *n = aqueue.Pop();
     if (n == NULL) {
-      if (aqueue.IsEmpty()) break;
+      if (aqueue.IsEmpty()) {
+        break;
+      }
       v++;
       aqueue.Push(NULL);
       continue;
     }
-    if (n->GetTag() != -1) continue;
+    if (n->GetTag() != -1) {
+      continue;
+    }
     n->SetTag(v);
     for (size_t i = 0; i < n->AttachedSiteCount(); i++) {
       TCAtom &aa = n->GetAttachedAtom(i);
-      if (aa.GetTag() == -1)
+      if (aa.GetTag() == -1) {
         aqueue.Push(&aa);
+      }
     }
   }
   TQueue<node_t*> queue;
@@ -1251,7 +1436,9 @@ fragments::fragment::build_graph() const
     node_t *n = queue.Pop();
     for (size_t i = 0; i < n->GetObject()->AttachedSiteCount(); i++) {
       TCAtom &aa = n->GetObject()->GetAttachedAtom(i);
-      if (aa.GetTag() < 0) continue;
+      if (aa.GetTag() < 0) {
+        continue;
+      }
       if (aa.GetTag() > n->GetObject()->GetTag()) {
         map.Add(&aa, queue.Push(&n->NewNode(0, &aa)));
       }
@@ -1266,8 +1453,9 @@ fragments::fragment::build_graph() const
 }
 //.............................................................................
 bool fragments::fragment::does_match(TCAtom &a, TCAtom &b, TCAtomPList &p) {
-  if (a.GetType() != b.GetType() || a.IsRingAtom() != b.IsRingAtom())
+  if (a.GetType() != b.GetType() || a.IsRingAtom() != b.IsRingAtom()) {
     return false;
+  }
   a.SetTag(4);
   b.SetTag(3);
   TEBitArray used(b.AttachedSiteCount());
@@ -1277,8 +1465,9 @@ bool fragments::fragment::does_match(TCAtom &a, TCAtom &b, TCAtomPList &p) {
     bool matched = false;
     for (size_t j = 0; j < b.AttachedSiteCount(); j++) {
       TCAtom &ba = b.GetAttachedAtom(j);
-      if (ba.GetTag() > 1 || ba.GetType() != aa.GetType() || used[j])
+      if (ba.GetTag() > 1 || ba.GetType() != aa.GetType() || used[j]) {
         continue;
+      }
       if (does_match(aa, ba, p)) {
         matched = true;
         used.SetTrue(j);
@@ -1339,7 +1528,9 @@ ConstTypeList<fragments::ring> fragments::fragment::get_rings(
 }
 //.............................................................................
 ConstPtrList<TCAtom> fragments::fragment::ring_sorter(const TCAtomPList &r) {
-  if (r.Count() < 3) return new TCAtomPList(r);
+  if (r.Count() < 3) {
+    return new TCAtomPList(r);
+  }
   TCAtomPList res(r.Count());
   res.Set(0, r[0])->SetProcessed(false);
   for (size_t i=0; i < r.Count()-1; i++) {
@@ -1366,7 +1557,9 @@ void fragments::expand_node(TCAtom &a, TCAtomPList &atoms) {
   atoms.Add(a)->SetTag(1);
   for (size_t i=0; i < a.AttachedSiteCount(); i++) {
     TCAtom &aa = a.GetAttachedAtom(i);
-    if (!aa.IsAvailable() || aa.GetTag() != 0) continue;
+    if (!aa.IsAvailable() || aa.GetTag() != 0) {
+      continue;
+    }
     expand_node(aa, atoms);
   }
 }
@@ -1510,42 +1703,37 @@ ConstTypeList<fragments::fragment> fragments::extract(const TCAtomPList &aua,
     throw TInvalidArgumentException(__OlxSourceInfo,
       "set of atoms is disconnected");
   }
+
+  TEBitArray arr(aua.Count());
   // mark ring atoms
   {
+    fragment x(aua);
     for (size_t i = 0; i < aua.Count(); i++) {
       TCAtom &a = *aua[i];
-      if (a.IsDeleted() || a.GetType().z < 0) {
-        a.SetTag(-2);
+      if (a.GetType().z < 0 && a.IsAvailable()) {
+        a.SetDeleted(true);
+        arr.SetTrue(i);
       }
-      else {
-        a.SetTag(-1);
-      }
+      a.SetTag(-1);
     }
-    TCAtomPList ring_atoms;
-    for (size_t i = 0; i < aua.Count(); i++) {
-      if (aua[i]->GetTag() == -2) continue;
-      if (aua[i]->GetTag() == -1) {
-        fragment::depth_first_tag(*aua[i], 0);
-      }
-      for (size_t j = 0; j < aua[i]->AttachedSiteCount(); j++) {
-        TCAtom &aa = aua[i]->GetAttachedAtom(j);
-        index_t df = aa.GetTag() - aua[i]->GetTag();
-        // the next ring atoms will have tag-1
-        if (aa.GetTag() >= 0 && df < -1) {
-          ring_atoms << aua[i];
+    
+    for (size_t i=0; i < aua.Count(); i++) {
+      if (aua[i]->IsAvailable() && aua[i]->GetTag() == -1) {
+        TCAtomPList r_atoms;
+        x.breadth_first_tags(i, &r_atoms);
+        for (size_t j = 0; j < r_atoms.Count(); j++) {
+          TTypeList<TCAtomPList> rings = x.trace_ring_b(*r_atoms[j]);
+          for (size_t k = 0; k < rings.Count(); k++) {
+            rings[k].ForEach(TCAtom::FlagSetter(catom_flag_RingAtom, true));
+          }
         }
       }
     }
-    for (size_t i = 0; i < ring_atoms.Count(); i++) {
-      TCAtomPList ring = fragment::trace_ring_d(*ring_atoms[i]);
-      ring.ForEach(TCAtom::FlagSetter(catom_flag_RingAtom, true));
-    }
     //for (size_t i = 0; i < aua.Count(); i++) {
-    //  if (aua[i]->GetTag() == -2) continue;
+    //  aua[i]->SetLabel(aua[i]->GetTag(), false);
     //  if (aua[i]->IsRingAtom()) {
-    //    aua[i]->SetLabel(aua[i]->GetLabel()+'r', false);
+    //    aua[i]->SetLabel(aua[i]->GetLabel() + 'r', false);
     //  }
-    //  //aua[i]->SetLabel(aua[i]->GetTag(), false);
     //}
   }
   fragment f = f_;
@@ -1605,6 +1793,12 @@ ConstTypeList<fragments::fragment> fragments::extract(const TCAtomPList &aua,
   TTypeList<fragments::fragment> rv;
   for (size_t i = 0; i < matching.Count(); i++) {
     rv.Add(new fragment(matching[i]));
+  }
+
+  for (size_t i = 0; i < arr.Count(); i++) {
+    if (arr[i]) {
+      aua[i]->SetDeleted(false);
+    }
   }
   return rv;
 }
