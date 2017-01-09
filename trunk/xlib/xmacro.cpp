@@ -177,7 +177,8 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(CifMerge,
     "u-updates atom treatment if the asymmetric units of currently loaded file"
     " and of the CIF file match&;"
-    "f-creates final CIF with embedded RES file and HKL loop",
+    "f-creates final CIF with embedded RES file and HKL loop&;"
+    "dn-new data name for the merged CIF",
     fpAny|psFileLoaded,
   "Merges loaded or provided as first argument cif with other cif(s)");
   xlib_InitMacro(CifExtract,
@@ -4474,6 +4475,12 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
   sw.start("Processing selected geometric measuremenets");
   xapp.XFile().GetRM().GetSelectedTableRows().Process(*Cif);
   sw.start("Saving the result");
+  {
+    olxstr new_dn = Options.FindValue("dn", EmptyString());
+    if (Cif->GetBlockIndex() != InvalidIndex && !new_dn.IsEmpty()) {
+      Cif->RenameCurrentBlock(new_dn);
+    }
+  }
   Cif->SaveToFile(Cif->GetFileName());
 }
 //.............................................................................

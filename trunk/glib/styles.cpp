@@ -41,20 +41,23 @@ bool TPrimitiveStyle::FromDataItem(const TDataItem& Item)  {
 //TGraphicsStyle implementation
 //------------------------------------------------------------------------------
 void TGraphicsStyle::Clear() {
-  for (size_t i =0; i < Styles.Count(); i++)
+  for (size_t i = 0; i < Styles.Count(); i++) {
     delete Styles.GetValue(i);
+  }
   Styles.Clear();
   PStyles.Clear();
   Params.Clear();
 }
 //..............................................................................
-bool TGraphicsStyle::operator == (const TGraphicsStyle &GS) const  {
+bool TGraphicsStyle::operator == (const TGraphicsStyle &GS) const {
   const size_t pc = PrimitiveStyleCount();
-  if (pc != GS.PrimitiveStyleCount())
+  if (pc != GS.PrimitiveStyleCount()) {
     return false;
-  for (size_t i=0; i < pc; i++ ) {
-    if (!(*PStyles[i] == GS.GetPrimitiveStyle(i)))
+  }
+  for (size_t i = 0; i < pc; i++) {
+    if (!(*PStyles[i] == GS.GetPrimitiveStyle(i))) {
       return false;
+    }
   }
   return true;
 }
@@ -68,34 +71,43 @@ TGlMaterial& TGraphicsStyle::CreatePrimitiveMaterial(const olxstr& pname,
 }
 //..............................................................................
 void TGraphicsStyle::ToDataItem(TDataItem& Item, bool saveAll) const {
-  if( !saveAll && !IsSaveable() )  return;
+  if (!saveAll && !IsSaveable()) {
+    return;
+  }
   Item.AddField("Name", Name);
-  if( IsPersistent() )
+  if (IsPersistent()) {
     Item.AddField("Persistent", TrueString());
-  for( size_t i=0; i < Params.Count(); i++ ) {
-    if (!saveAll && !Params.GetValue(i).saveable)  continue;
+  }
+  for (size_t i = 0; i < Params.Count(); i++) {
+    if (!saveAll && !Params.GetValue(i).saveable) {
+      continue;
+    }
     Item.AddField(Params.GetKey(i), Params.GetValue(i).val);
   }
 
   size_t ssc = saveAll ? 1 : 0;
   const size_t sc = Styles.Count();
-  if( !saveAll )  {
-    for( size_t i=0; i < sc; i++ )
-    if (Styles.GetValue(i)->IsSaveable())
+  if (!saveAll) {
+    for (size_t i = 0; i < sc; i++)
+      if (Styles.GetValue(i)->IsSaveable()) {
         ssc++;
+      }
   }
-  if( ssc != 0 )  {
+  if (ssc != 0) {
     TDataItem& RI = Item.AddItem("SubStyles");
-    for( size_t i=0; i < sc; i++ )  {
-      if (!saveAll&& !Styles.GetValue(i)->IsSaveable())  continue;
+    for (size_t i = 0; i < sc; i++) {
+      if (!saveAll && !Styles.GetValue(i)->IsSaveable()) {
+        continue;
+      }
       Styles.GetValue(i)->ToDataItem(RI.AddItem(olxstr("S_") << i), saveAll);
     }
   }
-  for( size_t i=0; i < PStyles.Count(); i++ )
+  for (size_t i = 0; i < PStyles.Count(); i++) {
     PStyles[i]->ToDataItem(Item.AddItem(olxstr("S") << i));
+  }
 }
 //..............................................................................
-bool TGraphicsStyle::FromDataItem(const TDataItem& Item)  {
+bool TGraphicsStyle::FromDataItem(const TDataItem& Item) {
   SetNew(false);
   bool name_set = false,
     persistence_set = false;
@@ -112,32 +124,33 @@ bool TGraphicsStyle::FromDataItem(const TDataItem& Item)  {
       SetParam(Item.GetFieldName(i), Item.GetFieldByIndex(i), Level < 2);
     }
   }
-//    SetParam(Item.FieldName(i), Item.Field(i), FParent->GetVersion() > 0 );
+  //    SetParam(Item.FieldName(i), Item.Field(i), FParent->GetVersion() > 0 );
   TDataItem* I = Item.FindItem("SubStyles");
   size_t off = 0;
-  if (I != NULL) {
+  if (I != 0) {
     off = 1;
-    for (size_t i=0; i < I->ItemCount(); i++) {
+    for (size_t i = 0; i < I->ItemCount(); i++) {
       const TDataItem& si = I->GetItemByIndex(i);
       const olxstr& si_name = si.FindField("Name");
       TGraphicsStyle* GS = FindLocalStyle(si_name);
-      if (GS == NULL)
+      if (GS == 0) {
         GS = Styles.Add(si_name, new TGraphicsStyle(Parent, this, si_name)).Value;
+      }
       GS->FromDataItem(I->GetItemByIndex(i));
     }
   }
   // merging happens here...
-  for (size_t i=off; i < Item.ItemCount(); i++) {
+  for (size_t i = off; i < Item.ItemCount(); i++) {
     const TDataItem& psi = Item.GetItemByIndex(i);
     const olxstr& psi_name = TPrimitiveStyle::ReadName(psi);
-    TPrimitiveStyle* PS = NULL;
-    for (size_t j=0; j < PStyles.Count(); j++) {
+    TPrimitiveStyle* PS = 0;
+    for (size_t j = 0; j < PStyles.Count(); j++) {
       if (PStyles[j]->GetName() == psi_name) {
         PS = PStyles[j];
         break;
       }
     }
-    if (PS == NULL) {
+    if (PS == 0) {
       PS = Parent.NewPrimitiveStyle_(psi_name);
       if (PS->FromDataItem(Item.GetItemByIndex(i))) {
         PStyles.Add(Parent.AddPrimitiveStyle(PS));
@@ -146,8 +159,9 @@ bool TGraphicsStyle::FromDataItem(const TDataItem& Item)  {
         delete PS;
       }
     }
-    else
+    else {
       PS->FromDataItem(Item.GetItemByIndex(i));
+    }
   }
   return true;
 }
@@ -157,40 +171,45 @@ TGraphicsStyle *TGraphicsStyle::FindStyle(const olxstr& Name) {
     TStrList Toks(Name, '.');
     size_t index=0;
     TGraphicsStyle* AS = FindLocalStyle(Toks[index]);
-    while (AS != NULL) {
-      if (++index >= Toks.Count())
+    while (AS != 0) {
+      if (++index >= Toks.Count()) {
         return AS;
+      }
       AS = AS->FindLocalStyle(Toks[index]);
     }
-    return NULL;
+    return 0;
   }
-  else
+  else {
     return FindLocalStyle(Name);
+  }
 }
 //..............................................................................
-TGraphicsStyle& TGraphicsStyle::NewStyle(const olxstr& Name, bool Force)  {
+TGraphicsStyle& TGraphicsStyle::NewStyle(const olxstr& Name, bool Force) {
   if (Name.Contains('.')) {
     TStrList Toks(Name, '.');
-    size_t index=0;
-    TGraphicsStyle *PrevGS=NULL;
+    size_t index = 0;
+    TGraphicsStyle *PrevGS = 0;
     TGraphicsStyle* GS = FindLocalStyle(Toks[index]);
-    while (GS != NULL) {
-      if (++index >= Toks.Count())
+    while (GS != 0) {
+      if (++index >= Toks.Count()) {
         return *GS;
+      }
       PrevGS = GS;  // save last valid value
       GS = GS->FindLocalStyle(Toks[index]);
     }
     // here we have GS==NULL, and index pointing to the following
     if (PrevGS == NULL) PrevGS = this;
     if (Force) {
-      for (size_t i=index; i < Toks.Count(); i++)
+      for (size_t i = index; i < Toks.Count(); i++) {
         PrevGS = &PrevGS->NewStyle(Toks[i]);
+      }
       return *PrevGS;
     }
-    else
+    else {
       return PrevGS->NewStyle(Toks[index]);
+    }
   }
-  else  {
+  else {
     TGraphicsStyle* gs = FindLocalStyle(Name);
     return *(gs != NULL ? gs : Styles.Add(Name,
       new TGraphicsStyle(Parent, this, Name)).Value);
@@ -200,9 +219,13 @@ TGraphicsStyle& TGraphicsStyle::NewStyle(const olxstr& Name, bool Force)  {
 TGraphicsStyle *TGraphicsStyle::FindStyle(TGraphicsStyle* style) {
   for (size_t i=0; i < Styles.Count(); i++) {
     TGraphicsStyle* GS = Styles.GetValue(i);
-    if (*GS == *style) return GS;
+    if (*GS == *style) {
+      return GS;
+    }
     GS = GS->FindStyle(style);
-    if(GS != NULL) return GS;
+    if (GS != 0) {
+      return GS;
+    }
   }
   return NULL;
 }
@@ -211,71 +234,81 @@ TGraphicsStyle *TGraphicsStyle::FindStyle(TGraphicsStyle* style) {
 void TGraphicsStyle::SetStylesTag(index_t Tag) {
   SetTag(Tag);
   const size_t sc = Styles.Count();
-  for (size_t i=0; i < sc; i++)
+  for (size_t i = 0; i < sc; i++) {
     Styles.GetValue(i)->SetStylesTag(Tag);
+  }
 }
 //..............................................................................
 // removes Styles with Style::Tag == Tag
 void TGraphicsStyle::RemoveStylesByTag(index_t Tag) {
   bool changed = false;
-  for (size_t i=0; i < Styles.Count(); i++) {
+  for (size_t i = 0; i < Styles.Count(); i++) {
     TGraphicsStyle* GS = Styles.GetValue(i);
     if (GS->GetTag() == Tag) {
-      if (GS->Styles.Count() != 0)
+      if (GS->Styles.Count() != 0) {
         GS->RemoveStylesByTag(Tag);
-      if (GS->Styles.Count() == 0  && !GS->IsPersistent()) {
+      }
+      if (GS->Styles.Count() == 0 && !GS->IsPersistent()) {
         delete GS;
         Styles.NullItem(i);
         changed = true;
       }
     }
   }
-  if(changed)
+  if (changed) {
     Styles.Pack();
+  }
 }
 //..............................................................................
 void TGraphicsStyle::RemoveNonPersistent() {
   bool changed = false;
-  for( size_t i=0; i < Styles.Count(); i++ )  {
+  for (size_t i = 0; i < Styles.Count(); i++) {
     TGraphicsStyle* GS = Styles.GetValue(i);
-    if( !GS->Styles.IsEmpty() )
+    if (!GS->Styles.IsEmpty()) {
       GS->RemoveNonPersistent();
-    if( !GS->IsPersistent() )  {
+    }
+    if (!GS->IsPersistent()) {
       delete GS;
       Styles.NullItem(i);
       changed = true;
     }
   }
-  if( changed )
+  if (changed) {
     Styles.Pack();
+  }
 }
 //..............................................................................
 void TGraphicsStyle::RemoveNonSaveable() {
   bool changed = false;
   for (size_t i=0; i < Styles.Count(); i++) {
     TGraphicsStyle* GS = Styles.GetValue(i);
-    if (!GS->Styles.IsEmpty())
+    if (!GS->Styles.IsEmpty()) {
       GS->RemoveNonSaveable();
+    }
     if (!GS->IsSaveable()) {
       delete GS;
       Styles.NullItem(i);
       changed = true;
     }
   }
-  if (changed)
+  if (changed) {
     Styles.Pack();
+  }
 }
 //..............................................................................
 void TGraphicsStyle::RemoveNamedStyles(const TStrList& toks) {
-  if (toks.Count() <= Level) return;
+  if (toks.Count() <= Level) {
+    return;
+  }
   const size_t i = Styles.IndexOf(toks[Level]);
   if (i != InvalidIndex) {
-    if (toks.Count() == size_t(Level+1)) {
+    if (toks.Count() == size_t(Level + 1)) {
       delete Styles.GetValue(i);
       Styles.Delete(i);
     }
-    else if (Styles.GetValue(i)->Styles.Count() != 0)
+    else if (Styles.GetValue(i)->Styles.Count() != 0) {
       Styles.GetValue(i)->RemoveNamedStyles(toks);
+    }
   }
 }
 //..............................................................................
@@ -285,8 +318,9 @@ void TGraphicsStyle::_TrimFloats() {
       Params.GetValue(i).val.TrimFloat();
     }
   }
-  for (size_t i=0; i < Styles.Count(); i++)
+  for (size_t i = 0; i < Styles.Count(); i++) {
     Styles.GetValue(i)->_TrimFloats();
+  }
 }
 //..............................................................................
 //------------------------------------------------------------------------------
@@ -307,10 +341,12 @@ TGraphicsStyles::~TGraphicsStyles()  {
 //..............................................................................
 void TGraphicsStyles::Clear() {
   OnClear.Enter(this);
-  for (size_t i = 0; i < PStyles.ObjectCount(); i++)
+  for (size_t i = 0; i < PStyles.ObjectCount(); i++) {
     delete &PStyles.GetObject(i);
-  for (size_t i=0; i < PStyles.PropertiesCount(); i++)
+  }
+  for (size_t i = 0; i < PStyles.PropertiesCount(); i++) {
     delete &PStyles.GetProperties(i);
+  }
   PStyles.Clear();
   Root->Clear();
   OnClear.Exit(this);
@@ -339,14 +375,15 @@ void TGraphicsStyles::ToDataItem(TDataItem& item,
   DataItems.Clear();
   DataItems.SetCount(PStyles.PropertiesCount());
   TPtrList<TGraphicsStyle> allStyles(styles);
-  size_t matc=0;
+  size_t matc = 0;
   const size_t sc = styles.Count();
   // recursion here on Count()
-  for (size_t i=0; i < allStyles.Count(); i++) {
+  for (size_t i = 0; i < allStyles.Count(); i++) {
     TGraphicsStyle* gs = allStyles[i];
-    if (i < sc)  // add only the top level styles
+    if (i < sc) { // add only the top level styles
       root.AddStyle(gs);
-    for (size_t j=0; j < gs->PrimitiveStyleCount(); j++ ) {
+    }
+    for (size_t j = 0; j < gs->PrimitiveStyleCount(); j++) {
       const TGlMaterial& glm = gs->GetPrimitiveStyle(j).GetProperties();
       size_t mi = PStyles.IndexOfProperties(glm);
       if (mi == InvalidIndex) {
@@ -359,8 +396,9 @@ void TGraphicsStyles::ToDataItem(TDataItem& item,
         DataItems[mi] = &SI1;
       }
     }
-    for (size_t j=0; j < gs->StyleCount(); j++)  // recursion implementation
+    for (size_t j = 0; j < gs->StyleCount(); j++) { // recursion implementation
       allStyles.Add(gs->GetStyle(j));
+    }
   }
   item.AddField("Name", Name);
   item.AddField("LinkFile", LinkFile);
@@ -371,14 +409,17 @@ void TGraphicsStyles::ToDataItem(TDataItem& item,
 }
 //..............................................................................
 bool TGraphicsStyles::FromDataItem(const TDataItem& Item, bool merge) {
-  if (&Item == NULL)
+  if (&Item == 0) {
     throw TInvalidArgumentException(__OlxSourceInfo, "item=NULL");
+  }
   OnClear.Enter(this);
   TActionQueueLock ql_(&OnClear);
-  if (!merge) Clear();
+  if (!merge) {
+    Clear();
+  }
   TDataItem* SI = Item.FindItem("Materials");
   TPtrList<TGlMaterial> mats;
-  for (size_t i=0; i < SI->ItemCount(); i++) {
+  for (size_t i = 0; i < SI->ItemCount(); i++) {
     TGlMaterial* GlM = new TGlMaterial;
     SI->GetItemByIndex(i).SetData(GlM);
     GlM->FromDataItem(SI->GetItemByIndex(i));
@@ -394,23 +435,24 @@ bool TGraphicsStyles::FromDataItem(const TDataItem& Item, bool merge) {
       Root->_TrimFloats();
     }
   }
-  for (size_t i=0; i < mats.Count(); i++)
+  for (size_t i = 0; i < mats.Count(); i++) {
     delete mats[i];
+  }
   ql_.Unlock();
   OnClear.Exit(this);
   return true;
 }
 //..............................................................................
-void TGraphicsStyles::CopyStyle(const olxstr &From, const olxstr &To)  {
+void TGraphicsStyles::CopyStyle(const olxstr &From, const olxstr &To) {
 }
 //..............................................................................
-TPrimitiveStyle *TGraphicsStyles::NewPrimitiveStyle(const olxstr &PName)  {
+TPrimitiveStyle *TGraphicsStyles::NewPrimitiveStyle(const olxstr &PName) {
   TPrimitiveStyle *PS = new TPrimitiveStyle(PName, PStyles, *this);
   PStyles.AddObject(PS);
   return PS;
 }
 //..............................................................................
-TPrimitiveStyle *TGraphicsStyles::NewPrimitiveStyle_(const olxstr &PName)  {
+TPrimitiveStyle *TGraphicsStyles::NewPrimitiveStyle_(const olxstr &PName) {
   return new TPrimitiveStyle(PName, PStyles, *this);
 }
 //..............................................................................
@@ -422,32 +464,39 @@ TPrimitiveStyle *TGraphicsStyles::AddPrimitiveStyle(TPrimitiveStyle *PS) {
 TDataItem* TGraphicsStyles::GetDataItem(const TPrimitiveStyle* Style) const {
   TGlMaterial &m = Style->GetProperties();
   size_t i = PStyles.IndexOfProperties(m);
-  if (i == InvalidIndex || DataItems[i] == NULL)
+  if (i == InvalidIndex || DataItems[i] == 0) {
     throw TFunctionFailedException(__OlxSourceInfo, "unregistered properties");
+  }
   return DataItems[i];
 }
 //..............................................................................
 TGlMaterial* TGraphicsStyles::GetMaterial(TDataItem& I) const {
-  if( I.GetData() == NULL )
-    I.SetData( new TGlMaterial() );
+  if (I.GetData() == 0) {
+    I.SetData(new TGlMaterial());
+  }
   return (TGlMaterial*)I.GetData();
 }
 //..............................................................................
-void TGraphicsStyles::DeleteStyle(TGraphicsStyle *Style)  {
-  if( Style->GetParentStyle() != NULL )
+void TGraphicsStyles::DeleteStyle(TGraphicsStyle *Style) {
+  if (Style->GetParentStyle() != 0) {
     Style->GetParentStyle()->DeleteStyle(*Style);
+  }
 }
 //..............................................................................
-bool TGraphicsStyles::LoadFromFile(const olxstr& FN, bool merge)  {
+bool TGraphicsStyles::LoadFromFile(const olxstr& FN, bool merge) {
   TDataFile DF;
-  if( !DF.LoadFromXLFile(FN, NULL) )  return false;
+  if (!DF.LoadFromXLFile(FN, 0)) {
+    return false;
+  }
   TDataItem *DI = DF.Root().FindItem("DStyle");
-  if( DI == NULL )  return false;
+  if (DI == 0) {
+    return false;
+  }
   FromDataItem(*DI, merge);
   return true;
 }
 //..............................................................................
-void TGraphicsStyles::SaveToFile(const olxstr& FN)  {
+void TGraphicsStyles::SaveToFile(const olxstr& FN) {
   TDataFile DF;
   TDataItem& DI = DF.Root().AddItem("DStyle");
   this->ToDataItem(DI);

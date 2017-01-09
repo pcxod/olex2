@@ -38,7 +38,7 @@ vec3i CalculateColour(float v, size_t colour_count, const vec3i* colours) {
   int idx1 = olx_floor(v),
     idx2 = idx1 + 1;
   if (idx2 >= colour_count) {
-    idx2 = 0;
+    idx2 = colour_count - 1;
   }
   v = v - idx1;
   vec3i rv;

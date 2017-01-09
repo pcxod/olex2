@@ -370,8 +370,9 @@ void TdlgMatProp::OnOK(wxCommandEvent& event) {
       if (cbApplyTo == NULL || cbApplyTo->GetSelection() == 0) {
         for (size_t i = 0; i < gl.Count(); i++) {
           if (EsdlInstanceOf(gl[i], *Object)) {
-            if (is_bond)
+            if (is_bond) {
               app.Individualise(((TXBond&)gl[i]), 3);
+            }
             uniqCol.AddUnique(&gl[i].GetPrimitives());
           }
         }
@@ -381,21 +382,25 @@ void TdlgMatProp::OnOK(wxCommandEvent& event) {
         TXBondPList bonds;
         for (size_t i = 0; i < gl.Count(); i++) {
           if (EsdlInstanceOf(gl[i], *Object)) {
-            if (EsdlInstanceOf(gl[i], TXAtom))
+            if (EsdlInstanceOf(gl[i], TXAtom)) {
               atoms.Add((TXAtom&)gl[i]);
-            else if (EsdlInstanceOf(gl[i], TXBond))
+            }
+            else if (EsdlInstanceOf(gl[i], TXBond)) {
               bonds.Add((TXBond&)gl[i]);
+            }
           }
         }
         if (!atoms.IsEmpty()) {
           app.Individualise(atoms, cl+cbApplyTo->GetSelection());
-          for (size_t i = 0; i < atoms.Count(); i++)
+          for (size_t i = 0; i < atoms.Count(); i++) {
             uniqCol.AddUnique(&atoms[i]->GetPrimitives());
+          }
         }
         else {
           app.Individualise(bonds, cl + cbApplyTo->GetSelection());
-          for (size_t i = 0; i < bonds.Count(); i++)
+          for (size_t i = 0; i < bonds.Count(); i++) {
             uniqCol.AddUnique(&bonds[i]->GetPrimitives());
+          }
         }
       }
       for (size_t i = 0; i < uniqCol.Count(); i++) {
@@ -430,8 +435,9 @@ void TdlgMatProp::OnOK(wxCommandEvent& event) {
       TGPCollection& gpc = Object->GetPrimitives();
       for (size_t i = 0; i < gpc.PrimitiveCount(); i++) {
         // this should not happens, since the mask is re-enforced...
-        if (i >= Materials.Count())
+        if (i >= Materials.Count()) {
           break;
+        }
         gpc.GetPrimitive(i).SetProperties(Materials[i]);
         gpc.GetStyle().SetMaterial(gpc.GetPrimitive(i).GetName(), Materials[i]);
       }
