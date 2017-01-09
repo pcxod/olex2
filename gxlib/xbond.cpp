@@ -131,8 +131,9 @@ void TXBond::Create(const olxstr& cName) {
   // find collection
   olxstr NewL;
   TGPCollection* GPC = Parent.FindCollectionX(Legend, NewL);
-  if (GPC == NULL)
+  if (GPC == 0) {
     GPC = &Parent.NewCollection(NewL);
+  }
   else if (GPC->PrimitiveCount() != 0) {
     GPC->AddObject(*this);
     Params()[4] = GPC->GetStyle().GetNumParam('R', defs.GetRadius());
@@ -177,10 +178,8 @@ void TXBond::Create(const olxstr& cName) {
       GlP.StartList();
       GlP.CallList(SGlP);
       GlP.EndList();
-      TGlMaterial* style_mat =
-        legend_level == 3 ? GS.FindMaterial(primitives[i]) : NULL;
-      //TGlMaterial* style_mat = GS.FindMaterial(primitives[i]);
-      if (style_mat != NULL) {
+      TGlMaterial* style_mat = GS.FindMaterial(primitives[i]);
+      if (style_mat != 0) {
         GlP.SetProperties(*style_mat);
       }
       else {

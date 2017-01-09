@@ -5379,55 +5379,65 @@ void TMainForm::funGetFont(const TStrObjList &Params, TMacroData &E)  {
   E.SetRetVal(glf->GetIdString());
 }
 //..............................................................................
-void TMainForm::macEditMaterial(TStrObjList &Cmds, const TParamList &Options, TMacroData &E)  {
+void TMainForm::macEditMaterial(TStrObjList &Cmds, const TParamList &Options, TMacroData &E) {
   TGlMaterial* mat = NULL, *smat = NULL;
   TGPCollection* gpc = NULL;
-  if( Cmds[0] == "helpcmd" )
+  if (Cmds[0] == "helpcmd") {
     mat = &HelpFontColorCmd;
-  else if( Cmds[0] == "helptxt" )
+  }
+  else if (Cmds[0] == "helptxt") {
     mat = &HelpFontColorTxt;
-  else if( Cmds[0] == "execout" )
+  }
+  else if (Cmds[0] == "execout") {
     mat = &ExecFontColor;
-  else if( Cmds[0] == "error" )
+  }
+  else if (Cmds[0] == "error") {
     mat = &ErrorFontColor;
-  else if( Cmds[0] == "exception" )
+  }
+  else if (Cmds[0] == "exception") {
     mat = &ExceptionFontColor;
-  else  {
+  }
+  else {
     gpc = FXApp->GetRenderer().FindCollection(Cmds[0]);
-    if( gpc == NULL )  {
+    if (gpc == 0) {
       const size_t di = Cmds[0].IndexOf('.');
-      if( di != InvalidIndex )  {
+      if (di != InvalidIndex) {
         TGPCollection* _gpc = FXApp->GetRenderer().FindCollection(Cmds[0].SubStringTo(di));
-        if( _gpc != NULL )  {
-          TGlPrimitive* glp = _gpc->FindPrimitiveByName(Cmds[0].SubStringFrom(di+1));
-          if( glp != NULL )  {
+        if (_gpc != 0) {
+          TGlPrimitive* glp = _gpc->FindPrimitiveByName(Cmds[0].SubStringFrom(di + 1));
+          if (glp != 0) {
             mat = &glp->GetProperties();
-            smat = &_gpc->GetStyle().GetMaterial(Cmds[0].SubStringFrom(di+1), *mat);
+            smat = &_gpc->GetStyle().GetMaterial(Cmds[0].SubStringFrom(di + 1), *mat);
           }
         }
-        else  {  // modify the style if exists
+        else {  // modify the style if exists
           TGraphicsStyle* gs = FXApp->GetRenderer().GetStyles().FindStyle(Cmds[0].SubStringTo(di));
-          if( gs != NULL )
-            mat = gs->FindMaterial(Cmds[0].SubStringFrom(di+1));
+          if (gs != 0) {
+            mat = gs->FindMaterial(Cmds[0].SubStringFrom(di + 1));
+          }
         }
       }
     }
   }
-  if( mat == NULL && (gpc == NULL || gpc->ObjectCount() == 0) )  {
+  if (mat == NULL && (gpc == NULL || gpc->ObjectCount() == 0)) {
     E.ProcessingError(__OlxSrcInfo, olxstr("undefined material/control ") << Cmds[0]);
     return;
   }
   TdlgMatProp* MatProp;
-  if( gpc != NULL )
+  if (gpc != 0) {
     MatProp = new TdlgMatProp(this, gpc->GetObject(0));
-  else
+  }
+  else {
     MatProp = new TdlgMatProp(this, *mat);
+  }
 
-  if( MatProp->ShowModal() == wxID_OK )  {
-    if( mat != NULL )
+  if (MatProp->ShowModal() == wxID_OK) {
+    if (mat != NULL) {
       *mat = MatProp->GetCurrent();
-    if( smat != NULL )
+    }
+    if (smat != NULL) {
       *smat = *mat;
+    }
   }
   MatProp->Destroy();
 }
