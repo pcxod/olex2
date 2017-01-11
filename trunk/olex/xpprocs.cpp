@@ -1697,7 +1697,7 @@ void TMainForm::macWaitFor(TStrObjList &Cmds, const TParamList &Options, TMacroD
     if (!IsVisible())  return;
     while (FMode & mFade) {
       FParent->Dispatch();
-      Dispatch(ID_TIMER, -1, (AActionHandler*)this, NULL, NULL);
+      Dispatch(ID_TIMER, -1, this, 0, 0);
       olx_sleep(50);
     }
   }
@@ -1705,14 +1705,14 @@ void TMainForm::macWaitFor(TStrObjList &Cmds, const TParamList &Options, TMacroD
     if (!IsVisible())  return;
     while (FXApp->GetFader().GetPosition() < 1 && FXApp->GetFader().IsVisible()) {
       FParent->Dispatch();
-      Dispatch(ID_TIMER, -1, (AActionHandler*)this, NULL, NULL);
+      Dispatch(ID_TIMER, -1, this, 0, 0);
       olx_sleep(50);
     }
   }
   else if (Cmds[0].Equalsi("rota")) {
     while( FMode & mRota )  {
       FParent->Dispatch();
-      Dispatch(ID_TIMER, -1, (AActionHandler*)this, NULL, NULL);
+      Dispatch(ID_TIMER, -1, this, 0, 0);
       olx_sleep(50);
     }
   }

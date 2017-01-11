@@ -464,7 +464,6 @@ void TGXApp::CreateObjects(bool centerModel, bool init_visibility)  {
   ClearXObjects();
   GlRenderer->ClearObjects();
   GlRenderer->SetSceneComplete(false);
-
   for (size_t i = 0; i < IndividualCollections.Count(); i++) {
     if (GlRenderer->FindCollection(IndividualCollections[i]) == 0) {
       GlRenderer->NewCollection(IndividualCollections[i]);
@@ -4817,25 +4816,55 @@ void TGXApp::BuildSceneMask(FractMask& mask, double inc)  {
 //..............................................................................
 void TGXApp::SaveStructureStyle(TDataItem& item) const {
   TPtrList<TGraphicsStyle> styles;
-  for( size_t i=0; i < GlRenderer->ObjectCount(); i++ )  {
+  for (size_t i = 0; i < GlRenderer->ObjectCount(); i++) {
     TGraphicsStyle* gs = &GlRenderer->GetObject(i).GetPrimitives().GetStyle();
-    while( gs->GetParentStyle() != NULL )  {
-      if( gs->GetParentStyle()->GetParentStyle() == NULL ) // avoid the root
+    while (gs->GetParentStyle() != NULL) {
+      if (gs->GetParentStyle()->GetParentStyle() == NULL) // avoid the root
         break;
       gs = gs->GetParentStyle();
     }
-    if( gs->GetName() == "Q" )
+    if (gs->GetName() == "Q")
       continue;
-    if( styles.IndexOf(gs) == InvalidIndex )
+    if (styles.IndexOf(gs) == InvalidIndex) {
       styles.Add(gs);
+    }
   }
   styles.Add(TXAtom::GetSettings(GetRenderer()).GetStyle());
   styles.Add(TXBond::GetSettings(GetRenderer()).GetStyle());
   GlRenderer->GetStyles().ToDataItem(item.AddItem("Style"), styles);
   GlRenderer->GetScene().ToDataItem(item.AddItem("Scene"));
   TDataItem& ind_col = item.AddItem("ICollections");
-  for( size_t i=0; i < IndividualCollections.Count(); i++ )
-    ind_col.AddField( olxstr("col_") << i, IndividualCollections[i]);
+  for (size_t i = 0; i < IndividualCollections.Count(); i++) {
+    ind_col.AddField(olxstr("col_") << i, IndividualCollections[i]);
+  }
+  // save name registries
+  TDataItem &name_reg = item.AddItem("NameRegistry");
+  {
+    const TTypeList<TSPlane::Def> &pd = XFile().GetLattice().GetPlaneDefinitions();
+    TDataItem &pr = name_reg.AddItem("Planes");
+    for (size_t i = 0; i < TXPlane::NamesRegistry().Count(); i++) {
+      size_t di = TXPlane::NamesRegistry().GetKey(i);
+      if (di >= pd.Count()) {
+        continue;
+      }
+      pr.AddItem("item").AddField("id", pd[di].ToString())
+        .AddField("value", TXPlane::NamesRegistry().GetValue(i));
+    }
+  }
+  {
+    TDataItem &pr = name_reg.AddItem("Atoms");
+    for (size_t i = 0; i < TXAtom::NamesRegistry().Count(); i++) {
+      pr.AddItem("item").AddField("id", TXAtom::NamesRegistry().GetKey(i))
+        .AddField("value", TXAtom::NamesRegistry().GetValue(i));
+    }
+  }
+  {
+    TDataItem &pr = name_reg.AddItem("Bonds");
+    for (size_t i = 0; i < TXBond::NamesRegistry().Count(); i++) {
+      pr.AddItem("item").AddField("id", TXBond::NamesRegistry().GetKey(i))
+        .AddField("value", TXBond::NamesRegistry().GetValue(i));
+    }
+  }
 }
 //..............................................................................
 void TGXApp::ToDataItem(TDataItem& item, IOutputStream& zos) const {
@@ -4905,8 +4934,9 @@ void TGXApp::ToDataItem(TDataItem& item, IOutputStream& zos) const {
   pi.Reset();
   while (pi.HasNext()) {
     TXPlane& xp = pi.Next();
-    if (!xp.IsDeleted())
+    if (!xp.IsDeleted()) {
       vis.Set(p_cnt++, xp.IsVisible());
+    }
   }
   visibility.AddField("planes", vis.ToBase64String());
 
@@ -4951,8 +4981,9 @@ void TGXApp::ToDataItem(TDataItem& item, IOutputStream& zos) const {
 
   TDataItem &lines = item.AddItem("Lines");
   for (size_t i=0; i < Lines.Count(); i++) {
-    if (Lines[i].IsVisible())
+    if (Lines[i].IsVisible()) {
       Lines[i].ToDataItem(lines.AddItem("object"));
+    }
   }
 
   TDataItem &user_objects = item.AddItem("UserObjects");
@@ -4962,37 +4993,10 @@ void TGXApp::ToDataItem(TDataItem& item, IOutputStream& zos) const {
   }
   TDataItem &rings = item.AddItem("Rings");
   for (size_t i = 0; i < Rings.Count(); i++) {
-    if (Rings[i].IsVisible())
+    if (Rings[i].IsVisible()) {
       Rings[i].ToDataItem(rings.AddItem("object"));
-  }
-
-  // save name registries
-  TDataItem &name_reg = item.AddItem("NameRegistry");
-  {
-    const TTypeList<TSPlane::Def> &pd = XFile().GetLattice().GetPlaneDefinitions();
-    TDataItem &pr = name_reg.AddItem("Planes");
-    for (size_t i = 0; i < TXPlane::NamesRegistry().Count(); i++) {
-      size_t di = TXPlane::NamesRegistry().GetKey(i);
-      if (di >= pd.Count()) continue;
-      pr.AddItem("item").AddField("id", pd[di].ToString())
-        .AddField("value", TXPlane::NamesRegistry().GetValue(i));
     }
   }
-  {
-    TDataItem &pr = name_reg.AddItem("Atoms");
-    for (size_t i = 0; i < TXAtom::NamesRegistry().Count(); i++) {
-      pr.AddItem("item").AddField("id", TXAtom::NamesRegistry().GetKey(i))
-        .AddField("value", TXAtom::NamesRegistry().GetValue(i));
-    }
-  }
-  {
-    TDataItem &pr = name_reg.AddItem("Bonds");
-    for (size_t i = 0; i < TXBond::NamesRegistry().Count(); i++) {
-      pr.AddItem("item").AddField("id", TXBond::NamesRegistry().GetKey(i))
-        .AddField("value", TXBond::NamesRegistry().GetValue(i));
-    }
-  }
-
   TDataItem& renderer = item.AddItem("Renderer");
   renderer.AddField("min", PersUtil::VecToStr(GlRenderer->MinDim()));
   renderer.AddField("max", PersUtil::VecToStr(GlRenderer->MaxDim()));
@@ -5001,13 +5005,17 @@ void TGXApp::ToDataItem(TDataItem& item, IOutputStream& zos) const {
 void TGXApp::LoadStructureStyle(const TDataItem &item) {
   GlRenderer->GetStyles().FromDataItem(item.GetItemByName("Style"), true);
   TDataItem *scene_item = item.FindItem("Scene");
-  if( scene_item != NULL )
+  if (scene_item != 0) {
     GlRenderer->GetScene().FromDataItem(*scene_item);
+  }
   IndividualCollections.Clear();
   TDataItem& ind_col = item.GetItemByName("ICollections");
   for (size_t i=0; i < ind_col.FieldCount(); i++)
     IndividualCollections.Add(ind_col.GetFieldByIndex(i));
   // load name registries
+  TXAtom::NamesRegistry().Clear();
+  TXBond::NamesRegistry().Clear();
+  TXPlane::NamesRegistry().Clear();
   TDataItem *name_reg = item.FindItem("NameRegistry");
   if (name_reg != NULL) {
     TDataItem &pr = name_reg->GetItemByName("Planes");
@@ -5020,7 +5028,9 @@ void TGXApp::LoadStructureStyle(const TDataItem &item) {
       for (size_t i = 0; i < pr.ItemCount(); i++) {
         size_t pdi = pd_dict.Find(pr.GetItemByIndex(i).GetFieldByName("id"),
           InvalidIndex);
-        if (pdi == InvalidIndex) continue;
+        if (pdi == InvalidIndex) {
+          continue;
+        }
         TXPlane::NamesRegistry().Add(pdi,
           pr.GetItemByIndex(i).GetFieldByName("value"));
       }
@@ -5031,7 +5041,7 @@ void TGXApp::LoadStructureStyle(const TDataItem &item) {
         ar.GetItemByIndex(i).GetFieldByName("value"));
     }
     TDataItem &br = name_reg->GetItemByName("Bonds");
-    for (size_t i = 0; i < ar.ItemCount(); i++) {
+    for (size_t i = 0; i < br.ItemCount(); i++) {
       TXBond::NamesRegistry().Add(br.GetItemByIndex(i).GetFieldByName("id"),
         br.GetItemByIndex(i).GetFieldByName("value"));
     }
@@ -5048,14 +5058,11 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
   DeleteXFiles();
   UserObjects.Clear();
   Rings.Clear();
-  TXAtom::NamesRegistry().Clear();
-  TXBond::NamesRegistry().Clear();
-  TXPlane::NamesRegistry().Clear();
   TDataItem *xfiles = item.FindItem("XFiles");
   if (xfiles == 0) {
     XFile().FromDataItem(item.GetItemByName("XFile"));
     TDataItem* overlays = item.FindItem("Overlays");
-    if (overlays != NULL) {
+    if (overlays != 0) {
       for (size_t i = 0; i < overlays->ItemCount(); i++)
         NewXFile().FromDataItem(overlays->GetItemByIndex(i));
     }
@@ -5076,7 +5083,7 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
   }
   bool vis;
   TDataItem *frame_i = item.FindItem("3DFrame");
-  if (frame_i != NULL) {
+  if (frame_i != 0) {
     vis = F3DFrame->IsVisible();
     F3DFrame->FromDataItem(*frame_i);
     if (vis != F3DFrame->IsVisible())
@@ -5089,12 +5096,12 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
 
   FDBasis->FromDataItem(item.GetItemByName("DBasis"));
   TDataItem *dspi = item.FindItem("DSphere");
-  if (dspi != NULL) {
+  if (dspi != 0) {
     FDSphere->FromDataItem(*dspi);
   }
   {
     TDataItem *lines = item.FindItem("Lines");
-    if (lines != NULL) {
+    if (lines != 0) {
       for (size_t i = 0; i < lines->ItemCount(); i++) {
         Lines.Add(new TXLine(*GlRenderer))
           .FromDataItem(lines->GetItemByIndex(i));
@@ -5112,7 +5119,7 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
   }
   {
     const TDataItem *rings = item.FindItem("Rings");
-    if (rings != NULL) {
+    if (rings != 0) {
       for (size_t i = 0; i < rings->ItemCount(); i++) {
         Rings.Add(new TDRing(GetRenderer(), EmptyString()))
           .FromDataItem(rings->GetItemByIndex(i));
