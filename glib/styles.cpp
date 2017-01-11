@@ -198,7 +198,9 @@ TGraphicsStyle& TGraphicsStyle::NewStyle(const olxstr& Name, bool Force) {
       GS = GS->FindLocalStyle(Toks[index]);
     }
     // here we have GS==NULL, and index pointing to the following
-    if (PrevGS == NULL) PrevGS = this;
+    if (PrevGS == 0) {
+      PrevGS = this;
+    }
     if (Force) {
       for (size_t i = index; i < Toks.Count(); i++) {
         PrevGS = &PrevGS->NewStyle(Toks[i]);
