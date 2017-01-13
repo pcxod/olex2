@@ -45,7 +45,7 @@ protected:
 public:
   TDSphere(TGlRenderer& Render, const olxstr& collectionName=EmptyString());
   ~TDSphere()  {
-    if (analyser != NULL) {
+    if (analyser != 0) {
       delete analyser;
     }
   }
@@ -63,7 +63,7 @@ public:
     analyser = a;
   }
   void ToDataItem(TDataItem &di) const;
-  void FromDataItem(const TDataItem &di);
+  bool FromDataItem(const TDataItem &di);
   TEBasis Basis;
 };
 
