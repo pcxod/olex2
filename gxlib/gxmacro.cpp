@@ -801,22 +801,26 @@ void GXLibMacros::macADS(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
   short ads = -1;
-  if( Cmds[0].Equalsi("elp") )
+  if (Cmds[0].Equalsi("elp")) {
     ads = adsEllipsoid;
-  else if( Cmds[0].Equalsi("sph") )
+  }
+  else if (Cmds[0].Equalsi("sph")) {
     ads = adsSphere;
-  else if( Cmds[0].Equalsi("ort") )
+  }
+  else if (Cmds[0].Equalsi("ort")) {
     ads = adsOrtep;
-  else if( Cmds[0].Equalsi("std") )
+  }
+  else if (Cmds[0].Equalsi("std")) {
     ads = adsStandalone;
-  if( ads == -1 )  {
+  }
+  if (ads == -1) {
     Error.ProcessingError(__OlxSrcInfo,
       "unknown atom type (elp/sph/ort/std) supported only");
     return;
   }
   Cmds.Delete(0);
   TXAtomPList Atoms = app.FindXAtoms(Cmds, false, false);
-  app.SetAtomDrawingStyle(ads, Atoms.IsEmpty() ? NULL : &Atoms);
+  app.SetAtomDrawingStyle(ads, Atoms.IsEmpty() ? 0 : &Atoms);
 }
 //.............................................................................
 void GXLibMacros::macAZoom(TStrObjList &Cmds, const TParamList &Options,
