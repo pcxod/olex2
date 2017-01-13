@@ -119,7 +119,7 @@ public:
   bool Enter(const IOlxObject *Sender, const IOlxObject *Data, TActionQueue *)  {
     state = 1;
     FParent->GetUndo().Clear();
-    FParent->DSphere().SetAnalyser(NULL);
+    FParent->DSphere().SetAnalyser(0);
     GrowInfo = NULL;
     EmptyFile = SameFile = false;
     if (Data != NULL && EsdlInstanceOf(*Data, olxstr)) {
@@ -5097,7 +5097,7 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
   FDBasis->FromDataItem(item.GetItemByName("DBasis"));
   TDataItem *dspi = item.FindItem("DSphere");
   if (dspi != 0) {
-    FDSphere->FromDataItem(*dspi);
+    FDSphere->SetVisible(FDSphere->FromDataItem(*dspi));
   }
   {
     TDataItem *lines = item.FindItem("Lines");

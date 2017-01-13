@@ -13,8 +13,8 @@
 APointAnalyser *APointAnalyser::FromDataItem(const TDataItem &di) {
   olxstr id = di.GetFieldByName("IdString");
   APointAnalyser *(*f)(const TDataItem &di) = Registry().Find(id, NULL);
-  if (f == NULL) {
-    return NULL;
+  if (f == 0) {
+    return 0;
   }
   return (*f)(di.GetItemByName("Object"));
 }
@@ -27,9 +27,12 @@ void APointAnalyser::ToDataItem(TDataItem &di) const {
 //.............................................................................
 //.............................................................................
 PointAnalyser::PointAnalyser(TXAtom &c)
-: center(c), clone(false), cs(*(new olx_critical_section())),
+: center(&c), clone(false), cs(*(new olx_critical_section())),
   areas(*(new olxstr_dict<size_t, false>()))
 {
+  if (!c.IsCreated()) {
+    return;
+  }
   colors.SetCount(7);
   colors[0] = 0XFF0000;
   colors[1] = 0X009933;
@@ -42,7 +45,7 @@ PointAnalyser::PointAnalyser(TXAtom &c)
   alpha = 0x9c;
   dry_run = false;
   olx_pdict<uint32_t, int> highest;
-  const TLattice &latt = center.GetParent();
+  const TLattice &latt = ((TSAtom &)center()).GetParent();
   for (size_t i = 0; i < latt.GetObjects().atoms.Count(); i++) {
     TXAtom &a = (TXAtom &)latt.GetObjects().atoms[i];
     if (!a.IsAvailable()) continue;
@@ -55,7 +58,9 @@ PointAnalyser::PointAnalyser(TXAtom &c)
         colors[ni] = a.GetParentGroup()->GetGlM().AmbientF.GetRGB();
       }
       else {
-        if (ni < 7) continue;
+        if (ni < 7) {
+          continue;
+        }
         if (a.GetType().z > highest.Find(a.CAtom().GetFragmentId(), 0)) {
           TGlMaterial glm;
           colors[ni] = a.GetPrimitives().GetStyle().GetMaterial("Sphere", glm)
@@ -73,15 +78,17 @@ uint32_t PointAnalyser::Analyse(vec3f &p_) {
   vec3f p = p_;
   float maxd = 1;
   sorted::ObjectPrimitive<uint32_t> added;
-  const TLattice &latt = center.GetParent();
-  for (size_t i = 0; i < latt.GetObjects().atoms.Count(); i++)  {
+  const TLattice &latt = ((TSAtom &)center()).GetParent();
+  const TSAtom &cnt = center();
+  for (size_t i = 0; i < latt.GetObjects().atoms.Count(); i++) {
     TSAtom &a = latt.GetObjects().atoms[i];
-    if (&a == &center || !a.IsAvailable())
+    if (&a == &cnt || !a.IsAvailable())
       continue;
-    vec3f v = a.crd() - center.crd();
+    vec3f v = a.crd() - cnt.crd();
     float dp = p.DotProd(v);
-    if (dp < 0)
+    if (dp < 0) {
       continue;
+    }
     float d = (v - p*dp).Length();
     if (d < a.GetType().r_custom) {
       if (!added.AddUnique(a.CAtom().GetFragmentId()).b) {
@@ -105,8 +112,9 @@ uint32_t PointAnalyser::Analyse(vec3f &p_) {
   }
   if (emboss)
     p_.NormaliseTo(maxd);
-  if (added.IsEmpty())
+  if (added.IsEmpty()) {
     return 0x00ffffff | ((uint32_t)alpha << 24);
+  }
   else {
     int s = (int)added.Count();
     if (s > 1) { // make darker
@@ -124,11 +132,14 @@ uint32_t PointAnalyser::Analyse(vec3f &p_) {
 }
 //.............................................................................
 void PointAnalyser::ToDataItem_(TDataItem &di) const {
-  center.GetRef().ToDataItem(di.AddItem("AtomRef"));
+  if (!center.is_valid()) {
+    return;
+  }
+  center().GetRef().ToDataItem(di.AddItem("AtomRef"));
   di.AddField("Colors", olxstr(',').Join(colors))
     .AddField("emboss", emboss).
     AddField("alpha", alpha);
-  ContentList cl = center.CAtom().GetParent()->GetContentList();
+  ContentList cl = center().CAtom().GetParent()->GetContentList();
   TDataItem &rdi = di.AddItem("Radii");
   for (size_t i = 0; i < cl.Count(); i++) {
     rdi.AddField(cl[i].element.symbol, cl[i].element.r_custom);
@@ -139,8 +150,8 @@ APointAnalyser *PointAnalyser::Load(const TDataItem &di) {
   TXApp &app = TXApp::GetInstance();
   TSAtom::Ref ref(di.GetItemByName("AtomRef"));
   TSAtom * sa = app.XFile().GetLattice().FindSAtom(ref);
-  if (sa == NULL) {
-    return NULL;
+  if (sa == 0) {
+    return 0;
   }
   PointAnalyser *rv = new PointAnalyser((TXAtom &)*sa);
   rv->emboss = di.GetFieldByName("emboss").ToBool();

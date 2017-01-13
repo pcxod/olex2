@@ -22,6 +22,7 @@ public:
   virtual uint32_t Analyse(vec3f &p) = 0;
   virtual void SetDryRun(bool v) = 0;
   virtual void GetReady() = 0;
+  virtual bool IsValid() const = 0;
   virtual olxstr GetIdString() const = 0;
   void ToDataItem(TDataItem &di) const;
   static APointAnalyser *FromDataItem(const TDataItem &di);
@@ -38,7 +39,7 @@ public:
 Guzei, I.A., Wendt, M.Dalton Trans., 2006, 3991–3999.
 */
 struct PointAnalyser : public APointAnalyser {
-  const TSAtom &center;
+  olx_perishable_ptr<TXAtom>  center;
   TArrayList<uint32_t> colors;
   bool emboss, dry_run, clone;
   uint8_t alpha;
@@ -64,6 +65,7 @@ public:
     return IdString();
   }
   void GetReady();
+  virtual bool IsValid() const { return center.is_valid(); }
   static olxstr IdString() {
     static olxstr name = "SolidAngles";
     return name;

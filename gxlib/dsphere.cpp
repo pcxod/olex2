@@ -111,20 +111,28 @@ TGlPrimitive &TDSphere::CreatePrimitive(TGPCollection &GPC,
 }
 //...........................................................................
 void TDSphere::Create(const olxstr& cName)  {
-  if (analyser == NULL) {
-    return;
-  }
   SetCreated(true);
   volatile TStopWatch sw(__FUNC__);
-  if (!cName.IsEmpty())
+  if (!cName.IsEmpty()) {
     SetCollectionName(cName);
+  }
   olxstr NewL;
   TGPCollection* GPC = Parent.FindCollectionX(GetCollectionName(), NewL);
-  if (GPC == NULL)
+  if (GPC == 0) {
     GPC = &Parent.NewCollection(NewL);
+  }
   GPC->AddObject(*this);
-  if (GPC->PrimitiveCount() != 0) return;
-
+  if (GPC->PrimitiveCount() != 0) {
+    return;
+  }
+  if (analyser == 0) {
+    return;
+  }
+  if (!analyser->IsValid()) {
+    delete analyser;
+    analyser = 0;
+    return;
+  }
   TGraphicsStyle& GS = GPC->GetStyle();
   GS.SetSaveable(false);
   analyser->SetDryRun(false);
@@ -135,18 +143,24 @@ void TDSphere::Create(const olxstr& cName)  {
     lowq = &CreatePrimitive(*GPC, "SphereLQ", 5, false);
   }
   else {
-    lowq = NULL;
+    lowq = 0;
   }
 }
 //...........................................................................
 bool TDSphere::Orient(TGlPrimitive& P) {
+  if (analyser == 0 || !analyser->IsValid()) {
+    SetVisible(false);
+    return true;
+  }
   if (TGlMouse::GetInstance().GetMouseData().Button != 0 || Parent.IsSelecting()) {
-    if (lowq != NULL && &P != lowq)
+    if (lowq != 0 && &P != lowq) {
       return true;
+    }
   }
   else {
-    if (&P != highq)
+    if (&P != highq) {
       return true;
+    }
   }
   olx_gl::orient(Basis.GetMDataT());
   olx_gl::scale(Basis.GetZoom());
@@ -175,27 +189,26 @@ bool TDSphere::OnDblClick(const IOlxObject *obj_, const TMouseData& md) {
 }
 //...........................................................................
 void TDSphere::ToDataItem(TDataItem &di) const {
-  if (analyser == NULL) {
+  if (analyser == 0 || !analyser->IsValid() || !IsVisible()) {
     return;
   }
   analyser->ToDataItem(di.AddItem("Analyser"));
   di.AddField("generation", Generation);
-//  .AddField("visible", IsVisible());
   Basis.ToDataItem(di.AddItem("Basis"));
 }
 //...........................................................................
-void TDSphere::FromDataItem(const TDataItem &di) {
+bool TDSphere::FromDataItem(const TDataItem &di) {
   TDataItem *an = di.FindItem("Analyser");
   if (an == 0) {
-    return;
+    return false;
   }
   Generation = di.GetFieldByName("generation").ToUInt();
-  //SetVisible(di.GetFieldByName("visible").ToBool());
   Basis.FromDataItem(di.GetItemByName("Basis"));
   APointAnalyser *pa = APointAnalyser::FromDataItem(*an);
-  if (pa == NULL) {
-    return;
+  if (pa == 0) {
+    return false;
   }
   SetAnalyser(pa);
+  return true;
 }
 //...........................................................................
