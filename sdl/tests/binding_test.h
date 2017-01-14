@@ -226,11 +226,25 @@ namespace test {
     i = _exp.build("t = test_struct(1)");
     _exp.build("t.set_val(5)");
     i = _exp.build("t.get_val() == 4");
+    if (i.cast<bool>() != false) {
+      throw TFunctionFailedException(__OlxSourceInfo, "value");
+    }
     i = _exp.build("t.get_val() == 5");
+    if (i.cast<bool>() != true) {
+      throw TFunctionFailedException(__OlxSourceInfo, "value");
+    }
     i = _exp.build("t.test(true,true)");
+    if (i.cast<bool>() != true) {
+      throw TFunctionFailedException(__OlxSourceInfo, "value");
+    }
     i = _exp.build("t.test(true,false)");
+    if (i.cast<bool>() != false) {
+      throw TFunctionFailedException(__OlxSourceInfo, "value");
+    }
     i = _exp.build("t.test(false,false)");
-    return;
+    if (i.cast<bool>() != false) {
+      throw TFunctionFailedException(__OlxSourceInfo, "value");
+    }
   }
   //...................................................................................................
   //...................................................................................................
