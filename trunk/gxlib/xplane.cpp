@@ -196,7 +196,7 @@ void TXPlane::ListPrimitives(TStrList &List) const {
 //..............................................................................
 const_strlist TXPlane::PovDeclare()  {
   TStrList out;
-  out.Add("#declare plane_centroid=object{ sphere {<0,0,0>, 0.25} }");
+  out.Add("#declare plane_centroid=object{ sphere {<0,0,0>, 0.1} }");
   out.Add("#declare plane_ring=union{");
   out.Add("  object{ torus {1, 0.075} }");
   out.Add("  transform{ rotate <90,0,0> }");
