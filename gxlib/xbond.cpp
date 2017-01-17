@@ -353,8 +353,6 @@ const vec3d &TXBond::GetToCrd() const {
 //..............................................................................
 const_strlist TXBond::ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const {
   TStrList out;
-  if (olx_abs(Params()[1]) + olx_abs(Params()[2]) < 1e-3)
-    return out;
   out.Add(" object { union {");
   const TGPCollection &gpc = GetPrimitives();
   for (size_t i=0; i < gpc.PrimitiveCount(); i++) {
@@ -365,18 +363,17 @@ const_strlist TXBond::ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const {
   }
   out.Add("  }");
   mat3d m;
-  olx_create_rotation_matrix(m, vec3d(Params()[1], Params()[2], 0).Normalise(),
-    cos(Params()[0]*M_PI/180));
+  if (olx_abs(Params()[0]) < 1e-3 ||
+    (olx_abs(Params()[1]) + olx_abs(Params()[2])) < 1e-3)
+  {
+    m.I();
+  }
+  else {
+    olx_create_rotation_matrix(m, vec3d(Params()[1], Params()[2], 0).Normalise(),
+      cos(Params()[0] * M_PI / 180));
+  }
   const mat3d &b = Parent.GetBasis().GetMatrix();
   m *= b;
-
-  vec3d x(1, 0, 0), v = x*m;
-  if (!v.IsParallel(x)) {
-    mat3d cm;
-    vec3d d = vec3d(GetToCrd() - GetFromCrd()).Normalise()*b;
-    olx_create_rotation_matrix(cm, -d, v.CAngle(d.Normal(x)));
-    m *= cm;
-  }
   m[0] *= Params()[4];
   m[1] *= Params()[4];
   m[2] *= Params()[3];
