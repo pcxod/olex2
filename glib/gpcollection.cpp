@@ -57,11 +57,17 @@ bool TGPCollection::ContainsPrimitive(TGlPrimitive& GlP)  {
 //..............................................................................
 void TGPCollection::SetStyle(TGraphicsStyle *S)  {
   Style = S;
-  if( S == NULL )  return;
-  // update materials of primitives & filling the style
-  for( size_t i=0; i < PrimitiveCount(); i++ )  {
-    TGlPrimitive& GlP = GetPrimitive(i);
-    if (S->IndexOfMaterial(GlP.GetName()) == InvalidIndex )
-      S->SetMaterial(GlP.GetName(), GlP.GetProperties());
+  if (S == 0) {
+    return;
   }
+  /* commented out on 2017-01-10 - this does not help with bonds etc when
+  applying styles
+  */
+  //// update materials of primitives & filling the style
+  //for (size_t i = 0; i < PrimitiveCount(); i++) {
+  //  TGlPrimitive& GlP = GetPrimitive(i);
+  //  if (S->IndexOfMaterial(GlP.GetName()) == InvalidIndex) {
+  //    S->SetMaterial(GlP.GetName(), GlP.GetProperties());
+  //  }
+  //}
 }

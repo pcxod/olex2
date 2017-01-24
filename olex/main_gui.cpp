@@ -392,7 +392,8 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
       }
       else {
         olxstr TmpStr = "mask ";
-        TmpStr << FObjectUnderMouse->GetPrimitives().GetName() << ' ' << Primitives->Mask;
+        TmpStr << FObjectUnderMouse->GetPrimitives().GetName() << ' ' <<
+          Primitives->Mask;
         processMacro(TmpStr);
       }
     }
@@ -409,8 +410,9 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
   }
   else if (event.GetId() == ID_GridMenuCreateBlob) {
     TXBlob* xb = FXApp->XGrid().CreateBlob(MousePositionX, MousePositionY);
-    if (xb != NULL)
+    if (xb != 0) {
       FXApp->AddObjectToCreate(xb);
+    }
     xb->Create();
   }
   else if (event.GetId() == ID_GraphicsCollectivise) {
@@ -453,6 +455,7 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
       }
     }
   }
+  FXApp->Draw();
 }
 //..............................................................................
 void TMainForm::ObjectUnderMouse(AGDrawObject *G)  {

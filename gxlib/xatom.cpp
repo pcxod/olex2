@@ -266,18 +266,24 @@ void TXAtom::Create(const olxstr& cName) {
       TGlPrimitive* SGlP = primitives.GetObject(i);
       TGlPrimitive& GlP = GPC->NewPrimitive(primitives.GetString(i),
         sgloCommandList);
-      if (i == defs.SphereIndex)
+      if (i == defs.SphereIndex) {
         GlP.SetOwnerId(xatom_SphereId);
-      else if (i == defs.SmallSphereIndex)
+      }
+      else if (i == defs.SmallSphereIndex) {
         GlP.SetOwnerId(xatom_SmallSphereId);
-      else if (i == defs.RimsIndex)
+      }
+      else if (i == defs.RimsIndex) {
         GlP.SetOwnerId(xatom_RimsId);
-      else if (i == defs.DisksIndex)
+      }
+      else if (i == defs.DisksIndex) {
         GlP.SetOwnerId(xatom_DisksId);
-      else if (i == defs.CrossIndex)
+      }
+      else if (i == defs.CrossIndex) {
         GlP.SetOwnerId(xatom_CrossId);
-      else if (i == defs.TetrahedronIndex)
+      }
+      else if (i == defs.TetrahedronIndex) {
         GlP.SetOwnerId(xatom_TetrahedronId);
+      }
       else if (i == defs.PolyhedronIndex) {
         GlP.SetOwnerId(xatom_PolyId);
         CreatePolyhedron(true);
@@ -299,21 +305,26 @@ void TXAtom::Create(const olxstr& cName) {
       }
       else {
         const size_t mi = GS.IndexOfMaterial(primitives.GetString(i));
-        if (mi != InvalidIndex)
+        if (mi != InvalidIndex) {
           GlP.SetProperties(GS.GetPrimitiveStyle(mi).GetProperties());
+        }
         else if (SGlP->Params.GetLast() == ddsDefSphere) {
           const size_t lmi = GS.IndexOfMaterial("Sphere");
-          if (lmi != InvalidIndex)
+          if (lmi != InvalidIndex) {
             RGlM = GS.GetPrimitiveStyle(lmi).GetProperties();
-          else
+          }
+          else {
             GetDefSphereMaterial(this->CAtom(), RGlM, defs);
+          }
         }
         else if (SGlP->Params.GetLast() == ddsDefRim) {
           const size_t lmi = GS.IndexOfMaterial("Rims");
-          if (lmi != InvalidIndex)
+          if (lmi != InvalidIndex) {
             RGlM = GS.GetPrimitiveStyle(lmi).GetProperties();
-          else
+          }
+          else {
             GetDefRimMaterial(this->CAtom(), RGlM);
+          }
         }
         GlP.SetProperties(GS.GetMaterial(primitives[i], RGlM));
       }

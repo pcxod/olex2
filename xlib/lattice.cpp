@@ -783,14 +783,43 @@ TSAtomPList TLattice::NewCentroid(const TSAtomPList& Atoms)  {
   ce /= Atoms.Count();
   cc /= Atoms.Count();
   try {
+    for (size_t i = 0; i < AsymmUnit->AtomCount(); i++) {
+      TCAtom &a = AsymmUnit->GetAtom(i);
+      if (a.IsDeleted()) {
+        continue;
+      }
+      if (cc.Equals(a.ccrd(), 1e-3)) {
+        return rv;
+      }
+    }
     TCAtom& CCent = AsymmUnit->NewCentroid(cc);
     GetUnitCell().AddEllipsoid();
     rv.SetCapacity(Matrices.Count());
-    for (size_t i=0; i < Matrices.Count(); i++ ) {
-      TSAtom& c = GenerateAtom(CCent, *Matrices[i]);
+    vec3d_list crds;
+    crds.AddCopy(cc);
+    CCent.SetFragmentId(Fragments.Count());
+    for (size_t i = 0; i < Matrices.Count(); i++) {
+      if (i > 0) {
+        cc = (*Matrices[i]) * CCent.ccrd();
+        bool found = false;
+        for (size_t j = 0; j < crds.Count(); j++) {
+          if (cc.Equals(crds[j], 1e-3)) {
+            found = true;
+            break;
+          }
+        }
+        if (found) {
+          continue;
+        }
+        crds.AddCopy(cc);
+      }
+      TNetwork *net = new TNetwork(this, Network);
+      Fragments.Add(net);
+      TSAtom& c = GenerateAtom(CCent, *Matrices[i], net);
       CCent.ccrdEsd() = ce;
       GetUnitCell().AddEllipsoid();
       rv << c;
+      net->AddNode(c);
     }
     return rv;
   }

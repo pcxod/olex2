@@ -801,22 +801,26 @@ void GXLibMacros::macADS(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
   short ads = -1;
-  if( Cmds[0].Equalsi("elp") )
+  if (Cmds[0].Equalsi("elp")) {
     ads = adsEllipsoid;
-  else if( Cmds[0].Equalsi("sph") )
+  }
+  else if (Cmds[0].Equalsi("sph")) {
     ads = adsSphere;
-  else if( Cmds[0].Equalsi("ort") )
+  }
+  else if (Cmds[0].Equalsi("ort")) {
     ads = adsOrtep;
-  else if( Cmds[0].Equalsi("std") )
+  }
+  else if (Cmds[0].Equalsi("std")) {
     ads = adsStandalone;
-  if( ads == -1 )  {
+  }
+  if (ads == -1) {
     Error.ProcessingError(__OlxSrcInfo,
       "unknown atom type (elp/sph/ort/std) supported only");
     return;
   }
   Cmds.Delete(0);
   TXAtomPList Atoms = app.FindXAtoms(Cmds, false, false);
-  app.SetAtomDrawingStyle(ads, Atoms.IsEmpty() ? NULL : &Atoms);
+  app.SetAtomDrawingStyle(ads, Atoms.IsEmpty() ? 0 : &Atoms);
 }
 //.............................................................................
 void GXLibMacros::macAZoom(TStrObjList &Cmds, const TParamList &Options,
@@ -2816,37 +2820,47 @@ void GXLibMacros::macCollectivise(TStrObjList &Cmds, const TParamList &Options,
     app.Collectivise(atoms);
     app.Collectivise(bonds);
   }
-  else
+  else {
     app.Collectivise(app.FindXAtoms(Cmds, false, false).GetObject());
+  }
 }
 //.............................................................................
 void GXLibMacros::macLstGO(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &E)
 {
   TStrList output;
-  output.SetCapacity( app.GetRenderer().CollectionCount() );
+  output.SetCapacity(app.GetRenderer().CollectionCount());
   for (size_t i=0; i < app.GetRenderer().CollectionCount(); i++) {
     TGPCollection& gpc = app.GetRenderer().GetCollection(i);
     output.Add( gpc.GetName() ) << '[';
     for (size_t j=0; j < gpc.PrimitiveCount(); j++) {
       output.GetLastString() << gpc.GetPrimitive(j).GetName();
-      if( (j+1) < gpc.PrimitiveCount() )
+      if ((j + 1) < gpc.PrimitiveCount()) {
         output.GetLastString() << ';';
+      }
     }
     output.GetLastString() << "]->" << gpc.ObjectCount();
   }
-  if (!TXAtom::NamesRegistry().IsEmpty()) {
-    output.Add("Named collections, atoms:");
-    for (size_t i = 0; i < TXAtom::NamesRegistry().Count(); i++) {
-      output.Add(TXAtom::NamesRegistry().GetKey(i)) << ": " <<
-        TXAtom::NamesRegistry().GetValue(i);
-    }
-  }
-  if (!TXBond::NamesRegistry().IsEmpty()) {
-    output.Add("Named collections, bonds:");
-    for (size_t i = 0; i < TXBond::NamesRegistry().Count(); i++) {
-      output.Add(TXBond::NamesRegistry().GetKey(i)) << ": " <<
-        TXBond::NamesRegistry().GetValue(i);
+  olxstr_dict<const olxstr_dict<olxstr> *> regs;
+  regs.Add("atoms", &TXAtom::NamesRegistry());
+  regs.Add("bonds", &TXBond::NamesRegistry());
+  for (int ri = 0; ri < regs.Count(); ri++) {
+    const olxstr_dict<olxstr> &reg = *regs.GetValue(ri);
+    if (!reg.IsEmpty()) {
+      output.Add("Named collections, ") << regs.GetKey(ri);
+      olxstr_dict<int> unq;
+      for (size_t i = 0; i < reg.Count(); i++) {
+        size_t idx = unq.IndexOf(reg.GetValue(i));
+        if (idx == InvalidIndex) {
+          unq.Add(reg.GetValue(i), 1);
+        }
+        else {
+          unq.GetValue(idx)++;
+        }
+      }
+      for (size_t i = 0; i < unq.Count(); i++) {
+        output.Add(unq.GetKey(i)) << ": " << unq.GetValue(i);
+      }
     }
   }
   if (!TXPlane::NamesRegistry().IsEmpty()) {
@@ -4273,32 +4287,51 @@ void GXLibMacros::macSetMaterial(TStrObjList &Cmds, const TParamList &Options,
       bool found = false;
       TGraphicsStyle* gs = app.GetRenderer().GetStyles().FindStyle(col_name);
       if (gs != NULL) {
-        mat = gs->FindMaterial(prm_name);
-        if (mat != NULL)  {
-          *mat = glm;
+        if (prm_name == '*') {
+          for (size_t pi = 0; pi < gs->PrimitiveStyleCount(); pi++) {
+            gs->GetPrimitiveStyle(pi).SetProperties(glm);
+          }
           found = true;
+        }
+        else {
+          mat = gs->FindMaterial(prm_name);
+          if (mat != 0) {
+            *mat = glm;
+            found = true;
+          }
         }
       }
       if (!found) {
         E.ProcessingError(__OlxSrcInfo, "Undefined style ").quote() <<
           Cmds[0];
       }
+      return;
     }
   }
   for (size_t ci = 0; ci < colls.Count(); ci++) {
     bool found = false;
     if (!prm_name.IsEmpty()) {
-      TGlPrimitive* glp = colls[ci]->FindPrimitiveByName(prm_name);
-      if (glp != NULL)  {
-        glp->SetProperties(glm);
-        colls[ci]->GetStyle().SetMaterial(prm_name, glm);
+      if (prm_name == '*') {
+        for (int pi = 0; pi < colls[ci]->PrimitiveCount(); pi++) {
+          TGlPrimitive &glp = colls[ci]->GetPrimitive(pi);
+          glp.SetProperties(glm);
+          colls[ci]->GetStyle().SetMaterial(glp.GetName(), glm);
+        }
         found = true;
+      }
+      else {
+        TGlPrimitive* glp = colls[ci]->FindPrimitiveByName(prm_name);
+        if (glp != 0) {
+          glp->SetProperties(glm);
+          colls[ci]->GetStyle().SetMaterial(prm_name, glm);
+          found = true;
+        }
       }
     }
     else {
       for (size_t i = 0; i < colls[ci]->ObjectCount(); i++)  {
         TGlGroup *glg = dynamic_cast<TGlGroup*>(&colls[ci]->GetObject(i));
-        if (glg != NULL) {
+        if (glg != 0) {
           glg->SetGlM(glm);
           found = true;
         }
