@@ -159,13 +159,16 @@ TXFile::TXFile(ASObjectProvider& Objects) :
   FSG = NULL;
 }
 //..............................................................................
-TXFile::~TXFile()  {
+TXFile::~TXFile() {
 // finding uniq objects and deleting them
-  for( size_t i=0; i < FileFormats.Count(); i++ )
+  for (size_t i = 0; i < FileFormats.Count(); i++) {
     FileFormats.GetObject(i)->SetTag(i);
-  for( size_t i=0; i < FileFormats.Count(); i++ )
-    if( (size_t)FileFormats.GetObject(i)->GetTag() == i )
+  }
+  for (size_t i = 0; i < FileFormats.Count(); i++) {
+    if ((size_t)FileFormats.GetObject(i)->GetTag() == i) {
       delete FileFormats.GetObject(i);
+    }
+  }
 }
 //..............................................................................
 void TXFile::TakeOver(TXFile &f) {
@@ -182,20 +185,22 @@ void TXFile::TakeOver(TXFile &f) {
 }
 //..............................................................................
 void TXFile::RegisterFileFormat(TBasicCFile *F, const olxstr &Ext)  {
-  if( FileFormats.IndexOf(Ext) != InvalidIndex )
+  if (FileFormats.IndexOf(Ext) != InvalidIndex) {
     throw TInvalidArgumentException(__OlxSourceInfo, "Ext");
+  }
   FileFormats.Add(Ext.ToLowerCase(), F);
 }
 //..............................................................................
 TBasicCFile *TXFile::FindFormat(const olxstr &Ext)  {
   const size_t i = FileFormats.IndexOf(Ext.ToLowerCase());
-  if( i == InvalidIndex )
+  if (i == InvalidIndex) {
     throw TInvalidArgumentException(__OlxSourceInfo, "unknown file format");
+  }
   return FileFormats.GetObject(i);
 }
 //..............................................................................
 void TXFile::LastLoaderChanged() {
-  if( FLastLoader == NULL )  {
+  if (FLastLoader == NULL) {
     GetRM().Clear(rm_clear_ALL);
     GetLattice().Clear(true);
     return;
@@ -217,6 +222,7 @@ bool TXFile::Dispatch(int MsgId, short MsgSubId, const IOlxObject* Sender,
     if (Data == NULL || !EsdlInstanceOf(*Data, TSpaceGroup))
       throw TInvalidArgumentException(__OlxSourceInfo, "space group");
     FSG = const_cast<TSpaceGroup*>(dynamic_cast<const TSpaceGroup*>(Data));
+    GetRM().ResetHklStats();
   }
   else if (MsgId == XFILE_EVT_UNIQ && MsgSubId == msiEnter) {
     //RefMod.Validate();
@@ -227,8 +233,9 @@ bool TXFile::Dispatch(int MsgId, short MsgSubId, const IOlxObject* Sender,
     //  FLastLoader->GetAsymmUnit().PackAtoms();
     //}
   }
-  else
+  else {
     return false;
+  }
   return true;
 }
 //..............................................................................
@@ -259,7 +266,11 @@ void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
     }
     OnFileLoad.Exit(this);
   }
-  FSG = &TSymmLib::GetInstance().FindSG(Loader->GetAsymmUnit());
+  TSpaceGroup &sg = TSymmLib::GetInstance().FindSG(Loader->GetAsymmUnit());;
+  if (FSG != &sg) {
+    GetRM().ResetHklStats();
+    FSG = &sg;
+  }
   if (replicated) {
     for (size_t i = 0; i < FileFormats.Count(); i++) {
       if (FileFormats.GetObject(i) == FLastLoader) {
@@ -349,7 +360,6 @@ void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
     }
 
   }
-
   TXApp::GetInstance().SetLastSGResult_(EmptyString());
 }
 //..............................................................................
@@ -360,16 +370,17 @@ void TXFile::LoadFromStrings(const TStrList& lines, const olxstr &nameToken) {
   const olxstr ext(TEFile::ExtractFileExt(file_n.file_name));
   TBasicCFile* Loader = FindFormat(ext);
   bool replicated = false;
-  if( FLastLoader == Loader )  {
+  if (FLastLoader == Loader) {
     Loader = dynamic_cast<TBasicCFile *>(Loader->Replicate());
     replicated = true;
   }
-  try  {
+  try {
     Loader->LoadStrings(lines, nameToken);
   }
-  catch( const TExceptionBase& exc )  {
-    if( replicated )
+  catch (const TExceptionBase& exc) {
+    if (replicated) {
       delete Loader;
+    }
     throw TFunctionFailedException(__OlxSourceInfo, exc);
   }
   PostLoad(EmptyString(), Loader, replicated);
@@ -382,16 +393,17 @@ void TXFile::LoadFromStream(IInputStream& in, const olxstr &nameToken) {
   const olxstr ext(TEFile::ExtractFileExt(file_n.file_name));
   TBasicCFile* Loader = FindFormat(ext);
   bool replicated = false;
-  if( FLastLoader == Loader )  {
+  if (FLastLoader == Loader) {
     Loader = dynamic_cast<TBasicCFile *>(Loader->Replicate());
     replicated = true;
   }
-  try  {
+  try {
     Loader->LoadFromStream(in, nameToken);
   }
-  catch( const TExceptionBase& exc )  {
-    if( replicated )
+  catch (const TExceptionBase& exc) {
+    if (replicated) {
       delete Loader;
+    }
     throw TFunctionFailedException(__OlxSourceInfo, exc);
   }
   PostLoad(EmptyString(), Loader, replicated);
@@ -418,8 +430,9 @@ void TXFile::LoadFromFile(const olxstr & _fn) {
     }
   }
   catch (const TExceptionBase& exc) {
-    if (replicated)
+    if (replicated) {
       delete Loader;
+    }
     throw TFunctionFailedException(__OlxSourceInfo, exc);
   }
   PostLoad(_fn, Loader, replicated);
@@ -653,7 +666,9 @@ void TXFile::UpdateAtomIds() {
   index_t idx = 0;
   for (size_t i = 0; i < au.AtomCount(); i++) {
     TCAtom &a = au.GetAtom(i);
-    if (a.GetType() == iHydrogenZ) continue;
+    if (a.GetType() == iHydrogenZ) {
+      continue;
+    }
     a.SetTag(idx++);
   }
   GetRM().AfterAUSort_();
@@ -712,8 +727,9 @@ void TXFile::SaveToFile(const olxstr& FN, int flags) {
           "could not adopt specified file format");
       }
     }
-    else
+    else {
       UpdateAsymmUnit();
+    }
     //if (Sort)
     //  Loader->GetAsymmUnit().Sort();
   }
@@ -741,8 +757,9 @@ void TXFile::SaveToFile(const olxstr& FN, int flags) {
     Cause = exc.Replicate();
   }
   OnFileSave.Exit(this);
-  if (Cause != NULL)
+  if (Cause != 0) {
     throw TFunctionFailedException(__OlxSourceInfo, Cause);
+  }
 }
 //..............................................................................
 void TXFile::Close() {
@@ -764,7 +781,7 @@ IOlxObject* TXFile::Replicate() const {
   return xf;
 }
 //..............................................................................
-void TXFile::EndUpdate()  {
+void TXFile::EndUpdate() {
   OnFileLoad.Enter(this, &GetFileName());
   OnFileLoad.Execute(this);
   // we keep the asymmunit but clear the unitcell
@@ -1016,36 +1033,38 @@ void TXFile::LibCurrentData(const TStrObjList& Params, TMacroData& E)  {
   }
 }
 //..............................................................................
-void TXFile::LibDataName(const TStrObjList& Params, TMacroData& E)  {
+void TXFile::LibDataName(const TStrObjList& Params, TMacroData& E) {
   int i = Params[0].ToInt();
   TCif &cif = *(TCif*)FLastLoader;
-  if( i < 0 )
+  if (i < 0) {
     E.SetRetVal(cif.GetDataName());
-  else  {
-    if( (size_t)i >= cif.BlockCount() )
+  }
+  else {
+    if ((size_t)i >= cif.BlockCount()) {
       throw TIndexOutOfRangeException(__OlxSourceInfo, i, 0, cif.BlockCount());
+    }
     E.SetRetVal(cif.GetBlock(i).GetName());
   }
 }
 //..............................................................................
-void TXFile::LibGetMu(const TStrObjList& Params, TMacroData& E)  {
+void TXFile::LibGetMu(const TStrObjList& Params, TMacroData& E) {
   cm_Absorption_Coefficient_Reg ac;
   ContentList cont = GetAsymmUnit().GetContentList();
-  double mu=0;
-  for( size_t i=0; i < cont.Count(); i++ )  {
+  double mu = 0;
+  for (size_t i = 0; i < cont.Count(); i++) {
     XScatterer *xs = GetRM().FindSfacData(cont[i].element.symbol);
     if (xs != NULL && xs->IsSet(XScatterer::setMu)) {
-      mu += cont[i].count*xs->GetMu()/10;
+      mu += cont[i].count*xs->GetMu() / 10;
     }
     else {
       double v = ac.CalcMuOverRhoForE(
         GetRM().expl.GetRadiationEnergy(), *ac.locate(cont[i].element.symbol));
-      mu += (cont[i].count*cont[i].element.GetMr())*v/6.022142;
+      mu += (cont[i].count*cont[i].element.GetMr())*v / 6.022142;
     }
   }
-  mu *= GetAsymmUnit().GetZ()/GetAsymmUnit().CalcCellVolume()/
+  mu *= GetAsymmUnit().GetZ() / GetAsymmUnit().CalcCellVolume() /
     GetAsymmUnit().GetZPrime();
-  E.SetRetVal(olxstr::FormatFloat(3,mu));
+  E.SetRetVal(olxstr::FormatFloat(3, mu));
 }
 //..............................................................................
 void TXFile::LibRefinementInfo(const TStrObjList& Params, TMacroData& E) {
@@ -1063,7 +1082,9 @@ void TXFile::LibRefinementInfo(const TStrObjList& Params, TMacroData& E) {
     TStrList toks(Params[0].DeleteCharSet("\t \r\n"), ';');
     for (size_t i = 0; i < toks.Count(); i++) {
       size_t ei = toks[i].IndexOf('=');
-      if (ei == InvalidIndex)  continue;
+      if (ei == InvalidIndex) {
+        continue;
+      }
       ins.RefinementInfo(toks[i].SubStringTo(ei),
         toks[i].SubStringFrom(ei + 1));
     }

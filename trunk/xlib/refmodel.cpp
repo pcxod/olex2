@@ -92,6 +92,7 @@ void RefinementModel::SetDefaults() {
   EXTI_set = false;
   EXTI = 0;
   TWIN_n = def_TWIN_n;
+  EXTI_Var = 0;
   TWIN_mat.I() *= -1;
 }
 //.............................................................................
@@ -132,10 +133,13 @@ void RefinementModel::Clear(uint32_t clear_mask) {
   HKLSource.SetLength(0);
   ModelSource.SetLength(0);
   Omits.Clear();
+  if (EXTI_Var != 0) {
+    Vars.ReleaseRef(*this, 0);
+  }
   BASF.Clear();
   for (size_t i = 0; i < BASF_Vars.Count(); i++) {
-    if (BASF_Vars[i] != NULL) {
-      delete Vars.ReleaseRef(*this, (short)i);
+    if (BASF_Vars[i] != 0) {
+      delete Vars.ReleaseRef(*this, (short)i+1);
     }
   }
   BASF_Vars.Clear();
@@ -149,21 +153,25 @@ void RefinementModel::Clear(uint32_t clear_mask) {
   Omitted.Clear();
   selectedTableRows.Clear();
   CVars.Clear();
-  if( (clear_mask & rm_clear_AFIX) != 0 )
+  if ((clear_mask & rm_clear_AFIX) != 0) {
     AfixGroups.Clear();
-  if( (clear_mask & rm_clear_VARS) != 0 )
+  }
+  if ((clear_mask & rm_clear_VARS) != 0) {
     Vars.ClearAll();
-  if ((clear_mask & rm_clear_BadRefs) != 0)
+  }
+  if ((clear_mask & rm_clear_BadRefs) != 0) {
     BadReflections.Clear();
+  }
 }
 //.............................................................................
 void RefinementModel::ClearVarRefs() {
-  for( size_t i=0; i < RefContainers.Count(); i++ )  {
+  for (size_t i = 0; i < RefContainers.Count(); i++) {
     IXVarReferencerContainer* rc = RefContainers.GetValue(i);
-    for( size_t j=0; j < rc->ReferencerCount(); j++ )  {
+    for (size_t j = 0; j < rc->ReferencerCount(); j++) {
       IXVarReferencer& vr = rc->GetReferencer(j);
-      for( size_t k=0; k < vr.VarCount(); k++ )
+      for (size_t k = 0; k < vr.VarCount(); k++) {
         vr.SetVarRef(k, NULL);
+      }
     }
   }
 }
@@ -254,32 +262,37 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm,
   DEFS_set = rm.DEFS_set;
   EXTI_set = rm.EXTI_set;
   EXTI = rm.EXTI;
-  for (size_t i=0; i < BASF.Count(); i++)
-    BASF_Vars.Add(NULL);
+  EXTI_Var = 0;
+  for (size_t i = 0; i < BASF.Count(); i++) {
+    BASF_Vars.Add(0);
+  }
   ModelSource = rm.ModelSource;
   HKLSource = rm.HKLSource;
   RefinementMethod = rm.RefinementMethod;
   SolutionMethod = rm.SolutionMethod;
 
-  for( size_t i=0; i < rm.Frags.Count(); i++ )
+  for (size_t i = 0; i < rm.Frags.Count(); i++) {
     Frags(rm.Frags.GetKey(i), new Fragment(*rm.Frags.GetValue(i)));
+  }
 
-  if( AssignAUnit )
+  if (AssignAUnit) {
     aunit.Assign(rm.aunit);
+  }
 
   /* need to copy the ID's before any restraints or info tabs use them or all
   gets broken... !!!  */
-  for( size_t i=0; i < rm.UsedSymm.Count(); i++ )
+  for (size_t i = 0; i < rm.UsedSymm.Count(); i++) {
     AddUsedSymm(rm.UsedSymm.GetValue(i).symop, rm.UsedSymm.GetKey(i));
+  }
 
-  if( AssignAUnit || aunit.AtomCount() >= rm.aunit.AtomCount() )  {
-    for( size_t i=0; i < rcList1.Count(); i++ )
+  if (AssignAUnit || aunit.AtomCount() >= rm.aunit.AtomCount()) {
+    for (size_t i = 0; i < rcList1.Count(); i++)
       rcList1[i]->Assign(*rm.rcList1[i]);
 
     rSAME.Assign(rm.rSAME);
     ExyzGroups.Assign(rm.ExyzGroups);
     AfixGroups.Assign(rm.AfixGroups);
-    for( size_t i=0; i < rcList.Count(); i++ )
+    for (size_t i = 0; i < rcList.Count(); i++)
       rcList[i]->Assign(*this, *rm.rcList[i]);
     // restraints have to be copied first, as some may refer to vars
     Vars.Assign(rm.Vars);
@@ -287,18 +300,21 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm,
     Conn.Assign(rm.Conn);
     aunit._UpdateConnInfo();
 
-    for( size_t i=0; i < rm.InfoTables.Count(); i++ )  {
-      if( rm.InfoTables[i].IsValid() )
+    for (size_t i = 0; i < rm.InfoTables.Count(); i++) {
+      if (rm.InfoTables[i].IsValid()) {
         InfoTables.Add(new InfoTab(*this, rm.InfoTables[i]));
+      }
     }
   }
-  for( size_t i=0; i < rm.SfacData.Count(); i++ )
+  for (size_t i = 0; i < rm.SfacData.Count(); i++) {
     SfacData(rm.SfacData.GetKey(i), new XScatterer(*rm.SfacData.GetValue(i)));
+  }
   UserContent = rm.UserContent;
   // check if all EQIV are used
   for( size_t i=0; i < UsedSymm.Count(); i++ )  {
-    if( UsedSymm.GetValue(i).ref_cnt == 0 )
+    if (UsedSymm.GetValue(i).ref_cnt == 0) {
       UsedSymm.Delete(i--);
+    }
   }
   Omitted.Assign(rm.Omitted);
   selectedTableRows.Assign(rm.selectedTableRows, aunit);
@@ -1479,8 +1495,9 @@ void RefinementModel::FromDataItem(TDataItem& item) {
   RefinementMethod = item.GetFieldByName("RefMeth");
   SolutionMethod = item.GetFieldByName("SolMeth");
   PersUtil::ComplexListFromStr(item.GetFieldByName("BatchScales"), BASF);
-  for (size_t i = 0; i < BASF.Count(); i++)
-    BASF_Vars.Add(NULL);
+  for (size_t i = 0; i < BASF.Count(); i++) {
+    BASF_Vars.Add(0);
+  }
   PersUtil::NumberListFromStr(item.GetFieldByName("RefInArg"), LS);
 
   TDataItem& eqiv = item.GetItemByName("EQIV");
