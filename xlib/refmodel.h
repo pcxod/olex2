@@ -92,6 +92,7 @@ protected:
   vec3i_list Omits;
   TDoubleList DEFS;
   TArrayList<TEValueD> BASF;
+  XVarReference * EXTI_Var;
   TPtrList<XVarReference> BASF_Vars;
   olxstr VarRefrencerId;
   olxstr_dict<IXVarReferencerContainer*, false> RefContainers;
@@ -415,17 +416,17 @@ Friedel opposites of components 1 ... m
   bool HasTWIN() const {  return TWIN_set;  }
   void RemoveTWIN()  {  TWIN_set = false;  }
 
-  void AddBASF(double val)  {
+  void AddBASF(double val) {
     BASF.Add(TEValueD(val));
-    BASF_Vars.Add(NULL);
+    BASF_Vars.Add(0);
   }
-  template <class list> void SetBASF(const list& bs)  {
+  template <class list> void SetBASF(const list& bs) {
     size_t cnt = BASF.Count();
-    BASF.SetCount(cnt+bs.Count());
+    BASF.SetCount(cnt + bs.Count());
     BASF_Vars.SetCount(BASF.Count());
-    for (size_t i=0; i < bs.Count(); i++) {
-      BASF_Vars[cnt+i] = NULL;
-      Vars.SetParam(*this, (short)(cnt+i), bs[i].ToDouble());
+    for (size_t i = 0; i < bs.Count(); i++) {
+      BASF_Vars[cnt + i] = 0;
+      Vars.SetParam(*this, (short)(cnt + i + 1), bs[i].ToDouble());
     }
   }
   void ClearBASF() {
@@ -694,6 +695,7 @@ Friedel opposites of components 1 ... m
   void SetReflections(const TRefList &refs) const;
   // this will be only valid if any list of the reflections was called
   const HklStat& GetReflectionStat() const {  return _HklStat;  }
+  void ResetHklStats() { _HklStat.SetDefaults();  }
   // filters the reflections according to the parameters
   HklStat& FilterHkl(TRefList& out, HklStat& stats);
   TRefPList::const_list_type GetNonoverlappingRefs(const TRefList& refs);
@@ -767,24 +769,38 @@ Friedel opposites of components 1 ... m
     }
   }
 // IXVarReferencer implementation
-  virtual size_t VarCount() const {  return BASF.Count();  }
+  virtual size_t VarCount() const {  return BASF.Count() + 1;  }
   virtual olxstr GetVarName(size_t i) const {
-    if (i >= BASF_Vars.Count())
+    if (i = 0) {
+      return "EXTI";
+    }
+    if (i > BASF_Vars.Count()) {
       throw TInvalidArgumentException(__OlxSourceInfo, "var index");
-    return olxstr("k") << (i+1);
+    }
+    return olxstr("k") << i;
   }
   virtual XVarReference* GetVarRef(size_t i) const {
-    if (i >= BASF_Vars.Count())
+    if (i == 0) {
+      return EXTI_Var;
+    }
+    if (i > BASF_Vars.Count()) {
       throw TInvalidArgumentException(__OlxSourceInfo, "var index");
-    return BASF_Vars[i];
+    }
+    return BASF_Vars[i-1];
   }
   virtual void SetVarRef(size_t i, XVarReference* var_ref)  {
-    if (i >= BASF_Vars.Count())
-      throw TInvalidArgumentException(__OlxSourceInfo, "var index");
-    if (var_ref != NULL) {
-      BASF[i].E() = var_ref->coefficient*var_ref->Parent.GetEsd();
+    if (i == 0) {
+      EXTI_Var = var_ref;
     }
-    BASF_Vars[i] = var_ref;
+    else {
+      if (i > BASF_Vars.Count()) {
+        throw TInvalidArgumentException(__OlxSourceInfo, "var index");
+      }
+      if (var_ref != NULL) {
+        BASF[i-1].E() = var_ref->coefficient*var_ref->Parent.GetEsd();
+      }
+      BASF_Vars[i-1] = var_ref;
+    }
   }
   virtual const IXVarReferencerContainer& GetParentContainer() const {
     return *this;

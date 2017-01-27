@@ -131,21 +131,23 @@ public:
   // validates that the equation is valid, if not - releases the variables
   bool Validate() {
     size_t vc = 0;
-    for( size_t i=0; i < Vars.Count(); i++ )  {
-      if( Vars[i]->IsUsed() )
+    for (size_t i = 0; i < Vars.Count(); i++) {
+      if (Vars[i]->IsUsed()) {
         vc++;
-      else  {
+      }
+      else {
         Vars[i]->_RemLeq(*this);
         Vars.Delete(i);
         i--;
       }
     }
-    if( vc < 2 )  {
-      for( size_t i=0; i < Vars.Count(); i++ )
+    if (vc < 1) {
+      for (size_t i = 0; i < Vars.Count(); i++) {
         Vars[i]->_RemLeq(*this);
+      }
       Vars.Clear();
     }
-    return vc >= 2;
+    return vc >= 1;
   }
   DefPropP(double, Value)
   DefPropP(double, Sigma)
@@ -263,17 +265,17 @@ public:
     return rv;
   }
   template <class list> void AddSUMP(const list& sump) {
-    if( sump.Count() < 6 ) {
+    if (sump.Count() < 4) {
       throw TInvalidArgumentException(__OlxSourceInfo,
-        "at least six parameters expected for SUMP");
+        "at least 4 parameters expected for SUMP");
     }
-    if( (sump.Count()%2) != 0 ) {
+    if ((sump.Count() % 2) != 0) {
       throw TInvalidArgumentException(__OlxSourceInfo,
         "even number of arguments is expected for SUMP");
     }
     XLEQ& le = NewEquation(sump[0].ToDouble(), sump[1].ToDouble());
-    for( size_t i=2; i < sump.Count(); i+=2 )  {
-      XVar& v = GetReferencedVar(sump[i+1].ToInt());
+    for (size_t i = 2; i < sump.Count(); i += 2) {
+      XVar& v = GetReferencedVar(sump[i + 1].ToInt());
       le.AddMember(v, sump[i].ToDouble());
     }
   }
