@@ -106,9 +106,11 @@ protected:
 struct ort_line : public a_ort_object  {
   vec3f from, to;
   uint32_t color;
+  float width;
   ort_line(const OrtDraw& parent, const vec3f& _from, const vec3f _to,
-    uint32_t _color)
-    :  a_ort_object(parent), from(_from), to(_to), color(_color)
+    uint32_t _color = 0, float width = 0.1f)
+    :  a_ort_object(parent), from(_from), to(_to),
+    color(_color), width(width)
   {}
   virtual void render(PSWriter&) const;
   //virtual float get_z() const {  return (from[2]+to[2])/2;  }
