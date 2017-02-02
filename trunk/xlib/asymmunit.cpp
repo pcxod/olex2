@@ -265,7 +265,7 @@ void TAsymmUnit::InitData() {
   }
 }
 //..............................................................................
-TResidue& TAsymmUnit::NewResidue(const olxstr& RClass, int number, int alias)  {
+TResidue& TAsymmUnit::NewResidue(const olxstr& RClass, int number, int alias) {
   if (number == 0) {
     if (!RClass.IsEmpty()) {
       throw TInvalidArgumentException(__OlxSourceInfo,
@@ -273,7 +273,7 @@ TResidue& TAsymmUnit::NewResidue(const olxstr& RClass, int number, int alias)  {
     }
     return MainResidue;
   }
-  if (number == -1 && alias == -1) {
+  if (number == TResidue::NoResidue && alias == TResidue::NoResidue) {
     for (size_t i = 0; i < Residues.Count(); i++) {
       if (Residues[i].GetNumber() > number) {
         number = Residues[i].GetNumber();
@@ -282,7 +282,7 @@ TResidue& TAsymmUnit::NewResidue(const olxstr& RClass, int number, int alias)  {
         number = Residues[i].GetAlias();
       }
     }
-    if (number == -1) {
+    if (number == TResidue::NoResidue) {
       number = 0;
     }
     alias = ++number;
@@ -299,14 +299,14 @@ TResidue& TAsymmUnit::NewResidue(const olxstr& RClass, int number, int alias)  {
       else {
         throw TInvalidArgumentException(__OlxSourceInfo,
           olx_print("Residue number %d is already assigned class %w", number,
-          &er->GetClassName())
-          );
+            &er->GetClassName())
+        );
       }
     }
     return *er;
   }
   TResidue &r = Residues.Add(
-    new TResidue(*this, (uint32_t)Residues.Count()+1, RClass, number, alias)
+    new TResidue(*this, (uint32_t)Residues.Count() + 1, RClass, number, alias)
   );
   ResidueRegistry(number, &r);
   if (alias != number) {
@@ -315,27 +315,32 @@ TResidue& TAsymmUnit::NewResidue(const olxstr& RClass, int number, int alias)  {
   return r;
 }
 //..............................................................................
-ConstPtrList<TResidue> TAsymmUnit::FindResidues(const olxstr& resi) const{
+ConstPtrList<TResidue> TAsymmUnit::FindResidues(const olxstr& resi) const {
   TPtrList<TResidue> list;
-  if (resi.IsEmpty())
+  if (resi.IsEmpty()) {
     list.Add(&MainResidue);
+  }
   else if (resi.IsNumber()) {
     int n = resi.ToInt();
     TResidue *r = ResidueRegistry.Find(n, NULL);
-    if (r != NULL)
+    if (r != 0) {
       list.Add(r);
+    }
   }
-  else  {
-    if( resi == '*' )  {  //special case
-      list.SetCapacity(Residues.Count()+1);
+  else {
+    if (resi == '*') {  //special case
+      list.SetCapacity(Residues.Count() + 1);
       list.Add(MainResidue);
-      for (size_t i=0; i < Residues.Count(); i++)
+      for (size_t i = 0; i < Residues.Count(); i++) {
         list.Add(Residues[i]);
+      }
     }
     else {
-      for (size_t i=0; i < Residues.Count(); i++)
-        if (Residues[i].GetClassName().Equalsi(resi))
+      for (size_t i = 0; i < Residues.Count(); i++) {
+        if (Residues[i].GetClassName().Equalsi(resi)) {
           list.Add(Residues[i]);
+        }
+      }
     }
   }
   return list;
