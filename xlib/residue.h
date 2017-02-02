@@ -96,6 +96,10 @@ public:
   TResidue* Next() const {  return Parent.NextResidue(*this);  }
   TResidue* Prev() const {  return Parent.PrevResidue(*this);  }
   friend class TAsymmUnit;
+
+  enum {
+    NoResidue = -100000
+  };
 };
 
 typedef TPtrList<TResidue> ResiPList;

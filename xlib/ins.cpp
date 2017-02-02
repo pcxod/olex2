@@ -66,11 +66,11 @@ void TIns::LoadFromFile(const olxstr& fileName)  {
   TBasicCFile::LoadFromFile(fileName);
   if (Lst.IsLoaded()) {
     try {
-      if (GetRM().HasEXTI()) {
+      if (GetRM().Vars.HasEXTI()) {
         olxstr str_exti = Lst.params.Find("exti", EmptyString());
         if (!str_exti.IsEmpty()) {
           TEValueD exti = str_exti;
-          GetRM().SetEXTI(exti.GetV(), exti.GetE());
+          GetRM().Vars.SetEXTI(exti.GetV(), exti.GetE());
         }
       }
       olxstr val_n = "basf_", val;
@@ -78,16 +78,21 @@ void TIns::LoadFromFile(const olxstr& fileName)  {
       while (!(val = Lst.params.Find(olxstr(val_n) << cnt, EmptyString()))
         .IsEmpty())
       {
-        if (GetRM().GetBASF().Count() >= cnt) {
+        if (GetRM().Vars.GetBASFCount() >= cnt) {
           TEValueD dv = val;
-          if (olx_abs(GetRM().GetBASF()[cnt - 1].GetV() - dv.GetV()) < dv.GetE())
-            GetRM().GetBASF()[cnt - 1] = dv;
-          else
+          if (olx_abs(GetRM().Vars.GetBASF(cnt - 1).GetValue() -
+            dv.GetV()) < dv.GetE())
+          {
+            GetRM().Vars.GetBASF(cnt - 1).Update(dv);
+          }
+          else {
             break;
+          }
           cnt++;
         }
-        else
+        else {
           break;
+        }
       }
       val_n = "fvar_";
       cnt = 2;
@@ -220,8 +225,9 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
         }
         TCAtom* atom = _ParseAtom(Toks, cx);
         atom->SetLabel(Toks[0], false);
-        if (qpeak)
+        if (qpeak) {
           atom->SetType(elmQPeak);
+        }
         else {
           atom->SetType(*cx.BasicAtoms.GetObject(sindex));
           atom->SetCharge(XScatterer::ChargeFromLabel(
@@ -413,10 +419,10 @@ void TIns::_ReadExtras(TStrList &l, ParseContext &cx) {
 //..............................................................................
 void TIns::_FinishParsing(ParseContext& cx) {
   __ProcessConn(cx);
-  for (size_t i = 0; i < Ins.Count(); i++)  {
+  for (size_t i = 0; i < Ins.Count(); i++) {
     TStrList toks(Ins[i], ' ');
     if (toks.Count() == 1 && toks[0].Equalsi("END")) {
-      Ins.DeleteRange(i, Ins.Count()-i);
+      Ins.DeleteRange(i, Ins.Count() - i);
       break;
     }
     else if ((toks[0].StartsFromi("HTAB") || toks[0].StartsFromi("RTAB") ||
@@ -457,8 +463,9 @@ void TIns::_FinishParsing(ParseContext& cx) {
       Ins.GetObject(i) = Param;
       Ins[i] = Param->GetString(0);
       Param->Delete(0);
-      for (size_t j = 0; j < Param->Count(); j++)
+      for (size_t j = 0; j < Param->Count(); j++) {
         Param->GetObject(j) = GetAsymmUnit().FindCAtom(Param->GetString(j));
+      }
     }
   }
   // automatically generate the 'extras'
@@ -477,6 +484,9 @@ void TIns::_FinishParsing(ParseContext& cx) {
     }
   }
   cx.rm.ReadInsExtras(cx.Extras);
+  for (size_t i = 0; i < cx.Sump.Count(); i++) {
+    cx.rm.Vars.AddSUMP(cx.Sump[i]);
+  }
   cx.rm.Vars.Validate();
   cx.rm.ProcessFrags();
 }
@@ -534,9 +544,9 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
   if (_ParseIns(cx.rm, Toks)) {
     return true;
   }
-  else if( !cx.CellFound && Toks[0].Equalsi("CELL") )  {
-    if( Toks.Count() == 8 )  {
-      cx.rm.expl.SetRadiation( Toks[1].ToDouble() );
+  else if (!cx.CellFound && Toks[0].Equalsi("CELL")) {
+    if (Toks.Count() == 8) {
+      cx.rm.expl.SetRadiation(Toks[1].ToDouble());
       cx.au.GetAxes() =
         vec3d(Toks[2].ToDouble(), Toks[3].ToDouble(), Toks[4].ToDouble());
       cx.au.GetAngles() =
@@ -544,37 +554,39 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
       cx.CellFound = true;
       cx.au.InitMatrices();
     }
-    else  {
+    else {
       throw TFunctionFailedException(__OlxSourceInfo,
         "invalid Cell instruction");
     }
   }
-  else if( Toks[0].Equalsi("SYMM") && (Toks.Count() > 1))
-    cx.Symm.Add( Toks.Text(EmptyString(), 1) );
-  else if( Toks[0].Equalsi("FRAG") && (Toks.Count() > 1))  {
-   int code = Toks[1].ToInt();
-    if( code < 17 )  {
+  else if (Toks[0].Equalsi("SYMM") && (Toks.Count() > 1)) {
+    cx.Symm.Add(Toks.Text(EmptyString(), 1));
+  }
+  else if (Toks[0].Equalsi("FRAG") && (Toks.Count() > 1)) {
+    int code = Toks[1].ToInt();
+    if (code < 17) {
       throw TInvalidArgumentException(__OlxSourceInfo,
         "FRAG code must be greater than 16");
     }
-    double a=1, b=1, c=1, al=90, be=90, ga=90;
+    double a = 1, b = 1, c = 1, al = 90, be = 90, ga = 90;
     XLibMacros::ParseOnly(
       Toks.SubListFrom(2), "dddddd", &a, &b, &c, &al, &be, &ga);
     Fragment* frag = cx.rm.FindFragByCode(code);
-    if( frag == NULL )
+    if (frag == NULL)
       frag = &cx.rm.AddFrag(Toks[1].ToInt(), a, b, c, al, be, ga);
     else
       frag->Reset(a, b, c, al, be, ga);
     TStrList f_toks;
-    while( ++i < ins.Count() && !ins[i].StartsFromi("FEND") )  {
-      if( ins[i].IsEmpty() )  continue;
+    while (++i < ins.Count() && !ins[i].StartsFromi("FEND")) {
+      if (ins[i].IsEmpty())  continue;
       f_toks.Strtok(ins[i], ' ');
-      if( f_toks.Count() > 4 )  {
+      if (f_toks.Count() > 4) {
         frag->Add(f_toks[0], f_toks[2].ToDouble(), f_toks[3].ToDouble(),
           f_toks[4].ToDouble());
       }
-      else
+      else {
         throw TFunctionFailedException(__OlxSourceInfo, "invalid FRAG atom");
+      }
       f_toks.Clear();
     }
   }
@@ -613,8 +625,8 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
         a new one
         */
         if (!cx.AfixGroups.IsEmpty() &&
-            !cx.AfixGroups.Top().b->IsFixedGroup() &&
-            !TAfixGroup::IsFixedGroup(afix))
+          !cx.AfixGroups.Top().b->IsFixedGroup() &&
+          !TAfixGroup::IsFixedGroup(afix))
         {
           cx.AfixGroups.Pop();
         }
@@ -622,9 +634,9 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
           u == 10.08 ? 0 : u);
       }
       else {
-        if( !cx.AfixGroups.IsEmpty() &&
-            cx.AfixGroups.Top().b->IsFixedGroup() &&
-            cx.AfixGroups.Top().GetA() == 0 )
+        if (!cx.AfixGroups.IsEmpty() &&
+          cx.AfixGroups.Top().b->IsFixedGroup() &&
+          cx.AfixGroups.Top().GetA() == 0)
         {
           cx.AfixGroups.Pop();
         }
@@ -656,63 +668,63 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
       */
       if (!cx.AfixGroups.IsEmpty() &&
         ((cx.AfixGroups.Top().GetA() < 0 &&
-        !TAfixGroup::IsDependent(afix) &&
-        !TAfixGroup::HasImplicitPivot(afix)) ||
-        (cx.AfixGroups.Top().GetB()->GetAfix() < 4)))
+          !TAfixGroup::IsDependent(afix) &&
+          !TAfixGroup::HasImplicitPivot(afix)) ||
+          (cx.AfixGroups.Top().GetB()->GetAfix() < 4)))
       {
         cx.AfixGroups.Pop();
       }
       if (afixg != NULL) {
-        switch( m )  {
+        switch (m) {
         case 1:
         case 4:
         case 8:
         case 14:
         case 15:
         case 16:
-          cx.AfixGroups.Push(AnAssociation3<int,TAfixGroup*,bool>(
+          cx.AfixGroups.Push(AnAssociation3<int, TAfixGroup*, bool>(
             1, afixg, false));
           break;
         case 2:
         case 9:
-          cx.AfixGroups.Push(AnAssociation3<int,TAfixGroup*,bool>(
+          cx.AfixGroups.Push(AnAssociation3<int, TAfixGroup*, bool>(
             2, afixg, false));
           break;
         case 3:
         case 13:
-          cx.AfixGroups.Push(AnAssociation3<int,TAfixGroup*,bool>(
+          cx.AfixGroups.Push(AnAssociation3<int, TAfixGroup*, bool>(
             3, afixg, false));
           break;
         case 7:
         case 6:
-          cx.AfixGroups.Push(AnAssociation3<int,TAfixGroup*,bool>(
+          cx.AfixGroups.Push(AnAssociation3<int, TAfixGroup*, bool>(
             5, afixg, true));
           cx.SetNextPivot = true;
           break;
         case 5:
-          cx.AfixGroups.Push(AnAssociation3<int,TAfixGroup*,bool>(
+          cx.AfixGroups.Push(AnAssociation3<int, TAfixGroup*, bool>(
             4, afixg, true));
           cx.SetNextPivot = true;
           break;
         case 11:  //naphtalene
         case 10:  // Cp*
-          cx.AfixGroups.Push(AnAssociation3<int,TAfixGroup*,bool>(
+          cx.AfixGroups.Push(AnAssociation3<int, TAfixGroup*, bool>(
             9, afixg, true));
           cx.SetNextPivot = true;
           break;
         case 12:  // disordered CH3
-          cx.AfixGroups.Push(AnAssociation3<int,TAfixGroup*,bool>(
+          cx.AfixGroups.Push(AnAssociation3<int, TAfixGroup*, bool>(
             6, afixg, false));
           break;
         }
-        if( m > 16 )  {  // FRAG
+        if (m > 16) {  // FRAG
           Fragment* frag = cx.rm.FindFragByCode(m);
-          if( frag == NULL )  {
+          if (frag == NULL) {
             throw TInvalidArgumentException(__OlxSourceInfo,
               "fitted group should be preceeded by the FRAG..FEND with the same code");
           }
-          cx.AfixGroups.Push(AnAssociation3<int,TAfixGroup*,bool>(
-            (int)frag->Count()-1, afixg, false));
+          cx.AfixGroups.Push(AnAssociation3<int, TAfixGroup*, bool>(
+            (int)frag->Count() - 1, afixg, false));
           cx.SetNextPivot = true;
         }
         else if (m == 0) {
@@ -769,7 +781,7 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
     bool expandedSfacProcessed = false;
     if (Toks.Count() == 16) {  // a special case for expanded sfac
       int NumberCount = 0;
-      for (size_t i=2; i < Toks.Count(); i++) {
+      for (size_t i = 2; i < Toks.Count(); i++) {
         if (Toks[i].IsNumber())
           NumberCount++;
       }
@@ -796,7 +808,7 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
             Toks[2].ToDouble(), Toks[4].ToDouble(), Toks[6].ToDouble(),
             Toks[8].ToDouble(), Toks[3].ToDouble(), Toks[5].ToDouble(),
             Toks[7].ToDouble(), Toks[9].ToDouble(), Toks[10].ToDouble())
-          );
+        );
         sc->SetFpFdp(compd(Toks[11].ToDouble(), Toks[12].ToDouble()));
         sc->SetMu(Toks[13].ToDouble());
         sc->SetR(Toks[14].ToDouble());
@@ -840,7 +852,7 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
             cx.ins->Skipped.Add(ins[i]);
           }
           if (ins[i].StartsFromi("REM") &&
-              ins[i].IndexOf("olex2.resume_parsing") != InvalidIndex)
+            ins[i].IndexOf("olex2.resume_parsing") != InvalidIndex)
           {
             break;
           }
@@ -852,7 +864,7 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
         size_t index = hklsrc.FirstIndexOf('>');
         size_t iv = hklsrc.IndexOf("</HKL>");
         if (iv == InvalidIndex) {
-          while ((i+1) < ins.Count()) {
+          while ((i + 1) < ins.Count()) {
             i++;
             if (!ins[i].StartsFromi("rem")) {
               break;
@@ -864,14 +876,14 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
           }
         }
         if (iv != InvalidIndex) {
-          hklsrc = hklsrc.SubString(index+1, iv-index-1).Replace("%20", ' ');
+          hklsrc = hklsrc.SubString(index + 1, iv - index - 1).Replace("%20", ' ');
         }
         else {
           hklsrc.SetLength(0);
         }
         cx.rm.SetHKLSource(hklsrc);
       }
-      else if (!cx.End  && !cx.rm.IsHKLFSet()) {
+      else if (!cx.End && !cx.rm.IsHKLFSet()) {
         if (cx.ins != NULL) {
           cx.ins->Ins.Add(Toks.Text(' '));
         }
@@ -884,7 +896,7 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
       cx.Same.GetLast().a.Add(Toks.Text(' '));
     }
     else {
-      cx.Same.Add(new olx_pair_t<TStrList,TCAtom*>);
+      cx.Same.Add(new olx_pair_t<TStrList, TCAtom*>);
       cx.Same.GetLast().b = NULL;
       cx.Same.GetLast().a.Add(Toks.Text(' '));
     }
@@ -896,6 +908,9 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
     else {
       return false;
     }
+  }
+  else if (Toks[0].Equalsi("SUMP")) {
+    cx.Sump.Add(Toks.SubListFrom(1).Release());
   }
   else {
     return false;
@@ -1057,8 +1072,9 @@ void TIns::SaveForSolution(const olxstr& FileName, const olxstr& sMethod,
   UpdateParams();
   SL.Add("TITL ") << GetTitle();
 
-  if (!comments.IsEmpty() && rems)
+  if (!comments.IsEmpty() && rems) {
     SL.Add("REM ") << comments;
+  }
 // try to estimate Z'
   SL.Add(_CellToString());
   SL.Add(_ZerrToString());
@@ -1070,23 +1086,27 @@ void TIns::SaveForSolution(const olxstr& FileName, const olxstr& sMethod,
   TStrList sfac = SaveSfacUnit(RefMod, SL, SL.Count()-1, false);
 
   _SaveSizeTemp(SL);
-  if( rems )
+  if (rems) {
     _SaveHklInfo(SL, true);
-  //_SaveFVar(RefMod, SL);
+    //_SaveFVar(RefMod, SL);
+  }
 
   SL.AddList(mtoks);
   SL.Add(EmptyString());
   if (save_atoms) {
     const TAsymmUnit &au = GetAsymmUnit();
-    for (size_t i=0; i < au.AtomCount(); i++)  {
+    for (size_t i = 0; i < au.AtomCount(); i++) {
       TCAtom &a = au.GetAtom(i);
-      if( a.IsDeleted() || a.GetType().z < 2) continue;
+      if (a.IsDeleted() || a.GetType().z < 2) {
+        continue;
+      }
       olxstr& aline = SL.Add(a.GetLabel());
       aline.RightPadding(6, ' ', true);
-      aline << (sfac.IndexOf(a.GetType().symbol)+1);
-      aline.RightPadding(aline.Length()+4, ' ', true);
-      for( size_t j=0; j < 3; j++ )
-        aline << olxstr::FormatFloat(-5, a.ccrd()[j] ) << ' ';
+      aline << (sfac.IndexOf(a.GetType().symbol) + 1);
+      aline.RightPadding(aline.Length() + 4, ' ', true);
+      for (size_t j = 0; j < 3; j++) {
+        aline << olxstr::FormatFloat(-5, a.ccrd()[j]) << ' ';
+      }
       double v = a.GetOccu() + 10;
       aline << olxstr::FormatFloat(-5, v) << ' ';
     }
@@ -1880,17 +1900,19 @@ void TIns::_SaveSymm(TStrList& SL)  {
   }
 }
 //..............................................................................
-void TIns::_SaveRefMethod(TStrList& SL)  {
-  if( !RefMod.GetRefinementMethod().IsEmpty() )  {
-    if( RefMod.LS.Count() != 0 )  {
-      olxstr& rm = SL.Add( RefMod.GetRefinementMethod() );
-      for( size_t i=0; i < RefMod.LS.Count(); i++ )
+void TIns::_SaveRefMethod(TStrList& SL) {
+  if (!RefMod.GetRefinementMethod().IsEmpty()) {
+    if (RefMod.LS.Count() != 0) {
+      olxstr& rm = SL.Add(RefMod.GetRefinementMethod());
+      for (size_t i = 0; i < RefMod.LS.Count(); i++) {
         rm << ' ' << RefMod.LS[i];
+      }
     }
-    if( RefMod.PLAN.Count() != 0 )  {
+    if (RefMod.PLAN.Count() != 0) {
       olxstr& pn = SL.Add("PLAN ");
-      for( size_t i=0; i < RefMod.PLAN.Count(); i++ )
+      for (size_t i = 0; i < RefMod.PLAN.Count(); i++) {
         pn << ' ' << ((i < 1) ? olx_round(RefMod.PLAN[i]) : RefMod.PLAN[i]);
+      }
     }
   }
 }
@@ -1900,7 +1922,7 @@ void TIns::_SaveHklInfo(TStrList& SL, bool solution) {
     if (GetRM().HasMERG()) {
       SL.Add("MERG ") << GetRM().GetMERG();
     }
-    if (!GetRM().GetBASF().IsEmpty()) {
+    if (GetRM().Vars.HasBASF()) {
       HyphenateIns("BASF ", GetRM().GetBASFStr(), SL);
     }
     if (GetRM().HasSHEL()) {
@@ -2066,7 +2088,9 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
     SL.Insert(oindex + i, Tmp);
   }
   for (size_t i = 0; i < rm.Vars.EquationCount(); i++) {
-    if (!rm.Vars.GetEquation(i).Validate())  continue;
+    if (!rm.Vars.GetEquation(i).Validate()) {
+      continue;
+    }
     SL.Add("SUMP ") << rm.Vars.GetSUMPStr(i);
     //if( processed != NULL )
     //  processed->equations.Add( &rm.Vars.GetEquation(i) );
@@ -2230,8 +2254,8 @@ TStrList::const_list_type TIns::SaveHeader(TStrList& SL,
   if (!GetRM().OmittedAtoms().IsEmpty())
     SL.Add("OMIT ") << GetRM().OmittedAtoms().GetExpression();
 
-  if (GetRM().HasEXTI()) {
-    SL.Add("EXTI ") << GetRM().GetEXTI().GetV();
+  if (GetRM().Vars.HasEXTI()) {
+    SL.Add("EXTI ") << GetRM().Vars.GetEXTI().GetValue();
   }
 
   _SaveHklInfo(SL, false);
@@ -2239,11 +2263,13 @@ TStrList::const_list_type TIns::SaveHeader(TStrList& SL,
   olxstr& wght = SL.Add("WGHT ");
   for (size_t i = 0; i < RefMod.used_weight.Count(); i++) {
     wght << RefMod.used_weight[i];
-    if (i + 1 < RefMod.used_weight.Count())
+    if (i + 1 < RefMod.used_weight.Count()) {
       wght << ' ';
+    }
   }
-  if (RefMod.used_weight.IsEmpty())
+  if (RefMod.used_weight.IsEmpty()) {
     wght << "0.1";
+  }
   _SaveFVar(RefMod, SL);
   return rv;
 }

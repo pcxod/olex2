@@ -10,6 +10,8 @@
 #ifndef __olx_liner_eq_h
 #define __olx_liner_eq_h
 #include "xbase.h"
+#include "evalue.h"
+#include "eset.h"
 #include "rm_base.h"
 #include "typelist.h"
 #include "dataitem.h"
@@ -63,7 +65,7 @@ public:
   static XVarReference& FromDataItem(const TDataItem& item, XVar& parent);
 };
 
-class XVar {
+class XVar :public IOlxObject {
   double Value, Esd;
   TPtrList<XVarReference> References;  // owed from the Parent
   TPtrList<XLEQ> Equations; // equations using this variable
@@ -72,7 +74,8 @@ public:
   XVarManager& Parent;
 
   XVar(XVarManager& parent, double val=0.5, double esd=0)
-    : Value(val), Esd(esd), Id(InvalidIndex), Parent(parent)
+    : Value(val), Esd(esd), Id(InvalidIndex),
+    Parent(parent)
   {}
   // adds a new atom, referencing this variable, for internal use
   XVarReference& _AddRef(XVarReference& vr)  {  return *References.Add(&vr);  }
@@ -84,6 +87,7 @@ public:
   */
   size_t RefCount() const;
   XVarReference& GetRef(size_t i) const {  return *References[i];  }
+  const TPtrList<XVarReference> & GetRefs() const { return References; }
 
   // adds a new equation, referencing this variable
   void _AddLeq(XLEQ& eq)  {  Equations.Add(&eq);  }
@@ -91,11 +95,16 @@ public:
   void _RemLeq(XLEQ& eq)  {  Equations.Remove(&eq);  }
   // returns the number of equations, referencing this variable
   size_t LeqCount() const {  return Equations.Count();  }
+  const TPtrList<XLEQ> & GetLEQs() const { return Equations; }
+
   bool IsUsed() const;
   DefPropP(double, Value)
   DefPropP(double, Esd)
   DefPropP(size_t, Id)
 
+  bool IsReserved() const;
+  TIString ToString() const;
+  void Update(const TEValueD &v);
   void ToDataItem(TDataItem& item) const;
 #ifdef _PYTHON
   PyObject* PyExport(TPtrList<PyObject>& atoms);
@@ -103,7 +112,7 @@ public:
   static XVar& FromDataItem(const TDataItem& item, XVarManager& parent);
 };
 
-class XLEQ {
+class XLEQ : public IOlxObject {
   double Value, Sigma;
   TDoubleList Coefficients;
   TPtrList<XVar> Vars;
@@ -112,43 +121,18 @@ public:
   XVarManager& Parent;
 
   XLEQ(XVarManager& parent, double val=1.0, double sig=0.01)
-    :  Value(val), Sigma(sig), Parent(parent) {}
-  ~XLEQ() {
-    for( size_t i=0; i < Vars.Count(); i++ )
-      Vars[i]->_RemLeq(*this);
-  }
+    :  Value(val), Sigma(sig), Parent(parent)
+  {}
+  ~XLEQ();
   // copies Coefficients and Vars, internal use
   void _Assign(const XLEQ& leq);
-  void AddMember(XVar& var, double coefficient=1.0) {
-    Vars.Add(&var);
-    Coefficients.Add(coefficient);
-    var._AddLeq(*this);
-  }
+  void AddMember(XVar& var, double coefficient = 1.0);
   size_t Count() const {  return Vars.Count();  }
   const XVar& operator [] (size_t i) const {  return *Vars[i];  }
   XVar& operator [] (size_t i) {  return *Vars[i];  }
   double GetCoefficient(size_t i) const {  return Coefficients[i];  }
   // validates that the equation is valid, if not - releases the variables
-  bool Validate() {
-    size_t vc = 0;
-    for (size_t i = 0; i < Vars.Count(); i++) {
-      if (Vars[i]->IsUsed()) {
-        vc++;
-      }
-      else {
-        Vars[i]->_RemLeq(*this);
-        Vars.Delete(i);
-        i--;
-      }
-    }
-    if (vc < 1) {
-      for (size_t i = 0; i < Vars.Count(); i++) {
-        Vars[i]->_RemLeq(*this);
-      }
-      Vars.Clear();
-    }
-    return vc >= 1;
-  }
+  bool Validate();
   DefPropP(double, Value)
   DefPropP(double, Sigma)
   DefPropP(size_t, Id)
@@ -160,10 +144,17 @@ public:
 };
 
 class XVarManager {
-  TTypeList<XVar> Vars;
+  TTypeList<XVar> Vars, ReservedVars;
   TTypeList<XLEQ> Equations;
   TTypeList<XVarReference> References;
   uint16_t NextVar;  // this controls there variables go in sebsequent calls
+  void UpdateIds();
+  void RemoveReservedVar(XVar &v,
+    olxset<XLEQ *, TPointerComparator> &leq_to_remove,
+    olxset<XVarReference *, TPointerComparator> &ref_to_remove);
+  void FinaliseReservedVarRemoval(
+    olxset<XLEQ *, TPointerComparator> &leq_to_remove,
+    olxset<XVarReference *, TPointerComparator> &ref_to_remove);
 public:
 
   class RefinementModel& RM;
@@ -173,42 +164,30 @@ public:
 
   XVarManager(RefinementModel& rm);
 
-  XVar& NewVar(double val = 0.5)  {
-    XVar* v = new XVar(*this, val);
-    v->SetId(Vars.Count());
-    return Vars.Add(v);
-  }
+  XVar& NewVar(double val = 0.5, bool reindex=true);
   /* returns existing variable or creates a new one. Sets a limit of 1024
   variables
   */
-  XVar& GetReferencedVar(size_t ind) {
-    if( ind < 1 || ind > 1024 ) {
-      throw TInvalidArgumentException(__OlxSourceInfo,
-        "invalid variable reference");
-    }
-    while( Vars.Count() < ind )
-      NewVar();
-    return Vars[ind-1];
-  }
+  XVar& GetReferencedVar(size_t ind);
   size_t VarCount() const {  return Vars.Count();  }
   const XVar& GetVar(size_t i) const {  return Vars[i];  }
   XVar& GetVar(size_t i)  {  return Vars[i];  }
 
-  XLEQ& NewEquation(double val=1.0, double sig=0.01)   {
-    XLEQ* leq = new XLEQ(*this, val, sig);
-    leq->SetId(Equations.Count());
-    return Equations.Add(leq);
+  /* For internal use - returns an instance form Vars or Reservedvars
+  according to the id
+  */
+  XVar& GetVar_(size_t id);
+  bool IsReserved(const XVar &v) const {
+    return v.GetId() >= Vars.Count();
   }
+
+  olxstr getReservedVarName(size_t i) const;
+
+  XLEQ& NewEquation(double val = 1.0, double sig = 0.01);
   size_t EquationCount() const {  return Equations.Count();  }
   const XLEQ& GetEquation(size_t i) const {  return Equations[i];  }
   XLEQ& GetEquation(size_t i)  {  return Equations[i];  }
-  XLEQ& ReleaseEquation(size_t i)  {
-    Equations[i].SetId(InvalidIndex);
-    XLEQ& eq = Equations.Release(i);
-    for( size_t i=0; i < Equations.Count(); i++ )
-      Equations[i].SetId(i);
-    return eq;
-  }
+  XLEQ& ReleaseEquation(size_t i);
 
   size_t VarRefCount() const {  return References.Count();  }
   XVarReference& GetVarRef(size_t i) {  return References[i];  }
@@ -220,7 +199,8 @@ public:
     Equations.Clear(); // these are recreatable
   }
   /* sets a relation between an atom parameter and a variable, if the
-  coefficient is -10 (default value), the atom degenerocy is taken
+  coefficient is -10 (default value), the position multiplicity is taken into
+  account
   */
   XVarReference& AddVarRef(XVar& var, IXVarReferencer& r, short var_name,
     short relation, double coefficient);
@@ -250,44 +230,24 @@ public:
   double GetParam(const IXVarReferencer& r, short param_name,
     double override_val) const;
   // parses FVAR and assignes variable values
-  template <class list> void AddFVAR(const list& fvar) {
-    for( size_t i=0; i < fvar.Count(); i++, NextVar++ )  {
-      if( Vars.Count() <= NextVar )
-        NewVar(fvar[i].ToDouble());
-      else
-        Vars[NextVar].SetValue(fvar[i].ToDouble());
-    }
-  }
-  olxstr GetFVARStr() const {
-    olxstr rv(Vars.IsEmpty() ? 1.0 : Vars[0].GetValue());
-    for( size_t i=1; i < Vars.Count(); i++ )
-      rv << ' ' << Vars[i].GetValue();
-    return rv;
-  }
-  template <class list> void AddSUMP(const list& sump) {
-    if (sump.Count() < 4) {
-      throw TInvalidArgumentException(__OlxSourceInfo,
-        "at least 4 parameters expected for SUMP");
-    }
-    if ((sump.Count() % 2) != 0) {
-      throw TInvalidArgumentException(__OlxSourceInfo,
-        "even number of arguments is expected for SUMP");
-    }
-    XLEQ& le = NewEquation(sump[0].ToDouble(), sump[1].ToDouble());
-    for (size_t i = 2; i < sump.Count(); i += 2) {
-      XVar& v = GetReferencedVar(sump[i + 1].ToInt());
-      le.AddMember(v, sump[i].ToDouble());
-    }
-  }
+  void AddFVAR(const TStrList &fvar);
+  bool HasEXTI() const;
+  const XVar &GetEXTI() const;
+  void SetEXTI(double val, double esd);
+  XVar &GetEXTI();
+  void ClearEXTI();
+
+  void SetBASF(const TStrList &bs);
+  void ClearBASF();
+  size_t GetBASFCount() const;
+  bool HasBASF() const { return GetBASFCount() > 0; }
+  const XVar &GetBASF(size_t i) const;
+  XVar &GetBASF(size_t i);
+
+  olxstr GetFVARStr() const;
+  void AddSUMP(const TStrList &sump);
   // Validate must be called first to get valid count of equations
-  olxstr GetSUMPStr(size_t ind) const {
-    XLEQ& le = Equations[ind];
-    olxstr rv(le.GetValue());
-    rv << ' ' << le.GetSigma();
-    for( size_t i=0; i < le.Count(); i++ )
-      rv << ' ' << le.GetCoefficient(i) << ' ' << le[i].GetId()+1;
-    return rv;
-  }
+  olxstr GetSUMPStr(size_t ind) const;
   void Assign(const XVarManager& vm);
 
   void Describe(TStrList& lst);
