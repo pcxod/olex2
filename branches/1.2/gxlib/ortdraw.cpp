@@ -37,7 +37,8 @@ draw_style(0)
     _elpm *= (float)atom.GetDrawScale();
     elpm = new mat3f(_elpm);
     p_elpm = &(_elpm *= parent.ProjMatr);
-    mat3f& ielpm = *(new mat3f((sa.GetEllipsoid()->GetMatrix()*parent.basis.GetMatrix()).Inverse()));
+    mat3f& ielpm = *(new mat3f((sa.GetEllipsoid()->GetMatrix()
+      *parent.basis.GetMatrix()).Inverse()));
     p_ielpm = &(ielpm *= _elpm);
   }
   draw_rad = (float)atom.GetDrawScale()*parent.DrawScale;
@@ -77,24 +78,26 @@ void ort_atom::render_elp(PSWriter& pw) const {
     pw.color(0);
     pw.stroke();
   }
-  else if( (draw_style&ortep_color_lines) != 0 )  {
+  else if ((draw_style&ortep_color_lines) != 0) {
     pw.color(sphere_color == 0xffffff ? 0 : sphere_color);
     pw.drawEllipse(NullVec, ielpm);
   }
-  else  {
+  else {
     pw.color(0);
     pw.drawEllipse(NullVec, ielpm);
   }
-  if( (draw_style&ortep_atom_rims) != 0 )
+  if ((draw_style&ortep_atom_rims) != 0) {
     render_rims(pw);
+  }
 }
 
 void ort_atom::render_sph(PSWriter& pw) const {
-  if( parent.GetAtomOutlineSize() > 0 )  {
+  if (parent.GetAtomOutlineSize() > 0) {
     pw.color(parent.GetAtomOutlineColor());
-    pw.drawCircle(NullVec, draw_rad*(parent.GetAtomOutlineSize()+1.0f), &PSWriter::fill);
+    pw.drawCircle(NullVec, draw_rad*(parent.GetAtomOutlineSize() + 1.0f),
+      &PSWriter::fill);
   }
-  if( (draw_style&ortep_color_fill) != 0 )  {
+  if ((draw_style&ortep_color_fill) != 0) {
     pw.newPath();
     pw.circle(NullVec, draw_rad);
     pw.gsave();
@@ -104,11 +107,11 @@ void ort_atom::render_sph(PSWriter& pw) const {
     pw.color(0);
     pw.stroke();
   }
-  else if( (draw_style&ortep_color_lines) != 0 )  {
+  else if ((draw_style&ortep_color_lines) != 0) {
     pw.color(sphere_color == 0xffffff ? 0 : sphere_color);
     pw.drawCircle(NullVec, draw_rad);
   }
-  else  {
+  else {
     pw.color(0);
     pw.drawCircle(NullVec, draw_rad);
   }
@@ -127,50 +130,63 @@ bool ort_atom::IsSpherical() const {
   bool res = !(p_elpm != NULL &&
     (atom.DrawStyle() == adsEllipsoid ||
     atom.DrawStyle() == adsOrtep));
-  if( !res && atom.GetEllipsoid()->IsNPD() )
+  if (!res && atom.GetEllipsoid()->IsNPD()) {
     return true;
+  }
   return res;
 }
 
 void ort_atom::render(PSWriter& pw) const {
-  if( mask == 0 )  return;
+  if (mask == 0)  return;
   pw.translate(crd);
   pw.lineWidth(parent.ElpLineWidth);
-  if( mask == 16 && atom.DrawStyle() == adsStandalone )  {
-    if( atom.IsStandalone() )
+  if (mask == 16 && atom.DrawStyle() == adsStandalone) {
+    if (atom.IsStandalone()) {
       render_standalone(pw);
+    }
   }
-  else if( !IsSpherical() )
+  else if (!IsSpherical()) {
     render_elp(pw);
-  else
+  }
+  else {
     render_sph(pw);
+  }
   pw.translate(-crd);
 }
 
 void ort_atom::update_size(evecf &size) const {
-  if( mask == 0 )  return;
+  if (mask == 0) {
+    return;
+  }
   float mw, mh;
-  if( mask == 16 && atom.DrawStyle() == adsStandalone )  {
-    mw = mh = draw_rad*(parent.GetAtomOutlineSize()+1.0f);
+  if (mask == 16 && atom.DrawStyle() == adsStandalone) {
+    mw = mh = draw_rad*(parent.GetAtomOutlineSize() + 1.0f);
   }
-  else if( !IsSpherical() )  {
-    mw = sqrt(olx_sqr((*p_ielpm)[0][0])+olx_sqr((*p_ielpm)[0][1]))
-      *(parent.GetAtomOutlineSize()+1.0f);
-    mh = sqrt(olx_sqr((*p_ielpm)[1][0])+olx_sqr((*p_ielpm)[1][1]))
-      *(parent.GetAtomOutlineSize()+1.0f);
+  else if (!IsSpherical()) {
+    mw = sqrt(olx_sqr((*p_ielpm)[0][0]) + olx_sqr((*p_ielpm)[0][1]))
+      *(parent.GetAtomOutlineSize() + 1.0f);
+    mh = sqrt(olx_sqr((*p_ielpm)[1][0]) + olx_sqr((*p_ielpm)[1][1]))
+      *(parent.GetAtomOutlineSize() + 1.0f);
   }
-  else  {
-    mw = mh = draw_rad*(parent.GetAtomOutlineSize()+1.0f);
+  else {
+    mw = mh = draw_rad*(parent.GetAtomOutlineSize() + 1.0f);
   }
-  if( size[0] > crd[0]-mw )  size[0] = crd[0]-mw;
-  if( size[1] > crd[1]-mh )  size[1] = crd[1]-mh;
-  if( size[2] < crd[0]+mw )  size[2] = crd[0]+mw;
-  if( size[3] < crd[1]+mh )  size[3] = crd[1]+mh;
+  if (size[0] > crd[0] - mw) {
+    size[0] = crd[0] - mw;
+  }
+  if (size[1] > crd[1] - mh) {
+    size[1] = crd[1] - mh;
+  }
+  if (size[2] < crd[0] + mw) {
+    size[2] = crd[0] + mw;
+  }
+  if (size[3] < crd[1] + mh) {
+    size[3] = crd[1] + mh;
+  }
 }
 
-
 void ort_atom::render_rims(PSWriter& pw) const {
-  if( (draw_style&(ortep_color_lines|ortep_color_fill)) != 0 )
+  if ((draw_style&(ortep_color_lines | ortep_color_fill)) != 0)
     pw.color(rim_color);
   pw.lineWidth(parent.QuadLineWidth);
   const mat3f& elpm = *p_elpm;
@@ -178,11 +194,11 @@ void ort_atom::render_rims(PSWriter& pw) const {
   mat3f pelpm(elpm[0][2] < 0 ? -elpm[0] : elpm[0],
     elpm[1][2] < 0 ? -elpm[1] : elpm[1],
     elpm[2][2] < 0 ? -elpm[2] : elpm[2]);
-  vec3f norm_vec = (parent.ElpCrd[0]*ielpm).XProdVec(parent.ElpCrd[1]*ielpm);
-  if( norm_vec[2] < 0 )  norm_vec *= -1;
+  vec3f norm_vec = (parent.ElpCrd[0] * ielpm).XProdVec(parent.ElpCrd[1] * ielpm);
+  if (norm_vec[2] < 0)  norm_vec *= -1;
 
   parent.RenderRims(pw, pelpm, norm_vec);
-  if( (draw_style&ortep_atom_quads) != 0 )  {
+  if ((draw_style&ortep_atom_quads) != 0) {
     pw.lineWidth(parent.PieLineWidth);
     parent.RenderQuads(pw, pelpm);
   }
@@ -214,24 +230,25 @@ uint32_t ort_bond<draw_t>::get_color(int primitive, uint32_t def) const {
   }
   return glp == NULL ? def : glp->GetProperties().AmbientF.GetRGB();
 }
+
 template <class draw_t>
 void ort_bond<draw_t>::render(PSWriter& pw) const {
   uint32_t mask = object.GetPrimitiveMask();
-  if( mask == 0 )  return;
+  if (mask == 0)  return;
   pw.lineWidth(1.0f);
   pw.translate(atom_a.crd);
-  if( parent.GetBondOutlineSize() > 0 )  {
+  if (parent.GetBondOutlineSize() > 0) {
     pw.color(parent.GetBondOutlineColor());
-    _render(pw, (parent.GetBondOutlineSize()+1.0f), mask);
+    _render(pw, (parent.GetBondOutlineSize() + 1.0f), mask);
   }
-  if( (draw_style&ortep_color_bond) == 0 )
+  if ((draw_style&ortep_color_bond) == 0)
     pw.color(0);
-  else if( (mask&((1<<4)|(1<<5)|(1<<6)|(1<<7)|(1<<9)|(1<<10))) == 0 )  {
+  else if ((mask&((1 << 4) | (1 << 5) | (1 << 6) | (1 << 7) | (1 << 9) | (1 << 10))) == 0) {
     uint32_t def = (atom_a.atom.GetType() > atom_b.atom.GetType() ?
       atom_a.sphere_color : atom_b.sphere_color);
-    int pi[] = {0,1,2,3,8,11,12,13};
-    for( size_t i=0; i < sizeof(pi)/sizeof(pi[0]); i++ )  {
-      if( (mask&(1<<pi[i])) != 0 )  {
+    int pi[] = { 0,1,2,3,8,11,12,13 };
+    for (size_t i = 0; i < sizeof(pi) / sizeof(pi[0]); i++) {
+      if ((mask&(1 << pi[i])) != 0) {
         pw.color(get_color(pi[i], def));
         break;
       }
@@ -634,7 +651,7 @@ void ort_bond_line::_render(PSWriter& pw, float scalex, uint32_t mask) const {
 }
 //.............................................................................
 void ort_line::render(PSWriter& pw) const {
-  pw.lineWidth(0.1);
+  pw.lineWidth(width);
   pw.color(color);
   pw.drawLine(from, to);
 }
@@ -788,7 +805,7 @@ size_t OrtDraw::PrepareArc(const TArrayList<vec3f>& in,
   return cnt;
 }
 
-void OrtDraw::Init(PSWriter& pw)  {
+void OrtDraw::Init(PSWriter& pw) {
   ElpCrd.SetCount(ElpDiv);
   Arc.SetCount(ElpDiv);
   PieCrd.SetCount(PieDiv);
@@ -798,53 +815,53 @@ void OrtDraw::Init(PSWriter& pw)  {
   BondProjM.SetCount(BondDiv);
   BondProjT.SetCount(BondDiv);
   float sin_a, cos_a;
-  olx_sincos((float)(2*M_PI/ElpDiv), &sin_a, &cos_a);
+  olx_sincos((float)(2 * M_PI / ElpDiv), &sin_a, &cos_a);
   vec3f ps(cos_a, -sin_a, 0);
-  for( uint16_t i=0; i < ElpDiv; i++ )  {
+  for (uint16_t i = 0; i < ElpDiv; i++) {
     ElpCrd[i] = ps;
     const float x = ps[0];
     ps[0] = (float)(cos_a*x + sin_a*ps[1]);
     ps[1] = (float)(cos_a*ps[1] - sin_a*x);
   }
-  olx_sincos((float)(2*M_PI/BondDiv), &sin_a, &cos_a);
-  ps = vec3f(cos_a/2, -sin_a/2, 0);
-  for( uint16_t i=0; i < BondDiv; i++ )  {
+  olx_sincos((float)(2 * M_PI / BondDiv), &sin_a, &cos_a);
+  ps = vec3f(cos_a / 2, -sin_a / 2, 0);
+  for (uint16_t i = 0; i < BondDiv; i++) {
     BondCrd[i] = ps;
     const float x = ps[0];
     ps[0] = (float)(cos_a*x + sin_a*ps[1]);
     ps[1] = (float)(cos_a*ps[1] - sin_a*x);
   }
   ps = vec3f(1, 0, 0);
-  for( uint16_t i=0; i < PieDiv; i++ )  {
+  for (uint16_t i = 0; i < PieDiv; i++) {
     PieCrd[i] = ps;
-    ps[0] = (float)(PieDiv-i-1)/PieDiv;
-    ps[1] = (float)sqrt(1.0-ps[0]*ps[0]);
+    ps[0] = (float)(PieDiv - i - 1) / PieDiv;
+    ps[1] = (float)sqrt(1.0 - ps[0] * ps[0]);
   }
   GLfloat vp[4];
   olx_gl::get(GL_VIEWPORT, vp);
   TGXApp& app = TGXApp::GetInstance();
   const TEBasis& basis = app.GetRenderer().GetBasis();
-  LinearScale = olx_min((float)pw.GetWidth()/vp[2],
-    (float)pw.GetHeight()/vp[3]);
+  LinearScale = olx_min((float)pw.GetWidth() / vp[2],
+    (float)pw.GetHeight() / vp[3]);
 
   {
     olxcstr fnt("/Verdana findfont ");
     AGlScene& sc = app.GetRenderer().GetScene();
     fnt << olx_round(
       sc.GetFont(sc.FindFontIndexForType<TXAtom>(), true).
-        GetPointSize()/sqrt(LinearScale))
+      GetPointSize() / sqrt(LinearScale))
       << " scalefont setfont";
     pw.custom(fnt.c_str());
   }
 
-  YOffset = ((float)pw.GetHeight()-LinearScale*vp[3])/2;
+  YOffset = ((float)pw.GetHeight() - LinearScale*vp[3]) / 2;
   pw.translate(0.0f, YOffset);
   pw.scale(LinearScale, LinearScale);
   DrawScale = (float)(app.GetRenderer().GetBasis().GetZoom()
-    /(app.GetRenderer().GetScale()));
+    / (app.GetRenderer().GetScale()));
   BondRad = 0.03f*DrawScale;
   SceneOrigin = basis.GetCenter();
-  DrawOrigin = vec3f(vp[2]/2, vp[3]/2, 0);
+  DrawOrigin = vec3f(vp[2] / 2, vp[3] / 2, 0);
   ProjMatr = basis.GetMatrix()*DrawScale;
   UnProjMatr = ProjMatr.Inverse();
 }
@@ -909,32 +926,87 @@ Direct calculation:
       }
     }
 */
-void OrtDraw::Render(const olxstr& fileName)  {
+void OrtDraw::Render(const olxstr& fileName) {
   PSWriter pw(fileName, true);
   Init(pw);
   TTypeList<a_ort_object> objects;
   TPtrList<vec3f> all_points;
   TGXApp::AtomIterator ai = app.GetAtoms();
   TGXApp::BondIterator bi = app.GetBonds();
-  objects.SetCapacity(ai.count+bi.count);
+  TGXApp::PlaneIterator pi = app.GetPlanes();
+
+  size_t extra_tria_cnt = 0;
+  while (ai.HasNext()) {
+    TXAtom& xa = ai.Next();
+    if (xa.IsVisible() && xa.GetPolyhedron() != 0) {
+      extra_tria_cnt += xa.GetPolyhedron()->faces.Count();
+    }
+  }
+  objects.SetCapacity(ai.count + bi.count + pi.count + extra_tria_cnt);
+  while (pi.HasNext()) {
+    TXPlane &p = pi.Next();
+    if (!p.IsVisible()) {
+      continue;
+    }
+    ort_poly* l = new ort_poly(*this, true);
+    l->color = OLX_RGB(0x5f, 0x5f, 0x5f);
+    for (size_t i = 0; i < p.Count(); i++) {
+      l->points.AddNew(ProjectPoint(p.GetAtom(i).crd()));
+    }
+    objects.Add(l);
+    _process_points(all_points, *l);
+  }
   atoms.Clear();
+  ai.Reset();
   while (ai.HasNext()) {
     TXAtom& xa = ai.Next();
     // have to keep hidden atoms, as those might be used by bonds!
-    if (xa.IsDeleted()) continue;
+    if (xa.IsDeleted()) {
+      continue;
+    }
     xa.SetTag(objects.Count());
     ort_atom *a = new ort_atom(*this, xa);
-    if (xa.GetPrimitives().FindPrimitiveByName("Rims") != NULL)
+    if (xa.GetPrimitives().FindPrimitiveByName("Rims") != NULL) {
       a->draw_style |= ortep_atom_rims;
-    if (xa.DrawStyle() == adsOrtep)
+    }
+    if (xa.DrawStyle() == adsOrtep) {
       a->draw_style |= ortep_atom_quads;
-    if ((ColorMode&ortep_color_lines))
+    }
+    if ((ColorMode&ortep_color_lines)) {
       a->draw_style |= ortep_color_lines;
-    if ((ColorMode&ortep_color_fill))
+    }
+    if ((ColorMode&ortep_color_fill)) {
       a->draw_style |= ortep_color_fill;
+    }
     objects.Add(a);
     all_points.Add(&a->crd);
     atoms.Add(a);
+    if (xa.GetPolyhedron() != 0) {
+      TXAtom::Poly &p = *xa.GetPolyhedron();
+      for (size_t i = 0; i < p.faces.Count(); i++) {
+        ort_poly* f = new ort_poly(*this, true);
+        if ((ColorMode&ortep_color_fill)) {
+          f->color = a->sphere_color;
+        }
+        else {
+          f->color = OLX_RGB(0x5f, 0x5f, 0x5f);
+        }
+        for (size_t j = 0; j < 3; j++) {
+          f->points.AddNew(ProjectPoint(p.vecs[p.faces[i][j]]));
+        }
+        objects.Add(f);
+        _process_points(all_points, *f);
+      }
+      for (size_t i = 0; i < p.edges.Count(); i++) {
+        ort_line *l = new ort_line(*this,
+          ProjectPoint(p.vecs[p.edges[i].a]),
+          ProjectPoint(p.vecs[p.edges[i].b]),
+          0, 5);
+        objects.Add(l);
+        all_points.Add(&l->from);
+        all_points.Add(&l->to);
+      }
+    }
   }
   {
     const TTypeListExt<TDRing, AGDrawObject> &rings = app.GetRings();
@@ -945,17 +1017,17 @@ void OrtDraw::Render(const olxstr& fileName)  {
         static_cast<float>(rings[i].Basis.GetZoom())*DrawScale, false);
       c->basis = new mat3f(
         mat3d::Transpose(rings[i].Basis.GetMatrix())
-          *app.GetRenderer().GetBasis().GetMatrix());
+        *app.GetRenderer().GetBasis().GetMatrix());
       objects.Add(c);
       all_points.Add(&c->center);
     }
   }
   if (app.XFile().DUnitCell->IsVisible()) {
     const TDUnitCell& uc = *app.XFile().DUnitCell;
-    for (size_t i=0; i < uc.EdgeCount(); i+=2) {
+    for (size_t i = 0; i < uc.EdgeCount(); i += 2) {
       ort_poly* l = new ort_poly(*this, false);
       l->points.AddNew(ProjectPoint(uc.GetEdge(i)));
-      l->points.AddNew(ProjectPoint(uc.GetEdge(i+1)));
+      l->points.AddNew(ProjectPoint(uc.GetEdge(i + 1)));
       objects.Add(l);
       _process_points(all_points, *l);
     }
@@ -976,23 +1048,23 @@ void OrtDraw::Render(const olxstr& fileName)  {
     all_points.Add(center->center);
     center->color = 0xffffffff;
     objects.Add(center);
-    for (int i=0; i < 3; i++) {
-      vec3f mp = cm[i]*((float)(0.2*len[i]*b.GetZoom())),
-        ep = cm[i]*((float)((0.2*len[i]+0.8)*b.GetZoom()));
+    for (int i = 0; i < 3; i++) {
+      vec3f mp = cm[i] * ((float)(0.2*len[i] * b.GetZoom())),
+        ep = cm[i] * ((float)((0.2*len[i] + 0.8)*b.GetZoom()));
 
-      ort_cone* arrow_cone = new ort_cone(*this, cnt+mp, cnt+ep,
+      ort_cone* arrow_cone = new ort_cone(*this, cnt + mp, cnt + ep,
         (float)(0.2*DrawScale*b.GetZoom()), 0, 0);
       objects.Add(arrow_cone);
       all_points.Add(arrow_cone->bottom);
       all_points.Add(arrow_cone->top);
 
-      const float z = cm[i][2]/cm[i].Length();
-      const float pscale = 1+olx_sign(z)*sqrt(olx_abs(z))/2;
+      const float z = cm[i][2] / cm[i].Length();
+      const float pscale = 1 + olx_sign(z)*sqrt(olx_abs(z)) / 2;
       const float base_r = (float)(0.075*DrawScale*b.GetZoom());
       ort_cone* axis_cone = new ort_cone(*this,
-        cnt+vec3f(cm[i]).NormaliseTo(// extra 3D effect for the central sphere
-          sqrt(olx_sqr(sph_rad)-olx_sqr(base_r))),
-        cnt+mp,
+        cnt + vec3f(cm[i]).NormaliseTo(// extra 3D effect for the central sphere
+          sqrt(olx_sqr(sph_rad) - olx_sqr(base_r))),
+        cnt + mp,
         base_r,
         base_r*pscale,
         0);
@@ -1003,12 +1075,13 @@ void OrtDraw::Render(const olxstr& fileName)  {
   }
   if (Perspective && !all_points.IsEmpty()) {
     vec3f _min, _max;
-    _min  = _max = (*all_points[0]);
-    for (size_t i=1; i < all_points.Count(); i++)
+    _min = _max = (*all_points[0]);
+    for (size_t i = 1; i < all_points.Count(); i++) {
       vec3f::UpdateMinMax(*all_points[i], _min, _max);
-    vec3f center((_min+_max)/2);
-    center[2] = (_max[2] - _min[2])*10;
-    for (size_t i=0; i < all_points.Count(); i++) {
+    }
+    vec3f center((_min + _max) / 2);
+    center[2] = (_max[2] - _min[2]) * 10;
+    for (size_t i = 0; i < all_points.Count(); i++) {
       vec3f& crd = *all_points[i];
       vec3f v(crd - center);
       v.NormaliseTo(center[2]);
@@ -1019,19 +1092,23 @@ void OrtDraw::Render(const olxstr& fileName)  {
 
   while (bi.HasNext()) {
     const TXBond& xb = bi.Next();
-    if (xb.IsDeleted() || !xb.IsVisible())
+    if (xb.IsDeleted() || !xb.IsVisible()) {
       continue;
+    }
     const ort_atom& a1 = (const ort_atom&)objects[xb.A().GetTag()];
     const ort_atom& a2 = (const ort_atom&)objects[xb.B().GetTag()];
     ort_bond<TXBond> *b = new ort_bond<TXBond>(*this, xb, a1, a2);
-    if ((ColorMode&ortep_color_bond) != 0)
+    if ((ColorMode&ortep_color_bond) != 0) {
       b->draw_style |= ortep_color_bond;
+    }
     objects.Add(b);
   }
 
-  for (size_t i=0; i < app.LineCount(); i++) {
+  for (size_t i = 0; i < app.LineCount(); i++) {
     TXLine &l = app.GetLine(i);
-    if (!l.IsVisible()) continue;
+    if (!l.IsVisible()) {
+      continue;
+    }
     ort_bond_line *ol = new ort_bond_line(*this,
       l, l.GetBase(), l.GetEdge());
     objects.Add(ol);
@@ -1043,13 +1120,13 @@ void OrtDraw::Render(const olxstr& fileName)  {
     Contour<float>::MemberFeedback<OrtDraw::ContourDrawer>
       mf(drawer, &OrtDraw::ContourDrawer::draw);
     const size_t MaxDim = grid.GetPlaneSize();
-    const float hh = (float)MaxDim/2;
+    const float hh = (float)MaxDim / 2;
     const float Size = grid.GetSize();
     const float Depth = grid.GetDepth();
     olx_array_ptr<float*> data(new float*[MaxDim]);
     olx_array_ptr<float> x(new float[MaxDim]);
     olx_array_ptr<float> y(new float[MaxDim]);
-    for (size_t i=0; i < MaxDim; i++) {
+    for (size_t i = 0; i < MaxDim; i++) {
       data[i] = new float[MaxDim];
       y[i] = x[i] = (float)i - hh;
     }
@@ -1060,9 +1137,9 @@ void OrtDraw::Render(const olxstr& fileName)  {
     const mat3f c2c(app.XFile().GetAsymmUnit().GetCartesianToCell());
     const vec3f center(app.GetRenderer().GetBasis().GetCenter());
     MapUtil::MapGetter<float, 2> map_getter(grid.Data()->Data);
-    for (size_t i=0; i < MaxDim; i++) {
-      for (size_t j=0; j < MaxDim; j++) {
-        vec3f p(((float)i-hh)/Size, ((float)j-hh)/Size,  Depth);
+    for (size_t i = 0; i < MaxDim; i++) {
+      for (size_t j = 0; j < MaxDim; j++) {
+        vec3f p(((float)i - hh) / Size, ((float)j - hh) / Size, Depth);
         p = bm*p;
         p -= center;
         p *= c2c;
@@ -1071,89 +1148,97 @@ void OrtDraw::Render(const olxstr& fileName)  {
         if (data[i][j] > maxZ) maxZ = data[i][j];
       }
     }
-    float contour_step = (maxZ - minZ)/(contour_cnt-1);
+    float contour_step = (maxZ - minZ) / (contour_cnt - 1);
     z[0] = minZ;
-    for (size_t i=1; i < contour_cnt; i++)
-      z[i] = z[i-1]+contour_step;
-    cm.DoContour(data, 0, (int)MaxDim-1, 0, (int)MaxDim-1, x, y,
+    for (size_t i = 1; i < contour_cnt; i++)
+      z[i] = z[i - 1] + contour_step;
+    cm.DoContour(data, 0, (int)MaxDim - 1, 0, (int)MaxDim - 1, x, y,
       contour_cnt, z, mf);
-    for (size_t i=0; i < MaxDim; i++)
-      delete [] data[i];
+    for (size_t i = 0; i < MaxDim; i++)
+      delete[] data[i];
   }
   QuickSorter::SortSF(objects, OrtObjectsZSort);
 
-  for (size_t i=0; i < objects.Count(); i++)
+  for (size_t i = 0; i < objects.Count(); i++) {
     objects[i].render(pw);
+  }
 
   TPtrList<const TXGlLabel> Labels;
-  for (size_t i=0; i < app.LabelCount(); i++) {
+  for (size_t i = 0; i < app.LabelCount(); i++) {
     const TXGlLabel& glxl = app.GetLabel(i);
-    if (glxl.IsVisible())
+    if (glxl.IsVisible()) {
       Labels.Add(glxl);
+    }
   }
   ai.Reset();
   while (ai.HasNext()) {
     TXAtom& xa = ai.Next();
-    if (xa.GetGlLabel().IsVisible())
+    if (xa.GetGlLabel().IsVisible()) {
       Labels.Add(xa.GetGlLabel());
+    }
   }
   bi.Reset();
   while (bi.HasNext()) {
     TXBond& xb = bi.Next();
-    if (xb.GetGlLabel().IsVisible())
+    if (xb.GetGlLabel().IsVisible()) {
       Labels.Add(xb.GetGlLabel());
+    }
   }
   if (app.XFile().DUnitCell->IsVisible()) {
-    for (size_t i=0; i < app.XFile().DUnitCell->LabelCount(); i++) {
+    for (size_t i = 0; i < app.XFile().DUnitCell->LabelCount(); i++) {
       const TXGlLabel& glxl = app.XFile().DUnitCell->GetLabel(i);
-      if (glxl.IsVisible())
+      if (glxl.IsVisible()) {
         Labels.Add(glxl);
+      }
     }
   }
   if (app.DBasis().IsVisible()) {
-    for (size_t i=0; i < app.DBasis().LabelCount(); i++) {
+    for (size_t i = 0; i < app.DBasis().LabelCount(); i++) {
       const TXGlLabel& glxl = app.DBasis().GetLabel(i);
-      if (glxl.IsVisible())
+      if (glxl.IsVisible()) {
         Labels.Add(glxl);
+      }
     }
   }
-  for (size_t i=0; i < app.LineCount(); i++) {
+  for (size_t i = 0; i < app.LineCount(); i++) {
     TXLine &l = app.GetLine(i);
-    if (l.GetGlLabel().IsVisible())
+    if (l.GetGlLabel().IsVisible()) {
       Labels.Add(l.GetGlLabel());
+    }
   }
   evecf boundary(4);
   boundary[0] = 596;
   boundary[1] = 842;
   boundary[2] = -596;
   boundary[3] = -842;
-  for (size_t i=0; i < objects.Count(); i++)
+  for (size_t i = 0; i < objects.Count(); i++) {
     objects[i].update_size(boundary);
+  }
   // labels rendering block
   {
     TGlFont::PSRenderContext context;
     TCStrList output;
     uint32_t prev_ps_color = 0;
     output.Add(pw.color_str(prev_ps_color));
-    const float vector_scale = (float)(1./app.GetRenderer().GetScale());
-    for (size_t i=0; i < Labels.Count(); i++) {
+    const float vector_scale = (float)(1. / app.GetRenderer().GetScale());
+    for (size_t i = 0; i < Labels.Count(); i++) {
       const TGlFont& glf = Labels[i]->GetFont();
       uint32_t color = 0;
       TGlMaterial* glm =
         Labels[i]->GetPrimitives().GetStyle().FindMaterial("Text");
-      if( glm != NULL )
+      if (glm != NULL)
         color = glm->AmbientF.GetRGB();
       pw.color(color);
       if (glf.IsVectorFont()) {
-        const float font_scale = (float)(DrawScale/app.GetRenderer().CalcZoom());
+        const float font_scale = (float)(DrawScale / app.GetRenderer().CalcZoom());
         vec3f crd = Labels[i]->GetVectorPosition()*vector_scale + DrawOrigin;
         const TTextRect &r = Labels[i]->GetRect();
         a_ort_object::update_min_max(boundary,
-          vec3f((float)(crd[0]+r.left*font_scale),
-            (float)(crd[1]+r.top*vector_scale), 0));
+          vec3f((float)(crd[0] + r.left*font_scale),
+          (float)(crd[1] + r.top*vector_scale), 0));
         a_ort_object::update_min_max(boundary,
-          vec3f((float)(crd[0]+(r.left+r.width)*font_scale),
-            (float)(crd[1]+(r.top+r.height)*font_scale), 0));
+          vec3f((float)(crd[0] + (r.left + r.width)*font_scale),
+          (float)(crd[1] + (r.top + r.height)*font_scale), 0));
         if (color != prev_ps_color) {
           output.Add(pw.color_str(color));
           prev_ps_color = color;
@@ -1167,24 +1252,25 @@ void OrtDraw::Render(const olxstr& fileName)  {
         pw.color(color);
         vec3f rp = Labels[i]->GetRasterPosition();
         rp[1] += 4;
-        pw.drawText(Labels[i]->GetLabel(), rp+DrawOrigin);
+        pw.drawText(Labels[i]->GetLabel(), rp + DrawOrigin);
       }
     }
     if (!output.IsEmpty()) {
-      for (size_t i=0; i < context.definitions.Count(); i++)
+      for (size_t i = 0; i < context.definitions.Count(); i++) {
         pw.custom(context.definitions[i].definition);
+      }
       pw.lineWidth(FontLineWidth);
       pw.custom(output);
     }
   }
   // scale a bit up
   float scale_up = 1.10;
-  float mx = (boundary[2]+boundary[0])/2;
-  float my = (boundary[3]+boundary[1])/2;
-  boundary[0] = (boundary[0]-mx)*scale_up + mx;
-  boundary[1] = (boundary[1]-my)*scale_up + my;
-  boundary[2] = (boundary[2]-mx)*scale_up + mx;
-  boundary[3] = (boundary[3]-my)*scale_up + my;
+  float mx = (boundary[2] + boundary[0]) / 2;
+  float my = (boundary[3] + boundary[1]) / 2;
+  boundary[0] = (boundary[0] - mx)*scale_up + mx;
+  boundary[1] = (boundary[1] - my)*scale_up + my;
+  boundary[2] = (boundary[2] - mx)*scale_up + mx;
+  boundary[3] = (boundary[3] - my)*scale_up + my;
   boundary *= LinearScale;
   boundary[1] += YOffset;
   boundary[3] += YOffset;

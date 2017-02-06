@@ -735,12 +735,15 @@ void TMainForm::macPictPS(TStrObjList &Cmds, const TParamList &Options,
 {
   OrtDraw od;
   uint16_t color_mode = 0;
-  if( Options.Contains("color_fill") )
+  if (Options.Contains("color_fill")) {
     color_mode |= ortep_color_fill;
-  if( Options.Contains("color_line") )
+  }
+  if (Options.Contains("color_line")) {
     color_mode |= ortep_color_lines;
-  if( Options.Contains("color_bond") )
+  }
+  if (Options.Contains("color_bond")) {
     color_mode |= ortep_color_bond;
+  }
   od.SetColorMode(color_mode);
   od.SetHBondScale(Options.FindValue("scale_hb", "0.5").ToDouble());
   od.SetPieDiv(Options.FindValue("div_pie", "4").ToInt());
@@ -766,70 +769,85 @@ void TMainForm::macPictPS(TStrObjList &Cmds, const TParamList &Options,
   // store the atom draw styles
   TGXApp::AtomIterator ai = FXApp->GetAtoms();
   TIntList ds(ai.count);
-  for( size_t i=0; ai.HasNext(); i++ )  {
+  for (size_t i = 0; ai.HasNext(); i++) {
     TXAtom& xa = ai.Next();
     ds[i] = xa.DrawStyle();
-    if( ds[i] == adsEllipsoid )
+    if (ds[i] == adsEllipsoid) {
       xa.DrawStyle(adsOrtep);
+    }
   }
   TStrList toks(octants, ',');
-  for( size_t i=0; i < toks.Count(); i++ )  {
-    if( toks[i].Length() < 2 || !(toks[i].CharAt(0) == '-' || toks[i].CharAt(0) == '+') )  continue;
-    if( toks[i].CharAt(0) == '-' )  {  // exclude
-      if( toks[i].Length() == 2 && toks[i].CharAt(1) == '*' )  { // special case...
+  for (size_t i = 0; i < toks.Count(); i++) {
+    if (toks[i].Length() < 2 ||
+      !(toks[i].CharAt(0) == '-' || toks[i].CharAt(0) == '+'))
+    {
+      continue;
+    }
+    if (toks[i].CharAt(0) == '-') {  // exclude
+      if (toks[i].Length() == 2 && toks[i].CharAt(1) == '*') { // special case...
         ai.Reset();
-        while( ai.HasNext() )  {
+        while (ai.HasNext()) {
           TXAtom& xa = ai.Next();
-          if( xa.DrawStyle() == adsOrtep )
+          if (xa.DrawStyle() == adsOrtep) {
             xa.DrawStyle(adsEllipsoid);
+          }
         }
       }
-      else if( toks[i].CharAt(1) == '$' )  {  // atom type
+      else if (toks[i].CharAt(1) == '$') {  // atom type
         cm_Element* elm = XElementLib::FindBySymbol(toks[i].SubStringFrom(2));
-        if( elm == NULL )  continue;
+        if (elm == 0) {
+          continue;
+        }
         ai.Reset();
-        while( ai.HasNext() )  {
+        while (ai.HasNext()) {
           TXAtom& xa = ai.Next();
-          if( xa.GetType() == *elm && xa.DrawStyle() == adsOrtep )
+          if (xa.GetType() == *elm && xa.DrawStyle() == adsOrtep) {
             xa.DrawStyle(adsEllipsoid);
+          }
         }
       }
-      else  {  // atom name
+      else {  // atom name
         olxstr aname = toks[i].SubStringFrom(1);
         ai.Reset();
-        while( ai.HasNext() )  {
+        while (ai.HasNext()) {
           TXAtom& xa = ai.Next();
-          if( xa.DrawStyle() == adsOrtep && xa.GetLabel().Equalsi(aname) )
+          if (xa.DrawStyle() == adsOrtep && xa.GetLabel().Equalsi(aname)) {
             xa.DrawStyle(adsEllipsoid);
+          }
         }
       }
     }
-    else  {  // include
-      if( toks[i].Length() == 2 && toks[i].CharAt(1) == '*' )  { // special case...
+    else {  // include
+      if (toks[i].Length() == 2 && toks[i].CharAt(1) == '*') { // special case...
         ai.Reset();
-        while( ai.HasNext() )  {
+        while (ai.HasNext()) {
           TXAtom& xa = ai.Next();
-          if( xa.DrawStyle() == adsEllipsoid )
+          if (xa.DrawStyle() == adsEllipsoid) {
             xa.DrawStyle(adsOrtep);
+          }
         }
       }
-      else if( toks[i].CharAt(1) == '$' )  {  // atom type
+      else if (toks[i].CharAt(1) == '$') {  // atom type
         cm_Element* elm = XElementLib::FindBySymbol(toks[i].SubStringFrom(2));
-        if( elm == NULL )  continue;
+        if (elm == 0) {
+          continue;
+        }
         ai.Reset();
-        while( ai.HasNext() )  {
+        while (ai.HasNext()) {
           TXAtom& xa = ai.Next();
-          if( xa.GetType() == *elm && xa.DrawStyle() == adsEllipsoid )
+          if (xa.GetType() == *elm && xa.DrawStyle() == adsEllipsoid) {
             xa.DrawStyle(adsOrtep);
+          }
         }
       }
-      else  {  // atom name
+      else {  // atom name
         olxstr aname = toks[i].SubStringFrom(1);
         ai.Reset();
-        while( ai.HasNext() )  {
+        while (ai.HasNext()) {
           TXAtom& xa = ai.Next();
-          if( xa.DrawStyle() == adsEllipsoid && xa.GetLabel().Equalsi(aname) )
+          if (xa.DrawStyle() == adsEllipsoid && xa.GetLabel().Equalsi(aname)) {
             xa.DrawStyle(adsOrtep);
+          }
         }
       }
     }
@@ -838,8 +856,9 @@ void TMainForm::macPictPS(TStrObjList &Cmds, const TParamList &Options,
   od.Render(TEFile::ChangeFileExt(Cmds[0], "eps"));
   // restore atom draw styles
   ai.Reset();
-  for( size_t i=0; ai.HasNext(); i++ )
+  for (size_t i = 0; ai.HasNext(); i++) {
     ai.Next().DrawStyle(ds[i]);
+  }
 }
 //..............................................................................
 void TMainForm::macPictTEX(TStrObjList &Cmds, const TParamList &Options, TMacroData &Error)  {
@@ -1509,8 +1528,9 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options,
         : TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "oxv"));
     }
     if (TEFile::Exists(FN)) {
-      if (!TEFile::IsAbsolutePath(FN))
+      if (!TEFile::IsAbsolutePath(FN)) {
         FN = TEFile::AddPathDelimeter(TEFile::CurrentDir()) << FN;
+      }
       TDataFile df;
       df.LoadFromXLFile(FN);
       FXApp->LoadStructureStyle(df.Root().GetItemByName("GraphicsView"));
@@ -1525,8 +1545,9 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options,
       }
     }
   }
-  else
+  else {
     Error.SetUnhandled(true);
+  }
 }
 //..............................................................................
 void TMainForm::macLink(TStrObjList &Cmds, const TParamList &Options,

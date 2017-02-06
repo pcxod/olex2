@@ -2218,9 +2218,9 @@ void XLibMacros::macDelIns(TStrObjList &Cmds, const TParamList &Options,
     else if( Cmds[0].Equalsi("TWIN") )
       TXApp::GetInstance().XFile().GetRM().RemoveTWIN();
     else if( Cmds[0].Equalsi("BASF") )
-      TXApp::GetInstance().XFile().GetRM().ClearBASF();
+      TXApp::GetInstance().XFile().GetRM().Vars.ClearBASF();
     else if( Cmds[0].Equalsi("EXTI") )
-      TXApp::GetInstance().XFile().GetRM().ClearEXTI();
+      TXApp::GetInstance().XFile().GetRM().Vars.ClearEXTI();
     else if( Cmds[0].Equalsi("HTAB") )
       TXApp::GetInstance().XFile().GetRM().ClearInfoTab("HTAB");
     else if( Cmds[0].Equalsi("RTAB") )
@@ -4418,7 +4418,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
     Cif->SetParam("_diffrn_reflns_limit_l_max", hs.MaxIndexes[2], false);
   }
   // batch scales
-  if (!xapp.XFile().GetRM().GetBASF().IsEmpty()) {
+  if (xapp.XFile().GetRM().Vars.HasBASF()) {
     olx_object_ptr<olx_pair_t<cetTable *, size_t> > tw_lip =
       Cif->FindLoopItem("_twin_individual_mass_fraction_refined");
     cetTable *l = 0;
@@ -4436,14 +4436,13 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
       id_col_idx = 0;
       fraction_col_idx = 1;
     }
-    
-    const TArrayList<TEValueD> &basf = xapp.XFile().GetRM().GetBASF();
+    const XVarManager &vm = xapp.XFile().GetRM().Vars;
     double esd = 0, sum = 0;
-    for (size_t i = 0; i < basf.Count(); i++) {
-      sum += basf[i].GetV();
-      esd += olx_sqr(basf[i].GetE());
+    for (size_t i = 0; i < vm.GetBASFCount(); i++) {
+      sum += vm.GetBASF(i).GetValue();
+      esd += olx_sqr(vm.GetBASF(i).GetEsd());
     }
-    for (size_t i = 0; i <= basf.Count(); i++) {
+    for (size_t i = 0; i <= vm.GetBASFCount(); i++) {
       olxstr id_val = olxstr(i + 1);
       size_t row_id = InvalidIndex;
       for (size_t j = 0; j < l->RowCount(); j++) {
@@ -4461,7 +4460,8 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
           new cetString(TEValueD(1 - sum, sqrt(esd)).ToString()));
       }
       else {
-        l->Set(row_id, fraction_col_idx, new cetString(basf[i-1].ToString()));
+        l->Set(row_id, fraction_col_idx,
+          new cetString(vm.GetBASF(i-1).ToString()));
       }
     }
   }
@@ -5423,27 +5423,28 @@ void XLibMacros::macASR(TStrObjList &Cmds, const TParamList &Options,
 {
   TXApp& xapp = TXApp::GetInstance();
   TSpaceGroup& sg = xapp.XFile().GetLastLoaderSG();
-  if( sg.IsCentrosymmetric() )  {
+  if (sg.IsCentrosymmetric()) {
     E.ProcessingError(__OlxSrcInfo,
       "not applicable to centrosymmetric space groups");
     return;
   }
-  if( xapp.XFile().GetRM().GetHKLF() == 5 ||
-      xapp.XFile().GetRM().GetHKLF() == 6 )
+  if (xapp.XFile().GetRM().GetHKLF() == 5 ||
+    xapp.XFile().GetRM().GetHKLF() == 6)
   {
     E.ProcessingError(__OlxSrcInfo, "not applicable to HKLF 5/6 data format");
     return;
   }
-  if( xapp.XFile().GetRM().GetBASF().IsEmpty() )  {
-    xapp.XFile().GetRM().AddBASF(0.2);
+  if (!xapp.XFile().GetRM().Vars.HasBASF()) {
+    xapp.XFile().GetRM().Vars.SetBASF(TStrList() << "0.2");
     xapp.NewLogEntry() << "BASF 0.2 is added";
   }
-  if( !xapp.XFile().GetRM().HasTWIN() )  {
+  if (!xapp.XFile().GetRM().HasTWIN()) {
     xapp.XFile().GetRM().SetTWIN_n(2);
     xapp.NewLogEntry() << "TWIN set to 2 components";
   }
-  if( xapp.XFile().GetRM().HasMERG() && xapp.XFile().GetRM().GetMERG() == 4 )
+  if (xapp.XFile().GetRM().HasMERG() && xapp.XFile().GetRM().GetMERG() == 4) {
     xapp.NewLogEntry() << "Please note, that currently Friedel pairs are merged";
+  }
   xapp.NewLogEntry() << "Done";
 }
 //.............................................................................
@@ -8648,14 +8649,16 @@ void XLibMacros::macRESI(TStrObjList &Cmds, const TParamList &Options,
 {
   TXApp &app = TXApp::GetInstance();
   olxstr resi_class = Cmds[0];
-  int resi_number = -1;
+  int resi_number = TResidue::NoResidue;
   if (resi_class.IsNumber()) {
     resi_number = resi_class.ToInt();
     resi_class.SetLength(0);
   }
   Cmds.Delete(0);
-  if (resi_number == -1 && (Cmds.Count() > 0  && Cmds[0].IsNumber())) {
-    resi_number = olx_abs(Cmds[0].ToInt());
+  if (resi_number == TResidue::NoResidue &&
+    (Cmds.Count() > 0  && Cmds[0].IsNumber()))
+  {
+    resi_number = Cmds[0].ToInt();
     Cmds.Delete(0);
   }
   TSAtomPList atoms = app.FindSAtoms(Cmds, false, true);
@@ -8684,8 +8687,8 @@ void XLibMacros::macRESI(TStrObjList &Cmds, const TParamList &Options,
       for (size_t fi = 0; fi <= frags.Count(); fi++) {
         fragments::fragment *f = (fi == 0 ? &fr : &frags[fi - 1]);
         TResidue *resi_;
-        if (resi_number == -1) {
-          resi_ = &au.NewResidue(resi_class, -1);
+        if (resi_number == TResidue::NoResidue) {
+          resi_ = &au.NewResidue(resi_class, TResidue::NoResidue);
           resi_number = resi_->GetNumber() + 1;
         }
         else {
@@ -9630,25 +9633,25 @@ void XLibMacros::funHKLF(const TStrObjList &args, TMacroData &E) {
   else if (args.Count() == 1 && args[0].IsUInt()) {
     uint32_t bc = args[0].ToUInt();
     if (bc == 0) {
-      xf.GetRM().ClearBASF();
+      xf.GetRM().Vars.ClearBASF();
       xf.GetRM().SetHKLF(4);
     }
     else {
-      xf.GetRM().ClearBASF();
+      xf.GetRM().Vars.ClearBASF();
       xf.GetRM().SetHKLF(5);
       bc--;
-      double bv = 1. / bc;
+      TStrList sl;
+      olxstr v = 1. / bc;
       for (size_t i = 0; i < bc; i++) {
-        xf.GetRM().AddBASF(bv);
+        sl << v;
       }
+      xf.GetRM().Vars.SetBASF(sl);
     }
   }
   else {
-    xf.GetRM().ClearBASF();
+    xf.GetRM().Vars.ClearBASF();
     xf.GetRM().SetHKLF(5);
-    for (size_t i = 0; i < args.Count(); i++) {
-      xf.GetRM().AddBASF(args[i].ToDouble());
-    }
+    xf.GetRM().Vars.SetBASF(args);
   }
 }
 //..............................................................................

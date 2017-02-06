@@ -32,6 +32,7 @@ class TIns: public TBasicCFile  {
     RefinementModel& rm;
     TAsymmUnit& au;
     TStrList Symm, Extras;
+    TTypeList<TStrList> Sump;
     TStringToList<olxstr, const cm_Element*>  BasicAtoms;  // SFAC container
     bool CellFound, SetNextPivot, End;
     int Part, ToAnis;
@@ -154,98 +155,111 @@ public:
   */
     template <class StrLst>
     static bool _ParseIns(RefinementModel& rm, const StrLst& Toks) {
-      if( Toks[0].Equalsi("FVAR") )
-        rm.Vars.AddFVAR( Toks.SubListFrom(1) );
-      else if( Toks[0].Equalsi("SUMP") )
-        rm.Vars.AddSUMP( Toks.SubListFrom(1) );
-      else if( Toks[0].Equalsi("WGHT") )  {
-        if( rm.used_weight.Count() != 0 )  {
-          rm.proposed_weight.SetCount(Toks.Count()-1);
+      if (Toks[0].Equalsi("FVAR")) {
+        rm.Vars.AddFVAR(Toks.SubListFrom(1));
+      }
+      else if (Toks[0].Equalsi("WGHT")) {
+        if (rm.used_weight.Count() != 0) {
+          rm.proposed_weight.SetCount(Toks.Count() - 1);
           for (size_t j = 1; j < Toks.Count(); j++) {
-            rm.proposed_weight[j-1] = Toks[j].IsNumber() ? Toks[j].ToDouble()
+            rm.proposed_weight[j - 1] = Toks[j].IsNumber() ? Toks[j].ToDouble()
               : 0.1;
           }
         }
-        else  {
+        else {
           /* shelxl proposes wght in .0000 but print in .000000 format, need
           to check for multiple values in tokens
           */
           TStrList toks(Toks);
-          for( size_t j=1; j < toks.Count(); j++ )  {
-            if( toks[j].CharCount('.') > 1 )  {
+          for (size_t j = 1; j < toks.Count(); j++) {
+            if (toks[j].CharCount('.') > 1) {
               const size_t fp = toks[j].IndexOf('.');
-              if( toks[j].Length() - fp >= 6 )  {
+              if (toks[j].Length() - fp >= 6) {
                 // 'recursive' run
-                toks.Insert(j+1, toks[j].SubStringFrom(fp+7));
-                toks[j].SetLength(fp+6);
+                toks.Insert(j + 1, toks[j].SubStringFrom(fp + 7));
+                toks[j].SetLength(fp + 6);
               }
             }
           }
-          rm.used_weight.SetCount(toks.Count()-1);
+          rm.used_weight.SetCount(toks.Count() - 1);
           for (size_t j = 1; j < toks.Count(); j++) {
-            if (!toks[j].IsNumber() && toks[j].EndsWith('*')){
+            if (!toks[j].IsNumber() && toks[j].EndsWith('*')) {
               if (!toks[j].TrimR('*').IsNumber()) {
-                rm.used_weight[j-1] = 0.1;
+                rm.used_weight[j - 1] = 0.1;
                 continue;
               }
             }
-            rm.used_weight[j-1] = toks[j].ToDouble();
+            rm.used_weight[j - 1] = toks[j].ToDouble();
           }
           rm.proposed_weight = rm.used_weight;
         }
       }
-      else if( Toks[0].Equalsi("MERG") && Toks.Count() == 2 )
+      else if (Toks[0].Equalsi("MERG") && Toks.Count() == 2) {
         rm.SetMERG(Toks[1].ToInt());
+      }
       else if (Toks[0].Equalsi("EXTI")) {
         TEValueD ev;
-        if (Toks.Count() > 1) ev = Toks[1];
-        rm.SetEXTI(ev.GetV(), ev.GetE());
+        if (Toks.Count() > 1) {
+          ev = Toks[1];
+        }
+        rm.Vars.SetEXTI(ev.GetV(), ev.GetE());
       }
-      else if( Toks[0].Equalsi("SIZE") && (Toks.Count() == 4) ) {
+      else if (Toks[0].Equalsi("SIZE") && (Toks.Count() == 4)) {
         rm.expl.SetCrystalSize(Toks[1].ToDouble(), Toks[2].ToDouble(),
           Toks[3].ToDouble());
       }
-      else if( Toks[0].Equalsi("BASF") && (Toks.Count() > 1) )
-        rm.SetBASF(Toks.SubListFrom(1));
-      else if( Toks[0].Equalsi("DEFS") && (Toks.Count() > 1) )
+      else if (Toks[0].Equalsi("BASF") && (Toks.Count() > 1)) {
+        rm.Vars.SetBASF(Toks.SubListFrom(1));
+      }
+      else if (Toks[0].Equalsi("DEFS") && (Toks.Count() > 1)) {
         rm.SetDEFS(Toks.SubListFrom(1));
-      else if( Toks[0].Equalsi("SHEL") )
+      }
+      else if (Toks[0].Equalsi("SHEL")) {
         rm.SetSHEL(Toks.SubListFrom(1));
-      else if( Toks[0].Equalsi("TWIN") )
+      }
+      else if (Toks[0].Equalsi("TWIN")) {
         rm.SetTWIN(Toks.SubListFrom(1));
-      else if( Toks[0].Equalsi("TEMP") && Toks.Count() == 2 )  {
+      }
+      else if (Toks[0].Equalsi("TEMP") && Toks.Count() == 2) {
         rm.expl.SetTemp(Toks[1]);
       }
-      else if( Toks[0].Equalsi("HKLF") && (Toks.Count() > 1) )
+      else if (Toks[0].Equalsi("HKLF") && (Toks.Count() > 1)) {
         rm.SetHKLF(Toks.SubListFrom(1));
-      else if( Toks[0].Equalsi("L.S.") || Toks[0].Equalsi("CGLS") )  {
+      }
+      else if (Toks[0].Equalsi("L.S.") || Toks[0].Equalsi("CGLS")) {
         rm.SetRefinementMethod(Toks[0]);
         rm.LS.SetCount(Toks.Count() - 1);
-        for( size_t i=1; i < Toks.Count(); i++ )
-          rm.LS[i-1] = Toks[i].ToInt();
+        for (size_t i = 1; i < Toks.Count(); i++) {
+          rm.LS[i - 1] = Toks[i].ToInt();
+        }
       }
-      else if( Toks[0].Equalsi("PLAN") )  {
+      else if (Toks[0].Equalsi("PLAN")) {
         rm.PLAN.SetCount(Toks.Count() - 1);
-        for( size_t i=1; i < Toks.Count(); i++ )
-          rm.PLAN[i-1] = Toks[i].ToDouble();
+        for (size_t i = 1; i < Toks.Count(); i++) {
+          rm.PLAN[i - 1] = Toks[i].ToDouble();
+        }
       }
-      else if( Toks[0].Equalsi("LATT") && (Toks.Count() > 1))
-        rm.aunit.SetLatt( (short)Toks[1].ToInt() );
-      else if( Toks[0].Equalsi("UNIT") )
+      else if (Toks[0].Equalsi("LATT") && (Toks.Count() > 1)) {
+        rm.aunit.SetLatt((short)Toks[1].ToInt());
+      }
+      else if (Toks[0].Equalsi("UNIT")) {
         rm.SetUserContentSize(Toks.SubListFrom(1));
-      else if( Toks[0].Equalsi("ZERR") )  {
-        if( Toks.Count() == 8 )  {
-          rm.aunit.SetZ( (short)Toks[1].ToDouble() );
+      }
+      else if (Toks[0].Equalsi("ZERR")) {
+        if (Toks.Count() == 8) {
+          rm.aunit.SetZ((short)Toks[1].ToDouble());
           rm.aunit.GetAxisEsds() = vec3d(Toks[2].ToDouble(),
             Toks[3].ToDouble(), Toks[4].ToDouble());
           rm.aunit.GetAngleEsds() = vec3d(Toks[5].ToDouble(),
             Toks[6].ToDouble(), Toks[7].ToDouble());
         }
-        else
+        else {
           throw TInvalidArgumentException(__OlxSourceInfo, "ZERR");
+        }
       }
-      else
+      else {
         return false;
+      }
       return true;
     }
 
