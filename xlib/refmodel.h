@@ -53,9 +53,7 @@ static uint32_t
   rm_clear_DEF = (rm_clear_ALL^(
   rm_clear_SAME|rm_clear_AFIX|rm_clear_VARS|rm_clear_BadRefs));
 
-class RefinementModel
-  : public IXVarReferencerContainer, public IXVarReferencer, public IOlxObject
-{
+class RefinementModel : public IOlxObject {
   // in INS file is EQUV command
   struct Equiv  {
     int ref_cnt;
@@ -84,16 +82,12 @@ protected:
   int HKLF_m;
   double OMIT_s, OMIT_2t;
   double SHEL_lr, SHEL_hr;
-  TEValueD EXTI;
   mat3d TWIN_mat;
   int TWIN_n;
   bool TWIN_set, OMIT_set, MERG_set, HKLF_set, SHEL_set,
-    EXTI_set, DEFS_set;
+    DEFS_set;
   vec3i_list Omits;
   TDoubleList DEFS;
-  TArrayList<TEValueD> BASF;
-  TPtrList<XVarReference> BASF_Vars;
-  olxstr VarRefrencerId;
   olxstr_dict<IXVarReferencerContainer*, false> RefContainers;
   void SetDefaults();
   TTypeListExt<class InfoTab, IOlxObject> InfoTables;
@@ -279,15 +273,6 @@ public:
   void SetMERG(int v)  {  MERG = v;  MERG_set = true;  }
   bool HasMERG() const {  return MERG_set;  }
 
-  const TEValueD& GetEXTI() const {  return EXTI;  }
-  void SetEXTI(double v, double e) {
-    EXTI.V() = v;
-    EXTI.E() = e;
-    EXTI_set = true;
-  }
-  bool HasEXTI() const {  return EXTI_set;  }
-  void ClearEXTI() { EXTI_set = false; }
-
   double GetOMIT_s() const {  return OMIT_s;  }
   void SetOMIT_s(double v)  {  OMIT_s = v;  OMIT_set = true;  }
   double GetOMIT_2t() const {  return OMIT_2t;  }
@@ -357,32 +342,9 @@ public:
   void ClearShell() { SHEL_set = false; }
   olxstr GetSHELStr() const {  return olxstr(SHEL_lr) << ' ' << SHEL_hr;  }
 
-  const TArrayList<TEValueD>& GetBASF() const {  return BASF;  }
-  TDoubleList::const_list_type GetBASFAsDoubleList() const {
-    return TDoubleList::FromList(GetBASF(),
-      FunctionAccessor::MakeConst(&TEValueD::GetV));
-  }
+  TDoubleList::const_list_type GetBASFAsDoubleList() const;
   // returns a list of [1-sum(basf), basf[0], basf[1],...] - complete scales
-  TDoubleList::const_list_type GetScales() const {
-    TDoubleList rv;
-    if (!GetBASF().IsEmpty()) {
-      double pi = 0;  // 'prime' reflection fraction
-      for (size_t bi = 0; bi < GetBASF().Count(); bi++) {
-        pi += GetBASF()[bi].GetV();
-      }
-      rv << 1 - pi << GetBASFAsDoubleList();
-    }
-    else {
-      if (GetTWIN_n() != 0) {  // all the fractions are the same
-        double f = 1. / olx_abs(GetTWIN_n());
-        rv.SetCount(olx_abs(GetTWIN_n()));
-        for (size_t i = 0; i < rv.Count(); i++) {
-          rv[i] = f;
-        }
-      }
-    }
-    return rv;
-  }
+  TDoubleList::const_list_type GetScales() const;
   olxstr GetBASFStr() const;
 
   template <class list> void SetTWIN(const list& twin) {
@@ -415,31 +377,8 @@ Friedel opposites of components 1 ... m
   bool HasTWIN() const {  return TWIN_set;  }
   void RemoveTWIN()  {  TWIN_set = false;  }
 
-  void AddBASF(double val)  {
-    BASF.Add(TEValueD(val));
-    BASF_Vars.Add(NULL);
-  }
-  template <class list> void SetBASF(const list& bs)  {
-    size_t cnt = BASF.Count();
-    BASF.SetCount(cnt+bs.Count());
-    BASF_Vars.SetCount(BASF.Count());
-    for (size_t i=0; i < bs.Count(); i++) {
-      BASF_Vars[cnt+i] = NULL;
-      Vars.SetParam(*this, (short)(cnt+i), bs[i].ToDouble());
-    }
-  }
-  void ClearBASF() {
-    BASF.Clear();
-    BASF_Vars.Clear();
-  }
   // sets default esd values for restraints
-  template <class list> void SetDEFS(const list& bs) {
-    size_t mc = olx_min(bs.Count(), DEFS.Count());
-    for (size_t i = 0; i < mc; i++) {
-      DEFS[i] = bs[i].ToDouble();
-    }
-    DEFS_set = true;
-  }
+  void SetDEFS(const TStrList &df);
   olxstr GetDEFSStr() const;
   bool IsDEFSSet() const {  return DEFS_set;  }
 
@@ -694,6 +633,7 @@ Friedel opposites of components 1 ... m
   void SetReflections(const TRefList &refs) const;
   // this will be only valid if any list of the reflections was called
   const HklStat& GetReflectionStat() const {  return _HklStat;  }
+  void ResetHklStats() { _HklStat.SetDefaults();  }
   // filters the reflections according to the parameters
   HklStat& FilterHkl(TRefList& out, HklStat& stats);
   TRefPList::const_list_type GetNonoverlappingRefs(const TRefList& refs);
@@ -718,11 +658,14 @@ Friedel opposites of components 1 ... m
   template <class RefList, class FList, class SymSpace>
   void CorrectExtiForF(const RefList& refs, FList& F, const SymSpace& sp) const
   {
-    if (!EXTI_set || EXTI.GetV() == 0) return;
-    if (refs.Count() != F.Count())
+    if (!Vars.HasEXTI() || Vars.GetEXTI().GetValue() == 0) {
+      return;
+    }
+    if (refs.Count() != F.Count()) {
       throw TInvalidArgumentException(__OlxSrcInfo, "arrays size");
+    }
     const double l = expl.GetRadiation(),
-      k = 0.0005*EXTI.GetV()*l*l*l, lsqo4 = l*l/4;
+      k = 0.0005*Vars.GetEXTI().GetValue()*l*l*l, lsqo4 = l*l/4;
     for (size_t i=0; i < refs.Count(); i++) {
       const double x =
         sp.HklToCart(TReflection::GetHkl(refs[i])).QLength()*lsqo4;
@@ -734,11 +677,14 @@ Friedel opposites of components 1 ... m
   void CorrectExtiForFsq(const RefList& refs, FsqList& Fsq,
     const SymSpace& sp) const
   {
-    if (!EXTI_set || EXTI.GetV() == 0) return;
-    if (refs.Count() != Fsq.Count())
+    if (!Vars.HasEXTI() || Vars.GetEXTI().GetValue() == 0) {
+      return;
+    }
+    if (refs.Count() != Fsq.Count()) {
       throw TInvalidArgumentException(__OlxSrcInfo, "arrays size");
+    }
     const double l = expl.GetRadiation(),
-      k = 0.0005*EXTI.GetV()*l*l*l, lsqo4 = l*l/4;
+      k = 0.0005*Vars.GetEXTI().GetValue()*l*l*l, lsqo4 = l*l/4;
     for (size_t i=0; i < refs.Count(); i++) {
       const double x =
         sp.HklToCart(TReflection::GetHkl(refs[i])).QLength()*lsqo4;
@@ -766,52 +712,6 @@ Friedel opposites of components 1 ... m
       throw TInvalidArgumentException(__OlxSourceInfo, "container id");
     }
   }
-// IXVarReferencer implementation
-  virtual size_t VarCount() const {  return BASF.Count();  }
-  virtual olxstr GetVarName(size_t i) const {
-    if (i >= BASF_Vars.Count())
-      throw TInvalidArgumentException(__OlxSourceInfo, "var index");
-    return olxstr("k") << (i+1);
-  }
-  virtual XVarReference* GetVarRef(size_t i) const {
-    if (i >= BASF_Vars.Count())
-      throw TInvalidArgumentException(__OlxSourceInfo, "var index");
-    return BASF_Vars[i];
-  }
-  virtual void SetVarRef(size_t i, XVarReference* var_ref)  {
-    if (i >= BASF_Vars.Count())
-      throw TInvalidArgumentException(__OlxSourceInfo, "var index");
-    if (var_ref != NULL) {
-      BASF[i].E() = var_ref->coefficient*var_ref->Parent.GetEsd();
-    }
-    BASF_Vars[i] = var_ref;
-  }
-  virtual const IXVarReferencerContainer& GetParentContainer() const {
-    return *this;
-  }
-  virtual double GetValue(size_t var_index) const {
-    if (var_index >= BASF.Count())
-      throw TInvalidArgumentException(__OlxSourceInfo, "var_index");
-    return BASF[var_index].GetV();
-  }
-  virtual void SetValue(size_t var_index, const double& val) {
-    if (var_index >= BASF.Count())
-      throw TInvalidArgumentException(__OlxSourceInfo, "var_index");
-    BASF[var_index] = val;
-  }
-  virtual bool IsValid() const {  return true;  }
-//
-// IXVarReferencerContainer implementation
-  virtual olxstr GetIdName() const {  return VarRefrencerId;  }
-  virtual size_t GetIdOf(const IXVarReferencer &) const {  return 0;  }
-  virtual size_t GetPersistentIdOf(const IXVarReferencer &) const {
-    return 0;
-  }
-  virtual IXVarReferencer& GetReferencer(size_t) const {
-    return const_cast<RefinementModel&>(*this);
-  }
-  virtual size_t ReferencerCount() const {  return 1;  }
-//
   TPtrList<const TSRestraintList>::const_list_type GetRestraints() const;
   TPtrList<TSRestraintList>::const_list_type GetRestraints();
   void ToDataItem(TDataItem& item);
