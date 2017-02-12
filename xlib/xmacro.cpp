@@ -4436,7 +4436,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
         Cif->Remove(l->GetName());
         TBasicApp::NewLogEntry(logWarning) << "The TWIN definition loop does not"
           " match the refinement model - removing, but some merged information "
-          "may be invalid.";
+          "may be still invalid.";
       }
       l = &Cif->AddLoopDef("_twin_individual_id,"
         "_twin_individual_mass_fraction_refined");
