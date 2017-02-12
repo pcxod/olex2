@@ -371,8 +371,12 @@ void GXLibMacros::Export(TLibrary& lib) {
     "For testing only for now");
   gxlib_InitMacro(Legend, EmptyString(),
     fpNone | fpOne,
-    "Shows atom legend");
-
+    "Shows/hides atom legend");
+  gxlib_InitMacro(AdjustStyle,
+    "a-apply to atoms [true]&;"
+    "b-apply to bonds[true]&;",
+    fpAny^(fpNone|fpOne),
+    "Shows/hides atom legend");
 
   gxlib_InitFunc(ExtraZoom, fpNone|fpOne,
     "Sets/reads current extra zoom (default zoom correction)");
@@ -384,6 +388,8 @@ void GXLibMacros::Export(TLibrary& lib) {
     "Returns material of specified object");
   gxlib_InitFunc(FBond, fpNone | fpOne,
     "Sets/prints bond unit length");
+  gxlib_InitFunc(ObjectSettings, fpTwo|fpThree,
+    "Gets/sets aobject settings for atom or bond");
 }
 //.............................................................................
 void GXLibMacros::macGrow(TStrObjList &Cmds, const TParamList &Options,
@@ -4855,3 +4861,174 @@ void GXLibMacros::macLegend(TStrObjList &Cmds, const TParamList &Options,
   }
 }
 //.............................................................................
+template <typename functor_t>
+void adjust_style(TGXApp &app, const functor_t & functor,
+  bool apply_to_atoms, bool apply_to_bonds,
+  const olxstr_set<true> &primitives, const olxstr &src=EmptyString())
+{
+  for (size_t i = 0; i < app.GetRenderer().CollectionCount(); i++) {
+    TGPCollection &c = app.GetRenderer().GetCollection(i);
+    if (c.IsEmpty()) {
+      continue;
+    }
+    if ((apply_to_atoms && EsdlInstanceOf(c.GetObject(0), TXAtom)) ||
+      (apply_to_bonds && EsdlInstanceOf(c.GetObject(0), TXBond)))
+    {
+      for (size_t j = 0; j < c.PrimitiveCount(); j++) {
+        TGlPrimitive &p = c.GetPrimitive(j);
+        if (!primitives.IsEmpty() && !primitives.Contains(p.GetName())) {
+          continue;
+        }
+        if (!src.IsEmpty()) {
+          TGlPrimitive *sp = c.FindPrimitiveByName(src);
+          if (sp != 0) {
+            p.SetProperties(sp->GetProperties());
+          }
+          continue;
+        }
+        TGlMaterial m = p.GetProperties();
+        // fix unnecessary properties
+        m.SetAmbientB(false);
+        m.SetDiffuseB(false);
+        m.SetEmissionB(false);
+        m.SetShininessB(false);
+        m.SetSpecularB(false);
+        functor(m);
+        p.SetProperties(m);
+        c.GetStyle().SetMaterial(p.GetName(), m);
+      }
+    }
+  }
+}
+
+struct sta_adjust_pc {
+  double pc;
+  int what;
+  sta_adjust_pc(double pc, int what)
+    : pc(pc), what(what)
+  {}
+  TGlMaterial &operator()(TGlMaterial &m) const {
+    if (what == 0) {
+      m.SetAmbientF(true);
+      m.AmbientF *= pc;
+    }
+    else if (what == 1) {
+      m.SetDiffuseF(true);
+      m.DiffuseF = m.AmbientF * pc;
+    }
+    else if (what == 2) {
+      m.SetSpecularF(true);
+      m.SpecularF = m.AmbientF * pc;
+    }
+    return m;
+  }
+};
+
+struct sta_adjust_cl {
+  uint32_t cl;
+  int what;
+  sta_adjust_cl(uint32_t cl, int what)
+    : cl(cl), what(what)
+  {}
+  TGlMaterial &operator()(TGlMaterial &m) const {
+    if (what == 0) {
+      m.SetAmbientF(true);
+      m.AmbientF = cl;
+    }
+    else if (what == 1) {
+      m.SetDiffuseF(true);
+      m.DiffuseF = cl;
+    }
+    return m;
+  }
+};
+
+struct sta_adjust_shininess {
+  short value;
+  sta_adjust_shininess(short value)
+    : value(value)
+  {}
+  TGlMaterial &operator()(TGlMaterial &m) const {
+    m.SetShininessF(true);
+    m.ShininessF = value;
+    return m;
+  }
+};
+
+struct sta_adjust_dummy {
+  sta_adjust_dummy()
+  {}
+  TGlMaterial &operator()(TGlMaterial &m) const {
+    return m;
+  }
+};
+
+void GXLibMacros::macAdjustStyle(TStrObjList &Cmds, const TParamList &Options,
+  TMacroData &Error)
+{
+  bool apply_to_atoms = Options.GetBoolOption("a", false, true),
+    apply_to_bonds = Options.GetBoolOption("b", false, true);
+  olxstr_set<true> primitives;
+  {
+    size_t idx = Cmds[0].IndexOf('.');
+    if (idx != InvalidIndex) {
+      TStrList toks(Cmds[0].SubStringFrom(idx + 1), ',');
+      for (size_t i = 0; i < toks.Count(); i++) {
+        primitives.Add(toks[i].TrimWhiteChars());
+      }
+    }
+  }
+  if (Cmds[0].StartsFromi("diffuse") ||
+    Cmds[0].StartsFromi("specular") ||
+    Cmds[0].StartsFromi("ambient"))
+  {
+    int dest = Cmds[0].StartsFromi("ambient") ? 0
+      : (Cmds[0].StartsFromi("diffuse") ? 1 : 2);
+    if (Cmds[1].EndsWith('%')) {
+      double pc = Cmds[1].SubStringFrom(0, 1).ToDouble()/100;
+      if (pc < 0) {
+        pc = 0;
+      }
+      else if (pc > 1) {
+        pc = 1;
+      }
+      adjust_style(app,
+        sta_adjust_pc(pc, dest),
+        apply_to_atoms, apply_to_bonds, primitives);
+    }
+    else if (Cmds[1].IsNumber()) {
+      adjust_style(app,
+        sta_adjust_cl(Cmds[1].ToUInt(), dest),
+        apply_to_atoms, apply_to_bonds, primitives);
+    }
+    // copy from another primitive
+    else {
+      adjust_style(app,
+        sta_adjust_dummy(),
+        apply_to_atoms, apply_to_bonds, primitives, Cmds[1]);
+    }
+  }
+  else if (Cmds[0].StartsFromi("shininess")) {
+    adjust_style(app,
+      sta_adjust_shininess(Cmds[1].ToInt()),
+      apply_to_atoms, apply_to_bonds, primitives);
+  }
+}
+//..............................................................................
+void GXLibMacros::funObjectSettings(const TStrObjList &Params, TMacroData &E) {
+  if (Params[0].Equalsi("atom")) {
+    TXAtom::Settings &st = TXAtom::GetSettings(app.GetRenderer());
+    if (Params[1].Equalsi("RimW")) {
+      if (Params.Count() == 3) {
+        st.SetRimW(Params[2].ToDouble());
+        // these have no effect?
+        //st.ClearPrimitives();
+        //app.CreateObjects(false);
+      }
+      else {
+        E.SetRetVal(st.GetRimW());
+      }
+    }
+  }
+}
+//..............................................................................
