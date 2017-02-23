@@ -203,23 +203,26 @@ void TMainForm::funStrcmp(const TStrObjList& Params, TMacroData &E)  {
   E.SetRetVal(Params[0] == Params[1]);
 }
 //..............................................................................
-void TMainForm::funGetEnv(const TStrObjList& Params, TMacroData &E)  {
-  if( Params.IsEmpty() )  {
+void TMainForm::funGetEnv(const TStrObjList& Params, TMacroData &E) {
+  if (Params.IsEmpty()) {
 #if defined(__WIN32__) && defined(_UNICODE) && defined(_MSC_VER)
-    if( _wenviron != NULL )  {
-      for( size_t i=0; _wenviron[i] != NULL; i++ )
+    if (_wenviron != NULL) {
+      for (size_t i = 0; _wenviron[i] != 0; i++) {
         TBasicApp::NewLogEntry() << _wenviron[i];
+      }
     }
 #else
     extern char **environ;
-    if( environ != NULL )  {
-      for( size_t i=0; environ[i] != NULL; i++ )
+    if (environ != NULL) {
+      for (size_t i = 0; environ[i] != 0; i++) {
         TBasicApp::NewLogEntry() << environ[i];
+      }
     }
 #endif
   }
-  else
+  else {
     E.SetRetVal(olx_getenv(Params[0]));
+  }
 }
 //..............................................................................
 void TMainForm::funFileSave(const TStrObjList& Params, TMacroData &E)  {

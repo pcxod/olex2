@@ -113,8 +113,7 @@ struct ort_line : public a_ort_object  {
     color(_color), width(width)
   {}
   virtual void render(PSWriter&) const;
-  //virtual float get_z() const {  return (from[2]+to[2])/2;  }
-  virtual float get_z() const { return olx_min(from[2], to[2]); }
+  virtual float get_z() const;
   void update_size(evecf &sz) const {
     a_ort_object::update_min_max(sz, from);
     a_ort_object::update_min_max(sz, to);
@@ -132,12 +131,7 @@ struct ort_poly : public a_ort_object  {
     line_width(1.0f),
     color(0x0) {  }
   virtual void render(PSWriter&) const;
-  virtual float get_z() const {
-    float z = 0;
-    for ( size_t i=0; i < points.Count(); i++)
-      z += points[i][2];
-    return points.IsEmpty() ? 0 : z/points.Count();
-  }
+  virtual float get_z() const;
   void update_size(evecf &sz) const {
     for (size_t i=0; i < points.Count(); i++)
       a_ort_object::update_min_max(sz, points[i]);

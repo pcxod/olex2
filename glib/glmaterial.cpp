@@ -190,66 +190,113 @@ bool TGlMaterial::FromDataItem(const TDataItem& Item)  {
 TIString TGlMaterial::ToString() const {
   olxstr str(EmptyString(), 256);
   str << Flags;
-  if( (Flags & sglmAmbientF) != 0 )
+  if ((Flags & sglmAmbientF) != 0) {
     str << ";" << AmbientF.ToString();
-  if( (Flags & sglmAmbientB) != 0 )
+  }
+  if ((Flags & sglmAmbientB) != 0) {
     str << ";" << AmbientB.ToString();
-  if( (Flags & sglmDiffuseF) != 0 )
+  }
+  if ((Flags & sglmDiffuseF) != 0) {
     str << ";" << DiffuseF.ToString();
-  if( (Flags & sglmDiffuseB) != 0 )
+  }
+  if ((Flags & sglmDiffuseB) != 0) {
     str << ";" << DiffuseB.ToString();
-  if( (Flags & sglmSpecularF) != 0 )
+  }
+  if ((Flags & sglmSpecularF) != 0) {
     str << ";" << SpecularF.ToString();
-  if( (Flags & sglmSpecularB) != 0 )
+  }
+  if ((Flags & sglmSpecularB) != 0) {
     str << ";" << SpecularB.ToString();
-  if( (Flags & sglmShininessF) != 0 )
+  }
+  if ((Flags & sglmShininessF) != 0) {
     str << ";" << ShininessF;
-  if( (Flags & sglmShininessB) != 0 )
+  }
+  if ((Flags & sglmShininessB) != 0) {
     str << ";" << ShininessB;
+  }
+  if ((Flags & sglmEmissionF) != 0) {
+    str << ";" << EmissionF.ToString();
+  }
+  if ((Flags & sglmEmissionB) != 0) {
+    str << ";" << EmissionB.ToString();
+  }
   return str;
 }
 //..............................................................................
-void TGlMaterial::FromString(const olxstr& str, bool safe)  {
-  if( str.IsEmpty() )
+void TGlMaterial::FromString(const olxstr& str, bool safe) {
+  if (str.IsEmpty()) {
     throw TInvalidArgumentException(__OlxSourceInfo, "representation");
-  TStrList toks( str, ';');
+  }
+  TStrList toks(str, ';');
   Flags = toks[0].ToInt();
   int ind = 1;
   if (!safe) {
-    if ((Flags & sglmAmbientF) != 0)
+    if ((Flags & sglmAmbientF) != 0) {
       AmbientF.FromString(toks[ind++]);
-    if ((Flags & sglmAmbientB) != 0)
+    }
+    if ((Flags & sglmAmbientB) != 0) {
       AmbientB.FromString(toks[ind++]);
-    if ((Flags & sglmDiffuseF) != 0)
+    }
+    if ((Flags & sglmDiffuseF) != 0) {
       DiffuseF.FromString(toks[ind++]);
-    if ((Flags & sglmDiffuseB) != 0)
+    }
+    if ((Flags & sglmDiffuseB) != 0) {
       DiffuseB.FromString(toks[ind++]);
-    if ((Flags & sglmSpecularF) != 0)
+    }
+    if ((Flags & sglmSpecularF) != 0) {
       SpecularF.FromString(toks[ind++]);
-    if ((Flags & sglmSpecularB) != 0)
+    }
+    if ((Flags & sglmSpecularB) != 0) {
       SpecularB.FromString(toks[ind++]);
-    if ((Flags & sglmShininessF) != 0)
+    }
+    if ((Flags & sglmShininessF) != 0) {
       ShininessF = toks[ind++].ToInt();
-    if ((Flags & sglmShininessB) != 0)
+    }
+    if ((Flags & sglmShininessB) != 0) {
       ShininessB = toks[ind++].ToInt();
+    }
+    if (ind < toks.Count()) {
+      if ((Flags & sglmEmissionF) != 0) {
+        EmissionF.FromString(toks[ind++]);
+      }
+      if ((Flags & sglmEmissionB) != 0) {
+        EmissionB.FromString(toks[ind++]);
+      }
+    }
   }
   else {
-    if ((Flags & sglmAmbientF) != 0)
+    if ((Flags & sglmAmbientF) != 0) {
       AmbientF.FromString(toks.GetStringSafe(ind++));
-    if ((Flags & sglmAmbientB) != 0)
+    }
+    if ((Flags & sglmAmbientB) != 0) {
       AmbientB.FromString(toks.GetStringSafe(ind++));
-    if ((Flags & sglmDiffuseF) != 0)
+    }
+    if ((Flags & sglmDiffuseF) != 0) {
       DiffuseF.FromString(toks.GetStringSafe(ind++));
-    if ((Flags & sglmDiffuseB) != 0)
+    }
+    if ((Flags & sglmDiffuseB) != 0) {
       DiffuseB.FromString(toks.GetStringSafe(ind++));
-    if ((Flags & sglmSpecularF) != 0)
+    }
+    if ((Flags & sglmSpecularF) != 0) {
       SpecularF.FromString(toks.GetStringSafe(ind++));
-    if ((Flags & sglmSpecularB) != 0)
+    }
+    if ((Flags & sglmSpecularB) != 0) {
       SpecularB.FromString(toks.GetStringSafe(ind++));
-    if ((Flags & sglmShininessF) != 0)
+    }
+    if ((Flags & sglmShininessF) != 0) {
       ShininessF = toks.GetStringSafe(ind++).ToInt();
-    if ((Flags & sglmShininessB) != 0)
+    }
+    if ((Flags & sglmShininessB) != 0) {
       ShininessB = toks.GetStringSafe(ind).ToInt();
+    }
+    if (ind < toks.Count()) {
+      if ((Flags & sglmEmissionF) != 0) {
+        EmissionF.FromString(toks.GetStringSafe(ind++));
+      }
+      if ((Flags & sglmEmissionB) != 0) {
+        EmissionB.FromString(toks.GetStringSafe(ind++));
+      }
+    }
   }
 }
 //..............................................................................

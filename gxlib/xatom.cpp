@@ -1314,8 +1314,8 @@ void TXAtom::Settings::CreatePrimitives() {
 
   GlPRD2 = &parent.NewPrimitive(sgloDisk);
   GlPRD2->SetQuadricOrientation(GLU_INSIDE);
-  GlPRD2->Params[0] = DiskIR;  GlPRD1->Params[1] = DiskOR;
-  GlPRD2->Params[2] = DiskQ;   GlPRD1->Params[3] = 1;
+  GlPRD2->Params[0] = DiskIR;  GlPRD2->Params[1] = DiskOR;
+  GlPRD2->Params[2] = DiskQ;   GlPRD2->Params[3] = 1;
   GlPRD2->Compile();
 
   primitives.Add("Disks", GlP = &parent.NewPrimitive(sgloCommandList));
