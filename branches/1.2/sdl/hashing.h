@@ -12,58 +12,58 @@
 #include "talist.h"
 BeginEsdlNamespace()
 
-struct HashingUtils  {
-  static inline uint32_t hs_rotl(uint32_t v, uint32_t c)  {
-    return (v << c) | (v >> (32-c));
+struct HashingUtils {
+  static inline uint32_t hs_rotl(uint32_t v, uint32_t c) {
+    return (v << c) | (v >> (32 - c));
   }
-  static inline uint32_t hs_rotr(uint32_t v, uint32_t c)  {
-    return (v >> c) | (v << (32-c));
+  static inline uint32_t hs_rotr(uint32_t v, uint32_t c) {
+    return (v >> c) | (v << (32 - c));
   }
 };
 struct HashingUtilsLE : public HashingUtils {
   // operates on 64 byte blocks only, little endian
-  static inline void hs_copy(const uint8_t* src, uint32_t* dest, size_t src_len)  {
-    for( size_t i=0, j=0; i < src_len; i += 4, j++ )
+  static inline void hs_copy(const uint8_t* src, uint32_t* dest, size_t src_len) {
+    for (size_t i = 0, j = 0; i < src_len; i += 4, j++)
       dest[j] = ((uint32_t)src[i]) |
-      (((uint32_t)src[i+1]) << 8) |
-      (((uint32_t)src[i+2]) << 16) |
-      (((uint32_t)src[i+3]) << 24);
+      (((uint32_t)src[i + 1]) << 8) |
+      (((uint32_t)src[i + 2]) << 16) |
+      (((uint32_t)src[i + 3]) << 24);
   }
-  static inline void hs_copy(const uint32_t* src, uint8_t* dest, size_t src_len)  {
-    for( size_t i=0, j=0; j < src_len; i += 4, j++ )  {
-      dest[i] =   (char)src[j];
-      dest[i+1] = (char)(src[j] >> 8);
-      dest[i+2] = (char)(src[j] >> 16);
-      dest[i+3] = (char)(src[j] >> 24);
+  static inline void hs_copy(const uint32_t* src, uint8_t* dest, size_t src_len) {
+    for (size_t i = 0, j = 0; j < src_len; i += 4, j++) {
+      dest[i] = (char)src[j];
+      dest[i + 1] = (char)(src[j] >> 8);
+      dest[i + 2] = (char)(src[j] >> 16);
+      dest[i + 3] = (char)(src[j] >> 24);
     }
   }
-  static inline void hs_write_len(uint8_t* dest, const uint64_t& len)  {
-    for( int i=8; i >= 1; i-- )
-      dest[64-i] = ((uint8_t*)&len)[8-i];
+  static inline void hs_write_len(uint8_t* dest, const uint64_t& len) {
+    for (int i = 8; i >= 1; i--)
+      dest[64 - i] = ((uint8_t*)&len)[8 - i];
   }
 };
 
 struct HashingUtilsBE : public HashingUtils {
 public:
   // operates on 64 byte blocks only, big endian
-  static inline void hs_copy(const uint8_t* src, uint32_t* dest, size_t src_len)  {
-    for( size_t i=0, j=0; i < src_len; i += 4, j++ )
-      dest[j] = ((uint32_t)src[i+3]) |
-      (((uint32_t)src[i+2]) << 8) |
-      (((uint32_t)src[i+1]) << 16) |
+  static inline void hs_copy(const uint8_t* src, uint32_t* dest, size_t src_len) {
+    for (size_t i = 0, j = 0; i < src_len; i += 4, j++)
+      dest[j] = ((uint32_t)src[i + 3]) |
+      (((uint32_t)src[i + 2]) << 8) |
+      (((uint32_t)src[i + 1]) << 16) |
       (((uint32_t)src[i]) << 24);
   }
-  static inline void hs_copy(const uint32_t* src, uint8_t* dest, size_t src_len)  {
-    for( size_t i=0, j=0; j < src_len; i += 4, j++ )  {
-      dest[i+3] = (char)src[j];
-      dest[i+2] = (char)(src[j] >> 8);
-      dest[i+1] = (char)(src[j] >> 16);
-      dest[i] =   (char)(src[j] >> 24);
+  static inline void hs_copy(const uint32_t* src, uint8_t* dest, size_t src_len) {
+    for (size_t i = 0, j = 0; j < src_len; i += 4, j++) {
+      dest[i + 3] = (char)src[j];
+      dest[i + 2] = (char)(src[j] >> 8);
+      dest[i + 1] = (char)(src[j] >> 16);
+      dest[i] = (char)(src[j] >> 24);
     }
   }
-  static inline void hs_write_len(uint8_t* dest, const uint64_t& len)  {
-    for( int i=8; i >= 1; i-- )
-      dest[64-i] = ((uint8_t*)&len)[i-1];
+  static inline void hs_write_len(uint8_t* dest, const uint64_t& len) {
+    for (int i = 8; i >= 1; i--)
+      dest[64 - i] = ((uint8_t*)&len)[i - 1];
   }
 };
 
@@ -80,8 +80,9 @@ protected:
     }
     const size_t part = len&0x3F;
     memset(cbf, 0, 64);
-    if (part > 0)
-      memcpy(cbf, msg, part);
+    if (part > 0) {
+      memcpy(cbf, (const void *)&(((const uint8_t *)msg)[blocks<<6]), part);
+    }
     cbf[part] |= (0x01 << 7);
     if (part > 56) { // will not the length fit?
       Tools::hs_copy(cbf, bf, 64);
@@ -111,8 +112,9 @@ protected:
     }
     const size_t part = stream.GetSize()&0x3F;
     memset(cbf, 0, 64);
-    if (part > 0)
+    if (part > 0) {
       stream.Read(cbf, part);
+    }
     cbf[part] |= (0x01 << 7);
     if (part >= 56) { // will not the length fit?
       Tools::hs_copy(cbf, bf, 64);

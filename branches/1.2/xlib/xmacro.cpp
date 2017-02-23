@@ -4423,6 +4423,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
       Cif->FindLoopItem("_twin_individual_mass_fraction_refined");
     cetTable *l = 0;
     size_t id_col_idx, fraction_col_idx;
+    const XVarManager &vm = xapp.XFile().GetRM().Vars;
     if (tw_lip.is_valid()) {
       fraction_col_idx = tw_lip().b;
       id_col_idx = tw_lip().a->ColIndex("_twin_individual_id");
@@ -4430,13 +4431,18 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
         l = tw_lip().a;
       }
     }
-    if (l == 0) {
+    if (l == 0 || l->RowCount() != vm.GetBASFCount()) {
+      if (l != 0) {
+        Cif->Remove(l->GetName());
+        TBasicApp::NewLogEntry(logWarning) << "The TWIN definition loop does not"
+          " match the refinement model - removing, but some merged information "
+          "may be still invalid.";
+      }
       l = &Cif->AddLoopDef("_twin_individual_id,"
         "_twin_individual_mass_fraction_refined");
       id_col_idx = 0;
       fraction_col_idx = 1;
     }
-    const XVarManager &vm = xapp.XFile().GetRM().Vars;
     double esd = 0, sum = 0;
     for (size_t i = 0; i < vm.GetBASFCount(); i++) {
       sum += vm.GetBASF(i).GetValue();

@@ -656,6 +656,13 @@ void ort_line::render(PSWriter& pw) const {
   pw.drawLine(from, to);
 }
 
+float ort_line::get_z() const {
+  return (from[2] + to[2]) / 2; 
+  //return olx_min(from[2], to[2]);
+  //return olx_min(from[2], to[2]);
+}
+
+//.............................................................................
 void ort_poly::render(PSWriter& pw) const {
   if( fill && points.Count() > 2 )  {
     pw.color(color);
@@ -672,6 +679,20 @@ void ort_poly::render(PSWriter& pw) const {
     pw.drawLines(points, InvalidSize, true);
   }
 }
+
+float ort_poly::get_z() const {
+  float z = 0;
+  for (size_t i = 0; i < points.Count(); i++) {
+    z += points[i][2];
+  }
+  return points.IsEmpty() ? 0 : z / points.Count();
+  //float z = -10000;
+  //for (size_t i = 0; i < points.Count(); i++) {
+  //  z = olx_max(z, points[i][2]);
+  //}
+  //return points.IsEmpty() ? 0 : z;
+}
+
 
 void ort_circle::render(PSWriter& pw) const {
   pw.color(color);
