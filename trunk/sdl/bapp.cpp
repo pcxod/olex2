@@ -511,6 +511,7 @@ void BAPP_IsDebugBuild(const TStrObjList& Params, TMacroData &E)  {
 //..............................................................................
 void BAPP_Digest(const TStrObjList& Params, TMacroData &E) {
   TStopWatch sw(__FUNC__);
+  sw.start("Digesting a file...");
   TEFile f(Params[0], "rb");
   if (Params[1].Equalsi("MD5")) {
     E.SetRetVal(MD5::Digest(f));
@@ -526,6 +527,56 @@ void BAPP_Digest(const TStrObjList& Params, TMacroData &E) {
   }
   else {
     E.ProcessingError(__OlxSrcInfo, "Unknow digest requested");
+  }
+  sw.stop();
+}
+//..............................................................................
+void BAPP_Encode(const TStrObjList& Params, TMacroData &E) {
+  TStopWatch sw(__FUNC__);
+  sw.start("Encoding...");
+  TEFile in(Params[0], "rb");
+  TEFile out(Params[1], "w+b");
+  if (Params[2].Equalsi("85")) {
+    uint64_t bf_sz = 4 * 64 * 256;
+    olx_array_ptr<uint8_t> bf(bf_sz);
+    uint64_t available = in.GetSize();
+    while (available > bf_sz) {
+      in.Read(bf(), bf_sz);
+      out.Write(encoding::base85::encode(bf(), bf_sz));
+      available -= bf_sz;
+    }
+    if (available > 0) {
+      in.Read(bf(), available);
+      out.Write(encoding::base85::encode(bf(), available));
+    }
+  }
+  else {
+    E.ProcessingError(__OlxSrcInfo, "Unknow encoding requested");
+  }
+  sw.stop();
+}
+//..............................................................................
+void BAPP_Decode(const TStrObjList& Params, TMacroData &E) {
+  TStopWatch sw(__FUNC__);
+  sw.start("Decoding...");
+  TEFile in(Params[0], "rb");
+  TEFile out(Params[1], "w+b");
+  if (Params[2].Equalsi("85")) {
+    uint64_t bf_sz = 5 * 64 * 256;
+    olx_array_ptr<uint8_t> bf(bf_sz);
+    uint64_t available = in.GetSize();
+    while (available > bf_sz) {
+      in.Read(bf(), bf_sz);
+      out.Write(encoding::base85::decode(bf(), bf_sz));
+      available -= bf_sz;
+    }
+    if (available > 0) {
+      in.Read(bf(), available);
+      out.Write(encoding::base85::decode(bf(), available));
+    }
+  }
+  else {
+    E.ProcessingError(__OlxSrcInfo, "Unknow encoding requested");
   }
   sw.stop();
 }
@@ -588,7 +639,15 @@ TLibrary* TBasicApp::ExportLibrary(const olxstr& lib_name)  {
     "Returns true if the application is built with debug info"));
   lib->Register(new TStaticFunction(BAPP_Digest,
     "Digest", fpTwo,
-    "Returns euested digest for a file. Use: 'digest file code', code is MD5, "
+    "Returns requested digest for a file. Use: 'digest file code', code is MD5, "
     "SHA1, SHA224 or SHA256"));
+  lib->Register(new TStaticFunction(BAPP_Encode,
+    "Encode", fpThree,
+    "Encodes given file in the requested encoding: encode file_in file_out code, "
+    "code is 16, 64 or 85"));
+  lib->Register(new TStaticFunction(BAPP_Decode,
+    "Decode", fpThree,
+    "Decodes given file: decode file_in file_out code, "
+    "code is 16, 64 or 85"));
   return lib;
 }

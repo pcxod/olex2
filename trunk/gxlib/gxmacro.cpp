@@ -4925,6 +4925,27 @@ void adjust_style(TGXApp &app, const functor_t & functor,
   }
 }
 
+void sta_adjust_overflow(TGlOption &o) {
+  double ovf = 0;
+  for (int i = 0; i < 4; i++) {
+    if (o[i] > 1) {
+      if (ovf < o[i]) {
+        ovf = o[i];
+      }
+      o[i] = 1;
+    }
+  }
+  if (ovf > 1) {
+    ovf -= 1;
+    for (int i = 0; i < 4; i++) {
+      if (o[i] < 1) {
+        if ((o[i] += ovf) > 1) {
+          o[i] = 1;
+        }
+      }
+    }
+  }
+}
 struct sta_adjust_pc {
   double pc;
   int what;
@@ -4935,14 +4956,22 @@ struct sta_adjust_pc {
     if (what == 0) {
       m.SetAmbientF(true);
       m.AmbientF *= pc;
+      sta_adjust_overflow(m.AmbientF);
     }
     else if (what == 1) {
       m.SetDiffuseF(true);
       m.DiffuseF = m.AmbientF * pc;
+      sta_adjust_overflow(m.DiffuseF);
     }
     else if (what == 2) {
       m.SetSpecularF(true);
       m.SpecularF = m.AmbientF * pc;
+      sta_adjust_overflow(m.SpecularF);
+    }
+    else if (what == 3) {
+      m.SetEmissionF(true);
+      m.EmissionF = m.AmbientF * pc;
+      sta_adjust_overflow(m.EmissionF);
     }
     return m;
   }
@@ -4960,8 +4989,16 @@ struct sta_adjust_cl {
       m.AmbientF = cl;
     }
     else if (what == 1) {
-      m.SetDiffuseF(true);
+      m.SetDiffuseF(cl != 0);
       m.DiffuseF = cl;
+    }
+    else if (what == 2) {
+      m.SetSpecularF(cl != 0);
+      m.SpecularF = cl;
+    }
+    else if (what == 3) {
+      m.SetEmissionF(cl != 0);
+      m.EmissionF = cl;
     }
     return m;
   }
@@ -4974,6 +5011,7 @@ struct sta_adjust_shininess {
   {}
   TGlMaterial &operator()(TGlMaterial &m) const {
     m.SetShininessF(true);
+    m.SetSpecularF(true);
     m.ShininessF = value;
     return m;
   }
@@ -5004,17 +5042,16 @@ void GXLibMacros::macAdjustStyle(TStrObjList &Cmds, const TParamList &Options,
   }
   if (Cmds[0].StartsFromi("diffuse") ||
     Cmds[0].StartsFromi("specular") ||
-    Cmds[0].StartsFromi("ambient"))
+    Cmds[0].StartsFromi("ambient") ||
+    Cmds[0].StartsFromi("emission"))
   {
     int dest = Cmds[0].StartsFromi("ambient") ? 0
-      : (Cmds[0].StartsFromi("diffuse") ? 1 : 2);
+      : (Cmds[0].StartsFromi("diffuse") ? 1 :
+        (Cmds[0].StartsFromi("specular") ? 2 : 3));
     if (Cmds[1].EndsWith('%')) {
       double pc = Cmds[1].SubStringFrom(0, 1).ToDouble()/100;
       if (pc < 0) {
         pc = 0;
-      }
-      else if (pc > 1) {
-        pc = 1;
       }
       adjust_style(app,
         sta_adjust_pc(pc, dest),
@@ -5022,7 +5059,7 @@ void GXLibMacros::macAdjustStyle(TStrObjList &Cmds, const TParamList &Options,
     }
     else if (Cmds[1].IsNumber()) {
       adjust_style(app,
-        sta_adjust_cl(Cmds[1].ToUInt(), dest),
+        sta_adjust_cl(Cmds[1].SafeUInt<uint32_t>(), dest),
         apply_to_atoms, apply_to_bonds, primitives);
     }
     // copy from another primitive
@@ -5045,14 +5082,45 @@ void GXLibMacros::funObjectSettings(const TStrObjList &Params, TMacroData &E) {
     if (Params[1].Equalsi("RimW")) {
       if (Params.Count() == 3) {
         st.SetRimW(Params[2].ToDouble());
-        // these have no effect?
-        //st.ClearPrimitives();
-        //app.CreateObjects(false);
       }
       else {
         E.SetRetVal(st.GetRimW());
       }
     }
+    else if (Params[1].Equalsi("RimR")) {
+      if (Params.Count() == 3) {
+        st.SetRimR(Params[2].ToDouble());
+      }
+      else {
+        E.SetRetVal(st.GetRimR());
+      }
+    }
+    else if (Params[1].Equalsi("DiskS")) {
+      if (Params.Count() == 3) {
+        st.SetDiskS(Params[2].ToDouble());
+      }
+      else {
+        E.SetRetVal(st.GetDiskS());
+      }
+    }
+    else if (Params[1].Equalsi("DiskOR")) {
+      if (Params.Count() == 3) {
+        st.SetDiskOR(Params[2].ToDouble());
+      }
+      else {
+        E.SetRetVal(st.GetDiskOR());
+      }
+    }
+    else if (Params[1].Equalsi("DiskIR")) {
+      if (Params.Count() == 3) {
+        st.SetDiskIR(Params[2].ToDouble());
+      }
+      else {
+        E.SetRetVal(st.GetDiskIR());
+      }
+    }
+    app.GetRenderer().Clear();
+    app.CreateObjects(false);
   }
 }
 //..............................................................................
