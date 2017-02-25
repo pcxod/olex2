@@ -847,118 +847,136 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects,
 }
 //..............................................................................
 AGDrawObject* TGlRenderer::SelectObject(int x, int y) {
-  if( (Width*Height) <= 100 )  return NULL;
-  for (size_t i=0; i < ObjectCount(); i++)
-    GetObject(i).SetTag((int)(i+1));
+  if ((Width*Height) <= 100) {
+    return 0;
+  }
+  for (size_t i = 0; i < ObjectCount(); i++) {
+    GetObject(i).SetTag((int)(i + 1));
+  }
   if (GLUSelection) {
-    AGDrawObject *Result=NULL;
-    olx_array_ptr<GLuint> selectBuf(new GLuint [MAXSELECT]);
-    if (!GetScene().StartSelect(x, y, selectBuf()))
-      return NULL;
+    AGDrawObject *Result = 0;
+    olx_array_ptr<GLuint> selectBuf(new GLuint[MAXSELECT]);
+    if (!GetScene().StartSelect(x, y, selectBuf())) {
+      return 0;
+    }
     DrawObjects(x, y, true, false);
     int hits = GetScene().EndSelect();
     if (hits >= 1) {
       if (hits == 1) {
-        GLuint in = selectBuf()[(hits-1)*4+3];
-        if( in >=1 && in <= ObjectCount() )
-          Result = &GetObject(in-1);
+        GLuint in = selectBuf()[(hits - 1) * 4 + 3];
+        if (in >= 1 && in <= ObjectCount()) {
+          Result = &GetObject(in - 1);
+        }
       }
       else {
         unsigned int maxz = ~0;
-        GLuint in=0;
-        for( int i=0; i < hits; i++ )  {
-          if( selectBuf()[i*4+1] < maxz )  {
+        GLuint in = 0;
+        for (int i = 0; i < hits; i++) {
+          if (selectBuf()[i * 4 + 1] < maxz) {
             in = i;
-            maxz = selectBuf()[i*4+1];
+            maxz = selectBuf()[i * 4 + 1];
           }
         }
-        if ((int)(in)*4+3 < 0) return NULL;
-        in = selectBuf()[(in)*4+3] - 1;
-        if (in < ObjectCount())
+        if ((int)(in)* 4 + 3 < 0) {
+          return 0;
+        }
+        in = selectBuf()[(in)* 4 + 3] - 1;
+        if (in < ObjectCount()) {
           Result = &GetObject(in);
+        }
       }
     }
     return Result;
   }
   else {
-    if (!GetScene().StartDraw())
-      return NULL;
+    if (!GetScene().StartDraw()) {
+      return 0;
+    }
     bool fe = olx_gl::isEnabled(GL_FOG);
-    if (fe)
+    if (fe) {
       olx_gl::disable(GL_FOG);
+    }
     SetView(x, y, false, true, 1);
     DrawObjects(x, y, true, false);
     GetScene().EndDraw();
-    if (fe)
+    if (fe) {
       olx_gl::enable(GL_FOG);
+    }
     memset(&SelectionBuffer, 0, sizeof(SelectionBuffer));
-    olx_gl::readPixels(x-1, Height-y-1, 3, 3, GL_RGB, GL_UNSIGNED_BYTE,
+    olx_gl::readPixels(x - 1, Height - y - 1, 3, 3, GL_RGB, GL_UNSIGNED_BYTE,
       &SelectionBuffer[0]);
-    static const size_t indices [9][2] = {
+    static const size_t indices[9][2] = {
       {1,3}, {1,0}, {1,6},
       {0,3}, {3,3},
       {0,0}, {0,6}, {3,0}, {3,6}
     };
-    for (int i=0; i < 9; i++) {
+    for (int i = 0; i < 9; i++) {
       size_t idx = OLX_RGB(
         SelectionBuffer[indices[i][0]][indices[i][1]],
-        SelectionBuffer[indices[i][0]][indices[i][1]+1],
-        SelectionBuffer[indices[i][0]][indices[i][1]+2])-1;
-      if (idx < FGObjects.Count() && FGObjects[idx]->IsVisible())
+        SelectionBuffer[indices[i][0]][indices[i][1] + 1],
+        SelectionBuffer[indices[i][0]][indices[i][1] + 2]) - 1;
+      if (idx < FGObjects.Count() && FGObjects[idx]->IsVisible()) {
         return FGObjects[idx];
+      }
     }
-    return NULL;
+    return 0;
   }
 }
 //..............................................................................
 TGlPrimitive* TGlRenderer::SelectPrimitive(int x, int y) {
-  if( (Width*Height) <= 100 )  return NULL;
-  for (size_t i=0; i < Primitives.ObjectCount(); i++)
-    Primitives.GetObject(i).SetTag((index_t)(i+1));
+  if ((Width*Height) <= 100) {
+    return 0;
+  }
+  for (size_t i = 0; i < Primitives.ObjectCount(); i++)
+    Primitives.GetObject(i).SetTag((index_t)(i + 1));
   if (GLUSelection) {
-    TGlPrimitive *Result=NULL;
-    olx_array_ptr<GLuint> selectBuf(new GLuint [MAXSELECT]);
-    if (!GetScene().StartSelect(x, y, selectBuf()))
-      return NULL;
+    TGlPrimitive *Result = 0;
+    olx_array_ptr<GLuint> selectBuf(new GLuint[MAXSELECT]);
+    if (!GetScene().StartSelect(x, y, selectBuf())) {
+      return 0;
+    }
     DrawObjects(x, y, false, true);
     GetScene().EndSelect();
     int hits = olx_gl::renderMode(GL_RENDER);
     if (hits >= 1) {
       if (hits == 1) {
-        GLuint in = selectBuf()[(hits-1)*4+3];
-        if (in >=1 && in <= (PrimitiveCount()+1))
-          Result = &GetPrimitive(in-1);
+        GLuint in = selectBuf()[(hits - 1) * 4 + 3];
+        if (in >= 1 && in <= (PrimitiveCount() + 1)) {
+          Result = &GetPrimitive(in - 1);
+        }
       }
       else {
         unsigned int maxz = ~0;
-        GLuint in=0;
-        for (int i=0; i < hits; i++) {
-          if (selectBuf()[i*4+1] < maxz) {
+        GLuint in = 0;
+        for (int i = 0; i < hits; i++) {
+          if (selectBuf()[i * 4 + 1] < maxz) {
             in = i;
-            maxz = selectBuf()[i*4+1];
+            maxz = selectBuf()[i * 4 + 1];
           }
         }
-        in = selectBuf()[in*4+3];
-        if (in >=1 && in <= (PrimitiveCount()+1))
-          Result = &GetPrimitive(in-1);
+        in = selectBuf()[in * 4 + 3];
+        if (in >= 1 && in <= (PrimitiveCount() + 1)) {
+          Result = &GetPrimitive(in - 1);
+        }
       }
     }
     return Result;
   }
   else {
-    if (!GetScene().StartDraw())
-      return NULL;
+    if (!GetScene().StartDraw()) {
+      return 0;
+    }
     SetView(x, y, false, true, 1);
     DrawObjects(x, y, false, true);
     GetScene().EndDraw();
     memset(&SelectionBuffer, 0, sizeof(SelectionBuffer));
-    olx_gl::readPixels(x-1, Height-y-1, 3, 3, GL_RGB, GL_UNSIGNED_BYTE,
+    olx_gl::readPixels(x - 1, Height - y - 1, 3, 3, GL_RGB, GL_UNSIGNED_BYTE,
       &SelectionBuffer[0]);
     size_t idx = OLX_RGB(
       SelectionBuffer[1][3],
       SelectionBuffer[1][4],
-      SelectionBuffer[1][5])-1;
-    return (idx < PrimitiveCount()) ? &GetPrimitive(idx) : NULL;
+      SelectionBuffer[1][5]) - 1;
+    return (idx < PrimitiveCount()) ? &GetPrimitive(idx) : 0;
   }
 }
 //..............................................................................
