@@ -1252,38 +1252,44 @@ void TGXApp::ChangeAtomType( TXAtom *A, const olxstr &Element)  {
   Draw();*/
 }
 //..............................................................................
-void TGXApp::SelectFragmentsAtoms(const TNetPList& frags, bool v)  {
+void TGXApp::SelectFragmentsAtoms(const TNetPList& frags, bool v) {
   TXAtomPList XA;
-  for( size_t i=0; i < frags.Count(); i++ )  {
-    for( size_t j=0; j < frags[i]->NodeCount(); j++ )
+  for (size_t i = 0; i < frags.Count(); i++) {
+    for (size_t j = 0; j < frags[i]->NodeCount(); j++) {
       XA.Add(static_cast<TXAtom&>(frags[i]->Node(j)));
-  }
-  for( size_t i=0; i < XA.Count(); i++ )  {
-    if( v )  {
-      if( XA[i]->IsVisible() && !XA[i]->IsSelected() )
-        GetRenderer().Select(*XA[i]);
     }
-    else  {
-      if ( XA[i]->IsSelected() )
+  }
+  for (size_t i = 0; i < XA.Count(); i++) {
+    if (v) {
+      if (XA[i]->IsVisible() && !XA[i]->IsSelected()) {
+        GetRenderer().Select(*XA[i]);
+      }
+    }
+    else {
+      if (XA[i]->IsSelected()) {
         GetRenderer().Deselect(*XA[i]);
+      }
     }
   }
 }
 //..............................................................................
-void TGXApp::SelectFragmentsBonds(const TNetPList& frags, bool v)  {
+void TGXApp::SelectFragmentsBonds(const TNetPList& frags, bool v) {
   TXBondPList XB;
-  for( size_t i=0; i < frags.Count(); i++ )  {
-    for( size_t j=0; j < frags[i]->BondCount(); j++ )
+  for (size_t i = 0; i < frags.Count(); i++) {
+    for (size_t j = 0; j < frags[i]->BondCount(); j++) {
       XB.Add(static_cast<TXBond&>(frags[i]->Bond(j)));
-  }
-  for( size_t i=0; i < XB.Count(); i++ )  {
-    if( v )  {
-      if( XB[i]->IsVisible() && !XB[i]->IsSelected() )
-        GetRenderer().Select(*XB[i]);
     }
-    else  {
-      if( XB[i]->IsSelected() )
+  }
+  for (size_t i = 0; i < XB.Count(); i++) {
+    if (v) {
+      if (XB[i]->IsVisible() && !XB[i]->IsSelected()) {
+        GetRenderer().Select(*XB[i]);
+      }
+    }
+    else {
+      if (XB[i]->IsSelected()) {
         GetRenderer().Deselect(*XB[i]);
+      }
     }
   }
 }
@@ -1293,39 +1299,46 @@ void TGXApp::SelectFragments(const TNetPList& frags, bool v)  {
   SelectFragmentsBonds(frags, v);
 }
 //..............................................................................
-void TGXApp::FragmentVisible(TNetwork *N, bool V)  {
+void TGXApp::FragmentVisible(TNetwork *N, bool V) {
   TXAtomPList XA;
   sorted::PointerPointer<TGlGroup> groups;
-//  OnFragmentVisible->Enter(dynamic_cast<TBasicApp*>(this), dynamic_cast<IOlxObject*>(N));
+  //  OnFragmentVisible->Enter(dynamic_cast<TBasicApp*>(this), dynamic_cast<IOlxObject*>(N));
   XA.SetCapacity(N->NodeCount());
-  for( size_t i=0; i < N->NodeCount(); i++ )
+  for (size_t i = 0; i < N->NodeCount(); i++) {
     XA.Add(static_cast<TXAtom&>(N->Node(i)));
-  for( size_t i=0; i < XA.Count(); i++ )  {
-    if( XA[i]->GetParentGroup() != NULL )
+  }
+  for (size_t i = 0; i < XA.Count(); i++) {
+    if (XA[i]->GetParentGroup() != 0) {
       groups.AddUnique(XA[i]->GetParentGroup());
-    else
+    }
+    else {
       XA[i]->SetVisible(V);
+    }
   }
 
   TXBondPList XB;
   XB.SetCapacity(N->BondCount());
-  for( size_t i=0; i < N->BondCount(); i++ )
+  for (size_t i = 0; i < N->BondCount(); i++)
     XB.Add(static_cast<TXBond&>(N->Bond(i)));
-  for( size_t i=0; i < XB.Count(); i++ )  {
-    if( XB[i]->GetParentGroup() != NULL )
+  for (size_t i = 0; i < XB.Count(); i++) {
+    if (XB[i]->GetParentGroup() != 0) {
       groups.AddUnique(XB[i]->GetParentGroup());
-    else
+    }
+    else {
       XB[i]->SetVisible(V);
+    }
   }
-  for( size_t i=0; i < groups.Count(); i++ )
+  for (size_t i = 0; i < groups.Count(); i++) {
     groups[i]->SetVisible(V);
-//  OnFragmentVisible->Exit(dynamic_cast<TBasicApp*>(this), dynamic_cast<IOlxObject*>(N));
+  }
+  //  OnFragmentVisible->Exit(dynamic_cast<TBasicApp*>(this), dynamic_cast<IOlxObject*>(N));
 }
 //..............................................................................
-void TGXApp::FragmentsVisible(const TNetPList& Frags, bool V)  {
-//  OnFragmentsVisible->Enter(this, dynamic_cast<IOlxObject*>(Frags));
-  for( size_t i=0; i < Frags.Count(); i++ )
+void TGXApp::FragmentsVisible(const TNetPList& Frags, bool V) {
+  //  OnFragmentsVisible->Enter(this, dynamic_cast<IOlxObject*>(Frags));
+  for (size_t i = 0; i < Frags.Count(); i++) {
     FragmentVisible(Frags[i], V);
+  }
   // synchronise the intermolecular bonds
   SetHBondsVisible(FHBondsVisible, false);
   _maskInvisible();
@@ -1333,80 +1346,92 @@ void TGXApp::FragmentsVisible(const TNetPList& Frags, bool V)  {
   Draw();
 }
 //..............................................................................
-TGlGroup& TGXApp::GroupFragments(const TNetPList& Fragments, const olxstr groupName)  {
+TGlGroup& TGXApp::GroupFragments(const TNetPList& Fragments, const olxstr groupName) {
   GetRenderer().GetSelection().Clear();
   TXBondPList xbonds;
-  for( size_t i=0; i < Fragments.Count(); i++ )  {
-    for( size_t j=0; j < Fragments[i]->BondCount(); j++ )
+  for (size_t i = 0; i < Fragments.Count(); i++) {
+    for (size_t j = 0; j < Fragments[i]->BondCount(); j++) {
       xbonds.Add(static_cast<TXBond&>(Fragments[i]->Bond(j)));
+    }
   }
-  if( xbonds.IsEmpty() )  return *(TGlGroup*)NULL;
-  for( size_t i=0; i < xbonds.Count(); i++ )
+  if (xbonds.IsEmpty()) {
+    throw TFunctionFailedException(__OlxSourceInfo, "no bonds found");
+  }
+  for (size_t i = 0; i < xbonds.Count(); i++) {
     GetRenderer().GetSelection().Add(*xbonds[i]);
+  }
   return *GetRenderer().GroupSelection(groupName);
 }
 //..............................................................................
-TNetPList TGXApp::InvertFragmentsList(const TNetPList& SF)  {
+TNetPList TGXApp::InvertFragmentsList(const TNetPList& SF) {
   TNetPList res;
   TLattice& L = XFile().GetLattice();
   L.GetFragments().ForEach(ACollectionItem::TagSetter(1));
   SF.ForEach(ACollectionItem::TagSetter(0));
-  for( size_t i=0; i < L.FragmentCount(); i++ )  {
-    if( L.GetFragment(i).GetTag() != 0 )
+  for (size_t i = 0; i < L.FragmentCount(); i++) {
+    if (L.GetFragment(i).GetTag() != 0) {
       res.Add(L.GetFragment(i));
+    }
   }
   return res;
 }
 //..............................................................................
-void TGXApp::SyncAtomAndBondVisiblity(short atom_type, bool show_a, bool show_b)  {
+void TGXApp::SyncAtomAndBondVisiblity(short atom_type, bool show_a, bool show_b) {
   AtomIterator ai(*this);
-  while( ai.HasNext() )  {
+  while (ai.HasNext()) {
     TXAtom& a = ai.Next();
-    if( a.GetType() != atom_type )
+    if (a.GetType() != atom_type) {
       continue;
-    if( atom_type == iHydrogenZ )  {
+    }
+    if (atom_type == iHydrogenZ) {
       bool vis = false;
       size_t nc = 0;
-      for( size_t j=0; j < a.NodeCount(); j++ )  {
-        if( a.Node(j).IsDeleted() )
+      for (size_t j = 0; j < a.NodeCount(); j++) {
+        if (a.Node(j).IsDeleted()) {
           continue;
+        }
         nc++;
-        if( a.Node(j).IsVisible() )  {
+        if (a.Node(j).IsVisible()) {
           vis = true;
           break;
         }
       }
-      if( nc > 0 )
+      if (nc > 0)
         a.SetVisible(vis ? show_a : false);
-      else
+      else {
         a.SetVisible(show_a);
+      }
     }
-    else
+    else {
       a.SetVisible(show_a);
+    }
   }
   BondIterator bi(*this);
-  while( bi.HasNext() )  {
+  while (bi.HasNext()) {
     TXBond& b = bi.Next();
-    if( !b.A().IsVisible() || !b.B().IsVisible() )  {
+    if (!b.A().IsVisible() || !b.B().IsVisible()) {
       b.SetVisible(false);
       continue;
     }
-    if( atom_type == iHydrogenZ )   {
-      if( b.GetType() == sotHBond )
+    if (atom_type == iHydrogenZ) {
+      if (b.GetType() == sotHBond) {
         b.SetVisible(show_b);
-      else if( b.A().GetType() == atom_type || b.B().GetType() == atom_type )  {
+      }
+      else if (b.A().GetType() == atom_type || b.B().GetType() == atom_type) {
         // there is always a special case...
-        if( (b.A().GetType() == iQPeakZ || b.B().GetType() == iQPeakZ) &&
-            !FQPeakBondsVisible )
+        if ((b.A().GetType() == iQPeakZ || b.B().GetType() == iQPeakZ) &&
+          !FQPeakBondsVisible)
         {
           b.SetVisible(false);
         }
-        else
+        else {
           b.SetVisible(show_a);
+        }
       }
     }
-    else if( b.A().GetType() == atom_type || b.B().GetType() == atom_type )
+    else if (b.A().GetType() == atom_type || b.B().GetType() == atom_type) {
       b.SetVisible(show_b);
+    }
   }
   //if( FXGrowLinesVisible )  {
   //  for( size_t i=0; i < XGrowLines.Count(); i++ )  {
@@ -1416,7 +1441,7 @@ void TGXApp::SyncAtomAndBondVisiblity(short atom_type, bool show_a, bool show_b)
   //}
 }
 //..............................................................................
-void TGXApp::AllVisible(bool V)  {
+void TGXApp::AllVisible(bool V) {
   OnAllVisible.Enter(dynamic_cast<TBasicApp*>(this), NULL);
   if (!V) {
     AtomIterator ai(*this);
@@ -1428,8 +1453,9 @@ void TGXApp::AllVisible(bool V)  {
     AtomIterator ai(*this);
     while (ai.HasNext()) ai.Next().SetMasked(false);
     TAsymmUnit& au = XFile().GetAsymmUnit();
-    for (size_t i=0; i < au.AtomCount(); i++)
+    for (size_t i = 0; i < au.AtomCount(); i++) {
       au.GetAtom(i).SetMasked(false);
+    }
     UpdateConnectivity();
     CenterView(true);
     GetLabels().ClearLabelMarks(lmiDefault);
@@ -1439,38 +1465,40 @@ void TGXApp::AllVisible(bool V)  {
   Draw();
 }
 //..............................................................................
-void TGXApp::Select(const vec3d& From, const vec3d& To )  {
+void TGXApp::Select(const vec3d& From, const vec3d& To) {
   AtomIterator ai(*this);
   BondIterator bi(*this);
-  while( ai.HasNext() )  {
+  while (ai.HasNext()) {
     TXAtom& XA = ai.Next();
-    if( XA.IsVisible() )  {
+    if (XA.IsVisible()) {
       vec3d Cnt = XA.crd() + GetRenderer().GetBasis().GetCenter();
       Cnt *= GetRenderer().GetBasis().GetMatrix();
       Cnt *= GetRenderer().GetBasis().GetZoom();
-      if( Cnt[0] < To[0] && Cnt[1] < To[1] &&
-          Cnt[0] > From[0] && Cnt[1] > From[1] )  {
-        if( !XA.IsSelected() )  {
-          if( XA.GetPrimitives().PrimitiveCount() )
+      if (Cnt[0] < To[0] && Cnt[1] < To[1] &&
+        Cnt[0] > From[0] && Cnt[1] > From[1]) {
+        if (!XA.IsSelected()) {
+          if (XA.GetPrimitives().PrimitiveCount()) {
             GetRenderer().Select(XA);
+          }
         }
       }
     }
   }
-  while( bi.HasNext() )  {
+  while (bi.HasNext()) {
     TXBond& B = bi.Next();
-    if( B.IsVisible() )  {
+    if (B.IsVisible()) {
       vec3d Cnt = B.A().crd() + GetRenderer().GetBasis().GetCenter();
       Cnt *= GetRenderer().GetBasis().GetMatrix();
       Cnt *= GetRenderer().GetBasis().GetZoom();
       vec3d Cnt1 = B.B().crd() + GetRenderer().GetBasis().GetCenter();
       Cnt1 *= GetRenderer().GetBasis().GetMatrix();
       Cnt1 *= GetRenderer().GetBasis().GetZoom();
-      if( Cnt[0] < To[0] && Cnt[1] < To[1] && Cnt[0] > From[0] && Cnt[1] > From[1] &&
-          Cnt1[0] < To[0] && Cnt1[1] < To[1] && Cnt1[0] > From[0] && Cnt1[1] > From[1] )  {
-        if( !B.IsSelected() )  {
-          if( B.GetPrimitives().PrimitiveCount() )
+      if (Cnt[0] < To[0] && Cnt[1] < To[1] && Cnt[0] > From[0] && Cnt[1] > From[1] &&
+        Cnt1[0] < To[0] && Cnt1[1] < To[1] && Cnt1[0] > From[0] && Cnt1[1] > From[1]) {
+        if (!B.IsSelected()) {
+          if (B.GetPrimitives().PrimitiveCount()) {
             GetRenderer().Select(B);
+          }
         }
       }
     }
@@ -2741,34 +2769,39 @@ void TGXApp::undoName(TUndoData *data)  {
     CreateObjects(false);
 }
 //..............................................................................
-void TGXApp::undoHide(TUndoData *data)  {
+void TGXApp::undoHide(TUndoData *data) {
   THideUndo *undo = dynamic_cast<THideUndo*>(data);
-  for( size_t i=0; i < undo->Objects.Count(); i++ )
+  for (size_t i = 0; i < undo->Objects.Count(); i++) {
     undo->Objects[i]->SetVisible(!undo->Objects[i]->IsVisible());
+  }
 }
 //..............................................................................
-TUndoData* TGXApp::DeleteXObjects(const AGDObjList& L)  {
+TUndoData* TGXApp::DeleteXObjects(const AGDObjList& L) {
   TXAtomPList atoms;
   atoms.SetCapacity(L.Count());
   bool planes_deleted = false;
-  for( size_t i=0; i < L.Count(); i++ )  {
-    if( EsdlInstanceOf(*L[i], TXAtom) )
+  for (size_t i = 0; i < L.Count(); i++) {
+    if (EsdlInstanceOf(*L[i], TXAtom)) {
       atoms.Add((TXAtom*)L[i]);
-    else if( EsdlInstanceOf(*L[i], TXPlane) )  {
+    }
+    else if (EsdlInstanceOf(*L[i], TXPlane)) {
       ((TXPlane*)L[i])->Delete(true);
-      if( L[i]->GetPrimitives().ObjectCount() == 1 )
+      if (L[i]->GetPrimitives().ObjectCount() == 1) {
         L[i]->GetPrimitives().ClearPrimitives();
+      }
       planes_deleted = true;
     }
-    else if( EsdlInstanceOf(*L[i], TXBond) )  {
+    else if (EsdlInstanceOf(*L[i], TXBond)) {
       TXBond* xb = (TXBond*)L[i];
       xb->Delete();
     }
-    else
+    else {
       L[i]->SetVisible(false);
+    }
   }
-  if( planes_deleted )
+  if (planes_deleted) {
     XFile().GetLattice().UpdatePlaneDefinitions();
+  }
   return DeleteXAtoms(atoms);
 }
 //..............................................................................
@@ -2814,11 +2847,11 @@ TUndoData* TGXApp::DeleteXAtoms(TXAtomPList& L) {
     XA->SetDeleted(true);
   }
   //CenterView();
-  TUndoData *undo = new TDeleteUndo(NULL);
-  olxdict<const TLattice *, TDeleteUndo *, TPointerComparator> lud;
+  TUndoData *undo = new TDeleteUndo(0);
+  olxdict<TLattice *, TDeleteUndo *, TPointerComparator> lud;
   for (size_t i = 0; i < deleted.Count(); i++) {
-    TDeleteUndo *du = lud.Find(&deleted[i]->GetParent(), NULL);
-    if (du == NULL) {
+    TDeleteUndo *du = lud.Find(&deleted[i]->GetParent(), 0);
+    if (du == 0) {
       lud(&deleted[i]->GetParent(),
         (du = new TDeleteUndo(
           UndoAction::New(&deleted[i]->GetParent(), &TLattice::undoDelete))));
@@ -2827,7 +2860,15 @@ TUndoData* TGXApp::DeleteXAtoms(TXAtomPList& L) {
     du->AddSAtom(*deleted[i]);
   }
   GetSelection().Clear();
-  UpdateConnectivity();
+  XFile().GetLattice().OnDisassemble.Enter(this);
+  for (size_t i = 0; i < lud.Count(); i++) {
+    lud.GetKey(i)->OnDisassemble.SetEnabled(false);
+    lud.GetKey(i)->UpdateConnectivity();
+    lud.GetKey(i)->OnDisassemble.SetEnabled(true);
+  }
+  XFile().GetLattice().OnDisassemble.Exit(this);
+  /* this may be too 'wide'*/
+  //UpdateConnectivity();
   if (FAtomLegend->IsVisible()) {
     FAtomLegend->Update();
   }
@@ -3668,7 +3709,9 @@ void TGXApp::UpdateConnectivity() {
   XFile().GetLattice().OnDisassemble.Enter(NULL);
   XFile().GetLattice().OnDisassemble.SetEnabled(false);
   for (size_t i = 0; i < Files.Count(); i++) {
+    Files[i].GetLattice().OnDisassemble.SetEnabled(false);
     Files[i].GetLattice().UpdateConnectivity();
+    Files[i].GetLattice().OnDisassemble.SetEnabled(true);
   }
   XFile().GetLattice().OnDisassemble.SetEnabled(true);
   XFile().GetLattice().OnDisassemble.Exit(NULL);
@@ -4580,19 +4623,20 @@ TGlBitmap* TGXApp::CreateGlBitmap(const olxstr& name,
 }
 //..............................................................................
 void TGXApp::DeleteGlBitmap(const olxstr& name) {
-  TGlBitmap* glb = NULL;
-  for (size_t i=0; i < GlBitmaps.Count(); i++) {
+  TGlBitmap* glb = 0;
+  for (size_t i = 0; i < GlBitmaps.Count(); i++) {
     if (GlBitmaps[i]->GetCollectionName() == name) {
       glb = GlBitmaps[i];
       GlBitmaps.Delete(i);
       break;
     }
   }
-  if (glb != NULL) {
+  if (glb != 0) {
     //GlBitmaps.Delete(index);
     size_t ind = ObjectsToCreate.IndexOf((AGDrawObject*)glb);
-    if (ind != InvalidIndex)
+    if (ind != InvalidIndex) {
       ObjectsToCreate.Delete(ind);
+    }
     glb->GetPrimitives().RemoveObject(*glb);
     GlRenderer->RemoveObject(*glb);
     delete glb;
@@ -4600,11 +4644,15 @@ void TGXApp::DeleteGlBitmap(const olxstr& name) {
 }
 //..............................................................................
 TGXFile& TGXApp::NewXFile() {
-  return Files.Add(dynamic_cast<TGXFile *>(XFile().Replicate()));
+  TGXFile &f = Files.Add(dynamic_cast<TGXFile *>(XFile().Replicate()));
+  f.GetLattice().OnDisassemble.Add(this, ID_OnDisassemble);
+  return f;
 }
 //..............................................................................
 void TGXApp::SetActiveXFile(size_t i) {
-  if (i == 0 || i >= Files.Count())  return;
+  if (i == 0 || i >= Files.Count()) {
+    return;
+  }
   Files.Swap(i, 0);
   XFile().TakeOver(Files[i]);
   AlignXFiles();

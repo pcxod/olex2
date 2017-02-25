@@ -174,8 +174,10 @@ TXFile::~TXFile() {
 void TXFile::TakeOver(TXFile &f) {
   OnFileLoad.TakeOver(f.OnFileLoad);
   OnFileSave.TakeOver(f.OnFileSave);
-  GetLattice().OnDisassemble.TakeOver(
-    f.GetLattice().OnDisassemble);
+  /* This should be left along as it is needed for ALL files
+  */
+  //GetLattice().OnDisassemble.TakeOver(
+  //  f.GetLattice().OnDisassemble);
   GetLattice().OnStructureGrow.TakeOver(
     f.GetLattice().OnStructureGrow);
   GetLattice().OnStructureUniq.TakeOver(
@@ -438,15 +440,17 @@ void TXFile::LoadFromFile(const olxstr & _fn) {
   PostLoad(_fn, Loader, replicated);
 }
 //..............................................................................
-void TXFile::UpdateAsymmUnit()  {
+void TXFile::UpdateAsymmUnit() {
   TBasicCFile* LL = FLastLoader;
-  if( LL->IsNative() )
+  if (LL->IsNative()) {
     return;
+  }
   GetLattice().UpdateAsymmUnit();
   LL->GetAsymmUnit().ClearEllps();
-  for( size_t i=0; i < GetAsymmUnit().EllpCount(); i++ )
+  for (size_t i = 0; i < GetAsymmUnit().EllpCount(); i++) {
     LL->GetAsymmUnit().NewEllp() = GetAsymmUnit().GetEllp(i);
-  for( size_t i=0; i < GetAsymmUnit().AtomCount(); i++ )  {
+  }
+  for (size_t i = 0; i < GetAsymmUnit().AtomCount(); i++) {
     TCAtom& CA = GetAsymmUnit().GetAtom(i);
     TCAtom& CA1 = LL->GetAsymmUnit().AtomCount() <= i ?
       LL->GetAsymmUnit().NewAtom() : LL->GetAsymmUnit().GetAtom(i);
