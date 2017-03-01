@@ -4431,7 +4431,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
         l = tw_lip().a;
       }
     }
-    if (l == 0 || l->RowCount() != vm.GetBASFCount()) {
+    if (l == 0 || l->RowCount() != (vm.GetBASFCount()+1)) {
       if (l != 0) {
         Cif->Remove(l->GetName());
         TBasicApp::NewLogEntry(logWarning) << "The TWIN definition loop does not"

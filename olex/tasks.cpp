@@ -66,9 +66,15 @@ void P4PTask::Run() {
 
 void CellChangeTask::Run() {
   TMainForm *mf = TGlXApp::GetMainForm();
-  if (hklsrc != TXApp::GetInstance().XFile().GetRM().GetHKLSource())
+  if (hklsrc != TXApp::GetInstance().XFile().GetRM().GetHKLSource()) {
     return;
-  TAsymmUnit &au = TXApp::GetInstance().XFile().GetAsymmUnit();
+  }
+  TXFile &xf = TXApp::GetInstance().XFile();
+  // skip if HKLF matrix is set
+  if (!xf.GetRM().GetHKLF_mat().IsI()) {
+    return;
+  }
+  TAsymmUnit &au = xf.GetAsymmUnit();
   olxstr o, n;
   for (size_t i=0; i < 3; i++) {
     o << ' ' << TEValueD(au.GetAxes()[i], au.GetAxisEsds()[i]).ToString() <<
@@ -87,12 +93,12 @@ void CellChangeTask::Run() {
       "Remember my decision",
       wxYES|wxNO|wxICON_QUESTION, true);
     use = rv.Contains('Y');
-    if (rv.Containsi('R'))
+    if (rv.Containsi('R')) {
       mf->UpdateUserOptions("use_hkl_cell", use);
+    }
   }
   if (use) {
-   TAsymmUnit &au1 =
-     TXApp::GetInstance().XFile().LastLoader()->GetAsymmUnit();
+   TAsymmUnit &au1 = xf.LastLoader()->GetAsymmUnit();
     au1.GetAxes() = au.GetAxes() = axes;
     au1.GetAngles() = au.GetAngles() = angles;
     au1.GetAxisEsds() = au.GetAxisEsds() = axis_esd;
