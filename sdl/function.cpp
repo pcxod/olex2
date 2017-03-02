@@ -26,7 +26,7 @@ olxstr ABasicLibrary::GetQualifiedName() const {
 //.............................................................................
 bool ABasicFunction::ValidateState(const TStrObjList &Params, TMacroData &E) {
   const size_t argC = Params.Count(),
-    arg_m = (0x0001 << argC);
+    arg_m = (1 << argC);
   if( (ArgStateMask&fpAny) < fpAny &&
       arg_m < fpAny &&
       (ArgStateMask&arg_m) == 0)
@@ -45,48 +45,75 @@ bool ABasicFunction::ValidateState(const TStrObjList &Params, TMacroData &E) {
 }
 //.............................................................................
 olxstr ABasicFunction::GetSignature() const {
-  olxstr res(GetName());
+  olxstr_buf res = GetName();
   res << " arguments [";
   const short arg_bits = 15;
   unsigned int ArgC = GetArgStateMask();
   short argc = 0, currentArg = 0;
-  for (short i=0; i < arg_bits; i++)  if (ArgC & (1 << i)) argc++;
+  for (short i = 0; i < arg_bits; i++) {
+    if (ArgC & (1 << i)) {
+      argc++;
+    }
+  }
   if (argc > 5) {
-    if (argc == arg_bits) res << "any";
+    if (argc == arg_bits) {
+      res << "any";
+    }
     else {
       argc = arg_bits - argc;
       res << "any except ";
-     for (short i=0; i < arg_bits; i++) {
+      for (short i = 0; i < arg_bits; i++) {
         if (!(ArgC & (0x001 << i))) {
-          if (i == 0) res << "none";
+          if (i == 0) {
+            res << "none";
+          }
           else res << i;
-          if (currentArg < (argc - 2)) res << ", ";
-          if (++currentArg == (argc - 1)) res << " or ";
+          if (currentArg < (argc - 2)) {
+            res << ", ";
+          }
+          if (++currentArg == (argc - 1)) {
+            res << " or ";
+          }
         }
       }
     }
   }
-  else  {
-    for (short i=0; i < arg_bits; i++) {
+  else {
+    for (short i = 0; i < arg_bits; i++) {
       if (ArgC & (0x001 << i)) {
-        if (i == 0) res << "none";
-        else res << i;
-        if (currentArg < (argc - 2)) res << ", ";
-        if (++currentArg == (argc - 1)) res << " or ";
+        if (i == 0) {
+          res << "none";
+        }
+        else {
+          res << i;
+        }
+        if (currentArg < (argc - 2)) {
+          res << ", ";
+        }
+        if (++currentArg == (argc - 1)) {
+          res << " or ";
+        }
       }
     }
   }
-  if ((ArgC&fpAny_Options) != 0)
+  if ((ArgC&fpAny_Options) != 0) {
     res << "] [any options";
-  if ((ArgC & 0xffff0000)) {
-    res << "] states - ";
-    if (GetParentLibrary()->GetOwner())
-      res << GetParentLibrary()->GetOwner()->GetStateName(ArgC);
-    else
-      res << "illegal states, program may crash if this function is called";
   }
-  else
+  if ((ArgC & 0xffff0000) == 0xffff0000) {
+    res << "] [any state]";
+  }
+  else if ((ArgC & 0xffff0000)) {
+    res << "] states - ";
+    if (GetParentLibrary()->GetOwner()) {
+      res << GetParentLibrary()->GetOwner()->GetStateName(ArgC);
+    }
+    else {
+      res << "illegal states, program may crash if this function is called";
+    }
+  }
+  else {
     res << ']';
+  }
   return res;
 }
 //.............................................................................
