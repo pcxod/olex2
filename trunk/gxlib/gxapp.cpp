@@ -1959,11 +1959,6 @@ void atoms_from_group(const TGlGroup &g, TXAtomPList &out) {
     if (EsdlInstanceOf(g[i], TXAtom)) {
       out.Add((TXAtom&)g[i]);
     }
-    else if (EsdlInstanceOf(g[i], TXBond)) {
-      TXBond &b = (TXBond &)g[i];
-      out.Add(b.A());
-      out.Add(b.B());
-    }
     else if (EsdlInstanceOf(g[i], TGlGroup)) {
       atoms_from_group((TGlGroup &)g[i], out);
     }
@@ -1977,6 +1972,7 @@ ConstPtrList<TXAtom> TGXApp::FindXAtoms(const olxstr &Atoms, bool getAll,
   if (Atoms.IsEmpty()) {  // return selection/all atoms
     TGlGroup& sel = GetRenderer().GetSelection();
     atoms_from_group(sel, rv);
+    ACollectionItem::Unify(rv);
     if (!rv.IsEmpty()) {
       if (ClearSelection) {
         SelectAll(false);
@@ -2440,24 +2436,16 @@ void TGXApp::InfoList(const olxstr &Atoms, TStrList &Info, bool sort,
 {
   TTypeList<olx_pair_t<vec3d, TCAtom*> > atoms;
   bool have_q = false;
-  if( XFile().GetLattice().IsGenerated() )  {
-    TXAtomPList AtomsList = FindXAtoms(Atoms, false);
-    for(size_t i = 0; i < AtomsList.Count(); i++ )  {
-      atoms.Add(Association::New(AtomsList[i]->ccrd(), &AtomsList[i]->CAtom()));
-      if( AtomsList[i]->GetType() == iQPeakZ )
-        have_q = true;
+  TXAtomPList AtomsList = FindXAtoms(Atoms, false);
+  for (size_t i = 0; i < AtomsList.Count(); i++) {
+    atoms.Add(Association::New(AtomsList[i]->ccrd(), &AtomsList[i]->CAtom()));
+    if (AtomsList[i]->GetType() == iQPeakZ) {
+      have_q = true;
     }
   }
-  else {
-    TCAtomPList catoms = FindCAtoms(Atoms, false);
-    for( size_t i=0; i < catoms.Count(); i++ )  {
-      atoms.Add(Association::New(catoms[i]->ccrd(), catoms[i]));
-      if( catoms[i]->GetType() == iQPeakZ )
-        have_q = true;
-    }
-  }
-  if (olx_abs(precision) > 10)
+  if (olx_abs(precision) > 10) {
     precision = -10;
+  }
   const TAsymmUnit &au = XFile().GetAsymmUnit();
   TTTable<TStrList> Table(atoms.Count(), have_q ? 12 : 11);
   Table.ColName(0) = "Atom";
@@ -2471,11 +2459,12 @@ void TGXApp::InfoList(const olxstr &Atoms, TStrList &Info, bool sort,
   Table.ColName(8) = "ChemOccu";
   Table.ColName(9) = "R-bond";
   Table.ColName(10) = "R-VdW";
-  if( have_q )
+  if (have_q) {
     Table.ColName(11) = "Peak";
+  }
   typedef AnAssociation3<double, double, size_t> count_t;
   olxdict<const cm_Element*, count_t, TPointerComparator> elements;
-  for(size_t i = 0; i < atoms.Count(); i++ )  {
+  for (size_t i = 0; i < atoms.Count(); i++) {
     const TCAtom& A = *atoms[i].GetB();
     if (A.GetType() != iQPeakZ) {
       count_t &ei = elements.Add(&A.GetType(), count_t(0, 0, 0));
@@ -2486,35 +2475,39 @@ void TGXApp::InfoList(const olxstr &Atoms, TStrList &Info, bool sort,
     Table[i][0] = A.GetLabel();
     Table[i][1] = A.GetType().symbol;
     vec3d c = cart ? au.Orthogonalise(atoms[i].GetA()) : atoms[i].GetA();
-    for (int ci=0; ci < 3; ci++)
-      Table[i][2+ci] = olxstr::FormatFloat(precision, c[ci]);
-    Table[i][5] = olxstr::FormatFloat(3, A.GetUiso());
-    if( A.GetEllipsoid() != NULL )  {
-      Table[i][6] << olxstr::FormatFloat(3,
-          pow(A.GetEllipsoid()->GetSX()*A.GetEllipsoid()->GetSY()*
-          A.GetEllipsoid()->GetSZ(), 2./3));
-      Table[i][7] << olxstr::FormatFloat(3,
-          A.GetEllipsoid()->GetSX()*A.GetEllipsoid()->GetSY()*
-          A.GetEllipsoid()->GetSZ()*4*M_PI/3);
+    for (int ci = 0; ci < 3; ci++) {
+      Table[i][2 + ci] = olxstr::FormatFloat(precision, c[ci]);
     }
-    else  {
+    Table[i][5] = olxstr::FormatFloat(3, A.GetUiso());
+    if (A.GetEllipsoid() != 0) {
+      Table[i][6] << olxstr::FormatFloat(3,
+        pow(A.GetEllipsoid()->GetSX()*A.GetEllipsoid()->GetSY()*
+          A.GetEllipsoid()->GetSZ(), 2. / 3));
+      Table[i][7] << olxstr::FormatFloat(3,
+        A.GetEllipsoid()->GetSX()*A.GetEllipsoid()->GetSY()*
+        A.GetEllipsoid()->GetSZ() * 4 * M_PI / 3);
+    }
+    else {
       Table[i][6] << '.';
       Table[i][7] << olxstr::FormatFloat(3,
-          pow(A.GetUiso(), 3./2)*4*M_PI/3);
+        pow(A.GetUiso(), 3. / 2) * 4 * M_PI / 3);
     }
     Table[i][8] = olxstr::FormatFloat(3, A.GetChemOccu());
     Table[i][9] = A.GetConnInfo().r;
     Table[i][10] = A.GetType().r_vdw;
-    if( have_q )  {
-      if( A.GetType() == iQPeakZ )
+    if (have_q) {
+      if (A.GetType() == iQPeakZ) {
         Table[i][11] = olxstr::FormatFloat(3, A.GetQPeak());
-      else
+      }
+      else {
         Table[i][11] = '-';
+      }
     }
   }
   Table.CreateTXTList(Info, "Atom information", true, true, ' ');
-  if (elements.IsEmpty())
+  if (elements.IsEmpty()) {
     return;
+  }
   // sorting sake
   ContentList cl;
   for (size_t i = 0; i < elements.Count(); i++) {
@@ -2528,17 +2521,23 @@ void TGXApp::InfoList(const olxstr &Atoms, TStrList &Info, bool sort,
     const cm_Element &e = cl[i].element;
     const count_t &cnt = elements.GetValue(idx);
     formula[0] << ' ' << e.symbol;
-    if (cnt.a != 1) formula[0] << cnt.a;
+    if (cnt.a != 1) {
+      formula[0] << cnt.a;
+    }
     ec[0] += e.z * cnt.a;
     mc[0] += e.GetMr() * cnt.a;
 
     formula[1] << ' ' << e.symbol;
-    if (cnt.b != 1) formula[1] << cnt.b;
+    if (cnt.b != 1) {
+      formula[1] << cnt.b;
+    }
     ec[1] += e.z * cnt.b;
     mc[1] += e.GetMr() * cnt.b;
 
     formula[2] << ' ' << e.symbol;
-    if (cnt.c != 1) formula[2] << cnt.c;
+    if (cnt.c != 1) {
+      formula[2] << cnt.c;
+    }
     ec[2] += e.z * cnt.c;
     mc[2] += e.GetMr() * cnt.c;
   }
