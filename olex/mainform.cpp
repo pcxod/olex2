@@ -844,7 +844,8 @@ void TMainForm::XApp(Olex2App *XA)  {
     "d-generate DFIX for 1-2 and 1-3 distances&;"
     "a-set specified AFIX to the imported fragment&;"
     "o-set specified occupancy to the imported fragment atoms&;"
-    "c-take the content from the clipboard",
+    "c-take the content from the clipboard (XYZ like)&;"
+    "rr-replace particular RESI with the given content (auto-fit)",
     fpNone|fpOne|psFileLoaded,
     "Import a fragment into current structure");
   this_InitMacroD(ExportFrag, EmptyString(), fpNone|psFileLoaded,
