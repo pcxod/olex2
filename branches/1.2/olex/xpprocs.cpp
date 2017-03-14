@@ -2565,8 +2565,9 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
     ff.Add("*.mol", "MDL MOL");
     ff.Add("*.mas", "XD master");
     ff.Add("*.mol2", "Tripos MOL2");
-    if (!OverlayXFile)
+    if (!OverlayXFile) {
       ff.Add("*.oxm", "Olex2 model");
+    }
     file_n.file_name = PickFile("Open File",
       ff.GetString(),
       XLibMacros::CurrentDir(), EmptyString(), true);
@@ -5898,6 +5899,7 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &E)
 {
   TStrList content;
+  olxstr file_ext = "xyz";
   if (Options.Contains('c')) {
     olxstr clipbrd_content;
     if (wxTheClipboard->Open()) {
@@ -5940,21 +5942,102 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options,
       FN = Cmds[0];
     }
     else {
-      FN = PickFile("Load Fragment", "XYZ files (*.xyz)|*.xyz",
+      FileFilter ff;
+      ff.AddAll("ins;cif;cmf;res;xyz;pdb");
+      FN = PickFile("Please select the fragment to import",
+        ff.GetString(),
         XLibMacros::CurrentDir(), EmptyString(), true);
     }
     if (FN.IsEmpty() || !TEFile::Exists(FN)) {
       E.ProcessingError(__OlxSrcInfo, "A file is expected");
       return;
     }
+    file_ext = TEFile::ExtractFileExt(FN);
+    if (file_ext.Equalsi("txt")) {
+      file_ext = "xyz";
+    }
     TEFile::ReadLines(FN, content);
   }
-  TXyz xyz;
-  xyz.LoadFromStrings(content);
+  TBasicCFile *ld  = dynamic_cast<TBasicCFile *>(FXApp->XFile().FindFormat(file_ext));
+  if (ld == 0) {
+    E.ProcessingError(__OlxSrcInfo, "Invalid file format");
+    return;
+  }
+  olx_object_ptr<TBasicCFile> f = dynamic_cast<TBasicCFile *>(ld->Replicate());
+  f().LoadStrings(content);
+  if (Options.Contains("rr")) {
+    olxstr resi = Options.FindValue("rr");
+    TPtrList<TResidue> resis = FXApp->XFile().GetAsymmUnit().FindResidues(resi);
+    if (resis.IsEmpty()) {
+      E.ProcessingError(__OlxSrcInfo, "no given residues found");
+      return;
+    }
+    if (resis[0]->Count() > f().GetAsymmUnit().AtomCount()) {
+      E.ProcessingError(__OlxSrcInfo, "not enough atoms provided");
+      return;
+    }
+    TAsymmUnit &au = FXApp->XFile().GetAsymmUnit(),
+      &fau = f().GetAsymmUnit();
+    for (size_t i = 0; i < resis.Count(); i++) {
+      TTypeList<align::pair> pairs;
+      for (size_t j = 0; j < resis[i]->Count(); j++) {
+         pairs.AddNew(au.Orthogonalise((*resis[i])[j].ccrd()),
+           fau.Orthogonalise(fau.GetAtom(j).ccrd()));
+      }
+      align::out ao = align::FindAlignmentQuaternions(pairs);
+      // normal coordinate match
+      smatdd tm;
+      QuaternionToMatrix(ao.quaternions[0], tm.r);
+      tm.r.Transpose();
+      tm.t = ao.center_a;
+      vec3d tr = ao.center_b;
+      bool invert = false;
+      if (true) {  // try inverted coordinate set
+        TTypeList<align::pair> ipairs;
+        for (size_t j = 0; j < resis[i]->Count(); j++) {
+          ipairs.AddNew(au.Orthogonalise((*resis[i])[j].ccrd()),
+            fau.Orthogonalise(-fau.GetAtom(j).ccrd()));
+        }
+        align::out iao = align::FindAlignmentQuaternions(ipairs);
+        smatdd itm;
+        QuaternionToMatrix(iao.quaternions[0], itm.r);
+        itm.r.Transpose();
+        if (iao.rmsd[0] < ao.rmsd[0]) {
+          tr = iao.center_b;
+          tm.r = itm.r;
+          invert = true;
+        }
+      }
+      for (size_t j = 0; j < fau.AtomCount(); j++) {
+        vec3d v = fau.GetAtom(j).ccrd();
+        if (invert) {
+          v *= -1;
+        }
+        v = fau.Orthogonalise(v);
+        v = au.Fractionalise(tm*(v - tr));
+        TCAtom * a;
+        if (j < resis[i]->Count()) {
+          a = &(*resis[i])[j];
+        }
+        else {
+          TCAtom *a = &au.NewAtom();
+          a->SetType(fau.GetAtom(j).GetType());
+        }
+        a->SetLabel(fau.GetAtom(j).GetLabel(), false);
+        a->ccrd() = v;
+        a->SetPart(fau.GetAtom(j).GetPart());
+        a->SetOccu(fau.GetAtom(j).GetOccu());
+        au.GetRefMod()->Vars.FixParam(*a, catom_var_name_Sof);
+      }
+      
+    }
+    FXApp->XFile().EndUpdate();
+    return;
+  }
   TXAtomPList xatoms;
   TXBondPList xbonds;
   LabelCorrector lc(FXApp->XFile().GetAsymmUnit(), TXApp::GetMaxLabelLength());
-  FXApp->AdoptAtoms(xyz.GetAsymmUnit(), xatoms, xbonds);
+  FXApp->AdoptAtoms(f().GetAsymmUnit(), xatoms, xbonds);
   int part = Options.FindValue("p", "-100").ToInt();
   const int npart = FXApp->XFile().GetAsymmUnit().GetNextPart(true);
   const double occu = Options.FindValue("o", "-1").ToDouble();
