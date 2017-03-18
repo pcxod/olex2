@@ -259,7 +259,11 @@ public:
     char a='0', char b='a', char c='a') const;
   /* finds labels duplicate for the given atom list
   */
-  TCAtomPList::const_list_type FindDiplicateLabels(const TCAtomPList &atoms);
+  TCAtomPList::const_list_type FindDiplicateLabels(const TCAtomPList &atoms,
+    bool rename_parts);
+
+  olxset<TCAtom *, TPointerComparator>::const_set_type
+    GetAtomsNeedingPartInLabel() const;
 
   bool IsQPeakMinMaxInitialised() const {  return MaxQPeak != -1000;  }
   DefPropP(double, MinQPeak)
@@ -283,13 +287,15 @@ public:
   virtual olxstr GetIdName() const {  return IdName;  }
   // note - possibly unsafe, type is not checked
   virtual size_t GetIdOf(const IXVarReferencer& vr) const {
-    if( !EsdlInstanceOf(vr, TCAtom) )
+    if (!EsdlInstanceOf(vr, TCAtom)) {
       throw TInvalidArgumentException(__OlxSourceInfo, "referencer");
+    }
     return ((TCAtom&)vr).GetId();
   }
   virtual size_t GetPersistentIdOf(const IXVarReferencer& vr) const {
-    if( !EsdlInstanceOf(vr, TCAtom) )
+    if (!EsdlInstanceOf(vr, TCAtom)) {
       throw TInvalidArgumentException(__OlxSourceInfo, "referencer");
+    }
     return ((TCAtom&)vr).GetTag();
   }
   // note - possibly unsafe, range is unchecked

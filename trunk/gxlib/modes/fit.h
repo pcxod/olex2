@@ -256,7 +256,7 @@ public:
     return false;
   }
   virtual bool AddAtoms(const TXAtomPList& atoms)  {
-    Atoms.AddList(atoms);
+    Atoms.AddAll(atoms);
     group->AddAtoms(atoms);
     group->SetSelected(true);
     return true;

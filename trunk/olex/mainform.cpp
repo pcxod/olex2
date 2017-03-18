@@ -2106,7 +2106,8 @@ bool TMainForm::ImportFrag(const olxstr& line) {
     processMacro("mode fit -a=6");
     TXAtomPList xatoms;
     TXBondPList xbonds;
-    LabelCorrector lc(FXApp->XFile().GetAsymmUnit(), TXApp::GetMaxLabelLength());
+    LabelCorrector lc(FXApp->XFile().GetAsymmUnit(), TXApp::GetMaxLabelLength(),
+      TXApp::DoRenameParts());
     FXApp->AdoptAtoms(xyz.GetAsymmUnit(), xatoms, xbonds);
     for (size_t i = 0; i < xatoms.Count(); i++) {
       FXApp->XFile().GetRM().Vars.FixParam(
@@ -3672,7 +3673,7 @@ bool TMainForm::FindXAtoms(const TStrObjList &Cmds, TXAtomPList& xatoms,
   bool GetAll, bool unselect)
 {
   size_t cnt = xatoms.Count();
-  xatoms.AddList(FXApp->FindXAtoms(Cmds, GetAll, unselect));
+  xatoms.AddAll(FXApp->FindXAtoms(Cmds, GetAll, unselect));
   return (xatoms.Count() != cnt);
 }
 //..............................................................................

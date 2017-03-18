@@ -64,10 +64,10 @@ protected:
   TLibrary Library;
   olxstr CifTemplatesDir;  // the folder with CIF templates/data
   ASelectionOwner* SelectionOwner;
-  bool preserve_fvars, preserve_fvars_i;
-  double min_hbond_angle;
-  bool min_hbond_angle_i;
-  bool safe_afix, safe_afix_i;
+  olx_object_ptr<bool> preserve_fvars;
+  olx_object_ptr<double> min_hbond_angle;
+  olx_object_ptr<bool> safe_afix;
+  olx_object_ptr<bool> rename_parts;
   size_t max_label_length;
   bool interactions_i;
   SortedObjectList<int, TPrimitiveComparator> interactions_from,
@@ -98,7 +98,9 @@ public:
 
   template <class FT>
     bool CheckFileType() const {
-      if (!XFile().HasLastLoader())  return false;
+      if (!XFile().HasLastLoader()) {
+        return false;
+      }
       return EsdlInstanceOf(*XFile().LastLoader(), FT);
     }
 
@@ -214,6 +216,8 @@ public:
   // if true - AFIX are validated adter naming, deleting and HADD
   static bool DoUseSafeAfix();
   static size_t GetMaxLabelLength();
+  // if true - parts cannot have identical labels
+  static bool DoRenameParts();
   // used in the analysis of what short interactions to display
   static SortedObjectList<int, TPrimitiveComparator>& GetInteractionsFrom();
   static SortedObjectList<int, TPrimitiveComparator>& GetInteractionsTo();

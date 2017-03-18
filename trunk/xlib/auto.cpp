@@ -396,7 +396,7 @@ bool TAutoDBNetNode::IsSameType(const TAutoDBNetNode& dbn, bool ExtraLevel)
 {
   if( !FCenter->IsSameType(*dbn.FCenter) )  return false;
   TPtrList<TAutoDBNetNode> nodes;
-  nodes.AddList(AttachedNodes);
+  nodes.AddAll(AttachedNodes);
   TSizeList indexes;
   indexes.SetCapacity( nodes.Count() );
   for( size_t i=0; i < dbn.AttachedNodes.Count(); i++ )  {
@@ -1138,7 +1138,7 @@ ConstTypeList<TAutoDB::TAnalysisResult> TAutoDB::AnalyseStructure(TLattice& latt
 {
   TTypeList<TAutoDB::TAnalysisResult> res;
   for( size_t i=0; i < latt.FragmentCount(); i++ )
-    res.AddList(AnalyseNet(latt.GetFragment(i)));
+    res.AddAll(AnalyseNet(latt.GetFragment(i)));
   return res;
 }
 //..............................................................................
@@ -1709,7 +1709,7 @@ void TAtomTypePermutator::Init(ElementPList* typeRestraints)  {
   Atoms.Clear();
   TypeRestraints.Clear();
   if( typeRestraints != NULL )
-    TypeRestraints.AddList(*typeRestraints);
+    TypeRestraints.AddAll(*typeRestraints);
 }
 //..............................................................................
 void TAtomTypePermutator::ReInit(const TAsymmUnit& au)  {

@@ -27,13 +27,6 @@
 TXApp::TXApp(const olxstr &basedir, bool)
   : TBasicApp(basedir), Library(EmptyString(), this)
 {
-  min_hbond_angle = 120;
-  min_hbond_angle_i = false;
-  preserve_fvars = false;
-  preserve_fvars_i = false;
-  safe_afix = true;
-  safe_afix_i = false;
-  interactions_i = false;
   max_label_length = 0;
 }
 //..............................................................................
@@ -590,7 +583,7 @@ bool TXApp::FindSAtoms(const olxstr& condition, TSAtomPList& res,
       if( objects.atoms[i].CAtom().IsAvailable() )
         atoms.Add(objects.atoms[i]);
   }
-  res.AddList(atoms);
+  res.AddAll(atoms);
   return !atoms.IsEmpty();
 }
 //..............................................................................
@@ -1083,38 +1076,49 @@ WBoxInfo TXApp::CalcWBox(const TSAtomPList& atoms, const TDoubleList* radii,
 //..............................................................................
 double TXApp::GetMinHBondAngle()  {
   TXApp &a = GetInstance();
-  if (a.min_hbond_angle_i)
-    return a.min_hbond_angle;
+  if (a.min_hbond_angle.is_valid()) {
+    return a.min_hbond_angle();
+  }
   else {
     a.min_hbond_angle = TBasicApp::GetInstance().GetOptions()
-    .FindValue("hbond_min_angle", "120").ToDouble();
-    a.min_hbond_angle_i = true;
-    return a.min_hbond_angle;
+      .FindValue("hbond_min_angle", "120").ToDouble();
+    return a.min_hbond_angle();
   }
 }
 //..............................................................................
 bool TXApp::DoPreserveFVARs() {
   TXApp &a = GetInstance();
-  if (a.preserve_fvars_i)
-    return a.preserve_fvars;
+  if (a.preserve_fvars.is_valid()) {
+    return a.preserve_fvars();
+  }
   else {
     a.preserve_fvars = TBasicApp::GetInstance().GetOptions()
-    .FindValue("preserve_fvars", FalseString()).ToBool();
-    a.preserve_fvars_i = true;
-    return a.preserve_fvars;
+      .FindValue("preserve_fvars", FalseString()).ToBool();
+    return a.preserve_fvars();
   }
 }
 //..............................................................................
 bool TXApp::DoUseSafeAfix() {
   TXApp &a = GetInstance();
-  if (a.safe_afix_i) {
-    return a.safe_afix;
+  if (a.safe_afix.is_valid()) {
+    return a.safe_afix();
   }
   else {
     a.safe_afix = TBasicApp::GetInstance().GetOptions()
-    .FindValue("safe_afix", TrueString()).ToBool();
-    a.safe_afix_i = true;
-    return a.safe_afix;
+      .FindValue("safe_afix", TrueString()).ToBool();
+    return a.safe_afix();
+  }
+}
+//..............................................................................
+bool TXApp::DoRenameParts() {
+  TXApp &a = GetInstance();
+  if (a.rename_parts.is_valid()) {
+    return a.rename_parts();
+  }
+  else {
+    a.rename_parts = TBasicApp::GetInstance().GetOptions()
+      .FindValue("rename_parts", TrueString()).ToBool();
+    return a.rename_parts();
   }
 }
 //..............................................................................

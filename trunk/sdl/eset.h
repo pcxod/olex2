@@ -27,48 +27,82 @@ public:
   olxset(const object_t _values[], size_t cnt, const cmp_t &cmp)
     : list_t(cmp)
   {
-    for (size_t i = 0; i < cnt; i++)
+    for (size_t i = 0; i < cnt; i++) {
       Add(_values[i]);
+    }
   }
   olxset(const object_t _values[], size_t cnt) {
-    for (size_t i = 0; i < cnt; i++)
+    for (size_t i = 0; i < cnt; i++) {
       Add(_values[i]);
+    }
   }
-  olxset(const olxset &ad) : list_t(ad) {}
+  olxset(const olxset &ad)
+    : list_t(ad)
+  {}
+
   olxset(const const_olxset<object_t, cmp_t>& ad)
     : list_t(ad.GetObject().cmp)
   {
     list_t::TakeOver(ad.Release(), true);
   }
+
   void TakeOver(olxset &d)  { list_t::TakeOver(d); }
+
   olxset &operator = (const olxset& ad) {
     list_t::operator = (ad);
     return *this;
   }
+
   olxset &operator = (const const_olxset<object_t, cmp_t> &ad)  {
     list_t::TakeOver(ad.Release(), true);
     return *this;
   }
+
   size_t Count() const { return list_t::Count(); }
+
   const object_t &operator [] (size_t i) const {
     return list_t::operator[] (i);
   }
+
   const object_t &Get(size_t i) const {
     return list_t::operator[] (i);
   }
+
   template <class T> bool Contains(const T &key) const {
     return list_t::Contains(key);
   }
+
   template <typename T> bool Add(const T &obj) {
     return list_t::AddUnique(obj).b;
   }
+
+  template <class coll_t> olxset& AddAll(const coll_t& l) {
+    list_t::SetCapacity(list_t::Count() + l.Count());
+    for (size_t i = 0; i < l.Count(); i++) {
+      Add(l[i]);
+    }
+    return *this;
+  }
+
+  template <class coll_t, class Accessor> olxset& AddAll(const coll_t& l,
+    const Accessor& accessor)
+  {
+    list_t::SetCapacity(list_t::Count() + l.Count());
+    for (size_t i = 0; i < l.Count(); i++) {
+      Add(accessor(l[i]));
+    }
+    return *this;
+  }
+
   template <typename T> olxset &operator << (const  T &obj) {
     list_t::AddUnique(obj);
     return *this;
   }
+
   template <class T> size_t IndexOf(const T &key) const {
     return list_t::IndexOf(key);
   }
+
   template <class T> bool Remove(const T &v) {
     size_t ind = list_t::IndexOf(v);
     if (ind != InvalidIndex) {
@@ -77,8 +111,11 @@ public:
     }
     return false;
   }
+
   void Delete(size_t ind)  { list_t::Delete(ind); }
+
   void Clear() { list_t::Clear(); }
+
   bool IsEmpty() const { return list_t::IsEmpty(); }
 
   olxset &Merge(const olxset &s) {

@@ -199,7 +199,7 @@ public:
     TGlGroup::AddObjects(atoms);
     Atoms.SetCapacity(atoms.Count());
     for (size_t i=0; i < atoms.Count(); i++) {
-      Bonds.AddList(Atoms.Add(atoms[i])->GetBonds(),
+      Bonds.AddAll(Atoms.Add(atoms[i])->GetBonds(),
         StaticCastAccessor<TXBond>());
     }
     Bonds.ForEach(ACollectionItem::IndexTagSetter());

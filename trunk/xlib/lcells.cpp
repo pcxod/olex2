@@ -483,7 +483,7 @@ ConstTypeList<Index::ResultEntry> IndexManager::Search(const olxstr &cfg_name,
       }
       else
         index_name = ind.root.name;
-      res.AddList(ind.Search(cell, vol_diff, true));
+      res.AddAll(ind.Search(cell, vol_diff, true));
     }
     catch(...)  {
       TBasicApp::NewLogEntry(logException) <<

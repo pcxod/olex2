@@ -65,9 +65,9 @@ void TMatchMode::FitAtoms(TXAtomPList& AtomsToMatch, bool group){
     netB = &AtomsToMatch[1]->GetNetwork();
     if( netA->GetLattice() != netB->GetLattice() )  {  //match lattices
       atomsB.SetCapacity(netB->GetLattice().GetObjects().atoms.Count());
-      atomsB.AddList(netB->GetLattice().GetObjects().atoms);
+      atomsB.AddAll(netB->GetLattice().GetObjects().atoms);
       atomsA.SetCapacity(netA->GetLattice().GetObjects().atoms.Count());
-      atomsA.AddList(netA->GetLattice().GetObjects().atoms);
+      atomsA.AddAll(netA->GetLattice().GetObjects().atoms);
     }
     else  {
       atomsB.SetCapacity(netB->NodeCount());
