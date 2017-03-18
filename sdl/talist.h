@@ -145,35 +145,37 @@ public:
     return Assign(list);
   }
 //..............................................................................
-  template <class List> TArrayList& AddList(const List& list)  {
+  template <class List> TArrayList& AddAll(const List& list)  {
     SetCapacity(list.Count() + FCount);
-    for( size_t i=0; i < list.Count(); i++ )
-      Items[FCount+i] = list[i];
+    for (size_t i = 0; i < list.Count(); i++) {
+      Items[FCount + i] = list[i];
+    }
     FCount += list.Count();
     return *this;
   }
 //..............................................................................
-  TArrayList& AddList(const SharedArrayList<T>& list)  {
-    return AddList(list.GetObject());
+  TArrayList& AddAll(const SharedArrayList<T>& list) {
+    return AddAll(list.GetObject());
   }
 //..............................................................................
-  TArrayList& AddList(const ConstArrayList<T>& list)  {
-    return AddList(list.GetObject());
+  TArrayList& AddAll(const ConstArrayList<T>& list) {
+    return AddAll(list.GetObject());
   }
 //..............................................................................
   template <class List> TArrayList& operator += (const List& list)  {
-    return AddList(list);
+    return AddAll(list);
   }
 //..............................................................................
   T& Add(const T& Obj)  {
-    if (FCapacity == FCount)
+    if (FCapacity == FCount) {
       SetCapacity((size_t)(1.5*FCount + FIncrement));
+    }
     return (Items[FCount++] = Obj);
   }
 //..............................................................................
   TArrayList& operator << (const T& o) {  Add(o);  return *this;  }
 //..............................................................................
-  TArrayList& operator << (const TArrayList& l) {  return AddList(l);  }
+  TArrayList& operator << (const TArrayList& l) { return AddAll(l); }
 //..............................................................................
   T& Insert(size_t index, const T& Obj)  {
 #ifdef _DEBUG

@@ -86,7 +86,8 @@ public:
     }
     if (part != 0) {
       TLattice& latt = gxapp.XFile().GetLattice();
-      LabelCorrector lc(latt.GetAsymmUnit(), TXApp::GetMaxLabelLength());
+      LabelCorrector lc(latt.GetAsymmUnit(), TXApp::GetMaxLabelLength(),
+        TXApp::DoRenameParts());
       for (size_t i=0; i < latt.GetObjects().atoms.Count(); i++) {
         TSAtom &a = latt.GetObjects().atoms[i];
         a.CAtom().SetOccu(a.CAtom().GetOccu()/2);

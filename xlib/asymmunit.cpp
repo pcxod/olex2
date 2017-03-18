@@ -411,8 +411,9 @@ void TAsymmUnit::Restore(const TPtrList<TResidue> &rs) {
 }
 //..............................................................................
 void TAsymmUnit::AssignResidues(const TAsymmUnit& au) {
-  if( CAtoms.Count() != au.CAtoms.Count() )
+  if (CAtoms.Count() != au.CAtoms.Count()) {
     throw TFunctionFailedException(__OlxSourceInfo, "asymmetric units mismatch");
+  }
   Residues.Clear();
   ResidueRegistry.Clear();
   MainResidue.Clear();
@@ -455,18 +456,48 @@ TCAtom& TAsymmUnit::NewCentroid(const vec3d& CCenter)  {
   return A;
 }
 //..............................................................................
+olxset<TCAtom *, TPointerComparator>::const_set_type
+  TAsymmUnit::GetAtomsNeedingPartInLabel() const
+{
+  olxstr_dict<TCAtomPList> uniq;
+  for (size_t i = 0; i < CAtoms.Count(); i++) {
+    TCAtom *a = CAtoms[i];
+    if (a->IsDeleted() || a->GetPart() == 0) {
+      continue;
+    }
+    uniq.Add(a->GetResiLabel()).Add(a);
+  }
+  olxset<TCAtom *, TPointerComparator> rv;
+  for (size_t i = 0; i < uniq.Count(); i++) {
+    if (uniq.GetValue(i).Count() > 1) {
+      rv.AddAll(uniq.GetValue(i));
+    }
+  }
+  return rv;
+}
+//..............................................................................
 TCAtom * TAsymmUnit::FindCAtom(const olxstr &Label, TResidue* resi)  const {
   int part = DefNoPart;
-  olxstr lb(Label);
-  size_t us_ind = Label.IndexOf('_');
-  if (us_ind != InvalidIndex && ++us_ind < Label.Length()) {
-    olxstr sfx = Label.SubStringFrom(us_ind);
-    if (sfx.IsNumber()) {  // residue number?
-      int resi_num = Label.SubStringFrom(us_ind).ToInt();
-      resi = ResidueRegistry.Find(resi_num, resi);
-      if (resi == NULL)
-        return NULL;
+  olxstr lb = Label;
+  size_t p_idx = Label.IndexOf('^');
+  if (p_idx != InvalidIndex) {
+    olxstr sfx = Label.SubStringFrom(p_idx+1);
+    if (sfx.Length() == 1) {
+      part = olxstr::o_tolower(sfx.CharAt(0)) - 'a' + 1;
     }
+    lb = Label.SubStringTo(p_idx);
+  }
+  size_t us_ind = lb.IndexOf('_');
+  if (us_ind != InvalidIndex && ++us_ind < lb.Length()) {
+    olxstr sfx = lb.SubStringFrom(us_ind);
+    if (sfx.IsNumber()) {  // residue number?
+      int resi_num = lb.SubStringFrom(us_ind).ToInt();
+      resi = ResidueRegistry.Find(resi_num, resi);
+      if (resi == 0) {
+        return 0;
+      }
+    }
+    // some old shelxl compatibility
     else {
       if (sfx.Length() == 1) {
         part = olxstr::o_tolower(Label.CharAt(us_ind)) - 'a' + 1;
@@ -476,37 +507,43 @@ TCAtom * TAsymmUnit::FindCAtom(const olxstr &Label, TResidue* resi)  const {
         if (resi_str.IsNumber()) {
           int resi_num = resi_str.ToInt();
           resi = ResidueRegistry.Find(resi_num, resi);
-          if (resi == NULL)
-            return NULL;
+          if (resi == 0) {
+            return 0;
+          }
         }
         part = olxstr::o_tolower(sfx.GetLast()) - 'a' + 1;
       }
     }
-    lb = lb.SubStringTo(us_ind-1);
+    lb = lb.SubStringTo(us_ind - 1);
   }
   if (resi == 0) {
     resi = &MainResidue;
   }
-  if( Label.Equalsi("first") )  {
-    for( size_t i=0; i < resi->Count(); i++ )
-      if( !resi->GetAtom(i).IsDeleted() )
+  if (Label.Equalsi("first")) {
+    for (size_t i = 0; i < resi->Count(); i++)
+      if (!resi->GetAtom(i).IsDeleted()) {
         return &resi->GetAtom(i);
-  }
-  else if( Label.Equalsi("last") )  {
-    for( size_t i=resi->Count(); i > 0; i-- )
-      if( !resi->GetAtom(i-1).IsDeleted() )
-        return &resi->GetAtom(i-1);
-  }
-  else  {
-    for( size_t i=0; i < resi->Count(); i++ )
-      if( !resi->GetAtom(i).IsDeleted() &&
-          resi->GetAtom(i).GetLabel().Equalsi(lb) )
-      {
-        if( part == DefNoPart || resi->GetAtom(i).GetPart() == part )
-          return &resi->GetAtom(i);
       }
   }
-  return NULL;
+  else if (Label.Equalsi("last")) {
+    for (size_t i = resi->Count(); i > 0; i--) {
+      if (!resi->GetAtom(i - 1).IsDeleted()) {
+        return &resi->GetAtom(i - 1);
+      }
+    }
+  }
+  else {
+    for (size_t i = 0; i < resi->Count(); i++) {
+      if (!resi->GetAtom(i).IsDeleted() &&
+        resi->GetAtom(i).GetLabel().Equalsi(lb))
+      {
+        if (part == DefNoPart || olx_abs(resi->GetAtom(i).GetPart()) == part) {
+          return &resi->GetAtom(i);
+        }
+      }
+    }
+  }
+  return 0;
 }
 //..............................................................................
 TCAtom *TAsymmUnit::FindCAtomDirect(const olxstr &label) const {
@@ -664,21 +701,23 @@ double TAsymmUnit::MolWeight() const  {
 }
 //..............................................................................
 void TAsymmUnit::AddMatrix(const smatd& a)  {
-  if( a.r.IsI() )
+  if (a.r.IsI()) {
     Matrices.InsertCopy(0, a);
-  else
+  }
+  else {
     Matrices.AddCopy(a);
+  }
 }
 //..............................................................................
 TCAtomPList::const_list_type TAsymmUnit::FindDiplicateLabels(
-  const TCAtomPList &atoms_)
+  const TCAtomPList &atoms_, bool rename_parts)
 {
   TCAtomPList duplicates;
   olxstr_dict<TCAtom *, true> atoms;
   CAtoms.ForEach(ACollectionItem::TagSetter(1));
   // make sure the given list labels are unique
   for (size_t i = 0; i < atoms_.Count(); i++) {
-    atoms.Add(atoms_[i]->GetResiLabel(), atoms_[i])->SetTag(0);
+    atoms.Add(atoms_[i]->GetResiLabel(!rename_parts), atoms_[i])->SetTag(0);
   }
 
   for (size_t i = 0; i < atoms.Count(); i++) {
@@ -687,6 +726,9 @@ TCAtomPList::const_list_type TAsymmUnit::FindDiplicateLabels(
     for (size_t j = 0; j < resi.Count(); j++) {
       TCAtom& b = resi[j];
       if (b.GetTag() == 0 || b.IsDeleted()) {
+        continue;
+      }
+      if (!rename_parts && (b.GetPart() != a.GetPart())) {
         continue;
       }
       if (b.GetLabel().Equalsi(a.GetLabel())) {

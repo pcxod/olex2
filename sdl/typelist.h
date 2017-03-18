@@ -126,7 +126,7 @@ public:
   /* creates new copies of the objest, be careful as the copy constructor must
   exist
   */
-  template <class alist> void AddList(const alist& list)  {
+  template <class alist> void AddAll(const alist& list)  {
     List.SetCapacity(list.Count() + List.Count());
     for( size_t i=0; i < list.Count(); i++ )
       List.Add(new T(list[i]));
@@ -336,7 +336,7 @@ public:
   TTypeListExt & operator << (T *item) { Add(item);  return *this; }
 //..............................................................................
   TTypeListExt & operator << (const TTypeListExt &list) {
-    AddList(list);
+    AddAll(list);
     return *this;
   }
 //..............................................................................

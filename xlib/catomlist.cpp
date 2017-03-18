@@ -227,7 +227,7 @@ size_t ImplicitCAtomRef::Expand(const RefinementModel& rm,
     if (resi_ref.IsEmpty())
       residues.Add(resi);
     else
-      residues.AddList(rm.aunit.FindResidues(resi_ref));
+      residues.AddAll(rm.aunit.FindResidues(resi_ref));
     aname = Name.SubStringTo(us_ind);
   }
   size_t ac = 0;

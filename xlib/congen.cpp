@@ -60,7 +60,8 @@ AConstraintGenerator::AConstraintGenerator(RefinementModel& rm)
 void AConstraintGenerator::DoGenerateAtom(TCAtomPList& created, TAsymmUnit& au,
   vec3d_list& Crds, const olxstr& StartingName)
 {
-  LabelCorrector lc(au, TXApp::GetMaxLabelLength());
+  LabelCorrector lc(au, TXApp::GetMaxLabelLength(),
+    TXApp::DoRenameParts());
   const bool IncLabel = (Crds.Count() != 1);
   for (size_t i = 0; i < Crds.Count(); i++) {
     TCAtom& CA = au.NewAtom();

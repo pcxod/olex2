@@ -201,11 +201,12 @@ PyObject* pyDescRef(PyObject* self, PyObject* args)  {
   return PythonExt::BuildString(rv.Text('\n'));
 }
 //..............................................................................
-PyObject* pyRefModel(PyObject* self, PyObject* args)  {
+PyObject* pyRefModel(PyObject* self, PyObject* args) {
   bool calc_connectivity = false;
-  if( PyTuple_Size(args) != 0 )  {
-    if( !PyArg_ParseTuple(args, "b", &calc_connectivity) )
+  if (PyTuple_Size(args) != 0) {
+    if (!PyArg_ParseTuple(args, "b", &calc_connectivity)) {
       return PythonExt::InvalidArgumentException(__OlxSourceInfo, "b");
+    }
   }
   TAsymmUnit& au = TXApp::GetInstance().XFile().GetAsymmUnit();
   /* make the labels unique globally. This needs to be done since the number of
@@ -213,15 +214,16 @@ PyObject* pyRefModel(PyObject* self, PyObject* args)  {
   -represented
   */
   TStrList o_labels(au.AtomCount());
-  LabelCorrector lc(TXApp::GetMaxLabelLength());
-  for (size_t i=0; i < au.AtomCount(); i++) {
+  LabelCorrector lc(TXApp::GetMaxLabelLength(), TXApp::DoRenameParts());
+  for (size_t i = 0; i < au.AtomCount(); i++) {
     lc.Correct(au.GetAtom(i));
     o_labels[i] = au.GetAtom(i).GetLabel();
-    au.GetAtom(i).SetLabel(au.GetAtom(i).GetResiLabel(), false);
+    au.GetAtom(i).SetLabel(au.GetAtom(i).GetResiLabel(!TXApp::DoRenameParts()),
+      false);
   }
   PyObject *rv = TXApp::GetInstance().XFile().GetRM().PyExport(calc_connectivity);
   // restore labels
-  for (size_t i=0; i < au.AtomCount(); i++) {
+  for (size_t i = 0; i < au.AtomCount(); i++) {
     au.GetAtom(i).SetLabel(o_labels[i], false);
   }
   return rv;

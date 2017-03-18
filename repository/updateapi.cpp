@@ -363,7 +363,7 @@ void UpdateAPI::EvaluateProperties(TStrList& props) const  {
       TDataItem* PluginItem = df.Root().FindItem("Plugin");
       if( PluginItem != NULL )  {
         for( size_t i=0; i < PluginItem->ItemCount(); i++ )  {
-          props.AddList(GetPluginProperties(
+          props.AddAll(GetPluginProperties(
             PluginItem->GetItemByIndex(i).GetName()));
         }
       }

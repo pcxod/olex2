@@ -122,7 +122,7 @@ namespace cif_dp {
     cetStringList(const cetStringList& v) : lines(v.lines)  {}
     virtual void ToStrings(TStrList& list) const {
       list.Add(';');
-      list.AddList(lines);
+      list.AddAll(lines);
       list.Add(';');
     }
     virtual void Format()  {
