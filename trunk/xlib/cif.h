@@ -99,7 +99,7 @@ public:
   // renames a parameter
   void Rename(const olxstr& old_name, const olxstr& new_name);
   // returns the number of parameters
-  inline size_t ParamCount() const {
+  size_t ParamCount() const {
     return (block_index == InvalidIndex) ? 0
       : data_provider[block_index].param_map.Count();
   }

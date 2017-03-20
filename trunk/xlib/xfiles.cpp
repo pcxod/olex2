@@ -75,17 +75,20 @@ void TBasicCFile::LoadStrings(const TStrList &lines, const olxstr &nameToken) {
   FileName.SetLength(0);
   Title.SetLength(0);
   TXFile::NameArg file_n(nameToken);
-  if (lines.IsEmpty())
+  if (lines.IsEmpty()) {
     throw TInvalidArgumentException(__OlxSourceInfo, "empty content");
+  }
   try {
     FileName = file_n.file_name;
     LoadFromStrings(lines);
     if (EsdlInstanceOf(*this, TCif)) {
       if (!file_n.data_name.IsEmpty()) {
-        if (file_n.is_index)
+        if (file_n.is_index) {
           ((TCif*)this)->SetCurrentBlock(file_n.data_name.ToSizeT());
-        else
+        }
+        else {
           ((TCif*)this)->SetCurrentBlock(file_n.data_name);
+        }
       }
       else {  // set first then
         ((TCif*)this)->SetCurrentBlock(InvalidIndex);
@@ -105,8 +108,9 @@ void TBasicCFile::LoadFromFile(const olxstr& _fn)  {
   TXFile::NameArg file_n(_fn);
   TEFile::CheckFileExists(__OlxSourceInfo, file_n.file_name);
   TStrList L = TEFile::ReadLines(file_n.file_name);
-  if (L.IsEmpty())
+  if (L.IsEmpty()) {
     throw TEmptyFileException(__OlxSourceInfo, _fn);
+  }
   try {
     LoadStrings(L, _fn);
   }
@@ -141,6 +145,24 @@ void TBasicCFile::GenerateCellForCartesianFormat() {
   }
   au.InitMatrices();
 }
+//..............................................................................
+void TBasicCFile::RearrangeAtoms(const TSizeList & new_indices) {
+  if (new_indices.Count() != GetAsymmUnit().AtomCount()) {
+    throw TInvalidArgumentException(__OlxSourceInfo, "invalid list of indices");
+  }
+  GetRM().BeforeAUSort_();
+  GetAsymmUnit().GetAtoms().Rearrange(new_indices);
+  GetRM().Sort_();
+  index_t idx = 0;
+  for (size_t i = 0; i < GetAsymmUnit().AtomCount(); i++) {
+    TCAtom &a = GetAsymmUnit().GetAtom(i);
+    if (a.GetType() == iHydrogenZ) {
+      continue;
+    }
+    a.SetTag(idx++);
+  }
+  GetRM().AfterAUSort_();
+}
 //----------------------------------------------------------------------------//
 // TXFile function bodies
 //----------------------------------------------------------------------------//
@@ -155,8 +177,8 @@ TXFile::TXFile(ASObjectProvider& Objects) :
   olx_vptr<AEventsDispatcher> vptr(new VPtr);
   Lattice.GetAsymmUnit().OnSGChange.Add(vptr, XFILE_EVT_SG_Change);
   Lattice.OnStructureUniq.Add(vptr, XFILE_EVT_UNIQ);
-  FLastLoader = NULL;
-  FSG = NULL;
+  FLastLoader = 0;
+  FSG = 0;
 }
 //..............................................................................
 TXFile::~TXFile() {
@@ -178,12 +200,9 @@ void TXFile::TakeOver(TXFile &f) {
   */
   //GetLattice().OnDisassemble.TakeOver(
   //  f.GetLattice().OnDisassemble);
-  GetLattice().OnStructureGrow.TakeOver(
-    f.GetLattice().OnStructureGrow);
-  GetLattice().OnStructureUniq.TakeOver(
-    f.GetLattice().OnStructureUniq);
-  GetLattice().OnAtomsDeleted.TakeOver(
-    f.GetLattice().OnAtomsDeleted);
+  GetLattice().OnStructureGrow.TakeOver(f.GetLattice().OnStructureGrow);
+  GetLattice().OnStructureUniq.TakeOver(f.GetLattice().OnStructureUniq);
+  GetLattice().OnAtomsDeleted.TakeOver(f.GetLattice().OnAtomsDeleted);
 }
 //..............................................................................
 void TXFile::RegisterFileFormat(TBasicCFile *F, const olxstr &Ext)  {
@@ -471,8 +490,13 @@ void TXFile::Sort(const TStrList& ins, const TParamList &options) {
   if (FLastLoader == 0) {
     return;
   }
+  olxdict<TCAtom *, size_t, TPointerComparator> original_ids;
   if (!FLastLoader->IsNative()) {
     UpdateAsymmUnit();
+    original_ids.SetCapacity(GetAsymmUnit().AtomCount());
+    for (size_t i = 0; i < GetAsymmUnit().AtomCount(); i++) {
+      original_ids.Add(&GetAsymmUnit().GetAtom(i), i);
+    }
   }
   const bool sort_resi_n = options.GetBoolOption("rn", false, true);
   GetRM().BeforeAUSort_();
@@ -487,11 +511,13 @@ void TXFile::Sort(const TStrList& ins, const TParamList &options) {
     if (list[i]->GetType() == iHydrogenZ) {
       if (!list[i]->IsDeleted()) {
         h_cnt++;
-        if (list[i]->GetParentAfixGroup() == NULL)
+        if (list[i]->GetParentAfixGroup() == 0) {
           free_h_cnt++;
+        }
       }
-      else
+      else {
         del_h_cnt++;
+      }
     }
   }
   if (h_cnt == 0 || del_h_cnt != 0) {
@@ -506,43 +532,56 @@ void TXFile::Sort(const TStrList& ins, const TParamList &options) {
     AtomSorter::CombiSort acs;
     olxstr sort;
     for (size_t i = 0; i < ins.Count(); i++) {
-      if (ins[i].CharAt(0) == '+')
+      if (ins[i].CharAt(0) == '+') {
         sort << ins[i].SubStringFrom(1);
+      }
       else if (ins[i].Equalsi("moiety")) {
         moiety_index = i;
         break;
       }
-      else
+      else {
         labels.Add(ins[i]);
+        }
     }
     bool insert_at_fisrt_label = false,
       label_swap = false;
     for (size_t i = 0; i < sort.Length(); i++) {
-      if (sort.CharAt(i) == 'm')
+      if (sort.CharAt(i) == 'm') {
         acs.sequence.AddNew(&AtomSorter::atom_cmp_Mw);
-      else if (sort.CharAt(i) == 'z')
+      }
+      else if (sort.CharAt(i) == 'z') {
         acs.sequence.AddNew(&AtomSorter::atom_cmp_Z);
-      else if (sort.CharAt(i) == 'l')
+      }
+      else if (sort.CharAt(i) == 'l') {
         acs.sequence.AddNew(&AtomSorter::atom_cmp_Label);
-      else if (sort.CharAt(i) == 'p')
+      }
+      else if (sort.CharAt(i) == 'p') {
         acs.sequence.AddNew(&AtomSorter::atom_cmp_Part);
-      else if (sort.CharAt(i) == 'h')
+      }
+      else if (sort.CharAt(i) == 'h') {
         keeph = false;
-      else if (sort.CharAt(i) == 's')
+      }
+      else if (sort.CharAt(i) == 's') {
         acs.sequence.AddNew(&AtomSorter::atom_cmp_Suffix);
-      else if (sort.CharAt(i) == 'n')
+      }
+      else if (sort.CharAt(i) == 'n') {
         acs.sequence.AddNew(&AtomSorter::atom_cmp_Number);
-      else if (sort.CharAt(i) == 'x')
+      }
+      else if (sort.CharAt(i) == 'x') {
         acs.sequence.AddNew(&AtomSorter::atom_cmp_MoietySize);
-      else if (sort.CharAt(i) == 'f')
+      }
+      else if (sort.CharAt(i) == 'f') {
         insert_at_fisrt_label = true;
-      else if (sort.CharAt(i) == 'w')
+      }
+      else if (sort.CharAt(i) == 'w') {
         label_swap = true;
+      }
     }
     if (!acs.sequence.IsEmpty()) {
       if (!labels.IsEmpty()) {
-        for (size_t i = 0; i < acs.sequence.Count(); i++)
+        for (size_t i = 0; i < acs.sequence.Count(); i++) {
           acs.sequence[i].AddExceptions(labels);
+        }
       }
       AtomSorter::Sort(list, acs);
     }
@@ -560,20 +599,26 @@ void TXFile::Sort(const TStrList& ins, const TParamList &options) {
       sort.SetLength(0);
       if (moiety_index + 1 < ins.Count()) {
         for (size_t i = moiety_index + 1; i < ins.Count(); i++) {
-          if (ins[i].CharAt(0) == '+')
+          if (ins[i].CharAt(0) == '+') {
             sort << ins[i].SubStringFrom(1);
-          else
+          }
+          else {
             labels.Add(ins[i]);
+          }
         }
         for (size_t i = 0; i < sort.Length(); i++) {
-          if (sort.CharAt(i) == 'l')
+          if (sort.CharAt(i) == 'l') {
             mcs.sequence.Add(&MoietySorter::moiety_cmp_label);
-          if (sort.CharAt(i) == 's')
+          }
+          if (sort.CharAt(i) == 's') {
             mcs.sequence.Add(&MoietySorter::moiety_cmp_size);
-          else if (sort.CharAt(i) == 'h')
+          }
+          else if (sort.CharAt(i) == 'h') {
             mcs.sequence.Add(&MoietySorter::moiety_cmp_heaviest);
-          else if (sort.CharAt(i) == 'm')
+          }
+          else if (sort.CharAt(i) == 'm') {
             mcs.sequence.Add(&MoietySorter::moiety_cmp_mass);
+          }
         }
         if (!mcs.sequence.IsEmpty()) {
           QuickSorter::SortMF(moieties, mcs, &MoietySorter::CombiSort::moiety_cmp);
@@ -595,6 +640,9 @@ void TXFile::Sort(const TStrList& ins, const TParamList &options) {
   
   if (sort_resi_n) {
     GetAsymmUnit().SortResidues();
+    if (!FLastLoader->IsNative()) {
+      FLastLoader->GetAsymmUnit().SortResidues();
+    }
   }
   if (options.GetBoolOption("r", false, true)) {
     // apply default sorting to the residues
@@ -603,25 +651,16 @@ void TXFile::Sort(const TStrList& ins, const TParamList &options) {
         default_sorter);
     }
   }
-  GetAsymmUnit().GetAtoms().ForEach(ACollectionItem::IndexTagSetter());
+  GetAsymmUnit().ComplyToResidues();
   {
+    GetAsymmUnit().GetAtoms().ForEach(ACollectionItem::IndexTagSetter());
     TSizeList indices = TIns::DrySave(GetAsymmUnit().GetAtoms());
     if (indices.Count() != GetAsymmUnit().GetAtoms().Count()) {
       throw TFunctionFailedException(__OlxSourceInfo, "assert");
     }
     GetAsymmUnit().GetAtoms().Rearrange(indices);
   }
-  if (!FLastLoader->IsNative()) {
-    if (sort_resi_n) {
-      FLastLoader->GetAsymmUnit().SortResidues();
-    }
-    AtomSorter::SyncLists(GetAsymmUnit().GetAtoms(),
-      FLastLoader->GetAsymmUnit().GetAtoms());
-    FLastLoader->GetAsymmUnit().ComplyToResidues();
-  }
   GetRM().Sort_();
-  // this changes Id's !!! so must be called after the SyncLists
-  GetAsymmUnit().ComplyToResidues();
   index_t idx = 0;
   for (size_t i = 0; i < GetAsymmUnit().AtomCount(); i++) {
     TCAtom &a = GetAsymmUnit().GetAtom(i);
@@ -631,6 +670,14 @@ void TXFile::Sort(const TStrList& ins, const TParamList &options) {
     a.SetTag(idx++);
   }
   GetRM().AfterAUSort_();
+  if (!FLastLoader->IsNative()) {
+    TSizeList new_indices(original_ids.Count(), olx_list_init::zero());
+    for (size_t i = 0; i < GetAsymmUnit().AtomCount(); i++) {
+      new_indices[i] = 
+        original_ids[&GetAsymmUnit().GetAtom(i)];
+    }
+    FLastLoader->RearrangeAtoms(new_indices);
+  }
   // 2010.11.29, ASB bug fix for ADPS on H...
   GetUnitCell().UpdateEllipsoids();
   GetLattice().RestoreADPs(false);
@@ -643,6 +690,13 @@ void TXFile::UpdateAtomIds() {
   TAsymmUnit &au = GetAsymmUnit();
   TCAtomPList &list = au.GetResidue(0).GetAtomList();
   TSizeList indices = TIns::DrySave(list);
+  olxdict<TCAtom *, size_t, TPointerComparator> original_ids;
+  if (!FLastLoader->IsNative()) {
+    original_ids.SetCapacity(list.Count());
+    for (size_t i = 0; i < list.Count(); i++) {
+      original_ids.Add(list[i], i);
+    }
+  }
   if (indices.Count() != list.Count()) {
     throw TFunctionFailedException(__OlxSourceInfo, "assert");
   }
@@ -660,13 +714,16 @@ void TXFile::UpdateAtomIds() {
   list.Rearrange(indices);
   list.ForEach(ACollectionItem::IndexTagSetter());
   GetRM().Sort_();
+  GetAsymmUnit().ComplyToResidues();
   if (!FLastLoader->IsNative()) {
-    AtomSorter::SyncLists(list,
-      FLastLoader->GetAsymmUnit().GetResidue(0).GetAtomList());
+    TSizeList new_indices(original_ids.Count(), olx_list_init::zero());
+    for (size_t i = 0; i < GetAsymmUnit().AtomCount(); i++) {
+      new_indices[i] =
+        original_ids[&GetAsymmUnit().GetAtom(i)];
+    }
+    FLastLoader->GetAsymmUnit().GetResidue(0).GetAtomList().Rearrange(new_indices);
     FLastLoader->GetAsymmUnit().ComplyToResidues();
   }
-  // this changes Id's !!! so must be called after the SyncLists
-  GetAsymmUnit().ComplyToResidues();
   index_t idx = 0;
   for (size_t i = 0; i < au.AtomCount(); i++) {
     TCAtom &a = au.GetAtom(i);
@@ -678,7 +735,7 @@ void TXFile::UpdateAtomIds() {
   GetRM().AfterAUSort_();
 }
 //..............................................................................
-void TXFile::ValidateTabs()  {
+void TXFile::ValidateTabs() {
   for (size_t i = 0; i < RefMod.InfoTabCount(); i++) {
     if (RefMod.GetInfoTab(i).GetType() != infotab_htab)
       continue;
@@ -691,7 +748,7 @@ void TXFile::ValidateTabs()  {
     bool hasH = false;
     for (size_t j = 0; j < ta[0].GetAtom().AttachedSiteCount(); j++) {
       TCAtom &aa = ta[0].GetAtom().GetAttachedAtom(j);
-      if (!aa.IsDeleted() && aa.GetType() == iHydrogenZ)  {
+      if (!aa.IsDeleted() && aa.GetType() == iHydrogenZ) {
         hasH = true;
         break;
       }
@@ -705,11 +762,13 @@ void TXFile::ValidateTabs()  {
     // validate the distance makes sense
     const TAsymmUnit& au = *ta[0].GetAtom().GetParent();
     vec3d v1 = ta[0].GetAtom().ccrd();
-    if (ta[0].GetMatrix() != NULL)
+    if (ta[0].GetMatrix() != 0) {
       v1 = *ta[0].GetMatrix()*v1;
+    }
     vec3d v2 = ta[1].GetAtom().ccrd();
-    if (ta[1].GetMatrix() != NULL)
+    if (ta[1].GetMatrix() != 0) {
       v2 = *ta[1].GetMatrix()*v2;
+    }
     const double dis = au.CellToCartesian(v1).DistanceTo(au.CellToCartesian(v2));
     if (dis > 5) {
       TBasicApp::NewLogEntry() << "Removing HTAB (d > 5A): " << it.InsStr();

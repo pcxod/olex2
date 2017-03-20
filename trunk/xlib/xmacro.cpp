@@ -2645,8 +2645,7 @@ void XLibMacros::macFixUnit(TStrObjList &Cmds, const TParamList &Options,
     content = xf.GetRM().GetUserContent();
   }
   const int Z_sg = (int)uc.MatrixCount();
-  int Z = olx_max(olx_round(Z_sg*Zp), 1);
-  au.SetZ(Z);
+  au.SetZ(Z_sg*Zp);
   olxstr n_c;
   for (size_t i = 0; i < content.Count(); i++) {
     n_c << ' ' << ElementCount::ToString(content[i].element,

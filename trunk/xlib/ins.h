@@ -247,7 +247,7 @@ public:
       }
       else if (Toks[0].Equalsi("ZERR")) {
         if (Toks.Count() == 8) {
-          rm.aunit.SetZ((short)Toks[1].ToDouble());
+          rm.aunit.SetZ(Toks[1].ToDouble());
           rm.aunit.GetAxisEsds() = vec3d(Toks[2].ToDouble(),
             Toks[3].ToDouble(), Toks[4].ToDouble());
           rm.aunit.GetAngleEsds() = vec3d(Toks[5].ToDouble(),

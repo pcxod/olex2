@@ -51,6 +51,7 @@ public:
   virtual bool IsNative() const {  return false;  }
   // adopts the content of the AsemmUnit to the virtual format
   virtual bool Adopt(class TXFile &, int flags=0) = 0;
+  virtual void RearrangeAtoms(const TSizeList & new_indices);
 };
 //---------------------------------------------------------------------------
 
