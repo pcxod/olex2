@@ -192,8 +192,10 @@ void TXBond::Create(const olxstr& cName) {
 void TXBond::UpdateStyle() {
   TGPCollection &gpc = GetPrimitives();
   const uint16_t legend_level = TXAtom::LegendLevel(gpc.GetName());
-  if (legend_level == 3)  // is user managed?
+  // is user managed?
+  if (legend_level == 3 || GetLegend(*this, legend_level) != gpc.GetName()) {
     return;
+  }
   TGraphicsStyle& GS = gpc.GetStyle();
   const int PrimitiveMask = GetPrimitiveMask();
   const TStringToList<olxstr, TGlPrimitive*> &primitives =
@@ -201,8 +203,9 @@ void TXBond::UpdateStyle() {
   for (size_t i = 0; i < primitives.Count(); i++) {
     if ((PrimitiveMask & (1<<i)) != 0) {
       TGlPrimitive *GlP = gpc.FindPrimitiveByName(primitives[i]);
-      if (GlP == NULL)  // must not ever happen...
+      if (GlP == 0) { // must not ever happen...
         continue;
+      }
       EvaluatePrimitiveMaterial(*GlP, GS);
     }
   }

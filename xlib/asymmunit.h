@@ -41,7 +41,7 @@ class TAsymmUnit: public IXVarReferencerContainer, public IOlxObject  {
   TCAtomPList Centroids;
   double MaxQPeak,
          MinQPeak;
-  unsigned short Z;
+  double Z;
   short Latt;
   /* this flag specifies that _OnAtomTypeChange will do nothing, however
   whatever called Assign must call _UpdateConnInfo
@@ -83,7 +83,7 @@ public:
   */
   double EstimateZ(double atomCount) const;
   double GetZPrime() const;
-  DefPropP(short, Z)
+  DefPropP(double, Z)
   DefPropP(short, Latt)
 
   const mat3d& GetCellToCartesian() const {  return Cell2Cartesian; }
