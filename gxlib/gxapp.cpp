@@ -1950,7 +1950,7 @@ bool TGXApp::FindSAtoms(const olxstr& condition, TSAtomPList& res,
     }
     al.Pack();
   }
-  res.AddList(al, StaticCastAccessor<TSAtom>());
+  res.AddAll(al, StaticCastAccessor<TSAtom>());
   return !al.IsEmpty();
 }
 //..............................................................................
@@ -2069,7 +2069,7 @@ ConstPtrList<TXAtom> TGXApp::FindXAtoms(const TStrObjList &Cmds, bool GetAll,
 {
   TXAtomPList atoms;
   if (Cmds.IsEmpty()) {
-    atoms.AddList(
+    atoms.AddAll(
       FindXAtoms(EmptyString(), GetAll, EsdlInstanceOf(GetSelection(), TGlGroup)
         ? unselect : false));
   }
@@ -2113,7 +2113,8 @@ TUndoData* TGXApp::ChangeSuffix(const TXAtomPList& xatoms, const olxstr &To) {
     undo->AddAtom(xatoms[i]->CAtom(), oldL);
   }
   TAsymmUnit &au = XFile().GetAsymmUnit();
-  TCAtomPList duplicates = au.FindDiplicateLabels(processed);
+  TCAtomPList duplicates = au.FindDiplicateLabels(processed,
+    TXApp::DoRenameParts());
   for (size_t i = 0; i < duplicates.Count(); i++) {
     olxstr l = duplicates[i]->GetLabel();
     duplicates[i]->SetLabel(au.CheckLabel(duplicates[i], l));
@@ -2167,7 +2168,8 @@ TUndoData* TGXApp::Name(TXAtom& XA, const olxstr& _Name) {
     SynchroniseBonds(TXAtomPList(objects, DynamicCastAccessor<TXAtom>()));
   }
   TAsymmUnit &au = XFile().GetAsymmUnit();
-  TCAtomPList duplicates = au.FindDiplicateLabels(processed);
+  TCAtomPList duplicates = au.FindDiplicateLabels(processed,
+    TXApp::DoRenameParts());
   for (size_t i = 0; i < duplicates.Count(); i++) {
     olxstr l = duplicates[i]->GetLabel();
     duplicates[i]->SetLabel(au.CheckLabel(duplicates[i], l));
@@ -2343,14 +2345,15 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To,
       AGDObjList objects;
       for (size_t i=0; i < ChangedAtoms.Count(); i++) {
         XA = ChangedAtoms[i];
-        objects.AddList(XA->GetPrimitives().GetObjects());
+        objects.AddAll(XA->GetPrimitives().GetObjects());
         XA->GetPrimitives().ClearObjects();
       }
       for (size_t i=0; i < objects.Count(); i++) {
         objects[i]->Create();
       }
       TAsymmUnit &au = XFile().GetAsymmUnit();
-      TCAtomPList duplicates = au.FindDiplicateLabels(processed);
+      TCAtomPList duplicates = au.FindDiplicateLabels(processed,
+        TXApp::DoRenameParts());
       for (size_t i = 0; i < duplicates.Count(); i++) {
         olxstr l = duplicates[i]->GetLabel();
         duplicates[i]->SetLabel(au.CheckLabel(duplicates[i], l));
@@ -3058,29 +3061,32 @@ void TGXApp::ExpandSelection(TCAtomGroup& atoms)  {
 }
 //..............................................................................
 void TGXApp::ExpandSelectionEx(TSAtomPList& atoms)  {
-  atoms.AddList(GetSelectedXAtoms(GetDoClearSelection()));
+  atoms.AddAll(GetSelectedXAtoms(GetDoClearSelection()));
 }
 //..............................................................................
 ConstPtrList<TSObject<TNetwork> > TGXApp::GetSelected() {
-  //TPtrList<TSObject<TNetwork> > res;
   ConstPtrList<TSObject<TNetwork> > rv =
     GetSelection().Extract<TSObject<TNetwork> >();
-  if (GetDoClearSelection())
+  if (GetDoClearSelection()) {
     SelectAll(false);
+  }
   return rv;
 }
 //..............................................................................
-ConstPtrList<TCAtom> TGXApp::FindCAtoms(const olxstr &Atoms, bool ClearSelection)  {
-  if( Atoms.IsEmpty() )  {
+ConstPtrList<TCAtom> TGXApp::FindCAtoms(const olxstr &Atoms, bool ClearSelection) {
+  if (Atoms.IsEmpty()) {
     TCAtomPList list = GetSelectedCAtoms(ClearSelection);
-    if( !list.IsEmpty() )  return list;
+    if (!list.IsEmpty()) {
+      return list;
+    }
     TAsymmUnit& AU = XFile().GetLattice().GetAsymmUnit();
     list.SetCapacity(list.Count() + AU.AtomCount());
-    for( size_t i=0; i < AU.ResidueCount(); i++ )  {
+    for (size_t i = 0; i < AU.ResidueCount(); i++) {
       TResidue& resi = AU.GetResidue(i);
-      for( size_t j=0; j < resi.Count(); j++ )  {
-        if( !resi[j].IsDeleted() )
+      for (size_t j = 0; j < resi.Count(); j++) {
+        if (!resi[j].IsDeleted()) {
           list.Add(resi[j]);
+        }
       }
     }
     return list;
@@ -3088,25 +3094,26 @@ ConstPtrList<TCAtom> TGXApp::FindCAtoms(const olxstr &Atoms, bool ClearSelection
   TStrList Toks(Atoms, ' ');
   olxstr Tmp;
   TCAtomPList list;
-  for( size_t i = 0; i < Toks.Count(); i++ )  {
+  for (size_t i = 0; i < Toks.Count(); i++) {
     Tmp = Toks[i];
-    if( Tmp.Equalsi("sel") )  {
-      list.AddList(GetSelectedCAtoms(ClearSelection));
+    if (Tmp.Equalsi("sel")) {
+      list.AddAll(GetSelectedCAtoms(ClearSelection));
       continue;
     }
-    if( Tmp.CharAt(0) == '$' )  {
+    if (Tmp.CharAt(0) == '$') {
       SortedElementPList elms = TAtomReference::DecodeTypes(
         Tmp.SubStringFrom(1), XFile().GetAsymmUnit());
-      for( size_t ei=0; ei < elms.Count(); ei++ )
+      for (size_t ei = 0; ei < elms.Count(); ei++) {
         list += CAtomsByType(*elms[ei]);
+      }
       continue;
     }
     size_t ind = Tmp.FirstIndexOf('?');
-    if( ind != InvalidIndex )  {
+    if (ind != InvalidIndex) {
       int mask = 0x0001 << ind;
-      for( size_t j=ind+1; j < Tmp.Length(); j++ )  {
+      for (size_t j = ind + 1; j < Tmp.Length(); j++) {
         ind = Tmp.FirstIndexOf('?', j);
-        if( ind != InvalidIndex )  {
+        if (ind != InvalidIndex) {
           mask |= 0x0001 << ind;
           j = ind;
         }
@@ -3115,19 +3122,24 @@ ConstPtrList<TCAtom> TGXApp::FindCAtoms(const olxstr &Atoms, bool ClearSelection
       continue;
     }
     TCAtom* A = XFile().GetAsymmUnit().FindCAtom(Tmp);
-    if( A != NULL && !A->IsDeleted() )
+    if (A != 0 && !A->IsDeleted()) {
       list.Add(A);
+    }
   }
   return list;
 }
 //..............................................................................
 void TGXApp::UpdateDuplicateLabels() {
-  if (!FLabels->IsVisible() || (FLabels->GetMode()&lmLabels) == 0) return;
+  if (!FLabels->IsVisible() || (FLabels->GetMode()&lmLabels) == 0) {
+    return;
+  }
   olxstr_dict<size_t, true> ld;
   AtomIterator ai = GetAtoms();
   while (ai.HasNext()) {
     TXAtom &a = ai.Next();
-    if (!a.GetMatrix().IsFirst()) continue;
+    if (!a.GetMatrix().IsFirst()) {
+      continue;
+    }
     olxstr gl = a.GetGuiLabel();
     size_t idx = ld.IndexOf(gl);
     if (idx != InvalidIndex) {
@@ -3306,7 +3318,7 @@ void TGXApp::GetGPCollections(AGDObjList& GDObjects, TPtrList<TGPCollection>& Re
 //..............................................................................
 void TGXApp::FillXAtomList(TXAtomPList& res, TXAtomPList* providedAtoms) {
   if (providedAtoms != 0) {
-    res.AddList(*providedAtoms);
+    res.AddAll(*providedAtoms);
   }
   else {
     AtomIterator ai(*this);
@@ -3319,7 +3331,7 @@ void TGXApp::FillXAtomList(TXAtomPList& res, TXAtomPList* providedAtoms) {
 //..............................................................................
 void TGXApp::FillXBondList(TXBondPList& res, TXBondPList* providedBonds) {
   if (providedBonds != 0) {
-    res.AddList(*providedBonds);
+    res.AddAll(*providedBonds);
   }
   else {
     BondIterator bi(*this);
@@ -4034,7 +4046,7 @@ void TGXApp::Individualise(const TXAtomPList& atoms, short _level, int32_t mask)
         for (size_t oi = 0; oi < objects.Count(); oi++) {
           TXAtom* _xa = (TXAtom*)objects[oi];
           _xa->Create(leg);
-          xbonds.AddList(_xa->GetBonds(), StaticCastAccessor<TXBond>());
+          xbonds.AddAll(_xa->GetBonds(), StaticCastAccessor<TXBond>());
         }
         if (mask >= 0) {
           a.UpdatePrimitives(mask);
@@ -4237,7 +4249,7 @@ size_t TGXApp::GetNextAvailableLabel(const olxstr& AtomType) {
 void TGXApp::SynchroniseBonds(const TXAtomPList& xatoms)  {
   TXBondPList xbonds;
   for (size_t i = 0; i < xatoms.Count(); i++) {
-    xbonds.AddList(xatoms[i]->GetBonds(), StaticCastAccessor<TXBond>());
+    xbonds.AddAll(xatoms[i]->GetBonds(), StaticCastAccessor<TXBond>());
   }
   // prepare unique list of bonds
   ACollectionItem::Unify(xbonds);
@@ -4404,7 +4416,7 @@ void TGXApp::CreateXGrowLines() {
   TGXApp_CrdMap CrdMap;
   TXAtomPList AtomsToProcess;
   if (!AtomsToGrow.IsEmpty()) {
-    AtomsToProcess.AddList(FindXAtoms(AtomsToGrow));
+    AtomsToProcess.AddAll(FindXAtoms(AtomsToGrow));
   }
   else if ((FGrowMode & gmSameAtoms) == 0) {
     const size_t ac = XFile().GetLattice().GetObjects().atoms.Count();
@@ -4517,7 +4529,7 @@ void TGXApp::_CreateXGrowVLines()  {
   TGXApp_CrdMap CrdMap;
   TXAtomPList AtomsToProcess;
   if( !AtomsToGrow.IsEmpty() )  {
-    AtomsToProcess.AddList(FindXAtoms(AtomsToGrow));
+    AtomsToProcess.AddAll(FindXAtoms(AtomsToGrow));
     const size_t ac = XFile().GetLattice().GetObjects().atoms.Count();
     for( size_t i=0; i < ac; i++ )  {
       TSAtom& A = XFile().GetLattice().GetObjects().atoms[i];
@@ -5674,7 +5686,7 @@ void TGXApp::ClearIndividualCollections() {
   }
   TPtrList<AGDrawObject> to_create;
   for (size_t i = 0; i < cols.Count(); i++) {
-    to_create.AddList(cols[i]->GetObjects());
+    to_create.AddAll(cols[i]->GetObjects());
   }
   ACollectionItem::Unify(to_create);
   GetRenderer().RemoveCollections(cols);

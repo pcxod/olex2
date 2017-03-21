@@ -41,7 +41,7 @@ class TAsymmUnit: public IXVarReferencerContainer, public IOlxObject  {
   TCAtomPList Centroids;
   double MaxQPeak,
          MinQPeak;
-  unsigned short Z;
+  double Z;
   short Latt;
   /* this flag specifies that _OnAtomTypeChange will do nothing, however
   whatever called Assign must call _UpdateConnInfo
@@ -83,7 +83,7 @@ public:
   */
   double EstimateZ(double atomCount) const;
   double GetZPrime() const;
-  DefPropP(short, Z)
+  DefPropP(double, Z)
   DefPropP(short, Latt)
 
   const mat3d& GetCellToCartesian() const {  return Cell2Cartesian; }
@@ -259,7 +259,11 @@ public:
     char a='0', char b='a', char c='a') const;
   /* finds labels duplicate for the given atom list
   */
-  TCAtomPList::const_list_type FindDiplicateLabels(const TCAtomPList &atoms);
+  TCAtomPList::const_list_type FindDiplicateLabels(const TCAtomPList &atoms,
+    bool rename_parts);
+
+  olxset<TCAtom *, TPointerComparator>::const_set_type
+    GetAtomsNeedingPartInLabel() const;
 
   bool IsQPeakMinMaxInitialised() const {  return MaxQPeak != -1000;  }
   DefPropP(double, MinQPeak)
@@ -283,13 +287,15 @@ public:
   virtual olxstr GetIdName() const {  return IdName;  }
   // note - possibly unsafe, type is not checked
   virtual size_t GetIdOf(const IXVarReferencer& vr) const {
-    if( !EsdlInstanceOf(vr, TCAtom) )
+    if (!EsdlInstanceOf(vr, TCAtom)) {
       throw TInvalidArgumentException(__OlxSourceInfo, "referencer");
+    }
     return ((TCAtom&)vr).GetId();
   }
   virtual size_t GetPersistentIdOf(const IXVarReferencer& vr) const {
-    if( !EsdlInstanceOf(vr, TCAtom) )
+    if (!EsdlInstanceOf(vr, TCAtom)) {
       throw TInvalidArgumentException(__OlxSourceInfo, "referencer");
+    }
     return ((TCAtom&)vr).GetTag();
   }
   // note - possibly unsafe, range is unchecked

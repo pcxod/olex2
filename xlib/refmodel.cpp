@@ -1341,7 +1341,7 @@ const_strlist RefinementModel::Describe() {
   Vars.Describe(vars);
   if( !vars.IsEmpty() )  {
     lst.Add(++sec_num) << ". Others";
-    lst.AddList(vars);
+    lst.AddAll(vars);
   }
   size_t afix_sn = 0;
   olx_pdict<int, TPtrList<TAfixGroup> > a_gs;
@@ -2162,12 +2162,12 @@ void RefinementModel::BeforeAUUpdate_() {
   }
   TPtrList<ExplicitCAtomRef> rs;
   for (size_t i = 0; i < InfoTables.Count(); i++) {
-    rs.AddList(InfoTables[i].GetAtoms().GetExplicit().GetObject());
+    rs.AddAll(InfoTables[i].GetAtoms().GetExplicit().GetObject());
   }
   TPtrList<TSRestraintList> restraints = GetRestraints();
   for (size_t i = 0; i < restraints.Count(); i++) {
     for (size_t j = 0; j < restraints[i]->Count(); j++) {
-      rs.AddList((*restraints[i])[j].GetAtoms().GetExplicit());
+      rs.AddAll((*restraints[i])[j].GetAtoms().GetExplicit());
     }
   }
   for (size_t i = 0; i < rs.Count(); i++) {

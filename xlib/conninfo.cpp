@@ -277,8 +277,8 @@ CXConnInfo& ConnInfo::GetConnInfo(const TCAtom& ca) const {
     const AtomConnInfo& aci = AtomInfo.GetValue(ai_ind);
     ci.r = aci.r < 0 ? ca.GetType().r_bonding : aci.r;
     ci.maxBonds = aci.maxBonds;
-    ci.BondsToCreate.AddList(aci.BondsToCreate);
-    ci.BondsToRemove.AddList(aci.BondsToRemove);
+    ci.BondsToCreate.AddAll(aci.BondsToCreate);
+    ci.BondsToRemove.AddAll(aci.BondsToRemove);
   }
   // use defaults then
   if( ai_ind == InvalidIndex && ti_ind == InvalidIndex )  {

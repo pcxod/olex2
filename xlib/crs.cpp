@@ -109,7 +109,7 @@ void TCRSFile::LoadFromStrings(const TStrList& Strings)  {
   toks.Clear();
   toks.Strtok( Zerr, ' ');
   if( toks.Count() >= 7 )  {
-    GetAsymmUnit().SetZ(static_cast<short>(olx_round(toks[0].ToDouble())));
+    GetAsymmUnit().SetZ(toks[0].ToDouble());
     GetAsymmUnit().GetAxisEsds() =
       vec3d(toks[1].ToDouble(), toks[2].ToDouble(), toks[3].ToDouble());
     GetAsymmUnit().GetAngleEsds() =

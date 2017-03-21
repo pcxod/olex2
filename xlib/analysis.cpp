@@ -558,10 +558,10 @@ bool fragments::ring::merge(ring &r) {
     return false;
   }
   if (atoms[0] != r.atoms[1]) {
-    atoms.AddList(r.atoms.SubListFrom(2));
+    atoms.AddAll(r.atoms.SubListFrom(2));
   }
   else
-    atoms.AddList(olx_list_reverse::MakeConst(r.atoms.SubListFrom(2)));
+    atoms.AddAll(olx_list_reverse::MakeConst(r.atoms.SubListFrom(2)));
   for (size_t i=0; i < r.substituents.Count(); i++) {
     if (!r.substituents[i].atoms[0]->IsProcessed())
       substituents.AddCopy(r.substituents[i]);
@@ -754,7 +754,7 @@ void fragments::fragment::init_generators() {
     return;
   }
   if (atoms_[0]->GetParent()->HasLattice()) {
-    generators.AddList(
+    generators.AddAll(
       atoms_[0]->GetParent()->GetLattice().GetFragmentGrowMatrices(atoms_,
       true));
   }
@@ -1825,7 +1825,7 @@ bool Analysis::trim_18(TAsymmUnit &au) {
     size_t i = peak_ranges.Count();
     while (--i !=InvalidIndex && mn > atoms.Count()) {
       if (peak_ranges[i].get_mean() < 1.5 && atoms.Count() > 0.75*mn ) break;
-      atoms.AddList(peak_ranges[i].peaks);
+      atoms.AddAll(peak_ranges[i].peaks);
     }
     for (; i != InvalidIndex; i--)
       peak_ranges[i].delete_all();
@@ -1834,7 +1834,7 @@ bool Analysis::trim_18(TAsymmUnit &au) {
     size_t p_i = peak_ranges.Count();
     while (--p_i !=InvalidIndex) {
       if (peak_ranges[p_i].get_mean() > 2)
-        atoms.AddList(peak_ranges[p_i].peaks);
+        atoms.AddAll(peak_ranges[p_i].peaks);
       else break;
     }
     for (; p_i != InvalidIndex; p_i--)
@@ -1862,7 +1862,7 @@ double Analysis::find_scale(TLattice &latt) {
         hits = ares[i].list2;
       else  {
         hits = ares[i].list1;
-        hits.AddList(ares[i].enforced);
+        hits.AddAll(ares[i].enforced);
       }
       size_t m = olx_min(2, hits.Count());
       for (size_t j=0; j < m; j++) {

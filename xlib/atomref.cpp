@@ -153,7 +153,7 @@ size_t TAtomReference::_Expand(RefinementModel& rm, TCAtomGroup& atoms,
   else  {
     // empty resi name refers to all atom outside RESI
     if( !resi_name.IsEmpty() )
-      residues.AddList(rm.aunit.FindResidues(resi_name));
+      residues.AddAll(rm.aunit.FindResidues(resi_name));
     else if( CurrResi != NULL )
       residues.Add(CurrResi);
     if( residues.IsEmpty() )  {
@@ -233,7 +233,7 @@ olxstr TAtomReference::Expand(RefinementModel& rm, TCAtomGroup& atoms,
       }
     }
     if( succeded )  {
-      atoms.AddList(tmp_atoms);
+      atoms.AddAll(tmp_atoms);
       if( atomAGroup == 0 )
         atomAGroup = tmp_atoms.Count();
     }

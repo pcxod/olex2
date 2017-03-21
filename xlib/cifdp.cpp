@@ -423,7 +423,7 @@ void cetTable::ToStrings(TStrList& list) const {
   if (out.Count() == data.ColCount() + 1) { // no content is added
     return;
   }
-  list.AddList(out);
+  list.AddAll(out);
   list.Add();  // add an empty string after loop for better formating
 }
 void cetTable::DataFromStrings(TStrList& lines) {

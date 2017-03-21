@@ -461,7 +461,7 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options,
         else
           FoundSpaceGroups.Add(sortedSATestResults.GetValue(i)->GetA()->GetObject());
       }
-      FoundSpaceGroups.AddList( ToAppend );
+      FoundSpaceGroups.AddAll( ToAppend );
       // try to recover...
       if( FilterByElementCount && FoundSpaceGroups.IsEmpty() )  {
         for (size_t i=sortedSATestResults.Count()-1;

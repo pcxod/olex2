@@ -28,6 +28,7 @@ private:
   olxstr_dict<size_t, true> MatrixMap;
   // to be used inernally for locating atoms in the tables
   ConstPtrList<TCAtom> FindAtoms(const TStrList &names);
+  bool has_duplicate_labels;
 protected:
   static cif_dp::cetTable* LoopFromDef(cif_dp::CifBlock& dp,
     const TStrList& col_names);
@@ -42,8 +43,12 @@ public:
   virtual ~TCif();
   void Clear();
   //............................................................................
-  //Load the object from a file.
+  /*Load the object from a file */
   virtual void LoadFromStrings(const TStrList& Strings);
+  /* valid only after loading / changing data block */
+  bool HasDuplicateLabels() {
+    return has_duplicate_labels;
+  }
   /* Saves the data to a file and returns true if successful and false in the
   case of failure
   */
@@ -94,7 +99,7 @@ public:
   // renames a parameter
   void Rename(const olxstr& old_name, const olxstr& new_name);
   // returns the number of parameters
-  inline size_t ParamCount() const {
+  size_t ParamCount() const {
     return (block_index == InvalidIndex) ? 0
       : data_provider[block_index].param_map.Count();
   }
@@ -233,8 +238,13 @@ public:
 struct AtomCifEntry : public cif_dp::IStringCifEntry {
   TCAtom& data;
   mutable olxstr label;
-  AtomCifEntry(const AtomCifEntry& v) : data(v.data)  {}
-  AtomCifEntry(TCAtom& _data) : data(_data)  {}
+  bool save_part;
+  AtomCifEntry(const AtomCifEntry& v)
+    : data(v.data), save_part(false)
+  {}
+  AtomCifEntry(TCAtom& _data)
+    : data(_data), save_part(false)
+  {}
   virtual size_t Count() const {  return 1;  }
   virtual bool IsSaveable() const {  return !data.IsDeleted();  }
   virtual size_t GetCmpHash() const {  return data.GetId();  }
@@ -245,18 +255,8 @@ struct AtomCifEntry : public cif_dp::IStringCifEntry {
   virtual cif_dp::ICifEntry* Replicate() const {
     return new AtomCifEntry(*this);
   }
-  virtual void ToStrings(TStrList& list) const {
-    olxstr al = data.GetResiLabel();
-    if( list.IsEmpty() ||
-        (list.GetLastString().Length() + al.Length() + 1 > 80) )
-    {
-      list.Add(' ') << al;
-    }
-    else {
-      list.GetLastString() << ' ' << data.GetResiLabel();
-    }
-  }
-  virtual olxstr GetStringValue() const {  return data.GetResiLabel();  }
+  virtual void ToStrings(TStrList& list) const;
+  virtual olxstr GetStringValue() const;
 };
 struct AtomPartCifEntry : public cif_dp::IStringCifEntry {
   TCAtom& data;
@@ -272,17 +272,20 @@ struct AtomPartCifEntry : public cif_dp::IStringCifEntry {
     return new AtomPartCifEntry(*this);
   }
   virtual void ToStrings(TStrList& list) const {
-    if( data.GetPart() == 0 )
+    if (data.GetPart() == 0) {
       tmp_val = '.';
-    else
+    }
+    else {
       tmp_val = (int)data.GetPart();
+    }
     if( list.IsEmpty() ||
         (list.GetLastString().Length() + data.GetLabel().Length() + 1 > 80) )
     {
       list.Add(' ') << tmp_val;
     }
-    else
+    else {
       list.GetLastString() << ' ' << tmp_val;
+    }
   }
   virtual olxstr GetStringValue() const {
     return (tmp_val = (int)data.GetPart());

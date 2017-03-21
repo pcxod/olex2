@@ -2138,20 +2138,20 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options,
     for (size_t j = 0; j < ca.DependentHfixGroupCount(); j++)  {
       TAfixGroup& hg = ca.GetDependentHfixGroup(j);
       if (hg.GetTag() != 0) continue;
-      CAtoms.AddList(hg);
+      CAtoms.AddAll(hg);
       hg.SetTag(1);
     }
     if (ca.GetDependentAfixGroup() != NULL &&
       ca.GetDependentAfixGroup()->GetTag() == 0)
     {
-      CAtoms.AddList(*ca.GetDependentAfixGroup());
+      CAtoms.AddAll(*ca.GetDependentAfixGroup());
       ca.GetDependentAfixGroup()->SetTag(1);
     }
     if (ca.GetParentAfixGroup() != NULL &&
       ca.GetParentAfixGroup()->GetTag() == 0)
     {
       CAtoms.Add(ca.GetParentAfixGroup()->GetPivot());
-      CAtoms.AddList(*ca.GetParentAfixGroup());
+      CAtoms.AddAll(*ca.GetParentAfixGroup());
       ca.GetParentAfixGroup()->SetTag(1);
     }
   }
@@ -6036,7 +6036,8 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options,
   }
   TXAtomPList xatoms;
   TXBondPList xbonds;
-  LabelCorrector lc(FXApp->XFile().GetAsymmUnit(), TXApp::GetMaxLabelLength());
+  LabelCorrector lc(FXApp->XFile().GetAsymmUnit(), TXApp::GetMaxLabelLength(),
+    TXApp::DoRenameParts());
   FXApp->AdoptAtoms(f().GetAsymmUnit(), xatoms, xbonds);
   int part = Options.FindValue("p", "-100").ToInt();
   const int npart = FXApp->XFile().GetAsymmUnit().GetNextPart(true);

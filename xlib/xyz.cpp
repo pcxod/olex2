@@ -74,7 +74,7 @@ bool TXyz::Adopt(TXFile &XF, int flags) {
     a.ccrd() = sa.crd();
     a.SetType(sa.GetType());
   }
-  GetAsymmUnit().SetZ((short)XF.GetLattice().GetUnitCell().MatrixCount());
+  GetAsymmUnit().SetZ((double)XF.GetLattice().GetUnitCell().MatrixCount());
   return true;
 }
 //..............................................................................

@@ -44,7 +44,7 @@ void TSPlane::Init(const TTypeList< olx_pair_t<TSAtom*, double> >& atoms) {
     points.AddNew(atoms[i].GetA()->crd(), atoms[i].GetB());
   }
   _Init(points);
-  Crds.Clear().AddList(atoms);
+  Crds.Clear().AddAll(atoms);
 }
 //..............................................................................
 void TSPlane::_Init(const TTypeList<olx_pair_t<vec3d, double> >& points) {

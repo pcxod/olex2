@@ -161,7 +161,7 @@ bool TMol2::Adopt(TXFile &XF, int) {
       sb.Length());
     if (mb.BondType == 0) mb.BondType = 1;
   }
-  GetAsymmUnit().SetZ((short)XF.GetLattice().GetUnitCell().MatrixCount());
+  GetAsymmUnit().SetZ((double)XF.GetLattice().GetUnitCell().MatrixCount());
   return true;
 }
 //..............................................................................

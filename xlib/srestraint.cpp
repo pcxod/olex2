@@ -217,20 +217,23 @@ void TSRestraintList::ValidateRestraint(TSimpleRestraint& sr)  {
   }
   // check uniqueness
   {
-    olxstr exp = sr.GetAtoms().GetExpression();
+    olxstr exp = olxstr(sr.GetAtoms().GetResi()) << ": "
+      << sr.GetAtomExpression();
     size_t dc = 0;
     for (size_t i = 0; i < Restraints.Count(); i++) {
       if (i == ri) {
         continue;
       }
-      if (Restraints[i].GetAtoms().GetExpression() == exp) {
+      olxstr exp1 = Restraints[i].GetAtoms().GetResi();
+      exp1 << ": " << Restraints[i].GetAtomExpression();
+      if (exp1 == exp) {
         Restraints[i].Delete();
         dc++;
       }
     }
     if (dc != 0) {
-      TBasicApp::NewLogEntry(logWarning) << "Some duplicate restraints removed in "
-        << GetIdName() << " list";
+      TBasicApp::NewLogEntry(logWarning) << "Duplicate restraints removed in "
+        << GetIdName() << " list: " << exp;
     }
   }
 }
