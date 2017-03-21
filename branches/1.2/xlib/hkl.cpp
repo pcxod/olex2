@@ -303,7 +303,7 @@ ConstPtrList<TReflection> THklFile::AllRefs(const vec3i& idx,
     if (!Hkl3D->IsInRange(ri[j])) continue;
     TRefPList* r = Hkl3D->Value(ri[j]);
     if (r != NULL)
-      rv.AddList(*r);
+      rv.AddAll(*r);
   }
   return rv;
 }

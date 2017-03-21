@@ -3949,7 +3949,7 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
             }
             else {
               atomsToTransform.Clear();
-              atomsToTransform.AddList(netB.GetLattice().GetObjects().atoms);
+              atomsToTransform.AddAll(netB.GetLattice().GetObjects().atoms);
             }
           }
           TNetwork::DoAlignAtoms(atomsToTransform, align_info);
@@ -4225,7 +4225,7 @@ TStrList GXLibMacros_funMatchLatts(TLattice& lattA, TLattice& lattB,
       if( !lattA.GetFragment(i).IsSuitableForMatching() )  continue;
       for( size_t j=i+1; j < lattA.FragmentCount(); j++ )  {
         if( !lattA.GetFragment(j).IsSuitableForMatching() )  continue;
-        rv.AddList(
+        rv.AddAll(
           TMainForm_funMatchNets1(
             lattA.GetFragment(i), lattA.GetFragment(j), verbose));
       }
@@ -4238,7 +4238,7 @@ TStrList GXLibMacros_funMatchLatts(TLattice& lattA, TLattice& lattB,
       if( !lattB.GetFragment(i).IsSuitableForMatching() )  continue;
       for( size_t j=i+1; j < lattB.FragmentCount(); j++ )  {
         if( !lattB.GetFragment(j).IsSuitableForMatching() )  continue;
-        rv.AddList(
+        rv.AddAll(
           TMainForm_funMatchNets1(lattB.GetFragment(i),
             lattB.GetFragment(j), verbose));
       }
@@ -4249,7 +4249,7 @@ TStrList GXLibMacros_funMatchLatts(TLattice& lattA, TLattice& lattB,
     if( !lattA.GetFragment(i).IsSuitableForMatching() )  continue;
     for( size_t j=0; j < lattB.FragmentCount(); j++ )  {
       if( !lattB.GetFragment(j).IsSuitableForMatching() )  continue;
-      rv.AddList(
+      rv.AddAll(
         TMainForm_funMatchNets1(
           lattA.GetFragment(i), lattB.GetFragment(j), verbose));
     }
@@ -4269,13 +4269,13 @@ void GXLibMacros::funMatchFiles(const TStrObjList& Params, TMacroData &E)  {
       TLattice& lattA = f1->GetLattice();
       TLattice& lattB = f2->GetLattice();
       rv.Add("!H atoms included");
-      rv.AddList(GXLibMacros_funMatchLatts(lattA, lattB, Params));
+      rv.AddAll(GXLibMacros_funMatchLatts(lattA, lattB, Params));
       rv.Add("!H atoms excluded");
       lattA.GetAsymmUnit().DetachAtomType(iHydrogenZ, true);
       lattA.UpdateConnectivity();
       lattB.GetAsymmUnit().DetachAtomType(iHydrogenZ, true);
       lattB.UpdateConnectivity();
-      rv.AddList(GXLibMacros_funMatchLatts(lattA, lattB, Params));
+      rv.AddAll(GXLibMacros_funMatchLatts(lattA, lattB, Params));
       delete f1;
       delete f2;
       E.SetRetVal(rv.Text(NewLineSequence()));
@@ -4300,10 +4300,30 @@ void GXLibMacros::funSelName(const TStrObjList& Params, TMacroData &E)  {
   }
 }
 //..............................................................................
+struct SetMaterialUndo : public TUndoData {
+  olxstr_dict<TGlMaterial> mat_list;
+  SetMaterialUndo() :
+    TUndoData(UndoAction::New(&SetMaterialUndo::undo))
+  {}
+
+  void push(const olxstr &obj, const TGlMaterial &m) {
+    mat_list.Add(obj, m);
+  }
+  static void undo(TUndoData *d) {
+    SetMaterialUndo *m = dynamic_cast<SetMaterialUndo *>(d);
+    if (d == 0) {
+      return;
+    }
+    for (size_t i = 0; i < m->mat_list.Count(); i++) {
+
+    }
+  }
+};
 void GXLibMacros::macSetMaterial(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &E)
 {
   TGlMaterial* mat = NULL;
+  olx_object_ptr<SetMaterialUndo> undo = new SetMaterialUndo();
   TGlMaterial glm;
   glm.FromString(Cmds[1], true);
   sorted::PointerPointer<TGPCollection> colls;
@@ -4380,6 +4400,9 @@ void GXLibMacros::macSetMaterial(TStrObjList &Cmds, const TParamList &Options,
       TBasicApp::NewLogEntry(logError) << "Collection '" << colls[ci]->GetName()
         << "' is not processed";
     }
+  }
+  if (!undo().mat_list.IsEmpty()) {
+    app.GetUndo().Push(undo.release());
   }
 }
 //..............................................................................

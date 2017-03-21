@@ -50,15 +50,14 @@ TXAtom::TXAtom(TNetwork* net, TGlRenderer& Render, const olxstr& collectionName)
 }
 //..............................................................................
 TXAtom::~TXAtom() {
-  if (GetParentGroup() != NULL) {
+  if (GetParentGroup() != 0) {
     GetParentGroup()->Remove(*this);
 #ifdef _DEBUG
     throw TFunctionFailedException(__OlxSourceInfo, "assert");
 #endif
   }
-  if (Polyhedron != NULL) {
+  if (Polyhedron != 0) {
     delete Polyhedron;
-    Polyhedron = NULL;
   }
   delete Label;
 }
@@ -70,12 +69,15 @@ void TXAtom::Update()  {
 void TXAtom::InitActualSphere() {
   Settings &defs = GetSettings();
   ActualSphere = ~0;
-  if (defs.GetQuality() == qaPict)
+  if (defs.GetQuality() == qaPict) {
     return;
-  if (CAtom().GetExyzGroup() != NULL && defs.ConstrainedAtomSphere != ~0)
+  }
+  if (CAtom().GetExyzGroup() != NULL && defs.ConstrainedAtomSphere != ~0) {
     ActualSphere = defs.ConstrainedAtomSphere;
-  else if (CAtom().IsFixedType() && defs.LockedAtomSphere != ~0)
+  }
+  else if (CAtom().IsFixedType() && defs.LockedAtomSphere != ~0) {
     ActualSphere = defs.LockedAtomSphere;
+  }
 }
 //..............................................................................
 int TXAtom::Quality(TGlRenderer &r, int V) {

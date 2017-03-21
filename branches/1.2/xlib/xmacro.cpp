@@ -2645,8 +2645,7 @@ void XLibMacros::macFixUnit(TStrObjList &Cmds, const TParamList &Options,
     content = xf.GetRM().GetUserContent();
   }
   const int Z_sg = (int)uc.MatrixCount();
-  int Z = olx_max(olx_round(Z_sg*Zp), 1);
-  au.SetZ(Z);
+  au.SetZ(Z_sg*Zp);
   olxstr n_c;
   for (size_t i = 0; i < content.Count(); i++) {
     n_c << ' ' << ElementCount::ToString(content[i].element,
@@ -3762,7 +3761,8 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
 {
   TStopWatch sw(__FUNC__);
   TXApp& xapp = TXApp::GetInstance();
-  const bool use_md5 = xapp.GetOptions().FindValue("cif.use_md5", FalseString()).ToBool();
+  const bool use_md5 = xapp.GetOptions()
+    .FindValue("cif.use_md5", FalseString()).ToBool();
   cif_dp::TCifDP src;
   TTypeList<olx_pair_t<olxstr,olxstr> > Translations;
   olxstr CifCustomisationFN = xapp.GetCifTemplatesDir() + "customisation.xlt";
@@ -3817,8 +3817,9 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
   TStrList _loop_names_to_skip("_atom;_geom;_space_group", ';');
   TCif *Cif;
   olx_object_ptr<TCif> Cif2(new TCif);
-  if (xapp.CheckFileType<TCif>())
+  if (xapp.CheckFileType<TCif>()) {
     Cif = &xapp.XFile().GetLastLoader<TCif>();
+  }
   else {
     olxstr cifFN = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "cif");
     if (TEFile::Exists(cifFN)) {
@@ -3830,6 +3831,11 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
         "existing cif is expected");
     }
     Cif = &Cif2();
+  }
+  if (Cif->HasDuplicateLabels()) {
+    TBasicApp::NewLogEntry(logWarning) << "Sorry - the CIF contains duplicate "
+      "atom labels and Olex2 cannot correctly process it. Skipping CifMerge.";
+      return;
   }
   olxstr shelxl_version_number =
     Cif->GetParamAsString("_shelxl_version_number");
@@ -8139,7 +8145,7 @@ void XLibMacros::macDelBond(TStrObjList &Cmds, const TParamList &Options,
   for (size_t i=0; i < mi.bonds.Count(); i++)
     pairs << mi.bonds[i]->A() << mi.bonds[i]->B();
   if ((mi.atoms.Count()%2) == 0)
-    pairs.AddList(mi.atoms);
+    pairs.AddAll(mi.atoms);
 
   TXApp &app = TXApp::GetInstance();
   const TUnitCell &uc = app.XFile().GetUnitCell();
@@ -9699,7 +9705,7 @@ void XLibMacros::macPack(TStrObjList &Cmds, const TParamList &Options,
       TSAtomPList atoms = app.FindSAtoms(Cmds.Text(' '));
       ACollectionItem::Unify(atoms,
         FunctionAccessor::MakeConst(&TSAtom::CAtom));
-      TemplAtoms.AddList(atoms, FunctionAccessor::MakeConst(&TSAtom::CAtom));
+      TemplAtoms.AddAll(atoms, FunctionAccessor::MakeConst(&TSAtom::CAtom));
     }
 
     if (number_count == 6 || number_count == 0 || number_count == 2)  {
@@ -9738,7 +9744,7 @@ void XLibMacros::macGrow(TStrObjList &Cmds, const TParamList &Options,
     TSAtomPList atoms = app.FindSAtoms(olxstr(Options['t']).Replace(',', ' '));
     ACollectionItem::Unify(atoms,
       FunctionAccessor::MakeConst(&TSAtom::CAtom));
-    TemplAtoms.AddList(atoms, FunctionAccessor::MakeConst(&TSAtom::CAtom));
+    TemplAtoms.AddAll(atoms, FunctionAccessor::MakeConst(&TSAtom::CAtom));
   }
   if (Cmds.IsEmpty()) {  // grow fragments
     if (GrowContent) {

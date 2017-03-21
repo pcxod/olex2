@@ -75,7 +75,7 @@ public:
   TPolynomMember& operator = (const TPolynomMember& P)  {
     FMembers.Clear();
     FMult = P.FMult;
-    FMembers.AddList(P.FMembers);
+    FMembers.AddAll(P.FMembers);
     return *this;
   }
   TTypeList<TPMember>& Members() {  return FMembers;  }
@@ -138,7 +138,7 @@ public:
 
   TPolynom&  operator = (const TPolynom& P)  {
     FMembers.Clear();
-    FMembers.AddList(P.FMembers);
+    FMembers.AddAll(P.FMembers);
     return *this;
   }
 

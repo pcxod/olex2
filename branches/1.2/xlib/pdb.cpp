@@ -163,8 +163,9 @@ void TPdb::LoadFromStrings(const TStrList& Strings)  {
         if( sg != NULL )
           GetAsymmUnit().ChangeSpaceGroup(*sg);
       }
-      if( toks.Count() > 9 )
-        GetAsymmUnit().SetZ(toks[9].ToInt());
+      if (toks.Count() > 9) {
+        GetAsymmUnit().SetZ(toks[9].ToDouble());
+      }
     }
     else if (line == "ATOM") {
       toks.Clear();
@@ -238,10 +239,11 @@ bool TPdb::Adopt(TXFile& XF, int)  {
   GetAsymmUnit().GetAxisEsds() = XF.GetAsymmUnit().GetAxisEsds();
   GetAsymmUnit().GetAngles() = XF.GetAsymmUnit().GetAngles();
   GetAsymmUnit().GetAngleEsds() = XF.GetAsymmUnit().GetAngleEsds();
-  for( size_t i=0; i < XF.GetAsymmUnit().MatrixCount(); i++ )
+  for (size_t i = 0; i < XF.GetAsymmUnit().MatrixCount(); i++) {
     GetAsymmUnit().AddMatrix(XF.GetAsymmUnit().GetMatrix(i));
+  }
   GetAsymmUnit().SetLatt(XF.GetAsymmUnit().GetLatt());
-  GetAsymmUnit().SetZ((short)XF.GetLattice().GetUnitCell().MatrixCount());
+  GetAsymmUnit().SetZ((double)XF.GetLattice().GetUnitCell().MatrixCount());
   GetAsymmUnit().InitMatrices();
   for (size_t i=1; i < XF.GetAsymmUnit().ResidueCount(); i++) {
     TResidue &r = XF.GetAsymmUnit().GetResidue(i);

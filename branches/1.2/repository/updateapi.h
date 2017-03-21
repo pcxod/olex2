@@ -131,7 +131,7 @@ class UpdateAPI  {
     catch( TExceptionBase& exc )  {
       TStrList out;
       exc.GetException()->GetStackTrace(out);
-      log.AddList(out);
+      log.AddAll(out);
       return uapi_UpdateError;
     }
   }
@@ -148,7 +148,7 @@ class UpdateAPI  {
     catch( TExceptionBase& exc )  {
       TStrList out;
       exc.GetException()->GetStackTrace(out);
-      log.AddList(out);
+      log.AddAll(out);
       return uapi_UpdateError;
     }
   }

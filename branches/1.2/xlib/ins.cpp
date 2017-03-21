@@ -1036,7 +1036,7 @@ void TIns::FixTypeListAndLabels() {
   }
   for (size_t i=0; i < GetAsymmUnit().ResidueCount(); i++ ) {
     TResidue& residue = GetAsymmUnit().GetResidue(i);
-    LabelCorrector lc(TXApp::GetMaxLabelLength());
+    LabelCorrector lc(TXApp::GetMaxLabelLength(), TXApp::DoRenameParts());
     for (size_t j=0; j < residue.Count(); j++) {
       if (residue[j].IsDeleted()) {
         continue;
@@ -1091,7 +1091,7 @@ void TIns::SaveForSolution(const olxstr& FileName, const olxstr& sMethod,
     //_SaveFVar(RefMod, SL);
   }
 
-  SL.AddList(mtoks);
+  SL.AddAll(mtoks);
   SL.Add(EmptyString());
   if (save_atoms) {
     const TAsymmUnit &au = GetAsymmUnit();
@@ -2163,7 +2163,8 @@ void TIns::ValidateRestraintsAtomNames(RefinementModel& rm, bool report)  {
   restraints.Add(&rm.rDihedralAngle);
   restraints.Add(&rm.rFixedUeq);
   restraints.Add(&rm.rSimilarUeq);
-  LabelCorrector lc(rm.aunit, TXApp::GetMaxLabelLength());
+  LabelCorrector lc(rm.aunit, TXApp::GetMaxLabelLength(),
+    TXApp::DoRenameParts());
   olxstr err_names;
   for (size_t i=0; i < restraints.Count(); i++) {
     TSRestraintList& srl = *restraints[i];

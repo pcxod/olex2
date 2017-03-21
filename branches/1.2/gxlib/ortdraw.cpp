@@ -1264,7 +1264,7 @@ void OrtDraw::Render(const olxstr& fileName) {
           output.Add(pw.color_str(color));
           prev_ps_color = color;
         }
-        output.AddList(
+        output.AddAll(
           glf.RenderPSLabel(
             crd, Labels[i]->GetLabel(), font_scale, context)
         );

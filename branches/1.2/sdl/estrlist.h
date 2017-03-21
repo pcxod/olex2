@@ -287,7 +287,7 @@ public:
       return *this;
     }
 
-  TTStrList& AddList(const TTStrList& S)  {
+  TTStrList& AddAll(const TTStrList& S)  {
     for( size_t i=0; i < S.Count(); i++ )
       Add(S.GetString(i));
     return *this;
@@ -726,7 +726,7 @@ public:
     return *this;
   }
 
-  TStringToList AddList(const TStringToList& S) {
+  TStringToList AddAll(const TStringToList& S) {
     for (size_t i=0; i < S.Count(); i++)
       Add(S[i], S.GetObject(i));
     return *this;

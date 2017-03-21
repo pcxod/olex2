@@ -137,9 +137,10 @@ public:
   // returns atom label
   const olxstr& GetLabel() const {  return Label;  }
   /* if ResiId == -1 works the same as GetLabel(), otherwise appends '_' and
-  the Residue number
+  the Residue number. If add part is true also adds '^' + parts as a Latin
+  letter
   */
-  olxstr GetResiLabel() const;
+  olxstr GetResiLabel(bool add_part=false) const;
 
   size_t AttachedSiteCount() const {  return AttachedSites.Count();  }
   bool IsAttachedTo(const TCAtom& ca) const {

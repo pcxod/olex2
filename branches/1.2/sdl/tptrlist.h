@@ -173,43 +173,45 @@ public:
     return TakeOver(l.Release(), true);
   }
 //..............................................................................
-  TPtrList& AddList(const TPtrList& list)  {
+  TPtrList& AddAll(const TPtrList& list) {
     SetCapacity(list.Count() + FCount);
     memcpy(&Items[FCount], list.Items, list.Count()*sizeof(T*));
     FCount += list.Count();
     return *this;
   }
 //..............................................................................
-  TPtrList& AddList(const SharedPtrList<T>& list)  {
-    return AddList(list.GetObject());
+  TPtrList& AddAll(const SharedPtrList<T>& list) {
+    return AddAll(list.GetObject());
   }
 //..............................................................................
-  TPtrList& AddList(const ConstPtrList<T>& list)  {
-    return AddList(list.GetObject());
+  TPtrList& AddAll(const ConstPtrList<T>& list)  {
+    return AddAll(list.GetObject());
   }
 //..............................................................................
-  template <class List> TPtrList& AddList(const List& l)  {
+  template <class List> TPtrList& AddAll(const List& l) {
     const size_t off = FCount;
     SetCount(l.Count() + FCount);
-    for( size_t i=0; i < l.Count(); i++ )
-      Set(off+i, l[i]);
+    for (size_t i = 0; i < l.Count(); i++) {
+      Set(off + i, l[i]);
+    }
     return *this;
   }
 //..............................................................................
-  template <class List, class Accessor> TPtrList& AddList(const List& l,
+  template <class List, class Accessor> TPtrList& AddAll(const List& l,
     const Accessor& accessor)
   {
     const size_t off = FCount;
     SetCount(l.Count() + FCount);
-    for( size_t i=0; i < l.Count(); i++ )
-      Set(off+i, accessor(l[i]));
+    for (size_t i = 0; i < l.Count(); i++) {
+      Set(off + i, accessor(l[i]));
+    }
     return *this;
   }
 //..............................................................................
-  TPtrList& operator += (const TPtrList& l)  {  return AddList(l);  }
+  TPtrList& operator += (const TPtrList& l) { return AddAll(l); }
 //..............................................................................
-  template <class List> TPtrList& operator += (const List& l)  {
-    return AddList(l);
+  template <class List> TPtrList& operator += (const List& l) {
+    return AddAll(l);
   }
 //..............................................................................
   template <class obj_t>
@@ -231,7 +233,7 @@ public:
   TPtrList& operator << (T& o)  { Add(o);  return *this; }
   TPtrList& operator << (T* o)  {  Add(o);  return *this;  }
 //..............................................................................
-  TPtrList& operator << (const TPtrList& l)  {  return AddList(l);  }
+  TPtrList& operator << (const TPtrList& l)  {  return AddAll(l);  }
 //..............................................................................
   T*& Set(size_t i, T* pObj)  {
 #ifdef _DEBUG
