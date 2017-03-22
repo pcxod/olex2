@@ -28,6 +28,7 @@ TXApp::TXApp(const olxstr &basedir, bool)
   : TBasicApp(basedir), Library(EmptyString(), this)
 {
   max_label_length = 0;
+  interactions_i = false;
 }
 //..............................................................................
 TXApp::TXApp(const olxstr &basedir, ASObjectProvider* objectProvider,
