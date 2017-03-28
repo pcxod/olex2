@@ -118,7 +118,6 @@ void TAsymmUnit::Assign(const TAsymmUnit& C) {
 }
 //..............................................................................
 void TAsymmUnit::ComplyToResidues() {
-  CAtoms.ForEach(ACollectionItem::TagSetter(-1));
   size_t ac = 0;
   for (size_t i = 0; i < MainResidue.Count(); i++) {
     MainResidue[i].SetTag(ac++);
@@ -1008,10 +1007,15 @@ void TAsymmUnit::ToDataItem(TDataItem& item) const {
   }
 }
 //..............................................................................
+void TAsymmUnit::_UpdateAtomIds() {
+  for (size_t i = 0; i < CAtoms.Count(); i++) {
+    CAtoms[i]->SetId(i);
+  }
+}
+//..............................................................................
 #ifdef _PYTHON
 PyObject* TAsymmUnit::PyExport(TPtrList<PyObject>& _atoms, bool export_conn) {
-  for (size_t i = 0; i < CAtoms.Count(); i++)
-    CAtoms[i]->SetId(i);
+  _UpdateAtomIds();
   PyObject* main = PyDict_New(), *cell = PyDict_New();
   PythonExt::SetDictItem(cell, "a",
     Py_BuildValue("(dd)", Axes[0], AxisEsds[0]));

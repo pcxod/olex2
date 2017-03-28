@@ -202,6 +202,7 @@ public:
   void _OnAtomTypeChanged(TCAtom& caller);
   // called by the ref model
   void _UpdateConnInfo();
+  void _UpdateAtomIds();
   //creates a new atom and puts it into the list
   TCAtom& NewAtom(TResidue* resi = NULL);
   //creates a new atom and puts it into the list

@@ -1510,26 +1510,31 @@ void TIns::_DrySaveAtom(TCAtom& a, TSizeList &indices,
   }
 }
 //..............................................................................
-TSizeList::const_list_type TIns::DrySave(const TCAtomPList& atoms) {
+TSizeList::const_list_type TIns::DrySave(const TAsymmUnit& au) {
   TSizeList rv;
-  for (size_t i = 0; i < atoms.Count(); i++) {
-    atoms[i]->SetSaved(false);
-    atoms[i]->SetTag((index_t)i);
+  rv.SetCapacity(au.AtomCount());
+  for (size_t i = 0; i < au.AtomCount(); i++) {
+    au.GetAtom(i).SetSaved(false);
+    au.GetAtom(i).SetTag((index_t)i);
   }
-  for (size_t i = 0; i < atoms.Count(); i++) {
-    if (atoms[i]->IsDeleted() || atoms[i]->IsSaved())
-      continue;
-    if (atoms[i]->GetParentAfixGroup() != NULL &&
-      !atoms[i]->GetParentAfixGroup()->GetPivot().IsDeleted())
-    {
-      continue;
+  for (size_t i = 0; i < au.ResidueCount(); i++) {
+    TResidue& residue = au.GetResidue(i);
+    for (size_t j = 0; j < residue.Count(); j++) {
+      TCAtom& ac = residue[j];
+      if (ac.IsDeleted() || ac.IsSaved()) {
+        continue;
+      }
+      if (ac.GetParentAfixGroup() != 0 &&
+        !ac.GetParentAfixGroup()->GetPivot().IsDeleted())
+      {
+        continue;
+      }
+      _DrySaveAtom(ac, rv, true, false);
     }
-    _DrySaveAtom(*atoms[i], rv, true, false);
   }
-  // move all not saved atoms to the end
-  for (size_t i = 0; i < atoms.Count(); i++) {
-    if (!atoms[i]->IsSaved()) {
-      rv.Add(atoms[i]->GetTag());
+  for (size_t i = 0; i < au.AtomCount(); i++) {
+    if (!au.GetAtom(i).IsSaved()) {
+      rv.Add(au.GetAtom(i).GetTag());
     }
   }
   return rv;

@@ -123,7 +123,7 @@ public:
     TIndexList& index, TStrList& SL,
     RefinementModel::ReleasedItems* processed);
   /**/
-  static TSizeList::const_list_type DrySave(const TCAtomPList& atoms);
+  static TSizeList::const_list_type DrySave(const TAsymmUnit& au);
   static void ValidateRestraintsAtomNames(RefinementModel& rm,
     bool report=true);
   static bool ParseRestraint(RefinementModel& rm, const TStrList& toks);
