@@ -7133,28 +7133,32 @@ void XLibMacros::macAfix(TStrObjList &Cmds, const TParamList &Options,
       TBasicApp::NewLogEntry() <<
         "Generating missing atoms and applying the AFIX";
       TStrList toks(positions, ',');
-      if( toks.Count() < 3 )  {
+      if (toks.Count() < 3) {
         E.ProcessingError(__OlxSrcInfo, "at least 3 atoms should be provided");
         return;
       }
-      if( toks.Count() != Atoms.Count() )  {
+      if (toks.Count() != Atoms.Count()) {
         E.ProcessingError(__OlxSrcInfo,
           "mismatching number of positions and given atoms");
         return;
       }
       TArrayList<int> pos(toks.Count());
       vec3d_list crds;
-      if (m == 5)
+      if (m == 5) {
         Fragment::GenerateFragCrds(frag_id_cp, crds);
-      else if (m == 6 || m == 7)
+      }
+      else if (m == 6 || m == 7) {
         Fragment::GenerateFragCrds(frag_id_ph, crds);
-      else if (m == 10)
+      }
+      else if (m == 10) {
         Fragment::GenerateFragCrds(frag_id_cp_star, crds);
-      else if (m == 11)
+      }
+      else if (m == 11) {
         Fragment::GenerateFragCrds(frag_id_naphthalene, crds);
-      for( size_t i=0; i < toks.Count(); i++ )  {
-        const int v = toks[i].ToInt()-1;
-        if( i > 0 && pos[i-1] >= v )  {
+      }
+      for (size_t i = 0; i < toks.Count(); i++) {
+        const int v = toks[i].ToInt() - 1;
+        if (i > 0 && pos[i - 1] >= v) {
           E.ProcessingError(__OlxSrcInfo,
             "please provide position in the ascending order");
           return;
@@ -7167,7 +7171,7 @@ void XLibMacros::macAfix(TStrObjList &Cmds, const TParamList &Options,
       }
       TTypeList<AnAssociation3<TCAtom*, const cm_Element*, bool> > atoms;
       const cm_Element& carb = XElementLib::GetByIndex(iCarbonIndex);
-      for (size_t i=0; i < pos.Count(); i++) {
+      for (size_t i = 0; i < pos.Count(); i++) {
         while (pos[i] > 0 && (pos[i] > (int)atoms.Count())) {
           atoms.Add(new AnAssociation3<TCAtom*, const cm_Element*, bool>(
             NULL, &carb, false));
@@ -7182,27 +7186,29 @@ void XLibMacros::macAfix(TStrObjList &Cmds, const TParamList &Options,
       app.XFile().GetAsymmUnit().FitAtoms(atoms, crds, false);
       TAfixGroup& ag = app.XFile().GetRM().AfixGroups.New(
         atoms[pos[0]].a, afix);
-      for( size_t i=pos[0]+1; i < atoms.Count(); i++ )
+      for (size_t i = pos[0] + 1; i < atoms.Count(); i++)
         ag.AddDependent(*atoms[i].a);
-      for( int i=0; i < pos[i]; i++ )
+      for (int i = 0; i < pos[i]; i++)
         ag.AddDependent(*atoms[i].a);
       app.XFile().EndUpdate();
       return;
     }
-    if (Atoms.IsEmpty())
+    if (Atoms.IsEmpty()) {
       app.AutoAfixRings(afix, NULL, Options.Contains('n'));
-    else if( Atoms.Count() == 1 )
+    }
+    else if (Atoms.Count() == 1) {
       app.AutoAfixRings(afix, Atoms[0], Options.Contains('n'));
-    else  {
-      if( (m == 5) &&  Atoms.Count() != 5 )  {
+    }
+    else {
+      if ((m == 5) && Atoms.Count() != 5) {
         E.ProcessingError(__OlxSrcInfo, "please provide 5 atoms exactly");
         return;
       }
-      else if( (m == 6 || m == 7) &&  Atoms.Count() != 6 )  {
+      else if ((m == 6 || m == 7) && Atoms.Count() != 6) {
         E.ProcessingError(__OlxSrcInfo, "please provide 6 atoms exactly");
         return;
       }
-      else if( (m == 10 || m == 11) &&  Atoms.Count() != 10 )  {
+      else if ((m == 10 || m == 11) && Atoms.Count() != 10) {
         E.ProcessingError(__OlxSrcInfo, "please provide 10 atoms exactly");
         return;
       }
@@ -7213,18 +7219,18 @@ void XLibMacros::macAfix(TStrObjList &Cmds, const TParamList &Options,
       else {
         TBasicApp::NewLogEntry() << "Applying AFIX " << afix << " to " <<
           olx_analysis::alg::label(Atoms, true, ' ');
-        if( Atoms[0]->CAtom().GetDependentAfixGroup() != NULL )
+        if (Atoms[0]->CAtom().GetDependentAfixGroup() != NULL)
           Atoms[0]->CAtom().GetDependentAfixGroup()->Clear();
         TAfixGroup& ag = rm.AfixGroups.New(&Atoms[0]->CAtom(), afix);
-        for( size_t i=1; i < Atoms.Count(); i++ )  {
+        for (size_t i = 1; i < Atoms.Count(); i++) {
           TCAtom& ca = Atoms[i]->CAtom();
           if (ca.GetParentAfixGroup() != NULL) {
             TBasicApp::NewLogEntry() << "Removing intersecting AFIX group: ";
             TBasicApp::NewLogEntry() << ca.GetParentAfixGroup()->ToString();
             ca.GetParentAfixGroup()->Clear();
           }
-          if( ca.GetDependentAfixGroup() != NULL &&
-            ca.GetDependentAfixGroup()->GetAfix() == afix )
+          if (ca.GetDependentAfixGroup() != NULL &&
+            ca.GetDependentAfixGroup()->GetAfix() == afix)
           {
             TBasicApp::NewLogEntry() << "Removing potentially intersecting AFIX"
               " group: ";
@@ -7232,39 +7238,41 @@ void XLibMacros::macAfix(TStrObjList &Cmds, const TParamList &Options,
             ca.GetDependentAfixGroup()->Clear();
           }
         }
-        for (size_t i=1; i < Atoms.Count(); i++)
+        for (size_t i = 1; i < Atoms.Count(); i++)
           ag.AddDependent(Atoms[i]->CAtom());
       }
     }
   }
   else {
     if (afix == 0) {
-      for (size_t i=0; i < Atoms.Count(); i++) {
+      for (size_t i = 0; i < Atoms.Count(); i++) {
         TCAtom& ca = Atoms[i]->CAtom();
         if (ca.GetAfix() == -1) {
           continue;
         }
         if (ca.GetAfix() == 1 || ca.GetAfix() == 2) {
-          if (ca.GetDependentAfixGroup() != NULL)
+          if (ca.GetDependentAfixGroup() != 0) {
             ca.GetDependentAfixGroup()->Clear();
+          }
           continue;
         }
-        if (ca.GetDependentAfixGroup() != NULL) {
+        if (ca.GetDependentAfixGroup() != 0) {
           ca.GetDependentAfixGroup()->Clear();
         }
         else if (ca.DependentHfixGroupCount() != 0) {
-          for (size_t j=0; j < ca.DependentHfixGroupCount(); j++) {
-            if (ca.GetDependentHfixGroup(j).GetAfix() != -1)
+          for (size_t j = 0; j < ca.DependentHfixGroupCount(); j++) {
+            if (ca.GetDependentHfixGroup(j).GetAfix() != -1) {
               ca.GetDependentHfixGroup(j).Clear();
+            }
           }
         }
-        else if (ca.GetParentAfixGroup() != NULL) {
+        else if (ca.GetParentAfixGroup() != 0) {
           ca.GetParentAfixGroup()->Clear();
         }
       }
     }
-    else if (!Atoms.IsEmpty() ) {
-      if (Atoms[0]->CAtom().GetUisoOwner() != NULL) {
+    else if (!Atoms.IsEmpty()) {
+      if (Atoms[0]->CAtom().GetUisoOwner() != 0) {
         TBasicApp::NewLogEntry(logError) << "Cannot use '" <<
           Atoms[0]->GetLabel() << "' as a pivot for the AFIX group";
       }
@@ -7272,7 +7280,7 @@ void XLibMacros::macAfix(TStrObjList &Cmds, const TParamList &Options,
         if (Atoms[0]->CAtom().GetDependentAfixGroup() != NULL)
           Atoms[0]->CAtom().GetDependentAfixGroup()->Clear();
         TAfixGroup& ag = rm.AfixGroups.New(&Atoms[0]->CAtom(), afix);
-        for (size_t i=1; i < Atoms.Count(); i++)
+        for (size_t i = 1; i < Atoms.Count(); i++)
           ag.AddDependent(Atoms[i]->CAtom());
       }
     }
