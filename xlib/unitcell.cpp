@@ -748,18 +748,24 @@ void TUnitCell::GetAtomPossibleHBonds(const TAtomEnvi& ae, TAtomEnvi& envi)  {
   types.Add(iBromineZ);
   for (size_t i=0; i < ac; i++) {
     TCAtom& A = au.GetAtom(i);
-    if (A.IsDeleted() || !types.Contains(A.GetType().z)) continue;
+    if (A.IsDeleted() || !types.Contains(A.GetType().z)) {
+      continue;
+    }
     const bool considerI =  (A != ae.GetBase().CAtom());
     smatd_list ms = GetInRange(ae.GetBase().ccrd(), A.ccrd(), D, considerI);
     for (size_t j=0; j < ms.Count(); j++) {
       const vec3d a_crd = au.Orthogonalise(ms[j] * A.ccrd());
       const double qd = a_crd.QDistanceTo(ae.GetBase().crd());
-      if (qd < 2*2 || qd > qD) continue;
+      if (qd < 2 * 2 || qd > qD) {
+        continue;
+      }
       if (ae.Count() == 1) {
         // 80 - 150 degrees
         const double ca = (ae.GetCrd(0) - ae.GetBase().crd()).CAngle(
           a_crd - ae.GetBase().crd());
-        if (ca > 0.174 || ca < -0.866) continue;
+        if (ca > 0.174 || ca < -0.866) {
+          continue;
+        }
       }
       // make sure that atoms on center of symmetry are not counted twice
       bool add = true;
@@ -769,8 +775,9 @@ void TUnitCell::GetAtomPossibleHBonds(const TAtomEnvi& ae, TAtomEnvi& envi)  {
           break;
         }
       }
-      if (add)
+      if (add) {
         envi.Add(A, ms[j], a_crd);
+      }
     }
   }
 }
@@ -786,8 +793,9 @@ void TUnitCell::FilterHBonds(TAtomEnvi& atom, TAtomEnvi& envi, bool move) {
       vec3d h_crd = au.Orthogonalise(m*s.atom->ccrd());
       double ca = (envi.GetBase().crd()-h_crd).CAngle(envi.GetCrd(i)-h_crd);
       if (ca < -0.34) { // 109.9 -> 180
-        if (move)
+        if (move) {
           atom.Add(a, envi.GetMatrix(i), envi.GetCrd(i));
+        }
         envi.Delete(i--);
         break;
       }
