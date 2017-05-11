@@ -20,7 +20,7 @@ class TFitMode : public AEventsDispatcher, public AMode {
   TXGroup* group;
   TXAtomPList Atoms, AtomsToMatch;
   vec3d_alist original_crds;
-  bool Initialised, DoSplit, Restrain;
+  bool Initialised, DoSplit, Restrain, RestrainU;
   int afix, part;
   size_t split_offset;
   class OnUniqHandler : public AActionHandler {
@@ -89,7 +89,7 @@ public:
     : AMode(id),
     Initialised(false),
     DoSplit(false),
-    Restrain(false),
+    Restrain(false), RestrainU(false),
     AngleInc(0),
     undo(0)
   {
@@ -104,6 +104,7 @@ public:
 
   bool Initialise_(TStrObjList& Cmds, const TParamList& Options) {
     Restrain = Cmds.Containsi("same");
+    RestrainU = Cmds.Containsi("rigu");
     DoSplit = Options.Contains('s');
     if (DoSplit) {
       split_offset = 0;
@@ -255,6 +256,15 @@ public:
           sr.AddAtomPair(au.GetAtom(bonds13[i].a), 0, au.GetAtom(bonds13[i].b), 0);
           sr.AddAtomPair(au.GetAtom(atom_map.Find(bonds13[i].a, bonds13[i].a)), 0,
             au.GetAtom(atom_map.Find(bonds13[i].b, bonds13[i].b)), 0);
+        }
+      }
+      if (RestrainU) {
+        TSimpleRestraint &r1 = rm.rRIGU.AddNew();
+        TSimpleRestraint &r2 = rm.rRIGU.AddNew();
+        for (size_t i = 0; i < atom_set.Count(); i++) {
+          TCAtom &a = au.GetAtom(atom_set[i]);
+          r1.AddAtom(a, 0);
+          r2.AddAtom(au.GetAtom(atom_map[a.GetId()]), 0);
         }
       }
       gxapp.XFile().GetLattice().SetAnis(
