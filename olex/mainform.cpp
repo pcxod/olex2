@@ -2492,40 +2492,36 @@ void TMainForm::OnResize()  {
       w = w-10;
     }
   }
-  else {
+  else  {
     HtmlManager.main->Freeze();
-    if (FHtmlOnLeft) {
-      const int cw = (FHtmlWidthFixed ? (int)FHtmlPanelWidth
-        : (int)(w*FHtmlPanelWidth));
+    if( FHtmlOnLeft )  {
+      const int cw = FHtmlWidthFixed ? (int)FHtmlPanelWidth
+        : (int)(w*FHtmlPanelWidth);
       HtmlManager.main->SetClientSize(cw, -1);
       HtmlManager.main->SetSize(-1, h);
       HtmlManager.main->Move(0, 0);
       l = HtmlManager.main->GetSize().GetWidth();
       w -= l;
     }
-    else {
-      const int cw = (FHtmlWidthFixed ? (int)FHtmlPanelWidth
-        : (int)(w*FHtmlPanelWidth));
+    else  {
+      const int cw = FHtmlWidthFixed ? (int)FHtmlPanelWidth
+        : (int)(w*FHtmlPanelWidth);
       HtmlManager.main->SetClientSize(cw, -1);
       HtmlManager.main->SetSize(-1, h);
-      HtmlManager.main->Move((int)(w - HtmlManager.main->GetSize().GetWidth()), 0);
+      HtmlManager.main->Move((int)(w-HtmlManager.main->GetSize().GetWidth()), 0);
       w -= HtmlManager.main->GetSize().GetWidth();
     }
     HtmlManager.main->Refresh();
     HtmlManager.main->Update();
     HtmlManager.main->Thaw();
   }
-  if (CmdLineVisible) {
+  if( CmdLineVisible )  {
     FCmdLine->WI.SetWidth(w);
     FCmdLine->WI.SetLeft(l);
     FCmdLine->WI.SetTop(h - FCmdLine->WI.GetHeight());
   }
-  if (w <= 0) {
-    w = 5;
-  }
-  if (h <= 0) {
-    h = 5;
-  }
+  if( w <= 0 )  w = 5;
+  if( h <= 0 )  h = 5;
   FGlCanvas->SetSize(l, 0, w, h - (CmdLineVisible ? FCmdLine->WI.GetHeight() : 0));
   FGlCanvas->GetClientSize(&w, &h);
   FXApp->GetRenderer().Resize(0, 0, w, h, 1);
@@ -2782,13 +2778,11 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
       FHtmlWidthFixed = !Tmp.EndsWith('%');
       FHtmlPanelWidth = ((!FHtmlWidthFixed) ? Tmp.SubStringTo(Tmp.Length()-1).ToDouble()
         : Tmp.ToDouble());
-      if (!FHtmlWidthFixed && FHtmlPanelWidth >= 0.5) {
+      if( !FHtmlWidthFixed && FHtmlPanelWidth >= 0.5 )
         FHtmlPanelWidth = 0.25;
-      }
     }
-    else {
+    else
       FHtmlPanelWidth = 0.25;
-    }
 
     Tmp = I->FindField("Tooltips", EmptyString());
     if( !Tmp.IsEmpty() )
@@ -3870,8 +3864,8 @@ PyObject* pyGetUserInput(PyObject* self, PyObject* args)  {
   return rv;
 }
 //..............................................................................
-PyObject* pyPPI(PyObject* self, PyObject* args) {
-  wxWindowDC wx_dc(TGlXApp::GetMainForm());
+PyObject* pyPPI(PyObject* self, PyObject* args)  {
+  wxWindowDC wx_dc( TGlXApp::GetMainForm() );
   wxSize ppi = wx_dc.GetPPI();
   return Py_BuildValue("(ii)", ppi.GetX(), ppi.GetY());
 }

@@ -1106,8 +1106,7 @@ void GXLibMacros::macLabel(TStrObjList &Cmds, const TParamList &Options,
     if (resi != 0 && atoms[i]->CAtom().GetResiId() != 0) {
       lb << resi_sep;
       if (resi == 1) {
-        lb << atoms[i]->CAtom().GetParent()->GetResidue(
-          atoms[i]->CAtom().GetResiId()).GetNumber();
+        lb << atoms[i]->CAtom().GetResiId();
       }
       else {
         lb << atoms[i]->CAtom().GetParent()->GetResidue(

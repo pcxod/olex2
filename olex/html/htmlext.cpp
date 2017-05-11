@@ -55,7 +55,7 @@ THtml::THtml(THtmlManager &manager, wxWindow *Parent,
   Bind(wxEVT_TEXT_COPY, &THtml::OnClipboard, this);
 }
 //.............................................................................
-THtml::~THtml() {
+THtml::~THtml()  {
   delete Root;
   ClearSwitchStates();
 }
@@ -88,8 +88,7 @@ void THtml::OnLinkClicked(const wxHtmlLinkInfo& link)  {
 }
 //.............................................................................
 wxHtmlOpeningStatus THtml::OnOpeningURL(wxHtmlURLType type, const wxString& url,
-  wxString *redirect) const
-{
+  wxString *redirect) const {
   olxstr Url = url;
   if (!OnURL.Execute((const AOlxCtrl *)this, &Url)) {
     return wxHTML_OPEN;
@@ -158,7 +157,7 @@ void THtml::OnSizeEvt(wxSizeEvent& event)  {
 bool THtml::Dispatch(int MsgId, short MsgSubId, const IOlxObject* Sender,
   const IOlxObject* Data, TActionQueue *)
 {
-  if (MsgId == html_parent_resize) {
+  if( MsgId == html_parent_resize )  {
     volatile THtmlManager::DestructionLocker dm =
       Manager.LockDestruction(this, (AOlxCtrl *)this);
     OnSize.Execute((const AOlxCtrl *)this, &OnSizeData);
@@ -166,7 +165,7 @@ bool THtml::Dispatch(int MsgId, short MsgSubId, const IOlxObject* Sender,
   return true;
 }
 //.............................................................................
-void THtml::OnKeyDown(wxKeyEvent& event) {
+void THtml::OnKeyDown(wxKeyEvent& event)  {
   event.Skip();
   if (event.GetModifiers() == wxMOD_CMD && event.GetKeyCode() == 'C') {
     CopySelection();
@@ -174,7 +173,7 @@ void THtml::OnKeyDown(wxKeyEvent& event) {
   }
 }
 //.............................................................................
-void THtml::OnNavigation(wxNavigationKeyEvent& event) {
+void THtml::OnNavigation(wxNavigationKeyEvent& event)  {
   event.Skip();
 }
 //.............................................................................
@@ -343,9 +342,7 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
 }
 //.............................................................................
 bool THtml::ProcessPageLoadRequest()  {
-  if (!PageLoadRequested || IsPageLocked()) {
-    return false;
-  }
+  if (!PageLoadRequested || IsPageLocked()) return false;
   PageLoadRequested = false;
   bool res = false;
   if (!PageRequested.IsEmpty()) {
@@ -376,13 +373,11 @@ bool THtml::LoadPage(const wxString &file) {
   TestFile = TEFile::ExtractFileName(File);
   if (Path.Length() > 1) {
     Path = TEFile::OSPath(Path);
-    if (TEFile::IsAbsolutePath(Path)) {
+    if( TEFile::IsAbsolutePath(Path) )
       WebFolder = Path;
-    }
   }
-  else {
+  else
     Path = WebFolder;
-  }
   if (Path == WebFolder) {
     TestFile = WebFolder + TestFile;
   }
@@ -391,7 +386,7 @@ bool THtml::LoadPage(const wxString &file) {
   }
 
   if (!TZipWrapper::IsValidFileName(TestFile) &&
-    !TFileHandlerManager::Exists(file))
+      !TFileHandlerManager::Exists(file) )
   {
     TBasicApp::NewLogEntry(logError) << "File does not exists: '" <<
       file << '\'';
@@ -482,8 +477,8 @@ bool THtml::UpdatePage(bool update_indices) {
     if (ind != InvalidIndex) {
       wxWindow* wnd = Objects.GetValue(ind).b;
       if (EsdlInstanceOf(*wnd, TTextEdit))
-        ((TTextEdit*)wnd)->SetSelection(-1, -1);
-      else if (EsdlInstanceOf(*wnd, TComboBox)) {
+        ((TTextEdit*)wnd)->SetSelection(-1,-1);
+      else if( EsdlInstanceOf(*wnd, TComboBox) )  {
         TComboBox* cb = (TComboBox*)wnd;
         wnd = cb;
       }
@@ -494,9 +489,8 @@ bool THtml::UpdatePage(bool update_indices) {
       }
       wnd->SetFocus();
     }
-    else {
+    else
       FocusedControl.SetLength(0);
-    }
   }
   UnlockPageLoad(this);
   return true;
@@ -528,42 +522,41 @@ bool THtml::AddControl(const olxstr& Name, AOlxCtrl *Object, wxWindow* wxWin,
   }
 }
 //.............................................................................
-void THtml::OnCellMouseHover(wxHtmlCell *Cell, wxCoord x, wxCoord y) {
+void THtml::OnCellMouseHover(wxHtmlCell *Cell, wxCoord x, wxCoord y)  {
   wxHtmlLinkInfo *Link = Cell->GetLink(x, y);
-  if (Link != NULL) {
+  if( Link != NULL )  {
     olxstr Href = Link->GetTarget();
-    if (Href.IsEmpty()) {
+    if( Href.IsEmpty() )
       Href = Link->GetHref();
-    }
+
     size_t ind = Href.FirstIndexOf('%');
-    while (ind != InvalidIndex && ((ind + 2) < Href.Length())) {
-      if (Href.CharAt(ind + 1) == '%') {
+    while( ind != InvalidIndex && ((ind+2) < Href.Length()) )  {
+      if( Href.CharAt(ind+1) == '%' )  {
         Href.Delete(ind, 1);
-        ind = Href.FirstIndexOf('%', ind + 1);
+        ind = Href.FirstIndexOf('%', ind+1);
         continue;
       }
-      olxstr nm = Href.SubString(ind + 1, 2);
-      if (nm.IsNumber()) {
-        try {
+      olxstr nm = Href.SubString(ind+1, 2);
+      if( nm.IsNumber() )  {
+        try  {
           int val = nm.RadInt<int>(16);
           Href.Delete(ind, 3);
           Href.Insert((char)val, ind);
         }
-        catch (...) {}
+        catch(...)  {}
       }
-      ind = Href.FirstIndexOf('%', ind + 1);
+      ind = Href.FirstIndexOf('%', ind+1);
     }
-    if (ShowTooltips) {
+    if( ShowTooltips )  {
       wxToolTip *tt = GetToolTip();
       wxString wxs(Href.Replace("#href", Link->GetHref()).u_str());
-      if (tt == NULL || tt->GetTip() != wxs) {
-        SetToolTip(wxs);
+      if( tt == NULL || tt->GetTip() != wxs )  {
+        SetToolTip( wxs );
       }
     }
   }
-  else {
+  else
     SetToolTip(NULL);
-  }
 }
 //.............................................................................
 olxstr THtml::GetObjectValue(const AOlxCtrl *Obj) {

@@ -47,215 +47,188 @@ void TXlConGen::AnalyseMultipart(const TAtomEnvi& envi,
 }
 //..............................................................................
 bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group,
-  const cm_Element& atomType, TAtomEnvi* pivoting, TCAtomPList* generated)
+    const cm_Element& atomType, TAtomEnvi* pivoting, TCAtomPList* generated)
 {
-  try {
+  try  {
     TSimpleRestraint* sr;
     TCAtomPList CreatedAtoms;
     GenerateAtom(CreatedAtoms, envi, Group, atomType, pivoting);
-    if (CreatedAtoms.IsEmpty()) { // nothing inserted
+    if( CreatedAtoms.IsEmpty() )  // nothing inserted
       return false;
-    }
     bool negative_part = false;
     double occu_mult = 1.0, dis;
     short afix = -1;
     const size_t bondex_cnt = envi.CountCovalent();
-    switch (Group) {
-    case fgNH3:
-    case fgCH3:
-      if (envi.Count() == 1) {
-        afix = 137;
-        negative_part = (envi.GetBase().CAtom().GetDegeneracy() != 1) &&
-          envi.GetBase().CAtom().GetPart() == 0;
-      }
-      break;
-    case fgCH2:
-      if (envi.Count() == 2) {
-        afix = 23;
-      }
-      else if (envi.Count() == 1) {
-        afix = 93;
-      }
-      break;
-    case fgCH1:
-      if (envi.Count() == 3) {
-        afix = 13;
-      }
-      else if (envi.Count() == 2) {
-        afix = 43;
-      }
-      else if (envi.Count() == 1) {
-        afix = 163;
-      }
-      break;
-    case fgSiH1:
-      if (envi.Count() == 3) {
-        afix = 13;
-      }
-      break;
-    case fgOH3:
-      break;
-    case fgOH2:
-      dis = Distances.Get(GenId(fgOH2, 0));
-      if (CreatedAtoms.Count() == 2) {
-        if (IsUseRestrains()) {
-          sr = &RefMod.rDFIX.AddNew();
-          sr->SetValue(dis);
-          sr->AddAtomPair(envi.GetBase().CAtom(), 0, *CreatedAtoms[0], 0);
-          sr->AddAtomPair(envi.GetBase().CAtom(), 0, *CreatedAtoms[1], 0);
-          sr = &RefMod.rDANG.AddNew();
-          sr->SetValue(olx_round(dis*sqrt(2 - 2 * cos(104.5*M_PI / 180)), 100));
-          sr->AddAtomPair(*CreatedAtoms[0], 0, *CreatedAtoms[1], 0);
-          if (envi.Count() == 1 &&
+    switch( Group )  {
+      case fgNH3:
+      case fgCH3:
+        if (envi.Count() == 1) {
+          afix = 137;
+          negative_part = (envi.GetBase().CAtom().GetDegeneracy() != 1);
+        }
+        break;
+      case fgCH2:
+        if( envi.Count() == 2 )
+          afix = 23;
+        else if( envi.Count() == 1 )
+          afix = 93;
+        break;
+      case fgCH1:
+        if( envi.Count() == 3 )
+          afix = 13;
+        else if( envi.Count() == 2 )
+          afix = 43;
+        else if( envi.Count() == 1 )
+          afix = 163;
+        break;
+      case fgSiH1:
+        if( envi.Count() == 3 )
+          afix = 13;
+        break;
+      case fgOH3:
+        break;
+      case fgOH2:
+        dis = Distances.Get(GenId(fgOH2,0));
+        if( CreatedAtoms.Count() == 2 )  {
+          if (IsUseRestrains()) {
+            sr = &RefMod.rDFIX.AddNew();
+            sr->SetValue(dis);
+            sr->AddAtomPair(envi.GetBase().CAtom(), NULL, *CreatedAtoms[0], NULL);
+            sr->AddAtomPair(envi.GetBase().CAtom(), NULL, *CreatedAtoms[1], NULL);
+            sr = &RefMod.rDANG.AddNew();
+            sr->SetValue(olx_round(dis*sqrt(2 - 2 * cos(104.5*M_PI / 180)), 100));
+            sr->AddAtomPair(*CreatedAtoms[0], NULL, *CreatedAtoms[1], NULL);
+            if (envi.Count() == 1 &&
+              XElementLib::IsMetal(envi.GetCAtom(0).GetType()))
+            {
+              sr = &RefMod.rSADI.AddNew();
+              sr->AddAtomPair(envi.GetCAtom(0), NULL, *CreatedAtoms[0], NULL);
+              sr->AddAtomPair(envi.GetCAtom(0), NULL, *CreatedAtoms[1], NULL);
+            }
+          }
+          else if (envi.Count() == 1 &&
             XElementLib::IsMetal(envi.GetCAtom(0).GetType()))
           {
-            sr = &RefMod.rSADI.AddNew();
-            sr->AddAtomPair(envi.GetCAtom(0), 0, *CreatedAtoms[0], 0);
-            sr->AddAtomPair(envi.GetCAtom(0), 0, *CreatedAtoms[1], 0);
+            afix = 7;
+          }
+          else {
+            afix = 6;
           }
         }
-        else if (envi.Count() == 1 &&
-          XElementLib::IsMetal(envi.GetCAtom(0).GetType()))
-        {
-          afix = 7;
-        }
-        else {
-          afix = 6;
-        }
-      }
-      else if (CreatedAtoms.Count() == 1 &&
-        envi.GetBase().CAtom().GetDegeneracy() == 2)
-      {
-        sr = &RefMod.rDFIX.AddNew();
-        sr->SetEsd(0.01);
-        sr->SetValue(dis);
-        sr->AddAtomPair(envi.GetBase().CAtom(), 0, *CreatedAtoms[0], 0);
-        sr->AddAtomPair(envi.GetBase().CAtom(), 0, *CreatedAtoms[0],
-          &envi.GetBase().CAtom().GetEquiv(0));
-
-        sr = &RefMod.rDANG.AddNew();
-        sr->SetEsd(0.02);
-        sr->SetValue(dis*sqrt(2 - 2 * cos(109.4*M_PI / 180)));
-        sr->AddAtomPair(*CreatedAtoms[0], &envi.GetBase().CAtom().GetEquiv(0),
-          *CreatedAtoms[0], 0);
-
-        if (envi.Count() == 1) {
-          sr = &RefMod.rSADI.AddNew();
-          sr->SetEsd(0.02);
-          sr->AddAtomPair(envi.GetCAtom(0), 0, *CreatedAtoms[0], 0);
-          sr->AddAtomPair(envi.GetCAtom(0), 0, *CreatedAtoms[0],
+        else if( CreatedAtoms.Count() == 1 && envi.GetBase().CAtom().GetDegeneracy() == 2 )  {
+          sr = &RefMod.rDFIX.AddNew();
+          sr->SetEsd(0.01);
+          sr->SetValue(dis);
+          sr->AddAtomPair(envi.GetBase().CAtom(), NULL, *CreatedAtoms[0], NULL);
+          sr->AddAtomPair(envi.GetBase().CAtom(), NULL, *CreatedAtoms[0],
             &envi.GetBase().CAtom().GetEquiv(0));
+
+          sr = &RefMod.rDANG.AddNew();
+          sr->SetEsd(0.02);
+          sr->SetValue(dis*sqrt(2-2*cos(109.4*M_PI/180)));
+          sr->AddAtomPair(*CreatedAtoms[0], &envi.GetBase().CAtom().GetEquiv(0),
+            *CreatedAtoms[0], NULL);
+
+          if( envi.Count() == 1 )  {
+            sr = &RefMod.rSADI.AddNew();
+            sr->SetEsd(0.02);
+            sr->AddAtomPair(envi.GetCAtom(0), NULL, *CreatedAtoms[0], NULL);
+            sr->AddAtomPair(envi.GetCAtom(0), NULL, *CreatedAtoms[0],
+              &envi.GetBase().CAtom().GetEquiv(0));
+          }
+          occu_mult = 2;
         }
-        occu_mult = 2;
-      }
-      break;
-    case fgSH1:
-    case fgOH1:
-      if (bondex_cnt == 1) {
-        afix = 147;
-      }
-      else if (bondex_cnt == 2 && CreatedAtoms.Count() == 1) {
-        const double d1 = envi.GetCrd(0).DistanceTo(envi.GetBase().crd());
-        const double d2 = envi.GetCrd(1).DistanceTo(envi.GetBase().crd());
-        //afix = 3; // possible...
-        dis = Distances.Get(GenId(fgOH2, 0));
-        sr = &RefMod.rDFIX.AddNew();
-        sr->SetEsd(0.01);
-        sr->SetValue(dis);
-        sr->AddAtomPair(envi.GetBase().CAtom(), 0, *CreatedAtoms[0], 0);
-        const double _d1 = (d1 < 1.8 ? d1 : d2);
-        // if this is not applied, the refinement may never converge
-        sr = &RefMod.rDANG.AddNew();
-        sr->SetEsd(0.02);
-        sr->SetValue(sqrt(_d1*_d1 + dis*dis - 2 * dis*_d1*cos(109.4*M_PI / 180)));
-        sr->AddAtomPair(envi.GetCAtom(d1 < 1.8 ? 0 : 1), 0, *CreatedAtoms[0], 0);
-        // this is optional
-        sr = &RefMod.rDANG.AddNew();
-        sr->SetEsd(0.02);
-        const double _d2 = (d1 < 1.8 ? d2 : d1);
-        sr->SetValue(sqrt(_d2*_d2 + dis*dis - 2 * dis*_d2*
-            cos((360.0 - 109.4 - olx_angle(envi.GetCrd(0),
-          envi.GetBase().crd(), envi.GetCrd(1)))*M_PI / 180)));
-        sr->AddAtomPair(envi.GetCAtom(d1 > 1.8 ? 0 : 1), 0, *CreatedAtoms[0], 0);
-      }
-      break;
-    case fgNH4:
-      break;
-    case fgNH2:
-      if (envi.Count() == 1) {
-        if (pivoting != 0) {
-          afix = 93;
+        break;
+      case fgSH1:
+      case fgOH1:
+        if( bondex_cnt == 1 )
+          afix = 147;
+        else if( bondex_cnt == 2 && CreatedAtoms.Count() == 1 )  {
+          const double d1 = envi.GetCrd(0).DistanceTo(envi.GetBase().crd());
+          const double d2 = envi.GetCrd(1).DistanceTo(envi.GetBase().crd());
+          //afix = 3; // possible...
+          dis = Distances.Get(GenId(fgOH2,0));
+          sr = &RefMod.rDFIX.AddNew();
+          sr->SetEsd(0.01);
+          sr->SetValue(dis);
+          sr->AddAtomPair(envi.GetBase().CAtom(), NULL, *CreatedAtoms[0], NULL);
+          const double _d1 = (d1 < 1.8 ? d1 : d2);
+          // if this is not applied, the refinement may never converge
+          sr = &RefMod.rDANG.AddNew();
+          sr->SetEsd(0.02);
+          sr->SetValue(sqrt(_d1*_d1+dis*dis-2*dis*_d1*cos(109.4*M_PI/180)));
+          sr->AddAtomPair(envi.GetCAtom(d1 < 1.8 ? 0 : 1), NULL, *CreatedAtoms[0], NULL);
+          // this is optional
+          sr = &RefMod.rDANG.AddNew();
+          sr->SetEsd(0.02);
+          const double _d2 = (d1 < 1.8 ? d2 : d1);
+          sr->SetValue(sqrt(_d2*_d2+dis*dis-2*dis*_d2*cos((360.0-109.4-olx_angle(envi.GetCrd(0),
+            envi.GetBase().crd(), envi.GetCrd(1)))*M_PI/180)));
+          sr->AddAtomPair(envi.GetCAtom(d1 > 1.8 ? 0 : 1), NULL, *CreatedAtoms[0], NULL);
         }
-        else  if (CreatedAtoms.Count() == 2) {
-          afix = 7;
+        break;
+      case fgNH4:
+        break;
+      case fgNH2:
+        if( envi.Count() == 1 )  {
+          if( pivoting != NULL )
+            afix = 93;
+          else  if( CreatedAtoms.Count() == 2 )
+            afix = 7;
         }
-      }
-      else if (envi.Count() == 2) {
-        afix = 23;
-      }
-      break;
-    case fgNH1:
-      if (envi.Count() == 3) {
-        afix = 13;
-      }
-      else if (envi.Count() == 2) {
-        afix = 43;
-      }
-      break;
-    case fgNH1t:
-      if (envi.Count() == 2) {
-        afix = 3;
-      }
-      break;
-    case fgBH1:
-      if (envi.Count() == 3) {
-        afix = 13;
-      }
-      else if (envi.Count() == 4 || envi.Count() == 5) {
-        afix = 153;
-      }
-      break;
+        else if( envi.Count() == 2 )
+          afix = 23;
+        break;
+      case fgNH1:
+        if( envi.Count() == 3 )
+          afix = 13;
+        else if( envi.Count() == 2 )
+          afix = 43;
+        break;
+      case fgNH1t:
+        if (envi.Count() == 2)
+          afix = 3;
+        break;
+      case fgBH1:
+        if( envi.Count() == 3 )
+          afix = 13;
+        else if( envi.Count() == 4 ||  envi.Count() == 5 )
+          afix = 153;
+        break;
     }
     if (afix != 0) {
       TAfixGroup& ag = RefMod.AfixGroups.New(&envi.GetBase().CAtom(), afix);
-      for (size_t i = 0; i < CreatedAtoms.Count(); i++) {
+      for (size_t i = 0; i < CreatedAtoms.Count(); i++)
         ag.AddDependent(*CreatedAtoms[i]);
-      }
     }
     for (size_t i = 0; i < CreatedAtoms.Count(); i++) {
-      if (negative_part) {
+      if (negative_part)
         CreatedAtoms[i]->SetPart(-1);
-      }
-      else {
+      else
         CreatedAtoms[i]->SetPart(envi.GetBase().CAtom().GetPart());
-      }
       CreatedAtoms[i]->SetUisoOwner(&envi.GetBase().CAtom());
-      if (envi.GetBase().GetType() == iOxygenZ || Group == fgCH3) {
+      if (envi.GetBase().GetType() == iOxygenZ || Group == fgCH3)
         CreatedAtoms[i]->SetUisoScale(1.5);
-      }
-      else {
+      else
         CreatedAtoms[i]->SetUisoScale(1.2);
-      }
       CreatedAtoms[i]->SetUiso(4 * caDefIso*caDefIso);
       RefMod.Vars.SetParam(*CreatedAtoms[i], catom_var_name_Sof,
         RefMod.Vars.GetParam(envi.GetBase().CAtom(), catom_var_name_Sof));
       CreatedAtoms[i]->SetOccu(CreatedAtoms[i]->GetOccu()*occu_mult);
-      if (generated != 0) {
+      if (generated != NULL)
         generated->Add(CreatedAtoms[i]);
-      }
     }
     if (Group == fgCH3x2 && CreatedAtoms.Count() == 6) {
       XVar &v = RefMod.Vars.NewVar();
       for (int i = 0; i < 3; i++) {
         RefMod.Vars.AddVarRef(v, *CreatedAtoms[i], catom_var_name_Sof,
           relation_AsVar, 1);
-        RefMod.Vars.AddVarRef(v, *CreatedAtoms[3 + i], catom_var_name_Sof,
+        RefMod.Vars.AddVarRef(v, *CreatedAtoms[3+i], catom_var_name_Sof,
           relation_AsOneMinusVar, 1);
       }
     }
   }
-  catch (TExceptionBase &)
-  {}
+  catch (TExceptionBase &) {}
   return false;
 }
 //..............................................................................
