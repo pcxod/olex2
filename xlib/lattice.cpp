@@ -2753,7 +2753,14 @@ TUndoData *TLattice::ValidateHGroups(bool reinit, bool report) {
       if (!ag.HasImplicitPivot() || ag.IsEmpty()) {
         continue;
       }
-      int part = ag.GetPivot().GetPart();
+      int part = 0;
+      for (size_t j = 0; j < ag.Count(); j++) {
+        if (ag[j].IsDeleted()) {
+          continue;
+        }
+        part = ag[j].GetPart();
+        break;
+      }
       size_t attached_cnt=0, metal_cnt=0, dependent_cnt=0;
       for (size_t j=0; j < ag.GetPivot().AttachedSiteCount(); j++) {
         TCAtom &a = ag.GetPivot().GetAttachedAtom(j);
