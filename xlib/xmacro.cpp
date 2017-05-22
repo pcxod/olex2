@@ -2445,21 +2445,30 @@ void XLibMacros::ChangeCell(const mat3d& tm, const TSpaceGroup& new_sg,
 TSpaceGroup* XLibMacros_macSGS_FindSG(TPtrList<TSpaceGroup>& sgs,
   const olxstr& axis)
 {
-  for( size_t i=0; i < sgs.Count(); i++ )
-    if( sgs[i]->GetAxis().Compare(axis) == 0 )
+  for (size_t i = 0; i < sgs.Count(); i++) {
+    if (sgs[i]->GetAxis().Compare(axis) == 0) {
       return sgs[i];
-  return NULL;
+    }
+  }
+  return 0;
 }
 olxstr XLibMacros_macSGS_SgInfo(const olxstr& caxis)  {
   if( caxis.IsEmpty() )
     return "standard";
   else  {
-    if( caxis.Length() == 3 && caxis.CharAt(0) == '-' )    // -axis + cell choice
-      return olxstr("axis: -") << caxis.CharAt(1) << ", cell choice " << caxis.CharAt(2);
-    else if( caxis.Length() == 2 )    // axis + cell choice
-      return olxstr("axis: ") << caxis.CharAt(0) << ", cell choice " << caxis.CharAt(1);
-    else
+    // -axis + cell choice
+    if (caxis.Length() == 3 && caxis.CharAt(0) == '-') {
+      return olxstr("axis: -") << caxis.CharAt(1) << ", cell choice "
+        << caxis.CharAt(2);
+    }
+    // axis + cell choice
+    else if (caxis.Length() == 2) {
+      return olxstr("axis: ") << caxis.CharAt(0) << ", cell choice "
+        << caxis.CharAt(1);
+    }
+    else {
       return olxstr("axis: ") << caxis;
+    }
   }
 }
 void XLibMacros::macSGS(TStrObjList &Cmds, const TParamList &Options,
