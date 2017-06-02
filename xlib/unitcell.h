@@ -287,10 +287,12 @@ public:
   }
 
   /* finds all atoms (+symm attached) and Q-peaks, if specfied; if part is not
-  -1, part 0 and the specified part are only placed
+  -1, part 0 and the specified part are only placed. If remove_redundant is set
+  to true - then the symmetry generated atoms that share symmetry equivalent
+  with the central atoms are omitted
   */
   void GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ = false,
-    int part=DefNoPart) const;
+    int part=DefNoPart, bool remove_redundant=false) const;
 
   // finds only q-peaks in the environment of specified atom
   void GetAtomQEnviList(TSAtom& atom, TAtomEnvi& envi);
