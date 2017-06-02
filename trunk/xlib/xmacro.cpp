@@ -1609,7 +1609,7 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options,
         TIntList parts;
         TDoubleList occu;
         TAtomEnvi AE;
-        uc.GetAtomEnviList(*satoms[aitr], AE);
+        uc.GetAtomEnviList(*satoms[aitr], AE, false, DefNoPart, true);
         for (size_t i=0; i < AE.Count(); i++) {
           if( AE.GetCAtom(i).GetPart() != 0 &&
               AE.GetCAtom(i).GetPart() != AE.GetBase().CAtom().GetPart() )
@@ -1651,7 +1651,7 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options,
           XApp.NewLogEntry() << "Processing " << parts.Count() << " parts";
           for (size_t i=0; i < parts.Count(); i++) {
             AE.Clear();
-            uc.GetAtomEnviList(*satoms[aitr], AE, false, parts[i]);
+            uc.GetAtomEnviList(*satoms[aitr], AE, false, parts[i], true);
             /*consider special case where the atom is bound to itself but
             very long bond > 1.6 A */
             smatd* eqiv = NULL;
