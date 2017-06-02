@@ -5922,3 +5922,25 @@ IOlxObject *TGXApp::DUnitCellPtr::get_ptr() const {
   return TGXApp::GetInstance().XFile().DUnitCell;
 }
 //..............................................................................
+void TGXApp::LabelGrowBonds() {
+  olxdict<TCAtom*, olxset<uint32_t, TPrimitiveComparator>, TPointerComparator> used;
+  for (size_t i = 0; i < XGrowLines.Count(); i++) {
+    TXGrowLine &gl = XGrowLines[i];
+    size_t idx = used.IndexOf(&gl.CAtom());
+    if (idx != InvalidIndex) {
+      if (used.GetValue(idx).Contains(gl.GetTransform().GetId())) {
+        continue;
+      }
+      else {
+        used.GetValue(idx).Add(gl.GetTransform().GetId());
+      }
+    }
+    else {
+      used.Add(&gl.CAtom()).Add(gl.GetTransform().GetId());
+    }
+    TXGlLabel &l = gl.GetGlLabel();
+    l.SetLabel(gl.CAtom().GetLabel());
+    l.SetOffset(gl.GetEdge());
+    l.SetVisible(true);
+  }
+}
