@@ -1604,7 +1604,7 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom,
 
   cm_Element& h_elm = XElementLib::GetByIndex(iHydrogenIndex);
   TAtomEnvi AE;
-  UnitCell->GetAtomEnviList(atom, AE, false, part);
+  UnitCell->GetAtomEnviList(atom, AE, false, part, true);
   if (part == DefNoPart) {  // check for disorder
     TIntList parts;
     TDoubleList occu;
@@ -2060,14 +2060,16 @@ void TLattice::AnalyseHAdd(AConstraintGenerator& cg, const TSAtomPList& atoms) {
   CTypes.Add(XElementLib::FindBySymbol("S"));
   TSAtomPList ProcessingAtoms;
 
-  for (size_t i = 0; i < atoms.Count(); i++)
+  for (size_t i = 0; i < atoms.Count(); i++) {
     atoms[i]->CAtom().SetHAttached(false);
+  }
 
   // treat rings
   ElementPList rcont;
   rcont.Add(CTypes[0]);
-  for (size_t i = 0; i < 4; i++)
+  for (size_t i = 0; i < 4; i++) {
     rcont.Add(rcont[0]);
+  }
   _ProcessRingHAdd(cg, rcont, atoms); // Cp
   rcont.Add(rcont[0]);
   _ProcessRingHAdd(cg, rcont, atoms); // Ph
@@ -2080,7 +2082,9 @@ void TLattice::AnalyseHAdd(AConstraintGenerator& cg, const TSAtomPList& atoms) {
   for (size_t i = 0; i < atoms.Count(); i++) {
     if (atoms[i]->IsDeleted() || !atoms[i]->CAtom().IsAvailable() ||
       atoms[i]->CAtom().GetTag() != 0)
+    {
       continue;
+    }
     // mark the atoms processed
     atoms[i]->CAtom().SetTag(1);
     bool consider = false;
@@ -2763,18 +2767,29 @@ TUndoData *TLattice::ValidateHGroups(bool reinit, bool report) {
       }
       size_t attached_cnt=0, metal_cnt=0, dependent_cnt=0;
       for (size_t j=0; j < ag.GetPivot().AttachedSiteCount(); j++) {
-        TCAtom &a = ag.GetPivot().GetAttachedAtom(j);
-        if (a.IsDeleted() || a.GetType().z < 2) {
+        TCAtom::Site &s = ag.GetPivot().GetAttachedSite(j);
+        if (s.atom->IsDeleted() || s.atom->GetType().z < 2) {
           continue;
         }
-        if (TAfixGroup::HasImplicitPivot(a.GetAfix())) {
+        if (TAfixGroup::HasImplicitPivot(s.atom->GetAfix())) {
           dependent_cnt++;
           continue;
         }
-        if (part == 0 || a.GetPart() == 0 || a.GetPart() == part
-          || rm.Conn.ArePartsGroupped(part, a.GetPart()))
+        if (part == 0 || s.atom->GetPart() == 0 || s.atom->GetPart() == part
+          || rm.Conn.ArePartsGroupped(part, s.atom->GetPart()))
         {
-          if (XElementLib::IsMetal(a.GetType())) {
+          if (!s.matrix.IsFirst()) {
+            bool contains = false;
+            for (size_t k = 0; k < ag.GetPivot().EquivCount(); k++) {
+              if (ag.GetPivot().GetEquiv(k).GetId() == s.matrix.GetId()) {
+                contains = true;
+              }
+            }
+            if (contains) {
+              continue;
+            }
+          }
+          if (XElementLib::IsMetal(s.atom->GetType())) {
             metal_cnt++;
           }
           attached_cnt++;

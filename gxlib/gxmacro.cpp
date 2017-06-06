@@ -1041,6 +1041,9 @@ void GXLibMacros::macLabel(TStrObjList &Cmds, const TParamList &Options,
       }
     }
   }
+  else if (Cmds.Count() == 1 && Cmds[0].Equalsi("gbonds")) {
+    app.LabelGrowBonds();
+  }
   else {
     atoms = app.FindXAtoms(Cmds, true, false);
   }

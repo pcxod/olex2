@@ -692,7 +692,7 @@ void TUnitCell::_FindBinding(const TCAtom& to, const smatd& ctm, double delta,
 }
 //..............................................................................
 void TUnitCell::GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ,
-  int part) const
+  int part, bool remove_redundant) const
 {
   if (atom.GetParent() != this->GetLattice()) {
     throw TInvalidArgumentException(__OlxSourceInfo,
@@ -702,18 +702,30 @@ void TUnitCell::GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ,
   envi.SetBase(atom);
   smatd I;
   I.I().SetId(0);
-  TCAtom& ca = atom.CAtom();
-  for( size_t i=0; i < ca.AttachedSiteCount(); i++ )  {
+  const TCAtom& ca = atom.CAtom();
+  for (size_t i = 0; i < ca.AttachedSiteCount(); i++) {
     const TCAtom::Site& site = ca.GetAttachedSite(i);
-    if( site.atom->IsDeleted() ||
-        (!IncludeQ && site.atom->GetType() == iQPeakZ) )
+    if (site.atom->IsDeleted() ||
+      (!IncludeQ && site.atom->GetType() == iQPeakZ))
     {
       continue;
     }
-    const smatd m = MulMatrix(site.matrix, atom.GetMatrix());
-    if( part == DefNoPart ||
-        (site.atom->GetPart() == 0 || site.atom->GetPart() == part) )
+    if (part == DefNoPart ||
+      (site.atom->GetPart() == 0 || site.atom->GetPart() == part))
     {
+      if (remove_redundant && !site.matrix.IsFirst()) {
+        bool contains = false;
+        for (size_t j = 0; j < ca.EquivCount(); j++) {
+          if (ca.GetEquiv(j).GetId() == site.matrix.GetId()) {
+            contains = true;
+            break;
+          }
+        }
+        if (contains) {
+          continue;
+        }
+      }
+      const smatd m = MulMatrix(site.matrix, atom.GetMatrix());
       envi.Add(*site.atom, m, au.Orthogonalise(m*site.atom->ccrd()));
     }
   }

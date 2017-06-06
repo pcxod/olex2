@@ -24,6 +24,7 @@
 #include "refmodel.h"
 #include "index_range.h"
 #include "equeue.h"
+#include "afixgroup.h"
 
 #undef GetObject
 
@@ -221,23 +222,38 @@ bool TNetwork::CBondExistsQ(const TSAtom& A1, const TSAtom& A2,
   return false;
 }
 //..............................................................................
+bool TNetwork::IsBondAllowed(const TCAtom& ca, const TCAtom& cb) {
+  if (ca.GetPart() == 0 || cb.GetPart() == 0 ||
+    (ca.GetPart() == cb.GetPart()) ||
+    ca.GetParent()->GetRefMod()->Conn.ArePartsGroupped(ca.GetPart(), cb.GetPart()))
+  {
+    if (ca.GetParentAfixGroup() == cb.GetParentAfixGroup() && ca.GetParentAfixGroup() != 0) {
+      if (ca.GetParentAfixGroup()->GetM() == 12) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+//..............................................................................
 bool TNetwork::IsBondAllowed(const TCAtom& ca, const TCAtom& cb,
   const smatd& sm)
 {
-  if (ca.GetPart() == 0 || cb.GetPart() == 0 ||
-     (ca.GetPart() == cb.GetPart()) ||
-     ca.GetParent()->GetRefMod()->Conn.ArePartsGroupped(ca.GetPart(), cb.GetPart()))
-  {
+  if (IsBondAllowed(ca, cb)) {
     if ((ca.GetPart() < 0 || cb.GetPart() < 0)) {
-      if (sm.IsFirst()) return true;
-      for (size_t i=0; i < ca.EquivCount(); i++) {
-        if (sm.GetId() == ca.GetEquiv(i).GetId())
+      if (sm.IsFirst()) {
+        return true;
+      }
+      for (size_t i = 0; i < ca.EquivCount(); i++) {
+        if (sm.GetId() == ca.GetEquiv(i).GetId()) {
           return true;
+        }
       }
       const TUnitCell &uc = ca.GetParent()->GetLattice().GetUnitCell();
-      for (size_t i=0; i < cb.EquivCount(); i++) {
-        if (smatd::IsFirst(uc.MulMatrixId(cb.GetEquiv(i), sm)))
+      for (size_t i = 0; i < cb.EquivCount(); i++) {
+        if (smatd::IsFirst(uc.MulMatrixId(cb.GetEquiv(i), sm))) {
           return true;
+        }
       }
       return false;
     }
@@ -246,6 +262,27 @@ bool TNetwork::IsBondAllowed(const TCAtom& ca, const TCAtom& cb,
   return false;
 }
 //..............................................................................
+bool TNetwork::IsBondAllowed(const TSAtom& sa, const TSAtom& sb) {
+  if (IsBondAllowed(sa.CAtom(), sb.CAtom())) {
+    if ((sa.CAtom().GetPart() < 0 || sb.CAtom().GetPart() < 0)) {
+      return HaveSharedMatrix(sa, sb);
+    }
+    return true;
+  }
+  return false;
+}
+//..............................................................................
+bool TNetwork::IsBondAllowed(const TSAtom& sa, const TCAtom& cb,
+  const smatd& sm)
+{
+  if (IsBondAllowed(sa.CAtom(), cb)) {
+    if ((sa.CAtom().GetPart() < 0 || cb.GetPart() < 0)) {
+      return sa.IsGenerator(sm);
+    }
+    return true;
+  }
+  return false;
+}
 //..............................................................................
 // HELPER function
 class TNetTraverser  {
