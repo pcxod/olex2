@@ -536,6 +536,7 @@ public:
 
   void SetXGrowLinesVisible(bool v);
   bool GetXGrowLinesVisible() const {  return FXGrowLinesVisible;  }
+  void LabelGrowBonds();
   short GetGrowMode() const {  return FGrowMode;  }
   void SetGrowMode(short v, const olxstr& atoms);
   //

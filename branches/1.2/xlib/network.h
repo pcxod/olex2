@@ -54,36 +54,14 @@ public:
   void CreateBondsAndFragments(ASObjectProvider& objects, TNetPList& Frags);
   // returns true if the two atoms share a matrix
   static bool HaveSharedMatrix(const TSAtom& sa, const TSAtom& sb);
-  static bool IsBondAllowed(const TSAtom& sa, const TSAtom& sb)  {
-    if( sa.CAtom().GetPart() == 0 || sb.CAtom().GetPart() == 0 ||
-       (sa.CAtom().GetPart() == sb.CAtom().GetPart()) )
-    {
-      if ((sa.CAtom().GetPart() < 0 || sb.CAtom().GetPart() < 0))
-        return HaveSharedMatrix(sa, sb);
-      return true;
-    }
-    return false;
-  }
+  static bool IsBondAllowed(const TSAtom& sa, const TSAtom& sb);
   static bool IsBondAllowed(const TSAtom& sa, const TCAtom& cb,
-    const smatd& sm)
-  {
-    if( sa.CAtom().GetPart() == 0 || cb.GetPart() == 0 ||
-       (sa.CAtom().GetPart() == cb.GetPart()) )
-    {
-      if ((sa.CAtom().GetPart() < 0 || cb.GetPart() < 0))
-        return sa.IsGenerator(sm);
-      return true;
-    }
-    return false;
-  }
+    const smatd& sm);
 
   static bool IsBondAllowed(const TCAtom& ca, const TCAtom& cb,
     const smatd& sm);
 
-  static bool IsBondAllowed(const TCAtom& ca, const TCAtom& cb)  {
-    return (ca.GetPart() == 0 || cb.GetPart() == 0 ||
-            ca.GetPart() == cb.GetPart());
-  }
+  static bool IsBondAllowed(const TCAtom& ca, const TCAtom& cb);
 
   bool CBondExists(const TSAtom& A1, const TSAtom& CA2, const double& D) const;
   // considers quadratic distance

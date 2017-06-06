@@ -798,7 +798,7 @@ void XVarManager::SetEXTI(double val, double esd) {
   else {
     if (HasEXTI()) {
       GetEXTI().SetValue(val);
-      GetEXTI().SetEsd(val);
+      GetEXTI().SetEsd(esd);
     }
     else {
       XVar *v = new XVar(*this, val, esd);
