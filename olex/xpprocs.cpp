@@ -2310,7 +2310,7 @@ void TMainForm::macHklEdit(TStrObjList &Cmds, const TParamList &Options,
   FXApp->GetSymm(matrices);
   sw.start("Loading HKL");
   THklFile Hkl;
-  Hkl.LoadFromFile(HklFN, false);
+  Hkl.Append(FXApp->XFile().GetRM().GetReflections());
   sw.start("Preparing input");
   TStrList SL;
   SL.Add("REM Please put \'-\' char in the front of reflections you wish to omit");

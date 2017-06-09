@@ -3112,23 +3112,24 @@ void TMainForm::BadReflectionsTable(bool TableDef, bool Create)  {
 
   smatd_list matrices;
   FXApp->GetSymm(matrices);
-  THklFile Hkl;
-  olxstr HklFN = FXApp->XFile().LocateHklFile();
-  if (TEFile::Exists(HklFN)) {
-    Hkl.LoadFromFile(HklFN, false);
-  }
   bool sort_abs = TOlxVars::FindValue(
     "olex2.disagreeable.sort_abs", TrueString()).ToBool();
   double sort_th = TOlxVars::FindValue(
     "olex2.disagreeable.threshold", "10").ToDouble();
   TTypeList<RefinementModel::BadReflection> bad_refs =
     FXApp->XFile().GetRM().GetBadReflectionList();
-  if (bad_refs.IsEmpty()) return;
+  if (bad_refs.IsEmpty()) {
+    return;
+  }
   if (!sort_abs) {
     QuickSorter::Sort(bad_refs,
       ReverseComparator::Make(&RefinementModel::BadReflection::CompareDirect));
   }
   bool editable = (FXApp->XFile().GetRM().GetHKLF() <= 4);
+  THklFile Hkl;
+  if (editable) {
+    Hkl.Append(FXApp->XFile().GetRM().GetReflections());
+  }
   TTTable<TStrList> Table;
   Table.Resize(bad_refs.Count(), editable ? 6 : 5);
   Table.ColName(0) = "H";
