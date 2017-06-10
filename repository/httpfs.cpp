@@ -100,9 +100,10 @@ void THttpFileSystem::Disconnect()  {
   }
 }
 //..............................................................................
-bool THttpFileSystem::Connect()  {
-  if( Connected )
+bool THttpFileSystem::Connect() {
+  if (Connected) {
     Disconnect();
+  }
   struct sockaddr  SockAddr;
   Connected = false;
   GetAddress(&SockAddr);
@@ -125,33 +126,39 @@ bool THttpFileSystem::Connect()  {
   }
 
   Status = connect(Socket, &SockAddr, sizeof(SockAddr));
-  if( Status >= 0 )
+  if (Status >= 0) {
     Connected = true;
-  else
+  }
+  else {
     throw TFunctionFailedException(__OlxSourceInfo, "connection failed");
+  }
   return Connected;
 }
 //..............................................................................
 olxcstr THttpFileSystem::GenerateRequest(const olxcstr& cmd,
   const olxcstr& FileName, uint64_t position)
 {
-  olxcstr request(cmd);
+  static const olxcstr le = "\r\n";
+  olxcstr request = cmd;
   request << ' '
     << TUtf8::Encode(Url.GetFullHost() << '/' <<
-    TEFile::UnixPath(FileName)).Replace(' ', "%20") << " HTTP/1.0\n";
+    TEFile::UnixPath(FileName)).Replace(' ', "%20") << " HTTP/1.0" << le;
   if (Url.HasProxy() && !Url.GetProxy().GetUser().IsEmpty() &&
       !Url.GetProxy().GetPassword().IsEmpty())
   {
-    request << "Authorization: " << olxcstr(Url.GenerateHTTPAuthString()) << '\n';
+    request << "Authorization: " << olxcstr(Url.GenerateHTTPAuthString()) << le;
   }
-  request << "Host: " << Url.GetHost() << ':' << Url.GetPort() << '\n';
-  if ((ExtraHeaders & httpHeaderPlatform) != 0)
-    request << "Platform: " << TBasicApp::GetPlatformString(false) << '\n';
-  if ((ExtraHeaders & httpHeaderESession) != 0)
-    request << "ESession: " << SessionInfo_() << '\n';
-  if (position != InvalidIndex && position != 0)
-    request << "Resume-From: " << position << '\n';
-  return request << '\n';
+  request << "Host: " << Url.GetHost() << ':' << Url.GetPort() << le;
+  if ((ExtraHeaders & httpHeaderPlatform) != 0) {
+    request << "Platform: " << TBasicApp::GetPlatformString(false) << le;
+  }
+  if ((ExtraHeaders & httpHeaderESession) != 0) {
+    request << "ESession: " << SessionInfo_() << le;
+  }
+  if (position != InvalidIndex && position != 0) {
+    request << "Resume-From: " << position << le;
+  }
+  return request << le;
 }
 //..............................................................................
 THttpFileSystem::ResponseInfo THttpFileSystem::ParseResponseInfo(
@@ -174,8 +181,10 @@ THttpFileSystem::ResponseInfo THttpFileSystem::ParseResponseInfo(
   }
   ii = rv.headers.IndexOf("Content-Length");
   if (ii != InvalidIndex) {
-    try  { rv.contentLength = rv.headers.GetValue(ii).ToInt(); }
-    catch(...) {}  // toInt my throw an exception
+    try  {
+      rv.contentLength = rv.headers.GetValue(ii).ToInt();
+    }
+    catch(...) {}  // toInt may throw an exception
     rv.headers.Delete(ii);
   }
   rv.source = src;
@@ -184,8 +193,9 @@ THttpFileSystem::ResponseInfo THttpFileSystem::ParseResponseInfo(
 //..............................................................................
 bool THttpFileSystem::IsCrLf(const char* bf, size_t len) {
   for (size_t i=1; i < len; i++) {
-    if (bf[i] == '\n')
+    if (bf[i] == '\n') {
       return (bf[i-1] == '\r');
+    }
   }
   throw TFunctionFailedException(__OlxSourceInfo,
     "could not locate reference char");
