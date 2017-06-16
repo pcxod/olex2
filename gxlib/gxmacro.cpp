@@ -436,10 +436,11 @@ void GXLibMacros::macName(TStrObjList &Cmds, const TParamList &Options,
   if (Cmds.Count() == 2 && Cmds[0].Equalsi("collection")) {
     sorted::PointerPointer<TGPCollection> old;
     TGlGroup &sel = app.GetSelection();
+    bool reset = Cmds[1].Equalsi("none");
     for (size_t i = 0; i < sel.Count(); i++) {
       if (old.AddUnique(&sel[i].GetPrimitives()).b) {
         // check type of the objects
-        if (old.Count() > 1) {
+        if (!reset && old.Count() > 1) {
           size_t idx = (old[0] == &sel[i].GetPrimitives() ? 1 : 0);
           if (typeid(old[idx]->GetObject(0)) != typeid(sel[i])) {
             TBasicApp::NewLogEntry(logError) << "Mixed object collections";
@@ -451,8 +452,51 @@ void GXLibMacros::macName(TStrObjList &Cmds, const TParamList &Options,
     if (old.IsEmpty()) {
       return;
     }
+    // restore default collections
+    if (reset) {
+      for (size_t i = 0; i < old.Count(); i++) {
+        bool bond = false;
+        if (EsdlInstanceOf(old[i]->GetObject(0), TXBond)) {
+          bond = true;
+          for (size_t j = 0; j < TXBond::NamesRegistry().Count(); j++) {
+            if (TXBond::NamesRegistry().GetValue(j) == old[i]->GetName()) {
+              TXBond::NamesRegistry().Delete(j--);
+            }
+          }
+        }
+        else if (EsdlInstanceOf(old[i]->GetObject(0), TXAtom)) {
+          TXAtom::NamesRegistry().Remove(old[i]->GetName());
+          for (size_t j = 0; j < TXAtom::NamesRegistry().Count(); j++) {
+            if (TXAtom::NamesRegistry().GetValue(j) == old[i]->GetName()) {
+              TXAtom::NamesRegistry().Delete(j--);
+            }
+          }
+        }
+        else {
+          TBasicApp::NewLogEntry(logError) << "Operation is not applicable";
+          continue;
+        }
+        AGDObjList objects(old[i]->GetObjects());
+        old[i]->ClearObjects();
+        old[i]->ClearPrimitives();
+        for (size_t j = 0; j < objects.Count(); j++) {
+          olxstr l;
+          if (bond) {
+            l = TXBond::GetLegend(*(TXBond*)objects[j], 0);
+          }
+          else {
+            l = TXAtom::GetLegend(*(TXAtom*)objects[j], 0);
+          }
+          if (l == old[i]->GetName()) {
+            continue;
+          }
+          objects[j]->Create();
+        }
+      }
+      return;
+    }
     TGPCollection *gpc = app.GetRenderer().FindCollection(Cmds[1]);
-    if (gpc != NULL && gpc->ObjectCount() != 0) {
+    if (gpc != 0 && gpc->ObjectCount() != 0) {
       if (typeid(old[0]->GetObject(0)) != typeid(gpc->GetObject(0))) {
         TBasicApp::NewLogEntry(logError) << "Destination collection is used "
           "by different object type";
@@ -460,7 +504,7 @@ void GXLibMacros::macName(TStrObjList &Cmds, const TParamList &Options,
       }
     }
     else {
-      if (gpc != NULL) {
+      if (gpc != 0) {
         gpc->ClearPrimitives();
       }
       else {
@@ -1824,7 +1868,7 @@ void GXLibMacros::macCell(TStrObjList &Cmds, const TParamList &Options,
 void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
-  if (TModeRegistry::GetInstance().GetCurrent() != NULL) {
+  if (TModeRegistry::GetInstance().GetCurrent() != 0) {
     TBasicApp::NewLogEntry(logError) << "Unavailable in a mode";
     return;
   }
@@ -1844,6 +1888,30 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
       app.FindXAtoms(TStrObjList(Cmds.SubListFrom(1)), false, false),
       FunctionAccessor::MakeConst(&TXAtom::GetNetwork));
     app.SelectFragments(ACollectionItem::Unify(nets), !Options.Contains('u'));
+  }
+  else if (Cmds.Count() == 1 && Cmds[0].Equalsi("collections")) {
+    if (flag == glSelectionNone) {
+      flag = glSelectionSelect;
+    }
+    olxstr_set<> cols;
+    for (size_t i = 0; i < TXBond::NamesRegistry().Count(); i++) {
+      cols.Add(TXBond::NamesRegistry().GetValue(i));
+    }
+    for (size_t i = 0; i < TXAtom::NamesRegistry().Count(); i++) {
+      cols.Add(TXAtom::NamesRegistry().GetValue(i));
+    }
+    for (size_t i = 0; i < TXPlane::NamesRegistry().Count(); i++) {
+      cols.Add(TXPlane::NamesRegistry().GetValue(i));
+    }
+    for (size_t i = 0; i < cols.Count(); i++) {
+      TGPCollection *c = app.GetRenderer().FindCollection(cols[i]);
+      if (c == 0) {
+        continue;
+      }
+      for (size_t j = 0; j < c->ObjectCount(); j++) {
+        app.GetRenderer().Select(c->GetObject(j), flag);
+      }
+    }
   }
   else if( Cmds.Count() == 1 && Cmds[0].Equalsi("res") )  {
     //app.GetRenderer().ClearSelection();
@@ -1926,21 +1994,27 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
     TGXApp::AtomIterator ai = app.GetAtoms();
     while (ai.HasNext()) {
       TXAtom &a = ai.Next();
-      if (a.IsVisible() && a.CAtom().GetTag() == 1)
+      if (a.IsVisible() && a.CAtom().GetTag() == 1) {
         app.GetRenderer().Select(a, true);
+      }
     }
   }
   else if (Cmds.Count() > 1 && Cmds[0].Equalsi("ofile")) {
-    if (flag == glSelectionNone) flag = glSelectionSelect;
+    if (flag == glSelectionNone) {
+      flag = glSelectionSelect;
+    }
     TSizeList fi;
-    for (size_t i=1; i < Cmds.Count(); i++)
+    for (size_t i = 1; i < Cmds.Count(); i++) {
       fi << Cmds[i].ToSizeT();
+    }
     for (size_t i=0; i < fi.Count(); i++) {
-      TXFile *f=NULL;
+      TXFile *f = 0;
       if (i < app.XFiles().Count()) {
         f = &app.XFiles()[i];
       }
-      if (f == NULL) continue;
+      if (f == 0) {
+        continue;
+      }
       ASObjectProvider &op = f->GetLattice().GetObjects();
       for (size_t j=0; j < op.atoms.Count(); j++) {
         TXAtom &a = (TXAtom &)op.atoms[j];
@@ -1949,28 +2023,38 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
       }
       for (size_t j=0; j < op.bonds.Count(); j++) {
         TXBond &b = (TXBond &)op.bonds[j];
-        if (!b.IsAvailable()) continue;
+        if (!b.IsAvailable()) {
+          continue;
+        }
         app.GetRenderer().Select(b, flag);
       }
     }
   }
   else if (Cmds.Count() == 1 && TSymmParser::IsRelSymm(Cmds[0])) {
-    if (flag == glSelectionNone) flag = glSelectionSelect;
+    if (flag == glSelectionNone) {
+      flag = glSelectionSelect;
+    }
     const smatd matr = TSymmParser::SymmCodeToMatrix(
       app.XFile().GetUnitCell(), Cmds[0]);
     TGXApp::AtomIterator ai = app.GetAtoms();
     while (ai.HasNext()) {
       TXAtom& a = ai.Next();
-      if (a.IsDeleted() || !a.IsVisible() )  continue;
-      if (a.IsGenerator(matr) )
+      if (a.IsDeleted() || !a.IsVisible()) {
+        continue;
+      }
+      if (a.IsGenerator(matr)) {
         app.GetRenderer().Select(a, flag);
+      }
     }
     TGXApp::BondIterator bi = app.GetBonds();
     while (bi.HasNext()) {
       TXBond& b = bi.Next();
-      if (b.IsDeleted() || !b.IsVisible())  continue;
-      if (b.A().IsGenerator(matr) && b.B().IsGenerator(matr))
+      if (b.IsDeleted() || !b.IsVisible()) {
+        continue;
+      }
+      if (b.A().IsGenerator(matr) && b.B().IsGenerator(matr)) {
         app.GetRenderer().Select(b, flag);
+      }
     }
   }
   else if (Cmds.Count() > 1 && Cmds[0].Equalsi("part")) {
@@ -2004,7 +2088,9 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
         break;
     }
     if (!afixes.IsEmpty()) {
-      if (flag == glSelectionNone) flag = glSelectionSelect;
+      if (flag == glSelectionNone) {
+        flag = glSelectionSelect;
+      }
       TGXApp::AtomIterator ai = app.GetAtoms();
       while (ai.HasNext()) {
         TXAtom& xa = ai.Next();
@@ -2014,7 +2100,9 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   else if (Cmds.Count() > 1 && Cmds[0].Equalsi("fvar")) {
-    if (flag == glSelectionNone) flag = glSelectionSelect;
+    if (flag == glSelectionNone) {
+      flag = glSelectionSelect;
+    }
     Cmds.Delete(0);
     TIntList fvars;
     for (size_t i=0; Cmds.Count(); i++) {
@@ -2210,8 +2298,9 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
     if (Atoms.IsEmpty() && Cmds.Count() == 1) {
       TGPCollection* gpc = app.GetRenderer().FindCollection(Cmds[0]);
       if (gpc != NULL) {
-        for (size_t i=0; i < gpc->ObjectCount(); i++)
+        for (size_t i = 0; i < gpc->ObjectCount(); i++) {
           app.GetRenderer().Select(gpc->GetObject(i));
+        }
         return;
       }
     }

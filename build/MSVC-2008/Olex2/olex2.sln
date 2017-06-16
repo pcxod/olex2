@@ -243,7 +243,7 @@ Global
 		{F32F8997-7CEA-489A-9A59-3119CE043C7C}.Unicode-release|x64.Build.0 = Unicode-release|x64
 		{F32F8997-7CEA-489A-9A59-3119CE043C7C}.Unicode-release-d|Win32.ActiveCfg = Release|Win32
 		{F32F8997-7CEA-489A-9A59-3119CE043C7C}.Unicode-release-d|Win32.Build.0 = Release|Win32
-		{F32F8997-7CEA-489A-9A59-3119CE043C7C}.Unicode-release-d|x64.ActiveCfg = Release|Win32
+		{F32F8997-7CEA-489A-9A59-3119CE043C7C}.Unicode-release-d|x64.ActiveCfg = Unicode-release-d|x64
 		{F32F8997-7CEA-489A-9A59-3119CE043C7C}.Unicode-release-static|Win32.ActiveCfg = Release|Win32
 		{F32F8997-7CEA-489A-9A59-3119CE043C7C}.Unicode-release-static|Win32.Build.0 = Release|Win32
 		{F32F8997-7CEA-489A-9A59-3119CE043C7C}.Unicode-release-static|x64.ActiveCfg = Release|Win32

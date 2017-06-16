@@ -2751,7 +2751,7 @@ void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options,
   TPtrList<cm_Element> elements;
   for (size_t i=0; i < Cmds.Count(); i++) {
     cm_Element* elm = XElementLib::FindBySymbol(Cmds[i]);
-    if (elm == NULL) {
+    if (elm == 0) {
       xapp.NewLogEntry(logError) << "Unknown element: " << Cmds[i];
       continue;
     }
@@ -2763,8 +2763,9 @@ void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options,
       E.ProcessingError(__OlxSrcInfo, "At least one more element type is expected");
       return;
     }
-    if (atoms[0]->CAtom().GetExyzGroup() != NULL)
+    if (atoms[0]->CAtom().GetExyzGroup() != 0) {
       atoms[0]->CAtom().GetExyzGroup()->Clear();
+    }
     groups.Add(rm.ExyzGroups.New())->Add(atoms[0]->CAtom());
     for (size_t i=0; i < elements.Count(); i++) {
       TCAtom& ca = au.NewAtom();
@@ -2857,10 +2858,11 @@ void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options,
     if (group0_sz == 2) {
       XVar& vr = rm.Vars.NewVar();
       for (size_t i=0; i < groups.Count(); i++) {
+        double k = 1.0 / (*groups[i])[0].GetDegeneracy();
+          rm.Vars.AddVarRef(vr,
+          (*groups[i])[0], catom_var_name_Sof, relation_AsVar, k);
         rm.Vars.AddVarRef(vr,
-          (*groups[i])[0], catom_var_name_Sof, relation_AsVar, 1.0);
-        rm.Vars.AddVarRef(vr,
-          (*groups[i])[1], catom_var_name_Sof, relation_AsOneMinusVar, 1.0);
+          (*groups[i])[1], catom_var_name_Sof, relation_AsOneMinusVar, k);
       }
     }
     else {
@@ -2870,7 +2872,8 @@ void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options,
         leq.AddMember(vr);
         for (size_t j=0; j < groups.Count(); j++) {
           rm.Vars.AddVarRef(vr,
-            (*groups[j])[i], catom_var_name_Sof, relation_AsVar, 1.0);
+            (*groups[j])[i], catom_var_name_Sof, relation_AsVar,
+            1.0/ (*groups[j])[i].GetDegeneracy());
         }
       }
     }
@@ -2878,7 +2881,7 @@ void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options,
       for (size_t i=0; i < groups.Count(); i++) {
         TSimpleRestraint& sr = rm.rEADP.AddNew();
         for (size_t j=0; j < groups[i]->Count(); j++)
-          sr.AddAtom((*groups[i])[j], NULL);
+          sr.AddAtom((*groups[i])[j], 0);
       }
     }
   }
