@@ -316,7 +316,10 @@ if sys.platform[:3] == 'win':
   tests_env = env.Clone()
   tests_env['CCFLAGS'].remove('-D_PYTHON')
   wx_env = env.Clone()
-  wx_env.Append(LIBPATH = [wxFolder+'lib/vc_lib'])
+  if architecture == '64bit':
+    wx_env.Append(LIBPATH = [wxFolder+'lib/vc_x64_lib'])
+  else:
+    wx_env.Append(LIBPATH = [wxFolder+'lib/vc_lib'])
   wx_env.Append(CCFLAGS = ['-D__WXWIDGETS__'])
   if not debug:
     wx_libs = """wxexpat wxjpeg wxpng wxtiff wxzlib 

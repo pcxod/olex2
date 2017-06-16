@@ -232,8 +232,9 @@ bool TNetwork::IsBondAllowed(const TCAtom& ca, const TCAtom& cb) {
         return false;
       }
     }
+    return true;
   }
-  return true;
+  return false;
 }
 //..............................................................................
 bool TNetwork::IsBondAllowed(const TCAtom& ca, const TCAtom& cb,
