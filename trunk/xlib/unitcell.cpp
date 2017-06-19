@@ -713,7 +713,7 @@ void TUnitCell::GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ,
     if (part == DefNoPart ||
       (site.atom->GetPart() == 0 || site.atom->GetPart() == part))
     {
-      if (remove_redundant && !site.matrix.IsFirst()) {
+      if (remove_redundant && !site.matrix.IsFirst() && site.atom->GetPart() < 0) {
         bool contains = false;
         for (size_t j = 0; j < ca.EquivCount(); j++) {
           if (ca.GetEquiv(j).GetId() == site.matrix.GetId()) {
