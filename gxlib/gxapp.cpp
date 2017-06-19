@@ -405,7 +405,7 @@ TGXApp::~TGXApp() {
 void TGXApp::ClearXObjects()  {
   OnObjectsDestroy.Enter(dynamic_cast<TBasicApp*>(this), NULL);
   GlRenderer->SelectAll(false);
-  GlRenderer->ClearGroups();
+  GlRenderer->ClearGroups(false);
   GlRenderer->GetSelection().Clear();
   XGrowLines.Clear();
   XGrowPoints.Clear();
@@ -1580,7 +1580,7 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
         StoreGroup(GetSelection(), SelectionCopy[0]);
         StoreLabels();
       }
-      GetRenderer().ClearGroups();
+      GetRenderer().ClearGroups(false);
       GetRenderer().ClearSelection();
       Rings.Clear();
       Disassembling = true;
@@ -3601,7 +3601,7 @@ void TGXApp::RestoreGroups() {
     RestoreGroup(GetSelection(), SelectionCopy[0]);
   }
   GroupDict.Clear();
-  GlRenderer->ClearGroups();
+  GlRenderer->ClearGroups(true);
   for (size_t i = 0; i < GroupDefs.Count(); i++) {
     GlRenderer->NewGroup(GroupDefs[i].collectionName).Create(
       GroupDefs[i].collectionName);
@@ -4787,7 +4787,7 @@ void TGXApp::DeleteXFile(size_t index) {
       LabelInfo.bonds.NullItem(i);
   }
   LabelInfo.bonds.Pack();
-  GetRenderer().ClearGroups();
+  GetRenderer().ClearGroups(false);
   if (index == 0) {
     SetActiveXFile(1);
     Files.Delete(1);
@@ -5464,7 +5464,7 @@ void TGXApp::Ungroup(TGlGroup& G)  {
 //..............................................................................
 void TGXApp::UngroupAll()  {
   GroupDefs.Clear();
-  GetRenderer().ClearGroups();
+  GetRenderer().ClearGroups(true);
   _UpdateGroupIds();
   Draw();
 }

@@ -1137,8 +1137,10 @@ void TGlRenderer::SelectAll(bool Select) {
   }
 }
 //..............................................................................
-void TGlRenderer::ClearGroups() {
-  FGObjects.ForEach(ACollectionItem::TagSetter(0));
+void TGlRenderer::ClearGroups(bool clean) {
+  if (clean) {
+    FGObjects.ForEach(ACollectionItem::TagSetter(0));
+  }
   for (size_t i = 0; i < FGroups.Count(); i++) {
     if (FGroups[i]->IsSelected()) {
       Deselect(*FGroups[i]);
@@ -1146,7 +1148,9 @@ void TGlRenderer::ClearGroups() {
     FGroups[i]->Clear();
     FGroups[i]->SetTag(1);
   }
-  FGObjects.Pack(ACollectionItem::TagAnalyser(1));
+  if (clean) {
+    FGObjects.Pack(ACollectionItem::TagAnalyser(1));
+  }
   FGroups.DeleteItems();
   FGroups.Clear();
 }
@@ -1264,21 +1268,30 @@ void TGlRenderer::RemoveObjects(const AGDObjList& objects) {
 }
 //..............................................................................
 //struct ADO : public ADestructionObserver {
+//  TGlRenderer &parent;
+//  ADO(TGlRenderer &parent) : parent(parent)
+//  {}
 //  virtual void call(class APerishable* obj) const {
 //    if (TBasicApp::HasInstance()) {
-//      TBasicApp::NewLogEntry() << typeid(*obj).name();
+//      for (size_t i = 0; i < parent.ObjectCount(); i++) {
+//        APerishable *x = dynamic_cast<APerishable *>(&parent.GetObject(i));
+//        if ( x == obj) {
+//          TBasicApp::NewLogEntry() << typeid(&parent.GetObject(i)).name();
+//          break;
+//        }
+//      }
 //    }
 //  }
 //  virtual bool operator == (const ADestructionObserver *x) const {
 //    return this == x;
 //  }
 //  virtual ADestructionObserver *clone() const {
-//    return new ADO();
+//    return new ADO(parent);
 //  }
 //};
 void TGlRenderer::AddObject(AGDrawObject& G) {
   FGObjects.AddUnique(&G);
-  //G.AddDestructionObserver(*(new ADO()));
+  //G.AddDestructionObserver(*(new ADO(*this)));
   if (FSceneComplete || !G.IsVisible()) {
     return;
   }
