@@ -3596,20 +3596,25 @@ void TGXApp::RestoreLabels()  {
   LabelInfo.Clear();
 }
 //..............................................................................
-void TGXApp::RestoreGroups()  {
-  if( !SelectionCopy[0].IsEmpty() )
+void TGXApp::RestoreGroups() {
+  if (!SelectionCopy[0].IsEmpty()) {
     RestoreGroup(GetSelection(), SelectionCopy[0]);
+  }
   GroupDict.Clear();
   GlRenderer->ClearGroups();
-  for( size_t i=0; i < GroupDefs.Count(); i++ )
-    GlRenderer->NewGroup(GroupDefs[i].collectionName).Create(GroupDefs[i].collectionName);
-  for( size_t i=0; i < GroupDefs.Count(); i++ )  {
+  for (size_t i = 0; i < GroupDefs.Count(); i++) {
+    GlRenderer->NewGroup(GroupDefs[i].collectionName).Create(
+      GroupDefs[i].collectionName);
+  }
+  for (size_t i = 0; i < GroupDefs.Count(); i++) {
     TGlGroup& glg = GlRenderer->GetGroup(i);
     RestoreGroup(glg, GroupDefs[i]);
-    if( GroupDefs[i].parent_id == -1 )
+    if (GroupDefs[i].parent_id == -1) {
       GlRenderer->GetSelection().Add(glg);
-    else if( GroupDefs[i].parent_id >= 0 )
+    }
+    else if (GroupDefs[i].parent_id >= 0) {
       GlRenderer->GetGroup(GroupDefs[i].parent_id).Add(glg);
+    }
     GroupDict(&glg, i);
   }
   RestoreLabels();
