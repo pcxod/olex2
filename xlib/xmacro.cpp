@@ -7948,6 +7948,10 @@ void XLibMacros::macExport(TStrObjList &Cmds, const TParamList &Options,
     cif_dp::cetStringList *ci = dynamic_cast<cif_dp::cetStringList *>(
       C.FindEntry("_shelx_hkl_file"));
     if (ci == 0) {
+      ci = dynamic_cast<cif_dp::cetStringList *>(
+        C.FindEntry("_iucr_refine_reflections_details"));
+    }
+    if (ci == 0) {
       TBasicApp::NewLogEntry() << "No hkl loop or data found";
     }
     else {
