@@ -2065,16 +2065,15 @@ void TMainForm::macGrad(TStrObjList &Cmds, const TParamList &Options, TMacroData
 void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &E)
 {
-  if (Modes->GetCurrent() != NULL)  {
+  if (Modes->GetCurrent() != 0) {
     E.ProcessingError(__OlxSourceInfo,
       "Please exit all modes before running this command");
     return;
   }
-  TCAtomPList CAtoms;
   TXAtomPList Atoms;
   TIns* Ins = FXApp->CheckFileType<TIns>() ?
-    &FXApp->XFile().GetLastLoader<TIns>() : NULL;
-  if (!FindXAtoms(Cmds, Atoms, true, !Options.Contains("cs")))  {
+    &FXApp->XFile().GetLastLoader<TIns>() : 0;
+  if (!FindXAtoms(Cmds, Atoms, true, !Options.Contains("cs"))) {
     E.ProcessingError(__OlxSrcInfo, "wrong atom names");
     return;
   }
@@ -2083,40 +2082,50 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options,
   RefinementModel& rm = FXApp->XFile().GetRM();
   TIns::ValidateRestraintsAtomNames(FXApp->XFile().GetRM(), false);
   FXApp->XFile().UpdateAtomIds();
-  if (Ins != NULL)
+  if (Ins != 0) {
     Ins->UpdateParams();
+  }
   // get CAtoms and EXYZ equivalents
   sorted::PointerPointer<TResidue> residues_to_release;
   au.GetAtoms().ForEach(ACollectionItem::TagSetter(0));
-  for (size_t i = 0; i < Atoms.Count(); i++)  {
+  TCAtomPList CAtoms;
+  for (size_t i = 0; i < Atoms.Count(); i++) {
     TCAtom &ca = Atoms[i]->CAtom();
-    if (ca.GetTag() != 0) continue;
+    if (ca.GetTag() != 0) {
+      continue;
+    }
     CAtoms.Add(ca)->SetTag(1);
     TExyzGroup* eg = ca.GetExyzGroup();
-    if (eg != NULL)  {
-      for (size_t j = 0; j < eg->Count(); j++)
-      if (!(*eg)[j].IsDeleted())
-        CAtoms.Add((*eg)[j]);
+    if (eg != 0) {
+      for (size_t j = 0; j < eg->Count(); j++) {
+        if (!(*eg)[j].IsDeleted()) {
+          CAtoms.Add((*eg)[j]);
+        }
+      }
     }
     if (ca.GetResiId() != 0) {
       TResidue& resi = rm.aunit.GetResidue(ca.GetResiId());
       residues_to_release.AddUnique(&resi);
       for (size_t j = 0; j < resi.Count(); j++) {
-        if (resi[j].GetTag() != 0) continue;
+        if (resi[j].GetTag() != 0) {
+          continue;
+        }
         CAtoms.Add(resi[j])->SetTag(1);
       }
     }
-    if (ca.GetUisoOwner() != NULL)
+    if (ca.GetUisoOwner() != 0) {
       CAtoms.Add(ca.GetUisoOwner());
+    }
   }
   TXApp::UnifyPAtomList(CAtoms);
   RefinementModel::ReleasedItems released;
   size_t ac = CAtoms.Count();
-  for (size_t i = 0; i < ac; i++)  {
-    if (olx_is_valid_index(CAtoms[i]->GetSameId()))  {
+  for (size_t i = 0; i < ac; i++) {
+    if (olx_is_valid_index(CAtoms[i]->GetSameId())) {
       TSameGroup& sg = rm.rSAME[CAtoms[i]->GetSameId()];
-      if (sg.GetParentGroup() != NULL)
+      if (sg.GetParentGroup() != 0) {
         released.sameList.Add(sg.GetParentGroup());
+      }
       released.sameList.Add(sg);
       for (size_t j = 0; j < sg.DependentCount(); j++) {
         released.sameList.Add(sg.GetDependent(j));
@@ -2125,29 +2134,34 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options,
   }
   // process SAME's
   ACollectionItem::Unify(released.sameList);
-  for (size_t i = 0; i < released.sameList.Count(); i++)  {
+  for (size_t i = 0; i < released.sameList.Count(); i++) {
     TSameGroup &sg = *released.sameList[i];
     TAtomRefList atoms = sg.GetAtoms().ExpandList(rm);
-    for (size_t j = 0; j < atoms.Count(); j++)
+    for (size_t j = 0; j < atoms.Count(); j++) {
       CAtoms.Add(atoms[j].GetAtom());
+    }
   }
-  for (size_t i = 0; i < rm.AfixGroups.Count(); i++)
+  for (size_t i = 0; i < rm.AfixGroups.Count(); i++) {
     rm.AfixGroups[i].SetTag(0);
-  for (size_t i = 0; i < CAtoms.Count(); i++)  {  // add afixed mates and afix parents
+  }
+  // add afixed mates and afix parents
+  for (size_t i = 0; i < CAtoms.Count(); i++) {
     TCAtom& ca = *CAtoms[i];
-    for (size_t j = 0; j < ca.DependentHfixGroupCount(); j++)  {
+    for (size_t j = 0; j < ca.DependentHfixGroupCount(); j++) {
       TAfixGroup& hg = ca.GetDependentHfixGroup(j);
-      if (hg.GetTag() != 0) continue;
+      if (hg.GetTag() != 0) {
+        continue;
+      }
       CAtoms.AddAll(hg);
       hg.SetTag(1);
     }
-    if (ca.GetDependentAfixGroup() != NULL &&
+    if (ca.GetDependentAfixGroup() != 0 &&
       ca.GetDependentAfixGroup()->GetTag() == 0)
     {
       CAtoms.AddAll(*ca.GetDependentAfixGroup());
       ca.GetDependentAfixGroup()->SetTag(1);
     }
-    if (ca.GetParentAfixGroup() != NULL &&
+    if (ca.GetParentAfixGroup() != 0 &&
       ca.GetParentAfixGroup()->GetTag() == 0)
     {
       CAtoms.Add(ca.GetParentAfixGroup()->GetPivot());
@@ -2159,28 +2173,34 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options,
   TXApp::UnifyPAtomList(CAtoms);
   TStrList SL;
   TStringToList<olxstr, TStrList* > RemovedIns;
-  SL.Add("REM please do not modify atom names inside the instructions - they will be updated");
+  SL.Add("REM please do not modify atom names inside the instructions - they"
+    " will be updated");
   SL.Add("REM by Olex2 automatically, though you can change any parameters");
   SL.Add("REM Also do not change the atoms order");
   // go through instructions
-  if (Ins != NULL)  {
-    for (size_t i = 0; i < Ins->InsCount(); i++)  {
+  if (Ins != 0) {
+    for (size_t i = 0; i < Ins->InsCount(); i++) {
       // do not process remarks
-      if (!Ins->InsName(i).Equalsi("rem"))  {
+      if (!Ins->InsName(i).Equalsi("rem")) {
         const TInsList* InsParams = &Ins->InsParams(i);
         bool found = false;
-        for (size_t j = 0; j < InsParams->Count(); j++)  {
+        for (size_t j = 0; j < InsParams->Count(); j++) {
           TCAtom* CA1 = InsParams->GetObject(j);
-          if (CA1 == NULL)  continue;
-          for (size_t k = 0; k < CAtoms.Count(); k++)  {
+          if (CA1 == 0) {
+            continue;
+          }
+          for (size_t k = 0; k < CAtoms.Count(); k++) {
             TCAtom* CA = CAtoms[k];
-            if (CA->GetLabel().Equalsi(CA1->GetLabel()))  {
-              found = true;  break;
+            if (CA->GetLabel().Equalsi(CA1->GetLabel())) {
+              found = true
+                ;  break;
             }
           }
-          if (found)  break;
+          if (found) {
+            break;
+          }
         }
-        if (found)  {
+        if (found) {
           SL.Add(Ins->InsName(i)) << ' ' << InsParams->Text(' ');
           TStrList* InsParamsCopy = new TStrList(*InsParams);
           RemovedIns.Add(Ins->InsName(i), InsParamsCopy);
@@ -2196,28 +2216,32 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options,
     TPrimitiveComparator()));
   TIns::SaveAtomsToStrings(FXApp->XFile().GetRM(), CAtoms, atomIndex, SL,
     &released);
-  for (size_t i = 0; i < released.restraints.Count(); i++)
+  for (size_t i = 0; i < released.restraints.Count(); i++) {
     released.restraints[i]->GetParent().Release(*released.restraints[i]);
+  }
   ACollectionItem::Unify(released.sameList);
-  for (size_t i = 0; i < released.sameList.Count(); i++)
+  for (size_t i = 0; i < released.sameList.Count(); i++) {
     released.sameList[i]->GetParent().Release(*released.sameList[i]);
+  }
   au.Release(TPtrList<TResidue>(residues_to_release));
   TdlgEdit *dlg = new TdlgEdit(this, true);
   dlg->SetText(SL.Text('\n'));
   bool undo = false;
   // prevent logging to interfere!
   FXApp->SetDisplayFrozen(true);
-  if (dlg->ShowModal() == wxID_OK)  {
+  if (dlg->ShowModal() == wxID_OK) {
     SL.Clear();
     FXApp->XFile().GetRM().Vars.Clear();
     SL.Strtok(dlg->GetText(), '\n');
     TStrList NewIns;
     try {
       TIns::UpdateAtomsFromStrings(FXApp->XFile().GetRM(), atomIndex, SL, NewIns);
-      if (Ins != NULL)  {
-        for (size_t i = 0; i < NewIns.Count(); i++)  {
+      if (Ins != 0) {
+        for (size_t i = 0; i < NewIns.Count(); i++) {
           NewIns[i] = NewIns[i].Trim(' ');
-          if (NewIns[i].IsEmpty())  continue;
+          if (NewIns[i].IsEmpty()) {
+            continue;
+          }
           Ins->AddIns(NewIns[i], FXApp->XFile().GetRM());
         }
       }
@@ -2228,36 +2252,41 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options,
       TBasicApp::NewLogEntry(logExceptionTrace) << e;
     }
   }
-  else  {
+  else {
     undo = true;
   }
   if (undo) {
     au.Restore(TPtrList<TResidue>(residues_to_release));
-    if (Ins != NULL)  {
+    if (Ins != 0) {
       for (size_t i = 0; i < RemovedIns.Count(); i++) {
         Ins->AddIns(RemovedIns[i], *RemovedIns.GetObject(i),
           FXApp->XFile().GetRM(), false);
       }
     }
-    for (size_t i = 0; i < released.restraints.Count(); i++)
+    for (size_t i = 0; i < released.restraints.Count(); i++) {
       released.restraints[i]->GetParent().Restore(*released.restraints[i]);
-    for (size_t i = 0; i < released.sameList.Count(); i++)
+    }
+    for (size_t i = 0; i < released.sameList.Count(); i++) {
       released.sameList[i]->GetParent().Restore(*released.sameList[i]);
+    }
   }
   else {
-    for (size_t i = 0; i < RemovedIns.Count(); i++)
+    for (size_t i = 0; i < RemovedIns.Count(); i++) {
       delete (TStrList*)RemovedIns.GetObject(i);
-    for (size_t i = 0; i < released.restraints.Count(); i++)  {
-      if (released.restraints[i]->GetVarRef(0) != NULL)
+    }
+    for (size_t i = 0; i < released.restraints.Count(); i++) {
+      if (released.restraints[i]->GetVarRef(0) != 0) {
         delete released.restraints[i]->GetVarRef(0);
+      }
       delete released.restraints[i];
     }
-    for (size_t i = 0; i < released.sameList.Count(); i++)  {
+    for (size_t i = 0; i < released.sameList.Count(); i++) {
       released.sameList[i]->ReleasedClear();
       delete released.sameList[i];
     }
-    for (size_t i = 0; i < residues_to_release.Count(); i++)
+    for (size_t i = 0; i < residues_to_release.Count(); i++) {
       delete residues_to_release[i];
+    }
   }
   dlg->Destroy();
   FXApp->SetDisplayFrozen(false);
