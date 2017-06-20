@@ -131,21 +131,25 @@ public:
     RefinementModel::ReleasedItems* processed, RefinementModel& rm);
   static void SaveExtras(TStrList& SL, const TCAtomPList* atoms,
     RefinementModel::ReleasedItems* processed, RefinementModel& rm);
+
   template <class StrLst> static
-  void ParseRestraints(RefinementModel& rm, StrLst& SL)  {
+  void ParseRestraints(RefinementModel& rm, StrLst& SL) {
     bool preserve = DoPreserveInvalid();
-    for( size_t i =0; i < SL.Count(); i++ )  {
+    for (size_t i = 0; i < SL.Count(); i++) {
       TStrList Toks(SL[i], ' ');
-      try  {
-        if( ParseRestraint(rm, Toks) )
+      try {
+        if (ParseRestraint(rm, Toks)) {
           SL[i].SetLength(0);
+        }
       }
-      catch(const TExceptionBase &e)  {
+      catch (const TExceptionBase &e) {
         TBasicApp::NewLogEntry(logExceptionTrace) << e;
-        if( preserve )
+        if (preserve) {
           SL[i] = olxstr("REM ") << SL[i];
-        else
+        }
+        else {
           SL[i].SetLength(0);
+        }
       }
     }
   }
