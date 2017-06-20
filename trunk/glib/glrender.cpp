@@ -1107,17 +1107,22 @@ void TGlRenderer::Select(AGDrawObject& G, glSelectionFlag v) {
 }
 //..............................................................................
 void TGlRenderer::InvertSelection() {
-  AGDObjList Selected;
+  AGDObjList to_select;
+  uint32_t mask = sgdoSelected | sgdoHidden | sgdoGrouped;
   const size_t oc = FGObjects.Count();
   for (size_t i = 0; i < oc; i++) {
     AGDrawObject* GDO = FGObjects[i];
-    if (!GDO->IsGrouped() && GDO->IsVisible()) {
-      Selected.Add(GDO);
+    if (GDO->MaskFlags(mask) == 0 &&
+      GDO->IsSelectable() &&
+      GDO != FSelection)
+    {
+      to_select.Add(GDO);
     }
   }
+  FSelection->SetSelected(false);
   FSelection->Clear();
-  for (size_t i = 0; i < Selected.Count(); i++) {
-    Selected[i]->SetSelected(FSelection->Add(*Selected[i]));
+  for (size_t i = 0; i < to_select.Count(); i++) {
+    to_select[i]->SetSelected(FSelection->Add(*to_select[i]));
   }
 }
 //..............................................................................
@@ -1127,12 +1132,12 @@ void TGlRenderer::SelectAll(bool Select) {
       AGDrawObject& GDO = GetObject(i);
       // grouped covers selected
       if (!GDO.IsGrouped() && GDO.IsVisible() && GDO.IsSelectable()) {
-        FSelection->Add(GDO);
+        GDO.SetSelected(FSelection->Add(GDO));
       }
     }
-    FSelection->SetSelected(true);
   }
   else {
+    FSelection->SetSelected(false);
     FSelection->Clear();
   }
 }
