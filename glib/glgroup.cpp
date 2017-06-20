@@ -113,7 +113,7 @@ bool TGlGroup::Add(AGDrawObject& GO, bool remove) {
   else {
     if (remove) {
       Objects.Delete(i);
-      go->SetParentGroup(NULL);
+      go->SetParentGroup(0);
       go->SetGrouped(false);
       return false;
     }
