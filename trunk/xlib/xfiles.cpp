@@ -731,7 +731,7 @@ void TXFile::UpdateAtomIds() {
     for (size_t i = 0; i < au.AtomCount(); i++) {
       new_indices[i] = original_ids[&GetAsymmUnit().GetAtom(i)];
     }
-    FLastLoader->GetAsymmUnit().GetResidue(0).GetAtomList().Rearrange(new_indices);
+    FLastLoader->GetAsymmUnit().GetAtoms().Rearrange(new_indices);
     FLastLoader->GetAsymmUnit().ComplyToResidues();
   }
   index_t idx = 0;
