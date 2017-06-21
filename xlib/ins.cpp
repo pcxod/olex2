@@ -1272,20 +1272,24 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
   double &spec, TStrList* sfac, TStrList &sl, TIndexList* index,
   bool checkSame, bool checkResi)
 {
-  if( a.IsDeleted() || a.IsSaved() )  return;
-  if( checkResi && a.GetResiId() != 0 )  {
+  if (a.IsDeleted() || a.IsSaved()) {
+    return;
+  }
+  if (checkResi && a.GetResiId() != 0) {
     const TResidue& resi = rm.aunit.GetResidue(a.GetResiId());
     sl.Add(resi.ToString());
-    for( size_t i=0; i < resi.Count(); i++ )
+    for (size_t i = 0; i < resi.Count(); i++) {
       _SaveAtom(rm, resi[i], part, afix, spec, sfac, sl, index, true, false);
+    }
     return;
   }
   if (checkSame && olx_is_valid_index(a.GetSameId())) {  // "
     TSameGroup& sg = rm.rSAME[a.GetSameId()];
-    if (sg.IsValidForSave()) {
+    if (sg.IsValidForSave() && sg.IsReference()) {
       for (size_t i = 0; i < sg.DependentCount(); i++) {
-        if (!sg.GetDependent(i).IsValidForSave())
+        if (!sg.GetDependent(i).IsValidForSave()) {
           continue;
+        }
         olxstr tmp("SAME ");
         tmp << olxstr(sg.GetDependent(i).Esd12).TrimFloat() << ' '
           << olxstr(sg.GetDependent(i).Esd13).TrimFloat() << ' '
@@ -1302,7 +1306,7 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
       return;
     }
   }
-  if (a.GetUisoOwner() != NULL && !a.GetUisoOwner()->IsSaved()) {
+  if (a.GetUisoOwner() != 0 && !a.GetUisoOwner()->IsSaved()) {
     _SaveAtom(rm, *a.GetUisoOwner(), part, afix, spec, sfac, sl, index,
       checkSame, checkResi);
   }
@@ -1310,8 +1314,9 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
     sl.Add("SPEC ") << a.GetSpecialPositionDeviation();
   }
   if (a.GetPart() != part) {
-    if (part != 0 && a.GetPart() != 0)
+    if (part != 0 && a.GetPart() != 0) {
       sl.Add("PART 0");
+    }
     sl.Add("PART ") << (int)a.GetPart();
   }
   TAfixGroup* ag = a.GetDependentAfixGroup();
@@ -1321,7 +1326,7 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
       !TAfixGroup::IsDependent(atom_afix))
     {
       TAfixGroup* _ag = a.GetParentAfixGroup();
-      if (_ag != NULL) {
+      if (_ag != 0) {
         olxstr& str = sl.Add("AFIX ") << atom_afix;
         if (_ag->GetD() != 0) {
           str << ' ' << _ag->GetD();
@@ -1335,7 +1340,7 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
       }
       else {
         olxstr& str = sl.Add("AFIX ") << atom_afix;
-        if (ag != NULL) {
+        if (ag != 0) {
           if (ag->GetD() != 0) {
             str << ' ' << ag->GetD();
           }
@@ -1354,7 +1359,7 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
   spec = a.GetSpecialPositionDeviation();
   index_t spindex;
   if (a.GetType() == iQPeakZ) {
-    spindex = (sfac == NULL ? -2 : (index_t)sfac->IndexOf('C') + 1);
+    spindex = (sfac == 0 ? -2 : (index_t)sfac->IndexOf('C') + 1);
   }
   else {
     int ch = a.GetCharge();
@@ -1365,11 +1370,13 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
         l << olx_abs(ch);
       }
     }
-    spindex = (sfac == NULL ? -2 : (index_t)sfac->IndexOf(l) + 1);
+    spindex = (sfac == 0 ? -2 : (index_t)sfac->IndexOf(l) + 1);
   }
   HyphenateIns(AtomToString(rm, a, spindex == 0 ? 1 : spindex), sl);
   a.SetSaved(true);
-  if (index != NULL)  index->Add(a.GetId());
+  if (index != 0) {
+    index->Add(a.GetId());
+  }
   for (size_t i=0; i < a.DependentHfixGroupCount(); i++) {
     TAfixGroup& hg = a.GetDependentHfixGroup(i);
     size_t sc = 0;
@@ -1385,7 +1392,7 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
       afix = 0;
     }
   }
-  if (ag != NULL) {  // save dependent rigid group
+  if (ag != 0) {  // save dependent rigid group
     size_t sc = 0;
     for (size_t i=0; i < ag->Count(); i++) {
       if (!(*ag)[i].IsDeleted() && !(*ag)[i].IsSaved()) {
@@ -1468,8 +1475,10 @@ void TIns::SaveToStrings(TStrList& SL) {
 void TIns::_DrySaveAtom(TCAtom& a, TSizeList &indices,
   bool checkSame, bool checkResi)
 {
-  if (a.IsDeleted() || a.IsSaved())  return;
-  if (checkResi && a.GetResiId() != 0)  {
+  if (a.IsDeleted() || a.IsSaved()) {
+    return;
+  }
+  if (checkResi && a.GetResiId() != 0) {
     const TResidue& resi = a.GetParent()->GetResidue(a.GetResiId());
     for (size_t i = 0; i < resi.Count(); i++) {
       _DrySaveAtom(resi[i], indices, true, false);
@@ -1478,7 +1487,7 @@ void TIns::_DrySaveAtom(TCAtom& a, TSizeList &indices,
   }
   if (checkSame && olx_is_valid_index(a.GetSameId())) {
     TSameGroup& sg = a.GetParent()->GetRefMod()->rSAME[a.GetSameId()];
-    if (sg.IsValidForSave())  {
+    if (sg.IsValidForSave() && sg.IsReference()) {
       if (sg.GetAtoms().IsExplicit()) {
         TAtomRefList atoms = sg.GetAtoms().ExpandList(*a.GetParent()->GetRefMod());
         for (size_t i = 0; i < atoms.Count(); i++)
@@ -1487,7 +1496,7 @@ void TIns::_DrySaveAtom(TCAtom& a, TSizeList &indices,
       return;
     }
   }
-  if (a.GetUisoOwner() != NULL && !a.GetUisoOwner()->IsSaved()) {
+  if (a.GetUisoOwner() != 0 && !a.GetUisoOwner()->IsSaved()) {
     _DrySaveAtom(*a.GetUisoOwner(), indices, checkSame, checkResi);
   }
   TAfixGroup* ag = a.GetDependentAfixGroup();
@@ -1495,14 +1504,14 @@ void TIns::_DrySaveAtom(TCAtom& a, TSizeList &indices,
   a.SetSaved(true);
   for (size_t i = 0; i < a.DependentHfixGroupCount(); i++) {
     TAfixGroup& hg = a.GetDependentHfixGroup(i);
-    for (size_t j = 0; j < hg.Count(); j++)  {
+    for (size_t j = 0; j < hg.Count(); j++) {
       if (!hg[j].IsDeleted() && !hg[j].IsSaved()) {
         _DrySaveAtom(hg[j], indices, checkSame, checkResi);
       }
     }
   }
-  if (ag != NULL) {  // save dependent rigid group
-    for (size_t i = 0; i < ag->Count(); i++)  {
+  if (ag != 0) {  // save dependent rigid group
+    for (size_t i = 0; i < ag->Count(); i++) {
       if (!(*ag)[i].IsDeleted() && !(*ag)[i].IsSaved()) {
         _DrySaveAtom((*ag)[i], indices, checkSame, checkResi);
       }

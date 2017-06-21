@@ -590,34 +590,39 @@ bool TXApp::FindSAtoms(const olxstr& condition, TSAtomPList& res,
 //..............................................................................
 ConstPtrList<SObject> TXApp::GetSelected(bool unselect) const {
   TPtrList<SObject> rv;
-  if (SelectionOwner != NULL) {
+  if (SelectionOwner != 0) {
     SelectionOwner->SetDoClearSelection(unselect);
     rv = SelectionOwner->GetSelected();
   }
   return rv;
 }
 //..............................................................................
-void TXApp::ProcessRingAfix(TSAtomPList& ring, int afix, bool pivot_last)  {
+void TXApp::ProcessRingAfix(TSAtomPList& ring, int afix, bool pivot_last) {
   olxstr info("Processing");
-  size_t pivot = (pivot_last ? ring.Count()-1 : 0);
-  for( size_t i=0; i < ring.Count(); i++ )
+  size_t pivot = (pivot_last ? ring.Count() - 1 : 0);
+  for (size_t i = 0; i < ring.Count(); i++) {
     info << ' ' << ring[i]->GetLabel();
+  }
   TBasicApp::NewLogEntry() << info << ". Chosen pivot atom is " <<
     ring[pivot]->GetLabel();
-  if( ring[pivot]->CAtom().GetDependentAfixGroup() != NULL )
+  if (ring[pivot]->CAtom().GetDependentAfixGroup() != 0) {
     ring[pivot]->CAtom().GetDependentAfixGroup()->Clear();
-  TAfixGroup& ag = XFile().GetRM().AfixGroups.New( &ring[pivot]->CAtom(), afix);
-  for( size_t i=0; i < ring.Count(); i++ )  {
-    if (i == pivot)  continue;  // do not want to delete just created!
+  }
+  TAfixGroup& ag = XFile().GetRM().AfixGroups.New(&ring[pivot]->CAtom(), afix);
+  for (size_t i = 0; i < ring.Count(); i++) {
+    // do not want to delete just created!
+    if (i == pivot) {
+      continue;
+    }
     TCAtom& ca = ring[i]->CAtom();
     // if used in case to change order
-    if (ca.GetParentAfixGroup() != NULL) {
+    if (ca.GetParentAfixGroup() != 0) {
       TBasicApp::NewLogEntry() << "Removing intersecting AFIX group: ";
       TBasicApp::NewLogEntry() << ca.GetParentAfixGroup()->ToString();
       ca.GetParentAfixGroup()->Clear();
     }
-    if( ca.GetDependentAfixGroup() != NULL &&
-      ca.GetDependentAfixGroup()->GetAfix() == afix )
+    if (ca.GetDependentAfixGroup() != 0 &&
+      ca.GetDependentAfixGroup()->GetAfix() == afix)
     {
       TBasicApp::NewLogEntry() << "Removing potentially intersecting AFIX"
         " group: ";
@@ -625,140 +630,174 @@ void TXApp::ProcessRingAfix(TSAtomPList& ring, int afix, bool pivot_last)  {
       ca.GetDependentAfixGroup()->Clear();
     }
   }
-  if( pivot_last )  {
-    for( size_t i=ring.Count()-2; i != InvalidIndex; i-- )
+  if (pivot_last) {
+    for (size_t i = ring.Count() - 2; i != InvalidIndex; i--) {
       ag.AddDependent(ring[i]->CAtom());
+    }
   }
-  else  {
-    for( size_t i=1; i < ring.Count(); i++ )
+  else {
+    for (size_t i = 1; i < ring.Count(); i++) {
       ag.AddDependent(ring[i]->CAtom());
+    }
   }
-
 }
 //..............................................................................
-void TXApp::AutoAfixRings(int afix, TSAtom* sa, bool TryPyridine)  {
+void TXApp::AutoAfixRings(int afix, TSAtom* sa, bool TryPyridine) {
   TBasicApp::NewLogEntry() <<
     "Automatically locating suitable targets for AFIX " << afix;
   int m = TAfixGroup::GetM(afix);
-  if( m == 5 || m ==6 || m == 7 || m == 10 )  {  // special case
-    if( sa == NULL )  {
+  if (m == 5 || m == 6 || m == 7 || m == 10) {  // special case
+    if (sa == 0) {
       TTypeList< TSAtomPList > rings;
-      try  {
-        if( m == 6 || m == 7 )  {
+      try {
+        if (m == 6 || m == 7) {
           FindRings("C6", rings);
-          if( TryPyridine )
+          if (TryPyridine) {
             FindRings("NC5", rings);
+          }
         }
-        else if( m == 5 || m == 10 ) // Cp or Cp*
+        else if (m == 5 || m == 10) { // Cp or Cp*
           FindRings("C5", rings);
-        else if( m == 11 )
+        }
+        else if (m == 11) {
           FindRings("C10", rings);
+        }
       }
-      catch( const TExceptionBase& exc )  {
+      catch (const TExceptionBase& exc) {
         throw TFunctionFailedException(__OlxSourceInfo, exc);
       }
       TNetwork::RingInfo ri;
-      for( size_t i=0; i < rings.Count(); i++ )  {
-        if( m != 11 && !TNetwork::IsRingRegular(rings[i]) )  continue;
+      for (size_t i = 0; i < rings.Count(); i++) {
+        if (m != 11 && !TNetwork::IsRingRegular(rings[i])) {
+          continue;
+        }
         // find the pivot (with heaviest atom attached)
-        TNetwork::AnalyseRing( rings[i], ri.Clear() );
-        if( ri.HasAfix || !olx_is_valid_index(ri.HeaviestSubsIndex) )  continue;
-        if( m != 10 && ri.Substituted.Count() > 1 )  continue;
-        if( m == 10 && ri.Substituted.Count() != 5 )  continue; // Cp*
+        TNetwork::AnalyseRing(rings[i], ri.Clear());
+        if (ri.HasAfix || !olx_is_valid_index(ri.HeaviestSubsIndex)) {
+          continue;
+        }
+        if (m != 10 && ri.Substituted.Count() > 1) {
+          continue;
+        }
+        // Cp*
+        if (m == 10 && ri.Substituted.Count() != 5) {
+          continue;
+        }
         // do not allign to pivot for Cp*
-        size_t shift = (m == 10 ? 0 : ri.HeaviestSubsIndex+1);
+        size_t shift = (m == 10 ? 0 : ri.HeaviestSubsIndex + 1);
         rings[i].ShiftL(shift);  // pivot is the last one now
-        if( m == 11 )  {  // validate and rearrange to figure of 8
-          if( ri.Alpha.IndexOf(shift - 1) == InvalidIndex ) continue;
-          if( ri.Ternary.Count() != 2 )  continue;
+        if (m == 11) {  // validate and rearrange to figure of 8
+          if (ri.Alpha.IndexOf(shift - 1) == InvalidIndex) {
+            continue;
+          }
+          if (ri.Ternary.Count() != 2) {
+            continue;
+          }
           // counter-clockwise direction
-          if( ri.Ternary.IndexOf(
-              shift >= 2 ? shift-2 : rings[i].Count()-shift ) != InvalidIndex )
+          if (ri.Ternary.IndexOf(
+            shift >= 2 ? shift - 2 : rings[i].Count() - shift) != InvalidIndex)
           {
-            for( size_t j=0; j < (rings[i].Count()-1)/2; j++ )  {
+            for (size_t j = 0; j < (rings[i].Count() - 1) / 2; j++) {
               TSAtom* a = rings[i][j];
-              rings[i][j] = rings[i][rings[i].Count()-j-2];
-              rings[i][rings[i].Count()-j-2] = a;
+              rings[i][j] = rings[i][rings[i].Count() - j - 2];
+              rings[i][rings[i].Count() - j - 2] = a;
             }
           }
           rings[i].Swap(0, 4);
           rings[i].Swap(1, 3);
         }
-        else if( m == 10 )  {  // Cp*
-          if( !ri.IsSingleCSubstituted() )  continue;
-          for( size_t j=0; j < ri.Substituents.Count(); j++ )
-            rings[i].Add(ri.Substituents[j][0] );
+        else if (m == 10) {  // Cp*
+          if (!ri.IsSingleCSubstituted()) {
+            continue;
+          }
+          for (size_t j = 0; j < ri.Substituents.Count(); j++) {
+            rings[i].Add(ri.Substituents[j][0]);
+          }
         }
         ProcessRingAfix(rings[i], afix, m != 10);
       }
     }
-    else  {  // sa != NULL
+    else {  // sa != NULL
       ElementPList ring;
       TTypeList< TSAtomPList > rings;
-      if( sa->GetType() != iCarbonZ)
+      if (sa->GetType() != iCarbonZ) {
         ring.Add(sa->GetType());
-      if( m == 6 || m == 7)
-        RingContentFromStr(ring.IsEmpty() ? "C6" :"C5", ring);
-      else if( m == 5 )
-        RingContentFromStr(ring.IsEmpty() ? "C5" :"C4", ring);
-      else if( m == 10 )
-        RingContentFromStr(ring.IsEmpty() ? "C5" :"C4", ring);
-      else if( m == 11 )
-        RingContentFromStr(ring.IsEmpty() ? "C10" :"C9", ring);
-      if( ring.IsEmpty() )  {
+      }
+      if (m == 6 || m == 7) {
+        if (TryPyridine) {
+          if (sa->GetType().z == iNitrogenZ) {
+            RingContentFromStr("C5", ring);
+          }
+          else if (sa->GetType() == iCarbonZ) {
+            RingContentFromStr("C5N", ring);
+          }
+          else {
+            throw TInvalidArgumentException(__OlxSourceInfo, "atom type");
+          }
+        }
+        else {
+          RingContentFromStr(ring.IsEmpty() ? "C6" : "C5", ring);
+        }
+      }
+      else if (m == 5) {
+        RingContentFromStr(ring.IsEmpty() ? "C5" : "C4", ring);
+      }
+      else if (m == 10) {
+        RingContentFromStr(ring.IsEmpty() ? "C5" : "C4", ring);
+      }
+      else if (m == 11) {
+        RingContentFromStr(ring.IsEmpty() ? "C10" : "C9", ring);
+      }
+      if (ring.IsEmpty()) {
         NewLogEntry() << "Unable to derive ring size";
         return;
       }
 
       sa->GetNetwork().FindAtomRings(*sa, ring, rings);
-      if( rings.IsEmpty() )  {
-        NewLogEntry() << "no suitable rings have been found";
+      if (rings.IsEmpty()) {
+        NewLogEntry() << "No suitable rings have been found";
         return;
       }
-      else if( rings.Count() > 1 )  {
-        NewLogEntry() << "the atom is shared by several rings";
+      else if (rings.Count() > 1) {
+        NewLogEntry() << "The atom is shared by several rings";
         return;
       }
       TNetwork::RingInfo ri;
-      TNetwork::AnalyseRing( rings[0], ri );
+      TNetwork::AnalyseRing(rings[0], ri);
       // need to rearrage the ring to fit shelxl requirements as fihure of 8
-      if( m == 11 )  {
-        if( ri.Alpha.IndexOf(rings[0].Count() - 1) == InvalidIndex )  {
-          NewLogEntry() << "the alpha substituted atom is expected";
+      if (m == 11) {
+        if (ri.Alpha.IndexOf(rings[0].Count() - 1) == InvalidIndex) {
+          NewLogEntry() << "The alpha substituted atom is expected";
           return;
         }
-        if( ri.Ternary.Count() != 2 )  {
-          NewLogEntry() << "naphtalene ring should have two ternary atoms";
+        if (ri.Ternary.Count() != 2) {
+          NewLogEntry() << "Naphthalene ring should have two ternary atoms";
           return;
         }
         // counter-clockwise direction to revert
-        if( ri.Ternary.IndexOf(rings[0].Count()-2) != InvalidIndex )  {
-          for( size_t i=0; i < (rings[0].Count()-1)/2; i++ )  {
+        if (ri.Ternary.IndexOf(rings[0].Count() - 2) != InvalidIndex) {
+          for (size_t i = 0; i < (rings[0].Count() - 1) / 2; i++) {
             TSAtom* a = rings[0][i];
-            rings[0][i] = rings[0][rings[0].Count()-i-2];
-            rings[0][rings[0].Count()-i-2] = a;
+            rings[0][i] = rings[0][rings[0].Count() - i - 2];
+            rings[0][rings[0].Count() - i - 2] = a;
           }
         }
         rings[0].Swap(0, 4);
         rings[0].Swap(1, 3);
       }
-      else if( m == 10 )  {
-        if( !ri.IsSingleCSubstituted() )  {
+      else if (m == 10) {
+        if (!ri.IsSingleCSubstituted()) {
           NewLogEntry() << "Could not locate Cp* ring";
           return;
         }
-        for( size_t j=0; j < ri.Substituents.Count(); j++ )
-          rings[0].Add(ri.Substituents[j][0] );
-      }
-      else  {
-        if( ri.Substituents.GetLast().Count() == 0 )  {
-          NewLogEntry() << "A substituted atom is expected";
-          return;
+        for (size_t j = 0; j < ri.Substituents.Count(); j++) {
+          rings[0].Add(ri.Substituents[j][0]);
         }
       }
-      if( ri.Substituted.Count() > 1 && m != 10 )
+      if (ri.Substituted.Count() > 1 && m != 10) {
         NewLogEntry() << "The selected ring has more than one substituent";
-      ProcessRingAfix(rings[0], afix, m!=10);
+      }
+      ProcessRingAfix(rings[0], afix, m != 10);
     }
   }
 }
