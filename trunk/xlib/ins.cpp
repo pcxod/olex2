@@ -318,8 +318,9 @@ void TIns::_ProcessSame(ParseContext& cx)  {
       sg1.Esd13 = esd2;
       if (sg1.GetAtoms().IsExplicit()) {
         TTypeList<ExplicitCAtomRef> atoms = sg1.GetAtoms().ExpandList(cx.rm);
-        if (atoms.Count() > max_atoms)
+        if (atoms.Count() > max_atoms) {
           max_atoms = atoms.Count();
+        }
       }
     }
     // now process the reference group
@@ -410,10 +411,12 @@ void TIns::_ReadExtras(TStrList &l, ParseContext &cx) {
     }
   }
   for (size_t i = 0; i < cx.Extras.Count(); i++) {
-    if (cx.Extras[i].Length() > 4)
+    if (cx.Extras[i].Length() > 4) {
       cx.Extras[i] = cx.Extras[i].SubStringFrom(4);
-    else
+    }
+    else {
       cx.Extras[i].SetLength(0);
+    }
   }
 }
 //..............................................................................
@@ -590,11 +593,20 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
       f_toks.Clear();
     }
   }
-  else if (Toks[0].Equalsi("PART") && (Toks.Count() > 1)) {
-    cx.Part = (short)Toks[1].ToInt();
+  else if (Toks[0].StartsFromi("PART")) {
     cx.PartOccu = 0;
-    if (Toks.Count() == 3)
-      cx.PartOccu = Toks[2].ToDouble();
+    if (Toks[0].Length() > 4) {
+      cx.Part = (short)Toks[0].SubStringFrom(4).ToInt();
+      if (Toks.Count() >= 2) {
+        cx.PartOccu = Toks[1].ToDouble();
+      }
+    }
+    else if (Toks.Count() > 1) {
+      cx.Part = (short)Toks[1].ToInt();
+      if (Toks.Count() >= 3) {
+        cx.PartOccu = Toks[2].ToDouble();
+      }
+    }
     // TODO: validate if appropriate here...
     //_ProcessAfix0(cx);
   }
@@ -1284,7 +1296,7 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
     return;
   }
   if (checkSame && olx_is_valid_index(a.GetSameId())) {  // "
-    TSameGroup& sg = rm.rSAME[a.GetSameId()];
+    TSameGroup &sg = rm.rSAME[a.GetSameId()];
     if (sg.IsValidForSave() && sg.IsReference()) {
       for (size_t i = 0; i < sg.DependentCount(); i++) {
         if (!sg.GetDependent(i).IsValidForSave()) {
