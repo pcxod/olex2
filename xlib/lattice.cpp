@@ -2778,7 +2778,7 @@ TUndoData *TLattice::ValidateHGroups(bool reinit, bool report) {
         if (part == 0 || s.atom->GetPart() == 0 || s.atom->GetPart() == part
           || rm.Conn.ArePartsGroupped(part, s.atom->GetPart()))
         {
-          if (!s.matrix.IsFirst()) {
+          if (!s.matrix.IsFirst() && s.atom->GetPart() < 0) {
             bool contains = false;
             for (size_t k = 0; k < ag.GetPivot().EquivCount(); k++) {
               if (ag.GetPivot().GetEquiv(k).GetId() == s.matrix.GetId()) {

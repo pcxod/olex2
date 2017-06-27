@@ -487,7 +487,7 @@
       <CallingConvention>Cdecl</CallingConvention>
     </ClCompile>
     <Lib>
-      <OutputFile>$(OutDir)sdlx64.lib</OutputFile>
+      <OutputFile>$(OutDir)sdl.lib</OutputFile>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-release-d|Win32'">
@@ -787,6 +787,7 @@
     <ClInclude Include="..\..\..\sdl\tptrlist.h" />
     <ClInclude Include="..\..\..\sdl\typelist.h" />
     <ClInclude Include="..\..\..\sdl\undo.h" />
+    <ClInclude Include="..\..\..\sdl\utf16.h" />
     <ClInclude Include="..\..\..\sdl\utf8file.h" />
     <ClInclude Include="..\..\..\sdl\wildcard.h" />
     <ClInclude Include="..\..\..\sdl\xldwriter.h" />

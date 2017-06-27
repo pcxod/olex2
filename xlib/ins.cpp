@@ -318,8 +318,9 @@ void TIns::_ProcessSame(ParseContext& cx)  {
       sg1.Esd13 = esd2;
       if (sg1.GetAtoms().IsExplicit()) {
         TTypeList<ExplicitCAtomRef> atoms = sg1.GetAtoms().ExpandList(cx.rm);
-        if (atoms.Count() > max_atoms)
+        if (atoms.Count() > max_atoms) {
           max_atoms = atoms.Count();
+        }
       }
     }
     // now process the reference group
@@ -410,10 +411,12 @@ void TIns::_ReadExtras(TStrList &l, ParseContext &cx) {
     }
   }
   for (size_t i = 0; i < cx.Extras.Count(); i++) {
-    if (cx.Extras[i].Length() > 4)
+    if (cx.Extras[i].Length() > 4) {
       cx.Extras[i] = cx.Extras[i].SubStringFrom(4);
-    else
+    }
+    else {
       cx.Extras[i].SetLength(0);
+    }
   }
 }
 //..............................................................................
@@ -590,11 +593,20 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
       f_toks.Clear();
     }
   }
-  else if (Toks[0].Equalsi("PART") && (Toks.Count() > 1)) {
-    cx.Part = (short)Toks[1].ToInt();
+  else if (Toks[0].StartsFromi("PART")) {
     cx.PartOccu = 0;
-    if (Toks.Count() == 3)
-      cx.PartOccu = Toks[2].ToDouble();
+    if (Toks[0].Length() > 4) {
+      cx.Part = (short)Toks[0].SubStringFrom(4).ToInt();
+      if (Toks.Count() >= 2) {
+        cx.PartOccu = Toks[1].ToDouble();
+      }
+    }
+    else if (Toks.Count() > 1) {
+      cx.Part = (short)Toks[1].ToInt();
+      if (Toks.Count() >= 3) {
+        cx.PartOccu = Toks[2].ToDouble();
+      }
+    }
     // TODO: validate if appropriate here...
     //_ProcessAfix0(cx);
   }
@@ -1272,20 +1284,24 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
   double &spec, TStrList* sfac, TStrList &sl, TIndexList* index,
   bool checkSame, bool checkResi)
 {
-  if( a.IsDeleted() || a.IsSaved() )  return;
-  if( checkResi && a.GetResiId() != 0 )  {
+  if (a.IsDeleted() || a.IsSaved()) {
+    return;
+  }
+  if (checkResi && a.GetResiId() != 0) {
     const TResidue& resi = rm.aunit.GetResidue(a.GetResiId());
     sl.Add(resi.ToString());
-    for( size_t i=0; i < resi.Count(); i++ )
+    for (size_t i = 0; i < resi.Count(); i++) {
       _SaveAtom(rm, resi[i], part, afix, spec, sfac, sl, index, true, false);
+    }
     return;
   }
   if (checkSame && olx_is_valid_index(a.GetSameId())) {  // "
-    TSameGroup& sg = rm.rSAME[a.GetSameId()];
-    if (sg.IsValidForSave()) {
+    TSameGroup &sg = rm.rSAME[a.GetSameId()];
+    if (sg.IsValidForSave() && sg.IsReference()) {
       for (size_t i = 0; i < sg.DependentCount(); i++) {
-        if (!sg.GetDependent(i).IsValidForSave())
+        if (!sg.GetDependent(i).IsValidForSave()) {
           continue;
+        }
         olxstr tmp("SAME ");
         tmp << olxstr(sg.GetDependent(i).Esd12).TrimFloat() << ' '
           << olxstr(sg.GetDependent(i).Esd13).TrimFloat() << ' '
@@ -1302,7 +1318,7 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
       return;
     }
   }
-  if (a.GetUisoOwner() != NULL && !a.GetUisoOwner()->IsSaved()) {
+  if (a.GetUisoOwner() != 0 && !a.GetUisoOwner()->IsSaved()) {
     _SaveAtom(rm, *a.GetUisoOwner(), part, afix, spec, sfac, sl, index,
       checkSame, checkResi);
   }
@@ -1310,8 +1326,9 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
     sl.Add("SPEC ") << a.GetSpecialPositionDeviation();
   }
   if (a.GetPart() != part) {
-    if (part != 0 && a.GetPart() != 0)
+    if (part != 0 && a.GetPart() != 0) {
       sl.Add("PART 0");
+    }
     sl.Add("PART ") << (int)a.GetPart();
   }
   TAfixGroup* ag = a.GetDependentAfixGroup();
@@ -1321,7 +1338,7 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
       !TAfixGroup::IsDependent(atom_afix))
     {
       TAfixGroup* _ag = a.GetParentAfixGroup();
-      if (_ag != NULL) {
+      if (_ag != 0) {
         olxstr& str = sl.Add("AFIX ") << atom_afix;
         if (_ag->GetD() != 0) {
           str << ' ' << _ag->GetD();
@@ -1335,7 +1352,7 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
       }
       else {
         olxstr& str = sl.Add("AFIX ") << atom_afix;
-        if (ag != NULL) {
+        if (ag != 0) {
           if (ag->GetD() != 0) {
             str << ' ' << ag->GetD();
           }
@@ -1354,7 +1371,7 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
   spec = a.GetSpecialPositionDeviation();
   index_t spindex;
   if (a.GetType() == iQPeakZ) {
-    spindex = (sfac == NULL ? -2 : (index_t)sfac->IndexOf('C') + 1);
+    spindex = (sfac == 0 ? -2 : (index_t)sfac->IndexOf('C') + 1);
   }
   else {
     int ch = a.GetCharge();
@@ -1365,11 +1382,13 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
         l << olx_abs(ch);
       }
     }
-    spindex = (sfac == NULL ? -2 : (index_t)sfac->IndexOf(l) + 1);
+    spindex = (sfac == 0 ? -2 : (index_t)sfac->IndexOf(l) + 1);
   }
   HyphenateIns(AtomToString(rm, a, spindex == 0 ? 1 : spindex), sl);
   a.SetSaved(true);
-  if (index != NULL)  index->Add(a.GetId());
+  if (index != 0) {
+    index->Add(a.GetId());
+  }
   for (size_t i=0; i < a.DependentHfixGroupCount(); i++) {
     TAfixGroup& hg = a.GetDependentHfixGroup(i);
     size_t sc = 0;
@@ -1385,7 +1404,7 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
       afix = 0;
     }
   }
-  if (ag != NULL) {  // save dependent rigid group
+  if (ag != 0) {  // save dependent rigid group
     size_t sc = 0;
     for (size_t i=0; i < ag->Count(); i++) {
       if (!(*ag)[i].IsDeleted() && !(*ag)[i].IsSaved()) {
@@ -1468,8 +1487,10 @@ void TIns::SaveToStrings(TStrList& SL) {
 void TIns::_DrySaveAtom(TCAtom& a, TSizeList &indices,
   bool checkSame, bool checkResi)
 {
-  if (a.IsDeleted() || a.IsSaved())  return;
-  if (checkResi && a.GetResiId() != 0)  {
+  if (a.IsDeleted() || a.IsSaved()) {
+    return;
+  }
+  if (checkResi && a.GetResiId() != 0) {
     const TResidue& resi = a.GetParent()->GetResidue(a.GetResiId());
     for (size_t i = 0; i < resi.Count(); i++) {
       _DrySaveAtom(resi[i], indices, true, false);
@@ -1478,7 +1499,7 @@ void TIns::_DrySaveAtom(TCAtom& a, TSizeList &indices,
   }
   if (checkSame && olx_is_valid_index(a.GetSameId())) {
     TSameGroup& sg = a.GetParent()->GetRefMod()->rSAME[a.GetSameId()];
-    if (sg.IsValidForSave())  {
+    if (sg.IsValidForSave() && sg.IsReference()) {
       if (sg.GetAtoms().IsExplicit()) {
         TAtomRefList atoms = sg.GetAtoms().ExpandList(*a.GetParent()->GetRefMod());
         for (size_t i = 0; i < atoms.Count(); i++)
@@ -1487,7 +1508,7 @@ void TIns::_DrySaveAtom(TCAtom& a, TSizeList &indices,
       return;
     }
   }
-  if (a.GetUisoOwner() != NULL && !a.GetUisoOwner()->IsSaved()) {
+  if (a.GetUisoOwner() != 0 && !a.GetUisoOwner()->IsSaved()) {
     _DrySaveAtom(*a.GetUisoOwner(), indices, checkSame, checkResi);
   }
   TAfixGroup* ag = a.GetDependentAfixGroup();
@@ -1495,14 +1516,14 @@ void TIns::_DrySaveAtom(TCAtom& a, TSizeList &indices,
   a.SetSaved(true);
   for (size_t i = 0; i < a.DependentHfixGroupCount(); i++) {
     TAfixGroup& hg = a.GetDependentHfixGroup(i);
-    for (size_t j = 0; j < hg.Count(); j++)  {
+    for (size_t j = 0; j < hg.Count(); j++) {
       if (!hg[j].IsDeleted() && !hg[j].IsSaved()) {
         _DrySaveAtom(hg[j], indices, checkSame, checkResi);
       }
     }
   }
-  if (ag != NULL) {  // save dependent rigid group
-    for (size_t i = 0; i < ag->Count(); i++)  {
+  if (ag != 0) {  // save dependent rigid group
+    for (size_t i = 0; i < ag->Count(); i++) {
       if (!(*ag)[i].IsDeleted() && !(*ag)[i].IsSaved()) {
         _DrySaveAtom((*ag)[i], indices, checkSame, checkResi);
       }
@@ -1557,64 +1578,71 @@ bool TIns::Adopt(TXFile &XF, int) {
 void TIns::UpdateAtomsFromStrings(RefinementModel& rm,
   const TIndexList& index, TStrList& SL, TStrList& Instructions)
 {
-  if (index.IsEmpty()) return;
+  if (index.IsEmpty()) {
+    return;
+  }
   size_t atomCount = 0;
   ParseContext cx(rm);
   Preprocess(SL);
-  for (size_t i=0; i < index.Count(); i++) {
-    if ((size_t)index[i] >= rm.aunit.AtomCount())
+  for (size_t i = 0; i < index.Count(); i++) {
+    if ((size_t)index[i] >= rm.aunit.AtomCount()) {
       throw TInvalidArgumentException(__OlxSourceInfo, "atom index");
+    }
     TCAtom &ca = rm.aunit.GetAtom(index[i]);
-    if (ca.GetParentAfixGroup() != NULL) {
+    if (ca.GetParentAfixGroup() != 0) {
       ca.GetParentAfixGroup()->Clear();
     }
-    if (ca.GetDependentAfixGroup() != NULL) {
+    if (ca.GetDependentAfixGroup() != 0) {
       ca.GetDependentAfixGroup()->Clear();
     }
-    if (ca.GetExyzGroup() != NULL) {
+    if (ca.GetExyzGroup() != 0) {
       ca.GetExyzGroup()->Clear();
     }
     ca.SetFixedType(false);
   }
   TTypeList<olx_pair_t<TCAtom *, olxstr> > atom_labels;
-  for( size_t i=0; i < SL.Count(); i++ )  {
+  for (size_t i = 0; i < SL.Count(); i++) {
     olxstr Tmp = olxstr::DeleteSequencesOf<char>(SL[i], true);
     if (Tmp.IsEmpty()) {
       continue;
     }
     const size_t exi = Tmp.IndexOf('!');
-    if( exi != InvalidIndex )
+    if (exi != InvalidIndex) {
       Tmp.SetLength(exi);
+    }
     TStrList Toks(Tmp, ' ');
     if (Toks.IsEmpty()) {
       continue;
     }
-    if( Toks[0].Equalsi("REM") )
-      ;
-    else if( ParseIns(SL, Toks, cx, i) )
-      ;
-    else if( Toks.Count() < 6 )  // should be at least
-      Instructions.Add(Tmp);
-    else if( !XElementLib::IsElement(Toks[1]) )  // is a valid atom
-      Instructions.Add(Tmp);
-    else if( (!Toks[2].IsNumber()) || (!Toks[3].IsNumber()) || // should be four numbers
-        (!Toks[4].IsNumber()) || (!Toks[5].IsNumber()) )  {
+    if (Toks[0].Equalsi("REM")) {
+    }
+    else if (ParseIns(SL, Toks, cx, i)) {
+    }
+    else if (Toks.Count() < 6) { // should be at least
       Instructions.Add(Tmp);
     }
-    else  {
+    else if (!XElementLib::IsElement(Toks[1])) { // is a valid atom
+      Instructions.Add(Tmp);
+    }
+    else if ((!Toks[2].IsNumber()) || (!Toks[3].IsNumber()) || // should be four numbers
+      (!Toks[4].IsNumber()) || (!Toks[5].IsNumber())) {
+      Instructions.Add(Tmp);
+    }
+    else {
       cm_Element* elm = XElementLib::FindBySymbol(Toks[1]);
-      if( elm == NULL )  {// wrong SFAC
+      if (elm == 0) {// wrong SFAC
         throw TInvalidArgumentException(__OlxSourceInfo,
           "unknown element symbol");
       }
-      TCAtom* atom = NULL;
+      TCAtom* atom = 0;
       if (atomCount >= index.Count()) {
         atom = &rm.aunit.NewAtom(cx.Resi);
       }
       else {
         atom = &rm.aunit.GetAtom(index[atomCount]);
-        if( cx.Resi != NULL )
+        if (cx.Resi != 0) {
           cx.Resi->Add(*atom);
+        }
       }
       _ParseAtom(Toks, cx, atom);
       atomCount++;
@@ -1629,10 +1657,14 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm,
     }
   }
   _ProcessSame(cx);
+  for (size_t i = 0; i < cx.Sump.Count(); i++) {
+    cx.rm.Vars.AddSUMP(cx.Sump[i]);
+  }
   ParseRestraints(cx.rm, Instructions);
   Instructions.Pack();
-  for (size_t i=0; i < atom_labels.Count(); i++)
+  for (size_t i = 0; i < atom_labels.Count(); i++) {
     atom_labels[i].a->SetLabel(atom_labels[i].GetB(), false);
+  }
 }
 //..............................................................................
 bool TIns::SaveAtomsToStrings(RefinementModel& rm, const TCAtomPList& CAtoms,
@@ -1759,47 +1791,54 @@ void TIns::_ProcessAfix(TCAtom& a, ParseContext& cx) {
   }
 }
 //..............................................................................
-TCAtom* TIns::_ParseAtom(TStrList& Toks, ParseContext& cx, TCAtom* atom)  {
+TCAtom* TIns::_ParseAtom(TStrList& Toks, ParseContext& cx, TCAtom* atom) {
   double QE[6];
-  if( atom == NULL )
+  if (atom == 0) {
     atom = &cx.au.NewAtom(cx.Resi);
-  for( short j=0; j < 3; j ++ )
-    cx.rm.Vars.SetParam(*atom, catom_var_name_X+j, Toks[2+j].ToDouble());
+  }
+  for (int j = 0; j < 3; j++) {
+    cx.rm.Vars.SetParam(*atom, catom_var_name_X + j, Toks[2 + j].ToDouble());
+  }
   atom->SetPart(cx.Part);
   atom->SetSpecialPositionDeviation(cx.SPEC);
   // update the context
   cx.Last = atom;
-  if( !cx.Same.IsEmpty() && cx.Same.GetLast().GetB() == NULL )
+  if (!cx.Same.IsEmpty() && cx.Same.GetLast().GetB() == 0) {
     cx.Same.GetLast().b = atom;
+  }
 
   cx.rm.Vars.SetParam(*atom, catom_var_name_Sof,
     cx.PartOccu == 0 ? Toks[5].ToDouble() : cx.PartOccu);
 
-  if( Toks.Count() == 12 )  {  // full ellipsoid
-    for( short j=0; j < 6; j ++ )  {
+  if (Toks.Count() == 12) {  // full ellipsoid
+    for (short j = 0; j < 6; j++) {
       QE[j] = cx.rm.Vars.SetParam(
-        *atom, catom_var_name_U11+j, Toks[j+6].ToDouble());
+        *atom, catom_var_name_U11 + j, Toks[j + 6].ToDouble());
     }
     cx.au.UcifToUcart(QE);
     TEllipsoid& elp = cx.au.NewEllp().Initialise(QE);
     atom->AssignEllp(&elp);
-    if( atom->GetEllipsoid()->IsNPD() )  {
+    if (atom->GetEllipsoid()->IsNPD()) {
       TBasicApp::NewLogEntry(logInfo) << "Not positevely defined: " << Toks[0];
       atom->SetUiso(0);
     }
-    else
+    else {
       atom->SetUiso(atom->GetEllipsoid()->GetUeq());
+    }
     cx.LastWithU = atom;
   }
-  else  {
-    if( Toks.Count() > 6 )
+  else {
+    if (Toks.Count() > 6) {
       cx.rm.Vars.SetParam(*atom, catom_var_name_Uiso, Toks[6].ToDouble());
-    else // incomplete data...
-      atom->SetUiso(4*caDefIso*caDefIso);
-    if( Toks.Count() >= 8 ) // some other data as Q-peak itensity
+    }
+    else { // incomplete data...
+      atom->SetUiso(4 * caDefIso*caDefIso);
+    }
+    if (Toks.Count() >= 8) { // some other data as Q-peak itensity
       atom->SetQPeak(Toks[7].ToDouble());
-    if( atom->GetUiso() <= -0.5 )  {  // a value fixed to the pivot atom value
-      if( cx.LastWithU == NULL )  {
+    }
+    if (atom->GetUiso() <= -0.5) {  // a value fixed to the pivot atom value
+      if (cx.LastWithU == 0) {
         throw TInvalidArgumentException(__OlxSourceInfo,
           olxstr("Invalid Uiso proxy for: ") << Toks[0]);
       }
@@ -1808,10 +1847,10 @@ TCAtom* TIns::_ParseAtom(TStrList& Toks, ParseContext& cx, TCAtom* atom)  {
       //atom->SetUiso( 4*caDefIso*caDefIso );
       atom->SetUiso(cx.LastWithU->GetUiso()*olx_abs(atom->GetUiso()));
     }
-    else  {
+    else {
       atom->SetUisoOwner(NULL);
       cx.LastWithU = atom;
-      if( cx.ToAnis > 0 )  {
+      if (cx.ToAnis > 0) {
         cx.ToAnis--;
         memset(&QE[0], 0, sizeof(QE));
         QE[0] = QE[1] = QE[2] = atom->GetUiso();

@@ -30,6 +30,7 @@ class TUtf8  {
   IDataOutputStream &(*EncodeStreamFunc)(const void* arr, size_t len,
     IDataOutputStream &);
   olxwstr (*DecodeFunc)(const char* arr, size_t len);
+  size_t (*CharCountFunc)(const char* arr, size_t len);
   static TUtf8& GetInstance() {
     static TUtf8 i_;
     return i_;
@@ -42,11 +43,13 @@ protected:
       EncodeFunc = &Encode2;
       EncodeStreamFunc = &EncodeStream2;
       DecodeFunc = &Decode2;
+      CharCountFunc = &CharCount2;
     }
     else if (sz == 4) {
       EncodeFunc = &Encode4;
       EncodeStreamFunc = &EncodeStream4;
       DecodeFunc = &Decode4;
+      CharCountFunc = &CharCount4;
     }
   }
 public:
@@ -101,11 +104,21 @@ public:
   static olxwstr Decode(const TTIString<char>& str)  {
     return (*GetInstance().DecodeFunc)(str.raw_str(), str.Length());
   }
-  static olxwstr Decode(const char* str)  {
-    return (*GetInstance().DecodeFunc)(str, olxstr::o_strlen(str));
+  static olxwstr Decode(const char* str, size_t len=InvalidSize) {
+    return (*GetInstance().DecodeFunc)(str, len == InvalidSize ? olxstr::o_strlen(str) : len);
   }
-  static olxwstr Decode(const char* str, size_t len) {
-    return (*GetInstance().DecodeFunc)(str, len);
+
+  static size_t CharCount(const char * str, size_t len = InvalidSize) {
+    return (*GetInstance().CharCountFunc)(str, len == InvalidSize ? olxstr::o_strlen(str) : len);
+  }
+  static size_t CharCount(const TTIString<char>& str) {
+    return (*GetInstance().CharCountFunc)(str.raw_str(), str.Length());
+  }
+  static size_t CharCount(const olxcstr& str) {
+    return (*GetInstance().CharCountFunc)(str.raw_str(), str.Length());
+  }
+  static size_t CharCount(const olxwstr& str) {
+    return str.Length();
   }
 
   static uint32_t& GetFileSignature() {
@@ -166,6 +179,22 @@ protected:  // functions below are unsafe to use if wchar_t size is unknown!!
     return str;
   }
 
+  static size_t CharCount2(const char* input, size_t len) {
+    size_t cnt = 0;
+    for (size_t i = 0; i < len; cnt++) {
+      if ((input[i] & UTF8_MASK3BYTES) == UTF8_MASK3BYTES) {  // 1110xxxx 10xxxxxx 10xxxxxx
+        i += 3;
+      }
+      else if ((input[i] & UTF8_MASK2BYTES) == UTF8_MASK2BYTES) {  // 110xxxxx 10xxxxxx
+        i += 2;
+      }
+      else {  // if( input[i] < UTF8_MASKBYTE )  {  // 0xxxxxxx, always true
+        i += 1;
+      }
+    }
+    return cnt;
+  }
+
   static IDataOutputStream &EncodeStream4(const void* vinput, size_t len,
     IDataOutputStream &out)
   {
@@ -213,41 +242,41 @@ protected:  // functions below are unsafe to use if wchar_t size is unknown!!
     return bf.ToCString();
   }
 
-  static olxwstr Decode4(const char* input, size_t len)  {
+  static olxwstr Decode4(const char* input, size_t len) {
     TDirectionalList<wchar_t> bf(len);
-    for( size_t i=0; i < len; )  {
+    for (size_t i = 0; i < len; ) {
       uint32_t ch;
-      if( (input[i] & UTF8_MASK6BYTES) == UTF8_MASK6BYTES )  {  // 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
-        ch = ((input[i] & 0x01) << 30) | ((input[i+1] & UTF8_MASKBITS) << 24)
-          | ((input[i+2] & UTF8_MASKBITS) << 18) | ((input[i+3]
-        & UTF8_MASKBITS) << 12)
-          | ((input[i+4] & UTF8_MASKBITS) << 6) | (input[i+5] & UTF8_MASKBITS);
+      if ((input[i] & UTF8_MASK6BYTES) == UTF8_MASK6BYTES) {  // 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+        ch = ((input[i] & 0x01) << 30) | ((input[i + 1] & UTF8_MASKBITS) << 24)
+          | ((input[i + 2] & UTF8_MASKBITS) << 18) | ((input[i + 3]
+            & UTF8_MASKBITS) << 12)
+          | ((input[i + 4] & UTF8_MASKBITS) << 6) | (input[i + 5] & UTF8_MASKBITS);
         i += 6;
       }
-      else if( (input[i] & UTF8_MASK5BYTES) == UTF8_MASK5BYTES )  {  // 111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
-        ch = ((input[i] & 0x03) << 24) | ((input[i+1]
-        & UTF8_MASKBITS) << 18)
-          | ((input[i+2] & UTF8_MASKBITS) << 12) | ((input[i+3]
-        & UTF8_MASKBITS) << 6)
-          | (input[i+4] & UTF8_MASKBITS);
+      else if ((input[i] & UTF8_MASK5BYTES) == UTF8_MASK5BYTES) {  // 111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+        ch = ((input[i] & 0x03) << 24) | ((input[i + 1]
+          & UTF8_MASKBITS) << 18)
+          | ((input[i + 2] & UTF8_MASKBITS) << 12) | ((input[i + 3]
+            & UTF8_MASKBITS) << 6)
+          | (input[i + 4] & UTF8_MASKBITS);
         i += 5;
       }
-      else if( (input[i] & UTF8_MASK4BYTES) == UTF8_MASK4BYTES )  {  // 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
-        ch = ((input[i] & 0x07) << 18) | ((input[i+1]
-        & UTF8_MASKBITS) << 12)
-          | ((input[i+2] & UTF8_MASKBITS) << 6) | (input[i+3] & UTF8_MASKBITS);
+      else if ((input[i] & UTF8_MASK4BYTES) == UTF8_MASK4BYTES) {  // 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+        ch = ((input[i] & 0x07) << 18) | ((input[i + 1]
+          & UTF8_MASKBITS) << 12)
+          | ((input[i + 2] & UTF8_MASKBITS) << 6) | (input[i + 3] & UTF8_MASKBITS);
         i += 4;
       }
-      else if( (input[i] & UTF8_MASK3BYTES) == UTF8_MASK3BYTES )  {  // 1110xxxx 10xxxxxx 10xxxxxx
-        ch = ((input[i] & 0x0F) << 12) | ((input[i+1] & UTF8_MASKBITS) << 6)
-          | (input[i+2] & UTF8_MASKBITS);
+      else if ((input[i] & UTF8_MASK3BYTES) == UTF8_MASK3BYTES) {  // 1110xxxx 10xxxxxx 10xxxxxx
+        ch = ((input[i] & 0x0F) << 12) | ((input[i + 1] & UTF8_MASKBITS) << 6)
+          | (input[i + 2] & UTF8_MASKBITS);
         i += 3;
       }
-      else if( (input[i] & UTF8_MASK2BYTES) == UTF8_MASK2BYTES )  {  // 110xxxxx 10xxxxxx
-        ch = ((input[i] & 0x1F) << 6) | (input[i+1] & UTF8_MASKBITS);
+      else if ((input[i] & UTF8_MASK2BYTES) == UTF8_MASK2BYTES) {  // 110xxxxx 10xxxxxx
+        ch = ((input[i] & 0x1F) << 6) | (input[i + 1] & UTF8_MASKBITS);
         i += 2;
       }
-      else  {  // if( input[i] < UTF8_MASKBYTE )  {  // 0xxxxxxx, always true
+      else {  // if( input[i] < UTF8_MASKBYTE )  {  // 0xxxxxxx, always true
         ch = input[i];
         i += 1;
       }
@@ -256,7 +285,32 @@ protected:  // functions below are unsafe to use if wchar_t size is unknown!!
     olxwstr str(WEmptyString(), bf.GetLength());
     bf.ToString(str);
     return str;
-}
+  }
+
+  static size_t CharCount4(const char* input, size_t len) {
+    size_t cnt = 0;
+    for (size_t i = 0; i < len; cnt++) {
+      if ((input[i] & UTF8_MASK6BYTES) == UTF8_MASK6BYTES) {  // 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+        i += 6;
+      }
+      else if ((input[i] & UTF8_MASK5BYTES) == UTF8_MASK5BYTES) {  // 111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+        i += 5;
+      }
+      else if ((input[i] & UTF8_MASK4BYTES) == UTF8_MASK4BYTES) {  // 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+        i += 4;
+      }
+      else if ((input[i] & UTF8_MASK3BYTES) == UTF8_MASK3BYTES) {  // 1110xxxx 10xxxxxx 10xxxxxx
+        i += 3;
+      }
+      else if ((input[i] & UTF8_MASK2BYTES) == UTF8_MASK2BYTES) {  // 110xxxxx 10xxxxxx
+        i += 2;
+      }
+      else {  // if( input[i] < UTF8_MASKBYTE )  {  // 0xxxxxxx, always true
+        i += 1;
+      }
+    }
+    return cnt;
+  }
 };
 
 EndEsdlNamespace()
