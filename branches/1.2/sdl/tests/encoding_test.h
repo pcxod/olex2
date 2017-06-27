@@ -10,6 +10,8 @@
 #include "md5.h"
 #include "sha.h"
 #include "../encodings.h"
+#include "../utf16.h"
+
 #include <locale>
 namespace test {
   void MD5Test(OlxTests& t)  {
@@ -145,6 +147,7 @@ namespace test {
       L"\u00e9 \u00df \u00de "
     },
       fm[] = {L"%% \u2045",  L"\u06de \u20a9"};
+    uint32_t fu[2][3] = { {25,0x24B62, 0x10437 },  {0x06de, 32, 0x20a9} };
     for (int i = 0; i < 2; i++) {
       olxcstr e = cm[i].ToMBStr();
       olxstr d = e.ToWCStr();
@@ -170,6 +173,21 @@ namespace test {
       olxstr d = e.ToWCStr();
       if (d != fm[i] || d != TUtf8::Decode(e)) {
         throw TFunctionFailedException(__OlxSourceInfo, "UTF8 conversion failed");
+      }
+    }
+    for (int i = 0; i < 2; i++) {
+      TArrayList<uint16_t> x = TUtf16::Encode(&fu[i][0], 3);
+      if (TUtf16::CharCount(x.GetData(), x.Count()) != 3) {
+        throw TFunctionFailedException(__OlxSourceInfo, "UTF16 conversion failed");
+      }
+      TArrayList<uint32_t> y = TUtf16::Decode(x.GetData(), x.Count());
+      if (y.Count() != 3) {
+        throw TFunctionFailedException(__OlxSourceInfo, "UTF16 conversion failed");
+      }
+      for (int j = 0; j < 3; j++) {
+        if (fu[i][j] != y[j]) {
+          throw TFunctionFailedException(__OlxSourceInfo, "UTF16 conversion failed");
+        }
       }
     }
   }

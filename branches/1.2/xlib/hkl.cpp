@@ -203,6 +203,11 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
         }
       }
       if (line.Length() != line_length) {
+        if (line_cnt - i > 10 && !ZeroRead) {
+          TBasicApp::NewLogEntry(logWarning) <<
+            "More that 10 lines of the HKL file have been ignored after line #" <<
+            (i+1);
+        }
         break;
       }
       try {

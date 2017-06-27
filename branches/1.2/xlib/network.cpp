@@ -800,17 +800,22 @@ bool TNetwork::TryRing(TSAtom& sa, size_t node, TSAtomPList& ring,
 bool TNetwork::TryRing(TSAtom& sa, TSAtomPList& ring,
   const ElementPList& ringContent, size_t level)
 {
-  if( ringContent[level-1] != NULL && (sa.GetType() != *ringContent[level-1]) )
+  if (ringContent[level - 1] != 0 && (sa.GetType() != *ringContent[level - 1])) {
     return false;
+  }
   sa.SetTag(level);
-  for( size_t i=0; i < sa.NodeCount(); i++ )  {
+  for (size_t i = 0; i < sa.NodeCount(); i++) {
     TSAtom& a = sa.Node(i);
-    if( a.IsDeleted() )  continue;
-    if( level >= ringContent.Count() && a.GetTag() == 1 )
+    if (a.IsDeleted()) {
+      continue;
+    }
+    if (level >= ringContent.Count() && a.GetTag() == 1) {
       return true;
-    if( a.GetTag() != 0 && a.GetTag() < (index_t)level )  continue;
-    if( level < ringContent.Count() && TryRing(a, ring, ringContent, level+1) )
-    {
+    }
+    if (a.GetTag() != 0 && a.GetTag() < (index_t)level) {
+      continue;
+    }
+    if (level < ringContent.Count() && TryRing(a, ring, ringContent, level + 1)) {
       ring.Add(a);
       return true;
     }
@@ -824,49 +829,62 @@ bool TNetwork::TryRing(TSAtom& sa, size_t node, TSAtomPList& ring)  {
   return TryRing(sa.Node(node), ring, 2);
 }
 //..............................................................................
-bool TNetwork::TryRing(TSAtom& sa, TSAtomPList& ring, size_t level)  {
-  if( level > 12 )  // safety precaution
+bool TNetwork::TryRing(TSAtom& sa, TSAtomPList& ring, size_t level) {
+  if (level > 12) { // safety precaution
     return false;
+  }
   sa.SetTag(level);
-  for( size_t i=0; i < sa.NodeCount(); i++ )  {
+  for (size_t i = 0; i < sa.NodeCount(); i++) {
     TSAtom& a = sa.Node(i);
-    if( a.IsDeleted() || a.GetType() == iQPeakZ )  continue;
-    if( a.GetTag() == 1 && level != 2 )
+    if (a.IsDeleted() || a.GetType() == iQPeakZ) {
+      continue;
+    }
+    if (a.GetTag() == 1 && level != 2) {
       return true;
-    if( a.GetTag() == 0 )  {
-      if( TryRing(a, ring, level+1) ) {
+    }
+    if (a.GetTag() == 0) {
+      if (TryRing(a, ring, level + 1)) {
         ring.Add(a);
         return true;
       }
-      else
+      else {
         continue;
+      }
     }
-    if( (a.GetTag()+1) == (index_t)level )  // previous?
+    if ((a.GetTag() + 1) == (index_t)level) { // previous?
       continue;
-    else
+    }
+    else {
       break;
+    }
   }
   sa.SetTag(0); // unroll the tags
   return false;
 }
 //..............................................................................
-void TNetwork::UnifyRings(TTypeList<TSAtomPList>& rings)  {
-  for( size_t i=0; i < rings.Count(); i++ )
+void TNetwork::UnifyRings(TTypeList<TSAtomPList>& rings) {
+  for (size_t i = 0; i < rings.Count(); i++) {
     QuickSorter::SortSF(rings[i], TNetwork_SortRingAtoms);
+  }
   // leave unique rings only
-  for( size_t i=0; i < rings.Count(); i++ )  {
-    if( rings.IsNull(i) )  continue;
-    for( size_t j=i+1; j < rings.Count(); j++ )  {
-      if( rings.IsNull(j) || rings[i].Count() != rings[j].Count() )
+  for (size_t i = 0; i < rings.Count(); i++) {
+    if (rings.IsNull(i)) {
+      continue;
+    }
+    for (size_t j = i + 1; j < rings.Count(); j++) {
+      if (rings.IsNull(j) || rings[i].Count() != rings[j].Count()) {
         continue;
+      }
       bool found = true;
-      for( size_t k=0; k < rings[i].Count(); k++ )  {
-        if( rings[i][k]->GetTag() != rings[j][k]->GetTag() )  {
+      for (size_t k = 0; k < rings[i].Count(); k++) {
+        if (rings[i][k]->GetTag() != rings[j][k]->GetTag()) {
           found = false;
           break;
         }
       }
-      if( found )  rings.NullItem(j);
+      if (found) {
+        rings.NullItem(j);
+      }
     }
   }
 }
@@ -874,15 +892,20 @@ void TNetwork::UnifyRings(TTypeList<TSAtomPList>& rings)  {
 void TNetwork::FindRings(const ElementPList& ringContent,
   TTypeList<TSAtomPList>& res)
 {
-  if( ringContent.IsEmpty() )  return;
+  if (ringContent.IsEmpty()) {
+    return;
+  }
   TSAtomPList all;
   all.SetCapacity(NodeCount());
-  for( size_t i=0; i < NodeCount(); i++ )  {
+  for (size_t i = 0; i < NodeCount(); i++) {
     TSAtom& sa = Node(i);
     sa.SetTag(0);
-    if( sa.IsDeleted() ) continue;
-    if( sa.NodeCount() > 1 )  // a ring node must have at least two bonds!
+    if (sa.IsDeleted()) {
+      continue;
+    }
+    if (sa.NodeCount() > 1) { // a ring node must have at least two bonds!
       all.Add(sa);
+    }
   }
   /* we have to keep the order of the ring atoms, so need an extra 'rings'
   array
@@ -890,21 +913,24 @@ void TNetwork::FindRings(const ElementPList& ringContent,
   TSAtomPList ring;
   TTypeList<TSAtomPList> rings;
   size_t resCount = res.Count();
-  for( size_t i=0; i < all.Count(); i++ )  {
-    if( all[i]->GetType() != *ringContent[0] )  continue;
+  for (size_t i = 0; i < all.Count(); i++) {
+    if (all[i]->GetType() != *ringContent[0]) {
+      continue;
+    }
     ring.Clear();
     Nodes.ForEach(ACollectionItem::TagSetter(0));
     ring.Add(all[i]);
-    if( TryRing(*all[i], ring, ringContent) )  {
+    if (TryRing(*all[i], ring, ringContent)) {
       res.AddCopy(ring);
       rings.AddCopy(ring);
     }
   }
   Nodes.ForEach(ACollectionItem::IndexTagSetter());
   UnifyRings(rings);
-  for( size_t i=0; i < rings.Count(); i++ )  {
-    if( rings.IsNull(i) )
+  for (size_t i = 0; i < rings.Count(); i++) {
+    if (rings.IsNull(i)) {
       res.NullItem(resCount + i);
+    }
   }
   res.Pack();
 }
@@ -926,27 +952,32 @@ void TNetwork::FindRings(const ElementPList& ringContent,
 //  }
 //}
 //..............................................................................
-void TNetwork::FindAtomRings(TSAtom& ringAtom, TTypeList<TSAtomPList>& res)  {
-  if( ringAtom.NodeCount() < 2 || &ringAtom.GetNetwork() != this )  return;
+void TNetwork::FindAtomRings(TSAtom& ringAtom, TTypeList<TSAtomPList>& res) {
+  if (ringAtom.NodeCount() < 2 || &ringAtom.GetNetwork() != this) {
+    return;
+  }
   TSAtomPList all;
   all.SetCapacity(NodeCount());
-  for( size_t i=0; i < NodeCount(); i++ )  {
+  for (size_t i = 0; i < NodeCount(); i++) {
     TSAtom& a = Node(i);
     a.SetTag(0);
-    if( a.IsDeleted() || a.NodeCount() < 2 || a.GetType() == iQPeakZ )  continue;
+    if (a.IsDeleted() || a.NodeCount() < 2 || a.GetType() == iQPeakZ) {
+      continue;
+    }
     all.Add(a);
   }
   // we have to keep the order of the ring atoms, so need an extra 'rings' array
   TSAtomPList ring;
   TTypeList<TSAtomPList> rings;
   size_t resCount = res.Count();
-  for( size_t i=0; i < ringAtom.NodeCount(); i++ )  {
+  for (size_t i = 0; i < ringAtom.NodeCount(); i++) {
     TSAtom& a = ringAtom.Node(i);
-    if( a.IsDeleted() || a.NodeCount() < 2 || a.GetType() == iQPeakZ )  continue;
+    if (a.IsDeleted() || a.NodeCount() < 2 || a.GetType() == iQPeakZ) {
+      continue;
+    }
     ring.Clear();
-    for( size_t j=0; j < NodeCount(); j++ )
-      Node(j).SetTag(0);
-    if( TryRing(ringAtom, i, ring) )  {
+    Nodes.ForEach(ACollectionItem::TagSetter(0));
+    if (TryRing(ringAtom, i, ring)) {
       ring.Add(a);  // the ring is in reverse order
       ring.Add(ringAtom);
       res.AddCopy(ring);
@@ -955,104 +986,126 @@ void TNetwork::FindAtomRings(TSAtom& ringAtom, TTypeList<TSAtomPList>& res)  {
   }
   Nodes.ForEach(ACollectionItem::IndexTagSetter());
   UnifyRings(rings);
-  for( size_t i=0; i < rings.Count(); i++ )  {
-    if( rings.IsNull(i) )
+  for (size_t i = 0; i < rings.Count(); i++) {
+    if (rings.IsNull(i)) {
       res.NullItem(resCount + i);
+    }
   }
-  for( size_t i=0; i < res.Count(); i++ )  {
-    if( !res.IsNull(i) && !IsRingPrimitive(res[i]) )
+  for (size_t i = 0; i < res.Count(); i++) {
+    if (!res.IsNull(i) && !IsRingPrimitive(res[i])) {
       res.NullItem(i);
+    }
   }
   res.Pack();
 }
 //..............................................................................
 void TNetwork::FindAtomRings(TSAtom& ringAtom, const ElementPList& ringContent,
-                             TTypeList<TSAtomPList>& res)
+  TTypeList<TSAtomPList>& res)
 {
-  if( ringContent.Count() < 3 || ringAtom.NodeCount() < 2 ||
-      &ringAtom.GetNetwork() != this )
+  if (ringContent.Count() < 3 || ringAtom.NodeCount() < 2 ||
+    &ringAtom.GetNetwork() != this)
   {
     return;
   }
-  if( ringContent[0] != NULL && ringAtom.GetType() != *ringContent[0] )
+  if (ringContent[0] != NULL && ringAtom.GetType() != *ringContent[0]) {
     return;
+  }
   TSAtomPList all;
-  all.SetCapacity( NodeCount() );
-  for( size_t i=0; i < NodeCount(); i++ )  {
+  all.SetCapacity(NodeCount());
+  for (size_t i = 0; i < NodeCount(); i++) {
     TSAtom& sa = Node(i);
     sa.SetTag(0);
-    if( sa.IsDeleted() ) continue;
-    if( sa.NodeCount() > 1 )  // a ring node must have at least two bonds!
+    if (sa.IsDeleted()) {
+      continue;
+    }
+    if (sa.NodeCount() > 1) { // a ring node must have at least two bonds!
       all.Add(sa);
+    }
   }
   // we have to keep the order of the ring atoms, so need an extra 'rings' array
   TSAtomPList ring;
   TTypeList<TSAtomPList> rings;
   size_t resCount = res.Count();
-  for( size_t i=0; i < ringAtom.NodeCount(); i++ )  {
+  for (size_t i = 0; i < ringAtom.NodeCount(); i++) {
     TSAtom& a = ringAtom.Node(i);
-    if( a.IsDeleted() || a.NodeCount() < 2 ||
-       (ringContent[1] != NULL && a.GetType() != *ringContent[1]) )  continue;
+    if (a.IsDeleted() || a.NodeCount() < 2 ||
+      (ringContent[1] != NULL && a.GetType() != *ringContent[1]))
+    {
+      continue;
+    }
     ring.Clear();
-    for( size_t j=0; j < NodeCount(); j++ )
-      Node(j).SetTag(0);
-    if( TryRing(ringAtom, i, ring, ringContent) )  {
+    Nodes.ForEach(ACollectionItem::TagSetter(0));
+    if (TryRing(ringAtom, i, ring, ringContent)) {
       ring.Add(a);  // the ring is in reverse order
       ring.Add(ringAtom);
       res.AddCopy(ring);
       rings.AddCopy(ring);
     }
   }
-  for( size_t i=0; i < NodeCount(); i++ )
-    Node(i).SetTag(i);
+  Nodes.ForEach(ACollectionItem::IndexTagSetter());
   UnifyRings(rings);
-  for( size_t i=0; i < rings.Count(); i++ )  {
-    if( rings.IsNull(i) )
+  for (size_t i = 0; i < rings.Count(); i++) {
+    if (rings.IsNull(i)) {
       res.NullItem(resCount + i);
+    }
   }
   res.Pack();
 }
 //..............................................................................
-TNetwork::RingInfo& TNetwork::AnalyseRing(const TSAtomPList& ring, TNetwork::RingInfo& ri)  {
+TNetwork::RingInfo& TNetwork::AnalyseRing(const TSAtomPList& ring,
+  TNetwork::RingInfo& ri)
+{
   double maxmw = 0;
-  for( size_t i=0; i < ring.Count(); i++ )  {
-    if( !ri.HasAfix && ring[i]->CAtom().GetAfix() != 0 )
+  for (size_t i = 0; i < ring.Count(); i++) {
+    if (!ri.HasAfix && ring[i]->CAtom().GetAfix() != 0) {
       ri.HasAfix = true;
+    }
     TSAtomPList& al = ri.Substituents.AddNew();
-
     size_t nhc = 0, // not hydrogen atom count
       rnc = 0;   // of which belong to the ring
     double local_maxmw = 0;
-    for( size_t j=0; j < ring[i]->NodeCount(); j++ )  {
+    for (size_t j = 0; j < ring[i]->NodeCount(); j++) {
       TSAtom& ra = ring[i]->Node(j);
-      if( ra.IsDeleted() )  continue;
+      if (ra.IsDeleted()) {
+        continue;
+      }
+      if (ra.GetType().z < 2) {
+        continue; // Q, H, D
+      }
       const double mw = ra.GetType().GetMr();
-      if( mw < 3 )  continue; // Q, H, D
-      if( ra.crd().DistanceTo( ring[i]->crd() ) > 2 )  continue;  // skip M-E bonds
-      if( mw > local_maxmw )  local_maxmw = mw;
-      if( ring.IndexOf(&ra) != InvalidIndex )
+      if (ra.crd().DistanceTo(ring[i]->crd()) > 2) {
+        continue;  // skip M-E bonds
+      }
+      if (mw > local_maxmw) {
+        local_maxmw = mw;
+      }
+      if (ring.IndexOf(&ra) != InvalidIndex) {
         rnc++;
-      else
-        al.Add(&ra);
+      }
+      else {
+        al.Add(ra);
+      }
       nhc++;
     }
-    if( nhc != rnc )  {
-      if( local_maxmw > maxmw )  {
+    if (nhc != rnc) {
+      if (local_maxmw > maxmw) {
         ri.HeaviestSubsIndex = i;
         ri.HeaviestSubsType = &ring[i]->GetType();
         maxmw = local_maxmw;
       }
       ri.Substituted.Add(i);
-      if( nhc-rnc > ri.MaxSubsANode )
-        ri.MaxSubsANode = nhc-rnc;
+      if (nhc - rnc > ri.MaxSubsANode) {
+        ri.MaxSubsANode = nhc - rnc;
+      }
     }
-    else if( rnc > 2 )
+    else if (rnc > 2) {
       ri.Ternary.Add(i);
+    }
   }
   // analyse alpha atoms (substituted next to ternary atoms)
-  for( size_t i=0; i < ri.Substituted.Count(); i++ )  {
-    for( size_t j=0;  j < ri.Ternary.Count(); j++ )  {
-      if( ring[ri.Substituted[i]]->IsConnectedTo( *ring[ri.Ternary[j]] ) )  {
+  for (size_t i = 0; i < ri.Substituted.Count(); i++) {
+    for (size_t j = 0; j < ri.Ternary.Count(); j++) {
+      if (ring[ri.Substituted[i]]->IsConnectedTo(*ring[ri.Ternary[j]])) {
         ri.Alpha.Add(ri.Substituted[i]);
         break;
       }

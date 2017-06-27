@@ -284,7 +284,11 @@ public:
   /* groups current selection and returns the created group object, or NULL
   if current selection had less than 2 elements */
   TGlGroup* GroupSelection(const olxstr& groupName);
-  void ClearGroups();
+  /*
+  clears the groups, if clean is specified - it makse sure that the groups are
+  removed from the Object list.
+  */
+  void ClearGroups(bool clean);
   void Ungroup(TGlGroup& GlG);
   TGlGroup& GetSelection() const {  return *FSelection; }
   template <class SelType> SelType& ReplaceSelection() {
