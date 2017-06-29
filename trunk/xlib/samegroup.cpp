@@ -18,7 +18,9 @@ TSameGroup::TSameGroup(uint16_t id, TSameGroupList& parent)
 {}
 //.............................................................................
 void TSameGroup::SetAtomIds(uint16_t id) {
-  if (!Atoms.IsExplicit()) return;
+  if (!Atoms.IsExplicit()) {
+    return;
+  }
   TAtomRefList atoms = Atoms.ExpandList(Parent.RM);
   for (size_t i = 0; i < atoms.Count(); i++) {
     atoms[i].GetAtom().SetSameId(id);
@@ -277,6 +279,14 @@ void TSameGroupList::FromDataItem(TDataItem& item) {
   }
 }
 //.............................................................................
+void TSameGroupList::FixIds() {
+  for (size_t i = 0; i < Groups.Count(); i++) {
+    if (!Groups[i].IsReference()) {
+      continue;
+    }
+    Groups[i].SetAtomIds(Groups[i].GetId());
+  }
+}
 void TSameGroupList::Assign(const TSameGroupList& sl) {
   Clear();
   Groups.SetCapacity(sl.Groups.Count());
@@ -286,12 +296,7 @@ void TSameGroupList::Assign(const TSameGroupList& sl) {
   for (size_t i=0; i < sl.Groups.Count(); i++) {
     Groups[i].Assign(sl.Groups[i]);
   }
-  for (size_t i = 0; i < Groups.Count(); i++) {
-    if (!Groups[i].IsReference()) {
-      continue;
-    }
-    Groups[i].SetAtomIds(Groups[i].GetId());
-  }
+  FixIds();
 }
 //.............................................................................
 void TSameGroupList::OnAUUpdate() {
