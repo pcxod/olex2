@@ -91,7 +91,7 @@ public:
   friend class TSameGroupList;
 };
 
-class TSameGroupList  {
+class TSameGroupList {
   TTypeList<TSameGroup> Groups;
 public:
 
@@ -107,12 +107,13 @@ public:
     on.AddDependent(rv);
     return rv;
   }
+  void FixIds();
   TSameGroup& operator [] (size_t i) { return Groups[i]; }
   const TSameGroup& operator [] (size_t i) const { return Groups[i]; }
   size_t Count() const { return Groups.Count(); }
   // searches a group by the content
   TSameGroup *Find(const TSameGroup &g) const;
-  void Clear()  { Groups.Clear(); }
+  void Clear() { Groups.Clear(); }
   void Assign(const TSameGroupList& sl);
   void Release(TSameGroup& sg);
   void Restore(TSameGroup& sg);

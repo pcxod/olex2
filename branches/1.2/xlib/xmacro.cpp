@@ -565,7 +565,9 @@ void XLibMacros::Export(TLibrary& lib)  {
     "i-if one atom is given - generates an implicit restraint for the atom's "
     "residue class, for 2 atoms - invert the graphs when doing automatic "
     "matching&;"
-    "e-expand SAME into the list of SADI [not implemented]",
+    "e-expand SAME into the list of SADI [not implemented]&;"
+    "s-generates 'self' same restrain so that the fragment matches itself in "
+    "reverse order",
     fpAny|psFileLoaded,
     "Creates SAME instruction for two fragments (two selected atoms or two "
     "atoms provided) or number_of_groups and groups following each another "
@@ -8564,7 +8566,11 @@ void XLibMacros::macTolman(TStrObjList &Cmds, const TParamList &Options,
 struct idx_pair_t : public olx_pair_t<size_t, size_t> {
   idx_pair_t(size_t a, size_t b)
     : olx_pair_t<size_t, size_t>(a, b)
-  {}
+  {
+    if (a > b) {
+      olx_swap(this->a, this->b);
+    }
+  }
   int Compare(const idx_pair_t &p) const {
     int d = olx_cmp(a, p.a);
     if (d == 0) {
@@ -8574,11 +8580,27 @@ struct idx_pair_t : public olx_pair_t<size_t, size_t> {
   }
 };
 
+struct PairListComparator {
+  int Compare(const TTypeList<idx_pair_t> &a,
+    const TTypeList<idx_pair_t> &b) const {
+    int r = olx_cmp(a.Count(), b.Count());
+    if (r == 0) {
+      for (size_t i = 0; i < a.Count(); i++) {
+        r = a[i].Compare(b[i]);
+        if (r != 0) {
+          break;
+        }
+      }
+    }
+    return r;
+  }
+};
+
 void macSAME_expand(RefinementModel &rm, const TArrayList<TSAtomPList>& groups) {
   TAsymmUnit &au = rm.aunit;
   olxdict<size_t, TSizeList, TPrimitiveComparator> atom_map;
   atom_map.SetCapacity(groups[0].Count());
-  olxset<size_t, TPrimitiveComparator> atom_set;
+  olxdict<size_t, size_t, TPrimitiveComparator> atom_set;
   atom_set.SetCapacity(groups[0].Count());
   olxset<idx_pair_t, TComparableComparator> bonds12, bonds13;
   for (size_t i = 0; i < groups[0].Count(); i++) {
@@ -8589,71 +8611,76 @@ void macSAME_expand(RefinementModel &rm, const TArrayList<TSAtomPList>& groups) 
         continue;
       }
     }
-    atom_set.Add(a.GetId());
+    atom_set.Add(a.GetId(), i);
   }
   for (size_t i = 0; i < atom_set.Count(); i++) {
-    TCAtom &a = au.GetAtom(atom_set[i]);
+    TCAtom &a = au.GetAtom(atom_set.GetKey(i));
     for (size_t j = 0; j < a.AttachedSiteCount(); j++) {
       TCAtom::Site &s1 = a.GetAttachedSite(j);
-      if (!s1.matrix.IsFirst() || !atom_set.Contains(s1.atom->GetId())) {
+      if (!s1.matrix.IsFirst() || !atom_set.HasKey(s1.atom->GetId())) {
         continue;
       }
-      size_t a_idx, b_idx;
-      if (a.GetId() > s1.atom->GetId()) {
-        a_idx = s1.atom->GetId();
-        b_idx = a.GetId();
-      }
-      else {
-        a_idx = a.GetId();
-        b_idx = s1.atom->GetId();
-      }
-      bonds12.Add(idx_pair_t(a_idx, b_idx));
+      bonds12.Add(idx_pair_t(a.GetId(), s1.atom->GetId()));
       for (size_t k = j + 1; k < a.AttachedSiteCount(); k++) {
         TCAtom::Site &s2 = a.GetAttachedSite(k);
-        if (!s2.matrix.IsFirst() || !atom_set.Contains(s2.atom->GetId())) {
+        if (!s2.matrix.IsFirst() || !atom_set.HasKey(s2.atom->GetId())) {
           continue;
         }
-        if (s1.atom->GetId() > s2.atom->GetId()) {
-          a_idx = s2.atom->GetId();
-          b_idx = s1.atom->GetId();
-        }
-        else {
-          a_idx = s1.atom->GetId();
-          b_idx = s2.atom->GetId();
-        }
-        bonds13.Add(idx_pair_t(a_idx, b_idx));
+        bonds13.Add(idx_pair_t(s1.atom->GetId(), s2.atom->GetId()));
       }
     }
     TSizeList & l = atom_map.Add(a.GetId());
     for (size_t j = 1; j < groups.Count(); j++) {
-      l.Add(groups[j][i]->CAtom().GetId());
+      l.Add(groups[j][atom_set.GetValue(i)]->CAtom().GetId());
     }
   }
+  olxset<TTypeList<idx_pair_t>, PairListComparator> added;
   for (size_t i = 0; i < bonds12.Count(); i++) {
     TSimpleRestraint &sr = rm.rSADI.AddNew();
-    sr.AddAtomPair(au.GetAtom(bonds12[i].a), 0, au.GetAtom(bonds12[i].b), 0);
+    TTypeList<idx_pair_t> pairs;
+    pairs.AddCopy(bonds12[i]);
     TSizeList &l1 = atom_map[bonds12[i].a];
     TSizeList &l2 = atom_map[bonds12[i].b];
     for (size_t j = 0; j < l1.Count(); j++) {
-      sr.AddAtomPair(au.GetAtom(l1[j]), 0, au.GetAtom(l2[j]), 0);
+      pairs.AddCopy(idx_pair_t(au.GetAtom(l1[j]).GetId(),
+        au.GetAtom(l2[j]).GetId()));
     }
+    QuickSorter::Sort(pairs, TComparableComparator());
+    if (added.Contains(pairs)) {
+      continue;
+    }
+    for (size_t i = 0; i < pairs.Count(); i++) {
+      sr.AddAtomPair(au.GetAtom(pairs[i].a), 0, au.GetAtom(pairs[i].b), 0);
+    }
+    added.Add(pairs);
   }
   for (size_t i = 0; i < bonds13.Count(); i++) {
     TSimpleRestraint &sr = rm.rSADI.AddNew();
     sr.SetEsd(sr.GetEsd() * 2);
-    sr.AddAtomPair(au.GetAtom(bonds13[i].a), 0, au.GetAtom(bonds13[i].b), 0);
+    TTypeList<idx_pair_t> pairs;
+    pairs.AddCopy(bonds13[i]);
     TSizeList &l1 = atom_map[bonds13[i].a];
     TSizeList &l2 = atom_map[bonds13[i].b];
     for (size_t j = 0; j < l1.Count(); j++) {
-      sr.AddAtomPair(au.GetAtom(l1[j]), 0, au.GetAtom(l2[j]), 0);
+      pairs.AddCopy(idx_pair_t(au.GetAtom(l1[j]).GetId(),
+        au.GetAtom(l2[j]).GetId()));
     }
+    QuickSorter::Sort(pairs, TComparableComparator());
+    if (added.Contains(pairs)) {
+      continue;
+    }
+    for (size_t i = 0; i < pairs.Count(); i++) {
+      sr.AddAtomPair(au.GetAtom(pairs[i].a), 0, au.GetAtom(pairs[i].b), 0);
+    }
+    added.Add(pairs);
   }
 }
 void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &E)
 {
   const bool invert = Options.Contains("i"),
-    expand = Options.Contains("e");
+    expand = Options.Contains("e"),
+    self = Options.GetBoolOption('s');
   size_t groups_count = InvalidSize;
   if (!Cmds.IsEmpty() && Cmds[0].IsNumber()) {
     groups_count = Cmds[0].ToSizeT();
@@ -8737,8 +8764,9 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
     if (expand) {
       TArrayList<TSAtomPList> groups(groups_count);
       for (size_t i=0; i < cnt; i++) {
-        for (size_t j=0; j < groups_count; j++)
-          groups[j].Add(atoms[cnt*j+i]);
+        for (size_t j = 0; j < groups_count; j++) {
+          groups[j].Add(atoms[cnt*j + i]);
+        }
       }
       macSAME_expand(app.XFile().GetRM(), groups);
     }
@@ -8746,8 +8774,9 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
       TPtrList<TSameGroup> deps;
       TSameGroup& sg = app.XFile().GetRM().rSAME.New();
       created = &sg;
-      for (size_t i=0; i < groups_count-1; i++)
+      for (size_t i = 0; i < groups_count - 1; i++) {
         deps.Add(app.XFile().GetRM().rSAME.NewDependent(sg));
+      }
       for (size_t i=0; i < cnt; i++) {
         sg.Add(atoms[i]->CAtom());
         for (size_t j = 1; j < groups_count; j++) {
@@ -8757,9 +8786,31 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
       TBasicApp::NewLogEntry() << "SAME instruction is added";
     }
   }
+  else if (groups_count == InvalidIndex && atoms.Count() > 2 && self) {
+    if (expand) {
+      TArrayList<TSAtomPList> groups(2);
+      for (size_t i = 0; i < atoms.Count(); i++) {
+        groups[0].Add(atoms[i]);
+        groups[1].Add(atoms[i == 0 ? 0 : atoms.Count()-i]);
+      }
+      macSAME_expand(app.XFile().GetRM(), groups);
+    }
+    else {
+      TSameGroup &sg = app.XFile().GetRM().rSAME.New(),
+        &dep = app.XFile().GetRM().rSAME.NewDependent(sg);
+      created = &sg;
+      for (size_t i = 0; i < atoms.Count(); i++) {
+        sg.Add(atoms[i]->CAtom());
+        dep.Add(atoms[i == 0 ? 0 : atoms.Count() - i]->CAtom());
+      }
+      TBasicApp::NewLogEntry() << "SAME instruction is added";
+    }
+  }
   else  {
     E.ProcessingError(__OlxSrcInfo, "invalid input arguments");
+    return;
   }
+  app.XFile().GetRM().rSAME.FixIds();
 }
 //.............................................................................
 void XLibMacros::macRIGU(TStrObjList &Cmds, const TParamList &Options,
