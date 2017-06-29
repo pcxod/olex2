@@ -2882,21 +2882,34 @@ void GXLibMacros::macDirection(TStrObjList &Cmds, const TParamList &Options,
 void GXLibMacros::macIndividualise(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &E)
 {
+  short level = -1;
+  int32_t mask = -1;
+  if (!Cmds.IsEmpty() && Cmds[0].IsNumber()) {
+    level = Cmds[0].ToInt();
+    Cmds.Delete(0);
+  }
+  if (!Cmds.IsEmpty() && Cmds[0].IsNumber()) {
+    mask = Cmds[0].ToInt();
+    Cmds.Delete(0);
+  }
   if (Cmds.IsEmpty()) {
     TXAtomPList atoms;
     TXBondPList bonds;
     TGlGroup& sel = app.GetSelection();
     for (size_t i=0; i < sel.Count(); i++) {
-      if (EsdlInstanceOf(sel[i], TXAtom))
+      if (EsdlInstanceOf(sel[i], TXAtom)) {
         atoms.Add((TXAtom&)sel[i]);
-      else if (EsdlInstanceOf(sel[i], TXBond))
+      }
+      else if (EsdlInstanceOf(sel[i], TXBond)) {
         bonds.Add((TXBond&)sel[i]);
+      }
     }
-    app.Individualise(atoms);
-    app.Individualise(bonds);
+    app.Individualise(atoms, level, mask);
+    app.Individualise(bonds, level, mask);
   }
   else {
-    app.Individualise(app.FindXAtoms(Cmds, false, false).GetObject());
+    app.Individualise(app.FindXAtoms(Cmds, false, false).GetObject(),
+      level, mask);
   }
 }
 //..............................................................................
