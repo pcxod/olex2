@@ -8877,6 +8877,11 @@ void XLibMacros::macRESI(TStrObjList &Cmds, const TParamList &Options,
     resi_number = Cmds[0].ToInt();
     Cmds.Delete(0);
   }
+  bool same = false;
+  if (!Cmds.IsEmpty() && Cmds[0].Equalsi("SAME")) {
+    same = true;
+    Cmds.Delete(0);
+  }
   TSAtomPList atoms = app.FindSAtoms(Cmds, false, true);
   if (atoms.IsEmpty()) {
     E.ProcessingError(__OlxSrcInfo, "no atoms provided");
@@ -8917,6 +8922,23 @@ void XLibMacros::macRESI(TStrObjList &Cmds, const TParamList &Options,
           resi.Add(a);
           if (fi > 0) {
             a.SetLabel(fr[i].GetLabel(), false);
+          }
+        }
+      }
+      if (frags.Count() > 0 && same) {
+        RefinementModel &rm = app.XFile().GetRM();
+        TSameGroup &rg = rm.rSAME.New();
+        for (size_t i = 0; i < fr.count(); i++) {
+          if (fr[i].GetType().z > 1) {
+            rg.Add(fr[i]);
+          }
+        }
+        for (size_t fi = 0; fi < frags.Count(); fi++) {
+          TSameGroup &dg = rm.rSAME.NewDependent(rg);
+          for (size_t i = 0; i < frags[0].count(); i++) {
+            if (fr[i].GetType().z > 1) {
+              dg.Add(frags[fi][i]);
+            }
           }
         }
       }
