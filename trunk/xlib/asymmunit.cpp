@@ -1145,6 +1145,42 @@ void TAsymmUnit::FromDataItem(TDataItem& item)  {
   InitData();
 }
 //..............................................................................
+void TAsymmUnit::SetNonHAtomTags_() {
+  index_t idx = 0;
+  for (size_t i = 0; i < CAtoms.Count(); i++) {
+    if (CAtoms[i]->IsDeleted() || CAtoms[i]->GetType().z < 2) {
+      CAtoms[i]->SetTag(-1);
+    }
+    else {
+      CAtoms[i]->SetTag(idx++);
+    }
+  }
+}
+//..............................................................................
+void TAsymmUnit::RearrangeAtoms(const TSizeList &indices) {
+  if (CAtoms.Count() != indices.Count()) {
+    throw TInvalidArgumentException(__OlxSourceInfo, "index list");
+  }
+  bool uniform = true;
+  for (size_t i = 0; i < indices.Count(); i++) {
+    if (indices[i] != i) {
+      uniform = false;
+      break;
+    }
+  }
+  if (uniform) {
+    return;
+  }
+  TCAtomPList mr = MainResidue.GetAtomList();
+  CAtoms.Rearrange(indices);
+  CAtoms.ForEach(ACollectionItem::IndexTagSetter());
+  QuickSorter::Sort(mr, ACollectionItem::TagComparator());
+  MainResidue.Clear();
+  for (size_t i = 0; i < mr.Count(); i++) {
+    mr[i]->SetResiId(0);
+  }
+  MainResidue.AddAll(mr);
+}
 //..............................................................................
 //..............................................................................
 //..............................................................................

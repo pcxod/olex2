@@ -38,9 +38,9 @@ public:
 
   void Assign(const TSameGroup& sg);
   // this is called internally by the RM
-  void OnAUUpdate() { Atoms.OnAUUpdate(); }
-  void BeginAUSort() { Atoms.BeginAUSort(); }
-  void EndAUSort() { Atoms.EndAUSort(true); }
+  void OnAUUpdate();
+  void BeginAUSort();
+  void EndAUSort();
 
   void Clear() {
     SetAtomIds(~0);

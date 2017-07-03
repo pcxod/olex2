@@ -151,16 +151,10 @@ void TBasicCFile::RearrangeAtoms(const TSizeList & new_indices) {
     throw TInvalidArgumentException(__OlxSourceInfo, "invalid list of indices");
   }
   GetRM().BeforeAUSort_();
-  GetAsymmUnit().GetAtoms().Rearrange(new_indices);
+  GetAsymmUnit().RearrangeAtoms(new_indices);
+  GetAsymmUnit().GetAtoms().ForEach(ACollectionItem::IndexTagSetter());
   GetRM().Sort_();
-  index_t idx = 0;
-  for (size_t i = 0; i < GetAsymmUnit().AtomCount(); i++) {
-    TCAtom &a = GetAsymmUnit().GetAtom(i);
-    if (a.GetType() == iHydrogenZ) {
-      continue;
-    }
-    a.SetTag(idx++);
-  }
+  GetAsymmUnit().SetNonHAtomTags_();
   GetRM().AfterAUSort_();
 }
 //----------------------------------------------------------------------------//
@@ -637,7 +631,6 @@ void TXFile::Sort(const TStrList& ins, const TParamList &options) {
   catch (const TExceptionBase& exc) {
     TBasicApp::NewLogEntry(logError) << exc.GetException()->GetError();
   }
-  
   if (sort_resi_n) {
     GetAsymmUnit().SortResidues();
     if (!FLastLoader->IsNative()) {
@@ -652,47 +645,32 @@ void TXFile::Sort(const TStrList& ins, const TParamList &options) {
     }
   }
   // comply to residues before dry-save
-  {
-    size_t ac = 0;
-    for (size_t i = 0; i < GetAsymmUnit().ResidueCount(); i++) {
-      TResidue& resi = GetAsymmUnit().GetResidue(i);
-      for (size_t j = 0; j < resi.Count(); j++) {
-        resi[j].SetTag(ac++);
-      }
-    }
-    QuickSorter::Sort(GetAsymmUnit().GetAtoms(), ACollectionItem::TagComparator());
-  }
+  GetAsymmUnit().ComplyToResidues();
+  GetAsymmUnit().GetAtoms().ForEach(ACollectionItem::IndexTagSetter());
+  GetRM().Sort_();
   {
     TSizeList indices = TIns::DrySave(GetAsymmUnit());
     if (indices.Count() != GetAsymmUnit().AtomCount()) {
       throw TFunctionFailedException(__OlxSourceInfo, "assert");
     }
-    GetAsymmUnit().GetAtoms().Rearrange(indices);
+    GetAsymmUnit().RearrangeAtoms(indices);
   }
-  GetAsymmUnit().GetAtoms().ForEach(ACollectionItem::IndexTagSetter());
-  GetRM().Sort_();
-  index_t idx = 0;
-  for (size_t i = 0; i < GetAsymmUnit().AtomCount(); i++) {
-    TCAtom &a = GetAsymmUnit().GetAtom(i);
-    if (a.GetType() == iHydrogenZ) {
-      continue;
-    }
-    a.SetTag(idx++);
-  }
+  GetAsymmUnit().SetNonHAtomTags_();
   GetRM().AfterAUSort_();
+  GetAsymmUnit()._UpdateAtomIds();
+  // 2010.11.29, ASB bug fix for ADPS on H...
+  GetUnitCell().UpdateEllipsoids();
+  GetLattice().RestoreADPs(false);
+
   if (!FLastLoader->IsNative()) {
     TSizeList new_indices(original_ids.Count(), olx_list_init::zero());
     for (size_t i = 0; i < GetAsymmUnit().AtomCount(); i++) {
-      new_indices[i] = 
+      new_indices[i] =
         original_ids[&GetAsymmUnit().GetAtom(i)];
     }
     FLastLoader->RearrangeAtoms(new_indices);
     FLastLoader->GetAsymmUnit().AssignResidues(GetAsymmUnit());
   }
-  GetAsymmUnit()._UpdateAtomIds();
-  // 2010.11.29, ASB bug fix for ADPS on H...
-  GetUnitCell().UpdateEllipsoids();
-  GetLattice().RestoreADPs(false);
 }
 //..............................................................................
 void TXFile::UpdateAtomIds() {
@@ -701,13 +679,6 @@ void TXFile::UpdateAtomIds() {
   }
   TAsymmUnit &au = GetAsymmUnit();
   TSizeList indices = TIns::DrySave(au);
-  olxdict<TCAtom *, size_t, TPointerComparator> original_ids;
-  if (!FLastLoader->IsNative()) {
-    original_ids.SetCapacity(au.AtomCount());
-    for (size_t i = 0; i < au.AtomCount(); i++) {
-      original_ids.Add(&au.GetAtom(i), i);
-    }
-  }
   if (indices.Count() != au.AtomCount()) {
     throw TFunctionFailedException(__OlxSourceInfo, "assert");
   }
@@ -721,28 +692,26 @@ void TXFile::UpdateAtomIds() {
   if (uniform) {
     return;
   }
-  GetRM().BeforeAUSort_();
-  au.GetAtoms().Rearrange(indices);
-  au.GetAtoms().ForEach(ACollectionItem::IndexTagSetter());
-  GetRM().Sort_();
+  olxdict<TCAtom *, size_t, TPointerComparator> original_ids;
+  if (!FLastLoader->IsNative()) {
+    original_ids.SetCapacity(au.AtomCount());
+    for (size_t i = 0; i < au.AtomCount(); i++) {
+      original_ids.Add(&au.GetAtom(i), i);
+    }
+  }
   au.ComplyToResidues();
   if (!FLastLoader->IsNative()) {
     TSizeList new_indices(original_ids.Count(), olx_list_init::zero());
     for (size_t i = 0; i < au.AtomCount(); i++) {
       new_indices[i] = original_ids[&GetAsymmUnit().GetAtom(i)];
     }
-    FLastLoader->GetAsymmUnit().GetAtoms().Rearrange(new_indices);
-    FLastLoader->GetAsymmUnit().ComplyToResidues();
+    FLastLoader->GetAsymmUnit().RearrangeAtoms(new_indices);
+    FLastLoader->GetAsymmUnit()._UpdateAtomIds();
   }
-  index_t idx = 0;
-  for (size_t i = 0; i < au.AtomCount(); i++) {
-    TCAtom &a = au.GetAtom(i);
-    if (a.GetType() == iHydrogenZ) {
-      continue;
-    }
-    a.SetTag(idx++);
-  }
-  GetRM().AfterAUSort_();
+  GetAsymmUnit()._UpdateAtomIds();
+  // 2010.11.29, ASB bug fix for ADPS on H...
+  GetUnitCell().UpdateEllipsoids();
+  GetLattice().RestoreADPs(false);
 }
 //..............................................................................
 void TXFile::ValidateTabs() {

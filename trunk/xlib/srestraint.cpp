@@ -17,7 +17,7 @@ TSimpleRestraint::TSimpleRestraint(TSRestraintList& parent, size_t id,
   Value = 0;
   Esd = Esd1 = 0;
   AllNonHAtoms = false;
-  VarRef = NULL;
+  VarRef = 0;
 }
 //..............................................................................
 void TSimpleRestraint::AddAtoms(const TCAtomGroup& atoms) {
@@ -35,10 +35,10 @@ TSimpleRestraint &TSimpleRestraint::AddAtom(TCAtom& aa, const smatd* ma) {
     throw TInvalidArgumentException(__OlxSourceInfo,
       "mismatching asymmetric unit");
   }
-  if (ma != NULL) {
+  if (ma != 0) {
     for (size_t i = 0; i < aa.EquivCount(); i++) {
       if (aa.GetEquiv(i).GetId() == ma->GetId()) {
-        ma = NULL;
+        ma = 0;
         break;
       }
     }
@@ -98,10 +98,12 @@ ConstPtrList<PyObject> TSimpleRestraint::PyExport(TPtrList<PyObject>& atoms,
     PyObject* involved = PyTuple_New(ats[i].Count());
     for( size_t j=0; j < ats[i].Count(); j++ )  {
       PyObject* eq;
-      if( ats[i][j].GetMatrix() == NULL )
+      if (ats[i][j].GetMatrix() == 0) {
         eq = Py_None;
-      else
+      }
+      else {
         eq = equiv[ats[i][j].GetMatrix()->GetId()];
+      }
       Py_INCREF(eq);
       PyTuple_SetItem(involved, j,
         Py_BuildValue("OO", Py_BuildValue("i", ats[i][j].GetAtom().GetTag()), eq));
@@ -118,13 +120,13 @@ void TSimpleRestraint::FromDataItem(const TDataItem& item) {
   Esd1 = item.GetFieldByName("esd1").ToDouble();
   Value = item.GetFieldByName("val").ToDouble();
   TDataItem* atoms = item.FindItem("atoms");
-  if (atoms != NULL) {
+  if (atoms != 0) {
     for( size_t i=0; i < atoms->ItemCount(); i++ )  {
       TDataItem& ai = atoms->GetItemByIndex(i);
       size_t aid = ai.GetFieldByName("atom_id").ToSizeT();
       uint32_t eid = ai.GetFieldByName("eqiv_id").ToUInt();
       AddAtom(Parent.GetRM().aunit.GetAtom(aid),
-        olx_is_valid_index(eid) ? &Parent.GetRM().GetUsedSymm(eid) : NULL);
+        olx_is_valid_index(eid) ? &Parent.GetRM().GetUsedSymm(eid) : 0);
     }
   }
   else {
@@ -136,7 +138,9 @@ IXVarReferencerContainer& TSimpleRestraint::GetParentContainer() const {
   return Parent;
 }
 //..............................................................................
-olxstr TSimpleRestraint::GetIdName() const {  return Parent.GetIdName();  }
+olxstr TSimpleRestraint::GetIdName() const {
+  return Parent.GetIdName();
+}
 //..............................................................................
 olxstr TSimpleRestraint::GetVarName(size_t var_index) const {
   const static olxstr vm("1");
@@ -240,15 +244,15 @@ void TSRestraintList::ValidateRestraint(TSimpleRestraint& sr)  {
 //..............................................................................
 void TSRestraintList::Clear() {
   for (size_t i = 0; i < Restraints.Count(); i++) {
-    if (Restraints[i].GetVarRef(0) != NULL) {
+    if (Restraints[i].GetVarRef(0) != 0) {
       delete RefMod.Vars.ReleaseRef(Restraints[i], 0);
     }
   }
   Restraints.Clear();
 }
 //..............................................................................
-TSimpleRestraint& TSRestraintList::Release(size_t i)  {
-  if (Restraints[i].GetVarRef(0) != NULL) {
+TSimpleRestraint& TSRestraintList::Release(size_t i) {
+  if (Restraints[i].GetVarRef(0) != 0) {
     RefMod.Vars.ReleaseRef(Restraints[i], 0);
   }
   return Restraints.Release(i);
@@ -256,10 +260,11 @@ TSimpleRestraint& TSRestraintList::Release(size_t i)  {
 //..............................................................................
 void TSRestraintList::Restore(TSimpleRestraint& sr)  {
   if (&sr.GetParent() != this) {
-    throw TInvalidArgumentException(__OlxSourceInfo, "restraint parent differs");
+    throw TInvalidArgumentException(__OlxSourceInfo,
+      "restraint parent differs");
   }
   Restraints.Add(sr);
-  if (sr.GetVarRef(0) != NULL) {
+  if (sr.GetVarRef(0) != 0) {
     RefMod.Vars.RestoreRef(sr, 0, sr.GetVarRef(0));
   }
 }
