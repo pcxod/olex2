@@ -1131,17 +1131,20 @@ void XLibMacros::macSort(TStrObjList &Cmds, const TParamList &Options,
   olxstr_buf atoms;
   olxstr ws = ' ';
   const TAsymmUnit &au = TXApp::GetInstance().XFile().GetAsymmUnit();
-  for (size_t i=0; i < au.AtomCount(); i++) {
-    if (au.GetAtom(i).IsDeleted()) continue;
-    olxstr l = au.GetAtom(i).GetResiLabel();
-    if (atoms.Length() + l.Length() >= 80) {
-      TBasicApp::NewLogEntry() << olxstr(atoms);
-      atoms.Clear();
+  for (size_t i=0; i < au.ResidueCount(); i++) {
+    TResidue &r = au.GetResidue(i);
+    for (size_t j = 0; j < r.Count(); j++) {
+      olxstr l = r[j].GetResiLabel();
+      if (atoms.Length() + l.Length() >= 80) {
+        TBasicApp::NewLogEntry() << olxstr(atoms);
+        atoms.Clear();
+      }
+      atoms << ws << l;
     }
-    atoms << ws << au.GetAtom(i).GetResiLabel();
   }
-  if (!atoms.IsEmpty())
+  if (!atoms.IsEmpty()) {
     TBasicApp::NewLogEntry() << olxstr(atoms);
+  }
 }
 //.............................................................................
 void XLibMacros::macRun(TStrObjList &Cmds, const TParamList &Options, TMacroData &Error)  {
@@ -8789,9 +8792,17 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
   else if (groups_count == InvalidIndex && atoms.Count() > 2 && self) {
     if (expand) {
       TArrayList<TSAtomPList> groups(2);
-      for (size_t i = 0; i < atoms.Count(); i++) {
-        groups[0].Add(atoms[i]);
-        groups[1].Add(atoms[i == 0 ? 0 : atoms.Count()-i]);
+      if (atoms[0]->IsConnectedTo(*atoms.GetLast())) {
+        for (size_t i = 0; i < atoms.Count(); i++) {
+          groups[0].Add(atoms[i]);
+          groups[1].Add(atoms[i == 0 ? 0 : atoms.Count() - i]);
+        }
+      }
+      else {
+        for (size_t i = 0; i < atoms.Count(); i++) {
+          groups[0].Add(atoms[i]);
+          groups[1].Add(atoms[atoms.Count() - i - 1]);
+        }
       }
       macSAME_expand(app.XFile().GetRM(), groups);
     }
@@ -8799,9 +8810,17 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
       TSameGroup &sg = app.XFile().GetRM().rSAME.New(),
         &dep = app.XFile().GetRM().rSAME.NewDependent(sg);
       created = &sg;
-      for (size_t i = 0; i < atoms.Count(); i++) {
-        sg.Add(atoms[i]->CAtom());
-        dep.Add(atoms[i == 0 ? 0 : atoms.Count() - i]->CAtom());
+      if (atoms[0]->IsConnectedTo(*atoms.GetLast())) {
+        for (size_t i = 0; i < atoms.Count(); i++) {
+          sg.Add(atoms[i]->CAtom());
+          dep.Add(atoms[i == 0 ? 0 : atoms.Count() - i]->CAtom());
+        }
+      }
+      else {
+        for (size_t i = 0; i < atoms.Count(); i++) {
+          sg.Add(atoms[i]->CAtom());
+          dep.Add(atoms[atoms.Count() - i - 1]->CAtom());
+        }
       }
       TBasicApp::NewLogEntry() << "SAME instruction is added";
     }

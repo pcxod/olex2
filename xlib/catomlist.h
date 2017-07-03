@@ -152,10 +152,7 @@ public:
     return start.IsExplicit() && end.IsExplicit();
   }
   // * is special char
-  virtual olxstr GetExpression(TResidue *r) const {
-    return olxstr(start.GetExpression(r) << ' ' << op << ' ' <<
-      end.GetExpression(r));
-  }
+  virtual olxstr GetExpression(TResidue *r) const;
   virtual size_t Expand(const RefinementModel& rm, TAtomRefList_& res,
     TResidue& resi) const;
   virtual AAtomRef* Clone(RefinementModel& rm) const {

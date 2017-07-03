@@ -290,10 +290,17 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
   }
 }
 //..............................................................................
-void TIns::_ProcessSame(ParseContext& cx)  {
+void TIns::_ProcessSame(ParseContext& cx, const TIndexList *index)  {
   TSameGroupList& sgl = cx.rm.rSAME;
   for (size_t i=0; i < cx.Same.Count(); i++) {
     TCAtom* ca = cx.Same[i].b;
+    size_t index_index = InvalidIndex;
+    if (index != 0) {
+      index_index = index->IndexOf(ca->GetId());
+      if (index_index == InvalidIndex) {
+        throw TInvalidArgumentException(__OlxSourceInfo, "atom index");
+      }
+    }
     TStrList& sl = cx.Same[i].a;
     TPtrList<TSameGroup> all_groups;
     size_t max_atoms = 0;
@@ -328,13 +335,24 @@ void TIns::_ProcessSame(ParseContext& cx)  {
       bool valid = true;
       TSameGroup& sg = sgl.New();  // main, reference, group
       for (size_t j = 0; j < max_atoms; j++) {
-        if (ca->GetId() + j >= cx.au.AtomCount()) {
-          TBasicApp::NewLogEntry(logError) <<
-            "Not enough atoms to create the reference group for SAME";
-          valid = false;
-          break;
+        if (index == 0) {
+          if (ca->GetId() + j >= cx.au.AtomCount()) {
+            TBasicApp::NewLogEntry(logError) <<
+              "Not enough atoms to create the reference group for SAME";
+            valid = false;
+            break;
+          }
         }
-        TCAtom& a = cx.au.GetAtom(ca->GetId() + j);
+        else {
+          if (j+ index_index >= index->Count()) {
+            TBasicApp::NewLogEntry(logError) <<
+              "Not enough atoms to create the reference group for SAME";
+            valid = false;
+            break;
+          }
+        }
+        TCAtom& a = cx.au.GetAtom(index == 0 ? ca->GetId() + j
+          : (*index)[index_index+j]);
         if (a.GetType() == iHydrogenZ) {
           max_atoms++; // do not count the H atoms!
           continue;
@@ -1502,8 +1520,9 @@ void TIns::_DrySaveAtom(TCAtom& a, TSizeList &indices,
     if (sg.IsValidForSave() && sg.IsReference()) {
       if (sg.GetAtoms().IsExplicit()) {
         TAtomRefList atoms = sg.GetAtoms().ExpandList(*a.GetParent()->GetRefMod());
-        for (size_t i = 0; i < atoms.Count(); i++)
+        for (size_t i = 0; i < atoms.Count(); i++) {
           _DrySaveAtom(atoms[i].GetAtom(), indices, false, checkResi);
+        }
       }
       return;
     }
@@ -1656,7 +1675,7 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm,
       _ProcessAfix(*atom, cx);
     }
   }
-  _ProcessSame(cx);
+  _ProcessSame(cx, &index);
   for (size_t i = 0; i < cx.Sump.Count(); i++) {
     cx.rm.Vars.AddSUMP(cx.Sump[i]);
   }
@@ -1670,7 +1689,9 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm,
 bool TIns::SaveAtomsToStrings(RefinementModel& rm, const TCAtomPList& CAtoms,
   TIndexList& index, TStrList& SL, RefinementModel::ReleasedItems* processed)
 {
-  if (CAtoms.IsEmpty()) return false;
+  if (CAtoms.IsEmpty()) {
+    return false;
+  }
   int part = 0, afix = 0;
   double spec = 0;
   SaveRestraints(SL, &CAtoms, processed, rm);
@@ -1679,14 +1700,16 @@ bool TIns::SaveAtomsToStrings(RefinementModel& rm, const TCAtomPList& CAtoms,
     CAtoms[i]->SetSaved(false);
   }
   for (size_t i=0; i < CAtoms.Count(); i++) {
-    if( CAtoms[i]->IsSaved() )  continue;
+    if (CAtoms[i]->IsSaved()) {
+      continue;
+    }
     TCAtom& ac = *CAtoms[i];
-    if (ac.GetParentAfixGroup() != NULL &&
+    if (ac.GetParentAfixGroup() != 0 &&
       !ac.GetParentAfixGroup()->GetPivot().IsDeleted())
     {
       continue;
     }
-    _SaveAtom(rm, ac, part, afix, spec, NULL, SL, &index);
+    _SaveAtom(rm, ac, part, afix, spec, 0, SL, &index);
   }
   SaveExtras(SL, &CAtoms, processed, rm);
   return true;
@@ -2088,10 +2111,13 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
       const RCInfo& ri = r.GetB();
       TSimpleRestraint& sr = (*r.a)[t.GetC()];
       olxstr line = RestraintToString(sr, ri, atoms);
-      if (line.IsEmpty())  continue;
+      if (line.IsEmpty()) {
+        continue;
+      }
       HyphenateIns(line, SL);
-      if (processed != NULL)
+      if (processed != 0) {
         processed->restraints.Add(sr);
+      }
     }
   }
   else {
@@ -2107,8 +2133,9 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
           continue;
         }
         HyphenateIns(line, SL);
-        if (processed != NULL)
+        if (processed != 0) {
           processed->restraints.Add(sr);
+        }
       }
     }
   }
@@ -2116,7 +2143,9 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
   // equivalent EXYZ constraint
   for (size_t i = 0; i < rm.ExyzGroups.Count(); i++) {
     TExyzGroup& sr = rm.ExyzGroups[i];
-    if (sr.IsEmpty())  continue;
+    if (sr.IsEmpty()) {
+      continue;
+    }
     olxstr Tmp = "EXYZ";
     for (size_t j = 0; j < sr.Count(); j++)  {
       if (!sr[j].IsDeleted()) {
@@ -2157,14 +2186,17 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
   }
   SL.Add(EmptyString());
   if (atoms == NULL) {
-    for (size_t i = 0; i < rm.FragCount(); i++)
+    for (size_t i = 0; i < rm.FragCount(); i++) {
       rm.GetFrag(i).ToStrings(SL);
+    }
   }
   else {
     sorted::PointerPointer<const Fragment> saved;
     for (size_t i = 0; i < atoms->Count(); i++) {
       const int m = TAfixGroup::GetM((*atoms)[i]->GetAfix());
-      if (m < 17)  continue;
+      if (m < 17) {
+        continue;
+      }
       const Fragment* frag = rm.FindFragByCode(m);
       if (frag == NULL)  {
         throw TFunctionFailedException(__OlxSourceInfo,
