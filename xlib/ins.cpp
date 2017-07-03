@@ -161,8 +161,9 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
   Preprocess(InsFile);
   for (size_t i = 0; i < InsFile.Count(); i++) {
     try {
-      if (InsFile[i].IsEmpty() || InsFile[i].StartsFrom(' '))
+      if (InsFile[i].IsEmpty() || InsFile[i].StartsFrom(' ')) {
         continue;
+      }
       const size_t exi = InsFile[i].IndexOf('!');
       if (exi != InvalidIndex) {
         InsFile[i].SetLength(exi);
@@ -976,7 +977,9 @@ bool TIns::InsExists(const olxstr &Name)  {
 //..............................................................................
 bool TIns::AddIns(const TStrList& toks, RefinementModel& rm, bool CheckUniq)  {
   // special instructions
-  if (_ParseIns(rm, toks) || ParseRestraint(rm, toks)) return true;
+  if (_ParseIns(rm, toks) || ParseRestraint(rm, toks)) {
+    return true;
+  }
   // check for uniqueness
   if (CheckUniq) {
     bool unique = false;
@@ -990,8 +993,9 @@ bool TIns::AddIns(const TStrList& toks, RefinementModel& rm, bool CheckUniq)  {
               break;
             }
           }
-          if (!unique)
+          if (!unique) {
             return false;
+          }
         }
       }
     }
@@ -2351,27 +2355,31 @@ TStrList::const_list_type TIns::SaveHeader(TStrList& SL,
   return rv;
 }
 //..............................................................................
-void TIns::ParseHeader(const TStrList& in)  {
+void TIns::ParseHeader(const TStrList& in) {
   // clear all but the atoms
-  for (size_t i=0; i < AsymmUnit.AtomCount(); i++)
+  for (size_t i = 0; i < AsymmUnit.AtomCount(); i++) {
     AsymmUnit.GetAtom(i).SetFixedType(false);
-  for( size_t i=0; i < Ins.Count(); i++ )
+  }
+  for (size_t i = 0; i < Ins.Count(); i++) {
     delete Ins.GetObject(i);
+  }
   Ins.Clear();
   Skipped.Clear();
   Title.SetLength(0);
   GetRM().Clear(rm_clear_DEF);
   GetAsymmUnit().ClearMatrices();
-// end clear, start parsing
+  // end clear, start parsing
   TStrList toks, lst(in);
   Preprocess(lst);
   ParseContext cx(GetRM());
   cx.ins = this;
   _ReadExtras(lst, cx);
-  for (size_t i = 0; i < lst.Count(); i++)  {
-    try  {
+  for (size_t i = 0; i < lst.Count(); i++) {
+    try {
       olxstr Tmp = olxstr::DeleteSequencesOf<char>(lst[i], ' ');
-      if( Tmp.IsEmpty() )  continue;
+      if (Tmp.IsEmpty()) {
+        continue;
+      }
       size_t ci = Tmp.IndexOf('!');
       if (ci != InvalidIndex) {
         if (ci == 0) {
@@ -2383,21 +2391,26 @@ void TIns::ParseHeader(const TStrList& in)  {
       }
       toks.Clear();
       toks.Strtok(Tmp, ' ');
-      if( toks.IsEmpty() )  continue;
-
-      if( ParseIns(lst, toks, cx, i) )
+      if (toks.IsEmpty()) {
         continue;
-      else if( toks[0].Equalsi("TITL") )
+      }
+
+      if (ParseIns(lst, toks, cx, i)) {
+        continue;
+      }
+      else if (toks[0].Equalsi("TITL")) {
         SetTitle(toks.Text(' ', 1));
-      else
+      }
+      else {
         Ins.Add(lst[i]);
+      }
     }
-    catch( const TExceptionBase& exc )  {
+    catch (const TExceptionBase& exc) {
       throw TFunctionFailedException(__OlxSourceInfo, exc,
-        olxstr("at line #") << i+1 << " ('" << lst[i] << "')");
+        olxstr("at line #") << i + 1 << " ('" << lst[i] << "')");
     }
   }
-  for (size_t i=0; i < cx.Symm.Count(); i++) {
+  for (size_t i = 0; i < cx.Symm.Count(); i++) {
     GetAsymmUnit().AddMatrix(TSymmParser::SymmToMatrix(cx.Symm[i]));
   }
   Ins.Pack();
@@ -2408,7 +2421,9 @@ void TIns::ParseHeader(const TStrList& in)  {
 }
 //..............................................................................
 bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& _toks) {
-  if (_toks.IsEmpty())  return false;
+  if (_toks.IsEmpty()) {
+    return false;
+  }
   TStrList toks(_toks);
   if (toks[0].Equalsi("EQIV") && toks.Count() >= 3) {
     try {
@@ -2451,6 +2466,10 @@ bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& _toks) {
     Vals[0] = &DefVal;  Vals[1] = &esd;
   }
   else if (ins_name.Equalsi("SADI")) {
+    // special case to expand SAME
+    if (toks.Count() == 1) {
+      return false;
+    }
     srl = &rm.rSADI;
     RequiredParams = 0;  AcceptsParams = 1;
     Vals[0] = &esd;
@@ -2535,9 +2554,9 @@ bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& _toks) {
     Vals[0] = &esd;
   }
   else {
-    srl = NULL;
+    srl = 0;
   }
-  if (srl != NULL) {
+  if (srl != 0) {
     TSimpleRestraint& sr = srl->AddNew();
     esd = sr.GetEsd();
     esd1 = sr.GetEsd1();
