@@ -567,7 +567,8 @@ void XLibMacros::Export(TLibrary& lib)  {
     "matching&;"
     "e-expand SAME into the list of SADI [not implemented]&;"
     "s-generates 'self' same restrain so that the fragment matches itself in "
-    "reverse order",
+    "reverse order&;"
+    "all-find fragments matching the selection and applies SAME to them",
     fpAny|psFileLoaded,
     "Creates SAME instruction for two fragments (two selected atoms or two "
     "atoms provided) or number_of_groups and groups following each another "
@@ -8599,7 +8600,10 @@ struct PairListComparator {
   }
 };
 
-void macSAME_expand(RefinementModel &rm, const TArrayList<TSAtomPList>& groups) {
+template <class list_t, typename accessor_t>
+void macSAME_expand(RefinementModel &rm, const list_t& groups,
+  const accessor_t &acc)
+{
   TAsymmUnit &au = rm.aunit;
   olxdict<size_t, TSizeList, TPrimitiveComparator> atom_map;
   atom_map.SetCapacity(groups[0].Count());
@@ -8607,9 +8611,9 @@ void macSAME_expand(RefinementModel &rm, const TArrayList<TSAtomPList>& groups) 
   atom_set.SetCapacity(groups[0].Count());
   olxset<idx_pair_t, TComparableComparator> bonds12, bonds13;
   for (size_t i = 0; i < groups[0].Count(); i++) {
-    TCAtom &a = groups[0][i]->CAtom();
+   const  TCAtom &a = olx_ref::get(acc(groups[0][i]));
     for (size_t j = 0; j < a.AttachedSiteCount(); j++) {
-      TCAtom::Site &s1 = a.GetAttachedSite(j);
+      const TCAtom::Site &s1 = a.GetAttachedSite(j);
       if (!s1.matrix.IsFirst() || s1.atom->IsDeleted() || s1.atom->GetType().z < 2) {
         continue;
       }
@@ -8617,15 +8621,15 @@ void macSAME_expand(RefinementModel &rm, const TArrayList<TSAtomPList>& groups) 
     atom_set.Add(a.GetId(), i);
   }
   for (size_t i = 0; i < atom_set.Count(); i++) {
-    TCAtom &a = au.GetAtom(atom_set.GetKey(i));
+    const TCAtom &a = au.GetAtom(atom_set.GetKey(i));
     for (size_t j = 0; j < a.AttachedSiteCount(); j++) {
-      TCAtom::Site &s1 = a.GetAttachedSite(j);
+      const TCAtom::Site &s1 = a.GetAttachedSite(j);
       if (!s1.matrix.IsFirst() || !atom_set.HasKey(s1.atom->GetId())) {
         continue;
       }
       bonds12.Add(idx_pair_t(a.GetId(), s1.atom->GetId()));
       for (size_t k = j + 1; k < a.AttachedSiteCount(); k++) {
-        TCAtom::Site &s2 = a.GetAttachedSite(k);
+        const TCAtom::Site &s2 = a.GetAttachedSite(k);
         if (!s2.matrix.IsFirst() || !atom_set.HasKey(s2.atom->GetId())) {
           continue;
         }
@@ -8634,7 +8638,7 @@ void macSAME_expand(RefinementModel &rm, const TArrayList<TSAtomPList>& groups) 
     }
     TSizeList & l = atom_map.Add(a.GetId());
     for (size_t j = 1; j < groups.Count(); j++) {
-      l.Add(groups[j][atom_set.GetValue(i)]->CAtom().GetId());
+      l.Add(olx_ref::get(acc(groups[j][atom_set.GetValue(i)])).GetId());
     }
   }
   olxset<TTypeList<idx_pair_t>, PairListComparator> added;
@@ -8683,7 +8687,13 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
 {
   const bool invert = Options.Contains("i"),
     expand = Options.Contains("e"),
-    self = Options.GetBoolOption('s');
+    self = Options.GetBoolOption('s'),
+    all = Options.GetBoolOption("all");
+  if (all && self) {
+    TBasicApp::NewLogEntry(logError) << "Sorry the option combination is "
+      "currently unsupported";
+    return;
+  }
   size_t groups_count = InvalidSize;
   if (!Cmds.IsEmpty() && Cmds[0].IsNumber()) {
     groups_count = Cmds[0].ToSizeT();
@@ -8728,7 +8738,8 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
         groups[0].Add(netA.Node(res[i].GetA()));
         groups[1].Add(netB.Node(res[i].GetB()));
       }
-      macSAME_expand(app.XFile().GetRM(), groups);
+      macSAME_expand(app.XFile().GetRM(), groups,
+        FunctionAccessor::MakeConst(&TSAtom::CAtom));
     }
     else {
       TSameGroup& sg = app.XFile().GetRM().rSAME.New();
@@ -8771,7 +8782,8 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
           groups[j].Add(atoms[cnt*j + i]);
         }
       }
-      macSAME_expand(app.XFile().GetRM(), groups);
+      macSAME_expand(app.XFile().GetRM(), groups,
+        FunctionAccessor::MakeConst(&TSAtom::CAtom));
     }
     else  {
       TPtrList<TSameGroup> deps;
@@ -8804,7 +8816,8 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
           groups[1].Add(atoms[atoms.Count() - i - 1]);
         }
       }
-      macSAME_expand(app.XFile().GetRM(), groups);
+      macSAME_expand(app.XFile().GetRM(), groups,
+        FunctionAccessor::MakeConst(&TSAtom::CAtom));
     }
     else {
       TSameGroup &sg = app.XFile().GetRM().rSAME.New(),
@@ -8823,6 +8836,48 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
         }
       }
       TBasicApp::NewLogEntry() << "SAME instruction is added";
+    }
+  }
+  else if (groups_count == InvalidSize && atoms.Count() > 2 && all) {
+    using namespace olx_analysis;
+    TCAtomPList fa(atoms, FunctionAccessor::MakeConst(&TSAtom::CAtom));
+    ACollectionItem::Unify(fa);
+    fragments::fragment fr(fa);
+    TTypeList<fragments::fragment> frags =
+      fragments::extract(app.XFile().GetAsymmUnit(), fr);
+    RefinementModel &rm = app.XFile().GetRM();
+    if (!frags.IsEmpty()) {
+      if (expand) {
+        TArrayList<TCAtomPList> groups(frags.Count()+1);
+        for (size_t i = 0; i < frags.Count() + 1; i++) {
+          fragments::fragment &f = (i == 0 ? fr : frags[i - 1]);
+          for (size_t j = 0; j < f.count(); j++) {
+            groups[i].Add(f[j]);
+          }
+        }
+        macSAME_expand(app.XFile().GetRM(), groups,
+          DummyAccessor());
+      }
+      else {
+        TSameGroup &rg = rm.rSAME.New();
+        for (size_t i = 0; i < fr.count(); i++) {
+          if (fr[i].GetType().z > 1) {
+            rg.Add(fr[i]);
+          }
+        }
+        for (size_t fi = 0; fi < frags.Count(); fi++) {
+          TSameGroup &dg = rm.rSAME.NewDependent(rg);
+          for (size_t i = 0; i < frags[0].count(); i++) {
+            if (fr[i].GetType().z > 1) {
+              dg.Add(frags[fi][i]);
+            }
+          }
+        }
+      }
+    }
+    else {
+      TBasicApp::NewLogEntry(logError) << "could not locate any matching "
+        "fragments";
     }
   }
   else  {
@@ -8848,7 +8903,7 @@ void XLibMacros::macRIGU(TStrObjList &Cmds, const TParamList &Options,
   }
   sr.SetAllNonHAtoms(Atoms.IsEmpty());
   for (size_t i = 0; i < Atoms.Count(); i++) {
-    sr.AddAtom(Atoms[i]->CAtom(), NULL);
+    sr.AddAtom(Atoms[i]->CAtom(), 0);
   }
   app.XFile().GetRM().rDELU.ValidateRestraint(sr);
   if (!sr.IsEmpty()) {
