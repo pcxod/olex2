@@ -20,26 +20,32 @@ void TXlConGen::AnalyseMultipart(const TAtomEnvi& envi,
   const TTypeList<TCAtomPList>& parts)
 {
   size_t cnt = 0;
-  for( size_t i=0; i < parts.Count(); i++ )  {
-    if( !parts[i].IsEmpty() && parts[i][0]->GetParentAfixGroup() != NULL &&
-      parts[i][0]->GetParentAfixGroup()->IsRefinable() )
+  for (size_t i = 0; i < parts.Count(); i++) {
+    if (!parts[i].IsEmpty() && parts[i][0]->GetParentAfixGroup() != NULL &&
+      parts[i][0]->GetParentAfixGroup()->IsRefinable())
     {
       cnt++;
     }
   }
-  if( cnt > 1 )  {  // have to change the refineable groups to riding group...
-    for( size_t i=0; i < parts.Count(); i++ )  {
-      if( parts[i].IsEmpty() )  continue;
-      if( parts[i][0]->GetParentAfixGroup() != NULL &&
-          parts[i][0]->GetParentAfixGroup()->IsRefinable() )
+  if (cnt > 1) {  // have to change the refineable groups to riding group...
+    for (size_t i = 0; i < parts.Count(); i++) {
+      if (parts[i].IsEmpty()) {
+        continue;
+      }
+      if (parts[i][0]->GetParentAfixGroup() != 0 &&
+        parts[i][0]->GetParentAfixGroup()->IsRefinable())
       {
         const int m = parts[i][0]->GetParentAfixGroup()->GetM();
-        if( m == 13 )
-          parts[i][0]->GetParentAfixGroup()->SetAfix(33);
-        else if( m == 14 )
+        if (m == 13) {
+          // new Shelxl seems to deal with it properly
+          //parts[i][0]->GetParentAfixGroup()->SetAfix(33);
+        }
+        else if (m == 14) {
           parts[i][0]->GetParentAfixGroup()->SetAfix(83);
-        else
-          parts[i][0]->GetParentAfixGroup()->SetAfix(m*10+3);
+        }
+        else {
+          parts[i][0]->GetParentAfixGroup()->SetAfix(m * 10 + 3);
+        }
       }
     }
   }

@@ -194,6 +194,9 @@ public:
   void AssignResidues(const TAsymmUnit& au);
   // changes the atom order as in residues
   void ComplyToResidues();
+  /* rearranges the atoms and updates the main residue atom order 
+  */
+  void RearrangeAtoms(const TSizeList &indices);
   // sorts residues by class and number
   void SortResidues();
   // if a number is provided, searches by Number otherwise - by ClassName
@@ -225,6 +228,7 @@ public:
   const TCAtomPList& GetAtoms() const {  return CAtoms;  }
   TCAtomPList& GetAtoms() {  return CAtoms;  }
   size_t AtomCount() const { return CAtoms.Count();  }
+  void SetNonHAtomTags_();
 
   size_t MatrixCount() const {  return Matrices.Count();  }
   const smatd& GetMatrix(size_t i) const {  return Matrices[i];  }

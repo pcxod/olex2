@@ -169,6 +169,22 @@ bool TSameGroup::AreAllAtomsUnique() const {
   return true;
 }
 //.............................................................................
+void TSameGroup::OnAUUpdate() {
+  Atoms.OnAUUpdate();
+}
+//.............................................................................
+void TSameGroup::BeginAUSort() {
+  if (!IsReference()) {
+    Atoms.BeginAUSort();
+  }
+}
+//.............................................................................
+void TSameGroup::EndAUSort() {
+  if (!IsReference()) {
+    Atoms.EndAUSort(true);
+  }
+}
+//.............................................................................
 //.............................................................................
 //.............................................................................
 void TSameGroupList::Release(TSameGroup& sg) {
@@ -187,6 +203,7 @@ void TSameGroupList::Release(TSameGroup& sg) {
   for (size_t i = 0; i < Groups.Count(); i++) {
     Groups[i].SetId((uint16_t)i);
   }
+  FixIds();
 }
 //.............................................................................
 void TSameGroupList::Restore(TSameGroup& sg)  {
@@ -224,6 +241,7 @@ void TSameGroupList::Delete(const TPtrList <TSameGroup> &groups_) {
   for (size_t i = 0; i < Groups.Count(); i++) {
     Groups[i].SetId((uint16_t)i);
   }
+  FixIds();
 }
 //.............................................................................
 void TSameGroupList::ToDataItem(TDataItem& item) const {
@@ -243,8 +261,9 @@ PyObject* TSameGroupList::PyExport(TPtrList<PyObject>& _atoms,
 {
   size_t id = 0;
   for (size_t i=0; i < Groups.Count(); i++) {
-    if (Groups[i].IsValidForSave())
+    if (Groups[i].IsValidForSave()) {
       Groups[i].SetTag(id++);
+    }
   }
   if (id == 0) {
     return PythonExt::PyNone();
