@@ -320,8 +320,8 @@ void TIns::_ProcessSame(ParseContext& cx, const TIndexList *index)  {
          esd2 = toks[2].ToDouble();
          from_ind++;
        }
-      TSameGroup& sg1 = *all_groups.Add(sgl.New());
-      sg1.GetAtoms().Build(toks.Text(' ', from_ind), resi);
+      TSameGroup& sg1 = *all_groups.Add(
+        sgl.Build(toks.Text(' ', from_ind), resi));
       sg1.Esd12 = esd1;
       sg1.Esd13 = esd2;
       if (sg1.GetAtoms().IsExplicit()) {

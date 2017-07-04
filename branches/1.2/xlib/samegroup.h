@@ -101,6 +101,7 @@ public:
   TSameGroup& New() {
     return Groups.Add(new TSameGroup((uint16_t)Groups.Count(), *this));
   }
+  TSameGroup& Build(const olxstr &exp, const olxstr &resi=EmptyString());
   TSameGroup& NewDependent(TSameGroup& on) {
     TSameGroup& rv = Groups.Add(
       new TSameGroup((uint16_t)Groups.Count(), *this));
