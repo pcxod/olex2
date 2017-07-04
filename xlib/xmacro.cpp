@@ -8734,7 +8734,9 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
       groups[0].SetCapacity(res.Count());
       groups[1].SetCapacity(res.Count());
       for (size_t i=0; i < res.Count(); i++) {
-        if (netA.Node(res[i].GetA()).GetType().z < 2) continue;
+        if (netA.Node(res[i].GetA()).GetType().z < 2) {
+          continue;
+        }
         groups[0].Add(netA.Node(res[i].GetA()));
         groups[1].Add(netB.Node(res[i].GetB()));
       }
@@ -8742,24 +8744,37 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
         FunctionAccessor::MakeConst(&TSAtom::CAtom));
     }
     else {
-      TSameGroup& sg = app.XFile().GetRM().rSAME.New();
-      created = &sg;
+      TSameGroup* sg = 0;
       for (size_t i=0; i < netA.NodeCount(); i++) {
         netA.Node(i).SetTag(-1);
         netB.Node(i).SetTag(-1);
       }
+      bool first = true;
       for (size_t i=0; i < res.Count(); i++) {
         if (netA.Node(res[i].GetA()).GetType().z < 2 ||
             netA.Node(res[i].GetA()).GetTag() == 0)
         {
           continue;
         }
-        sg.Add(netA.Node(res[i].GetA()).CAtom());
+        if (first) {
+          if (olx_is_valid_index(netA.Node(res[i].GetA()).CAtom().GetSameId())) {
+            TSameGroup &asg = app.XFile().GetRM().rSAME[
+              netA.Node(res[i].GetA()).CAtom().GetSameId()];
+            if (asg.GetParentGroup() == 0) {
+              sg = &asg;
+              break;
+            }
+            else {
+              sg = &app.XFile().GetRM().rSAME.New();
+            }
+          }
+          first = false;
+        }
+        sg->Add(netA.Node(res[i].GetA()).CAtom());
         netA.Node(res[i].GetA()).SetTag(0);
-        TBasicApp::GetLog() << netA.Node(res[i].GetA()).GetLabel() << ' ';
       }
       TBasicApp::NewLogEntry();
-      TSameGroup& d_sg = app.XFile().GetRM().rSAME.NewDependent(sg);
+      TSameGroup& d_sg = app.XFile().GetRM().rSAME.NewDependent(*sg);
       for (size_t i=0; i < res.Count(); i++) {
         if (netB.Node(res[i].GetB()).GetType().z < 2 ||
           netB.Node(res[i].GetB()).GetTag() == 0)
@@ -8787,13 +8802,27 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
     }
     else  {
       TPtrList<TSameGroup> deps;
-      TSameGroup& sg = app.XFile().GetRM().rSAME.New();
-      created = &sg;
+      TSameGroup* sg;
+      if (olx_is_valid_index(atoms[0]->CAtom().GetSameId())) {
+        TSameGroup &asg = app.XFile().GetRM().rSAME[
+          atoms[0]->CAtom().GetSameId()];
+        if (asg.GetParentGroup() == 0) {
+          sg = &asg;
+        }
+        else {
+          sg = &app.XFile().GetRM().rSAME.New();
+        }
+      }
       for (size_t i = 0; i < groups_count - 1; i++) {
-        deps.Add(app.XFile().GetRM().rSAME.NewDependent(sg));
+        deps.Add(app.XFile().GetRM().rSAME.NewDependent(*sg));
+      }
+      if (!sg->GetAtoms().IsEmpty()) {
+        sg = 0;
       }
       for (size_t i=0; i < cnt; i++) {
-        sg.Add(atoms[i]->CAtom());
+        if (sg != 0) {
+          sg->Add(atoms[i]->CAtom());
+        }
         for (size_t j = 1; j < groups_count; j++) {
           deps[j - 1]->Add(atoms[cnt*j + i]->CAtom());
         }
@@ -8820,18 +8849,34 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
         FunctionAccessor::MakeConst(&TSAtom::CAtom));
     }
     else {
-      TSameGroup &sg = app.XFile().GetRM().rSAME.New(),
-        &dep = app.XFile().GetRM().rSAME.NewDependent(sg);
-      created = &sg;
+      TSameGroup *sg;
+      if (olx_is_valid_index(atoms[0]->CAtom().GetSameId())) {
+        TSameGroup &asg = app.XFile().GetRM().rSAME[
+          atoms[0]->CAtom().GetSameId()];
+        if (asg.GetParentGroup() == 0) {
+          sg = &asg;
+        }
+        else {
+          sg = &app.XFile().GetRM().rSAME.New();
+        }
+      }
+      TSameGroup &dep = app.XFile().GetRM().rSAME.NewDependent(*sg);
+      if (!sg->GetAtoms().IsEmpty()) {
+        sg = 0;
+      }
       if (atoms[0]->IsConnectedTo(*atoms.GetLast())) {
         for (size_t i = 0; i < atoms.Count(); i++) {
-          sg.Add(atoms[i]->CAtom());
+          if (sg != 0) {
+            sg->Add(atoms[i]->CAtom());
+          }
           dep.Add(atoms[i == 0 ? 0 : atoms.Count() - i]->CAtom());
         }
       }
       else {
         for (size_t i = 0; i < atoms.Count(); i++) {
-          sg.Add(atoms[i]->CAtom());
+          if (sg != 0) {
+            sg->Add(atoms[i]->CAtom());
+          }
           dep.Add(atoms[atoms.Count() - i - 1]->CAtom());
         }
       }

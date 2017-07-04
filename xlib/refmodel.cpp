@@ -271,14 +271,16 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm,
   }
 
   if (AssignAUnit || aunit.AtomCount() >= rm.aunit.AtomCount()) {
-    for (size_t i = 0; i < rcList1.Count(); i++)
+    for (size_t i = 0; i < rcList1.Count(); i++) {
       rcList1[i]->Assign(*rm.rcList1[i]);
+    }
 
     rSAME.Assign(rm.rSAME);
     ExyzGroups.Assign(rm.ExyzGroups);
     AfixGroups.Assign(rm.AfixGroups);
-    for (size_t i = 0; i < rcList.Count(); i++)
+    for (size_t i = 0; i < rcList.Count(); i++) {
       rcList[i]->Assign(*this, *rm.rcList[i]);
+    }
     // restraints have to be copied first, as some may refer to vars
     Vars.Assign(rm.Vars);
 
