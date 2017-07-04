@@ -152,10 +152,7 @@ public:
     return start.IsExplicit() && end.IsExplicit();
   }
   // * is special char
-  virtual olxstr GetExpression(TResidue *r) const {
-    return olxstr(start.GetExpression(r) << ' ' << op << ' ' <<
-      end.GetExpression(r));
-  }
+  virtual olxstr GetExpression(TResidue *r) const;
   virtual size_t Expand(const RefinementModel& rm, TAtomRefList_& res,
     TResidue& resi) const;
   virtual AAtomRef* Clone(RefinementModel& rm) const {
@@ -178,15 +175,7 @@ class AtomRefList {
   olxstr residue;
   olxstr expression;
   bool Valid, ContainsImplicitAtoms;
-  olxstr BuildExpression(TResidue *r) const {
-    olxstr rv;
-    for( size_t i=0; i < refs.Count(); i++ )  {
-      rv << refs[i].GetExpression(r);
-      if( (i+1) < refs.Count() )
-        rv << ' ';
-    }
-    return rv;
-  }
+  olxstr BuildExpression(TResidue *r) const;
   void EnsureAtomGroups(const RefinementModel& rm, TAtomRefList& al,
     size_t groups_size) const;
   void EnsureAtomGroups(size_t group_size);
@@ -237,9 +226,7 @@ public:
   /* checks if any of the references are expandable */
   bool IsExpandable() const;
   /* this can be used to decide if the atom list is valid */
-  virtual bool IsExplicit() const {
-    return (!ContainsImplicitAtoms && residue.IsEmpty());
-  }
+  virtual bool IsExplicit() const;
   /* converts this list to list of exlicit references */
   AtomRefList &ConvertToExplicit();
   /* converts this list to list of implicit references */

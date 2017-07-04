@@ -14,7 +14,7 @@
 BeginXlibNamespace()
 
 /* number and alias are unique numbers */
-class TResidue : public IOlxObject  {
+class TResidue : public IOlxObject {
   TAsymmUnit& Parent;
   uint32_t Id;
   olxstr ClassName;
@@ -23,16 +23,15 @@ class TResidue : public IOlxObject  {
 protected:
   // removes an atom and resets the ResiId, this is used internally from Add
   void Remove(TCAtom& ca) {
-    size_t i = Atoms.IndexOf(ca);
-    if( i != InvalidIndex )  {
+    if (Atoms.Remove(ca)) {
       ca.SetResiId(~0);
-      Atoms.Delete(i);
     }
   }
   void SetId(uint32_t id) {
     Id = id;
-    for (size_t i=0; i < Atoms.Count(); i++)
+    for (size_t i = 0; i < Atoms.Count(); i++) {
       Atoms[i]->SetResiId(id);
+    }
   }
   /* adds an atom to this residue without trying to remove from the owning
  residue (if there is any!)
@@ -46,7 +45,7 @@ public:
     : Parent(parent), Id(id), Number(0), Alias(0)
   {}
   TResidue(TAsymmUnit& parent, uint32_t id, const olxstr& cl,
-    int number=0)
+    int number = 0)
     : Parent(parent), Id(id), ClassName(cl), Number(number), Alias(number)
   {}
   TResidue(TAsymmUnit& parent, uint32_t id, const olxstr& cl,
@@ -55,46 +54,68 @@ public:
   {}
   //
   DefPropC(olxstr, ClassName)
-  DefPropC(int, Alias)
-  DefPropP(int, Number)
-  bool HasAlias() const { return Number != Alias; }
+    DefPropC(int, Alias)
+    DefPropP(int, Number)
+    bool HasAlias() const { return Number != Alias; }
   int Compare(const TResidue &r) const {
     return olx_cmp(GetNumber(), r.GetNumber());
   }
-  size_t GetId() const {  return Id;  }
-  TCAtomPList& GetAtomList()  {  return Atoms;  }
-  const TCAtomPList& GetAtomList() const {  return Atoms;  }
-  TAsymmUnit& GetParent()  {  return Parent;  }
+  size_t GetId() const { return Id; }
+  TCAtomPList& GetAtomList() { return Atoms; }
+  const TCAtomPList& GetAtomList() const { return Atoms; }
+  TAsymmUnit& GetParent() { return Parent; }
   virtual TIString ToString() const {
-    if (Id == 0)  return EmptyString();
+    if (Id == 0) {
+      return EmptyString();
+    }
     olxstr rv("RESI ");
     rv << ClassName << ' ' << Number;
-    if (HasAlias()) rv << ' ' << Alias;
+    if (HasAlias()) {
+      rv << ' ' << Alias;
+    }
     return rv;
   }
-  size_t Count() const {  return Atoms.Count();  }
-  TCAtom& GetAtom(size_t i) const {  return *Atoms[i];  }
-  TCAtom& operator [] (size_t i) const {  return *Atoms[i]; }
+  size_t Count() const { return Atoms.Count(); }
+  TCAtom& GetAtom(size_t i) const { return *Atoms[i]; }
+  TCAtom& operator [] (size_t i) const { return *Atoms[i]; }
   void Clear() {
-    for( size_t i=0; i < Atoms.Count(); i++ )
+    for (size_t i = 0; i < Atoms.Count(); i++) {
       Atoms[i]->SetResiId(~0);
+    }
     Atoms.Clear();
   }
-  size_t IndexOf(const TCAtom& ca) const {  return Atoms.IndexOf(ca);  }
+  size_t IndexOf(const TCAtom& ca) const {
+    return Atoms.IndexOf(ca);
+  }
   // removes atom from previous residue and puts into current
   void Add(TCAtom& ca) {
-    Parent.GetResidue(ca.GetResiId()).Remove(ca);
-    Atoms.Add(ca);
-    ca.SetResiId(Id);
+    if (ca.GetResiId() == Id) {
+      Atoms.Add(ca);
+    }
+    else {
+      Parent.GetResidue(ca.GetResiId()).Remove(ca);
+      Atoms.Add(ca);
+      ca.SetResiId(Id);
+    }
   }
-  void SetCapacity(size_t c)  {  Atoms.SetCapacity(c);  }
+  void AddAll(const TCAtomPList &atoms) {
+    Atoms.SetCapacity(Atoms.Count() + atoms.Count());
+    for (size_t i = 0; i < atoms.Count(); i++) {
+      Add(*atoms[i]);
+    }
+  }
+
+  void SetCapacity(size_t c) { Atoms.SetCapacity(c); }
   bool IsEmpty() const {
-    for( size_t i=0; i < Atoms.Count(); i++ )
-      if( !Atoms[i]->IsDeleted() )  return false;
+    for (size_t i = 0; i < Atoms.Count(); i++) {
+      if (!Atoms[i]->IsDeleted()) {
+        return false;
+      }
+    }
     return true;
   }
-  TResidue* Next() const {  return Parent.NextResidue(*this);  }
-  TResidue* Prev() const {  return Parent.PrevResidue(*this);  }
+  TResidue* Next() const { return Parent.NextResidue(*this); }
+  TResidue* Prev() const { return Parent.PrevResidue(*this); }
   friend class TAsymmUnit;
 
   enum {

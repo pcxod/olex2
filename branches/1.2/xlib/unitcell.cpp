@@ -181,30 +181,32 @@ void  TUnitCell::InitMatrices()  {
 #endif
 }
 //..............................................................................
-void TUnitCell::UpdateEllipsoids()  {
+void TUnitCell::UpdateEllipsoids() {
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();
   const size_t ac = au.AtomCount();
   const size_t mc = Matrices.Count();
   const mat3d abc2xyz(mat3d::Transpose(au.GetCellToCartesian())),
-              xyz2abc(mat3d::Transpose(au.GetCartesianToCell()));
+    xyz2abc(mat3d::Transpose(au.GetCartesianToCell()));
   ClearEllipsoids();
   Ellipsoids.SetCount(ac);
-  for (size_t i=0; i < mc; i++)  {
+  for (size_t i = 0; i < mc; i++) {
     mat3d tm = abc2xyz*Matrices[i].r*xyz2abc;
     ematd J = TEllipsoid::GetTransformationJ(tm),
       Jt = ematd::Transpose(J);
-    for (size_t j=0; j < ac; j++)  {
-      if (i == 0)
+    for (size_t j = 0; j < ac; j++) {
+      if (i == 0) {
         Ellipsoids[j].SetCount(mc);
+      }
       const TCAtom& a = au.GetAtom(j);
-      if( olx_is_valid_index(a.GetEllpId()) )  {
+      if (olx_is_valid_index(a.GetEllpId())) {
         TEllipsoid* E = new TEllipsoid(*a.GetEllipsoid());
-        E->SetId(i*mc+a.GetId());
+        E->SetId(i*mc + a.GetId());
         E->Mult(tm, J, Jt);
         Ellipsoids[j][i] = E;
       }
-      else
-        Ellipsoids[j][i] = NULL;
+      else {
+        Ellipsoids[j][i] = 0;
+      }
     }
   }
 }

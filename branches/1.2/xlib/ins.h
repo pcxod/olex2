@@ -84,7 +84,7 @@ protected:
   static void _DrySaveAtom(TCAtom& a, TSizeList &indices,
     bool checkSame = true, bool checkResi = true);
 
-  static void _ProcessSame(ParseContext& cx);
+  static void _ProcessSame(ParseContext& cx, const TIndexList *atomIndex=0);
   // initialises the unparsed instruction list
   void _FinishParsing(ParseContext& cx);
   // processes CONN, FREE and BIND, called from _FinishParsing
