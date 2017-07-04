@@ -47,9 +47,9 @@ ExplicitCAtomRef::~ExplicitCAtomRef() {
 ExplicitCAtomRef* ExplicitCAtomRef::NewInstance(const RefinementModel& rm,
   const olxstr& exp, TResidue* resi)
 {
-  olxstr aname(exp);
+  olxstr aname = exp;
   size_t symm_ind = exp.IndexOf('_');
-  const smatd* symm = NULL;
+  const smatd* symm = 0;
   if (symm_ind != InvalidIndex && (symm_ind+1) < exp.Length())  {
     aname = exp.SubStringTo(symm_ind);
     olxstr sm = exp.SubStringFrom(symm_ind+1);
@@ -303,8 +303,9 @@ AAtomRef* ImplicitCAtomRef::NewInstance(const RefinementModel& rm,
           if (exp.CharAt(us_ind + 1) != '$') { // is symm reference?
             olxstr ri = exp.SubStringFrom(us_ind + 1);
             size_t di = ri.FirstIndexOf('$');
-            if (di != InvalidIndex)
+            if (di != InvalidIndex) {
               ri = ri.SubStringTo(di);
+            }
             if (!ri.IsNumber()) { //is explicit?
               return new ImplicitCAtomRef(exp);
             }
@@ -574,13 +575,19 @@ TAtomRefList::const_list_type AtomRefList::ExpandList(
 }
 //.............................................................................
 bool AtomRefList::IsExpandable() const {
-  if (!Valid) return false;
+  if (!Valid) {
+    return false;
+  }
   for (size_t i = 0; i < refs.Count(); i++) {
     if (refs[i].IsExpandable()) {
       return true;
     }
   }
   return false;
+}
+//.............................................................................
+bool AtomRefList::IsExplicit() const {
+  return (!ContainsImplicitAtoms && (residue.IsEmpty() || residue.IsInt()));
 }
 //.............................................................................
 void AtomRefList::Assign(const AtomRefList &arl) {
@@ -720,6 +727,17 @@ void AtomRefList::Clear() {
   ContainsImplicitAtoms = false;
   residue.SetLength(0);
   expression.SetLength(0);
+}
+//.............................................................................
+olxstr AtomRefList::BuildExpression(TResidue *r) const {
+  olxstr_buf rv;
+  for (size_t i = 0; i < refs.Count(); i++) {
+    rv << refs[i].GetExpression(r);
+    if ((i + 1) < refs.Count()) {
+      rv << ' ';
+    }
+  }
+  return rv;
 }
 //.............................................................................
 olxstr AtomRefList::GetExpression() const {

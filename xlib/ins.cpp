@@ -1321,14 +1321,18 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
     TSameGroup &sg = rm.rSAME[a.GetSameId()];
     if (sg.IsValidForSave() && sg.IsReference()) {
       for (size_t i = 0; i < sg.DependentCount(); i++) {
-        if (!sg.GetDependent(i).IsValidForSave()) {
+        TSameGroup & dg = sg.GetDependent(i);
+        if (!dg.IsValidForSave()) {
           continue;
         }
-        olxstr tmp("SAME ");
-        tmp << olxstr(sg.GetDependent(i).Esd12).TrimFloat() << ' '
-          << olxstr(sg.GetDependent(i).Esd13).TrimFloat() << ' '
-          << sg.GetDependent(i).GetAtoms().GetExpression();
-        HyphenateIns(tmp, sl);
+        olxstr_buf tmp("SAME");
+        if (!dg.GetAtoms().GetResi().IsEmpty()) {
+          tmp << '_' << dg.GetAtoms().GetResi();
+        }
+        tmp << ' ' << olxstr(dg.Esd12).TrimFloat() << ' '
+          << olxstr(dg.Esd13).TrimFloat() << ' '
+          << dg.GetAtoms().GetExpression();
+        HyphenateIns(olxstr(tmp), sl);
       }
       if (sg.GetAtoms().IsExplicit()) {
         TAtomRefList atoms = sg.GetAtoms().ExpandList(rm);
