@@ -372,3 +372,10 @@ TSameGroup *TSameGroupList::Find(const TSameGroup &g) const {
   return 0;
 }
 //.............................................................................
+TSameGroup& TSameGroupList::Build(const olxstr &exp, const olxstr &resi) {
+  TSameGroup& rv = Groups.Add(
+    new TSameGroup((uint16_t)Groups.Count(), *this));
+  rv.GetAtoms().Build(exp, resi);
+  rv.SetId(rv.GetId());
+  return rv;
+}
