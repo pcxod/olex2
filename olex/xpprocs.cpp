@@ -888,10 +888,11 @@ void TMainForm::macClear(TStrObjList &Cmds, const TParamList &Options,
   if (Cmds.IsEmpty()) {
     FGlConsole->ClearBuffer();
   }
-  else {
-    if (Cmds[0].Equalsi("groups")) {
-      FXApp->ClearIndividualCollections();
-    }
+  else if (Cmds[0].Equalsi("groups")) {
+    FXApp->ClearIndividualCollections();
+  }
+  else if (Cmds[0].Equalsi("same")) {
+    FXApp->XFile().GetRM().rSAME.Clear();
   }
 }
 //..............................................................................
@@ -2119,21 +2120,24 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options,
   }
   TXApp::UnifyPAtomList(CAtoms);
   RefinementModel::ReleasedItems released;
-  size_t ac = CAtoms.Count();
-  for (size_t i = 0; i < ac; i++) {
+  olxset<TSameGroup *, TPointerComparator> sameGroups;
+  for (size_t i = 0; i < CAtoms.Count(); i++) {
     if (olx_is_valid_index(CAtoms[i]->GetSameId())) {
-      TSameGroup& sg = rm.rSAME[CAtoms[i]->GetSameId()];
-      if (sg.GetParentGroup() != 0) {
-        released.sameList.Add(sg.GetParentGroup());
+      TSameGroup* sg = &rm.rSAME[CAtoms[i]->GetSameId()];
+      if (sameGroups.Contains(sg)) {
+        continue;
       }
-      released.sameList.Add(sg);
-      for (size_t j = 0; j < sg.DependentCount(); j++) {
-        released.sameList.Add(sg.GetDependent(j));
+      if (sg->GetParentGroup() != 0) {
+        sg = sg->GetParentGroup();
+      }
+      sameGroups.Add(sg);
+      for (size_t j = 0; j < sg->DependentCount(); j++) {
+        sameGroups.Add(&sg->GetDependent(j));
       }
     }
   }
   // process SAME's
-  ACollectionItem::Unify(released.sameList);
+  released.sameList.AddAll(sameGroups);
   for (size_t i = 0; i < released.sameList.Count(); i++) {
     TSameGroup &sg = *released.sameList[i];
     TAtomRefList atoms = sg.GetAtoms().ExpandList(rm);
