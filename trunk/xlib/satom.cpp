@@ -151,30 +151,44 @@ void TSAtom::FromDataItem(const TDataItem& item, TLattice& parent) {
   }
 }
 //..............................................................................
-void TSAtom::UpdateMatrix(const smatd *M) {
-  if (M->IsFirst() || M->GetId() < Matrix->GetId())
-    Matrix = M;
+void TSAtom::_SetMatrix(const smatd &M) {
+  Matrix = &M;
+}
+//..............................................................................
+TSAtom::Ref TSAtom::GetRef() const {
+  return GetRef(*FCAtom, *Matrix);
+}
+//..............................................................................
+bool TSAtom::operator == (const TSAtom::Ref& id) const {
+  return (FCAtom->GetId() == id.catom_id &&
+    IsGenerator(id.matrix_id));
 }
 //..............................................................................
 bool TSAtom::IsGenerator(uint32_t m_id) const {
-  if (m_id == GetMatrix().GetId())
+  if (m_id == GetMatrix().GetId()) {
     return true;
+  }
   const TUnitCell &uc = GetNetwork().GetLattice().GetUnitCell();
   for (size_t i=0; i < CAtom().EquivCount(); i++) {
     uint32_t id = uc.MulMatrixId(CAtom().GetEquiv(i), GetMatrix());
-    if (id == m_id)
+    if (id == m_id) {
       return true;
+    }
   }
   return false;
 }
 //..............................................................................
 TSAtom::Ref TSAtom::GetRef(const TCAtom &a, const smatd &generator) {
+  if (generator.IsFirst()) {
+    return Ref(a.GetId(), generator.GetId());
+  }
   uint32_t m_id = generator.GetId();
   const TUnitCell &uc = a.GetParent()->GetLattice().GetUnitCell();
   for (size_t i=0; i < a.EquivCount(); i++) {
     uint32_t n_id = uc.MulMatrixId(a.GetEquiv(i), generator);
-    if (n_id < m_id)
+    if (n_id < m_id) {
       m_id = n_id;
+    }
   }
   return Ref(a.GetId(), m_id);
 }
