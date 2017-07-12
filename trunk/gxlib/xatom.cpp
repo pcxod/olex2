@@ -1129,6 +1129,52 @@ void TXAtom::CreatePoly(const TSAtomPList& bound, short type,
           }
         }
       }
+      for (size_t i = 0; i < pl.faces.Count(); i++) {
+        vec3f c = (pl.vecs[pl.faces[i][0]] +
+          pl.vecs[pl.faces[i][1]] + pl.vecs[pl.faces[i][2]])/3;
+        for (size_t j = 0; j < pl.faces.Count(); j++) {
+          if (i == j) {
+            continue;
+          }
+          vec3f c1 = (pl.vecs[pl.faces[j][0]] +
+            pl.vecs[pl.faces[j][1]] + pl.vecs[pl.faces[j][2]] + crd()) / 4;
+          vec3f ns[4] = {
+            (pl.vecs[pl.faces[j][0]] - crd()).XProdVec(
+              pl.vecs[pl.faces[j][1]] - crd()),
+            (pl.vecs[pl.faces[j][0]] - crd()).XProdVec(
+              pl.vecs[pl.faces[j][2]] - crd()),
+            (pl.vecs[pl.faces[j][1]] - crd()).XProdVec(
+              pl.vecs[pl.faces[j][2]] - crd()),
+            (pl.vecs[pl.faces[j][1]] - pl.vecs[pl.faces[j][0]]).XProdVec(
+              pl.vecs[pl.faces[j][2]] - pl.vecs[pl.faces[j][0]])
+          };
+          vec3f fc[4] = {
+            (pl.vecs[pl.faces[j][0]] + crd() + pl.vecs[pl.faces[j][1]]) / 3,
+            (pl.vecs[pl.faces[j][0]] + crd() + pl.vecs[pl.faces[j][2]]) / 3,
+            (pl.vecs[pl.faces[j][1]] + crd() + pl.vecs[pl.faces[j][2]]) / 3,
+            (pl.vecs[pl.faces[j][1]] + pl.vecs[pl.faces[j][0]] +
+              pl.vecs[pl.faces[j][2]]) /3
+          };
+          for (int k = 0; k < 4; k++) {
+            if ((c1-fc[k]).DotProd(ns[k]) < 0) {
+              ns[k] *= -1;
+            }
+          }
+          float cs = olx_sign((c-fc[0]).DotProd(ns[0]));
+          if (cs > 0) {
+            for (int k = 1; k < 4; k++) {
+              if ((cs = olx_sign((c-fc[k]).DotProd(ns[k]))) < 0) {
+                break;
+              }
+            }
+            //a centre inside another tetrahedron
+            if (cs > 0) {
+              pl.faces.Delete(i--);
+              break;
+            }
+          }
+        }
+      }
       CreateNormals(pl, crd());
     }
     else if (type == polyPyramid) {
