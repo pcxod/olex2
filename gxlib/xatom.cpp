@@ -72,7 +72,7 @@ void TXAtom::InitActualSphere() {
   if (defs.GetQuality() == qaPict) {
     return;
   }
-  if (CAtom().GetExyzGroup() != NULL && defs.ConstrainedAtomSphere != ~0) {
+  if (CAtom().GetExyzGroup() != 0 && defs.ConstrainedAtomSphere != ~0) {
     ActualSphere = defs.ConstrainedAtomSphere;
   }
   else if (CAtom().IsFixedType() && defs.LockedAtomSphere != ~0) {
@@ -124,13 +124,14 @@ TStrList* TXAtom::FindPrimitiveParams(TGlPrimitive *P) const {
     if (defs.PrimitiveParams[i].GlP == P)
       return &(defs.PrimitiveParams[i].Params);
   }
-  return NULL;
+  return 0;
 }
 //..............................................................................
 void TXAtom::ListParams(TStrList &l, TGlPrimitive *P) {
   TStrList *L = FindPrimitiveParams(P);
-  if (L != NULL)
+  if (L != 0) {
     l = *L;
+  }
 }
 //..............................................................................
 void TXAtom::ListParams(TStrList &l) {
@@ -202,7 +203,7 @@ void TXAtom::Create(const olxstr& cName) {
     }
   }
 
-  TGPCollection *GPC = NULL;
+  TGPCollection *GPC = 0;
   Settings &defs = GetSettings();
   const TStringToList<olxstr, TGlPrimitive*> &primitives =
     defs.GetPrimitives(true);
@@ -215,9 +216,10 @@ void TXAtom::Create(const olxstr& cName) {
     Legend = GetLabelLegend(*this);
     GPC = Parent.FindCollection(Legend);
     // if the collection is empty, need to fill it...
-    if (GPC == NULL || GPC->PrimitiveCount() == 0) {
-      if (GPC == NULL)
+    if (GPC == 0 || GPC->PrimitiveCount() == 0) {
+      if (GPC == 0) {
         GPC = &Parent.NewCollection(Legend);
+      }
       GPC->GetStyle().SetSaveable(false);
     }
     else {
@@ -229,8 +231,9 @@ void TXAtom::Create(const olxstr& cName) {
   else {
     olxstr NewL;
     GPC = Parent.FindCollectionX(Legend, NewL);
-    if (GPC == NULL)
+    if (GPC == 0) {
       GPC = &Parent.NewCollection(NewL);
+    }
     else {
       if (GPC->PrimitiveCount() != 0) {
         GPC->AddObject(*this);
@@ -250,13 +253,15 @@ void TXAtom::Create(const olxstr& cName) {
   GS.SetSaveable(GPC->GetName().CharCount('.') == 0);
 
   olxstr& SMask = GS.GetParam(GetPrimitiveMaskName(), EmptyString());
-  if (SMask.IsEmpty())
+  if (SMask.IsEmpty()) {
     SMask = defs.GetMask();
+  }
   int PMask = SMask.ToInt();
 
   GPC->AddObject(*this);
-  if( PMask == 0 )
+  if (PMask == 0) {
     return; // nothing to create then...
+  }
   // update primitives list
   ValidateDS(GS);
   ValidateRadius(GS);
@@ -361,16 +366,42 @@ uint16_t TXAtom::LegendLevel(const olxstr& legend) {
   return (uint16_t)legend.CharCount('.');
 }
 //..............................................................................
+//..............................................................................
+struct PolyFacesSorter {
+  const TXAtom::Poly& p;
+  vec3f c;
+  mat3f rm;
+  PolyFacesSorter(const TXAtom::Poly& p,
+    const TGlRenderer &r)
+    : p(p)
+  {
+    c = r.GetBasis().GetCenter();
+    rm = r.GetBasis().GetMatrix();
+  }
+  int Compare(const vec3s *a, const vec3s *b) const {
+    vec3f ca = (p.vecs[(*a)[0]] + p.vecs[(*a)[1]] + p.vecs[(*a)[2]])/3;
+    vec3f cb = (p.vecs[(*b)[0]] + p.vecs[(*b)[1]] + p.vecs[(*b)[2]])/3;
+    ca = (ca+c)*rm;
+    cb = (cb+c)*rm;
+    return olx_cmp(cb[2], ca[2]);
+  }
+};
+//..............................................................................
 bool TXAtom::Orient(TGlPrimitive& GlP) {
   // override for standalone atoms
-  if (FDrawStyle == adsStandalone && !IsStandalone())
+  if (FDrawStyle == adsStandalone && !IsStandalone()) {
     return true;
+  }
 
   if (GlP.GetOwnerId() == xatom_PolyId) {
-    if (Polyhedron == NULL) return true;
-    const TXAtom::Poly& pl = *Polyhedron;
+    if (Polyhedron == 0) {
+      return true;
+    }
+    TXAtom::Poly& pl = *Polyhedron;
+    QuickSorter::Sort(pl.faces, PolyFacesSorter(pl, Parent),
+      SyncSortListener::MakeSingle(pl.norms));
     olx_gl::begin(GL_TRIANGLES);
-    for (size_t j=0; j < pl.faces.Count(); j++) {
+    for (size_t j = 0; j < pl.faces.Count(); j++) {
       olx_gl::normal(pl.norms[j]);
       olx_gl::vertex(pl.vecs[pl.faces[j][0]]);
       olx_gl::vertex(pl.vecs[pl.faces[j][1]]);
@@ -386,8 +417,8 @@ bool TXAtom::Orient(TGlPrimitive& GlP) {
     return true;
   }
   // override for iso atoms
-  if (GetEllipsoid() == NULL &&
-     (GlP.GetOwnerId() == xatom_DisksId || GlP.GetOwnerId() == xatom_RimsId))
+  if (GetEllipsoid() == 0 &&
+    (GlP.GetOwnerId() == xatom_DisksId || GlP.GetOwnerId() == xatom_RimsId))
   {
     return true;
   }
@@ -396,24 +427,27 @@ bool TXAtom::Orient(TGlPrimitive& GlP) {
   c += crd();
 
   const TExyzGroup* exyz = CAtom().GetExyzGroup();
-  if (exyz != NULL) {
+  if (exyz != 0) {
     if (IsSpecialDrawing()) { // draw separate atoms
       const mat3d& m = Parent.GetBasis().GetMatrix();
       vec3d v(m[0][0], m[1][0], m[2][0]);
       v *= 0.75;
       if (exyz->Count() == 2) {
-        if (&(*exyz)[1] == &CAtom())
+        if (&(*exyz)[1] == &CAtom()) {
           c += v;
+        }
       }
       if (exyz->Count() == 3) {
-        if (&(*exyz)[1] == &CAtom())
+        if (&(*exyz)[1] == &CAtom()) {
           c += v;
-        else if (&(*exyz)[2] == &CAtom())
+        }
+        else if (&(*exyz)[2] == &CAtom()) {
           c -= v;
+        }
       }
       else if (exyz->Count() > 3) {
-        size_t id=0;
-        for (size_t i=0; i < exyz->Count(); i++) {
+        size_t id = 0;
+        for (size_t i = 0; i < exyz->Count(); i++) {
           if (&(*exyz)[i] == &CAtom()) {
             id = i;
             break;
@@ -422,7 +456,7 @@ bool TXAtom::Orient(TGlPrimitive& GlP) {
         if (id > 0) {
           vec3d rv(m[0][2], m[1][2], m[2][2]);
           mat3d rm;
-          double a = (id-1)*2*M_PI/(exyz->Count()-1);
+          double a = (id - 1) * 2 * M_PI / (exyz->Count() - 1);
           olx_create_rotation_matrix(rm, rv, cos(a), sin(a));
           c += v*rm;
         }
@@ -437,19 +471,20 @@ bool TXAtom::Orient(TGlPrimitive& GlP) {
 
   double scale = GetZoom();
   if ((FRadius & darIsot) != 0) {
-    if (GetType().z != 1)
+    if (GetType().z != 1) {
       scale *= defs.GetTelpProb();
+    }
   }
   else if ((FRadius & darIsotH) != 0)
     scale *= defs.GetTelpProb();
 
   if (FDrawStyle == adsEllipsoid || FDrawStyle == adsOrtep) {
-    if (GetEllipsoid() != NULL) {
+    if (GetEllipsoid() != 0) {
       // override for NPD atoms
       if (GetEllipsoid()->IsNPD() ||
         (CAtom().GetUiso() < 1e-2 && IsSpecialDrawing()))
       {
-        olx_gl::scale(caDefIso*2*scale);
+        olx_gl::scale(caDefIso * 2 * scale);
         if (GlP.GetOwnerId() == xatom_SphereId) {
           defs.GetPrimitives().GetObject(defs.TetrahedronIndex)->Draw();
           return true;
@@ -464,7 +499,7 @@ bool TXAtom::Orient(TGlPrimitive& GlP) {
           GetEllipsoid()->GetSX()*scale,
           GetEllipsoid()->GetSY()*scale,
           GetEllipsoid()->GetSZ()*scale
-          );
+        );
         if (GlP.GetOwnerId() == xatom_SphereId && !Parent.IsSelecting()) {
           if (ActualSphere != ~0) {
             olx_gl::callList(ActualSphere);
@@ -474,11 +509,12 @@ bool TXAtom::Orient(TGlPrimitive& GlP) {
             short mask = 0;
             const mat3d mat = GetEllipsoid()->GetMatrix()*
               Parent.GetBasis().GetMatrix();
-            for (int i=0; i < 3; i++) {
-              if (mat[i][2] < 0)
-                mask |= (1<<i);
+            for (int i = 0; i < 3; i++) {
+              if (mat[i][2] < 0) {
+                mask |= (1 << i);
+              }
             }
-            olx_gl::callList(defs.OrtepSpheres+mask);
+            olx_gl::callList(defs.OrtepSpheres + mask);
             return true;
           }
         }
@@ -495,8 +531,9 @@ bool TXAtom::Orient(TGlPrimitive& GlP) {
       olx_gl::scale(GetR()*scale);
     }
   }
-  else if (FDrawStyle == adsSphere)
+  else if (FDrawStyle == adsSphere) {
     olx_gl::scale(GetR()*scale);
+  }
   else if (FDrawStyle == adsStandalone) {
     olx_gl::scale(GetR()*scale);
     return false;
@@ -588,12 +625,13 @@ TGraphicsStyle& TXAtom::Style()  {
   return GetPrimitives().GetStyle();
 }
 //..............................................................................
-void TXAtom::ApplyStyle(TGraphicsStyle& Style)  {
-  for( size_t i=0; i < Style.PrimitiveStyleCount(); i++ )  {
+void TXAtom::ApplyStyle(TGraphicsStyle& Style) {
+  for (size_t i = 0; i < Style.PrimitiveStyleCount(); i++) {
     TGlPrimitive* GP = GetPrimitives().FindPrimitiveByName(
-      Style.GetPrimitiveStyle(i).GetName() );
-    if( GP != NULL )
+      Style.GetPrimitiveStyle(i).GetName());
+    if (GP != 0) {
       GP->SetProperties(Style.GetPrimitiveStyle(i).GetProperties());
+    }
   }
 }
 //..............................................................................
@@ -660,32 +698,35 @@ void TXAtom::UpdatePrimitiveParams(TGlPrimitive* GlP)  {
 const_strlist TXAtom::ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const
 {
   TStrList out;
-  if( DrawStyle() == adsStandalone && !IsStandalone() )
+  if (DrawStyle() == adsStandalone && !IsStandalone())
     return out;
   out.Add(" object { union {");
   const TGPCollection &gpc = GetPrimitives();
-  for( size_t i=0; i < gpc.PrimitiveCount(); i++ )  {
+  for (size_t i = 0; i < gpc.PrimitiveCount(); i++) {
     TGlPrimitive &glp = gpc.GetPrimitive(i);
-    if( glp.GetOwnerId() == xatom_PolyId ) continue;
-    if( GetEllipsoid() == NULL &&
-      (glp.GetOwnerId() == xatom_DisksId || glp.GetOwnerId() == xatom_RimsId ) )
+    if (glp.GetOwnerId() == xatom_PolyId) continue;
+    if (GetEllipsoid() == 0 &&
+      (glp.GetOwnerId() == xatom_DisksId || glp.GetOwnerId() == xatom_RimsId))
+    {
       continue;
+    }
     olxstr glp_name = glp.GetName().ToLowerCase().Replace(' ', '_'),
       name_extra;
-    if (GetEllipsoid() != NULL) {
+    if (GetEllipsoid() != 0) {
       if (GetEllipsoid()->IsNPD() && DrawStyle() != adsSphere) {
         glp_name = "tetrahedron";
       }
       else if (FDrawStyle == adsOrtep &&
-          glp.GetOwnerId() == xatom_SphereId)
+        glp.GetOwnerId() == xatom_SphereId)
       {
         short mask = 0;
         const mat3d mat = GetEllipsoid()->GetMatrix()*Parent.GetBasis().GetMatrix();
-        for( int i=0; i < 3; i++ )  {
-          if( mat[i][2] < 0 )
-            mask |= (1<<i);
+        for (int i = 0; i < 3; i++) {
+          if (mat[i][2] < 0) {
+            mask |= (1 << i);
+          }
         }
-        name_extra = mask+1;
+        name_extra = mask + 1;
       }
     }
 
@@ -695,8 +736,8 @@ const_strlist TXAtom::ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const
   }
   pov::CrdTransformer crdc(Parent.GetBasis());
   out.Add("  }");
-  if( (DrawStyle() == adsEllipsoid || DrawStyle() == adsOrtep) &&
-    GetEllipsoid() != NULL && !GetEllipsoid()->IsNPD())
+  if ((DrawStyle() == adsEllipsoid || DrawStyle() == adsOrtep) &&
+    GetEllipsoid() != 0 && !GetEllipsoid()->IsNPD())
   {
     mat3d m = GetEllipsoid()->GetMatrix()*GetDrawScale();
     m[0] *= GetEllipsoid()->GetSX();
@@ -711,14 +752,14 @@ const_strlist TXAtom::ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const
     out.Add("  translate") << pov::to_str(crdc.crd(crd()));
   }
   out.Add(" }");
-  if( GetPolyhedronType() != polyNone && GetPolyhedron() != NULL )  {
+  if (GetPolyhedronType() != polyNone && GetPolyhedron() != 0) {
     olxstr poly_mat_name = pov::get_mat_name("Polyhedron",
       GetPrimitives().GetStyle(), materials, this);
     TXAtom::Poly &p = *GetPolyhedron();
     out.Add(" union { //") << GetLabel();
-    for( size_t i=0; i < p.faces.Count(); i++ )  {
+    for (size_t i = 0; i < p.faces.Count(); i++) {
       out.Add("  smooth_triangle {");
-      for( int j=0; j < 3; j++ )  {
+      for (int j = 0; j < 3; j++) {
         out.Add("   ") << pov::to_str(crdc.crd(p.vecs[p.faces[i][j]]))
           << pov::to_str(crdc.normal(p.norms[i]));
       }
@@ -799,8 +840,8 @@ const_strlist TXAtom::ToWrl(olx_cdict<TGlMaterial, olxstr> &materials) const
     return out;
   out.Add(" Group { children [");
   pov::CrdTransformer crdc(Parent.GetBasis());
-  if( (DrawStyle() == adsEllipsoid || DrawStyle() == adsOrtep) &&
-    GetEllipsoid() != NULL && !GetEllipsoid()->IsNPD())
+  if ((DrawStyle() == adsEllipsoid || DrawStyle() == adsOrtep) &&
+    GetEllipsoid() != 0 && !GetEllipsoid()->IsNPD())
   {
     mat3d m = GetEllipsoid()->GetMatrix()*GetDrawScale(),
       q;
@@ -828,15 +869,17 @@ const_strlist TXAtom::ToWrl(olx_cdict<TGlMaterial, olxstr> &materials) const
   out.Add("   children [");
   const TGPCollection &gpc = GetPrimitives();
   bool th_drawn = false;
-  for (size_t i=0; i < gpc.PrimitiveCount(); i++) {
+  for (size_t i = 0; i < gpc.PrimitiveCount(); i++) {
     TGlPrimitive &glp = gpc.GetPrimitive(i);
     if (glp.GetOwnerId() == xatom_PolyId || th_drawn) continue;
-    if (GetEllipsoid() == NULL &&
-        (glp.GetOwnerId() == xatom_DisksId || glp.GetOwnerId() == xatom_RimsId ))
+    if (GetEllipsoid() == 0 &&
+      (glp.GetOwnerId() == xatom_DisksId || glp.GetOwnerId() == xatom_RimsId))
+    {
       continue;
+    }
     olxstr glp_name = glp.GetName().ToLowerCase().Replace(' ', '_'),
       name_extra;
-    if (GetEllipsoid() != NULL) {
+    if (GetEllipsoid() != 0) {
       if (GetEllipsoid()->IsNPD() && DrawStyle() != adsSphere) {
         glp_name = "tetrahedron";
         th_drawn = true;
@@ -847,20 +890,21 @@ const_strlist TXAtom::ToWrl(olx_cdict<TGlMaterial, olxstr> &materials) const
       p_mat << '}';
   }
   out.Add("  ]}");
-  if (GetPolyhedronType() != polyNone && GetPolyhedron() != NULL) {
+  if (GetPolyhedronType() != polyNone && GetPolyhedron() != 0) {
     olxstr poly_mat_str = wrl::get_mat_str("Polyhedron",
       GetPrimitives().GetStyle(), materials, this);
     TXAtom::Poly &p = *GetPolyhedron();
     out.Add("  Shape{ appearance ") << poly_mat_str;
     out.Add("   geometry IndexedFaceSet{ coord Coordinate{ point[");
-    for (size_t i=0; i < p.vecs.Count(); i++) {
+    for (size_t i = 0; i < p.vecs.Count(); i++) {
       out.Add("    ") << wrl::to_str(crdc.crd(p.vecs[i]));
-      if (i+1 < p.vecs.Count())
+      if (i + 1 < p.vecs.Count()) {
         out.GetLastString() << ',';
+      }
     }
     out.GetLastString() << "]}";
     olxstr &ci = out.Add("    coordIndex[");
-    for (size_t i=0; i < p.faces.Count(); i++) {
+    for (size_t i = 0; i < p.faces.Count(); i++) {
       ci.stream(' ') << p.faces[i][0] << p.faces[i][1] << p.faces[i][2] << "-1";
     }
     ci << ']';
@@ -924,11 +968,11 @@ const_strlist TXAtom::WrlDeclare(TGlRenderer &r) {
   return out;
 }
 //..............................................................................
-void TXAtom::UpdatePrimitives(int32_t Mask)  {
+void TXAtom::UpdatePrimitives(int32_t Mask) {
   Settings &defs = GetSettings();
   AGDrawObject::UpdatePrimitives(Mask);
   bool create_polyhedron = (Mask & (1 << defs.PolyhedronIndex)) != 0;
-  for (size_t i=0; i < GetPrimitives().ObjectCount(); i++) {
+  for (size_t i = 0; i < GetPrimitives().ObjectCount(); i++) {
     if (EsdlInstanceOf(GetPrimitives().GetObject(i), TXAtom)) {
       ((TXAtom&)GetPrimitives().GetObject(i))
         .CreatePolyhedron(create_polyhedron);
@@ -936,13 +980,13 @@ void TXAtom::UpdatePrimitives(int32_t Mask)  {
   }
 }
 //..............................................................................
-void TXAtom::SetZoom(double V)  {
+void TXAtom::SetZoom(double V) {
   GetPrimitives().GetStyle().SetParam("Z",
     V, LegendLevel(GetCollectionName()) == 0);
   Params()[1] = V;
 }
 //..............................................................................
-void TXAtom::SetR(double V)  {
+void TXAtom::SetR(double V) {
   GetPrimitives().GetStyle().SetParam("R", V,
     LegendLevel(GetCollectionName()) == 0);
   Params()[0] = V;
@@ -959,14 +1003,14 @@ bool TXAtom::OnMouseDown(const IOlxObject *Sender, const TMouseData& Data) {
   return AGlMouseHandlerImp::OnMouseDown(Sender, Data);
 }
 //..............................................................................
-bool TXAtom::OnMouseUp(const IOlxObject *Sender, const TMouseData& Data)  {
+bool TXAtom::OnMouseUp(const IOlxObject *Sender, const TMouseData& Data) {
   if (!IsMoveable()) {
     return Label->IsVisible() ? Label->OnMouseUp(Sender, Data) : false;
   }
   return AGlMouseHandlerImp::OnMouseUp(Sender, Data);
 }
 //..............................................................................
-bool TXAtom::OnMouseMove(const IOlxObject *Sender, const TMouseData& Data)  {
+bool TXAtom::OnMouseMove(const IOlxObject *Sender, const TMouseData& Data) {
   if (!IsMoveable()) {
     return Label->IsVisible() ? Label->OnMouseMove(Sender, Data) : false;
   }
@@ -976,11 +1020,11 @@ bool TXAtom::OnMouseMove(const IOlxObject *Sender, const TMouseData& Data)  {
 void TXAtom::CreateNormals(TXAtom::Poly& pl, const vec3f& cnt) {
   const size_t off = pl.norms.Count();
   pl.norms.SetCapacity(pl.faces.Count());
-  for (size_t i=off; i < pl.faces.Count(); i++) {
+  for (size_t i = off; i < pl.faces.Count(); i++) {
     const vec3f& v1 = pl.vecs[pl.faces[i][0]];
     const vec3f& v2 = pl.vecs[pl.faces[i][1]];
     const vec3f& v3 = pl.vecs[pl.faces[i][2]];
-    vec3f n = (v2-v1).XProdVec(v3-v1);
+    vec3f n = (v2 - v1).XProdVec(v3 - v1);
     if (n.QLength() < 1e-6) {  // oups...
       pl.faces.Clear();
       pl.vecs.Clear();
@@ -988,7 +1032,7 @@ void TXAtom::CreateNormals(TXAtom::Poly& pl, const vec3f& cnt) {
       return;
     }
     float nl = n.Length();
-    const float d = n.DotProd((v1+v2+v3)/3-cnt)/nl;
+    const float d = n.DotProd((v1 + v2 + v3) / 3 - cnt) / nl;
     n /= nl;
     if (d < 0) { // normal looks inside?
       olx_swap(pl.faces[i][0], pl.faces[i][1]);
@@ -998,7 +1042,7 @@ void TXAtom::CreateNormals(TXAtom::Poly& pl, const vec3f& cnt) {
   }
 }
 vec3f TXAtom::TriangulateType2(Poly& pl, const TSAtomPList& atoms) {
-  TSPlane plane(NULL);
+  TSPlane plane(0);
   TTypeList< olx_pair_t<TSAtom*, double> > pa;
   vec3f cnt;
   for (size_t i=0; i < atoms.Count(); i++ ) {
@@ -1019,15 +1063,18 @@ vec3f TXAtom::TriangulateType2(Poly& pl, const TSAtomPList& atoms) {
   pl.vecs.SetCount(pl.vecs.Count()+atoms.Count()+2);
   pl.vecs[start] = crd();
   pl.vecs[start+1] = plane.GetCenter();
-  for (size_t i=0; i < sp.sortedPlane.Count(); i++)
-    pl.vecs[start+i+2] = sp.sortedPlane[i];
+  for (size_t i = 0; i < sp.sortedPlane.Count(); i++) {
+    pl.vecs[start + i + 2] = sp.sortedPlane[i];
+  }
   // create the base
-  for (size_t i=0; i < sp.sortedPlane.Count()-1; i++)
-    pl.faces.AddNew(start+1, start+i+2, start+i+3);
+  for (size_t i = 0; i < sp.sortedPlane.Count() - 1; i++) {
+    pl.faces.AddNew(start + 1, start + i + 2, start + i + 3);
+  }
   pl.faces.AddNew(start+1, start+2, start+sp.sortedPlane.Count()+1);
   // and the rest to close the polyhedron
-  for (size_t i=0; i < sp.sortedPlane.Count()-1; i++)
-    pl.faces.AddNew(start, start+i+2, start+i+3);
+  for (size_t i = 0; i < sp.sortedPlane.Count() - 1; i++) {
+    pl.faces.AddNew(start, start + i + 2, start + i + 3);
+  }
   pl.faces.AddNew(start, start+2, start+sp.sortedPlane.Count()+1);
   return cnt;
 }
@@ -1035,39 +1082,41 @@ vec3f TXAtom::TriangulateType2(Poly& pl, const TSAtomPList& atoms) {
 void TXAtom::CreatePoly(const TSAtomPList& bound, short type,
   const vec3d* _normal, const vec3d* _pc)
 {
-  try  {
+  try {
     static const vec3d NullVec;
-    TXAtom::Poly& pl = *((Polyhedron == NULL) ?
-      (Polyhedron=new TXAtom::Poly) : Polyhedron);
-    if( type == polyRegular )  {
+    TXAtom::Poly& pl = *((Polyhedron == 0) ?
+      (Polyhedron = new TXAtom::Poly) : Polyhedron);
+    if (type == polyRegular) {
       vec3d pc;
-      for (size_t ai=0; ai < bound.Count(); ai++)
+      for (size_t ai = 0; ai < bound.Count(); ai++) {
         pc += bound[ai]->crd();
+      }
       pc /= bound.Count();
       bool centered = pc.DistanceTo(crd()) < 0.15;
       pl.vecs.SetCount(bound.Count());
-      for( size_t i=0; i < bound.Count(); i++ )  {
+      for (size_t i = 0; i < bound.Count(); i++) {
         pl.vecs[i] = bound[i]->crd();
-        for( size_t j=i+1; j < bound.Count(); j++ )  {
-          for( size_t k=j+1; k < bound.Count(); k++ )  {
+        for (size_t j = i + 1; j < bound.Count(); j++) {
+          for (size_t k = j + 1; k < bound.Count(); k++) {
             // regular octahedron vol would be ~0.47A^3
             double vol = olx_tetrahedron_volume(
               NullVec,
-              (bound[i]->crd()-crd()).Normalise(),
-              (bound[j]->crd()-crd()).Normalise(),
-              (bound[k]->crd()-crd()).Normalise());
-            if (vol > 0.03) {
+              (bound[i]->crd() - crd()).Normalise(),
+              (bound[j]->crd() - crd()).Normalise(),
+              (bound[k]->crd() - crd()).Normalise());
+            if (vol > 0.06) {
               pl.faces.AddNew(i, j, k);
             }
             // check if there is another atom on the other side
             else if (!centered) {
-              vec3d n = (bound[i]->crd()-bound[j]->crd()).XProdVec(
-                bound[k]->crd()-bound[j]->crd()).Normalise();
-              if ((pc-crd()).DotProd(n) > 0)
+              vec3d n = (bound[i]->crd() - bound[j]->crd()).XProdVec(
+                bound[k]->crd() - bound[j]->crd()).Normalise();
+              if ((pc - crd()).DotProd(n) > 0) {
                 n *= -1;
-              bool exists=false;
-              for (size_t ai=0; ai < bound.Count(); ai++) {
-                double d = (bound[ai]->crd()-crd()).DotProd(n);
+              }
+              bool exists = false;
+              for (size_t ai = 0; ai < bound.Count(); ai++) {
+                double d = (bound[ai]->crd() - crd()).DotProd(n);
                 if (d > 0.1) { // at least 0.1 A away from this face
                   exists = true;
                   break;
@@ -1080,38 +1129,84 @@ void TXAtom::CreatePoly(const TSAtomPList& bound, short type,
           }
         }
       }
+      for (size_t i = 0; i < pl.faces.Count(); i++) {
+        vec3f c = (pl.vecs[pl.faces[i][0]] +
+          pl.vecs[pl.faces[i][1]] + pl.vecs[pl.faces[i][2]])/3;
+        for (size_t j = 0; j < pl.faces.Count(); j++) {
+          if (i == j) {
+            continue;
+          }
+          vec3f c1 = (pl.vecs[pl.faces[j][0]] +
+            pl.vecs[pl.faces[j][1]] + pl.vecs[pl.faces[j][2]] + crd()) / 4;
+          vec3f ns[4] = {
+            (pl.vecs[pl.faces[j][0]] - crd()).XProdVec(
+              pl.vecs[pl.faces[j][1]] - crd()),
+            (pl.vecs[pl.faces[j][0]] - crd()).XProdVec(
+              pl.vecs[pl.faces[j][2]] - crd()),
+            (pl.vecs[pl.faces[j][1]] - crd()).XProdVec(
+              pl.vecs[pl.faces[j][2]] - crd()),
+            (pl.vecs[pl.faces[j][1]] - pl.vecs[pl.faces[j][0]]).XProdVec(
+              pl.vecs[pl.faces[j][2]] - pl.vecs[pl.faces[j][0]])
+          };
+          vec3f fc[4] = {
+            (pl.vecs[pl.faces[j][0]] + crd() + pl.vecs[pl.faces[j][1]]) / 3,
+            (pl.vecs[pl.faces[j][0]] + crd() + pl.vecs[pl.faces[j][2]]) / 3,
+            (pl.vecs[pl.faces[j][1]] + crd() + pl.vecs[pl.faces[j][2]]) / 3,
+            (pl.vecs[pl.faces[j][1]] + pl.vecs[pl.faces[j][0]] +
+              pl.vecs[pl.faces[j][2]]) /3
+          };
+          for (int k = 0; k < 4; k++) {
+            if ((c1-fc[k]).DotProd(ns[k]) < 0) {
+              ns[k] *= -1;
+            }
+          }
+          float cs = olx_sign((c-fc[0]).DotProd(ns[0]));
+          if (cs > 0) {
+            for (int k = 1; k < 4; k++) {
+              if ((cs = olx_sign((c-fc[k]).DotProd(ns[k]))) < 0) {
+                break;
+              }
+            }
+            //a centre inside another tetrahedron
+            if (cs > 0) {
+              pl.faces.Delete(i--);
+              break;
+            }
+          }
+        }
+      }
       CreateNormals(pl, crd());
     }
-    else if( type == polyPyramid )  {
+    else if (type == polyPyramid) {
       vec3f cnt = TriangulateType2(pl, bound);
       CreateNormals(pl, cnt);
     }
-    else if( type == polyBipyramid )  {
+    else if (type == polyBipyramid) {
       vec3d normal, pc;
-      if( _normal == NULL || _pc == NULL )  {
+      if (_normal == 0 || _pc == 0) {
         vec3d rms;
         mat3d normals;
         TSPlane::CalcPlanes(bound, normals, rms, pc);
         normal = normals[2];
       }
-      else  {
+      else {
         normal = *_normal;
         pc = *_pc;
       }
       TSAtomPList sidea, sideb;
       pl.vecs.Clear();
-      for( size_t i=0; i < bound.Count(); i++ )  {
+      for (size_t i = 0; i < bound.Count(); i++) {
         const double ca = normal.CAngle(bound[i]->crd() - pc);
-        if( ca >= 0 )
+        if (ca >= 0)
           sidea.Add(bound[i]);
         else
           sideb.Add(bound[i]);
       }
-      if( sidea.Count() > 2 )  {
+      if (sidea.Count() > 2) {
         vec3f cnt = TriangulateType2(pl, sidea);
         CreateNormals(pl, cnt);
       }
-      if( sideb.Count() > 2 )  {
+      if (sideb.Count() > 2) {
         vec3f cnt = TriangulateType2(pl, sideb);
         CreateNormals(pl, cnt);
       }
@@ -1122,7 +1217,7 @@ void TXAtom::CreatePoly(const TSAtomPList& bound, short type,
         TPrimitiveComparator> edges;
       for (size_t i = 0; i < pl.faces.Count(); i++) {
         for (size_t j = 0; j < 3; j++) {
-          size_t a, b, idx = (j+1)%3;
+          size_t a, b, idx = (j + 1) % 3;
           if (pl.faces[i][j] < pl.faces[i][idx]) {
             a = pl.faces[i][0];
             b = pl.faces[i][idx];
@@ -1142,33 +1237,37 @@ void TXAtom::CreatePoly(const TSAtomPList& bound, short type,
       }
     }
   }
-  catch(...)  {
-    if( Polyhedron != NULL )
+  catch (...) {
+    if (Polyhedron != 0) {
       delete Polyhedron;
-    Polyhedron = NULL;
+    }
+    Polyhedron = 0;
   }
 }
 //..............................................................................
-void TXAtom::CreatePolyhedron(bool v)  {
-  if( Polyhedron != NULL )  {
+void TXAtom::CreatePolyhedron(bool v) {
+  if (Polyhedron != NULL) {
     delete Polyhedron;
     Polyhedron = NULL;
   }
-  if( !v )  return;
-  if( NodeCount() < 4 )  return;
-  if( IsDeleted() || GetType() == iQPeakZ )
+  if (!v)  return;
+  if (NodeCount() < 4)  return;
+  if (IsDeleted() || GetType() == iQPeakZ)
     return;
   TPtrList<TSAtom> bound;
-  for( size_t i=0; i < NodeCount(); i++ )  {
-    if( Node(i).IsDeleted() || Node(i).GetType().GetMr() < 3.5  )
+  for (size_t i = 0; i < NodeCount(); i++) {
+    if (Node(i).IsDeleted() || Node(i).GetType().z < 2) {
       continue;
+    }
     //if( FAtom.Node(i).NodeCount() > FAtom.NodeCount() )
     //  continue;
     bound.Add(Node(i));
   }
-  if( bound.Count() < 4 )  return;
+  if (bound.Count() < 4) {
+    return;
+  }
   int type = GetPrimitives().GetStyle().GetNumParam(PolyTypeName(), 0, true);
-  if( type != polyAuto && type != polyNone )  {
+  if (type != polyAuto && type != polyNone) {
     CreatePoly(bound, type);
     return;
   }
@@ -1176,37 +1275,38 @@ void TXAtom::CreatePolyhedron(bool v)  {
   Polyhedron = new TXAtom::Poly;
   vec3f sv;
   double sd = 0;
-  for( size_t i=0; i < bound.Count(); i++ )  {
+  for (size_t i = 0; i < bound.Count(); i++) {
     vec3d nd = bound[i]->crd() - crd();
     sd += nd.Length();
     sv += nd.Normalise();
   }
   sv /= bound.Count();
   sd /= bound.Count();
-  double ratio = sv.Length()/sd;
-  if( ratio < 0.2 )  {  // atom is inside
+  double ratio = sv.Length() / sd;
+  if (ratio < 0.2) {  // atom is inside
     // test for Cp-kind polyhedron, should be drawn as two of the other kind (atom outside)
     vec3d pc, rms;
     mat3d normals;
     TSPlane::CalcPlanes(bound, normals, rms, pc);
-    const double pd = normals[0].DotProd(pc)/normals[0].Length();
-    const double pd_x = normals[2].DotProd(pc)/normals[2].Length();
+    const double pd = normals[0].DotProd(pc) / normals[0].Length();
+    const double pd_x = normals[2].DotProd(pc) / normals[2].Length();
     normals.Normalise();
     int deviating = 0, deviating_x = 0;
-    for( size_t i=0; i < bound.Count(); i++ )  {
-      if( olx_abs(bound[i]->crd().DotProd(normals[0]) - pd) > rms[0] )
+    for (size_t i = 0; i < bound.Count(); i++) {
+      if (olx_abs(bound[i]->crd().DotProd(normals[0]) - pd) > rms[0])
         deviating++;
-      if( olx_abs(bound[i]->crd().DotProd(normals[2]) - pd_x) > rms[2] )
+      if (olx_abs(bound[i]->crd().DotProd(normals[2]) - pd_x) > rms[2])
         deviating_x++;
     }
-    if( deviating < 3 || deviating_x < 3 )  {  // a proper polyhedra
+    if (deviating < 3 || deviating_x < 3) {  // a proper polyhedra
       CreatePoly(bound, polyRegular);
     }
     else  // two polyhedra of atom outside..
       CreatePoly(bound, polyBipyramid, &normals[2], &pc);
   }
-  else  // atom outside
+  else { // atom outside
     CreatePoly(bound, polyPyramid);
+  }
   GetPrimitives().GetStyle().SetParam(PolyTypeName(), polyAuto, true);
 }
 //..............................................................................

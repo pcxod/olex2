@@ -132,7 +132,7 @@ ConstPtrList<const TSAtom> CalculatedVars::Object::GetAtoms() const {
     if (atoms[i].GetAtom()->IsDeleted()) continue;
     TSAtom *a = new TSAtom(NULL);
     a->CAtom(*atoms[i].GetAtom());
-    a->_SetMatrix(atoms[i].GetMatrix());
+    a->_SetMatrix(*atoms[i].GetMatrix());
     a->ccrd() = *atoms[i].GetMatrix()*atoms[i].GetAtom()->ccrd();
     a->crd() = au.Orthogonalise(a->ccrd());
     rv.Add(a);

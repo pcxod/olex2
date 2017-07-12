@@ -356,6 +356,7 @@ olx_object_ptr<THklFile::ref_list> THklFile::FromCifTable(
   const size_t lInd = t.ColIndex(prefix + "_index_l");
   size_t mInd = t.ColIndex(prefix + "_F_squared_meas");
   size_t sInd = t.ColIndex(prefix + "_F_squared_sigma");
+  size_t batch = t.ColIndex(prefix + "_scale_group_code");
   if (mInd == InvalidIndex) {
     mInd = t.ColIndex(prefix + "_F_meas");
     sInd = t.ColIndex(prefix + "_F_sigma");
@@ -377,8 +378,10 @@ olx_object_ptr<THklFile::ref_list> THklFile::FromCifTable(
       r[kInd]->GetStringValue().ToInt(),
       r[lInd]->GetStringValue().ToInt(),
       r[mInd]->GetStringValue().ToDouble(),
-      r[sInd]->GetStringValue().ToDouble()
-      ));
+      r[sInd]->GetStringValue().ToDouble()));
+    if (batch != InvalidIndex) {
+      ref.SetBatch(r[batch]->GetStringValue().ToInt());
+    }
     if (!zero_found && ref.GetHkl().IsNull()) {
       zero_found = true;
       continue;

@@ -4811,7 +4811,7 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options,
         row.Set(2, new AtomCifEntry(ta[1].GetAtom()));
         TSAtom da(NULL), aa(NULL);
         da.CAtom(ta[0].GetAtom());
-        da._SetMatrix(&I);
+        da._SetMatrix(I);
         da.crd() = au.Orthogonalise(da.ccrd());
         aa.CAtom(ta[1].GetAtom());
         smatd am;
@@ -4823,7 +4823,7 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options,
           am = *ta[1].GetMatrix();
           xapp.XFile().GetUnitCell().InitMatrixId(am);
         }
-        aa._SetMatrix(&am);
+        aa._SetMatrix(am);
         aa.ccrd() = am*aa.ccrd();
         aa.crd() = au.Orthogonalise(aa.ccrd());
         row[3] = new cetString(olxstr::FormatFloat(2, envi.GetCrd(j).
@@ -6572,7 +6572,7 @@ void XLibMacros::macHklImport(TStrObjList &Cmds, const TParamList &Options,
         continue;
       TReflection& r = refs.AddNew(
         toks[0].ToInt(), toks[1].ToInt(), toks[2].ToInt()
-        );
+      );
       r.SetI(toks[3].ToDouble());
       r.SetS(toks[4].ToDouble());
       if (format.Count() == 6)
@@ -6581,7 +6581,7 @@ void XLibMacros::macHklImport(TStrObjList &Cmds, const TParamList &Options,
     THklFile::SaveToFile(out_name, refs);
   }
   else if (Cmds[1].Equalsi("separator")) {
-    if (Cmds[2].IsEmpty())  {
+    if (Cmds[2].IsEmpty()) {
       E.ProcessingError(__OlxSrcInfo, "non-empty separator is expected");
       return;
     }
@@ -6590,18 +6590,21 @@ void XLibMacros::macHklImport(TStrObjList &Cmds, const TParamList &Options,
     const olxch sep = Cmds[2].CharAt(0);
     for (size_t i = 0; i < lines.Count(); i++) {
       TStrList toks(lines[i], sep);
-      if (toks.Count() < 5)  continue;
+      if (toks.Count() < 5) {
+        continue;
+      }
       TReflection& r = refs.AddNew(
         toks[0].ToInt(), toks[1].ToInt(), toks[2].ToInt()
-        );
+      );
       r.SetI(toks[3].ToDouble());
       r.SetS(toks[4].ToDouble());
-      if (has_batch && toks.Count() >= 6)
+      if (has_batch && toks.Count() >= 6) {
         r.SetBatch(toks[5].ToInt());
+      }
     }
     THklFile::SaveToFile(out_name, refs);
   }
-  else  {
+  else {
     E.ProcessingError(__OlxSrcInfo, olxstr("undefined keyword: ") << Cmds[1]);
   }
 }
