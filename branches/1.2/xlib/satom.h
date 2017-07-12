@@ -76,21 +76,17 @@ public:
 
   const smatd& GetMatrix() const {
 #ifdef _DEBUG
-    if (Matrix == NULL)
+    if (Matrix == 0) {
       throw TFunctionFailedException(__OlxSourceInfo, "uninitialised object");
+    }
 #endif
     return *Matrix;
   }
-  /* this also makes sure that the identity matrix or matrix with the smallest
-  ID is coming first in the list
-  */
-  void UpdateMatrix(const smatd *M);
   // to be called by TLattice!
-  void _SetMatrix(const smatd *M) { Matrix = M; }
+  void _SetMatrix(const smatd &M);
   // checks if the matrix is a generator for this atom site
   bool IsGenerator(const smatd &m) const { return IsGenerator(m.GetId()); }
   bool IsGenerator(uint32_t m_id) const;
-  void UpdateMatrix(const TSAtom& A)  {  UpdateMatrix(A.Matrix);  }
   static double weight_unit(const TSAtom &)  {  return 1.0;  }
   static double weight_occu(const TSAtom &a)  {
     return a.CAtom().GetChemOccu();
@@ -148,7 +144,7 @@ public:
       return *this;
     }
     bool operator == (const Ref& r) const {
-      return (catom_id == r.catom_id && matrix_id != r.matrix_id);
+      return (catom_id == r.catom_id && matrix_id == r.matrix_id);
     }
     bool operator == (const TSAtom& a) const {
       return a.operator == (*this);
@@ -169,12 +165,9 @@ public:
     }
   };
 
-  bool operator == (const Ref& id) const {
-    return (FCAtom->GetId() == id.catom_id &&
-            Matrix->GetId() == id.matrix_id);
-  }
+  bool operator == (const Ref& id) const;
+  Ref GetRef() const;
   // finds the matrix with smallest Id
-  Ref GetRef() const {  return GetRef(CAtom(), GetMatrix());  }
   static Ref GetRef(const TCAtom &a, const smatd &generator);
 
   virtual void ToDataItem(TDataItem& item) const;
