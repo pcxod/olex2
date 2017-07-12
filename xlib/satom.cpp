@@ -186,6 +186,9 @@ TSAtom::Ref TSAtom::GetRef(const TCAtom &a, const smatd &generator) {
   const TUnitCell &uc = a.GetParent()->GetLattice().GetUnitCell();
   for (size_t i=0; i < a.EquivCount(); i++) {
     uint32_t n_id = uc.MulMatrixId(a.GetEquiv(i), generator);
+    if (smatd::IsFirst(n_id)) {
+      return Ref(a.GetId(), n_id);
+    }
     if (n_id < m_id) {
       m_id = n_id;
     }
