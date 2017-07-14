@@ -679,18 +679,18 @@ void CifBlock::Rename(const olxstr& old_name, const olxstr& new_name,
     }
     return;
   }
-  const size_t i = param_map.IndexOf(old_name);
-  if (i == InvalidIndex) {
+  const size_t idx = param_map.IndexOf(old_name);
+  if (idx == InvalidIndex) {
     return;
   }
-  ICifEntry* val = param_map.GetValue(i);
+  ICifEntry* val = param_map.GetValue(idx);
   if (!val->HasName()) {
     return;
   }
   const size_t ni = param_map.IndexOf(new_name);
   if (ni != InvalidIndex) {
     if (!replace_if_exists) {
-      Delete(i);
+      Delete(idx);
       return;
     }
     else {
@@ -717,7 +717,7 @@ void CifBlock::Rename(const olxstr& old_name, const olxstr& new_name,
       table_map.Delete(table_map.IndexOf(old_name));
       delete t;
       table_map.Add(new_name, nt);
-      param_map.Delete(i);
+      param_map.Delete(idx);
       param_map.Add(new_name, nt);
       const size_t oi = params.IndexOfi(old_name);
       params[oi] = new_name;
@@ -725,7 +725,7 @@ void CifBlock::Rename(const olxstr& old_name, const olxstr& new_name,
     }
     return;
   }
-  param_map.Delete(i);
+  param_map.Delete(idx);
   param_map.Add(new_name, val);
   const size_t ti = table_map.IndexOf(old_name);
   const size_t oi = params.IndexOfi(old_name);
