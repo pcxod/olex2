@@ -19,19 +19,19 @@
 using namespace SFUtil;
 
 #ifdef __OLX_USE_FASTSYMM
-  DefineFSFactory(ISF_Util, SF_Util)
+DefineFSFactory(ISF_Util, SF_Util)
 #endif
 //..............................................................................
-ISF_Util* SFUtil::GetSF_Util_Instance(const TSpaceGroup& sg)  {
+ISF_Util* SFUtil::GetSF_Util_Instance(const TSpaceGroup& sg) {
 #ifdef __OLX_USE_FASTSYMM
   ISF_Util* sf_util = fs_factory_ISF_Util(sg.GetName());
-  if( sf_util == NULL )
+  if (sf_util == NULL)
     throw TFunctionFailedException(__OlxSourceInfo, "invalid space group");
   return sf_util;
 #else
   smatd_list all_m, unq_m;
   sg.GetMatrices(all_m, mattAll);
-  sg.GetMatrices(unq_m, mattAll^(mattInversion|mattCentering));
+  sg.GetMatrices(unq_m, mattAll ^ (mattInversion | mattCentering));
   return new SF_Util<SG_Impl>(all_m, unq_m, sg.IsCentrosymmetric());
   //return new SF_Util<SG_Impl>(all_m, all_m, false);
 #endif
@@ -40,7 +40,7 @@ ISF_Util* SFUtil::GetSF_Util_Instance(const TSpaceGroup& sg)  {
 void SFUtil::ExpandToP1(const TArrayList<vec3i>& hkl, const TArrayList<compd>& F,
   const TSpaceGroup& sg, TArrayList<StructureFactor>& out)
 {
-  if( hkl.Count() != F.Count() )
+  if (hkl.Count() != F.Count())
     throw TInvalidArgumentException(__OlxSourceInfo,
       "hkl array and structure factors dimensions missmatch");
   ISF_Util* sf_util = GetSF_Util_Instance(sg);
@@ -75,7 +75,7 @@ void SFUtil::FindMinMax(const TArrayList<StructureFactor>& F,
 {
   min = vec3i(100, 100, 100);
   max = vec3i(-100, -100, -100);
-  for (size_t i=0; i < F.Count(); i++) {
+  for (size_t i = 0; i < F.Count(); i++) {
     vec3i::UpdateMinMax(F[i].hkl, min, max);
   }
 }
@@ -87,60 +87,87 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
   TStopWatch sw(__FUNC__);
   if (sfOrigin == sfOriginFcf) {
     olxstr fcffn = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "fcf");
-    if (!TEFile::Exists(fcffn)) {
-      fcffn = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "fco");
-      if (!TEFile::Exists(fcffn))
-        return "please load fcf file or make sure the one exists in current folder";
+    cif_dp::cetTable* hklLoop = 0;
+    olx_object_ptr<TCif> cif;
+    if (xapp.CheckFileType<TCif>()) {
+      hklLoop = xapp.XFile().GetLastLoader<TCif>()
+        .FindLoopGlobal("_refln", false);
     }
-    sw.start("Loading CIF");
-    TCif cif;
-    cif.LoadFromFile(fcffn);
-    sw.stop();
-    cif_dp::cetTable* hklLoop = cif.FindLoopGlobal("_refln", false);
-    if( hklLoop == NULL )
+    if (hklLoop == 0 && !TEFile::Exists(fcffn)) {
+      fcffn = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "fco");
+      if (!TEFile::Exists(fcffn)) {
+        return "please load fcf file or make sure the one exists in current folder";
+      }
+    }
+    if (hklLoop == 0) {
+      sw.start("Loading CIF");
+      cif = new TCif();
+      cif().LoadFromFile(fcffn);
+      hklLoop = cif().FindLoopGlobal("_refln", false);
+      sw.stop();
+    }
+    if (hklLoop == 0) {
       return "no hkl loop found";
+    }
     sw.start("Extracting CIF data");
     const size_t hInd = hklLoop->ColIndex("_refln_index_h");
     const size_t kInd = hklLoop->ColIndex("_refln_index_k");
     const size_t lInd = hklLoop->ColIndex("_refln_index_l");
     // list 3, F
-    const size_t mfInd = hklLoop->ColIndex("_refln_F_meas");
-    const size_t sfInd = hklLoop->ColIndex("_refln_F_sigma");
+    size_t mfInd = hklLoop->ColIndex("_refln_F_meas");
+    size_t sfInd = hklLoop->ColIndex("_refln_F_sigma");
+    bool squared = false;
+    if (mfInd == InvalidIndex) {
+      mfInd = hklLoop->ColIndex("_refln_F_squared_meas");
+      sfInd = hklLoop->ColIndex("_refln_F_squared_sigma");
+      squared = true;
+    }
     const size_t aInd = hklLoop->ColIndex("_refln_A_calc");
     const size_t bInd = hklLoop->ColIndex("_refln_B_calc");
-
-    if ((hInd|kInd|lInd|mfInd|sfInd|aInd|bInd) == InvalidIndex) {
-      return "list 3 fcf file is expected";
+    const size_t fcInd = hklLoop->ColIndex("_refln_F_calc");
+    const size_t fcpInd = hklLoop->ColIndex("_refln_phase_calc");
+    if ((hInd | kInd | lInd | mfInd | sfInd) == InvalidIndex) {
+      return "undefined FCF data";
     }
+    if ((aInd | bInd) == InvalidIndex && (fcInd | fcpInd) == InvalidIndex) {
+      return "undefined FCF data - list 3 or 6 is expected";
+    }
+    int list = (fcInd | fcpInd) == InvalidIndex ? 3 : 6;
     refs.SetCapacity(hklLoop->RowCount());
     F.SetCount(hklLoop->RowCount());
     for (size_t i=0; i < hklLoop->RowCount(); i++) {
       const cif_dp::CifRow& row = (*hklLoop)[i];
-      TReflection& ref = refs.AddNew(row[hInd]->GetStringValue().ToInt(),
+      TReflection& ref = refs.AddNew(
+        row[hInd]->GetStringValue().ToInt(),
         row[kInd]->GetStringValue().ToInt(),
         row[lInd]->GetStringValue().ToInt(),
         row[mfInd]->GetStringValue().ToDouble(),
         row[sfInd]->GetStringValue().ToDouble());
+      if (squared) {
+        ref.SetI(sqrt(olx_max(0.0, ref.GetI())));
+      }
+      compd rv;
+      if (list == 3) {
+        rv.Re() = row[aInd]->GetStringValue().ToDouble();
+        rv.Im() = row[bInd]->GetStringValue().ToDouble();
+      }
+      else {
+        rv = compd::polar(row[fcInd]->GetStringValue().ToDouble(),
+          row[fcpInd]->GetStringValue().ToDouble()*M_PI/180);
+      }
       if (mapType == mapTypeDiff) {
-        const compd rv(row[aInd]->GetStringValue().ToDouble(),
-          row[bInd]->GetStringValue().ToDouble());
         double dI = (ref.GetI() - rv.mod());
         F[i] = compd::polar(dI, rv.arg());
       }
       else if (mapType == mapType2OmC) {
-        const compd rv(row[aInd]->GetStringValue().ToDouble(),
-          row[bInd]->GetStringValue().ToDouble());
         double dI = 2*ref.GetI() - rv.mod();
         F[i] = compd::polar(dI, rv.arg());
       }
       else if (mapType == mapTypeObs) {
-        const compd rv(row[aInd]->GetStringValue().ToDouble(),
-          row[bInd]->GetStringValue().ToDouble());
         F[i] = compd::polar(ref.GetI(), rv.arg());
       }
       else {
-        F[i].SetRe(row[aInd]->GetStringValue().ToDouble());
-        F[i].SetIm(row[bInd]->GetStringValue().ToDouble());
+        F[i] = rv;
       }
     }
     sw.stop();
