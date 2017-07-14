@@ -12,6 +12,8 @@
 #include "log.h"
 #include "etime.h"
 #include "bitarray.h"
+#include "wildcard.h"
+#include "eset.h"
 
 using namespace exparse::parser_util;
 using namespace cif_dp;
@@ -587,11 +589,13 @@ CifBlock::CifBlock(const CifBlock& v) {
     }
   }
 }
+//..............................................................................
 CifBlock::~CifBlock() {
   for (size_t i = 0; i < params.Count(); i++) {
     delete params.GetObject(i);
   }
 }
+//..............................................................................
 ICifEntry& CifBlock::Add(ICifEntry* p) {
   // only comments are allowed to have not name
   if (!p->HasName() || p->GetName().IsEmpty()) {
@@ -628,6 +632,7 @@ ICifEntry& CifBlock::Add(ICifEntry* p) {
   }
   return *p;
 }
+//..............................................................................
 bool CifBlock::Delete(size_t idx) {
   if (idx == InvalidIndex) {
     return false;
@@ -642,9 +647,38 @@ bool CifBlock::Delete(size_t idx) {
   param_map.Delete(idx);
   return true;
 }
+//..............................................................................
 void CifBlock::Rename(const olxstr& old_name, const olxstr& new_name,
   bool replace_if_exists)
 {
+  size_t st_idx = old_name.IndexOf('*');
+  if (st_idx != InvalidIndex) {
+    if (old_name.Length() < 2 ||
+      !new_name.EndsWith('*') || new_name.Length() < 2)
+    {
+      return;
+    }
+    olxset<olxstr, olxstrComparator<true> > to_skip;
+    TStrList toks(old_name, ",");
+    for (size_t i = 1; i < toks.Count(); i++) {
+      to_skip.Add(toks[i]);
+    }
+    olxstr oname = toks[0].SubString(0, toks[0].Length() - 1),
+      nname = new_name.SubString(0, new_name.Length() - 1);
+    olxstr_dict<olxstr> names;
+    for (size_t i = 0; i < param_map.Count(); i++) {
+      if (param_map.GetKey(i).StartsFrom(oname) &&
+        !to_skip.Contains(param_map.GetKey(i)))
+      {
+        names.Add(param_map.GetKey(i),
+          nname + param_map.GetKey(i).SubStringFrom(oname.Length()));
+      }
+    }
+    for (size_t i = 0; i < names.Count(); i++) {
+      Rename(names.GetKey(i), names.GetValue(i));
+    }
+    return;
+  }
   const size_t i = param_map.IndexOf(old_name);
   if (i == InvalidIndex) {
     return;
@@ -663,18 +697,41 @@ void CifBlock::Rename(const olxstr& old_name, const olxstr& new_name,
       Delete(ni);
     }
   }
-  try { val->SetName(new_name); }
-  catch (...) { return; }  // read only name?
+  try {
+    val->SetName(new_name);
+  }
+  catch (...) { // read only name?
+    if (EsdlInstanceOf(*val, cetTable)) {
+      cetTable* t = dynamic_cast<cetTable *>(val);
+      cetTable *nt = new cetTable();
+      for (size_t i = 0; i < t->ColCount(); i++) {
+        nt->AddCol(new_name + t->ColName(i).SubStringFrom(old_name.Length()));
+      }
+      for (size_t i = 0; i < t->RowCount(); i++) {
+        CifRow &r = nt->AddRow();
+        for (size_t j = 0; j < t->ColCount(); j++) {
+          r[j] = (*t)[i][j];
+          (*t)[i][j] = 0;
+        }
+      }
+      table_map.Delete(table_map.IndexOf(old_name));
+      delete t;
+      table_map.Add(new_name, nt);
+      param_map.Delete(i);
+      param_map.Add(new_name, nt);
+      const size_t oi = params.IndexOfi(old_name);
+      params[oi] = new_name;
+      params.GetObject(oi) = nt;
+    }
+    return;
+  }
   param_map.Delete(i);
   param_map.Add(new_name, val);
   const size_t ti = table_map.IndexOf(old_name);
-  if (ti != InvalidIndex) {
-    table_map.Delete(ti);
-    table_map.Add(new_name, (cetTable*)val);
-  }
   const size_t oi = params.IndexOfi(old_name);
   params[oi] = new_name;
 }
+//..............................................................................
 void CifBlock::ToStrings(TStrList& list) const {
   if (!name.IsEmpty()) {
     (parent != NULL ? list.Add("save_") : list.Add("data_")) << name;
@@ -686,6 +743,7 @@ void CifBlock::ToStrings(TStrList& list) const {
     list.Add("save_");
   }
 }
+//..............................................................................
 void CifBlock::Format() {
   for (size_t i = 0; i < params.Count(); i++) {
     params.GetObject(i)->Format();
