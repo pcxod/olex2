@@ -3927,32 +3927,37 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
         for (size_t rs_i=0; rs_i < rm.rDFIX.Count(); rs_i++) {
           TTypeList<ExplicitCAtomRef> r =
             rm.rDFIX[rs_i].GetAtoms().ExpandList(rm, 2);
-          for (size_t ai=0; ai < r.Count(); ai++)
+          for (size_t ai = 0; ai < r.Count(); ai++) {
             rD.AddUnique(&r[ai].GetAtom());
+          }
         }
         for (size_t rs_i=0; rs_i < rm.rDANG.Count(); rs_i++) {
           TTypeList<ExplicitCAtomRef> r =
             rm.rDANG[rs_i].GetAtoms().ExpandList(rm, 2);
-          for (size_t ai=0; ai < r.Count(); ai++)
+          for (size_t ai = 0; ai < r.Count(); ai++) {
             rD.AddUnique(&r[ai].GetAtom());
+          }
         }
         for (size_t rs_i = 0; rs_i < rm.rSADI.Count(); rs_i++) {
           TTypeList<ExplicitCAtomRef> r =
             rm.rSADI[rs_i].GetAtoms().ExpandList(rm, 2);
-          for (size_t ai = 0; ai < r.Count(); ai++)
+          for (size_t ai = 0; ai < r.Count(); ai++) {
             rD.AddUnique(&r[ai].GetAtom());
+          }
         }
         for (size_t rs_i = 0; rs_i < rm.rISOR.Count(); rs_i++) {
           TTypeList<ExplicitCAtomRef> r =
             rm.rISOR[rs_i].GetAtoms().ExpandList(rm);
-          for (size_t ai=0; ai < r.Count(); ai++)
+          for (size_t ai = 0; ai < r.Count(); ai++) {
             rU.AddUnique(&r[ai].GetAtom());
+          }
         }
         for (size_t rs_i = 0; rs_i < rm.rSAME.Count(); rs_i++) {
           TTypeList<ExplicitCAtomRef> r =
             rm.rSAME[rs_i].GetAtoms().ExpandList(rm);
-          for (size_t ai = 0; ai < r.Count(); ai++)
+          for (size_t ai = 0; ai < r.Count(); ai++) {
             rD.AddUnique(&r[ai].GetAtom());
+          }
         }
         {
           TPtrList<const TSRestraintList> Urs;
@@ -3962,15 +3967,17 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
             for (size_t rs_i = 0; rs_i < rl.Count(); rs_i++) {
               if (rl[rs_i].IsAllNonHAtoms()) {
                 for (size_t ai = 0; ai < au.AtomCount(); ai++) {
-                  if (au.GetAtom(ai).GetType().z > 1)
+                  if (au.GetAtom(ai).GetType().z > 1) {
                     rU.AddUnique(&au.GetAtom(ai));
+                  }
                 }
               }
               else {
                 TTypeList<ExplicitCAtomRef> r =
                   rl[rs_i].GetAtoms().ExpandList(rm);
-                for (size_t ai = 0; ai < r.Count(); ai++)
+                for (size_t ai = 0; ai < r.Count(); ai++) {
                   rU.AddUnique(&r[ai].GetAtom());
+                }
               }
             }
           }
@@ -4094,42 +4101,54 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
               //}
             }
             olxstr pos_t, adp_t;
-            if (rD.Contains(&a))
+            if (rD.Contains(&a)) {
               pos_t << 'D';
+            }
             if (a.GetParentAfixGroup() != NULL) {
-              if (a.GetParentAfixGroup()->IsRefinable())
+              if (a.GetParentAfixGroup()->IsRefinable()) {
                 pos_t << 'G';
-              if (a.GetParentAfixGroup()->IsRiding())
+              }
+              if (a.GetParentAfixGroup()->IsRiding()) {
                 pos_t << 'R';
+              }
             }
             if (a.GetDegeneracy() != 1) {
               pos_t << 'S';
               adp_t << 'T';
             }
-            if (rU.Contains(&a))
+            if (rU.Contains(&a)) {
               adp_t << 'U';
-            if (pos_t.IsEmpty())
+            }
+            if (pos_t.IsEmpty()) {
               tab->Set(ri, rf_pos_ind, new cetString('.'));
-            else
+            }
+            else {
               tab->Set(ri, rf_pos_ind, new cetString(pos_t));
+            }
 
             if (rf_adp_ind != InvalidIndex) {
-              if (adp_t.IsEmpty())
+              if (adp_t.IsEmpty()) {
                 tab->Set(ri, rf_adp_ind, new cetString('.'));
-              else
+              }
+              else {
                 tab->Set(ri, rf_adp_ind, new cetString(adp_t));
+              }
             }
             if (has_parts) {
-              if (a.GetPart() == 0)
+              if (a.GetPart() == 0) {
                 tab->Set(ri, dg_ind, new cetString('.'));
-              else
+              }
+              else {
                 tab->Set(ri, dg_ind, new cetString((int)a.GetPart()));
+              }
             }
             if (has_special_positions) {
-              if (a.GetDegeneracy() == 1)
+              if (a.GetDegeneracy() == 1) {
                 tab->Set(ri, rf_occu_ind, new cetString('.'));
-              else
+              }
+              else {
                 tab->Set(ri, rf_occu_ind, new cetString('P'));
+              }
             }
             if (st_order_ind != InvalidIndex) {
               tab->Set(ri, st_order_ind, new cetString(a.GetDegeneracy()));
@@ -4151,21 +4170,28 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
                 }
               }
               if (all_same) {
-                if (v == 0)
+                if (v == 0) {
                   Cif->SetParam("_refine_ls_hydrogen_treatment", "refall", false);
-                else if (v == 2) // fixed U
+                }
+                else if (v == 2) { // fixed U
                   Cif->SetParam("_refine_ls_hydrogen_treatment", "refxyz", false);
-                else if (v == 8) // fixed xyz
+                }
+                else if (v == 8) { // fixed xyz
                   Cif->SetParam("_refine_ls_hydrogen_treatment", "refU", false);
-                else if (v == 10) // fixed U and xyz
+                }
+                else if (v == 10) { // fixed U and xyz
                   Cif->SetParam("_refine_ls_hydrogen_treatment", "noref", false);
-                else if (v == 1 || v == 4 || v == 5) // constrained U, xyz or both
+                }
+                else if (v == 1 || v == 4 || v == 5) { // constrained U, xyz or both
                   Cif->SetParam("_refine_ls_hydrogen_treatment", "constr", false);
-                else
+                }
+                else {
                   Cif->SetParam("_refine_ls_hydrogen_treatment", "mixed", false);
+                }
               }
-              else
+              else {
                 Cif->SetParam("_refine_ls_hydrogen_treatment", "mixed", false);
+              }
             }
           }
         }
