@@ -7275,13 +7275,14 @@ void XLibMacros::macAfix(TStrObjList &Cmds, const TParamList &Options,
           olx_plane::Sort(atoms, FunctionAccessor::MakeConst(
             (const vec3d& (TSAtom::*)() const)&TSAtom::crd), center, normal);
           if (atoms[0] != Atoms[0]) {
-            size_t idx = Atoms.IndexOf(atoms[0]);
+            size_t idx = atoms.IndexOf(Atoms[0]);
             atoms.ShiftL(idx);
           }
           bool match = true;
           for (size_t i = 0; i < Atoms.Count(); i++) {
             if (atoms[i] != Atoms[i]) {
               match = false;
+              break;
             }
           }
           if (!match) {

@@ -50,20 +50,38 @@ void TIns::Clear() {
   RefinementInfo.Clear();
 }
 //..............................................................................
-void TIns::LoadFromFile(const olxstr& fileName)  {
+void TIns::LoadFromFile(const olxstr& fileName) {
   TStopWatch sw(__FUNC__);
   Lst.Clear();
   // load Lst first, as it may have the error indicator
   olxstr lst_fn = TEFile::ChangeFileExt(fileName, "lst");
-  if( TEFile::Exists(lst_fn) )  {
-    try  {
+  if (TEFile::Exists(lst_fn)) {
+    try {
       sw.start("Loading LST file");
       Lst.LoadFromFile(lst_fn);
     }
-    catch(...)  {}
+    catch (...) {}
   }
   sw.start("Loading the file");
   TBasicCFile::LoadFromFile(fileName);
+  // try fix BOND $H when there is no H in the formula when it comes from ShelXT
+  {
+    bool has_h = false;
+    const ContentList &cl = GetRM().GetUserContent();
+    for (size_t i = 0; i < cl.Count(); i++) {
+      if (cl[i].element.z == iHydrogenZ) {
+        has_h = true;
+        break;
+      }
+    }
+    if (!has_h) {
+      for (size_t i = 0; i < Ins.Count(); i++) {
+        if (Ins[i].StartsFromi("BOND")) {
+          DelIns(i--);
+        }
+      }
+    }
+  }
   if (Lst.IsLoaded()) {
     try {
       if (GetRM().Vars.HasEXTI()) {
@@ -101,7 +119,7 @@ void TIns::LoadFromFile(const olxstr& fileName)  {
       {
         if (GetRM().Vars.VarCount() >= cnt) {
           TEValueD dv = val;
-          if (olx_abs(GetRM().Vars.GetVar(cnt-1).GetValue() - dv.GetV()) < dv.GetE())
+          if (olx_abs(GetRM().Vars.GetVar(cnt - 1).GetValue() - dv.GetV()) < dv.GetE())
             GetRM().Vars.GetVar(cnt - 1).SetEsd(dv.GetE());
           else
             break;
@@ -138,7 +156,7 @@ void TIns::LoadFromFile(const olxstr& fileName)  {
           Lst.params.Find("flack", XLibMacros::NAString()));
       }
     }
-    catch (...)  {}
+    catch (...) {}
   }
 }
 //..............................................................................
