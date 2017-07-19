@@ -72,7 +72,7 @@ void TSimpleRestraint::Assign(const TSimpleRestraint& sr) {
 }
 //..............................................................................
 void TSimpleRestraint::EndAUSort() {
-  Atoms.EndAUSort(ListType == rltAtoms && !Parent.GetIdName().Equalsi("RIGU"));
+  Atoms.EndAUSort(ListType == rltAtoms);
 }
 //..............................................................................
 void TSimpleRestraint::ToDataItem(TDataItem& item) const {
@@ -208,15 +208,24 @@ void TSRestraintList::ValidateRestraint(TSimpleRestraint& sr)  {
       }
     }
     if (AllAtomsInd != InvalidIndex && Restraints.Count() > 1) {
+      size_t deleted_cnt = 0;
       for (size_t i = 0; i < Restraints.Count(); i++) {
-        if (i != AllAtomsInd) {
+        if (i != AllAtomsInd &&
+          Restraints[AllAtomsInd].Esd == Restraints[i].Esd &&
+          Restraints[AllAtomsInd].Esd1 == Restraints[i].Esd1)
+        {
           Restraints[i].Delete();
+          deleted_cnt++;
         }
       }
-      TBasicApp::NewLogEntry(logWarning) <<
-        "There is a restraint for all non-H atoms, removing any others for "
-        << GetIdName() << " list";
-      return;
+      if (deleted_cnt > 0) {
+        TBasicApp::NewLogEntry(logWarning) <<
+          "There is a restraint for all non-H atoms, removing any others for "
+          << GetIdName() << " list";
+        if (Restraints.Count() - deleted_cnt == 1) {
+          return;
+        }
+      }
     }
   }
   // check uniqueness
@@ -225,7 +234,7 @@ void TSRestraintList::ValidateRestraint(TSimpleRestraint& sr)  {
       << sr.GetAtomExpression();
     size_t dc = 0;
     for (size_t i = 0; i < Restraints.Count(); i++) {
-      if (i == ri) {
+      if (i == ri || Restraints[i].IsEmpty()) {
         continue;
       }
       olxstr exp1 = Restraints[i].GetAtoms().GetResi();
