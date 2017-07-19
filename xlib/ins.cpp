@@ -1032,15 +1032,15 @@ void TIns::HyphenateIns(const olxstr &InsName, const olxstr &Ins,
   TStrList &Res, int sz)
 {
   olxstr Tmp = Ins;
-  if (Tmp.Length() > 80 - InsName.Length()) {
-    while (Tmp.Length() > 80 - InsName.Length())  {
+  if (Tmp.Length() > 79 - InsName.Length()) {
+    while (Tmp.Length() > 79 - InsName.Length())  {
       size_t spindex = Tmp.LastIndexOf(' ', sz - InsName.Length());
       if (spindex != InvalidIndex && spindex > 0)  {
         Res.Add(InsName + Tmp.SubStringTo(spindex));
         Tmp = olxstr(' ') << Tmp.SubStringFrom(spindex + 1);
       }
       else {
-        Res.Add(InsName + Tmp.SubStringTo(80 - InsName.Length() - 2));
+        Res.Add(InsName + Tmp.SubStringTo(79 - InsName.Length() - 2));
         Tmp = Tmp.SubStringFrom(sz - InsName.Length() - 2);
       }
     }
@@ -1054,29 +1054,33 @@ void TIns::HyphenateIns(const olxstr &InsName, const olxstr &Ins,
 void TIns::HyphenateIns(const olxstr& Ins, TStrList& Res, int sz)  {
   bool MultiLine = false, added = false;
   olxstr Tmp(Ins), Tmp1;
-  while( Tmp.Length() >= (size_t)sz )  {
+  while (Tmp.Length() >= (size_t)sz) {
     MultiLine = true;
-    size_t spindex = Tmp.LastIndexOf(' ', sz-3); // for the right hyphenation
-    if( spindex != InvalidIndex && spindex > 0 )  {
-      if( added )  Tmp1 = ' ';
+    size_t spindex = Tmp.LastIndexOf(' ', sz - 3); // for the right hyphenation
+    if (spindex != InvalidIndex && spindex > 0) {
+      if (added) {
+        Tmp1 = ' ';
+      }
       Tmp1 << Tmp.SubStringTo(spindex);
-      if( !Tmp1.IsEmpty() && Tmp1.GetLast() != ' ')
+      if (!Tmp1.IsEmpty() && Tmp1.GetLast() != ' ') {
         Tmp1 << ' ';
+      }
       Tmp1 << '=';
       Res.Add(Tmp1);
-      Tmp.Delete(0, spindex+1); // remove the space
+      Tmp.Delete(0, spindex + 1); // remove the space
       added = true;
     }
-    else  {
+    else {
       Tmp1 = ' ';  // a space before each line
-      Tmp1 << Tmp.SubStringTo(sz-1);
+      Tmp1 << Tmp.SubStringTo(sz - 1);
       Res.Add(Tmp1);
-      Tmp.Delete(0, sz-1);
+      Tmp.Delete(0, sz - 1);
     }
   }
-  if( !Tmp.IsEmpty() )  {  // add the last bit
-    if( MultiLine )
+  if (!Tmp.IsEmpty()) {  // add the last bit
+    if (MultiLine) {
       Tmp.Insert(' ', 0);
+    }
     Res.Add(Tmp);
   }
 }
