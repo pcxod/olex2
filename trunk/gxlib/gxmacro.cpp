@@ -4428,15 +4428,26 @@ struct SetMaterialUndo : public TUndoData {
 void GXLibMacros::macSetMaterial(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &E)
 {
-  TGlMaterial* mat = NULL;
   olx_object_ptr<SetMaterialUndo> undo = new SetMaterialUndo();
-  TGlMaterial glm;
-  glm.FromString(Cmds[1], true);
+  olx_object_ptr<TGlMaterial> glm;
+  if (!Cmds[1].Equalsi("None")) {
+    try {
+      glm().FromString(Cmds[1], true);
+    }
+    catch (...) {
+      glm = 0;
+    }
+  }
   sorted::PointerPointer<TGPCollection> colls;
   size_t di = Cmds[0].IndexOf('.');
   olxstr col_name = di != InvalidIndex ? Cmds[0].SubStringTo(di) : Cmds[0];
   olxstr prm_name = di != InvalidIndex ? Cmds[0].SubStringFrom(di + 1)
     : EmptyString();
+  if (!glm.is_valid() && !prm_name.Equals('*')) {
+    E.ProcessingError(__OlxSrcInfo,
+      "The style can be reset to all promtives only");
+    return;
+  }
   if (col_name.Equalsi("sel")) {
     TGlGroup &g = app.GetSelection();
     for (size_t i = 0; i < g.Count(); i++) {
@@ -4451,19 +4462,25 @@ void GXLibMacros::macSetMaterial(TStrObjList &Cmds, const TParamList &Options,
     else {  // try to modify the style then, if exists
       bool found = false;
       TGraphicsStyle* gs = app.GetRenderer().GetStyles().FindStyle(col_name);
-      if (gs != NULL) {
+      if (gs != 0) {
         if (prm_name == '*') {
-          for (size_t pi = 0; pi < gs->PrimitiveStyleCount(); pi++) {
-            gs->GetPrimitiveStyle(pi).SetProperties(glm);
+          if (!glm.is_valid()) {
+            gs->Clear();
+          }
+          else {
+            for (size_t pi = 0; pi < gs->PrimitiveStyleCount(); pi++) {
+              gs->GetPrimitiveStyle(pi).SetProperties(glm());
+            }
           }
           found = true;
         }
         else {
-          mat = gs->FindMaterial(prm_name);
+          TGlMaterial* mat = gs->FindMaterial(prm_name);
           if (mat != 0) {
-            *mat = glm;
+            *mat = glm();
             found = true;
           }
+
         }
       }
       if (!found) {
@@ -4477,27 +4494,36 @@ void GXLibMacros::macSetMaterial(TStrObjList &Cmds, const TParamList &Options,
     bool found = false;
     if (!prm_name.IsEmpty()) {
       if (prm_name == '*') {
-        for (int pi = 0; pi < colls[ci]->PrimitiveCount(); pi++) {
-          TGlPrimitive &glp = colls[ci]->GetPrimitive(pi);
-          glp.SetProperties(glm);
-          colls[ci]->GetStyle().SetMaterial(glp.GetName(), glm);
+        if (!glm.is_valid()) {
+          colls[ci]->ClearPrimitives();
+          colls[ci]->GetStyle().Clear();
+        }
+        else {
+          for (int pi = 0; pi < colls[ci]->PrimitiveCount(); pi++) {
+            TGlPrimitive &glp = colls[ci]->GetPrimitive(pi);
+            glp.SetProperties(glm());
+            colls[ci]->GetStyle().SetMaterial(glp.GetName(), glm());
+          }
         }
         found = true;
       }
       else {
         TGlPrimitive* glp = colls[ci]->FindPrimitiveByName(prm_name);
         if (glp != 0) {
-          glp->SetProperties(glm);
-          colls[ci]->GetStyle().SetMaterial(prm_name, glm);
+          glp->SetProperties(glm());
+          colls[ci]->GetStyle().SetMaterial(prm_name, glm());
           found = true;
         }
+      }
+      if (!glm.is_valid() && colls[ci]->ObjectCount() > 0) {
+        colls[ci]->GetObject(0).Create(colls[ci]->GetName());
       }
     }
     else {
       for (size_t i = 0; i < colls[ci]->ObjectCount(); i++)  {
         TGlGroup *glg = dynamic_cast<TGlGroup*>(&colls[ci]->GetObject(i));
         if (glg != 0) {
-          glg->SetGlM(glm);
+          glg->SetGlM(glm());
           found = true;
         }
       }
