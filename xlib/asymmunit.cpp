@@ -1173,7 +1173,10 @@ void TAsymmUnit::RearrangeAtoms(const TSizeList &indices) {
   }
   TCAtomPList mr = MainResidue.GetAtomList();
   CAtoms.Rearrange(indices);
-  CAtoms.ForEach(ACollectionItem::IndexTagSetter());
+  for (size_t i = 0; i < CAtoms.Count(); i++) {
+    CAtoms[i]->SetTag(i);
+    CAtoms[i]->SetId(i);
+  }
   QuickSorter::Sort(mr, ACollectionItem::TagComparator());
   MainResidue.Clear();
   for (size_t i = 0; i < mr.Count(); i++) {
