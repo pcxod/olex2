@@ -4432,6 +4432,7 @@ void GXLibMacros::macSetMaterial(TStrObjList &Cmds, const TParamList &Options,
   olx_object_ptr<TGlMaterial> glm;
   if (!Cmds[1].Equalsi("None")) {
     try {
+      glm = new TGlMaterial();
       glm().FromString(Cmds[1], true);
     }
     catch (...) {
