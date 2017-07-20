@@ -894,6 +894,9 @@ void TMainForm::macClear(TStrObjList &Cmds, const TParamList &Options,
   else if (Cmds[0].Equalsi("same")) {
     FXApp->XFile().GetRM().rSAME.Clear();
   }
+  else if (Cmds[0].Equalsi("style")) {
+    FXApp->GetRenderer().GetStyles().Clear();
+  }
 }
 //..............................................................................
 void TMainForm::macRota(TStrObjList &Cmds, const TParamList &Options, TMacroData &Error)  {
