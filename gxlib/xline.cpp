@@ -11,6 +11,7 @@
 #include "gpcollection.h"
 #include "xatom.h"
 #include "pers_util.h"
+#include "gxapp.h"
 
 TXLine::TXLine(TGlRenderer& r, const olxstr& collectionName,
   const vec3d& base, const vec3d& edge)
@@ -88,7 +89,8 @@ void TXLine::Update() {
   Init(true);
 }
 //..............................................................................
-bool TXLine::DoTranslate(const vec3d& t) {
+bool TXLine::DoTranslate(const vec3d& t_) {
+  vec3d t = TGXApp::GetConstrainedDirection(t_);
   FBase += t;
   FEdge += t;
   GetGlLabel().SetOffset((FBase + FEdge) / 2);

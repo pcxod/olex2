@@ -5949,3 +5949,25 @@ void TGXApp::LabelGrowBonds() {
     l.SetVisible(true);
   }
 }
+//..............................................................................
+vec3d TGXApp::GetConstrainedDirection(const vec3d &t_) {
+  TGlGroup &sel = GetInstance().GetRenderer().GetSelection();
+  TXBondPList bonds = sel.Extract<TXBond>();
+  vec3d dir;
+  if (bonds.Count() == 1) {
+    dir = (bonds[0]->GetToCrd() - bonds[0]->GetFromCrd()).Normalise();
+  }
+  else {
+    TXAtomPList atoms = sel.Extract<TXAtom>();
+    if (atoms.Count() == 2) {
+      dir = (atoms[1]->crd() - atoms[0]->crd()).Normalise();
+    }
+  }
+  if (!dir.IsNull()) {
+    dir *= t_.Length();
+    dir *= olx_sign(t_.DotProd(vec3d(1, 1, 0))) * olx_sign(dir.DotProd(vec3d(1, 1, 0)));
+    return dir;
+  }
+  return t_;
+}
+//..............................................................................
