@@ -32,7 +32,7 @@ private:
   ICrdTransformer* Transformer;
 protected:
   vec3d _Center;
-  virtual bool DoTranslate(const vec3d& t)  {  _Center += t;  return true;  }
+  virtual bool DoTranslate(const vec3d& t);
   virtual bool DoRotate(const vec3d&, double)  {  return false;  }
   virtual bool DoZoom(double, bool)  {  return false;  }
 public:
