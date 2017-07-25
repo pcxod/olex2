@@ -4205,15 +4205,12 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
     try {
       TStrList toks(Cmds[i], '&');
       olxstr fn = toks[0];
-      IInputStream *is = TFileHandlerManager::GetInputStream(fn);
-      if (is == NULL) {
+      olx_object_ptr<IInputStream> is = TFileHandlerManager::GetInputStream(fn);
+      if (!is.is_valid()) {
         TBasicApp::NewLogEntry(logError) << "Could not find file: " << fn;
         continue;
       }
-      TStrList sl;
-      sl.LoadFromTextStream(*is);
-      delete is;
-      src.LoadFromStrings(sl);
+      src.LoadFromStream(is());
       for (size_t i=1; i < toks.Count(); i++) {
         size_t idx = toks[i].IndexOf('=');
         if (idx != InvalidIndex) {
@@ -4290,12 +4287,12 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
       }
       if (!skip) {
         bool processed = false;
-        if (op != NULL && EsdlInstanceOf(e, cif_dp::cetNamedString)) {
+        if (op != 0 && EsdlInstanceOf(e, cif_dp::cetString)) {
           olxstr sv = e.GetStringValue();
           if (sv.StartsFrom('$')) {
             try {
               if (op->processFunction(sv)) {
-                Cif->SetParam(cif_dp::cetNamedString(e.GetName(), sv));
+                Cif->SetParam(cif_dp::cetString(e.GetName(), sv));
                 processed = true;
               }
             }
@@ -4334,7 +4331,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
     if (insert) {
       olxstr res_fn = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "res");
       if (TEFile::Exists(res_fn)) {
-        cetNamedStringList res("_iucr_refine_instructions_details");
+        cetStringList res("_iucr_refine_instructions_details");
         TEFile res_f(res_fn, "rb");
         res.lines.LoadFromTextStream(res_f);
         Cif->SetParam(res);
@@ -4376,7 +4373,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
               TBasicApp::NewLogEntry(logError) << "FAB file is missing";
             }
             else {
-              cetNamedStringList fab("_shelx_fab_file");
+              cetStringList fab("_shelx_fab_file");
               fab.lines = TEFile::ReadLines(fab_name);
               for (size_t fi = 0; fi < fab.lines.Count(); fi++) {
                 olxstr &l = fab.lines[fi];
@@ -4524,7 +4521,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   // update the refinement description
-  cetNamedStringList description("_olex2_refinement_description");
+  cetStringList description("_olex2_refinement_description");
   TStrList ri = xapp.XFile().GetRM().Describe();
   for (size_t i=0; i < ri.Count(); i++) {
     description.lines.Hyphenate(ri[i].Replace(" ~ ", " \\\\sim "), 80, true);
@@ -4918,22 +4915,22 @@ void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options,
   TCifDP fcf_dp;
   CifBlock& cif_data = fcf_dp.Add(
     TEFile::ExtractFileName(fn).Replace(' ', EmptyString()));
-  cif_data.Add(new cetNamedString("_olex2_title",
+  cif_data.Add(cetString::NewNamedString("_olex2_title",
     xapp.XFile().LastLoader()->GetTitle()));
-  cif_data.Add(new cetNamedString("_shelx_refln_list_code", list_n));
+  cif_data.Add(cetString::NewNamedString("_shelx_refln_list_code", list_n));
 
   const TAsymmUnit& au = xapp.XFile().GetAsymmUnit();
-  cif_data.Add(new cetNamedString("_cell_length_a",
+  cif_data.Add(cetString::NewNamedString("_cell_length_a",
     TEValueD(au.GetAxes()[0], au.GetAxisEsds()[0]).ToString()));
-  cif_data.Add(new cetNamedString("_cell_length_b",
+  cif_data.Add(cetString::NewNamedString("_cell_length_b",
     TEValueD(au.GetAxes()[1], au.GetAxisEsds()[1]).ToString()));
-  cif_data.Add(new cetNamedString("_cell_length_c",
+  cif_data.Add(cetString::NewNamedString("_cell_length_c",
     TEValueD(au.GetAxes()[2], au.GetAxisEsds()[2]).ToString()));
-  cif_data.Add(new cetNamedString("_cell_angle_alpha",
+  cif_data.Add(cetString::NewNamedString("_cell_angle_alpha",
     TEValueD(au.GetAngles()[0], au.GetAngleEsds()[0]).ToString()));
-  cif_data.Add(new cetNamedString("_cell_angle_beta",
+  cif_data.Add(cetString::NewNamedString("_cell_angle_beta",
     TEValueD(au.GetAngles()[1], au.GetAngleEsds()[1]).ToString()));
-  cif_data.Add(new cetNamedString("_cell_angle_gamma",
+  cif_data.Add(cetString::NewNamedString("_cell_angle_gamma",
     TEValueD(au.GetAngles()[2], au.GetAngleEsds()[2]).ToString()));
 
   const TUnitCell& uc = xapp.XFile().GetUnitCell();
@@ -4982,7 +4979,7 @@ void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options,
       row[6] = new cetString('o');
     }
   }
-  TEFile::WriteLines(fn, TCStrList(fcf_dp.SaveToStrings()));
+  TEFile::WriteLines(fn, TCStrList(fcf_dp.SaveToStrings().GetObject()));
 }
 //.............................................................................
 struct XLibMacros_StrF  {
