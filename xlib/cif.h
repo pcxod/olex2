@@ -88,11 +88,11 @@ public:
   void SetParam(const cif_dp::ICifEntry& value);
   void SetParam(const olxstr& name, const olxstr& value, bool quoted)  {
     if( quoted ) {
-      SetParam(cif_dp::cetNamedString(name,
-        olxstr('\'') << value << '\''));
+      SetParam(cif_dp::cetString(name, olxstr('\'') << value << '\''));
     }
-    else
-      SetParam(cif_dp::cetNamedString(name, value));
+    else {
+      SetParam(cif_dp::cetString(name, value));
+    }
   }
   // removes the parameter by name and add the new one
   void ReplaceParam(const olxstr& name, const cif_dp::ICifEntry& value);
