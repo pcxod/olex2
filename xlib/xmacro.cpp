@@ -178,7 +178,8 @@ void XLibMacros::Export(TLibrary& lib)  {
     "u-updates atom treatment if the asymmetric units of currently loaded file"
     " and of the CIF file match&;"
     "f-creates final CIF with embedded RES file and HKL loop&;"
-    "dn-new data name for the merged CIF",
+    "dn-new data name for the merged CIF&;"
+    "resolve-allows using skip_merged items to resolve empty items",
     fpAny|psFileLoaded,
   "Merges loaded or provided as first argument cif with other cif(s)");
   xlib_InitMacro(CifExtract,
@@ -3782,7 +3783,8 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
   TStopWatch sw(__FUNC__);
   TXApp& xapp = TXApp::GetInstance();
   const bool use_md5 = xapp.GetOptions()
-    .FindValue("cif.use_md5", FalseString()).ToBool();
+    .FindValue("cif.use_md5", FalseString()).ToBool(),
+    resolve = Options.GetBoolOption("resolve", true, false);
   cif_dp::TCifDP src;
   TTypeList<olx_pair_t<olxstr,olxstr> > Translations;
   olxstr CifCustomisationFN = xapp.GetCifTemplatesDir() + "customisation.xlt";
@@ -3798,7 +3800,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
           "falied to load CIF customisation file");
         return;
       }
-      df.Include(NULL);
+      df.Include(0);
       TDataItem& di = df.Root().GetItemByName(
         "cif_customisation").GetItemByName("translation");
       for (size_t i=0; i < di.ItemCount(); i++) {
@@ -3808,24 +3810,29 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
       {
         TDataItem *si = df.Root().GetItemByName(
           "cif_customisation").FindItem("skip_merge");
-        if (si != NULL) {
+        if (si != 0) {
           for (size_t i=0; i < si->ItemCount(); i++) {
-            if (si->GetItemByIndex(i).GetName().ContainAnyOf("*?"))
-              masks_to_skip.AddNew(si->GetItemByIndex(i).GetName());
-            else
-              items_to_skip.AddUnique(si->GetItemByIndex(i).GetName());
+            TDataItem &di = si->GetItemByIndex(i);
+            if (di.GetName().ContainAnyOf("*?")) {
+              masks_to_skip.AddNew(di.GetName());
+            }
+            else {
+              items_to_skip.AddUnique(di.GetName());
+            }
           }
         }
       }
       {
         TDataItem *mi = df.Root().GetItemByName(
           "cif_customisation").FindItem("do_merge");
-        if (mi != NULL) {
+        if (mi != 0) {
           for (size_t i = 0; i < mi->ItemCount(); i++) {
-            if (mi->GetItemByIndex(i).GetName().ContainAnyOf("*?"))
+            if (mi->GetItemByIndex(i).GetName().ContainAnyOf("*?")) {
               masks_to_merge.AddNew(mi->GetItemByIndex(i).GetName());
-            else
+            }
+            else {
               items_to_merge.AddUnique(mi->GetItemByIndex(i).GetName());
+            }
           }
         }
       }
@@ -4253,7 +4260,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
             }
           }
         }
-        if (contains) {
+        if (contains || !resolve) {
           if (items_to_skip.Contains(e.GetName()) &&
             !items_to_merge.Contains(e.GetName()))
           {
