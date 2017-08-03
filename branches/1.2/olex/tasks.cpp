@@ -76,11 +76,19 @@ void CellChangeTask::Run() {
   }
   TAsymmUnit &au = xf.GetAsymmUnit();
   olxstr o, n;
+  double diff = 0;
   for (size_t i=0; i < 3; i++) {
     o << ' ' << TEValueD(au.GetAxes()[i], au.GetAxisEsds()[i]).ToString() <<
       ' ' << TEValueD(au.GetAngles()[i], au.GetAngleEsds()[i]).ToString();
     n << ' ' << TEValueD(axes[i], axis_esd[i]).ToString() <<
       ' ' << TEValueD(angles[i], angle_esd[i]).ToString();
+    diff += olx_abs(au.GetAxes()[i]- axes[i]);
+  }
+  if (diff / 3 > 1) {
+    TBasicApp::NewLogEntry(logError) <<
+      "There is a new cell in the HKL file but it differs significantly from "
+      "the current one - please update manually";
+    return;
   }
   bool use = TBasicApp::GetInstance().GetOptions().FindValue(
     "use_hkl_cell", TrueString()).ToBool();
