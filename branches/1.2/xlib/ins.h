@@ -293,7 +293,7 @@ public:
   static olxstr AtomToString(RefinementModel& rm, TCAtom& CA,
     index_t SfacIndex);
   static void HyphenateIns(const olxstr &InsName, const olxstr &Ins,
-    TStrList &Res, int sz=80);
+    TStrList &Res, int sz=79);
   static void HyphenateIns(const olxstr &Ins, TStrList &Res, int sz=79);
 protected:
   // index will be automatically incremented if more then one line is parsed
