@@ -1032,23 +1032,25 @@ void TIns::HyphenateIns(const olxstr &InsName, const olxstr &Ins,
   TStrList &Res, int sz)
 {
   olxstr Tmp = Ins;
-  if (Tmp.Length() > 79 - InsName.Length()) {
-    while (Tmp.Length() > 79 - InsName.Length())  {
+  if (Tmp.Length() > sz - InsName.Length()) {
+    while (Tmp.Length() > sz - InsName.Length())  {
       size_t spindex = Tmp.LastIndexOf(' ', sz - InsName.Length());
       if (spindex != InvalidIndex && spindex > 0)  {
         Res.Add(InsName + Tmp.SubStringTo(spindex));
         Tmp = olxstr(' ') << Tmp.SubStringFrom(spindex + 1);
       }
       else {
-        Res.Add(InsName + Tmp.SubStringTo(79 - InsName.Length() - 2));
+        Res.Add(InsName + Tmp.SubStringTo(sz - InsName.Length() - 2));
         Tmp = Tmp.SubStringFrom(sz - InsName.Length() - 2);
       }
     }
-    if (!Tmp.IsEmpty())
+    if (!Tmp.IsEmpty()) {
       Res.Add(InsName + Tmp);
+    }
   }
-  else
+  else {
     Res.Add(InsName + Tmp);
+  }
 }
 //..............................................................................
 void TIns::HyphenateIns(const olxstr& Ins, TStrList& Res, int sz)  {
