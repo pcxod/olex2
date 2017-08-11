@@ -70,7 +70,7 @@ namespace cif_dp {
       }
       throw TNotImplementedException(__OlxSourceInfo);
     }
-    void SetName(const olxstr &n) {
+    virtual void SetName(const olxstr &n) {
       name = new olxstr(n);
     }
     const olxstr& GetComment() const {
@@ -228,6 +228,9 @@ namespace cif_dp {
     cetTable(const olxstr& cols, size_t row_count = InvalidSize);
     cetTable(const cetTable& v);
     virtual ~cetTable() { Clear(); }
+    virtual void SetName(const olxstr&) {
+      throw TNotImplementedException(__OlxSourceInfo);
+    }
     void Clear();
     void AddCol(const olxstr& col_name);
     template <class SC>
@@ -357,7 +360,7 @@ namespace cif_dp {
     struct LineIndexer {
       const olxstr &str;
       size_t lastPos, ln;
-      LineIndexer(const olxstr str)
+      LineIndexer(const olxstr &str)
         : str(str), lastPos(0), ln(0)
       {}
       size_t GetLineNumber(size_t idx);
