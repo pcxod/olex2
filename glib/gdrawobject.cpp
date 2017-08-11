@@ -71,7 +71,7 @@ void AGDrawObject::ExportLibrary(TLibrary& lib)  {
   "GetName", fpNone, "Returns object collection name") );
 }
 //..............................................................................
-#if _MSC_VER >= 1900 && 0
+#if _MSC_VER == 1900 && 0
 template <>
 AGDrawObject const & esdl::olx_ref::get<AGDrawObject>(AGDrawObject const & x) {
   return x;

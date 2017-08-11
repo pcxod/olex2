@@ -122,7 +122,12 @@ void TCifDP::LoadFromString(const olxstr &str) {
         dn = new_name;
         TBasicApp::NewLogEntry(logInfo) << "New name: " << dn;
       }
-      current_block = &Add(dn);
+      if (current_block->GetName().IsEmpty() && current_block->params.IsEmpty()) {
+        current_block->SetName(dn);
+      }
+      else {
+        current_block = &Add(dn);
+      }
     }
     else if (line.StartsFromi("save_")) {
       if (line.Length() > 5) {
@@ -354,7 +359,7 @@ ICifEntry& cetTable::Set(size_t i, size_t j, ICifEntry* v)  {
 void cetTable::AddCol(const olxstr& col_name) {
   data.AddCol(col_name);
   if (data.ColCount() == 1) {
-    SetName(col_name);
+    ICifEntry::SetName(col_name);
   }
   else {
     olxstr nn = data.ColName(0).CommonSubString(data.ColName(1));
@@ -383,7 +388,7 @@ void cetTable::AddCol(const olxstr& col_name) {
     if (nn.IsEmpty()) {
       throw TFunctionFailedException(__OlxSourceInfo, "mismatching loop columns");
     }
-    SetName(nn);
+    ICifEntry::SetName(nn);
   }
 }
 //.............................................................................
@@ -729,7 +734,6 @@ void CifBlock::Rename(const olxstr& old_name, const olxstr& new_name,
   }
   param_map.Delete(idx);
   param_map.Add(new_name, val);
-  const size_t ti = table_map.IndexOf(old_name);
   const size_t oi = params.IndexOfi(old_name);
   params[oi] = new_name;
 }

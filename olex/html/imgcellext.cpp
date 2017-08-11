@@ -18,24 +18,24 @@ THtmlImageCell::THtmlImageCell(wxWindow *window, wxFSFile *input,
   const wxString& mapname,
   bool width_per, bool height_per) : wxHtmlCell(), AOlxCtrl(window)
 {
-  m_window = window ? wxStaticCast(window, wxScrolledWindow) : NULL;
+  m_window = window ? wxStaticCast(window, wxScrolledWindow) : 0;
   m_scale = scale;
   m_showFrame = false;
-  m_bitmap = NULL;
+  m_bitmap = 0;
   m_bmpW = w;
   m_bmpH = h;
   m_mapName = mapname;
   SetCanLiveOnPagebreak(false);
 #if wxUSE_GIF && wxUSE_TIMER
-  m_gifDecoder = NULL;
-  m_gifTimer = NULL;
+  m_gifDecoder = 0;
+  m_gifTimer = 0;
   File = input;
   m_physX = m_physY = wxDefaultCoord;
 #endif
   if (m_bmpW && m_bmpH) {
-    if (input != NULL) {
+    if (input != 0) {
       wxInputStream *s = input->GetStream();
-      if (s != NULL) {
+      if (s != 0) {
         bool readImg = true;
 
 #if wxUSE_GIF && wxUSE_TIMER && !wxCHECK_VERSION(2,8,0)
@@ -68,9 +68,8 @@ THtmlImageCell::THtmlImageCell(wxWindow *window, wxFSFile *input,
             wxLogNull nl;
             image.LoadFile(*s, wxBITMAP_TYPE_ANY);
           }
-          if (image.Ok()) {
+          if (image.Ok())
             SetImage(image);
-          }
           else {
             if (mapname.IsEmpty()) {
               TBasicApp::NewLogEntry(logError) << "Invalid image";
@@ -125,10 +124,20 @@ void THtmlImageCell::SetImage(const wxImage& img) {
     int ww = img.GetWidth();
     int hh = img.GetHeight();
     if (m_bmpW == wxDefaultCoord) {
-      m_bmpW = ww;
+      if (m_bmpH != wxDefaultCoord) {
+        m_bmpW = ww*m_bmpH / hh;
+      }
+      else {
+        m_bmpW = ww;
+      }
     }
     if (m_bmpH == wxDefaultCoord) {
-      m_bmpH = hh;
+      if (m_bmpW != wxDefaultCoord) {
+        m_bmpH = hh * m_bmpW / ww;
+      }
+      else {
+        m_bmpH = hh;
+      }
     }
 
     if ((m_bmpW != ww || m_bmpH != hh) && m_bmpW > 0 && m_bmpH > 0) {
@@ -184,11 +193,11 @@ void THtmlImageCell::Layout(int w) {
 }
 //..............................................................................
 
-THtmlImageCell::~THtmlImageCell() {
-  if (File != NULL) {
+THtmlImageCell::~THtmlImageCell()  {
+  if (File != 0) {
     delete File;
   }
-  delete m_bitmap;
+    delete m_bitmap;
 #if wxUSE_GIF && wxUSE_TIMER
   delete m_gifTimer;
   delete m_gifDecoder;
@@ -211,17 +220,15 @@ void THtmlImageCell::Draw(wxDC& dc, int x, int y) {
     dc.DrawRectangle(x + m_PosX, y + m_PosY, (int)(width*m_scale), (int)(height*m_scale));
     x++, y++;
   }
-  if (m_bitmap != NULL) {
+  if (m_bitmap != 0) {
     // We add in the scaling from the desired bitmap width
     // and height, so we only do the scaling once.
     double imageScaleX = 1.0;
     double imageScaleY = 1.0;
-    if (width != m_bitmap->GetWidth()) {
+    if (width != m_bitmap->GetWidth())
       imageScaleX = (double)width / (double)m_bitmap->GetWidth();
-    }
-    if (height != m_bitmap->GetHeight()) {
+    if (height != m_bitmap->GetHeight())
       imageScaleY = (double)height / (double)m_bitmap->GetHeight();
-    }
 
     double us_x, us_y;
     dc.GetUserScale(&us_x, &us_y);
@@ -245,12 +252,12 @@ wxHtmlLinkInfo *THtmlImageCell::GetLink(int x, int y) const {
     }
   }
   wxHtmlContainerCell *op = GetParent(), *p = op;
-  while (p != NULL) {
+  while (p != 0) {
     op = p;
     p = p->GetParent();
   }
   p = op;
   wxHtmlCell *cell = (wxHtmlCell*)p->Find(wxHTML_COND_ISIMAGEMAP, (const void*)(&m_mapName));
-  return (cell == NULL) ? wxHtmlCell::GetLink(x, y) : cell->GetLink(x, y);
+  return (cell == 0) ? wxHtmlCell::GetLink(x, y) : cell->GetLink(x, y);
 }
 //..............................................................................

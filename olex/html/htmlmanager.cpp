@@ -767,66 +767,79 @@ void THtmlManager::macLstObj(TStrObjList &Cmds, const TParamList &Options,
 {
   THtml* html = Cmds.Count() == 0 ? main : FindHtml(Cmds[1]);
   const olxstr &hn = Cmds.Count() == 0 ? EmptyString() : Cmds[0];
-  if (html == NULL) {
+  if (html == 0) {
     E.ProcessingError(__OlxSrcInfo,
       "undefined html window: ").quote() << hn;
     return;
   }
   TStrList all;
   all.SetCapacity(html->Objects.Count());
-  for( size_t i=0; i < html->Objects.Count(); i++ )
+  for (size_t i = 0; i < html->Objects.Count(); i++)
     all.Add(html->Objects.GetKey(i));
-  for( size_t i=0; i < Popups.Count(); i++ )  {
+  for (size_t i = 0; i < Popups.Count(); i++) {
     THtml &h = *Popups.GetValue(i)->Html;
-    all.SetCapacity(all.Count()+h.Objects.Count());
-    for( size_t j=0; j < h.Objects.Count(); j++ )
+    all.SetCapacity(all.Count() + h.Objects.Count());
+    for (size_t j = 0; j < h.Objects.Count(); j++) {
       all.Add(Popups.GetKey(i)) << '.' << h.Objects.GetKey(j);
+    }
   }
   TBasicApp::NewLogEntry() << all;
 }
 //.............................................................................
-void THtmlManager::funSetImage(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funSetImage(const TStrObjList &Params, TMacroData &E) {
   Control c = FindControl(Params[0], E, 1, __OlxSrcInfo);
-  if( c.html == NULL || c.ctrl == NULL )  return;
-  if( !c.html->SetObjectImage(c.ctrl, Params[1]) ) {
+  if (c.html == 0 || c.ctrl == 0) {
+    return;
+  }
+  if (!c.html->SetObjectImage(c.ctrl, Params[1])) {
     E.ProcessingError(__OlxSrcInfo,
-      "could not set image for the object: ").quote()  << c.ctrl_name;
+      "could not set image for the object: ").quote() << c.ctrl_name;
   }
 }
 //.............................................................................
-void THtmlManager::funGetImage(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funGetImage(const TStrObjList &Params, TMacroData &E) {
   Control c = FindControl(Params[0], E, 1, __OlxSrcInfo);
-  if( c.html == NULL || c.ctrl == NULL )  return;
+  if (c.html == 0 || c.ctrl == 0) {
+    return;
+  }
   E.SetRetVal(c.html->GetObjectImage(c.ctrl));
 }
 //.............................................................................
-void THtmlManager::funSetFocus(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funSetFocus(const TStrObjList &Params, TMacroData &E) {
   Control c = FindControl(Params[0], E, 0, __OlxSrcInfo);
-  if( c.html == NULL )  return;
-  if( c.wnd == NULL )  // not created yet?
+  if (c.html == 0) {
     return;
-  if( EsdlInstanceOf(*c.wnd, TTextEdit) )
-    ((TTextEdit*)c.wnd)->SetSelection(-1,-1);
-  else if( EsdlInstanceOf(*c.wnd, TComboBox) )  {
+  }
+  if (c.wnd == 0) { // not created yet?
+    return;
+  }
+  if (EsdlInstanceOf(*c.wnd, TTextEdit)) {
+    ((TTextEdit*)c.wnd)->SetSelection(-1, -1);
+  }
+  else if (EsdlInstanceOf(*c.wnd, TComboBox)) {
     TComboBox* cb = (TComboBox*)c.wnd;
     //cb->GetTextCtrl()->SetSelection(-1, -1);
   }
   c.wnd->SetFocus();
 }
 //.............................................................................
-void THtmlManager::funSelect(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funSelect(const TStrObjList &Params, TMacroData &E) {
   bool by_label = Params.Count() == 3 ? Params[2].ToBool() : true;
   Control c = FindControl(Params[0], E, 1, __OlxSrcInfo);
-  if( c.html == NULL || c.ctrl == NULL )  return;
-  if( !EsdlInstanceOf(*c.ctrl, TTreeView) )  {
+  if (c.html == 0 || c.ctrl == 0) {
+    return;
+  }
+  if (!EsdlInstanceOf(*c.ctrl, TTreeView)) {
     E.ProcessingError(__OlxSrcInfo, "incompatible object type");
     return;
   }
   TTreeView* tv = (TTreeView*)c.ctrl;
-  if( by_label )
+  if (by_label) {
     tv->SelectByLabel(Params[1]);
-  else
+  }
+  else {
     tv->SelectByData(Params[1]);
+  }
 }
 //.............................................................................
 bool THtmlManager::SetState(const TStrObjList &Params, TMacroData &E)  {
