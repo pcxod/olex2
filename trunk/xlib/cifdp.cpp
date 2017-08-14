@@ -46,7 +46,14 @@ void TCifDP::LoadFromStream(IInputStream & stream) {
 //..............................................................................
 void TCifDP::LoadFromString(const olxstr &str) {
   Clear();
-  TTypeList<CifToken> toks = TokenizeString(str);
+  if (str.StartsFrom("#\\#CIF_2.0")) {
+    version = 2;
+  }
+  else {
+    version = 1;
+  }
+  TTypeList<CifToken> toks = TokenizeString(
+    version == 2 ? str.SubStringFrom(10) : str);
   //TBasicApp::NewLogEntry() << toks;
   CifBlock *current_block = &Add(EmptyString());
   for (size_t i = 0; i < toks.Count(); i++) {
@@ -87,7 +94,7 @@ void TCifDP::LoadFromString(const olxstr &str) {
             ij--;
             continue;
           }
-          r[ij] = ICifEntry::FromToken(toks[ii]);
+          r[ij] = ICifEntry::FromToken(toks[ii], version);
         }
       }
       current_block->Add(t.release());
@@ -99,7 +106,7 @@ void TCifDP::LoadFromString(const olxstr &str) {
     }
     if (line.CharAt(0) == '_') {  // parameter
       if (i + 1 < toks.Count()) {
-        ICifEntry *e = ICifEntry::FromToken(toks[i + 1]);
+        ICifEntry *e = ICifEntry::FromToken(toks[i + 1], version);
         e->SetName(line);
         current_block->Add(e);
       }
@@ -880,7 +887,7 @@ void cetList::FromToken(const CifToken &token) {
   TTypeList<CifToken> toks = TCifDP::TokenizeString(
     token.value.SubStringFrom(1, 1));
   for (size_t i = 0; i < toks.Count(); i++) {
-    data.Add(ICifEntry::FromToken(toks[i]));
+    data.Add(ICifEntry::FromToken(toks[i], 2));
   }
 }
 //.............................................................................
@@ -941,42 +948,61 @@ void cetDict::FromToken(const CifToken &token) {
     data.Add(
       new cetDict::dict_item_t(
         new cetString(toks[i].value, true),
-        ICifEntry::FromToken(toks[i+1]))
+        ICifEntry::FromToken(toks[i+1], 2))
     );
   }
 }
 //.............................................................................
 //.............................................................................
 //.............................................................................
-ICifEntry *ICifEntry::FromToken(const CifToken &t) {
+ICifEntry *ICifEntry::FromToken(const CifToken &t, int version) {
   if (t.value.IsEmpty()) {
     return new cetString(EmptyString());
   }
-  switch (t.value.CharAt(0)) {
-  case '[':
-  {
-    olx_object_ptr<cetList> l = new cetList();
-    l().FromToken(t);
-    return l.release();
+  if (version == 1) {
+    switch (t.value.CharAt(0)) {
+    case ';':
+    {
+      olx_object_ptr<cetStringList> l = new cetStringList();
+      l().lines.Strtok(t.value.SubStringFrom(1, 1), '\n');
+      return l.release();
+    }
+    case '#':
+    {
+      cetComment *c = new cetComment(t.value.SubStringFrom(1));
+      return c;
+    }
+    default:
+      return new cetString(t.value);
+    }
   }
-  case '{':
-  {
-    olx_object_ptr<cetDict> d = new cetDict();
-    d().FromToken(t);
-    return d.release();
-  }
-  case ';':
-  {
-    olx_object_ptr<cetStringList> l = new cetStringList();
-    l().lines.Strtok(t.value.SubStringFrom(1, 1), '\n');
-    return l.release();
-  }
-  case '#':
-  {
-    cetComment *c = new cetComment(t.value.SubStringFrom(1));
-    return c;
-  }
-  default:
-    return new cetString(t.value);
+  else {
+    switch (t.value.CharAt(0)) {
+    case '[':
+    {
+      olx_object_ptr<cetList> l = new cetList();
+      l().FromToken(t);
+      return l.release();
+    }
+    case '{':
+    {
+      olx_object_ptr<cetDict> d = new cetDict();
+      d().FromToken(t);
+      return d.release();
+    }
+    case ';':
+    {
+      olx_object_ptr<cetStringList> l = new cetStringList();
+      l().lines.Strtok(t.value.SubStringFrom(1, 1), '\n');
+      return l.release();
+    }
+    case '#':
+    {
+      cetComment *c = new cetComment(t.value.SubStringFrom(1));
+      return c;
+    }
+    default:
+      return new cetString(t.value);
+    }
   }
 }
