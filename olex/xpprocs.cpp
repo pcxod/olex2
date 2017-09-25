@@ -2347,6 +2347,9 @@ void TMainForm::macHklEdit(TStrObjList &Cmds, const TParamList &Options,
   sw.start("Loading HKL");
   THklFile Hkl;
   Hkl.Append(FXApp->XFile().GetRM().GetReflections());
+  for (size_t i = 0; i < Hkl.RefCount(); i++) {
+    Hkl[i].SetTag(i+1);
+  }
   sw.start("Preparing input");
   TStrList SL;
   SL.Add("REM Please put \'-\' char in the front of reflections you wish to omit");
@@ -2360,16 +2363,18 @@ void TMainForm::macHklEdit(TStrObjList &Cmds, const TParamList &Options,
       Tmp.stream(' ') << bad_refs[i].index[0] << bad_refs[i].index[1] <<
         bad_refs[i].index[2] << "Error/esd=" << bad_refs[i].factor;
       TRefPList refs = Hkl.AllRefs(bad_refs[i].index, matrices);
-      for (size_t j=0; j < refs.Count(); j++)
+      for (size_t j = 0; j < refs.Count(); j++) {
         SL.Add(refs[j]->ToNString());
+      }
       SL.Add();
     }
   }
   else  {
     TReflection Refl(Cmds[0].ToInt(), Cmds[1].ToInt(), Cmds[2].ToInt());
     TRefPList refs = Hkl.AllRefs(Refl, matrices);
-    for (size_t i=0; i < refs.Count(); i++)
+    for (size_t i = 0; i < refs.Count(); i++) {
       SL.Add(refs[i]->ToNString());
+    }
   }
   sw.stop();
   TdlgEdit *dlg = new TdlgEdit(this, true);
@@ -2380,7 +2385,9 @@ void TMainForm::macHklEdit(TStrObjList &Cmds, const TParamList &Options,
     SL.Strtok(Tmp, '\n');
     TReflection R(0, 0, 0);
     for (size_t i=0; i < SL.Count(); i++) {
-      if (SL[i].ToUpperCase().StartsFrom("REM"))  continue;
+      if (SL[i].ToUpperCase().StartsFrom("REM")) {
+        continue;
+      }
       R.FromNString(SL[i]);
       Hkl.UpdateRef(R);
     }

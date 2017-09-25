@@ -180,11 +180,10 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
     sw.start("Loading/Filtering/Merging HKL");
     TUnitCell::SymmSpace sp = xapp.XFile().GetUnitCell().GetSymmSpace();
     SymmSpace::InfoEx info_ex = SymmSpace::Compact(sp);
-    info_ex.centrosymmetric = true;
     RefinementModel& rm = xapp.XFile().GetRM();
     if (rm.GetHKLF() < 5) {
       RefinementModel::HklStat ms =
-        rm.GetFourierRefList<
+        rm.GetRefinementRefList<
           TUnitCell::SymmSpace,RefMerger::ShelxMerger>(sp, refs);
       F.SetCount(refs.Count());
       sw.start("Calculating structure factors");
