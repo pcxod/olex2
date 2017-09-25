@@ -274,10 +274,11 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
   return rv;
 }
 //..............................................................................
-void THklFile::UpdateRef(const TReflection& R)  {
-  size_t ind = olx_abs(R.GetTag())-1;
-  if( ind >= Refs.Count() )
+void THklFile::UpdateRef(const TReflection& R) {
+  size_t ind = olx_abs(R.GetTag()) - 1;
+  if (ind >= Refs.Count()) {
     throw TInvalidArgumentException(__OlxSourceInfo, "reflection tag");
+  }
   Refs[ind].SetOmitted(R.IsOmitted());
 }
 //..............................................................................
