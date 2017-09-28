@@ -71,20 +71,20 @@ void TCifDP::LoadFromString(const olxstr &str) {
       while (++i < toks.Count() && toks[i].value.StartsFrom('_')) {
         t().AddCol(toks[i].value);
       }
-      size_t st = i;
+      size_t st = i--;
       while (++i < toks.Count() && !IsLoopBreaking(toks[i].value)) {
         if (toks[i].value.StartsFrom('#')) {
           comments.Add(toks[i].value);
           toks.NullItem(i);
+          continue;
         }
-        continue;
       }
       if (((i - st - comments.Count()) % t().ColCount()) > 0) {
         throw ParsingException(__OlxSourceInfo,
-          olxstr("invalid table ") << t().GetName(), toks[st].lineNumber);
+          olxstr("invalid table ") << t().GetName(), st);
       }
       for (size_t ii = st; ii < i;) {
-        if (toks.IsNull(ii)) {
+        if (toks.IsNull(ii) || toks[ii].value.IsEmpty()) {
           ii++;
           continue;
         }
@@ -96,6 +96,11 @@ void TCifDP::LoadFromString(const olxstr &str) {
           }
           r[ij] = ICifEntry::FromToken(toks[ii], version);
         }
+      }
+      if (t().RowCount() == 0) {
+        TBasicApp::NewLogEntry(logWarning) << "Ignoring empty table "
+          << t().GetName();
+        continue;
       }
       current_block->Add(t.release());
       for (size_t ci = 0; ci < comments.Count(); ci++) {
