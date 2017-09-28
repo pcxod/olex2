@@ -125,14 +125,18 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
     const size_t aInd = hklLoop->ColIndex("_refln_A_calc");
     const size_t bInd = hklLoop->ColIndex("_refln_B_calc");
     const size_t fcInd = hklLoop->ColIndex("_refln_F_calc");
+    const size_t fcqInd = hklLoop->ColIndex("_refln_F_squared_calc");
     const size_t fcpInd = hklLoop->ColIndex("_refln_phase_calc");
     if ((hInd | kInd | lInd | mfInd | sfInd) == InvalidIndex) {
       return "undefined FCF data";
     }
-    if ((aInd | bInd) == InvalidIndex && (fcInd | fcpInd) == InvalidIndex) {
+    if ((aInd | bInd) == InvalidIndex && (fcInd | fcpInd) == InvalidIndex &&
+        (fcqInd | fcpInd) == InvalidIndex)
+    {
       return "undefined FCF data - list 3 or 6 is expected";
     }
-    int list = (fcInd | fcpInd) == InvalidIndex ? 3 : 6;
+    int list = (fcInd | fcpInd) != InvalidIndex ? 6
+      : ((aInd | bInd) != InvalidIndex ? 3 : -6);
     refs.SetCapacity(hklLoop->RowCount());
     F.SetCount(hklLoop->RowCount());
     for (size_t i=0; i < hklLoop->RowCount(); i++) {
@@ -151,9 +155,13 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
         rv.Re() = row[aInd]->GetStringValue().ToDouble();
         rv.Im() = row[bInd]->GetStringValue().ToDouble();
       }
-      else {
+      else if (list == 6) {
         rv = compd::polar(row[fcInd]->GetStringValue().ToDouble(),
           row[fcpInd]->GetStringValue().ToDouble()*M_PI/180);
+      }
+      else if (list == -6) {
+        rv = compd::polar(sqrt(row[fcqInd]->GetStringValue().ToDouble()),
+          row[fcpInd]->GetStringValue().ToDouble()*M_PI / 180);
       }
       if (mapType == mapTypeDiff) {
         double dI = (ref.GetI() - rv.mod());

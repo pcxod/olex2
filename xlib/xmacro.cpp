@@ -4880,34 +4880,44 @@ void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options,
   olxstr col_names = "_refln_index_h,_refln_index_k,_refln_index_l,";
   if (list_n == 4) {
     ms = xapp.XFile().GetRM().GetRefinementRefList<
-      TUnitCell::SymmSpace,RefMerger::ShelxMerger>(sp, refs);
+      TUnitCell::SymmSpace, RefMerger::ShelxMerger>(sp, refs);
     col_names << "_refln_F_squared_calc,_refln_F_squared_meas,"
       "_refln_F_squared_sigma,_refln_observed_status";
   }
+  else if (list_n == 6) {
+    ms = xapp.XFile().GetRM().GetRefinementRefList<
+      TUnitCell::SymmSpace, RefMerger::ShelxMerger>(sp, refs);
+    col_names << "_refln_F_squared_meas,_refln_F_squared_sigma,"
+      "_refln_F_calc,_refln_phase_calc";
+  }
   else if (list_n == 3) {
     ms = xapp.XFile().GetRM().GetFourierRefList<
-      TUnitCell::SymmSpace,RefMerger::ShelxMerger>(sp, refs);
+      TUnitCell::SymmSpace, RefMerger::ShelxMerger>(sp, refs);
     col_names << "_refln_F_meas,_refln_F_sigma,_refln_A_calc,_refln_B_calc";
   }
-  else  {
+  else {
     Error.ProcessingError(__OlxSrcInfo, "unsupported list number: ") <<
       list_n;
     return;
   }
+  TReflection::SortList(refs);
   TArrayList<compd> F;
   F.SetCount(refs.Count());
   //xapp.CalcSF(refs, F);
   //SFUtil::CalcSF(xapp.XFile(), refs, F, xapp.XFile().GetRM().GetMERG() != 4);
   SFUtil::CalcSF(xapp.XFile(), refs, F);
   double scale_k = 1, scale_a = 0;
-  olxstr scale_str = Options.FindValue("scale", "external");
-  if( scale_str.Equalsi("external") )
-    scale_k = 1./olx_sqr(xapp.XFile().GetRM().Vars.GetVar(0).GetValue());
-  else if( scale_str.Equalsi("simple") )
+  olxstr scale_str = Options.FindValue("scale", "regression");
+  if (scale_str.Equalsi("external")) {
+    scale_k = 1. / olx_sqr(xapp.XFile().GetRM().Vars.GetVar(0).GetValue());
+  }
+  else if (scale_str.Equalsi("simple")) {
     scale_k = SFUtil::CalcF2Scale(F, refs);
-  else if( scale_str.Equalsi("regression") )
+  }
+  else if (scale_str.Equalsi("regression")) {
     SFUtil::CalcF2Scale(F, refs, scale_k, scale_a);
-  else  {
+  }
+  else {
     Error.ProcessingError(__OlxSrcInfo, olxstr("unsupported scale: ") << scale_str);
     return;
   }
@@ -4935,9 +4945,9 @@ void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options,
   const TUnitCell& uc = xapp.XFile().GetUnitCell();
   cetTable* sym_tab = new cetTable(
     "_space_group_symop_id,_space_group_symop_operation_xyz");
-  for( size_t i=0; i < uc.MatrixCount(); i++ )  {
+  for (size_t i = 0; i < uc.MatrixCount(); i++) {
     CifRow& r = sym_tab->AddRow();
-    r[0] = new cetString(i+1);
+    r[0] = new cetString(i + 1);
     r[1] = new cetString(TSymmParser::MatrixToSymmEx(uc.GetMatrix(i)));
   }
   cif_data.Add(sym_tab);
@@ -4945,7 +4955,7 @@ void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options,
   cetTable* ref_tab = new cetTable(col_names);
   cif_data.Add(ref_tab);
 
-  for( size_t i=0; i < refs.Count(); i++ )  {
+  for (size_t i = 0; i < refs.Count(); i++) {
     TReflection& r = refs[i];
     const double Fo2 = r.GetI()*scale_k + scale_a;
     const double sigFo2 = r.GetS()*scale_k;
@@ -4953,16 +4963,16 @@ void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options,
     row[0] = new cetString(r.GetH());
     row[1] = new cetString(r.GetK());
     row[2] = new cetString(r.GetL());
-    if( list_n == 3 )  {
+    if (list_n == 3) {
       double Fo, s_m;
       //http://www.iucr.org/__data/iucr/cif/software/xtal/xtal372htmlman/html/refcal-desc.html
-      if( Fo2 <= 0 )  {
+      if (Fo2 <= 0) {
         Fo = 0;
         s_m = sqrt(sigFo2); // xtal 3.7.2
       }
-      else  {
+      else {
         Fo = sqrt(Fo2);
-        s_m = sqrt(Fo2+sigFo2) - Fo; // xtal 3.7.2
+        s_m = sqrt(Fo2 + sigFo2) - Fo; // xtal 3.7.2
         //s_m = sigFo2/(Fo + sqrt(sigFo2+Fo2));  // sxtal 3.7
         //s_m = Fo2 < sigFo2 ? sigFo2 : sigFo2/(2*Fo); // crystals
       }
@@ -4971,11 +4981,17 @@ void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options,
       row[5] = new cetString(F[i].Re());
       row[6] = new cetString(sp.IsCentrosymmetric() ? 0.0 : F[i].Im());
     }
-    else if( list_n == 4 )  {
+    else if (list_n == 4) {
       row[3] = new cetString(olxstr::FormatFloat(2, F[i].qmod()));
       row[4] = new cetString(olxstr::FormatFloat(2, Fo2));
       row[5] = new cetString(olxstr::FormatFloat(2, sigFo2));
       row[6] = new cetString('o');
+    }
+    else if (list_n == 6) {
+      row[3] = new cetString(olxstr::FormatFloat(2, Fo2));
+      row[4] = new cetString(olxstr::FormatFloat(2, sigFo2));
+      row[5] = new cetString(olxstr::FormatFloat(2, F[i].mod()));
+      row[6] = new cetString(olxstr::FormatFloat(2, F[i].arg()*180/M_PI));
     }
   }
   TEFile::WriteLines(fn, TCStrList(fcf_dp.SaveToStrings().GetObject()));
