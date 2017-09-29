@@ -195,7 +195,9 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(CifCreate, EmptyString(), fpNone|psFileLoaded,
     "Creates cif from current file, variance-covariance matrix should be "
     "available");
-  xlib_InitMacro(FcfCreate, "scale-[external],simple or regression",
+  xlib_InitMacro(FcfCreate,
+    "scale-[external],simple, regression or none&;"
+    "c-[false] converts current fcf to the given list format",
     (fpAny^fpNone)|psFileLoaded,
     "Creates fcf from current file. Expects a number as in the shelx list "
     "number as the first argument, the second argument is the output file name"
@@ -4874,25 +4876,40 @@ void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options,
   const int list_n = Cmds[0].ToInt();
   const olxstr fn = (Cmds.Count() > 1 ? Cmds.Text(' ', 1) :
     TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "fcf"));
-  RefinementModel::HklStat ms;
   TUnitCell::SymmSpace sp = xapp.XFile().GetUnitCell().GetSymmSpace();
   TRefList refs;
+  TArrayList<compd> F;
+  bool convert = Options.GetBoolOption('c');
+  if (convert) {
+    olxstr err = SFUtil::GetSF(refs, F, SFUtil::mapTypeCalc, SFUtil::sfOriginFcf,
+      SFUtil::scaleExternal, 1);
+    if (!err.IsEmpty()) {
+      Error.ProcessingError(__OlxSrcInfo, err);
+      return;
+    }
+  }
   olxstr col_names = "_refln_index_h,_refln_index_k,_refln_index_l,";
   if (list_n == 4) {
-    ms = xapp.XFile().GetRM().GetRefinementRefList<
-      TUnitCell::SymmSpace, RefMerger::ShelxMerger>(sp, refs);
+    if (!convert) {
+      xapp.XFile().GetRM().GetRefinementRefList<
+        TUnitCell::SymmSpace, RefMerger::ShelxMerger>(sp, refs);
+    }
     col_names << "_refln_F_squared_calc,_refln_F_squared_meas,"
       "_refln_F_squared_sigma,_refln_observed_status";
   }
   else if (list_n == 6) {
-    ms = xapp.XFile().GetRM().GetRefinementRefList<
-      TUnitCell::SymmSpace, RefMerger::ShelxMerger>(sp, refs);
+    if (!convert) {
+      xapp.XFile().GetRM().GetRefinementRefList<
+        TUnitCell::SymmSpace, RefMerger::ShelxMerger>(sp, refs);
+    }
     col_names << "_refln_F_squared_meas,_refln_F_squared_sigma,"
       "_refln_F_calc,_refln_phase_calc";
   }
   else if (list_n == 3) {
-    ms = xapp.XFile().GetRM().GetFourierRefList<
-      TUnitCell::SymmSpace, RefMerger::ShelxMerger>(sp, refs);
+    if (!convert) {
+      xapp.XFile().GetRM().GetFourierRefList<
+        TUnitCell::SymmSpace, RefMerger::ShelxMerger>(sp, refs);
+    }
     col_names << "_refln_F_meas,_refln_F_sigma,_refln_A_calc,_refln_B_calc";
   }
   else {
@@ -4900,14 +4917,16 @@ void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options,
       list_n;
     return;
   }
-  TReflection::SortList(refs);
-  TArrayList<compd> F;
-  F.SetCount(refs.Count());
-  //xapp.CalcSF(refs, F);
-  //SFUtil::CalcSF(xapp.XFile(), refs, F, xapp.XFile().GetRM().GetMERG() != 4);
-  SFUtil::CalcSF(xapp.XFile(), refs, F);
+  if (!convert) {
+    F.SetCount(refs.Count());
+    //xapp.CalcSF(refs, F);
+    //SFUtil::CalcSF(xapp.XFile(), refs, F, xapp.XFile().GetRM().GetMERG() != 4);
+    SFUtil::CalcSF(xapp.XFile(), refs, F);
+  }
   double scale_k = 1, scale_a = 0;
   olxstr scale_str = Options.FindValue("scale", "regression");
+  if (scale_str.Equalsi("none")) {
+  }
   if (scale_str.Equalsi("external")) {
     scale_k = 1. / olx_sqr(xapp.XFile().GetRM().Vars.GetVar(0).GetValue());
   }
