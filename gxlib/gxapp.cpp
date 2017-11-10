@@ -4624,14 +4624,14 @@ TGlBitmap* TGXApp::CreateGlBitmap(const olxstr& name,
   unsigned char* RGBa, unsigned int format)
 {
   TGlBitmap* glB = FindGlBitmap(name);
-  if( glB == NULL )  {
-    glB = new TGlBitmap(*GlRenderer, name, left, top, width, height, RGBa, format );
+  if (glB == 0) {
+    glB = new TGlBitmap(*GlRenderer, name, left, top, width, height, RGBa, format);
     GlBitmaps.Add(glB);
     glB->Create();
-    ObjectsToCreate.Add( (AGDrawObject*)glB );
-    glB->SetZ(-GlRenderer->GetMaxRasterZ() + (double)GlBitmaps.Count()/100);
+    ObjectsToCreate.Add((AGDrawObject*)glB);
+    glB->SetZ(-GlRenderer->GetMaxRasterZ() + (double)GlBitmaps.Count() / 100);
   }
-  else  {
+  else {
     glB->ReplaceData(width, height, RGBa, format);
     glB->SetVisible(!glB->IsVisible());
   }
