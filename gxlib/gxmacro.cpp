@@ -2484,6 +2484,8 @@ void GXLibMacros::macPiM(TStrObjList &Cmds, const TParamList &Options,
     ai.Next().SetTag(0);
   }
   bool create_c = Options.GetBoolOption("c");
+  bool label = Options.GetBoolOption("l");
+
   const olxstr sb_name = TXBond::GetSettings(app.GetRenderer())
     .GetPrimitives(true)[9];
   for (size_t i=0; i < rings.Count(); i++) {
