@@ -4624,14 +4624,14 @@ TGlBitmap* TGXApp::CreateGlBitmap(const olxstr& name,
   unsigned char* RGBa, unsigned int format)
 {
   TGlBitmap* glB = FindGlBitmap(name);
-  if( glB == NULL )  {
-    glB = new TGlBitmap(*GlRenderer, name, left, top, width, height, RGBa, format );
+  if (glB == 0) {
+    glB = new TGlBitmap(*GlRenderer, name, left, top, width, height, RGBa, format);
     GlBitmaps.Add(glB);
     glB->Create();
-    ObjectsToCreate.Add( (AGDrawObject*)glB );
-    glB->SetZ(-GlRenderer->GetMaxRasterZ() + (double)GlBitmaps.Count()/100);
+    ObjectsToCreate.Add((AGDrawObject*)glB);
+    glB->SetZ(-GlRenderer->GetMaxRasterZ() + (double)GlBitmaps.Count() / 100);
   }
-  else  {
+  else {
     glB->ReplaceData(width, height, RGBa, format);
     glB->SetVisible(!glB->IsVisible());
   }
@@ -5017,8 +5017,9 @@ void TGXApp::ToDataItem(TDataItem& item, IOutputStream& zos) const {
   size_t b_cnt = 0;
   BondIterator bi(*this);
   while (bi.HasNext()) {
-    if (!bi.Next().IsDeleted())
+    if (!bi.Next().IsDeleted()) {
       b_cnt++;
+    }
   }
   vis.SetSize(b_cnt);
   TPtrList<TXGlLabel> bond_labels(b_cnt);
@@ -5034,9 +5035,11 @@ void TGXApp::ToDataItem(TDataItem& item, IOutputStream& zos) const {
   visibility.AddField("bonds", vis.ToBase64String());
   size_t p_cnt = 0;
   PlaneIterator pi(*this);
-  while (pi.HasNext())
-    if (!pi.Next().IsDeleted())
+  while (pi.HasNext()) {
+    if (!pi.Next().IsDeleted()) {
       p_cnt++;
+    }
+  }
   vis.SetSize(p_cnt);
   p_cnt = 0;
   pi.Reset();
@@ -5260,24 +5263,61 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
     OnGraphicsVisible.Execute(dynamic_cast<TBasicApp*>(this),
       FAtomLegend);
   }
+  {
+    TEBitArray arr;
+    arr.FromBase64String(visibility.GetFieldByName("atoms"));
+    AtomIterator ai(*this);
+    size_t cnt = 0;
+    while(ai.HasNext()) {
+      if (cnt >= arr.Count()) {
+        TBasicApp::NewLogEntry(logWarning) << "Atom visibility integrity broken";
+        break;
+      }
+      ai.Next().SetVisible(arr[cnt++]);
+    }
+    arr.FromBase64String(visibility.GetFieldByName("bonds"));
+    BondIterator bi(*this);
+    cnt = 0;
+    while (bi.HasNext()) {
+      if (cnt >= arr.Count()) {
+        TBasicApp::NewLogEntry(logWarning) << "Bond visibility integrity broken";
+        break;
+      }
+      bi.Next().SetVisible(arr[cnt++]);
+    }
+    arr.FromBase64String(visibility.GetFieldByName("planes"));
+    PlaneIterator pi(*this);
+    cnt = 0;
+    while (pi.HasNext()) {
+      if (cnt >= arr.Count()) {
+        TBasicApp::NewLogEntry(logWarning) << "Plane visibility integrity broken";
+        break;
+      }
+      pi.Next().SetVisible(arr[cnt++]);
+    }
+  }
 
   const TDataItem* atom_labels = item.FindItem("AtomLabels");
   if (atom_labels != NULL) {
     AtomIterator ai(*this);
-    if (ai.count != atom_labels->ItemCount())
+    if (ai.count != atom_labels->ItemCount()) {
       throw TFunctionFailedException(__OlxSourceInfo, "integrity is broken");
+    }
     size_t i=0;
-    while (ai.HasNext())
+    while (ai.HasNext()) {
       ai.Next().GetGlLabel().FromDataItem(atom_labels->GetItemByIndex(i++));
+    }
   }
   const TDataItem* bond_labels = item.FindItem("BondLabels");
   if (bond_labels != NULL) {
     BondIterator bi(*this);
-    if (bi.count != bond_labels->ItemCount())
+    if (bi.count != bond_labels->ItemCount()) {
       throw TFunctionFailedException(__OlxSourceInfo, "integrity is broken");
+    }
     size_t i = 0;
-    while (bi.HasNext())
+    while (bi.HasNext()) {
       bi.Next().GetGlLabel().FromDataItem(bond_labels->GetItemByIndex(i++));
+    }
   }
   //// restore
 
@@ -5295,20 +5335,24 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
     TGlGroup& glG = GlRenderer->GetGroup(i);
     glG.SetVisible(group.GetFieldByName("visible").ToBool());
     const int p_id = group.GetFieldByName("parent_id").ToInt();
-    if (p_id == -1)
+    if (p_id == -1) {
       GlRenderer->GetSelection().Add(glG);
-    else if (p_id >= 0)
+    }
+    else if (p_id >= 0) {
       GlRenderer->GetGroup(p_id).Add(glG);
+    }
     // compatibility
     TDataItem* atoms = group.FindItem("Atoms");
     if (atoms != NULL) {
       glG.IncCapacity(atoms->FieldCount());
-      for (size_t j = 0; j < atoms->FieldCount(); j++)
+      for (size_t j = 0; j < atoms->FieldCount(); j++) {
         glG.Add(GetXAtom(atoms->GetFieldByIndex(j).ToSizeT()));
+      }
       TDataItem& bonds = group.GetItemByName("Bonds");
       glG.IncCapacity(bonds.FieldCount());
-      for (size_t j = 0; j < bonds.FieldCount(); j++)
+      for (size_t j = 0; j < bonds.FieldCount(); j++) {
         glG.Add(GetXBond(bonds.GetFieldByIndex(j).ToSizeT()));
+      }
     }
     else {
       IndexRange::RangeItr ai(group.GetFieldByName("atom_range"));
@@ -5949,3 +5993,25 @@ void TGXApp::LabelGrowBonds() {
     l.SetVisible(true);
   }
 }
+//..............................................................................
+vec3d TGXApp::GetConstrainedDirection(const vec3d &t_) {
+  TGlGroup &sel = GetInstance().GetRenderer().GetSelection();
+  TXBondPList bonds = sel.Extract<TXBond>();
+  vec3d dir;
+  if (bonds.Count() == 1) {
+    dir = (bonds[0]->GetToCrd() - bonds[0]->GetFromCrd()).Normalise();
+  }
+  else {
+    TXAtomPList atoms = sel.Extract<TXAtom>();
+    if (atoms.Count() == 2) {
+      dir = (atoms[1]->crd() - atoms[0]->crd()).Normalise();
+    }
+  }
+  if (!dir.IsNull()) {
+    dir *= t_.Length();
+    dir *= olx_sign(t_.DotProd(vec3d(1, 1, 0))) * olx_sign(dir.DotProd(vec3d(1, 1, 0)));
+    return dir;
+  }
+  return t_;
+}
+//..............................................................................

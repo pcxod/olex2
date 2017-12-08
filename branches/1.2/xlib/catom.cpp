@@ -488,17 +488,19 @@ void TCAtom::UpdateAttachedSites() {
     QuickSorter::SortMF(AttachedSites, *this,
       ci.maxBonds < 0 ? &TCAtom::SortSitesByDistanceDsc
       : &TCAtom::SortSitesByDistanceAsc);
-    // prevent q-peaks affecting the max number of bonds...
+    // prevent q-peaks and H atoms from affecting the max number of bonds...
     uint16_t bc2set = olx_abs(ci.maxBonds);
     for (uint16_t j = 0; j < bc2set; j++) {
-      if (AttachedSites[j].atom->GetType() == iQPeakZ) {
+      if (AttachedSites[j].atom->GetType() <= iHydrogenZ) {
         if (++bc2set >= AttachedSites.Count()) {
           break;
         }
       }
     }
     for (size_t i = bc2set; i < AttachedSites.Count(); i++) {
-      if (AttachedSites[i].atom == this)  continue;
+      if (AttachedSites[i].atom == this) {
+        continue;
+      }
       for (size_t j = 0; j < AttachedSites[i].atom->AttachedSites.Count(); j++) {
         if (AttachedSites[i].atom->AttachedSites[j].atom == this) {
           AttachedSites[i].atom->AttachedSites.Delete(j--);

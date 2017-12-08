@@ -2347,6 +2347,9 @@ void TMainForm::macHklEdit(TStrObjList &Cmds, const TParamList &Options,
   sw.start("Loading HKL");
   THklFile Hkl;
   Hkl.Append(FXApp->XFile().GetRM().GetReflections());
+  for (size_t i = 0; i < Hkl.RefCount(); i++) {
+    Hkl[i].SetTag(i+1);
+  }
   sw.start("Preparing input");
   TStrList SL;
   SL.Add("REM Please put \'-\' char in the front of reflections you wish to omit");
@@ -2360,16 +2363,18 @@ void TMainForm::macHklEdit(TStrObjList &Cmds, const TParamList &Options,
       Tmp.stream(' ') << bad_refs[i].index[0] << bad_refs[i].index[1] <<
         bad_refs[i].index[2] << "Error/esd=" << bad_refs[i].factor;
       TRefPList refs = Hkl.AllRefs(bad_refs[i].index, matrices);
-      for (size_t j=0; j < refs.Count(); j++)
+      for (size_t j = 0; j < refs.Count(); j++) {
         SL.Add(refs[j]->ToNString());
+      }
       SL.Add();
     }
   }
   else  {
     TReflection Refl(Cmds[0].ToInt(), Cmds[1].ToInt(), Cmds[2].ToInt());
     TRefPList refs = Hkl.AllRefs(Refl, matrices);
-    for (size_t i=0; i < refs.Count(); i++)
+    for (size_t i = 0; i < refs.Count(); i++) {
       SL.Add(refs[i]->ToNString());
+    }
   }
   sw.stop();
   TdlgEdit *dlg = new TdlgEdit(this, true);
@@ -2380,7 +2385,9 @@ void TMainForm::macHklEdit(TStrObjList &Cmds, const TParamList &Options,
     SL.Strtok(Tmp, '\n');
     TReflection R(0, 0, 0);
     for (size_t i=0; i < SL.Count(); i++) {
-      if (SL[i].ToUpperCase().StartsFrom("REM"))  continue;
+      if (SL[i].ToUpperCase().StartsFrom("REM")) {
+        continue;
+      }
       R.FromNString(SL[i]);
       Hkl.UpdateRef(R);
     }
@@ -3330,68 +3337,65 @@ void TMainForm::macCreateBitmap(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &E)
 {
   wxFSFile* inf = TFileHandlerManager::GetFSFileHandler(Cmds[1]);
-  if( inf == NULL )  {
+  if (inf == NULL) {
     E.ProcessingError(__OlxSrcInfo, "Image file does not exist: ").quote() <<
       Cmds[1];
     return;
   }
   wxImage img(*inf->GetStream());
   delete inf;
-  if( !img.Ok() )  {
+  if (!img.Ok()) {
     E.ProcessingError(__OlxSrcInfo, "Invalid image file: ") << Cmds[1];
     return;
   }
-  bool resize = !Options.Contains('r');
-
   int owidth = img.GetWidth(), oheight = img.GetHeight();
   int l = CalcL(img.GetWidth());
   int swidth = (int)pow((double)2, (double)l);
   l = CalcL(img.GetHeight());
   int sheight = (int)pow((double)2, (double)l);
 
-  if( swidth != owidth || sheight != oheight )
+  if (swidth != owidth || sheight != oheight)
     img.Rescale(swidth, sheight);
 
   int cl = 3, bmpType = GL_RGB;
-  if( img.HasAlpha() )  {
-    cl ++;
+  if (img.HasAlpha()) {
+    cl++;
     bmpType = GL_RGBA;
   }
 
   unsigned char* RGBData = new unsigned char[swidth * sheight * cl];
-  for( int i=0; i < sheight; i++ )  {
-    for( int j=0; j < swidth; j++ )  {
-      int indexa = (i*swidth + (swidth-j-1)) * cl;
+  for (int i = 0; i < sheight; i++) {
+    for (int j = 0; j < swidth; j++) {
+      int indexa = (i*swidth + (swidth - j - 1)) * cl;
       RGBData[indexa] = img.GetRed(j, i);
-      RGBData[indexa+1] = img.GetGreen(j, i);
-      RGBData[indexa+2] = img.GetBlue(j, i);
-      if( cl == 4 )
-        RGBData[indexa+3] = img.GetAlpha(j, i);
+      RGBData[indexa + 1] = img.GetGreen(j, i);
+      RGBData[indexa + 2] = img.GetBlue(j, i);
+      if (cl == 4) {
+        RGBData[indexa + 3] = img.GetAlpha(j, i);
+      }
     }
   }
   bool Created = (FXApp->FindGlBitmap(Cmds[0]) == NULL);
 
   TGlBitmap* glB = FXApp->CreateGlBitmap(Cmds[0], 0, 0, swidth, sheight, RGBData, bmpType);
-  delete [] RGBData;
+  delete[] RGBData;
 
   int Top = FInfoBox->IsVisible() ? (FInfoBox->GetTop() + FInfoBox->GetHeight()) : 0;
-  if( Created )  {
-    for( size_t i=0; i < FXApp->GlBitmapCount(); i++ )  {
+  if (Created) {
+    for (size_t i = 0; i < FXApp->GlBitmapCount(); i++) {
       TGlBitmap& b = FXApp->GlBitmap(i);
-      if( &b == glB )  continue;
+      if (&b == glB) {
+        continue;
+      }
       Top += (b.GetHeight() + 2);
     }
   }
 
-  if( Created ) {
+  if (Created) {
     glB->SetWidth(owidth);
     glB->SetHeight(oheight);
   }
   glB->SetTop(Top);
-  if( resize && Created ) {
-    double r = ((double)FXApp->GetRenderer().GetWidth()/(double)owidth)/10.0;
-    glB->SetZoom(r);
-  }
   glB->SetLeft(FXApp->GetRenderer().GetWidth() - glB->GetWidth());
   FXApp->Draw();
 }

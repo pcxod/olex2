@@ -1506,8 +1506,9 @@ void TMainForm::StartupInit() {
       TStrList in = TEFile::ReadLines(FXApp->GetArguments().GetLastString());
       PythonExt::GetInstance()->RunPython(in.Text('\n'));
     }
-    else // disable reading last file in
+    else { // disable reading last file in
       TOlxVars::SetVar("olx_reap_cmdl", FXApp->GetArguments()[1]);
+    }
   }
   processMacro("onstartup", __OlxSrcInfo);
   processMacro("user_onstartup", __OlxSrcInfo);
@@ -3439,20 +3440,22 @@ void TMainForm::SetUserCursor(const olxstr& param, const olxstr& mode)  {
   FGlCanvas->SetCursor(cr);
 }
 //..............................................................................
-bool TMainForm::ProcessEvent(wxEvent& evt)  {
-  if( evt.GetEventType() == wxEVT_COMMAND_MENU_SELECTED &&
-      AccMenus.ValueExists(evt.GetId()) )
+bool TMainForm::ProcessEvent(wxEvent& evt) {
+  if (evt.GetEventType() == wxEVT_COMMAND_MENU_SELECTED &&
+    AccMenus.ValueExists(evt.GetId()))
   {
-    olxstr macro( AccMenus.GetValue(evt.GetId())->GetCommand());
-    if( !macro.IsEmpty() )  {
+    olxstr macro(AccMenus.GetValue(evt.GetId())->GetCommand());
+    if (!macro.IsEmpty()) {
       TStrList sl = TParamList::StrtokLines(macro, ">>");
-      for( size_t i=0; i < sl.Count(); i++ )  {
-        if( !processMacro(sl[i]) )
+      for (size_t i = 0; i < sl.Count(); i++) {
+        if (!processMacro(sl[i])) {
           break;
+        }
       }
       // restore state if failed
-      if( AccMenus.GetValue(evt.GetId())->IsCheckable() )
+      if (AccMenus.GetValue(evt.GetId())->IsCheckable()) {
         AccMenus.GetValue(evt.GetId())->ValidateState();
+      }
 
       FXApp->Draw();
       return true;
@@ -3462,44 +3465,54 @@ bool TMainForm::ProcessEvent(wxEvent& evt)  {
   return wxFrame::ProcessEvent(evt);
 }
 //..............................................................................
-int TMainForm::TranslateShortcut(const olxstr& sk)  {
-  if( sk.IsEmpty() )  return -1;
+int TMainForm::TranslateShortcut(const olxstr& sk) {
+  if (sk.IsEmpty()) {
+    return -1;
+  }
   TStrList toks(sk, '+');
-  if( !toks.Count() )  return -1;
-  short Shift=0, Char = 0;
-  for( size_t i=0; i < toks.Count() - 1; i++ )  {
-    if( toks[i].Equalsi("Ctrl") )
+  if (!toks.Count()) {
+    return -1;
+  }
+  short Shift = 0, Char = 0;
+  for (size_t i = 0; i < toks.Count() - 1; i++) {
+    if (toks[i].Equalsi("Ctrl")) {
       Shift |= sssCtrl;
-    else if( toks[i].Equalsi("Shift") )
+    }
+    else if (toks[i].Equalsi("Shift")) {
       Shift |= sssShift;
-    else if( toks[i].Equalsi("Alt") )
+    }
+    else if (toks[i].Equalsi("Alt")) {
       Shift |= sssAlt;
-    else if( toks[i].Equalsi("Cmd") )
+    }
+    else if (toks[i].Equalsi("Cmd")) {
       Shift |= sssCmd;
+    }
   }
   olxstr charStr = toks.GetLastString();
   // a char
-  if( charStr.Length() == 1 ) {
+  if (charStr.Length() == 1) {
     Char = charStr[0];
-    if( Char >= 'a' && Char <= 'z' ) Char -= ('a'-'A');
-    return ((Shift << 16)|Char);
+    if (Char >= 'a' && Char <= 'z') {
+      Char -= ('a' - 'A');
+    }
+    return ((Shift << 16) | Char);
   }
-  if( charStr.CharAt(0) == 'F' && charStr.SubStringFrom(1).IsNumber() )  {
+  if (charStr.CharAt(0) == 'F' && charStr.SubStringFrom(1).IsNumber()) {
     Char = WXK_F1 + charStr.SubStringFrom(1).ToInt() - 1;
-    return ((Shift << 16)|Char);
+    return ((Shift << 16) | Char);
   }
   charStr.UpperCase();
-  if( charStr == "TAB" )       Char = WXK_TAB;
-  else if( charStr == "HOME" ) Char = WXK_HOME;
-  else if( charStr == "PGUP" ) Char = WXK_PAGEUP;
-  else if( charStr == "PGDN" ) Char = WXK_PAGEDOWN;
-  else if( charStr == "END" )  Char = WXK_END;
-  else if( charStr == "DEL" )  Char = WXK_DELETE;
-  else if( charStr == "INS" )  Char = WXK_INSERT;
-  else if( charStr == "BREAK" ) Char = WXK_PAUSE;
-  else if( charStr == "BACK" ) Char = WXK_BACK;
+  if (charStr == "TAB")       Char = WXK_TAB;
+  else if (charStr == "HOME") Char = WXK_HOME;
+  else if (charStr == "PGUP") Char = WXK_PAGEUP;
+  else if (charStr == "PGDN") Char = WXK_PAGEDOWN;
+  else if (charStr == "END")  Char = WXK_END;
+  else if (charStr == "DEL")  Char = WXK_DELETE;
+  else if (charStr == "INS")  Char = WXK_INSERT;
+  else if (charStr == "BREAK") Char = WXK_PAUSE;
+  else if (charStr == "BACK") Char = WXK_BACK;
 
-  return Char!=0 ? ((Shift << 16)|Char) : -1;
+  return Char != 0 ? ((Shift << 16) | Char) : -1;
 }
 //..............................................................................
 bool TMainForm::OnMouseDblClick(int x, int y, short Flags, short Buttons)  {
@@ -3511,24 +3524,23 @@ bool TMainForm::OnMouseDblClick(int x, int y, short Flags, short Buttons)  {
     processMacro("sel -u");
     return true;
   }
-  if( EsdlInstanceOf(*G, TGlBitmap) )  {
+  if (EsdlInstanceOf(*G, TGlBitmap)) {
     TGlBitmap* glB = (TGlBitmap*)G;
-    if( !(glB->GetLeft() > 0) )  {
+    if (!(glB->GetLeft() > 0)) {
       int Top = InfoWindowVisible ? FInfoBox->GetTop() + FInfoBox->GetHeight() : 1;
-      for( size_t i=0; i < FXApp->GlBitmapCount(); i++ )  {
+      for (size_t i = 0; i < FXApp->GlBitmapCount(); i++) {
         TGlBitmap* b = &FXApp->GlBitmap(i);
-        if( b == glB )  break;
+        if (b == glB) {
+          break;
+        }
         Top += (b->GetHeight() + 2);
       }
-      const double r = ((double)FXApp->GetRenderer().GetWidth()/(double)glB->GetWidth()) / 10.0;
-      glB->SetZoom(r);
       glB->SetTop(Top);
       glB->SetLeft(FXApp->GetRenderer().GetWidth() - glB->GetWidth());
     }
-    else  {
+    else {
       glB->SetLeft(0);
       glB->SetTop(InfoWindowVisible ? FInfoBox->GetTop() + FInfoBox->GetHeight() : 1);
-      glB->SetZoom(1.0);
     }
   }
   else if( EsdlInstanceOf(*G, TXGlLabel) )  {

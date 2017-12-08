@@ -915,13 +915,14 @@ cetTable& TCif::AddLoopDef(const olxstr& col_names)  {
   return *LoopFromDef(data_provider[block_index], toks);
 }
 //..............................................................................
-cetTable& TCif::GetPublicationInfoLoop()  {
-  const static olxstr publ_ln( "_publ_author" ), publ_jn("_publ_requested_journal");
+cetTable& TCif::GetPublicationInfoLoop() {
+  const static olxstr publ_ln("_publ_author"), publ_jn("_publ_requested_journal");
   cetTable *CF = FindLoop(publ_ln);
-  if( CF != NULL )  return *CF;
+  if (CF != NULL)  return *CF;
   // to make the automatic grouping to work ...
-  if( !ParamExists(publ_jn) )
-    data_provider[block_index].Add(new cetNamedString(publ_jn, "?"));
+  if (!ParamExists(publ_jn)) {
+    data_provider[block_index].Add(new cetString(publ_jn, "?"));
+  }
   return *LoopFromDef(data_provider[block_index],
     "_publ_author_name,_publ_author_email,_publ_author_address");
 }
@@ -1639,7 +1640,7 @@ void DataItemToCifEntry(const TDataItem &root, const TDataItem &di,
       olxstr name = olxstr('_') << di.GetFullName('_', &root);
       name = translations.Find(name, name);
       if (di.GetValue().Contains('\n')) {
-        cetNamedStringList *sl = new cetNamedStringList(name);
+        cetStringList *sl = new cetStringList(name);
         sl->lines.Strtok(di.GetValue(), '\n', false);
         for (size_t i = 0; i < sl->lines.Count(); i++) {
           sl->lines[i].TrimR('\r');
@@ -1647,7 +1648,7 @@ void DataItemToCifEntry(const TDataItem &root, const TDataItem &di,
         out.Add(sl);
       }
       else {
-        out.Add(new cetNamedString(name, di.GetValue()));
+        out.Add(new cetString(name, di.GetValue()));
       }
     }
   }

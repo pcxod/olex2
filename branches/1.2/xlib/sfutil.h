@@ -20,7 +20,7 @@ BeginXlibNamespace()
 namespace SFUtil {
 
   static const short mapTypeDiff = 0,  // map type
-    mapTypeObs  = 1,
+    mapTypeObs = 1,
     mapTypeCalc = 2,
     mapType2OmC = 3;
   static const short scaleSimple = 0,  // scale for difference map
@@ -28,12 +28,12 @@ namespace SFUtil {
     scaleExternal = 2;
   static const short sfOriginFcf = 0,  // structure factor origin
     sfOriginOlex2 = 1;
-  static const double T_PI = M_PI*2;
-  static const double MT_PI = -M_PI*2;
-  const static double EQ_PI = 8*M_PI*M_PI;
-  const static double TQ_PI = 2*M_PI*M_PI;
+  static const double T_PI = M_PI * 2;
+  static const double MT_PI = -M_PI * 2;
+  const static double EQ_PI = 8 * M_PI*M_PI;
+  const static double TQ_PI = 2 * M_PI*M_PI;
 
-  struct StructureFactor  {
+  struct StructureFactor {
     vec3i hkl;  // hkl indexes
     double ps;  // phase shift
     compd val; // value
@@ -41,7 +41,7 @@ namespace SFUtil {
   // interface description...
   class ISF_Util {
   public:
-    virtual ~ISF_Util()  {}
+    virtual ~ISF_Util() {}
     // expands indexes to P1
     virtual void Expand(const TArrayList<vec3i>& hkl,
       const TArrayList<compd>& F,
@@ -65,14 +65,14 @@ namespace SFUtil {
   doubles (Fo)
   */
   template <class RefList>
-  static double CalcFScale(const TArrayList<compd>& F, const RefList& refs)  {
+  static double CalcFScale(const TArrayList<compd>& F, const RefList& refs) {
     double sF2o = 0, sF2c = 0;
     const size_t f_cnt = F.Count();
-    for( size_t i=0; i < f_cnt; i++ )  {
+    for (size_t i = 0; i < f_cnt; i++) {
       sF2o += TReflection::GetF(refs[i]);
       sF2c += F[i].mod();
     }
-    return sF2c/sF2o;
+    return sF2c / sF2o;
   }
   /* calculates the scale sum(Fc^2)/sum(Fo^2) Fc^2 = k*Fo^2. Can accept a list
   of doubles (Fo^2)
@@ -82,11 +82,11 @@ namespace SFUtil {
   {
     double sF2o = 0, sF2c = 0;
     const size_t f_cnt = F.Count();
-    for( size_t i=0; i < f_cnt; i++ )  {
+    for (size_t i = 0; i < f_cnt; i++) {
       sF2o += TReflection::GetFsq(refs[i]);
       sF2c += F[i].qmod();
     }
-    return sF2c/sF2o;
+    return sF2c / sF2o;
   }
   /* calculates a best line scale : Fc = k*Fo + a. Can accept a list of doubles (Fo) */
   template <class RefList> void CalcFScale(const TArrayList<compd>& F,
@@ -94,7 +94,7 @@ namespace SFUtil {
   {
     double sx = 0, sy = 0, sxs = 0, sxy = 0;
     const size_t f_cnt = F.Count();
-    for( size_t i=0; i < f_cnt; i++ )  {
+    for (size_t i = 0; i < f_cnt; i++) {
       const double I = TReflection::GetF(refs[i]);
       const double qm = F[i].mod();
       sx += I;
@@ -102,8 +102,8 @@ namespace SFUtil {
       sxy += I*qm;
       sxs += I*I;
     }
-    k = (sxy - sx*sy/f_cnt)/(sxs - sx*sx/f_cnt);
-    a = (sy - k*sx)/f_cnt;
+    k = (sxy - sx*sy / f_cnt) / (sxs - sx*sx / f_cnt);
+    a = (sy - k*sx) / f_cnt;
   }
   /* calculates a best line scale : Fc^2 = k*Fo^2 + a. Can accept a list of
   doubles (Fo^2)
@@ -113,7 +113,7 @@ namespace SFUtil {
   {
     double sx = 0, sy = 0, sxs = 0, sxy = 0;
     const size_t f_cnt = F.Count();
-    for( size_t i=0; i < f_cnt; i++ )  {
+    for (size_t i = 0; i < f_cnt; i++) {
       const double I = TReflection::GetFsq(refs[i]);
       const double qm = F[i].qmod();
       sx += I;
@@ -121,8 +121,8 @@ namespace SFUtil {
       sxy += I*qm;
       sxs += I*I;
     }
-    k = (sxy - sx*sy/f_cnt)/(sxs - sx*sx/f_cnt);
-    a = (sy - k*sx)/f_cnt;
+    k = (sxy - sx*sy / f_cnt) / (sxs - sx*sx / f_cnt);
+    a = (sy - k*sx) / f_cnt;
   }
   // expands structure factors to P1 for given space group
   void ExpandToP1(const TArrayList<vec3i>& hkl, const TArrayList<compd>& F,
@@ -134,21 +134,22 @@ namespace SFUtil {
   {
     const size_t ml_cnt = ml.Count();
     out.SetCount(ml_cnt* hkl_list.Count());
-    for( size_t i=0; i < hkl_list.Count(); i++ )  {
+    for (size_t i = 0; i < hkl_list.Count(); i++) {
       const size_t off = i*ml_cnt;
-      for( size_t j=0; j < ml_cnt; j++ )  {
+      for (size_t j = 0; j < ml_cnt; j++) {
         const smatd& m = ml[j];
-        const size_t ind = off+j;
+        const size_t ind = off + j;
         vec3i hkl = TReflection::GetHkl(hkl_list[i]);
         out[ind].hkl = hkl*m.r;
         out[ind].ps = m.t.DotProd(hkl);
-        if( out[ind].ps != 0 )  {
-          double ca=1, sa=0;
+        if (out[ind].ps != 0) {
+          double ca = 1, sa = 0;
           olx_sincos(-T_PI*out[ind].ps, &sa, &ca);
-          out[ind].val = F[i]*compd(ca,sa);
+          out[ind].val = F[i] * compd(ca, sa);
         }
-        else
+        else {
           out[ind].val = F[i];
+        }
       }
     }
   }
@@ -169,7 +170,7 @@ namespace SFUtil {
     TArrayList<compd>& F, bool UseFpFdp);
   template <class IndexList>
   void CalcSF(const TXFile& xfile, const IndexList& refs,
-    TArrayList<compd>& F, bool UseFdp=true)
+    TArrayList<compd>& F, bool UseFdp = true)
   {
     _CalcSF(xfile, MillerIndexList<IndexList>(refs), F, UseFdp);
   }
@@ -181,7 +182,7 @@ namespace SFUtil {
 #ifdef __OLX_USE_FASTSYMM
   template <class sg> class SF_Util : public ISF_Util {
 #else
-  struct SG_Impl  {
+  struct SG_Impl {
     const size_t size, u_size;
     const smatd_list matrices, u_matrices;
     double u_multiplier;
@@ -189,12 +190,12 @@ namespace SFUtil {
     SG_Impl(const smatd_list& all_matrices, const smatd_list& u_matrices,
       bool _centro)
       : size(all_matrices.Count()), u_size(u_matrices.Count()),
-        matrices(all_matrices), u_matrices(u_matrices),
-        u_multiplier(double(size)/u_size), centro(_centro) {}
+      matrices(all_matrices), u_matrices(u_matrices),
+      u_multiplier(double(size) / u_size), centro(_centro) {}
     void GenHkl(const vec3i& hkl, TArrayList<vec3i>& out,
       TArrayList<double>& ps) const
     {
-      for( size_t i=0; i < size; i++ )  {
+      for (size_t i = 0; i < size; i++) {
         out[i] = hkl*matrices[i].r;
         ps[i] = matrices[i].t.DotProd(hkl);
       }
@@ -202,7 +203,7 @@ namespace SFUtil {
     void GenUniqueHkl(const vec3i& hkl, TArrayList<vec3i>& out,
       TArrayList<double>& ps) const
     {
-      for( size_t i=0; i < u_matrices.Count(); i++ )  {
+      for (size_t i = 0; i < u_matrices.Count(); i++) {
         out[i] = hkl*u_matrices[i].r;
         ps[i] = u_matrices[i].t.DotProd(hkl);
       }
@@ -213,8 +214,8 @@ namespace SFUtil {
     bool centrosymmetric;
   protected:
     // proxying functions
-    inline size_t _getusize() const {  return sg::u_size;  }
-    inline double _getumult() const {  return sg::u_multiplier;  }
+    inline size_t _getusize() const { return sg::u_size; }
+    inline double _getumult() const { return sg::u_multiplier; }
     inline void _generateu(const vec3i& hkl, TArrayList<vec3i>& out,
       TArrayList<double>& ps) const
     {
@@ -240,72 +241,74 @@ namespace SFUtil {
         const TCAtomPList& _atoms, const double* _U,
         const TArrayList<compd>& _fpfdp)
         : parent(_parent), refs(_refs), hkl2c(_hkl2c), F(_F),
-          scatterers(_scatterers), atoms(_atoms), U(_U),
-          rv(_parent._getusize()), ps(_parent._getusize()),
-          fo(_scatterers.Count()), fpfdp(_fpfdp)
+        scatterers(_scatterers), atoms(_atoms), U(_U),
+        rv(_parent._getusize()), ps(_parent._getusize()),
+        fo(_scatterers.Count()), fpfdp(_fpfdp)
       {}
-      virtual ~SFCalculateTask()  {}
-      void Run(size_t i)  {
+      virtual ~SFCalculateTask() {}
+      void Run(size_t i) {
         const vec3i hkl = refs[i];  //make a copy, safer
         const double d_s2 = TReflection::ToCart(hkl, hkl2c).QLength()*0.25;
         parent._generateu(hkl, rv, ps);
-        for( size_t j=0; j < scatterers.Count(); j++)  {
+        for (size_t j = 0; j < scatterers.Count(); j++) {
           fo[j] = scatterers[j]->gaussians->calc_sq(d_s2);
           fo[j] += fpfdp[j];
         }
-        if( centro )  {
+        if (centro) {
           compd ir = 0;
-          for( size_t j=0; j < atoms.Count(); j++ )  {
+          for (size_t j = 0; j < atoms.Count(); j++) {
             double l = 0;
-            for( size_t k=0; k < parent._getusize(); k++ )  {
+            for (size_t k = 0; k < parent._getusize(); k++) {
               // scattering vector + phase shift
-              double ca = cos(SFUtil::T_PI*(atoms[j]->ccrd().DotProd(rv[k])+ps[k]));
-              if( olx_is_valid_index(atoms[j]->GetEllpId()) )  {
-                const double* Q = &U[j*6];  // pick up the correct ellipsoid
+              double ca = cos(SFUtil::T_PI*(atoms[j]->ccrd().DotProd(rv[k]) + ps[k]));
+              if (olx_is_valid_index(atoms[j]->GetEllpId())) {
+                const double* Q = &U[j * 6];  // pick up the correct ellipsoid
                 const double B = exp(
-                  (Q[0]*rv[k][0]+Q[4]*rv[k][2]+Q[5]*rv[k][1])*rv[k][0] +
-                  (Q[1]*rv[k][1]+Q[3]*rv[k][2])*rv[k][1] +
-                  (Q[2]*rv[k][2])*rv[k][2]);
+                  (Q[0] * rv[k][0] + Q[4] * rv[k][2] + Q[5] * rv[k][1])*rv[k][0] +
+                  (Q[1] * rv[k][1] + Q[3] * rv[k][2])*rv[k][1] +
+                  (Q[2] * rv[k][2])*rv[k][2]);
                 l += ca*B;
               }
-              else  {
+              else {
                 l += ca;
               }
             }
-            compd scv = fo[atoms[j]->GetTag()];
-            if( !olx_is_valid_index(atoms[j]->GetEllpId()) )
-              scv *= exp(U[j*6]*d_s2);
+            double scv = fo[atoms[j]->GetTag()].Re();
+            if (!olx_is_valid_index(atoms[j]->GetEllpId())) {
+              scv *= exp(U[j * 6] * d_s2);
+            }
             scv *= (l*atoms[j]->GetOccu());
             ir += scv;
           }
           F[i] = ir*parent._getumult();
         }
-        else  {
+        else {
           compd ir;
-          for( size_t j=0; j < atoms.Count(); j++ )  {
+          for (size_t j = 0; j < atoms.Count(); j++) {
             compd l;
-            for( size_t k=0; k < parent._getusize(); k++ )  {
+            for (size_t k = 0; k < parent._getusize(); k++) {
               // scattering vector + phase shift
-              const double tv = SFUtil::T_PI*(atoms[j]->ccrd().DotProd(rv[k])+ps[k]);
+              const double tv = SFUtil::T_PI*(atoms[j]->ccrd().DotProd(rv[k]) + ps[k]);
               double ca, sa;
               olx_sincos(tv, &sa, &ca);
-              if( olx_is_valid_index(atoms[j]->GetEllpId()) )  {
-                const double* Q = &U[j*6];  // pick up the correct ellipsoid
+              if (olx_is_valid_index(atoms[j]->GetEllpId())) {
+                const double* Q = &U[j * 6];  // pick up the correct ellipsoid
                 const double B = exp(
-                  (Q[0]*rv[k][0]+Q[4]*rv[k][2]+Q[5]*rv[k][1])*rv[k][0] +
-                  (Q[1]*rv[k][1]+Q[3]*rv[k][2])*rv[k][1] +
-                  (Q[2]*rv[k][2])*rv[k][2]);
+                  (Q[0] * rv[k][0] + Q[4] * rv[k][2] + Q[5] * rv[k][1])*rv[k][0] +
+                  (Q[1] * rv[k][1] + Q[3] * rv[k][2])*rv[k][1] +
+                  (Q[2] * rv[k][2])*rv[k][2]);
                 l.Re() += ca*B;
                 l.Im() += sa*B;
               }
-              else  {
+              else {
                 l.Re() += ca;
                 l.Im() += sa;
               }
             }
             compd scv = fo[atoms[j]->GetTag()];
-            if( !olx_is_valid_index(atoms[j]->GetEllpId()) )
-              scv *= exp(U[j*6]*d_s2);
+            if (!olx_is_valid_index(atoms[j]->GetEllpId())) {
+              scv *= exp(U[j * 6] * d_s2);
+            }
             scv *= atoms[j]->GetOccu();
             scv *= l;
             ir += scv;
@@ -320,7 +323,7 @@ namespace SFUtil {
   public:
 #ifndef __OLX_USE_FASTSYMM
     SF_Util(const smatd_list& all_mat, const smatd_list& unq_mat, bool centro) :
-      sg(all_mat, unq_mat, centro), centrosymmetric(centro)  {}
+      sg(all_mat, unq_mat, centro), centrosymmetric(centro) {}
 #endif
     virtual void Expand(const TArrayList<vec3i>& hkl, const TArrayList<compd>& F,
       TArrayList<SFUtil::StructureFactor>& out) const
@@ -328,20 +331,21 @@ namespace SFUtil {
       TArrayList<vec3i> rv(sg::size);
       TArrayList<double> ps(sg::size);
       const size_t hkl_cnt = hkl.Count();
-      for( size_t i=0; i < hkl_cnt; i++ )  {
+      for (size_t i = 0; i < hkl_cnt; i++) {
         sg::GenHkl(hkl[i], rv, ps);
         const size_t off = i*sg::size;
-        for( size_t j=0; j < sg::size; j++ )  {
-          const size_t ind = j+off;
+        for (size_t j = 0; j < sg::size; j++) {
+          const size_t ind = j + off;
           out[ind].hkl = rv[j];
           out[ind].ps = ps[j];
           double ca = 1, sa = 0;
-          if( ps[j] != 0 )  {
+          if (ps[j] != 0) {
             olx_sincos(-SFUtil::T_PI*ps[j], &sa, &ca);
-            out[ind].val = F[i]*compd(ca, sa);
+            out[ind].val = F[i] * compd(ca, sa);
           }
-          else
+          else {
             out[ind].val = F[i];
+          }
         }
       }
     }
@@ -353,18 +357,18 @@ namespace SFUtil {
     {
       TArrayList<compd> fpfdp(fpfdp_);
       fpfdp.SetCount(scatterers.Count(), olx_list_init::zero());
-      if( centrosymmetric )  {
+      if (centrosymmetric) {
         SFCalculateTask<TRefList, true> task(*this, refs, hkl2c, F, scatterers,
           atoms, U, fpfdp);
         OlxListTask::Run(task, refs.Count(), tLinearTask, 50);
       }
-      else  {
+      else {
         SFCalculateTask<TRefList, false> task(*this, refs, hkl2c, F,
           scatterers, atoms, U, fpfdp);
         OlxListTask::Run(task, refs.Count(), tLinearTask, 50);
       }
     }
-    virtual size_t GetSGOrder() const {  return sg::size;  }
+    virtual size_t GetSGOrder() const { return sg::size; }
   };
 
 }; // SFUtil namespace

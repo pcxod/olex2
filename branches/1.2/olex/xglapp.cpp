@@ -49,11 +49,12 @@ class TProgress : public AActionHandler {
   wxProgressDialog *Progress;
   uint64_t start, p_max;
 public:
-  TProgress() : Progress(NULL)
+  TProgress() : Progress(0)
   {}
   virtual ~TProgress() {
-    if (Progress != NULL)
+    if (Progress != 0) {
       Progress->Destroy();
+    }
   }
   bool Enter(const IOlxObject *, const IOlxObject *, TActionQueue *) {
     start = TETime::msNow();
@@ -62,16 +63,16 @@ public:
   bool Exit(const IOlxObject *Sender, const IOlxObject *Data, TActionQueue *) {
     if (Progress) {
       Progress->Destroy();
-      Progress = NULL;
+      Progress = 0;
     }
     return false;
   }
   bool Execute(const IOlxObject *Sender, const IOlxObject *Data, TActionQueue *) {
     const TOnProgress *A = dynamic_cast<const TOnProgress*>(Data);
-    if (A == NULL || A->GetPos() == 0) {
+    if (A == 0 || A->GetPos() == 0) {
       return false;
     }
-    if (Progress == NULL) {
+    if (Progress == 0) {
       double tat = (double)A->GetPos()*(TETime::msNow() - start) / A->GetMax();
       if (tat*A->GetMax() < 30000) { // max time 30 sec
         return false;
@@ -84,7 +85,7 @@ public:
       Progress = new wxProgressDialog(wxT("Progress"), wxT(""), (int)A->GetMax());
       p_max = A->GetMax();
     }
-    if (Progress != NULL) {
+    if (Progress != 0) {
       //wxSize ds = Progress->GetSize();
       //ds.SetWidth(400);
       //Progress->SetSize(ds);
@@ -162,7 +163,7 @@ bool TGlXApp::OnInit() {
     olxstr cctbx_env = XApp->GetBaseDir() + "cctbx/cctbx_build/libtbx_env";
     if (!TEFile::Exists(cctbx_env) && !TBasicApp::IsBaseDirWriteable()) {
       TMainForm::ShowAlert("Please run Olex2 as administrator on the first run."
-        "\nPyhton modules need to be precompiled.", "Error", wxOK | wxICON_ERROR);
+        "\nPython modules need to be precompiled.", "Error", wxOK | wxICON_ERROR);
       OnExit();
       return false;
     }
