@@ -56,11 +56,13 @@ void TSameGroup::ToDataItem(TDataItem& item) const {
     .AddField("AtomList", Atoms.GetExpression());
   IndexRange::Builder irb;
   for (size_t i = 0; i < Dependent.Count(); i++) {
-    irb << Dependent[i]->GetId();
+    if (Dependent[i]->IsValidForSave()) {
+      irb << Dependent[i]->GetTag();
+    }
   }
   item.AddField("dependent", irb.GetString());
   if (ParentGroup != 0) {
-    item.AddField("parent", ParentGroup->GetId());
+    item.AddField("parent", ParentGroup->GetTag());
   }
 }
 //..............................................................................
@@ -102,7 +104,6 @@ void TSameGroup::FromDataItem(TDataItem& item) {
   Clear();
   Esd12 = item.GetFieldByName("esd12").ToDouble();
   Esd13 = item.GetFieldByName("esd13").ToDouble();
-
   if (item.FieldExists("AtomList")) {
     Atoms.Build(item.GetFieldByName("AtomList"));
     IndexRange::RangeItr di(item.GetFieldByName("dependent"));
@@ -118,7 +119,7 @@ void TSameGroup::FromDataItem(TDataItem& item) {
         Add(au.GetAtom(_atoms->GetItemByIndex(i).GetValue().ToSizeT()));
       }
     }
-    else  {  // index range then
+    else {  // index range then
       IndexRange::RangeItr ai(item.GetFieldByName("atom_range"));
       while (ai.HasNext()) {
         Add(au.GetAtom(ai.Next()));
@@ -248,8 +249,12 @@ void TSameGroupList::ToDataItem(TDataItem& item) const {
   size_t cnt = 0;
   for (size_t i = 0; i < Groups.Count(); i++) {
     if (Groups[i].IsValidForSave()) {
+      Groups[i].SetTag(cnt++);
+    }
+  }
+  for (size_t i = 0; i < Groups.Count(); i++) {
+    if (Groups[i].IsValidForSave()) {
       Groups[i].ToDataItem(item.AddItem("group"));
-      cnt++;
     }
   }
   item.AddField("n", cnt);

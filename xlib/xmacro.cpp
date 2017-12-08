@@ -6443,18 +6443,22 @@ void XLibMacros::macRTab(TStrObjList &Cmds, const TParamList &Options,
 {
   TSAtomPList atoms;
   olxstr name = Cmds[0];
-  if( !TXApp::GetInstance().FindSAtoms(Cmds.Text(' ', 1), atoms, true, true) )
+  if (!TXApp::GetInstance().FindSAtoms(Cmds.Text(' ', 1), atoms, true, true)) {
     return;
-  if( atoms.Count() >= 1 && atoms.Count() <= 4 )  {
+  }
+  if ((atoms.Count() >= 1 && atoms.Count() <= 4) ||
+    (atoms.Count() > 1 && name.Equalsi("D2CG")))
+  {
     RefinementModel& rm = TXApp::GetInstance().XFile().GetRM();
     InfoTab& it = rm.AddRTAB(name);
-    for( size_t i=0; i < atoms.Count(); i++ ) {
-      it.AddAtom(atoms[i]->CAtom(), atoms[i]->GetMatrix().IsFirst() ? NULL
-       : &atoms[i]->GetMatrix());
+    for (size_t i = 0; i < atoms.Count(); i++) {
+      it.AddAtom(atoms[i]->CAtom(), atoms[i]->GetMatrix().IsFirst() ? 0
+        : &atoms[i]->GetMatrix());
     }
   }
-  else
+  else {
     Error.ProcessingError(__OlxSrcInfo, "1 to 4 atoms is expected");
+  }
 }
 //.............................................................................
 void XLibMacros::macHklMerge(TStrObjList &Cmds, const TParamList &Options,
