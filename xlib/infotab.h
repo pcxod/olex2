@@ -31,7 +31,7 @@ class InfoTab : public IOlxObject {  // need to cast to delete
   AtomRefList atoms;
 public:
   InfoTab(RefinementModel& rm, short type,
-    const olxstr& paramName=EmptyString(), short atomCount=-1)
+    const olxstr& paramName = EmptyString(), short atomCount = -1)
     : RM(rm), Type(type), AtomCount(atomCount),
     ParamName(paramName), atoms(rm)
   {}
@@ -52,20 +52,20 @@ public:
   bool operator == (const InfoTab& it) const;
   InfoTab& operator = (const InfoTab& it);
 
-  void FromExpression(const olxstr &e, const olxstr &resi=EmptyString())  {
+  void FromExpression(const olxstr &e, const olxstr &resi = EmptyString()) {
     atoms.Build(e, resi);
   }
   void AddAtom(TCAtom& ca, const smatd* sm);
   void UpdateResi() { atoms.UpdateResi(); }
   // this is called internally by the RM
-  void OnAUUpdate() { atoms.OnAUUpdate();  }
+  void OnAUUpdate() { atoms.OnAUUpdate(); }
   void BeginAUSort() { atoms.BeginAUSort(); }
   void EndAUSort() { atoms.EndAUSort(false); }
 
-  AtomRefList& GetAtoms() {  return atoms;  }
-  const AtomRefList& GetAtoms() const {  return atoms;  }
+  AtomRefList& GetAtoms() { return atoms; }
+  const AtomRefList& GetAtoms() const { return atoms; }
 
-  short GetType() const {  return Type;  }
+  short GetType() const { return Type; }
 
   bool IsValid() const;
 
@@ -73,7 +73,7 @@ public:
     return olxstr(Type == infotab_htab ? "HTAB" :
       (Type == infotab_rtab ? "RTAB"
         : (Type == infotab_mpla ? "MPLA"
-        : (Type == infotab_bond ? "BOND" : "CONF"))));
+          : (Type == infotab_bond ? "BOND" : "CONF"))));
   }
 
   TIString ToString() const;

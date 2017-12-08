@@ -12,6 +12,7 @@
 #include "widgetcellext.h"
 #include "wx/html/htmlcell.h"
 #include "wx/html/m_templ.h"
+#include "wx/webview.h"
 #include "wxzipfs.h"
 #include "integration.h"
 #include "utf8file.h"
@@ -988,8 +989,42 @@ TAG_HANDLER_PROC(tag) {
     hc->ShowScrollbars(h, v);
     m_WParser->GetContainer()->InsertCell(new THtmlWidgetCell(hc, fl));
   }
+  else if (TagName.Equalsi("webview")) {
+    olxstr src = tag.GetParam(wxT("VALUE"));
+    if (op != 0) {
+      op->processFunction(src, EmptyString(), true);
+    }
+    
+    if (TZipWrapper::IsZipFile(THtml::SwitchSource()) &&
+      !TZipWrapper::IsZipFile(src))
+    {
+      src = TZipWrapper::ComposeFileName(THtml::SwitchSource(), src);
+    }
+    olx_object_ptr<wxWebView> wv = wxWebView::New(
+      m_WParser->GetWindowInterface()->GetHTMLWindow(), wxID_ANY);
+    wxFSFile *fsFile = TFileHandlerManager::GetFSFileHandler(src);
+    if (fsFile == 0) {
+      wv().SetPage(src.u_str(), wxT(""));
+    }
+    else {
+      wv().SetPage(*fsFile->GetStream(), wxT(""));
+    }
+    CreatedObject = 0;
+    CreatedWindow = wv.release();
+    CreatedWindow ->SetSize(ax, ay);
+    wxScrollbarVisibility v = wxSHOW_SB_DEFAULT,
+      h = wxSHOW_SB_DEFAULT;
+    if (GetBoolAttribute(tag, "vscroll")) {
+      v = wxSHOW_SB_ALWAYS;
+    }
+    if (GetBoolAttribute(tag, "hscroll")) {
+      h = wxSHOW_SB_ALWAYS;
+    }
+    wxHtmlWidgetCell * cell = new wxHtmlWidgetCell(CreatedWindow);
+    m_WParser->GetContainer()->InsertCell(cell);
+  }
   /******************* END OF CONTROLS ******************************************/
-  if (LinkInfo != NULL) {
+  if (LinkInfo != 0) {
     delete LinkInfo;
   }
   if (ObjectName.IsEmpty()) {}  // create random name?
@@ -1029,8 +1064,8 @@ TAG_HANDLER_PROC(tag) {
   }
   return false;
 }
-
 TAG_HANDLER_END(INPUT)
+// webview...
 
 TAGS_MODULE_BEGIN(Input)
     TAGS_MODULE_ADD(INPUT)

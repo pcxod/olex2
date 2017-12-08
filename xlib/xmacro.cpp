@@ -195,7 +195,9 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(CifCreate, EmptyString(), fpNone|psFileLoaded,
     "Creates cif from current file, variance-covariance matrix should be "
     "available");
-  xlib_InitMacro(FcfCreate, "scale-[external],simple or regression",
+  xlib_InitMacro(FcfCreate,
+    "scale-[external],simple, regression or none&;"
+    "c-[false] converts current fcf to the given list format",
     (fpAny^fpNone)|psFileLoaded,
     "Creates fcf from current file. Expects a number as in the shelx list "
     "number as the first argument, the second argument is the output file name"
@@ -466,7 +468,7 @@ void XLibMacros::Export(TLibrary& lib)  {
     "automatically links occupancies with the original atoms",
     fpAny|psFileLoaded,
     "Sets part(s) to given atoms, also if -lo is given and -p > 1 allows linking "
-    "occupancy of given atoms throw FVAR and/or SUMP in cases when -p > 2");
+    "occupancy of given atoms through FVAR and/or SUMP in cases when -p > 2");
   xlib_InitMacro(Spec, EmptyString(),
     fpAny | psFileLoaded,
     "Sets SPEC (special position eforcing) command for given atoms with default"
@@ -3777,20 +3779,464 @@ bool XLibMacros::ProcessExternalFunction(olxstr& func)  {
   return false;
 }
 //.............................................................................
+//.............................................................................
+//.............................................................................
+void CifMerge_UpdateAtomLoop(TCif &Cif) {
+  TXApp &xapp = TXApp::GetInstance();
+  if (xapp.CheckFileType<TCif>()) {
+    TBasicApp::NewLogEntry() <<
+      "Cannot update the CIF - the real refinement model is unknown";
+  }
+  else {
+    TStopWatch sw(__FUNC__);
+    sw.start("Processing -u option");
+    olxstr shelxl_version_number =
+      Cif.GetParamAsString("_shelxl_version_number");
+    if (shelxl_version_number.IsEmpty()) { // 2014-7?
+      shelxl_version_number =
+        Cif.GetParamAsString("_shelx_SHELXL_version_number");
+    }
+    const bool shelxl2014 = shelxl_version_number.StartsFrom("201"); //3/4/5...
+    const TAsymmUnit &au = xapp.XFile().GetAsymmUnit();
+    const TAsymmUnit &tau = Cif.GetAsymmUnit();
+    bool match = (tau.AtomCount() <= au.AtomCount()),
+      has_parts = false,
+      has_special_positions = false;
+    if (match) {
+      size_t ind = 0;
+      for (size_t i = 0; i < tau.AtomCount(); i++, ind++) {
+        TCAtom& ta = tau.GetAtom(i);
+        while (ind < au.AtomCount() &&
+          (au.GetAtom(ind).IsDeleted() || au.GetAtom(ind).GetType() == iQPeakZ))
+        {
+          ind++;
+        }
+        if (ind >= au.AtomCount()) {
+          match = false;
+          break;
+        }
+        TCAtom &a = au.GetAtom(ind);
+        if (!a.GetLabel().Equalsi(ta.GetLabel())) {
+          // negative parts do not produce generated labels
+          if (shelxl2014 && a.GetPart() > 0) {
+            olxstr tl = olxstr(a.GetLabel()) << '_' <<
+              olxch('a' + a.GetPart() - 1);
+            if (!ta.GetLabel().Equalsi(tl)) {
+              match = false;
+              break;
+            }
+          }
+        }
+        if (a.ccrd().QDistanceTo(ta.ccrd()) > 1e-3) {
+          match = false;
+          break;
+        }
+        if (a.GetPart() != 0)
+          has_parts = true;
+        if (a.GetDegeneracy() != 1)
+          has_special_positions = true;
+      }
+    }
+    if (!match) {
+      TBasicApp::NewLogEntry() << "Could not update the atom information loop - "
+        "the asymmetric units mismatch";
+    }
+    else {
+      const RefinementModel &rm = xapp.XFile().GetRM();
+      SortedObjectList<const TCAtom *, TPointerComparator> rD,
+        rU;
+      for (size_t rs_i = 0; rs_i < rm.rDFIX.Count(); rs_i++) {
+        TTypeList<ExplicitCAtomRef> r =
+          rm.rDFIX[rs_i].GetAtoms().ExpandList(rm, 2);
+        for (size_t ai = 0; ai < r.Count(); ai++) {
+          rD.AddUnique(&r[ai].GetAtom());
+        }
+      }
+      for (size_t rs_i = 0; rs_i < rm.rDANG.Count(); rs_i++) {
+        TTypeList<ExplicitCAtomRef> r =
+          rm.rDANG[rs_i].GetAtoms().ExpandList(rm, 2);
+        for (size_t ai = 0; ai < r.Count(); ai++) {
+          rD.AddUnique(&r[ai].GetAtom());
+        }
+      }
+      for (size_t rs_i = 0; rs_i < rm.rSADI.Count(); rs_i++) {
+        TTypeList<ExplicitCAtomRef> r =
+          rm.rSADI[rs_i].GetAtoms().ExpandList(rm, 2);
+        for (size_t ai = 0; ai < r.Count(); ai++) {
+          rD.AddUnique(&r[ai].GetAtom());
+        }
+      }
+      for (size_t rs_i = 0; rs_i < rm.rISOR.Count(); rs_i++) {
+        TTypeList<ExplicitCAtomRef> r =
+          rm.rISOR[rs_i].GetAtoms().ExpandList(rm);
+        for (size_t ai = 0; ai < r.Count(); ai++) {
+          rU.AddUnique(&r[ai].GetAtom());
+        }
+      }
+      for (size_t rs_i = 0; rs_i < rm.rSAME.Count(); rs_i++) {
+        TTypeList<ExplicitCAtomRef> r =
+          rm.rSAME[rs_i].GetAtoms().ExpandList(rm);
+        for (size_t ai = 0; ai < r.Count(); ai++) {
+          rD.AddUnique(&r[ai].GetAtom());
+        }
+      }
+      {
+        TPtrList<const TSRestraintList> Urs;
+        Urs << rm.rDELU << rm.rSIMU << rm.rRIGU;
+        for (size_t rrs_i = 0; rrs_i < Urs.Count(); rrs_i++) {
+          const TSRestraintList &rl = *Urs[rrs_i];
+          for (size_t rs_i = 0; rs_i < rl.Count(); rs_i++) {
+            if (rl[rs_i].IsAllNonHAtoms()) {
+              for (size_t ai = 0; ai < au.AtomCount(); ai++) {
+                if (au.GetAtom(ai).GetType().z > 1) {
+                  rU.AddUnique(&au.GetAtom(ai));
+                }
+              }
+            }
+            else {
+              TTypeList<ExplicitCAtomRef> r =
+                rl[rs_i].GetAtoms().ExpandList(rm);
+              for (size_t ai = 0; ai < r.Count(); ai++) {
+                rU.AddUnique(&r[ai].GetAtom());
+              }
+            }
+          }
+        }
+      }
+      cetTable* tab = Cif.FindLoop("_atom_site");
+      if (tab == NULL || tab->RowCount() != tau.AtomCount()) {
+        TBasicApp::NewLogEntry() << "Could not locate the atom_site loop or"
+          " its content mismatches the asymmetric unit";
+      }
+      else {
+        bool need_new_site_m =
+          tab->RemoveCol("_atom_site_symmetry_multiplicity");
+        if (!need_new_site_m) {
+          need_new_site_m = (
+            (tab->ColIndex("_atom_site_site_symmetry_multiplicity") == InvalidIndex)
+            &&
+            (tab->ColIndex("_atom_site_site_symmetry_order") == InvalidIndex));
+        }
+        size_t st_order_ind = InvalidIndex;
+        if (need_new_site_m && has_special_positions) {
+          tab->AddCol("_atom_site_site_symmetry_order");
+          st_order_ind = tab->ColCount() - 1;
+        }
+        tab->RemoveCol("_atom_site_refinement_flags");
+        size_t rf_pos_ind = tab->ColIndex("_atom_site_refinement_flags_posn");
+        if (rf_pos_ind == InvalidIndex) {
+          tab->AddCol("_atom_site_refinement_flags_posn");
+          rf_pos_ind = tab->ColCount() - 1;
+        }
+        // re-evaluate col indices!
+        if (st_order_ind != InvalidIndex) {
+          st_order_ind = tab->ColIndex("_atom_site_site_symmetry_order");
+        }
+        // no more removals - so indices will stick
+        size_t rf_adp_ind = tab->ColIndex("_atom_site_refinement_flags_adp");
+        if ((!rU.IsEmpty() || has_special_positions) &&
+          rf_adp_ind == InvalidIndex)
+        {
+          tab->AddCol("_atom_site_refinement_flags_adp");
+          rf_adp_ind = tab->ColCount() - 1;
+        }
+        size_t rf_occu_ind = tab->ColIndex("_atom_site_refinement_flags_occupancy");
+        if (has_special_positions && rf_occu_ind == InvalidIndex) {
+          tab->AddCol("_atom_site_refinement_flags_occupancy");
+          rf_occu_ind = tab->ColCount() - 1;
+        }
+        size_t dg_ind = tab->ColIndex("_atom_site_disorder_group");
+        if (dg_ind == InvalidIndex && has_parts) {
+          tab->AddCol("_atom_site_disorder_group");
+          dg_ind = tab->ColCount() - 1;
+        }
+
+        TIntList h_t;
+        size_t ri = 0;
+        for (size_t i = 0; i < au.AtomCount(); i++, ri++) {
+          while (i < au.AtomCount() &&
+            (au.GetAtom(i).IsDeleted() || au.GetAtom(i).GetType() == iQPeakZ))
+          {
+            i++;
+          }
+          // last condition must not ever happen
+          if (i >= au.AtomCount() || ri >= tab->RowCount())
+            break;
+          TCAtom &a = au.GetAtom(i);
+          if (a.GetType() == iHydrogenZ) {
+            int& h = h_t.Add(0);
+            /*
+            0 - all refined
+            1 - Uiso constrained
+            2 - U/Uiso - fixed
+            4 - xyz constrained
+            8 - xyz fixed
+            *16 - occu fixed - NOT USED
+            */
+            if (a.GetUisoOwner() != 0) {  // u constrained
+              h |= 0x0001;
+            }
+            else {
+              if (a.GetEllipsoid() == 0) {
+                XVarReference *r = a.GetVarRef(catom_var_name_Uiso);
+                if (r != 0 && r->relation_type == relation_None) {
+                  h |= 0x0002;
+                }
+              }
+              else {
+                bool all_fixed = true;
+                for (short vi = catom_var_name_U11; vi <= catom_var_name_U33; vi++) {
+                  XVarReference *r = a.GetVarRef(vi);
+                  if (r == 0 || r->relation_type != relation_None) {
+                    all_fixed = false;
+                    break;
+                  }
+                }
+                if (all_fixed) {
+                  h |= 0x0002;
+                }
+              }
+            }
+            // position
+            {
+              bool all_fixed = true;
+              for (short vi = catom_var_name_X; vi <= catom_var_name_Z; vi++) {
+                XVarReference *r = a.GetVarRef(vi);
+                if (r == 0 || r->relation_type != relation_None) {
+                  all_fixed = false;
+                  break;
+                }
+              }
+              if (all_fixed) {
+                h |= 0x0008;
+              }
+              else {
+                if (a.GetParentAfixGroup() != 0 &&  // coordinates constrained
+                  a.GetParentAfixGroup()->GetAfix() > 0)
+                {
+                  h |= 0x0004;
+                }
+              }
+            }
+            // occupancy
+            //{
+            //  XVarReference *r = a.GetVarRef(catom_var_name_Sof);
+            //  if (r != NULL && r->relation_type == relation_None)
+            //    h |= 0x0010;
+            //}
+          }
+          olxstr pos_t, adp_t;
+          if (rD.Contains(&a)) {
+            pos_t << 'D';
+          }
+          if (a.GetParentAfixGroup() != NULL) {
+            if (a.GetParentAfixGroup()->IsRefinable()) {
+              pos_t << 'G';
+            }
+            if (a.GetParentAfixGroup()->IsRiding()) {
+              pos_t << 'R';
+            }
+          }
+          if (a.GetDegeneracy() != 1) {
+            pos_t << 'S';
+            adp_t << 'T';
+          }
+          if (rU.Contains(&a)) {
+            adp_t << 'U';
+          }
+          if (pos_t.IsEmpty()) {
+            tab->Set(ri, rf_pos_ind, new cetString('.'));
+          }
+          else {
+            tab->Set(ri, rf_pos_ind, new cetString(pos_t));
+          }
+
+          if (rf_adp_ind != InvalidIndex) {
+            if (adp_t.IsEmpty()) {
+              tab->Set(ri, rf_adp_ind, new cetString('.'));
+            }
+            else {
+              tab->Set(ri, rf_adp_ind, new cetString(adp_t));
+            }
+          }
+          if (has_parts) {
+            if (a.GetPart() == 0) {
+              tab->Set(ri, dg_ind, new cetString('.'));
+            }
+            else {
+              tab->Set(ri, dg_ind, new cetString((int)a.GetPart()));
+            }
+          }
+          if (has_special_positions) {
+            if (a.GetDegeneracy() == 1) {
+              tab->Set(ri, rf_occu_ind, new cetString('.'));
+            }
+            else {
+              tab->Set(ri, rf_occu_ind, new cetString('P'));
+            }
+          }
+          if (st_order_ind != InvalidIndex) {
+            tab->Set(ri, st_order_ind, new cetString(a.GetDegeneracy()));
+          }
+        }
+        bool force_update = shelxl_version_number.IsEmpty();
+        if (force_update ||
+          !Cif.ParamExists("_refine_ls_hydrogen_treatment"))
+        {
+          if (h_t.IsEmpty())
+            Cif.SetParam("_refine_ls_hydrogen_treatment", "undef", false);
+          else {
+            int v = h_t[0];
+            bool all_same = true;
+            for (size_t i = 1; i < h_t.Count(); i++) {
+              if (h_t[i] != v) {
+                all_same = false;
+                break;
+              }
+            }
+            if (all_same) {
+              if (v == 0) {
+                Cif.SetParam("_refine_ls_hydrogen_treatment", "refall", false);
+              }
+              else if (v == 2) { // fixed U
+                Cif.SetParam("_refine_ls_hydrogen_treatment", "refxyz", false);
+              }
+              else if (v == 8) { // fixed xyz
+                Cif.SetParam("_refine_ls_hydrogen_treatment", "refU", false);
+              }
+              else if (v == 10) { // fixed U and xyz
+                Cif.SetParam("_refine_ls_hydrogen_treatment", "noref", false);
+              }
+              else if (v == 1 || v == 4 || v == 5) { // constrained U, xyz or both
+                Cif.SetParam("_refine_ls_hydrogen_treatment", "constr", false);
+              }
+              else {
+                Cif.SetParam("_refine_ls_hydrogen_treatment", "mixed", false);
+              }
+            }
+            else {
+              Cif.SetParam("_refine_ls_hydrogen_treatment", "mixed", false);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+void CifMerge_EmbeddData(TCif &Cif, bool insert) {
+  TStopWatch sw(__FUNC__);
+  sw.start("Embedding data");
+  TXApp &xapp = TXApp::GetInstance();
+  const bool use_md5 = xapp.GetOptions()
+    .FindValue("cif.use_md5", FalseString()).ToBool();
+  // emmbedding the RES file into the CIF
+  Cif.Remove("_shelx_res_file");
+  Cif.Remove("_shelx_res_checksum");
+  Cif.Remove("_iucr_refine_instructions_details");
+  Cif.Remove("_shelx_hkl_file");
+  Cif.Remove("_shelx_fab_file");
+  Cif.Remove("_shelx_hkl_checksum");
+  Cif.Remove("_shelx_fab_checksum");
+  if (use_md5) {
+    Cif.Remove("_olex2_res_file_MD5");
+    Cif.Remove("_olex2_hkl_file_MD5");
+    Cif.Remove("_olex2_fab_file_MD5");
+  }
+  Cif.Remove("_refln");
+  if (insert) {
+    olxstr res_fn = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "res");
+    if (TEFile::Exists(res_fn)) {
+      cetStringList res("_iucr_refine_instructions_details");
+      TEFile res_f(res_fn, "rb");
+      res.lines.LoadFromTextStream(res_f);
+      Cif.SetParam(res);
+      if (use_md5) {
+        res_f.SetPosition(0);
+        size_t as = res_f.GetAvailableSizeT();
+        olx_array_ptr<char> bf(as);
+        res_f.Read(bf(), as);
+        olxcstr s = olxcstr::FromExternal(bf.release(), as);
+        s.DeleteCharSet("\n\r\t ");
+        Cif.SetParam("_olex2_res_file_MD5", MD5::Digest(s), false);
+      }
+    }
+    // embedd HKL
+    olxstr hkl_src = xapp.XFile().LocateHklFile();
+    if (TEFile::Exists(hkl_src)) {
+      THklFile hkl;
+      hkl.LoadFromFile(hkl_src, false);
+      cetTable &t = *THklFile::ToCIF(hkl.RefList(), Cif, true);
+      if (use_md5) {
+        olxstr_buf bf;
+        for (size_t i = 0; i < t.RowCount(); i++) {
+          for (size_t j = 0; j < t.ColCount(); j++) {
+            bf << t[i][j]->GetStringValue();
+          }
+        }
+        Cif.SetParam("_olex2_hkl_file_MD5",
+          MD5::Digest(olxcstr(olxstr(bf).DeleteChars(' '))), false);
+      }
+    }
+    // try inserting FAB file
+    if (xapp.CheckFileType<TIns>()) {
+      TIns &ins = xapp.XFile().GetLastLoader<TIns>();
+      if (ins.InsExists("ABIN")) {
+        if (Cif.FindEntry("_shelx_fab_file") == 0) {
+          olxstr fab_name = TEFile::ChangeFileExt(xapp.XFile().LocateHklFile(),
+            "fab");
+          if (!TEFile::Exists(fab_name)) {
+            TBasicApp::NewLogEntry(logError) << "FAB file is missing";
+          }
+          else {
+            cetStringList fab("_shelx_fab_file");
+            fab.lines = TEFile::ReadLines(fab_name);
+            for (size_t fi = 0; fi < fab.lines.Count(); fi++) {
+              olxstr &l = fab.lines[fi];
+              if (l.StartsFrom("loop_") || l.StartsFrom('_')) {
+                try {
+                  cif_dp::TCifDP fabc;
+                  fabc.LoadFromStrings(fab.lines.SubListFrom(fi).GetObject());
+                  for (size_t bc = 0; bc < fabc.Count(); bc++) {
+                    for (size_t fj = 0; fj < fabc[bc].param_map.Count(); fj++) {
+                      Cif.SetParam(*fabc[bc].param_map.GetValue(fj));
+                    }
+                  }
+                  fab.lines.SetCount(fi);
+                  break;
+                }
+                catch (const TExceptionBase &e) {
+                  break;
+                }
+              }
+              else {
+                l.DeleteSequencesOf(' ');
+              }
+            }
+            Cif.SetParam(fab);
+            if (use_md5) {
+              olxcstr s = fab.lines.Text(EmptyString()).c_str();
+              s.DeleteCharSet("\n\r\t ");
+              Cif.SetParam("_olex2_fab_file_MD5", MD5::Digest(s), false);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+//.............................................................................
 void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
   TStopWatch sw(__FUNC__);
   TXApp& xapp = TXApp::GetInstance();
-  const bool use_md5 = xapp.GetOptions()
-    .FindValue("cif.use_md5", FalseString()).ToBool(),
-    resolve = Options.GetBoolOption("resolve", true, false);
+  const bool resolve = Options.GetBoolOption("resolve", true, false);
   cif_dp::TCifDP src;
   TTypeList<olx_pair_t<olxstr,olxstr> > Translations;
   olxstr CifCustomisationFN = xapp.GetCifTemplatesDir() + "customisation.xlt";
   typedef SortedObjectList<olxstr, olxstrComparator<true> > SortedStrList;
-  SortedStrList items_to_skip, items_to_merge;
-  TTypeList<Wildcard> masks_to_skip, masks_to_merge;
+  WildcardList to_skip, to_merge;
   sw.start("Reading customisation");
   if (TEFile::Exists(CifCustomisationFN)) {
     try {
@@ -3812,13 +4258,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
           "cif_customisation").FindItem("skip_merge");
         if (si != 0) {
           for (size_t i=0; i < si->ItemCount(); i++) {
-            TDataItem &di = si->GetItemByIndex(i);
-            if (di.GetName().ContainAnyOf("*?")) {
-              masks_to_skip.AddNew(di.GetName());
-            }
-            else {
-              items_to_skip.AddUnique(di.GetName());
-            }
+            to_skip.Add(si->GetItemByIndex(i).GetName());
           }
         }
       }
@@ -3827,12 +4267,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
           "cif_customisation").FindItem("do_merge");
         if (mi != 0) {
           for (size_t i = 0; i < mi->ItemCount(); i++) {
-            if (mi->GetItemByIndex(i).GetName().ContainAnyOf("*?")) {
-              masks_to_merge.AddNew(mi->GetItemByIndex(i).GetName());
-            }
-            else {
-              items_to_merge.AddUnique(mi->GetItemByIndex(i).GetName());
-            }
+            to_merge.Add(mi->GetItemByIndex(i).GetName());
           }
         }
       }
@@ -3864,346 +4299,13 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
       "atom labels and Olex2 cannot correctly process it. Skipping CifMerge.";
       return;
   }
-  olxstr shelxl_version_number =
-    Cif->GetParamAsString("_shelxl_version_number");
-  if (shelxl_version_number.IsEmpty()) { // 2014-7?
-    shelxl_version_number =
-      Cif->GetParamAsString("_shelx_SHELXL_version_number");
-  }
-  const bool shelxl2014 = shelxl_version_number.StartsFrom("201"); //3/4/5...
   // normalise
   for (size_t i = 0; i < Translations.Count(); i++) {
     Cif->Rename(Translations[i].GetA(), Translations[i].GetB());
   }
   // update the atom_site loop and H treatment if AU match
   if (Options.Contains('u')) {
-    sw.start("Processing -u option");
-    if (xapp.CheckFileType<TCif>()) {
-      TBasicApp::NewLogEntry() <<
-        "Cannot update the CIF - the real refinement model is unknown";
-    }
-    else {
-      const TAsymmUnit &au = xapp.XFile().GetAsymmUnit();
-      const TAsymmUnit &tau = Cif->GetAsymmUnit();
-      bool match = (tau.AtomCount() <= au.AtomCount()),
-        has_parts = false,
-        has_special_positions = false;
-      if (match) {
-        size_t ind=0;
-        for (size_t i=0; i < tau.AtomCount(); i++, ind++) {
-          TCAtom& ta = tau.GetAtom(i);
-          while (ind < au.AtomCount() &&
-            (au.GetAtom(ind).IsDeleted() || au.GetAtom(ind).GetType() == iQPeakZ))
-          {
-            ind++;
-          }
-          if (ind >= au.AtomCount()) {
-            match = false;
-            break;
-          }
-          TCAtom &a = au.GetAtom(ind);
-          if (!a.GetLabel().Equalsi(ta.GetLabel())) {
-            // negative parts do not produce generated labels
-            if (shelxl2014 && a.GetPart() > 0) {
-              olxstr tl = olxstr(a.GetLabel()) << '_' <<
-                olxch('a' + a.GetPart()-1);
-              if (!ta.GetLabel().Equalsi(tl)) {
-                match = false;
-                break;
-              }
-            }
-          }
-          if (a.ccrd().QDistanceTo(ta.ccrd()) > 1e-3) {
-            match = false;
-            break;
-          }
-          if (a.GetPart() != 0)
-            has_parts = true;
-          if (a.GetDegeneracy() != 1)
-            has_special_positions = true;
-        }
-      }
-      if (!match) {
-        TBasicApp::NewLogEntry() << "Could not update the atom information loop - "
-          "the asymmetric units mismatch";
-      }
-      else  {
-        const RefinementModel &rm = xapp.XFile().GetRM();
-        SortedObjectList<const TCAtom *, TPointerComparator> rD,
-          rU;
-        for (size_t rs_i=0; rs_i < rm.rDFIX.Count(); rs_i++) {
-          TTypeList<ExplicitCAtomRef> r =
-            rm.rDFIX[rs_i].GetAtoms().ExpandList(rm, 2);
-          for (size_t ai = 0; ai < r.Count(); ai++) {
-            rD.AddUnique(&r[ai].GetAtom());
-          }
-        }
-        for (size_t rs_i=0; rs_i < rm.rDANG.Count(); rs_i++) {
-          TTypeList<ExplicitCAtomRef> r =
-            rm.rDANG[rs_i].GetAtoms().ExpandList(rm, 2);
-          for (size_t ai = 0; ai < r.Count(); ai++) {
-            rD.AddUnique(&r[ai].GetAtom());
-          }
-        }
-        for (size_t rs_i = 0; rs_i < rm.rSADI.Count(); rs_i++) {
-          TTypeList<ExplicitCAtomRef> r =
-            rm.rSADI[rs_i].GetAtoms().ExpandList(rm, 2);
-          for (size_t ai = 0; ai < r.Count(); ai++) {
-            rD.AddUnique(&r[ai].GetAtom());
-          }
-        }
-        for (size_t rs_i = 0; rs_i < rm.rISOR.Count(); rs_i++) {
-          TTypeList<ExplicitCAtomRef> r =
-            rm.rISOR[rs_i].GetAtoms().ExpandList(rm);
-          for (size_t ai = 0; ai < r.Count(); ai++) {
-            rU.AddUnique(&r[ai].GetAtom());
-          }
-        }
-        for (size_t rs_i = 0; rs_i < rm.rSAME.Count(); rs_i++) {
-          TTypeList<ExplicitCAtomRef> r =
-            rm.rSAME[rs_i].GetAtoms().ExpandList(rm);
-          for (size_t ai = 0; ai < r.Count(); ai++) {
-            rD.AddUnique(&r[ai].GetAtom());
-          }
-        }
-        {
-          TPtrList<const TSRestraintList> Urs;
-          Urs << rm.rDELU << rm.rSIMU << rm.rRIGU;
-          for (size_t rrs_i = 0; rrs_i < Urs.Count(); rrs_i++) {
-            const TSRestraintList &rl = *Urs[rrs_i];
-            for (size_t rs_i = 0; rs_i < rl.Count(); rs_i++) {
-              if (rl[rs_i].IsAllNonHAtoms()) {
-                for (size_t ai = 0; ai < au.AtomCount(); ai++) {
-                  if (au.GetAtom(ai).GetType().z > 1) {
-                    rU.AddUnique(&au.GetAtom(ai));
-                  }
-                }
-              }
-              else {
-                TTypeList<ExplicitCAtomRef> r =
-                  rl[rs_i].GetAtoms().ExpandList(rm);
-                for (size_t ai = 0; ai < r.Count(); ai++) {
-                  rU.AddUnique(&r[ai].GetAtom());
-                }
-              }
-            }
-          }
-        }
-        cetTable* tab = Cif->FindLoop("_atom_site");
-        if( tab == NULL || tab->RowCount() != tau.AtomCount() )  {
-          TBasicApp::NewLogEntry() << "Could not locate the atom_site loop or"
-           " its content mismatches the asymmetric unit";
-        }
-        else {
-          bool need_new_site_m =
-            tab->RemoveCol("_atom_site_symmetry_multiplicity");
-          if (!need_new_site_m) {
-            need_new_site_m = (
-              (tab->ColIndex("_atom_site_site_symmetry_multiplicity") == InvalidIndex)
-              &&
-              (tab->ColIndex("_atom_site_site_symmetry_order") == InvalidIndex));
-          }
-          size_t st_order_ind = InvalidIndex;
-          if (need_new_site_m && has_special_positions) {
-            tab->AddCol("_atom_site_site_symmetry_order");
-            st_order_ind = tab->ColCount() - 1;
-          }
-          tab->RemoveCol("_atom_site_refinement_flags");
-          size_t rf_pos_ind = tab->ColIndex("_atom_site_refinement_flags_posn");
-          if (rf_pos_ind == InvalidIndex) {
-            tab->AddCol("_atom_site_refinement_flags_posn");
-            rf_pos_ind = tab->ColCount()-1;
-          }
-          // re-evaluate col indices!
-          if (st_order_ind != InvalidIndex)
-            st_order_ind = tab->ColIndex("_atom_site_site_symmetry_order");
-          // no more removals - so indices will stick
-          size_t rf_adp_ind = tab->ColIndex("_atom_site_refinement_flags_adp");
-          if ((!rU.IsEmpty() || has_special_positions) &&
-            rf_adp_ind == InvalidIndex)
-          {
-            tab->AddCol("_atom_site_refinement_flags_adp");
-            rf_adp_ind = tab->ColCount()-1;
-          }
-          size_t rf_occu_ind = tab->ColIndex("_atom_site_refinement_flags_occupancy");
-          if (has_special_positions && rf_occu_ind == InvalidIndex) {
-            tab->AddCol("_atom_site_refinement_flags_occupancy");
-            rf_occu_ind = tab->ColCount() - 1;
-          }
-          size_t dg_ind = tab->ColIndex("_atom_site_disorder_group");
-          if (dg_ind == InvalidIndex && has_parts) {
-            tab->AddCol("_atom_site_disorder_group");
-            dg_ind = tab->ColCount()-1;
-          }
-
-          TIntList h_t;
-          size_t ri=0;
-          for (size_t i=0; i < au.AtomCount(); i++, ri++) {
-            while (i < au.AtomCount() &&
-              (au.GetAtom(i).IsDeleted() || au.GetAtom(i).GetType() == iQPeakZ))
-            {
-              i++;
-            }
-            // last condition must not ever happen
-            if (i >= au.AtomCount() || ri >= tab->RowCount())
-              break;
-            TCAtom &a = au.GetAtom(i);
-            if (a.GetType() == iHydrogenZ) {
-              int& h = h_t.Add(0);
-              /*
-              0 - all refined
-              1 - Uiso constrained
-              2 - U/Uiso - fixed
-              4 - xyz constrained
-              8 - xyz fixed
-              *16 - occu fixed - NOT USED
-              */
-              if (a.GetUisoOwner() != NULL) {  // u constrained
-                h |= 0x0001;
-              }
-              else {
-                if (a.GetEllipsoid() == NULL) {
-                  XVarReference *r = a.GetVarRef(catom_var_name_Uiso);
-                  if (r != NULL && r->relation_type == relation_None)
-                    h |= 0x0002;
-                }
-                else {
-                  bool all_fixed = true;
-                  for (short vi = catom_var_name_U11; vi <= catom_var_name_U33; vi++) {
-                    XVarReference *r = a.GetVarRef(vi);
-                    if (r == NULL || r->relation_type != relation_None) {
-                      all_fixed = false;
-                      break;
-                    }
-                  }
-                  if (all_fixed)
-                    h |= 0x0002;
-                }
-              }
-              // position
-              {
-                bool all_fixed = true;
-                for (short vi = catom_var_name_X; vi <= catom_var_name_Z; vi++) {
-                  XVarReference *r = a.GetVarRef(vi);
-                  if (r == NULL || r->relation_type != relation_None) {
-                    all_fixed = false;
-                    break;
-                  }
-                }
-                if (all_fixed)
-                  h |= 0x0008;
-                else {
-                  if (a.GetParentAfixGroup() != NULL &&  // coordinates constrained
-                    a.GetParentAfixGroup()->GetAfix() > 0)
-                  {
-                    h |= 0x0004;
-                  }
-                }
-              }
-              // occupancy
-              //{
-              //  XVarReference *r = a.GetVarRef(catom_var_name_Sof);
-              //  if (r != NULL && r->relation_type == relation_None)
-              //    h |= 0x0010;
-              //}
-            }
-            olxstr pos_t, adp_t;
-            if (rD.Contains(&a)) {
-              pos_t << 'D';
-            }
-            if (a.GetParentAfixGroup() != NULL) {
-              if (a.GetParentAfixGroup()->IsRefinable()) {
-                pos_t << 'G';
-              }
-              if (a.GetParentAfixGroup()->IsRiding()) {
-                pos_t << 'R';
-              }
-            }
-            if (a.GetDegeneracy() != 1) {
-              pos_t << 'S';
-              adp_t << 'T';
-            }
-            if (rU.Contains(&a)) {
-              adp_t << 'U';
-            }
-            if (pos_t.IsEmpty()) {
-              tab->Set(ri, rf_pos_ind, new cetString('.'));
-            }
-            else {
-              tab->Set(ri, rf_pos_ind, new cetString(pos_t));
-            }
-
-            if (rf_adp_ind != InvalidIndex) {
-              if (adp_t.IsEmpty()) {
-                tab->Set(ri, rf_adp_ind, new cetString('.'));
-              }
-              else {
-                tab->Set(ri, rf_adp_ind, new cetString(adp_t));
-              }
-            }
-            if (has_parts) {
-              if (a.GetPart() == 0) {
-                tab->Set(ri, dg_ind, new cetString('.'));
-              }
-              else {
-                tab->Set(ri, dg_ind, new cetString((int)a.GetPart()));
-              }
-            }
-            if (has_special_positions) {
-              if (a.GetDegeneracy() == 1) {
-                tab->Set(ri, rf_occu_ind, new cetString('.'));
-              }
-              else {
-                tab->Set(ri, rf_occu_ind, new cetString('P'));
-              }
-            }
-            if (st_order_ind != InvalidIndex) {
-              tab->Set(ri, st_order_ind, new cetString(a.GetDegeneracy()));
-            }
-          }
-          bool force_update = shelxl_version_number.IsEmpty();
-          if (force_update ||
-            !Cif->ParamExists("_refine_ls_hydrogen_treatment"))
-          {
-            if (h_t.IsEmpty())
-              Cif->SetParam("_refine_ls_hydrogen_treatment", "undef", false);
-            else {
-              int v = h_t[0];
-              bool all_same = true;
-              for (size_t i = 1; i < h_t.Count(); i++) {
-                if (h_t[i] != v)  {
-                  all_same = false;
-                  break;
-                }
-              }
-              if (all_same) {
-                if (v == 0) {
-                  Cif->SetParam("_refine_ls_hydrogen_treatment", "refall", false);
-                }
-                else if (v == 2) { // fixed U
-                  Cif->SetParam("_refine_ls_hydrogen_treatment", "refxyz", false);
-                }
-                else if (v == 8) { // fixed xyz
-                  Cif->SetParam("_refine_ls_hydrogen_treatment", "refU", false);
-                }
-                else if (v == 10) { // fixed U and xyz
-                  Cif->SetParam("_refine_ls_hydrogen_treatment", "noref", false);
-                }
-                else if (v == 1 || v == 4 || v == 5) { // constrained U, xyz or both
-                  Cif->SetParam("_refine_ls_hydrogen_treatment", "constr", false);
-                }
-                else {
-                  Cif->SetParam("_refine_ls_hydrogen_treatment", "mixed", false);
-                }
-              }
-              else {
-                Cif->SetParam("_refine_ls_hydrogen_treatment", "mixed", false);
-              }
-            }
-          }
-        }
-      }
-    }
+    CifMerge_UpdateAtomLoop(*Cif);
   }
   olex2::IOlex2Processor *op = olex2::IOlex2Processor::GetInstance();
   sw.start("Do the merging");
@@ -4212,15 +4314,12 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
     try {
       TStrList toks(Cmds[i], '&');
       olxstr fn = toks[0];
-      IInputStream *is = TFileHandlerManager::GetInputStream(fn);
-      if (is == NULL) {
+      olx_object_ptr<IInputStream> is = TFileHandlerManager::GetInputStream(fn);
+      if (!is.is_valid()) {
         TBasicApp::NewLogEntry(logError) << "Could not find file: " << fn;
         continue;
       }
-      TStrList sl;
-      sl.LoadFromTextStream(*is);
-      delete is;
-      src.LoadFromStrings(sl);
+      src.LoadFromStream(is());
       for (size_t i=1; i < toks.Count(); i++) {
         size_t idx = toks[i].IndexOf('=');
         if (idx != InvalidIndex) {
@@ -4261,27 +4360,13 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
           }
         }
         if (contains || !resolve) {
-          if (items_to_skip.Contains(e.GetName()) &&
-            !items_to_merge.Contains(e.GetName()))
+          if (to_skip.DoesMatch(e.GetName()) &&
+            !to_merge.DoesMatch(e.GetName()))
           {
             TBasicApp::NewLogEntry(logInfo) << "Skipping '" << e.GetName() << '\'';
             continue;
           }
-          for (size_t k = 0; k < masks_to_skip.Count(); k++) {
-            if (masks_to_skip[k].DoesMatch(e.GetName())) {
-              skip = true;
-              break;
-            }
-          }
-          if (skip) {
-            for (size_t k = 0; k < masks_to_merge.Count(); k++) {
-              if (masks_to_merge[k].DoesMatch(e.GetName())) {
-                skip = false;
-                break;
-              }
-            }
-          }
-          if (!skip && EsdlInstanceOf(e, cetTable)) {
+          if (EsdlInstanceOf(e, cetTable)) {
             for (size_t k = 0; k < _loop_names_to_skip.Count(); k++) {
               const olxstr &i_name = e.GetName();
               if (i_name.StartsFromi(_loop_names_to_skip[k]) &&
@@ -4297,12 +4382,12 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
       }
       if (!skip) {
         bool processed = false;
-        if (op != NULL && EsdlInstanceOf(e, cif_dp::cetNamedString)) {
+        if (op != 0 && EsdlInstanceOf(e, cif_dp::cetString)) {
           olxstr sv = e.GetStringValue();
           if (sv.StartsFrom('$')) {
             try {
               if (op->processFunction(sv)) {
-                Cif->SetParam(cif_dp::cetNamedString(e.GetName(), sv));
+                Cif->SetParam(cif_dp::cetString(e.GetName(), sv));
                 processed = true;
               }
             }
@@ -4321,103 +4406,9 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   if (Options.Contains('f')) {
-    sw.start("Processing -f option");
     olxstr i_v = Options.FindValue('f');
     bool insert = i_v.IsEmpty() ? true : i_v.ToBool();
-    // emmbedding the RES file into the CIF
-    Cif->Remove("_shelx_res_file");
-    Cif->Remove("_shelx_res_checksum");
-    Cif->Remove("_iucr_refine_instructions_details");
-    Cif->Remove("_shelx_hkl_file");
-    Cif->Remove("_shelx_fab_file");
-    Cif->Remove("_shelx_hkl_checksum");
-    Cif->Remove("_shelx_fab_checksum");
-    if (use_md5) {
-      Cif->Remove("_olex2_res_file_MD5");
-      Cif->Remove("_olex2_hkl_file_MD5");
-      Cif->Remove("_olex2_fab_file_MD5");
-    }
-    Cif->Remove("_refln");
-    if (insert) {
-      olxstr res_fn = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "res");
-      if (TEFile::Exists(res_fn)) {
-        cetNamedStringList res("_iucr_refine_instructions_details");
-        TEFile res_f(res_fn, "rb");
-        res.lines.LoadFromTextStream(res_f);
-        Cif->SetParam(res);
-        if (use_md5) {
-          res_f.SetPosition(0);
-          size_t as = res_f.GetAvailableSizeT();
-          olx_array_ptr<char> bf(as);
-          res_f.Read(bf(), as);
-          olxcstr s = olxcstr::FromExternal(bf.release(), as);
-          s.DeleteCharSet("\n\r\t ");
-          Cif->SetParam("_olex2_res_file_MD5", MD5::Digest(s), false);
-        }
-      }
-      // embedd HKL
-      olxstr hkl_src = xapp.XFile().LocateHklFile();
-      if (TEFile::Exists(hkl_src)) {
-        THklFile hkl;
-        hkl.LoadFromFile(hkl_src, false);
-        cetTable &t = *THklFile::ToCIF(hkl.RefList(), *Cif, true);
-        if (use_md5) {
-          olxstr_buf bf;
-          for (size_t i = 0; i < t.RowCount(); i++) {
-            for (size_t j = 0; j < t.ColCount(); j++) {
-              bf << t[i][j]->GetStringValue();
-            }
-          }
-          Cif->SetParam("_olex2_hkl_file_MD5",
-            MD5::Digest(olxcstr(olxstr(bf).DeleteChars(' '))), false);
-        }
-      }
-      // try inserting FAB file
-      if (xapp.CheckFileType<TIns>()) {
-        TIns &ins = xapp.XFile().GetLastLoader<TIns>();
-        if (ins.InsExists("ABIN")) {
-          if (Cif->FindEntry("_shelx_fab_file") == 0) {
-            olxstr fab_name = TEFile::ChangeFileExt(xapp.XFile().LocateHklFile(),
-              "fab");
-            if (!TEFile::Exists(fab_name)) {
-              TBasicApp::NewLogEntry(logError) << "FAB file is missing";
-            }
-            else {
-              cetNamedStringList fab("_shelx_fab_file");
-              fab.lines = TEFile::ReadLines(fab_name);
-              for (size_t fi = 0; fi < fab.lines.Count(); fi++) {
-                olxstr &l = fab.lines[fi];
-                if (l.StartsFrom("loop_") || l.StartsFrom('_')) {
-                  try {
-                    cif_dp::TCifDP fabc;
-                    fabc.LoadFromStrings(fab.lines.SubListFrom(fi).GetObject());
-                    for (size_t bc = 0; bc < fabc.Count(); bc++) {
-                      for (size_t fj = 0; fj < fabc[bc].param_map.Count(); fj++) {
-                        Cif->SetParam(*fabc[bc].param_map.GetValue(fj));
-                      }
-                    }
-                    fab.lines.SetCount(fi);
-                    break;
-                  }
-                  catch (const TExceptionBase &e) {
-                    break;
-                  }
-                }
-                else {
-                  l.DeleteSequencesOf(' ');
-                }
-              }
-              Cif->SetParam(fab);
-              if (use_md5) {
-                olxcstr s = fab.lines.Text(EmptyString()).c_str();
-                s.DeleteCharSet("\n\r\t ");
-                Cif->SetParam("_olex2_fab_file_MD5", MD5::Digest(s), false);
-              }
-            }
-          }
-        }
-      }
-    }
+    CifMerge_EmbeddData(*Cif, insert);
   }
   sw.start("Updating commonly mising parameters");
   // generate moiety string if does not exist
@@ -4531,7 +4522,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   // update the refinement description
-  cetNamedStringList description("_olex2_refinement_description");
+  cetStringList description("_olex2_refinement_description");
   TStrList ri = xapp.XFile().GetRM().Describe();
   for (size_t i=0; i < ri.Count(); i++) {
     description.lines.Hyphenate(ri[i].Replace(" ~ ", " \\\\sim "), 80, true);
@@ -4885,70 +4876,97 @@ void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options,
   const int list_n = Cmds[0].ToInt();
   const olxstr fn = (Cmds.Count() > 1 ? Cmds.Text(' ', 1) :
     TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "fcf"));
-  RefinementModel::HklStat ms;
   TUnitCell::SymmSpace sp = xapp.XFile().GetUnitCell().GetSymmSpace();
   TRefList refs;
+  TArrayList<compd> F;
+  bool convert = Options.GetBoolOption('c');
+  if (convert) {
+    olxstr err = SFUtil::GetSF(refs, F, SFUtil::mapTypeCalc, SFUtil::sfOriginFcf,
+      SFUtil::scaleExternal, 1);
+    if (!err.IsEmpty()) {
+      Error.ProcessingError(__OlxSrcInfo, err);
+      return;
+    }
+  }
   olxstr col_names = "_refln_index_h,_refln_index_k,_refln_index_l,";
   if (list_n == 4) {
-    ms = xapp.XFile().GetRM().GetRefinementRefList<
-      TUnitCell::SymmSpace,RefMerger::ShelxMerger>(sp, refs);
+    if (!convert) {
+      xapp.XFile().GetRM().GetRefinementRefList<
+        TUnitCell::SymmSpace, RefMerger::ShelxMerger>(sp, refs);
+    }
     col_names << "_refln_F_squared_calc,_refln_F_squared_meas,"
       "_refln_F_squared_sigma,_refln_observed_status";
   }
+  else if (list_n == 6) {
+    if (!convert) {
+      xapp.XFile().GetRM().GetRefinementRefList<
+        TUnitCell::SymmSpace, RefMerger::ShelxMerger>(sp, refs);
+    }
+    col_names << "_refln_F_squared_meas,_refln_F_squared_sigma,"
+      "_refln_F_calc,_refln_phase_calc";
+  }
   else if (list_n == 3) {
-    ms = xapp.XFile().GetRM().GetFourierRefList<
-      TUnitCell::SymmSpace,RefMerger::ShelxMerger>(sp, refs);
+    if (!convert) {
+      xapp.XFile().GetRM().GetFourierRefList<
+        TUnitCell::SymmSpace, RefMerger::ShelxMerger>(sp, refs);
+    }
     col_names << "_refln_F_meas,_refln_F_sigma,_refln_A_calc,_refln_B_calc";
   }
-  else  {
+  else {
     Error.ProcessingError(__OlxSrcInfo, "unsupported list number: ") <<
       list_n;
     return;
   }
-  TArrayList<compd> F;
-  F.SetCount(refs.Count());
-  //xapp.CalcSF(refs, F);
-  //SFUtil::CalcSF(xapp.XFile(), refs, F, xapp.XFile().GetRM().GetMERG() != 4);
-  SFUtil::CalcSF(xapp.XFile(), refs, F);
+  if (!convert) {
+    F.SetCount(refs.Count());
+    //xapp.CalcSF(refs, F);
+    //SFUtil::CalcSF(xapp.XFile(), refs, F, xapp.XFile().GetRM().GetMERG() != 4);
+    SFUtil::CalcSF(xapp.XFile(), refs, F);
+  }
   double scale_k = 1, scale_a = 0;
-  olxstr scale_str = Options.FindValue("scale", "external");
-  if( scale_str.Equalsi("external") )
-    scale_k = 1./olx_sqr(xapp.XFile().GetRM().Vars.GetVar(0).GetValue());
-  else if( scale_str.Equalsi("simple") )
+  olxstr scale_str = Options.FindValue("scale", "regression");
+  if (scale_str.Equalsi("none")) {
+  }
+  if (scale_str.Equalsi("external")) {
+    scale_k = 1. / olx_sqr(xapp.XFile().GetRM().Vars.GetVar(0).GetValue());
+  }
+  else if (scale_str.Equalsi("simple")) {
     scale_k = SFUtil::CalcF2Scale(F, refs);
-  else if( scale_str.Equalsi("regression") )
+  }
+  else if (scale_str.Equalsi("regression")) {
     SFUtil::CalcF2Scale(F, refs, scale_k, scale_a);
-  else  {
+  }
+  else {
     Error.ProcessingError(__OlxSrcInfo, olxstr("unsupported scale: ") << scale_str);
     return;
   }
   TCifDP fcf_dp;
   CifBlock& cif_data = fcf_dp.Add(
     TEFile::ExtractFileName(fn).Replace(' ', EmptyString()));
-  cif_data.Add(new cetNamedString("_olex2_title",
+  cif_data.Add(cetString::NewNamedString("_olex2_title",
     xapp.XFile().LastLoader()->GetTitle()));
-  cif_data.Add(new cetNamedString("_shelx_refln_list_code", list_n));
+  cif_data.Add(cetString::NewNamedString("_shelx_refln_list_code", list_n));
 
   const TAsymmUnit& au = xapp.XFile().GetAsymmUnit();
-  cif_data.Add(new cetNamedString("_cell_length_a",
+  cif_data.Add(cetString::NewNamedString("_cell_length_a",
     TEValueD(au.GetAxes()[0], au.GetAxisEsds()[0]).ToString()));
-  cif_data.Add(new cetNamedString("_cell_length_b",
+  cif_data.Add(cetString::NewNamedString("_cell_length_b",
     TEValueD(au.GetAxes()[1], au.GetAxisEsds()[1]).ToString()));
-  cif_data.Add(new cetNamedString("_cell_length_c",
+  cif_data.Add(cetString::NewNamedString("_cell_length_c",
     TEValueD(au.GetAxes()[2], au.GetAxisEsds()[2]).ToString()));
-  cif_data.Add(new cetNamedString("_cell_angle_alpha",
+  cif_data.Add(cetString::NewNamedString("_cell_angle_alpha",
     TEValueD(au.GetAngles()[0], au.GetAngleEsds()[0]).ToString()));
-  cif_data.Add(new cetNamedString("_cell_angle_beta",
+  cif_data.Add(cetString::NewNamedString("_cell_angle_beta",
     TEValueD(au.GetAngles()[1], au.GetAngleEsds()[1]).ToString()));
-  cif_data.Add(new cetNamedString("_cell_angle_gamma",
+  cif_data.Add(cetString::NewNamedString("_cell_angle_gamma",
     TEValueD(au.GetAngles()[2], au.GetAngleEsds()[2]).ToString()));
 
   const TUnitCell& uc = xapp.XFile().GetUnitCell();
   cetTable* sym_tab = new cetTable(
     "_space_group_symop_id,_space_group_symop_operation_xyz");
-  for( size_t i=0; i < uc.MatrixCount(); i++ )  {
+  for (size_t i = 0; i < uc.MatrixCount(); i++) {
     CifRow& r = sym_tab->AddRow();
-    r[0] = new cetString(i+1);
+    r[0] = new cetString(i + 1);
     r[1] = new cetString(TSymmParser::MatrixToSymmEx(uc.GetMatrix(i)));
   }
   cif_data.Add(sym_tab);
@@ -4956,7 +4974,7 @@ void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options,
   cetTable* ref_tab = new cetTable(col_names);
   cif_data.Add(ref_tab);
 
-  for( size_t i=0; i < refs.Count(); i++ )  {
+  for (size_t i = 0; i < refs.Count(); i++) {
     TReflection& r = refs[i];
     const double Fo2 = r.GetI()*scale_k + scale_a;
     const double sigFo2 = r.GetS()*scale_k;
@@ -4964,16 +4982,16 @@ void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options,
     row[0] = new cetString(r.GetH());
     row[1] = new cetString(r.GetK());
     row[2] = new cetString(r.GetL());
-    if( list_n == 3 )  {
+    if (list_n == 3) {
       double Fo, s_m;
       //http://www.iucr.org/__data/iucr/cif/software/xtal/xtal372htmlman/html/refcal-desc.html
-      if( Fo2 <= 0 )  {
+      if (Fo2 <= 0) {
         Fo = 0;
         s_m = sqrt(sigFo2); // xtal 3.7.2
       }
-      else  {
+      else {
         Fo = sqrt(Fo2);
-        s_m = sqrt(Fo2+sigFo2) - Fo; // xtal 3.7.2
+        s_m = sqrt(Fo2 + sigFo2) - Fo; // xtal 3.7.2
         //s_m = sigFo2/(Fo + sqrt(sigFo2+Fo2));  // sxtal 3.7
         //s_m = Fo2 < sigFo2 ? sigFo2 : sigFo2/(2*Fo); // crystals
       }
@@ -4982,14 +5000,20 @@ void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options,
       row[5] = new cetString(F[i].Re());
       row[6] = new cetString(sp.IsCentrosymmetric() ? 0.0 : F[i].Im());
     }
-    else if( list_n == 4 )  {
+    else if (list_n == 4) {
       row[3] = new cetString(olxstr::FormatFloat(2, F[i].qmod()));
       row[4] = new cetString(olxstr::FormatFloat(2, Fo2));
       row[5] = new cetString(olxstr::FormatFloat(2, sigFo2));
       row[6] = new cetString('o');
     }
+    else if (list_n == 6) {
+      row[3] = new cetString(olxstr::FormatFloat(2, Fo2));
+      row[4] = new cetString(olxstr::FormatFloat(2, sigFo2));
+      row[5] = new cetString(olxstr::FormatFloat(2, F[i].mod()));
+      row[6] = new cetString(olxstr::FormatFloat(2, F[i].arg()*180/M_PI));
+    }
   }
-  TEFile::WriteLines(fn, TCStrList(fcf_dp.SaveToStrings()));
+  TEFile::WriteLines(fn, TCStrList(fcf_dp.SaveToStrings().GetObject()));
 }
 //.............................................................................
 struct XLibMacros_StrF  {
@@ -6419,18 +6443,22 @@ void XLibMacros::macRTab(TStrObjList &Cmds, const TParamList &Options,
 {
   TSAtomPList atoms;
   olxstr name = Cmds[0];
-  if( !TXApp::GetInstance().FindSAtoms(Cmds.Text(' ', 1), atoms, true, true) )
+  if (!TXApp::GetInstance().FindSAtoms(Cmds.Text(' ', 1), atoms, true, true)) {
     return;
-  if( atoms.Count() >= 1 && atoms.Count() <= 4 )  {
+  }
+  if ((atoms.Count() >= 1 && atoms.Count() <= 4) ||
+    (atoms.Count() > 1 && name.Equalsi("D2CG")))
+  {
     RefinementModel& rm = TXApp::GetInstance().XFile().GetRM();
     InfoTab& it = rm.AddRTAB(name);
-    for( size_t i=0; i < atoms.Count(); i++ ) {
-      it.AddAtom(atoms[i]->CAtom(), atoms[i]->GetMatrix().IsFirst() ? NULL
-       : &atoms[i]->GetMatrix());
+    for (size_t i = 0; i < atoms.Count(); i++) {
+      it.AddAtom(atoms[i]->CAtom(), atoms[i]->GetMatrix().IsFirst() ? 0
+        : &atoms[i]->GetMatrix());
     }
   }
-  else
+  else {
     Error.ProcessingError(__OlxSrcInfo, "1 to 4 atoms is expected");
+  }
 }
 //.............................................................................
 void XLibMacros::macHklMerge(TStrObjList &Cmds, const TParamList &Options,

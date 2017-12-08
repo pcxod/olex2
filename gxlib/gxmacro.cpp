@@ -232,7 +232,7 @@ void GXLibMacros::Export(TLibrary& lib) {
   gxlib_InitMacro(Uniq, EmptyString(), fpAny | psFileLoaded,
     "Shows only fragments specified by atom name(s) or selection");
   gxlib_InitMacro(PiM,
-    "l-display labels for the created lines",
+    "l-display labels for the created lines&;",
     fpAny|psFileLoaded,
     "Creates an illustration of a pi-system to metal bonds");
   gxlib_InitMacro(ShowP,
@@ -1799,8 +1799,9 @@ void GXLibMacros::macCent(TStrObjList &Cmds, const TParamList &Options,
   }
   else {
     TTypeList<TSAtomPList> rings = app.FindRings(rings_name);
-    for (size_t i=0; i < rings.Count(); i++)
+    for (size_t i = 0; i < rings.Count(); i++) {
       app.AddCentroid(TXAtomPList(rings[i], DynamicCastAccessor<TXAtom>()));
+    }
   }
 }
 //.............................................................................
@@ -2448,9 +2449,12 @@ void GXLibMacros::macPiM(TStrObjList &Cmds, const TParamList &Options,
       }
     }
     rings[0].Pack();
-    if ( rings[0].IsEmpty())  return;
-    if (check_metal)
+    if (rings[0].IsEmpty()) {
+      return;
+    }
+    if (check_metal) {
       ring_M.Delete(0);
+    }
   }
   if (check_metal) {
     ring_M.SetCapacity(rings.Count());
@@ -2472,11 +2476,16 @@ void GXLibMacros::macPiM(TStrObjList &Cmds, const TParamList &Options,
     ring_M.Pack();
   }
   // process rings...
-  if (rings.IsEmpty())  return;
-  const bool label = Options.Contains('l');
+  if (rings.IsEmpty()) {
+    return;
+  }
   TGXApp::AtomIterator ai = app.GetAtoms();
-  while (ai.HasNext())
+  while (ai.HasNext()) {
     ai.Next().SetTag(0);
+  }
+  bool create_c = Options.GetBoolOption("c");
+  bool label = Options.GetBoolOption("l");
+
   const olxstr sb_name = TXBond::GetSettings(app.GetRenderer())
     .GetPrimitives(true)[9];
   for (size_t i=0; i < rings.Count(); i++) {
@@ -2487,29 +2496,33 @@ void GXLibMacros::macPiM(TStrObjList &Cmds, const TParamList &Options,
     }
     c /= rings[i].Count();
     ACollectionItem::Unify(ring_M[i]);
-    for (size_t j=0; j < ring_M[i].Count(); j++) {
-      TXLine *l = app.AddLine(ring_M[i][j]->GetLabel()+olxstr(i),
+    for (size_t j = 0; j < ring_M[i].Count(); j++) {
+      TXLine *l = app.AddLine(ring_M[i][j]->GetLabel() + olxstr(i),
         ring_M[i][j]->crd(), c);
-      if (l == NULL) continue;
+      if (l == 0) {
+        continue;
+      }
       TGraphicsStyle &ms = ((TXAtom*)ring_M[i][j])->GetPrimitives().GetStyle();
       TGlMaterial *sm = ms.FindMaterial("Sphere");
-      if (sm != NULL) {
+      if (sm != 0) {
         l->GetPrimitives().GetStyle().SetMaterial(sb_name, *sm);
       }
-      l->UpdatePrimitives((1<<9)|(1<<10));
+      l->UpdatePrimitives((1 << 9) | (1 << 10));
       l->SetRadius(0.5);
       ((AGlMouseHandler *)l)->SetMoveable(false);
       ring_M[i][j]->SetTag(2);
-      if (!label)
+      if (!label) {
         l->GetGlLabel().SetVisible(false);
+      }
     }
-    // hide replaced bonds
   }
+  // hide replaced bonds
   TGXApp::BondIterator bi = app.GetBonds();
   while (bi.HasNext()) {
     TXBond &b = bi.Next();
-    if (b.A().GetTag() == 2 && b.B().GetTag() == 1)
+    if (b.A().GetTag() == 2 && b.B().GetTag() == 1) {
       b.SetVisible(false);
+    }
   }
 }
 //.............................................................................

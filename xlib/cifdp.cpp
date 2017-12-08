@@ -14,11 +14,14 @@
 #include "bitarray.h"
 #include "wildcard.h"
 #include "eset.h"
+#include "efile.h"
 
 using namespace exparse::parser_util;
 using namespace cif_dp;
-const olxstr cetString::empty_value("''");
 
+//..............................................................................
+//..............................................................................
+//..............................................................................
 void TCifDP::Clear() {
   data.Clear();
   data_map.Clear();
@@ -30,211 +33,93 @@ void TCifDP::Format() {
   }
 }
 //..............................................................................
-bool TCifDP::ExtractLoop(size_t& start, parse_context& context) {
-  if (!context.lines[start].StartsFromi("loop_"))  return false;
-  TStrList& Lines = context.lines;
-  if (context.current_block == NULL)
-    context.current_block = &Add(EmptyString());
-  cetTable& table = *(new cetTable);
-  TStrList loop_data;
-  bool parse_header = true;
-  if (Lines[start].IndexOf(' ') != InvalidIndex) {
-    TStrList toks;
-    CIFToks(Lines[start], toks);
-    for (size_t i = 1; i < toks.Count(); i++) {
-      if (!parse_header || toks[i].CharAt(0) != '_') {
-        parse_header = false;
-        loop_data.Add(toks[i]);
-      }
-      else {
-        try {
-          table.AddCol(toks[i]);
-        }
-        catch (...) {
-          throw ParsingException(__OlxSourceInfo, "invalid table definition", start);
-        }
-      }
-    }
-  }
-  while (parse_header) {  // skip loop definition
-    if (++start >= Lines.Count()) {  // end of file?
-      context.current_block->Add(table);
-      return true;
-    }
-    if (Lines[start].IsEmpty() || Lines[start].StartsFrom('#'))
-      continue;
-    if (!Lines[start].StartsFrom('_')) {
-      start--;
-      break;
-    }
-    bool param_found = false;  // in the case loop header is mixed up with loop data...
-    if (Lines[start].IndexOf(' ') == InvalidIndex)
-      table.AddCol(Lines[start]);
-    else {
-      TStrList toks;
-      CIFToks(Lines[start], toks);
-      for (size_t i = 0; i < toks.Count(); i++) {
-        if (toks[i].CharAt(0) == '#') continue;
-        if (param_found || !toks[i].StartsFrom('_')) {
-          param_found = true;
-          loop_data.Add(toks[i]);
-        }
-        else
-          table.AddCol(toks[i]);
-      }
-    }
-    if (param_found)  break;
-  }
-  size_t q_cnt = 0;
-  while (true) {  // skip loop data
-    while (++start < Lines.Count() && Lines[start].IsEmpty())  continue;
-    if (start >= Lines.Count())  break;
-    // a new loop or dataset started (not a part of a multi-string value)
-    if ((q_cnt % 2) == 0 && IsLoopBreaking(Lines[start]))
-      break;
-    if (Lines[start].CharAt(0) == ';')  q_cnt++;
-    loop_data.Add(Lines[start]);
-  }
-
-  try {
-    table.DataFromStrings(loop_data);
-    context.current_block->Add(table);
-  }
-  catch (const TExceptionBase& e) {
-    delete &table;
-    throw ParsingException(__OlxSourceInfo, e, olxstr("starting at line #") << start);
-  }
-  start--;
-  return true;
+void TCifDP::LoadFromStrings(const TStrList &lines) {
+  LoadFromString(lines.Text('\n'));
+}
+//.............................................................................
+void TCifDP::LoadFromStream(IInputStream & stream) {
+  size_t sz = stream.GetSize();
+  olx_array_ptr<char> data = new char[sz];
+  stream.Read(data(), sz);
+  LoadFromString(olxstr::FromUTF8(data(), sz));
 }
 //..............................................................................
-void TCifDP::LoadFromStrings(const TStrList& Strings) {
+void TCifDP::LoadFromString(const olxstr &str) {
   Clear();
-  TStrList Lines = Strings;
-  for (size_t i = 0; i < Lines.Count(); i++) {
-    if (Lines[i].StartsFrom(';')) {  // skip these things
-      while (++i < Lines.Count() && !Lines[i].StartsFrom(';')) {
-        continue;
-      }
-      continue;
-    }
-    Lines[i].Replace('\t', ' ').DeleteSequencesOf<char>(' ').Trim(' ');
+  if (str.StartsFrom("#\\#CIF_2.0")) {
+    version = 2;
   }
-  parse_context context(Lines);
-  for (size_t i = 0; i < Lines.Count(); i++) {
-    const olxstr& line = Lines[i];
+  else {
+    version = 1;
+  }
+  TTypeList<CifToken> toks = TokenizeString(
+    version == 2 ? str.SubStringFrom(10) : str);
+  //TBasicApp::NewLogEntry() << toks;
+  CifBlock *current_block = &Add(EmptyString());
+  for (size_t i = 0; i < toks.Count(); i++) {
+    const olxstr& line = toks[i].value;
     if (line.IsEmpty()) {
       continue;
     }
     if (line.CharAt(0) == '#') {
-      if (context.current_block == NULL)
-        context.current_block = &Add(EmptyString());
-      context.current_block->Add(new cetComment(line.SubStringFrom(1)));
+      current_block->Add(new cetComment(line.SubStringFrom(1)));
       continue;
     }
-    if (ExtractLoop(i, context)) {
-      continue;
-    }
-    const size_t src_line = i;
-    if (line.CharAt(0) == '_') {  // parameter
-      if (context.current_block == 0) {
-        context.current_block = &Add(EmptyString());
+    if (line == "loop_") {
+      TStrList comments;
+      olx_object_ptr<cetTable> t = new cetTable();
+      while (++i < toks.Count() && toks[i].value.StartsFrom('_')) {
+        t().AddCol(toks[i].value);
       }
-      TStrList toks;
-      CIFToks(line, toks);
-      if (toks.Count() >= 3 && toks[2].CharAt(0) == '#') {
-        context.current_block->Add(
-          new cetCommentedString(toks[0], toks[1], toks[2].SubStringFrom(1)));
-        toks.DeleteRange(0, 3);
-      }
-      else if (toks.Count() == 2 && toks[1].CharAt(0) != '#') {
-        context.current_block->Add(
-          new cetNamedString(toks[0], toks[1]));
-        toks.DeleteRange(0, 2);
-      }
-      else {  // string or list
-        while (++i < Lines.Count() && Lines[i].IsEmpty()) {
+      size_t st = i--;
+      while (++i < toks.Count() && !IsLoopBreaking(toks[i].value)) {
+        if (toks[i].value.StartsFrom('#')) {
+          comments.Add(toks[i].value);
+          toks.NullItem(i);
           continue;
         }
-        if (i >= Lines.Count()) {
+      }
+      if (((i - st - comments.Count()) % t().ColCount()) > 0) {
+        throw ParsingException(__OlxSourceInfo,
+          olxstr("invalid table ") << t().GetName(), st);
+      }
+      for (size_t ii = st; ii < i;) {
+        if (toks.IsNull(ii) || toks[ii].value.IsEmpty()) {
+          ii++;
           continue;
         }
-        olxch Char = Lines[i].CharAt(0);
-        while (Char == '#' && ++i < Lines.Count()) {
-          while (Lines[i].IsEmpty() && ++i < Lines.Count()) {
+        CifRow &r = t().AddRow();
+        for (size_t ij = 0; ij < t().ColCount(); ij++, ii++) {
+          if (toks.IsNull(ii)) {
+            ij--;
             continue;
           }
-          if (i >= Lines.Count()) {
-            break;
-          }
-          Char = Lines[i].CharAt(0);
-          if (Char == '#') {
-            context.current_block->Add(new cetComment(Lines[i].SubStringFrom(1)));
-          }
-        }
-        if (Char == ';') {
-          cetNamedStringList* list = NULL;
-          if (toks.Count() >= 2 && toks[1].CharAt(0) == '#') {
-            list = new cetCommentedNamedStringList(
-              toks[0], toks.Text(' ', 1).SubStringFrom(1));
-            toks.DeleteRange(0, 2);
-          }
-          else if (toks.Count() == 1) {
-            list = new cetNamedStringList(toks[0]);
-            toks.Delete(0);
-          }
-          else {
-            throw ParsingException(__OlxSourceInfo,
-              "invalid multi line parameter syntax", src_line);
-          }
-          context.current_block->Add(list);
-          if (Lines[i].Length() > 1)
-            list->lines.Add(Lines[i].SubStringFrom(1));
-          while (++i < Lines.Count()) {
-            if (!Lines[i].IsEmpty() && Lines[i].CharAt(0) == ';') {
-              break;
-            }
-            list->lines.Add(Lines[i]);
-          }
-        }
-        else if (Char == '\'' || Char == '"') {
-          cetNamedString* str = NULL;
-          if (toks.Count() == 2 && toks[1].CharAt(0) == '#') {
-            str = new cetCommentedString(toks[0], Lines[i], toks[1].SubStringFrom(1));
-            toks.DeleteRange(0, 2);
-          }
-          else if (toks.Count() == 1) {
-            str = new cetNamedString(toks[0], Lines[i]);
-            toks.Delete(0);
-          }
-          else {
-            throw ParsingException(__OlxSourceInfo,
-              "invalid single line parameter syntax", src_line);
-          }
-          context.current_block->Add(str);
-        }
-        else {
-          cetNamedString* str = NULL;
-          size_t ci = Lines[i].IndexOf('#');
-          if (ci != InvalidIndex) {
-            context.current_block->Add(new cetComment(Lines[i].SubStringFrom(ci+1)));
-            Lines[i] = Lines[i].SubStringTo(ci);
-          }
-          if (toks.Count() == 2 && toks[1].CharAt(0) == '#') {
-            str = new cetCommentedString(toks[0], Lines[i], toks[1].SubStringFrom(1));
-            toks.DeleteRange(0, 2);
-          }
-          else if (toks.Count() == 1) {
-            str = new cetNamedString(toks[0], Lines[i]);
-            toks.Delete(0);
-          }
-          else {
-            throw ParsingException(__OlxSourceInfo,
-              "invalid single line parameter syntax", src_line);
-          }
-          context.current_block->Add(str);
+          r[ij] = ICifEntry::FromToken(toks[ii], version);
         }
       }
+      if (t().RowCount() == 0) {
+        TBasicApp::NewLogEntry(logWarning) << "Ignoring empty table "
+          << t().GetName();
+        continue;
+      }
+      current_block->Add(t.release());
+      for (size_t ci = 0; ci < comments.Count(); ci++) {
+        current_block->Add(new cetComment(comments[ci].SubStringFrom(1)));
+      }
+      i--;
+      continue;
+    }
+    if (line.CharAt(0) == '_') {  // parameter
+      if (i + 1 < toks.Count()) {
+        ICifEntry *e = ICifEntry::FromToken(toks[i + 1], version);
+        e->SetName(line);
+        current_block->Add(e);
+      }
+      else {
+        throw ParsingException(__OlxSourceInfo,
+          olxstr("missing value for ") << line, 0);
+      }
+      i++;
     }
     else if (line.StartsFromi("data_")) {
       olxstr dn = line.SubStringFrom(5);
@@ -249,18 +134,19 @@ void TCifDP::LoadFromStrings(const TStrList& Strings) {
         dn = new_name;
         TBasicApp::NewLogEntry(logInfo) << "New name: " << dn;
       }
-      context.current_block = &Add(dn);
+      if (current_block->GetName().IsEmpty() && current_block->params.IsEmpty()) {
+        current_block->SetName(dn);
+      }
+      else {
+        current_block = &Add(dn);
+      }
     }
     else if (line.StartsFromi("save_")) {
       if (line.Length() > 5) {
-        context.current_block = &Add(line.SubStringFrom(5),
-          context.current_block == NULL ? &Add(EmptyString())
-          : context.current_block);
+        current_block = &Add(line.SubStringFrom(5), current_block);
       }  // close the block
-      else if (context.current_block != NULL &&
-        context.current_block->parent != NULL)
-      {
-        context.current_block = context.current_block->parent;
+      else if (current_block->parent != 0) {
+        current_block = current_block->parent;
       }
       else {
         ; // should be error
@@ -283,83 +169,241 @@ TStrList& TCifDP::SaveToStrings(TStrList& Strings) const {
   return Strings;
 }
 //..............................................................................
-size_t TCifDP::CIFToks(const olxstr& exp, TStrList& out) {
+size_t TCifDP::LineIndexer::GetLineNumber(size_t idx) {
+  ln += str.SubString(lastPos, idx - lastPos).CharCount('\n');
+  lastPos = idx;
+  return ln;
+};
+
+TTypeList<CifToken>::const_list_type TCifDP::TokenizeString(const olxstr &str_) {
+  olxstr str = str_;
+  str.Replace('\r', '\n').DeleteSequencesOf('\n');
+  TTypeList<CifToken> toks;
   size_t start = 0;
-  const size_t toks_c = out.Count();
-  for (size_t i = 0; i < exp.Length(); i++) {
-    const olxch ch = exp.CharAt(i);
-    if (is_quote(ch) && (i == 0 || olxstr::o_iswhitechar(exp[i - 1]))) {
-      while (++i < exp.Length()) {
-        if (exp[i] == ch && ((i + 1) >= exp.Length() ||
-          olxstr::o_iswhitechar(exp[i + 1])))
-        {
-          break;
+  LineIndexer lni(str);
+  for (size_t i = 0; i < str.Length(); i++) {
+    olxch ch = str.CharAt(i);
+    if (is_quote(ch) &&
+      (i == 0 || olxstr::o_iswhitechar(str.CharAt(i - 1)) || str.CharAt(i - 1) == '\n'))
+    {
+      if (i + 2 < str.Length() && str.CharAt(i + 1) == ch && str.CharAt(i + 2) == ch) {
+        size_t idx = str.FirstIndexOf(olxstr::CharStr(ch, 3), i+3);
+        if (idx == InvalidIndex) {
+          throw ParsingException(__OlxSourceInfo, "unbalanced quotation", 
+            lni.GetLineNumber(i));
+        }
+        toks.Add(
+          new CifToken(str.SubString(i+3, idx-i-3),
+            lni.GetLineNumber(i)));
+        i = idx+3;
+        start = i + 1;
+      }
+      else {
+        size_t st = i + 1;
+        while (++i < str.Length()) {
+          if ((str.CharAt(i) == ch && ((i + 1) >= str.Length() ||
+            olxstr::o_iswhitechar(str.CharAt(i + 1)) || str.CharAt(i+1) == ':')) ||
+            str.CharAt(i + 1) == '\n')
+          {
+            break;
+          }
+        }
+        toks.Add(
+          new CifToken(str.SubString(st, i - st),
+            lni.GetLineNumber(i)));
+        if ((i+1) < str.Length() && str.CharAt(i) == ch && str.CharAt(i + 1) == ':') {
+          i++;
         }
       }
+      start = i + 1;
     }
-    else if (olxstr::o_iswhitechar(ch)) {
+    else if (olxstr::o_iswhitechar(ch) || ch == '\n') {
       if (start == i) { // white chars cannot define empty args
         start = i + 1;
         continue;
       }
-      out.Add(exp.SubString(start, i - start).TrimWhiteChars());
+      toks.Add(
+        new CifToken(str.SubString(start, i - start).TrimWhiteChars(),
+          lni.GetLineNumber(start)));
+      start = i + 1;
+    }
+    else if (ch == ';' && i > 0 && str.CharAt(i - 1) == '\n') {
+      size_t idx = str.FirstIndexOf("\n;", i + 1);
+      if (idx == InvalidIndex) {
+        throw ParsingException(__OlxSourceInfo, "unbalanced quotation", 
+          lni.GetLineNumber(i));
+      }
+      toks.Add(
+        new CifToken(str.SubString(i, idx - i+2),
+          lni.GetLineNumber(i)));
+      i = idx + 2;
       start = i + 1;
     }
     else if (ch == '#') {
-      out.Add(exp.SubStringFrom(start));
-      start = exp.Length();
-      break;
+      size_t idx = str.FirstIndexOf('\n', i+1);
+      if (idx == InvalidIndex) {
+        idx = str.Length();
+      }
+      toks.Add(
+        new CifToken(str.SubString(start, idx - start),
+          lni.GetLineNumber(start)));
+      i = idx;
+      start = i+1;
+    }
+    else if (ch == '[') {
+      toks.Add(
+        new CifToken(ExtractBracketedData(str, '[', ']', i),
+          lni.GetLineNumber(i)));
+      start = i + 1;
+    }
+    else if (ch == '{') {
+      toks.Add(
+        new CifToken(ExtractBracketedData(str, '{', '}', i),
+          lni.GetLineNumber(i)));
+      start = i + 1;
     }
   }
-  if (start < exp.Length()) {
-    out.Add(exp.SubStringFrom(start).TrimWhiteChars());
+  if (start < str.Length()) {
+    toks.Add(
+      new CifToken(str.SubStringFrom(start).TrimWhiteChars(),
+        lni.GetLineNumber(start)));
   }
-  return out.Count() - toks_c;
+  return toks;
 }
 //.............................................................................
-cetTable::cetTable(const cetTable& v) : name(v.name), data(v.data) {
+olxstr TCifDP::ExtractBracketedData(const olxstr &str, olxch open, olxch close,
+  size_t &i_)
+{
+  if (str.CharAt(i_) != open) {
+    throw TInvalidArgumentException(__OlxSourceInfo, "data");
+  }
+  size_t oc = 0;
+  olxch qch = 0;
+  for (size_t i = i_; i < str.Length(); i++) {
+    olxch ch = str.CharAt(i);
+    if (is_quote(ch)) {
+      if (qch == ch) {
+        qch = 0;
+      }
+      else {
+        qch = ch;
+      }
+      continue;
+    }
+    if (qch == 0) {
+      if (ch == open) {
+        oc++;
+      }
+      else if (ch == ';' && i > 0 && str.CharAt(i-1) == '\n') {
+        while (++i < str.Length()) {
+          if (str.CharAt(i) == ';' && str.CharAt(i - 1) == '\n') {
+            break;
+          }
+        }
+      }
+      else if (ch == close) {
+        if (--oc == 0) {
+          olxstr rv = str.SubString(i_, i - i_+1);
+          i_ = i;
+          return rv;
+        }
+      }
+    }
+  }
+  throw TInvalidArgumentException(__OlxSourceInfo, "data");
+}
+//.............................................................................
+CifBlock& TCifDP::Add(const olxstr& name, CifBlock* parent) {
+  const size_t i = data_map.IndexOf(name);
+  if (i != InvalidIndex) {
+    return *data_map.GetValue(i);
+  }
+  else {
+    return *data_map.Add(name, &data.Add(new CifBlock(name, parent)));
+  }
+}
+//.............................................................................
+size_t TCifDP::IndexOf(const CifBlock& cb) const {
+  const CifBlock* cb_ptr = &cb;
+  for (size_t i = 0; i < data.Count(); i++)
+    if (&data[i] == cb_ptr) {
+      return i;
+    }
+  return InvalidIndex;
+}
+//.............................................................................
+void TCifDP::Rename(const olxstr& old_name, const olxstr& new_name) {
+  if (old_name == new_name) {
+    return;
+  }
+  if (data_map.HasKey(new_name)) {
+    throw TInvalidArgumentException(__OlxSourceInfo,
+      olxstr("Name already in use: ") << new_name);
+  }
+  const size_t cb_ind = data_map.IndexOf(old_name);
+  if (cb_ind == InvalidIndex) {
+    throw TInvalidArgumentException(__OlxSourceInfo,
+      olxstr("Undefined block: ") << old_name);
+  }
+  CifBlock* cb = data_map.GetValue(cb_ind);
+  cb->name = new_name;
+  data_map.Delete(cb_ind);
+  data_map.Add(new_name, cb);
+}
+//.............................................................................
+//.............................................................................
+//.............................................................................
+cetTable::cetTable(const cetTable& v)
+  : ICifEntry(v), data(v.data)
+{
   for (size_t i = 0; i < data.RowCount(); i++) {
     for (size_t j = 0; j < data.ColCount(); j++) {
       data[i][j] = v.data[i][j]->Replicate();
     }
   }
 }
+//.............................................................................
 ICifEntry& cetTable::Set(size_t i, size_t j, ICifEntry* v)  {
   delete data[i][j];
   return *(data[i][j] = v);
 }
+//.............................................................................
 void cetTable::AddCol(const olxstr& col_name) {
   data.AddCol(col_name);
   if (data.ColCount() == 1) {
-    name = col_name;
+    ICifEntry::SetName(col_name);
   }
   else {
-    name = data.ColName(0).CommonSubString(data.ColName(1));
+    olxstr nn = data.ColName(0).CommonSubString(data.ColName(1));
     size_t min_len = olx_min(data.ColName(0).Length(), data.ColName(1).Length());
     for (size_t i = 2; i < data.ColCount(); i++) {
-      olxstr n = data.ColName(i).CommonSubString(name);
+      olxstr n = data.ColName(i).CommonSubString(nn);
       if (n.Length() > 1) {
-        if (data.ColName(i).Length() < min_len)
+        if (data.ColName(i).Length() < min_len) {
           min_len = data.ColName(i).Length();
-        name = n;
+        }
+        nn = n;
       }
     }
-    if (name.Length() != min_len) {  // line _geom_angle and geom_angle_etc
-      const size_t u_ind = name.LastIndexOf('_');
-      if (u_ind != InvalidIndex && u_ind != 0)
-        name.SetLength(u_ind);
+    if (nn.Length() != min_len) {  // line _geom_angle and geom_angle_etc
+      const size_t u_ind = nn.LastIndexOf('_');
+      if (u_ind != InvalidIndex && u_ind != 0) {
+        nn.SetLength(u_ind);
+      }
       else {
-        const size_t d_ind = name.LastIndexOf('.');
-        if (d_ind != InvalidIndex && d_ind != 0)
-          name.SetLength(d_ind);
+        const size_t d_ind = nn.LastIndexOf('.');
+        if (d_ind != InvalidIndex && d_ind != 0) {
+          nn.SetLength(d_ind);
+        }
       }
     }
-    if (name.IsEmpty()) {
+    if (nn.IsEmpty()) {
       throw TFunctionFailedException(__OlxSourceInfo, "mismatching loop columns");
     }
+    ICifEntry::SetName(nn);
   }
 }
-
+//.............................................................................
 void cetTable::DelRow(size_t idx) {
   if (idx >= data.RowCount()) {
     return;
@@ -369,7 +413,7 @@ void cetTable::DelRow(size_t idx) {
   }
   data.DelRow(idx);
 }
-
+//.............................................................................
 bool cetTable::DelCol(size_t idx) {
   if (idx >= data.ColCount()) {
     return false;
@@ -381,7 +425,7 @@ bool cetTable::DelCol(size_t idx) {
   // shall we update the table name here?
   return true;
 }
-
+//.............................................................................
 cetTable::cetTable(const olxstr& cols, size_t row_count)  {
   const TStrList toks(cols, ',');
   for (size_t i = 0; i < toks.Count(); i++) {
@@ -391,12 +435,14 @@ cetTable::cetTable(const olxstr& cols, size_t row_count)  {
     data.SetRowCount(row_count);
   }
 }
-void cetTable::Clear()  {
+//.............................................................................
+void cetTable::Clear() {
   for (size_t i = 0; i < data.RowCount(); i++) {
     data[i].DeleteItems();
   }
   data.Clear();
 }
+//.............................................................................
 void cetTable::ToStrings(TStrList& list) const {
   if (data.RowCount() == 0) {
     return;
@@ -428,49 +474,7 @@ void cetTable::ToStrings(TStrList& list) const {
   list.AddAll(out);
   list.Add();  // add an empty string after loop for better formating
 }
-void cetTable::DataFromStrings(TStrList& lines) {
-  if (data.ColCount() == 0) {
-    return;
-  }
-  TPtrList<ICifEntry> cells;
-  TStrList toks;
-  for (size_t i = 0; i < lines.Count(); i++) {
-    if (lines[i].IsEmpty() || lines[i].CharAt(0) == '#')  continue;
-    if (lines[i].StartsFrom(';')) {
-      cetStringList* cell = (cetStringList*)cells.Add(new cetStringList);
-      if (lines[i].Length() > 1)
-        cell->lines.Add(lines[i].SubStringFrom(1));
-      while (++i < lines.Count() && !lines[i].StartsFrom(';'))
-        cell->lines.Add(lines[i]);
-      if (i < lines.Count() && lines[i].Length() > 1) {
-        lines[i] = lines[i].SubStringFrom(1);
-        i--;
-      }
-      cell->lines.TrimWhiteCharStrings();
-      continue;
-    }
-    toks.Clear();
-    TCifDP::CIFToks(lines[i], toks);
-    for (size_t j = 0; j < toks.Count(); j++) {
-      if (toks[j].CharAt(0) != '#')
-        cells.Add(new cetString(toks[j]));
-    }
-  }
-  if ((cells.Count() % data.ColCount()) != 0) {
-    for (size_t i = 0; i < cells.Count(); i++)  // clean up the memory
-      delete cells[i];
-    throw TFunctionFailedException(__OlxSourceInfo,
-      olxstr("wrong number of parameters in '") << GetName() << "' loop");
-  }
-  const size_t ColCount = data.ColCount();
-  const size_t RowCount = cells.Count() / ColCount;
-  data.SetRowCount(RowCount);
-  for (size_t i = 0; i < RowCount; i++) {
-    for (size_t j = 0; j < ColCount; j++) {
-      data[i][j] = cells[i*ColCount + j];
-    }
-  }
-}
+//.............................................................................
 int cetTable::TableSorter::Compare_(const CifRow &r1, const CifRow &r2) const {
   const size_t sz = r1.Count();
   size_t cmpb_cnt = 0;
@@ -534,11 +538,14 @@ void cetTable::Sort() {
   data.SortRows(TableSorter());
 }
 //.............................................................................
-cetString::cetString(const olxstr& _val) : value(_val), quoted(false) {
-  if (_val.Length() > 1) {
-    const olxch ch = _val[0];
-    if ((ch == '\'' || ch == '"') && _val.EndsWith(ch)) {
-      value = _val.SubStringFrom(1, 1);
+//.............................................................................
+//.............................................................................
+void cetString::SetValue_(const olxstr &val) {
+  value = val;
+  if (val.Length() > 1) {
+    const olxch ch = val[0];
+    if ((ch == '\'' || ch == '"') && val.EndsWith(ch)) {
+      value = val.SubStringFrom(1, 1);
       quoted = true;
     }
   }
@@ -546,39 +553,51 @@ cetString::cetString(const olxstr& _val) : value(_val), quoted(false) {
     quoted = true;
   }
 }
+//.............................................................................
 void cetString::ToStrings(TStrList& list) const {
+  size_t qsz = quoted ? 3 : 0;
+  if (HasName()) {
+    list.Add(GetName()).RightPadding(34, ' ', true);
+  }
+  if (value.Contains('\n')) {
+    qsz = 7;
+  }
   olxstr& line =
     (list.IsEmpty() ||
-     (list.GetLastString().Length() + value.Length() + 3 > 80) ||
+     (list.GetLastString().Length() + value.Length() + qsz > 80) ||
      list.GetLastString().StartsFrom(';')) ?
     list.Add(' ') : (list.GetLastString() << ' ');
   if (quoted) {
-    line << '\'' << value << '\'';
+    if (qsz == 3) {
+      line << '\'' << value << '\'';
+    }
+    else {
+      line << "'''" << value << "'''";
+    }
   }
   else {
-    line << (value.IsEmpty() ? empty_value : value);
+    line << (value.IsEmpty() ? GetEmptyValue() : value);
+  }
+  if (HasComment()) {
+    line << " # " << comment();
   }
 }
 //..............................................................................
-void cetNamedString::ToStrings(TStrList& list) const {
-  if (olx_max(34, name.Length()) + value.Length() > 78) {
-    list.Add(name);
-    if (quoted)
-      list.Add('\'') << value << '\'';
-    else
-      list.Add(value.IsEmpty() ? empty_value : value);
+//..............................................................................
+//..............................................................................
+void cetStringList::ToStrings(TStrList& list) const {
+  if (comment.is_valid()) {
+    list.Add("#") << comment();
   }
-  else {
-    olxstr& tmp = list.Add(name);
-    tmp.RightPadding(34, ' ', true);
-    if (quoted) {
-      tmp << '\'' << value << '\'';
-    }
-    else {
-      tmp << (value.IsEmpty() ? empty_value : value);
-    }
+  if (name.is_valid()) {
+    list.Add(name());
   }
+  list.Add(';');
+  list.AddAll(lines);
+  list.Add(';');
 }
+//..............................................................................
+//..............................................................................
 //..............................................................................
 CifBlock::CifBlock(const CifBlock& v) {
   for (size_t i = 0; i < v.params.Count(); i++) {
@@ -727,19 +746,18 @@ void CifBlock::Rename(const olxstr& old_name, const olxstr& new_name,
   }
   param_map.Delete(idx);
   param_map.Add(new_name, val);
-  const size_t ti = table_map.IndexOf(old_name);
   const size_t oi = params.IndexOfi(old_name);
   params[oi] = new_name;
 }
 //..............................................................................
 void CifBlock::ToStrings(TStrList& list) const {
-  if (!name.IsEmpty()) {
-    (parent != NULL ? list.Add("save_") : list.Add("data_")) << name;
+  if (!GetName().IsEmpty()) {
+    (parent != 0 ? list.Add("save_") : list.Add("data_")) << GetName();
   }
   for (size_t i = 0; i < params.Count(); i++) {
     params.GetObject(i)->ToStrings(list);
   }
-  if (parent != NULL && !name.IsEmpty()) {
+  if (parent != 0 && !GetName().IsEmpty()) {
     list.Add("save_");
   }
 }
@@ -821,3 +839,175 @@ int CifBlock::CifSorter::Compare_(const CifBlock::EntryGroup &e1,
   return olx_cmp(c1, c2);
 }
 //.............................................................................
+//.............................................................................
+//.............................................................................
+cetList::cetList(const cetList &l) : ICifEntry(l) {
+  data.SetCount(l.data.Count());
+  for (size_t i = 0; i < l.data.Count(); i++) {
+    data[i] = l.data[i]->Replicate();
+  }
+}
+//.............................................................................
+cetList::~cetList() {
+  data.DeleteItems();
+}
+//.............................................................................
+void cetList::ToStrings(TStrList& list) const {
+  if (comment.is_valid()) {
+    list.Add("#") << comment();
+  }
+  if (name.is_valid()) {
+    list.Add(name());
+  }
+  if (data.IsEmpty()) {
+    if (list.IsEmpty() || (list.GetLastString().Length() + 3) > 80) {
+      list.Add("");
+    }
+    else {
+      list.GetLastString() << ' ';
+    }
+    list.GetLastString() << '[' << ']';
+    return;
+  }
+  if (list.IsEmpty() || (list.GetLastString().Length() + 2) > 80) {
+    list.Add("");
+  }
+  else {
+    list.GetLastString() << ' ';
+  }
+  list.GetLastString() << '[';
+  for (size_t i = 0; i < data.Count(); i++) {
+    data[i]->ToStrings(list);
+  }
+  if (list.GetLastString().Length() + 2 > 80) {
+    list.Add("");
+  }
+  else {
+    list.GetLastString() << ' ';
+  }
+  list.GetLastString() << "]";
+}
+//.............................................................................
+void cetList::FromToken(const CifToken &token) {
+  TTypeList<CifToken> toks = TCifDP::TokenizeString(
+    token.value.SubStringFrom(1, 1));
+  for (size_t i = 0; i < toks.Count(); i++) {
+    data.Add(ICifEntry::FromToken(toks[i], 2));
+  }
+}
+//.............................................................................
+//.............................................................................
+//.............................................................................
+cetDict::cetDict(const cetDict &d) : ICifEntry(d) {
+  data.SetCapacity(d.data.Count());
+  for (size_t i = 0; i < d.data.Count(); i++) {
+    data.Add(new cetDict::dict_item_t(
+     (IStringCifEntry *)d.data[i].a->Replicate(), d.data[i].b->Replicate()));
+  }
+}
+//.............................................................................
+cetDict::~cetDict() {
+  for (size_t i = 0; i < data.Count(); i++) {
+    delete data[i].a;
+    delete data[i].b;
+  }
+}
+//.............................................................................
+void cetDict::ToStrings(TStrList& list) const {
+  if (comment.is_valid()) {
+    list.Add("#") << comment();
+  }
+  if (name.is_valid()) {
+    list.Add(name());
+  }
+  if (data.IsEmpty()) {
+    if (list.IsEmpty() || (list.GetLastString().Length() + 3) > 80) {
+      list.Add("");
+    }
+    list.GetLastString() << ' ' << '{' << '}';
+    return;
+  }
+  olxstr& line =
+    (list.IsEmpty() || (list.GetLastString().Length() + 2 > 80)) ?
+    list.Add(' ') : (list.GetLastString() << ' ');
+  line << '{';
+  for (size_t i = 0; i < data.Count(); i++) {
+    data[i].a->ToStrings(list);
+    list.GetLastString() << ':';
+    data[i].b->ToStrings(list);
+  }
+  if (list.GetLastString().Length() + 1 > 80) {
+    list.Add("");
+  }
+  list.GetLastString() << '}';
+}
+//.............................................................................
+void cetDict::FromToken(const CifToken &token) {
+  TTypeList<CifToken> toks = TCifDP::TokenizeString(
+    token.value.SubStringFrom(1,1));
+  if ((toks.Count() % 2) != 0) {
+    throw ParsingException(__OlxSourceInfo,
+      "even number of items is expected for a map", token.lineNumber);
+  }
+  for (size_t i = 0; i < toks.Count(); i+=2) {
+    data.Add(
+      new cetDict::dict_item_t(
+        new cetString(toks[i].value, true),
+        ICifEntry::FromToken(toks[i+1], 2))
+    );
+  }
+}
+//.............................................................................
+//.............................................................................
+//.............................................................................
+ICifEntry *ICifEntry::FromToken(const CifToken &t, int version) {
+  if (t.value.IsEmpty()) {
+    return new cetString(EmptyString());
+  }
+  if (version == 1) {
+    switch (t.value.CharAt(0)) {
+    case ';':
+    {
+      olx_object_ptr<cetStringList> l = new cetStringList();
+      l().lines.Strtok(t.value.SubStringFrom(1, 1), '\n');
+      return l.release();
+    }
+    case '#':
+    {
+      cetComment *c = new cetComment(t.value.SubStringFrom(1));
+      return c;
+    }
+    default:
+      return new cetString(t.value);
+    }
+  }
+  else {
+    switch (t.value.CharAt(0)) {
+    case '[':
+    {
+      olx_object_ptr<cetList> l = new cetList();
+      l().FromToken(t);
+      return l.release();
+    }
+    case '{':
+    {
+      olx_object_ptr<cetDict> d = new cetDict();
+      d().FromToken(t);
+      return d.release();
+    }
+    case ';':
+    {
+      olx_object_ptr<cetStringList> l = new cetStringList();
+      l().lines.Strtok(t.value.SubStringFrom(1, 1), '\n');
+      return l.release();
+    }
+    case '#':
+    {
+      cetComment *c = new cetComment(t.value.SubStringFrom(1));
+      return c;
+    }
+    default:
+      return new cetString(t.value);
+    }
+  }
+}

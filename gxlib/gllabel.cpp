@@ -15,6 +15,7 @@
 #include "pers_util.h"
 #include "povdraw.h"
 #include "wrldraw.h"
+#include "gxapp.h"
 
 TXGlLabel::TXGlLabel(TGlRenderer& R, const olxstr& collectionName) :
   AGlMouseHandlerImp(R, collectionName), Transformer(NULL)
@@ -192,5 +193,11 @@ const_strlist TXGlLabel::ToWrl(olx_cdict<TGlMaterial, olxstr> &materials) const
     "geometry Text { fontStyle FontStyle {size 0.5} string[\"";
   out.GetLastString() << exparse::parser_util::escape(FLabel) << "\"]}}}";
   return out;
+}
+//..............................................................................
+bool TXGlLabel::DoTranslate(const vec3d& t_) {
+  vec3d t = TGXApp::GetConstrainedDirection(t_);
+  _Center += t;
+  return true;
 }
 //..............................................................................
