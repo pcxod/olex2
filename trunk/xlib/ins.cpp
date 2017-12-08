@@ -2201,8 +2201,8 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
     //  processed->equations.Add( &rm.Vars.GetEquation(i) );
   }
   for (size_t i = 0; i < rm.rSAME.Count(); i++) {
+    rm.rSAME[i].GetAtoms().UpdateResi();
     if (!rm.rSAME[i].GetAtoms().IsExplicit()) {
-      rm.rSAME[i].GetAtoms().UpdateResi();
       olxstr &l = SL.Add("SAME");
       if (!rm.rSAME[i].GetAtoms().GetResi().IsEmpty()) {
         l << '_' << rm.rSAME[i].GetAtoms().GetResi();
@@ -2277,11 +2277,15 @@ void TIns::ValidateRestraintsAtomNames(RefinementModel& rm, bool report)  {
   for (size_t i=0; i < restraints.Count(); i++) {
     TSRestraintList& srl = *restraints[i];
     for (size_t j=0; j < srl.Count(); j++) {
-      if (!srl[j].GetAtoms().GetResi().IsEmpty()) continue;
+      srl[j].UpdateResi();
+      if (!srl[j].GetAtoms().GetResi().IsEmpty()) {
+        continue;
+      }
       TTypeList<ExplicitCAtomRef> atoms = srl[j].GetAtoms().ExpandList(rm);
       for (size_t k=0; k < atoms.Count(); k++) {
-        if (!lc.IsGlobal(atoms[k].GetAtom()))
+        if (!lc.IsGlobal(atoms[k].GetAtom())) {
           err_names << ' ' << atoms[k].GetAtom().GetLabel();
+        }
       }
     }
   }
