@@ -52,8 +52,8 @@ vec3i CalculateColour(float v, size_t colour_count, const vec3i* colours) {
 const vec3i* Get7Colours() {
   const int NUM_COLORS = 7;
   static const vec3i colours[NUM_COLORS] = {
-    vec3i(0,0,0), vec3i(0,0,255),vec3i(0,255,255), vec3i(0,255,0),
-    vec3i(255,255,0), vec3i(255,0,0), vec3i(255,255,255)
+    vec3i(255,255,255), vec3i(255,0,0), vec3i(255,255,0),
+    vec3i(0,255,0), vec3i(0,255,255), vec3i(0,0,255), vec3i(0,0,0)
   };
   return colours;
 }
@@ -61,8 +61,8 @@ const vec3i* Get7Colours() {
 const vec3i* Get5Colours() {
   const int NUM_COLORS = 5;
   static vec3i colours[NUM_COLORS] = {
-    vec3i(0,0,255), vec3i(0,255,255), vec3i(0,255,0), vec3i(255,255,0),
-    vec3i(255,0,0)
+    vec3i(255,0,0), vec3i(255,255,0),
+    vec3i(0,255,0), vec3i(0,255,255), vec3i(0,0,255)
   };
   return colours;
 }
@@ -889,7 +889,8 @@ bool TXGrid::OnMouseMove(const IOlxObject *Sender, const TMouseData& Data) {
 void TXGrid::UpdateInfo()  {
   Info->Clear();
   if (Is3D()) {
-    Info->PostText(olxstr("Current level: ") << Scale);
+    Info->PostText(olxstr("Current level: ") <<
+      olx_abs(olx_round(Scale, 1000)));
   }
   else {
     const vec3f center(Parent.GetBasis().GetCenter());

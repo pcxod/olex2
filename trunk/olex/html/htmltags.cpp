@@ -273,8 +273,9 @@ TAG_HANDLER_PROC(tag) {
         _ay *= html->GetClientSize().GetHeight();
         ay = (int)_ay;
       }
-      else
+      else {
         ay = Tmp.ToDouble();
+      }
       height_set = true;
     }
   }
@@ -297,10 +298,12 @@ TAG_HANDLER_PROC(tag) {
 
   {  // parse h alignment
     wxString ha;
-    if (tag.HasParam(wxT("ALIGN")))
+    if (tag.HasParam(wxT("ALIGN"))) {
       ha = tag.GetParam(wxT("ALIGN"));
-    else if (tag.HasParam(wxT("HALIGN")))
+    }
+    else if (tag.HasParam(wxT("HALIGN"))) {
       ha = tag.GetParam(wxT("HALIGN"));
+    }
     if (!ha.IsEmpty()) {
       if (ha.CmpNoCase(wxT("left")) == 0)
         halign = wxHTML_ALIGN_LEFT;
@@ -378,7 +381,7 @@ TAG_HANDLER_PROC(tag) {
         new wxHtmlContainerCell(m_WParser->GetContainer());
       THtml::WordCell* wc =
         new THtml::WordCell(Label.u_str(), *m_WParser->GetDC());
-      if (LinkInfo != NULL) {
+      if (LinkInfo != 0) {
         wc->SetLink(*LinkInfo);
       }
       wc->SetDescent(0);
@@ -515,12 +518,18 @@ TAG_HANDLER_PROC(tag) {
   else if (TagName.Equalsi("button")) {
     AButtonBase *Btn;
     long flags = 0;
-    if (GetBoolAttribute(tag, "FIT"))  flags |= wxBU_EXACTFIT;
-    if (GetBoolAttribute(tag, "FLAT"))  flags |= wxNO_BORDER;
-    if (halign == wxHTML_ALIGN_LEFT)
+    if (GetBoolAttribute(tag, "FIT")) {
+      flags |= wxBU_EXACTFIT;
+    }
+    if (GetBoolAttribute(tag, "FLAT")) {
+      flags |= wxNO_BORDER;
+    }
+    if (halign == wxHTML_ALIGN_LEFT) {
       flags |= wxBU_LEFT;
-    else if (halign == wxHTML_ALIGN_RIGHT)
+    }
+    else if (halign == wxHTML_ALIGN_RIGHT) {
       flags |= wxBU_RIGHT;
+    }
     olxstr buttonImage = tag.GetParam(wxT("IMAGE"));
     if (!buttonImage.IsEmpty()) {
       if (buttonImage.IndexOf(',') != InvalidIndex) {
@@ -618,8 +627,9 @@ TAG_HANDLER_PROC(tag) {
       Btn->SetDown(tag.GetParam(wxT("DOWN")).CmpNoCase(wxT("true")) == 0);
 
     olxstr modeDependent = tag.GetParam(wxT("MODEDEPENDENT"));
-    if (!modeDependent.IsEmpty())
+    if (!modeDependent.IsEmpty()) {
       Btn->SetActionQueue(TModeRegistry::GetInstance().OnChange, modeDependent);
+    }
     m_WParser->GetContainer()->InsertCell(new THtmlWidgetCell(CreatedWindow, fl));
   }
 /******************* COMBOBOX *************************************************/
@@ -747,110 +757,114 @@ TAG_HANDLER_PROC(tag) {
       }
     }
   }
-/******************* SPIN CONTROL *********************************************/
-  else if (TagName.Equalsi("spin")) {
-    TSpinCtrl *Spin = new TSpinCtrl(html);
-    Spin->SetFont(m_WParser->GetDC()->GetFont());
-    Spin->WI.SetHeight(ay);
-    Spin->WI.SetWidth(ax);
-    AdjustSize(*Spin);
-    Spin->SetForegroundColour(m_WParser->GetDC()->GetTextForeground());
-    int min = 0, max = 100;
-    if (tag.HasParam(wxT("MIN"))) {
-      tag.ScanParam(wxT("MIN"), wxT("%i"), &min);
+/******************* SPIN CONTROL AND SLIDER **********************************/
+  else if (TagName.Equalsi("spin") || TagName.Equalsi("slider")) {
+    int min = 0, max = 100, value = 0;
+    try {
+      if (tag.HasParam(wxT("MIN"))) {
+        olxstr v = tag.GetParam(wxT("MIN"));
+        if (!v.IsEmpty()) {
+          op->processFunction(v, SrcInfo, true);
+          min = (int)v.ToDouble();
+        }
+      }
+      if (tag.HasParam(wxT("MAX"))) {
+        olxstr v = tag.GetParam(wxT("MAX"));
+        if (!v.IsEmpty()) {
+          op->processFunction(v, SrcInfo, true);
+          max = (int)v.ToDouble();
+        }
+      }
+      if (!Value.IsEmpty()) {
+        value = (int)Value.ToDouble();
+      }
     }
-    if (tag.HasParam(wxT("MAX"))) {
-      tag.ScanParam(wxT("MAX"), wxT("%i"), &max);
-    }
-    Spin->SetRange(min, max);
-    try { Spin->SetValue((int)Value.ToDouble()); }
     catch (...) {
-      TBasicApp::NewLogEntry() << "Invalid value for spin control: \'" <<
-        Value << '\'';
+      TBasicApp::NewLogEntry() << "Invalid min/max/value for " << TagName;
     }
-    CreatedObject = Spin;
-    CreatedWindow = Spin;
-    Spin->SetData(Data);
-    if (tag.HasParam(wxT("ONCHANGE"))) {
-      Spin->OnChange.data =
-        ExpandMacroShortcuts(tag.GetParam(wxT("ONCHANGE")), macro_map);
-      Spin->OnChange.Add(&html->Manager);
-    }
-    if (!Label.IsEmpty()) {
-      wxHtmlContainerCell* contC =
-        new wxHtmlContainerCell(m_WParser->GetContainer());
-      THtml::WordCell* wc =
-        new THtml::WordCell(Label.u_str(), *m_WParser->GetDC());
-      if (LinkInfo != NULL) {
-        wc->SetLink(*LinkInfo);
+    if (TagName.Equalsi("spin")) {
+      TSpinCtrl *Spin = new TSpinCtrl(html);
+      Spin->SetFont(m_WParser->GetDC()->GetFont());
+      Spin->WI.SetHeight(ay);
+      Spin->WI.SetWidth(ax);
+      AdjustSize(*Spin);
+      Spin->SetForegroundColour(m_WParser->GetDC()->GetTextForeground());
+      Spin->SetRange(min, max);
+      Spin->SetValue(value);
+      CreatedObject = Spin;
+      CreatedWindow = Spin;
+      Spin->SetData(Data);
+      if (tag.HasParam(wxT("ONCHANGE"))) {
+        Spin->OnChange.data =
+          ExpandMacroShortcuts(tag.GetParam(wxT("ONCHANGE")), macro_map);
+        Spin->OnChange.Add(&html->Manager);
       }
-      wc->SetDescent(0);
-      contC->InsertCell(wc);
-      contC->InsertCell(new THtmlWidgetCell(Spin, fl));
-      if (valign != -1) {
-        contC->SetAlignVer(valign);
+      if (!Label.IsEmpty()) {
+        wxHtmlContainerCell* contC =
+          new wxHtmlContainerCell(m_WParser->GetContainer());
+        THtml::WordCell* wc =
+          new THtml::WordCell(Label.u_str(), *m_WParser->GetDC());
+        if (LinkInfo != NULL) {
+          wc->SetLink(*LinkInfo);
+        }
+        wc->SetDescent(0);
+        contC->InsertCell(wc);
+        contC->InsertCell(new THtmlWidgetCell(Spin, fl));
+        if (valign != -1) {
+          contC->SetAlignVer(valign);
+        }
+        if (halign != -1) {
+          contC->SetAlignHor(halign);
+        }
       }
-      if (halign != -1) {
-        contC->SetAlignHor(halign);
+      else {
+        m_WParser->GetContainer()->InsertCell(new THtmlWidgetCell(Spin, fl));
       }
     }
     else {
-      m_WParser->GetContainer()->InsertCell(new THtmlWidgetCell(Spin, fl));
-    }
-  }
-/******************* SLIDER ***************************************************/
-  else if (TagName.Equalsi("slider")) {
-    TTrackBar *Track = new TTrackBar(html);
-    Track->SetFont(m_WParser->GetDC()->GetFont());
-    Track->WI.SetWidth(ax);
-    Track->WI.SetHeight(ay);
+      TTrackBar *Track = new TTrackBar(html);
+      Track->SetFont(m_WParser->GetDC()->GetFont());
+      Track->WI.SetWidth(ax);
+      Track->WI.SetHeight(ay);
 #ifdef __MAC__
-    AdjustSize(*Track);
+      AdjustSize(*Track);
 #endif
-    CreatedObject = Track;
-    CreatedWindow = Track;
-    int min = 0, max = 100;
-    if (tag.HasParam(wxT("MIN")))
-      tag.ScanParam(wxT("MIN"), wxT("%i"), &min);
-    if (tag.HasParam(wxT("MAX")))
-      tag.ScanParam(wxT("MAX"), wxT("%i"), &max);
-    if (min < max)
+      CreatedObject = Track;
+      CreatedWindow = Track;
       Track->SetRange(min, max);
-    try { Track->SetValue((int)Value.ToDouble()); }
-    catch (...) {
-      TBasicApp::NewLogEntry() << "Invalid value slider: \'" << Value << '\'';
-    }
-    Track->SetData(Data);
-    if (tag.HasParam(wxT("ONCHANGE"))) {
-      Track->OnChange.data =
-        ExpandMacroShortcuts(tag.GetParam(wxT("ONCHANGE")), macro_map);
-      Track->OnChange.Add(&html->Manager);
-    }
-    if (tag.HasParam(wxT("ONMOUSEUP"))) {
-      Track->OnMouseUp.data =
-        ExpandMacroShortcuts(tag.GetParam(wxT("ONMOUSEUP")), macro_map);
-      Track->OnMouseUp.Add(&html->Manager);
-    }
-    if (!Label.IsEmpty()) {
-      wxHtmlContainerCell* contC =
-        new wxHtmlContainerCell(m_WParser->GetContainer());
-      THtml::WordCell* wc =
-        new THtml::WordCell(Label.u_str(), *m_WParser->GetDC());
-      if (LinkInfo != NULL) {
-        wc->SetLink(*LinkInfo);
+      Track->SetValue(value);
+      Track->SetData(Data);
+      if (tag.HasParam(wxT("ONCHANGE"))) {
+        Track->OnChange.data =
+          ExpandMacroShortcuts(tag.GetParam(wxT("ONCHANGE")), macro_map);
+        Track->OnChange.Add(&html->Manager);
       }
-      wc->SetDescent(0);
-      contC->InsertCell(wc);
-      contC->InsertCell(new THtmlWidgetCell(Track, fl));
-      if (valign != -1) {
-        contC->SetAlignVer(valign);
+      if (tag.HasParam(wxT("ONMOUSEUP"))) {
+        Track->OnMouseUp.data =
+          ExpandMacroShortcuts(tag.GetParam(wxT("ONMOUSEUP")), macro_map);
+        Track->OnMouseUp.Add(&html->Manager);
       }
-      if (halign != -1) {
-        contC->SetAlignHor(halign);
+      if (!Label.IsEmpty()) {
+        wxHtmlContainerCell* contC =
+          new wxHtmlContainerCell(m_WParser->GetContainer());
+        THtml::WordCell* wc =
+          new THtml::WordCell(Label.u_str(), *m_WParser->GetDC());
+        if (LinkInfo != NULL) {
+          wc->SetLink(*LinkInfo);
+        }
+        wc->SetDescent(0);
+        contC->InsertCell(wc);
+        contC->InsertCell(new THtmlWidgetCell(Track, fl));
+        if (valign != -1) {
+          contC->SetAlignVer(valign);
+        }
+        if (halign != -1) {
+          contC->SetAlignHor(halign);
+        }
       }
-    }
-    else {
-      m_WParser->GetContainer()->InsertCell(new THtmlWidgetCell(Track, fl));
+      else {
+        m_WParser->GetContainer()->InsertCell(new THtmlWidgetCell(Track, fl));
+      }
     }
   }
 /******************* CHECKBOX *************************************************/
@@ -921,8 +935,9 @@ TAG_HANDLER_PROC(tag) {
 
     TTreeView *Tree = new TTreeView(html, wxID_ANY, wxDefaultPosition,
       wxSize(ax, ay), flags);
-    if ((flags&wxTR_HIDE_ROOT) == 0 && tag.HasParam(wxT("ROOTLABEL")))
+    if ((flags&wxTR_HIDE_ROOT) == 0 && tag.HasParam(wxT("ROOTLABEL"))) {
       Tree->SetItemText(Tree->GetRootItem(), tag.GetParam(wxT("ROOTLABEL")));
+    }
     olxstr src = tag.GetParam(wxT("SRC"));
     op->processFunction(src, SrcInfo, true);
     IInputStream* ios = TFileHandlerManager::GetInputStream(src);
