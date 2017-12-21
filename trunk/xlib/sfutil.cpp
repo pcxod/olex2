@@ -81,7 +81,7 @@ void SFUtil::FindMinMax(const TArrayList<StructureFactor>& F,
 }
 //..............................................................................
 olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
-  short mapType, short sfOrigin, short scaleType, double scale)
+  short mapType, short sfOrigin, short scaleType, double scale, short friedelPairs)
 {
   TXApp& xapp = TXApp::GetInstance();
   TStopWatch sw(__FUNC__);
@@ -188,11 +188,20 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
     sw.start("Loading/Filtering/Merging HKL");
     TUnitCell::SymmSpace sp = xapp.XFile().GetUnitCell().GetSymmSpace();
     SymmSpace::InfoEx info_ex = SymmSpace::Compact(sp);
+    if (friedelPairs == fpMerge) {
+      info_ex.centrosymmetric = true;
+    }
     RefinementModel& rm = xapp.XFile().GetRM();
     if (rm.GetHKLF() < 5) {
-      RefinementModel::HklStat ms =
-        rm.GetRefinementRefList<
-          TUnitCell::SymmSpace,RefMerger::ShelxMerger>(sp, refs);
+      RefinementModel::HklStat ms;
+      if (!sp.IsCentrosymmetric() && info_ex.centrosymmetric) {
+        ms = rm.GetFourierRefList<
+          TUnitCell::SymmSpace, RefMerger::ShelxMerger>(sp, refs);
+      }
+      else {
+        ms = rm.GetRefinementRefList<
+          TUnitCell::SymmSpace, RefMerger::ShelxMerger>(sp, refs);
+      }
       F.SetCount(refs.Count());
       sw.start("Calculating structure factors");
       //xapp.CalcSF(refs, F);
@@ -365,6 +374,7 @@ void SFUtil::_CalcSF(const TXFile& xfile, const IMillerIndexList& refs,
         }
         else {
           THklFile hkl;
+          TStrList missing;
           hkl.LoadFromFile(fab_name, false, "free");
           for (size_t i = 0; i < hkl.RefCount(); i++) {
             TReflection &r = hkl[i];
@@ -381,11 +391,16 @@ void SFUtil::_CalcSF(const TXFile& xfile, const IMillerIndexList& refs,
           for (size_t i = 0; i < F.Count(); i++) {
             size_t idx = fab.IndexOf(TReflection::CalcHKLHash(refs[i]));
             if (idx == InvalidIndex) {
-              TBasicApp::NewLogEntry(logError) << "Missing modification";
+              missing << refs[i].ToString();
             }
             else {
               F[i] += fab.GetValue(idx);
             }
+          }
+          if (!missing.IsEmpty()) {
+            TBasicApp::NewLogEntry(logError) << "Missing modifications for the"
+              " following reflecrions";
+            TBasicApp::NewLogEntry(logError) << missing;
           }
         }
       }
