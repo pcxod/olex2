@@ -666,10 +666,30 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
   TRefList refs;
   TArrayList<compd> F;
   st.start("Obtaining structure factors");
+  short scale = SFUtil::scaleSimple;
+  double scale_value = 0;
+  {
+    olxstr str_scale = Options.FindValue("scale").ToLowerCase();
+    if (!str_scale.IsEmpty()) {
+      if (str_scale.CharAt(0) == 'r') {
+        scale = SFUtil::scaleRegression;
+      }
+      else if (str_scale.CharAt(0) == 'e') {
+        scale = SFUtil::scaleExternal;
+        if (app.XFile().GetRM().Vars.VarCount() > 0) {
+          scale = app.XFile().GetRM().Vars.GetVar(0).GetValue();
+        }
+        else {
+          TBasicApp::NewLogEntry(logWarning) << "Could not locate external "
+            "scale - using the default";
+          scale = SFUtil::scaleSimple;
+        }
+      }
+    }
+  }
   olxstr err = SFUtil::GetSF(refs, F, mapType,
     Options.Contains("fcf") ? SFUtil::sfOriginFcf : SFUtil::sfOriginOlex2,
-    (Options.FindValue("scale", "r").ToLowerCase().CharAt(0) == 'r') ?
-      SFUtil::scaleRegression : SFUtil::scaleSimple);
+    scale, scale_value, SFUtil::fpMerge);
   if (!err.IsEmpty()) {
     E.ProcessingError(__OlxSrcInfo, err);
     return;
