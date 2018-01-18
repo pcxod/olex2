@@ -210,7 +210,7 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(ChangeSG,
     "c-apply cell change according to the centering change (experimental!)",
     (fpAny^fpNone)|psFileLoaded,
-    "[shift] SG. Changes space group of current structure, applying given shit"
+    "[shift] SG. Changes space group of current structure, applying given shift"
     " prior (if provided) to the change of symmetry of the unit cell");
 //_____________________________________________________________________________
   xlib_InitMacro(Htab,

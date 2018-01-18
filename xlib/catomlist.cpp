@@ -669,6 +669,7 @@ void AtomRefList::UpdateResi() {
   if (!IsExplicit()) {
     return;
   }
+  residue = EmptyString();
   TPtrList<ExplicitCAtomRef> atom_refs;
   for (size_t i = 0; i < refs.Count(); i++) {
     ExplicitCAtomRef *r = dynamic_cast<ExplicitCAtomRef *>(&refs[i]);
@@ -693,16 +694,36 @@ void AtomRefList::UpdateResi() {
     ExplicitCAtomRef &r0 = *atom_refs[0];
     ExplicitCAtomRef &r1 = *atom_refs[1];
     if (r1.GetMatrix() != 0 && r0.GetMatrix() != 0) {
-      return;
+      if (r0.GetAtom().GetResiId() == r1.GetAtom().GetResiId()) {
+        r_id = r0.GetAtom().GetResiId();
+      }
+      else {
+        return;
+      }
     }
     if (r1.GetMatrix() == 0 && r0.GetMatrix() == 0) {
-      return;
+      if (r0.GetAtom().GetResiId() == r1.GetAtom().GetResiId()) {
+        r_id = r0.GetAtom().GetResiId();
+      }
+      else {
+        return;
+      }
     }
     if (r1.GetMatrix() != 0) {
-      r_id = r1.GetAtom().GetResiId();
+      if (r1.GetAtom().GetResiId() != r0.GetAtom().GetResiId()) {
+        return;
+      }
+      else {
+        r_id = r1.GetAtom().GetResiId();
+      }
     }
     else if (r0.GetMatrix() != 0) {
-      r_id = r0.GetAtom().GetResiId();
+      if (r1.GetAtom().GetResiId() != r0.GetAtom().GetResiId() == 0) {
+        return;
+      }
+      else {
+        r_id = r0.GetAtom().GetResiId();
+      }
     }
   }
   else {
