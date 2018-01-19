@@ -41,9 +41,10 @@ void AButtonBase::SetDown(bool v)  {
   }
 }
 //..............................................................................
-void AButtonBase::_ClickEvent()  {
-  if( Down )
+void AButtonBase::_ClickEvent() {
+  if (Down) {
     OnUp.Execute((AOlxCtrl*)this);
+  }
   OnClick.Execute((AOlxCtrl*)this);
   if( !Down )
     OnDown.Execute((AOlxCtrl*)this);
@@ -67,14 +68,14 @@ void TButton::ClickEvent(wxCommandEvent&) {
   SetFocus();
 }
 //..............................................................................
-void TButton::MouseEnterEvent(wxMouseEvent& event)  {
-  SetCursor( wxCursor(wxCURSOR_HAND) );
+void TButton::MouseEnterEvent(wxMouseEvent& event) {
+  SetCursor(wxCursor(wxCURSOR_HAND));
   if( !GetHint().IsEmpty() )
     SetToolTip(GetHint().u_str());
   event.Skip();
 }
 //..............................................................................
-void TButton::MouseLeaveEvent(wxMouseEvent& event)  {
+void TButton::MouseLeaveEvent(wxMouseEvent& event) {
   event.Skip();
 }
 //..............................................................................
@@ -92,8 +93,9 @@ AButtonBase(this)
 //..............................................................................
 void TBmpButton::MouseEnterEvent(wxMouseEvent& event)  {
   SetCursor(wxCursor(wxCURSOR_HAND));
-  if( !GetHint().IsEmpty() )
+  if (!GetHint().IsEmpty()) {
     SetToolTip(GetHint().u_str());
+  }
   event.Skip();
 }
 //..............................................................................
@@ -110,7 +112,9 @@ const short TImgButton::stDisabled;
 const short TImgButton::stHover;
 #endif
 //..............................................................................
-TImgButton::TImgButton(wxWindow* parent) : wxPanel(parent), AButtonBase(this) {
+TImgButton::TImgButton(wxWindow* parent)
+  : wxPanel(parent), AButtonBase(this)
+{
   Bind(wxEVT_LEFT_DOWN, &TImgButton::MouseDownEvent, this);
   Bind(wxEVT_LEFT_UP, &TImgButton::MouseUpEvent, this);
   Bind(wxEVT_MOTION, &TImgButton::MouseMoveEvent, this);
@@ -145,7 +149,7 @@ void TImgButton::MouseLeaveEvent(wxMouseEvent& event)  {
 }
 //..............................................................................
 const wxBitmap& TImgButton::ChooseBitmap() const {
-  switch( state )  {
+  switch (state) {
   case stUp:        return bmpUp;
   case stDown:      return bmpDown;
   case stDisabled:  return bmpDisabled;
@@ -156,7 +160,7 @@ const wxBitmap& TImgButton::ChooseBitmap() const {
 //..............................................................................
 void TImgButton::Render(wxDC& dc) const {
   const wxBitmap& bmp = ChooseBitmap();
-  if( bmp.IsOk() )  {
+  if (bmp.IsOk()) {
     wxBitmap tbmp(bmp.GetWidth(), bmp.GetHeight(), bmp.GetDepth());
     wxMemoryDC mdc(tbmp);
     mdc.SetBackground(wxBrush(GetBackgroundColour()));
@@ -199,8 +203,9 @@ void TImgButton::MouseMoveEvent(wxMouseEvent& event) {
 }
 //..............................................................................
 wxBitmap TImgButton::BmpFromImage(const wxImage& img, int w, int h) const {
-  if( img.GetWidth() != w || img.GetHeight() != h )
-    return wxBitmap(img.Scale(w,h));
+  if (img.GetWidth() != w || img.GetHeight() != h) {
+    return wxBitmap(img.Scale(w, h));
+  }
   return wxBitmap(img);
 }
 //..............................................................................
@@ -226,6 +231,12 @@ void TImgButton::SetImages(const olxstr& src, int w, int h) {
     {
       wxLogNull bl;
       img = new wxImage(*(fsFile->GetStream()), wxBITMAP_TYPE_ANY);
+      if (!img->IsOk()) {
+        TBasicApp::NewLogEntry(logError) << "Failed to load image: " <<
+          fn;
+        delete img;
+        continue;
+      }
     }
     if (dest.Equalsi("up")) {
       imgState |= TImgButton::stUp;
@@ -243,8 +254,9 @@ void TImgButton::SetImages(const olxstr& src, int w, int h) {
       imgState |= TImgButton::stHover;
       images.Set(3, img);
     }
-    else
+    else {
       delete img;
+    }
     delete fsFile;
   }
   images.Pack();

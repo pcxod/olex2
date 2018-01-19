@@ -28,6 +28,10 @@ namespace SFUtil {
     scaleExternal = 2;
   static const short sfOriginFcf = 0,  // structure factor origin
     sfOriginOlex2 = 1;
+  // merge Friedel pairs
+  static const short fpDefault = 0,  // depending on SG
+    fpMerge = 1,
+    fpDoNotMerge = 2;
   static const double T_PI = M_PI * 2;
   static const double MT_PI = -M_PI * 2;
   const static double EQ_PI = 8 * M_PI*M_PI;
@@ -164,7 +168,8 @@ namespace SFUtil {
   olxstr GetSF(TRefList& refs, TArrayList<compd>& F,
     short mapType, short sfOrigin = sfOriginOlex2,
     short scaleType = scaleSimple,
-    double scale = 0);
+    double scale = 0,
+    short friedelPairs = fpDefault);
   // calculates the structure factors for given reflections
   void _CalcSF(const TXFile& xfile, const IMillerIndexList& refs,
     TArrayList<compd>& F, bool UseFpFdp);
