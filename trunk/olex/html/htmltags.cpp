@@ -186,7 +186,7 @@ TAG_HANDLER_PROC(tag) {
   }
 
   wxFSFile *fsFile = TFileHandlerManager::GetFSFileHandler( src );
-  if (fsFile == NULL) {
+  if (fsFile == 0) {
     TBasicApp::NewLogEntry(logError) << "Could not locate image: '"
       << src << '\'';
   }
@@ -212,7 +212,7 @@ TAG_HANDLER_PROC(tag) {
   if (!ObjectName.IsEmpty()) {
     THtml * html = dynamic_cast<THtml*>(
       m_WParser->GetWindowInterface()->GetHTMLWindow());
-    if (html->AddControl(ObjectName, cell, NULL)) {
+    if (html->AddControl(ObjectName, cell, 0)) {
       TBasicApp::NewLogEntry(logInfo) << "THTML: control has been replaced: " <<
         ObjectName;
     }
@@ -544,7 +544,7 @@ TAG_HANDLER_PROC(tag) {
           wxDefaultPosition, wxDefaultSize, flags );
         ((TBmpButton*)Btn)->SetSource( buttonImage );
         wxFSFile *fsFile = TFileHandlerManager::GetFSFileHandler(buttonImage);
-        if (fsFile == NULL) {
+        if (fsFile == 0) {
           TBasicApp::NewLogEntry(logError) <<
             "THTML: could not locate image for button: " << ObjectName;
         }
