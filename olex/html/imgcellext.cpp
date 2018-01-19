@@ -68,8 +68,9 @@ THtmlImageCell::THtmlImageCell(wxWindow *window, wxFSFile *input,
             wxLogNull nl;
             image.LoadFile(*s, wxBITMAP_TYPE_ANY);
           }
-          if (image.Ok())
+          if (image.Ok()) {
             SetImage(image);
+          }
           else {
             if (mapname.IsEmpty()) {
               TBasicApp::NewLogEntry(logError) << "Invalid image";
