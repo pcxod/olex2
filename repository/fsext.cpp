@@ -456,7 +456,7 @@ static PyMethodDef OLEXFS_Methods[] = {
   "creates a new file (file_name, data,[persistence]), returns true if "
   "operation succeeded" },
   { "ReadFile", fsext_pyReadFile, METH_VARARGS,
-  "reads previously created file and reurns the content of the file or None, "
+  "reads previously created file and returns the content of the file or None, "
   "if error has occured" },
   { "Clear", fsext_pyClear, METH_VARARGS,
   "clears content of the VFS. Mask can be given to remove items with "

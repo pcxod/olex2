@@ -187,22 +187,22 @@ TTypeList<CifToken>::const_list_type TCifDP::TokenizeString(const olxstr &str_) 
       (i == 0 || olxstr::o_iswhitechar(str.CharAt(i - 1)) || str.CharAt(i - 1) == '\n'))
     {
       if (i + 2 < str.Length() && str.CharAt(i + 1) == ch && str.CharAt(i + 2) == ch) {
-        size_t idx = str.FirstIndexOf(olxstr::CharStr(ch, 3), i+3);
+        size_t idx = str.FirstIndexOf(olxstr::CharStr(ch, 3), i + 3);
         if (idx == InvalidIndex) {
-          throw ParsingException(__OlxSourceInfo, "unbalanced quotation", 
+          throw ParsingException(__OlxSourceInfo, "unbalanced quotation",
             lni.GetLineNumber(i));
         }
         toks.Add(
-          new CifToken(str.SubString(i+3, idx-i-3),
+          new CifToken(str.SubString(i + 3, idx - i - 3),
             lni.GetLineNumber(i)));
-        i = idx+3;
+        i = idx + 3;
         start = i + 1;
       }
       else {
         size_t st = i + 1;
         while (++i < str.Length()) {
           if ((str.CharAt(i) == ch && ((i + 1) >= str.Length() ||
-            olxstr::o_iswhitechar(str.CharAt(i + 1)) || str.CharAt(i+1) == ':')) ||
+            olxstr::o_iswhitechar(str.CharAt(i + 1)) || str.CharAt(i + 1) == ':')) ||
             str.CharAt(i + 1) == '\n')
           {
             break;
@@ -211,7 +211,7 @@ TTypeList<CifToken>::const_list_type TCifDP::TokenizeString(const olxstr &str_) 
         toks.Add(
           new CifToken(str.SubString(st, i - st),
             lni.GetLineNumber(i)));
-        if ((i+1) < str.Length() && str.CharAt(i) == ch && str.CharAt(i + 1) == ':') {
+        if ((i + 1) < str.Length() && str.CharAt(i) == ch && str.CharAt(i + 1) == ':') {
           i++;
         }
       }
@@ -230,17 +230,17 @@ TTypeList<CifToken>::const_list_type TCifDP::TokenizeString(const olxstr &str_) 
     else if (ch == ';' && i > 0 && str.CharAt(i - 1) == '\n') {
       size_t idx = str.FirstIndexOf("\n;", i + 1);
       if (idx == InvalidIndex) {
-        throw ParsingException(__OlxSourceInfo, "unbalanced quotation", 
+        throw ParsingException(__OlxSourceInfo, "unbalanced quotation",
           lni.GetLineNumber(i));
       }
       toks.Add(
-        new CifToken(str.SubString(i, idx - i+2),
+        new CifToken(str.SubString(i, idx - i + 2),
           lni.GetLineNumber(i)));
       i = idx + 2;
       start = i + 1;
     }
     else if (ch == '#') {
-      size_t idx = str.FirstIndexOf('\n', i+1);
+      size_t idx = str.FirstIndexOf('\n', i + 1);
       if (idx == InvalidIndex) {
         idx = str.Length();
       }
@@ -248,19 +248,22 @@ TTypeList<CifToken>::const_list_type TCifDP::TokenizeString(const olxstr &str_) 
         new CifToken(str.SubString(start, idx - start),
           lni.GetLineNumber(start)));
       i = idx;
-      start = i+1;
-    }
-    else if (ch == '[') {
-      toks.Add(
-        new CifToken(ExtractBracketedData(str, '[', ']', i),
-          lni.GetLineNumber(i)));
       start = i + 1;
     }
-    else if (ch == '{') {
-      toks.Add(
-        new CifToken(ExtractBracketedData(str, '{', '}', i),
-          lni.GetLineNumber(i)));
-      start = i + 1;
+    else if (start == i) {
+      if (ch == '[') {
+        toks.Add(
+          new CifToken(ExtractBracketedData(str, '[', ']', i),
+            lni.GetLineNumber(i)));
+
+        start = i + 1;
+      }
+      else if (ch == '{') {
+        toks.Add(
+          new CifToken(ExtractBracketedData(str, '{', '}', i),
+            lni.GetLineNumber(i)));
+        start = i + 1;
+      }
     }
   }
   if (start < str.Length()) {

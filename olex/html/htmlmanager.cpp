@@ -21,7 +21,7 @@
 THtmlManager::THtmlManager(wxWindow *mainWindow)
   : mainWindow(mainWindow),
     destroyed(false),
-    main(NULL),
+    main(0),
     OnLink(Actions.New("OnLink"))
 {
   AActionHandler::SetToDelete(false);
@@ -34,7 +34,7 @@ THtmlManager::~THtmlManager() {
 void THtmlManager::Destroy() {
   if (destroyed) return;
   destroyed = true;
-  if (main != NULL) {
+  if (main != 0) {
     main->OnLink.Remove(this);
     main->Destroy();
   }
@@ -48,7 +48,7 @@ void THtmlManager::InitialiseMain(long flags) {
 }
 //.............................................................................
 void THtmlManager::ProcessPageLoadRequests() {
-  if (main != NULL && main->IsPageLoadRequested() && !main->IsPageLocked()) {
+  if (main != 0 && main->IsPageLoadRequested() && !main->IsPageLocked()) {
     main->ProcessPageLoadRequest();
   }
   try {
@@ -93,10 +93,11 @@ void THtmlManager::LockWindowDestruction(wxWindow* wnd,
 void THtmlManager::UnlockWindowDestruction(wxWindow* wnd,
   const IOlxObject* caller)
 {
-  if (wnd == main)
+  if (wnd == main) {
     main->UnlockPageLoad(caller);
-  else  {
-    for (size_t i=0; i < Popups.Count(); i++) {
+  }
+  else {
+    for (size_t i = 0; i < Popups.Count(); i++) {
       if (Popups.GetValue(i)->Html == wnd) {
         Popups.GetValue(i)->Html->UnlockPageLoad(caller);
         break;
@@ -106,18 +107,20 @@ void THtmlManager::UnlockWindowDestruction(wxWindow* wnd,
 }
 //.............................................................................
 THtml* THtmlManager::FindHtml(const olxstr& name) const {
-  if(name.IsEmpty()) return main;
-  TPopupData *pd = Popups.Find(name, NULL);
-  return pd == NULL ? NULL : pd->Html;
+  if (name.IsEmpty()) {
+    return main;
+  }
+  TPopupData *pd = Popups.Find(name, 0);
+  return pd == 0 ? 0 : pd->Html;
 }
 //.............................................................................
 bool THtmlManager::Enter(const IOlxObject *sender, const IOlxObject *data,
   TActionQueue *)
 {
-  if (sender != NULL) {
+  if (sender != 0) {
     const wxWindow *wx = dynamic_cast<const wxWindow*>(sender);
     THtml *html = dynamic_cast<THtml*>(wx->GetParent());
-    if (html != NULL) {
+    if (html != 0) {
       volatile THtmlManager::DestructionLocker dm =
         LockDestruction(html, this);
       OnLink.Enter(sender, data);
@@ -131,10 +134,10 @@ bool THtmlManager::Enter(const IOlxObject *sender, const IOlxObject *data,
 bool THtmlManager::Exit(const IOlxObject *sender, const IOlxObject *data,
   TActionQueue *)
 {
-  if (sender != NULL) {
+  if (sender != 0) {
     const wxWindow *wx = dynamic_cast<const wxWindow*>(sender);
     THtml *html = dynamic_cast<THtml*>(wx->GetParent());
-    if (html != NULL) {
+    if (html != 0) {
       volatile THtmlManager::DestructionLocker dm =
         LockDestruction(html, this);
       OnLink.Exit(sender, data);
@@ -163,10 +166,10 @@ bool THtmlManager::Execute(const IOlxObject *sender, const IOlxObject *data,
     }
     data = &dt;
   }
-  if (sender != NULL) {
+  if (sender != 0) {
     const wxWindow *wx = dynamic_cast<const wxWindow*>(sender);
     THtml *html = dynamic_cast<THtml*>(wx->GetParent());
-    if (html != NULL) {
+    if (html != 0) {
       volatile THtmlManager::DestructionLocker dm =
         LockDestruction(html, this);
       olxstr cmd = *(const olxstr *)data;
@@ -177,14 +180,12 @@ bool THtmlManager::Execute(const IOlxObject *sender, const IOlxObject *data,
           !(dynamic_cast<const TComboBox *>(sender))->IsReadOnly())
         {
         }
-        else if (ti == typeid(TTreeView))
-          ;
-        else if (ti == typeid(TTextEdit))
-          ;
-        else if (ti == typeid(TSpinCtrl))
-          ;
-        else if (ti == typeid(TDateCtrl))
-          ;
+        else if (ti == typeid(TTreeView) ||
+          ti == typeid(TTextEdit) ||
+          ti == typeid(TSpinCtrl) ||
+          ti == typeid(TDateCtrl))
+        {
+        }
         else {
           olex2::IOlex2Processor::GetInstance()->processMacro("focus");
         }
@@ -200,8 +201,8 @@ bool THtmlManager::Execute(const IOlxObject *sender, const IOlxObject *data,
 THtmlManager::TPopupData &THtmlManager::NewPopup(TDialog *owner,
   const olxstr &name, long flags)
 {
-  TPopupData *pd = Popups.Find(name, NULL);
-  if (pd == NULL) {
+  TPopupData *pd = Popups.Find(name, 0);
+  if (pd == 0) {
     pd = Popups.Add(name, new TPopupData);
     pd->Dialog = owner;
     pd->Html = new THtml(*this, owner, name, flags);
@@ -218,146 +219,159 @@ rotation if one of the states correspond to current - the next one is selected
 void THtmlManager::macItemState(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
-  THtml *html = NULL;
-  if( Cmds.Count() > 2 && !Cmds[1].IsNumber() )  {
+  THtml *html = 0;
+  if (Cmds.Count() > 2 && !Cmds[1].IsNumber()) {
     html = FindHtml(Cmds[0]);
-    if( html == NULL )  {
+    if (html == 0) {
       Error.ProcessingError(__OlxSrcInfo,
         "undefined popup: ").quote() << Cmds[0];
       return;
     }
     Cmds.Delete(0);
   }
-  else
+  else {
     html = main;
+  }
 
   THtmlSwitch& rootSwitch = html->GetRoot();
   TIndexList states;
   olxstr itemName(Cmds[0]);
   bool changed = false;
-  for( size_t i=1; i < Cmds.Count(); i++ )  {
+  for (size_t i = 1; i < Cmds.Count(); i++) {
     TPtrList<THtmlSwitch> Switches;
     // special treatment of any particular index
-    if( itemName.EndsWith('.') )  {
+    if (itemName.EndsWith('.')) {
       THtmlSwitch* sw =
-        rootSwitch.FindSwitch(itemName.SubStringTo(itemName.Length()-1));
-      if( sw == NULL )
+        rootSwitch.FindSwitch(itemName.SubStringTo(itemName.Length() - 1));
+      if (sw == 0) {
         return;
-      for( size_t j=0; j < sw->SwitchCount(); j++ )
+      }
+      for (size_t j = 0; j < sw->SwitchCount(); j++) {
         Switches.Add(sw->GetSwitch(j));
+      }
       //sw->Expand(Switches);
     }
-    else if( itemName.FirstIndexOf('*') == InvalidIndex )  {
+    else if (itemName.FirstIndexOf('*') == InvalidIndex) {
       THtmlSwitch* sw = rootSwitch.FindSwitch(itemName);
-      if( sw == NULL )  {
+      if (sw == 0) {
         Error.ProcessingError(__OlxSrcInfo,
           "could not locate specified switch: ").quote() << itemName;
         return;
       }
       Switches.Add(sw);
     }
-    else  {
-      if( itemName == '*' )  {
-        for( size_t j=0; j < rootSwitch.SwitchCount(); j++ )
+    else {
+      if (itemName == '*') {
+        for (size_t j = 0; j < rootSwitch.SwitchCount(); j++) {
           Switches.Add(rootSwitch.GetSwitch(j));
+        }
       }
-      else  {
+      else {
         size_t sindex = itemName.FirstIndexOf('*');
         // *blabla* syntax
-        if( sindex == 0 && itemName.Length() > 2 &&
-            itemName.CharAt(itemName.Length()-1) == '*')
+        if (sindex == 0 && itemName.Length() > 2 &&
+          itemName.CharAt(itemName.Length() - 1) == '*')
         {
           rootSwitch.FindSimilar(itemName.SubString(
-            1, itemName.Length()-2), EmptyString(), Switches);
+            1, itemName.Length() - 2), EmptyString(), Switches);
         }
-        else  {  // assuming bla*bla syntax
+        else {  // assuming bla*bla syntax
           olxstr from = itemName.SubStringTo(sindex), with;
-          if( (sindex+1) < itemName.Length() )
-            with = itemName.SubStringFrom(sindex+1);
+          if ((sindex + 1) < itemName.Length()) {
+            with = itemName.SubStringFrom(sindex + 1);
+          }
           rootSwitch.FindSimilar(from, with, Switches);
         }
       }
     }
     states.Clear();
-    for( size_t j=i; j < Cmds.Count();  j++,i++ )  {
+    for (size_t j = i; j < Cmds.Count(); j++, i++) {
       // is new switch encountered?
-      if( !Cmds[j].IsNumber() )  {  itemName = Cmds[j];  break;  }
+      if (!Cmds[j].IsNumber()) {
+        itemName = Cmds[j];
+        break;
+      }
       states.Add(Cmds[j].ToInt());
     }
-    if( states.Count() == 1 )  {  // simply change the state to the request
-      for( size_t j=0; j < Switches.Count(); j++ )  {
-        if( Switches[j]->GetFileIndex() != states[0]-1 )
+    if (states.Count() == 1) {  // simply change the state to the request
+      for (size_t j = 0; j < Switches.Count(); j++) {
+        if (Switches[j]->GetFileIndex() != states[0] - 1) {
           changed = true;
-        Switches[j]->SetFileIndex(states[0]-1);
+        }
+        Switches[j]->SetFileIndex(states[0] - 1);
       }
     }
-    else  {
-      for( size_t j=0; j < Switches.Count(); j++ )  {
+    else {
+      for (size_t j = 0; j < Switches.Count(); j++) {
         THtmlSwitch* sw = Switches[j];
         const index_t currentState = sw->GetFileIndex();
-        for( size_t k=0; k < states.Count(); k++ )  {
-          if( states[k] == (currentState+1) )  {
-            if( (k+1) < states.Count() )  {
-              if( sw->GetFileIndex() != states[k+1]-1 )
+        for (size_t k = 0; k < states.Count(); k++) {
+          if (states[k] == (currentState + 1)) {
+            if ((k + 1) < states.Count()) {
+              if (sw->GetFileIndex() != states[k + 1] - 1) {
                 changed = true;
-              sw->SetFileIndex(states[k+1]-1);
+              }
+              sw->SetFileIndex(states[k + 1] - 1);
             }
-            else  {
-              if( sw->GetFileIndex() != states[0]-1 )
+            else {
+              if (sw->GetFileIndex() != states[0] - 1)
                 changed = true;
-              sw->SetFileIndex(states[0]-1);
+              sw->SetFileIndex(states[0] - 1);
             }
           }
         }
       }
     }
   }
-  if( changed && !Options.Contains('u') )
+  if (changed && !Options.Contains('u')) {
     html->UpdatePage();
-  return;
+  }
 }
 //.............................................................................
-void THtmlManager::funGetItemState(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funGetItemState(const TStrObjList &Params, TMacroData &E) {
   size_t di = Params[0].IndexOf('.');
   olxstr hn = di == InvalidIndex ? EmptyString() : Params[0].SubStringTo(di);
-  olxstr in = di == InvalidIndex ? Params[0] : Params[0].SubStringFrom(di+1);
-  THtml *html = di == InvalidIndex ?  main : FindHtml(hn);
-  if( html == NULL )  {
+  olxstr in = di == InvalidIndex ? Params[0] : Params[0].SubStringFrom(di + 1);
+  THtml *html = di == InvalidIndex ? main : FindHtml(hn);
+  if (html == 0) {
     E.ProcessingError(__OlxSrcInfo,
       "undefined html window: ").quote() << hn;
     return;
   }
   THtmlSwitch *sw = html->GetRoot().FindSwitch(in);
-  if( sw == NULL )  {
+  if (sw == 0) {
     E.ProcessingError(__OlxSrcInfo,
       "could not locate specified switch: ").quote() << in;
     return;
   }
-  if( sw->GetFileIndex() == InvalidIndex )
+  if (sw->GetFileIndex() == InvalidIndex) {
     E.SetRetVal<olxstr>("-1");
-  else if( sw->GetFileIndex() == UnknownSwitchState )
+  }
+  else if (sw->GetFileIndex() == UnknownSwitchState) {
     E.SetRetVal<olxstr>("-2");
-  else
+  }
+  else {
     E.SetRetVal(sw->GetFileIndex());
+  }
 }
 //.............................................................................
-void THtmlManager::funIsPopup(const TStrObjList& Params, TMacroData &E)  {
+void THtmlManager::funIsPopup(const TStrObjList& Params, TMacroData &E) {
   THtml *html = FindHtml(Params[0]);
-  E.SetRetVal(html != NULL && html->GetParent()->IsShown());
+  E.SetRetVal(html != 0 && html->GetParent()->IsShown());
 }
 //.............................................................................
-void THtmlManager::funIsEnabled(const TStrObjList& Params, TMacroData &E)  {
+void THtmlManager::funIsEnabled(const TStrObjList& Params, TMacroData &E) {
   Control c = FindControl(Params[0], E, 0, __OlxSrcInfo);
-  if (c.ctrl == NULL) {
+  if (c.ctrl == 0) {
     E.ProcessingError(__OlxSrcInfo, "undefined control: ").quote() << Params[0];
     return;
   }
   E.SetRetVal(c.ctrl->WI.IsEnabled());
 }
 //.............................................................................
-void THtmlManager::funIsItem(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funIsItem(const TStrObjList &Params, TMacroData &E) {
   THtml *html = (Params.Count() == 2) ? FindHtml(Params[0]) : main;
-  if( html == NULL )  {
+  if (html == 0) {
     E.ProcessingError(__OlxSrcInfo,
       "undefined html window: ").quote() << Params[0];
     return;
@@ -382,22 +396,24 @@ void THtmlManager::macTooltips(TStrObjList &Cmds, const TParamList &Options,
     hname = Cmds[0];
     Cmds.Delete(0);
   }
-  if (html == NULL)  {
+  if (html == 0) {
     E.ProcessingError(__OlxSrcInfo,
       "undefined html window: ").quote() << hname;
     return;
   }
-  if (Cmds.IsEmpty())
+  if (Cmds.IsEmpty()) {
     html->SetShowTooltips(!html->GetShowTooltips());
-  else
+  }
+  else {
     html->SetShowTooltips(Cmds[0].ToBool());
+  }
 }
 //.............................................................................
 void THtmlManager::macUpdate(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &E)
 {
   THtml *html = (Cmds.Count() == 1) ? FindHtml(Cmds[0]) : main;
-  if( html == NULL )  {
+  if (html == 0) {
     E.ProcessingError(__OlxSrcInfo,
       "undefined html window: ").quote() << (Cmds.IsEmpty() ? "main" : Cmds[0]);
     return;
@@ -410,7 +426,7 @@ void THtmlManager::macSetFonts(TStrObjList &Cmds, const TParamList &Options,
 {
   olxstr hn = Cmds.Count() == 2 ? EmptyString() : Cmds[0];
   THtml *html = Cmds.Count() == 3 ? FindHtml(hn) : main;
-  if (html == NULL) {
+  if (html == 0) {
     Error.ProcessingError(__OlxSrcInfo,
       "undefined html window: ").quote() << hn;
     return;
@@ -428,7 +444,7 @@ void THtmlManager::macSetBorders(TStrObjList &Cmds, const TParamList &Options,
 {
   olxstr hn = Cmds.Count() == 1 ? EmptyString() : Cmds[0];
   THtml *html = Cmds.Count() == 2 ? FindHtml(hn) : main;
-  if( html == NULL )  {
+  if (html == 0) {
     E.ProcessingError(__OlxSrcInfo,
       "undefined html window: ").quote() << hn;
     return;
@@ -441,7 +457,7 @@ void THtmlManager::macHome(TStrObjList &Cmds, const TParamList &Options,
 {
   olxstr hn = Cmds.Count() == 0 ? EmptyString() : Cmds[0];
   THtml *html = (Cmds.Count() == 1) ? FindHtml(Cmds[0]) : main;
-  if( html == NULL )  {
+  if (html == 0) {
     E.ProcessingError(__OlxSrcInfo,
       "undefined html window: ").quote() << hn;
     return;
@@ -454,7 +470,7 @@ void THtmlManager::macLoad(TStrObjList &Cmds, const TParamList &Options,
 {
   olxstr hn = Cmds.Count() == 1 ? EmptyString() : Cmds[0];
   THtml *html = (Cmds.Count() == 2) ? FindHtml(Cmds[0]) : main;
-  if( html == NULL )  {
+  if (html == 0) {
     E.ProcessingError(__OlxSrcInfo,
       "undefined html window: ").quote() << hn;
     return;
@@ -466,7 +482,7 @@ void THtmlManager::macHide(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &E)
 {
   THtmlManager::TPopupData *html = Popups.Find(Cmds[0], NULL);
-  if( html == NULL )  {
+  if (html == 0) {
     //E.ProcessingError(__OlxSrcInfo, "undefined html window");
     return;
   }
@@ -478,7 +494,6 @@ void THtmlManager::macHide(TStrObjList &Cmds, const TParamList &Options,
     }
     html->Dialog->Show(false);
   }
-
 }
 //.............................................................................
 void THtmlManager::macDump(TStrObjList &Cmds, const TParamList &Options,
@@ -486,7 +501,7 @@ void THtmlManager::macDump(TStrObjList &Cmds, const TParamList &Options,
 {
   olxstr hn = Cmds.Count() == 1 ? EmptyString() : Cmds[0];
   THtml *html = (Cmds.Count() == 2) ? FindHtml(Cmds[0]) : main;
-  if( html == NULL )  {
+  if (html == 0) {
     E.ProcessingError(__OlxSrcInfo,
       "undefined html window: ").quote() << hn;
     return;
@@ -501,91 +516,98 @@ void THtmlManager::macDefineControl(TStrObjList &Cmds,
 {
   const size_t ind = Cmds[0].IndexOf('.');
   THtml* html = (ind == InvalidIndex) ? main : FindHtml(Cmds[0].SubStringTo(ind));
-  olxstr objName = (ind == InvalidIndex) ? Cmds[0] : Cmds[0].SubStringFrom(ind+1);
-  if( html->ObjectsState.FindProperties(objName) != NULL )  {
+  olxstr objName = (ind == InvalidIndex) ? Cmds[0] : Cmds[0].SubStringFrom(ind + 1);
+  if (html->ObjectsState.FindProperties(objName) != 0) {
     E.ProcessingError(__OlxSrcInfo, "control ").quote() << objName <<
       " already exists";
     return;
   }
-  olxstr_dict<olxstr,false>* props = NULL;
-  if( Cmds[1].Equalsi("text") )  {
+  olxstr_dict<olxstr, false>* props = 0;
+  if (Cmds[1].Equalsi("text")) {
     props = html->ObjectsState.DefineControl(objName, typeid(TTextEdit));
   }
-  else if( Cmds[1].Equalsi("label") )  {
+  else if (Cmds[1].Equalsi("label")) {
     props = html->ObjectsState.DefineControl(objName, typeid(TLabel));
   }
-  else if( Cmds[1].Equalsi("button") )  {
+  else if (Cmds[1].Equalsi("button")) {
     props = html->ObjectsState.DefineControl(objName, typeid(TButton));
     (*props)["image"] = Options.FindValue("i");
   }
-  else if( Cmds[1].Equalsi("combo") )  {
+  else if (Cmds[1].Equalsi("combo")) {
     props = html->ObjectsState.DefineControl(objName, typeid(TComboBox));
     (*props)["items"] = Options.FindValue("i");
   }
-  else if (Cmds[1].Equalsi("choice"))  {
+  else if (Cmds[1].Equalsi("choice")) {
     props = html->ObjectsState.DefineControl(objName, typeid(TChoice));
     (*props)["items"] = Options.FindValue("i");
   }
-  else if (Cmds[1].Equalsi("spin"))  {
+  else if (Cmds[1].Equalsi("spin")) {
     props = html->ObjectsState.DefineControl(objName, typeid(TSpinCtrl));
     (*props)["min"] = Options.FindValue("min", "0");
     (*props)["max"] = Options.FindValue("max", "100");
   }
-  else if( Cmds[1].Equalsi("slider") )  {
+  else if (Cmds[1].Equalsi("slider")) {
     props = html->ObjectsState.DefineControl(objName, typeid(TTrackBar));
     (*props)["min"] = Options.FindValue("min", "0");
     (*props)["max"] = Options.FindValue("max", "100");
   }
-  else if( Cmds[1].Equalsi("checkbox") )  {
+  else if (Cmds[1].Equalsi("checkbox")) {
     props = html->ObjectsState.DefineControl(objName, typeid(TCheckBox));
     (*props)["checked"] = Options.FindValue("c", "false");
   }
-  else if( Cmds[1].Equalsi("tree") )  {
+  else if (Cmds[1].Equalsi("tree")) {
     props = html->ObjectsState.DefineControl(objName, typeid(TTreeView));
   }
-  else if( Cmds[1].Equalsi("list") )  {
+  else if (Cmds[1].Equalsi("list")) {
     props = html->ObjectsState.DefineControl(objName, typeid(TListBox));
     (*props)["items"] = Options.FindValue("i");
   }
-  if( props != NULL )  {
+  if (props != 0) {
     (*props)["bg"] = Options.FindValue("bg");
     (*props)["fg"] = Options.FindValue("fg");
-    if( props->IndexOf("data") != InvalidIndex )
+    if (props->IndexOf("data") != InvalidIndex) {
       (*props)["data"] = Options.FindValue("data", EmptyString());
-    if (props->HasKey("val"))
+    }
+    if (props->HasKey("val")) {
       (*props)["val"] = Options.FindValue("v");
+    }
   }
 }
 //.............................................................................
-void THtmlManager::funGetValue(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funGetValue(const TStrObjList &Params, TMacroData &E) {
   Control c = FindControl(Params[0], E, 0, __OlxSrcInfo);
-  if( c.html == NULL )  return;
-  if( c.ctrl == NULL )  {
-    olxstr_dict<olxstr,false>* props =
+  if (c.html == 0) {
+    return;
+  }
+  if (c.ctrl == 0) {
+    olxstr_dict<olxstr, false>* props =
       c.html->ObjectsState.FindProperties(c.ctrl_name);
-    if( props == NULL )  {
+    if (props == 0) {
       E.ProcessingError(__OlxSrcInfo,
         "wrong html object name: ").quote() << c.ctrl_name;
       return;
     }
-    if( props->IndexOf("val") == InvalidIndex )  {
+    if (props->IndexOf("val") == InvalidIndex) {
       E.ProcessingError(__OlxSrcInfo,
         "object definition does not have value for: ").quote() << c.ctrl_name;
       return;
     }
     E.SetRetVal((*props)["val"]);
   }
-  else
+  else {
     E.SetRetVal(c.html->GetObjectValue(c.ctrl));
+  }
 }
 //.............................................................................
 void THtmlManager::funSetValue(const TStrObjList &Params, TMacroData &E) {
   Control c = FindControl(Params[0], E, 0, __OlxSrcInfo);
-  if (c.html == NULL) return;
-  if (c.ctrl == NULL) {
-    olxstr_dict<olxstr,false>* props =
+  if (c.html == 0) {
+    return;
+  }
+  if (c.ctrl == 0) {
+    olxstr_dict<olxstr, false>* props =
       c.html->ObjectsState.FindProperties(c.ctrl_name);
-    if (props == NULL) {
+    if (props == 0) {
       E.ProcessingError(__OlxSrcInfo,
         "wrong html object name: ").quote() << c.ctrl_name;
       return;
@@ -596,53 +618,62 @@ void THtmlManager::funSetValue(const TStrObjList &Params, TMacroData &E) {
       return;
     }
     if ((*props)["type"] == EsdlClassName(TTrackBar) ||
-        (*props)["type"] == EsdlClassName(TSpinCtrl))
+      (*props)["type"] == EsdlClassName(TSpinCtrl))
     {
       const size_t si = Params[1].IndexOf(',');
       if (si == InvalidIndex)
         (*props)["val"] = Params[1];
       else {
         (*props)["min"] = Params[1].SubStringTo(si);
-        (*props)["max"] = Params[1].SubStringFrom(si+1);
+        (*props)["max"] = Params[1].SubStringFrom(si + 1);
       }
     }
-    else
+    else {
       (*props)["val"] = Params[1];
+    }
   }
   else {
     c.html->SetObjectValue(c.ctrl, c.ctrl_name, Params[1]);
     wxWindow *w = dynamic_cast<wxWindow *>(c.ctrl);
-    if (w != NULL)
+    if (w != 0) {
       w->Refresh();
+    }
   }
 }
 //.............................................................................
-void THtmlManager::funGetData(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funGetData(const TStrObjList &Params, TMacroData &E) {
   Control c = FindControl(Params[0], E, 0, __OlxSrcInfo);
-  if( c.html == NULL )  return;
-  if( c.ctrl == NULL )  {
-    olxstr_dict<olxstr,false>* props =
+  if (c.html == 0) {
+    return;
+  }
+  if (c.ctrl == 0) {
+    olxstr_dict<olxstr, false>* props =
       c.html->ObjectsState.FindProperties(c.ctrl_name);
-    if( props == NULL )  {
+    if (props == 0) {
       E.ProcessingError(__OlxSrcInfo,
         "wrong html object name: ").quote() << c.ctrl_name;
       return;
     }
-    E.SetRetVal( (*props)["data"] );
+    E.SetRetVal((*props)["data"]);
   }
-  else
+  else {
     E.SetRetVal(c.html->GetObjectData(c.ctrl));
+  }
 }
 //.............................................................................
-void THtmlManager::funGetItems(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funGetItems(const TStrObjList &Params, TMacroData &E) {
   Control c = FindControl(Params[0], E, 1, __OlxSrcInfo);
-  if( c.html == NULL || c.ctrl == NULL )  return;
+  if (c.html == 0 || c.ctrl == 0) {
+    return;
+  }
   E.SetRetVal(c.html->GetObjectItems(c.ctrl));
 }
 //.............................................................................
-void THtmlManager::funSetData(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funSetData(const TStrObjList &Params, TMacroData &E) {
   Control c = FindControl(Params[0], E, 1, __OlxSrcInfo);
-  if( c.html == NULL || c.ctrl == NULL )  return;
+  if (c.html == 0 || c.ctrl == 0) {
+    return;
+  }
   c.html->SetObjectData(c.ctrl, Params[1]);
 }
 //.............................................................................
@@ -652,43 +683,47 @@ THtmlManager::Control THtmlManager::FindControl(const olxstr &name,
   const size_t ind = name.IndexOf('.');
   olxstr hn = (ind == InvalidIndex) ? EmptyString() : name.SubStringTo(ind);
   THtml* html = (ind == InvalidIndex) ? main : FindHtml(name.SubStringTo(ind));
-  olxstr objName = (ind == InvalidIndex) ? name : name.SubStringFrom(ind+1);
-  if( html == NULL )  {
+  olxstr objName = (ind == InvalidIndex) ? name : name.SubStringFrom(ind + 1);
+  if (html == 0) {
     me.ProcessingError(location,
       "could not locate specified popup: ").quote() << hn;
-    return Control(NULL, NULL, NULL, objName);
+    return Control(0, 0, 0, objName);
   }
-  if( objName.Equals("self") )  {
-    if( needs == 1 ) {
+  if (objName.Equals("self")) {
+    if (needs == 1) {
       me.ProcessingError(__OlxSrcInfo,
         "wrong control name: ").quote() << objName;
     }
-    return Control(html, NULL, main, objName);
+    return Control(html, 0, main, objName);
   }
   const size_t ci = html->Objects.IndexOf(objName);
-  if( ci == InvalidIndex && needs != 0 ) {
+  if (ci == InvalidIndex && needs != 0) {
     me.ProcessingError(__OlxSrcInfo,
       "wrong html object name: ").quote() << objName;
   }
-  return Control(html, ci == InvalidIndex ? NULL : html->GetObject(ci),
-    ci == InvalidIndex ? NULL : html->GetWindow(ci), objName);
+  return Control(html, ci == InvalidIndex ? 0 : html->GetObject(ci),
+    ci == InvalidIndex ? 0 : html->GetWindow(ci), objName);
 }
 //.............................................................................
-void THtmlManager::funGetState(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funGetState(const TStrObjList &Params, TMacroData &E) {
   Control c = FindControl(Params[0], E, 0, __OlxSrcInfo);
-  if( c.html == NULL )  return;
-  if( c.ctrl == NULL )  {
-    olxstr_dict<olxstr,false>* props =
+  if (c.html == 0) {
+    return;
+  }
+  if (c.ctrl == 0) {
+    olxstr_dict<olxstr, false>* props =
       c.html->ObjectsState.FindProperties(c.ctrl_name);
-    if( props == NULL )  {
+    if (props == 0) {
       E.ProcessingError(__OlxSrcInfo,
         "wrong html object name: ").quote() << c.ctrl_name;
       return;
     }
-    if( Params.Count() == 1 )
+    if (Params.Count() == 1) {
       E.SetRetVal((*props)["checked"]);
-    else
+    }
+    else {
       E.SetRetVal((*props)[Params[1]]);
+    }
   }
   else {
     E.SetRetVal(c.html->GetObjectState(
@@ -696,66 +731,77 @@ void THtmlManager::funGetState(const TStrObjList &Params, TMacroData &E)  {
   }
 }
 //.............................................................................
-void THtmlManager::funGetLabel(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funGetLabel(const TStrObjList &Params, TMacroData &E) {
   Control c = FindControl(Params[0], E, 1, __OlxSrcInfo);
-  if( c.html == NULL || c.ctrl == NULL )  return;
+  if (c.html == 0 || c.ctrl == 0) {
+    return;
+  }
   olxstr rV;
-  if( EsdlInstanceOf(*c.ctrl, TButton) )
+  if (EsdlInstanceOf(*c.ctrl, TButton)) {
     rV = ((TButton*)c.ctrl)->GetCaption();
-  else if( EsdlInstanceOf(*c.ctrl, TLabel) )
+  }
+  else if (EsdlInstanceOf(*c.ctrl, TLabel)) {
     rV = ((TLabel*)c.ctrl)->GetCaption();
-  else if( EsdlInstanceOf(*c.ctrl, TCheckBox) )
+  }
+  else if (EsdlInstanceOf(*c.ctrl, TCheckBox)) {
     rV = ((TCheckBox*)c.ctrl)->GetCaption();
-  else if( EsdlInstanceOf(*c.ctrl, TTreeView) )  {
+  }
+  else if (EsdlInstanceOf(*c.ctrl, TTreeView)) {
     TTreeView* T = (TTreeView*)c.ctrl;
     wxTreeItemId ni = T->GetSelection();
     rV = T->GetItemText(ni);
   }
-  else  {
+  else {
     E.ProcessingError(__OlxSrcInfo,
-      "wrong html object type: ").quote()  << EsdlObjectName(*c.ctrl);
+      "wrong html object type: ").quote() << EsdlObjectName(*c.ctrl);
     return;
   }
   E.SetRetVal(rV);
 }
 //.............................................................................
-void THtmlManager::funSetLabel(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funSetLabel(const TStrObjList &Params, TMacroData &E) {
   Control c = FindControl(Params[0], E, 1, __OlxSrcInfo);
-  if( c.html == NULL || c.ctrl == NULL )  return;
-  if( EsdlInstanceOf(*c.ctrl, TButton) )
+  if (c.html == 0 || c.ctrl == 0) {
+    return;
+  }
+  if (EsdlInstanceOf(*c.ctrl, TButton)) {
     ((TButton*)c.ctrl)->SetCaption(Params[1]);
-  else if( EsdlInstanceOf(*c.ctrl, TLabel) )
+  }
+  else if (EsdlInstanceOf(*c.ctrl, TLabel)) {
     ((TLabel*)c.ctrl)->SetCaption(Params[1]);
-  else if( EsdlInstanceOf(*c.ctrl, TCheckBox) )
+  }
+  else if (EsdlInstanceOf(*c.ctrl, TCheckBox)) {
     ((TCheckBox*)c.ctrl)->SetCaption(Params[1]);
-  else if( EsdlInstanceOf(*c.ctrl, TTreeView) )  {
+  }
+  else if (EsdlInstanceOf(*c.ctrl, TTreeView)) {
     TTreeView* T = (TTreeView*)c.ctrl;
     wxTreeItemId ni = T->GetSelection();
     T->SetItemText(ni, Params[1].u_str());
   }
-  else  {
+  else {
     E.ProcessingError(__OlxSrcInfo,
-      "wrong html object type: ").quote()  << EsdlObjectName(*c.ctrl);
+      "wrong html object type: ").quote() << EsdlObjectName(*c.ctrl);
     return;
   }
+}
 //.............................................................................
-}void THtmlManager::funCall(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funCall(const TStrObjList &Params, TMacroData &E) {
   const size_t d_cnt = Params[0].CharCount('.');
   olxstr ctrl_name, evt_name;
-  if( d_cnt >= 1 )  {
+  if (d_cnt >= 1) {
     const size_t si = Params[0].IndexOf('.');
-    evt_name = Params[0].SubStringFrom(si+1);
+    evt_name = Params[0].SubStringFrom(si + 1);
     ctrl_name = Params[0].SubStringTo(si);
   }
-  else  {
+  else {
     E.ProcessingError(__OlxSrcInfo,
       "Invalid expression: ").quote() << Params[0];
     return;
   }
   Control c = FindControl(ctrl_name, E, 1, __OlxSrcInfo);
-  if( c.html == NULL || c.ctrl == NULL )  return;
+  if (c.html == NULL || c.ctrl == NULL)  return;
   volatile THtmlManager::DestructionLocker dm = LockDestruction(c.html, this);
-  if( !c.ctrl->ExecuteActionQueue(evt_name) )
+  if (!c.ctrl->ExecuteActionQueue(evt_name))
     E.ProcessingError(__OlxSrcInfo, "Failed to execute: ").quote() << Params[0];
 }
 //.............................................................................
@@ -839,27 +885,31 @@ void THtmlManager::funSelect(const TStrObjList &Params, TMacroData &E) {
   }
 }
 //.............................................................................
-bool THtmlManager::SetState(const TStrObjList &Params, TMacroData &E)  {
+bool THtmlManager::SetState(const TStrObjList &Params, TMacroData &E) {
   Control c = FindControl(Params[0], E, 0, __OlxSrcInfo);
-  if( c.html == NULL )  return false;
+  if (c.html == 0) {
+    return false;
+  }
   const bool state = Params.GetLastString().ToBool();
-  if( c.ctrl == NULL )  {
-    olxstr_dict<olxstr,false>* props =
+  if (c.ctrl == 0) {
+    olxstr_dict<olxstr, false>* props =
       c.html->ObjectsState.FindProperties(c.ctrl_name);
-    if( props == NULL )  {
+    if (props == 0) {
       E.ProcessingError(__OlxSrcInfo,
         "wrong html object name: ").quote() << c.ctrl_name;
       return false;
     }
-    if( props->IndexOf("checked") == InvalidIndex )  {
+    if (props->IndexOf("checked") == InvalidIndex) {
       E.ProcessingError(__OlxSrcInfo,
         "object definition does have state for: ").quote() << c.ctrl_name;
       return false;
     }
-    if( Params.Count() == 2 )
+    if (Params.Count() == 2) {
       (*props)["checked"] = state;
-    else
+    }
+    else {
       (*props)[Params[1]] = state;
+    }
   }
   else {
     c.html->SetObjectState(
@@ -889,23 +939,25 @@ void THtmlManager::funSetState(const TStrObjList &Params, TMacroData &E)  {
 //.............................................................................
 void THtmlManager::funSetEnabled(const TStrObjList &Params, TMacroData &E) {
   Control c = FindControl(Params[0], E, 1, __OlxSrcInfo);
-  if (c.ctrl == NULL) {
+  if (c.ctrl == 0) {
     E.ProcessingError(__OlxSrcInfo, "undefined control: ").quote() << Params[0];
     return;
   }
   c.ctrl->WI.SetEnabled(Params[1].ToBool());
 }
 //.............................................................................
-void THtmlManager::funSetItems(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funSetItems(const TStrObjList &Params, TMacroData &E) {
   Control c = FindControl(Params[0], E, 1, __OlxSrcInfo);
-  if( c.html == NULL || c.ctrl == NULL )  return;
+  if (c.html == 0 || c.ctrl == 0) {
+    return;
+  }
   c.html->SetObjectItems(c.ctrl, Params[1]);
 }
 //.............................................................................
-void THtmlManager::funSaveData(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funSaveData(const TStrObjList &Params, TMacroData &E) {
   olxstr hn = Params.Count() == 1 ? EmptyString() : Params[0];
   THtml* html = Params.Count() == 1 ? main : FindHtml(Params[0]);
-  if (html == NULL) {
+  if (html == 0) {
     E.ProcessingError(__OlxSrcInfo,
       "undefined html window: ").quote() << hn;
     return;
@@ -914,16 +966,16 @@ void THtmlManager::funSaveData(const TStrObjList &Params, TMacroData &E)  {
   html->ObjectsState.SaveToFile(fn);
 }
 //.............................................................................
-void THtmlManager::funLoadData(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funLoadData(const TStrObjList &Params, TMacroData &E) {
   olxstr hn = Params.Count() == 1 ? EmptyString() : Params[0];
   THtml* html = Params.Count() == 1 ? main : FindHtml(Params[0]);
-  if (html == NULL) {
+  if (html == 0) {
     E.ProcessingError(__OlxSrcInfo,
       "undefined html window: ").quote() << hn;
     return;
   }
   olxstr &fn = Params[Params.Count() == 1 ? 0 : 1];
-  if( !TEFile::Exists(fn) )  {
+  if (!TEFile::Exists(fn)) {
     E.ProcessingError(__OlxSrcInfo, "file does not exist: ") << fn;
     return;
   }
@@ -934,24 +986,28 @@ void THtmlManager::funLoadData(const TStrObjList &Params, TMacroData &E)  {
   }
 }
 //.............................................................................
-void THtmlManager::funSetFG(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funSetFG(const TStrObjList &Params, TMacroData &E) {
   Control c = FindControl(Params[0], E, 2, __OlxSrcInfo);
-  if( c.html == NULL || c.wnd == NULL )  return;
+  if (c.html == 0 || c.wnd == 0) {
+    return;
+  }
   const wxColor fgc = wxColor(Params[1].u_str());
   c.wnd->SetForegroundColour(fgc);
-  if( EsdlInstanceOf(*c.wnd, TComboBox) )  {
+  if (EsdlInstanceOf(*c.wnd, TComboBox)) {
     TComboBox* Box = (TComboBox*)c.wnd;
     //Box->SetForegroundColour(fgc);
   }
   c.wnd->Refresh();
 }
 //.............................................................................
-void THtmlManager::funSetBG(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funSetBG(const TStrObjList &Params, TMacroData &E) {
   Control c = FindControl(Params[0], E, 2, __OlxSrcInfo);
-  if( c.html == NULL || c.wnd == NULL )  return;
+  if (c.html == 0 || c.wnd == 0) {
+    return;
+  }
   const wxColor bgc(Params[1].u_str());
   c.wnd->SetBackgroundColour(bgc);
-  if( EsdlInstanceOf(*c.wnd, TComboBox) )  {
+  if (EsdlInstanceOf(*c.wnd, TComboBox)) {
     TComboBox* Box = (TComboBox*)c.wnd;
   }
   //else if( EsdlInstanceOf(*wxw, TTrackBar) )  {
@@ -960,10 +1016,10 @@ void THtmlManager::funSetBG(const TStrObjList &Params, TMacroData &E)  {
   c.wnd->Refresh();
 }
 //.............................................................................
-void THtmlManager::funGetFontName(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funGetFontName(const TStrObjList &Params, TMacroData &E) {
   olxstr hn = Params.IsEmpty() ? EmptyString() : Params[0];
   THtml* html = Params.IsEmpty() ? main : FindHtml(Params[0]);
-  if (html == NULL) {
+  if (html == 0) {
     E.ProcessingError(__OlxSrcInfo,
       "undefined html window: ").quote() << hn;
     return;
@@ -971,10 +1027,10 @@ void THtmlManager::funGetFontName(const TStrObjList &Params, TMacroData &E)  {
   E.SetRetVal<olxstr>(html->GetParser()->GetFontFace());
 }
 //.............................................................................
-void THtmlManager::funGetBorders(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funGetBorders(const TStrObjList &Params, TMacroData &E) {
   olxstr hn = Params.IsEmpty() ? EmptyString() : Params[0];
   THtml* html = Params.IsEmpty() ? main : FindHtml(Params[0]);
-  if (html == NULL) {
+  if (html == 0) {
     E.ProcessingError(__OlxSrcInfo,
       "undefined html window: ").quote() << hn;
     return;
@@ -982,24 +1038,31 @@ void THtmlManager::funGetBorders(const TStrObjList &Params, TMacroData &E)  {
   E.SetRetVal(html->GetBorders());
 }
 //.............................................................................
-void THtmlManager::funEndModal(const TStrObjList &Params, TMacroData &E)  {
-  THtmlManager::TPopupData *pd = Popups.Find(Params[0], NULL);
-  if( pd == NULL )  {
+void THtmlManager::funEndModal(const TStrObjList &Params, TMacroData &E) {
+  THtmlManager::TPopupData *pd = Popups.Find(Params[0], 0);
+  if (pd == 0) {
     E.ProcessingError(__OlxSrcInfo,
       "undefined html window: ").quote() << Params[0];
     return;
   }
-  if( !pd->Dialog->IsModal() )  {
+  if (!pd->Dialog->IsModal()) {
     E.ProcessingError(__OlxSrcInfo,
       "non-modal html window: ").quote() << Params[0];
     return;
   }
   pd->Dialog->EndModal(Params[1].ToInt());
+#ifdef __MAC__
+  pd->Html->OnLink.Remove(this);
+  pd->Html->Destroy();
+  pd->Dialog->Destroy();
+  delete pd;
+  Popups.Remove(Params[0]);
+#endif
 }
 //.............................................................................
-void THtmlManager::funShowModal(const TStrObjList &Params, TMacroData &E)  {
-  THtmlManager::TPopupData *pd = Popups.Find(Params[0], NULL);
-  if (pd == NULL) {
+void THtmlManager::funShowModal(const TStrObjList &Params, TMacroData &E) {
+  THtmlManager::TPopupData *pd = Popups.Find(Params[0], 0);
+  if (pd == 0) {
     E.ProcessingError(__OlxSrcInfo,
       "undefined html window: ").quote() << Params[0];
     return;
@@ -1008,78 +1071,94 @@ void THtmlManager::funShowModal(const TStrObjList &Params, TMacroData &E)  {
     pd->Dialog->ShowModalEx(Params.Count() == 1 ? false : Params[1].ToBool()));
 }
 //.............................................................................
-void THtmlManager::funWidth(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funWidth(const TStrObjList &Params, TMacroData &E) {
   Control c = FindControl(Params[0], E, 2, __OlxSrcInfo);
-  if( c.html == NULL || c.wnd == NULL )  return;
-  if( Params.Count() == 1 )
+  if (c.html == 0 || c.wnd == 0) {
+    return;
+  }
+  if (Params.Count() == 1) {
     E.SetRetVal(c.wnd->GetSize().GetWidth());
-  else
+  }
+  else {
     c.wnd->SetSize(-1, -1, Params[1].ToInt(), -1);
+  }
 }
 //.............................................................................
-void THtmlManager::funHeight(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funHeight(const TStrObjList &Params, TMacroData &E) {
   Control c = FindControl(Params[0], E, 2, __OlxSrcInfo);
-  if( c.html == NULL || c.wnd == NULL )  return;
-  if( Params.Count() == 1 )
+  if (c.html == 0 || c.wnd == 0) {
+    return;
+  }
+  if (Params.Count() == 1) {
     E.SetRetVal(c.wnd->GetSize().GetHeight());
-  else
+  }
+  else {
     c.wnd->SetSize(-1, -1, -1, Params[1].ToInt());
+  }
 }
 //.............................................................................
-void THtmlManager::funClientWidth(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funClientWidth(const TStrObjList &Params, TMacroData &E) {
   Control c = FindControl(Params[0], E, 2, __OlxSrcInfo);
-  if( c.html == NULL || c.wnd == NULL )  {
-    if( Params.Count() == 1 ) {
+  if (c.html == 0 || c.wnd == 0) {
+    if (Params.Count() == 1) {
       E.Reset();
       E.SetRetVal(0);
     }
     return;
   }
-  if( Params.Count() == 1 )
+  if (Params.Count() == 1) {
     E.SetRetVal(c.wnd->GetClientSize().GetWidth());
-  else
+  }
+  else {
     c.wnd->SetClientSize(Params[1].ToInt(), -1);
+  }
 }
 //.............................................................................
-void THtmlManager::funClientHeight(const TStrObjList &Params, TMacroData &E)  {
+void THtmlManager::funClientHeight(const TStrObjList &Params, TMacroData &E) {
   Control c = FindControl(Params[0], E, 2, __OlxSrcInfo);
-  if( c.html == NULL || c.wnd == NULL )  {
-    if( Params.Count() == 1 ) {
+  if (c.html == 0 || c.wnd == 0) {
+    if (Params.Count() == 1) {
       E.Reset();
       E.SetRetVal(0);
     }
     return;
   }
-  if( Params.Count() == 1 )
+  if (Params.Count() == 1) {
     E.SetRetVal(c.wnd->GetClientSize().GetHeight());
-  else
+  }
+  else {
     c.wnd->SetClientSize(-1, Params[1].ToInt());
+  }
 }
 //.............................................................................
-void THtmlManager::funContainerWidth(const TStrObjList &Params, TMacroData &E)  {
-  THtmlManager::TPopupData *pd = Popups.Find(Params[0], NULL);
-  if( pd == NULL )  {
+void THtmlManager::funContainerWidth(const TStrObjList &Params, TMacroData &E) {
+  THtmlManager::TPopupData *pd = Popups.Find(Params[0], 0);
+  if (pd == 0) {
     E.ProcessingError(__OlxSrcInfo,
       "undefined html window: ").quote() << Params[0];
     return;
   }
-  if( Params.Count() == 1 )
+  if (Params.Count() == 1) {
     E.SetRetVal(pd->Dialog->GetClientSize().GetWidth());
-  else
+  }
+  else {
     pd->Dialog->SetClientSize(Params[1].ToInt(), -1);
+  }
 }
 //.............................................................................
-void THtmlManager::funContainerHeight(const TStrObjList &Params, TMacroData &E)  {
-  THtmlManager::TPopupData *pd = Popups.Find(Params[0], NULL);
-  if( pd == NULL )  {
+void THtmlManager::funContainerHeight(const TStrObjList &Params, TMacroData &E) {
+  THtmlManager::TPopupData *pd = Popups.Find(Params[0], 0);
+  if (pd == 0) {
     E.ProcessingError(__OlxSrcInfo,
       "undefined html window: ").quote() << Params[0];
     return;
   }
-  if( Params.Count() == 1 )
+  if (Params.Count() == 1) {
     E.SetRetVal(pd->Dialog->GetClientSize().GetHeight());
-  else
+  }
+  else {
     pd->Dialog->SetClientSize(-1, Params[1].ToInt());
+  }
 }
 //.............................................................................
 void THtmlManager::macGroup(TStrObjList &Cmds, const TParamList &Options,
@@ -1106,7 +1185,7 @@ void THtmlManager::funSnippet(const TStrObjList &Params,
   TMacroData &E)
 {
   IInputStream *is = TFileHandlerManager::GetInputStream(Params[0]);
-  if (is == NULL) {
+  if (is == 0) {
     TBasicApp::NewLogEntry(logError) <<
       (olxstr("THtmlSwitch::File does not exist: ").quote() << Params[0]);
     return;
