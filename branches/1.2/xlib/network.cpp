@@ -81,69 +81,82 @@ void TNetwork::CreateBondsAndFragments(ASObjectProvider& objects, TNetPList& Fra
   }
 }
 //..............................................................................
-void TNetwork::Disassemble(ASObjectProvider& objects, TNetPList& Frags)  {
+void TNetwork::Disassemble(ASObjectProvider& objects, TNetPList& Frags) {
   //define the cosine of minimum allowed angle
-  const double cos_th = cos(TXApp::GetMinHBondAngle()*M_PI/180);
+  const double cos_th = cos(TXApp::GetMinHBondAngle()*M_PI / 180);
   const TUnitCell& uc = Lattice->GetUnitCell();
   const size_t ac = objects.atoms.Count();
-  for (size_t i=0; i < ac; i++) {
+  for (size_t i = 0; i < ac; i++) {
     TSAtom& sa = objects.atoms[i];
     sa.ClearBonds();
     sa.ClearNodes();
-    if (sa.IsDeleted()) continue;
-    for (size_t j=0; j < sa.CAtom().AttachedSiteCount(); j++) {
+    if (sa.IsDeleted()) {
+      continue;
+    }
+    for (size_t j = 0; j < sa.CAtom().AttachedSiteCount(); j++) {
       TCAtom::Site& site = sa.CAtom().GetAttachedSite(j);
       const smatd m = uc.MulMatrix(site.matrix, sa.GetMatrix());
       TSAtom* a = objects.atomRegistry.Find(
         TSAtom::GetRef(*site.atom, m));
-      if( a != NULL && !a->IsDeleted() )
+      if (a != 0 && !a->IsDeleted()) {
         sa.AddNode(*a);
+      }
     }
   }
   // in second pass - Nodes have to get initialised
   SortedObjectList<int, TPrimitiveComparator> &from = TXApp::GetInteractionsFrom();
   SortedObjectList<int, TPrimitiveComparator> &to = TXApp::GetInteractionsTo();
   objects.atoms.ForEach(ACollectionItem::TagSetter(0));
-  for (size_t i=0; i < ac; i++) {
+  for (size_t i = 0; i < ac; i++) {
     TSAtom& sa = objects.atoms[i];
-    if (sa.IsDeleted() || sa.GetTag() != 0) continue;
+    if (sa.IsDeleted() || sa.GetTag() != 0) {
+      continue;
+    }
     const cm_Element& thisT = sa.GetType();
-    if (!from.Contains(thisT.z))  continue;
-    for( size_t j=0; j < sa.CAtom().AttachedSiteICount(); j++ )  {
+    if (!from.Contains(thisT.z)) {
+      continue;
+    }
+    for (size_t j = 0; j < sa.CAtom().AttachedSiteICount(); j++) {
       TCAtom::Site& site = sa.CAtom().GetAttachedSiteI(j);
       const cm_Element& thatT = site.atom->GetType();
-      if (!to.Contains(thatT.z)) continue;
+      if (!to.Contains(thatT.z)) {
+        continue;
+      }
       const smatd m = sa.GetMatrix().IsFirst() ? site.matrix :
         uc.MulMatrix(site.matrix, sa.GetMatrix());
       TSAtom* a = objects.atomRegistry.Find(
         TSAtom::Ref(site.atom->GetId(), m.GetId()));
-      if (a == NULL || a->IsDeleted()) {
-        for( size_t k=0; k < site.atom->EquivCount(); k++ )  {
+      if (a == 0 || a->IsDeleted()) {
+        for (size_t k = 0; k < site.atom->EquivCount(); k++) {
           uint32_t id = uc.MulMatrixId(site.atom->GetEquiv(k), m);
-            a = objects.atomRegistry.Find(
+          a = objects.atomRegistry.Find(
             TSAtom::Ref(site.atom->GetId(), id));
-          if (a != NULL && !a->IsDeleted())
+          if (a != 0 && !a->IsDeleted()) {
             break;
+          }
         }
       }
-      if (a != NULL) {
+      if (a != 0) {
         a->SetTag(1);
         bool process = true;
         double min_cs = cos_th;
-        for( size_t k=0; k < sa.NodeCount(); k++ )  {
-          if( sa.Node(k).GetType() != iQPeakZ )  {
-            if( a->IsConnectedTo(sa.Node(k)) )  {
+        for (size_t k = 0; k < sa.NodeCount(); k++) {
+          if (sa.Node(k).GetType() != iQPeakZ) {
+            if (a->IsConnectedTo(sa.Node(k))) {
               process = false;
               break;
             }
-            else  {
-              double cs = (sa.Node(k).crd()-sa.crd()).CAngle(a->crd()-sa.crd());
-              if( cs < min_cs )
+            else {
+              double cs = (sa.Node(k).crd() - sa.crd()).CAngle(a->crd() - sa.crd());
+              if (cs < min_cs) {
                 min_cs = cs;
+              }
             }
           }
         }
-        if( !process || min_cs >= cos_th )  continue;
+        if (!process || min_cs >= cos_th) {
+          continue;
+        }
         TSBond& B = objects.bonds.New(&Lattice->GetNetwork());
         B.SetType(sotHBond);
         B.SetA(sa);

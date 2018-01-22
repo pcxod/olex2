@@ -202,7 +202,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(OLX_WX_DIR_V12)\lib\vc_lib\mswd;$(OLX_WX_DIR_V12)\include;../../../sdl;../../../repository;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(OLX_WX_DIR)\lib\vc_lib\mswd;$(OLX_WX_DIR)\include;../../../sdl;../../../repository;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;__WXWIDGETS__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <MinimalRebuild>true</MinimalRebuild>
@@ -215,8 +215,8 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>sdl.lib;wxbase$(OLX_WX_VER_V12)d.lib;wxbase$(OLX_WX_VER_V12)d_net.lib;wxbase$(OLX_WX_VER_V12)d_odbc.lib;wxbase$(OLX_WX_VER_V12)d_xml.lib;wxexpatd.lib;wxjpegd.lib;wxmsw$(OLX_WX_VER_V12)d_adv.lib;wxmsw$(OLX_WX_VER_V12)d_aui.lib;wxmsw$(OLX_WX_VER_V12)d_core.lib;wxmsw$(OLX_WX_VER_V12)d_dbgrid.lib;wxmsw$(OLX_WX_VER_V12)d_gl.lib;wxmsw$(OLX_WX_VER_V12)d_media.lib;wxmsw$(OLX_WX_VER_V12)d_qa.lib;wxmsw$(OLX_WX_VER_V12)d_richtext.lib;wxmsw$(OLX_WX_VER_V12)d_xrc.lib;wxmsw$(OLX_WX_VER_V12)d_html.lib;wxpngd.lib;wxregexd.lib;wxtiffd.lib;wxzlibd.lib;mapi32.lib;glu32.lib;user32.lib;opengl32.lib;gdi32.lib;ole32.lib;advapi32.lib;comdlg32.lib;comctl32.lib;shell32.lib;rpcrt4.lib;oleaut32.lib;kernel32.lib;wsock32.lib;Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(OLX_WX_DIR_V12)\lib\vc_lib;$(SolutionDir)$(Configuration)\lib;</AdditionalLibraryDirectories>
+      <AdditionalDependencies>sdl.lib;wxbase$(OLX_WX_VER)d.lib;wxbase$(OLX_WX_VER)d_net.lib;wxbase$(OLX_WX_VER)d_odbc.lib;wxbase$(OLX_WX_VER)d_xml.lib;wxexpatd.lib;wxjpegd.lib;wxmsw$(OLX_WX_VER)d_adv.lib;wxmsw$(OLX_WX_VER)d_aui.lib;wxmsw$(OLX_WX_VER)d_core.lib;wxmsw$(OLX_WX_VER)d_dbgrid.lib;wxmsw$(OLX_WX_VER)d_gl.lib;wxmsw$(OLX_WX_VER)d_media.lib;wxmsw$(OLX_WX_VER)d_qa.lib;wxmsw$(OLX_WX_VER)d_richtext.lib;wxmsw$(OLX_WX_VER)d_xrc.lib;wxmsw$(OLX_WX_VER)d_html.lib;wxpngd.lib;wxregexd.lib;wxtiffd.lib;wxzlibd.lib;mapi32.lib;glu32.lib;user32.lib;opengl32.lib;gdi32.lib;ole32.lib;advapi32.lib;comdlg32.lib;comctl32.lib;shell32.lib;rpcrt4.lib;oleaut32.lib;kernel32.lib;wsock32.lib;Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OLX_WX_DIR)\lib\vc_lib;$(SolutionDir)$(Configuration)\lib;</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
@@ -231,7 +231,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(OLX_WX_DIR_V12)\lib\vc_lib\mswd;$(OLX_WX_DIR_V12)\include;../../../sdl;../../../repository;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(OLX_WX_DIR)\lib\vc_lib\mswd;$(OLX_WX_DIR)\include;../../../sdl;../../../repository;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;__WXWIDGETS__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <MinimalRebuild>true</MinimalRebuild>
@@ -244,8 +244,8 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>sdl.lib;wxbase$(OLX_WX_VER_V12)d.lib;wxbase$(OLX_WX_VER_V12)d_net.lib;wxbase$(OLX_WX_VER_V12)d_odbc.lib;wxbase$(OLX_WX_VER_V12)d_xml.lib;wxexpatd.lib;wxjpegd.lib;wxmsw$(OLX_WX_VER_V12)d_adv.lib;wxmsw$(OLX_WX_VER_V12)d_aui.lib;wxmsw$(OLX_WX_VER_V12)d_core.lib;wxmsw$(OLX_WX_VER_V12)d_dbgrid.lib;wxmsw$(OLX_WX_VER_V12)d_gl.lib;wxmsw$(OLX_WX_VER_V12)d_media.lib;wxmsw$(OLX_WX_VER_V12)d_qa.lib;wxmsw$(OLX_WX_VER_V12)d_richtext.lib;wxmsw$(OLX_WX_VER_V12)d_xrc.lib;wxmsw$(OLX_WX_VER_V12)d_html.lib;wxpngd.lib;wxregexd.lib;wxtiffd.lib;wxzlibd.lib;mapi32.lib;glu32.lib;user32.lib;opengl32.lib;gdi32.lib;ole32.lib;advapi32.lib;comdlg32.lib;comctl32.lib;shell32.lib;rpcrt4.lib;oleaut32.lib;kernel32.lib;wsock32.lib;Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(OLX_WX64_DIR_V12)\lib\vc_lib;$(SolutionDir)$(Platform)\$(Configuration)\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>sdl.lib;wxbase$(OLX_WX_VER)d.lib;wxbase$(OLX_WX_VER)d_net.lib;wxbase$(OLX_WX_VER)d_odbc.lib;wxbase$(OLX_WX_VER)d_xml.lib;wxexpatd.lib;wxjpegd.lib;wxmsw$(OLX_WX_VER)d_adv.lib;wxmsw$(OLX_WX_VER)d_aui.lib;wxmsw$(OLX_WX_VER)d_core.lib;wxmsw$(OLX_WX_VER)d_dbgrid.lib;wxmsw$(OLX_WX_VER)d_gl.lib;wxmsw$(OLX_WX_VER)d_media.lib;wxmsw$(OLX_WX_VER)d_qa.lib;wxmsw$(OLX_WX_VER)d_richtext.lib;wxmsw$(OLX_WX_VER)d_xrc.lib;wxmsw$(OLX_WX_VER)d_html.lib;wxpngd.lib;wxregexd.lib;wxtiffd.lib;wxzlibd.lib;mapi32.lib;glu32.lib;user32.lib;opengl32.lib;gdi32.lib;ole32.lib;advapi32.lib;comdlg32.lib;comctl32.lib;shell32.lib;rpcrt4.lib;oleaut32.lib;kernel32.lib;wsock32.lib;Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OLX_WX_DIR)\lib\vc_lib;$(SolutionDir)$(Platform)\$(Configuration)\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
@@ -261,7 +261,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <WholeProgramOptimization>true</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>$(OLX_WX_DIR_V12)\lib\vc_lib\msw;$(OLX_WX_DIR_V12)\include;../../../sdl;../../../repository;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(OLX_WX_DIR)\lib\vc_lib\msw;$(OLX_WX_DIR)\include;../../../sdl;../../../repository;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;__WXWIDGETS__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
@@ -276,8 +276,8 @@
       </DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>sdl.lib;wxexpat.lib;wxjpeg.lib;wxbase$(OLX_WX_VER_V12).lib;wxbase$(OLX_WX_VER_V12)_net.lib;wxmsw$(OLX_WX_VER_V12)_gl.lib;wxmsw$(OLX_WX_VER_V12)_richtext.lib;wxmsw$(OLX_WX_VER_V12)_html.lib;wxmsw$(OLX_WX_VER_V12)_core.lib;wxmsw$(OLX_WX_VER_V12)_adv.lib;wxpng.lib;wxregex.lib;wxtiff.lib;wxzlib.lib;mapi32.lib;glu32.lib;user32.lib;opengl32.lib;gdi32.lib;ole32.lib;advapi32.lib;comdlg32.lib;comctl32.lib;shell32.lib;rpcrt4.lib;oleaut32.lib;kernel32.lib;wsock32.lib;Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(OLX_WX_DIR_V12)\lib\vc_lib;$(SolutionDir)$(Configuration)\lib;</AdditionalLibraryDirectories>
+      <AdditionalDependencies>sdl.lib;wxexpat.lib;wxjpeg.lib;wxbase$(OLX_WX_VER).lib;wxbase$(OLX_WX_VER)_net.lib;wxmsw$(OLX_WX_VER)_gl.lib;wxmsw$(OLX_WX_VER)_richtext.lib;wxmsw$(OLX_WX_VER)_html.lib;wxmsw$(OLX_WX_VER)_core.lib;wxmsw$(OLX_WX_VER)_adv.lib;wxpng.lib;wxregex.lib;wxtiff.lib;wxzlib.lib;mapi32.lib;glu32.lib;user32.lib;opengl32.lib;gdi32.lib;ole32.lib;advapi32.lib;comdlg32.lib;comctl32.lib;shell32.lib;rpcrt4.lib;oleaut32.lib;kernel32.lib;wsock32.lib;Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OLX_WX_DIR)\lib\vc_lib;$(SolutionDir)$(Configuration)\lib;</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -298,7 +298,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <WholeProgramOptimization>true</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>$(OLX_WX_DIR_V12)\lib\vc_lib\msw;$(OLX_WX_DIR_V12)\include;../../../sdl;../../../repository;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(OLX_WX_DIR)\lib\vc_lib\msw;$(OLX_WX_DIR)\include;../../../sdl;../../../repository;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;__WXWIDGETS__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
@@ -313,8 +313,8 @@
       </DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>sdl.lib;wxexpat.lib;wxjpeg.lib;wxbase$(OLX_WX_VER_V12).lib;wxbase$(OLX_WX_VER_V12)_net.lib;wxmsw$(OLX_WX_VER_V12)_gl.lib;wxmsw$(OLX_WX_VER_V12)_richtext.lib;wxmsw$(OLX_WX_VER_V12)_html.lib;wxmsw$(OLX_WX_VER_V12)_core.lib;wxmsw$(OLX_WX_VER_V12)_adv.lib;wxpng.lib;wxregex.lib;wxtiff.lib;wxzlib.lib;mapi32.lib;glu32.lib;user32.lib;opengl32.lib;gdi32.lib;ole32.lib;advapi32.lib;comdlg32.lib;comctl32.lib;shell32.lib;rpcrt4.lib;oleaut32.lib;kernel32.lib;wsock32.lib;Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(OLX_WX64_DIR_V12)\lib\vc_lib;$(SolutionDir)$(Platform)\$(Configuration)\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>sdl.lib;wxexpat.lib;wxjpeg.lib;wxbase$(OLX_WX_VER).lib;wxbase$(OLX_WX_VER)_net.lib;wxmsw$(OLX_WX_VER)_gl.lib;wxmsw$(OLX_WX_VER)_richtext.lib;wxmsw$(OLX_WX_VER)_html.lib;wxmsw$(OLX_WX_VER)_core.lib;wxmsw$(OLX_WX_VER)_adv.lib;wxpng.lib;wxregex.lib;wxtiff.lib;wxzlib.lib;mapi32.lib;glu32.lib;user32.lib;opengl32.lib;gdi32.lib;ole32.lib;advapi32.lib;comdlg32.lib;comctl32.lib;shell32.lib;rpcrt4.lib;oleaut32.lib;kernel32.lib;wsock32.lib;Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OLX_WX_DIR)\lib\vc_lib;$(SolutionDir)$(Platform)\$(Configuration)\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -328,7 +328,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(OLX_WX_DIR_V12)\lib\vc_lib\mswud;$(OLX_WX_DIR_V12)\include;../../../sdl;../../../repository;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(OLX_WX_DIR)\lib\vc_lib\mswud;$(OLX_WX_DIR)\include;../../../sdl;../../../repository;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_UNICODE;_DEBUG;__WXWIDGETS__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -338,8 +338,8 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>sdl.lib;wxexpatd.lib;wxjpegd.lib;wxbase$(OLX_WX_VER_V12)ud.lib;wxbase$(OLX_WX_VER_V12)ud_net.lib;wxmsw$(OLX_WX_VER_V12)ud_gl.lib;wxmsw$(OLX_WX_VER_V12)ud_richtext.lib;wxmsw$(OLX_WX_VER_V12)ud_html.lib;wxmsw$(OLX_WX_VER_V12)ud_core.lib;wxmsw$(OLX_WX_VER_V12)ud_adv.lib;wxpngd.lib;wxregexud.lib;wxtiffd.lib;wxzlibd.lib;mapi32.lib;glu32.lib;user32.lib;opengl32.lib;gdi32.lib;ole32.lib;advapi32.lib;comdlg32.lib;comctl32.lib;shell32.lib;rpcrt4.lib;oleaut32.lib;kernel32.lib;wsock32.lib;Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(OLX_WX_DIR_V12)\lib\vc_lib;$(SolutionDir)$(Platform)\$(Configuration)\lib\</AdditionalLibraryDirectories>
+      <AdditionalDependencies>sdl.lib;wxexpatd.lib;wxjpegd.lib;wxbase$(OLX_WX_VER)ud.lib;wxbase$(OLX_WX_VER)ud_net.lib;wxmsw$(OLX_WX_VER)ud_gl.lib;wxmsw$(OLX_WX_VER)ud_richtext.lib;wxmsw$(OLX_WX_VER)ud_html.lib;wxmsw$(OLX_WX_VER)ud_core.lib;wxmsw$(OLX_WX_VER)ud_adv.lib;wxpngd.lib;wxregexud.lib;wxtiffd.lib;wxzlibd.lib;mapi32.lib;glu32.lib;user32.lib;opengl32.lib;gdi32.lib;ole32.lib;advapi32.lib;comdlg32.lib;comctl32.lib;shell32.lib;rpcrt4.lib;oleaut32.lib;kernel32.lib;wsock32.lib;Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OLX_WX_DIR)\lib\vc_lib;$(SolutionDir)$(Platform)\$(Configuration)\lib\</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AssemblyDebug>true</AssemblyDebug>
       <SubSystem>Console</SubSystem>
@@ -354,7 +354,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(OLX_WX64_DIR_V12)\lib\vc_lib\mswud;$(OLX_WX64_DIR_V12)\include;../../../sdl;../../../repository;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(OLX_WX_DIR)\lib\vc_lib\mswud;$(OLX_WX_DIR)\include;../../../sdl;../../../repository;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_UNICODE;_DEBUG;__WXWIDGETS__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -364,8 +364,8 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>sdl.lib;wxexpatd.lib;wxjpegd.lib;wxbase$(OLX_WX_VER_V12)ud.lib;wxbase$(OLX_WX_VER_V12)ud_net.lib;wxmsw$(OLX_WX_VER_V12)ud_gl.lib;wxmsw$(OLX_WX_VER_V12)ud_richtext.lib;wxmsw$(OLX_WX_VER_V12)ud_html.lib;wxmsw$(OLX_WX_VER_V12)ud_core.lib;wxmsw$(OLX_WX_VER_V12)ud_adv.lib;wxpngd.lib;wxregexud.lib;wxtiffd.lib;wxzlibd.lib;mapi32.lib;glu32.lib;user32.lib;opengl32.lib;gdi32.lib;ole32.lib;advapi32.lib;comdlg32.lib;comctl32.lib;shell32.lib;rpcrt4.lib;oleaut32.lib;kernel32.lib;wsock32.lib;Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(OLX_WX64_DIR_V12)\lib\vc_lib;$(SolutionDir)$(Platform)\$(Configuration)\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>sdl.lib;wxexpatd.lib;wxjpegd.lib;wxbase$(OLX_WX_VER)ud.lib;wxbase$(OLX_WX_VER)ud_net.lib;wxmsw$(OLX_WX_VER)ud_gl.lib;wxmsw$(OLX_WX_VER)ud_richtext.lib;wxmsw$(OLX_WX_VER)ud_html.lib;wxmsw$(OLX_WX_VER)ud_core.lib;wxmsw$(OLX_WX_VER)ud_adv.lib;wxpngd.lib;wxregexud.lib;wxtiffd.lib;wxzlibd.lib;mapi32.lib;glu32.lib;user32.lib;opengl32.lib;gdi32.lib;ole32.lib;advapi32.lib;comdlg32.lib;comctl32.lib;shell32.lib;rpcrt4.lib;oleaut32.lib;kernel32.lib;wsock32.lib;Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OLX_WX_DIR)\lib\vc_lib;$(SolutionDir)$(Platform)\$(Configuration)\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AssemblyDebug>true</AssemblyDebug>
       <SubSystem>Console</SubSystem>
@@ -382,7 +382,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <WholeProgramOptimization>true</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>$(OLX_WX_DIR_V12)\lib\vc_lib\mswu;$(OLX_WX_DIR_V12)\include;../../../sdl;../../../repository;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(OLX_WX_DIR)\lib\vc_lib\mswu;$(OLX_WX_DIR)\include;../../../sdl;../../../repository;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_UNICODE;__WXWIDGETS__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -393,8 +393,8 @@
       </DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>sdl.lib;wxexpat.lib;wxjpeg.lib;wxbase$(OLX_WX_VER_V12)u.lib;wxbase$(OLX_WX_VER_V12)u_net.lib;wxmsw$(OLX_WX_VER_V12)u_gl.lib;wxmsw$(OLX_WX_VER_V12)u_richtext.lib;wxmsw$(OLX_WX_VER_V12)u_html.lib;wxmsw$(OLX_WX_VER_V12)u_core.lib;wxmsw$(OLX_WX_VER_V12)u_adv.lib;wxpng.lib;wxregexu.lib;wxtiff.lib;wxzlib.lib;mapi32.lib;glu32.lib;user32.lib;opengl32.lib;gdi32.lib;ole32.lib;advapi32.lib;comdlg32.lib;comctl32.lib;shell32.lib;rpcrt4.lib;oleaut32.lib;kernel32.lib;wsock32.lib;Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(OLX_WX_DIR_V12)\lib\vc_lib;$(SolutionDir)$(Configuration)\lib;</AdditionalLibraryDirectories>
+      <AdditionalDependencies>sdl.lib;wxexpat.lib;wxjpeg.lib;wxbase$(OLX_WX_VER)u.lib;wxbase$(OLX_WX_VER)u_net.lib;wxmsw$(OLX_WX_VER)u_gl.lib;wxmsw$(OLX_WX_VER)u_richtext.lib;wxmsw$(OLX_WX_VER)u_html.lib;wxmsw$(OLX_WX_VER)u_core.lib;wxmsw$(OLX_WX_VER)u_adv.lib;wxpng.lib;wxregexu.lib;wxtiff.lib;wxzlib.lib;mapi32.lib;glu32.lib;user32.lib;opengl32.lib;gdi32.lib;ole32.lib;advapi32.lib;comdlg32.lib;comctl32.lib;shell32.lib;rpcrt4.lib;oleaut32.lib;kernel32.lib;wsock32.lib;Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OLX_WX_DIR)\lib\vc_lib;$(SolutionDir)$(Configuration)\lib;</AdditionalLibraryDirectories>
       <SubSystem>Console</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DataExecutionPrevention>
@@ -411,7 +411,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <WholeProgramOptimization>true</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>$(OLX_WX64_DIR_V12)\lib\vc_lib\mswu;$(OLX_WX64_DIR_V12)\include;../../../sdl;../../../repository;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(OLX_WX_DIR)\lib\vc_lib\mswu;$(OLX_WX_DIR)\include;../../../sdl;../../../repository;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_UNICODE;__WXWIDGETS__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -422,8 +422,8 @@
       </DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>sdl.lib;wxexpat.lib;wxjpeg.lib;wxbase$(OLX_WX_VER_V12)u.lib;wxbase$(OLX_WX_VER_V12)u_net.lib;wxmsw$(OLX_WX_VER_V12)u_gl.lib;wxmsw$(OLX_WX_VER_V12)u_richtext.lib;wxmsw$(OLX_WX_VER_V12)u_html.lib;wxmsw$(OLX_WX_VER_V12)u_core.lib;wxmsw$(OLX_WX_VER_V12)u_adv.lib;wxpng.lib;wxregexu.lib;wxtiff.lib;wxzlib.lib;mapi32.lib;glu32.lib;user32.lib;opengl32.lib;gdi32.lib;ole32.lib;advapi32.lib;comdlg32.lib;comctl32.lib;shell32.lib;rpcrt4.lib;oleaut32.lib;kernel32.lib;wsock32.lib;Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(OLX_WX64_DIR_V12)\lib\vc_lib;$(SolutionDir)$(Platform)\$(Configuration)\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>sdl.lib;wxexpat.lib;wxjpeg.lib;wxbase$(OLX_WX_VER)u.lib;wxbase$(OLX_WX_VER)u_net.lib;wxmsw$(OLX_WX_VER)u_gl.lib;wxmsw$(OLX_WX_VER)u_richtext.lib;wxmsw$(OLX_WX_VER)u_html.lib;wxmsw$(OLX_WX_VER)u_core.lib;wxmsw$(OLX_WX_VER)u_adv.lib;wxpng.lib;wxregexu.lib;wxtiff.lib;wxzlib.lib;mapi32.lib;glu32.lib;user32.lib;opengl32.lib;gdi32.lib;ole32.lib;advapi32.lib;comdlg32.lib;comctl32.lib;shell32.lib;rpcrt4.lib;oleaut32.lib;kernel32.lib;wsock32.lib;Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OLX_WX_DIR)\lib\vc_lib;$(SolutionDir)$(Platform)\$(Configuration)\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Console</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DataExecutionPrevention>
@@ -438,7 +438,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <WholeProgramOptimization>true</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>$(OLX_WX_DIR_V12)\lib\vc_lib\mswu;$(OLX_WX_DIR_V12)\include;../../../sdl;../../../repository;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(OLX_WX_DIR)\lib\vc_lib\mswu;$(OLX_WX_DIR)\include;../../../sdl;../../../repository;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_UNICODE;__WXWIDGETS__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -449,8 +449,8 @@
       </DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>sdl.lib;wxexpat.lib;wxjpeg.lib;wxbase$(OLX_WX_VER_V12)u.lib;wxbase$(OLX_WX_VER_V12)u_net.lib;wxmsw$(OLX_WX_VER_V12)u_gl.lib;wxmsw$(OLX_WX_VER_V12)u_richtext.lib;wxmsw$(OLX_WX_VER_V12)u_html.lib;wxmsw$(OLX_WX_VER_V12)u_core.lib;wxmsw$(OLX_WX_VER_V12)u_adv.lib;wxpng.lib;wxregexu.lib;wxtiff.lib;wxzlib.lib;mapi32.lib;glu32.lib;user32.lib;opengl32.lib;gdi32.lib;ole32.lib;advapi32.lib;comdlg32.lib;comctl32.lib;shell32.lib;rpcrt4.lib;oleaut32.lib;kernel32.lib;wsock32.lib;Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(OLX_WX_DIR_V12)\lib\vc_lib;$(SolutionDir)$(Configuration)\lib;</AdditionalLibraryDirectories>
+      <AdditionalDependencies>sdl.lib;wxexpat.lib;wxjpeg.lib;wxbase$(OLX_WX_VER)u.lib;wxbase$(OLX_WX_VER)u_net.lib;wxmsw$(OLX_WX_VER)u_gl.lib;wxmsw$(OLX_WX_VER)u_richtext.lib;wxmsw$(OLX_WX_VER)u_html.lib;wxmsw$(OLX_WX_VER)u_core.lib;wxmsw$(OLX_WX_VER)u_adv.lib;wxpng.lib;wxregexu.lib;wxtiff.lib;wxzlib.lib;mapi32.lib;glu32.lib;user32.lib;opengl32.lib;gdi32.lib;ole32.lib;advapi32.lib;comdlg32.lib;comctl32.lib;shell32.lib;rpcrt4.lib;oleaut32.lib;kernel32.lib;wsock32.lib;Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OLX_WX_DIR)\lib\vc_lib;$(SolutionDir)$(Configuration)\lib;</AdditionalLibraryDirectories>
       <SubSystem>Console</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DataExecutionPrevention>
@@ -467,7 +467,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <WholeProgramOptimization>true</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>$(OLX_WX64_DIR_V12)\lib\vc_lib\mswu;$(OLX_WX64_DIR_V12)\include;../../../sdl;../../../repository;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(OLX_WX_DIR)\lib\vc_lib\mswu;$(OLX_WX_DIR)\include;../../../sdl;../../../repository;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_UNICODE;__WXWIDGETS__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -478,8 +478,8 @@
       </DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>sdl.lib;wxexpat.lib;wxjpeg.lib;wxbase$(OLX_WX_VER_V12)u.lib;wxbase$(OLX_WX_VER_V12)u_net.lib;wxmsw$(OLX_WX_VER_V12)u_gl.lib;wxmsw$(OLX_WX_VER_V12)u_richtext.lib;wxmsw$(OLX_WX_VER_V12)u_html.lib;wxmsw$(OLX_WX_VER_V12)u_core.lib;wxmsw$(OLX_WX_VER_V12)u_adv.lib;wxpng.lib;wxregexu.lib;wxtiff.lib;wxzlib.lib;mapi32.lib;glu32.lib;user32.lib;opengl32.lib;gdi32.lib;ole32.lib;advapi32.lib;comdlg32.lib;comctl32.lib;shell32.lib;rpcrt4.lib;oleaut32.lib;kernel32.lib;wsock32.lib;Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(OLX_WX64_DIR_V12)\lib\vc_lib;$(SolutionDir)$(Platform)\$(Configuration)\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>sdl.lib;wxexpat.lib;wxjpeg.lib;wxbase$(OLX_WX_VER)u.lib;wxbase$(OLX_WX_VER)u_net.lib;wxmsw$(OLX_WX_VER)u_gl.lib;wxmsw$(OLX_WX_VER)u_richtext.lib;wxmsw$(OLX_WX_VER)u_html.lib;wxmsw$(OLX_WX_VER)u_core.lib;wxmsw$(OLX_WX_VER)u_adv.lib;wxpng.lib;wxregexu.lib;wxtiff.lib;wxzlib.lib;mapi32.lib;glu32.lib;user32.lib;opengl32.lib;gdi32.lib;ole32.lib;advapi32.lib;comdlg32.lib;comctl32.lib;shell32.lib;rpcrt4.lib;oleaut32.lib;kernel32.lib;wsock32.lib;Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OLX_WX_DIR)\lib\vc_lib;$(SolutionDir)$(Platform)\$(Configuration)\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Console</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DataExecutionPrevention>
@@ -494,7 +494,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <WholeProgramOptimization>true</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>$(OLX_WX_DIR_V12)\lib\vc_lib\mswu;$(OLX_WX_DIR_V12)\include;../../../sdl;../../../repository;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(OLX_WX_DIR)\lib\vc_lib\mswu;$(OLX_WX_DIR)\include;../../../sdl;../../../repository;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_UNICODE;__WXWIDGETS__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -505,8 +505,8 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>sdl.lib;wxexpat.lib;wxjpeg.lib;wxbase$(OLX_WX_VER_V12)u.lib;wxbase$(OLX_WX_VER_V12)u_net.lib;wxmsw$(OLX_WX_VER_V12)u_gl.lib;wxmsw$(OLX_WX_VER_V12)u_richtext.lib;wxmsw$(OLX_WX_VER_V12)u_html.lib;wxmsw$(OLX_WX_VER_V12)u_core.lib;wxmsw$(OLX_WX_VER_V12)u_adv.lib;wxpng.lib;wxregexu.lib;wxtiff.lib;wxzlib.lib;mapi32.lib;glu32.lib;user32.lib;opengl32.lib;gdi32.lib;ole32.lib;advapi32.lib;comdlg32.lib;comctl32.lib;shell32.lib;rpcrt4.lib;oleaut32.lib;kernel32.lib;wsock32.lib;Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(OLX_WX_DIR_V12)\lib\vc_lib;$(SolutionDir)$(Configuration)\lib;</AdditionalLibraryDirectories>
+      <AdditionalDependencies>sdl.lib;wxexpat.lib;wxjpeg.lib;wxbase$(OLX_WX_VER)u.lib;wxbase$(OLX_WX_VER)u_net.lib;wxmsw$(OLX_WX_VER)u_gl.lib;wxmsw$(OLX_WX_VER)u_richtext.lib;wxmsw$(OLX_WX_VER)u_html.lib;wxmsw$(OLX_WX_VER)u_core.lib;wxmsw$(OLX_WX_VER)u_adv.lib;wxpng.lib;wxregexu.lib;wxtiff.lib;wxzlib.lib;mapi32.lib;glu32.lib;user32.lib;opengl32.lib;gdi32.lib;ole32.lib;advapi32.lib;comdlg32.lib;comctl32.lib;shell32.lib;rpcrt4.lib;oleaut32.lib;kernel32.lib;wsock32.lib;Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OLX_WX_DIR)\lib\vc_lib;$(SolutionDir)$(Configuration)\lib;</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
@@ -524,7 +524,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <WholeProgramOptimization>true</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>$(OLX_WX64_DIR_V12)\lib\vc_lib\mswu;$(OLX_WX64_DIR_V12)\include;../../../sdl;../../../repository;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(OLX_WX_DIR)\lib\vc_lib\mswu;$(OLX_WX_DIR)\include;../../../sdl;../../../repository;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_UNICODE;__WXWIDGETS__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -535,8 +535,8 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>sdl.lib;wxexpat.lib;wxjpeg.lib;wxbase$(OLX_WX_VER_V12)u.lib;wxbase$(OLX_WX_VER_V12)u_net.lib;wxmsw$(OLX_WX_VER_V12)u_gl.lib;wxmsw$(OLX_WX_VER_V12)u_richtext.lib;wxmsw$(OLX_WX_VER_V12)u_html.lib;wxmsw$(OLX_WX_VER_V12)u_core.lib;wxmsw$(OLX_WX_VER_V12)u_adv.lib;wxpng.lib;wxregexu.lib;wxtiff.lib;wxzlib.lib;mapi32.lib;glu32.lib;user32.lib;opengl32.lib;gdi32.lib;ole32.lib;advapi32.lib;comdlg32.lib;comctl32.lib;shell32.lib;rpcrt4.lib;oleaut32.lib;kernel32.lib;wsock32.lib;Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(OLX_WX64_DIR_V12)\lib\vc_lib;$(SolutionDir)$(Platform)\$(Configuration)\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>sdl.lib;wxexpat.lib;wxjpeg.lib;wxbase$(OLX_WX_VER)u.lib;wxbase$(OLX_WX_VER)u_net.lib;wxmsw$(OLX_WX_VER)u_gl.lib;wxmsw$(OLX_WX_VER)u_richtext.lib;wxmsw$(OLX_WX_VER)u_html.lib;wxmsw$(OLX_WX_VER)u_core.lib;wxmsw$(OLX_WX_VER)u_adv.lib;wxpng.lib;wxregexu.lib;wxtiff.lib;wxzlib.lib;mapi32.lib;glu32.lib;user32.lib;opengl32.lib;gdi32.lib;ole32.lib;advapi32.lib;comdlg32.lib;comctl32.lib;shell32.lib;rpcrt4.lib;oleaut32.lib;kernel32.lib;wsock32.lib;Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OLX_WX_DIR)\lib\vc_lib;$(SolutionDir)$(Platform)\$(Configuration)\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>

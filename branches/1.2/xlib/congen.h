@@ -52,18 +52,18 @@ class AConstraintGenerator : public IOlxObject {
   bool UseRestrains;
 protected:
   olx_pdict<uint32_t,double> Distances;
-  void DoGenerateAtom(TCAtomPList& created, TAsymmUnit& au, vec3d_list& Crds,
+  void DoGenerateAtom(TResidue &r, TCAtomPList& created, TAsymmUnit& au, vec3d_list& Crds,
     const olxstr& StartingName);
   void GenerateAtom(TCAtomPList& created, TAtomEnvi& envi, const short Group,
-    const cm_Element& atomType, TAtomEnvi* pivoting = NULL);
+    const cm_Element& atomType, TAtomEnvi* pivoting = 0);
   RefinementModel& RefMod;
 public:
   AConstraintGenerator(RefinementModel& rm);
   virtual bool FixParam(const short paramMask, TStrList& res,
     const TCAtomPList& atoms, const TFixedValueList& values) = 0;
   virtual bool FixAtom(TAtomEnvi& envi, const short Group,
-    const cm_Element& atomType, TAtomEnvi* pivoting = NULL,
-    TCAtomPList* generated = NULL) = 0;
+    const cm_Element& atomType, TAtomEnvi* pivoting = 0,
+    TCAtomPList* generated = 0) = 0;
   virtual void AnalyseMultipart(const TAtomEnvi& envi,
     const TTypeList<TCAtomPList>& parts) = 0;
   

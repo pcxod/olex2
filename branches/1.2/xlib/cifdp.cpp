@@ -53,7 +53,7 @@ void TCifDP::LoadFromString(const olxstr &str) {
     version = 1;
   }
   TTypeList<CifToken> toks = TokenizeString(
-    version == 2 ? str.SubStringFrom(10) : str);
+    version == 2 ? str.SubStringFrom(10) : str, version);
   //TBasicApp::NewLogEntry() << toks;
   CifBlock *current_block = &Add(EmptyString());
   for (size_t i = 0; i < toks.Count(); i++) {
@@ -175,7 +175,9 @@ size_t TCifDP::LineIndexer::GetLineNumber(size_t idx) {
   return ln;
 };
 
-TTypeList<CifToken>::const_list_type TCifDP::TokenizeString(const olxstr &str_) {
+TTypeList<CifToken>::const_list_type TCifDP::TokenizeString(const olxstr &str_,
+  int version)
+{
   olxstr str = str_;
   str.Replace('\r', '\n').DeleteSequencesOf('\n');
   TTypeList<CifToken> toks;
@@ -193,7 +195,7 @@ TTypeList<CifToken>::const_list_type TCifDP::TokenizeString(const olxstr &str_) 
             lni.GetLineNumber(i));
         }
         toks.Add(
-          new CifToken(str.SubString(i + 3, idx - i - 3),
+          new CifToken(olxstr().quote(ch) << str.SubString(i + 3, idx - i - 3),
             lni.GetLineNumber(i)));
         i = idx + 3;
         start = i + 1;
@@ -209,7 +211,7 @@ TTypeList<CifToken>::const_list_type TCifDP::TokenizeString(const olxstr &str_) 
           }
         }
         toks.Add(
-          new CifToken(str.SubString(st, i - st),
+          new CifToken(olxstr().quote(ch) << str.SubString(st, i - st),
             lni.GetLineNumber(i)));
         if ((i + 1) < str.Length() && str.CharAt(i) == ch && str.CharAt(i + 1) == ':') {
           i++;
@@ -250,7 +252,7 @@ TTypeList<CifToken>::const_list_type TCifDP::TokenizeString(const olxstr &str_) 
       i = idx;
       start = i + 1;
     }
-    else if (start == i) {
+    else if (start == i && version == 2) {
       if (ch == '[') {
         toks.Add(
           new CifToken(ExtractBracketedData(str, '[', ']', i),
@@ -893,7 +895,7 @@ void cetList::ToStrings(TStrList& list) const {
 //.............................................................................
 void cetList::FromToken(const CifToken &token) {
   TTypeList<CifToken> toks = TCifDP::TokenizeString(
-    token.value.SubStringFrom(1, 1));
+    token.value.SubStringFrom(1, 1), 2);
   for (size_t i = 0; i < toks.Count(); i++) {
     data.Add(ICifEntry::FromToken(toks[i], 2));
   }
@@ -947,7 +949,7 @@ void cetDict::ToStrings(TStrList& list) const {
 //.............................................................................
 void cetDict::FromToken(const CifToken &token) {
   TTypeList<CifToken> toks = TCifDP::TokenizeString(
-    token.value.SubStringFrom(1,1));
+    token.value.SubStringFrom(1,1), 2);
   if ((toks.Count() % 2) != 0) {
     throw ParsingException(__OlxSourceInfo,
       "even number of items is expected for a map", token.lineNumber);
