@@ -215,7 +215,9 @@ void XLibMacros::Export(TLibrary& lib)  {
 //_____________________________________________________________________________
   xlib_InitMacro(Htab,
     "t-adds extra elements (comma separated -t=Se,I) to the donor list. "
-    "Defaults are [N,O,F,Cl,S,Br]&;g-generates found interactions",
+    "Defaults are [N,O,F,Cl,S,Br]&;"
+    "g-generates found interactions&;"
+    "c-add carbon in the atom list",
     fpNone|fpOne|fpTwo|psFileLoaded,
     "Adds HTAB instructions to the ins file, maximum bond length [2.9] and "
     "minimal angle [150] might be provided. If the default length is changed"
@@ -1381,14 +1383,16 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options,
       "operation is not applicable to the grown structure");
     return;
   }
+  const bool use_c = Options.GetBoolOption("c");
   double def_max_d = 2.9,
     def_min_ang = TXApp::GetMinHBondAngle();
 #ifdef _PYTHON
   olex2::IOlex2Processor *op = olex2::IOlex2Processor::GetInstance();
-  if (op) {
+  if (op != 0) {
     olxstr f = "spy.GetParam('snum.cif.htab_max_d')";
-    if (op->processFunction(f) && f.IsNumber())
+    if (op->processFunction(f) && f.IsNumber()) {
       def_max_d = f.ToDouble();
+    }
     if (op->processFunction(f = "spy.GetParam('snum.cif.htab_min_angle')") &&
       f.IsNumber())
     {
@@ -1411,7 +1415,7 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options,
       max_d = 2.9;
   }
 #ifdef _PYTHON
-  if (op) {
+  if (op != 0) {
     op->processMacro(olx_print("spy.SetParam('snum.cif.htab_max_d', %lf)", max_d));
     op->processMacro(olx_print("spy.SetParam('snum.cif.htab_min_angle', %lf)", min_ang));
   }
@@ -1424,7 +1428,7 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options,
     if (it.IsValid() && it.GetType() == infotab_htab)
       current.Add(it.ToString());
   }
-  if (!current.IsEmpty())  {
+  if (!current.IsEmpty()) {
     TBasicApp::NewLogEntry() << "List of current HTAB instructions: ";
     TBasicApp::NewLogEntry() << current;
   }
@@ -1439,14 +1443,16 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options,
   TBasicApp::NewLogEntry() << "Processing HTAB with max D-A distance " <<
     max_d << " and minimum angle " << min_ang;
   min_ang = cos(min_ang*M_PI / 180.0);
-  if (Options.Contains('t'))  {
+  if (Options.Contains('t')) {
     TStrList elm(Options.FindValue('t'), ',');
-    for (size_t i = 0; i < elm.Count(); i++)  {
+    for (size_t i = 0; i < elm.Count(); i++) {
       cm_Element* e = XElementLib::FindBySymbol(elm[i]);
-      if (e == NULL)
+      if (e == 0) {
         TBasicApp::NewLogEntry() << "Unknown element type: " << elm[i];
-      else if (bais.IndexOf(e->z) == InvalidIndex)
+      }
+      else if (bais.IndexOf(e->z) == InvalidIndex) {
         bais.Add(e->z);
+      }
     }
   }
   TUnitCell& uc = TXApp::GetInstance().XFile().GetUnitCell();
@@ -1455,42 +1461,52 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options,
   for (size_t i = 0; i < objects.atoms.Count(); i++) {
     TSAtom& sa = objects.atoms[i];
     const cm_Element& elm = sa.GetType();
-    if (elm.z < 2)  // H,D,Q
+    if (elm.z < 2) { // H,D,Q
       continue;
+    }
     TSizeList h_indexes;
     for (size_t j = 0; j < sa.NodeCount(); j++) {
       const cm_Element& elm1 = sa.Node(j).GetType();
-      if (elm1 == iHydrogenZ)
+      if (elm1 == iHydrogenZ) {
         h_indexes << j;
+      }
     }
-    if (h_indexes.IsEmpty()) continue;
+    if (h_indexes.IsEmpty()) {
+      continue;
+    }
     TArrayList<olx_pair_t<TCAtom const*, smatd> > all;
     uc.FindInRangeAM(sa.ccrd(), max_d, all);
-    for (size_t j = 0; j < all.Count(); j++)  {
+    for (size_t j = 0; j < all.Count(); j++) {
       const TCAtom& ca = *all[j].GetA();
+      if (!TNetwork::IsBondAllowed(sa, ca, all[j].GetB())) {
+        continue;
+      }
       const cm_Element& elm1 = ca.GetType();
-      if (bais.IndexOf(elm1.z) == InvalidIndex)  continue;
+      if (bais.IndexOf(elm1.z) == InvalidIndex) {
+        continue;
+      }
       vec3d cvec(all[j].GetB()*ca.ccrd()),
         bond(cvec - sa.ccrd());
       const double d = au.CellToCartesian(bond).Length();
-      if (d < (elm.r_bonding + elm1.r_bonding + 0.4)) // coval bond
+      if (d < (elm.r_bonding + elm1.r_bonding + 0.4)) { // coval bond
         continue;
+      }
       // analyse angles
       for (size_t k = 0; k < h_indexes.Count(); k++) {
         vec3d base = sa.Node(h_indexes[k]).ccrd();
         const vec3d v1 = au.Orthogonalise(sa.ccrd() - base);
         const vec3d v2 = au.Orthogonalise(cvec - base);
         const double c_a = v1.CAngle(v2);
-        if (c_a < min_ang)  {  // > 150 degrees
-          // NOTE: false!
-          if (sa.GetType() == iCarbonZ && false)  {
+        if (c_a < min_ang) {  // > 150 degrees
+          if (sa.GetType() == iCarbonZ && use_c) {
             InfoTab& it_d = rm.AddRTAB(
               sa.GetType().symbol + ca.GetType().symbol);
-            it_d.AddAtom(sa.CAtom(), NULL);
+            it_d.AddAtom(sa.CAtom(), 0);
             const smatd* mt = (!(all[j].GetB().t.IsNull() &&
-              all[j].GetB().r.IsI()) ? &all[j].GetB() : NULL);
-            if (mt != NULL && transforms.IndexOf(*mt) == InvalidIndex)
+              all[j].GetB().r.IsI()) ? &all[j].GetB() : 0);
+            if (mt != 0 && transforms.IndexOf(*mt) == InvalidIndex) {
               transforms.AddCopy(*mt);
+            }
             it_d.AddAtom(*const_cast<TCAtom*>(&ca), mt);
             if (rm.ValidateInfoTab(it_d)) {
               TBasicApp::NewLogEntry() << it_d.InsStr() << " d=" <<
@@ -1499,21 +1515,22 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options,
 
             InfoTab& it_a = rm.AddRTAB(
               sa.GetType().symbol + ca.GetType().symbol);
-            it_a.AddAtom(sa.CAtom(), NULL);
-            it_a.AddAtom(sa.Node(h_indexes[k]).CAtom(), NULL);
+            it_a.AddAtom(sa.CAtom(), 0);
+            it_a.AddAtom(sa.Node(h_indexes[k]).CAtom(), 0);
             it_a.AddAtom(*const_cast<TCAtom*>(&ca), mt);
             if (rm.ValidateInfoTab(it_a)) {
               TBasicApp::NewLogEntry() << it_a.InsStr() << " a=" <<
                 olxstr::FormatFloat(3, acos(c_a)*180.0 / M_PI);
             }
           }
-          else  {
+          else {
             InfoTab& it = rm.AddHTAB();
-            it.AddAtom(sa.CAtom(), NULL);
+            it.AddAtom(sa.CAtom(), 0);
             const smatd* mt = (!(all[j].GetB().t.IsNull() &&
-              all[j].GetB().r.IsI()) ? &all[j].GetB() : NULL);
-            if (mt != NULL && transforms.IndexOf(*mt) == InvalidIndex)
+              all[j].GetB().r.IsI()) ? &all[j].GetB() : 0);
+            if (mt != 0 && transforms.IndexOf(*mt) == InvalidIndex) {
               transforms.AddCopy(*mt);
+            }
             it.AddAtom(*const_cast<TCAtom*>(&ca), mt);
             it.UpdateResi();
             if (rm.ValidateInfoTab(it)) {
@@ -1533,9 +1550,12 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options,
     TCAtomPList iatoms;
     for (size_t i = 0; i < objects.atoms.Count(); i++) {
       TSAtom& sa = objects.atoms[i];
-      if (sa.IsDeleted())  continue;
-      if (sa.IsAUAtom())
+      if (sa.IsDeleted()) {
+        continue;
+      }
+      if (sa.IsAUAtom()) {
         iatoms.Add(sa.CAtom());
+      }
     }
     xlatt.GrowAtoms(iatoms, transforms);
   }
@@ -1621,9 +1641,9 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options,
         TDoubleList occu;
         TAtomEnvi AE;
         uc.GetAtomEnviList(*satoms[aitr], AE, false, DefNoPart, true);
-        for (size_t i=0; i < AE.Count(); i++) {
-          if( AE.GetCAtom(i).GetPart() != 0 &&
-              AE.GetCAtom(i).GetPart() != AE.GetBase().CAtom().GetPart() )
+        for (size_t i = 0; i < AE.Count(); i++) {
+          if (AE.GetCAtom(i).GetPart() != 0 &&
+            AE.GetCAtom(i).GetPart() != AE.GetBase().CAtom().GetPart())
           {
             if (parts.IndexOf(AE.GetCAtom(i).GetPart()) == InvalidIndex) {
               parts.Add(AE.GetCAtom(i).GetPart());
@@ -1637,7 +1657,7 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options,
           int afix = TXlConGen::ShelxToOlex(Hfix, AE);
           if (afix != -1) {
             xlConGen.FixAtom(AE, afix, XElementLib::GetByIndex(iHydrogenIndex),
-              NULL, &generated);
+              0, &generated);
             if (!generated.IsEmpty()) {
               // hack to get desired Hfix...
               if (generated[0]->GetParentAfixGroup() != NULL) {
