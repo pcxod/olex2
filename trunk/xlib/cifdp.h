@@ -401,7 +401,7 @@ namespace cif_dp {
     void Rename(const olxstr& old_name, const olxstr& new_name);
 
     static TTypeList<CifToken>::const_list_type
-      TokenizeString(const olxstr &str);
+      TokenizeString(const olxstr &str, int version);
 
     static olxstr ExtractBracketedData(const olxstr &str,
       olxch open, olxch close, size_t &i);
