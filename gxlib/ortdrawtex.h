@@ -561,7 +561,7 @@ public:
           );
         pw.Writenl(bf);
         //write a node to make life easier later
-        sprintf(bf, "\\node (atom%i) at (%fmm,%fmm) {};",
+        sprintf(bf, "\\node (atom%zi) at (%fmm,%fmm) {};",
           i,
           p[0]/5, p[1]/5);
         pw.Writenl(bf);
@@ -575,8 +575,7 @@ public:
         sprintf(bf, "\\pgfpathellipse{\\pgfpoint{%fmm}{%fmm}}\n{\\pgfpoint{%fmm}{%fmm}}\n{\\pgfpoint{%fmm}{%fmm}}\n\\pgfusepath{draw}",
           p[0]/5, p[1]/5,
           ielpm[0][0]/5, ielpm[0][1]/5,
-          ielpm[1][0]/5, ielpm[1][1]/5,
-          sa.GetType().symbol.c_str()
+          ielpm[1][0]/5, ielpm[1][1]/5
           );
         pw.Writenl(bf);
         pw.Writenl("\\end{pgfscope}");
@@ -589,7 +588,7 @@ public:
           );
         pw.Writenl(bf);
         //write a node to make life easier later
-        sprintf(bf, "\\node (atom%i) at (%fmm,%fmm) {};",
+        sprintf(bf, "\\node (atom%zi) at (%fmm,%fmm) {};",
           i,
           p[0]/5, p[1]/5);
         pw.Writenl(bf);
