@@ -718,7 +718,9 @@ void AtomRefList::UpdateResi() {
       }
     }
     else if (r0.GetMatrix() != 0) {
-      if (r1.GetAtom().GetResiId() != r0.GetAtom().GetResiId() == 0) {
+      if (r0.GetAtom().GetResiId() == 0 &&
+        r0.GetAtom().GetResiId() != r1.GetAtom().GetResiId())
+      {
         return;
       }
       else {
