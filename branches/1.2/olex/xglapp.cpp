@@ -137,8 +137,9 @@ bool TGlXApp::OnInit() {
       XApp->SetSharedDir(patcher::PatchAPI::GetSharedDir());
       XApp->SetInstanceDir(patcher::PatchAPI::GetInstanceDir());
       olxstr config_dir = olx_getenv("OLEX2_CONFIGDIR");
-      if (!config_dir.IsEmpty())
+      if (!config_dir.IsEmpty()) {
         XApp->SetConfigdDir(config_dir);
+      }
     }
     XApp->ReadOptions(XApp->GetConfigDir() + ".options");
     XApp->CleanupLogs();
@@ -257,7 +258,7 @@ bool TGlXApp::OnInit() {
 //..............................................................................
 int TGlXApp::OnExit() {
   // do all operations before TEGC is deleted
-  if( pid_file != NULL )  {
+  if (pid_file != 0) {
     pid_file->Delete();
     delete pid_file;
     pid_file = NULL;
@@ -266,19 +267,24 @@ int TGlXApp::OnExit() {
   TStrList pid_files = TEFile::ListDir(conf_dir, olxstr("*.") <<
     patcher::PatchAPI::GetOlex2PIDFileExt(), sefFile);
 #ifdef __linux__
-    size_t ext_len = olxstr::o_strlen(patcher::PatchAPI::GetOlex2PIDFileExt())+1;
+  size_t ext_len = olxstr::o_strlen(patcher::PatchAPI::GetOlex2PIDFileExt()) + 1;
 #endif
-  for (size_t i=0; i < pid_files.Count(); i++) {
+  for (size_t i = 0; i < pid_files.Count(); i++) {
 #ifdef __linux__
     if (ext_len >= pid_files[i].Length()) continue;
-    olxstr spid = pid_files[i].SubStringTo(pid_files[i].Length()-ext_len);
+    olxstr spid = pid_files[i].SubStringTo(pid_files[i].Length() - ext_len);
     if (spid.IsInt()) {
-       int pid = spid.ToInt();
-       if (kill(pid, 0) == 0)
-         continue;
+      int pid = spid.ToInt();
+      if (kill(pid, 0) == 0) {
+        continue;
+      }
     }
 #endif
-    TEFile::DelFile(conf_dir+pid_files[i]);
+    TEFile::DelFile(conf_dir + pid_files[i]);
+  }
+  TStrList ready_files = TEFile::ListDir(conf_dir, "*.ready", sefFile);
+  for (size_t i = 0; i < ready_files.Count(); i++) {
+    TEFile::DelFile(conf_dir + ready_files[i]);
   }
   if (TMainForm::HasInstance()) {
     MainForm->Destroy();
@@ -317,8 +323,9 @@ void TGlXApp::OnNavigation(wxNavigationKeyEvent& event)  {
 //..............................................................................
 void TGlXApp::OnIdle(wxIdleEvent& event)  {
   event.Skip();
-  if (GetMainForm()->idle_start == 0)
+  if (GetMainForm()->idle_start == 0) {
     GetMainForm()->idle_start = TETime::msNow();
+  }
   GetMainForm()->OnIdle();
 }
 //..............................................................................

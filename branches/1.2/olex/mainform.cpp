@@ -144,98 +144,6 @@ public:
     return true;
   }
 };
-#ifdef __WIN32__
-class SplashDlg : public wxDialog  {
-  wxBitmap *bmp;
-  int imgHeight, imgWidth, txtHeight, txtWidth;
-  bool has_alpha;
-  wxString to_render;
-public:
-  SplashDlg(wxWindow *parent) :
-      wxDialog(parent, -1, wxT("Initialising"), wxDefaultPosition, wxSize(100, 100),
-        wxNO_BORDER|wxFRAME_SHAPED)
-  {
-    wxDialog::SetTitle(wxT("Olex2 splash screen"));
-    bmp = NULL;
-    imgHeight = 0;
-    imgWidth = 200;
-    has_alpha = false;
-    olxstr splash_img = TBasicApp::GetBaseDir() + "splash.jpg";
-    if (TEFile::Exists(splash_img)) {
-      wxImage img;
-      {
-        wxLogNull nl;
-        img.LoadFile(splash_img.u_str());
-      }
-      has_alpha = img.HasAlpha();
-      if (has_alpha) {
-        img.ConvertAlphaToMask();
-      }
-      bmp = new wxBitmap(img);
-      imgWidth = img.GetWidth();
-      imgHeight = img.GetHeight();
-      if (has_alpha) {
-        wxRegion reg(*bmp);
-        SetShape(reg);
-      }
-    }
-    wxWindowDC dc(this);
-    olxstr tag = patcher::PatchAPI::ReadRepositoryTag();
-    if (tag.IsEmpty()) {
-      to_render = "Olex2 is initialising";
-    }
-    else {
-      to_render << "Olex2 " << tag.u_str() << " is initialising";
-    }
-    wxSize sz = dc.GetTextExtent(to_render);
-    int ScreenW = wxSystemSettings::GetMetric(wxSYS_SCREEN_X),
-        ScreenH = wxSystemSettings::GetMetric(wxSYS_SCREEN_Y);
-    const int ch = imgHeight + sz.y; // combined height
-    SetSize((ScreenW-imgWidth)/2, (ScreenH-ch)/2, imgWidth, ch);
-    txtHeight = sz.y;
-    txtWidth = sz.GetWidth();
-  }
-  ~SplashDlg()  {
-    if( bmp != NULL )
-      delete bmp;
-  }
-  void DoPaint()  {
-    static size_t generation = 0;
-    wxWindowDC dc(this);
-    dc.SetBackgroundMode(wxTRANSPARENT);
-    dc.SetBackground(*wxTRANSPARENT_BRUSH);//*wxWHITE_BRUSH);
-    //dc.Clear();
-    if (bmp != NULL) {
-      dc.DrawBitmap(*bmp, 0, 0, true);
-    }
-    wxString str = to_render + olxstr::CharStr('.', generation).u_str();
-    wxColor cl(0x8b7566);
-    //wxColor cl(0xb4);
-    dc.SetBrush(wxBrush(cl));//*wxWHITE_BRUSH);
-    dc.SetPen(wxPen(cl));//*wxWHITE_PEN);
-    int h = has_alpha ? imgHeight-txtHeight : imgHeight;
-    dc.DrawRectangle(0, h, imgWidth, h);
-    dc.SetTextForeground(*wxWHITE);
-    dc.DrawText(str, (imgWidth-olx_round(txtWidth*1.5))/2, h);
-    if (++generation > 20) {
-      generation = 0;
-    }
-  }
-};
-class RefreshTh : public AOlxThread  {
-  SplashDlg& dlg;
-public:
-  RefreshTh(SplashDlg& _dlg) :dlg(_dlg)  {  Detached = false;  }
-  int Run()  {
-    while( true )  {
-      if( Terminate )  return 1;
-      dlg.DoPaint();
-      //wxApp::GetInstance()->ProcessPendingEvents();
-      olx_sleep(200);
-    }
-  }
-};
-#endif
 /******************************************************************************/
 // TMainForm function bodies
 //..............................................................................
@@ -329,7 +237,7 @@ TMainForm::TMainForm(TGlXApp *Parent)
     Bind(wxEVT_MENU, &TMainForm::OnGraphicsStyle, this, ID_GStyleOpen);
   }
     
-    idle_time = idle_start = 0;
+  idle_time = idle_start = 0;
   TEGC::AddP(&HtmlManager);
   nui_interface = NULL;
   _UpdateThread = NULL;
@@ -1334,17 +1242,8 @@ void TMainForm::XApp(Olex2App *XA)  {
 
   // synchronise if value is different in settings file...
   miHtmlPanel->Check(!FHtmlMinimized);
-#ifdef __WIN32__
-  SplashDlg splash_dlg(this);
-  RefreshTh rth(splash_dlg);
-  splash_dlg.Show();
-  rth.Start();
-#endif
 #if defined(__WIN32__) || defined(__MAC__)
   StartupInit();
-#endif
-#ifdef __WIN32__
-  rth.Join(true);
 #endif
   try  {
     nui_interface = olx_nui::Initialise();
@@ -1497,8 +1396,9 @@ void TMainForm::StartupInit() {
   }
 
   olxstr textures_dir = FXApp->GetBaseDir() + "etc/Textures";
-  if (TEFile::IsDir(textures_dir))
+  if (TEFile::IsDir(textures_dir)) {
     FXApp->LoadTextures(textures_dir);
+  }
 
   // do the iterpreters job...
   if (FXApp->GetArguments().Count() >= 2) {
@@ -1525,6 +1425,12 @@ void TMainForm::StartupInit() {
   this->SetDropTarget(dndt);
   processMacro("schedule 'update -f=false' -g");
   TStateRegistry::GetInstance().RepeatAll();
+  try {
+    TEFile f(olxstr(FXApp->GetInstanceDir()) << getpid() << ".ready", "wb");
+    f.Writeln(TETime::FormatDateTime(TETime::msNow()));
+  }
+  catch (...) {
+  }
 }
 //..............................................................................
 bool TMainForm::CreateUpdateThread(bool force) {
