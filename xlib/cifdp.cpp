@@ -79,7 +79,7 @@ void TCifDP::LoadFromString(const olxstr &str) {
           continue;
         }
       }
-      if (((i - st - comments.Count()) % t().ColCount()) > 0) {
+      if (t().ColCount() == 0 || ((i - st - comments.Count()) % t().ColCount()) > 0) {
         throw ParsingException(__OlxSourceInfo,
           olxstr("invalid table ") << t().GetName(), st);
       }
@@ -229,7 +229,11 @@ TTypeList<CifToken>::const_list_type TCifDP::TokenizeString(const olxstr &str_,
           lni.GetLineNumber(start)));
       start = i + 1;
     }
-    else if (ch == ';' && i > 0 && str.CharAt(i - 1) == '\n') {
+    else if (ch == ';' && (i == 0 || i > 0 && str.CharAt(i - 1) == '\n')) {
+      if (i == 0) {
+        throw ParsingException(__OlxSourceInfo, "invalid start of file",
+          lni.GetLineNumber(i));
+      }
       size_t idx = str.FirstIndexOf("\n;", i + 1);
       if (idx == InvalidIndex) {
         throw ParsingException(__OlxSourceInfo, "unbalanced quotation",
@@ -241,7 +245,7 @@ TTypeList<CifToken>::const_list_type TCifDP::TokenizeString(const olxstr &str_,
       i = idx + 2;
       start = i + 1;
     }
-    else if (ch == '#') {
+    else if (ch == '#' && (i==0 || olxstr::o_isoneof(str.CharAt(i-1), " \t\n"))) {
       size_t idx = str.FirstIndexOf('\n', i + 1);
       if (idx == InvalidIndex) {
         idx = str.Length();
@@ -973,9 +977,14 @@ ICifEntry *ICifEntry::FromToken(const CifToken &t, int version) {
     switch (t.value.CharAt(0)) {
     case ';':
     {
-      olx_object_ptr<cetStringList> l = new cetStringList();
-      l().lines.Strtok(t.value.SubStringFrom(1, 1), '\n');
-      return l.release();
+      if (t.value.Length() > 1 && t.value.EndsWith(';')) {
+        olx_object_ptr<cetStringList> l = new cetStringList();
+        l().lines.Strtok(t.value.SubStringFrom(1, 1), '\n');
+        return l.release();
+      }
+      else {
+        return new cetString(t.value, true);
+      }
     }
     case '#':
     {
@@ -1002,9 +1011,14 @@ ICifEntry *ICifEntry::FromToken(const CifToken &t, int version) {
     }
     case ';':
     {
-      olx_object_ptr<cetStringList> l = new cetStringList();
-      l().lines.Strtok(t.value.SubStringFrom(1, 1), '\n');
-      return l.release();
+      if (t.value.Length() > 1 && t.value.EndsWith(';')) {
+        olx_object_ptr<cetStringList> l = new cetStringList();
+        l().lines.Strtok(t.value.SubStringFrom(1, 1), '\n');
+        return l.release();
+      }
+      else {
+        return new cetString(t.value, true);
+      }
     }
     case '#':
     {

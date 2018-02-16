@@ -556,8 +556,8 @@ void THtml::OnCellMouseHover(wxHtmlCell *Cell, wxCoord x, wxCoord y) {
     if (ShowTooltips) {
       wxToolTip *tt = GetToolTip();
       wxString wxs(Href.Replace("#href", Link->GetHref()).u_str());
-      if (tt == NULL || tt->GetTip() != wxs) {
-        SetToolTip(wxs);
+      if (tt == 0 || tt->GetTip() != wxs) {
+        SetToolTip(wxs.SubString(0, olx_min(wxs.size(), 256)));
       }
     }
   }
