@@ -179,7 +179,6 @@ TTypeList<CifToken>::const_list_type TCifDP::TokenizeString(const olxstr &str_,
   int version)
 {
   olxstr str = str_;
-  str.Replace('\r', '\n').DeleteSequencesOf('\n');
   TTypeList<CifToken> toks;
   size_t start = 0;
   LineIndexer lni(str);
@@ -979,7 +978,7 @@ ICifEntry *ICifEntry::FromToken(const CifToken &t, int version) {
     {
       if (t.value.Length() > 1 && t.value.EndsWith(';')) {
         olx_object_ptr<cetStringList> l = new cetStringList();
-        l().lines.Strtok(t.value.SubStringFrom(1, 1), '\n');
+        l().lines.Strtok(t.value.SubStringFrom(1, 1), '\n', false);
         return l.release();
       }
       else {
@@ -1013,7 +1012,7 @@ ICifEntry *ICifEntry::FromToken(const CifToken &t, int version) {
     {
       if (t.value.Length() > 1 && t.value.EndsWith(';')) {
         olx_object_ptr<cetStringList> l = new cetStringList();
-        l().lines.Strtok(t.value.SubStringFrom(1, 1), '\n');
+        l().lines.Strtok(t.value.SubStringFrom(1, 1), '\n', false);
         return l.release();
       }
       else {
