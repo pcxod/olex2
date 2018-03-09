@@ -1343,6 +1343,9 @@ void TGXApp::FragmentsVisible(const TNetPList& Frags, bool V) {
   SetHBondsVisible(FHBondsVisible, false);
   _maskInvisible();
   //  OnFragmentsVisible->Exit(this, dynamic_cast<IOlxObject*>(Frags));
+  if (AtomLegend().IsVisible()) {
+    AtomLegend().Update();
+  }
   Draw();
 }
 //..............................................................................
@@ -1462,6 +1465,9 @@ void TGXApp::AllVisible(bool V) {
     UpdateDuplicateLabels();
   }
   OnAllVisible.Exit(dynamic_cast<TBasicApp*>(this), NULL);
+  if (AtomLegend().IsVisible()) {
+    AtomLegend().Update();
+  }
   Draw();
 }
 //..............................................................................
@@ -3782,21 +3788,23 @@ void TGXApp::SetQPeakBondsVisible(bool v, bool update_groups)  {
   }
 }
 //..............................................................................
-void TGXApp::_maskInvisible()  {
+void TGXApp::_maskInvisible() {
   const TAsymmUnit& au = XFile().GetAsymmUnit();
   TEBitArray vis(au.AtomCount());
   AtomIterator ai(*this);
-  while( ai.HasNext() )  {
+  while (ai.HasNext()) {
     TXAtom& xa = ai.Next();
-    if( !xa.IsVisible() )  {
+    if (!xa.IsVisible()) {
       xa.SetMasked(true);
       continue;
     }
-    else
+    else {
       vis.SetTrue(xa.CAtom().GetId());
+    }
   }
-  for( size_t i=0; i < vis.Count(); i++ )
+  for (size_t i = 0; i < vis.Count(); i++) {
     au.GetAtom(i).SetMasked(!vis[i]);
+  }
 }
 //..............................................................................
 void TGXApp::_syncBondsVisibility()  {
@@ -3880,8 +3888,9 @@ sorted::ObjectPrimitive<index_t>::cons_list_type TGXApp::GetVisibleCAtomTags() {
   }
   for (size_t i = 0; i < au.AtomCount(); i++) {
     TCAtom &a = au.GetAtom(i);
-    if (!a.IsProcessed())
+    if (!a.IsProcessed()) {
       TCAtom::SetTagRecursively(a, (index_t)i);
+    }
   }
   AtomIterator ai(*this);
   while (ai.HasNext()) {
@@ -3893,10 +3902,11 @@ sorted::ObjectPrimitive<index_t>::cons_list_type TGXApp::GetVisibleCAtomTags() {
   return tags;
 }
 //..............................................................................
-void TGXApp::ShowPart(const TIntList& parts, bool show, bool visible_only)  {
+void TGXApp::ShowPart(const TIntList& parts, bool show, bool visible_only) {
   if (visible_only) {
-    SortedObjectList<index_t, TPrimitiveComparator> tags = 
+    SortedObjectList<index_t, TPrimitiveComparator> tags =
       GetVisibleCAtomTags();
+    tags.Remove(-1);
     AtomIterator ai(*this);
     while (ai.HasNext()) {
       TXAtom& xa = ai.Next();
@@ -3911,15 +3921,17 @@ void TGXApp::ShowPart(const TIntList& parts, bool show, bool visible_only)  {
     }
   }
   if (parts.IsEmpty()) {
-    if (!visible_only)
+    if (!visible_only) {
       AllVisible(show);
+    }
     return;
   }
   AtomIterator ai(*this);
   while (ai.HasNext()) {
     TXAtom& xa = ai.Next();
-    if (visible_only && !xa.IsVisible())
+    if (visible_only && !xa.IsVisible()) {
       continue;
+    }
     if (parts.Contains(xa.CAtom().GetPart())) {
       xa.SetVisible(show);
       xa.SetMasked(!show);
