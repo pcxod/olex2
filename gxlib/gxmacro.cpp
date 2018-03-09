@@ -369,7 +369,8 @@ void GXLibMacros::Export(TLibrary& lib) {
     ,
     fpAny,
     "For testing only for now");
-  gxlib_InitMacro(Legend, EmptyString(),
+  gxlib_InitMacro(Legend,
+    "r-reset the position",
     fpNone | fpOne,
     "Shows/hides atom legend");
   gxlib_InitMacro(AdjustStyle,
@@ -2554,8 +2555,9 @@ void GXLibMacros::macShowP(TStrObjList &Cmds, const TParamList &Options,
     parts.Add(Cmds[i].ToInt());
   }
   app.ShowPart(parts, true, Options.GetBoolOption('v'));
-  if (!Options.GetBoolOption('m'))
+  if (!Options.GetBoolOption('m')) {
     app.CenterView();
+  }
 }
 //.............................................................................
 void GXLibMacros::macShowR(TStrObjList &Cmds, const TParamList &Options,
@@ -5078,9 +5080,13 @@ void GXLibMacros::macLegend(TStrObjList &Cmds, const TParamList &Options,
     app.AtomLegend().SetVisible(false);
   }
   else {
+    if (Options.GetBoolOption('r')) {
+      app.AtomLegend().SetPosition(0, 0);
+    }
     app.AtomLegend().Update();
     app.AtomLegend().SetVisible(true);
   }
+  
 }
 //.............................................................................
 template <typename functor_t>
