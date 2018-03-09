@@ -9540,22 +9540,34 @@ int RSA_CompareSites(const SiteInfo &a, const SiteInfo &b) {
 }
 int RSA_GetAtomPriorityX(AtomEnvList &a, AtomEnvList &b) {
   size_t sz = olx_min(a.Count(), b.Count());
-  if (sz == 0)
+  if (sz == 0) {
     return olx_cmp(a.Count(), b.Count());
+  }
   for (size_t i=0; i < sz; i++) {
     size_t ai = a.Count()-i-1;
     size_t bi = b.Count()-i-1;
     int res = RSA_CompareSites(a[ai], b[bi]);
-    if (a[ai].GetA() != NULL) a[ai].a->atom->SetTag(2);
-    if (b[bi].GetA() != NULL) b[bi].a->atom->SetTag(3);
-    if (res != 0)
+    if (a[ai].GetA() != 0) {
+      if (a[ai].a->atom->GetTag() == 0) {
+        a[ai].a->atom->SetTag(2);
+      }
+    }
+    if (b[bi].GetA() != 0) {
+      if (b[bi].a->atom->GetTag() == 0) {
+        b[bi].a->atom->SetTag(3);
+      }
+    }
+    if (res != 0) {
       return res;
+    }
   }
   int res = olx_cmp(a.Count(), b.Count());
-  if (res != 0) return res;
+  if (res != 0) {
+    return res;
+  }
   // equal? expand further
   for (size_t i=0; i < sz; i++) {
-    if (a[i].GetA() != NULL) {
+    if (a[i].GetA() != 0) {
       TCAtom &atomA = *a[i].GetA()->atom;
       for (size_t j=0; j < atomA.AttachedSiteCount(); j++) {
         TCAtom::Site &s = atomA.GetAttachedSite(j);
@@ -9566,8 +9578,9 @@ int RSA_GetAtomPriorityX(AtomEnvList &a, AtomEnvList &b) {
         }
         a.Add(new SiteInfo(&s, &s.atom->GetType()));
         int bo = RSA_BondOrder(atomA, s);
-        for (int k=1; k < bo; k++)
-          a.Add(new SiteInfo(NULL, &s.atom->GetType()));
+        for (int k = 1; k < bo; k++) {
+          a.Add(new SiteInfo(0, &s.atom->GetType()));
+        }
       }
     }
     if (b[i].GetA() != NULL) {
@@ -9581,8 +9594,9 @@ int RSA_GetAtomPriorityX(AtomEnvList &a, AtomEnvList &b) {
         }
         b.Add(new SiteInfo(&s, &s.atom->GetType()));
         int bo = RSA_BondOrder(atomB, s);
-        for (int k=1; k < bo; k++)
-          b.Add(new SiteInfo(NULL, &s.atom->GetType()));
+        for (int k = 1; k < bo; k++) {
+          b.Add(new SiteInfo(0, &s.atom->GetType()));
+        }
       }
     }
   }
@@ -9598,7 +9612,9 @@ int RSA_GetAtomPriorityX(AtomEnvList &a, AtomEnvList &b) {
 }
 struct RSA_EnviSorter {
   TCAtom &center;
-  RSA_EnviSorter(TCAtom &center) : center(center) {}
+  RSA_EnviSorter(TCAtom &center)
+    : center(center)
+  {}
 
   int Comparator(const TCAtom::Site &a, const TCAtom ::Site &b) const {
     a.atom->GetParent()->GetAtoms().ForEach(ACollectionItem::TagSetter(0));
@@ -9616,11 +9632,15 @@ void XLibMacros::macRSA(TStrObjList &Cmds, const TParamList &Options,
   const TAsymmUnit &au = app.XFile().GetAsymmUnit();
   for (size_t i=0; i < au.AtomCount(); i++) {
     TCAtom &a = au.GetAtom(i);
-    if (a.IsDeleted() || a.GetType() < 2) continue;
+    if (a.IsDeleted() || a.GetType() < 2) {
+      continue;
+    }
     TPtrList<TCAtom::Site> attached;
     for (size_t j=0; j < a.AttachedSiteCount(); j++) {
       TCAtom &aa = a.GetAttachedAtom(j);
-      if (aa.IsDeleted() || aa.GetType() == iQPeakZ) continue;
+      if (aa.IsDeleted() || aa.GetType() == iQPeakZ) {
+        continue;
+      }
       attached.Add(a.GetAttachedSite(j));
     }
     if (attached.Count() == 4) {
@@ -9630,15 +9650,20 @@ void XLibMacros::macRSA(TStrObjList &Cmds, const TParamList &Options,
       olxstr w;
       for (size_t j=0; j < attached.Count(); j++) {
         w << attached[j]->atom->GetLabel();
-        if ((j+1) < 4) w << " < ";
-        if (j == 0) continue;
+        if ((j + 1) < 4) {
+          w << " < ";
+        }
+        if (j == 0) {
+          continue;
+        }
         if(es.Comparator(*attached[j-1], *attached[j]) == 0) {
           chiral = false;
           break;
         }
       }
-      if (!chiral)
+      if (!chiral) {
         continue;
+      }
       vec3d_alist crds(4);
       for (int j=0; j < 4; j++) {
         crds[j] = au.Orthogonalise(
@@ -9646,15 +9671,18 @@ void XLibMacros::macRSA(TStrObjList &Cmds, const TParamList &Options,
       }
       vec3d cnt = (crds[1]+crds[2]+crds[3])/3;
       vec3d n = (crds[1]-crds[2]).XProdVec(crds[3]-crds[2]).Normalise();
-      if ((crds[0]-cnt).DotProd(n) < 0)
+      if ((crds[0] - cnt).DotProd(n) < 0) {
         n *= -1;
+      }
       vec3d np = (crds[1]-cnt).XProdVec(n);
       olxstr lbl = a.GetLabel();
       lbl.RightPadding(5, ' ') << ':';
-      if ((crds[3]-cnt).DotProd(np) < 0) //clockwise
+      if ((crds[3] - cnt).DotProd(np) < 0) { //clockwise
         lbl << " R";
-      else
+      }
+      else {
         lbl << " S";
+      }
       TBasicApp::NewLogEntry() << lbl << " (" << w << ')';
     }
   }

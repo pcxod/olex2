@@ -155,10 +155,11 @@ void TAtomLegend::Update() {
   TGXApp &app = TGXApp::GetInstance();
   olxset<const cm_Element * , TPointerComparator> elm_set;
   const TAsymmUnit &au = app.XFile().GetAsymmUnit();
-  TCAtom *q1 = 0;
-  for (size_t i = 0; i < au.AtomCount(); i++) {
-    TCAtom &a = au.GetAtom(i);
-    if (a.IsDeleted()) {
+  TXAtom *q1 = 0;
+  TGXApp::AtomIterator ai = app.GetAtoms();
+  while (ai.HasNext()) {
+    TXAtom &a = ai.Next();
+    if (!a.IsVisible()) {
       continue;
     }
     if (q1 == 0 && a.GetType() == iQPeakZ) {
@@ -198,7 +199,7 @@ void TAtomLegend::Update() {
       if (!app.AreQPeaksVisible()) {
         continue;
       }
-      TXAtom::GetDefSphereMaterial(*q1, materials.Add(TGlMaterial()),
+      TXAtom::GetDefSphereMaterial(q1->CAtom(), materials.Add(TGlMaterial()),
         app.GetRenderer());
       set = true;
     }
@@ -233,5 +234,10 @@ void TAtomLegend::SetVisible(bool v) {
   AGDrawObject::SetVisible(v);
   GetPrimitives().GetStyle().SetParam("visible",
     v ? TrueString() : FalseString(), true);
+}
+//.............................................................................
+void TAtomLegend::SetPosition(int left, int top) {
+  Left = left;
+  Top = top;
 }
 //.............................................................................

@@ -39,6 +39,7 @@ public:
   virtual void Update();
   virtual void UpdateLabel() { Fit(); }
   virtual void SetVisible(bool v);
+  void SetPosition(int left, int top);
 };
 EndGxlNamespace()
 
