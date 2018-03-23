@@ -50,10 +50,11 @@ olxstr XScatterer::ToInsString() const {
   if (set_items == setDispersion || set_items == (setDispersion | setMu)) {
     olxstr rv("DISP", 80);
     rv.stream(' ') << Label <<
-      olxstr::FormatFloat(3, fpfdp.GetRe()).TrimFloat() <<
-      olxstr::FormatFloat(3, fpfdp.GetIm()).TrimFloat();
-    if ((set_items & setMu) != 0)
-      rv << ' ' << olxstr::FormatFloat(3, mu).TrimFloat();
+      olxstr::FormatFloat(4, fpfdp.GetRe()).TrimFloat() <<
+      olxstr::FormatFloat(4, fpfdp.GetIm()).TrimFloat();
+    if ((set_items & setMu) != 0) {
+      rv << ' ' << olxstr::FormatFloat(4, mu).TrimFloat();
+    }
     return rv;
   }
   else if (set_items == setAll) {
