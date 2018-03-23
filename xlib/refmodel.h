@@ -68,7 +68,7 @@ class RefinementModel : public IOlxObject {
     }
   };
   mutable olxstr_dict<Equiv, false> UsedSymm;
-  olxstr_dict<XScatterer*, false> SfacData;
+  olxstr_dict<XScatterer*, true> SfacData;
   olx_pdict<int, Fragment*> Frags;
   ContentList UserContent;
 protected:
