@@ -44,13 +44,22 @@ void TCifDP::LoadFromStream(IInputStream & stream) {
   LoadFromString(olxstr::FromUTF8(data(), sz));
 }
 //..............................................................................
-void TCifDP::LoadFromString(const olxstr &str) {
+void TCifDP::LoadFromString(const olxstr &str_) {
   Clear();
+  olxstr str = str_;
   if (str.StartsFrom("#\\#CIF_2.0")) {
     version = 2;
   }
   else {
     version = 1;
+  }
+  if (str.Contains('\r')) {
+    if (str.Contains('\n')) {
+      str = str.Replace("\r", "");
+    }
+    else {
+      str = str.Replace("\r", "\n");
+    }
   }
   TTypeList<CifToken> toks = TokenizeString(
     version == 2 ? str.SubStringFrom(10) : str, version);
@@ -208,6 +217,9 @@ TTypeList<CifToken>::const_list_type TCifDP::TokenizeString(const olxstr &str_,
           {
             break;
           }
+        }
+        if (str.CharAt(i) != ch) {
+          i--;
         }
         toks.Add(
           new CifToken(olxstr().quote(ch) << str.SubString(st, i - st),
