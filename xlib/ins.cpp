@@ -1284,7 +1284,7 @@ TStrList::const_list_type TIns::SaveSfacUnit(const RefinementModel& rm,
   TStrList sfac;
   short state = 0;
   SortedObjectList<olxstr, olxstrComparator<false> > elms;
-  for (size_t i=0; i < rm.GetUserContent().Count(); i++) {
+  for (size_t i = 0; i < rm.GetUserContent().Count(); i++) {
     elms.AddUnique(rm.GetUserContent()[i].element.symbol);
     XScatterer* sd = rm.FindSfacData(rm.GetUserContent()[i].element.symbol);
     if (sd != NULL && sd->IsSFAC()) {
@@ -1295,14 +1295,15 @@ TStrList::const_list_type TIns::SaveSfacUnit(const RefinementModel& rm,
       state = 1;
     }
     else {
-      if( state == 1 )  {
-        list.Insert(pos++,  "SFAC ") << rm.GetUserContent()[i].element.symbol;
+      if (state == 1) {
+        list.Insert(pos++, "SFAC ") << rm.GetUserContent()[i].element.symbol;
         state = 2;
       }
-      else  {
-        if( state == 2 )  // SFAC added and pos incremented
-          list[pos-1] << ' ' << rm.GetUserContent()[i].element.symbol;
-        else if( state == 0 )  {  // nothing added yet
+      else {
+        if (state == 2) { // SFAC added and pos incremented
+          list[pos - 1] << ' ' << rm.GetUserContent()[i].element.symbol;
+        }
+        else if (state == 0) {  // nothing added yet
           list[pos++] << "SFAC " << rm.GetUserContent()[i].element.symbol;
           state = 2;
         }
