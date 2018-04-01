@@ -194,7 +194,7 @@ public:
     }
 
   template <class SC> SC StrRepr() const {
-    if( FE != 0 )  {
+    if (FE != 0) {
       SC strv, stre;
       int pr = 0;
       double po = 1;
@@ -203,28 +203,32 @@ public:
         pr++;
       }
       int iv = olx_round(FE*po);
-      if( iv >= 20 && pr > 0 )  {
-        iv = olx_round((double)iv/10);
+      if (iv >= 20 && pr > 0) {
+        iv = olx_round((double)iv / 10);
         pr--;
       }
-      if( pr != 0 )  {
+      if (pr != 0) {
         strv = olxstr::FormatFloat(pr, FV);
         stre = iv;
       }
-      else  {
+      else {
         strv = olx_round(FV);
         stre << olx_round(FE);
       }
-      while( stre.EndsWith('0') && strv.EndsWith('0') && strv.IndexOf('.') != InvalidIndex )  {
-        stre.SetLength(stre.Length()-1);
-        strv.SetLength(strv.Length()-1);
+      if (strv.IndexOf('.') != InvalidIndex && iv != 10) {
+        while (stre.EndsWith('0') && strv.EndsWith('0')) {
+          stre.SetLength(stre.Length() - 1);
+          strv.SetLength(strv.Length() - 1);
+        }
       }
-      if( strv.EndsWith('.') )
-        strv.SetLength(strv.Length()-1);
+      if (strv.EndsWith('.')) {
+        strv.SetLength(strv.Length() - 1);
+      }
       return (SC(strv) << '(' << stre << ')');
     }
-    else
+    else {
       return SC(FV);
+    }
   }
   inline virtual TIString ToString() const {  return StrRepr<olxstr>();  }
   inline olxcstr ToCStr() const {  return StrRepr<olxcstr>();  }
