@@ -3645,7 +3645,7 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options,
     Root = DF.Root().FindItemi("Cif_Tables");
     if (Root != NULL) {
       xapp.NewLogEntry(logInfo) << "Found table definitions:";
-      for (size_t i=0; i < Root->ItemCount(); i++) {
+      for (size_t i = 0; i < Root->ItemCount(); i++) {
         Tmp = "Table ";
         Tmp << Root->GetItemByIndex(i).GetName() << '(' << " #" << (int)i + 1 <<
           "): caption <---";
@@ -3662,8 +3662,9 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options,
   }
   TCif *Cif;
   olx_object_ptr<TCif> Cif1(new TCif());
-  if (xapp.CheckFileType<TCif>() )
+  if (xapp.CheckFileType<TCif>()) {
     Cif = &xapp.XFile().GetLastLoader<TCif>();
+  }
   else {
     olxstr cifFN = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "cif");
     if (TEFile::Exists(cifFN)) {
@@ -3677,7 +3678,7 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options,
   TStrList SL, Dic;
   TDataFile DF;
   TTTable<TStrList> DT;
-  DF.LoadFromXLFile(CifTablesFile, NULL);
+  DF.LoadFromXLFile(CifTablesFile, 0);
   Dic = TEFile::ReadLines(CifDictionaryFile);
   olxstr RF = Options.FindValue('n');
   if (RF.IsEmpty()) {
@@ -3698,7 +3699,7 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options,
   }
   smatd_list SymmList;
   size_t tab_count = 1;
-  for (size_t i=0; i < Cmds.Count(); i++) {
+  for (size_t i = 0; i < Cmds.Count(); i++) {
     TDataItem* TD = 0;
     if (Cmds[i].IsNumber()) {
       size_t index = Cmds[i].ToSizeT();
@@ -3723,7 +3724,7 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options,
         fn = xapp.GetCifTemplatesDir() + fn;
       }
       TStrList SL1 = TEFile::ReadLines(fn);
-      for (size_t j=0; j < SL1.Count(); j++) {
+      for (size_t j = 0; j < SL1.Count(); j++) {
         Cif->ResolveParamsFromDictionary(Dic, SL1[j], '%', &XLibMacros::CifResolve);
         SL.Add(SL1[j]);
       }
@@ -3742,19 +3743,21 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options,
       TStrList CLA, THA;
       CLA.Add(TD->FindField("tha"));
       THA.Add(TD->FindField("tha"));
-      for (size_t j=0; j < TD->ItemCount(); j++) {
+      for (size_t j = 0; j < TD->ItemCount(); j++) {
         CLA.Add(TD->GetItemByIndex(j).FindField("cola"));
         THA.Add(TD->GetItemByIndex(j).FindField("tha"));
       }
       olxstr footer;
-      for (size_t i=0; i < SymmList.Count(); i++) {
-        footer << "<sup>" << (i+1) << "</sup>" <<
+      for (size_t i = 0; i < SymmList.Count(); i++) {
+        footer << "<sup>" << (i + 1) << "</sup>" <<
           TSymmParser::MatrixToSymmEx(SymmList[i]);
-        if ((i+1) < SymmList.Count())
+        if ((i + 1) < SymmList.Count()) {
           footer << "; ";
+        }
       }
-      if (tab_count > 1)
+      if (tab_count > 1) {
         SL.Add("<p>&nbsp;</p>");
+      }
       DT.CreateHTMLList(
         SL,
         Tmp,
@@ -4339,7 +4342,6 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
         TBasicApp::NewLogEntry(logError) << "Could not find file: " << fn;
         continue;
       }
-      src.LoadFromStream(is());
       for (size_t i=1; i < toks.Count(); i++) {
         size_t idx = toks[i].IndexOf('=');
         if (idx != InvalidIndex) {
@@ -4349,6 +4351,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
           }
         }
       }
+      src.LoadFromStream(is());
     }
     catch(...) {}  // most like the cif does not have cell, so pass it
     if (src.Count() == 0) {
