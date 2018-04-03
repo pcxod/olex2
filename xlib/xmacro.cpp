@@ -4342,7 +4342,6 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
         TBasicApp::NewLogEntry(logError) << "Could not find file: " << fn;
         continue;
       }
-      src.LoadFromStream(is());
       for (size_t i=1; i < toks.Count(); i++) {
         size_t idx = toks[i].IndexOf('=');
         if (idx != InvalidIndex) {
@@ -4352,6 +4351,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
           }
         }
       }
+      src.LoadFromStream(is());
     }
     catch(...) {}  // most like the cif does not have cell, so pass it
     if (src.Count() == 0) {
