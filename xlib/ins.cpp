@@ -2643,6 +2643,10 @@ bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& _toks) {
     }
     else {
       sr.AtomsFromExpression(toks.Text(' ', index), resi);
+      if (sr.IsEmpty()) {
+        TBasicApp::NewLogEntry(logWarning) <<
+          "The following INS line has been ignored:" << toks.Text(' ');
+      }
     }
     srl->ValidateRestraint(sr);
     if (!Ins_ProcessRestraint(NULL, sr, rm) && DoPreserveInvalid()) {

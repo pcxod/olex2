@@ -469,12 +469,14 @@ void AtomRefList::Build(const olxstr& exp, const olxstr& resi_) {
         AAtomRef* start = ImplicitCAtomRef::NewInstance(rm, toks[i], r_c, r_r);
         if (start == 0) {
           Valid = false;
+          TBasicApp::NewLogEntry(logWarning) << "Could not locate: " << toks[i];
           break;
         }
         AAtomRef* end = ImplicitCAtomRef::NewInstance(rm, toks[i + 2], r_c, r_r);
         if (end == 0) {
           delete start;
           Valid = false;
+          TBasicApp::NewLogEntry(logWarning) << "Could not locate: " << toks[i];
           break;
         }
         refs.Add(new ListAtomRef(*start, *end, toks[i + 1]));
@@ -485,6 +487,7 @@ void AtomRefList::Build(const olxstr& exp, const olxstr& resi_) {
     AAtomRef* ar = ImplicitCAtomRef::NewInstance(rm, toks[i], r_c, r_r);
     if (ar == 0) {
       Valid = false;
+      TBasicApp::NewLogEntry(logWarning) << "Could not locate: " << toks[i];
       break;
     }
     refs.Add(ar);
