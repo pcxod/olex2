@@ -1807,12 +1807,14 @@ olx_pair_t<vec3i, vec3i> RefinementModel::CalcIndicesToD(double d,
   return olx_pair::make(-mx, mx);
 }
 //..............................................................................
-double RefinementModel::CalcCompletnessTo2Theta(double tt) const {
+double RefinementModel::CalcCompletnessTo2Theta(double tt, bool Laue) const {
   TUnitCell::SymmSpace sp =
     aunit.GetLattice().GetUnitCell().GetSymmSpace();
   mat3d h2c = aunit.GetHklToCartesian();
   SymmSpace::InfoEx info_ex = SymmSpace::Compact(sp);
-  
+  if (Laue) {
+    info_ex.centrosymmetric = true;
+  }
   double two_sin_2t = 2*sin(tt*M_PI/360.0);
   double min_d = expl.GetRadiation()/(two_sin_2t == 0 ? 1e-6 : two_sin_2t);
   double min_ds_sq = olx_sqr(1.0 / min_d);
@@ -2544,7 +2546,11 @@ void RefinementModel::LibShareADP(TStrObjList &Cmds, const TParamList &Options,
 void RefinementModel::LibCalcCompleteness(const TStrObjList& Params,
   TMacroData& E)
 {
-  E.SetRetVal(CalcCompletnessTo2Theta(Params[0].ToDouble()));
+  if (Params.Count() == 2) {
+    E.SetRetVal(CalcCompletnessTo2Theta(Params[0].ToDouble(), Params[1].ToBool()));
+    return;
+  }
+  E.SetRetVal(CalcCompletnessTo2Theta(Params[0].ToDouble(), false));
 }
 //..............................................................................
 void RefinementModel::LibMaxIndex(const TStrObjList& Params,
@@ -2699,7 +2705,7 @@ TLibrary* RefinementModel::ExportLibrary(const olxstr& name) {
   lib->Register(
     new TFunction<RefinementModel>(thip, &RefinementModel::LibCalcCompleteness,
       "Completeness",
-      fpOne,
+      fpOne|fpTwo,
 "Calculates completeness to the given 2 theta value") );
   lib->Register(
     new TMacro<RefinementModel>(thip, &RefinementModel::LibShareADP,
