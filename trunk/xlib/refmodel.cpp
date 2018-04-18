@@ -1819,8 +1819,9 @@ double RefinementModel::CalcCompletnessTo2Theta(double tt, bool Laue) const {
   double min_d = expl.GetRadiation()/(two_sin_2t == 0 ? 1e-6 : two_sin_2t);
   double min_ds_sq = olx_sqr(1.0 / min_d);
   TRefList refs = GetReflections();
-  for (size_t i=0; i < refs.Count(); i++)
+  for (size_t i = 0; i < refs.Count(); i++) {
     refs[i].Standardise(info_ex);
+  }
   QuickSorter::SortSF(refs, &TReflection::CompareIndices);
   size_t u_cnt = 0;
   for (size_t i=0; i < refs.Count(); i++) {

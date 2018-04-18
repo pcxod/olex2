@@ -2044,13 +2044,21 @@ void TIns::_SaveHklInfo(TStrList& SL, bool solution) {
 bool Ins_ProcessRestraint(const TCAtomPList* atoms,
   const TSimpleRestraint& sr, const RefinementModel &rm)
 {
-  if (sr.IsEmpty() && !sr.IsAllNonHAtoms()) return false;
-  if (atoms == NULL)  return true;
-  if (sr.IsAllNonHAtoms()) return true;
+  if (sr.IsEmpty() && !sr.IsAllNonHAtoms()) {
+    return false;
+  }
+  if (atoms == 0) {
+    return true;
+  }
+  if (sr.IsAllNonHAtoms()) {
+    return true;
+  }
   TTypeList<ExplicitCAtomRef> ra = sr.GetAtoms().ExpandList(rm);
-  for (size_t i=0; i < ra.Count(); i++)
-    if (atoms->Contains(ra[i].GetAtom()))
+  for (size_t i = 0; i < ra.Count(); i++) {
+    if (atoms->Contains(ra[i].GetAtom())) {
       return true;
+    }
+  }
   return false;
 }
 //..............................................................................
@@ -2058,26 +2066,33 @@ olxstr TIns::RestraintToString(const TSimpleRestraint &sr,
   const TIns::RCInfo &ri, const TCAtomPList *atoms)
 {
   const RefinementModel &rm = sr.GetParent().GetRM();
-  if (!Ins_ProcessRestraint(atoms, sr, rm))
+  if (!Ins_ProcessRestraint(atoms, sr, rm)) {
     return EmptyString();
+  }
   if (sr.GetAtoms().IsExplicit()) {
     // has lower atom count limit?
-    if ((int)sr.GetAtoms().ExpandList(rm).Count() < ri.atom_limit)
+    if ((int)sr.GetAtoms().ExpandList(rm).Count() < ri.atom_limit) {
       return EmptyString();
+    }
   }
   bool def = rm.IsDEFSSet() ? rm.IsDefaultRestraint(sr) :
     (rm.DoShowRestraintDefaults() ? false : rm.IsDefaultRestraint(sr));
   olxstr line = sr.GetIdName();
-  if (!sr.GetAtoms().GetResi().IsEmpty())
+  if (!sr.GetAtoms().GetResi().IsEmpty()) {
     line << '_' << sr.GetAtoms().GetResi();
-  if( ri.has_value > 0 )  // has value and is first?
+  }
+  if (ri.has_value > 0) {// has value and is first?
     line << ' ' << rm.Vars.GetParam(sr, 0);
-  if( ri.esd_cnt > 0 && !def )  // uses Esd?
+  }
+  if (ri.esd_cnt > 0 && !def) { // uses Esd?
     line << ' ' << sr.GetEsd();
-  if( ri.esd_cnt > 1 && !def )  // has extra Esd?
+  }
+  if (ri.esd_cnt > 1 && !def) {  // has extra Esd?
     line << ' ' << sr.GetEsd1();
-  if( ri.has_value < 0 && !def )  // has value and is last?
+  }
+  if (ri.has_value < 0 && !def) { // has value and is last?
     line << ' ' << rm.Vars.GetParam(sr, 0);
+  }
   line << ' ' << sr.GetAtoms().GetExpression();
   return line;
 }
@@ -2212,13 +2227,13 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
         l << ' ' << rm.rSAME[i].Esd12 << ' ' << rm.rSAME[i].Esd13;
       }
       l << ' ' << rm.rSAME[i].GetAtoms().GetExpression();
-      if (processed != NULL) {
+      if (processed != 0) {
         processed->sameList.Add(rm.rSAME[i]);
       }
     }
   }
   SL.Add(EmptyString());
-  if (atoms == NULL) {
+  if (atoms == 0) {
     for (size_t i = 0; i < rm.FragCount(); i++) {
       rm.GetFrag(i).ToStrings(SL);
     }
@@ -2231,7 +2246,7 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
         continue;
       }
       const Fragment* frag = rm.FindFragByCode(m);
-      if (frag == NULL)  {
+      if (frag == 0)  {
         throw TFunctionFailedException(__OlxSourceInfo,
           "could not locate the FRAG for fitted group");
       }
@@ -2250,8 +2265,9 @@ void TIns::SaveExtras(TStrList& SL, const TCAtomPList* atoms,
   TStrList extras(rm.WriteInsExtras(atoms, false), NewLineSequence());
   if (!extras.IsEmpty()) {
     SL.Add("REM <olex2.extras>");
-    for (size_t i = 0; i < extras.Count(); i++)
+    for (size_t i = 0; i < extras.Count(); i++) {
       HyphenateIns("REM ", extras[i], SL);
+    }
     SL.Add("REM </olex2.extras>");
   }
 }
@@ -2303,9 +2319,10 @@ void TIns::ValidateRestraintsAtomNames(RefinementModel& rm, bool report)  {
   }
 }
 //..............................................................................
-void TIns::ClearIns()  {
-  for( size_t i=0; i < Ins.Count(); i++ )
+void TIns::ClearIns() {
+  for (size_t i = 0; i < Ins.Count(); i++) {
     delete Ins.GetObject(i);
+  }
   Ins.Clear();
 }
 //..............................................................................
@@ -2316,10 +2333,12 @@ bool TIns::AddIns(const olxstr& Params, RefinementModel& rm)  {
 //..............................................................................
 void TIns::_SaveSizeTemp(TStrList& SL)  {
   vec3d size( RefMod.expl.GetCrystalSize() );
-  if( !size.IsNull() )
+  if (!size.IsNull()) {
     SL.Add("SIZE ") << size[0] << ' ' << size[1] << ' ' << size[2];
-  if( RefMod.expl.IsTemperatureSet() )
+  }
+  if (RefMod.expl.IsTemperatureSet()) {
     SL.Add("TEMP ") << RefMod.expl.GetTempValue().ToString();
+  }
 }
 //..............................................................................
 TStrList::const_list_type TIns::SaveHeader(TStrList& SL,
@@ -2341,8 +2360,9 @@ TStrList::const_list_type TIns::SaveHeader(TStrList& SL,
   }
   SL.Add(EmptyString());
   TStrList::const_list_type rv = SaveSfacUnit(GetRM(), SL, SL.Count() - 1);
-  if (ValidateRestraintNames)
+  if (ValidateRestraintNames) {
     ValidateRestraintsAtomNames(GetRM());
+  }
   SaveRestraints(SL, NULL, NULL, GetRM());
   _SaveRefMethod(SL);
   _SaveSizeTemp(SL);
@@ -2357,7 +2377,7 @@ TStrList::const_list_type TIns::SaveHeader(TStrList& SL,
 
   for (size_t i=0; i < Ins.Count(); i++) {
     TInsList* L = Ins.GetObject(i);
-    if (L == NULL) {  // if load failed
+    if (L == 0) {  // if load failed
       continue;
     }
     if (!Ins[i].Equalsi("REM") && !Ins[i].Equalsi("NEUT")) {
