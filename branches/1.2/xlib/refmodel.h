@@ -705,7 +705,7 @@ Friedel opposites of components 1 ... m
   vec3i CalcMaxHklIndexForD(double d, double tol=1e-3) const {
     return vec3i(aunit.GetAxes()/d + tol);
   }
-  double CalcCompletnessTo2Theta(double tt) const;
+  double CalcCompletnessTo2Theta(double tt, bool Laue) const;
   IXVarReferencerContainer& GetRefContainer(const olxstr& id_name)  {
     try {  return *RefContainers.Get(id_name);  }
     catch(...)  {
