@@ -48,11 +48,17 @@ bool InfoTab::IsValid() const {
   if (!atoms.IsExplicit()) { // leave implicit as they are
     return true;
   }
+  if (!atoms.IsValid()) {
+    return false;
+  }
   TTypeList<ExplicitCAtomRef> a = atoms.ExpandList(RM);
   size_t ac = a.Count();
-  if (ac == 0) return false;
-  if ((Type == infotab_htab || Type == infotab_bond) && (ac%2) == 0)
+  if (ac == 0) {
+    return false;
+  }
+  if ((Type == infotab_htab || Type == infotab_bond) && (ac % 2) == 0) {
     return true;
+  }
   if (Type == infotab_rtab) {
     if (ac >= 1 && ac <= 4 && !ParamName.IsEmpty()) {
       return true;

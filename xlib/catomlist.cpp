@@ -460,7 +460,7 @@ void AtomRefList::Build(const olxstr& exp, const olxstr& resi_) {
   }
   expression = exp;
   residue = resi_;
-  Valid = true;
+  bool Valid = true;
   TStrList toks(exp, ' ');
   for (size_t i = 0; i < toks.Count(); i++) {
     if (!Valid) break;
@@ -469,12 +469,14 @@ void AtomRefList::Build(const olxstr& exp, const olxstr& resi_) {
         AAtomRef* start = ImplicitCAtomRef::NewInstance(rm, toks[i], r_c, r_r);
         if (start == 0) {
           Valid = false;
+          TBasicApp::NewLogEntry(logWarning) << "Could not locate: " << toks[i];
           break;
         }
         AAtomRef* end = ImplicitCAtomRef::NewInstance(rm, toks[i + 2], r_c, r_r);
         if (end == 0) {
           delete start;
           Valid = false;
+          TBasicApp::NewLogEntry(logWarning) << "Could not locate: " << toks[i];
           break;
         }
         refs.Add(new ListAtomRef(*start, *end, toks[i + 1]));
@@ -485,6 +487,7 @@ void AtomRefList::Build(const olxstr& exp, const olxstr& resi_) {
     AAtomRef* ar = ImplicitCAtomRef::NewInstance(rm, toks[i], r_c, r_r);
     if (ar == 0) {
       Valid = false;
+      TBasicApp::NewLogEntry(logWarning) << "Could not locate: " << toks[i];
       break;
     }
     refs.Add(ar);
@@ -533,7 +536,7 @@ void AtomRefList::EnsureAtomGroups(const RefinementModel& rm,
 TTypeList<TAtomRefList> &AtomRefList::Expand(const RefinementModel& rm,
   TTypeList<TAtomRefList>& c_res, size_t group_size) const
 {
-  if (!Valid) {
+  if (!IsValid()) {
     return c_res;
   }
   TPtrList<TResidue> residues = rm.aunit.FindResidues(residue);
@@ -575,7 +578,7 @@ TAtomRefList::const_list_type AtomRefList::ExpandList(
 }
 //.............................................................................
 bool AtomRefList::IsExpandable() const {
-  if (!Valid) {
+  if (!IsValid()) {
     return false;
   }
   for (size_t i = 0; i < refs.Count(); i++) {
@@ -586,6 +589,15 @@ bool AtomRefList::IsExpandable() const {
   return false;
 }
 //.............................................................................
+bool AtomRefList::IsValid() const {
+  for (size_t i = 0; i < refs.Count(); i++) {
+    if (!refs[i].IsValid()) {
+      return false;
+    }
+  }
+  return !refs.IsEmpty();
+}
+//.............................................................................
 bool AtomRefList::IsExplicit() const {
   return (!ContainsImplicitAtoms && (residue.IsEmpty() || residue.IsInt()));
 }
@@ -594,7 +606,6 @@ void AtomRefList::Assign(const AtomRefList &arl) {
   ContainsImplicitAtoms = arl.ContainsImplicitAtoms;
   expression = arl.expression;
   residue = arl.residue;
-  Valid = arl.Valid;
   refs.Clear();
   refs.SetCapacity(arl.refs.Count());
   for (size_t i=0; i < arl.refs.Count(); i++) {
@@ -746,7 +757,6 @@ void AtomRefList::UpdateResi() {
 //.............................................................................
 void AtomRefList::Clear() {
   refs.Clear();
-  Valid = true;
   ContainsImplicitAtoms = false;
   residue.SetLength(0);
   expression.SetLength(0);
@@ -764,7 +774,7 @@ olxstr AtomRefList::BuildExpression(TResidue *r) const {
 }
 //.............................................................................
 olxstr AtomRefList::GetExpression() const {
-  if (!Valid) {
+  if (!IsValid()) {
     return expression;
   }
   if (residue.IsNumber()) {
