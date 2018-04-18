@@ -147,9 +147,12 @@ public:
   }
   AAtomRef &GetStart() { return start;  }
   AAtomRef &GetEnd() { return end; }
-  virtual bool IsExpandable() const { return true; }
+  virtual bool IsExpandable() const { return start.IsExpandable() && end.IsExpandable(); }
   virtual bool IsExplicit() const {
     return start.IsExplicit() && end.IsExplicit();
+  }
+  virtual bool IsValid() const {
+    return start.IsValid() && end.IsValid();
   }
   // * is special char
   virtual olxstr GetExpression(TResidue *r) const;
@@ -174,7 +177,7 @@ class AtomRefList {
   RefinementModel& rm;
   olxstr residue;
   olxstr expression;
-  bool Valid, ContainsImplicitAtoms;
+  bool ContainsImplicitAtoms;
   olxstr BuildExpression(TResidue *r) const;
   void EnsureAtomGroups(const RefinementModel& rm, TAtomRefList& al,
     size_t groups_size) const;
@@ -193,7 +196,7 @@ public:
   AtomRefList(RefinementModel& rm, const olxstr& exp,
     const olxstr& resi=EmptyString());
   AtomRefList(RefinementModel& rm)
-    : rm(rm), Valid(true), ContainsImplicitAtoms(false)
+    : rm(rm), ContainsImplicitAtoms(false)
   {}
   /* expands the underlying expressions into a list. If the residue name is a
   class name (and there are several residues of the kind), there will be more
@@ -225,6 +228,7 @@ public:
   const olxstr &GetResi() const { return residue; }
   /* checks if any of the references are expandable */
   bool IsExpandable() const;
+  bool IsValid() const;
   /* this can be used to decide if the atom list is valid */
   virtual bool IsExplicit() const;
   /* converts this list to list of exlicit references */
