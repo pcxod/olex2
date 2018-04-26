@@ -8624,21 +8624,38 @@ void XLibMacros::macTolman(TStrObjList &Cmds, const TParamList &Options,
 {
   TXApp &app = TXApp::GetInstance();
   TSAtomPList atoms = app.FindSAtoms(Cmds, false, true);
-  if (atoms.Count() != 5) {
-    E.ProcessingError(__OlxSrcInfo, "5 Atoms are expected - M P S1 S2 S3");
+  if (atoms.Count() < 4) {
+    E.ProcessingError(__OlxSrcInfo, "5 Atoms are expected - M P S1 S2 S3 or "
+    "mpd parameter and 4 atoms - P S1 S2 S3");
     return;
   }
-  TBasicApp::NewLogEntry() << "Calculatinng Tolman cone angle for the "
+  TBasicApp::NewLogEntry() << "Calculating Tolman cone angle for the "
     "selection: http://en.wikipedia.org/wiki/Tolman_cone_angle";
-  double d = Options.FindValue("mpd", atoms[0]->crd().DistanceTo(
-    atoms[1]->crd())).ToDouble();
+  vec3d v0;
+  size_t start, end;
+  double d;
+  if (atoms.Count() == 4) {
+    d = Options.FindValue("mpd", 0).ToDouble();
+    start = 1;
+    end = 4;
+    vec3d c = (atoms[1]->crd() + atoms[2]->crd() + atoms[3]->crd()) / 3;
+    v0 = atoms[0]->crd() - (c - atoms[0]->crd()).NormaliseTo(d);
+  }
+  else {
+    start = 2;
+    end = 5;
+    d = Options.FindValue("mpd", atoms[0]->crd().DistanceTo(
+      atoms[1]->crd())).ToDouble();
+    v0 = atoms[1]->crd() + (atoms[0]->crd() - atoms[1]->crd()).NormaliseTo(d);
+  }
+  
   TBasicApp::NewLogEntry() << "Metal to P distance is: " <<
     olxstr::FormatFloat(3, d);
-  vec3d v0 = (atoms[1]->crd() - atoms[0]->crd()).NormaliseTo(d);
+
   olxdict<const cm_Element*, double, TPointerComparator> radii;
   double sa = 0;
-  for (size_t i=2; i < 5; i++) {
-    vec3d v = atoms[i]->crd()-atoms[0]->crd();
+  for (size_t i=start; i < end; i++) {
+    vec3d v = atoms[i]->crd()-v0;
     radii.Add(&atoms[i]->GetType()) = atoms[i]->GetType().r_vdw;
     double a = acos(v.CAngle(v0));
     double qvl = v.QLength();
