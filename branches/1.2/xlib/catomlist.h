@@ -147,7 +147,7 @@ public:
   }
   AAtomRef &GetStart() { return start;  }
   AAtomRef &GetEnd() { return end; }
-  virtual bool IsExpandable() const { return start.IsExpandable() && end.IsExpandable(); }
+  virtual bool IsExpandable() const { return true; }
   virtual bool IsExplicit() const {
     return start.IsExplicit() && end.IsExplicit();
   }
