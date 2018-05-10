@@ -1349,7 +1349,7 @@ void TGXApp::FragmentsVisible(const TNetPList& Frags, bool V) {
   Draw();
 }
 //..............................................................................
-TGlGroup& TGXApp::GroupFragments(const TNetPList& Fragments, const olxstr groupName) {
+TGlGroup* TGXApp::GroupFragments(const TNetPList& Fragments, const olxstr groupName) {
   GetRenderer().GetSelection().Clear();
   TXBondPList xbonds;
   for (size_t i = 0; i < Fragments.Count(); i++) {
@@ -1363,7 +1363,7 @@ TGlGroup& TGXApp::GroupFragments(const TNetPList& Fragments, const olxstr groupN
   for (size_t i = 0; i < xbonds.Count(); i++) {
     GetRenderer().GetSelection().Add(*xbonds[i]);
   }
-  return *GetRenderer().GroupSelection(groupName);
+  return GetRenderer().GroupSelection(groupName);
 }
 //..............................................................................
 TNetPList TGXApp::InvertFragmentsList(const TNetPList& SF) {
