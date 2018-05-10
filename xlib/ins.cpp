@@ -2480,7 +2480,12 @@ bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& _toks) {
   TStrList toks(_toks);
   if (toks[0].Equalsi("EQIV") && toks.Count() >= 3) {
     try {
+      size_t cc = rm.UsedSymmCount();
       rm.AddUsedSymm(TSymmParser::SymmToMatrix(toks.Text(EmptyString(), 2)), toks[1]);
+      if (cc == rm.UsedSymmCount()) {
+        TBasicApp::NewLogEntry(logWarning) << "Duplicate EQIV: " << toks[1]
+          << ". Note that this may cause incorrect interpretation of the model.";
+      }
     }
     catch (const TExceptionBase &e) {
       throw TFunctionFailedException(__OlxSourceInfo, e, "to parse EQIV");
@@ -2665,7 +2670,7 @@ bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& _toks) {
       sr.AtomsFromExpression(toks.Text(' ', index), resi);
       if (sr.IsEmpty()) {
         TBasicApp::NewLogEntry(logWarning) <<
-          "The following INS line has been ignored:" << toks.Text(' ');
+          "The following INS line has been ignored: " << toks.Text(' ');
       }
     }
     srl->ValidateRestraint(sr);

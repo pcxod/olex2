@@ -8631,22 +8631,32 @@ void XLibMacros::macTolman(TStrObjList &Cmds, const TParamList &Options,
   }
   TBasicApp::NewLogEntry() << "Calculating Tolman cone angle for the "
     "selection: http://en.wikipedia.org/wiki/Tolman_cone_angle";
-  vec3d v0;
+  vec3d v0, // M
+    v1; // P
   size_t start, end;
   double d;
   if (atoms.Count() == 4) {
     d = Options.FindValue("mpd", 0).ToDouble();
     start = 1;
     end = 4;
-    vec3d c = (atoms[1]->crd() + atoms[2]->crd() + atoms[3]->crd()) / 3;
-    v0 = atoms[0]->crd() - (c - atoms[0]->crd()).NormaliseTo(d);
+    vec3d c;
+    if (atoms[0]->NodeCount() == 3) {
+      c = (atoms[0]->Node(0).crd() + atoms[0]->Node(1).crd() +
+        atoms[0]->Node(2).crd()) / 3;
+    }
+    else {
+      c = (atoms[1]->crd() + atoms[2]->crd() + atoms[3]->crd()) / 3;
+    }
+    v1 = atoms[0]->crd();
+    v0 = (v1 - c).NormaliseTo(d);
   }
   else {
     start = 2;
     end = 5;
     d = Options.FindValue("mpd", atoms[0]->crd().DistanceTo(
       atoms[1]->crd())).ToDouble();
-    v0 = atoms[1]->crd() + (atoms[0]->crd() - atoms[1]->crd()).NormaliseTo(d);
+    v1 = atoms[1]->crd();
+    v0 = (atoms[0]->crd() - v1).NormaliseTo(d);
   }
   
   TBasicApp::NewLogEntry() << "Metal to P distance is: " <<
@@ -8655,11 +8665,12 @@ void XLibMacros::macTolman(TStrObjList &Cmds, const TParamList &Options,
   olxdict<const cm_Element*, double, TPointerComparator> radii;
   double sa = 0;
   for (size_t i=start; i < end; i++) {
-    vec3d v = atoms[i]->crd()-v0;
+    vec3d v = atoms[i]->crd() - v1 - v0;
     radii.Add(&atoms[i]->GetType()) = atoms[i]->GetType().r_vdw;
-    double a = acos(v.CAngle(v0));
+    double a = M_PI - acos(v.CAngle(v0));
     double qvl = v.QLength();
-    a += acos(sqrt((qvl-olx_sqr(atoms[i]->GetType().r_vdw))/qvl));
+    double rsq = olx_sqr(atoms[i]->GetType().r_vdw);
+    a += acos(sqrt((qvl-rsq)/qvl));
     sa += a;
   }
   TBasicApp::NewLogEntry() << "Used radii:";
