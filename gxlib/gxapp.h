@@ -705,7 +705,7 @@ public:
   void SelectFragmentsAtoms(const TNetPList& frags, bool v);
   void SelectFragmentsBonds(const TNetPList& frags, bool v);
   void SelectFragments(const TNetPList& frags, bool v);
-  TGlGroup& GroupFragments(const TNetPList& Fragments, const olxstr groupName);
+  TGlGroup* GroupFragments(const TNetPList& Fragments, const olxstr groupName);
   void LoadTextures(const olxstr &folder);
   void ClearTextures(short flags);
   // inverts current list of TLattice using Selected Fragments, returns

@@ -609,9 +609,10 @@ void XLibMacros::Export(TLibrary& lib)  {
     "\nUsage: conn bonding_radius [selection/atom(s)/$type] - note the radius"
     " should have floating point");
   xlib_InitMacro(Tolman,
-    "mpd-M to P distance",
+    "mpd-M to P distance [2.28]&;"
+    "chd-C to H distance [0.96]",
     fpNone|fpFive|psFileLoaded,
-    "Calculates Tolamn code angle for the selection (M P S1 S2 S3)");
+    "Calculates Tolman angle for the structure");
   xlib_InitMacro(Split,
     "r-EADP,ISOR or SIMU to be placed for the split atoms",
     fpAny|psCheckFileTypeIns,
@@ -8619,57 +8620,115 @@ void XLibMacros::macConstrain(TStrObjList &Cmds,
   }
 }
 //..............................................................................
+bool Tolman_MaskSub(TSAtom &a, int tag) {
+  a.SetTag(tag);
+  for (size_t i = 0; i < a.NodeCount(); i++) {
+    if (a.Node(i).GetTag() == -1) {
+      if (!Tolman_MaskSub(a.Node(i), tag)) {
+        return false;
+      }
+    }
+    else if (a.Node(i).GetTag() != 0 && a.Node(i).GetTag() != tag) {
+      return false;
+    }
+  }
+  return true;
+}
 void XLibMacros::macTolman(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &E)
 {
   TXApp &app = TXApp::GetInstance();
-  TSAtomPList atoms = app.FindSAtoms(Cmds, false, true);
-  if (atoms.Count() < 4) {
-    E.ProcessingError(__OlxSrcInfo, "5 Atoms are expected - M P S1 S2 S3 or "
-    "mpd parameter and 4 atoms - P S1 S2 S3");
-    return;
+  double mpd = Options.FindValue("mpd", "2.28").ToDouble();
+  double chd = Options.FindValue("chd", "0.96").ToDouble();
+  TSAtomPList atoms = app.FindSAtoms("$P", false, false);
+  for (size_t i = 0; i < atoms.Count(); i++) {
+    TSAtom &sa = *atoms[i];
+    size_t sc = 0, m_idx = InvalidIndex;
+    vec3d s_c;
+    for (size_t j = 0; j < sa.NodeCount(); j++) {
+      if (sa.Node(j).IsDeleted() || sa.Node(j).GetType() == iQPeakZ) {
+        continue;
+      }
+      if (XElementLib::IsMetal(sa.Node(j).GetType())) {
+        if (m_idx != InvalidIndex) {
+          sc = 0;
+          break;
+        }
+        m_idx = j;
+      }
+      else {
+        s_c += sa.Node(j).crd();
+      }
+      sc++;
+    }
+    vec3d v0, // M
+      v1; // P
+    double ang = 0;
+    bool calculated = true;
+    if (sc == 3 || (sc == 4 && m_idx != InvalidIndex)) {
+      v1 = sa.crd();
+      if (sc == 3) {
+        v0 = v1 + (v1 - s_c/3).NormaliseTo(mpd);
+      }
+      else {
+        v0 = v1 + (sa.Node(m_idx).crd() - v1).NormaliseTo(mpd);
+      }
+      ASObjectProvider &op = app.XFile().GetLattice().GetObjects();
+      op.atoms.ForEach(ACollectionItem::TagSetter(-1));
+      sa.SetTag(0);
+      for (size_t j = 0; j < sa.NodeCount(); j++) {
+        TSAtom &sa1 = sa.Node(j);
+        if (sa1.IsDeleted() || sa1.GetType() == iQPeakZ) {
+          continue;
+        }
+        if (m_idx == j) {
+          continue;
+        }
+        if (!Tolman_MaskSub(sa1, j)) {
+          calculated = false;
+          break;
+        }
+      }
+      for (size_t j = 0; j < sa.NodeCount(); j++) {
+        TSAtom &sa1 = sa.Node(j);
+        if (sa1.IsDeleted() || sa1.GetType() == iQPeakZ) {
+          continue;
+        }
+        if (m_idx == j) {
+          continue;
+        }
+        double max_ang = 0;
+        for (size_t k = 0; k < op.atoms.Count(); k++) {
+          TSAtom& sa2 = op.atoms[k];
+          if (sa2.IsDeleted() || sa2.GetType() == iQPeakZ ||
+            sa2.GetTag() != j || sa2.GetType() != iHydrogenZ)
+          {
+            continue;
+          }
+          if (sa2.NodeCount() != 1) {
+            calculated = false;
+            break;
+          }
+          TSAtom &ba = sa2.Node(0);
+          vec3d v = (ba.crd() + (sa2.crd()-ba.crd()).NormaliseTo(chd)) - v0;
+          double a = acos(v.CAngle(v1-v0));
+          a += asin(1.0/v.Length());
+          if (a > max_ang) {
+            max_ang = a;
+          }
+        }
+        ang += max_ang;
+      }
+      if (calculated) {
+        TBasicApp::NewLogEntry() << "Angle for " << sa.GetLabel() << ": "
+          << olxstr::FormatFloat(3, 180 * (2 * ang / 3) / M_PI);
+      }
+    }
   }
-  TBasicApp::NewLogEntry() << "Calculating Tolman cone angle for the "
-    "selection: http://en.wikipedia.org/wiki/Tolman_cone_angle";
-  vec3d v0;
-  size_t start, end;
-  double d;
-  if (atoms.Count() == 4) {
-    d = Options.FindValue("mpd", 0).ToDouble();
-    start = 1;
-    end = 4;
-    vec3d c = (atoms[1]->crd() + atoms[2]->crd() + atoms[3]->crd()) / 3;
-    v0 = atoms[0]->crd() - (c - atoms[0]->crd()).NormaliseTo(d);
-  }
-  else {
-    start = 2;
-    end = 5;
-    d = Options.FindValue("mpd", atoms[0]->crd().DistanceTo(
-      atoms[1]->crd())).ToDouble();
-    v0 = atoms[1]->crd() + (atoms[0]->crd() - atoms[1]->crd()).NormaliseTo(d);
-  }
-  
-  TBasicApp::NewLogEntry() << "Metal to P distance is: " <<
-    olxstr::FormatFloat(3, d);
-
-  olxdict<const cm_Element*, double, TPointerComparator> radii;
-  double sa = 0;
-  for (size_t i=start; i < end; i++) {
-    vec3d v = atoms[i]->crd()-v0;
-    radii.Add(&atoms[i]->GetType()) = atoms[i]->GetType().r_vdw;
-    double a = acos(v.CAngle(v0));
-    double qvl = v.QLength();
-    a += acos(sqrt((qvl-olx_sqr(atoms[i]->GetType().r_vdw))/qvl));
-    sa += a;
-  }
-  TBasicApp::NewLogEntry() << "Used radii:";
-  for (size_t i=0; i < radii.Count(); i++) {
-    TBasicApp::NewLogEntry() << radii.GetKey(i)->symbol << '\t' <<
-      radii.GetValue(i);
-  }
-
-  TBasicApp::NewLogEntry() << "Resulting angle: " <<
-    olxstr::FormatFloat(3, 180*(2*sa/3)/M_PI);
+  TBasicApp::NewLogEntry() << "Calculating Tolman cone angle: "
+    "http://en.wikipedia.org/wiki/Tolman_cone_angle, Transition Met. Chem., 20, 533-539 (1995)";
+  TBasicApp::NewLogEntry() << "Metal to P distance is: " << olxstr::FormatFloat(3, mpd);
+  TBasicApp::NewLogEntry() << "C-H disance is: " << olxstr::FormatFloat(3, chd);
 }
 
 struct idx_pair_t : public olx_pair_t<size_t, size_t> {
@@ -8825,7 +8884,7 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
     TTypeList< olx_pair_t<size_t, size_t> > res;
     TNetwork &netA = atoms[0]->GetNetwork(),
       &netB = atoms[1]->GetNetwork();
-    if (&netA == &netB ) {
+    if (&netA == &netB) {
       E.ProcessingError(__OlxSrcInfo, "Please select different fragments");
       return;
     }
@@ -8838,7 +8897,7 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
       TArrayList<TSAtomPList> groups(2);
       groups[0].SetCapacity(res.Count());
       groups[1].SetCapacity(res.Count());
-      for (size_t i=0; i < res.Count(); i++) {
+      for (size_t i = 0; i < res.Count(); i++) {
         if (netA.Node(res[i].GetA()).GetType().z < 2) {
           continue;
         }
@@ -8850,14 +8909,14 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
     }
     else {
       TSameGroup* sg = 0;
-      for (size_t i=0; i < netA.NodeCount(); i++) {
+      for (size_t i = 0; i < netA.NodeCount(); i++) {
         netA.Node(i).SetTag(-1);
         netB.Node(i).SetTag(-1);
       }
       bool first = true;
-      for (size_t i=0; i < res.Count(); i++) {
+      for (size_t i = 0; i < res.Count(); i++) {
         if (netA.Node(res[i].GetA()).GetType().z < 2 ||
-            netA.Node(res[i].GetA()).GetTag() == 0)
+          netA.Node(res[i].GetA()).GetTag() == 0)
         {
           continue;
         }
@@ -8869,9 +8928,9 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
               sg = &asg;
               break;
             }
-            else {
-              sg = &app.XFile().GetRM().rSAME.New();
-            }
+          }
+          if (sg == 0) {
+            sg = &app.XFile().GetRM().rSAME.New();
           }
           first = false;
         }
@@ -8880,7 +8939,7 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
       }
       TBasicApp::NewLogEntry();
       TSameGroup& d_sg = app.XFile().GetRM().rSAME.NewDependent(*sg);
-      for (size_t i=0; i < res.Count(); i++) {
+      for (size_t i = 0; i < res.Count(); i++) {
         if (netB.Node(res[i].GetB()).GetType().z < 2 ||
           netB.Node(res[i].GetB()).GetTag() == 0)
         {
@@ -8893,11 +8952,11 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
       TBasicApp::NewLogEntry();
     }
   }
-  else if (groups_count != InvalidSize && (atoms.Count()%groups_count) == 0) {
-    const size_t cnt = atoms.Count()/groups_count;
+  else if (groups_count != InvalidSize && (atoms.Count() % groups_count) == 0) {
+    const size_t cnt = atoms.Count() / groups_count;
     if (expand) {
       TArrayList<TSAtomPList> groups(groups_count);
-      for (size_t i=0; i < cnt; i++) {
+      for (size_t i = 0; i < cnt; i++) {
         for (size_t j = 0; j < groups_count; j++) {
           groups[j].Add(atoms[cnt*j + i]);
         }
@@ -8905,18 +8964,18 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
       macSAME_expand(app.XFile().GetRM(), groups,
         FunctionAccessor::MakeConst(&TSAtom::CAtom));
     }
-    else  {
+    else {
       TPtrList<TSameGroup> deps;
-      TSameGroup* sg;
+      TSameGroup* sg = 0;
       if (olx_is_valid_index(atoms[0]->CAtom().GetSameId())) {
         TSameGroup &asg = app.XFile().GetRM().rSAME[
           atoms[0]->CAtom().GetSameId()];
         if (asg.GetParentGroup() == 0) {
           sg = &asg;
         }
-        else {
-          sg = &app.XFile().GetRM().rSAME.New();
-        }
+      }
+      if (sg == 0) {
+        sg = &app.XFile().GetRM().rSAME.New();
       }
       for (size_t i = 0; i < groups_count - 1; i++) {
         deps.Add(app.XFile().GetRM().rSAME.NewDependent(*sg));
@@ -8924,7 +8983,7 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
       if (!sg->GetAtoms().IsEmpty()) {
         sg = 0;
       }
-      for (size_t i=0; i < cnt; i++) {
+      for (size_t i = 0; i < cnt; i++) {
         if (sg != 0) {
           sg->Add(atoms[i]->CAtom());
         }
@@ -8954,16 +9013,16 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
         FunctionAccessor::MakeConst(&TSAtom::CAtom));
     }
     else {
-      TSameGroup *sg;
+      TSameGroup *sg = 0;
       if (olx_is_valid_index(atoms[0]->CAtom().GetSameId())) {
         TSameGroup &asg = app.XFile().GetRM().rSAME[
           atoms[0]->CAtom().GetSameId()];
         if (asg.GetParentGroup() == 0) {
           sg = &asg;
         }
-        else {
-          sg = &app.XFile().GetRM().rSAME.New();
-        }
+      }
+      if (sg == 0) {
+        sg = &app.XFile().GetRM().rSAME.New();
       }
       TSameGroup &dep = app.XFile().GetRM().rSAME.NewDependent(*sg);
       if (!sg->GetAtoms().IsEmpty()) {
@@ -8998,7 +9057,7 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
     RefinementModel &rm = app.XFile().GetRM();
     if (!frags.IsEmpty()) {
       if (expand) {
-        TArrayList<TCAtomPList> groups(frags.Count()+1);
+        TArrayList<TCAtomPList> groups(frags.Count() + 1);
         for (size_t i = 0; i < frags.Count() + 1; i++) {
           fragments::fragment &f = (i == 0 ? fr : frags[i - 1]);
           for (size_t j = 0; j < f.count(); j++) {
@@ -9030,7 +9089,7 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
         "fragments";
     }
   }
-  else  {
+  else {
     E.ProcessingError(__OlxSrcInfo, "invalid input arguments");
     return;
   }
