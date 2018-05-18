@@ -66,6 +66,10 @@ ExplicitCAtomRef* ExplicitCAtomRef::NewInstance(const RefinementModel& rm,
     }
     if (!sm.IsEmpty()) {
       symm = rm.FindUsedSymm(sm);
+      if (symm == 0) {
+        TBasicApp::NewLogEntry(logError) << "Could not locate EQIV for " << exp;
+        return 0;
+      }
     }
   }
   TCAtom* ca = rm.aunit.FindCAtom(aname, resi);
@@ -463,7 +467,9 @@ void AtomRefList::Build(const olxstr& exp, const olxstr& resi_) {
   bool Valid = true;
   TStrList toks(exp, ' ');
   for (size_t i = 0; i < toks.Count(); i++) {
-    if (!Valid) break;
+    if (!Valid) {
+      break;
+    }
     if ((i + 2) < toks.Count()) {
       if (toks[i + 1] == '>' || toks[i + 1] == '<') {
         AAtomRef* start = ImplicitCAtomRef::NewInstance(rm, toks[i], r_c, r_r);

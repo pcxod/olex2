@@ -4833,7 +4833,7 @@ void GXLibMacros::macProjSph(TStrObjList &Cmds, const TParamList &Options,
   TBasicApp::NewLogEntry() <<
     table_o.CreateTXTList("Overlapping area (%)", false, false, ' ');
   TBasicApp::NewLogEntry() << "For the use of solid angles, see: "
-    "Guzei, I.A., Wendt, M.Dalton Trans., 2006, 3991-3999.";
+    "Guzei, I.A., Wendt, M. Dalton Trans., 2006, 3991-3999.";
 }
 //..............................................................................
 void GXLibMacros::macOFileDel(TStrObjList &Cmds, const TParamList &Options,

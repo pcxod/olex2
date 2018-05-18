@@ -592,12 +592,12 @@ double VcoVContainer::OctahedralDistortionBP::calc() const {
     pl[i] = (points[i + 1] - c1);
     pl[i + 1] = (points[i + 2] - c2);
   }
+
   PlaneInfo pi = CalcPlane(pl, weights, 0);
-  pi.center += points[0];
   double sum = 0;
   for (int i = 0; i < 6; i++) {
-    const vec3d v1 = points[i + 1].Projection(pi.center, pi.normal);
-    const vec3d v2 = points[i == 5 ? 1 : i + 2].Projection(pi.center, pi.normal);
+    const vec3d v1 = pl[i].Projection(pi.normal);
+    const vec3d v2 = pl[i == 5 ? 0 : i + 1].Projection(pi.normal);
     sum += olx_abs(M_PI / 3 - acos(v1.CAngle(v2)));
   }
   return (sum * 180 / 6) / M_PI;
