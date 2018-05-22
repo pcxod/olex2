@@ -279,6 +279,8 @@ void THklFile::UpdateRef(const TReflection& R) {
   if (ind >= Refs.Count()) {
     throw TInvalidArgumentException(__OlxSourceInfo, "reflection tag");
   }
+  Refs[ind].SetI(R.GetI());
+  Refs[ind].SetS(R.GetS());
   Refs[ind].SetOmitted(R.IsOmitted());
 }
 //..............................................................................
