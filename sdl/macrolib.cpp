@@ -285,16 +285,28 @@ bool TEMacroLib::ProcessFunction(olxstr& Cmd, TMacroData& E, bool has_owner,
     Cmd.Delete(specialFunctionIndex-1, 1);
     specialFunctionIndex = Cmd.FirstIndexOf('$', specialFunctionIndex);
   }
-  if( specialFunctionIndex != InvalidIndex )  {
-    size_t i=specialFunctionIndex;
+  if (specialFunctionIndex != InvalidIndex) {
+    size_t i = specialFunctionIndex;
     int bc = 0;
     bool funcStarted = false;
-    while( ++i < Cmd.Length() )  {
-      if( Cmd.CharAt(i) == '(' )  {  bc++;  funcStarted = true;  }
-      else if( Cmd.CharAt(i) == ')' )  bc--;
-      else if( !funcStarted && !is_allowed_in_name(Cmd.CharAt(i)) )  {
+    while (++i < Cmd.Length()) {
+      olxch ch = Cmd.CharAt(i);
+      if (is_quote(ch)) {
+        if (!skip_string(Cmd, i)) {
+          return false;
+        }
+        continue;
+      }
+      if (ch == '(' && !is_escaped(Cmd, i)) {
+        bc++;
+        funcStarted = true;
+      }
+      else if (ch == ')' && !is_escaped(Cmd, i)) {
+        bc--;
+      }
+      else if (!funcStarted && !is_allowed_in_name(Cmd.CharAt(i))) {
         specialFunctionIndex = next_unescaped('$', Cmd, i);
-        if( specialFunctionIndex == InvalidIndex )  {
+        if (specialFunctionIndex == InvalidIndex) {
           E.GetStack().Pop();
           return true;
         }
@@ -302,17 +314,17 @@ bool TEMacroLib::ProcessFunction(olxstr& Cmd, TMacroData& E, bool has_owner,
         funcStarted = false;
         continue;
       }
-      if( bc == 0 && funcStarted )  {
+      if (bc == 0 && funcStarted) {
         olxstr spFunction =
-          Cmd.SubString(specialFunctionIndex+1, i-specialFunctionIndex);
-        if( ProcessFunction(spFunction, E, false, argv) )  {
+          Cmd.SubString(specialFunctionIndex + 1, i - specialFunctionIndex);
+        if (ProcessFunction(spFunction, E, false, argv)) {
           Cmd.Delete(specialFunctionIndex, i - specialFunctionIndex + 1);
           Cmd.Insert(spFunction, specialFunctionIndex);
         }
         else
           Cmd.Delete(specialFunctionIndex, i - specialFunctionIndex + 1);
         specialFunctionIndex = next_unescaped('$', Cmd, 0);
-        if( specialFunctionIndex == InvalidIndex )  {
+        if (specialFunctionIndex == InvalidIndex) {
           E.GetStack().Pop();
           return true;
         }
