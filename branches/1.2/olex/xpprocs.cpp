@@ -2346,7 +2346,7 @@ void TMainForm::macHklEdit(TStrObjList &Cmds, const TParamList &Options,
   FXApp->GetSymm(matrices);
   sw.start("Loading HKL");
   THklFile Hkl;
-  Hkl.Append(FXApp->XFile().GetRM().GetReflections());
+  Hkl.LoadFromFile(HklFN, false);
   for (size_t i = 0; i < Hkl.RefCount(); i++) {
     Hkl[i].SetTag(i+1);
   }

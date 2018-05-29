@@ -111,19 +111,25 @@ bool parser_util::parse_escaped_string(const olxstr& exp, olxstr& dest,
   return end_found;
 }
 //.............................................................................
-bool parser_util::skip_brackets(const olxstr& exp, size_t& ind)  {
+bool parser_util::skip_brackets(const olxstr& exp, size_t& ind) {
   const olxch oc = exp.CharAt(ind),
     cc = get_closing_bracket(oc);
   int bc = 1;
-  const size_t start = ind+1;
-  while( ++ind < exp.Length() && bc != 0 )  {
+  const size_t start = ind + 1;
+  while (++ind < exp.Length() && bc != 0) {
     const olxch ch = exp.CharAt(ind);
-    if( is_quote(ch) && !is_escaped(exp, ind) )  {
-      if( !skip_string(exp, ind) )  return false;
+    if (is_quote(ch) && !is_escaped(exp, ind)) {
+      if (!skip_string(exp, ind)) {
+        return false;
+      }
       continue;
     }
-    if( ch == cc && (--bc == 0) )  return true;
-    else if( ch == oc )  bc++;
+    if (ch == cc && (--bc == 0)) {
+      return true;
+    }
+    else if (ch == oc) {
+      bc++;
+    }
   }
   ind = start;
   return false;
@@ -142,15 +148,25 @@ bool parser_util::parse_brackets(const olxstr& exp, olxstr& dest,
   const olxch oc = exp.CharAt(ind),
     cc = get_closing_bracket(oc);
   int bc = 1;
-  const size_t start = ind+1;
-  while( ++ind < exp.Length() && bc != 0 )  {
+  const size_t start = ind + 1;
+  while (++ind < exp.Length() && bc != 0) {
     const olxch ch = exp.CharAt(ind);
-    if( ch == cc )       bc--;
-    else if( ch == oc )  bc++;
+    if (is_quote(ch) && !is_escaped(exp, ind)) {
+      if (!skip_string(exp, ind)) {
+        return false;
+      }
+      continue;
+    }
+    if (ch == cc) {
+      bc--;
+    }
+    else if (ch == oc) {
+      bc++;
+    }
   }
-  if( bc == 0 )  {
+  if (bc == 0) {
     ind--;
-    dest = exp.SubString(start, ind-start);
+    dest = exp.SubString(start, ind - start);
     return true;
   }
   return false;
@@ -430,7 +446,9 @@ void expression_tree::expand_cmd()  {
     }
     else if (ch == '(') {  // parse out brackets
       olxstr dt = data.SubString(dt_st, i-dt_st);//.TrimWhiteChars();
-      if (dt.IsNumber()) continue;
+      if (dt.IsNumber()) {
+        continue;
+      }
       olxstr arg;
       if( !parser_util::parse_brackets(data, arg, i) ) {
         throw TInvalidArgumentException(__OlxSourceInfo,
