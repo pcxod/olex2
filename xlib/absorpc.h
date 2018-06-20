@@ -45,9 +45,17 @@ struct cm_Absorption_Entry  {
 struct cm_Absorption_Coefficient_Reg  {
   olxdict<olxstr, cm_Absorption_Entry, olxstrComparator<true> > entries;
   cm_Absorption_Coefficient_Reg();
-  cm_Absorption_Entry* locate(const olxstr& symbol)  {
+  cm_Absorption_Entry* find(const olxstr& symbol)  {
     const size_t i = entries.IndexOf(symbol);
     return i == InvalidIndex ? NULL : &entries.GetValue(i);
+  }
+  cm_Absorption_Entry& get(const olxstr& symbol) {
+    const size_t i = entries.IndexOf(symbol);
+    if (i == InvalidIndex) {
+      throw TFunctionFailedException(__OlxSourceInfo,
+        olxstr("could not locate entry for ") << symbol);
+    }
+    return entries.GetValue(i);
   }
   // cm^2/g
   double CalcMuOverRhoForE(double eV, cm_Absorption_Entry& ac) const {

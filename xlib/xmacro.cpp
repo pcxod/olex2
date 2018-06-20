@@ -2716,7 +2716,7 @@ void XLibMacros::macGenDisp(TStrObjList &Cmds, const TParamList &Options,
       sc->SetFpFdp(content[i].element->CalcFpFdp(en) - content[i].element->z);
       try {
         double absorpc =
-          ac.CalcMuOverRhoForE(en, *ac.locate(content[i].element->symbol));
+          ac.CalcMuOverRhoForE(en, ac.get(content[i].element->symbol));
         sc->SetMu(absorpc*content[i].element->GetMr()/0.6022142);
       }
       catch(...) {
@@ -2735,7 +2735,7 @@ void XLibMacros::macGenDisp(TStrObjList &Cmds, const TParamList &Options,
         sc->SetFpFdp(content[i].element->CalcFpFdp(en) - content[i].element->z);
       try  {
         double absorpc =
-          ac.CalcMuOverRhoForE(en, *ac.locate(content[i].element->symbol));
+          ac.CalcMuOverRhoForE(en, ac.get(content[i].element->symbol));
         CXConnInfo& ci = rm.Conn.GetConnInfo(*content[i].element);
         sc->SetMu(absorpc*content[i].element->GetMr()/0.6022142);
         sc->SetR(ci.r);
@@ -8684,7 +8684,7 @@ void XLibMacros::macTolman(TStrObjList &Cmds, const TParamList &Options,
         if (m_idx == j) {
           continue;
         }
-        if (!Tolman_MaskSub(sa1, j)) {
+        if (!Tolman_MaskSub(sa1, (int)j)) {
           calculated = false;
           break;
         }

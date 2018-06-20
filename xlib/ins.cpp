@@ -1243,7 +1243,7 @@ TStrList::const_list_type TIns::SaveSfacUnit(const RefinementModel& rm,
         sd->SetFpFdp(a.GetType().CalcFpFdp(en) - a.GetType().z);
         try {
           double absorpc =
-            ac.CalcMuOverRhoForE(en, *ac.locate(a.GetType().symbol));
+            ac.CalcMuOverRhoForE(en, ac.get(a.GetType().symbol));
           sd->SetMu(absorpc*a.GetType().GetMr() / 0.6022142);
         }
         catch (...) {
