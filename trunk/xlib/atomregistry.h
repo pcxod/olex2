@@ -36,8 +36,9 @@ public:
   inline bool IsEmpty() const { return Count() == 0; }
   template <class Functor>
   const TIObjectProvider& ForEach(const Functor& f) const {
-    for (size_t i = 0; i < Count(); i++)
+    for (size_t i = 0; i < Count(); i++) {
       f.OnItem(Get(i), i);
+    }
     return *this;
   }
   template <class act_t> ObjectCaster<obj_t, act_t> GetAccessor() {
@@ -53,7 +54,9 @@ template <class obj_t, class act_t> class ObjectCaster
   TIObjectProvider<obj_t>& list;
 protected:
   // dummy function...
-  virtual act_t& New(TNetwork*) { return *((act_t*)NULL); }
+  virtual act_t& New(TNetwork*) {
+    throw TNotImplementedException(__OlxSourceInfo);
+  }
 public:
   ObjectCaster(TIObjectProvider<obj_t>& _list) : list(_list) {}
   virtual size_t Count() const { return list.Count(); }

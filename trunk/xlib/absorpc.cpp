@@ -121,15 +121,14 @@ double cm_Absorption_Coefficient_Reg::_CalcForE(double eV,
   }
   if( k != 0 )
     eV = double((long)(eV*k))/k;
-  if( &ac == NULL )
-    throw TFunctionFailedException(__OlxSourceInfo, "undefined absorption data");
   if( ac.size == 0 )  {  // update the size
     const cm_Absorption_Coefficient* _ac = ac.data;
     while( (++_ac)->energy != 0 )
       ac.size++;
   }
-  if( eV < ac.data[0].energy || eV > ac.data[ac.size].energy )
+  if (eV < ac.data[0].energy || eV > ac.data[ac.size].energy) {
     throw TInvalidArgumentException(__OlxSourceInfo, "energy is out of range");
+  }
   if( eV == ac.data[0].energy )
     return (ac.data[0].*f)();
   size_t i_start = 0, i_end = ac.size-1;

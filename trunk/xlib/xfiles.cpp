@@ -1103,7 +1103,7 @@ void TXFile::LibGetMu(const TStrObjList& Params, TMacroData& E) {
     }
     else {
       double v = ac.CalcMuOverRhoForE(
-        GetRM().expl.GetRadiationEnergy(), *ac.locate(cont[i].element->symbol));
+        GetRM().expl.GetRadiationEnergy(), ac.get(cont[i].element->symbol));
       mu += (cont[i].count*cont[i].element->GetMr())*v / 6.022142;
     }
   }
