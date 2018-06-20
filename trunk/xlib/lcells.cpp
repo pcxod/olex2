@@ -104,6 +104,7 @@ ConstArrayList<CellInfo> CellReader::read(const olxstr &fn)  {
     }
   }
   catch(const TExceptionBase &e)  {
+    olx_scope_cs cs_(TBasicApp::GetCriticalSection());
     TBasicApp::NewLogEntry(logError) << fn << ": ";
     TBasicApp::NewLogEntry(logExceptionTrace) << e;
   }
@@ -188,7 +189,7 @@ void Index::Create(const olxstr &folder, const olxstr& index_name)  {
       << masks[i]) << ' ' << masks[i].ToUpperCase();
   }
   TBasicApp::NewLogEntry() << "  files";
-  root.name = TEFile::OSPath(folder);
+  root.name = TEFile::TrimPathDelimeter(TEFile::OSPath(folder));
   root.Init(ft.GetRoot());
   LastUpdated = TETime::EpochTime();
   SaveToFile(index_name);
@@ -297,23 +298,55 @@ size_t Index::FolderEntry::Update(const TFileTree::Folder &folder)  {
   return updated_cnt;
 }
 //.............................................................................
+class TCellReaderTask : public TaskBase {
+  TPtrList<Index::FileEntry>& entries;
+public:
+  TCellReaderTask(TPtrList<Index::FileEntry>& entries)
+    : entries(entries)
+  {}
+  void Run(size_t ind) const {
+    Index::FileEntry *f = entries[ind];
+    ConstArrayList<CellInfo> res = CellReader::read(f->FullName());
+    f->cells = res;
+  }
+  TCellReaderTask* Replicate() const {
+    return new TCellReaderTask(entries);
+  }
+};
+//.............................................................................
+void Index::FolderEntry::Expand(TPtrList<Index::FileEntry> &all) {
+  all.SetCapacity(all.Count() + entries.Count());
+  for (size_t i = 0; i < entries.Count(); i++) {
+    all.Add(entries[i]);
+    // preinitialise
+    entries[i].FullName();
+  }
+  for (size_t i = 0; i < folders.Count(); i++) {
+    folders[i].Expand(all);
+  }
+}
 void Index::FolderEntry::Init(const TFileTree::Folder &folder)  {
-  if( parent != NULL )
+  if (parent != 0) {
     name = folder.GetName();
+  }
   modified = folder.GetModificationTime();
   for( size_t i=0; i < folder.FileCount(); i++ )  {
     const TFileListItem &f = folder.GetFile(i);
-    if( !ConsiderFile(f.GetName()) )  continue;
-    ConstArrayList<CellInfo> res =
-      CellReader::read(folder.GetFullPath()+f.GetName());
-    FileEntry &fe = entries.Add(
-      new FileEntry(*this, f.GetName(), f.GetModificationTime()));
-    fe.cells = res;
+    if (!ConsiderFile(f.GetName())) {
+      continue;
+    }
+    entries.Add(new FileEntry(*this, f.GetName(), f.GetModificationTime()));
   }
   for( size_t i=0; i < folder.FolderCount(); i++ )  {
     const TFileTree::Folder &f = folder.GetFolder(i);
     folders.Add(new FolderEntry(this, f.GetName(), f.GetModificationTime()))
       .Init(f);
+  }
+  if (parent == 0) {
+    TPtrList<FileEntry> entries;
+    Expand(entries);
+    TCellReaderTask task(entries);
+    OlxListTask::Run(task, entries.Count(), tLinearTask, 250);
   }
 }
 //.............................................................................

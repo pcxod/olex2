@@ -30,7 +30,7 @@ public:
   }
   void Finalise_()  {}
   virtual bool OnObject_(AGDrawObject& obj) {
-    if (EsdlInstanceOf(obj, TXAtom) && AtomsToMatch.Count() < 7) {
+    if (obj.Is<TXAtom>() && AtomsToMatch.Count() < 7) {
       if (!AtomsToMatch.AddUnique((TXAtom&)obj)) {
         return false;
       }
@@ -46,7 +46,9 @@ public:
   }
   virtual bool OnKey_(int keyId, short shiftState)  {
     if( shiftState == 0 && keyId == OLX_KEY_ESCAPE )  {
-      if( AtomsToMatch.IsEmpty() )  return false;
+      if (AtomsToMatch.IsEmpty()) {
+        return false;
+      }
       AtomsToMatch.Delete(AtomsToMatch.Count()-1);
       SetUserCursor(AtomsToMatch.Count(), "<M>");
       return true;

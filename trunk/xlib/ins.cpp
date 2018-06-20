@@ -69,7 +69,7 @@ void TIns::LoadFromFile(const olxstr& fileName) {
     bool has_h = false;
     const ContentList &cl = GetRM().GetUserContent();
     for (size_t i = 0; i < cl.Count(); i++) {
-      if (cl[i].element.z == iHydrogenZ) {
+      if (cl[i].element->z == iHydrogenZ) {
         has_h = true;
         break;
       }
@@ -1090,7 +1090,7 @@ void TIns::HyphenateIns(const olxstr& Ins, TStrList& Res, int sz)  {
 void TIns::FixTypeListAndLabels() {
   sorted::PointerPointer<const cm_Element> elms;
   for (size_t i=0; i < GetRM().GetUserContent().Count(); i++) {
-    elms.Add(&GetRM().GetUserContent()[i].element);
+    elms.Add(GetRM().GetUserContent()[i].element);
   }
   for (size_t i=0; i < GetAsymmUnit().ResidueCount(); i++ ) {
     TResidue& residue = GetAsymmUnit().GetResidue(i);
@@ -1185,7 +1185,7 @@ TStrList::const_list_type TIns::SaveSfacUnit(const RefinementModel& rm,
   sorted::ObjectComparable<olxstr> elms;
   short state = 0;
   for (size_t i = 0; i < rm.GetUserContent().Count(); i++) {
-    olxstr es = rm.GetUserContent()[i].element.symbol;
+    olxstr es = rm.GetUserContent()[i].element->symbol;
     if (rm.GetUserContent()[i].charge != 0) {
       es << olx_sign_char(rm.GetUserContent()[i].charge);
       if (olx_abs(rm.GetUserContent()[i].charge) > 1) {
@@ -1285,8 +1285,8 @@ TStrList::const_list_type TIns::SaveSfacUnit(const RefinementModel& rm,
   short state = 0;
   SortedObjectList<olxstr, olxstrComparator<false> > elms;
   for (size_t i = 0; i < rm.GetUserContent().Count(); i++) {
-    elms.AddUnique(rm.GetUserContent()[i].element.symbol);
-    XScatterer* sd = rm.FindSfacData(rm.GetUserContent()[i].element.symbol);
+    elms.AddUnique(rm.GetUserContent()[i].element->symbol);
+    XScatterer* sd = rm.FindSfacData(rm.GetUserContent()[i].element->symbol);
     if (sd != NULL && sd->IsSFAC()) {
       TStrList lines;
       HyphenateIns(sd->ToInsString(), lines);
@@ -1296,20 +1296,20 @@ TStrList::const_list_type TIns::SaveSfacUnit(const RefinementModel& rm,
     }
     else {
       if (state == 1) {
-        list.Insert(pos++, "SFAC ") << rm.GetUserContent()[i].element.symbol;
+        list.Insert(pos++, "SFAC ") << rm.GetUserContent()[i].element->symbol;
         state = 2;
       }
       else {
         if (state == 2) { // SFAC added and pos incremented
-          list[pos - 1] << ' ' << rm.GetUserContent()[i].element.symbol;
+          list[pos - 1] << ' ' << rm.GetUserContent()[i].element->symbol;
         }
         else if (state == 0) {  // nothing added yet
-          list[pos++] << "SFAC " << rm.GetUserContent()[i].element.symbol;
+          list[pos++] << "SFAC " << rm.GetUserContent()[i].element->symbol;
           state = 2;
         }
       }
     }
-    sfac << rm.GetUserContent()[i].element.symbol;
+    sfac << rm.GetUserContent()[i].element->symbol;
   }
   if (save_disp) {
     for( size_t i=0; i < rm.SfacCount(); i++ )  {

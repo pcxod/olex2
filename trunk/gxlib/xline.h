@@ -15,6 +15,7 @@
 BeginGxlNamespace()
 
 class TXLine : protected TXBond, AGlMouseHandler {
+private:
   vec3d FBase, FEdge;
   void Init(bool update_label=true);
 protected:

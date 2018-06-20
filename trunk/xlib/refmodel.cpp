@@ -841,13 +841,9 @@ TRefPList::const_list_type RefinementModel::GetNonoverlappingRefs(
   const size_t ref_cnt = refs.Count();
   out.SetCapacity(ref_cnt);
   for (size_t i = 0; i < ref_cnt; i++) {
-    if (refs[i].GetBatch() < 0) {
-      // skip overlapped reflection
-      while (++i < ref_cnt && refs[i].GetBatch() < 0)
-        ;
-      continue;
+    if (refs[i].GetBatch() >= 0 && (i == 0 || refs[i - 1].GetBatch() >= 0)) {
+      out.Add(refs[i]);
     }
-    out.Add(refs[i]);
   }
   return out;
 }

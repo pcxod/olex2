@@ -115,8 +115,8 @@ void helper_CleanBaiList(TStringToList<olxstr, const cm_Element*>& list,
     list.Clear();
     const ContentList& cl = ins.GetRM().GetUserContent();
     for( size_t i=0; i < cl.Count(); i++ )  {
-      au_bais.Add(&cl[i].element);
-      list.Add(cl[i].element.symbol, &cl[i].element);
+      au_bais.Add(cl[i].element);
+      list.Add(cl[i].element->symbol, cl[i].element);
     }
     QuickSorter::Sort(list, Main_BaiComparator());
   }
@@ -512,152 +512,172 @@ struct Main_SfacComparator {
       return olx_ref::get(b).GetB()->z - olx_ref::get(a).GetB()->z;
   }
 };
-void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroData &Error)  {
+void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroData &Error) {
   using namespace olx_analysis;
   TXApp& xapp = TXApp::GetInstance();
   TLattice& latt = xapp.XFile().GetLattice();
   TUnitCell& uc = latt.GetUnitCell();
   TAsymmUnit& au = latt.GetAsymmUnit();
-  int ValidatedAtomCount = 0, AtomCount=0;
+  int ValidatedAtomCount = 0, AtomCount = 0;
   const bool use_formula = (Cmds.IsEmpty() ? false : Cmds[0].ToBool());
   const bool enforce_formula = TAutoDB::GetInstance().IsEnforceFormula();
-  if( use_formula )  {
-    TTypeList< olx_pair_t<double,const cm_Element*> > sl;
+  if (use_formula) {
+    TTypeList< olx_pair_t<double, const cm_Element*> > sl;
     double ac = 0;
     const ContentList& cl = xapp.XFile().GetRM().GetUserContent();
     ElementPList elm_l = olx_analysis::helper::get_user_elements();
-    for( size_t i=0; i < cl.Count(); i++ )  {
-      if( cl[i].element == iHydrogenZ )  continue;
-      sl.AddNew(cl[i].count, &cl[i].element);
+    for (size_t i = 0; i < cl.Count(); i++) {
+      if (cl[i].element->z == iHydrogenZ) {
+        continue;
+      }
+      sl.AddNew(cl[i].count, cl[i].element);
       ac += cl[i].count;
     }
     QuickSorter::Sort(sl, Main_SfacComparator());  // sorts ascending
-    double auv = latt.GetUnitCell().CalcVolume()/latt.GetUnitCell().MatrixCount();
-    double ratio = auv/(18*ac);
-    for( size_t i=0; i < sl.Count(); i++ )
+    double auv = latt.GetUnitCell().CalcVolume() / latt.GetUnitCell().MatrixCount();
+    double ratio = auv / (18 * ac);
+    for (size_t i = 0; i < sl.Count(); i++) {
       sl[i].a = ratio*sl[i].GetA();
+    }
 
     sorted::PrimitiveAssociation<double, TCAtom*> SortedQPeaks;
-    for( size_t i=0; i < au.AtomCount(); i++ )  {
-      if( au.GetAtom(i).IsDeleted() )  continue;
-      if( au.GetAtom(i).GetType() == iQPeakZ )
+    for (size_t i = 0; i < au.AtomCount(); i++) {
+      if (au.GetAtom(i).IsDeleted()) {
+        continue;
+      }
+      if (au.GetAtom(i).GetType() == iQPeakZ) {
         SortedQPeaks.Add(au.GetAtom(i).GetQPeak(), &au.GetAtom(i));
-      else  {
-        for( size_t j=0; j < sl.Count(); j++ )  {
-          if( *sl[j].GetB() == au.GetAtom(i).GetType() )  {
-            sl[j].a -= 1./au.GetAtom(i).GetDegeneracy();
+      }
+      else {
+        for (size_t j = 0; j < sl.Count(); j++) {
+          if (*sl[j].GetB() == au.GetAtom(i).GetType()) {
+            sl[j].a -= 1. / au.GetAtom(i).GetDegeneracy();
             break;
           }
         }
       }
     }
-    for( size_t i=0; i < sl.Count(); i++ )  {
-      while( sl[i].GetA() > 0.45 )  {
-        if( SortedQPeaks.IsEmpty() )  break;
+    for (size_t i = 0; i < sl.Count(); i++) {
+      while (sl[i].GetA() > 0.45) {
+        if (SortedQPeaks.IsEmpty()) {
+          break;
+        }
         TCAtom &p = *SortedQPeaks.GetLastValue();
-        sl[i].a -= 1./p.GetDegeneracy();
+        sl[i].a -= 1. / p.GetDegeneracy();
         p.SetLabel((olxstr(sl[i].GetB()->symbol) << i), false);
         const cm_Element &e = Analysis::check_proposed_element(p, *sl[i].b);
-        if (elm_l.Contains(&e))
+        if (elm_l.Contains(&e)) {
           p.SetType(e);
-        else
+        }
+        else {
           p.SetType(*sl[i].b);
+        }
         p.SetQPeak(0);
-        SortedQPeaks.Delete(SortedQPeaks.Count()-1);
+        SortedQPeaks.Delete(SortedQPeaks.Count() - 1);
       }
-      if( SortedQPeaks.IsEmpty() ) break;
+      if (SortedQPeaks.IsEmpty()) {
+        break;
+      }
     }
     // get rid of the rest of Q-peaks and "validate" geometry of atoms
-    for( size_t i=0; i < au.AtomCount(); i++ )  {
-      if( au.GetAtom(i).GetType() == iQPeakZ )
+    for (size_t i = 0; i < au.AtomCount(); i++) {
+      if (au.GetAtom(i).GetType() == iQPeakZ) {
         au.GetAtom(i).SetDeleted(true);
+      }
     }
     xapp.XFile().EndUpdate();
     // validate max bonds
     ASObjectProvider& objects = latt.GetObjects();
     TTypeList<TAtomEnvi> bc_to_check;
-    const size_t maxb_cnt = sizeof(_autoMaxBond)/sizeof(_autoMaxBond[0]);
-    for( size_t i=0; i < objects.atoms.Count(); i++ )  {
+    const size_t maxb_cnt = sizeof(_autoMaxBond) / sizeof(_autoMaxBond[0]);
+    for (size_t i = 0; i < objects.atoms.Count(); i++) {
       TSAtom& sa = objects.atoms[i];
-      for( size_t j=0; j < maxb_cnt; j++ )  {
-        if( sa.GetType() == _autoMaxBond[j].type )  {
+      for (size_t j = 0; j < maxb_cnt; j++) {
+        if (sa.GetType() == _autoMaxBond[j].type) {
           uc.GetAtomEnviList(sa, bc_to_check.AddNew());
-          if( bc_to_check.GetLast().Count() <= _autoMaxBond[j].max_bonds &&
-              bc_to_check.GetLast().Count() >= _autoMaxBond[j].min_bonds)
+          if (bc_to_check.GetLast().Count() <= _autoMaxBond[j].max_bonds &&
+            bc_to_check.GetLast().Count() >= _autoMaxBond[j].min_bonds)
           {
-            bc_to_check.NullItem(bc_to_check.Count()-1);
+            bc_to_check.NullItem(bc_to_check.Count() - 1);
           }
         }
       }
     }
     bc_to_check.Pack();
     bool changes = true;
-    while( changes )  {
+    while (changes) {
       changes = false;
-      for( size_t i=0; i < bc_to_check.Count(); i++ )  {
+      for (size_t i = 0; i < bc_to_check.Count(); i++) {
         size_t sati = InvalidIndex;
-        for( size_t j=0; j < sl.Count(); j++ )  {
-          if( bc_to_check[i].GetBase().GetType() == *sl[j].GetB() )  {
+        for (size_t j = 0; j < sl.Count(); j++) {
+          if (bc_to_check[i].GetBase().GetType() == *sl[j].GetB()) {
             sati = j;
             break;
           }
         }
-        if( sati != InvalidIndex && (sati+1) < sl.Count() )  {
-          if (!enforce_formula || elm_l.Contains(sl[sati+1].GetB())) {
-            bc_to_check[i].GetBase().CAtom().SetType(*sl[sati+1].GetB());
+        if (sati != InvalidIndex && (sati + 1) < sl.Count()) {
+          if (!enforce_formula || elm_l.Contains(sl[sati + 1].GetB())) {
+            bc_to_check[i].GetBase().CAtom().SetType(*sl[sati + 1].GetB());
             changes = true;
           }
         }
       }
     }
-    if( !bc_to_check.IsEmpty() )
+    if (!bc_to_check.IsEmpty()) {
       xapp.XFile().EndUpdate();
+    }
   }
   TArrayList<olx_pair_t<TCAtom const*, vec3d> > res;
-  for( size_t i=0; i < au.AtomCount(); i++ )  {
-    if( au.GetAtom(i).IsDeleted() || au.GetAtom(i).GetType() < 2)  continue;
+  for (size_t i = 0; i < au.AtomCount(); i++) {
+    if (au.GetAtom(i).IsDeleted() || au.GetAtom(i).GetType() < 2) {
+      continue;
+    }
     uc.FindInRangeAC(au.GetAtom(i).ccrd(),
-      au.GetAtom(i).GetType().r_bonding+1.3, res);
+      au.GetAtom(i).GetType().r_bonding + 1.3, res);
     vec3d center = au.Orthogonalise(au.GetAtom(i).ccrd());
-    for( size_t j=0; j < res.Count(); j++ )  {
-      if( (res[j].GetA()->GetId() == au.GetAtom(i).GetId() &&
-           center.QDistanceTo(res[j].GetB()) < 1e-4) ||
-           res[j].GetA()->GetType() < 2)
+    for (size_t j = 0; j < res.Count(); j++) {
+      if ((res[j].GetA()->GetId() == au.GetAtom(i).GetId() &&
+        center.QDistanceTo(res[j].GetB()) < 1e-4) ||
+        res[j].GetA()->GetType() < 2)
       {
         res.Delete(j--);
       }
     }
     AtomCount++;
     double wght = 1;
-    if( res.Count() > 1 )  {
-      double awght = 1./(res.Count()*(res.Count()-1));
-      for( size_t j=0; j < res.Count(); j++ )  {
-        if( res[j].GetB().QLength() < 1 )
-          wght -= 0.5/res.Count();
-        for( size_t k=j+1; k < res.Count(); k++ )  {
-          double cang = (res[j].GetB()-center).CAngle(res[k].GetB()-center);
-          if( cang > 0.588 )  { // 56 degrees
+    if (res.Count() > 1) {
+      double awght = 1. / (res.Count()*(res.Count() - 1));
+      for (size_t j = 0; j < res.Count(); j++) {
+        if (res[j].GetB().QLength() < 1)
+          wght -= 0.5 / res.Count();
+        for (size_t k = j + 1; k < res.Count(); k++) {
+          double cang = (res[j].GetB() - center).CAngle(res[k].GetB() - center);
+          if (cang > 0.588) { // 56 degrees
             wght -= awght;
           }
         }
       }
     }
-    else if( res.Count() == 1 ) {  // just one bond
-      if( res[0].GetB().QLength() < 1 )
+    else if (res.Count() == 1) {  // just one bond
+      if (res[0].GetB().QLength() < 1) {
         wght = 0;
+      }
     }
-    else  // no bonds, cannot say anything
+    else { // no bonds, cannot say anything
       wght = 0;
+    }
 
-    if( wght >= 0.95 )
+    if (wght >= 0.95) {
       ValidatedAtomCount++;
+    }
     res.Clear();
   }
-  for( size_t i=0; i < au.AtomCount(); i++ )
+  for (size_t i = 0; i < au.AtomCount(); i++) {
     au.GetAtom(i).SetLabel(au.CheckLabel(NULL, au.GetAtom(i).GetLabel()), false);
+  }
 
   Error.SetRetVal(AtomCount == 0 ? 0
-    : (double)ValidatedAtomCount*100/AtomCount);
+    : (double)ValidatedAtomCount * 100 / AtomCount);
 }
 //..............................................................................
 double TryPoint(TArray3D<float>& map, const TUnitCell& uc, const vec3i& p,

@@ -87,12 +87,14 @@ void TMacroData::WrongState(const ABasicFunction& func)  {
   ProcessError |= peIllegalState;
 }
 //.............................................................................
-olxstr TMacroData::GetRetVal() const  {
-  if( RetValue == NULL )  return EmptyString();
-//  if( !EsdlInstanceOf(*RetValue, olxstr) )
-//    throw TCastException(*this, EsdlObjectName(RetValue), EsdlClassName(olxstr) );
-//  olxstr cn = EsdlObjectName(*RetValue);
-//  return cn;
+olxstr TMacroData::GetRetVal() const {
+  if (RetValue == NULL) {
+    return EmptyString();
+  }
+  //  if( !EsdlInstanceOf(*RetValue, olxstr) )
+  //    throw TCastException(*this, EsdlObjectName(RetValue), EsdlClassName(olxstr) );
+  //  olxstr cn = EsdlObjectName(*RetValue);
+  //  return cn;
   return RetValue->ToString();
 }
 
@@ -100,7 +102,7 @@ void TMacroData::PrintStack(int logEvt, bool annotate,
   const olxstr &prefix) const
 {
   const str_stack::item *i = Stack.TopItem();
-  while (i != NULL) {
+  while (i != 0) {
     TBasicApp::NewLogEntry(logEvt, annotate) << prefix <<
       olxstr(i->data).TrimWhiteChars();
     i = i->prev;

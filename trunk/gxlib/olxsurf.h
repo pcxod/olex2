@@ -40,7 +40,7 @@ struct TSurfCalculationTask : public TaskBase {
         for (size_t i = 0; i < crds.width; i++) {
           float qd = crds[i].QDistanceTo(p);
           if (qd < olx_sqr(radii[i] + pr)) {
-            data[i1][i2][i3] = i;
+            data[i1][i2][i3] = (int)i;
             array[i1][i2][i3] = -1;
           }
         }
@@ -78,7 +78,7 @@ struct TSurfCalculationTask1 : public TaskBase {
     if (v != 0) {
       v = 1.0 / v;
     }
-    values[i] = v;
+    values[i] = (float)v;
   }
   TSurfCalculationTask1 * Replicate() const {
     return new TSurfCalculationTask1(vertices, values, uc);

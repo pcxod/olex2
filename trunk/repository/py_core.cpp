@@ -463,11 +463,11 @@ PyObject* pyGetVdWRadii(PyObject* self, PyObject* args)  {
     TXApp::GetInstance().XFile().GetAsymmUnit().GetContentList();
   PyObject* dict = PyDict_New();
   for( size_t i=0; i < content.Count(); i++ )  {
-    const size_t ei = radii.IndexOf(&content[i].element);
-    const double r = (ei == InvalidIndex ? content[i].element.r_vdw
+    const size_t ei = radii.IndexOf(content[i].element);
+    const double r = (ei == InvalidIndex ? content[i].element->r_vdw
       : radii.GetValue(ei));
     PythonExt::SetDictItem(dict,
-      PythonExt::BuildString(content[i].element.symbol),
+      PythonExt::BuildString(content[i].element->symbol),
       Py_BuildValue("f", r));
   }
   return dict;

@@ -26,7 +26,7 @@ protected:
       vec3d cr;
       TXAtomPList atoms;
       for (size_t i = 0; i < sel.Count(); i++) {
-        if (EsdlInstanceOf(sel[i], TXAtom)) {
+        if (sel[i].Is<TXAtom>()) {
           cr += ((TXAtom&)sel[i]).GetCenter();
           cr += ((TXAtom&)sel[i]).crd();
           atoms.Add((TXAtom&)sel[i]);
@@ -138,7 +138,7 @@ public:
   }
 
   virtual bool OnObject_(AGDrawObject &obj) {
-    if (EsdlInstanceOf(obj, TXAtom)) {
+    if (obj.Is<TXAtom>()) {
       TXAtom *XA = &(TXAtom&)obj;
       bool split = true;
       for (size_t i = 0; i < SplitAtoms.Count(); i++)

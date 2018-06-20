@@ -23,7 +23,7 @@ void AButtonBase::SetActionQueue(TActionQueue& q, const olxstr& dependMode) {
 bool AButtonBase::Execute(const IOlxObject *Sender, const IOlxObject *Data,
   TActionQueue *)
 {
-  if (Data && EsdlInstanceOf(*Data, TModeChange)) {
+  if (Data && Data->Is<TModeChange>()) {
     const TModeChange* mc = (const TModeChange*)Data;
     SetDown(TModeRegistry::CheckMode(DependMode));
   }

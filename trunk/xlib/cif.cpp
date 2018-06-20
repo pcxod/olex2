@@ -87,17 +87,17 @@ void TCif::_LoadCurrent()  {
     }
   }
   // undo the changes
-  for( size_t i=0; i < data_provider.Count(); i++ )  {
+  for (size_t i = 0; i < data_provider.Count(); i++) {
     CifBlock& d = data_provider[i];
-    for( size_t j=0; j < d.table_map.Count(); j++ )  {
+    for (size_t j = 0; j < d.table_map.Count(); j++) {
       cetTable& tab = *d.table_map.GetValue(j);
-      for( size_t k=0; k < tab.ColCount(); k++ )  {
-        if(  tab.ColName(k).IndexOf("atom_site") != InvalidIndex &&
-          tab.ColName(k).IndexOf("label") != InvalidIndex )
+      for (size_t k = 0; k < tab.ColCount(); k++) {
+        if (tab.ColName(k).IndexOf("atom_site") != InvalidIndex &&
+          tab.ColName(k).IndexOf("label") != InvalidIndex)
         {
-          for( size_t l=0; l < tab.RowCount(); l++ )  {
-            if( EsdlInstanceOf(tab.Get(l, k), AtomCifEntry) ||
-                EsdlInstanceOf(tab.Get(l, k), AtomPartCifEntry) )
+          for (size_t l = 0; l < tab.RowCount(); l++) {
+            if (tab.Get(l, k).Is<AtomCifEntry>() ||
+              tab.Get(l, k).Is<AtomPartCifEntry>())
             {
               tab.Set(l, k, new cetString(tab.Get(l, k).GetStringValue()));
             }
@@ -1377,14 +1377,14 @@ bool Cif_ValidateColumn(const TDataItem &col, const ICifEntry &entry) {
 
   Tmp = col.FindField("atypeequal", EmptyString());
   if (!Tmp.IsEmpty()) {  // check for atom type equals to
-    if (EsdlInstanceOf(entry, AtomCifEntry))
+    if (entry.Is<AtomCifEntry>())
       if (!((AtomCifEntry&)entry).data.GetType().symbol.Equalsi(Tmp)) {
         return false;
       }
   }
   Tmp = col.FindField("atypenotequal", EmptyString());
   if (!Tmp.IsEmpty()) {  // check for atom type equals to
-    if (EsdlInstanceOf(entry, AtomCifEntry))
+    if (entry.Is<AtomCifEntry>())
       if (((AtomCifEntry&)entry).data.GetType().symbol.Equalsi(Tmp)) {
         return false;
       }

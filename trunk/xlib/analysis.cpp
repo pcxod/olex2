@@ -52,7 +52,7 @@ olxstr alg::formula(const TCAtomPList &atoms, double mult) {
   XElementLib::SortContentList(cl);
   olxstr rv;
   for (size_t i = 0; i < cl.Count(); i++) {
-    rv << cl[i].element.symbol;
+    rv << cl[i].element->symbol;
     if (olx_abs(cl[i].count - 1.0) > 1e-3) {
       rv << olxstr::FormatFloat(3, cl[i].count).TrimFloat();
     }
@@ -217,7 +217,7 @@ ConstSortedElementPList helper::get_user_elements() {
   const ContentList& cl = xapp.XFile().GetRM().GetUserContent();
   SortedElementPList rv;
   for (size_t i = 0; i < cl.Count(); i++) {
-    rv.AddUnique(&cl[i].element);
+    rv.AddUnique(cl[i].element);
   }
   return rv;
 }
@@ -1909,57 +1909,70 @@ const cm_Element &Analysis::check_atom_type(TSAtom &a) {
     types.Add(33); // arsenic
     types.Add(iBromineZ);
   }
-  if (types.IndexOf(a.GetType().z) == InvalidIndex)
+  if (types.IndexOf(a.GetType().z) == InvalidIndex) {
     return a.GetType();
+  }
 
   TUnitCell &uc = a.CAtom().GetParent()->GetLattice().GetUnitCell();
   TAtomEnvi ae;
   uc.GetAtomEnviList(a, ae);
   size_t metal_c = 0;
-  for (size_t i=0; i < ae.Count(); i++) {
-    if (XElementLib::IsMetal(ae.GetCAtom(i).GetType()))
+  for (size_t i = 0; i < ae.Count(); i++) {
+    if (XElementLib::IsMetal(ae.GetCAtom(i).GetType())) {
       metal_c++;
+    }
   }
   size_t non_metal_c = ae.Count() - metal_c;
   if (a.GetType() == iOxygenZ) {
-    if (non_metal_c > 2)
+    if (non_metal_c > 2) {
       return XElementLib::GetByIndex(iNitrogenIndex);
+    }
   }
   else if (a.GetType() == iFluorineZ) {
-    if (non_metal_c > 2)
+    if (non_metal_c > 2) {
       return XElementLib::GetByIndex(iNitrogenIndex);
-    if (non_metal_c > 1)
+    }
+    if (non_metal_c > 1) {
       return XElementLib::GetByIndex(iOxygenIndex);
+    }
   }
   else if (a.GetType() == iChlorineZ) {
     if (non_metal_c <= 1) return a.GetType();
     if (metal_c != 0) {
-      if (ae.Count() == 4) // PR3->M
+      if (ae.Count() == 4) {// PR3->M
         return XElementLib::GetByIndex(iPhosphorusIndex);
-      if (ae.Count() > 2) //SR2->M
+      }
+      if (ae.Count() > 2) { //SR2->M
         return XElementLib::GetByIndex(iSulphurIndex);
+      }
     }
-    if (ae.Count() == 3) // PR3
+    if (ae.Count() == 3) { // PR3
       return XElementLib::GetByIndex(iPhosphorusIndex);
+    }
     return XElementLib::GetByIndex(iSulphurIndex);
   }
   else if (a.GetType() == 33) { // arsenic
-    if (non_metal_c <= 1)
+    if (non_metal_c <= 1) {
       return *XElementLib::FindByZ(iBromineZ);
+    }
   }
   else if (a.GetType() == iSulphurZ) {
-    if (non_metal_c <= 1)
+    if (non_metal_c <= 1) {
       return XElementLib::GetByIndex(iChlorineIndex);
-    else if (ae.Count() > 6)  // reset - bad conenctivity
+    }
+    else if (ae.Count() > 6) { // reset - bad conenctivity
       return XElementLib::GetByIndex(iCarbonIndex);
+    }
   }
   else if (a.GetType() == iBromineZ) {
-    if (non_metal_c > 1)
+    if (non_metal_c > 1) {
       return *XElementLib::FindByZ(33);
+    }
   }
   else if (a.GetType() == iCarbonZ) {
-    if (ae.Count() == 0)
+    if (ae.Count() == 0) {
       return XElementLib::GetByIndex(iOxygenIndex);
+    }
   }
   return a.GetType();
 }

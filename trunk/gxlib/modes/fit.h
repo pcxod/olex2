@@ -315,7 +315,7 @@ public:
     if (DoSplit) {
       return true;
     }
-    if (EsdlInstanceOf(obj, TXAtom)) {
+    if (obj.Is<TXAtom>()) {
       if (AtomsToMatch.IsEmpty() && Atoms.IndexOf((TXAtom&)obj) == InvalidIndex) {
         return true;
       }
@@ -338,7 +338,7 @@ public:
     }
     TAsymmUnit& au = gxapp.XFile().GetAsymmUnit();
     if (msg == mode_fit_disassemble) {
-      if (!EsdlInstanceOf(gxapp.GetRenderer().GetSelection(), TXGroup)) {
+      if (!gxapp.GetRenderer().GetSelection().Is<TXGroup>()) {
         return true;
       }
       for (size_t i = 0; i < Atoms.Count(); i++) {
@@ -349,7 +349,7 @@ public:
       SetUserCursor('0', "<F>");
     }
     else if (msg == mode_fit_create) {
-      if (!EsdlInstanceOf(gxapp.GetRenderer().GetSelection(), TXGroup)) {
+      if (!gxapp.GetRenderer().GetSelection().Is<TXGroup>()) {
         group = &gxapp.GetRenderer().ReplaceSelection<TXGroup>();
         group->SetAngleInc(AngleInc*M_PI / 180);
       }

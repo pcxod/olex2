@@ -101,7 +101,7 @@ public:
       if (!XFile().HasLastLoader()) {
         return false;
       }
-      return EsdlInstanceOf(*XFile().LastLoader(), FT);
+      return XFile().LastLoader()->Is<FT>();
     }
 
   static TXApp& GetInstance() {

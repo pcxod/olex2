@@ -19,7 +19,7 @@ TdlgPrimitive::TdlgPrimitive(TMainFrame *P, AGDrawObject& object) :
 {
   wxBoxSizer *TopSizer = new wxBoxSizer(wxVERTICAL);
   const int border = 1;
-  if ((EsdlInstanceOf(Object,TXAtom) || EsdlInstanceOf(Object, TXBond))) {
+  if ((Object.Is<TXAtom>() || Object.Is<TXBond>())) {
     const uint16_t current_level =
       TXAtom::LegendLevel(Object.GetPrimitives().GetName());
     wxArrayString choices;
@@ -66,11 +66,13 @@ TdlgPrimitive::TdlgPrimitive(TMainFrame *P, AGDrawObject& object) :
 void TdlgPrimitive::OnOK(wxCommandEvent& event) {
   Mask = 0;
   for (size_t i = 0; i < Boxes.Count(); i++) {
-    if (Boxes[i]->GetValue())
+    if (Boxes[i]->GetValue()) {
       Mask |= (1 << i);
+    }
   }
-  if (cbApplyTo != NULL)
+  if (cbApplyTo != 0) {
     Level = cbApplyTo->GetSelection() + (3 - cbApplyTo->GetCount());
+  }
   EndModal(wxID_OK);
 }
 //..............................................................................

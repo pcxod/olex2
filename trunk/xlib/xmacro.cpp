@@ -2689,7 +2689,7 @@ void XLibMacros::macFixUnit(TStrObjList &Cmds, const TParamList &Options,
   au.SetZ(Z_sg*Zp);
   olxstr n_c;
   for (size_t i = 0; i < content.Count(); i++) {
-    n_c << ' ' << ElementCount::ToString(content[i].element,
+    n_c << ' ' << ElementCount::ToString(*content[i].element,
       content[i].count/Zp, content[i].charge);
     content[i].count = olx_round(content[i].count * Z_sg, 100);
   }
@@ -2712,49 +2712,49 @@ void XLibMacros::macGenDisp(TStrObjList &Cmds, const TParamList &Options,
       return;
     }
     for (size_t i=0; i < content.Count(); i++) {
-      XScatterer* sc = new XScatterer(content[i].element.symbol);
-      sc->SetFpFdp(content[i].element.CalcFpFdp(en) - content[i].element.z);
+      XScatterer* sc = new XScatterer(content[i].element->symbol);
+      sc->SetFpFdp(content[i].element->CalcFpFdp(en) - content[i].element->z);
       try {
         double absorpc =
-          ac.CalcMuOverRhoForE(en, *ac.locate(content[i].element.symbol));
-        sc->SetMu(absorpc*content[i].element.GetMr()/0.6022142);
+          ac.CalcMuOverRhoForE(en, *ac.locate(content[i].element->symbol));
+        sc->SetMu(absorpc*content[i].element->GetMr()/0.6022142);
       }
       catch(...) {
         TBasicApp::NewLogEntry() << "Could not locate absorption data for: " <<
-          content[i].element.symbol;
+          content[i].element->symbol;
       }
       rm.AddSfac(*sc);
     }
   }
   else {
     for( size_t i=0; i < content.Count(); i++ )  {
-      XScatterer* sc = new XScatterer(content[i].element, en);
+      XScatterer* sc = new XScatterer(*content[i].element, en);
       if (neutron)
         sc->SetFpFdp(compd(0, 0));
       else
-        sc->SetFpFdp(content[i].element.CalcFpFdp(en) - content[i].element.z);
+        sc->SetFpFdp(content[i].element->CalcFpFdp(en) - content[i].element->z);
       try  {
         double absorpc =
-          ac.CalcMuOverRhoForE(en, *ac.locate(content[i].element.symbol));
-        CXConnInfo& ci = rm.Conn.GetConnInfo(content[i].element);
-        sc->SetMu(absorpc*content[i].element.GetMr()/0.6022142);
+          ac.CalcMuOverRhoForE(en, *ac.locate(content[i].element->symbol));
+        CXConnInfo& ci = rm.Conn.GetConnInfo(*content[i].element);
+        sc->SetMu(absorpc*content[i].element->GetMr()/0.6022142);
         sc->SetR(ci.r);
-        sc->SetWeight(content[i].element.GetMr());
+        sc->SetWeight(content[i].element->GetMr());
         delete &ci;
       }
       catch(...)  {
         TBasicApp::NewLogEntry() << "Could not locate absorption data for: " <<
-          content[i].element.symbol;
+          content[i].element->symbol;
       }
       if( neutron )  {
-        if( content[i].element.neutron_scattering == NULL )  {
+        if( content[i].element->neutron_scattering == NULL )  {
           TBasicApp::NewLogEntry() << "Could not locate neutron data for: " <<
-            content[i].element.symbol;
+            content[i].element->symbol;
         }
         else  {
           sc->SetGaussians(
             cm_Gaussians(0,0,0,0,0,0,0,0,
-              content[i].element.neutron_scattering->coh.GetRe()));
+              content[i].element->neutron_scattering->coh.GetRe()));
         }
       }
       rm.AddSfac(*sc);
@@ -4390,7 +4390,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
             TBasicApp::NewLogEntry(logInfo) << "Skipping '" << e.GetName() << '\'';
             continue;
           }
-          if (EsdlInstanceOf(e, cetTable)) {
+          if (e.Is<cetTable>()) {
             for (size_t k = 0; k < _loop_names_to_skip.Count(); k++) {
               const olxstr &i_name = e.GetName();
               if (i_name.StartsFromi(_loop_names_to_skip[k]) &&
@@ -4406,7 +4406,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
       }
       if (!skip) {
         bool processed = false;
-        if (op != 0 && EsdlInstanceOf(e, cif_dp::cetString)) {
+        if (op != 0 && e.Is<cif_dp::cetString>()) {
           olxstr sv = e.GetStringValue();
           if (sv.StartsFrom('$')) {
             try {
@@ -5461,7 +5461,7 @@ void XLibMacros::macSGE(TStrObjList &Cmds, const TParamList &Options,
       "this function requires Olex2 processor implementation");
   }
   TSpaceGroup* sg = NULL;
-  if (EsdlInstanceOf(*xapp.XFile().LastLoader(), TCRSFile) &&
+  if (xapp.CheckFileType<TCRSFile>() &&
     ((TCRSFile*)xapp.XFile().LastLoader())->HasSG())
   {
     sg = &xapp.XFile().GetLastLoaderSG();

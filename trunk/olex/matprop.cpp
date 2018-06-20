@@ -32,7 +32,7 @@ TdlgMatProp::TdlgMatProp(TMainFrame *ParentFrame, AGDrawObject& object) :
 TdlgMatProp::TdlgMatProp(TMainFrame *ParentFrame, TGlMaterial& mat) :
   TDialog(ParentFrame, wxT("Material Parameters"), wxT("dlgMatProp"))
 {
-  Object = NULL;
+  Object = 0;
   Materials.AddCopy(mat);
   Init();
 }
@@ -43,13 +43,13 @@ void TdlgMatProp::Init() {
   Bind(wxEVT_BUTTON, &TdlgMatProp::OnPaste, this, ID_PASTE);
   Bind(wxEVT_BUTTON, &TdlgMatProp::OnEditFont, this, ID_EDITFONT);
   AActionHandler::SetToDelete(false);
-  bEditFont = NULL;
-  cbApplyTo = NULL;
-  cbBlend = NULL;
-  scBlend = NULL;
+  bEditFont = 0;
+  cbApplyTo = 0;
+  cbBlend = 0;
+  scBlend = 0;
   short Border = 3, SpW = 40;
   FCurrentMaterial = 0;
-  if (Object != NULL && Object->GetPrimitives().PrimitiveCount() > 1) {
+  if (Object != 0 && Object->GetPrimitives().PrimitiveCount() > 1) {
     cbPrimitives = new TChoice(this);
     TGPCollection& gpc = Object->GetPrimitives();
     for (size_t i=0; i < gpc.PrimitiveCount(); i++) {
@@ -62,9 +62,9 @@ void TdlgMatProp::Init() {
     cbPrimitives->SetSelection(0);
   }
   else {
-    cbPrimitives = NULL;
-    if (Object != NULL) {
-      if (EsdlInstanceOf(*Object, TGlGroup)) {
+    cbPrimitives = 0;
+    if (Object != 0) {
+      if (Object->Is<TGlGroup>()) {
         Materials.AddCopy(((TGlGroup*)Object)->GetGlM());
         cbBlend = new wxCheckBox(this, -1, wxT("Blend"));
         cbBlend->SetValue(((TGlGroup*)Object)->IsBlended());
@@ -78,8 +78,8 @@ void TdlgMatProp::Init() {
       }
     }
   }
-  if (Object != NULL) {
-    if (EsdlInstanceOf(*Object, TXAtom) || EsdlInstanceOf(*Object, TXBond)) {
+  if (Object != 0) {
+    if (Object->Is<TXAtom>() || Object->Is<TXBond>()) {
       const uint16_t current_level =
         TXAtom::LegendLevel(Object->GetPrimitives().GetName());
       wxArrayString choices;
@@ -250,7 +250,7 @@ TdlgMatProp::~TdlgMatProp()  {
 bool TdlgMatProp::Execute(const IOlxObject *Sender, const IOlxObject *Data,
   TActionQueue *)
 {
-  if (EsdlInstanceOf( *Sender, TTextEdit)) {
+  if (Sender->Is<TTextEdit>()) {
     wxColourDialog *CD = new wxColourDialog(this);
     wxColor wc = dynamic_cast<const TTextEdit *>(Sender)->GetBackgroundColour();
     CD->GetColourData().SetColour(wc);
@@ -358,7 +358,7 @@ void TdlgMatProp::OnOK(wxCommandEvent& event) {
   if (Object != NULL) {
     const short cl = TXAtom::LegendLevel(Object->GetPrimitives().GetName());
     TGXApp& app = TGXApp::GetInstance();
-    if (EsdlInstanceOf(*Object, TGlGroup)) {
+    if (Object->Is<TGlGroup>()) {
       ((TGlGroup*)Object)->SetGlM(Materials[0]);
       ((TGlGroup*)Object)->SetBlended(cbBlend->GetValue());
     }
@@ -366,10 +366,10 @@ void TdlgMatProp::OnOK(wxCommandEvent& event) {
       TGlGroup& gl = app.GetSelection();
       TGPCollection* ogpc = &Object->GetPrimitives();
       sorted::PointerPointer<TGPCollection> uniqCol;
-      const bool is_bond = EsdlInstanceOf(*Object, TXBond);
+      const bool is_bond = Object->Is<TXBond>();
       if (cbApplyTo == NULL || cbApplyTo->GetSelection() == 0) {
         for (size_t i = 0; i < gl.Count(); i++) {
-          if (EsdlInstanceOf(gl[i], *Object)) {
+          if (olx_type_check(gl[i], *Object)) {
             if (is_bond) {
               app.Individualise(((TXBond&)gl[i]), 3);
             }
@@ -381,11 +381,11 @@ void TdlgMatProp::OnOK(wxCommandEvent& event) {
         TXAtomPList atoms;
         TXBondPList bonds;
         for (size_t i = 0; i < gl.Count(); i++) {
-          if (EsdlInstanceOf(gl[i], *Object)) {
-            if (EsdlInstanceOf(gl[i], TXAtom)) {
+          if (olx_type_check(gl[i], *Object)) {
+            if (gl[i].Is<TXAtom>()) {
               atoms.Add((TXAtom&)gl[i]);
             }
-            else if (EsdlInstanceOf(gl[i], TXBond)) {
+            else if (gl[i].Is<TXBond>()) {
               bonds.Add((TXBond&)gl[i]);
             }
           }
@@ -409,7 +409,7 @@ void TdlgMatProp::OnOK(wxCommandEvent& event) {
             break;
           TGlPrimitive* glp = uniqCol[i]->FindPrimitiveByName(
             ogpc->GetPrimitive(j).GetName());
-          if (glp != NULL) {
+          if (glp != 0) {
             glp->SetProperties(Materials[j]);
             uniqCol[i]->GetStyle().SetMaterial(glp->GetName(), Materials[j]);
           }
@@ -420,13 +420,13 @@ void TdlgMatProp::OnOK(wxCommandEvent& event) {
       /* we have to re-enfoce the primitive mask as the new collection can have
       different size!
       */
-      if (EsdlInstanceOf(*Object, TXBond)) {
+      if (Object->Is<TXBond>()) {
         const uint32_t pmask = ((TXBond*)Object)->GetPrimitiveMask();
         app.Individualise(
           *((TXBond*)Object), cl + cbApplyTo->GetSelection(), pmask);
       }
-      if (cbApplyTo != NULL && cbApplyTo->GetSelection() != 0) {
-        if (EsdlInstanceOf(*Object, TXAtom)) {
+      if (cbApplyTo != 0 && cbApplyTo->GetSelection() != 0) {
+        if (Object->Is<TXAtom>()) {
           const uint32_t pmask = ((TXAtom*)Object)->GetPrimitiveMask();
           app.Individualise(
             *((TXAtom*)Object), cl + cbApplyTo->GetSelection(), pmask);
@@ -442,7 +442,7 @@ void TdlgMatProp::OnOK(wxCommandEvent& event) {
         gpc.GetStyle().SetMaterial(gpc.GetPrimitive(i).GetName(), Materials[i]);
       }
     }
-    if (EsdlInstanceOf(*Object, TXAtom)) {
+    if (Object->Is<TXAtom>()) {
       TGXApp::BondIterator bi = app.GetBonds();
       while (bi.HasNext()) {
         bi.Next().UpdateStyle();
@@ -467,7 +467,8 @@ void TdlgMatProp::OnEditFont(wxCommandEvent& event) {
   TGXApp::GetInstance().GetRenderer().GetScene().ShowFontDialog(
     Object->GetPrimitives().GetPrimitive(FCurrentMaterial).GetFont());
   TGPCollection& gpc = Object->GetPrimitives();
-  for (size_t i=0; i < gpc.ObjectCount(); i++)
+  for (size_t i = 0; i < gpc.ObjectCount(); i++) {
     gpc.GetObject(i).UpdateLabel();
+  }
 }
 //..............................................................................
