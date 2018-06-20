@@ -33,7 +33,7 @@ const short
   rptValue1 = 0x0008
   ;
 
-class TSimpleRestraint : public IOlxObject, public IXVarReferencer {
+class TSimpleRestraint : public IXVarReferencer {
   TSRestraintList& Parent;
   size_t Id;
   short ListType;
@@ -133,7 +133,7 @@ public:
   friend class TSRestraintList;
 };
 
-class TSRestraintList : public IOlxObject, public IXVarReferencerContainer {
+class TSRestraintList : public IXVarReferencerContainer {
   TTypeList<TSimpleRestraint> Restraints;
   short RestraintListType;
   RefinementModel& RefMod;
@@ -180,7 +180,7 @@ public:
   // IXVarReferencerContainer implementation
   virtual olxstr GetIdName() const { return IdName; }
   virtual size_t GetIdOf(const IXVarReferencer& vr) const {
-    if (!EsdlInstanceOf(vr, TSimpleRestraint)) {
+    if (!vr.Is<TSimpleRestraint>()) {
       throw TInvalidArgumentException(__OlxSourceInfo, "var referencer");
     }
     return ((TSimpleRestraint&)vr).GetId();

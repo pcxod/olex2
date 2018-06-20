@@ -111,10 +111,12 @@ public:
   // returns a reference to the last loader (type safe)
   template <class LoaderClass>
   LoaderClass& GetLastLoader() const {
-    if( FLastLoader == NULL )
+    if (FLastLoader == 0) {
       throw TFunctionFailedException(__OlxSourceInfo, "no last loader");
-    if( !EsdlInstanceOf(*FLastLoader, LoaderClass) )
+    }
+    if (!FLastLoader->Is<LoaderClass>()) {
       throw TInvalidArgumentException(__OlxSourceInfo, "wrong last loader type");
+    }
     return *(LoaderClass*)FLastLoader;
   }
   void SetLastLoader(TBasicCFile* ll)  {  FLastLoader = ll;  }

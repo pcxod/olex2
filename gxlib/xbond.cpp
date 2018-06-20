@@ -101,7 +101,7 @@ void TXBond::EvaluatePrimitiveMaterial(TGlPrimitive &p, TGraphicsStyle &s) const
 void TXBond::Create(const olxstr& cName) {
   SetCreated(true);
   olxstr Legend;
-  if (EsdlInstanceOf(*this, TXBond)) {
+  if (this->Is<TXBond>()) {
     olxstr strRef = GetRef().ToString();
     if (!cName.IsEmpty())  {
       SetCollectionName(cName);

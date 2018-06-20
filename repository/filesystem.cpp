@@ -530,7 +530,9 @@ void TFSItem::DelFile() {
 }
 //.............................................................................
 void TFSItem::_DelFile() {
-  if (!EsdlInstanceOf(GetIndexFS(), TUpdateFS) || IsFolder()) return;
+  if (!olx_type<TUpdateFS>::check(GetIndexFS()) || IsFolder()) {
+    return;
+  }
   olxstr fn = GetIndexFS().GetBase()+ GetFullName();
   if (TEFile::Exists(fn)) {
     TEFile::Chmod(fn, S_IWRITE);
@@ -587,8 +589,9 @@ TFSItem& TFSItem::NewItem(TFSItem* item)  {
 }
 //.............................................................................
 void TFSItem::ClearNonexisting()  {
-  if( !EsdlInstanceOf(GetIndexFS(), TOSFileSystem) )
+  if (!olx_type<TOSFileSystem>::check(GetIndexFS())) {
     return;
+  }
   for( size_t i=0; i < Count(); i++ )  {
     if( !Item(i).IsFolder() )  {
       if( Index.ShouldExist(Item(i)) &&

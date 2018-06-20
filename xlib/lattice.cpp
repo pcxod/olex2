@@ -2666,7 +2666,7 @@ olxstr TLattice::CalcMoietyStr(bool html) const {
     if (frags[i].GetA() != 1)
       rv << olx_round(frags[i].GetA(), 100) << '(';
     for (size_t j = 0; j < frags[i].GetB().Count(); j++) {
-      rv << frags[i].GetB()[j].element.symbol;
+      rv << frags[i].GetB()[j].element->symbol;
       if (frags[i].GetB()[j].count != 1) {
         if (html) {
           rv << so << olx_round(frags[i].GetB()[j].count, 100) << sc;

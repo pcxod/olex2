@@ -648,7 +648,7 @@ ContentList::const_list_type TAsymmUnit::GetContentList(double mult) const {
     }
     size_t ind = InvalidIndex;
     for (size_t j = 0; j < rv.Count(); j++) {
-      if (&rv[j].element == &elm && rv[j].charge == CAtoms[i]->GetCharge()) {
+      if (rv[j].element == &elm && rv[j].charge == CAtoms[i]->GetCharge()) {
         ind = j;
         break;
       }
@@ -667,7 +667,7 @@ olxstr TAsymmUnit::_SummFormula(const olxstr &Sep, double mult) const {
   ContentList cl = GetContentList(mult);
   olxstr rv;
   for (size_t i = 0; i < cl.Count(); i++) {
-    rv << cl[i].element.symbol;
+    rv << cl[i].element->symbol;
     if (olx_abs(cl[i].count - 1.0) > 1e-3) {
       rv << olxstr::FormatFloat(3, cl[i].count).TrimFloat();
     }

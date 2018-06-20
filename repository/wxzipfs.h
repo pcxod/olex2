@@ -72,9 +72,9 @@ public:
   void DoBreak()  {  Break = true;  }
 };
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class TwxZipFileSystem: public AZipFS  {
+class TwxZipFileSystem : public AZipFS {
   TZipWrapper zip;
-  static AZipFS *instance_maker(const olxstr& filename, bool UseCache)  {
+  static AZipFS *instance_maker(const olxstr& filename, bool UseCache) {
     return new TwxZipFileSystem(filename, UseCache);
   }
 protected:
@@ -82,38 +82,41 @@ protected:
   virtual bool Enter(const IOlxObject *Sender, const IOlxObject *Data,
     TActionQueue * caller)
   {
-    if( Data != NULL && EsdlInstanceOf(*Data, TOnProgress) )  {
+    if (Data != 0 && Data->Is<TOnProgress>()) {
       OnProgress.Enter(this, Data, caller);
       return true;
     }
-    else
+    else {
       return AFileSystem::Enter(Sender, Data, caller);
+    }
   }
   virtual bool Exit(const IOlxObject *Sender, const IOlxObject *Data,
     TActionQueue *caller)
   {
-    if( Data != NULL && EsdlInstanceOf(*Data, TOnProgress) )  {
+    if (Data != 0 && Data->Is<TOnProgress>()) {
       OnProgress.Exit(this, Data, caller);
       return true;
     }
-    else
+    else {
       return AFileSystem::Exit(Sender, Data, caller);
+    }
   }
   virtual bool Execute(const IOlxObject *Sender, const IOlxObject *Data,
     TActionQueue *caller)
   {
-    if( Data != NULL && EsdlInstanceOf(*Data, TOnProgress) )  {
+    if (Data != 0 && Data->Is<TOnProgress>()) {
       OnProgress.Execute(this, Data, caller);
       return true;
     }
-    else
+    else {
       return AFileSystem::Execute(Sender, Data, caller);
+    }
   }
-  virtual bool _DoDelFile(const olxstr& f) {  return false;  }
-  virtual bool _DoDelDir(const olxstr& f)  {  return false;  }
-  virtual bool _DoNewDir(const olxstr& f)  {  return false;  }
-  virtual bool _DoAdoptFile(const TFSItem& Source) {  return false;  }
-  virtual bool _DoesExist(const olxstr& df, bool)  {
+  virtual bool _DoDelFile(const olxstr& f) { return false; }
+  virtual bool _DoDelDir(const olxstr& f) { return false; }
+  virtual bool _DoNewDir(const olxstr& f) { return false; }
+  virtual bool _DoAdoptFile(const TFSItem& Source) { return false; }
+  virtual bool _DoesExist(const olxstr& df, bool) {
     return zip.FileExists(df);
   }
   virtual IInputStream* _DoOpenFile(const olxstr& src);
@@ -121,13 +124,13 @@ protected:
     return false;
   }
 public:
-  TwxZipFileSystem(const olxstr& filename, bool UseCache=false);
+  TwxZipFileSystem(const olxstr& filename, bool UseCache = false);
   TwxZipFileSystem(TEFile* file, bool UseCache);
   virtual ~TwxZipFileSystem();
 
   bool ExtractAll(const olxstr& dest);
 
-  virtual void DoBreak()  {
+  virtual void DoBreak() {
     AFileSystem::DoBreak();
     zip.DoBreak();
   }

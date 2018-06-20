@@ -481,13 +481,14 @@ bool THtml::UpdatePage(bool update_indices) {
     size_t ind = Objects.IndexOf(FocusedControl);
     if (ind != InvalidIndex) {
       wxWindow* wnd = Objects.GetValue(ind).b;
-      if (EsdlInstanceOf(*wnd, TTextEdit))
+      if (olx_type<TTextEdit>::check(*wnd)) {
         ((TTextEdit*)wnd)->SetSelection(-1, -1);
-      else if (EsdlInstanceOf(*wnd, TComboBox)) {
+      }
+      else if (olx_type<TComboBox>::check(*wnd)) {
         TComboBox* cb = (TComboBox*)wnd;
         wnd = cb;
       }
-      else if (EsdlInstanceOf(*wnd, TSpinCtrl)) {
+      else if (olx_type<TSpinCtrl>::check(*wnd)) {
         TSpinCtrl* sc = (TSpinCtrl*)wnd;
         olxstr sv(sc->GetValue());
         sc->SetSelection((long)sv.Length(), -1);
@@ -580,11 +581,13 @@ olxstr THtml::GetObjectValue(const AOlxCtrl *Obj) {
     TTreeView* T = (TTreeView*)Obj;
     wxTreeItemId ni = T->GetSelection();
     wxTreeItemData* td = T->GetItemData(ni);
-    if( td == NULL || !EsdlInstanceOf(*td, TTreeNodeData) )
+    if (td == NULL || !olx_type<TTreeNodeData>::check(*td)) {
       return EmptyString();
+    }
     TTreeNodeData* olx_td = dynamic_cast<TTreeNodeData*>(td);
-    if( olx_td == NULL || olx_td->GetData() == NULL )
+    if (olx_td == 0 || olx_td->GetData() == 0) {
       return EmptyString();
+    }
     return olx_td->GetData()->ToString();
   }
   if (ti == typeid(TDateCtrl)) {
@@ -810,60 +813,60 @@ THtml::TObjectsState::~TObjectsState()  {
     delete Objects.GetValue(i);
 }
 //.............................................................................
-void THtml::TObjectsState::SaveState()  {
-  for( size_t i=0; i < html.ObjectCount(); i++ )  {
-    if( !html.IsObjectManageble(i) )  continue;
+void THtml::TObjectsState::SaveState() {
+  for (size_t i = 0; i < html.ObjectCount(); i++) {
+    if (!html.IsObjectManageble(i))  continue;
     size_t ind = Objects.IndexOf(html.GetObjectName(i));
     AOlxCtrl* obj = html.GetObject(i);
     wxWindow* win = html.GetWindow(i);
-    olxstr_dict<olxstr,false>* props;
-    if( ind == InvalidIndex )  {
-      props = new olxstr_dict<olxstr,false>;
+    olxstr_dict<olxstr, false>* props;
+    if (ind == InvalidIndex) {
+      props = new olxstr_dict<olxstr, false>;
       Objects.Add(html.GetObjectName(i), props);
     }
-    else  {
+    else {
       props = Objects.GetValue(ind);
       props->Clear();
     }
     props->Add("type", EsdlClassName(*obj));  // type
-    if( EsdlInstanceOf(*obj, TTextEdit))  {
+    if (obj->Is<TTextEdit>()) {
       TTextEdit* te = (TTextEdit*)obj;
       props->Add("val", te->GetText());
       props->Add("data", te->GetData());
     }
-    else if( EsdlInstanceOf(*obj, TCheckBox) )  {
+    else if (obj->Is<TCheckBox>()) {
       TCheckBox* cb = (TCheckBox*)obj;
       props->Add("val", cb->GetCaption());
       props->Add("checked", cb->IsChecked());
       props->Add("data", cb->GetData());
     }
-    else if( EsdlInstanceOf(*obj, TTrackBar) )  {
+    else if (obj->Is<TTrackBar>()) {
       TTrackBar* tb = (TTrackBar*)obj;
       props->Add("min", tb->GetMin());
       props->Add("max", tb->GetMax());
       props->Add("val", tb->GetValue());
       props->Add("data", tb->GetData());
     }
-    else if( EsdlInstanceOf(*obj, TSpinCtrl) )  {
+    else if (obj->Is<TSpinCtrl>()) {
       TSpinCtrl* sc = (TSpinCtrl*)obj;
       props->Add("min", sc->GetMin());
       props->Add("max", sc->GetMax());
       props->Add("val", sc->GetValue());
       props->Add("data", sc->GetData());
     }
-    else if( EsdlInstanceOf(*obj, TButton) )  {
+    else if (obj->Is<TButton>()) {
       TButton* bt = (TButton*)obj;
       props->Add("val", bt->GetCaption());
       props->Add("checked", bt->IsDown());
       props->Add("data", bt->GetData());
     }
-    else if( EsdlInstanceOf(*obj, TBmpButton) )  {
+    else if (obj->Is<TBmpButton>()) {
       TBmpButton* bt = (TBmpButton*)obj;
       props->Add("checked", bt->IsDown());
       props->Add("val", bt->GetSource());
       props->Add("data", bt->GetData());
     }
-    else if( EsdlInstanceOf(*obj, TImgButton) )  {
+    else if (obj->Is<TImgButton>()) {
       TImgButton* bt = (TImgButton*)obj;
       props->Add("checked", bt->IsDown());
       props->Add("enabled", bt->IsEnabled());
@@ -872,29 +875,29 @@ void THtml::TObjectsState::SaveState()  {
       props->Add("height", bt->GetHeight());
       props->Add("data", bt->GetData());
     }
-    else if( EsdlInstanceOf(*obj, TComboBox) )  {
+    else if (obj->Is<TComboBox>()) {
       TComboBox* cb = (TComboBox*)obj;
       props->Add("val", cb->GetValue());
       props->Add("items", cb->ItemsToString(';'));
       props->Add("data", cb->GetData());
     }
-    else if (EsdlInstanceOf(*obj, TChoice))  {
+    else if (obj->Is<TChoice>()) {
       TChoice* c = (TChoice*)obj;
       props->Add("val", c->GetValue());
       props->Add("items", c->ItemsToString(';'));
       props->Add("data", c->GetData());
     }
-    else if (EsdlInstanceOf(*obj, TListBox))  {
+    else if (obj->Is<TListBox>()) {
       TListBox* lb = (TListBox*)obj;
       props->Add("val", lb->GetValue());
       props->Add("items", lb->ItemsToString(';'));
       props->Add("data", lb->GetData());
     }
-    else if( EsdlInstanceOf(*obj, TTreeView) )  {
+    else if (obj->Is<TTreeView>()) {
       TTreeView* tv = (TTreeView*)obj;
       props->Add("state", tv->SaveState());
     }
-    else if( EsdlInstanceOf(*obj, TLabel) )  {
+    else if (obj->Is<TLabel>()) {
       TLabel* lb = (TLabel*)obj;
       props->Add("val", lb->GetCaption());
       props->Add("data", lb->GetData());
@@ -902,56 +905,60 @@ void THtml::TObjectsState::SaveState()  {
     else //?
       ;
     // stroring the control colours, it is generic
-    if( win != NULL )  {
+    if (win != 0) {
       props->Add("fg", win->GetForegroundColour().GetAsString(wxC2S_HTML_SYNTAX));
       props->Add("bg", win->GetBackgroundColour().GetAsString(wxC2S_HTML_SYNTAX));
     }
   }
 }
 //.............................................................................
-void THtml::TObjectsState::RestoreState()  {
+void THtml::TObjectsState::RestoreState() {
   olex2::IOlex2Processor *op = olex2::IOlex2Processor::GetInstance();
-  for( size_t i=0; i < html.ObjectCount(); i++ )  {
-    if( !html.IsObjectManageble(i) )  continue;
+  for (size_t i = 0; i < html.ObjectCount(); i++) {
+    if (!html.IsObjectManageble(i)) {
+      continue;
+    }
     size_t ind = Objects.IndexOf(html.GetObjectName(i));
-    if( ind == InvalidIndex )  continue;
+    if (ind == InvalidIndex) {
+      continue;
+    }
     AOlxCtrl* obj = html.GetObject(i);
     wxWindow* win = html.GetWindow(i);
     olxstr_dict<olxstr, false>& props = *Objects.GetValue(ind);
-    if( props.Get("type") != EsdlClassName(*obj) )  {
+    if (props.Get("type") != EsdlClassName(*obj)) {
       TBasicApp::NewLogEntry(logError) << "Object type changed for: "
         << Objects.GetKey(ind);
       continue;
     }
-    if( EsdlInstanceOf(*obj, TTextEdit) )  {
+    if (obj->Is<TTextEdit>()) {
       TTextEdit* te = (TTextEdit*)obj;
       te->SetText(props["val"]);
       te->SetData(props["data"]);
     }
-    else if( EsdlInstanceOf(*obj, TCheckBox) )  {
+    else if (obj->Is<TCheckBox>()) {
       TCheckBox* cb = (TCheckBox*)obj;
       cb->SetCaption(props["val"]);
       cb->SetChecked(props["checked"].ToBool());
       cb->SetData(props["data"]);
     }
-    else if( EsdlInstanceOf(*obj, TTrackBar) )  {
+    else if (obj->Is<TTrackBar>()) {
       TTrackBar* tb = (TTrackBar*)obj;
       tb->SetRange(olx_round(props["min"].ToDouble()), olx_round(props["max"].ToDouble()));
       tb->SetValue(olx_round(props["val"].ToDouble()));
       tb->SetData(props["data"]);
       tb->SetData(props.Get("data"));
     }
-    else if( EsdlInstanceOf(*obj, TSpinCtrl) )  {
+    else if (obj->Is<TSpinCtrl>()) {
       TSpinCtrl* sc = (TSpinCtrl*)obj;
       sc->SetRange(olx_round(props["min"].ToDouble()), olx_round(props["max"].ToDouble()));
       sc->SetValue(olx_round(props["val"].ToDouble()));
       sc->SetData(props["data"]);
       sc->SetData(props.Get("data"));
     }
-    else if( EsdlInstanceOf(*obj, TButton) )  {
+    else if (obj->Is<TButton>()) {
       TButton* bt = (TButton*)obj;
       bt->SetData(props["data"]);
-      bt->SetCaption(props["val"] );
+      bt->SetCaption(props["val"]);
       bt->OnDown.SetEnabled(false);
       bt->OnUp.SetEnabled(false);
       bt->OnClick.SetEnabled(false);
@@ -960,10 +967,10 @@ void THtml::TObjectsState::RestoreState()  {
       bt->OnUp.SetEnabled(true);
       bt->OnClick.SetEnabled(true);
     }
-    else if( EsdlInstanceOf(*obj, TBmpButton) )  {
+    else if (obj->Is<TBmpButton>()) {
       TBmpButton* bt = (TBmpButton*)obj;
       bt->SetData(props["data"]);
-      bt->SetSource(props["val"] );
+      bt->SetSource(props["val"]);
       bt->OnDown.SetEnabled(false);
       bt->OnUp.SetEnabled(false);
       bt->OnClick.SetEnabled(false);
@@ -972,45 +979,45 @@ void THtml::TObjectsState::RestoreState()  {
       bt->OnUp.SetEnabled(true);
       bt->OnClick.SetEnabled(true);
     }
-    else if( EsdlInstanceOf(*obj, TImgButton) )  {
+    else if (obj->Is<TImgButton>()) {
       TImgButton* bt = (TImgButton*)obj;
       bt->SetData(props["data"]);
       bt->SetImages(props["val"], props["width"].ToInt(), props["height"].ToInt());
       bt->SetDown(props["checked"].ToBool());
       bt->SetEnabled(props["enabled"].ToBool());
     }
-    else if( EsdlInstanceOf(*obj, TComboBox) )  {
+    else if (obj->Is<TComboBox>()) {
       TComboBox* cb = (TComboBox*)obj;
       cb->Clear();
       cb->AddItems(TStrList(props["items"], ';'));
-      cb->SetText(props["val"] );
+      cb->SetText(props["val"]);
       cb->SetData(props["data"]);
     }
-    else if (EsdlInstanceOf(*obj, TChoice))  {
+    else if (obj->Is<TChoice>()) {
       TChoice* cb = (TChoice*)obj;
       cb->Clear();
       cb->AddItems(TStrList(props["items"], ';'));
       cb->SetText(props["val"]);
       cb->SetData(props["data"]);
     }
-    else if (EsdlInstanceOf(*obj, TListBox))  {
+    else if (obj->Is<TListBox>()) {
       TListBox* lb = (TListBox*)obj;
       lb->Clear();
       lb->AddItems(TStrList(props["items"], ';'));
     }
-    else if( EsdlInstanceOf(*obj, TTreeView) )  {
+    else if (obj->Is<TTreeView>()) {
       ((TTreeView*)obj)->RestoreState(props["state"]);
     }
-    else if( EsdlInstanceOf(*obj, TLabel) )  {
+    else if (obj->Is<TLabel>()) {
       TLabel* lb = (TLabel*)obj;
       lb->SetCaption(props["val"]);
     }
     else //?
       ;
     // restoring the control colours, it is generic
-    if( win != NULL && false )  {
+    if (win != NULL && false) {
       olxstr bg(props["bg"]), fg(props["fg"]);
-      if (op != NULL) {
+      if (op != 0) {
         op->processFunction(bg);
         op->processFunction(fg);
       }
@@ -1098,21 +1105,25 @@ olxstr_dict<olxstr,false>* THtml::TObjectsState::DefineControl(
 //.............................................................................
 void THtml::OnClipboard(wxClipboardTextEvent& evt) {
   wxWindow *w = FindFocus();
-  if (w == NULL) return;
+  if (w == 0) {
+    return;
+  }
   bool processed = true;
   wxString text;
-  if (EsdlInstanceOf(*w, TTextEdit) || EsdlInstanceOf(*w, wxTextCtrl)) {
+  if (olx_type<TTextEdit>::check(*w) || olx_type<wxTextCtrl>::check (*w)) {
     wxTextCtrl *tc = dynamic_cast<wxTextCtrl*>(w);
-    if (tc != NULL)
+    if (tc != 0) {
       text = tc->GetStringSelection();
+    }
   }
-  else if(EsdlInstanceOf(*w, TComboBox))
+  else if(olx_type<TComboBox>::check(*w))
     text = dynamic_cast<wxComboBox*>(w)->GetStringSelection();
   else
     processed = false;
   if (processed && !text.IsEmpty() && wxTheClipboard->Open()) {
-    if (wxTheClipboard->IsSupported(wxDF_TEXT))
+    if (wxTheClipboard->IsSupported(wxDF_TEXT)) {
       wxTheClipboard->SetData(new wxTextDataObject(text));
+    }
     wxTheClipboard->Close();
   }
   evt.Skip(processed);

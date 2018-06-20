@@ -23,7 +23,7 @@ BeginXlibNamespace()
 
 class TResidue;
 
-class TAsymmUnit: public IXVarReferencerContainer, public IOlxObject  {
+class TAsymmUnit: public IXVarReferencerContainer  {
   TCAtomPList CAtoms;
   // list of unique SG matrices (no centering or inversion)
   smatd_list  Matrices;
@@ -292,13 +292,13 @@ public:
   virtual olxstr GetIdName() const {  return IdName;  }
   // note - possibly unsafe, type is not checked
   virtual size_t GetIdOf(const IXVarReferencer& vr) const {
-    if (!EsdlInstanceOf(vr, TCAtom)) {
+    if (!vr.Is<TCAtom>()) {
       throw TInvalidArgumentException(__OlxSourceInfo, "referencer");
     }
     return ((TCAtom&)vr).GetId();
   }
   virtual size_t GetPersistentIdOf(const IXVarReferencer& vr) const {
-    if (!EsdlInstanceOf(vr, TCAtom)) {
+    if (!vr.Is<TCAtom>()) {
       throw TInvalidArgumentException(__OlxSourceInfo, "referencer");
     }
     return ((TCAtom&)vr).GetTag();

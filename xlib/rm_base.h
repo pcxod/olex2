@@ -13,10 +13,9 @@
 #include "xbase.h"
 BeginXlibNamespace()
 
-class IXVarReferencer;
 class IXVarReferencerContainer;
 
-class IXVarReferencer {
+class IXVarReferencer : public virtual IOlxObject {
 public:
   virtual size_t VarCount() const = 0;
   virtual struct XVarReference* GetVarRef(size_t i) const = 0;
@@ -32,7 +31,7 @@ public:
   virtual olxstr GetIdName() const = 0;
 };
 
-class IXVarReferencerContainer  {
+class IXVarReferencerContainer : public virtual IOlxObject {
 public:
   // returns an object id and the name of id, like 'atom', 'dfix', 'basf', etc
   virtual olxstr GetIdName() const = 0;

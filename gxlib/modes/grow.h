@@ -24,9 +24,9 @@ public:
   {}
   bool Initialise_(TStrObjList& Cmds, const TParamList& Options) {
     bool SI = Options.Contains('s'),
-         Cov = Options.Contains('c'),
-         VdW = Options.Contains('v'),
-         Rad = Options.Contains('r');
+      Cov = Options.Contains('c'),
+      VdW = Options.Contains('v'),
+      Rad = Options.Contains('r');
     GrowShells = Options.Contains("shells");
     mode = 0;
     if (SI)   mode = gmSInteractions;
@@ -55,7 +55,7 @@ public:
     if (Options.Contains('a')) {
       TAsymmUnit &au = gxapp.XFile().GetAsymmUnit();
       detached.SetSize(au.AtomCount());
-      for (size_t i=0; i < au.AtomCount(); i++) {
+      for (size_t i = 0; i < au.AtomCount(); i++) {
         TCAtom &a = au.GetAtom(i);
         if (!a.IsDetached() && a.GetType() == iQPeakZ) {
           a.SetDetached(true);
@@ -78,9 +78,10 @@ public:
     gxapp.SetZoomAfterModelBuilt(true);
     if (!detached.IsEmpty()) {
       TAsymmUnit &au = gxapp.XFile().GetAsymmUnit();
-      for (size_t i=0; i < au.AtomCount(); i++) {
-        if (detached[i])
+      for (size_t i = 0; i < au.AtomCount(); i++) {
+        if (detached[i]) {
           au.GetAtom(i).SetDetached(false);
+        }
       }
       gxapp.XFile().GetLattice().CompaqQ();
     }
@@ -88,9 +89,9 @@ public:
       TLattice& latt = gxapp.XFile().GetLattice();
       LabelCorrector lc(latt.GetAsymmUnit(), TXApp::GetMaxLabelLength(),
         TXApp::DoRenameParts());
-      for (size_t i=0; i < latt.GetObjects().atoms.Count(); i++) {
+      for (size_t i = 0; i < latt.GetObjects().atoms.Count(); i++) {
         TSAtom &a = latt.GetObjects().atoms[i];
-        a.CAtom().SetOccu(a.CAtom().GetOccu()/2);
+        a.CAtom().SetOccu(a.CAtom().GetOccu() / 2);
         if (!a.GetMatrix().IsFirst()) {
           TCAtom &ca = latt.GetAsymmUnit().NewAtom();
           ca.ccrd() = a.ccrd();
@@ -112,8 +113,9 @@ public:
       TSAtom &aa = latt.GetObjects().atoms[i];
       for (size_t j = 0; j < ac; j++) {
         TSAtom &ab = latt.GetObjects().atoms[j];
-        if (aa.CAtom().GetId() == ab.CAtom().GetId())
+        if (aa.CAtom().GetId() == ab.CAtom().GetId()) {
           ab.SetDeleted(true);
+        }
       }
     }
     if (ac != latt.GetObjects().atoms.Count()) {
@@ -123,7 +125,7 @@ public:
   }
   virtual bool OnObject_(AGDrawObject& obj) {
     TLattice& latt = gxapp.XFile().GetLattice();
-    if (EsdlInstanceOf(obj, TXGrowLine)) {
+    if (obj.Is<TXGrowLine>()) {
       TXGrowLine& xl = (TXGrowLine&)obj;
       if (GrowShells && (mode == gmCovalent || mode == gmVanDerWaals)) {
         size_t ac = latt.GetObjects().atoms.Count();
@@ -135,7 +137,7 @@ public:
       }
       return true;
     }
-    else if (EsdlInstanceOf(obj, TXAtom)) {
+    else if (obj.Is<TXAtom>()) {
       size_t ac = latt.GetObjects().atoms.Count();
       TXAtom& a = (TXAtom&)obj;
       if (!a.IsGrown()) {
@@ -144,8 +146,9 @@ public:
       }
       return true;
     }
-    else
+    else {
       return false;
+    }
   }
 };
 

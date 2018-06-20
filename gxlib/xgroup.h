@@ -73,12 +73,12 @@ protected:
           if (!Select) {
             bool initialised=false;
             if (&G == rotation_anchor) {
-              if (EsdlInstanceOf(G, TXAtom)) {
+              if (G.Is<TXAtom>()) {
                 TXAtom &a = (TXAtom &)G;
                 if (a.crd().Equals(RotationCenter, 1e-3))
                   initialised = true;
               }
-              else if (EsdlInstanceOf(G, TXBond)) {
+              else if (G.Is<TXBond>()) {
                 TXBond &b = (TXBond &)G;
                 if (RotationCenter.Equals((b.A().crd() + b.B().crd()) / 2, 1e-3)) {
                   initialised = true;
@@ -170,7 +170,7 @@ protected:
   bool OnMouseUp(const IOlxObject *Sender, const TMouseData& Data) {
     if (Data.Button == smbRight) {
       if (Data.Object != 0) {
-        if (EsdlInstanceOf(*Data.Object, TXAtom)) {
+        if (Data.Object->Is<TXAtom>()) {
           if (rotation_anchor == Data.Object) {
             rotation_anchor = 0;
             UpdateRotationCenter();
@@ -181,7 +181,7 @@ protected:
             RotationDir.Null();
           }
         }
-        else if (EsdlInstanceOf(*Data.Object, TXBond)) {
+        else if (Data.Object->Is<TXBond>()) {
           if (rotation_anchor == Data.Object) {
             rotation_anchor = 0;
             RotationDir.Null();
@@ -260,10 +260,10 @@ public:
     src_crds.SetCapacity(TGlGroup::Count());
     for (size_t i = 0; i < TGlGroup::Count(); i++) {
       AGDrawObject& G = GetObject(i);
-      if (EsdlInstanceOf(G, TXAtom)) {
+      if (G.Is<TXAtom>()) {
         src_crds.Add(Atoms.Add((TXAtom&)G)->crd());
       }
-      else if (EsdlInstanceOf(G, TXBond)) {
+      else if (G.Is<TXBond>()) {
         Bonds.Add((TXBond&)G);
       }
     }

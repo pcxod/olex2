@@ -241,24 +241,25 @@ void TMainForm::funFileOpen(const TStrObjList& Params, TMacroData &E)  {
     );
 }
 //..............................................................................
-void TMainForm::funSel(const TStrObjList& Params, TMacroData &E)  {
+void TMainForm::funSel(const TStrObjList& Params, TMacroData &E) {
   AtomRefList arl(FXApp->XFile().GetRM());
   bool atoms_only = (Params.Count() == 1 && Params[0].Equalsi('a'));
   TGlGroup& sel = FXApp->GetSelection();
-  for( size_t i=0; i < sel.Count(); i++ )  {
+  for (size_t i = 0; i < sel.Count(); i++) {
     AGDrawObject& gdo = sel[i];
-    if( EsdlInstanceOf(gdo, TXAtom) ) {
+    if (gdo.Is<TXAtom>()) {
       arl.AddExplicit((TXAtom&)gdo);
     }
     else if (!atoms_only) {
-      if( EsdlInstanceOf(gdo, TXBond) )  {
+      if (gdo.Is<TXBond>()) {
         arl.AddExplicit(((TXBond&)gdo).A());
         arl.AddExplicit(((TXBond&)gdo).B());
       }
-      else if( EsdlInstanceOf(gdo, TXPlane) )  {
+      else if (gdo.Is<TXPlane>()) {
         TSPlane& sp = ((TXPlane&)gdo);
-        for( size_t j=0; j < sp.Count(); j++ )
+        for (size_t j = 0; j < sp.Count(); j++) {
           arl.AddExplicit(sp.GetAtom(j));
+        }
       }
     }
   }
@@ -1174,7 +1175,7 @@ void TMainForm::macHide(TStrObjList &Cmds, const TParamList &Options, TMacroData
     AGDObjList Objects;
     TGlGroup& sel = FXApp->GetSelection();
     for (size_t i=0; i < sel.Count(); i++) {
-      if (ab && EsdlInstanceOf(sel[i], TXAtom)) {
+      if (ab && sel[i].Is<TXAtom>()) {
         TXAtom &a = dynamic_cast<TXAtom&>(sel[i]);
         for (size_t j=0; j < a.BondCount(); j++) {
           Objects.Add(a.Bond(j));
@@ -2929,8 +2930,8 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
       ContentList cl = FXApp->XFile().GetAsymmUnit().GetContentList();
       TStrList at("C;N;O;F;H;S", ';');
       for (size_t i = 0; i < cl.Count(); i++) {
-        if (!at.Contains(cl[i].element.symbol)) {
-          at.Add(cl[i].element.symbol);
+        if (!at.Contains(cl[i].element->symbol)) {
+          at.Add(cl[i].element->symbol);
         }
       }
       pmAtomType->Clear();
@@ -3557,45 +3558,54 @@ void TMainForm::macAddLabel(TStrObjList &Cmds, const TParamList &Options, TMacro
 }
 //..............................................................................
 //
-class TOnSync : public AActionHandler  {
+class TOnSync : public AActionHandler {
   TGXApp& xa;
   olxstr BaseDir;
 public:
-  TOnSync(TGXApp& xapp, const olxstr baseDir) : xa(xapp)  {
+  TOnSync(TGXApp& xapp, const olxstr baseDir) : xa(xapp) {
     BaseDir = baseDir;
   }
-  bool Execute(const IOlxObject *Sender, const IOlxObject *Data, TActionQueue *)  {
-    if( !EsdlInstanceOf(*Data, olxstr) )  return false;
+  bool Execute(const IOlxObject *Sender, const IOlxObject *Data, TActionQueue *) {
+    if (!Data->Is<olxstr>()) {
+      return false;
+    }
     olxstr cpath = olxstr::CommonString(BaseDir, *(const olxstr*)Data);
-    TBasicApp::GetLog() << ( olxstr("\rInstalling /~/") << ((olxstr*)Data)->SubStringFrom(cpath.Length()) );
+    TBasicApp::GetLog() << (olxstr("\rInstalling /~/") <<
+      ((olxstr*)Data)->SubStringFrom(cpath.Length()));
     xa.Draw();
     wxTheApp->Dispatch();
     return true;
   }
 };
-class TDownloadProgress: public AActionHandler  {
-    TGXApp* xa;
+class TDownloadProgress : public AActionHandler {
+  TGXApp* xa;
 public:
   TDownloadProgress(TGXApp& xapp) : xa(&xapp) {  }
-  bool Enter(const IOlxObject *Sender, const IOlxObject *Data, TActionQueue *)  {
-    if( Data != NULL && EsdlInstanceOf(*Data, TOnProgress) )
+  bool Enter(const IOlxObject *Sender, const IOlxObject *Data, TActionQueue *) {
+    if (Data != 0 && Data->Is<TOnProgress>()) {
       TBasicApp::NewLogEntry() << ((TOnProgress*)Data)->GetAction();
+    }
     return true;
   }
-  bool Exit(const IOlxObject *Sender, const IOlxObject *Data, TActionQueue *)  {
+  bool Exit(const IOlxObject *Sender, const IOlxObject *Data, TActionQueue *) {
     TBasicApp::NewLogEntry() << NewLineSequence() << "Done";
     return true;
   }
-  bool Execute(const IOlxObject *Sender, const IOlxObject *Data, TActionQueue *)  {
-    if( !EsdlInstanceOf(*Data, TOnProgress) )
+  bool Execute(const IOlxObject *Sender, const IOlxObject *Data, TActionQueue *) {
+    if (Data == 0 || !Data->Is<TOnProgress>()) {
       return false;
+    }
     IOlxObject* p_d = const_cast<IOlxObject*>(Data);
     TOnProgress *A = dynamic_cast<TOnProgress*>(p_d);
-    if( A->GetPos() <= 0 )  return false;
-    if( A->GetMax() <= 0 )
-      TBasicApp::GetLog() << (olxstr("\r") << A->GetPos()/1024 << "Kb");
-    else
-      TBasicApp::GetLog() << (olxstr("\r") << A->GetPos()*100/A->GetMax() << '%');
+    if (A->GetPos() <= 0) {
+      return false;
+    }
+    if (A->GetMax() <= 0) {
+      TBasicApp::GetLog() << (olxstr("\r") << A->GetPos() / 1024 << "Kb");
+    }
+    else {
+      TBasicApp::GetLog() << (olxstr("\r") << A->GetPos() * 100 / A->GetMax() << '%');
+    }
     xa->Draw();
     wxTheApp->Dispatch();
     return true;
@@ -3982,7 +3992,7 @@ struct FormulaFitter {
     for (size_t i = 0; i < input.Count(); i++) {
       const atype &v = input.GetValue(i);
       for (size_t j = 0; j < v.GetB().Count(); j++) {
-        elements.AddUnique(&v.GetB()[j].element);
+        elements.AddUnique(v.GetB()[j].element);
       }
     }
     ematd mt(input.Count(), elements.Count());
@@ -3990,7 +4000,7 @@ struct FormulaFitter {
     for (size_t i = 0; i < input.Count(); i++) {
       atype & v = input.GetValue(i);
       for (size_t j = 0; j < v.GetB().Count(); j++) {
-        size_t ei = elements.IndexOf(&v.GetB()[j].element);
+        size_t ei = elements.IndexOf(v.GetB()[j].element);
         mt[i][ei] = v.GetB()[j].count;
       }
       r[i] = v.GetA();
@@ -4005,7 +4015,7 @@ struct FormulaFitter {
       atype & v = input.GetValue(i);
       double calc = 0;
       for (size_t j = 0; j < v.GetB().Count(); j++) {
-        size_t ei = elements.IndexOf(&v.GetB()[j].element);
+        size_t ei = elements.IndexOf(v.GetB()[j].element);
         calc += v.GetB()[j].count*nr[ei];
       }
       double diff = v.GetA() - calc;
@@ -4052,7 +4062,7 @@ struct FormulaFitter {
     for (size_t i = 0; i < input.Count(); i++) {
       atype & v = input.GetValue(i);
       for (size_t j = 0; j < v.GetB().Count(); j++) {
-        cnts[elements.IndexOf(&v.GetB()[j].element)]++;
+        cnts[elements.IndexOf(v.GetB()[j].element)]++;
       }
     }
     for (size_t i = 0; i < elements.Count(); i++) {
@@ -4070,7 +4080,7 @@ struct FormulaFitter {
   TEValueD estimate(const TTypeList<ElementCount> &f) {
     double res = 0, su = 0;
     for (size_t j = 0; j < f.Count(); j++) {
-      size_t ei = elements.IndexOf(&f[j].element);
+      size_t ei = elements.IndexOf(f[j].element);
       if (ei == InvalidIndex)
         return TEValueD(-1.0);
       res += f[j].count*nr[ei];
