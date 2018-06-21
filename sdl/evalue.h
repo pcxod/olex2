@@ -52,16 +52,7 @@ public:
     if (FV == 0) {
       throw TDivException(__OlxSourceInfo);
     }
-    return TEValue<EType>((EType)sqrt(FV), (EType)(FE / Val.FV) / 2);
-  }
-
-  TEValue& SelfSqrt() {
-    if (FV == 0) {
-      throw TDivException(__OlxSourceInfo);
-    }
-    FE = (EType)(FE / FV) / 2;
-    FV = (EType)sqrt(FV);
-    return *this;
+    return TEValue<EType>((EType)sqrt(FV), (EType)olx_abs(0.5*FE / FV));
   }
 
   TEValue& operator = (const TEValue& p) {
