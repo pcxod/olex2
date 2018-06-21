@@ -17,76 +17,83 @@ BeginEsdlNamespace()
 
 template <typename> class TEVPoint;
 
-template <class EType> class TEValue: public IOlxObject  {
+template <class EType> class TEValue : public IOlxObject {
   EType FV, FE;
 public:
 
-  TEValue() : FV(0), FE(0) {}
+  TEValue()
+    : FV(0), FE(0)
+  {}
+  TEValue(const TEValue& obj)
+    : FV(obj.FV), FE(obj.FE)
+  {}
 
-  TEValue(const TEValue& obj) : FV(obj.FV), FE(obj.FE)  {}
+  template <class T> TEValue(const TEValue<T>& obj) {
+    FV = (EType)obj.V;
+    FE = (EType)obj.E;
+  }
 
-  template <class T>
-    TEValue(const TEValue<T>& obj)  {
-      FV = (EType)obj.V;
-      FE = (EType)obj.E;
-    }
+  TEValue(EType Value, EType Error)
+    : FV(Value), FE(Error)
+  {}
 
-  TEValue(EType Value, EType Error) : FV(Value), FE(Error) {}
+  TEValue(const olxstr& str) {
+    *this = str;
+  }
 
-  TEValue(const olxstr& str) : FV(0), FE(0) {  *this = str;  }
+  EType& V() { return  FV; }
+  EType& E() { return  FE; }
 
-  EType& V()  {  return  FV;  }
-  EType& E()  {  return  FE;  }
-
-  const EType& GetV() const {  return  FV;  }
-  const EType& GetE() const {  return  FE;  }
+  const EType& GetV() const { return  FV; }
+  const EType& GetE() const { return  FE; }
 
 
   TEValue Sqrt() const {
-    TEValue<EType> Val;
-    if( FV == 0 )
+    if (FV == 0) {
       throw TDivException(__OlxSourceInfo);
-    Val.FV = (EType)sqrt(FV);
-    Val.FE = (EType)(FE/Val.FV)/2;
-    return Val;
+    }
+    return TEValue<EType>((EType)sqrt(FV), (EType)(FE / Val.FV) / 2);
   }
 
-  TEValue& SelfSqrt()  {
-    if( FV == 0 )
+  TEValue& SelfSqrt() {
+    if (FV == 0) {
       throw TDivException(__OlxSourceInfo);
-    FE = (EType)(FE/FV)/2;
+    }
+    FE = (EType)(FE / FV) / 2;
     FV = (EType)sqrt(FV);
     return *this;
   }
 
-  TEValue& operator = (const TEValue& p)  {
+  TEValue& operator = (const TEValue& p) {
     FV = p.FV;
     FE = p.FE;
     return *this;
   }
 
   template <class AType>
-    TEValue<AType>& operator = (const TEValue<AType>& p)  {
-      FV = (EType)p.FV;
-      FE = (EType)p.FE;
-      return *this;
-    }
+  TEValue<AType>& operator = (const TEValue<AType>& p) {
+    FV = (EType)p.FV;
+    FE = (EType)p.FE;
+    return *this;
+  }
 
-  TEValue &operator = (const olxstr& S)  {
+  TEValue &operator = (const olxstr& S) {
     size_t i = S.LastIndexOf('(');
-    if( i != InvalidIndex && i > 0 )  {
+    if (i != InvalidIndex && i > 0) {
       FV = (EType)S.SubStringTo(i).ToDouble();
       size_t j = S.LastIndexOf(')'),
-             k = S.FirstIndexOf('.');
-      double po=1;
-      if( j != InvalidIndex && j > i )  {
-        if( k != InvalidIndex && k < i )
-          for( size_t l=0; l < i-k-1; l++ )
+        k = S.FirstIndexOf('.');
+      double po = 1;
+      if (j != InvalidIndex && j > i) {
+        if (k != InvalidIndex && k < i) {
+          for (size_t l = 0; l < i - k - 1; l++) {
             po *= 10;
-        FE = (EType)(S.SubString(i+1,j-i-1).ToDouble()/po);
+          }
+        }
+        FE = (EType)(S.SubString(i + 1, j - i - 1).ToDouble() / po);
       }
     }
-    else  {  // no error
+    else {  // no error
       FV = (EType)S.ToDouble();
       FE = 0;
     }
@@ -94,111 +101,131 @@ public:
   }
 
   template <class AType>
-    TEValue& operator += (const TEValue<AType>& S)  {
-      FV += S.FV;
-      FE = (EType)sqrt(S.FE*S.FE+FE*FE);
-     return *this;
-    }
+  TEValue& operator += (const TEValue<AType>& S) {
+    FV += S.FV;
+    FE = (EType)sqrt(S.FE*S.FE + FE*FE);
+    return *this;
+  }
 
   template <class AType>
-    TEValue& operator *= (const TEValue<AType>& S)  {
-      if( FV == 0 || S.FV == 0 )
-        throw TDivException(__OlxSourceInfo);
-      if( FE != 0 || S.FE != 0 )
-        FE = (EType)(olx_sqr(S.FE/S.FV) + olx_sqr(FE/FV));
-      FV *= S.FV;
-      return *this;
-    }
+  TEValue& operator -= (const TEValue<AType>& S) {
+    FV -= S.FV;
+    FE = (EType)sqrt(olx_sqr(S.FE) + olx_sqr(FE));
+    return *this;
+  }
 
   template <class AType>
-    TEValue& operator /= (const TEValue<AType>& S)  {
-      if( FV == 0 || S.FV == 0 )
-        throw TDivException(__OlxSourceInfo);
-      if( FE != 0 || S.FE != 0 )
-        FE = (EType)(olx_sqr(S.FE/S.FV) + olx_sqr(FE/FV));
-      FV /= S.FV;
-      return *this;
+  TEValue& operator *= (const TEValue<AType>& S) {
+    if (FV == 0 || S.FV == 0) {
+      throw TDivException(__OlxSourceInfo);
     }
+    FE = (EType)sqrt(olx_sqr(S.FE / S.FV) + olx_sqr(FE / FV));
+    FV *= S.FV;
+    FE *= olx_abs(FV);
+    return *this;
+  }
 
   template <class AType>
-    TEValue& operator -= (const TEValue<AType>& S)  {
-      FV -= S.FV;
-      FE = (EType)sqrt(olx_sqr(S.FE)+olx_sqr(FE));
-      return *this;
+  TEValue& operator /= (const TEValue<AType>& S) {
+    if (FV == 0 || S.FV == 0) {
+      throw TDivException(__OlxSourceInfo);
     }
+    FE = (EType)sqrt(olx_sqr(S.FE / S.FV) + olx_sqr(FE / FV));
+    FV /= S.FV;
+    FE *= olx_abs(FV);
+    return *this;
+  }
 
-  TEValue& operator += (EType S)  {
+  TEValue& operator += (EType S) {
     FV += S;
     return *this;
   }
 
-  TEValue& operator *= (EType S)  {
+  TEValue& operator *= (EType S) {
     FV *= S;
-    FE *= S;
+    FE *= olx_abs(S);
     return *this;
   }
 
-  TEValue& operator /= (EType S)  {
-    if( S == 0 )
+  TEValue& operator /= (EType S) {
+    if (S == 0) {
       throw TDivException(__OlxSourceInfo);
+    }
     FV /= S;
-    FE /= S;
+    FE /= olx_abs(S);
     return *this;
   }
 
-  TEValue& operator -= (EType S)  {
+  TEValue& operator -= (EType S) {
     FV -= S;
     return *this;
   }
 
   TEValue operator + (EType S) const {
-    return TEValue<EType>(FV+S, FE);
+    return TEValue<EType>(FV + S, FE);
   }
 
   TEValue operator - (EType S) const {
-    return TEValue<EType>(FV-S, FE);
+    return TEValue<EType>(FV - S, FE);
   }
 
   TEValue operator * (EType S) const {
-    return TEValue<EType>(FV*S, FE*S);
+    return TEValue<EType>(FV*S, olx_abs(FE*S));
   }
 
   TEValue operator / (EType S) const {
-    if( S == 0 )
+    if (S == 0) {
       throw TDivException(__OlxSourceInfo);
-    return TEValue<EType>(FV/S, FE/S);
+    }
+    return TEValue<EType>(FV / S, olx_abs(FE / S));
   }
 
   template <class AType>
-    TEValue operator + (const TEValue<AType> &S) const {
-      TEValue<EType> P(*this);
-      return (P += S);
-    }
+  TEValue operator + (const TEValue<AType> &S) const {
+    TEValue<EType> P(*this);
+    return (P += S);
+  }
 
   template <class AType>
-    TEValue operator - (const TEValue<AType> &S) const {
-      TEValue<EType> P(*this);
-      return (P -= S);
-    }
+  TEValue operator - (const TEValue<AType> &S) const {
+    TEValue<EType> P(*this);
+    return (P -= S);
+  }
 
   template <class AType>
-    TEValue operator * (const TEValue<AType> &S) const {
-      TEValue<EType> P(*this);
-      return (P *= S);
-    }
+  TEValue operator * (const TEValue<AType> &S) const {
+    TEValue<EType> P(*this);
+    return (P *= S);
+  }
 
   template <class AType>
-    TEValue operator / (const TEValue<AType> &S) const {
-      TEValue<EType> P(*this);
-      return (P /= S);
-    }
+  TEValue operator / (const TEValue<AType> &S) const {
+    TEValue<EType> P(*this);
+    return (P /= S);
+  }
+
+  bool Equals(const TEValue<EType> &v) const {
+    return FV == v.FV && FE == v.FE;
+  }
+
+  bool operator == (const TEValue<EType> &v) const {
+    return Equals(v);
+  }
+
+  bool operator != (const TEValue<EType> &v) const {
+    return !Equals(v);
+  }
+
+  bool Equals(const TEValue<EType> &v, EType tol) const {
+    return olx_abs(FV-v.FV) < tol && olx_abs(FE-v.FE) < tol;
+  }
 
   template <class SC> SC StrRepr() const {
     if (FE != 0) {
       SC strv, stre;
       int pr = 0;
       double po = 1;
-      while( olx_abs(FE*po) < 10 )  {
+      while (olx_abs(FE*po) < 10) {
         po *= 10;
         pr++;
       }
@@ -215,7 +242,8 @@ public:
         strv = olx_round(FV);
         stre << olx_round(FE);
       }
-      if (strv.IndexOf('.') != InvalidIndex && iv != 10) {
+      size_t fpidx = strv.IndexOf('.');
+      if (fpidx != InvalidIndex && fpidx != strv.Length() - 2) {
         while (stre.EndsWith('0') && strv.EndsWith('0')) {
           stre.SetLength(stre.Length() - 1);
           strv.SetLength(strv.Length() - 1);
@@ -230,9 +258,9 @@ public:
       return SC(FV);
     }
   }
-  inline virtual TIString ToString() const {  return StrRepr<olxstr>();  }
-  inline olxcstr ToCStr() const {  return StrRepr<olxcstr>();  }
-  inline olxwstr ToWStr() const {  return StrRepr<olxwstr>();  }
+  inline virtual TIString ToString() const { return StrRepr<olxstr>(); }
+  inline olxcstr ToCStr() const { return StrRepr<olxcstr>(); }
+  inline olxwstr ToWStr() const { return StrRepr<olxwstr>(); }
 };
 
 typedef TEValue<float>  TEValueF;
@@ -240,16 +268,21 @@ typedef TEValue<double>  TEValueD;
 
 template <typename FloatT> struct TEPoint3 {
   TEValue<FloatT> data[3];
-  TEPoint3(const TEValue<FloatT> &x, const TEValue<FloatT> &y, const TEValue<FloatT> &z)  {
+  TEPoint3(const TEValue<FloatT> &x, const TEValue<FloatT> &y, const TEValue<FloatT> &z) {
     data[0] = x;  data[1] = y;  data[2] = z;
   }
-  TEPoint3(const TEPoint3<FloatT> &p)  {
+  TEPoint3(const TEPoint3<FloatT> &p) {
     data[0] = p.data[0];  data[1] = p.data[1];  data[2] = p.data[2];
   }
-  TEValue<FloatT>& operator [] (size_t i)  {  return data[i];  }
-  const TEValue<FloatT>& operator [] (size_t i) const {  return data[i];  }
-  TEPoint3& operator = (const TEPoint3 &p)  {
-    data[0] = p.data[0];  data[1] = p.data[1];  data[2] = p.data[2];
+  
+  TEValue<FloatT>& operator [] (size_t i) { return data[i]; }
+  
+  const TEValue<FloatT>& operator [] (size_t i) const { return data[i]; }
+  
+  TEPoint3& operator = (const TEPoint3 &p) {
+    data[0] = p.data[0];
+    data[1] = p.data[1];
+    data[2] = p.data[2];
     return *this;
   }
 };

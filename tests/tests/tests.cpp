@@ -45,16 +45,16 @@
 #include "tests/ptr_test.h"
 #include "tests/binding_test.h"
 
-class Listener : public AActionHandler  {
+class Listener : public AActionHandler {
 public:
   virtual bool Execute(const IOlxObject *Sender, const IOlxObject *Data) {
-    if( EsdlInstanceOf(*Data, TOnProgress) )  {
+    if (Data != 0 && Data->Is<TOnProgress>()) {
       TBasicApp::GetLog() << '\r' << ((TOnProgress*)Data)->GetAction() << "     ";
       return true;
     }
     return false;
   }
-  virtual bool OnExit(const IOlxObject *Sender, const IOlxObject *Data)  {
+  virtual bool OnExit(const IOlxObject *Sender, const IOlxObject *Data) {
     TBasicApp::NewLogEntry();
     return true;
   }
