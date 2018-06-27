@@ -36,6 +36,10 @@ public:
     GetInstance_() = this;
   }
 
+  virtual ~AOlex2App() {
+    GetInstance_() = 0;
+  }
+
   static bool HasInstance() {
     return GetInstance_() != 0;
   }
