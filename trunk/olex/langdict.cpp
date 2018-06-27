@@ -24,13 +24,16 @@ TLangDict::TLangDict()  {
 TLangDict::~TLangDict()  {  Clear();  }
 //..............................................................................
 void TLangDict::Clear()  {
-  for( size_t i=0; i < Records.Count(); i++ )
+  for (size_t i = 0; i < Records.Count(); i++) {
     delete Records.GetValue(i);
+  }
   Records.Clear();
 }
 //..............................................................................
-const olxstr& TLangDict::Translate(const olxstr& Phrase) const  {
-  if( CurrentLanguageIndex == 0 )  return Phrase;
+const olxstr& TLangDict::Translate(const olxstr& Phrase) const {
+  if (CurrentLanguageIndex == 0) {
+    return Phrase;
+  }
   size_t ind = Records.IndexOf(Phrase);
   return (ind == InvalidIndex ? Phrase : *Records.GetValue(ind));
 }
@@ -97,13 +100,14 @@ void TLangDict::SetCurrentLanguage(const olxstr& fileName, const olxstr& lang) {
       wc_bf.SetCapacity(toks[1].Length());
       int c = utf8.MB2WC(wc_bf.Data(), toks[1].c_str(), wc_bf.GetCapacity());
       Records.Add(toks[0], new olxstr((const olxch *)wc_bf.Data(), c));
-#endif
+#else
       try {
         Records.Add(toks[0],
           new olxstr(olxwstr::FromCStr(toks[1].c_str())));
       }
       catch (...) {
       }
+#endif
     }
     else {
 #ifdef __WXWIDGETS__
@@ -111,13 +115,14 @@ void TLangDict::SetCurrentLanguage(const olxstr& fileName, const olxstr& lang) {
       size_t c = utf8.MB2WC(wc_bf.Data(), toks[CurrentLanguageIndex].c_str(),
         wc_bf.GetCapacity());
       Records.Add(toks[0], new olxstr((const olxch *)wc_bf.Data(), c));
-#endif
+#else
       try {
         Records.Add(toks[0],
           new olxstr(olxwstr::FromCStr(toks[CurrentLanguageIndex].c_str())));
       }
       catch (...) {
       }
+#endif
     }
 #else
     if (toks[CurrentLanguageIndex].Length() < 2) {
