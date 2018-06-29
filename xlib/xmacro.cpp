@@ -8129,6 +8129,39 @@ void XLibMacros::macExport(TStrObjList &Cmds, const TParamList &Options,
         TCStrList(ci->lines));
     }
   }
+  // extract SQUEEZE info, if any
+  {
+    cif_dp::cetTable *sqf = C.FindLoop("_smtbx_masks_void");
+    TPtrList<cif_dp::ICifEntry> details;
+    if (sqf != 0) {
+      cif_dp::ICifEntry *e = C.FindEntry("_smtbx_masks_special_details");
+      if (e != 0) {
+        details.Add(e);
+      }
+    }
+    else {
+      sqf = C.FindLoop("_platon_squeeze_void");
+      if (sqf != 0) {
+        cif_dp:ICifEntry *e = C.FindEntry("_platon_squeeze_details");
+        if (e != 0) {
+          details.Add(e);
+        }
+        e = C.FindEntry("_platon_squeeze_void_probe_radius");
+        if (e != 0) {
+          details.Add(e);
+        }
+      }
+    }
+    if (sqf != 0) {
+      TCif cf;
+      cf.SetCurrentBlock(C.GetDataName(), true);
+      cf.SetParam(*sqf);
+      for (size_t i = 0; i < details.Count(); i++) {
+        cf.SetParam(*details[i]);
+      }
+      cf.SaveToFile(TEFile::ChangeFileExt(hkl_name, "sqf"));
+    }
+  }
   // check if the res file is there
   olxstr res_name = TEFile::ChangeFileExt(hkl_name, "res");
   if (!TEFile::Exists(res_name)) {
