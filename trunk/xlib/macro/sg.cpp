@@ -441,7 +441,7 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options,
         if (all_present) {
           size_t unique_elm = 0;
           for (size_t j = 0; j < sgElmFound.Count(); j++)
-            if (UniqueElements.Contains(sgElmFound[j]) != InvalidIndex) {
+            if (UniqueElements.Contains(sgElmFound[j])) {
               unique_elm++;
             }
           if (unique_elm > maxUniqueElementFound) {
