@@ -680,6 +680,12 @@ const TRefList& RefinementModel::GetReflections() const {
       if (cell_changed) {
         OnCellDifference.Execute(this, &ins());
       }
+      if (ins().GetRM().Vars.HasBASF()) {
+        TStrList l(ins().GetRM().GetBASFStr(), ' ');
+        // dirty tricks...
+        const_cast<XVarManager &>(Vars).SetBASF(l);
+        HKLF = ins().GetRM().GetHKLF();
+      }
     }
     SetReflections(hf.RefList());
     if (hf.GetHKLF() != -1) {
@@ -709,12 +715,23 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
       FilterHkl(refs, _HklStat);
       TRefPList non_overlapping_1;
       if (HKLF >= 5) {
+        if (!refs.IsEmpty()) {
+          if (!refs[0].IsBatchSet()) {
+            TBasicApp::NewLogEntry(logWarning) << "HKL file is not compatible with"
+              " the HKLF instruction - clearing BASF and resetting to HKLF 4";
+            HKLF = 4;
+            Vars.ClearBASF();
+          }
+        }
+      }
+      if (HKLF >= 5) {
         non_overlapping_1 = GetNonoverlappingRefs(refs).GetObject()
           .Filter(olx_alg::olx_eq(1,
           FunctionAccessor::MakeConst(&TReflection::GetBatch)));
         for (size_t i = 0; i < refs.Count(); i++) {
-          if (refs[i].GetBatch() >= 0)
+          if (refs[i].GetBatch() >= 0) {
             _HklStat.DataCount++;
+          }
           refs[i].SetBatch(TReflection::NoBatchSet);
         }
       }
