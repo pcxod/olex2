@@ -2391,17 +2391,21 @@ void TMainForm::OnNavigation(wxNavigationKeyEvent& event) {
 }
 //..............................................................................
 void TMainForm::OnMove(wxMoveEvent& evt) {
-  if( FXApp == 0 || FGlConsole == 0 || FInfoBox == 0 || !StartupInitialised ) {
+  if( FXApp == 0 || FGlConsole == 0 || FInfoBox == 0 ||
+    !StartupInitialised || !FGlCanvas->IsShown())
+  {
     return;
   }
   wxPoint p = FGlCanvas->GetScreenPosition();
   FXApp->GetRenderer().SetAbsoluteTop(p.y);
 }
 //..............................................................................
-void TMainForm::OnSize(wxSizeEvent& event)  {
+void TMainForm::OnSize(wxSizeEvent& event) {
   wxFrame::OnSize(event);
-  if( SkipSizing )  return;
-  if( FXApp == 0 || FGlConsole == 0 || FInfoBox == 0 || !StartupInitialised ) {
+  if (SkipSizing) {
+    return;
+  }
+  if (FXApp == 0 || FGlConsole == 0 || FInfoBox == 0 || !StartupInitialised) {
     return;
   }
   OnResize();
@@ -3302,10 +3306,13 @@ bool TMainForm::CheckState(size_t state, const olxstr& stateData) const {
 }
 //..............................................................................
 void TMainForm::OnIdle() {
-  if (Destroying) return;
+  if (Destroying) {
+    return;
+  }
 #if !defined(__WIN32__)
-  if (!StartupInitialised)
+  if (!StartupInitialised && IsVisible()) {
     StartupInit();
+}
 #endif
   TBasicApp::GetInstance().OnIdle.Execute((AEventsDispatcher*)this, NULL);
   // runonce business...
