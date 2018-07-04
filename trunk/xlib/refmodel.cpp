@@ -680,9 +680,12 @@ const TRefList& RefinementModel::GetReflections() const {
       if (cell_changed) {
         OnCellDifference.Execute(this, &ins());
       }
-      if (ins().GetRM().Vars.HasBASF()) {
+      if ((ins().GetRM().Vars.HasBASF() && !Vars.HasBASF()) ||
+        ins().GetRM().Vars.GetBASFCount() != Vars.GetBASFCount())
+      {
         TStrList l(ins().GetRM().GetBASFStr(), ' ');
         // dirty tricks...
+        const_cast<XVarManager &>(Vars).ClearBASF();
         const_cast<XVarManager &>(Vars).SetBASF(l);
         HKLF = ins().GetRM().GetHKLF();
       }
