@@ -2392,7 +2392,7 @@ void TMainForm::OnNavigation(wxNavigationKeyEvent& event) {
 //..............................................................................
 void TMainForm::OnMove(wxMoveEvent& evt) {
   if( FXApp == 0 || FGlConsole == 0 || FInfoBox == 0 ||
-    !StartupInitialised || !FGlCanvas->IsShown())
+    !StartupInitialised)
   {
     return;
   }
@@ -2663,7 +2663,9 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
 }
 //..............................................................................
 void TMainForm::LoadSettings(const olxstr &FN)  {
-  if( !TEFile::Exists(FN) ) return;
+  if (!TEFile::Exists(FN)) {
+    return;
+  }
   // compatibility check...
 #ifdef __WIN32__
   {
@@ -3310,9 +3312,9 @@ void TMainForm::OnIdle() {
     return;
   }
 #if !defined(__WIN32__)
-  if (!StartupInitialised && IsVisible()) {
+  if (!StartupInitialised && IsVisible() && FGlCanvas->IsShown()) {
     StartupInit();
-}
+  }
 #endif
   TBasicApp::GetInstance().OnIdle.Execute((AEventsDispatcher*)this, NULL);
   // runonce business...
