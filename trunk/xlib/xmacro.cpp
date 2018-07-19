@@ -8142,7 +8142,7 @@ void XLibMacros::macExport(TStrObjList &Cmds, const TParamList &Options,
     else {
       sqf = C.FindLoop("_platon_squeeze_void");
       if (sqf != 0) {
-        cif_dp:ICifEntry *e = C.FindEntry("_platon_squeeze_details");
+        cif_dp::ICifEntry *e = C.FindEntry("_platon_squeeze_details");
         if (e != 0) {
           details.Add(e);
         }
@@ -8362,13 +8362,13 @@ void XLibMacros::macRestrain(TStrObjList &Cmds, const TParamList &Options,
   if (Cmds[0].Equalsi("ADP") && Cmds.Count() > 1) {
     olxstr target = Cmds[1];
     Cmds.DeleteRange(0, 2);
-    MacroInput mi = ExtractSelection(Cmds, true);
     double value = -1;
     if (Cmds.Count() > 0 && Cmds[0].IsNumber()) {
       value = Cmds[0].ToDouble();
       Cmds.Delete(0);
     }
-    TSimpleRestraint *r = NULL;
+    MacroInput mi = ExtractSelection(Cmds, true);
+    TSimpleRestraint *r = 0;
     if (target.Equalsi("Ueq")) {
       if (mi.atoms.Count() < 2 && value < 0) {
         E.ProcessingError(__OlxSrcInfo, "at least two atoms are expected");
@@ -8378,8 +8378,9 @@ void XLibMacros::macRestrain(TStrObjList &Cmds, const TParamList &Options,
         r = &rm.rFixedUeq.AddNew();
         r->SetValue(value);
       }
-      else
+      else {
         r = &rm.rSimilarUeq.AddNew();
+      }
     }
     else if (target.Equalsi("volume")) {
       if (mi.atoms.Count() < 2) {
@@ -8388,23 +8389,25 @@ void XLibMacros::macRestrain(TStrObjList &Cmds, const TParamList &Options,
       }
       r = &rm.rSimilarAdpVolume.AddNew();
     }
-    if (r != NULL) {
-      for (size_t i=0; i < mi.atoms.Count(); i++)
-        r->AddAtom(mi.atoms[i]->CAtom(), NULL);
+    if (r != 0) {
+      for (size_t i = 0; i < mi.atoms.Count(); i++) {
+        r->AddAtom(mi.atoms[i]->CAtom(), 0);
+      }
     }
   }
   else if (Cmds[0].Equalsi("bond")) {
     Cmds.Delete(0);
     MacroInput mi = ExtractSelection(Cmds, true);
-    double val = -1, esd=0.02;
-    TSimpleRestraint *r = NULL;
+    double val = -1, esd = 0.02;
+    TSimpleRestraint *r = 0;
     size_t set_cnt = XLibMacros::Parse(Cmds, "dd", &val, &esd);
     TSAtomPList atoms = mi.atoms;
     if (atoms.IsEmpty()) {
-      for (size_t i=0; i < mi.bonds.Count(); i++)
+      for (size_t i = 0; i < mi.bonds.Count(); i++) {
         atoms << mi.bonds[i]->A() << mi.bonds[i]->B();
+      }
     }
-    if ((atoms.Count()%2) != 0) {
+    if ((atoms.Count() % 2) != 0) {
       E.ProcessingError(__OlxSrcInfo, "even number of atoms is expected");
       return;
     }
@@ -8417,40 +8420,43 @@ void XLibMacros::macRestrain(TStrObjList &Cmds, const TParamList &Options,
       r = &rm.rSADI.AddNew();
       if (set_cnt == 1) r->SetEsd(val);
     }
-    for (size_t i=0; i < atoms.Count(); i++)
+    for (size_t i = 0; i < atoms.Count(); i++) {
       r->AddAtom(atoms[i]->CAtom(), &atoms[i]->GetMatrix());
+    }
   }
-  else if( Cmds[0].Equalsi("angle") && Cmds.Count() > 1 )  {
+  else if (Cmds[0].Equalsi("angle") && Cmds.Count() > 1) {
     double val = Cmds[1].ToDouble();
     Cmds.DeleteRange(0, 2);
     MacroInput mi = ExtractSelection(Cmds, true);
     TSAtomPList atoms = mi.atoms;
     if (atoms.IsEmpty()) {
-      if ((mi.bonds.Count()%2)!=0) {
+      if ((mi.bonds.Count() % 2) != 0) {
         E.ProcessingError(__OlxSrcInfo, "even number of bonds is expected");
         return;
       }
-      for (size_t i=0; i < mi.bonds.Count(); i+=2) {
-        TSAtom *s = mi.bonds[i]->GetShared(*mi.bonds[i+1]);
-        if (s == NULL)  {
+      for (size_t i = 0; i < mi.bonds.Count(); i += 2) {
+        TSAtom *s = mi.bonds[i]->GetShared(*mi.bonds[i + 1]);
+        if (s == 0) {
           TBasicApp::NewLogEntry(logError) << "No shared atom for: " <<
             mi.bonds[i]->A().GetLabel() << '-' << mi.bonds[i]->B().GetLabel()
-            << " and " << mi.bonds[i+1]->A().GetLabel() << '-' <<
-            mi.bonds[i+1]->B().GetLabel() << " skiping...";
+            << " and " << mi.bonds[i + 1]->A().GetLabel() << '-' <<
+            mi.bonds[i + 1]->B().GetLabel() << " skiping...";
         }
-        else
-          atoms << mi.bonds[i]->Another(*s) << s << mi.bonds[i+1]->Another(*s);
+        else {
+          atoms << mi.bonds[i]->Another(*s) << s << mi.bonds[i + 1]->Another(*s);
+        }
       }
     }
-    if ((atoms.Count()%3)!=0) {
+    if ((atoms.Count() % 3) != 0) {
       E.ProcessingError(__OlxSrcInfo, "triplets of atoms are expected");
       return;
     }
     if (!atoms.IsEmpty()) {
       TSimpleRestraint &sr = rm.rAngle.AddNew();
       sr.SetValue(val);
-      for (size_t i=0; i < atoms.Count(); i++)
+      for (size_t i = 0; i < atoms.Count(); i++) {
         sr.AddAtom(atoms[i]->CAtom(), &atoms[i]->GetMatrix());
+      }
     }
   }
   else if (Cmds[0].Equalsi("dihedral") && Cmds.Count() > 1) {
@@ -8460,38 +8466,39 @@ void XLibMacros::macRestrain(TStrObjList &Cmds, const TParamList &Options,
     TSAtomPList atoms = mi.atoms;
     TTypeList<TSAtomPList> quadruplets;
     if (atoms.IsEmpty()) {
-      if ((mi.bonds.Count()%2)!=0) {
+      if ((mi.bonds.Count() % 2) != 0) {
         E.ProcessingError(__OlxSrcInfo, "even number of bonds is expected");
         return;
       }
-      for (size_t i=0; i < mi.bonds.Count(); i+=2) {
-        ConstPtrList<TSAtom> dh = mi.bonds[i]->GetDihedral(*mi.bonds[i+1]);
+      for (size_t i = 0; i < mi.bonds.Count(); i += 2) {
+        ConstPtrList<TSAtom> dh = mi.bonds[i]->GetDihedral(*mi.bonds[i + 1]);
         if (dh.IsEmpty()) {
           TBasicApp::NewLogEntry(logError) << "Do not form dihedral: " <<
             mi.bonds[i]->A().GetLabel() << '-' << mi.bonds[i]->B().GetLabel()
-            << " and " << mi.bonds[i+1]->A().GetLabel()
-            << '-' << mi.bonds[i+1]->B().GetLabel() << " skiping...";
+            << " and " << mi.bonds[i + 1]->A().GetLabel()
+            << '-' << mi.bonds[i + 1]->B().GetLabel() << " skiping...";
         }
         else
           quadruplets.AddNew(dh);
       }
     }
     else {
-      if ((atoms.Count()%4)!=0) {
+      if ((atoms.Count() % 4) != 0) {
         E.ProcessingError(__OlxSrcInfo, "quadruplets of atoms are expected");
         return;
       }
-      for (size_t i=0; i < atoms.Count(); i+=4) {
+      for (size_t i = 0; i < atoms.Count(); i += 4) {
         TSAtomPList &l = quadruplets.AddNew(4);
-        for( int j=0; j < 4; j++)
-          l.Set(j, atoms[i+j]);
+        for (int j = 0; j < 4; j++) {
+          l.Set(j, atoms[i + j]);
+        }
       }
     }
     if (!quadruplets.IsEmpty()) {
       TSimpleRestraint &sr = rm.rDihedralAngle.AddNew();
       sr.SetValue(val);
-      for (size_t i=0; i < quadruplets.Count(); i++) {
-        for (size_t j=0; j < quadruplets[i].Count(); j++) {
+      for (size_t i = 0; i < quadruplets.Count(); i++) {
+        for (size_t j = 0; j < quadruplets[i].Count(); j++) {
           sr.AddAtom(quadruplets[i][j]->CAtom(),
             &quadruplets[i][j]->GetMatrix());
         }
