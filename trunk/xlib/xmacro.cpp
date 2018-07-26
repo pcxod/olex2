@@ -8414,11 +8414,15 @@ void XLibMacros::macRestrain(TStrObjList &Cmds, const TParamList &Options,
     if ((set_cnt == 1 && val >= 0.5) || set_cnt == 2) {
       r = &rm.rDFIX.AddNew();
       r->SetValue(val);
-      if (set_cnt == 2) r->SetEsd(esd);
+      if (set_cnt == 2) {
+        r->SetEsd(esd);
+      }
     }
     else {
       r = &rm.rSADI.AddNew();
-      if (set_cnt == 1) r->SetEsd(val);
+      if (set_cnt == 1) {
+        r->SetEsd(val);
+      }
     }
     for (size_t i = 0; i < atoms.Count(); i++) {
       r->AddAtom(atoms[i]->CAtom(), &atoms[i]->GetMatrix());

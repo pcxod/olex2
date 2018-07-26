@@ -681,7 +681,8 @@ const TRefList& RefinementModel::GetReflections() const {
         OnCellDifference.Execute(this, &ins());
       }
       if ((ins().GetRM().Vars.HasBASF() && !Vars.HasBASF()) ||
-        ins().GetRM().Vars.GetBASFCount() != Vars.GetBASFCount())
+        (ins().GetRM().Vars.GetBASFCount() != Vars.GetBASFCount()
+          && ins().GetRM().Vars.GetBASFCount() != 0))
       {
         TStrList l(ins().GetRM().GetBASFStr(), ' ');
         // dirty tricks...
