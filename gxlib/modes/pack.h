@@ -10,13 +10,14 @@
 #ifndef __OLX_PACK_MODE_H
 #define __OLX_PACK_MODE_H
 
-class TPackMode : public AMode  {
+class TPackMode : public AMode {
 public:
-  TPackMode(size_t id) : AMode(id)  {}
+  TPackMode(size_t id) : AMode(id)
+  {}
   bool Initialise_(TStrObjList &Cmds, const TParamList &Options) {
-    olxstr AtomsToGrow( Cmds.Text(' ') );
+    olxstr AtomsToGrow(Cmds.Text(' '));
     olex2.processMacro("cursor(hand)");
-    gxapp.SetPackMode( 0, AtomsToGrow );
+    gxapp.SetPackMode(0, AtomsToGrow);
     gxapp.SetXGrowPointsVisible(true);
     gxapp.SetZoomAfterModelBuilt(false);
     return true;
@@ -25,8 +26,8 @@ public:
     gxapp.SetZoomAfterModelBuilt(true);
     gxapp.SetXGrowPointsVisible(false);
   }
-  virtual bool OnObject_(AGDrawObject& obj)  {
-    if( EsdlInstanceOf(obj, TXGrowPoint) )  {
+  virtual bool OnObject_(AGDrawObject& obj) {
+    if (obj.Is<TXGrowPoint>()) {
       gxapp.Grow((TXGrowPoint&)obj);
       return true;
     }

@@ -19,10 +19,10 @@ protected:
   public:
     TLockModeUndo(TXAtom& xa, bool v)
       : TUndoData(new TUndoActionImplMF<TLockModeUndo>(
-          this, &TLockModeUndo::undo)),
-        index(xa.GetOwnerId()),
-        a(xa.CAtom()),
-        v(v)
+        this, &TLockModeUndo::undo)),
+      index(xa.GetOwnerId()),
+      a(xa.CAtom()),
+      v(v)
     {}
     void undo(TUndoData* data) {
       a.SetFixedType(!v);
@@ -43,20 +43,21 @@ public:
     TGXApp::AtomIterator ai = gxapp.GetAtoms();
     while (ai.HasNext()) {
       TXAtom &a = ai.Next();
-      if (a.CAtom().IsFixedType())
+      if (a.CAtom().IsFixedType()) {
         gxapp.MarkLabel(a, true);
+      }
     }
     return true;
   }
   ~TLockMode() {}
-  void Finalise_()  {
+  void Finalise_() {
     TGXApp::BondIterator bi = gxapp.GetBonds();
     while (bi.HasNext())
       bi.Next().SetSelectable(true);
     gxapp.XFile().GetLattice().UpdateConnectivity();
   }
   virtual bool OnObject_(AGDrawObject& obj) {
-    if (EsdlInstanceOf(obj, TXAtom)) {
+    if (obj.Is<TXAtom>()) {
       TXAtom &XA = (TXAtom&)obj;
       TLockModeUndo* undo = new TLockModeUndo(XA, !XA.CAtom().IsFixedType());
       gxapp.GetUndo().Push(undo);

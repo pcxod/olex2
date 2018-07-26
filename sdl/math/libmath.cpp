@@ -21,7 +21,7 @@ void LibMath::Eval(const TStrObjList& Params, TMacroData& E) {
     math_eval::Evaluator *e = evtr.Evaluators[i];
     TStrObjList Params;
     for (size_t j=0; j < e->args.Count(); j++) {
-      if (EsdlInstanceOf(*e->args[j], math_eval::Variable)) {
+      if (e->args[j]->Is<math_eval::Variable>()) {
         Params.Add(exparse::parser_util::unquote(
           ((math_eval::Variable*)e->args[j])->name));
       }

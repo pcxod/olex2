@@ -57,22 +57,24 @@ void TMenuItem::SetActionQueue(TActionQueue& q, const olxstr& dependMode,
   short dependentOn)
 {
   const size_t cmdind = dependMode.FirstIndexOf(';');
-  if( cmdind != InvalidIndex )  {
+  if (cmdind != InvalidIndex) {
     DependMode = dependMode.SubStringTo(cmdind);
-    OnModeChangeCmd = dependMode.SubStringFrom(cmdind+1);
+    OnModeChangeCmd = dependMode.SubStringFrom(cmdind + 1);
   }
-  else
+  else {
     DependMode = dependMode;
+  }
   DependentOn = dependentOn;
   ActionQueue = &q;
   ActionQueue->Add(this);
 }
 //..............................................................................
-void TMenuItem::ValidateState()  {
-  if( DependentOn != 0 && IsCheckable() && !DependMode.IsEmpty() )  {
-    if( DependentOn == ModeDependent )
+void TMenuItem::ValidateState() {
+  if (DependentOn != 0 && IsCheckable() && !DependMode.IsEmpty()) {
+    if (DependentOn == ModeDependent) {
       Check(TModeRegistry::CheckMode(DependMode));
-    else if( DependentOn == StateDependent ) {
+    }
+    else if (DependentOn == StateDependent) {
       Check(TStateRegistry::GetInstance().CheckState(
         DependMode, OnModeChangeCmd));
     }
@@ -82,14 +84,14 @@ void TMenuItem::ValidateState()  {
 bool TMenuItem::Execute(const IOlxObject *Sender, const IOlxObject *Data,
   TActionQueue *)
 {
-  if( Data && EsdlInstanceOf(*Data, TModeChange) )  {
+  if (Data != 0 && Data->Is<TModeChange>()) {
     const TModeChange* mc = (const TModeChange*)Data;
-    if( this->IsCheckable() )
+    if (this->IsCheckable())
       Check(TModeRegistry::CheckMode(DependMode));
   }
-  if( Data && EsdlInstanceOf(*Data, TStateChange) )  {
+  if (Data != 0 && Data->Is<TStateChange>()) {
     TStateChange* sc = (TStateChange*)Data;
-    if( this->IsCheckable() ) {
+    if (this->IsCheckable()) {
       Check(
         TStateRegistry::GetInstance().CheckState(DependMode, OnModeChangeCmd));
     }

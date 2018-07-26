@@ -535,8 +535,8 @@ void expression_tree::expand_cmd()  {
       break;
     }
     else if (ch == '=') {
-      if (i+1 < data.Length() && olxstr::o_iswhitechar(data.CharAt(i+1)) ||
-        data.CharAt(i+1) == '=')
+      if (i+1 < data.Length() && (olxstr::o_iswhitechar(data.CharAt(i+1)) ||
+        data.CharAt(i+1) == '='))
       {
         continue;
       }

@@ -973,7 +973,7 @@ void TXAtom::UpdatePrimitives(int32_t Mask) {
   AGDrawObject::UpdatePrimitives(Mask);
   bool create_polyhedron = (Mask & (1 << defs.PolyhedronIndex)) != 0;
   for (size_t i = 0; i < GetPrimitives().ObjectCount(); i++) {
-    if (EsdlInstanceOf(GetPrimitives().GetObject(i), TXAtom)) {
+    if (GetPrimitives().GetObject(i).Is<TXAtom>()) {
       ((TXAtom&)GetPrimitives().GetObject(i))
         .CreatePolyhedron(create_polyhedron);
     }
@@ -1318,21 +1318,24 @@ void TXAtom::SetPolyhedronType(short type) {
   int int_mask = GetPrimitives().GetStyle()
     .GetNumParam(GetPrimitiveMaskName(), 0);
   if (type == polyNone) {
-    if ((int_mask & (1 << defs.PolyhedronIndex)) != 0)
+    if ((int_mask & (1 << defs.PolyhedronIndex)) != 0) {
       UpdatePrimitives(int_mask & ~(1 << defs.PolyhedronIndex));
+    }
   }
   else {
     if (int_type != type || (int_mask & (1 << defs.PolyhedronIndex)) == 0) {
       str_type = type;
-      if ((int_mask & (1 << defs.PolyhedronIndex)) == 0)
+      if ((int_mask & (1 << defs.PolyhedronIndex)) == 0) {
         UpdatePrimitives(int_mask | (1 << defs.PolyhedronIndex));
+      }
       else {
         GetPrimitives().ClearPrimitives();
         GetPrimitives().RemoveObject(*this);
         Create();
         for (size_t i=0; i < GetPrimitives().ObjectCount(); i++) {
-          if (EsdlInstanceOf(GetPrimitives().GetObject(i), TXAtom))
+          if (GetPrimitives().GetObject(i).Is<TXAtom>()) {
             ((TXAtom&)GetPrimitives().GetObject(i)).CreatePolyhedron(true);
+          }
         }
       }
     }

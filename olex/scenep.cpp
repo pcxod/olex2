@@ -321,7 +321,7 @@ bool TdlgSceneProps::Execute(const IOlxObject* Sender, const IOlxObject* Data,
     teZ->SetText(tbZ->GetValue());
   else if (Sender == tbR)
     teR->SetText(tbR->GetValue());
-  else if (EsdlInstanceOf(*Sender, TTextEdit)) {
+  else if (Sender->Is<TTextEdit>()) {
     wxColourDialog *CD = new wxColourDialog(this);
     wxColor wc = dynamic_cast< const TTextEdit *>(Sender)->GetBackgroundColour();
     CD->GetColourData().SetColour(wc);

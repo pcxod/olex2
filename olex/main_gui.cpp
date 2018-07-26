@@ -320,11 +320,12 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
   else if (event.GetId() == ID_GraphicsDS) {
     TGlGroup& Sel = FXApp->GetSelection();
     TdlgMatProp* MatProp = new TdlgMatProp(this, *FObjectUnderMouse);
-    if (EsdlInstanceOf(*FObjectUnderMouse, TGlGroup))
+    if (FObjectUnderMouse->Is<TGlGroup>())
       MatProp->SetCurrent(((TGlGroup*)FObjectUnderMouse)->GetGlM());
     if (MatProp->ShowModal() == wxID_OK)  {
-      if (EsdlInstanceOf(*FObjectUnderMouse, TXAtom))
-        ;//FXApp->SynchroniseBonds((TXAtom*)FObjectUnderMouse);
+      if (FObjectUnderMouse->Is<TXAtom>()) {
+        //FXApp->SynchroniseBonds((TXAtom*)FObjectUnderMouse);
+      }
     }
     MatProp->Destroy();
     TimePerFrame = FXApp->Draw();
@@ -362,11 +363,11 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
     }
     TdlgPrimitive* Primitives = new TdlgPrimitive(this, *FObjectUnderMouse);
     if (Primitives->ShowModal() == wxID_OK) {
-      if (EsdlInstanceOf(*FObjectUnderMouse, TXBond)) {
+      if (FObjectUnderMouse->Is<TXBond>()) {
         TXBondPList bonds;
         if (FObjectUnderMouse->IsSelected()) {
           for (size_t i = 0; i < FXApp->GetSelection().Count(); i++) {
-            if (EsdlInstanceOf(FXApp->GetSelection()[i], TXBond)) {
+            if (FXApp->GetSelection()[i].Is<TXBond>()) {
               bonds.Add((TXBond&)FXApp->GetSelection()[i]);
             }
           }
@@ -376,11 +377,11 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
         }
         FXApp->Individualise(bonds, Primitives->Level, Primitives->Mask);
       }
-      else if (EsdlInstanceOf(*FObjectUnderMouse, TXAtom)) {
+      else if (FObjectUnderMouse->Is<TXAtom>()) {
         TXAtomPList atoms;
         if (FObjectUnderMouse->IsSelected()) {
           for (size_t i = 0; i < FXApp->GetSelection().Count(); i++) {
-            if (EsdlInstanceOf(FXApp->GetSelection()[i], TXAtom)) {
+            if (FXApp->GetSelection()[i].Is<TXAtom>()) {
               atoms.Add((TXAtom&)FXApp->GetSelection()[i]);
             }
           }
@@ -401,11 +402,11 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
     TimePerFrame = FXApp->Draw();
   }
   else if (event.GetId() == ID_FixLattice) {
-    if (EsdlInstanceOf(*FObjectUnderMouse, TXLattice))
+    if (FObjectUnderMouse->Is<TXLattice>())
       ((TXLattice*)FObjectUnderMouse)->SetFixed(true);
   }
   else if (event.GetId() == ID_FreeLattice) {
-    if (EsdlInstanceOf(*FObjectUnderMouse, TXLattice))
+    if (FObjectUnderMouse->Is<TXLattice>())
       ((TXLattice*)FObjectUnderMouse)->SetFixed(false);
   }
   else if (event.GetId() == ID_GridMenuCreateBlob) {
@@ -417,40 +418,40 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
   }
   else if (event.GetId() == ID_GraphicsCollectivise) {
     if (FObjectUnderMouse->IsSelected()) {
-      if (EsdlInstanceOf(*FObjectUnderMouse, TXAtom)) {
+      if (FObjectUnderMouse->Is<TXAtom>()) {
         FXApp->Collectivise(
           FXApp->GetSelection().Extract<TXAtom>().GetObject());
       }
-      else if (EsdlInstanceOf(*FObjectUnderMouse, TXBond)) {
+      else if (FObjectUnderMouse->Is<TXBond>()) {
         FXApp->Collectivise(
           FXApp->GetSelection().Extract<TXBond>().GetObject());
       }
     }
     else {
-      if (EsdlInstanceOf(*FObjectUnderMouse, TXAtom)) {
+      if (FObjectUnderMouse->Is<TXAtom>()) {
         FXApp->Collectivise(*(TXAtom*)FObjectUnderMouse);
       }
-      else if (EsdlInstanceOf(*FObjectUnderMouse, TXBond)) {
+      else if (FObjectUnderMouse->Is<TXBond>()) {
         FXApp->Collectivise(*(TXBond*)FObjectUnderMouse);
       }
     }
   }
   else if (event.GetId() == ID_GraphicsIndividualise) {
     if (FObjectUnderMouse->IsSelected()) {
-      if (EsdlInstanceOf(*FObjectUnderMouse, TXAtom)) {
+      if (FObjectUnderMouse->Is<TXAtom>()) {
         FXApp->Individualise(
           FXApp->GetSelection().Extract<TXAtom>().GetObject());
       }
-      else if (EsdlInstanceOf(*FObjectUnderMouse, TXBond)) {
+      else if (FObjectUnderMouse->Is<TXBond>()) {
         FXApp->Individualise(
           FXApp->GetSelection().Extract<TXBond>().GetObject());
       }
     }
     else {
-      if (EsdlInstanceOf(*FObjectUnderMouse, TXAtom)) {
+      if (FObjectUnderMouse->Is<TXAtom>()) {
         FXApp->Individualise(*(TXAtom*)FObjectUnderMouse);
       }
-      else if (EsdlInstanceOf(*FObjectUnderMouse, TXBond)) {
+      else if (FObjectUnderMouse->Is<TXBond>()) {
         FXApp->Individualise(*(TXBond*)FObjectUnderMouse);
       }
     }
@@ -464,7 +465,7 @@ void TMainForm::ObjectUnderMouse(AGDrawObject *G)  {
   FCurrentPopup = NULL;
   if (G == NULL)  return;
   FCurrentPopup = NULL;
-  if (EsdlInstanceOf(*G, TXAtom)) {
+  if (G->Is<TXAtom>()) {
     TXAtom *XA = (TXAtom*)G;
     // bang
     TStrList SL = FXApp->BangList(*XA);
@@ -481,7 +482,7 @@ void TMainForm::ObjectUnderMouse(AGDrawObject *G)  {
     pmAtom->SetLabel(ID_AtomInfo, T.u_str());
     pmAtom->Enable(ID_AtomGrow, !XA->IsGrown());
     pmAtom->Enable(ID_Selection, G->IsSelected() &&
-      EsdlInstanceOf(*G->GetParentGroup(), TGlGroup));
+      G->GetParentGroup()->Is<TGlGroup>());
     pmAtom->Enable(ID_SelGroup, false);
     {
       int level = TXAtom::LegendLevel(XA->GetPrimitives().GetName());
@@ -623,7 +624,7 @@ void TMainForm::ObjectUnderMouse(AGDrawObject *G)  {
     }
     FCurrentPopup = pmAtom;
   }
-  else if (EsdlInstanceOf(*G, TXBond)) {
+  else if (G->Is<TXBond>()) {
     olxstr T;
     TXBond *XB = (TXBond*)G;
     {
@@ -642,12 +643,12 @@ void TMainForm::ObjectUnderMouse(AGDrawObject *G)  {
       << olxstr::FormatFloat(3, XB->Length()) << 'A';
     pmBond->SetLabel(ID_BondInfo, T.u_str());
     pmBond->Enable(ID_Selection, G->IsSelected() &&
-      EsdlInstanceOf(*G->GetParentGroup(), TGlGroup));
+      G->GetParentGroup()->Is<TGlGroup>());
     pmBond->SetLabel(ID_BondRadius, wxString("Radius: ") << XB->GetRadius());
     pmBond->Enable(ID_BondInfo, false);
     FCurrentPopup = pmBond;
   }
-  else if (EsdlInstanceOf(*G, TXLine)) {
+  else if (G->Is<TXLine>()) {
     TXLine *l = (TXLine *)G;
     pmBond->SetLabel(ID_BondInfo, wxString("Length: ") <<
       olxstr::FormatFloat(3, l->GetLength()).u_str());
@@ -660,9 +661,9 @@ void TMainForm::ObjectUnderMouse(AGDrawObject *G)  {
     pmBond->SetLabel(ID_BondRadius, wxString("Radius: ") << l->GetRadius());
     FCurrentPopup = pmBond;
   }
-  else if (EsdlInstanceOf(*G, TXPlane))  {
+  else if (G->Is<TXPlane>())  {
     pmPlane->Enable(ID_Selection, G->IsSelected() &&
-      EsdlInstanceOf(*G->GetParentGroup(), TGlGroup));
+      G->GetParentGroup()->Is<TGlGroup>());
     FCurrentPopup = pmPlane;
   }
   if (FCurrentPopup != NULL)  {
@@ -672,30 +673,30 @@ void TMainForm::ObjectUnderMouse(AGDrawObject *G)  {
       FCurrentPopup->Enable(ID_SelGroup, true);
     }
     if (FXApp->GetSelection().Count() == 1)  {
-      if (EsdlInstanceOf(FXApp->GetSelection().GetObject(0), TGlGroup))  {
+      if (FXApp->GetSelection()[0].Is<TGlGroup>())  {
         FCurrentPopup->Enable(ID_SelUnGroup, true);
       }
     }
     olxstr tt = FXApp->GetObjectInfoAt(MousePositionX, MousePositionY);
     FCurrentPopup->Enable(ID_SelLabel, !tt.IsEmpty());
   }
-  if (EsdlInstanceOf(*G, TGlGroup))  {
+  if (G->Is<TGlGroup>())  {
     pmSelection->Enable(ID_SelGroup, G->IsSelected() && FXApp->GetSelection().Count() > 1);
     pmSelection->Enable(ID_SelUnGroup, true);
     FCurrentPopup = pmSelection;
   }
-  else if (EsdlInstanceOf(*G, TGlBackground))  {
+  else if (G->Is<TGlBackground>())  {
     FCurrentPopup = pmMenu;
   }
-  else if (EsdlInstanceOf(*G, TXGlLabel))  {
+  else if (G->Is<TXGlLabel>())  {
     FCurrentPopup = pmLabel;
     LabelToEdit = (TXGlLabel*)G;
   }
-  else if (EsdlInstanceOf(*G, TXLattice))  {
+  else if (G->Is<TXLattice>())  {
     FCurrentPopup = pmLattice;
   }
 #ifdef _DEBUG
-  else if (EsdlInstanceOf(*G, TXGrid))  {
+  else if (G->Is<TXGrid>())  {
     FCurrentPopup = pmGrid;
   }
 #endif
@@ -703,12 +704,16 @@ void TMainForm::ObjectUnderMouse(AGDrawObject *G)  {
 //..............................................................................
 void TMainForm::OnAtomTypeChange(wxCommandEvent& event)  {
   TXAtom *XA = (TXAtom*)FObjectUnderMouse;
-  if (XA == NULL)  return;
+  if (XA == 0) {
+    return;
+  }
   olxstr Tmp("name ");
-  if (XA->IsSelected())
+  if (XA->IsSelected()) {
     Tmp << "sel";
-  else
+  }
+  else {
     Tmp << "#s" << XA->GetOwnerId();
+  }
   Tmp << ' ';
   if (event.GetId() == ID_AtomTypeChangeLast) {
     TPTableDlg Dlg(this);
@@ -726,28 +731,35 @@ void TMainForm::OnAtomTypeChange(wxCommandEvent& event)  {
   TimePerFrame = FXApp->Draw();
 }
 //..............................................................................
-size_t TMainForm::GetFragmentList(TNetPList& res)  {
-  if( FObjectUnderMouse == NULL )  return 0;
-  if( FObjectUnderMouse->IsSelected() )  {
+size_t TMainForm::GetFragmentList(TNetPList& res) {
+  if (FObjectUnderMouse == 0) {
+    return 0;
+  }
+  if (FObjectUnderMouse->IsSelected()) {
     TGlGroup& glg = FXApp->GetSelection();
-    for( size_t i=0; i < glg.Count(); i++ )  {
-      if( EsdlInstanceOf(glg[i], TXAtom) )
+    for (size_t i = 0; i < glg.Count(); i++) {
+      if (glg[i].Is<TXAtom>()) {
         res.Add(((TXAtom&)glg[i]).GetNetwork());
-      else if( EsdlInstanceOf(glg[i], TXBond) )
+      }
+      else if (glg[i].Is<TXBond>()) {
         res.Add(((TXBond&)glg[i]).GetNetwork());
+      }
     }
-    for( size_t i=0; i < res.Count(); i++ )
+    for (size_t i = 0; i < res.Count(); i++)
       res[i]->SetTag(i);
-    for( size_t i=0; i < res.Count(); i++ )
-      if( res[i]->GetTag() != i )
-        res[i] = NULL;
+    for (size_t i = 0; i < res.Count(); i++)
+      if (res[i]->GetTag() != i) {
+        res[i] = 0;
+      }
     res.Pack();
   }
-  else  {
-    if( EsdlInstanceOf(*FObjectUnderMouse, TXAtom) )
+  else {
+    if (FObjectUnderMouse->Is<TXAtom>()) {
       res.Add(((TXAtom*)FObjectUnderMouse)->GetNetwork());
-    else if( EsdlInstanceOf(*FObjectUnderMouse, TXBond) )
+    }
+    else if (FObjectUnderMouse->Is<TXBond>()) {
       res.Add(((TXBond*)FObjectUnderMouse)->GetNetwork());
+    }
   }
   return res.Count();
 }
@@ -881,36 +893,39 @@ void TMainForm::OnBond(wxCommandEvent& event)  {
   }
 }
 //..............................................................................
-void TMainForm::OnSelection(wxCommandEvent& m)  {
-  if( m.GetId() == ID_SelGroup )
+void TMainForm::OnSelection(wxCommandEvent& m) {
+  if (m.GetId() == ID_SelGroup)
     processMacro("group");
-  else if( m.GetId() == ID_SelUnGroup )  {
+  else if (m.GetId() == ID_SelUnGroup) {
     TGlGroup *GlR = NULL;
-    if (FObjectUnderMouse != NULL && EsdlInstanceOf(*FObjectUnderMouse, TGlGroup))
+    if (FObjectUnderMouse != 0 && FObjectUnderMouse->Is<TGlGroup>()) {
       FXApp->Ungroup(*((TGlGroup*)FObjectUnderMouse));
-    else
+    }
+    else {
       FXApp->UngroupSelection();
+    }
   }
-  else if( m.GetId() == ID_SelLabel )  {
+  else if (m.GetId() == ID_SelLabel) {
     vec3d cent;
     size_t cnt = 0;
     TGlGroup& gl = FXApp->GetSelection();
-    for( size_t i=0; i < gl.Count(); i++ )  {
-      if( EsdlInstanceOf(gl[i], TXAtom) )  {
+    for (size_t i = 0; i < gl.Count(); i++) {
+      if (gl[i].Is<TXAtom>()) {
         cent += ((TXAtom&)gl[i]).crd();
         cnt++;
       }
-      else if( EsdlInstanceOf(gl[i], TXBond) ) {
+      else if (gl[i].Is<TXBond>()) {
         cent += ((TXBond&)gl[i]).GetCenter();
         cnt++;
       }
-      else if( EsdlInstanceOf(gl[i], TXPlane) ) {
+      else if (gl[i].Is<TXPlane>()) {
         cent += ((TXPlane&)gl[i]).GetCenter();
         cnt++;
       }
     }
-    if( cnt != 0 )
+    if (cnt != 0) {
       cent /= cnt;
+    }
     FXApp->CreateLabel(cent,
       FXApp->GetObjectInfoAt(MousePositionX, MousePositionY), 4);
     TimePerFrame = FXApp->Draw();

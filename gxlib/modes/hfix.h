@@ -13,41 +13,45 @@
 #include "xlcongen.h"
 #include "unitcell.h"
 
-class THfixMode : public AModeWithLabels  {
+class THfixMode : public AModeWithLabels {
   int Hfix;
 protected:
   TXlConGen* xlConGen;
 public:
-  THfixMode(size_t id) : AModeWithLabels(id), xlConGen(NULL)  {}
+  THfixMode(size_t id) : AModeWithLabels(id), xlConGen(0)
+  {}
   bool Initialise_(TStrObjList& Cmds, const TParamList& Options) {
-    if( !gxapp.CheckFileType<TIns>() )
+    if (!gxapp.CheckFileType<TIns>()) {
       return false;
+    }
     Hfix = Cmds.IsEmpty() ? 0 : Cmds[0].ToInt();
     xlConGen = new TXlConGen(gxapp.XFile().GetRM());
     SetUserCursor(Hfix, "hfix");
     olex2.processMacro("labels -a -h");
     return true;
   }
-  void Finalise_()  {
-    if( xlConGen != NULL )
-      delete xlConGen;
+  void Finalise_() {
+    olx_del_obj(xlConGen);
   }
-  virtual bool OnObject_(AGDrawObject &obj)  {
-    if( EsdlInstanceOf( obj, TXAtom) )  {
+  virtual bool OnObject_(AGDrawObject &obj) {
+    if (obj.Is<TXAtom>()) {
       TXAtom *XA = &(TXAtom&)obj;
-      if( TAfixGroup::IsFittedRing(Hfix) )  {
+      if (TAfixGroup::IsFittedRing(Hfix)) {
         gxapp.AutoAfixRings(Hfix, XA, true);
       }
-      else if( Hfix == 0 )  {  // special case
+      else if (Hfix == 0) {  // special case
         TCAtom& ca = XA->CAtom();
-        if( ca.GetDependentAfixGroup() != NULL )
+        if (ca.GetDependentAfixGroup() != 0) {
           ca.GetDependentAfixGroup()->Clear();
-        else if( ca.DependentHfixGroupCount() != 0 )  {
-          for( size_t i=0; i < ca.DependentHfixGroupCount(); i++ )
-            ca.GetDependentHfixGroup(i).Clear();
         }
-        else if( ca.GetParentAfixGroup() != NULL )
+        else if (ca.DependentHfixGroupCount() != 0) {
+          for (size_t i = 0; i < ca.DependentHfixGroupCount(); i++) {
+            ca.GetDependentHfixGroup(i).Clear();
+          }
+        }
+        else if (ca.GetParentAfixGroup() != 0) {
           ca.GetParentAfixGroup()->Clear();
+        }
       }
       else {
         olex2.processMacro(

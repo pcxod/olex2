@@ -1391,10 +1391,10 @@ void TNetwork::ToDataItem(TDataItem& item) const {
 //..............................................................................
 void TNetwork::FromDataItem(const TDataItem& item) {
   const int net_id = item.GetFieldByName("net_id").ToInt();
-  Network = (net_id == -1 ? NULL : &Lattice->GetFragment(net_id));
+  Network = (net_id == -1 ? 0 : &Lattice->GetFragment(net_id));
   const TDataItem* _nodes = item.FindItem("Nodes");
   ASObjectProvider& objects = Lattice->GetObjects();
-  if (_nodes != NULL)  {
+  if (_nodes != 0) {
     TStrStrList nodes = _nodes->GetOrderedFieldList();
     Nodes.SetCapacity(nodes.Count());
     for (size_t i = 0; i < nodes.Count(); i++) {
@@ -1411,55 +1411,66 @@ void TNetwork::FromDataItem(const TDataItem& item) {
   else {  // index range then
     IndexRange::RangeItr ai(item.GetFieldByName("node_range"));
     Nodes.SetCapacity(ai.CalcSize());
-    while( ai.HasNext() )
+    while (ai.HasNext()) {
       Nodes.Add(objects.atoms[ai.Next()])->SetFragmentId(Nodes.Count());
+    }
     IndexRange::RangeItr bi(item.GetFieldByName("bond_range"));
     Bonds.SetCapacity(bi.CalcSize());
-    while( bi.HasNext() )
+    while (bi.HasNext()) {
       Bonds.Add(objects.bonds[bi.Next()])->SetFragmentId(Bonds.Count());
+    }
   }
 }
 //..............................................................................
 ContentList TNetwork::GetContentList() const {
   ElementDict elms;
-  for( size_t i=0; i < NodeCount(); i++ )  {
+  for (size_t i = 0; i < NodeCount(); i++) {
     const TSAtom& a = Node(i);
-    if( a.IsDeleted() || a.GetType() == iQPeakZ )  continue;
+    if (a.IsDeleted() || a.GetType() == iQPeakZ) {
+      continue;
+    }
     size_t ind = elms.IndexOf(&a.GetType());
-    if( ind == InvalidIndex )
+    if (ind == InvalidIndex) {
       elms.Add(&a.GetType(), a.CAtom().GetChemOccu());
-    else
+    }
+    else {
       elms.GetValue(ind) += (a.CAtom().GetChemOccu());
+    }
   }
   ContentList rv;
-  for( size_t i=0; i < elms.Count(); i++ )
+  for (size_t i = 0; i < elms.Count(); i++) {
     rv.AddNew(*elms.GetKey(i), elms.GetValue(i));
+  }
   return rv;
 }
 //..............................................................................
 olxstr TNetwork::GetFormula() const {
   const ContentList cl = GetContentList();
   olxstr rv;
-  for( size_t i=0; i < cl.Count(); i++ )  {
-    rv << cl[i].element.symbol;
-    if( cl[i].count != 1 )
+  for (size_t i = 0; i < cl.Count(); i++) {
+    rv << cl[i].element->symbol;
+    if (cl[i].count != 1) {
       rv << cl[i].count;
-    if( (i+1) < cl.Count() )
+    }
+    if ((i + 1) < cl.Count()) {
       rv << ' ';
+    }
   }
   return rv;
 }
 //..............................................................................
-bool TNetwork::HaveSharedMatrix(const TSAtom& sa, const TSAtom& sb)  {
-  if (sa.GetMatrix().GetId() == sb.GetMatrix().GetId())
+bool TNetwork::HaveSharedMatrix(const TSAtom& sa, const TSAtom& sb) {
+  if (sa.GetMatrix().GetId() == sb.GetMatrix().GetId()) {
     return true;
+  }
   const TUnitCell &uc = sa.GetNetwork().GetLattice().GetUnitCell();
-  for (size_t i=0; i < sa.CAtom().EquivCount(); i++) {
+  for (size_t i = 0; i < sa.CAtom().EquivCount(); i++) {
     uint32_t id = uc.MulMatrixId(sa.CAtom().GetEquiv(i), sa.GetMatrix());
-    for (size_t j=0; j < sb.CAtom().EquivCount(); j++) {
+    for (size_t j = 0; j < sb.CAtom().EquivCount(); j++) {
       uint32_t id1 = uc.MulMatrixId(sb.CAtom().GetEquiv(j), sb.GetMatrix());
-      if (id == id1)
+      if (id == id1) {
         return true;
+      }
     }
   }
   return false;

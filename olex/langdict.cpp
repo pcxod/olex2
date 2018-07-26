@@ -13,7 +13,9 @@
 #include "bapp.h"
 #include "log.h"
 #include "etbuffer.h"
+#ifdef __WXWIDGETS__
 #include "wx/wx.h"
+#endif
 
 TLangDict::TLangDict()  {
   CurrentLanguageEncodingStr = "ISO8859-1";
@@ -22,31 +24,34 @@ TLangDict::TLangDict()  {
 TLangDict::~TLangDict()  {  Clear();  }
 //..............................................................................
 void TLangDict::Clear()  {
-  for( size_t i=0; i < Records.Count(); i++ )
+  for (size_t i = 0; i < Records.Count(); i++) {
     delete Records.GetValue(i);
+  }
   Records.Clear();
 }
 //..............................................................................
-const olxstr& TLangDict::Translate(const olxstr& Phrase) const  {
-  if( CurrentLanguageIndex == 0 )  return Phrase;
+const olxstr& TLangDict::Translate(const olxstr& Phrase) const {
+  if (CurrentLanguageIndex == 0) {
+    return Phrase;
+  }
   size_t ind = Records.IndexOf(Phrase);
   return (ind == InvalidIndex ? Phrase : *Records.GetValue(ind));
 }
 //..............................................................................
-void TLangDict::SetCurrentLanguage(const olxstr& fileName, const olxstr& lang)  {
+void TLangDict::SetCurrentLanguage(const olxstr& fileName, const olxstr& lang) {
   Clear();
   olx_object_ptr<TUtf8File> f = TUtf8File::Open(fileName, "rb", true);
   TCStrList sl;
   sl.LoadFromTextStream(f());
-  if( sl.Count() < 2 )  return;
+  if (sl.Count() < 2)  return;
 
   TCStrList toks(sl[0], '\t');  // languages
-  if( toks.Count() < 2 ) {
+  if (toks.Count() < 2) {
     throw TFunctionFailedException(__OlxSourceInfo,
       "At least one ID column and one language are expected");
   }
 
-  CurrentLanguageIndex = (lang.IsEmpty() ? 1 : toks.IndexOf(lang) );
+  CurrentLanguageIndex = (lang.IsEmpty() ? 1 : toks.IndexOf(lang));
   if (CurrentLanguageIndex == 0 || CurrentLanguageIndex == InvalidIndex) {
     throw TInvalidArgumentException(__OlxSourceInfo,
       olxstr("Invalid language ").quote() << lang);
@@ -59,12 +64,12 @@ void TLangDict::SetCurrentLanguage(const olxstr& fileName, const olxstr& lang)  
 
 #ifndef _UNICODE
   wxCSConv csc(toks1[CurrentLanguageIndex].u_str());
-  if( !csc.IsOk() )  {
+  if (!csc.IsOk()) {
     throw TFunctionFailedException(__OlxSourceInfo,
       (olxstr("Could not locate the following encoding ") <<
         toks1[CurrentLanguageIndex] << '\n'));
   }
-  else  {
+  else {
     CurrentLanguage = toks[CurrentLanguageIndex];
     CurrentLanguageEncodingStr = toks1[CurrentLanguageIndex];
   }
@@ -73,39 +78,61 @@ void TLangDict::SetCurrentLanguage(const olxstr& fileName, const olxstr& lang)  
   CurrentLanguage = toks[CurrentLanguageIndex];
   CurrentLanguageEncodingStr = toks1[CurrentLanguageIndex];
 #endif
-  TTBuffer<wchar_t> wc_bf(4096);
+#ifdef __WXWIDGETS__
   wxMBConvUTF8 utf8;
+  TTBuffer<wchar_t> wc_bf(4096);
+#endif
   size_t cc = toks.Count();
   Records.SetCapacity(sl.Count());
-  for( size_t i=2; i < sl.Count(); i++ )  {
-    if( sl[i].IsEmpty() )  continue;
+  for (size_t i = 2; i < sl.Count(); i++) {
+    if (sl[i].IsEmpty()) {
+      continue;
+    }
     toks.Clear();
-    toks.Strtok( sl[i], '\t');
-    if( toks.Count() != cc )  {
+    toks.Strtok(sl[i], '\t');
+    if (toks.Count() != cc) {
       TBasicApp::NewLogEntry() << "Error reading dictionary at line " << i;
       continue;
     }
 #ifdef _UNICODE
-    if( toks[CurrentLanguageIndex].Length() < 2 )  {  // take language 1
+    if (toks[CurrentLanguageIndex].Length() < 2) {  // take language 1
+#ifdef __WXWIDGETS__
       wc_bf.SetCapacity(toks[1].Length());
-      int c = utf8.MB2WC( wc_bf.Data(), toks[1].c_str(), wc_bf.GetCapacity());
+      int c = utf8.MB2WC(wc_bf.Data(), toks[1].c_str(), wc_bf.GetCapacity());
       Records.Add(toks[0], new olxstr((const olxch *)wc_bf.Data(), c));
+#else
+      try {
+        Records.Add(toks[0],
+          new olxstr(olxwstr::FromCStr(toks[1].c_str())));
+      }
+      catch (...) {
+      }
+#endif
     }
-    else  {
+    else {
+#ifdef __WXWIDGETS__
       wc_bf.SetCapacity(toks[CurrentLanguageIndex].Length());
-      size_t c = utf8.MB2WC( wc_bf.Data(), toks[CurrentLanguageIndex].c_str(),
+      size_t c = utf8.MB2WC(wc_bf.Data(), toks[CurrentLanguageIndex].c_str(),
         wc_bf.GetCapacity());
       Records.Add(toks[0], new olxstr((const olxch *)wc_bf.Data(), c));
+#else
+      try {
+        Records.Add(toks[0],
+          new olxstr(olxwstr::FromCStr(toks[CurrentLanguageIndex].c_str())));
+      }
+      catch (...) {
+      }
+#endif
     }
 #else
-    if( toks[CurrentLanguageIndex].Length() < 2 )  {
+    if (toks[CurrentLanguageIndex].Length() < 2) {
       wc_bf.SetCapacity(toks[1].Length());
       c_bf.SetCapacity(toks[1].Length());
       int c = utf8.MB2WC(wc_bf.Data(), toks[1].c_str(), wc_bf.GetCapacity());
       csc.FromWChar(c_bf.Data(), c_bf.GetCapacity(), wc_bf.Data(), c);
       Records.Add(toks[0], new olxstr(c_bf.Data()));
     }
-    else  {
+    else {
       wc_bf.SetCapacity(toks[CurrentLanguageIndex].Length());
       c_bf.SetCapacity(toks[CurrentLanguageIndex].Length());
       size_t c = utf8.MB2WC(wc_bf.Data(), toks[CurrentLanguageIndex].c_str(),

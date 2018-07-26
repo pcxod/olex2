@@ -69,7 +69,7 @@ TdlgGradient::~TdlgGradient()  {
 bool TdlgGradient::Execute(const IOlxObject *Sender, const IOlxObject *Data,
   TActionQueue *)
 {
-  if( EsdlInstanceOf( *Sender, TTextEdit) )  {
+  if (Sender != 0 && Sender->Is<TTextEdit>()) {
     wxColourDialog *CD = new wxColourDialog(this);
     wxColor wc = dynamic_cast<const TTextEdit *>(Sender)->GetBackgroundColour();
     CD->GetColourData().SetColour(wc);

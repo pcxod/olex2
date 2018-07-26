@@ -116,34 +116,38 @@ public:
     state = 0;
   }
   ~xappXFileLoad() {}
-  bool Enter(const IOlxObject *Sender, const IOlxObject *Data, TActionQueue *)  {
+  bool Enter(const IOlxObject *Sender, const IOlxObject *Data, TActionQueue *) {
     state = 1;
     FParent->GetUndo().Clear();
     FParent->DSphere().SetAnalyser(0);
-    GrowInfo = NULL;
+    GrowInfo = 0;
     EmptyFile = SameFile = false;
-    if (Data != NULL && EsdlInstanceOf(*Data, olxstr)) {
+    if (Data != 0 && olx_type<olxstr>::check(*Data)) {
       olxstr s1 = TEFile::UnixPath(TEFile::ChangeFileExt(
         *(olxstr*)Data, EmptyString()));
       olxstr s2 = TEFile::UnixPath(TEFile::ChangeFileExt(
         FParent->XFile().GetFileName(), EmptyString()));
-      if( s1 != s2 )  {
+      if (s1 != s2) {
         FParent->ClearStructureRelated();
       }
-      else  {
+      else {
         const TAsymmUnit& au = FParent->XFile().GetAsymmUnit();
         size_t ac = 0;
-        for( size_t i=0; i < au.AtomCount(); i++ )  {
+        for (size_t i = 0; i < au.AtomCount(); i++) {
           const TCAtom& ca = au.GetAtom(i);
-          if( ca.IsDeleted() || ca.GetType() == iQPeakZ )  continue;
+          if (ca.IsDeleted() || ca.GetType() == iQPeakZ) {
+            continue;
+          }
           ac++;
         }
         AtomNames.SetCapacity(ac);
         CAtomMasks.SetSize(ac);
         ac = 0;
-        for( size_t i=0; i < au.AtomCount(); i++ )  {
+        for (size_t i = 0; i < au.AtomCount(); i++) {
           const TCAtom& ca = au.GetAtom(i);
-          if( ca.IsDeleted() || ca.GetType() == iQPeakZ )  continue;
+          if (ca.IsDeleted() || ca.GetType() == iQPeakZ) {
+            continue;
+          }
           AtomNames.Add(ca.GetLabel());
           CAtomMasks.Set(ac++, ca.IsMasked());
         }
@@ -152,7 +156,7 @@ public:
         EmptyFile = (ac == 0);
       }
     }
-    else  {
+    else {
       FParent->ClearStructureRelated();
     }
     //FParent->XGrid().Clear();
@@ -166,9 +170,11 @@ public:
     const TAsymmUnit& au = FParent->XFile().GetAsymmUnit();
     bool sameAU = true, hasNonQ = false;
     size_t ac = 0;
-    for (size_t i=0; i < au.AtomCount(); i++) {
+    for (size_t i = 0; i < au.AtomCount(); i++) {
       const TCAtom& ca = au.GetAtom(i);
-      if (ca.IsDeleted() || ca.GetType() == iQPeakZ) continue;
+      if (ca.IsDeleted() || ca.GetType() == iQPeakZ) {
+        continue;
+      }
       hasNonQ = true;
       if (ac >= AtomNames.Count()) {
         sameAU = false;
@@ -185,9 +191,11 @@ public:
       !FParent->AreHydrogensVisible());
     if (sameAU) {  // apply masks
       ac = 0;
-      for (size_t i=0; i < au.AtomCount(); i++) {
+      for (size_t i = 0; i < au.AtomCount(); i++) {
         TCAtom& ca = au.GetAtom(i);
-        if (ca.IsDeleted() || ca.GetType() == iQPeakZ) continue;
+        if (ca.IsDeleted() || ca.GetType() == iQPeakZ) {
+          continue;
+        }
         ca.SetMasked(CAtomMasks[ac++]);
       }
       FParent->XFile().GetLattice().SetGrowInfo(GrowInfo.release());
@@ -203,8 +211,9 @@ public:
     return false;
   }
   bool Exit(const IOlxObject *Sender, const IOlxObject *Data, TActionQueue *) {
-    if (state == 1)  // somehing went not as expected? try to recover then...
+    if (state == 1) { // somehing went not as expected? try to recover then...
       FParent->CreateObjects(true);
+    }
     state = 3;
     FParent->GetRenderer().SetBasis(B);
     FParent->CenterView(!SameFile);
@@ -836,11 +845,13 @@ olxstr TGXApp::GetSelectionInfo(bool list) const {
     TGlGroup& Sel = GlRenderer->GetSelection();
     if (list) {
       TStrList rv;
-      for (size_t i=0; i < Sel.Count(); i++) {
-        if (!EsdlInstanceOf(Sel[i], TXBond))  continue;
+      for (size_t i = 0; i < Sel.Count(); i++) {
+        if (!Sel[i].Is<TXBond>()) {
+          continue;
+        }
         TXBond &b = ((TXBond&)Sel[i]);
-        ACifValue* cv=NULL;
-        if( CheckFileType<TCif>() )  {
+        ACifValue* cv = NULL;
+        if (CheckFileType<TCif>()) {
           cv = XFile().GetLastLoader<TCif>().GetDataManager().Match(
             b.A(), b.B());
         }
@@ -848,43 +859,41 @@ olxstr TGXApp::GetSelectionInfo(bool list) const {
       }
       return rv.Text(NewLineSequence());
     }
-    if( Sel.Count() == 1 )  {
-      if( EsdlInstanceOf(Sel[0], TXBond) )  {
+    if (Sel.Count() == 1) {
+      if (Sel[0].Is<TXBond>()) {
         TXBond &b = ((TXBond&)Sel[0]);
-        ACifValue* cv=NULL;
-        if( CheckFileType<TCif>() )  {
+        ACifValue* cv = NULL;
+        if (CheckFileType<TCif>()) {
           cv = XFile().GetLastLoader<TCif>().GetDataManager().Match(
             b.A(), b.B());
         }
         Tmp = macSel_FormatDistance(b.A(), b.B(), b.Length(), cv);
       }
     }
-    else if( Sel.Count() == 2 )  {
-      if( EsdlInstanceOf(Sel[0], TXAtom) &&
-        EsdlInstanceOf(Sel[1], TXAtom) )
-      {
+    else if (Sel.Count() == 2) {
+      if (olx_list_and(Sel, &IOlxObject::Is<TXAtom>)) {
         TSAtom &a1 = ((TXAtom&)Sel[0]),
           &a2 = ((TXAtom&)Sel[1]);
-        ACifValue* cv=NULL;
-        if( CheckFileType<TCif>() )
+        ACifValue* cv = NULL;
+        if (CheckFileType<TCif>())
           cv = XFile().GetLastLoader<TCif>().GetDataManager().Match(a1, a2);
         Tmp = macSel_FormatDistance(a1, a2, a1.crd().DistanceTo(a2.crd()), cv);
       }
-      else if( EsdlInstanceOf(Sel[0], TXBond) && EsdlInstanceOf(Sel[1], TXBond) )  {
-        TXBond& A = (TXBond&)Sel[0], &B =(TXBond&)Sel[1];
+      else if (olx_list_and(Sel, &IOlxObject::Is<TXBond>)) {
+        TXBond& A = (TXBond&)Sel[0], &B = (TXBond&)Sel[1];
         Tmp = "Angle (";
         Tmp << macSel_GetName4a(A.A(), A.B(), B.A(), B.B()) <<
           "): ";
         v = olx_angle(A.A().crd(), A.B().crd(), B.A().crd(), B.B().crd());
-        Tmp << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ')' <<
+        Tmp << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180 - v) << ')' <<
           "\nAngle (" <<
           macSel_GetName4a(A.A(), A.B(), B.B(), B.A()) <<
           "): ";
         v = olx_angle(A.A().crd(), A.B().crd(), B.A().crd(), B.B().crd());
-        Tmp << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ')';
+        Tmp << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180 - v) << ')';
         // check for adjacent bonds
-        if( !(&A.A() == &B.A() || &A.A() == &B.B() ||
-          &A.B() == &B.A() || &A.B() == &B.B()) )
+        if (!(&A.A() == &B.A() || &A.A() == &B.B() ||
+          &A.B() == &B.A() || &A.B() == &B.B()))
         {
           Tmp << "\nTorsion angle (" <<
             macSel_GetName4(A.A(), A.B(), B.B(), B.A()) <<
@@ -895,56 +904,56 @@ olxstr TGXApp::GetSelectionInfo(bool list) const {
             macSel_GetName4(A.A(), A.B(), B.B(), B.A()) <<
             "): ";
           v = olx_dihedral_angle_signed(A.A().crd(), A.B().crd(), B.A().crd(), B.B().crd());
-          Tmp << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ')';
+          Tmp << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180 - v) << ')';
         }
       }
-      else if( EsdlInstanceOf(Sel[0], TXLine) && EsdlInstanceOf(Sel[1], TXLine) )  {
-        TXLine& A = (TXLine&)Sel[0], &B =(TXLine&)Sel[1];
+      else if (olx_list_and(Sel, &IOlxObject::Is<TXLine>)) {
+        TXLine& A = (TXLine&)Sel[0], &B = (TXLine&)Sel[1];
         Tmp = "Angle: ";
         v = olx_angle(A.GetEdge(), A.GetBase(), B.GetEdge(), B.GetBase());
-        Tmp << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ")";
+        Tmp << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180 - v) << ")";
       }
-      else if( EsdlInstanceOf(Sel[0], TXLine) && EsdlInstanceOf(Sel[1], TXBond) )  {
+      else if (Sel[0].Is<TXLine>() && Sel[1].Is<TXBond>()) {
         TXLine& A = (TXLine&)Sel[0];
-        TXBond& B =(TXBond&)Sel[1];
+        TXBond& B = (TXBond&)Sel[1];
         Tmp = "Angle: ";
         v = olx_angle(A.GetEdge(), A.GetBase(), B.A().crd(), B.B().crd());
-        Tmp << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ")";
+        Tmp << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180 - v) << ")";
       }
-      else if( EsdlInstanceOf(Sel[0], TXBond) && EsdlInstanceOf(Sel[1], TXLine) )  {
+      else if (Sel[0].Is<TXBond>() && Sel[1].Is<TXLine>()) {
         TXLine& A = (TXLine&)Sel[1];
-        TXBond& B =(TXBond&)Sel[0];
+        TXBond& B = (TXBond&)Sel[0];
         Tmp = "Angle: ";
         v = olx_angle(A.GetEdge(), A.GetBase(), B.A().crd(), B.B().crd());
-        Tmp << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ")";
+        Tmp << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180 - v) << ")";
       }
-      else if ((EsdlInstanceOf(Sel[0], TXBond) && EsdlInstanceOf(Sel[1], TXAtom)) ||
-               (EsdlInstanceOf(Sel[1], TXBond) && EsdlInstanceOf(Sel[0], TXAtom)))
+      else if ((Sel[0].Is<TXBond>() && Sel[1].Is<TXAtom>()) ||
+        (Sel[1].Is<TXBond>() && Sel[0].Is<TXAtom>()))
       {
-        const TXBond &b = (TXBond&)(EsdlInstanceOf(Sel[0], TXBond) ? Sel[0] : Sel[1]);
-        const TXAtom &a = (TXAtom&)(EsdlInstanceOf(Sel[0], TXBond) ? Sel[1] : Sel[0]);
+        const TXBond &b = (TXBond&)(Sel[0].Is<TXBond>() ? Sel[0] : Sel[1]);
+        const TXAtom &a = (TXAtom&)(Sel[0].Is<TXBond>() ? Sel[1] : Sel[0]);
         Tmp = "Distance (bond-atom): ";
         vec3d av = a.crd() - b.A().crd(),
           bv = (b.B().crd() - b.A().crd()).Normalise();
         v = (av - (bv*bv.DotProd(av))).Length();
         Tmp << olxstr::FormatFloat(3, v);
       }
-      else if ((EsdlInstanceOf(Sel[0], TXLine) && EsdlInstanceOf(Sel[1], TXAtom)) ||
-        (EsdlInstanceOf(Sel[1], TXLine) && EsdlInstanceOf(Sel[0], TXAtom)))
+      else if ((Sel[0].Is<TXLine>() && Sel[1].Is<TXAtom>()) ||
+        (Sel[1].Is<TXLine>() && Sel[0].Is<TXAtom>()))
       {
-        TXLine &l = (TXLine&)(EsdlInstanceOf(Sel[0], TXLine) ? Sel[0] : Sel[1]);
-        const TXAtom &a = (TXAtom&)(EsdlInstanceOf(Sel[0], TXLine) ? Sel[1] : Sel[0]);
+        TXLine &l = (TXLine&)(Sel[0].Is<TXLine>() ? Sel[0] : Sel[1]);
+        const TXAtom &a = (TXAtom&)(Sel[0].Is<TXLine>() ? Sel[1] : Sel[0]);
         Tmp = "Distance (line-atom): ";
         vec3d av = a.crd() - l.GetBase(),
           bv = (l.GetEdge() - l.GetBase()).Normalise();
         v = (av - (bv*bv.DotProd(av))).Length();
         Tmp << olxstr::FormatFloat(3, v);
       }
-      else if ((EsdlInstanceOf(Sel[0], TXPlane) && EsdlInstanceOf(Sel[1], TXAtom)) ||
-        (EsdlInstanceOf(Sel[1], TXPlane) && EsdlInstanceOf(Sel[0], TXAtom)))
+      else if ((Sel[0].Is<TXPlane>() && Sel[1].Is<TXAtom>()) ||
+        (Sel[1].Is<TXPlane>() && Sel[0].Is<TXAtom>()))
       {
-        const TXPlane &p = (TXPlane&)(EsdlInstanceOf(Sel[0], TXPlane) ? Sel[0] : Sel[1]);
-        const TXAtom &a = (TXAtom&)(EsdlInstanceOf(Sel[0], TXPlane) ? Sel[1] : Sel[0]);
+        const TXPlane &p = (TXPlane&)(Sel[0].Is<TXPlane>() ? Sel[0] : Sel[1]);
+        const TXAtom &a = (TXAtom&)(Sel[0].Is<TXPlane>() ? Sel[1] : Sel[0]);
         Tmp = "Distance (plane-atom): ";
         v = p.DistanceTo(a);
         Tmp << olxstr::FormatFloat(3, v) << "\nDistance (plane centroid-atom): " <<
@@ -957,31 +966,31 @@ olxstr TGXApp::GetSelectionInfo(bool list) const {
           olxstr::FormatFloat(3, x.Length());
         Tmp << "\nAtom-Centroid-projection point angle: " <<
           olxstr::FormatFloat(2,
-          acos((a.crd() - p.GetCenter()).CAngle(x)) * 180 / M_PI);
+            acos((a.crd() - p.GetCenter()).CAngle(x)) * 180 / M_PI);
       }
-      else if (EsdlInstanceOf(Sel[0], TXBond) && EsdlInstanceOf(Sel[1], TXPlane))  {
+      else if (Sel[0].Is<TXBond>() && Sel[1].Is<TXPlane>()) {
         Tmp = "Angle (plane normal-bond): ";
         v = ((TXPlane&)Sel[1]).Angle(((TXBond&)Sel[0]));
         Tmp << olxstr::FormatFloat(3, v);
       }
-      else if( EsdlInstanceOf(Sel[1], TXBond) && EsdlInstanceOf(Sel[0], TXPlane) )  {
+      else if (Sel[1].Is<TXBond>() && Sel[0].Is<TXPlane>()) {
         Tmp = "Angle (plane normal-bond): ";
         v = ((TXPlane&)Sel[0]).Angle(((TXBond&)Sel[1]));
         Tmp << olxstr::FormatFloat(3, v);
       }
-      else if( EsdlInstanceOf(Sel[0], TXLine) && EsdlInstanceOf(Sel[1], TXPlane) )  {
+      else if (Sel[0].Is<TXLine>() && Sel[1].Is<TXPlane>()) {
         TXLine& xl = (TXLine&)Sel[0];
         Tmp = "Angle (plane normal-line): ";
-        v = ((TXPlane&)Sel[1]).Angle(xl.GetEdge()-xl.GetBase());
+        v = ((TXPlane&)Sel[1]).Angle(xl.GetEdge() - xl.GetBase());
         Tmp << olxstr::FormatFloat(3, v);
       }
-      else if( EsdlInstanceOf(Sel[1], TXLine) && EsdlInstanceOf(Sel[0], TXPlane) )  {
+      else if (Sel[1].Is<TXLine>() && Sel[0].Is<TXPlane>()) {
         TXLine& xl = (TXLine&)Sel[1];
         Tmp = "Angle (plane normal-vector): ";
-        v = ((TXPlane&)Sel[0]).Angle(xl.GetEdge()-xl.GetBase());
+        v = ((TXPlane&)Sel[0]).Angle(xl.GetEdge() - xl.GetBase());
         Tmp << olxstr::FormatFloat(3, v);
       }
-      if( EsdlInstanceOf(Sel[1], TXPlane) && EsdlInstanceOf(Sel[0], TXPlane) )  {
+      if (olx_list_and(Sel, &IOlxObject::Is<TXPlane>)) {
         TXPlane &a = ((TXPlane&)Sel[0]),
           &b = ((TXPlane&)Sel[1]);
 
@@ -989,28 +998,28 @@ olxstr TGXApp::GetSelectionInfo(bool list) const {
         Tmp = "Angle (plane normal-plane normal): ";
         Tmp << olxstr::FormatFloat(3, ang) <<
           "\nDistance (plane centroid-plane centroid): " <<
-          olxstr::FormatFloat(3, a.GetCenter().DistanceTo(b.GetCenter()))  <<
+          olxstr::FormatFloat(3, a.GetCenter().DistanceTo(b.GetCenter())) <<
           "\nDistance (plane[" << macSel_GetPlaneName(a) << "]-centroid): " <<
           olxstr::FormatFloat(3, a.DistanceTo(b.GetCenter())) <<
           "\nShift (plane [" << macSel_GetPlaneName(a) << "]-plane): " <<
           olxstr::FormatFloat(3,
             sqrt(olx_max(0, a.GetCenter().QDistanceTo(b.GetCenter())
-            -
-            olx_sqr(a.DistanceTo(b.GetCenter())))));
-        if( olx_abs(ang) > 1e-6 )  {
+              -
+              olx_sqr(a.DistanceTo(b.GetCenter())))));
+        if (olx_abs(ang) > 1e-6) {
           Tmp << "\nDistance (plane[" << macSel_GetPlaneName(b) << "]-centroid): " <<
-          olxstr::FormatFloat(3, b.DistanceTo(a.GetCenter())) <<
-          "\nShift (plane [" << macSel_GetPlaneName(b) << "]-plane): " <<
-          olxstr::FormatFloat(3,
-            sqrt(olx_max(0, a.GetCenter().QDistanceTo(b.GetCenter())
-            -
-            olx_sqr(b.DistanceTo(a.GetCenter())))));
+            olxstr::FormatFloat(3, b.DistanceTo(a.GetCenter())) <<
+            "\nShift (plane [" << macSel_GetPlaneName(b) << "]-plane): " <<
+            olxstr::FormatFloat(3,
+              sqrt(olx_max(0, a.GetCenter().QDistanceTo(b.GetCenter())
+                -
+                olx_sqr(b.DistanceTo(a.GetCenter())))));
         }
         if (a.Count() == b.Count() && a.Count() == 3) {
           TSAtomPList atoms(6), sorted_atoms;
-          for (size_t i=0; i < 3; i++) {
+          for (size_t i = 0; i < 3; i++) {
             (atoms[i] = &a.GetAtom(i))->SetTag(0);
-            (atoms[i+3] = &b.GetAtom(i))->SetTag(1);
+            (atoms[i + 3] = &b.GetAtom(i))->SetTag(1);
           }
           olx_pdict<index_t, vec3d> transforms;
           transforms.Add(1, -b.GetCenter());
@@ -1023,75 +1032,66 @@ olxstr TGXApp::GetSelectionInfo(bool list) const {
           VcoVContainer::TriangleTwistBP tt(pts);
           double v = tt.calc();
           if (v > 60) {
-            v = 120-v;
+            v = 120 - v;
           }
           Tmp << "\nMean triange twist angle: " << olxstr::FormatFloat(3, v);
         }
       }
     }
-    else if( Sel.Count() == 3 )  {
-      if( EsdlInstanceOf(Sel[0], TXAtom) &&
-        EsdlInstanceOf(Sel[1], TXAtom) &&
-        EsdlInstanceOf(Sel[2], TXAtom) )  {
-          TSAtom &a1 = ((TXAtom&)Sel[0]),
-            &a2 = ((TXAtom&)Sel[1]),
-            &a3 = ((TXAtom&)Sel[2]);
+    else if (Sel.Count() == 3) {
+      if (olx_list_and(Sel, &IOlxObject::Is<TXAtom>)) {
+        TSAtom &a1 = ((TXAtom&)Sel[0]),
+          &a2 = ((TXAtom&)Sel[1]),
+          &a3 = ((TXAtom&)Sel[2]);
         Tmp = "Angle (";
-        Tmp << macSel_GetName3(a1, a2, a3)<< "): ";
-        ACifValue* cv=NULL;
-        if( CheckFileType<TCif>() )  {
+        Tmp << macSel_GetName3(a1, a2, a3) << "): ";
+        ACifValue* cv = NULL;
+        if (CheckFileType<TCif>()) {
           cv = XFile().GetLastLoader<TCif>().GetDataManager().Match(a1, a2, a3);
         }
         Tmp << macSel_FormatValue(olx_angle(a1.crd(), a2.crd(), a3.crd()), cv);
       }
-      else if( EsdlInstanceOf(Sel[0], TXPlane) &&
-        EsdlInstanceOf(Sel[1], TXPlane) &&
-        EsdlInstanceOf(Sel[2], TXPlane) )  {
-          TXPlane &p1 = ((TXPlane&)Sel[0]),
-            &p2 = ((TXPlane&)Sel[1]),
-            &p3 = ((TXPlane&)Sel[2]);
-          Tmp = "Angle between plane centroids: ";
-          Tmp << olxstr::FormatFloat(3,
-            olx_angle(p1.GetCenter(), p2.GetCenter(), p3.GetCenter()));
+      else if (olx_list_and(Sel, &IOlxObject::Is<TXPlane>)) {
+        TXPlane &p1 = ((TXPlane&)Sel[0]),
+          &p2 = ((TXPlane&)Sel[1]),
+          &p3 = ((TXPlane&)Sel[2]);
+        Tmp = "Angle between plane centroids: ";
+        Tmp << olxstr::FormatFloat(3,
+          olx_angle(p1.GetCenter(), p2.GetCenter(), p3.GetCenter()));
       }
-      else if( EsdlInstanceOf(Sel[0], TXPlane) &&
-        EsdlInstanceOf(Sel[1], TXAtom) &&
-        EsdlInstanceOf(Sel[2], TXPlane) )  {
-          TXPlane &p1 = ((TXPlane&)Sel[0]),
-            &p2 = ((TXPlane&)Sel[2]);
-          Tmp = "Angle between plane centroid - atom - plane centroid: ";
-          Tmp << olxstr::FormatFloat(3,
-            olx_angle(p1.GetCenter(), ((TXAtom&)Sel[1]).crd(), p2.GetCenter()));
+      else if (Sel[0].Is<TXPlane>() && Sel[1].Is<TXAtom>() && Sel[2].Is<TXPlane>()) {
+        TXPlane &p1 = ((TXPlane&)Sel[0]),
+          &p2 = ((TXPlane&)Sel[2]);
+        Tmp = "Angle between plane centroid - atom - plane centroid: ";
+        Tmp << olxstr::FormatFloat(3,
+          olx_angle(p1.GetCenter(), ((TXAtom&)Sel[1]).crd(), p2.GetCenter()));
       }
     }
-    else if( Sel.Count() == 4 )  {
-      if( EsdlInstanceOf(Sel[0], TXAtom) &&
-        EsdlInstanceOf(Sel[1], TXAtom) &&
-        EsdlInstanceOf(Sel[2], TXAtom) &&
-        EsdlInstanceOf(Sel[3], TXAtom) )  {
-          TSAtom &a1 = ((TXAtom&)Sel[0]),
-            &a2 = ((TXAtom&)Sel[1]),
-            &a3 = ((TXAtom&)Sel[2]),
-            &a4 = ((TXAtom&)Sel[3]);
-          Tmp = "Torsion angle (";
-          Tmp << macSel_GetName4(a1, a2, a3, a4) << "): ";
-          v = olx_dihedral_angle_signed(a1.crd(), a2.crd(), a3.crd(), a4.crd());
-          Tmp << olxstr::FormatFloat(3, v);
-          Tmp <<
-            "\nAngle (" << macSel_GetName3(a1, a2, a3) << "): " <<
-            olxstr::FormatFloat(3, olx_angle(a1.crd(), a2.crd(), a3.crd())) <<
-            "\nAngle (" << macSel_GetName3(a2, a3, a4) << "): " <<
-            olxstr::FormatFloat(3, olx_angle(a2.crd(), a3.crd(), a4.crd())) <<
-            "\nDistance (" << macSel_GetName2(a1, a2) << "): " <<
-            olxstr::FormatFloat(3, a1.crd().DistanceTo(a2.crd())) <<
-            "\nDistance (" << macSel_GetName2(a2, a3) << "): " <<
-            olxstr::FormatFloat(3, a2.crd().DistanceTo(a3.crd())) <<
-            "\nDistance (" << macSel_GetName2(a3, a4) << "): " <<
-            olxstr::FormatFloat(3, a3.crd().DistanceTo(a4.crd()));
+    else if (Sel.Count() == 4) {
+      if (olx_list_and(Sel, &IOlxObject::Is<TXAtom>)) {
+        TSAtom &a1 = ((TXAtom&)Sel[0]),
+          &a2 = ((TXAtom&)Sel[1]),
+          &a3 = ((TXAtom&)Sel[2]),
+          &a4 = ((TXAtom&)Sel[3]);
+        Tmp = "Torsion angle (";
+        Tmp << macSel_GetName4(a1, a2, a3, a4) << "): ";
+        v = olx_dihedral_angle_signed(a1.crd(), a2.crd(), a3.crd(), a4.crd());
+        Tmp << olxstr::FormatFloat(3, v);
+        Tmp <<
+          "\nAngle (" << macSel_GetName3(a1, a2, a3) << "): " <<
+          olxstr::FormatFloat(3, olx_angle(a1.crd(), a2.crd(), a3.crd())) <<
+          "\nAngle (" << macSel_GetName3(a2, a3, a4) << "): " <<
+          olxstr::FormatFloat(3, olx_angle(a2.crd(), a3.crd(), a4.crd())) <<
+          "\nDistance (" << macSel_GetName2(a1, a2) << "): " <<
+          olxstr::FormatFloat(3, a1.crd().DistanceTo(a2.crd())) <<
+          "\nDistance (" << macSel_GetName2(a2, a3) << "): " <<
+          olxstr::FormatFloat(3, a2.crd().DistanceTo(a3.crd())) <<
+          "\nDistance (" << macSel_GetName2(a3, a4) << "): " <<
+          olxstr::FormatFloat(3, a3.crd().DistanceTo(a4.crd()));
       }
     }
   }
-  catch( const TExceptionBase& )  {
+  catch (const TExceptionBase&) {
     Tmp = "n/a";
   }
   return Tmp;
@@ -1101,9 +1101,10 @@ olxstr TGXApp::GetObjectInfoAt(int x, int y) const {
   AGDrawObject *G = SelectObject(x, y);
   if (G == NULL) return EmptyString();
   olxstr rv;
-  if (G->IsSelected())
+  if (G->IsSelected()) {
     rv = GetSelectionInfo();
-  else if (EsdlInstanceOf(*G, TXAtom)) {
+  }
+  else if (G->Is<TXAtom>()) {
     const TXAtom &xa = *(TXAtom*)G;
     const TCAtom& ca = xa.CAtom();
     rv = xa.GetGuiLabelEx();
@@ -1172,50 +1173,53 @@ olxstr TGXApp::GetObjectInfoAt(int x, int y) const {
       olxstr::FormatFloat(3, xa.ccrd()[1]) << ", " <<
       olxstr::FormatFloat(3, xa.ccrd()[2]) << ')';
   }
-  else if (EsdlInstanceOf(*G, TXBond)) {
+  else if (G->Is<TXBond>()) {
     TXBond& xb = *(TXBond*)G;
     rv = xb.A().GetLabel();
     rv << '-' << xb.B().GetLabel() << ": ";
     if (CheckFileType<TCif>()) {
       ACifValue* cv = XFile().GetLastLoader<TCif>()
         .GetDataManager().Match(xb.A(), xb.B());
-      if (cv != NULL)
+      if (cv != 0) {
         rv << cv->GetValue().ToString();
-      else
+      }
+      else {
         rv << olxstr::FormatFloat(3, xb.Length());
+      }
     }
-    else
+    else {
       rv << olxstr::FormatFloat(3, xb.Length());
+    }
 #ifdef _DEBUG
     vec3d n = (xb.A().crd()-xb.B().crd()).Normalise();
     rv << "\nn: " << olx_round(n[0], 1000) << ',' << olx_round(n[1], 1000) <<
       ',' << olx_round(n[2], 1000);
 #endif
   }
-  else if (EsdlInstanceOf(*G, TXReflection)) {
+  else if (G->Is<TXReflection>()) {
     rv = ((TXReflection*)G)->GetHKL()[0];
     rv << ' '
       << ((TXReflection*)G)->GetHKL()[1] << ' '
       << ((TXReflection*)G)->GetHKL()[2] << ": "
       << ((TXReflection*)G)->GetI();
   }
-  else if (EsdlInstanceOf(*G, TXLine)) {
+  else if (G->Is<TXLine>()) {
     rv = olxstr::FormatFloat(3, ((TXLine*)G)->GetLength());
   }
-  else if (EsdlInstanceOf(*G, TXGrowLine)) {
+  else if (G->Is<TXGrowLine>()) {
     rv = ((TXGrowLine*)G)->XAtom().GetLabel();
     rv << '-' << ((TXGrowLine*)G)->CAtom().GetLabel() << ": "
       << olxstr::FormatFloat(3, ((TXGrowLine*)G)->Length()) << '('
       << TSymmParser::MatrixToSymmEx(((TXGrowLine*)G)->GetTransform()) << ')';
   }
-  else if (EsdlInstanceOf(*G, TXGrowPoint)) {
+  else if (G->Is<TXGrowPoint>()) {
     rv = TSymmParser::MatrixToSymmEx(((TXGrowPoint*)G)->GetTransform());
   }
-  else if (EsdlInstanceOf(*G, TXPlane)) {
+  else if (G->Is<TXPlane>()) {
     rv << "HKL direction: " <<
       ((TXPlane*)G)->GetCrystallographicDirection().ToString();
   }
-  else if (EsdlInstanceOf(*G, TDUserObj)) {
+  else if (G->Is<TDUserObj>()) {
     TDUserObj &o = *(TDUserObj*)G;
     if (o.GetType() == sgloSphere && !o.Params().IsEmpty()) {
       double r=o.Params()[0]*o.Basis.GetZoom();
@@ -1723,29 +1727,34 @@ void TGXApp::RestoreSelection()  {
   RestoreGroup(GetSelection(), SelectionCopy[1]);
 }
 //..............................................................................
-ConstPtrList<TXAtom> TGXApp::GetSelectedXAtoms(bool Clear)  {
+ConstPtrList<TXAtom> TGXApp::GetSelectedXAtoms(bool Clear) {
   TPtrList<TGlGroup> S;
   S.Add(GetSelection());
   TXAtomPList rv;
   TXBondPList bonds;
-  for( size_t i=0; i < S.Count(); i++ )  {
+  for (size_t i = 0; i < S.Count(); i++) {
     TGlGroup& Sel = *S[i];
-    for( size_t j=0; j < Sel.Count(); j++ )  {
+    for (size_t j = 0; j < Sel.Count(); j++) {
       AGDrawObject& GO = Sel[j];
-      if( GO.IsGroup() )  // another group
+      if (GO.IsGroup()) { // another group
         S.Add((TGlGroup&)GO);
-      else if( EsdlInstanceOf(GO, TXAtom) )
+      }
+      else if (GO.Is<TXAtom>()) {
         rv.Add((TXAtom&)GO);
-      else if (EsdlInstanceOf(GO, TXBond))
+      }
+      else if (GO.Is<TXBond>()) {
         bonds << (TXBond&)GO;
+      }
     }
   }
   if (rv.IsEmpty()) {
-    for (size_t i=0; i < bonds.Count(); i++)
+    for (size_t i = 0; i < bonds.Count(); i++) {
       rv << bonds[i]->A() << bonds[i]->B();
+    }
   }
-  if( Clear )
+  if (Clear) {
     SelectAll(false);
+  }
   return rv;
 }
 //..............................................................................
@@ -1962,10 +1971,10 @@ bool TGXApp::FindSAtoms(const olxstr& condition, TSAtomPList& res,
 //..............................................................................
 void atoms_from_group(const TGlGroup &g, TXAtomPList &out) {
   for (size_t i = 0; i < g.Count(); i++) {
-    if (EsdlInstanceOf(g[i], TXAtom)) {
+    if (g[i].Is<TXAtom>()) {
       out.Add((TXAtom&)g[i]);
     }
-    else if (EsdlInstanceOf(g[i], TGlGroup)) {
+    else if (g[i].Is<TGlGroup>()) {
       atoms_from_group((TGlGroup &)g[i], out);
     }
   }
@@ -2076,7 +2085,7 @@ ConstPtrList<TXAtom> TGXApp::FindXAtoms(const TStrObjList &Cmds, bool GetAll,
   TXAtomPList atoms;
   if (Cmds.IsEmpty()) {
     atoms.AddAll(
-      FindXAtoms(EmptyString(), GetAll, EsdlInstanceOf(GetSelection(), TGlGroup)
+      FindXAtoms(EmptyString(), GetAll, GetSelection().Is<TGlGroup>()
         ? unselect : false));
   }
   else {
@@ -2526,8 +2535,8 @@ void TGXApp::InfoList(const olxstr &Atoms, TStrList &Info, bool sort,
   olxstr formula[3];
   double ec[3] = { 0, 0, 0 }, mc[3] = { 0, 0, 0 };
   for (size_t i = 0; i < cl.Count(); i++) {
-    size_t idx = elements.IndexOf(&cl[i].element);
-    const cm_Element &e = cl[i].element;
+    size_t idx = elements.IndexOf(cl[i].element);
+    const cm_Element &e = *cl[i].element;
     const count_t &cnt = elements.GetValue(idx);
     formula[0] << ' ' << e.symbol;
     if (cnt.a != 1) {
@@ -2589,8 +2598,8 @@ TXGlLabel *TGXApp::AddLabel(const olxstr& Name, const vec3d& center, const olxst
 //..............................................................................
 TXLine *TGXApp::AddLine(const olxstr& Name, const vec3d& base, const vec3d& edge)  {
   TGPCollection *gpc = GetRenderer().FindCollection(Name);
-  if (gpc != NULL && gpc->ObjectCount() != 0) {
-    if (!EsdlInstanceOf(gpc->GetObject(0), TXLine)) {
+  if (gpc != 0 && gpc->ObjectCount() != 0) {
+    if (!gpc->GetObject(0).Is<TXLine>()) {
       TBasicApp::NewLogEntry(logError) << "The given collection name is alreay"
         " in use by other object type";
       return NULL;
@@ -2637,7 +2646,7 @@ TXPlane *TGXApp::AddPlane(const olxstr &name, const TXAtomPList &Atoms,
   if (Atoms.Count() < 3) return NULL;
   TGPCollection *gpc = GetRenderer().FindCollection(name);
   if (gpc != NULL && gpc->ObjectCount() != 0) {
-    if (!EsdlInstanceOf(gpc->GetObject(0), TXPlane)) {
+    if (!gpc->GetObject(0).Is<TXPlane>()) {
       TBasicApp::NewLogEntry(logError) << "The given collection name is alreay"
         " in use by other object type";
       return NULL;
@@ -2739,42 +2748,44 @@ void TGXApp::AdoptAtoms(const TAsymmUnit& au, TXAtomPList& atoms, TXBondPList& b
     FLabels->Init();
 }
 //..............................................................................
-TXAtom& TGXApp::AddAtom(TXAtom* templ)  {
+TXAtom& TGXApp::AddAtom(TXAtom* templ) {
   vec3d center;
-  if( templ != NULL )
+  if (templ != NULL)
     center = templ->CAtom().ccrd();
   TXAtom &A = static_cast<TXAtom&>(XFile().GetLattice().NewAtom(center));
   olxstr colName;
-  if( templ != NULL )  {
+  if (templ != NULL) {
     colName = templ->GetCollectionName();
     A.CAtom().SetType(templ->GetType());
-    if( templ->GetType() == iQPeakZ )
+    if (templ->GetType() == iQPeakZ)
       A.CAtom().SetQPeak(1.0);
   }
-  else
+  else {
     A.CAtom().SetType(XElementLib::GetByIndex(iCarbonIndex));
+  }
   A.Create();
   A.Params()[0] = A.GetType().r_pers;
   return A;
 }
 //..............................................................................
-void TGXApp::undoName(TUndoData *data)  {
+void TGXApp::undoName(TUndoData *data) {
   TNameUndo *undo = dynamic_cast<TNameUndo*>(data);
   const TAsymmUnit& au = XFile().GetAsymmUnit();
   bool recreate = false;
-  for( size_t i=0; i < undo->AtomCount(); i++ )  {
-    if( undo->GetCAtomId(i) >= au.AtomCount() )  //could happen?
+  for (size_t i = 0; i < undo->AtomCount(); i++) {
+    if (undo->GetCAtomId(i) >= au.AtomCount())  //could happen?
       continue;
     const TCAtom& ca = au.GetAtom(undo->GetCAtomId(i));
-    if( ca.GetType() != undo->GetElement(i) )  {
+    if (ca.GetType() != undo->GetElement(i)) {
       recreate = true;
       break;
     }
   }
   // could be optimised...
   TXApp::undoName(data);
-  if( recreate )
+  if (recreate) {
     CreateObjects(false);
+  }
 }
 //..............................................................................
 void TGXApp::undoHide(TUndoData *data) {
@@ -2789,17 +2800,17 @@ TUndoData* TGXApp::DeleteXObjects(const AGDObjList& L) {
   atoms.SetCapacity(L.Count());
   bool planes_deleted = false;
   for (size_t i = 0; i < L.Count(); i++) {
-    if (EsdlInstanceOf(*L[i], TXAtom)) {
+    if (L[i]->Is<TXAtom>()) {
       atoms.Add((TXAtom*)L[i]);
     }
-    else if (EsdlInstanceOf(*L[i], TXPlane)) {
+    else if (L[i]->Is<TXPlane>()) {
       ((TXPlane*)L[i])->Delete(true);
       if (L[i]->GetPrimitives().ObjectCount() == 1) {
         L[i]->GetPrimitives().ClearPrimitives();
       }
       planes_deleted = true;
     }
-    else if (EsdlInstanceOf(*L[i], TXBond)) {
+    else if (L[i]->Is<TXBond>()) {
       TXBond* xb = (TXBond*)L[i];
       xb->Delete();
     }
@@ -2891,7 +2902,7 @@ void TGXApp::SelectBondsWhere(const olxstr &Where, bool Invert) {
   }
   if (str.Contains(" sel.")) {
     if (GlRenderer->GetSelection().Count() != 1 ||
-      !EsdlInstanceOf(GlRenderer->GetSelection()[0], TXBond))
+      !GlRenderer->GetSelection()[0].Is<TXBond>())
     {
       NewLogEntry(logError) << "SelectBonds: please select one bond only";
       return;
@@ -2917,7 +2928,7 @@ void TGXApp::SelectBondsWhere(const olxstr &Where, bool Invert) {
   }
 }
 //..............................................................................
-void TGXApp::SelectAtomsWhere(const olxstr &Where, bool Invert)  {
+void TGXApp::SelectAtomsWhere(const olxstr &Where, bool Invert) {
   olxstr str = Where.ToLowerCase();
   if (str.Contains("xbond") || str.Contains("sbond")) {
     NewLogEntry(logError) << "SelectAtoms: xbond/satom are not allowed here";
@@ -2928,7 +2939,7 @@ void TGXApp::SelectAtomsWhere(const olxstr &Where, bool Invert)  {
       NewLogEntry(logError) << "SelectAtoms: please select one atom only";
       return;
     }
-    if (!EsdlInstanceOf(GlRenderer->GetSelection()[0], TXAtom)) {
+    if (!GlRenderer->GetSelection()[0].Is<TXAtom>()) {
       NewLogEntry(logError) << "SelectAtoms: please select an atom";
       return;
     }
@@ -2938,18 +2949,22 @@ void TGXApp::SelectAtomsWhere(const olxstr &Where, bool Invert)  {
   TTGlGroupEvaluatorFactory *sel = (TTGlGroupEvaluatorFactory*)rf.BindingFactory("sel");
   sel->SetTGlGroup(&GlRenderer->GetSelection());
   TSyntaxParser SyntaxParser(&rf, Where);
-  if (!SyntaxParser.Errors().Count())  {
+  if (!SyntaxParser.Errors().Count()) {
     AtomIterator ai(*this);
-    while (ai.HasNext())  {
+    while (ai.HasNext()) {
       TXAtom& xa = ai.Next();
-      if (xa.IsSelected())  continue;
+      if (xa.IsSelected()) {
+        continue;
+      }
       xatom->provider->SetTXAtom(&xa);
-      if (SyntaxParser.Evaluate())
+      if (SyntaxParser.Evaluate()) {
         GetRenderer().Select(xa);
+      }
     }
   }
-  else
+  else {
     NewLogEntry(logError) << SyntaxParser.Errors().Text(NewLineSequence());
+  }
 }
 //..............................................................................
 bool GetRing(TSAtomPList& atoms, TTypeList<TSAtomPList>& rings)  {
@@ -3201,13 +3216,13 @@ void TGXApp::ClearLabels()  {
 //..............................................................................
 void bonds_from_group(const TGlGroup &g, TXBondPList & out) {
   for (size_t i = 0; i < g.Count(); i++) {
-    if (EsdlInstanceOf(g[i], TXBond)) {
+    if (g[i].Is<TXBond>()) {
       out.Add((TXBond&)g[i]);
     }
-    else if (EsdlInstanceOf(g[i], TGlGroup)) {
+    else if (g[i].Is<TGlGroup>()) {
       bonds_from_group((TGlGroup&)g[i], out);
     }
-    else if (EsdlInstanceOf(g[i], TXAtom)) {
+    else if (g[i].Is<TXAtom>()) {
       TXAtom& xa = ((TXAtom&)g[i]);
       for (size_t j = 0; j < xa.BondCount(); j++) {
         out.Add(xa.Bond(j));
@@ -3229,7 +3244,7 @@ ConstPtrList<TXBond> TGXApp::GetBonds(const TStrList& Bonds, bool inc_lines)  {
     }
     for( size_t i=0; i < GPC->ObjectCount(); i++ )  {
       // check if the right type !
-      if (i == 0 && !EsdlInstanceOf(GPC->GetObject(0), TXBond)) {
+      if (i == 0 && !GPC->GetObject(0).Is<TXBond>()) {
         break;
       }
       List.Add((TXBond&)GPC->GetObject(i));
@@ -3532,17 +3547,17 @@ void TGXApp::RestoreGroup(TGlGroup& glg, const GroupData& gd)  {
   glg.SetVisible(gd.visible);
 }
 //..............................................................................
-void TGXApp::StoreGroup(const TGlGroup& glG, GroupData& gd)  {
+void TGXApp::StoreGroup(const TGlGroup& glG, GroupData& gd) {
   gd.collectionName = glG.GetCollectionName();  //planes
   gd.visible = glG.IsVisible();
   gd.parent_id = (glG.GetParentGroup() != NULL ? glG.GetParentGroup()->GetTag() : -2);
-  for( size_t j=0; j < glG.Count(); j++ )  {
+  for (size_t j = 0; j < glG.Count(); j++) {
     AGDrawObject& glO = glG[j];
-    if( EsdlInstanceOf(glO, TXAtom) )  {
+    if (glO.Is<TXAtom>()) {
       const TSAtom& sa = ((TXAtom&)glO);
       gd.atoms.Add(new TGXApp::AtomRef(sa.GetNetwork().GetLattice(), sa.GetRef()));
     }
-    if( EsdlInstanceOf(glO, TXBond) )  {
+    if (glO.Is<TXBond>()) {
       const TSBond& sb = ((TXBond&)glO);
       gd.bonds.Add(new TGXApp::BondRef(sb.GetNetwork().GetLattice(), sb.GetRef()));
     }
@@ -5091,10 +5106,10 @@ void TGXApp::ToDataItem(TDataItem& item, IOutputStream& zos) const {
     IndexRange::Builder ra, rb;
     for (size_t j=0; j < glG.Count(); j++) {
       AGDrawObject& glO = glG.GetObject(j);
-      if (EsdlInstanceOf(glO, TXAtom)) {
+      if (glO.Is<TXAtom>()) {
         ra << GetAtomTag(((TXAtom&)glO), LattAtomSz);
       }
-      else if (EsdlInstanceOf(glO, TXBond)) {
+      else if (glO.Is<TXBond>()) {
         rb << GetBondTag(((TXBond&)glO), LattBondSz);
       }
     }
@@ -5495,7 +5510,7 @@ TGlGroup *TGXApp::GroupSelection(const olxstr& name)  {
 void TGXApp::UngroupSelection()  {
   TGlGroup& sel = GetSelection();
   for (size_t i=0; i < sel.Count(); i++) {
-    if (EsdlInstanceOf(sel[i], TGlGroup)) {
+    if (sel[i].Is<TGlGroup>()) {
       TGlGroup& G = (TGlGroup&)sel[i];
       size_t i = GroupDict.IndexOf(&G);
       if (i != InvalidIndex)  {

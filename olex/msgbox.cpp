@@ -93,7 +93,7 @@ TdlgMsgBox::~TdlgMsgBox()  {
 bool TdlgMsgBox::Execute(const IOlxObject *Sender, const IOlxObject *Data,
   TActionQueue *)
 {
-  if (EsdlInstanceOf(*Sender, TButton)) {
+  if (Sender->Is<TButton>()) {
     EndModal(dynamic_cast<const TButton *>(Sender)->GetId());
   }
   return true;

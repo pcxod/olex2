@@ -16,6 +16,7 @@
 BeginGxlNamespace()
 
 class TXPlane: public TSPlane, public AGDrawObject  {
+private:
   mat3d RM;
   vec3d MaxV;
 public:

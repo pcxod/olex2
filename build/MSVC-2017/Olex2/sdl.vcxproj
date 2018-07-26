@@ -782,6 +782,7 @@
     <ClInclude Include="..\..\..\sdl\tests\binding_test.h" />
     <ClInclude Include="..\..\..\sdl\tests\container_test.h" />
     <ClInclude Include="..\..\..\sdl\tests\encoding_test.h" />
+    <ClInclude Include="..\..\..\sdl\tests\evalue_test.h" />
     <ClInclude Include="..\..\..\sdl\tests\exparse_test.h" />
     <ClInclude Include="..\..\..\sdl\tests\file_test.h" />
     <ClInclude Include="..\..\..\sdl\tests\irange_test.h" />

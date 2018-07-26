@@ -457,7 +457,7 @@ void GXLibMacros::macName(TStrObjList &Cmds, const TParamList &Options,
     if (reset) {
       for (size_t i = 0; i < old.Count(); i++) {
         bool bond = false;
-        if (EsdlInstanceOf(old[i]->GetObject(0), TXBond)) {
+        if (old[i]->GetObject(0).Is<TXBond>()) {
           bond = true;
           for (size_t j = 0; j < TXBond::NamesRegistry().Count(); j++) {
             if (TXBond::NamesRegistry().GetValue(j) == old[i]->GetName()) {
@@ -465,7 +465,7 @@ void GXLibMacros::macName(TStrObjList &Cmds, const TParamList &Options,
             }
           }
         }
-        else if (EsdlInstanceOf(old[i]->GetObject(0), TXAtom)) {
+        else if (old[i]->GetObject(0).Is<TXAtom>()) {
           TXAtom::NamesRegistry().Remove(old[i]->GetName());
           for (size_t j = 0; j < TXAtom::NamesRegistry().Count(); j++) {
             if (TXAtom::NamesRegistry().GetValue(j) == old[i]->GetName()) {
@@ -515,7 +515,7 @@ void GXLibMacros::macName(TStrObjList &Cmds, const TParamList &Options,
     for (size_t i = 0; i < sel.Count(); i++) {
       sel[i].GetPrimitives().RemoveObject(sel[i]);
     }
-    if (EsdlInstanceOf(sel[0], TXAtom)) {
+    if (sel[0].Is<TXAtom>()) {
       for (size_t i = 0; i < sel.Count(); i++) {
         TXAtom &a = dynamic_cast<TXAtom &>(sel[i]);
         TXAtom::NamesRegistry().Add(a.GetRef().ToString(), Cmds[1]);
@@ -524,13 +524,13 @@ void GXLibMacros::macName(TStrObjList &Cmds, const TParamList &Options,
         }
       }
     }
-    else if (EsdlInstanceOf(sel[0], TXBond)) {
+    else if (sel[0].Is<TXBond>()) {
       for (size_t i = 0; i < sel.Count(); i++) {
         TXBond &b = dynamic_cast<TXBond &>(sel[i]);
         TXBond::NamesRegistry().Add(b.GetRef().ToString(), Cmds[1]);
       }
     }
-    else if (EsdlInstanceOf(sel[0], TXPlane)) {
+    else if (sel[0].Is<TXPlane>()) {
       for (size_t i = 0; i < sel.Count(); i++) {
         TXPlane &p = dynamic_cast<TXPlane &>(sel[i]);
         TXPlane::NamesRegistry().Add(p.GetDefId(), Cmds[1]);
@@ -678,7 +678,7 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
       else if (str_scale.CharAt(0) == 'e') {
         scale = SFUtil::scaleExternal;
         if (app.XFile().GetRM().Vars.VarCount() > 0) {
-          scale = app.XFile().GetRM().Vars.GetVar(0).GetValue();
+          scale_value = app.XFile().GetRM().Vars.GetVar(0).GetValue();
         }
         else {
           TBasicApp::NewLogEntry(logWarning) << "Could not locate external "
@@ -998,7 +998,7 @@ void GXLibMacros::macLabels(TStrObjList &Cmds, const TParamList &Options,
     TGlGroup &sel = app.GetSelection();
     bool bonds_only = true;
     for (size_t i = 0; i < sel.Count(); i++) {
-      if (!EsdlInstanceOf(sel[i], TXBond)) {
+      if (!sel[i].Is<TXBond>()) {
         bonds_only = false;
         break;
       }
@@ -1562,13 +1562,13 @@ void GXLibMacros::macSetView(TStrObjList &Cmds, const TParamList &Options,
   if (Cmds.IsEmpty()) {
     TGlGroup& g = app.GetSelection();
     if (g.Count() == 1) {
-      if (EsdlInstanceOf(g[0], TXPlane)) {
+      if (g[0].Is<TXPlane>()) {
         TXPlane& xp = (TXPlane&)g[0];
         normal = xp.GetNormal();
         center = xp.GetCenter();
         process = true;
       }
-      else if (EsdlInstanceOf(g[0], TXBond)) {
+      else if (g[0].Is<TXBond>()) {
         TXBond& xb = (TXBond&)g[0];
         normal = vec3d(xb.B().crd()-xb.A().crd()).Normalise();
         center = (xb.B().crd()+xb.A().crd())/2;
@@ -1630,20 +1630,20 @@ void GXLibMacros::macLine(TStrObjList &Cmds, const TParamList &Options,
   if (Cmds.IsEmpty() || (Cmds.Count() == 1 && Cmds[0].Equalsi("sel"))) {
     TGlGroup& sel = app.GetSelection();
     if( sel.Count() == 2 )  {
-      if (EsdlInstanceOf(sel[0], TXPlane) && EsdlInstanceOf(sel[1], TXPlane)) {
+      if (sel[0].Is<TXPlane>() && sel[1].Is<TXPlane>()) {
         from = ((TXPlane&)sel[0]).GetCenter();
         to = ((TXPlane&)sel[1]).GetCenter();
         process_atoms = false;
       }
-      else if (EsdlInstanceOf(sel[0], TXAtom) &&
-        EsdlInstanceOf(sel[1], TXPlane))
+      else if (sel[0].Is<TXAtom>() &&
+        sel[1].Is<TXPlane>())
       {
         from = ((TXAtom&)sel[0]).crd();
         to = ((TXPlane&)sel[1]).GetCenter();
         process_atoms = false;
       }
-      else if (EsdlInstanceOf(sel[0], TXPlane) &&
-        EsdlInstanceOf(sel[1], TXAtom))
+      else if (sel[0].Is<TXPlane>() &&
+        sel[1].Is<TXAtom>())
       {
         from = ((TXPlane&)sel[0]).GetCenter();
         to = ((TXAtom&)sel[1]).crd();
@@ -2732,7 +2732,7 @@ void GXLibMacros::macCalcVoid(TStrObjList &Cmds, const TParamList &Options,
   // consider the selection if any
   TGlGroup& sel = app.GetSelection();
   for (size_t i = 0; i < sel.Count(); i++) {
-    if (EsdlInstanceOf(sel[i], TXAtom)) {
+    if (sel[i].Is<TXAtom>()) {
       ((TXAtom&)sel[i]).CAtom().SetTag(catoms.Count());
       catoms.Add(((TXAtom&)sel[i]).CAtom());
     }
@@ -2932,10 +2932,10 @@ void GXLibMacros::macIndividualise(TStrObjList &Cmds, const TParamList &Options,
     TXBondPList bonds;
     TGlGroup& sel = app.GetSelection();
     for (size_t i=0; i < sel.Count(); i++) {
-      if (EsdlInstanceOf(sel[i], TXAtom)) {
+      if (sel[i].Is<TXAtom>()) {
         atoms.Add((TXAtom&)sel[i]);
       }
-      else if (EsdlInstanceOf(sel[i], TXBond)) {
+      else if (sel[i].Is<TXBond>()) {
         bonds.Add((TXBond&)sel[i]);
       }
     }
@@ -2956,9 +2956,9 @@ void GXLibMacros::macCollectivise(TStrObjList &Cmds, const TParamList &Options,
     TXAtomPList atoms;
     TXBondPList bonds;
     for (size_t i=0; i < glg.Count(); i++) {
-      if (EsdlInstanceOf(glg[i], TXAtom))
+      if (glg[i].Is<TXAtom>())
         atoms.Add((TXAtom&)glg[i]);
-      else if (EsdlInstanceOf(glg[i], TXBond))
+      else if (glg[i].Is<TXBond>())
         bonds.Add((TXBond&)glg[i]);
     }
     if (atoms.IsEmpty() && bonds.IsEmpty()) {
@@ -3089,7 +3089,7 @@ void GXLibMacros::macEsd(TStrObjList &Cmds, const TParamList &Options,
   TGlGroup& sel = app.GetSelection();
   if (Options.Contains('l')) {
     for (size_t i = 0; i < sel.Count(); i++) {
-      if (EsdlInstanceOf(sel[i], TXBond)) {
+      if (sel[i].Is<TXBond>()) {
         TXBond &xb = (TXBond&)sel[i];
         values.Add(xb.A().GetLabel()) << " to " << xb.B().GetLabel() <<
           " distance: " << vcovc.CalcDistance(xb.A(), xb.B()).ToString() <<
@@ -3099,17 +3099,19 @@ void GXLibMacros::macEsd(TStrObjList &Cmds, const TParamList &Options,
   }
   else {
     if (sel.Count() == 1) {
-      if (EsdlInstanceOf(sel[0], TXAtom)) {
+      if (sel[0].Is<TXAtom>()) {
         TSAtomPList atoms;
         TXAtom& xa = (TXAtom&)sel[0];
         for (size_t i = 0; i < xa.NodeCount(); i++) {
           TSAtom& A = xa.Node(i);
-          if (A.IsDeleted() || (A.GetType() == iQPeakZ))
+          if (A.IsDeleted() || (A.GetType() == iQPeakZ)) {
             continue;
+          }
           atoms.Add(A);
         }
-        if (atoms.Count() == 3)
+        if (atoms.Count() == 3) {
           atoms.Add(xa);
+        }
         if (atoms.Count() < 4) {
           Error.ProcessingError(__OlxSrcInfo,
             "An atom with at least four bonds is expected");
@@ -3169,7 +3171,7 @@ void GXLibMacros::macEsd(TStrObjList &Cmds, const TParamList &Options,
           values.Add("The tetrahedra volume is ") << ev.ToString() << " A^3";
         }
       }
-      else if (EsdlInstanceOf(sel[0], TXPlane)) {
+      else if (sel[0].Is<TXPlane>()) {
         TSAtomCPList atoms;
         TXPlane& xp = (TXPlane&)sel[0];
         olxstr pld;
@@ -3188,7 +3190,7 @@ void GXLibMacros::macEsd(TStrObjList &Cmds, const TParamList &Options,
           f_cent[0].ToString() << ", " << f_cent[1].ToString() << ", " <<
           f_cent[2].ToString() << "}";
       }
-      else if (EsdlInstanceOf(sel[0], TXBond)) {
+      else if (sel[0].Is<TXBond>()) {
         TXBond& xb = (TXBond&)sel[0];
         values.Add(xb.A().GetLabel()) << " to " << xb.B().GetLabel() <<
           " distance: " << vcovc.CalcDistance(xb.A(), xb.B()).ToString() <<
@@ -3196,15 +3198,13 @@ void GXLibMacros::macEsd(TStrObjList &Cmds, const TParamList &Options,
       }
     }
     else if (sel.Count() == 2) {
-      if (EsdlInstanceOf(sel[0], TXAtom) && EsdlInstanceOf(sel[1], TXAtom)) {
+      if (olx_list_and(sel, &IOlxObject::Is<TXAtom>)) {
         values.Add(((TXAtom&)sel[0]).GetLabel()) << " to " <<
           ((TXAtom&)sel[1]).GetLabel() << " distance: " <<
           vcovc.CalcDistance((TXAtom&)sel[0], (TXAtom&)sel[1]).ToString() <<
           " A";
       }
-      else if (EsdlInstanceOf(sel[0], TXBond) &&
-        EsdlInstanceOf(sel[1], TXBond))
-      {
+      else if (olx_list_and(sel, &IOlxObject::Is<TXBond>)) {
         TSBond& b1 = ((TXBond&)sel[0]);
         TSBond& b2 = ((TXBond&)sel[1]);
         TEValue<double> v(vcovc.CalcB2BAngle(b1.A(), b1.B(), b2.A(), b2.B())),
@@ -3213,52 +3213,48 @@ void GXLibMacros::macEsd(TStrObjList &Cmds, const TParamList &Options,
           b2.A().GetLabel() << '-' << b2.B().GetLabel() << " angle: " <<
           v.ToString() << '(' << v1.ToString() << ')';
       }
-      else if ((EsdlInstanceOf(sel[0], TXBond) && EsdlInstanceOf(sel[1], TXAtom)) ||
-        (EsdlInstanceOf(sel[1], TXBond) && EsdlInstanceOf(sel[0], TXAtom)))
+      else if ((sel[0].Is<TXBond>() && sel[1].Is<TXAtom>()) ||
+        (sel[1].Is<TXBond>() && sel[0].Is<TXAtom>()))
       {
-        const TXBond &b = (TXBond&)(EsdlInstanceOf(sel[0], TXBond) ? sel[0] : sel[1]);
-        const TXAtom &a = (TXAtom&)(EsdlInstanceOf(sel[0], TXBond) ? sel[1] : sel[0]);
+        const TXBond &b = (TXBond&)(sel[0].Is<TXBond>() ? sel[0] : sel[1]);
+        const TXAtom &a = (TXAtom&)(sel[0].Is<TXBond>() ? sel[1] : sel[0]);
         values.Add(a.GetLabel()) << " to " <<
           b.A().GetLabel() << '-' << b.B().GetLabel() << " distance: " <<
           vcovc.CalcAtomToVectorDistance(a, b.A(), b.B()).ToString();
       }
-      else if (
-        (EsdlInstanceOf(sel[0], TXAtom) && EsdlInstanceOf(sel[1], TXPlane)) ||
-        (EsdlInstanceOf(sel[1], TXAtom) && EsdlInstanceOf(sel[0], TXPlane)))
+      else if ((sel[0].Is<TXAtom>() && sel[1].Is<TXPlane>()) ||
+        (sel[1].Is<TXAtom>() && sel[0].Is<TXPlane>()))
       {
         TSAtomCPList atoms;
-        TXPlane& xp = (TXPlane&)sel[EsdlInstanceOf(sel[0], TXPlane) ? 0 : 1];
+        TXPlane& xp = (TXPlane&)sel[sel[0].Is<TXPlane>() ? 0 : 1];
         olxstr pld;
         for (size_t i = 0; i < xp.Count(); i++) {
           atoms.Add(xp.GetAtom(i));
           pld << atoms.GetLast()->GetLabel() << ' ';
         }
-        TSAtom& sa = ((TXAtom&)sel[EsdlInstanceOf(sel[0], TXAtom) ? 0 : 1]);
+        TSAtom& sa = ((TXAtom&)sel[sel[0].Is<TXAtom>() ? 0 : 1]);
         values.Add(sa.GetLabel()) << " to plane " << pld << "distance: " <<
           vcovc.CalcP2ADistance(atoms, sa).ToString() << " A";
         values.Add(sa.GetLabel()) << " to plane " << pld <<
           "centroid distance: " <<
           vcovc.CalcPC2ADistance(atoms, sa).ToString() << " A";
       }
-      else if (
-        (EsdlInstanceOf(sel[0], TXBond) && EsdlInstanceOf(sel[1], TXPlane)) ||
-        (EsdlInstanceOf(sel[1], TXBond) && EsdlInstanceOf(sel[0], TXPlane)))
+      else if ((sel[0].Is<TXBond>() && sel[1].Is<TXPlane>()) ||
+        (sel[1].Is<TXBond>() && sel[0].Is<TXPlane>()))
       {
         TSAtomCPList atoms;
-        TXPlane& xp = (TXPlane&)sel[EsdlInstanceOf(sel[0], TXPlane) ? 0 : 1];
+        TXPlane& xp = (TXPlane&)sel[sel[0].Is<TXPlane>() ? 0 : 1];
         olxstr_buf pld;
         for (size_t i = 0; i < xp.Count(); i++) {
           atoms.Add(xp.GetAtom(i));
           pld << atoms.GetLast()->GetLabel() << ' ';
         }
-        TSBond& sb = ((TXBond&)sel[EsdlInstanceOf(sel[0], TXBond) ? 0 : 1]);
+        TSBond& sb = ((TXBond&)sel[sel[0].Is<TXBond>() ? 0 : 1]);
         TEValue<double> v(vcovc.CalcP2VAngle(atoms, xp.GetNormal(), sb.A(), sb.B()));
         values.Add(sb.A().GetLabel()) << '-' << sb.B().GetLabel() <<
           " to plane normal " << olxstr(pld) << "angle: " << v.ToString();
       }
-      else if (EsdlInstanceOf(sel[0], TXPlane) &&
-        EsdlInstanceOf(sel[1], TXPlane))
-      {
+      else if (olx_list_and(sel, &IOlxObject::Is<TXPlane>)) {
         TSAtomCPList p1, p2;
         TXPlane& xp1 = (TXPlane&)sel[0];
         TXPlane& xp2 = (TXPlane&)sel[1];
@@ -3313,10 +3309,7 @@ void GXLibMacros::macEsd(TStrObjList &Cmds, const TParamList &Options,
       }
     }
     else if (sel.Count() == 3) {
-      if (EsdlInstanceOf(sel[0], TXAtom) &&
-        EsdlInstanceOf(sel[1], TXAtom) &&
-        EsdlInstanceOf(sel[2], TXAtom))
-      {
+      if (olx_list_and(sel, &IOlxObject::Is<TXAtom>)) {
         TSAtom& a1 = (TXAtom&)sel[0];
         TSAtom& a2 = (TXAtom&)sel[1];
         TSAtom& a3 = (TXAtom&)sel[2];
@@ -3330,24 +3323,26 @@ void GXLibMacros::macEsd(TStrObjList &Cmds, const TParamList &Options,
           vcovc.CalcAtomToVectorDistance(a1, a2, a3).ToString();
       }
       else if (
-        (EsdlInstanceOf(sel[0], TXPlane) && EsdlInstanceOf(sel[1], TXAtom) &&
-          EsdlInstanceOf(sel[2], TXAtom)) ||
-        (EsdlInstanceOf(sel[1], TXPlane) && EsdlInstanceOf(sel[0], TXAtom) &&
-          EsdlInstanceOf(sel[2], TXAtom)) ||
-        (EsdlInstanceOf(sel[2], TXPlane) && EsdlInstanceOf(sel[1], TXAtom) &&
-          EsdlInstanceOf(sel[0], TXAtom)))
+        (sel[0].Is<TXPlane>() && sel[1].Is<TXAtom>() &&
+          sel[2].Is<TXAtom>()) ||
+        (sel[1].Is<TXPlane>() && sel[0].Is<TXAtom>() &&
+          sel[2].Is<TXAtom>()) ||
+        (sel[2].Is<TXPlane>() && sel[1].Is<TXAtom>() &&
+          sel[0].Is<TXAtom>()))
       {
         TSAtom* a1 = NULL, *a2 = NULL;
         TXPlane* xp = NULL;
         TSAtomCPList atoms;
         for (size_t i = 0; i < 3; i++) {
-          if (EsdlInstanceOf(sel[i], TXPlane))
+          if (sel[i].Is<TXPlane>())
             xp = &(TXPlane&)sel[i];
           else {
-            if (a1 == NULL)
+            if (a1 == 0) {
               a1 = &((TXAtom&)sel[i]);
-            else
+            }
+            else {
               a2 = &((TXAtom&)sel[i]);
+            }
           }
         }
         olxstr pld;
@@ -3358,7 +3353,7 @@ void GXLibMacros::macEsd(TStrObjList &Cmds, const TParamList &Options,
         values.Add(a1->GetLabel()) << '-' << a2->GetLabel() << " to plane normal " <<
           pld << "angle: " << vcovc.CalcP2VAngle(atoms, xp->GetNormal(),
             *a1, *a2).ToString();
-        if (EsdlInstanceOf(sel[0], TXPlane) || EsdlInstanceOf(sel[2], TXPlane)) {
+        if (sel[0].Is<TXPlane>() || sel[2].Is<TXPlane>()) {
           values.Add("Plane centroid-") << a1->GetLabel() << '-' << a2->GetLabel()
             << " angle: " << vcovc.CalcPCAngle(atoms, *a1, *a2).ToString();
         }
@@ -3367,10 +3362,7 @@ void GXLibMacros::macEsd(TStrObjList &Cmds, const TParamList &Options,
             << " angle: " << vcovc.CalcPCAngle(*a1, atoms, *a2).ToString();
         }
       }
-      else if (EsdlInstanceOf(sel[0], TXPlane) &&
-        EsdlInstanceOf(sel[1], TXPlane) &&
-        EsdlInstanceOf(sel[2], TXPlane))
-      {
+      else if (olx_list_and(sel, &IOlxObject::Is<TXPlane>)) {
         TSPlane& p1 = (TXPlane&)sel[0];
         TSPlane& p2 = (TXPlane&)sel[1];
         TSPlane& p3 = (TXPlane&)sel[2];
@@ -3387,9 +3379,9 @@ void GXLibMacros::macEsd(TStrObjList &Cmds, const TParamList &Options,
         values.Add("Angle between plane centroids: ") <<
           vcovc.Calc3PCAngle(a1, a2, a3).ToString();
       }
-      else if (EsdlInstanceOf(sel[0], TXPlane) &&
-        EsdlInstanceOf(sel[1], TXAtom) &&
-        EsdlInstanceOf(sel[2], TXPlane))
+      else if (sel[0].Is<TXPlane>() &&
+        sel[1].Is<TXAtom>() &&
+        sel[2].Is<TXPlane>())
       {
         TSPlane& p1 = (TXPlane&)sel[0];
         TSAtom& a = (TXAtom&)sel[1];
@@ -3490,15 +3482,15 @@ void GXLibMacros::macEsd(TStrObjList &Cmds, const TParamList &Options,
     size_t cnt = 0;
     TGlGroup& gl = app.GetSelection();
     for (size_t i = 0; i < gl.Count(); i++) {
-      if (EsdlInstanceOf(gl[i], TXAtom)) {
+      if (gl[i].Is<TXAtom>()) {
         cent += ((TXAtom&)gl[i]).crd();
         cnt++;
       }
-      else if (EsdlInstanceOf(gl[i], TXBond)) {
+      else if (gl[i].Is<TXBond>()) {
         cent += ((TXBond&)gl[i]).GetCenter();
         cnt++;
       }
-      else if (EsdlInstanceOf(gl[i], TXPlane)) {
+      else if (gl[i].Is<TXPlane>()) {
         cent += ((TXPlane&)gl[i]).GetCenter();
         cnt++;
       }
@@ -3610,9 +3602,10 @@ void GXLibMacros::macKill(TStrObjList &Cmds, const TParamList &Options,
     olxstr_buf out;
     bool group_deletion = false;
     for (size_t i=0; i < sel.Count(); i++) {
-      if (EsdlInstanceOf(sel[i], TXAtom))
+      if (sel[i].Is<TXAtom>()) {
         out << ((TXAtom&)sel[i]).GetLabel();
-      if (EsdlInstanceOf(sel[i], TGlGroup)) {
+      }
+      if (sel[i].Is<TGlGroup>()) {
         if (!group_deletion) {
           group_deletion = true;
           TBasicApp::NewLogEntry() << "Please use 'ungroup' to delete groups";
@@ -4575,12 +4568,12 @@ void GXLibMacros::macSetMaterial(TStrObjList &Cmds, const TParamList &Options,
 }
 //..............................................................................
 void GXLibMacros::funGetMaterial(const TStrObjList &Params, TMacroData &E) {
-  const TGlMaterial* mat = NULL;
+  const TGlMaterial* mat = 0;
   size_t di = Params[0].IndexOf('.');
   olxstr col_name = di != InvalidIndex ? Params[0].SubStringTo(di) : Params[0];
   olxstr prm_name = di != InvalidIndex ? Params[0].SubStringFrom(di + 1)
     : EmptyString();
-  TGPCollection* gpc = NULL;
+  TGPCollection* gpc = 0;
   if (col_name.Equalsi("sel")) {
     TGlGroup &g = app.GetSelection();
     if (g.Count() != 1) {
@@ -4589,20 +4582,22 @@ void GXLibMacros::funGetMaterial(const TStrObjList &Params, TMacroData &E) {
     }
     gpc = &g[0].GetPrimitives();
   }
-  if (gpc != NULL) {
+  if (gpc != 0) {
     if (prm_name.IsEmpty()) {
-      if (EsdlInstanceOf(*gpc, TGlGroup))
+      if (gpc->Is<TGlGroup>()) {
         mat = &((TGlGroup*)gpc)->GetGlM();
+      }
     }
     else {
       TGlPrimitive* glp = gpc->FindPrimitiveByName(prm_name);
-      if (glp != NULL)
+      if (glp != 0) {
         mat = &glp->GetProperties();
+      }
     }
   }
   else {  // check if the style exists
     TGraphicsStyle* gs = app.GetRenderer().GetStyles().FindStyle(col_name);
-    if (gs != NULL) {
+    if (gs != 0) {
       if (prm_name.IsEmpty()) {
         mat = gs->FindMaterial("mat");
       }
@@ -4611,16 +4606,18 @@ void GXLibMacros::funGetMaterial(const TStrObjList &Params, TMacroData &E) {
       }
     }
   }
-  if (mat == NULL) {
+  if (mat == 0) {
     E.ProcessingError(__OlxSrcInfo, "Undefined material ").quote() <<
       Params[0];
     return;
   }
   else {
-    if (Params.Count() == 2)
+    if (Params.Count() == 2) {
       E.SetRetVal(mat->ToPOV());
-    else
+    }
+    else {
       E.SetRetVal(mat->ToString());
+    }
   }
 }
 //..............................................................................
@@ -4631,7 +4628,7 @@ void GXLibMacros::macDefineVar(TStrObjList &Cmds, const TParamList &Options,
   CalculatedVars &cv = rm.CVars;
   TGlGroup &g = app.GetSelection();
   if (g.Count() == 2) {
-    if (EsdlInstanceOf(g[0], TXPlane) && EsdlInstanceOf(g[1], TXPlane)) {
+    if (g[0].Is<TXPlane>() && g[1].Is<TXPlane>()) {
       CalculatedVars::Object
         *p1 = CalculatedVars::Object::create((TXPlane&)g[0], cv),
         *p2 = CalculatedVars::Object::create((TXPlane&)g[1], cv);
@@ -4646,18 +4643,18 @@ void GXLibMacros::macDefineVar(TStrObjList &Cmds, const TParamList &Options,
       cv.AddVar(new CalculatedVars::Var(Cmds[0] + "sb"))
         .AddRef(*p1).AddRef(*p2, "c").type = cv_vt_shift;
     }
-    else if ((EsdlInstanceOf(g[0], TXPlane) && EsdlInstanceOf(g[1], TXBond)) ||
-      (EsdlInstanceOf(g[1], TXPlane) && EsdlInstanceOf(g[0], TXBond)))
+    else if ((g[0].Is<TXPlane>() && g[1].Is<TXBond>()) ||
+      (g[1].Is<TXPlane>() && g[0].Is<TXBond>()))
     {
-      TXPlane &p = (TXPlane &)(g[EsdlInstanceOf(g[0], TXPlane) ? 0 : 1]);
-      TXBond &b = (TXBond &)(g[EsdlInstanceOf(g[0], TXPlane) ? 1 : 0]);
+      TXPlane &p = (TXPlane &)(g[g[0].Is<TXPlane>() ? 0 : 1]);
+      TXBond &b = (TXBond &)(g[g[0].Is<TXPlane>() ? 1 : 0]);
       CalculatedVars::Object
         *p1 = CalculatedVars::Object::create(p, cv),
         *p2 = CalculatedVars::Object::create(b, cv);
       cv.AddVar(new CalculatedVars::Var(Cmds[0]))
         .AddRef(*p1, "n").AddRef(*p2).type = cv_vt_angle;
     }
-    else if (EsdlInstanceOf(g[0], TXAtom) && EsdlInstanceOf(g[1], TXAtom)) {
+    else if (g[0].Is<TXAtom>() && g[1].Is<TXAtom>()) {
       CalculatedVars::Object
         *p1 = CalculatedVars::Object::create((TXAtom &)g[0], cv),
         *p2 = CalculatedVars::Object::create((TXAtom &)g[1], cv);
@@ -4688,7 +4685,7 @@ void GXLibMacros::macProjSph(TStrObjList &Cmds, const TParamList &Options,
       radii = TXApp::ReadRadii(Cmds[0]);
     ContentList cl = app.XFile().GetAsymmUnit().GetContentList();
     for (size_t i = 0; i < cl.Count(); i++) {
-      cl[i].element.r_custom = radii.Find(&cl[i].element, cl[i].element.r_vdw);
+      cl[i].element->r_custom = radii.Find(cl[i].element, cl[i].element->r_vdw);
     }
     TXApp::PrintCustomRadii(radii, cl);
   }
@@ -5099,8 +5096,8 @@ void adjust_style(TGXApp &app, const functor_t & functor,
     if (c.IsEmpty()) {
       continue;
     }
-    if ((apply_to_atoms && EsdlInstanceOf(c.GetObject(0), TXAtom)) ||
-      (apply_to_bonds && EsdlInstanceOf(c.GetObject(0), TXBond)))
+    if ((apply_to_atoms && c.GetObject(0).Is<TXAtom>()) ||
+      (apply_to_bonds && c.GetObject(0).Is<TXBond>()))
     {
       for (size_t j = 0; j < c.PrimitiveCount(); j++) {
         TGlPrimitive &p = c.GetPrimitive(j);
@@ -5130,7 +5127,7 @@ void adjust_style(TGXApp &app, const functor_t & functor,
 }
 
 void sta_adjust_overflow(TGlOption &o) {
-  double ovf = 0;
+  float ovf = 0;
   for (int i = 0; i < 4; i++) {
     if (o[i] > 1) {
       if (ovf < o[i]) {

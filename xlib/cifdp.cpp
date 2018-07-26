@@ -240,7 +240,7 @@ TTypeList<CifToken>::const_list_type TCifDP::TokenizeString(const olxstr &str_,
           lni.GetLineNumber(start)));
       start = i + 1;
     }
-    else if (ch == ';' && (i == 0 || i > 0 && str.CharAt(i - 1) == '\n')) {
+    else if (ch == ';' && (i == 0 || str.CharAt(i - 1) == '\n')) {
       if (i == 0) {
         throw ParsingException(__OlxSourceInfo, "invalid start of file",
           lni.GetLineNumber(i));
@@ -623,7 +623,7 @@ CifBlock::CifBlock(const CifBlock& v) {
   for (size_t i = 0; i < v.params.Count(); i++) {
     param_map.Add(v.params[i], v.params.GetObject(i));
     params.Add(v.params[i], v.params.GetObject(i));
-    if (EsdlInstanceOf(*v.params.GetObject(i), cetTable)) {
+    if (v.params.GetObject(i)->Is<cetTable>()) {
       table_map.Add(v.params[i], (cetTable*)v.params.GetObject(i));
     }
   }
@@ -638,7 +638,7 @@ CifBlock::~CifBlock() {
 ICifEntry& CifBlock::Add(ICifEntry* p) {
   // only comments are allowed to have not name
   if (!p->HasName() || p->GetName().IsEmpty()) {
-    if (!EsdlInstanceOf(*p, cetComment)) {
+    if (!p->Is<cetComment>()) {
       throw TInvalidArgumentException(__OlxSourceInfo, "name");
     }
     return *params.Add(EmptyString(), p).Object;
@@ -648,14 +648,14 @@ ICifEntry& CifBlock::Add(ICifEntry* p) {
   if (i == InvalidIndex) {
     param_map.Add(pname, p);
     params.Add(pname, p);
-    if (EsdlInstanceOf(*p, cetTable)) {
+    if (p->Is<cetTable>()) {
       table_map.Add(pname, (cetTable*)p);
     }
   }
   else {
     const size_t ti = table_map.IndexOf(pname);
     if (ti != InvalidIndex) {
-      if (EsdlInstanceOf(*p, cetTable)) {
+      if (p->Is<cetTable>()) {
         table_map.GetValue(ti) = (cetTable*)p;
       }
       else {
@@ -740,7 +740,7 @@ void CifBlock::Rename(const olxstr& old_name, const olxstr& new_name,
     val->SetName(new_name);
   }
   catch (...) { // read only name?
-    if (EsdlInstanceOf(*val, cetTable)) {
+    if (val->Is<cetTable>()) {
       cetTable* t = dynamic_cast<cetTable *>(val);
       cetTable *nt = new cetTable();
       for (size_t i = 0; i < t->ColCount(); i++) {
@@ -793,7 +793,7 @@ void CifBlock::Sort(const TStrList& pivots, const TStrList& endings) {
   for (size_t i = 0; i < params.Count(); i++) {
     CifBlock::EntryGroup& eg = groups.AddNew();
     while (i < params.Count() &&
-      EsdlInstanceOf(*params.GetObject(i), cetComment))
+      params.GetObject(i)->Is<cetComment>())
     {
       eg.items.Add(params.GetObject(i++));
     }
