@@ -115,8 +115,10 @@ bool XVar::IsUsed() const {
   if (LeqCount() == 0) {
     if (rc == 1) {
       if (TXApp::DoPreserveFVARs() ||
-        EsdlInstanceOf(References[0]->referencer, TSimpleRestraint))
+        References[0]->referencer.Is<TSimpleRestraint>())
+      {
         return true;
+      }
     }
     return rc > 1;
   }

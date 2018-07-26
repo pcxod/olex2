@@ -45,29 +45,33 @@ void TCheckBox::SetActionQueue(TActionQueue& q, const olxstr& dependMode)  {
 bool TCheckBox::Execute(const IOlxObject *Sender, const IOlxObject *Data,
   TActionQueue *)
 {
-  if (Data && EsdlInstanceOf(*Data, TModeChange)) {
+  if (Data != 0 && Data->Is<TModeChange>()) {
     const TModeChange* mc = (const TModeChange*)Data;
     SetChecked(mc->GetStatus());
   }
-  else if (Data && EsdlInstanceOf(*Data, TStateChange)) {
+  else if (Data != 0 && Data->Is<TStateChange>()) {
     const TStateChange* sc = (const TStateChange*)Data;
     SetChecked(sc->GetStatus());
   }
   else {
     OnClick.Execute((AOlxCtrl*)this);
-    if (IsChecked())
+    if (IsChecked()) {
       OnCheck.Execute((AOlxCtrl*)this);
-    else
+    }
+    else {
       OnUncheck.Execute((AOlxCtrl*)this);
+    }
   }
   return true;
 }
 //..............................................................................
-void TCheckBox::ClickEvent(wxCommandEvent &event)  {
+void TCheckBox::ClickEvent(wxCommandEvent &event) {
   event.Skip();
   OnClick.Execute((AOlxCtrl*)this);
-  if( IsChecked() )
+  if (IsChecked()) {
     OnCheck.Execute((AOlxCtrl*)this);
-  else
+  }
+  else {
     OnUncheck.Execute((AOlxCtrl*)this);
+  }
 }

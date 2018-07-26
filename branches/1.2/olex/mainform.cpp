@@ -122,25 +122,33 @@ const olxstr ProcessOutputCBName("procout");
 const olxstr OnStateChangeCBName("statechange");
 const olxstr OnLogCBName("onlog");
 
-class TObjectVisibilityChange: public AActionHandler  {
+class TObjectVisibilityChange : public AActionHandler {
   TMainForm *FParent;
 public:
-  TObjectVisibilityChange(TMainForm *Parent){  FParent = Parent; }
-  virtual ~TObjectVisibilityChange()  {  ;  }
-  bool Execute(const IOlxObject *Sender, const IOlxObject *Obj, TActionQueue *)  {
-    if( !Obj )  return false;
-    if( EsdlInstanceOf(*Obj, TDBasis) )
+  TObjectVisibilityChange(TMainForm *Parent) { FParent = Parent; }
+  virtual ~TObjectVisibilityChange() { ; }
+  bool Execute(const IOlxObject *Sender, const IOlxObject *Obj, TActionQueue *) {
+    if (Obj == 0) {
+      return false;
+    }
+    if (Obj->Is<TDBasis>()) {
       FParent->BasisVChange();
-    else if( EsdlInstanceOf(*Obj, TDUnitCell) )
+    }
+    else if (Obj->Is<TDUnitCell>()) {
       FParent->CellVChange();
-    else  if( Obj == FParent->FInfoBox )
+    }
+    else  if (Obj == FParent->FInfoBox) {
       FParent->processMacro("showwindow info false");
-    else  if( Obj == FParent->FHelpWindow )
+    }
+    else  if (Obj == FParent->FHelpWindow) {
       FParent->processMacro("showwindow help false");
-    else if( EsdlInstanceOf(*Obj, TXGrid) )
+    }
+    else if (Obj->Is<TXGrid>()) {
       FParent->GridVChange();
-    else if( EsdlInstanceOf(*Obj, T3DFrameCtrl) )
+    }
+    else if (Obj->Is<T3DFrameCtrl>()) {
       FParent->FrameVChange();
+    }
     return true;
   }
 };
@@ -1489,13 +1497,13 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
     Py_BEGIN_ALLOW_THREADS
       olx_sleep(5);
     Py_END_ALLOW_THREADS
-    PyGILState_Release(st);
+      PyGILState_Release(st);
   }
 
-  bool res = true, Silent = (FMode & mSilent) != 0, Draw=false;
-  static bool actionEntered = false, downloadEntered=false;
-  if( MsgId == ID_GLDRAW && !IsIconized() )  {
-    if( !FBitmapDraw )  {
+  bool res = true, Silent = (FMode & mSilent) != 0, Draw = false;
+  static bool actionEntered = false, downloadEntered = false;
+  if (MsgId == ID_GLDRAW && !IsIconized()) {
+    if (!FBitmapDraw) {
       //glLoadIdentity();
       //glRasterPos3d(-0.5,-0.5,-1.6);
       //wxMemoryDC dc;
@@ -1549,62 +1557,65 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
   //    }
   //  }
   //}
-  else if( MsgId == ID_UpdateThreadTerminate )  {
+  else if (MsgId == ID_UpdateThreadTerminate) {
     volatile olx_scope_cs cs(TBasicApp::GetCriticalSection());
-    _UpdateThread = NULL;
+    _UpdateThread = 0;
 
-     if( UpdateProgress != NULL )  {
-       delete UpdateProgress;
-       UpdateProgress = NULL;
-     }
+    if (UpdateProgress != 0) {
+      delete UpdateProgress;
+      UpdateProgress = 0;
+    }
   }
-  else if( MsgId == ID_UpdateThreadDownload )  {
+  else if (MsgId == ID_UpdateThreadDownload) {
     volatile olx_scope_cs cs(TBasicApp::GetCriticalSection());
-    if( MsgSubId == msiEnter )  {
-      if( UpdateProgress == NULL )
+    if (MsgSubId == msiEnter) {
+      if (UpdateProgress == 0)
         UpdateProgress = new TOnProgress;
     }
-    if( MsgSubId == msiExecute && Data != NULL && EsdlInstanceOf(*Data, TOnProgress) )  {
+    if (MsgSubId == msiExecute && Data != 0 && Data->Is<TOnProgress>()) {
       TOnProgress& pg = *(TOnProgress*)Data;
-      if( UpdateProgress != NULL )
+      if (UpdateProgress != 0) {
         *UpdateProgress = pg;
+      }
       downloadEntered = true;
       AOlxThread::Yield();
     }
-    else if( MsgSubId == msiExit )  {
-      if( UpdateProgress != NULL )  {
+    else if (MsgSubId == msiExit) {
+      if (UpdateProgress != 0) {
         delete UpdateProgress;
-        UpdateProgress = NULL;
+        UpdateProgress = 0;
       }
     }
   }
-  else if( MsgId == ID_UpdateThreadAction )  {
+  else if (MsgId == ID_UpdateThreadAction) {
     volatile olx_scope_cs cs(TBasicApp::GetCriticalSection());
-    if( MsgSubId == msiEnter )  {
-      if( ActionProgress == NULL )
+    if (MsgSubId == msiEnter) {
+      if (ActionProgress == 0) {
         ActionProgress = new TOnProgress;
+      }
     }
-    else if( MsgSubId == msiExecute && Data != NULL && EsdlInstanceOf(*Data, TOnProgress) )  {
+    else if (MsgSubId == msiExecute && Data != 0 && Data->Is<TOnProgress>()) {
       TOnProgress& pg = *(TOnProgress*)Data;
-        if( ActionProgress != NULL )
-          *ActionProgress = pg;
+      if (ActionProgress != 0) {
+        *ActionProgress = pg;
+      }
       actionEntered = true;
       AOlxThread::Yield();
     }
-    else if( MsgSubId == msiExit )  {
-       if( ActionProgress != NULL )  {
-         delete ActionProgress;
-         ActionProgress = NULL;
-       }
+    else if (MsgSubId == msiExit) {
+      if (ActionProgress != 0) {
+        delete ActionProgress;
+        ActionProgress = 0;
+      }
     }
   }
   else if (MsgId == ID_TIMER) {
     FTimer->OnTimer.SetEnabled(false);
-    if (nui_interface != NULL) {
+    if (nui_interface != 0) {
       nui_interface->DoProcessing();
     }
     // execute tasks ...
-    for (size_t i=0; i < Tasks.Count(); i++) {
+    for (size_t i = 0; i < Tasks.Count(); i++) {
       if (Tasks[i].NeedsGUI && !this->IsShownOnScreen())
         continue;
       if ((TETime::Now() - Tasks[i].LastCalled) > Tasks[i].Interval) {
@@ -1618,56 +1629,58 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
         processMacro(tmp, "Scheduled task");
       }
     }
-    for (size_t i=0; i < RunWhenVisibleTasks.Count(); i++)
+    for (size_t i = 0; i < RunWhenVisibleTasks.Count(); i++)
       RunWhenVisibleTasks[i]->Run();
     RunWhenVisibleTasks.DeleteItems().Clear();
     // end tasks ...
     FTimer->OnTimer.SetEnabled(true);
-    if( (FMode & mListen) != 0 && TEFile::Exists(FListenFile) )  {
+    if ((FMode & mListen) != 0 && TEFile::Exists(FListenFile)) {
       static time_t FileMT = TEFile::FileAge(FListenFile);
       time_t FileT = TEFile::FileAge(FListenFile);
-      if( FileMT != FileT )  {
+      if (FileMT != FileT) {
         FObjectUnderMouse = NULL;
-        processMacro((olxstr("@reap -b -r \"") << FListenFile)+'\"', "OnListen");
-        for( size_t i=0; i < FOnListenCmds.Count(); i++ )  {
-          if( !processMacro(FOnListenCmds[i], "OnListen") )
+        processMacro((olxstr("@reap -b -r \"") << FListenFile) + '\"', "OnListen");
+        for (size_t i = 0; i < FOnListenCmds.Count(); i++) {
+          if (!processMacro(FOnListenCmds[i], "OnListen"))
             break;
         }
         FileMT = FileT;
-        if( !FOnListenCmds.IsEmpty() )
+        if (!FOnListenCmds.IsEmpty())
           Draw = true;
       }
     }
-    if( (FMode & mRota) != 0  )  {
+    if ((FMode & mRota) != 0) {
       FXApp->GetRenderer().GetBasis().RotateX(
-        FXApp->GetRenderer().GetBasis().GetRX()+FRotationIncrement*FRotationVector[0]);
+        FXApp->GetRenderer().GetBasis().GetRX() + FRotationIncrement*FRotationVector[0]);
       FXApp->GetRenderer().GetBasis().RotateY(
-        FXApp->GetRenderer().GetBasis().GetRY()+FRotationIncrement*FRotationVector[1]);
+        FXApp->GetRenderer().GetBasis().GetRY() + FRotationIncrement*FRotationVector[1]);
       FXApp->GetRenderer().GetBasis().RotateZ(
-        FXApp->GetRenderer().GetBasis().GetRZ()+FRotationIncrement*FRotationVector[2]);
+        FXApp->GetRenderer().GetBasis().GetRZ() + FRotationIncrement*FRotationVector[2]);
       FRotationAngle -= olx_abs(FRotationVector.Length()*FRotationIncrement);
-      if( FRotationAngle < 0 )  FMode ^= mRota;
+      if (FRotationAngle < 0)  FMode ^= mRota;
       Draw = true;
     }
-    if( (FMode & mFade) != 0 )  {
+    if ((FMode & mFade) != 0) {
       Draw = true;
-      if( FFadeVector[0] == FFadeVector[1] )
-      {  FMode ^= mFade;  }//FXApp->GetRenderer().Ceiling()->Visible(false);  }
+      if (FFadeVector[0] == FFadeVector[1])
+      {
+        FMode ^= mFade;
+      }//FXApp->GetRenderer().Ceiling()->Visible(false);  }
 
       FFadeVector[0] += FFadeVector[2];
-      if( FFadeVector[2] > 0 )  {
-        if( FFadeVector[0] > FFadeVector[1] )  {
+      if (FFadeVector[2] > 0) {
+        if (FFadeVector[0] > FFadeVector[1]) {
           FFadeVector[0] = FFadeVector[1];
           FMode ^= mFade;
         }
       }
-      else  {
-        if( FFadeVector[0] < FFadeVector[1] )  {
+      else {
+        if (FFadeVector[0] < FFadeVector[1]) {
           FFadeVector[0] = FFadeVector[1];
           FMode ^= mFade;
         }
       }
-      if( (FMode & mFade) != 0 )  {
+      if ((FMode & mFade) != 0) {
         TGlOption glO;
         glO = FXApp->GetRenderer().Ceiling()->LT();  glO[3] = FFadeVector[0];
         FXApp->GetRenderer().Ceiling()->LT(glO);
@@ -1683,35 +1696,35 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
         Draw = true;
       }
     }
-    if( FXApp->GetFader().IsVisible() )  {
-      if( !FXApp->GetFader().Increment() )
-         FXApp->GetFader().SetVisible(false);
+    if (FXApp->GetFader().IsVisible()) {
+      if (!FXApp->GetFader().Increment())
+        FXApp->GetFader().SetVisible(false);
       Draw = true;
     }
-    if( MouseMoveTimeElapsed < 2500 )
+    if (MouseMoveTimeElapsed < 2500)
       MouseMoveTimeElapsed += FTimer->GetInterval();
-    if( MouseMoveTimeElapsed > 500 && MouseMoveTimeElapsed < 5000 )  {
+    if (MouseMoveTimeElapsed > 500 && MouseMoveTimeElapsed < 5000) {
       olxstr tt = this->FXApp->GetObjectInfoAt(MousePositionX, MousePositionY);
       if (!_UseGlTooltip)
         FGlCanvas->SetToolTip(tt.u_str());
-      else if( GlTooltip != NULL) {
-        if (tt.IsEmpty() )  {
+      else if (GlTooltip != 0) {
+        if (tt.IsEmpty()) {
           if (GlTooltip->IsVisible()) {
             GlTooltip->SetVisible(false);
             Draw = true;
           }
         }
-        else  {
+        else {
           GlTooltip->Clear();
           GlTooltip->PostText(tt);
           GlTooltip->Fit();
-          int x = MousePositionX-GlTooltip->GetWidth()/2,
-            y = MousePositionY-GlTooltip->GetHeight()-4;
-          if( x < 0 )  x = 0;
-          if( (size_t)(x + GlTooltip->GetWidth()) > (size_t)FXApp->GetRenderer().GetWidth() )
+          int x = MousePositionX - GlTooltip->GetWidth() / 2,
+            y = MousePositionY - GlTooltip->GetHeight() - 4;
+          if (x < 0)  x = 0;
+          if ((size_t)(x + GlTooltip->GetWidth()) > (size_t)FXApp->GetRenderer().GetWidth())
             x = FXApp->GetRenderer().GetWidth() - GlTooltip->GetWidth();
-          if( y < 0 )
-            y  = 0;
+          if (y < 0)
+            y = 0;
           GlTooltip->SetLeft(x); // put it off the mouse
           GlTooltip->SetTop(y);
           GlTooltip->SetZ(FXApp->GetRenderer().GetMaxRasterZ());
@@ -1719,22 +1732,24 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
           Draw = true;
         }
       }
-      if( DrawSceneTimer > 0 && !Draw )  {
-        if( DrawSceneTimer < FTimer->GetInterval() )
+      if (DrawSceneTimer > 0 && !Draw) {
+        if (DrawSceneTimer < FTimer->GetInterval()) {
           TimePerFrame = FXApp->Draw();
-        else
+        }
+        else {
           DrawSceneTimer -= FTimer->GetInterval();
+        }
       }
       MouseMoveTimeElapsed = 5000;
     }
-    if( Draw )  {
+    if (Draw) {
       TimePerFrame = FXApp->Draw();
     }
     // here it cannot be done with scope_cs - GTK would freese the main loop...
     TBasicApp::EnterCriticalSection();
-    if( _UpdateThread != NULL && _UpdateThread->GetUpdateSize() != 0 )  {
+    if (_UpdateThread != NULL && _UpdateThread->GetUpdateSize() != 0) {
       TBasicApp::LeaveCriticalSection();
-      if( wxApp::IsMainLoopRunning() )  {
+      if (wxApp::IsMainLoopRunning()) {
         FTimer->OnTimer.SetEnabled(false);
         DoUpdateFiles();
         FTimer->OnTimer.SetEnabled(true);
@@ -1742,61 +1757,64 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
     }
     else
       TBasicApp::LeaveCriticalSection();
-  // deal with updates
-    if( wxIsMainThread() )  {
+    // deal with updates
+    if (wxIsMainThread()) {
       static bool UpdateExecuted = false;
       volatile olx_scope_cs cs(TBasicApp::GetCriticalSection());
-      if( actionEntered && ActionProgress != NULL )  {
-        StatusBar->SetStatusText( (olxstr("Processing ") <<
-          ActionProgress->GetAction()).u_str() );
+      if (actionEntered && ActionProgress != 0) {
+        StatusBar->SetStatusText((olxstr("Processing ") <<
+          ActionProgress->GetAction()).u_str());
         actionEntered = false;
       }
-      if( downloadEntered && UpdateProgress != NULL )  {
+      if (downloadEntered && UpdateProgress != 0) {
         downloadEntered = false;
         UpdateExecuted = true;
         StatusBar->SetStatusText(
           (olxstr("Downloading ") << UpdateProgress->GetAction() << ' ' <<
-          olxstr::FormatFloat(2, UpdateProgress->GetPos()*100/
-            (UpdateProgress->GetMax()+1)) << '%').u_str()
+            olxstr::FormatFloat(2, UpdateProgress->GetPos() * 100 /
+            (UpdateProgress->GetMax() + 1)) << '%').u_str()
         );
       }
-      if( UpdateExecuted && _UpdateThread == NULL )  {
+      if (UpdateExecuted && _UpdateThread == 0) {
         StatusBar->SetStatusText(TBasicApp::GetBaseDir().u_str());
         UpdateExecuted = false;
       }
     }
   }
-  else if( MsgId == ID_XOBJECTSDESTROY )  {
-    FObjectUnderMouse = NULL;
-    if( Modes->GetCurrent() != NULL )
+  else if (MsgId == ID_XOBJECTSDESTROY) {
+    FObjectUnderMouse = 0;
+    if (Modes->GetCurrent() != 0) {
       Modes->GetCurrent()->OnGraphicsDestroy();
+    }
   }
-  else if( MsgId == ID_FileLoad )  {
+  else if (MsgId == ID_FileLoad) {
   }
-  else if( MsgId == ID_FileClose )  {
-    if( MsgSubId == msiExit )  {
+  else if (MsgId == ID_FileClose) {
+    if (MsgSubId == msiExit) {
       UpdateRecentFile(EmptyString());
       UpdateInfoBox();
     }
   }
-  else if( MsgId == ID_CMDLINECHAR )  {
-    if( Data != NULL && EsdlInstanceOf(*Data, TKeyEvent) )
+  else if (MsgId == ID_CMDLINECHAR) {
+    if (Data != 0 && Data->Is<TKeyEvent>()) {
       this->OnChar(((TKeyEvent*)Data)->GetEvent());
+    }
   }
-  else if( MsgId == ID_CMDLINEKEYDOWN )  {
-    if( Data != NULL && EsdlInstanceOf(*Data, TKeyEvent) )
+  else if (MsgId == ID_CMDLINEKEYDOWN) {
+    if (Data != 0 && Data->Is<TKeyEvent>()) {
       this->OnKeyDown(((TKeyEvent*)Data)->GetEvent());
+    }
   }
   else if ((MsgId == ID_INFO || MsgId == ID_WARNING || MsgId == ID_ERROR ||
-           MsgId == ID_EXCEPTION) && (MsgSubId == msiEnter))
+    MsgId == ID_EXCEPTION) && (MsgSubId == msiEnter))
   {
-    if( Data != NULL )  {
-      TGlMaterial *glm = NULL;
-      if( MsgId == ID_INFO )           glm = &InfoFontColor;
-      else if( MsgId == ID_WARNING )   glm = &WarningFontColor;
-      else if( MsgId == ID_ERROR )     glm = &ErrorFontColor;
-      else if( MsgId == ID_EXCEPTION ) glm = &ExceptionFontColor;
-      if( !( (FMode&mSilent) != 0 &&  (MsgId == ID_INFO)) ||
+    if (Data != 0) {
+      TGlMaterial *glm = 0;
+      if (MsgId == ID_INFO)           glm = &InfoFontColor;
+      else if (MsgId == ID_WARNING)   glm = &WarningFontColor;
+      else if (MsgId == ID_ERROR)     glm = &ErrorFontColor;
+      else if (MsgId == ID_EXCEPTION) glm = &ExceptionFontColor;
+      if (!((FMode&mSilent) != 0 && (MsgId == ID_INFO)) ||
         (MsgId == ID_WARNING || MsgId == ID_ERROR || MsgId == ID_EXCEPTION))
       {
         FGlConsole->OnPost.SetEnabled(false); // the proporgation will happen after we return false
@@ -1810,19 +1828,21 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
     }
   }
   else if (MsgId == ID_LOG && (MsgSubId == msiExecute)) {
-    if( Data != NULL )
+    if (Data != 0) {
       callCallbackFunc(OnLogCBName, TStrList() << Data->ToString());
+    }
   }
-  else if( MsgId == ID_ONLINK )  {
-    if( Data != NULL && EsdlInstanceOf(*Data, olxstr) )  {
+  else if (MsgId == ID_ONLINK) {
+    if (Data != 0 && Data->Is<olxstr>()) {
       TStrList Toks = TParamList::StrtokLines(*(olxstr*)Data, ">>");
       //GetHtml()->LockPageLoad();
       /* the page, if requested, will beloaded on time event. The timer is disabled
       in case if a modal window appears and the timer event can be called */
       FTimer->OnTimer.SetEnabled(false);
-      for( size_t i=0; i < Toks.Count(); i++ )  {
-        if( !processMacro(olxstr::DeleteSequencesOf<char>(Toks[i], ' '), "OnLink") )
+      for (size_t i = 0; i < Toks.Count(); i++) {
+        if (!processMacro(olxstr::DeleteSequencesOf<char>(Toks[i], ' '), "OnLink")) {
           break;
+        }
       }
       TimePerFrame = FXApp->Draw();
       // enabling the timer back
@@ -1851,48 +1871,51 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
         }
       }
       else {
-          if (CmdLineVisible)
-            FCmdLine->SetFocus();
-          else
-            FGlCanvas->SetFocus();
+        if (CmdLineVisible)
+          FCmdLine->SetFocus();
+        else
+          FGlCanvas->SetFocus();
       }
       FTimer->OnTimer.SetEnabled(true);
     }
   }
-  else if( MsgId == ID_HTMLKEY )  {
+  else if (MsgId == ID_HTMLKEY) {
     if (CmdLineVisible)
       FCmdLine->SetFocus();
     else
       FGlCanvas->SetFocus();
     OnChar(((TKeyEvent*)Data)->GetEvent());
   }
-  else if( MsgId == ID_TEXTPOST )  {
+  else if (MsgId == ID_TEXTPOST) {
     if (Data != NULL) {
       FGlConsole->SetSkipPosting(true);
       TBasicApp::NewLogEntry() << olxstr(Data->ToString());
       FGlConsole->SetSkipPosting(false);
     }
   }
-  else if( MsgId == ID_COMMAND )  {
+  else if (MsgId == ID_COMMAND) {
     olxstr tmp;
-    if( CmdLineVisible && EsdlInstanceOf(*Sender, TCmdLine) )
+    if (CmdLineVisible && Sender->Is<TCmdLine>()) {
       tmp = FCmdLine->GetCommand();
-    else if( EsdlInstanceOf(*Sender, TGlConsole) )
+    }
+    else if (Sender->Is<TGlConsole>())
       tmp = FGlConsole->GetCommand();
-    if( !tmp.IsEmpty() )  {
-      if( _ProcessManager->GetRedirected() != NULL )  {
+    if (!tmp.IsEmpty()) {
+      if (_ProcessManager->GetRedirected() != NULL) {
         _ProcessManager->GetRedirected()->Write(tmp);
         _ProcessManager->GetRedirected()->Writenl();
         TimePerFrame = FXApp->Draw();
       }
-      else  {
+      else {
         FHelpWindow->SetVisible(false);
         olxstr FullCmd(tmp);
         if (tmp.StartsFrom('!')) {
-          if (CmdLineVisible && EsdlInstanceOf(*Sender, TCmdLine))
+          if (CmdLineVisible && Sender->Is<TCmdLine>()) {
             tmp = FCmdLine->GetLastCommand(tmp.SubStringFrom(1));
-          else if (EsdlInstanceOf(*Sender, TGlConsole))
+          }
+          else if (Sender->Is<TGlConsole>()) {
             tmp = FGlConsole->GetLastCommand(tmp.SubStringFrom(1));
+          }
           if (!tmp.IsEmpty()) {
             FullCmd = tmp;
             TBasicApp::NewLogEntry() << FullCmd;
@@ -1900,41 +1923,44 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
         }
         processMacro(FullCmd, "Console");
       }
-      if( CmdLineVisible && EsdlInstanceOf(*Sender, TCmdLine) )
+      if (CmdLineVisible && Sender->Is<TCmdLine>()) {
         FCmdLine->SetCommand(EmptyString());
-      else
+      }
+      else {
         FGlConsole->SetCommand(EmptyString());
+      }
     }
   }
-  else if( MsgId == ID_DELINS )  {
-    if( Data != NULL && EsdlInstanceOf(*Data, olxstr) )  {
-      if( ((olxstr*)Data)->Equalsi("OMIT") )  {
+  else if (MsgId == ID_DELINS) {
+    if (Data != 0 && Data->Is<olxstr>()) {
+      if (((olxstr*)Data)->Equalsi("OMIT")) {
         BadReflectionsTable(false);
         processMacro("html.update");
       }
     }
   }
-  else if( MsgId == ID_ADDINS )  {
-    if( Data != NULL && EsdlInstanceOf(*Data, olxstr) )  {
-      if( ((olxstr*)Data)->Equalsi("OMIT") )  {
+  else if (MsgId == ID_ADDINS) {
+    if (Data != 0 && Data->Is<olxstr>()) {
+      if (((olxstr*)Data)->Equalsi("OMIT")) {
         BadReflectionsTable(false);
         processMacro("html.update");
       }
     }
   }
   else if (MsgId == ID_BadReflectionSet) {
-    if (MsgSubId == msiExit)
+    if (MsgSubId == msiExit) {
       BadReflectionsTable(false);
+    }
   }
   else if (MsgId == ID_UPDATE_GUI) {
     processMacro("html.update");
   }
   else if (MsgId == ID_CellChanged) {
-    if (Data != NULL && EsdlInstanceOf(*Data, TIns) ) {
-       const TIns *hf = dynamic_cast<const TIns*>(Data);
+    if (Data != 0 && Data->Is<TIns>()) {
+      const TIns *hf = dynamic_cast<const TIns*>(Data);
       RunWhenVisibleTasks.Add(
         new CellChangeTask(FXApp->XFile().GetRM().GetHKLSource(),
-        hf->GetAsymmUnit()));
+          hf->GetAsymmUnit()));
     }
   }
   return res;
@@ -2213,10 +2239,10 @@ void TMainForm::OnKeyDown(wxKeyEvent& m)  {
   if (wxw != FGlCanvas && wxw != FCmdLine) {
     if (HtmlManager.main != NULL) {
       THtml* htw = HtmlManager.main;
-      if ((wxw != NULL && EsdlInstanceOf(*wxw, THtml)))
+      if ((wxw != NULL && olx_type<THtml>::check(*wxw)))
         htw = (THtml*)wxw;
       else if (wxw != NULL && wxw->GetParent() != NULL &&
-        EsdlInstanceOf(*wxw->GetParent(), THtml) )
+        olx_type<THtml>::check(*wxw->GetParent()))
       {
         htw = (THtml*)wxw->GetParent();
       }
@@ -2343,15 +2369,16 @@ void TMainForm::OnKeyDown(wxKeyEvent& m)  {
   m.Skip();
 }
 //..............................................................................
-void TMainForm::OnNavigation(wxNavigationKeyEvent& event)  {
+void TMainForm::OnNavigation(wxNavigationKeyEvent& event) {
   if (FindFocus() != FGlCanvas) {
-    if (HtmlManager.main != NULL) {
+    if (HtmlManager.main != 0) {
       THtml* htw = HtmlManager.main;
       wxWindow* wxw = FindFocus();
-      if( (wxw != NULL && EsdlInstanceOf(*wxw, THtml)) )
+      if ((wxw != 0 && olx_type<THtml>::check(*wxw))) {
         htw = (THtml*)wxw;
-      else if(wxw != NULL && wxw->GetParent() != NULL &&
-              EsdlInstanceOf(*wxw->GetParent(), THtml) )
+      }
+      else if (wxw != 0 && wxw->GetParent() != 0 &&
+        olx_type<THtml>::check(*wxw->GetParent()))
       {
         htw = (THtml*)wxw->GetParent();
       }
@@ -2364,8 +2391,8 @@ void TMainForm::OnNavigation(wxNavigationKeyEvent& event)  {
 }
 //..............................................................................
 void TMainForm::OnMove(wxMoveEvent& evt) {
-  if( FXApp == NULL || FGlConsole == NULL || FInfoBox == NULL ||
-      !StartupInitialised )
+  if( FXApp == 0 || FGlConsole == 0 || FInfoBox == 0 ||
+    !StartupInitialised)
   {
     return;
   }
@@ -2373,12 +2400,12 @@ void TMainForm::OnMove(wxMoveEvent& evt) {
   FXApp->GetRenderer().SetAbsoluteTop(p.y);
 }
 //..............................................................................
-void TMainForm::OnSize(wxSizeEvent& event)  {
+void TMainForm::OnSize(wxSizeEvent& event) {
   wxFrame::OnSize(event);
-  if( SkipSizing )  return;
-  if( FXApp == NULL || FGlConsole == NULL || FInfoBox == NULL ||
-      !StartupInitialised )
-  {
+  if (SkipSizing) {
+    return;
+  }
+  if (FXApp == 0 || FGlConsole == 0 || FInfoBox == 0 || !StartupInitialised) {
     return;
   }
   OnResize();
@@ -2632,7 +2659,9 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
 }
 //..............................................................................
 void TMainForm::LoadSettings(const olxstr &FN)  {
-  if( !TEFile::Exists(FN) ) return;
+  if (!TEFile::Exists(FN)) {
+    return;
+  }
   // compatibility check...
 #ifdef __WIN32__
   {
@@ -3273,10 +3302,13 @@ bool TMainForm::CheckState(size_t state, const olxstr& stateData) const {
 }
 //..............................................................................
 void TMainForm::OnIdle() {
-  if (Destroying) return;
+  if (Destroying) {
+    return;
+  }
 #if !defined(__WIN32__)
-  if (!StartupInitialised)
+  if (!StartupInitialised && IsVisible() && FGlCanvas->IsShown()) {
     StartupInit();
+  }
 #endif
   TBasicApp::GetInstance().OnIdle.Execute((AEventsDispatcher*)this, NULL);
   // runonce business...
@@ -3421,16 +3453,16 @@ int TMainForm::TranslateShortcut(const olxstr& sk) {
   return Char != 0 ? ((Shift << 16) | Char) : -1;
 }
 //..............................................................................
-bool TMainForm::OnMouseDblClick(int x, int y, short Flags, short Buttons)  {
+bool TMainForm::OnMouseDblClick(int x, int y, short Flags, short Buttons) {
   AGDrawObject *G = FXApp->SelectObject(x, y);
-  if (Modes->GetCurrent() != NULL && Modes->GetCurrent()->OnDblClick()) {
+  if (Modes->GetCurrent() != 0 && Modes->GetCurrent()->OnDblClick()) {
     return true;
   }
-  if (G == NULL) {
+  if (G == 0) {
     processMacro("sel -u");
     return true;
   }
-  if (EsdlInstanceOf(*G, TGlBitmap)) {
+  if (G->Is<TGlBitmap>()) {
     TGlBitmap* glB = (TGlBitmap*)G;
     if (!(glB->GetLeft() > 0)) {
       int Top = InfoWindowVisible ? FInfoBox->GetTop() + FInfoBox->GetHeight() : 1;
@@ -3449,41 +3481,50 @@ bool TMainForm::OnMouseDblClick(int x, int y, short Flags, short Buttons)  {
       glB->SetTop(InfoWindowVisible ? FInfoBox->GetTop() + FInfoBox->GetHeight() : 1);
     }
   }
-  else if( EsdlInstanceOf(*G, TXGlLabel) )  {
+  else if (G->Is<TXGlLabel>()) {
     olxstr label = "getuserinput(1, \'Please, enter new label\', \'";
     label << ((TXGlLabel*)G)->GetLabel() << "\')";
-    if( processFunction(label.Replace('$', "\\$")) && !label.IsEmpty() )
+    if (processFunction(label.Replace('$', "\\$")) && !label.IsEmpty())
       ((TXGlLabel*)G)->SetLabel(label);
 
   }
-  else if (EsdlInstanceOf(*G, TXAtom)) {
+  else if (G->Is<TXAtom>()) {
     TXAtom * xa = (TXAtom*)G;
-    if (xa->CAtom().GetExyzGroup() != NULL) {
+    if (xa->CAtom().GetExyzGroup() != 0) {
       TGXApp::AtomIterator ai = FXApp->GetAtoms();
       while (ai.HasNext()) {
         TXAtom &a = ai.Next();
-        if (a.CAtom().GetExyzGroup() == xa->CAtom().GetExyzGroup())
-        a.SetSpecialDrawing(!a.IsSpecialDrawing());
+        if (a.CAtom().GetExyzGroup() == xa->CAtom().GetExyzGroup()) {
+          a.SetSpecialDrawing(!a.IsSpecialDrawing());
+        }
       }
       FXApp->SelectAll(false);
     }
     else if (FXApp->GetMouseHandler().IsSelectionEnabled()) {
       TNetwork& n = xa->GetNetwork();
-      size_t sel_cnt=0, cnt = 0;
-      for (size_t i=0; i < n.NodeCount(); i++) {
+      size_t sel_cnt = 0, cnt = 0;
+      for (size_t i = 0; i < n.NodeCount(); i++) {
         TXAtom& a = (TXAtom&)n.Node(i);
-        if( !a.IsVisible() )  continue;
+        if (!a.IsVisible()) {
+          continue;
+        }
         cnt++;
-        if( a.IsSelected() )  sel_cnt++;
+        if (a.IsSelected()) {
+          sel_cnt++;
+        }
       }
-      for (size_t i=0; i < n.BondCount(); i++) {
+      for (size_t i = 0; i < n.BondCount(); i++) {
         TXBond& b = (TXBond&)n.Bond(i);
-        if (!b.IsVisible()) continue;
+        if (!b.IsVisible()) {
+          continue;
+        }
         cnt++;
-        if (b.IsSelected())  sel_cnt++;
+        if (b.IsSelected()) {
+          sel_cnt++;
+        }
       }
       if (cnt > 0) {
-        FXApp->SelectFragments(TNetPList() << &n, ((double)sel_cnt/cnt) < .75);
+        FXApp->SelectFragments(TNetPList() << &n, ((double)sel_cnt / cnt) < .75);
       }
     }
   }

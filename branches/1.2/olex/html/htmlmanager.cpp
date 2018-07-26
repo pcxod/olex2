@@ -152,7 +152,7 @@ bool THtmlManager::Execute(const IOlxObject *sender, const IOlxObject *data,
   TActionQueue *)
 {
   olxstr dt;
-  if (EsdlInstanceOf(*data, olxstr)) {
+  if (data != 0 && data->Is<olxstr>()) {
     dt = *(olxstr *)data;
     size_t ind = dt.FirstIndexOf('%');
     while (ind != InvalidIndex && ((ind + 2) < dt.Length()) &&
@@ -737,16 +737,16 @@ void THtmlManager::funGetLabel(const TStrObjList &Params, TMacroData &E) {
     return;
   }
   olxstr rV;
-  if (EsdlInstanceOf(*c.ctrl, TButton)) {
+  if (c.ctrl->Is<TButton>()) {
     rV = ((TButton*)c.ctrl)->GetCaption();
   }
-  else if (EsdlInstanceOf(*c.ctrl, TLabel)) {
+  else if (c.ctrl->Is<TLabel>()) {
     rV = ((TLabel*)c.ctrl)->GetCaption();
   }
-  else if (EsdlInstanceOf(*c.ctrl, TCheckBox)) {
+  else if (c.ctrl->Is<TCheckBox>()) {
     rV = ((TCheckBox*)c.ctrl)->GetCaption();
   }
-  else if (EsdlInstanceOf(*c.ctrl, TTreeView)) {
+  else if (c.ctrl->Is<TTreeView>()) {
     TTreeView* T = (TTreeView*)c.ctrl;
     wxTreeItemId ni = T->GetSelection();
     rV = T->GetItemText(ni);
@@ -764,16 +764,16 @@ void THtmlManager::funSetLabel(const TStrObjList &Params, TMacroData &E) {
   if (c.html == 0 || c.ctrl == 0) {
     return;
   }
-  if (EsdlInstanceOf(*c.ctrl, TButton)) {
+  if (c.ctrl->Is<TButton>()) {
     ((TButton*)c.ctrl)->SetCaption(Params[1]);
   }
-  else if (EsdlInstanceOf(*c.ctrl, TLabel)) {
+  else if (c.ctrl->Is<TLabel>()) {
     ((TLabel*)c.ctrl)->SetCaption(Params[1]);
   }
-  else if (EsdlInstanceOf(*c.ctrl, TCheckBox)) {
+  else if (c.ctrl->Is<TCheckBox>()) {
     ((TCheckBox*)c.ctrl)->SetCaption(Params[1]);
   }
-  else if (EsdlInstanceOf(*c.ctrl, TTreeView)) {
+  else if (c.ctrl->Is<TTreeView>()) {
     TTreeView* T = (TTreeView*)c.ctrl;
     wxTreeItemId ni = T->GetSelection();
     T->SetItemText(ni, Params[1].u_str());
@@ -856,10 +856,10 @@ void THtmlManager::funSetFocus(const TStrObjList &Params, TMacroData &E) {
   if (c.wnd == 0) { // not created yet?
     return;
   }
-  if (EsdlInstanceOf(*c.wnd, TTextEdit)) {
+  if (olx_type<TTextEdit>::check(*c.wnd)) {
     ((TTextEdit*)c.wnd)->SetSelection(-1, -1);
   }
-  else if (EsdlInstanceOf(*c.wnd, TComboBox)) {
+  else if (olx_type<TComboBox>::check(*c.wnd)) {
     TComboBox* cb = (TComboBox*)c.wnd;
     //cb->GetTextCtrl()->SetSelection(-1, -1);
   }
@@ -872,7 +872,7 @@ void THtmlManager::funSelect(const TStrObjList &Params, TMacroData &E) {
   if (c.html == 0 || c.ctrl == 0) {
     return;
   }
-  if (!EsdlInstanceOf(*c.ctrl, TTreeView)) {
+  if (!olx_type<TTreeView>::check (*c.ctrl)) {
     E.ProcessingError(__OlxSrcInfo, "incompatible object type");
     return;
   }
@@ -993,7 +993,7 @@ void THtmlManager::funSetFG(const TStrObjList &Params, TMacroData &E) {
   }
   const wxColor fgc = wxColor(Params[1].u_str());
   c.wnd->SetForegroundColour(fgc);
-  if (EsdlInstanceOf(*c.wnd, TComboBox)) {
+  if (olx_type<TComboBox>::check(*c.wnd)) {
     TComboBox* Box = (TComboBox*)c.wnd;
     //Box->SetForegroundColour(fgc);
   }
@@ -1007,7 +1007,7 @@ void THtmlManager::funSetBG(const TStrObjList &Params, TMacroData &E) {
   }
   const wxColor bgc(Params[1].u_str());
   c.wnd->SetBackgroundColour(bgc);
-  if (EsdlInstanceOf(*c.wnd, TComboBox)) {
+  if (olx_type<TComboBox>::check(*c.wnd)) {
     TComboBox* Box = (TComboBox*)c.wnd;
   }
   //else if( EsdlInstanceOf(*wxw, TTrackBar) )  {

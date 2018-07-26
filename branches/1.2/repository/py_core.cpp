@@ -24,6 +24,7 @@
 #include "label_corrector.h"
 #include "symmparser.h"
 #include "updateapi.h"
+#include "xapp.h"
 #undef GetObject
 
 using namespace olex2;
@@ -172,13 +173,15 @@ PyObject* pyGetPlugins(PyObject* self, PyObject* args)  {
     }
   }
 #else
-  if (!AOlex2App::HasInstance())
+  if (!AOlex2App::HasInstance()) {
     return PythonExt::PyNone();
+  }
   rv = AOlex2App::GetInstance().GetPluginList();
 #endif
   PyObject* af = PyTuple_New(rv.Count());
-  for( size_t i=0; i < rv.Count(); i++ )
+  for (size_t i = 0; i < rv.Count(); i++) {
     PyTuple_SetItem(af, i, PythonExt::BuildString(rv[i]));
+  }
   return af;
 }
 //..............................................................................
@@ -463,11 +466,11 @@ PyObject* pyGetVdWRadii(PyObject* self, PyObject* args)  {
     TXApp::GetInstance().XFile().GetAsymmUnit().GetContentList();
   PyObject* dict = PyDict_New();
   for( size_t i=0; i < content.Count(); i++ )  {
-    const size_t ei = radii.IndexOf(&content[i].element);
-    const double r = (ei == InvalidIndex ? content[i].element.r_vdw
+    const size_t ei = radii.IndexOf(content[i].element);
+    const double r = (ei == InvalidIndex ? content[i].element->r_vdw
       : radii.GetValue(ei));
     PythonExt::SetDictItem(dict,
-      PythonExt::BuildString(content[i].element.symbol),
+      PythonExt::BuildString(content[i].element->symbol),
       Py_BuildValue("f", r));
   }
   return dict;

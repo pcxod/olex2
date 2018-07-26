@@ -2689,7 +2689,7 @@ void XLibMacros::macFixUnit(TStrObjList &Cmds, const TParamList &Options,
   au.SetZ(Z_sg*Zp);
   olxstr n_c;
   for (size_t i = 0; i < content.Count(); i++) {
-    n_c << ' ' << ElementCount::ToString(content[i].element,
+    n_c << ' ' << ElementCount::ToString(*content[i].element,
       content[i].count/Zp, content[i].charge);
     content[i].count = olx_round(content[i].count * Z_sg, 100);
   }
@@ -2712,49 +2712,49 @@ void XLibMacros::macGenDisp(TStrObjList &Cmds, const TParamList &Options,
       return;
     }
     for (size_t i=0; i < content.Count(); i++) {
-      XScatterer* sc = new XScatterer(content[i].element.symbol);
-      sc->SetFpFdp(content[i].element.CalcFpFdp(en) - content[i].element.z);
+      XScatterer* sc = new XScatterer(content[i].element->symbol);
+      sc->SetFpFdp(content[i].element->CalcFpFdp(en) - content[i].element->z);
       try {
         double absorpc =
-          ac.CalcMuOverRhoForE(en, *ac.locate(content[i].element.symbol));
-        sc->SetMu(absorpc*content[i].element.GetMr()/0.6022142);
+          ac.CalcMuOverRhoForE(en, ac.get(content[i].element->symbol));
+        sc->SetMu(absorpc*content[i].element->GetMr()/0.6022142);
       }
       catch(...) {
         TBasicApp::NewLogEntry() << "Could not locate absorption data for: " <<
-          content[i].element.symbol;
+          content[i].element->symbol;
       }
       rm.AddSfac(*sc);
     }
   }
   else {
     for( size_t i=0; i < content.Count(); i++ )  {
-      XScatterer* sc = new XScatterer(content[i].element, en);
+      XScatterer* sc = new XScatterer(*content[i].element, en);
       if (neutron)
         sc->SetFpFdp(compd(0, 0));
       else
-        sc->SetFpFdp(content[i].element.CalcFpFdp(en) - content[i].element.z);
+        sc->SetFpFdp(content[i].element->CalcFpFdp(en) - content[i].element->z);
       try  {
         double absorpc =
-          ac.CalcMuOverRhoForE(en, *ac.locate(content[i].element.symbol));
-        CXConnInfo& ci = rm.Conn.GetConnInfo(content[i].element);
-        sc->SetMu(absorpc*content[i].element.GetMr()/0.6022142);
+          ac.CalcMuOverRhoForE(en, ac.get(content[i].element->symbol));
+        CXConnInfo& ci = rm.Conn.GetConnInfo(*content[i].element);
+        sc->SetMu(absorpc*content[i].element->GetMr()/0.6022142);
         sc->SetR(ci.r);
-        sc->SetWeight(content[i].element.GetMr());
+        sc->SetWeight(content[i].element->GetMr());
         delete &ci;
       }
       catch(...)  {
         TBasicApp::NewLogEntry() << "Could not locate absorption data for: " <<
-          content[i].element.symbol;
+          content[i].element->symbol;
       }
       if( neutron )  {
-        if( content[i].element.neutron_scattering == NULL )  {
+        if( content[i].element->neutron_scattering == NULL )  {
           TBasicApp::NewLogEntry() << "Could not locate neutron data for: " <<
-            content[i].element.symbol;
+            content[i].element->symbol;
         }
         else  {
           sc->SetGaussians(
             cm_Gaussians(0,0,0,0,0,0,0,0,
-              content[i].element.neutron_scattering->coh.GetRe()));
+              content[i].element->neutron_scattering->coh.GetRe()));
         }
       }
       rm.AddSfac(*sc);
@@ -4390,7 +4390,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
             TBasicApp::NewLogEntry(logInfo) << "Skipping '" << e.GetName() << '\'';
             continue;
           }
-          if (EsdlInstanceOf(e, cetTable)) {
+          if (e.Is<cetTable>()) {
             for (size_t k = 0; k < _loop_names_to_skip.Count(); k++) {
               const olxstr &i_name = e.GetName();
               if (i_name.StartsFromi(_loop_names_to_skip[k]) &&
@@ -4406,7 +4406,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
       }
       if (!skip) {
         bool processed = false;
-        if (op != 0 && EsdlInstanceOf(e, cif_dp::cetString)) {
+        if (op != 0 && e.Is<cif_dp::cetString>()) {
           olxstr sv = e.GetStringValue();
           if (sv.StartsFrom('$')) {
             try {
@@ -5461,7 +5461,7 @@ void XLibMacros::macSGE(TStrObjList &Cmds, const TParamList &Options,
       "this function requires Olex2 processor implementation");
   }
   TSpaceGroup* sg = NULL;
-  if (EsdlInstanceOf(*xapp.XFile().LastLoader(), TCRSFile) &&
+  if (xapp.CheckFileType<TCRSFile>() &&
     ((TCRSFile*)xapp.XFile().LastLoader())->HasSG())
   {
     sg = &xapp.XFile().GetLastLoaderSG();
@@ -8129,6 +8129,39 @@ void XLibMacros::macExport(TStrObjList &Cmds, const TParamList &Options,
         TCStrList(ci->lines));
     }
   }
+  // extract SQUEEZE info, if any
+  {
+    cif_dp::cetTable *sqf = C.FindLoop("_smtbx_masks_void");
+    TPtrList<cif_dp::ICifEntry> details;
+    if (sqf != 0) {
+      cif_dp::ICifEntry *e = C.FindEntry("_smtbx_masks_special_details");
+      if (e != 0) {
+        details.Add(e);
+      }
+    }
+    else {
+      sqf = C.FindLoop("_platon_squeeze_void");
+      if (sqf != 0) {
+        cif_dp::ICifEntry *e = C.FindEntry("_platon_squeeze_details");
+        if (e != 0) {
+          details.Add(e);
+        }
+        e = C.FindEntry("_platon_squeeze_void_probe_radius");
+        if (e != 0) {
+          details.Add(e);
+        }
+      }
+    }
+    if (sqf != 0) {
+      TCif cf;
+      cf.SetCurrentBlock(C.GetDataName(), true);
+      cf.SetParam(*sqf);
+      for (size_t i = 0; i < details.Count(); i++) {
+        cf.SetParam(*details[i]);
+      }
+      cf.SaveToFile(TEFile::ChangeFileExt(hkl_name, "sqf"));
+    }
+  }
   // check if the res file is there
   olxstr res_name = TEFile::ChangeFileExt(hkl_name, "res");
   if (!TEFile::Exists(res_name)) {
@@ -8329,13 +8362,13 @@ void XLibMacros::macRestrain(TStrObjList &Cmds, const TParamList &Options,
   if (Cmds[0].Equalsi("ADP") && Cmds.Count() > 1) {
     olxstr target = Cmds[1];
     Cmds.DeleteRange(0, 2);
-    MacroInput mi = ExtractSelection(Cmds, true);
     double value = -1;
     if (Cmds.Count() > 0 && Cmds[0].IsNumber()) {
       value = Cmds[0].ToDouble();
       Cmds.Delete(0);
     }
-    TSimpleRestraint *r = NULL;
+    MacroInput mi = ExtractSelection(Cmds, true);
+    TSimpleRestraint *r = 0;
     if (target.Equalsi("Ueq")) {
       if (mi.atoms.Count() < 2 && value < 0) {
         E.ProcessingError(__OlxSrcInfo, "at least two atoms are expected");
@@ -8345,8 +8378,9 @@ void XLibMacros::macRestrain(TStrObjList &Cmds, const TParamList &Options,
         r = &rm.rFixedUeq.AddNew();
         r->SetValue(value);
       }
-      else
+      else {
         r = &rm.rSimilarUeq.AddNew();
+      }
     }
     else if (target.Equalsi("volume")) {
       if (mi.atoms.Count() < 2) {
@@ -8355,69 +8389,78 @@ void XLibMacros::macRestrain(TStrObjList &Cmds, const TParamList &Options,
       }
       r = &rm.rSimilarAdpVolume.AddNew();
     }
-    if (r != NULL) {
-      for (size_t i=0; i < mi.atoms.Count(); i++)
-        r->AddAtom(mi.atoms[i]->CAtom(), NULL);
+    if (r != 0) {
+      for (size_t i = 0; i < mi.atoms.Count(); i++) {
+        r->AddAtom(mi.atoms[i]->CAtom(), 0);
+      }
     }
   }
   else if (Cmds[0].Equalsi("bond")) {
     Cmds.Delete(0);
     MacroInput mi = ExtractSelection(Cmds, true);
-    double val = -1, esd=0.02;
-    TSimpleRestraint *r = NULL;
+    double val = -1, esd = 0.02;
+    TSimpleRestraint *r = 0;
     size_t set_cnt = XLibMacros::Parse(Cmds, "dd", &val, &esd);
     TSAtomPList atoms = mi.atoms;
     if (atoms.IsEmpty()) {
-      for (size_t i=0; i < mi.bonds.Count(); i++)
+      for (size_t i = 0; i < mi.bonds.Count(); i++) {
         atoms << mi.bonds[i]->A() << mi.bonds[i]->B();
+      }
     }
-    if ((atoms.Count()%2) != 0) {
+    if ((atoms.Count() % 2) != 0) {
       E.ProcessingError(__OlxSrcInfo, "even number of atoms is expected");
       return;
     }
     if ((set_cnt == 1 && val >= 0.5) || set_cnt == 2) {
       r = &rm.rDFIX.AddNew();
       r->SetValue(val);
-      if (set_cnt == 2) r->SetEsd(esd);
+      if (set_cnt == 2) {
+        r->SetEsd(esd);
+      }
     }
     else {
       r = &rm.rSADI.AddNew();
-      if (set_cnt == 1) r->SetEsd(val);
+      if (set_cnt == 1) {
+        r->SetEsd(val);
+      }
     }
-    for (size_t i=0; i < atoms.Count(); i++)
+    for (size_t i = 0; i < atoms.Count(); i++) {
       r->AddAtom(atoms[i]->CAtom(), &atoms[i]->GetMatrix());
+    }
   }
-  else if( Cmds[0].Equalsi("angle") && Cmds.Count() > 1 )  {
+  else if (Cmds[0].Equalsi("angle") && Cmds.Count() > 1) {
     double val = Cmds[1].ToDouble();
     Cmds.DeleteRange(0, 2);
     MacroInput mi = ExtractSelection(Cmds, true);
     TSAtomPList atoms = mi.atoms;
     if (atoms.IsEmpty()) {
-      if ((mi.bonds.Count()%2)!=0) {
+      if ((mi.bonds.Count() % 2) != 0) {
         E.ProcessingError(__OlxSrcInfo, "even number of bonds is expected");
         return;
       }
-      for (size_t i=0; i < mi.bonds.Count(); i+=2) {
-        TSAtom *s = mi.bonds[i]->GetShared(*mi.bonds[i+1]);
-        if (s == NULL)  {
+      for (size_t i = 0; i < mi.bonds.Count(); i += 2) {
+        TSAtom *s = mi.bonds[i]->GetShared(*mi.bonds[i + 1]);
+        if (s == 0) {
           TBasicApp::NewLogEntry(logError) << "No shared atom for: " <<
             mi.bonds[i]->A().GetLabel() << '-' << mi.bonds[i]->B().GetLabel()
-            << " and " << mi.bonds[i+1]->A().GetLabel() << '-' <<
-            mi.bonds[i+1]->B().GetLabel() << " skiping...";
+            << " and " << mi.bonds[i + 1]->A().GetLabel() << '-' <<
+            mi.bonds[i + 1]->B().GetLabel() << " skiping...";
         }
-        else
-          atoms << mi.bonds[i]->Another(*s) << s << mi.bonds[i+1]->Another(*s);
+        else {
+          atoms << mi.bonds[i]->Another(*s) << s << mi.bonds[i + 1]->Another(*s);
+        }
       }
     }
-    if ((atoms.Count()%3)!=0) {
+    if ((atoms.Count() % 3) != 0) {
       E.ProcessingError(__OlxSrcInfo, "triplets of atoms are expected");
       return;
     }
     if (!atoms.IsEmpty()) {
       TSimpleRestraint &sr = rm.rAngle.AddNew();
       sr.SetValue(val);
-      for (size_t i=0; i < atoms.Count(); i++)
+      for (size_t i = 0; i < atoms.Count(); i++) {
         sr.AddAtom(atoms[i]->CAtom(), &atoms[i]->GetMatrix());
+      }
     }
   }
   else if (Cmds[0].Equalsi("dihedral") && Cmds.Count() > 1) {
@@ -8427,38 +8470,39 @@ void XLibMacros::macRestrain(TStrObjList &Cmds, const TParamList &Options,
     TSAtomPList atoms = mi.atoms;
     TTypeList<TSAtomPList> quadruplets;
     if (atoms.IsEmpty()) {
-      if ((mi.bonds.Count()%2)!=0) {
+      if ((mi.bonds.Count() % 2) != 0) {
         E.ProcessingError(__OlxSrcInfo, "even number of bonds is expected");
         return;
       }
-      for (size_t i=0; i < mi.bonds.Count(); i+=2) {
-        ConstPtrList<TSAtom> dh = mi.bonds[i]->GetDihedral(*mi.bonds[i+1]);
+      for (size_t i = 0; i < mi.bonds.Count(); i += 2) {
+        ConstPtrList<TSAtom> dh = mi.bonds[i]->GetDihedral(*mi.bonds[i + 1]);
         if (dh.IsEmpty()) {
           TBasicApp::NewLogEntry(logError) << "Do not form dihedral: " <<
             mi.bonds[i]->A().GetLabel() << '-' << mi.bonds[i]->B().GetLabel()
-            << " and " << mi.bonds[i+1]->A().GetLabel()
-            << '-' << mi.bonds[i+1]->B().GetLabel() << " skiping...";
+            << " and " << mi.bonds[i + 1]->A().GetLabel()
+            << '-' << mi.bonds[i + 1]->B().GetLabel() << " skiping...";
         }
         else
           quadruplets.AddNew(dh);
       }
     }
     else {
-      if ((atoms.Count()%4)!=0) {
+      if ((atoms.Count() % 4) != 0) {
         E.ProcessingError(__OlxSrcInfo, "quadruplets of atoms are expected");
         return;
       }
-      for (size_t i=0; i < atoms.Count(); i+=4) {
+      for (size_t i = 0; i < atoms.Count(); i += 4) {
         TSAtomPList &l = quadruplets.AddNew(4);
-        for( int j=0; j < 4; j++)
-          l.Set(j, atoms[i+j]);
+        for (int j = 0; j < 4; j++) {
+          l.Set(j, atoms[i + j]);
+        }
       }
     }
     if (!quadruplets.IsEmpty()) {
       TSimpleRestraint &sr = rm.rDihedralAngle.AddNew();
       sr.SetValue(val);
-      for (size_t i=0; i < quadruplets.Count(); i++) {
-        for (size_t j=0; j < quadruplets[i].Count(); j++) {
+      for (size_t i = 0; i < quadruplets.Count(); i++) {
+        for (size_t j = 0; j < quadruplets[i].Count(); j++) {
           sr.AddAtom(quadruplets[i][j]->CAtom(),
             &quadruplets[i][j]->GetMatrix());
         }
@@ -8684,7 +8728,7 @@ void XLibMacros::macTolman(TStrObjList &Cmds, const TParamList &Options,
         if (m_idx == j) {
           continue;
         }
-        if (!Tolman_MaskSub(sa1, j)) {
+        if (!Tolman_MaskSub(sa1, (int)j)) {
           calculated = false;
           break;
         }

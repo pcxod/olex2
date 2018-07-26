@@ -54,10 +54,10 @@ void FormulaParseTest(OlxTests& t)  {
     }
     else {
       for (size_t i=0; i < cl.Count(); i++) {
-        if (!s_toks[i].StartsFromi(cl[i].element.symbol)) {
+        if (!s_toks[i].StartsFromi(cl[i].element->symbol)) {
           throw TFunctionFailedException(__OlxSourceInfo,
             olxstr("Mismatching element type. Expected ").quote() << s_toks[i] <<
-            " got " << cl[i].element.symbol);
+            " got " << cl[i].element->symbol);
         }
         if (olx_abs(cl[i].count-n_toks[i]) > 1e-3) {
           throw TFunctionFailedException(__OlxSourceInfo,

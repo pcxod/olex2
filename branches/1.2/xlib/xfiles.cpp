@@ -81,7 +81,7 @@ void TBasicCFile::LoadStrings(const TStrList &lines, const olxstr &nameToken) {
   try {
     FileName = file_n.file_name;
     LoadFromStrings(lines);
-    if (EsdlInstanceOf(*this, TCif)) {
+    if (this->Is<TCif>()) {
       if (!file_n.data_name.IsEmpty()) {
         if (file_n.is_index) {
           ((TCif*)this)->SetCurrentBlock(file_n.data_name.ToSizeT());
@@ -234,7 +234,7 @@ bool TXFile::Dispatch(int MsgId, short MsgSubId, const IOlxObject* Sender,
   const IOlxObject* Data, TActionQueue *)
 {
   if (MsgId == XFILE_EVT_SG_Change) {
-    if (Data == NULL || !EsdlInstanceOf(*Data, TSpaceGroup))
+    if (Data == NULL || !Data->Is<TSpaceGroup>())
       throw TInvalidArgumentException(__OlxSourceInfo, "space group");
     FSG = const_cast<TSpaceGroup*>(dynamic_cast<const TSpaceGroup*>(Data));
     GetRM().ResetHklStats();
@@ -306,7 +306,7 @@ void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
     try {
       if (src.IsEmpty()) {
         GetRM().SetReflections(TRefList());
-        if (EsdlInstanceOf(*FLastLoader, TCif)) {
+        if (FLastLoader->Is<TCif>()) {
           TCif &cif = GetLastLoader<TCif>();
           cif_dp::cetTable* hklLoop = cif.FindLoop("_refln");
           if (hklLoop == 0) {
@@ -344,7 +344,7 @@ void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
     }
   }
   // try resolve the residues
-  if (false && EsdlInstanceOf(*FLastLoader, TCif)) {
+  if (false && FLastLoader->Is<TCif>()) {
     using namespace olx_analysis;
     TAsymmUnit &au = GetAsymmUnit();
     TEBitArray processed(au.ResidueCount());
@@ -960,7 +960,7 @@ void TXFile::LibGetFormula(const TStrObjList& Params, TMacroData& E)  {
   const ContentList& content = GetRM().GetUserContent();
   olxstr rv;
   for (size_t i=0; i < content.Count(); i++) {
-    rv << content[i].element.symbol;
+    rv << content[i].element->symbol;
     if (list)  rv << ':';
     else if (split) rv << ' ';
     bool subAdded = false;
@@ -1049,21 +1049,24 @@ void TXFile::LibSaveSolution(const TStrObjList& Params, TMacroData& E)  {
   ins.GetRM().SetUserContent(oins->GetRM().GetUserContent());
   ins.SaveToFile(Params[0]);
 }
-void TXFile::LibDataCount(const TStrObjList& Params, TMacroData& E)  {
-  if (EsdlInstanceOf(*FLastLoader, TCif)) {
+void TXFile::LibDataCount(const TStrObjList& Params, TMacroData& E) {
+  if (FLastLoader->Is<TCif>()) {
     E.SetRetVal(((TCif*)FLastLoader)->BlockCount());
   }
-  else
+  else {
     E.SetRetVal(1);
+  }
 }
 //..............................................................................
-void TXFile::LibCurrentData(const TStrObjList& Params, TMacroData& E)  {
-  if (EsdlInstanceOf(*FLastLoader, TCif)) {
+void TXFile::LibCurrentData(const TStrObjList& Params, TMacroData& E) {
+  if (FLastLoader->Is<TCif>()) {
     TCif &cif = *(TCif*)FLastLoader;
-    if (Params.IsEmpty())
+    if (Params.IsEmpty()) {
       E.SetRetVal(cif.GetBlockIndex());
-    else
+    }
+    else {
       cif.SetCurrentBlock(Params[0].ToInt());
+    }
   }
   else {
     if (Params.IsEmpty()) {
@@ -1094,14 +1097,14 @@ void TXFile::LibGetMu(const TStrObjList& Params, TMacroData& E) {
   ContentList cont = GetAsymmUnit().GetContentList();
   double mu = 0;
   for (size_t i = 0; i < cont.Count(); i++) {
-    XScatterer *xs = GetRM().FindSfacData(cont[i].element.symbol);
+    XScatterer *xs = GetRM().FindSfacData(cont[i].element->symbol);
     if (xs != NULL && xs->IsSet(XScatterer::setMu)) {
       mu += cont[i].count*xs->GetMu() / 10;
     }
     else {
       double v = ac.CalcMuOverRhoForE(
-        GetRM().expl.GetRadiationEnergy(), *ac.locate(cont[i].element.symbol));
-      mu += (cont[i].count*cont[i].element.GetMr())*v / 6.022142;
+        GetRM().expl.GetRadiationEnergy(), ac.get(cont[i].element->symbol));
+      mu += (cont[i].count*cont[i].element->GetMr())*v / 6.022142;
     }
   }
   mu *= GetAsymmUnit().GetZ() / GetAsymmUnit().CalcCellVolume() /

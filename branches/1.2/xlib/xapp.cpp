@@ -66,21 +66,23 @@ TXApp::~TXApp() {
 }
 //..............................................................................
 bool TXApp::CheckProgramState(unsigned int specialCheck)  {
- if( specialCheck & psFileLoaded )
-   return XFile().HasLastLoader();
- if ((specialCheck&psCheckFileTypeIns) != 0 &&
-   (XFile().HasLastLoader() && (EsdlInstanceOf(*XFile().LastLoader(), TIns) ||
-   XFile().LastLoader()->IsNative())))
+  if (specialCheck & psFileLoaded) {
+    return XFile().HasLastLoader();
+  }
+ if ((specialCheck&psCheckFileTypeIns) != 0 && (CheckFileType<TIns>() ||
+   XFile().LastLoader()->IsNative()))
+   {
    return true;
- if ((specialCheck&psCheckFileTypeP4P) != 0 &&
-   (XFile().HasLastLoader() && EsdlInstanceOf(*XFile().LastLoader(), TP4PFile)))
+   }
+ if ((specialCheck&psCheckFileTypeP4P) != 0 && CheckFileType<TP4PFile>()) {
    return true;
- if ((specialCheck&psCheckFileTypeCRS) != 0 &&
-   (XFile().HasLastLoader() && EsdlInstanceOf(*XFile().LastLoader(), TCRSFile)))
+ }
+ if ((specialCheck&psCheckFileTypeCRS) != 0 && CheckFileType<TCRSFile>()) {
    return true;
- if ((specialCheck&psCheckFileTypeCif) != 0 &&
-   (XFile().HasLastLoader() && EsdlInstanceOf(*XFile().LastLoader(), TCif)))
+ }
+ if ((specialCheck&psCheckFileTypeCif) != 0 && CheckFileType<TCif>()) {
    return true;
+ }
  return false;
 }
 //..............................................................................
@@ -1020,22 +1022,22 @@ void TXApp::PrintRadii(int which, const ElementRadii& radii,
       "(Default radii source: http://www.ccdc.cam.ac.uk/products/csd/radii)";
   }
   for (size_t i = 0; i < au_cont.Count(); i++) {
-    const size_t ei = radii.IndexOf(&au_cont[i].element);
+    const size_t ei = radii.IndexOf(au_cont[i].element);
     if (ei == InvalidIndex) {
       double r = 0;
       switch (which) {
-      case 0: r = au_cont[i].element.r_bonding; break;
-      case 1: r = au_cont[i].element.r_pers; break;
-      case 2: r = au_cont[i].element.r_cov; break;
-      case 3: r = au_cont[i].element.r_sfil; break;
-      case 4: r = au_cont[i].element.r_vdw; break;
-      case 5: r = au_cont[i].element.r_custom; break;
+      case 0: r = au_cont[i].element->r_bonding; break;
+      case 1: r = au_cont[i].element->r_pers; break;
+      case 2: r = au_cont[i].element->r_cov; break;
+      case 3: r = au_cont[i].element->r_sfil; break;
+      case 4: r = au_cont[i].element->r_vdw; break;
+      case 5: r = au_cont[i].element->r_custom; break;
       }
-      TBasicApp::NewLogEntry() << au_cont[i].element.symbol << '\t' <<
+      TBasicApp::NewLogEntry() << au_cont[i].element->symbol << '\t' <<
         r;
     }
     else {
-      TBasicApp::NewLogEntry() << au_cont[i].element.symbol << '\t' <<
+      TBasicApp::NewLogEntry() << au_cont[i].element->symbol << '\t' <<
         radii.GetValue(ei);
     }
   }
@@ -1220,26 +1222,35 @@ SortedObjectList<int, TPrimitiveComparator>& TXApp::GetInteractionsTo() {
   return a.interactions_to;
 }
 //..............................................................................
-const_strlist TXApp::BangList(const TSAtom& A)  {
+const_strlist TXApp::BangList(const TSAtom& A) {
   TStrList L;
-  for( size_t i=0; i < A.BondCount(); i++ )  {
+  for (size_t i = 0; i < A.BondCount(); i++) {
     const TSBond &B = A.Bond(i);
+    if (!B.A().IsAvailable() || !B.B().IsAvailable()) {
+      continue;
+    }
     olxstr& T = L.Add(A.GetLabel());
-    T << '-'  << B.Another(A).GetLabel();
+    T << '-' << B.Another(A).GetLabel();
     T << ": " << olxstr::FormatFloat(3, B.Length());
   }
-  for( size_t i=0; i < A.BondCount(); i++ )  {
+  for (size_t i = 0; i < A.BondCount(); i++) {
     const TSBond &B = A.Bond(i);
-    for( size_t j=i+1; j < A.BondCount(); j++ )  {
+    if (!B.A().IsAvailable() || !B.B().IsAvailable()) {
+      continue;
+    }
+    for (size_t j = i + 1; j < A.BondCount(); j++) {
       const TSBond &B1 = A.Bond(j);
+      if (!B1.A().IsAvailable() || !B1.B().IsAvailable()) {
+        continue;
+      }
       olxstr& T = L.Add(B.Another(A).GetLabel());
       T << '-' << A.GetLabel() << '-';
       T << B1.Another(A).GetLabel() << ": ";
       const vec3d V = B.Another(A).crd() - A.crd();
       const vec3d V1 = B1.Another(A).crd() - A.crd();
-      if( V.QLength()*V1.QLength() != 0 )  {
+      if (V.QLength()*V1.QLength() != 0) {
         double angle = V.CAngle(V1);
-        angle = acos(angle)*180/M_PI;
+        angle = acos(angle) * 180 / M_PI;
         T << olxstr::FormatFloat(3, angle);
       }
     }

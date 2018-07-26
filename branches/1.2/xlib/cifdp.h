@@ -45,7 +45,7 @@ namespace cif_dp {
     {}
   };
   /////////////////////////////////////////////////////////////////////////////
-  struct ICifEntry {
+  struct ICifEntry : public IOlxObject {
     olx_object_ptr<olxstr> name, comment;
     ICifEntry() {}
     ICifEntry(const ICifEntry &e) {

@@ -77,7 +77,7 @@ TAG_HANDLER_BEGIN(RECT, "ZRECT")
 TAG_HANDLER_PROC(tag)  {
   if( tag.HasParam(wxT("COORDS")) )  {
     if( m_WParser->GetContainer()->GetLastChild() != NULL &&
-      EsdlInstanceOf(*m_WParser->GetContainer()->GetLastChild(), THtmlImageCell) )
+      olx_type<THtmlImageCell>::check(*m_WParser->GetContainer()->GetLastChild()) )
     {
       THtmlImageCell* ic =
         (THtmlImageCell*)m_WParser->GetContainer()->GetLastChild();
@@ -101,7 +101,7 @@ TAG_HANDLER_BEGIN(CIRCLE, "ZCIRCLE")
 TAG_HANDLER_PROC(tag)  {
   if( tag.HasParam(wxT("COORDS")) )  {
     if( m_WParser->GetContainer()->GetLastChild() != NULL &&
-      EsdlInstanceOf(*m_WParser->GetContainer()->GetLastChild(), THtmlImageCell) )
+      olx_type<THtmlImageCell>::check(*m_WParser->GetContainer()->GetLastChild()) )
     {
       THtmlImageCell* ic =
         (THtmlImageCell*)m_WParser->GetContainer()->GetLastChild();

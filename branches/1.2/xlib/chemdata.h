@@ -82,7 +82,8 @@ struct cm_Neutron_Scattering {
   compd coh;
   double xs;
   cm_Neutron_Scattering(double _coh_re, double _coh_im, double _xs) :
-  coh(_coh_re, _coh_im), xs(_xs)  {  }
+    coh(_coh_re, _coh_im), xs(_xs)
+  {}
 };
 struct cm_Isotope {
   double Mr, W;
@@ -91,16 +92,19 @@ struct cm_Isotope {
 
 struct cm_Gaussians {
   double a1, a2, a3, a4, b1, b2, b3, b4, c;
-  cm_Gaussians() : a1(0), a2(0), a3(0), a4(0), b1(0), b2(0), b3(0), b4(0), c(0)  {}
+  cm_Gaussians() : a1(0), a2(0), a3(0), a4(0), b1(0), b2(0), b3(0), b4(0), c(0)
+  {}
   // constructor, note that b values are inverted!
   cm_Gaussians(double _a1, double _a2, double _a3, double _a4,
     double _b1, double _b2, double _b3, double _b4, double _c) :
     a1(_a1), a2(_a2), a3(_a3), a4(_a4),
-      b1(-_b1), b2(-_b2), b3(-_b3), b4(-_b4), c(_c)  {  }
+      b1(-_b1), b2(-_b2), b3(-_b3), b4(-_b4), c(_c)
+  {}
   // copy constructor
   cm_Gaussians(const cm_Gaussians& g) :
     a1(g.a1), a2(g.a2), a3(g.a3), a4(g.a4),
-      b1(g.b1), b2(g.b2), b3(g.b3), b4(g.b4), c(g.c)  {  }
+      b1(g.b1), b2(g.b2), b3(g.b3), b4(g.b4), c(g.c)
+  {}
 
   double calc_sq(double sqv) const {
     return a1*exp(b1*sqv) + a2*exp(b2*sqv) + a3*exp(b3*sqv) + a4*exp(b4*sqv) + c;
@@ -147,8 +151,9 @@ public:
     r_custom(0), gaussians(_gaussians), isotopes(_isotopes),
     henke_data(_henke_data), neutron_scattering(_neutron_scattering)
   {
-    for (int i=0; i < isotope_count; i++)
+    for (int i = 0; i < isotope_count; i++) {
       Mr += isotopes[i].Mr*isotopes[i].W;
+    }
   }
 
   compd CalcFpFdp(double eV) const {
@@ -170,10 +175,15 @@ public:
         double fdp = cm_Anomalous_Henke::Undefined;
         if (henke_data[i - 1].fp != cm_Anomalous_Henke::Undefined &&
           henke_data[i].fp != cm_Anomalous_Henke::Undefined)
+        {
           fp = henke_data[i - 1].fp + k*(henke_data[i].fp - henke_data[i - 1].fp);
+        }
         if (henke_data[i - 1].fdp != cm_Anomalous_Henke::Undefined &&
           henke_data[i].fdp != cm_Anomalous_Henke::Undefined)
+        {
+
           fdp = henke_data[i - 1].fdp + k*(henke_data[i].fdp - henke_data[i - 1].fdp);
+        }
         return compd(fp, fdp);
       }
     }
@@ -199,17 +209,19 @@ public:
 };
 
 struct ElementCount {
-  const cm_Element& element;
+  const cm_Element* element;
   double count;
   int charge;
   ElementCount()
-    : element(*((const cm_Element*)NULL)), count(0), charge(0)
-  {}
+    : element(0), count(0), charge(0)
+  {
+    throw TNotImplementedException(__OlxSourceInfo);
+  }
   ElementCount(const cm_Element& _e, double _c, int ch)
-    : element(_e), count(_c), charge(ch)
+    : element(&_e), count(_c), charge(ch)
   {}
   ElementCount(const cm_Element& _e, double _c)
-    : element(_e), count(_c), charge(0)
+    : element(&_e), count(_c), charge(0)
   {}
   ElementCount(const ElementCount& e)
     : element(e.element), count(e.count), charge(e.charge)
@@ -231,7 +243,7 @@ struct ElementCount {
     return element == e.element && charge == e.charge;
   }
   olxstr ToString() const {
-    return ToString(element, count, charge);
+    return ToString(*element, count, charge);
   }
 
   static olxstr ToString(const cm_Element &element, double count, int charge) {
@@ -268,9 +280,9 @@ struct ElementZSorter  {
   }
 };
 // sorts element by symbol ascending
-struct ElementSymbolSorter  {
+struct ElementSymbolSorter {
   template <class item_t>
-  static int Compare(const item_t &s1, const item_t &s2)  {
+  static int Compare(const item_t &s1, const item_t &s2) {
     return olx_ref::get(s1).symbol.Compare(olx_ref::get(s2).symbol);
   }
 };
@@ -280,7 +292,7 @@ class XElementLib {
   static void ParseSimpleElementStr(const olxstr& str, TStrList& toks);
   static void ExpandShortcut(const olxstr& sh, ContentList& res, double cnt=1.0);
   // checks if p is an element symbol, will correctly distinguis "C " and "Cd"
-  static bool IsShortcut(const olxstr& c)  {
+  static bool IsShortcut(const olxstr& c) {
     return c.Equalsi("Ph") || c.Equalsi("Cp") || c.Equalsi("Me") ||
       c.Equalsi("Et") || c.Equalsi("Bu") ||
       c.Equalsi("Py") || c.Equalsi("Tf");

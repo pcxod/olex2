@@ -587,6 +587,9 @@
     <ClInclude Include="..\..\..\sdl\utf16.h">
       <Filter>Header Files\encoding</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\sdl\tests\evalue_test.h">
+      <Filter>tests</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />

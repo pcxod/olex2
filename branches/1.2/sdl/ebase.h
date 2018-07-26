@@ -18,8 +18,6 @@
 #define EsdlClassName(class)  olxstr(typeid(class).name())
 #define EsdlObjectName(object)  olxstr(typeid(object).name())
 
-#define EsdlInstanceOf( class, className )  (typeid(class) == typeid(className))
-
 // defines a primitive type property
 #define DefPropP(Type, Name) \
 public:\
@@ -107,6 +105,19 @@ template <typename T> T *olx_memcpy(T *dest, const T *src, size_t sz) {
 }
 template <typename T> T *olx_memmove(T *dest, const T *src, size_t sz) {
   return (T *)memmove(dest, src, sz*sizeof(T));
+}
+
+template <typename A>
+struct olx_type {
+  template <typename B>
+  static bool check(const B &b) {
+    return typeid(b) == typeid(A);
+  }
+};
+
+template <typename A, typename B>
+bool olx_type_check(const A &a, const B &b) {
+  return typeid(a) == typeid(b);
 }
 
 // string base
@@ -262,6 +273,10 @@ public:
   virtual TIString ToString() const;
   // throws an exception if not implemented
   virtual IOlxObject* Replicate() const;
+  template <class T>
+  bool Is() const {
+    return olx_type<T>::check(*this);
+  }
 };
 
 #include "olxvptr.h"

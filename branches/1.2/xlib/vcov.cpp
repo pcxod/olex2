@@ -77,7 +77,7 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au) {
       const double esd = toks[2].ToDouble();
       for (size_t j = 0; j < var.RefCount(); j++) {
         XVarReference& r = var.GetRef(j);
-        if (!EsdlInstanceOf(r.referencer, TCAtom)) {
+        if (!r.referencer.Is<TCAtom>()) {
           continue;
         }
         TCAtom& ca = (TCAtom&)r.referencer;

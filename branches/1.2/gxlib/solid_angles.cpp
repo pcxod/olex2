@@ -142,7 +142,7 @@ void PointAnalyser::ToDataItem_(TDataItem &di) const {
   ContentList cl = center().CAtom().GetParent()->GetContentList();
   TDataItem &rdi = di.AddItem("Radii");
   for (size_t i = 0; i < cl.Count(); i++) {
-    rdi.AddField(cl[i].element.symbol, cl[i].element.r_custom);
+    rdi.AddField(cl[i].element->symbol, cl[i].element->r_custom);
   }
 }
 //.............................................................................

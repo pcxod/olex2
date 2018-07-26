@@ -203,17 +203,20 @@ wxTreeItemId TTreeView::_FindByLabel(const wxTreeItemId& root, const olxstr& lab
 //..............................................................................
 wxTreeItemId TTreeView::_FindByData(const wxTreeItemId& root, const olxstr& data) const {
   wxTreeItemData* _dt = GetItemData(root);
-  if( _dt != NULL && EsdlInstanceOf(*_dt, TTreeNodeData) )  {
+  if (_dt != 0 && olx_type<TTreeNodeData>::check(_dt)) {
     TTreeNodeData* dt = (TTreeNodeData*)_dt;
-    if( dt->GetData() != NULL && data == dt->GetData()->ToString() )
+    if (dt->GetData() != 0 && data == dt->GetData()->ToString()) {
       return root;
+    }
   }
- // if( !HasChildren(root) )  return wxTreeItemId();
+  // if( !HasChildren(root) )  return wxTreeItemId();
   wxTreeItemIdValue cookie;
   wxTreeItemId ch_id = GetFirstChild(root, cookie);
-  while( ch_id.IsOk() )  {
+  while (ch_id.IsOk()) {
     wxTreeItemId id = _FindByData(ch_id, data);
-    if( id.IsOk() )  return id;
+    if (id.IsOk()) {
+      return id;
+    }
     ch_id = GetNextChild(root, cookie);
   }
   return ch_id;

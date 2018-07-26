@@ -45,7 +45,7 @@ void TXPlane::Create(const olxstr& cName) {
     GPC.ClearPrimitives();
   size_t deleted_cnt = 0;
   for (size_t i = 0; i < GPC.ObjectCount(); i++) {
-    if (EsdlInstanceOf(GPC.GetObject(i), TXPlane) &&
+    if (GPC.GetObject(i).Is<TXPlane>() &&
       ((TXPlane&)GPC.GetObject(i)).IsDeleted())
     {
       deleted_cnt++;
