@@ -126,19 +126,20 @@ public:
   static TSizeList::const_list_type DrySave(const TAsymmUnit& au);
   static void ValidateRestraintsAtomNames(RefinementModel& rm,
     bool report=true);
-  static bool ParseRestraint(RefinementModel& rm, const TStrList& toks);
+  static bool ParseRestraint(RefinementModel& rm, const TStrList& toks,
+    bool warnings=true);
   static void SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
     RefinementModel::ReleasedItems* processed, RefinementModel& rm);
   static void SaveExtras(TStrList& SL, const TCAtomPList* atoms,
     RefinementModel::ReleasedItems* processed, RefinementModel& rm);
 
   template <class StrLst> static
-  void ParseRestraints(RefinementModel& rm, StrLst& SL) {
+  void ParseRestraints(RefinementModel& rm, StrLst& SL, bool warnings=true) {
     bool preserve = DoPreserveInvalid();
     for (size_t i = 0; i < SL.Count(); i++) {
       TStrList Toks(SL[i], ' ');
       try {
-        if (ParseRestraint(rm, Toks)) {
+        if (ParseRestraint(rm, Toks, warnings)) {
           SL[i].SetLength(0);
         }
       }

@@ -44,7 +44,7 @@
 //#undef __WIN32__  // compilation test for wxWidgets
 #ifndef __GNUC__
 bool TShellUtil::CreateShortcut(const olxstr& ShortcutPath,
-  const olxstr& ObjectPath,const olxstr& description, bool AddRunAs)
+  const olxstr& ObjectPath, const olxstr& description, bool AddRunAs)
 {
 #ifdef __WIN32__
   IShellLink* psl;
@@ -59,7 +59,7 @@ bool TShellUtil::CreateShortcut(const olxstr& ShortcutPath,
     psl->SetDescription(description.u_str());
     psl->SetWorkingDirectory(TEFile::ExtractFilePath(ObjectPath).u_str());
     hres = psl->QueryInterface(IID_IPersistFile, (LPVOID*)&ppf);
-    if( AddRunAs )  {   // set admin rights
+    if (AddRunAs) {   // set admin rights
       IShellLinkDataList* pdl;
       hres = psl->QueryInterface(IID_IShellLinkDataList, (void**)&pdl);
       if (SUCCEEDED(hres)) {
@@ -77,9 +77,9 @@ bool TShellUtil::CreateShortcut(const olxstr& ShortcutPath,
       }
     }
     // Save the link by calling IPersistFile::Save
-    if( SUCCEEDED(hres) )  {
+    if (SUCCEEDED(hres)) {
 #if !defined(_UNICODE )
-      olx_array_ptr<WCHAR> wsz( new WCHAR[MAX_PATH]);
+      olx_array_ptr<WCHAR> wsz(new WCHAR[MAX_PATH]);
       // Ensure that the string is Unicode.
       MultiByteToWideChar(CP_ACP, 0, ShortcutPath.u_str(), -1, wsz(), MAX_PATH);
       hres = ppf->Save(wsz(), TRUE);
@@ -97,96 +97,98 @@ bool TShellUtil::CreateShortcut(const olxstr& ShortcutPath,
 }
 #endif //__GNUC__
 //..............................................................................
-olxstr TShellUtil::GetSpecialFolderLocation(short folderId)  {
+olxstr TShellUtil::GetSpecialFolderLocation(short folderId) {
 #ifdef __WIN32__
   int FID = 0;
-  switch( folderId )  {
-    case fiDesktop:       FID = CSIDL_DESKTOP;  break;
-    case fiStartMenu:     FID = CSIDL_STARTMENU;  break;
-    case fiPrograms:      FID = CSIDL_PROGRAMS;  break;
-    case fiStartup:       FID = CSIDL_STARTUP;  break;
-    case fiControls:      FID = CSIDL_CONTROLS;  break;
-    case fiProgramFiles:  FID = CSIDL_PROGRAM_FILES;  break;
-    case fiMyDocuments:   FID = CSIDL_PERSONAL;  break;
-    case fiAppData:       FID = CSIDL_APPDATA;  break;
-    case fiCommonAppData: FID = CSIDL_COMMON_APPDATA;  break;
-    case fiCommonStartMenu: FID = CSIDL_COMMON_STARTMENU;  break;
-    case fiCommonDesktop: FID = CSIDL_COMMON_DESKTOPDIRECTORY;  break;
-    case fiCommonPrograms: FID = CSIDL_COMMON_PROGRAMS;  break;
-    case fiSysProgramFiles:
-      {
-        /*
-        determine windows version, win2000 and earlier do not support
-        KEY_WOW64_64KEY...
-        */
-        OSVERSIONINFO veri;
-        memset(&veri, 0, sizeof(veri));
-        veri.dwOSVersionInfoSize = sizeof(veri);
-        GetVersionEx(&veri);
-        LONG flags = KEY_QUERY_VALUE;
-        // is XP or later?
+  switch (folderId) {
+  case fiDesktop:       FID = CSIDL_DESKTOP;  break;
+  case fiStartMenu:     FID = CSIDL_STARTMENU;  break;
+  case fiPrograms:      FID = CSIDL_PROGRAMS;  break;
+  case fiStartup:       FID = CSIDL_STARTUP;  break;
+  case fiControls:      FID = CSIDL_CONTROLS;  break;
+  case fiProgramFiles:  FID = CSIDL_PROGRAM_FILES;  break;
+  case fiMyDocuments:   FID = CSIDL_PERSONAL;  break;
+  case fiAppData:       FID = CSIDL_APPDATA;  break;
+  case fiCommonAppData: FID = CSIDL_COMMON_APPDATA;  break;
+  case fiCommonStartMenu: FID = CSIDL_COMMON_STARTMENU;  break;
+  case fiCommonDesktop: FID = CSIDL_COMMON_DESKTOPDIRECTORY;  break;
+  case fiCommonPrograms: FID = CSIDL_COMMON_PROGRAMS;  break;
+  case fiSysProgramFiles:
+  {
+    /*
+    determine windows version, win2000 and earlier do not support
+    KEY_WOW64_64KEY...
+    */
+    OSVERSIONINFO veri;
+    memset(&veri, 0, sizeof(veri));
+    veri.dwOSVersionInfoSize = sizeof(veri);
+    GetVersionEx(&veri);
+    LONG flags = KEY_QUERY_VALUE;
+    // is XP or later?
 #ifdef KEY_WOW64_64KEY
-        if ( veri.dwMajorVersion > 5 ||
-            (veri.dwMajorVersion == 5 && veri.dwMinorVersion > 0 ))
-        {
-          flags |= KEY_WOW64_64KEY;
-        }
+    if (veri.dwMajorVersion > 5 ||
+      (veri.dwMajorVersion == 5 && veri.dwMinorVersion > 0))
+    {
+      flags |= KEY_WOW64_64KEY;
+    }
 #endif
-        HKEY key;
-        if (RegOpenKeyEx(HKEY_LOCAL_MACHINE,
-              olxT("SOFTWARE\\Microsoft\\Windows\\CurrentVersion"),
-              0, flags, &key) != ERROR_SUCCESS)
-        {
-          return EmptyString();
-        }
-        DWORD sz = 0;
-        if (RegQueryValueEx(key, olxT("ProgramFilesDir"),
-          NULL, NULL, NULL, &sz) != ERROR_SUCCESS)
-        {
-          return EmptyString();
-        }
-        olx_array_ptr<olxch> data(new olxch[sz/sizeof(olxch)+1]);
-        if (RegQueryValueEx(key, olxT("ProgramFilesDir"),
-            NULL, NULL, (LPBYTE)data(), &sz) != ERROR_SUCCESS)
-        {
-          return EmptyString();
-        }
-        RegCloseKey(key);
-        olxstr rv = olxstr::FromExternal(data.release());
-        return TEFile::AddPathDelimeterI(rv);
-      }
-      break;
-    default:
-      throw TInvalidArgumentException(__OlxSourceInfo, "unknown identifier");
+    HKEY key;
+    if (RegOpenKeyEx(HKEY_LOCAL_MACHINE,
+      olxT("SOFTWARE\\Microsoft\\Windows\\CurrentVersion"),
+      0, flags, &key) != ERROR_SUCCESS)
+    {
+      return EmptyString();
+    }
+    DWORD sz = 0;
+    if (RegQueryValueEx(key, olxT("ProgramFilesDir"),
+      NULL, NULL, NULL, &sz) != ERROR_SUCCESS)
+    {
+      return EmptyString();
+    }
+    olx_array_ptr<olxch> data(new olxch[sz / sizeof(olxch) + 1]);
+    if (RegQueryValueEx(key, olxT("ProgramFilesDir"),
+      NULL, NULL, (LPBYTE)data(), &sz) != ERROR_SUCCESS)
+    {
+      return EmptyString();
+    }
+    RegCloseKey(key);
+    olxstr rv = olxstr::FromExternal(data.release());
+    return TEFile::AddPathDelimeterI(rv);
+  }
+  break;
+  default:
+    throw TInvalidArgumentException(__OlxSourceInfo, "unknown identifier");
   }
   LPITEMIDLIST items;
-  if (SHGetSpecialFolderLocation(NULL, FID, &items ) == NOERROR) {
-    olx_array_ptr<olxch> bf(new olxch [MAX_PATH]);
+  if (SHGetSpecialFolderLocation(NULL, FID, &items) == NOERROR) {
+    olx_array_ptr<olxch> bf(new olxch[MAX_PATH]);
     olxstr retVal;
-    if (SHGetPathFromIDList(items, bf()))
+    if (SHGetPathFromIDList(items, bf())) {
       retVal = olxstr::FromExternal(bf.release());
+    }
     // release memory allocated by the funciton
     LPMALLOC shellMalloc;
-    if (SHGetMalloc(&shellMalloc) == NOERROR)
+    if (SHGetMalloc(&shellMalloc) == NOERROR) {
       shellMalloc->Free(items);
+    }
     return TEFile::AddPathDelimeterI(retVal);
   }
   return EmptyString();
 #else
-  #ifdef __WXWIDGETS__
-    olxstr retVal;
-    switch( folderId )  {
-      case fiAppData:
-        retVal = wxStandardPaths::Get().GetUserDataDir();
-      break;
-      case fiMyDocuments:
-        retVal = wxStandardPaths::Get().GetDocumentsDir();
-      break;
-      default:
-        throw TInvalidArgumentException(__OlxSourceInfo, "unknown identifier");
-    }
-    return TEFile::AddPathDelimeterI(retVal);
-  #endif
+#ifdef __WXWIDGETS__
+  olxstr retVal;
+  switch (folderId) {
+  case fiAppData:
+    retVal = wxStandardPaths::Get().GetUserDataDir();
+    break;
+  case fiMyDocuments:
+    retVal = wxStandardPaths::Get().GetDocumentsDir();
+    break;
+  default:
+    throw TInvalidArgumentException(__OlxSourceInfo, "unknown identifier");
+  }
+  return TEFile::AddPathDelimeterI(retVal);
+#endif
   throw TNotImplementedException(__OlxSourceInfo);
 #endif
 }
@@ -195,8 +197,9 @@ olxstr TShellUtil::GetSpecialFolderLocation(short folderId)  {
 int __stdcall BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam,
   LPARAM lpData)
 {
-  if (uMsg == BFFM_INITIALIZED && lpData)
+  if (uMsg == BFFM_INITIALIZED && lpData) {
     SendMessage(hwnd, BFFM_SETSELECTION, TRUE, lpData);
+  }
   return 0;
 }
 #endif
@@ -206,12 +209,14 @@ olxstr TShellUtil::PickFolder(const olxstr& Title,
 {
 #ifdef __WIN32__
   LPMALLOC shellMalloc;
-  if (SHGetMalloc(&shellMalloc) != NOERROR)
+  if (SHGetMalloc(&shellMalloc) != NOERROR) {
     return EmptyString();
+  }
 
   LPSHELLFOLDER desktopFolder;
-  if (SHGetDesktopFolder(&desktopFolder) != NOERROR)
+  if (SHGetDesktopFolder(&desktopFolder) != NOERROR) {
     return EmptyString();
+  }
 
   LPITEMIDLIST rootFolder= NULL;
   if (TEFile::Exists(RootFolder)) {
@@ -238,8 +243,9 @@ olxstr TShellUtil::PickFolder(const olxstr& Title,
 
   if (pidlBrowse) {
     olxstr retVal;
-    if (SHGetPathFromIDList(pidlBrowse, path))
+    if (SHGetPathFromIDList(pidlBrowse, path)) {
       retVal = path;
+    }
     shellMalloc->Free(pidlBrowse);
     shellMalloc->Free(path);
     return retVal;
@@ -248,8 +254,9 @@ olxstr TShellUtil::PickFolder(const olxstr& Title,
 #else
   #ifdef __WXWIDGETS__
   wxDirDialog dd(NULL, Title.u_str(), SelectedFolder.u_str());
-  if (dd.ShowModal() == wxID_OK)
+  if (dd.ShowModal() == wxID_OK) {
     return dd.GetPath();
+  }
   return EmptyString();
   #endif
   throw TNotImplementedException(__OlxSourceInfo);
@@ -274,17 +281,20 @@ olxstr TShellUtil::PickFile(const olxstr& Title, const olxstr &Filter,
   ofn.lpstrFile = bf();
   ofn.nMaxFile = MAX_PATH;
   ofn.lpstrTitle = Title.u_str();
-  if (!DefFolder.IsEmpty())
+  if (!DefFolder.IsEmpty()) {
     ofn.lpstrInitialDir = DefFolder.u_str();
+  }
   ofn.Flags = OFN_ENABLESIZING;
   if (open) {
     ofn.Flags |= OFN_FILEMUSTEXIST;
-    if (GetSaveFileName(&ofn) == TRUE)
+    if (GetSaveFileName(&ofn) == TRUE) {
       return olxstr::FromExternal(bf.release());
+    }
   }
   else {
-    if (GetOpenFileName(&ofn) == TRUE)
+    if (GetOpenFileName(&ofn) == TRUE) {
       return olxstr::FromExternal(bf.release());
+    }
   }
   return EmptyString();
 #elif __WXWIDGETS__
@@ -303,14 +313,18 @@ bool TShellUtil::_MACFromArray(const unsigned char* bf, const char* name,
 {
   if (!accept_empty) {
     uint32_t sum = 0;
-    for (size_t i=0; i < len; i++)
+    for (size_t i = 0; i < len; i++) {
       sum += bf[i];
-    if (sum == 0)  return false;
+    }
+    if (sum == 0) {
+      return false;
+    }
   }
   TArrayList<unsigned char>& MAC = mi.Add(name).Object;
   MAC.SetCount(len);
-  for (size_t i=0; i < len; i++)
+  for (size_t i = 0; i < len; i++) {
     MAC[i] = bf[i];
+  }
   return true;
 }
 //.............................................................................

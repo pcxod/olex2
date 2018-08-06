@@ -1712,7 +1712,7 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm,
   for (size_t i = 0; i < cx.Sump.Count(); i++) {
     cx.rm.Vars.AddSUMP(cx.Sump[i]);
   }
-  ParseRestraints(cx.rm, Instructions);
+  ParseRestraints(cx.rm, Instructions, false);
   Instructions.Pack();
   for (size_t i = 0; i < atom_labels.Count(); i++) {
     atom_labels[i].a->SetLabel(atom_labels[i].GetB(), false);
@@ -2473,7 +2473,9 @@ void TIns::ParseHeader(const TStrList& in) {
   _FinishParsing(cx);
 }
 //..............................................................................
-bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& _toks) {
+bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& _toks,
+  bool warnings)
+{
   if (_toks.IsEmpty()) {
     return false;
   }
@@ -2482,8 +2484,8 @@ bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& _toks) {
     try {
       size_t cc = rm.UsedSymmCount();
       rm.AddUsedSymm(TSymmParser::SymmToMatrix(toks.Text(EmptyString(), 2)), toks[1]);
-      if (cc == rm.UsedSymmCount()) {
-        TBasicApp::NewLogEntry(logWarning) << "Duplicate EQIV: " << toks[1]
+      if (warnings && cc == rm.UsedSymmCount()) {
+        TBasicApp::NewLogEntry(logWarning) << "Duplicated EQIV: " << toks[1]
           << ". Note that this may cause incorrect interpretation of the model.";
       }
     }
