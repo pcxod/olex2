@@ -2092,7 +2092,11 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options,
   }
   // get CAtoms and EXYZ equivalents
   sorted::PointerPointer<TResidue> residues_to_release;
-  au.GetAtoms().ForEach(ACollectionItem::TagSetter(0));
+  for (size_t i = 0; i < au.AtomCount(); i++) {
+    TCAtom &a = au.GetAtom(i);
+    a.SetTag(0);
+    a.SetSaved(false);
+  }
   TCAtomPList CAtoms;
   for (size_t i = 0; i < Atoms.Count(); i++) {
     TCAtom &ca = Atoms[i]->CAtom();

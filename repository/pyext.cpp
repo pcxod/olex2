@@ -187,8 +187,9 @@ PyObject* runRegisterCallback(PyObject* self, PyObject* args)  {
   olxstr cbEvent;
   PyObject* fun;
   bool profile = false;
-  if( !PythonExt::ParseTuple(args, "wO|b", &cbEvent, &fun, &profile) )
+  if (!PythonExt::ParseTuple(args, "wO|b", &cbEvent, &fun, &profile)) {
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "wO|b");
+  }
   if (!PyCallable_Check(fun)) {
     return PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo,
       "Parameter must be callable");
@@ -604,99 +605,104 @@ TLibrary* PythonExt::ExportLibrary(const olxstr& name)  {
   return Library;
 }
 
-bool PythonExt::ParseTuple(PyObject* tuple, const char* format, ...)  {
+bool PythonExt::ParseTuple(PyObject* tuple, const char* format, ...) {
   va_list argptr;
   va_start(argptr, format);
-  if( tuple == NULL )  {
+  if (tuple == NULL) {
     va_end(argptr);
     return false;
   }
   const size_t slen = olxstr::o_strlen(format),
     tlen = PyTuple_Size(tuple);
-  size_t tind = InvalidIndex;
-  bool proceedOptional = (slen > 0 && (format[0] == '|')) ? true : false;
-  for( size_t i=0; i < slen; i++ )  {
-    if( ++tind >= tlen )  {
-      if( !proceedOptional )  {
+  bool proceedOptional = (slen > 0 && (format[0] == '|'));
+  size_t tind = InvalidIndex,
+    start = proceedOptional ? 1 : 0;
+  for (size_t i = start; i < slen; i++) {
+    if (++tind >= tlen) {
+      if (!proceedOptional) {
         va_end(argptr);
         return false;
       }
-      else
+      else {
         break;
+      }
     }
     PyObject* io = PyTuple_GetItem(tuple, tind);
-    if( format[i] == 'i' )  {
+    if (format[i] == 'i') {
       int* ip = va_arg(argptr, int*);
-      if( !PyArg_Parse(io, "i", ip) )  {
+      if (!PyArg_Parse(io, "i", ip)) {
         va_end(argptr);
         return false;
       }
     }
-    else if( format[i] == 'w' )  {
+    else if (format[i] == 'w') {
       olxstr* os = va_arg(argptr, olxstr*);
       os->SetLength(0);
-      if( io->ob_type == &PyString_Type )  {
+      if (io->ob_type == &PyString_Type) {
         char* str;
         int len;
         PyArg_Parse(io, "s#", &str, &len);
         os->Append(str, len);
       }
-      else if( io->ob_type == &PyUnicode_Type )  {
-        Py_ssize_t usz =  PyUnicode_GetSize(io);
-        TTBuffer<wchar_t> wc_bf(usz+1);
+      else if (io->ob_type == &PyUnicode_Type) {
+        Py_ssize_t usz = PyUnicode_GetSize(io);
+        TTBuffer<wchar_t> wc_bf(usz + 1);
         usz = PyUnicode_AsWideChar((PyUnicodeObject*)io, wc_bf.Data(), usz);
-        if( usz > 0 )
+        if (usz > 0)
           os->Append(wc_bf.Data(), usz);
       }
-      else  {
+      else {
         va_end(argptr);
         return false;
       }
     }
-    else if( format[i] == 's' )  {
+    else if (format[i] == 's') {
       char** cstr = va_arg(argptr, char**);
       int len, *rlen = NULL;
-      if( (i+1) < slen && format[i+1] == '#' )  {
+      if ((i + 1) < slen && format[i + 1] == '#') {
         rlen = va_arg(argptr, int*);
         i++;
       }
       else
         rlen = &len;
-      if( !PyArg_Parse(io, "s#", cstr, rlen)  )  {
+      if (!PyArg_Parse(io, "s#", cstr, rlen)) {
         va_end(argptr);
         return false;
       }
     }
-    else if( format[i] == 'f' )  {
+    else if (format[i] == 'f') {
       float* fp = va_arg(argptr, float*);
-      if( !PyArg_Parse(io, "f", fp) )  {
+      if (!PyArg_Parse(io, "f", fp)) {
         va_end(argptr);
         return false;
       }
     }
-    else if( format[i] == 'd' )  {
+    else if (format[i] == 'd') {
       double* fp = va_arg(argptr, double*);
-      if( !PyArg_Parse(io, "d", fp) )  {
+      if (!PyArg_Parse(io, "d", fp)) {
         va_end(argptr);
         return false;
       }
     }
-    else if( format[i] == 'O' )  {
+    else if (format[i] == 'O') {
       PyObject** fp = va_arg(argptr, PyObject**);
       *fp = io;
     }
-    else if( format[i] == 'b' )  {
+    else if (format[i] == 'b') {
       bool* bp = va_arg(argptr, bool*);
-      if( !PyArg_Parse(io, "b", bp) )  {
+      if (!PyArg_Parse(io, "b", bp)) {
         va_end(argptr);
         return false;
       }
     }
-    else  {
+    else if (format[i] == '|') {
+      continue;
+    }
+    else {
       va_end(argptr);
       return false;
     }
-    if( (i+1) < slen && format[i+1] == '|' )  {
+    if ((i + 1) < slen && format[i + 1] == '|') {
       proceedOptional = true;
       i++;
     }
