@@ -280,7 +280,7 @@ public:
   }
   // could be list of pointers or list of const pointers
   template <class RefPList> static void SortListByIndices(RefPList& lst) {
-    QuickSorter::SortSF(lst, &TReflection::CompareIndices);
+    QuickSorter::SortSF(lst, &TReflection::Compare);
   }
   //..............................................................................
   bool operator == (const vec3i &hkl_) const {

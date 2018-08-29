@@ -245,7 +245,7 @@ class RefMerger {
     size_t mi_o_sig_cnt = 0;
     for (size_t i = 0; i < ref_cnt;) {
       TReflection* ref = refs[i];
-      if (usebatch && ref->GetBatch() < 0) {
+      if (UseBatch && ref->GetBatch() < 0) {
         continue;
       }
       ref->Analyse(ml);
