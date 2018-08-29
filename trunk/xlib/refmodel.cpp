@@ -576,11 +576,10 @@ void RefinementModel::SetReflections(const TRefList &refs) const {
   _Reflections.Clear();
   _FriedelPairCount = 0;
   _Reflections.SetCapacity(refs.Count());
+  const bool use_batch = HKLF >= 5;
   for (size_t i = 0; i < refs.Count(); i++) {
     if (refs[i].IsOmitted()) continue;
     TReflection& r = _Reflections.AddNew(refs[i]);
-    if (HKLF < 5)  // enforce to clear the batch number...
-      r.SetBatch(TReflection::NoBatchSet);
     if (HKLF == 3) {
       double F = r.GetI()*HKLF_s;
       double sF = r.GetS()*HKLF_s / HKLF_wt;
@@ -602,15 +601,17 @@ void RefinementModel::SetReflections(const TRefList &refs) const {
   hkl3d.FastInitWith(0);
   for (size_t i = 0; i < _Reflections.Count(); i++) {
     TReflection &r = _Reflections[i];
-    if (r.GetBatch() <= 0) {
+    if (use_batch && r.GetBatch() <= 0) {
       continue;
     }
     TRefPList *& rl = hkl3d(r.GetHkl());
-    if (rl == NULL)
-      rl = new TRefPList;
+    if (rl == 0) {
+      rl = new TRefPList();
+    }
     rl->Add(r);
-    if (rl->Count() > maxRedundancy)
+    if (rl->Count() > maxRedundancy) {
       maxRedundancy = rl->Count();
+    }
   }
   sw.start("Analysing redundancy and Friedel pairs");
   _Redundancy.SetCount(maxRedundancy);
@@ -619,20 +620,22 @@ void RefinementModel::SetReflections(const TRefList &refs) const {
     for (int k = _HklStat.FileMinInd[1]; k <= _HklStat.FileMaxInd[1]; k++) {
       for (int l = _HklStat.FileMinInd[2]; l <= _HklStat.FileMaxInd[2]; l++) {
         TRefPList* rl1 = hkl3d(h, k, l);
-        if (rl1 == NULL)  continue;
+        if (rl1 == 0) {
+          continue;
+        }
         const vec3i ind(-h, -k, -l);
         if (hkl3d.IsInRange(ind)) {
           TRefPList* rl2 = hkl3d(ind);
-          if (rl2 != NULL && rl2 != rl1) {
+          if (rl2 != 0 && rl2 != rl1) {
             _FriedelPairCount++;
             _Redundancy[rl2->Count() - 1]++;
             delete rl2;
-            hkl3d(ind) = NULL;
+            hkl3d(ind) = 0;
           }
         }
         _Redundancy[rl1->Count() - 1]++;
         delete rl1;
-        hkl3d(h, k, l) = NULL;
+        hkl3d(h, k, l) = 0;
       }
     }
   }
@@ -815,17 +818,19 @@ RefinementModel::HklStat& RefinementModel::FilterHkl(TRefList& out,
   TStopWatch sw(__FUNC__);
   const TRefList& all_refs = GetReflections();
   // swap the values if in wrong order
-  if (SHEL_hr > SHEL_lr)
+  if (SHEL_hr > SHEL_lr) {
     olx_swap(SHEL_hr, SHEL_lr);
+  }
   RefUtil::ResolutionAndSigmaFilter rsf(*this);
   rsf.SetStats(stats);
   const size_t ref_cnt = all_refs.Count();
   out.SetCapacity(ref_cnt);
   for( size_t i=0; i < ref_cnt; i++ )  {
     size_t start = i;
-    if (all_refs[i].GetBatch() < 0) {
-      while (++i < ref_cnt && all_refs[i].GetBatch() < 0)
+    if (HKLF >= 5 && all_refs[i].GetBatch() < 0) {
+      while (++i < ref_cnt && all_refs[i].GetBatch() < 0) {
         ;
+      }
       i--;
     }
     bool add = true;
@@ -874,29 +879,27 @@ RefinementModel::HklStat& RefinementModel::AdjustIntensity(TRefList& out,
 {
   const double h_o_s = 0.5*OMIT_s;
   const size_t ref_cnt = out.Count();
-  for( size_t i=0; i < ref_cnt; i++ )  {
+  for (size_t i = 0; i < ref_cnt; i++) {
     TReflection& r = out[i];
-    if( r.GetI() < h_o_s*r.GetS() )  {
+    if (r.GetI() < h_o_s*r.GetS()) {
       r.SetI(h_o_s*r.GetS());
       stats.IntensityTransformed++;
     }
-    //if( r.GetI() < 0 )
-    //  r.SetI(0);
   }
   return stats;
 }
 //.............................................................................
-size_t RefinementModel::ProcessOmits(TRefList& refs)  {
-  if( Omits.IsEmpty() )  return 0;
+size_t RefinementModel::ProcessOmits(TRefList& refs) {
+  if (Omits.IsEmpty())  return 0;
   size_t processed = 0;
   const size_t ref_c = refs.Count();
-  for( size_t i=0; i < ref_c; i++ )  {
+  for (size_t i = 0; i < ref_c; i++) {
     const TReflection& r = refs[i];
     const size_t omit_cnt = Omits.Count();
-    for( size_t j=0; j < omit_cnt; j++ )  {
-      if( r.GetH() == Omits[j][0] &&
-          r.GetK() == Omits[j][1] &&
-          r.GetL() == Omits[j][2] )
+    for (size_t j = 0; j < omit_cnt; j++) {
+      if (r.GetH() == Omits[j][0] &&
+        r.GetK() == Omits[j][1] &&
+        r.GetL() == Omits[j][2])
       {
         refs.NullItem(i);
         processed++;
@@ -904,8 +907,9 @@ size_t RefinementModel::ProcessOmits(TRefList& refs)  {
       }
     }
   }
-  if( processed != 0 )
+  if (processed != 0) {
     refs.Pack();
+  }
   return processed;
 }
 //.............................................................................
@@ -921,7 +925,9 @@ void RefinementModel::DetwinAlgebraic(TRefList& refs, const HklStat& st,
     TRefList dtr;
     dtr.SetCapacity(refs.Count());
     for (size_t i = 0; i < refs.Count(); i++) {
-      if (refs[i].GetTag() < 0)  continue;
+      if (refs[i].GetTag() < 0) {
+        continue;
+      }
       const size_t s = dtr.Count();
       dtw.detwin(
         obs_twin_mate_generator<merohedral::iterator>(
@@ -929,7 +935,9 @@ void RefinementModel::DetwinAlgebraic(TRefList& refs, const HklStat& st,
       for (size_t j = s; j < dtr.Count(); j++) {
         if (tw.hkl_to_ref_map(dtr[j].GetHkl())) {
           size_t ri = tw.hkl_to_ref_map(dtr[j].GetHkl());
-          if (ri == InvalidIndex)  continue;
+          if (ri == InvalidIndex) {
+            continue;
+          }
           TReflection& r = refs[ri];
           r.SetI(dtr[j].GetI());
           r.SetS(dtr[j].GetS());
@@ -972,24 +980,29 @@ olxstr RefinementModel::AtomListToStr(const TTypeList<ExplicitCAtomRef> &al,
   olxstr_buf rv;
   if (olx_is_valid_size(group_size)) {
     olxstr ss = '-';
-    for (size_t i=0; i < al.Count(); i+=group_size) {
-      for (size_t j=0; j < group_size; j++) {
-        if ((i + j) >= al.Count())
+    for (size_t i = 0; i < al.Count(); i += group_size) {
+      for (size_t j = 0; j < group_size; j++) {
+        if ((i + j) >= al.Count()) {
           rv << '?';
-        else
-          rv << al[i+j].GetExpression(NULL);
-        if (j+1 < group_size)
+        }
+        else {
+          rv << al[i + j].GetExpression(0);
+        }
+        if (j + 1 < group_size) {
           rv << ss;
+        }
       }
-      if ((i+group_size) < al.Count())
+      if ((i + group_size) < al.Count()) {
         rv << sep;
+      }
     }
   }
   else {
-    for (size_t i=0; i < al.Count(); i++) {
-      rv << al[i].GetExpression(NULL);
-      if ((i+1) < al.Count())
+    for (size_t i = 0; i < al.Count(); i++) {
+      rv << al[i].GetExpression(0);
+      if ((i + 1) < al.Count()) {
         rv << sep;
+      }
     }
   }
   return rv;
@@ -999,7 +1012,9 @@ void formatRidingUHelper(olxstr &l,
   olxdict<const TCAtom *, TCAtomPList, TPointerComparator> &r)
 {
   for (size_t j=0; j < r.Count(); j++) {
-    if (l.Length() > 2) l << ", ";
+    if (l.Length() > 2) {
+      l << ", ";
+    }
     TCAtomPList &al = r.GetValue(j);
     if (al.Count() == 1) {
       l << al[0]->GetLabel() << " of " <<
@@ -1839,16 +1854,21 @@ double RefinementModel::CalcCompletnessTo2Theta(double tt, bool Laue) const {
   for (size_t i = 0; i < refs.Count(); i++) {
     refs[i].Standardise(info_ex);
   }
-  QuickSorter::SortSF(refs, &TReflection::CompareIndices);
+  QuickSorter::SortSF(refs, &TReflection::Compare);
   size_t u_cnt = 0;
   for (size_t i=0; i < refs.Count(); i++) {
     TReflection &r = refs[i];
-    while (++i < refs.Count() && r.CompareToIndices(refs[i]) == 0)
+    while (++i < refs.Count() && r.CompareTo(refs[i]) == 0) {
       ;
+    }
     i--;
-    if (r.IsAbsent()) continue;
+    if (r.IsAbsent()) {
+      continue;
+    }
     double qd = r.ToCart(h2c).QLength();
-    if (qd <= min_ds_sq) u_cnt++;
+    if (qd <= min_ds_sq) {
+      u_cnt++;
+    }
   }
 
   olx_pair_t<vec3i, vec3i> range = CalcIndicesToD(min_d);
@@ -1856,13 +1876,21 @@ double RefinementModel::CalcCompletnessTo2Theta(double tt, bool Laue) const {
   for (int h = range.a[0]; h <= range.b[0]; h++) {
     for (int k = range.a[1]; k <= range.b[1]; k++) {
       for (int l = range.a[2]; l <= range.b[2]; l++) {
-        if (l == 0 && k == 0 && h == 0) continue;
+        if (l == 0 && k == 0 && h == 0) {
+          continue;
+        }
         vec3i hkl(h,k,l);
         vec3i shkl = TReflection::Standardise(hkl, info_ex);
-        if (shkl != hkl) continue;
-        if (TReflection::IsAbsent(hkl, info_ex)) continue;
+        if (shkl != hkl) {
+          continue;
+        }
+        if (TReflection::IsAbsent(hkl, info_ex)) {
+          continue;
+        }
         double qd = TReflection::ToCart(hkl, h2c).QLength();
-        if (qd <= min_ds_sq) e_cnt++;
+        if (qd <= min_ds_sq) {
+          e_cnt++;
+        }
       }
     }
   }
@@ -2329,12 +2357,12 @@ bool RefinementModel::HklStat::need_updating(const RefinementModel &r) const {
     r.HKLF_s == HKLF_s &&
     r.HKLF_mat == HKLF_mat &&
     r.MERG == MERG;
-  if (!eq || omits.Count() != r.Omits.Count())
+  if (!eq || omits.Count() != r.Omits.Count()) {
     return true;
+  }
   for (size_t i = 0; i < omits.Count(); i++) {
     if (omits[i] != r.Omits[i]) {
       return true;
-      break;
     }
   }
   return false;

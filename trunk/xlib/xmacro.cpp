@@ -10215,7 +10215,7 @@ void XLibMacros::funHKLF(const TStrObjList &args, TMacroData &E) {
       xf.GetRM().SetHKLF(5);
       bc--;
       TStrList sl;
-      olxstr v = 1. / bc;
+      olxstr v = 1. / (bc+1);
       for (size_t i = 0; i < bc; i++) {
         sl << v;
       }
@@ -10235,8 +10235,9 @@ void XLibMacros::macPack(TStrObjList &Cmds, const TParamList &Options,
   TXApp &app = TXApp::GetInstance();
   const bool ClearCont = !Options.Contains("c");
   const bool cell = (Cmds.Count() > 0 && Cmds[0].Equalsi("cell"));
-  if (cell)
+  if (cell) {
     Cmds.Delete(0);
+  }
   TStopWatch sw(__FUNC__);
   if (cell) {
     app.XFile().GetLattice().GenerateCell();
