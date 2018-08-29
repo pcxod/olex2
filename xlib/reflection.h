@@ -217,9 +217,9 @@ public:
   /* analyses if this reflection is centric, systematically absent and its
   multiplicity
   */
-  template <class MatList> void Analyse(const MatList& ml)  {
+  template <class MatList> void Analyse(const MatList& ml) {
     _reset_flags(0, 1, GetBatch());
-    for( size_t i=0; i < ml.Count(); i++ )  {
+    for (size_t i = 0; i < ml.Count(); i++) {
       vec3i hklv = MulHkl(hkl, ml[i]);
       if (EqHkl(hklv)) {  // symmetric reflection
         IncMultiplicity();
@@ -228,8 +228,9 @@ public:
           SetAbsent(olx_abs(l - olx_round(l)) > 0.01);
         }
       }
-      else if (!IsCentric() && EqNegHkl(hklv))  // centric reflection
+      else if (!IsCentric() && EqNegHkl(hklv)) { // centric reflection
         SetCentric(true);
+      }
     }
   }
 //..............................................................................
@@ -243,40 +244,42 @@ public:
     return EqNegHkl(MulHkl(hkl, m));
   }
 //..............................................................................
-  int CompareTo(const TReflection &r) const {
+  int CompareToWithBatch(const TReflection &r) const {
     int res = GetBatch() - r.GetBatch();  // prioritise by batch number
-    if( res == 0 )  {
+    if (res == 0) {
       res = hkl[2] - r.hkl[2];
-      if( res == 0 )  {
+      if (res == 0) {
         res = hkl[1] - r.hkl[1];
-        if( res == 0 )
+        if (res == 0) {
           res = hkl[0] - r.hkl[0];
+        }
       }
     }
     return res;
   }
-  static int Compare(const TReflection &a, const TReflection &b)  {
-    return a.CompareTo(b);
+  static int CompareWithbatch(const TReflection &a, const TReflection &b)  {
+    return a.CompareToWithBatch(b);
   }
   // could be list of pointers or list of const pointers
   template <class RefPList> static void SortList(RefPList& lst)  {
     QuickSorter::SortSF(lst, &TReflection::Compare);
   }
   //..............................................................................
-  int CompareToIndices(const TReflection &r) const {
+  int CompareTo(const TReflection &r) const {
     int res = hkl[2] - r.hkl[2];
-    if (res == 0)  {
+    if (res == 0) {
       res = hkl[1] - r.hkl[1];
-      if (res == 0)
+      if (res == 0) {
         res = hkl[0] - r.hkl[0];
+      }
     }
     return res;
   }
-  static int CompareIndices(const TReflection &a, const TReflection &b)  {
-    return a.CompareToIndices(b);
+  static int Compare(const TReflection &a, const TReflection &b) {
+    return a.CompareTo(b);
   }
   // could be list of pointers or list of const pointers
-  template <class RefPList> static void SortListByIndices(RefPList& lst)  {
+  template <class RefPList> static void SortListByIndices(RefPList& lst) {
     QuickSorter::SortSF(lst, &TReflection::CompareIndices);
   }
   //..............................................................................
@@ -384,7 +387,9 @@ public:
 template <class RefList> class MillerIndexList : public IMillerIndexList {
   const RefList& src;
 public:
-  MillerIndexList(const RefList& r) : src(r)  {}
+  MillerIndexList(const RefList& r)
+    : src(r)
+  {}
   size_t Count() const {  return src.Count();  }
   vec3i operator [] (size_t i) const {  return TReflection::GetHkl(src[i]); }
 };
@@ -402,10 +407,12 @@ struct RefListUtil {
     m.b = m.a = olx_ref::get(l[0]).GetI();
     for (size_t i = 1; i < l.Count(); i++) {
       TReflection &r = olx_ref::get(l[i]);
-      if (r.GetI() > m.b)
+      if (r.GetI() > m.b) {
         m.b = r.GetI();
-      if (r.GetI() < m.a)
+      }
+      if (r.GetI() < m.a) {
         m.a = r.GetI();
+      }
     }
     return m;
   }
