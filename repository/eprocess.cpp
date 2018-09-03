@@ -330,7 +330,7 @@ bool TWxProcess::Terminate() {
     int pid = ProcessId;
     ProcessId = -1;
     return wxKill(pid, wxSIGKILL) == 0;
-    // the function hsould trigger the OnTerminate function
+    // the function should trigger the OnTerminate function
   }
   return false;
 }
@@ -343,8 +343,12 @@ void TWxProcess::Detach() {
 }
 //.............................................................................
 bool TWxProcess::Execute() {
-  if (GetCmdLine().IsEmpty())  return false;
-  if (AProcess::IsRedirected())  Redirect();
+  if (GetCmdLine().IsEmpty()) {
+    return false;
+  }
+  if (AProcess::IsRedirected()) {
+    Redirect();
+  }
   if (AProcess::IsRedirected()) {  // must be async
     TStrList toks;
     TParamList::StrtokParams(GetCmdLine(), ' ', toks);
@@ -354,10 +358,12 @@ bool TWxProcess::Execute() {
     olxstr cmd( TEFile::Which(TEFile::ExtractFileName(toks[0])) );
     if (toks.Count() > 1) {
       for (size_t i=1; i < toks.Count(); i++) {
-        if (!toks[i].Contains(' '))
-          cmd << ' '  << toks[i];
-        else
+        if (!toks[i].Contains(' ')) {
+          cmd << ' ' << toks[i];
+        }
+        else {
           cmd << " \'" << toks[i] << '\'';
+        }
       }
     }
     ProcessId = wxExecute( cmd.u_str(), wxEXEC_ASYNC, this);
@@ -369,8 +375,9 @@ bool TWxProcess::Execute() {
   else {
     if (IsSynchronised()) {
       ProcessId = wxExecute(GetCmdLine().u_str(), wxEXEC_SYNC, this);
-      if (ProcessId == -1)
+      if (ProcessId == -1) {
         return false;
+      }
       return true;
     }
     else {
@@ -390,7 +397,7 @@ bool TWxProcess::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
   bool Terminated = false;
   if (MsgId == ID_Timer) {
     wxInputStream *in = wxProcess::GetInputStream();
-    if (in != NULL) {
+    if (in != 0) {
       const int BfC=512;
       olx_array_ptr<char> Bf(new char[BfC]);
       if (in->CanRead()) {
@@ -399,8 +406,9 @@ bool TWxProcess::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
         }
         size_t lr = in->LastRead();
          Output.Write(Bf, lr);
-          if (GetDubStream() != NULL)
-            GetDubStream()->Write(Bf(), lr);
+         if (GetDubStream() != 0) {
+           GetDubStream()->Write(Bf(), lr);
+         }
       }
     }
     else {  // just check if still valid
@@ -417,6 +425,8 @@ bool TWxProcess::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
 //.............................................................................
 void TWxProcess::OnTerminate(int pid, int status) {
   if (ProcessId == pid) {
+    // make sure that nothing is discarded!
+    Dispatch(ID_Timer, 0, 0, 0, 0);
     ProcessId = -1;
     Terminate();
   }
@@ -424,14 +434,18 @@ void TWxProcess::OnTerminate(int pid, int status) {
 //.............................................................................
 void TWxProcess::Write(const olxstr &Cmd) {
   wxOutputStream *out = wxProcess::GetOutputStream();
-  if (out == NULL) return;
+  if (out == 0) {
+    return;
+  }
   out->Write(Cmd.c_str(), Cmd.Length());
   Output.Write(Cmd.c_str(), Cmd.Length());
 }
 //.............................................................................
 void TWxProcess::Writenl()  {
   wxOutputStream *out = wxProcess::GetOutputStream();
-  if (out == NULL) return;
+  if (out == 0) {
+    return;
+  }
   out->PutC('\n');
   Output.Write('\n');
 }
