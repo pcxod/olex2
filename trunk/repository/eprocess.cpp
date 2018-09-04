@@ -199,11 +199,11 @@ bool TWinProcess::Terminate() {
     TBasicApp::GetInstance().OnTimer.Remove(this);
   SetTerminated();
   CloseStreams();
-  OnTerminate.Execute((AEventsDispatcher*)this, NULL);
-  if (ProcessInfo.hProcess != NULL) {
+  OnTerminate.Execute((AEventsDispatcher*)this, 0);
+  if (ProcessInfo.hProcess != 0) {
     bool res = TerminateProcess(ProcessInfo.hProcess, 0) != 0;
     CloseHandle(ProcessInfo.hProcess);
-    ProcessInfo.hProcess = NULL;
+    ProcessInfo.hProcess = 0;
     return res;
   }
   return true;
@@ -211,16 +211,22 @@ bool TWinProcess::Terminate() {
 //.............................................................................
 // write data to the child's stdin
 void TWinProcess::Write(const olxstr &Str) {
-  if (InWrite == NULL) return;
+  if (InWrite == 0) {
+    return;
+  }
   DWORD Written;
-  WriteFile(InWrite, Str.c_str(), Str.Length(), &Written, NULL);
+  WriteFile(InWrite, Str.c_str(), Str.Length(), &Written, 0);
+  volatile olx_scope_cs cs_(GetOutputLock());
   GetOutput().Write(Str.c_str(), Str.Length());
 }
 //.............................................................................
 void TWinProcess::Writenl() {
-  if (InWrite == NULL) return;
+  if (InWrite == 0) {
+    return;
+  }
   DWORD Written;
-  WriteFile(InWrite, "\n", 1, &Written, NULL);
+  WriteFile(InWrite, "\n", 1, &Written, 0);
+  volatile olx_scope_cs cs_(GetOutputLock());
   GetOutput().Write('\n');
 }
 //.............................................................................
@@ -234,7 +240,7 @@ bool TWinProcess::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
       const int BfC=512;
       olx_array_ptr<char> Bf(new char[BfC]);
       DWORD dwRead = 0;
-      if (PeekNamedPipe(OutRead, NULL, 0, NULL, &dwAvail, NULL) == 0) // error
+      if (PeekNamedPipe(OutRead, 0, 0, 0, &dwAvail, 0) == 0) // error
         Terminated = true;
       else if (dwAvail == 0) {  // no data
         CallsWasted++;
@@ -242,15 +248,16 @@ bool TWinProcess::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
       else  {
         CallsWasted = 0;
         dwRead = 0;
-        if (ReadFile(OutRead, Bf(), olx_min(BfC-1, dwAvail), &dwRead, NULL) == 0
+        if (ReadFile(OutRead, Bf(), olx_min(BfC-1, dwAvail), &dwRead, 0) == 0
             || dwRead == 0)  // error, the child might ended
         {
           Terminated = true;
         }
         else {
           Output.Write(Bf, dwRead);
-          if (GetDubStream() != NULL)
+          if (GetDubStream() != 0) {
             GetDubStream()->Write(Bf, dwRead);
+          }
         }
       }
     }
@@ -275,7 +282,7 @@ bool TWinProcess::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
   //
   if (Terminated) {
     CloseHandle(ProcessInfo.hProcess);
-    ProcessInfo.hProcess = NULL;
+    ProcessInfo.hProcess = 0;
     Terminate();
     CallsWasted = 0;
   }
@@ -289,16 +296,18 @@ void TWinProcess::Detach() {
 // TWinWinCmd implementation
 //---------------------------------------------------------------------------//
 bool TWinWinCmd::SendWindowCmd(const olxstr& WndName, const olxstr& Cmd) {
-  HWND Window = FindWindow(WndName.u_str(), NULL);
+  HWND Window = FindWindow(WndName.u_str(), 0);
   int TO=50;
-  if (Window == NULL) {
+  if (Window == 0) {
     SleepEx(20, FALSE);
-    Window = FindWindow(WndName.u_str(), NULL);
-    if (--TO < 0)
+    Window = FindWindow(WndName.u_str(), 0);
+    if (--TO < 0) {
       return false;
+    }
   }
-  for (size_t i=0; i < Cmd.Length(); i++)
+  for (size_t i = 0; i < Cmd.Length(); i++) {
     PostMessage(Window, WM_CHAR, Cmd[i], 0);
+  }
   return true;
 }
 #endif  // for __WIN32__
@@ -308,23 +317,22 @@ bool TWinWinCmd::SendWindowCmd(const olxstr& WndName, const olxstr& Cmd) {
 // TWxProcess implementation
 //---------------------------------------------------------------------------//
 TWxProcess::TWxProcess(const olxstr& cmdl, short flags)
-  : AProcess(true, cmdl, flags)
+  : AProcess(true, cmdl, flags),
+  outputReader(*this)
 {}
 //.............................................................................
 TWxProcess::~TWxProcess() {
-  if (TBasicApp::HasInstance()) {
-    TBasicApp::GetInstance().OnTimer.Remove(this);
-  }
+  outputReader.DoStop();
+  outputReader.Join();
   if (IsTerminateOnDelete()) {
     Terminate();
   }
 }
 //.............................................................................
 bool TWxProcess::Terminate() {
+  outputReader.DoStop();
+  outputReader.Join();
   SetTerminated();
-  if (TBasicApp::HasInstance()) {
-    TBasicApp::GetInstance().OnTimer.Remove(this);
-  }
   AProcess::OnTerminate.Execute((AProcess *)this);
   if (ProcessId >= 0) {
     int pid = ProcessId;
@@ -337,6 +345,8 @@ bool TWxProcess::Terminate() {
 //.............................................................................
 void TWxProcess::Detach() {
   AProcess::OnTerminate.Clear();
+  outputReader.DoStop();
+  outputReader.Join();
   wxProcess::Detach();
   // according to docs, we should not delete the object ?
   TEGC::AddP((AProcess *)this);
@@ -386,47 +396,43 @@ bool TWxProcess::Execute() {
     }
   }
   if (!IsSynchronised()) {
-    TBasicApp::GetInstance().OnTimer.Add(this, ID_Timer);
+    outputReader.Start();
   }
   return true;
 }
 //.............................................................................
-bool TWxProcess::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
-  const IOlxObject *Data, TActionQueue *q)
-{
-  bool Terminated = false;
-  if (MsgId == ID_Timer) {
-    wxInputStream *in = wxProcess::GetInputStream();
+int TWxProcess::OutputReaderThread::Run(){
+  stop = false;
+  while (true) {
+    wxInputStream *in = parent.GetInputStream();
     if (in != 0) {
-      const int BfC=512;
+      bool terminated = false;
+      const int BfC = 512;
       olx_array_ptr<char> Bf(new char[BfC]);
-      if (in->CanRead()) {
-        if (in->Read(Bf(), BfC).Eof()) {
-          Terminated = true;
-        }
-        size_t lr = in->LastRead();
-         Output.Write(Bf, lr);
-         if (GetDubStream() != 0) {
-           GetDubStream()->Write(Bf(), lr);
-         }
+      if (in->Read(Bf(), BfC).Eof()) {
+        terminated = true;
+      }
+      size_t lr = in->LastRead();
+      volatile olx_scope_cs cs_(parent.GetOutputLock());
+      parent.GetOutput().Write(Bf, lr);
+      if (parent.GetDubStream() != 0) {
+        parent.GetDubStream()->Write(Bf(), lr);
+      }
+      AOlxThread::Yield();
+      if (terminated) {
+        return 1;
       }
     }
-    else {  // just check if still valid
-      Terminated = !wxProcess::Exists(ProcessId);
+    if (stop) {
+      return 1;
     }
   }
-  if (Terminated) {
-    if (TBasicApp::HasInstance()) {
-      TBasicApp::GetInstance().OnTimer.Remove(this);
-    }
-  }
-  return true;
+  return 0;
 }
 //.............................................................................
 void TWxProcess::OnTerminate(int pid, int status) {
   if (ProcessId == pid) {
     // make sure that nothing is discarded!
-    Dispatch(ID_Timer, 0, 0, 0, 0);
     ProcessId = -1;
     Terminate();
   }
@@ -441,7 +447,7 @@ void TWxProcess::Write(const olxstr &Cmd) {
   Output.Write(Cmd.c_str(), Cmd.Length());
 }
 //.............................................................................
-void TWxProcess::Writenl()  {
+void TWxProcess::Writenl() {
   wxOutputStream *out = wxProcess::GetOutputStream();
   if (out == 0) {
     return;
