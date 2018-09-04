@@ -15,6 +15,7 @@
 #include "os_util.h"
 #include "sortedlist.h"
 #include "bapp.h"
+#include "olxth.h"
 
 #ifdef __WXWIDGETS__
   #include "wx/process.h"
@@ -51,10 +52,10 @@ class ProcessOutput : public IProcessOutput {
 protected:
   TDirectionalList<char> data;
 public:
-  ProcessOutput()  {}
-  void write_char(char ch)  {  data.Write(ch);  }
-  void write_array(const char* bf, size_t len)  {  data.Write(bf, len);  }
-  bool isEmpty() const {  return data.IsEmpty();  }
+  ProcessOutput() {}
+  void write_char(char ch) { data.Write(ch); }
+  void write_array(const char* bf, size_t len) { data.Write(bf, len); }
+  bool isEmpty() const { return data.IsEmpty(); }
   olxstr readAll() {
     olxstr rv;
     data.ToString(rv);
@@ -69,11 +70,11 @@ protected:
   mutable olx_critical_section cs;
 public:
   SynchronisedProcessOutput() {}
-  void write_char(char ch)  {
+  void write_char(char ch) {
     volatile olx_scope_cs _cs(cs);
     data.Write(ch);
   }
-  void write_array(const char* bf, size_t len)  {
+  void write_array(const char* bf, size_t len) {
     volatile olx_scope_cs _cs(cs);
     data.Write(bf, len);
   }
@@ -94,16 +95,16 @@ class BufferedProcessOutput {
 protected:
   IProcessOutput& data;
 public:
-  BufferedProcessOutput(bool thread_use) :
-      data(*(thread_use ?
-        (IProcessOutput*)(new SynchronisedProcessOutput)
-        : (IProcessOutput*)(new ProcessOutput)))
+  BufferedProcessOutput(bool thread_use)
+    : data(*(thread_use ?
+    (IProcessOutput*)(new SynchronisedProcessOutput)
+      : (IProcessOutput*)(new ProcessOutput)))
   {}
-  ~BufferedProcessOutput()  {  delete &data;  }
-  void Write(char ch)  {  data.write_char(ch);  }
-  void Write(const char* bf, size_t len)  {  data.write_array(bf, len);  }
-  bool IsEmpty() const {  return data.isEmpty();  }
-  olxstr ReadAll() {  return data.readAll();  }
+  ~BufferedProcessOutput() { delete &data; }
+  void Write(char ch) { data.write_char(ch); }
+  void Write(const char* bf, size_t len) { data.write_array(bf, len); }
+  bool IsEmpty() const { return data.isEmpty(); }
+  olxstr ReadAll() { return data.readAll(); }
 };
 
 class AProcess : public virtual IOlxObject {
@@ -115,31 +116,35 @@ private:
   olxstr CmdLine;
 protected:
   int ProcessId; // must be initialised for async execution in the execute method
-  bool IsTerminateOnDelete() const {  return (Flags & spfTerminateOnDelete) != 0;  }
+  bool IsTerminateOnDelete() const { return (Flags & spfTerminateOnDelete) != 0; }
   BufferedProcessOutput Output;
-  void SetTerminated()  {  Flags |= spfTerminated;  }
+  olx_critical_section OutputLock;
+  void SetTerminated() { Flags |= spfTerminated; }
 public:
   AProcess(bool use_threads, const olxstr& cmdl, short flags);
   virtual ~AProcess();
 
-  bool IsSynchronised() const {  return (Flags & spfSynchronised) != 0;  }
-  bool IsRedirected() const {  return (Flags & spfRedirected) != 0;  }
-  bool IsOutputDub() const {  return (Flags & spfRedirected) != 0;  }
-  bool IsQuite() const {  return (Flags & spfQuiet) != 0;  }
-  bool IsTerminated() const {  return (Flags & spfTerminated) != 0;  }
+  bool IsSynchronised() const { return (Flags & spfSynchronised) != 0; }
+  bool IsRedirected() const { return (Flags & spfRedirected) != 0; }
+  bool IsOutputDub() const { return (Flags & spfRedirected) != 0; }
+  bool IsQuite() const { return (Flags & spfQuiet) != 0; }
+  bool IsTerminated() const { return (Flags & spfTerminated) != 0; }
 
-  const BufferedProcessOutput& GetOutput() const {  return Output;  }
-  BufferedProcessOutput& GetOutput()  {  return Output;  }
+  const BufferedProcessOutput& GetOutput() const { return Output; }
+  BufferedProcessOutput& GetOutput() { return Output; }
+  olx_critical_section &GetOutputLock() {
+    return OutputLock;
+  }
 
-  const TStrList& OnTerminateCmds() const {  return FOnTerminateCmds;  }
-  void SetOnTerminateCmds(const TStrList& l)  {  FOnTerminateCmds.Assign(l);  }
-  int GetProcessId() const {  return ProcessId;  }
-  const olxstr&  GetCmdLine() const {  return CmdLine;  }
-  IOutputStream* GetDubStream() const {  return DubOutput;  }
+  const TStrList& OnTerminateCmds() const { return FOnTerminateCmds; }
+  void SetOnTerminateCmds(const TStrList& l) { FOnTerminateCmds.Assign(l); }
+  int GetProcessId() const { return ProcessId; }
+  const olxstr&  GetCmdLine() const { return CmdLine; }
+  IOutputStream* GetDubStream() const { return DubOutput; }
   // sets stream to dublicate process output, will be deleted
-  void SetDubStream(IOutputStream* v) {  DubOutput = v;  }
+  void SetDubStream(IOutputStream* v) { DubOutput = v; }
 
-  virtual void Write(const olxstr& Cmd)=0; // writes to the process output
+  virtual void Write(const olxstr& Cmd) = 0; // writes to the process output
   virtual void Writenl() = 0; // writes to the process output
   virtual bool Terminate() = 0;
   virtual bool Execute() = 0;
@@ -152,12 +157,27 @@ public:
 
 #ifdef __WXWIDGETS__
 class TWxProcess
-  : protected wxProcess, public AProcess, public AEventsDispatcher
+  : protected wxProcess, public AProcess
 {
-  bool Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
-    const IOlxObject *Data, TActionQueue *);
   // override to stop automatic deletion of the object
   virtual void OnTerminate(int pid, int status);
+
+  class OutputReaderThread : public AOlxThread {
+    TWxProcess &parent;
+    volatile bool stop;
+  public:
+    OutputReaderThread(TWxProcess &parent)
+      : parent(parent),
+      stop(false)
+    {
+      Detached = false;
+    }
+    virtual int Run();
+    void DoStop() {
+      stop = true;
+    };
+  };
+  OutputReaderThread outputReader;
 public:
   TWxProcess(const olxstr& cmdl, short flags);
   ~TWxProcess();
@@ -194,15 +214,15 @@ public:
   virtual void Detach();
 };
 
-class TWinWinCmd  {
+class TWinWinCmd {
 public:
   static bool SendWindowCmd(const olxstr& WndName, const olxstr& Cmd);
 };
 #endif // !__WIN32__
 
-class ProcessManager : public AEventsDispatcher  {
+class ProcessManager : public AEventsDispatcher {
 public:
-  class IProcessHandler  {
+  class IProcessHandler {
   public:
     virtual ~IProcessHandler() {}
     virtual void BeforePrint() {}
@@ -220,14 +240,17 @@ private:
 protected:
   IProcessHandler& OutputHandler;
   virtual bool Dispatch(int MsgId, short MsgSubId, const IOlxObject* Sender,
-  const IOlxObject* Data, TActionQueue *)
+    const IOlxObject* Data, TActionQueue *)
   {
-    if( MsgSubId != msiExecute )  return false;
-    if( MsgId == process_manager_timer )  {
-      if( !Processes.IsEmpty() )  {
+    if (MsgSubId != msiExecute) {
+      return false;
+    }
+    if (MsgId == process_manager_timer) {
+      if (!Processes.IsEmpty()) {
         OutputHandler.BeforePrint();
-        for( size_t i=0; i < Processes.Count(); i++ )  {
-          if( !Processes[i]->GetOutput().IsEmpty() )  {
+        for (size_t i = 0; i < Processes.Count(); i++) {
+          volatile olx_scope_cs cs_(Processes[i]->GetOutputLock());
+          if (!Processes[i]->GetOutput().IsEmpty()) {
             olxstr rv = Processes[i]->GetOutput().ReadAll();
             OutputHandler.Print(rv);
           }
@@ -235,73 +258,85 @@ protected:
         OutputHandler.AfterPrint();
       }
     }
-    else if( MsgId == process_manager_kill )  {
+    else if (MsgId == process_manager_kill) {
       OnTerminate(dynamic_cast<const AProcess&>(*Sender));
     }
-    else
+    else {
       return false;
+    }
     return true;
   }
 public:
   ProcessManager(IProcessHandler& outputHandler)
-  : Redirected(NULL), Current(NULL), Last(NULL),
+    : Redirected(0), Current(0), Last(0),
     OutputHandler(outputHandler)
   {
     TBasicApp::GetInstance().OnTimer.Add(this, process_manager_timer);
   }
   //..............................................................................
-  ~ProcessManager()  {
+  ~ProcessManager() {
     TBasicApp::GetInstance().OnTimer.Remove(this);
-    for( size_t i=0; i < Processes.Count(); i++ )  {
+    for (size_t i = 0; i < Processes.Count(); i++) {
       Processes[i]->OnTerminate.Clear();
       Processes[i]->Terminate();
       delete Processes[i];
     }
   }
-  void OnCreate(AProcess& Process)  {
+  void OnCreate(AProcess& Process) {
     Process.OnTerminate.Add(this, process_manager_kill);
-    while( Current != NULL && !Current->IsTerminated() )  {
+    while (Current != 0 && !Current->IsTerminated()) {
       OutputHandler.OnWait();
       olx_sleep(50);
     }
-    Current = NULL;
+    Current = 0;
     Processes.Add(&Process);
-    if( Process.IsRedirected() )
+    if (Process.IsRedirected()) {
       Redirected = &Process;
+    }
     Last = &Process;
   }
   //..............................................................................
-  void OnTerminate(const AProcess& _process)  {
+  void OnTerminate(const AProcess& _process) {
     const size_t pi = Processes.IndexOf(&_process);
-    if( pi == InvalidIndex )  // howm come?
+    if (pi == InvalidIndex) { // how come?
       return;
+    }
     AProcess& Process = *Processes[pi];
-    if( &Process == Redirected )  Redirected = NULL;
-    if( &Process == Current )  Current = NULL;
-    if( &Process == Last )  Last = NULL;
-    if( !Process.GetOutput().IsEmpty() )  {
-      OutputHandler.BeforePrint();
-      const olxstr rv = Process.GetOutput().ReadAll();
-      OutputHandler.Print(rv);
-      OutputHandler.AfterPrint();
+    if (&Process == Redirected) {
+      Redirected = 0;
+    }
+    if (&Process == Current) {
+      Current = 0;
+    }
+    if (&Process == Last) {
+      Last = 0;
+    }
+    {
+      volatile olx_scope_cs cs_(Process.GetOutputLock());
+      if (!Process.GetOutput().IsEmpty()) {
+        OutputHandler.BeforePrint();
+        const olxstr rv = Process.GetOutput().ReadAll();
+        OutputHandler.Print(rv);
+        OutputHandler.AfterPrint();
+      }
     }
     OutputHandler.OnTerminate(_process);
     TEGC::Add(Processes[pi]);
     Processes.Delete(pi);
   }
   //..............................................................................
-  void WaitForLast()  {
+  void WaitForLast() {
     Current = Last;
-    while( Current != NULL && !Current->IsTerminated() )  {
+    while (Current != 0 && !Current->IsTerminated()) {
       OutputHandler.OnWait();
       olx_sleep(50);
     }
-    Current = NULL;
+    Current = 0;
   }
   //..............................................................................
-  AProcess* GetCurrent() const {  return Current;  }
-  AProcess* GetLast() const {  return Last;  }
-  AProcess* GetRedirected() const {  return Redirected;  }
+  AProcess* GetCurrent() const { return Current; }
+  AProcess* GetLast() const { return Last; }
+  AProcess* GetRedirected() const { return Redirected; }
 };
 
 #endif
