@@ -3495,8 +3495,9 @@ void GXLibMacros::macEsd(TStrObjList &Cmds, const TParamList &Options,
         cnt++;
       }
     }
-    if (cnt != 0)
+    if (cnt != 0) {
       cent /= cnt;
+    }
     app.CreateLabel(cent, values.Text('\n'), 4);
   }
 }
@@ -3525,10 +3526,12 @@ void GXLibMacros::macChemDraw(TStrObjList &Cmds, const TParamList &Options,
     else if (b.B().GetType() == iCarbonZ &&
       (b.A().GetType() == iCarbonZ || b.A().GetType() == iNitrogenZ)) {
       double l = b.Length();
-      if (l < 1.2)
+      if (l < 1.2) {
         order = 3;
-      else if (l < 1.30)
+      }
+      else if (l < 1.30) {
         order = 2;
+      }
     }
     b.SetOrder(order);
     if (order > 1) {
@@ -3549,7 +3552,6 @@ void GXLibMacros::macChemDraw(TStrObjList &Cmds, const TParamList &Options,
     else if (order == 3) {
       changed[i]->UpdatePrimitives((1 << 16) | (1 << 17));
     }
-
   }
 }
 //.............................................................................
@@ -3558,16 +3560,21 @@ void GXLibMacros::macPoly(TStrObjList &Cmds, const TParamList &Options,
 {
   short pt = 0;
   const olxstr &str_t = Cmds.GetLastString();
-  if (str_t.Equalsi("none"))
+  if (str_t.Equalsi("none")) {
     pt = 0;
-  else if (str_t.Equalsi("auto"))
+  }
+  else if (str_t.Equalsi("auto")) {
     pt = polyAuto;
-  else if (str_t.Equalsi("regular"))
+  }
+  else if (str_t.Equalsi("regular")) {
     pt = polyRegular;
-  else if (str_t.Equalsi("pyramid"))
+  }
+  else if (str_t.Equalsi("pyramid")) {
     pt = polyPyramid;
-  else if (str_t.Equalsi("bipyramid"))
+  }
+  else if (str_t.Equalsi("bipyramid")) {
     pt = polyBipyramid;
+  }
   else {
     E.ProcessingError(__OlxSrcInfo, "Undefined poly type: ").quote() << str_t;
     return;
@@ -3578,15 +3585,18 @@ void GXLibMacros::macPoly(TStrObjList &Cmds, const TParamList &Options,
     FunctionAccessor::MakeConst(&TXAtom::GetPrimitives)));
   atoms.Pack(olx_alg::olx_not(ACollectionItem::IndexTagAnalyser(
     FunctionAccessor::MakeConst(&TXAtom::GetPrimitives))));
-  for (size_t i=0; i < atoms.Count(); i++)
+  for (size_t i = 0; i < atoms.Count(); i++) {
     atoms[i]->SetPolyhedronType(pt);
+  }
 }
 //.............................................................................
 void GXLibMacros::funExtraZoom(const TStrObjList& Params, TMacroData &E) {
-  if (Params.IsEmpty())
+  if (Params.IsEmpty()) {
     E.SetRetVal(app.GetExtraZoom());
-  else
+  }
+  else {
     app.SetExtraZoom(Params[0].ToDouble());
+  }
 }
 //.............................................................................
 void GXLibMacros::macKill(TStrObjList &Cmds, const TParamList &Options,
@@ -3639,7 +3649,7 @@ void GXLibMacros::macKill(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   else {
-    if (Options.Contains("au")) {
+    if (Options.GetBoolOption("au")) {
       TCAtomPList atoms = app.FindCAtoms(Cmds.Text(' '), false);
       for (size_t i = 0; i < atoms.Count(); i++) {
         atoms[i]->SetDeleted(true);
@@ -3670,11 +3680,13 @@ void GXLibMacros::macKill(TStrObjList &Cmds, const TParamList &Options,
       if (todel.IsEmpty()) {
         return;
       }
-      olxstr_buf log = olxstr("Deleting");
-      for (size_t i = 0; i < todel.Count(); i++) {
-        log << ' ' << todel[i]->GetLabel();
+      if (!Options.GetBoolOption("au")) {
+        olxstr_buf log = olxstr("Deleting");
+        for (size_t i = 0; i < todel.Count(); i++) {
+          log << ' ' << todel[i]->GetLabel();
+        }
+        app.NewLogEntry() << log;
       }
-      app.NewLogEntry() << log;
       app.GetUndo().Push(app.DeleteXAtoms(todel));
     }
   }
