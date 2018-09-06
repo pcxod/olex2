@@ -66,6 +66,23 @@ AMode::~AMode() {
   olex2.processMacro("cursor()");
 }
 //..............................................................................
+void AMode::SetUserCursor(const olxstr &val, const olxstr &name) const {
+  olxstr v = val;
+  v.Replace('$', "\\$");
+  ABasicFunction *cf = olex2.GetLibrary().FindFunction("cursor");
+  if (cf != 0) {
+    TStrObjList params;
+    params.Add("user");
+    params.Add(v);
+    params.Add(name);
+    TMacroData md;
+    cf->Run(params, md);
+  }
+  else {
+    TBasicApp::NewLogEntry(logWarning) << "No 'cursor' function available";
+  }
+}
+//..............................................................................
 //..............................................................................
 //..............................................................................
 AModeWithLabels::AModeWithLabels(size_t id) : AMode(id)  {

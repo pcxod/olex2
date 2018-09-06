@@ -216,11 +216,7 @@ protected:
   size_t Id;
   TGXApp &gxapp;
   olex2::IOlex2Processor &olex2;
-  void SetUserCursor(const olxstr &val, const olxstr &name) const{
-    olxstr v = val;
-    v.Replace('$', "\\$");
-    olex2.processMacro(olxstr("cursor(user,") << v << ',' << name << ')');
-  }
+  void SetUserCursor(const olxstr &val, const olxstr &name) const;
   class ObjectPicker_ : public AActionHandler {
   public:
     ObjectPicker_(AMode &mode) : mode(mode) {}
