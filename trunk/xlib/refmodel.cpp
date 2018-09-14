@@ -2301,6 +2301,11 @@ TPtrList<TSRestraintList>::const_list_type RefinementModel::GetRestraints() {
   return restraints;
 }
 //..............................................................................
+void RefinementModel::SetHKLFString(const olxstr &str) {
+  TStrList toks(olxstr(str).Replace('-', " -"), ' ');
+  SetHKLF(toks);
+}
+//..............................................................................
 RefinementModel::HklStat& RefinementModel::HklStat::operator = (
   const RefinementModel::HklStat& hs)
 {

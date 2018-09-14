@@ -229,7 +229,7 @@ public:
         rm.expl.SetTemp(Toks[1]);
       }
       else if (Toks[0].Equalsi("HKLF") && (Toks.Count() > 1)) {
-        rm.SetHKLF(Toks.SubListFrom(1));
+        rm.SetHKLFString(olxstr(" ").Join(Toks.SubListFrom(1)));
       }
       else if (Toks[0].Equalsi("L.S.") || Toks[0].Equalsi("CGLS")) {
         rm.SetRefinementMethod(Toks[0]);
