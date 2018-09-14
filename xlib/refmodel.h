@@ -249,6 +249,8 @@ public:
     }
     HKLF_set = true;
   }
+  // special handling of possibly merged numerical values...
+  void SetHKLFString(const olxstr &str);
   int GetHKLF() const {  return HKLF;  }
   void SetHKLF(int v)  {  HKLF = v;  HKLF_set = true;  }
   const mat3d& GetHKLF_mat() const {  return HKLF_mat;  }
