@@ -861,17 +861,22 @@ TEFile* TEFile::TmpFile(const olxstr& templ)  {
     throw TNotImplementedException(__OlxSourceInfo);
 }
 //..............................................................................
-bool TEFile::Rename(const olxstr& from, const olxstr& to, bool overwrite)  {
-  if( !Exists(from) )  return false;
-  if( Exists(to) )  {
-    if( !overwrite )
-      return false;
-    if( !IsDir(to) )
-      DelFile(to);
-    else
-      return false;
+bool TEFile::Rename(const olxstr& from, const olxstr& to, bool overwrite) {
+  if (!Exists(from)) {
+    return false;
   }
-  return rename( OLXSTR(from), OLXSTR(to) ) != -1;
+  if (Exists(to)) {
+    if (!overwrite) {
+      return false;
+    }
+    if (!IsDir(to)) {
+      DelFile(to);
+    }
+    else {
+      return false;
+    }
+  }
+  return rename(OLXSTR(from), OLXSTR(to)) == 0;
 }
 //..............................................................................
 bool TEFile::Copy(const olxstr& From, const olxstr& To, bool overwrite)  {

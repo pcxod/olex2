@@ -1299,17 +1299,30 @@ olxstr TXFile::LocateHklFile() {
 //..............................................................................
 olxstr TXFile::GetStructureDataFolder() const {
   if (HasLastLoader()) {
-    olxstr ofn = TEFile::ExtractFilePath(GetFileName());
-    TEFile::AddPathDelimeterI(ofn) << ".olex/";
-    if (!TEFile::Exists(ofn)) {
-      if (!TEFile::MakeDir(ofn)) {
+    olxstr sdfb = TEFile::ExtractFilePath(GetFileName());
+    olxstr odn = TEFile::AddPathDelimeter(sdfb) << ".olex"
+      << TEFile::GetPathDelimeter();
+    olxstr ndn = TEFile::AddPathDelimeter(sdfb) << "olex2"
+      << TEFile::GetPathDelimeter();
+    // new structure dir
+    if (TEFile::Exists(ndn)) {
+      return ndn;
+    }
+    if (!TEFile::Exists(odn)) {
+      if (!TEFile::MakeDir(ndn)) {
         throw TFunctionFailedException(__OlxSourceInfo, "cannot create folder");
       }
-#ifdef __WIN32__
-      SetFileAttributes(ofn.u_str(), FILE_ATTRIBUTE_HIDDEN);
-#endif
+      return ndn;
     }
-    return ofn;
+    else {
+      if (TEFile::Rename(odn, ndn, false)) {
+#ifdef __WIN32__
+        SetFileAttributes(ndn.u_str(), FILE_ATTRIBUTE_NORMAL);
+#endif
+        return ndn;
+      }
+      return odn;
+    }
   }
   return EmptyString();
 }
