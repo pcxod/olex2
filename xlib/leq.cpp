@@ -204,7 +204,10 @@ PyObject* XLEQ::PyExport(TPtrList<PyObject>& _vars) {
   PyObject* vars = PyTuple_New(Vars.Count());
   for (size_t i = 0; i < Vars.Count(); i++) {
     Py_IncRef(_vars[Vars[i]->GetId()]);
-    PyTuple_SetItem(vars, i, _vars[Vars[i]->GetId()]);
+    PyObject* var = PyTuple_New(2);
+    PyTuple_SetItem(var, 0, _vars[Vars[i]->GetId()]);
+    PyTuple_SetItem(var, 1, Py_BuildValue("d", Coefficients[i]));
+    PyTuple_SetItem(vars, i, var);
   }
   PythonExt::SetDictItem(main, "variables", vars);
   return main;
