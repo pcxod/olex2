@@ -5624,8 +5624,8 @@ const_strlist TGXApp::ToPov() const {
 const_strlist TGXApp::ToWrl() const {
   olx_cdict<TGlMaterial, olxstr> materials;
   TStrList out;// = GetRenderer().GetScene().ToPov();
-  out << "#Created by Olex2 " << XLibMacros::GetCompilationInfo();
   out << "#VRML V2.0 utf8";
+  out.Add() << "#Created by Olex2 " << XLibMacros::GetCompilationInfo();
   out << TXAtom::WrlDeclare(GetRenderer());
   out << TXBond::WrlDeclare(GetRenderer());
   out << TXPlane::WrlDeclare(GetRenderer());
