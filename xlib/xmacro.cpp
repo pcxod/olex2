@@ -60,6 +60,7 @@
   lib.Register(new TStaticFunction(&XLibMacros::fun##funcName, #funcName, argc, desc))
 
 using namespace cif_dp;
+void HKLCreate(TStrObjList &Cmds, const TParamList &Options, TMacroData &E);
 
 void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(Run, EmptyString(), fpAny^fpNone,
@@ -432,6 +433,11 @@ void XLibMacros::Export(TLibrary& lib)  {
     " reflections end up in *_w.hkl and stronger reflections - in the *_s.hkl "
     "files."
    );
+  lib.Register(new TStaticMacro(
+    &HKLCreate, "HKLCreate", EmptyString(), fpThree,
+    "Creates calculated HKL file with given name followed by wavelength "
+    "and resolution")
+  );
   xlib_InitMacroA(Update, @update, EmptyString(), fpAny,
     "Reads given file and if the atoms list of loaded file matches the atom "
     "list of the given file the atomic coordinates, FVAR and BASF values are "
@@ -6585,46 +6591,49 @@ void XLibMacros::macHklExclude(TStrObjList &Cmds, const TParamList &Options,
   TIntList h, k, l;
   const bool combine = Options.FindValue("c", TrueString()).ToBool();
   TStrList toks(Options.FindValue('h', EmptyString()), ';');
-  for( size_t i=0; i < toks.Count(); i++ )
+  for (size_t i = 0; i < toks.Count(); i++) {
     h.Add(toks[i].ToInt());
+  }
   toks.Clear();
   toks.Strtok(Options.FindValue('k', EmptyString()), ';');
-  for( size_t i=0; i < toks.Count(); i++ )
+  for (size_t i = 0; i < toks.Count(); i++) {
     k.Add(toks[i].ToInt());
+  }
   toks.Clear();
   toks.Strtok(Options.FindValue('l', EmptyString()), ';');
-  for( size_t i=0; i < toks.Count(); i++ )
+  for (size_t i = 0; i < toks.Count(); i++) {
     l.Add(toks[i].ToInt());
+  }
 
   const olxstr hklSrc = TXApp::GetInstance().XFile().LocateHklFile();
-  if( !TEFile::Exists(hklSrc) )  {
+  if (!TEFile::Exists(hklSrc)) {
     E.ProcessingError(__OlxSrcInfo, "could not find hkl file: ") << hklSrc;
     return;
   }
-  if( h.IsEmpty() && k.IsEmpty() && l.IsEmpty() )  {
+  if (h.IsEmpty() && k.IsEmpty() && l.IsEmpty()) {
     E.ProcessingError(__OlxSrcInfo, "please provide a condition");
     return;
   }
   THklFile Hkl;
   size_t c = 0;
   Hkl.LoadFromFile(hklSrc, false);
-  if( combine )  {
-    for( size_t i=0; i < Hkl.RefCount(); i++ )  {
-      if( !Hkl[i].IsOmitted() )  {
-        if( !h.IsEmpty() && h.IndexOf(Hkl[i].GetH()) == InvalidIndex) continue;
-        if( !k.IsEmpty() && k.IndexOf(Hkl[i].GetK()) == InvalidIndex) continue;
-        if( !l.IsEmpty() && l.IndexOf(Hkl[i].GetL()) == InvalidIndex) continue;
+  if (combine) {
+    for (size_t i = 0; i < Hkl.RefCount(); i++) {
+      if (!Hkl[i].IsOmitted()) {
+        if (!h.IsEmpty() && h.IndexOf(Hkl[i].GetH()) == InvalidIndex) continue;
+        if (!k.IsEmpty() && k.IndexOf(Hkl[i].GetK()) == InvalidIndex) continue;
+        if (!l.IsEmpty() && l.IndexOf(Hkl[i].GetL()) == InvalidIndex) continue;
         Hkl[i].SetOmitted(true);
         c++;
       }
     }
   }
-  else  {
-    for( size_t i=0; i < Hkl.RefCount(); i++ )  {
-      if( !Hkl[i].IsOmitted() )  {
-        if( (!h.IsEmpty() && h.IndexOf(Hkl[i].GetH()) != InvalidIndex) ||
-            (!k.IsEmpty() && k.IndexOf(Hkl[i].GetK()) != InvalidIndex) ||
-            (!l.IsEmpty() && l.IndexOf(Hkl[i].GetL()) != InvalidIndex) )
+  else {
+    for (size_t i = 0; i < Hkl.RefCount(); i++) {
+      if (!Hkl[i].IsOmitted()) {
+        if ((!h.IsEmpty() && h.IndexOf(Hkl[i].GetH()) != InvalidIndex) ||
+          (!k.IsEmpty() && k.IndexOf(Hkl[i].GetK()) != InvalidIndex) ||
+          (!l.IsEmpty() && l.IndexOf(Hkl[i].GetL()) != InvalidIndex))
         {
           Hkl[i].SetOmitted(true);
           c++;
@@ -6697,7 +6706,7 @@ void XLibMacros::macHklImport(TStrObjList &Cmds, const TParamList &Options,
 void XLibMacros::macHklSplit(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &E)
 {
-  double percents=-1, th = -1;
+  double percents = -1, th = -1;
   if (Cmds[0].EndsWith('%')) {
     percents = Cmds[0].SubStringFrom(0, 1).ToDouble();
     if (percents <= 0 || percents >= 100) {
@@ -6719,7 +6728,7 @@ void XLibMacros::macHklSplit(TStrObjList &Cmds, const TParamList &Options,
 
   TXApp &app = TXApp::GetInstance();
   TUnitCell::SymmSpace sp =
-      app.XFile().GetLattice().GetUnitCell().GetSymmSpace();
+    app.XFile().GetLattice().GetUnitCell().GetSymmSpace();
   SymmSpace::InfoEx info_ex = SymmSpace::Compact(sp);
 
   TRefList refs;
@@ -6727,25 +6736,27 @@ void XLibMacros::macHklSplit(TStrObjList &Cmds, const TParamList &Options,
   RefinementModel::HklStat stats = app.CalcFsq(refs, Fsq, true);
   TArrayList<double> fracts(refs.Count());
   if (Cmds[1].Equalsi('a')) {
-    for (size_t i=0; i < refs.Count(); i++)
-      fracts[i] = olx_abs(refs[i].GetI()-Fsq[i])/(refs[i].GetS()+1e-6);
+    for (size_t i = 0; i < refs.Count(); i++) {
+      fracts[i] = olx_abs(refs[i].GetI() - Fsq[i]) / (refs[i].GetS() + 1e-6);
+    }
   }
   else { // I/esd
-    for (size_t i=0; i < refs.Count(); i++)
-      fracts[i] = refs[i].GetI()/(refs[i].GetS()+1e-6);
+    for (size_t i = 0; i < refs.Count(); i++) {
+      fracts[i] = refs[i].GetI() / (refs[i].GetS() + 1e-6);
+    }
   }
 
   TArray3D<size_t> hkl3d(stats.MinIndexes, stats.MaxIndexes);
   hkl3d.FastInitWith(0);
-  for (size_t i=0; i < refs.Count(); i++) {
-    hkl3d(refs[i].GetHkl()) = i+1;
+  for (size_t i = 0; i < refs.Count(); i++) {
+    hkl3d(refs[i].GetHkl()) = i + 1;
   }
   TRefList all_refs;
   RefinementModel::HklStat stats1;
   app.XFile().GetRM().FilterHkl(all_refs, stats1);
   sorted::PrimitiveAssociation<double, TReflection*> sorted;
   sorted.SetCapacity(all_refs.Count());
-  for (size_t i=0; i < all_refs.Count(); i++) {
+  for (size_t i = 0; i < all_refs.Count(); i++) {
     if (TReflection::IsAbsent(all_refs[i].GetHkl(), info_ex)) {
       stats1.SystematicAbsencesRemoved++;
       all_refs.NullItem(i);
@@ -6754,8 +6765,9 @@ void XLibMacros::macHklSplit(TStrObjList &Cmds, const TParamList &Options,
     vec3i hkl = TReflection::Standardise(all_refs[i].GetHkl(), info_ex);
     if (hkl3d.IsInRange(hkl)) {
       size_t idx = hkl3d(hkl);
-      if (idx != 0)
-        sorted.Add(fracts[idx-1], &all_refs[i]);
+      if (idx != 0) {
+        sorted.Add(fracts[idx - 1], &all_refs[i]);
+      }
       else {
         throw TFunctionFailedException(__OlxSourceInfo,
           "Miller arrays mismatch");
@@ -6772,7 +6784,7 @@ void XLibMacros::macHklSplit(TStrObjList &Cmds, const TParamList &Options,
       " Systematic absences is removed.";
   }
   if (percents > 0) {
-    th = sorted.GetKey(olx_round(all_refs.Count()*percents/100));
+    th = sorted.GetKey(olx_round(all_refs.Count()*percents / 100));
     TBasicApp::NewLogEntry() << "Threshold calculated for " << percents <<
       "% is " << olxstr::FormatFloat(2, th);
   }
@@ -6783,7 +6795,7 @@ void XLibMacros::macHklSplit(TStrObjList &Cmds, const TParamList &Options,
   size_t cnt = 0;
   bool hklf5 = Options.GetBoolOption('b');
   if (hklf5 && Cmds[1].Equalsi('a')) {
-    for (size_t i=0; i < sorted.Count(); i++) {
+    for (size_t i = 0; i < sorted.Count(); i++) {
       if (sorted.GetKey(i) < th) {
         sorted.GetValue(i)->SetBatch(1);
         cnt++;
@@ -6791,29 +6803,29 @@ void XLibMacros::macHklSplit(TStrObjList &Cmds, const TParamList &Options,
       else
         sorted.GetValue(i)->SetBatch(2);
     }
-    all_refs.SetCapacity(all_refs.Count() + (all_refs.Count()-cnt));
-    for (size_t i=0; i < all_refs.Count(); i++) {
+    all_refs.SetCapacity(all_refs.Count() + (all_refs.Count() - cnt));
+    for (size_t i = 0; i < all_refs.Count(); i++) {
       if (all_refs[i].GetBatch() == 2) {
         all_refs[i].SetBatch(1);
-        all_refs.InsertCopy(i+1, all_refs[i]).SetBatch(-2);
+        all_refs.InsertCopy(i + 1, all_refs[i]).SetBatch(-2);
         i++;
       }
     }
     fn = olx_print("%w_hf5.hkl", &fn);
     THklFile::SaveToFile(fn, all_refs);
     TBasicApp::NewLogEntry() << cnt << " Reflection is assigned batch 1 and " <<
-      (sorted.Count()-cnt) << " reflection assigned batch 2 and wrotten to '" <<
+      (sorted.Count() - cnt) << " reflection assigned batch 2 and written to '" <<
       TEFile::ExtractFileName(fn) << " file.";
   }
   else {
     const size_t ref_str_len = all_refs[0].ToString().Length();
-    const size_t bf_sz = ref_str_len+10;
+    const size_t bf_sz = ref_str_len + 10;
     olx_array_ptr<char> ref_bf(new char[bf_sz]);
     char ffs = Cmds[1].Equalsi('i') ? 'w' : 'a',
       sfs = Cmds[1].Equalsi('i') ? 's' : 'd';
     TEFile a(olx_print("%w_%c.hkl", &fn, ffs), "w+b"),
       d(olx_print("%w_%c.hkl", &fn, sfs), "w+b");
-    for (size_t i=0; i < sorted.Count(); i++) {
+    for (size_t i = 0; i < sorted.Count(); i++) {
       if (sorted.GetKey(i) < th) {
         a.Writecln(sorted.GetValue(i)->ToCBuffer(ref_bf, bf_sz, 1), ref_str_len);
         cnt++;
@@ -6822,10 +6834,37 @@ void XLibMacros::macHklSplit(TStrObjList &Cmds, const TParamList &Options,
         d.Writecln(sorted.GetValue(i)->ToCBuffer(ref_bf, bf_sz, 1), ref_str_len);
     }
     TBasicApp::NewLogEntry() << cnt << " Reflection is written to '" <<
-      TEFile::ExtractFileName(a.GetName()) << "' and " << (sorted.Count()-cnt) <<
+      TEFile::ExtractFileName(a.GetName()) << "' and " << (sorted.Count() - cnt) <<
       " reflection is written to '" << TEFile::ExtractFileName(d.GetName()) <<
       " files.";
   }
+}
+//.............................................................................
+void HKLCreate(TStrObjList &Cmds, const TParamList &Options,
+  TMacroData &E)
+{
+  olxstr out_name = Cmds[0];
+  if (!out_name.EndsWithi(".hkl")) {
+    out_name << ".hkl";
+  }
+  double wl = Cmds[1].ToDouble(),
+    r = Cmds[2].ToDouble();
+  if (r < wl / 2) {
+    r = wl / 2;
+  }
+  TXApp& app = TXApp::GetInstance();
+  vec3i idx = app.XFile().GetRM().CalcMaxHklIndexForD(r);
+  MillerIndexArray ma = MillerIndexArray(-idx, idx);
+  TArrayList<compd> F(ma.Count());
+  SFUtil::CalcSF(app.XFile(), ma, F);
+  TRefList refs(F.Count(), false);
+  for (size_t i = 0; i < F.Count(); i++) {
+    refs.Set(i, new TReflection(ma[i], F[i].qmod(), 0.0));
+    refs[i].SetS((rand()%10)*refs[i].GetI()/100 + 0.01);
+  }
+  THklFile hkl;
+  hkl.Append(refs);
+  hkl.SaveToFile(out_name);
 }
 //.............................................................................
 void XLibMacros::macUpdate(TStrObjList &Cmds, const TParamList &Options,
