@@ -9197,7 +9197,7 @@ void XLibMacros::macRIGU(TStrObjList &Cmds, const TParamList &Options,
   for (size_t i = 0; i < Atoms.Count(); i++) {
     sr.AddAtom(Atoms[i]->CAtom(), 0);
   }
-  app.XFile().GetRM().rDELU.ValidateRestraint(sr);
+  app.XFile().GetRM().rRIGU.ValidateRestraint(sr);
   if (!sr.IsEmpty()) {
     if (Options.GetBoolOption('i')) {
       sr.ConvertToImplicit();
