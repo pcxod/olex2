@@ -78,6 +78,8 @@ public:
   void ReadShelxMat(const olxstr& fileName, TAsymmUnit& au);
   // reads the smtbx VcoV matrix
   void ReadSmtbxMat(const olxstr& fileName, TAsymmUnit& au);
+  // reads the smtbx VcoV matrix in numpy format
+  void ReadNpyMat(const olxstr& fileName, TAsymmUnit& au);
   void FromCIF(TAsymmUnit& au);
   // creates matrices AA, AB, ... AX, BA, BB, ... BX, ...
   template <class list> void FindVcoV(const list& atoms, mat3d_list& m) const {
@@ -672,6 +674,9 @@ public:
   }
   void ReadSmtbxMat(const olxstr& fileName) {
     vcov.ReadSmtbxMat(fileName, au);
+  }
+  void ReadNpyMat(const olxstr& fileName) {
+    vcov.ReadNpyMat(fileName, au);
   }
   void FromCIF() { vcov.FromCIF(au); }
   // precise calculation
