@@ -18,6 +18,8 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
+
+ OVD modified - passing a stream instead of file name to allow skiping header
  */
 
 #pragma once
@@ -27,7 +29,6 @@
 #include <fstream>
 #include <sstream>
 #include <stdexcept>
-#include <stdint.h>
 #include <string>
 #include <vector>
 
@@ -235,15 +236,11 @@ void SaveArrayAsNumpy(
     SaveArrayAsNumpy(filename, false, 4, dim, data); 
 }
 
-template<typename Scalar>
+template<typename Scalar, typename stream_t>
 void LoadArrayFromNumpy(
-    const std::string& filename, std::vector<int>& shape,
+  stream_t &stream, std::vector<int>& shape,
     std::vector<Scalar>& data)
 {
-    std::ifstream stream(filename.c_str(), std::ios::in|std::ios::binary);
-    if(!stream) {
-        throw std::runtime_error("io error: failed to open a file.");
-    }
     // check if this file is the valid .npy file
     std::string valid_preamble = "\x93NUMPY";
     valid_preamble.push_back(char(1));
@@ -323,10 +320,22 @@ void LoadArrayFromNumpy(
 
 template<typename Scalar>
 void LoadArrayFromNumpy(
-    const std::string& filename, std::vector<Scalar>& data)
+  const std::string filename, std::vector<int>& shape,
+  std::vector<Scalar>& data)
 {
-    std::vector<int> tmp_dim;
-    LoadArrayFromNumpy(filename, tmp_dim, data);
+  std::ifstream stream(filename.c_str(), std::ios::in | std::ios::binary);
+  if (!stream) {
+    throw std::runtime_error("io error: failed to open a file.");
+  }
+  LoadArrayFromNumpy<Scalar, std::ifstream>(stream, shape, data);
+}
+
+template<typename Scalar>
+void LoadArrayFromNumpy(
+  const std::string& filename, std::vector<Scalar>& data)
+{
+  std::vector<int> tmp_dim;
+  LoadArrayFromNumpy(filename, tmp_dim, data);
 }
 
 template<typename Scalar>

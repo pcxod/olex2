@@ -17,6 +17,7 @@
 #include "bapp.h"
 #include "log.h"
 #include "symmcon.h"
+#include <vector>
 #undef QLength
 BeginXlibNamespace()
 
@@ -57,6 +58,8 @@ protected:
     return AtomIdIndex.Find(a.GetId(), InvalidIndex);
   }
   void UpdateAtomIndex();
+  void FromArray(const TStrList &annotations, const std::vector<double> &data,
+    TAsymmUnit& au);
 public:
   VcoVMatrix();
   ~VcoVMatrix() {  Clear();  }

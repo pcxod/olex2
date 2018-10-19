@@ -876,15 +876,15 @@ olxstr TXApp::InitVcoV(VcoVContainer& vcovc) const {
     smtbx_exists = TEFile::Exists(smtbx_fn),
     npy_exists = TEFile::Exists(npy_fn);
   olxstr src_mat;
-  if (shelx_exists && smtbx_exists) {
-    if (TEFile::FileAge(shelx_fn) > TEFile::FileAge(smtbx_fn)) {
+  if (shelx_exists && (smtbx_exists || npy_exists)) {
+    if (TEFile::FileAge(shelx_fn) > TEFile::FileAge(npy_exists ? npy_fn : smtbx_fn)) {
       vcovc.ReadShelxMat(shelx_fn);
       src_mat = "shelxl";
     }
     else  {
       src_mat = "smtbx";
       if (npy_exists) {
-        vcovc.ReadNpyMat(smtbx_fn);
+        vcovc.ReadNpyMat(npy_fn);
       } else {
         vcovc.ReadSmtbxMat(smtbx_fn);
       }
@@ -894,7 +894,7 @@ olxstr TXApp::InitVcoV(VcoVContainer& vcovc) const {
     vcovc.ReadShelxMat(shelx_fn);
     src_mat = "shelxl";
   }
-  else if (smtbx_exists) {
+  else if (smtbx_exists || npy_exists) {
     if (npy_exists) {
       vcovc.ReadNpyMat(smtbx_fn);
     } else {

@@ -331,14 +331,10 @@ double VcoVMatrix::Find(const olxstr& atom, const short va,
   return (i1 <= i2) ? data[i2][i1] : data[i1][i2];
 }
 //.............................................................................
-void VcoVMatrix::ReadSmtbxMat(const olxstr& fileName, TAsymmUnit& au) {
-  TStrList in = TEFile::ReadLines(fileName);
-  if (in.Count() != 3 || !in[0].Equals("VCOV")) {
-    throw TInvalidArgumentException(__OlxSourceInfo, "file format");
-  }
-  TStrList annotations(in[1], ' '),
-    values(in[2], ' ');
-  if (((annotations.Count()*(annotations.Count() + 1))) / 2 != values.Count()) {
+void VcoVMatrix::FromArray(const TStrList &annotations,
+  const std::vector<double> &values,TAsymmUnit& au)
+ {
+  if (((annotations.Count()*(annotations.Count() + 1))) / 2 != values.size()) {
     throw TInvalidArgumentException(__OlxSourceInfo,
       "inconsistent matrix and annotations");
   }
@@ -372,34 +368,34 @@ void VcoVMatrix::ReadSmtbxMat(const olxstr& fileName, TAsymmUnit& au) {
         "mismatching matrix file");
     }
     if (param_name == 'x') {
-      atom->ccrdEsd()[0] = sqrt(values[d_index].ToDouble());
+      atom->ccrdEsd()[0] = sqrt(values[d_index]);
       Index.AddNew(atom_name, vcoviX, -1);
       indexes.Add(i);
     }
     else if (param_name == 'y') {
-      atom->ccrdEsd()[1] = sqrt(values[d_index].ToDouble());
+      atom->ccrdEsd()[1] = sqrt(values[d_index]);
       Index.AddNew(atom_name, vcoviY, -1);
       indexes.Add(i);
     }
     else if (param_name == 'z') {
-      atom->ccrdEsd()[2] = sqrt(values[d_index].ToDouble());
+      atom->ccrdEsd()[2] = sqrt(values[d_index]);
       Index.AddNew(atom_name, vcoviZ, -1);
       indexes.Add(i);
     }
     else if (param_name == "occu") {
-      atom->SetOccuEsd(sqrt(values[d_index].ToDouble()));
+      atom->SetOccuEsd(sqrt(values[d_index]));
       Index.AddNew(atom_name, vcoviO, -1);
       indexes.Add(i);
     }
     else if (param_name == "uiso") {
-      atom->SetUisoEsd(sqrt(values[d_index].ToDouble()));
+      atom->SetUisoEsd(sqrt(values[d_index]));
     }
     else if ((ua_index = U_annotations.IndexOf(param_name)) != InvalidIndex) {
       if (atom->GetEllipsoid() == 0) {
         throw TInvalidArgumentException(__OlxSourceInfo,
           "U for isotropic atom");
       }
-      atom->GetEllipsoid()->SetEsd(ua_index, values[d_index].ToDouble());
+      atom->GetEllipsoid()->SetEsd(ua_index, values[d_index]);
       eveci& v = Us.Add(atom->GetId());
       if (v.Count() == 0) {
         v.Resize(6);
@@ -423,7 +419,7 @@ void VcoVMatrix::ReadSmtbxMat(const olxstr& fileName, TAsymmUnit& au) {
         olx_swap(ix, iy);
       }
       const size_t ind = ix*(2 * annotations.Count() - ix - 1) / 2 + iy;
-      data[i][j] = values[ind].ToDouble();
+      data[i][j] = values[ind];
     }
   }
   for (size_t i = 0; i < Index.Count(); i++) {
@@ -469,7 +465,7 @@ void VcoVMatrix::ReadSmtbxMat(const olxstr& fileName, TAsymmUnit& au) {
           olx_swap(x, y);
         }
         const size_t ind = x*(2 * annotations.Count() - x - 1) / 2 + y;
-        Um[vi][vj] = Um[vj][vi] = values[ind].ToDouble();
+        Um[vi][vj] = Um[vj][vi] = values[ind];
       }
     }
     const double Ueq = (Um*Ut).DotProd(Ut);
@@ -478,163 +474,45 @@ void VcoVMatrix::ReadSmtbxMat(const olxstr& fileName, TAsymmUnit& au) {
   UpdateAtomIndex();
 }
 //.............................................................................
+void VcoVMatrix::ReadSmtbxMat(const olxstr& fileName, TAsymmUnit& au) {
+  TStrList in = TEFile::ReadLines(fileName);
+  if (in.Count() != 3 || !in[0].Equals("VCOV")) {
+    throw TInvalidArgumentException(__OlxSourceInfo, "file format");
+  }
+  TStrList annotations(in[1], ' '),
+    values_(in[2], ' ');
+  std::vector<double> values(values_.Count());
+  for (size_t i = 0; i < values_.Count(); i++) {
+    values[i] = values_[i].ToDouble();
+  }
+   FromArray(annotations, values, au);
+}
+//.............................................................................
+struct FileToStreamAdaptor {
+  TEFile &f;
+  FileToStreamAdaptor(TEFile &f)
+    : f(f)
+  {}
+  void read(char *to, size_t size) {
+    f.Read(to, size);
+  }
+};
 void VcoVMatrix::ReadNpyMat(const olxstr& fileName, TAsymmUnit& au) {
-
   std::vector<int> s;
   std::vector<double> datanumpy;
   
   const olxstr npy_fn = TEFile::ChangeFileExt(fileName, "npy");
-  std::string npyfile = npy_fn.c_str();
-  
-  aoba::LoadArrayFromNumpy(npyfile, s, datanumpy);
-  if(s.size()!=1) {
-    throw TInvalidArgumentException(__OlxSourceInfo, "Invalid file format");
-  }
-  
-  TStrList in = TEFile::ReadLines(fileName);
-  if (in.Count() < 2 || !in[0].Equals("VCOV")) {
+  TEFile f(npy_fn, "rb");
+  olxstr l1 = f.ReadLine(), l2 = f.ReadLine();
+  if (!l1.Equals("VCOV")) {
     throw TInvalidArgumentException(__OlxSourceInfo, "file format");
   }
-  TStrList annotations(in[1], ' ');
-  
-  if (((annotations.Count()*(annotations.Count() + 1))) / 2 != datanumpy.size()) {
-    throw TInvalidArgumentException(__OlxSourceInfo,
-      "inconsistent matrix and annotations");
+  FileToStreamAdaptor adaptor(f);
+  aoba::LoadArrayFromNumpy<double, FileToStreamAdaptor>(adaptor, s, datanumpy);
+  if (s.size() != 1) {
+    throw TInvalidArgumentException(__OlxSourceInfo, "Invalid file format");
   }
-
-  olxstr last_atom_name;
-  TSizeList indexes;
-  TCAtom* atom = NULL;
-  olx_pdict<size_t, eveci> Us;
-  const mat3d& h2c = au.GetHklToCartesian();
-  const double O[6] = {
-    1. / h2c[0].QLength(), 1. / h2c[1].QLength(), 1. / h2c[2].QLength(),
-    sqrt(O[1] * O[2]), sqrt(O[0] * O[2]), sqrt(O[0] * O[1])
-  };
-  size_t ua_index, d_index = 0;
-  for (size_t i = 0; i < annotations.Count(); i++) {
-    if (i != 0) {
-      d_index += (annotations.Count() - i + 1);
-    }
-    const size_t di = annotations[i].IndexOf('.');
-    if (di == InvalidIndex) {
-      throw TInvalidArgumentException(__OlxSourceInfo, "annotation");
-    }
-    const olxstr atom_name = annotations[i].SubStringTo(di);
-    const olxstr param_name = annotations[i].SubStringFrom(di + 1);
-    if (last_atom_name != atom_name) {
-      atom = au.FindCAtom(atom_name);
-      last_atom_name = atom_name;
-    }
-    if (atom == 0) {
-      throw TFunctionFailedException(__OlxSourceInfo,
-        "mismatching matrix file");
-    }
-    if (param_name == 'x') {
-      atom->ccrdEsd()[0] = sqrt(datanumpy[d_index]);
-      Index.AddNew(atom_name, vcoviX, -1);
-      indexes.Add(i);
-    }
-    else if (param_name == 'y') {
-      atom->ccrdEsd()[1] = sqrt(datanumpy[d_index]);
-      Index.AddNew(atom_name, vcoviY, -1);
-      indexes.Add(i);
-    }
-    else if (param_name == 'z') {
-      atom->ccrdEsd()[2] = sqrt(datanumpy[d_index]);
-      Index.AddNew(atom_name, vcoviZ, -1);
-      indexes.Add(i);
-    }
-    else if (param_name == "occu") {
-      atom->SetOccuEsd(sqrt(datanumpy[d_index]));
-      Index.AddNew(atom_name, vcoviO, -1);
-      indexes.Add(i);
-    }
-    else if (param_name == "uiso") {
-      atom->SetUisoEsd(sqrt(datanumpy[d_index]));
-    }
-    else if ((ua_index = U_annotations.IndexOf(param_name)) != InvalidIndex) {
-      if (atom->GetEllipsoid() == 0) {
-        throw TInvalidArgumentException(__OlxSourceInfo,
-          "U for isotropic atom");
-      }
-      atom->GetEllipsoid()->SetEsd(ua_index, datanumpy[d_index]);
-      eveci& v = Us.Add(atom->GetId());
-      if (v.Count() == 0) {
-        v.Resize(6);
-      }
-      // put indices in the smtbx order
-      if (ua_index == 3) {
-        ua_index = 5;
-      }
-      else if (ua_index == 5) {
-        ua_index = 3;
-      }
-      v[ua_index] = (int)i;
-    }
-  }
-  Allocate(indexes.Count());
-  for (size_t i = 0; i < indexes.Count(); i++) {
-    for (size_t j = 0; j <= i; j++) {
-      size_t ix = indexes[j];
-      size_t iy = indexes[i];
-      if (ix > iy) {
-        olx_swap(ix, iy);
-      }
-      const size_t ind = ix*(2 * annotations.Count() - ix - 1) / 2 + iy;
-      data[i][j] = datanumpy[ind];
-    }
-  }
-  for (size_t i = 0; i < Index.Count(); i++) {
-    TCAtom* ca = au.FindCAtom(Index[i].GetA());
-    Index[i].c = ca->GetId();
-    size_t j = i;
-    while (++j < Index.Count() && Index[i].GetA().Equalsi(Index[j].GetA())) {
-      Index[j].c = ca->GetId();
-    }
-    i = j - 1;
-  }
-  const mat3d& f2c = au.GetCellToCartesian();
-  evecd Ut(6);
-  Ut[0] = (f2c[0][0] * f2c[0][0]);
-  Ut[1] = (f2c[1][0] * f2c[1][0] + f2c[1][1] * f2c[1][1]);
-  Ut[2] = (f2c[2][0] * f2c[2][0] + f2c[2][1] * f2c[2][1] + f2c[2][2] * f2c[2][2]);
-  Ut[3] = 2 * (f2c[0][0] * f2c[1][0]);
-  Ut[4] = 2 * (f2c[0][0] * f2c[2][0]);
-  Ut[5] = 2 * (f2c[1][0] * f2c[2][0] + f2c[1][1] * f2c[2][1]);
-  Ut *= 1. / 3;
-  ematd Um(6, 6);
-  for (size_t i = 0; i < au.AtomCount(); i++) {
-    TCAtom& a = au.GetAtom(i);
-    if (a.GetEllipsoid() == 0) {
-      continue;
-    }
-    TEllipsoid& elp = *a.GetEllipsoid();
-    const size_t ui = Us.IndexOf(a.GetId());
-    if (ui == InvalidIndex) {
-      continue;
-    }
-    eveci& v = Us.GetValue(ui);
-    for (int vi = 0; vi < 6; vi++) {
-      int src_i = vi;
-      if (src_i == 3)  src_i = 5;
-      else if (src_i == 5)  src_i = 3;
-      Um[vi][vi] = elp.GetEsd(src_i);
-      elp.SetEsd(src_i, sqrt(elp.GetEsd(src_i))*O[src_i]);
-      for (int vj = vi + 1; vj < 6; vj++) {
-        int x = v[vi];
-        int y = v[vj];
-        if (x > y) {
-          olx_swap(x, y);
-        }
-        const size_t ind = x*(2 * annotations.Count() - x - 1) / 2 + y;
-        Um[vi][vj] = Um[vj][vi] = datanumpy[ind];
-      }
-    }
-    const double Ueq = (Um*Ut).DotProd(Ut);
-    a.SetUisoEsd(sqrt(Ueq));
-  }
-  UpdateAtomIndex();
+  FromArray(TStrList(l2, ' '), datanumpy, au);
 }
 //.............................................................................
 void VcoVMatrix::FromCIF(TAsymmUnit& au) {
