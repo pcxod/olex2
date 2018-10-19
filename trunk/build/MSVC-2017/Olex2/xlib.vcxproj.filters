@@ -1097,6 +1097,9 @@
     <ClInclude Include="..\..\..\sdl\tests\file_test.h">
       <Filter>tests</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\xlib\numpy.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />

@@ -1120,6 +1120,7 @@
     <ClInclude Include="..\..\..\xlib\mol.h" />
     <ClInclude Include="..\..\..\xlib\mol2.h" />
     <ClInclude Include="..\..\..\xlib\network.h" />
+    <ClInclude Include="..\..\..\xlib\numpy.hpp" />
     <ClInclude Include="..\..\..\xlib\p4p.h" />
     <ClInclude Include="..\..\..\xlib\packutil.h" />
     <ClInclude Include="..\..\..\xlib\pdb.h" />
