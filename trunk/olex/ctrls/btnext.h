@@ -54,6 +54,8 @@ namespace ctrl_ext {
     void MouseEnterEvent(wxMouseEvent& event);
     void MouseLeaveEvent(wxMouseEvent& event);
     void ClickEvent(wxCommandEvent&);
+    void PaintEvent(wxPaintEvent&);
+    wxColor bgColor;
   protected:
     virtual wxWindow* GetParent() const {  return wxButton::GetParent();  }
   public:
@@ -64,6 +66,7 @@ namespace ctrl_ext {
 
     void SetCaption(const olxstr &l)  {  wxButton::SetLabel(l.u_str());  }
     olxstr GetCaption() const { return wxButton::GetLabel();  }
+    virtual bool SetBackgroundColour(const wxColour &colour);
   };
 
   class TBmpButton: public wxBitmapButton, public AButtonBase  {
