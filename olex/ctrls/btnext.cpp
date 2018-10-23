@@ -65,6 +65,7 @@ TButton::TButton(wxWindow* parent, wxWindowID id, const wxString& label,
   Bind(wxEVT_BUTTON, &TButton::ClickEvent, this);
   Bind(wxEVT_ENTER_WINDOW, &TButton::MouseEnterEvent, this);
   Bind(wxEVT_LEAVE_WINDOW, &TButton::MouseLeaveEvent, this);
+  Bind(wxEVT_PAINT, &TButton::PaintEvent, this);
 }
 //..............................................................................
 void TButton::ClickEvent(wxCommandEvent&) {
@@ -77,11 +78,41 @@ void TButton::MouseEnterEvent(wxMouseEvent& event) {
   if (!GetHint().IsEmpty()) {
     SetToolTip(GetHint().u_str());
   }
+  if (bgColor.IsOk()) {
+    wxColor cl = bgColor.ChangeLightness(155);
+    wxButton::SetBackgroundColour(cl);
+  }
   event.Skip();
 }
 //..............................................................................
 void TButton::MouseLeaveEvent(wxMouseEvent& event) {
+  if (bgColor.IsOk()) {
+    wxButton::SetBackgroundColour(bgColor);
+  }
   event.Skip();
+}
+//..............................................................................
+bool TButton::SetBackgroundColour(const wxColour &colour) {
+  bgColor = colour;
+  long ws = GetWindowStyle();
+  bool res = wxButton::SetBackgroundColour(bgColor);
+  SetWindowStyle(ws);
+  return res;
+}
+//..............................................................................
+void TButton::PaintEvent(wxPaintEvent& evt) {
+  if (!bgColor.IsOk()) {
+    evt.Skip();
+    return;
+  }
+  wxPaintDC dc(this);
+  dc.SetBrush(wxBrush(GetBackgroundColour(), wxBRUSHSTYLE_SOLID));
+  dc.SetPen(wxPen(GetBackgroundColour().ChangeLightness(64), 1, wxPENSTYLE_SOLID));
+  dc.DrawRectangle(0, 0, WI.GetWidth(), WI.GetHeight());
+  wxSize sz = dc.GetTextExtent(GetLabel());
+  dc.DrawText(GetLabel(), (WI.GetWidth() - sz.GetWidth()) / 2,
+    (WI.GetHeight()-sz.GetHeight())/2);
+  evt.Skip(false);
 }
 //..............................................................................
 //..............................................................................

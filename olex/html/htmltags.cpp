@@ -622,8 +622,9 @@ TAG_HANDLER_PROC(tag) {
       Btn->SetHint(
         ExpandMacroShortcuts(tag.GetParam(wxT("HINT")),macro_map));
     }
-    if (tag.HasParam(wxT("DOWN")))
+    if (tag.HasParam(wxT("DOWN"))) {
       Btn->SetDown(tag.GetParam(wxT("DOWN")).CmpNoCase(wxT("true")) == 0);
+    }
 
     olxstr modeDependent = tag.GetParam(wxT("MODEDEPENDENT"));
     if (!modeDependent.IsEmpty()) {
@@ -1108,10 +1109,16 @@ TAG_HANDLER_PROC(tag) {
         op->processFunction(fgc, SrcInfo, false);
       }
       if (!bgc.IsEmpty()) {
-        CreatedWindow->SetBackgroundColour(wxColor(bgc.u_str()));
+        wxColor cl = wxColor(bgc.u_str());
+        if (cl.IsOk()) {
+          CreatedWindow->SetBackgroundColour(cl);
+        }
       }
       if (!fgc.IsEmpty()) {
-        CreatedWindow->SetForegroundColour(wxColor(fgc.u_str()));
+        wxColor cl = wxColor(fgc.u_str());
+        if (cl.IsOk()) {
+          CreatedWindow->SetForegroundColour(cl);
+        }
       }
     }
   }
