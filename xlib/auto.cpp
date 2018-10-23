@@ -114,49 +114,33 @@ int TAutoDBNode::SortCAtomsFunc(const olx_pair_t<TCAtom*, vec3d> &a,
   return olx_cmp(TAutoDBNode::SortCenter.DistanceTo(b.GetB()),
                 TAutoDBNode::SortCenter.DistanceTo(a.GetB()));
 }
-
-TAutoDBNode::TAutoDBNode(TSAtom& sa,
+//..............................................................................
+void TAutoDBNode::FromCAtom(const TCAtom& ca, const smatd &m_,
   TTypeList<olx_pair_t<TCAtom*, vec3d> >* atoms)
 {
-  Center = sa.crd();
-  Element = &sa.GetType();
-  const TCAtom& ca = sa.CAtom();
-  const TUnitCell& uc = sa.GetNetwork().GetLattice().GetUnitCell();
-  const TAsymmUnit& au = sa.GetNetwork().GetLattice().GetAsymmUnit();
-  //TArrayList<olx_pair_t<const TCAtom *, vec3d> > res;
-  //uc.FindInRangeAC(sa.ccrd(), 2, res);
-  //for (size_t i=0; i < res.Count(); i++) {
-  //  if (res[i].GetB().QDistanceTo(sa.crd()) < 1e-3 ) {
-  //    continue;
-  //  }
-  //  bool unique = true;
-  //  for ( size_t j=0; j < AttachedNodes.Count(); j++) {
-  //    if (AttachedNodes[j].GetCenter().QDistanceTo(res[i].GetB()) < 1e-3) {
-  //      unique = false;
-  //      break;
-  //    }
-  //  }
-  //  if (!unique) continue;
-  //  if( atoms != NULL )
-  //    atoms->AddNew<TCAtom*, vec3d>(
-  //    const_cast<TCAtom*>(res[i].GetA()), res[i].GetB());
-  //  AttachedNodes.Add(new TAttachedNode(&res[i].GetA()->GetType(), res[i].GetB()));
-  //
-  //}
-  for( size_t i=0; i < ca.AttachedSiteCount(); i++ )  {
+  const TAsymmUnit& au = *ca.GetParent();
+  const TUnitCell &uc = au.GetLattice().GetUnitCell();
+  Center = au.Orthogonalise(m_*ca.ccrd());
+  Element = &ca.GetType();
+
+  for (size_t i = 0; i < ca.AttachedSiteCount(); i++) {
     const TCAtom::Site& site = ca.GetAttachedSite(i);
-    if( ca.IsDeleted() || site.atom->GetType() == iHydrogenZ )  continue;
-    const smatd m = sa.GetMatrix().IsFirst()
-      ? site.matrix : uc.MulMatrix(site.matrix, sa.GetMatrix());
+    if (ca.IsDeleted() || site.atom->GetType() == iHydrogenZ) {
+      continue;
+    }
+    const smatd m = m_.IsFirst()
+      ? site.matrix : uc.MulMatrix(site.matrix, m_);
     const vec3d p = au.Orthogonalise(m*site.atom->ccrd());
-    if( atoms != NULL )
+    if (atoms != 0) {
       atoms->AddNew<TCAtom*, vec3d>(site.atom, p);
+    }
     AttachedNodes.Add(new TAttachedNode(&site.atom->GetType(), p));
   }
-  TAutoDBNode::SortCenter = sa.crd();
+  TAutoDBNode::SortCenter = Center;
   QuickSorter::SortSF(AttachedNodes, SortMetricsFunc);
-  if( atoms != NULL )
+  if (atoms != 0) {
     QuickSorter::SortSF(*atoms, SortCAtomsFunc);
+  }
   _PreCalc();
 }
 //..............................................................................

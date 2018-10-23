@@ -115,8 +115,17 @@ protected:
   static int SortCAtomsFunc(const olx_pair_t<TCAtom*, vec3d> &a,
                             const olx_pair_t<TCAtom*, vec3d> &b);
   static vec3d SortCenter;
+  void FromCAtom(const TCAtom& ca, const smatd &m,
+    TTypeList<olx_pair_t<TCAtom*, vec3d> >* atoms);
 public:
-  TAutoDBNode(TSAtom& sa, TTypeList<olx_pair_t<TCAtom*, vec3d> >* atoms);
+  TAutoDBNode(const TSAtom& sa, TTypeList<olx_pair_t<TCAtom*, vec3d> >* atoms) {
+    FromCAtom(sa.CAtom(), sa.GetMatrix(), atoms);
+  }
+  TAutoDBNode(const TCAtom& ca, const smatd &m,
+    TTypeList<olx_pair_t<TCAtom*, vec3d> >* atoms)
+  {
+    FromCAtom(ca, m, atoms);
+  }
   TAutoDBNode(IDataInputStream& in)  {  LoadFromStream(in);  }
 
   olxstr ToString() const;

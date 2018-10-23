@@ -108,7 +108,8 @@ bool alg::check_geometry(const TCAtom &a, const cm_Element &e) {
 //.............................................................................
 bool alg::check_connectivity(const TCAtom &a, const cm_Element &e) {
   size_t cc = 0, metal_c = 0;
-  size_t halogen_c = 0, calcogen_c = 0, oxygen_c=0;
+  size_t halogen_c = 0, calcogen_c = 0, oxygen_c = 0,
+    nitrogen_c = 0;
   for (size_t i=0; i < a.AttachedSiteCount(); i++) {
     TCAtom &aa = a.GetAttachedAtom(i);
     if (aa.GetType() != iQPeakZ && !aa.IsDeleted()) {
@@ -124,6 +125,9 @@ bool alg::check_connectivity(const TCAtom &a, const cm_Element &e) {
         if (aa.GetType() == iOxygenZ) {
           oxygen_c++;
         }
+      }
+      else if (aa.GetType() == iNitrogenIndex) {
+        nitrogen_c ++;
       }
     }
   }
@@ -142,7 +146,7 @@ bool alg::check_connectivity(const TCAtom &a, const cm_Element &e) {
     cc -= metal_c;
     if (XElementLib::IsChalcogen(e)) {
       if (e == iOxygenZ) {
-        return cc <= 2;
+        return cc <= 2 && calcogen_c < 2;
       }
       return cc > 0;
     }
@@ -161,6 +165,9 @@ bool alg::check_connectivity(const TCAtom &a, const cm_Element &e) {
     }
     if (XElementLib::IsGroup5(e) && e != iNitrogenZ) {
       return cc > 0;
+    }
+    if (e == iNitrogenZ && a.IsRingAtom()) {
+      return nitrogen_c < 2;
     }
   }
   return true;
@@ -1886,14 +1893,16 @@ bool Analysis::analyse_u_eq(TAsymmUnit &au) {
 }
 //.............................................................................
 const cm_Element &Analysis::check_proposed_element(
-    TCAtom &a, const cm_Element &e, ElementPList *set)
+  TCAtom &a, const cm_Element &e, ElementPList *set)
 {
-  if ( !alg::check_connectivity(a, e) || !alg::check_geometry(a, e) )
+  if (!alg::check_connectivity(a, e) || !alg::check_geometry(a, e)) {
     return a.GetType();
+  }
   if (XElementLib::IsGroup8(e)) {
-    cm_Element *pe = XElementLib::FindByZ(e.z-1);
-    if (pe != NULL)
+    cm_Element *pe = XElementLib::FindByZ(e.z - 1);
+    if (pe != 0) {
       return *pe;
+    }
   }
   return e;
 }
