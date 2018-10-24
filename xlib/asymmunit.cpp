@@ -1576,14 +1576,14 @@ void TAsymmUnit::LibSetZ(const TStrObjList& Params, TMacroData& E)  {
 }
 //..............................................................................
 void TAsymmUnit::LibGetZprime(const TStrObjList& Params, TMacroData& E) {
-  E.SetRetVal(olxstr::FormatFloat(5, GetZPrime()).TrimFloat());
+  E.SetRetVal(olxstr::FormatFloat(6, GetZPrime()).TrimFloat());
 }
 //..............................................................................
 void TAsymmUnit::LibSetZprime(const TStrObjList& Params, TMacroData& E) {
   if (Params[0].IsEmpty()) {
     return;
   }
-  double zp = Params[0].ToDouble();
+  double zp = (double)olx_round(Params[0].ToDouble()*192)/192;
   Z = TCLattice::GetLattMultiplier(Latt)*(MatrixCount() + 1)*zp;
   if (Z <= 0) {
     Z = 1;

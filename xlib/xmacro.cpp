@@ -2679,7 +2679,8 @@ void XLibMacros::macPlan(TStrObjList &Cmds, const TParamList &Options,
 void XLibMacros::macFixUnit(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
-  double Zp = Cmds.IsEmpty() ? 1 : Cmds[0].ToDouble();
+  double Zp = Cmds.IsEmpty() ? 1
+    : (double)olx_round(Cmds[0].ToDouble() * 192) / 192;
   if (Zp <= 0) {
     Zp = 1;
   }

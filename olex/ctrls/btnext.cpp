@@ -11,6 +11,7 @@
 #include "frameext.h"
 #include "olxstate.h"
 #include "fsext.h"
+#include "olxvar.h"
 
 using namespace ctrl_ext;
 //..............................................................................
@@ -79,7 +80,9 @@ void TButton::MouseEnterEvent(wxMouseEvent& event) {
     SetToolTip(GetHint().u_str());
   }
   if (bgColor.IsOk()) {
-    wxColor cl = bgColor.ChangeLightness(155);
+    int alpha = TOlxVars::GetInstance()->FindValue("button.highlight.lightness",
+      "140").ToInt();
+    wxColor cl = bgColor.ChangeLightness(alpha);
     wxButton::SetBackgroundColour(cl);
   }
   event.Skip();
@@ -105,9 +108,11 @@ void TButton::PaintEvent(wxPaintEvent& evt) {
     evt.Skip();
     return;
   }
+  int alpha = TOlxVars::GetInstance()->FindValue("button.border.lightness",
+    "64").ToInt();
   wxPaintDC dc(this);
   dc.SetBrush(wxBrush(GetBackgroundColour(), wxBRUSHSTYLE_SOLID));
-  dc.SetPen(wxPen(GetBackgroundColour().ChangeLightness(64), 1, wxPENSTYLE_SOLID));
+  dc.SetPen(wxPen(GetBackgroundColour().ChangeLightness(alpha), 1, wxPENSTYLE_SOLID));
   dc.DrawRectangle(0, 0, WI.GetWidth(), WI.GetHeight());
   wxSize sz = dc.GetTextExtent(GetLabel());
   dc.DrawText(GetLabel(), (WI.GetWidth() - sz.GetWidth()) / 2,
