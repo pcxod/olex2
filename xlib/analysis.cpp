@@ -146,7 +146,13 @@ bool alg::check_connectivity(const TCAtom &a, const cm_Element &e) {
     cc -= metal_c;
     if (XElementLib::IsChalcogen(e)) {
       if (e == iOxygenZ) {
-        return cc <= 2 && calcogen_c < 2;
+        if (halogen_c > 1 || (halogen_c == 1 && cc > 1)) {
+          return false;
+        }
+        if (a.IsRingAtom()) {
+          return cc <= 2 && calcogen_c == 0;
+        }
+        return cc <= 2 && (oxygen_c < 2 && calcogen_c < 3);
       }
       return cc > 0;
     }
