@@ -77,6 +77,7 @@ public:
     : Value(val), Esd(esd), Id(InvalidIndex),
     Parent(parent)
   {}
+  ~XVar();
   // adds a new atom, referencing this variable, for internal use
   XVarReference& _AddRef(XVarReference& vr)  {  return *References.Add(&vr);  }
   // removes a refence, for internal use
@@ -97,7 +98,7 @@ public:
   size_t LeqCount() const {  return Equations.Count();  }
   const TPtrList<XLEQ> & GetLEQs() const { return Equations; }
 
-  bool IsUsed() const;
+  bool IsUsed(bool consider_single=false) const;
   DefPropP(double, Value)
   DefPropP(double, Esd)
   DefPropP(size_t, Id)
@@ -194,10 +195,8 @@ public:
   const XVarReference& GetVarRef(size_t i) const {  return References[i];  }
   // clears all the data and Nulls atoms' varrefs
   void ClearAll();
-  void Clear() {  // does not clear the data, just resets the NextVar
-    NextVar = 0;  // the global scale factor
-    Equations.Clear(); // these are recreatable
-  }
+  // does not clear the data, just resets the NextVar
+  void Clear();
   /* sets a relation between an atom parameter and a variable, if the
   coefficient is -10 (default value), the position multiplicity is taken into
   account
@@ -215,7 +214,7 @@ public:
   // restrores previously released var reference
   void RestoreRef(IXVarReferencer& r, short var_name, XVarReference* vr);
   // removes all unused variables and invalid/incomplete equations
-  void Validate();
+  void Validate(bool remove_single=false);
   /* helps with parsing SHELX specific paramter representation, returns actual
   value of the param
   */
