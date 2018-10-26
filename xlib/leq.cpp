@@ -53,6 +53,9 @@ XVarReference& XVarReference::FromDataItem(const TDataItem& item,
 //.............................................................................
 //.............................................................................
 //.............................................................................
+XVar::~XVar() {
+}
+//.............................................................................
 size_t XVar::RefCount() const {
   size_t rv = 0;
   for (size_t i = 0; i < References.Count(); i++) {
@@ -107,14 +110,14 @@ XVar& XVar::FromDataItem(const TDataItem& item, XVarManager& parent) {
   return *var;
 }
 //.............................................................................
-bool XVar::IsUsed() const {
+bool XVar::IsUsed(bool consider_single) const {
   if (IsReserved()) {
     return true;
   }
   const size_t rc = RefCount();
   if (LeqCount() == 0) {
     if (rc == 1) {
-      if (TXApp::DoPreserveFVARs() ||
+      if (consider_single || TXApp::DoPreserveFVARs() ||
         References[0]->referencer.Is<TSimpleRestraint>())
       {
         return true;
@@ -232,6 +235,12 @@ XVarManager::XVarManager(RefinementModel& rm) : RM(rm) {
   NewVar(1.0).SetId(0);
   // unset EXTI
   ReservedVars.Add((XVar *)0);
+}
+//.............................................................................
+void XVarManager::Clear() {
+  NextVar = 0;  // the global scale factor
+  // equations are recreatable
+  Equations.Clear();
 }
 //.............................................................................
 void XVarManager::ClearAll() {
@@ -451,7 +460,7 @@ double XVarManager::GetParam(const IXVarReferencer& ca, short var_index,
   return 0;
 }
 //.............................................................................
-void XVarManager::Validate() {
+void XVarManager::Validate(bool consider_single) {
   bool changes = true;
   while (changes) {
     changes = false;
@@ -465,7 +474,7 @@ void XVarManager::Validate() {
   // start from 1 to leave global scale
   for (size_t i = 1; i < Vars.Count(); i++) {
     XVar& v = Vars[i];
-    if (!v.IsUsed()) {
+    if (!v.IsUsed(consider_single)) {
       for (size_t j = 0; j < v._RefCount(); j++) {
         XVarReference& vr = v.GetRef(j);
         vr.referencer.SetVarRef(vr.var_index, NULL);

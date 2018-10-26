@@ -6789,27 +6789,20 @@ void XLibMacros::macHklSplit(TStrObjList &Cmds, const TParamList &Options,
     TBasicApp::NewLogEntry() << "Threshold calculated for " << percents <<
       "% is " << olxstr::FormatFloat(2, th);
   }
-  if (all_refs.IsEmpty())
+  if (all_refs.IsEmpty()) {
     return;
+  }
   olxstr fn = TEFile::ChangeFileExt(app.XFile().GetRM().GetHKLSource(),
     EmptyString());
   size_t cnt = 0;
-  bool hklf5 = Options.GetBoolOption('b');
-  if (hklf5 && Cmds[1].Equalsi('a')) {
+  if (Options.GetBoolOption('b')) {
     for (size_t i = 0; i < sorted.Count(); i++) {
       if (sorted.GetKey(i) < th) {
         sorted.GetValue(i)->SetBatch(1);
         cnt++;
       }
-      else
+      else {
         sorted.GetValue(i)->SetBatch(2);
-    }
-    all_refs.SetCapacity(all_refs.Count() + (all_refs.Count() - cnt));
-    for (size_t i = 0; i < all_refs.Count(); i++) {
-      if (all_refs[i].GetBatch() == 2) {
-        all_refs[i].SetBatch(1);
-        all_refs.InsertCopy(i + 1, all_refs[i]).SetBatch(-2);
-        i++;
       }
     }
     fn = olx_print("%w_hf5.hkl", &fn);
@@ -6831,8 +6824,9 @@ void XLibMacros::macHklSplit(TStrObjList &Cmds, const TParamList &Options,
         a.Writecln(sorted.GetValue(i)->ToCBuffer(ref_bf, bf_sz, 1), ref_str_len);
         cnt++;
       }
-      else
+      else {
         d.Writecln(sorted.GetValue(i)->ToCBuffer(ref_bf, bf_sz, 1), ref_str_len);
+      }
     }
     TBasicApp::NewLogEntry() << cnt << " Reflection is written to '" <<
       TEFile::ExtractFileName(a.GetName()) << "' and " << (sorted.Count() - cnt) <<
@@ -7104,8 +7098,9 @@ void XLibMacros::macFvar(TStrObjList &Cmds, const TParamList &Options,
           if (k < 0) {
             val = ag[j].GetOccu();
           }
-          else
-            val = k/ag[j].GetDegeneracy();
+          else {
+            val = k / ag[j].GetDegeneracy();
+          }
           rm.Vars.SetParam(ag[j], catom_var_name_Sof,
             olx_sign(fvar)*(olx_abs(fvar)*10+val));
         }

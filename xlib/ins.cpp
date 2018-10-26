@@ -272,7 +272,7 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
   ParseRestraints(cx.rm, Ins);
   Ins.Pack();
   _ProcessSame(cx);
-  _FinishParsing(cx);
+  _FinishParsing(cx, false);
   // remove dublicated instructions, rems ONLY
   for (size_t i = 0; i < Ins.Count(); i++) {
     if (!Ins[i].StartsFromi("REM")) continue;
@@ -457,7 +457,7 @@ void TIns::_ReadExtras(TStrList &l, ParseContext &cx) {
   }
 }
 //..............................................................................
-void TIns::_FinishParsing(ParseContext& cx) {
+void TIns::_FinishParsing(ParseContext& cx, bool header_only) {
   __ProcessConn(cx);
   for (size_t i = 0; i < Ins.Count(); i++) {
     TStrList toks(Ins[i], ' ');
@@ -527,7 +527,7 @@ void TIns::_FinishParsing(ParseContext& cx) {
   for (size_t i = 0; i < cx.Sump.Count(); i++) {
     cx.rm.Vars.AddSUMP(cx.Sump[i]);
   }
-  cx.rm.Vars.Validate();
+  cx.rm.Vars.Validate(header_only);
   cx.rm.ProcessFrags();
 }
 //..............................................................................
@@ -2470,7 +2470,7 @@ void TIns::ParseHeader(const TStrList& in) {
   ParseRestraints(cx.rm, Ins);
   Ins.Pack();
   _ProcessSame(cx);
-  _FinishParsing(cx);
+  _FinishParsing(cx, true);
 }
 //..............................................................................
 bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& _toks,

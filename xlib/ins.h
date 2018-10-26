@@ -86,7 +86,7 @@ protected:
 
   static void _ProcessSame(ParseContext& cx, const TIndexList *atomIndex=0);
   // initialises the unparsed instruction list
-  void _FinishParsing(ParseContext& cx);
+  void _FinishParsing(ParseContext& cx, bool header_only);
   // processes CONN, FREE and BIND, called from _FinishParsing
   void __ProcessConn(ParseContext& cx);
   // also updates the RM user content if any of the types missing
