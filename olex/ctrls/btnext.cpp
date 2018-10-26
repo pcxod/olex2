@@ -79,39 +79,27 @@ void TButton::MouseEnterEvent(wxMouseEvent& event) {
   if (!GetHint().IsEmpty()) {
     SetToolTip(GetHint().u_str());
   }
-  if (bgColor.IsOk()) {
-    int alpha = TOlxVars::GetInstance()->FindValue("button.highlight.lightness",
-      "140").ToInt();
-    wxColor cl = bgColor.ChangeLightness(alpha);
-    wxButton::SetBackgroundColour(cl);
-  }
   event.Skip();
 }
 //..............................................................................
 void TButton::MouseLeaveEvent(wxMouseEvent& event) {
-  if (bgColor.IsOk()) {
-    wxButton::SetBackgroundColour(bgColor);
-  }
   event.Skip();
 }
 //..............................................................................
-bool TButton::SetBackgroundColour(const wxColour &colour) {
-  bgColor = colour;
-  long ws = GetWindowStyle();
-  bool res = wxButton::SetBackgroundColour(bgColor);
-  SetWindowStyle(ws);
-  return res;
-}
-//..............................................................................
 void TButton::PaintEvent(wxPaintEvent& evt) {
-  if (!bgColor.IsOk()) {
-    evt.Skip();
-    return;
+  int alpha = drawParams.Find("border.lightness",
+    CustomDraw_Border_Lightness).ToInt();
+  wxColor bg;
+  if (IsMouseInWindow()) {
+    int alpha1 = drawParams.Find("highlight.lightness",
+      CustomDraw_Highlight_Lightness).ToInt();
+    bg = GetBackgroundColour().ChangeLightness(alpha1);
   }
-  int alpha = TOlxVars::GetInstance()->FindValue("button.border.lightness",
-    "64").ToInt();
+  else {
+    bg = GetBackgroundColour();
+  }
   wxPaintDC dc(this);
-  dc.SetBrush(wxBrush(GetBackgroundColour(), wxBRUSHSTYLE_SOLID));
+  dc.SetBrush(wxBrush(bg, wxBRUSHSTYLE_SOLID));
   dc.SetPen(wxPen(GetBackgroundColour().ChangeLightness(alpha), 1, wxPENSTYLE_SOLID));
   dc.DrawRectangle(0, 0, WI.GetWidth(), WI.GetHeight());
   wxSize sz = dc.GetTextExtent(GetLabel());

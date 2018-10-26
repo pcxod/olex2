@@ -24,7 +24,10 @@ TChoice::TChoice(wxWindow *Parent, wxWindowID id, const wxPoint& pos,
   Bind(wxEVT_CHOICE, &TChoice::ChangeEvent, this);
   Bind(wxEVT_KILL_FOCUS, &TChoice::LeaveEvent, this);
   Bind(wxEVT_SET_FOCUS, &TChoice::EnterEvent, this);
-    OnLeave.SetEnabled(false);
+  Bind(wxEVT_ENTER_WINDOW, &TChoice::MouseEnterEvent, this);
+  Bind(wxEVT_LEAVE_WINDOW, &TChoice::MouseLeaveEvent, this);
+  Bind(wxEVT_PAINT, &TChoice::PaintEvent, this);
+  OnLeave.SetEnabled(false);
   entered_counter = 0;
   OnChangeAlways = false;
 }
@@ -53,7 +56,9 @@ void TChoice::SetText(const olxstr& T) {
 //..............................................................................
 void TChoice::Clear() {
   StrValue.SetLength(0);
-  if (GetCount() == 0) return;
+  if (GetCount() == 0) {
+    return;
+  }
   _Clear();
   wxChoice::Clear();
 }
@@ -62,22 +67,25 @@ void TChoice::ChangeEvent(wxCommandEvent& event) {
   olxstr v = GetValue();
   if (IsOnChangeAlways() || v != StrValue) {
     StrValue = v;
-    if (!Data.IsEmpty())
+    if (!Data.IsEmpty()) {
       TOlxVars::SetVar(Data, GetText());
+    }
     OnChange.Execute(this);
   }
   event.Skip();
 }
 //..............................................................................
 void TChoice::LeaveEvent(wxFocusEvent& event)  {
-  if (--entered_counter == 0)
+  if (--entered_counter == 0) {
     HandleOnLeave();
+  }
   event.Skip();
 }
 //..............................................................................
 void TChoice::EnterEvent(wxFocusEvent& event)  {
-  if (++entered_counter == 1)
+  if (++entered_counter == 1) {
     HandleOnEnter();
+  }
   event.Skip();
 }
 //..............................................................................
@@ -110,5 +118,47 @@ void TChoice::HandleOnEnter()  {
     OnEnter.SetEnabled(false);
     OnLeave.SetEnabled(true);
   }
+}
+//..............................................................................
+void TChoice::MouseEnterEvent(wxMouseEvent& event) {
+  SetCursor(wxCursor(wxCURSOR_HAND));
+  event.Skip();
+}
+//..............................................................................
+void TChoice::MouseLeaveEvent(wxMouseEvent& event) {
+  event.Skip();
+}
+//..............................................................................
+void TChoice::PaintEvent(wxPaintEvent& event) {
+  if (drawParams.IsEmpty()) {
+    event.Skip();
+    return;
+  }
+  int alpha = drawParams.Find("border.lightness",
+    CustomDraw_Border_Lightness).ToInt();
+  wxColor bg;
+  if (IsMouseInWindow()) {
+    int alpha1 = drawParams.Find("highlight.lightness",
+      CustomDraw_Highlight_Lightness).ToInt();
+    bg = GetBackgroundColour().ChangeLightness(alpha1);
+  }
+  else {
+    bg = GetBackgroundColour();
+  }
+  wxPaintDC dc(this);
+  dc.SetBrush(wxBrush(bg, wxBRUSHSTYLE_SOLID));
+  dc.SetPen(wxPen(GetBackgroundColour().ChangeLightness(alpha), 1, wxPENSTYLE_SOLID));
+
+  int arrow_w = drawParams.Find("arrow_width", "20").ToInt(),
+    text_offset = drawParams.Find("text_offset", "2").ToInt();
+  wxSize sz = dc.GetTextExtent(GetValue());
+  int w = WI.GetWidth(), h = WI.GetHeight();
+  dc.DrawRectangle(0, 0, w, h);
+  wxRendererNative::Get().DrawComboBoxDropButton(this, dc,
+    wxRect(w - arrow_w, 0, arrow_w, h),
+    IsMouseInWindow() ? wxCONTROL_CURRENT : 0);
+  dc.SetClippingRegion(wxRect(0, 0, w-arrow_w- text_offset, h));
+  dc.DrawText(GetValue(), text_offset, (h - sz.GetHeight()) / 2);
+  event.Skip(false);
 }
 //..............................................................................

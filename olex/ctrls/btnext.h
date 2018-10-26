@@ -28,18 +28,19 @@ namespace ctrl_ext {
       OnUp(AOlxCtrl::ActionQueue::New(Actions, evt_on_uncheck_id)),
       OnDown(AOlxCtrl::ActionQueue::New(Actions, evt_on_check_id)),
       Down(false),
-      ActionQueue(NULL)
+      ActionQueue(0)
     {
       SetToDelete(false);
     }
     virtual ~AButtonBase() {
-      if (ActionQueue != NULL)
+      if (ActionQueue != 0) {
         ActionQueue->Remove(this);
+      }
     }
 
     void SetActionQueue(TActionQueue& q, const olxstr& dependMode);
     bool Execute(const IOlxObject *, const IOlxObject *, TActionQueue *);
-    void OnRemove(TActionQueue *) { ActionQueue = NULL; }
+    void OnRemove(TActionQueue *) { ActionQueue = 0; }
 
     DefPropC(olxstr, Data)
     DefPropC(olxstr, Hint)
@@ -55,7 +56,7 @@ namespace ctrl_ext {
     void MouseLeaveEvent(wxMouseEvent& event);
     void ClickEvent(wxCommandEvent&);
     void PaintEvent(wxPaintEvent&);
-    wxColor bgColor;
+    olxstr_dict<olxstr> drawParams;
   protected:
     virtual wxWindow* GetParent() const {  return wxButton::GetParent();  }
   public:
@@ -66,7 +67,9 @@ namespace ctrl_ext {
 
     void SetCaption(const olxstr &l)  {  wxButton::SetLabel(l.u_str());  }
     olxstr GetCaption() const { return wxButton::GetLabel();  }
-    virtual bool SetBackgroundColour(const wxColour &colour);
+    void SetCustomDrawParams(const olxstr &params) {
+      drawParams = MapFromToks(params);
+    }
   };
 
   class TBmpButton: public wxBitmapButton, public AButtonBase  {

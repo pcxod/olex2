@@ -22,6 +22,7 @@ namespace ctrl_ext  {
     void LeaveEvent(wxFocusEvent& event);
     void EnterEvent(wxFocusEvent& event);
     void EnterPressedEvent(wxCommandEvent& event);
+    void PaintEvent(wxPaintEvent& event);
     olxstr Data;
   public:
     TSpinCtrl(wxWindow *Parent, wxWindowID id = -1,
