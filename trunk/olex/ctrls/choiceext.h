@@ -19,10 +19,14 @@ namespace ctrl_ext {
     void ChangeEvent(wxCommandEvent& event);
     void EnterEvent(wxFocusEvent& event);
     void LeaveEvent(wxFocusEvent& event);
+    void PaintEvent(wxPaintEvent& event);
+    void MouseEnterEvent(wxMouseEvent& event);
+    void MouseLeaveEvent(wxMouseEvent& event);
     olxstr Data;
     olxstr StrValue;
     int entered_counter;
     bool OnChangeAlways, hasDefault;
+    olxstr_dict<olxstr> drawParams;
   public:
     TChoice(wxWindow *Parent, wxWindowID id = -1,
       const wxPoint& pos = wxDefaultPosition,
@@ -34,6 +38,10 @@ namespace ctrl_ext {
     wxString GetValue() const {
       return (GetSelection() != wxNOT_FOUND ?
         wxChoice::GetString(GetSelection()) : wxString(wxEmptyString));
+    }
+
+    void SetCustomDrawParams(const olxstr &params) {
+      drawParams = MapFromToks(params);
     }
 
     olxstr GetText() const;

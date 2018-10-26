@@ -10,6 +10,7 @@
 #ifndef __olx_ctrl_base_H
 #define __olx_ctrl_base_H
 #include "actions.h"
+#include "estrlist.h"
 #include "../wininterface.h"
 
 namespace ctrl_ext  {
@@ -28,10 +29,10 @@ namespace ctrl_ext  {
         {
           parent.Add(this);
         }
-        bool Execute(const IOlxObject *Sender, const IOlxObject *Data=NULL,
-          TActionQueue *caller=NULL)
+        bool Execute(const IOlxObject *Sender, const IOlxObject *Data=0,
+          TActionQueue *caller=0)
         {
-          return TActionQueue::Execute(Sender, Data == NULL ? &data : Data);
+          return TActionQueue::Execute(Sender, Data == 0 ? &data : Data);
         }
         static ActionQueue& New(TActionQList &parent, const olxstr &name)  {
           return *(new ActionQueue(parent, name));
@@ -41,9 +42,11 @@ namespace ctrl_ext  {
     bool ExecuteActionQueue(const olxstr &name) const {
       ActionQueue *q = dynamic_cast<ActionQueue *>(
         Actions.Find(name.ToUpperCase()));
-      if( q == NULL )  return false;
+      if (q == 0) {
+        return false;
+      }
       olxstr data = GetActionQueueData(*q);
-      q->Execute(this, &data, NULL);
+      q->Execute(this, &data, 0);
       return true;
     }
 
@@ -55,10 +58,33 @@ namespace ctrl_ext  {
     virtual olxstr GetActionQueueData(const ActionQueue &q) const {
       return q.data;
     }
+
+    static olxstr_dict<olxstr>::const_dict_type
+      MapFromToks(const olxstr &toks_)
+    {
+      olxstr_dict<olxstr> rv;
+      TStrList toks(toks_, ';');
+      rv.SetCapacity(toks.Count());
+      for (size_t i = 0; i < toks.Count(); i++) {
+        size_t es = toks[i].IndexOf(':');
+        if (es == InvalidIndex) {
+          rv.Add(toks[i], EmptyString());
+        }
+        else {
+          rv.Add(toks[i].SubStringTo(es).TrimWhiteChars(),
+            toks[i].SubStringFrom(es+1));
+        }
+      }
+      return rv;
+    }
   };
 
   const size_t UnknownSwitchState = (size_t)(-2);
-  static olxstr
+  
+  static const olxstr CustomDraw_Highlight_Lightness = "140",
+    CustomDraw_Border_Lightness = "64";
+
+  static const olxstr
     evt_change_id("ONCHANGE"),
     evt_on_mouse_leave_id("ONLEAVE"),
     evt_on_mouse_enter_id("ONENTER"),

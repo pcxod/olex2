@@ -10,6 +10,7 @@
 #include "spinctrlext.h"
 #include "frameext.h"
 #include "olxvar.h"
+#include "wx/renderer.h"
 
 using namespace ctrl_ext;
 //..............................................................................
@@ -24,7 +25,7 @@ TSpinCtrl::TSpinCtrl(wxWindow *Parent, wxWindowID id, const wxString &value,
   Bind(wxEVT_TEXT_ENTER, &TSpinCtrl::EnterPressedEvent, this);
   Bind(wxEVT_KILL_FOCUS, &TSpinCtrl::LeaveEvent, this);
   Bind(wxEVT_SET_FOCUS, &TSpinCtrl::EnterEvent, this);
-
+  Bind(wxEVT_PAINT, &TSpinCtrl::PaintEvent, this);
 }
 //..............................................................................
 void TSpinCtrl::SpinChangeEvent(wxSpinEvent& event) {
@@ -61,5 +62,9 @@ void TSpinCtrl::EnterPressedEvent(wxCommandEvent& event) {
   if (val == Value) return;
   Value = val;
   OnChange.Execute(this);
+}
+//..............................................................................
+void TSpinCtrl::PaintEvent(wxPaintEvent& event) {
+  event.Skip(true);
 }
 //..............................................................................

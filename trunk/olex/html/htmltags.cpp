@@ -589,6 +589,9 @@ TAG_HANDLER_PROC(tag) {
       else {
         ((TButton*)Btn)->Fit();
       }
+      if (tag.HasParam(wxT("CUSTOM"))) {
+        ((TButton *)Btn)->SetCustomDrawParams(tag.GetParam(wxT("CUSTOM")));
+      }
 #ifdef __WXGTK__  // got no idea what happens here, client size does not work?
       wxFont fnt(m_WParser->GetDC()->GetFont());
       fnt.SetPointSize( fnt.GetPointSize()-2);
@@ -657,6 +660,9 @@ TAG_HANDLER_PROC(tag) {
         Box->SetSelection(0);
       }
       Box->SetData(Data);
+      if (tag.HasParam(wxT("CUSTOM"))) {
+        Box->SetCustomDrawParams(tag.GetParam(wxT("CUSTOM")));
+      }
       if (tag.HasParam(wxT("ONCHANGE"))) {
         Box->OnChange.data =
           ExpandMacroShortcuts(tag.GetParam(wxT("ONCHANGE")), macro_map);
