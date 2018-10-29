@@ -130,7 +130,7 @@ void TChoice::MouseLeaveEvent(wxMouseEvent& event) {
 }
 //..............................................................................
 void TChoice::PaintEvent(wxPaintEvent& event) {
-  if (drawParams.IsEmpty()) {
+  if (IsBeingDeleted() || drawParams.IsEmpty()) {
     event.Skip();
     return;
   }
