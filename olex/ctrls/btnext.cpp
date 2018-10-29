@@ -87,6 +87,10 @@ void TButton::MouseLeaveEvent(wxMouseEvent& event) {
 }
 //..............................................................................
 void TButton::PaintEvent(wxPaintEvent& evt) {
+  if (IsBeingDeleted() || drawParams.IsEmpty()) {
+    evt.Skip();
+    return;
+  }
   int alpha = drawParams.Find("border.lightness",
     CustomDraw_Border_Lightness).ToInt();
   wxColor bg;
