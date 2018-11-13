@@ -765,7 +765,7 @@ void XVarManager::AddSUMP(const TStrList &sump) {
     XVar* v;
     if (vi > Vars.Count()) {
       vi -= Vars.Count();
-      if (vi > ReservedVars.Count()) {
+      if (vi >= ReservedVars.Count()) {
         throw TInvalidArgumentException(__OlxSourceInfo, "var index");
       }
       v = &ReservedVars[vi - 1];
