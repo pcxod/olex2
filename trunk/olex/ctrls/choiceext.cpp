@@ -137,7 +137,8 @@ void TChoice::PaintEvent(wxPaintEvent& event) {
   int alpha = drawParams.Find("border.lightness",
     CustomDraw_Border_Lightness).ToInt();
   wxColor bg;
-  if (IsMouseInWindow()) {
+  bool in_wnd = GetScreenRect().Contains(wxGetMousePosition());
+  if (in_wnd) {
     int alpha1 = drawParams.Find("highlight.lightness",
       CustomDraw_Highlight_Lightness).ToInt();
     bg = GetBackgroundColour().ChangeLightness(alpha1);
@@ -156,7 +157,7 @@ void TChoice::PaintEvent(wxPaintEvent& event) {
   dc.DrawRectangle(0, 0, w, h);
   wxRendererNative::Get().DrawComboBoxDropButton(this, dc,
     wxRect(w - arrow_w, 0, arrow_w, h),
-    IsMouseInWindow() ? wxCONTROL_CURRENT : 0);
+    in_wnd ? wxCONTROL_CURRENT : 0);
   dc.SetClippingRegion(wxRect(0, 0, w-arrow_w- text_offset, h));
   dc.DrawText(GetValue(), text_offset, (h - sz.GetHeight()) / 2);
   event.Skip(false);
