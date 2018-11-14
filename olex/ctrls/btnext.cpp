@@ -94,7 +94,8 @@ void TButton::PaintEvent(wxPaintEvent& evt) {
   int alpha = drawParams.Find("border.lightness",
     CustomDraw_Border_Lightness).ToInt();
   wxColor bg;
-  if (IsMouseInWindow()) {
+  bool in_wnd = GetScreenRect().Contains(wxGetMousePosition());
+  if (in_wnd) {
     int alpha1 = drawParams.Find("highlight.lightness",
       CustomDraw_Highlight_Lightness).ToInt();
     bg = GetBackgroundColour().ChangeLightness(alpha1);
