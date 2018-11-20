@@ -29,6 +29,7 @@ class InfoTab : public IOlxObject {  // need to cast to delete
     AtomCount; // for MPLA, CONF
   olxstr ParamName;
   AtomRefList atoms;
+  TDoubleList args; // for new CONF
 public:
   InfoTab(RefinementModel& rm, short type,
     const olxstr& paramName = EmptyString(), short atomCount = -1)
@@ -52,9 +53,7 @@ public:
   bool operator == (const InfoTab& it) const;
   InfoTab& operator = (const InfoTab& it);
 
-  void FromExpression(const olxstr &e, const olxstr &resi = EmptyString()) {
-    atoms.Build(e, resi);
-  }
+  void FromExpression(const olxstr &e, const olxstr &resi = EmptyString());
   void AddAtom(TCAtom& ca, const smatd* sm);
   void UpdateResi() { atoms.UpdateResi(); }
   // this is called internally by the RM
@@ -64,6 +63,11 @@ public:
 
   AtomRefList& GetAtoms() { return atoms; }
   const AtomRefList& GetAtoms() const { return atoms; }
+
+  const TDoubleList & getArgs() { return args; }
+  void setArgs(const TDoubleList &args) {
+    this->args = args;
+  }
 
   short GetType() const { return Type; }
 

@@ -9729,7 +9729,7 @@ int RSA_GetAtomPriorityX(AtomEnvList &a, AtomEnvList &b) {
       TCAtom &atomA = *a[i].GetA()->atom;
       for (size_t j=0; j < atomA.AttachedSiteCount(); j++) {
         TCAtom::Site &s = atomA.GetAttachedSite(j);
-        if (!(s.atom->GetTag() == 0 || s.atom->GetTag() == 3) ||
+        if (s.atom->GetTag() != 0 ||
           s.atom->GetType() == iQPeakZ || s.atom->IsDeleted())
         {
           continue;
@@ -9741,11 +9741,11 @@ int RSA_GetAtomPriorityX(AtomEnvList &a, AtomEnvList &b) {
         }
       }
     }
-    if (b[i].GetA() != NULL) {
+    if (b[i].GetA() != 0) {
       TCAtom &atomB = *b[i].GetA()->atom;
       for (size_t j=0; j < atomB.AttachedSiteCount(); j++) {
         TCAtom::Site &s = atomB.GetAttachedSite(j);
-        if (!(s.atom->GetTag() == 0 || s.atom->GetTag() == 2) ||
+        if (s.atom->GetTag() != 0 ||
           s.atom->GetType() == iQPeakZ || s.atom->IsDeleted())
         {
           continue;
@@ -9874,21 +9874,23 @@ ConstTypeList<TGroupCAtom> CONF_GetSites(const TLattice &latt,
       }
     }
     if (skip) continue;
-    smatd *mp = NULL;
+    smatd *mp = 0;
     if (!m.IsFirst()) {
-      mp = matrices.Find(m.GetId(), NULL);
-      if (mp == NULL)
+      mp = matrices.Find(m.GetId(), 0);
+      if (mp == 0) {
         mp = matrices.Add(m.GetId(), new smatd(m));
+      }
     }
     rv.Add(new TGroupCAtom(s.atom, mp));
   }
   return rv;
 }
 void CONF_Process(TCAtom &a, const smatd &am, TCAtom &b, const smatd &bm,
-  olx_pdict<uint32_t, smatd*> &matrices, short min_z)
+  olx_pdict<uint32_t, smatd*> &matrices, short min_z, const TDoubleList &args)
 {
-  if (a.GetType() < min_z || b.GetType() < min_z)
+  if (a.GetType() < min_z || b.GetType() < min_z) {
     return;
+  }
   TAsymmUnit &au = *a.GetParent();
   TLattice &latt = au.GetLattice();
   RefinementModel &rm = *au.GetRefMod();
@@ -9896,37 +9898,43 @@ void CONF_Process(TCAtom &a, const smatd &am, TCAtom &b, const smatd &bm,
   TCAtomGroup right = CONF_GetSites(latt, b, bm, a, am, matrices, min_z);
   const vec3d ac = am*a.ccrd(), bc = bm*b.ccrd();
   for (size_t i=0; i < left.Count(); i++) {
-    const vec3d lc = (left[i].GetMatrix() == NULL ? left[i].GetAtom()->ccrd() :
+    const vec3d lc = (left[i].GetMatrix() == 0 ? left[i].GetAtom()->ccrd() :
       (*left[i].GetMatrix())*left[i].GetAtom()->ccrd());
     for (size_t j=0; j < right.Count(); j++) {
-      const vec3d rc = (right[j].GetMatrix() == NULL ? right[j].GetAtom()->ccrd() :
+      const vec3d rc = (right[j].GetMatrix() == 0 ? right[j].GetAtom()->ccrd() :
         (*right[j].GetMatrix())*right[j].GetAtom()->ccrd());
       // analyse if any of the three atoms are on the line
       try {
         double ca = au.Orthogonalise(lc-ac).CAngle(au.Orthogonalise(bc-ac));
-        if (olx_abs(ca+1) < 1e-6)
+        if (olx_abs(ca + 1) < 1e-6) {
           continue;
+        }
         ca = au.Orthogonalise(rc-bc).CAngle(au.Orthogonalise(ac-bc));
-        if (olx_abs(ca+1) < 1e-6)
+        if (olx_abs(ca + 1) < 1e-6) {
           continue;
+        }
       }
       catch(...) {
         continue;
       }
       InfoTab &it = rm.AddCONF();
+      it.setArgs(args);
       bool reverse;
       if (left[i].GetAtom()->GetType() == right[j].GetAtom()->GetType()) {
-        if (a.GetType() == b.GetType())
+        if (a.GetType() == b.GetType()) {
           reverse = left[i].GetAtom()->GetId() > right[j].GetAtom()->GetId();
-        else
+        }
+        else {
           reverse = a.GetType() > b.GetType();
+        }
       }
-      else
+      else {
         reverse = left[i].GetAtom()->GetType() > right[j].GetAtom()->GetType();
+      }
       TCAtomGroup atoms;
       atoms.AddCopy(left[i]);
-      atoms.Add(new TGroupCAtom(&a, am.IsFirst() ? NULL : &am));
-      atoms.Add(new TGroupCAtom(&b, bm.IsFirst() ? NULL : &bm));
+      atoms.Add(new TGroupCAtom(&a, am.IsFirst() ? 0 : &am));
+      atoms.Add(new TGroupCAtom(&b, bm.IsFirst() ? 0 : &bm));
       atoms.AddCopy(right[j]);
       for (size_t k=0; k < atoms.Count(); k++) {
         size_t idx = (reverse ? (atoms.Count()-k-1) : k);
@@ -9940,6 +9948,13 @@ void XLibMacros::macCONF(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
   bool all = Options.GetBoolOption('a');
+  TDoubleList args;
+  for (size_t i = 0; i < Cmds.Count(); i++) {
+    if (Cmds[i].IsNumber()) {
+      args.Add(Cmds[i].ToDouble());
+      Cmds.Delete(i--);
+    }
+  }
   MacroInput ma = ExtractSelection(Cmds, true);
   TXApp &app = TXApp::GetInstance();
   RefinementModel &rm = app.XFile().GetRM();
@@ -9959,7 +9974,7 @@ void XLibMacros::macCONF(TStrObjList &Cmds, const TParamList &Options,
       for (size_t i=0; i < ma.bonds.Count(); i++) {
         TSBond &b = *ma.bonds[i];
         CONF_Process(b.A().CAtom(), b.A().GetMatrix(),
-          b.B().CAtom(), b.B().GetMatrix(), matrices, min_z);
+          b.B().CAtom(), b.B().GetMatrix(), matrices, min_z, args);
       }
     }
   }
@@ -9971,23 +9986,27 @@ void XLibMacros::macCONF(TStrObjList &Cmds, const TParamList &Options,
       TSAtom &a = *atoms[i];
       for (size_t j=0; j < a.CAtom().AttachedSiteCount(); j++) {
         TCAtom::Site &s = a.CAtom().GetAttachedSite(j);
-        CONF_Process(a.CAtom(), a.GetMatrix(), *s.atom, s.matrix, matrices, min_z);
+        CONF_Process(a.CAtom(), a.GetMatrix(), *s.atom, s.matrix, matrices,
+          min_z, args);
       }
     }
   }
   else if (!ma.atoms.IsEmpty()) {
     if (ma.atoms.Count() > 3) {
       InfoTab &it = rm.AddCONF();
-      for (size_t i=0; i < ma.atoms.Count(); i++) {
+      it.setArgs(args);
+      for (size_t i = 0; i < ma.atoms.Count(); i++) {
         it.AddAtom(ma.atoms[i]->CAtom(),
           ma.atoms[i]->GetMatrix().IsFirst() ? NULL : &ma.atoms[i]->GetMatrix());
       }
     }
-    else
+    else {
       Error.ProcessingError(__OlxSrcInfo, "at least 4 atoms are expected");
+    }
   }
-  for (size_t i=0; i < matrices.Count(); i++)
+  for (size_t i = 0; i < matrices.Count(); i++) {
     delete matrices.GetValue(i);
+  }
 }
 //..............................................................................
 void XLibMacros::macD2CG(TStrObjList &Cmds, const TParamList &Options,
@@ -10013,8 +10032,9 @@ void XLibMacros::macD2CG(TStrObjList &Cmds, const TParamList &Options,
   }
   TSAtom &a = *ma.atoms[0];
   TSAtomCPList atoms;
-  if (ma.atoms.Count() > 1)
+  if (ma.atoms.Count() > 1) {
     atoms = ma.atoms.GetObject().SubListFrom(1);
+  }
   else {
     atoms.SetCapacity(ma.planes[0]->Count());
     for (size_t i = 0; i < ma.planes[0]->Count(); i++) {

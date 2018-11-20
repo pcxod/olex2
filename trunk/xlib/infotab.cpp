@@ -9,6 +9,28 @@
 #include "infotab.h"
 #include "lattice.h"
 #include "unitcell.h"
+#include "pers_util.h"
+
+void InfoTab::FromExpression(const olxstr &e, const olxstr &resi) {
+  TStrList toks(e, ' ');
+  size_t ni = InvalidIndex;
+  for (size_t i = 0; i < toks.Count(); i++) {
+    if (ni != InvalidIndex || toks[i].IsNumber()) {
+      if (ni == InvalidIndex) {
+        ni = i;
+      }
+      // expect number only here
+      args.Add(toks[i].ToDouble());
+    }
+  }
+  if (ni == InvalidIndex) {
+    atoms.Build(e, resi);
+  }
+  else {
+    atoms.Build(toks.SubListTo(ni).Text(' '), resi);
+  }
+}
+//.............................................................................
 
 bool InfoTab::operator == (const InfoTab &it) const {
   if (Type != it.Type) {
@@ -40,6 +62,7 @@ InfoTab& InfoTab::operator = (const InfoTab& it) {
   ParamName = it.ParamName;
   AtomCount = it.AtomCount;
   Type = it.Type;
+  args = it.args;
   atoms.Assign(it.atoms);
   return *this;
 }
@@ -88,7 +111,11 @@ olxstr InfoTab::InsStr() const {
   else if (Type == infotab_mpla && AtomCount != -1) {
     rv << ' ' << AtomCount;
   }
-  return (rv << ' ' << atoms.GetExpression());
+  rv << ' ' << atoms.GetExpression();
+  for (size_t i = 0; i < args.Count(); i++) {
+    rv << ' ' << args[i];
+  }
+  return rv;
 }
 //.............................................................................
 void InfoTab::ToDataItem(TDataItem& di) const {
@@ -98,6 +125,7 @@ void InfoTab::ToDataItem(TDataItem& di) const {
     di.AddField("atomCount", AtomCount);
   }
   atoms.ToDataItem(di.AddItem("AtomList"));
+  di.AddField("args", PersUtil::NumberListToStr(args));
 }
 //.............................................................................
 void InfoTab::FromDataItem(const TDataItem& di, RefinementModel& rm)  {
@@ -134,6 +162,12 @@ void InfoTab::FromDataItem(const TDataItem& di, RefinementModel& rm)  {
   else {
     atoms.FromDataItem(di.GetItemByName("AtomList"));
   }
+  {
+    olxstr av = di.FindField("args");
+    if (!av.IsEmpty()) {
+      PersUtil::NumberListFromStr(av, args);
+    }
+  }
 }
 //.............................................................................
 #ifdef _PYTHON
@@ -142,8 +176,9 @@ PyObject* InfoTab::PyExport() {
   PythonExt::SetDictItem(main, "type",
     PythonExt::BuildString(GetName()));
   PythonExt::SetDictItem(main, "param_name", PythonExt::BuildString(ParamName));
-  if (Type == infotab_mpla)
+  if (Type == infotab_mpla) {
     PythonExt::SetDictItem(main, "atom_count", Py_BuildValue("i", AtomCount));
+  }
   TTypeList<ExplicitCAtomRef> a = atoms.ExpandList(RM);
   PyObject* pya = PyTuple_New(a.Count());
   for (size_t i = 0; i < a.Count(); i++) {
@@ -152,6 +187,11 @@ PyObject* InfoTab::PyExport() {
         a[i].GetMatrix() == 0 ? -1 : a[i].GetMatrix()->GetId()));
   }
   PythonExt::SetDictItem(main, "atoms", pya);
+  PyObject* pyal = PyTuple_New(args.Count());
+  for (size_t i = 0; i < args.Count(); i++) {
+    PyTuple_SetItem(pyal, i, Py_BuildValue("d", args[i]));
+  }
+  PythonExt::SetDictItem(main, "args", pyal);
   return main;
 }
 #endif
