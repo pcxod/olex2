@@ -1261,12 +1261,14 @@ olxstr TXFile::NameArg::ToString() const {
 //..............................................................................
 olxstr TXFile::LocateHklFile() {
   olxstr HklFN = GetRM().GetHKLSource();
-  if (TEFile::Existsi(HklFN, HklFN))
+  if (TEFile::Existsi(HklFN, HklFN)) {
     return HklFN;
+  }
   const olxstr fn = GetFileName();
   HklFN = TEFile::ChangeFileExt(fn, "hkl");
-  if (TEFile::Existsi(HklFN, HklFN))
+  if (TEFile::Existsi(HklFN, HklFN)) {
     return HklFN;
+  }
   HklFN = TEFile::ChangeFileExt(fn, "raw");
   if (TEFile::Existsi(HklFN, HklFN)) {
     THklFile Hkl;
@@ -1292,8 +1294,9 @@ olxstr TXFile::LocateHklFile() {
   TStrList hkl_files;
   olxstr dir = TEFile::ExtractFilePath(fn);
   TEFile::ListDir(dir, hkl_files, "*.hkl", sefFile);
-  if (hkl_files.Count() == 1)
+  if (hkl_files.Count() == 1) {
     return TEFile::AddPathDelimeterI(dir) << hkl_files[0];
+  }
   return EmptyString();
 }
 //..............................................................................

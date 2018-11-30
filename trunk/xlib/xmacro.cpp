@@ -3554,7 +3554,7 @@ void XLibMacros::funHKLSrc(const TStrObjList& Params, TMacroData &E) {
   }
   else {
     olxstr fn = xapp.XFile().GetRM().GetHKLSource();
-    if (TEFile::Exists(fn)) {  // check the format...
+    if (TEFile::Exists(fn) && !TEFile::IsDir(fn)) {  // check the format...
       TEFile f(fn, "rb");
       if (!THklFile::IsHKLFileLine(f.ReadLine())) {
         f.Close();
