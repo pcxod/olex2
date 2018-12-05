@@ -476,16 +476,17 @@ PyObject* pyGetVdWRadii(PyObject* self, PyObject* args)  {
   return dict;
 }
 //..............................................................................
-PyObject* pySetBadReflections(PyObject* self, PyObject* args)  {
+PyObject* pySetBadReflections(PyObject* self, PyObject* args) {
   PyObject *r, *l;
-  if( !PythonExt::ParseTuple(args, "O", &l) || !PyIter_Check(l) )
+  if (!PythonExt::ParseTuple(args, "O", &l) || !PyIter_Check(l)) {
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "O");
+  }
   TTypeList<RefinementModel::BadReflection> bad_refs;
   while ((r = PyIter_Next(l)) != 0) {
     RefinementModel::BadReflection br;
     if (!PythonExt::ParseTuple(r, "iiiddd",
-          &br.index[0], &br.index[1], &br.index[2],
-          &br.Fo, &br.Fc, &br.esd))
+      &br.index[0], &br.index[1], &br.index[2],
+      &br.Fo, &br.Fc, &br.esd))
     {
       Py_DECREF(r);
       return PythonExt::InvalidArgumentException(__OlxSourceInfo, "iiiddd");
@@ -494,8 +495,61 @@ PyObject* pySetBadReflections(PyObject* self, PyObject* args)  {
     bad_refs.AddCopy(br).UpdateFactor();
   }
   TXApp::GetInstance().XFile().GetRM().SetBadReflectionList(bad_refs);
-
   return PythonExt::PyNone();
+}
+//..............................................................................
+PyObject* pyCreateLock(PyObject* self, PyObject* args) {
+#ifdef __WIN32__
+  olxstr lock_name;
+  int timeout;
+  if (!PythonExt::ParseTuple(args, "wi", &lock_name, &timeout)) {
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "wi");
+  }
+  HANDLE fh;
+  int cnt = 0;
+  while ((fh = CreateFile(lock_name.wc_str(),
+    GENERIC_READ | GENERIC_WRITE, // access
+    0, // share mode
+    0, // security attributes
+    CREATE_ALWAYS, // creation disposition
+    FILE_ATTRIBUTE_NORMAL, //flags and attribtes
+    0)) == INVALID_HANDLE_VALUE)
+  {
+    if (++cnt * 100 > timeout) {
+      break;
+    }
+    olx_sleep(100);
+  }
+  if (fh == INVALID_HANDLE_VALUE) {
+    return PythonExt::SetErrorMsg(PyExc_IOError, __OlxSourceInfo,
+      "failed to create lock file");
+  }
+  return Py_BuildValue("(L,O)", (int64_t)fh, PythonExt::BuildString(lock_name));
+#endif
+  return PythonExt::SetErrorMsg(PyExc_NotImplementedError, __OlxSourceInfo, "");
+}
+//..............................................................................
+PyObject* pyDeleteLock(PyObject* self, PyObject* args) {
+#ifdef __WIN32__
+  PyObject *lock_tuple;
+  if (!PythonExt::ParseTuple(args, "O", &lock_tuple)) {
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "O");
+  }
+  int64_t handle;
+  olxstr lock_name;
+  if (!PythonExt::ParseTuple(lock_tuple, "Lw", &handle, &lock_name)) {
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "LW");
+  }
+
+  HANDLE fh = (HANDLE)handle;
+  if (CloseHandle(fh)) {
+    if (DeleteFile(lock_name.wc_str())) {
+      return PythonExt::PyTrue();
+    }
+  }
+  return PythonExt::PyFalse();
+#endif
+  return PythonExt::SetErrorMsg(PyExc_NotImplementedError, __OlxSourceInfo, "");
 }
 //..............................................................................
 #if defined(__WIN32__)
@@ -607,6 +661,10 @@ static PyMethodDef CORE_Methods[] = {
     "Converts a symmetry operation into string representation"},
   { "OnPlatonRun", pyOnPlatonRun, METH_VARARGS,
     "Deals with orphaned Platon processes" },
+  { "CreateLock", pyCreateLock, METH_VARARGS,
+  "Windows only - creates exclusive lock file" },
+  { "DeleteLock", pyDeleteLock, METH_VARARGS,
+  "Windows only - deletes previously created lock file" },
   { NULL, NULL, 0, NULL }
    };
 

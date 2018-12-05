@@ -635,6 +635,13 @@ bool PythonExt::ParseTuple(PyObject* tuple, const char* format, ...) {
         return false;
       }
     }
+    else if (format[i] == 'L') {
+      int64_t* ip = va_arg(argptr, int64_t*);
+      if (!PyArg_Parse(io, "L", ip)) {
+        va_end(argptr);
+        return false;
+      }
+    }
     else if (format[i] == 'w') {
       olxstr* os = va_arg(argptr, olxstr*);
       os->SetLength(0);
