@@ -576,8 +576,9 @@ bool fragments::ring::merge(ring &r) {
   else
     atoms.AddAll(olx_list_reverse::MakeConst(r.atoms.SubListFrom(2)));
   for (size_t i=0; i < r.substituents.Count(); i++) {
-    if (!r.substituents[i].atoms[0]->IsProcessed())
+    if (!r.substituents[i].atoms[0]->IsProcessed()) {
       substituents.AddCopy(r.substituents[i]);
+    }
   }
   fused_count++;
   return true;
@@ -1047,6 +1048,7 @@ void fragments::fragment::init_ring(size_t i, TTypeList<ring> &rings) {
   }
   atoms_.ForEach(ACollectionItem::TagSetter(-1));
   ring &r = rings[i];
+  r.substituents.Clear();
   TQueue<TCAtom*> queue;
   for (size_t i = 0; i < rings.Count(); i++) {
     rings[i].atoms.ForEach(ACollectionItem::TagSetter(-2));
@@ -1120,6 +1122,10 @@ fragments::tree_node &fragments::fragment::trace_tree(TCAtomPList &atoms,
       tree_node &b = *(new tree_node);
       TCAtom *ta = trace_branch(atoms[i], b);
       const index_t t = ta->GetTag();
+      if ((size_t)t >= branches.Count()) {
+        delete &b;
+        throw TFunctionFailedException(__OlxSourceInfo, "trace tree");
+      }
       b.trunk.ForEach(ACollectionItem::TagSetter(branches.Count()));
       branches[t]->branches.Add(b);
       branches.Add(b);
@@ -1512,7 +1518,9 @@ ConstTypeList<fragments::ring> fragments::fragment::get_rings(
   const TCAtomPList &r_atoms)
 {
   TTypeList<fragments::ring> rv;
-  if (r_atoms.IsEmpty()) return rv;
+  if (r_atoms.IsEmpty()) {
+    return rv;
+  }
   for (size_t i = 0; i < r_atoms.Count(); i++) {
     TTypeList<TCAtomPList> nrings = trace_ring_b(*r_atoms[i]);
     for (size_t j = 0; j < nrings.Count(); j++) {
@@ -1557,7 +1565,6 @@ ConstPtrList<TCAtom> fragments::fragment::ring_sorter(const TCAtomPList &r) {
       }
     }
     if (!set) {
-      TBasicApp::NewLogEntry() << alg::label(r, '-');
       throw TInvalidArgumentException(__OlxSourceInfo,
         olxstr("ring ") << alg::label(r));
     }
