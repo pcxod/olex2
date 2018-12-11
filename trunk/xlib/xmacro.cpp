@@ -364,11 +364,15 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(CalcMass, EmptyString(), fpNone|fpOne,
     "Calculates Mass spectrum of current structure or for provided formula");
   xlib_InitMacro(Omit,
-    "u-removes puts the omitted reflection back (only for OMIT lines)",
+    "u-puts the omitted reflection back (only for OMIT lines)",
     fpOne|fpTwo|fpThree|psCheckFileTypeIns,
     "Removes any particular reflection from the refinement list. If a single "
     "number is provided, all reflections with delta(F^2)/esd greater than "
     "given number are omitted");
+  xlib_InitMacro(Shel,
+    EmptyString(),
+    fpTwo | psCheckFileTypeIns,
+    "Adds SHEL command to trim reflections");
   xlib_InitMacro(Reset, "s-space group&;c-content&;f-alternative file name&;"
     "rem-exclude remarks&;atoms-saves the atom list alongside",
     fpAny|psFileLoaded,
@@ -1191,62 +1195,65 @@ void XLibMacros::macHklStat(TStrObjList &Cmds, const TParamList &Options,
     RefinementModel::HklStat hs = xapp.XFile().GetRM().GetMergeStat();
     TTTable<TStrList> tab(22, 2);
     tab[0][0] << "Total reflections (after filtering)";
-      tab[0][1] << hs.TotalReflections;
+    tab[0][1] << hs.TotalReflections;
     tab[1][0] << "Data/Unique reflections";
-      tab[1][1] << hs.DataCount << '/' << hs.UniqueReflections;
+    tab[1][1] << hs.DataCount << '/' << hs.UniqueReflections;
     tab[2][0] << "Centric reflections";
-      tab[2][1] << hs.CentricReflections;
+    tab[2][1] << hs.CentricReflections;
     tab[3][0] << "Friedel pairs merged";
-      tab[3][1] << hs.FriedelOppositesMerged;
+    tab[3][1] << hs.FriedelOppositesMerged;
     tab[4][0] << "Inconsistent equivalents";
-      tab[4][1] << hs.InconsistentEquivalents;
+    tab[4][1] << hs.InconsistentEquivalents;
     tab[5][0] << "Systematic absences removed (all/unique)";
-      tab[5][1] << hs.SystematicAbsencesRemoved << '/' <<
-        hs.UniqueSystematicAbsencesRemoved;
+    tab[5][1] << hs.SystematicAbsencesRemoved << '/' <<
+      hs.UniqueSystematicAbsencesRemoved;
     tab[6][0] << "Min d";
-      tab[6][1] << olxstr::FormatFloat(3, hs.MinD);
+    tab[6][1] << olxstr::FormatFloat(3, hs.MinD);
     tab[7][0] << "Max d";
-      tab[7][1] << olxstr::FormatFloat(3, hs.MaxD);
+    tab[7][1] << olxstr::FormatFloat(3, hs.MaxD);
     tab[8][0] << "Limiting d min (SHEL)";
-      tab[8][1] << (hs.LimDmin == 0 ? NAString()
-        : olxstr::FormatFloat(3, hs.LimDmin));
+    tab[8][1] << (hs.LimDmin == 0 ? NAString()
+      : olxstr::FormatFloat(3, hs.LimDmin));
     tab[9][0] << "Limiting d max (SHEL/OMIT_2t)";
-      tab[9][1] << (hs.LimDmax == 100 ? NAString()
-        : olxstr::FormatFloat(3, hs.LimDmax));
+    tab[9][1] << (hs.LimDmax == 100 ? NAString()
+      : olxstr::FormatFloat(3, hs.LimDmax));
     tab[10][0] << "Filtered off reflections (SHEL/OMIT_s/OMIT_2t)";
-      tab[10][1] << hs.FilteredOff;
+    tab[10][1] << hs.FilteredOff;
     tab[11][0] << "Reflections omitted by user (OMIT_hkl)";
-      tab[11][1] << hs.OmittedByUser;
+    tab[11][1] << hs.OmittedByUser;
     tab[12][0] << "Reflections skipped (after 0 0 0)";
-      tab[12][1] << hs.OmittedReflections;
+    tab[12][1] << hs.OmittedReflections;
     tab[13][0] << "Intensity transformed for (OMIT_s)";
-      tab[13][1] << hs.IntensityTransformed << " reflections";
+    tab[13][1] << hs.IntensityTransformed << " reflections";
     tab[14][0] << "Rint, %";
-      tab[14][1] << (hs.Rint < 0 ? NAString()
-        : olxstr::FormatFloat(2, hs.Rint*100));
+    tab[14][1] << (hs.Rint < 0 ? NAString()
+      : olxstr::FormatFloat(2, hs.Rint * 100));
     tab[15][0] << "Rsigma, %";
-      tab[15][1] << (hs.Rsigma < 0 ? NAString()
-        : olxstr::FormatFloat(2, hs.Rsigma*100));
+    tab[15][1] << (hs.Rsigma < 0 ? NAString()
+      : olxstr::FormatFloat(2, hs.Rsigma * 100));
     tab[16][0] << "Completeness, [d_min-d_max] %";
     tab[16][1] << olxstr::FormatFloat(2, hs.Completeness * 100);
     tab[17][0] << "Mean I/sig";
-      tab[17][1] << olxstr::FormatFloat(3, hs.MeanIOverSigma);
+    tab[17][1] << olxstr::FormatFloat(3, hs.MeanIOverSigma);
     tab[18][0] << "HKL range (refinement)";
-      tab[18][1] << "h=[" << hs.MinIndexes[0] << ',' << hs.MaxIndexes[0] << "] "
-                 << "k=[" << hs.MinIndexes[1] << ',' << hs.MaxIndexes[1] << "] "
-                 << "l=[" << hs.MinIndexes[2] << ',' << hs.MaxIndexes[2] << "] ";
+    tab[18][1] << "h=[" << hs.MinIndexes[0] << ',' << hs.MaxIndexes[0] << "] "
+      << "k=[" << hs.MinIndexes[1] << ',' << hs.MaxIndexes[1] << "] "
+      << "l=[" << hs.MinIndexes[2] << ',' << hs.MaxIndexes[2] << "] ";
     tab[19][0] << "HKL range (file)";
-      tab[19][1] << "h=[" << hs.FileMinInd[0] << ',' << hs.FileMaxInd[0] << "] "
-                 << "k=[" << hs.FileMinInd[1] << ',' << hs.FileMaxInd[1] << "] "
-                 << "l=[" << hs.FileMinInd[2] << ',' << hs.FileMaxInd[2] << "] ";
+    tab[19][1] << "h=[" << hs.FileMinInd[0] << ',' << hs.FileMaxInd[0] << "] "
+      << "k=[" << hs.FileMinInd[1] << ',' << hs.FileMaxInd[1] << "] "
+      << "l=[" << hs.FileMinInd[2] << ',' << hs.FileMaxInd[2] << "] ";
     tab[20][0] << "Maximum redundancy (+symm eqivs)";
-    if (hs.HKLF >= 5)
+    if (hs.HKLF >= 5) {
       tab[20][1] = NAString();
-    else
+    }
+    else {
       tab[20][1] << hs.ReflectionAPotMax;
+    }
     tab[21][0] << "Average redundancy (+symm eqivs)";
-    if (hs.HKLF >= 5)
+    if (hs.HKLF >= 5) {
       tab[20][1] = NAString();
+    }
     else {
       tab[21][1] << olxstr::FormatFloat(2,
         (double)hs.TotalReflections / hs.UniqueReflections);
@@ -1256,16 +1263,20 @@ void XLibMacros::macHklStat(TStrObjList &Cmds, const TParamList &Options,
       "Refinement reflection statistsics", true, false, "  ");
     const TIntList& redInfo = xapp.XFile().GetRM().GetRedundancyInfo();
     int red_cnt = 0;
-    for( size_t i=0; i < redInfo.Count(); i++ )
-      if( redInfo[i] != 0 )
+    for (size_t i = 0; i < redInfo.Count(); i++) {
+      if (redInfo[i] != 0) {
         red_cnt++;
+      }
+    }
     tab.Resize(red_cnt, 2);
     tab.ColName(0) = "Times measured";
     tab.ColName(1) = "Count";
     red_cnt = 0;
-    for (size_t i=0; i < redInfo.Count(); i++) {
-      if (redInfo[i] == 0)  continue;
-      tab[red_cnt][0] = i+1;
+    for (size_t i = 0; i < redInfo.Count(); i++) {
+      if (redInfo[i] == 0) {
+        continue;
+      }
+      tab[red_cnt][0] = i + 1;
       tab[red_cnt++][1] = redInfo[i];
     }
     Output << tab.CreateTXTList(
@@ -1280,51 +1291,58 @@ void XLibMacros::macHklStat(TStrObjList &Cmds, const TParamList &Options,
     return;
   }
   bool list = Options.Contains("l"),
-       merge = Options.Contains("m");
+    merge = Options.Contains("m");
   TRefList Refs;
-  if( merge ) {
+  if (merge) {
     xapp.XFile().GetRM().GetRefinementRefList<
-      TUnitCell::SymmSpace,RefMerger::StandardMerger>(
+      TUnitCell::SymmSpace, RefMerger::StandardMerger>(
         xapp.XFile().GetUnitCell().GetSymmSpace(), Refs);
   }
-  else
+  else {
     xapp.XFile().GetRM().GetFilteredP1RefList<RefMerger::StandardMerger>(Refs);
+  }
   evecd_list con;
 
-  for( size_t i=0; i < Cmds.Count(); i++ )  {
+  for (size_t i = 0; i < Cmds.Count(); i++) {
     size_t obi = Cmds[i].FirstIndexOf('[');
-    if( obi == InvalidIndex || !Cmds[i].EndsWith(']') )  {
+    if (obi == InvalidIndex || !Cmds[i].EndsWith(']')) {
       Error.ProcessingError(__OlxSrcInfo, "incorrect construct: ") << Cmds[i];
       return;
     }
     con.AddNew(4);
     con[i][3] = Cmds[i].SubStringTo(obi).ToInt();
-    olxstr tmp = Cmds[i].SubString(obi+1, Cmds[i].Length() - obi - 2);
-    int hkli=-1;
-    for( size_t j=tmp.Length()-1; j != InvalidIndex; j-- ) {
-      if( tmp.CharAt(j) == 'l' )  hkli = 2;
-      else if( tmp.CharAt(j) == 'k' )  hkli = 1;
-      else if( tmp.CharAt(j) == 'h' )  hkli = 0;
-      if( hkli == -1 )  {
+    olxstr tmp = Cmds[i].SubString(obi + 1, Cmds[i].Length() - obi - 2);
+    int hkli = -1;
+    for (size_t j = tmp.Length() - 1; j != InvalidIndex; j--) {
+      if (tmp.CharAt(j) == 'l')  hkli = 2;
+      else if (tmp.CharAt(j) == 'k') {
+        hkli = 1;
+      }
+      else if (tmp.CharAt(j) == 'h') {
+        hkli = 0;
+      }
+      if (hkli == -1) {
         Error.ProcessingError(__OlxSrcInfo, "incorrect construct: ") << Cmds[i];
         return;
 
       }
       j--;
       olxstr strV;
-      while( j != InvalidIndex && !(tmp.CharAt(j) >= 'a' && tmp.CharAt(j) <= 'z' ) )  {
+      while (j != InvalidIndex && !(tmp.CharAt(j) >= 'a' && tmp.CharAt(j) <= 'z')) {
         strV.Insert((olxch)tmp[j], 0);
         j--;
       }
-      if( !strV.IsEmpty() && !(strV == "+") && !(strV == "-") )
+      if (!strV.IsEmpty() && !(strV == "+") && !(strV == "-"))
         con[i][hkli] = strV.ToDouble();
-      else  {
-        if( !strV.IsEmpty() && strV == "-" )
+      else {
+        if (!strV.IsEmpty() && strV == "-") {
           con[i][hkli] = -1.0;
-        else
+        }
+        else {
           con[i][hkli] = 1.0;
+        }
       }
-      if( con[i][hkli] == 0 )  {
+      if (con[i][hkli] == 0) {
         Error.ProcessingError(__OlxSrcInfo, "illegal value: ") << Cmds[i];
         return;
       }
@@ -1333,47 +1351,49 @@ void XLibMacros::macHklStat(TStrObjList &Cmds, const TParamList &Options,
   }
   double SI = 0, SE = 0;
   size_t count = 0;
-  for( size_t i=0; i < Refs.Count(); i++ )  {
+  for (size_t i = 0; i < Refs.Count(); i++) {
     bool fulfilled = true;
     const TReflection& ref = Refs[i];
-    for( size_t j=0; j < Cmds.Count(); j ++ )  {
+    for (size_t j = 0; j < Cmds.Count(); j++) {
       int v = olx_round(ref.GetH()*con[j][0] +
-                    ref.GetK()*con[j][1] +
-                    ref.GetL()*con[j][2]);
-      if( con[j][3] == 0 )  {
-        if( v != 0 ) {
+        ref.GetK()*con[j][1] +
+        ref.GetL()*con[j][2]);
+      if (con[j][3] == 0) {
+        if (v != 0) {
           fulfilled = false;
           break;
         }
       }
-      else if( con[j][3] < 0 )  {
-        if( (v%(int)con[j][3]) == 0 )  {
+      else if (con[j][3] < 0) {
+        if ((v % (int)con[j][3]) == 0) {
           fulfilled = false;
           break;
         }
       }
-      else if( con[j][3] > 0 )  {
-        if( (v%(int)con[j][3]) != 0 )  {
+      else if (con[j][3] > 0) {
+        if ((v % (int)con[j][3]) != 0) {
           fulfilled = false;
           break;
         }
       }
     }
-    if( !fulfilled )  continue;
-    count ++;
+    if (!fulfilled) {
+      continue;
+    }
+    count++;
     SI += ref.GetI();
     SE += olx_sqr(ref.GetS());
-    if( list )  {
+    if (list) {
       TBasicApp::NewLogEntry() << ref.ToString();
     }
   }
-  if( count == 0 )  {
+  if (count == 0) {
     TBasicApp::NewLogEntry() <<
       "Could not find any reflections fulfilling given condition";
     return;
   }
   SI /= count;
-  SE = sqrt(SE/count);
+  SE = sqrt(SE / count);
 
   xapp.NewLogEntry() << "Found " << count <<
     " reflections fulfilling given condition";
@@ -2246,30 +2266,44 @@ void XLibMacros::macDelIns(TStrObjList &Cmds, const TParamList &Options,
 {
   if (!TXApp::GetInstance().CheckFileType<TIns>()) return;
   TIns& Ins = TXApp::GetInstance().XFile().GetLastLoader<TIns>();
-  if( Cmds[0].IsNumber() )  {
+  if (Cmds[0].IsNumber()) {
     int insIndex = Cmds[0].ToInt();
     Ins.DelIns(insIndex);
   }
-  else  {
-    if( Cmds[0].Equalsi("OMIT") )
-      TXApp::GetInstance().XFile().GetRM().ClearOmits();
-    else if( Cmds[0].Equalsi("TWIN") )
-      TXApp::GetInstance().XFile().GetRM().RemoveTWIN();
-    else if( Cmds[0].Equalsi("BASF") )
-      TXApp::GetInstance().XFile().GetRM().Vars.ClearBASF();
-    else if( Cmds[0].Equalsi("EXTI") )
-      TXApp::GetInstance().XFile().GetRM().Vars.ClearEXTI();
-    else if( Cmds[0].Equalsi("HTAB") )
-      TXApp::GetInstance().XFile().GetRM().ClearInfoTab("HTAB");
-    else if( Cmds[0].Equalsi("RTAB") )
-      TXApp::GetInstance().XFile().GetRM().ClearInfoTab("RTAB");
-    else if( Cmds[0].Equalsi("BOND") )
-      TXApp::GetInstance().XFile().GetRM().ClearInfoTab("BOND");
-    else if( Cmds[0].Equalsi("MPLA") )
-      TXApp::GetInstance().XFile().GetRM().ClearInfoTab("MPLA");
-    else if( Cmds[0].Equalsi("CONF") )
-      TXApp::GetInstance().XFile().GetRM().ClearInfoTab("CONF");
-    for (size_t i=0; i < Ins.InsCount(); i++) {
+  else {
+    RefinementModel &rm = TXApp::GetInstance().XFile().GetRM();
+    if (Cmds[0].Equalsi("OMIT")) {
+      rm.ClearOmits();
+      rm.ClearOmit();
+    }
+    else if (Cmds[0].Equalsi("SHEL")) {
+      rm.ClearShell();
+    }
+    else if (Cmds[0].Equalsi("TWIN")) {
+      rm.RemoveTWIN();
+    }
+    else if (Cmds[0].Equalsi("BASF")) {
+      rm.Vars.ClearBASF();
+    }
+    else if (Cmds[0].Equalsi("EXTI")) {
+      rm.Vars.ClearEXTI();
+    }
+    else if (Cmds[0].Equalsi("HTAB")) {
+      rm.ClearInfoTab("HTAB");
+    }
+    else if (Cmds[0].Equalsi("RTAB")) {
+      rm.ClearInfoTab("RTAB");
+    }
+    else if (Cmds[0].Equalsi("BOND")) {
+      rm.ClearInfoTab("BOND");
+    }
+    else if (Cmds[0].Equalsi("MPLA")) {
+      rm.ClearInfoTab("MPLA");
+    }
+    else if (Cmds[0].Equalsi("CONF")) {
+      rm.ClearInfoTab("CONF");
+    }
+    for (size_t i = 0; i < Ins.InsCount(); i++) {
       if (Ins.InsName(i).Equalsi(Cmds[0])) {
         Ins.DelIns(i--);
         continue;
@@ -3425,24 +3459,35 @@ void XLibMacros::funIns(const TStrObjList& Params, TMacroData &E)  {
     }
     E.SetRetVal(rm.PLAN.Count() == 0 ? NAString() : tmp);
   }
-  else if (Params[0].Equalsi("qnum"))
+  else if (Params[0].Equalsi("qnum")) {
     E.SetRetVal(rm.PLAN.Count() == 0 ? NAString() : olxstr(rm.PLAN[0]));
+  }
+  else if (Params[0].Equalsi("shel")) {
+    E.SetRetVal(rm.HasSHEL() ? rm.GetSHELStr() : NAString());
+  }
+  else if (Params[0].Equalsi("omit")) {
+    E.SetRetVal(rm.HasOMIT() ? rm.GetOMITStr() : NAString());
+  }
   else if (TXApp::GetInstance().CheckFileType<TIns>()) {
     TIns& I = TXApp::GetInstance().XFile().GetLastLoader<TIns>();
-    if (Params[0].Equalsi("R1"))
+    if (Params[0].Equalsi("R1")) {
       E.SetRetVal(I.GetR1() < 0 ? NAString() : olxstr(I.GetR1()));
+    }
     if (!I.InsExists(Params[0]))  {
       E.SetRetVal(NAString());
       return;
     }
     TInsList* insv = I.FindIns(Params[0]);
-    if (insv != 0)
+    if (insv != 0) {
       E.SetRetVal(insv->Text(' '));
-    else
+    }
+    else {
       E.SetRetVal(EmptyString());
+    }
   }
-  else
+  else {
     E.SetRetVal(NAString());
+  }
 }
 //.............................................................................
 void XLibMacros::funSSM(const TStrObjList& Params, TMacroData &E) {
@@ -5898,8 +5943,7 @@ void XLibMacros::macOmit(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   else if (Cmds.Count() == 2 && olx_list_and(Cmds, &olxstr::IsNumber)) {
-    rm.SetOMIT_s(Cmds[0].ToDouble());
-    rm.SetOMIT_2t(Cmds[1].ToDouble());
+    rm.AddOMIT(TStrList(Cmds));
     processed = true;
   }
   if (!processed) {
@@ -5917,11 +5961,20 @@ void XLibMacros::macOmit(TStrObjList &Cmds, const TParamList &Options,
   OnAddIns().Exit(NULL, &sig);
 }
 //.............................................................................
+void XLibMacros::macShel(TStrObjList &Cmds, const TParamList &Options,
+  TMacroData &Error)
+{
+  TXApp &app = TXApp::GetInstance();
+  RefinementModel& rm = app.XFile().GetRM();
+  rm.SetSHEL(TStrList(Cmds));
+}
+//.............................................................................
 void XLibMacros::funLst(const TStrObjList &Cmds, TMacroData &E) {
   const TIns& ins = TXApp::GetInstance().XFile().GetLastLoader<TIns>();
   const TLst& Lst = ins.GetLst();
-  if( !Lst.IsLoaded() )
+  if (!Lst.IsLoaded()) {
     E.SetRetVal(NAString());
+  }
   E.SetRetVal(Lst.params.Find(Cmds[0], NAString()));
 }
 //.............................................................................

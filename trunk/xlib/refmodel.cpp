@@ -537,6 +537,46 @@ void RefinementModel::AddInfoTab(const TStrList& l)  {
   }
 }
 //.............................................................................
+void RefinementModel::SetSHEL(const TStrList& shel) {
+  if (shel.Count() > 0) {
+    SHEL_lr = shel[0].ToDouble();
+    if (shel.Count() > 1) {
+      SHEL_hr = shel[1].ToDouble();
+    }
+    SHEL_set = true;
+  }
+}
+//.............................................................................
+void RefinementModel::Omit(const vec3i& r) {
+  if (!Omits.Contains(r)) {
+    Omits.AddCopy(r);
+  }
+}
+//.............................................................................
+void RefinementModel::AddOMIT(const TStrList& omit) {
+  if (!omit.IsEmpty() && !omit[0].IsNumber()) {
+    Omitted.Build(omit.Text(' '));
+  }
+  else if (omit.Count() == 3) {  // reflection omit
+    Omit(vec3i(omit[0].ToInt(), omit[1].ToInt(), omit[2].ToInt()));
+  }
+  else {  // reflection transformation/filtering
+    if (omit.Count() > 0) {
+      OMIT_s = omit[0].ToDouble();
+    }
+    if (omit.Count() > 1) {
+      OMIT_2t = omit[1].ToDouble();
+    }
+    OMIT_set = !(OMIT_s == -2 && OMIT_2t == 180);
+  }
+}
+//.............................................................................
+void RefinementModel::DelOMIT(const TStrList& omit) {
+  if (omit.Count() == 3) {
+    Omits.Remove(vec3i(omit[0].ToInt(), omit[1].ToInt(), omit[2].ToInt()));
+  }
+}
+//.............................................................................
 double RefinementModel::FindRestrainedDistance(const TCAtom& a1,
   const TCAtom& a2)
 {
@@ -1024,7 +1064,9 @@ void formatRidingUHelper(olxstr &l,
       l << '{';
       for (size_t k=0; k < al.Count(); k++) {
         l << al[k]->GetLabel();
-        if ((k+1) < al.Count()) l << ',';
+        if ((k + 1) < al.Count()) {
+          l << ',';
+        }
       }
       l << "} of " << r.GetKey(j)->GetLabel();
     }
@@ -1051,62 +1093,74 @@ const_strlist RefinementModel::Describe() {
   // riding atoms..
   olx_pdict<double, // scale
     olxdict<const TCAtom *, TCAtomPList, TPointerComparator> > riding_u;
-  for (size_t i=0; i < aunit.AtomCount(); i++) {
+  for (size_t i = 0; i < aunit.AtomCount(); i++) {
     TCAtom &a = aunit.GetAtom(i);
-    if (a.GetUisoOwner() != NULL && !a.IsDeleted())
+    if (a.GetUisoOwner() != NULL && !a.IsDeleted()) {
       riding_u.Add(a.GetUisoScale()).Add(a.GetUisoOwner()).Add(a);
+    }
   }
   if (!riding_u.IsEmpty()) {
     olx_pdict<uint32_t, //low-to-high: 8 - bond count, 8 - riding z, 8 - pivot z
       olxdict<double,
-        sorted::PointerPointer<const TCAtom>,
-        TPrimitiveComparator> > riding_u_g;
-    for (size_t i=0; i < riding_u.Count(); i++) {
-      for (size_t j=0; j < riding_u.GetValue(i).Count(); j++) {
+      sorted::PointerPointer<const TCAtom>,
+      TPrimitiveComparator> > riding_u_g;
+    for (size_t i = 0; i < riding_u.Count(); i++) {
+      for (size_t j = 0; j < riding_u.GetValue(i).Count(); j++) {
         TCAtomPList &al = riding_u.GetValue(i).GetValue(j);
-        bool same_type=true;
-        for (size_t k=1; k < al.Count(); k++) {
+        bool same_type = true;
+        for (size_t k = 1; k < al.Count(); k++) {
           if (al[k]->GetType() != al[0]->GetType()) {
             same_type = false;
             break;
           }
         }
-        if (!same_type) continue;
-        uint32_t key1=riding_u.GetValue(i).GetKey(j)->GetType().z << 16;
+        if (!same_type) {
+          continue;
+        }
+        uint32_t key1 = riding_u.GetValue(i).GetKey(j)->GetType().z << 16;
         key1 = key1 | (al[0]->GetType().z << 8) | (uint8_t)(al.Count());
         riding_u_g.Add(key1).Add(riding_u.GetKey(i)).AddUnique(
           riding_u.GetValue(i).GetKey(j));
       }
     }
     // eliminate groups
-    for (size_t i=0; i < riding_u_g.Count(); i++) {
-      if (riding_u_g.GetValue(i).Count() != 1) continue;
+    for (size_t i = 0; i < riding_u_g.Count(); i++) {
+      if (riding_u_g.GetValue(i).Count() != 1) {
+        continue;
+      }
       size_t idx = riding_u.IndexOf(riding_u_g.GetValue(i).GetKey(0));
-      for (size_t j=0; j < riding_u_g.GetValue(i).GetValue(0).Count(); j++) {
+      for (size_t j = 0; j < riding_u_g.GetValue(i).GetValue(0).Count(); j++) {
         riding_u.GetValue(idx).Remove(riding_u_g.GetValue(i).GetValue(0)[j]);
       }
-      if (riding_u.GetValue(idx).IsEmpty())
+      if (riding_u.GetValue(idx).IsEmpty()) {
         riding_u.Delete(idx);
+      }
     }
 
     lst.Add(olxstr(++sec_num)) << ". Fixed Uiso";
     olx_pdict<double, TSizeList> gg;
     // groups first
-    for (size_t i=0; i < riding_u_g.Count(); i++) {
-      if (riding_u_g.GetValue(i).Count() != 1) continue;
+    for (size_t i = 0; i < riding_u_g.Count(); i++) {
+      if (riding_u_g.GetValue(i).Count() != 1) {
+        continue;
+      }
       gg.Add(riding_u_g.GetValue(i).GetKey(0)).Add(i);
     }
-    for (size_t i=0; i < gg.Count(); i++) {
+    for (size_t i = 0; i < gg.Count(); i++) {
       lst.Add(" At ") << gg.GetKey(i) << " times of:";
       olxstr &l = lst.Add("  ");
-      for (size_t j=0; j < gg.GetValue(i).Count(); j++) {
+      for (size_t j = 0; j < gg.GetValue(i).Count(); j++) {
         uint32_t gk = riding_u_g.GetKey(gg.GetValue(i)[j]);
-        cm_Element *e1 = XElementLib::FindByZ((gk&0x00ff0000)>>16);
-        cm_Element *e2 = XElementLib::FindByZ((gk&0x0000ff00)>>8);
-        size_t bonds = (gk&0x000000ff);
-        if (l.Length() > 2) l << ", ";
+        cm_Element *e1 = XElementLib::FindByZ((gk & 0x00ff0000) >> 16);
+        cm_Element *e2 = XElementLib::FindByZ((gk & 0x0000ff00) >> 8);
+        size_t bonds = (gk & 0x000000ff);
+        if (l.Length() > 2) {
+          l << ", ";
+        }
         l << "All " << e1->symbol << '(' << e2->symbol;
-        for (size_t bi=1; bi < bonds; bi++) l << ',' << e2->symbol;
+        for (size_t bi = 1; bi < bonds; bi++) {
+          l << ',' << e2->symbol;
+        }
         l << ") groups";
         size_t idx = riding_u.IndexOf(gg.GetKey(i));
         if (idx != InvalidIndex) {
@@ -1115,98 +1169,105 @@ const_strlist RefinementModel::Describe() {
         }
       }
     }
-    for (size_t i=0; i < riding_u.Count(); i++) {
+    for (size_t i = 0; i < riding_u.Count(); i++) {
       lst.Add(" At ") << riding_u.GetKey(i) << " times of:";
       formatRidingUHelper(lst.Add("  "), riding_u.GetValue(i));
     }
   }
   // site related
-  if( ExyzGroups.Count() != 0 )  {
+  if (ExyzGroups.Count() != 0) {
     lst.Add(olxstr(++sec_num)) << ". Shared sites";
-    for( size_t i=0; i < ExyzGroups.Count(); i++ )  {
+    for (size_t i = 0; i < ExyzGroups.Count(); i++) {
       TExyzGroup& sr = ExyzGroups[i];
       olxstr& str = lst.Add('{');
-      for( size_t j=0; j < sr.Count(); j++ )  {
+      for (size_t j = 0; j < sr.Count(); j++) {
         str << sr[j].GetLabel();
-        if( (j+1) < sr.Count() )
+        if ((j + 1) < sr.Count()) {
           str << ", ";
+        }
       }
       str << '}';
     }
   }
-  if( (rDFIX.Count()|rDANG.Count()|rSADI.Count()) != 0 )  {
+  if ((rDFIX.Count() | rDANG.Count() | rSADI.Count()) != 0) {
     TPtrList<TSRestraintList> ress;
     ress << rDFIX << rDANG << rSADI;
     lst.Add(olxstr(++sec_num)) << ". Restrained distances";
-    for (size_t ri=0; ri < ress.Count(); ri++) {
+    for (size_t ri = 0; ri < ress.Count(); ri++) {
       TSRestraintList &res = *ress[ri];
-      for( size_t i=0; i < res.Count(); i++ )  {
+      for (size_t i = 0; i < res.Count(); i++) {
         TSimpleRestraint& sr = res[i];
         TTypeList<TAtomRefList> atoms = sr.GetAtoms().Expand(*this, 2);
-        for (size_t j=0; j < atoms.Count(); j++) {
+        for (size_t j = 0; j < atoms.Count(); j++) {
           lst.Add(' ') << AtomListToStr(atoms[j], 2,
-            (&res == &rSADI ? " ~ "  : " = "));
+            (&res == &rSADI ? " ~ " : " = "));
         }
         if (!atoms.IsEmpty()) {
-          if (&res == &rSADI)
+          if (&res == &rSADI) {
             lst.Add(" with sigma of ") << sr.GetEsd();
-          else
+          }
+          else {
             lst.Add(" ") << sr.GetValue() << " with sigma of " << sr.GetEsd();
+          }
         }
       }
     }
   }
   if (rAngle.Count() != 0) {
     lst.Add(olxstr(++sec_num)) << ". Restrained angles";
-    for (size_t i=0; i < rAngle.Count(); i++) {
+    for (size_t i = 0; i < rAngle.Count(); i++) {
       TSimpleRestraint& sr = rAngle[i];
       TTypeList<TAtomRefList> atoms = sr.GetAtoms().Expand(*this, 3);
-      for (size_t j=0; j < atoms.Count(); j++)
+      for (size_t j = 0; j < atoms.Count(); j++) {
         lst.Add(' ') << AtomListToStr(atoms[j], 3, ", ");
+      }
       lst.Add(" fixed at ") << sr.GetValue() << " with sigma of " << sr.GetEsd();
     }
   }
   if (rDihedralAngle.Count() != 0) {
     lst.Add(olxstr(++sec_num)) << ". Restrained dihedral angles";
-    for (size_t i=0; i < rDihedralAngle.Count(); i++) {
+    for (size_t i = 0; i < rDihedralAngle.Count(); i++) {
       TSimpleRestraint& sr = rDihedralAngle[i];
       TTypeList<TAtomRefList> atoms = sr.GetAtoms().Expand(*this, 4);
-      for (size_t j=0; j < atoms.Count(); j++)
+      for (size_t j = 0; j < atoms.Count(); j++) {
         lst.Add(' ') << AtomListToStr(atoms[j], 4, ", ");
+      }
       lst.Add(" fixed at ") << sr.GetValue() << " with sigma of " << sr.GetEsd();
     }
   }
-  if( rCHIV.Count() != 0 )  {
+  if (rCHIV.Count() != 0) {
     lst.Add(olxstr(++sec_num)) << ". Restrained atomic chiral volume";
-    for( size_t i=0; i < rCHIV.Count(); i++ )  {
+    for (size_t i = 0; i < rCHIV.Count(); i++) {
       TSimpleRestraint& sr = rCHIV[i];
       TTypeList<TAtomRefList> atoms = sr.GetAtoms().Expand(*this);
-      for (size_t j=0; j < atoms.Count(); j++)
+      for (size_t j = 0; j < atoms.Count(); j++) {
         lst.Add(' ') << AtomListToStr(atoms[j], InvalidSize, ", ");
+      }
       lst.Add(" fixed at ") << sr.GetValue() << " with sigma of " << sr.GetEsd();
     }
   }
-  if( rFLAT.Count() != 0 )  {
+  if (rFLAT.Count() != 0) {
     lst.Add(olxstr(++sec_num)) << ". Restrained planarity";
-    for( size_t i=0; i < rFLAT.Count(); i++ )  {
+    for (size_t i = 0; i < rFLAT.Count(); i++) {
       TSimpleRestraint& sr = rFLAT[i];
       TTypeList<TAtomRefList> atoms = sr.GetAtoms().Expand(*this);
-      for (size_t j=0; j < atoms.Count(); j++)
+      for (size_t j = 0; j < atoms.Count(); j++) {
         lst.Add(' ') << AtomListToStr(atoms[j], InvalidSize, ", ");
+      }
       lst.Add(" with sigma of ") << sr.GetEsd();
     }
   }
   // ADP related
-  if( rDELU.Count() != 0 )  {
+  if (rDELU.Count() != 0) {
     lst.Add(olxstr(++sec_num)) << ". Rigid bond restraints";
-    for( size_t i=0; i < rDELU.Count(); i++ )  {
+    for (size_t i = 0; i < rDELU.Count(); i++) {
       TSimpleRestraint& sr = rDELU[i];
-      if( sr.GetEsd() == 0 || sr.GetEsd1() == 0 )  continue;
-      if( sr.IsAllNonHAtoms() )
+      if (sr.GetEsd() == 0 || sr.GetEsd1() == 0)  continue;
+      if (sr.IsAllNonHAtoms())
         lst.Add(" All non-hydrogen atoms");
       else {
         TTypeList<TAtomRefList> atoms = sr.GetAtoms().Expand(*this);
-        for (size_t j=0; j < atoms.Count(); j++)
+        for (size_t j = 0; j < atoms.Count(); j++)
           lst.Add(' ') << AtomListToStr(atoms[j], InvalidSize, ", ");
       }
       lst.Add(" with sigma for 1-2 distances of ") << sr.GetEsd() <<
@@ -1214,88 +1275,98 @@ const_strlist RefinementModel::Describe() {
         sr.GetEsd1();
     }
   }
-  if( (rSIMU.Count()|rISOR.Count()|rEADP.Count()|
-    rFixedUeq.Count()|rSimilarUeq.Count()|rSimilarAdpVolume.Count()) != 0 )
+  if ((rSIMU.Count() | rISOR.Count() | rEADP.Count() |
+    rFixedUeq.Count() | rSimilarUeq.Count() | rSimilarAdpVolume.Count()) != 0)
   {
     lst.Add(olxstr(++sec_num)) << ". Uiso/Uaniso restraints and constraints";
-    for( size_t i=0; i < rSIMU.Count(); i++ )  {
+    for (size_t i = 0; i < rSIMU.Count(); i++) {
       TSimpleRestraint& sr = rSIMU[i];
       olxstr& str = lst.Add(EmptyString());
-      if( sr.IsAllNonHAtoms() )
+      if (sr.IsAllNonHAtoms()) {
         str << "All non-hydrogen atoms" << ' ' << "have similar U";
+      }
       else {
         str << AtomListToStr(sr.GetAtoms().ExpandList(*this), InvalidSize, " ~ ");
       }
       str << ": within " << sr.GetValue() << "A with sigma of " << sr.GetEsd() <<
         " and sigma for terminal atoms of " << sr.GetEsd1();
     }
-    for( size_t i=0; i < rISOR.Count(); i++ )  {
+    for (size_t i = 0; i < rISOR.Count(); i++) {
       TSimpleRestraint& sr = rISOR[i];
       olxstr& str = lst.Add(EmptyString());
-      if( sr.IsAllNonHAtoms() )
+      if (sr.IsAllNonHAtoms())
         str << "All non-hydrogen atoms" << ' ' << "restrained to be isotropic";
       else {
         TAtomRefList al = sr.GetAtoms().ExpandList(*this);
-        for( size_t j=0; j < al.Count(); j++ )  {
-          if( al[j].GetAtom().GetEllipsoid() == NULL )  continue;
+        for (size_t j = 0; j < al.Count(); j++) {
+          if (al[j].GetAtom().GetEllipsoid() == NULL)  continue;
           str << "Uanis(" << al[j].GetExpression(NULL) << ") ~ Ueq";
-          if( (j+1) < al.Count() )
+          if ((j + 1) < al.Count())
             str << ", ";
         }
       }
       str << ": with sigma of " << sr.GetEsd() <<
         " and sigma for terminal atoms of " << sr.GetEsd1();
     }
-    for( size_t i=0; i < rEADP.Count(); i++ )  {
+    for (size_t i = 0; i < rEADP.Count(); i++) {
       TSimpleRestraint& sr = rEADP[i];
       olxstr& str = lst.Add(EmptyString());
       TAtomRefList al = sr.GetAtoms().ExpandList(*this);
-      for( size_t j=0; j < al.Count(); j++ )  {
-        if( al[j].GetAtom().GetEllipsoid() == NULL )
+      for (size_t j = 0; j < al.Count(); j++) {
+        if (al[j].GetAtom().GetEllipsoid() == 0) {
           str << "Uiso(";
-        else
+        }
+        else {
           str << "Uanis(";
+        }
         str << al[j].GetExpression(NULL) << ')';
-        if( (j+1) < al.Count() )
+        if ((j + 1) < al.Count()) {
           str << " = ";
+        }
       }
     }
-    for (size_t i=0; i < rFixedUeq.Count(); i++) {
+    for (size_t i = 0; i < rFixedUeq.Count(); i++) {
       TSimpleRestraint& sr = rFixedUeq[i];
       olxstr& str = lst.Add(EmptyString());
       TAtomRefList al = sr.GetAtoms().ExpandList(*this);
-      for (size_t j=0; j < al.Count(); j++)  {
+      for (size_t j = 0; j < al.Count(); j++) {
         str << "Ueq(" << al[j].GetExpression(NULL) << ')';
-        if ((j+1) < al.Count()) str << ", ";
+        if ((j + 1) < al.Count()) {
+          str << ", ";
+        }
       }
       str << ": fixed at " << sr.GetValue() << " with sigma of " << sr.GetEsd();
     }
-    for( size_t i=0; i < rSimilarUeq.Count(); i++ )  {
+    for (size_t i = 0; i < rSimilarUeq.Count(); i++) {
       TSimpleRestraint& sr = rSimilarUeq[i];
       olxstr& str = lst.Add(EmptyString());
-      if( sr.IsAllNonHAtoms() )
+      if (sr.IsAllNonHAtoms()) {
         str << "All non-hydrogen atoms" << ' ' << "have similar Ueq";
+      }
       else {
         TAtomRefList al = sr.GetAtoms().ExpandList(*this);
-        for( size_t j=0; j < al.Count(); j++ )  {
+        for (size_t j = 0; j < al.Count(); j++) {
           str << "Ueq(" << al[j].GetExpression(NULL) << ')';
-          if( (j+1) < al.Count() )
+          if ((j + 1) < al.Count()) {
             str << " ~ ";
+          }
         }
       }
       str << ": with sigma of " << sr.GetEsd();
     }
-    for( size_t i=0; i < rSimilarAdpVolume.Count(); i++ )  {
+    for (size_t i = 0; i < rSimilarAdpVolume.Count(); i++) {
       TSimpleRestraint& sr = rSimilarAdpVolume[i];
       olxstr& str = lst.Add(EmptyString());
-      if( sr.IsAllNonHAtoms() )
+      if (sr.IsAllNonHAtoms()) {
         str << "All non-hydrogen atoms" << ' ' << "have similar Uvol";
+      }
       else {
         TAtomRefList al = sr.GetAtoms().ExpandList(*this);
-        for( size_t j=0; j < al.Count(); j++ )  {
+        for (size_t j = 0; j < al.Count(); j++) {
           str << "Uvol(" << al[j].GetExpression(NULL) << ')';
-          if( (j+1) < al.Count() )
+          if ((j + 1) < al.Count()) {
             str << " ~ ";
+          }
         }
       }
       str << ": with sigma of " << sr.GetEsd();
@@ -1303,15 +1374,18 @@ const_strlist RefinementModel::Describe() {
   }
   if (rRIGU.Count() != 0) {
     lst.Add(olxstr(++sec_num)) << ". Rigid body (RIGU) restrains";
-    for (size_t i=0; i < rRIGU.Count(); i++) {
+    for (size_t i = 0; i < rRIGU.Count(); i++) {
       TSimpleRestraint& sr = rRIGU[i];
-      if (sr.GetEsd() == 0 || sr.GetEsd1() == 0)  continue;
+      if (sr.GetEsd() == 0 || sr.GetEsd1() == 0) {
+        continue;
+      }
       if (sr.IsAllNonHAtoms())
         lst.Add(" All non-hydrogen atoms");
       else {
         TTypeList<TAtomRefList> atoms = sr.GetAtoms().Expand(*this);
-        for (size_t j=0; j < atoms.Count(); j++)
+        for (size_t j = 0; j < atoms.Count(); j++) {
           lst.Add(' ') << AtomListToStr(atoms[j], InvalidSize, ", ");
+        }
       }
       lst.Add(" with sigma for 1-2 distances of ") << sr.GetEsd() <<
         " and sigma for 1-3 distances of " <<
@@ -1329,12 +1403,17 @@ const_strlist RefinementModel::Describe() {
         continue;
       }
       TAtomRefList ratoms = sg.GetAtoms().ExpandList(*this);
-      if (ratoms.IsEmpty()) continue;
-      for (size_t j = 0; j < sg.DependentCount(); j++)  {
-        if (!sg.GetDependent(j).IsValidForSave())
+      if (ratoms.IsEmpty()) {
+        continue;
+      }
+      for (size_t j = 0; j < sg.DependentCount(); j++) {
+        if (!sg.GetDependent(j).IsValidForSave()) {
           continue;
+        }
         TAtomRefList atoms = sg.GetDependent(j).GetAtoms().ExpandList(*this);
-        if (atoms.Count() != ratoms.Count()) continue;
+        if (atoms.Count() != ratoms.Count()) {
+          continue;
+        }
         lst.Add('{') << AtomListToStr(atoms, InvalidSize, ", ") << '}' <<
           " sigma for 1-2: " << sg.GetDependent(j).Esd12 << ", 1-3: " <<
           sg.GetDependent(j).Esd13;
@@ -1344,11 +1423,17 @@ const_strlist RefinementModel::Describe() {
     }
     for (size_t i = 0; i < rSAME.Count(); i++) {
       TSameGroup& sg = rSAME[i];
-      if (sg.GetAtoms().IsExplicit() || !sg.IsValidForSave()) continue;
+      if (sg.GetAtoms().IsExplicit() || !sg.IsValidForSave()) {
+        continue;
+      }
       TTypeList<TAtomRefList> atoms = sg.GetAtoms().Expand(*this);
-      if (atoms.Count() < 2 || atoms[0].Count() < 2) continue;
-      for (size_t j = 1; j < atoms.Count(); j++)  {
-        if (atoms[j].Count() != atoms[0].Count()) continue;
+      if (atoms.Count() < 2 || atoms[0].Count() < 2) {
+        continue;
+      }
+      for (size_t j = 1; j < atoms.Count(); j++) {
+        if (atoms[j].Count() != atoms[0].Count()) {
+          continue;
+        }
         lst.Add('{') << AtomListToStr(atoms[j], InvalidSize, ", ") << '}';
       }
       lst.Add("as");
@@ -1359,51 +1444,59 @@ const_strlist RefinementModel::Describe() {
   }
   if (!SameGroups.items.IsEmpty()) {
     lst.Add(olxstr(++sec_num)) << ". Same fragment constrains";
-    for( size_t i=0; i < SameGroups.items.Count(); i++ )  {
-      if (!SameGroups.items[i].IsValid()) continue;
+    for (size_t i = 0; i < SameGroups.items.Count(); i++) {
+      if (!SameGroups.items[i].IsValid()) {
+        continue;
+      }
       lst.Add(SameGroups.items[i].Describe());
     }
   }
   if (!SharedRotatedADPs.items.IsEmpty()) {
     lst.Add(olxstr(++sec_num)) << ". Shared rotated ADPs";
-    for( size_t i=0; i < SharedRotatedADPs.items.Count(); i++ )  {
-      if (!SharedRotatedADPs.items[i].IsValid()) continue;
+    for (size_t i = 0; i < SharedRotatedADPs.items.Count(); i++) {
+      if (!SharedRotatedADPs.items[i].IsValid()) {
+        continue;
+      }
       lst.Add(SharedRotatedADPs.items[i].Describe());
     }
   }
   TStrList vars;
   Vars.Describe(vars);
-  if( !vars.IsEmpty() )  {
+  if (!vars.IsEmpty()) {
     lst.Add(++sec_num) << ". Others";
     lst.AddAll(vars);
   }
   size_t afix_sn = 0;
   olx_pdict<int, TPtrList<TAfixGroup> > a_gs;
-  for( size_t i=0; i < AfixGroups.Count(); i++ )  {
-    if( !AfixGroups[i].IsEmpty() )
+  for (size_t i = 0; i < AfixGroups.Count(); i++) {
+    if (!AfixGroups[i].IsEmpty()) {
       a_gs.Add(AfixGroups[i].GetAfix()).Add(AfixGroups[i]);
+    }
   }
   sec_num++;
-  for( size_t i=0; i < a_gs.Count(); i++ )  {
+  for (size_t i = 0; i < a_gs.Count(); i++) {
     TPtrList<TAfixGroup>& gl = a_gs.GetValue(i);
-    if (gl[0]->GetAfix() < 0) // skip internals
+    if (gl[0]->GetAfix() < 0) { // skip internals
       continue;
+    }
     olxstr ag_name = gl[0]->Describe();
-    if( !ag_name.IsEmpty() )
+    if (!ag_name.IsEmpty()) {
       ag_name[0] = olxstr::o_toupper(ag_name.CharAt(0));
-    lst.Add(olxstr(sec_num) << '.' << (olxch)('a'+afix_sn++)) << ' ' <<
+    }
+    lst.Add(olxstr(sec_num) << '.' << (olxch)('a' + afix_sn++)) << ' ' <<
       ag_name << ':';
     olxstr& line = (lst.Add(' ') << gl[0]->ToString());
-    for( size_t j=1; j < gl.Count(); j++ )
+    for (size_t j = 1; j < gl.Count(); j++) {
       line << ", " << gl[j]->ToString();
+    }
   }
-  for (size_t i=0; i < lst.Count(); i++) {
+  for (size_t i = 0; i < lst.Count(); i++) {
     size_t wsc = lst[i].LeadingCharCount(' ');
     if (wsc > 0 && lst[i].Length() > 80) {
       TStrList sl;
-      sl.Hyphenate(lst[i], " \t,=+-*/", 80-wsc, true);
+      sl.Hyphenate(lst[i], " \t,=+-*/", 80 - wsc, true);
       lst[i] = sl[0];
-      for (size_t li=1; li < sl.Count(); li++) {
+      for (size_t li = 1; li < sl.Count(); li++) {
         lst.Insert(++i, sl[li].Insert(' ', 0, wsc));
       }
     }
@@ -1411,54 +1504,60 @@ const_strlist RefinementModel::Describe() {
   return lst;
 }
 //.............................................................................
-void RefinementModel::ProcessFrags()  {
+void RefinementModel::ProcessFrags() {
   // generate missing atoms for the AFIX 59, 66
   olx_pdict<int, TPtrList<TAfixGroup> > a_groups;
   olx_pdict<int, Fragment*> frags;
-  for( size_t i=0; i < AfixGroups.Count(); i++ )  {
+  for (size_t i = 0; i < AfixGroups.Count(); i++) {
     TAfixGroup& ag = AfixGroups[i];
     int m = ag.GetM();
-    if( !ag.IsFittedRing() )  continue;
-    if( m == 7 )  m = 6;
+    if (!ag.IsFittedRing())  continue;
+    if (m == 7)  m = 6;
     bool generate = false;
-    for( size_t j=0; j < ag.Count(); j++ )  {
-      if( ag[j].ccrd().IsNull() )  {
+    for (size_t j = 0; j < ag.Count(); j++) {
+      if (ag[j].ccrd().IsNull()) {
         generate = true;
-        a_groups.Add(ag.GetAfix()).Add(ag)->SetAfix(m*10+ag.GetN());
+        a_groups.Add(ag.GetAfix()).Add(ag)->SetAfix(m * 10 + ag.GetN());
         break;
       }
     }
-    if( generate )  {
-      if( frags.IndexOf(m) == InvalidIndex )  {
+    if (generate) {
+      if (frags.IndexOf(m) == InvalidIndex) {
         vec3d_list crds;
-        if( m == 5 )
+        if (m == 5) {
           Fragment::GenerateFragCrds(frag_id_cp, crds);
-        else if( m == 6 )
+        }
+        else if (m == 6) {
           Fragment::GenerateFragCrds(frag_id_ph, crds);
-        else if( m == 10 )
+        }
+        else if (m == 10) {
           Fragment::GenerateFragCrds(frag_id_cp_star, crds);
-        else if( m == 11 )
+        }
+        else if (m == 11) {
           Fragment::GenerateFragCrds(frag_id_naphthalene, crds);
+        }
         Fragment& f = AddFrag(m);
         const olxstr label("C");
-        for( size_t i=0; i < crds.Count(); i++ )
+        for (size_t i = 0; i < crds.Count(); i++) {
           f.Add(label, crds[i]);
+        }
         frags.Add(m, &f);
       }
     }
   }
-  for( size_t i=0; i < Frags.Count(); i++ )  {
+  for (size_t i = 0; i < Frags.Count(); i++) {
     Fragment* frag = Frags.GetValue(i);
-    for( size_t j=0; j < AfixGroups.Count(); j++ )  {
+    for (size_t j = 0; j < AfixGroups.Count(); j++) {
       TAfixGroup& ag = AfixGroups[j];
-      if( ag.GetM() == frag->GetCode() && (ag.Count()+1) == frag->Count() )  {
+      if (ag.GetM() == frag->GetCode() && (ag.Count() + 1) == frag->Count()) {
         TTypeList<AnAssociation3<TCAtom*, const cm_Element*, bool> > atoms;
         vec3d_list crds;
-        TCAtomPList all_atoms(ag.Count()+1);
+        TCAtomPList all_atoms(ag.Count() + 1);
         all_atoms[0] = &ag.GetPivot();
-        for( size_t k=0; k < ag.Count(); k++ )
-          all_atoms[k+1] = &ag[k];
-        for( size_t k=0; k < all_atoms.Count(); k++ )  {
+        for (size_t k = 0; k < ag.Count(); k++) {
+          all_atoms[k + 1] = &ag[k];
+        }
+        for (size_t k = 0; k < all_atoms.Count(); k++) {
           atoms.AddNew(all_atoms[k],
             (const cm_Element*)NULL, all_atoms[k]->ccrd().QLength() > 1e-6);
           crds.AddCopy((*frag)[k].crd);
@@ -1468,15 +1567,18 @@ void RefinementModel::ProcessFrags()  {
       }
     }
   }
-  for( size_t i=0; i < a_groups.Count(); i++ )  {
+  for (size_t i = 0; i < a_groups.Count(); i++) {
     TPtrList<TAfixGroup>& gs = a_groups.GetValue(i);
-    for( size_t j=0; j < gs.Count(); j++ )
+    for (size_t j = 0; j < gs.Count(); j++) {
       gs[j]->SetAfix(a_groups.GetKey(i));
+    }
   }
   // remove the 'special' frags
-  for( size_t i=0; i < frags.Count(); i++ )  {
+  for (size_t i = 0; i < frags.Count(); i++) {
     const size_t ind = Frags.IndexOf(frags.GetKey(i));
-    if( ind == InvalidIndex )  continue;  // ?
+    if (ind == InvalidIndex) {
+      continue;  // ?
+    }
     delete Frags.GetValue(ind);
     Frags.Delete(ind);
   }
@@ -1548,8 +1650,9 @@ void RefinementModel::ToDataItem(TDataItem& item) {
     CVars.ToDataItem(item.AddItem("to_calculate"), true);
   }
   // restore matrix tags
-  for (size_t i=0; i < UsedSymm.Count(); i++)
+  for (size_t i = 0; i < UsedSymm.Count(); i++) {
     UsedSymm.GetValue(i).symop.SetRawId(mat_tags[i]);
+  }
 }
 //.............................................................................
 void RefinementModel::FromDataItem(TDataItem& item) {
@@ -1898,27 +2001,31 @@ double RefinementModel::CalcCompletnessTo2Theta(double tt, bool Laue) const {
 }
 //..............................................................................
 adirection& RefinementModel::DirectionById(const olxstr &id) const {
-  for( size_t i = 0; i < Directions.items.Count(); i++ )
-    if( Directions.items[i].id.Equalsi(id) )
+  for (size_t i = 0; i < Directions.items.Count(); i++) {
+    if (Directions.items[i].id.Equalsi(id)) {
       return Directions.items[i];
+    }
+  }
   throw TInvalidArgumentException(__OlxSourceInfo, "direction ID");
 }
 //..............................................................................
-adirection *RefinementModel::AddDirection(const TCAtomGroup &atoms, uint16_t type)  {
+adirection *RefinementModel::AddDirection(const TCAtomGroup &atoms, uint16_t type) {
   olxstr dname;
-  if( type == direction_vector )
+  if (type == direction_vector)
     dname << 'v';
-  else if( type == direction_normal )
+  else if (type == direction_normal)
     dname << 'n';
-  else  {
+  else {
     throw TInvalidArgumentException(__OlxSourceInfo,
       olxstr("direction type: ").quote() << type);
   }
-  for( size_t i=0; i < atoms.Count(); i++ )
+  for (size_t i = 0; i < atoms.Count(); i++) {
     dname << atoms[i].GetFullLabel(*this);
-  for( size_t i=0; i < Directions.items.Count(); i++ )  {
-    if( Directions.items[i].id == dname )
+  }
+  for (size_t i = 0; i < Directions.items.Count(); i++) {
+    if (Directions.items[i].id == dname) {
       return &Directions.items[i];
+    }
   }
   return &Directions.items.Add(new direction(dname, atoms, type));
 }
@@ -1927,22 +2034,22 @@ TSimpleRestraint & RefinementModel::SetRestraintDefaults(
   TSimpleRestraint &r) const
 {
   const TSRestraintList& container = r.GetParent();
-  if( container.GetIdName().Equals("DFIX") )  {
+  if (container.GetIdName().Equals("DFIX")) {
     r.SetEsd(DEFS[0]);
   }
-  else if( container.GetIdName().Equals("DANG") )  {
-    r.SetEsd(DEFS[0]*2);
+  else if (container.GetIdName().Equals("DANG")) {
+    r.SetEsd(DEFS[0] * 2);
   }
-  else if( container.GetIdName().Equals("SADI") )  {
+  else if (container.GetIdName().Equals("SADI")) {
     r.SetEsd(DEFS[0]);
   }
-  else if( container.GetIdName().Equals("CHIV") )  {
+  else if (container.GetIdName().Equals("CHIV")) {
     r.SetEsd(DEFS[1]);
   }
-  else if( container.GetIdName().Equals("FLAT") )  {
+  else if (container.GetIdName().Equals("FLAT")) {
     r.SetEsd(DEFS[1]);
   }
-  else if( container.GetIdName().Equals("DELU") )  {
+  else if (container.GetIdName().Equals("DELU")) {
     r.SetEsd(DEFS[2]);
     r.SetEsd1(DEFS[2]);
   }
@@ -1950,22 +2057,22 @@ TSimpleRestraint & RefinementModel::SetRestraintDefaults(
     r.SetEsd(0.004);
     r.SetEsd1(0.004);
   }
-  else if( container.GetIdName().Equals("SIMU") )  {
+  else if (container.GetIdName().Equals("SIMU")) {
     r.SetEsd(DEFS[3]);
-    r.SetEsd1(DEFS[3]*2);
+    r.SetEsd1(DEFS[3] * 2);
     r.SetValue(2);
   }
-  else if( container.GetIdName().Equals("ISOR") )  {
+  else if (container.GetIdName().Equals("ISOR")) {
     r.SetEsd(0.1);
     r.SetEsd1(0.2);
   }
-  else if( container.GetIdName().Equals("olex2.restraint.angle") )  {
+  else if (container.GetIdName().Equals("olex2.restraint.angle")) {
     r.SetEsd(0.02);
   }
-  else if( container.GetIdName().Equals("olex2.restraint.dihedral") )  {
+  else if (container.GetIdName().Equals("olex2.restraint.dihedral")) {
     r.SetEsd(0.04);
   }
-  else if( container.GetIdName().StartsFromi("olex2.restraint.adp") )  {
+  else if (container.GetIdName().StartsFromi("olex2.restraint.adp")) {
     r.SetEsd(0.1);
   }
   return r;

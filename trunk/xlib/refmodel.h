@@ -282,31 +282,12 @@ public:
   bool HasOMIT() const {  return OMIT_set;  }
   size_t OmittedCount() const {  return Omits.Count();  }
   const vec3i& GetOmitted(size_t i) const {  return Omits[i];  }
-  void Omit(const vec3i& r)  {  Omits.AddCopy(r);  }
-  void ClearOmits()  {  Omits.Clear();  }
+  void Omit(const vec3i& r);
+  void ClearOmits() { Omits.Clear(); }
+  void ClearOmit() { OMIT_set = false; }
   const vec3i_list& GetOmits() const {  return Omits;  }
-  template <class list> void AddOMIT(const list& omit) {
-    if (!omit.IsEmpty() && !omit[0].IsNumber()) {
-      Omitted.Build(omit.Text(' '));
-    }
-    else if (omit.Count() == 3) {  // reflection omit
-      Omits.AddNew(omit[0].ToInt(), omit[1].ToInt(), omit[2].ToInt());
-    }
-    else {  // reflection transformation/filtering
-      if (omit.Count() > 0) {
-        OMIT_s = omit[0].ToDouble();
-      }
-      if (omit.Count() > 1) {
-        OMIT_2t = omit[1].ToDouble();
-      }
-      OMIT_set = true;
-    }
-  }
-  template <class list> void DelOMIT(const list& omit) {
-    if (omit.Count() == 3) {
-      Omits.Remove(vec3i(omit[0].ToInt(), omit[1].ToInt(), omit[2].ToInt()));
-    }
-  }
+  void AddOMIT(const TStrList& omit);
+  void DelOMIT(const TStrList& omit);
   const AtomRefList &OmittedAtoms() const { return Omitted; }
   olxstr GetOMITStr() const {
     return olxstr(OMIT_s) << ' ' << OMIT_2t;
@@ -332,15 +313,7 @@ public:
   double GetSHEL_hr() const {  return SHEL_hr;  }
   void SetSHEL_hr(double v)  {  SHEL_hr = v;  SHEL_set = true;  }
   bool HasSHEL() const {  return SHEL_set;  }
-  template <class list> void SetSHEL(const list& shel) {
-    if (shel.Count() > 0) {
-      SHEL_lr = shel[0].ToDouble();
-      if (shel.Count() > 1) {
-        SHEL_hr = shel[1].ToDouble();
-      }
-      SHEL_set = true;
-    }
-  }
+  void SetSHEL(const TStrList& shel);
   void ClearShell() { SHEL_set = false; }
   olxstr GetSHELStr() const {  return olxstr(SHEL_lr) << ' ' << SHEL_hr;  }
 
