@@ -222,6 +222,9 @@ public:
       else if (Toks[0].Equalsi("SHEL")) {
         rm.SetSHEL(Toks.SubListFrom(1));
       }
+      else if (Toks[0].Equalsi("OMIT")) {
+        rm.AddOMIT(Toks.SubListFrom(1));
+      }
       else if (Toks[0].Equalsi("TWIN")) {
         rm.SetTWIN(Toks.SubListFrom(1));
       }
