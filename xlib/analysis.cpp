@@ -126,7 +126,7 @@ bool alg::check_connectivity(const TCAtom &a, const cm_Element &e) {
           oxygen_c++;
         }
       }
-      else if (aa.GetType() == iNitrogenIndex) {
+      else if (aa.GetType() == iNitrogenZ) {
         nitrogen_c ++;
       }
     }
