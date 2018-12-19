@@ -802,6 +802,8 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitFunc(StrDir, fpNone | psFileLoaded,
     "Returns location of the folder, where Olex2 stores structure related "
     "data");
+  xlib_InitFunc(HAddCount, fpNone | psFileLoaded,
+    "calculates the number of H atoms HAdd will add");
 }
 //.............................................................................
 void XLibMacros::macTransform(TStrObjList &Cmds,
@@ -1604,8 +1606,9 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options,
   TAsymmUnit &au = XApp.XFile().GetAsymmUnit();
   for (size_t i=0; i < au.AtomCount(); i++) {
     TCAtom &ca = au.GetAtom(i);
-    if (ca.GetType() == iHydrogenZ)
+    if (ca.GetType() == iHydrogenZ) {
       ca.SetDetached(false);
+    }
   }
   TActionQueueLock q_draw(XApp.FindActionQueue(olxappevent_GL_DRAW));
   try {
@@ -1618,7 +1621,23 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options,
     xlConGen.SetUseRestrains(Options.GetBoolOption('r'));
     TUnitCell &uc = XApp.XFile().GetUnitCell();
     if (Hfix == 0) {
-      latt.AnalyseHAdd(xlConGen, satoms);
+      TSAtomPList c, n;
+      satoms.ForEach(ACollectionItem::TagSetter(0));
+      for (size_t i = 0; i < satoms.Count(); i++) {
+        if (satoms[i]->GetType() == iCarbonZ) {
+          c << satoms[i];
+          satoms[i]->SetTag(1);
+        }
+        else if(satoms[i]->GetType() == iNitrogenZ) {
+          n << satoms[i];
+          satoms[i]->SetTag(1);
+        }
+      }
+      TSAtomPList others = satoms.Filter(ACollectionItem::TagAnalyser(0));
+      latt.AnalyseHAdd(xlConGen, c, false);
+      // the rest of the atoms
+      latt.AnalyseHAdd(xlConGen, others, false);
+      latt.AnalyseHAdd(xlConGen, n, false);
     }
     else if (Hfix < 0) {
       if (satoms.Count() > 1) {
@@ -1632,9 +1651,9 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options,
         if (afix != -1) {
           TCAtomPList generated;
           xlConGen.FixAtom(AE, afix, XElementLib::GetByIndex(iHydrogenIndex),
-            NULL, &generated);
+            0, &generated);
           if (!generated.IsEmpty()) {
-            if (generated[0]->GetParentAfixGroup() != NULL) {
+            if (generated[0]->GetParentAfixGroup() != 0) {
               generated[0]->GetParentAfixGroup()->SetAfix(3);
             }
             double occu = rm.Vars.GetParam(satoms[1]->CAtom(),
@@ -1712,7 +1731,7 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options,
             uc.GetAtomEnviList(*satoms[aitr], AE, false, parts[i], true);
             /*consider special case where the atom is bound to itself but
             very long bond > 1.6 A */
-            smatd* eqiv = NULL;
+            smatd* eqiv = 0;
             for (size_t j=0; j < AE.Count(); j++) {
               if (&AE.GetCAtom(j) == &AE.GetBase().CAtom()) {
                 const double d = AE.GetCrd(j).DistanceTo(AE.GetBase().crd());
@@ -1723,10 +1742,10 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options,
                 }
               }
             }
-            if (eqiv != NULL) {
+            if (eqiv != 0) {
               const smatd& e = rm.AddUsedSymm(*eqiv);
               rm.Conn.RemBond(satoms[aitr]->CAtom(), satoms[aitr]->CAtom(),
-                NULL, &e, true);
+                0, &e, true);
               XApp.NewLogEntry() << "The atom" << satoms[aitr]->GetLabel() <<
                 " is connected to itself through symmetry, removing the"
                 " symmetry generated bond";
@@ -1743,7 +1762,7 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options,
                 rm.Vars.SetParam(*generated[j], catom_var_name_Sof, occu[i]);
               }
               if (!generated.IsEmpty() &&
-                  generated[0]->GetParentAfixGroup() != NULL)
+                  generated[0]->GetParentAfixGroup() != 0)
               {
                 // a hack again
                 generated[0]->GetParentAfixGroup()->SetAfix(Hfix);
@@ -1762,6 +1781,63 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options,
     Error.ProcessingError(__OlxSrcInfo, e.GetException()->GetError());
   }
   XApp.XFile().GetLattice().Init();
+  // look at ring N...
+  if (Hfix == 0) {
+    using namespace olx_analysis;
+    TAsymmUnit &au = XApp.XFile().GetAsymmUnit();
+    au.DetachAtomType(iQPeakZ, true);
+    TTypeList<fragments::fragment> frags = fragments::extract(au);
+    for (size_t i = 0; i < frags.Count(); i++) {
+      TCAtomPList r_atoms;
+      frags[i].breadth_first_tags(InvalidIndex, &r_atoms);
+      TTypeList<fragments::ring> rings = frags[i].get_rings(r_atoms);
+      for (size_t j = 0; j < rings.Count(); j++) {
+        rings[j].atoms.ForEach(TCAtom::FlagSetter(catom_flag_RingAtom, true));
+      }
+    }
+    for (size_t i = 0; i < au.AtomCount(); i++) {
+      TCAtom &a = au.GetAtom(i);
+      if (a.IsDeleted() || a.GetType() != iHydrogenZ) {
+        continue;
+      }
+      for (size_t j = 0; j < a.AttachedSiteCount(); j++) {
+        a.GetAttachedAtom(j).SetHAttached(true);
+      }
+    }
+    for (size_t i = 0; i < au.AtomCount(); i++) {
+      TCAtom &a = au.GetAtom(i);
+      if (a.IsDeleted() || a.GetType() != iNitrogenZ) {
+        continue;
+      }
+      TCAtom *h_atom = 0;
+      for (size_t j = 0; j < a.AttachedSiteCount(); j++) {
+        TCAtom &aa = a.GetAttachedAtom(j);
+        if (!aa.IsDeleted() && aa.GetType() == iHydrogenZ) {
+          h_atom = &aa;
+          break;
+        }
+      }
+      if (h_atom == 0) {
+        continue;
+      }
+      bool conflict = false;
+      for (size_t j = 0; j < a.AttachedSiteICount(); j++) {
+        TCAtom::Site &as = a.GetAttachedSiteI(j);
+        if (as.atom->GetType() == iOxygenZ) {
+          if(as.atom->IsHAttached()) {
+            conflict = true;
+            break;
+          }
+        }
+      }
+      if (conflict) {
+        h_atom->SetDeleted(true);
+        TBasicApp::NewLogEntry(logInfo) << "Removing H fron ring N atom: " << a.GetLabel();
+      }
+    }
+    au.DetachAtomType(iQPeakZ, false);
+  }
+
   olx_del_obj(XApp.FixHL());
   if (TXApp::DoUseSafeAfix()) {
     XApp.GetUndo().Push(
@@ -10467,6 +10543,17 @@ void XLibMacros::macGrow(TStrObjList &Cmds, const TParamList &Options,
 void XLibMacros::funStrDir(const TStrObjList& Params, TMacroData &E) {
   olxstr f = TXApp::GetInstance().XFile().GetStructureDataFolder();
   E.SetRetVal(f.IsEmpty() ? EmptyString() : f.SubStringFrom(0, 1));
+}
+//..............................................................................
+void XLibMacros::funHAddCount(const TStrObjList& Params, TMacroData &E) {
+  TXApp &app = TXApp::GetInstance();
+  TLattice &latt = app.XFile().GetLattice();
+  TSAtomPList satoms = app.FindSAtoms(Params.Text(' '), true);
+  latt.UpdateConnectivity();
+  RefinementModel &rm = app.XFile().GetRM();
+  TXlConGen xlConGen(rm);
+  TUnitCell &uc = app.XFile().GetUnitCell();
+  E.SetRetVal(app.XFile().GetLattice().AnalyseHAdd(xlConGen, satoms, true));
 }
 //..............................................................................
 void XLibMacros::macConvert(TStrObjList &Cmds, const TParamList &Options,

@@ -32,6 +32,39 @@ size_t TAtomEnvi::CountCovalent() const {
   return cnt;
 }
 //.............................................................................
+void TAtomEnvi::Exclude(TCAtom& ca) {
+  for (size_t i = 0; i < Envi.Count(); i++) {
+    if (Envi[i].GetA() == &ca) {
+      Envi.Delete(i);
+      break;
+    }
+  }
+}
+//.............................................................................
+void TAtomEnvi::ExcludeIndices(const TSizeList &indices) {
+  for (size_t i = 0; i < indices.Count(); i++) {
+    if (indices[i] < Envi.Count()) {
+      Envi.NullItem(indices[i]);
+    }
+  }
+  Envi.Pack();
+}
+//.............................................................................
+void TAtomEnvi::LeaveIndices(const TSizeList &indices) {
+  TEBitArray mask(Envi.Count());
+  for (size_t i = 0; i < indices.Count(); i++) {
+    if (indices[i] < Envi.Count()) {
+      mask.SetTrue(indices[i]);
+    }
+  }
+  for (size_t i = 0; i < Envi.Count(); i++) {
+    if (!mask[i]) {
+      Envi.NullItem(i);
+    }
+  }
+  Envi.Pack();
+}
+//.............................................................................
 #ifdef _PYTHON
 PyObject* TAtomEnvi::PyExport(TPtrList<PyObject>& atoms)  {
   PyObject* neighbours = PyTuple_New( Envi.Count() );

@@ -75,7 +75,9 @@ void GXLibMacros::Export(TLibrary& lib) {
     "sum(Fo^2)/sum(Fc^2)) and regression(r)&;"
     "r-resolution in Angstrems&;"
     "i-integrates the map&;"
-    "m-mask the structure", fpNone|psFileLoaded,
+    "m-mask the structure&;"
+    "map-show map[true]"
+    , fpNone | psFileLoaded,
   "Calculates fourier map");
 
   gxlib_InitMacro(Qual,
@@ -754,8 +756,9 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
     }
     app.XFile().GetLattice().Init();
     olex2::IOlex2Processor::GetInstance()->processMacro("compaq -q");
-    if (q_draw != NULL && q_draw_changed)
+    if (q_draw != NULL && q_draw_changed) {
       q_draw->SetEnabled(true);
+    }
   }  // integration
   if (Options.GetBoolOption("m")) {
     FractMask* fm = new FractMask;
@@ -764,7 +767,7 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
   }
   app.XGrid().InitIso();
   //TStateChange sc(prsGridVis, true);
-  app.ShowGrid(true, EmptyString());
+  app.ShowGrid(Options.GetBoolOption("map", false, true), EmptyString());
   //OnStateChange.Execute((AEventsDispatcher*)this, &sc);
   pg.SetPos(pg.GetMax());
   TBasicApp::GetInstance().OnProgress.Exit(NULL, &pg);
@@ -983,11 +986,12 @@ void GXLibMacros::macInfo(TStrObjList &Cmds, const TParamList &Options,
   app.InfoList(Cmds.IsEmpty() ? EmptyString() : Cmds.Text(' '),
     Output, Options.Contains("p"),
     Options.FindValue('p', "-3").ToInt(),
-    Options.GetBoolOption('f')
+    Options.GetBoolOption('f', false, false)
   );
   TBasicApp::NewLogEntry() << Output;
-  if (Options.Contains('c'))
+  if (Options.Contains('c')) {
     app.ToClipboard(Output);
+  }
 }
 //.............................................................................
 void GXLibMacros::macLabels(TStrObjList &Cmds, const TParamList &Options,
