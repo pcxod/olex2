@@ -245,16 +245,17 @@ protected:
   // returns true if the info is valid and applied
   bool ApplyGrowInfo();
   // removes H2O and R3N from the list of potential hydrogen bond forming atoms
-  void RemoveNonHBonding(class TAtomEnvi& envi);
+  void RemoveNonHBonding(class TAtomEnvi& envi, size_t max);
 //  void AnalyseHBonding(class TAtomEnvi& Envi);
-  bool _AnalyseAtomHAdd(class AConstraintGenerator& cg, TSAtom& atom,
-    TSAtomPList& ProcessingAtoms, int part = DefNoPart,
-    TCAtomPList* generated = NULL);
-  void _ProcessRingHAdd(AConstraintGenerator& cg, const ElementPList& rcont,
-    const TSAtomPList& atoms);
+  size_t _AnalyseAtomHAdd(class AConstraintGenerator& cg, TSAtom& atom,
+    TSAtomPList& ProcessingAtoms, bool dry_run,
+    int part = DefNoPart, TCAtomPList* generated = 0);
+  size_t _ProcessRingHAdd(AConstraintGenerator& cg, const ElementPList& rcont,
+    const TSAtomPList& atoms, bool dry_run);
 public:
   // implements HADD command
-  void AnalyseHAdd(class AConstraintGenerator& cg, const TSAtomPList& atoms);
+  size_t AnalyseHAdd(class AConstraintGenerator& cg, const TSAtomPList& atoms,
+    bool dry_run);
   /* function undoes deleting atoms */
   void undoDelete(TUndoData *data);
   /* checks if the HFIX groups have valid connectivity. Returns NULL if nothing

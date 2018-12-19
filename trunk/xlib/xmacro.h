@@ -203,6 +203,7 @@ public:
   static DefFunc(SGList)
   static DefFunc(HKLF)
   static DefFunc(StrDir)
+  static DefFunc(HAddCount)
 
   static void ChangeCell(const mat3d& tm, const TSpaceGroup& sg,
     const olxstr& resHKL_FN);

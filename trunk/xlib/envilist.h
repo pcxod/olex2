@@ -53,14 +53,14 @@ public:
   void SortByDistance() {
     QuickSorter::SortMF(Envi, *this, &TAtomEnvi::_SortByDistance);
   }
-  void Exclude(TCAtom& ca) {
-    for (size_t i=0; i < Envi.Count(); i++) {
-      if (Envi[i].GetA() == &ca) {
-        Envi.Delete(i);
-        break;
-      }
-    }
-  }
+  /* beware as this may cause problems with symmetry equivalents - only
+  the efirst instance will be removed!
+  */
+  void Exclude(TCAtom& ca);
+  // excludes given indices
+  void ExcludeIndices(const TSizeList &indices);
+  //removes all but the given indices
+  void LeaveIndices(const TSizeList &indices);
   /* counts covalent bonds only. The list may have mixed bonds if modified
   externally, like in the case of placing H atoms on O
   */
