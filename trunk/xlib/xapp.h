@@ -129,7 +129,7 @@ public:
     bool scale) const;
   /* function undoes renaming atoms */
   void undoName(TUndoData *data);
-  void NameHydrogens(TSAtom& a, TUndoData* ud);
+  void NameHydrogens(TSAtom& a, const TAsymmUnit::TLabelChecker &lc, TUndoData* ud);
   // fixes hydrogen atom labels
   TUndoData* FixHL();
   static void RingContentFromStr(const olxstr& textDescr,

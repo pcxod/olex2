@@ -155,6 +155,7 @@ public:
     Initialised = false;
     RefinementModel& rm = gxapp.XFile().GetRM();
     TAsymmUnit& au = gxapp.XFile().GetAsymmUnit();
+    TAsymmUnit::TLabelChecker lck(au);
     XVar& xv = rm.Vars.NewVar(0.75);
     if (DoSplit) {
       olxdict<size_t, size_t, TPrimitiveComparator> atom_map;
@@ -185,15 +186,16 @@ public:
         // set label
         olxstr new_l = Atoms[i]->GetLabel();
         olxch lc = '1';
-        if (new_l.Length() > Atoms[i]->GetType().symbol.Length())
+        if (new_l.Length() > Atoms[i]->GetType().symbol.Length()) {
           lc = olxstr::o_tolower(new_l.GetLast());
+        }
         if (olxstr::o_isalpha(lc)) {
           new_l[new_l.Length() - 1] = ++lc;
         }
         else {
           new_l << 'a';
         }
-        na.SetLabel(au.CheckLabel(&na, new_l), false);
+        na.SetLabel(lck.CheckLabel(na, new_l), false);
         if (na.GetType() == iQPeakZ) {
           na.SetQPeak(1.0);
         }
