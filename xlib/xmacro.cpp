@@ -9443,7 +9443,7 @@ void XLibMacros::macSplit(TStrObjList &Cmds, const TParamList &Options,
   RefinementModel& rm = app.XFile().GetRM();
   TCAtomPList ProcessedAtoms;
   XVar& var = rm.Vars.NewVar();
-  for (size_t i=0; i < Atoms.Count(); i++) {
+  for (size_t i = 0; i < Atoms.Count(); i++) {
     TCAtom* CA = Atoms[i];
     if (CA->GetEllipsoid() == NULL) continue;
     vec3d direction;
@@ -9472,7 +9472,8 @@ void XLibMacros::macSplit(TStrObjList &Cmds, const TParamList &Options,
     direction *= Length;
     direction /= 2;
     au.CartesianToCell(direction);
-    const double sp = 1./CA->GetDegeneracy();
+    const double sp = 1. / CA->GetDegeneracy();
+    TAsymmUnit::TLabelChecker lc(au);
     TSAtom &A = latt.NewAtom(vec3d());
     TCAtom& CA1 = A.CAtom();
     CA1.Assign(*CA);
@@ -9480,7 +9481,7 @@ void XLibMacros::macSplit(TStrObjList &Cmds, const TParamList &Options,
     CA1.SetPart(1);
     CA1.ccrd() += direction;
     A.ccrd() = CA1.ccrd();
-    CA1.SetLabel(au.CheckLabel(&CA1, lbl+'a'), true);
+    CA1.SetLabel(lc.CheckLabel(CA1, lbl + 'a'), true);
     // link occupancies
     rm.Vars.AddVarRef(var, CA1, catom_var_name_Sof, relation_AsVar, 1);
     CA1.SetOccu(0.5*sp);
@@ -9488,22 +9489,27 @@ void XLibMacros::macSplit(TStrObjList &Cmds, const TParamList &Options,
     TCAtom& CA2 = *CA;
     CA2.SetPart(2);
     CA2.ccrd() -= direction;
-    CA2.SetLabel(au.CheckLabel(&CA2, lbl+'b'), true);
+    CA2.SetLabel(lc.CheckLabel(CA2, lbl + 'b'), true);
     // link occupancies
     rm.Vars.AddVarRef(var, CA2, catom_var_name_Sof, relation_AsOneMinusVar, 1);
     CA2.SetOccu(0.5*sp);
     ProcessedAtoms.Add(CA2);
-    TSimpleRestraint* sr = NULL;
-    if (cr.IsEmpty())
+    TSimpleRestraint* sr = 0;
+    if (cr.IsEmpty()) {
       ;
-    else if (cr == "eadp")
+    }
+    else if (cr == "eadp") {
       sr = &rm.rEADP.AddNew();
-    else if (cr == "isor")
+    }
+    else if (cr == "isor") {
       sr = &rm.rISOR.AddNew();
-    else if (cr == "simu")
+    }
+    else if (cr == "simu") {
       sr = &rm.rSIMU.AddNew();
-    if (sr != NULL)
-      sr->AddAtomPair(CA1, NULL, CA2, NULL);
+    }
+    if (sr != 0) {
+      sr->AddAtomPair(CA1, 0, CA2, 0);
+    }
   }
   latt.SetAnis(ProcessedAtoms, false);
   latt.Uniq();

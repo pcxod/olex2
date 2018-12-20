@@ -16,6 +16,7 @@
 #include "ellipsoid.h"
 #include "dataitem.h"
 #include "conninfo.h"
+#include "eset.h"
 
 #undef GetObject
 
@@ -260,8 +261,6 @@ public:
   // sorts the content of the asymmetric unit or the list if provided
   void Sort(TCAtomPList* list = NULL);
 
-  olxstr CheckLabel(const TCAtom* ca, const olxstr &Label,
-    char a='0', char b='a', char c='a') const;
   /* finds labels duplicate for the given atom list
   */
   TCAtomPList::const_list_type FindDiplicateLabels(const TCAtomPList &atoms,
@@ -359,11 +358,23 @@ public:
   void LibOrthogonolise(const TStrObjList& Params, TMacroData& E);
   void LibFractionalise(const TStrObjList& Params, TMacroData& E);
   class TLibrary*  ExportLibrary(const olxstr& name=EmptyString());
+
   struct VPtr : public olx_virtual_ptr<TAsymmUnit> {
     virtual IOlxObject *get_ptr() const;
   };
 
+  struct TLabelChecker {
+    const TAsymmUnit &parent;
+    typedef olxstr_dict<size_t> label_dict_t;
+    olxdict<uint32_t, label_dict_t, TPrimitiveComparator>
+      r_labels;
+    size_t max_label_length;
+    TLabelChecker(const TAsymmUnit &au);
+    olxstr CheckLabel(const TCAtom &ca, const olxstr &Label,
+      bool check_atom=true) const;
+  };
 };
+
 
 EndXlibNamespace()
 #endif

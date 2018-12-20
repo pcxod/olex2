@@ -151,11 +151,14 @@ public:
       if (split) {
         TXAtom &xa = gxapp.AddAtom(XA);
         const TAsymmUnit& au = gxapp.XFile().GetAsymmUnit();
+        TAsymmUnit::TLabelChecker lck(au);
         xa.SetMoveable(true);
         xa.SetRoteable(true);
         SplitAtoms.AddNew(&XA->CAtom(), &xa.CAtom());
         int part = XA->CAtom().GetPart();
-        if (part == 0)  part++;
+        if (part == 0) {
+          part++;
+        }
         XA->CAtom().SetPart(part);
         xa.CAtom().SetPart(part + 1);
         xa.crd() += 0.5;
@@ -170,7 +173,7 @@ public:
         else {
           new_l << 'a';
         }
-        xa.CAtom().SetLabel(au.CheckLabel(&xa.CAtom(), new_l), true);
+        xa.CAtom().SetLabel(lck.CheckLabel(xa.CAtom(), new_l), true);
         if (xa.GetType() == iQPeakZ) {
           xa.CAtom().SetQPeak(1.0);
         }
