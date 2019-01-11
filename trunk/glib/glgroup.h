@@ -16,12 +16,7 @@ BeginGlNamespace()
 
 struct TMouseData;
 
-class TGlGroup: public AGDrawObject {
-  /* a sorted list, although would give some performace boost cannot be used
-  here:
-    SortedPtrList<AGDrawObject, TPointerComparator> Objects;
-  since the selection order influences a lot of functionality
-  */
+class TGlGroup : public AGDrawObject {
   AGDObjList Objects;  // a list of grouped objects
   TGlMaterial GlM;
   TGlOption BlendColor;
@@ -43,27 +38,29 @@ protected:
   bool CheckBlended() const;
 public:
   TGlGroup(class TGlRenderer& R, const olxstr& collectionName);
-  virtual void Create(const olxstr& cName=EmptyString());
+  virtual void Create(const olxstr& cName = EmptyString());
   virtual ~TGlGroup();
   virtual void Clear();
-  void Draw(bool SelectPrimitives=false, bool SelectObjects=false) const {
+  void Draw(bool SelectPrimitives = false, bool SelectObjects = false) const {
     DoDraw(SelectPrimitives, SelectObjects);
   }
   void IncCapacity(size_t v) { Objects.SetCapacity(Objects.Count() + v); }
   // Adds an object to the list if it is not there and removes it otherwise
   // returns true if the object is added and false if it is removed
-  bool Add(AGDrawObject& G, bool remove=true);
+  bool Add(AGDrawObject& G, bool remove = true);
   // a list to ADrawObjects/derived classes is expected
-  template <class List> void AddObjects(const List& list)  {
-    Objects.SetCapacity(Objects.Count()+list.Count());
-    for( size_t i=0; i < list.Count(); i++ )
+  template <class List> void AddObjects(const List& list) {
+    Objects.SetCapacity(Objects.Count() + list.Count());
+    for (size_t i = 0; i < list.Count(); i++) {
       Add(*list[i], false);
+    }
   }
   template <class obj_t, class list_t> list_t& Extract(list_t& l) const {
-    for( size_t i=0; i < Objects.Count(); i++ ) {
+    for (size_t i = 0; i < Objects.Count(); i++) {
       obj_t *a = dynamic_cast<obj_t*>(Objects[i]);
-      if (a != NULL)
+      if (a != 0) {
         l.Add(a);
+      }
     }
     return l;
   }
@@ -77,18 +74,21 @@ public:
   bool Remove(AGDrawObject& G);
   void RemoveHidden();
 
-  bool Contains(const AGDrawObject& G) const {  return  Objects.Contains(G);  }
-  size_t Count() const {  return Objects.Count();  }
-  bool IsEmpty() const {  return Objects.IsEmpty();  }
-  AGDrawObject& GetObject(size_t i) const {  return *Objects[i];  }
-  AGDrawObject& operator [] (size_t i) const {  return *Objects[i];  }
+  bool Contains(const AGDrawObject& G) const { return  Objects.Contains(G); }
+  size_t Count() const { return Objects.Count(); }
+  bool IsEmpty() const { return Objects.IsEmpty(); }
+  AGDrawObject& GetObject(size_t i) const { return *Objects[i]; }
+  AGDrawObject& operator [] (size_t i) const { return *Objects[i]; }
+  void SortObjectsByTag() {
+    QuickSorter::Sort(Objects, ACollectionItem::TagComparator());
+  }
   /* returns true if there are at least two groupable objects, moving the
   ungroupable ones to the provided list
   */
   bool TryToGroup(AGDObjList& ungroupable);
 
-  bool Orient(TGlPrimitive&)  {  return false;  }
-  bool GetDimensions(vec3d&, vec3d&)  {  return false;  }
+  bool Orient(TGlPrimitive&) { return false; }
+  bool GetDimensions(vec3d&, vec3d&) { return false; }
   virtual bool OnMouseDown(const IOlxObject *Sender, const TMouseData& Data);
   virtual bool OnMouseUp(const IOlxObject *Sender, const TMouseData& Data);
   virtual bool OnMouseMove(const IOlxObject *Sender, const TMouseData& Data);
@@ -96,10 +96,10 @@ public:
   virtual void SetVisible(bool On);
   virtual void SetSelected(bool On);
 
-  bool IsDefaultColor() const {  return DefaultColor;  }
-  bool IsBlended() const {  return Blended;  }
+  bool IsDefaultColor() const { return DefaultColor; }
+  bool IsBlended() const { return Blended; }
   void SetBlended(bool v);
-  const TGlMaterial& GetGlM() const {  return GlM; }
+  const TGlMaterial& GetGlM() const { return GlM; }
   void SetGlM(const TGlMaterial& m);
   // returns the actually rendered material
   virtual TGlMaterial GetActualMaterial(const TGlMaterial &) const;

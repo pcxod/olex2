@@ -3188,31 +3188,35 @@ void TMainForm::RefineDataTable(bool TableDef, bool Create)  {
 //TUtf8File::WriteLines( RefineDataFile, Output, false );
 }
 //..............................................................................
-void TMainForm::OnMouseWheel(int x, int y, double delta)  {
+void TMainForm::OnMouseWheel(int x, int y, double delta) {
   size_t ind = Bindings.IndexOf("wheel");
-  if( ind == InvalidIndex )  return;
+  if (ind == InvalidIndex)  return;
   olxstr cmd = Bindings.GetValue(ind);
   ind = TOlxVars::VarIndex("core_wheel_step");
-  const olxstr& step( ind == InvalidIndex ? EmptyString()
+  const olxstr& step(ind == InvalidIndex ? EmptyString()
     : TOlxVars::GetVarStr(ind));
-  if( step.IsNumber() )
+  if (step.IsNumber()) {
     delta *= step.ToDouble();
+  }
   cmd << delta;
   processMacro(cmd);
 }
 //..............................................................................
-void TMainForm::OnMouseMove(int x, int y)  {
-  if( MousePositionX == x && MousePositionY == y )
+void TMainForm::OnMouseMove(int x, int y) {
+  if (MousePositionX == x && MousePositionY == y)
     return;
-  else  {
+  else {
     MouseMoveTimeElapsed = 0;
     MousePositionX = x;
     MousePositionY = y;
-    if( !_UseGlTooltip )  {
-      if( FGlCanvas->GetToolTip() != NULL && !FGlCanvas->GetToolTip()->GetTip().IsEmpty() )
+    if (!_UseGlTooltip) {
+      if (FGlCanvas->GetToolTip() != 0 &&
+        !FGlCanvas->GetToolTip()->GetTip().IsEmpty())
+      {
         FGlCanvas->SetToolTip(wxT(""));
+      }
     }
-    else if( GlTooltip != NULL && GlTooltip->IsVisible() )  {
+    else if (GlTooltip != NULL && GlTooltip->IsVisible()) {
       GlTooltip->SetVisible(false);
       TimePerFrame = FXApp->Draw();
     }
@@ -3225,6 +3229,7 @@ bool TMainForm::OnMouseDown(int x, int y, short Flags, short Buttons) {
   MouseMoveTimeElapsed = 5000;
   return false;
 }
+//..............................................................................
 bool TMainForm::OnMouseUp(int x, int y, short Flags, short Buttons)  {
   // HKL "grid snap on mouse release
   if( FXApp->XFile().HasLastLoader() && FXApp->IsHklVisible() && false )  {
@@ -3285,8 +3290,10 @@ bool TMainForm::OnMouseUp(int x, int y, short Flags, short Buttons)  {
   return false;
 }
 //..............................................................................
-bool TMainForm::CheckMode(size_t mode, const olxstr& modeData)  {
-  if( Modes->GetCurrent() == NULL )  return false;
+bool TMainForm::CheckMode(size_t mode, const olxstr& modeData) {
+  if (Modes->GetCurrent() == 0) {
+    return false;
+  }
   return mode == Modes->GetCurrent()->GetId();
 }
 //..............................................................................

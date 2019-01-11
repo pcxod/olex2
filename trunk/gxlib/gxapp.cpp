@@ -5501,9 +5501,19 @@ void TGXApp::LoadModel(const olxstr& fileName) {
 #endif
 }
 //..............................................................................
-TGlGroup *TGXApp::GroupSelection(const olxstr& name)  {
+TGlGroup *TGXApp::GroupSelection(const olxstr& name) {
   TGlGroup* glg = GetRenderer().GroupSelection(name);
-  if( glg != NULL )  {
+  if (glg != 0) {
+    for (size_t i = 0; i < glg->Count(); i++) {
+      AGDrawObject & o = glg->GetObject(i);
+      if (o.Is<TXAtom>()) {
+        o.SetTag(0);
+      }
+      else {
+        o.SetTag(1);
+      }
+    }
+    glg->SortObjectsByTag();
     StoreGroup(*glg, GroupDefs.AddNew());
     _UpdateGroupIds();
     Draw();
