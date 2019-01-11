@@ -59,7 +59,7 @@ TGlGroup::~TGlGroup() {
   Clear();
 }
 //..............................................................................
-void TGlGroup::Clear()  {
+void TGlGroup::Clear() {
   Objects.ForEach(ObjectReleaser());
   GlM.SetIdentityDraw(false);  // most objects are 'normal'
   Objects.Clear();
@@ -73,7 +73,7 @@ bool TGlGroup::Remove(AGDrawObject& G)  {
   return false;
 }
 //..............................................................................
-void TGlGroup::RemoveHidden()  {
+void TGlGroup::RemoveHidden() {
   Objects.Pack(AGDrawObject::FlagsAnalyserEx<ObjectReleaser>(
     sgdoHidden, ObjectReleaser()));
 }
@@ -247,6 +247,10 @@ void TGlGroup::BlendMaterialDraw(bool SelectPrimitives,
           glm.SetDiffuseF(true);
           glm.DiffuseF = GlM.DiffuseF;
         }
+        else {
+          glm.SetDiffuseF(false);
+        }
+
         glm.Init(false);
       }
       Parent.HandleSelection(G, GlP, SelectObjects, SelectPrimitives);

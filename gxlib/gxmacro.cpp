@@ -2225,14 +2225,23 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
   else if (Cmds.Count() == 2 && Cmds[0].Equalsi("atom") &&
     Cmds[1].Equalsi("bonds"))
   {
+    bool both = false;;
     if (flag == glSelectionNone) {
       flag = glSelectionSelect;
+      both = true;
     }
     TGXApp::BondIterator bi = app.GetBonds();
     while (bi.HasNext()) {
       TXBond &b = bi.Next();
-      if (b.A().IsSelected() && b.B().IsSelected()) {
-        app.GetRenderer().Select(b, flag);
+      if (both) {
+        if (b.A().IsSelected() && b.B().IsSelected()) {
+          app.GetRenderer().Select(b, flag);
+        }
+      }
+      else {
+        if (b.A().IsSelected() || b.B().IsSelected()) {
+          app.GetRenderer().Select(b, flag);
+        }
       }
     }
   }
@@ -2422,6 +2431,20 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
         }
       }
     }
+  }
+  // sort the selection
+  {
+    TGlGroup &glg = app.GetRenderer().GetSelection();
+    for (size_t i = 0; i < glg.Count(); i++) {
+      AGDrawObject & o = glg[i];
+      if (o.Is<TXAtom>()) {
+        o.SetTag(0);
+      }
+      else {
+        o.SetTag(1);
+      }
+    }
+    glg.SortObjectsByTag();
   }
 }
 //.............................................................................
