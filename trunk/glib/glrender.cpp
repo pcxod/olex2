@@ -600,7 +600,13 @@ void TGlRenderer::Draw() {
     olx_gl::colorMask(true, true, true, true);
     olx_gl::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     // right eye
-    GetBasis().RotateY(ry + StereoAngle);
+    mat3d rm1, rm2;
+    double ang = StereoAngle * M_PI / 180;
+    mat3d om = GetBasis().GetMatrix();
+    olx_create_rotation_matrix(rm1, vec3d(0,1,0), cos(ang), sin(ang));
+    olx_create_rotation_matrix(rm2, vec3d(0, 1, 0), cos(-ang), sin(-ang));
+    //GetBasis().RotateY(ry + StereoAngle);
+    GetBasis().SetMatrix(om*rm1);
     olx_gl::colorMask(
       StereoRightColor[0] != 0,
       StereoRightColor[1] != 0,
@@ -610,7 +616,8 @@ void TGlRenderer::Draw() {
     olx_gl::colorMask(true, true, true, true);
     olx_gl::accum(GL_LOAD, 1);
     // left eye
-    GetBasis().RotateY(ry - StereoAngle);
+    //GetBasis().RotateY(ry - StereoAngle);
+    GetBasis().SetMatrix(om*rm2);
     olx_gl::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     olx_gl::colorMask(
       StereoLeftColor[0] != 0,
@@ -621,7 +628,8 @@ void TGlRenderer::Draw() {
     olx_gl::colorMask(true, true, true, true);
     olx_gl::accum(GL_ACCUM, 1);
     olx_gl::accum(GL_RETURN, 1.0);
-    GetBasis().RotateY(ry);
+    //GetBasis().RotateY(ry);
+    GetBasis().SetMatrix(om);
   }
   else if (StereoFlag == glStereoHardware) {
     const double ry = GetBasis().GetRY();

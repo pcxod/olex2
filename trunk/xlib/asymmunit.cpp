@@ -759,12 +759,12 @@ TAsymmUnit::TLabelChecker::TLabelChecker(const TAsymmUnit &au)
   r_labels.SetCapacity(au.ResidueCount());
   for (size_t i = 0; i < au.ResidueCount(); i++) {
     const TResidue& resi = parent.GetResidue(i);
-    label_dict_t &labels = r_labels.Add(resi.GetId());
+    label_dict_t &labels = r_labels.Add((uint32_t)resi.GetId());
     labels.SetCapacity(resi.Count());
     for (size_t i = 0; i < resi.Count(); i++) {
       const TCAtom& atom = resi[i];
       if (!atom.IsDeleted()) {
-        labels.Add(atom.GetLabel(), atom.GetId());
+        labels.Add(atom.GetLabel().ToLowerCase(), atom.GetId());
       }
     }
   }
@@ -775,26 +775,22 @@ olxstr TAsymmUnit::TLabelChecker::CheckLabel(const TCAtom &ca,
 {
   olxstr LB = Label.Length() > max_label_length ? Label.SubStringTo(2) : Label;
   label_dict_t &labels = r_labels.Get(ca.GetResiId());
-  if (!labels.HasKey(LB)) {
+  if (!labels.HasKey(LB.ToLowerCase())) {
     return LB;
   }
   LB = ca.GetType().symbol;
   size_t off = LB.Length();
-  LB << ' ';
+  LB << '1';
   TArrayList<char> seq(max_label_length - off, olx_list_init::value(' '));
+  seq[0] = '1';
   size_t sid = 0;
   size_t key_idx;
-  while (sid == 00 || (key_idx = labels.IndexOf(LB)) != InvalidIndex) {
+  while ((key_idx = labels.IndexOf(LB.ToLowerCase())) != InvalidIndex) {
     if (check_atom && labels.GetValue(key_idx) == ca.GetId()) {
       return LB;
     }
     if (seq[sid] == ' ') {
-      if (sid == 0) {
-        seq[sid] = '1';
-      }
-      else {
-        seq[sid] = 'a';
-      }
+      seq[sid] = '0';
     }
     else if (seq[sid] == '9') {
       if (sid > 0) {
@@ -820,12 +816,19 @@ olxstr TAsymmUnit::TLabelChecker::CheckLabel(const TCAtom &ca,
     }
     LB.Set(sid+off,  seq[sid]);
   }
-  size_t v_idx = labels.IndexOfValue(ca.GetId());
-  if (v_idx != InvalidIndex) {
-    labels.Delete(v_idx);
-  }
-  labels.Add(LB, ca.GetId());
   return LB;
+}
+//..............................................................................
+void TAsymmUnit::TLabelChecker::SetLabel(TCAtom &a, const olxstr& label,
+  bool update_type)
+{
+  a.SetLabel(label, update_type);
+  label_dict_t &labels = r_labels.Get(a.GetResiId());
+  size_t idx = labels.IndexOfValue(a.GetId());
+  if (idx != InvalidIndex) {
+    labels.Delete(idx);
+  }
+  labels.Add(label.ToLowerCase(), a.GetId(), true);
 }
 //..............................................................................
 //..............................................................................

@@ -372,6 +372,7 @@ public:
     TLabelChecker(const TAsymmUnit &au);
     olxstr CheckLabel(const TCAtom &ca, const olxstr &Label,
       bool check_atom=true) const;
+    void SetLabel(TCAtom &a, const olxstr& label, bool update_type=false);
   };
 };
 
