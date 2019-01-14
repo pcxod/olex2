@@ -73,6 +73,7 @@ void TCAtom::SetLabel(const olxstr& L, bool validate) {
       Parent->_OnAtomTypeChanged(*this);
     }
     Label = L;
+    Label[0] = Label.o_toupper(Label.CharAt(0));
     if (Type->symbol.Length() == 2) {
       Label[1] = Label.o_tolower(Label.CharAt(1));
     }

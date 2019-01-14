@@ -287,7 +287,7 @@ RefinementModel::HklStat TXApp::CalcFsq(TRefList &refs, evecd &Fsq,
   return rv;
 }
 //..............................................................................
-void TXApp::NameHydrogens(TSAtom& SA, const TAsymmUnit::TLabelChecker &lc,
+void TXApp::NameHydrogens(TSAtom& SA, TAsymmUnit::TLabelChecker &lc,
   TUndoData* ud)
 {
   TNameUndo* nu = static_cast<TNameUndo*>(ud);
@@ -338,14 +338,15 @@ void TXApp::NameHydrogens(TSAtom& SA, const TAsymmUnit::TLabelChecker &lc,
             break;
           }
           Labl = al[j]->GetType().symbol + Name;
-          if (Labl.Length() >= lc.max_label_length)
+          if (Labl.Length() >= lc.max_label_length) {
             Labl.SetLength(lc.max_label_length - 1);
+          }
           else if (Labl.Length() < 3 && parts.Count() > 1) {
             Labl << (char)('a' + i);
           }
           const char next_ch = 'a' + lablInc++;
           if (next_ch > 'z') {
-            lc.CheckLabel(al[j]->CAtom(), Labl);
+            Labl = lc.CheckLabel(al[j]->CAtom(), Labl);
             break;
           }
           else {
@@ -357,7 +358,7 @@ void TXApp::NameHydrogens(TSAtom& SA, const TAsymmUnit::TLabelChecker &lc,
         if (nu != 0) {
           nu->AddAtom(al[j]->CAtom(), al[j]->GetLabel());
         }
-        al[j]->CAtom().SetLabel(Labl, false);
+        lc.SetLabel(al[j]->CAtom(), Labl);
       }
       al[j]->CAtom().SetTag(0);
       al[j]->SetTag(0);
@@ -365,17 +366,19 @@ void TXApp::NameHydrogens(TSAtom& SA, const TAsymmUnit::TLabelChecker &lc,
   }
 }
 //..............................................................................
-void TXApp::undoName(TUndoData *data)  {
+void TXApp::undoName(TUndoData *data) {
   TNameUndo *undo = static_cast<TNameUndo*>(data);
   TAsymmUnit& au = XFile().GetAsymmUnit();
-  for( size_t i=0; i < undo->AtomCount(); i++ )  {
-    if( undo->GetCAtomId(i) >= au.AtomCount() )  // would definetely be an error
+  for (size_t i = 0; i < undo->AtomCount(); i++) {
+    if (undo->GetCAtomId(i) >= au.AtomCount()) { // would definetely be an error
       continue;
+    }
     TCAtom& ca = au.GetAtom(undo->GetCAtomId(i));
     ca.SetLabel(undo->GetLabel(i), false);
     ca.SetType(undo->GetElement(i));
-    if( ca.GetType() == iQPeakZ )
+    if (ca.GetType() == iQPeakZ) {
       ca.SetQPeak(undo->GetPeakHeight(i));
+    }
   }
 }
 //..............................................................................
@@ -389,8 +392,9 @@ TUndoData* TXApp::FixHL() {
   if (!satoms.IsEmpty()) {
     for (size_t i = 0; i < satoms.Count(); i++) {
       if (!satoms[i]->IsAUAtom())  continue;
-      if (frag_id.IndexOf(satoms[i]->CAtom().GetFragmentId()) == InvalidIndex)
+      if (frag_id.IndexOf(satoms[i]->CAtom().GetFragmentId()) == InvalidIndex) {
         frag_id.Add(satoms[i]->CAtom().GetFragmentId());
+      }
     }
   }
   ASObjectProvider& objects = XFile().GetLattice().GetObjects();
@@ -466,43 +470,49 @@ void TXApp::RingContentFromStr(const olxstr& Condition,
 {
   TStrList toks;
   olxstr symbol, count;
-  for( size_t i=0; i < Condition.Length(); i++ )  {
-    if( Condition[i] <= 'Z' && Condition[i] >= 'A' )  {
-      if( !symbol.IsEmpty() )  {
-        if( !count.IsEmpty() )  {
+  for (size_t i = 0; i < Condition.Length(); i++) {
+    if (Condition[i] <= 'Z' && Condition[i] >= 'A') {
+      if (!symbol.IsEmpty()) {
+        if (!count.IsEmpty()) {
           const size_t c = count.ToSizeT();
-          for( size_t j=0; j < c; j++ )
-            toks.Add( symbol );
+          for (size_t j = 0; j < c; j++) {
+            toks.Add(symbol);
+          }
         }
-        else
-          toks.Add( symbol );
+        else {
+          toks.Add(symbol);
+        }
       }
       symbol = Condition[i];
       count.SetLength(0);
     }
-    else if( Condition[i] <= 'z' && Condition[i] >= 'a' )  {
+    else if (Condition[i] <= 'z' && Condition[i] >= 'a') {
       symbol << Condition[i];
       count.SetLength(0);
     }
-    else if( Condition[i] <= '9' && Condition[i] >= '0' )  {
+    else if (Condition[i] <= '9' && Condition[i] >= '0') {
       count << Condition[i];
     }
   }
-  if( !symbol.IsEmpty() )  {
-    if( !count.IsEmpty() )  {
+  if (!symbol.IsEmpty()) {
+    if (!count.IsEmpty()) {
       const size_t c = count.ToSizeT();
-      for( size_t j=0; j < c; j++ )
+      for (size_t j = 0; j < c; j++) {
         toks.Add(symbol);
+      }
     }
-    else
+    else {
       toks.Add(symbol);
+    }
   }
 
-  if( toks.Count() < 3 )  return;
+  if (toks.Count() < 3) {
+    return;
+  }
 
-  for( size_t i=0; i < toks.Count(); i++ )  {
+  for (size_t i = 0; i < toks.Count(); i++) {
     cm_Element* elm = XElementLib::FindBySymbol(toks[i]);
-    if( elm == NULL ) {
+    if (elm == NULL) {
       throw TInvalidArgumentException(__OlxSourceInfo,
         olxstr("Unknown element: ") << toks[i]);
     }
@@ -514,16 +524,21 @@ void TXApp::FindRings(const olxstr& Condition, TTypeList<TSAtomPList>& rings) {
   // external ring connectivity
   TTypeList< ElementPList > extRing;
   RingContentFromStr(Condition, ring);
-  for( size_t i=0; i < XFile().GetLattice().FragmentCount(); i++ )  {
+  for (size_t i = 0; i < XFile().GetLattice().FragmentCount(); i++) {
     XFile().GetLattice().GetFragment(i).FindRings(ring, rings);
   }
 
-  for( size_t i=0; i < rings.Count(); i++ )  {
-    if( rings.IsNull(i) )  continue;
-    for( size_t j= i+1; j < rings.Count(); j++ ) {
-      if( rings.IsNull(j) )  continue;
-      if( RingsEq(rings[i], rings[j]) )
+  for (size_t i = 0; i < rings.Count(); i++) {
+    if (rings.IsNull(i)) {
+      continue;
+    }
+    for (size_t j = i + 1; j < rings.Count(); j++) {
+      if (rings.IsNull(j)) {
+        continue;
+      }
+      if (RingsEq(rings[i], rings[j])) {
         rings.NullItem(j);
+      }
     }
   }
   rings.Pack();
@@ -532,59 +547,68 @@ void TXApp::FindRings(const olxstr& Condition, TTypeList<TSAtomPList>& rings) {
 bool TXApp::FindSAtoms(const olxstr& condition, TSAtomPList& res,
   bool ReturnAll, bool ClearSelection)
 {
-  if( SelectionOwner != NULL )
+  if (SelectionOwner != 0) {
     SelectionOwner->SetDoClearSelection(ClearSelection);
+  }
   TSAtomPList atoms;
   // try the selection first
-  if (condition.IsEmpty() || condition.Equals("sel"))  {
-    if( SelectionOwner != NULL )
+  if (condition.IsEmpty() || condition.Equals("sel")) {
+    if (SelectionOwner != 0) {
       SelectionOwner->ExpandSelectionEx(atoms);
+    }
   }
-  if( !condition.IsEmpty() )  {
+  if (!condition.IsEmpty()) {
     TStrList toks(condition, ' ');
     //TLattice& latt = XFile().GetLattice();
     ASObjectProvider& objects = XFile().GetLattice().GetObjects();
-    for( size_t i=0; i < toks.Count(); i++ )  {
-      if( toks[i].StartsFrom("#s") )  {  // TSAtom.LattId
+    for (size_t i = 0; i < toks.Count(); i++) {
+      if (toks[i].StartsFrom("#s")) {  // TSAtom.LattId
         const size_t lat_id = toks[i].SubStringFrom(2).ToSizeT();
-        if( lat_id >= objects.atoms.Count() )
+        if (lat_id >= objects.atoms.Count())
           throw TInvalidArgumentException(__OlxSourceInfo, "satom id");
-        if( objects.atoms[lat_id].CAtom().IsAvailable() )
+        if (objects.atoms[lat_id].CAtom().IsAvailable()) {
           res.Add(objects.atoms[lat_id]);
+        }
         toks.Delete(i);
         i--;
       }
       // should not be here, but the parser will choke on it
-      else if( toks[i].IsNumber() )  {
+      else if (toks[i].IsNumber()) {
         toks.Delete(i);
         i--;
       }
     }
     olxstr new_c = toks.Text(' ');
-    if( !new_c.IsEmpty() )  {
+    if (!new_c.IsEmpty()) {
       TCAtomGroup ag;
       TAtomReference ar(toks.Text(' '), SelectionOwner);
       size_t atomAGroup;
       ar.Expand(XFile().GetRM(), ag, EmptyString(), atomAGroup);
-      if( !ag.IsEmpty() )  {
-        atoms.SetCapacity( atoms.Count() + ag.Count() );
+      if (!ag.IsEmpty()) {
+        atoms.SetCapacity(atoms.Count() + ag.Count());
         TAsymmUnit& au = XFile().GetAsymmUnit();
-        for( size_t i=0; i < au.AtomCount(); i++ )
+        for (size_t i = 0; i < au.AtomCount(); i++)
           au.GetAtom(i).SetTag(au.GetAtom(i).GetId());
-        for( size_t i=0; i < ag.Count(); i++ )  {
-          if( (size_t)ag[i].GetAtom()->GetTag() != ag[i].GetAtom()->GetId() )
+        for (size_t i = 0; i < ag.Count(); i++) {
+          if ((size_t)ag[i].GetAtom()->GetTag() != ag[i].GetAtom()->GetId()) {
             continue;
-          for( size_t j=0; j < objects.atoms.Count(); j++ )  {
+          }
+          for (size_t j = 0; j < objects.atoms.Count(); j++) {
             TSAtom& sa = objects.atoms[j];
-            if( !sa.CAtom().IsAvailable() )  continue;
-            if( sa.CAtom().GetTag() != ag[i].GetAtom()->GetTag() )  continue;
-            // get an atom from the asymm unit
-            if( ag[i].GetMatrix() == NULL )  {
-              if( sa.IsAUAtom() )
-                atoms.Add(sa);
+            if (!sa.CAtom().IsAvailable()) {
+              continue;
             }
-            else  {
-              if( sa.IsGenerator(*ag[i].GetMatrix()) )  {
+            if (sa.CAtom().GetTag() != ag[i].GetAtom()->GetTag()) {
+              continue;
+            }
+            // get an atom from the asymm unit
+            if (ag[i].GetMatrix() == 0) {
+              if (sa.IsAUAtom()) {
+                atoms.Add(sa);
+              }
+            }
+            else {
+              if (sa.IsGenerator(*ag[i].GetMatrix())) {
                 atoms.Add(sa);
               }
             }
@@ -593,13 +617,14 @@ bool TXApp::FindSAtoms(const olxstr& condition, TSAtomPList& res,
       }
     }
   }
-  else if( atoms.IsEmpty() && ReturnAll ) {
+  else if (atoms.IsEmpty() && ReturnAll) {
     ASObjectProvider& objects = XFile().GetLattice().GetObjects();
     const size_t ac = objects.atoms.Count();
     atoms.SetCapacity(ac);
-    for( size_t i=0; i < ac; i++ )
-      if( objects.atoms[i].CAtom().IsAvailable() )
+    for (size_t i = 0; i < ac; i++)
+      if (objects.atoms[i].CAtom().IsAvailable()) {
         atoms.Add(objects.atoms[i]);
+      }
   }
   res.AddAll(atoms);
   return !atoms.IsEmpty();
