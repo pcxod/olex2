@@ -2174,11 +2174,13 @@ TUndoData* TGXApp::Name(TXAtom& XA, const olxstr& _Name) {
     }
     // generate unique label if the user does not care
     if (checkBonds && _Name.Length() == elm->symbol.Length()) {
+      // important as symbol will be used
+      XA.CAtom().SetType(*elm);
       Name = lc.CheckLabel(XA.CAtom(), Name);
     }
   }
   lc.SetLabel(XA.CAtom(), Name);
-  if (oldL != XA.GetLabel() || *elm != XA.GetType()) {
+  if (oldL != XA.GetLabel() || recreate) {
     undo->AddAtom(XA.CAtom(), oldL);
     processed << XA.CAtom();
   }

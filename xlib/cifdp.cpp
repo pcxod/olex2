@@ -617,6 +617,12 @@ void cetStringList::ToStrings(TStrList& list) const {
   list.Add(';');
 }
 //..............................................................................
+olxstr cetStringList::GetStringValue() const {
+  TStrList val;
+  ToStrings(val);
+  return olxstr(NewLineSequence()).Join(val);
+}
+//..............................................................................
 //..............................................................................
 //..............................................................................
 CifBlock::CifBlock(const CifBlock& v) {
@@ -991,6 +997,9 @@ ICifEntry *ICifEntry::FromToken(const CifToken &t, int version) {
       if (t.value.Length() > 1 && t.value.EndsWith(';')) {
         olx_object_ptr<cetStringList> l = new cetStringList();
         l().lines.Strtok(t.value.SubStringFrom(1, 1), '\n', false);
+        if (t.value.CharAt(1) == '\n') {
+          l().lines.Delete(0);
+        }
         return l.release();
       }
       else {
@@ -1025,6 +1034,9 @@ ICifEntry *ICifEntry::FromToken(const CifToken &t, int version) {
       if (t.value.Length() > 1 && t.value.EndsWith(';')) {
         olx_object_ptr<cetStringList> l = new cetStringList();
         l().lines.Strtok(t.value.SubStringFrom(1, 1), '\n', false);
+        if (t.value.CharAt(1) == '\n') {
+          l().lines.Delete(0);
+        }
         return l.release();
       }
       else {
