@@ -176,9 +176,7 @@ namespace cif_dp {
     virtual size_t Count() const { return lines.Count(); }
     virtual const olxstr& operator [] (size_t i) const { return lines[i]; }
     virtual ICifEntry* Replicate() const { return new cetStringList(*this); }
-    virtual olxstr GetStringValue() const {
-      throw TNotImplementedException(__OlxSourceInfo);
-    }
+    virtual olxstr GetStringValue() const;
   };
   /////////////////////////////////////////////////////////////////////////////
   struct cetList : public ICifEntry {
