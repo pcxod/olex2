@@ -16,7 +16,6 @@
 #include "bapp.h"
 #include "log.h"
 #include "estrbuffer.h"
-
 #ifndef GL_MULTISAMPLE
 #define GL_MULTISAMPLE  0x809D
 #endif
@@ -75,7 +74,8 @@ void TGlRenderer::TGlListManager::Clear()  {
 //..............................................................................
 //..............................................................................
 TGlRenderer::TGlRenderer(AGlScene *S, size_t width, size_t height)
-  : Top(0), Left(0), Width((int)width), Height((int)height), OWidth(0),
+  : PerspectiveMatrix(4, 4),
+  Top(0), Left(0), Width((int)width), Height((int)height), OWidth(0),
   StereoLeftColor(0, 1, 1, 1), StereoRightColor(1, 0, 0, 1),
   OnDraw(TBasicApp::GetInstance().NewActionQueue(olxappevent_GL_DRAW)),
   OnClear(TBasicApp::GetInstance().NewActionQueue("GL_CLEAR"))
@@ -89,7 +89,7 @@ TGlRenderer::TGlRenderer(AGlScene *S, size_t width, size_t height)
   FViewZoom = 1;
   FScene->Parent(this);
   Selecting = FPerspective = false;
-  FPAngle = 1;
+  SetPerspectiveAngle(45);
   StereoFlag = 0;
   StereoAngle = 3;
   LookAt(0,0,1);
@@ -115,6 +115,10 @@ TGlRenderer::TGlRenderer(AGlScene *S, size_t width, size_t height)
   FCollections.SetIncrement(16);
   FGObjects.SetIncrement(16);
   MaxRasterZ = 1;
+
+  NearPlane = 1;
+  FarPlane = 10;
+
   GLUSelection = true;
   Styles.OnClear.Add(this);
 }
@@ -417,21 +421,48 @@ void TGlRenderer::EnableFog(bool Set) {
 }
 //..............................................................................
 void TGlRenderer::EnablePerspective(bool Set) {
-  if (Set == FPerspective) {
-    return;
-  }
   FPerspective = Set;
 }
 //..............................................................................
 void TGlRenderer::SetPerspectiveAngle(double angle) {
-  FPAngle = (float)tan(angle*M_PI / 360);
+  FPAngle = tan(angle*M_PI / 360);
+  double t = -1.0*FPAngle;
+  double b = -t;
+  double l = t;
+  double r = -l;
+  PerspectiveMatrix[0][0] = 2 * NearPlane / (r - l);
+  PerspectiveMatrix[1][1] = 2 * NearPlane / (b - t);
+  PerspectiveMatrix[2][2] = -(FarPlane + NearPlane) / (FarPlane - NearPlane);
+  PerspectiveMatrix[2][3] = -2 * FarPlane*NearPlane / (FarPlane - NearPlane);
+  PerspectiveMatrix[3][2] = -1;
+}
+//..............................................................................
+double TGlRenderer::CalcRasterZ(double off) const {
+  return olx_sign(GetMaxRasterZ())*(olx_abs(GetMaxRasterZ()) - off);
+}
+//..............................................................................
+vec3d TGlRenderer::Project(const vec3d &v) const {
+  vec3d shift = GetBasis().GetCenter();
+  shift += GetBasis().GetMatrix()*vec3d(0, 0, -(NearPlane + 1) / GetBasis().GetZoom());
+  vec3d rs = (v + shift) * GetBasis().GetMatrix();
+  rs *= GetBasis().GetZoom();
+  if (!FPerspective  && StereoFlag == 0) {
+    return rs;
+  }
+  evecd v1(4);
+  v1[0] = rs[0];
+  v1[1] = rs[1];
+  v1[2] = rs[2];
+  v1[3] = 1;
+  v1 = PerspectiveMatrix*v1;
+  return vec3d(v1[0] / v1[3], v1[1] / v1[3], v1[2] / v1[3]);
 }
 //..............................................................................
 void TGlRenderer::Resize(size_t w, size_t h) {
   Resize(0, 0, w, h, 1);
 }
 //..............................................................................
-void TGlRenderer::Resize(int l, int t, size_t w, size_t h, float Zoom) {
+void TGlRenderer::Resize(int l, int t, size_t w, size_t h, double Zoom) {
   Left = l;
   Top = t;
   if (StereoFlag == glStereoCross) {
@@ -475,15 +506,18 @@ void TGlRenderer::SetView(int x, int y, bool identity, bool Select, short Res) {
     gluPickMatrix(x, Height - y, 3, 3, vp);
   }
   const double aspect = (double)Width / (double)Height;
+  
   if (!identity) {
-    if (FPerspective) {
+    if (FPerspective || StereoFlag != 0) {
       double right = FPAngle*aspect;
       olx_gl::frustum(right*FProjectionLeft, right*FProjectionRight,
-        FPAngle*FProjectionTop, FPAngle*FProjectionBottom, 1, 10);
+        FPAngle*FProjectionTop, FPAngle*FProjectionBottom,
+        NearPlane, FarPlane);
     }
     else {
       olx_gl::ortho(aspect*FProjectionLeft, aspect*FProjectionRight,
-        FProjectionTop, FProjectionBottom, 1, 10);
+        FProjectionTop, FProjectionBottom,
+        NearPlane, FarPlane);
     }
   }
   else {
@@ -498,21 +532,22 @@ void TGlRenderer::SetView(int x, int y, bool identity, bool Select, short Res) {
     w = {(Bf[3][0]*x+Bf[3][1]*y+Bf[3][2]*z+Bf[3][3]*w)}
   */
   if (!identity) {
+    vec3f eye_p = vec3f(0, 0, 0);
     float Bf[4][4];
     memcpy(&Bf[0][0], GetBasis().GetMData(), 12 * sizeof(float));
-    Bf[3][0] = Bf[3][1] = 0;
-    Bf[3][2] = -1;
+    Bf[3][0] = eye_p[0];
+    Bf[3][1] = eye_p[1];
+    Bf[3][2] = eye_p[2];
     Bf[3][3] = 1;
     olx_gl::loadMatrix(&Bf[0][0]);
     olx_gl::scale(GetBasis().GetZoom());
-    vec3d t = GetBasis().GetCenter();// *GetBasis().GetMatrix();
-    t += GetBasis().GetMatrix()*vec3d(0, 0, -2 / GetBasis().GetZoom());
+    vec3d t = GetBasis().GetCenter();
+    t += GetBasis().GetMatrix()*vec3d(0, 0, -(NearPlane+1) / GetBasis().GetZoom());
     olx_gl::translate(t);
   }
   else {
     olx_gl::loadIdentity();
   }
-  //glDepthRange(1, 0);
 }
 //..............................................................................
 void TGlRenderer::SetupStencilFoInterlacedDraw(bool even) {
@@ -600,13 +635,7 @@ void TGlRenderer::Draw() {
     olx_gl::colorMask(true, true, true, true);
     olx_gl::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     // right eye
-    mat3d rm1, rm2;
-    double ang = StereoAngle * M_PI / 180;
-    mat3d om = GetBasis().GetMatrix();
-    olx_create_rotation_matrix(rm1, vec3d(0,1,0), cos(ang), sin(ang));
-    olx_create_rotation_matrix(rm2, vec3d(0, 1, 0), cos(-ang), sin(-ang));
-    //GetBasis().RotateY(ry + StereoAngle);
-    GetBasis().SetMatrix(om*rm1);
+    GetBasis().RotateY(ry + StereoAngle);
     olx_gl::colorMask(
       StereoRightColor[0] != 0,
       StereoRightColor[1] != 0,
@@ -616,8 +645,7 @@ void TGlRenderer::Draw() {
     olx_gl::colorMask(true, true, true, true);
     olx_gl::accum(GL_LOAD, 1);
     // left eye
-    //GetBasis().RotateY(ry - StereoAngle);
-    GetBasis().SetMatrix(om*rm2);
+    GetBasis().RotateY(ry - StereoAngle);
     olx_gl::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     olx_gl::colorMask(
       StereoLeftColor[0] != 0,
@@ -628,8 +656,7 @@ void TGlRenderer::Draw() {
     olx_gl::colorMask(true, true, true, true);
     olx_gl::accum(GL_ACCUM, 1);
     olx_gl::accum(GL_RETURN, 1.0);
-    //GetBasis().RotateY(ry);
-    GetBasis().SetMatrix(om);
+    GetBasis().RotateY(ry);
   }
   else if (StereoFlag == glStereoHardware) {
     const double ry = GetBasis().GetRY();

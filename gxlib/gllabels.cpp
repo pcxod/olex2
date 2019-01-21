@@ -78,9 +78,7 @@ void TXGlLabels::RenderLabel(const vec3d &crd, const olxstr &label,
         }
       }
     }
-    vec3d V = crd + Parent.GetBasis().GetCenter();
-    V *= Parent.GetBasis().GetMatrix();
-    V *= Parent.GetBasis().GetZoom();
+    vec3d V = Parent.Project(crd);
     if( Parent.GetExtraZoom() > 1 )  {
       V *= (1./Parent.GetScale());
       Parent.DrawTextSafe(vec3d(V[0]+0.01, V[1]+0.01, Z), label, rc.font);
@@ -91,9 +89,7 @@ void TXGlLabels::RenderLabel(const vec3d &crd, const olxstr &label,
     }
   }
   else  {  // vector font?
-    vec3d T = Parent.GetBasis().GetCenter() + crd;
-    T *= Parent.GetBasis().GetMatrix();
-    T *= Parent.GetBasis().GetZoom();
+    vec3d T = Parent.Project(crd);
     T[2] = Z;
     rc.font.DrawVectorText(T, label, rc.vectorZoom);
   }
