@@ -17,6 +17,7 @@
 #include "glscene.h"
 #include "ebasis.h"
 #include "actions.h"
+#include "ematrix.h"
 #include "threex3.h"
 #include "library.h"
 #include "tptrlist.h"
@@ -85,7 +86,8 @@ class TGlRenderer : public AActionHandler {
   bool FSceneComplete, Selecting;
 //__________________ perspective related stuff
   bool FPerspective;
-  float FPAngle,
+  ematd PerspectiveMatrix;
+  double FPAngle,
   /* zoom is used when drawn on a larger canvas, so that objects, which are
   draw in identity mode can fix their position
   */
@@ -129,7 +131,7 @@ protected:
   char *FGlImage;
   int GlImageHeight, GlImageWidth;
   uint8_t StereoFlag;
-  double StereoAngle;
+  double StereoAngle, NearPlane, FarPlane;
   TGlOption StereoLeftColor, StereoRightColor;
   mutable double SceneDepth;
   bool ATI, GLUSelection;
@@ -188,11 +190,12 @@ public:
     &OnClear;
 
   void Resize(size_t w, size_t h);
-  void Resize(int Left, int Top, size_t w, size_t h, float Zoom);
+  void Resize(int Left, int Top, size_t w, size_t h, double Zoom);
 // perspective stuff
   void EnablePerspective(bool Set);
   bool IsPerspectiveEnabled() const {  return FPerspective; }
   void SetPerspectiveAngle(double Angle);
+  vec3d Project(const vec3d &v) const;
   //fog stuff
   void EnableFog(bool Set);
   bool IsFogEnabled() const {  return Fog; }
@@ -208,7 +211,7 @@ public:
   DefPropBIsSet(GLUSelection)
   double GetLineWidth() const {  return LineWidth;  }
   void SetLineWidth(double v);
-  float GetExtraZoom() const {  return FZoom;  }
+  double GetExtraZoom() const {  return FZoom;  }
   bool ForcePlain() const { return IsColorStereo() || IsSelecting(); }
   bool IsColorStereo() const {  return StereoFlag==glStereoColor;  }
   bool IsCrossStereo() const {  return StereoFlag==glStereoCross;  }
@@ -232,9 +235,7 @@ public:
   /* to be used to calculate raster positions (z) */
   double GetMaxRasterZ() const {  return MaxRasterZ;  }
   // calculates the Z value for the given offset
-  double CalcRasterZ(double off) const {
-    return olx_sign(GetMaxRasterZ())*(olx_abs(GetMaxRasterZ()) - off);
-  }
+  double CalcRasterZ(double off) const;
   /* this function provides extra value for use with rasters, when the scene is
   zoomed using LookAt function
   */

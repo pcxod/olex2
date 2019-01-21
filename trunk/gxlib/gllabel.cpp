@@ -35,8 +35,9 @@ void TXGlLabel::Create(const olxstr& cName)  {
   text_rect = GetFont().GetTextRect(FLabel);
   if( GPC.PrimitiveCount() != 0 )  {
     TGlPrimitive* glpText = GPC.FindPrimitiveByName("Text");
-    if( glpText != NULL )
+    if (glpText != 0) {
       glpText->SetFont(&GetFont());
+    }
     return;
   }
 
@@ -59,16 +60,14 @@ void TXGlLabel::SetLabel(const olxstr& L)  {
 //..............................................................................
 vec3d TXGlLabel::GetRasterPosition() const {
   const double ScaleR = Parent.GetExtraZoom()*Parent.GetViewZoom();
-  vec3d off = GetCenter()*Parent.GetBasis().GetZoom();
-  if (Transformer != NULL) {
+  const double Scale = Parent.GetScale()*ScaleR;
+  vec3d off = Parent.GetBasis().GetMatrix()*GetCenter();
+  if (Transformer != 0) {
     vec3d T = Transformer->ForRaster(*this);
     return Transformer->AdjustZ(T += off*ScaleR);
   }
-  vec3d T(Parent.GetBasis().GetCenter()+GetOffset());
-  T *= Parent.GetBasis().GetMatrix();
-  T *= Parent.GetBasis().GetZoom();
+  vec3d T = Parent.Project(GetOffset() + off*Scale);
   T /= Parent.GetScale();
-  T += off*ScaleR;
   T[2] = Parent.CalcRasterZ(0.001);
   return T;
 }
@@ -77,15 +76,12 @@ vec3d TXGlLabel::GetVectorPosition() const {
   vec3d off = Parent.GetBasis().GetMatrix()*GetCenter();
   const double Scale = Parent.GetScale()*Parent.GetExtraZoom()
     *Parent.GetViewZoom();
-  if( Transformer != NULL )  {
+  if (Transformer != 0) {
     vec3d T = Transformer->ForVector(*this);
     return Transformer->AdjustZ(
       T += (off*Parent.GetBasis().GetMatrix())*(Scale*Parent.GetBasis().GetZoom()));
   }
-  vec3d T(Parent.GetBasis().GetCenter()+GetOffset());
-  T += off*Scale;
-  T *= Parent.GetBasis().GetMatrix();
-  T *= Parent.GetBasis().GetZoom();
+  vec3d T = Parent.Project(GetOffset() + off*Scale);
   T[2] = Parent.CalcRasterZ(0.001);
   return T;
 }
