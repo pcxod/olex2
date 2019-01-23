@@ -195,7 +195,7 @@ public:
         else {
           new_l << 'a';
         }
-        na.SetLabel(lck.CheckLabel(na, new_l), false);
+        na.SetLabel(lck.CheckLabel(na, new_l, 0, true), false);
         if (na.GetType() == iQPeakZ) {
           na.SetQPeak(1.0);
         }

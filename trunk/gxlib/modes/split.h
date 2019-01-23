@@ -173,7 +173,7 @@ public:
         else {
           new_l << 'a';
         }
-        xa.CAtom().SetLabel(lck.CheckLabel(xa.CAtom(), new_l), true);
+        xa.CAtom().SetLabel(lck.CheckLabel(xa.CAtom(), new_l, 0, true), true);
         if (xa.GetType() == iQPeakZ) {
           xa.CAtom().SetQPeak(1.0);
         }

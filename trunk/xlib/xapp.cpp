@@ -324,7 +324,7 @@ void TXApp::NameHydrogens(TSAtom& SA, TAsymmUnit::TLabelChecker &lc,
       }
       if (true) {
         if (lablInc > 25) {
-          Labl = lc.CheckLabel(al[j]->CAtom(), Labl);
+          Labl = lc.CheckLabel(al[j]->CAtom(), Labl, 0, true);
           continue;
         }
         olxstr appx;
@@ -346,7 +346,7 @@ void TXApp::NameHydrogens(TSAtom& SA, TAsymmUnit::TLabelChecker &lc,
           }
           const char next_ch = 'a' + lablInc++;
           if (next_ch > 'z') {
-            Labl = lc.CheckLabel(al[j]->CAtom(), Labl);
+            Labl = lc.CheckLabel(al[j]->CAtom(), Labl, 0, true);
             break;
           }
           else {

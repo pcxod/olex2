@@ -727,7 +727,7 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroData &Error) {
   TAsymmUnit::TLabelChecker lc(au);
   for (size_t i = 0; i < au.AtomCount(); i++) {
     TCAtom &a = au.GetAtom(i);
-    au.GetAtom(i).SetLabel(lc.CheckLabel(a, a.GetLabel(), false), false);
+    au.GetAtom(i).SetLabel(lc.CheckLabel(a, a.GetLabel(), 0, false), false);
   }
 
   Error.SetRetVal(AtomCount == 0 ? 0

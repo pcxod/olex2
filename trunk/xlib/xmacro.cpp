@@ -9481,7 +9481,7 @@ void XLibMacros::macSplit(TStrObjList &Cmds, const TParamList &Options,
     CA1.SetPart(1);
     CA1.ccrd() += direction;
     A.ccrd() = CA1.ccrd();
-    CA1.SetLabel(lc.CheckLabel(CA1, lbl + 'a'), true);
+    CA1.SetLabel(lc.CheckLabel(CA1, lbl + 'a', 0, true), false);
     // link occupancies
     rm.Vars.AddVarRef(var, CA1, catom_var_name_Sof, relation_AsVar, 1);
     CA1.SetOccu(0.5*sp);
@@ -9489,7 +9489,7 @@ void XLibMacros::macSplit(TStrObjList &Cmds, const TParamList &Options,
     TCAtom& CA2 = *CA;
     CA2.SetPart(2);
     CA2.ccrd() -= direction;
-    CA2.SetLabel(lc.CheckLabel(CA2, lbl + 'b'), true);
+    CA2.SetLabel(lc.CheckLabel(CA2, lbl + 'b', 0, true), false);
     // link occupancies
     rm.Vars.AddVarRef(var, CA2, catom_var_name_Sof, relation_AsOneMinusVar, 1);
     CA2.SetOccu(0.5*sp);

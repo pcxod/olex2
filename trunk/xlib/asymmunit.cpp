@@ -711,7 +711,7 @@ double TAsymmUnit::MolWeight() const {
   return Mw;
 }
 //..............................................................................
-void TAsymmUnit::AddMatrix(const smatd& a)  {
+void TAsymmUnit::AddMatrix(const smatd& a) {
   if (a.r.IsI()) {
     Matrices.InsertCopy(0, a);
   }
@@ -732,14 +732,16 @@ TCAtomPList::const_list_type TAsymmUnit::FindDiplicateLabels(
   }
 
   for (size_t i = 0; i < atoms.Count(); i++) {
-    const TCAtom &a = *atoms.GetValue(i);
+    TCAtom &a = *atoms.GetValue(i);
     const TResidue& resi = GetResidue(a.GetResiId());
     for (size_t j = 0; j < resi.Count(); j++) {
       TCAtom& b = resi[j];
       if (b.GetTag() == 0 || b.IsDeleted()) {
         continue;
       }
-      if (!rename_parts && (b.GetPart() != a.GetPart())) {
+      if (!rename_parts && (b.GetPart() != a.GetPart() &&
+        a.GetPart() != 0 && b.GetPart() != 0))
+      {
         continue;
       }
       if (b.GetLabel().Equalsi(a.GetLabel())) {
@@ -771,17 +773,22 @@ TAsymmUnit::TLabelChecker::TLabelChecker(const TAsymmUnit &au)
 }
 //..............................................................................
 olxstr TAsymmUnit::TLabelChecker::CheckLabel(const TCAtom &ca,
-  const olxstr &Label, bool check_atom) const
+  const olxstr &Label, const cm_Element *elm, bool check_atom) const
 {
   olxstr LB = Label.Length() > max_label_length ? Label.SubStringTo(2) : Label;
   label_dict_t &labels = r_labels.Get(ca.GetResiId());
-  if (!labels.HasKey(LB.ToLowerCase())) {
-    return LB;
+  {
+    size_t idx = labels.IndexOf(LB.ToLowerCase());
+    if (idx == InvalidIndex ||
+      (check_atom && labels.GetValue(idx) == ca.GetId()))
+    {
+      return LB;
+    }
   }
-  LB = ca.GetType().symbol;
+  LB = elm == 0 ? ca.GetType().symbol : elm->symbol;
   size_t off = LB.Length();
   LB << '1';
-  TArrayList<char> seq(max_label_length - off, olx_list_init::value(' '));
+  TArrayList<char> seq(max_label_length - off, olx_list_init::value('0'));
   seq[0] = '1';
   size_t sid = 0;
   size_t key_idx;
@@ -789,32 +796,56 @@ olxstr TAsymmUnit::TLabelChecker::CheckLabel(const TCAtom &ca,
     if (check_atom && labels.GetValue(key_idx) == ca.GetId()) {
       return LB;
     }
-    if (seq[sid] == ' ') {
-      seq[sid] = '0';
-    }
-    else if (seq[sid] == '9') {
-      if (sid > 0) {
-        seq[sid] = 'a';
-      }
-      else {
-        if (++sid >= seq.Count()) {
-          throw TFunctionFailedException(__OlxSourceInfo, "cannot create label");
-        }
-        LB << ' ';
-        continue;
-      }
-    }
-    else if (seq[sid] == 'z') {
+    if (sid == 0 && seq[sid] == '9') {
       if (++sid >= seq.Count()) {
         throw TFunctionFailedException(__OlxSourceInfo, "cannot create label");
       }
+      seq[0] = '1';
       LB << ' ';
-      continue;
+    }
+    else if (seq[sid] == 'z') {
+      size_t inc_idx = InvalidIndex;
+      for (size_t i = sid - 1; i != InvalidIndex; i--) {
+        if (i > 0) {
+          if (seq[i] < 'z') {
+            seq[i]++;
+            inc_idx = i;
+            break;
+          }
+        }
+        else if (seq[i] < '9') {
+          seq[i]++;
+          inc_idx = i;
+          break;
+        }
+      }
+      if (inc_idx == InvalidIndex) {
+        if (++sid >= seq.Count()) {
+          throw TFunctionFailedException(__OlxSourceInfo, "cannot create label");
+        }
+        seq[0] = '1';
+        for (size_t i = 1; i <= sid; i++) {
+          seq[sid] = '0';
+        }
+        LB << ' ';
+      }
+      else {
+        for (size_t i = inc_idx + 1; i <= sid; i++) {
+          seq[i] = '0';
+        }
+      }
     }
     else {
-      seq[sid]++;
+      if (seq[sid] == '9') {
+        seq[sid] = 'a';
+      }
+      else {
+        seq[sid]++;
+      }
     }
-    LB.Set(sid+off,  seq[sid]);
+    for (size_t i = 0; i <= sid; i++) {
+      LB.Set(off+i, seq[i]);
+    }
   }
   return LB;
 }
