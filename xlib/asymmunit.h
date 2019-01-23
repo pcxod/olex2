@@ -371,7 +371,8 @@ public:
     size_t max_label_length;
     TLabelChecker(const TAsymmUnit &au);
     olxstr CheckLabel(const TCAtom &ca, const olxstr &Label,
-      bool check_atom=true) const;
+      const cm_Element *new_element,
+      bool check_atom) const;
     void SetLabel(TCAtom &a, const olxstr& label, bool update_type=false);
   };
 };
