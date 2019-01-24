@@ -143,6 +143,10 @@ void GXLibMacros::Export(TLibrary& lib) {
     EmptyString(),
     fpNone|fpTwo|psFileLoaded,
     "Changes the H-atom and H-bonds visibility");
+  gxlib_InitMacro(Detach,
+    "u-re-attaches all or given atoms",
+    fpAny | psFileLoaded,
+    "Detaches/re-attaches given/selected atoms from/to the model");
   gxlib_InitMacro(Info,
     "s-sorts the atom list&;p-coordinate precision [3]&;f-print fractional "
     "coordinates vs Cartesian [true]&;"
@@ -1308,34 +1312,34 @@ void GXLibMacros::macShowH(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &E)
 {
   TEBasis basis = app.GetRenderer().GetBasis();
-  if( Cmds.Count() == 2 )  {
+  if (Cmds.Count() == 2) {
     bool v = Cmds[1].ToBool();
-    if( Cmds[0] == 'a' )  {
-      if( v && !app.AreHydrogensVisible() )  {
+    if (Cmds[0] == 'a') {
+      if (v && !app.AreHydrogensVisible()) {
         app.SetHydrogensVisible(true);
       }
-      else if( !v && app.AreHydrogensVisible() )  {
+      else if (!v && app.AreHydrogensVisible()) {
         app.SetHydrogensVisible(false);
       }
     }
-    else if( Cmds[0] == 'b' )  {
-      if( v && !app.AreHBondsVisible() )  {
+    else if (Cmds[0] == 'b') {
+      if (v && !app.AreHBondsVisible()) {
         app.SetHBondsVisible(true);
       }
-      else if( !v && app.AreHBondsVisible() )  {
+      else if (!v && app.AreHBondsVisible()) {
         app.SetHBondsVisible(false);
       }
     }
   }
-  else  {
-    if( app.AreHydrogensVisible() && !app.AreHBondsVisible() )  {
+  else {
+    if (app.AreHydrogensVisible() && !app.AreHBondsVisible()) {
       app.SetHBondsVisible(true);
     }
-    else if( app.AreHydrogensVisible() && app.AreHBondsVisible() )  {
+    else if (app.AreHydrogensVisible() && app.AreHBondsVisible()) {
       app.SetHBondsVisible(false);
       app.SetHydrogensVisible(false);
     }
-    else if( !app.AreHydrogensVisible() && !app.AreHBondsVisible() )  {
+    else if (!app.AreHydrogensVisible() && !app.AreHBondsVisible()) {
       app.SetHydrogensVisible(true);
     }
   }
@@ -1343,6 +1347,22 @@ void GXLibMacros::macShowH(TStrObjList &Cmds, const TParamList &Options,
     app.AreHydrogensVisible(), EmptyString(), true);
   TStateRegistry::GetInstance().SetState(app.stateHydrogenBondsVisible,
     app.AreHBondsVisible(), EmptyString(), true);
+  app.GetRenderer().SetBasis(basis);
+}
+//.............................................................................
+void GXLibMacros::macDetach(TStrObjList &Cmds, const TParamList &Options,
+  TMacroData &E)
+{
+  TEBasis basis = app.GetRenderer().GetBasis();
+  bool reattach = Options.GetBoolOption('u');
+  TCAtomPList atoms = app.FindCAtoms(Cmds.Text(' '));
+  for (size_t i = 0; i < atoms.Count(); i++) {
+    atoms[i]->SetDetached(!reattach);
+  }
+  app.UpdateConnectivity();
+  if (app.AtomLegend().IsVisible()) {
+    app.AtomLegend().Update();
+  }
   app.GetRenderer().SetBasis(basis);
 }
 //.............................................................................
