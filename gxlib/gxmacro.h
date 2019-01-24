@@ -33,6 +33,7 @@ public:
   DefMacro(Labels)
   DefMacro(ShowH)
   DefMacro(ShowQ)
+  DefMacro(Detach)
   DefMacro(ShowP)
   DefMacro(ShowR)
   DefMacro(Cell)
