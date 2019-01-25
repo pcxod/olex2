@@ -552,14 +552,25 @@ void TCif::Initialize()  {
           label.SetLength(p_idx);
         }
         olxstr rn = label.SubStringFrom(ui+1);
-        if (rn.IsInt()) {
-          int rni = rn.ToInt();
-          resi = GetAsymmUnit().FindResidue(rni);
-          if (resi == 0) {
-            resi = &GetAsymmUnit().NewResidue(
-              olxstr("unk") << GetAsymmUnit().ResidueCount(), rni);
+        if (rn.IsInt() || rn.Contains(':')) {
+          olxch chain_id = TResidue::NoChainId();
+          int r_num = TResidue::NoResidue;
+          size_t cidx = rn.IndexOf(':');
+          if (cidx == 1) {
+            chain_id = rn.CharAt(0);
+            r_num = rn.SubStringFrom(cidx + 1).ToInt();
           }
-          label.SetLength(ui);
+          else if (rn.IsInt()) {
+            r_num = rn.ToInt();
+          }
+          if (r_num != TResidue::NoResidue) {
+            resi = GetAsymmUnit().FindResidue(chain_id, r_num);
+            if (resi == 0) {
+              resi = &GetAsymmUnit().NewResidue(
+                olxstr("unk") << GetAsymmUnit().ResidueCount(), r_num, r_num, chain_id);
+            }
+            label.SetLength(ui);
+          }
         }
       }
     }

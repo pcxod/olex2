@@ -88,8 +88,9 @@ void TAsymmUnit::Assign(const TAsymmUnit& C) {
 
   for (size_t i = 0; i < C.Residues.Count(); i++) {
     TResidue& resi = C.Residues[i];
-    NewResidue(resi.GetClassName(), resi.GetNumber(), resi.GetAlias()).
-      SetCapacity(resi.Count());
+    TResidue& nr = NewResidue(resi.GetClassName(), resi.GetNumber(),
+      resi.GetAlias(), resi.GetChainId());
+    nr.SetCapacity(resi.Count());
   }
   for (size_t i = 0; i < C.AtomCount(); i++) {
     NewAtom(&GetResidue(C.GetAtom(i).GetResiId())).SetId(i);
@@ -261,7 +262,9 @@ void TAsymmUnit::InitData() {
   }
 }
 //..............................................................................
-TResidue& TAsymmUnit::NewResidue(const olxstr& RClass, int number, int alias) {
+TResidue& TAsymmUnit::NewResidue(const olxstr& RClass, int number, int alias,
+  char chainId)
+{
   if (number == 0) {
     if (!RClass.IsEmpty()) {
       throw TInvalidArgumentException(__OlxSourceInfo,
@@ -283,11 +286,15 @@ TResidue& TAsymmUnit::NewResidue(const olxstr& RClass, int number, int alias) {
     }
     alias = ++number;
   }
-  TResidue *er = ResidueRegistry.Find(number, NULL);
-  if (er == NULL && alias != number) {
-    er = ResidueRegistry.Find(alias, NULL);
+  if (!ResidueRegistry.HasKey(chainId)) {
+    ResidueRegistry.Add(chainId);
   }
-  if (er != NULL) {
+  olx_pdict<int, TResidue*> &rd = ResidueRegistry[chainId];
+  TResidue *er = rd.Find(number, 0);
+  if (er == 0 && alias != number) {
+    er = rd.Find(alias, 0);
+  }
+  if (er != 0) {
     if (!er->GetClassName().Equalsi(RClass)) {
       if (er->IsEmpty()) {
         er->SetClassName(RClass);
@@ -304,9 +311,10 @@ TResidue& TAsymmUnit::NewResidue(const olxstr& RClass, int number, int alias) {
   TResidue &r = Residues.Add(
     new TResidue(*this, (uint32_t)Residues.Count() + 1, RClass, number, alias)
   );
-  ResidueRegistry(number, &r);
+  r.SetChainId(chainId);
+  rd(number, &r);
   if (alias != number) {
-    ResidueRegistry(alias, &r);
+    rd(alias, &r);
   }
   return r;
 }
@@ -318,9 +326,11 @@ ConstPtrList<TResidue> TAsymmUnit::FindResidues(const olxstr& resi) const {
   }
   else if (resi.IsNumber()) {
     int n = resi.ToInt();
-    TResidue *r = ResidueRegistry.Find(n, NULL);
-    if (r != 0) {
-      list.Add(r);
+    for (size_t cid = 0; cid < ResidueRegistry.Count(); cid++) {
+      TResidue *r = ResidueRegistry.GetValue(cid).Find(n, 0);
+      if (r != 0) {
+        list.Add(r);
+      }
     }
   }
   else {
@@ -348,6 +358,22 @@ TResidue* TAsymmUnit::NextResidue(const TResidue& r) const {
 //..............................................................................
 TResidue* TAsymmUnit::PrevResidue(const TResidue& r) const {
   return FindResidue(r.GetNumber()-1);
+}
+//..............................................................................
+TResidue* TAsymmUnit::FindResidue(char chainId, int num) const {
+  size_t cid = ResidueRegistry.IndexOf(chainId);
+  return cid == InvalidIndex ? 0 : ResidueRegistry.GetValue(cid).Find(num, 0);
+}
+//..............................................................................
+TResidue* TAsymmUnit::FindResidue(const olxstr &number) const {
+  size_t cidx = number.IndexOf(':');
+  if (cidx != InvalidIndex && cidx != 1) {
+    return 0;
+  }
+  if (cidx != InvalidIndex) {
+    return FindResidue(number.CharAt(0), number.SubStringFrom(cidx + 1).ToInt());
+  }
+  return FindResidue(TResidue::NoChainId(), number.ToInt());
 }
 //..............................................................................
 void TAsymmUnit::Release(const TPtrList<TResidue> &rs) {
@@ -396,9 +422,10 @@ void TAsymmUnit::Restore(const TPtrList<TResidue> &rs) {
   }
   for (size_t i = 0; i < rs.Count(); i++) {
     Residues.Add(rs[i]);
-    ResidueRegistry.Add(rs[i]->GetNumber(), rs[i]);
+    olx_pdict<int, TResidue*> &rd = ResidueRegistry.Add(rs[i]->GetChainId());
+    rd.Add(rs[i]->GetNumber(), rs[i]);
     if (rs[i]->HasAlias()) {
-      ResidueRegistry.Add(rs[i]->GetAlias(), rs[i]);
+      rd.Add(rs[i]->GetAlias(), rs[i]);
     }
   }
   BubbleSorter::Sort(Residues);
@@ -419,12 +446,14 @@ void TAsymmUnit::AssignResidues(const TAsymmUnit& au) {
   ResidueRegistry.Clear();
   MainResidue.Clear();
   MainResidue.SetCapacity(au.MainResidue.Count());
-  for (size_t i=0; i < au.MainResidue.Count(); i++)
+  for (size_t i = 0; i < au.MainResidue.Count(); i++) {
     MainResidue._Add(*CAtoms[au.MainResidue[i].GetId()]);
+  }
   for (size_t i=0; i < au.Residues.Count(); i++) {
     TResidue& that_resi = au.Residues[i];
     TResidue& this_resi = NewResidue(
-      that_resi.GetClassName(), that_resi.GetNumber(), that_resi.GetAlias());
+      that_resi.GetClassName(), that_resi.GetNumber(), that_resi.GetAlias(),
+      that_resi.GetChainId());
     this_resi.SetCapacity(that_resi.Count());
     for (size_t j = 0; j < that_resi.Count(); j++) {
       this_resi._Add(*CAtoms[that_resi[j].GetId()]);
@@ -492,9 +521,8 @@ TCAtom * TAsymmUnit::FindCAtom(const olxstr &Label, TResidue* resi)  const {
   size_t us_ind = lb.IndexOf('_');
   if (us_ind != InvalidIndex && ++us_ind < lb.Length()) {
     olxstr sfx = lb.SubStringFrom(us_ind);
-    if (sfx.IsNumber()) {  // residue number?
-      int resi_num = lb.SubStringFrom(us_ind).ToInt();
-      resi = ResidueRegistry.Find(resi_num, resi);
+    if (sfx.IsNumber() || sfx.Contains(':')) {  // residue number?
+      resi = FindResidue(sfx);
       if (resi == 0) {
         return 0;
       }
@@ -508,7 +536,7 @@ TCAtom * TAsymmUnit::FindCAtom(const olxstr &Label, TResidue* resi)  const {
         olxstr resi_str = sfx.SubString(0, 1);
         if (resi_str.IsNumber()) {
           int resi_num = resi_str.ToInt();
-          resi = ResidueRegistry.Find(resi_num, resi);
+          resi = FindResidue(TResidue::NoChainId(), resi_num);
           if (resi == 0) {
             return 0;
           }
@@ -1057,6 +1085,9 @@ void TAsymmUnit::ToDataItem(TDataItem& item) const {
       if (r.HasAlias()) {
         ri->AddField("alias", r.GetAlias());
       }
+      if (r.HasChainId()) {
+        ri->AddField("chainId", r.GetChainId());
+      }
     }
     olxstr atom_di = "atom";
     for (size_t j = 0; j < r.Count(); j++) {
@@ -1139,6 +1170,7 @@ PyObject* TAsymmUnit::PyExport(TPtrList<PyObject>& _atoms, bool export_conn) {
       PythonExt::SetDictItem(ri, "class", PythonExt::BuildString(r.GetClassName()));
       PythonExt::SetDictItem(ri, "alias", Py_BuildValue("i", r.GetAlias()));
       PythonExt::SetDictItem(ri, "number", Py_BuildValue("i", r.GetNumber()));
+      PythonExt::SetDictItem(ri, "chainId", Py_BuildValue("b", r.GetChainId()));
     }
     atom_cnt = 0;
     for (size_t j = 0; j < r.Count(); j++) {
@@ -1162,7 +1194,7 @@ PyObject* TAsymmUnit::PyExport(TPtrList<PyObject>& _atoms, bool export_conn) {
 }
 #endif
 //..............................................................................
-void TAsymmUnit::FromDataItem(TDataItem& item)  {
+void TAsymmUnit::FromDataItem(TDataItem& item) {
   Clear();
   TDataItem& cell = item.GetItemByName("cell");
   TEValueD evalue;
@@ -1188,13 +1220,15 @@ void TAsymmUnit::FromDataItem(TDataItem& item)  {
       TSymmParser::SymmToMatrix(symm.GetItemByIndex(i).GetValue()));
   }
   TDataItem& resis = item.GetItemByName("residues");
-  for( size_t i=0; i < resis.ItemCount(); i++ )  {
+  for (size_t i = 0; i < resis.ItemCount(); i++) {
     TDataItem& resi = resis.GetItemByIndex(i);
-    TResidue& r = (i==0 ? MainResidue
+    TResidue& r = (i == 0 ? MainResidue
       : NewResidue(resi.GetFieldByName("class_name"),
         resi.GetName().ToInt(),
-        resi.FindField("alias",resi.GetName()).ToInt()));
-    for( size_t j=0; j < resi.ItemCount(); j++ )  {
+        resi.FindField("alias", resi.GetName()).ToInt(),
+        resi.FindField("chainId", TResidue::NoChainId()).CharAt(0)
+        ));
+    for (size_t j = 0; j < resi.ItemCount(); j++) {
       atom_items.Add(resi.GetItemByIndex(j));
       NewAtom(&r);
     }

@@ -794,32 +794,63 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
   }
   else if (Toks[0].Equalsi("RESI")) {
     _ProcessAfix0(cx);
-    if (Toks.Count() < 2) {
+    if (Toks.Count() < 2 || Toks.Count() > 4) {
       throw TInvalidArgumentException(__OlxSourceInfo,
         "number of arguments for RESI");
     }
-    if (Toks[1].IsNumber()) {
-      int n = Toks[1].ToInt();
-      if (Toks.Count() > 2) {
-        if (Toks[2].IsNumber()) {
-          cx.Resi = &cx.au.NewResidue(EmptyString(), n,
-            Toks[2].ToInt());
-        }
-        else {
-          cx.Resi = &cx.au.NewResidue(Toks[2], n, n);
-        }
+    olxstr chainId(' '), className, number, alias;
+    if (Toks.Count() == 2) {
+      if (Toks[1].Contains(':')) {
+        number = Toks[1];
       }
       else {
-        cx.Resi = &cx.au.NewResidue(EmptyString(), n, n);
+        className = Toks[1];
       }
     }
     else {
-      if (Toks.Count() < 3 || !Toks[2].IsNumber()) {
-        throw TInvalidArgumentException(__OlxSourceInfo, "number for RESI");
+      if (Toks.Count() == 4) {
+        alias = Toks[3];
       }
-      int n = Toks[2].ToInt();
-      cx.Resi = &cx.au.NewResidue(Toks[1], n,
-        (Toks.Count() > 3) ? Toks[3].ToInt() : n);
+      if (Toks[1].Contains(':') || Toks[1].IsNumber()) {
+        number = Toks[1];
+        if (Toks[2].IsNumber()) {
+          if (Toks.Count() == 3) {
+            alias = Toks[2];
+          }
+          else {
+            throw TInvalidArgumentException(__OlxSourceInfo,
+              "RESI class name");
+          }
+        }
+        else {
+          className = Toks[2];
+        }
+      }
+      else if (Toks[2].Contains(':') || Toks[2].IsNumber()) {
+        number = Toks[2];
+        className= Toks[1];
+      }
+    }
+
+    size_t cidx = number.IndexOf(':');
+    if (cidx != InvalidIndex) {
+      if (cidx != 1) {
+        throw TInvalidArgumentException(__OlxSourceInfo,
+          "RESI chain ID");
+      }
+      int n = number.SubStringFrom(cidx+1).ToInt();
+      cx.Resi = &cx.au.NewResidue(className, n, n, number.CharAt(0));
+    }
+    else {
+      int n = number.IsEmpty() ? TResidue::NoResidue : number.ToInt();
+      cx.Resi = &cx.au.NewResidue(className, n, n, TResidue::NoChainId());
+    }
+    if (alias.IsNumber()) {
+      cx.Resi->SetAlias(alias.ToInt());
+    }
+    else if (!alias.IsEmpty()) {
+      throw TInvalidArgumentException(__OlxSourceInfo,
+        "RESI alias number");
     }
   }
   else if (Toks[0].Equalsi("SFAC")) {

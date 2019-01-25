@@ -57,7 +57,7 @@ protected:
   TActionQList Actions;
   TTypeListExt<TResidue, IOlxObject> Residues;
   TResidue& MainResidue;
-  olx_pdict<int, TResidue*> ResidueRegistry;
+  olx_pdict<olxch, olx_pdict<int, TResidue*> > ResidueRegistry;
   class RefinementModel* RefMod;
   static const olxstr IdName;
   void _UpdateQPeaks();
@@ -172,10 +172,7 @@ public:
   void Clear();
   //creates a new residue
   TResidue& NewResidue(const olxstr& RClass, int number,
-    int alias);
-  TResidue& NewResidue(const olxstr& RClass, int number) {
-    return NewResidue(RClass, number, number);
-  }
+    int alias, char chainId);
   size_t ResidueCount() const {  return Residues.Count()+1;  }
   /* 0 - main residue */
   TResidue& GetResidue(size_t i) const {
@@ -183,9 +180,8 @@ public:
   }
   TResidue* NextResidue(const TResidue& r) const;
   TResidue* PrevResidue(const TResidue& r) const;
-  TResidue* FindResidue(int num) const {
-    return ResidueRegistry.Find(num, NULL);
-  }
+  TResidue* FindResidue(char chainId, int num) const;
+  TResidue* FindResidue(const olxstr &number) const;
   // releases the given residues
   void Release(const TPtrList<TResidue> &rs);
   /* releases the given residues; after the residues restrored, they are sorted
