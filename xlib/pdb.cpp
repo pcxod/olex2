@@ -48,6 +48,9 @@ void TPdb::SaveToStrings(TStrList& Strings) {
     vec3d crd = GetAsymmUnit().Orthogonalise(a.ccrd());
     TResidue &r = GetAsymmUnit().GetResidue(a.GetResiId());
     olxstr r_name = r.GetClassName();
+    if (r_name.Length() > 3) {
+      r_name.SetLength(3);
+    }
     olxcstr r_num, p_num(' ');
     if (r.GetId() != 0) {
       r_num = r.GetNumber();
@@ -56,11 +59,12 @@ void TPdb::SaveToStrings(TStrList& Strings) {
     if (p != 0) {
       p_num[0] = ('A' + p - 1);
     }
-    sprintf(bf(), "ATOM  %5d %4s%1s%3s  %4s    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s  ",
+    sprintf(bf(), "ATOM  %5d %4s%1s%3s %1c%4s    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s  ",
       (int)(i + 1),
       label.c_str(),
       p_num.c_str(),
       r_name.c_str(),
+      r.GetChainId(),
       r_num.c_str(),
       crd[0],
       crd[1],
@@ -194,7 +198,8 @@ void TPdb::LoadFromStrings(const TStrList& Strings) {
         int r_num = toks[6].ToInt();
         resi = GetAsymmUnit().FindResidue(r_num);
         if (resi == 0) {
-          resi = &GetAsymmUnit().NewResidue(toks[4].TrimWhiteChars(), r_num);
+          resi = &GetAsymmUnit().NewResidue(toks[4].TrimWhiteChars(), r_num, r_num,
+            toks[5].CharAt(0));
         }
       }
       TCAtom& CA = GetAsymmUnit().NewAtom(resi);
@@ -275,7 +280,8 @@ bool TPdb::Adopt(TXFile& XF, int) {
   GetAsymmUnit().InitMatrices();
   for (size_t i = 1; i < XF.GetAsymmUnit().ResidueCount(); i++) {
     TResidue &r = XF.GetAsymmUnit().GetResidue(i);
-    GetAsymmUnit().NewResidue(r.GetClassName(), r.GetNumber(), r.GetAlias());
+    GetAsymmUnit().NewResidue(r.GetClassName(), r.GetNumber(),
+      r.GetAlias(), r.GetChainId());
   }
 
   const ASObjectProvider& objects = XF.GetLattice().GetObjects();
@@ -286,8 +292,8 @@ bool TPdb::Adopt(TXFile& XF, int) {
     }
     TResidue *r = 0;
     if (sa.CAtom().GetResiId() != 0) {
-      r = GetAsymmUnit().FindResidue(
-        XF.GetAsymmUnit().GetResidue(sa.CAtom().GetResiId()).GetNumber());
+      TResidue &ar = XF.GetAsymmUnit().GetResidue(sa.CAtom().GetResiId());
+      r = GetAsymmUnit().FindResidue(ar.GetChainId(), ar.GetNumber());
     }
     TCAtom& a = GetAsymmUnit().NewAtom(r);
     a.SetLabel(sa.GetLabel(), false);

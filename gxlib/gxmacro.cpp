@@ -552,12 +552,13 @@ void GXLibMacros::macName(TStrObjList &Cmds, const TParamList &Options,
   else if (Cmds.Count() > 1 && Cmds[0].Equalsi("resi")) {
     if (Cmds.Count() == 3 && Cmds[1].IsNumber() && Cmds[2].IsNumber()) {
       TAsymmUnit & au = app.XFile().GetAsymmUnit();
-      TResidue *r = au.FindResidue(Cmds[1].ToInt());
+      TResidue *r = au.FindResidue(Cmds[1]);
       if (r == 0) {
         Error.ProcessingError(__OlxSrcInfo, "could not locate specified residue");
         return;
       }
-      TResidue& resi = au.NewResidue(r->GetClassName(), Cmds[2].ToInt());
+      int nn = Cmds[2].ToInt();
+      TResidue& resi = au.NewResidue(r->GetClassName(), nn, nn, r->GetChainId());
       if (!resi.IsEmpty()) {
         TBasicApp::NewLogEntry(logWarning) <<
           "Warning - appending atoms to existing, non-empty residue!";
@@ -1320,6 +1321,22 @@ void GXLibMacros::macShowH(TStrObjList &Cmds, const TParamList &Options,
       }
       else if (!v && app.AreHydrogensVisible()) {
         app.SetHydrogensVisible(false);
+      }
+      TGXApp::AtomIterator ai = app.GetAtoms();
+      while (ai.HasNext()) {
+        TXAtom &a = ai.Next();
+        if (a.GetType() == iHydrogenZ && !a.IsDeleted()) {
+          a.SetVisible(v);
+        }
+      }
+      TGXApp::BondIterator bi = app.GetBonds();
+      while (bi.HasNext()) {
+        TXBond &b = bi.Next();
+        if (!b.IsDeleted() && 
+          (b.A().GetType() == iHydrogenZ || b.B().GetType() == iHydrogenZ))
+        {
+          b.SetVisible(v);
+        }
       }
     }
     else if (Cmds[0] == 'b') {

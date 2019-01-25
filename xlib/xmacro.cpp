@@ -9381,11 +9381,13 @@ void XLibMacros::macRESI(TStrObjList &Cmds, const TParamList &Options,
         fragments::fragment *f = (fi == 0 ? &fr : &frags[fi - 1]);
         TResidue *resi_;
         if (resi_number == TResidue::NoResidue) {
-          resi_ = &au.NewResidue(resi_class, TResidue::NoResidue);
+          resi_ = &au.NewResidue(resi_class, TResidue::NoResidue,
+            TResidue::NoResidue, TResidue::NoChainId());
           resi_number = resi_->GetNumber() + 1;
         }
         else {
-          resi_ = &au.NewResidue(resi_class, resi_number++);
+          int rn = resi_number++;
+          resi_ = &au.NewResidue(resi_class, rn, rn, TResidue::NoChainId());
         }
         TResidue &resi = *resi_;
         resi.SetCapacity(f->count());
@@ -9416,8 +9418,13 @@ void XLibMacros::macRESI(TStrObjList &Cmds, const TParamList &Options,
       }
     }
     else {
+      olxstr ch_id = Options.FindValue('c', TResidue::NoChainId());
+      if (ch_id.IsEmpty()) {
+        ch_id = TResidue::NoChainId();
+      }
       TResidue& resi = au.NewResidue(resi_class, resi_number,
-        Options.FindValue('a', resi_number).ToInt());
+        Options.FindValue('a', resi_number).ToInt(),
+        ch_id.CharAt(0));
       if (!resi.IsEmpty()) {
         TBasicApp::NewLogEntry(logWarning) <<
           "Warning - appending atoms to existing, non-empty residue!";

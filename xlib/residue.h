@@ -15,8 +15,17 @@ BeginXlibNamespace()
 
 /* number and alias are unique numbers */
 class TResidue : public IOlxObject {
+public:
+  enum {
+    NoResidue = -100000
+  };
+  static char NoChainId() {
+    return ' ';
+  }
+private:
   TAsymmUnit& Parent;
   uint32_t Id;
+  char ChainId;
   olxstr ClassName;
   int Number, Alias;
   TCAtomPList Atoms;
@@ -42,21 +51,23 @@ protected:
   }
 public:
   TResidue(TAsymmUnit& parent, uint32_t id)
-    : Parent(parent), Id(id), Number(0), Alias(0)
+    : Parent(parent), Id(id), ChainId(' '), Number(0), Alias(0)
   {}
   TResidue(TAsymmUnit& parent, uint32_t id, const olxstr& cl,
     int number = 0)
-    : Parent(parent), Id(id), ClassName(cl), Number(number), Alias(number)
+    : Parent(parent), Id(id), ChainId(' '), ClassName(cl), Number(number), Alias(number)
   {}
   TResidue(TAsymmUnit& parent, uint32_t id, const olxstr& cl,
     int number, int alias)
-    : Parent(parent), Id(id), ClassName(cl), Number(number), Alias(alias)
+    : Parent(parent), Id(id), ChainId(' '), ClassName(cl), Number(number), Alias(alias)
   {}
   //
   DefPropC(olxstr, ClassName)
-    DefPropC(int, Alias)
-    DefPropP(int, Number)
-    bool HasAlias() const { return Number != Alias; }
+  DefPropC(int, Alias)
+  DefPropP(int, Number)
+  DefPropP(char, ChainId)
+  bool HasChainId() const { return ChainId != ' '; }
+  bool HasAlias() const { return Number != Alias; }
   int Compare(const TResidue &r) const {
     return olx_cmp(GetNumber(), r.GetNumber());
   }
@@ -69,7 +80,11 @@ public:
       return EmptyString();
     }
     olxstr rv("RESI ");
-    rv << ClassName << ' ' << Number;
+    rv << ClassName << ' ';
+    if (HasChainId()) {
+      rv << ChainId << ':';
+    }
+    rv << Number;
     if (HasAlias()) {
       rv << ' ' << Alias;
     }
@@ -117,10 +132,6 @@ public:
   TResidue* Next() const { return Parent.NextResidue(*this); }
   TResidue* Prev() const { return Parent.PrevResidue(*this); }
   friend class TAsymmUnit;
-
-  enum {
-    NoResidue = -100000
-  };
 };
 
 typedef TPtrList<TResidue> ResiPList;
