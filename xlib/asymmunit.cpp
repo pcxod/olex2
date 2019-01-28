@@ -37,7 +37,8 @@ public:
 
 const olxstr TAsymmUnit::IdName("catom");
 
-TAsymmUnit::TAsymmUnit(TLattice *L) : MainResidue(*(new TResidue(*this, 0))),
+TAsymmUnit::TAsymmUnit(TLattice *L)
+  : MainResidue(*(new TResidue(*this, 0, EmptyString(), 0, 0, TResidue::NoChainId()))),
   OnSGChange(Actions.New("AU_SG_CHANGE"))
 {
   Lattice = L;
@@ -263,7 +264,7 @@ void TAsymmUnit::InitData() {
 }
 //..............................................................................
 TResidue& TAsymmUnit::NewResidue(const olxstr& RClass, int number, int alias,
-  char chainId)
+  olxch chainId)
 {
   if (number == 0) {
     if (!RClass.IsEmpty()) {
@@ -286,10 +287,7 @@ TResidue& TAsymmUnit::NewResidue(const olxstr& RClass, int number, int alias,
     }
     alias = ++number;
   }
-  if (!ResidueRegistry.HasKey(chainId)) {
-    ResidueRegistry.Add(chainId);
-  }
-  olx_pdict<int, TResidue*> &rd = ResidueRegistry[chainId];
+  olx_pdict<int, TResidue*> &rd = ResidueRegistry.Add(chainId);
   TResidue *er = rd.Find(number, 0);
   if (er == 0 && alias != number) {
     er = rd.Find(alias, 0);
@@ -309,9 +307,8 @@ TResidue& TAsymmUnit::NewResidue(const olxstr& RClass, int number, int alias,
     return *er;
   }
   TResidue &r = Residues.Add(
-    new TResidue(*this, (uint32_t)Residues.Count() + 1, RClass, number, alias)
+    new TResidue(*this, (uint32_t)Residues.Count() + 1, RClass, number, alias, chainId)
   );
-  r.SetChainId(chainId);
   rd(number, &r);
   if (alias != number) {
     rd(alias, &r);
@@ -360,7 +357,7 @@ TResidue* TAsymmUnit::PrevResidue(const TResidue& r) const {
   return FindResidue(r.GetNumber()-1);
 }
 //..............................................................................
-TResidue* TAsymmUnit::FindResidue(char chainId, int num) const {
+TResidue* TAsymmUnit::FindResidue(olxch chainId, int num) const {
   size_t cid = ResidueRegistry.IndexOf(chainId);
   return cid == InvalidIndex ? 0 : ResidueRegistry.GetValue(cid).Find(num, 0);
 }
@@ -378,20 +375,21 @@ TResidue* TAsymmUnit::FindResidue(const olxstr &number) const {
 //..............................................................................
 void TAsymmUnit::Release(const TPtrList<TResidue> &rs) {
   for (size_t i=0; i < rs.Count(); i++) {
-    size_t idx = ResidueRegistry.IndexOf(rs[i]->GetNumber());
+    olx_pdict<int, TResidue*> &rd = ResidueRegistry[rs[i]->GetChainId()];
+    size_t idx = rd.IndexOf(rs[i]->GetNumber());
     if (idx == InvalidIndex) {
       throw TInvalidArgumentException(__OlxSourceInfo, "residue");
     }
-    ResidueRegistry.Delete(idx);
+    rd.Delete(idx);
     for (size_t j = 0; j < rs[i]->Count(); j++) {
       (*rs[i])[j].SetResiId(0);
     }
     if (rs[i]->HasAlias()) {
-      idx = ResidueRegistry.IndexOf(rs[i]->GetAlias());
+      idx = rd.IndexOf(rs[i]->GetAlias());
       if (idx == InvalidIndex) {
         throw TInvalidArgumentException(__OlxSourceInfo, "residue");
       }
-      ResidueRegistry.Delete(idx);
+      rd.Delete(idx);
     }
     for (size_t j=0; j < Residues.Count(); j++) {
       if (&Residues[j] == rs[i]) {
@@ -412,9 +410,10 @@ void TAsymmUnit::Release(const TPtrList<TResidue> &rs) {
 void TAsymmUnit::Restore(const TPtrList<TResidue> &rs) {
   // validate if unique
   for (size_t i = 0; i < rs.Count(); i++) {
-    size_t idx = ResidueRegistry.IndexOf(rs[i]->GetNumber());
+    olx_pdict<int, TResidue*> &rd = ResidueRegistry[rs[i]->GetChainId()];
+    size_t idx = rd.IndexOf(rs[i]->GetNumber());
     if (idx == InvalidIndex && rs[i]->HasAlias()) {
-      idx = ResidueRegistry.IndexOf(rs[i]->GetAlias());
+      idx = rd.IndexOf(rs[i]->GetAlias());
     }
     if (idx != InvalidIndex) {
       throw TInvalidArgumentException(__OlxSourceInfo, "residue number/alias");
@@ -467,11 +466,11 @@ void TAsymmUnit::_OnAtomTypeChanged(TCAtom& caller) {
   }
 }
 //..............................................................................
-TCAtom& TAsymmUnit::NewAtom(TResidue* resi)  {
+TCAtom& TAsymmUnit::NewAtom(TResidue* resi) {
   TCAtom *A = new TCAtom(this);
   A->SetId(CAtoms.Count());
   CAtoms.Add(A);
-  if (resi == NULL) {
+  if (resi == 0) {
     resi = &MainResidue;
   }
   resi->_Add(*A);
@@ -512,7 +511,7 @@ TCAtom * TAsymmUnit::FindCAtom(const olxstr &Label, TResidue* resi)  const {
   olxstr lb = Label;
   size_t p_idx = Label.IndexOf('^');
   if (p_idx != InvalidIndex) {
-    olxstr sfx = Label.SubStringFrom(p_idx+1);
+    olxstr sfx = Label.SubStringFrom(p_idx + 1);
     if (sfx.Length() == 1) {
       part = olxstr::o_tolower(sfx.CharAt(0)) - 'a' + 1;
     }
@@ -579,10 +578,11 @@ TCAtom * TAsymmUnit::FindCAtom(const olxstr &Label, TResidue* resi)  const {
 TCAtom *TAsymmUnit::FindCAtomDirect(const olxstr &label) const {
   const size_t ac = CAtoms.Count();
   for( size_t i =0; i < ac; i++ )  {
-    if (CAtoms[i]->GetLabel().Equalsi(label))
+    if (CAtoms[i]->GetLabel().Equalsi(label)) {
       return CAtoms[i];
+    }
   }
-  return NULL;
+  return 0;
 }
 //..............................................................................
 void TAsymmUnit::DetachAtomType(short type, bool detach) {
@@ -817,6 +817,8 @@ olxstr TAsymmUnit::TLabelChecker::CheckLabel(const TCAtom &ca,
   size_t off = LB.Length();
   LB << '1';
   TArrayList<char> seq(max_label_length - off, olx_list_init::value('0'));
+  TEBitArray alpha(seq.Count());
+  alpha.SetAll(false);
   seq[0] = '1';
   size_t sid = 0;
   size_t key_idx;
@@ -824,17 +826,15 @@ olxstr TAsymmUnit::TLabelChecker::CheckLabel(const TCAtom &ca,
     if (check_atom && labels.GetValue(key_idx) == ca.GetId()) {
       return LB;
     }
-    if (sid == 0 && seq[sid] == '9') {
-      if (++sid >= seq.Count()) {
-        throw TFunctionFailedException(__OlxSourceInfo, "cannot create label");
-      }
-      seq[0] = '1';
-      LB << ' ';
-    }
-    else if (seq[sid] == 'z') {
+    if ((!alpha[sid] && seq[sid] == '9') || seq[sid] == 'z') {
       size_t inc_idx = InvalidIndex;
       for (size_t i = sid - 1; i != InvalidIndex; i--) {
-        if (i > 0) {
+        if (alpha[i]) {
+          if (seq[i] == '9') {
+            seq[i] = 'a';
+            inc_idx = i;
+            break;
+          }
           if (seq[i] < 'z') {
             seq[i]++;
             inc_idx = i;
@@ -849,11 +849,23 @@ olxstr TAsymmUnit::TLabelChecker::CheckLabel(const TCAtom &ca,
       }
       if (inc_idx == InvalidIndex) {
         if (++sid >= seq.Count()) {
+          sid--;
+          bool changed = false;
+          for (size_t i = sid; i != InvalidIndex; i--) {
+            if (!alpha[i]) {
+              alpha.SetTrue(i);
+              changed = true;
+              break;
+            }
+          }
+          if (changed) {
+            continue;
+          }
           throw TFunctionFailedException(__OlxSourceInfo, "cannot create label");
         }
         seq[0] = '1';
         for (size_t i = 1; i <= sid; i++) {
-          seq[sid] = '0';
+          seq[i] = '0';
         }
         LB << ' ';
       }

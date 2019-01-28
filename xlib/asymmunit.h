@@ -172,7 +172,7 @@ public:
   void Clear();
   //creates a new residue
   TResidue& NewResidue(const olxstr& RClass, int number,
-    int alias, char chainId);
+    int alias, olxch chainId);
   size_t ResidueCount() const {  return Residues.Count()+1;  }
   /* 0 - main residue */
   TResidue& GetResidue(size_t i) const {
@@ -180,7 +180,7 @@ public:
   }
   TResidue* NextResidue(const TResidue& r) const;
   TResidue* PrevResidue(const TResidue& r) const;
-  TResidue* FindResidue(char chainId, int num) const;
+  TResidue* FindResidue(olxch chainId, int num) const;
   TResidue* FindResidue(const olxstr &number) const;
   // releases the given residues
   void Release(const TPtrList<TResidue> &rs);

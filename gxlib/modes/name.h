@@ -82,7 +82,9 @@ protected:
     }
     return 0;
   }
-  void Autocomplete(TXAtom& xa, TNameModeUndo* undo, bool recursion = false) {
+  void Autocomplete(TCAtomPList &ref, TXAtom& xa, TNameModeUndo* undo,
+    bool recursion = false)
+  {
     if (!recursion) {
       TGXApp::AtomIterator ai = gxapp.GetAtoms();
       while (ai.HasNext()) {
@@ -110,8 +112,9 @@ protected:
     }
     bool set_cursor = false;
     if (outgoing.Count() == 1) {
+      ref << outgoing[0]->CAtom();
       DoNumber(*outgoing[0], undo);
-      Autocomplete(*outgoing[0], undo, true);
+      Autocomplete(ref, *outgoing[0], undo, true);
       set_cursor = true;
     }
     else if ((AutoComplete & 8) == 8) {
@@ -138,12 +141,14 @@ protected:
         }
         if (a.CAtom().IsRingAtom()) {
           set_cursor = true;
+          ref << a.CAtom();
           DoNumber(a, undo);
-          Autocomplete(a, undo, true);
+          Autocomplete(ref, a, undo, true);
         }
         else {
           if (cnt == 0) {
             set_cursor = true;
+            ref << a.CAtom();
             DoNumber(a, undo);
           }
           else if (a.GetTag() == 0) {
@@ -152,10 +157,13 @@ protected:
         }
       }
       for (size_t i = 0; i < to_number.Count(); i++) {
-        if (to_number[i]->GetTag() == 1) continue;
+        if (to_number[i]->GetTag() == 1) {
+          continue;
+        }
         set_cursor = true;
+        ref << to_number[i]->CAtom();
         DoNumber(*to_number[i], undo);
-        Autocomplete(*to_number[i], undo, true);
+        Autocomplete(ref, *to_number[i], undo, true);
       }
     }
     if (!recursion && set_cursor) {
@@ -180,8 +188,9 @@ public:
 
     SetCursor();
     olxstr labels("labels -l");
-    if (Symbol.Equalsi('H') || Symbol.Equalsi('D'))
+    if (Symbol.Equalsi('H') || Symbol.Equalsi('D')) {
       labels << " -h";
+    }
     olex2.processMacro(labels);
     TGXApp::BondIterator bi = gxapp.GetBonds();
     while (bi.HasNext())
@@ -202,11 +211,12 @@ public:
     }
     return true;
   }
-  ~TNameMode() { Instance = NULL; }
+  ~TNameMode() { Instance = 0; }
   void Finalise_() {
     TGXApp::BondIterator bi = gxapp.GetBonds();
-    while (bi.HasNext())
+    while (bi.HasNext()) {
       bi.Next().SetSelectable(true);
+    }
     gxapp.XFile().GetLattice().UpdateConnectivity();
   }
   virtual bool OnObject_(AGDrawObject& obj) {
@@ -217,8 +227,9 @@ public:
       TNameModeUndo* undo = new TNameModeUndo(XA);
       gxapp.MarkLabel(XA, true);
       undo->AddAction(gxapp.Name(XA, Labl));
+      TCAtomPList ref;
       if (NameResidues) {
-        undo->AddAction(gxapp.SynchroniseResidues(TCAtomPList() << XA.CAtom()));
+        ref << XA.CAtom();
       }
       if (Lock) {
         undo->AddAction(new TLockUndo(XA.CAtom()));
@@ -229,7 +240,10 @@ public:
       Index++;
       SetCursor();
       if (AutoComplete != 0) {
-        Autocomplete(XA, undo);
+        Autocomplete(ref, XA, undo);
+      }
+      if (NameResidues) {
+        undo->AddAction(gxapp.SynchroniseResidues(ref));
       }
       return true;
     }
