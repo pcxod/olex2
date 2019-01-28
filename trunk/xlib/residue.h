@@ -19,13 +19,13 @@ public:
   enum {
     NoResidue = -100000
   };
-  static char NoChainId() {
+  static olxch NoChainId() {
     return ' ';
   }
 private:
   TAsymmUnit& Parent;
   uint32_t Id;
-  char ChainId;
+  olxch ChainId;
   olxstr ClassName;
   int Number, Alias;
   TCAtomPList Atoms;
@@ -50,23 +50,17 @@ protected:
     ca.SetResiId(Id);
   }
 public:
-  TResidue(TAsymmUnit& parent, uint32_t id)
-    : Parent(parent), Id(id), ChainId(' '), Number(0), Alias(0)
-  {}
   TResidue(TAsymmUnit& parent, uint32_t id, const olxstr& cl,
-    int number = 0)
-    : Parent(parent), Id(id), ChainId(' '), ClassName(cl), Number(number), Alias(number)
-  {}
-  TResidue(TAsymmUnit& parent, uint32_t id, const olxstr& cl,
-    int number, int alias)
-    : Parent(parent), Id(id), ChainId(' '), ClassName(cl), Number(number), Alias(alias)
+    int number, int alias, olxch chainId)
+    : Parent(parent), Id(id), ChainId(chainId),
+    ClassName(cl), Number(number), Alias(alias)
   {}
   //
   DefPropC(olxstr, ClassName)
   DefPropC(int, Alias)
   DefPropP(int, Number)
-  DefPropP(char, ChainId)
-  bool HasChainId() const { return ChainId != ' '; }
+  DefPropP(olxch, ChainId)
+  bool HasChainId() const { return ChainId != NoChainId(); }
   bool HasAlias() const { return Number != Alias; }
   int Compare(const TResidue &r) const {
     return olx_cmp(GetNumber(), r.GetNumber());

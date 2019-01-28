@@ -82,7 +82,7 @@ void TPdb::SaveToStrings(TStrList& Strings) {
     for (int j = 0; j < 6; j++) {
       iq[j] = (int)(q[j] * 10000);
     }
-    sprintf(bf(), "ANISOU%5d %4s            %7d%7d%7d%7d%7d%7d      %2s ",
+    sprintf(bf(), "ANISOU%5d %4s            %7d%7d%7d%7d%7d%7d      %2s  ",
       (int)(i + 1),
       label.c_str(),
       iq[0],

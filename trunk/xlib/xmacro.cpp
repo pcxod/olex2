@@ -1832,7 +1832,7 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options,
       }
       if (conflict) {
         h_atom->SetDeleted(true);
-        TBasicApp::NewLogEntry(logInfo) << "Removing H fron ring N atom: " << a.GetLabel();
+        TBasicApp::NewLogEntry(logInfo) << "Removing H from ring N atom: " << a.GetLabel();
       }
     }
     au.DetachAtomType(iQPeakZ, false);
