@@ -800,7 +800,7 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
     }
     olxstr chainId(' '), className, number, alias;
     if (Toks.Count() == 2) {
-      if (Toks[1].Contains(':')) {
+      if (Toks[1].Contains(':') || Toks[1].IsNumber()) {
         number = Toks[1];
       }
       else {
