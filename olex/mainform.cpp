@@ -1810,14 +1810,23 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
   {
     if (Data != 0) {
       TGlMaterial *glm = 0;
-      if (MsgId == ID_INFO)           glm = &InfoFontColor;
-      else if (MsgId == ID_WARNING)   glm = &WarningFontColor;
-      else if (MsgId == ID_ERROR)     glm = &ErrorFontColor;
-      else if (MsgId == ID_EXCEPTION) glm = &ExceptionFontColor;
+      if (MsgId == ID_INFO) {
+        glm = &InfoFontColor;
+      }
+      else if (MsgId == ID_WARNING) {
+        glm = &WarningFontColor;
+      }
+      else if (MsgId == ID_ERROR) {
+        glm = &ErrorFontColor;
+      }
+      else if (MsgId == ID_EXCEPTION) {
+        glm = &ExceptionFontColor;
+      }
       if (!((FMode&mSilent) != 0 && (MsgId == ID_INFO)) ||
         (MsgId == ID_WARNING || MsgId == ID_ERROR || MsgId == ID_EXCEPTION))
       {
-        FGlConsole->OnPost.SetEnabled(false); // the proporgation will happen after we return false
+        // the proporgation will happen after we return false
+        FGlConsole->OnPost.SetEnabled(false);
         FGlConsole->PrintText(Data->ToString(), glm, true);
         FGlConsole->PrintText(EmptyString());
         FGlConsole->OnPost.SetEnabled(true);
@@ -3174,7 +3183,7 @@ void TMainForm::RefineDataTable(bool TableDef, bool Create)  {
     Table[6][1] = Lst.params.Find("Rsig", m1);
   Table[6][2] = "F000";
     Table[6][3] = Lst.params.Find("F000", m1);
-  Table[7][0] = "&rho;/g*mm<sup>-3</sup>";
+  Table[7][0] = "&rho;/g*cm<sup>-3</sup>";
     Table[7][1] = Lst.params.Find("Rho", m1);
   Table[7][2] = "&mu;/mm<sup>-1</sup>";
     Table[7][3] = Lst.params.Find("Mu", m1);
@@ -3922,17 +3931,17 @@ void TMainForm::ProcessHandler::BeforePrint() {
   printed = false;
 }
 //..............................................................................
-void TMainForm::ProcessHandler::Print(const olxstr& line)  {
-  if( !line.IsEmpty() )  {
+void TMainForm::ProcessHandler::Print(const olxstr& line) {
+  if (!line.IsEmpty()) {
     TBasicApp::GetLog() << line;
+     printed = true;
     parent.callCallbackFunc(ProcessOutputCBName, TStrList() << line);
-    printed = true;
   }
 }
 //..............................................................................
 void TMainForm::ProcessHandler::AfterPrint() {
-  parent.FGlConsole->SetPrintMaterial(NULL);
-  if( printed )  {
+  parent.FGlConsole->SetPrintMaterial(0);
+  if (printed) {
     parent.FXApp->Draw();
     printed = false;
   }
@@ -3943,13 +3952,14 @@ void TMainForm::ProcessHandler::OnWait() {
   TBasicApp::GetInstance().OnTimer.Execute(&(AEventsDispatcher&)parent);
 }
 //..............................................................................
-void TMainForm::ProcessHandler::OnTerminate(const AProcess& p)  {
+void TMainForm::ProcessHandler::OnTerminate(const AProcess& p) {
   TMacroData err;
-  for( size_t i=0; i < p.OnTerminateCmds().Count(); i++ ) {
+  for (size_t i = 0; i < p.OnTerminateCmds().Count(); i++) {
     const olxstr& cmd = p.OnTerminateCmds()[i];
     parent.processMacro(cmd, olxstr("OnTerminate of: ") << p.GetCmdLine());
-    if( !err.IsSuccessful() )
+    if (!err.IsSuccessful()) {
       break;
+    }
   }
   TBasicApp::NewLogEntry(logInfo) << "The process '" << p.GetCmdLine() <<
     "' has been terminated...";
