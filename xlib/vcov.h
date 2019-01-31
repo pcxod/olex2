@@ -322,10 +322,25 @@ public:
   template <class VT, class WT> struct PlaneEvaluator {
     const VT& values;
     const WT& weights;
+    bool inverse;
     PlaneEvaluator(const VT& _v, const WT& _w)
-      : values(_v), weights(_w)
+      : values(_v), weights(_w), inverse(false)
     {}
-    PlaneInfo evaluate() const { return CalcPlane(values, weights); }
+    PlaneEvaluator(const VT& _v, const WT& _w, const vec3d &n)
+      : values(_v), weights(_w), inverse(false)
+    {
+      PlaneInfo pi = CalcPlane(values, weights);
+      if (pi.normal.DotProd(n) < 0) {
+        inverse = true;
+      }
+    }
+    PlaneInfo evaluate() const {
+      PlaneInfo pi = CalcPlane(values, weights);
+      if (inverse) {
+        pi.normal *= -1;
+      }
+      return pi;
+    }
   };
   // plane centroid to plane centroid distance
   template <class VT, class WT> struct CentroidEvaluator {
@@ -437,11 +452,16 @@ public:
     {}
     double calc() const {
       const PlaneInfo ai = a.evaluate(), bi = b.evaluate();
-      vec3d n_c = (bi.center - ai.center).XProdVec(
-        ai.normal + bi.normal).Normalise();
+      vec3d dv = (bi.center - ai.center).Normalise();
+      vec3d n_c = dv.XProdVec(ai.normal).Normalise();
       vec3d p_a = ai.normal - n_c*n_c.DotProd(ai.normal);
       vec3d p_b = bi.normal - n_c*n_c.DotProd(bi.normal);
-      return (acos(p_a.CAngle(p_b)) * 180 / M_PI);
+      double a = acos(p_a.CAngle(p_b));
+      n_c = dv.XProdVec(bi.normal).Normalise();
+      p_a = ai.normal - n_c*n_c.DotProd(ai.normal);
+      p_b = bi.normal - n_c*n_c.DotProd(bi.normal);
+      double b = acos(p_a.CAngle(p_b));
+      return ((a+b) * 90 / M_PI);
     }
   };
   // tetrahedron volume
@@ -933,26 +953,28 @@ public:
     return r;
   }
   // plane to plane twisting angle
-  TEValue<double> CalcP2PTAngle(const TSAtomCPList& p1, const TSAtomCPList& p2)
+  TEValue<double> CalcP2PTAngle(const TSAtomCPList& p1, const vec3d &pn1,
+    const TSAtomCPList& p2, const vec3d &pn2)
   {
     CalcWHelper ch(*this, TSAtomCPList(p1) << p2);
     return ch.DoCalc(
       TwistAngle<pln_et>(
         pln_et(crd_slice(ch.points, 0, p1.Count()),
-          weight_slice(ch.weights, 0, p1.Count())),
+          weight_slice(ch.weights, 0, p1.Count()), pn1),
         pln_et(crd_slice(ch.points, p1.Count(), p2.Count()),
-          weight_slice(ch.weights, p1.Count(), p2.Count()))));
+          weight_slice(ch.weights, p1.Count(), p2.Count()), pn2)));
   }
   // plane to plane folding angle
-  TEValue<double> CalcP2PFAngle(const TSAtomCPList& p1, const TSAtomCPList& p2)
+  TEValue<double> CalcP2PFAngle(const TSAtomCPList& p1, const vec3d &pn1,
+    const TSAtomCPList& p2, const vec3d &pn2)
   {
     CalcWHelper ch(*this, TSAtomCPList(p1) << p2);
     return ch.DoCalc(
       FoldAngle<pln_et>(
         pln_et(crd_slice(ch.points, 0, p1.Count()),
-          weight_slice(ch.weights, 0, p1.Count())),
+          weight_slice(ch.weights, 0, p1.Count()), pn1),
         pln_et(crd_slice(ch.points, p1.Count(), p2.Count()),
-          weight_slice(ch.weights, p1.Count(), p2.Count()))));
+          weight_slice(ch.weights, p1.Count(), p2.Count()), pn2)));
   }
   //plane centroid to plane centroid distance
   TEValue<double> CalcPC2PCDistance(const TSAtomCPList& p1,
