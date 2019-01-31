@@ -1034,28 +1034,35 @@ void TMainForm::macEcho(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
   olxstr m = Options.FindValue('m');
-  TGlMaterial *mat = NULL;
+  TGlMaterial *mat = 0;
   if (!m.IsEmpty()) {
-    if (m.Equalsi("info"))
+    if (m.Equalsi("info")) {
       mat = &InfoFontColor;
-    else if (m.Equalsi("warning"))
+    }
+    else if (m.Equalsi("warning")) {
       mat = &WarningFontColor;
-    else if (m.Equalsi("error"))
+    }
+    else if (m.Equalsi("error")) {
       mat = &ErrorFontColor;
-    else if (m.Equalsi("exception"))
+    }
+    else if (m.Equalsi("exception")) {
       mat = &ExceptionFontColor;
+    }
   }
   FGlConsole->PrintText(TStrList(Cmds), mat, true);
   FGlConsole->SetSkipPosting(true);
   TBasicApp::NewLogEntry() << Cmds;
-  if (Options.GetBoolOption('c'))
+  if (Options.GetBoolOption('c')) {
     FXApp->ToClipboard(Cmds.Text(' '));
+  }
 }
 //..............................................................................
 void TMainForm::macPost(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
-  if (FXApp == NULL || FGlConsole == NULL)  return;
+  if (FXApp == 0 || FGlConsole == 0) {
+    return;
+  }
   TBasicApp::NewLogEntry() << Cmds;
   FXApp->Draw();
   wxTheApp->Dispatch();

@@ -3348,9 +3348,11 @@ void GXLibMacros::macEsd(TStrObjList &Cmds, const TParamList &Options,
             vcovc.CalcP2PShiftDistance(p2, p1).ToString() << " A";
         }
         values.Add("Plane ") << pld1 << "to plane twist angle: " <<
-          vcovc.CalcP2PTAngle(p1, p2).ToString();
+          vcovc.CalcP2PTAngle(p1, xp1.GetNormal(),
+            p2, xp2.GetNormal()).ToString();
         values.Add("Plane ") << pld1 << "to plane fold angle: " <<
-          vcovc.CalcP2PFAngle(p1, p2).ToString();
+          vcovc.CalcP2PFAngle(p1, xp1.GetNormal(),
+            p2, xp2.GetNormal()).ToString();
 
         if (xp1.Count() == xp2.Count() && xp1.Count() == 3) {
           TSAtomPList atoms(6), sorted_atoms;
