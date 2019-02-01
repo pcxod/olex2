@@ -514,7 +514,9 @@ void TGXApp::CreateObjects(bool centerModel, bool init_visibility)  {
   ObjectCaster<TSPlane,TXPlane> latt_planes =
     XFile().GetLattice().GetObjects().planes.GetAccessor<TXPlane>();
   for( size_t i=0; i < latt_planes.Count(); i++ )  {
-    latt_planes[i].Create();
+    if (!latt_planes[i].IsDeleted()) {
+      latt_planes[i].Create();
+    }
   }
   DBasis().SetAsymmUnit(XFile().GetAsymmUnit());
 
@@ -2873,6 +2875,20 @@ TUndoData* TGXApp::DeleteXAtoms(TXAtomPList& L) {
       }
     }
     XA->SetDeleted(true);
+  }
+
+  ObjectCaster<TSPlane, TXPlane> latt_planes =
+    XFile().GetLattice().GetObjects().planes.GetAccessor<TXPlane>();
+  for (size_t pi = 0; pi < latt_planes.Count(); pi++) {
+    if (latt_planes[pi].IsDeleted()) {
+      continue;
+    }
+    for (size_t ai = 0; ai < latt_planes[pi].Count(); ai++) {
+      if (latt_planes[pi].GetAtom(ai).IsDeleted()) {
+        latt_planes[pi].SetDeleted(true);
+        break;
+      }
+    }
   }
   //CenterView();
   TUndoData *undo = new TDeleteUndo(0);

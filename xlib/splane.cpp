@@ -204,7 +204,9 @@ TSPlane::Def::Def(const TSPlane& plane)
   for (size_t i = 0; i < plane.Count(); i++) {
     atoms.Set(i, new DefData(plane.GetAtom(i).GetRef(), plane.GetWeight(i)));
   }
-  if( plane.Count() == 0 )  return;
+  if (plane.Count() == 0) {
+    return;
+  }
   if (!plane.GetAtom(0).IsAUAtom()) {
     const TUnitCell& uc = plane.GetNetwork().GetLattice().GetUnitCell();
     const smatd im = uc.InvMatrix(plane.GetAtom(0).GetMatrix());
@@ -251,22 +253,34 @@ TSPlane* TSPlane::Def::FromAtomRegistry(ASObjectProvider& ar, size_t def_id,
   if (matr.IsFirst()) {
     for (size_t i = 0; i < atoms.Count(); i++) {
       TSAtom::Ref &ref = atoms[i].ref;
+      // 'fixing' potentially broke nodel
+      if (ref.catom_id >= au.AtomCount()) {
+        return 0;
+      }
       smatd m = smatd::FromId(ref.matrix_id,
         uc.GetMatrix(smatd::GetContainerId(ref.matrix_id)));
       TSAtom* sa = ar.atomRegistry.Find(
         TSAtom::GetRef(au.GetAtom(ref.catom_id), m));
-      if (sa == NULL)  return NULL;
+      if (sa == 0) {
+        return 0;
+      }
       points.AddNew(sa, atoms[i].weight);
     }
   }
   else {
     for (size_t i = 0; i < atoms.Count(); i++) {
       TSAtom::Ref &ref = atoms[i].ref;
+      // 'fixing' potentially broke nodel
+      if (ref.catom_id >= au.AtomCount()) {
+        return 0;
+      }
       smatd m = uc.MulMatrix(smatd::FromId(ref.matrix_id,
         uc.GetMatrix(smatd::GetContainerId(ref.matrix_id))), matr);
       TSAtom* sa = ar.atomRegistry.Find(
         TSAtom::GetRef(au.GetAtom(ref.catom_id), m));
-      if (sa == NULL)  return NULL;
+      if (sa == 0) {
+        return 0;
+      }
       points.AddNew(sa, atoms[i].weight);
     }
   }

@@ -2541,7 +2541,7 @@ void TLattice::SetAnis(const TCAtomPList& atoms, bool anis)  {
   RestoreADPs(false);
 }
 //..............................................................................
-void TLattice::ToDataItem(TDataItem& item) const  {
+void TLattice::ToDataItem(TDataItem& item) const {
   item.AddField("delta", Delta);
   item.AddField("deltai", DeltaI);
   GetAsymmUnit().ToDataItem(item.AddItem("AUnit"));
@@ -2551,7 +2551,7 @@ void TLattice::ToDataItem(TDataItem& item) const  {
     old tags
   */
   TArrayList<uint32_t> m_tags(mat_c);
-  for( size_t i=0; i < mat_c; i++ )  {
+  for (size_t i = 0; i < mat_c; i++) {
     mat.AddItem("symop", TSymmParser::MatrixToSymmEx(*Matrices[i]))
       .AddField("id", Matrices[i]->GetId());
     m_tags[i] = Matrices[i]->GetId();
@@ -2559,53 +2559,61 @@ void TLattice::ToDataItem(TDataItem& item) const  {
   }
   // initialise bond tags
   size_t sbond_tag = 0;
-  for( size_t i=0; i < Objects.bonds.Count(); i++ )  {
-    if( Objects.bonds[i].IsDeleted() )  continue;
+  for (size_t i = 0; i < Objects.bonds.Count(); i++) {
+    if (Objects.bonds[i].IsDeleted())  continue;
     Objects.bonds[i].SetTag(sbond_tag++);
   }
   // initialise atom tags
   size_t satom_tag = 0;
-  for( size_t i=0; i < Objects.atoms.Count(); i++ )  {
-    if( Objects.atoms[i].IsDeleted() )  continue;
+  for (size_t i = 0; i < Objects.atoms.Count(); i++) {
+    if (Objects.atoms[i].IsDeleted())  continue;
     Objects.atoms[i].SetTag(satom_tag++);
   }
   // initialise fragment tags
   size_t frag_tag = 0;
   Network->SetTag(-1);
-  for( size_t i=0; i < Fragments.Count(); i++ )
+  for (size_t i = 0; i < Fragments.Count(); i++)
     Fragments[i]->SetTag(frag_tag++);
   // save satoms - only the original CAtom Tag and the generating matrix tag
   TDataItem& atoms = item.AddItem("Atoms");
-  for( size_t i=0; i < Objects.atoms.Count(); i++ )  {
-    if( !Objects.atoms[i].IsDeleted() )
+  for (size_t i = 0; i < Objects.atoms.Count(); i++) {
+    if (!Objects.atoms[i].IsDeleted()) {
       Objects.atoms[i].ToDataItem(atoms.AddItem("Atom"));
+    }
   }
   // save bonds
   TDataItem& bonds = item.AddItem("Bonds");
-  for( size_t i=0; i < Objects.bonds.Count(); i++ )  {
-    if( !Objects.bonds[i].IsDeleted() )
+  for (size_t i = 0; i < Objects.bonds.Count(); i++) {
+    if (!Objects.bonds[i].IsDeleted()) {
       Objects.bonds[i].ToDataItem(bonds.AddItem("Bond"));
+    }
   }
   // save fragments
   TDataItem& frags = item.AddItem("Fragments");
-  for( size_t i=0; i < Fragments.Count(); i++ )
+  for (size_t i = 0; i < Fragments.Count(); i++) {
     Fragments[i]->ToDataItem(frags.AddItem("Fragment"));
+  }
   // restore original matrix tags
-  for( size_t i=0; i < mat_c; i++ )
+  for (size_t i = 0; i < mat_c; i++) {
     Matrices[i]->SetRawId(m_tags[i]);
+  }
   // save planes
   TSPlanePList valid_planes;
   for (size_t i = 0; i < Objects.planes.Count(); i++) {
-    if (Objects.planes[i].IsDeleted()) continue;
+    if (Objects.planes[i].IsDeleted()) {
+      continue;
+    }
     size_t p_ac = 0;
     for (size_t j = 0; j < Objects.planes[i].Count(); j++)
-    if (Objects.planes[i].GetAtom(j).IsAvailable())
-      p_ac++;
+      if (Objects.planes[i].GetAtom(j).IsAvailable()) {
+        p_ac++;
+      }
     if (p_ac >= 3) {// a plane must contain at least three atoms
       valid_planes.Add(Objects.planes[i]);
     }
-    else
+    else {
       Objects.planes[i].SetDeleted(true);
+    }
   }
   TPtrList<TSPlane::Def> defs;
   TDataItem& planes = item.AddItem("Planes");
