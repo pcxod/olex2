@@ -1482,36 +1482,26 @@ void TGXApp::Select(const vec3d& From, const vec3d& To) {
   BondIterator bi(*this);
   while (ai.HasNext()) {
     TXAtom& XA = ai.Next();
-    if (XA.IsVisible()) {
-      vec3d Cnt = XA.crd() + GetRenderer().GetBasis().GetCenter();
-      Cnt *= GetRenderer().GetBasis().GetMatrix();
-      Cnt *= GetRenderer().GetBasis().GetZoom();
+    if (XA.IsVisible() && !XA.IsSelected() && XA.GetPrimitives().PrimitiveCount() > 0)
+    {
+      vec3d Cnt = GetRenderer().Project(XA.crd());
       if (Cnt[0] < To[0] && Cnt[1] < To[1] &&
-        Cnt[0] > From[0] && Cnt[1] > From[1]) {
-        if (!XA.IsSelected()) {
-          if (XA.GetPrimitives().PrimitiveCount()) {
-            GetRenderer().Select(XA);
-          }
-        }
+        Cnt[0] > From[0] && Cnt[1] > From[1])
+      {
+        GetRenderer().Select(XA);
       }
     }
   }
   while (bi.HasNext()) {
     TXBond& B = bi.Next();
-    if (B.IsVisible()) {
-      vec3d Cnt = B.A().crd() + GetRenderer().GetBasis().GetCenter();
-      Cnt *= GetRenderer().GetBasis().GetMatrix();
-      Cnt *= GetRenderer().GetBasis().GetZoom();
-      vec3d Cnt1 = B.B().crd() + GetRenderer().GetBasis().GetCenter();
-      Cnt1 *= GetRenderer().GetBasis().GetMatrix();
-      Cnt1 *= GetRenderer().GetBasis().GetZoom();
+    if (B.IsVisible() && !B.IsSelected() && B.GetPrimitives().PrimitiveCount() > 0)
+    {
+      vec3d Cnt = GetRenderer().Project(B.A().crd());
+      vec3d Cnt1 = GetRenderer().Project(B.B().crd());
       if (Cnt[0] < To[0] && Cnt[1] < To[1] && Cnt[0] > From[0] && Cnt[1] > From[1] &&
-        Cnt1[0] < To[0] && Cnt1[1] < To[1] && Cnt1[0] > From[0] && Cnt1[1] > From[1]) {
-        if (!B.IsSelected()) {
-          if (B.GetPrimitives().PrimitiveCount()) {
-            GetRenderer().Select(B);
-          }
-        }
+        Cnt1[0] < To[0] && Cnt1[1] < To[1] && Cnt1[0] > From[0] && Cnt1[1] > From[1])
+      {
+          GetRenderer().Select(B);
       }
     }
   }
@@ -1538,8 +1528,9 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
   if (MsgId == ID_OnSelect) {
     if (FGlMouse->IsSelectionEnabled()) {
       const TSelectionInfo* SData = dynamic_cast<const TSelectionInfo*>(Data);
-      if (!(SData->From == SData->To))
+      if (!(SData->From == SData->To)) {
         Select(SData->From, SData->To);
+      }
     }
   }
   else if (MsgId == ID_OnUniq || MsgId == ID_OnGrow) {
