@@ -122,60 +122,93 @@ void ConnInfo::Disconnect(TCAtom& ca)  {
   ca.SetConnInfo(GetConnInfo(ca));
 }
 //........................................................................
-void ConnInfo::ProcessConn(TStrList& ins)  {
+void ConnInfo::ProcessConn(TStrList& ins) {
   short maxB = def_max_bonds;
   double r = -1;
   TSizeList num_indexes;
-  for( size_t i=0; i < ins.Count(); i++ )  {
-    if( ins[i].IsNumber() )
+  for (size_t i = 0; i < ins.Count(); i++) {
+    if (ins[i].IsNumber()) {
       num_indexes.Add(i);
+    }
   }
-  if( num_indexes.Count() == 2 )  {
+  if (num_indexes.Count() == 2) {
     maxB = ins[num_indexes[0]].ToInt();
     r = ins[num_indexes[1]].ToDouble();
   }
-  else if( num_indexes.Count() == 1 )  {
-    if( ins[num_indexes[0]].IndexOf('.') != InvalidIndex )
+  else if (num_indexes.Count() == 1) {
+    if (ins[num_indexes[0]].Contains('.')) {
       r = ins[num_indexes[0]].ToDouble();
-    else
+    }
+    else {
       maxB = ins[num_indexes[0]].ToInt();
+    }
   }
-  else  // invalid argument set - reset any existing conn info
+  else { // invalid argument set - reset any existing conn info
     ;
+  }
   // remove numbers to leave atom names/types only
-  for( size_t i=num_indexes.Count(); i > 0; i-- )
-    ins.Delete(num_indexes[i-1]);
+  for (size_t i = num_indexes.Count(); i > 0; i--) {
+    ins.Delete(num_indexes[i - 1]);
+  }
   // extract and remove atom types
-  for( size_t i=0; i < ins.Count(); i++ )  {
-    if( ins[i].CharAt(0) == '$' )  {
+  for (size_t i = 0; i < ins.Count(); i++) {
+    if (ins[i].CharAt(0) == '$') {
       ConstSortedElementPList elms = TAtomReference::DecodeTypes(
         ins[i].SubStringFrom(1), rm.aunit);
-      for( size_t ei=0; ei < elms.Count(); ei++ )  {
+      for (size_t ei = 0; ei < elms.Count(); ei++) {
         TypeConnInfo& ci = TypeInfo.Add(elms[ei], TypeConnInfo(*elms[ei]));
         ci.maxBonds = maxB;
         ci.r = r;
+        for (size_t ai = 0; ai < AtomInfo.Count(); ai++) {
+          if (AtomInfo.GetKey(ai)->GetType() == *elms[ei]) {
+            AtomInfo.GetValue(ai).maxBonds = maxB;
+            AtomInfo.GetValue(ai).r = r;
+          }
+        }
       }
       ins.Delete(i--);
     }
   }
-  if( !ins.IsEmpty() )  {
+  if (!ins.IsEmpty()) {
     TAtomReference ar(ins.Text(' '));
     TCAtomGroup ag;
     size_t aag;
-    try  {  ar.Expand(rm, ag, EmptyString(), aag);  }
-    catch(const TExceptionBase& )  {  }
-    if( ag.IsEmpty() )  {
-      TBasicApp::NewLogEntry(logError) <<  "Undefined atom in CONN: " <<
+    try { ar.Expand(rm, ag, EmptyString(), aag); }
+    catch (const TExceptionBase&) {}
+    if (ag.IsEmpty()) {
+      TBasicApp::NewLogEntry(logError) << "Undefined atom in CONN: " <<
         ins.Text(' ');
       return;
     }
-    for( size_t i=0; i < ag.Count(); i++ )  {
-      if( maxB == def_max_bonds && r == -1 )  {  // reset to default?
+    for (size_t i = 0; i < ag.Count(); i++) {
+      bool add = true;
+      if (maxB == def_max_bonds && r == -1) {  // reset to default?
         size_t ai = AtomInfo.IndexOf(ag[i].GetAtom());
-        if( ai != InvalidIndex )
+        if (ai != InvalidIndex) {
           AtomInfo.Delete(ai);
+          add = false;
+        }
+        // no specialisation, check if there is a type override
+        else {
+          size_t e_idx = TypeInfo.IndexOf(ag[i].GetAtom()->GetType());
+          if (e_idx != InvalidIndex) {
+            const TCAtomPList &atoms = ag[i].GetAtom()->GetParent()->GetAtoms();
+            size_t ac = 0;
+            for (size_t ai = 0; ai < atoms.Count(); ai++) {
+              if (!atoms[ai]->IsDeleted() &&
+                atoms[ai]->GetType() == ag[i].GetAtom()->GetType())
+              {
+                ac++;
+              }
+            }
+            if (ac == 1) {
+              TypeInfo.Delete(e_idx);
+              add = false;
+            }
+          }
+        }
       }
-      else  {
+      if (add) {
         AtomConnInfo& ai = AtomInfo.Add(ag[i].GetAtom(),
           AtomConnInfo(*ag[i].GetAtom()));
         ai.maxBonds = maxB;
@@ -185,7 +218,7 @@ void ConnInfo::ProcessConn(TStrList& ins)  {
     }
   }
   // update temporary connectivity objects
-  for (size_t i=0; i < AtomInfo.Count(); i++) {
+  for (size_t i = 0; i < AtomInfo.Count(); i++) {
     AtomConnInfo &ai = AtomInfo.GetValue(i);
     if (ai.temporary) {
       size_t ti = TypeInfo.IndexOf(&ai.atom->GetType());
@@ -199,67 +232,85 @@ void ConnInfo::ProcessConn(TStrList& ins)  {
 //........................................................................
 void ConnInfo::ToInsList(TStrList& ins) const {
   // put the type specific info first
-  for( size_t i=0; i < TypeInfo.Count(); i++ )  {
+  olxset<const cm_Element *, TPointerComparator> element_types;
+  for (size_t i = 0; i < TypeInfo.Count(); i++) {
     const TypeConnInfo& tci = TypeInfo.GetValue(i);
-    if( tci.maxBonds == def_max_bonds && tci.r == -1 )
+    if (tci.maxBonds == def_max_bonds && tci.r == -1) {
       continue;
+    }
+    element_types.Add(tci.atomType);
     olxstr& str = ins.Add("CONN ");
-    if (tci.maxBonds != def_max_bonds || tci.r != -1)
+    if (tci.maxBonds != def_max_bonds || tci.r != -1) {
       str << tci.maxBonds << ' ';
-    if( tci.r != -1 )
+    }
+    if (tci.r != -1) {
       str << tci.r << ' ';
+    }
     str << '$' << tci.atomType->symbol;
   }
   // specialisation for particular atoms to follow the generic type info
-  for( size_t i=0; i < AtomInfo.Count(); i++ )  {
+  for (size_t i = 0; i < AtomInfo.Count(); i++) {
     const AtomConnInfo& aci = AtomInfo.GetValue(i);
-    if (aci.atom->IsDeleted())
+    if (aci.atom->IsDeleted()) {
       continue;
-    if (!aci.temporary &&
-      (aci.r != -1 || aci.maxBonds != def_max_bonds))
-    {
-      olxstr &str = ins.Add("CONN");
-      if (aci.maxBonds != def_max_bonds || aci.r != -1) {
-        str << ' ' << aci.maxBonds;
-      }
-      if (aci.r != -1) {
-        str << ' ' << aci.r;
-      }
-      str << ' ' << aci.atom->GetResiLabel();
     }
-    for( size_t j=0; j < aci.BondsToCreate.Count(); j++ )  {
+    if (!aci.temporary) {
+      bool has_elm = element_types.Contains(aci.atom->GetType());
+      // check if defined by the element
+      if (has_elm) {
+        const TypeConnInfo& tci = TypeInfo[aci.atom->GetType()];
+        if (aci.r == tci.r && aci.maxBonds == tci.maxBonds) {
+          continue;
+        }
+      }
+      if (has_elm || aci.r != -1 || aci.maxBonds != def_max_bonds) {
+        olxstr &str = ins.Add("CONN");
+        if (aci.maxBonds != def_max_bonds || aci.r != -1 || has_elm) {
+          str << ' ' << aci.maxBonds;
+        }
+        if (aci.r != -1) {
+          str << ' ' << aci.r;
+        }
+        str << ' ' << aci.atom->GetResiLabel();
+      }
+    }
+    for (size_t j = 0; j < aci.BondsToCreate.Count(); j++) {
       const CXBondInfo& bi = aci.BondsToCreate[j];
-      if( bi.to.IsDeleted() )
+      if (bi.to.IsDeleted()) {
         continue;
+      }
       olxstr& str = ins.Add("BIND ");
       str << aci.atom->GetResiLabel() << ' ' << bi.to.GetResiLabel();
-      if( bi.matr != NULL )  {
+      if (bi.matr != 0) {
         size_t si = rm.UsedSymmIndex(*bi.matr);
-        if( si == InvalidIndex ) {
+        if (si == InvalidIndex) {
           throw TFunctionFailedException(__OlxSourceInfo,
             "Undefined EQIV in BIND");
         }
-        str << "_$" << (si+1);
+        str << "_$" << (si + 1);
       }
     }
-    for( size_t j=0; j < aci.BondsToRemove.Count(); j++ )  {
+    for (size_t j = 0; j < aci.BondsToRemove.Count(); j++) {
       const CXBondInfo& bi = aci.BondsToRemove[j];
-      if( bi.to.IsDeleted() )
+      if (bi.to.IsDeleted()) {
         continue;
+      }
       olxstr& str = ins.Add("FREE ");
       str << aci.atom->GetResiLabel() << ' ' << bi.to.GetResiLabel();
-      if( bi.matr != NULL )  {
+      if (bi.matr != 0) {
         size_t si = rm.UsedSymmIndex(*bi.matr);
-        if( si == InvalidIndex ) {
+        if (si == InvalidIndex) {
           throw TFunctionFailedException(__OlxSourceInfo,
             "Undefined EQIV in BIND");
         }
-        str << "_$" << (si+1);
+        str << "_$" << (si + 1);
       }
     }
   }
-  for (size_t i=0; i < PartGroups.Count(); i++) {
-    if (PartGroups[i].Count() < 2) continue;
+  for (size_t i = 0; i < PartGroups.Count(); i++) {
+    if (PartGroups[i].Count() < 2) {
+      continue;
+    }
     ins.Add("BIND ") << olxstr(' ').Join(PartGroups[i]);
   }
 }

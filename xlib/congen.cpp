@@ -324,9 +324,9 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
       }
       else if (pivoting->Count() == 2) {
         vec3d PlaneN = (envi.GetBase().crd() - envi.GetCrd(0)).Normalise();
-        vec3d RotVec = PlaneN.XProdVec(pivoting->GetCrd(0) - envi.GetBase().crd())
-          .Normalise();
-        vec3d t_vec = PlaneN.XProdVec(pivoting->GetCrd(1) - envi.GetBase().crd());
+        vec3d pv1 = pivoting->GetCrd(0) - envi.GetBase().crd();
+        vec3d pv2 = pivoting->GetCrd(1) - envi.GetBase().crd();
+        vec3d RotVec = PlaneN.XProdVec(pv1).Normalise();
         double ang = M_PI*(180 - THA) / 180;
         olx_create_rotation_matrix(M, RotVec, cos(ang));
         crds.AddCopy((PlaneN*M).NormaliseTo(dis));
@@ -335,7 +335,7 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
         olx_create_rotation_matrix(M, PlaneN, ang);
         vec3d t_v1 = crds[0]*M;
         vec3d t_v2 = M*crds[0];
-        if (t_vec.CAngle(t_v1) > t_vec.CAngle(t_v2)) {
+        if (pv2.CAngle(t_v1) > pv2.CAngle(t_v2)) {
           crds.AddCopy(t_v1.NormaliseTo(dis));
         }
         else {
