@@ -272,6 +272,35 @@ void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
       GetRM().Clear(rm_clear_ALL);
       GetLattice().Clear(true);
       GetRM().Assign(Loader->GetRM(), true);
+      // try to resolve some parameters of the refinement model
+      if (Loader->Is<TCif>()) {
+        try {
+          TCif &cif = dynamic_cast<TCif&>(*Loader);
+          cif_dp::ICifEntry *res = cif.FindEntry("_shelx_res_file");
+          if (res == 0) {
+            res = cif.FindEntry("_iucr_refine_instructions_details");
+          }
+          if (res != 0) {
+            TStrList resContent;
+            res->ToStrings(resContent);
+            TIns ins;
+            ins.LoadFromStrings(resContent);
+            GetRM().SetHKLFString(ins.GetRM().GetHKLFStr());
+            if (ins.GetRM().GetHKLF() == 5) {
+              // a workaround as there is no direct API...
+              TStrList bl;
+              for (size_t bi = 0; bi < ins.GetRM().Vars.GetBASFCount(); bi++) {
+                bl.Add(ins.GetRM().Vars.GetBASF(bi).GetValue());
+              }
+              GetRM().Vars.SetBASF(bl);
+            }
+          }
+        }
+        catch (const TExceptionBase &exc) {
+          TBasicApp::NewLogEntry(logError) << "Failed to update the refinement"
+            " model from the embedded RES file";
+        }
+      }
       OnFileLoad.Execute(this);
       GetLattice().Init();
     }
