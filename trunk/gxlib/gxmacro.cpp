@@ -479,6 +479,13 @@ void GXLibMacros::macName(TStrObjList &Cmds, const TParamList &Options,
             }
           }
         }
+        else if (old[i]->GetObject(0).Is<TXPlane>()) {
+          for (size_t j = 0; j < TXPlane::NamesRegistry().Count(); j++) {
+            if (TXPlane::NamesRegistry().GetValue(j) == old[i]->GetName()) {
+              TXPlane::NamesRegistry().Delete(j--);
+            }
+          }
+        }
         else {
           TBasicApp::NewLogEntry(logError) << "Operation is not applicable";
           continue;
@@ -513,6 +520,9 @@ void GXLibMacros::macName(TStrObjList &Cmds, const TParamList &Options,
     else {
       if (gpc != 0) {
         gpc->ClearPrimitives();
+        for (size_t i = 0; i < sel.Count(); i++) {
+          gpc->RemoveObject(sel[i]);
+        }
       }
       else {
         gpc = &app.GetRenderer().NewCollection(Cmds[1]);
@@ -1758,7 +1768,9 @@ void GXLibMacros::macMpln(TStrObjList &Cmds, const TParamList &Options,
     if (reqular) {
       olxstr v = Options.FindValue('r');
       sides_n = (v.IsEmpty()) ? 4 : v.ToSizeT();
-      if (sides_n < 4) sides_n = 4;
+      if (sides_n < 4) {
+        sides_n = 4;
+      }
     }
     olxstr name = Options.FindValue('n');
     const double weightExtent = olx_abs(Options.FindValue("we", "0").ToDouble());
@@ -1783,15 +1795,20 @@ void GXLibMacros::macMpln(TStrObjList &Cmds, const TParamList &Options,
         app.GetRenderer().GetBasis().Orient(d1, d2, m[0]);
         app.SetGridDepth(plane->GetCenter());
         delete plane;
-        plane = NULL;
+        plane = 0;
       }
     }
     else {
       TXPlane* xp = app.AddPlane(name, Atoms, sides_n, weightExtent);
-      if (xp != NULL)
+      if (xp != 0) {
         plane = xp;
+      }
     }
-    if (plane != NULL) {
+    if (plane != 0) {
+      const vec3d& Z = app.GetRenderer().GetBasis().GetMatrix()[2];
+      if (plane->GetNormal().DotProd(Z) < 0) {
+        plane->Invert();
+      }
       const TAsymmUnit& au = app.XFile().GetAsymmUnit();
       size_t colCount = 3;
       TTTable<TStrList> tab(plane->Count()/colCount +
@@ -1803,8 +1820,9 @@ void GXLibMacros::macMpln(TStrObjList &Cmds, const TParamList &Options,
       double rmsd = 0;
       for (size_t i=0; i < plane->Count(); i+=colCount) {
         for (size_t j=0; j < colCount; j++) {
-          if ((i + j) >= Atoms.Count())
+          if ((i + j) >= Atoms.Count()) {
             break;
+          }
           tab[i/colCount][j*3] = plane->GetAtom(i+j).GetLabel();
           const double v = plane->DistanceTo(plane->GetAtom(i+j).crd());
           rmsd += v*v;
@@ -1831,7 +1849,7 @@ void GXLibMacros::macMpln(TStrObjList &Cmds, const TParamList &Options,
     }
     else if (!orientOnly) {
       TBasicApp::NewLogEntry() <<
-        "The plane was not created because it is either not unique or valid";
+        "The plane was not created because it is either not unique or invalid";
     }
   }
   else {
@@ -1895,8 +1913,9 @@ void GXLibMacros::macGroup(TStrObjList &Cmds, const TParamList &Options,
     return;
   }
   olxstr name = Options.FindValue('n');
-  if (app.GetSelection().IsEmpty())
+  if (app.GetSelection().IsEmpty()) {
     app.SelectAll(true);
+  }
   if (name.IsEmpty())  {
     name = "group";
     name << (app.GetRenderer().GroupCount()+1);
@@ -4851,7 +4870,7 @@ void GXLibMacros::macProjSph(TStrObjList &Cmds, const TParamList &Options,
   TTable table_l(0, 3), table_o(0, 2);
   table_l.ColName(0) = "Ligand id";
   table_l.ColName(1) = "Area total, %";
-  table_l.ColName(2) = "Area indiviual, %";
+  table_l.ColName(2) = "Area individual, %";
   olxdict<TNetwork *, olx_pair_t<double, TSAtom *>, TPointerComparator> li;
   olxdict<TNetwork *, size_t, TPointerComparator> ri;
   for (size_t i = 0; i < pa.areas.Count(); i++) {

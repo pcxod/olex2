@@ -390,24 +390,25 @@ void TIns::_ProcessSame(ParseContext& cx, const TIndexList *index)  {
   }
 }
 //..............................................................................
-void TIns::__ProcessConn(ParseContext& cx)  {
+void TIns::__ProcessConn(ParseContext& cx) {
   TStrList toks;
-  for( size_t i=0; i < Ins.Count(); i++ )  {
-    if( Ins[i].IsEmpty() )  // should not happen, but
+  for (size_t i = 0; i < Ins.Count(); i++) {
+    if (Ins[i].IsEmpty()) { // should not happen, but
       continue;
+    }
     toks.Clear();
     toks.Strtok(Ins[i], ' ');
-    if( toks[0].Equalsi("CONN") )  {
+    if (toks[0].Equalsi("CONN")) {
       TStrList sl(toks.SubListFrom(1));
       cx.rm.Conn.ProcessConn(sl);
       Ins[i].SetLength(0);
     }
-    else if( toks[0].Equalsi("FREE") )  {
-      cx.rm.Conn.ProcessFree(toks.SubListFrom(1));
+    else if (toks[0].StartsFromi("FREE")) {
+      cx.rm.Conn.ProcessFree(toks);
       Ins[i].SetLength(0);
     }
-    else if( toks[0].Equalsi("BIND") )  {
-      cx.rm.Conn.ProcessBind(toks.SubListFrom(1));
+    else if (toks[0].StartsFromi("BIND")) {
+      cx.rm.Conn.ProcessBind(toks);
       Ins[i].SetLength(0);
     }
   }

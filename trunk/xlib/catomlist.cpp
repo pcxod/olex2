@@ -730,22 +730,10 @@ void AtomRefList::UpdateResi() {
       }
     }
     if (r1.GetMatrix() != 0) {
-      if (r1.GetAtom().GetResiId() != r0.GetAtom().GetResiId()) {
-        return;
-      }
-      else {
-        r_id = r1.GetAtom().GetResiId();
-      }
+        r_id = r0.GetAtom().GetResiId();
     }
     else if (r0.GetMatrix() != 0) {
-      if (r0.GetAtom().GetResiId() == 0 &&
-        r0.GetAtom().GetResiId() != r1.GetAtom().GetResiId())
-      {
-        return;
-      }
-      else {
-        r_id = r0.GetAtom().GetResiId();
-      }
+      r_id = r1.GetAtom().GetResiId();
     }
   }
   else {

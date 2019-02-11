@@ -390,8 +390,15 @@ void TLattice::GenerateCell() {
       TSAtom& sa = Objects.atoms.New(Network);
       sa.CAtom(ca);
       sa.ccrd() = m*ca.ccrd();
-      const vec3i t = -sa.ccrd().Floor<int>();
+      vec3i t = -sa.ccrd().Floor<int>();
       sa.ccrd() += t;
+      // 209-02-11, H13A 2 0.499999!! 0.230127 0.251084
+      for (int k = 0; k < 3; k++) {
+        if (olx_abs(sa.ccrd()[k] - 1) < 1e-3) {
+          t[k] -= 1;
+          sa.ccrd()[k] = 0;
+        }
+      }
       const uint32_t m_id = smatd::GenerateId((uint8_t)i, t);
       smatd* lm = matrices.Find(m_id, 0);
       if (lm == 0) {
@@ -2023,11 +2030,22 @@ size_t TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom,
         }
       }
       else if (v < 121 && d1 > 1.45 && d2 > 1.45) {
-        if (!dry_run) {
-          TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() << ": R2NH2+";
-          cg.FixAtom(AE, fgNH2, h_elm, 0, generated);
+        bool two = (AE.GetType(0) == iCarbonZ || AE.GetType(0) == iNitrogenZ) &&
+          (AE.GetType(1) == iCarbonZ || AE.GetType(1) == iNitrogenZ);
+        if (two) {
+          if (!dry_run) {
+            TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() << ": XYNH2+";
+            cg.FixAtom(AE, fgNH2, h_elm, 0, generated);
+          }
+          count += 2;
         }
-        count += 2;
+        else {
+          if (!dry_run) {
+            TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() << ": XYNH";
+            cg.FixAtom(AE, fgNH1, h_elm, 0, generated);
+          }
+          count += 1;
+        }
       }
       else if (v < 121 && (d1 < 1.3 || d2 < 1.3)) {
         ;

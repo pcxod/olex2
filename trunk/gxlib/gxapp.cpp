@@ -5557,16 +5557,17 @@ void TGXApp::UngroupSelection()  {
   Draw();
 }
 //..............................................................................
-void TGXApp::Ungroup(TGlGroup& G)  {
+void TGXApp::Ungroup(TGlGroup& G) {
   size_t i = GroupDict.IndexOf(&G);
-  if (i != InvalidIndex)
+  if (i != InvalidIndex) {
     GroupDefs.Delete(GroupDict.GetValue(i));
+  }
   GetRenderer().Ungroup(G);
   _UpdateGroupIds();
   Draw();
 }
 //..............................................................................
-void TGXApp::UngroupAll()  {
+void TGXApp::UngroupAll() {
   GroupDefs.Clear();
   GetRenderer().ClearGroups(true);
   _UpdateGroupIds();
