@@ -516,7 +516,7 @@ olxstr TCAtom::GetResiLabel(bool add_part) const {
   olxstr rv = GetLabel();
   if (GetResiId() != 0) {
     TResidue &r = GetParent()->GetResidue(GetResiId());
-    rv << '_' << r.GetNumber();
+    rv << '_' << r.GetNumberStr();
   }
   if (add_part && GetPart() != 0) {
     rv << '^' << (olxch)('a' + olx_abs(GetPart()) - 1);
@@ -560,7 +560,7 @@ olxstr TGroupCAtom::GetFullLabel(const RefinementModel& rm,
     }
   }
   else {  // it is however shown that shelx just IGNORES $EQIV in this notation...
-    name << '_' << r.GetNumber();
+    name << '_' << r.GetNumberStr();
     if (Matrix != 0) {
       name << '$' << (rm.UsedSymmIndex(*Matrix) + 1);
     }

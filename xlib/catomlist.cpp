@@ -113,7 +113,7 @@ olxstr ExplicitCAtomRef::GetExpression(TResidue *r) const {
     if (matrix != 0) {
       valid_s = false;
     }
-    rv << '_' << atom->GetParent()->GetResidue(atom->GetResiId()).GetNumber();
+    rv << '_' << atom->GetParent()->GetResidue(atom->GetResiId()).GetNumberStr();
   }
   if (matrix != 0) {
     if (use_resi) {
@@ -456,8 +456,8 @@ void AtomRefList::Build(const olxstr& exp, const olxstr& resi_) {
   Clear();
   olxstr r_c;
   TResidue *r_r = 0;
-  if (resi_.IsNumber()) {
-    r_r = rm.aunit.FindResidue(resi_.ToInt());
+  if (TResidue::IsValidNumber(resi_)) {
+    r_r = rm.aunit.FindResidue(resi_);
   }
   else {
     r_c = resi_;
@@ -608,7 +608,8 @@ bool AtomRefList::IsValid() const {
 }
 //.............................................................................
 bool AtomRefList::IsExplicit() const {
-  return (!ContainsImplicitAtoms && (residue.IsEmpty() || residue.IsInt()));
+  return (!ContainsImplicitAtoms &&
+    (residue.IsEmpty() || TResidue::IsValidNumber(residue)));
 }
 //.............................................................................
 void AtomRefList::Assign(const AtomRefList &arl) {
@@ -713,15 +714,9 @@ void AtomRefList::UpdateResi() {
   if (atom_refs.Count() == 2) {
     ExplicitCAtomRef &r0 = *atom_refs[0];
     ExplicitCAtomRef &r1 = *atom_refs[1];
-    if (r1.GetMatrix() != 0 && r0.GetMatrix() != 0) {
-      if (r0.GetAtom().GetResiId() == r1.GetAtom().GetResiId()) {
-        r_id = r0.GetAtom().GetResiId();
-      }
-      else {
-        return;
-      }
-    }
-    if (r1.GetMatrix() == 0 && r0.GetMatrix() == 0) {
+    if ((r1.GetMatrix() != 0 && r0.GetMatrix() != 0) ||
+      (r1.GetMatrix() == 0 && r0.GetMatrix() == 0))
+    {
       if (r0.GetAtom().GetResiId() == r1.GetAtom().GetResiId()) {
         r_id = r0.GetAtom().GetResiId();
       }
@@ -748,7 +743,7 @@ void AtomRefList::UpdateResi() {
     }
   }
   if (r_id != 0) {
-    residue = rm.aunit.GetResidue(r_id).GetNumber();
+    residue = rm.aunit.GetResidue(r_id).GetNumberStr();
   }
 }
 //.............................................................................
@@ -774,8 +769,8 @@ olxstr AtomRefList::GetExpression() const {
   if (!IsValid()) {
     return expression;
   }
-  if (residue.IsNumber()) {
-    return BuildExpression(rm.aunit.FindResidue(residue.ToInt()));
+  if (TResidue::IsValidNumber(residue)) {
+    return BuildExpression(rm.aunit.FindResidue(residue));
   }
   return BuildExpression(0);
 }

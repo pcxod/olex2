@@ -20,7 +20,7 @@ public:
     NoResidue = -100000
   };
   static olxch NoChainId() {
-    return ' ';
+    return '~';
   }
 private:
   TAsymmUnit& Parent;
@@ -84,6 +84,13 @@ public:
     }
     return rv;
   }
+  // will prepend chain id if set
+  olxstr GetNumberStr() const {
+    if (HasChainId()) {
+      return olxstr(GetChainId()) << ':' << GetNumber();
+    }
+    return olxstr(GetNumber());
+  }
   size_t Count() const { return Atoms.Count(); }
   TCAtom& GetAtom(size_t i) const { return *Atoms[i]; }
   TCAtom& operator [] (size_t i) const { return *Atoms[i]; }
@@ -125,6 +132,21 @@ public:
   }
   TResidue* Next() const { return Parent.NextResidue(*this); }
   TResidue* Prev() const { return Parent.PrevResidue(*this); }
+
+  static bool IsValidNumber(const olxstr &rn) {
+    size_t idx = rn.IndexOf(':');
+    if (idx == InvalidIndex) {
+      return rn.IsNumber();
+    }
+    if (idx == 0) {
+      return rn.SubStringFrom(idx+1).IsNumber();
+    }
+    if (idx == 1) {
+      return olxstr::o_isalphanumeric(rn.CharAt(0)) &&
+        rn.SubStringFrom(idx + 1).IsNumber();
+    }
+    return false;
+  }
   friend class TAsymmUnit;
 };
 

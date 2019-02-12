@@ -552,7 +552,7 @@ void TCif::Initialize()  {
           label.SetLength(p_idx);
         }
         olxstr rn = label.SubStringFrom(ui+1);
-        if (rn.IsInt() || rn.Contains(':')) {
+        if (TResidue::IsValidNumber(rn)) {
           olxch chain_id = TResidue::NoChainId();
           int r_num = TResidue::NoResidue;
           size_t cidx = rn.IndexOf(':');
