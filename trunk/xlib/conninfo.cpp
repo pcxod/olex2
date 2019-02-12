@@ -854,3 +854,22 @@ PyObject* ConnInfo::AtomConnInfo::PyExport() {
   return main;
 }
 #endif
+//........................................................................
+olxstr CXBondInfo::ToString(const TCAtom & from) const {
+  olxstr_buf rv;
+  // to is in a residue
+  if (to.GetResiId() != 0) {
+    rv << '_' << to.GetParent()->GetResidue(to.GetResiId()).GetNumberStr()
+      << ' ' << from.GetResiLabel() << ' ' << to.GetLabel();
+  }
+  // from is in a residue
+  else if (from.GetResiId() != 0) {
+    rv << '_' << from.GetParent()->GetResidue(from.GetResiId()).GetNumberStr()
+      << ' ' << from.GetLabel() << ' ' << to.GetLabel();
+  }
+  // both in main residue
+  else {
+    rv << from.GetLabel() << ' ' << to.GetLabel();
+  }
+  return olxstr(rv);
+}

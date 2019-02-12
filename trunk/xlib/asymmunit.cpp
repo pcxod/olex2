@@ -364,11 +364,20 @@ TResidue* TAsymmUnit::FindResidue(olxch chainId, int num) const {
 //..............................................................................
 TResidue* TAsymmUnit::FindResidue(const olxstr &number) const {
   size_t cidx = number.IndexOf(':');
-  if (cidx != InvalidIndex && cidx != 1) {
-    return 0;
+  olxch chid;
+  if (cidx != InvalidIndex) {
+    if (cidx == 0) {
+      chid = ' ';
+    }
+    else if (cidx == 1) {
+      chid = number.CharAt(0);
+    }
+    else {
+      return 0;
+    }
   }
   if (cidx != InvalidIndex) {
-    return FindResidue(number.CharAt(0), number.SubStringFrom(cidx + 1).ToInt());
+    return FindResidue(chid, number.SubStringFrom(cidx + 1).ToInt());
   }
   return FindResidue(TResidue::NoChainId(), number.ToInt());
 }
@@ -520,7 +529,7 @@ TCAtom * TAsymmUnit::FindCAtom(const olxstr &Label, TResidue* resi)  const {
   size_t us_ind = lb.IndexOf('_');
   if (us_ind != InvalidIndex && ++us_ind < lb.Length()) {
     olxstr sfx = lb.SubStringFrom(us_ind);
-    if (sfx.IsNumber() || sfx.Contains(':')) {  // residue number?
+    if (TResidue::IsValidNumber(sfx)) {  // residue number?
       resi = FindResidue(sfx);
       if (resi == 0) {
         return 0;
