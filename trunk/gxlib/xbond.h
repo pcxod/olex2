@@ -52,6 +52,7 @@ public:
 
   bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d &, vec3d &)  {  return false; }
+  virtual vec3d CalcCenter() const;
 
   // for parameters of a specific primitive
   void ListParams(TStrList &List, TGlPrimitive *Primitive);

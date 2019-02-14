@@ -77,21 +77,23 @@ TGlMaterial& TGlMaterial::operator = (const TGlMaterial& G)  {
 void TGlMaterial::Init(bool skip) const {
   if( skip )  return;
   if( Flags & sglmTransparent )  {
-    //if( !glIsEnabled(GL_ALPHA_TEST) )  {
+    if( !glIsEnabled(GL_ALPHA_TEST) )  {
       olx_gl::enable(GL_ALPHA_TEST);
-//      olx_gl::enable( GL_POINT_SMOOTH);
+      olx_gl::enable( GL_POINT_SMOOTH);
       olx_gl::enable(GL_BLEND);
       olx_gl::blendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
       olx_gl::enable(GL_CULL_FACE);
-    //}
+      //glCullFace(GL_BACK);
+      //glFrontFace(GL_CCW);
+    }
   }
   else  {
-    //if( glIsEnabled(GL_ALPHA_TEST) )  {
+    if( glIsEnabled(GL_ALPHA_TEST) )  {
       olx_gl::disable(GL_ALPHA_TEST);
-//      olx_gl::disable(GL_POINT_SMOOTH);
+      olx_gl::disable(GL_POINT_SMOOTH);
       olx_gl::disable(GL_BLEND);
       olx_gl::disable(GL_CULL_FACE);
-    //}
+    }
   }
 //  if( Flags & sglmLighting )  olx_gl::enable(GL_LIGHTING);
 //  else                        olx_gl::disable(GL_LIGHTING);

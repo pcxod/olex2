@@ -1211,7 +1211,7 @@ void GXLibMacros::macLabel(TStrObjList &Cmds, const TParamList &Options,
         if (symm_tag == 1) {
           lb << "_$" << (pos + 1);
         }
-        else if (symm_tag == 1) {
+        else if (symm_tag == 2) {
           lb << "\\+" << (pos + 1);
         }
         else {
@@ -1265,21 +1265,32 @@ void GXLibMacros::macLabel(TStrObjList &Cmds, const TParamList &Options,
       l.TranslateBasis(-l.GetCenter());
     }
   }
-  for (size_t i = 0; i < lines.Count(); i++)
+  for (size_t i = 0; i < lines.Count(); i++) {
     lines[i]->GetGlLabel().SetVisible(true);
-
+  }
+  TStrList l_out;
+  l_out.Add();
   for (size_t i = 0; i < equivs.Count(); i++) {
     smatd m = app.XFile().GetUnitCell().GetMatrix(
       smatd::GetContainerId(equivs[i]));
     m.t += smatd::GetT(equivs[i]);
-    olxstr line("$");
-    line << (i + 1);
+    olxstr line;
+    if (symm_tag == 1) {
+      line << "$" << (i + 1);
+    }
+    else if (symm_tag == 2) {
+      line << (i + 1);
+    }
+    else {
+      line << RomanNumber::To(i + 1).ToLowerCase();
+    }
     line.RightPadding(4, ' ', true) << TSymmParser::MatrixToSymmEx(m);
-    if (i != 0 && (i % 3) == 0)
-      TBasicApp::GetLog() << NewLineSequence();
-    TBasicApp::GetLog() << line.RightPadding(26, ' ');
+    if (i != 0 && (i % 3) == 0) {
+      l_out.Add();
+    }
+    l_out.GetLastString() << line.RightPadding(26, ' ');
   }
-  TBasicApp::GetLog() << NewLineSequence();
+  TBasicApp::NewLogEntry() << l_out << NewLineSequence();
 
   for (size_t i = 0; i < labels.Count(); i++) {
     TXGlLabel& l = *labels[i];

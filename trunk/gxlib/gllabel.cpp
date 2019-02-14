@@ -56,6 +56,9 @@ void TXGlLabel::Create(const olxstr& cName)  {
 void TXGlLabel::SetLabel(const olxstr& L)  {
   FLabel = L;
   text_rect = GetFont().GetTextRect(FLabel);
+  double inc = text_rect.height *0.5;
+  text_rect.top -= inc / 2;
+  text_rect.height += inc;
 }
 //..............................................................................
 vec3d TXGlLabel::GetRasterPosition() const {

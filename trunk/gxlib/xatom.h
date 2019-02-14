@@ -88,6 +88,7 @@ protected:
     static olxstr v = "PolyType";
     return v;
   }
+  virtual bool SelfDraw(bool SelectPrimitives, bool SelectObjects);
 public:
   TXAtom(TNetwork* net, TGlRenderer& Render, const olxstr& collectionName);
   virtual ~TXAtom();
@@ -152,6 +153,7 @@ public:
   }
   bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d& Max, vec3d& Min);
+  virtual vec3d CalcCenter() const;
 
   // for parameters of a specific primitive
   void ListParams(TStrList& List, TGlPrimitive* Primitive);

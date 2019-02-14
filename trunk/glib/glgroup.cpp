@@ -145,7 +145,7 @@ void TGlGroup::InitMaterial() const {
   }
 }
 //..............................................................................
-void TGlGroup::DoDraw(bool SelectPrimitives, bool SelectObjects) const {
+void TGlGroup::DoDraw(bool SelectPrimitives, bool SelectObjects) {
   if (!SelectPrimitives && !SelectObjects && !Blended) {
     InitMaterial();
   }
@@ -342,5 +342,22 @@ TGlMaterial TGlGroup::GetActualMaterial(const TGlMaterial &m) const {
     glm = GlM;
   }
   return (ParentGroup != 0) ? ParentGroup->GetActualMaterial(glm) : glm;
+}
+//..............................................................................
+vec3d TGlGroup::CalcCenter() const {
+  vec3d c;
+  size_t count = 0;
+  for (size_t i = 0; i < Count(); i++) {
+    const AGDrawObject& G = GetObject(i);
+    if (G.MaskFlags(sgdoHidden) != 0) {
+      continue;
+    }
+    c += G.CalcCenter();
+    count++;
+  }
+  if (count > 0) {
+    c /= count;
+  }
+  return c;
 }
 //..............................................................................

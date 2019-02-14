@@ -374,7 +374,7 @@ TGPCollection *TGlRenderer::FindCollectionX(const olxstr& Name,
       if (dc == 0 || dc < maxMatchLevels) {
         continue;
       }
-      // keep the one with shortes name
+      // keep the one with shortest name
       if (BestMatch != 0 && dc == maxMatchLevels) {
         if (BestMatch->GetName().Length() > FCollections.GetKey(i).Length()) {
           BestMatch = FCollections.GetValue(i);
@@ -778,15 +778,18 @@ void TGlRenderer::HandleSelection(const AGDrawObject &o, const TGlPrimitive &p,
   }
 }
 //..............................................................................
+//..............................................................................
+int CompareObjectsZ_1(
+  const AnAssociation3<TGlPrimitive *, AGDrawObject *, double> &a,
+  const AnAssociation3<TGlPrimitive *,
+  AGDrawObject *, double> &b)
+{
+  return olx_cmp(a.c, b.c);
+}
+//..............................................................................
 void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects,
   bool SelectPrimitives)
 {
-#if defined(_DEBUG) && 0
-  for (size_t i = 0; i < PrimitiveCount(); i++) {
-    GetPrimitive(i).SetFont(NULL);
-    GetPrimitive(i).SetString(NULL);
-  }
-#endif
   olx_gl::pushAttrib(GL_ALL_ATTRIB_BITS);
   Selecting = (SelectObjects || SelectPrimitives);
   const bool skip_mat = (StereoFlag == glStereoColor || Selecting);
@@ -886,6 +889,7 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects,
   /* disabling the depth test does help for a set of transparent objects but
   then it does not help if there are any solid objects on the way
   */
+  TTypeList<AnAssociation3<TGlPrimitive*, AGDrawObject*, double> > to_render;
   for (size_t i = 0; i < trans_obj_count; i++) {
     TGlMaterial* GlM = FTranslucentObjects[i];
     GlM->Init(skip_mat);
@@ -899,16 +903,24 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects,
         if (GDO.MaskFlags(DrawMask) != 0) {
           continue;
         }
-        HandleSelection(GDO, GlP, SelectObjects, SelectPrimitives);
-        olx_gl::pushMatrix();
-        if (GDO.Orient(GlP)) { // the object has drawn itself
-          olx_gl::popMatrix();
-          continue;
-        }
-        GlP.Draw();
-        olx_gl::popMatrix();
+        to_render.AddNew(&GlP, &GDO, GDO.CalcZ());
       }
     }
+  }
+  QuickSorter::SortSF(to_render, &CompareObjectsZ_1);
+  for (size_t i = 0; i < to_render.Count(); i++) {
+    HandleSelection(*to_render[i].b,
+      *to_render[i].a, SelectObjects, SelectPrimitives);
+    if (!skip_mat) {
+      to_render[i].a->GetProperties().Init(false);
+    }
+    olx_gl::pushMatrix();
+    if (to_render[i].b->Orient(*to_render[i].a)) {
+      olx_gl::popMatrix();
+      continue;
+    }
+    to_render[i].a->Draw();
+    olx_gl::popMatrix();
   }
   //olx_gl::enable(GL_DEPTH_TEST);
   for (size_t i = 0; i < group_count; i++) {
@@ -1187,6 +1199,7 @@ void TGlRenderer::ClearGroups(bool clean) {
     }
     FGroups[i]->Clear();
     FGroups[i]->SetTag(1);
+    FGroups[i]->GetPrimitives().RemoveObject(*FGroups[i]);
   }
   if (clean) {
     FGObjects.Pack(ACollectionItem::TagAnalyser(1));

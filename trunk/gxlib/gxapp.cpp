@@ -203,9 +203,10 @@ public:
     else {  // definition will get broken otherwise
       FParent->ClearStructureRelated();
     }
-    if (!hasNonQ && !FParent->AreQPeaksVisible())
+    if (!hasNonQ && !FParent->AreQPeaksVisible()) {
       FParent->SetQPeaksVisible(true);
-    GrowInfo = NULL;
+    }
+    GrowInfo = 0;
     CAtomMasks.Clear();
     AtomNames.Clear();
     return false;
@@ -5171,14 +5172,15 @@ void TGXApp::LoadStructureStyle(const TDataItem &item) {
   }
   IndividualCollections.Clear();
   TDataItem& ind_col = item.GetItemByName("ICollections");
-  for (size_t i=0; i < ind_col.FieldCount(); i++)
+  for (size_t i = 0; i < ind_col.FieldCount(); i++) {
     IndividualCollections.Add(ind_col.GetFieldByIndex(i));
+  }
   // load name registries
   TXAtom::NamesRegistry().Clear();
   TXBond::NamesRegistry().Clear();
   TXPlane::NamesRegistry().Clear();
   TDataItem *name_reg = item.FindItem("NameRegistry");
-  if (name_reg != NULL) {
+  if (name_reg != 0) {
     TDataItem &pr = name_reg->GetItemByName("Planes");
     if (pr.ItemCount() != 0) {
       olxstr_dict<size_t, false> pd_dict;
@@ -5209,7 +5211,7 @@ void TGXApp::LoadStructureStyle(const TDataItem &item) {
   }
 }
 //..............................................................................
-void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
+void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis) {
   GlRenderer->Clear();
   ClearXObjects();
   ClearLabels();
@@ -5236,24 +5238,26 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
 
   LoadStructureStyle(item);
   const TDataItem& labels = item.GetItemByName("Labels");
-  for (size_t i=0; i < labels.ItemCount(); i++) {
+  for (size_t i = 0; i < labels.ItemCount(); i++) {
     XLabels.Add(
       new TXGlLabel(
-      *GlRenderer, PLabelsCollectionName())).FromDataItem(
-        labels.GetItemByIndex(i));
+        *GlRenderer, PLabelsCollectionName())).FromDataItem(
+          labels.GetItemByIndex(i));
   }
   bool vis;
   TDataItem *frame_i = item.FindItem("3DFrame");
   if (frame_i != 0) {
     vis = F3DFrame->IsVisible();
     F3DFrame->FromDataItem(*frame_i);
-    if (vis != F3DFrame->IsVisible())
+    if (vis != F3DFrame->IsVisible()) {
       OnGraphicsVisible.Execute(dynamic_cast<TBasicApp*>(this), F3DFrame);
+    }
   }
   vis = FXGrid->IsVisible();
   FXGrid->FromDataItem(item.GetItemByName("Grid"), zis);
-  if (vis != FXGrid->IsVisible())
+  if (vis != FXGrid->IsVisible()) {
     OnGraphicsVisible.Execute(dynamic_cast<TBasicApp*>(this), FXGrid);
+  }
 
   FDBasis->FromDataItem(item.GetItemByName("DBasis"));
   TDataItem *dspi = item.FindItem("DSphere");
@@ -5318,7 +5322,7 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
     arr.FromBase64String(visibility.GetFieldByName("atoms"));
     AtomIterator ai(*this);
     size_t cnt = 0;
-    while(ai.HasNext()) {
+    while (ai.HasNext()) {
       if (cnt >= arr.Count()) {
         TBasicApp::NewLogEntry(logWarning) << "Atom visibility integrity broken";
         break;
@@ -5353,7 +5357,7 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
     if (ai.count != atom_labels->ItemCount()) {
       throw TFunctionFailedException(__OlxSourceInfo, "integrity is broken");
     }
-    size_t i=0;
+    size_t i = 0;
     while (ai.HasNext()) {
       ai.Next().GetGlLabel().FromDataItem(atom_labels->GetItemByIndex(i++));
     }
@@ -5377,10 +5381,11 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
   const TDataItem& groups = item.GetItemByName("Groups");
   // pre-create all groups
   GroupDict.Clear();
-  for (size_t i=0; i < groups.ItemCount(); i++)
+  for (size_t i = 0; i < groups.ItemCount(); i++) {
     GlRenderer->NewGroup(groups.GetItemByIndex(i).GetValue());
+  }
   // load groups
-  for (size_t i=0; i < groups.ItemCount(); i++) {
+  for (size_t i = 0; i < groups.ItemCount(); i++) {
     const TDataItem& group = groups.GetItemByIndex(i);
     TGlGroup& glG = GlRenderer->GetGroup(i);
     glG.SetVisible(group.GetFieldByName("visible").ToBool());
@@ -5418,7 +5423,7 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
     }
     glG.Create(group.GetValue());
     StoreGroup(glG, GroupDefs.AddNew());
-    GroupDict(&glG, GroupDefs.Count()-1);
+    GroupDict(&glG, GroupDefs.Count() - 1);
   }
   _UpdateGroupIds();
   TDataItem& renderer = item.GetItemByName("Renderer");
@@ -5478,22 +5483,28 @@ void TGXApp::LoadModel(const olxstr& fileName) {
   char sig[3];
   wxZipInputStream zin(fis);
   fis.Read(sig, 3);
-  if( olxstr::o_memcmp(sig, "oxm", 3) != 0 )
+  if (olxstr::o_memcmp(sig, "oxm", 3) != 0) {
     throw TFunctionFailedException(__OlxSourceInfo, "invalid file signature");
+  }
 
-  wxZipEntry* model = NULL, *grid = NULL, *zen;
+  wxZipEntry* model = 0, *grid = 0, *zen;
   olxstr entryModel("model"), entryGrid("grid");
 
-  while( (zen = zin.GetNextEntry()) != NULL )  {
-    if( entryModel == zen->GetName() )
+  while ((zen = zin.GetNextEntry()) != 0) {
+    if (entryModel == zen->GetName()) {
       model = zen;
-    else if( entryGrid == zen->GetName() )
+    }
+    else if (entryGrid == zen->GetName()) {
       grid = zen;
-    else
+    }
+    else {
       delete zen;
+    }
   }
-  if( model == NULL || grid == NULL )
-    throw TFunctionFailedException(__OlxSourceInfo, "invalid model file description");
+  if (model == 0 || grid == 0) {
+    throw TFunctionFailedException(__OlxSourceInfo,
+      "invalid model file description");
+  }
   zin.OpenEntry(*model);
   uint32_t contentLen = zin.GetLength();
   unsigned char * bf = new unsigned char[contentLen + 1];
@@ -5501,13 +5512,13 @@ void TGXApp::LoadModel(const olxstr& fileName) {
   TEMemoryInputStream ms(bf, contentLen);
   TDataFile df;
   df.LoadFromTextStream(ms);
-  delete [] bf;
+  delete[] bf;
   zin.OpenEntry(*grid);
   TwxInputStreamWrapper in(zin);
-  try  {
+  try {
     FromDataItem(df.Root().GetItemByName("olex_model"), in);
   }
-  catch(const TExceptionBase& exc)  {
+  catch (const TExceptionBase& exc) {
     NewLogEntry(logException) << "Failed to load model: " << exc.GetException()->GetError();
     XFile().SetLastLoader(NULL);
     XFile().LastLoaderChanged();
@@ -5609,7 +5620,7 @@ const_strlist TGXApp::ToPov() const {
   out << TXPlane::PovDeclare();
   out.Add("union {");
   TGXApp::AtomIterator ai = GetAtoms();
-  while( ai.HasNext() )  {
+  while (ai.HasNext()) {
     TXAtom &a = ai.Next();
     if (a.IsVisible()) {
       out.Add("//") << a.CAtom().GetResiLabel();
@@ -5617,7 +5628,7 @@ const_strlist TGXApp::ToPov() const {
     }
   }
   TGXApp::BondIterator bi = GetBonds();
-  while( bi.HasNext() )  {
+  while (bi.HasNext()) {
     TXBond &b = bi.Next();
     if (b.IsVisible()) {
       out.Add("//") << b.A().CAtom().GetResiLabel() << '-' <<
@@ -5626,29 +5637,35 @@ const_strlist TGXApp::ToPov() const {
     }
   }
   TGXApp::PlaneIterator pi = GetPlanes();
-  while( pi.HasNext() )  {
+  while (pi.HasNext()) {
     TXPlane &p = pi.Next();
-    if( p.IsVisible() )
+    if (p.IsVisible()) {
       out << p.ToPov(materials);
+    }
   }
-  for( size_t i=0; i < Lines.Count(); i++ )  {
-    if( Lines[i].IsVisible() )
+  for (size_t i = 0; i < Lines.Count(); i++) {
+    if (Lines[i].IsVisible()) {
       out << Lines[i].ToPov(materials);
+    }
   }
-  for( size_t i=0; i < XGrowLines.Count(); i++ )  {
-    if( XGrowLines[i].IsVisible() )
+  for (size_t i = 0; i < XGrowLines.Count(); i++) {
+    if (XGrowLines[i].IsVisible()) {
       out << XGrowLines[i].ToPov(materials);
+    }
   }
-  if( XGrid().IsVisible() && !XGrid().IsEmpty() )
+  if (XGrid().IsVisible() && !XGrid().IsEmpty()) {
     out << XGrid().ToPov(materials);
-  for (size_t i=0; i < UserObjects.Count(); i++)
+  }
+  for (size_t i = 0; i < UserObjects.Count(); i++) {
     out << UserObjects[i].ToPov(materials);
+  }
 
-  if (XFile().DUnitCell->IsVisible())
+  if (XFile().DUnitCell->IsVisible()) {
     out << XFile().DUnitCell->ToPov(materials);
+  }
   out.Add("}");
   TStrList mat_out;
-  for( size_t i=0; i < materials.Count(); i++ )  {
+  for (size_t i = 0; i < materials.Count(); i++) {
     mat_out.Add("#declare ") << materials.GetValue(i) << '=';
     mat_out.Add(materials.GetKey(i).ToPOV());
   }
@@ -5809,7 +5826,7 @@ void TGXApp::ClearIndividualCollections() {
   TXBond::NamesRegistry().Clear();
 }
 //..............................................................................
-void TGXApp::ClearGroupDefinitions()  {
+void TGXApp::ClearGroupDefinitions() {
   GroupDefs.Clear();
   SelectionCopy[0].Clear();
   SelectionCopy[1].Clear();

@@ -78,3 +78,31 @@ AGDrawObject const & esdl::olx_ref::get<AGDrawObject>(AGDrawObject const & x) {
 }
 #endif
 //..............................................................................
+double AGDrawObject::CalcZ() const {
+  return Parent.Project(CalcCenter())[2];
+}
+//..............................................................................
+void AGDrawObject::DoDraw(bool SelectPrimitives, bool SelectObjects) {
+  if (SelfDraw(SelectPrimitives, SelectObjects)) {
+    return;
+  }
+  const TGPCollection &ps = GetPrimitives();
+  if (ps.PrimitiveCount() == 0) {
+    return;
+  }
+  for (size_t i = 0; i < ps.PrimitiveCount(); i++) {
+    TGlPrimitive &GlP = ps.GetPrimitive(i);
+    Parent.HandleSelection(*this, GlP, SelectObjects, SelectPrimitives);
+    if (!Parent.ForcePlain()) {
+      GlP.GetProperties().Init(false);
+    }
+    olx_gl::pushMatrix();
+    if (Orient(GlP)) {
+      olx_gl::popMatrix();
+      continue;
+    }
+    GlP.Draw();
+    olx_gl::popMatrix();
+  }
+}
+//..............................................................................

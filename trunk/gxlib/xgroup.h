@@ -42,7 +42,7 @@ class TXGroup : public TGlGroup, public AGlMouseHandler {
   double AngleInc, AngleAcc;
   bool mirror, MirrororingEnabled;
 protected:
-  virtual void DoDraw(bool SelectPrimitives, bool SelectObjects) const {
+  virtual void DoDraw(bool SelectPrimitives, bool SelectObjects) {
     if (GetParentGroup() != 0) {  // is inside a group?
       TGlGroup::DoDraw(SelectPrimitives, SelectObjects);
       return;
