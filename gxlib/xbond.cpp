@@ -354,6 +354,10 @@ const vec3d &TXBond::GetToCrd() const {
   return B().crd();
 }
 //..............................................................................
+vec3d TXBond::CalcCenter() const {
+  return (GetToCrd() + GetFromCrd()) / 2;
+}
+//..............................................................................
 const_strlist TXBond::ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const {
   TStrList out;
   out.Add(" object { union {");

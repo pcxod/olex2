@@ -2655,6 +2655,7 @@ void TLattice::ToDataItem(TDataItem& item) const {
 void TLattice::FromDataItem(TDataItem& item)  {
   TActionQueueLock ql(&OnAtomsDeleted);
   Clear(true);
+  ClearPlaneDefinitions();
   Delta = item.GetFieldByName("delta").ToDouble();
   DeltaI = item.GetFieldByName("deltai").ToDouble();
   GetAsymmUnit().FromDataItem(item.GetItemByName("AUnit"));

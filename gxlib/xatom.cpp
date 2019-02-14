@@ -371,6 +371,7 @@ struct PolyFacesSorter {
   const TXAtom::Poly& p;
   vec3f c;
   mat3f rm;
+  mutable olxdict<vec3s, float, TComparableComparator> z_cache;
   PolyFacesSorter(const TXAtom::Poly& p,
     const TGlRenderer &r)
     : p(p)
@@ -378,12 +379,25 @@ struct PolyFacesSorter {
     c = r.GetBasis().GetCenter();
     rm = r.GetBasis().GetMatrix();
   }
+  float calc_z(const vec3s *a) const {
+    vec3f ca = (p.vecs[(*a)[0]] + p.vecs[(*a)[1]] + p.vecs[(*a)[2]]) / 3;
+    ca = (ca + c)*rm;
+    return ca[2];
+  }
+  float get_z(const vec3s *a) const {
+    size_t a_idx = z_cache.IndexOf(*a);
+    if (a_idx == InvalidIndex) {
+      float a_z = calc_z(a);
+      z_cache.Add(*a, a_z);
+      return a_z;
+    }
+    else {
+      return z_cache.GetValue(a_idx);
+    }
+  }
+
   int Compare(const vec3s *a, const vec3s *b) const {
-    vec3f ca = (p.vecs[(*a)[0]] + p.vecs[(*a)[1]] + p.vecs[(*a)[2]])/3;
-    vec3f cb = (p.vecs[(*b)[0]] + p.vecs[(*b)[1]] + p.vecs[(*b)[2]])/3;
-    ca = (ca+c)*rm;
-    cb = (cb+c)*rm;
-    return olx_cmp(cb[2], ca[2]);
+    return olx_cmp(get_z(a), get_z(b));
   }
 };
 //..............................................................................
@@ -545,6 +559,14 @@ bool TXAtom::Orient(TGlPrimitive& GlP) {
       return true;
     }
   }
+  return false;
+}
+//..............................................................................
+vec3d TXAtom::CalcCenter() const {
+  return crd() + GetCenter();
+}
+//..............................................................................
+bool TXAtom::SelfDraw(bool SelectPrimitives, bool SelectObjects) {
   return false;
 }
 //..............................................................................
@@ -1109,14 +1131,20 @@ void TXAtom::CreatePoly(const TSAtomPList& bound, short type,
             }
             // check if there is another atom on the other side
             else if (!centered) {
+              pc = (bound[i]->crd() + bound[j]->crd() + bound[k]->crd()) / 3;
               vec3d n = (bound[i]->crd() - bound[j]->crd()).XProdVec(
                 bound[k]->crd() - bound[j]->crd()).Normalise();
-              if ((pc - crd()).DotProd(n) > 0) {
+              double pd = n.DotProd(pc);
+              if ((crd() - pc).DotProd(n) > 0) {
                 n *= -1;
+                pd = -pd;
               }
               bool exists = false;
               for (size_t ai = 0; ai < bound.Count(); ai++) {
-                double d = (bound[ai]->crd() - crd()).DotProd(n);
+                if (ai == i || ai == j || ai == k) {
+                  continue;
+                }
+                double d = (bound[ai]->crd()).DotProd(n) - pd;
                 if (d > 0.1) { // at least 0.1 A away from this face
                   exists = true;
                   break;
@@ -1197,10 +1225,12 @@ void TXAtom::CreatePoly(const TSAtomPList& bound, short type,
       pl.vecs.Clear();
       for (size_t i = 0; i < bound.Count(); i++) {
         const double ca = normal.CAngle(bound[i]->crd() - pc);
-        if (ca >= 0)
+        if (ca >= 0) {
           sidea.Add(bound[i]);
-        else
+        }
+        else {
           sideb.Add(bound[i]);
+        }
       }
       if (sidea.Count() > 2) {
         vec3f cnt = TriangulateType2(pl, sidea);
@@ -1246,14 +1276,19 @@ void TXAtom::CreatePoly(const TSAtomPList& bound, short type,
 }
 //..............................................................................
 void TXAtom::CreatePolyhedron(bool v) {
-  if (Polyhedron != NULL) {
+  if (Polyhedron != 0) {
     delete Polyhedron;
     Polyhedron = NULL;
   }
-  if (!v)  return;
-  if (NodeCount() < 4)  return;
-  if (IsDeleted() || GetType() == iQPeakZ)
+  if (!v) {
     return;
+  }
+  if (NodeCount() < 4) {
+    return;
+  }
+  if (IsDeleted() || GetType() == iQPeakZ) {
+    return;
+  }
   TPtrList<TSAtom> bound;
   for (size_t i = 0; i < NodeCount(); i++) {
     if (Node(i).IsDeleted() || Node(i).GetType().z < 2) {
@@ -1293,16 +1328,19 @@ void TXAtom::CreatePolyhedron(bool v) {
     normals.Normalise();
     int deviating = 0, deviating_x = 0;
     for (size_t i = 0; i < bound.Count(); i++) {
-      if (olx_abs(bound[i]->crd().DotProd(normals[0]) - pd) > rms[0])
+      if (olx_abs(bound[i]->crd().DotProd(normals[0]) - pd) > rms[0]) {
         deviating++;
-      if (olx_abs(bound[i]->crd().DotProd(normals[2]) - pd_x) > rms[2])
+      }
+      if (olx_abs(bound[i]->crd().DotProd(normals[2]) - pd_x) > rms[2]) {
         deviating_x++;
+      }
     }
     if (deviating < 3 || deviating_x < 3) {  // a proper polyhedra
       CreatePoly(bound, polyRegular);
     }
-    else  // two polyhedra of atom outside..
+    else { // two polyhedra of atom outside..
       CreatePoly(bound, polyBipyramid, &normals[2], &pc);
+    }
   }
   else { // atom outside
     CreatePoly(bound, polyPyramid);

@@ -15,30 +15,30 @@
 #include "splane.h"
 BeginGxlNamespace()
 
-class TXPlane: public TSPlane, public AGDrawObject  {
+class TXPlane : public TSPlane, public AGDrawObject {
 private:
   mat3d RM;
   vec3d MaxV;
 public:
   TXPlane(TNetwork* net, TGlRenderer& Render, const olxstr& collectionName)
     : TSPlane(net),
-      AGDrawObject(Render, collectionName)
+    AGDrawObject(Render, collectionName)
   {}
-  virtual ~TXPlane()  {}
-  void Create(const olxstr& cName=EmptyString());
+  virtual ~TXPlane() {}
+  void Create(const olxstr& cName = EmptyString());
 
   bool Orient(TGlPrimitive& P);
-  bool GetDimensions(vec3d &, vec3d &)  {  return false;  }
+  bool GetDimensions(vec3d &, vec3d &) { return false; }
   void ListPrimitives(TStrList& List) const;
   /* Inverts the plane normal */
   void Invert();
-  bool OnMouseDown(const IOlxObject *, const TMouseData &)  {
+  bool OnMouseDown(const IOlxObject *, const TMouseData &) {
     return true;
   }
-  bool OnMouseUp(const IOlxObject *, const TMouseData &)  {
+  bool OnMouseUp(const IOlxObject *, const TMouseData &) {
     return false;
   }
-  bool OnMouseMove(const IOlxObject *, const TMouseData &)  {
+  bool OnMouseMove(const IOlxObject *, const TMouseData &) {
     return false;
   }
 
@@ -48,6 +48,8 @@ public:
       SetVisible(false);
     }
   }
+
+  virtual vec3d CalcCenter() const { return GetCenter(); }
 
   const_strlist ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const;
   static const_strlist PovDeclare();

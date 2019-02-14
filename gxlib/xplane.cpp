@@ -144,7 +144,7 @@ bool TXPlane::Orient(TGlPrimitive& P) {
       olx_gl::normal(GetNormal());
       vec3d v = MaxV;
       olx_gl::begin(GL_POLYGON);
-      for (int i = 0; i < def.GetSides(); i++) {
+      for (size_t i = 0; i < def.GetSides(); i++) {
         olx_gl::vertex(v);
         v *= RM;
       }
@@ -199,36 +199,58 @@ const_strlist TXPlane::PovDeclare()  {
   out.Add("#declare plane_centroid=object{ sphere {<0,0,0>, 0.1} }");
   out.Add("#declare plane_ring=union{");
   out.Add("  object{ torus {1, 0.075} }");
-  out.Add("  transform{ rotate <90,0,0> }");
-  out.Add("}");
+  out.Add("  transform{ rotate <90,0,0> }}");
+
+  out.Add("#declare plane_normal=union{");
+  out.Add("  cylinder {<0,0,0>, <0,0,1.0>, 0.05}");
+  out.Add("  cone {<0,0,1.0>, 0.10, <0,0,1.2>, 0}}");
   return out;
 }
 //..............................................................................
 const_strlist TXPlane::ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const {
   TStrList out;
-   pov::CrdTransformer crdc(Parent.GetBasis());
+  pov::CrdTransformer crdc(Parent.GetBasis());
   out.Add(" object { union {");
   const TGPCollection &gpc = GetPrimitives();
-  for( size_t i=0; i < gpc.PrimitiveCount(); i++ )  {
+  const TSPlane::Def &def =
+    GetNetwork().GetLattice().GetPlaneDefinitions()[this->GetDefId()];
+  const mat3d tm = TEBasis::CalcBasis<vec3d, mat3d>(crdc.normal(GetNormal()));
+  for (size_t i = 0; i < gpc.PrimitiveCount(); i++) {
     TGlPrimitive &glp = gpc.GetPrimitive(i);
-    if (glp.GetType() == sgloPolygon) {
+    if (glp.GetOwnerId() == 0) {
       out.Add("   object { union {");
       vec3d zv = vec3d(),
         n = crdc.normal(GetNormal());
-      const mat3f m = GetBasis();
-      for (size_t j = 0; j < Count(); j++) {
-        out.Add("    smooth_triangle {");
-        out.Add("     ") << pov::to_str(zv) << pov::to_str(n);
-        out.Add("     ") << pov::to_str(crdc.normal(GetAtom(j).crd()-GetCenter()))
-          << pov::to_str(n);
-        out.Add("     ") << pov::to_str(
-          crdc.normal(GetAtom(j == Count()-1 ? 0 : j+1).crd()-GetCenter()))
-          << pov::to_str(n);
-        out.Add("     }");
+      if (def.GetSides() > 2) {
+        vec3d v = MaxV;
+        for (size_t j = 0; j < def.GetSides(); j++) {
+          out.Add("    smooth_triangle {");
+          out.Add("     ") << pov::to_str(zv) << pov::to_str(n);
+          out.Add("     ") << pov::to_str(crdc.normal(v))
+            << pov::to_str(n);
+          out.Add("     ") << pov::to_str(
+            crdc.normal((j == Count() - 1 ? MaxV : v*RM)))
+            << pov::to_str(n);
+          out.Add("     }");
+          v *= RM;
+        }
+      }
+      else {
+        const mat3f m = GetBasis();
+        for (size_t j = 0; j < Count(); j++) {
+          out.Add("    smooth_triangle {");
+          out.Add("     ") << pov::to_str(zv) << pov::to_str(n);
+          out.Add("     ") << pov::to_str(crdc.normal(GetAtom(j).crd() - GetCenter()))
+            << pov::to_str(n);
+          out.Add("     ") << pov::to_str(
+            crdc.normal(GetAtom(j == Count() - 1 ? 0 : j + 1).crd() - GetCenter()))
+            << pov::to_str(n);
+          out.Add("     }");
+        }
       }
       out.Add("    }");
     }
-    else if (glp.GetType() == sgloCommandList) {
+    else if (glp.GetOwnerId() == 2) {
       double minrs = (GetAtom(0).crd() - GetCenter()).QLength();
       for (size_t i = 1; i < Count(); i++) {
         const double qd = (GetAtom(i).crd() - GetCenter()).QLength();
@@ -236,17 +258,19 @@ const_strlist TXPlane::ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const {
           minrs = qd;
         }
       }
-      out.Add("   object { union { object {plane_ring} ");
+      out.Add("   object { object {plane_ring} ");
       out.Add("      transform { ");
-      mat3d tm = TEBasis::CalcBasis<vec3d, mat3d>(crdc.normal(GetNormal()));
       minrs = sqrt(minrs)*cos(M_PI / Count()) / (0.075 + 1);
-      tm *= (minrs*0.85);
-      out.Add("        matrix") << pov::to_str(tm, vec3d());
-      out.Add("      }}");
+      mat3d rm = tm * (minrs*0.85);
+      out.Add("        matrix") << pov::to_str(rm, vec3d());
+      out.Add("      }");
     }
     else {
       out.Add("   object {") << "plane_"
         << glp.GetName().ToLowerCase().Replace(' ', '_');
+      out.Add("      transform { ");
+      out.Add("        matrix") << pov::to_str(tm, vec3d());
+      out.Add("      }");
     }
     olxstr p_mat = pov::get_mat_name(glp.GetProperties(), materials);
     out.Add("    texture {") << pov::get_mat_name(glp.GetProperties(), materials) << '}';
@@ -274,17 +298,17 @@ const_strlist TXPlane::ToWrl(olx_cdict<TGlMaterial, olxstr> &materials) const {
   out.Add("     translation ") << wrl::to_str(crdc.crd(GetCenter()));
   out.Add("   children [");
   const TGPCollection &gpc = GetPrimitives();
-  for (size_t i = 0; i < gpc.PrimitiveCount(); i++)  {
+  for (size_t i = 0; i < gpc.PrimitiveCount(); i++) {
     TGlPrimitive &glp = gpc.GetPrimitive(i);
-    if (glp.GetType() == sgloPolygon)  {
+    if (glp.GetType() == sgloPolygon) {
       TStrList geom;
       out.Add("  Shape{ appearance ") << wrl::get_mat_str("Plane",
         GetPrimitives().GetStyle(), materials, this);
       geom.Add("   geometry IndexedFaceSet{ coord Coordinate{ point[");
       for (size_t j = 0; j < Count(); j++) {
         // no need for translations here, use normal vs crd
-        geom.Add("    ") << wrl::to_str(crdc.normal(GetAtom(j).crd()-GetCenter()));
-        if (j+1 < Count()) {
+        geom.Add("    ") << wrl::to_str(crdc.normal(GetAtom(j).crd() - GetCenter()));
+        if (j + 1 < Count()) {
           geom.GetLastString() << ',';
         }
       }
@@ -293,13 +317,13 @@ const_strlist TXPlane::ToWrl(olx_cdict<TGlMaterial, olxstr> &materials) const {
       olxstr idx, idx1;
       for (size_t j = 0; j < Count(); j++) {
         idx << ' ' << j;
-        idx1 << ' ' << (Count()-j-1);
+        idx1 << ' ' << (Count() - j - 1);
       }
       out.Add("    coordIndex[") << idx << " -1] }}";
       out.Add("  Shape{ appearance ") << wrl::get_mat_str("Plane",
         GetPrimitives().GetStyle(), materials, this, true);
       out << geom;
-      out.Add("    coordIndex[" ) << idx1 << " -1] }}";
+      out.Add("    coordIndex[") << idx1 << " -1] }}";
     }
     else if (!glp.GetName().Equals("Ring")) {
       olxstr glp_name = glp.GetName().ToLowerCase().Replace(' ', '_');

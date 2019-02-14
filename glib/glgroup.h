@@ -23,7 +23,7 @@ class TGlGroup : public AGDrawObject {
   bool DefaultColor, Blended;
 protected:
   void InitMaterial() const;
-  virtual void DoDraw(bool SelectPrimitives, bool SelectObjects) const;
+  virtual void DoDraw(bool SelectPrimitives, bool SelectObjects);
   struct ObjectReleaser {
     template <typename item_t> static bool OnItem(item_t &o_, size_t) {
       AGDrawObject &o = olx_ref::get(o_);
@@ -41,7 +41,7 @@ public:
   virtual void Create(const olxstr& cName = EmptyString());
   virtual ~TGlGroup();
   virtual void Clear();
-  void Draw(bool SelectPrimitives = false, bool SelectObjects = false) const {
+  void Draw(bool SelectPrimitives = false, bool SelectObjects = false) {
     DoDraw(SelectPrimitives, SelectObjects);
   }
   void IncCapacity(size_t v) { Objects.SetCapacity(Objects.Count() + v); }
@@ -88,6 +88,7 @@ public:
   bool TryToGroup(AGDObjList& ungroupable);
 
   bool Orient(TGlPrimitive&) { return false; }
+  virtual vec3d CalcCenter() const;
   bool GetDimensions(vec3d&, vec3d&) { return false; }
   virtual bool OnMouseDown(const IOlxObject *Sender, const TMouseData& Data);
   virtual bool OnMouseUp(const IOlxObject *Sender, const TMouseData& Data);
