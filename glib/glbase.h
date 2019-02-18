@@ -569,6 +569,10 @@ struct olx_gl {
     glShadeModel(mode);
   }
 
+  static void cullFace(GLenum back_or_front) {
+    glCullFace(back_or_front);
+  }
+
   static void lineWidth(GLfloat width) {
     glLineWidth(width);
   }
@@ -773,38 +777,90 @@ struct olx_gl {
     return glGetString(name);
   }
   // changes a flag and restores it on destroying
-  template <bool do_disable=true> struct FlagChanger {
+  class FlagChanger {
     GLenum flag;
-    bool enabled, restored;
-    FlagChanger(GLenum flag)
-      : flag(flag), restored(false)
-    {
-      enabled = isEnabled(flag);
-      if (enabled) {
-        if (do_disable) disable(flag);
-      }
-      else {
-        if (!do_disable) enable(flag);
+    bool original_state, current_state;
+    void restore() {
+      if (original_state != current_state) {
+        if (original_state) {
+          olx_gl::enable(flag);
+        }
+        else {
+          olx_gl::disable(flag);
+        }
       }
     }
-    virtual ~FlagChanger() { restore(); }
-    void restore() {
-      if (restored) return;
-      if (do_disable) {
-        if (enabled) enable(flag);
+  public:
+    FlagChanger(GLenum flag)
+      : flag(flag)
+    {
+      original_state = current_state = isEnabled(flag);
+    }
+    void enable() {
+      if (!current_state) {
+        olx_gl::enable(flag);
+        current_state = true;
       }
-      else {
-        if (!enabled) disable(flag);
+    }
+    void disable() {
+      if (current_state) {
+        olx_gl::disable(flag);
+        current_state = false;
       }
-      restored = true;
+    }
+    ~FlagChanger() { restore(); }
+  };
+
+  struct FlagManipulatorBase {
+    FlagChanger fc;
+    FlagManipulatorBase(GLenum f)
+      : fc(f)
+    {}
+    void disable() { fc.disable(); }
+    void enable() { fc.enable(); }
+  };
+
+  struct FlagEnabler : FlagManipulatorBase {
+    FlagEnabler(GLenum f)
+      : FlagManipulatorBase(f)
+    {
+      FlagManipulatorBase::fc.enable();
     }
   };
 
-  struct FlagDisabler : public FlagChanger<true> {
-    FlagDisabler(GLenum flag) : FlagChanger<true>(flag) {}
+  struct FlagDisabler : FlagManipulatorBase {
+    FlagDisabler(GLenum f)
+      : FlagManipulatorBase(f)
+    {
+      FlagManipulatorBase::fc.disable();
+    }
   };
-  struct FlagEnabler : public FlagChanger<false> {
-    FlagEnabler(GLenum flag) : FlagChanger<false>(flag) {}
+
+  struct FlagManager {
+    olx_pdict<GLenum, FlagChanger *>  state;
+    ~FlagManager() {
+      for (size_t i = 0; i < state.Count(); i++) {
+        delete state.GetValue(i);
+      }
+    }
+    void enable(GLenum f) {
+      size_t idx = state.IndexOf(f);
+      if (idx == InvalidIndex) {
+        state.Add(f, new FlagChanger(f))->enable();
+      }
+      else {
+        state.GetValue(idx)->enable();
+      }
+    }
+    void disable(GLenum f) {
+      size_t idx = state.IndexOf(f);
+      if (idx == InvalidIndex) {
+        state.Add(f, new FlagChanger(f))->disable();
+      }
+      else {
+        state.GetValue(idx)->disable();
+      }
+    }
   };
 
 };

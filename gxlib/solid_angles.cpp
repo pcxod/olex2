@@ -48,25 +48,28 @@ PointAnalyser::PointAnalyser(TXAtom &c)
   const TLattice &latt = ((TSAtom &)center()).GetParent();
   for (size_t i = 0; i < latt.GetObjects().atoms.Count(); i++) {
     TXAtom &a = (TXAtom &)latt.GetObjects().atoms[i];
-    if (!a.IsAvailable()) continue;
-    if (a.CAtom().GetFragmentId() != ~0) {
-      uint32_t ni = a.CAtom().GetFragmentId();
-      if (ni >= colors.Count()) {
-        colors.SetCount(ni + 1, olx_list_init::zero());
+    if (!a.IsAvailable()) {
+      continue;
+    }
+    size_t net_id = a.GetNetwork().GetOwnerId();
+    if (net_id == ~0) {
+      continue;
+    }
+    if (net_id >= colors.Count()) {
+      colors.SetCount(net_id + 1, olx_list_init::zero());
+    }
+    if (a.IsGrouped()) {
+      colors[net_id] = a.GetParentGroup()->GetGlM().AmbientF.GetRGB();
+    }
+    else {
+      if (net_id < 7) {
+        continue;
       }
-      if (a.IsGrouped()) {
-        colors[ni] = a.GetParentGroup()->GetGlM().AmbientF.GetRGB();
-      }
-      else {
-        if (ni < 7) {
-          continue;
-        }
-        if (a.GetType().z > highest.Find(a.CAtom().GetFragmentId(), 0)) {
-          TGlMaterial glm;
-          colors[ni] = a.GetPrimitives().GetStyle().GetMaterial("Sphere", glm)
-            .AmbientF.GetRGB();
-          highest.Add(a.CAtom().GetFragmentId(), a.GetType().z);
-        }
+      if (a.GetType().z > highest.Find(net_id, 0)) {
+        TGlMaterial glm;
+        colors[net_id] = a.GetPrimitives().GetStyle().GetMaterial("Sphere", glm)
+          .AmbientF.GetRGB();
+        highest.Add(net_id, a.GetType().z);
       }
     }
   }
@@ -90,12 +93,13 @@ uint32_t PointAnalyser::Analyse(vec3f &p_) {
       continue;
     }
     float d = (v - p*dp).Length();
+    size_t net_id = a.GetNetwork().GetOwnerId();
     if (d < a.GetType().r_custom) {
-      if (!added.AddUnique(a.CAtom().GetFragmentId()).b) {
+      if (!added.AddUnique(net_id).b) {
         continue;
       }
-      if (a.CAtom().GetFragmentId() < colors.Count()) {
-        uint32_t c = colors[a.CAtom().GetFragmentId()];
+      if (net_id < colors.Count()) {
+        uint32_t c = colors[net_id];
         r += OLX_GetRValue(c);
         g += OLX_GetGValue(c);
         b += OLX_GetBValue(c);

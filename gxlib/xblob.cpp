@@ -58,8 +58,9 @@ bool TXBlob::Orient(TGlPrimitive& P)  {
   //olx_gl::translate(Basis.GetCenter());
   olx_gl::polygonMode(GL_FRONT_AND_BACK, PolygonMode);
   bool use_color = colors.Count() == vertices.Count();
+  olx_gl::FlagManager fm;
   if (use_color) {
-    olx_gl::enable(GL_COLOR_MATERIAL);
+    fm.enable(GL_COLOR_MATERIAL);
   }
   bool transparent = P.GetProperties().IsTransparent();
   float to = P.GetProperties().DiffuseF[3];

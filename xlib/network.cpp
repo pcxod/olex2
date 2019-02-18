@@ -28,7 +28,9 @@
 
 #undef GetObject
 
-TNetwork::TNetwork(TLattice* P, TNetwork *N) : TBasicNode<TNetwork, TSAtom, TSBond>(N)  {
+TNetwork::TNetwork(TLattice* P, TNetwork *N)
+  : TBasicNode<TNetwork, TSAtom, TSBond>(N)
+{
   Lattice = P;
   SetTag(-1);
 }
@@ -37,24 +39,28 @@ void TNetwork::SortNodes()  {
   QuickSorter::Sort(Nodes, TSAtom::SortByDistance());
 }
 //..............................................................................
-void TNetwork::CreateBondsAndFragments(ASObjectProvider& objects, TNetPList& Frags)  {
+void TNetwork::CreateBondsAndFragments(ASObjectProvider& objects,
+  TNetPList& Frags)
+{
   objects.atoms.ForEach(ACollectionItem::TagSetter(1));
   const size_t ac = objects.atoms.Count();
-  for( size_t i=0; i < ac; i++ )  {
+  for (size_t i = 0; i < ac; i++) {
     TSAtom& A1 = objects.atoms[i];
-    if( A1.IsDeleted() )  continue;
+    if (A1.IsDeleted()) {
+      continue;
+    }
     A1.SetStandalone(A1.NodeCount() == 0);
-    if( A1.GetTag() != 0 )  {
+    if (A1.GetTag() != 0) {
       TNetwork* Net = Frags.Add(new TNetwork(&GetLattice(), this));
       Net->AddNode(A1);
       A1.SetNetwork(*Net);
       A1.SetTag(0);
-      for( size_t j=0; j < Net->NodeCount(); j++ )  {
+      for (size_t j = 0; j < Net->NodeCount(); j++) {
         TSAtom& A2 = Net->Node(j);
         const size_t a2_cnt = A2.NodeCount();
-        for( size_t k=0; k < a2_cnt; k++ )  {
+        for (size_t k = 0; k < a2_cnt; k++) {
           TSAtom& A3 = A2.Node(k);
-          if( A3.GetTag() != 0 )  {
+          if (A3.GetTag() != 0) {
             Net->AddNode(A3);
             A3.SetNetwork(*Net);
             TSBond& B = objects.bonds.New(Net);
@@ -66,7 +72,7 @@ void TNetwork::CreateBondsAndFragments(ASObjectProvider& objects, TNetPList& Fra
             Net->AddBond(B);
             A3.SetTag(0);
           }
-          else if( A3.GetFragmentId() > j )  {  // the atom is in the list, but has not been processes
+          else if (A3.GetIdInNetwork() > j) {  // the atom is in the list, but has not been processes
             TSBond& B = objects.bonds.New(Net);  // in this case we need to create a bond
             B.SetType(sotBond);
             B.SetA(A2);
@@ -90,7 +96,7 @@ void TNetwork::Disassemble(ASObjectProvider& objects, TNetPList& Frags) {
     TSAtom& sa = objects.atoms[i];
     sa.ClearBonds();
     sa.ClearNodes();
-    if (sa.IsDeleted()) {
+    if (!sa.IsAvailable()) {
       continue;
     }
     for (size_t j = 0; j < sa.CAtom().AttachedSiteCount(); j++) {
@@ -98,7 +104,7 @@ void TNetwork::Disassemble(ASObjectProvider& objects, TNetPList& Frags) {
       const smatd m = uc.MulMatrix(site.matrix, sa.GetMatrix());
       TSAtom* a = objects.atomRegistry.Find(
         TSAtom::GetRef(*site.atom, m));
-      if (a != 0 && !a->IsDeleted()) {
+      if (a != 0 && a->IsAvailable()) {
         sa.AddNode(*a);
       }
     }
@@ -109,7 +115,7 @@ void TNetwork::Disassemble(ASObjectProvider& objects, TNetPList& Frags) {
   objects.atoms.ForEach(ACollectionItem::TagSetter(0));
   for (size_t i = 0; i < ac; i++) {
     TSAtom& sa = objects.atoms[i];
-    if (sa.IsDeleted() || sa.GetTag() != 0) {
+    if (!sa.IsAvailable() || sa.GetTag() != 0) {
       continue;
     }
     const cm_Element& thisT = sa.GetType();
@@ -126,12 +132,12 @@ void TNetwork::Disassemble(ASObjectProvider& objects, TNetPList& Frags) {
         uc.MulMatrix(site.matrix, sa.GetMatrix());
       TSAtom* a = objects.atomRegistry.Find(
         TSAtom::Ref(site.atom->GetId(), m.GetId()));
-      if (a == 0 || a->IsDeleted()) {
+      if (a == 0 || !a->IsAvailable()) {
         for (size_t k = 0; k < site.atom->EquivCount(); k++) {
           uint32_t id = uc.MulMatrixId(site.atom->GetEquiv(k), m);
           a = objects.atomRegistry.Find(
             TSAtom::Ref(site.atom->GetId(), id));
-          if (a != 0 && !a->IsDeleted()) {
+          if (a != 0 && a->IsAvailable()) {
             break;
           }
         }
@@ -299,37 +305,37 @@ bool TNetwork::IsBondAllowed(const TSAtom& sa, const TCAtom& cb,
 }
 //..............................................................................
 // HELPER function
-class TNetTraverser  {
+class TNetTraverser {
   olxstr Data;
 public:
-  TNetTraverser() {  Data.SetIncrement(1024);  }
+  TNetTraverser() { Data.SetIncrement(1024); }
   bool OnItem(const TEGraphNode<uint64_t, TSAtom*>& v) {
-    olxstr tmp(v.GetData(), v.Count()*6);
+    olxstr tmp(v.GetData(), v.Count() * 6);
     tmp << '{';
-    for( size_t i=0; i < v.Count(); i++ )  {
+    for (size_t i = 0; i < v.Count(); i++) {
       tmp << v.Item(i).GetData();
-      if( (i+1) < v.Count() )  tmp << ',';
+      if ((i + 1) < v.Count())  tmp << ',';
     }
     tmp << '}';
     Data << tmp;
     return true;
   }
-  const olxstr& GetData() const {  return Data;  }
-  void ClearData()  {  Data.SetLength(0);  }
+  const olxstr& GetData() const { return Data; }
+  void ClearData() { Data.SetLength(0); }
 };
 
 void ResultCollector(
-  TEGraphNode<uint64_t,TSAtom*>& subRoot,
-  TEGraphNode<uint64_t,TSAtom*>& Root,
+  TEGraphNode<uint64_t, TSAtom*>& subRoot,
+  TEGraphNode<uint64_t, TSAtom*>& Root,
   TTypeList<olx_pair_t<size_t, size_t> >& res)
 {
-  res.AddNew(subRoot.GetObject()->GetFragmentId(),
-    Root.GetObject()->GetFragmentId());
+  res.AddNew(subRoot.GetObject()->GetIdInNetwork(),
+    Root.GetObject()->GetIdInNetwork());
   subRoot.GetObject()->SetTag(0);
   Root.GetObject()->SetTag(0);
-  for( size_t i=0; i < olx_min(subRoot.Count(),Root.Count()); i++ )  {
-    if( subRoot[i].GetObject()->GetTag() != 0 &&
-      Root[i].GetObject()->GetTag() != 0 )
+  for (size_t i = 0; i < olx_min(subRoot.Count(), Root.Count()); i++) {
+    if (subRoot[i].GetObject()->GetTag() != 0 &&
+      Root[i].GetObject()->GetTag() != 0)
     {
       ResultCollector(subRoot[i], Root[i], res);
     }
@@ -1399,25 +1405,25 @@ void TNetwork::FromDataItem(const TDataItem& item) {
     Nodes.SetCapacity(nodes.Count());
     for (size_t i = 0; i < nodes.Count(); i++) {
       Nodes.Add(objects.atoms[
-        nodes.GetObject(i).ToInt()])->SetFragmentId(Nodes.Count());
+        nodes.GetObject(i).ToInt()])->SetIdInNetwork(Nodes.Count());
     }
     nodes = item.GetItemByName("Bonds").GetOrderedFieldList();
     Bonds.SetCapacity(nodes.Count());
     for (size_t i = 0; i < nodes.Count(); i++) {
       Bonds.Add(objects.bonds[
-        nodes.GetObject(i).ToInt()])->SetFragmentId(Bonds.Count());
+        nodes.GetObject(i).ToInt()])->SetIdInNetwork(Bonds.Count());
     }
   }
   else {  // index range then
     IndexRange::RangeItr ai(item.GetFieldByName("node_range"));
     Nodes.SetCapacity(ai.CalcSize());
     while (ai.HasNext()) {
-      Nodes.Add(objects.atoms[ai.Next()])->SetFragmentId(Nodes.Count());
+      Nodes.Add(objects.atoms[ai.Next()])->SetIdInNetwork(Nodes.Count());
     }
     IndexRange::RangeItr bi(item.GetFieldByName("bond_range"));
     Bonds.SetCapacity(bi.CalcSize());
     while (bi.HasNext()) {
-      Bonds.Add(objects.bonds[bi.Next()])->SetFragmentId(Bonds.Count());
+      Bonds.Add(objects.bonds[bi.Next()])->SetIdInNetwork(Bonds.Count());
     }
   }
 }

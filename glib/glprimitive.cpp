@@ -201,7 +201,7 @@ void TGlPrimitive::Compile() {
 }
 //..............................................................................
 void TGlPrimitive::PrepareColorRendering(uint16_t _begin) const {
-  if( !Renderer.ForcePlain() )  {
+  if (!Renderer.ForcePlain()) {
     olx_gl::pushAttrib(GL_LIGHTING_BIT);
     olx_gl::disable(GL_LIGHTING);
     olx_gl::enable(GL_COLOR_MATERIAL);
