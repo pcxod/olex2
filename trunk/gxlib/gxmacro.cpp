@@ -1435,17 +1435,24 @@ void GXLibMacros::macShowQ(TStrObjList &Cmds, const TParamList &Options,
     }
     QuickSorter::SortSF(qpeaks, &GXLibMacros::QPeakSortD);
     index_t d_cnt = 0;
-    for (size_t i=0; i < qpeaks.Count(); i++)
-      if (!qpeaks[i]->IsDetached())
+    for (size_t i = 0; i < qpeaks.Count(); i++) {
+      if (!qpeaks[i]->IsDetached()) {
         d_cnt++;
-    if (d_cnt == 0 && wheel < 0) return;
-    if (d_cnt == (index_t)qpeaks.Count() && wheel > 0) return;
+      }
+    }
+    if (d_cnt == 0 && wheel < 0) {
+      return;
+    }
+    if (d_cnt == (index_t)qpeaks.Count() && wheel > 0) {
+      return;
+    }
     d_cnt += (index_t)(wheel);
     if (d_cnt < 0)  d_cnt = 0;
     if (d_cnt > (index_t)qpeaks.Count())
       d_cnt = qpeaks.Count();
-    for (size_t i=0; i < qpeaks.Count(); i++)
+    for (size_t i = 0; i < qpeaks.Count(); i++) {
       qpeaks[i]->SetDetached(i >= (size_t)d_cnt);
+    }
     app.UpdateConnectivity();
     app.Draw();
   }
@@ -4789,8 +4796,9 @@ void GXLibMacros::macProjSph(TStrObjList &Cmds, const TParamList &Options,
 {
   {
     ElementRadii radii;
-    if (Cmds.Count() == 1 && TEFile::Exists(Cmds[0]))
+    if (Cmds.Count() == 1 && TEFile::Exists(Cmds[0])) {
       radii = TXApp::ReadRadii(Cmds[0]);
+    }
     ContentList cl = app.XFile().GetAsymmUnit().GetContentList();
     for (size_t i = 0; i < cl.Count(); i++) {
       cl[i].element->r_custom = radii.Find(cl[i].element, cl[i].element->r_vdw);
@@ -4816,22 +4824,26 @@ void GXLibMacros::macProjSph(TStrObjList &Cmds, const TParamList &Options,
   pa.alpha = Options.FindValue('a', "0x9c").SafeUInt<uint8_t>();
   pa.emboss = Options.GetBoolOption('e');
   {
-    if (pa.colors.Count() == 1 && !colors.IsEmpty())
+    if (pa.colors.Count() == 1 && !colors.IsEmpty()) {
       pa.colors[0] = colors[0];
+    }
     else {
       size_t cr = 0;
       for (size_t i = 0; i < colors.Count(); i++) {
-        if (xatoms[0]->CAtom().GetFragmentId() == i)
+        if (xatoms[0]->GetNetwork().GetOwnerId() == i) {
           cr = 1;
-        if (i + cr >= pa.colors.Count())
+        }
+        if (i + cr >= pa.colors.Count()) {
           break;
+        }
         pa.colors[i + cr] = colors[i];
       }
     }
   }
   size_t g = Options.FindValue('g', 6).ToSizeT();
-  if (g > 10)
+  if (g > 10) {
     g = 10;
+  }
   TDSphere &sph = app.DSphere();
   if (sph.IsCreated()) {
     sph.GetPrimitives().ClearPrimitives();
@@ -4843,30 +4855,32 @@ void GXLibMacros::macProjSph(TStrObjList &Cmds, const TParamList &Options,
   sph.Basis.SetCenter(xatoms[0]->crd());
   sph.Basis.SetZoom(2);
   if (Options.GetBoolOption("group")) {
-    olx_pdict<uint32_t, TGlGroup *> groups;
+    olx_pdict<size_t, TGlGroup *> groups;
     TGXApp::AtomIterator atoms = app.GetAtoms();
     while (atoms.HasNext()) {
       TXAtom &a = atoms.Next();
-      if (&a == xatoms[0] || !a.IsAvailable() || a.IsGrouped())
+      if (&a == xatoms[0] || !a.IsAvailable() || a.IsGrouped()) {
         continue;
-      TGlGroup *glg = groups.Find(a.CAtom().GetFragmentId(), NULL);
-      if (glg == NULL) {
+      }
+      TGlGroup *glg = groups.Find(a.GetNetwork().GetOwnerId(), 0);
+      if (glg == 0) {
         glg = &app.GetRenderer().NewGroup(
           olxstr("Ligand") << (groups.Count() + 1));
-        groups.Add(a.CAtom().GetFragmentId(), glg)->Create();
+        groups.Add(a.GetNetwork().GetOwnerId(), glg)->Create();
       }
       glg->Add(a);
     }
     TGXApp::BondIterator bonds = app.GetBonds();
     while (bonds.HasNext()) {
       TXBond &b = bonds.Next();
-      if (!b.IsAvailable() || b.IsGrouped())
+      if (!b.IsAvailable() || b.IsGrouped()) {
         continue;
-      TGlGroup *glg = groups.Find(b.A().CAtom().GetFragmentId(), NULL);
-      if (glg == NULL) {
+      }
+      TGlGroup *glg = groups.Find(b.A().GetNetwork().GetOwnerId(), 0);
+      if (glg == 0) {
         glg = &app.GetRenderer().NewGroup(
           olxstr("Ligand") << (groups.Count() + 1));
-        groups.Add(b.A().CAtom().GetFragmentId(), glg)->Create();
+        groups.Add(b.A().GetNetwork().GetOwnerId(), glg)->Create();
       }
       glg->Add(b);
     }
@@ -4898,7 +4912,9 @@ void GXLibMacros::macProjSph(TStrObjList &Cmds, const TParamList &Options,
         if (toks.Count() == 1) {
           ri(&n, table_l.RowCount());
         }
-        if (n.NodeCount() == 0) continue;
+        if (n.NodeCount() == 0) {
+          continue;
+        }
         TSAtom *a = &n.Node(0);
         for (size_t j = 1; j < n.NodeCount(); j++) {
           if (a->GetType() < n.Node(j).GetType()) {
@@ -4927,7 +4943,9 @@ void GXLibMacros::macProjSph(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   for (size_t i = 0; i < li.Count(); i++) {
-    if (li.GetValue(i).b->GetTag() == 0) continue;
+    if (li.GetValue(i).b->GetTag() == 0) {
+      continue;
+    }
     TStrList &row = table_l.AddRow();
     row[0] = li.GetValue(i).b->GetGuiLabel();
     row[1] = olxstr::FormatFloat(2, li.GetValue(i).a);

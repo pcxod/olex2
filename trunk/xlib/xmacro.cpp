@@ -4834,7 +4834,7 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options,
     olxstr src_mat = xapp.InitVcoV(vcovc);
     xapp.NewLogEntry() << "Using " << src_mat << " matrix for the calculation";
   }
-  catch(TExceptionBase& e) {
+  catch (TExceptionBase& e) {
     throw TFunctionFailedException(__OlxSourceInfo, e);
   }
 
@@ -4846,8 +4846,9 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options,
       a.SetUiso(elp.GetUeq());
       if (a.GetUisoEsd() == 0) {
         double esd = 0;
-        for (int j = 0; j < 3; j++)
+        for (int j = 0; j < 3; j++) {
           esd += olx_sqr(elp.GetEsd(j));
+        }
         a.SetUisoEsd(sqrt(esd) / 3.);
       }
     }
@@ -4858,19 +4859,22 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options,
   TCif cif;
   cif.Adopt(xapp.XFile(), 0);
   TAsymmUnit& au = cif.GetAsymmUnit();
-  for (size_t i=0; i < au.AtomCount(); i++) {
-    if (au.GetAtom(i).GetType() == iQPeakZ)
+  for (size_t i = 0; i < au.AtomCount(); i++) {
+    if (au.GetAtom(i).GetType() == iQPeakZ) {
       au.GetAtom(i).SetDeleted(true);
+    }
   }
   TLattice latt(*(new SObjectProvider));
   latt.GetAsymmUnit().SetRefMod(&xapp.XFile().GetRM());
   latt.GetAsymmUnit().Assign(xapp.XFile().GetAsymmUnit());
-  for (size_t i=0; i < latt.GetAsymmUnit().AtomCount(); i++) {
+  for (size_t i = 0; i < latt.GetAsymmUnit().AtomCount(); i++) {
     TCAtom& a = latt.GetAsymmUnit().GetAtom(i);
-    if (a.IsDetached())
+    if (a.IsDetached()) {
       a.SetDetached(false);
-    if (a.IsMasked())
+    }
+    if (a.IsMasked()) {
       a.SetMasked(false);
+    }
   }
   latt.GetAsymmUnit()._UpdateConnInfo();
   latt.GetAsymmUnit().DetachAtomType(iQPeakZ, true);
@@ -4897,12 +4901,14 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options,
   }
   for (size_t i = 0; i < objects.atoms.Count(); i++) {
     TSAtom& a = objects.atoms[i];
-    if (a.GetType().GetMr()  < 3 || a.IsDeleted() || !a.IsAUAtom())
+    if (a.GetType().GetMr() < 3 || a.IsDeleted() || !a.IsAUAtom()) {
       continue;
+    }
     for (size_t j = 0; j < a.BondCount(); j++) {
       TSBond& b = a.Bond(j);
-      if (b.GetTag() == 0 || !b.A().IsAUAtom())
+      if (b.GetTag() == 0 || !b.A().IsAUAtom()) {
         continue;
+      }
       b.SetTag(0);
       cif_dp::CifRow& row = bonds.AddRow();
       row.Set(0, new AtomCifEntry(b.A().CAtom()));
@@ -4912,8 +4918,9 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options,
         row[3] = new cetString(TSymmParser::MatrixToSymmCode(
           xapp.XFile().GetUnitCell().GetSymmSpace(), b.B().GetMatrix()));
       }
-      else
+      else {
         row[3] = new cetString('.');
+      }
       row[4] = new cetString('?');
     }
   }
@@ -4923,16 +4930,19 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options,
     "_geom_angle_site_symmetry_3,_geom_angle_publ_flag");
   for (size_t i = 0; i < objects.atoms.Count(); i++) {
     TSAtom& a = objects.atoms[i];
-    if (a.GetType().GetMr()  < 3 || a.IsDeleted() || !a.IsAUAtom())
+    if (a.GetType().GetMr() < 3 || a.IsDeleted() || !a.IsAUAtom()) {
       continue;
+    }
     for (size_t j = 0; j < a.NodeCount(); j++) {
       TSAtom& b = a.Node(j);
-      if (b.IsDeleted() || b.GetType().GetMr() < 3)
+      if (b.IsDeleted() || b.GetType().z < 2) {
         continue;
+      }
       for (size_t k = j + 1; k < a.NodeCount(); k++) {
         TSAtom& c = a.Node(k);
-        if (c.IsDeleted() || c.GetType().GetMr() < 3)
+        if (c.IsDeleted() || c.GetType().z < 2) {
           continue;
+        }
         TSAtom& _b = (b.CAtom().GetId() <= c.CAtom().GetId() ? b : c);
         TSAtom& _c = (b.CAtom().GetId() > c.CAtom().GetId() ? b : c);
         cif_dp::CifRow& row = angles.AddRow();
@@ -4950,8 +4960,9 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options,
           row[5] = new cetString(TSymmParser::MatrixToSymmCode(
             xapp.XFile().GetUnitCell().GetSymmSpace(), _c.GetMatrix()));
         }
-        else
+        else {
           row[5] = new cetString('.');
+        }
         row[6] = new cetString('?');
       }
     }
@@ -4968,30 +4979,37 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options,
     TAtomEnvi envi;
     for (size_t i = 0; i < rm.InfoTabCount(); i++) {
       InfoTab& it = rm.GetInfoTab(i);
-      if (it.GetType() != infotab_htab || !it.IsValid())  continue;
+      if (it.GetType() != infotab_htab || !it.IsValid()) {
+        continue;
+      }
       TTypeList<ExplicitCAtomRef> ta = it.GetAtoms().ExpandList(rm);
       TSAtom* dsa = xapp.XFile().GetLattice().FindSAtom(ta[0].GetAtom());
-      if (dsa == NULL)  continue;  //eh?
+      if (dsa == 0) { //eh?
+        continue;
+      }
       envi.Clear();
       xapp.XFile().GetUnitCell().GetAtomEnviList(*dsa, envi);
       for (size_t j = 0; j < envi.Count(); j++) {
-        if (envi.GetType(j) != iHydrogenZ)  continue;
+        if (envi.GetType(j) != iHydrogenZ) {
+          continue;
+        }
         // check if the D-H-A angle makes sense...
         double ang = (au.Orthogonalise(ta[0].GetAtom().ccrd()) - envi.GetCrd(j))
           .CAngle(au.Orthogonalise(ta[1].GetAtom().ccrd()) - envi.GetCrd(j));
-        if (ang >= 0)  // <= 90
+        if (ang >= 0) { // <= 90
           continue;
+        }
         CifRow& row = hbonds.AddRow();
         row.Set(0, new AtomCifEntry(ta[0].GetAtom()));
         row.Set(1, new AtomCifEntry(envi.GetCAtom(j)));
         row.Set(2, new AtomCifEntry(ta[1].GetAtom()));
-        TSAtom da(NULL), aa(NULL);
+        TSAtom da(0), aa(0);
         da.CAtom(ta[0].GetAtom());
         da._SetMatrix(I);
         da.crd() = au.Orthogonalise(da.ccrd());
         aa.CAtom(ta[1].GetAtom());
         smatd am;
-        if (ta[1].GetMatrix() == NULL) {
+        if (ta[1].GetMatrix() == 0) {
           am.I();
           am.SetId(0);
         }
@@ -5011,10 +5029,11 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options,
           envi.GetCrd(j), aa.crd())));
         if (ta[1].GetMatrix() == NULL)
           row[7] = new cetString('.');
-        else
+        else {
           row[7] = new cetString(
-          TSymmParser::MatrixToSymmCode(
-          xapp.XFile().GetUnitCell().GetSymmSpace(), aa.GetMatrix()));
+            TSymmParser::MatrixToSymmCode(
+              xapp.XFile().GetUnitCell().GetSymmSpace(), aa.GetMatrix()));
+        }
       }
     }
   }
@@ -6395,8 +6414,9 @@ void XLibMacros::macPiSig(TStrObjList &Cmds, const TParamList &Options,
 {
   double maxd = 4, maxa = 25;
   if (Cmds.Count() == 2) {
-    if ((maxd = Cmds[0].ToDouble()) > 6 || maxd < 0)
+    if ((maxd = Cmds[0].ToDouble()) > 6 || maxd < 0) {
       maxd = 4;
+    }
     maxa = Cmds[1].ToDouble();
   }
   TXApp& xapp = TXApp::GetInstance();
@@ -6406,9 +6426,10 @@ void XLibMacros::macPiSig(TStrObjList &Cmds, const TParamList &Options,
   TEBitArray masks(au.AtomCount());
   for (size_t i = 0; i < au.AtomCount(); i++) {
     TCAtom &a = au.GetAtom(i);
-    if (a.IsMasked())
+    if (a.IsMasked()) {
       masks.SetTrue(i);
-    a.SetMasked(a.GetType() < 2);
+    }
+    a.SetMasked(a.GetType().z < 2);
   }
   smatd_list transforms;
   TTypeList<fragments::fragment> fs = fragments::extract(au);
@@ -6417,30 +6438,39 @@ void XLibMacros::macPiSig(TStrObjList &Cmds, const TParamList &Options,
     fs[i].breadth_first_tags(InvalidIndex, &r_atoms);
     TTypeList<fragments::ring> rs = fs[i].get_rings(r_atoms);
     for (size_t j = 0; j < rs.Count(); j++) {
-      if (rs[j].atoms.Count() < 4 || rs[j].atoms.Count() > 6) continue;
+      if (rs[j].atoms.Count() < 4 || rs[j].atoms.Count() > 6) {
+        continue;
+      }
       fragments::cart_ring ring = rs[j].to_cart();
-      if (!ring.is_regular()) continue;
+      if (!ring.is_regular()) {
+        continue;
+      }
       TCAtomPList found;
       fragments::cart_plane cp = ring.calc_plane();
-      if (cp.rmsd > 0.25) continue;
+      if (cp.rmsd > 0.25) {
+        continue;
+      }
       TArrayList<AnAssociation3<TCAtom*, smatd, vec3d> > res;
       uc.FindInRangeAMC(au.Fractionalise(cp.center), maxd, res);
       for (size_t k = 0; k < res.Count(); k++) {
         double ang = cp.angle(res[k].GetC() - cp.center);
         if (ang < maxa) {
           found << res[k].GetA();
-          if (!transforms.Contains(res[k].GetB()))
+          if (!transforms.Contains(res[k].GetB())) {
             transforms.AddCopy(res[k].GetB());
+          }
         }
       }
       if (!found.IsEmpty()) {
         for (size_t k = 0; k < ring.atoms.Count(); k++) {
-          if (!transforms.Contains(ring[k].matrix))
+          if (!transforms.Contains(ring[k].matrix)) {
             transforms.AddCopy(ring[k].matrix);
+          }
         }
         olxstr l = (alg::label(rs[j].atoms, '-') << ": ");
-        for (size_t k = 0; k < found.Count(); k++)
+        for (size_t k = 0; k < found.Count(); k++) {
           l << ' ' << found[k]->GetLabel();
+        }
         TBasicApp::NewLogEntry() << l;
       }
     }
@@ -6457,9 +6487,12 @@ void XLibMacros::macPiSig(TStrObjList &Cmds, const TParamList &Options,
     TCAtomPList iatoms;
     for (size_t i = 0; i < objects.atoms.Count(); i++) {
       TSAtom& sa = objects.atoms[i];
-      if (sa.IsDeleted())  continue;
-      if (sa.IsAUAtom())
+      if (sa.IsDeleted()) {
+        continue;
+      }
+      if (sa.IsAUAtom()) {
         iatoms.Add(sa.CAtom());
+      }
     }
     xlatt.GrowAtoms(iatoms, transforms);
   }

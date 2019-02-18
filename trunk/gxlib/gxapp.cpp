@@ -1454,14 +1454,14 @@ void TGXApp::SyncAtomAndBondVisiblity(short atom_type, bool show_a, bool show_b)
 void TGXApp::AllVisible(bool V) {
   OnAllVisible.Enter(dynamic_cast<TBasicApp*>(this), NULL);
   if (!V) {
-    AtomIterator ai(*this);
-    while (ai.HasNext()) ai.Next().SetVisible(false);
-    BondIterator bi(*this);
-    while (bi.HasNext()) bi.Next().SetVisible(false);
+    AtomIterator(*this).ForEach(AGDrawObject::FlagSetter(sgdoHidden, true));
+    BondIterator(*this).ForEach(AGDrawObject::FlagSetter(sgdoHidden, true));
   }
   else {
     AtomIterator ai(*this);
-    while (ai.HasNext()) ai.Next().SetMasked(false);
+    while (ai.HasNext()) {
+      ai.Next().SetMasked(false);
+    }
     TAsymmUnit& au = XFile().GetAsymmUnit();
     for (size_t i = 0; i < au.AtomCount(); i++) {
       au.GetAtom(i).SetMasked(false);
@@ -3846,7 +3846,7 @@ void TGXApp::_maskInvisible() {
   }
 }
 //..............................................................................
-void TGXApp::_syncBondsVisibility()  {
+void TGXApp::_syncBondsVisibility() {
   BondIterator bi(*this);
   while (bi.HasNext()) {
     TXBond& xb = bi.Next();
@@ -3855,15 +3855,18 @@ void TGXApp::_syncBondsVisibility()  {
     {
       xb.SetVisible(false);
     }
-    else if (!FHBondsVisible && xb.GetType() == sotHBond)
+    else if (!FHBondsVisible && xb.GetType() == sotHBond) {
       xb.SetVisible(false);
-    else
+    }
+    else {
       xb.SetVisible(xb.A().IsVisible() && xb.B().IsVisible());
+    }
   }
   if (FXGrowLinesVisible) {
-    for (size_t i=0; i < XGrowLines.Count(); i++) {
-      if (XGrowLines[i].XAtom().GetType() == iQPeakZ)
+    for (size_t i = 0; i < XGrowLines.Count(); i++) {
+      if (XGrowLines[i].XAtom().GetType() == iQPeakZ) {
         XGrowLines[i].SetVisible(XGrowLines[i].XAtom().IsVisible());
+      }
     }
   }
 }
@@ -3873,28 +3876,29 @@ void TGXApp::SetStructureVisible(bool v) {
   AtomIterator ai(*this);
   while (ai.HasNext()) {
     TXAtom& xa = ai.Next();
-    if( !v )
+    if (!v) {
       xa.SetVisible(v);
-    else
+    }
+    else {
       xa.SetVisible(xa.IsAvailable());
+    }
   }
-  for (size_t i=0; i < LooseObjects.Count(); i++)
-    LooseObjects[i]->SetVisible(v);
+  LooseObjects.ForEach(AGDrawObject::FlagSetter(sgdoHidden, !v));
   for (size_t i=0; i < Lines.Count(); i++) {
-    if (!Lines[i].IsDeleted())
+    if (!Lines[i].IsDeleted()) {
       Lines[i].SetVisible(v);
+    }
   }
-  PlaneIterator pi(*this);
-  while (pi.HasNext())
-    pi.Next().SetVisible(v);
-  for (size_t i=0; i < XLabels.Count(); i++)
-    XLabels[i].SetVisible(v);
+  PlaneIterator(*this).ForEach(AGDrawObject::FlagSetter(sgdoHidden, !v));
+  XLabels.ForEach(AGDrawObject::FlagSetter(sgdoHidden, !v));
   if (v) {
-    if (!FXGrid->IsEmpty())
+    if (!FXGrid->IsEmpty()) {
       FXGrid->SetVisible(true);
+    }
   }
-  else
+  else {
     FXGrid->SetVisible(false);
+  }
   _syncBondsVisibility();
 }
 //..............................................................................
@@ -4006,15 +4010,17 @@ void TGXApp::ShowResi(const TIntList& numbers, const TStrList &names,
     }
   }
   if (numbers.IsEmpty() && names.IsEmpty()) {
-    if (!visible_only)
+    if (!visible_only) {
       AllVisible(show);
+    }
     return;
   }
   AtomIterator ai(*this);
   while (ai.HasNext()) {
     TXAtom& xa = ai.Next();
-    if (visible_only && !xa.IsVisible())
+    if (visible_only && !xa.IsVisible()) {
       continue;
+    }
     TResidue &r = xa.CAtom().GetParent()->GetResidue(xa.CAtom().GetResiId());
     if (numbers.Contains(r.GetNumber()) ||
       (r.HasAlias() && numbers.Contains(r.GetAlias())) ||

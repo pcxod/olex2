@@ -75,78 +75,85 @@ TGlMaterial& TGlMaterial::operator = (const TGlMaterial& G)  {
 }
 //..............................................................................
 void TGlMaterial::Init(bool skip) const {
-  if( skip )  return;
-  if( Flags & sglmTransparent )  {
-    if( !glIsEnabled(GL_ALPHA_TEST) )  {
+  if (skip)  return;
+  if (Flags & sglmTransparent) {
+    if (!glIsEnabled(GL_ALPHA_TEST)) {
       olx_gl::enable(GL_ALPHA_TEST);
-      olx_gl::enable( GL_POINT_SMOOTH);
+      olx_gl::enable(GL_POINT_SMOOTH);
       olx_gl::enable(GL_BLEND);
-      olx_gl::blendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
       olx_gl::enable(GL_CULL_FACE);
-      //glCullFace(GL_BACK);
-      //glFrontFace(GL_CCW);
     }
   }
-  else  {
-    if( glIsEnabled(GL_ALPHA_TEST) )  {
+  else {
+    if (glIsEnabled(GL_ALPHA_TEST)) {
       olx_gl::disable(GL_ALPHA_TEST);
       olx_gl::disable(GL_POINT_SMOOTH);
       olx_gl::disable(GL_BLEND);
       olx_gl::disable(GL_CULL_FACE);
     }
   }
-//  if( Flags & sglmLighting )  olx_gl::enable(GL_LIGHTING);
-//  else                        olx_gl::disable(GL_LIGHTING);
-  if( (Flags & sglmColorMat) == 0 )  {
+  //  if( Flags & sglmLighting )  olx_gl::enable(GL_LIGHTING);
+  //  else                        olx_gl::disable(GL_LIGHTING);
+  if ((Flags & sglmColorMat) == 0) {
     olx_gl::disable(GL_COLOR_MATERIAL);
-    olx_gl::material(GL_FRONT, GL_DIFFUSE, ((Flags&sglmDiffuseF) != 0 ? DiffuseF : BlackColor).Data());
-    olx_gl::material(GL_BACK, GL_DIFFUSE, ((Flags&sglmDiffuseB) != 0 ? DiffuseB : BlackColor).Data());
-    olx_gl::material(GL_FRONT, GL_AMBIENT, ((Flags&sglmAmbientF) != 0 ? AmbientF : BlackColor).Data());
-    olx_gl::material(GL_BACK, GL_AMBIENT, ((Flags&sglmAmbientB) != 0 ? AmbientB : BlackColor).Data());
-    olx_gl::material(GL_FRONT, GL_SPECULAR, ((Flags&sglmSpecularF) != 0 ? SpecularF : BlackColor).Data());
-    olx_gl::material(GL_BACK, GL_SPECULAR, ((Flags&sglmSpecularB) != 0 ? SpecularB : BlackColor).Data());
-    olx_gl::material(GL_FRONT, GL_EMISSION, ((Flags&sglmEmissionF) != 0 ? EmissionF : BlackColor).Data());
-    olx_gl::material(GL_BACK, GL_EMISSION, ((Flags&sglmEmissionB) != 0 ? EmissionB : BlackColor).Data());
-    olx_gl::material(GL_FRONT, GL_SHININESS, ((Flags&sglmShininessF) != 0 ? ShininessF : 0));
-    olx_gl::material(GL_BACK, GL_SHININESS, ((Flags&sglmShininessB) != 0 ? ShininessB : 0));
+    olx_gl::material(GL_FRONT, GL_DIFFUSE,
+      ((Flags&sglmDiffuseF) != 0 ? DiffuseF : BlackColor).Data());
+    olx_gl::material(GL_BACK, GL_DIFFUSE,
+      ((Flags&sglmDiffuseB) != 0 ? DiffuseB : BlackColor).Data());
+    olx_gl::material(GL_FRONT, GL_AMBIENT,
+      ((Flags&sglmAmbientF) != 0 ? AmbientF : BlackColor).Data());
+    olx_gl::material(GL_BACK, GL_AMBIENT,
+      ((Flags&sglmAmbientB) != 0 ? AmbientB : BlackColor).Data());
+    olx_gl::material(GL_FRONT, GL_SPECULAR,
+      ((Flags&sglmSpecularF) != 0 ? SpecularF : BlackColor).Data());
+    olx_gl::material(GL_BACK, GL_SPECULAR,
+      ((Flags&sglmSpecularB) != 0 ? SpecularB : BlackColor).Data());
+    olx_gl::material(GL_FRONT, GL_EMISSION,
+      ((Flags&sglmEmissionF) != 0 ? EmissionF : BlackColor).Data());
+    olx_gl::material(GL_BACK, GL_EMISSION,
+      ((Flags&sglmEmissionB) != 0 ? EmissionB : BlackColor).Data());
+    olx_gl::material(GL_FRONT, GL_SHININESS,
+      ((Flags&sglmShininessF) != 0 ? ShininessF : 0));
+    olx_gl::material(GL_BACK, GL_SHININESS,
+      ((Flags&sglmShininessB) != 0 ? ShininessB : 0));
   }
-  else  {
+  else {
     olx_gl::enable(GL_COLOR_MATERIAL);
-    if( Flags & sglmAmbientF )  {
+    if (Flags & sglmAmbientF) {
       olx_gl::colorMaterial(GL_FRONT, GL_AMBIENT);
       olx_gl::color(AmbientF.Data());
     }
-    if( Flags & sglmAmbientB )  {
+    if (Flags & sglmAmbientB) {
       olx_gl::colorMaterial(GL_BACK, GL_AMBIENT);
       olx_gl::color(AmbientB.Data());
     }
-    if( Flags & sglmDiffuseF )  {
+    if (Flags & sglmDiffuseF) {
       olx_gl::colorMaterial(GL_FRONT, GL_DIFFUSE);
       olx_gl::color(DiffuseF.Data());
     }
-    if( Flags & sglmDiffuseB )  {
+    if (Flags & sglmDiffuseB) {
       olx_gl::colorMaterial(GL_BACK, GL_DIFFUSE);
       olx_gl::color(DiffuseB.Data());
     }
-    if( Flags & sglmEmissionF )  {
+    if (Flags & sglmEmissionF) {
       olx_gl::colorMaterial(GL_FRONT, GL_EMISSION);
       olx_gl::color(EmissionF.Data());
     }
-    if( Flags & sglmEmissionB )  {
+    if (Flags & sglmEmissionB) {
       olx_gl::colorMaterial(GL_BACK, GL_EMISSION);
       olx_gl::color(EmissionB.Data());
     }
-    if( Flags & sglmSpecularF )  {
+    if (Flags & sglmSpecularF) {
       olx_gl::colorMaterial(GL_FRONT, GL_SPECULAR);
       olx_gl::color(SpecularF.Data());
     }
-    if( Flags & sglmSpecularB )  {
+    if (Flags & sglmSpecularB) {
       olx_gl::colorMaterial(GL_BACK, GL_SPECULAR);
       olx_gl::color(SpecularB.Data());
     }
-    if( Flags & sglmShininessF )
+    if (Flags & sglmShininessF)
       olx_gl::material(GL_FRONT, GL_SHININESS, ShininessF);
-    if( Flags & sglmShininessB )
+    if (Flags & sglmShininessB)
       olx_gl::material(GL_BACK, GL_SHININESS, ShininessB);
   }
 }

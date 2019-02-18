@@ -1940,28 +1940,34 @@ void TMainForm::macFlush(TStrObjList &Cmds, const TParamList &Options,
     E.SetUnhandled(true);
 }
 //..............................................................................
-void TMainForm::macShowStr(TStrObjList &Cmds, const TParamList &Options, TMacroData &E)  {
-  if( Cmds.IsEmpty() )  {  //S+C -> C -> S -> S+C
-    if( FXApp->IsStructureVisible() )  {
-      if( FGlConsole->ShowBuffer() )
+void TMainForm::macShowStr(TStrObjList &Cmds, const TParamList &Options,
+  TMacroData &E)
+{
+  if (Cmds.IsEmpty()) {  //S+C -> C -> S -> S+C
+    if (FXApp->IsStructureVisible()) {
+      if (FGlConsole->ShowBuffer()) {
         FXApp->SetStructureVisible(false);
-      else  {
-        if( FGlConsole->GetLinesToShow() != InvalidSize )
+      }
+      else {
+        if (FGlConsole->GetLinesToShow() != InvalidSize) {
           FGlConsole->SetLinesToShow(InvalidSize);
+        }
         FGlConsole->ShowBuffer(true);
       }
     }
     else {
-      if( FGlConsole->ShowBuffer() )  {
+      if (FGlConsole->ShowBuffer()) {
         FXApp->SetStructureVisible(true);
         FGlConsole->ShowBuffer(false);
       }
-      else
+      else {
         FGlConsole->ShowBuffer(false);
+      }
     }
   }
-  else
+  else {
     FXApp->SetStructureVisible(Cmds[0].ToBool());
+  }
   FXApp->CenterView();
   TStateRegistry::GetInstance().SetState(FXApp->stateStructureVisible,
     FXApp->IsStructureVisible(), EmptyString(), true);

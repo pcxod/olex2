@@ -56,7 +56,7 @@ public:
   DefPropBFIsSet(Processed, Flags, satom_Processed)
 
   bool IsAvailable() const {
-    return !(IsDeleted() || IsMasked() || FCAtom->IsDetached());
+    return (Flags&(satom_Deleted|satom_Masked)) == 0 && !FCAtom->IsDetached();
   }
   bool IsGrown() const {  return NodeCount() == CAtom().AttachedSiteCount();  }
 

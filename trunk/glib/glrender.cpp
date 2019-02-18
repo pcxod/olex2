@@ -565,25 +565,23 @@ void TGlRenderer::SetupStencilFoInterlacedDraw(bool even) {
     //memset(poly_stipple, even ? 0x55 : 0xAA, 128);
   }
   SetView(true);
-  olx_gl::disable(GL_LIGHTING);
-  olx_gl::disable(GL_DEPTH_TEST);
+  olx_gl::FlagManager fm;
+  fm.disable(GL_LIGHTING);
+  fm.disable(GL_DEPTH_TEST);
 
   olx_gl::clear(GL_STENCIL_BUFFER_BIT);
   olx_gl::stencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
   olx_gl::stencilFunc(GL_ALWAYS, 1, ~0);
-  olx_gl::enable(GL_STENCIL_TEST);
+  fm.enable(GL_STENCIL_TEST);
 
   olx_gl::polygonStipple(poly_stipple);
-  olx_gl::enable(GL_POLYGON_STIPPLE);
+  fm.enable(GL_POLYGON_STIPPLE);
   olx_gl::colorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 
   const double aspect = (double)Width/(double)Height;
   glRectd(-0.5*aspect, -0.5, 0.5*aspect, 0.5);
 
   olx_gl::colorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-  olx_gl::enable(GL_DEPTH_TEST);
-  olx_gl::disable(GL_POLYGON_STIPPLE);
-  olx_gl::enable(GL_LIGHTING);
 }
 //..............................................................................
 void TGlRenderer::Draw() {
@@ -591,6 +589,8 @@ void TGlRenderer::Draw() {
     return;
   }
   olx_gl::enable(GL_NORMALIZE);
+  olx_gl::blendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  olx_gl::cullFace(GL_BACK);
   OnDraw.Enter(this);
   //glLineWidth( (float)(0.07/GetScale()) );
   //glPointSize( (float)(0.07/GetScale()) );
@@ -598,10 +598,11 @@ void TGlRenderer::Draw() {
     olx_gl::clearColor(0.0, 0.0, 0.0, 0.0);
     olx_gl::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     const double ry = GetBasis().GetRY();
-    olx_gl::disable(GL_ALPHA_TEST);
-    olx_gl::disable(GL_BLEND);
-    olx_gl::disable(GL_CULL_FACE);
-    olx_gl::enable(GL_COLOR_MATERIAL);
+    olx_gl::FlagManager fm;
+    fm.disable(GL_ALPHA_TEST);
+    fm.disable(GL_BLEND);
+    fm.disable(GL_CULL_FACE);
+    fm.enable(GL_COLOR_MATERIAL);
     olx_gl::colorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
     // right eye
     GetBasis().RotateY(ry + StereoAngle);
@@ -615,7 +616,7 @@ void TGlRenderer::Draw() {
     //left eye
     GetBasis().RotateY(ry - StereoAngle);
     olx_gl::clear(GL_DEPTH_BUFFER_BIT);
-    olx_gl::enable(GL_BLEND);
+    fm.enable(GL_BLEND);
     olx_gl::blendFunc(GL_ONE, GL_ONE);
     olx_gl::colorMask(
       StereoLeftColor[0] != 0,
@@ -674,7 +675,7 @@ void TGlRenderer::Draw() {
   else if (StereoFlag == glStereoInterlace) {
     olx_gl::drawBuffer(GL_BACK);
     SetupStencilFoInterlacedDraw((AbsoluteTop % 2) != 0);
-    olx_gl::enable(GL_STENCIL_TEST);
+    olx_gl::FlagEnabler fe_(GL_STENCIL_TEST);
     olx_gl::stencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
     const double ry = GetBasis().GetRY();
     GetBasis().RotateY(ry + StereoAngle);
@@ -685,7 +686,6 @@ void TGlRenderer::Draw() {
     olx_gl::stencilFunc(GL_NOTEQUAL, 0, ~0);
     DrawObjects(0, 0, false, false);
     GetBasis().RotateY(ry);
-    olx_gl::disable(GL_STENCIL_TEST);
   }
   else if (StereoFlag == glStereoCross) {
     const double ry = GetBasis().GetRY();
@@ -1013,16 +1013,11 @@ AGDrawObject* TGlRenderer::SelectObject(int x, int y) {
     if (!GetScene().StartDraw()) {
       return 0;
     }
-    bool fe = olx_gl::isEnabled(GL_FOG);
-    if (fe) {
-      olx_gl::disable(GL_FOG);
-    }
+    olx_gl::FlagDisabler fd_(GL_FOG);
     SetView(x, y, false, true, 1);
     DrawObjects(x, y, true, false);
     GetScene().EndDraw();
-    if (fe) {
-      olx_gl::enable(GL_FOG);
-    }
+    fd_.enable();
     memset(&SelectionBuffer, 0, sizeof(SelectionBuffer));
     olx_gl::readPixels(x - 1, Height - y - 1, 3, 3, GL_RGB, GL_UNSIGNED_BYTE,
       &SelectionBuffer[0]);

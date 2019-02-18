@@ -871,13 +871,13 @@ void TXBond::Settings::CreatePrimitives() {
   primitives.Add("Stippled line", GlP);
 
   GlP->StartList();
-  olx_gl::enable(GL_LINE_STIPPLE);
+  olx_gl::FlagEnabler sl_(GL_LINE_STIPPLE);
   olx_gl::lineStipple(1, 0xf0f0);
   olx_gl::begin(GL_LINES);
   olx_gl::vertex(0, 0, 0);
   olx_gl::vertex(0, 0, 1);
   olx_gl::end();
-  olx_gl::disable(GL_LINE_STIPPLE);
+  sl_.disable();
   GlP->EndList();
   GlP->Params.Resize(GlP->Params.Count() + 1);  //
   GlP->Params.GetLast() = ddsDefAtomA;

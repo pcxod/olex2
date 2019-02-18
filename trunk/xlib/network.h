@@ -25,22 +25,22 @@ const int DefNoPart = -100;
 typedef TTypeListExt<class TNetwork, IOlxObject> TNetList;
 typedef TPtrList<class TNetwork> TNetPList;
 
-class TNetwork: public TBasicNode<TNetwork, TSAtom, TSBond>  {
+class TNetwork : public TBasicNode<TNetwork, TSAtom, TSBond> {
 protected:
   class TLattice  *Lattice;
   // sorts atoms by distance from 0, must be called before search for Hbonds
   void SortNodes();
 public:
   TNetwork(TLattice* P, TNetwork *N);
-  virtual ~TNetwork()  {}
+  virtual ~TNetwork() {}
 
-  TLattice& GetLattice() const {  return *Lattice;  }
+  TLattice& GetLattice() const { return *Lattice; }
   // empties the content of the network
   void Clear();
   // adds a node to the network and assigns its NetId
-  void AddNode(TSAtom& N)  { Nodes.Add(N)->SetFragmentId(NodeCount());  }
+  void AddNode(TSAtom& N) { Nodes.Add(N)->SetIdInNetwork(NodeCount()); }
   // adds a bond to the network and assigns its NetId
-  void AddBond(TSBond& B)  {  Bonds.Add(B)->SetFragmentId(BondCount());  }
+  void AddBond(TSBond& B) { Bonds.Add(B)->SetIdInNetwork(BondCount()); }
 
   // copies the content of S to the net
   void Assign(TNetwork& S);
@@ -83,8 +83,9 @@ public:
   static bool BondExists(const TSAtom& a1, const TSAtom& a2, double D,
     double delta)
   {
-    if (D < (a1.CAtom().GetConnInfo().r + a2.CAtom().GetConnInfo().r + delta))
+    if (D < (a1.CAtom().GetConnInfo().r + a2.CAtom().GetConnInfo().r + delta)) {
       return IsBondAllowed(a1, a2);
+    }
     return false;
   }
   static bool BondExistsQ(const TSAtom& a1, const TSAtom& a2, double qD,
@@ -100,8 +101,9 @@ public:
   static bool BondExists(const TSAtom& a1, const TCAtom& a2, const smatd& m,
     double D, double delta)
   {
-    if (D < (a1.CAtom().GetConnInfo().r + a2.GetConnInfo().r + delta))
+    if (D < (a1.CAtom().GetConnInfo().r + a2.GetConnInfo().r + delta)) {
       return IsBondAllowed(a1, a2, m);
+    }
     return false;
   }
   static bool BondExistsQ(const TSAtom& a1, const TCAtom& a2, const smatd& m,
@@ -144,10 +146,10 @@ public:
   }
 
   // only pointers are compared!!
-  bool operator == (const TNetwork& n) const {  return this == &n;  }
-  bool operator == (const TNetwork* n) const {  return this == n;  }
-  bool operator != (const TNetwork& n) const {  return this != &n;  }
-  bool operator != (const TNetwork* n) const {  return this != n;  }
+  bool operator == (const TNetwork& n) const { return this == &n; }
+  bool operator == (const TNetwork* n) const { return this == n; }
+  bool operator != (const TNetwork& n) const { return this != &n; }
+  bool operator != (const TNetwork* n) const { return this != n; }
 
   // returns true if the ring is regular (distances from centroid and angles)
   static bool IsRingRegular(const TSAtomPList& ring);
@@ -155,20 +157,20 @@ public:
   // invertion must be specified for the permutational graph match
   bool DoMatch(TNetwork& net, TTypeList< olx_pair_t<size_t, size_t> >& res,
     bool Invert,
-    double (*weight_calculator)(const TSAtom&));
+    double(*weight_calculator)(const TSAtom&));
   bool IsSubgraphOf(TNetwork& net,
     TTypeList< olx_pair_t<size_t, size_t> >& res,
     const TSizeList& rootsToSkip);
 
 protected:
-  static int TNetwork_SortRingAtoms(const TSAtom &a, const TSAtom &b)  {
-    return (int)(a.GetTag()-b.GetTag());
+  static int TNetwork_SortRingAtoms(const TSAtom &a, const TSAtom &b) {
+    return (int)(a.GetTag() - b.GetTag());
   }
   static index_t ShortestDistance(TSAtom &a, TSAtom &b);
   static bool TryRing(TSAtom& sa, TSAtomPList& ring,
-    const ElementPList& ringContent, size_t level=1);
-  static bool TryRing(TSAtom& sa, TSAtomPList& ring, size_t level=1);
-// tries to find the ring in given direction
+    const ElementPList& ringContent, size_t level = 1);
+  static bool TryRing(TSAtom& sa, TSAtomPList& ring, size_t level = 1);
+  // tries to find the ring in given direction
   static bool TryRing(TSAtom& sa, size_t node, TSAtomPList& ring,
     const ElementPList& ringContent);
   static bool TryRing(TSAtom& sa, size_t node, TSAtomPList& ring);
@@ -181,10 +183,10 @@ public:
   ContentList GetContentList() const;
   olxstr GetFormula() const;
   void FindAtomRings(TSAtom& ringAtom, const ElementPList& ringContent,
-        TTypeList<TSAtomPList>& res);
+    TTypeList<TSAtomPList>& res);
   // finds all rings
   void FindAtomRings(TSAtom& ringAtom, TTypeList<TSAtomPList>& res);
-  struct RingInfo  {
+  struct RingInfo {
     const cm_Element* HeaviestSubsType;
     size_t MaxSubsANode, HeaviestSubsIndex;
     TSizeList Ternary, // three bond inside the ring
@@ -194,8 +196,8 @@ public:
     bool HasAfix;
     RingInfo()
       : HeaviestSubsType(NULL), MaxSubsANode(0),
-        HeaviestSubsIndex(InvalidIndex), HasAfix(false)  {}
-    RingInfo& Clear()  {
+      HeaviestSubsIndex(InvalidIndex), HasAfix(false) {}
+    RingInfo& Clear() {
       MaxSubsANode = 0;
       HeaviestSubsIndex = InvalidIndex;
       HasAfix = false;
@@ -213,32 +215,33 @@ public:
   others
   */
   bool IsSuitableForMatching() const {
-    size_t cnt=0;
-    for (size_t i=0; i < NodeCount(); i++) {
-      if (Node(i).CAtom().IsAvailable() && ++cnt > 3)
+    size_t cnt = 0;
+    for (size_t i = 0; i < NodeCount(); i++) {
+      if (Node(i).CAtom().IsAvailable() && ++cnt > 3) {
         return true;
+      }
     }
     return false;
   }
-  struct AlignInfo  {
+  struct AlignInfo {
     align::out align_out;
     TEValueD rmsd;  // unweighted rmsd
     bool inverted;
   };
   static AlignInfo GetAlignmentRMSD(
-    const TTypeList< olx_pair_t<TSAtom*,TSAtom*> >& atoms,
+    const TTypeList< olx_pair_t<TSAtom*, TSAtom*> >& atoms,
     bool invert,
-    double (*weight_calculator)(const TSAtom&),
-    bool reset_crd=true
-    );
+    double(*weight_calculator)(const TSAtom&),
+    bool reset_crd = true
+  );
   // prepares a list of atoms, coordinates and weights for VcoV calculations
   static void PrepareESDCalc(
-    const TTypeList<olx_pair_t<TSAtom*,TSAtom*> >& atoms,
+    const TTypeList<olx_pair_t<TSAtom*, TSAtom*> >& atoms,
     bool TryInversion,
     TSAtomPList& atoms_out,
     vec3d_alist& crd_out,
     TDoubleList& wght_out,
-    double (*weight_calculator)(const TSAtom&));
+    double(*weight_calculator)(const TSAtom&));
 
   static void DoAlignAtoms(const TSAtomPList& atomsToTransform,
     const AlignInfo& align_info);
@@ -248,17 +251,17 @@ public:
     const mat3d &m, const vec3d &shift);
 
   static TArrayList<align::pair>& AtomsToPairs(
-    const TTypeList<olx_pair_t<TSAtom*,TSAtom*> >& atoms,
+    const TTypeList<olx_pair_t<TSAtom*, TSAtom*> >& atoms,
     bool invert,
-    double (*weight_calculator)(const TSAtom&),
+    double(*weight_calculator)(const TSAtom&),
     TArrayList<align::pair>& pairs,
-    bool reset_crd=true);
+    bool reset_crd = true);
 
   static align::out GetAlignmentInfo(
-    const TTypeList<olx_pair_t<TSAtom*,TSAtom*> >& atoms,
+    const TTypeList<olx_pair_t<TSAtom*, TSAtom*> >& atoms,
     bool invert,
-    double (*weight_calculator)(const TSAtom&),
-    bool reset_crd=true);
+    double(*weight_calculator)(const TSAtom&),
+    bool reset_crd = true);
   void ToDataItem(TDataItem& item) const;
   void FromDataItem(const TDataItem& item);
 };

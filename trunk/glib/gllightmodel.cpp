@@ -39,30 +39,40 @@ TGlLightModel& TGlLightModel::operator = (TGlLightModel& M)  {
   return *this;
 }
 //..............................................................................
-void TGlLightModel::Init()  {
+void TGlLightModel::Init() {
   olx_gl::lightModel(GL_LIGHT_MODEL_AMBIENT, AmbientColor.Data());
   olx_gl::shadeModel(IsSmoothShade() ? GL_SMOOTH : GL_FLAT);
   olx_gl::lightModel(GL_LIGHT_MODEL_LOCAL_VIEWER, IsLocalViewer() ? 1 : 0);
   olx_gl::lightModel(GL_LIGHT_MODEL_TWO_SIDE, IsTwoSides() ? 1 : 0);
   olx_gl::clearColor(ClearColor.Data());
-  for( int i=0; i<8; i++ )  {
-    if( Lights[i].IsEnabled() )  {
-      olx_gl::light(Lights[i].GetIndex(), GL_AMBIENT, Lights[i].GetAmbient().Data());
-      olx_gl::light(Lights[i].GetIndex(), GL_DIFFUSE, Lights[i].GetDiffuse().Data());
-      olx_gl::light(Lights[i].GetIndex(), GL_SPECULAR, Lights[i].GetSpecular().Data());
+  for (int i = 0; i < 8; i++) {
+    if (Lights[i].IsEnabled()) {
+      olx_gl::light(Lights[i].GetIndex(), GL_AMBIENT,
+        Lights[i].GetAmbient().Data());
+      olx_gl::light(Lights[i].GetIndex(), GL_DIFFUSE,
+        Lights[i].GetDiffuse().Data());
+      olx_gl::light(Lights[i].GetIndex(), GL_SPECULAR,
+        Lights[i].GetSpecular().Data());
 
-      olx_gl::light(Lights[i].GetIndex(), GL_POSITION, Lights[i].GetPosition().Data());
-      olx_gl::light(Lights[i].GetIndex(), GL_SPOT_CUTOFF, Lights[i].GetSpotCutoff());
+      olx_gl::light(Lights[i].GetIndex(), GL_POSITION,
+        Lights[i].GetPosition().Data());
+      olx_gl::light(Lights[i].GetIndex(), GL_SPOT_CUTOFF,
+        Lights[i].GetSpotCutoff());
 
-      olx_gl::light(Lights[i].GetIndex(), GL_SPOT_DIRECTION, Lights[i].GetSpotDirection().Data());
-      olx_gl::light(Lights[i].GetIndex(), GL_SPOT_EXPONENT, Lights[i].GetSpotExponent());
+      olx_gl::light(Lights[i].GetIndex(), GL_SPOT_DIRECTION,
+        Lights[i].GetSpotDirection().Data());
+      olx_gl::light(Lights[i].GetIndex(), GL_SPOT_EXPONENT,
+        Lights[i].GetSpotExponent());
 
-      olx_gl::light(Lights[i].GetIndex(), GL_CONSTANT_ATTENUATION, Lights[i].GetAttenuation()[0]);
-      olx_gl::light(Lights[i].GetIndex(), GL_LINEAR_ATTENUATION, Lights[i].GetAttenuation()[1]);
-      olx_gl::light(Lights[i].GetIndex(), GL_QUADRATIC_ATTENUATION, Lights[i].GetAttenuation()[2]);
+      olx_gl::light(Lights[i].GetIndex(), GL_CONSTANT_ATTENUATION,
+        Lights[i].GetAttenuation()[0]);
+      olx_gl::light(Lights[i].GetIndex(), GL_LINEAR_ATTENUATION,
+        Lights[i].GetAttenuation()[1]);
+      olx_gl::light(Lights[i].GetIndex(), GL_QUADRATIC_ATTENUATION,
+        Lights[i].GetAttenuation()[2]);
       olx_gl::enable(Lights[i].GetIndex());
     }
-    else  {
+    else {
       olx_gl::disable(Lights[i].GetIndex());
     }
   }

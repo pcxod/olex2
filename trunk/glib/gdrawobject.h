@@ -157,7 +157,9 @@ public:
 
   struct FlagsAnalyser {
     const short ref_flags;
-    FlagsAnalyser(short _ref_flags) : ref_flags(_ref_flags) {}
+    FlagsAnalyser(short _ref_flags)
+      : ref_flags(_ref_flags)
+    {}
     template <typename item_t>
     bool OnItem(const item_t& o, size_t) const {
       return olx_ref::get(o).MaskFlags(ref_flags) != 0;
@@ -172,11 +174,33 @@ public:
     template <typename item_t>
     bool OnItem(item_t& o_, size_t i) const {
       AGDrawObject &o = olx_ref::get(o_);
-      if (o.MaskFlags(ref_flags) != 0)
+      if (o.MaskFlags(ref_flags) != 0) {
         return actor.OnItem(o, i);
+      }
       return false;
     }
   };
+
+  template <class Accessor> struct FlagSetter_ {
+    const Accessor &accessor;
+    const short ref_flags;
+    bool set;
+    FlagSetter_(const Accessor &accessor_, short ref_flags_, bool set_)
+      : accessor(accessor_), ref_flags(ref_flags_), set(set_)
+    {}
+    template <class Item>
+    void OnItem(Item& o, size_t) const {
+      return olx_set_bit(set, olx_ref::get(accessor(o)).sgdo_Flags, ref_flags);
+    }
+  };
+  template <class acc_t> static FlagSetter_<acc_t>
+    FlagSetter(const acc_t &acc, short ref_flags, bool set) {
+      return FlagSetter_<acc_t>(acc, ref_flags, set);
+    }
+  static FlagSetter_<DummyAccessor>
+    FlagSetter(short ref_flags, bool set) {
+    return FlagSetter_<DummyAccessor>(DummyAccessor(), ref_flags, set);
+  }
 };
 
 typedef TPtrList<AGDrawObject> AGDObjList;
