@@ -75,10 +75,17 @@ void TCifDP::LoadFromString(const olxstr &str_) {
       continue;
     }
     if (line == "loop_") {
-      TStrList comments;
+      TStrList comments, h_comments;
       olx_object_ptr<cetTable> t = new cetTable();
-      while (++i < toks.Count() && toks[i].value.StartsFrom('_')) {
-        t().AddCol(toks[i].value);
+      while (++i < toks.Count() &&
+        (toks[i].value.StartsFrom('_') || toks[i].value.StartsFrom('#')))
+      {
+        if (toks[i].value.StartsFrom('_')) {
+          t().AddCol(toks[i].value);
+        }
+        else {
+          h_comments.Add(toks[i].value);
+        }
       }
       size_t st = i--;
       while (++i < toks.Count() && !IsLoopBreaking(toks[i].value)) {
@@ -92,6 +99,7 @@ void TCifDP::LoadFromString(const olxstr &str_) {
         throw ParsingException(__OlxSourceInfo,
           olxstr("invalid table ") << t().GetName(), st);
       }
+      comments.AddAll(h_comments);
       for (size_t ii = st; ii < i;) {
         if (toks.IsNull(ii) || toks[ii].value.IsEmpty()) {
           ii++;
