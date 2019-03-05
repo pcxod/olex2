@@ -65,6 +65,8 @@ public:
     while (ai.HasNext()) {
       ai.Next().SetMoveable(true);
     }
+    gxapp.SetZoomAfterModelBuilt(gxapp
+      .GetOptions().GetBoolOption("model.center_on_update", true, true));
     return true;
   }
 

@@ -58,6 +58,7 @@
   #include <WinGDI.h>
 #endif
 #include "atomlegend.h"
+#include "olxvar.h"
 #define ConeStipple  6.0
 #define LineStipple  0xf0f0
 
@@ -108,6 +109,7 @@ class xappXFileLoad : public AActionHandler {
   olx_object_ptr<TLattice::GrowInfo> GrowInfo;
   bool SameFile, EmptyFile;
   int state;
+  olx_object_ptr<bool> recenter;
 public:
   xappXFileLoad(TGXApp *Parent) {
     FParent = Parent;
@@ -117,6 +119,11 @@ public:
   }
   ~xappXFileLoad() {}
   bool Enter(const IOlxObject *Sender, const IOlxObject *Data, TActionQueue *) {
+    // cannot use in the constructor as options have not ben read in!
+    if (!recenter.is_valid()) {
+      recenter = FParent->GetOptions()
+        .GetBoolOption("model.center_on_reload", true, true);
+    }
     state = 1;
     FParent->GetUndo().Clear();
     FParent->DSphere().SetAnalyser(0);
@@ -217,7 +224,9 @@ public:
     }
     state = 3;
     FParent->GetRenderer().SetBasis(B);
-    FParent->CenterView(!SameFile);
+    if (!SameFile || recenter()) {
+      FParent->CenterView(!SameFile);
+    }
     if (FParent->AtomLegend().IsVisible()) {
       FParent->AtomLegend().Update();
     }
@@ -1544,8 +1553,22 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
         AlignXFiles();
         UpdateBonds();
       }
-      if (ZoomAfterModelBuilt)
-        CenterView(true);
+      if (ZoomAfterModelBuilt) {
+        // this is set in TMainForm::Dispatch
+        size_t cc_idx = TOlxVars::VarIndex("console_command");
+        bool act = true;
+        if (cc_idx != InvalidIndex) {
+          act = GetOptions().GetBoolOption("model.center_on_update", true, true);
+          TOlxVars::UnsetVar("console_command");
+        }
+        if (act) {
+          CenterView(true);
+        }
+      }
+      // auto turn-on
+      else {
+        ZoomAfterModelBuilt = true;
+      }
     }
   }
   else if (MsgId == ID_OnFileLoad) {

@@ -42,6 +42,8 @@ public:
     Part = Cmds.IsEmpty() ? 0 : Cmds[0].ToInt();
     SetUserCursor(Part, "part");
     olex2.processMacro("labels -p -h");
+    gxapp.SetZoomAfterModelBuilt(gxapp
+      .GetOptions().GetBoolOption("model.center_on_update", true, true));
     return true;
   }
   ~TPartMode() { HasInstance = false; }

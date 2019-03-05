@@ -1907,9 +1907,11 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
     if (CmdLineVisible && Sender->Is<TCmdLine>()) {
       tmp = FCmdLine->GetCommand();
     }
-    else if (Sender->Is<TGlConsole>())
+    else if (Sender->Is<TGlConsole>()) {
       tmp = FGlConsole->GetCommand();
+    }
     if (!tmp.IsEmpty()) {
+      TOlxVars::SetVar("console_command", TrueString());
       if (_ProcessManager->GetRedirected() != NULL) {
         _ProcessManager->GetRedirected()->Write(tmp);
         _ProcessManager->GetRedirected()->Writenl();
