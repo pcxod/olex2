@@ -136,6 +136,8 @@ public:
     group->SetAngleInc(AngleInc*M_PI / 180);
     group->SetMirrororingEnabled(DoSplit);
     AddAtoms(xatoms);
+    gxapp.SetZoomAfterModelBuilt(gxapp
+      .GetOptions().GetBoolOption("model.center_on_update", true, true));
     return (Initialised = true);
   }
 
