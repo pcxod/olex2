@@ -234,8 +234,9 @@ bool TXFile::Dispatch(int MsgId, short MsgSubId, const IOlxObject* Sender,
   const IOlxObject* Data, TActionQueue *)
 {
   if (MsgId == XFILE_EVT_SG_Change) {
-    if (Data == NULL || !Data->Is<TSpaceGroup>())
+    if (Data == 0 || !Data->Is<TSpaceGroup>()) {
       throw TInvalidArgumentException(__OlxSourceInfo, "space group");
+    }
     FSG = const_cast<TSpaceGroup*>(dynamic_cast<const TSpaceGroup*>(Data));
     GetRM().ResetHklStats();
   }
@@ -1283,8 +1284,9 @@ void TXFile::NameArg::Parse(const olxstr& fn)  {
 }
 //..............................................................................
 olxstr TXFile::NameArg::ToString() const {
-  if (data_name.IsEmpty())
+  if (data_name.IsEmpty()) {
     return file_name;
+  }
   return olxstr(file_name) << (is_index ? '#' : '$') << data_name;
 }
 //..............................................................................

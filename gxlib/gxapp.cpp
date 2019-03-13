@@ -134,7 +134,29 @@ public:
         *(olxstr*)Data, EmptyString()));
       olxstr s2 = TEFile::UnixPath(TEFile::ChangeFileExt(
         FParent->XFile().GetFileName(), EmptyString()));
-      if (s1 != s2) {
+      bool equal = (s1 == s2);
+      if (equal && FParent->CheckFileType<TCif>()) {
+        TXFile::NameArg fn(*dynamic_cast<const olxstr *>(Data));
+        if (!fn.data_name.IsEmpty()) {
+          TCif & cif = FParent->XFile().GetLastLoader<TCif>();
+          size_t bi = cif.GetBlockIndex();
+          if (fn.is_index) {
+            equal = fn.data_name.ToSizeT() == bi;
+          }
+          else {
+            if (bi != InvalidIndex) {
+              cif.GetBlock(bi).GetName() == fn.data_name;
+            }
+            else {
+              equal = false;
+            }
+          }
+        }
+        else {
+          equal = false;
+        }
+      }
+      if (!equal) {
         FParent->ClearStructureRelated();
       }
       else {

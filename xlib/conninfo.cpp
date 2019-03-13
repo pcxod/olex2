@@ -285,7 +285,7 @@ void ConnInfo::ToInsList(TStrList& ins) const {
       if (bi.to.IsDeleted()) {
         continue;
       }
-      olxstr& str = ins.Add("BIND") << bi.ToString(*aci.atom);
+      olxstr& str = ins.Add("BIND ") << bi.ToString(*aci.atom);
       if (bi.matr != 0) {
         size_t si = rm.UsedSymmIndex(*bi.matr);
         if (si == InvalidIndex) {
@@ -300,7 +300,7 @@ void ConnInfo::ToInsList(TStrList& ins) const {
       if (bi.to.IsDeleted()) {
         continue;
       }
-      olxstr& str = ins.Add("FREE") << bi.ToString(*aci.atom);
+      olxstr& str = ins.Add("FREE ") << bi.ToString(*aci.atom);
       if (bi.matr != 0) {
         size_t si = rm.UsedSymmIndex(*bi.matr);
         if (si == InvalidIndex) {

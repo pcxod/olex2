@@ -19,16 +19,19 @@ protected:
   TXGlLabel* Labels[3];
   virtual vec3d ForRaster(const TXGlLabel&) const;
   virtual vec3d ForVector(const TXGlLabel&) const;
-  virtual vec3d& AdjustZ(vec3d&) const;
+  const vec3d &GetAxis(const TXGlLabel &) const;
 protected:
   vec3d _Center;
   double Zoom;
-  virtual bool DoTranslate(const vec3d& t) {  _Center += t;  return true;  }
+  virtual bool DoTranslate(const vec3d& t);
   virtual bool DoRotate(const vec3d& vec, double angle) {  return false;  }
-  virtual bool DoZoom(double zoom, bool inc)  {
-    if( inc ) Zoom = ValidateZoom(Zoom+zoom);
-    else      Zoom = ValidateZoom(zoom);
-    return true;
+  virtual bool DoZoom(double zoom, bool inc) {
+    if (inc) {
+      Zoom = ValidateZoom(Zoom + zoom);
+    }
+    else {
+      Zoom = ValidateZoom(zoom);
+    }
     return true;
   }
 public:
