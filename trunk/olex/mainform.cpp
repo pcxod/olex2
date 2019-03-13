@@ -1911,6 +1911,7 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
       tmp = FGlConsole->GetCommand();
     }
     if (!tmp.IsEmpty()) {
+      // this is used in TGXApp::Dispatch
       TOlxVars::SetVar("console_command", TrueString());
       if (_ProcessManager->GetRedirected() != NULL) {
         _ProcessManager->GetRedirected()->Write(tmp);
