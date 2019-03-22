@@ -74,10 +74,13 @@ public:
     set_items |= setDispersion;
   }
   bool IsNeutron() const {
-    return gaussians.a1 == 0 && gaussians.b1 == 0 &&
-      gaussians.a2 == 0 && gaussians.b2 == 0 &&
-      gaussians.a3 == 0 && gaussians.b3 == 0 &&
-      gaussians.a4 == 0 && gaussians.b4 == 0;
+    if (IsSet(setGaussian)) {
+      return gaussians.a1 == 0 && gaussians.b1 == 0 &&
+        gaussians.a2 == 0 && gaussians.b2 == 0 &&
+        gaussians.a3 == 0 && gaussians.b3 == 0 &&
+        gaussians.a4 == 0 && gaussians.b4 == 0;
+    }
+    return false;
   }
   const compd& GetFpFdp() const {  return fpfdp;  }
   // sets custom bonding radius
@@ -103,7 +106,7 @@ public:
     gaussians = g;
     set_items |= setGaussian;
   }
-  bool IsSet(short what) { return (set_items&what) != 0; }
+  bool IsSet(short what) const { return (set_items&what) != 0; }
   DefPropC(olxstr, Label)
     // return an INS file string representation
     olxstr ToInsString() const;
