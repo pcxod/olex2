@@ -223,7 +223,7 @@ bool TNetwork::CBondExists(const TSAtom& A1, const TSAtom& A2,
   const double& D) const
 {
   if (D < (A1.CAtom().GetConnInfo().r +
-           A2.CAtom().GetConnInfo().r + GetLattice().GetDelta()))
+    A2.CAtom().GetConnInfo().r + GetLattice().GetDelta()))
   {
     return IsBondAllowed(A1, A2);
   }
@@ -233,8 +233,8 @@ bool TNetwork::CBondExists(const TSAtom& A1, const TSAtom& A2,
 bool TNetwork::CBondExistsQ(const TSAtom& A1, const TSAtom& A2,
   const double& qD) const
 {
-  if(  qD < olx_sqr(A1.CAtom().GetConnInfo().r +
-                    A2.CAtom().GetConnInfo().r + GetLattice().GetDelta()) )
+  if (qD < olx_sqr(A1.CAtom().GetConnInfo().r +
+    A2.CAtom().GetConnInfo().r + GetLattice().GetDelta()))
   {
     return IsBondAllowed(A1, A2);
   }
@@ -246,7 +246,9 @@ bool TNetwork::IsBondAllowed(const TCAtom& ca, const TCAtom& cb) {
     (ca.GetPart() == cb.GetPart()) ||
     ca.GetParent()->GetRefMod()->Conn.ArePartsGroupped(ca.GetPart(), cb.GetPart()))
   {
-    if (ca.GetParentAfixGroup() == cb.GetParentAfixGroup() && ca.GetParentAfixGroup() != 0) {
+    if (ca.GetParentAfixGroup() == cb.GetParentAfixGroup() &&
+      ca.GetParentAfixGroup() != 0)
+    {
       if (ca.GetParentAfixGroup()->GetM() == 12) {
         return false;
       }
@@ -260,7 +262,10 @@ bool TNetwork::IsBondAllowed(const TCAtom& ca, const TCAtom& cb,
   const smatd& sm)
 {
   if (IsBondAllowed(ca, cb)) {
-    if ((ca.GetPart() < 0 || cb.GetPart() < 0)) {
+    if (ca.GetPart() < 0 || cb.GetPart() < 0) {
+      if (ca.GetPart() == 0 || cb.GetPart() == 0) {
+        return true;
+      }
       if (sm.IsFirst()) {
         return true;
       }
@@ -285,6 +290,9 @@ bool TNetwork::IsBondAllowed(const TCAtom& ca, const TCAtom& cb,
 bool TNetwork::IsBondAllowed(const TSAtom& sa, const TSAtom& sb) {
   if (IsBondAllowed(sa.CAtom(), sb.CAtom())) {
     if ((sa.CAtom().GetPart() < 0 || sb.CAtom().GetPart() < 0)) {
+      if (sa.CAtom().GetPart() == 0 || sb.CAtom().GetPart() == 0) {
+        return true;
+      }
       return HaveSharedMatrix(sa, sb);
     }
     return true;
@@ -297,6 +305,9 @@ bool TNetwork::IsBondAllowed(const TSAtom& sa, const TCAtom& cb,
 {
   if (IsBondAllowed(sa.CAtom(), cb)) {
     if ((sa.CAtom().GetPart() < 0 || cb.GetPart() < 0)) {
+      if (sa.CAtom().GetPart() == 0 || cb.GetPart() == 0) {
+        return true;
+      }
       return sa.IsGenerator(sm);
     }
     return true;
