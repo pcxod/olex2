@@ -7280,26 +7280,124 @@ void XLibMacros::macSump(TStrObjList &Cmds, const TParamList &Options,
   XLibMacros::Parse(Cmds, "dd", &val, &esd);
   TSAtomPList xatoms = app.FindSAtoms(Cmds, false, true);
   // create a list of unique catoms
-  for( size_t i=0; i < xatoms.Count(); i++ )
+  for (size_t i = 0; i < xatoms.Count(); i++) {
     xatoms[i]->CAtom().SetTag(i);
+  }
   TCAtomPList catoms;
-  for( size_t i=0; i < xatoms.Count(); i++ )
-    if( xatoms[i]->CAtom().GetTag() == i )
-      catoms.Add(xatoms[i]->CAtom());
-  if( catoms.Count() < 2 )  {
+  size_t p_cnt = 0, v_cnt = 0;
+  for (size_t i = 0; i < xatoms.Count(); i++) {
+    if (xatoms[i]->CAtom().GetTag() == i) {
+      TCAtom &a = xatoms[i]->CAtom();
+      catoms.Add(a);
+      if (a.GetVarRef(catom_var_name_Sof) == 0 ||
+        a.GetVarRef(catom_var_name_Sof)->relation_type == relation_None)
+      {
+        v_cnt++;
+      }
+      if (a.GetPart() != 0) {
+        p_cnt++;
+      }
+    }
+  }
+  if (catoms.Count() < 2) {
     E.ProcessingError(__OlxSrcInfo,
       "at least two unique atoms should be provided");
     return;
   }
   XLEQ& xeq = rm.Vars.NewEquation(val, esd);
-  for( size_t i=0; i < catoms.Count(); i++ )  {
-    if( catoms[i]->GetVarRef(catom_var_name_Sof) == NULL ||
-      catoms[i]->GetVarRef(catom_var_name_Sof)->relation_type == relation_None )
-    {
-      XVar& xv = rm.Vars.NewVar(1./catoms.Count());
-      rm.Vars.AddVarRef(xv, *catoms[i], catom_var_name_Sof, relation_AsVar, 1.0);
+  // special case: all of the FVAR are set, use them
+  if (v_cnt == 0) {
+    olxdict<XVar*, int, TPointerComparator> vars;
+    for (size_t i = 0; i < catoms.Count(); i++) {
+      XVar &v = catoms[i]->GetVarRef(catom_var_name_Sof)->Parent;
+      size_t v_idx = vars.IndexOf(&v);
+      if (v_idx == InvalidIndex) {
+        vars.Add(&v, 1);
+      }
+      else {
+        vars.GetValue(v_idx)++;
+      }
     }
-    xeq.AddMember(catoms[i]->GetVarRef(catom_var_name_Sof)->Parent);
+    for (size_t i = 0; i < vars.Count(); i++) {
+      xeq.AddMember(*vars.GetKey(i), vars.GetValue(i));
+    }
+  }
+  // special case - all in parts
+  else if (p_cnt == catoms.Count()) {
+    typedef olx_pair_t<XVar*, int> var_t;
+    olx_pdict<int, var_t> vars;
+    // collect and analyse FVARs if any
+    for (size_t i = 0; i < catoms.Count(); i++) {
+      XVar *v;
+      XVarReference *vr = catoms[i]->GetVarRef(catom_var_name_Sof);
+      if (vr->relation_type == relation_None) {
+        vr = 0;
+      }
+      size_t p_idx = vars.IndexOf(catoms[i]->GetPart());
+      if (p_idx == InvalidIndex) {
+        if (vr != 0) {
+          v = vars.Add(catoms[i]->GetPart(), var_t(&vr->Parent, 1)).a;
+        }
+      }
+      else {
+        var_t &vr_ = vars.GetValue(p_idx);
+        if (vr != 0) {
+          if (&vr->Parent != vr_.a) {
+            E.ProcessingError(__OlxSrcInfo,
+              "Inconsistent use of parts and variables, aborting");
+            return;
+          }
+        }
+        vr_.b++;
+      }
+    }
+    // create new vars as needed
+    for (size_t i = 0; i < catoms.Count(); i++) {
+      XVar *v;
+      size_t p_idx = vars.IndexOf(catoms[i]->GetPart());
+      if (p_idx == InvalidIndex) {
+        v = &rm.Vars.NewVar(1. / catoms.Count());
+        v = vars.Add(catoms[i]->GetPart(), var_t(v, 1)).a;
+      }
+      else {
+        var_t &vr = vars.GetValue(p_idx);
+        vr.b++;
+        v = vr.a;
+      }
+      rm.Vars.AddVarRef(*v, *catoms[i], catom_var_name_Sof, relation_AsVar,
+        1.0 / catoms[i]->GetDegeneracy());
+    }
+    for (size_t i = 0; i < vars.Count(); i++) {
+      var_t &vr = vars.GetValue(i);
+      xeq.AddMember(*vr.a, vr.b);
+    }
+  }
+  // generic case, disregard parts, create FVARs if not set
+  else {
+    olxdict<XVar*, int, TPointerComparator> vars;
+    for (size_t i = 0; i < catoms.Count(); i++) {
+      XVar *xv;
+      if (catoms[i]->GetVarRef(catom_var_name_Sof) == 0 ||
+        catoms[i]->GetVarRef(catom_var_name_Sof)->relation_type == relation_None)
+      {
+        xv = &rm.Vars.NewVar(1. / catoms.Count());
+        rm.Vars.AddVarRef(*xv, *catoms[i], catom_var_name_Sof, relation_AsVar,
+          1.0 / catoms[i]->GetDegeneracy());
+      }
+      else {
+        xv = &catoms[i]->GetVarRef(catom_var_name_Sof)->Parent;
+      }
+      size_t v_idx = vars.IndexOf(xv);
+      if (v_idx == InvalidIndex) {
+        vars.Add(xv, 1);
+      }
+      else {
+        vars.GetValue(v_idx)++;
+      }
+    }
+    for (size_t i = 0; i < vars.Count(); i++) {
+      xeq.AddMember(*vars.GetKey(i), vars.GetValue(i));
+    }
   }
 }
 //.............................................................................
