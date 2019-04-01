@@ -62,7 +62,7 @@ void  TAsymmUnit::Clear() {
   CAtoms.DeleteItems().Clear();
   Centroids.DeleteItems().Clear();
   Ellipsoids.DeleteItems().Clear();
-  Latt = -1;
+  Latt = 1;
   Z = 1;
   MaxQPeak = MinQPeak = 0;
 }
