@@ -164,6 +164,10 @@ protected:
   /* this is used to initialise the old_atom_ids */
   olxdict<TCAtom *, size_t, TPointerComparator> atom_ids;
   TSizeList old_atom_ids;
+  olx_pdict<long, double> completeness_cache;
+  long d_to_key(double d, bool centro) const {
+    return olx_round(d*1e5) * (centro ? -1 : 1);
+  }
 public:
   RefinementModel(TAsymmUnit& au);
   virtual ~RefinementModel() {  Clear(rm_clear_DEF);  }
@@ -610,7 +614,7 @@ Friedel opposites of components 1 ... m
   const HklStat& GetReflectionStat() const {  return _HklStat;  }
   void ResetHklStats() { _HklStat.SetDefaults();  }
   // filters the reflections according to the parameters
-  HklStat& FilterHkl(TRefList& out, HklStat& stats);
+  HklStat& FilterHkl(TRefList& out, HklStat& stats) const;
   TRefPList::const_list_type GetNonoverlappingRefs(const TRefList& refs);
   // adjust intensity of reflections according to OMIT
   HklStat& AdjustIntensity(TRefList& out, HklStat& stats) const;
@@ -680,7 +684,7 @@ Friedel opposites of components 1 ... m
   vec3i CalcMaxHklIndexForD(double d, double tol=1e-3) const {
     return vec3i(aunit.GetAxes()/d + tol);
   }
-  double CalcCompletnessTo2Theta(double tt, bool Laue) const;
+  double CalcCompletenessTo2Theta(double tt, bool Laue);
   IXVarReferencerContainer& GetRefContainer(const olxstr& id_name)  {
     try {  return *RefContainers.Get(id_name);  }
     catch(...)  {

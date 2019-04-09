@@ -23,27 +23,32 @@ namespace RefUtil {
     const MatList& ml)
   {
     SymmSpace::InfoEx sp = SymmSpace::Compact(ml);
-    if( sp.centrosymmetric )
+    if (sp.centrosymmetric) {
       return 0;
-    pos.SetCapacity(refs.Count()/2);
-    neg.SetCapacity(refs.Count()/2);
+    }
+    pos.SetCapacity(refs.Count() / 2);
+    neg.SetCapacity(refs.Count() / 2);
     TArray3D<TReflection*> hkl3d(min_indices, max_indices);
-    for( size_t i=0; i < refs.Count(); i++ )  {
+    for (size_t i = 0; i < refs.Count(); i++) {
       hkl3d(refs[i].GetHkl()) = &refs[i];
       refs[i].SetTag(i);
     }
     size_t cnt = 0;
-    for( size_t i=0; i < refs.Count(); i++ )  {
-      if( refs[i].GetTag() < 0 )  continue;
+    for (size_t i = 0; i < refs.Count(); i++) {
+      if (refs[i].GetTag() < 0) {
+        continue;
+      }
       refs[i].SetTag(-1);
-      for( size_t mi=0; mi < sp.matrices.Count(); mi++ )  {
+      for (size_t mi = 0; mi < sp.matrices.Count(); mi++) {
         const vec3i& pi = refs[i].GetHkl();
         vec3i ni;
         refs[i].MulHkl(ni, sp.matrices[mi]);
         ni *= -1;
-        if( hkl3d.IsInRange(ni) && hkl3d(ni) != NULL ) {
+        if (hkl3d.IsInRange(ni) && hkl3d(ni) != 0) {
           TReflection& n = *hkl3d(ni);
-          if( n.GetTag() < 0 )  continue;
+          if (n.GetTag() < 0) {
+            continue;
+          }
           pos.Add(refs[i]);
           neg.Add(n)->SetTag(-1);
           cnt++;
@@ -53,20 +58,25 @@ namespace RefUtil {
     return cnt;
   }
 
-  class ResolutionAndSigmaFilter  {
+  class ResolutionAndSigmaFilter {
     const RefinementModel& rm;
     mutable RefinementModel::HklStat *_stats;
     double h_o_s, min_d, max_d;
   public:
-    ResolutionAndSigmaFilter(const RefinementModel& _rm) : rm(_rm), _stats(NULL)  {
+    ResolutionAndSigmaFilter(const RefinementModel& _rm) : rm(_rm),
+      _stats(0)
+    {
       double SHEL_hr = rm.GetSHEL_hr();
       double SHEL_lr = rm.GetSHEL_lr();
-      if( SHEL_hr > SHEL_lr ) olx_swap(SHEL_hr, SHEL_lr);
+      if (SHEL_hr > SHEL_lr) {
+        olx_swap(SHEL_hr, SHEL_lr);
+      }
       h_o_s = 0.5*rm.GetOMIT_s();
-      const double two_sin_2t = 2*sin(rm.GetOMIT_2t()*M_PI/360.0);
-      min_d = rm.expl.GetRadiation()/(two_sin_2t == 0 ? 1e-6 : two_sin_2t);
-      if( rm.HasSHEL() && SHEL_hr > min_d )
+      const double two_sin_2t = 2 * sin(rm.GetOMIT_2t()*M_PI / 360.0);
+      min_d = rm.expl.GetRadiation() / (two_sin_2t == 0 ? 1e-6 : two_sin_2t);
+      if (rm.HasSHEL() && SHEL_hr > min_d) {
         min_d = SHEL_hr;
+      }
       max_d = SHEL_lr;
     }
     void SetStats(RefinementModel::HklStat &stats) const {
@@ -86,13 +96,14 @@ namespace RefUtil {
       stats.MaxIndexes = -stats.MinIndexes;
     }
     bool IsOutside(const TReflection& r) const {
-      const double d = 1/r.ToCart(rm.aunit.GetHklToCartesian()).Length();
-      if( (h_o_s > 0 && r.GetI() < h_o_s*r.GetS()) || d >= max_d || d <= min_d )  {
-        if( _stats != NULL )
+      const double d = 1 / r.ToCart(rm.aunit.GetHklToCartesian()).Length();
+      if ((h_o_s > 0 && r.GetI() < h_o_s*r.GetS()) || d >= max_d || d <= min_d) {
+        if (_stats != 0) {
           _stats->FilteredOff++;
+        }
         return true;
       }
-      if( _stats != NULL )  {
+      if (_stats != 0) {
         olx_update_min_max(r.GetI(), _stats->MinI, _stats->MaxI);
         olx_update_min_max(d, _stats->MinD, _stats->MaxD);
         vec3i::UpdateMinMax(r.GetHkl(), _stats->MinIndexes, _stats->MaxIndexes);
@@ -103,16 +114,16 @@ namespace RefUtil {
       return (rm.GetOmits().IndexOf(hkl) != InvalidIndex);
     }
     void AdjustIntensity(TReflection& r) const {
-      if( r.GetI() < h_o_s*r.GetS() )  {
+      if (r.GetI() < h_o_s*r.GetS()) {
         r.SetI(h_o_s*r.GetS());
-        if( _stats != NULL )
+        if (_stats != 0)
           _stats->IntensityTransformed++;
       }
     }
-    struct IntensityModifier  {
+    struct IntensityModifier {
       const ResolutionAndSigmaFilter& parent;
-      IntensityModifier(const ResolutionAndSigmaFilter& _parent) : parent(_parent)  {}
-      void OnItem(TReflection& r, size_t) const {  parent.AdjustIntensity(r);  }
+      IntensityModifier(const ResolutionAndSigmaFilter& _parent) : parent(_parent) {}
+      void OnItem(TReflection& r, size_t) const { parent.AdjustIntensity(r); }
     };
   };
 };  // end of namespace RefUtil
