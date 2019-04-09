@@ -1268,35 +1268,41 @@ void TMainForm::macExec(TStrObjList &Cmds, const TParamList &Options, TMacroData
 }
 //..............................................................................
 void TMainForm::macShell(TStrObjList &Cmds, const TParamList &Options, TMacroData &Error)  {
-  if( Cmds.IsEmpty() )
+  if (Cmds.IsEmpty()) {
     wxShell();
-  else  {
+  }
+  else {
     olxstr cmd = Cmds.Text(' ');
 #ifdef __WIN32__
     ShellExecute((HWND)this->GetHWND(), wxT("open"), cmd.u_str(), NULL,
       TEFile::CurrentDir().u_str(), SW_SHOWNORMAL);
 #else
-    if( cmd.StartsFrom("http") || cmd.StartsFrom("https") || cmd.EndsWith(".htm") ||
-        cmd.EndsWith(".html") || cmd.EndsWith(".php") || cmd.EndsWith(".asp") )
+    if (cmd.StartsFrom("http") || cmd.StartsFrom("https") || cmd.EndsWith(".htm") ||
+      cmd.EndsWith(".html") || cmd.EndsWith(".php") || cmd.EndsWith(".asp"))
     {
       Macros.ProcessMacro(olxstr("exec -o getvar(defbrowser) '") << cmd << '\'', Error);
     }
 # ifdef __linux__
-    else if( cmd.EndsWith(".pdf") || cmd.EndsWith(".PDF") )  {
+    else if (cmd.EndsWith(".pdf") || cmd.EndsWith(".PDF")) {
       wxString dskpAttr;
       wxGetEnv(wxT("DESKTOP_SESSION"), &dskpAttr);
-      if (dskpAttr.Contains(wxT("gnome")))
+      if (dskpAttr.Contains(wxT("gnome"))) {
         Macros.ProcessMacro(olxstr("exec -o xdg-open '") << cmd << '\'', Error);
-      else if (dskpAttr.Contains(wxT("kde")))
+      }
+      else if (dskpAttr.Contains(wxT("kde"))) {
         Macros.ProcessMacro(olxstr("exec -o konqueror '") << cmd << '\'', Error);
-      else if (dskpAttr.Contains(wxT("xfce")))
+      }
+      else if (dskpAttr.Contains(wxT("xfce"))) {
         Macros.ProcessMacro(olxstr("exec -o thunar '") << cmd << '\'', Error);
-      else
+      }
+      else {
         Macros.ProcessMacro(olxstr("exec -o getvar(defbrowser) '") << cmd << '\'', Error);
+      }
     }
 # endif
-    else
+    else {
       Macros.ProcessMacro(olxstr("exec -o getvar(defexplorer) '") << cmd << '\'', Error);
+  }
 #endif
   }
 }
