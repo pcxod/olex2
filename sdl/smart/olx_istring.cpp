@@ -9,6 +9,7 @@
 
 #include "../ebase.h"
 #include "../eutf8.h"
+#include "../bapp.h"
 namespace esdl {
 
   template<> olxcstr olxcstr::FromCStr(
@@ -20,8 +21,11 @@ namespace esdl {
     }
     const size_t res = wcstombs(NULL, wstr, 0);
     if (res == InvalidSize) {
-      TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo,
-        "could not convert wcs to mbs");
+      TBasicApp::NewLogEntry(logWarning) <<
+        "wcstombs has failed, defaulting to UTF8";
+      return TUtf8::Encode(wstr, sz);
+      //TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo,
+      //  "could not convert wcs to mbs");
     }
     olx_array_ptr<char> out = olx_malloc<char>(res + 1);
     wcstombs(out(), wstr, res);

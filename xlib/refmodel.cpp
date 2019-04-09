@@ -206,8 +206,9 @@ void RefinementModel::UpdateUsedSymm(const class TUnitCell& uc)  {
 void RefinementModel::RemUsedSymm(const smatd& matr) const {
   for (size_t i = 0; i < UsedSymm.Count(); i++) {
     if (UsedSymm.GetValue(i).symop == matr) {
-      if (UsedSymm.GetValue(i).ref_cnt > 0)
+      if (UsedSymm.GetValue(i).ref_cnt > 0) {
         UsedSymm.GetValue(i).ref_cnt--;
+      }
       return;
     }
   }
@@ -215,9 +216,11 @@ void RefinementModel::RemUsedSymm(const smatd& matr) const {
 }
 //.............................................................................
 size_t RefinementModel::UsedSymmIndex(const smatd& matr) const {
-  for( size_t i=0; i < UsedSymm.Count(); i++ )
-    if( UsedSymm.GetValue(i).symop == matr )
+  for (size_t i = 0; i < UsedSymm.Count(); i++) {
+    if (UsedSymm.GetValue(i).symop == matr) {
       return i;
+    }
+  }
   return InvalidIndex;
 }
 //.............................................................................
@@ -356,7 +359,7 @@ olxstr RefinementModel::GetBASFStr() const {
 //.............................................................................
 olxstr RefinementModel::GetDEFSStr() const {
   olxstr rv;
-  for( size_t i=0; i < DEFS.Count(); i++ )  {
+  for (size_t i = 0; i < DEFS.Count(); i++) {
     rv << ' ' << DEFS[i];
   }
   return rv.IsEmpty() ? rv : rv.SubStringFrom(1);
@@ -364,7 +367,7 @@ olxstr RefinementModel::GetDEFSStr() const {
 //.............................................................................
 olxstr RefinementModel::GetTWINStr() const {
   olxstr rv;
-  for( size_t i=0; i < 9; i++ )  {
+  for (size_t i = 0; i < 9; i++) {
     if (TWIN_mat[i / 3][i % 3] == 0) {
       rv << "0 ";
     }
@@ -375,7 +378,7 @@ olxstr RefinementModel::GetTWINStr() const {
   return rv << TWIN_n;
 }
 //.............................................................................
-void RefinementModel::SetIterations(int v)  {
+void RefinementModel::SetIterations(int v) {
   if (LS.IsEmpty()) {
     LS.Add(v);
   }
@@ -384,7 +387,7 @@ void RefinementModel::SetIterations(int v)  {
   }
 }
 //.............................................................................
-void RefinementModel::SetPlan(int v)  {
+void RefinementModel::SetPlan(int v) {
   if (PLAN.IsEmpty()) {
     PLAN.Add(v);
   }
@@ -471,13 +474,13 @@ void RefinementModel::ClearInfoTab(const olxstr &name) {
   }
 }
 //.............................................................................
-void RefinementModel::AddInfoTab(const TStrList& l)  {
+void RefinementModel::AddInfoTab(const TStrList& l) {
   size_t atom_start = 1;
   size_t resi_ind = l[0].IndexOf('_');
   olxstr tab_name = (resi_ind == InvalidIndex ? l[0]
-  : l[0].SubStringTo(resi_ind));
+    : l[0].SubStringTo(resi_ind));
   olxstr resi_name = (resi_ind == InvalidIndex ? EmptyString()
-    : l[0].SubStringFrom(resi_ind+1));
+    : l[0].SubStringFrom(resi_ind + 1));
   if (tab_name.Equalsi("HTAB")) {
     InfoTables.Add(
       new InfoTab(*this, infotab_htab, EmptyString()));
@@ -497,7 +500,7 @@ void RefinementModel::AddInfoTab(const TStrList& l)  {
   else if (tab_name.Equalsi("MPLA")) {
     if (l[atom_start].IsNumber()) {
       InfoTables.Add(
-        new InfoTab(*this, infotab_mpla, l[atom_start+1],
+        new InfoTab(*this, infotab_mpla, l[atom_start + 1],
           l[atom_start].ToInt()));
       atom_start++;
     }
@@ -510,28 +513,29 @@ void RefinementModel::AddInfoTab(const TStrList& l)  {
     throw TInvalidArgumentException(__OlxSourceInfo,
       "unknown information table name");
   }
-  try  {
+  try {
     InfoTables.GetLast().FromExpression(l.Text(' ', atom_start), resi_name);
   }
   catch (const TExceptionBase& ex) {
     TBasicApp::NewLogEntry(logError) <<
       "Invalid info table atoms: " << l.Text(' ');
     TBasicApp::NewLogEntry(logError) << ex.GetException()->GetFullMessage();
-    InfoTables.Delete(InfoTables.Count()-1);
+    InfoTables.Delete(InfoTables.Count() - 1);
     return;
   }
   if (!InfoTables.GetLast().IsValid()) {
     TBasicApp::NewLogEntry(logError) <<
       "Invalid info table: " << l.Text(' ');
-    if (!TIns::DoPreserveInvalid())
-      InfoTables.Delete(InfoTables.Count()-1);
+    if (!TIns::DoPreserveInvalid()) {
+      InfoTables.Delete(InfoTables.Count() - 1);
+    }
     return;
   }
-  for (size_t i=0; i < InfoTables.Count()-1; i++) {
+  for (size_t i = 0; i < InfoTables.Count() - 1; i++) {
     if (InfoTables[i] == InfoTables.GetLast()) {
       TBasicApp::NewLogEntry(logError) <<
         "Duplicate info table: " << l.Text(' ');
-      InfoTables.Delete(InfoTables.Count()-1);
+      InfoTables.Delete(InfoTables.Count() - 1);
       return;
     }
   }
@@ -756,6 +760,7 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
       return _HklStat;
     }
     else  {
+      completeness_cache.Clear();
       HklStatFileID = HklFileID;
       _HklStat.SetDefaults();
       TRefList refs;
@@ -843,6 +848,9 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
         _HklStat.DataCount = _HklStat.UniqueReflections;
       }
      _HklStat.Completeness = double(_HklStat.UniqueReflections) / e_cnt;
+     completeness_cache.Add(
+       d_to_key(_HklStat.MinD, sp.IsCentrosymmetric()),
+       _HklStat.Completeness);
     }
   }
   catch(const TExceptionBase& e) {
@@ -853,19 +861,15 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
 }
 //.............................................................................
 RefinementModel::HklStat& RefinementModel::FilterHkl(TRefList& out,
-  RefinementModel::HklStat& stats)
+  RefinementModel::HklStat& stats) const
 {
   TStopWatch sw(__FUNC__);
   const TRefList& all_refs = GetReflections();
-  // swap the values if in wrong order
-  if (SHEL_hr > SHEL_lr) {
-    olx_swap(SHEL_hr, SHEL_lr);
-  }
   RefUtil::ResolutionAndSigmaFilter rsf(*this);
   rsf.SetStats(stats);
   const size_t ref_cnt = all_refs.Count();
   out.SetCapacity(ref_cnt);
-  for( size_t i=0; i < ref_cnt; i++ )  {
+  for (size_t i = 0; i < ref_cnt; i++) {
     size_t start = i;
     if (HKLF >= 5 && all_refs[i].GetBatch() < 0) {
       while (++i < ref_cnt && all_refs[i].GetBatch() < 0) {
@@ -1942,7 +1946,19 @@ olx_pair_t<vec3i, vec3i> RefinementModel::CalcIndicesToD(double d,
   return olx_pair::make(-mx, mx);
 }
 //..............................................................................
-double RefinementModel::CalcCompletnessTo2Theta(double tt, bool Laue) const {
+double RefinementModel::CalcCompletenessTo2Theta(double tt, bool Laue) {
+  // this resets the cace if needed
+  GetMergeStat();
+  // check cache
+  double two_sin_2t = 2 * sin(tt*M_PI / 360.0);
+  double min_d = expl.GetRadiation() / (two_sin_2t == 0 ? 1e-6 : two_sin_2t);
+  long key = d_to_key(min_d, Laue);
+  {
+    double v = completeness_cache.Find(key, -1.0);
+    if (v > 0) {
+      return v;
+    }
+  }
   TUnitCell::SymmSpace sp =
     aunit.GetLattice().GetUnitCell().GetSymmSpace();
   mat3d h2c = aunit.GetHklToCartesian();
@@ -1950,10 +1966,14 @@ double RefinementModel::CalcCompletnessTo2Theta(double tt, bool Laue) const {
   if (Laue) {
     info_ex.centrosymmetric = true;
   }
-  double two_sin_2t = 2*sin(tt*M_PI/360.0);
-  double min_d = expl.GetRadiation()/(two_sin_2t == 0 ? 1e-6 : two_sin_2t);
   double min_ds_sq = olx_sqr(1.0 / min_d);
-  TRefList refs = GetReflections();
+  TRefList refs;
+  SortedObjectList<vec3i, TComparableComparator> omits;
+  for (size_t i = 0; i < Omits.Count(); i++) {
+    omits.AddUnique(Omits[i]);
+  }
+  HklStat st;
+  FilterHkl(refs,st);
   for (size_t i = 0; i < refs.Count(); i++) {
     refs[i].Standardise(info_ex);
   }
@@ -1961,11 +1981,12 @@ double RefinementModel::CalcCompletnessTo2Theta(double tt, bool Laue) const {
   size_t u_cnt = 0;
   for (size_t i=0; i < refs.Count(); i++) {
     TReflection &r = refs[i];
+    bool skip = omits.Contains(refs[i].GetHkl());
     while (++i < refs.Count() && r.CompareTo(refs[i]) == 0) {
       ;
     }
     i--;
-    if (r.IsAbsent()) {
+    if (skip || r.IsAbsent()) {
       continue;
     }
     double qd = r.ToCart(h2c).QLength();
@@ -1997,7 +2018,9 @@ double RefinementModel::CalcCompletnessTo2Theta(double tt, bool Laue) const {
       }
     }
   }
-  return double(u_cnt) / (e_cnt);
+  double rv = double(u_cnt) / (e_cnt);
+  completeness_cache.Add(key, rv);
+  return rv;
 }
 //..............................................................................
 adirection& RefinementModel::DirectionById(const olxstr &id) const {
@@ -2614,90 +2637,93 @@ void RefinementModel::LibShareADP(TStrObjList &Cmds, const TParamList &Options,
   //size_t n = Cmds.Count();
   TSAtomPList atoms;
   double ang = -1001;
-  if( Cmds.Count() > 0 && Cmds[0].IsNumber() )  {
+  if (Cmds.Count() > 0 && Cmds[0].IsNumber()) {
     //n = Cmds[0].ToSizeT();
     Cmds.Delete(0);
   }
-  if( Cmds.Count() > 0 && Cmds[0].IsNumber() )  {
+  if (Cmds.Count() > 0 && Cmds[0].IsNumber()) {
     ang = Cmds[0].ToDouble();
     Cmds.Delete(0);
   }
   TXApp::GetInstance().FindSAtoms(Cmds.Text(' '), atoms);
-  if( atoms.Count() < 3 )  {
+  if (atoms.Count() < 3) {
     E.ProcessingError(__OlxSrcInfo, "At least three atoms are expected");
     return;
   }
-  if( ang == -1001 )
-    ang = 360./atoms.Count();
-  adirection *d = NULL;
+  if (ang == -1001)
+    ang = 360. / atoms.Count();
+  adirection *d = 0;
   vec3d center, normal;
   // consider special cases... CF3, CM3 etc - need to find the bond direction
-  if( atoms.Count() == 3 )  {
+  if (atoms.Count() == 3) {
     TPtrList<TSAtom> cnt(atoms.Count());
-    for( size_t i=0; i < atoms.Count(); i++ )  {
-      for( size_t j=0; j < atoms[i]->NodeCount(); j++ )  {
+    for (size_t i = 0; i < atoms.Count(); i++) {
+      for (size_t j = 0; j < atoms[i]->NodeCount(); j++) {
         TSAtom &a = atoms[i]->Node(j);
-        if( a.IsDeleted() || a.GetType() == iQPeakZ || a.GetType() == iHydrogenZ )
+        if (a.IsDeleted() || a.GetType() == iQPeakZ || a.GetType() == iHydrogenZ)
           continue;
-        if( cnt[i] != NULL )  {  // attached to more than 2 atoms, invalidate
-          cnt[i] = NULL;
+        if (cnt[i] != 0) {  // attached to more than 2 atoms, invalidate
+          cnt[i] = 0;
           break;
         }
         cnt[i] = &a;
       }
     }
-    bool valid_for_bond = (cnt[0] != NULL);
-    if( valid_for_bond )  {
-      for( size_t i=1; i < cnt.Count(); i++ )  {
-        if( cnt[i] == NULL || cnt[i] != cnt[0] )  {
+    bool valid_for_bond = (cnt[0] != 0);
+    if (valid_for_bond) {
+      for (size_t i = 1; i < cnt.Count(); i++) {
+        if (cnt[i] == 0 || cnt[i] != cnt[0]) {
           valid_for_bond = false;
           break;
         }
       }
     }
-    if( valid_for_bond )  {
+    if (valid_for_bond) {
       size_t p_ind = InvalidIndex;
-      for( size_t i=0; i < cnt[0]->NodeCount(); i++ )  {
+      for (size_t i = 0; i < cnt[0]->NodeCount(); i++) {
         TSAtom &a = cnt[0]->Node(i);
-        if( a.IsDeleted() || a.GetType() == iQPeakZ ||
-            atoms.IndexOf(a) != InvalidIndex )
+        if (a.IsDeleted() || a.GetType() == iQPeakZ ||
+          atoms.IndexOf(a) != InvalidIndex)
+        {
           continue;
-        if( p_ind != InvalidIndex )  {
+        }
+        if (p_ind != InvalidIndex) {
           p_ind = InvalidIndex;
           break;
         }
         p_ind = i;
       }
-      if( p_ind != InvalidIndex )  { // add the direction then
+      if (p_ind != InvalidIndex) { // add the direction then
         TCAtomGroup as;
         as.Add(new TGroupCAtom(
           cnt[0]->Node(p_ind).CAtom(), cnt[0]->Node(p_ind).GetMatrix()));
         as.Add(new TGroupCAtom(cnt[0]->CAtom(), cnt[0]->GetMatrix()));
-        normal = (cnt[0]->crd()-cnt[0]->Node(p_ind).crd()).Normalise();
-        center = (atoms[0]->crd()+atoms[1]->crd()+atoms[2]->crd())/3;
+        normal = (cnt[0]->crd() - cnt[0]->Node(p_ind).crd()).Normalise();
+        center = (atoms[0]->crd() + atoms[1]->crd() + atoms[2]->crd()) / 3;
         d = AddDirection(as, direction_vector);
       }
     }
   }
   // create a normal direction
-  if( d == NULL )  {
+  if (d == 0) {
     TCAtomGroup as;
-    for( size_t i=0; i < atoms.Count(); i++ )
+    for (size_t i = 0; i < atoms.Count(); i++) {
       as.Add(new TGroupCAtom(atoms[i]->CAtom(), atoms[i]->GetMatrix()));
+    }
     d = AddDirection(as, direction_normal);
     TSPlane::CalcPlane(atoms, normal, center);
   }
-  if( d == NULL )  {
+  if (d == 0) {
     E.ProcessingError(__OlxSrcInfo, "could not add direction object");
     return;
   }
   olx_plane::Sort(atoms, FunctionAccessor::MakeConst(
     (const vec3d& (TSAtom::*)() const)&TSAtom::crd), center, normal);
   double ra = atoms.Count()*ang;
-  for( size_t i=1; i < atoms.Count(); i++ )  {
+  for (size_t i = 1; i < atoms.Count(); i++) {
     SharedRotatedADPs.items.Add(
       new rotated_adp_constraint(
-        atoms[0]->CAtom(), atoms[i]->CAtom(), *d, (ra-=ang), false));
+        atoms[0]->CAtom(), atoms[i]->CAtom(), *d, (ra -= ang), false));
   }
 }
 //..............................................................................
@@ -2705,10 +2731,10 @@ void RefinementModel::LibCalcCompleteness(const TStrObjList& Params,
   TMacroData& E)
 {
   if (Params.Count() == 2) {
-    E.SetRetVal(CalcCompletnessTo2Theta(Params[0].ToDouble(), Params[1].ToBool()));
+    E.SetRetVal(CalcCompletenessTo2Theta(Params[0].ToDouble(), Params[1].ToBool()));
     return;
   }
-  E.SetRetVal(CalcCompletnessTo2Theta(Params[0].ToDouble(), false));
+  E.SetRetVal(CalcCompletenessTo2Theta(Params[0].ToDouble(), false));
 }
 //..............................................................................
 void RefinementModel::LibMaxIndex(const TStrObjList& Params,
