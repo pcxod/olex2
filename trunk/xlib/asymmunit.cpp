@@ -515,7 +515,7 @@ olxset<TCAtom *, TPointerComparator>::const_set_type
   return rv;
 }
 //..............................................................................
-TCAtom * TAsymmUnit::FindCAtom(const olxstr &Label, TResidue* resi)  const {
+TCAtom * TAsymmUnit::FindCAtom(const olxstr &Label, TResidue* resi) const {
   int part = DefNoPart;
   olxstr lb = Label;
   size_t p_idx = Label.IndexOf('^');

@@ -2095,7 +2095,7 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
     while (ai.HasNext()) {
       TXAtom &a = ai.Next();
       if (a.IsVisible() && a.CAtom().GetTag() == 1) {
-        app.GetRenderer().Select(a, true);
+        app.GetRenderer().Select(a, flag);
       }
     }
   }
