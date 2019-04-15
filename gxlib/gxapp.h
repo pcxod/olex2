@@ -29,6 +29,7 @@
 #include "xbond.h"
 #include "xplane.h"
 #include "gxfiles.h"
+#include "label_utils.h"
 #ifdef __WXWIDGETS__
 #include "wx/zipstrm.h"
 #endif
@@ -528,7 +529,9 @@ public:
   bool IsDisplayFrozen() const { return DisplayFrozen; }
   void SetDisplayFrozen(bool v) {
     DisplayFrozen = v;
-    if (!v)  Draw();
+    if (!v) {
+      Draw();
+    }
   }
 
   // hides all bonds for all hidden q-peaks
@@ -552,10 +555,14 @@ public:
   void SetPackMode(short v, const olxstr& atoms);
   //
 protected:
-  ConstPtrList<TXAtom> XAtomsByMask(const olxstr& Name, int Mask);
-  ConstPtrList<TCAtom> CAtomsByMask(const olxstr& Name, int Mask);
-  ConstPtrList<TXAtom> XAtomsByType(const cm_Element& AI, bool FindHidden = false);
-  ConstPtrList<TCAtom> CAtomsByType(const cm_Element& AI);
+  ConstPtrList<TXAtom> XAtomsByMask(const olxstr& Name, int Mask,
+    const AtomLabelInfo &label_info);
+  ConstPtrList<TCAtom> CAtomsByMask(const olxstr& Name, int Mask,
+    const AtomLabelInfo &label_info);
+  ConstPtrList<TXAtom> XAtomsByType(const cm_Element& AI,
+    const AtomLabelInfo &label_info, bool FindHidden = false);
+  ConstPtrList<TCAtom> CAtomsByType(const cm_Element& AI,
+    const AtomLabelInfo &label_info);
   ConstPtrList<TXAtom> GetSelectedXAtoms(bool Clear = true);
   ConstPtrList<TCAtom> GetSelectedCAtoms(bool Clear = true);
 public:
@@ -568,7 +575,7 @@ public:
     bool ClearSelection = true, bool FindHidden = false);
   ConstPtrList<TXAtom> FindXAtoms(const TStrObjList &Cmds, bool GetAll,
     bool unselect);
-  // this function will return atoms WITHOUT atoms of th eoverlayed files!
+  // this function will return atoms WITHOUT atoms of the overlayed files!
   virtual bool FindSAtoms(const olxstr& condition, TSAtomPList& res,
     bool ReturnAll = true, bool ClearSelection = true);
 protected:

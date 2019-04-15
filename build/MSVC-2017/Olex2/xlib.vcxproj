@@ -1112,6 +1112,7 @@
     <ClInclude Include="..\..\..\xlib\ins.h" />
     <ClInclude Include="..\..\..\xlib\ipattern.h" />
     <ClInclude Include="..\..\..\xlib\label_corrector.h" />
+    <ClInclude Include="..\..\..\xlib\label_utils.h" />
     <ClInclude Include="..\..\..\xlib\lattice.h" />
     <ClInclude Include="..\..\..\xlib\lcells.h" />
     <ClInclude Include="..\..\..\xlib\leq.h" />

@@ -13,6 +13,8 @@
 #include "residue.h"
 #include "talist.h"
 
+BeginXlibNamespace()
+
 struct LabelIterator {
   static olxch inc_char(olxch ch) {
     if (ch == '9') {
@@ -175,4 +177,5 @@ struct LabelCorrector  {
   }
 };
 
+EndXlibNamespace()
 #endif
