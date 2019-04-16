@@ -1349,14 +1349,6 @@ void TGlRenderer::AddObject(AGDrawObject& G) {
   }
 }
 //..............................................................................
-/*
-void TGlRenderer::ReplacePrimitives(TEList *CurObj, TEList *NewObj)
-{
-  if( CurObj->Count() != NewObj->Count() )
-    BasicApp->Log->Exception("TGlRenderer:: lists count does not much!", true);
-  Primitives.ReplaceObjects(CurObj, NewObj);
-} */
-//..............................................................................
 void TGlRenderer::RemoveCollection(TGPCollection& GP) {
   FTranslucentIdentityObjects.Clear();
   FTranslucentObjects.Clear();
@@ -1568,6 +1560,27 @@ void TGlRenderer::SetVisibility(const TEBitArray &v) {
   }
 }
 //..............................................................................
+double TGlRenderer::CalcZoom(bool for_selection) const {
+  if (!for_selection) {
+    const double df = SceneDepth < 0 ?
+      (SceneDepth = olx_max(FMaxV.DistanceTo(FMinV), 1.0)) : SceneDepth;
+    return 1. / df;
+  }
+  else {
+    vec3d minv(1000), maxv(-1000);
+    size_t cnt = 0;
+    for (size_t i = 0; i < FSelection->Count(); i++) {
+      if ((*FSelection)[i].GetDimensions(maxv, minv)) {
+        cnt++;
+      }
+    }
+    if (cnt == 0) {
+      return CalcZoom(false);
+    }
+    return 1./ olx_max(maxv.DistanceTo(minv), 1.0);
+  }
+}
+//..............................................................................
 //..............................................................................
 //..............................................................................
 void TGlRenderer::LibCompile(const TStrObjList& Params, TMacroData& E) {
@@ -1622,7 +1635,11 @@ void TGlRenderer::LibZoom(TStrObjList &Cmds, const TParamList &Options,
   if (Cmds.IsEmpty()) {
     SetZoom(CalcZoom());
   }
-  else if (Cmds.Count() == 1) {
+  bool absolute = Options.GetBoolOption('a');
+  if (absolute) {
+    SetZoom(Cmds[0].ToDouble());
+  }
+  else {
     double zoom = GetZoom() + Cmds[0].ToDouble();
     if (zoom < 0.001) {
       zoom = 0.001;
@@ -1632,7 +1649,9 @@ void TGlRenderer::LibZoom(TStrObjList &Cmds, const TParamList &Options,
 }
 //..............................................................................
 void TGlRenderer::LibCalcZoom(const TStrObjList& Params, TMacroData& E) {
-  E.SetRetVal(CalcZoom());
+  E.SetRetVal(
+    CalcZoom(Params.IsEmpty() ? false : Params[0].ToBool())
+  );
 }
 //..............................................................................
 void TGlRenderer::LibGetZoom(const TStrObjList& Params, TMacroData& E) {
@@ -1795,13 +1814,16 @@ TLibrary*  TGlRenderer::ExportLibrary(const olxstr& name) {
   );
   lib->Register(
     new TMacro<TGlRenderer>(this, &TGlRenderer::LibZoom, "Zoom",
-      EmptyString(), fpNone | fpOne,
+      "a-[false] set absolute zoom value vs. relative",
+      fpNone | fpOne | fpTwo,
       "If no arguments provided - resets zoom to fit to screen, otherwise "
-      "increments/decrements current zoom by provided value")
+      "increments/decrements current zoom by provided value (default) or "
+      "sets absolute according to the -a option.")
   );
   lib->Register(
     new TFunction<TGlRenderer>(this, &TGlRenderer::LibCalcZoom, "CalcZoom",
-      fpNone, "Returns optimal zoom value")
+      fpNone|fpOne, "Returns optimal zoom value. Takes optional bool value to "
+      "specify if to calculate zoom for the selection rather than the whole scene")
   );
   lib->Register(
     new TFunction<TGlRenderer>(this, &TGlRenderer::LibGetZoom, "GetZoom",

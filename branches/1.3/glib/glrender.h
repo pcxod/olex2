@@ -219,11 +219,7 @@ public:
 
   void Initialise();
   void InitLights();
-  double CalcZoom() const {
-    const double df = SceneDepth < 0 ?
-      (SceneDepth=olx_max(FMaxV.DistanceTo(FMinV), 1.0)) : SceneDepth;
-    return 1./df;
-  }
+  double CalcZoom(bool for_selection = false) const;
   /* returns a "size of a pixel in current viewport"; use it to transform
   screen coordinates to internal coordinates of OpenGl Scene like follow: if an
   object has to follow mouse pointer, then the change in coordinates should be
