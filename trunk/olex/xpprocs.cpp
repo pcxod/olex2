@@ -2669,7 +2669,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
         FXApp->GetRenderer().GetStyles().LoadFromFile(DefStyle, false);
       }
     }
-    // special treatment of the kl files
+    // special treatment of the hkl files
     if (TEFile::ExtractFileExt(file_n.file_name).Equalsi("hkl")) {
       if (!TEFile::Exists(TEFile::ChangeFileExt(file_n.file_name, "ins"))) {
         THklFile hkl;
@@ -2677,8 +2677,9 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
         olx_object_ptr<TIns> hkl_ins = hkl.LoadFromFile(file_n.file_name, true);
         if (!hkl_ins.is_valid()) {
           olxstr src_fn = TEFile::ChangeFileExt(file_n.file_name, "p4p");
-          if (!TEFile::Exists(src_fn))
+          if (!TEFile::Exists(src_fn)) {
             src_fn = TEFile::ChangeFileExt(file_n.file_name, "crs");
+          }
           if (!TEFile::Exists(src_fn)) {
             Error.ProcessingError(__OlxSrcInfo,
               "could not initialise CELL/SFAC from the hkl file");
@@ -2692,12 +2693,24 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
           TIns *ins = (TIns *)FXApp->XFile().FindFormat("ins");
           ins->GetRM().Assign(hkl_ins().GetRM(), true);
           FXApp->XFile().SetLastLoader(ins);
+          TInsList *sgi = hkl_ins().FindIns("SPGR");
+          bool force_sg = false;
+          if (sgi != 0) {
+            TSpaceGroup *sg = TSymmLib::GetInstance().FindGroupByName(
+              sgi->Text(EmptyString()));
+            if (sg != 0) {
+              ins->GetAsymmUnit().ChangeSpaceGroup(*sg);
+              force_sg = true;
+            }
+          }
           FXApp->XFile().LastLoaderChanged();
           // make sure tha SGE finds the related HKL
           FXApp->XFile().GetRM().SetHKLSource(file_n.file_name);
           TMacroData er;
           Macros.ProcessMacro(olxstr("SGE '") <<
-            TEFile::ChangeFileExt(file_n.file_name, "ins") << '\'', er);
+            TEFile::ChangeFileExt(file_n.file_name, "ins") << '\'' <<
+            (force_sg ? " -f=true" : EmptyString()),
+            er);
           if (!er.HasRetVal() || !er.GetRetObj< TEPType<bool> >()->GetValue()) {
             olxstr
               s_inp("getuserinput(1, \'Please, enter the spacegroup\', \'')"),
@@ -2796,10 +2809,12 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
           "p4p_automate", FalseString()).ToBool())
         {
           TMacroData er;
-          if (TEFile::Exists(TEFile::ChangeFileExt(file_n.file_name, "ins")))
+          if (TEFile::Exists(TEFile::ChangeFileExt(file_n.file_name, "ins"))) {
             Macros.ProcessMacro("SG", er);
-          else
+          }
+          else {
             Macros.ProcessMacro("SGE", er);
+          }
         }
         else if (FXApp->CheckFileType<TP4PFile>()) {
           TP4PFile &p4p = FXApp->XFile().GetLastLoader<TP4PFile>();

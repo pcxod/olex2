@@ -83,7 +83,9 @@ void XLibMacros::Export(TLibrary& lib)  {
  data sets, removes equivalents with high sigma");
 //_____________________________________________________________________________
   xlib_InitMacro(SG, "a", fpNone|fpOne, "suggest space group");
-  xlib_InitMacro(SGE, EmptyString(), fpNone|fpOne|psFileLoaded,
+  xlib_InitMacro(SGE,
+    "f-use the current loader space group",
+    fpNone|fpOne|psFileLoaded,
     "Extended spacegroup determination. Internal use");
 //_____________________________________________________________________________
   xlib_InitMacro(GraphSR, "b-number of bins", fpNone|fpOne|psFileLoaded,
@@ -5603,19 +5605,20 @@ void XLibMacros::macSGE(TStrObjList &Cmds, const TParamList &Options,
   using namespace olex2;
   TXApp& xapp = TXApp::GetInstance();
   IOlex2Processor* op = IOlex2Processor::GetInstance();
-  if (op == NULL) {
+  if (op == 0) {
     throw TFunctionFailedException(__OlxSourceInfo,
       "this function requires Olex2 processor implementation");
   }
-  TSpaceGroup* sg = NULL;
-  if (xapp.CheckFileType<TCRSFile>() &&
-    ((TCRSFile*)xapp.XFile().LastLoader())->HasSG())
+  TSpaceGroup* sg = 0;
+  if (Options.GetBoolOption("f") ||
+    (xapp.CheckFileType<TCRSFile>() &&
+    ((TCRSFile*)xapp.XFile().LastLoader())->HasSG()))
   {
     sg = &xapp.XFile().GetLastLoaderSG();
     TBasicApp::NewLogEntry() << "Choosing CRS file space group: " <<
       sg->GetName();
   }
-  else {
+  if (sg == 0) {
     TPtrList<TSpaceGroup> sgs;
     E.SetRetVal(&sgs);
     op->processMacroEx("SG", E);
@@ -5632,8 +5635,9 @@ void XLibMacros::macSGE(TStrObjList &Cmds, const TParamList &Options,
     }
     else {
       olxstr cmd = "Wilson";
-      if (!Cmds.IsEmpty())
+      if (!Cmds.IsEmpty()) {
         cmd << " '" << Cmds[0] << '\'';
+      }
       op->processMacroEx(cmd, E);
       bool centro = E.GetRetVal().ToBool();
       TBasicApp::NewLogEntry() << "Searching for centrosymmetric group: " <<
@@ -5652,7 +5656,7 @@ void XLibMacros::macSGE(TStrObjList &Cmds, const TParamList &Options,
           }
         }
       }
-      if (sg == NULL) {  // no match to centre of symmetry found
+      if (sg == 0) {  // no match to centre of symmetry found
         sg = sgs[0];
         TBasicApp::NewLogEntry() << "Could not match, choosing: " <<
           sg->GetName();
