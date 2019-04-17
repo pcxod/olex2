@@ -119,28 +119,30 @@ olxstr TEMacroLib::ProcessEvaluator(
   const TStrList &argv, bool allow_dummy)
 {
   me.GetStack().Push(e->ToStringBuffer());
-  olxstr name = e->evator == NULL ? e->data : e->evator->name;
+  olxstr name = e->evator == 0 ? e->data : e->evator->name;
   size_t bi_ind = GetBuiltins().IndexOf(name);
-  if (bi_ind != InvalidIndex && e->evator != NULL) {
+  if (bi_ind != InvalidIndex && e->evator != 0) {
     (*GetBuiltins().GetValue(bi_ind))(e->evator, me, argv);
   }
   else {
     ABasicFunction *f = FindEvaluator(e, name);
-    if (f == NULL) {
-      if (e->evator == NULL && allow_dummy)
+    if (f == 0) {
+      if (e->evator == 0 && allow_dummy) {
         return unquote(SubstituteArgs(e->data, argv));
+      }
       me.NonexitingMacroError(name);
       return EmptyString();
     }
     TStrObjList Cmds;
     TParamList Options;
-    if (e->evator != NULL) {
+    if (e->evator != 0) {
       bool math_module = name.StartsFromi("math.");
-      for (size_t i=0; i < e->evator->args.Count(); i++) {
+      for (size_t i = 0; i < e->evator->args.Count(); i++) {
         if (!math_module) {
           arg_t r = EvaluateArg(e->evator->args[i], me, argv);
-          if (!me.IsSuccessful())
+          if (!me.IsSuccessful()) {
             return EmptyString();
+          }
           if (r.GetA().IsEmpty()) {
             Cmds.Add(r.GetB());
           }
@@ -148,24 +150,33 @@ olxstr TEMacroLib::ProcessEvaluator(
             Options.AddParam(r.GetA(), r.GetB());
           }
         }
-        else
+        else {
           Cmds.Add(SubstituteArgs(e->evator->args[i]->data, argv));
+        }
       }
     }
     if (f->HasOptions()) {
       Cmds.Pack();
       f->Run(Cmds, Options, me);
     }
-    else
+    else {
+      // put options back
+      for (size_t oi = 0; oi < Options.Count(); oi++) {
+        olxstr_buf bf('-');
+        bf << Options.GetName(oi) << '=' << Options.GetValue(oi);
+        Cmds.Add(bf);
+      }
       f->Run(Cmds, me);
+    }
   }
   if (me.IsSuccessful()) {
     olxstr rv;
     try {
       rv = me.GetRetVal();
-      if (e->left != NULL)
+      if (e->left != 0) {
         rv = EvaluateArg(e->left, me, argv).b << rv;
-      if (e->right != NULL) {
+      }
+      if (e->right != 0) {
         rv << EvaluateArg(e->right, me, argv).GetB();
       }
     }
