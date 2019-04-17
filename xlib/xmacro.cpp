@@ -640,7 +640,8 @@ void XLibMacros::Export(TLibrary& lib)  {
     "Calculates tetrahedron or bipyramidal shape volume for given (selected) "
     "atom");
   xlib_InitMacro(TLS,
-    "a-apply the TLS ADP to the atoms",
+    "a-apply the TLS ADP to the atoms&;"
+    "q-quiet&;",
     fpAny|psFileLoaded,
     "TLS procedure. The TLS is calculated for the given atoms and then the "
     "matrices rotated to the L axes (making L diagonal) and shifted to make S "
@@ -9667,8 +9668,9 @@ void XLibMacros::macTLS(TStrObjList &Cmds, const TParamList &Options,
   TXApp &app = TXApp::GetInstance();
   TSAtomPList atoms = app.FindSAtoms(Cmds, true, true);
   for (size_t i=0; i < atoms.Count(); i++) {
-    if (atoms[i]->GetEllipsoid() == NULL)
-      atoms[i] = NULL;
+    if (atoms[i]->GetEllipsoid() == 0) {
+      atoms[i] = 0;
+    }
   }
   if (atoms.Pack().Count() < 4) {
     Error.ProcessingError(__OlxSrcInfo,
@@ -9678,18 +9680,21 @@ void XLibMacros::macTLS(TStrObjList &Cmds, const TParamList &Options,
   evecd Q(6);
   TAsymmUnit &au = app.XFile().GetAsymmUnit();
   xlib::TLS tls(atoms);
-  olxstr ttitle = "TLS analysis for: ";
-  tls.printTLS(ttitle << olx_analysis::alg::label(atoms, true, ' '));
-  tls.printFOM();
-  tls.printDiff();
+  if (!Options.GetBoolOption('q')) {
+    olxstr ttitle = "TLS analysis for: ";
+    tls.printTLS(ttitle << olx_analysis::alg::label(atoms, true, ' '));
+    tls.printFOM();
+    tls.printDiff();
+  }
   if (Options.GetBoolOption('a') &&
       tls.GetElpList().Count() == atoms.Count())
   {
     for (size_t i=0; i < atoms.Count(); i++) {
       atoms[i]->GetEllipsoid()->GetShelxQuad(Q);
       atoms[i]->GetEllipsoid()->Initialise(tls.GetElpList()[i]);
-      if (atoms[i]->GetMatrix().IsFirst())
+      if (atoms[i]->GetMatrix().IsFirst()) {
         *atoms[i]->CAtom().GetEllipsoid() = tls.GetElpList()[i];
+      }
     }
   }
 }
