@@ -2055,6 +2055,9 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
     //app.GetLog() << NewLineSequence();
   }
   else if (Cmds.Count() > 1 && Cmds[0].Equalsi("resi")) {
+    if (flag == glSelectionNone) {
+      flag = glSelectionSelect;
+    }
     TAsymmUnit &au = app.XFile().GetAsymmUnit();
     au.GetAtoms().ForEach(ACollectionItem::TagSetter(0));
     TSizeList nums;
