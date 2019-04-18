@@ -83,7 +83,9 @@ void XLibMacros::Export(TLibrary& lib)  {
  data sets, removes equivalents with high sigma");
 //_____________________________________________________________________________
   xlib_InitMacro(SG, "a", fpNone|fpOne, "suggest space group");
-  xlib_InitMacro(SGE, EmptyString(), fpNone|fpOne|psFileLoaded,
+  xlib_InitMacro(SGE,
+    "f-use the current loader space group",
+    fpNone|fpOne|psFileLoaded,
     "Extended spacegroup determination. Internal use");
 //_____________________________________________________________________________
   xlib_InitMacro(GraphSR, "b-number of bins", fpNone|fpOne|psFileLoaded,
@@ -638,7 +640,8 @@ void XLibMacros::Export(TLibrary& lib)  {
     "Calculates tetrahedron or bipyramidal shape volume for given (selected) "
     "atom");
   xlib_InitMacro(TLS,
-    "a-apply the TLS ADP to the atoms",
+    "a-apply the TLS ADP to the atoms&;"
+    "q-quiet&;",
     fpAny|psFileLoaded,
     "TLS procedure. The TLS is calculated for the given atoms and then the "
     "matrices rotated to the L axes (making L diagonal) and shifted to make S "
@@ -5603,19 +5606,20 @@ void XLibMacros::macSGE(TStrObjList &Cmds, const TParamList &Options,
   using namespace olex2;
   TXApp& xapp = TXApp::GetInstance();
   IOlex2Processor* op = IOlex2Processor::GetInstance();
-  if (op == NULL) {
+  if (op == 0) {
     throw TFunctionFailedException(__OlxSourceInfo,
       "this function requires Olex2 processor implementation");
   }
-  TSpaceGroup* sg = NULL;
-  if (xapp.CheckFileType<TCRSFile>() &&
-    ((TCRSFile*)xapp.XFile().LastLoader())->HasSG())
+  TSpaceGroup* sg = 0;
+  if (Options.GetBoolOption("f") ||
+    (xapp.CheckFileType<TCRSFile>() &&
+    ((TCRSFile*)xapp.XFile().LastLoader())->HasSG()))
   {
     sg = &xapp.XFile().GetLastLoaderSG();
     TBasicApp::NewLogEntry() << "Choosing CRS file space group: " <<
       sg->GetName();
   }
-  else {
+  if (sg == 0) {
     TPtrList<TSpaceGroup> sgs;
     E.SetRetVal(&sgs);
     op->processMacroEx("SG", E);
@@ -5632,8 +5636,9 @@ void XLibMacros::macSGE(TStrObjList &Cmds, const TParamList &Options,
     }
     else {
       olxstr cmd = "Wilson";
-      if (!Cmds.IsEmpty())
+      if (!Cmds.IsEmpty()) {
         cmd << " '" << Cmds[0] << '\'';
+      }
       op->processMacroEx(cmd, E);
       bool centro = E.GetRetVal().ToBool();
       TBasicApp::NewLogEntry() << "Searching for centrosymmetric group: " <<
@@ -5652,7 +5657,7 @@ void XLibMacros::macSGE(TStrObjList &Cmds, const TParamList &Options,
           }
         }
       }
-      if (sg == NULL) {  // no match to centre of symmetry found
+      if (sg == 0) {  // no match to centre of symmetry found
         sg = sgs[0];
         TBasicApp::NewLogEntry() << "Could not match, choosing: " <<
           sg->GetName();
@@ -9663,8 +9668,9 @@ void XLibMacros::macTLS(TStrObjList &Cmds, const TParamList &Options,
   TXApp &app = TXApp::GetInstance();
   TSAtomPList atoms = app.FindSAtoms(Cmds, true, true);
   for (size_t i=0; i < atoms.Count(); i++) {
-    if (atoms[i]->GetEllipsoid() == NULL)
-      atoms[i] = NULL;
+    if (atoms[i]->GetEllipsoid() == 0) {
+      atoms[i] = 0;
+    }
   }
   if (atoms.Pack().Count() < 4) {
     Error.ProcessingError(__OlxSrcInfo,
@@ -9674,18 +9680,21 @@ void XLibMacros::macTLS(TStrObjList &Cmds, const TParamList &Options,
   evecd Q(6);
   TAsymmUnit &au = app.XFile().GetAsymmUnit();
   xlib::TLS tls(atoms);
-  olxstr ttitle = "TLS analysis for: ";
-  tls.printTLS(ttitle << olx_analysis::alg::label(atoms, true, ' '));
-  tls.printFOM();
-  tls.printDiff();
+  if (!Options.GetBoolOption('q')) {
+    olxstr ttitle = "TLS analysis for: ";
+    tls.printTLS(ttitle << olx_analysis::alg::label(atoms, true, ' '));
+    tls.printFOM();
+    tls.printDiff();
+  }
   if (Options.GetBoolOption('a') &&
       tls.GetElpList().Count() == atoms.Count())
   {
     for (size_t i=0; i < atoms.Count(); i++) {
       atoms[i]->GetEllipsoid()->GetShelxQuad(Q);
       atoms[i]->GetEllipsoid()->Initialise(tls.GetElpList()[i]);
-      if (atoms[i]->GetMatrix().IsFirst())
+      if (atoms[i]->GetMatrix().IsFirst()) {
         *atoms[i]->CAtom().GetEllipsoid() = tls.GetElpList()[i];
+      }
     }
   }
 }
