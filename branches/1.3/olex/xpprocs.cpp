@@ -393,22 +393,23 @@ void TMainForm::funLoadDll(const TStrObjList &Cmds, TMacroData &E) {
   }
   typedef olex2::IOlex2Runnable* (*GOR)();
   GOR gor = (GOR)dl().GetSymbol(wxT("GetOlex2Runnable"));
-  if (gor == NULL) {
+  if (gor == 0) {
     E.ProcessingError(__OlxSrcInfo, "could not locate initialisation point");
     return;
   }
   olex2::IOlex2Runnable* runnable = (*gor)();
-  if (!runnable) {
+  if (runnable == 0) {
     E.ProcessingError(__OlxSrcInfo, "NULL runnable");
     return;
   }
-  if (!runnable->Initialise(this)) {
-    dl().Detach();
+  if (!loadedDll.Contains(runnable)) {
+    if (!runnable->Initialise(this)) {
+      dl().Detach();
+    }
+    else {
+      loadedDll << runnable;
+    }
   }
-  else {
-    loadedDll << runnable;
-  }
-
 }
 //..............................................................................
 void TMainForm::macLines(TStrObjList &Cmds, const TParamList &Options, TMacroData &E)  {
