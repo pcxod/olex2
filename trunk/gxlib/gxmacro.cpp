@@ -71,6 +71,7 @@ void GXLibMacros::Export(TLibrary& lib) {
     "tomc-calculates 2Fo-Fc map&;"
     "obs-calculates observed map&;"
     "calc-calculates calculated map&;"
+    "fcfmc-calculates FCF Fc-Fc map&;"
     "scale-scale to use for difference maps, currently available simple(s) "
     "sum(Fo^2)/sum(Fc^2)) and regression(r)&;"
     "r-resolution in Angstrems&;"
@@ -679,7 +680,7 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
   // link the two
   st.SetProgress(&pg);
   pg.SetMax(4);
-  TBasicApp::GetInstance().OnProgress.Enter(NULL, &pg);
+  TBasicApp::GetInstance().OnProgress.Enter(0, &pg);
 
   TRefList refs;
   TArrayList<compd> F;
@@ -705,12 +706,29 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
       }
     }
   }
-  olxstr err = SFUtil::GetSF(refs, F, mapType,
-    Options.Contains("fcf") ? SFUtil::sfOriginFcf : SFUtil::sfOriginOlex2,
+  short src = Options.GetBoolOption("fcf") ? SFUtil::sfOriginFcf
+    : SFUtil::sfOriginOlex2;
+  olxstr err = SFUtil::GetSF(refs, F, mapType, src,
     scale, scale_value, SFUtil::fpMerge);
   if (!err.IsEmpty()) {
     E.ProcessingError(__OlxSrcInfo, err);
     return;
+  }
+  if (Options.GetBoolOption("fcfmc")) {
+    if (src != SFUtil::sfOriginFcf || mapType != SFUtil::mapTypeCalc) {
+      E.ProcessingError(__OlxSrcInfo, "Invalid combination of arguments");
+      return;
+    }
+    TArrayList<compd> F1;
+    F1.SetCount(refs.Count());
+    app.CalcSF(refs, F1);
+    if (F1.Count() != F.Count()) {
+      E.ProcessingError(__OlxSrcInfo, "F arrays mismatch");
+      return;
+    }
+    for (size_t i = 0; i < F1.Count(); i++) {
+      F[i] -= F1[i];
+    }
   }
   TAsymmUnit& au = app.XFile().GetAsymmUnit();
   TUnitCell& uc = app.XFile().GetUnitCell();
@@ -765,13 +783,13 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
     au.InitData();
     TActionQueue* q_draw = app.FindActionQueue(olxappevent_GL_DRAW);
     bool q_draw_changed = false;
-    if (q_draw != NULL) {
+    if (q_draw != 0) {
       q_draw->SetEnabled(false);
       q_draw_changed = true;
     }
     app.XFile().GetLattice().Init();
     olex2::IOlex2Processor::GetInstance()->processMacro("compaq -q");
-    if (q_draw != NULL && q_draw_changed) {
+    if (q_draw != 0 && q_draw_changed) {
       q_draw->SetEnabled(true);
     }
   }  // integration
