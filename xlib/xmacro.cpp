@@ -3269,7 +3269,7 @@ void XLibMacros::macEnvi(TStrObjList &Cmds, const TParamList &Options,
       allAtoms.Add(au.GetAtom(i));
     }
   }
-  IOlex2Processor::GetInstance()->processMacro("Freeze true",
+  olex2::IOlex2Processor::GetInstance()->processMacro("Freeze true",
     __OlxSrcInfo, true);
   for (size_t i = 0; i < atoms.Count(); i++) {
     TTypeList<AnAssociation3<TCAtom*, smatd, vec3d> > envi;
@@ -3327,7 +3327,7 @@ void XLibMacros::macEnvi(TStrObjList &Cmds, const TParamList &Options,
     TBasicApp::NewLogEntry() <<
       table.CreateTXTList(EmptyString(), true, true, ' ');
   }
-  IOlex2Processor::GetInstance()->processMacro("Freeze false",
+  olex2::IOlex2Processor::GetInstance()->processMacro("Freeze false",
     __OlxSrcInfo, true);
 }
 //.............................................................................
