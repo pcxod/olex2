@@ -2803,26 +2803,30 @@ void TLattice::_CreateFrags(TCAtom& start, TCAtomPList& dest) {
 //..............................................................................
 olxstr TLattice::CalcMoietyStr(bool html) const {
   const TAsymmUnit& au = GetAsymmUnit();
-  TTypeList<AnAssociation3<double,ContentList, size_t> > frags = 
+  TTypeList<AnAssociation3<double, ContentList, size_t> > frags =
     CalcMoiety();
   olxstr_buf rv;
   olxstr so = "<sub>", sc = "</sub>";
   for (size_t i = 0; i < frags.Count(); i++) {
-    if (!rv.IsEmpty())  rv << ", ";
-    if (frags[i].GetA() != 1)
-      rv << olx_round(frags[i].GetA(), 100) << '(';
+    if (!rv.IsEmpty()) {
+      rv << ", ";
+    }
+    if (frags[i].GetA() != 1) {
+      rv << olx_round(frags[i].GetA(), 1000) << '(';
+    }
     for (size_t j = 0; j < frags[i].GetB().Count(); j++) {
       rv << frags[i].GetB()[j].element->symbol;
       if (frags[i].GetB()[j].count != 1) {
         if (html) {
-          rv << so << olx_round(frags[i].GetB()[j].count, 100) << sc;
+          rv << so << olx_round(frags[i].GetB()[j].count, 1000) << sc;
         }
         else {
-          rv << olx_round(frags[i].GetB()[j].count, 100);
+          rv << olx_round(frags[i].GetB()[j].count, 1000);
         }
       }
-      if ((j+1) < frags[i].GetB().Count())
+      if ((j + 1) < frags[i].GetB().Count()) {
         rv << ' ';
+      }
     }
     if (frags[i].GetA() != 1) {
       rv << ')';
@@ -2836,78 +2840,102 @@ TLattice::CalcMoiety() const
 {
   const TAsymmUnit& au = GetAsymmUnit();
   TTypeList<TCAtomPList> cfrags;
-  for (size_t i = 0; i < au.AtomCount(); i++)  {
-    if (au.GetAtom(i).IsDeleted() || au.GetAtom(i).GetType() == iQPeakZ)
+  for (size_t i = 0; i < au.AtomCount(); i++) {
+    if (au.GetAtom(i).IsDeleted() || au.GetAtom(i).GetType() == iQPeakZ) {
       au.GetAtom(i).SetTag(1);  // ignore
-    else
+    }
+    else {
       au.GetAtom(i).SetTag(0); // unprocessed
+    }
   }
-  for (size_t i = 0; i < au.AtomCount(); i++)  {
-    if (au.GetAtom(i).GetTag() == 0)
+  for (size_t i = 0; i < au.AtomCount(); i++) {
+    if (au.GetAtom(i).GetTag() == 0) {
       _CreateFrags(au.GetAtom(i), cfrags.AddNew());
+    }
   }
   // multiplicity,content, reference fragment index
   TTypeList<AnAssociation3<double, ContentList, size_t> > frags;
-  for (size_t i = 0; i < cfrags.Count(); i++)  {
+  for (size_t i = 0; i < cfrags.Count(); i++) {
     ElementDict _cld;
-    for (size_t j = 0; j < cfrags[i].Count(); j++)
+    for (size_t j = 0; j < cfrags[i].Count(); j++) {
       _cld.Add(&cfrags[i][j]->GetType(), 0) += cfrags[i][j]->GetOccu();
+    }
     ContentList cl(_cld.Count(), false);
-    for (size_t j = 0; j < _cld.Count(); j++)
+    for (size_t j = 0; j < _cld.Count(); j++) {
       cl.Set(j, new ElementCount(*_cld.GetKey(j), _cld.GetValue(j)));
+    }
     XElementLib::SortContentList(cl);
     bool uniq = true;
     double overall_occu = 0;
-    for (size_t j = 0; j < cfrags[i].Count(); j++)  {
+    for (size_t j = 0; j < cfrags[i].Count(); j++) {
       const double occu = cfrags[i][j]->GetOccu();
-      if (overall_occu == 0)
+      if (overall_occu == 0) {
         overall_occu = occu;
-      else if (overall_occu != -1 && olx_abs(overall_occu-occu) > 0.01)  {
+      }
+      else if (overall_occu != -1 && olx_abs(overall_occu - occu) > 0.01) {
         overall_occu = -1;
         break;
       }
     }
-    for (size_t j = 0; j < frags.Count(); j++)  {
-      if (frags[j].GetB().Count() != cl.Count())  continue;
+    for (size_t j = 0; j < frags.Count(); j++) {
+      if (frags[j].GetB().Count() != cl.Count()) {
+        continue;
+      }
       bool equals = true;
-      if (frags[j].GetB()[0].element != cl[0].element)
+      if (frags[j].GetB()[0].element != cl[0].element) {
         equals = false;
-      else  {
-        for (size_t k = 1; k < cl.Count(); k++)  {
+      }
+      else {
+        for (size_t k = 1; k < cl.Count(); k++) {
           if (frags[j].GetB()[k].element != cl[k].element ||
-            olx_abs((frags[j].GetB()[k].count/frags[j].GetB()[0].count)-(cl[k].count/cl[0].count)) > 0.01)
+            olx_abs((frags[j].GetB()[k].count /
+              frags[j].GetB()[0].count) - (cl[k].count / cl[0].count)) > 0.01)
           {
             equals = false;
             break;
           }
         }
       }
-      if (equals)  {
-        frags[j].a += cl[0].count/frags[j].GetB()[0].count;
+      if (equals) {
+        frags[j].a += cl[0].count / frags[j].GetB()[0].count;
         uniq = false;
         break;
       }
     }
-    if (uniq)  {
-      if (olx_abs(overall_occu) == 1)
+    if (uniq) {
+      if (olx_abs(overall_occu) == 1) {
         frags.AddNew(1, cl, i);
-      else  {  // apply overal atom occupancy
-        for (size_t j = 0; j < cl.Count(); j++)
+      }
+      else {  // apply overal atom occupancy
+        for (size_t j = 0; j < cl.Count(); j++) {
           cl[j].count /= overall_occu;
+        }
         frags.AddNew(overall_occu, cl, i);
       }
     }
   }
   // apply Z multiplier...
-  const double zp_mult = (double)GetUnitCell().MatrixCount()/olx_max(au.GetZ(), 1);
-  if (zp_mult != 1)  {
-    for (size_t i = 0; i < frags.Count(); i++)  {
-      const TCAtomPList& l = cfrags[frags[i].GetC()];
-      const size_t generators = GetFragmentGrowMatrices(l, false).Count();
-      const int gd = int(generators == 0 ? 1 : generators);
-      frags[i].a *= zp_mult/gd;
-      for (size_t j = 0; j < frags[i].GetB().Count(); j++)
-        frags[i].b[j].count *= gd;
+  const double zp_mult = (double)GetUnitCell().MatrixCount() / olx_max(au.GetZ(), 1);
+  if (zp_mult != 1) {
+    bool check_con = TBasicApp::GetInstance().GetOptions()
+      .FindValue("moiety.check_connectivity", FalseString()).ToBool();
+    if (check_con) {
+      for (size_t i = 0; i < frags.Count(); i++) {
+        const TCAtomPList& l = cfrags[frags[i].GetC()];
+        const size_t generators = GetFragmentGrowMatrices(l, false).Count();
+        const int gd = int(generators == 0 ? 1 : generators);
+        frags[i].a *= zp_mult / gd;
+        for (size_t j = 0; j < frags[i].GetB().Count(); j++) {
+          frags[i].b[j].count *= gd;
+        }
+      }
+    }
+    else {
+      for (size_t i = 0; i < frags.Count(); i++) {
+        for (size_t j = 0; j < frags[i].GetB().Count(); j++) {
+          frags[i].b[j].count *= zp_mult;
+        }
+      }
     }
   }
   return frags;

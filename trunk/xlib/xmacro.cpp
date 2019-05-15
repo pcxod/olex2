@@ -269,7 +269,9 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(Anis,"h-adds hydrogen atoms" , (fpAny) | psFileLoaded,
     "Makes provided atoms anisotropic if no arguments provided current "
     "selection or all atoms are considered");
-  xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit",
+  xlib_InitMacro(File,
+    "s-sort the main residue of the asymmetric unit&;"
+    "p-coordinate precision for files supporting this option",
     fpNone|fpOne|psFileLoaded,
     "Saves current model to a file. By default an ins file is saved and "
     "loaded");
@@ -2219,11 +2221,13 @@ void XLibMacros::macFile(TStrObjList &Cmds, const TParamList &Options,
     if (XApp.CheckFileType<TIns>()) {
       Tmp = TEFile::ChangeFileExt(XApp.XFile().GetFileName(), "ins");
     }
-    else
+    else {
       Tmp = XApp.XFile().GetFileName();
+    }
   }
-  else
+  else {
     Tmp = Cmds[0];
+  }
 
   if (!TEFile::IsAbsolutePath(Tmp)) {
     olxstr root = (CurrentDir().IsEmpty() ? TEFile::CurrentDir()
@@ -2235,7 +2239,7 @@ void XLibMacros::macFile(TStrObjList &Cmds, const TParamList &Options,
   if (TEFile::ExtractFileExt(Tmp).Equalsi("ins")) {
     ASObjectProvider& objects = XApp.XFile().GetLattice().GetObjects();
     removedSAtoms.SetSize(objects.atoms.Count());
-    for (size_t i=0; i < objects.atoms.Count(); i++) {
+    for (size_t i = 0; i < objects.atoms.Count(); i++) {
       TSAtom& sa = objects.atoms[i];
       if (sa.GetType() == iQPeakZ && !sa.IsDeleted()) {
         sa.SetDeleted(true);
@@ -2244,7 +2248,7 @@ void XLibMacros::macFile(TStrObjList &Cmds, const TParamList &Options,
     }
     TAsymmUnit& au = XApp.XFile().GetAsymmUnit();
     removedCAtoms.SetSize(au.AtomCount());
-    for (size_t i=0; i < au.AtomCount(); i++) {
+    for (size_t i = 0; i < au.AtomCount(); i++) {
       TCAtom& ca = au.GetAtom(i);
       if (ca.GetType() == iQPeakZ && !ca.IsDeleted()) {
         ca.SetDeleted(true);
@@ -2258,17 +2262,22 @@ void XLibMacros::macFile(TStrObjList &Cmds, const TParamList &Options,
       op->processMacro("sort +ml moiety");
     }
   }
+  olxstr op = Options.FindValue('p');
+  if (op.IsInt()) {
+    TOlxVars::SetVar("file_output_precision", op);
+  }
   XApp.XFile().SaveToFile(Tmp);
   if (!removedSAtoms.IsEmpty()) {  // need to restore, a bit of mess here...
     ASObjectProvider& objects = XApp.XFile().GetLattice().GetObjects();
-    for (size_t i=0; i < objects.atoms.Count(); i++) {
+    for (size_t i = 0; i < objects.atoms.Count(); i++) {
       if (removedSAtoms.Get(i))
         objects.atoms[i].SetDeleted(false);
     }
     TAsymmUnit& au = XApp.XFile().GetAsymmUnit();
-    for (size_t i=0; i < au.AtomCount(); i++) {
-      if (removedCAtoms[i])
-          au.GetAtom(i).SetDeleted(false);
+    for (size_t i = 0; i < au.AtomCount(); i++) {
+      if (removedCAtoms[i]) {
+        au.GetAtom(i).SetDeleted(false);
+      }
     }
   }
 }
