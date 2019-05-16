@@ -9,6 +9,7 @@
 
 #include "treeviewext.h"
 #include "frameext.h"
+#include "bapp.h"
 
 using namespace ctrl_ext;
 
@@ -35,7 +36,7 @@ const wxPoint& pos, const wxSize& size, long flags)
   Bind(wxEVT_MENU, &TTreeView::OnContextMenu, this, ID_CollapseAll);
 }
 //..............................................................................
-void TTreeView::ItemActivateEvent(wxTreeEvent& event)  {
+void TTreeView::ItemActivateEvent(wxTreeEvent& event) {
   event.Skip();
   OnDblClick.Execute(this);
 }
@@ -54,25 +55,29 @@ void TTreeView::ItemEditEvent(wxTreeEvent& event) {
 size_t TTreeView::ReadStrings(size_t& index, const wxTreeItemId* thisCaller,
   const TStrList& strings)
 {
-  while( (index + 2) <= strings.Count() )  {
+  while ((index + 2) <= strings.Count()) {
     size_t level = strings[index].LeadingCharCount('\t');
     index++;  // now index is on data string
     wxTreeItemId item;
-    if( strings[index].Trim('\t').IsEmpty() )
-      item = AppendItem(*thisCaller, olxstr(strings[index-1]).Trim('\t').u_str());
-    else
-      item = AppendItem(*thisCaller, olxstr(strings[index-1]).Trim('\t').u_str(), -1, -1,
-         new TTreeNodeData(new olxstr(strings[index])));
+    if (strings[index].Trim('\t').IsEmpty()) {
+      item = AppendItem(*thisCaller, olxstr(strings[index - 1]).Trim('\t').u_str());
+    }
+    else {
+      item = AppendItem(*thisCaller, olxstr(strings[index - 1]).Trim('\t').u_str(), -1, -1,
+        new TTreeNodeData(new olxstr(strings[index])));
+    }
     index++;  // and now on the next item
-    if( index < strings.Count() )  {
+    if (index < strings.Count()) {
       size_t nextlevel = strings[index].LeadingCharCount('\t');
-      if( nextlevel > level )  {
+      if (nextlevel > level) {
         size_t slevel = ReadStrings(index, &item, strings);
-        if( slevel != level )
+        if (slevel != level) {
           return slevel;
+        }
       }
-      if( nextlevel < level )
+      if (nextlevel < level) {
         return  nextlevel;
+      }
     }
   }
   return 0;
@@ -93,38 +98,48 @@ bool TTreeView::LoadFromStrings(const TStrList &strings)  {
 //..............................................................................
 void TTreeView::OnMouseUp(wxMouseEvent& me)  {
   me.Skip();
-  if( Popup == NULL )  return;
-  if( me.ButtonUp(wxMOUSE_BTN_RIGHT) )
+  if (Popup == 0) {
+    return;
+  }
+  if (me.ButtonUp(wxMOUSE_BTN_RIGHT)) {
     PopupMenu(Popup);
+  }
 }
 //..............................................................................
-void TTreeView::OnContextMenu(wxCommandEvent& evt)  {
-  if( evt.GetId() == ID_ExpandAll )
+void TTreeView::OnContextMenu(wxCommandEvent& evt) {
+  if (evt.GetId() == ID_ExpandAll) {
     ExpandAllChildren(GetSelection());
-  else if( evt.GetId() == ID_CollapseAll )
+  }
+  else if (evt.GetId() == ID_CollapseAll) {
     CollapseAllChildren(GetSelection());
+  }
 }
 //..............................................................................
 size_t TTreeView::_SaveState(TEBitArray& res, const wxTreeItemId& item,
   size_t& counter) const
 {
   size_t selected = InvalidIndex;
-  if( IsExpanded(item) )
+  if (IsExpanded(item)) {
     res.SetTrue(counter);
-  if( IsSelected(item) )  selected = counter;
+  }
+  if (IsSelected(item)) {
+    selected = counter;
+  }
   wxTreeItemIdValue cookie;
   wxTreeItemId ch_id = GetFirstChild(item, cookie);
-  while( ch_id.IsOk() )  {
+  while (ch_id.IsOk()) {
     counter++;
-    if( HasChildren(ch_id) )  {
+    if (HasChildren(ch_id)) {
       size_t sel = _SaveState(res, ch_id, counter);
-      if( sel != InvalidIndex )
+      if (sel != InvalidIndex) {
         selected = sel;
+      }
     }
-    else  {
+    else {
       res.SetFalse(counter);
-      if( IsSelected(ch_id) )
+      if (IsSelected(ch_id)) {
         selected = counter;
+      }
     }
     ch_id = GetNextChild(item, cookie);
   }
@@ -148,25 +163,33 @@ olxstr TTreeView::SaveState() const {
 void TTreeView::_RestoreState(const TEBitArray& res, const wxTreeItemId& item,
   size_t& counter, size_t selected)
 {
-  if( res[counter] )  Expand(item);
-  if( selected == counter )  SelectItem(item, true);
+  if (res[counter]) {
+    Expand(item);
+  }
+  if (selected == counter) {
+    SelectItem(item, true);
+  }
   wxTreeItemIdValue cookie;
   wxTreeItemId ch_id = GetFirstChild(item, cookie);
-  while( ch_id.IsOk() )  {
+  while (ch_id.IsOk()) {
     counter++;
-    if( HasChildren(ch_id) )
+    if (HasChildren(ch_id)) {
       _RestoreState(res, ch_id, counter, selected);
-    else  {
-      if( counter == selected )
+    }
+    else {
+      if (counter == selected) {
         SelectItem(ch_id, true);
+      }
     }
     ch_id = GetNextChild(item, cookie);
   }
 }
 //..............................................................................
-void TTreeView::RestoreState(const olxstr& state)  {
+void TTreeView::RestoreState(const olxstr& state) {
   TStrList toks(state, ';');
-  if (toks.Count() != 4)  return;
+  if (toks.Count() != 4) {
+    return;
+  }
   wxTreeItemId root = GetRootItem();
   if ((GetWindowStyle()&wxTR_HIDE_ROOT) != 0) {
     wxTreeItemIdValue cookie;
@@ -174,8 +197,9 @@ void TTreeView::RestoreState(const olxstr& state)  {
   }
   TEBitArray res;
   res.FromBase64String(toks[0]);
-  if( res.Count() != GetChildrenCount(root, true)+1 )
+  if (res.Count() != GetChildrenCount(root, true) + 1) {
     return;
+  }
   size_t counter = 0;
   size_t selected = toks[1].ToSizeT();
   Freeze();
@@ -188,28 +212,37 @@ void TTreeView::RestoreState(const olxstr& state)  {
   SetScrollPos(wxHORIZONTAL, toks[3].ToInt(), true);
 }
 //..............................................................................
-wxTreeItemId TTreeView::_FindByLabel(const wxTreeItemId& root, const olxstr& label) const {
-  if( label == GetItemText(root) )  return root;
-  if( !HasChildren(root) )  return wxTreeItemId();
+wxTreeItemId TTreeView::_FindByLabel(const wxTreeItemId& root,
+  const olxstr& label) const
+{
+  if (label == GetItemText(root)) {
+    return root;
+  }
+  if (!HasChildren(root)) {
+    return wxTreeItemId();
+  }
   wxTreeItemIdValue cookie;
   wxTreeItemId ch_id = GetFirstChild(root, cookie);
-  while( ch_id.IsOk() )  {
+  while (ch_id.IsOk()) {
     wxTreeItemId id = _FindByLabel(ch_id, label);
-    if( id.IsOk() )  return id;
+    if (id.IsOk()) {
+      return id;
+    }
     ch_id = GetNextChild(root, cookie);
   }
   return ch_id;
 }
 //..............................................................................
-wxTreeItemId TTreeView::_FindByData(const wxTreeItemId& root, const olxstr& data) const {
+wxTreeItemId TTreeView::_FindByData(const wxTreeItemId& root,
+  const olxstr& data) const
+{
   wxTreeItemData* _dt = GetItemData(root);
-  if (_dt != 0 && olx_type<TTreeNodeData>::check(_dt)) {
+  if (_dt != 0 && olx_type<TTreeNodeData>::check(*_dt)) {
     TTreeNodeData* dt = (TTreeNodeData*)_dt;
     if (dt->GetData() != 0 && data == dt->GetData()->ToString()) {
       return root;
     }
   }
-  // if( !HasChildren(root) )  return wxTreeItemId();
   wxTreeItemIdValue cookie;
   wxTreeItemId ch_id = GetFirstChild(root, cookie);
   while (ch_id.IsOk()) {
@@ -222,18 +255,18 @@ wxTreeItemId TTreeView::_FindByData(const wxTreeItemId& root, const olxstr& data
   return ch_id;
 }
 //..............................................................................
-void TTreeView::SelectByLabel(const olxstr& label)  {
+void TTreeView::SelectByLabel(const olxstr& label) {
   wxTreeItemId item = _FindByLabel(GetRootItem(), label);
-  if( item.IsOk() )  {
+  if (item.IsOk()) {
     OnSelect.SetEnabled(false);
     SelectItem(item);
     OnSelect.SetEnabled(true);
   }
 }
 //..............................................................................
-void TTreeView::SelectByData(const olxstr& data)  {
+void TTreeView::SelectByData(const olxstr& data) {
   wxTreeItemId item = _FindByData(GetRootItem(), data);
-  if( item.IsOk() )  {
+  if (item.IsOk()) {
     OnSelect.SetEnabled(false);
     SelectItem(item);
     OnSelect.SetEnabled(true);

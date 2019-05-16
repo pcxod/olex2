@@ -580,8 +580,11 @@ olxstr THtml::GetObjectValue(const AOlxCtrl *Obj) {
   if (ti == typeid(TTreeView)) {
     TTreeView* T = (TTreeView*)Obj;
     wxTreeItemId ni = T->GetSelection();
+    if (!ni.IsOk()) {
+      return EmptyString();
+    }
     wxTreeItemData* td = T->GetItemData(ni);
-    if (td == NULL || !olx_type<TTreeNodeData>::check(*td)) {
+    if (td == 0 || !olx_type<TTreeNodeData>::check(*td)) {
       return EmptyString();
     }
     TTreeNodeData* olx_td = dynamic_cast<TTreeNodeData*>(td);
