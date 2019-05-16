@@ -627,13 +627,15 @@ void TUnitCell::_FindInRange(const vec3d& to, double R,
   const double ma = olx_min(olx_min(au.GetAxes()[0], au.GetAxes()[1]),
     au.GetAxes()[2]);
   const int pr = int(R / ma) + 1, mr = -pr;
-  const TCAtomPList& atoms = (_atoms == NULL ? au.GetAtoms() : *_atoms);
+  const TCAtomPList& atoms = (_atoms == 0 ? au.GetAtoms() : *_atoms);
   R *= R;
   const size_t ac = atoms.Count();
   const size_t mc = Matrices.Count();
   for (size_t i=0; i < ac; i++ ) {
     const TCAtom& a = *atoms[i];
-    if (a.IsDeleted() && !find_deleted)  continue;
+    if (a.IsDeleted() && !find_deleted) {
+      continue;
+    }
     for (size_t j = 0; j < mc; j++) {
       const vec3i shift = -vec3d(Matrices[j] * a.ccrd() - to).Round<int>();
       for (int ii = mr; ii <= pr; ii++) {
@@ -655,11 +657,49 @@ void TUnitCell::_FindInRange(const vec3d& to, double R,
   UnifyAMCList(res);
 }
 //..............................................................................
+bool TUnitCell::HasInRange(const vec3d &to, double R,
+  const TUnitCell::IAtomAnalyser &analyser) const
+{
+  const TAsymmUnit& au = GetLattice().GetAsymmUnit();
+  const double ma = olx_min(olx_min(au.GetAxes()[0], au.GetAxes()[1]),
+    au.GetAxes()[2]);
+  const int pr = int(R / ma) + 1, mr = -pr;
+  const TCAtomPList& atoms = au.GetAtoms();
+  R *= R;
+  const size_t ac = atoms.Count();
+  const size_t mc = Matrices.Count();
+  for (size_t i = 0; i < ac; i++) {
+    const TCAtom& a = *atoms[i];
+    if (a.IsDeleted()) {
+      continue;
+    }
+    for (size_t j = 0; j < mc; j++) {
+      const vec3i shift = -vec3d(Matrices[j] * a.ccrd() - to).Round<int>();
+      for (int ii = mr; ii <= pr; ii++) {
+        for (int ij = mr; ij <= pr; ij++) {
+          for (int ik = mr; ik <= pr; ik++) {
+            const vec3i shift1(shift[0] + ii, shift[1] + ij, shift[2] + ik);
+            smatd tm = Matrices[j];
+            tm.t += shift1;
+            const double D = au.Orthogonalise(tm*a.ccrd() - to).QLength();
+            if (D < R) {
+              if (analyser.Matches(a, D)) {
+                return true;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  return false;
+}
+//..............................................................................
 void TUnitCell::_FindBinding(const TCAtom& to, const smatd& ctm, double delta,
   TTypeList<AnAssociation3<TCAtom*,smatd, vec3d> >& res, const TCAtomPList* _atoms) const
 {
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();
-  const TCAtomPList& atoms = (_atoms == NULL ? au.GetAtoms() : *_atoms);
+  const TCAtomPList& atoms = (_atoms == 0 ? au.GetAtoms() : *_atoms);
   const size_t ac = atoms.Count();
   const size_t mc = Matrices.Count();
   smatd I;

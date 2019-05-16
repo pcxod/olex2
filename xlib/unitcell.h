@@ -27,7 +27,7 @@
 BeginXlibNamespace()
 
 using namespace olx_array;
-class TUnitCell: public IOlxObject  {
+class TUnitCell : public IOlxObject {
   TNetwork*  Network;  // for internal use only
   smatd_list Matrices;  // list of unique matrices; FMatrices + centering
   TArrayList<TEllpPList> Ellipsoids;  // i - atoms index, j - matrix index
@@ -41,29 +41,31 @@ class TUnitCell: public IOlxObject  {
   */
   void _FindInRange(const vec3d& center, double R,
     TTypeList<AnAssociation3<TCAtom*, smatd, vec3d> >& res,
-    bool find_deleted=false,
-    const TCAtomPList* atoms=NULL) const;
+    bool find_deleted = false,
+    const TCAtomPList* atoms = 0) const;
   /* macro FindBinding, if the atoms is NULL, atoms of the asymmetric unit are
   taken and atoms are excluded only if deleted, availability is not counted
   */
   void _FindBinding(const TCAtom& center, const smatd& center_tm, double delta,
     TTypeList<AnAssociation3<TCAtom*, smatd, vec3d> >& res,
-    const TCAtomPList* atoms=NULL) const;
+    const TCAtomPList* atoms = 0) const;
   // explicit use of the I matrix
   void _FindBinding(const TCAtom& center, double delta,
     TTypeList<AnAssociation3<TCAtom*, smatd, vec3d> >& res,
-    const TCAtomPList* atoms=NULL) const
-  {  _FindBinding(center, smatd().I(), delta, res, atoms);  }
+    const TCAtomPList* atoms = 0) const
+  {
+    _FindBinding(center, smatd().I(), delta, res, atoms);
+  }
   // taking the transformation from the position generator
   void _FindBinding(const TSAtom& center, double delta,
     TTypeList<AnAssociation3<TCAtom*, smatd, vec3d> >& res,
-    const TCAtomPList* atoms=NULL) const
+    const TCAtomPList* atoms = 0) const
   {
     _FindBinding(center.CAtom(), center.GetMatrix(), delta, res, atoms);
   }
   //
-  static int _AtomSorter(const AnAssociation3<vec3d,TCAtom*, double>& a1,
-    const AnAssociation3<vec3d,TCAtom*, double>& a2)
+  static int _AtomSorter(const AnAssociation3<vec3d, TCAtom*, double>& a1,
+    const AnAssociation3<vec3d, TCAtom*, double>& a2)
   {
     return olx_cmp(a1.GetA().QLength(), a2.GetA().QLength());
   }
@@ -77,18 +79,18 @@ public:
 
   static double CalcVolume(const vec3d& sides, const vec3d& angles);
   template <typename vec_t>
-  static double CalcVolume(const vec_t v)  {
+  static double CalcVolume(const vec_t v) {
     return CalcVolume(vec3d(v[0], v[1], v[2]), vec3d(v[3], v[4], v[5]));
   }
   double CalcVolume()  const;
   static TEValue<double> CalcVolumeEx(const TAsymmUnit &au);
   TEValue<double> CalcVolumeEx() const;
-  inline TLattice& GetLattice() const {  return *Lattice;  }
+  inline TLattice& GetLattice() const { return *Lattice; }
   void Clear();
 
-  inline size_t MatrixCount() const {  return Matrices.Count();  }
+  inline size_t MatrixCount() const { return Matrices.Count(); }
   // the identity matrix is always the first
-  inline const smatd& GetMatrix(size_t i) const {  return Matrices[i];  }
+  inline const smatd& GetMatrix(size_t i) const { return Matrices[i]; }
   /* initialises the matrix container id, throws an excpetion if matrix is not
   found
   */
@@ -104,13 +106,13 @@ public:
   */
   uint32_t MulMatrixId(const smatd& m, const smatd& tr) const {
     const uint8_t index = MulDest[tr.GetContainerId()][m.GetContainerId()];
-    return smatd::GenerateId(index, (tr.MulT(m)-Matrices[index].t).Round<int>());
+    return smatd::GenerateId(index, (tr.MulT(m) - Matrices[index].t).Round<int>());
   }
   /* full product */
   smatd MulMatrix(const smatd& m, const smatd& tr) const {
     const uint8_t index = MulDest[tr.GetContainerId()][m.GetContainerId()];
     smatd rv(Matrices[index].r, tr.MulT(m));
-    rv.SetId(index, (rv.t-Matrices[index].t).Round<int>());
+    rv.SetId(index, (rv.t - Matrices[index].t).Round<int>());
     return rv;
   }
   smatd InvMatrix(const smatd& m) const {
@@ -121,15 +123,15 @@ public:
         olxstr("matrix ID: ").quote() << c_id);
     }
     const uint8_t index = InvDest[m.GetContainerId()];
-    rv.SetId(index, (rv.t-Matrices[index].t).Round<int>());
+    rv.SetId(index, (rv.t - Matrices[index].t).Round<int>());
     return rv;
   }
-  size_t EllpCount() const {  return Ellipsoids.Count()*Matrices.Count();  }
+  size_t EllpCount() const { return Ellipsoids.Count()*Matrices.Count(); }
   const TEllipsoid* GetEllp(size_t i) const {
-    return Ellipsoids[i/Matrices.Count()][i%Matrices.Count()];
+    return Ellipsoids[i / Matrices.Count()][i%Matrices.Count()];
   }
-  TEllipsoid* GetEllp(size_t i)  {
-    return Ellipsoids[i/Matrices.Count()][i%Matrices.Count()];
+  TEllipsoid* GetEllp(size_t i) {
+    return Ellipsoids[i / Matrices.Count()][i%Matrices.Count()];
   }
   /* gets an ellipsoid for an atom by asymmetric unit Id and a matrix
   associated with it
@@ -137,11 +139,11 @@ public:
   const TEllipsoid& GetEllipsoid(size_t MatrixId, size_t AUId) const {
     return *Ellipsoids[AUId][MatrixId];
   }
-  TEllipsoid& GetEllipsoid(size_t MatrixId, size_t AUId)  {
+  TEllipsoid& GetEllipsoid(size_t MatrixId, size_t AUId) {
     return *Ellipsoids[AUId][MatrixId];
   }
   // adds a new row to ellipsoids, intialised with NULLs
-  void AddEllipsoid(size_t n=1);
+  void AddEllipsoid(size_t n = 1);
   void ClearEllipsoids();
   // (re)caches the ellipsoids from the aunit
   void UpdateEllipsoids();
@@ -158,11 +160,11 @@ public:
    has to be deleted with delete
   */
   smatd* GetClosest(const class TCAtom& to, const TCAtom& atom,
-    bool ConsiderOriginal, double* dist=NULL) const {
+    bool ConsiderOriginal, double* dist = 0) const {
     return GetClosest(to.ccrd(), atom.ccrd(), ConsiderOriginal, dist);
   }
   smatd* GetClosest(const vec3d& to, const vec3d& from, bool ConsiderOriginal,
-    double* dist=NULL) const;
+    double* dist = 0) const;
   /* Finds a symmetry matrix linking two symmetry dependent positions.
   Throws an exception if the relation cannot be found.
   */
@@ -184,12 +186,12 @@ public:
   Assiciation2+<TCAtom const*, smatd,...>
   */
   template <class res_t> void FindInRangeAM(const vec3d& center, double R,
-    res_t& out, const TCAtomPList* atoms=NULL) const
+    res_t& out, const TCAtomPList* atoms = 0) const
   {
-    TTypeList<AnAssociation3<TCAtom*,smatd,vec3d> > res;
+    TTypeList<AnAssociation3<TCAtom*, smatd, vec3d> > res;
     _FindInRange(center, R, res, false, atoms);
     out.SetCount(res.Count());
-    for( size_t i=0; i < res.Count(); i++ )  {
+    for (size_t i = 0; i < res.Count(); i++) {
       out[i].a = res[i].a;
       out[i].b = res[i].GetB();
     }
@@ -199,12 +201,12 @@ public:
   coordinate is the Cartesian coordinate (the input is in fractional)
   */
   template <class res_t> void FindInRangeAMC(const vec3d& center, double R,
-    res_t& out, const TCAtomPList* atoms=NULL) const
+    res_t& out, const TCAtomPList* atoms = 0) const
   {
-    TTypeList<AnAssociation3<TCAtom*,smatd,vec3d> > res;
+    TTypeList<AnAssociation3<TCAtom*, smatd, vec3d> > res;
     _FindInRange(center, R, res, false, atoms);
     out.SetCount(res.Count());
-    for( size_t i=0; i < res.Count(); i++ )  {
+    for (size_t i = 0; i < res.Count(); i++) {
       out[i].a = res[i].a;
       out[i].b = res[i].GetB();
       out[i].c = res[i].GetC();
@@ -216,12 +218,12 @@ public:
   */
   template <class atom_t, class res_t> void FindBindingAM(const atom_t& center,
     double delta, res_t& out,
-    const TCAtomPList* atoms=NULL) const
+    const TCAtomPList* atoms = 0) const
   {
-    TTypeList<AnAssociation3<TCAtom*,smatd,vec3d> > res;
+    TTypeList<AnAssociation3<TCAtom*, smatd, vec3d> > res;
     _FindBinding(center, delta, res, atoms);
     out.SetCount(res.Count());
-    for( size_t i=0; i < res.Count(); i++ )  {
+    for (size_t i = 0; i < res.Count(); i++) {
       out[i].a = res[i].a;
       out[i].b = res[i].GetB();
     }
@@ -231,12 +233,12 @@ public:
   Assiciation2+<TCAtom const*, vec3d,...>
   */
   template <class res_t> void FindInRangeAC(const vec3d& center, double R,
-    res_t& out, const TCAtomPList* atoms=NULL) const
+    res_t& out, const TCAtomPList* atoms = 0) const
   {
-    TTypeList<AnAssociation3<TCAtom*,smatd,vec3d> > res;
+    TTypeList<AnAssociation3<TCAtom*, smatd, vec3d> > res;
     _FindInRange(center, R, res, false, atoms);
     out.SetCount(res.Count());
-    for( size_t i=0; i < res.Count(); i++ )  {
+    for (size_t i = 0; i < res.Count(); i++) {
       out[i].a = res[i].a;
       out[i].b = res[i].GetC();
     }
@@ -251,7 +253,7 @@ public:
   typedef MatrixListAdaptor<TUnitCell> MatrixList;
   typedef TSymmSpace<TUnitCell::MatrixList> SymmSpace;
 
-  MatrixList GetMatrixList() const {  return MatrixList(*this);  }
+  MatrixList GetMatrixList() const { return MatrixList(*this); }
 
   SymmSpace GetSymmSpace() const {
     const TAsymmUnit& au = GetLattice().GetAsymmUnit();
@@ -275,13 +277,14 @@ public:
     const TAsymmUnit& au, const MatList& ml,
     const vec3d& to, const vec3d& from)
   {
-    vec3d v = au.Orthogonalise(from-to);
+    vec3d v = au.Orthogonalise(from - to);
     double minD = v.QLength();
-    for( size_t i=0; i < ml.Count(); i++ )  {
-      v = ml[i]*from - to;
+    for (size_t i = 0; i < ml.Count(); i++) {
+      v = ml[i] * from - to;
       const double D = au.Orthogonalise(v -= v.Round<int>()).QLength();
-      if( D < minD )
+      if (D < minD) {
         minD = D;
+      }
     }
     return sqrt(minD);
   }
@@ -292,7 +295,7 @@ public:
   with the central atoms are omitted
   */
   void GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ = false,
-    int part=DefNoPart, bool remove_redundant=false) const;
+    int part = DefNoPart, bool remove_redundant = false) const;
 
   // finds only q-peaks in the environment of specified atom
   void GetAtomQEnviList(TSAtom& atom, TAtomEnvi& envi);
@@ -315,32 +318,32 @@ public:
   calculation
   */
   void BuildStructureMap_Direct(TArray3D<short>& map, double delta,
-    short value, ElementRadii* radii, const TCAtomPList* _template = NULL);
+    short value, ElementRadii* radii, const TCAtomPList* _template = 0);
   /* builds boolean mask for atoms types, mdim - the dimensions of the grid to
   which the masks will be applied, delta - extra added value for Rs
   */
   olx_pdict<short, TArray3D<bool>*>::const_dict_type
     BuildAtomMasks(const vec3s& dim, ElementRadii* radii,
-    double delta=0) const;
+      double delta = 0) const;
   olx_object_ptr<TArray3D<bool> > BuildAtomMask(const vec3s& dim,
     double r) const;
   // much faster, but less 'precise' version
   void BuildStructureMap_Masks(TArray3D<short>& map, double delta, short value,
-    ElementRadii* radii, const TCAtomPList* _template = NULL) const;
+    ElementRadii* radii, const TCAtomPList* _template = 0) const;
   /**/
   void BuildDistanceMap_Direct(TArray3D<short>& map, double delta, short value,
-    const ElementRadii* radii, const TCAtomPList* _template = NULL) const;
+    const ElementRadii* radii, const TCAtomPList* _template = 0) const;
   // much faster, but less 'precise' version
   void BuildDistanceMap_Masks(TArray3D<short>& map, double delta, short value,
-    const ElementRadii* radii, const TCAtomPList* _template = NULL) const;
+    const ElementRadii* radii, const TCAtomPList* _template = 0) const;
 protected:
   // helper function, association should be olx_pair_t+<vec3d,TCAtom*,+>
   template <class Association>
-    static int AtomsSortByDistance(const Association &A1,
-      const Association &A2)
-    {
-      return olx_cmp(A1.GetA().QLength(), A2.GetA().QLength());
-    }
+  static int AtomsSortByDistance(const Association &A1,
+    const Association &A2)
+  {
+    return olx_cmp(A1.GetA().QLength(), A2.GetA().QLength());
+  }
 public:
   // creates an array of matrices for a given aunit and lattice type
   static void GenerateMatrices(smatd_list& out, const TAsymmUnit& au,
@@ -354,56 +357,74 @@ public:
   */
   template <class Association> void GenereteAtomCoordinates(
     TTypeList<Association>& list, bool IncludeH,
-    const TCAtomPList* _template = NULL) const
+    const TCAtomPList* _template = 0) const
   {
-    TCAtomPList& atoms = (_template == NULL ? *(new TCAtomPList)
+    TCAtomPList& atoms = (_template == 0 ? *(new TCAtomPList)
       : *const_cast<TCAtomPList*>(_template));
-    if( _template == NULL )  {
+    if (_template == 0) {
       list.SetCapacity(Lattice->GetAsymmUnit().AtomCount()*Matrices.Count());
-      for( size_t i=0; i < Lattice->GetAsymmUnit().AtomCount(); i++ )  {
+      for (size_t i = 0; i < Lattice->GetAsymmUnit().AtomCount(); i++) {
         TCAtom& ca = Lattice->GetAsymmUnit().GetAtom(i);
-        if( ca.GetType() == iQPeakZ || ca.IsDeleted() )  continue;
-        if( !IncludeH && ca.GetType() == iHydrogenZ )    continue;
+        if (ca.GetType() == iQPeakZ || ca.IsDeleted()) {
+          continue;
+        }
+        if (!IncludeH && ca.GetType() == iHydrogenZ) {
+          continue;
+        }
         atoms.Add(&ca);
       }
     }
     list.SetCapacity(atoms.Count()*Matrices.Count());
     const size_t atom_cnt = atoms.Count();
-    for( size_t i=0; i < atom_cnt; i++ )  {
+    for (size_t i = 0; i < atom_cnt; i++) {
       TCAtom* ca = atoms[i];
-      if( ca->GetType() == iQPeakZ || ca->IsDeleted() )  continue;
-      for( size_t j=0; j < Matrices.Count(); j++ )  {
+      if (ca->GetType() == iQPeakZ || ca->IsDeleted()) {
+        continue;
+      }
+      for (size_t j = 0; j < Matrices.Count(); j++) {
         vec3d center = Matrices[j] * ca->ccrd();
-        for( int k=0; k < 3; k++ )  {
-          while( center[k] < 0 )  center[k] += 1;
-          while( center[k] > 1 )  center[k] -= 1;
+        for (int k = 0; k < 3; k++) {
+          while (center[k] < 0) {
+            center[k] += 1;
+          }
+          while (center[k] > 1) {
+            center[k] -= 1;
+          }
         }
         list.AddNew(center, ca);
       }
     }
     // create a list of unique atoms
-    float* distances = new float[ list.Count()+1 ];
+    float* distances = new float[list.Count() + 1];
     QuickSorter::SortSF(list, &AtomsSortByDistance<Association>);
     const size_t lc = list.Count();
-    for( size_t i=0; i < lc; i++ )
+    for (size_t i = 0; i < lc; i++) {
       distances[i] = (float)list[i].GetA().QLength();
+    }
 
-    for( size_t i=0; i < lc; i++ )  {
-      if( list.IsNull(i) )  continue;
-      for( size_t j=i+1; j < lc; j++ )  {
-        if( list.IsNull(j) )  continue;
-        if( (distances[j] - distances[i]) > 0.1 )  break;
+    for (size_t i = 0; i < lc; i++) {
+      if (list.IsNull(i)) {
+        continue;
+      }
+      for (size_t j = i + 1; j < lc; j++) {
+        if (list.IsNull(j)) {
+          continue;
+        }
+        if ((distances[j] - distances[i]) > 0.1) {
+          break;
+        }
         const double d = list[i].GetA().QDistanceTo(list[j].GetA());
-        if( d < 0.00001 )  {
+        if (d < 0.00001) {
           list.NullItem(j);
           continue;
         }
       }
     }
-    delete [] distances;
+    delete[] distances;
     list.Pack();
-    if( _template == NULL )
+    if (_template == 0) {
       delete &atoms;
+    }
   }
   /* expands atom coordinates with +/-1 if one of the fractional coordinates
   is less the lim or greater than 1-lim. This function is used in the
@@ -413,31 +434,35 @@ public:
   template <class Association> void ExpandAtomCoordinates(
     TTypeList<Association>& list, const double lim) const
   {
-    list.SetCapacity( list.Count()*7 );
-    const double c_min = lim, c_max = 1.0 -lim;
+    list.SetCapacity(list.Count() * 7);
+    const double c_min = lim, c_max = 1.0 - lim;
     const size_t all_ac = list.Count();
-    for( size_t i=0; i < all_ac; i++ )  {
+    for (size_t i = 0; i < all_ac; i++) {
       const vec3d& v = list[i].GetA();
       const double xi = v[0] < c_min ? 1 : (v[0] > c_max ? -1 : 0);
       const double yi = v[1] < c_min ? 1 : (v[1] > c_max ? -1 : 0);
       const double zi = v[2] < c_min ? 1 : (v[2] > c_max ? -1 : 0);
-      if( xi != 0 )  {
-        list.AddNew(vec3d(v[0]+xi, v[1], v[2]), list[i].b);
-        if( yi != 0 )  {
-          list.AddNew(vec3d(v[0]+xi, v[1]+yi, v[2]), list[i].b);
-          if( zi != 0 )
-            list.AddNew(vec3d(v[0]+xi, v[1]+yi, v[2]+zi), list[i].b);
+      if (xi != 0) {
+        list.AddNew(vec3d(v[0] + xi, v[1], v[2]), list[i].b);
+        if (yi != 0) {
+          list.AddNew(vec3d(v[0] + xi, v[1] + yi, v[2]), list[i].b);
+          if (zi != 0) {
+            list.AddNew(vec3d(v[0] + xi, v[1] + yi, v[2] + zi), list[i].b);
+          }
         }
-        if( zi != 0 )
-          list.AddNew(vec3d(v[0]+xi, v[1], v[2]+zi), list[i].b);
+        if (zi != 0) {
+          list.AddNew(vec3d(v[0] + xi, v[1], v[2] + zi), list[i].b);
+        }
       }
-      if( yi != 0 )  {
-        list.AddNew(vec3d(v[0], v[1]+yi, v[2]), list[i].b);
-        if( zi != 0 )
-          list.AddNew(vec3d(v[0], v[1]+yi, v[2]+zi), list[i].b);
+      if (yi != 0) {
+        list.AddNew(vec3d(v[0], v[1] + yi, v[2]), list[i].b);
+        if (zi != 0) {
+          list.AddNew(vec3d(v[0], v[1] + yi, v[2] + zi), list[i].b);
+        }
       }
-      if( zi != 0 )
-        list.AddNew(vec3d(v[0], v[1], v[2]+zi), list[i].b);
+      if (zi != 0) {
+        list.AddNew(vec3d(v[0], v[1], v[2] + zi), list[i].b);
+      }
     }
   }
   // finds an atom at given position
@@ -449,13 +474,14 @@ public:
     return GetPositionMultiplicity(MatrixList(*this), p);
   }
   template <class MatList>
-  static size_t GetPositionMultiplicity(const MatList& ml, const vec3d& p)  {
-    size_t m=1;  // identity
-    for( size_t i=1; i < ml.Count(); i++ )  {
-      vec3d v = p - ml[i]*p;
+  static size_t GetPositionMultiplicity(const MatList& ml, const vec3d& p) {
+    size_t m = 1;  // identity
+    for (size_t i = 1; i < ml.Count(); i++) {
+      vec3d v = p - ml[i] * p;
       v -= v.Round<int>();
-      if( v.IsNull(1e-3) )
+      if (v.IsNull(1e-3)) {
         m++;
+      }
     }
     return m;
   }
@@ -473,6 +499,17 @@ public:
     }
   };
 
+  class IAtomAnalyser : IOlxObject {
+  public:
+    // the atom and the square of the respective distance
+    virtual bool Matches(const TCAtom & a, double qd) const = 0;
+  };
+
+  /* Returns true if finds a first occurrence of the matching atom within the
+  given range. v is in fractional coordinates
+  */
+  bool HasInRange(const vec3d &v, double r,
+    const IAtomAnalyser &analyser) const;
 protected:
   class TSearchSymmEqTask : public TaskBase {
     TPtrList<TCAtom>& Atoms;
@@ -489,17 +526,17 @@ protected:
   };
   class TBuildDistanceMapTask : public TaskBase {
     array_3d<float> &map;
-    TTypeList<AnAssociation3<vec3f,TCAtom*, float> >& atoms;
+    TTypeList<AnAssociation3<vec3f, TCAtom*, float> >& atoms;
     const vec3s dims;
     const mat3f& tm;
     float** loop_data;
     bool owns_data;
     TBuildDistanceMapTask(TBuildDistanceMapTask& parent)
       : map(parent.map), atoms(parent.atoms), dims(parent.dims), tm(parent.tm),
-        loop_data(parent.loop_data), owns_data(false)  {}
+      loop_data(parent.loop_data), owns_data(false) {}
   public:
     TBuildDistanceMapTask(const mat3f& _tm, array_3d<float> &_map,
-      TTypeList<AnAssociation3<vec3f,TCAtom*, float> >& _atoms)
+      TTypeList<AnAssociation3<vec3f, TCAtom*, float> >& _atoms)
       : map(_map), atoms(_atoms), dims(_map.dim()), tm(_tm), owns_data(true)
     {
       init_loop_data();
@@ -515,7 +552,7 @@ public:
   void LibVolumeEx(const TStrObjList& Params, TMacroData& E);
   void LibCellEx(const TStrObjList& Params, TMacroData& E);
   void LibMatrixCount(const TStrObjList& Params, TMacroData& E);
-  class TLibrary*  ExportLibrary(const olxstr& name=EmptyString());
+  class TLibrary*  ExportLibrary(const olxstr& name = EmptyString());
   struct VPtr : public olx_virtual_ptr<TUnitCell> {
     virtual IOlxObject *get_ptr() const;
   };
