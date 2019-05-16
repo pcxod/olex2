@@ -1293,7 +1293,8 @@ const_strlist RefinementModel::Describe() {
         str << AtomListToStr(sr.GetAtoms().ExpandList(*this), InvalidSize, " ~ ");
       }
       str << ": within " << sr.GetValue() << "A with sigma of " << sr.GetEsd() <<
-        " and sigma for terminal atoms of " << sr.GetEsd1();
+        " and sigma for terminal atoms of " << sr.GetEsd1() << " within " <<
+        sr.GetValue() << "A";
     }
     for (size_t i = 0; i < rISOR.Count(); i++) {
       TSimpleRestraint& sr = rISOR[i];

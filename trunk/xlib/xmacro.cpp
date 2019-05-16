@@ -3953,6 +3953,31 @@ bool XLibMacros::ProcessExternalFunction(olxstr& func)  {
 //.............................................................................
 //.............................................................................
 //.............................................................................
+class SIMU_analyser : public TUnitCell::IAtomAnalyser {
+public:
+  const TCAtom &origin;
+  mutable const TCAtom *match;
+  bool allow_h;
+  SIMU_analyser(const TCAtom &o, bool allow_h_)
+    : origin(o),
+    match(0),
+    allow_h(allow_h_)
+  {}
+  bool Matches(const TCAtom &a, double d) const {
+    if (d < 1e-6 && a.GetId() == origin.GetId()) {
+      return false;
+    }
+    if (a.GetEllipsoid() != 0) {
+      if (!allow_h && a.GetType().z < 2) {
+        return false;
+      }
+      match = &a;
+      return true;
+    }
+    return false;
+  }
+};
+//.............................................................................
 void CifMerge_UpdateAtomLoop(TCif &Cif) {
   TXApp &xapp = TXApp::GetInstance();
   if (xapp.CheckFileType<TCif>()) {
@@ -4003,10 +4028,12 @@ void CifMerge_UpdateAtomLoop(TCif &Cif) {
           match = false;
           break;
         }
-        if (a.GetPart() != 0)
+        if (a.GetPart() != 0) {
           has_parts = true;
-        if (a.GetDegeneracy() != 1)
+        }
+        if (a.GetDegeneracy() != 1) {
           has_special_positions = true;
+        }
       }
     }
     if (!match) {
@@ -4054,14 +4081,18 @@ void CifMerge_UpdateAtomLoop(TCif &Cif) {
       }
       {
         TPtrList<const TSRestraintList> Urs;
-        Urs << rm.rDELU << rm.rSIMU << rm.rRIGU;
+        Urs << rm.rDELU << rm.rRIGU;
+        au.GetAtoms().ForEach(ACollectionItem::TagSetter(0));
         for (size_t rrs_i = 0; rrs_i < Urs.Count(); rrs_i++) {
           const TSRestraintList &rl = *Urs[rrs_i];
           for (size_t rs_i = 0; rs_i < rl.Count(); rs_i++) {
             if (rl[rs_i].IsAllNonHAtoms()) {
               for (size_t ai = 0; ai < au.AtomCount(); ai++) {
-                if (au.GetAtom(ai).GetType().z > 1) {
+                if (au.GetAtom(ai).GetTag() == 0 &&
+                  au.GetAtom(ai).GetType().z > 1)
+                {
                   rU.AddUnique(&au.GetAtom(ai));
+                  au.GetAtom(ai).SetTag(1);
                 }
               }
             }
@@ -4069,7 +4100,53 @@ void CifMerge_UpdateAtomLoop(TCif &Cif) {
               TTypeList<ExplicitCAtomRef> r =
                 rl[rs_i].GetAtoms().ExpandList(rm);
               for (size_t ai = 0; ai < r.Count(); ai++) {
+                if (r[ai].GetAtom().GetTag() == 0) {
+                  rU.AddUnique(&r[ai].GetAtom());
+                  r[ai].GetAtom().SetTag(1);
+                }
+              }
+            }
+          }
+        }
+        // now all atoms in rU have tag == 1
+        for (size_t rs_i = 0; rs_i < rm.rSIMU.Count(); rs_i++) {
+          double d = rm.rSIMU[rs_i].GetValue();
+          if (rm.rSIMU[rs_i].IsAllNonHAtoms()) {
+            for (size_t ai = 0; ai < au.AtomCount(); ai++) {
+              if (au.GetAtom(ai).GetTag() == 1 ||
+                au.GetAtom(ai).GetType().z < 2 ||
+                au.GetAtom(ai).GetEllipsoid() == 0)
+              {
+                continue;
+              }
+              SIMU_analyser a(au.GetAtom(ai), false);
+              if (xapp.XFile().GetUnitCell().HasInRange(
+                au.GetAtom(ai).ccrd(), d, a))
+              {
+                rU.AddUnique(&au.GetAtom(ai));
+                au.GetAtom(ai).SetTag(1);
+                if (a.match->GetTag() == 0) {
+                  rU.AddUnique(a.match);
+                  au.GetAtom(a.match->GetId()).SetTag(1);
+                }
+              }
+            }
+          }
+          else {
+            TTypeList<ExplicitCAtomRef> r =
+              rm.rSIMU[rs_i].GetAtoms().ExpandList(rm);
+            for (size_t ai = 0; ai < r.Count(); ai++) {
+              if (r[ai].GetAtom().GetEllipsoid() == 0 ||
+                r[ai].GetAtom().GetTag() == 1)
+              {
+                continue;
+              }
+              SIMU_analyser a(r[ai].GetAtom(), true);
+              if (xapp.XFile().GetUnitCell().HasInRange(
+                r[ai].GetAtom().ccrd(), d, a))
+              {
                 rU.AddUnique(&r[ai].GetAtom());
+                r[ai].GetAtom().SetTag(1);
               }
             }
           }
@@ -4476,7 +4553,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
     Cif->Rename(Translations[i].GetA(), Translations[i].GetB());
   }
   // update the atom_site loop and H treatment if AU match
-  if (Options.Contains('u')) {
+  if (Options.GetBoolOption('u')) {
     CifMerge_UpdateAtomLoop(*Cif);
   }
   olex2::IOlex2Processor *op = olex2::IOlex2Processor::GetInstance();
