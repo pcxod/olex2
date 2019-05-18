@@ -308,7 +308,7 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
                 break;
               }
             }
-            if (!Toks.IsEmpty()) {
+            if (!Toks.IsEmpty() && !Toks[0].Equalsi("No")) {
               TEValueD flack = Toks[0];
               params("flack", flack.ToString());
               flack_found = true;
