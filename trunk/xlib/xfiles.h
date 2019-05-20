@@ -15,12 +15,12 @@
 #include "lattice.h"
 BeginXlibNamespace()
 
-class TBasicCFile: public ACollectionItem  {
+class TBasicCFile : public ACollectionItem {
 private:
   void PostLoad();
 protected:
   olxstr FileName,  // file name if file is loaded
-         Title;     // title of the file
+    Title;     // title of the file
   RefinementModel RefMod;
   TAsymmUnit AsymmUnit;
   // do not use it directly - use LoadStrings instead
@@ -30,12 +30,12 @@ public:
   TBasicCFile();
   virtual ~TBasicCFile();
 
-  const TAsymmUnit& GetAsymmUnit() const {  return AsymmUnit;  }
-  TAsymmUnit& GetAsymmUnit()  {  return AsymmUnit; }
-  const RefinementModel& GetRM() const {  return RefMod;  }
-  RefinementModel& GetRM()  {  return RefMod;  }
+  const TAsymmUnit& GetAsymmUnit() const { return AsymmUnit; }
+  TAsymmUnit& GetAsymmUnit() { return AsymmUnit; }
+  const RefinementModel& GetRM() const { return RefMod; }
+  RefinementModel& GetRM() { return RefMod; }
   DefPropC(olxstr, Title)
-  const olxstr& GetFileName() const {  return FileName; }
+  const olxstr& GetFileName() const { return FileName; }
   /* this function could be const, but many file handlers might do some
   preprocessing of changes before flushing...
   */
@@ -46,11 +46,11 @@ public:
   virtual void LoadFromStream(IInputStream &is, const olxstr& nameToken);
   // name token can specify the dataset index or name
   void LoadStrings(const TStrList &lines,
-    const olxstr &nameToken=EmptyString());
+    const olxstr &nameToken = EmptyString());
   // only oxm loader is native
-  virtual bool IsNative() const {  return false;  }
+  virtual bool IsNative() const { return false; }
   // adopts the content of the AsemmUnit to the virtual format
-  virtual bool Adopt(class TXFile &, int flags=0) = 0;
+  virtual bool Adopt(class TXFile &, int flags = 0) = 0;
   virtual void RearrangeAtoms(const TSizeList & new_indices);
 };
 //---------------------------------------------------------------------------
@@ -62,19 +62,20 @@ enum {
 };
 
 //---------------------------------------------------------------------------
-class TXFile: public AEventsDispatcher {
+class TXFile : public AEventsDispatcher {
 private:
   TLattice Lattice;
   RefinementModel RefMod;
 protected:
   TActionQList Actions;
-  TStringToList<olxstr,TBasicCFile*> FileFormats;
+  TStringToList<olxstr, TBasicCFile*> FileFormats;
   TBasicCFile *FLastLoader;
   TSpaceGroup* FSG;
   virtual bool Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
     const IOlxObject *Data, TActionQueue *);
   void ValidateTabs();
   void PostLoad(const olxstr &fn, TBasicCFile *loader, bool replicated);
+  double CalcMass(const ContentList &) const;
 public:
   TXFile(ASObjectProvider& Objects);
   virtual ~TXFile();
@@ -87,12 +88,12 @@ public:
   */
   virtual void TakeOver(TXFile &f);
 
-  const TLattice& GetLattice() const {  return Lattice;  }
-  TLattice& GetLattice()  {  return Lattice;  }
-  TUnitCell& GetUnitCell() const {  return Lattice.GetUnitCell();  }
-  const RefinementModel& GetRM() const {  return RefMod;  }
-  RefinementModel& GetRM()  {  return RefMod;  }
-  TAsymmUnit& GetAsymmUnit() const {  return Lattice.GetAsymmUnit();  }
+  const TLattice& GetLattice() const { return Lattice; }
+  TLattice& GetLattice() { return Lattice; }
+  TUnitCell& GetUnitCell() const { return Lattice.GetUnitCell(); }
+  const RefinementModel& GetRM() const { return RefMod; }
+  RefinementModel& GetRM() { return RefMod; }
+  TAsymmUnit& GetAsymmUnit() const { return Lattice.GetAsymmUnit(); }
   /* a propper pointer, created with new should be passed
    the object will be deleted in the destructor !! */
   void RegisterFileFormat(TBasicCFile* F, const olxstr& Ext);
@@ -102,8 +103,9 @@ public:
    if the space group is unknow, TFunctionFailedException is thrown
   */
   TSpaceGroup& GetLastLoaderSG() const {
-    if( FSG == NULL )
+    if (FSG == 0) {
       throw TFunctionFailedException(__OlxSourceInfo, "unknown space group");
+    }
     return *FSG;
   }
   // returns file loader associated with given file extension
@@ -119,13 +121,13 @@ public:
     }
     return *(LoaderClass*)FLastLoader;
   }
-  void SetLastLoader(TBasicCFile* ll)  {  FLastLoader = ll;  }
+  void SetLastLoader(TBasicCFile* ll) { FLastLoader = ll; }
   // returns true if a file is loaded
-  bool HasLastLoader() const {  return FLastLoader != NULL;  }
+  bool HasLastLoader() const { return FLastLoader != NULL; }
   /* returns last loader object to access properties of the base class if type
   is not required
   */
-  TBasicCFile* LastLoader() const {  return FLastLoader;  }
+  TBasicCFile* LastLoader() const { return FLastLoader; }
   // locates related HKL file, processes raw or hkc file if necessary
   olxstr LocateHklFile();
   void UpdateAsymmUnit();
@@ -146,7 +148,7 @@ public:
   void Close();
   // returns last loaded file name (if any) or empty string
   const olxstr& GetFileName() const {
-    return FLastLoader != NULL ? FLastLoader->GetFileName() : EmptyString();
+    return FLastLoader != 0 ? FLastLoader->GetFileName() : EmptyString();
   }
   /* returns 'file_path/.olex' if the folder does not exists - it tryes to
   create one and may throw an exception if it fails.
@@ -168,10 +170,15 @@ public:
   void LibEndUpdate(TStrObjList &Cmds, const TParamList &Options,
     TMacroData &E);
   void LibSaveSolution(const TStrObjList& Params, TMacroData& E);
+
   void LibGetMu(const TStrObjList& Params, TMacroData& E);
+  void LibGetMass(const TStrObjList& Params, TMacroData& E);
+  void LibGetF000(const TStrObjList& Params, TMacroData& E);
+  void LibGetDensity(const TStrObjList& Params, TMacroData& E);
+
   void LibRefinementInfo(const TStrObjList& Params, TMacroData& E);
 
-  TLibrary* ExportLibrary(const olxstr& name=EmptyString());
+  TLibrary* ExportLibrary(const olxstr& name = EmptyString());
 
   struct VPtr : public olx_virtual_ptr<TXFile> {
     virtual IOlxObject *get_ptr() const;
@@ -180,7 +187,7 @@ public:
   /* describes a file name with which may carry reference to the dataset in the
   case of multiple-dataset files
   */
-  struct NameArg  {
+  struct NameArg {
     olxstr file_name;
     olxstr data_name;
     bool is_index;

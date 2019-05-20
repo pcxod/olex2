@@ -715,7 +715,8 @@ void TXGrid::SetScale(float v) {
     n_normals.Clear();
     n_vertices.Clear();
     if (XApp->Get3DFrame().IsVisible() || Boxed) {
-      const size_t SZ = 10;
+      double SZ = olx_round(
+        (double)MaxX / XApp->XFile().GetAsymmUnit().GetAxes()[0]);
       const vec3i isz = (XApp->Get3DFrame().GetSize()*SZ).Round<int>();
       TArray3D<float>& points = *(new TArray3D<float>(vec3i(0, 0, 0), isz));
       const mat3f rm(XApp->Get3DFrame().GetNormals() / SZ);
@@ -734,7 +735,7 @@ void TXGrid::SetScale(float v) {
         p_vertices[i] = p_vertices[i] * rm + tr;
       }
       for (size_t i = 0; i < p_normals.Count(); i++) {
-        p_normals[i] = p_normals[i] * rm;
+        p_normals[i] = p_normals[i] * XApp->Get3DFrame().GetNormals();
       }
       if (Scale < 0) {
         IS.GenerateSurface(-Scale);
@@ -745,7 +746,7 @@ void TXGrid::SetScale(float v) {
           n_vertices[i] = n_vertices[i] * rm + tr;
         }
         for (size_t i = 0; i < n_normals.Count(); i++) {
-          n_normals[i] = n_normals[i] * rm;
+          n_normals[i] = n_normals[i] * XApp->Get3DFrame().GetNormals();
         }
       }
       delete &points;
