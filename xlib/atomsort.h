@@ -29,9 +29,11 @@ public:
   struct Sorter {
     int(*func)(const TCAtom &, const TCAtom &);
     olxdict<const cm_Element *, int, TPointerComparator> type_exc;
+    bool reverse;
 
-    Sorter(int(*f)(const TCAtom &, const TCAtom &))
-      : func(f)
+    Sorter(int(*f)(const TCAtom &, const TCAtom &), bool reverse = false)
+      : func(f),
+      reverse(reverse)
     {}
     void AddExceptions(const TStrList &e) {
       for (size_t i = 0; i < e.Count(); i++) {
@@ -49,7 +51,7 @@ public:
       if (type_exc.HasKey(&a.GetType()) && type_exc.HasKey(&b.GetType())) {
         return olx_cmp(type_exc.Get(&a.GetType()), type_exc.Get(&b.GetType()));
       }
-      return (*func)(a, b);
+      return reverse ? -(*func)(a, b) : (*func)(a, b);
     }
   };
 

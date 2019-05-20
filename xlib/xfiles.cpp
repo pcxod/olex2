@@ -570,6 +570,7 @@ void TXFile::Sort(const TStrList& ins, const TParamList &options) {
     bool insert_at_fisrt_label = false,
       label_swap = false;
     for (size_t i = 0; i < sort.Length(); i++) {
+      size_t acs_cnt = acs.sequence.Count();
       if (sort.CharAt(i) == 'm') {
         acs.sequence.AddNew(&AtomSorter::atom_cmp_Mw);
       }
@@ -599,6 +600,13 @@ void TXFile::Sort(const TStrList& ins, const TParamList &options) {
       }
       else if (sort.CharAt(i) == 'w') {
         label_swap = true;
+      }
+      // has been processed?
+      if (acs_cnt + 1 == acs.sequence.Count()) {
+        if (i + 1 < sort.Length() && sort.CharAt(i + 1) == 'r') {
+          acs.sequence.GetLast().reverse = true;
+          i++;
+        }
       }
     }
     if (!acs.sequence.IsEmpty()) {
@@ -1028,25 +1036,26 @@ void TXFile::LibGetFormula(const TStrObjList& Params, TMacroData& E)  {
 }
 //..............................................................................
 void TXFile::LibSetFormula(const TStrObjList& Params, TMacroData& E) {
-  if( Params[0].IndexOf(':') == InvalidIndex )
+  if (Params[0].IndexOf(':') == InvalidIndex) {
     GetRM().SetUserFormula(Params[0]);
-  else  {
+  }
+  else {
     ContentList content;
     TStrList toks(Params[0], ',');
-    for( size_t i=0; i < toks.Count(); i++ )  {
+    for (size_t i = 0; i < toks.Count(); i++) {
       size_t ind = toks[i].FirstIndexOf(':');
-      if( ind == InvalidIndex )  {
-        E.ProcessingError(__OlxSrcInfo, "invalid formula syntax" );
+      if (ind == InvalidIndex) {
+        E.ProcessingError(__OlxSrcInfo, "invalid formula syntax");
         return;
       }
       const cm_Element* elm =
         XElementLib::FindBySymbol(toks[i].SubStringTo(ind));
-      if( elm == NULL )
+      if (elm == NULL)
         throw TInvalidArgumentException(__OlxSourceInfo, "element");
       content.AddNew(*elm,
-        toks[i].SubStringFrom(ind+1).ToDouble()*GetAsymmUnit().GetZ());
+        toks[i].SubStringFrom(ind + 1).ToDouble()*GetAsymmUnit().GetZ());
     }
-    if( content.IsEmpty() )  {
+    if (content.IsEmpty()) {
       E.ProcessingError(__OlxSrcInfo, "empty SFAC - check formula syntax");
       return;
     }
@@ -1060,18 +1069,18 @@ void TXFile::LibEndUpdate(TStrObjList &Cmds, const TParamList &Options,
   EndUpdate();
   if (Cmds.Count() == 1 && Cmds[0].ToBool()) {
     TIns * ins = dynamic_cast<TIns *>(FLastLoader);
-    if (ins != NULL) {
+    if (ins != 0) {
       ins->GetLst().Clear();
     }
   }
 }
 //..............................................................................
-void TXFile::LibSaveSolution(const TStrObjList& Params, TMacroData& E)  {
+void TXFile::LibSaveSolution(const TStrObjList& Params, TMacroData& E) {
   TIns* oins = (TIns*)FLastLoader;
   TIns ins;
   // needs to be called to assign the loaderIds for new atoms
   UpdateAsymmUnit();
-  ins.GetRM().Assign( GetRM(), true );
+  ins.GetRM().Assign(GetRM(), true);
   ins.AddIns("FMAP 2", ins.GetRM());
   ins.GetRM().SetRefinementMethod("L.S.");
   ins.GetRM().SetIterations(4);
@@ -1079,6 +1088,7 @@ void TXFile::LibSaveSolution(const TStrObjList& Params, TMacroData& E)  {
   ins.GetRM().SetUserContent(oins->GetRM().GetUserContent());
   ins.SaveToFile(Params[0]);
 }
+//..............................................................................
 void TXFile::LibDataCount(const TStrObjList& Params, TMacroData& E) {
   if (FLastLoader->Is<TCif>()) {
     E.SetRetVal(((TCif*)FLastLoader)->BlockCount());
@@ -1124,11 +1134,11 @@ void TXFile::LibDataName(const TStrObjList& Params, TMacroData& E) {
 //..............................................................................
 void TXFile::LibGetMu(const TStrObjList& Params, TMacroData& E) {
   cm_Absorption_Coefficient_Reg ac;
-  ContentList cont = GetAsymmUnit().GetContentList();
+  const ContentList &cont = GetRM().GetUserContent();
   double mu = 0;
   for (size_t i = 0; i < cont.Count(); i++) {
     XScatterer *xs = GetRM().FindSfacData(cont[i].element->symbol);
-    if (xs != NULL && xs->IsSet(XScatterer::setMu)) {
+    if (xs != 0 && xs->IsSet(XScatterer::setMu)) {
       mu += cont[i].count*xs->GetMu() / 10;
     }
     else {
@@ -1137,9 +1147,65 @@ void TXFile::LibGetMu(const TStrObjList& Params, TMacroData& E) {
       mu += (cont[i].count*cont[i].element->GetMr())*v / 6.022142;
     }
   }
-  mu *= GetAsymmUnit().GetZ() / GetAsymmUnit().CalcCellVolume() /
-    GetAsymmUnit().GetZPrime();
+  mu /= GetAsymmUnit().CalcCellVolume();
   E.SetRetVal(olxstr::FormatFloat(3, mu));
+}
+//..............................................................................
+//..............................................................................
+double TXFile::CalcMass(const ContentList &cont) const {
+  double mass = 0;
+  for (size_t i = 0; i < cont.Count(); i++) {
+    XScatterer *xs = GetRM().FindSfacData(cont[i].element->symbol);
+    if (xs != 0 && xs->IsSet(XScatterer::setWt)) {
+      mass += cont[i].count*xs->GetWeight();
+    }
+    else {
+      mass += cont[i].count*cont[i].element->GetMr();
+    }
+  }
+  return mass;
+}
+//..............................................................................
+//..............................................................................
+void TXFile::LibGetMass(const TStrObjList& Params, TMacroData& E) {
+  E.SetRetVal(olxstr::FormatFloat(3,
+    CalcMass(GetRM().GetUserContent())/GetAsymmUnit().GetZ()));
+}
+//..............................................................................
+void TXFile::LibGetF000(const TStrObjList& Params, TMacroData& E) {
+  const ContentList & cont = GetRM().GetUserContent();
+  double r_e = GetRM().expl.GetRadiationEnergy();
+  double F000 = 0;
+  for (size_t i = 0; i < cont.Count(); i++) {
+    XScatterer *xs = GetRM().FindSfacData(cont[i].element->symbol);
+    compd f0 = cont[i].element->gaussians->calc_sq(0);
+    bool processed = false;
+    if (xs != 0) {
+      if (xs->IsSet(XScatterer::setGaussian) &&
+        xs->IsSet(XScatterer::setDispersion))
+      {
+        F000 += cont[i].count*xs->calc_sq_anomalous(0).mod();
+        processed = true;
+      }
+      else if (xs->IsSet(XScatterer::setDispersion)) {
+        f0 += xs->GetFpFdp();
+        F000 += cont[i].count*f0.mod();
+        processed = true;
+      }
+    }
+    if (!processed) {
+      f0 += cont[i].element->CalcFpFdp(r_e);
+      f0.Re() -= cont[i].element->z;
+      F000 += cont[i].count*f0.mod();
+    }
+  }
+  E.SetRetVal(olxstr::FormatFloat(3, F000));
+}
+//..............................................................................
+void TXFile::LibGetDensity(const TStrObjList& Params, TMacroData& E) {
+  double mass = CalcMass(GetRM().GetUserContent());
+  mass /= 0.6022142;
+  E.SetRetVal(olxstr::FormatFloat(3, mass / GetAsymmUnit().CalcCellVolume()));
 }
 //..............................................................................
 void TXFile::LibRefinementInfo(const TStrObjList& Params, TMacroData& E) {
@@ -1222,8 +1288,26 @@ TLibrary* TXFile::ExportLibrary(const olxstr& name) {
   lib->Register(
     new TFunction<TXFile>(thip, &TXFile::LibGetMu, "GetMu",
       fpNone|psFileLoaded,
-      "Returns absorption coefficient for current model.")
+      "Returns absorption coefficient for current formula.")
   );
+  lib->Register(
+    new TFunction<TXFile>(thip, &TXFile::LibGetMass, "GetMass",
+      fpNone | psFileLoaded,
+      "Returns molecular mass for current formula.")
+  );
+
+  lib->Register(
+    new TFunction<TXFile>(thip, &TXFile::LibGetF000, "GetF000",
+      fpNone | psFileLoaded,
+      "Returns F000 for current formula.")
+  );
+
+  lib->Register(
+    new TFunction<TXFile>(thip, &TXFile::LibGetDensity, "GetDensity",
+      fpNone | psFileLoaded,
+      "Returns density for current formula.")
+  );
+
 
   lib->Register(
     new TFunction<TXFile>(thip, &TXFile::LibRefinementInfo, "RefinementInfo",
