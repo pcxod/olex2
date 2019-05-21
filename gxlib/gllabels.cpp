@@ -57,23 +57,23 @@ void TXGlLabels::RenderLabel(const vec3d &crd, const olxstr &label,
         rc.currentMaterial = Marks[index];
         rc.font.Reset_ATI(rc.optimizeATI);
       }
-      else  {
+      else {
         rc.primitive.GetProperties().Init(Parent.ForcePlain());
         rc.currentMaterial = -1;
         rc.font.Reset_ATI(rc.optimizeATI);
       }
       rc.matInitialised = true;
     }
-    else  {
+    else {
       if (Marks[index] < Colors_.Count()) {
-        if (rc.currentMaterial != Marks[index])  {
+        if (rc.currentMaterial != Marks[index]) {
           rc.GlM.AmbientF = Colors_[Marks[index]];
           rc.GlM.Init(Parent.ForcePlain());
           rc.currentMaterial = Marks[index];
           rc.font.Reset_ATI(rc.optimizeATI);
         }
       }
-      else  {
+      else {
         if (rc.currentMaterial != -1) {
           rc.primitive.GetProperties().Init(Parent.ForcePlain());
           rc.currentMaterial = -1;
@@ -81,17 +81,18 @@ void TXGlLabels::RenderLabel(const vec3d &crd, const olxstr &label,
         }
       }
     }
-    vec3d V = Parent.Project(crd);
-    if( Parent.GetExtraZoom() > 1 )  {
-      V *= (1./Parent.GetScale());
-      Parent.DrawTextSafe(vec3d(V[0]+0.01, V[1]+0.01, Z), label, rc.font);
+    vec3d V = Parent.Project(crd) +
+      vec3d(5.0, 5.0, 0) * Parent.GetScale();
+    if (Parent.GetExtraZoom() > 1) {
+      V *= (1. / Parent.GetScale());
+      Parent.DrawTextSafe(vec3d(V[0], V[1], Z), label, rc.font);
     }
-    else  {
-      olx_gl::rasterPos(V[0]+0.01, V[1]+0.01, Z);
+    else {
+      olx_gl::rasterPos(V[0], V[1], Z);
       rc.primitive.Draw();
     }
   }
-  else  {  // vector font?
+  else {  // vector font?
     vec3d T = Parent.Project(crd);
     T[2] = Z;
     rc.font.DrawVectorText(T, label, rc.vectorZoom);
@@ -99,7 +100,9 @@ void TXGlLabels::RenderLabel(const vec3d &crd, const olxstr &label,
 }
 //..............................................................................
 bool TXGlLabels::Orient(TGlPrimitive& P) {
-  if (Mode == 0) return true;
+  if (Mode == 0) {
+    return true;
+  }
   TGlFont &Fnt = GetFont();
   TGXApp& app = TGXApp::GetInstance();
   bool matInited = false;
