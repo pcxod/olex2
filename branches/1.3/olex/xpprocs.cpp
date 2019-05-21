@@ -6427,20 +6427,23 @@ void TMainForm::macPictS(TStrObjList &Cmds, const TParamList &Options, TMacroDat
   image.SaveFile(bmpFN.u_str());
 }
 //..............................................................................
-void TMainForm::funFullScreen(const TStrObjList& Params, TMacroData &E)  {
-  if( Params.IsEmpty() )  E.SetRetVal(IsFullScreen());
-  else  {
-    if( Params[0].Equalsi("swap") )
+void TMainForm::funFullScreen(const TStrObjList& Params, TMacroData &E) {
+  if (Params.IsEmpty())  E.SetRetVal(IsFullScreen());
+  else {
+    if (Params[0].Equalsi("swap")) {
       ShowFullScreen(!IsFullScreen());
-    else
+    }
+    else {
       ShowFullScreen(Params[0].ToBool());
+    }
   }
 }
 //..............................................................................
-void TMainForm::funFreeze(const TStrObjList& Params, TMacroData &E)  {
-  if( Params.IsEmpty() )
+void TMainForm::funFreeze(const TStrObjList& Params, TMacroData &E) {
+  if (Params.IsEmpty()) {
     E.SetRetVal(FXApp->IsDisplayFrozen());
-  else  {
+  }
+  else {
     E.SetRetVal(FXApp->IsDisplayFrozen());
     FXApp->SetDisplayFrozen(Params[0].ToBool());
   }
@@ -6449,17 +6452,17 @@ void TMainForm::funFreeze(const TStrObjList& Params, TMacroData &E)  {
 void TMainForm::macFlushFS(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &E)
 {
-  if( Cmds.IsEmpty() || Cmds[0].Equalsi("global") )  {
+  if (Cmds.IsEmpty() || Cmds[0].Equalsi("global")) {
     SaveVFS(plGlobal);
   }
-  else if( Cmds[0].Equalsi("structure") )  {
-    if( !FXApp->XFile().HasLastLoader() )  {
+  else if (Cmds[0].Equalsi("structure")) {
+    if (!FXApp->XFile().HasLastLoader()) {
       E.ProcessingError(__OlxSrcInfo, "a loaded file is required");
       return;
     }
     SaveVFS(plStructure);
   }
-  else  {
+  else {
     E.ProcessingError(__OlxSrcInfo, "unknown option: ").quote() << Cmds[0];
   }
 }

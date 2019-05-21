@@ -10,6 +10,7 @@
 #include "xyz.h"
 #include "catom.h"
 #include "unitcell.h"
+#include "olxvar.h"
 
 TXyz::TXyz()  {  Clear();  }
 //..............................................................................
@@ -26,14 +27,18 @@ void TXyz::SaveToStrings(TStrList& Strings) {
   Strings.Add();
   Strings.Add("Exported from Olex2");
   size_t cnt = 0;
-  for( size_t i=0; i < GetAsymmUnit().AtomCount(); i++ )  {
+  int op = TOlxVars::FindValue("file_output_precision", "4").ToInt();
+  for (size_t i = 0; i < GetAsymmUnit().AtomCount(); i++) {
     TCAtom& CA = GetAsymmUnit().GetAtom(i);
-    if( CA.IsDeleted() )  continue;
+    if (CA.IsDeleted()) {
+      continue;
+    }
     olxstr& aline = Strings.Add(CA.GetType().symbol);
     aline << ' ';
     vec3d v = GetAsymmUnit().Orthogonalise(CA.ccrd());
-    for( int j=0; j < 3; j++ )
-      aline << olxstr::FormatFloat(4, v[j]).LeftPadding(10, ' ');
+    for (int j = 0; j < 3; j++) {
+      aline << olxstr::FormatFloat(op, v[j]).LeftPadding(10, ' ', true);
+    }
     cnt++;
   }
   Strings[0] = cnt;
@@ -43,19 +48,23 @@ void TXyz::LoadFromStrings(const TStrList &Strings) {
   TAsymmUnit &au = GetAsymmUnit();
   au.Clear();
   Title = "OLEX2: imported from XYZ";
-  for (size_t i=0; i < Strings.Count(); i++) {
+  for (size_t i = 0; i < Strings.Count(); i++) {
     olxstr line = Strings[i];
-    if (line.IsEmpty())  continue;
+    if (line.IsEmpty()) {
+      continue;
+    }
     TStrList toks(line, ' ');
-    if (toks.Count() != 4) continue;
+    if (toks.Count() != 4) {
+      continue;
+    }
     const cm_Element* elm = XElementLib::FindBySymbolEx(toks[0]);
-    if (elm != NULL) {
+    if (elm != 0) {
       TCAtom& CA = GetAsymmUnit().NewAtom();
       CA.ccrd()[0] = toks[1].ToDouble();
       CA.ccrd()[1] = toks[2].ToDouble();
       CA.ccrd()[2] = toks[3].ToDouble();
       CA.SetType(*elm);
-      CA.SetLabel(olxstr(elm->symbol) << (GetAsymmUnit().AtomCount()+1), false);
+      CA.SetLabel(olxstr(elm->symbol) << (GetAsymmUnit().AtomCount() + 1), false);
     }
   }
   GenerateCellForCartesianFormat();
@@ -68,7 +77,9 @@ bool TXyz::Adopt(TXFile &XF, int flags) {
   const ASObjectProvider& objects = XF.GetLattice().GetObjects();
   for (size_t i=0; i < objects.atoms.Count(); i++) {
     TSAtom& sa = objects.atoms[i];
-    if (!sa.IsAvailable())  continue;
+    if (!sa.IsAvailable()) {
+      continue;
+    }
     TCAtom& a = GetAsymmUnit().NewAtom();
     a.SetLabel(sa.GetLabel(), false);
     a.ccrd() = sa.crd();

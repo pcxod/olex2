@@ -12,6 +12,7 @@
 #include "unitcell.h"
 #include "estrlist.h"
 #include "exception.h"
+#include "olxvar.h"
 
 TMol::TMol()  {  Clear();  }
 //..............................................................................
@@ -28,8 +29,9 @@ void TMol::Clear()  {
 olxstr TMol::MOLAtom(TCAtom& A) {
   olxstr_buf tmp;
   vec3d v = GetAsymmUnit().Orthogonalise(A.ccrd());
+  int op = TOlxVars::FindValue("file_output_precision", "4").ToInt();
   for (int i = 0; i < 3; i++) {
-    tmp << olxstr::FormatFloat(4, v[i]).LeftPadding(10, ' ');
+    tmp << olxstr::FormatFloat(op, v[i]).LeftPadding(10, ' ', true);
   }
   tmp << ' ' << olxstr(A.GetType().symbol).RightPadding(3, ' ');
   for (int j = 0; j < 12; j++) {
