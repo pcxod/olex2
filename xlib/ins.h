@@ -55,6 +55,7 @@ class TIns: public TBasicCFile  {
       ins = NULL;
     }
   };
+  TStrList included;
 private:
   TStringToList<olxstr, TInsList*> Ins;  // instructions
   TStrList Skipped;
@@ -113,7 +114,7 @@ public:
    Atoms by index in the AU.
    Instructions are initialised with all unrecognised commands
   */
-  static void UpdateAtomsFromStrings(RefinementModel& rm,
+  void UpdateAtomsFromStrings(RefinementModel& rm,
     const TIndexList& index, TStrList& SL, TStrList& Instructions);
   /* saves some atoms to a plain ins format with no headers etc; to be used
   with UpdateAtomsFromStrings. index is initialised with the order in which
@@ -133,143 +134,14 @@ public:
   static void SaveExtras(TStrList& SL, const TCAtomPList* atoms,
     RefinementModel::ReleasedItems* processed, RefinementModel& rm);
 
-  template <class StrLst> static
-  void ParseRestraints(RefinementModel& rm, StrLst& SL, bool warnings=true) {
-    bool preserve = DoPreserveInvalid();
-    for (size_t i = 0; i < SL.Count(); i++) {
-      TStrList Toks(SL[i], ' ');
-      try {
-        if (ParseRestraint(rm, Toks, warnings)) {
-          SL[i].SetLength(0);
-        }
-      }
-      catch (const TExceptionBase &e) {
-        TBasicApp::NewLogEntry(logExceptionTrace) << e;
-        if (preserve) {
-          SL[i] = olxstr("REM ") << SL[i];
-        }
-        else {
-          SL[i].SetLength(0);
-        }
-      }
-    }
-  }
+  void ParseRestraints(RefinementModel& rm,
+    const TStringToList<olxstr, TInsList*>& SL,
+    bool warnings = true);
 //..............................................................................
   /* parses a single line instruction, which does not depend on context
   (as SYMM) this is used internally by ParseIns and AddIns
   */
-    template <class StrLst>
-    static bool _ParseIns(RefinementModel& rm, const StrLst& Toks) {
-      if (Toks[0].Equalsi("FVAR")) {
-        rm.Vars.AddFVAR(Toks.SubListFrom(1));
-      }
-      else if (Toks[0].Equalsi("WGHT")) {
-        if (rm.used_weight.Count() != 0) {
-          rm.proposed_weight.SetCount(Toks.Count() - 1);
-          for (size_t j = 1; j < Toks.Count(); j++) {
-            rm.proposed_weight[j - 1] = Toks[j].IsNumber() ? Toks[j].ToDouble()
-              : 0.1;
-          }
-        }
-        else {
-          /* shelxl proposes wght in .0000 but print in .000000 format, need
-          to check for multiple values in tokens
-          */
-          TStrList toks(Toks);
-          for (size_t j = 1; j < toks.Count(); j++) {
-            if (toks[j].CharCount('.') > 1) {
-              const size_t fp = toks[j].IndexOf('.');
-              if (toks[j].Length() - fp >= 6) {
-                // 'recursive' run
-                toks.Insert(j + 1, toks[j].SubStringFrom(fp + 7));
-                toks[j].SetLength(fp + 6);
-              }
-            }
-          }
-          rm.used_weight.SetCount(toks.Count() - 1);
-          for (size_t j = 1; j < toks.Count(); j++) {
-            if (!toks[j].IsNumber() && toks[j].EndsWith('*')) {
-              if (!toks[j].TrimR('*').IsNumber()) {
-                rm.used_weight[j - 1] = 0.1;
-                continue;
-              }
-            }
-            rm.used_weight[j - 1] = toks[j].ToDouble();
-          }
-          rm.proposed_weight = rm.used_weight;
-        }
-      }
-      else if (Toks[0].Equalsi("MERG") && Toks.Count() == 2) {
-        rm.SetMERG(Toks[1].ToInt());
-      }
-      else if (Toks[0].Equalsi("EXTI")) {
-        TEValueD ev;
-        if (Toks.Count() > 1) {
-          ev = Toks[1];
-        }
-        rm.Vars.SetEXTI(ev.GetV(), ev.GetE());
-      }
-      else if (Toks[0].Equalsi("SIZE") && (Toks.Count() == 4)) {
-        rm.expl.SetCrystalSize(Toks[1].ToDouble(), Toks[2].ToDouble(),
-          Toks[3].ToDouble());
-      }
-      else if (Toks[0].Equalsi("BASF") && (Toks.Count() > 1)) {
-        rm.Vars.SetBASF(Toks.SubListFrom(1));
-      }
-      else if (Toks[0].Equalsi("DEFS") && (Toks.Count() > 1)) {
-        rm.SetDEFS(Toks.SubListFrom(1));
-      }
-      else if (Toks[0].Equalsi("SHEL")) {
-        rm.SetSHEL(Toks.SubListFrom(1));
-      }
-      else if (Toks[0].Equalsi("OMIT")) {
-        rm.AddOMIT(Toks.SubListFrom(1));
-      }
-      else if (Toks[0].Equalsi("TWIN")) {
-        rm.SetTWIN(Toks.SubListFrom(1));
-      }
-      else if (Toks[0].Equalsi("TEMP") && Toks.Count() == 2) {
-        rm.expl.SetTemp(Toks[1]);
-      }
-      else if (Toks[0].Equalsi("HKLF") && (Toks.Count() > 1)) {
-        rm.SetHKLFString(olxstr(" ").Join(Toks.SubListFrom(1)));
-      }
-      else if (Toks[0].Equalsi("L.S.") || Toks[0].Equalsi("CGLS")) {
-        rm.SetRefinementMethod(Toks[0]);
-        rm.LS.SetCount(Toks.Count() - 1);
-        for (size_t i = 1; i < Toks.Count(); i++) {
-          rm.LS[i - 1] = Toks[i].ToInt();
-        }
-      }
-      else if (Toks[0].Equalsi("PLAN")) {
-        rm.PLAN.SetCount(Toks.Count() - 1);
-        for (size_t i = 1; i < Toks.Count(); i++) {
-          rm.PLAN[i - 1] = Toks[i].ToDouble();
-        }
-      }
-      else if (Toks[0].Equalsi("LATT") && (Toks.Count() > 1)) {
-        rm.aunit.SetLatt((short)Toks[1].ToInt());
-      }
-      else if (Toks[0].Equalsi("UNIT")) {
-        rm.SetUserContentSize(Toks.SubListFrom(1));
-      }
-      else if (Toks[0].Equalsi("ZERR")) {
-        if (Toks.Count() == 8) {
-          rm.aunit.SetZ(Toks[1].ToDouble());
-          rm.aunit.GetAxisEsds() = vec3d(Toks[2].ToDouble(),
-            Toks[3].ToDouble(), Toks[4].ToDouble());
-          rm.aunit.GetAngleEsds() = vec3d(Toks[5].ToDouble(),
-            Toks[6].ToDouble(), Toks[7].ToDouble());
-        }
-        else {
-          throw TInvalidArgumentException(__OlxSourceInfo, "ZERR");
-        }
-      }
-      else {
-        return false;
-      }
-      return true;
-    }
+  static bool _ParseIns(RefinementModel& rm, const TStrList& Toks);
 
   virtual void LoadFromFile(const olxstr& fileName);
   virtual void SaveToStrings(TStrList& Strings);
@@ -309,37 +181,7 @@ public:
     TStrList& list, size_t sfac_pos, bool save_disp);
   static TStrList::const_list_type SaveSfacUnit(const RefinementModel& rm,
     TStrList& list, size_t sfac_pos);
-  template <class List> static List& Preprocess(List& l)  {
-    // combine lines
-    for( size_t i=0; i < l.Count(); i++ )  {
-      if( l[i].EndsWith('=') &&
-          (!l[i].StartsFromi("REM") ||
-            l[i].IndexOf("olex2.restraint.") != InvalidIndex ||
-            l[i].IndexOf("olex2.constraint.") != InvalidIndex ))
-      {
-        l[i].SetLength(l[i].Length()-1);
-        if( (i+1) < l.Count() )  {
-          l[i] << l[i+1];
-          l.Delete(1+i--);
-        }
-      }
-    }
-    // include files
-    for( size_t i=0; i < l.Count(); i++ )  {
-      if( l[i].StartsFrom('+') )  {
-        olxstr fn = l[i].SubStringFrom(1);
-        if( !TEFile::Exists(fn) )  {
-          TBasicApp::NewLogEntry(logError) << "Included file missing: " << fn;
-          continue;
-        }
-        TStrList lst = TEFile::ReadLines(fn);
-        l.Delete(i);
-        l.Insert(i, lst);
-        i += lst.Count();
-      }
-    }
-    return l;
-  }
+  TStrList& Preprocess(TStrList& l);
   /* spits out all instructions, including CELL, FVAR, etc, returns the list
   of SFAC
   */
