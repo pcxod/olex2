@@ -188,7 +188,6 @@ void TSRestraintList::Assign(const TSRestraintList& rl)  {
 }
 //..............................................................................
 void TSRestraintList::ValidateRestraint(TSimpleRestraint& sr)  {
-
   if (sr.GetListType() != RestraintListType) {
     throw TInvalidArgumentException(__OlxSourceInfo, "list type mismatch");
   }
@@ -214,7 +213,9 @@ void TSRestraintList::ValidateRestraint(TSimpleRestraint& sr)  {
           Restraints[AllAtomsInd].Esd == Restraints[i].Esd &&
           Restraints[AllAtomsInd].Esd1 == Restraints[i].Esd1)
         {
+          // invalidate
           Restraints[i].Delete();
+          Restraints[i].SetAllNonHAtoms(false);
           deleted_cnt++;
         }
       }

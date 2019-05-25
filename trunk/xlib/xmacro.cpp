@@ -584,7 +584,7 @@ void XLibMacros::Export(TLibrary& lib)  {
     "i-if one atom is given - generates an implicit restraint for the atom's "
     "residue class, for 2 atoms - invert the graphs when doing automatic "
     "matching&;"
-    "e-expand SAME into the list of SADI [not implemented]&;"
+    "e-expand SAME into the list of SADI&;"
     "s-generates 'self' same restrain so that the fragment matches itself in "
     "reverse order&;"
     "all-find fragments matching the selection and applies SAME to them",

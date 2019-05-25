@@ -2267,7 +2267,8 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options,
     SL.Strtok(dlg->GetText(), '\n');
     TStrList NewIns;
     try {
-      TIns::UpdateAtomsFromStrings(FXApp->XFile().GetRM(), atomIndex, SL, NewIns);
+      TIns ins_;
+      ins_.UpdateAtomsFromStrings(FXApp->XFile().GetRM(), atomIndex, SL, NewIns);
       if (Ins != 0) {
         for (size_t i = 0; i < NewIns.Count(); i++) {
           NewIns[i] = NewIns[i].Trim(' ');
@@ -2767,6 +2768,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
         TFileHandlerManager::Clear(plStructure);
       }
       sw.start("Loading the XFile");
+      TEFile::ChangeDir(TEFile::ExtractFilePath(file_n.ToString()));
       FXApp->LoadXFile(file_n.ToString());
       sw.start("Creating bad reflections and refinement info tables");
       BadReflectionsTable(false, false);
