@@ -2267,7 +2267,8 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options,
     SL.Strtok(dlg->GetText(), '\n');
     TStrList NewIns;
     try {
-      TIns::UpdateAtomsFromStrings(FXApp->XFile().GetRM(), atomIndex, SL, NewIns);
+      TIns ins_;
+      ins_.UpdateAtomsFromStrings(FXApp->XFile().GetRM(), atomIndex, SL, NewIns);
       if (Ins != 0) {
         for (size_t i = 0; i < NewIns.Count(); i++) {
           NewIns[i] = NewIns[i].Trim(' ');
@@ -2767,6 +2768,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
         TFileHandlerManager::Clear(plStructure);
       }
       sw.start("Loading the XFile");
+      TEFile::ChangeDir(TEFile::ExtractFilePath(file_n.ToString()));
       FXApp->LoadXFile(file_n.ToString());
       sw.start("Creating bad reflections and refinement info tables");
       BadReflectionsTable(false, false);
@@ -5996,6 +5998,7 @@ void TMainForm::macImportFont(TStrObjList &Cmds, const TParamList &Options, TMac
 void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &E)
 {
+  Macros.ProcessMacro("mode off", E);
   TStrList content;
   olxstr file_ext = "xyz";
   if (Options.Contains('c')) {
@@ -6141,14 +6144,17 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options,
   const int npart = FXApp->XFile().GetAsymmUnit().GetNextPart(true);
   const double occu = Options.FindValue("o", "-1").ToDouble();
   for (size_t i=0; i < xatoms.Count(); i++) {
-    if (occu > 0)
+    if (occu > 0) {
       xatoms[i]->CAtom().SetOccu(occu);
+    }
     FXApp->XFile().GetRM().Vars.FixParam(
       xatoms[i]->CAtom(), catom_var_name_Sof);
     lc.Correct(xatoms[i]->CAtom());
     xatoms[i]->CAtom().SetPart(npart);
   }
-  if (xatoms.IsEmpty())  return;
+  if (xatoms.IsEmpty()) {
+    return;
+  }
   Macros.ProcessMacro("mode fit", E);
   const int afix = Options.FindValue("a", "-100").ToInt();
   if (afix != -100) {

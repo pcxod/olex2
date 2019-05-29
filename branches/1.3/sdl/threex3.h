@@ -168,7 +168,7 @@ public:
   // a*b*sin = a*b*(1-cos^2) = a*b - DotProd^2
   template <class AT> T XProdVal(const TVector3<AT>& v) const {
     const T dp = DotProd(v);
-    return sqrt(QLength()*v.QLength()) - dp*dp;
+    return sqrt(QLength()*v.QLength() - dp*dp);
   }
   template <class AT> TVector3<T> XProdVec(const TVector3<AT>& v) const
   {
