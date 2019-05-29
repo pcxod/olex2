@@ -451,17 +451,22 @@ public:
       : a(a_), b(b_)
     {}
     double calc() const {
-      const PlaneInfo ai = a.evaluate(), bi = b.evaluate();
-      vec3d dv = (bi.center - ai.center).Normalise();
-      vec3d n_c = dv.XProdVec(ai.normal).Normalise();
+      PlaneInfo ai = a.evaluate(), bi = b.evaluate();
+      vec3d dv = (bi.center - ai.center);
+      olxch a_sig = olx_sign_char(dv.DotProd(ai.normal));
+      // make sure normals look on opposite sides of dv
+      if (olx_sign_char(dv.DotProd(bi.normal)) == a_sig) {
+        bi.normal *= -1;
+        a_sig = ' ';
+      }
+      vec3d n_c = dv.XProdVec(ai.normal + bi.normal).Normalise();
       vec3d p_a = ai.normal - n_c*n_c.DotProd(ai.normal);
       vec3d p_b = bi.normal - n_c*n_c.DotProd(bi.normal);
       double a = acos(p_a.CAngle(p_b));
-      n_c = dv.XProdVec(bi.normal).Normalise();
-      p_a = ai.normal - n_c*n_c.DotProd(ai.normal);
-      p_b = bi.normal - n_c*n_c.DotProd(bi.normal);
-      double b = acos(p_a.CAngle(p_b));
-      return ((a+b) * 90 / M_PI);
+      if (a_sig == ' ') { // one of the normals has been inverted
+        a = M_PI - a;
+      }
+      return (a * 180 / M_PI);
     }
   };
   // tetrahedron volume
