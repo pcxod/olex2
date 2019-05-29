@@ -5998,6 +5998,7 @@ void TMainForm::macImportFont(TStrObjList &Cmds, const TParamList &Options, TMac
 void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &E)
 {
+  Macros.ProcessMacro("mode off", E);
   TStrList content;
   olxstr file_ext = "xyz";
   if (Options.Contains('c')) {
@@ -6143,14 +6144,17 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options,
   const int npart = FXApp->XFile().GetAsymmUnit().GetNextPart(true);
   const double occu = Options.FindValue("o", "-1").ToDouble();
   for (size_t i=0; i < xatoms.Count(); i++) {
-    if (occu > 0)
+    if (occu > 0) {
       xatoms[i]->CAtom().SetOccu(occu);
+    }
     FXApp->XFile().GetRM().Vars.FixParam(
       xatoms[i]->CAtom(), catom_var_name_Sof);
     lc.Correct(xatoms[i]->CAtom());
     xatoms[i]->CAtom().SetPart(npart);
   }
-  if (xatoms.IsEmpty())  return;
+  if (xatoms.IsEmpty()) {
+    return;
+  }
   Macros.ProcessMacro("mode fit", E);
   const int afix = Options.FindValue("a", "-100").ToInt();
   if (afix != -100) {
