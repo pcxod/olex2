@@ -725,10 +725,10 @@ void AtomRefList::UpdateResi() {
       }
     }
     if (r1.GetMatrix() != 0) {
-        r_id = r0.GetAtom().GetResiId();
+      r_id = r1.GetAtom().GetResiId();
     }
     else if (r0.GetMatrix() != 0) {
-      r_id = r1.GetAtom().GetResiId();
+      r_id = r0.GetAtom().GetResiId();
     }
   }
   else {
