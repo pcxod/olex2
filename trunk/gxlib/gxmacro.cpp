@@ -400,6 +400,29 @@ void GXLibMacros::Export(TLibrary& lib) {
     "Gets/sets aobject settings for atom or bond");
 }
 //.............................................................................
+bool InvertFittedFragment() {
+  TModeRegistry &mr = TModeRegistry::GetInstance();
+  if (mr.CheckMode(mr.DecodeMode("fit"))) {
+    TXAtomPList atoms = TGXApp::GetInstance()
+      .GetSelection().Extract<TXAtom>();
+    if (atoms.IsEmpty()) {
+      return false;
+    }
+    vec3d cnt;
+    for (size_t i = 0; i < atoms.Count(); i++) {
+      cnt += atoms[i]->crd();
+    }
+    cnt /= atoms.Count();
+    for (size_t i = 0; i < atoms.Count(); i++) {
+      atoms[i]->crd() = -atoms[i]->crd() + cnt + cnt;
+      atoms[i]->CAtom().ccrd() = atoms[i]->CAtom()
+        .GetParent()->Fractionalise(atoms[i]->crd());
+    }
+    return true;
+  }
+  return false;
+}
+
 void GXLibMacros::macGrow(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
@@ -1987,17 +2010,22 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
   if (TModeRegistry::GetInstance().GetCurrent() != 0) {
+    if (Options.GetBoolOption('i')) {
+      if (InvertFittedFragment()) {
+        return;
+      }
+    }
     TBasicApp::NewLogEntry(logError) << "Unavailable in a mode";
     return;
   }
   glSelectionFlag flag=glSelectionNone;
-  if (Options.Contains('a')) {
+  if (Options.GetBoolOption('a')) {
     flag = glSelectionSelect;
   }
-  else if (Options.Contains('u')) {
+  else if (Options.GetBoolOption('u')) {
     flag = glSelectionUnselect;
   }
-  else if (Options.Contains('i')) {
+  else if (Options.GetBoolOption('i')) {
     flag = glSelectionInvert;
   }
 
@@ -3820,13 +3848,16 @@ void GXLibMacros::macInv(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
   TXPlanePList planes = app.GetSelection().Extract<TXPlane>();
-  if (planes.IsEmpty()) {
-    Error.SetUnhandled(true);
+  if (!planes.IsEmpty()) {
+    for (size_t i = 0; i < planes.Count(); i++) {
+      planes[i]->Invert();
+    }
+  }
+  if (InvertFittedFragment()) {
     return;
   }
-  for (size_t i = 0; i < planes.Count(); i++) {
-    planes[i]->Invert();
-  }
+  Error.SetUnhandled(true);
+  return;
 }
 //.............................................................................
 TNetwork::AlignInfo GXLibMacros_MatchAtomPairsQT(
