@@ -6139,6 +6139,20 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options,
   TXBondPList xbonds;
   LabelCorrector lc(FXApp->XFile().GetAsymmUnit(), TXApp::GetMaxLabelLength(),
     TXApp::DoRenameParts());
+  // invert the coordinates
+  if (Options.GetBoolOption('i')) {
+    TAsymmUnit &au = f().GetAsymmUnit();
+    vec3d cnt;
+    vec3d_alist crds(au.AtomCount());
+    for (size_t i = 0; i < au.AtomCount(); i++) {
+      crds[i] = au.Orthogonalise(au.GetAtom(i).ccrd());
+      cnt += crds[i];
+    }
+    cnt /= au.AtomCount();
+    for (size_t i = 0; i < au.AtomCount(); i++) {
+      au.GetAtom(i).ccrd() = au.Fractionalise(-crds[i] + cnt + cnt);
+    }
+  }
   FXApp->AdoptAtoms(f().GetAsymmUnit(), xatoms, xbonds);
   int part = Options.FindValue("p", "-100").ToInt();
   const int npart = FXApp->XFile().GetAsymmUnit().GetNextPart(true);

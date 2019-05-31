@@ -761,7 +761,8 @@ void TMainForm::XApp(Olex2App *XA)  {
     "a-set specified AFIX to the imported fragment&;"
     "o-set specified occupancy to the imported fragment atoms&;"
     "c-take the content from the clipboard (XYZ like)&;"
-    "rr-replace particular RESI with the given content (auto-fit)",
+    "rr-replace particular RESI with the given content (auto-fit)&;"
+    "i-invert the provided atom coordinates",
     fpNone|fpOne|psFileLoaded,
     "Import a fragment into current structure");
   this_InitMacroD(ExportFrag, EmptyString(), fpNone|psFileLoaded,
