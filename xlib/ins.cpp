@@ -488,6 +488,7 @@ void TIns::_ProcessSame(ParseContext& cx, const TIndexList *index)  {
       }
     }
     // now process the reference group
+    olxstr_buf warns;
     if (max_atoms != 0 && ca != 0) {
       bool valid = true;
       TSameGroup& sg = sgl.New();  // main, reference, group
@@ -514,6 +515,10 @@ void TIns::_ProcessSame(ParseContext& cx, const TIndexList *index)  {
           max_atoms++; // do not count the H atoms!
           continue;
         }
+        if (olx_is_valid_index(a.GetSameId())) {
+          warns << "\nOverriding same group from " << a.GetSameId() << " to " <<
+            sg.GetId() << " for " << a.GetResiLabel();
+        }
         sg.Add(a);
       }
       if (valid) {
@@ -524,6 +529,9 @@ void TIns::_ProcessSame(ParseContext& cx, const TIndexList *index)  {
       else {
         sgl.Delete(all_groups << sg);
       }
+    }
+    if (!warns.IsEmpty()) {
+      TBasicApp::NewLogEntry(logWarning) << warns;
     }
   }
 }
@@ -1570,6 +1578,14 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
       }
       return;
     }
+    if (sg.IsValidForSave() && !sg.IsReference() && sg.GetAtoms().IsExplicit()) {
+      TAtomRefList atoms = sg.GetAtoms().ExpandList(rm);
+      for (size_t i = 0; i < atoms.Count(); i++) {
+        _SaveAtom(rm, atoms[i].GetAtom(), part, afix, spec, sfac, sl, index,
+          false, checkResi);
+      }
+      return;
+    }
   }
   if (a.GetUisoOwner() != 0 && !a.GetUisoOwner()->IsSaved()) {
     _SaveAtom(rm, *a.GetUisoOwner(), part, afix, spec, sfac, sl, index,
@@ -1768,6 +1784,16 @@ void TIns::_DrySaveAtom(TCAtom& a, TSizeList &indices,
         for (size_t i = 0; i < atoms.Count(); i++) {
           _DrySaveAtom(atoms[i].GetAtom(), indices, false, checkResi);
         }
+      }
+      return;
+    }
+    if (sg.IsValidForSave() && !sg.IsReference() && sg.GetAtoms().IsExplicit()) {
+      TAtomRefList atoms = sg.GetAtoms().ExpandList(*a.GetParent()->GetRefMod());
+      if (atoms.IsEmpty() || atoms[0].GetAtom().IsSaved()) {
+        return;
+      }
+      for (size_t i = 0; i < atoms.Count(); i++) {
+        _DrySaveAtom(atoms[i].GetAtom(), indices, false, checkResi);
       }
       return;
     }

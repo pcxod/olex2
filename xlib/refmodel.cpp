@@ -1416,14 +1416,11 @@ const_strlist RefinementModel::Describe() {
           continue;
         }
         TAtomRefList atoms = sg.GetDependent(j).GetAtoms().ExpandList(*this);
-        if (atoms.Count() != ratoms.Count()) {
-          continue;
-        }
         lst.Add('{') << AtomListToStr(atoms, InvalidSize, ", ") << '}' <<
           " sigma for 1-2: " << sg.GetDependent(j).Esd12 << ", 1-3: " <<
           sg.GetDependent(j).Esd13;
       }
-      lst.Add("as");
+      lst.Add("as in");
       lst.Add('{') << AtomListToStr(ratoms, InvalidSize, ", ") << '}';
     }
     for (size_t i = 0; i < rSAME.Count(); i++) {
@@ -2406,7 +2403,12 @@ void RefinementModel::AfterAUSort_() {
 }
 //..............................................................................
 void RefinementModel::Sort_() {
-  rSAME.SortGroupContent();
+  try {
+    rSAME.SortGroupContent();
+  }
+  catch (const TExceptionBase &e) {
+    TBasicApp::NewLogEntry(logError) << "Failed to sort SAME groups";
+  }
   AfixGroups.SortGroupContent();
   rFLAT.SortAtomsByTags();
   rRIGU.SortAtomsByTags();
