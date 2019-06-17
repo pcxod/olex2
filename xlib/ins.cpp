@@ -757,7 +757,7 @@ void TIns::_ProcessAfix0(ParseContext& cx)  {
 bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
   ParseContext& cx, size_t& i)
 {
-  if (cx.End) {
+  if (cx.End  && !Toks[0].Equalsi("WGHT")) {
     return false;
   }
   if (_ParseIns(cx.rm, Toks)) {
