@@ -228,6 +228,7 @@ void XLibMacros::Export(TLibrary& lib)  {
 //_____________________________________________________________________________
   xlib_InitMacro(HAdd,
     "r-use restraints vs constraints for water molecules [False]&;"
+    "nr3-disable H placement for NR3 [False]&;"
     "p-put added H atoms to given part (sometimes needed when add/del bonds) "
     "are used in conjunction with parts&;"
     "a-changes AFIX to the given value (like 3 is needed sometimes for complex)"
@@ -1623,6 +1624,7 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options,
     latt.UpdateConnectivity();
     RefinementModel &rm = XApp.XFile().GetRM();
     TXlConGen xlConGen(rm);
+    xlConGen.Options = Options;
     xlConGen.SetUseRestrains(Options.GetBoolOption('r'));
     TUnitCell &uc = XApp.XFile().GetUnitCell();
     if (Hfix == 0) {

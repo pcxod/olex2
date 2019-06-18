@@ -2064,7 +2064,7 @@ size_t TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom,
           }
           count += 1;
         }
-        else {
+        else if (cg.Options.GetBoolOption("nr3", false, true)) {
           // this excludes P-N bonds, http://www.olex2.org/olex2-bugs/359
           if (d1 < 1.65 && d2 < 1.65 && d3 < 1.65) {
             if (!dry_run) {

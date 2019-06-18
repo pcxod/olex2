@@ -43,7 +43,7 @@ const uint16_t
 const uint16_t
   fgDefault     = 0,
   fgLinear      = 1,
-  fgPlaner      = 2,
+  fgPlanar      = 2,
   fgTetrahedral = 3;
 
 typedef TTypeList< olx_pair_t<double, double> > TFixedValueList;
@@ -52,8 +52,8 @@ class AConstraintGenerator : public IOlxObject {
   bool UseRestrains;
 protected:
   olx_pdict<uint32_t,double> Distances;
-  void DoGenerateAtom(TResidue &r, TCAtomPList& created, TAsymmUnit& au, vec3d_list& Crds,
-    const olxstr& StartingName);
+  void DoGenerateAtom(TResidue &r, TCAtomPList& created, TAsymmUnit& au,
+    vec3d_list& Crds, const olxstr& StartingName);
   void GenerateAtom(TCAtomPList& created, TAtomEnvi& envi, const short Group,
     const cm_Element& atomType, TAtomEnvi* pivoting = 0);
   RefinementModel& RefMod;
@@ -67,7 +67,8 @@ public:
   virtual void AnalyseMultipart(const TAtomEnvi& envi,
     const TTypeList<TCAtomPList>& parts) = 0;
   
-  DefPropBIsSet(UseRestrains)
+  DefPropBIsSet(UseRestrains);
+  TParamList Options;
 
   /* front 16 bits - number of bonds, following 8 bits - geometry, rear 8 bits
   - group */
