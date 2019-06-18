@@ -1833,7 +1833,7 @@ size_t TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom,
           if (d < 1.25) {
             if (NAE.Count() > 1) {
               bool done = false;
-              if (NAE.Count() == 2) { // check acetilene again
+              if (NAE.Count() == 2) { // check acetylene again
                 vec3d v = (NAE.GetCAtom(0) == atom.CAtom() ? NAE.GetCrd(1)
                   : NAE.GetCrd(0));
                 double ang = (v - NAE.GetBase().crd())
@@ -2462,7 +2462,7 @@ void TLattice::RemoveNonHBonding(TAtomEnvi& Envi, size_t max) {
     TSizeList to_exclude;
     for (size_t i = 0; i < AE.Count(); i++) {
       const double d = Envi.GetBase().crd().DistanceTo(AE.GetCrd(i));
-      if (d < 0.7 || d > 1.3) {
+      if (d < 0.65 || d > 1.2) {
         to_exclude.Add(i);
       }
     }
