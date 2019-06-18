@@ -104,6 +104,14 @@ bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group,
     case fgOH2:
       dis = Distances.Get(GenId(fgOH2, 0));
       if (CreatedAtoms.Count() == 2) {
+        bool force_restraints = false;
+        if (envi.Count() == 1 && pivoting != 0 && pivoting->Count() == 2) {
+          force_restraints = olx_tetrahedron_volume_n(envi.GetBase().crd(),
+            envi.GetCrd(0),
+            CreatedAtoms[0]->GetParent()->Orthogonalise(CreatedAtoms[0]->ccrd()),
+            CreatedAtoms[0]->GetParent()->Orthogonalise(CreatedAtoms[1]->ccrd())
+          ) < 1e-3;
+        }
         if (IsUseRestrains()) {
           sr = &RefMod.rDFIX.AddNew();
           sr->SetValue(dis);
@@ -123,7 +131,15 @@ bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group,
         else if (envi.Count() == 1 &&
           XElementLib::IsMetal(envi.GetCAtom(0).GetType()))
         {
-          afix = 7;
+          if (force_restraints) {
+            sr = &RefMod.rSADI.AddNew();
+            sr->AddAtomPair(envi.GetCAtom(0), 0, *CreatedAtoms[0], 0);
+            sr->AddAtomPair(envi.GetCAtom(0), 0, *CreatedAtoms[1], 0);
+            afix = 6;
+          }
+          else {
+            afix = 7;
+          }
         }
         else {
           afix = 6;
