@@ -114,7 +114,19 @@ THtml* THtmlManager::FindHtml(const olxstr& name) const {
     return main;
   }
   TPopupData *pd = Popups.Find(name, 0);
-  return pd == 0 ? 0 : pd->Html;
+  if (pd == 0) {
+    for (size_t i = 0; i < main->ObjectCount(); i++) {
+      if (main->GetObjectName(i).Equals(name) &&
+        main->GetObject(i)->Is<THtml>())
+      {
+        return (THtml *)main->GetObject(i);
+      }
+    }
+    return 0;
+  }
+  else {
+    return pd->Html;
+  }
 }
 //.............................................................................
 bool THtmlManager::Enter(const IOlxObject *sender, const IOlxObject *data,
@@ -421,7 +433,27 @@ void THtmlManager::macUpdate(TStrObjList &Cmds, const TParamList &Options,
       "undefined html window: ").quote() << (Cmds.IsEmpty() ? "main" : Cmds[0]);
     return;
   }
-  html->LoadPage(html->FileName.u_str());
+  if (html->GetParentCell() != 0 && html->GetParentCell()->GetFloatY() != 0) {
+    main->Freeze();
+    html->LoadPage(html->FileName.u_str());
+    wxClientDC dc(main);
+    wxHtmlRenderingInfo r_info;
+    main->GetRootCell()->DrawInvisible(dc, 0, 0, r_info);
+    wxClientDC dc1(html);
+    wxHtmlRenderingInfo r_info1;
+    html->GetRootCell()->DrawInvisible(dc, 0, 0, r_info1);
+    int bh = html->GetBestHeight(html->GetParentCell()->GetWidth());
+    if (html->GetParentCell()->GetHeight() != bh + 20) {
+      html->GetParentCell()->SetHeight(bh + 20);
+      main->CreateLayout();
+      main->GetRootCell()->DrawInvisible(dc, 0, 0, r_info);
+    }
+    main->Thaw();
+  }
+  else {
+    html->LoadPage(html->FileName.u_str());
+  }
+  
 }
 //.............................................................................
 void THtmlManager::macSetFonts(TStrObjList &Cmds, const TParamList &Options,

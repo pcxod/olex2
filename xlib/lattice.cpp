@@ -1747,8 +1747,7 @@ size_t TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom,
   ProcessingAtoms.Add(atom);
   size_t count = 0;
   cm_Element& h_elm = XElementLib::GetByIndex(iHydrogenIndex);
-  TAtomEnvi AE;
-  UnitCell->GetAtomEnviList(atom, AE, false, part, true);
+  TAtomEnvi AE = UnitCell->GetAtomEnviList(atom, false, part, true);
   if (part == DefNoPart) {  // check for disorder
     TIntList parts;
     TDoubleList occu;
@@ -1812,8 +1811,7 @@ size_t TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom,
           olxstr("Could not locate atom ").quote() << AE.GetLabel(0));
       }
 
-      TAtomEnvi NAE;
-      UnitCell->GetAtomEnviList(*A, NAE, false, part);
+      TAtomEnvi NAE = UnitCell->GetAtomEnviList(*A, false, part);
       if (A->GetType() == iCarbonZ && NAE.Count() == 2 && d < 1.2) {
         if (!dry_run) {
           TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() << ": XCH";
@@ -1949,8 +1947,7 @@ size_t TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom,
           throw TFunctionFailedException(__OlxSourceInfo,
             olxstr("Could not locate atom ").quote() << AE.GetLabel(0));
         }
-        TAtomEnvi NAE;
-        UnitCell->GetAtomEnviList(*A, NAE, false, part);
+        TAtomEnvi NAE = UnitCell->GetAtomEnviList(*A, false, part);
         NAE.Exclude(atom.CAtom());
 
         if (A->GetType() == iCarbonZ && NAE.Count() > 1) {
@@ -2024,8 +2021,12 @@ size_t TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom,
           count += 1;
         }
       }
-      else if (v < 121 && (d1 < 1.3 || d2 < 1.3)) {
-        ;
+      else if (v > 118 && d1 > 1.33 && d2 > 1.33) {
+        if (!dry_run) {
+          TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() << ": ArNH";
+          cg.FixAtom(AE, fgNH1, h_elm, 0, generated);
+        }
+        count += 1;
       }
       else {
         if ((d1 + d2) > 2.70 && v < 140) {
@@ -2080,8 +2081,7 @@ size_t TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom,
   if (atom.GetType() == iOxygenZ) {  // oxygen
     if (AE.IsEmpty()) {
       if (!dry_run) {
-        TAtomEnvi pivoting;
-        UnitCell->GetAtomPossibleHBonds(AE, pivoting);
+        TAtomEnvi pivoting = UnitCell->GetAtomPossibleHBonds(AE);
         UnitCell->FilterHBonds(AE, pivoting, true);
         RemoveNonHBonding(pivoting, 2);
         TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() << ": OH2";
@@ -2092,8 +2092,7 @@ size_t TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom,
     else if (AE.Count() == 1) {
       const double d = AE.GetCrd(0).DistanceTo(atom.crd());
       if (d > 1.3) {  // otherwise a double bond
-        TAtomEnvi pivoting;
-        UnitCell->GetAtomPossibleHBonds(AE, pivoting);
+        TAtomEnvi pivoting = UnitCell->GetAtomPossibleHBonds(AE);
         // d < 1.8 - move bonds only if not coordination
         UnitCell->FilterHBonds(AE, pivoting, d < 1.8);
         RemoveNonHBonding(pivoting, d > 1.8 ? 2 : 1);
@@ -2169,8 +2168,7 @@ size_t TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom,
         (d2 > 1.8 && d1 < 1.8 && d1 > 1.38))
       {
         if (!dry_run) {
-          TAtomEnvi pivoting;
-          UnitCell->GetAtomPossibleHBonds(AE, pivoting);
+          TAtomEnvi pivoting = UnitCell->GetAtomPossibleHBonds(AE);
           UnitCell->FilterHBonds(AE, pivoting, false);
           RemoveNonHBonding(pivoting, 2);
           TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() <<
@@ -2282,14 +2280,12 @@ size_t TLattice::_ProcessRingHAdd(AConstraintGenerator& cg,
   for (size_t i = 0; i < FragmentCount(); i++) {
     GetFragment(i).FindRings(rcont, rings);
   }
-  TAtomEnvi AE;
   size_t count = 0;
   for( size_t i=0; i < rings.Count(); i++ )  {
     double rms = TSPlane::CalcRMSD(rings[i]);
     if( rms < 0.05 && TNetwork::IsRingRegular( rings[i]) )  {
       for( size_t j=0; j < rings[i].Count(); j++ )  {
-        AE.Clear();
-        UnitCell->GetAtomEnviList(*rings[i][j], AE);
+        TAtomEnvi AE = UnitCell->GetAtomEnviList(*rings[i][j]);
         if( AE.Count() == 3 )  {
           const vec3d cnt = AE.GetBase().crd();
           try  {
@@ -2429,11 +2425,9 @@ size_t TLattice::AnalyseHAdd(AConstraintGenerator& cg, const TSAtomPList& atoms,
 }
 //..............................................................................
 void TLattice::RemoveNonHBonding(TAtomEnvi& Envi, size_t max) {
-  TAtomEnvi AE;
   for (size_t i = 0; i < Envi.Count(); i++) {
     TSAtom* SA = FindSAtom(Envi.GetCAtom(i));
-    AE.Clear();
-    UnitCell->GetAtomEnviList(*SA, AE);
+    TAtomEnvi AE = UnitCell->GetAtomEnviList(*SA);
     if (SA->GetType() == iOxygenZ) {
       if (AE.Count() == 1) {
         const double d = AE.GetCrd(0).DistanceTo(SA->crd());
@@ -2457,8 +2451,7 @@ void TLattice::RemoveNonHBonding(TAtomEnvi& Envi, size_t max) {
   }
   // all similar length  .... Q peaks might help :)
   if (Envi.Count() > max) {
-    AE.Clear();
-    UnitCell->GetAtomQEnviList(Envi.GetBase(), AE);
+    TAtomEnvi AE = UnitCell->GetAtomQEnviList(Envi.GetBase());
     TSizeList to_exclude;
     for (size_t i = 0; i < AE.Count(); i++) {
       const double d = Envi.GetBase().crd().DistanceTo(AE.GetCrd(i));

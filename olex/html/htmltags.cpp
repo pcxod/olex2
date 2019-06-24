@@ -745,7 +745,7 @@ TAG_HANDLER_PROC(tag) {
           new wxHtmlContainerCell(m_WParser->GetContainer());
         THtml::WordCell* wc =
           new THtml::WordCell(Label.u_str(), *m_WParser->GetDC());
-        if (LinkInfo != NULL) {
+        if (LinkInfo != 0) {
           wc->SetLink(*LinkInfo);
         }
         wc->SetDescent(0);
@@ -1063,39 +1063,64 @@ TAG_HANDLER_PROC(tag) {
   }
   /******************* HTML CONTROL *****************************************/
   else if (TagName.Equalsi("html")) {
-    THtml *hc = new THtml(html->Manager, html);
+    THtml *hc = new THtml(html->Manager, html, ObjectName);
     CreatedObject = hc;
     CreatedWindow = hc;
+    hc->SetBorders(0);
     hc->WI.SetWidth(ax);
     hc->WI.SetHeight(ay);
     hc->LoadPage(Value.u_str());
     hc->OnLink.Add(&html->Manager);
     wxScrollbarVisibility v = wxSHOW_SB_DEFAULT,
       h = wxSHOW_SB_DEFAULT;
-    if (GetBoolAttribute(tag, "vscroll")) {
-      v = wxSHOW_SB_ALWAYS;
-    }
-    if (GetBoolAttribute(tag, "hscroll")) {
-      h = wxSHOW_SB_ALWAYS;
+    {
+      wxString vs = tag.GetParam("vscroll");
+      if (vs.CmpNoCase("false") == 0) {
+        v = wxSHOW_SB_NEVER;
+      }
+      else if (vs.CmpNoCase("true") == 0) {
+        v = wxSHOW_SB_ALWAYS;
+      }
+      vs = tag.GetParam("hscroll");
+      if (vs.CmpNoCase("false") == 0) {
+        h = wxSHOW_SB_NEVER;
+      }
+      else if (vs.CmpNoCase("true") == 0) {
+        h = wxSHOW_SB_ALWAYS;
+      }
     }
     hc->ShowScrollbars(h, v);
-    m_WParser->GetContainer()->InsertCell(new THtmlWidgetCell(hc, fl));
+    if (v == wxSHOW_SB_NEVER) {
+      wxClientDC dc(hc);
+      wxHtmlRenderingInfo r_info1;
+      hc->GetRootCell()->Layout(ax);
+      hc->GetRootCell()->DrawInvisible(dc, 0, 0, r_info1);
+      int bh = hc->GetBestHeight(ax);
+      hc->WI.SetHeight(bh);
+    }
+    THtmlWidgetCell *cell;
+    m_WParser->GetContainer()->InsertCell(
+      cell = new THtmlWidgetCell(hc, fl, v != wxSHOW_SB_ALWAYS));
+    hc->SetParentCell(cell);
   }
   /******************* END OF CONTROLS ******************************************/
   if (LinkInfo != 0) {
     delete LinkInfo;
   }
   if (ObjectName.IsEmpty()) {}  // create random name?
-  if (CreatedWindow != NULL) {  // set default colors
-    if (m_WParser->GetActualColor().IsOk())
+  if (CreatedWindow != 0) {  // set default colors
+    CreatedWindow->Hide();
+    //m_WParser->GetContainer()->
+    if (m_WParser->GetActualColor().IsOk()) {
       CreatedWindow->SetForegroundColour(m_WParser->GetActualColor());
+    }
     if (m_WParser->GetContainer()->GetBackgroundColour().IsOk()) {
       CreatedWindow->SetBackgroundColour(
         m_WParser->GetContainer()->GetBackgroundColour());
     }
     CreatedWindow->Enable(!GetBoolAttribute(tag, "DISABLED"));
   }
-  if (CreatedObject != NULL) {
+  if (CreatedObject != 0) {
     bool manage = GetBoolAttribute(tag, "MANAGE");
     if (html->AddControl(
       ObjectName, CreatedObject, CreatedWindow, manage))
@@ -1103,7 +1128,7 @@ TAG_HANDLER_PROC(tag) {
       TBasicApp::NewLogEntry(logInfo) << "HTML: control has been replaced: \'" <<
         ObjectName << '\'';
     }
-    if (CreatedWindow != NULL && !ObjectName.IsEmpty()) {
+    if (CreatedWindow != 0 && !ObjectName.IsEmpty()) {
       CreatedWindow->Hide();
       olxstr bgc, fgc;
       if (tag.HasParam(wxT("BGCOLOR"))) {

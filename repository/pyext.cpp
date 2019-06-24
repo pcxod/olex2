@@ -461,11 +461,17 @@ PythonExt::PythonExt(IOlex2Processor* olexProcessor, const olxstr &module_name)
 }
 //.............................................................................
 PythonExt::~PythonExt() {
-  ClearToDelete();
+  ToDelete.DeleteItems(false);
   if (Py_IsInitialized()) {
     Py_Finalize();
   }
   Instance() = NULL;
+}
+//.............................................................................
+void PythonExt::ProfileAll() {
+  for (size_t i = 0; i < ToDelete.Count(); i++) {
+    ToDelete[i]->EnableProfiling(true);
+  }
 }
 //.............................................................................
 void PythonExt::CheckInitialised() {
@@ -478,11 +484,11 @@ void PythonExt::CheckInitialised() {
   }
 }
 //.............................................................................
-PyObject* PythonExt::GetProfileInfo()  {
+PyObject* PythonExt::GetProfileInfo() {
   size_t picnt = 0;
-  for( size_t i=0; i < ToDelete.Count(); i++ ) {
-    if( ToDelete[i]->ProfileInfo() != NULL &&
-        ToDelete[i]->ProfileInfo()->CallCount > 0 )
+  for (size_t i = 0; i < ToDelete.Count(); i++) {
+    if (ToDelete[i]->ProfileInfo() != 0 &&
+      ToDelete[i]->ProfileInfo()->CallCount > 0)
     {
       picnt++;
     }
@@ -490,9 +496,9 @@ PyObject* PythonExt::GetProfileInfo()  {
 
   PyObject *rv = PyTuple_New(picnt);
   picnt = 0;
-  for( size_t i=0; i < ToDelete.Count(); i++ )  {
+  for (size_t i = 0; i < ToDelete.Count(); i++) {
     PythonExt::ProfileInfo *pi = ToDelete[i]->ProfileInfo();
-    if( pi != NULL && pi->CallCount > 0 )  {
+    if (pi != NULL && pi->CallCount > 0) {
       PyTuple_SetItem(rv, picnt, Py_BuildValue("sil",
         PyEval_GetFuncName(
           ToDelete[i]->GetFunction()), pi->CallCount, pi->TotalTimeMs));
@@ -502,7 +508,7 @@ PyObject* PythonExt::GetProfileInfo()  {
   return rv;
 }
 //.............................................................................
-int PythonExt::RunPython(const olxstr& script)  {
+int PythonExt::RunPython(const olxstr& script) {
   CheckInitialised();
   return PyRun_SimpleString(script.c_str());
 }
@@ -513,17 +519,18 @@ void ExportLib(const olxstr &_root, const TLibrary& Lib,
   if (Lib.IsEmpty()) return;
 
   olxstr root = TEFile::AddPathDelimeter(_root);
-  if( !TEFile::Exists(root) )
+  if (!TEFile::Exists(root))
     TEFile::MakeDir(root);
   TEFile out(root + "__init__.py", "w+b");
   out.Write("import sys\n");
   out.Write(olxcstr("import ") << module_name << "\n");
-  for( size_t i=0; i < Lib.LibraryCount(); i++ )  {
+  for (size_t i = 0; i < Lib.LibraryCount(); i++) {
     TLibrary &lib = *Lib.GetLibraryByIndex(i);
-    if( !lib.IsEmpty() )
+    if (!lib.IsEmpty()) {
       out.Write(olxcstr("import ") << lib.GetName() << '\n');
+    }
   }
-  for( size_t i=0; i < Lib.FunctionCount(); i++ )  {
+  for (size_t i = 0; i < Lib.FunctionCount(); i++) {
     ABasicFunction* fun = Lib.GetFunctionByIndex(i);
     olxstr pyName = fun->GetName();
     pyName.Replace('@', "At");
@@ -531,30 +538,33 @@ void ExportLib(const olxstr &_root, const TLibrary& Lib,
       << '\n');
   }
 
-  for( size_t i=0; i < Lib.MacroCount(); i++ )  {
+  for (size_t i = 0; i < Lib.MacroCount(); i++) {
     ABasicFunction* fun = Lib.GetMacroByIndex(i);
-    if (dynamic_cast<macrolib::TEMacro*>(fun) != NULL)
+    if (dynamic_cast<macrolib::TEMacro*>(fun) != 0) {
       continue;
+    }
     olxstr pyName = fun->GetName();
     pyName.Replace('@', "At");
     out.Write(PyFuncBody(fun->GetQualifiedName(), pyName, ' ', module_name)
       << '\n');
   }
-  for( size_t i=0; i < Lib.LibraryCount(); i++ )  {
+  for (size_t i = 0; i < Lib.LibraryCount(); i++) {
     TLibrary &lib = *Lib.GetLibraryByIndex(i);
-    ExportLib(root + lib.GetName(),  lib, module_name);
+    ExportLib(root + lib.GetName(), lib, module_name);
   }
 }
 //.............................................................................
-void PythonExt::funExport(const TStrObjList& Cmds, TMacroData& E)  {
+void PythonExt::funExport(const TStrObjList& Cmds, TMacroData& E) {
   IOlex2Processor* o_r = PythonExt::GetInstance()->GetOlexProcessor();
-  if( o_r == NULL )  return;
-  // clean up legacy export
-  if (TEFile::Exists(Cmds[0]+".py")) {
-    TEFile::DelFile(Cmds[0]+".py");
+  if (o_r == 0) {
+    return;
   }
-  if (TEFile::Exists(Cmds[0]+".pyc")) {
-    TEFile::DelFile(Cmds[0]+".pyc");
+  // clean up legacy export
+  if (TEFile::Exists(Cmds[0] + ".py")) {
+    TEFile::DelFile(Cmds[0] + ".py");
+  }
+  if (TEFile::Exists(Cmds[0] + ".pyc")) {
+    TEFile::DelFile(Cmds[0] + ".pyc");
   }
   bool do_export = true;
   olxstr last_exp_fn = Cmds[0] + ".cache";
@@ -583,7 +593,7 @@ void PythonExt::macRun(TStrObjList& Cmds, const TParamList &Options,
   TMacroData& E)
 {
   olxstr fn = TEFile::OSPath(Cmds.Text(' '));
-  if( !TEFile::Exists(fn) )  {
+  if (!TEFile::Exists(fn)) {
     E.ProcessingError(__OlxSrcInfo,
       "specified script file does not exist: ") << fn;
     return;
@@ -591,35 +601,46 @@ void PythonExt::macRun(TStrObjList& Cmds, const TParamList &Options,
   olxstr cd = TEFile::CurrentDir();
   TEFile::ChangeDir(TEFile::ExtractFilePath(fn));
 
-  if( RunPython(
-        olxstr("execfile(\'") << TEFile::ExtractFileName(fn) << "\')") == -1)
+  if (RunPython(
+    olxstr("execfile(\'") << TEFile::ExtractFileName(fn) << "\')") == -1)
   {
     E.ProcessingError(__OlxSrcInfo, "script execution failed");
   }
-
   TEFile::ChangeDir(cd);
 }
 //.............................................................................
-void PythonExt::funLogLevel(const TStrObjList& Params, TMacroData& E)  {
+void PythonExt::funLogLevel(const TStrObjList& Params, TMacroData& E) {
   using namespace macrolib;
-  if( Params.IsEmpty() )  {
+  if (Params.IsEmpty()) {
     olxstr ll;
-    if( (GetLogLevel()&macro_log_macro) != 0 )  ll << 'm';
-    if( (GetLogLevel()&macro_log_function) != 0 )  ll << 'f';
+    if ((GetLogLevel()&macro_log_macro) != 0) {
+      ll << 'm';
+    }
+    if ((GetLogLevel()&macro_log_function) != 0) {
+      ll << 'f';
+    }
     E.SetRetVal(ll);
   }
-  else  {
+  else {
     uint8_t ll = 0;
-    if( Params[0].IndexOfi('m') != InvalidIndex )  ll |= macro_log_macro;
-    if( Params[0].IndexOfi('f') != InvalidIndex )  ll |= macro_log_function;
+    if (Params[0].IndexOfi('m') != InvalidIndex) {
+      ll |= macro_log_macro;
+    }
+    if (Params[0].IndexOfi('f') != InvalidIndex) {
+      ll |= macro_log_function;
+    }
     SetLogLevel(ll);
   }
 }
+
+void funProfileAll(const TStrObjList& Params, TMacroData& E) {
+  PythonExt::GetInstance()->ProfileAll();
+}
 //.............................................................................
-TLibrary* PythonExt::ExportLibrary(const olxstr& name)  {
+TLibrary* PythonExt::ExportLibrary(const olxstr& name) {
   // binding library
   PythonExt::GetOlexProcessor()->GetLibrary().AttachLibrary(
-    BindLibrary=new TLibrary("spy"));
+    BindLibrary = new TLibrary("spy"));
   Library = new TLibrary(name.IsEmpty() ? olxstr("py") : name);
   Library->Register(
     new TFunction<PythonExt>(this, &PythonExt::funExport,
@@ -633,8 +654,12 @@ TLibrary* PythonExt::ExportLibrary(const olxstr& name)  {
       "Run", EmptyString(),
       fpAny^fpNone, "Runs provided file"));
   Library->Register(
+    new TStaticFunction(&funProfileAll,
+      "ProfileAll",
+      fpAny^fpNone, "Switches profiling to all of the Python functions"));
+  Library->Register(
     new TFunction<PythonExt>(this, &PythonExt::funLogLevel,
-      "LogLevel", fpNone|fpOne,
+      "LogLevel", fpNone | fpOne,
       "Sets log level - default is macro, look at LogLevel for more "
       "information"));
   return Library;
@@ -643,7 +668,7 @@ TLibrary* PythonExt::ExportLibrary(const olxstr& name)  {
 bool PythonExt::ParseTuple(PyObject* tuple, const char* format, ...) {
   va_list argptr;
   va_start(argptr, format);
-  if (tuple == NULL) {
+  if (tuple == 0) {
     va_end(argptr);
     return false;
   }

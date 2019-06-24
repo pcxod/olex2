@@ -20,31 +20,37 @@ typedef void (*pyRegFunc)();
 
 class PythonExt : public IOlxObject {
   static PythonExt *&Instance() {
-    static PythonExt* inst=NULL;
+    static PythonExt* inst=0;
     return inst;
   }
   IOlex2Processor* OlexProcessor;
   TLibrary *Library, *BindLibrary;
   TTypeList<pyRegFunc> ToRegister;
 //.............................................................................
-  struct ProfileInfo  {
+  struct ProfileInfo {
     int CallCount;
     uint64_t TotalTimeMs;
-    ProfileInfo()  {  Reset();  }
-    void Reset()   {  CallCount = 0;  TotalTimeMs = 0;  }
+    ProfileInfo() :
+      CallCount(0),
+    TotalTimeMs(0)
+    {}
+    void Reset() {
+      CallCount = 0;
+      TotalTimeMs = 0;
+    }
   };
 //.............................................................................
 public:
-  class BasicWrapper : public IOlxObject  {
+  class BasicWrapper : public IOlxObject {
     PythonExt::ProfileInfo *PI;
     uint64_t StartTime;
     int Recursion;  // specifies that the function is called recursively
   protected:
     PyObject *PyFunction;
     bool IsProfilingEnabled()  const {
-      return PI != NULL;
+      return PI != 0;
     }
-    void OnCallEnter()  {
+    void OnCallEnter() {
       if (PI == 0) {
         return;
       }
@@ -53,48 +59,47 @@ public:
         return;
       }
       StartTime = TETime::msNow();
-     }
-    void OnCallLeave()  {
-      if( PI == NULL )  return;
-      if( --Recursion > 0 )  return;
+    }
+    void OnCallLeave() {
+      if (PI == 0) {
+        return;
+      }
+      if (--Recursion > 0) {
+        return;
+      }
       uint64_t now = TETime::msNow();
       PI->TotalTimeMs += ((StartTime < now) ? (now - StartTime) : 0);
       Recursion = 0;
     }
     //..........................................................................
+  public:
+    BasicWrapper(bool enableProfiling) {
+      PI = 0;
+      StartTime = 0;
+      Recursion = 0;
+      EnableProfiling(enableProfiling);
+    }
+    //..........................................................................
+    virtual ~BasicWrapper() {
+      olx_del_obj(PI);
+    }
+    PyObject* GetFunction() const { return PyFunction; }
+    PythonExt::ProfileInfo *ProfileInfo() { return PI; }
     void EnableProfiling(bool enable) {
       if (enable) {
-        if (PI == NULL) {
+        if (PI == 0) {
           PI = new PythonExt::ProfileInfo();
         }
         else  PI->Reset();
       }
       else {
         delete PI;
-        PI = NULL;
+        PI = 0;
       }
     }
-    //..........................................................................
-  public:
-    BasicWrapper(bool enableProfiling)  {
-      PI = NULL;
-      StartTime = 0;
-      Recursion = 0;
-      EnableProfiling(enableProfiling);
-    }
-    //..........................................................................
-    virtual ~BasicWrapper()  {  if( PI != NULL )  delete PI;  }
-    PyObject* GetFunction() const {  return PyFunction;  }
-    PythonExt::ProfileInfo *ProfileInfo() {  return PI;  }
   };
 //.............................................................................
   TPtrList<BasicWrapper> ToDelete;
-//.............................................................................
-  void ClearToDelete() {
-    for (size_t i = 0; i < ToDelete.Count(); i++) {
-      delete ToDelete[i];
-    }
-  }
 //.............................................................................
   void macReset(TStrObjList& Cmds, const TParamList &Options, TMacroData& E);
   void macRun(TStrObjList& Cmds, const TParamList &Options, TMacroData& E);
@@ -111,8 +116,8 @@ public:
   {
     return *(new PythonExt(olexProcessor, module_name));
   }
-  static void Finilise()  {
-    if (Instance() != NULL) {
+  static void Finilise() {
+    if (Instance() != 0) {
       delete Instance();
       Instance() = NULL;
     }
@@ -140,11 +145,14 @@ public:
     }
     return Instance();
   }
+
+  void ProfileAll();
+
   PyObject* GetProfileInfo();
 // building string
   static PyObject* BuildString(const olxstr& str)  {
 #ifdef _UNICODE
-    if (str.IsEmpty()) { // silly Py...
+    if (str.IsEmpty()) {
       return PyUnicode_FromWideChar(L"", 0);
     }
     return PyUnicode_FromWideChar(str.raw_str(), str.Length());
@@ -155,20 +163,20 @@ public:
 #endif
   }
   static PyObject* BuildCString(const olxcstr& str)  {
-    if (str.IsEmpty()) { // silly Py...
+    if (str.IsEmpty()) {
       return PyString_FromStringAndSize("", 0);
     }
     return PyString_FromStringAndSize(str.raw_str(), str.Length());
   }
   static PyObject* BuildWString(const olxwstr& str) {
-    if (str.IsEmpty()) { // silly Py...
+    if (str.IsEmpty()) {
       return PyUnicode_FromWideChar(L"", 0);
     }
     return PyUnicode_FromWideChar(str.raw_str(), str.Length());
   }
 // parsing string
   static olxstr ParseStr(PyObject *pobj) {
-    char*  crv;
+    char* crv;
     olxstr rv;
     if (pobj->ob_type == &PyString_Type && PyArg_Parse(pobj, "s", &crv)) {
       rv = crv;
@@ -213,7 +221,7 @@ public:
     PyObject* val = BuildString(olxstr(location) << ": " << msg);
     PyErr_SetObject(err_type, val);
     Py_DECREF(val);
-    return NULL;
+    return 0;
   }
   static PyObject* SetErrorMsg(PyObject* err_type, const olxcstr& location,
     const char* msg)
@@ -221,7 +229,7 @@ public:
     PyObject* val = Py_BuildValue("s: s", location.c_str(), msg);
     PyErr_SetObject(err_type, val);
     Py_DECREF(val);
-    return NULL;
+    return 0;
   }
   static PyObject* InvalidArgumentException(const olxcstr& location,
     const char* msg)
@@ -230,7 +238,7 @@ public:
       "invalid argument format for ", msg);
     PyErr_SetObject(PyExc_TypeError, val);
     Py_DECREF(val);
-    return NULL;
+    return 0;
   }
   static PyObject* PyNone()  {  Py_INCREF(Py_None);  return Py_None;  }
   static PyObject* PyTrue()  {  Py_INCREF(Py_True);  return Py_True;  }

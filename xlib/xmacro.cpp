@@ -1648,8 +1648,7 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options,
     }
     else if (Hfix < 0) {
       if (satoms.Count() > 1) {
-        TAtomEnvi AE;
-        AE.SetBase(*satoms[0]);
+        TAtomEnvi AE(*satoms[0]);
         for (size_t ei = 1; ei < satoms.Count(); ei++) {
           TSAtom &a = *satoms[ei];
           AE.Add(a.CAtom(), a.GetMatrix(), a.crd());
@@ -1692,8 +1691,7 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options,
       for (size_t aitr=0; aitr < satoms.Count(); aitr++) {
         TIntList parts;
         TDoubleList occu;
-        TAtomEnvi AE;
-        uc.GetAtomEnviList(*satoms[aitr], AE, false, DefNoPart, true);
+        TAtomEnvi AE = uc.GetAtomEnviList(*satoms[aitr], false, DefNoPart, true);
         for (size_t i = 0; i < AE.Count(); i++) {
           if (AE.GetCAtom(i).GetPart() != 0 &&
             AE.GetCAtom(i).GetPart() != AE.GetBase().CAtom().GetPart())
@@ -1734,8 +1732,7 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options,
         else {
           XApp.NewLogEntry() << "Processing " << parts.Count() << " parts";
           for (size_t i=0; i < parts.Count(); i++) {
-            AE.Clear();
-            uc.GetAtomEnviList(*satoms[aitr], AE, false, parts[i], true);
+            AE = uc.GetAtomEnviList(*satoms[aitr], false, parts[i], true);
             /*consider special case where the atom is bound to itself but
             very long bond > 1.6 A */
             smatd* eqiv = 0;
@@ -5075,7 +5072,6 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options,
       "_geom_hbond_angle_DHA,_geom_hbond_site_symmetry_A");
     smatd I;
     I.I().SetId(0);
-    TAtomEnvi envi;
     for (size_t i = 0; i < rm.InfoTabCount(); i++) {
       InfoTab& it = rm.GetInfoTab(i);
       if (it.GetType() != infotab_htab || !it.IsValid()) {
@@ -5086,8 +5082,7 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options,
       if (dsa == 0) { //eh?
         continue;
       }
-      envi.Clear();
-      xapp.XFile().GetUnitCell().GetAtomEnviList(*dsa, envi);
+      TAtomEnvi envi = xapp.XFile().GetUnitCell().GetAtomEnviList(*dsa);
       for (size_t j = 0; j < envi.Count(); j++) {
         if (envi.GetType(j) != iHydrogenZ) {
           continue;

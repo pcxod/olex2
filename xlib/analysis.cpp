@@ -1537,10 +1537,12 @@ ConstTypeList<fragments::ring> fragments::fragment::get_rings(
       rv[i].atoms.ForEach(TCAtom::FlagSetter(catom_flag_Processed, true));
       try {
         rv[i] = ring_sorter(rv[i].atoms);
+        if (rv[i].atoms.IsEmpty()) {
+          rv.NullItem(i);
+        }
       }
       catch (const TExceptionBase &e) {
         rv.NullItem(i);
-        TBasicApp::NewLogEntry(logInfo) << e.GetException()->GetFullMessage();
       }
     }
   }
@@ -1565,8 +1567,11 @@ ConstPtrList<TCAtom> fragments::fragment::ring_sorter(const TCAtomPList &r) {
       }
     }
     if (!set) {
-      throw TInvalidArgumentException(__OlxSourceInfo,
-        olxstr("ring ") << alg::label(r));
+#ifdef _DEBUG
+      TBasicApp::NewLogEntry(logWarning) << "DEBUG: " <<
+        "Failed to sort " << alg::label(r) << " ring";
+#endif
+      return new TCAtomPList(r);
     }
   }
   return res;
@@ -1936,8 +1941,7 @@ const cm_Element &Analysis::check_atom_type(TSAtom &a) {
   }
 
   TUnitCell &uc = a.CAtom().GetParent()->GetLattice().GetUnitCell();
-  TAtomEnvi ae;
-  uc.GetAtomEnviList(a, ae);
+  TAtomEnvi ae = uc.GetAtomEnviList(a);
   size_t metal_c = 0;
   for (size_t i = 0; i < ae.Count(); i++) {
     if (XElementLib::IsMetal(ae.GetCAtom(i).GetType())) {
