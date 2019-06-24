@@ -23,16 +23,18 @@
 THtml::THtml(THtmlManager &manager, wxWindow *Parent,
   const olxstr &pop_name, int flags)
   : wxHtmlWindow(Parent, -1, wxDefaultPosition, wxDefaultSize, flags),
-    AOlxCtrl(this),
-    PopupName(pop_name), ObjectsState(*this),
-    Manager(manager),
-    OnLink(Actions.New("ONLINK")),
-    OnURL(Actions.New("ONURL")),
-    OnDblClick(Actions.New("ONDBLCL")),
-    OnKey(Actions.New("ONCHAR")),
-    OnSize(Actions.New("ONSIZE"))
+  AOlxCtrl(this),
+  PopupName(pop_name),
+  parentCell(0),
+  ObjectsState(*this),
+  Manager(manager),
+  OnLink(Actions.New("ONLINK")),
+  OnURL(Actions.New("ONURL")),
+  OnDblClick(Actions.New("ONDBLCL")),
+  OnKey(Actions.New("ONCHAR")),
+  OnSize(Actions.New("ONSIZE"))
 {
-  Root = new THtmlSwitch(this, NULL);
+  Root = new THtmlSwitch(this, 0);
   Movable = false;
   MouseDown = false;
   ShowTooltips = true;
@@ -202,19 +204,19 @@ void THtml::UpdateSwitchState(THtmlSwitch &Switch, olxstr &String)  {
   String = Tmp;
 }
 //.............................................................................
-void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
-  TStringToList<olxstr,THtmlSwitch*>& Lst = Sender.GetStrings();
+void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip) {
+  TStringToList<olxstr, THtmlSwitch*>& Lst = Sender.GetStrings();
   TStrList Toks;
   using namespace exparse::parser_util;
-  static const olxstr Tag  = "<!-- #include ",
-           Tag1 = "<!-- #includeif ",
-           Tag2 = "<!-- #include",
-           comment_open = "<!--", comment_close = "-->";
-  Olex2App *app=NULL;
+  static const olxstr Tag = "<!-- #include ",
+    Tag1 = "<!-- #includeif ",
+    Tag2 = "<!-- #include",
+    comment_open = "<!--", comment_close = "-->";
+  Olex2App *app = 0;
   try { app = &Olex2App::GetInstance(); }
-  catch(...) {}
+  catch (...) {}
   olex2::IOlex2Processor *op = olex2::IOlex2Processor::GetInstance();
-  for( size_t i=0; i < Lst.Count(); i++ )  {
+  for (size_t i = 0; i < Lst.Count(); i++) {
     Lst[i].Replace("~popup_name~", PopupName);
     olxstr tmp = olxstr(Lst[i]).TrimWhiteChars();
     // skip comments
@@ -222,7 +224,7 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
       //tag_parse_info tpi = skip_tag(Lst, Tag2, Tag3, i, 0);
       if (tmp.EndsWith(comment_close))  continue;
       bool tag_found = false;
-      while (++i < Lst.Count())  {
+      while (++i < Lst.Count()) {
         if (olxstr(Lst[i]).TrimWhiteChars().EndsWith(comment_close)) {
           tag_found = true;
           break;
@@ -236,107 +238,119 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
       }
     }
     // TRANSLATION START
-    if (app != NULL) {
+    if (app != 0) {
       Lst[i] = app->TranslateString(Lst[i]);
       size_t bs = Lst[i].IndexOf("$+");
       if (bs != InvalidIndex) {
         TStrList blk;
-        blk.Add(Lst[i].SubStringFrom(bs+2).TrimWhiteChars(true, false));
-        Lst[i].Delete(bs, Lst[i].Length()-bs);
-        size_t bi=i;
+        blk.Add(Lst[i].SubStringFrom(bs + 2).TrimWhiteChars(true, false));
+        Lst[i].Delete(bs, Lst[i].Length() - bs);
+        size_t bi = i;
         while (++bi < Lst.Count()) {
           size_t be = Lst[bi].IndexOf("$-");
           if (be != InvalidIndex) {
             blk.Add(Lst[bi].SubStringTo(be).TrimWhiteChars(true, false));
-            Lst[bi].Delete(0, be+2);
+            Lst[bi].Delete(0, be + 2);
             break;
           }
-          else
+          else {
             blk.Add(Lst[bi].TrimWhiteChars(true, false));
+          }
         }
-        Lst.DeleteRange(i+1, blk.Count()-2);
-        Lst.Insert(i+1, olxstr('$') << blk.Text(EmptyString()), NULL);
+        Lst.DeleteRange(i + 1, blk.Count() - 2);
+        Lst.Insert(i + 1, olxstr('$') << blk.Text(EmptyString()), 0);
       }
-      if (Lst[i].IndexOf("$") != InvalidIndex && op != NULL) {
+      if (Lst[i].IndexOf("$") != InvalidIndex && op != 0) {
         op->processFunction(Lst[i],
-          olxstr(Sender.GetCurrentFile()) << '#' << (i+1));
+          olxstr(Sender.GetCurrentFile()) << '#' << (i + 1));
       }
     }
     // TRANSLATION END
     int stm = (Lst[i].StartsFrom(Tag1) ? 1 : 0);
-    if( stm == 0 )  stm = (Lst[i].StartsFrom(Tag) ? 2 : 0);
-    if( stm != 0 )  {
+    if (stm == 0) {
+      stm = (Lst[i].StartsFrom(Tag) ? 2 : 0);
+    }
+    if (stm != 0) {
       tmp = Lst[i].SubStringFrom(stm == 1 ? Tag1.Length() : Tag.Length());
       Toks.Clear();
       Toks.Strtok(tmp, ' '); // extract item name
-      if( (stm == 1 && Toks.Count() < 4) ||
-          (stm == 2 && Toks.Count() < 3) )  {
+      if ((stm == 1 && Toks.Count() < 4) ||
+        (stm == 2 && Toks.Count() < 3)) {
         TBasicApp::NewLogEntry(logError) << "Wrong #include[if] syntax: " << tmp;
         continue;
       }
-      if( stm == 1 )  {
+      if (stm == 1) {
         tmp = Toks[0];
-        if( op != NULL && op->processFunction(tmp) )  {
-          if( !tmp.ToBool() )  continue;
+        if (op != 0 && op->processFunction(tmp)) {
+          if (!tmp.ToBool()) {
+            continue;
+          }
         }
-        else  continue;
+        else {
+          continue;
+        }
         Toks.Delete(0);
       }
       THtmlSwitch* Sw = &Sender.NewSwitch();
       Lst.GetObject(i) = Sw;
       Sw->SetName(Toks[0]);
-      tmp = Toks.Text(' ', 1, Toks.Count()-1);
+      tmp = Toks.Text(' ', 1, Toks.Count() - 1);
       Toks.Clear();
       TParamList::StrtokParams(tmp, ';', Toks); // extract arguments
-      if( Toks.Count() < 2 )  { // must be at least 2 for filename and status
+      if (Toks.Count() < 2) { // must be at least 2 for filename and status
         TBasicApp::NewLogEntry(logError) <<
           "Wrong defined switch (not enough data)" << Sw->GetName();
         continue;
       }
 
-      for( size_t j=0; j < Toks.Count()-1; j++ )  {
-        if( Toks[j].FirstIndexOf('=') == InvalidIndex )  {
-          if( izZip && !TZipWrapper::IsZipFile(Toks[j]) )  {
-            if( Toks[j].StartsFrom('\\') || Toks[j].StartsFrom('/') )
+      for (size_t j = 0; j < Toks.Count() - 1; j++) {
+        if (Toks[j].FirstIndexOf('=') == InvalidIndex) {
+          if (izZip && !TZipWrapper::IsZipFile(Toks[j])) {
+            if (Toks[j].StartsFrom('\\') || Toks[j].StartsFrom('/')) {
               tmp = Toks[j].SubStringFrom(1);
+            }
             else {
               tmp = TZipWrapper::ComposeFileName(
                 Sender.GetFile(Sender.GetFileIndex()), Toks[j]);
             }
           }
-          else
+          else {
             tmp = Toks[j];
-          if (op != NULL)
+          }
+          if (op != 0) {
             op->processFunction(tmp);
+          }
           Sw->AddFile(tmp);
         }
-        else  {
+        else {
           // check for parameters
-          if( Toks[j].IndexOf('#') != InvalidIndex )  {
+          if (Toks[j].IndexOf('#') != InvalidIndex) {
             tmp = Toks[j];
-            for( size_t k=0; k < Sender.GetParams().Count(); k++ )  {
+            for (size_t k = 0; k < Sender.GetParams().Count(); k++) {
               olxstr tmp1 = olxstr().Allocate(
-                  Sender.GetParams().GetName(k).Length()+2) <<
+                Sender.GetParams().GetName(k).Length() + 2) <<
                 '#' << Sender.GetParams().GetName(k);
               tmp.Replace(tmp1, Sender.GetParams().GetValue(k));
             }
             Sw->AddParam(tmp);
           }
-          else
+          else {
             Sw->AddParam(Toks[j]);
+          }
         }
       }
 
       size_t switchState = GetSwitchState(Sw->GetName()), index = InvalidIndex;
-      if( switchState == UnknownSwitchState )  {
+      if (switchState == UnknownSwitchState) {
         index_t iv = Toks.GetLastString().RadInt<index_t>();
         if (iv < 0) {
           Sw->SetUpdateSwitch(false);
         }
-        index = olx_abs(iv)-1;
+        index = olx_abs(iv) - 1;
       }
-      else
+      else {
         index = switchState;
+      }
       Sw->SetFileIndex(index);
     }
   }
@@ -424,16 +438,19 @@ bool THtml::UpdatePage(bool update_indices) {
     PageRequested.SetLength(0);
     return true;
   }
+  TStopWatch sw(__FUNC__);
   LockPageLoad(this);
+  Freeze();
 
   olxstr Path = TEFile::ExtractFilePath(FileName);
   if (TEFile::IsAbsolutePath(FileName)) {
     Path = TEFile::OSPath(Path);
     WebFolder = Path;
   }
-  else
+  else {
     Path = WebFolder;
-
+  }
+  sw.start("Updating indices");
   olxstr oldPath = TEFile::CurrentDir();
   TEFile::ChangeDir(WebFolder);
   if (update_indices) { // reload switches
@@ -456,26 +473,32 @@ bool THtml::UpdatePage(bool update_indices) {
       }
     }
   }
+  sw.start("Saving to string list");
   TStrList Res;
   Root->ToStrings(Res);
+  sw.start("Saving object states");
   ObjectsState.SaveState();
   Objects.Clear();
-  Freeze();
+  sw.start("Setting the page");
   SetPage(Res.Text(' ').u_str());
+  sw.start("Restoring object states");
   ObjectsState.RestoreState();
-  for (size_t i = 0; i < Objects.Count(); i++) {
-    if (Objects.GetValue(i).GetB() != NULL) {
-#ifndef __MAC__
-      Objects.GetValue(i).b->Move(6000, 0);
-#endif
-      Objects.GetValue(i).b->Show();
+  sw.start("Loading inner html objects");
+  wxWindowList &wil = GetChildren();
+  TPtrList<THtml> htmls;
+  for (size_t i = 0; i < wil.size(); i++) {
+    if (olx_is<THtml>(*wil[i])) {
+      THtml * ht = (THtml*)wil[i];
+      ht->LoadPage(ht->GetHomePage().u_str());
+      htmls << ht;
     }
   }
   CreateLayout();
   Scroll(xPos, yPos);
-  Thaw();
-  SwitchSources().Clear();
-  SwitchSource().SetLength(0);
+  if (!olx_is<THtml>(*GetParent())) {
+    SwitchSources().Clear();
+    SwitchSource().SetLength(0);
+  }
   TEFile::ChangeDir(oldPath);
   if (!FocusedControl.IsEmpty()) {
     size_t ind = Objects.IndexOf(FocusedControl);
@@ -499,6 +522,29 @@ bool THtml::UpdatePage(bool update_indices) {
       FocusedControl.SetLength(0);
     }
   }
+  sw.start("Updating layout");
+  wxClientDC dc(this);
+  wxHtmlRenderingInfo r_info;
+  this->m_Cell->DrawInvisible(dc, 0, 0, r_info);
+  //for (size_t i = 0; i < htmls.Count(); i++) {
+  //  if (htmls[i]->GetParentCell()->GetFloatY() != 0) {
+  //    wxClientDC dc1(htmls[i]);
+  //    wxHtmlRenderingInfo r_info1;
+  //    htmls[i]->m_Cell->DrawInvisible(dc1, 0, 0, r_info1);
+  //    int bh = htmls[i]->GetBestHeight(htmls[i]->GetParentCell()->GetWidth());
+  //    htmls[i]->GetParentCell()->SetHeight(bh+20);
+  //    htmls[i]->WI.SetHeight(bh + 20);
+  //    htmls[i]->GetParentCell()->GetRootCell()->Layout(
+  //      htmls[i]->GetParentCell()->GetWidth()-1);
+  //  }
+  //}
+  //CreateLayout();
+  //this->m_Cell->DrawInvisible(dc, 0, 0, r_info);
+  sw.start("Finsihing...");
+  for (size_t i = 0; i < wil.size(); i++) {
+    wil[i]->Show();
+  }
+  Thaw();
   UnlockPageLoad(this);
   return true;
 }

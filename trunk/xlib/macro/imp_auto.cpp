@@ -646,7 +646,7 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroData &Error) {
       TSAtom& sa = objects.atoms[i];
       for (size_t j = 0; j < maxb_cnt; j++) {
         if (sa.GetType() == _autoMaxBond[j].type) {
-          uc.GetAtomEnviList(sa, bc_to_check.AddNew());
+          bc_to_check.AddCopy(uc.GetAtomEnviList(sa));
           if (bc_to_check.GetLast().Count() <= _autoMaxBond[j].max_bonds &&
             bc_to_check.GetLast().Count() >= _autoMaxBond[j].min_bonds)
           {

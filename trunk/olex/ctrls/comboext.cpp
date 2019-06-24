@@ -49,7 +49,9 @@ void TComboBox::SetText(const olxstr& T) {
 //..............................................................................
 void TComboBox::Clear() {
   StrValue.SetLength(0);
-  if (GetCount() == 0) return;
+  if (GetCount() == 0) {
+    return;
+  }
   _Clear();
 #if defined(__MAC__) && wxCHECK_VERSION(2,9,0)
   wxComboBox::DoClear();
@@ -59,9 +61,10 @@ void TComboBox::Clear() {
   wxComboBox::SetSelection(wxNOT_FOUND);
 }
 //..............................................................................
-void TComboBox::EnterPressedEvent(wxCommandEvent &event)  {
-  if( !Data.IsEmpty() )
+void TComboBox::EnterPressedEvent(wxCommandEvent &event) {
+  if (!Data.IsEmpty()) {
     TOlxVars::SetVar(Data, GetText());
+  }
   OnReturn.Execute(this);
   event.Skip();
 }
@@ -70,22 +73,25 @@ void TComboBox::ChangeEvent(wxCommandEvent& event) {
   olxstr v = GetValue();
   if (IsOnChangeAlways() || v != StrValue) {
     StrValue = v;
-    if (!Data.IsEmpty())
+    if (!Data.IsEmpty()) {
       TOlxVars::SetVar(Data, GetText());
+    }
     OnChange.Execute(this);
   }
   event.Skip();
 }
 //..............................................................................
 void TComboBox::LeaveEvent(wxFocusEvent& event)  {
-  if (--entered_counter == 0)
+  if (--entered_counter == 0) {
     HandleOnLeave();
+  }
   event.Skip();
 }
 //..............................................................................
 void TComboBox::EnterEvent(wxFocusEvent& event)  {
-  if (++entered_counter == 1)
+  if (++entered_counter == 1) {
     HandleOnEnter();
+  }
   event.Skip();
 }
 //..............................................................................

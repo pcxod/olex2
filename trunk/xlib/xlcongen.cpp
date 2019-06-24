@@ -281,3 +281,24 @@ bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group,
   return false;
 }
 //..............................................................................
+int TXlConGen::AfixFromQEnvironment(const TSAtom &a) {
+  TAtomEnvi envi = a.GetParent().GetUnitCell().GetAtomEnviList(a, true);
+  switch (envi.GetBase().GetType().z) {
+  case iNitrogenZ:
+  {
+    size_t q_cnt = envi.CountZ(iQPeakZ);
+    if (envi.Count() == 3 && q_cnt == 1) {
+      return 43;
+    }
+    if (envi.Count() == 4 && q_cnt == 1) {
+      return 13;
+    }
+  }
+  break;
+  }
+  return 0;
+}
+//..............................................................................
+bool TXlConGen::NormaliseEnvironment(TSAtom &a) {
+  return false;
+}

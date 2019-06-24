@@ -731,7 +731,7 @@ void TUnitCell::_FindBinding(const TCAtom& to, const smatd& ctm, double delta,
   UnifyAMCList(res);
 }
 //..............................................................................
-void TUnitCell::GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ,
+TAtomEnvi TUnitCell::GetAtomEnviList(const TSAtom& atom, bool IncludeQ,
   int part, bool remove_redundant) const
 {
   if (atom.GetParent() != this->GetLattice()) {
@@ -739,7 +739,7 @@ void TUnitCell::GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ,
       "atom must belong to the same lattice as the unit cell");
   }
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();
-  envi.SetBase(atom);
+  TAtomEnvi envi(atom);
   smatd I;
   I.I().SetId(0);
   const TCAtom& ca = atom.CAtom();
@@ -769,27 +769,30 @@ void TUnitCell::GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ,
       envi.Add(*site.atom, m, au.Orthogonalise(m*site.atom->ccrd()));
     }
   }
+  return envi;
 }
 //..............................................................................
-void TUnitCell::GetAtomQEnviList(TSAtom& atom, TAtomEnvi& envi)  {
-  envi.SetBase(atom);
+TAtomEnvi TUnitCell::GetAtomQEnviList(const TSAtom& atom) {
+  TAtomEnvi  envi(atom);
   smatd I;
   I.I().SetId(0);
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();
-  for( size_t i=0; i < atom.CAtom().AttachedSiteCount(); i++ )  {
+  for (size_t i = 0; i < atom.CAtom().AttachedSiteCount(); i++) {
     TCAtom::Site& site = atom.CAtom().GetAttachedSite(i);
-    if( site.atom->IsDeleted() || site.atom->GetType() != iQPeakZ )
+    if (site.atom->IsDeleted() || site.atom->GetType() != iQPeakZ) {
       continue;
+    }
     const smatd m = MulMatrix(site.matrix, atom.GetMatrix());
     const vec3d v = au.Orthogonalise(m*site.atom->ccrd());
     envi.Add(*site.atom, m, v);
   }
+  return envi;
 }
 //..............................................................................
-void TUnitCell::GetAtomPossibleHBonds(const TAtomEnvi& ae, TAtomEnvi& envi)  {
-  envi.SetBase(ae.GetBase());
+TAtomEnvi TUnitCell::GetAtomPossibleHBonds(const TAtomEnvi& ae) {
+  TAtomEnvi envi(ae.GetBase());
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();
-  const double D = 3.3, qD = D*D;
+  const double D = 3.3, qD = D * D;
   const size_t ac = au.AtomCount();
   SortedObjectList<int, TPrimitiveComparator> types;
   types.Add(iNitrogenZ);
@@ -798,14 +801,14 @@ void TUnitCell::GetAtomPossibleHBonds(const TAtomEnvi& ae, TAtomEnvi& envi)  {
   types.Add(iChlorineZ);
   types.Add(iSulphurZ);
   types.Add(iBromineZ);
-  for (size_t i=0; i < ac; i++) {
+  for (size_t i = 0; i < ac; i++) {
     TCAtom& A = au.GetAtom(i);
     if (A.IsDeleted() || !types.Contains(A.GetType().z)) {
       continue;
     }
-    const bool considerI =  (A != ae.GetBase().CAtom());
+    const bool considerI = (A != ae.GetBase().CAtom());
     smatd_list ms = GetInRange(ae.GetBase().ccrd(), A.ccrd(), D, considerI);
-    for (size_t j=0; j < ms.Count(); j++) {
+    for (size_t j = 0; j < ms.Count(); j++) {
       const vec3d a_crd = au.Orthogonalise(ms[j] * A.ccrd());
       const double qd = a_crd.QDistanceTo(ae.GetBase().crd());
       if (qd < 2 * 2 || qd > qD) {
@@ -821,7 +824,7 @@ void TUnitCell::GetAtomPossibleHBonds(const TAtomEnvi& ae, TAtomEnvi& envi)  {
       }
       // make sure that atoms on center of symmetry are not counted twice
       bool add = true;
-      for (size_t k=0; k < envi.Count(); k++) {
+      for (size_t k = 0; k < envi.Count(); k++) {
         if (envi.GetCAtom(k) == A && envi.GetCrd(k).Equals(a_crd, 1e-3)) {
           add = false;
           break;
@@ -832,6 +835,7 @@ void TUnitCell::GetAtomPossibleHBonds(const TAtomEnvi& ae, TAtomEnvi& envi)  {
       }
     }
   }
+  return envi;
 }
 //..............................................................................
 void TUnitCell::FilterHBonds(TAtomEnvi& atom, TAtomEnvi& envi, bool move) {

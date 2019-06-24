@@ -19,7 +19,7 @@
 #include "library.h"
 #include "edict.h"
 #include "../ctrls.h"
-
+#include "widgetcellext.h"
 class THtmlSwitch;
 
 enum {
@@ -39,8 +39,9 @@ private:
     return v;
   }
 protected:
+  THtmlWidgetCell *parentCell;
   olxstr WebFolder, // the base of all web files
-    FileName, HomePage;
+    FileName;
   olxstr NormalFont, FixedFont;
   void OnLinkClicked(const wxHtmlLinkInfo& link);
   wxHtmlOpeningStatus OnOpeningURL(wxHtmlURLType type, const wxString& url,
@@ -117,7 +118,6 @@ public:
     normal = this->NormalFont;
     fixed = this->FixedFont;
   }
-
   bool GetShowTooltips() const {  return ShowTooltips;  }
   void SetShowTooltips(bool v, const olxstr &html_name=EmptyString());
 
@@ -129,15 +129,17 @@ public:
   void UnlockPageLoad(const IOlxObject* caller)  {
     volatile olx_scope_cs cs(TBasicApp::GetCriticalSection());
     const size_t pos = Locks.IndexOf(caller);
-    if( pos == InvalidIndex )
+    if (pos == InvalidIndex) {
       throw TInvalidArgumentException(__OlxSourceInfo, "caller");
+    }
     int lc = --Locks.GetValue(pos);
     if( lc < 0 ) {
       throw TFunctionFailedException(__OlxSourceInfo,
         "not matching call to unlock");
     }
-    if( lc == 0 )
+    if (lc == 0) {
       Locks.Delete(pos);
+    }
   }
   bool IsPageLocked() const {
     volatile olx_scope_cs cs(TBasicApp::GetCriticalSection());
@@ -147,8 +149,8 @@ public:
   bool ProcessPageLoadRequest();
   virtual bool Destroy();
 
-  const olxstr& GetHomePage() const  {  return HomePage;  }
-  void SetHomePage(const olxstr& hp)  {  HomePage = hp;  }
+  const olxstr& GetHomePage() const  {  return FileName;  }
+  void SetHomePage(const olxstr& hp)  {  FileName = hp;  }
 
   bool LoadPage(const wxString &File);
   bool UpdatePage(bool update_indices=true);
@@ -170,7 +172,7 @@ public:
   }
   wxWindow *FindObjectWindow(const olxstr& Name)  {
     const size_t ind = Objects.IndexOf(Name);
-    return (ind == InvalidIndex) ? NULL : Objects.GetValue(ind).b;
+    return (ind == InvalidIndex) ? 0 : Objects.GetValue(ind).b;
   }
   size_t ObjectCount() const {  return Objects.Count();  }
   AOlxCtrl* GetObject(size_t i)  {  return Objects.GetValue(i).a;  }
@@ -191,6 +193,18 @@ public:
 
   DefPropC(olxstr, OnSizeData)
   DefPropC(olxstr, OnDblClickData)
+
+  THtmlWidgetCell *GetParentCell() {
+    return parentCell;
+  }
+
+  wxHtmlCell *GetRootCell() {
+    return m_Cell;
+  }
+
+  void SetParentCell(THtmlWidgetCell *cell) {
+    parentCell = cell;
+  }
 
   // global data for the HTML parsing....
   static olxstr &SwitchSource() {
