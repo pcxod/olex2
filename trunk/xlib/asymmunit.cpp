@@ -42,7 +42,7 @@ TAsymmUnit::TAsymmUnit(TLattice *L)
   OnSGChange(Actions.New("AU_SG_CHANGE"))
 {
   Lattice = L;
-  Latt = 1;
+  Latt = -1;
   Assigning = false;
   Z = 1;
   RefMod = NULL;
@@ -62,7 +62,7 @@ void  TAsymmUnit::Clear() {
   CAtoms.DeleteItems().Clear();
   Centroids.DeleteItems().Clear();
   Ellipsoids.DeleteItems().Clear();
-  Latt = 1;
+  Latt = -1;
   Z = 1;
   MaxQPeak = MinQPeak = 0;
 }
