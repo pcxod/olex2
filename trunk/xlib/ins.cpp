@@ -1754,7 +1754,7 @@ void TIns::SaveToStrings(TStrList& SL) {
   // save L bits
   for (size_t i = 0; i < Ins.Count(); i++) {
     TInsList* L = Ins.GetObject(i);
-    if (L == 0) {  // if load failed
+    if (L == 0 || L->Count() < 4) {
       continue;
     }
     if (L->Count() > 0 && Ins[i].StartsFromi('l')) {
@@ -2636,13 +2636,13 @@ TStrList::const_list_type TIns::SaveHeader(TStrList& SL,
       SL.Add('+') << included[i];
     }
   }
-  // copy "unknown" instructions except rems
+  // copy "unknown" instructions except rems and 'L1 2 0.62516 0.10472 0.43104'
   for (size_t i=0; i < Ins.Count(); i++) {
     TInsList* L = Ins.GetObject(i);
     if (L == 0) {  // if load failed
       continue;
     }
-    if (L->Count() > 0 && Ins[i].StartsFromi('l')) {
+    if (L->Count() >= 4 && Ins[i].StartsFromi('l')) {
       continue;
     }
     if (!Ins[i].Equalsi("REM") && !Ins[i].Equalsi("NEUT")) {

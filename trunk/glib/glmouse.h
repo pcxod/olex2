@@ -50,33 +50,44 @@ const short
 
 //typedef void (*MMoveHandler)(class TGlMouse *, int dx, int dy);
 
-struct TMouseData: public IOlxObject  {
+class TMouseData: public IOlxObject {
+  mutable class AGDrawObject *Object;  // object under the mouse
+  void OnObjectDelete(APerishable* obj);
+public:
   TMouseData() :
     Button(0), Shift(0), Event(0),
     DownX(0), DownY(0), UpX(0), UpY(0),
-    Object(NULL)  {}
-  virtual ~TMouseData()  {}
+    Object(0)
+  {}
+  ~TMouseData();
   short Button, // mouse button
     Shift,      // shift state
     Event;
   short DownX, DownY, // position of mouse when pressed down
         UpX, UpY,     // position of mouse when released
         X, Y;         // current position
-  class AGDrawObject *Object;  // object under the mouse
   class TGlMouse *GlMouse;
+  TMouseData & operator = (const TMouseData &d);
+  AGDrawObject *GetObject() const { return Object; }
+  bool HasObject() const { return Object != 0; }
+  void SetObject(AGDrawObject *obj);
 };
 
 struct TMouseRegion {
   int x, y;
-  TMouseRegion(int x, int y) : x(x), y(y)
+  TMouseRegion(int x, int y)
+    : x(x),
+    y(y)
   {}
   int Compare(const TMouseRegion &r) const {
     int d = x - r.x;
-    if (olx_abs(d) > 2)
+    if (olx_abs(d) > 2) {
       return d;
+    }
     d = y - r.y;
-    if (olx_abs(d) > 2)
+    if (olx_abs(d) > 2) {
       return d;
+    }
     return 0;
   }
 };
@@ -142,7 +153,10 @@ class TGlMouse: public IOlxObject {
   class TGlRenderer *FParent;
   class TDFrame *FDFrame;
   TActionQList Actions;
-  static TGlMouse *Instance;
+  static TGlMouse *& GetInstance_() {
+    static TGlMouse *i = 0;
+    return i;
+  }
 protected:
   int FSX, FSY;
   bool FDblClick;
@@ -193,10 +207,10 @@ public:
   DefPropBIsSet(ZoomingEnabled)
   DefPropBIsSet(InMode)
   static TGlMouse &GetInstance() {
-    if (Instance == NULL) {
+    if (GetInstance_() == 0) {
       throw TFunctionFailedException(__OlxSourceInfo, "uninitialised object");
     }
-    return *Instance;
+    return *GetInstance_();
   }
   TActionQueue &OnObject;
   void LibEnable(TStrObjList& Cmds, const TParamList& Options,
