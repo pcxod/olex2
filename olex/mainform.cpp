@@ -2031,8 +2031,9 @@ bool TMainForm::ImportFrag(const olxstr& line) {
   if (!trimmed_content.StartsFromi("FRAG") || !trimmed_content.EndsWithi("FEND"))
     return false;
   TStrList lines(trimmed_content, '\n');
-  if (lines.Count() < 4)
+  if (lines.Count() < 4) {
     return false;
+  }
   lines.Delete(lines.Count() - 1);
   lines.Delete(0);
   for (size_t i = 0; i < lines.Count(); i++) {
@@ -2047,8 +2048,9 @@ bool TMainForm::ImportFrag(const olxstr& line) {
   try {
     TXyz xyz;
     xyz.LoadFromStrings(lines);
-    if (xyz.GetAsymmUnit().AtomCount() == 0)
+    if (xyz.GetAsymmUnit().AtomCount() == 0) {
       return false;
+    }
     processMacro("mode fit -a=6");
     TXAtomPList xatoms;
     TXBondPList xbonds;
@@ -2063,7 +2065,7 @@ bool TMainForm::ImportFrag(const olxstr& line) {
     }
     FXApp->CenterView(true);
     AMode *md = Modes->GetCurrent();
-    if (md != NULL) {
+    if (md != 0) {
       md->AddAtoms(xatoms);
       for (size_t i = 0; i < xbonds.Count(); i++) {
         FXApp->GetRenderer().Select(*xbonds[i], true);

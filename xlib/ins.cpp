@@ -34,13 +34,19 @@
 #undef GetObject
 #undef Object
 
-TIns::TIns()  {  LoadQPeaks = true;  }
+TIns::TIns()  {
+  LoadQPeaks = true;
+  // Shelxl default!
+  GetAsymmUnit().SetLatt(1);
+}
 //..............................................................................
 TIns::~TIns()  {  Clear();  }
 //..............................................................................
 void TIns::Clear() {
   GetRM().Clear(rm_clear_ALL);
   GetAsymmUnit().Clear();
+  // Shelxl default!
+  GetAsymmUnit().SetLatt(1);
   for (size_t i = 0; i < Ins.Count(); i++) {
     delete Ins.GetObject(i);
   }
