@@ -1659,8 +1659,9 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options,
           xlConGen.FixAtom(AE, afix, XElementLib::GetByIndex(iHydrogenIndex),
             0, &generated);
           if (!generated.IsEmpty()) {
+            int n_afix = Options.FindValue("a", "3").ToInt();
             if (generated[0]->GetParentAfixGroup() != 0) {
-              generated[0]->GetParentAfixGroup()->SetAfix(3);
+              generated[0]->GetParentAfixGroup()->SetAfix(n_afix);
             }
             double occu = rm.Vars.GetParam(satoms[1]->CAtom(),
               catom_var_name_Sof);
