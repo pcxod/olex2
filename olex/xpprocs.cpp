@@ -2332,6 +2332,7 @@ void TMainForm::macEditIns(TStrObjList &Cmds, const TParamList &Options, TMacroD
   Ins.SaveHeader(SL, true);
   SL.Add("HKLF ") << Ins.GetRM().GetHKLFStr();
   SL.Add();
+  SL.AddAll(Ins.GetFooter().GetObject());
   Ins.SaveExtras(SL, NULL, NULL, Ins.GetRM());
   TdlgEdit *dlg = new TdlgEdit(this, true);
   dlg->SetText(SL.Text('\n'));
