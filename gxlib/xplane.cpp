@@ -41,8 +41,9 @@ void TXPlane::Create(const olxstr& cName) {
     return;
   }
   TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
-  if (GPC.ObjectCount() == 0 && GPC.PrimitiveCount() != 0)
+  if (GPC.ObjectCount() == 0 && GPC.PrimitiveCount() != 0) {
     GPC.ClearPrimitives();
+  }
   size_t deleted_cnt = 0;
   for (size_t i = 0; i < GPC.ObjectCount(); i++) {
     if (GPC.GetObject(i).Is<TXPlane>() &&
