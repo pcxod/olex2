@@ -1016,6 +1016,10 @@ void GXLibMacros::macBRad(TStrObjList &Cmds, const TParamList &Options,
         TXPlane &p = pi.Next();
         p.GetPrimitives().ClearPrimitives();
         p.GetPrimitives().ClearObjects();
+      }
+      pi.Reset();
+      while (pi.HasNext()) {
+        TXPlane &p = pi.Next();
         p.Create();
       }
     }
@@ -1027,8 +1031,9 @@ void GXLibMacros::macTelpV(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
   float p = Cmds[0].ToFloat();
-  if (p > 0)
+  if (p > 0) {
     app.CalcProbFactor(p);
+  }
   else {
     TXAtom::GetSettings(app.GetRenderer()).SetTelpProb(-p);
     app.Draw();
@@ -1142,27 +1147,32 @@ void GXLibMacros::macLabel(TStrObjList &Cmds, const TParamList &Options,
     TGlGroup& sel = app.GetSelection();
     for (size_t i=0; i < sel.Count(); i++) {
       const std::type_info &oi = typeid(sel[i]);
-      if (oi == typeid(TXAtom))
+      if (oi == typeid(TXAtom)) {
         atoms.Add((TXAtom&)sel[i]);
-      else if (oi == typeid(TXBond))
+      }
+      else if (oi == typeid(TXBond)) {
         bonds.Add((TXBond&)sel[i]);
-      else if (oi == typeid(TXLine))
+      }
+      else if (oi == typeid(TXLine)) {
         lines.Add((TXLine&)sel[i]);
+      }
     }
     if (atoms.IsEmpty() && bonds.IsEmpty() && lines.IsEmpty()) {
       TGXApp::AtomIterator ai = app.GetAtoms();
       atoms.SetCapacity(ai.count);
       while (ai.HasNext()) {
         TXAtom& xa = ai.Next();
-        if (xa.IsVisible())
+        if (xa.IsVisible()) {
           atoms.Add(xa);
+        }
       }
       TGXApp::BondIterator bi = app.GetBonds();
       bonds.SetCapacity(bi.count);
       while (bi.HasNext()) {
         TXBond& xb = bi.Next();
-        if (xb.IsVisible())
+        if (xb.IsVisible()) {
           bonds.Add(xb);
+        }
       }
     }
   }

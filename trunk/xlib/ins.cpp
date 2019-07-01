@@ -2647,7 +2647,7 @@ TStrList::const_list_type TIns::SaveHeader(TStrList& SL,
   }
   // copy "unknown" instructions except rems and 'L1 2 0.62516 0.10472 0.43104'
   for (size_t i=0; i < Ins.Count(); i++) {
-    if (GetInsType(Ins[i], Ins.GetObject(i)) == InsType::insHeader) {
+    if (GetInsType(Ins[i], Ins.GetObject(i)) == insHeader) {
       olxstr ic = Ins.GetObject(i)->Text(' ');
       if (incs.Contains(Ins[i] + ' ' + ic)) {
         continue;
@@ -2683,7 +2683,7 @@ TStrList::const_list_type TIns::SaveHeader(TStrList& SL,
 TStrList::const_list_type TIns::GetFooter() {
   TStrList rv;
   for (size_t i = 0; i < Ins.Count(); i++) {
-    if (GetInsType(Ins[i], Ins.GetObject(i)) == InsType::insFooter) {
+    if (GetInsType(Ins[i], Ins.GetObject(i)) == insFooter) {
       olxstr ic = Ins.GetObject(i)->Text(' ');
       HyphenateIns(Ins[i] + ' ', ic, rv);
     }
@@ -2971,10 +2971,10 @@ bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& _toks,
 //..............................................................................
 TIns::InsType TIns::GetInsType(const olxstr &ins, const TInsList *params) const {
   if (params == 0 || ins.Equalsi("REM") || ins.Equalsi("NEUT")) {
-    return InsType::insNone;
+    return insNone;
   }
   if (params->Count() >= 4 && ins.StartsFromi('l')) {
-    return InsType::insFooter;
+    return insFooter;
   }
-  return InsType::insHeader;
+  return insHeader;
 }
