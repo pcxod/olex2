@@ -169,27 +169,27 @@ protected:
 
   bool OnMouseUp(const IOlxObject *Sender, const TMouseData& Data) {
     if (Data.Button == smbRight) {
-      if (Data.Object != 0) {
-        if (Data.Object->Is<TXAtom>()) {
-          if (rotation_anchor == Data.Object) {
+      if (Data.HasObject()) {
+        if (Data.GetObject()->Is<TXAtom>()) {
+          if (rotation_anchor == Data.GetObject()) {
             rotation_anchor = 0;
             UpdateRotationCenter();
           }
           else {
-            rotation_anchor = Data.Object;
-            RotationCenter = ((TXAtom*)Data.Object)->crd();
+            rotation_anchor = Data.GetObject();
+            RotationCenter = ((TXAtom*)Data.GetObject())->crd();
             RotationDir.Null();
           }
         }
-        else if (Data.Object->Is<TXBond>()) {
-          if (rotation_anchor == Data.Object) {
+        else if (Data.GetObject()->Is<TXBond>()) {
+          if (rotation_anchor == Data.GetObject()) {
             rotation_anchor = 0;
             RotationDir.Null();
             UpdateRotationCenter();
           }
           else {
-            rotation_anchor = Data.Object;
-            TXBond* xb = (TXBond*)Data.Object;
+            rotation_anchor = Data.GetObject();
+            TXBond* xb = (TXBond*)rotation_anchor;
             RotationCenter = (xb->A().crd() + xb->B().crd()) / 2;
             RotationDir = (xb->B().crd() - xb->A().crd()).Normalise();
           }

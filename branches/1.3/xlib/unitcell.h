@@ -294,16 +294,16 @@ public:
   to true - then the symmetry generated atoms that share symmetry equivalent
   with the central atoms are omitted
   */
-  void GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ = false,
+  TAtomEnvi GetAtomEnviList(const TSAtom& atom, bool IncludeQ = false,
     int part = DefNoPart, bool remove_redundant = false) const;
 
   // finds only q-peaks in the environment of specified atom
-  void GetAtomQEnviList(TSAtom& atom, TAtomEnvi& envi);
+  TAtomEnvi GetAtomQEnviList(const TSAtom& atom);
 
   /* finds "pivoting" atoms for possible h-bonds, considering O, N and Cl only
   with distances within 2.9A and angles 90-150 deg
   */
-  void GetAtomPossibleHBonds(const TAtomEnvi& atom, TAtomEnvi& envi);
+  TAtomEnvi GetAtomPossibleHBonds(const TAtomEnvi& atom);
 
   /* any of the atoms in envi having H atoms pointing in the atom direction,
   are moved from envi into atom envi (if move is true) or simply deleted

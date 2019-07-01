@@ -2332,6 +2332,7 @@ void TMainForm::macEditIns(TStrObjList &Cmds, const TParamList &Options, TMacroD
   Ins.SaveHeader(SL, true);
   SL.Add("HKLF ") << Ins.GetRM().GetHKLFStr();
   SL.Add();
+  SL.AddAll(Ins.GetFooter().GetObject());
   Ins.SaveExtras(SL, NULL, NULL, Ins.GetRM());
   TdlgEdit *dlg = new TdlgEdit(this, true);
   dlg->SetText(SL.Text('\n'));
@@ -3002,24 +3003,38 @@ void TMainForm::macPopup(TStrObjList &Cmds, const TParamList &Options, TMacroDat
     onDblClick = Options.FindValue("ondblclick"),
     onSize = Options.FindValue("onsize");
   int iBorder = 0;
-  for( size_t i=0; i < border.Length(); i++ )  {
-    if( border.CharAt(i) == 't' )  iBorder |= wxCAPTION;
-    else if( border.CharAt(i) == 'r' )  iBorder |= wxRESIZE_BORDER;
-    else if( border.CharAt(i) == 's' )  iBorder |= wxSYSTEM_MENU;
-    else if( border.CharAt(i) == 'c' )  iBorder |= (wxCLOSE_BOX|wxSYSTEM_MENU);
-    else if( border.CharAt(i) == 'a' )  iBorder |= (wxMAXIMIZE_BOX|wxSYSTEM_MENU);
-    else if( border.CharAt(i) == 'i' )  iBorder |= (wxMINIMIZE_BOX|wxSYSTEM_MENU);
-    else if( border.CharAt(i) == 'p' )  iBorder |= wxSTAY_ON_TOP;
+  for (size_t i = 0; i < border.Length(); i++) {
+    if (border.CharAt(i) == 't') {
+      iBorder |= wxCAPTION;
+    }
+    else if (border.CharAt(i) == 'r') {
+      iBorder |= wxRESIZE_BORDER;
+    }
+    else if (border.CharAt(i) == 's') {
+      iBorder |= wxSYSTEM_MENU;
+    }
+    else if (border.CharAt(i) == 'c') {
+      iBorder |= (wxCLOSE_BOX | wxSYSTEM_MENU);
+    }
+    else if (border.CharAt(i) == 'a') {
+      iBorder |= (wxMAXIMIZE_BOX | wxSYSTEM_MENU);
+    }
+    else if (border.CharAt(i) == 'i') {
+      iBorder |= (wxMINIMIZE_BOX | wxSYSTEM_MENU);
+    }
+    else if (border.CharAt(i) == 'p') {
+      iBorder |= wxSTAY_ON_TOP;
+    }
   }
-  if( iBorder == 0 )
+  if (iBorder == 0) {
     iBorder = wxNO_BORDER;
+  }
   // check if the popup already exists
   THtmlManager::TPopupData *pd = HtmlManager.Popups.Find(Cmds[0], NULL);
-  if( pd != NULL )  {
-    try  {  pd->Html->LoadPage(Cmds[1].u_str());  }
-    catch( ... )  {}
-    pd->Html->SetHomePage(TutorialDir + Cmds[1]);
-    if( Options.Contains('w') && Options.Contains('h') )  {
+  if (pd != 0) {
+    try { pd->Html->LoadPage(Cmds[1].u_str()); }
+    catch (...) {}
+    if (Options.Contains('w') && Options.Contains('h')) {
 #ifdef __WXGTK__  // any another way to force move ???
       pd->Dialog->SetSize(5000, 5000, 0, 0);
 #endif
@@ -3027,8 +3042,9 @@ void TMainForm::macPopup(TStrObjList &Cmds, const TParamList &Options, TMacroDat
       pd->Dialog->GetClientSize(&width, &height);
       pd->Html->SetSize(width, height);
     }
-    if( !pd->Dialog->IsShown() && !Options.Contains('s'))
+    if (!pd->Dialog->IsShown() && !Options.Contains('s')) {
       pd->Dialog->Show(true);
+    }
     return;
   }
   TDialog *dlg = new TDialog(this, title.u_str(), wxT("htmlPopupWindow"), wxPoint(x,y),
@@ -3036,7 +3052,9 @@ void TMainForm::macPopup(TStrObjList &Cmds, const TParamList &Options, TMacroDat
   pd = &HtmlManager.NewPopup(dlg, Cmds[0]);
   dlg->OnResize.Add(pd->Html, html_parent_resize, msiExecute);
   pd->Html->SetWebFolder(TutorialDir);
-  pd->Html->SetHomePage(TutorialDir + Cmds[1]);
+  if (border.Contains('x')) {
+    pd->Html->SetBorders(0);
+  }
   pd->Html->SetMovable(false);
   pd->Html->SetOnSizeData(onSize.Replace("\\(", '('));
   pd->Html->SetOnDblClickData(onDblClick.Replace("\\(", '('));
@@ -3048,8 +3066,9 @@ void TMainForm::macPopup(TStrObjList &Cmds, const TParamList &Options, TMacroDat
   pd->Html->OnKey.Add(this, ID_HTMLKEY);
   pd->Html->OnDblClick.Add(this, ID_ONLINK);
   pd->Html->OnSize.Add(this, ID_ONLINK);
-  if (!Options.GetBoolOption('s'))
+  if (!Options.GetBoolOption('s')) {
     dlg->Show();
+  }
 }
 //..............................................................................
 void TMainForm::macPython(TStrObjList &Cmds, const TParamList &Options, TMacroData &E)  {
@@ -6139,6 +6158,20 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options,
   TXBondPList xbonds;
   LabelCorrector lc(FXApp->XFile().GetAsymmUnit(), TXApp::GetMaxLabelLength(),
     TXApp::DoRenameParts());
+  // invert the coordinates
+  if (Options.GetBoolOption('i')) {
+    TAsymmUnit &au = f().GetAsymmUnit();
+    vec3d cnt;
+    vec3d_alist crds(au.AtomCount());
+    for (size_t i = 0; i < au.AtomCount(); i++) {
+      crds[i] = au.Orthogonalise(au.GetAtom(i).ccrd());
+      cnt += crds[i];
+    }
+    cnt /= au.AtomCount();
+    for (size_t i = 0; i < au.AtomCount(); i++) {
+      au.GetAtom(i).ccrd() = au.Fractionalise(-crds[i] + cnt + cnt);
+    }
+  }
   FXApp->AdoptAtoms(f().GetAsymmUnit(), xatoms, xbonds);
   int part = Options.FindValue("p", "-100").ToInt();
   const int npart = FXApp->XFile().GetAsymmUnit().GetNextPart(true);

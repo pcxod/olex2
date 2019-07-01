@@ -34,13 +34,19 @@
 #undef GetObject
 #undef Object
 
-TIns::TIns()  {  LoadQPeaks = true;  }
+TIns::TIns()  {
+  LoadQPeaks = true;
+  // Shelxl default!
+  GetAsymmUnit().SetLatt(1);
+}
 //..............................................................................
 TIns::~TIns()  {  Clear();  }
 //..............................................................................
 void TIns::Clear() {
   GetRM().Clear(rm_clear_ALL);
   GetAsymmUnit().Clear();
+  // Shelxl default!
+  GetAsymmUnit().SetLatt(1);
   for (size_t i = 0; i < Ins.Count(); i++) {
     delete Ins.GetObject(i);
   }
@@ -193,6 +199,13 @@ void TIns::LoadFromStrings(const TStrList& FileContent) {
       if (Toks.IsEmpty()) {
         continue;
       }
+      bool updated = false;
+      // try recovering congloberated instructions
+      if (Toks[0].Length() > 4) {
+        Toks.Insert(1, Toks[0].SubStringFrom(4));
+        Toks[0].SetLength(4);
+        updated = true;
+      }
       if (Toks[0].Equalsi("MOLE")) { // these are dodgy
         continue;
       }
@@ -212,7 +225,12 @@ void TIns::LoadFromStrings(const TStrList& FileContent) {
       }
       // atom should have at least 7 parameters
       else if (Toks.Count() < 6 || Toks.Count() > 12) {
-        Ins.Add(InsFile[i]);
+        if (updated) {
+          Ins.Add(Toks.Text(' '));
+        }
+        else {
+          Ins.Add(InsFile[i]);
+        }
       }
       else {
         bool qpeak = olxstr::o_toupper(Toks[0].CharAt(0)) == 'Q';
@@ -275,14 +293,19 @@ void TIns::LoadFromStrings(const TStrList& FileContent) {
   Ins.Pack();
   _ProcessSame(cx);
   _FinishParsing(cx, false);
-  // remove dublicated instructions, rems ONLY
-  for (size_t i = 0; i < Ins.Count(); i++) {
-    if (!Ins[i].StartsFromi("REM")) continue;
-    olxstr a = olxstr(' ').Join(*Ins.GetObject(i));
-    for (size_t j = i + 1; j < Ins.Count(); j++) {
-      if (Ins[i] == Ins[j] && a == olxstr(' ').Join(*Ins.GetObject(j))) {
-        delete Ins.GetObject(j);
-        Ins[j].SetLength(0);
+  // remove duplicated instructions
+  {
+    olxstr_set<false> inses;
+    for (size_t i = 0; i < Ins.Count(); i++) {
+      if (Ins.GetObject(i) == 0) {
+        continue;
+      }
+      olxstr ins = olxstr(Ins[i]) << ' ' << Ins.GetObject(i)->Text(' ');
+      if (!inses.Add(ins.ToLowerCase())) {
+        TBasicApp::NewLogEntry(logWarning) << "Removing duplicate INS: "
+          << ins;
+        delete Ins.GetObject(i);
+        Ins[i].SetLength(0);
       }
     }
   }
@@ -488,6 +511,7 @@ void TIns::_ProcessSame(ParseContext& cx, const TIndexList *index)  {
       }
     }
     // now process the reference group
+    olxstr_buf warns;
     if (max_atoms != 0 && ca != 0) {
       bool valid = true;
       TSameGroup& sg = sgl.New();  // main, reference, group
@@ -514,6 +538,10 @@ void TIns::_ProcessSame(ParseContext& cx, const TIndexList *index)  {
           max_atoms++; // do not count the H atoms!
           continue;
         }
+        if (olx_is_valid_index(a.GetSameId())) {
+          warns << "\nOverriding same group from " << a.GetSameId() << " to " <<
+            sg.GetId() << " for " << a.GetResiLabel();
+        }
         sg.Add(a);
       }
       if (valid) {
@@ -524,6 +552,9 @@ void TIns::_ProcessSame(ParseContext& cx, const TIndexList *index)  {
       else {
         sgl.Delete(all_groups << sg);
       }
+    }
+    if (!warns.IsEmpty()) {
+      TBasicApp::NewLogEntry(logWarning) << warns;
     }
   }
 }
@@ -749,7 +780,7 @@ void TIns::_ProcessAfix0(ParseContext& cx)  {
 bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
   ParseContext& cx, size_t& i)
 {
-  if (cx.End) {
+  if (cx.End  && !Toks[0].Equalsi("WGHT")) {
     return false;
   }
   if (_ParseIns(cx.rm, Toks)) {
@@ -1570,6 +1601,14 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
       }
       return;
     }
+    if (sg.IsValidForSave() && !sg.IsReference() && sg.GetAtoms().IsExplicit()) {
+      TAtomRefList atoms = sg.GetAtoms().ExpandList(rm);
+      for (size_t i = 0; i < atoms.Count(); i++) {
+        _SaveAtom(rm, atoms[i].GetAtom(), part, afix, spec, sfac, sl, index,
+          false, checkResi);
+      }
+      return;
+    }
   }
   if (a.GetUisoOwner() != 0 && !a.GetUisoOwner()->IsSaved()) {
     _SaveAtom(rm, *a.GetUisoOwner(), part, afix, spec, sfac, sl, index,
@@ -1677,7 +1716,9 @@ void TIns::SaveToStrings(TStrList& SL) {
   FixTypeListAndLabels();
   for (size_t i=0; i < GetAsymmUnit().AtomCount(); i++) {
     TCAtom &ca = GetAsymmUnit().GetAtom(i);
-    if (ca.IsDeleted()) continue;
+    if (ca.IsDeleted()) {
+      continue;
+    }
     olxstr lb = ca.GetLabel();
     lb.Replace('\t' ,' ').Replace('_', ' ');
     if (lb.Contains(' ')) {
@@ -1729,16 +1770,7 @@ void TIns::SaveToStrings(TStrList& SL) {
   }
   SL.Add("HKLF ") << RefMod.GetHKLFStr();
   SL.Add(EmptyString());
-  // save L bits
-  for (size_t i = 0; i < Ins.Count(); i++) {
-    TInsList* L = Ins.GetObject(i);
-    if (L == 0) {  // if load failed
-      continue;
-    }
-    if (L->Count() > 0 && Ins[i].StartsFromi('l')) {
-      HyphenateIns(Ins[i] + ' ', Ins.GetObject(i)->Text(' '), SL);
-    }
-  }
+  SL.AddAll(GetFooter().GetObject());
   SL.Add("END");
   for (size_t i = 0; i < peaks.Count(); i++) {
     TCAtom &p = *peaks[i];
@@ -1768,6 +1800,16 @@ void TIns::_DrySaveAtom(TCAtom& a, TSizeList &indices,
         for (size_t i = 0; i < atoms.Count(); i++) {
           _DrySaveAtom(atoms[i].GetAtom(), indices, false, checkResi);
         }
+      }
+      return;
+    }
+    if (sg.IsValidForSave() && !sg.IsReference() && sg.GetAtoms().IsExplicit()) {
+      TAtomRefList atoms = sg.GetAtoms().ExpandList(*a.GetParent()->GetRefMod());
+      if (atoms.IsEmpty() || atoms[0].GetAtom().IsSaved()) {
+        return;
+      }
+      for (size_t i = 0; i < atoms.Count(); i++) {
+        _DrySaveAtom(atoms[i].GetAtom(), indices, false, checkResi);
       }
       return;
     }
@@ -2564,8 +2606,7 @@ TStrList::const_list_type TIns::SaveHeader(TStrList& SL,
   SL.Add("TITL ") << GetTitle();
   for (size_t i = 0; i < Ins.Count(); i++) {
     TInsList* L = Ins.GetObject(i);
-    if (L == NULL)  continue;  // if load failed
-    if (Ins[i].Equalsi("REM")) {
+    if (L != 0 && Ins[i].Equalsi("REM")) {
       HyphenateIns(Ins[i] + ' ', L->Text(' '), SL);
     }
   }
@@ -2604,17 +2645,10 @@ TStrList::const_list_type TIns::SaveHeader(TStrList& SL,
       SL.Add('+') << included[i];
     }
   }
-  // copy "unknown" instructions except rems
+  // copy "unknown" instructions except rems and 'L1 2 0.62516 0.10472 0.43104'
   for (size_t i=0; i < Ins.Count(); i++) {
-    TInsList* L = Ins.GetObject(i);
-    if (L == 0) {  // if load failed
-      continue;
-    }
-    if (L->Count() > 0 && Ins[i].StartsFromi('l')) {
-      continue;
-    }
-    if (!Ins[i].Equalsi("REM") && !Ins[i].Equalsi("NEUT")) {
-      olxstr ic = L->Text(' ');
+    if (GetInsType(Ins[i], Ins.GetObject(i)) == insHeader) {
+      olxstr ic = Ins.GetObject(i)->Text(' ');
       if (incs.Contains(Ins[i] + ' ' + ic)) {
         continue;
       }
@@ -2643,6 +2677,17 @@ TStrList::const_list_type TIns::SaveHeader(TStrList& SL,
     wght << "0.1";
   }
   _SaveFVar(RefMod, SL);
+  return rv;
+}
+//..............................................................................
+TStrList::const_list_type TIns::GetFooter() {
+  TStrList rv;
+  for (size_t i = 0; i < Ins.Count(); i++) {
+    if (GetInsType(Ins[i], Ins.GetObject(i)) == insFooter) {
+      olxstr ic = Ins.GetObject(i)->Text(' ');
+      HyphenateIns(Ins[i] + ' ', ic, rv);
+    }
+  }
   return rv;
 }
 //..............................................................................
@@ -2922,4 +2967,14 @@ bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& _toks,
     return true;
   }
   return false;
+}
+//..............................................................................
+TIns::InsType TIns::GetInsType(const olxstr &ins, const TInsList *params) const {
+  if (params == 0 || ins.Equalsi("REM") || ins.Equalsi("NEUT")) {
+    return insNone;
+  }
+  if (params->Count() >= 4 && ins.StartsFromi('l')) {
+    return insFooter;
+  }
+  return insHeader;
 }

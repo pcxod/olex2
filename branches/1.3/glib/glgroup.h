@@ -14,7 +14,7 @@
 #include "gdrawobject.h"
 BeginGlNamespace()
 
-struct TMouseData;
+class TMouseData;
 
 class TGlGroup : public AGDrawObject {
   AGDObjList Objects;  // a list of grouped objects

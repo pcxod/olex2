@@ -1107,10 +1107,12 @@ olxstr TGXApp::GetSelectionInfo(bool list) const {
           &a2 = ((TXAtom&)Sel[1]),
           &a3 = ((TXAtom&)Sel[2]),
           &a4 = ((TXAtom&)Sel[3]);
-        Tmp = "Torsion angle (";
+        Tmp = "Torsion angle/tetrahedron volume (";
         Tmp << macSel_GetName4(a1, a2, a3, a4) << "): ";
         v = olx_dihedral_angle_signed(a1.crd(), a2.crd(), a3.crd(), a4.crd());
         Tmp << olxstr::FormatFloat(3, v);
+        v = olx_tetrahedron_volume(a1.crd(), a2.crd(), a3.crd(), a4.crd());
+        Tmp << "/ " << olxstr::FormatFloat(3, v);
         Tmp <<
           "\nAngle (" << macSel_GetName3(a1, a2, a3) << "): " <<
           olxstr::FormatFloat(3, olx_angle(a1.crd(), a2.crd(), a3.crd())) <<

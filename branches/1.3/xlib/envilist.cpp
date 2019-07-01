@@ -19,9 +19,11 @@ void TAtomEnvi::ApplySymm(const smatd& sym) {
 }
 //.............................................................................
 size_t TAtomEnvi::CountCovalent() const {
-  if (Envi.IsEmpty() || Base == NULL) return 0;
+  if (Envi.IsEmpty()) {
+    return 0;
+  }
   size_t cnt = 0;
-  const double delta = Base->GetNetwork().GetLattice().GetDelta();
+  const double delta = Base->GetParent().GetDelta();
   for (size_t i=0; i < Envi.Count(); i++) {
     if (TNetwork::BondExistsQ(Base->CAtom(), *Envi[i].GetA(),
       Envi[i].GetC().QDistanceTo(Base->crd()), delta))
@@ -63,6 +65,38 @@ void TAtomEnvi::LeaveIndices(const TSizeList &indices) {
     }
   }
   Envi.Pack();
+}
+//.............................................................................
+const TAsymmUnit &TAtomEnvi::GetAU() const {
+  return GetBase().GetParent().GetAsymmUnit();
+}
+//.............................................................................
+const TUnitCell &TAtomEnvi::GetUC() const {
+  return GetBase().GetParent().GetUnitCell();
+}
+//.............................................................................
+const TLattice &TAtomEnvi::GetLatt() const {
+  return GetBase().GetParent();
+}
+//.............................................................................
+size_t TAtomEnvi::CountZ(int z) const {
+  size_t cnt = 0;
+  for (size_t i = 0; i < Envi.Count(); i++) {
+    if (Envi[i].a->GetType() == z) {
+      cnt++;
+    }
+  }
+  return cnt;
+}
+//..............................................................................
+TSizeList::const_list_type TAtomEnvi::GetZIndices(int z) const {
+  TSizeList ids;
+  for (size_t i = 0; i < Envi.Count(); i++) {
+    if (Envi[i].a->GetType() == z) {
+      ids << i;
+    }
+  }
+  return ids;
 }
 //.............................................................................
 #ifdef _PYTHON

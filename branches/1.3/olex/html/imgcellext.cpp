@@ -8,6 +8,7 @@
 ******************************************************************************/
 
 #include "imgcellext.h"
+#include "widgetcellext.h"
 #include "bapp.h"
 #include "log.h"
 #include "wx/dc.h"
@@ -260,5 +261,11 @@ wxHtmlLinkInfo *THtmlImageCell::GetLink(int x, int y) const {
   p = op;
   wxHtmlCell *cell = (wxHtmlCell*)p->Find(wxHTML_COND_ISIMAGEMAP, (const void*)(&m_mapName));
   return (cell == 0) ? wxHtmlCell::GetLink(x, y) : cell->GetLink(x, y);
+}
+//..............................................................................
+//..............................................................................
+//..............................................................................
+void THtmlWidgetCell::SetHeight(int h) {
+  m_Height = h;
 }
 //..............................................................................

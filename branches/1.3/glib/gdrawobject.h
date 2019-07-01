@@ -74,19 +74,19 @@ public:
   // mouse handlers, any object receives mouse down/up events; write appropriate
   //handlers to handle mouse; if the object returns true OnMouseDown, it receives
   //OnMouseMove as well; Objects must not change values of the Data!
-  virtual bool OnMouseDown(const IOlxObject *, const struct TMouseData&) {
+  virtual bool OnMouseDown(const IOlxObject *, const class TMouseData&) {
     return false;
   }
-  virtual bool OnMouseUp(const IOlxObject *, const struct TMouseData&) {
+  virtual bool OnMouseUp(const IOlxObject *, const class TMouseData&) {
     return false;
   }
-  virtual bool OnMouseMove(const IOlxObject *, const struct TMouseData&) {
+  virtual bool OnMouseMove(const IOlxObject *, const class TMouseData&) {
     return false;
   }
-  virtual bool OnDblClick(const IOlxObject *, const struct TMouseData&) {
+  virtual bool OnDblClick(const IOlxObject *, const class TMouseData&) {
     return false;
   }
-  virtual bool OnZoom(const IOlxObject *, const struct TMouseData&) {
+  virtual bool OnZoom(const IOlxObject *, const class TMouseData&) {
     return false;
   }
 

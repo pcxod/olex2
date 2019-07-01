@@ -400,6 +400,29 @@ void GXLibMacros::Export(TLibrary& lib) {
     "Gets/sets aobject settings for atom or bond");
 }
 //.............................................................................
+bool InvertFittedFragment() {
+  TModeRegistry &mr = TModeRegistry::GetInstance();
+  if (mr.CheckMode(mr.DecodeMode("fit"))) {
+    TXAtomPList atoms = TGXApp::GetInstance()
+      .GetSelection().Extract<TXAtom>();
+    if (atoms.IsEmpty()) {
+      return false;
+    }
+    vec3d cnt;
+    for (size_t i = 0; i < atoms.Count(); i++) {
+      cnt += atoms[i]->crd();
+    }
+    cnt /= atoms.Count();
+    for (size_t i = 0; i < atoms.Count(); i++) {
+      atoms[i]->crd() = -atoms[i]->crd() + cnt + cnt;
+      atoms[i]->CAtom().ccrd() = atoms[i]->CAtom()
+        .GetParent()->Fractionalise(atoms[i]->crd());
+    }
+    return true;
+  }
+  return false;
+}
+
 void GXLibMacros::macGrow(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
@@ -993,6 +1016,10 @@ void GXLibMacros::macBRad(TStrObjList &Cmds, const TParamList &Options,
         TXPlane &p = pi.Next();
         p.GetPrimitives().ClearPrimitives();
         p.GetPrimitives().ClearObjects();
+      }
+      pi.Reset();
+      while (pi.HasNext()) {
+        TXPlane &p = pi.Next();
         p.Create();
       }
     }
@@ -1004,8 +1031,9 @@ void GXLibMacros::macTelpV(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
   float p = Cmds[0].ToFloat();
-  if (p > 0)
+  if (p > 0) {
     app.CalcProbFactor(p);
+  }
   else {
     TXAtom::GetSettings(app.GetRenderer()).SetTelpProb(-p);
     app.Draw();
@@ -1119,27 +1147,32 @@ void GXLibMacros::macLabel(TStrObjList &Cmds, const TParamList &Options,
     TGlGroup& sel = app.GetSelection();
     for (size_t i=0; i < sel.Count(); i++) {
       const std::type_info &oi = typeid(sel[i]);
-      if (oi == typeid(TXAtom))
+      if (oi == typeid(TXAtom)) {
         atoms.Add((TXAtom&)sel[i]);
-      else if (oi == typeid(TXBond))
+      }
+      else if (oi == typeid(TXBond)) {
         bonds.Add((TXBond&)sel[i]);
-      else if (oi == typeid(TXLine))
+      }
+      else if (oi == typeid(TXLine)) {
         lines.Add((TXLine&)sel[i]);
+      }
     }
     if (atoms.IsEmpty() && bonds.IsEmpty() && lines.IsEmpty()) {
       TGXApp::AtomIterator ai = app.GetAtoms();
       atoms.SetCapacity(ai.count);
       while (ai.HasNext()) {
         TXAtom& xa = ai.Next();
-        if (xa.IsVisible())
+        if (xa.IsVisible()) {
           atoms.Add(xa);
+        }
       }
       TGXApp::BondIterator bi = app.GetBonds();
       bonds.SetCapacity(bi.count);
       while (bi.HasNext()) {
         TXBond& xb = bi.Next();
-        if (xb.IsVisible())
+        if (xb.IsVisible()) {
           bonds.Add(xb);
+        }
       }
     }
   }
@@ -1987,17 +2020,22 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
   if (TModeRegistry::GetInstance().GetCurrent() != 0) {
+    if (Options.GetBoolOption('i')) {
+      if (InvertFittedFragment()) {
+        return;
+      }
+    }
     TBasicApp::NewLogEntry(logError) << "Unavailable in a mode";
     return;
   }
   glSelectionFlag flag=glSelectionNone;
-  if (Options.Contains('a')) {
+  if (Options.GetBoolOption('a')) {
     flag = glSelectionSelect;
   }
-  else if (Options.Contains('u')) {
+  else if (Options.GetBoolOption('u')) {
     flag = glSelectionUnselect;
   }
-  else if (Options.Contains('i')) {
+  else if (Options.GetBoolOption('i')) {
     flag = glSelectionInvert;
   }
 
@@ -3820,13 +3858,16 @@ void GXLibMacros::macInv(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
   TXPlanePList planes = app.GetSelection().Extract<TXPlane>();
-  if (planes.IsEmpty()) {
-    Error.SetUnhandled(true);
+  if (!planes.IsEmpty()) {
+    for (size_t i = 0; i < planes.Count(); i++) {
+      planes[i]->Invert();
+    }
+  }
+  if (InvertFittedFragment()) {
     return;
   }
-  for (size_t i = 0; i < planes.Count(); i++) {
-    planes[i]->Invert();
-  }
+  Error.SetUnhandled(true);
+  return;
 }
 //.............................................................................
 TNetwork::AlignInfo GXLibMacros_MatchAtomPairsQT(

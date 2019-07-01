@@ -92,6 +92,16 @@ protected:
   void __ProcessConn(ParseContext& cx);
   // also updates the RM user content if any of the types missing
   void FixTypeListAndLabels();
+  enum InsType {
+    insNone,
+    insHeader,
+    insFooter
+  };
+  /* determines if the instruction goes to the header or the footer
+  (after HKLF). Always returns insNone if params is null or the Ins is in
+  (REM, NEUT).
+  */
+  InsType GetInsType(const olxstr &ins, const TInsList *params) const;
 public:
   TIns();
   virtual ~TIns();
@@ -182,11 +192,17 @@ public:
   static TStrList::const_list_type SaveSfacUnit(const RefinementModel& rm,
     TStrList& list, size_t sfac_pos);
   TStrList& Preprocess(TStrList& l);
-  /* spits out all instructions, including CELL, FVAR, etc, returns the list
-  of SFAC
+
+  /* spits out all instructions, including CELL, FVAR, but skipping "L N N N N"
+  lines, returns the list
+  of SFAC.
   */
   TStrList::const_list_type SaveHeader(TStrList& out,
     bool ValidateRestraintNames);
+  /* retursn the remaning "unknown" instructions that did not end up in the
+  header
+  */
+  TStrList::const_list_type GetFooter();
   // Parses all instructions, exclusing atoms, throws if fails
   void ParseHeader(const TStrList& in);
   /* parsed out from REMS if refined with Olex2, typically listed like:

@@ -26,7 +26,7 @@
 #include "estopwatch.h"
 
 TBasicCFile::TBasicCFile()
-  : RefMod(AsymmUnit), AsymmUnit(NULL)
+  : RefMod(AsymmUnit), AsymmUnit(0)
 {
   AsymmUnit.SetRefMod(&RefMod);
 }
