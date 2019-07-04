@@ -565,6 +565,12 @@ void cetTable::Sort() {
   }
   data.SortRows(TableSorter());
 }
+void cetTable::SetName(const olxstr& nn) {
+  for (size_t i = 0; i < data.ColCount(); i++) {
+    data.ColName(i) = nn + data.ColName(i).SubStringFrom(name().Length());
+  }
+  this->name = nn;
+}
 //.............................................................................
 //.............................................................................
 //.............................................................................

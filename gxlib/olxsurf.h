@@ -68,7 +68,7 @@ struct TSurfCalculationTask1 : public TaskBase {
     uc(uc_), au(uc_.GetLattice().GetAsymmUnit())
   {}
   void Run(size_t i) {
-    uc.FindInRangeAMC(au.Fractionalise(vertices[i]), 5,
+    uc.FindInRangeAMC(au.Fractionalise(vertices[i]), 1e-3, 5,
       res.SetCount(0, false));
     double v = 0;
     for (size_t j = 0; j < res.Count(); j++) {

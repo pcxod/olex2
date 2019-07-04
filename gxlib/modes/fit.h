@@ -284,7 +284,7 @@ public:
       for (size_t i = 0; i < Atoms.Count(); i++) {
         Atoms[i]->CAtom().ccrd() = au.Fractionalise(Atoms[i]->crd());
         TTypeList<olx_pair_t<TCAtom*, vec3d> > res;
-        uc.FindInRangeAC(Atoms[i]->CAtom().ccrd(), 0.5, res);
+        uc.FindInRangeAC(Atoms[i]->CAtom().ccrd(), 0.0, 0.1, res);
         for (size_t j = 0; j < res.Count(); j++) {
           if (res[j].GetA()->GetTag() == 0 &&
             (res[j].GetA()->GetPart() == 0 ||

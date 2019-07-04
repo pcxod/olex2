@@ -24,21 +24,27 @@
 
 #undef GetObject
 
-TUnitCell::TUnitCell(TLattice *L)  {  Lattice = L;  }
+TUnitCell::TUnitCell(TLattice *L)
+: Lattice(L)
+{}
 //..............................................................................
-TUnitCell::~TUnitCell()  {  Clear();  }
+TUnitCell::~TUnitCell() {
+  Clear();
+}
 //..............................................................................
-void TUnitCell::ClearEllipsoids()  {
-  for( size_t i=0; i < Ellipsoids.Count(); i++ )
+void TUnitCell::ClearEllipsoids() {
+  for (size_t i = 0; i < Ellipsoids.Count(); i++) {
     Ellipsoids[i].DeleteItems(true);
+  }
   Ellipsoids.Clear();
 }
 //..............................................................................
-void TUnitCell::AddEllipsoid(size_t n)  {
+void TUnitCell::AddEllipsoid(size_t n) {
   size_t st = Ellipsoids.Count();
   Ellipsoids.SetCount(Ellipsoids.Count() + n);
-  for( size_t i=0; i < n; i++ )
-    Ellipsoids[i+st].SetCount(Matrices.Count());
+  for (size_t i = 0; i < n; i++) {
+    Ellipsoids[i + st].SetCount(Matrices.Count());
+  }
 }
 //..............................................................................
 void TUnitCell::Clear()  {
@@ -115,7 +121,7 @@ TEValue<double> TUnitCell::CalcVolumeEx(const TAsymmUnit& au) {
   return  TEValue<double>(v, esd);
 }
 //..............................................................................
-void  TUnitCell::InitMatrices()  {
+void  TUnitCell::InitMatrices() {
   volatile TStopWatch sw(__FUNC__);
   MulDest.Clear();
   Matrices.Clear();
@@ -124,22 +130,22 @@ void  TUnitCell::InitMatrices()  {
   const size_t mc = Matrices.Count();
   MulDest.SetCapacity(mc);
   InvDest.SetCount(mc);
-  for( size_t i=0; i < mc; i++ )  {
+  for (size_t i = 0; i < mc; i++) {
     Matrices[i].SetId((uint8_t)i);
     MulDest.Add(new TArrayList<uint8_t>(mc));
-    for( size_t j=0; j < mc; j++ )  {
-      smatd m = Matrices[i]*Matrices[j];
+    for (size_t j = 0; j < mc; j++) {
+      smatd m = Matrices[i] * Matrices[j];
       size_t index = InvalidIndex;
-      for( size_t k=0; k < mc; k++ )  {
-        if( Matrices[k].r == m.r )  {
+      for (size_t k = 0; k < mc; k++) {
+        if (Matrices[k].r == m.r) {
           const vec3d t = m.t - Matrices[k].t;
-          if( (t-t.Round<int>()).QLength() < 1e-6 )  {
+          if ((t - t.Round<int>()).QLength() < 1e-6) {
             index = k;
             break;
           }
         }
       }
-      if( index == InvalidIndex ) {
+      if (index == InvalidIndex) {
         throw TFunctionFailedException(__OlxSourceInfo,
           "assert: incomplete space group");
       }
@@ -148,16 +154,16 @@ void  TUnitCell::InitMatrices()  {
     {
       const smatd m = Matrices[i].Inverse();
       size_t index = InvalidIndex;
-      for( size_t k=0; k < mc; k++ )  {
-        if( Matrices[k].r == m.r )  {
+      for (size_t k = 0; k < mc; k++) {
+        if (Matrices[k].r == m.r) {
           const vec3d t = m.t - Matrices[k].t;
-          if( (t-t.Round<int>()).QLength() < 1e-6 )  {
+          if ((t - t.Round<int>()).QLength() < 1e-6) {
             index = k;
             break;
           }
         }
       }
-      if( index == InvalidIndex ) {
+      if (index == InvalidIndex) {
         throw TFunctionFailedException(__OlxSourceInfo,
           "assert: incomplete space group");
       }
@@ -167,10 +173,10 @@ void  TUnitCell::InitMatrices()  {
   UpdateEllipsoids();
 #if defined(_DEBUG) && 0
   TTable m_tab(mc, mc), i_tab(1, mc);
-  for( size_t i=0; i < mc; i++ )  {
+  for (size_t i = 0; i < mc; i++) {
     i_tab.ColName(i) = i;
     i_tab[0][i] = InvDest[i];
-    for( size_t j=0; j < mc; j++ )  {
+    for (size_t j = 0; j < mc; j++) {
       m_tab[i][j] = MulDest[i][j];
     }
   }
@@ -229,7 +235,7 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
     if (Atoms[i]->IsDeleted()) {
       continue;
     }
-    if (Atoms[i]->GetExyzGroup() != NULL &&
+    if (Atoms[i]->GetExyzGroup() != 0 &&
       Atoms[i]->GetExyzGroup() == Atoms[ind]->GetExyzGroup())
     {
       continue;
@@ -242,7 +248,9 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
         AU->CellToCartesian(v);
         const double qd = v.QLength();
         if (qd < 1e-4) {
-          if (Atoms[i]->GetPart() != Atoms[ind]->GetPart())  continue;
+          if (Atoms[i]->GetPart() != Atoms[ind]->GetPart()) {
+            continue;
+          }
           if (Atoms[ind]->GetType() == iQPeakZ) {
             Atoms[ind]->SetDeleted(true);
             break;
@@ -327,8 +335,9 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
           {
             volatile olx_scope_cs cs_(GetCriticalSection());
             Atoms[ind]->AttachSiteI(Atoms[i], matr);
-            if (i != ind)
+            if (i != ind) {
               Atoms[i]->AttachSiteI(Atoms[ind], Latt->GetUnitCell().InvMatrix(matr));
+            }
           }
         }
       }
@@ -339,16 +348,16 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
 void TUnitCell::TSearchSymmEqTask::InitEquiv() const {
   const size_t ac = Atoms.Count();
   const size_t mc = Matrices.Count();
-  for( size_t i=0; i < ac; i++ )  {
+  for (size_t i = 0; i < ac; i++) {
     if (Atoms[i]->IsDeleted()) {
       continue;
     }
-    for( size_t j=1; j < mc; j++ )  {
+    for (size_t j = 1; j < mc; j++) {
       vec3d v = Atoms[i]->ccrd() - Matrices[j] * Atoms[i]->ccrd();
       const vec3i shift = v.Round<int>();
       AU->CellToCartesian(v -= shift);
       const double qd = v.QLength();
-      if( qd < 1e-4 )  {
+      if (qd < 1e-4) {
         smatd eqm(Matrices[j]);
         eqm.t += shift;
         eqm.SetId((uint8_t)j, shift);
@@ -358,13 +367,13 @@ void TUnitCell::TSearchSymmEqTask::InitEquiv() const {
         smatd matr = Matrices[j];
         matr.t += shift;
         matr.SetId((uint8_t)j, shift);
-        if( TNetwork::BondExistsQ(*Atoms[i], *Atoms[i], matr, qd,
-          Latt->GetDelta()) )
+        if (TNetwork::BondExistsQ(*Atoms[i], *Atoms[i], matr, qd,
+          Latt->GetDelta()))
         {
           Atoms[i]->AttachSite(Atoms[i], matr);
         }
-        else if( TNetwork::BondExistsQ(*Atoms[i], *Atoms[i], matr, qd,
-          Latt->GetDeltaI()) )
+        else if (TNetwork::BondExistsQ(*Atoms[i], *Atoms[i], matr, qd,
+          Latt->GetDeltaI()))
         {
           Atoms[i]->AttachSiteI(Atoms[i], matr);
         }
@@ -378,7 +387,7 @@ void TUnitCell::FindSymmEq() const {
   TStrList report;
   TCAtomPList ACA;
   ACA.SetCapacity(GetLattice().GetAsymmUnit().AtomCount());
-  for( size_t i=0; i < GetLattice().GetAsymmUnit().AtomCount(); i++ )  {
+  for (size_t i = 0; i < GetLattice().GetAsymmUnit().AtomCount(); i++) {
     TCAtom& A1 = GetLattice().GetAsymmUnit().GetAtom(i);
     if (A1.IsDeleted()) {
       continue;
@@ -394,10 +403,10 @@ void TUnitCell::FindSymmEq() const {
   if (ACA.IsEmpty()) {
     return;
   }
-  if (olx_abs(CalcVolume()-1.0) < 1e-3) {  // cartesian coordinates?
+  if (olx_abs(CalcVolume() - 1.0) < 1e-3) {  // cartesian coordinates?
     const double delta = GetLattice().GetDelta();
     for (size_t i = 0; i < ACA.Count(); i++) {
-      for (size_t j = i+1; j < ACA.Count(); j++) {
+      for (size_t j = i + 1; j < ACA.Count(); j++) {
         const double qd = ACA[i]->ccrd().QDistanceTo(ACA[j]->ccrd());
         if (TNetwork::BondExistsQ(*ACA[i], *ACA[j], Matrices[0], qd, delta)) {
           ACA[i]->AttachSite(ACA[j], Matrices[0]);
@@ -406,7 +415,7 @@ void TUnitCell::FindSymmEq() const {
       }
     }
   }
-  else  {
+  else {
     TSearchSymmEqTask searchTask(ACA, Matrices);
     searchTask.InitEquiv();
     OlxListTask::Run(searchTask, ACA.Count(), tQuadraticTask, 1000);
@@ -415,30 +424,38 @@ void TUnitCell::FindSymmEq() const {
     }
   }
   RefinementModel *rm = GetLattice().GetAsymmUnit().GetRefMod();
-  if (rm != NULL) {
-    for (size_t i=0; i < rm->InfoTabCount(); i++) {
+  if (rm != 0) {
+    for (size_t i = 0; i < rm->InfoTabCount(); i++) {
       InfoTab &it = rm->GetInfoTab(i);
-      if (it.GetType() != infotab_htab) continue;
+      if (it.GetType() != infotab_htab) {
+        continue;
+      }
       TTypeList<ExplicitCAtomRef> ta = it.GetAtoms().ExpandList(*rm, 2);
-      for (size_t j=0; j < ta.Count(); j+=2) {
+      for (size_t j = 0; j < ta.Count(); j += 2) {
         smatd m;
-        if (ta[j+1].GetMatrix() != NULL) {
-          m = InvMatrix(*ta[j+1].GetMatrix());
-          if (ta[j].GetMatrix() != NULL)
+        if (ta[j + 1].GetMatrix() != 0) {
+          m = InvMatrix(*ta[j + 1].GetMatrix());
+          if (ta[j].GetMatrix() != 0) {
             m = MulMatrix(*ta[j].GetMatrix(), m);
+          }
         }
-        else if (ta[j].GetMatrix() != NULL)
+        else if (ta[j].GetMatrix() != 0) {
           m = *ta[j].GetMatrix();
-        else
+        }
+        else {
           m = Matrices[0];
+        }
         TCAtom &dn = ta[j].GetAtom();
-        for (size_t k=0; k < dn.AttachedSiteCount(); k++) {
+        for (size_t k = 0; k < dn.AttachedSiteCount(); k++) {
           TCAtom::Site &s = dn.GetAttachedSite(k);
-          if (s.atom->GetType() != iHydrogenZ) continue;
+          if (s.atom->GetType() != iHydrogenZ) {
+            continue;
+          }
           smatd m1 = MulMatrix(s.matrix, m);
-          ta[j+1].GetAtom().AttachSiteI(s.atom, m1);
-          if (ta[j+1].GetAtom() != s.atom)
-            s.atom->AttachSiteI(&ta[j+1].GetAtom(), InvMatrix(m1));
+          ta[j + 1].GetAtom().AttachSiteI(s.atom, m1);
+          if (ta[j + 1].GetAtom() != s.atom) {
+            s.atom->AttachSiteI(&ta[j + 1].GetAtom(), InvMatrix(m1));
+          }
         }
       }
     }
@@ -448,17 +465,18 @@ void TUnitCell::FindSymmEq() const {
 smatd* TUnitCell::GetClosest(const vec3d& to, const vec3d& from,
   bool ConsiderOriginal, double* dist) const
 {
-  const smatd* minMatr = NULL;
+  const smatd* minMatr = 0;
   const TAsymmUnit &au = GetLattice().GetAsymmUnit();
   vec3i mint;
   smatd I = smatd::Identity();
   double minD = 10000;
   if (ConsiderOriginal) {
-    minD = au.Orthogonalise(from-to).QLength();
-    if (dist != NULL)
+    minD = au.Orthogonalise(from - to).QLength();
+    if (dist != 0) {
       *dist = minD;
+    }
   }
-  for (size_t i=0; i < Matrices.Count(); i++) {
+  for (size_t i = 0; i < Matrices.Count(); i++) {
     const smatd& matr = Matrices[i];
     vec3d v = matr * from - to;
     const vec3i shift = -v.Round<int>();
@@ -476,18 +494,19 @@ smatd* TUnitCell::GetClosest(const vec3d& to, const vec3d& from,
       }
     }
   }
-  if (minMatr != NULL) {
+  if (minMatr != 0) {
     if (minMatr->IsFirst() && mint.IsNull()) {
       return 0;
     }
     smatd* retVal = new smatd(*minMatr);
     retVal->t += mint;
     retVal->SetId(minMatr->GetContainerId(), mint);
-    if (dist != NULL)
+    if (dist != 0) {
       *dist = sqrt(minD);
+    }
     return retVal;
   }
-  return NULL;
+  return 0;
 }
 //..............................................................................
 smatd TUnitCell::GetRelation(const vec3d& to, const vec3d& from) const {
@@ -515,12 +534,16 @@ smatd TUnitCell::GetRelation(const vec3d& to, const vec3d& from) const {
 void TUnitCell::UnifyAMCList(
   TTypeList<AnAssociation3<TCAtom*, smatd, vec3d> >& res)
 {
-  for (size_t i=0; i < res.Count(); i++) {
-    if (res.IsNull(i) || res[i].GetA()->EquivCount() == 0) continue;
-    for (size_t j=i+1; j < res.Count(); j++) {
-      if (res.IsNull(j)) continue;
+  for (size_t i = 0; i < res.Count(); i++) {
+    if (res.IsNull(i) || res[i].GetA()->EquivCount() == 0) {
+      continue;
+    }
+    for (size_t j = i + 1; j < res.Count(); j++) {
+      if (res.IsNull(j)) {
+        continue;
+      }
       if (res[i].GetA() == res[j].GetA() &&
-          res[i].GetC().Equals(res[j].GetC(), 1e-3))
+        res[i].GetC().Equals(res[j].GetC(), 1e-3))
       {
         res.NullItem(j);
       }
@@ -537,47 +560,52 @@ ConstTypeList<smatd> TUnitCell::GetBinding(const TCAtom& toA,
   smatd Im;
   vec3d i_t;
   Im.I().SetId(0);
-  for( size_t i=0; i < MatrixCount(); i++ )  {
+  for (size_t i = 0; i < MatrixCount(); i++) {
     const smatd& matr = GetMatrix(i);
     vec3d v = matr * from - to;
     const vec3i shift = -v.Round<int>();
-    if (i == 0) i_t = shift;
+    if (i == 0) {
+      i_t = shift;
+    }
     v += shift;
     // check for identity matrix
-    if( !IncludeI && i == 0 && shift.IsNull() )  continue;
+    if (!IncludeI && i == 0 && shift.IsNull()) {
+      continue;
+    }
     const double qD = GetLattice().GetAsymmUnit().CellToCartesian(v).QLength();
-    if( GetLattice().GetNetwork().CBondExistsQ(toA, fromA, matr, qD) )  {
+    if (GetLattice().GetNetwork().CBondExistsQ(toA, fromA, matr, qD)) {
       smatd& newMatr = retVal.AddNew(matr);
       newMatr.t += shift;
       newMatr.SetId(matr.GetContainerId(), shift);
     }
-    else if( IncludeHBonds )  {
-      if( GetLattice().GetNetwork().HBondExistsQ(toA, fromA, matr, qD) )  {
+    else if (IncludeHBonds) {
+      if (GetLattice().GetNetwork().HBondExistsQ(toA, fromA, matr, qD)) {
         smatd& newMatr = retVal.AddNew(matr);
         newMatr.t += shift;
         newMatr.SetId(matr.GetContainerId(), shift);
       }
     }
   }
-  for( int i=-1; i <= 1; i++ )  {
-    for( int j=-1; j <= 1; j++ ) {
-      for( int k=-1; k <= 1; k++ )  {
-        if( i == 0 && j == 0 && k == 0 ) {
-          if (i_t.IsNull(1e-3))
+  for (int i = -1; i <= 1; i++) {
+    for (int j = -1; j <= 1; j++) {
+      for (int k = -1; k <= 1; k++) {
+        if (i == 0 && j == 0 && k == 0) {
+          if (i_t.IsNull(1e-3)) {
             continue;
+          }
         }
         vec3d v(from[0] + i - to[0], from[1] + j - to[1], from[2] + k - to[2]);
         Im.t = v;
         const double qD = GetLattice().GetAsymmUnit().CellToCartesian(v).QLength();
-        if( GetLattice().GetNetwork().CBondExistsQ(toA, fromA, Im, qD) )  {
+        if (GetLattice().GetNetwork().CBondExistsQ(toA, fromA, Im, qD)) {
           smatd& retMatr = retVal.AddNew().I();
           retMatr.t[0] += i;
           retMatr.t[1] += j;
           retMatr.t[2] += k;
           retMatr.SetId(0, i, j, k);
         }
-        else if( IncludeHBonds )  {
-          if( GetLattice().GetNetwork().HBondExistsQ(toA, fromA, Im, qD) )  {
+        else if (IncludeHBonds) {
+          if (GetLattice().GetNetwork().HBondExistsQ(toA, fromA, Im, qD)) {
             smatd& retMatr = retVal.AddNew().I();
             retMatr.t[0] += i;
             retMatr.t[1] += j;
@@ -592,14 +620,16 @@ ConstTypeList<smatd> TUnitCell::GetBinding(const TCAtom& toA,
 }
 //..............................................................................
 ConstTypeList<smatd> TUnitCell::GetInRange(const vec3d& to, const vec3d& from,
-  double R, bool IncludeI) const
+  double minR, double maxR, bool IncludeI) const
 {
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();
   const double ma = olx_min(olx_min(au.GetAxes()[0], au.GetAxes()[1]),
     au.GetAxes()[2]);
-  const int pr = int(R / ma) + 1, mr = -pr;
+  const int pr = int(maxR / ma) + 1,
+    mr = -pr;
   smatd_list retVal;
-  R *= R;
+  maxR *= maxR;
+  minR *= minR;
   for (size_t i=0; i < MatrixCount(); i++) {
     const vec3i shift = -vec3d(Matrices[i] * from - to).Round<int>();
     for (int ii = mr; ii <= pr; ii++) {
@@ -609,7 +639,7 @@ ConstTypeList<smatd> TUnitCell::GetInRange(const vec3d& to, const vec3d& from,
           smatd tm = Matrices[i];
           tm.t += shift1;
           const double D = au.Orthogonalise(tm*from - to).QLength();
-          if (D < R && D > 0.0001) {
+          if (D < maxR && D >= minR) {
             retVal.AddCopy(tm).SetId(Matrices[i].GetContainerId(), shift1);
           }
         }
@@ -619,16 +649,17 @@ ConstTypeList<smatd> TUnitCell::GetInRange(const vec3d& to, const vec3d& from,
   return retVal;
 }
 //..............................................................................
-void TUnitCell::_FindInRange(const vec3d& to, double R,
+void TUnitCell::_FindInRange(const vec3d& to, double minR, double maxR,
   TTypeList<AnAssociation3<TCAtom*,smatd, vec3d> >& res, bool find_deleted,
   const TCAtomPList* _atoms) const
 {
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();
   const double ma = olx_min(olx_min(au.GetAxes()[0], au.GetAxes()[1]),
     au.GetAxes()[2]);
-  const int pr = int(R / ma) + 1, mr = -pr;
+  const int pr = int(maxR / ma) + 1, mr = -pr;
   const TCAtomPList& atoms = (_atoms == 0 ? au.GetAtoms() : *_atoms);
-  R *= R;
+  maxR *= maxR;
+  minR *= minR;
   const size_t ac = atoms.Count();
   const size_t mc = Matrices.Count();
   for (size_t i=0; i < ac; i++ ) {
@@ -645,7 +676,7 @@ void TUnitCell::_FindInRange(const vec3d& to, double R,
             smatd tm = Matrices[j];
             tm.t += shift1;
             const double D = au.Orthogonalise(tm*a.ccrd() - to).QLength();
-            if (D < R && D > 0.0001) {
+            if (D < maxR && D >= minR) {
               res.AddNew(atoms[i], tm, au.Orthogonalise(tm*a.ccrd())).b
                 .SetId(Matrices[j].GetContainerId(), shift1);
             }
@@ -792,7 +823,6 @@ TAtomEnvi TUnitCell::GetAtomQEnviList(const TSAtom& atom) {
 TAtomEnvi TUnitCell::GetAtomPossibleHBonds(const TAtomEnvi& ae) {
   TAtomEnvi envi(ae.GetBase());
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();
-  const double D = 3.3, qD = D * D;
   const size_t ac = au.AtomCount();
   SortedObjectList<int, TPrimitiveComparator> types;
   types.Add(iNitrogenZ);
@@ -807,13 +837,10 @@ TAtomEnvi TUnitCell::GetAtomPossibleHBonds(const TAtomEnvi& ae) {
       continue;
     }
     const bool considerI = (A != ae.GetBase().CAtom());
-    smatd_list ms = GetInRange(ae.GetBase().ccrd(), A.ccrd(), D, considerI);
+    smatd_list ms = GetInRange(ae.GetBase().ccrd(), A.ccrd(),
+      1.7, 3.3, considerI);
     for (size_t j = 0; j < ms.Count(); j++) {
       const vec3d a_crd = au.Orthogonalise(ms[j] * A.ccrd());
-      const double qd = a_crd.QDistanceTo(ae.GetBase().crd());
-      if (qd < 2 * 2 || qd > qD) {
-        continue;
-      }
       if (ae.Count() == 1) {
         // 80 - 150 degrees
         const double ca = (ae.GetCrd(0) - ae.GetBase().crd()).CAngle(
@@ -844,7 +871,9 @@ void TUnitCell::FilterHBonds(TAtomEnvi& atom, TAtomEnvi& envi, bool move) {
     TCAtom &a = envi.GetCAtom(i);
     for( size_t ai=0; ai < a.AttachedSiteCount(); ai++) {
       TCAtom::Site &s = a.GetAttachedSite(ai);
-      if (s.atom->GetType() != iHydrogenZ) continue;
+      if (s.atom->GetType() != iHydrogenZ) {
+        continue;
+      }
       smatd m = MulMatrix(s.matrix, envi.GetMatrix(i));
       vec3d h_crd = au.Orthogonalise(m*s.atom->ccrd());
       double ca = (envi.GetBase().crd()-h_crd).CAngle(envi.GetCrd(i)-h_crd);
@@ -862,37 +891,42 @@ void TUnitCell::FilterHBonds(TAtomEnvi& atom, TAtomEnvi& envi, bool move) {
 TCAtom* TUnitCell::FindOverlappingAtom(const vec3d& pos, bool find_deleted,
   double delta) const
 {
-  TTypeList< AnAssociation3<TCAtom*,smatd,vec3d> > res;
-  _FindInRange(pos, delta, res, find_deleted);
-  if( res.IsEmpty() )
-    return NULL;
-  if( res.Count() == 1 )
+  TTypeList< AnAssociation3<TCAtom*, smatd, vec3d> > res;
+  _FindInRange(pos, 0.0, delta, res, find_deleted);
+  if (res.IsEmpty()) {
+    return 0;
+  }
+  if (res.Count() == 1) {
     return const_cast<TCAtom*>(res[0].a);
-  else  {
+  }
+  else {
     const TAsymmUnit& au = GetLattice().GetAsymmUnit();
     vec3d cpos = au.Orthogonalise(pos);
     double minQD = 1000;
     size_t ri = InvalidIndex;
-    for( size_t i=0; i < res.Count(); i++ )  {
+    for (size_t i = 0; i < res.Count(); i++) {
       const double qd = res[i].GetC().QDistanceTo(cpos);
-      if( qd < minQD )  {
+      if (qd < minQD) {
         ri = i;
         minQD = qd;
       }
     }
-    if( ri == InvalidIndex )
+    if (ri == InvalidIndex) {
       throw TFunctionFailedException(__OlxSourceInfo, "assert here");
+    }
     return res[ri].a;
   }
 }
 //..............................................................................
-TCAtom* TUnitCell::FindCAtom(const vec3d& center) const  {
+TCAtom* TUnitCell::FindCAtom(const vec3d& center) const {
   TTypeList< AnAssociation3<TCAtom*, smatd, vec3d> > res;
-  _FindInRange(center, 0.1, res);
-  if( res.IsEmpty() )
-    return NULL;
-  if( res.Count() == 1 )
+  _FindInRange(center, 0.0, 0.1, res);
+  if (res.IsEmpty()) {
+    return 0;
+  }
+  if (res.Count() == 1) {
     return res[0].a;
+  }
   throw TFunctionFailedException(__OlxSourceInfo,
     "assert, too many atoms returned");
 }
@@ -901,46 +935,49 @@ void TUnitCell::BuildStructureMap_Direct(TArray3D<short>& map, double delta,
   short val, ElementRadii* radii, const TCAtomPList* _template)
 {
   TBasicApp::NewLogEntry() << "Building structure map...";
-  TTypeList< AnAssociation3<vec3d,TCAtom*, double> > allAtoms;
+  TTypeList< AnAssociation3<vec3d, TCAtom*, double> > allAtoms;
   GenereteAtomCoordinates(allAtoms, true, _template);
 
   const size_t da = map.Length1(),
-               db = map.Length2(),
-               dc = map.Length3();
+    db = map.Length2(),
+    dc = map.Length3();
   map.FastInitWith(0);
   // expand atom list to +/-1/3 of UC
-  ExpandAtomCoordinates(allAtoms, 1./2);
+  ExpandAtomCoordinates(allAtoms, 1. / 2);
   // precalculate the sphere/ellipsoid etc coordinates for all distinct scatterers
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();
   double maxR = 0;
   sorted::PrimitiveAssociation<short, double> scatterers;
-  for( size_t i=0; i < au.AtomCount(); i++ )  {
-    if( au.GetAtom(i).IsDeleted() )  continue;
+  for (size_t i = 0; i < au.AtomCount(); i++) {
+    if (au.GetAtom(i).IsDeleted()) {
+      continue;
+    }
     const size_t ind = scatterers.IndexOf(au.GetAtom(i).GetType().GetIndex());
-    if( ind != InvalidIndex )  continue;
+    if (ind != InvalidIndex)  continue;
     const double r = TXApp::GetVdWRadius(au.GetAtom(i), radii) + delta;
     scatterers.Add(au.GetAtom(i).GetType().GetIndex(), r);
   }
-  for( size_t i=0; i < allAtoms.Count(); i++ )  {
+  for (size_t i = 0; i < allAtoms.Count(); i++) {
     const double sr = scatterers.Find(allAtoms[i].GetB()->GetType().GetIndex());
-    if( sr > maxR )
+    if (sr > maxR) {
       maxR = sr;
-    allAtoms[i].c = sr*sr;
+    }
+    allAtoms[i].c = sr * sr;
     au.CellToCartesian(allAtoms[i].a);
   }
   const size_t ac = allAtoms.Count();
-  for( size_t j = 0; j < da; j ++ )  {
-    const double dx = (double)j/da;
-    if( (j%5) == 0 )  {
-      TBasicApp::GetLog() << '\r' << j*100/da << '%';
+  for (size_t j = 0; j < da; j++) {
+    const double dx = (double)j / da;
+    if ((j % 5) == 0) {
+      TBasicApp::GetLog() << '\r' << j * 100 / da << '%';
       TBasicApp::GetInstance().Update();
     }
-    for( size_t k = 0; k < db; k ++ )  {
-      const double dy = (double)k/db;
-      for( size_t l = 0; l < dc; l ++ )  {
-        vec3d p = au.Orthogonalise(vec3d(dx, dy, (double)l/dc));
-        for( size_t i=0; i < ac; i++ )  {
-          if( p.QDistanceTo(allAtoms[i].GetA()) <= allAtoms[i].GetC() )  {
+    for (size_t k = 0; k < db; k++) {
+      const double dy = (double)k / db;
+      for (size_t l = 0; l < dc; l++) {
+        vec3d p = au.Orthogonalise(vec3d(dx, dy, (double)l / dc));
+        for (size_t i = 0; i < ac; i++) {
+          if (p.QDistanceTo(allAtoms[i].GetA()) <= allAtoms[i].GetC()) {
             map.Data[j][k][l] = val;
             break;
           }
@@ -982,34 +1019,38 @@ olx_object_ptr<TArray3D<bool> > TUnitCell::BuildAtomMask(const vec3s& dim,
 }
 //..................................................................................
 olx_pdict<short, TArray3D<bool>*>::const_dict_type
-  TUnitCell::BuildAtomMasks(const vec3s& dim, ElementRadii* radii, double delta) const
+TUnitCell::BuildAtomMasks(const vec3s& dim, ElementRadii* radii, double delta) const
 {
   // angstrem per pixel scale
-  double capp = Lattice->GetAsymmUnit().GetAxes()[2]/dim[2],
-         bapp = Lattice->GetAsymmUnit().GetAxes()[1]/dim[1],
-         aapp = Lattice->GetAsymmUnit().GetAxes()[0]/dim[0];
+  double capp = Lattice->GetAsymmUnit().GetAxes()[2] / dim[2],
+    bapp = Lattice->GetAsymmUnit().GetAxes()[1] / dim[1],
+    aapp = Lattice->GetAsymmUnit().GetAxes()[0] / dim[0];
   // precalculate the sphere/ellipsoid etc coordinates for all distinct scatterers
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();
-  const double sin_a = sin(au.GetAngles()[0]*M_PI/180);
-  const double sin_b = sin(au.GetAngles()[1]*M_PI/180);
-  const double sin_g = sin(au.GetAngles()[2]*M_PI/180);
+  const double sin_a = sin(au.GetAngles()[0] * M_PI / 180);
+  const double sin_b = sin(au.GetAngles()[1] * M_PI / 180);
+  const double sin_g = sin(au.GetAngles()[2] * M_PI / 180);
   olx_pdict<short, TArray3D<bool>*> scatterers;
-  for( size_t i=0; i < au.AtomCount(); i++ )  {
-    if( au.GetAtom(i).IsDeleted() || au.GetAtom(i).GetType() == iQPeakZ )  continue;
+  for (size_t i = 0; i < au.AtomCount(); i++) {
+    if (au.GetAtom(i).IsDeleted() || au.GetAtom(i).GetType() == iQPeakZ) {
+      continue;
+    }
     size_t ind = scatterers.IndexOf(au.GetAtom(i).GetType().GetIndex());
-    if( ind != InvalidIndex )  continue;
+    if (ind != InvalidIndex) {
+      continue;
+    }
     const double r = TXApp::GetVdWRadius(au.GetAtom(i), radii) + delta;
-    const double sr = r*r;
-    int ad = olx_round(olx_max(2*r/sin_b, 2*r/sin_g)/aapp);
-    int bd = olx_round(olx_max(2*r/sin_a, 2*r/sin_g)/bapp);
-    int cd = olx_round(olx_max(2*r/sin_a, 2*r/sin_b)/capp);
+    const double sr = r * r;
+    int ad = olx_round(olx_max(2 * r / sin_b, 2 * r / sin_g) / aapp);
+    int bd = olx_round(olx_max(2 * r / sin_a, 2 * r / sin_g) / bapp);
+    int cd = olx_round(olx_max(2 * r / sin_a, 2 * r / sin_b) / capp);
     TArray3D<bool>* spm = new TArray3D<bool>(-ad, ad, -bd, bd, -cd, cd);
-    for( int x=-ad; x <= ad; x ++ )  {
-      for( int y=-bd; y <= bd; y ++ )  {
-        for( int z=-cd; z <= cd; z ++ )  {
-          vec3d v = au.Orthogonalise(vec3d((double)x/dim[0], (double)y/dim[1],
-            (double)z/dim[2]));
-          spm->Data[x+ad][y+bd][z+cd] = (v.QLength() <= sr);
+    for (int x = -ad; x <= ad; x++) {
+      for (int y = -bd; y <= bd; y++) {
+        for (int z = -cd; z <= cd; z++) {
+          vec3d v = au.Orthogonalise(vec3d((double)x / dim[0], (double)y / dim[1],
+            (double)z / dim[2]));
+          spm->Data[x + ad][y + bd][z + cd] = (v.QLength() <= sr);
         }
       }
     }
@@ -1021,37 +1062,43 @@ olx_pdict<short, TArray3D<bool>*>::const_dict_type
 void TUnitCell::BuildStructureMap_Masks(TArray3D<short>& map, double delta, short val,
   ElementRadii* radii, const TCAtomPList* _template) const
 {
-  TTypeList< olx_pair_t<vec3d,TCAtom*> > allAtoms;
+  TTypeList< olx_pair_t<vec3d, TCAtom*> > allAtoms;
   GenereteAtomCoordinates(allAtoms, true, _template);
   const vec3s dim = map.GetSize();
   // angstrem per pixel scale
   // precalculate the sphere/ellipsoid etc coordinates for all distinct scatterers
   olx_pdict<short, TArray3D<bool>*> scatterers = BuildAtomMasks(dim, radii, delta);
   vec3i aa[8];
-  for( size_t i=0; i < allAtoms.Count(); i++ )  {
+  for (size_t i = 0; i < allAtoms.Count(); i++) {
     TArray3D<bool>* spm = scatterers.Get(allAtoms[i].GetB()->GetType().GetIndex());
     vec3d center = allAtoms[i].GetA()*dim;
-    const index_t ad = spm->Length1()/2;
-    const index_t bd = spm->Length2()/2;
-    const index_t cd = spm->Length3()/2;
-    for( index_t j = -ad; j <= ad; j ++ )  {
-      for( index_t k = -bd; k <= bd; k ++ )  {
-        for( index_t l = -cd; l <= cd; l ++ )  {
-          if( !spm->Data[j+ad][k+bd][l+cd] )  continue;
-          aa[0] = vec3i(olx_round(center[0]+j), olx_round(center[1]+k), olx_round(center[2]+l)); //x,y,z
-          aa[1] = vec3i((int)(center[0]+j), (int)(center[1]+k), (int)(center[2]+l));  //x',y',z'
+    const index_t ad = spm->Length1() / 2;
+    const index_t bd = spm->Length2() / 2;
+    const index_t cd = spm->Length3() / 2;
+    for (index_t j = -ad; j <= ad; j++) {
+      for (index_t k = -bd; k <= bd; k++) {
+        for (index_t l = -cd; l <= cd; l++) {
+          if (!spm->Data[j + ad][k + bd][l + cd]) {
+            continue;
+          }
+          aa[0] = vec3i(olx_round(center[0] + j), olx_round(center[1] + k),
+            olx_round(center[2] + l)); //x,y,z
+          aa[1] = vec3i((int)(center[0] + j), (int)(center[1] + k),
+            (int)(center[2] + l));  //x',y',z'
           aa[2] = vec3i(aa[1][0], aa[0][1], aa[0][2]);  // x',y,z
           aa[3] = vec3i(aa[1][0], aa[1][1], aa[0][2]);  // x',y',z
           aa[4] = vec3i(aa[1][0], aa[0][1], aa[1][2]);  // x',y,z'
           aa[5] = vec3i(aa[0][0], aa[1][1], aa[0][2]);  // x,y',z
           aa[6] = vec3i(aa[0][0], aa[1][1], aa[1][2]);  // x,y',z'
           aa[7] = vec3i(aa[0][0], aa[0][1], aa[1][2]);  // x,y,z'
-          for( int ci=0; ci < 8; ci++ )  {
-            for( size_t m=0; m < 3; m++ )  {
-              if( aa[ci][m] < 0 )
+          for (int ci = 0; ci < 8; ci++) {
+            for (size_t m = 0; m < 3; m++) {
+              if (aa[ci][m] < 0) {
                 aa[ci][m] += (int)dim[m];
-              else if( aa[ci][m] >= (int)dim[m] )
+              }
+              else if (aa[ci][m] >= (int)dim[m]) {
                 aa[ci][m] -= (int)dim[m];
+              }
             }
             map.Data[aa[ci][0]][aa[ci][1]][aa[ci][2]] = val;
           }
@@ -1059,51 +1106,58 @@ void TUnitCell::BuildStructureMap_Masks(TArray3D<short>& map, double delta, shor
       }
     }
   }
-  for( size_t i=0; i < scatterers.Count(); i++ )
+  for (size_t i = 0; i < scatterers.Count(); i++) {
     delete scatterers.GetValue(i);
+  }
 }
 //..................................................................................
 void TUnitCell::BuildDistanceMap_Direct(TArray3D<short>& _map, double delta, short val,
   const ElementRadii* _radii, const TCAtomPList* _template) const
 {
-  TTypeList< AnAssociation3<vec3f,TCAtom*, float> > allAtoms;
+  TTypeList< AnAssociation3<vec3f, TCAtom*, float> > allAtoms;
   GenereteAtomCoordinates(allAtoms, true, _template);
-  ExpandAtomCoordinates(allAtoms, 1./2);
+  ExpandAtomCoordinates(allAtoms, 1. / 2);
   const vec3s dims = _map.GetSize();
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();
   sorted::PrimitiveAssociation<short, float> radii;
-  for( size_t i=0; i < au.AtomCount(); i++ )  {
-    if( au.GetAtom(i).IsDeleted() )  continue;
+  for (size_t i = 0; i < au.AtomCount(); i++) {
+    if (au.GetAtom(i).IsDeleted()) {
+      continue;
+    }
     const size_t ind = radii.IndexOf(au.GetAtom(i).GetType().GetIndex());
-    if( ind != InvalidIndex )  continue;
+    if (ind != InvalidIndex) {
+      continue;
+    }
     const double r = TXApp::GetVdWRadius(au.GetAtom(i), _radii) + delta;
     radii.Add(au.GetAtom(i).GetType().GetIndex(), (float)r);
   }
-  for( size_t i=0; i < allAtoms.Count(); i++ )  {
+  for (size_t i = 0; i < allAtoms.Count(); i++) {
     allAtoms[i].c = radii.Find(allAtoms[i].GetB()->GetType().GetIndex());
     vec3d c = allAtoms[i].GetA();
     allAtoms[i].a = au.CellToCartesian(c);
   }
   mat3f tm = au.GetCellToCartesian();
-  TArray3D<float> map(0, dims[0]-1, 0, dims[1]-1, 0, dims[2]-1);
+  TArray3D<float> map(0, dims[0] - 1, 0, dims[1] - 1, 0, dims[2] - 1);
   map.InitWith(10000);
   TBuildDistanceMapTask task(tm, map.Data, allAtoms);
   OlxListTask::Run(task, dims[0], tLinearTask, 0);
   task.clear_loop_data();
-  float scale = (float)dims[0]/(float)Lattice->GetAsymmUnit().GetAxes()[0];
-  for( size_t i=0; i < dims[0]; i++ )  {
-    for( size_t j=0; j < dims[1]; j++ )  {
-      for( size_t k=0; k < dims[2]; k++ )  {
-        if( map.Data[i][j][k] > 0 )
-          _map.Data[i][j][k] = olx_round_t<short,float>(map.Data[i][j][k]*scale);
-        else
+  float scale = (float)dims[0] / (float)Lattice->GetAsymmUnit().GetAxes()[0];
+  for (size_t i = 0; i < dims[0]; i++) {
+    for (size_t j = 0; j < dims[1]; j++) {
+      for (size_t k = 0; k < dims[2]; k++) {
+        if (map.Data[i][j][k] > 0) {
+          _map.Data[i][j][k] = olx_round_t<short, float>(map.Data[i][j][k] * scale);
+        }
+        else {
           _map.Data[i][j][k] = val;
+        }
       }
     }
   }
 }
 //////////////////////////////////////////////////////////////////////////////////////////////
-void TUnitCell::TBuildDistanceMapTask::init_loop_data()  {
+void TUnitCell::TBuildDistanceMapTask::init_loop_data() {
   loop_data = new float*[7];
   loop_data[0] = new float[dims[0]];
   loop_data[1] = new float[dims[1]];
@@ -1112,45 +1166,51 @@ void TUnitCell::TBuildDistanceMapTask::init_loop_data()  {
   loop_data[4] = new float[dims[2]];
   loop_data[5] = new float[dims[2]];
   loop_data[6] = new float[atoms.Count()];
-  for( size_t i=0; i < dims[0]; i++ )  {
-    loop_data[0][i] = (float)i*tm[0][0]/dims[0];
+  for (size_t i = 0; i < dims[0]; i++) {
+    loop_data[0][i] = (float)i*tm[0][0] / dims[0];
   }
-  for( size_t i=0; i < dims[1]; i++ )  {
-    loop_data[1][i] = (float)i*tm[1][0]/dims[1];
-    loop_data[2][i] = (float)i*tm[1][1]/dims[1];
+  for (size_t i = 0; i < dims[1]; i++) {
+    loop_data[1][i] = (float)i*tm[1][0] / dims[1];
+    loop_data[2][i] = (float)i*tm[1][1] / dims[1];
   }
-  for( size_t i=0; i < dims[2]; i++ )  {
-    loop_data[3][i] = (float)i*tm[2][0]/dims[2];
-    loop_data[4][i] = (float)i*tm[2][1]/dims[2];
-    loop_data[5][i] = (float)i*tm[2][2]/dims[2];
+  for (size_t i = 0; i < dims[2]; i++) {
+    loop_data[3][i] = (float)i*tm[2][0] / dims[2];
+    loop_data[4][i] = (float)i*tm[2][1] / dims[2];
+    loop_data[5][i] = (float)i*tm[2][2] / dims[2];
   }
   QuickSorter::SortSF(atoms,
-    &TUnitCell::AtomsSortByDistance<AnAssociation3<vec3f,TCAtom*,float> >);
+    &TUnitCell::AtomsSortByDistance<AnAssociation3<vec3f, TCAtom*, float> >);
   const size_t ac = atoms.Count();
-  for( size_t i=0; i < ac; i++ )
+  for (size_t i = 0; i < ac; i++) {
     loop_data[6][i] = atoms[i].GetA().Length();
+  }
 }
+//..................................................................................
 void TUnitCell::TBuildDistanceMapTask::clear_loop_data()  {
-  for( int i=0; i < 7; i++ )
-    delete [] loop_data[i];
+  for (int i = 0; i < 7; i++) {
+    delete[] loop_data[i];
+  }
   delete [] loop_data;
 }
+//..................................................................................
 void TUnitCell::TBuildDistanceMapTask::Run(size_t ind) const {
   const size_t ac = atoms.Count();
-  for( size_t i = 0; i < dims[1]; i++ )  {
-    for( size_t j = 0; j < dims[2]; j++ )  {
+  for (size_t i = 0; i < dims[1]; i++) {
+    for (size_t j = 0; j < dims[2]; j++) {
       vec3f p(loop_data[0][ind] + loop_data[1][i] + loop_data[3][j],
         loop_data[2][i] + loop_data[4][j], loop_data[5][j]);
       const float pl = p.Length();
-      for( size_t k=0; k < ac; k++ )  {
-        const float d = p.DistanceTo(atoms[k].GetA())-atoms[k].GetC();
-        if( map[ind][i][j] > d )
+      for (size_t k = 0; k < ac; k++) {
+        const float d = p.DistanceTo(atoms[k].GetA()) - atoms[k].GetC();
+        if (map[ind][i][j] > d)
           map[ind][i][j] = d;
         //map[ind][i][j] += d;
-        if( d < 0 )  // inside
+        if (d < 0) { // inside
           break;
-        if( (loop_data[6][k]-map[ind][i][j]-3) > pl )  // 3 - max rad (?)
+        }
+        if ((loop_data[6][k] - map[ind][i][j] - 3) > pl) { // 3 - max rad (?)
           break;
+        }
       }
     }
   }
@@ -1161,52 +1221,56 @@ void TUnitCell::BuildDistanceMap_Masks(TArray3D<short>& map, double delta, short
 {
   const vec3s dims = map.GetSize();
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();
-  double capp = au.GetAxes()[2]/dims[2],
-         bapp = au.GetAxes()[1]/dims[1],
-         aapp = au.GetAxes()[0]/dims[0];
-  const double sin_a = sin(au.GetAngles()[0]*M_PI/180);
-  const double sin_b = sin(au.GetAngles()[1]*M_PI/180);
-  const double sin_g = sin(au.GetAngles()[2]*M_PI/180);
-  const int shell_res = olx_round(1./aapp);
+  double capp = au.GetAxes()[2] / dims[2],
+    bapp = au.GetAxes()[1] / dims[1],
+    aapp = au.GetAxes()[0] / dims[0];
+  const double sin_a = sin(au.GetAngles()[0] * M_PI / 180);
+  const double sin_b = sin(au.GetAngles()[1] * M_PI / 180);
+  const double sin_g = sin(au.GetAngles()[2] * M_PI / 180);
+  const int shell_res = olx_round(1. / aapp);
   const double max_r = 15;
-  TArrayList<vec3i_list> shells(olx_round(max_r*shell_res)+1);
-  const int ad = olx_round(olx_max(max_r/sin_b, max_r/sin_g)/aapp);
-  const int bd = olx_round(olx_max(max_r/sin_a, max_r/sin_g)/bapp);
-  const int cd = olx_round(olx_max(max_r/sin_a, max_r/sin_b)/capp);
-  for( int x=-ad; x <= ad; x++ )  {
-    const double dx = (double)x/dims[0];
-    for( int y=-bd; y <= bd; y++ )  {
-      const double dy = (double)y/dims[1];
-      for( int z=-cd; z <= cd; z++ )  {
-        vec3d v(dx, dy, (double)z/dims[2]);
+  TArrayList<vec3i_list> shells(olx_round(max_r*shell_res) + 1);
+  const int ad = olx_round(olx_max(max_r / sin_b, max_r / sin_g) / aapp);
+  const int bd = olx_round(olx_max(max_r / sin_a, max_r / sin_g) / bapp);
+  const int cd = olx_round(olx_max(max_r / sin_a, max_r / sin_b) / capp);
+  for (int x = -ad; x <= ad; x++) {
+    const double dx = (double)x / dims[0];
+    for (int y = -bd; y <= bd; y++) {
+      const double dy = (double)y / dims[1];
+      for (int z = -cd; z <= cd; z++) {
+        vec3d v(dx, dy, (double)z / dims[2]);
         au.CellToCartesian(v);
         const double r = v.Length();
-        if( r < max_r )  {
+        if (r < max_r) {
           short shell_index = (short)(r*shell_res);
-          shells[shell_index].AddNew(x,y,z);
+          shells[shell_index].AddNew(x, y, z);
         }
       }
     }
   }
-  TTypeList<AnAssociation3<vec3d,TCAtom*,short> > allAtoms;
+  TTypeList<AnAssociation3<vec3d, TCAtom*, short> > allAtoms;
   GenereteAtomCoordinates(allAtoms, true, _template);
   // Z->R
   olx_pdict<short, short> scatterers;
-  for( size_t i=0; i < au.AtomCount(); i++ )  {
-    if( au.GetAtom(i).IsDeleted() )  continue;
+  for (size_t i = 0; i < au.AtomCount(); i++) {
+    if (au.GetAtom(i).IsDeleted()) {
+      continue;
+    }
     size_t ind = scatterers.IndexOf(au.GetAtom(i).GetType().GetIndex());
-    if( ind != InvalidIndex )  continue;
+    if (ind != InvalidIndex) {
+      continue;
+    }
     const double r = TXApp::GetVdWRadius(au.GetAtom(i), radii) + delta;
     scatterers.Add(au.GetAtom(i).GetType().GetIndex(), short(r*shell_res));
   }
   vec3i aa[8];
   // this builds the structure map
-  for( size_t i=0; i < allAtoms.Count(); i++ )  {
+  for (size_t i = 0; i < allAtoms.Count(); i++) {
     allAtoms[i].a *= dims;
     short shell_cnt = scatterers.Get(allAtoms[i].GetB()->GetType().GetIndex());
     allAtoms[i].c = shell_cnt;
-    for( short j=0; j < shell_cnt; j++ )  {
-      for( size_t k=0; k < shells[j].Count(); k++ )  {
+    for (short j = 0; j < shell_cnt; j++) {
+      for (size_t k = 0; k < shells[j].Count(); k++) {
         aa[0] = (allAtoms[i].GetA() + shells[j][k]).Round<int>(); //x,y,z
         aa[1] = allAtoms[i].GetA() + shells[j][k];  //x',y',z'
         aa[2] = vec3i(aa[1][0], aa[0][1], aa[0][2]);  // x',y,z
@@ -1215,52 +1279,61 @@ void TUnitCell::BuildDistanceMap_Masks(TArray3D<short>& map, double delta, short
         aa[5] = vec3i(aa[0][0], aa[1][1], aa[0][2]);  // x,y',z
         aa[6] = vec3i(aa[0][0], aa[1][1], aa[1][2]);  // x,y',z'
         aa[7] = vec3i(aa[0][0], aa[0][1], aa[1][2]);  // x,y,z'
-        for( int ci=0; ci < 8; ci++ )  {
-          for( size_t m=0; m < 3; m++ )  {
-            if( aa[ci][m] < 0 )
+        for (int ci = 0; ci < 8; ci++) {
+          for (size_t m = 0; m < 3; m++) {
+            if (aa[ci][m] < 0) {
               aa[ci][m] += (int)dims[m];
-            else if( aa[ci][m] >= (int)dims[m] )
+            }
+            else if (aa[ci][m] >= (int)dims[m]) {
               aa[ci][m] -= (int)dims[m];
+            }
           }
           map.Data[aa[ci][0]][aa[ci][1]][aa[ci][2]] = val;
         }
       }
     }
   }
-  short shell_expansion=0;
+  short shell_expansion = 0;
   bool changes = true;
-  while( changes )  {
+  while (changes) {
     changes = false;
     const short map_val = shell_expansion;//*shell_res;
-    size_t unused_atoms=0;
-    for( size_t i=0; i < allAtoms.Count(); i++ )  {
+    size_t unused_atoms = 0;
+    for (size_t i = 0; i < allAtoms.Count(); i++) {
       const short shell_cnt = allAtoms[i].GetC();
-      const short shell_num = shell_cnt+shell_expansion;
+      const short shell_num = shell_cnt + shell_expansion;
       short atom_used = false;
-      for( size_t j=0; j < shells[shell_num].Count(); j++ )  {
+      for (size_t j = 0; j < shells[shell_num].Count(); j++) {
         vec3i crd = allAtoms[i].GetA() + shells[shell_num][j];
-        for( size_t k=0; k < 3; k++ )  {
-          // cannot use if/else here - in some silly cases (like one atom in the AU) this can cause crashes
-          while( crd[k] < 0 )
+        for (size_t k = 0; k < 3; k++) {
+          /* cannot use if/else here - in some silly cases (like one atom in the
+          AU) this can cause crashes
+          */
+          while (crd[k] < 0) {
             crd[k] += (int)dims[k];
-          while( crd[k] >= (int)dims[k] )
+          }
+          while (crd[k] >= (int)dims[k]) {
             crd[k] -= (int)dims[k];
+          }
         }
         short& cv = map.Data[crd[0]][crd[1]][crd[2]];
-        if( cv > map_val )  {
+        if (cv > map_val) {
           cv = map_val;
           atom_used = changes = true;
         }
       }
-      if( !atom_used )  {
+      if (!atom_used) {
         allAtoms.NullItem(i);
         unused_atoms++;
       }
     }
-    if( unused_atoms > 0 )
+    if (unused_atoms > 0) {
       allAtoms.Pack();
-    if( size_t(shell_expansion++) >= shells.Count() )
-      throw TFunctionFailedException(__OlxSourceInfo, "too large voids for this procedure");
+    }
+    if (size_t(shell_expansion++) >= shells.Count()) {
+      throw TFunctionFailedException(__OlxSourceInfo,
+        "too large voids for this procedure");
+    }
   }
 }
 //..................................................................................
@@ -1270,22 +1343,29 @@ void TUnitCell::LibVolumeEx(const TStrObjList& Params, TMacroData& E)  {
   E.SetRetVal(CalcVolumeEx().ToString());
 }
 //..............................................................................
-void TUnitCell::LibCellEx(const TStrObjList& Params, TMacroData& E)  {
+void TUnitCell::LibCellEx(const TStrObjList& Params, TMacroData& E) {
   const TAsymmUnit& au = Lattice->GetAsymmUnit();
-  if( Params[0].Equalsi('a') )
+  if (Params[0].Equalsi('a')) {
     E.SetRetVal(TEValueD(au.GetAxes()[0], au.GetAxisEsds()[0]).ToString());
-  else if( Params[0].Equalsi('b') )
+  }
+  else if (Params[0].Equalsi('b')) {
     E.SetRetVal(TEValueD(au.GetAxes()[1], au.GetAxisEsds()[1]).ToString());
-  else if( Params[0].Equalsi('c') )
+  }
+  else if (Params[0].Equalsi('c')) {
     E.SetRetVal(TEValueD(au.GetAxes()[2], au.GetAxisEsds()[2]).ToString());
-  else if( Params[0].Equalsi("alpha") )
+  }
+  else if (Params[0].Equalsi("alpha")) {
     E.SetRetVal(TEValueD(au.GetAngles()[0], au.GetAngleEsds()[0]).ToString());
-  else if( Params[0].Equalsi("beta") )
+  }
+  else if (Params[0].Equalsi("beta")) {
     E.SetRetVal(TEValueD(au.GetAngles()[1], au.GetAngleEsds()[1]).ToString());
-  else if( Params[0].Equalsi("gamma") )
+  }
+  else if (Params[0].Equalsi("gamma")) {
     E.SetRetVal(TEValueD(au.GetAngles()[2], au.GetAngleEsds()[2]).ToString());
-  else
+  }
+  else {
     E.ProcessingError(__OlxSrcInfo, "invalid argument");
+  }
 }
 //..............................................................................
 void TUnitCell::LibMatrixCount(const TStrObjList& Params, TMacroData& E)  {
