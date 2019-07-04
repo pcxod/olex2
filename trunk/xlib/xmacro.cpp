@@ -1510,7 +1510,7 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options,
       continue;
     }
     TArrayList<olx_pair_t<TCAtom const*, smatd> > all;
-    uc.FindInRangeAM(sa.ccrd(), max_d, all);
+    uc.FindInRangeAM(sa.ccrd(), elm.r_bonding + 0.4, max_d, all);
     for (size_t j = 0; j < all.Count(); j++) {
       const TCAtom& ca = *all[j].GetA();
       if (!TNetwork::IsBondAllowed(sa, ca, all[j].GetB())) {
@@ -3282,7 +3282,8 @@ void XLibMacros::macEnvi(TStrObjList &Cmds, const TParamList &Options,
     __OlxSrcInfo, true);
   for (size_t i = 0; i < atoms.Count(); i++) {
     TTypeList<AnAssociation3<TCAtom*, smatd, vec3d> > envi;
-    latt.GetUnitCell().FindInRangeAMC(atoms[i]->ccrd(), r, envi, &allAtoms);
+    latt.GetUnitCell().FindInRangeAMC(atoms[i]->ccrd(),
+      1e-3, r, envi, &allAtoms);
     // remove self equivalents
     for (size_t j = 0; j < envi.Count(); j++) {
       if (j > 0 && !envi.IsNull(j - 1) &&
@@ -6548,7 +6549,7 @@ void XLibMacros::macPiSig(TStrObjList &Cmds, const TParamList &Options,
         continue;
       }
       TArrayList<AnAssociation3<TCAtom*, smatd, vec3d> > res;
-      uc.FindInRangeAMC(au.Fractionalise(cp.center), maxd, res);
+      uc.FindInRangeAMC(au.Fractionalise(cp.center), 2.0, maxd, res);
       for (size_t k = 0; k < res.Count(); k++) {
         double ang = cp.angle(res[k].GetC() - cp.center);
         if (ang < maxa) {

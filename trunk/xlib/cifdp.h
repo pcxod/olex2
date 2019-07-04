@@ -226,9 +226,7 @@ namespace cif_dp {
     cetTable(const olxstr& cols, size_t row_count = InvalidSize);
     cetTable(const cetTable& v);
     virtual ~cetTable() { Clear(); }
-    virtual void SetName(const olxstr&) {
-      throw TNotImplementedException(__OlxSourceInfo);
-    }
+    virtual void SetName(const olxstr&);
     void Clear();
     void AddCol(const olxstr& col_name);
     template <class SC>
