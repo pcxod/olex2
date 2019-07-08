@@ -6192,9 +6192,9 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options,
   const int afix = Options.FindValue("a", "-100").ToInt();
   if (afix != -100) {
     TCAtom* pivot = TAfixGroup::HasExcplicitPivot(afix) ? &xatoms[0]->CAtom()
-      : NULL;
+      : 0;
     TAfixGroup& ag = FXApp->XFile().GetRM().AfixGroups.New(pivot, afix);
-    const size_t start = pivot != NULL ? 1 : 0;
+    const size_t start = pivot != 0 ? 1 : 0;
     for (size_t i = start; i < xatoms.Count(); i++) {
       ag.AddDependent(xatoms[i]->CAtom());
     }
@@ -6206,12 +6206,14 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options,
       TXAtom& a = *xatoms[i];
       for (size_t j=0; j < a.BondCount(); j++) {
         TXAtom& b = a.Bond(j).Another(a);
-        if (b.GetOwnerId() <= a.GetOwnerId())  continue;
+        if (b.GetOwnerId() <= a.GetOwnerId()) {
+          continue;
+        }
         const double d = olx_round(a.Bond(j).Length(), 1000);
         const size_t ri = r12.IndexOf(d);
         TSimpleRestraint& df = (ri == InvalidIndex) ? rm.rDFIX.AddNew()
           : *r12.GetValue(ri);
-        df.AddAtomPair(a.CAtom(), NULL, b.CAtom(), NULL);
+        df.AddAtomPair(a.CAtom(), 0, b.CAtom(), 0);
         if (ri == InvalidIndex) {
           df.SetValue(d);
           df.SetEsd(0.02);
@@ -6224,7 +6226,7 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options,
           const size_t ri1 = r13.IndexOf(d1);
           TSimpleRestraint& df1 = (ri1 == InvalidIndex) ? rm.rDFIX.AddNew()
             : *r13.GetValue(ri1);
-          df1.AddAtomPair(a.CAtom(), NULL, b1.CAtom(), NULL);
+          df1.AddAtomPair(a.CAtom(), 0, b1.CAtom(), 0);
           if (ri1 == InvalidIndex) {
             df1.SetValue(d1);
             df1.SetEsd(0.04);

@@ -191,12 +191,10 @@ ConstArrayList<size_t> alg::find_hetero_indices(const TCAtomPList &atoms,
 //.............................................................................
 double alg::rate_envi(const TUnitCell &uc, const vec3d& fcrd, double r) {
   TArrayList<olx_pair_t<TCAtom const*, vec3d> > res;
-  uc.FindInRangeAC(fcrd, r, res);
+  uc.FindInRangeAC(fcrd, 1e-2, r, res);
   const vec3d center = uc.GetLattice().GetAsymmUnit().Orthogonalise(fcrd);
   for (size_t j = 0; j < res.Count(); j++) {
-    if (center.QDistanceTo(res[j].GetB()) < 1e-4 ||
-      res[j].GetA()->GetType() < 2)
-    {
+    if (res[j].GetA()->GetType() < 2) {
       res.Delete(j--);
     }
   }
@@ -204,8 +202,9 @@ double alg::rate_envi(const TUnitCell &uc, const vec3d& fcrd, double r) {
   if (res.Count() > 1) {
     double awght = 1. / (res.Count()*(res.Count() - 1));
     for (size_t j = 0; j < res.Count(); j++) {
-      if (res[j].GetB().QLength() < 0.8)
+      if (res[j].GetB().QLength() < 0.8) {
         wght -= 0.5 / res.Count();
+      }
       for (size_t k = j + 1; k < res.Count(); k++) {
         double cang = (res[j].GetB() - center).CAngle(res[k].GetB() - center);
         if (cang > 0.588) { // less than 56 degrees

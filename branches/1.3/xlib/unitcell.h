@@ -37,9 +37,10 @@ class TUnitCell : public IOlxObject {
   class TLattice*  Lattice;    // parent lattice
   /* a macro FindInRange, if the atom list is NULL, atoms are taken from the
   asymmetric unit, atoms are excluded only if deleted, availability is not
-  counted
+  considered.
+  Condition: d < mixR and d >= minR
   */
-  void _FindInRange(const vec3d& center, double R,
+  void _FindInRange(const vec3d& center, double minR, double maxR,
     TTypeList<AnAssociation3<TCAtom*, smatd, vec3d> >& res,
     bool find_deleted = false,
     const TCAtomPList* atoms = 0) const;
@@ -174,10 +175,11 @@ public:
   deleted with delete. For the identity matrix additionally checks the
   translational symmetry (in some cases the atom within the aunit is closer
   than the translational symmetry generated one), so there might be a two I
-  matrices with different translations
+  matrices with different translations.
+  Condition: d < mixR and d >= minR
   */
   ConstTypeList<smatd> GetInRange(const vec3d& to, const vec3d& from,
-    double R, bool IncludeI) const;
+    double minR, double maxR, bool IncludeI) const;
 
   /* The function finds all atoms and symmetry operators generating them within
   the sphere of radius R. Note that only matrices unique to the unit cell are
@@ -185,11 +187,12 @@ public:
   directions), so only limited R values are supported. Expects a list of
   Assiciation2+<TCAtom const*, smatd,...>
   */
-  template <class res_t> void FindInRangeAM(const vec3d& center, double R,
+  template <class res_t> void FindInRangeAM(const vec3d& center,
+    double minR, double maxR,
     res_t& out, const TCAtomPList* atoms = 0) const
   {
     TTypeList<AnAssociation3<TCAtom*, smatd, vec3d> > res;
-    _FindInRange(center, R, res, false, atoms);
+    _FindInRange(center, minR, maxR,res, false, atoms);
     out.SetCount(res.Count());
     for (size_t i = 0; i < res.Count(); i++) {
       out[i].a = res[i].a;
@@ -200,11 +203,12 @@ public:
   Assiciation3+<TCAtom const*, smatd, vec3d, ...>, note that the resulting
   coordinate is the Cartesian coordinate (the input is in fractional)
   */
-  template <class res_t> void FindInRangeAMC(const vec3d& center, double R,
+  template <class res_t> void FindInRangeAMC(const vec3d& center,
+    double minR, double maxR,
     res_t& out, const TCAtomPList* atoms = 0) const
   {
     TTypeList<AnAssociation3<TCAtom*, smatd, vec3d> > res;
-    _FindInRange(center, R, res, false, atoms);
+    _FindInRange(center, minR, maxR, res, false, atoms);
     out.SetCount(res.Count());
     for (size_t i = 0; i < res.Count(); i++) {
       out[i].a = res[i].a;
@@ -232,11 +236,12 @@ public:
   coordinates instead of the matrices. Expects a list of
   Assiciation2+<TCAtom const*, vec3d,...>
   */
-  template <class res_t> void FindInRangeAC(const vec3d& center, double R,
+  template <class res_t> void FindInRangeAC(const vec3d& center,
+    double minR, double maxR,
     res_t& out, const TCAtomPList* atoms = 0) const
   {
     TTypeList<AnAssociation3<TCAtom*, smatd, vec3d> > res;
-    _FindInRange(center, R, res, false, atoms);
+    _FindInRange(center, minR, maxR, res, false, atoms);
     out.SetCount(res.Count());
     for (size_t i = 0; i < res.Count(); i++) {
       out[i].a = res[i].a;

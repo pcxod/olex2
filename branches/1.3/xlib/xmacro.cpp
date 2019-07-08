@@ -244,7 +244,10 @@ void XLibMacros::Export(TLibrary& lib)  {
     "Sets SFAc and UNIT to current content of the asymmetric unit. Takes Z', "
     "with default value of 1.");
   xlib_InitMacro(GenDisp,
-    "f-generates full SFAC instructions&;n-for neutron data",
+    "f-generates full SFAC instructions&;"
+    "n-for neutron data&;"
+    "force-forces rewriting SFAC for existing items[false]&;"
+    "source-use cctbx's Sasaki or Henke tables as source",
     fpNone|fpOne|psFileLoaded,
     "Generates anisotropic dispertion parameters for current radiation "
     "wavelength");
@@ -1510,7 +1513,7 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options,
       continue;
     }
     TArrayList<olx_pair_t<TCAtom const*, smatd> > all;
-    uc.FindInRangeAM(sa.ccrd(), max_d, all);
+    uc.FindInRangeAM(sa.ccrd(), elm.r_bonding + 0.4, max_d, all);
     for (size_t j = 0; j < all.Count(); j++) {
       const TCAtom& ca = *all[j].GetA();
       if (!TNetwork::IsBondAllowed(sa, ca, all[j].GetB())) {
@@ -2829,20 +2832,61 @@ void XLibMacros::macFixUnit(TStrObjList &Cmds, const TParamList &Options,
 void XLibMacros::macGenDisp(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
-  const bool neutron = Options.Contains('n');
-  const bool full = Options.Contains('f') || neutron;
+  const bool neutron = Options.GetBoolOption('n');
+  const bool full = Options.GetBoolOption('f') || neutron;
+  const bool force = Options.GetBoolOption("force");
+
   RefinementModel& rm = TXApp::GetInstance().XFile().GetRM();
   const ContentList& content = rm.GetUserContent();
   const double en = rm.expl.GetRadiationEnergy();
   cm_Absorption_Coefficient_Reg ac;
+  olxstr_dict<compd> ext_registry;
+  olxstr source = Options.FindValue("source");
+  if (!source.IsEmpty()) {
+    olxstr fn = "spy.sfac.generate_DISP(";
+    if (source.Equalsi("sasaki")) {
+      fn << "sasaki)";
+    }
+    else if (source.Equalsi("henke")) {
+      fn << "henke)";
+    }
+    else {
+      Error.ProcessingError(__OlxSrcInfo, "Unknown source");
+      return;
+    }
+    if (!IOlex2Processor::GetInstance()->processFunction(fn, true)) {
+      Error.ProcessingError(__OlxSrcInfo, "Failed to extarct data from cctbx");
+      return;
+    }
+    TStrList e_lines(fn, ';');
+    for (size_t i = 0; i < e_lines.Count(); i++) {
+      TStrList e_toks(e_lines[i], ',');
+      if (e_toks.Count() == 3) {
+        ext_registry.Add(e_toks[0],
+          compd(e_toks[1].ToDouble(), e_toks[2].ToDouble()));
+      }
+    }
+  }
   if (!full) {
     if (rm.SfacCount() > 0 && rm.GetSfacData(0).IsNeutron()) {
       TBasicApp::NewLogEntry() << "Skipping DISP generation for neutron data";
       return;
     }
     for (size_t i=0; i < content.Count(); i++) {
+      if (!force) {
+        XScatterer *s = rm.FindSfacData(content[i].element->symbol);
+        if (s != 0 && s->IsSet(XScatterer::setDispersion)) {
+          continue;
+        }
+      }
       XScatterer* sc = new XScatterer(content[i].element->symbol);
-      sc->SetFpFdp(content[i].element->CalcFpFdp(en) - content[i].element->z);
+      size_t ext_idx = ext_registry.IndexOf(content[i].element->symbol);
+      if (ext_idx != InvalidIndex) {
+        sc->SetFpFdp(ext_registry.GetValue(ext_idx));
+      }
+      else {
+        sc->SetFpFdp(content[i].element->CalcFpFdp(en) - content[i].element->z);
+      }
       try {
         double absorpc =
           ac.CalcMuOverRhoForE(en, ac.get(content[i].element->symbol));
@@ -2856,33 +2900,47 @@ void XLibMacros::macGenDisp(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   else {
-    for( size_t i=0; i < content.Count(); i++ )  {
+    for (size_t i = 0; i < content.Count(); i++) {
+      if (!force) {
+        XScatterer *s = rm.FindSfacData(content[i].element->symbol);
+        if (s != 0 && s->IsSet(XScatterer::setAll)) {
+          continue;
+        }
+      }
       XScatterer* sc = new XScatterer(*content[i].element, en);
-      if (neutron)
-        sc->SetFpFdp(compd(0, 0));
-      else
-        sc->SetFpFdp(content[i].element->CalcFpFdp(en) - content[i].element->z);
-      try  {
+        if (neutron) {
+          sc->SetFpFdp(compd(0, 0));
+        }
+        else {
+          size_t ext_idx = ext_registry.IndexOf(content[i].element->symbol);
+          if (ext_idx != InvalidIndex) {
+            sc->SetFpFdp(ext_registry.GetValue(ext_idx));
+          }
+          else {
+            sc->SetFpFdp(content[i].element->CalcFpFdp(en) - content[i].element->z);
+          }
+        }
+      try {
         double absorpc =
           ac.CalcMuOverRhoForE(en, ac.get(content[i].element->symbol));
         CXConnInfo& ci = rm.Conn.GetConnInfo(*content[i].element);
-        sc->SetMu(absorpc*content[i].element->GetMr()/0.6022142);
+        sc->SetMu(absorpc*content[i].element->GetMr() / 0.6022142);
         sc->SetR(ci.r);
         sc->SetWeight(content[i].element->GetMr());
         delete &ci;
       }
-      catch(...)  {
+      catch (...) {
         TBasicApp::NewLogEntry() << "Could not locate absorption data for: " <<
           content[i].element->symbol;
       }
-      if( neutron )  {
-        if( content[i].element->neutron_scattering == NULL )  {
+      if (neutron) {
+        if (content[i].element->neutron_scattering == NULL) {
           TBasicApp::NewLogEntry() << "Could not locate neutron data for: " <<
             content[i].element->symbol;
         }
-        else  {
+        else {
           sc->SetGaussians(
-            cm_Gaussians(0,0,0,0,0,0,0,0,
+            cm_Gaussians(0, 0, 0, 0, 0, 0, 0, 0,
               content[i].element->neutron_scattering->coh.GetRe()));
         }
       }
@@ -3282,7 +3340,8 @@ void XLibMacros::macEnvi(TStrObjList &Cmds, const TParamList &Options,
     __OlxSrcInfo, true);
   for (size_t i = 0; i < atoms.Count(); i++) {
     TTypeList<AnAssociation3<TCAtom*, smatd, vec3d> > envi;
-    latt.GetUnitCell().FindInRangeAMC(atoms[i]->ccrd(), r, envi, &allAtoms);
+    latt.GetUnitCell().FindInRangeAMC(atoms[i]->ccrd(),
+      1e-3, r, envi, &allAtoms);
     // remove self equivalents
     for (size_t j = 0; j < envi.Count(); j++) {
       if (j > 0 && !envi.IsNull(j - 1) &&
@@ -6548,7 +6607,7 @@ void XLibMacros::macPiSig(TStrObjList &Cmds, const TParamList &Options,
         continue;
       }
       TArrayList<AnAssociation3<TCAtom*, smatd, vec3d> > res;
-      uc.FindInRangeAMC(au.Fractionalise(cp.center), maxd, res);
+      uc.FindInRangeAMC(au.Fractionalise(cp.center), 2.0, maxd, res);
       for (size_t k = 0; k < res.Count(); k++) {
         double ang = cp.angle(res[k].GetC() - cp.center);
         if (ang < maxa) {

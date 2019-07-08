@@ -684,14 +684,11 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroData &Error) {
     if (au.GetAtom(i).IsDeleted() || au.GetAtom(i).GetType() < 2) {
       continue;
     }
-    uc.FindInRangeAC(au.GetAtom(i).ccrd(),
+    uc.FindInRangeAC(au.GetAtom(i).ccrd(), 1e-2,
       au.GetAtom(i).GetType().r_bonding + 1.3, res);
     vec3d center = au.Orthogonalise(au.GetAtom(i).ccrd());
     for (size_t j = 0; j < res.Count(); j++) {
-      if ((res[j].GetA()->GetId() == au.GetAtom(i).GetId() &&
-        center.QDistanceTo(res[j].GetB()) < 1e-4) ||
-        res[j].GetA()->GetType() < 2)
-      {
+      if (res[j].GetA()->GetType() < 2) {
         res.Delete(j--);
       }
     }
