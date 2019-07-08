@@ -2854,7 +2854,7 @@ void XLibMacros::macGenDisp(TStrObjList &Cmds, const TParamList &Options,
       Error.ProcessingError(__OlxSrcInfo, "Unknown source");
       return;
     }
-    if (!IOlex2Processor::GetInstance()->processFunction(fn, true)) {
+    if (!olex2::IOlex2Processor::GetInstance()->processFunction(fn, true)) {
       Error.ProcessingError(__OlxSrcInfo, "Failed to extarct data from cctbx");
       return;
     }
