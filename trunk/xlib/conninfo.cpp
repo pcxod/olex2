@@ -115,6 +115,27 @@ void ConnInfo::ProcessBind(const TStrList& ins) {
   }
 }
 //........................................................................
+void ConnInfo::SetMaxBondsAndR(TCAtom &ca, size_t maxBonds, double r) {
+  const size_t i = AtomInfo.IndexOf(&ca);
+  if (i == InvalidIndex) {
+    AtomConnInfo& ai = AtomInfo.Add(&ca, AtomConnInfo(ca));
+    ai.maxBonds = (short)maxBonds;
+    if (r >= 0) {
+      ai.r = r;
+    }
+    else {
+      ai.r = -1;
+    }
+  }
+  else {
+    AtomInfo.GetValue(i).maxBonds = (short)maxBonds;
+    if (r >= 0) {
+      AtomInfo.GetValue(i).r = r;
+    }
+  }
+  ca.SetConnInfo(GetConnInfo(ca));
+}
+//........................................................................
 void ConnInfo::Disconnect(TCAtom& ca)  {
   const size_t i = AtomInfo.IndexOf(&ca);
   if (i == InvalidIndex) {
@@ -358,14 +379,15 @@ CXConnInfo& ConnInfo::GetConnInfo(const cm_Element& elm) const {
   return ci;
 }
 //........................................................................
-void ConnInfo::Assign(const ConnInfo& ci)  {
+void ConnInfo::Assign(const ConnInfo& ci) {
   Clear();
-  for( size_t i=0; i < ci.AtomInfo.Count(); i++ )  {
+  for (size_t i = 0; i < ci.AtomInfo.Count(); i++) {
     const AtomConnInfo& _aci = ci.AtomInfo.GetValue(i);
-    if( _aci.atom->IsDeleted() )
+    if (_aci.atom->IsDeleted()) {
       continue;
+    }
     TCAtom* ca = rm.aunit.FindCAtomById(_aci.atom->GetId());
-    if( ca == NULL ) {
+    if (ca == 0) {
       throw TFunctionFailedException(__OlxSourceInfo,
         "Asymmetric units mismatch");
     }
@@ -373,33 +395,36 @@ void ConnInfo::Assign(const ConnInfo& ci)  {
     aci.atom = ca;
     (CXConnInfoBase&)aci = _aci;
     aci.temporary = _aci.temporary;
-    for( size_t j=0; j < _aci.BondsToCreate.Count(); j++ )  {
+    for (size_t j = 0; j < _aci.BondsToCreate.Count(); j++) {
       ca = rm.aunit.FindCAtomById(_aci.BondsToCreate[j].to.GetId());
-      if( ca == NULL ) {
+      if (ca == 0) {
         throw TFunctionFailedException(__OlxSourceInfo,
           "Asymmetric units mismatch");
       }
-      if( ca->IsDeleted() )
+      if (ca->IsDeleted()) {
         continue;
-      const smatd* sm = _aci.BondsToCreate[j].matr == NULL ? NULL
+      }
+      const smatd* sm = _aci.BondsToCreate[j].matr == 0 ? 0
         : &rm.AddUsedSymm(*_aci.BondsToCreate[j].matr);
       aci.BondsToCreate.Add(new CXBondInfo(*ca, sm));
     }
-    for( size_t j=0; j < _aci.BondsToRemove.Count(); j++ )  {
+    for (size_t j = 0; j < _aci.BondsToRemove.Count(); j++) {
       ca = rm.aunit.FindCAtomById(_aci.BondsToRemove[j].to.GetId());
-      if( ca == NULL ) {
+      if (ca == 0) {
         throw TFunctionFailedException(__OlxSourceInfo,
           "Asymmetric units mismatch");
       }
-      if( ca->IsDeleted() )
+      if (ca->IsDeleted()) {
         continue;
-      const smatd* sm = _aci.BondsToRemove[j].matr == NULL ? NULL
+      }
+      const smatd* sm = _aci.BondsToRemove[j].matr == 0 ? 0
         : &rm.AddUsedSymm(*_aci.BondsToRemove[j].matr);
       aci.BondsToRemove.Add(new CXBondInfo(*ca, sm));
     }
   }
-  for( size_t i=0; i < ci.TypeInfo.Count(); i++ )
+  for (size_t i = 0; i < ci.TypeInfo.Count(); i++) {
     TypeInfo.Add(ci.TypeInfo.GetKey(i), ci.TypeInfo.GetValue(i));
+  }
   PartGroups = ci.PartGroups;
   PartGroups_ = ci.PartGroups_;
 }

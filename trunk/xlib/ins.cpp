@@ -234,10 +234,10 @@ void TIns::LoadFromStrings(const TStrList& FileContent) {
       }
       else {
         bool qpeak = olxstr::o_toupper(Toks[0].CharAt(0)) == 'Q';
-        if (qpeak && !cx.End && !LoadQPeaks) {
+        if (qpeak && !LoadQPeaks) {
           continue;
         }
-        if (cx.End && !qpeak) {
+        if ((!cx.End && qpeak) || (cx.End && !qpeak)) {
           continue;
         }
         // is a valid atom

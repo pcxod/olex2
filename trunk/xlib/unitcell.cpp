@@ -418,7 +418,7 @@ void TUnitCell::FindSymmEq() const {
   else {
     TSearchSymmEqTask searchTask(ACA, Matrices);
     searchTask.InitEquiv();
-    OlxListTask::Run(searchTask, ACA.Count(), tQuadraticTask, 1000);
+    OlxListTask::Run(searchTask, ACA.Count(), tQuadraticTask, 100);
     for (size_t i = 0; i < ACA.Count(); i++) {
       ACA[i]->UpdateAttachedSites();
     }

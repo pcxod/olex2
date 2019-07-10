@@ -255,6 +255,32 @@ bool TXFile::Dispatch(int MsgId, short MsgSubId, const IOlxObject* Sender,
   return true;
 }
 //..............................................................................
+//..............................................................................
+struct CifConnectivityGenerator : public TLattice::IConnectivityGenerator {
+  const TCif &cif;
+  TAsymmUnit &aunit;
+  CifConnectivityGenerator(const TCif &cif, TAsymmUnit &au)
+    : cif(cif),
+    aunit(au)
+  {}
+  void Generate() const {
+    const TPtrList<ACifValue> *bond_data = cif.GetDataManager().FindValues(2);
+    if (bond_data != 0) {
+      TUnitCell &uc = aunit.GetLattice().GetUnitCell();
+      for (size_t i = 0; i < bond_data->Count(); i++) {
+        CifBond &cb = *(CifBond *)(*bond_data)[i];
+        TCAtom &a = aunit.GetAtom(cb.GetA().GetId());
+        TCAtom &b = aunit.GetAtom(cb.GetB().GetId());
+        smatd m = cb.GetMatrix();
+        uc.InitMatrixId(m);
+        a.AttachSite(&b, m);
+        b.AttachSite(&a, uc.InvMatrix(m));
+      }
+    }
+  }
+};
+//..............................................................................
+//..............................................................................
 void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
   TStopWatch sw(__FUNC__);
   for (size_t i = 0; i < Loader->GetAsymmUnit().AtomCount(); i++) {
@@ -272,11 +298,14 @@ void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
     try {
       GetRM().Clear(rm_clear_ALL);
       GetLattice().Clear(true);
+      bool rm_assigned = false;
       GetRM().Assign(Loader->GetRM(), true);
+      olx_object_ptr<CifConnectivityGenerator> generator;
       // try to resolve some parameters of the refinement model
       if (Loader->Is<TCif>()) {
+        TCif &cif = dynamic_cast<TCif&>(*Loader);
+        bool rm_updated = false;
         try {
-          TCif &cif = dynamic_cast<TCif&>(*Loader);
           cif_dp::ICifEntry *res = cif.FindEntry("_shelx_res_file");
           if (res == 0) {
             res = cif.FindEntry("_iucr_refine_instructions_details");
@@ -285,25 +314,64 @@ void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
             TStrList resContent;
             res->ToStrings(resContent);
             TIns ins;
+            ins.SetLoadQPeaks(false);
             ins.LoadFromStrings(resContent);
-            GetRM().SetHKLFString(ins.GetRM().GetHKLFStr());
-            if (ins.GetRM().GetHKLF() == 5) {
-              // a workaround as there is no direct API...
-              TStrList bl;
-              for (size_t bi = 0; bi < ins.GetRM().Vars.GetBASFCount(); bi++) {
-                bl.Add(ins.GetRM().Vars.GetBASF(bi).GetValue());
+            // check the AU is the same and in the same order
+            bool match = true;
+            {
+              TAsymmUnit &that_au = ins.GetAsymmUnit(),
+                &this_au = GetAsymmUnit();
+              if (that_au.AtomCount() < this_au.AtomCount()) {
+                match = false;
               }
-              GetRM().Vars.SetBASF(bl);
+              if (that_au.GetAngles().QDistanceTo(this_au.GetAngles()) > 1e-6 ||
+                that_au.GetAxes().QDistanceTo(this_au.GetAxes()) > 1e-6)
+              {
+                match = false;
+              }
+              if (match) {
+                for (size_t ai = 0; ai < this_au.AtomCount(); ai++) {
+                  TCAtom &a1 = this_au.GetAtom(ai);
+                  TCAtom &a2 = that_au.GetAtom(ai);
+                  if (!a1.GetLabel().Equalsi(a2.GetLabel()) ||
+                    a1.ccrd().QDistanceTo(a2.ccrd()) > 1e-3)
+                  {
+                    match = false;
+                    break;
+                  }
+                }
+              }
+            }
+            if (match) {
+              TBasicApp::NewLogEntry(logError) << "Loading the refinement model "
+                "from the embedded RES file.";
+              GetRM().Assign(ins.GetRM(), false);
+              rm_updated = true;
+            }
+            else {
+              TBasicApp::NewLogEntry(logError) << "Embedded RES does not match"
+                " the CIF. Ignoring.";
             }
           }
         }
         catch (const TExceptionBase &exc) {
           TBasicApp::NewLogEntry(logError) << "Failed to update the refinement"
-            " model from the embedded RES file";
+            " model from the embedded RES file.";
+        }
+        // build bonds from the CIF
+        if (!rm_updated) {
+          generator = new CifConnectivityGenerator(cif, GetAsymmUnit());
         }
       }
       OnFileLoad.Execute(this);
-      GetLattice().Init();
+      if (generator.is_valid()) {
+        TBasicApp::NewLogEntry(logWarning) << "Displaying CIF bonds only, use "
+          "'fuse' to recalculate from scratch";
+        GetLattice().Init(generator());
+      }
+      else {
+        GetLattice().Init();
+      }
     }
     catch(const TExceptionBase& exc)  {
       OnFileLoad.Exit(this);
