@@ -36,8 +36,8 @@ public:
   {
     mat.SetId(1);
   }
-  CifBond(const TCAtom& _base, const TCAtom& _to, const TEValueD& _d) :
-    ACifValue(_d),
+  CifBond(const TCAtom& _base, const TCAtom& _to, const TEValueD& _d)
+    : ACifValue(_d),
     base(_base),
     to(_to)
   {
@@ -56,6 +56,23 @@ public:
   const TCAtom& GetA() const { return base; }
   const TCAtom& GetB() const { return to; }
   const smatd &GetMatrix() const { return mat; }
+};
+
+class CifHBond : public CifBond {
+  const TCAtom &h;
+public:
+  CifHBond(const TCAtom& _base, const TCAtom &_h, const TCAtom& _to,
+    const smatd& _m, const TEValueD& _d)
+    : CifBond(_base, _to, _m, _d),
+    h(_h)
+  {}
+  CifHBond(const TCAtom& _base, const TCAtom& _h, const TCAtom& _to,
+    const TEValueD& _d)
+    : CifBond(_base, _to, _d),
+    h(_h)
+  {}
+
+  const TCAtom& GetH() const { return h; }
 };
 
 class CifAngle : public ACifValue {
@@ -121,17 +138,22 @@ public:
   // finds a cif value for a list of TSATOMS(!)
   ACifValue* Match(const TSAtomCPList& Atoms) const {
     const size_t ci = Data.IndexOf(Atoms.Count());
-    if (ci == InvalidIndex)  return NULL;
+    if (ci == InvalidIndex) {
+      return 0;
+    }
     const TPtrList<ACifValue>& items = Data.GetValue(ci);
     for (size_t i = 0; i < items.Count(); i++) {
-      if (items[i]->Match(Atoms))
+      if (items[i]->Match(Atoms)) {
         return items[i];
+      }
     }
-    return NULL;
+    return 0;
   }
   const TPtrList<ACifValue>* FindValues(size_t number_of_atoms) const {
     const size_t ci = Data.IndexOf(number_of_atoms);
-    if (ci == InvalidIndex)  return NULL;
+    if (ci == InvalidIndex) {
+      return 0;
+    }
     return &Data.GetValue(ci);
   }
   void Clear() {

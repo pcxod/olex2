@@ -273,8 +273,17 @@ struct CifConnectivityGenerator : public TLattice::IConnectivityGenerator {
         TCAtom &b = aunit.GetAtom(cb.GetB().GetId());
         smatd m = cb.GetMatrix();
         uc.InitMatrixId(m);
-        a.AttachSite(&b, m);
-        b.AttachSite(&a, uc.InvMatrix(m));
+        if (cb.Is<CifHBond>()) {
+          CifHBond &hb = (CifHBond &)cb;
+          //a.AttachSiteI(&b, m);
+          TCAtom &h = aunit.GetAtom(hb.GetH().GetId());
+          h.AttachSiteI(&b, m);
+          b.AttachSiteI(&h, uc.InvMatrix(m));
+        }
+        else {
+          a.AttachSite(&b, m);
+          b.AttachSite(&a, uc.InvMatrix(m));
+        }
       }
     }
   }

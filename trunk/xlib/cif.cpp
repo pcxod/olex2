@@ -782,22 +782,24 @@ void TCif::Initialize() {
     try {
       const size_t ALabel = ALoop->ColIndex("_geom_hbond_atom_site_label_D");
       const size_t ALabel1 = ALoop->ColIndex("_geom_hbond_atom_site_label_A");
+      const size_t ALabel2 = ALoop->ColIndex("_geom_hbond_atom_site_label_H");
       const size_t BD = ALoop->ColIndex("_geom_hbond_distance_DA");
       const size_t SymmA = ALoop->ColIndex("_geom_hbond_site_symmetry_A");
-      if ((ALabel | ALabel1 | BD | SymmA) != InvalidIndex) {
+      if ((ALabel | ALabel1 | ALabel2 | BD | SymmA) != InvalidIndex) {
         TEValueD ev;
         for (size_t i = 0; i < ALoop->RowCount(); i++) {
           const CifRow& Row = (*ALoop)[i];
           ev = Row[BD]->GetStringValue();
           AtomCifEntry * ci1 = dynamic_cast<AtomCifEntry *>(Row[ALabel]);
           AtomCifEntry * ci2 = dynamic_cast<AtomCifEntry *>(Row[ALabel1]);
+          AtomCifEntry * ha = dynamic_cast<AtomCifEntry *>(Row[ALabel2]);
           if (ci1 != 0 && ci2 != 0) {
-            ACifValue* cv = NULL;
+            ACifValue* cv;
             if (Row[SymmA]->GetStringValue() == '.') {
-              cv = new CifBond(ci1->data, ci2->data, ev);
+              cv = new CifHBond(ci1->data, ha->data, ci2->data, ev);
             }
             else {
-              cv = new CifBond(ci1->data, ci2->data,
+              cv = new CifHBond(ci1->data, ha->data, ci2->data,
                 SymmCodeToMatrix(Row[SymmA]->GetStringValue()), ev);
             }
             DataManager.AddValue(cv);
