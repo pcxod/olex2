@@ -10130,9 +10130,9 @@ int RSA_CompareSites(const SiteInfo &a, const SiteInfo &b) {
   return olx_cmp(a.GetB()->z, b.GetB()->z);
 }
 int RSA_GetAtomPriorityX(AtomEnvList &a, AtomEnvList &b) {
-  size_t sz = olx_min(a.Count(), b.Count());
+  size_t sz = a.Count();
   if (sz == 0) {
-    return olx_cmp(a.Count(), b.Count());
+    return 0;
   }
   for (size_t i=0; i < sz; i++) {
     size_t ai = a.Count()-i-1;
@@ -10152,12 +10152,9 @@ int RSA_GetAtomPriorityX(AtomEnvList &a, AtomEnvList &b) {
       return res;
     }
   }
-  int res = olx_cmp(a.Count(), b.Count());
-  if (res != 0) {
-    return res;
-  }
   // equal? expand further
   for (size_t i=0; i < sz; i++) {
+    AtomEnvList aa, bb;
     if (a[i].GetA() != 0) {
       TCAtom &atomA = *a[i].GetA()->atom;
       for (size_t j=0; j < atomA.AttachedSiteCount(); j++) {
@@ -10167,10 +10164,10 @@ int RSA_GetAtomPriorityX(AtomEnvList &a, AtomEnvList &b) {
         {
           continue;
         }
-        a.Add(new SiteInfo(&s, &s.atom->GetType()));
+        aa.Add(new SiteInfo(&s, &s.atom->GetType()));
         int bo = RSA_BondOrder(atomA, s);
         for (int k = 1; k < bo; k++) {
-          a.Add(new SiteInfo(0, &s.atom->GetType()));
+          aa.Add(new SiteInfo(0, &s.atom->GetType()));
         }
       }
     }
@@ -10183,21 +10180,36 @@ int RSA_GetAtomPriorityX(AtomEnvList &a, AtomEnvList &b) {
         {
           continue;
         }
-        b.Add(new SiteInfo(&s, &s.atom->GetType()));
+        bb.Add(new SiteInfo(&s, &s.atom->GetType()));
         int bo = RSA_BondOrder(atomB, s);
         for (int k = 1; k < bo; k++) {
-          b.Add(new SiteInfo(0, &s.atom->GetType()));
+          bb.Add(new SiteInfo(0, &s.atom->GetType()));
         }
       }
     }
+    // padd the branches
+    while (aa.Count() < bb.Count()) {
+      aa.Add(new SiteInfo(0, &XElementLib::GetByIndex(iQPeakIndex)));
+    }
+    while (bb.Count() < aa.Count()) {
+      bb.Add(new SiteInfo(0, &XElementLib::GetByIndex(iQPeakIndex)));
+    }
+    BubbleSorter::SortSF(aa, &RSA_CompareSites);
+    for (size_t ai = 0; ai < aa.Count(); ai++) {
+      a.Add(aa[ai]);
+    }
+    aa.ReleaseAll();
+    BubbleSorter::SortSF(bb, &RSA_CompareSites);
+    for (size_t ai = 0; ai < bb.Count(); ai++) {
+      b.Add(bb[ai]);
+    }
+    bb.ReleaseAll();
   }
   if (!a.IsEmpty()) {
     a.DeleteRange(0, sz);
-    BubbleSorter::SortSF(a, &RSA_CompareSites);
   }
   if (!b.IsEmpty()) {
     b.DeleteRange(0, sz);
-    BubbleSorter::SortSF(b, &RSA_CompareSites);
   }
   return RSA_GetAtomPriorityX(a, b);
 }

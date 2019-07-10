@@ -3082,35 +3082,42 @@ void TMainForm::BadReflectionsTable(bool TableDef, bool Create)  {
     Hkl.Append(FXApp->XFile().GetRM().GetReflections());
   }
   TTTable<TStrList> Table;
-  Table.Resize(bad_refs.Count(), editable ? 6 : 5);
+  Table.Resize(bad_refs.Count(), editable ? 7 : 6);
   Table.ColName(0) = "H";
   Table.ColName(1) = "K";
   Table.ColName(2) = "L";
   Table.ColName(3) = "Error/esd";
+  Table.ColName(4) = "d/A";
   for (size_t i=0; i < bad_refs.Count(); i++) {
-    for (int j=0; j < 3; j++)
+    for (int j = 0; j < 3; j++) {
       Table[i][j] = bad_refs[i].index[j];
+    }
     if (olx_abs(bad_refs[i].factor) >= sort_th) {
       Table[i][3] << "<font color=\'red\'>" <<
         olxstr::FormatFloat(2, bad_refs[i].factor) << "</font>";
     }
-    else
+    else {
       Table[i][3] << olxstr::FormatFloat(2, bad_refs[i].factor);
+    }
+    double ds = TReflection(bad_refs[i].index).ToCart(
+      FXApp->XFile().GetRM().aunit.GetHklToCartesian()).Length();
+    Table[i][4] << olxstr::FormatFloat(2, 1. / ds);
+
     if (FXApp->XFile().GetRM().GetOmits().Contains(bad_refs[i].index)) {
-      Table[i][4] << "Omitted";
+      Table[i][5] << "Omitted";
     }
     else {
-      Table[i][4] << "<a href='omit " << bad_refs[i].index[0] <<  ' ' <<
+      Table[i][5] << "<a href='omit " << bad_refs[i].index[0] <<  ' ' <<
         bad_refs[i].index[1] << ' ' << bad_refs[i].index[2] << "\'>" <<
         "omit" << "</a>";
     }
     if (editable) {
       if (Hkl.AllRefs(bad_refs[i].index, matrices).Count() > 1) {
-        Table[i][5].stream(' ') << "<a href='HklEdit" << bad_refs[i].index[0]
+        Table[i][6].stream(' ') << "<a href='HklEdit" << bad_refs[i].index[0]
           << bad_refs[i].index[1] << bad_refs[i].index[2] << "'>Edit...</a>";
       }
       else {
-        Table[i][5] = "---";
+        Table[i][6] = "---";
       }
     }
   }
