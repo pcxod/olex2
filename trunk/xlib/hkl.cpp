@@ -220,8 +220,8 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
         }
         TReflection* ref = HasBatch ?
           new TReflection(h, k, l,
+            line.SubString(fidx3,fl[3]).ToDouble(),
             // trim  fix for field overrun for -0.0 by CrystalClear
-            line.SubString(fidx3,fl[3]).TrimL('0').ToDouble(),
             line.SubString(fidx4,fl[4]).TrimL('0').ToDouble(),
             line.SubString(fidx5,4).IsNumber() ? line.SubString(fidx5,4).ToInt()
             : 1)
