@@ -257,14 +257,14 @@ bool TXFile::Dispatch(int MsgId, short MsgSubId, const IOlxObject* Sender,
 //..............................................................................
 //..............................................................................
 struct CifConnectivityGenerator : public TLattice::IConnectivityGenerator {
-  const TCif &cif;
   TAsymmUnit &aunit;
+  const TPtrList<ACifValue> *bond_data;
   CifConnectivityGenerator(const TCif &cif, TAsymmUnit &au)
-    : cif(cif),
-    aunit(au)
-  {}
+    : aunit(au)
+  {
+    bond_data = cif.GetDataManager().FindValues(2);
+  }
   void Generate() const {
-    const TPtrList<ACifValue> *bond_data = cif.GetDataManager().FindValues(2);
     if (bond_data != 0) {
       TUnitCell &uc = aunit.GetLattice().GetUnitCell();
       for (size_t i = 0; i < bond_data->Count(); i++) {
@@ -286,6 +286,10 @@ struct CifConnectivityGenerator : public TLattice::IConnectivityGenerator {
         }
       }
     }
+  }
+
+  bool IsValid() const {
+    return bond_data != 0 && !bond_data->IsEmpty();
   }
 };
 //..............................................................................
@@ -373,7 +377,7 @@ void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
         }
       }
       OnFileLoad.Execute(this);
-      if (generator.is_valid()) {
+      if (generator.is_valid() && generator().IsValid()) {
         TBasicApp::NewLogEntry(logWarning) << "Displaying CIF bonds only, use "
           "'fuse' to recalculate from scratch";
         GetLattice().Init(generator());
