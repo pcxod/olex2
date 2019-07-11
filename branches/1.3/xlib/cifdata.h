@@ -14,11 +14,11 @@
 #include "satom.h"
 
 BeginXlibNamespace()
-class ACifValue : public IOlxObject  {
+class ACifValue : public IOlxObject {
   TEValueD Value;
 public:
-  ACifValue(const TEValueD& v) : Value(v)  {}
-  const TEValueD& GetValue() const {  return Value;  }
+  ACifValue(const TEValueD& v) : Value(v) {}
+  const TEValueD& GetValue() const { return Value; }
   virtual bool Match(const TSAtomCPList& atoms) const = 0;
   virtual size_t Count() const = 0;
 };
@@ -27,16 +27,17 @@ class CifBond : public ACifValue {
   const TCAtom &base, &to;
   smatd mat;
 public:
-  CifBond(const TCAtom& _base, const TCAtom& _to, const smatd& _m, const TEValueD& _d) :
-    ACifValue(_d),
+  CifBond(const TCAtom& _base, const TCAtom& _to, const smatd& _m,
+    const TEValueD& _d)
+    : ACifValue(_d),
     base(_base),
     to(_to),
     mat(_m)
   {
     mat.SetId(1);
   }
-  CifBond(const TCAtom& _base, const TCAtom& _to, const TEValueD& _d) :
-    ACifValue(_d),
+  CifBond(const TCAtom& _base, const TCAtom& _to, const TEValueD& _d)
+    : ACifValue(_d),
     base(_base),
     to(_to)
   {
@@ -44,11 +45,34 @@ public:
     mat.SetId(0);
   }
   bool DoesMatch(const TSAtom& a, const TSAtom& b) const;
-  virtual size_t Count() const {  return 2;  }
+  virtual size_t Count() const { return 2; }
   virtual bool Match(const TSAtomCPList& atoms) const {
-    if( atoms.Count() != 2 )  return false;
+    if (atoms.Count() != 2) {
+      return false;
+    }
     return DoesMatch(*atoms[0], *atoms[1]) || DoesMatch(*atoms[1], *atoms[0]);
   }
+
+  const TCAtom& GetA() const { return base; }
+  const TCAtom& GetB() const { return to; }
+  const smatd &GetMatrix() const { return mat; }
+};
+
+class CifHBond : public CifBond {
+  const TCAtom &h;
+public:
+  CifHBond(const TCAtom& _base, const TCAtom &_h, const TCAtom& _to,
+    const smatd& _m, const TEValueD& _d)
+    : CifBond(_base, _to, _m, _d),
+    h(_h)
+  {}
+  CifHBond(const TCAtom& _base, const TCAtom& _h, const TCAtom& _to,
+    const TEValueD& _d)
+    : CifBond(_base, _to, _d),
+    h(_h)
+  {}
+
+  const TCAtom& GetH() const { return h; }
 };
 
 class CifAngle : public ACifValue {
@@ -56,8 +80,8 @@ class CifAngle : public ACifValue {
   smatd mat_l, mat_r;
 public:
   CifAngle(const TCAtom& _l, const TCAtom& _m, const TCAtom& _r,
-    const smatd& _lm, const smatd& _rm, const TEValueD& _d) :
-    ACifValue(_d),
+    const smatd& _lm, const smatd& _rm, const TEValueD& _d)
+    : ACifValue(_d),
     left(_l),
     middle(_m),
     right(_r),
@@ -67,8 +91,8 @@ public:
     mat_l.SetId(1);
     mat_r.SetId(1);
   }
-  CifAngle(const TCAtom& _l, const TCAtom& _m, const TCAtom& _r, const TEValueD& _d) :
-    ACifValue(_d),
+  CifAngle(const TCAtom& _l, const TCAtom& _m, const TCAtom& _r, const TEValueD& _d)
+    : ACifValue(_d),
     left(_l),
     middle(_m),
     right(_r)
@@ -81,7 +105,9 @@ public:
   bool DoesMatch(const TSAtom& l, const TSAtom& m, const TSAtom& r) const;
   virtual size_t Count() const {  return 3;  }
   virtual bool Match(const TSAtomCPList& atoms) const {
-    if( atoms.Count() != 3 )  return false;
+    if (atoms.Count() != 3) {
+      return false;
+    }
     return DoesMatch(*atoms[0], *atoms[1], *atoms[2]) ||
            DoesMatch(*atoms[2], *atoms[1], *atoms[0]);
   }
@@ -89,45 +115,50 @@ public:
 //---------------------------------------------------------------------------
 
 //---------------------------------------------------------------------------
-class TCifDataManager  {
+class TCifDataManager {
   olx_pdict<size_t, TPtrList<ACifValue> > Data;
 public:
-  TCifDataManager()  {}
-  virtual ~TCifDataManager()  {  Clear();  }
-  ACifValue& AddValue(ACifValue* v)  {  return *Data.Add(v->Count()).Add(v);  }
+  TCifDataManager() {}
+  virtual ~TCifDataManager() { Clear(); }
+  ACifValue& AddValue(ACifValue* v) { return *Data.Add(v->Count()).Add(v); }
   ACifValue* Match(const TSAtom& a, const TSAtom& b) const {
-    const TSAtom* a_[] = {&a, &b};
+    const TSAtom* a_[] = { &a, &b };
     return Match(TSAtomCPList(2, a_));
   }
   ACifValue* Match(const TSAtom& a, const TSAtom& b, const TSAtom& c) const {
-    const TSAtom* a_[] = {&a, &b, &c};
+    const TSAtom* a_[] = { &a, &b, &c };
     return Match(TSAtomCPList(3, a_));
   }
-  ACifValue* Match(const TSAtom& a, const TSAtom& b, const TSAtom& c, const TSAtom& d) const {
-    const TSAtom* a_[] = {&a, &b, &c, &d};
+  ACifValue* Match(const TSAtom& a, const TSAtom& b, const TSAtom& c,
+    const TSAtom& d) const
+  {
+    const TSAtom* a_[] = { &a, &b, &c, &d };
     return Match(TSAtomCPList(4, a_));
   }
   // finds a cif value for a list of TSATOMS(!)
   ACifValue* Match(const TSAtomCPList& Atoms) const {
     const size_t ci = Data.IndexOf(Atoms.Count());
-    if( ci == InvalidIndex )  return NULL;
-    const TPtrList<ACifValue>& items = Data.GetValue(ci);
-    for( size_t i=0; i < items.Count(); i++ )  {
-      if( items[i]->Match(Atoms) )
-        return items[i];
+    if (ci == InvalidIndex) {
+      return 0;
     }
-    return NULL;
+    const TPtrList<ACifValue>& items = Data.GetValue(ci);
+    for (size_t i = 0; i < items.Count(); i++) {
+      if (items[i]->Match(Atoms)) {
+        return items[i];
+      }
+    }
+    return 0;
   }
   const TPtrList<ACifValue>* FindValues(size_t number_of_atoms) const {
     const size_t ci = Data.IndexOf(number_of_atoms);
-    if( ci == InvalidIndex )  return NULL;
+    if (ci == InvalidIndex) {
+      return 0;
+    }
     return &Data.GetValue(ci);
   }
-  void Clear()  {
-    for( size_t i=0; i < Data.Count(); i++ )  {
-      TPtrList<ACifValue>& items = Data.GetValue(i);
-      for( size_t j=0; j < items.Count(); j++ )
-        delete items[j];
+  void Clear() {
+    for (size_t i = 0; i < Data.Count(); i++) {
+      Data.GetValue(i).DeleteItems(false);
     }
     Data.Clear();
   }

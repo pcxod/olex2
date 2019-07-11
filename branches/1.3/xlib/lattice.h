@@ -86,7 +86,6 @@ public:
   // used if the connectivity info (CONN/BIND/FREE etc) is changed
   void UpdateConnectivityInfo();
   void UpdatePlaneDefinitions();
-  void Init();
   /*adopts atoms, bonds and fragment from the given lattice */
   void AddLatticeContent(const TLattice& latt);
   // generates atoms inside the unit cell only
@@ -165,12 +164,7 @@ public:
 
   TSAtom* FindSAtom(const olxstr &Label) const;
   TSAtom* FindSAtom(const TCAtom& ca) const;
-  TSAtom* FindSAtom(const TSAtom::Ref& id) const {
-    for( size_t i=0; i < Objects.atoms.Count(); i++ )
-      if( Objects.atoms[i] == id )
-        return &Objects.atoms[i];
-    return NULL;
-  }
+  TSAtom* FindSAtom(const TSAtom::Ref& id) const;
   //
   const AtomRegistry& GetAtomRegistry() const {
     return Objects.atomRegistry;
@@ -253,6 +247,23 @@ protected:
   size_t _ProcessRingHAdd(AConstraintGenerator& cg, const ElementPList& rcont,
     const TSAtomPList& atoms, bool dry_run);
 public:
+  struct IConnectivityGenerator {
+    virtual void Generate() const = 0;
+  };
+  // Uses TUnitCell::FindSymmEq
+  struct DefaultConnectivityGenerator : public IConnectivityGenerator {
+    TUnitCell &UnitCell;
+    DefaultConnectivityGenerator(TUnitCell &unitCell)
+      : UnitCell(unitCell)
+    {}
+    void Generate() const;
+  };
+
+  void Init(const IConnectivityGenerator &cg);
+
+  void Init() {
+    Init(DefaultConnectivityGenerator(GetUnitCell()));
+  }
   // implements HADD command
   size_t AnalyseHAdd(class AConstraintGenerator& cg, const TSAtomPList& atoms,
     bool dry_run);

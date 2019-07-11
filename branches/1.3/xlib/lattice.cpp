@@ -271,19 +271,25 @@ void TLattice::InitBody() {
       GenerateAtom(CA, *Matrices[0]);
     }
   }
-  GenerateBondsAndFragments(NULL);
+  GenerateBondsAndFragments(0);
   BuildPlanes();
   OnDisassemble.Exit(this);
 }
 //..............................................................................
-void TLattice::Init() {
+//..............................................................................
+void TLattice::DefaultConnectivityGenerator::Generate() const {
+  UnitCell.FindSymmEq();
+};
+//..............................................................................
+//..............................................................................
+void TLattice::Init(const IConnectivityGenerator &cg) {
   volatile TStopWatch sw(__FUNC__);
   Clear(false);
   GetUnitCell().ClearEllipsoids();
   GetUnitCell().InitMatrices();
   GetAsymmUnit().GetRefMod()->UpdateUsedSymm(GetUnitCell());
   try {
-    GetUnitCell().FindSymmEq();
+    cg.Generate();
     InitBody();
   }
   catch (const TExceptionBase &e) {
@@ -837,6 +843,15 @@ TSAtom* TLattice::FindSAtom(const TCAtom& ca) const {
   const size_t ac = Objects.atoms.Count();
   for (size_t i = 0; i < ac; i++) {
     if (ca.GetId() == Objects.atoms[i].CAtom().GetId()) {
+      return &Objects.atoms[i];
+    }
+  }
+  return 0;
+}
+//..............................................................................
+TSAtom* TLattice::FindSAtom(const TSAtom::Ref& id) const {
+  for (size_t i = 0; i < Objects.atoms.Count(); i++) {
+    if (Objects.atoms[i] == id) {
       return &Objects.atoms[i];
     }
   }

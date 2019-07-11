@@ -204,8 +204,8 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
       }
       if (line.Length() != line_length) {
         if (line_cnt - i > 50 && !ZeroRead) {
-          TBasicApp::NewLogEntry(logWarning) <<
-            "More that 50 lines of the HKL file have been ignored after line #" <<
+          TBasicApp::NewLogEntry(logWarning) << (line_cnt - i) <<
+            " Lines of the HKL file have been ignored after line #" <<
             (i+1);
         }
         break;
@@ -219,8 +219,10 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
           continue;
         }
         TReflection* ref = HasBatch ?
-          new TReflection(h, k, l, line.SubString(fidx3,fl[3]).ToDouble(),
-            line.SubString(fidx4,fl[4]).ToDouble(),
+          new TReflection(h, k, l,
+            line.SubString(fidx3,fl[3]).ToDouble(),
+            // trim  fix for field overrun for -0.0 by CrystalClear
+            line.SubString(fidx4,fl[4]).TrimL('0').ToDouble(),
             line.SubString(fidx5,4).IsNumber() ? line.SubString(fidx5,4).ToInt()
             : 1)
           :
@@ -244,6 +246,11 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
       catch(const TExceptionBase& e) {
         TBasicApp::NewLogEntry(logInfo) <<
           olxstr("Not an HKL line ") << (i+1) << ", breaking";
+        if (line_cnt - i > 50 && !ZeroRead) {
+          TBasicApp::NewLogEntry(logWarning) << (line_cnt - i) <<
+            " Lines of the HKL file have been ignored after line #" <<
+            (i + 1);
+        }
         break;
       }
     }
@@ -253,7 +260,7 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
       TBasicApp::NewLogEntry(logError) << "Removed: " << removed_cnt <<
         " invalid reflections";
     }
-    if (get_ins && i < SL.Count()) {
+    if (get_ins && (SL.Count() - i) > 2) {
       TStrList toks = SL.SubListFrom(i).GetObject();
       olx_object_ptr<TIns> ins(new TIns);
       try {

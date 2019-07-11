@@ -619,29 +619,31 @@ void XVarManager::Describe(TStrList& lst) {
   }
   // fixed params...
   olxstr_dict<olxstr> fixed;
-  for (size_t i = 0; i < Vars[0]._RefCount(); i++) {
-    TCAtom *ca = dynamic_cast<TCAtom*>(&Vars[0].GetRef(i).referencer);
-    if (ca != NULL) {
-      if (ca->GetType() == iQPeakZ) {
-        continue;
+  if (!Vars.IsEmpty()) {
+    for (size_t i = 0; i < Vars[0]._RefCount(); i++) {
+      TCAtom *ca = dynamic_cast<TCAtom*>(&Vars[0].GetRef(i).referencer);
+      if (ca != 0) {
+        if (ca->GetType() == iQPeakZ) {
+          continue;
+        }
+        if (Vars[0].GetRef(i).var_index == catom_var_name_Sof &&
+          olx_abs(ca->GetChemOccu() - 1) < 1e-3)
+        {
+          continue;
+        }
       }
-      if (Vars[0].GetRef(i).var_index == catom_var_name_Sof &&
-        olx_abs(ca->GetChemOccu() - 1) < 1e-3)
-      {
-        continue;
+      size_t ind = fixed.IndexOf(Vars[0].GetRef(i).referencer.GetVarName(
+        Vars[0].GetRef(i).var_index));
+      if (ind == InvalidIndex) {
+        fixed.Add(
+          Vars[0].GetRef(i).referencer.GetVarName(Vars[0].GetRef(i).var_index),
+          olxstr(Vars[0].GetRef(i).referencer.GetIdName()) << '(' <<
+          Vars[0].GetRef(i).GetActualValue() << ')');
       }
-    }
-    size_t ind = fixed.IndexOf(Vars[0].GetRef(i).referencer.GetVarName(
-      Vars[0].GetRef(i).var_index));
-    if (ind == InvalidIndex) {
-      fixed.Add(
-        Vars[0].GetRef(i).referencer.GetVarName(Vars[0].GetRef(i).var_index),
-        olxstr(Vars[0].GetRef(i).referencer.GetIdName()) << '(' <<
-        Vars[0].GetRef(i).GetActualValue() << ')');
-    }
-    else {
-      fixed.GetValue(ind) << ' ' << Vars[0].GetRef(i).referencer.GetIdName()
-        << '(' << Vars[0].GetRef(i).GetActualValue() << ')';
+      else {
+        fixed.GetValue(ind) << ' ' << Vars[0].GetRef(i).referencer.GetIdName()
+          << '(' << Vars[0].GetRef(i).GetActualValue() << ')';
+      }
     }
   }
   for (size_t i = 0; i < fixed.Count(); i++) {
