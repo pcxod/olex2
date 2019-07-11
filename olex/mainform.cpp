@@ -674,7 +674,7 @@ void TMainForm::XApp(Olex2App *XA)  {
   this_InitMacroD(Update,
     "f-force [true]",
     fpNone,
-    "Does check the for the updates");
+    "Does check for the updates");
   this_InitMacro(Reload, , fpOne);
   this_InitMacro(StoreParam, , fpTwo|fpThree);
   this_InitMacro(SelBack, a&;o&;x, fpNone);
@@ -3726,7 +3726,7 @@ void TMainForm::DoUpdateFiles()  {
     bool checked = msg_box->IsChecked();
     msg_box->Destroy();
     TBasicApp::EnterCriticalSection();
-    if (_UpdateThread == NULL) {
+    if (_UpdateThread == 0) {
       TBasicApp::LeaveCriticalSection();
       return;
     }
@@ -3739,13 +3739,19 @@ void TMainForm::DoUpdateFiles()  {
     }
     else  {
       _UpdateThread->SendTerminate();
-      _UpdateThread = NULL;
+      _UpdateThread = 0;
+      if (checked) {
+        sf.update_interval = "Never";
+        sf.Save();
+      }
     }
   }
-  else
+  else {
     _UpdateThread->DoUpdate();
-  if( _UpdateThread != NULL )
+  }
+  if (_UpdateThread != 0) {
     _UpdateThread->ResetUpdateSize();
+  }
   TBasicApp::LeaveCriticalSection();
 }
 //..............................................................................
