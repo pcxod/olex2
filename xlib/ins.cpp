@@ -200,8 +200,8 @@ void TIns::LoadFromStrings(const TStrList& FileContent) {
         continue;
       }
       bool updated = false;
-      // try recovering conglomerated instructions
-      if (Toks[0].Length() > 4 && Toks[0][4] != '_') {
+      // try recovering conglomerated instructions like BOND$H PART1
+      if (Toks.Count() == 1 && Toks[0].Length() > 4 && Toks[0][4] != '_') {
         Toks.Insert(1, Toks[0].SubStringFrom(4));
         Toks[0].SetLength(4);
         updated = true;

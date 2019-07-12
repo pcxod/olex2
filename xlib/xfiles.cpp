@@ -387,7 +387,7 @@ void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
       }
     }
     catch(const TExceptionBase& exc)  {
-      OnFileLoad.Exit(this);
+      OnFileLoad.Exit(this, &exc);
       throw TFunctionFailedException(__OlxSourceInfo, exc);
     }
     OnFileLoad.Exit(this);
