@@ -153,9 +153,18 @@ void TNetwork::Disassemble(ASObjectProvider& objects, TNetPList& Frags) {
               break;
             }
             else {
-              double cs = (sa.Node(k).crd() - sa.crd()).CAngle(a->crd() - sa.crd());
-              if (cs < min_cs) {
-                min_cs = cs;
+              try {
+                double cs = (sa.Node(k).crd() - sa.crd()).CAngle(a->crd() - sa.crd());
+                if (cs < min_cs) {
+                  min_cs = cs;
+                }
+              }
+              catch (const TDivException &e) {
+                TBasicApp::NewLogEntry(logError) << "Check the following atoms: "
+                  << sa.GetLabel() << ", " << a->GetLabel() << " and "
+                  << sa.Node(k).GetLabel();
+                process = false;
+                break;
               }
             }
           }

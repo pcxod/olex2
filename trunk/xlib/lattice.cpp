@@ -80,13 +80,13 @@ void TLattice::ClearMatrices()  {
   Matrices.Clear();
 }
 //..............................................................................
-void TLattice::Clear(bool ClearUnitCell)  {
+void TLattice::Clear(bool ClearUnitCell) {
   ClearAtoms();
   ClearBonds();
   ClearFragments();
   ClearMatrices();
   ClearPlanes();
-  if( ClearUnitCell )  {
+  if (ClearUnitCell) {
     GetUnitCell().Clear();
     GetAsymmUnit().Clear();
   }
@@ -293,6 +293,10 @@ void TLattice::Init(const IConnectivityGenerator &cg) {
     InitBody();
   }
   catch (const TExceptionBase &e) {
+    // must clear RM as the AU is cleared!
+    if (GetAsymmUnit().GetRefMod() != 0) {
+      GetAsymmUnit().GetRefMod()->Clear(rm_clear_ALL);
+    }
     Clear(true);
     throw TFunctionFailedException(__OlxSourceInfo, e);
   }
