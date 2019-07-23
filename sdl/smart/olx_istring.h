@@ -2064,7 +2064,7 @@ public:
     }
     fmt << "%." << NumberOfDigits;
     if (!Exponent) {
-      if (olx_abs(v) > pow(10.0, 80-NumberOfDigits-2)) {
+      if ((v < 0 ? -v : v) > pow(10.0, 80-NumberOfDigits-2)) {
         TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo,
           "format overrun");
       }
