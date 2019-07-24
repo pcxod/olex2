@@ -148,7 +148,7 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
           cif.LoadFromStrings(SL);
           // find first data block with reflections...
           cif_dp::cetTable* hklLoop = cif.FindLoopGlobal("_refln", true);
-          if (hklLoop == NULL) {
+          if (hklLoop == 0) {
             // tonto mess?
             hklLoop = cif.FindLoopGlobal("_diffrn_refln", true);
             if (hklLoop == 0) {
@@ -161,7 +161,7 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
             Refs = refs().a;
             HKLF = (refs().b ? 4 : 3);
           }
-          if (get_ins && cif.FindEntry("_cell_length_a") != NULL) {
+          if (get_ins && cif.FindEntry("_cell_length_a") != 0) {
             rv = new TIns;
             rv().GetRM().Assign(cif.GetRM(), true);
           }
@@ -276,8 +276,9 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
   catch (const TExceptionBase& e)  {
     throw TFunctionFailedException(__OlxSourceInfo, e);
   }
-  if (Refs.IsEmpty())
+  if (Refs.IsEmpty()) {
     throw TFunctionFailedException(__OlxSourceInfo, "empty reflections file");
+  }
   return rv;
 }
 //..............................................................................
