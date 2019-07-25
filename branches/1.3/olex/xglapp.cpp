@@ -297,10 +297,10 @@ bool TGlXApp::Dispatch() {
   return wxApp::Dispatch();
 }
 //..............................................................................
-void TGlXApp::OnChar(wxKeyEvent& event)  {
+void TGlXApp::OnChar(wxKeyEvent& event) {
   if (event.GetKeyCode() == 9) {
     wxComboBox *wnd = dynamic_cast<wxComboBox *>(MainForm->FindFocus());
-    if (wnd != NULL) {
+    if (wnd != 0) {
       event.Skip(false);
       wxWindow *nw = (event.GetModifiers() == wxMOD_SHIFT) ?
         wnd->GetPrevSibling() : wnd->GetNextSibling();

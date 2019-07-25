@@ -1172,7 +1172,7 @@ void TMainForm::XApp(Olex2App *XA)  {
   XLibMacros::OnAddIns().Add(this, ID_ADDINS, msiExit);
   LoadVFS(plGlobal);
 
-  HtmlManager.InitialiseMain(wxBORDER_NONE|wxVSCROLL|wxCLIP_CHILDREN);
+  HtmlManager.InitialiseMain(wxBORDER_NONE|wxCLIP_CHILDREN|wxALWAYS_SHOW_SB);
   GetLibrary().AttachLibrary(HtmlManager.ExportLibrary());
 
   HtmlManager.OnLink.Add(this, ID_ONLINK);
@@ -1857,10 +1857,11 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
       TimePerFrame = FXApp->Draw();
       // enabling the timer back
       // retrun fucus to the main window, but let typing in the comboboxes
-      if (Sender != NULL) {
+      if (Sender != 0) {
         const std::type_info &ti = typeid(*Sender);
-        if (((olxstr*)Data)->IsEmpty())
+        if (((olxstr*)Data)->IsEmpty()) {
           ;
+        }
         else if (ti == typeid(TComboBox) &&
           !(dynamic_cast<const TComboBox *>(Sender))->IsReadOnly())
         {
@@ -1874,30 +1875,36 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
         else if (ti == typeid(TDateCtrl))
           ;
         else {
-          if (CmdLineVisible)
+          if (CmdLineVisible) {
             FCmdLine->SetFocus();
-          else
+          }
+          else {
             FGlCanvas->SetFocus();
+          }
         }
       }
       else {
-        if (CmdLineVisible)
+        if (CmdLineVisible) {
           FCmdLine->SetFocus();
-        else
+        }
+        else {
           FGlCanvas->SetFocus();
+        }
       }
       FTimer->OnTimer.SetEnabled(true);
     }
   }
   else if (MsgId == ID_HTMLKEY) {
-    if (CmdLineVisible)
+    if (CmdLineVisible) {
       FCmdLine->SetFocus();
-    else
+    }
+    else {
       FGlCanvas->SetFocus();
+    }
     OnChar(((TKeyEvent*)Data)->GetEvent());
   }
   else if (MsgId == ID_TEXTPOST) {
-    if (Data != NULL) {
+    if (Data != 0) {
       FGlConsole->SetSkipPosting(true);
       TBasicApp::NewLogEntry() << olxstr(Data->ToString());
       FGlConsole->SetSkipPosting(false);
@@ -1914,7 +1921,7 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
     if (!tmp.IsEmpty()) {
       // this is used in TGXApp::Dispatch
       TOlxVars::SetVar("console_command", TrueString());
-      if (_ProcessManager->GetRedirected() != NULL) {
+      if (_ProcessManager->GetRedirected() != 0) {
         _ProcessManager->GetRedirected()->Write(tmp);
         _ProcessManager->GetRedirected()->Writenl();
         TimePerFrame = FXApp->Draw();
@@ -2111,55 +2118,61 @@ bool TMainForm::ProcessTab() {
 void TMainForm::OnChar(wxKeyEvent& m) {
   OnNonIdle();
   m.Skip(false);
-  short Fl=0;
-  if (m.GetModifiers() & wxMOD_ALT) Fl |= sssAlt;
-  if (m.GetModifiers() & wxMOD_RAW_CONTROL) Fl |= sssCtrl;
-  if (m.GetModifiers() & wxMOD_SHIFT) Fl |= sssShift;
+  short Fl = 0;
+  if (m.GetModifiers() & wxMOD_ALT) {
+    Fl |= sssAlt;
+  }
+  if (m.GetModifiers() & wxMOD_RAW_CONTROL) {
+    Fl |= sssCtrl;
+  }
+  if (m.GetModifiers() & wxMOD_SHIFT) {
+    Fl |= sssShift;
+  }
   // Alt + Up,Down,Left, Right - rotation, +Shift - speed
   if (((Fl & sssShift)) || (Fl & sssAlt)) {
     int inc = 3;
     double zoom_inc = 0.01;
-    if( (Fl & sssShift) )  {
+    if ((Fl & sssShift)) {
       inc *= 3;
       zoom_inc *= 3;
     }
-    if( m.m_keyCode == WXK_UP )  {
-      FXApp->GetRenderer().RotateX(FXApp->GetRenderer().GetBasis().GetRX()+inc);
+    if (m.m_keyCode == WXK_UP) {
+      FXApp->GetRenderer().RotateX(FXApp->GetRenderer().GetBasis().GetRX() + inc);
       TimePerFrame = FXApp->Draw();
       return;
     }
-    if( m.m_keyCode == WXK_DOWN )  {
-      FXApp->GetRenderer().RotateX(FXApp->GetRenderer().GetBasis().GetRX()-inc);
+    if (m.m_keyCode == WXK_DOWN) {
+      FXApp->GetRenderer().RotateX(FXApp->GetRenderer().GetBasis().GetRX() - inc);
       TimePerFrame = FXApp->Draw();
       return;
     }
-    if( m.m_keyCode == WXK_LEFT )  {
-      FXApp->GetRenderer().RotateY(FXApp->GetRenderer().GetBasis().GetRY()-inc);
+    if (m.m_keyCode == WXK_LEFT) {
+      FXApp->GetRenderer().RotateY(FXApp->GetRenderer().GetBasis().GetRY() - inc);
       TimePerFrame = FXApp->Draw();
       return;
     }
-    if( m.m_keyCode == WXK_RIGHT )  {
-      FXApp->GetRenderer().RotateY(FXApp->GetRenderer().GetBasis().GetRY()+inc);
+    if (m.m_keyCode == WXK_RIGHT) {
+      FXApp->GetRenderer().RotateY(FXApp->GetRenderer().GetBasis().GetRY() + inc);
       TimePerFrame = FXApp->Draw();
       return;
     }
-    if( m.m_keyCode == WXK_END )  {
-      if( FXApp->GetRenderer().GetZoom()+zoom_inc < 100 )  {
-        FXApp->GetRenderer().SetZoom(FXApp->GetRenderer().GetZoom()+zoom_inc);
+    if (m.m_keyCode == WXK_END) {
+      if (FXApp->GetRenderer().GetZoom() + zoom_inc < 100) {
+        FXApp->GetRenderer().SetZoom(FXApp->GetRenderer().GetZoom() + zoom_inc);
         TimePerFrame = FXApp->Draw();
         return;
       }
     }
-    if( m.m_keyCode == WXK_HOME )  {
-      double z = FXApp->GetRenderer().GetZoom()-zoom_inc;
-      if( z <= 0 ) z = 0.001;
+    if (m.m_keyCode == WXK_HOME) {
+      double z = FXApp->GetRenderer().GetZoom() - zoom_inc;
+      if (z <= 0) z = 0.001;
       FXApp->GetRenderer().SetZoom(z);
       TimePerFrame = FXApp->Draw();
       return;
     }
   }
   // Ctrl + Up, Down - browse solutions
-  if ((Fl & sssCtrl) != 0 ) {
+  if ((Fl & sssCtrl) != 0) {
     if (m.m_keyCode == WXK_UP && ((FMode&mSolve) == mSolve)) {
       ChangeSolution(CurrentSolution - 1);
       return;
@@ -2169,8 +2182,8 @@ void TMainForm::OnChar(wxKeyEvent& m) {
       return;
     }
   }
-  if ((Fl&sssCtrl) && m.GetKeyCode() == 'c'-'a'+1) {  // Ctrl+C
-    if (_ProcessManager->GetRedirected() != NULL) {
+  if ((Fl&sssCtrl) && m.GetKeyCode() == 'c' - 'a' + 1) {  // Ctrl+C
+    if (_ProcessManager->GetRedirected() != 0) {
       if (_ProcessManager->GetRedirected()->Terminate()) {
         TBasicApp::NewLogEntry(logInfo) <<
           "Process has been successfully terminated...";
@@ -2184,13 +2197,13 @@ void TMainForm::OnChar(wxKeyEvent& m) {
     return;
   }
   if (m.GetKeyCode() == WXK_RETURN) {
-    if (FMode & mSolve)  {
+    if (FMode & mSolve) {
       FMode ^= mSolve;
       TBasicApp::NewLogEntry(logInfo) << "Model is set to current solution";
     }
   }
   if (m.GetKeyCode() == WXK_ESCAPE) {  // escape
-    if (Modes->GetCurrent() != NULL) {
+    if (Modes->GetCurrent() != 0) {
       if (Modes->GetCurrent()->OnKey(m.GetKeyCode(), Fl))
         return;
       else
@@ -2205,7 +2218,7 @@ void TMainForm::OnChar(wxKeyEvent& m) {
   }
 
   if (!CmdLineVisible) {
-    if( FGlConsole->ProcessKey(m.GetKeyCode(), Fl) )  {
+    if (FGlConsole->ProcessKey(m.GetKeyCode(), Fl)) {
       PreviewHelp(FGlConsole->GetCommand());
       TimePerFrame = FXApp->Draw();
       return;
@@ -2227,66 +2240,101 @@ void TMainForm::OnChar(wxKeyEvent& m) {
     }
   }
 
-  if( _ProcessManager->GetRedirected() != NULL )  {
+  if (_ProcessManager->GetRedirected() != 0) {
     FHelpWindow->SetVisible(false);
     FGlConsole->ShowBuffer(true);
     TimePerFrame = FXApp->Draw();
     return;
   }
 
-  if (m.GetKeyCode() == WXK_RETURN)
+  if (m.GetKeyCode() == WXK_RETURN) {
     TimePerFrame = FXApp->Draw();
-  else {
-    if (!CmdLineVisible)
-      TimePerFrame = FXApp->Draw();
   }
-  if (FindFocus() != FCmdLine)
+  else {
+    if (!CmdLineVisible) {
+      TimePerFrame = FXApp->Draw();
+    }
+  }
+  if (FindFocus() != FCmdLine) {
     m.Skip();
+  }
 }
 //..............................................................................
 void TMainForm::OnKeyUp(wxKeyEvent& m)  {
   m.Skip();
 }
 //..............................................................................
-void TMainForm::OnKeyDown(wxKeyEvent& m)  {
+void TMainForm::OnKeyDown(wxKeyEvent& m) {
   m.Skip(false);
   wxWindow* wxw = FindFocus();
   if (wxw != FGlCanvas && wxw != FCmdLine) {
-    if (HtmlManager.main != NULL) {
+    if (HtmlManager.main != 0) {
       THtml* htw = HtmlManager.main;
-      if ((wxw != NULL && olx_type<THtml>::check(*wxw)))
+      if ((wxw != 0 && olx_type<THtml>::check(*wxw))) {
         htw = (THtml*)wxw;
-      else if (wxw != NULL && wxw->GetParent() != NULL &&
+      }
+      else if (wxw != 0 && wxw->GetParent() != 0 &&
         olx_type<THtml>::check(*wxw->GetParent()))
       {
         htw = (THtml*)wxw->GetParent();
+      }
+      bool process = false;
+      const std::type_info &ti = typeid(*wxw);
+      if (ti == typeid(TComboBox) &&
+        !(dynamic_cast<const TComboBox *>(wxw))->IsReadOnly())
+      {
+      }
+      else if (ti == typeid(TTreeView))
+        ;
+      else if (ti == typeid(TTextEdit))
+        ;
+      else if (ti == typeid(TSpinCtrl))
+        ;
+      else if (ti == typeid(TDateCtrl))
+        ;
+      else {
+        if (CmdLineVisible) {
+          FCmdLine->SetFocus();
+        }
+        else {
+          FGlCanvas->SetFocus();
+        }
+        if (m.GetKeyCode() >= 'A' && m.GetKeyCode() <= 'Z') {
+          if ((m.GetModifiers() & wxMOD_SHIFT) == 0) {
+            m.m_keyCode += 'a' - 'A';
+          }
+          OnChar(m);
+        }
+        return;
       }
       htw->OnKeyDown(m);
     }
     return;
   }
 
-  static bool special_drawing_set=false;
+  static bool special_drawing_set = false;
   if (m.m_controlDown && m.m_keyCode == WXK_SPACE) {
     special_drawing_set = true;
     TGXApp::AtomIterator ai = FXApp->GetAtoms();
-    while (ai.HasNext())
+    while (ai.HasNext()) {
       ai.Next().SetSpecialDrawing(true);
+    }
     FXApp->Draw();
   }
   else if (special_drawing_set) {
     special_drawing_set = false;
     TGXApp::AtomIterator ai = FXApp->GetAtoms();
-    while (ai.HasNext())
+    while (ai.HasNext()) {
       ai.Next().SetSpecialDrawing(false);
+    }
     FXApp->Draw();
   }
 
   short Fl = 0;
-  if( m.m_keyCode == WXK_RAW_CONTROL ||
-      m.m_keyCode == WXK_MENU ||
-      m.m_keyCode == WXK_SHIFT ||
-      m.m_keyCode == WXK_ALT)
+  if (m.m_keyCode == WXK_RAW_CONTROL ||
+    m.m_keyCode == WXK_MENU ||
+    m.m_keyCode == WXK_SHIFT ||
+    m.m_keyCode == WXK_ALT)
   {
     m.Skip();
     return;
@@ -2298,16 +2346,23 @@ void TMainForm::OnKeyDown(wxKeyEvent& m)  {
     }
   }
 
-  if (m.GetModifiers() & wxMOD_ALT) Fl |= sssAlt;
-  if (m.GetModifiers() & wxMOD_RAW_CONTROL) Fl |= sssCtrl;
-  if (m.GetModifiers() & wxMOD_SHIFT) Fl |= sssShift;
+  if (m.GetModifiers() & wxMOD_ALT) {
+    Fl |= sssAlt;
+  }
+  if (m.GetModifiers() & wxMOD_RAW_CONTROL) {
+    Fl |= sssCtrl;
+  }
+  if (m.GetModifiers() & wxMOD_SHIFT) {
+    Fl |= sssShift;
+  }
   // process built-ins first
   if (m.GetModifiers() == wxMOD_CMD) {
-  // paste, Cmd+V, Ctrl+V
+    // paste, Cmd+V, Ctrl+V
     if (m.GetKeyCode() == 'V') {
       // avoid duplication
-      if (CmdLineVisible && FindFocus() != FCmdLine)
+      if (CmdLineVisible && FindFocus() != FCmdLine) {
         return;
+      }
       olxstr content;
       if (wxTheClipboard->Open()) {
         if (wxTheClipboard->IsSupported(wxDF_TEXT)) {
@@ -2318,10 +2373,12 @@ void TMainForm::OnKeyDown(wxKeyEvent& m)  {
         wxTheClipboard->Close();
       }
       olxstr cmdl;
-      if (CmdLineVisible)
+      if (CmdLineVisible) {
         cmdl = FCmdLine->GetCommand();
-      else
+      }
+      else {
         cmdl = FGlConsole->GetCommand();
+      }
       if (!ImportFrag(content)) {
         olxstr trimmed_content = content;
         trimmed_content.Trim(' ').Trim('\n').Trim('\r');
@@ -2330,16 +2387,21 @@ void TMainForm::OnKeyDown(wxKeyEvent& m)  {
           ip = FCmdLine->GetInsertionPoint() -
             FCmdLine->GetPromptStr().Length();
         }
-        else
+        else {
           ip = FGlConsole->GetCmdInsertPosition();
-        if (ip >= cmdl.Length())
+        }
+        if (ip >= cmdl.Length()) {
           cmdl << content;
-        else
+        }
+        else {
           cmdl.Insert(content, ip);
-        if (CmdLineVisible)
+        }
+        if (CmdLineVisible) {
           FCmdLine->SetCommand(cmdl);
-        else
+        }
+        else {
           FGlConsole->SetCommand(cmdl);
+        }
       }
       TimePerFrame = FXApp->Draw();
       return;
@@ -2350,18 +2412,18 @@ void TMainForm::OnKeyDown(wxKeyEvent& m)  {
       TimePerFrame = FXApp->Draw();
       return;
     }
-    else if(m.GetKeyCode() == WXK_INSERT) {
+    else if (m.GetKeyCode() == WXK_INSERT) {
       FXApp->CopySelection();
       return;
     }
   }
   else if (m.GetModifiers() == wxMOD_SHIFT) {
-    if(m.GetKeyCode() == WXK_INSERT) {
+    if (m.GetKeyCode() == WXK_INSERT) {
       FXApp->PasteSelection();
       return;
     }
   }
-  if (!AccShortcuts.ValueExists(Fl<<16 | m.m_keyCode)) {
+  if (!AccShortcuts.ValueExists(Fl << 16 | m.m_keyCode)) {
     m.Skip();
     return;
   }
@@ -2375,8 +2437,8 @@ void TMainForm::OnKeyDown(wxKeyEvent& m)  {
     m.Skip();
     return;
   }
-  olxstr Cmd = AccShortcuts.GetValue(Fl<<16 | m.m_keyCode);
-  if( !Cmd.IsEmpty() )  {
+  olxstr Cmd = AccShortcuts.GetValue(Fl << 16 | m.m_keyCode);
+  if (!Cmd.IsEmpty()) {
     processMacro(Cmd, __OlxSrcInfo);
     TimePerFrame = FXApp->Draw();
     return;

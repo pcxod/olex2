@@ -727,21 +727,21 @@ const TRefList& RefinementModel::GetReflections() const {
       if (cell_changed) {
         OnCellDifference.Execute(this, &ins());
       }
-      if ((ins().GetRM().Vars.HasBASF() && !Vars.HasBASF()) ||
-        (ins().GetRM().Vars.GetBASFCount() != Vars.GetBASFCount()
-          && ins().GetRM().Vars.GetBASFCount() != 0))
-      {
-        TStrList l(ins().GetRM().GetBASFStr(), ' ');
-        // dirty tricks...
-        const_cast<XVarManager &>(Vars).ClearBASF();
-        const_cast<XVarManager &>(Vars).SetBASF(l);
+      if (ins().GetRM().IsHKLFSet()) {
         HKLF = ins().GetRM().GetHKLF();
+        if (ins().GetRM().Vars.GetBASFCount() != Vars.GetBASFCount()) {
+          TStrList l(ins().GetRM().GetBASFStr(), ' ');
+          // dirty tricks...
+          const_cast<XVarManager &>(Vars).ClearBASF();
+          const_cast<XVarManager &>(Vars).SetBASF(l);
+          HKLF = ins().GetRM().GetHKLF();
+        }
       }
     }
-    SetReflections(hf.RefList());
-    if (hf.GetHKLF() != -1) {
+    else if (hf.GetHKLF() != -1) {
       HKLF = hf.GetHKLF();
     }
+    SetReflections(hf.RefList());
     return _Reflections;
   }
   catch(TExceptionBase& exc) {

@@ -2058,9 +2058,22 @@ public:
     TTSString<T, TC> fmt, rv;
     if (NumberOfDigits < 0) {
       NumberOfDigits = -NumberOfDigits;
-      if (v >= 0)  fmt = ' ';
+      if (v >= 0) {
+        fmt = ' ';
+      }
     }
-    fmt << "%." << NumberOfDigits << ((Exponent) ? 'e' : 'f') << '\0';
+    fmt << "%." << NumberOfDigits;
+    if (!Exponent) {
+      if ((v < 0 ? -v : v) > pow(10.0, 80-NumberOfDigits-2)) {
+        TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo,
+          "format overrun");
+      }
+      fmt << 'f';
+    }
+    else {
+      fmt << 'e';
+    }
+    fmt << '\0';
     rv.setTypeValue(fmt.Data(), v);
     return rv;
   }

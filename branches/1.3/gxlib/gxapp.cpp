@@ -241,7 +241,8 @@ public:
     return false;
   }
   bool Exit(const IOlxObject *Sender, const IOlxObject *Data, TActionQueue *) {
-    if (state == 1) { // somehing went not as expected? try to recover then...
+    // something went not as expected? try to recover then...
+    if (state == 1 || dynamic_cast<const TExceptionBase *>(Data) != 0) {
       FParent->CreateObjects(true);
     }
     state = 3;
@@ -3780,8 +3781,10 @@ void TGXApp::UpdateLabels()  {
   }
 }
 //..............................................................................
-uint64_t TGXApp::Draw()  {
-  if( !IsMainFormVisible() || DisplayFrozen )  return 0;
+uint64_t TGXApp::Draw() {
+  if (!IsMainFormVisible() || DisplayFrozen) {
+    return 0;
+  }
   uint64_t st = TETime::msNow();
   GetRenderer().Draw();
   return TETime::msNow() - st;
