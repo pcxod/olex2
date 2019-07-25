@@ -237,7 +237,7 @@ void TIns::LoadFromStrings(const TStrList& FileContent) {
         if (qpeak && !LoadQPeaks) {
           continue;
         }
-        if ((!cx.End && qpeak) || (cx.End && !qpeak)) {
+        if (cx.End && !qpeak) {
           continue;
         }
         // is a valid atom
@@ -293,8 +293,8 @@ void TIns::LoadFromStrings(const TStrList& FileContent) {
   Ins.Pack();
   _ProcessSame(cx);
   _FinishParsing(cx, false);
-  // remove duplicated instructions
-  {
+  // remove duplicated instructions if valid
+  if (cx.CellFound) {
     olxstr_set<false> inses;
     for (size_t i = 0; i < Ins.Count(); i++) {
       if (Ins.GetObject(i) == 0) {

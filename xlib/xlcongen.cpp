@@ -244,6 +244,18 @@ bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group,
         ag.AddDependent(*CreatedAtoms[i]);
       }
     }
+    XVarReference *ovr = envi.GetBase().CAtom().GetVarRef(catom_var_name_Sof);
+    XVar *var = 0;
+    short relation = relation_AsVar;
+    if (ovr == 0) {
+      var = &RefMod.Vars.NewVar(envi.GetBase().CAtom().GetOccu());
+      RefMod.Vars.AddVarRef(*var, envi.GetBase().CAtom(), catom_var_name_Sof,
+        relation, 1.0);
+    }
+    else {
+      var = &ovr->Parent;
+      relation = ovr->relation_type;
+    }
     for (size_t i = 0; i < CreatedAtoms.Count(); i++) {
       if (negative_part) {
         CreatedAtoms[i]->SetPart(-1);
@@ -259,8 +271,9 @@ bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group,
         CreatedAtoms[i]->SetUisoScale(1.2);
       }
       CreatedAtoms[i]->SetUiso(4 * caDefIso*caDefIso);
-      RefMod.Vars.SetParam(*CreatedAtoms[i], catom_var_name_Sof,
-        RefMod.Vars.GetParam(envi.GetBase().CAtom(), catom_var_name_Sof));
+      
+      RefMod.Vars.AddVarRef(*var, *CreatedAtoms[i], catom_var_name_Sof,
+        relation, occu_mult);
       CreatedAtoms[i]->SetOccu(CreatedAtoms[i]->GetOccu()*occu_mult);
       if (generated != 0) {
         generated->Add(CreatedAtoms[i]);
