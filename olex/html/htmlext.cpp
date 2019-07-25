@@ -169,11 +169,12 @@ bool THtml::Dispatch(int MsgId, short MsgSubId, const IOlxObject* Sender,
 }
 //.............................................................................
 void THtml::OnKeyDown(wxKeyEvent& event) {
-  event.Skip();
   if (event.GetModifiers() == wxMOD_CMD && event.GetKeyCode() == 'C') {
     CopySelection();
+    event.Skip(false);
     return;
   }
+  event.Skip();
 }
 //.............................................................................
 void THtml::OnNavigation(wxNavigationKeyEvent& event) {
