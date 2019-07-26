@@ -2267,7 +2267,9 @@ void TMainForm::OnKeyUp(wxKeyEvent& m)  {
 void TMainForm::OnKeyDown(wxKeyEvent& m) {
   m.Skip(false);
   wxWindow* wxw = FindFocus();
-  if (wxw != FGlCanvas && wxw != FCmdLine) {
+  if (wxw != FGlCanvas && wxw != FCmdLine &&
+    (wxw->GetParent() == HtmlManager.main || wxw == HtmlManager.main))
+  {
     if (HtmlManager.main != 0) {
       THtml* htw = HtmlManager.main;
       if ((wxw != 0 && olx_type<THtml>::check(*wxw))) {
