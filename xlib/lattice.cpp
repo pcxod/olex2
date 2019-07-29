@@ -3109,6 +3109,13 @@ TUndoData *TLattice::ValidateHGroups(bool reinit, bool report) {
   TCAtomPList deleted;
   TAsymmUnit &au = GetAsymmUnit();
   RefinementModel &rm = *au.GetRefMod();
+  // mark atom in EXYZ to count them once only
+  au.GetAtoms().ForEach(ACollectionItem::TagSetter(-1));
+  for (size_t i = 0; i < rm.ExyzGroups.Count(); i++) {
+    for (size_t j = 0; j < rm.ExyzGroups[i].Count(); j++) {
+      rm.ExyzGroups[i][j].SetTag(i);
+    }
+  }
   while (true) {
     size_t deleted_cnt = deleted.Count();
     for (size_t i=0; i < rm.AfixGroups.Count(); i++) {
@@ -3125,6 +3132,7 @@ TUndoData *TLattice::ValidateHGroups(bool reinit, bool report) {
         break;
       }
       size_t attached_cnt=0, metal_cnt=0, dependent_cnt=0;
+      olx_pset<index_t> exyz_counted;
       for (size_t j=0; j < ag.GetPivot().AttachedSiteCount(); j++) {
         TCAtom::Site &s = ag.GetPivot().GetAttachedSite(j);
         if (s.atom->IsDeleted() || s.atom->GetType().z < 2) {
@@ -3146,6 +3154,15 @@ TUndoData *TLattice::ValidateHGroups(bool reinit, bool report) {
             }
             if (contains) {
               continue;
+            }
+          }
+          // check if EXYZ
+          if (s.atom->GetTag() >= 0) {
+            if (exyz_counted.Contains(s.atom->GetTag())) {
+              continue;
+            }
+            else {
+              exyz_counted.Add(s.atom->GetTag());
             }
           }
           if (XElementLib::IsMetal(s.atom->GetType())) {
