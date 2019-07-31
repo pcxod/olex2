@@ -32,6 +32,7 @@ TTextEdit::TTextEdit(wxWindow *Parent, wxWindowID id, const wxString& value,
   Bind(wxEVT_TEXT_ENTER, &TTextEdit::EnterPressedEvent, this);
   Bind(wxEVT_KILL_FOCUS, &TTextEdit::LeaveEvent, this);
   Bind(wxEVT_SET_FOCUS, &TTextEdit::EnterEvent, this);
+  StrValue = value;
 }
 //..............................................................................
 void TTextEdit::ClickEvent(wxMouseEvent& event)  {

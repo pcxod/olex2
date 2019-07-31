@@ -2265,55 +2265,53 @@ void TMainForm::OnKeyUp(wxKeyEvent& m)  {
 }
 //..............................................................................
 void TMainForm::OnKeyDown(wxKeyEvent& m) {
+  if (m.m_keyCode == WXK_RAW_CONTROL ||
+    m.m_keyCode == WXK_MENU ||
+    m.m_keyCode == WXK_SHIFT ||
+    m.m_keyCode == WXK_ALT)
+  {
+    m.Skip();
+    return;
+  }
   m.Skip(false);
   wxWindow* wxw = FindFocus();
   if (wxw != FGlCanvas && wxw != FCmdLine &&
     (wxw->GetParent() == HtmlManager.main || wxw == HtmlManager.main))
   {
-    if (HtmlManager.main != 0) {
-      THtml* htw = HtmlManager.main;
-      if ((wxw != 0 && olx_type<THtml>::check(*wxw))) {
-        htw = (THtml*)wxw;
+    bool process = false;
+    const std::type_info &ti = typeid(*wxw);
+    if (ti == typeid(TComboBox) ||
+      ti == typeid(TChoice) ||
+      ti == typeid(TTreeView) ||
+      ti == typeid(TTextEdit) ||
+      ti == typeid(TSpinCtrl) ||
+      ti == typeid(TDateCtrl))
+    {}
+    else {
+      if (CmdLineVisible) {
+        wxw = FCmdLine;
+        FCmdLine->SetFocus();
       }
-      else if (wxw != 0 && wxw->GetParent() != 0 &&
-        olx_type<THtml>::check(*wxw->GetParent()))
-      {
-        htw = (THtml*)wxw->GetParent();
-      }
-      bool process = false;
-      const std::type_info &ti = typeid(*wxw);
-      if (ti == typeid(TComboBox) &&
-        !(dynamic_cast<const TComboBox *>(wxw))->IsReadOnly())
-      {
-      }
-      else if (ti == typeid(TTreeView))
-        ;
-      else if (ti == typeid(TTextEdit))
-        ;
-      else if (ti == typeid(TSpinCtrl))
-        ;
-      else if (ti == typeid(TDateCtrl))
-        ;
       else {
-        if (CmdLineVisible) {
-          FCmdLine->SetFocus();
-        }
-        else {
-          FGlCanvas->SetFocus();
-        }
-        if (m.GetKeyCode() >= 'A' && m.GetKeyCode() <= 'Z') {
-          if ((m.GetModifiers() & wxMOD_SHIFT) == 0) {
+        wxw = FGlCanvas;
+        FGlCanvas->SetFocus();
+      }
+      if (m.GetKeyCode() >= 'A' && m.GetKeyCode() <= 'Z') {
+        if (m.GetModifiers() == wxMOD_NONE || m.GetModifiers() == wxMOD_SHIFT) {
+          if (m.GetModifiers() == wxMOD_NONE) {
             m.m_keyCode += 'a' - 'A';
           }
           OnChar(m);
+          return;
         }
-        return;
       }
-      htw->OnKeyDown(m);
+      // else: look through shortcuts etc
     }
+  }
+  if (wxw != this && wxw != FGlCanvas && wxw != FCmdLine) {
+    m.Skip();
     return;
   }
-
   static bool special_drawing_set = false;
   if (m.m_controlDown && m.m_keyCode == WXK_SPACE) {
     special_drawing_set = true;
@@ -2333,14 +2331,6 @@ void TMainForm::OnKeyDown(wxKeyEvent& m) {
   }
 
   short Fl = 0;
-  if (m.m_keyCode == WXK_RAW_CONTROL ||
-    m.m_keyCode == WXK_MENU ||
-    m.m_keyCode == WXK_SHIFT ||
-    m.m_keyCode == WXK_ALT)
-  {
-    m.Skip();
-    return;
-  }
   if (CmdLineVisible && wxw == FGlCanvas) {
     if (m.m_keyCode != WXK_BACK && m.m_keyCode != WXK_DELETE) {
       FCmdLine->EmulateKeyPress(m);
@@ -2362,9 +2352,6 @@ void TMainForm::OnKeyDown(wxKeyEvent& m) {
     // paste, Cmd+V, Ctrl+V
     if (m.GetKeyCode() == 'V') {
       // avoid duplication
-      if (CmdLineVisible && FindFocus() != FCmdLine) {
-        return;
-      }
       olxstr content;
       if (wxTheClipboard->Open()) {
         if (wxTheClipboard->IsSupported(wxDF_TEXT)) {
@@ -2449,24 +2436,14 @@ void TMainForm::OnKeyDown(wxKeyEvent& m) {
 }
 //..............................................................................
 void TMainForm::OnNavigation(wxNavigationKeyEvent& event) {
-  if (FindFocus() != FGlCanvas) {
-    if (HtmlManager.main != 0) {
-      THtml* htw = HtmlManager.main;
-      wxWindow* wxw = FindFocus();
-      if ((wxw != 0 && olx_type<THtml>::check(*wxw))) {
-        htw = (THtml*)wxw;
-      }
-      else if (wxw != 0 && wxw->GetParent() != 0 &&
-        olx_type<THtml>::check(*wxw->GetParent()))
-      {
-        htw = (THtml*)wxw->GetParent();
-      }
-      htw->OnNavigation(event);
-    }
-    return;
+  wxWindow *wxw = wxWindow::FindFocus();
+  if (wxw == this || wxw == FGlCanvas || wxw == FCmdLine) {
+    ProcessTab();
+    event.Skip(false);
   }
-  ProcessTab();
-  event.Skip(false);
+  else {
+    event.Skip();
+  }
 }
 //..............................................................................
 void TMainForm::OnMove(wxMoveEvent& evt) {
