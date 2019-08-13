@@ -427,6 +427,7 @@ void TMainForm::XApp(Olex2App *XA)  {
     "color_line-lines&;"
     "color_fill-ellipses are filled&;"
     "color_bond-bonds are colored&;"
+    "color_plane-planes are colored&;"
     "div_pie-number [4] of stripes in the octant&;"
     "lw_pie-line width [0.5] of the octant stripes&;"
     "lw_octant-line width [0.5] of the octant arcs&;"

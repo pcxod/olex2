@@ -747,7 +747,15 @@ void TMainForm::macPictPS(TStrObjList &Cmds, const TParamList &Options,
     color_mode |= ortep_color_lines;
   }
   if (Options.Contains("color_bond")) {
-    color_mode |= ortep_color_bond;
+    color_mode |= ortep_color_bonds;
+  }
+  if (Options.Contains("color_plane")) {
+    color_mode |= ortep_color_planes;
+  }
+  else {
+    if ((color_mode & ortep_color_fill) != 0) {
+      color_mode |= ortep_color_planes;
+    }
   }
   od.SetColorMode(color_mode);
   od.SetHBondScale(Options.FindValue("scale_hb", "0.5").ToDouble());

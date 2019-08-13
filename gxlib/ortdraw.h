@@ -13,11 +13,13 @@
 #include "ps_writer.h"
 
 static const uint16_t
-  ortep_color_lines = 0x0001,
-  ortep_color_fill  = 0x0002,
-  ortep_color_bond  = 0x0004,
-  ortep_atom_rims   = 0x0008,
-  ortep_atom_quads  = 0x0010;
+  ortep_color_lines  = 0x0001,
+  ortep_color_fill   = 0x0002,
+  ortep_color_bonds  = 0x0004,
+  ortep_atom_rims    = 0x0008,
+  ortep_atom_quads   = 0x0010,
+  ortep_color_planes = 0x0020
+  ;
 
 class OrtDraw;
 
