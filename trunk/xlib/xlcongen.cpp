@@ -257,6 +257,7 @@ bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group,
       relation = ovr->relation_type;
     }
     for (size_t i = 0; i < CreatedAtoms.Count(); i++) {
+      CreatedAtoms[i]->SetOccu(envi.GetBase().CAtom().GetOccu());
       if (negative_part) {
         CreatedAtoms[i]->SetPart(-1);
       }
