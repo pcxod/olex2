@@ -72,6 +72,9 @@ bool InfoTab::IsValid() const {
     return true;
   }
   if (!atoms.IsValid()) {
+    if (Type == infotab_conf) {
+      return true;
+    }
     return false;
   }
   TTypeList<ExplicitCAtomRef> a = atoms.ExpandList(RM);
@@ -111,7 +114,9 @@ olxstr InfoTab::InsStr() const {
   else if (Type == infotab_mpla && AtomCount != -1) {
     rv << ' ' << AtomCount;
   }
-  rv << ' ' << atoms.GetExpression();
+  if (!atoms.IsEmpty()) {
+    rv << ' ' << atoms.GetExpression();
+  }
   for (size_t i = 0; i < args.Count(); i++) {
     rv << ' ' << args[i];
   }

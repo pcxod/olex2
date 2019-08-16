@@ -3581,38 +3581,35 @@ void XLibMacros::funRun(const TStrObjList& Params, TMacroData &E) {
   E.SetRetVal(EmptyString());
 }
 //.............................................................................
-void XLibMacros::funIns(const TStrObjList& Params, TMacroData &E)  {
+void XLibMacros::funIns(const TStrObjList& Params, TMacroData &E) {
   RefinementModel& rm = TXApp::GetInstance().XFile().GetRM();
   olxstr tmp;
   if (Params[0].Equalsi("weight") || Params[0].Equalsi("wght")) {
-    for (size_t j = 0; j < rm.used_weight.Count(); j++)  {
-      tmp << rm.used_weight[j];
-      if ((j + 1) < rm.used_weight.Count())  tmp << ' ';
+    for (size_t j = 0; j < rm.used_weight.Count(); j++) {
+      tmp << ' ' << rm.used_weight[j];
     }
-    E.SetRetVal(tmp.IsEmpty() ? NAString() : tmp);
+    E.SetRetVal(tmp.IsEmpty() ? NAString() : tmp.SubStringFrom(1));
   }
-  else if (Params[0].Equalsi("weight1"))  {
+  else if (Params[0].Equalsi("weight1")) {
     for (size_t j = 0; j < rm.proposed_weight.Count(); j++) {
-      tmp << rm.proposed_weight[j];
-      if ((j + 1) < rm.proposed_weight.Count())  tmp << ' ';
+      tmp << ' ' << rm.proposed_weight[j];
     }
-    E.SetRetVal(tmp.IsEmpty() ? NAString() : tmp);
+    E.SetRetVal(tmp.IsEmpty() ? NAString() : tmp.SubStringFrom(1));
   }
   else if (Params[0].Equalsi("L.S.") || Params[0].Equalsi("CGLS")) {
-    for (size_t i = 0; i < rm.LS.Count(); i++)  {
-      tmp << rm.LS[i];
-      if ((i + 1) < rm.LS.Count())  tmp << ' ';
+    for (size_t i = 0; i < rm.LS.Count(); i++) {
+      tmp << ' ' << rm.LS[i];
     }
-    E.SetRetVal(rm.LS.Count() == 0 ? NAString() : tmp);
+    E.SetRetVal(tmp.IsEmpty() ? NAString() : tmp.SubStringFrom(1));
   }
-  else if (Params[0].Equalsi("ls"))
+  else if (Params[0].Equalsi("ls")) {
     E.SetRetVal(rm.LS.Count() == 0 ? NAString() : olxstr(rm.LS[0]));
-  else if (Params[0].Equalsi("plan"))  {
-    for (size_t i = 0; i < rm.PLAN.Count(); i++)  {
-      tmp << ((i < 1) ? olx_round(rm.PLAN[i]) : rm.PLAN[i]);
-      if ((i + 1) < rm.PLAN.Count())  tmp << ' ';
+  }
+  else if (Params[0].Equalsi("plan")) {
+    for (size_t i = 0; i < rm.PLAN.Count(); i++) {
+      tmp << ' ' << ((i == 1) ? olx_round(rm.PLAN[i]) : rm.PLAN[i]);
     }
-    E.SetRetVal(rm.PLAN.Count() == 0 ? NAString() : tmp);
+    E.SetRetVal(tmp.IsEmpty() ? NAString() : tmp.SubStringFrom(1));
   }
   else if (Params[0].Equalsi("qnum")) {
     E.SetRetVal(rm.PLAN.Count() == 0 ? NAString() : olxstr(rm.PLAN[0]));
@@ -3623,12 +3620,21 @@ void XLibMacros::funIns(const TStrObjList& Params, TMacroData &E)  {
   else if (Params[0].Equalsi("omit")) {
     E.SetRetVal(rm.HasOMIT() ? rm.GetOMITStr() : NAString());
   }
+  else if (Params[0].Equalsi("conf")) {
+    size_t cnt = 0;
+    for (size_t i = 0; i < rm.InfoTabCount(); i++) {
+      if (rm.GetInfoTab(i).GetType() == infotab_conf) {
+        cnt++;
+      }
+    }
+    E.SetRetVal(cnt == 0 ? NAString() : cnt);
+  }
   else if (TXApp::GetInstance().CheckFileType<TIns>()) {
     TIns& I = TXApp::GetInstance().XFile().GetLastLoader<TIns>();
     if (Params[0].Equalsi("R1")) {
       E.SetRetVal(I.GetR1() < 0 ? NAString() : olxstr(I.GetR1()));
     }
-    if (!I.InsExists(Params[0]))  {
+    if (!I.InsExists(Params[0])) {
       E.SetRetVal(NAString());
       return;
     }
