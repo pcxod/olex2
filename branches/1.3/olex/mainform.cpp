@@ -427,6 +427,7 @@ void TMainForm::XApp(Olex2App *XA)  {
     "color_line-lines&;"
     "color_fill-ellipses are filled&;"
     "color_bond-bonds are colored&;"
+    "color_plane-planes are colored&;"
     "div_pie-number [4] of stripes in the octant&;"
     "lw_pie-line width [0.5] of the octant stripes&;"
     "lw_octant-line width [0.5] of the octant arcs&;"
@@ -1171,8 +1172,15 @@ void TMainForm::XApp(Olex2App *XA)  {
   XLibMacros::OnDelIns().Add(this, ID_DELINS, msiExit);
   XLibMacros::OnAddIns().Add(this, ID_ADDINS, msiExit);
   LoadVFS(plGlobal);
-
-  HtmlManager.InitialiseMain(wxBORDER_NONE|wxCLIP_CHILDREN|wxALWAYS_SHOW_SB);
+  {
+    long flags = wxBORDER_NONE | wxCLIP_CHILDREN;
+#if wxMAJOR_VERSION == 3 && wxMINOR_VERSION == 0
+    flags |= wxVSCROLL;
+#else
+    flags != wxALWAYS_SHOW_SB;
+#endif
+    HtmlManager.InitialiseMain(flags);
+  }
   GetLibrary().AttachLibrary(HtmlManager.ExportLibrary());
 
   HtmlManager.OnLink.Add(this, ID_ONLINK);

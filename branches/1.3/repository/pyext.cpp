@@ -28,13 +28,16 @@
 //.............................................................................
 class TFuncWrapper : public PythonExt::BasicWrapper {
   bool ProcessOutput;
+  bool DecodeKeywords;
 public:
-  TFuncWrapper(PyObject* callable, bool processOutput, bool profile) :
+  TFuncWrapper(PyObject* callable, bool processOutput,
+    bool profile, bool decode_keywords) :
     PythonExt::BasicWrapper(true)
   {
     PyFunction = callable;
     Py_XINCREF(PyFunction);
     ProcessOutput = processOutput;
+    DecodeKeywords = decode_keywords;
   }
   virtual ~TFuncWrapper() { Py_XDECREF(PyFunction); }
 
@@ -43,25 +46,30 @@ public:
     PyObject *arglist = 0, *kwds = 0;
     if (!Params.IsEmpty()) {
       size_t kwd_cnt = 0;
-      for (size_t i = 0; i < Params.Count(); i++) {
-        if (Params[i].StartsFrom('-')) {
-          size_t eidx = Params[i].IndexOf('=');
-          if (eidx != InvalidIndex) {
-            if (kwds == 0) {
-              kwds = PyDict_New();
+      if (DecodeKeywords) {
+        for (size_t i = 0; i < Params.Count(); i++) {
+          if (Params[i].StartsFrom('-')) {
+            size_t eidx = Params[i].IndexOf('=');
+            if (eidx != InvalidIndex) {
+              if (kwds == 0) {
+                kwds = PyDict_New();
+              }
+              PyDict_SetItem(kwds,
+                PythonExt::BuildString(Params[i].SubString(1, eidx - 1)),
+                PythonExt::BuildString(Params[i].SubStringFrom(eidx + 1))
+              );
+              kwd_cnt++;
             }
-            PyDict_SetItem(kwds,
-              PythonExt::BuildString(Params[i].SubString(1, eidx-1)),
-              PythonExt::BuildString(Params[i].SubStringFrom(eidx + 1))
-            );
-            kwd_cnt++;
           }
         }
       }
       arglist = PyTuple_New(Params.Count()- kwd_cnt);
-      for (size_t i = 0; i < Params.Count(); i++) {
-        if (!(Params[i].StartsFrom('-') && Params[i].Contains('='))) {
+      for (size_t i = 0, j = 0; i < Params.Count(); i++) {
+        if (!DecodeKeywords) {
           PyTuple_SetItem(arglist, i, PythonExt::BuildString(Params[i]));
+        }
+        else if (!(Params[i].StartsFrom('-') && Params[i].Contains('='))) {
+          PyTuple_SetItem(arglist, j++, PythonExt::BuildString(Params[i]));
         }
       }
     }
@@ -187,9 +195,12 @@ TLibrary *FindOrCreateLibrary(const olxstr& name) {
 PyObject* runRegisterFunction(PyObject* self, PyObject* args) {
   PyObject* fun;
   olxstr lib_name;
-  bool profile = false;
-  if( !PythonExt::ParseTuple(args, "O|bw", &fun, &profile, &lib_name) )
-    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "O|bw");
+  bool profile = false, decode_keywords = true;
+  if (!PythonExt::ParseTuple(args, "O|bwb", &fun, &profile, &lib_name,
+    &decode_keywords))
+  {
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "O|bwb");
+  }
   if (!PyCallable_Check(fun)) {
     return PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo,
       "Parameter must be callable");
@@ -197,10 +208,10 @@ PyObject* runRegisterFunction(PyObject* self, PyObject* args) {
   TLibrary *lib = FindOrCreateLibrary(lib_name);
   if (lib == NULL)
     return PythonExt::SetErrorMsg(PyExc_RuntimeError, __OlxSourceInfo,
-    "Olex2 binding python library is not initialised...");
+      "Olex2 binding python library is not initialised...");
 
   TFuncWrapper* fw = PythonExt::GetInstance()->AddToDelete(
-    new TFuncWrapper(fun, true, profile));
+    new TFuncWrapper(fun, true, profile, decode_keywords));
   try {
     lib->Register(new TFunction<TFuncWrapper>(
       fw, &TFuncWrapper::Call, PyEval_GetFuncName(fun), fpAny),
@@ -218,9 +229,11 @@ PyObject* runRegisterFunction(PyObject* self, PyObject* args) {
 PyObject* runRegisterCallback(PyObject* self, PyObject* args) {
   olxstr cbEvent;
   PyObject* fun;
-  bool profile = false;
-  if (!PythonExt::ParseTuple(args, "wO|b", &cbEvent, &fun, &profile)) {
-    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "wO|b");
+  bool profile = false, decode_keywords = false;
+  if (!PythonExt::ParseTuple(args, "wO|bb", &cbEvent, &fun, &profile,
+    &decode_keywords))
+  {
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "wO|bb");
   }
   if (!PyCallable_Check(fun)) {
     return PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo,
@@ -232,7 +245,7 @@ PyObject* runRegisterCallback(PyObject* self, PyObject* args) {
   }
   // leave function wrapper util the end ..., but delete the binding
   TFuncWrapper* fw = PythonExt::GetInstance()->AddToDelete(
-    new TFuncWrapper(fun, false, profile));
+    new TFuncWrapper(fun, false, profile, decode_keywords));
   PythonExt::GetInstance()->GetOlexProcessor()->registerCallbackFunc(cbEvent,
     new TFunction<TFuncWrapper>(
       fw, &TFuncWrapper::Call, PyEval_GetFuncName(fun), fpAny));

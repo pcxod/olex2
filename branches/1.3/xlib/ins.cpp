@@ -637,7 +637,7 @@ void TIns::_FinishParsing(ParseContext& cx, bool header_only) {
     }
     else if ((toks[0].StartsFromi("HTAB") || toks[0].StartsFromi("RTAB") ||
       toks[0].StartsFromi("MPLA") || toks[0].StartsFromi("CONF")) &&
-      toks.Count() > 2)
+      (toks.Count() > 2 || toks[0].StartsFromi("CONF")))
     {
       cx.rm.AddInfoTab(toks);
       Ins.Delete(i--);
