@@ -1177,7 +1177,7 @@ void TMainForm::XApp(Olex2App *XA)  {
 #if wxMAJOR_VERSION == 3 && wxMINOR_VERSION == 0
     flags |= wxVSCROLL;
 #else
-    flags != wxALWAYS_SHOW_SB;
+    flags |= wxALWAYS_SHOW_SB;
 #endif
     HtmlManager.InitialiseMain(flags);
   }
