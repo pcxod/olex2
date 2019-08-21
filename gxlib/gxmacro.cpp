@@ -2069,7 +2069,38 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
       }
     }
   }
-  else if( Cmds.Count() == 1 && Cmds[0].Equalsi("res") )  {
+  else if (Cmds.Count() > 0 && Cmds[0].Equalsi("sel")) {
+    if (flag == glSelectionNone) {
+      flag = glSelectionSelect;
+    }
+    TSAtomPList atoms = app.FindXAtoms(Cmds, false, true);
+    if (atoms.IsEmpty()) {
+      return;
+    }
+    TAsymmUnit& au = app.XFile().GetAsymmUnit();
+    ACollectionItem::Unify(atoms);
+    using namespace olx_analysis;
+    TCAtomPList fa(atoms, FunctionAccessor::MakeConst(&TSAtom::CAtom));
+    fragments::fragment fr(fa);
+    TTypeList<fragments::fragment> frags =
+      fragments::extract(app.XFile().GetAsymmUnit(), fr);
+    app.XFile().GetAsymmUnit().GetAtoms().ForEach(
+      ACollectionItem::TagSetter(0));
+    for (size_t fi = 0; fi <= frags.Count(); fi++) {
+      fragments::fragment *f = (fi == 0 ? &fr : &frags[fi - 1]);
+      for (size_t j = 0; j < f->count(); j++) {
+        (*f)[j].SetTag(1);
+      }
+    }
+    TGXApp::AtomIterator ai = app.GetAtoms();
+    while (ai.HasNext()) {
+      TXAtom &a = ai.Next();
+      if (a.IsVisible() && a.CAtom().GetTag() == 1) {
+        app.GetRenderer().Select(a, flag);
+      }
+    }
+  }
+  else if (Cmds.Count() == 1 && Cmds[0].Equalsi("res")) {
     //app.GetRenderer().ClearSelection();
     //TStrList out;
     //TCAtomPList a_res;
