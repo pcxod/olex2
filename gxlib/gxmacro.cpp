@@ -3893,6 +3893,7 @@ void GXLibMacros::macInv(TStrObjList &Cmds, const TParamList &Options,
     for (size_t i = 0; i < planes.Count(); i++) {
       planes[i]->Invert();
     }
+    return;
   }
   if (InvertFittedFragment()) {
     return;
