@@ -727,14 +727,13 @@ const TRefList& RefinementModel::GetReflections() const {
       if (cell_changed) {
         OnCellDifference.Execute(this, &ins());
       }
-      if (ins().GetRM().IsHKLFSet()) {
+      if (ins().GetRM().IsHKLFSet() && ins().GetRM().GetHKLF() != GetHKLF()) {
         HKLF = ins().GetRM().GetHKLF();
         if (ins().GetRM().Vars.GetBASFCount() != Vars.GetBASFCount()) {
           TStrList l(ins().GetRM().GetBASFStr(), ' ');
           // dirty tricks...
           const_cast<XVarManager &>(Vars).ClearBASF();
           const_cast<XVarManager &>(Vars).SetBASF(l);
-          HKLF = ins().GetRM().GetHKLF();
         }
       }
     }
@@ -765,24 +764,26 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
       _HklStat.SetDefaults();
       TRefList refs;
       FilterHkl(refs, _HklStat);
-      TRefPList non_overlapping_1;
+      TRefPList non_overlapping_1, batch_1;
       if (HKLF >= 5) {
-        if (!refs.IsEmpty()) {
-          if (!refs[0].IsBatchSet()) {
-            TBasicApp::NewLogEntry(logWarning) << "HKL file is not compatible with"
-              " the HKLF instruction - clearing BASF and resetting to HKLF 4";
-            HKLF = 4;
-            Vars.ClearBASF();
-          }
+        if (!refs.IsEmpty() && !refs[0].IsBatchSet()) {
+          TBasicApp::NewLogEntry(logWarning) << "HKL file is not compatible with"
+            " the HKLF instruction - clearing BASF and resetting to HKLF 4";
+          HKLF = 4;
+          Vars.ClearBASF();
         }
       }
       if (HKLF >= 5) {
         non_overlapping_1 = GetNonoverlappingRefs(refs).GetObject()
           .Filter(olx_alg::olx_eq(1,
           FunctionAccessor::MakeConst(&TReflection::GetBatch)));
+        batch_1.SetCapacity(refs.Count());
         for (size_t i = 0; i < refs.Count(); i++) {
           if (refs[i].GetBatch() >= 0) {
             _HklStat.DataCount++;
+            if (refs[i].GetBatch() == 1) {
+              batch_1.Add(refs[i]);
+            }
           }
           refs[i].SetBatch(TReflection::NoBatchSet);
         }
@@ -815,10 +816,14 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
       for (int h = range.a[0]; h <= range.b[0]; h++) {
         for (int k = range.a[1]; k <= range.b[1]; k++) {
           for (int l = range.a[2]; l <= range.b[2]; l++) {
-            if (h == 0 && k == 0 && l == 0) continue;
+            if (h == 0 && k == 0 && l == 0) {
+              continue;
+            }
             vec3i hkl(h,k,l);
             vec3i shkl = TReflection::Standardise(hkl, info_ex);
-            if (shkl != hkl) continue;
+            if (shkl != hkl) {
+              continue;
+            }
             if (TReflection::IsAbsent(hkl, info_ex)) {
               continue;
             }
@@ -841,6 +846,12 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
         else {
           _HklStat.Rint = _HklStat.Rsigma = -1;
           _HklStat.InconsistentEquivalents = 0;
+        }
+        if (!batch_1.IsEmpty()) {
+          MergeStats st =
+            RefMerger::DryMerge<RefMerger::ShelxMerger>(sp, batch_1,
+              vec3i_list(), info_ex.centrosymmetric);
+          _HklStat.UniqueReflections = st.UniqueReflections;
         }
         _HklStat.ReflectionAPotMax = 0;
       }
@@ -1945,7 +1956,7 @@ olx_pair_t<vec3i, vec3i> RefinementModel::CalcIndicesToD(double d,
 }
 //..............................................................................
 double RefinementModel::CalcCompletenessTo2Theta(double tt, bool Laue) {
-  // this resets the cace if needed
+  // this resets the cache if needed
   GetMergeStat();
   // check cache
   double two_sin_2t = 2 * sin(tt*M_PI / 360.0);
@@ -1965,22 +1976,35 @@ double RefinementModel::CalcCompletenessTo2Theta(double tt, bool Laue) {
     info_ex.centrosymmetric = true;
   }
   double min_ds_sq = olx_sqr(1.0 / min_d);
-  TRefList refs;
   SortedObjectList<vec3i, TComparableComparator> omits;
   for (size_t i = 0; i < Omits.Count(); i++) {
-    omits.AddUnique(Omits[i]);
+    if (HKLF <= 4) {
+      omits.AddUnique(TReflection::Standardise(Omits[i], info_ex));
+    }
   }
+  TRefList refs_;
+  TRefPList refs;
   HklStat st;
-  FilterHkl(refs,st);
+  FilterHkl(refs_, st);
+  if (GetHKLF() >= 5) {
+    for (size_t i = 0; i < refs_.Count(); i++) {
+      if (refs_[i].GetBatch() == 1) {
+        refs.Add(refs_[i]);
+      }
+    }
+  }
+  else {
+    refs.AddAll(refs_);
+  }
   for (size_t i = 0; i < refs.Count(); i++) {
-    refs[i].Standardise(info_ex);
+    refs[i]->Standardise(info_ex);
   }
   QuickSorter::SortSF(refs, &TReflection::Compare);
   size_t u_cnt = 0;
   for (size_t i=0; i < refs.Count(); i++) {
-    TReflection &r = refs[i];
-    bool skip = omits.Contains(refs[i].GetHkl());
-    while (++i < refs.Count() && r.CompareTo(refs[i]) == 0) {
+    TReflection &r = *refs[i];
+    bool skip = omits.Contains(r.GetHkl());
+    while (++i < refs.Count() && r.CompareTo(*refs[i]) == 0) {
       ;
     }
     i--;
