@@ -76,6 +76,8 @@ public:
   DefMacro(CalcSurf)
   DefMacro(Legend)
   DefMacro(AdjustStyle)
+  DefMacro(TLS)
+  DefMacro(Udiff)
 
   DefFunc(MatchFiles)
   DefFunc(ExtraZoom)
