@@ -838,7 +838,7 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
         if (!non_overlapping_1.IsEmpty()) {
           MergeStats st =
             RefMerger::DryMerge<RefMerger::ShelxMerger>(sp, non_overlapping_1,
-              Omits, info_ex.centrosymmetric);
+              vec3i_list(), info_ex.centrosymmetric);
           _HklStat.Rint = st.Rint;
           _HklStat.Rsigma = st.Rsigma;
           _HklStat.InconsistentEquivalents = st.InconsistentEquivalents;
