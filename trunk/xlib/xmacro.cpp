@@ -2270,7 +2270,23 @@ void XLibMacros::macFile(TStrObjList &Cmds, const TParamList &Options,
   if (op.IsInt()) {
     TOlxVars::SetVar("file_output_precision", op);
   }
-  XApp.XFile().SaveToFile(Tmp);
+  if (Tmp.EndsWith(".xml") || Tmp.EndsWith(".xld")) {
+    if (!XApp.CheckFileType<TCif>()) {
+      Error.ProcessingError(__OlxSourceInfo, "CIF is expected");
+      return;
+    }
+    TDataFile df;
+    XApp.XFile().GetLastLoader<TCif>().ToDataItem(df.Root().AddItem("CIF"));
+    if (Tmp.EndsWith(".xml")) {
+      df.SaveToXMLFile(Tmp);
+    }
+    else {
+      df.SaveToXLFile(Tmp);
+    }
+  }
+  else {
+    XApp.XFile().SaveToFile(Tmp);
+  }
   if (!removedSAtoms.IsEmpty()) {  // need to restore, a bit of mess here...
     ASObjectProvider& objects = XApp.XFile().GetLattice().GetObjects();
     for (size_t i = 0; i < objects.atoms.Count(); i++) {
