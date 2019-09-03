@@ -78,7 +78,7 @@ public:
   DefMacro(AdjustStyle)
   DefMacro(TLS)
   DefMacro(Udiff)
-  DefMacro(RMSView)
+  DefMacro(MSDSView)
 
   DefFunc(MatchFiles)
   DefFunc(ExtraZoom)
