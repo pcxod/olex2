@@ -201,9 +201,18 @@ void TGlPrimitive::Compile() {
 }
 //..............................................................................
 void TGlPrimitive::PrepareColorRendering(uint16_t _begin) const {
-  if (!Renderer.ForcePlain()) {
+  if (Colors.Count() >= Vertices.Count() &&
+    !Renderer.ForcePlain() &&
+    !Renderer.IsSelecting())
+  {
     olx_gl::pushAttrib(GL_LIGHTING_BIT);
-    olx_gl::disable(GL_LIGHTING);
+    if (_begin == GL_POINT ||
+      _begin == GL_LINES ||
+      _begin == GL_LINE_STRIP ||
+      _begin == GL_LINE_LOOP)
+    {
+      olx_gl::disable(GL_LIGHTING);
+    }
     olx_gl::enable(GL_COLOR_MATERIAL);
     olx_gl::colorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
   }
@@ -212,7 +221,10 @@ void TGlPrimitive::PrepareColorRendering(uint16_t _begin) const {
 //..............................................................................
 void TGlPrimitive::EndColorRendering() const {
   olx_gl::end();
-  if (!Renderer.ForcePlain()) {
+  if (Colors.Count() >= Vertices.Count() &&
+    !Renderer.ForcePlain() &&
+    !Renderer.IsSelecting())
+  {
     olx_gl::popAttrib();
   }
 }
@@ -247,7 +259,8 @@ void TGlPrimitive::Draw() {
     tex->ReadCurrent(*currentTexture);
     tex->SetCurrent();
   }
-  if (Type == sgloText) {
+  switch (Type) {
+  case sgloText: {
 #ifdef _DEBUG
     if (Font == 0)
       throw TFunctionFailedException(__OlxSourceInfo, "undefined font");
@@ -276,94 +289,97 @@ void TGlPrimitive::Draw() {
         }
       }
     }
+    break;
   }
-  else if (Type == sgloPoints) {
+  case sgloPoints: {
+    PrepareColorRendering(GL_POINTS);
     olx_gl::pointSize((float)Params[0]);
     if (Colors.IsEmpty() || GetRenderer().IsSelecting()) {
-      olx_gl::begin(GL_POINTS);
       for (size_t i = 0; i < Vertices.Count(); i++) {
         DrawVertex(Vertices[i]);
       }
-      olx_gl::end();
     }
     else if (Colors.Count() == Vertices.Count()) {
-      PrepareColorRendering(GL_POINTS);
       for (size_t i = 0; i < Vertices.Count(); i++) {
         DrawVertex(Vertices[i], Colors[i]);
       }
-      EndColorRendering();
     }
+    EndColorRendering();
+    break;
   }
-  else if (Type == sgloLines) {
+  case sgloLines: {
+    PrepareColorRendering(GL_LINES);
     float LW = 0;
     if (Params[0] != 1) {
       olx_gl::get(GL_LINE_WIDTH, &LW);
       olx_gl::lineWidth(Params[0] * LW);
     }
     if (Colors.IsEmpty() || GetRenderer().IsSelecting()) {
-      olx_gl::begin(GL_LINES);
-      for (size_t i = 0; i < Vertices.Count(); i++)
+      for (size_t i = 0; i < Vertices.Count(); i++) {
         DrawVertex(Vertices[i]);
-      olx_gl::end();
+      }
     }
     else if (Colors.Count() == Vertices.Count()) {
-      PrepareColorRendering(GL_LINES);
-      for (size_t i = 0; i < Vertices.Count(); i++)
+      for (size_t i = 0; i < Vertices.Count(); i++) {
         DrawVertex(Vertices[i], Colors[i]);
-      EndColorRendering();
+      }
     }
     else if (Colors.Count() * 2 == Vertices.Count()) {
-      PrepareColorRendering(GL_LINES);
       for (size_t i = 0; i < Colors.Count(); i++) {
         SetColor(Colors[i]);
         DrawVertex2(i * 2);
       }
-      EndColorRendering();
     }
     if (LW != 0) {
       olx_gl::lineWidth(LW);
     }
+    EndColorRendering();
+    break;
   }
-  else if (Type == sgloLineStrip) {
+  case sgloLineStrip: {
+    PrepareColorRendering(GL_LINE_STRIP);
     float LW = 0;
     if (Params[0] != 1) {
       olx_gl::get(GL_LINE_WIDTH, &LW);
       olx_gl::lineWidth(Params[0] * LW);
     }
-    olx_gl::begin(GL_LINE_STRIP);
-    for (size_t i = 0; i < Vertices.Count(); i++)
+    for (size_t i = 0; i < Vertices.Count(); i++) {
+      if (Colors.Count() == Vertices.Count()) {
+        SetColor(Colors[i]);
+      }
       DrawVertex(Vertices[i]);
-    olx_gl::end();
+    }
     if (LW != 0) {
       olx_gl::lineWidth(LW);
     }
+    EndColorRendering();
+    break;
   }
-  else if (Type == sgloLineLoop) {
+  case sgloLineLoop: {
+    PrepareColorRendering(GL_LINE_LOOP);
     float LW = 0;
     if (Params[0] != 1) {
       olx_gl::get(GL_LINE_WIDTH, &LW);
       olx_gl::lineWidth(Params[0] * LW);
     }
     if (Colors.IsEmpty() || GetRenderer().IsSelecting()) {
-      olx_gl::begin(GL_LINE_LOOP);
       for (size_t i = 0; i < Vertices.Count(); i++) {
         DrawVertex(Vertices[i]);
       }
-      olx_gl::end();
     }
     else if (Colors.Count() == Vertices.Count()) {
-      PrepareColorRendering(GL_LINE_LOOP);
       for (size_t i = 0; i < Vertices.Count(); i++) {
         DrawVertex(Vertices[i], Colors[i]);
       }
-      EndColorRendering();
     }
     if (LW != 0) {
       olx_gl::lineWidth(LW);
     }
+    EndColorRendering();
+    break;
   }
-  else if (Type == sgloTriangles) {
-    olx_gl::begin(GL_TRIANGLES);
+  case sgloTriangles: {
+    PrepareColorRendering(GL_TRIANGLES);
     if (Normals.IsEmpty()) {
       if (Colors.IsEmpty() || GetRenderer().IsSelecting()) {
         for (size_t i = 0; i < Vertices.Count(); i++) {
@@ -406,141 +422,123 @@ void TGlPrimitive::Draw() {
         }
       }
     }
-    olx_gl::end();
+    EndColorRendering();
+    break;
   }
-  else if (Type == sgloQuads) {
+  case sgloQuads: {
+    PrepareColorRendering(GL_QUADS);
     if (TextureCrds.IsEmpty() ||
       !olx_is_valid_index(TextureId) ||
       GetRenderer().IsSelecting())
     {
       if (Colors.IsEmpty() || GetRenderer().IsSelecting()) {
         if (Normals.IsEmpty()) {
-          olx_gl::begin(GL_QUADS);
           for (size_t i = 0; i < Vertices.Count(); i++) {
             DrawVertex(Vertices[i]);
           }
-          olx_gl::end();
         }
         else if (Normals.Count() * 4 == Vertices.Count()) {
-          olx_gl::begin(GL_QUADS);
           for (size_t i = 0; i < Normals.Count(); i++) {
             SetNormal(Normals[i]);
             DrawVertex4(i * 4);
           }
-          olx_gl::end();
         }
       }
       else if (Colors.Count() == Vertices.Count()) {
         if (Normals.IsEmpty()) {
-          PrepareColorRendering(GL_QUADS);
           for (size_t i = 0; i < Vertices.Count(); i++) {
             DrawVertex(Vertices[i], Colors[i]);
           }
-          EndColorRendering();
         }
         else if (Normals.Count() * 4 == Vertices.Count()) {
-          PrepareColorRendering(GL_QUADS);
           for (size_t i = 0; i < Normals.Count(); i++) {
             SetNormal(Normals[i]);
             DrawVertex4c(i * 4);
           }
-          EndColorRendering();
         }
       }
       else if (Colors.Count() * 4 == Vertices.Count()) {
         if (Normals.IsEmpty()) {
-          PrepareColorRendering(GL_QUADS);
           for (size_t i = 0; i < Colors.Count(); i++) {
             SetColor(Colors[i]);
             DrawVertex4(i * 4);
           }
-          EndColorRendering();
         }
         else if (Normals.Count() * 4 == Vertices.Count()) {
-          PrepareColorRendering(GL_QUADS);
           for (size_t i = 0; i < Normals.Count(); i++) {
             SetNormal(Normals[i]);
             SetColor(Colors[i]);
             DrawVertex4(i * 4);
           }
-          EndColorRendering();
         }
       }
     }
     else if (TextureCrds.Count() == Vertices.Count()) {
       if (Colors.IsEmpty()) {
         if (Normals.IsEmpty()) {
-          olx_gl::begin(GL_QUADS);
           for (size_t i = 0; i < Vertices.Count(); i++) {
             DrawVertex(Vertices[i], TextureCrds[i]);
           }
-          olx_gl::end();
         }
         else if (Normals.Count() * 4 == Vertices.Count()) {
-          olx_gl::begin(GL_QUADS);
           for (size_t i = 0; i < Normals.Count(); i++) {
             SetNormal(Normals[i]);
             DrawVertex4t(i * 4);
           }
-          olx_gl::end();
         }
       }
       else if (Colors.Count() == Vertices.Count()) {
         if (Normals.IsEmpty()) {
-          PrepareColorRendering(GL_QUADS);
           for (size_t i = 0; i < Vertices.Count(); i++) {
             DrawVertex(Vertices[i], Colors[i], TextureCrds[i]);
           }
-          EndColorRendering();
         }
         else if (Normals.Count() * 4 == Vertices.Count()) {
-          PrepareColorRendering(GL_QUADS);
           for (size_t i = 0; i < Normals.Count(); i++) {
             SetNormal(Normals[i]);
             DrawVertex4ct(i * 4);
           }
-          EndColorRendering();
         }
       }
       else if (Colors.Count() * 4 == Vertices.Count()) {
         if (Normals.IsEmpty()) {
-          PrepareColorRendering(GL_QUADS);
           for (size_t i = 0; i < Colors.Count(); i++) {
             SetColor(Colors[i]);
             DrawVertex4t(i * 4);
           }
-          EndColorRendering();
         }
         else if (Normals.Count() * 4 == Vertices.Count()) {
-          PrepareColorRendering(GL_QUADS);
           for (size_t i = 0; i < Normals.Count(); i++) {
             SetNormal(Normals[i]);
             SetColor(Colors[i]);
             DrawVertex4t(i * 4);
           }
-          EndColorRendering();
         }
       }
     }
+    EndColorRendering();
+    break;
   }
-  else if (Type == sgloPolygon) {
+  case sgloPolygon: {
+    PrepareColorRendering(GL_POLYGON);
     olx_gl::FlagDisabler fc(GL_CULL_FACE);
     if (Colors.IsEmpty() || GetRenderer().IsSelecting()) {
-      olx_gl::begin(GL_POLYGON);
       for (size_t i = 0; i < Vertices.Count(); i++) {
         DrawVertex(Vertices[i]);
       }
-      olx_gl::end();
     }
     else if (Colors.Count() == Vertices.Count()) {
-      PrepareColorRendering(GL_POLYGON);
       for (size_t i = 0; i < Vertices.Count(); i++) {
         DrawVertex(Vertices[i], Colors[i]);
       }
-      EndColorRendering();
     }
+    EndColorRendering();
+    break;
   }
-  if (ClipPlanes != NULL)  ClipPlanes->Enable(false);
+  } // end of case(Type)
+  if (ClipPlanes != 0) {
+    ClipPlanes->Enable(false);
+  }
   if (currentTexture != 0) {
     currentTexture->SetCurrent();
     delete currentTexture;

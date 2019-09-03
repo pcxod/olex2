@@ -468,6 +468,7 @@
     <ClCompile Include="..\..\..\gxlib\olxstate.cpp" />
     <ClCompile Include="..\..\..\gxlib\olxsurf.cpp" />
     <ClCompile Include="..\..\..\gxlib\ortdraw.cpp" />
+    <ClCompile Include="..\..\..\gxlib\rmsds_adp.cpp" />
     <ClCompile Include="..\..\..\gxlib\solid_angles.cpp" />
     <ClCompile Include="..\..\..\gxlib\wxglscene.cpp" />
     <ClCompile Include="..\..\..\gxlib\xatom.cpp" />
@@ -504,6 +505,7 @@
     <ClCompile Include="..\..\..\gxlib\xline.cpp" />
     <ClCompile Include="..\..\..\gxlib\xplane.cpp" />
     <ClCompile Include="..\..\..\gxlib\xreflection.cpp" />
+    <ClCompile Include="..\..\..\gxlib\xtls.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\gxlib\atomlegend.h" />
@@ -538,6 +540,7 @@
     <ClInclude Include="..\..\..\gxlib\ortdraw.h" />
     <ClInclude Include="..\..\..\gxlib\ortdrawtex.h" />
     <ClInclude Include="..\..\..\gxlib\oxmfile.h" />
+    <ClInclude Include="..\..\..\gxlib\rmsds_adp.h" />
     <ClInclude Include="..\..\..\gxlib\solid_angles.h" />
     <ClInclude Include="..\..\..\gxlib\wglscene.h" />
     <ClInclude Include="..\..\..\gxlib\wxglscene.h" />
@@ -553,6 +556,7 @@
     <ClInclude Include="..\..\..\gxlib\xline.h" />
     <ClInclude Include="..\..\..\gxlib\xplane.h" />
     <ClInclude Include="..\..\..\gxlib\xreflection.h" />
+    <ClInclude Include="..\..\..\gxlib\xtls.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />
