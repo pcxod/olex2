@@ -418,9 +418,9 @@ void GXLibMacros::Export(TLibrary& lib) {
       "Renders a difference between two sets of ADPs")
   );
   
-  gxlib_InitMacro(RMSView,
+  gxlib_InitMacro(MSDSView,
     "s-scale [1]&;"
-    "t-type [rmsd], rms&;"
+    "t-type [rmsd], msd&;"
     "q-quality [5], max is set to 7;",
     fpNone,
     "Shows/hides atom legend");
@@ -5746,7 +5746,7 @@ void GXLibMacros::macUdiff(TStrObjList &Cmds, const TParamList &Options,
   u_to.DeleteItems(false);
 }
 //.............................................................................
-void GXLibMacros::macRMSView(TStrObjList &Cmds, const TParamList &Options,
+void GXLibMacros::macMSDSView(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
   olxstr col_name = "MSDS";
