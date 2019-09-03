@@ -5893,10 +5893,11 @@ void TGXApp::GrowBonds() {
   XFile().GetLattice().GrowFragments(transforms);
 }
 //..............................................................................
-AGDrawObject* TGXApp::AddObjectToCreate(AGDrawObject* obj)  {
+AGDrawObject* TGXApp::AddObjectToCreate(AGDrawObject* obj) {
   TDUserObj *o = dynamic_cast<TDUserObj*>(obj);
-  if (o != NULL)
+  if (o != 0) {
     return &UserObjects.Add(o);
+  }
   return ObjectsToCreate.Add(obj);
 }
 //..............................................................................

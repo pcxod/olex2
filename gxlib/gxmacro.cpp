@@ -22,6 +22,7 @@
 #include "olxsurf.h"
 #include "atomlegend.h"
 #include "xtls.h"
+#include "rmsds_adp.h"
 
 #define gxlib_InitMacro(macroName, validOptions, argc, desc)\
   lib.Register(\
@@ -416,6 +417,13 @@ void GXLibMacros::Export(TLibrary& lib) {
       fpAny,
       "Renders a difference between two sets of ADPs")
   );
+  
+  gxlib_InitMacro(RMSView,
+    "s-scale [1]&;"
+    "t-type [rmsd], rms&;"
+    "q-quality [5], max is set to 7;",
+    fpNone,
+    "Shows/hides atom legend");
 
   gxlib_InitFunc(ExtraZoom, fpNone|fpOne,
     "Sets/reads current extra zoom (default zoom correction)");
@@ -5736,4 +5744,30 @@ void GXLibMacros::macUdiff(TStrObjList &Cmds, const TParamList &Options,
     "udiff",
     obj_type);
   u_to.DeleteItems(false);
+}
+//.............................................................................
+void GXLibMacros::macRMSView(TStrObjList &Cmds, const TParamList &Options,
+  TMacroData &Error)
+{
+  olxstr col_name = "MSDS";
+  TRMDSADP *obj = 0;
+  bool add = false;
+  TGPCollection *col = app.GetRenderer().FindCollection(col_name);
+  if (col != 0 && col->ObjectCount() > 0) {
+    col->ClearPrimitives();
+    obj = dynamic_cast<TRMDSADP *>(&col->GetObject(0));
+  }
+  if (obj == 0) {
+    obj = new TRMDSADP(app.GetRenderer(), col_name);
+    add = true;
+  }
+  obj->SetScale(Options.FindValue("s", "1").ToDouble());
+  obj->SetQuality(Options.FindValue("q", "5").ToInt());
+  int otype = Options.FindValue('t', "rmsd").Equalsi("rmsd") ? TRMDSADP::type_rmsd
+    : TRMDSADP::type_msd;
+  obj->SetType(otype);
+  obj->Create();
+  if (add) {
+    app.AddObjectToCreate(obj);
+  }
 }
