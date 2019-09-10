@@ -21,6 +21,8 @@
 #include "roman.h"
 #include "olxsurf.h"
 #include "atomlegend.h"
+#include "xtls.h"
+#include "rmsds_adp.h"
 
 #define gxlib_InitMacro(macroName, validOptions, argc, desc)\
   lib.Register(\
@@ -384,6 +386,43 @@ void GXLibMacros::Export(TLibrary& lib) {
     "a-apply to atoms [true]&;"
     "b-apply to bonds[true]&;",
     fpAny^(fpNone|fpOne),
+    "Shows/hides atom legend");
+
+  lib.Register(
+    new TMacro<GXLibMacros>(this, &GXLibMacros::macTLS, "TLS",
+      "b-three first selected atoms are the ADP basis&;"
+      "v-shows the difference {Uobs, Utls}&;"
+      "o-the povray output file name and type, like: -o=output,Utls. The "
+      "supported types are Utls and Uobs. When Utls is given the difference "
+      "between the Utls and Uobs will be rendered and for Uobs, the difference "
+      "between Uobs and Utls will be rendered&;"
+      "s-scale [125]&;"
+      "g-do not use gradient&;"
+      "start_color-starting colur for the gradient&;"
+      "end_color-final gradient color&;"
+      "quality-the sphere quality [5]&;"
+      "q-quiet&;"
+      "type-object type [diff], rmsds&;",
+      0),
+    libReplace
+  );
+  lib.Register(
+    new TMacro<GXLibMacros>(this, &GXLibMacros::macUdiff, "Udiff",
+      "s-scale [125]&;"
+      "start_color-start gradient color [0xff0000]&;"
+      "g-do not use gradient&;"
+      "end_color-end gradient color [0x0000ff]&;"
+      "quality-the sphere quality [5]&;"
+      "type-object type [diff], rmsds&;",
+      fpAny,
+      "Renders a difference between two sets of ADPs")
+  );
+  
+  gxlib_InitMacro(MSDSView,
+    "s-scale [1]&;"
+    "t-type [rmsd], msd&;"
+    "q-quality [5], max is set to 7;",
+    fpNone,
     "Shows/hides atom legend");
 
   gxlib_InitFunc(ExtraZoom, fpNone|fpOne,
@@ -2069,7 +2108,38 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
       }
     }
   }
-  else if( Cmds.Count() == 1 && Cmds[0].Equalsi("res") )  {
+  else if (Cmds.Count() > 0 && Cmds[0].Equalsi("sel")) {
+    if (flag == glSelectionNone) {
+      flag = glSelectionSelect;
+    }
+    TSAtomPList atoms = app.FindXAtoms(Cmds, false, true);
+    if (atoms.IsEmpty()) {
+      return;
+    }
+    TAsymmUnit& au = app.XFile().GetAsymmUnit();
+    ACollectionItem::Unify(atoms);
+    using namespace olx_analysis;
+    TCAtomPList fa(atoms, FunctionAccessor::MakeConst(&TSAtom::CAtom));
+    fragments::fragment fr(fa);
+    TTypeList<fragments::fragment> frags =
+      fragments::extract(app.XFile().GetAsymmUnit(), fr);
+    app.XFile().GetAsymmUnit().GetAtoms().ForEach(
+      ACollectionItem::TagSetter(0));
+    for (size_t fi = 0; fi <= frags.Count(); fi++) {
+      fragments::fragment *f = (fi == 0 ? &fr : &frags[fi - 1]);
+      for (size_t j = 0; j < f->count(); j++) {
+        (*f)[j].SetTag(1);
+      }
+    }
+    TGXApp::AtomIterator ai = app.GetAtoms();
+    while (ai.HasNext()) {
+      TXAtom &a = ai.Next();
+      if (a.IsVisible() && a.CAtom().GetTag() == 1) {
+        app.GetRenderer().Select(a, flag);
+      }
+    }
+  }
+  else if (Cmds.Count() == 1 && Cmds[0].Equalsi("res")) {
     //app.GetRenderer().ClearSelection();
     //TStrList out;
     //TCAtomPList a_res;
@@ -3862,6 +3932,7 @@ void GXLibMacros::macInv(TStrObjList &Cmds, const TParamList &Options,
     for (size_t i = 0; i < planes.Count(); i++) {
       planes[i]->Invert();
     }
+    return;
   }
   if (InvertFittedFragment()) {
     return;
@@ -5513,3 +5584,190 @@ void GXLibMacros::funObjectSettings(const TStrObjList &Params, TMacroData &E) {
   }
 }
 //..............................................................................
+void GXLibMacros::macTLS(TStrObjList &Cmds, const TParamList &Options,
+  TMacroData &Error)
+{
+  TGXApp &app = TGXApp::GetInstance();
+  TXAtomPList xatoms = app.FindXAtoms(Cmds, true, true);
+  for (size_t i = 0; i < xatoms.Count(); i++) {
+    if (xatoms[i]->GetEllipsoid() == 0) {
+      xatoms[i] = 0;
+    }
+  }
+  if (xatoms.Pack().Count() < 4) {
+    Error.ProcessingError(__OlxSrcInfo, "at least 4 anisotropic atoms expected");
+    return;
+  }
+  evecd_list original_q;
+  vec3d_list original_crds;
+  vec3d center = olx_mean(xatoms,
+    FunctionAccessor::MakeConst<vec3d, TSAtom>(&TXAtom::crd));
+  mat3d basis;
+  basis.I();
+  TAsymmUnit &au = app.XFile().GetAsymmUnit();
+  if (Options.Contains('b') && xatoms.Count() > 2) {
+    evecd Q(6);
+    TBasicApp::NewLogEntry() << "Aligning x axis to: " <<
+      xatoms[1]->GetGuiLabelEx() << " - " <<
+      xatoms[0]->GetGuiLabelEx();
+    basis[0] = (xatoms[1]->crd() - xatoms[0]->crd());
+    TBasicApp::NewLogEntry() << "Aligning z axis perpendicular to plane formed"
+      " by given atoms";
+    basis[2] = basis[0].XProdVec(xatoms[2]->crd() - xatoms[0]->crd());
+    basis[1] = basis[2].XProdVec(basis[0]);
+    basis.Normalise();
+    original_q.SetCapacity(xatoms.Count());
+    original_crds.SetCapacity(xatoms.Count());
+    sorted::PointerPointer<TEllipsoid> processed;
+    for (size_t i = 0; i < xatoms.Count(); i++) {
+      xatoms[i]->GetEllipsoid()->GetShelxQuad(original_q.AddNew(6));
+      if (processed.AddUnique(xatoms[i]->GetEllipsoid()).b)
+        xatoms[i]->GetEllipsoid()->Mult(basis);
+      original_crds.AddCopy(xatoms[i]->crd());
+      xatoms[i]->crd() = basis * (xatoms[i]->crd() - center) + center;
+    }
+  }
+  mat3d basis_t = mat3d::Transpose(basis);
+
+  xlib::TLS tls(TSAtomPList(xatoms, StaticCastAccessor<TSAtom>()));
+  if (!Options.GetBoolOption('q')) {
+    tls.printTLS(olxstr("TLS analysis for: ") << app.Label(xatoms));
+    tls.printFOM();
+    tls.printDiff();
+  }
+
+  if (!original_q.IsEmpty()) {
+    for (size_t i = 0; i < xatoms.Count(); i++) {
+      *xatoms[i]->GetEllipsoid() = original_q[i];
+      xatoms[i]->crd() = original_crds[i];
+    }
+    tls.RotateElps(basis_t);
+  }
+
+  olxstr show = Options.FindValue('v');
+  int q = Options.FindValue("quality", "5").ToUInt();
+  if (q > 7) q = 7;
+  glx_ext::XTLS xtls(
+    Options.FindValue("start_color", "0xff0000").SafeUInt<uint32_t>(),
+    Options.FindValue("end_color", "0x0000ff").SafeUInt<uint32_t>(),
+    q,
+    Options.FindValue("g", TrueString()).ToBool()
+  );
+  if (!show.IsEmpty()) {
+    olxstr obj_type_str = Options.FindValue("type", "diff");
+    short obj_type = obj_type_str.Equalsi("diff") ? glx_ext::xtls_obj_diff
+      : glx_ext::xtls_obj_rmsd;
+    xtls.CreateTLSObject(xatoms, tls,
+      show.Equalsi("Uobs") ? glx_ext::xtls_diff_Obs_Tls
+      : glx_ext::xtls_diff_Tls_Obs,
+      Options.FindValue('s', "125").ToFloat(),
+      obj_type
+    );
+  }
+  olxstr out = Options.FindValue("o");
+  if (!out.IsEmpty()) {
+    TStrList toks(out, ',');
+    if (toks.Count() != 2 ||
+      !(toks[1].Equalsi("Utls") || toks[1].Equalsi("Uobs")))
+    {
+      Error.ProcessingError(__OlxSrcInfo, "Invalid -o option");
+    }
+    else {
+      if (!toks[0].EndsWithi(".pov")) {
+        toks[0] << ".pov";
+      }
+      xtls.CreatePovRayFile(xatoms, tls,
+        toks[1].Equalsi("Uobs") ? glx_ext::xtls_diff_Obs_Tls
+        : glx_ext::xtls_diff_Tls_Obs, toks[0]);
+    }
+  }
+  if (Options.Contains('a') &&
+    tls.GetElpList().Count() == xatoms.Count())
+  {
+    for (size_t i = 0; i < xatoms.Count(); i++) {
+      xatoms[i]->GetEllipsoid()->Initialise(tls.GetElpList()[i]);
+      if (xatoms[i]->GetMatrix().IsFirst())
+        *xatoms[i]->CAtom().GetEllipsoid() = tls.GetElpList()[i];
+    }
+  }
+}
+//.............................................................................
+void GXLibMacros::macUdiff(TStrObjList &Cmds, const TParamList &Options,
+  TMacroData &Error)
+{
+  TGXApp &app = TGXApp::GetInstance();
+  TXAtomPList xatoms = app.FindXAtoms(Cmds, true, true);
+  for (size_t i = 0; i < xatoms.Count(); i++) {
+    if (xatoms[i]->GetEllipsoid() == 0) {
+      xatoms[i] = 0;
+    }
+  }
+  if (xatoms.Pack().Count() < 6 || (xatoms.Count() % 2) != 0) {
+    Error.ProcessingError(__OlxSrcInfo,
+      "at least 3 pairs of anisotropic atoms expected");
+    return;
+  }
+  size_t aag = xatoms.Count() / 2;
+  vec3f_alist crds(aag);
+  TTypeList<olx_pair_t<TSAtom*, TSAtom*> > satomp(aag);
+  TEllpPList u_from(aag), u_to(aag);
+  for (size_t i = 0; i < aag; i++) {
+    satomp[i].a = xatoms[i];
+    crds[i] = xatoms[i]->crd();
+    satomp[i].b = xatoms[i + aag];
+    u_from[i] = xatoms[i]->GetEllipsoid();
+    u_to[i] = new TEllipsoid(*xatoms[i + aag]->GetEllipsoid());
+  }
+  TNetwork::AlignInfo rv = TNetwork::GetAlignmentRMSD(satomp, false,
+    TSAtom::weight_unit);
+  mat3d m;
+  QuaternionToMatrix(rv.align_out.quaternions[0], m);
+  for (size_t i = 0; i < aag; i++) {
+    u_to[i]->Mult(m);
+  }
+  int q = Options.FindValue("quality", "5").ToUInt();
+  if (q > 7) {
+    q = 7;
+  }
+  glx_ext::XTLS xtls(
+    Options.FindValue("start_color", "0xff0000").SafeUInt<uint32_t>(),
+    Options.FindValue("end_color", "0x0000ff").SafeUInt<uint32_t>(),
+    q,
+    Options.FindValue("g", TrueString()).ToBool()
+  );
+  olxstr obj_type_str = Options.FindValue("type", "diff");
+  short obj_type = obj_type_str.Equalsi("diff") ? glx_ext::xtls_obj_diff
+    : glx_ext::xtls_obj_rmsd;
+  xtls.CreateUdiffObject(crds,
+    u_from, u_to,
+    Options.FindValue('s', "125").ToFloat(),
+    "udiff",
+    obj_type);
+  u_to.DeleteItems(false);
+}
+//.............................................................................
+void GXLibMacros::macMSDSView(TStrObjList &Cmds, const TParamList &Options,
+  TMacroData &Error)
+{
+  olxstr col_name = "MSDS";
+  TRMDSADP *obj = 0;
+  bool add = false;
+  TGPCollection *col = app.GetRenderer().FindCollection(col_name);
+  if (col != 0 && col->ObjectCount() > 0) {
+    col->ClearPrimitives();
+    obj = dynamic_cast<TRMDSADP *>(&col->GetObject(0));
+  }
+  if (obj == 0) {
+    obj = new TRMDSADP(app.GetRenderer(), col_name);
+    add = true;
+  }
+  obj->SetScale(Options.FindValue("s", "1").ToDouble());
+  obj->SetQuality(Options.FindValue("q", "5").ToInt());
+  int otype = Options.FindValue('t', "rmsd").Equalsi("rmsd") ? TRMDSADP::type_rmsd
+    : TRMDSADP::type_msd;
+  obj->SetType(otype);
+  obj->Create();
+  if (add) {
+    app.AddObjectToCreate(obj);
+  }
+}

@@ -70,14 +70,14 @@ Global
 		{01EB4F8B-6F6E-4FD4-908E-37E02AA6EA63}.Unicode-release-static|Win32.ActiveCfg = Unicode-release-static|Win32
 		{01EB4F8B-6F6E-4FD4-908E-37E02AA6EA63}.Unicode-release-static|Win32.Build.0 = Unicode-release-static|Win32
 		{01EB4F8B-6F6E-4FD4-908E-37E02AA6EA63}.Unicode-release-static|x64.ActiveCfg = Unicode-release-static|Win32
-		{F91183CE-E72E-4B45-A7E3-EE23C4B62338}.Debug|Win32.ActiveCfg = Debug|Win32
-		{F91183CE-E72E-4B45-A7E3-EE23C4B62338}.Debug|Win32.Build.0 = Debug|Win32
-		{F91183CE-E72E-4B45-A7E3-EE23C4B62338}.Debug|x64.ActiveCfg = Debug|x64
-		{F91183CE-E72E-4B45-A7E3-EE23C4B62338}.Debug|x64.Build.0 = Debug|x64
-		{F91183CE-E72E-4B45-A7E3-EE23C4B62338}.Release|Win32.ActiveCfg = Release|Win32
-		{F91183CE-E72E-4B45-A7E3-EE23C4B62338}.Release|Win32.Build.0 = Release|Win32
-		{F91183CE-E72E-4B45-A7E3-EE23C4B62338}.Release|x64.ActiveCfg = Release|x64
-		{F91183CE-E72E-4B45-A7E3-EE23C4B62338}.Release|x64.Build.0 = Release|x64
+		{F91183CE-E72E-4B45-A7E3-EE23C4B62338}.Debug|Win32.ActiveCfg = Unicode-release-static|Win32
+		{F91183CE-E72E-4B45-A7E3-EE23C4B62338}.Debug|Win32.Build.0 = Unicode-release-static|Win32
+		{F91183CE-E72E-4B45-A7E3-EE23C4B62338}.Debug|x64.ActiveCfg = Unicode-release-static|x64
+		{F91183CE-E72E-4B45-A7E3-EE23C4B62338}.Debug|x64.Build.0 = Unicode-release-static|x64
+		{F91183CE-E72E-4B45-A7E3-EE23C4B62338}.Release|Win32.ActiveCfg = Unicode-release-static|Win32
+		{F91183CE-E72E-4B45-A7E3-EE23C4B62338}.Release|Win32.Build.0 = Unicode-release-static|Win32
+		{F91183CE-E72E-4B45-A7E3-EE23C4B62338}.Release|x64.ActiveCfg = Unicode-release-static|x64
+		{F91183CE-E72E-4B45-A7E3-EE23C4B62338}.Release|x64.Build.0 = Unicode-release-static|x64
 		{F91183CE-E72E-4B45-A7E3-EE23C4B62338}.Unicode-debug|Win32.ActiveCfg = Unicode-debug|Win32
 		{F91183CE-E72E-4B45-A7E3-EE23C4B62338}.Unicode-debug|Win32.Build.0 = Unicode-debug|Win32
 		{F91183CE-E72E-4B45-A7E3-EE23C4B62338}.Unicode-debug|x64.ActiveCfg = Unicode-debug|x64
@@ -118,14 +118,14 @@ Global
 		{C664746C-BA54-47ED-8CEC-58C2C9D859FD}.Unicode-release-static|Win32.Build.0 = Unicode-release-static|Win32
 		{C664746C-BA54-47ED-8CEC-58C2C9D859FD}.Unicode-release-static|x64.ActiveCfg = Unicode-release-static|x64
 		{C664746C-BA54-47ED-8CEC-58C2C9D859FD}.Unicode-release-static|x64.Build.0 = Unicode-release-static|x64
-		{DE8F09F2-84B2-4114-AA86-950FCC923CD9}.Debug|Win32.ActiveCfg = Debug|Win32
-		{DE8F09F2-84B2-4114-AA86-950FCC923CD9}.Debug|Win32.Build.0 = Debug|Win32
-		{DE8F09F2-84B2-4114-AA86-950FCC923CD9}.Debug|x64.ActiveCfg = Debug|x64
-		{DE8F09F2-84B2-4114-AA86-950FCC923CD9}.Debug|x64.Build.0 = Debug|x64
-		{DE8F09F2-84B2-4114-AA86-950FCC923CD9}.Release|Win32.ActiveCfg = Release|Win32
-		{DE8F09F2-84B2-4114-AA86-950FCC923CD9}.Release|Win32.Build.0 = Release|Win32
-		{DE8F09F2-84B2-4114-AA86-950FCC923CD9}.Release|x64.ActiveCfg = Release|x64
-		{DE8F09F2-84B2-4114-AA86-950FCC923CD9}.Release|x64.Build.0 = Release|x64
+		{DE8F09F2-84B2-4114-AA86-950FCC923CD9}.Debug|Win32.ActiveCfg = Unicode-release-no-python|Win32
+		{DE8F09F2-84B2-4114-AA86-950FCC923CD9}.Debug|Win32.Build.0 = Unicode-release-no-python|Win32
+		{DE8F09F2-84B2-4114-AA86-950FCC923CD9}.Debug|x64.ActiveCfg = Unicode-release-no-python|x64
+		{DE8F09F2-84B2-4114-AA86-950FCC923CD9}.Debug|x64.Build.0 = Unicode-release-no-python|x64
+		{DE8F09F2-84B2-4114-AA86-950FCC923CD9}.Release|Win32.ActiveCfg = Unicode-release-no-python|Win32
+		{DE8F09F2-84B2-4114-AA86-950FCC923CD9}.Release|Win32.Build.0 = Unicode-release-no-python|Win32
+		{DE8F09F2-84B2-4114-AA86-950FCC923CD9}.Release|x64.ActiveCfg = Unicode-release-no-python|x64
+		{DE8F09F2-84B2-4114-AA86-950FCC923CD9}.Release|x64.Build.0 = Unicode-release-no-python|x64
 		{DE8F09F2-84B2-4114-AA86-950FCC923CD9}.Unicode-debug|Win32.ActiveCfg = Unicode-debug|Win32
 		{DE8F09F2-84B2-4114-AA86-950FCC923CD9}.Unicode-debug|Win32.Build.0 = Unicode-debug|Win32
 		{DE8F09F2-84B2-4114-AA86-950FCC923CD9}.Unicode-debug|x64.ActiveCfg = Unicode-debug|x64
@@ -255,5 +255,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A70C8B3B-555B-4E76-967B-88DCF39C44CD}
 	EndGlobalSection
 EndGlobal

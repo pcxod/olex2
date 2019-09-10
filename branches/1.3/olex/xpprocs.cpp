@@ -4237,11 +4237,11 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroData
   {
     TDataFile df;
     FXApp->XFile().GetLastLoader<TCif>().ToDataItem(df.Root().AddItem("CIF"));
-    df.SaveToXMLFile("e:/1cif.xml");
-    df.LoadFromXMLFile("e:/1cif.xml");
-    df.SaveToXMLFile("e:/2cif.xml");
-    FXApp->XFile().GetLastLoader<TCif>().FromDataItem(df.Root().GetItemByName("CIF"));
-    FXApp->XFile().GetLastLoader<TCif>().SaveToFile("e:/1cif.cif");
+    df.SaveToXMLFile("q:/devel/1cif.xml");
+    //df.LoadFromXMLFile("e:/1cif.xml");
+    //df.SaveToXMLFile("e:/2cif.xml");
+    //FXApp->XFile().GetLastLoader<TCif>().FromDataItem(df.Root().GetItemByName("CIF"));
+    //FXApp->XFile().GetLastLoader<TCif>().SaveToFile("e:/1cif.cif");
   }
   {
     TDataFile df;

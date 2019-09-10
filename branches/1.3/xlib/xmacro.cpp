@@ -851,12 +851,12 @@ void XLibMacros::macInv(TStrObjList &Cmds, const TParamList &Options,
   bool Force = Options.Contains("f");
   TXApp& xapp = TXApp::GetInstance();
   TSpaceGroup* sg = NULL;
-  try  { sg = &xapp.XFile().GetLastLoaderSG();  }
-  catch(...)  {
+  try { sg = &xapp.XFile().GetLastLoaderSG(); }
+  catch (...) {
     Error.ProcessingError(__OlxSrcInfo, "unknown file space group");
     return;
   }
-  if( !sg->IsCentrosymmetric() &&  !Force )  {
+  if (!sg->IsCentrosymmetric() && !Force) {
     Error.ProcessingError(__OlxSrcInfo,
       "non-centrosymmetric space group, use -f to force");
     return;
@@ -872,7 +872,7 @@ void XLibMacros::macInv(TStrObjList &Cmds, const TParamList &Options,
   specials.Add("P41", "P43");
   specials.Add("P4122", "P4322");
   specials.Add("P41212", "P43212");
-  specials.Add("P4132", "P4321");
+  specials.Add("P4132", "P4332");
   // re-map the reverse
   {
     const olxstr_dict<olxstr> tmp = specials;
@@ -883,19 +883,20 @@ void XLibMacros::macInv(TStrObjList &Cmds, const TParamList &Options,
   TSAtomPList atoms = xapp.FindSAtoms(Cmds.Text(' '), true);
   SortedObjectList<const TNetwork*, TPointerComparator> frags;
   if (!sg->IsCentrosymmetric()) {
-    for (size_t i=0; i < atoms.Count(); i++)
+    for (size_t i = 0; i < atoms.Count(); i++) {
       frags.AddUnique(&atoms[i]->GetNetwork());
+    }
   }
   smatd tm;
   tm.I() *= -1;
   tm.t = sg->GetInversionCenter()*(-2);
   xapp.XFile().GetLattice().TransformFragments(atoms, tm);
   size_t s_c = specials.IndexOf(sg->GetName());
-  if( s_c != InvalidIndex )  {
+  if (s_c != InvalidIndex) {
     TBasicApp::NewLogEntry() << "Changing spacegroup from "
       << specials.GetKey(s_c) << " to " << specials.GetValue(s_c);
     sg = TSymmLib::GetInstance().FindGroupByName(specials.GetValue(s_c));
-    if( sg == NULL )  {
+    if (sg == 0) {
       Error.ProcessingError(__OlxSrcInfo, "Failed to locate required space group");
       return;
     }
@@ -2269,7 +2270,23 @@ void XLibMacros::macFile(TStrObjList &Cmds, const TParamList &Options,
   if (op.IsInt()) {
     TOlxVars::SetVar("file_output_precision", op);
   }
-  XApp.XFile().SaveToFile(Tmp);
+  if (Tmp.EndsWith(".xml") || Tmp.EndsWith(".xld")) {
+    if (!XApp.CheckFileType<TCif>()) {
+      Error.ProcessingError(__OlxSourceInfo, "CIF is expected");
+      return;
+    }
+    TDataFile df;
+    XApp.XFile().GetLastLoader<TCif>().ToDataItem(df.Root().AddItem("CIF"));
+    if (Tmp.EndsWith(".xml")) {
+      df.SaveToXMLFile(Tmp);
+    }
+    else {
+      df.SaveToXLFile(Tmp);
+    }
+  }
+  else {
+    XApp.XFile().SaveToFile(Tmp);
+  }
   if (!removedSAtoms.IsEmpty()) {  // need to restore, a bit of mess here...
     ASObjectProvider& objects = XApp.XFile().GetLattice().GetObjects();
     for (size_t i = 0; i < objects.atoms.Count(); i++) {
