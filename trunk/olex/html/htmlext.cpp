@@ -476,7 +476,7 @@ bool THtml::UpdatePage(bool update_indices) {
   }
   sw.start("Saving to string list");
   TStrList Res;
-  Root->ToStrings(Res);
+  Root->ToStrings(Res, false);
   sw.start("Saving object states");
   ObjectsState.SaveState();
   Objects.Clear();

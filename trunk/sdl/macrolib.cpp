@@ -33,26 +33,32 @@ void TEMacro::DoRun(TStrObjList &Params, const TParamList &Options,
   args.SetCapacity(Args.Count());
   olex2::IOlex2Processor *ip = olex2::IOlex2Processor::GetInstance();
   olxstr location = __OlxSourceInfo;
-  for (size_t i=0; i < Args.Count(); i++) {
-    // processing needs to be done for the defaults only - the rest already ARE
+  for (size_t i = 0; i < Args.Count(); i++) {
+    // cehck if is an option
+    if (Args[i].StartsFrom('-')) {
+      args.Add(Options.FindValue(Args[i].SubStringFrom(1), Args.GetObject(i)));
+    }
     if (i < Params.Count()) {
       args.Add(Params[i]);
     }
+    // processing needs to be done for the defaults only - the rest already ARE
     else {
       ip->processFunction(args.Add(Args.GetObject(i)), location);
     }
   }
-  for (size_t i=0; i < Commands.Count(); i++) {
+  for (size_t i = 0; i < Commands.Count(); i++) {
     TEMacroLib::ProcessEvaluator(Commands[i].root, E, args);
-    if (!E.IsSuccessful())
+    if (!E.IsSuccessful()) {
       break;
+    }
   }
   if (!E.IsSuccessful() && !OnAbort.IsEmpty()) {
     E.ClearErrorFlag();
-    for (size_t i=0; i < OnAbort.Count(); i++) {
+    for (size_t i = 0; i < OnAbort.Count(); i++) {
       TEMacroLib::ProcessEvaluator(OnAbort[i].root, E, args);
-      if (!E.IsSuccessful())
+      if (!E.IsSuccessful()) {
         break;
+      }
     }
   }
 }
