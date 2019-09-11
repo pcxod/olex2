@@ -33,10 +33,9 @@ void TRMDSADP::Create(const olxstr& cName) {
   TGraphicsStyle& GS = GPC.GetStyle();
   GS.SetSaveable(false);
   TGlPrimitive& GlP = GPC.NewPrimitive("MSDS", sgloCommandList);
-  TGlMaterial &m = GS.GetMaterial("Object",
+  TGlMaterial &m = GS.GetMaterial("MSDS",
     TGlMaterial("85;0;4286611584;4290822336;64"));
   m.SetColorMaterial(true);
-  m.SetTransparent(true);
   GlP.SetProperties(m);
   size_t a_cnt = 0, a_i = 0;
   TGXApp::AtomIterator ai = TGXApp::GetInstance().GetAtoms();
@@ -100,7 +99,7 @@ void TRMDSADP::Create(const olxstr& cName) {
       vec3f vec2 = vecs[sph_t[i][2]] - vecs[sph_t[i][0]];
       vec3f normal = vec1.XProdVec(vec2);
       float S = vec1.XProdVal(vec2);
-      normal /= sqrt(olx_abs(S));
+      normal = normal.Normalise()/sqrt(olx_abs(S));
       for (int j = 0; j < 3; j++) {
         norms[sph_t[i][j]] += normal;
       }

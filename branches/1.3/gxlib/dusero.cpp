@@ -38,25 +38,29 @@ TDUserObj::TDUserObj(TGlRenderer& R, const TDataItem &di)
   FromDataItem(di);
 }
 //.............................................................................
-void TDUserObj::Create(const olxstr& cName)  {
-  if( !cName.IsEmpty() )
+void TDUserObj::Create(const olxstr& cName) {
+  if (!cName.IsEmpty()) {
     SetCollectionName(cName);
+  }
   olxstr NewL;
   TGPCollection* GPC = Parent.FindCollectionX(GetCollectionName(), NewL);
-  if( GPC == NULL )
+  if (GPC == 0) {
     GPC = &Parent.NewCollection(NewL);
+  }
   GPC->AddObject(*this);
-  if( GPC->PrimitiveCount() != 0 )  return;
+  if (GPC->PrimitiveCount() != 0) {
+    return;
+  }
 
   TGraphicsStyle& GS = GPC->GetStyle();
   TGlPrimitive& GlP = GPC->NewPrimitive("Object", Type);
   GlP.SetProperties(GS.GetMaterial("Object", GlM));
-  if( Type == sgloSphere )  {
+  if (Type == sgloSphere) {
     if (Vertices.is_valid() && Vertices().Count() == 3) {
       Params().Resize(16);
-      for( int i=0; i < 3; i++ )  {
-        for( int j=0; j < 3; j++ )  {
-            Params()[i*4+j] = Vertices()[i][j];
+      for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+          Params()[i * 4 + j] = Vertices()[i][j];
         }
       }
       Params()[15] = 1;
@@ -66,29 +70,33 @@ void TDUserObj::Create(const olxstr& cName)  {
     GlP.Params[2] = 25;
     GlP.Compile();
   }
-  else  {
-    if (Vertices.is_valid())
+  else {
+    if (Vertices.is_valid()) {
       GlP.Vertices = Vertices();
-    if (Normals.is_valid())
+    }
+    if (Normals.is_valid()) {
       GlP.Normals = Normals();
+    }
     if (Colors.is_valid()) {
       GlP.Colors = Colors();
-      GlM.SetColorMaterial(true);
-      GlP.SetProperties(GlM);
+      //GlM.SetColorMaterial(true);
+      //GlP.SetProperties(GlM);
     }
   }
 }
 //.............................................................................
-bool TDUserObj::Orient(TGlPrimitive& P)  {
+bool TDUserObj::Orient(TGlPrimitive& P) {
   olx_gl::translate(Basis.GetCenter());
   olx_gl::scale(Basis.GetZoom());
   if (Type == sgloSphere) {
-    if (Params().Count() == 16 )
+    if (Params().Count() == 16) {
       olx_gl::orient(Params().GetRawData());
-    else if (Params().Count() == 1)
+    }
+    else if (Params().Count() == 1) {
       olx_gl::scale(Params()[0]);
+    }
     else if (Vertices.is_valid()) {
-      for( size_t i=0; i < Vertices().Count(); i++ )  {
+      for (size_t i = 0; i < Vertices().Count(); i++) {
         olx_gl::translate(Vertices()[i]);
         P.Draw();
       }
@@ -103,20 +111,24 @@ void TDUserObj::ToDataItem(TDataItem &di) const {
     .AddField("name", GetCollectionName())
     .AddField("flags", AGlMouseHandlerImp::glml_Flags);
   Basis.ToDataItem(di.AddItem("Basis"));
-  if (Vertices.is_valid())
+  if (Vertices.is_valid()) {
     di.AddField("vertices", PersUtil::VecListToStr(Vertices()));
-  if (Normals.is_valid())
+  }
+  if (Normals.is_valid()) {
     di.AddField("normals", PersUtil::VecListToStr(Normals()));
-  if (Colors.is_valid())
+  }
+  if (Colors.is_valid()) {
     di.AddField("colors", PersUtil::NumberListToStr(Colors()));
-  if (!Params().IsEmpty())
+  }
+  if (!Params().IsEmpty()) {
     di.AddField("params", PersUtil::NumberListToStr(Params()));
+  }
 }
 //.............................................................................
 void TDUserObj::FromDataItem(const TDataItem &di) {
-  Vertices = NULL;
-  Normals = NULL;
-  Colors = NULL;
+  Vertices = 0;
+  Normals = 0;
+  Colors = 0;
   di.GetFieldByName("type").ToNumber(Type);
   di.GetFieldByName("flags").ToNumber(AGlMouseHandlerImp::glml_Flags);
   SetCollectionName(di.GetFieldByName("name"));
@@ -148,7 +160,7 @@ const_strlist TDUserObj::ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const
   out.Add(" object { union {");
   const TGPCollection &gpc = GetPrimitives();
   pov::CrdTransformer crdc(Parent.GetBasis());
-  for( size_t i=0; i < gpc.PrimitiveCount(); i++ )  {
+  for (size_t i = 0; i < gpc.PrimitiveCount(); i++) {
     TGlPrimitive &glp = gpc.GetPrimitive(i);
     olxstr p_mat = pov::get_mat_name(glp.GetProperties(), materials);
     if (glp.GetType() == sgloSphere) {
@@ -156,17 +168,17 @@ const_strlist TDUserObj::ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const
     }
     if (glp.GetType() == sgloTriangles) {
       out.Add("  mesh {");
-      for (size_t vi=0; vi < glp.Vertices.Count(); vi+=3) {
+      for (size_t vi = 0; vi < glp.Vertices.Count(); vi += 3) {
         out.Add("   triangle {") << pov::to_str(glp.Vertices[vi]) <<
-          ',' << pov::to_str(glp.Vertices[vi+1]) << ',' <<
-          pov::to_str(glp.Vertices[vi+2]) << "}";
+          ',' << pov::to_str(glp.Vertices[vi + 1]) << ',' <<
+          pov::to_str(glp.Vertices[vi + 2]) << "}";
       }
       out.Add("   texture {") << p_mat << "}";
       out.Add("  }");
     }
   }
   out.Add("  }");
-  if(Vertices.is_valid() && Vertices().Count() == 3) {
+  if (Vertices.is_valid() && Vertices().Count() == 3) {
     mat3d m(Vertices()[0], Vertices()[1], Vertices()[2]);
     out.Add("  transform {");
     out.Add("   matrix") << pov::to_str(crdc.matr(m),

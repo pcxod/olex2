@@ -413,7 +413,8 @@ void GXLibMacros::Export(TLibrary& lib) {
       "g-do not use gradient&;"
       "end_color-end gradient color [0x0000ff]&;"
       "quality-the sphere quality [5]&;"
-      "type-object type [diff], rmsds&;",
+      "type-object type [diff], rmsd&;"
+      "r-reset the object style",
       fpAny,
       "Renders a difference between two sets of ADPs")
   );
@@ -4830,6 +4831,9 @@ void GXLibMacros::funGetMaterial(const TStrObjList &Params, TMacroData &E) {
     }
     gpc = &g[0].GetPrimitives();
   }
+  if (gpc == 0) {
+    gpc = app.GetRenderer().FindCollection(col_name);
+  }
   if (gpc != 0) {
     if (prm_name.IsEmpty()) {
       if (gpc->Is<TGlGroup>()) {
@@ -5738,11 +5742,18 @@ void GXLibMacros::macUdiff(TStrObjList &Cmds, const TParamList &Options,
   olxstr obj_type_str = Options.FindValue("type", "diff");
   short obj_type = obj_type_str.Equalsi("diff") ? glx_ext::xtls_obj_diff
     : glx_ext::xtls_obj_rmsd;
-  xtls.CreateUdiffObject(crds,
+  TDUserObj *obj = xtls.CreateUdiffObject(crds,
     u_from, u_to,
-    Options.FindValue('s', "125").ToFloat(),
+    Options.FindValue('s', obj_type == glx_ext::xtls_obj_diff ? "125" : "3").ToFloat(),
     "udiff",
     obj_type);
+  if (Options.GetBoolOption('r')) {
+    TGlMaterial m("85;0;4286611584;4290822336;64");
+    m.SetColorMaterial(true);
+    obj->SetMaterial(m);
+    obj->GetPrimitives().GetStyle().SetMaterial("Object", m);
+    obj->GetPrimitives().GetPrimitive(0).SetProperties(m);
+  }
   u_to.DeleteItems(false);
 }
 //.............................................................................
@@ -5760,6 +5771,9 @@ void GXLibMacros::macMSDSView(TStrObjList &Cmds, const TParamList &Options,
   if (obj == 0) {
     obj = new TRMDSADP(app.GetRenderer(), col_name);
     add = true;
+  }
+  else {
+    obj->SetVisible(true);
   }
   obj->SetScale(Options.FindValue("s", "1").ToDouble());
   obj->SetQuality(Options.FindValue("q", "5").ToInt());

@@ -39,8 +39,11 @@ TDUserObj *XTLS::CreateUdiffObject(const vec3f_alist &crds,
   }
   TGXApp &app = TGXApp::GetInstance();
   TDUserObj *obj = app.FindUserObject(obj_name);
-  if (obj == 0)  {
-      obj = new TDUserObj(app.GetRenderer(), sgloTriangles, obj_name);
+  if (obj == 0) {
+    TGlMaterial m("85;0;4286611584;4290822336;64");
+    m.SetColorMaterial(true);
+    obj = new TDUserObj(app.GetRenderer(), sgloTriangles, obj_name);
+    obj->SetMaterial(m);
     app.AddObjectToCreate(obj);
   }
   else {
@@ -103,7 +106,7 @@ TDUserObj *XTLS::CreateUdiffObject(const vec3f_alist &crds,
       float S = vec1.XProdVal(vec2);
       vec3f normal = vec1.XProdVec(vec2);
       if (S > 0) {  // weight up normals of little triangles (hight curvature)
-        normal /= sqrt(S);
+        normal = normal.Normalise() / sqrt(S);
       }
       for (int k=0; k < 3; k++) {
         allv[idx+k] = lc[sph_t[j][k]] + crds[i];
@@ -148,10 +151,12 @@ TDUserObj *XTLS::CreateUdiffObject(const vec3f_alist &crds,
   // Normalise normals.
   for (size_t i = 0; i < alln.Count(); i++) {
     float ql = alln[i].QLength();
-    if (ql > 1e-6)
+    if (ql > 1e-6) {
       alln[i] /= sqrt(ql);
-    else
+    }
+    else {
       alln[i][2] = 1;
+    }
   }
   obj->SetVertices(&allv);
   obj->SetNormals(&alln);
@@ -178,20 +183,23 @@ void XTLS::CreatePovRayFile(const TXAtomPList &atoms, const TLS &tls,
   ai.Reset();
   while (ai.HasNext()) {
     TXAtom &a = ai.Next();
-    if (a.IsVisible() && a.GetTag() == 0)
+    if (a.IsVisible() && a.GetTag() == 0) {
       out << a.ToPov(materials);
+    }
   }
   TGXApp::BondIterator bi = app.GetBonds();
   while (bi.HasNext()) {
     TXBond &b = bi.Next();
-    if (b.IsVisible())
+    if (b.IsVisible()) {
       out << b.ToPov(materials);
+    }
   }
   TGXApp::PlaneIterator pi = app.GetPlanes();
   while (pi.HasNext()) {
     TXPlane &p = pi.Next();
-    if (p.IsVisible())
+    if (p.IsVisible()) {
       out << p.ToPov(materials);
+    }
   }
   evecd Q(6);
   for (size_t i = 0; i < atoms.Count(); i++) {
