@@ -528,7 +528,7 @@ void THtmlManager::macDump(TStrObjList &Cmds, const TParamList &Options,
     return;
   }
   TStrList SL;
-  html->GetRoot().ToStrings(SL);
+  html->GetRoot().ToStrings(SL, !Options.GetBoolOption('a'));
   TUtf8File::WriteLines(Cmds.GetLastString(), SL);
 }
 //.............................................................................
@@ -1307,7 +1307,9 @@ TLibrary *THtmlManager::ExportLibrary(const olxstr &name) {
   InitMacroD(Library, THtmlManager, Load, EmptyString(), fpOne|fpTwo,
     "Loads content into main or given HTML page. Example: load name file_name"
   );
-  InitMacroD(Library, THtmlManager, Dump, EmptyString(), fpOne|fpTwo,
+  InitMacroD(Library, THtmlManager, Dump,
+    "a-do not annotate includes",
+    fpOne|fpTwo,
     "Saves content of the main or given page into the file"
   );
   InitMacroD(Library, THtmlManager, Tooltips, EmptyString(),

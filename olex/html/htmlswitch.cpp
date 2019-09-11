@@ -190,19 +190,19 @@ THtmlSwitch*  THtmlSwitch::FindSwitch(const olxstr &IName) {
   return 0;
 }
 //..............................................................................
-void THtmlSwitch::ToStrings(TStrList &List)  {
-  if (FileIndex != InvalidIndex && FileIndex < Files.Count()) {
+void THtmlSwitch::ToStrings(TStrList &List, bool annotate) {
+  if (annotate && FileIndex != InvalidIndex && FileIndex < Files.Count()) {
     List.Add("<SWITCHINFOS SRC=\"") << Files[FileIndex] << "\"/>";
   }
 
-  for( size_t i=0; i < Strings.Count(); i++ )  {
+  for (size_t i = 0; i < Strings.Count(); i++) {
     if (Strings.GetObject(i) != 0) {
-      Strings.GetObject(i)->ToStrings(List);
+      Strings.GetObject(i)->ToStrings(List, annotate);
     }
     List.Add(Strings[i]);
   }
 
-  if (FileIndex != InvalidIndex && FileIndex < Files.Count()) {
+  if (annotate && FileIndex != InvalidIndex && FileIndex < Files.Count()) {
     List.Add("<SWITCHINFOE/>");
   }
 }

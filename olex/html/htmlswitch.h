@@ -65,7 +65,7 @@ public:
   bool IsToUpdateSwitch() const {  return UpdateSwitch; };
   void SetUpdateSwitch(bool v)  {  UpdateSwitch = v; };
 
-  void ToStrings(TStrList &List);
+  void ToStrings(TStrList &List, bool annotate);
   bool ToFile();
 };
 #endif
