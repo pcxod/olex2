@@ -1634,6 +1634,7 @@ void TGlRenderer::LibZoom(TStrObjList &Cmds, const TParamList &Options,
 {
   if (Cmds.IsEmpty()) {
     SetZoom(CalcZoom());
+    return;
   }
   bool absolute = Options.GetBoolOption('a');
   if (absolute) {
