@@ -937,6 +937,7 @@ TSPlanePList TLattice::NewPlane(const TSAtomPList& Atoms, double weightExtent) {
     bool found = false;
     for (size_t i = 0; i < PlaneDefs.Count(); i++) {
       if (PlaneDefs[i] == pd) {
+        Plane->_SetDefId(i);
         found = true;
         break;
       }

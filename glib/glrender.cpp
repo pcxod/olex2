@@ -155,7 +155,9 @@ bool TGlRenderer::Enter(const IOlxObject *s, const IOlxObject *d, TActionQueue *
 }
 //..............................................................................
 bool TGlRenderer::Exit(const IOlxObject *s, const IOlxObject *d, TActionQueue *q) {
-  if (s != &Styles) return false;
+  if (s != &Styles) {
+    return false;
+  }
   for (size_t i = 0; i < ObjectSettings.Count(); i++) {
     ObjectSettings.GetValue(i)->Exit(s, d, q);
   }
@@ -183,6 +185,7 @@ bool TGlRenderer::Exit(const IOlxObject *s, const IOlxObject *d, TActionQueue *q
     // some loose objects as labels can be created twice otherwise
     if (!GO[i]->IsCreated()) {
       GO[i]->Create();
+      GO[i]->Compile();
       GO[i]->SetCreated(true);
     }
   }
