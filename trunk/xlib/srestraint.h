@@ -35,7 +35,7 @@ const short
 
 class TSimpleRestraint : public IXVarReferencer {
   TSRestraintList& Parent;
-  size_t Id;
+  size_t Id, Position;
   short ListType;
   double Value, Esd, Esd1;
   XVarReference* VarRef;
@@ -77,11 +77,12 @@ public:
   void EndAUSort();
   void Sort() { Atoms.SortByTag(TPtrList<AtomRefList>()); }
   // copies data from a restrain, but with atoms from the thisAU
-  void Assign(const TSimpleRestraint&);
+  void Assign(const TSimpleRestraint &r);
 
   short GetListType() const { return ListType; }
 
   size_t GetId() const { return Id; }
+  DefPropP(size_t, Position)
   DefPropP(double, Value)
   DefPropP(double, Esd)
   DefPropP(double, Esd1)

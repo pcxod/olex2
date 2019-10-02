@@ -63,6 +63,7 @@ public:
   bool HasPrimitives() const { return Primitives != 0; }
 
   const olxstr& GetCollectionName() const { return CollectionName; }
+  void ResetCollectionName() { CollectionName = EmptyString(); }
 
   evecd& Params() { return FParams; }
   const evecd& Params() const { return FParams; }

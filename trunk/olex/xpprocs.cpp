@@ -898,7 +898,19 @@ void TMainForm::macClear(TStrObjList &Cmds, const TParamList &Options,
   if (Cmds.IsEmpty()) {
     FGlConsole->ClearBuffer();
   }
-  else if (Cmds[0].Equalsi("groups")) {
+  // undo ChemDraw
+  else if (Cmds[0].Equalsi("groups") || Cmds[0].Equalsi("collections")) {
+    TGXApp::BondIterator bi = FXApp->GetBonds();
+    while (bi.HasNext()) {
+      bi.Next().SetOrder(sboUndefined);
+    }
+    TGXApp::PlaneIterator pi = FXApp->GetPlanes();
+    while (pi.HasNext()) {
+      TXPlane &p = pi.Next();
+      if (p.GetCollectionName().StartsFrom("CDRing_")) {
+        FXApp->DeletePlane(p);
+      }
+    }
     FXApp->ClearIndividualCollections();
   }
   else if (Cmds[0].Equalsi("same")) {

@@ -2693,30 +2693,36 @@ TDUserObj* TGXApp::FindUserObject(const olxstr &Name)  {
   return NULL;
 }
 //..............................................................................
-TSPlane *TGXApp::TmpPlane(const TXAtomPList* atoms, double weightExtent)  {
+TSPlane *TGXApp::TmpPlane(const TXAtomPList* atoms, double weightExtent) {
   TSAtomPList SAtoms;
-  if( atoms != NULL )
+  if (atoms != 0) {
     SAtoms.Assign(*atoms);
-  else  {
+  }
+  else {
     AtomIterator ai(*this);
     SAtoms.SetCapacity(ai.count);
-    while( ai.HasNext() )
+    while (ai.HasNext()) {
       SAtoms.Add(ai.Next());
+    }
   }
-  if( SAtoms.Count() < 3 )  return NULL;
+  if (SAtoms.Count() < 3) {
+    return 0;
+  }
   return XFile().GetLattice().TmpPlane(SAtoms, weightExtent);
 }
 //..............................................................................
 TXPlane *TGXApp::AddPlane(const olxstr &name, const TXAtomPList &Atoms,
   size_t sides, double weightExtent)
 {
-  if (Atoms.Count() < 3) return NULL;
+  if (Atoms.Count() < 3) {
+    return 0;
+  }
   TGPCollection *gpc = GetRenderer().FindCollection(name);
-  if (gpc != NULL && gpc->ObjectCount() != 0) {
+  if (gpc != 0 && gpc->ObjectCount() != 0) {
     if (!gpc->GetObject(0).Is<TXPlane>()) {
-      TBasicApp::NewLogEntry(logError) << "The given collection name is alreay"
+      TBasicApp::NewLogEntry(logError) << "The given collection name is already"
         " in use by other object type";
-      return NULL;
+      return 0;
     }
   }
   TSPlanePList planes = XFile().GetLattice().NewPlane(
@@ -2728,8 +2734,9 @@ TXPlane *TGXApp::AddPlane(const olxstr &name, const TXAtomPList &Atoms,
   size_t pi=0;
   for (size_t i=0; i < planes.Count(); i++) {
     TXPlane * p = static_cast<TXPlane*>(planes[i]);
-    if (!p->IsVisible())
+    if (!p->IsVisible()) {
       p->SetVisible(true);
+    }
     p->Create(name);
     if (&planes[i]->GetAtom(0) == Atoms[0]) {
       pi = i;
@@ -2738,24 +2745,32 @@ TXPlane *TGXApp::AddPlane(const olxstr &name, const TXAtomPList &Atoms,
   return planes.IsEmpty() ? NULL : static_cast<TXPlane*>(planes[pi]);
 }
 //..............................................................................
-TXPlane *TGXApp::FindPlane(const olxstr &PlaneName)  {
+TXPlane *TGXApp::FindPlane(const olxstr &PlaneName) {
   PlaneIterator pi(*this);
-  while( pi.HasNext() )  {
+  while (pi.HasNext()) {
     TXPlane& p = pi.Next();
-    if( p.GetPrimitives().GetName().Equalsi(PlaneName) )
+    if (p.GetPrimitives().GetName().Equalsi(PlaneName)) {
       return &p;
+    }
   }
-  return NULL;
+  return 0;
 }
 //..............................................................................
-void TGXApp::DeletePlane(TXPlane* plane)  {
-  plane->SetDeleted(true);
+void TGXApp::DeletePlane(TXPlane &plane) {
+  plane.Delete(true);
+  if (plane.GetPrimitives().ObjectCount() == 1) {
+    plane.GetPrimitives().ClearPrimitives();
+  }
+  //plane.GetPrimitives().RemoveObject(plane);
+  XFile().GetLattice().UpdatePlaneDefinitions();
 }
 //..............................................................................
-void TGXApp::ClearPlanes()  {
+void TGXApp::ClearPlanes() {
   PlaneIterator pi(*this);
-  while( pi.HasNext() )
-    pi.Next().SetDeleted(true);
+  while (pi.HasNext()) {
+    pi.Next().Delete(true);
+  }
+  XFile().GetLattice().UpdatePlaneDefinitions();
 }
 //..............................................................................
 ConstPtrList<TXAtom> TGXApp::AddCentroid(const TXAtomPList& Atoms)  {
@@ -5854,7 +5869,11 @@ void TGXApp::CreateRings(bool force, bool create) {
     {
       continue;
     }
-    TXPlane *p = AddPlane(EmptyString(),
+    olxstr_buf label;
+    for (size_t j = 0; j < rings[i].Count(); j++) {
+      label << rings[i][j]->GetType().symbol;
+    }
+    TXPlane *p = AddPlane(olxstr("CDRing_") << olxstr(label),
       TXAtomPList(rings[i], DynamicCastAccessor<TXAtom>()), 0);
     if (p != 0) {
       p->UpdatePrimitives(4);
@@ -5922,6 +5941,10 @@ void TGXApp::ClearIndividualCollections() {
       cols.AddUnique(gp);
     }
   }
+  IndividualCollections.Clear();
+  TXPlane::NamesRegistry().Clear();
+  TXAtom::NamesRegistry().Clear();
+  TXBond::NamesRegistry().Clear();
   TPtrList<AGDrawObject> to_create;
   for (size_t i = 0; i < cols.Count(); i++) {
     to_create.AddAll(cols[i]->GetObjects());
@@ -5929,12 +5952,10 @@ void TGXApp::ClearIndividualCollections() {
   ACollectionItem::Unify(to_create);
   GetRenderer().RemoveCollections(cols);
   for (size_t i = 0; i < to_create.Count(); i++) {
-    to_create[i]->Create();
+    if (to_create[i]->IsVisible()) {
+      to_create[i]->Create();
+    }
   }
-  IndividualCollections.Clear();
-  TXPlane::NamesRegistry().Clear();
-  TXAtom::NamesRegistry().Clear();
-  TXBond::NamesRegistry().Clear();
 }
 //..............................................................................
 void TGXApp::ClearGroupDefinitions() {
