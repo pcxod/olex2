@@ -925,13 +925,13 @@ cetTable* TCif::LoopFromDef(CifBlock& dp, const TStrList& col_names)  {
   return &(cetTable&)dp.Add(tab);
 }
 //..............................................................................
-cetTable& TCif::AddLoopDef(const olxstr& col_names)  {
+cetTable& TCif::AddLoopDef(const olxstr& col_names) {
   TStrList toks(col_names, ',');
   olxstr name = cetTable::GenerateName(toks);
   cetTable *CF = FindLoop(name);
-  if( CF != NULL )  {
-    for( size_t i=0; i < toks.Count(); i++ )
-      if( CF->ColIndex(toks[i]) == InvalidIndex )
+  if (CF != 0) {
+    for (size_t i = 0; i < toks.Count(); i++)
+      if (CF->ColIndex(toks[i]) == InvalidIndex)
         CF->AddCol(toks[i]);
     return *CF;
   }
