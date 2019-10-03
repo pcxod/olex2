@@ -4497,7 +4497,7 @@ void CifMerge_EmbeddData(TCif &Cif, bool insert) {
     if (TEFile::Exists(hkl_src)) {
       THklFile hkl;
       hkl.LoadFromFile(hkl_src, false);
-      cetTable &t = *THklFile::ToCIF(hkl.RefList(), Cif, true);
+      cetTable &t = *THklFile::ExperimentalToCIF(hkl.RefList(), Cif);
       if (use_md5) {
         olxstr_buf bf;
         for (size_t i = 0; i < t.RowCount(); i++) {
@@ -8543,7 +8543,7 @@ void XLibMacros::macExport(TStrObjList &Cmds, const TParamList &Options,
   if (hklLoop == 0) {
     hklLoop = C.FindLoopGlobal("_diffrn_refln", true);
   }
-  if (hklLoop == NULL) {
+  if (hklLoop == 0) {
     cif_dp::cetStringList *ci = dynamic_cast<cif_dp::cetStringList *>(
       C.FindEntry("_shelx_hkl_file"));
     if (ci == 0) {
