@@ -930,9 +930,11 @@ cetTable& TCif::AddLoopDef(const olxstr& col_names) {
   olxstr name = cetTable::GenerateName(toks);
   cetTable *CF = FindLoop(name);
   if (CF != 0) {
-    for (size_t i = 0; i < toks.Count(); i++)
-      if (CF->ColIndex(toks[i]) == InvalidIndex)
+    for (size_t i = 0; i < toks.Count(); i++) {
+      if (CF->ColIndex(toks[i]) == InvalidIndex) {
         CF->AddCol(toks[i]);
+      }
+    }
     return *CF;
   }
   return *LoopFromDef(data_provider[block_index], toks);

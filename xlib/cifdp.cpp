@@ -397,6 +397,9 @@ ICifEntry& cetTable::Set(size_t i, size_t j, ICifEntry* v)  {
 }
 //.............................................................................
 void cetTable::AddCol(const olxstr& col_name) {
+  if (data.ColIndex(col_name) != InvalidIndex) {
+    return;
+  }
   data.AddCol(col_name);
   if (data.ColCount() == 1) {
     ICifEntry::SetName(col_name);
