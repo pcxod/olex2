@@ -397,6 +397,9 @@ ICifEntry& cetTable::Set(size_t i, size_t j, ICifEntry* v)  {
 }
 //.............................................................................
 void cetTable::AddCol(const olxstr& col_name) {
+  if (data.ColIndex(col_name) != InvalidIndex) {
+    return;
+  }
   data.AddCol(col_name);
   if (data.ColCount() == 1) {
     ICifEntry::SetName(col_name);
@@ -837,16 +840,27 @@ int CifBlock::CifSorter::Compare_(const CifBlock::EntryGroup &e1,
 {
   size_t c1 = InvalidIndex, c2 = InvalidIndex, c1_l = 0, c2_l = 0;
   for (size_t i = 0; i < pivots.Count(); i++) {
-    if (c1 == InvalidIndex && e1.name.StartsFromi(pivots[i])) {
-      if (pivots[i].Length() > c1_l) {
-        c1 = i;
-        c1_l = pivots[i].Length();
+    olxstr p = pivots[i];
+    bool table = p.EndsWith('#');
+    if (table) {
+      p.SetLength(p.Length() - 1);
+    }
+    if (e1.name.StartsFromi(p)) {
+      if (!table || (table && e1.items.GetLast()->Is<cetTable>())) {
+        // use original - it is longer for tables!
+        if (pivots[i].Length() > c1_l) {
+          c1 = i;
+          c1_l = pivots[i].Length();
+        }
       }
     }
-    if (c2 == InvalidIndex && e2.name.StartsFromi(pivots[i])) {
-      if (pivots[i].Length() > c2_l) {
-        c2 = i;
-        c2_l = pivots[i].Length();
+    if (e2.name.StartsFromi(p)) {
+      if (!table || (table && e2.items.GetLast()->Is<cetTable>())) {
+        // use original - it is longer for tables!
+        if (pivots[i].Length() > c2_l) {
+          c2 = i;
+          c2_l = pivots[i].Length();
+        }
       }
     }
   }

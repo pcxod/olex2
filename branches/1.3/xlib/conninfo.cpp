@@ -306,7 +306,7 @@ void ConnInfo::ToInsList(TStrList& ins) const {
       if (bi.to.IsDeleted()) {
         continue;
       }
-      olxstr& str = ins.Add("BIND ") << bi.ToString(*aci.atom);
+      olxstr& str = ins.Add("BIND") << bi.ToString(*aci.atom);
       if (bi.matr != 0) {
         size_t si = rm.UsedSymmIndex(*bi.matr);
         if (si == InvalidIndex) {
@@ -321,12 +321,12 @@ void ConnInfo::ToInsList(TStrList& ins) const {
       if (bi.to.IsDeleted()) {
         continue;
       }
-      olxstr& str = ins.Add("FREE ") << bi.ToString(*aci.atom);
+      olxstr& str = ins.Add("FREE") << bi.ToString(*aci.atom);
       if (bi.matr != 0) {
         size_t si = rm.UsedSymmIndex(*bi.matr);
         if (si == InvalidIndex) {
           throw TFunctionFailedException(__OlxSourceInfo,
-            "Undefined EQIV in BIND");
+            "Undefined EQIV in FREE");
         }
         str << "_$" << (si + 1);
       }
@@ -643,7 +643,7 @@ void ConnInfo::AddBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv1,
   }
   if (ind == InvalidIndex) {
     const size_t aii = AtomInfo.IndexOf(&a1);
-    AtomConnInfo *ci = NULL;
+    AtomConnInfo *ci = 0;
     if (aii != InvalidIndex) {
       ci = &AtomInfo.GetValue(aii);
     }
@@ -780,22 +780,26 @@ void ConnInfo::AtomConnInfo::ToDataItem(TDataItem& item) const {
     .AddField('b', maxBonds)
     .AddField('t', temporary);
   TDataItem& ab = item.AddItem("ADDBOND");
-  for( size_t i=0; i < BondsToCreate.Count(); i++ )  {
-    if( BondsToCreate[i].to.IsDeleted() )
+  for (size_t i = 0; i < BondsToCreate.Count(); i++) {
+    if (BondsToCreate[i].to.IsDeleted()) {
       continue;
+    }
     TDataItem& bi = ab.AddItem("bi");
     bi.AddField("to", BondsToCreate[i].to.GetTag());
-    if( BondsToCreate[i].matr != NULL )
+    if (BondsToCreate[i].matr != 0) {
       bi.AddField("eqiv", BondsToCreate[i].matr->GetId());
+    }
   }
   TDataItem& db = item.AddItem("DELBOND");
-  for( size_t i=0; i < BondsToRemove.Count(); i++ )  {
-    if( BondsToRemove[i].to.IsDeleted() )
+  for (size_t i = 0; i < BondsToRemove.Count(); i++) {
+    if (BondsToRemove[i].to.IsDeleted()) {
       continue;
+    }
     TDataItem& bi = db.AddItem("bi");
     bi.AddField("to", BondsToRemove[i].to.GetTag());
-    if( BondsToRemove[i].matr != NULL )
+    if (BondsToRemove[i].matr != 0) {
       bi.AddField("eqiv", BondsToRemove[i].matr->GetId());
+    }
   }
 }
 void ConnInfo::AtomConnInfo::FromDataItem(const TDataItem& item,
@@ -806,24 +810,24 @@ void ConnInfo::AtomConnInfo::FromDataItem(const TDataItem& item,
   maxBonds = item.GetFieldByName('b').ToInt();
   temporary = item.FindField('t', FalseString()).ToBool();
   TDataItem& ab = item.GetItemByName("ADDBOND");
-  for( size_t i=0; i < ab.ItemCount(); i++ )  {
+  for (size_t i = 0; i < ab.ItemCount(); i++) {
     TCAtom& ca = rm.aunit.GetAtom(
       ab.GetItemByIndex(i).GetFieldByName("to").ToInt());
     const olxstr& eq = ab.GetItemByIndex(i).FindField("eqiv");
-    smatd const* eqiv = NULL;
-    if( !eq.IsEmpty() )  {
+    smatd const* eqiv = 0;
+    if (!eq.IsEmpty()) {
       eqiv = &rm.GetUsedSymm(eq.ToInt());
       rm.AddUsedSymm(*eqiv);  // persist
     }
     BondsToCreate.Add(new CXBondInfo(ca, eqiv));
   }
   TDataItem& db = item.GetItemByName("DELBOND");
-  for( size_t i=0; i < db.ItemCount(); i++ )  {
+  for (size_t i = 0; i < db.ItemCount(); i++) {
     TCAtom& ca = rm.aunit.GetAtom(
       db.GetItemByIndex(i).GetFieldByName("to").ToInt());
     const olxstr& eq = db.GetItemByIndex(i).FindField("eqiv");
     smatd const* eqiv = 0;
-    if( !eq.IsEmpty() )  {
+    if (!eq.IsEmpty()) {
       eqiv = &rm.GetUsedSymm(eq.ToInt());
       rm.AddUsedSymm(*eqiv);  // persist
     }
@@ -894,7 +898,7 @@ olxstr CXBondInfo::ToString(const TCAtom & from) const {
   }
   // both in main residue
   else {
-    rv << from.GetLabel() << ' ' << to.GetLabel();
+    rv << ' ' << from.GetLabel() << ' ' << to.GetLabel();
   }
   return olxstr(rv);
 }

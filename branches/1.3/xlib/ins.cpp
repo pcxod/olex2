@@ -339,11 +339,13 @@ void TIns::ParseRestraints(RefinementModel& rm,
   bool warnings)
 {
   bool preserve = DoPreserveInvalid();
+  size_t rp = 0;
   for (size_t i = 0; i < SL.Count(); i++) {
     TStrList Toks(SL[i], ' ');
     try {
-      if (ParseRestraint(rm, Toks, warnings)) {
+      if (ParseRestraint(rm, Toks, warnings, rp)) {
         SL[i].SetLength(0);
+        rp++;
       }
     }
     catch (const TExceptionBase &e) {
@@ -2387,63 +2389,49 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
   if (rm.IsDEFSSet()) {
     SL.Add("DEFS ") << rm.GetDEFSStr();
   }
+  bool group = TBasicApp::GetInstance().GetOptions()
+    .GetBoolOption("group_restraints");
+  typedef AnAssociation3<size_t, size_t, size_t> triple_t;
+  TTypeList<triple_t> sorted_res;
 
-  if (TBasicApp::GetInstance().GetOptions().GetBoolOption("group_restraints")) {
-    typedef AnAssociation3<size_t, size_t, size_t> triple_t;
-    TTypeList<triple_t> sorted_res;
-
-    for (size_t i = 0; i < restraints.Count(); i++) {
-      ResInfo& r = restraints.GetObject(i);
-      for (size_t j = 0; j < r.GetA()->Count(); j++) {
-        TSimpleRestraint& sr = (*r.a)[j];
-        sr.UpdateResi();
-        const RCInfo& ri = r.GetB();
-        TTypeList<ExplicitCAtomRef> ra = sr.Validate().GetAtoms().ExpandList(rm);
-        size_t min_id = InvalidIndex;
+  for (size_t i = 0; i < restraints.Count(); i++) {
+    ResInfo& r = restraints.GetObject(i);
+    for (size_t j = 0; j < r.GetA()->Count(); j++) {
+      TSimpleRestraint& sr = (*r.a)[j];
+      sr.UpdateResi();
+      const RCInfo& ri = r.GetB();
+      TTypeList<ExplicitCAtomRef> ra = sr.Validate().GetAtoms().ExpandList(rm);
+      size_t min_id;
+      if (group) {
+        min_id = InvalidIndex;
         for (size_t k = 0; k < ra.Count(); k++) {
           if (ra[k].GetAtom().GetId() < min_id) {
             min_id = ra[k].GetAtom().GetId();
           }
         }
-        sorted_res.Add(Association::New(min_id, i, j));
       }
-    }
-    QuickSorter::Sort(sorted_res,
-      ComplexComparator::Make(FunctionAccessor::MakeConst(&triple_t::GetA),
-      TPrimitiveComparator()));
-
-    for (size_t i = 0; i < sorted_res.Count(); i++) {
-      const triple_t &t = sorted_res[i];
-      ResInfo& r = restraints.GetObject(t.GetB());
-      const RCInfo& ri = r.GetB();
-      TSimpleRestraint& sr = (*r.a)[t.GetC()];
-      olxstr line = RestraintToString(sr, ri, atoms);
-      if (line.IsEmpty()) {
-        continue;
+      else {
+        min_id = sr.GetPosition();
       }
-      HyphenateIns(line, SL);
-      if (processed != 0) {
-        processed->restraints.Add(sr);
-      }
+      sorted_res.Add(Association::New(min_id, i, j));
     }
   }
-  else {
-    for (size_t i = 0; i < restraints.Count(); i++) {
-      ResInfo& r = restraints.GetObject(i);
-      for (size_t j = 0; j < r.GetA()->Count(); j++) {
-        TSimpleRestraint& sr = (*r.a)[j];
-        sr.UpdateResi();
-        const RCInfo& ri = r.GetB();
-        sr.Validate();
-        olxstr line = RestraintToString(sr, ri, atoms);
-        if (line.IsEmpty()) {
-          continue;
-        }
-        HyphenateIns(line, SL);
-        if (processed != 0) {
-          processed->restraints.Add(sr);
-        }
-      }
+  QuickSorter::Sort(sorted_res,
+    ComplexComparator::Make(FunctionAccessor::MakeConst(&triple_t::GetA),
+    TPrimitiveComparator()));
+
+  for (size_t i = 0; i < sorted_res.Count(); i++) {
+    const triple_t &t = sorted_res[i];
+    ResInfo& r = restraints.GetObject(t.GetB());
+    const RCInfo& ri = r.GetB();
+    TSimpleRestraint& sr = (*r.a)[t.GetC()];
+    olxstr line = RestraintToString(sr, ri, atoms);
+    if (line.IsEmpty()) {
+      continue;
+    }
+    HyphenateIns(line, SL);
+    if (processed != 0) {
+      processed->restraints.Add(sr);
     }
   }
 
@@ -2756,8 +2744,8 @@ void TIns::ParseHeader(const TStrList& in) {
   _FinishParsing(cx, true);
 }
 //..............................................................................
-bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& _toks,
-  bool warnings)
+bool TIns::ParseRestraint(RefinementModel &rm, const TStrList& _toks,
+  bool warnings, size_t r_position)
 {
   if (_toks.IsEmpty()) {
     return false;
@@ -2901,6 +2889,7 @@ bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& _toks,
   }
   if (srl != 0) {
     TSimpleRestraint& sr = srl->AddNew();
+    sr.SetPosition(r_position);
     esd = sr.GetEsd();
     esd1 = sr.GetEsd1();
     size_t index = 1;

@@ -144,23 +144,49 @@ public:
   reflection list return NULL.
   */
   template <class ref_list_t>
-  static cif_dp::cetTable *ToCIF(const ref_list_t& refs, TCif &out,
-    bool intensity=true)
+  static cif_dp::cetTable *ToCIF_(const ref_list_t& refs, TCif &out,
+    bool intensity=true, bool measured=true, bool experimental = false)
   {
-    if (refs.IsEmpty()) return 0;
-    cif_dp::cetTable &t = out.AddLoopDef(
-      "_refln_index_h,_refln_index_k,_refln_index_l");
-    if (intensity) {
-      t.AddCol("_refln_F_squared_meas");
-      t.AddCol("_refln_F_squared_sigma");
+    if (refs.IsEmpty()) {
+      return 0;
+    }
+    cif_dp::cetTable *t_;
+    if (experimental) {
+      t_ = &out.AddLoopDef(
+        "_diffrn_refln_index_h,_diffrn_refln_index_k,_diffrn_refln_index_l,"
+        "_diffrn_refln_intensity_net,_diffrn_refln_intensity_u");
     }
     else {
-      t.AddCol("_refln_F_meas");
-      t.AddCol("_refln_F_sigma");
+      t_ = &out.AddLoopDef(
+        "_refln_index_h,_refln_index_k,_refln_index_l");
+      if (intensity) {
+        if (measured) {
+          t_->AddCol("_refln_F_squared_meas");
+        }
+        else {
+          t_->AddCol("_refln_F_squared_calc");
+        }
+        t_->AddCol("_refln_F_squared_sigma");
+      }
+      else {
+        if (measured) {
+          t_->AddCol("_refln_F_meas");
+        }
+        else {
+          t_->AddCol("_refln_F_calc");
+        }
+        t_->AddCol("_refln_F_sigma");
+      }
     }
+    cif_dp::cetTable &t = *t_;
     bool batch_set;
     if ((batch_set = olx_ref::get(refs[0]).IsBatchSet())) {
-      t.AddCol("_refln_scale_group_code");
+      if (experimental) {
+        t.AddCol("_diffrn_refln_scale_group_code");
+      }
+      else {
+        t.AddCol("_refln_scale_group_code");
+      }
     }
     t.SetRowCapacity(refs.Count());
     size_t omitted_cnt = 0;
@@ -186,6 +212,24 @@ public:
       }
     }
     return &t;
+  }
+  template <class ref_list_t>
+  static cif_dp::cetTable *ExperimentalToCIF(const ref_list_t& refs, TCif &out)
+  {
+    return ToCIF_(refs, out, true, true, true);
+  }
+  template <class ref_list_t>
+  static cif_dp::cetTable *ExperimentalToFCF(const ref_list_t& refs, TCif &out,
+    bool intensity=true)
+  {
+    return ToCIF_(refs, out, intensity, true, false);
+  }
+
+  template <class ref_list_t>
+  static cif_dp::cetTable *CalculatedToFCF(const ref_list_t& refs, TCif &out,
+    bool intensity = true)
+  {
+    return ToCIF_(refs, out, intensity, false, false);
   }
 
   // reflection list + data type, false - F, true - Fsq

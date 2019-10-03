@@ -12,7 +12,11 @@
 
 TSimpleRestraint::TSimpleRestraint(TSRestraintList& parent, size_t id,
   short listType)
-  : Parent(parent), Id(id), ListType(listType), Atoms(parent.GetRM())
+  : Parent(parent),
+  Id(id),
+  Position(InvalidIndex),
+  ListType(listType),
+  Atoms(parent.GetRM())
 {
   Value = 0;
   Esd = Esd1 = 0;
@@ -69,6 +73,7 @@ void TSimpleRestraint::Assign(const TSimpleRestraint& sr) {
   Esd = sr.Esd;
   Esd1 = sr.Esd1;
   AllNonHAtoms = sr.AllNonHAtoms;
+  Position = sr.Position;
 }
 //..............................................................................
 void TSimpleRestraint::EndAUSort() {
@@ -80,6 +85,7 @@ void TSimpleRestraint::ToDataItem(TDataItem& item) const {
   item.AddField("esd", Esd);
   item.AddField("esd1", Esd1);
   item.AddField("val", Value);
+  item.AddField("pos", Position);
   Atoms.ToDataItem(item.AddItem("AtomList"));
 }
 //..............................................................................
@@ -119,6 +125,7 @@ void TSimpleRestraint::FromDataItem(const TDataItem& item) {
   Esd = item.GetFieldByName("esd").ToDouble();
   Esd1 = item.GetFieldByName("esd1").ToDouble();
   Value = item.GetFieldByName("val").ToDouble();
+  Position = item.FindField("pos", InvalidIndex).ToSizeT();
   TDataItem* atoms = item.FindItem("atoms");
   if (atoms != 0) {
     for( size_t i=0; i < atoms->ItemCount(); i++ )  {

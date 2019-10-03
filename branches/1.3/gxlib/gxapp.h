@@ -620,7 +620,7 @@ public:
   TXPlane *AddPlane(const olxstr &name, const TXAtomPList& Atoms,
     size_t sides, double weightExtent = 0);
   TSPlane *TmpPlane(const TXAtomPList* Atoms = NULL, double weightExtent = 0);
-  void DeletePlane(TXPlane* plane);
+  void DeletePlane(TXPlane &plane);
   void ClearPlanes();
   TXPlane *FindPlane(const olxstr& PlaneName);
 

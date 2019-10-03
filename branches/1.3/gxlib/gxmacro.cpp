@@ -290,7 +290,7 @@ void GXLibMacros::Export(TLibrary& lib) {
     (fpAny)|psFileLoaded,
     "Sets the centre of rotation to given point");
   gxlib_InitMacro(ChemDraw,
-    EmptyString(),
+    "u-clear the drawing; be careful as it also clears model customisations",
     fpAny|psFileLoaded,
     "Changes the view to show aromatic rings and double/tripple bonds.");
   gxlib_InitMacro(Direction,
@@ -3738,6 +3738,10 @@ void GXLibMacros::macEsd(TStrObjList &Cmds, const TParamList &Options,
 void GXLibMacros::macChemDraw(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &E)
 {
+  if (Options.GetBoolOption('u')) {
+    olex2::IOlex2Processor::GetInstance()->processMacro("clear groups");
+    return;
+  }
   app.CreateRings(true, true);
   TGXApp::BondIterator bi = app.GetBonds();
   sorted::PointerPointer<TGPCollection> cols;
@@ -3751,7 +3755,9 @@ void GXLibMacros::macChemDraw(TStrObjList &Cmds, const TParamList &Options,
     }
     short order = TSBond::PercieveOrder(b.A().GetType(),
       b.B().GetType(), b.Length());
-    if (order == 0) order = 1;
+    if (order == 0) {
+      order = 1;
+    }
     b.SetOrder(order);
     if (order > 1) {
       changed << b;
