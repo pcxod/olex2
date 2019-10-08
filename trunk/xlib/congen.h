@@ -57,6 +57,7 @@ protected:
   void GenerateAtom(TCAtomPList& created, TAtomEnvi& envi, const short Group,
     const cm_Element& atomType, TAtomEnvi* pivoting = 0);
   RefinementModel& RefMod;
+  vec3d Generate_1(short group, const TAtomEnvi& envi) const;
 public:
   AConstraintGenerator(RefinementModel& rm);
   virtual bool FixParam(const short paramMask, TStrList& res,
