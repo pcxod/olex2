@@ -7606,21 +7606,22 @@ void XLibMacros::macPart(TStrObjList &Cmds, const TParamList &Options,
     return;
   }
   if (copy) {
-    if (part == DefNoPart)
+    if (part == DefNoPart) {
       part = rm.aunit.GetNextPart(true);
+    }
     XVar& xv = rm.Vars.NewVar(0.5);
     for (size_t i = 0; i < Atoms.Count(); i++) {
       if (!Atoms[i]->GetMatrix().IsFirst()) {
         TCAtom& ca = rm.aunit.NewAtom();
         ca.Assign(Atoms[i]->CAtom());
         ca.ccrd() = Atoms[i]->ccrd();
-        ca.SetPart(-1);
-        Atoms[i]->CAtom().SetPart(-1);
+        ca.SetPart(part);
         rm.Vars.AddVarRef(xv, Atoms[i]->CAtom(), catom_var_name_Sof,
           relation_AsVar, 1.0 / Atoms[i]->CAtom().GetDegeneracy());
         rm.Vars.AddVarRef(xv, ca, catom_var_name_Sof, relation_AsVar,
           1.0 / Atoms[i]->CAtom().GetDegeneracy());
       }
+      Atoms[i]->CAtom().SetPart(part);
     }
     app.XFile().EndUpdate();
     if (Options.GetBoolOption('f', false, true)) {
