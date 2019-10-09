@@ -1839,12 +1839,12 @@ bool Analysis::trim_18(TAsymmUnit &au) {
     TCAtom &a = au.GetAtom(i);
     if (a.GetType().z < 2 || a.IsDeleted()) {
       if (a.GetType().z == -1) {
-        qac += a.GetOccu();
+        qac += 1./ a.GetDegeneracy();
       }
       continue;
     }
     atoms.Add(a);
-    ac += a.GetOccu();
+    ac += 1./a.GetDegeneracy();
   }
   if ((ac + qac) <= mn) {
     return false;
@@ -1862,7 +1862,7 @@ bool Analysis::trim_18(TAsymmUnit &au) {
       }
       atoms.AddAll(peak_ranges[i].peaks);
       for (size_t j = 0; j < peak_ranges[i].peaks.Count(); j++) {
-        s_oc += peak_ranges[i].peaks[j]->GetOccu();
+        s_oc += 1./peak_ranges[i].peaks[j]->GetDegeneracy();
       }
     }
     for (; i != InvalidIndex; i--) {
@@ -1889,7 +1889,7 @@ bool Analysis::trim_18(TAsymmUnit &au) {
       atoms[i]->SetDeleted(true);
     }
     else {
-      ac += atoms[i]->GetOccu();
+      ac += 1./atoms[i]->GetDegeneracy();
     }
   }
   return true;

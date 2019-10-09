@@ -1628,6 +1628,8 @@ void TAsymmUnit::LibNewAtom(const TStrObjList& Params, TMacroData& E) {
       .FindOverlappingAtom(test_pos, is_q_peak, 0.01);
     if (ca != 0) {
       if (is_q_peak && (ca->GetType() == iQPeakZ || ca->IsDeleted())) {
+        // just in case the position to special has got changed
+        ca->SetOccu(1. / Lattice->GetUnitCell().GetPositionMultiplicity(crd));
         ca->SetDeleted(false);
         ca->SetType(XElementLib::GetByIndex(iQPeakIndex));
         ca->SetQPeak(Params[0].ToDouble());
