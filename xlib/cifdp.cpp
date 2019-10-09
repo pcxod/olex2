@@ -220,8 +220,9 @@ TTypeList<CifToken>::const_list_type TCifDP::TokenizeString(const olxstr &str_,
         size_t st = i + 1;
         while (++i < str.Length()) {
           if ((str.CharAt(i) == ch && ((i + 1) >= str.Length() ||
-            olxstr::o_iswhitechar(str.CharAt(i + 1)) || str.CharAt(i + 1) == ':')) ||
-            str.CharAt(i + 1) == '\n')
+            olxstr::o_iswhitechar(str.CharAt(i + 1)) ||
+            str.CharAt(i + 1) == '\n' ||
+            (version == 2 && str.CharAt(i + 1) == ':'))))
           {
             break;
           }
@@ -232,7 +233,9 @@ TTypeList<CifToken>::const_list_type TCifDP::TokenizeString(const olxstr &str_,
         toks.Add(
           new CifToken(olxstr().quote(ch) << str.SubString(st, i - st),
             lni.GetLineNumber(i)));
-        if ((i + 1) < str.Length() && str.CharAt(i) == ch && str.CharAt(i + 1) == ':') {
+        if (version ==2 && (i + 1) < str.Length() &&
+          str.CharAt(i) == ch && str.CharAt(i + 1) == ':')
+        {
           i++;
         }
       }
@@ -606,7 +609,46 @@ void cetString::ToStrings(TStrList& list) const {
     list.Add(' ') : (list.GetLastString() << ' ');
   if (quoted) {
     if (qsz == 3) {
-      line << '\'' << value << '\'';
+      size_t qidx = InvalidIndex;
+      bool use_dq = false, use_ml = false;
+      // check if ' will be valid in this case
+      while ((qidx = value.FirstIndexOf('\'', qidx)) != InvalidIndex) {
+        if (++qidx < value.Length() &&
+          olxstr::o_isoneof(value.CharAt(qidx), " \t"))
+        {
+          use_dq = true;
+          break;
+        }
+      }
+      // check if " will be valid in this case
+      if (use_dq) {
+        while ((qidx = value.FirstIndexOf('"', qidx)) != InvalidIndex) {
+          if (++qidx < value.Length() &&
+            olxstr::o_isoneof(value.CharAt(qidx), " \t"))
+          {
+            use_ml = true;
+            break;
+          }
+        }
+      }
+      if (use_ml) {
+        if (line.Length() == 1) {
+          line[0] = ';';
+          if (value.StartsFrom(';')) {
+            list.Add(' ') << value;
+          }
+          else {
+            list.Add(value);
+          }
+          list.Add(';');
+        }
+      }
+      else if (use_dq) {
+        line << '"' << value << '"';
+      }
+      else {
+        line << '\'' << value << '\'';
+      }
     }
     else {
       line << "'''" << value << "'''";

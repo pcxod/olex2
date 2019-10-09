@@ -615,7 +615,7 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroData &Error) {
       }
       while (sl[i].GetA() > 0) {
         TCAtom &p = *SortedQPeaks.GetLastValue();
-        sl[i].a -= p.GetOccu();
+        sl[i].a -= 1. / p.GetDegeneracy();
         p.SetLabel((olxstr(sl[i].GetB()->symbol) << i), false);
         const cm_Element &e = Analysis::check_proposed_element(p, *sl[i].b);
         if (elm_l.Contains(&e)) {
