@@ -32,6 +32,7 @@ AConstraintGenerator::AConstraintGenerator(RefinementModel& rm)
 
   Distances(GenId(fgOH2, 0), 0.85);
   Distances(GenId(fgOH1, 0), 0.82);
+  Distances(GenId(fgOH1, 3), 0.85);
 
   Distances(GenId(fgNH3, 0), 0.89);
   Distances(GenId(fgNH2, 0), 0.86);
@@ -46,14 +47,16 @@ AConstraintGenerator::AConstraintGenerator(RefinementModel& rm)
 
   Distances(GenId(fgSH1, 0), 1.2);
 
-  if( rm.expl.IsTemperatureSet() )  {
-    if( rm.expl.GetTempValue().GetV() < -70 )  {
-      for( size_t i=0; i < Distances.Count(); i++ )
+  if (rm.expl.IsTemperatureSet()) {
+    if (rm.expl.GetTempValue().GetV() < -70) {
+      for (size_t i = 0; i < Distances.Count(); i++) {
         Distances.GetValue(i) += 0.02;
+      }
     }
-    else if( rm.expl.GetTempValue().GetV() < -20 )  {
-      for( size_t i=0; i < Distances.Count(); i++ )
+    else if (rm.expl.GetTempValue().GetV() < -20) {
+      for (size_t i = 0; i < Distances.Count(); i++) {
         Distances.GetValue(i) += 0.01;
+      }
     }
   }
 }
@@ -79,7 +82,42 @@ void AConstraintGenerator::DoGenerateAtom(TResidue &r, TCAtomPList& created,
     created.Add(CA);
   }
 }
+vec3d AConstraintGenerator::Generate_1(short group,
+  const TAtomEnvi& envi) const
+{
+  double dis = Distances.Get(AConstraintGenerator::GenId(group, envi.Count()));
+  // proposed by Luc, see Afix 13 in shelxl
+  bool AnglesEqual = (envi.Count() == 3);
+  if (AnglesEqual) {
+    for (size_t i = 0; i < envi.Count(); i++) {
+      if (envi.GetCrd(i).DistanceTo(envi.crd()) > 1.95 &&
+        envi.GetType(i) != iBromineZ)
+      {
+        AnglesEqual = false;
+        break;
+      }
+    }
+    if (AnglesEqual) {
+      vec3d Vec1 = envi.GetVec(0).Normalise();
+      vec3d Vec2 = envi.GetVec(1).Normalise();
+      vec3d Vec3 = envi.GetVec(2).Normalise();
+      vec3d rv = (Vec1 + Vec2 + Vec3).Normalise();
+      Vec1 -= Vec2;
+      Vec3 -= Vec2;
+      Vec3 = Vec1.XProdVec(Vec3);
+      Vec3.NormaliseTo(rv.CAngle(Vec3) < 0 ? dis : -dis);
+      return (Vec3 += envi.crd());
+    }
+  }
+  if (!AnglesEqual) {
+    vec3d Vec1;
+    for (size_t i = 0; i < envi.Count(); i++) {
+      Vec1 += envi.GetVec(i).Normalise();
+    }
+    return Vec1.NormaliseTo(-dis) + envi.crd();
+  }
 
+}
 void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
   const short Group, const cm_Element& atomType, TAtomEnvi* pivoting)
 {
@@ -204,45 +242,9 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
     break;
   case fgCH1:
   {
-    // proposed by Luc, see Afix 1 in shelxl
-    bool AnglesEqual = (envi.Count() == 3);
-    if (envi.Count() == 3) {
-      dis = Distances.Get(GenId(fgCH1, 3));
-      for (size_t i = 0; i < envi.Count(); i++) {
-        if (envi.GetCrd(i).DistanceTo(envi.crd()) > 1.95 &&
-          envi.GetType(i) != iBromineZ)
-        {
-          AnglesEqual = false;
-          break;
-        }
-      }
-      if (AnglesEqual) {
-        vec3d Vec1 = envi.GetVec(0).Normalise();
-        vec3d Vec2 = envi.GetVec(1).Normalise();
-        vec3d Vec3 = envi.GetVec(2).Normalise();
-        crds.AddNew((Vec1 + Vec2 + Vec3).Normalise());
-        Vec1 -= Vec2;
-        Vec3 -= Vec2;
-        Vec3 = Vec1.XProdVec(Vec3);
-        Vec3.NormaliseTo(crds[0].CAngle(Vec3) < 0 ? dis : -dis);
-        crds[0] = (Vec3 += envi.crd());
-      }
-    }
-    if (!AnglesEqual) {
-      size_t c = 0;
-      vec3d Vec1;
-      for (size_t i = 0; i < envi.Count(); i++) {
-        //  if( envi.GetCrd(i).DistanceTo( envi.crd() ) > 1.95 &&
-        //    envi.GetBAI(i) != 34 ) // bromine
-        //      continue;
-        Vec1 += envi.GetVec(i).Normalise();
-        c++;
-      }
-      dis = Distances.Get(GenId(fgCH1, (uint16_t)c));
-      crds.AddNew(Vec1.NormaliseTo(-dis) + envi.crd());
-    }
+    crds.AddNew(Generate_1(fgCH1, envi));
   }
-    break;
+  break;
   case fgOH3:
     break;
   case fgOH2:
@@ -383,9 +385,13 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
     }
     break;
   case fgOH1:
-    dis = Distances.Get(GenId(fgOH1, 0));
-    // any possibl H-bonds?
-    if (envi.Count() > 0 && pivoting != 0 && pivoting->Count() >= 1) {
+    dis = Distances.Get(GenId(fgOH1, envi.Count() == 3 ? 3 : 0));
+    // special case AFIX 13
+    if (envi.Count() == 3) {
+      crds.AddNew(Generate_1(fgOH1, envi));
+    }
+    // any possible H-bonds?
+    else if (envi.Count() > 0 && pivoting != 0 && pivoting->Count() >= 1) {
       vec3d Vec1 = pivoting->GetCrd(0) - envi.crd();
       vec3d Vec2 = envi.GetVec(0);
       vec3d RotVec = Vec1.XProdVec(Vec2).Normalise();

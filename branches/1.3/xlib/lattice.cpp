@@ -2206,6 +2206,19 @@ size_t TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom,
         count += 1;
       }
     }
+    else if (AE.Count() == 3) {
+      if (XElementLib::IsTransitionalMetal(AE.GetType(0)) &&
+        XElementLib::IsTransitionalMetal(AE.GetType(1)) &&
+        XElementLib::IsTransitionalMetal(AE.GetType(2)))
+      {
+        if (!dry_run) {
+          TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() <<
+            ": possibly M3-O(H)";
+          cg.FixAtom(AE, fgOH1, h_elm, 0, generated);
+        }
+        count += 1;
+      }
+    }
   }
   else if (atom.GetType() == iBoronZ) {  // boron
     if (AE.Count() == 3) {

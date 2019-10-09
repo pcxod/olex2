@@ -446,7 +446,10 @@ double TGlRenderer::CalcRasterZ(double off) const {
 //..............................................................................
 vec3d TGlRenderer::Project(const vec3d &v) const {
   vec3d shift = GetBasis().GetCenter();
-  shift += GetBasis().GetMatrix()*vec3d(0, 0, -(NearPlane + 1) / GetBasis().GetZoom());
+  double sm = -(NearPlane + 1) / GetBasis().GetZoom();
+  shift[0] += GetBasis().GetMatrix()[0][2] * sm;
+  shift[1] += GetBasis().GetMatrix()[1][2] * sm;
+  shift[2] += GetBasis().GetMatrix()[2][2] * sm;
   vec3d rs = (v + shift) * GetBasis().GetMatrix();
   rs *= GetBasis().GetZoom();
   if (!FPerspective  && StereoFlag == 0) {

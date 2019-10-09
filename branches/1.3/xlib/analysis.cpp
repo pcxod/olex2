@@ -1832,43 +1832,65 @@ ConstTypeList<fragments::fragment> fragments::extract(const TCAtomPList &aua,
 bool Analysis::trim_18(TAsymmUnit &au) {
   size_t mult = (au.MatrixCount()+1)*
     TCLattice::GetLattMultiplier(au.GetLatt());
-  size_t mn = olx_round(au.CalcCellVolume()/(mult*18));
-  if (au.AtomCount() <= mn)
-    return false;
+  double mn = (double)au.CalcCellVolume()/(mult*18);
   TCAtomPList atoms;
-  for (size_t i=0; i < au.AtomCount(); i++) {
+  double ac = 0, qac = 0;
+  for (size_t i = 0; i < au.AtomCount(); i++) {
     TCAtom &a = au.GetAtom(i);
-    if (a.GetType().z < 2 || a.IsDeleted()) continue;
+    if (a.GetType().z < 2 || a.IsDeleted()) {
+      if (a.GetType().z == -1) {
+        qac += 1./ a.GetDegeneracy();
+      }
+      continue;
+    }
     atoms.Add(a);
+    ac += 1./a.GetDegeneracy();
+  }
+  if ((ac + qac) <= mn) {
+    return false;
   }
   TCAtomPList peaks = peaks::extract(au);
   peaks::proximity_clean(peaks);
   TTypeList<peaks::range> peak_ranges = peaks::analyse(
     peaks::extract(au));
-  if (mn > atoms.Count()) {
+  if (mn > ac) {
+    double s_oc = 0;
     size_t i = peak_ranges.Count();
-    while (--i !=InvalidIndex && mn > atoms.Count()) {
-      if (peak_ranges[i].get_mean() < 1.5 && atoms.Count() > 0.75*mn ) break;
+    while (--i !=InvalidIndex && mn > s_oc) {
+      if (peak_ranges[i].get_mean() < 1.5 && s_oc > 0.75*mn) {
+        break;
+      }
       atoms.AddAll(peak_ranges[i].peaks);
+      for (size_t j = 0; j < peak_ranges[i].peaks.Count(); j++) {
+        s_oc += 1./peak_ranges[i].peaks[j]->GetDegeneracy();
+      }
     }
-    for (; i != InvalidIndex; i--)
+    for (; i != InvalidIndex; i--) {
       peak_ranges[i].delete_all();
+    }
   }
   else {
     size_t p_i = peak_ranges.Count();
     while (--p_i !=InvalidIndex) {
-      if (peak_ranges[p_i].get_mean() > 2)
+      if (peak_ranges[p_i].get_mean() > 2) {
         atoms.AddAll(peak_ranges[p_i].peaks);
-      else break;
+      }
+      else {
+        break;
+      }
     }
-    for (; p_i != InvalidIndex; p_i--)
+    for (; p_i != InvalidIndex; p_i--) {
       peak_ranges[p_i].delete_all();
-    //for (size_t i=mn; i < atoms.Count(); i++)
-    //  atoms[i]->SetDeleted(true);
+    }
   }
-  if (atoms.Count() > mn*1.25) {
-    for (size_t i=mn; i < atoms.Count(); i++)
+  ac = 0;
+  for (size_t i = 0; i < atoms.Count(); i++) {
+    if (ac > mn*1.25) {
       atoms[i]->SetDeleted(true);
+    }
+    else {
+      ac += 1./atoms[i]->GetDegeneracy();
+    }
   }
   return true;
 }

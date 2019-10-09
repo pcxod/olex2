@@ -610,10 +610,10 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroData &Error) {
       }
     }
     for (size_t i = 0; i < sl.Count(); i++) {
-      while (sl[i].GetA() > 0.45) {
-        if (SortedQPeaks.IsEmpty()) {
-          break;
-        }
+      if (SortedQPeaks.IsEmpty()) {
+        break;
+      }
+      while (sl[i].GetA() > 0) {
         TCAtom &p = *SortedQPeaks.GetLastValue();
         sl[i].a -= 1. / p.GetDegeneracy();
         p.SetLabel((olxstr(sl[i].GetB()->symbol) << i), false);
@@ -626,9 +626,9 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroData &Error) {
         }
         p.SetQPeak(0);
         SortedQPeaks.Delete(SortedQPeaks.Count() - 1);
-      }
-      if (SortedQPeaks.IsEmpty()) {
-        break;
+        if (SortedQPeaks.IsEmpty()) {
+          break;
+        }
       }
     }
     // get rid of the rest of Q-peaks and "validate" geometry of atoms
