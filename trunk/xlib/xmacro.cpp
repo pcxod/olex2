@@ -577,7 +577,7 @@ void XLibMacros::Export(TLibrary& lib)  {
     fpAny,
     "Removes specified bond from the connectivity table");
   xlib_InitMacro(Sgen,
-    EmptyString(),
+    "m-move the atoms instead of generating copies&;",
     (fpAny^fpNone)|psFileLoaded,
     "Grows the structure using provided atoms (all if none provided) and "
     "symmetry code");
@@ -7606,21 +7606,22 @@ void XLibMacros::macPart(TStrObjList &Cmds, const TParamList &Options,
     return;
   }
   if (copy) {
-    if (part == DefNoPart)
+    if (part == DefNoPart) {
       part = rm.aunit.GetNextPart(true);
+    }
     XVar& xv = rm.Vars.NewVar(0.5);
     for (size_t i = 0; i < Atoms.Count(); i++) {
       if (!Atoms[i]->GetMatrix().IsFirst()) {
         TCAtom& ca = rm.aunit.NewAtom();
         ca.Assign(Atoms[i]->CAtom());
         ca.ccrd() = Atoms[i]->ccrd();
-        ca.SetPart(-1);
-        Atoms[i]->CAtom().SetPart(-1);
+        ca.SetPart(part);
         rm.Vars.AddVarRef(xv, Atoms[i]->CAtom(), catom_var_name_Sof,
           relation_AsVar, 1.0 / Atoms[i]->CAtom().GetDegeneracy());
         rm.Vars.AddVarRef(xv, ca, catom_var_name_Sof, relation_AsVar,
           1.0 / Atoms[i]->CAtom().GetDegeneracy());
       }
+      Atoms[i]->CAtom().SetPart(part);
     }
     app.XFile().EndUpdate();
     if (Options.GetBoolOption('f', false, true)) {
@@ -8713,26 +8714,43 @@ void XLibMacros::macSgen(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
   TXApp &app = TXApp::GetInstance();
+  bool move = Options.GetBoolOption('m');
+  if (move && app.XFile().GetLattice().IsGenerated()) {
+    Error.ProcessingError(__OlxSrcInfo,
+      "moving is not applicable to grown structures");
+    return;
+  }
   // check if a single full matrix is given
   if (Cmds.Count() == 12 && olx_list_and(Cmds, &olxstr::IsNumber)) {
     smatdd m;
-    for (int i=0; i < 9; i++)
-      m.r[i/3][i%3] = Cmds[i].ToDouble();
-    for (int i=0; i < 3; i++)
-      m.t[i] = Cmds[9+i].ToDouble();
+    for (int i = 0; i < 9; i++) {
+      m.r[i / 3][i % 3] = Cmds[i].ToDouble();
+    }
+    for (int i = 0; i < 3; i++) {
+      m.t[i] = Cmds[9 + i].ToDouble();
+    }
     TLattice & latt = app.XFile().GetLattice();
     TSAtomPList atoms = app.FindSAtoms("sel");
-    for (size_t i=0; i < atoms.Count(); i++) {
-      vec3d c = m * atoms[i]->ccrd();
-      TSAtom &a = latt.NewAtom(c);
-      a.CAtom().SetType(atoms[i]->CAtom().GetType());
+    for (size_t i = 0; i < atoms.Count(); i++) {
+      if (move) {
+        vec3d c = m * atoms[i]->ccrd();
+        atoms[i]->CAtom().ccrd() = c;
+        if (atoms[i]->CAtom().GetEllipsoid() != 0) {
+          atoms[i]->CAtom().GetEllipsoid()->Mult(m.r);
+        }
+      }
+      else {
+        vec3d c = m * atoms[i]->ccrd();
+        TSAtom &a = latt.NewAtom(c);
+        a.CAtom().SetType(atoms[i]->CAtom().GetType());
+      }
     }
     latt.Init();
     return;
   }
   smatd_list symm;
   smatd matr;
-  for (size_t i=0; i < Cmds.Count(); i++) {
+  for (size_t i = 0; i < Cmds.Count(); i++) {
     bool validSymm = false;
     if (TSymmParser::IsRelSymm(Cmds[i])) {
       try {
@@ -8756,6 +8774,22 @@ void XLibMacros::macSgen(TStrObjList &Cmds, const TParamList &Options,
   }
   if (symm.IsEmpty()) {
     Error.ProcessingError(__OlxSrcInfo, "no symm code(s) provided");
+    return;
+  }
+  if (move) {
+    if (app.XFile().GetLattice().IsGenerated() && symm.Count() > 1) {
+      Error.ProcessingError(__OlxSrcInfo, "single operator is expected for move");
+      return;
+    }
+    TSAtomPList atoms = app.FindSAtoms(Cmds, true, true);
+    for (size_t i = 0; i < atoms.Count(); i++) {
+      vec3d c = symm[0] * atoms[i]->ccrd();
+      atoms[i]->CAtom().ccrd() = c;
+      if (atoms[i]->CAtom().GetEllipsoid() != 0) {
+        atoms[i]->CAtom().GetEllipsoid()->Mult(symm[0].r);
+      }
+    }
+    app.XFile().GetLattice().Init();
     return;
   }
   TCAtomPList atoms(app.FindSAtoms(Cmds, true, true),

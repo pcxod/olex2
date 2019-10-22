@@ -41,6 +41,9 @@ namespace SFUtil {
     vec3i hkl;  // hkl indexes
     double ps;  // phase shift
     compd val; // value
+    int Compare(const StructureFactor &sf) const {
+      return hkl.Compare(sf.hkl);
+    }
   };
   // interface description...
   class ISF_Util {
@@ -154,6 +157,13 @@ namespace SFUtil {
         else {
           out[ind].val = F[i];
         }
+      }
+    }
+    QuickSorter::Sort(out, TComparableComparator());
+    for (size_t i = 0; i < out.Count(); i++) {
+      size_t j = i;
+      while (++j < out.Count() && out[i].hkl == out[j].hkl) {
+        out.Delete(j--);
       }
     }
   }
@@ -351,6 +361,13 @@ namespace SFUtil {
           else {
             out[ind].val = F[i];
           }
+        }
+      }
+      QuickSorter::Sort(out, TComparableComparator());
+      for (size_t i = 0; i < out.Count(); i++) {
+        size_t j = i;
+        while (++j < out.Count() && out[i].hkl == out[j].hkl) {
+          out.Delete(j--);
         }
       }
     }

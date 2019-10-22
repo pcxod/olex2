@@ -1892,6 +1892,7 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm,
   size_t atomCount = 0;
   ParseContext cx(rm);
   Preprocess(SL);
+  TStringToList<olxstr, TInsList*> ins;
   for (size_t i = 0; i < index.Count(); i++) {
     if ((size_t)index[i] >= rm.aunit.AtomCount()) {
       throw TInvalidArgumentException(__OlxSourceInfo, "atom index");
@@ -1927,14 +1928,16 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm,
     else if (ParseIns(SL, Toks, cx, i)) {
     }
     else if (Toks.Count() < 6) { // should be at least
-      Instructions.Add(Tmp);
+      ins.Add(Tmp);
     }
     else if (!XElementLib::IsElement(Toks[1])) { // is a valid atom
-      Instructions.Add(Tmp);
+      ins.Add(Tmp);
     }
-    else if ((!Toks[2].IsNumber()) || (!Toks[3].IsNumber()) || // should be four numbers
-      (!Toks[4].IsNumber()) || (!Toks[5].IsNumber())) {
-      Instructions.Add(Tmp);
+    // should be four numbers
+    else if ((!Toks[2].IsNumber()) || (!Toks[3].IsNumber()) ||
+      (!Toks[4].IsNumber()) || (!Toks[5].IsNumber()))
+    {
+      ins.Add(Tmp);
     }
     else {
       cm_Element* elm = XElementLib::FindBySymbol(Toks[1]);
@@ -1968,8 +1971,9 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm,
   for (size_t i = 0; i < cx.Sump.Count(); i++) {
     cx.rm.Vars.AddSUMP(cx.Sump[i]);
   }
-  ParseRestraints(cx.rm, Instructions, false);
-  Instructions.Pack();
+  ParseRestraints(cx.rm, ins, false);
+  ins.Pack();
+  Instructions.AddAll(ins);
   for (size_t i = 0; i < atom_labels.Count(); i++) {
     atom_labels[i].a->SetLabel(atom_labels[i].GetB(), false);
   }

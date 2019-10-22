@@ -952,6 +952,18 @@ cetTable& TCif::GetPublicationInfoLoop() {
     "_publ_author_name,_publ_author_email,_publ_author_address");
 }
 //..............................................................................
+int cif_adopt_sort(const TSAtom &a, const TSAtom &b) {
+  if (a.IsAUAtom()) {
+    if (!b.IsAUAtom()) {
+      return -1;
+    }
+  }
+  else if (b.IsAUAtom()) {
+    return 1;
+  }
+  return olx_cmp(a.CAtom().GetId(), b.CAtom().GetId());
+}
+//------
 bool TCif::Adopt(TXFile &XF, int flags) {
   Clear();
   double Q[6], E[6];  // quadratic form of s thermal ellipsoid
@@ -959,11 +971,17 @@ bool TCif::Adopt(TXFile &XF, int flags) {
   if (flags != 0) {
     GetAsymmUnit().GetAtoms().ForEach(TCAtom::FlagSetter(catom_flag_Deleted, true));
     ASObjectProvider &objects = XF.GetLattice().GetObjects();
+    TSAtomPList atoms;
     for (size_t i = 0; i < objects.atoms.Count(); i++) {
       TSAtom &a = objects.atoms[i];
       if (!a.IsAvailable()) {
         continue;
       }
+      atoms.Add(a);
+    }
+    QuickSorter::SortSF(atoms, &cif_adopt_sort);
+    for (size_t i = 0; i < atoms.Count(); i++) {
+      TSAtom &a = *atoms[i];
       TCAtom & ca = AsymmUnit.NewAtom();
       ca.SetLabel(a.GetLabel(), false);
       ca.SetPart(a.CAtom().GetPart());
