@@ -359,6 +359,11 @@ int TXlConGen::OlexToShelx(short code, const TAtomEnvi& envi,
     }
     return 147;
     break;
+  case fgOH2:
+    if (envi.Count() == 2) {
+      return 23;
+    }
+    break;
   case fgNH2:
     if (envi.Count() == 1 && pivot == 0) {
       return 93;
@@ -411,6 +416,9 @@ short TXlConGen::ShelxToOlex(int shelx_code, const TAtomEnvi& envi) {
       }
       else if (envi.GetBase().GetType() == iNitrogenZ) {
         return fgNH2;
+      }
+      else if (envi.GetBase().GetType() == iOxygenZ) {
+        return fgOH2;
       }
     }
     break;

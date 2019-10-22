@@ -32,7 +32,8 @@ ISF_Util* SFUtil::GetSF_Util_Instance(const TSpaceGroup& sg) {
   smatd_list all_m, unq_m;
   sg.GetMatrices(all_m, mattAll);
   sg.GetMatrices(unq_m, mattAll ^ (mattInversion | mattCentering));
-  return new SF_Util<SG_Impl>(all_m, unq_m, sg.IsCentrosymmetric());
+  return new SF_Util<SG_Impl>(all_m, unq_m,
+    sg.IsCentrosymmetric() && sg.GetInversionCenter().IsNull());
   //return new SF_Util<SG_Impl>(all_m, all_m, false);
 #endif
 }
@@ -40,9 +41,10 @@ ISF_Util* SFUtil::GetSF_Util_Instance(const TSpaceGroup& sg) {
 void SFUtil::ExpandToP1(const TArrayList<vec3i>& hkl, const TArrayList<compd>& F,
   const TSpaceGroup& sg, TArrayList<StructureFactor>& out)
 {
-  if (hkl.Count() != F.Count())
+  if (hkl.Count() != F.Count()) {
     throw TInvalidArgumentException(__OlxSourceInfo,
       "hkl array and structure factors dimensions missmatch");
+  }
   ISF_Util* sf_util = GetSF_Util_Instance(sg);
   out.SetCount(sf_util->GetSGOrder()* hkl.Count());
   sf_util->Expand(hkl, F, out);
@@ -50,21 +52,29 @@ void SFUtil::ExpandToP1(const TArrayList<vec3i>& hkl, const TArrayList<compd>& F
   // test
   //smatd_list ml;
   //sg.GetMatrices(ml, mattAll);
-  //const int ml_cnt = ml.Count();
-  //out.SetCount( ml_cnt* hkl.Count() );
-  //for( size_t i=0; i < hkl.Count(); i++ )  {
-  //  const int off = i*ml_cnt;
-  //  for( size_t j=0; j < ml_cnt; j++ )  {
-  //    const int ind = off+j;
-  //    out[ind].hkl = hkl[i]*ml[j].r;
+  //const size_t ml_cnt = ml.Count();
+  //out.SetCount( ml_cnt* hkl.Count());
+  //for (size_t i = 0; i < hkl.Count(); i++) {
+  //  const size_t off = i * ml_cnt;
+  //  for (size_t j = 0; j < ml_cnt; j++) {
+  //    const size_t ind = off + j;
+  //    out[ind].hkl = hkl[i] * ml[j].r;
   //    out[ind].ps = ml[j].t.DotProd(hkl[i]);
-  //    if( out[ind].ps != 0 )  {
-  //      double ca=1, sa=0;
-  //      olx_sincos(-T_PI*out[ind].ps, &sa, &ca);
-  //      out[ind].val = F[i]*compd(ca,sa);
+  //    if (out[ind].ps != 0) {
+  //      double ca = 1, sa = 0;
+  //      olx_sincos(-T_PI * out[ind].ps, &sa, &ca);
+  //      out[ind].val = F[i] * compd(ca, sa);
   //    }
-  //    else
+  //    else {
   //      out[ind].val = F[i];
+  //    }
+  //  }
+  //}
+  //QuickSorter::Sort(out, TComparableComparator());
+  //for (size_t i = 0; i < out.Count(); i++) {
+  //  size_t j = i;
+  //  while (++j < out.Count() && out[i].hkl == out[j].hkl) {
+  //    out.Delete(j--);
   //  }
   //}
   //end test
