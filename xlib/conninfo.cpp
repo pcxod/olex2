@@ -888,13 +888,30 @@ olxstr CXBondInfo::ToString(const TCAtom & from) const {
   olxstr_buf rv;
   // to is in a residue
   if (to.GetResiId() != 0) {
-    rv << '_' << to.GetParent()->GetResidue(to.GetResiId()).GetNumberStr()
-      << ' ' << from.GetResiLabel() << ' ' << to.GetLabel();
+    // both in the same residue, easy
+    if (from.GetResiId() == to.GetResiId()) {
+      rv << '_' << to.GetParent()->GetResidue(to.GetResiId()).GetNumberStr()
+        << ' ' << from.GetLabel() << ' ' << to.GetLabel();
+    }
+    else if (from.GetResiId() == 0) {
+      // can swap the atoms
+      if (matr == 0) {
+        rv << ' ' << from.GetLabel() << ' ' << to.GetResiLabel();
+      }
+      // so far shelxl does not support _0 but no other choice
+      else {
+        rv << '_' << to.GetParent()->GetResidue(to.GetResiId()).GetNumberStr()
+          << ' ' << from.GetLabel() << "_0 " << to.GetLabel();
+      }
+
+    }
+    else {
+      rv << ' ' << from.GetResiLabel() << ' ' << to.GetResiLabel();
+    }
   }
   // from is in a residue
   else if (from.GetResiId() != 0) {
-    rv << '_' << from.GetParent()->GetResidue(from.GetResiId()).GetNumberStr()
-      << ' ' << from.GetLabel() << ' ' << to.GetLabel();
+    rv << ' ' << from.GetResiLabel() << ' ' << to.GetLabel();
   }
   // both in main residue
   else {

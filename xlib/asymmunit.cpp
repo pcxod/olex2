@@ -323,10 +323,15 @@ ConstPtrList<TResidue> TAsymmUnit::FindResidues(const olxstr& resi) const {
   }
   else if (resi.IsNumber()) {
     int n = resi.ToInt();
-    for (size_t cid = 0; cid < ResidueRegistry.Count(); cid++) {
-      TResidue *r = ResidueRegistry.GetValue(cid).Find(n, 0);
-      if (r != 0) {
-        list.Add(r);
+    if (n == 0) {
+      list.Add(MainResidue);
+    }
+    else {
+      for (size_t cid = 0; cid < ResidueRegistry.Count(); cid++) {
+        TResidue *r = ResidueRegistry.GetValue(cid).Find(n, 0);
+        if (r != 0) {
+          list.Add(r);
+        }
       }
     }
   }
