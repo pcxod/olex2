@@ -367,12 +367,12 @@ CXConnInfo& ConnInfo::GetConnInfo(const TCAtom& ca) const {
 CXConnInfo& ConnInfo::GetConnInfo(const cm_Element& elm) const {
   CXConnInfo& ci = *(new CXConnInfo);
   size_t ti_ind = TypeInfo.IndexOf(&elm);
-  if( ti_ind != InvalidIndex )  {
+  if (ti_ind != InvalidIndex) {
     const TypeConnInfo& aci = TypeInfo.GetValue(ti_ind);
     ci.r = (aci.r < 0 ? elm.r_bonding : aci.r);
     ci.maxBonds = aci.maxBonds;
   }
-  else  {
+  else {
     ci.r = elm.r_bonding;
     ci.maxBonds = def_max_bonds;
   }
@@ -431,33 +431,33 @@ void ConnInfo::Assign(const ConnInfo& ci) {
 //........................................................................
 void ConnInfo::ToDataItem(TDataItem& item) const {
   TDataItem& ti_item = item.AddItem("TYPE");
-  for( size_t i=0; i < TypeInfo.Count(); i++ ) {
+  for (size_t i = 0; i < TypeInfo.Count(); i++) {
     TypeInfo.GetValue(i).ToDataItem(
       ti_item.AddItem(TypeInfo.GetValue(i).atomType->symbol));
   }
   TDataItem& ai_item = item.AddItem("ATOM");
-  for( size_t i=0; i < AtomInfo.Count(); i++ )  {
-    if( AtomInfo.GetValue(i).atom->IsDeleted() )  continue;
+  for (size_t i = 0; i < AtomInfo.Count(); i++) {
+    if (AtomInfo.GetValue(i).atom->IsDeleted())  continue;
     AtomInfo.GetValue(i).ToDataItem(
       ai_item.AddItem(AtomInfo.GetValue(i).atom->GetTag()));
   }
   if (!PartGroups.IsEmpty()) {
     TDataItem& groups = item.AddItem("PART");
-    size_t cnt=0;
-    for (size_t i=0; i < PartGroups.Count(); i++) {
+    size_t cnt = 0;
+    for (size_t i = 0; i < PartGroups.Count(); i++) {
       if (PartGroups[i].Count() < 2) continue;
       TDataItem& group = groups.AddItem(++cnt, olxstr(' ').Join(PartGroups[i]));
     }
   }
 }
 //........................................................................
-void ConnInfo::FromDataItem(const TDataItem& item)  {
+void ConnInfo::FromDataItem(const TDataItem& item) {
   Clear();
   TDataItem& ti_item = item.GetItemByName("TYPE");
-  for( size_t i=0; i < ti_item.ItemCount(); i++ )  {
+  for (size_t i = 0; i < ti_item.ItemCount(); i++) {
     cm_Element* elm = XElementLib::FindBySymbol(
       ti_item.GetItemByIndex(i).GetName());
-    if( elm == NULL ) {
+    if (elm == 0) {
       throw TInvalidArgumentException(__OlxSourceInfo,
         olxstr("Unknown symbol: ") << ti_item.GetItemByIndex(i).GetName());
     }
@@ -465,14 +465,14 @@ void ConnInfo::FromDataItem(const TDataItem& item)  {
 
   }
   TDataItem& ai_item = item.GetItemByName("ATOM");
-  for( size_t i=0; i < ai_item.ItemCount(); i++ )  {
+  for (size_t i = 0; i < ai_item.ItemCount(); i++) {
     TCAtom& ca = rm.aunit.GetAtom(
       ai_item.GetItemByIndex(i).GetName().ToSizeT());
     AtomInfo.Add(&ca).FromDataItem(ai_item.GetItemByIndex(i), rm, ca);
   }
   TDataItem* groups = item.FindItem("PART");
-  if (groups != NULL) {
-    for (size_t i=0; i < groups->ItemCount(); i++) {
+  if (groups != 0) {
+    for (size_t i = 0; i < groups->ItemCount(); i++) {
       PartGroups.AddNew().FromList(
         TStrList(groups->GetItemByIndex(i).GetValue(), ' '),
         FunctionAccessor::MakeConst(&olxstr::ToInt));
@@ -480,28 +480,28 @@ void ConnInfo::FromDataItem(const TDataItem& item)  {
   }
 }
 #ifdef _PYTHON
-PyObject* ConnInfo::PyExport()  {
+PyObject* ConnInfo::PyExport() {
   PyObject* main = PyDict_New(),
     *type = PyDict_New(),
     *atom = PyDict_New();
   SortedElementPList types;
-  for (size_t i=0; i < rm.aunit.AtomCount(); i++) {
+  for (size_t i = 0; i < rm.aunit.AtomCount(); i++) {
     if (!rm.aunit.GetAtom(i).IsDeleted() &&
       rm.aunit.GetAtom(i).GetType() != iQPeakZ)
     {
       types.AddUnique(&rm.aunit.GetAtom(i).GetType());
     }
   }
-  for( size_t i=0; i < TypeInfo.Count(); i++ )  {
+  for (size_t i = 0; i < TypeInfo.Count(); i++) {
     PythonExt::SetDictItem(type, TypeInfo.GetValue(i).atomType->symbol,
       TypeInfo.GetValue(i).PyExport());
     types.Remove(TypeInfo.GetValue(i).atomType);
   }
-  for( size_t i=0; i < types.Count(); i++ )  {
+  for (size_t i = 0; i < types.Count(); i++) {
     PythonExt::SetDictItem(type, types[i]->symbol,
       Py_BuildValue("{s:f,s:i}", "radius", types[i]->r_bonding, "bonds", 12));
   }
-  for( size_t i=0; i < AtomInfo.Count(); i++ )  {
+  for (size_t i = 0; i < AtomInfo.Count(); i++) {
     PythonExt::SetDictItem(atom, Py_BuildValue("i",
       AtomInfo.GetValue(i).atom->GetTag()),
       AtomInfo.GetValue(i).PyExport());
@@ -510,16 +510,16 @@ PyObject* ConnInfo::PyExport()  {
   PythonExt::SetDictItem(main, "atom", atom);
   PythonExt::SetDictItem(main, "delta",
     Py_BuildValue("f", rm.aunit.GetLattice().GetDelta()));
-  size_t gc=0;
-  for (size_t i=0; i < PartGroups.Count(); i++) {
+  size_t gc = 0;
+  for (size_t i = 0; i < PartGroups.Count(); i++) {
     if (PartGroups[i].Count() > 1)
       gc++;
   }
   PyObject *part = PyList_New(gc);
-  for (size_t i=0; i < PartGroups.Count(); i++) {
+  for (size_t i = 0; i < PartGroups.Count(); i++) {
     if (PartGroups[i].Count() < 2) continue;
     PyObject *p = PyList_New(PartGroups[i].Count());
-    for (size_t j=0; j < PartGroups[i].Count(); j++) {
+    for (size_t j = 0; j < PartGroups[i].Count(); j++) {
       PyList_SetItem(p, j, Py_BuildValue("i", PartGroups[i][j]));
     }
     PyList_SetItem(part, i, p);
@@ -582,7 +582,7 @@ const smatd* ConnInfo::GetCorrectMatrix(const smatd* eqiv1, const smatd* eqiv2,
   bool release) const
 {
   if (eqiv1 == 0 || (eqiv1->r.IsI() && eqiv1->t.IsNull())) {
-    if (release && eqiv1 != NULL) {
+    if (release && eqiv1 != 0) {
       rm.RemUsedSymm(*eqiv1);
     }
     return (eqiv2 == 0 || (eqiv2->r.IsI() && eqiv2->t.IsNull()) ?
@@ -691,7 +691,7 @@ void ConnInfo::RemBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv1,
       }
     }
     const size_t aii = AtomInfo.IndexOf(&a1);
-    AtomConnInfo *ci = NULL;
+    AtomConnInfo *ci = 0;
     if (aii != InvalidIndex) {
       ci = &AtomInfo.GetValue(aii);
     }
@@ -856,7 +856,7 @@ PyObject* ConnInfo::AtomConnInfo::PyExport() {
       }
       PyTuple_SetItem(btc, bc++,
         Py_BuildValue("{s:i,s:i}", "to", BondsToCreate[i].to.GetTag(), "eqiv",
-          BondsToCreate[i].matr == NULL ? -1 : BondsToCreate[i].matr->GetId()));
+          BondsToCreate[i].matr == 0 ? -1 : BondsToCreate[i].matr->GetId()));
     }
     PythonExt::SetDictItem(main, "create", btc);
   }
@@ -876,7 +876,7 @@ PyObject* ConnInfo::AtomConnInfo::PyExport() {
       }
       PyTuple_SetItem(btd, bc++,
         Py_BuildValue("{s:i,s:i}", "to", BondsToRemove[i].to.GetTag(), "eqiv",
-          BondsToRemove[i].matr == NULL ? -1 : BondsToRemove[i].matr->GetId()));
+          BondsToRemove[i].matr == 0 ? -1 : BondsToRemove[i].matr->GetId()));
     }
     PythonExt::SetDictItem(main, "delete", btd);
   }
@@ -888,25 +888,30 @@ olxstr CXBondInfo::ToString(const TCAtom & from) const {
   olxstr_buf rv;
   // to is in a residue
   if (to.GetResiId() != 0) {
-    // both in the same residue, easy
+    // both in the same residue, easy; move it to the instruction
     if (from.GetResiId() == to.GetResiId()) {
       rv << '_' << to.GetParent()->GetResidue(to.GetResiId()).GetNumberStr()
         << ' ' << from.GetLabel() << ' ' << to.GetLabel();
     }
-    else if (from.GetResiId() == 0) {
-      // can swap the atoms
-      if (matr == 0) {
-        rv << ' ' << from.GetLabel() << ' ' << to.GetResiLabel();
-      }
-      // so far shelxl does not support _0 but no other choice
-      else {
-        rv << '_' << to.GetParent()->GetResidue(to.GetResiId()).GetNumberStr()
-          << ' ' << from.GetLabel() << "_0 " << to.GetLabel();
-      }
-
-    }
     else {
-      rv << ' ' << from.GetResiLabel() << ' ' << to.GetResiLabel();
+      if (matr == 0) {
+        // do not care in this case
+        rv << ' ' << from.GetResiLabel() << ' ' << to.GetResiLabel();
+      }
+      else {
+        if (from.GetResiId() == 0) {
+          /* so far shelxl does not support _0 but no other choice here
+          move resi from TO to the instruction and specify _0 for the FROM
+          */
+          rv << '_' << to.GetParent()->GetResidue(to.GetResiId()).GetNumberStr()
+            << ' ' << from.GetLabel() << "_0 " << to.GetLabel();
+        }
+        else {
+          // move resi from TO to the instruction
+          rv << '_' << to.GetParent()->GetResidue(to.GetResiId()).GetNumberStr()
+            << ' ' << from.GetResiLabel() << ' ' << to.GetLabel();
+        }
+      }
     }
   }
   // from is in a residue
