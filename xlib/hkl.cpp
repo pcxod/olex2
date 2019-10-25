@@ -359,7 +359,7 @@ void THklFile::SaveToFile(const olxstr& FN, const TRefList& refs) {
 olx_object_ptr<THklFile::ref_list> THklFile::FromCifTable(
   const cif_dp::cetTable &t)
 {
-  bool intensity;
+  bool intensity = true;
   TRefList refs;
   olxstr prefix = t.GetName();
   const size_t hInd = t.ColIndex(prefix + "_index_h");
@@ -369,12 +369,13 @@ olx_object_ptr<THklFile::ref_list> THklFile::FromCifTable(
   size_t sInd = t.ColIndex(prefix + "_F_squared_sigma");
   size_t batch = t.ColIndex(prefix + "_scale_group_code");
   if (mInd == InvalidIndex) {
-    mInd = t.ColIndex(prefix + "_F_meas");
-    sInd = t.ColIndex(prefix + "_F_sigma");
-    intensity = false;
-  }
-  else {
-    intensity = true;
+    mInd = t.ColIndex(prefix + "_intensity_net");
+    sInd = t.ColIndex(prefix + "_intensity_u");
+    if (mInd == InvalidIndex) {
+      mInd = t.ColIndex(prefix + "_F_meas");
+      sInd = t.ColIndex(prefix + "_F_sigma");
+      intensity = false;
+    }
   }
   if ((hInd | kInd | lInd | mInd | sInd) == InvalidIndex) {
     throw TInvalidArgumentException(__OlxSourceInfo,
