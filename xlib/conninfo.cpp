@@ -585,8 +585,12 @@ const smatd* ConnInfo::GetCorrectMatrix(const smatd* eqiv1, const smatd* eqiv2,
     if (release && eqiv1 != 0) {
       rm.RemUsedSymm(*eqiv1);
     }
-    return (eqiv2 == 0 || (eqiv2->r.IsI() && eqiv2->t.IsNull()) ?
+    eqiv2 = (eqiv2 == 0 || (eqiv2->r.IsI() && eqiv2->t.IsNull()) ?
       0 : eqiv2);
+    if (!release && eqiv2 != 0) {
+      return &rm.AddUsedSymm(*eqiv2);
+    }
+    return eqiv2;
   }
   smatd mat;
   if (!rm.aunit.HasLattice()) {  // no lattice?
@@ -627,6 +631,38 @@ const smatd* ConnInfo::GetCorrectMatrix(const smatd* eqiv1, const smatd* eqiv2,
     }
   }
   return ((mat.r.IsI() && mat.t.IsNull()) ? 0 : &rm.AddUsedSymm(mat));
+}
+//........................................................................
+void ConnInfo::AddBond(TCAtom& a1, TCAtom& a2, const smatd &eqiv1,
+  const smatd &eqiv2)
+{
+  bool swap = false;
+  if (a1.GetResiId() == 0 && a2.GetResiId() != 0) {
+    smatd m = eqiv2 * eqiv1.Inverse();
+    swap = !m.IsI();
+  }
+  if (swap) {
+    AddBond(a2, a1, &eqiv2, &eqiv1, false);
+  }
+  else {
+    AddBond(a1, a2, &eqiv1, &eqiv2, false);
+  }
+}
+//........................................................................
+void ConnInfo::RemBond(TCAtom& a1, TCAtom& a2, const smatd &eqiv1,
+  const smatd &eqiv2)
+{
+  bool swap = false;
+  if (a1.GetResiId() == 0 && a2.GetResiId() != 0) {
+    smatd m = eqiv2 * eqiv1.Inverse();
+    swap = !m.IsI();
+  }
+  if (swap) {
+    RemBond(a2, a1, &eqiv2, &eqiv1, false);
+  }
+  else {
+    RemBond(a1, a2, &eqiv1, &eqiv2, false);
+  }
 }
 //........................................................................
 void ConnInfo::AddBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv1,
@@ -677,8 +713,9 @@ void ConnInfo::RemBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv1,
   for (size_t i=0; i < AtomInfo.Count(); i++) {
     ind = FindBondIndex(AtomInfo.GetValue(i).BondsToRemove, AtomInfo.GetKey(i),
       a1, a2, eqiv);
-    if (ind != InvalidIndex)
+    if (ind != InvalidIndex) {
       break;
+    }
   }
   if (ind == InvalidIndex) {
     // validate the bonds to create

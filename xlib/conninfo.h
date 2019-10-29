@@ -98,6 +98,10 @@ public:
     const smatd* eqiv2, bool release_eqiv);
   void RemBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv1,
     const smatd* eqiv2, bool release_eqiv);
+  void AddBond(TCAtom& a1, TCAtom& a2, const smatd &eqiv1,
+    const smatd &eqiv2);
+  void RemBond(TCAtom& a1, TCAtom& a2, const smatd &eqiv1,
+    const smatd &eqiv2);
   void SetMaxBondsAndR(TCAtom &a, size_t maxBonds, double r = -1);
   /* combines all bonds to create and delete for this atom and imposed by
   others assumes that all atoms already have connectivity information attached.

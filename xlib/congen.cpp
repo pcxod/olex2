@@ -82,6 +82,7 @@ void AConstraintGenerator::DoGenerateAtom(TResidue &r, TCAtomPList& created,
     created.Add(CA);
   }
 }
+
 vec3d AConstraintGenerator::Generate_1(short group,
   const TAtomEnvi& envi) const
 {
@@ -97,27 +98,27 @@ vec3d AConstraintGenerator::Generate_1(short group,
         break;
       }
     }
-    if (AnglesEqual) {
-      vec3d Vec1 = envi.GetVec(0).Normalise();
-      vec3d Vec2 = envi.GetVec(1).Normalise();
-      vec3d Vec3 = envi.GetVec(2).Normalise();
-      vec3d rv = (Vec1 + Vec2 + Vec3).Normalise();
-      Vec1 -= Vec2;
-      Vec3 -= Vec2;
-      Vec3 = Vec1.XProdVec(Vec3);
-      Vec3.NormaliseTo(rv.CAngle(Vec3) < 0 ? dis : -dis);
-      return (Vec3 += envi.crd());
-    }
   }
-  if (!AnglesEqual) {
+  if (AnglesEqual) {
+    vec3d Vec1 = envi.GetVec(0).Normalise();
+    vec3d Vec2 = envi.GetVec(1).Normalise();
+    vec3d Vec3 = envi.GetVec(2).Normalise();
+    vec3d rv = (Vec1 + Vec2 + Vec3).Normalise();
+    Vec1 -= Vec2;
+    Vec3 -= Vec2;
+    Vec3 = Vec1.XProdVec(Vec3);
+    Vec3.NormaliseTo(rv.CAngle(Vec3) < 0 ? dis : -dis);
+    return (Vec3 += envi.crd());
+  }
+  else {
     vec3d Vec1;
     for (size_t i = 0; i < envi.Count(); i++) {
       Vec1 += envi.GetVec(i).Normalise();
     }
     return Vec1.NormaliseTo(-dis) + envi.crd();
   }
-
 }
+
 void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
   const short Group, const cm_Element& atomType, TAtomEnvi* pivoting)
 {
