@@ -365,12 +365,12 @@ olx_object_ptr<THklFile::ref_list> THklFile::FromCifTable(
   const size_t hInd = t.ColIndex(prefix + "_index_h");
   const size_t kInd = t.ColIndex(prefix + "_index_k");
   const size_t lInd = t.ColIndex(prefix + "_index_l");
-  size_t mInd = t.ColIndex(prefix + "_F_squared_meas");
-  size_t sInd = t.ColIndex(prefix + "_F_squared_sigma");
+  size_t mInd = t.ColIndex(prefix + "_intensity_net");
+  size_t sInd = t.ColIndex(prefix + "_intensity_u");
   size_t batch = t.ColIndex(prefix + "_scale_group_code");
   if (mInd == InvalidIndex) {
-    mInd = t.ColIndex(prefix + "_intensity_net");
-    sInd = t.ColIndex(prefix + "_intensity_u");
+    mInd = t.ColIndex(prefix + "_F_squared_meas");
+    sInd = t.ColIndex(prefix + "_F_squared_sigma");
     if (mInd == InvalidIndex) {
       mInd = t.ColIndex(prefix + "_F_meas");
       sInd = t.ColIndex(prefix + "_F_sigma");
