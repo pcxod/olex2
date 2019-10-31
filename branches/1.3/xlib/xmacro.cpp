@@ -8835,9 +8835,8 @@ void XLibMacros::macAddBond(TStrObjList &Cmds, const TParamList &Options,
   for (size_t i=0; i < atoms.Count(); i += 2) {
     app.XFile().GetRM().Conn.AddBond(
       atoms[i]->CAtom(), atoms[i+1]->CAtom(),
-      &app.XFile().GetRM().AddUsedSymm(atoms[i]->GetMatrix()),
-      &app.XFile().GetRM().AddUsedSymm(atoms[i+1]->GetMatrix()),
-      true
+      atoms[i]->GetMatrix(),
+      atoms[i+1]->GetMatrix()
     );
     TBasicApp::NewLogEntry() << "Adding bond " << atoms[i]->GetGuiLabel()
       << '-' << atoms[i+1]->GetGuiLabel();
@@ -8867,11 +8866,7 @@ void XLibMacros::macDelBond(TStrObjList &Cmds, const TParamList &Options,
       for( size_t sasi=0; sasi <= a2.EquivCount(); sasi++ )  {
         const smatd m2 = uc.MulMatrix(pairs[i+1]->GetMatrix(),
           (sasi == a2.EquivCount() ? fm : a2.GetEquiv(sasi)));
-        app.XFile().GetRM().Conn.RemBond(
-          a1, a2,
-          &app.XFile().GetRM().AddUsedSymm(m1),
-          &app.XFile().GetRM().AddUsedSymm(m2),
-          true);
+        app.XFile().GetRM().Conn.RemBond(a1, a2, m1, m2);
         TBasicApp::NewLogEntry() << "Removing bond " << pairs[i]->GetGuiLabel()
           << '-' << pairs[i+1]->GetGuiLabel();
       }
