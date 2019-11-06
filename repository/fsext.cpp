@@ -484,7 +484,7 @@ static PyMethodDef OLEXFS_Methods[] = {
   { NULL, NULL, 0, NULL }
 };
 
-void TFileHandlerManager::PyInit()  {
-  Py_InitModule("olex_fs", OLEXFS_Methods);
+void TFileHandlerManager::PyInit() {
+  PythonExt::init_module("olex_fs", &OLEXFS_Methods[0]);
 }
 #endif //_PYTHON

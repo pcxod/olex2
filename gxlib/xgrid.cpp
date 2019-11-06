@@ -1717,7 +1717,7 @@ static PyMethodDef XGRID_Methods[] = {
   {NULL, NULL, 0, NULL}
   };
 
-void TXGrid::PyInit()  {
-  Py_InitModule( "olex_xgrid", XGRID_Methods );
+void TXGrid::PyInit() {
+  PythonExt::init_module("olex_xgrid", XGRID_Methods);
 }
 #endif // _PYTHON

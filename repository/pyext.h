@@ -14,32 +14,50 @@
 #include "etbuffer.h"
 
 #ifdef _PYTHON
+
+#if PY_MAJOR_VERSION >= 3
+#define OlxInitPyModule(f_name, m_name, m_def) PyObject *f_name() \
+ { return PythonExt::init_module(m_name, m_def); }
+#else
+#define OlxInitPyModule(f_name, m_name, m_def) void f_name() \
+ { PythonExt::init_module(m_name, m_def); }
+#endif
+
 //---------------------------------------------------------------------------
 using namespace olex2;
 typedef void (*pyRegFunc)();
 
 class PythonExt : public IOlxObject {
   static PythonExt *&Instance() {
-    static PythonExt* inst=0;
+    static PythonExt* inst = 0;
     return inst;
   }
   IOlex2Processor* OlexProcessor;
   TLibrary *Library, *BindLibrary;
   TTypeList<pyRegFunc> ToRegister;
-//.............................................................................
+  //.............................................................................
   struct ProfileInfo {
     int CallCount;
     uint64_t TotalTimeMs;
     ProfileInfo() :
       CallCount(0),
-    TotalTimeMs(0)
+      TotalTimeMs(0)
     {}
     void Reset() {
       CallCount = 0;
       TotalTimeMs = 0;
     }
   };
-//.............................................................................
+  //.............................................................................
+  static size_t Olx_PyUnicode_AsWideChar(PyObject *unic, wchar_t *w,
+    Py_ssize_t sz)
+  {
+#if PY_MAJOR_VERSION >= 3
+    return PyUnicode_AsWideChar(unic, w, sz);
+#else
+    return PyUnicode_AsWideChar((PyUnicodeObject *)unic, w, sz);
+#endif
+  }
 public:
   class BasicWrapper : public IOlxObject {
     PythonExt::ProfileInfo *PI;
@@ -98,9 +116,9 @@ public:
       }
     }
   };
-//.............................................................................
+  //.............................................................................
   TPtrList<BasicWrapper> ToDelete;
-//.............................................................................
+  //.............................................................................
   void macReset(TStrObjList& Cmds, const TParamList &Options, TMacroData& E);
   void macRun(TStrObjList& Cmds, const TParamList &Options, TMacroData& E);
   void funLogLevel(const TStrObjList& Params, TMacroData& E);
@@ -112,7 +130,7 @@ public:
   ~PythonExt();
   // must be called only once
   static PythonExt& Init(IOlex2Processor* olexProcessor,
-    const olxstr &module_name="olex")
+    const olxstr &module_name = "olex")
   {
     return *(new PythonExt(olexProcessor, module_name));
   }
@@ -124,8 +142,8 @@ public:
   }
   int RunPython(const olxstr& script);
   DefPropP(uint16_t, LogLevel)
-  template <class T>
-    T * AddToDelete(T* td)  {  return (T*)ToDelete.Add(td);  }
+    template <class T>
+  T * AddToDelete(T* td) { return (T*)ToDelete.Add(td); }
 
   void Register(pyRegFunc regFunc) {
     ToRegister.AddCopy(regFunc);
@@ -133,10 +151,10 @@ public:
       (*regFunc)();
     }
   }
-  TLibrary* ExportLibrary(const olxstr& name=EmptyString());
-//  static TLibrary* GetExportedLibrary()  {  return Library;  }
-  TLibrary* GetBindLibrary()  {  return BindLibrary;  }
-  IOlex2Processor* GetOlexProcessor()  {  return OlexProcessor;  }
+  TLibrary* ExportLibrary(const olxstr& name = EmptyString());
+  //  static TLibrary* GetExportedLibrary()  {  return Library;  }
+  TLibrary* GetBindLibrary() { return BindLibrary; }
+  IOlex2Processor* GetOlexProcessor() { return OlexProcessor; }
   void CheckInitialised();
 
   static PythonExt* GetInstance() {
@@ -149,24 +167,24 @@ public:
   void ProfileAll();
 
   PyObject* GetProfileInfo();
-// building string
-  static PyObject* BuildString(const olxstr& str)  {
+  // building string
+  static PyObject* BuildString(const olxstr& str) {
 #ifdef _UNICODE
     if (str.IsEmpty()) {
       return PyUnicode_FromWideChar(L"", 0);
     }
     return PyUnicode_FromWideChar(str.raw_str(), str.Length());
 #else
-    if( str.IsEmpty() ) // silly Py...
+    if (str.IsEmpty()) // silly Py...
       return PyString_FromStringAndSize("", 0);
     return PyString_FromStringAndSize(str.raw_str(), str.Length());
 #endif
   }
-  static PyObject* BuildCString(const olxcstr& str)  {
+  static PyObject* BuildCString(const olxcstr& str) {
     if (str.IsEmpty()) {
-      return PyString_FromStringAndSize("", 0);
+      return PyBytes_FromStringAndSize("", 0);
     }
-    return PyString_FromStringAndSize(str.raw_str(), str.Length());
+    return PyBytes_FromStringAndSize(str.raw_str(), str.Length());
   }
   static PyObject* BuildWString(const olxwstr& str) {
     if (str.IsEmpty()) {
@@ -174,23 +192,26 @@ public:
     }
     return PyUnicode_FromWideChar(str.raw_str(), str.Length());
   }
-// parsing string
+  // parsing string
   static olxstr ParseStr(PyObject *pobj) {
     char* crv;
     olxstr rv;
-    if (pobj->ob_type == &PyString_Type && PyArg_Parse(pobj, "s", &crv)) {
+    if (pobj->ob_type == &PyBytes_Type && PyArg_Parse(pobj, "s", &crv)) {
       rv = crv;
     }
     else if (pobj->ob_type == &PyUnicode_Type) {
       size_t sz = PyUnicode_GetSize(pobj);
       TTBuffer<wchar_t> wc_bf(sz + 1);
-      sz = PyUnicode_AsWideChar((PyUnicodeObject*)pobj, wc_bf.Data(), sz);
+      sz = Olx_PyUnicode_AsWideChar(pobj, wc_bf.Data(), sz);
       if (sz > 0) {
         rv.Append(wc_bf.Data(), sz);
       }
     }
     else {
-      rv = PyObject_REPR(pobj);
+      pobj = PyObject_Repr(pobj);
+      if (pobj != 0) {
+        return ParseStr(pobj);
+      }
     }
     return rv;
   }
@@ -240,9 +261,9 @@ public:
     Py_DECREF(val);
     return 0;
   }
-  static PyObject* PyNone()  {  Py_INCREF(Py_None);  return Py_None;  }
-  static PyObject* PyTrue()  {  Py_INCREF(Py_True);  return Py_True;  }
-  static PyObject* PyFalse()  {  Py_INCREF(Py_False);  return Py_False;  }
+  static PyObject* PyNone() { Py_INCREF(Py_None);  return Py_None; }
+  static PyObject* PyTrue() { Py_INCREF(Py_True);  return Py_True; }
+  static PyObject* PyFalse() { Py_INCREF(Py_False);  return Py_False; }
   /* tuple parsing to process unicode and string in the same way...
     s# - char*, len
     s - char*
@@ -253,6 +274,8 @@ public:
     | - optional params after column
   */
   static bool ParseTuple(PyObject* tuple, const char* format, ...);
+
+  static PyObject *init_module(const olxcstr &name, PyMethodDef *m_def);
 };
 
 #endif

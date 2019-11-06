@@ -66,16 +66,22 @@ void TOlxPyVar::InitObject(PyObject* obj) {
     ot = obj->ob_type;
   }
 
+#if PY_MAJOR_VERSION >= 3
+  if (ot == &PyLong_Type) {
+    Type |= potInt;
+  }
+#else
   if (ot == &PyInt_Type) {
     Type |= potInt;
   }
+#endif
   else if (ot == &PyBool_Type) {
     Type |= potBool;
   }
   else if (ot == &PyFloat_Type) {
     Type |= potFloat;
   }
-  else if (ot == &PyString_Type) {
+  else if (ot == &PyBytes_Type) {
     Type |= potString;
   }
   else if (ot == &PyUnicode_Type) {
@@ -145,7 +151,7 @@ void TOlxPyVar::Set(PyObject* obj) {
     }
   }
   else {
-    if (obj->ob_type == &PyString_Type || obj->ob_type == &PyUnicode_Type) {
+    if (obj->ob_type == &PyBytes_Type || obj->ob_type == &PyUnicode_Type) {
       *Str = PythonExt::ParseStr(obj);
     }
     else {
@@ -224,14 +230,16 @@ const olxstr& TOlxVars::GetVarStr(size_t index) {
   }
   PyObject *po = oo.GetObjVal();
   double fv;
-  if (po->ob_type == &PyString_Type || po->ob_type == &PyUnicode_Type) {
+  if (po->ob_type == &PyBytes_Type || po->ob_type == &PyUnicode_Type) {
     return TEGC::Add(new olxstr(PythonExt::ParseStr(po)));
   }
   else if (po->ob_type == &PyFloat_Type && PyArg_Parse(po, "d", &fv)) {
     return TEGC::Add(new olxstr(fv));
   }
   else {
-    return TEGC::Add(new olxstr(PyObject_REPR(po)));
+    return TEGC::Add(
+      new olxstr(PythonExt::ParseStr(PyObject_Repr(po)))
+    );
   }
 }
 //.............................................................................

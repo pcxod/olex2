@@ -25,6 +25,53 @@
 //#include "egc.h"
 #ifdef _PYTHON
 //.............................................................................
+#if PY_MAJOR_VERSION >= 3
+struct olx_PyModuleDef {
+  olx_object_ptr<PyModuleDef> moduleDef;
+  PyObject *moduleObj;
+
+  struct module_state {
+    PyObject *error;
+  };
+
+  static int mod_traverse(PyObject *m, visitproc visit, void *arg) {
+    Py_VISIT(((module_state *)PyModule_GetState(m))->error);
+    return 0;
+  }
+
+  static int mod_clear(PyObject *m) {
+    Py_CLEAR(((module_state *)PyModule_GetState(m))->error);
+    return 0;
+  }
+
+  static void mod_free(void *m) {
+    return;
+  }
+
+  olx_PyModuleDef(const olxcstr &m_name, PyMethodDef *m_def) {
+    moduleDef = new PyModuleDef{
+      PyModuleDef_HEAD_INIT,
+      m_name.c_str(),
+      0,
+      sizeof(struct module_state),
+      m_def,
+      0,
+      &olx_PyModuleDef::mod_traverse,
+      &olx_PyModuleDef::mod_clear,
+      &olx_PyModuleDef::mod_free,
+    };
+    moduleObj = PyModule_Create(moduleDef.get_ptr());
+  }
+};
+//.............................................................................
+olxdict<PyObject *, olx_PyModuleDef*, TPointerComparator>
+&GetModuleRegistry()
+{
+  static olxdict<PyObject *, olx_PyModuleDef*, TPointerComparator> reg;
+  return reg;
+}
+#endif
+//.............................................................................
 //.............................................................................
 class TFuncWrapper : public PythonExt::BasicWrapper {
   bool ProcessOutput;
@@ -112,7 +159,7 @@ public:
     OnCallEnter();
     PyObject* arglist = PyTuple_New(Params.Count());
     for (size_t i = 0; i < Params.Count(); i++) {
-      PyTuple_SetItem(arglist, i, PyString_FromString(Params[i].c_str()));
+      PyTuple_SetItem(arglist, i, PyBytes_FromString(Params[i].c_str()));
     }
     PyObject* options = PyDict_New();
     for (size_t i = 0; i < Options.Count(); i++) {
@@ -327,16 +374,17 @@ PyObject* runOlexFunction(PyObject* self, PyObject* args)  {
     olxstr("Function '") << functionName << "' failed");
 }
 //.............................................................................
-PyObject* runOlexFunctionEx(PyObject* self, PyObject* args)  {
+PyObject* runOlexFunctionEx(PyObject* self, PyObject* args) {
   using namespace macrolib;
   IOlex2Processor* o_r = PythonExt::GetInstance()->GetOlexProcessor();
   olxstr name;
   bool macro;
-  PyObject *args_, *kwds_=NULL;
-  if( !PythonExt::ParseTuple(args, "wbO|O", &name, &macro, &args_, &kwds_) )
+  PyObject *args_, *kwds_ = 0;
+  if (!PythonExt::ParseTuple(args, "wbO|O", &name, &macro, &args_, &kwds_)) {
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "wbO|O");
+  }
   TStrObjList params;
-  for (Py_ssize_t i=0; i < PyList_Size(args_); i++) {
+  for (Py_ssize_t i = 0; i < PyList_Size(args_); i++) {
     olxstr val = exparse::parser_util::unquote(
       PythonExt::ParseStr(PyList_GetItem(args_, i)));
     //olxstr val = PythonExt::ParseStr(PyList_GetItem(args_, i));
@@ -345,16 +393,18 @@ PyObject* runOlexFunctionEx(PyObject* self, PyObject* args)  {
   if (macro) {
     TParamList options;
     ABasicFunction* macro = o_r->GetLibrary().FindMacro(name);
-    if( macro == NULL )
+    if (macro == 0) {
       return PythonExt::SetErrorMsg(PyExc_RuntimeError, __OlxSourceInfo,
         olxstr("Undefined macro '") << name << '\'');
-    if (kwds_ != NULL && PyDict_Size(kwds_) != 0) {
+    }
+    if (kwds_ != 0 && PyDict_Size(kwds_) != 0) {
       PyObject *keys_ = PyDict_Keys(kwds_);
-      for (Py_ssize_t i=0; i < PyList_Size(keys_); i++) {
+      for (Py_ssize_t i = 0; i < PyList_Size(keys_); i++) {
         PyObject *key_ = PyList_GetItem(keys_, i);
         PyObject *val = PyDict_GetItem(kwds_, key_);
-        if (val == NULL || val == Py_None)
+        if (val == 0 || val == Py_None) {
           continue;
+        }
         olxstr str_val = PythonExt::ParseStr(val);
         options.AddParam(PythonExt::ParseStr(key_), str_val);
       }
@@ -362,12 +412,13 @@ PyObject* runOlexFunctionEx(PyObject* self, PyObject* args)  {
     }
     TMacroData er;
     macro->Run(params, options, er);
-    if ((PythonExt::GetInstance()->GetLogLevel() & macro_log_macro) != 0){
+    if ((PythonExt::GetInstance()->GetLogLevel() & macro_log_macro) != 0) {
       TBasicApp::NewLogEntry(logInfo) << "@py: " <<
         macro->GetRuntimeSignature();
     }
-    if (er.IsSuccessful())
+    if (er.IsSuccessful()) {
       return Py_BuildValue("b", true);
+    }
     else {
       TBasicApp::NewLogEntry() << "Macro '" << name << "' failed: " <<
         er.GetInfo();
@@ -376,9 +427,10 @@ PyObject* runOlexFunctionEx(PyObject* self, PyObject* args)  {
   }
   else {
     ABasicFunction* func = o_r->GetLibrary().FindFunction(name);
-    if (func == NULL)
+    if (func == 0) {
       return PythonExt::SetErrorMsg(PyExc_RuntimeError, __OlxSourceInfo,
         olxstr("Undefined function '") << name << '\'');
+    }
     TMacroData er;
     func->Run(params, er);
     if ((PythonExt::GetInstance()->GetLogLevel() & macro_log_function) != 0) {
@@ -410,7 +462,9 @@ PyObject* runPrintText(PyObject* self, PyObject* args)  {
       nl = true;
       s.SetLength(s.Length()-1);
     }
-    if (nl) TBasicApp::NewLogEntry();
+    if (nl) {
+      TBasicApp::NewLogEntry();
+    }
     TBasicApp::GetLog() << s;
   }
   return PythonExt::PyNone();
@@ -467,8 +521,9 @@ PythonExt::PythonExt(IOlex2Processor* olexProcessor, const olxstr &module_name)
   : module_name(module_name),
     LogLevel(macrolib::macro_log_macro)
 {
-  if (Instance() != NULL)
+  if (Instance() != 0) {
     throw TFunctionFailedException(__OlxSourceInfo, "singleton");
+  }
   Instance() = this;
   OlexProcessor = olexProcessor;
 }
@@ -477,8 +532,14 @@ PythonExt::~PythonExt() {
   ToDelete.DeleteItems(false);
   if (Py_IsInitialized()) {
     Py_Finalize();
+#if PY_MAJOR_VERSION >= 3
+    for (size_t i = 0; i < GetModuleRegistry().Count(); i++) {
+      delete GetModuleRegistry().GetValue(i);
+    }
+    GetModuleRegistry().Clear();
+#endif
   }
-  Instance() = NULL;
+  Instance() = 0;
 }
 //.............................................................................
 void PythonExt::ProfileAll() {
@@ -491,9 +552,10 @@ void PythonExt::CheckInitialised() {
   if (!Py_IsInitialized()) {
     Py_Initialize();
     PyEval_InitThreads();
-    Py_InitModule(module_name.c_str(), Methods);
-    for (size_t i=0; i < ToRegister.Count(); i++)
+    init_module(module_name, Methods);
+    for (size_t i = 0; i < ToRegister.Count(); i++) {
       (*ToRegister[i])();
+    }
   }
 }
 //.............................................................................
@@ -597,8 +659,15 @@ void PythonExt::funExport(const TStrObjList& Cmds, TMacroData& E) {
 void PythonExt::macReset(TStrObjList& Cmds, const TParamList &Options,
   TMacroData& E)
 {
-  if( Py_IsInitialized() )
+  if (Py_IsInitialized()) {
     Py_Finalize();
+#if PY_MAJOR_VERSION >= 3
+    for (size_t i = 0; i < GetModuleRegistry().Count(); i++) {
+      delete GetModuleRegistry().GetValue(i);
+    }
+    GetModuleRegistry().Clear();
+#endif
+  }
   CheckInitialised();
 }
 //.............................................................................
@@ -718,7 +787,7 @@ bool PythonExt::ParseTuple(PyObject* tuple, const char* format, ...) {
     else if (format[i] == 'w') {
       olxstr* os = va_arg(argptr, olxstr*);
       os->SetLength(0);
-      if (io->ob_type == &PyString_Type) {
+      if (io->ob_type == &PyBytes_Type) {
         char* str;
         int len;
         PyArg_Parse(io, "s#", &str, &len);
@@ -727,9 +796,10 @@ bool PythonExt::ParseTuple(PyObject* tuple, const char* format, ...) {
       else if (io->ob_type == &PyUnicode_Type) {
         Py_ssize_t usz = PyUnicode_GetSize(io);
         TTBuffer<wchar_t> wc_bf(usz + 1);
-        usz = PyUnicode_AsWideChar((PyUnicodeObject*)io, wc_bf.Data(), usz);
-        if (usz > 0)
+        usz = Olx_PyUnicode_AsWideChar(io, wc_bf.Data(), usz);
+        if (usz > 0) {
           os->Append(wc_bf.Data(), usz);
+        }
       }
       else {
         va_end(argptr);
@@ -743,8 +813,9 @@ bool PythonExt::ParseTuple(PyObject* tuple, const char* format, ...) {
         rlen = va_arg(argptr, int*);
         i++;
       }
-      else
+      else {
         rlen = &len;
+      }
       if (!PyArg_Parse(io, "s#", cstr, rlen)) {
         va_end(argptr);
         return false;
@@ -789,5 +860,15 @@ bool PythonExt::ParseTuple(PyObject* tuple, const char* format, ...) {
   }
   va_end(argptr);
   return true;
+}
+//.............................................................................
+PyObject *PythonExt::init_module(const olxcstr &name, PyMethodDef *md) {
+#if PY_MAJOR_VERSION >= 3
+  olx_PyModuleDef *pmd = new olx_PyModuleDef(name, md);
+  GetModuleRegistry().Add(pmd->moduleObj, pmd);
+  return pmd->moduleObj;
+#else
+  return Py_InitModule(name.c_str(), md);
+#endif
 }
 #endif

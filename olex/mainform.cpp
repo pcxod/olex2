@@ -1499,8 +1499,8 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
     return false;
   }
 
-  if (!(MsgId >= ID_INFO && MsgId <= ID_EXCEPTION) && StartupInitialised &&
-    PyEval_ThreadsInitialized() && wxThread::IsMain())
+  if (!(MsgId >= ID_INFO && MsgId <= ID_EXCEPTION) && wxThread::IsMain() &&
+    StartupInitialised && Py_IsInitialized() && PyEval_ThreadsInitialized())
   {
     PyGILState_STATE st = PyGILState_Ensure();
     Py_BEGIN_ALLOW_THREADS
@@ -3935,8 +3935,8 @@ static PyMethodDef CORE_Methods[] = {
   { NULL, NULL, 0, NULL }
 };
 //..............................................................................
-void TMainForm::PyInit()  {
-  Py_InitModule("olex_gui", CORE_Methods);
+void TMainForm::PyInit() {
+  PythonExt::init_module("olex_gui", CORE_Methods);
 }
 //..............................................................................
 //..............................................................................

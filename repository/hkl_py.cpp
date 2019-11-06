@@ -16,8 +16,8 @@ PyMethodDef hkl_py::Methods[] = {
   {NULL, NULL, 0, NULL}
 };
 
-void hkl_py::PyInit()  {
-  Py_InitModule( "olex_hkl", Methods );
+void hkl_py::PyInit() {
+  PythonExt::init_module("olex_hkl", Methods);
 }
 //..................................................................................................
 PyObject* hkl_py::Read(PyObject* self, PyObject* args)  {

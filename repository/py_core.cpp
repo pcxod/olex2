@@ -668,7 +668,7 @@ static PyMethodDef CORE_Methods[] = {
   { NULL, NULL, 0, NULL }
    };
 
-void OlexPyCore::PyInit()  {
-  Py_InitModule("olex_core", CORE_Methods);
+void OlexPyCore::PyInit() {
+  PythonExt::init_module("olex_core", CORE_Methods);
 }
 #endif
