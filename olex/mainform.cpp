@@ -262,10 +262,14 @@ TMainForm::TMainForm(TGlXApp *Parent)
   /* a singleton - will be deleted in destructor, we cannot use GC as the Py_DecRef
    would be called after finalising python
   */
-  PythonExt::Init(this).Register(&TMainForm::PyInit);
-  PythonExt::GetInstance()->Register(&OlexPyCore::PyInit);
-  PythonExt::GetInstance()->Register(&hkl_py::PyInit);
-  PythonExt::GetInstance()->Register(&TXGrid::PyInit);
+  PythonExt::Init(this).Register(
+    TMainForm::ModuleName(), &TMainForm::PyInit);
+  PythonExt::GetInstance()->Register(
+    OlexPyCore::ModuleName(), &OlexPyCore::PyInit);
+  PythonExt::GetInstance()->Register(
+    hkl_py::ModuleName(), &hkl_py::PyInit);
+  PythonExt::GetInstance()->Register(
+    TXGrid::ModuleName(), &TXGrid::PyInit);
   //TOlxVars::Init().OnVarChange->Add(this, ID_VarChange);
   FGlCanvas = NULL;
   FXApp = NULL;
@@ -3935,8 +3939,13 @@ static PyMethodDef CORE_Methods[] = {
   { NULL, NULL, 0, NULL }
 };
 //..............................................................................
-void TMainForm::PyInit() {
-  PythonExt::init_module("olex_gui", CORE_Methods);
+olxcstr &TMainForm::ModuleName() {
+  static olxcstr mn = "olex_gui";
+  return mn;
+}
+//..............................................................................
+PyObject *TMainForm::PyInit() {
+  return PythonExt::init_module(ModuleName(), CORE_Methods);
 }
 //..............................................................................
 //..............................................................................

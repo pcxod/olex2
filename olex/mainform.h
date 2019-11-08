@@ -205,7 +205,8 @@ protected:
   UpdateThread* _UpdateThread;
   TOnProgress* UpdateProgress, *ActionProgress;
   TStack<TEFile *> LogFiles;
-  static void PyInit();
+  static olxcstr &ModuleName();
+  static PyObject *PyInit();
   TActionQList Action;
   TGlXApp* FParent;
   TArrayList< olx_pair_t<TDUnitCell*, TSpaceGroup*> > UserCells;

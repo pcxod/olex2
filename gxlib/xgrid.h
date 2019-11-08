@@ -217,7 +217,8 @@ public:
   void LibIsvalid(const TStrObjList& Params, TMacroData& E);
   class TLibrary*  ExportLibrary(const olxstr& name=EmptyString());
 #ifdef _PYTHON
-  static void PyInit();
+  static olxcstr &ModuleName();
+  static PyObject *PyInit();
 #endif
   void ToDataItem(TDataItem& item, IOutputStream& zos) const;
   void FromDataItem(const TDataItem& item, IInputStream& zis);

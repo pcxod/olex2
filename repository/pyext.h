@@ -25,7 +25,7 @@
 
 //---------------------------------------------------------------------------
 using namespace olex2;
-typedef void (*pyRegFunc)();
+typedef PyObject *(*pyRegFunc)();
 
 class PythonExt : public IOlxObject {
   static PythonExt *&Instance() {
@@ -58,6 +58,9 @@ class PythonExt : public IOlxObject {
     return PyUnicode_AsWideChar((PyUnicodeObject *)unic, w, sz);
 #endif
   }
+#if PY_MAJOR_VERSION >= 3
+  static PyObject *pyInit();
+#endif
 public:
   class BasicWrapper : public IOlxObject {
     PythonExt::ProfileInfo *PI;
@@ -123,34 +126,26 @@ public:
   void macRun(TStrObjList& Cmds, const TParamList &Options, TMacroData& E);
   void funLogLevel(const TStrObjList& Params, TMacroData& E);
   void funExport(const TStrObjList& Params, TMacroData& E);
-  olxstr module_name;
-  PythonExt(IOlex2Processor* olexProcessor, const olxstr &module_name);
+  PythonExt(IOlex2Processor* olexProcessor);
   uint16_t LogLevel;
 public:
   ~PythonExt();
   // must be called only once
-  static PythonExt& Init(IOlex2Processor* olexProcessor,
-    const olxstr &module_name = "olex")
-  {
-    return *(new PythonExt(olexProcessor, module_name));
+  static PythonExt& Init(IOlex2Processor* olexProcessor) {
+    return *(new PythonExt(olexProcessor));
   }
   static void Finilise() {
     if (Instance() != 0) {
       delete Instance();
-      Instance() = NULL;
+      Instance() = 0;
     }
   }
   int RunPython(const olxstr& script);
-  DefPropP(uint16_t, LogLevel)
-    template <class T>
+  DefPropP(uint16_t, LogLevel);
+  template <class T>
   T * AddToDelete(T* td) { return (T*)ToDelete.Add(td); }
 
-  void Register(pyRegFunc regFunc) {
-    ToRegister.AddCopy(regFunc);
-    if (Py_IsInitialized()) {
-      (*regFunc)();
-    }
-  }
+  void Register(const olxcstr &name, pyRegFunc regFunc);
   TLibrary* ExportLibrary(const olxstr& name = EmptyString());
   //  static TLibrary* GetExportedLibrary()  {  return Library;  }
   TLibrary* GetBindLibrary() { return BindLibrary; }
@@ -274,6 +269,8 @@ public:
     | - optional params after column
   */
   static bool ParseTuple(PyObject* tuple, const char* format, ...);
+
+  static olxcstr &ModuleName();
 
   static PyObject *init_module(const olxcstr &name, PyMethodDef *m_def);
 };

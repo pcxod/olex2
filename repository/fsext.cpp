@@ -21,7 +21,8 @@
 
 TFileHandlerManager::TFileHandlerManager() {
 #ifdef _PYTHON
-  PythonExt::GetInstance()->Register(&TFileHandlerManager::PyInit);
+  PythonExt::GetInstance()->Register(
+    TFileHandlerManager::ModuleName(), &TFileHandlerManager::PyInit);
 #endif
 }
 //..............................................................................
@@ -465,7 +466,6 @@ PyObject* fsext_pyClear(PyObject* self, PyObject* args) {
   return Py_BuildValue("b", true);
 }
 //..............................................................................
-
 static PyMethodDef OLEXFS_Methods[] = {
   { "Exists", fsext_pyExists, METH_VARARGS,
   "returns true if specified file exists" },
@@ -483,8 +483,13 @@ static PyMethodDef OLEXFS_Methods[] = {
   "particular persistence level" },
   { NULL, NULL, 0, NULL }
 };
-
-void TFileHandlerManager::PyInit() {
-  PythonExt::init_module("olex_fs", &OLEXFS_Methods[0]);
+//..............................................................................
+olxcstr &TFileHandlerManager::ModuleName() {
+  static olxcstr mn = "olex_fs";
+  return mn;
+}
+//..............................................................................
+PyObject *TFileHandlerManager::PyInit() {
+  return PythonExt::init_module(ModuleName(), &OLEXFS_Methods[0]);
 }
 #endif //_PYTHON

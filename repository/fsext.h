@@ -99,7 +99,8 @@ public:
   static TLibrary* ExportLibrary(const olxstr& name=EmptyString());
 protected:
 #ifdef _PYTHON
-  static void PyInit();
+  static PyObject *PyInit();
+  static olxcstr &ModuleName();
 #endif
 
 };

@@ -253,10 +253,10 @@ PyObject* runRegisterFunction(PyObject* self, PyObject* args) {
       "Parameter must be callable");
   }
   TLibrary *lib = FindOrCreateLibrary(lib_name);
-  if (lib == NULL)
+  if (lib == 0) {
     return PythonExt::SetErrorMsg(PyExc_RuntimeError, __OlxSourceInfo,
       "Olex2 binding python library is not initialised...");
-
+  }
   TFuncWrapper* fw = PythonExt::GetInstance()->AddToDelete(
     new TFuncWrapper(fun, true, profile, decode_keywords));
   try {
@@ -517,9 +517,8 @@ olxcstr PyFuncBody(const olxcstr& olexName, const olxcstr& pyName, char sep,
   }
 }
 //.............................................................................
-PythonExt::PythonExt(IOlex2Processor* olexProcessor, const olxstr &module_name)
-  : module_name(module_name),
-    LogLevel(macrolib::macro_log_macro)
+PythonExt::PythonExt(IOlex2Processor* olexProcessor)
+  : LogLevel(macrolib::macro_log_macro)
 {
   if (Instance() != 0) {
     throw TFunctionFailedException(__OlxSourceInfo, "singleton");
@@ -548,14 +547,45 @@ void PythonExt::ProfileAll() {
   }
 }
 //.............................................................................
+void PythonExt::Register(const olxcstr &name, pyRegFunc regFunc) {
+#if PY_MAJOR_VERSION >= 3
+  if (Py_IsInitialized()) {
+    throw TFunctionFailedException(__OlxSourceInfo, "too late to register!");
+  }
+  PyImport_AppendInittab(name.c_str(), regFunc);
+#else
+  ToRegister.AddCopy(regFunc);
+  if (Py_IsInitialized()) {
+    (*regFunc)();
+  }
+#endif
+}
+//.............................................................................
+olxcstr &PythonExt::ModuleName() {
+  static olxcstr mn = "olex";
+  return mn;
+}
+//.............................................................................
+#if PY_MAJOR_VERSION >= 3
+PyObject *PythonExt::pyInit() {
+  return init_module(ModuleName().c_str(), Methods);
+}
+#endif
+
 void PythonExt::CheckInitialised() {
   if (!Py_IsInitialized()) {
+#if PY_MAJOR_VERSION >= 3
+    PyImport_AppendInittab(ModuleName().c_str(), &PythonExt::pyInit);
+    Py_Initialize();
+#else
     Py_Initialize();
     PyEval_InitThreads();
-    init_module(module_name, Methods);
+    init_module(ModuleName(), Methods);
     for (size_t i = 0; i < ToRegister.Count(); i++) {
       (*ToRegister[i])();
     }
+#endif
+
   }
 }
 //.............................................................................
@@ -591,18 +621,27 @@ int PythonExt::RunPython(const olxstr& script) {
 void ExportLib(const olxstr &_root, const TLibrary& Lib,
   const olxstr &module_name)
 {
-  if (Lib.IsEmpty()) return;
-
+  if (Lib.IsEmpty()) {
+    return;
+  }
   olxstr root = TEFile::AddPathDelimeter(_root);
-  if (!TEFile::Exists(root))
+  if (!TEFile::Exists(root)) {
     TEFile::MakeDir(root);
+  }
   TEFile out(root + "__init__.py", "w+b");
   out.Write("import sys\n");
   out.Write(olxcstr("import ") << module_name << "\n");
+  olxcstr ln = Lib.GetQualifiedName();
+  if (Lib.GetName().IsEmpty()) {
+    ln = "olx";
+  }
+  else {
+    ln = olxcstr("olx.") << ln;
+  }
   for (size_t i = 0; i < Lib.LibraryCount(); i++) {
     TLibrary &lib = *Lib.GetLibraryByIndex(i);
     if (!lib.IsEmpty()) {
-      out.Write(olxcstr("import ") << lib.GetName() << '\n');
+      out.Write(olxcstr("from ") << ln << " import " << lib.GetName() << '\n');
     }
   }
   for (size_t i = 0; i < Lib.FunctionCount(); i++) {
@@ -652,7 +691,7 @@ void PythonExt::funExport(const TStrObjList& Cmds, TMacroData& E) {
     TCStrList l;
     l << TBasicApp::GetModuleMD5Hash();
     TEFile::WriteLines(last_exp_fn, l);
-    ExportLib(Cmds[0], o_r->GetLibrary(), module_name);
+    ExportLib(Cmds[0], o_r->GetLibrary(), ModuleName());
   }
 }
 //.............................................................................
@@ -682,10 +721,9 @@ void PythonExt::macRun(TStrObjList& Cmds, const TParamList &Options,
   }
   olxstr cd = TEFile::CurrentDir();
   TEFile::ChangeDir(TEFile::ExtractFilePath(fn));
-
-  if (RunPython(
-    olxstr("execfile(\'") << TEFile::ExtractFileName(fn) << "\')") == -1)
-  {
+  olxstr py_str = olxstr("exec(open('") <<
+    TEFile::ExtractFileName(fn) << "').read())";
+  if (RunPython(py_str) == -1)  {
     E.ProcessingError(__OlxSrcInfo, "script execution failed");
   }
   TEFile::ChangeDir(cd);

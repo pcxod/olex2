@@ -15,7 +15,7 @@
 
 class OlexPyCore {
 public:
-  static void PyInit();
+  static PyObject *PyInit();
+  static olxcstr &ModuleName();
 };
-
 #endif

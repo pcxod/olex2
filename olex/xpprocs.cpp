@@ -2657,6 +2657,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
     ff.Add("*.mol2", "Tripos MOL2");
     if (!OverlayXFile) {
       ff.Add("*.oxm", "Olex2 model");
+      ff.Add("*.cfx_LANA", "Stoe data file");
     }
     file_n.file_name = PickFile("Open File",
       ff.GetString(),
