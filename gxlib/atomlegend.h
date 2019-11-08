@@ -28,11 +28,18 @@ protected:
   virtual bool DoTranslate(const vec3d& t) { Center += t;  return true; }
   virtual bool DoRotate(const vec3d&, double) { return false; }
   virtual bool DoZoom(double zoom, bool inc) { return false; }
-  const vec3d& GetCenter() const { return Center; }
 public:
   TAtomLegend(TGlRenderer& Render, const olxstr& collectionName);
   void Create(const olxstr& cName = EmptyString());
   void Fit();
+  int GetLeft() const { return Left; }
+  int GetTop() const { return Top; }
+  int GetWidth() const { return Width; }
+  int GetHeight() const { return Height; }
+  const vec3d &GetCenter() const { return Center; }
+
+  const TStrList &GetLabels() const { return text; }
+  const TArrayList<TGlMaterial> &GetMaterials() const { return materials; }
   virtual bool Orient(TGlPrimitive& P);
   virtual bool GetDimensions(vec3d &, vec3d &) { return false; }
   bool OnMouseUp(const IOlxObject *Sender, const TMouseData& Data);

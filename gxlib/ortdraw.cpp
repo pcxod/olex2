@@ -16,6 +16,7 @@
 #include "dunitcell.h"
 #include "dbasis.h"
 #include "xgrid.h"
+#include "atomlegend.h"
 #include "conrec.h"
 #include "sfutil.h"
 #include "unitcell.h"
@@ -1281,21 +1282,37 @@ void OrtDraw::Render(const olxstr& fileName) {
         p -= center;
         p *= c2c;
         data[i][j] = map_getter.Get(p);
-        if (data[i][j] < minZ) minZ = data[i][j];
-        if (data[i][j] > maxZ) maxZ = data[i][j];
+        olx_update_min_max(data[i][j], minZ, maxZ);
       }
     }
     float contour_step = (maxZ - minZ) / (contour_cnt - 1);
     z[0] = minZ;
-    for (size_t i = 1; i < contour_cnt; i++)
+    for (size_t i = 1; i < contour_cnt; i++) {
       z[i] = z[i - 1] + contour_step;
+    }
     cm.DoContour(data, 0, (int)MaxDim - 1, 0, (int)MaxDim - 1, x, y,
       contour_cnt, z, mf);
-    for (size_t i = 0; i < MaxDim; i++)
+    for (size_t i = 0; i < MaxDim; i++) {
       delete[] data[i];
+    }
   }
   QuickSorter::SortSF(objects, OrtObjectsZSort);
-
+  if (app.AtomLegend().IsVisible()) {
+    const TAtomLegend &al = app.AtomLegend();
+    for (size_t i = 0; i < al.GetMaterials().Count(); i++) {
+      vec3f c = al.GetCenter();
+      c[0] += al.GetLeft();
+      c[1] += al.GetParent().GetHeight() - al.GetTop();
+      //c = c  + DrawOrigin;
+      c[1] -= DrawScale * 0.42f*i;
+      ort_circle *cr = new ort_circle(*this, c, DrawScale*0.2f, true);
+      cr->color = al.GetMaterials()[i].AmbientF.GetRGB();
+      objects.Add(cr);
+      cr = new ort_circle(*this, c, DrawScale*0.2f, false);
+      cr->color = 0;
+      objects.Add(cr);
+    }
+  }
   for (size_t i = 0; i < objects.Count(); i++) {
     objects[i].render(pw);
   }
@@ -1363,8 +1380,9 @@ void OrtDraw::Render(const olxstr& fileName) {
       uint32_t color = 0;
       TGlMaterial* glm =
         Labels[i]->GetPrimitives().GetStyle().FindMaterial("Text");
-      if (glm != NULL)
+      if (glm != 0) {
         color = glm->AmbientF.GetRGB();
+      }
       pw.color(color);
       if (glf.IsVectorFont()) {
         const float font_scale = (float)(DrawScale / app.GetRenderer().CalcZoom());
