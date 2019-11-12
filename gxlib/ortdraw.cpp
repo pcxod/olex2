@@ -1299,16 +1299,18 @@ void OrtDraw::Render(const olxstr& fileName) {
   QuickSorter::SortSF(objects, OrtObjectsZSort);
   if (app.AtomLegend().IsVisible()) {
     const TAtomLegend &al = app.AtomLegend();
+    TGlFont &glf = al.GetParent().GetScene().GetFont(
+      al.GetParent().GetScene().FindFontIndexForType<TXAtom>(), true);
     for (size_t i = 0; i < al.GetMaterials().Count(); i++) {
       vec3f c = al.GetCenter();
       c[0] += al.GetLeft();
       c[1] += al.GetParent().GetHeight() - al.GetTop();
-      //c = c  + DrawOrigin;
-      c[1] -= DrawScale * 0.42f*i;
-      ort_circle *cr = new ort_circle(*this, c, DrawScale*0.2f, true);
+      c[1] -= glf.GetMaxHeight()*i * 1.05f;
+      c[2] = -0.01f;
+      ort_circle *cr = new ort_circle(*this, c, glf.GetMaxHeight()/2, true);
       cr->color = al.GetMaterials()[i].AmbientF.GetRGB();
       objects.Add(cr);
-      cr = new ort_circle(*this, c, DrawScale*0.2f, false);
+      cr = new ort_circle(*this, c, glf.GetMaxHeight() / 2, false);
       cr->color = 0;
       objects.Add(cr);
     }
@@ -1408,6 +1410,29 @@ void OrtDraw::Render(const olxstr& fileName) {
         vec3f rp = Labels[i]->GetRasterPosition();
         rp[1] += 4;
         pw.drawText(Labels[i]->GetLabel(), rp + DrawOrigin);
+      }
+    }
+    TAtomLegend &al = app.AtomLegend();
+    if (al.IsVisible()) {
+      TGlFont &glf = al.GetParent().GetScene().GetFont(
+        al.GetParent().GetScene().FindFontIndexForType<TXAtom>(), true);
+      const float font_scale = (float)(DrawScale / app.GetRenderer().CalcZoom());
+      for (size_t i = 0; i < al.GetLabels().Count(); i++) {
+        vec3f c = al.GetCenter();
+        c[0] += al.GetLeft() + glf.GetMaxHeight() / 2;
+        c[1] += al.GetParent().GetHeight() - al.GetTop();
+        c[1] -= glf.GetMaxHeight() * i * 1.05f;
+        c[1] -= glf.GetMaxHeight() / 2.5f;
+        if (glf.IsVectorFont()) {
+          output.AddAll(
+            glf.RenderPSLabel(
+              c, al.GetLabels()[i], font_scale, context)
+          );
+        }
+        else {
+          c[1] += 4;
+          pw.drawText(al.GetLabels()[i], c);
+        }
       }
     }
     if (!output.IsEmpty()) {
