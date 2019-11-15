@@ -234,7 +234,6 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
     //xapp.XFile().GetRM().DetwinRatio(refs, F, ms, info_ex);
     //xapp.XFile().GetRM().DetwinAlgebraic(refs, ms, info_ex);
 
-    xapp.XFile().GetRM().CorrectExtiForF(refs, F, sp);
     sw.start("Scaling structure factors");
     if (mapType != mapTypeCalc) {
       // find a linear scale between F
@@ -254,10 +253,16 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
         if (TBasicApp::GetInstance().IsProfiling())
           TBasicApp::NewLogEntry(logInfo) << "Fc^2 = " << k << "*Fo^2";
       }
+      RefinementModel::EXTI::Shelxl cr = rm.GetShelxEXTICorrector();
+      bool apply_ext = cr.IsValid();
       const size_t f_cnt = F.Count();
       for (size_t i=0; i < f_cnt; i++) {
         const TReflection &r = refs[i];
-        double dI = r.GetI() < 0 ? 0 : sqrt(r.GetI());
+        double I = r.GetI();
+        if (apply_ext) {
+          F[i] *= cr.CalcForF(r.GetHkl(), F[i].qmod());
+        }
+        double dI = I < 0 ? 0 : sqrt(I);
         dI *= k;
         if (scaleType == scaleRegression) {
           dI += a;
@@ -279,69 +284,70 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
   return EmptyString();
 }
 //..............................................................................
-void SFUtil::PrepareCalcSF(const TAsymmUnit& au, double* U, ElementPList& scatterers,
+void SFUtil::PrepareCalcSF(const TAsymmUnit& au, double* U,
+  TTypeList<XScatterer>& scatterers, ElementPList &types,
   TCAtomPList& alist)
 {
   const mat3d& hkl2c = au.GetHklToCartesian();
   double quad[6];
   // the thermal ellipsoid scaling factors
-  double BM[6] = {hkl2c[0].Length(), hkl2c[1].Length(), hkl2c[2].Length(), 0, 0, 0};
-  BM[3] = 2*BM[1]*BM[2];
-  BM[4] = 2*BM[0]*BM[2];
-  BM[5] = 2*BM[0]*BM[1];
+  double BM[6] = { hkl2c[0].Length(), hkl2c[1].Length(), hkl2c[2].Length(), 0, 0, 0 };
+  BM[3] = 2 * BM[1] * BM[2];
+  BM[4] = 2 * BM[0] * BM[2];
+  BM[5] = 2 * BM[0] * BM[1];
   BM[0] *= BM[0];
   BM[1] *= BM[1];
   BM[2] *= BM[2];
-
   au.GetAtoms().ForEach(ACollectionItem::TagSetter(0));
   if (au.GetRefMod() && !au.GetRefMod()->OmittedAtoms().IsEmpty()) {
     TTypeList<ExplicitCAtomRef> l =
       au.GetRefMod()->OmittedAtoms().ExpandList(*au.GetRefMod());
-    for (size_t i=0; i < l.Count(); i++)
+    for (size_t i = 0; i < l.Count(); i++) {
       l[i].GetAtom().SetTag(1);
+    }
   }
-  for( size_t i=0; i < au.AtomCount(); i++ )  {
+  for (size_t i = 0; i < au.AtomCount(); i++) {
     TCAtom& ca = au.GetAtom(i);
-    if (ca.IsDeleted() || ca.GetType() == iQPeakZ || ca.GetTag() != 0)
+    if (ca.IsDeleted() || ca.GetType() == iQPeakZ || ca.GetTag() != 0) {
       continue;
-    size_t ind = scatterers.IndexOf(ca.GetType());
-    if( ind == InvalidIndex )  {
-      scatterers.Add(ca.GetType());
-      ind = scatterers.Count() - 1;
+    }
+    size_t ind = types.IndexOf(ca.GetType());
+    if (ind == InvalidIndex) {
+      types.Add(ca.GetType());
+      scatterers.AddNew(ca.GetType().symbol);
+      ind = types.Count() - 1;
     }
     ca.SetTag(ind);
-    ind = alist.Count()*6;
+    ind = alist.Count() * 6;
     alist.Add(&ca);
     TEllipsoid* elp = ca.GetEllipsoid();
-    if( elp != NULL )  {
+    if (elp != 0) {
       elp->GetShelxQuad(quad);  // default is Ucart
       au.UcartToUcif(quad);
-      for( int k=0; k < 6; k++ )
-        U[ind+k] = -TQ_PI*quad[k]*BM[k];
+      for (int k = 0; k < 6; k++) {
+        U[ind + k] = -TQ_PI * quad[k] * BM[k];
+      }
     }
-    else
-      U[ind] = -EQ_PI*ca.GetUiso();
+    else {
+      U[ind] = -EQ_PI * ca.GetUiso();
+    }
   }
 }
 //..............................................................................
 void SFUtil::_CalcSF(const TXFile& xfile, const IMillerIndexList& refs,
   TArrayList<TEComplex<double> >& F, bool UseFdp)
 {
-  TSpaceGroup* sg = NULL;
-  try  { sg = &xfile.GetLastLoaderSG();  }
-  catch(...)  {
-    throw TFunctionFailedException(__OlxSourceInfo, "unknown space group");
-  }
-  olx_object_ptr<ISF_Util> sf_util = GetSF_Util_Instance(*sg);
+  TSpaceGroup &sg = xfile.GetLastLoaderSG();
+  olx_object_ptr<ISF_Util> sf_util = GetSF_Util_Instance(sg);
   if (!sf_util.is_valid()) {
     throw TFunctionFailedException(__OlxSourceInfo, "invalid space group");
   }
   TAsymmUnit& au = xfile.GetAsymmUnit();
   olx_array_ptr<double> U = new double[6*au.AtomCount() + 1];
   TPtrList<TCAtom> alist;
-  ElementPList scatterers;
-  PrepareCalcSF(au, U, scatterers, alist);
-  TArrayList<compd> fpfdp(scatterers.Count(), olx_list_init::zero());
+  TTypeList<XScatterer> scatterers;
+  ElementPList types;
+  PrepareCalcSF(au, U, scatterers, types, alist);
   const double ev = xfile.GetRM().expl.GetRadiationEnergy();
   olxstr_dict<XScatterer *, true> scs;
   for (size_t i=0; i < xfile.GetRM().SfacCount(); i++) {
@@ -349,24 +355,31 @@ void SFUtil::_CalcSF(const TXFile& xfile, const IMillerIndexList& refs,
     scs(sc.GetLabel(), &sc);
   }
   for (size_t i=0; i < scatterers.Count(); i++) {
-    XScatterer *xs = scs.Find(scatterers[i]->symbol, NULL);
-    if (xs == NULL) {
-      fpfdp[i] = scatterers[i]->CalcFpFdp(ev);
-      fpfdp[i] -= scatterers[i]->z;
+    XScatterer *xs = scs.Find(scatterers[i].GetLabel(), 0);
+    if (xs == 0) {
+      scatterers[i].SetSource(*types[i], ev);
     }
     else {
-      fpfdp[i] = xs->GetFpFdp();
+      if (xs->IsSet(XScatterer::setGaussian)) {
+        scatterers[i].SetGaussians(xs->GetGaussians());
+      }
+      else {
+        scatterers[i].SetGaussians(*types[i]->gaussians);
+      }
+      if (!UseFdp) {
+        scatterers[i].SetFpFdp(xs->GetFpFdp().GetRe());
+      }
+      else {
+        scatterers[i].SetFpFdp(xs->GetFpFdp());
+      }
     }
-    if (!UseFdp)
-      fpfdp[i].SetIm(0);
   }
   sf_util().Calculate(
     refs,
     au.GetHklToCartesian(),
     F, scatterers,
     alist,
-    U,
-    fpfdp
+    U
   );
   // apply modifications
   try {

@@ -25,12 +25,12 @@ class XScatterer {
   short set_items;
 public:
   static const short
-    setGaussian   = 0x0001,
+    setGaussian = 0x0001,
     setDispersion = 0x0002,
-    setMu         = 0x0004,
-    setR          = 0x0008,
-    setWt         = 0x0010,
-    setAll = setGaussian|setDispersion|setMu|setR|setWt;
+    setMu = 0x0004,
+    setR = 0x0008,
+    setWt = 0x0010,
+    setAll = setGaussian | setDispersion | setMu | setR | setWt;
   // creates a dummy scatterer
   XScatterer(const olxstr& lbl)
     : mu(0), wt(0), r(0), source(NULL), Label(lbl), set_items(0)
@@ -82,29 +82,32 @@ public:
     }
     return false;
   }
-  const compd& GetFpFdp() const {  return fpfdp;  }
+  const compd& GetFpFdp() const { return fpfdp; }
   // sets custom bonding radius
-  void SetR(double v)  {
+  void SetR(double v) {
     r = v;
     set_items |= setR;
   }
-  double GetR() const {  return r;  }
+  double GetR() const { return r; }
   // sets custom molecular weight
-  void SetWeight(double v)  {
+  void SetWeight(double v) {
     wt = v;
     set_items |= setWt;
   }
-  double GetWeight() const {  return wt;  }
+  double GetWeight() const { return wt; }
   // sets custom adsorption coefficient
-  void SetMu(double v)  {
+  void SetMu(double v) {
     mu = v;
     set_items |= setMu;
   }
-  double GetMu() const {  return mu;  }
+  double GetMu() const { return mu; }
   // sets custom gaussians
-  void SetGaussians(const cm_Gaussians& g)  {
+  void SetGaussians(const cm_Gaussians& g) {
     gaussians = g;
     set_items |= setGaussian;
+  }
+  const cm_Gaussians &GetGaussians() const {
+    return gaussians;
   }
   bool IsSet(short what) const { return (set_items&what) != 0; }
   DefPropC(olxstr, Label)
@@ -116,9 +119,11 @@ public:
   compd calc_sq_anomalous(double sqv) const {
     return compd(gaussians.calc_sq(sqv) + fpfdp.GetRe(), fpfdp.GetIm());
   }
-  bool IsSFAC() const {  return (set_items == setAll);  }
-  bool IsDISP() const {  return (set_items == setDispersion ||
-    set_items == (setDispersion|setMu));  }
+  bool IsSFAC() const { return (set_items == setAll); }
+  bool IsDISP() const {
+    return (set_items == setDispersion ||
+      set_items == (setDispersion | setMu));
+  }
   void ToDataItem(TDataItem& _di) const;
   void FromDataItem(const TDataItem& di);
 #ifdef _PYTHON

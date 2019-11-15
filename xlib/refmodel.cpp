@@ -2564,6 +2564,15 @@ olxstr RefinementModel::GetHKLFStr() const {
   return rv;
 }
 //..............................................................................
+RefinementModel::EXTI::Shelxl RefinementModel::GetShelxEXTICorrector() const {
+  if (!Vars.HasEXTI()) {
+    return EXTI::Shelxl(0, 0, mat3d());
+  }
+  return EXTI::Shelxl(expl.GetRadiation(),
+    Vars.GetEXTI().GetValue(),
+    aunit.GetHklToCartesian());
+}
+//..............................................................................
 //..............................................................................
 //..............................................................................
 void RefinementModel::LibHasOccu(const TStrObjList& Params,

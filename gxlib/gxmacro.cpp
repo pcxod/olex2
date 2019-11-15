@@ -782,9 +782,8 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
       E.ProcessingError(__OlxSrcInfo, "Invalid combination of arguments");
       return;
     }
-    TArrayList<compd> F1;
-    F1.SetCount(refs.Count());
-    app.CalcSF(refs, F1);
+    TArrayList<compd> F1(refs.Count());
+    SFUtil::CalcSF(app.XFile(), refs, F1);
     if (F1.Count() != F.Count()) {
       E.ProcessingError(__OlxSrcInfo, "F arrays mismatch");
       return;
@@ -2239,8 +2238,8 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
     }
     for (size_t i=0; i < fi.Count(); i++) {
       TXFile *f = 0;
-      if (i < app.XFiles().Count()) {
-        f = &app.XFiles()[i];
+      if (fi[i] < app.XFiles().Count()) {
+        f = &app.XFiles()[fi[i]];
       }
       if (f == 0) {
         continue;

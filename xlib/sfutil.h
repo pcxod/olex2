@@ -14,6 +14,7 @@
 #include "fastsymm.h"
 #include "symmlib.h"
 #include "chemdata.h"
+#include "xscatterer.h"
 #include "olxmps.h"
 BeginXlibNamespace()
 
@@ -58,16 +59,18 @@ namespace SFUtil {
     */
     virtual void Calculate(const IMillerIndexList& refs,
       const mat3d& hkl2c, TArrayList<compd>& F,
-      const ElementPList& scatterers, const TCAtomPList& atoms,
-      const double* U,
-      const TArrayList<compd> &fpfdp) const = 0;
+      const TTypeList<XScatterer>& scatterers,
+      const TCAtomPList& atoms,
+      const double* U) const = 0;
     virtual size_t GetSGOrder() const = 0;
   };
 
 
   // for internal use
   void PrepareCalcSF(const TAsymmUnit& au, double* U,
-    ElementPList& scatterers, TCAtomPList& alist);
+    TTypeList<XScatterer>& scatterers,
+    ElementPList &types,
+    TCAtomPList& alist);
   /* calculates the scale sum(Fc)/sum(Fo) Fc = k*Fo. Can accept a list of
   doubles (Fo)
   */
@@ -243,22 +246,21 @@ namespace SFUtil {
       const IMillerIndexList& refs;
       const mat3d& hkl2c;
       TArrayList<compd>& F;
-      const ElementPList& scatterers;
+      const TTypeList<XScatterer>& scatterers;
       const TCAtomPList& atoms;
       const double* U;
       TArrayList<vec3i> rv;
       TArrayList<double> ps;
       TArrayList<compd> fo;
-      const TArrayList<compd>& fpfdp;
       SFCalculateTask(const SF_Util& _parent, const IMillerIndexList& _refs,
         const mat3d& _hkl2c,
-        TArrayList<compd>& _F, const ElementPList& _scatterers,
-        const TCAtomPList& _atoms, const double* _U,
-        const TArrayList<compd>& _fpfdp)
+        TArrayList<compd>& _F,
+        const TTypeList<XScatterer>& _scatterers,
+        const TCAtomPList& _atoms, const double* _U)
         : parent(_parent), refs(_refs), hkl2c(_hkl2c), F(_F),
         scatterers(_scatterers), atoms(_atoms), U(_U),
         rv(_parent._getusize()), ps(_parent._getusize()),
-        fo(_scatterers.Count()), fpfdp(_fpfdp)
+        fo(_scatterers.Count())
       {}
       virtual ~SFCalculateTask() {}
       void Run(size_t i) {
@@ -266,8 +268,7 @@ namespace SFUtil {
         const double d_s2 = TReflection::ToCart(hkl, hkl2c).QLength()*0.25;
         parent._generateu(hkl, rv, ps);
         for (size_t j = 0; j < scatterers.Count(); j++) {
-          fo[j] = scatterers[j]->gaussians->calc_sq(d_s2);
-          fo[j] += fpfdp[j];
+          fo[j] = scatterers[j].calc_sq_anomalous(d_s2);
         }
         if (centro) {
           compd ir = 0;
@@ -332,7 +333,7 @@ namespace SFUtil {
         }
       }
       SFCalculateTask* Replicate() const {
-        return new SFCalculateTask(parent, refs, hkl2c, F, scatterers, atoms, U, fpfdp);
+        return new SFCalculateTask(parent, refs, hkl2c, F, scatterers, atoms, U);
       }
     };
   public:
@@ -373,20 +374,17 @@ namespace SFUtil {
     }
     virtual void Calculate(const IMillerIndexList& refs,
       const mat3d& hkl2c, TArrayList<compd>& F,
-      const ElementPList& scatterers, const TCAtomPList& atoms,
-      const double* U,
-      const TArrayList<compd> &fpfdp_) const
+      const TTypeList<XScatterer>& scatterers, const TCAtomPList& atoms,
+      const double* U) const
     {
-      TArrayList<compd> fpfdp(fpfdp_);
-      fpfdp.SetCount(scatterers.Count(), olx_list_init::zero());
       if (centrosymmetric) {
         SFCalculateTask<TRefList, true> task(*this, refs, hkl2c, F, scatterers,
-          atoms, U, fpfdp);
+          atoms, U);
         OlxListTask::Run(task, refs.Count(), tLinearTask, 50);
       }
       else {
         SFCalculateTask<TRefList, false> task(*this, refs, hkl2c, F,
-          scatterers, atoms, U, fpfdp);
+          scatterers, atoms, U);
         OlxListTask::Run(task, refs.Count(), tLinearTask, 50);
       }
     }

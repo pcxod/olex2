@@ -5275,8 +5275,6 @@ void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options,
   }
   if (!convert) {
     F.SetCount(refs.Count());
-    //xapp.CalcSF(refs, F);
-    //SFUtil::CalcSF(xapp.XFile(), refs, F, xapp.XFile().GetRM().GetMERG() != 4);
     SFUtil::CalcSF(xapp.XFile(), refs, F);
   }
   double scale_k = 1, scale_a = 0;
@@ -5296,6 +5294,7 @@ void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options,
     Error.ProcessingError(__OlxSrcInfo, olxstr("unsupported scale: ") << scale_str);
     return;
   }
+
   TCifDP fcf_dp;
   CifBlock& cif_data = fcf_dp.Add(
     TEFile::ExtractFileName(fn).Replace(' ', EmptyString()));
@@ -5329,11 +5328,19 @@ void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options,
 
   cetTable* ref_tab = new cetTable(col_names);
   cif_data.Add(ref_tab);
-
+  const RefinementModel &rm = xapp.XFile().GetRM();
+  RefinementModel::EXTI::Shelxl cr = rm.GetShelxEXTICorrector();
+  double exti = cr.IsValid();
   for (size_t i = 0; i < refs.Count(); i++) {
     TReflection& r = refs[i];
-    const double Fo2 = r.GetI()*scale_k + scale_a;
-    const double sigFo2 = r.GetS()*scale_k;
+    double Fo2 = r.GetI()*scale_k + scale_a;
+    double sigFo2 = r.GetS()*scale_k;
+    double Fo_sq = F[i].qmod();
+    if (exti != 0) {
+      double k = cr.CalcForF2(refs[i].GetHkl(), Fo_sq);
+      Fo2 *= k;
+      sigFo2 *= k;
+    }
     CifRow& row = ref_tab->AddRow();
     row[0] = new cetString(r.GetH());
     row[1] = new cetString(r.GetK());
@@ -5357,7 +5364,7 @@ void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options,
       row[6] = new cetString(sp.IsCentrosymmetric() ? 0.0 : F[i].Im());
     }
     else if (list_n == 4) {
-      row[3] = new cetString(olxstr::FormatFloat(2, F[i].qmod()));
+      row[3] = new cetString(olxstr::FormatFloat(2, Fo_sq));
       row[4] = new cetString(olxstr::FormatFloat(2, Fo2));
       row[5] = new cetString(olxstr::FormatFloat(2, sigFo2));
       row[6] = new cetString('o');

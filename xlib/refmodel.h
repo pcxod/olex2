@@ -634,42 +634,6 @@ Friedel opposites of components 1 ... m
   // convinience method for mrehedral::detwin<> with  detwin_shelx
   void DetwinShelx(TRefList& refs, const TArrayList<compd>& F,
     const HklStat& st, const SymmSpace::InfoEx& info_ex) const;
-  template <class RefList, class FList, class SymSpace>
-  void CorrectExtiForF(const RefList& refs, FList& F, const SymSpace& sp) const
-  {
-    if (!Vars.HasEXTI() || Vars.GetEXTI().GetValue() == 0) {
-      return;
-    }
-    if (refs.Count() != F.Count()) {
-      throw TInvalidArgumentException(__OlxSrcInfo, "arrays size");
-    }
-    const double l = expl.GetRadiation(),
-      k = 0.0005*Vars.GetEXTI().GetValue()*l*l*l, lsqo4 = l*l/4;
-    for (size_t i=0; i < refs.Count(); i++) {
-      const double x =
-        sp.HklToCart(TReflection::GetHkl(refs[i])).QLength()*lsqo4;
-      F[i] *=
-        pow(1+F[i].qmod()*k/sqrt(olx_max(0,x*(1-x))), -0.25);
-    }
-  }
-  template <class RefList, class FsqList, class SymSpace>
-  void CorrectExtiForFsq(const RefList& refs, FsqList& Fsq,
-    const SymSpace& sp) const
-  {
-    if (!Vars.HasEXTI() || Vars.GetEXTI().GetValue() == 0) {
-      return;
-    }
-    if (refs.Count() != Fsq.Count()) {
-      throw TInvalidArgumentException(__OlxSrcInfo, "arrays size");
-    }
-    const double l = expl.GetRadiation(),
-      k = 0.0005*Vars.GetEXTI().GetValue()*l*l*l, lsqo4 = l*l/4;
-    for (size_t i=0; i < refs.Count(); i++) {
-      const double x =
-        sp.HklToCart(TReflection::GetHkl(refs[i])).QLength()*lsqo4;
-      Fsq[i] /= sqrt(1+Fsq[i]*k/sqrt(olx_max(0,x*(1-x))));
-    }
-  }
   // returns the number of pairs
   int GetFriedelPairCount() const {
     GetReflections();
@@ -731,6 +695,48 @@ Friedel opposites of components 1 ... m
     TPtrList<TSameGroup> sameList;
     //TPtrList<XLEQ> equations;
   };
+  
+  // EXTI stuff
+  struct EXTI {
+    static vec3d HklToCart(const vec3i& mi, const mat3d &hkl2cart) {
+      return vec3d(
+        mi[0] * hkl2cart[0][0],
+        mi[0] * hkl2cart[0][1] + mi[1] * hkl2cart[1][1],
+        mi[0] * hkl2cart[0][2] + mi[1] * hkl2cart[1][2] + mi[2] * hkl2cart[2][2]
+      );
+    }
+    struct Shelxl {
+      const double l_sq_o_4, k;
+      const mat3d hkl2cart;
+      Shelxl(double l, double x, const mat3d &hkl2cart)
+        : l_sq_o_4(l*l*0.25), k(l*l*l*x*0.001 / 2), hkl2cart(hkl2cart)
+      {}
+      double CalcForF2(const vec3i &mi, double Fc_sq) const {
+        const double x = EXTI::HklToCart(mi, hkl2cart).QLength()*l_sq_o_4;
+        return sqrt(1 + Fc_sq * k / sqrt(x*(1 - x)));
+      }
+      double CalcForF(const vec3i &mi, double Fc_sq) const {
+        const double x = EXTI::HklToCart(mi, hkl2cart).QLength()*l_sq_o_4;
+        return pow(1 + Fc_sq * k / sqrt(x*(1 - x)), -0.25);
+      }
+      bool IsValid() const { return k != 0; }
+    };
+
+    template <class RefList, class FList, class Corrector>
+    static void CorrectF(const RefList& refs, FList& F, const Corrector& cr) {
+      if (!cr.IsValid()) {
+        return;
+      }
+      if (refs.Count() != F.Count()) {
+        throw TInvalidArgumentException(__OlxSrcInfo, "arrays size");
+      }
+      for (size_t i = 0; i < refs.Count(); i++) {
+        F[i] *= cr.CalcForF(TReflection::GetHkl(refs[i]), F[i].qmod());
+      }
+    }
+  };
+
+  EXTI::Shelxl GetShelxEXTICorrector() const;
 };
 
 EndXlibNamespace()

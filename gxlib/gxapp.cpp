@@ -880,6 +880,7 @@ olxstr TGXApp::GetSelectionInfo(bool list) const {
     TGlGroup& Sel = GlRenderer->GetSelection();
     if (list) {
       TStrList rv;
+      TDoubleList lengths;
       for (size_t i = 0; i < Sel.Count(); i++) {
         if (!Sel[i].Is<TXBond>()) {
           continue;
@@ -891,6 +892,16 @@ olxstr TGXApp::GetSelectionInfo(bool list) const {
             b.A(), b.B());
         }
         rv << macSel_FormatDistance(b.A(), b.B(), b.Length(), cv);
+        lengths.Add(b.Length());
+      }
+      if (lengths.Count() > 1) {
+        double mean = olx_sum(lengths)/lengths.Count();
+        double s_diff = 0;
+        for (size_t i = 0; i < lengths.Count(); i++) {
+          s_diff += olx_sqr(lengths[i] - mean);
+        }
+        double sig = sqrt(s_diff / lengths.Count());
+        rv.Add("Mean/s.u.: ") << TEValueD(mean, sig).ToString();
       }
       return rv.Text(NewLineSequence());
     }
