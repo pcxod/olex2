@@ -422,7 +422,7 @@ void SFUtil::_CalcSF(const TXFile& xfile, const IMillerIndexList& refs,
           }
           if (!missing.IsEmpty()) {
             TBasicApp::NewLogEntry(logError) << "Missing modifications for the"
-              " following reflecrions";
+              " following reflections";
             TBasicApp::NewLogEntry(logError) << missing;
           }
         }

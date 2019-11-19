@@ -94,7 +94,7 @@ PyObject* hkl_py::Write(PyObject* self, PyObject* args)  {
   catch (const TExceptionBase &e) {
     error = e.GetException()->GetError();
   }
-  if (error.IsEmpty()) {
+  if (!error.IsEmpty()) {
     return PythonExt::SetErrorMsg(PyExc_IOError, __OlxSourceInfo,
       olxstr("Failed to save the HKL file: ") << fn << '\n' << error);
   }

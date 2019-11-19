@@ -619,7 +619,7 @@ int PythonExt::RunPython(const olxstr& script) {
 }
 //.............................................................................
 void ExportLib(const olxstr &_root, const TLibrary& Lib,
-  const olxstr &module_name)
+  const olxstr &module_name, const olxcstr &py_module_name)
 {
   if (Lib.IsEmpty()) {
     return;
@@ -633,10 +633,10 @@ void ExportLib(const olxstr &_root, const TLibrary& Lib,
   out.Write(olxcstr("import ") << module_name << "\n");
   olxcstr ln = Lib.GetQualifiedName();
   if (Lib.GetName().IsEmpty()) {
-    ln = "olx";
+    ln = py_module_name;
   }
   else {
-    ln = olxcstr("olx.") << ln;
+    ln = olxcstr(py_module_name) << "." << ln;
   }
   for (size_t i = 0; i < Lib.LibraryCount(); i++) {
     TLibrary &lib = *Lib.GetLibraryByIndex(i);
@@ -664,7 +664,7 @@ void ExportLib(const olxstr &_root, const TLibrary& Lib,
   }
   for (size_t i = 0; i < Lib.LibraryCount(); i++) {
     TLibrary &lib = *Lib.GetLibraryByIndex(i);
-    ExportLib(root + lib.GetName(), lib, module_name);
+    ExportLib(root + lib.GetName(), lib, module_name, py_module_name);
   }
 }
 //.............................................................................
@@ -680,6 +680,11 @@ void PythonExt::funExport(const TStrObjList& Cmds, TMacroData& E) {
   if (TEFile::Exists(Cmds[0] + ".pyc")) {
     TEFile::DelFile(Cmds[0] + ".pyc");
   }
+  olxcstr py_module_name;
+  {
+    TStrList ft(TEFile::TrimPathDelimeter(Cmds[0]), TEFile::GetPathDelimeter());
+    py_module_name = ft.GetLastString();
+  }
   bool do_export = true;
   olxstr last_exp_fn = Cmds[0] + ".cache";
   if (TEFile::Exists(last_exp_fn)) {
@@ -691,7 +696,7 @@ void PythonExt::funExport(const TStrObjList& Cmds, TMacroData& E) {
     TCStrList l;
     l << TBasicApp::GetModuleMD5Hash();
     TEFile::WriteLines(last_exp_fn, l);
-    ExportLib(Cmds[0], o_r->GetLibrary(), ModuleName());
+    ExportLib(Cmds[0], o_r->GetLibrary(), ModuleName(), py_module_name);
   }
 }
 //.............................................................................
