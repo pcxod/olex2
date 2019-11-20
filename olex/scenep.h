@@ -18,11 +18,12 @@ private:
   wxCheckBox *cbEnabled, *cbUniform;
   TSpinCtrl *scSCO, *scAmbA, *scDiffA, *scSpecA, *scSExp;
   TTrackBar *tbX, *tbY, *tbZ, *tbR;
-  TTextEdit *teAmb, *teDiff, *teSpec, *teSCX, *teSCY, *teSCZ, *teAA, *teAB, *teAC;
+  TColorCtrl *teAmb, *teDiff, *teSpec;
+  TTextEdit *teSCX, *teSCY, *teSCZ, *teAA, *teAB, *teAC;
   TTextEdit *teX, *teY, *teZ, *teR;
   // light model
   wxCheckBox *cbLocalV, *cbTwoSide, *cbSmooth;
-  TTextEdit *tcAmbLM, *tcBgClr;
+  TColorCtrl *tcAmbLM, *tcBgClr;
   TButton* tbEditFont;
   TComboBox *cbLights, *cbFonts;
   TGlOption ConsoleFontColor, NotesFontColor, LabelsFontColor, XColor;

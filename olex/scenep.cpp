@@ -22,8 +22,9 @@
 #endif
 
 //..............................................................................
-TdlgSceneProps::TdlgSceneProps(TMainFrame *ParentFrame) :
-  TDialog(ParentFrame, wxT("Scene Parameters"), EsdlClassName(TdlgSceneProps).u_str() )
+TdlgSceneProps::TdlgSceneProps(TMainFrame *ParentFrame)
+  : TDialog(ParentFrame, wxT("Scene Parameters"),
+    EsdlClassName(TdlgSceneProps).u_str() )
 {
   AActionHandler::SetToDelete(false);
   short Border = 2;
@@ -96,21 +97,14 @@ TdlgSceneProps::TdlgSceneProps(TMainFrame *ParentFrame) :
   wxStaticText *sttransparency = new wxStaticText(wxComp(boxLC, this), -1, wxT("Transparency"));
 
   wxStaticText *stAmb = new wxStaticText(wxComp(boxLC, this), -1, wxT("Ambient"));
-  teAmb = new TTextEdit(wxComp(boxLC, this));
-    teAmb->SetReadOnly(true);
-    teAmb->OnClick.Add(this);
+  teAmb = new TColorCtrl(wxComp(boxLC, this));
   scAmbA = new TSpinCtrl(wxComp(boxLC, this));
   wxStaticText *stDiff = new wxStaticText(wxComp(boxLC, this), -1, wxT("Diffuse"));
-  teDiff = new TTextEdit(wxComp(boxLC, this));
-    teDiff->SetReadOnly(true);
-    teDiff->OnClick.Add(this);
-  //teDiff = new wxColourPickerCtrl(this, -1); //teDiff->OnClick.Add(this);
+  teDiff = new TColorCtrl(wxComp(boxLC, this));
   scDiffA = new TSpinCtrl(wxComp(boxLC, this));
 
   wxStaticText *stSpec = new wxStaticText(wxComp(boxLC, this), -1, wxT("Specular"));
-  teSpec  = new TTextEdit(wxComp(boxLC, this));
-    teSpec->SetReadOnly(true);
-    teSpec->OnClick.Add(this);
+  teSpec  = new TColorCtrl(wxComp(boxLC, this));
   scSpecA = new TSpinCtrl(wxComp(boxLC, this));
   wxStaticText *stSExp = new wxStaticText(wxComp(boxLC, this), -1, wxT("Spot exponent"));
   scSExp = new TSpinCtrl(wxComp(boxLC, this));
@@ -220,12 +214,9 @@ TdlgSceneProps::TdlgSceneProps(TMainFrame *ParentFrame) :
   cbLocalV = new wxCheckBox(wxComp(boxLM, this), -1, wxT("Local viewer"));
   cbTwoSide = new wxCheckBox(wxComp(boxLM, this), -1, wxT("Two side"));
   cbSmooth = new wxCheckBox(wxComp(boxLM, this), -1, wxT("Smooth shade"));
-  tcAmbLM = new TTextEdit(wxComp(boxLM, this));
-    tcAmbLM->SetReadOnly(true);
-    tcAmbLM->OnClick.Add(this);
+  tcAmbLM = new TColorCtrl(wxComp(boxLM, this));
   wxStaticText *stAmbLM = new wxStaticText(wxComp(boxLM, this), -1, wxT("Ambient color"));
-  tcBgClr = new TTextEdit(wxComp(boxLM, this)); tcBgClr->SetReadOnly(true);
-    tcBgClr->OnClick.Add(this);
+  tcBgClr = new TColorCtrl(wxComp(boxLM, this)); tcBgClr->SetReadOnly(true);
   wxStaticText *stBgClr = new wxStaticText(wxComp(boxLM, this), -1, wxT("Background color"));
 
   wxStaticBoxSizer *SizerLM = new wxStaticBoxSizer(boxLM, wxHORIZONTAL);
@@ -299,13 +290,8 @@ TdlgSceneProps::~TdlgSceneProps()  {
   tbY->OnChange.Clear();
   tbZ->OnChange.Clear();
   tbR->OnChange.Clear();
-  teAmb->OnClick.Clear();
-  teDiff->OnClick.Clear();
-  teSpec->OnClick.Clear();
   scSCO->OnChange.Clear();
   cbLights->OnChange.Clear();
-  tcAmbLM->OnClick.Clear();
-  tcBgClr->OnClick.Clear();
   cbFonts->OnChange.Clear();
   tbEditFont->OnClick.Clear();
 }
@@ -313,24 +299,17 @@ TdlgSceneProps::~TdlgSceneProps()  {
 bool TdlgSceneProps::Execute(const IOlxObject* Sender, const IOlxObject* Data,
   TActionQueue *)
 {
-  if (Sender == tbX)
+  if (Sender == tbX) {
     teX->SetText(tbX->GetValue());
-  else if (Sender == tbY)
+  }
+  else if (Sender == tbY) {
     teY->SetText(tbY->GetValue());
-  else if (Sender == tbZ)
+  }
+  else if (Sender == tbZ) {
     teZ->SetText(tbZ->GetValue());
-  else if (Sender == tbR)
+  }
+  else if (Sender == tbR) {
     teR->SetText(tbR->GetValue());
-  else if (Sender->Is<TTextEdit>()) {
-    wxColourDialog *CD = new wxColourDialog(this);
-    wxColor wc = dynamic_cast< const TTextEdit *>(Sender)->GetBackgroundColour();
-    CD->GetColourData().SetColour(wc);
-    if (CD->ShowModal() == wxID_OK) {
-      wc = CD->GetColourData().GetColour();
-      const_cast<TTextEdit *>(dynamic_cast<const TTextEdit *>(Sender))->WI
-        .SetColor(OLX_RGB(wc.Red(), wc.Green(), wc.Blue()));
-    }
-    CD->Destroy();
   }
   else if (Sender == cbLights) {
     UpdateLight(FLightModel.GetLight(FCurrentLight));
@@ -341,73 +320,73 @@ bool TdlgSceneProps::Execute(const IOlxObject* Sender, const IOlxObject* Data,
     }
   }
   else if (Sender == scSCO) {
-    if (scSCO->GetValue() > 90)
+    if (scSCO->GetValue() > 90) {
       cbUniform->SetValue(true);
-    else
+    }
+    else {
       cbUniform->SetValue(false);
+    }
   }
   else if (Sender == tbEditFont) {
     int sel = cbFonts->GetSelection();
-    if( sel == -1 )  return false;
+    if (sel == -1) {
+      return false;
+    }
     TGXApp::GetInstance().GetRenderer().GetScene().ShowFontDialog(
       (TGlFont*)cbFonts->GetObject(sel));
   }
-
   return true;
 }
 //..............................................................................
-void TdlgSceneProps::InitLightModel(TGlLightModel& GlLM)  {
+void TdlgSceneProps::InitLightModel(TGlLightModel& GlLM) {
   cbLocalV->SetValue(GlLM.IsLocalViewer());
   cbTwoSide->SetValue(GlLM.IsTwoSides());
   cbSmooth->SetValue(GlLM.IsSmoothShade());
-  tcAmbLM->WI.SetColor(GlLM.GetAmbientColor().GetRGB());
-  tcBgClr->WI.SetColor(GlLM.GetClearColor().GetRGB());
+  tcAmbLM->SetColour(GlLM.GetAmbientColor().GetRGB());
+  tcBgClr->SetColour(GlLM.GetClearColor().GetRGB());
 }
 //..............................................................................
-void TdlgSceneProps::UpdateLightModel(TGlLightModel& GlLM)  {
+void TdlgSceneProps::UpdateLightModel(TGlLightModel& GlLM) {
   GlLM.SetLocalViewer(cbLocalV->GetValue());
   GlLM.SetTwoSides(cbTwoSide->GetValue());
   GlLM.SetSmoothShade(cbSmooth->GetValue());
-  GlLM.SetAmbientColor(tcAmbLM->WI.GetColor());
-  GlLM.SetClearColor(tcBgClr->WI.GetColor());
+  GlLM.SetAmbientColor(tcAmbLM->GetColour().GetRGB());
+  GlLM.SetClearColor(tcBgClr->GetColour().GetRGB());
 }
 //..............................................................................
-void TdlgSceneProps::InitLight(TGlLight& L)  {
+void TdlgSceneProps::InitLight(TGlLight& L) {
   tbX->SetValue((int)L.GetPosition()[0]);  teX->SetText((int)L.GetPosition()[0]);
   tbY->SetValue((int)L.GetPosition()[1]);  teY->SetText((int)L.GetPosition()[1]);
   tbZ->SetValue((int)L.GetPosition()[2]);  teZ->SetText((int)L.GetPosition()[2]);
   tbR->SetValue((int)L.GetPosition()[3]);  teR->SetText((int)L.GetPosition()[3]);
 
-  teAmb->WI.SetColor(L.GetAmbient().GetRGB());
-  scAmbA->SetValue( (int)L.GetAmbient()[3]*100);
-  teDiff->WI.SetColor(L.GetDiffuse().GetRGB());
-  /*teDiff->SetColour(wxColour(OLX_GetRValue(L.Diffuse().GetRGB()),
-    OLX_GetGValue(L.Diffuse().GetRGB()),
-    OLX_GetBValue(L.Diffuse().GetRGB())));*/
-  scDiffA->SetValue(L.GetDiffuse()[3]*100);
-  teSpec->WI.SetColor(L.GetSpecular().GetRGB());
-  scSpecA->SetValue((int)L.GetSpecular()[3]*100);
-  teAA->SetText( L.GetAttenuation()[2] );
-  teAB->SetText( L.GetAttenuation()[1] );
-  teAC->SetText( L.GetAttenuation()[0] );
-  cbEnabled->SetValue( L.IsEnabled() );
-  scSExp->SetValue( L.GetSpotExponent() );
-  scSCO->SetValue( L.GetSpotCutoff() );
+  teAmb->SetColour(L.GetAmbient().GetRGB());
+  scAmbA->SetValue((int)L.GetAmbient()[3] * 100);
+  teDiff->SetColour(L.GetDiffuse().GetRGB());
+  scDiffA->SetValue(L.GetDiffuse()[3] * 100);
+  teSpec->SetColour(L.GetSpecular().GetRGB());
+  scSpecA->SetValue((int)L.GetSpecular()[3] * 100);
+  teAA->SetText(L.GetAttenuation()[2]);
+  teAB->SetText(L.GetAttenuation()[1]);
+  teAC->SetText(L.GetAttenuation()[0]);
+  cbEnabled->SetValue(L.IsEnabled());
+  scSExp->SetValue(L.GetSpotExponent());
+  scSCO->SetValue(L.GetSpotCutoff());
   cbUniform->SetValue(L.GetSpotCutoff() == 180);
-  teSCX->SetText( L.GetSpotDirection()[0] );
-  teSCY->SetText( L.GetSpotDirection()[1] );
-  teSCZ->SetText( L.GetSpotDirection()[2] );
+  teSCX->SetText(L.GetSpotDirection()[0]);
+  teSCY->SetText(L.GetSpotDirection()[1]);
+  teSCZ->SetText(L.GetSpotDirection()[2]);
 }
 //..............................................................................
-void TdlgSceneProps::UpdateLight(TGlLight& L)  {
+void TdlgSceneProps::UpdateLight(TGlLight& L) {
   L.SetPosition(TGlOption(tbX->GetValue(), tbY->GetValue(),
     tbZ->GetValue(), tbR->GetValue()));
   L.SetAmbient(
-    teAmb->WI.GetColor() | (uint32_t)((256*scAmbA->GetValue()/100) << 24));
+    teAmb->GetColour().GetRGB() | (uint32_t)((256 * scAmbA->GetValue() / 100) << 24));
   L.SetDiffuse(
-    teDiff->WI.GetColor() | (uint32_t)((256*scDiffA->GetValue()/100) << 24));
+    teDiff->GetColour().GetRGB() | (uint32_t)((256 * scDiffA->GetValue() / 100) << 24));
   L.SetSpecular(
-    teSpec->WI.GetColor() | (uint32_t)((256*scSpecA->GetValue()/100) << 24));
+    teSpec->GetColour().GetRGB() | (uint32_t)((256 * scSpecA->GetValue() / 100) << 24));
   L.SetAttenuation(TGlOption(teAC->GetText().ToDouble(),
     teAB->GetText().ToDouble(), teAA->GetText().ToDouble()));
   L.SetEnabled(cbEnabled->GetValue());
@@ -458,20 +437,20 @@ void TdlgSceneProps::OnSave(wxCommandEvent& event)  {
   }
 }
 //..............................................................................
-void TdlgSceneProps::LoadFromFile(TGlLightModel &FLM, const olxstr &FN)  {
+void TdlgSceneProps::LoadFromFile(TGlLightModel &FLM, const olxstr &FN) {
   TDataFile F;
-  F.LoadFromXLFile(FN, NULL);
+  F.LoadFromXLFile(FN, 0);
   TGlRenderer &gr = TGXApp::GetInstance().GetRenderer();
   gr.GetScene().FromDataItem(F.Root());
   FLightModel = gr.LightModel;
 }
 //..............................................................................
-void TdlgSceneProps::SaveToFile(TGlLightModel &FLM, const olxstr &FN)  {
+void TdlgSceneProps::SaveToFile(TGlLightModel &FLM, const olxstr &FN) {
   TDataFile DF;
   TGlRenderer &gr = TGXApp::GetInstance().GetRenderer();
   gr.GetScene().ToDataItem(DF.Root());
-  try{  DF.SaveToXLFile(FN); }
-  catch(...)  {
+  try { DF.SaveToXLFile(FN); }
+  catch (...) {
     TBasicApp::NewLogEntry(logError) << "Failed to save scene parameters!";
   }
 }

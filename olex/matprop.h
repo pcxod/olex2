@@ -17,8 +17,9 @@ private:
   wxCheckBox *cbAmbF, *cbAmbB, *cbDiffF, *cbDiffB, *cbEmmF, *cbEmmB,
       *cbSpecF, *cbSpecB, *cbShnF, *cbShnB, *cbTrans, *cbIDraw,
       *cbBlend;
-  TTextEdit *tcAmbF, *tcAmbB, *tcDiffF, *tcDiffB, *tcEmmF, *tcEmmB,
-      *tcSpecF, *tcSpecB, *tcShnF, *tcShnB;
+  TColorCtrl *tcAmbF, *tcAmbB, *tcDiffF, *tcDiffB, *tcEmmF, *tcEmmB,
+      *tcSpecF, *tcSpecB;
+  TTextEdit *tcShnF, *tcShnB;
   TSpinCtrl *scBlend, *scTrans;
   wxButton* bEditFont;
   wxComboBox *cbApplyTo;

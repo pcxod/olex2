@@ -123,14 +123,14 @@ void TdlgMatProp::Init() {
   cbIDraw = new wxCheckBox(this, -1,
     wxT("Identity Draw"), wxDefaultPosition, wxDefaultSize);
 
-  tcAmbF = new TTextEdit(this);  tcAmbF->SetReadOnly(true);  tcAmbF->OnClick.Add(this);
-  tcAmbB = new TTextEdit(this);  tcAmbB->SetReadOnly(true);  tcAmbB->OnClick.Add(this);
-  tcDiffF = new TTextEdit(this); tcDiffF->SetReadOnly(true); tcDiffF->OnClick.Add(this);
-  tcDiffB = new TTextEdit(this); tcDiffB->SetReadOnly(true); tcDiffB->OnClick.Add(this);
-  tcEmmF = new TTextEdit(this);  tcEmmF->SetReadOnly(true);  tcEmmF->OnClick.Add(this);
-  tcEmmB = new TTextEdit(this);  tcEmmB->SetReadOnly(true);  tcEmmB->OnClick.Add(this);
-  tcSpecF = new TTextEdit(this); tcSpecF->SetReadOnly(true); tcSpecF->OnClick.Add(this);
-  tcSpecB = new TTextEdit(this); tcSpecB->SetReadOnly(true); tcSpecB->OnClick.Add(this);
+  tcAmbF = new TColorCtrl(this);  tcAmbF->SetReadOnly(true);
+  tcAmbB = new TColorCtrl(this);  tcAmbB->SetReadOnly(true);
+  tcDiffF = new TColorCtrl(this); tcDiffF->SetReadOnly(true);
+  tcDiffB = new TColorCtrl(this); tcDiffB->SetReadOnly(true);
+  tcEmmF = new TColorCtrl(this);  tcEmmF->SetReadOnly(true);
+  tcEmmB = new TColorCtrl(this);  tcEmmB->SetReadOnly(true);
+  tcSpecF = new TColorCtrl(this); tcSpecF->SetReadOnly(true);
+  tcSpecB = new TColorCtrl(this); tcSpecB->SetReadOnly(true);
   tcShnF = new TTextEdit(this);  tcShnF->SetReadOnly(false);
   tcShnB = new TTextEdit(this);  tcShnB->SetReadOnly(false);
 
@@ -233,34 +233,16 @@ void TdlgMatProp::Init() {
   Init(Materials[0]);
 }
 //..............................................................................
-TdlgMatProp::~TdlgMatProp()  {
-  if (cbPrimitives != NULL)
+TdlgMatProp::~TdlgMatProp() {
+  if (cbPrimitives != 0) {
     cbPrimitives->OnChange.Clear();
+  }
   scTrans->OnChange.Clear();
-  tcAmbF->OnClick.Clear();
-  tcAmbB->OnClick.Clear();
-  tcDiffF->OnClick.Clear();
-  tcDiffB->OnClick.Clear();
-  tcEmmF->OnClick.Clear();
-  tcEmmB->OnClick.Clear();
-  tcSpecF->OnClick.Clear();
-  tcSpecB->OnClick.Clear();
 }
 //..............................................................................
 bool TdlgMatProp::Execute(const IOlxObject *Sender, const IOlxObject *Data,
   TActionQueue *)
 {
-  if (Sender->Is<TTextEdit>()) {
-    wxColourDialog *CD = new wxColourDialog(this);
-    wxColor wc = dynamic_cast<const TTextEdit *>(Sender)->GetBackgroundColour();
-    CD->GetColourData().SetColour(wc);
-    if( CD->ShowModal() == wxID_OK )  {
-      wc = CD->GetColourData().GetColour();
-      const_cast<TTextEdit *>(dynamic_cast<const TTextEdit *>(Sender))->WI
-        .SetColor(OLX_RGB(wc.Red(), wc.Green(), wc.Blue()));
-    }
-    delete CD;
-  }
   if (Sender == cbPrimitives) {
     Update(Materials[FCurrentMaterial]);
     int i = cbPrimitives->FindString(cbPrimitives->GetValue());
@@ -269,7 +251,7 @@ bool TdlgMatProp::Execute(const IOlxObject *Sender, const IOlxObject *Data,
       Init(Materials[FCurrentMaterial]);
       const TGlPrimitive* glp = dynamic_cast<const TGlPrimitive*>(
         cbPrimitives->GetObject(i));
-      bEditFont->Enable(glp->GetFont() != NULL && !glp->GetFont()->IsVectorFont());
+      bEditFont->Enable(glp->GetFont() != 0 && !glp->GetFont()->IsVectorFont());
     }
   }
   return true;
@@ -298,17 +280,17 @@ void TdlgMatProp::Init(const TGlMaterial &Glm) {
   cbTrans->SetValue(Glm.IsTransparent());
   cbIDraw->SetValue(Glm.IsIdentityDraw());
 
-  tcAmbF->WI.SetColor(Glm.AmbientF.GetRGB());
-  tcAmbB->WI.SetColor(Glm.AmbientB.GetRGB());
+  tcAmbF->SetColour(Glm.AmbientF.GetRGB());
+  tcAmbB->SetColour(Glm.AmbientB.GetRGB());
 
-  tcDiffF->WI.SetColor(Glm.DiffuseF.GetRGB());
-  tcDiffB->WI.SetColor(Glm.DiffuseB.GetRGB());
+  tcDiffF->SetColour(Glm.DiffuseF.GetRGB());
+  tcDiffB->SetColour(Glm.DiffuseB.GetRGB());
 
-  tcEmmF->WI.SetColor(Glm.EmissionF.GetRGB());
-  tcEmmB->WI.SetColor(Glm.EmissionB.GetRGB());
+  tcEmmF->SetColour(Glm.EmissionF.GetRGB());
+  tcEmmB->SetColour(Glm.EmissionB.GetRGB());
 
-  tcSpecF->WI.SetColor(Glm.SpecularF.GetRGB());
-  tcSpecB->WI.SetColor(Glm.SpecularB.GetRGB());
+  tcSpecF->SetColour(Glm.SpecularF.GetRGB());
+  tcSpecB->SetColour(Glm.SpecularB.GetRGB());
 
   tcShnF->SetValue(olxstr(Glm.ShininessF).u_str());
   tcShnB->SetValue(olxstr(Glm.ShininessB).u_str());
@@ -333,21 +315,21 @@ void TdlgMatProp::Update(TGlMaterial &Glm)  {
   Glm.SetTransparent(cbTrans->GetValue());
   Glm.SetIdentityDraw(cbIDraw->GetValue());
 
-  Glm.AmbientF = tcAmbF->WI.GetColor();
+  Glm.AmbientF = tcAmbF->GetColour().GetRGBA();
   if (scBlend != 0) {
     Glm.AmbientF[3] = (double)scBlend->GetValue()/100;
   }
-  Glm.AmbientB = tcAmbB->WI.GetColor();
+  Glm.AmbientB = tcAmbB->GetColour().GetRGBA();
 
-  Glm.DiffuseF = tcDiffF->WI.GetColor();
-  Glm.DiffuseB = tcDiffB->WI.GetColor();
+  Glm.DiffuseF = tcDiffF->GetColour().GetRGBA();
+  Glm.DiffuseB = tcDiffB->GetColour().GetRGBA();
   Glm.DiffuseB[3] = Glm.DiffuseF[3] = (double)scTrans->GetValue()/100;
 
-  Glm.EmissionF = tcEmmF->WI.GetColor();
-  Glm.EmissionB = tcEmmB->WI.GetColor();
+  Glm.EmissionF = tcEmmF->GetColour().GetRGBA();
+  Glm.EmissionB = tcEmmB->GetColour().GetRGBA();
 
-  Glm.SpecularF = tcSpecF->WI.GetColor();
-  Glm.SpecularB = tcSpecB->WI.GetColor();
+  Glm.SpecularF = tcSpecF->GetColour().GetRGBA();
+  Glm.SpecularB = tcSpecB->GetColour().GetRGBA();
 
   Glm.ShininessF = olxstr(tcShnF->GetValue()).ToInt();
   Glm.ShininessB = olxstr(tcShnB->GetValue()).ToInt();

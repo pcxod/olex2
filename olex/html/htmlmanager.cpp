@@ -1072,7 +1072,7 @@ void THtmlManager::funEndModal(const TStrObjList &Params, TMacroData &E) {
     return;
   }
   pd->Dialog->EndModal(Params[1].ToInt());
-#ifdef __MAC__
+#if defined __MAC__ && 0
   pd->Html->OnLink.Remove(this);
   pd->Html->Destroy();
   pd->Dialog->Destroy();
