@@ -116,15 +116,25 @@ public:
     return !(Matrices.Count() == 1 && Matrices[0]->IsFirst());
   }
 
+  bool IsPolymeric(bool use_peaks) const;
+
   /* generates matrices to fil the given volume */
   ConstPtrList<smatd> GenerateMatrices(const vec3d& VFrom,
     const vec3d& VTo);
   // finds matrices to be used for the next grow operation in GrowFragments
   void GetGrowMatrices(smatd_list& res) const;
-  /* finds all matrices unique to the unit cell which complete a given fragment
+  /* finds all matrices unique to the unit cell which complete a given fragment.
+  Initialises polymeric if there are matrices with the same r but different t
+  encountered during the process
   */
   SortedObjectList<smatd, smatd::ContainerIdComparator>
-    GetFragmentGrowMatrices(const TCAtomPList& fragment, bool use_q_peaks) const;
+    GetFragmentGrowMatrices(const TCAtomPList& fragment, bool use_q_peaks,
+      bool *polymeric=0) const;
+  /* finds all unique matrices which complete a given fragment. For polymeric
+  structure the translation of the matrices is mapped to [0-1]
+  */
+  SortedObjectList<smatd, smatd::IdComparator>
+    GetFragmentGrowMatrices_1(const TCAtomPList& fragment, bool use_q_peaks) const;
   /* grows all atoms which can be grown, if GrowShells is true, only immediate
   environment of the atoms which can grow is generated */
   void GrowFragments(bool GrowShells, TCAtomPList* Template);
@@ -276,7 +286,7 @@ public:
   */
   TUndoData *ValidateHGroups(bool reinit, bool report=false);
   // returns a chemical moiety string for CIF
-  olxstr CalcMoietyStr(bool html=false) const;
+  olxstr CalcMoietyStr(bool html) const;
   TTypeList<AnAssociation3<double, ContentList, size_t> >::const_list_type
     CalcMoiety() const;
   double GetDelta() const { return Delta; }
@@ -293,6 +303,7 @@ public:
   void LibGetFragmentAtoms(const TStrObjList& Params, TMacroData& E);
   void LibGetMoiety(const TStrObjList& Params, TMacroData& E);
   void LibIsGrown(const TStrObjList& Params, TMacroData& E);
+  void LibIsPolymeric(const TStrObjList& Params, TMacroData& E);
   TLibrary* ExportLibrary(const olxstr& name=EmptyString());
 };
 

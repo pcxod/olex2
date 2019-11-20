@@ -35,4 +35,3 @@ cif.use_md5 [false] - embedd MD5 checksums for HKL/FAB/RES into the CIF
 rename_parts [true] - disallow identical labels within different parts
 model.center_on_reload [true] - re-centres the model on the file re-read (like after the refinement)
 model.center_on_update [true] - re-centres the model when it is updated (like atoms split)
-moiety.check_connectivity [false] - checks if moiety entities grow when reporting

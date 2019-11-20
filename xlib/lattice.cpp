@@ -489,7 +489,8 @@ void TLattice::Generate(const vec3d& center, double rad, TCAtomPList* Template,
 }
 //..............................................................................
 SortedObjectList<smatd, smatd::ContainerIdComparator>
-TLattice::GetFragmentGrowMatrices(const TCAtomPList& l, bool use_q_peaks) const
+TLattice::GetFragmentGrowMatrices(const TCAtomPList& l, bool use_q_peaks,
+  bool *polymeric) const
 {
   SortedObjectList<smatd, smatd::ContainerIdComparator> res;
   const TUnitCell& uc = GetUnitCell();
@@ -501,11 +502,62 @@ TLattice::GetFragmentGrowMatrices(const TCAtomPList& l, bool use_q_peaks) const
     for (size_t j = 0; j < l.Count(); j++) {
       TCAtom& a = *l[j];
       for (size_t k = 0; k < a.AttachedSiteCount(); k++) {
-        TCAtom &aa = a.GetAttachedAtom(k);
-        if (aa.IsDeleted() || (!use_q_peaks && aa.GetType() == iQPeakZ)) {
+        TCAtom::Site &as = a.GetAttachedSite(k);
+        if (as.atom->IsDeleted() ||
+          (!use_q_peaks && as.atom->GetType() == iQPeakZ))
+        {
           continue;
         }
-        smatd m = uc.MulMatrix(a.GetAttachedSite(k).matrix, ref_m);
+        smatd m = uc.MulMatrix(as.matrix, ref_m);
+        olx_pair_t<size_t, bool> idx = res.AddUnique(m);
+        if (idx.b) {
+          q.Push(&res[idx.a]);
+        }
+        else {
+          if (polymeric != 0 && !*polymeric && m.t != res[idx.a].t) {
+            *polymeric = true;
+          }
+        }
+      }
+    }
+  }
+  return res;
+}
+//..............................................................................
+SortedObjectList<smatd, smatd::IdComparator>
+TLattice::GetFragmentGrowMatrices_1(const TCAtomPList& l, bool use_q_peaks) const
+{
+  SortedObjectList<smatd, smatd::IdComparator> res;
+  const TUnitCell& uc = GetUnitCell();
+  res.Add(uc.GetMatrix(0));
+  TQueue<const smatd*> q;
+  q.Push(&res[0]);
+  while (!q.IsEmpty()) {
+    const smatd &ref_m = *q.Pop();
+    for (size_t j = 0; j < l.Count(); j++) {
+      TCAtom& a = *l[j];
+      for (size_t k = 0; k < a.AttachedSiteCount(); k++) {
+        TCAtom::Site &as = a.GetAttachedSite(k);
+        if (as.atom->IsDeleted() ||
+          (!use_q_peaks && as.atom->GetType() == iQPeakZ))
+        {
+          continue;
+        }
+        smatd m = uc.MulMatrix(as.matrix, ref_m);
+        // remap translation to [0-1]
+        for (int l = 0; l < 3; l++) {
+          if (m.t[l] <= -1) {
+            m.t[l] -= olx_floor(m.t[l]);
+          }
+          else if (m.t[l] > 1) {
+            m.t[l] -= olx_floor(m.t[l]);
+            if (m.t[l] == 0) {
+              m.t[l] = 1;
+            }
+          }
+        }
+        m.SetId(m.GetContainerId(),
+          (m.t - uc.GetMatrix(m.GetContainerId()).t).Round<int>());
         olx_pair_t<size_t, bool> idx = res.AddUnique(m);
         if (idx.b) {
           q.Push(&res[idx.a]);
@@ -2945,24 +2997,17 @@ TLattice::CalcMoiety() const
   // apply Z multiplier...
   const double zp_mult = (double)GetUnitCell().MatrixCount() / olx_max(au.GetZ(), 1);
   if (zp_mult != 1) {
-    bool check_con = TBasicApp::GetInstance().GetOptions()
-      .FindValue("moiety.check_connectivity", FalseString()).ToBool();
-    if (check_con) {
-      for (size_t i = 0; i < frags.Count(); i++) {
-        const TCAtomPList& l = cfrags[frags[i].GetC()];
-        const size_t generators = GetFragmentGrowMatrices(l, false).Count();
-        const int gd = int(generators == 0 ? 1 : generators);
+    for (size_t i = 0; i < frags.Count(); i++) {
+      const TCAtomPList& l = cfrags[frags[i].GetC()];
+      bool polymeric = false;
+      const size_t generators = GetFragmentGrowMatrices(l, false, &polymeric).Count();
+      const int gd = int(generators == 0 ? 1 : generators);
+      double mult = polymeric ? zp_mult : gd;
+      if (!polymeric) {
         frags[i].a *= zp_mult / gd;
-        for (size_t j = 0; j < frags[i].GetB().Count(); j++) {
-          frags[i].b[j].count *= gd;
-        }
       }
-    }
-    else {
-      for (size_t i = 0; i < frags.Count(); i++) {
-        for (size_t j = 0; j < frags[i].GetB().Count(); j++) {
-          frags[i].b[j].count *= zp_mult;
-        }
+      for (size_t j = 0; j < frags[i].GetB().Count(); j++) {
+        frags[i].b[j].count *= mult;
       }
     }
   }
@@ -3250,6 +3295,37 @@ TUndoData *TLattice::ValidateHGroups(bool reinit, bool report) {
   return du;
 }
 //..............................................................................
+bool TLattice::IsPolymeric(bool use_peaks) const {
+  using namespace olx_analysis;
+  TAsymmUnit &au = GetAsymmUnit();
+  olx_object_ptr<TEBitArray> df;
+  if (!use_peaks) {
+    df = new TEBitArray(au.AtomCount());
+    // store Q-atom state
+    for (size_t i = 0; i < au.AtomCount(); i++) {
+      if (au.GetAtom(i).GetType() == iQPeakZ) {
+        df().Set(i, au.GetAtom(i).IsDeleted());
+        au.GetAtom(i).SetDeleted(true);
+      }
+    }
+  }
+  TTypeList<fragments::fragment> fl = fragments::extract(GetAsymmUnit());
+  if (!use_peaks) {
+    // restore the Q-peaks state
+    for (size_t i = 0; i < au.AtomCount(); i++) {
+      if (au.GetAtom(i).GetType() == iQPeakZ) {
+        au.GetAtom(i).SetDeleted(df()[i]);
+      }
+    }
+  }
+  for (size_t i = 0; i < fl.Count(); i++) {
+    if (fl[i].is_polymeric()) {
+      return true;
+    }
+  }
+  return false;
+}
+//..............................................................................
 //..............................................................................
 //..............................................................................
 void TLattice::LibGetFragmentCount(const TStrObjList& Params, TMacroData& E) {
@@ -3257,7 +3333,8 @@ void TLattice::LibGetFragmentCount(const TStrObjList& Params, TMacroData& E) {
 }
 //..............................................................................
 void TLattice::LibGetMoiety(const TStrObjList& Params, TMacroData& E) {
-  E.SetRetVal(CalcMoietyStr(Params.IsEmpty() ? false : Params[0].ToBool()));
+  E.SetRetVal(
+    CalcMoietyStr(Params.IsEmpty() ? false : Params[0].ToBool()));
 }
 //..............................................................................
 void TLattice::LibGetFragmentAtoms(const TStrObjList& Params, TMacroData& E) {
@@ -3278,6 +3355,10 @@ void TLattice::LibIsGrown(const TStrObjList& Params, TMacroData& E)  {
   E.SetRetVal(IsGenerated());
 }
 //..............................................................................
+void TLattice::LibIsPolymeric(const TStrObjList& Params, TMacroData& E) {
+  E.SetRetVal(IsPolymeric(Params.IsEmpty() ? false : Params[0].ToBool()));
+}
+//..............................................................................
 TLibrary*  TLattice::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("latt") : name);
   lib->Register(
@@ -3293,13 +3374,19 @@ TLibrary*  TLattice::ExportLibrary(const olxstr& name)  {
   lib->Register(
     new TFunction<TLattice>(this,  &TLattice::LibGetMoiety,
     "GetMoiety", fpNone|fpOne,
-    "Returns molecular moiety. HTML formatted depending on the boolean argument "
-    "[false].")
+    "Returns molecular moiety. HTML formatted depending on the first boolean "
+      "argument [false].")
   );
   lib->Register(
     new TFunction<TLattice>(this,  &TLattice::LibIsGrown,
     "IsGrown", fpNone,
     "Returns true if the structure is grow")
+  );
+  lib->Register(
+    new TFunction<TLattice>(this, &TLattice::LibIsPolymeric,
+      "IsPolymeric", fpNone|fpOne,
+      "Returns true if the structure is polymeric. The use of Q-peaks is "
+      "controlled by the first boolean argument [false]")
   );
   return lib;
 }

@@ -212,6 +212,7 @@ public:
     mutable double u_eq;
     TCAtomPList atoms_;
     smatd_list generators;
+    bool polymeric;
     void init_generators();
     static void build_coordinate(
       TCAtom &a, const smatd &m, vec3d_list &res);
@@ -267,11 +268,15 @@ public:
     */
     static bool does_match(TCAtom &a, TCAtom &b, TCAtomPList &p);
   public:
-    fragment() : u_eq(0) {}
-    fragment(const fragment &f)
-      : u_eq(f.u_eq), atoms_(f.atoms_), generators(f.generators)
+    fragment() : u_eq(0), polymeric(false)
     {}
-    fragment(const TCAtomPList &atoms) : u_eq(0) {
+    fragment(const fragment &f)
+      : u_eq(f.u_eq),
+      atoms_(f.atoms_),
+      generators(f.generators),
+      polymeric(f.polymeric)
+    {}
+    fragment(const TCAtomPList &atoms) : u_eq(0), polymeric(false) {
       set_atoms(atoms);
     }
     double get_mean_u_eq(bool update = false) const {
@@ -288,7 +293,7 @@ public:
     bool is_disjoint() const;
     bool is_regular() const;
     bool is_flat() const;
-    bool is_polymeric() const;
+    bool is_polymeric() const { return polymeric; }
     fragment &pack() {
       atoms_.Pack(TCAtom::FlagsAnalyser(catom_flag_Deleted));
       return *this;

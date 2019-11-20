@@ -7,7 +7,6 @@
 * the root folder.                                                            *
 ******************************************************************************/
 
-#include "py_core.h"
 #ifndef _CONSOLE
 #include "olex2app.h"
 #else
@@ -29,6 +28,7 @@
 
 using namespace olex2;
 #ifdef _PYTHON
+#include "py_core.h"
 
 PyObject* pyVarValue(PyObject* self, PyObject* args)  {
   olxstr varName;

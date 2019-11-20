@@ -769,7 +769,7 @@ void fragments::fragment::init_generators() {
   if (atoms_[0]->GetParent()->HasLattice()) {
     generators.AddAll(
       atoms_[0]->GetParent()->GetLattice().GetFragmentGrowMatrices(atoms_,
-      true));
+      true, &polymeric));
   }
 }
 //.............................................................................
@@ -778,34 +778,6 @@ bool fragments::fragment::is_disjoint() const {
   for (size_t i = 0; i < atoms_.Count(); i++) {
     if (atoms_[i]->GetTag() == -1) {
       return true;
-    }
-  }
-  return false;
-}
-//.............................................................................
-bool fragments::fragment::is_polymeric() const {
-  if (generators.Count() < 3) {
-    return false;
-  }
-  smatd_list set(generators);
-  for (size_t i=1; i < set.Count(); i++) {
-    for (size_t j=i; j < set.Count(); j++) {
-      smatd m = set[i]*set[j];
-      bool uniq = true;
-      for (size_t k=0; k < set.Count(); k++) {
-        if (m.r == set[k].r) {
-          if (m.t.Equals(set[k].t, 1e-3)) {
-            uniq = false;
-            break;
-          }
-          else {
-            return true;
-          }
-        }
-      }
-      if (uniq) {
-        set.Add(m);
-      }
     }
   }
   return false;
@@ -1594,13 +1566,16 @@ ConstTypeList<fragments::fragment> fragments::extract(TAsymmUnit &au) {
   atoms.ForEach(ACollectionItem::TagSetter(0));
   size_t cnt = 0;
   for (size_t i=0; i < atoms.Count(); i++) {
-    if (!atoms[i]->IsAvailable()) continue;
+    if (!atoms[i]->IsAvailable()) {
+      continue;
+    }
     if (atoms[i]->GetTag() == 0) {
       TCAtomPList catoms;
       expand_node(*atoms[i], catoms);
       rv.AddNew().set_atoms(catoms);
-      if ((cnt+=catoms.Count()) == atoms.Count())
+      if ((cnt += catoms.Count()) == atoms.Count()) {
         break;
+      }
     }
   }
   return rv;

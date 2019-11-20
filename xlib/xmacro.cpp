@@ -4754,7 +4754,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
   const olxstr cif_moiety = Cif->GetParamAsString("_chemical_formula_moiety");
   if (cif_moiety.IsEmpty() || cif_moiety == '?') {
     Cif->SetParam("_chemical_formula_moiety",
-      xapp.XFile().GetLattice().CalcMoietyStr(), true);
+      xapp.XFile().GetLattice().CalcMoietyStr(false), true);
   }
   Cif->SetParam("_cell_formula_units_Z",
     xapp.XFile().GetAsymmUnit().GetZ(), false);
