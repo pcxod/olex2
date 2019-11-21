@@ -21,7 +21,7 @@ namespace ctrl_ext {
     wxColor Color;
   public:
     TColorCtrl(wxWindow *Parent, wxWindowID id = -1,
-      const wxColor &value = wxColour(),
+      const wxColor &value = *wxBLACK,
       const wxPoint& pos = wxDefaultPosition,
       const wxSize& size = wxDefaultSize, long style = 0);
     bool IsReadOnly() const {  return WI.HasWindowStyle(wxTE_READONLY); }

@@ -26,7 +26,9 @@ TColorCtrl::TColorCtrl(wxWindow *Parent, wxWindowID id, const wxColor &value,
 void TColorCtrl::ChangeEvent(wxColourPickerEvent& event) {
   event.Skip();
   wxColor c = GetColour();
-  if (Color == c) return;
+  if (Color == c) {
+    return;
+  }
   Color = c;
   OnChange.Execute(this);
 }
