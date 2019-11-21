@@ -280,17 +280,17 @@ void TdlgMatProp::Init(const TGlMaterial &Glm) {
   cbTrans->SetValue(Glm.IsTransparent());
   cbIDraw->SetValue(Glm.IsIdentityDraw());
 
-  tcAmbF->SetColour(Glm.AmbientF.GetRGB());
-  tcAmbB->SetColour(Glm.AmbientB.GetRGB());
+  tcAmbF->SetColour(Glm.AmbientF);
+  tcAmbB->SetColour(Glm.AmbientB);
 
-  tcDiffF->SetColour(Glm.DiffuseF.GetRGB());
-  tcDiffB->SetColour(Glm.DiffuseB.GetRGB());
+  tcDiffF->SetColour(Glm.DiffuseF);
+  tcDiffB->SetColour(Glm.DiffuseB);
 
-  tcEmmF->SetColour(Glm.EmissionF.GetRGB());
-  tcEmmB->SetColour(Glm.EmissionB.GetRGB());
+  tcEmmF->SetColour(Glm.EmissionF);
+  tcEmmB->SetColour(Glm.EmissionB);
 
-  tcSpecF->SetColour(Glm.SpecularF.GetRGB());
-  tcSpecB->SetColour(Glm.SpecularB.GetRGB());
+  tcSpecF->SetColour(Glm.SpecularF);
+  tcSpecB->SetColour(Glm.SpecularB);
 
   tcShnF->SetValue(olxstr(Glm.ShininessF).u_str());
   tcShnB->SetValue(olxstr(Glm.ShininessB).u_str());
@@ -315,21 +315,21 @@ void TdlgMatProp::Update(TGlMaterial &Glm)  {
   Glm.SetTransparent(cbTrans->GetValue());
   Glm.SetIdentityDraw(cbIDraw->GetValue());
 
-  Glm.AmbientF = tcAmbF->GetColour().GetRGBA();
+  Glm.AmbientF = tcAmbF->GetColour();
   if (scBlend != 0) {
     Glm.AmbientF[3] = (double)scBlend->GetValue()/100;
   }
-  Glm.AmbientB = tcAmbB->GetColour().GetRGBA();
+  Glm.AmbientB = tcAmbB->GetColour();
 
-  Glm.DiffuseF = tcDiffF->GetColour().GetRGBA();
-  Glm.DiffuseB = tcDiffB->GetColour().GetRGBA();
+  Glm.DiffuseF = tcDiffF->GetColour();
+  Glm.DiffuseB = tcDiffB->GetColour();
   Glm.DiffuseB[3] = Glm.DiffuseF[3] = (double)scTrans->GetValue()/100;
 
-  Glm.EmissionF = tcEmmF->GetColour().GetRGBA();
-  Glm.EmissionB = tcEmmB->GetColour().GetRGBA();
+  Glm.EmissionF = tcEmmF->GetColour();
+  Glm.EmissionB = tcEmmB->GetColour();
 
-  Glm.SpecularF = tcSpecF->GetColour().GetRGBA();
-  Glm.SpecularB = tcSpecB->GetColour().GetRGBA();
+  Glm.SpecularF = tcSpecF->GetColour();
+  Glm.SpecularB = tcSpecB->GetColour();
 
   Glm.ShininessF = olxstr(tcShnF->GetValue()).ToInt();
   Glm.ShininessB = olxstr(tcShnB->GetValue()).ToInt();

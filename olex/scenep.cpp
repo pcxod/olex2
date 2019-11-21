@@ -342,16 +342,16 @@ void TdlgSceneProps::InitLightModel(TGlLightModel& GlLM) {
   cbLocalV->SetValue(GlLM.IsLocalViewer());
   cbTwoSide->SetValue(GlLM.IsTwoSides());
   cbSmooth->SetValue(GlLM.IsSmoothShade());
-  tcAmbLM->SetColour(GlLM.GetAmbientColor().GetRGB());
-  tcBgClr->SetColour(GlLM.GetClearColor().GetRGB());
+  tcAmbLM->SetColour(GlLM.GetAmbientColor());
+  tcBgClr->SetColour(GlLM.GetClearColor());
 }
 //..............................................................................
 void TdlgSceneProps::UpdateLightModel(TGlLightModel& GlLM) {
   GlLM.SetLocalViewer(cbLocalV->GetValue());
   GlLM.SetTwoSides(cbTwoSide->GetValue());
   GlLM.SetSmoothShade(cbSmooth->GetValue());
-  GlLM.SetAmbientColor(tcAmbLM->GetColour().GetRGB());
-  GlLM.SetClearColor(tcBgClr->GetColour().GetRGB());
+  GlLM.SetAmbientColor(tcAmbLM->GetColour());
+  GlLM.SetClearColor(tcBgClr->GetColour());
 }
 //..............................................................................
 void TdlgSceneProps::InitLight(TGlLight& L) {
@@ -360,11 +360,11 @@ void TdlgSceneProps::InitLight(TGlLight& L) {
   tbZ->SetValue((int)L.GetPosition()[2]);  teZ->SetText((int)L.GetPosition()[2]);
   tbR->SetValue((int)L.GetPosition()[3]);  teR->SetText((int)L.GetPosition()[3]);
 
-  teAmb->SetColour(L.GetAmbient().GetRGB());
+  teAmb->SetColour(L.GetAmbient());
   scAmbA->SetValue((int)L.GetAmbient()[3] * 100);
-  teDiff->SetColour(L.GetDiffuse().GetRGB());
+  teDiff->SetColour(L.GetDiffuse());
   scDiffA->SetValue(L.GetDiffuse()[3] * 100);
-  teSpec->SetColour(L.GetSpecular().GetRGB());
+  teSpec->SetColour(L.GetSpecular());
   scSpecA->SetValue((int)L.GetSpecular()[3] * 100);
   teAA->SetText(L.GetAttenuation()[2]);
   teAB->SetText(L.GetAttenuation()[1]);
