@@ -83,5 +83,7 @@ void TXGrowLine::Length(float V)  {
   Params()[3] = V;
 }
 //..............................................................................
-const vec3d &TXGrowLine::GetBaseCrd() const {  return _XAtom.crd();  }
+const vec3d &TXGrowLine::GetFromCrd() const {
+  return _XAtom.crd();
+}
 //..............................................................................

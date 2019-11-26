@@ -6210,7 +6210,7 @@ void TGXApp::LabelGrowBonds() {
     }
     TXGlLabel &l = gl.GetGlLabel();
     l.SetLabel(gl.CAtom().GetLabel());
-    l.SetOffset(gl.GetEdge());
+    l.SetOffset(gl.GetToCrd());
     l.SetVisible(true);
   }
 }

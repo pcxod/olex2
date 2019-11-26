@@ -49,8 +49,8 @@ public:
   TXAtom& XAtom() const {  return _XAtom;  }
   TCAtom& CAtom() const {  return _CAtom;  }
   const smatd& GetTransform() const {  return Transform;  }
-  const vec3d &GetEdge() const {  return FEdge;  }
-  const vec3d &GetBaseCrd() const;
+  const vec3d &GetToCrd() const {  return FEdge;  }
+  const vec3d &GetFromCrd() const;
 };
 
 EndGxlNamespace()
