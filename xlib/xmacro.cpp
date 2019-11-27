@@ -3867,6 +3867,7 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options,
 {
   TXApp& xapp = TXApp::GetInstance();
   olxstr CifTablesFile = Options.FindValue('t', "tables.xlt");
+  olxstr TablesAlignmentTemplate = Options.FindValue("ta");
   if (!TEFile::IsAbsolutePath(CifTablesFile))
     CifTablesFile = xapp.GetCifTemplatesDir() + CifTablesFile;
   if (!TEFile::Exists(CifTablesFile)) {
@@ -3909,8 +3910,9 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options,
     if (TEFile::Exists(cifFN)) {
       Cif1().LoadFromFile(cifFN);
     }
-    else
-      throw TFunctionFailedException(__OlxSourceInfo, "existing cif is expected");
+    else {
+      throw TFunctionFailedException(__OlxSourceInfo, "existing CIF is expected");
+    }
     Cif = &Cif1();
   }
 
@@ -3954,7 +3956,9 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options,
         Cmds[i];
       continue;
     }
-    if (TD->GetName().Equalsi("footer") || TD->GetName().Equalsi("header")) {
+    if (TD->GetName().Equalsi("footer") || TD->GetName().Equalsi("header")
+      || TD->GetName().StartsFromi("include"))
+    {
       olxstr fn = TD->FindField("source");
       if (fn.Contains('$')) {
         ProcessExternalFunction(fn);
@@ -3965,8 +3969,8 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options,
       TStrList SL1 = TEFile::ReadLines(fn);
       for (size_t j = 0; j < SL1.Count(); j++) {
         Cif->ResolveParamsFromDictionary(Dic, SL1[j], '%', &XLibMacros::CifResolve);
-        SL.Add(SL1[j]);
       }
+      SL.AddAll(SL1);
       continue;
     }
     if (Cif->CreateTable(TD, DT, SymmList, Options.FindValue('l', "0").ToInt())
@@ -3994,9 +3998,7 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options,
           footer << "; ";
         }
       }
-      if (tab_count > 1) {
-        SL.Add("<p>&nbsp;</p>");
-      }
+      SL.Add("<p>&nbsp;</p>");
       DT.CreateHTMLList(
         SL,
         Tmp,
@@ -4012,8 +4014,7 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options,
         TD->FindField("coln", "1").ToInt(),
         TD->FindField("colsa"),
         TD->FindField("across", FalseString()).ToBool()
-      ); //bool Format) const  {
-      //DT.CreateHTMLList(SL, Tmp, true, false, true);
+      );
     }
   }
   TUtf8File::WriteLines(RF, SL, false);
