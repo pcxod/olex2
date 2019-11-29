@@ -46,14 +46,66 @@ const olxstr &esdl::TrueString()  {  return CTrueString();  }
 const olxstr &esdl::FalseString()  { return CFalseString();  }
 #endif
 
+struct olx_print_i_cont {
+  virtual olxstr ToString() = 0;
+};
+
+template <typename T>
+struct olx_print_cont : public olx_print_i_cont {
+  const T &value;
+  olx_print_cont(const T &value)
+    : value(value)
+  {}
+  virtual olxstr ToString() {
+    return olxstr(value);
+  }
+};
+
+template <typename T>
+struct olx_print_cont_f : public olx_print_i_cont {
+  const T &value;
+  int fp_cnt;
+  olx_print_cont_f(const T &v, int fp_cnt, bool expf)
+    : value(v),
+    fp_cnt(fp_cnt)
+  {}
+  virtual olxstr ToString() {
+    if (fp_cnt != 0) {
+      return olxstr::FormatFloat(fp_cnt, value, false);
+    }
+    return olxstr(value);
+  }
+};
+
+template <typename T>
+olx_print_i_cont *olx_print_makec(const T &v) {
+  return new olx_print_cont<T>(v);
+}
+template <typename T>
+olx_print_i_cont *olx_print_makec(const T &v, int fp_cnt, bool expf = false) {
+  return new olx_print_cont_f<T>(v, fp_cnt, expf);
+}
+
 olxstr esdl::olx_print(const char *format_, ...) {
   va_list argptr;
   va_start(argptr, format_);
   const olxstr format = format_;
   olxstr_buf rv;
-  size_t str_st = 0;
+  size_t str_st = 0, f_width = 0;
+  int fp_cnt = 0;
   try {
+    olx_object_ptr<olx_print_i_cont> val;
     for (size_t i=0; i < format.Length(); i++) {
+      if (val.is_valid()) {
+        olxstr val_str = val().ToString();
+        if (f_width != 0) {
+          if (val_str.Length() < f_width) {
+            val_str.Padding(f_width, ' ', false, false);
+          }
+        }
+        rv << val_str;
+        val = 0;
+      }
       size_t p_cnt=0;
       while (i < format.Length() && format.CharAt(i) == '%') {
         p_cnt++;
@@ -66,16 +118,48 @@ olxstr esdl::olx_print(const char *format_, ...) {
       }
       if ((p_cnt&1) != 0) {
         rv << format.SubString(str_st, i-str_st-p_cnt/2-1);
+        f_width = 0;
+        fp_cnt = 0;
+        // extract field width
+        if (olxstr::o_isdigit(format.CharAt(i))) {
+          size_t j = i-1;
+          while (++j < format.Length() && olxstr::o_isdigit(format.CharAt(j)))
+            ;
+          if (j == format.Length()) {
+            break;
+          }
+          f_width = format.SubString(i, j - i).ToInt();
+          i = j;
+        }
+        if (format.CharAt(i) == '.') {
+          i++;
+          size_t j = i - 1;
+          while (++j < format.Length() &&
+            (olxstr::o_isdigit(format.CharAt(j)) ||
+            (j == i && format.CharAt(j) == '-')))
+          {
+            ;
+          }
+          if (j == format.Length()) {
+            break;
+          }
+          if (j != i) {
+            fp_cnt = format.SubString(i, j - i).ToInt();
+            i = j;
+          }
+        }
         switch (format.CharAt(i)) {
         case 'l': {  // ll d/u l d/u/c/s
           if (++i < format.Length()) {
               switch (format.CharAt(i)) {
               case 'l': { // ll d/u
                 if (++i < format.Length()) {
-                  if (format.CharAt(i) == 'd')
-                    rv <<  va_arg(argptr, long long int);
-                  else if (format.CharAt(i) == 'u')
-                    rv << va_arg(argptr, unsigned long long int);
+                  if (format.CharAt(i) == 'd') {
+                    val = olx_print_makec(va_arg(argptr, long long int));
+                  }
+                  else if (format.CharAt(i) == 'u') {
+                    val = olx_print_makec(va_arg(argptr, unsigned long long int));
+                  }
                   else {
                     throw TInvalidArgumentException(__OlxSourceInfo,
                       olxstr("argument for ll: '") << format.CharAt(i) << '\'');
@@ -83,25 +167,27 @@ olxstr esdl::olx_print(const char *format_, ...) {
                 }
               }
               break;
+              case 'e':
               case 'f':
-                rv << va_arg(argptr, double);
+                val = olx_print_makec(va_arg(argptr, double), fp_cnt,
+                  format.CharAt(i) == 'e');
                 break;
               case 'i':
               case 'd':
-                rv << va_arg(argptr, long int);
+                val = olx_print_makec(va_arg(argptr, long int));
                 break;
               case 'u':
-                rv << va_arg(argptr, unsigned long int);
+                val = olx_print_makec(va_arg(argptr, unsigned long int));
                 break;
               case 'c':
 #ifdef __GNUC__
-                rv << va_arg(argptr, int);
+                val = olx_print_makec(va_arg(argptr, int));
 #else
-                rv << va_arg(argptr, wchar_t);
+                val = olx_print_makec(va_arg(argptr, wchar_t));
 #endif
                 break;
               case 's':
-                rv << va_arg(argptr, const wchar_t*);
+                val = olx_print_makec(va_arg(argptr, const wchar_t*));
                 break;
               default:
                 throw TInvalidArgumentException(__OlxSourceInfo,
@@ -114,15 +200,15 @@ olxstr esdl::olx_print(const char *format_, ...) {
           if (++i < format.Length()) {
             if (format.CharAt(i) == 'd')
 #ifdef __GNUC__
-              rv << va_arg(argptr, int);
+              val = olx_print_makec(va_arg(argptr, int));
 #else
-              rv << va_arg(argptr, short int);
+              val = olx_print_makec (va_arg(argptr, short int));
 #endif
             else if (format.CharAt(i) == 'u')
 #ifdef __GNUC__
-              rv << va_arg(argptr, unsigned int);
+              val = olx_print_makec(va_arg(argptr, unsigned int));
 #else
-              rv << va_arg(argptr, unsigned short int);
+              val = olx_print_makec(va_arg(argptr, unsigned short int));
 #endif
             else
               throw TInvalidArgumentException(__OlxSourceInfo,
@@ -131,39 +217,43 @@ olxstr esdl::olx_print(const char *format_, ...) {
           break;
         case 'L': // L
           if (++i < format.Length()) {
-            if (format.CharAt(i) == 'f')
-              rv << va_arg(argptr, long double);
+            if (format.CharAt(i) == 'f' || format.CharAt(i) == 'e') {
+              val = olx_print_makec(va_arg(argptr, long double), fp_cnt,
+                format.CharAt(i) == 'e');
+            }
             else
               throw TInvalidArgumentException(__OlxSourceInfo,
                 olxstr("argument for h: '") << format.CharAt(i) << '\'');
           }
           break;
+        case 'e':
         case 'f':
 #ifdef __GNUC__
           rv << va_arg(argptr, double);
 #else
-          rv << va_arg(argptr, float);
+          val = olx_print_makec(va_arg(argptr, float), fp_cnt,
+            format.CharAt(i) == 'e');
 #endif
           break;
         case 'i':
         case 'd':
-          rv << va_arg(argptr, int);
+          val = olx_print_makec(va_arg(argptr, int));
           break;
         case 'u':
-          rv << va_arg(argptr, unsigned int);
+          val = olx_print_makec(va_arg(argptr, unsigned int));
           break;
         case 'c':
 #ifdef __GNUC__
-          rv << va_arg(argptr, int);
+          val = olx_print_makec(va_arg(argptr, int));
 #else
-          rv << va_arg(argptr, char);
+          val = olx_print_makec(va_arg(argptr, char));
 #endif
           break;
         case 's':
-          rv << va_arg(argptr, const char*);
+          val = olx_print_makec(va_arg(argptr, const char*));
           break;
         case 'w':
-          rv << *va_arg(argptr, olxstr*);
+          val = olx_print_makec(*va_arg(argptr, olxstr*));
           break;
         default:
           throw TInvalidArgumentException(__OlxSourceInfo,
@@ -176,13 +266,23 @@ olxstr esdl::olx_print(const char *format_, ...) {
         str_st = i; // finished here
       }
     }
+    if (val.is_valid()) {
+      olxstr val_str = val().ToString();
+      if (f_width != 0) {
+        if (val_str.Length() < f_width) {
+          val_str.Padding(f_width, ' ', false, false);
+        }
+      }
+      rv << val_str;
+    }
   }
   catch (const TExceptionBase &e) {
     va_end(argptr);
     throw TFunctionFailedException(__OlxSourceInfo, e);
   }
   va_end(argptr);
-  if (str_st < format.Length())
+  if (str_st < format.Length()) {
     rv << format.SubStringFrom(str_st);
+  }
   return olxstr(rv);
 }
