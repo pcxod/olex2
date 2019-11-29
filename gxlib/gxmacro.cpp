@@ -2397,7 +2397,10 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
       flag = glSelectionSelect;
     }
     while (ai.HasNext()) {
-      app.GetRenderer().Select(ai.Next(), flag);
+      TXAtom &a = ai.Next();
+      if (a.IsVisible()) {
+        app.GetRenderer().Select(a, flag);
+      }
     }
   }
   else if (Cmds.Count() == 1 && Cmds[0].Equalsi("bonds")) {
