@@ -673,7 +673,7 @@ void XLibMacros::Export(TLibrary& lib)  {
     " the rest. If the variance-covariance matrix existsm also calculates the "
     "esd.");
   xlib_InitMacro(TestR,
-    EmptyString(),
+    "s-update the scale",
     fpAny | psFileLoaded,
     "Under development.");
   xlib_InitMacro(CalcVars,
@@ -7234,12 +7234,12 @@ void XLibMacros::macUpdate(TStrObjList &Cmds, const TParamList &Options,
   app.XFile().EndUpdate();
 }
 //.............................................................................
-void XLibMacros::funCalcR(const TStrObjList& Params, TMacroData &E)  {
+void XLibMacros::funCalcR(const TStrObjList& Params, TMacroData &E) {
   TXApp& xapp = TXApp::GetInstance();
   TRefList refs;
   evecd Fsq;
   RefinementModel& rm = xapp.XFile().GetRM();
-  double scale_k = 1./olx_sqr(rm.Vars.GetVar(0).GetValue());
+  double scale_k = 1. / olx_sqr(rm.Vars.GetVar(0).GetValue());
   xapp.CalcFsq(refs, Fsq, false);
   if (!Params.IsEmpty() && Params[0].Contains("scale")) {
     double sup = 0, sdn = 0;
@@ -7252,55 +7252,38 @@ void XLibMacros::funCalcR(const TStrObjList& Params, TMacroData &E)  {
     }
     scale_k = sdn / sup;
   }
-  double wR2u=0, wR2d=0, R1u=0, R1d=0, R1up = 0, R1dp = 0;
-  size_t r1p_cnt=0;
+  double wR2u = 0, wR2d = 0, R1u = 0, R1d = 0, R1up = 0, R1dp = 0;
+  size_t r1p_cnt = 0;
   TDoubleList wght = rm.used_weight;
   while (wght.Count() < 6) {
     wght.Add(0);
   }
-  wght[5] = 1./3;
-  evecd wsqd(refs.Count());
-  for (size_t i=0; i < refs.Count(); i++) {
+  wght[5] = 1. / 3;
+  TDoubleList wsqd(refs.Count());
+  for (size_t i = 0; i < refs.Count(); i++) {
     TReflection& r = refs[i];
     double Fc2 = Fsq[i];
     const double Fc = sqrt(olx_abs(Fc2));
     const double Fo2 = r.GetI()*scale_k;
     const double Fo = sqrt(Fo2 < 0 ? 0 : Fo2);
-    //double Fo2 = olx_abs(r.GetI()*scale_k);
-    //const double Fo = sqrt(Fo2);
     const double sigFo2 = r.GetS()*scale_k;
-    const double P = wght[5]*olx_max(0, Fo2) + (1.0-wght[5])*Fc2;
+    const double P = wght[5] * olx_max(0, Fo2) + (1.0 - wght[5])*Fc2;
     const double w =
-      1./(olx_sqr(sigFo2) + olx_sqr(wght[0]*P) + wght[1]*P + wght[2]);
-    wsqd[i] = w*olx_sqr(Fo2-Fc2);
-    wR2u += wsqd[i];
-    wR2d += w*olx_sqr(Fo2);
-    R1u += olx_abs(Fo-Fc);
+      1. / (olx_sqr(sigFo2) + olx_sqr(wght[0] * P) + wght[1] * P + wght[2]);
+    wR2u += w * olx_sqr(Fo2 - Fc2);
+    wR2d += w * olx_sqr(Fo2);
+    R1u += olx_abs(Fo - Fc);
     R1d += Fo;
-    if( Fo2 >= 2*sigFo2 )  {
-      R1up += olx_abs(Fo-Fc);
+    if (Fo2 >= 2 * sigFo2) {
+      R1up += olx_abs(Fo - Fc);
       R1dp += Fo;
       r1p_cnt++;
     }
   }
-  double wR2 = sqrt(wR2u/wR2d);
-  double R1 = R1u/R1d;
-  double R1p = R1up/R1dp;
-  if (!Params.IsEmpty() && Params[0].IndexOfi("print") != InvalidIndex) {
-    sorted::PrimitiveAssociation<double, size_t> dr;
-    double mv = wR2u/wsqd.Count();
-    for (size_t i=0; i < wsqd.Count(); i++) {
-      double df = sqrt(wsqd[i]/mv);
-      if (df > 5)
-        dr.Add(df, i);
-    }
-    for (size_t i=0; i < olx_min(10, dr.Count()); i++) {
-      TReflection& r = refs[dr.GetValue(i)];
-      double Fc2 = Fsq[dr.GetValue(i)];
-      TBasicApp::NewLogEntry() <<
-        olx_print("R %d %d %d %lf %lf %lf = %lf", r.GetH(), r.GetK(), r.GetL(),
-        r.GetI()*scale_k, r.GetS()*scale_k, Fc2, dr.GetKey(i));
-    }
+  double wR2 = sqrt(wR2u / wR2d);
+  double R1 = R1u / R1d;
+  double R1p = R1up / R1dp;
+  if (!Params.IsEmpty() && Params[0].Containsi("print")) {
     xapp.NewLogEntry() << "R1 (All, " << refs.Count() << ") = " <<
       olxstr::FormatFloat(4, R1);
     xapp.NewLogEntry() << "R1 (I/sig >= 2, " << r1p_cnt << ") = " <<
@@ -10581,6 +10564,160 @@ void XLibMacros::macD2CG(TStrObjList &Cmds, const TParamList &Options,
   TBasicApp::NewLogEntry() << out;
 }
 //..............................................................................
+//..............................................................................
+struct TestRTask : public TaskBase {
+  const TAsymmUnit &au;
+  const TUnitCell::SymmSpace &sp;
+  const TRefList &refs;
+  const TRefPList &testr;
+  const evecd &Fsq, &weights;
+  const TArray3D<TReflection*> &hkl3d;
+  sorted::PrimitiveAssociation<double,
+    AnAssociation4<vec3i, double, double,
+    AnAssociation3<bool, size_t, double> > > hits;
+  olxset<vec3d, TComparableComparator> &uniq_dir;
+  double originalR;
+  mat3d fm, om, hm;
+  TArrayList<TReflection*> mates;
+  bool direct, invert;
+  double cos_angle;
+
+  TestRTask(const TAsymmUnit &au,
+    const TUnitCell::SymmSpace &sp,
+    const TRefList &refs,
+    const TRefPList &testr,
+    const evecd &Fsq, const evecd &weights,
+    const TArray3D<TReflection*> &hkl3d,
+    olxset<vec3d, TComparableComparator> &uniq_dir,
+    double originalR)
+    : au(au),
+    sp(sp),
+    refs(refs),
+    testr(testr),
+    Fsq(Fsq),
+    weights(weights),
+    hkl3d(hkl3d),
+    uniq_dir(uniq_dir),
+    originalR(originalR),
+    mates(refs.Count())
+  {
+    direct = true;
+    invert = false;
+    cos_angle = -1;
+    fm = au.GetCartesianToCell();
+    om = au.GetCellToCartesian();
+    hm = au.GetHklToCartesian();
+  }
+
+  TestRTask(TestRTask &t)
+    : au(t.au),
+    sp(t.sp),
+    refs(t.refs),
+    testr(t.testr),
+    Fsq(t.Fsq),
+    weights(t.weights),
+    hkl3d(t.hkl3d),
+    uniq_dir(t.uniq_dir),
+    originalR(t.originalR),
+    mates(refs.Count()),
+    direct(t.direct),
+    invert(t.invert),
+    cos_angle(t.cos_angle),
+    fm(t.fm),
+    om(t.om),
+    hm(t.hm)
+  {}
+
+  void Run(size_t h_) {
+    int h = (int)h_ - 12;
+    const mat3d &dir_tm = direct ? hm : fm;
+    for (int k = -12; k <= 12; k++) {
+      for (int l = 0; l <= 12; l++)
+      {
+        if (h == 0 && k == 0 && (l == 0 || l > 1 || l < -1)) {
+          continue;
+        }
+        if (h == 0 && l == 0 && (k > 1 || k < -1)) {
+          continue;
+        }
+        if (k == 0 && l == 0 && (h > 1 || h < -1)) {
+          continue;
+        }
+        vec3d rv = TReflection::ToCart(vec3d(h, k, l), dir_tm).Normalise();
+        {
+          volatile olx_scope_cs _cs(GetCriticalSection());
+          if (!uniq_dir.Add(rv)) {
+            continue;
+          }
+        }
+        mat3d rm;
+        olx_create_rotation_matrix(rm, rv, cos_angle);
+        mat3d hrm = om * rm*fm;
+        if (invert) {
+          hrm *= -1;
+        }
+        mates.ForEach(olx_list_init::zero());
+        double bup = 0, bdn = 0, ds = 0;
+        size_t cnt = 0;
+        for (size_t i = 0; i < refs.Count(); i++) {
+          vec3d ctr = hrm * vec3d(refs[i].GetHkl());
+          vec3i tri = ctr.Round<int>();
+          double d = TReflection::ToCart(ctr - tri, hm).Length();
+          if (d > 0.005) {
+            continue;
+          }
+          ds += d;
+          tri = TReflection::Standardise(tri, sp);
+          if (!hkl3d.IsInRange(tri)) {
+            continue;
+          }
+          if ((mates[i] = hkl3d(tri)) != 0) {
+            cnt++;
+            double x = Fsq[refs[i].GetTag()] - Fsq[mates[i]->GetTag()];
+            bup += x * (refs[i].GetI() - Fsq[mates[i]->GetTag()]);
+            bdn += olx_sqr(x);
+          }
+        }
+        if (cnt < 30) {
+          continue;
+        }
+        double basf = bup / olx_max(1e-3, bdn);
+        if (basf <= 0 || basf >= 1) {
+          continue;
+        }
+        bup = bdn = 0;
+        size_t mc = 0;
+        for (size_t i = 0; i < testr.Count(); i++) {
+          TReflection *mate = mates[testr[i]->GetTag()];
+          if (mate == 0) {
+            continue;
+          }
+          mc++;
+          double si = testr[i]->GetI();
+          double w = weights[testr[i]->GetTag()];
+          bup += w * olx_sqr(si -
+            basf * (Fsq[testr[i]->GetTag()] - Fsq[mate->GetTag()]) -
+            Fsq[mate->GetTag()]);
+          bdn += w * olx_sqr(si);
+        }
+        if (mc < testr.Count() / 4) {
+          continue;
+        }
+        double R = sqrt(bup / (olx_max(1e-3, bdn)));
+        if (R < originalR) {
+          hits.Add(R / cnt, Association::Create(
+            vec3i(h, k, l), basf, 180,
+            Association::Create(direct, cnt, ds)));
+        }
+      }
+    }
+  }
+  TestRTask *Replicate() {
+    return new TestRTask(*this);
+  }
+};
+//..............................................................................
+//..............................................................................
 void XLibMacros::macTestR(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
@@ -10591,39 +10728,38 @@ void XLibMacros::macTestR(TStrObjList &Cmds, const TParamList &Options,
   RefinementModel& rm = xapp.XFile().GetRM();
   double scale_k = 1. / olx_sqr(rm.Vars.GetVar(0).GetValue());
   xapp.CalcFsq(refs, Fsq, false);
-  if (Options.GetBoolOption('s', true, true)) {
-    double sup = 0, sdn = 0;
-    for (size_t i = 0; i < refs.Count(); i++) {
-      if (refs[i].GetI() < 3 * refs[i].GetS()) continue;
-      sup += refs[i].GetI();
-      sdn += Fsq[i];
-    }
-    scale_k = sdn / sup;
+  if (Options.GetBoolOption('s', true, false)) {
+    scale_k = SFUtil::CalcF2Scale(Fsq, refs, TReflection::IoverSigmaFilter(3));
   }
   double wR2u = 0, wR2d = 0, R1u = 0, R1d = 0, R1up = 0, R1dp = 0;
   size_t r1p_cnt = 0;
+  typedef olx_pair_t<double, size_t> pair_t;
+  TTypeList<pair_t> dr;
   TDoubleList wght = rm.used_weight;
-  while (wght.Count() < 6)
+  while (wght.Count() < 6) {
     wght.Add(0);
+  }
+  evecd weights(refs.Count());
   wght[5] = 1. / 3;
   vec3i mini(100, 100, 100), maxi(-100, -100, -100);
   for (size_t i = 0; i < refs.Count(); i++) {
     TReflection& r = refs[i];
+    r *= scale_k;
     r.SetTag(i);
     r.Standardise(sp);
     vec3i::UpdateMinMax(r.GetHkl(), mini, maxi);
     double Fc2 = Fsq[i];
     const double Fc = sqrt(olx_abs(Fc2));
-    const double Fo2 = r.GetI()*scale_k;
+    const double Fo2 = r.GetI();
     const double Fo = sqrt(Fo2 < 0 ? 0 : Fo2);
-    //double Fo2 = olx_abs(r.GetI()*scale_k);
-    //const double Fo = sqrt(Fo2);
-    const double sigFo2 = r.GetS()*scale_k;
+    const double sigFo2 = r.GetS();
     const double P = wght[5] * olx_max(0, Fo2) + (1.0 - wght[5])*Fc2;
     const double w =
       1. / (olx_sqr(sigFo2) + olx_sqr(wght[0] * P) + wght[1] * P + wght[2]);
-    wR2u += w*olx_sqr(Fo2 - Fc2);
-    wR2d += w*olx_sqr(Fo2);
+    weights[i] = w;
+    double wsqd = w * olx_sqr(Fo2 - Fc2);
+    wR2u += wsqd;
+    wR2d += w * olx_sqr(Fo2);
     R1u += olx_abs(Fo - Fc);
     R1d += Fo;
     if (Fo2 >= 2 * sigFo2) {
@@ -10631,6 +10767,7 @@ void XLibMacros::macTestR(TStrObjList &Cmds, const TParamList &Options,
       R1dp += Fo;
       r1p_cnt++;
     }
+    dr.Add(new pair_t(wsqd, i));
   }
 
   double wR2 = sqrt(wR2u / wR2d);
@@ -10642,30 +10779,32 @@ void XLibMacros::macTestR(TStrObjList &Cmds, const TParamList &Options,
     olxstr::FormatFloat(4, R1p);
   xapp.NewLogEntry() << "wR2 = " << olxstr::FormatFloat(4, wR2);
 
-  sorted::PrimitiveAssociation<double, size_t> dr;
-  for (size_t i = 0; i < refs.Count(); i++) {
-    double df = olx_abs(Fsq[i]-refs[i].GetI()*scale_k)
-      / olx_max(1e-5, refs[i].GetS());
-    dr.Add(df, i);
-  }
+  QuickSorter::Sort(dr, ReverseComparator::Make(
+    ComplexComparator::Make(
+      FunctionAccessor::MakeConst(&pair_t::GetA),
+      TPrimitiveComparator()))
+  );
   TRefPList testr;
   double oR;
   {
     double rup = 0, rdn = 0;
-    for (size_t i = 0; i < 30; i++) {
-      size_t idx = dr.Count() - i - 1;
-      if (idx >= dr.Count()) break;
-      TReflection& r = refs[dr.GetValue(idx)];
-      double Fc2 = Fsq[dr.GetValue(idx)];
-      TBasicApp::NewLogEntry() <<
-        olx_print("R %d %d %d %lf %lf %lf = %lf", r.GetH(), r.GetK(), r.GetL(),
-        r.GetI()*scale_k, r.GetS()*scale_k, Fc2, dr.GetKey(idx));
+    for (size_t i = 0; i < olx_min(50, dr.Count()); i++) {
+      TReflection& r = refs[dr[i].b];
+      double Fc2 = Fsq[dr[i].b];
+      if (i < 10) {
+        TBasicApp::NewLogEntry() <<
+          olx_print("R %4d %4d %4d %8.2lf %8.2lf %8.2lf = %.2lf",
+            r.GetH(), r.GetK(), r.GetL(),
+            r.GetI(), r.GetS(), Fc2,
+            sqrt(dr[i].a *refs.Count() / wR2u));
+      }
       testr.Add(&r);
-      rup += olx_sqr(testr[i]->GetI()*scale_k - Fsq[testr[i]->GetTag()]);
-      rdn += olx_sqr(testr[i]->GetI());
+      double w = weights[testr[i]->GetTag()];
+      rup += w*olx_sqr(testr[i]->GetI() - Fsq[testr[i]->GetTag()]);
+      rdn += w*olx_sqr(testr[i]->GetI());
     }
     TBasicApp::NewLogEntry() << "Original R=" <<
-      olxstr::FormatFloat(3, oR = sqrt(rup/rdn)/scale_k);
+      olxstr::FormatFloat(3, oR = sqrt(rup/rdn));
   }
   TArray3D<TReflection*> hkl3d(mini, maxi);
   hkl3d.FastInitWith(0);
@@ -10673,81 +10812,44 @@ void XLibMacros::macTestR(TStrObjList &Cmds, const TParamList &Options,
     hkl3d(refs[i].GetHkl()) = &refs[i];
   }
   sorted::PrimitiveAssociation<double,
-    AnAssociation4<vec3i,size_t, double, bool> > hits;
-  TArrayList<TReflection*> mates(testr.Count());
+    AnAssociation4<vec3i,double, double,
+    AnAssociation3<bool, size_t, double> > > hits;
+  TArrayList<TReflection*> mates(refs.Count());
   const TAsymmUnit &au = xapp.XFile().GetAsymmUnit();
   mat3d fm = au.GetCartesianToCell(),
     om = au.GetCellToCartesian(),
-    hm = au.GetHklToCartesian(),
-    hmi = hm.Inverse();
-  sorted::ObjectComparable<vec3d> uniq_d;
-  for (int dir_t = 0; dir_t <= 1; dir_t++) {
-    bool direct = (dir_t == 0);
-    mat3d dir_tm = direct ? hm : fm;
-    for (int h = -12; h <= 12; h++) {
-      for (int k = -12; k <= 12; k++) {
-        for (int l = 0; l <= 12; l++)
-        {
-          if (h == 0 && k == 0 && l == 0) continue;
-          mat3d rm;
-          vec3d rv = TReflection::ToCart(vec3d(h, k, l), dir_tm).Normalise();
-          if (uniq_d.Contains(rv)) continue;
-          uniq_d.Add(rv);
-          olx_create_rotation_matrix(rm, rv, -1);
-          mat3d hrm = om*rm*fm;
-          mates.ForEach(olx_list_init::zero());
-          double bup = 0, bdn = 0, ds = 0;
-          size_t cnt = 0;
-          for (size_t i = 0; i < testr.Count(); i++) {
-            vec3d ctr = hrm*vec3d(testr[i]->GetHkl());
-            vec3i tri = ctr.Round<int>();
-            double d = TReflection::ToCart(ctr - tri, hm).Length();
-            if (d > 0.005)
-              continue;
-            ds += d;
-            tri = TReflection::Standardise(tri, sp);
-            if (!hkl3d.IsInRange(tri)) continue;
-            if ((mates[i] = hkl3d(tri)) != NULL) {
-              double x = Fsq[testr[i]->GetTag()] - Fsq[mates[i]->GetTag()];
-              bup += x*(testr[i]->GetI()*scale_k - Fsq[mates[i]->GetTag()]);
-              bdn += olx_sqr(x);
-              cnt++;
-            }
-          }
-          if (cnt < 10) continue;
-          double basf = bup / olx_max(1e-3, bdn);
-          //if (basf >= 1) continue;
-          bup = bdn = 0;
-          for (size_t i = 0; i < testr.Count(); i++) {
-            if (mates[i] == NULL) continue;
-            double si = testr[i]->GetI()*scale_k;
-            bup += olx_sqr(si -
-              basf*(Fsq[testr[i]->GetTag()] - Fsq[mates[i]->GetTag()]) -
-              Fsq[mates[i]->GetTag()]);
-            bdn += olx_sqr(si);
-          }
-          double R = sqrt(bup / (olx_max(1e-3, bdn)));
-          if (R > oR) continue;
-          //hits.Add(R,
-          //  olx_pair::make(vec3i(h, k, l), cnt));
-          hits.Add(ds / cnt, Association::Create(
-            vec3i(h, k, l), cnt, R, direct));
-        }
-      }
+    hm = au.GetHklToCartesian();
+  olxset<vec3d, TComparableComparator> uniq_dir;
+  TestRTask task(au, sp, refs, testr, Fsq, weights, hkl3d, uniq_dir, oR);
+  olx_critical_section cr_s;
+
+  TListIteratorManager<TestRTask> tasks(task, 24, tLinearTask, 1);
+  for (size_t i = 0; i < tasks.Count(); i++) {
+    tasks[i].direct = false;
+  }
+  tasks.ReRun();
+  for (size_t i = 0; i < tasks.Count(); i++) {
+    for (size_t j = 0; j < tasks[i].hits.Count(); j++) {
+      hits.Add(tasks[i].hits.GetKey(j), tasks[i].hits.GetValue(j));
     }
   }
-  for (size_t i = 0; i < olx_min(30, hits.Count()); i++) {
-    TBasicApp::NewLogEntry() << hits.GetKey(i) << ": " <<
-      (olxstr(',').Join(hits.GetValue(i).a).stream(", ") << hits.GetValue(i).b
-      << hits.GetValue(i).c << hits.GetValue(i).d);
+  for (size_t i = 0; i < olx_min(20, hits.Count()); i++) {
+    TBasicApp::NewLogEntry() << hits.GetKey(i)*hits.GetValue(i).d.b << ": " <<
+      (olxstr(',').Join(hits.GetValue(i).a).stream(", ")
+        << hits.GetValue(i).b
+        << hits.GetValue(i).c << hits.GetValue(i).d.a
+        <<  hits.GetValue(i).d.c/ hits.GetValue(i).d.b);
   }
-  if (hits.IsEmpty())
+  if (hits.IsEmpty()) {
     return;
+  }
   mat3d rot_m;
   olx_create_rotation_matrix(rot_m,
     TReflection::ToCart(hits.GetValue(0).a,
-    hits.GetValue(0).c ? fm : hm).Normalise(), -1);
+    hits.GetValue(0).d.a ? hm : fm).Normalise(),
+    cos(hits.GetValue(0).c*M_PI/180));
   rot_m = om*rot_m*fm;
+  math::alg::print0_2(rot_m);
   TRefList out;
   for (size_t i = 0; i < refs.Count(); i++) {
     TReflection &r = *(new TReflection(refs[i]));
@@ -10759,15 +10861,36 @@ void XLibMacros::macTestR(TStrObjList &Cmds, const TParamList &Options,
       continue;
     }
     tri = TReflection::Standardise(tri, sp);
-    if (!hkl3d.IsInRange(tri) || hkl3d(tri) == NULL) {
+    if (!hkl3d.IsInRange(tri) || hkl3d(tri) == 0) {
       out.Add(r);
       continue;
     }
     out.Add(new TReflection(tri, refs[i].GetI(), refs[i].GetS(), -2));
     out.Add(r);
   }
-  THklFile::SaveToFile(TEFile::ExtractFilePath(xapp.XFile().GetFileName()) +
-    "processed.hkl", out);
+  olxstr fn = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "olex2_hklf5.hkl");
+  olx_object_ptr<TUtf8File> outs = TUtf8File::Open(fn, "wb", false);
+  THklFile::SaveToStream(out, outs());
+  outs().Writeln(EmptyString());
+  outs().Writeln("TITL Olex2 generated HKLF5 file");
+  olxstr t = olx_print("CELL %.5lf %.4lf %.4lf %.4lf %.4lf %.4lf %.4lf",
+    xapp.XFile().GetRM().expl.GetRadiation(),
+    au.GetAxes()[0], au.GetAxes()[1], au.GetAxes()[2],
+    au.GetAngles()[0], au.GetAngles()[1], au.GetAngles()[2]);
+  outs().Writeln(t);
+  t = olx_print("ZERR %.5lf %.4lf %.4lf %.4lf %.4lf %.4lf %.4lf",
+    au.GetZ(),
+    au.GetAxisEsds()[0], au.GetAxisEsds()[1], au.GetAxisEsds()[2],
+    au.GetAngleEsds()[0], au.GetAngleEsds()[1], au.GetAngleEsds()[2]);
+  outs().Writeln(t);
+  outs().Writeln(olx_print("BASF %.4lf", 1.0-hits.GetValue(0).b));
+  outs().Writeln(
+    olx_print("REM Matrix: %.3lf %.3lf %.3lf %.3lf %.3lf %.3lf %.3lf %.3lf %.3lf",
+      rot_m[0][0], rot_m[0][1], rot_m[0][2],
+      rot_m[1][0], rot_m[1][1], rot_m[1][2],
+      rot_m[2][0], rot_m[2][1], rot_m[2][2]
+    ));
+  outs().Writeln("HKLF 5");
 }
 //.............................................................................
 void XLibMacros::macCalcVars(TStrObjList &Cmds, const TParamList &Options,

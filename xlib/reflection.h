@@ -119,6 +119,15 @@ public:
     I = IS.a;
     S = IS.b;
   }
+  // scaling
+  TReflection &operator *= (double s) {
+    return Scale(s);
+  }
+  TReflection &Scale(double s) {
+    I *= s;
+    S *= s;
+    return *this;
+  }
   //...........................................................................
   // these values are intialised by Analyse
   DefPropBFIsSet(Centric, Flags, bitCentric)
@@ -356,6 +365,20 @@ public:
       return olx_pair::make(F, sqrt(Fsq + sFsq) - F);
     }
   }
+
+  struct DummyFilter {
+    bool DoesPass(const TReflection &) const { return true; }
+  };
+
+  struct IoverSigmaFilter {
+    double threshold;
+    IoverSigmaFilter(double threshold)
+      : threshold(threshold)
+    {}
+    bool DoesPass(const TReflection &r) const {
+      return r.GetI() > threshold * r.GetS();
+    }
+  };
 };
 
 class IMillerIndexList {

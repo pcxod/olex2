@@ -38,6 +38,11 @@ namespace SFUtil {
   const static double EQ_PI = 8 * M_PI*M_PI;
   const static double TQ_PI = 2 * M_PI*M_PI;
 
+  static double GetFsq(double v) { return v; }
+  static double GetFsq(const compd &v) { return v.qmod(); }
+  static double GetF(double v) { return v; }
+  static double GetF(const compd &v) { return v.mod(); }
+
   struct StructureFactor {
     vec3i hkl;  // hkl indexes
     double ps;  // phase shift
@@ -72,41 +77,60 @@ namespace SFUtil {
     ElementPList &types,
     TCAtomPList& alist);
   /* calculates the scale sum(Fc)/sum(Fo) Fc = k*Fo. Can accept a list of
-  doubles (Fo)
+  doubles (Fo).
+  F - a list of doubles (F) or complex values
   */
-  template <class RefList>
-  static double CalcFScale(const TArrayList<compd>& F, const RefList& refs) {
+  template <class FList, class RefList>
+  static double CalcFScale(const FList& F, const RefList& refs) {
     double sF2o = 0, sF2c = 0;
-    const size_t f_cnt = F.Count();
-    for (size_t i = 0; i < f_cnt; i++) {
+    for (size_t i = 0; i < F.Count(); i++) {
       sF2o += TReflection::GetF(refs[i]);
-      sF2c += F[i].mod();
+      sF2c += GetF(F[i]);
     }
     return sF2c / sF2o;
   }
-  /* calculates the scale sum(Fc^2)/sum(Fo^2) Fc^2 = k*Fo^2. Can accept a list
-  of doubles (Fo^2)
+  /* calculates the scale sum(Fc^2)/sum(Fo^2) Fc^2 = k*Fo^2.
+  F - a list of doubles (Fsq) or complex values (F)
+  refs - a list of doubles (Fo^2) or reflections (Fo^2)
   */
-  template <class RefList> double CalcF2Scale(const TArrayList<compd>& F,
-    const RefList& refs)
-  {
+  template <class FList, class RefList>
+  double CalcF2Scale(const FList& F, const RefList& refs) {
     double sF2o = 0, sF2c = 0;
     const size_t f_cnt = F.Count();
     for (size_t i = 0; i < f_cnt; i++) {
       sF2o += TReflection::GetFsq(refs[i]);
-      sF2c += F[i].qmod();
+      sF2c += GetFsq(F[i]);
     }
     return sF2c / sF2o;
   }
-  /* calculates a best line scale : Fc = k*Fo + a. Can accept a list of doubles (Fo) */
-  template <class RefList> void CalcFScale(const TArrayList<compd>& F,
-    const RefList& refs, double& k, double& a)
-  {
+  /* calculates the scale sum(Fc^2)/sum(Fo^2) Fc^2 = k*Fo^2 for selected
+  reflections.
+  F - a list of doubles (Fsq) or complex values (F)
+  refs - a list of reflections (Fo^2)
+  */
+  template <class FList, class RefList, class filter_t>
+  double CalcF2Scale(const FList& F, const RefList& refs, const filter_t filter) {
+    double sF2o = 0, sF2c = 0;
+    const size_t f_cnt = F.Count();
+    for (size_t i = 0; i < f_cnt; i++) {
+      if (filter.DoesPass(olx_ref::get(refs[i]))) {
+        sF2o += TReflection::GetFsq(refs[i]);
+        sF2c += GetFsq(F[i]);
+      }
+    }
+    return sF2c / sF2o;
+  }
+  /* calculates a best line scale : Fc = k*Fo + a.
+  F - a list of doubles (F) or complex values (F)
+  refs - a list of doubles (Fo) or reflections (Fo^2)
+  */
+  template <class FList, class RefList>
+  void CalcFScale(const FList& F, const RefList& refs, double& k, double& a) {
     double sx = 0, sy = 0, sxs = 0, sxy = 0;
     const size_t f_cnt = F.Count();
     for (size_t i = 0; i < f_cnt; i++) {
       const double I = TReflection::GetF(refs[i]);
-      const double qm = F[i].mod();
+      const double qm = GetF(F[i]);
       sx += I;
       sy += qm;
       sxy += I*qm;
@@ -115,17 +139,17 @@ namespace SFUtil {
     k = (sxy - sx*sy / f_cnt) / (sxs - sx*sx / f_cnt);
     a = (sy - k*sx) / f_cnt;
   }
-  /* calculates a best line scale : Fc^2 = k*Fo^2 + a. Can accept a list of
-  doubles (Fo^2)
+  /* calculates a best line scale : Fc^2 = k*Fo^2 + a.
+  F - a list of doubles (Fsq) or complex values (F)
+  refs - a list of doubles (Fo^2) or reflections (Fo^2)
   */
-  template <class RefList> void CalcF2Scale(const TArrayList<compd>& F,
-    const RefList& refs, double& k, double& a)
-  {
+  template <class FList, class RefList>
+  void CalcF2Scale(const FList& F, const RefList& refs, double& k, double& a) {
     double sx = 0, sy = 0, sxs = 0, sxy = 0;
     const size_t f_cnt = F.Count();
     for (size_t i = 0; i < f_cnt; i++) {
       const double I = TReflection::GetFsq(refs[i]);
-      const double qm = F[i].qmod();
+      const double qm = GetFsq(F[i]);
       sx += I;
       sy += qm;
       sxy += I*qm;
