@@ -76,46 +76,44 @@ namespace SFUtil {
     TTypeList<XScatterer>& scatterers,
     ElementPList &types,
     TCAtomPList& alist);
-  /* calculates the scale sum(Fc)/sum(Fo) Fc = k*Fo. Can accept a list of
-  doubles (Fo).
+  /* calculates the scale sum(w*Fc*Fc)/sum(w*Fo^2) Fc = k*Fo.
   F - a list of doubles (F) or complex values
+  refs - a list of reflections (Fo^2), sqrt of I will be taken
   */
-  template <class FList, class RefList>
-  static double CalcFScale(const FList& F, const RefList& refs) {
-    double sF2o = 0, sF2c = 0;
+  template <class FList, class RefList, class weight_t, class filter_t>
+  static double CalcFScale(const FList& F, const RefList& refs,
+    const weight_t &weights, const filter_t filter)
+  {
+    double sFo = 0, sFc = 0;
     for (size_t i = 0; i < F.Count(); i++) {
-      sF2o += TReflection::GetF(refs[i]);
-      sF2c += GetF(F[i]);
+      if (filter.DoesPass(olx_ref::get(refs[i]))) {
+        const TReflection &r = olx_ref::get(refs[i]);
+        double Fo = r.GetI() <= 0 ? 0 : sqrt(r.GetI());
+        double w = weights.Calculate(r);
+        sFo += w * Fo * Fo;
+        sFc += w* Fo * GetF(F[i]);
+      }
     }
-    return sF2c / sF2o;
+    return sFc / sFo;
   }
-  /* calculates the scale sum(Fc^2)/sum(Fo^2) Fc^2 = k*Fo^2.
-  F - a list of doubles (Fsq) or complex values (F)
-  refs - a list of doubles (Fo^2) or reflections (Fo^2)
-  */
-  template <class FList, class RefList>
-  double CalcF2Scale(const FList& F, const RefList& refs) {
-    double sF2o = 0, sF2c = 0;
-    const size_t f_cnt = F.Count();
-    for (size_t i = 0; i < f_cnt; i++) {
-      sF2o += TReflection::GetFsq(refs[i]);
-      sF2c += GetFsq(F[i]);
-    }
-    return sF2c / sF2o;
-  }
-  /* calculates the scale sum(Fc^2)/sum(Fo^2) Fc^2 = k*Fo^2 for selected
+  /* calculates the scale sum(Fc^2*Fo^2)/sum(Fo^4) Fc^2 = k*Fo^2 for selected
   reflections.
   F - a list of doubles (Fsq) or complex values (F)
   refs - a list of reflections (Fo^2)
   */
-  template <class FList, class RefList, class filter_t>
-  double CalcF2Scale(const FList& F, const RefList& refs, const filter_t filter) {
+  template <class FList, class RefList, class weight_t, class filter_t>
+  double CalcF2Scale(const FList& F, const RefList& refs,
+    const weight_t &weights, const filter_t filter)
+  {
     double sF2o = 0, sF2c = 0;
     const size_t f_cnt = F.Count();
     for (size_t i = 0; i < f_cnt; i++) {
       if (filter.DoesPass(olx_ref::get(refs[i]))) {
-        sF2o += TReflection::GetFsq(refs[i]);
-        sF2c += GetFsq(F[i]);
+        const TReflection &r = olx_ref::get(refs[i]);
+        double F2o = r.GetI();
+        double w = weights.Calculate(r);
+        sF2o += w*F2o * F2o;
+        sF2c += w*F2o * GetFsq(F[i]);
       }
     }
     return sF2c / sF2o;

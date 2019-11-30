@@ -126,6 +126,33 @@ namespace RefUtil {
       void OnItem(TReflection& r, size_t) const { parent.AdjustIntensity(r); }
     };
   };
+
+  /* Requires and instance of TXApp */
+  struct Stats {
+    TRefList refs;
+    evecd Fsq;
+    evecd weights,
+      wsqd; // weighted square differences 
+    double R1, R1_partial, wR2;
+    double sum_wsqd;
+    double partical_threshold = 2;
+    size_t partial_R1_cnt;
+    vec3i min_hkl, max_hkl;
+    Stats(bool update_scale);
+
+    double UpdatePartialR1(double threshold);
+
+    TRefPList::const_list_type GetNBadRefs(size_t N, double *wR2 = 0) const {
+      return GetBadRefs_(N, 0.0, true, wR2);
+    }
+    TRefPList::const_list_type GetBadRefs(double threshold, double *wR2 = 0) const {
+      return GetBadRefs_(0, threshold, false, wR2);
+    }
+  protected:
+    TRefPList::const_list_type GetBadRefs_(size_t N, double th,
+      bool use_n,
+      double *wR2) const;
+  };
 };  // end of namespace RefUtil
 
 EndXlibNamespace()

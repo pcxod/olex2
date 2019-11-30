@@ -249,7 +249,9 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
         }
       }
       else {  // simple scale on I/sigma > 3
-        k = CalcFScale(F, refs);
+        k = CalcFScale(F, refs,
+          TReflection::SigmaWeightCalculator<1>(),
+          TReflection::IoverSigmaFilter(2));
         if (TBasicApp::GetInstance().IsProfiling())
           TBasicApp::NewLogEntry(logInfo) << "Fc^2 = " << k << "*Fo^2";
       }

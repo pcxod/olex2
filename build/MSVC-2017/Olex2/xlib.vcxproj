@@ -662,6 +662,7 @@
     <ClCompile Include="..\..\..\xlib\lattice.cpp" />
     <ClCompile Include="..\..\..\xlib\leq.cpp" />
     <ClCompile Include="..\..\..\xlib\lst.cpp" />
+    <ClCompile Include="..\..\..\xlib\macro\testr.cpp" />
     <ClCompile Include="..\..\..\xlib\mol.cpp" />
     <ClCompile Include="..\..\..\xlib\mol2.cpp" />
     <ClCompile Include="..\..\..\xlib\network.cpp" />
@@ -669,6 +670,7 @@
     <ClCompile Include="..\..\..\xlib\pdb.cpp" />
     <ClCompile Include="..\..\..\xlib\reflection.cpp" />
     <ClCompile Include="..\..\..\xlib\refmodel.cpp" />
+    <ClCompile Include="..\..\..\xlib\refutil.cpp" />
     <ClCompile Include="..\..\..\xlib\rm_base.cpp" />
     <ClCompile Include="..\..\..\xlib\samegroup.cpp" />
     <ClCompile Include="..\..\..\xlib\satom.cpp" />
