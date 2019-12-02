@@ -11,6 +11,7 @@ Stats::Stats(bool update_scale)
   min_hkl(1000),
   max_hkl(-1000)
 {
+  partical_threshold = 2;
   TXApp& xapp = TXApp::GetInstance();
   RefinementModel& rm = xapp.XFile().GetRM();
   double scale_k = 1. / olx_sqr(rm.Vars.GetVar(0).GetValue());

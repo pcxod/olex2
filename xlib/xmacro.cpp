@@ -675,7 +675,11 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(TestR,
     "s-update the scale",
     fpAny | psFileLoaded,
-    "Under development.");
+    "Test for twinning.");
+  xlib_InitMacro(HKLF5,
+    EmptyString(),
+    fpAny | psFileLoaded,
+    "HKLF5 utils.");
   xlib_InitMacro(CalcVars,
     EmptyString(),
     fpAny | psFileLoaded,
@@ -10806,5 +10810,113 @@ void XLibMacros::macLowdin(TStrObjList &Cmds, const TParamList &Options,
   TBasicApp::NewLogEntry() << "(" << olxstr::FormatFloat(3, S_sq[0].DotProd(S[0]))
     << ", " << olxstr::FormatFloat(3, S_sq[1].DotProd(S[1]))
     << ", " << olxstr::FormatFloat(3, S_sq[2].DotProd(S[2])) << ')';
+}
+//..............................................................................
+struct macHKLF5_sorter {
+  const THklFile &hf;
+  macHKLF5_sorter(const THklFile &hf)
+    : hf(hf)
+  {}
+
+  template <typename pair_t>
+  int Compare(const pair_t &a_, const pair_t &b_) const {
+    const TReflection &ra = hf[olx_ref::get(a_).b];
+    const TReflection &rb = hf[olx_ref::get(b_).b];
+    return -olx_cmp(ra.GetHkl().QLength(), rb.GetHkl().QLength());
+  }
+};
+void XLibMacros::macHKLF5(TStrObjList &Cmds, const TParamList &Options,
+  TMacroData &Error)
+{
+  if (Cmds.IsEmpty()) {
+    olxstr fof = "FileOpen('Choose an HKLF5 file', '*.hkl', FilePath())";
+    if (!olex2::IOlex2Processor::GetInstance()->processFunction(fof)) {
+      return;
+    }
+    Cmds.Add(fof);
+  }
+  THklFile hf;
+  hf.LoadFromFile(Cmds[0], false);
+  if (hf.RefCount() == 0 || !hf[0].IsBatchSet()) {
+    Error.ProcessingError(__OlxSrcInfo, "HKLF5 file is expected");
+    return;
+  }
+  typedef olx_pair_t<size_t, size_t> pair_t;
+  olx_pdict<int16_t, TTypeList<pair_t> > batches;
+  
+  for (size_t i = 0; i < hf.RefCount(); i++) {
+    if (hf[i].GetBatch() < 0) {
+      size_t st = i;
+      while (++i < hf.RefCount() && hf[i].GetBatch() < 0)
+      {
+      }
+      if (i >= hf.RefCount()) {
+        break;
+      }
+      if (hf[i].GetHkl().Prod() == 0) {
+        continue;
+      }
+      for (size_t ri = st; ri < i; ri++) {
+        TTypeList<pair_t> &data = batches.Add(hf[ri].GetBatch());
+        data.Add(new pair_t(ri, i));
+      }
+    }
+  }
+  mat3d hm = TXApp::GetInstance().XFile().GetAsymmUnit().GetHklToCartesian();
+  for (size_t bi = 0; bi < batches.Count(); bi++) {
+    TTypeList<pair_t> &data = batches.GetValue(bi);
+    if (data.Count() < 3) {
+      TBasicApp::NewLogEntry(logWarning) << "Skipping batch "
+        << batches.GetKey(bi) << " - not enough data";
+      continue;
+    }
+    QuickSorter::Sort(data, macHKLF5_sorter(hf));
+    size_t max_data = olx_max(3, data.Count()/2);
+    ematd dm(max_data * 3, 9);
+    evecd right(max_data * 3);
+    for (size_t hi = 0; hi < max_data; hi ++) {
+      const TReflection &sr = hf[data[hi].b];
+      const TReflection &dr = hf[data[hi].a];
+      size_t off = hi * 3;
+      double w = sr.GetHkl().QLength();
+      for (size_t i = 0; i < 3; i++) {
+        for (size_t j = 0; j < 3; j++) {
+          dm[off + i][i * 3 + j] = sr.GetHkl()[j] * w * w;
+        }
+        right[off + i] = dr.GetHkl()[i] * w * w;
+      }
+    }
+    ematd dmt = ematd::Transpose(dm);
+    ematd inm = dmt * dm;
+    if (!math::LU::Invert(inm)) {
+      TBasicApp::NewLogEntry(logWarning) << "Failed to invert the normal matrix";
+      continue;
+    }
+    evecd b = dmt * right;
+    b = inm * b;
+    mat3d tm;
+    TBasicApp::NewLogEntry() << "Twin rotation matrix for batch "
+      << batches.GetKey(bi);
+    for (size_t i = 0; i < 3; i++) {
+      for (size_t j = 0; j < 3; j++) {
+        tm[i][j] = b[i * 3 + j];
+        if (olx_abs(tm[i][j]) < 1e-6) {
+          tm[i][j] = 0;
+        }
+      }
+      TBasicApp::NewLogEntry() << olx_print("%5.3lft %5.3lft %5.3lft",
+        tm[i][0], tm[i][1], tm[i][2]);
+    }
+    // test
+    double r_sq = 0;
+    for (size_t hi = 0; hi < data.Count(); hi++) {
+      const TReflection &sr = hf[data[hi].b];
+      const TReflection &dr = hf[data[hi].a];
+      vec3d res = tm * vec3d(sr.GetHkl());
+      r_sq += TReflection::ToCart(res - dr.GetHkl(), hm).QLength();
+    }
+    TBasicApp::NewLogEntry() << olx_print("R fit: %.2le for %z data",
+      sqrt(r_sq)/ data.Count(), data.Count());
+  }
 }
 //..............................................................................

@@ -102,8 +102,8 @@ struct TestRTask : public TaskBase {
         for (size_t i = 0; i < refs.Count(); i++) {
           vec3d ctr = hrm * vec3d(refs[i].GetHkl());
           vec3i tri = ctr.Round<int>();
-          double d = TReflection::ToCart(ctr - tri, hm).Length();
-          if (d > 0.005) {
+          double d = TReflection::ToCart(ctr - tri, hm).QLength();
+          if (d > 0.005*0.005) {
             continue;
           }
           ds += d;
@@ -112,10 +112,13 @@ struct TestRTask : public TaskBase {
             continue;
           }
           if ((mates[i] = hkl3d(tri)) != 0) {
-            cnt++;
+            double w = 1;// weights[refs[i].GetTag()];
             double x = Fsq[refs[i].GetTag()] - Fsq[mates[i]->GetTag()];
-            bup += x * (refs[i].GetI() - Fsq[mates[i]->GetTag()]);
-            bdn += olx_sqr(x);
+            bup += w * x * (refs[i].GetI() - Fsq[mates[i]->GetTag()]);
+            bdn += w * olx_sqr(x);
+            if (cnt++ >= refs.Count()/5) {
+              break;
+            }
           }
         }
         if (cnt < 30) {
@@ -146,8 +149,8 @@ struct TestRTask : public TaskBase {
         double R = sqrt(bup / (olx_max(1e-3, bdn)));
         if (R < originalR) {
           hits.Add(R / cnt, Association::Create(
-            vec3i(h, k, l), basf, 180,
-            Association::Create(direct, cnt, ds)));
+            vec3i(h, k, l), basf, cos_angle,
+            Association::Create(direct, cnt, sqrt(ds))));
         }
       }
     }
@@ -216,31 +219,57 @@ void XLibMacros::macTestR(TStrObjList &Cmds, const TParamList &Options,
       hits.Add(tasks[i].hits.GetKey(j), tasks[i].hits.GetValue(j));
     }
   }
-  for (size_t i = 0; i < olx_min(20, hits.Count()); i++) {
-    TBasicApp::NewLogEntry() << hits.GetKey(i)*hits.GetValue(i).d.b << ": " <<
-      (olxstr(',').Join(hits.GetValue(i).a).stream(", ")
-        << hits.GetValue(i).b
-        << hits.GetValue(i).c << hits.GetValue(i).d.a
-        << hits.GetValue(i).d.c / hits.GetValue(i).d.b);
-  }
   if (hits.IsEmpty()) {
     return;
+  }
+  {
+    TTable ho(olx_min(20, hits.Count()), 5);
+    ho.ColName(0) = "wR2";
+    ho.ColName(1) = "Direction";
+    ho.ColName(2) = "BASF";
+    ho.ColName(3) = "Angle";
+    ho.ColName(4) = "D/A";
+    for (size_t i = 0; i < olx_min(20, hits.Count()); i++) {
+      TStrList &r = ho[i];
+      r[0] = olx_print("%.3lf", hits.GetKey(i)*hits.GetValue(i).d.b);
+      r[1] = olxstr(',').Join(hits.GetValue(i).a) << '/' <<
+        (hits.GetValue(0).d.a ? 'd' : 'r');
+      r[2] = olx_print("%.3lf", hits.GetValue(i).b);
+      r[3] = olx_print("%.3lft", acos(hits.GetValue(i).c) * 180 / M_PI);
+      r[4] = olx_print("%.3le", hits.GetValue(i).d.c / hits.GetValue(i).d.b);
+    }
+    TBasicApp::NewLogEntry() << ho.CreateTXTList("Hits", true, false, ' ');
   }
   sw.start("Processing results");
   mat3d rot_m;
   olx_create_rotation_matrix(rot_m,
     TReflection::ToCart(hits.GetValue(0).a,
-      hits.GetValue(0).d.a ? hm : fm).Normalise(),
-    cos(hits.GetValue(0).c*M_PI / 180));
+      hits.GetValue(0).d.a ? hm : fm).Normalise(), hits.GetValue(0).c);
+
+  TBasicApp::NewLogEntry() << acos(hits.GetValue(0).c)*180/M_PI
+    << " deg rotation around "
+    << (hits.GetValue(0).d.a ? "direct" : "reciprocal") << " lattice vector: "
+    << olx_print("%3d %3d %3d",
+      hits.GetValue(0).a[0], hits.GetValue(0).a[1], hits.GetValue(0).a[2]);
+
   rot_m = om * rot_m*fm;
-  math::alg::print0_2(rot_m);
+  TBasicApp::NewLogEntry() << "Transformation matrix:";
+  for (size_t i = 0; i < 3; i++) {
+    for (size_t j = 0; j < 3; j++) {
+      if (olx_abs(rot_m[i][j]) < 1e-8) {
+        rot_m[i][j] = 0;
+      }
+    }
+    TBasicApp::NewLogEntry() << olx_print("%4.3lft %4.3lft %4.3lft",
+      rot_m[i][0], rot_m[i][1], rot_m[i][2]);
+  }
   TRefList out;
   for (size_t i = 0; i < rstat.refs.Count(); i++) {
     TReflection &r = *(new TReflection(rstat.refs[i]));
     r.SetBatch(1);
     vec3d tr = rot_m * vec3d(rstat.refs[i].GetHkl());
     vec3i tri = tr.Round<int>();
-    if (TReflection::ToCart(tr - tri, hm).Length() > 0.005) {
+    if (TReflection::ToCart(tr - tri, hm).QLength() > 0.005*0.005) {
       out.Add(r);
       continue;
     }
@@ -271,7 +300,8 @@ void XLibMacros::macTestR(TStrObjList &Cmds, const TParamList &Options,
   outs().Writeln(t);
   outs().Writeln(olx_print("BASF %.4lf", 1.0 - hits.GetValue(0).b));
   outs().Writeln(
-    olx_print("REM Matrix: %.3lf %.3lf %.3lf %.3lf %.3lf %.3lf %.3lf %.3lf %.3lf",
+    olx_print("REM Matrix: %.3lf %.3lft %.3lft %.3lft %.3lft %.3lft %.3lft"
+      "%.3lft %.3lft",
       rot_m[0][0], rot_m[0][1], rot_m[0][2],
       rot_m[1][0], rot_m[1][1], rot_m[1][2],
       rot_m[2][0], rot_m[2][1], rot_m[2][2]

@@ -135,7 +135,7 @@ namespace RefUtil {
       wsqd; // weighted square differences 
     double R1, R1_partial, wR2;
     double sum_wsqd;
-    double partical_threshold = 2;
+    double partical_threshold; // = 2;
     size_t partial_R1_cnt;
     vec3i min_hkl, max_hkl;
     Stats(bool update_scale);
