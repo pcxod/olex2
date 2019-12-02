@@ -65,15 +65,22 @@ template <typename T>
 struct olx_print_cont_f : public olx_print_i_cont {
   const T &value;
   int fp_cnt;
-  olx_print_cont_f(const T &v, int fp_cnt, bool expf)
+  bool expf, trim;
+  olx_print_cont_f(const T &v, int fp_cnt, bool expf, bool trim)
     : value(v),
-    fp_cnt(fp_cnt)
+    fp_cnt(fp_cnt),
+    expf(expf),
+    trim(trim)
   {}
   virtual olxstr ToString() {
+    olxstr rv;
     if (fp_cnt != 0) {
-      return olxstr::FormatFloat(fp_cnt, value, false);
+      rv = olxstr::FormatFloat(fp_cnt, value, expf);
     }
-    return olxstr(value);
+    else {
+      rv = olxstr(value);
+    }
+    return trim ?rv.TrimFloat() : rv;
   }
 };
 
@@ -82,8 +89,18 @@ olx_print_i_cont *olx_print_makec(const T &v) {
   return new olx_print_cont<T>(v);
 }
 template <typename T>
-olx_print_i_cont *olx_print_makec(const T &v, int fp_cnt, bool expf = false) {
-  return new olx_print_cont_f<T>(v, fp_cnt, expf);
+olx_print_i_cont *olx_print_makec(const T &v, int fp_cnt,
+  bool expf, bool trim)
+{
+  return new olx_print_cont_f<T>(v, fp_cnt, expf, trim);
+}
+
+bool olx_print_check_next(const olxstr &format, olxch what, size_t &idx) {
+  if (idx + 1 < format.Length() && format.CharAt(idx + 1) == what) {
+    idx++;
+    return true;
+  }
+  return false;
 }
 
 olxstr esdl::olx_print(const char *format_, ...) {
@@ -170,7 +187,7 @@ olxstr esdl::olx_print(const char *format_, ...) {
               case 'e':
               case 'f':
                 val = olx_print_makec(va_arg(argptr, double), fp_cnt,
-                  format.CharAt(i) == 'e');
+                  format.CharAt(i) == 'e', olx_print_check_next(format, 't', i));
                 break;
               case 'i':
               case 'd':
@@ -219,7 +236,7 @@ olxstr esdl::olx_print(const char *format_, ...) {
           if (++i < format.Length()) {
             if (format.CharAt(i) == 'f' || format.CharAt(i) == 'e') {
               val = olx_print_makec(va_arg(argptr, long double), fp_cnt,
-                format.CharAt(i) == 'e');
+                format.CharAt(i) == 'e', olx_print_check_next(format, 't', i));
             }
             else
               throw TInvalidArgumentException(__OlxSourceInfo,
@@ -229,10 +246,11 @@ olxstr esdl::olx_print(const char *format_, ...) {
         case 'e':
         case 'f':
 #ifdef __GNUC__
-          rv << va_arg(argptr, double);
+          val = olx_print_makec(va_arg(argptr, double), fp_cnt,
+            format.CharAt(i) == 'e', olx_print_check_next(format, 't', i));
 #else
           val = olx_print_makec(va_arg(argptr, float), fp_cnt,
-            format.CharAt(i) == 'e');
+            format.CharAt(i) == 'e', olx_print_check_next(format, 't', i));
 #endif
           break;
         case 'i':
@@ -251,6 +269,9 @@ olxstr esdl::olx_print(const char *format_, ...) {
           break;
         case 's':
           val = olx_print_makec(va_arg(argptr, const char*));
+          break;
+        case 'z':
+          val = olx_print_makec(va_arg(argptr, size_t));
           break;
         case 'w':
           val = olx_print_makec(*va_arg(argptr, olxstr*));
