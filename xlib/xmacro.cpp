@@ -10862,6 +10862,11 @@ void XLibMacros::macHKLF5(TStrObjList &Cmds, const TParamList &Options,
       }
     }
   }
+  if (batches.IsEmpty()) {
+    Error.ProcessingError(__OlxSrcInfo,
+      "could not locate any negative batch numbers");
+    return;
+  }
   mat3d hm = TXApp::GetInstance().XFile().GetAsymmUnit().GetHklToCartesian();
   for (size_t bi = 0; bi < batches.Count(); bi++) {
     TTypeList<pair_t> &data = batches.GetValue(bi);

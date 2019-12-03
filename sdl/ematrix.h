@@ -41,9 +41,7 @@ private:
   size_t RowCount_() const { return Self().RowCount(); }
   const FT& Get_(size_t i, size_t j) const { return Self()(i,j); }
 public:
-  /* the function multiplies a matrix by a column vector. Only the number of
-  vector elements is taken from the matrix - no error will be generated if the
-  matrix dimensions (number of elements) are larger than the vector dimentions!
+  /* the function multiplies a matrix by a column vector.
   */
   template <class AFT>
   ConstVector<FT> operator * (const TVector<AFT>& C) const

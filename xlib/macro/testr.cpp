@@ -171,6 +171,10 @@ void XLibMacros::macTestR(TStrObjList &Cmds, const TParamList &Options,
   TXApp& xapp = TXApp::GetInstance();
   TUnitCell::SymmSpace sp = xapp.XFile().GetUnitCell().GetSymmSpace();
   RefinementModel& rm = xapp.XFile().GetRM();
+  if (rm.GetHKLF() != 4) {
+    Error.ProcessingError(__OlxSrcInfo, "HKLF4 mode is expected");
+    return;
+  }
 
   xapp.NewLogEntry() << "R1 (All, " << rstat.refs.Count() << ") = " <<
     olxstr::FormatFloat(4, rstat.R1);
@@ -189,7 +193,7 @@ void XLibMacros::macTestR(TStrObjList &Cmds, const TParamList &Options,
         sqrt(rstat.wsqd[r.GetTag()] * rstat.refs.Count() / rstat.sum_wsqd));
 
   }
-  TBasicApp::NewLogEntry() << "Original R=" << olxstr::FormatFloat(3, oR);
+  TBasicApp::NewLogEntry() << "Original wR2=" << olxstr::FormatFloat(3, oR);
   TArray3D<TReflection*> hkl3d(rstat.min_hkl, rstat.max_hkl);
   hkl3d.FastInitWith(0);
   for (size_t i = 0; i < rstat.refs.Count(); i++) {
@@ -223,20 +227,23 @@ void XLibMacros::macTestR(TStrObjList &Cmds, const TParamList &Options,
     return;
   }
   {
-    TTable ho(olx_min(20, hits.Count()), 5);
+    TTable ho(olx_min(20, hits.Count()), 6);
     ho.ColName(0) = "wR2";
     ho.ColName(1) = "Direction";
     ho.ColName(2) = "BASF";
     ho.ColName(3) = "Angle";
-    ho.ColName(4) = "D/A";
+    ho.ColName(4) = "Nref";
+    ho.ColName(5) = "D/A";
     for (size_t i = 0; i < olx_min(20, hits.Count()); i++) {
       TStrList &r = ho[i];
       r[0] = olx_print("%.3lf", hits.GetKey(i)*hits.GetValue(i).d.b);
-      r[1] = olxstr(',').Join(hits.GetValue(i).a) << '/' <<
+      r[1] = olx_print("%3d%3d%3d /", hits.GetValue(i).a[0],
+        hits.GetValue(i).a[1], hits.GetValue(i).a[2]) <<
         (hits.GetValue(0).d.a ? 'd' : 'r');
       r[2] = olx_print("%.3lf", hits.GetValue(i).b);
       r[3] = olx_print("%.3lft", acos(hits.GetValue(i).c) * 180 / M_PI);
-      r[4] = olx_print("%.3le", hits.GetValue(i).d.c / hits.GetValue(i).d.b);
+      r[4] = olx_print("%z", hits.GetValue(i).d.b);
+      r[5] = olx_print("%.3le", hits.GetValue(i).d.c / hits.GetValue(i).d.b);
     }
     TBasicApp::NewLogEntry() << ho.CreateTXTList("Hits", true, false, ' ');
   }
