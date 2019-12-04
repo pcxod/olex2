@@ -2107,17 +2107,21 @@ bool TMainForm::ProcessTab() {
   size_t spi = Cmd.LastIndexOf(' ');
   if (spi != InvalidIndex)  {
     FullCmd = ExpandCommand(Cmd.SubStringFrom(spi + 1), true);
-    if (FullCmd != Cmd.SubStringFrom(spi + 1))
+    if (FullCmd != Cmd.SubStringFrom(spi + 1)) {
       FullCmd = Cmd.SubStringTo(spi + 1) << FullCmd;
-    else
+    }
+    else {
       FullCmd.SetLength(0);
+    }
   }
-  else
+  else {
     FullCmd = ExpandCommand(Cmd, false);
+  }
   bool res = false;
   if (!FullCmd.IsEmpty() && (FullCmd != Cmd)) {
-    if (CmdLineVisible)
+    if (CmdLineVisible) {
       FCmdLine->SetCommand(FullCmd);
+    }
     else {
       FGlConsole->SetCommand(FullCmd);
     }
@@ -2454,7 +2458,8 @@ void TMainForm::OnNavigation(wxNavigationKeyEvent& event) {
     event.Skip(false);
   }
   else {
-    event.Skip();
+    FGlCanvas->SetFocus();
+    event.Skip(false);
   }
 }
 //..............................................................................
@@ -2539,65 +2544,80 @@ void TMainForm::OnResize()  {
   }
 }
 //..............................................................................
-olxstr TMainForm::ExpandCommand(const olxstr &Cmd, bool inc_files)  {
-  if( Cmd.IsEmpty() )  return Cmd;
+olxstr TMainForm::ExpandCommand(const olxstr &Cmd, bool inc_files) {
+  if (FHelpWindow->IsVisible()) {
+    FHelpWindow->Clear();
+  }
+  if (Cmd.IsEmpty()) {
+    return Cmd;
+  }
   olxstr FullCmd(Cmd.ToLowerCase());
   TStrList all_cmds;
-  if( inc_files )  {
+  if (inc_files) {
     TStrList names;
     olxstr path = TEFile::ExpandRelativePath(Cmd, TEFile::CurrentDir());
-    if( !path.IsEmpty() && TEFile::IsAbsolutePath(path) )  {
+    if (!path.IsEmpty() && TEFile::IsAbsolutePath(path)) {
       size_t lsi = path.LastIndexOf(TEFile::GetPathDelimeter());
-      if( lsi != InvalidIndex )  {
-        olxstr dir_name = path.SubStringTo(lsi+1);
-        if( TEFile::Exists(dir_name) )  {
-          TEFile::ListDir(dir_name, names, olxstr(path.SubStringFrom(lsi+1)) <<
+      if (lsi != InvalidIndex) {
+        olxstr dir_name = path.SubStringTo(lsi + 1);
+        if (TEFile::Exists(dir_name)) {
+          TEFile::ListDir(dir_name, names, olxstr(path.SubStringFrom(lsi + 1)) <<
             '*', sefReadWrite);
-          for( size_t i=0; i < names.Count(); i++ )
-            all_cmds.Add(dir_name +names[i]);
+          for (size_t i = 0; i < names.Count(); i++) {
+            all_cmds.Add(dir_name + names[i]);
+          }
         }
       }
     }
-    else
+    else {
       TEFile::ListCurrentDir(all_cmds, olxstr(Cmd) << '*', sefReadWrite);
+    }
   }
   TBasicLibraryPList libs;
   GetLibrary().FindSimilarLibraries(Cmd, libs);
   TBasicFunctionPList bins;  // builins
   GetLibrary().FindSimilarMacros(Cmd, bins);
   GetLibrary().FindSimilarFunctions(Cmd, bins);
-  for( size_t i=0; i < bins.Count(); i++ )
+  for (size_t i = 0; i < bins.Count(); i++) {
     all_cmds.Add(bins[i]->GetQualifiedName());
-  for( size_t i=0; i < libs.Count(); i++ )
+  }
+  for (size_t i = 0; i < libs.Count(); i++) {
     all_cmds.Add(libs[i]->GetQualifiedName());
-  if( all_cmds.Count() > 1 )  {
-    if( FHelpWindow->IsVisible() )  // console buffer is hidden then...
+  }
+  if (all_cmds.Count() > 1) {
+    if (FHelpWindow->IsVisible())  // console buffer is hidden then...
       FHelpWindow->Clear();
     olxstr cmn_str = all_cmds[0].ToLowerCase();
     olxstr line(all_cmds[0], 80);
-    for( size_t i=1; i < all_cmds.Count(); i++ )  {
+    for (size_t i = 1; i < all_cmds.Count(); i++) {
       cmn_str = all_cmds[i].ToLowerCase().CommonString(cmn_str);
-      if( line.Length() + all_cmds[i].Length() > 79 )  {  // expects no names longer that 79!
-        if( FHelpWindow->IsVisible() )
+      if (line.Length() + all_cmds[i].Length() > 79) {  // expects no names longer that 79!
+        if (FHelpWindow->IsVisible()) {
           FHelpWindow->PostText(line);
-        else
+        }
+        else {
           FXApp->NewLogEntry() << line;
+        }
         line.SetLength(0);
       }
-      else
+      else {
         line << ' ' << all_cmds[i];
+      }
     }
     FullCmd = cmn_str;
-    if( !line.IsEmpty() )  {
-      if( FHelpWindow->IsVisible() )
+    if (!line.IsEmpty()) {
+      if (FHelpWindow->IsVisible()) {
         FHelpWindow->PostText(line);
-      else
+      }
+      else {
         FXApp->NewLogEntry() << line;
+      }
     }
     FHelpWindow->Fit();
   }
-  else if( all_cmds.Count() == 1 )
+  else if (all_cmds.Count() == 1) {
     return all_cmds[0];
+  }
   return FullCmd;
 }
 //..............................................................................

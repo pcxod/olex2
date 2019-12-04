@@ -6099,7 +6099,7 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options,
     }
     TEFile::ReadLines(FN, content);
   }
-  TBasicCFile *ld  = dynamic_cast<TBasicCFile *>(FXApp->XFile().FindFormat(file_ext));
+  TBasicCFile *ld  = FXApp->XFile().FindFormat(file_ext);
   if (ld == 0) {
     E.ProcessingError(__OlxSrcInfo, "Invalid file format");
     return;
@@ -6211,7 +6211,7 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options,
   }
   Macros.ProcessMacro("mode fit", E);
   const int afix = Options.FindValue("a", "-100").ToInt();
-  if (afix != -100) {
+  if (afix != -100 && afix != 0) {
     TCAtom* pivot = TAfixGroup::HasExcplicitPivot(afix) ? &xatoms[0]->CAtom()
       : 0;
     TAfixGroup& ag = FXApp->XFile().GetRM().AfixGroups.New(pivot, afix);
@@ -6223,14 +6223,14 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options,
   else if (Options.Contains('d')) {
     RefinementModel& rm = FXApp->XFile().GetRM();
     olx_pdict<double, TSimpleRestraint*> r12, r13;
-    for (size_t i=0; i < xatoms.Count(); i++) {
+    for (size_t i = 0; i < xatoms.Count(); i++) {
       TXAtom& a = *xatoms[i];
-      for (size_t j=0; j < a.BondCount(); j++) {
+      for (size_t j = 0; j < a.BondCount(); j++) {
         TXAtom& b = a.Bond(j).Another(a);
         if (b.GetOwnerId() <= a.GetOwnerId()) {
           continue;
         }
-        const double d = olx_round(a.Bond(j).Length(), 1000);
+        const double d = olx_round(a.Bond(j).Length(), 100);
         const size_t ri = r12.IndexOf(d);
         TSimpleRestraint& df = (ri == InvalidIndex) ? rm.rDFIX.AddNew()
           : *r12.GetValue(ri);
@@ -6240,12 +6240,14 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options,
           df.SetEsd(0.02);
           r12.Add(d, &df);
         }
-        for (size_t k=0; k < b.NodeCount(); k++) {
+        for (size_t k = 0; k < b.NodeCount(); k++) {
           TSAtom& b1 = b.Node(k);
-          if (b1.GetOwnerId() <= a.GetOwnerId())  continue;
-          const double d1 = olx_round(a.crd().DistanceTo(b1.crd()), 1000);
+          if (b1.GetOwnerId() <= a.GetOwnerId()) {
+            continue;
+          }
+          const double d1 = olx_round(a.crd().DistanceTo(b1.crd()), 100);
           const size_t ri1 = r13.IndexOf(d1);
-          TSimpleRestraint& df1 = (ri1 == InvalidIndex) ? rm.rDFIX.AddNew()
+          TSimpleRestraint& df1 = (ri1 == InvalidIndex) ? rm.rDANG.AddNew()
             : *r13.GetValue(ri1);
           df1.AddAtomPair(a.CAtom(), 0, b1.CAtom(), 0);
           if (ri1 == InvalidIndex) {
@@ -6260,7 +6262,7 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options,
   FXApp->CenterView(true);
   FXApp->SelectAll(false);
   AMode *md = Modes->GetCurrent();
-  if (md != NULL) {
+  if (md != 0) {
     md->AddAtoms(xatoms);
     for (size_t i = 0; i < xbonds.Count(); i++) {
       FXApp->GetRenderer().Select(*xbonds[i], true);
