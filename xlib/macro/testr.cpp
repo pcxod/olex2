@@ -172,7 +172,7 @@ void XLibMacros::macTestR(TStrObjList &Cmds, const TParamList &Options,
   TUnitCell::SymmSpace sp = xapp.XFile().GetUnitCell().GetSymmSpace();
   RefinementModel& rm = xapp.XFile().GetRM();
   if (rm.GetHKLF() != 4) {
-    Error.ProcessingError(__OlxSrcInfo, "HKLF4 mode is expected");
+    Error.ProcessingError(__OlxSrcInfo, "HKLF4 is expected");
     return;
   }
 
@@ -184,14 +184,24 @@ void XLibMacros::macTestR(TStrObjList &Cmds, const TParamList &Options,
 
   double oR = 0;
   TRefPList testr = rstat.GetNBadRefs(50, &oR);
-  for (size_t i = 0; i < olx_min(10, testr.Count()); i++) {
-    TReflection& r = *testr[i];
-    TBasicApp::NewLogEntry() <<
-      olx_print("R %4d %4d %4d %8.2lf %8.2lf %8.2lf = %.2lf",
-        r.GetH(), r.GetK(), r.GetL(),
-        r.GetI(), r.GetS(), rstat.Fsq[r.GetTag()],
+  {
+    TTable ho(olx_min(10, testr.Count()), 5);
+    ho.ColName(0) = "HKL";
+    ho.ColName(1) = "Fo^2";
+    ho.ColName(2) = "s";
+    ho.ColName(3) = "Fc^2";
+    ho.ColName(4) = "Error";
+    for (size_t i = 0; i < olx_min(10, testr.Count()); i++) {
+      TReflection& r = *testr[i];
+      ho[i][0] = olx_print("%4d%4d%4d", r.GetH(), r.GetK(), r.GetL());
+      ho[i][1] = olx_print("%8.2lf", r.GetI());
+      ho[i][2] = olx_print("%5.2lf", r.GetS());
+      ho[i][3] = olx_print("%8.2lf", rstat.Fsq[r.GetTag()]);
+      ho[i][4] = olx_print("%4.2lf",
         sqrt(rstat.wsqd[r.GetTag()] * rstat.refs.Count() / rstat.sum_wsqd));
-
+    }
+    TBasicApp::NewLogEntry() <<
+      ho.CreateTXTList("10 Most disagreeable reflections", true, false, ' ');
   }
   TBasicApp::NewLogEntry() << "Original wR2=" << olxstr::FormatFloat(3, oR);
   TArray3D<TReflection*> hkl3d(rstat.min_hkl, rstat.max_hkl);
