@@ -2193,37 +2193,42 @@ olxstr RefinementModel::WriteInsExtras(const TCAtomPList* atoms,
   restraints.AddNew(&rSimilarUeq, TIns::RCInfo(0, 1, -1, false));
   restraints.AddNew(&rSimilarAdpVolume, TIns::RCInfo(0, 1, -1, false));
   TStrList rl;
-  for( size_t i=0; i < restraints.Count(); i++ )  {
-    for( size_t j=0; j < restraints[i].GetA()->Count(); j++ )  {
+  for (size_t i = 0; i < restraints.Count(); i++) {
+    for (size_t j = 0; j < restraints[i].GetA()->Count(); j++) {
       olxstr line = TIns::RestraintToString(
         (*restraints[i].GetA())[j], restraints[i].GetB());
-      if( !line.IsEmpty() )
+      if (!line.IsEmpty()) {
         rl.Add(line);
+      }
     }
   }
-  if( !rl.IsEmpty() )  {
+  if (!rl.IsEmpty()) {
     TDataItem &ri = di.AddItem("restraints");
-    for( size_t i=0;  i < rl.Count(); i++ )
+    for (size_t i = 0; i < rl.Count(); i++) {
       ri.AddItem("item", rl[i]);
+    }
   }
   rl.Clear();
-  for( size_t i=0; i < rcList.Count(); i++ )
+  for (size_t i = 0; i < rcList.Count(); i++) {
     rl << rcList[i]->ToInsList(*this);
-  if( write_internals )  {
+  }
+  if (write_internals) {
     bool has_int_groups = false;
-    for( size_t i=0; i < AfixGroups.Count(); i++ )  {
-      if( AfixGroups[i].GetAfix() == -1 && !AfixGroups[i].IsEmpty() )  {
+    for (size_t i = 0; i < AfixGroups.Count(); i++) {
+      if (AfixGroups[i].GetAfix() == -1 && !AfixGroups[i].IsEmpty()) {
         has_int_groups = true;
         break;
       }
     }
-    if( has_int_groups )  {
-      for( size_t i=0; i < AfixGroups.Count(); i++ )  {
-        if( AfixGroups[i].GetAfix() == -1 && !AfixGroups[i].IsEmpty() )  {
+    if (has_int_groups) {
+      for (size_t i = 0; i < AfixGroups.Count(); i++) {
+        if (AfixGroups[i].GetAfix() == -1 && !AfixGroups[i].IsEmpty()) {
           olxstr line = "olex2.constraint.u_proxy ";
           line << AfixGroups[i].GetPivot().GetLabel();
-          for( size_t j=0; j < AfixGroups[i].Count(); j++ )  {
-            if( AfixGroups[i][j].IsDeleted() )  continue;
+          for (size_t j = 0; j < AfixGroups[i].Count(); j++) {
+            if (AfixGroups[i][j].IsDeleted()) {
+              continue;
+            }
             line << ' ' << AfixGroups[i][j].GetLabel();
           }
           rl << line;
@@ -2231,16 +2236,18 @@ olxstr RefinementModel::WriteInsExtras(const TCAtomPList* atoms,
       }
     }
   }
-  if( !rl.IsEmpty() )  {
+  if (!rl.IsEmpty()) {
     TDataItem &ri = di.AddItem("constraints");
-    for( size_t i=0;  i < rl.Count(); i++ )
+    for (size_t i = 0; i < rl.Count(); i++) {
       ri.AddItem("item", rl[i]);
+    }
   }
   olxstr fixed_types;
-  for (size_t i=0; i < aunit.AtomCount(); i++) {
+  for (size_t i = 0; i < aunit.AtomCount(); i++) {
     TCAtom &a = aunit.GetAtom(i);
-    if (!a.IsDeleted() && a.IsFixedType())
+    if (!a.IsDeleted() && a.IsFixedType()) {
       fixed_types << ' ' << a.GetLabel();
+    }
   }
   if (!fixed_types.IsEmpty()) {
     di.AddItem("fixed_types", fixed_types.SubStringFrom(1));
@@ -2248,12 +2255,35 @@ olxstr RefinementModel::WriteInsExtras(const TCAtomPList* atoms,
   {
     TDataItem *sci;
     selectedTableRows.ToDataItem(*(sci = &di.AddItem("selected_cif_records")));
-    if (sci->ItemCount() == 0)
+    if (sci->ItemCount() == 0) {
       di.DeleteItem(sci);
+    }
   }
   if (CVars.Validate()) {
     CVars.ToDataItem(di.AddItem("to_calculate"), false);
   }
+  // write anharmonic ADP parts
+  {
+    TDataItem *aa = 0;
+    for (size_t i = 0; i < aunit.AtomCount(); i++) {
+      TCAtom &a = aunit.GetAtom(i);
+      if (a.GetEllipsoid() != 0 && a.GetEllipsoid()->IsAnharmonic()) {
+        if (aa == 0) {
+          aa = &di.AddItem("anharmonics");
+        }
+        olxstr_buf tmp;
+        GramCharlier4 &ap = a.GetEllipsoid()->GetAnharmonicPart().get();
+        for (size_t ci = 0; ci < ap.C.size(); ci++) {
+          tmp << ' ' << olxstr::FormatFloat(4, ap.C[ci]);
+        }
+        for (size_t ci = 0; ci < ap.D.size(); ci++) {
+          tmp << ' ' << olxstr::FormatFloat(4, ap.D[ci]);
+        }
+        aa->AddField(a.GetResiLabel(), olxstr(tmp).SubStringFrom(1));
+      }
+    }
+  }
+
   di.AddItem("HklSrc").SetValue(
     olxstr('%') << encoding::percent::encode(HKLSource));
   TEStrBuffer bf;
@@ -2261,14 +2291,14 @@ olxstr RefinementModel::WriteInsExtras(const TCAtomPList* atoms,
   return bf.ToString();
 }
 //..............................................................................
-void RefinementModel::ReadInsExtras(const TStrList &items)  {
-  TDataItem di(NULL, EmptyString());
-  di.LoadFromString(0, olxstr().Join(items), NULL);
+void RefinementModel::ReadInsExtras(const TStrList &items) {
+  TDataItem di(0, EmptyString());
+  di.LoadFromString(0, olxstr().Join(items), 0);
   TDataItem *restraints = di.FindItem("restraints");
-  if( restraints != NULL )   {
-    for( size_t i=0; i < restraints->ItemCount(); i++ )  {
+  if (restraints != 0) {
+    for (size_t i = 0; i < restraints->ItemCount(); i++) {
       TStrList toks(restraints->GetItemByIndex(i).GetValue(), ' ');
-      if( !TIns::ParseRestraint(*this, toks) )  {
+      if (!TIns::ParseRestraint(*this, toks)) {
         TBasicApp::NewLogEntry() << (olxstr(
           "Invalid Olex2 restraint: ").quote()
           << restraints->GetItemByIndex(i).GetValue());
@@ -2276,27 +2306,27 @@ void RefinementModel::ReadInsExtras(const TStrList &items)  {
     }
   }
   TDataItem *constraints = di.FindItem("constraints");
-  if( constraints != NULL )  {
-    for( size_t i=0; i < constraints->ItemCount(); i++ )  {
+  if (constraints != 0) {
+    for (size_t i = 0; i < constraints->ItemCount(); i++) {
       TStrList toks(constraints->GetItemByIndex(i).GetValue(), ' ');
-      IConstraintContainer *cc = rcRegister.Find(toks[0], NULL);
-      if( cc != NULL )  {
+      IConstraintContainer *cc = rcRegister.Find(toks[0], 0);
+      if (cc != 0) {
         cc->FromToks(toks.SubListFrom(1), *this);
       }
-      else if( toks[0] == "olex2.constraint.u_proxy" )  {
+      else if (toks[0] == "olex2.constraint.u_proxy") {
         TCAtom *ca = aunit.FindCAtom(toks[1]);
-        if( ca == NULL )  {
+        if (ca == 0) {
           TBasicApp::NewLogEntry() << (olxstr(
             "Invalid Olex2 constraint: ").quote()
             << constraints->GetItemByIndex(i).GetValue());
           continue;
         }
-        if( ca->GetAfix() != 0 )  // already set
+        if (ca->GetAfix() != 0)  // already set
           continue;
         TAfixGroup& ag = AfixGroups.New(ca, -1);
-        for( size_t ti=2; ti < toks.Count(); ti++ )  {
+        for (size_t ti = 2; ti < toks.Count(); ti++) {
           ca = aunit.FindCAtom(toks[ti]);
-          if( ca == NULL )  {
+          if (ca == 0) {
             TBasicApp::NewLogEntry(logError) << (olxstr(
               "Warning - possibly invalid Olex2 constraint: ").quote()
               << constraints->GetItemByIndex(i).GetValue());
@@ -2314,11 +2344,11 @@ void RefinementModel::ReadInsExtras(const TStrList &items)  {
     }
   }
   TDataItem *fixed_types = di.FindItem("fixed_types");
-  if (fixed_types != NULL) {
+  if (fixed_types != 0) {
     TStrList toks(fixed_types->GetValue(), ' ');
-    for (size_t i=0; i < toks.Count(); i++) {
+    for (size_t i = 0; i < toks.Count(); i++) {
       TCAtom *a = aunit.FindCAtom(toks[i]);
-      if (a == NULL) {
+      if (a == 0) {
         TBasicApp::NewLogEntry(logError) <<
           (olxstr("Invalid fixed type atom name: ").quote() << toks[i]);
         continue;
@@ -2346,6 +2376,32 @@ void RefinementModel::ReadInsExtras(const TStrList &items)  {
       TBasicApp::NewLogEntry(logError) <<
         "While loading variables definitions: " <<
         e.GetException()->GetFullMessage();
+    }
+  }
+  TDataItem *a_adp = di.FindAnyItem("anharmonics");
+  // read anharmonic ADP parts
+  if (a_adp != 0) {
+    for (size_t i = 0; i < a_adp->FieldCount(); i++) {
+      TCAtom *a = aunit.FindCAtom(a_adp->GetFieldName(i));
+      if (a == 0 || a->GetEllipsoid() == 0) {
+        TBasicApp::NewLogEntry(logError) << "Could not locate suitable " <<
+          a_adp->GetFieldName(i) << " for the anharmonic contribution";
+        continue;
+      }
+      TStrList toks(a_adp->GetFieldByIndex(i), ",");
+      if (toks.Count() != 25) {
+        TBasicApp::NewLogEntry(logError) << "Ignoring invalid anharmonic ADP for " <<
+          a_adp->GetFieldName(i);
+        continue;
+      }
+      olx_object_ptr<GramCharlier4> ac(new GramCharlier4());
+      for (size_t ci = 0; ci < ac().C.size(); ci++) {
+        ac().C[ci] = toks[ci].ToDouble();
+      }
+      for (size_t ci = 0; ci < ac().D.size(); ci++) {
+        ac().D[ci] = toks[ac().C.size() + ci].ToDouble();
+      }
+      a->GetEllipsoid()->SetAnharmonicPart(ac.release());
     }
   }
   TDataItem *hs = di.FindItem("HklSrc");

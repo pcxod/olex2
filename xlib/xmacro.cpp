@@ -270,7 +270,10 @@ void XLibMacros::Export(TLibrary& lib)  {
     fpAny|psFileLoaded,
     "Makes provided atoms isotropic, if no arguments provided, current "
     "selection or all atoms become isotropic");
-  xlib_InitMacro(Anis,"h-adds hydrogen atoms" , (fpAny) | psFileLoaded,
+  xlib_InitMacro(Anis,
+    "h-adds hydrogen atoms&;"
+    "a-also adds anharmonic part",
+    (fpAny) | psFileLoaded,
     "Makes provided atoms anisotropic if no arguments provided current "
     "selection or all atoms are considered");
   xlib_InitMacro(File,
@@ -308,7 +311,7 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(Describe, EmptyString(), fpNone^psFileLoaded,
     "Describes current refinement in a human readable form");
   xlib_InitMacro(Sort,
-    "r-use default sorting for atoms inside residues [true]&;"
+    "r-sort for atoms inside residues [true]&;"
     "rn-sort residues by number [true]&;"
     ,
     fpAny^psFileLoaded,
@@ -1168,6 +1171,9 @@ void XLibMacros::macSort(TStrObjList &Cmds, const TParamList &Options,
   for (size_t i=0; i < au.ResidueCount(); i++) {
     TResidue &r = au.GetResidue(i);
     for (size_t j = 0; j < r.Count(); j++) {
+      if (r[j].IsDeleted()) {
+        continue;
+      }
       olxstr l = r[j].GetResiLabel();
       if (atoms.Length() + l.Length() >= 80) {
         TBasicApp::NewLogEntry() << olxstr(atoms);
@@ -1934,11 +1940,12 @@ void XLibMacros::macAnis(TStrObjList &Cmds, const TParamList &Options,
   }
   TCAtomPList catoms(atoms,
     FunctionAccessor::MakeConst(&TSAtom::CAtom));
-  if (!Options.Contains("h")) {
+  if (!Options.GetBoolOption('h')) {
     catoms.Pack(TCAtom::TypeAnalyser(iHydrogenZ));
   }
   catoms.Pack(TCAtom::TypeAnalyser(iQPeakZ));
-  TXApp::GetInstance().XFile().GetLattice().SetAnis(catoms, true);
+  TXApp::GetInstance().XFile().GetLattice().SetAnis(
+    catoms, true, Options.GetBoolOption('a'));
 }
 //.............................................................................
 void XLibMacros::macIsot(TStrObjList &Cmds, const TParamList &Options,
@@ -10867,7 +10874,8 @@ void XLibMacros::macHKLF5(TStrObjList &Cmds, const TParamList &Options,
       "could not locate any negative batch numbers");
     return;
   }
-  mat3d hm = TXApp::GetInstance().XFile().GetAsymmUnit().GetHklToCartesian();
+  const TAsymmUnit &au = TXApp::GetInstance().XFile().GetAsymmUnit();
+  mat3d hm = au.GetHklToCartesian();
   for (size_t bi = 0; bi < batches.Count(); bi++) {
     TTypeList<pair_t> &data = batches.GetValue(bi);
     if (data.Count() < 3) {
@@ -10876,7 +10884,7 @@ void XLibMacros::macHKLF5(TStrObjList &Cmds, const TParamList &Options,
       continue;
     }
     QuickSorter::Sort(data, macHKLF5_sorter(hf));
-    size_t max_data = olx_max(3, data.Count()/2);
+    size_t max_data = olx_min(10, data.Count());
     ematd dm(max_data * 3, 9);
     evecd right(max_data * 3);
     for (size_t hi = 0; hi < max_data; hi ++) {
@@ -10923,5 +10931,6 @@ void XLibMacros::macHKLF5(TStrObjList &Cmds, const TParamList &Options,
     TBasicApp::NewLogEntry() << olx_print("R fit: %.2le for %z data",
       sqrt(r_sq)/ data.Count(), data.Count());
   }
+
 }
 //..............................................................................

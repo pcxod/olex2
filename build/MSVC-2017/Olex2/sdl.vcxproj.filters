@@ -590,6 +590,9 @@
     <ClInclude Include="..\..\..\sdl\tests\evalue_test.h">
       <Filter>tests</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\sdl\math\tensor.h">
+      <Filter>Header Files\math</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />

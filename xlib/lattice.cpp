@@ -2592,23 +2592,29 @@ void TLattice::RemoveNonHBonding(TAtomEnvi& Envi, size_t max) {
   Envi.SortByDistance();
 }
 //..............................................................................
-void TLattice::SetAnis(const TCAtomPList& atoms, bool anis)  {
-  if (atoms.IsEmpty()) return;
-  if( !anis )  {
-    for( size_t i=0; i < atoms.Count(); i++ )  {
-      if( olx_is_valid_index(atoms[i]->GetEllpId()) )  {
-         GetAsymmUnit().NullEllp(atoms[i]->GetEllpId());
-         atoms[i]->AssignEllp(NULL);
+void TLattice::SetAnis(const TCAtomPList& atoms, bool anis, bool anharmonic) {
+  if (atoms.IsEmpty()) {
+    return;
+  }
+  if (!anis) {
+    for (size_t i = 0; i < atoms.Count(); i++) {
+      if (olx_is_valid_index(atoms[i]->GetEllpId())) {
+        GetAsymmUnit().NullEllp(atoms[i]->GetEllpId());
+        atoms[i]->AssignEllp(0);
       }
     }
     GetAsymmUnit().PackEllps();
   }
-  else  {
+  else {
     evecd ee(6);
-    for( size_t i=0; i < atoms.Count(); i++ )  {
-      if( atoms[i]->GetEllipsoid() == NULL)  {
+    for (size_t i = 0; i < atoms.Count(); i++) {
+      if (atoms[i]->GetEllipsoid() == 0) {
         ee[0] = ee[1] = ee[2] = atoms[i]->GetUiso();
         atoms[i]->UpdateEllp(ee);
+      }
+      if (anharmonic) {
+        atoms[i]->GetEllipsoid()->SetAnharmonicPart(
+          new GramCharlier4());
       }
     }
   }

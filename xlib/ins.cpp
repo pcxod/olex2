@@ -1001,7 +1001,7 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
     }
   }
   else if (Toks[0].Equalsi("RESI")) {
-    _ProcessAfix0(cx);
+    //_ProcessAfix0(cx);
     if (Toks.Count() < 2 || Toks.Count() > 4) {
       throw TInvalidArgumentException(__OlxSourceInfo,
         "number of arguments for RESI");
@@ -1620,7 +1620,7 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
     sl.Add("SPEC ") << a.GetSpecialPositionDeviation();
   }
   if (a.GetPart() != part) {
-    if (part != 0 && a.GetPart() != 0) {
+    if (part != 0 && a.GetPart() != 0 && false) {
       sl.Add("PART 0");
     }
     sl.Add("PART ") << (int)a.GetPart();

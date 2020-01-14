@@ -13,29 +13,26 @@
 #include "ematrix.h"
 #include "threex3.h"
 #include "tptrlist.h"
+#include "math/tensor.h"
+#include "ecomplex.h"
 
 BeginXlibNamespace()
 
 /* Ellipsoid always must be in the cartesian frame */
-
+struct GramCharlier4;
 class TEllipsoid: public ACollectionItem  {
   bool NPD;  // not positive defined
   evecd Quad, Esd;  // quadratic form of the elipsoid and esd
   mat3d Matrix;  // normalised eigen vectors
-  double SX, SY, SZ;  // lengths of the vectores
+  double SX, SY, SZ;  // lengths of the vectors
   /* do not change this value ! it is equal to the position in the AsymmUnit
   list
   */
   size_t Id;
+  olx_object_ptr<GramCharlier4> anharmonic;
 public:
   TEllipsoid();
-  TEllipsoid(const TEllipsoid& e)
-    : NPD(e.NPD),
-    Quad(e.Quad),
-    Esd(e.Esd),
-    SX(e.SX), SY(e.SY), SZ(e.SZ),
-    Id(e.Id)
-  {}
+  TEllipsoid(const TEllipsoid& e);
   template <class T> TEllipsoid(const T& Q)  {  Initialise(Q);  }
   template <class T> TEllipsoid(const T& Q, const T& E)  { Initialise(Q, E);  }
   virtual ~TEllipsoid()  {}
@@ -50,6 +47,16 @@ public:
   void Mult(const mat3d &M, const ematd &VcV);
   // return true if the ellipsoid is not positively defined
   bool IsNPD() const {  return NPD;  }
+
+  bool IsAnharmonic() const { return anharmonic.is_valid(); }
+
+  const olx_object_ptr<GramCharlier4> &GetAnharmonicPart() const {
+    return anharmonic;
+  }
+
+  void SetAnharmonicPart(GramCharlier4 *anh) {
+    anharmonic = anh;
+  }
 
   template <class T> TEllipsoid& Initialise(const T& ShelxQ, const T& ShelxE) {
     Quad.Resize(6);
@@ -132,6 +139,27 @@ public:
   double CalcScale(const vec3d &v);
   DefPropP(size_t, Id)
 };
+
+struct GramCharlier4 {
+  tensor::tensor_rank_3 C;
+  tensor::tensor_rank_4 D;
+
+  GramCharlier4() {}
+
+  GramCharlier4(const GramCharlier4 &o)
+    : C(o.C), D(o.D)
+  {}
+
+  compd calculate(const vec3i &h) const {
+    const double pi_sq = M_PI * M_PI;
+    double c = C.sum_up(h), d = D.sum_up(h);
+    return compd(
+      1 + d * pi_sq*pi_sq * 2 / 3,
+      -c * pi_sq*M_PI * 4 / 3);
+  }
+
+};
+
   typedef TTypeList<TEllipsoid>  TEllpList;
   typedef TPtrList<TEllipsoid>  TEllpPList;
 EndXlibNamespace()

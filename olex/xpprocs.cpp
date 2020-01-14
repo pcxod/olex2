@@ -4244,8 +4244,105 @@ public:
   }
 };
 
-
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroData &Error)  {
+  using namespace esdl::tensor;
+  smatd_list tm;
+  TSpaceGroup *sg = TSymmLib::GetInstance().FindGroupByName("P62");
+  sg->GetMatrices(tm, mattAll^mattIdentity);
+  tm.AddNew(smatd(mat3i(0, -1, 0, -1, 0, 0, 0, 0, -1)));
+  tm.AddNew(smatd(mat3i(0, 1, 0, 1, 0, 0, 0, 0, -1)));
+  for (size_t smi = 0; smi < tm.Count(); smi++) {
+    tensor_rank_2 xx[6];
+    smatd &sm = tm[smi];
+    for (int i = 0; i < 3; i++) {
+      for (int j = i; j < 3; j++) {
+        tensor_rank_2 &t = xx[tensor_rank_2::linearise(i, j)];
+        for (int r = 0; r < 3; r++) {
+          for (int s = 0; s < 3; s++) {
+            t(r, s) += sm.r[i][r] * sm.r[j][s];
+          }
+        }
+        t[t.linearise(i, j)] -= 1;
+      }
+    }
+    tensor_rank_4 t4t;
+    t4t(0, 1, 2, 2) = 10;
+    tensor_rank_3 t3t;
+    t4t(0, 1, 2, 2) = 10;
+    t3t(0, 2, 2) = 10;
+    tensor_rank_2::cleanup();
+    tensor_rank_3::cleanup();
+    tensor_rank_4::cleanup();
+    std::vector<double> xxx[6];
+    {
+      for (int i = 0; i < 6; i++) {
+        xxx[i].resize(6);
+      }
+      double r[] = {
+        sm.r[0][0], sm.r[1][0], sm.r[2][0],
+        sm.r[0][1], sm.r[1][1], sm.r[2][1],
+        sm.r[0][2], sm.r[1][2], sm.r[2][2]
+      };
+      xxx[0][0] = r[0] * r[0] - 1;
+      xxx[0][1] = r[3] * r[3];
+      xxx[0][2] = r[6] * r[6];
+      xxx[0][3] = 2 * r[0] * r[3];
+      xxx[0][4] = 2 * r[0] * r[6];
+      xxx[0][5] = 2 * r[3] * r[6];
+      // row 1
+      xxx[1][0] = r[1] * r[1];
+      xxx[1][1] = r[4] * r[4] - 1;
+      xxx[1][2] = r[7] * r[7];
+      xxx[1][3] = 2 * r[1] * r[4];
+      xxx[1][4] = 2 * r[1] * r[7];
+      xxx[1][5] = 2 * r[4] * r[7];
+      // row 2
+      xxx[2][0] = r[2] * r[2];
+      xxx[2][1] = r[5] * r[5];
+      xxx[2][2] = r[8] * r[8] - 1;
+      xxx[2][3] = 2 * r[2] * r[5];
+      xxx[2][4] = 2 * r[2] * r[8];
+      xxx[2][5] = 2 * r[5] * r[8];
+      // row 3
+      xxx[3][0] = r[0] * r[1];
+      xxx[3][1] = r[3] * r[4];
+      xxx[3][2] = r[6] * r[7];
+      xxx[3][3] = r[1] * r[3] + r[0] * r[4] - 1;
+      xxx[3][4] = r[1] * r[6] + r[0] * r[7];
+      xxx[3][5] = r[4] * r[6] + r[3] * r[7];
+      // row 4
+      xxx[4][0] = r[0] * r[2];
+      xxx[4][1] = r[3] * r[5];
+      xxx[4][2] = r[6] * r[8];
+      xxx[4][3] = r[2] * r[3] + r[0] * r[5];
+      xxx[4][4] = r[2] * r[6] + r[0] * r[8] - 1;
+      xxx[4][5] = r[5] * r[6] + r[3] * r[8];
+      // row 5
+      xxx[5][0] = r[1] * r[2];
+      xxx[5][1] = r[4] * r[5];
+      xxx[5][2] = r[7] * r[8];
+      xxx[5][3] = r[2] * r[4] + r[1] * r[5];
+      xxx[5][4] = r[2] * r[7] + r[1] * r[8];
+      xxx[5][5] = r[5] * r[7] + r[4] * r[8] - 1;
+
+      olxstr_buf out;
+      for (int i = 0; i < 6; i++) {
+        for (int j = 0; j < 6; j++) {
+          out << olx_print("%3i", (int)xxx[i][j]);
+        }
+        out << '\n';
+      }
+      out << '\n';
+      for (int i = 0; i < 6; i++) {
+        for (int j = 0; j < 6; j++) {
+          out << olx_print("%3i", (int)xx[i][j]);
+        }
+        out << '\n';
+      }
+      TBasicApp::NewLogEntry() << '\n' << olxstr(out);
+    }
+  }
+  
   return;
   {
     TDataFile df;

@@ -158,17 +158,19 @@ void TCAtom::Assign(const TCAtom& S)  {
 }
 //..............................................................................
 int TCAtom::GetAfix() const {
-  if (ParentAfixGroup == NULL) {
-    if (DependentAfixGroup != NULL && (DependentAfixGroup->HasExcplicitPivot() ||
-      DependentAfixGroup->GetM() == 0)) {
+  if (ParentAfixGroup == 0) {
+    if (DependentAfixGroup != 0 && (DependentAfixGroup->HasExcplicitPivot() ||
+      DependentAfixGroup->GetM() == 0))
+    {
       return DependentAfixGroup->GetAfix();
     }
     //if( DependentHfixGroup != NULL && !DependentHfixGroup->IsRiding() )
     //  return DependentHfixGroup->GetAfix();
     return 0;
   }
-  if (ParentAfixGroup->HasExcplicitPivot())
+  if (ParentAfixGroup->HasExcplicitPivot()) {
     return (ParentAfixGroup->GetAfix() / 10) * 10 + 5;
+  }
   else {
     int a = ParentAfixGroup->GetAfix();
 #ifdef _DEBUG
@@ -260,8 +262,22 @@ PyObject* TCAtom::PyExport(bool export_attached_sites) {
     GetEllipsoid()->GetShelxQuad(Q, E);
     PythonExt::SetDictItem(main, "adp",
       Py_BuildValue("(dddddd)(dddddd)", Q[0], Q[1], Q[2], Q[3], Q[4], Q[5],
-        E[0], E[1], E[2], E[3], E[4], E[5]
-        ));
+        E[0], E[1], E[2], E[3], E[4], E[5])
+    );
+    if (GetEllipsoid()->IsAnharmonic()) {
+      GramCharlier4 &a = GetEllipsoid()->GetAnharmonicPart().get();
+      PyObject* anh = PyDict_New();
+      PythonExt::SetDictItem(anh, "C",
+        Py_BuildValue("(dddddddddd)", a.C[0], a.C[1], a.C[2], a.C[3], a.C[4],
+          a.C[5], a.C[6], a.C[7], a.C[8], a.C[9])
+      );
+      PythonExt::SetDictItem(anh, "D",
+        Py_BuildValue("(ddddddddddddddd)",
+          a.D[0], a.D[1], a.D[2], a.D[3], a.D[4], a.D[5], a.D[6], a.D[7],
+          a.D[8], a.D[9], a.D[10], a.D[11], a.D[12], a.D[13], a.D[14])
+      );
+      PythonExt::SetDictItem(main, "anharmonic_adp", anh);
+    }
   }
   if (*Type == iQPeakZ) {
     PythonExt::SetDictItem(main, "peak", Py_BuildValue("d", QPeak));

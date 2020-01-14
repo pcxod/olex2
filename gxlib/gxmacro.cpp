@@ -3524,9 +3524,14 @@ void GXLibMacros::macEsd(TStrObjList &Cmds, const TParamList &Options,
         catch (const TExceptionBase &) {
           values.Add("Twist angle is undefined");
         }
-        values.Add("Plane ") << pld1 << "to plane fold angle: " <<
-          vcovc.CalcP2PFAngle(p1, xp1.GetNormal(),
-            p2, xp2.GetNormal()).ToString();
+        try {
+          values.Add("Plane ") << pld1 << "to plane fold angle: " <<
+            vcovc.CalcP2PFAngle(p1, xp1.GetNormal(),
+              p2, xp2.GetNormal()).ToString();
+        }
+        catch (const TExceptionBase &) {
+          values.Add("Fold angle is undefined");
+        }
         if (xp1.Count() == xp2.Count() && xp1.Count() == 3) {
           TSAtomPList atoms(6), sorted_atoms;
           for (size_t i = 0; i < 3; i++) {
@@ -3543,7 +3548,7 @@ void GXLibMacros::macEsd(TStrObjList &Cmds, const TParamList &Options,
           if (v.GetV() > 60) {
             v.V() = 120 - v.GetV();
           }
-          values.Add("Mean triange twist angle: ") << v.ToString();
+          values.Add("Mean triangle twist angle: ") << v.ToString();
         }
       }
     }

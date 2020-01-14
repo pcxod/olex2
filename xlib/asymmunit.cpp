@@ -1532,29 +1532,41 @@ void TAsymmUnit::LibIsPeak(const TStrObjList& Params, TMacroData& E) {
 //..............................................................................
 void TAsymmUnit::LibSetAtomU(const TStrObjList& Params, TMacroData& E) {
   size_t index = Params[0].ToSizeT();
-  if (index >= AtomCount())
+  if (index >= AtomCount()) {
     throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, AtomCount());
+  }
   TCAtom& ca = GetAtom(index);
-  if ((GetAtom(index).GetEllipsoid() != NULL) && (Params.Count() == 7)) {
+  if (ca.GetEllipsoid() != 0 && Params.Count() >= 7) {
     double V[6];
     for (int i = 0; i < 6; i++) {
       XVarReference* vr = ca.GetVarRef(catom_var_name_U11 + i);
       const double val = Params[i + 1].ToDouble();
       if (vr != 0) {  // should preserve the variable - smtbx
-        if (vr->relation_type == relation_AsVar)
+        if (vr->relation_type == relation_AsVar) {
           vr->Parent.SetValue(val / vr->coefficient);
-        else if (vr->relation_type == relation_AsOneMinusVar)
+        }
+        else if (vr->relation_type == relation_AsOneMinusVar) {
           vr->Parent.SetValue(1.0 - val / vr->coefficient);
+        }
         V[i] = val;
       }
       else {
         V[i] = GetRefMod()->Vars.SetParam(ca, catom_var_name_U11 + i, val);
       }
     }
+    if (ca.GetEllipsoid()->IsAnharmonic() && Params.Count() >= 32) {
+      GramCharlier4 &ac = ca.GetEllipsoid()->GetAnharmonicPart().get();
+      for (size_t i = 0; i < 10; i++) {
+        ac.C[i] = Params[i + 7].ToDouble();
+      }
+      for (size_t i = 0; i < 15; i++) {
+        ac.D[i] = Params[i + 17].ToDouble();
+      }
+    }
     ca.GetEllipsoid()->Initialise(V);
     ca.SetUiso(ca.GetEllipsoid()->GetUeq());
   }
-  else if ((ca.GetEllipsoid() == NULL) && (Params.Count() == 2)) {
+  else if ((ca.GetEllipsoid() == 0) && (Params.Count() == 2)) {
     XVarReference* vr = ca.GetVarRef(catom_var_name_Uiso);
     const double val = Params[1].ToDouble();
     if (vr != 0) {  // should preserve the variable - smtbx
@@ -1571,7 +1583,7 @@ void TAsymmUnit::LibSetAtomU(const TStrObjList& Params, TMacroData& E) {
     }
   }
   else {
-    olxstr at = ca.GetEllipsoid() == NULL ? "isotropic" : "anisotropic";
+    olxstr at = ca.GetEllipsoid() == 0 ? "isotropic" : "anisotropic";
     E.ProcessingError(__OlxSrcInfo,
       "invalid number of arguments: ") << Params.Count() << " for " <<
       at << " atom " << ca.GetLabel();

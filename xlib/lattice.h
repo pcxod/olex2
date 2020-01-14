@@ -193,7 +193,7 @@ public:
   TSAtomPList NewCentroid(const TSAtomPList& Atoms);
   TSAtom& NewAtom(const vec3d& center);
 
-  void SetAnis(const TCAtomPList& atoms, bool anis);
+  void SetAnis(const TCAtomPList& atoms, bool anis, bool anharmonic=false);
 
   TUnitCell& GetUnitCell() const {  return *UnitCell; }
   TAsymmUnit& GetAsymmUnit() const {  return *AsymmUnit; }

@@ -605,7 +605,7 @@ void TXFile::Sort(const TStrList& ins, const TParamList &options) {
   }
   const bool sort_resi_n = options.GetBoolOption("rn", false, true);
   GetRM().BeforeAUSort_();
-  AtomSorter::CombiSort default_sorter;
+  AtomSorter::CombiSort default_sorter, acs;
   default_sorter.sequence.AddNew(&AtomSorter::atom_cmp_Mw);
   default_sorter.sequence.AddNew(&AtomSorter::atom_cmp_Label);
   TStrList labels;
@@ -634,7 +634,6 @@ void TXFile::Sort(const TStrList& ins, const TParamList &options) {
     }
   }
   try {
-    AtomSorter::CombiSort acs;
     olxstr sort;
     for (size_t i = 0; i < ins.Count(); i++) {
       if (ins[i].CharAt(0) == '+') {
@@ -652,35 +651,37 @@ void TXFile::Sort(const TStrList& ins, const TParamList &options) {
       label_swap = false;
     for (size_t i = 0; i < sort.Length(); i++) {
       size_t acs_cnt = acs.sequence.Count();
-      if (sort.CharAt(i) == 'm') {
+      switch (sort.CharAt(i)) {
+      case 'm':
         acs.sequence.AddNew(&AtomSorter::atom_cmp_Mw);
-      }
-      else if (sort.CharAt(i) == 'z') {
+        break;
+      case 'z':
         acs.sequence.AddNew(&AtomSorter::atom_cmp_Z);
-      }
-      else if (sort.CharAt(i) == 'l') {
+        break;
+      case 'l':
         acs.sequence.AddNew(&AtomSorter::atom_cmp_Label);
-      }
-      else if (sort.CharAt(i) == 'p') {
+        break;
+      case 'p':
         acs.sequence.AddNew(&AtomSorter::atom_cmp_Part);
-      }
-      else if (sort.CharAt(i) == 'h') {
+        break;
+      case 'h':
         keeph = false;
-      }
-      else if (sort.CharAt(i) == 's') {
+        break;
+      case 's':
         acs.sequence.AddNew(&AtomSorter::atom_cmp_Suffix);
-      }
-      else if (sort.CharAt(i) == 'n') {
+        break;
+      case 'n':
         acs.sequence.AddNew(&AtomSorter::atom_cmp_Number);
-      }
-      else if (sort.CharAt(i) == 'x') {
+        break;
+      case 'x':
         acs.sequence.AddNew(&AtomSorter::atom_cmp_MoietySize);
-      }
-      else if (sort.CharAt(i) == 'f') {
+        break;
+      case 'f':
         insert_at_fisrt_label = true;
-      }
-      else if (sort.CharAt(i) == 'w') {
+        break;
+      case 'w':
         label_swap = true;
+        break;
       }
       // has been processed?
       if (acs_cnt + 1 == acs.sequence.Count()) {
@@ -760,7 +761,7 @@ void TXFile::Sort(const TStrList& ins, const TParamList &options) {
     // apply default sorting to the residues
     for (size_t i = 1; i < GetAsymmUnit().ResidueCount(); i++) {
       AtomSorter::Sort(GetAsymmUnit().GetResidue(i).GetAtomList(),
-        default_sorter);
+        acs);
     }
   }
   // comply to residues before dry-save
@@ -1157,7 +1158,6 @@ void TXFile::LibEndUpdate(TStrObjList &Cmds, const TParamList &Options,
 }
 //..............................................................................
 void TXFile::LibSaveSolution(const TStrObjList& Params, TMacroData& E) {
-  TIns* oins = (TIns*)FLastLoader;
   TIns ins;
   // needs to be called to assign the loaderIds for new atoms
   UpdateAsymmUnit();
@@ -1166,7 +1166,7 @@ void TXFile::LibSaveSolution(const TStrObjList& Params, TMacroData& E) {
   ins.GetRM().SetRefinementMethod("L.S.");
   ins.GetRM().SetIterations(4);
   ins.GetRM().SetPlan(20);
-  ins.GetRM().SetUserContent(oins->GetRM().GetUserContent());
+  ins.GetRM().SetUserContent(GetRM().GetUserContent());
   ins.SaveToFile(Params[0]);
 }
 //..............................................................................
@@ -1290,7 +1290,12 @@ void TXFile::LibGetDensity(const TStrObjList& Params, TMacroData& E) {
 }
 //..............................................................................
 void TXFile::LibRefinementInfo(const TStrObjList& Params, TMacroData& E) {
-  TIns &ins = *(TIns*)FLastLoader;
+  TIns *ins_ = dynamic_cast<TIns*>(FLastLoader);
+  // avoid OXM file
+  if (ins_ == 0) {
+    return;
+  }
+  TIns &ins = *ins_;
   if (Params.IsEmpty()) {
     TStrList rv;
     for (size_t i = 0; i < ins.RefinementInfo.Count(); i++) {

@@ -383,6 +383,7 @@ void SFUtil::_CalcSF(const TXFile& xfile, const IMillerIndexList& refs,
     alist,
     U
   );
+  bool centro = sg.IsCentrosymmetric() && sg.GetInversionCenter().IsNull();
   // apply modifications
   try {
     TXApp &xapp = TXApp::GetInstance();
@@ -428,6 +429,11 @@ void SFUtil::_CalcSF(const TXFile& xfile, const IMillerIndexList& refs,
             TBasicApp::NewLogEntry(logError) << missing;
           }
         }
+      }
+    }
+    if (centro) {
+      for (size_t i = 0; i < F.Count(); i++) {
+        F[i].SetIm(0);
       }
     }
   }
