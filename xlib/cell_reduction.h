@@ -35,7 +35,7 @@ struct Niggli {
   static evecd::const_vec_type reduce_const(short _latt, const arr_t& arr)  {
     vec3d s(arr[0], arr[1], arr[2]), a(arr[3], arr[4], arr[5]);
     reduce(_latt, s, a);
-    return evecd(s[0], s[1], s[2], a[0], a[1], a[2]);
+    return new evecd(s[0], s[1], s[2], a[0], a[1], a[2]);
   }
   template <typename arr_t>
   static arr_t& reduce(short _latt, arr_t& arr)  {

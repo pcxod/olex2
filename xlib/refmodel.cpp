@@ -17,7 +17,6 @@
 #include "xapp.h"
 #include "refmerge.h"
 #include "infotab.h"
-#include "refutil.h"
 #include "twinning.h"
 #include "math/plane.h"
 #include "ins.h"
@@ -2368,7 +2367,7 @@ void RefinementModel::ReadInsExtras(const TStrList &items) {
     }
   }
   TDataItem *to_calc = di.FindItem("to_calculate");
-  if (to_calc != NULL) {
+  if (to_calc != 0) {
     try {
       CVars.FromDataItem(*to_calc, false);
     }

@@ -470,18 +470,6 @@ public:
     }
     return *this;
   }
-  TVector &Transpose() {
-    if (type == vec_type_col) {
-      type = vec_type_row;
-    }
-    else if (type == vec_type_row) {
-      type = vec_type_row;
-    }
-    else {
-      throw TInvalidArgumentException(__OlxSourceInfo, "vector type");
-    }
-    return *this;
-  }
   // for compatibility of the template interfaces
   void SetCount(size_t v) { Resize(v); }
   //------------------------------------------------------------------------------

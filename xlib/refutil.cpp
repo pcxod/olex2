@@ -1,3 +1,4 @@
+#include "refutil.h"
 #include "refmodel.h"
 #include "refutil.h"
 #include "sfutil.h"
