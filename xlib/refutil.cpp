@@ -1,8 +1,8 @@
-#include "refutil.h"
 #include "refmodel.h"
 #include "refutil.h"
 #include "sfutil.h"
 #include "xapp.h"
+#include "refutil.h"
 
 using namespace RefUtil;
 
