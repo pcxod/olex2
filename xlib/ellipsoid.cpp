@@ -54,6 +54,9 @@ void TEllipsoid::operator = (const TEllipsoid &E) {
   Quad = E.Quad;
   Esd = E.Esd;
   NPD = E.NPD;
+  if (E.IsAnharmonic()) {
+    SetAnharmonicPart(new GramCharlier4(E.GetAnharmonicPart().get()));
+  }
 }
 //..............................................................................
 /* to get the quadratic for Matrix*Matr(SX^2,SY^2,SZ^2)*MatrixT */

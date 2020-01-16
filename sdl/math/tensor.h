@@ -60,12 +60,12 @@ namespace esdl { namespace tensor {
         for (size_t j = 0; j < idx.Count(); j++) {
           mps[idx[j]]++;
         }
-        get_multiplicity_()[i] = utils::calc_multiplicity(mps, 3);
+        get_multiplicity_()[i] = utils::calc_multiplicity(mps, heir_t::rank());
       }
     }
 
     static index_t &get_multiplicity_() {
-      static index_t multiplicity(heir_t::size());
+      static index_t multiplicity(heir_t::size(), olx_list_init::zero());
       return multiplicity;
     }
   public:
@@ -77,7 +77,7 @@ namespace esdl { namespace tensor {
       return heir_t::get_linear_index_(idx);
     }
 
-    size_t get_multiplicity(size_t i) const {
+    static size_t get_multiplicity(size_t i) {
       return get_multiplicity_()[i];
     }
     /* this might be required in a multithreaded environment!

@@ -240,7 +240,8 @@ MC& olx_create_rotation_matrix_(MC& rm, const VC& rv,
 }
 template <typename FloatType, typename MC, typename VC>
 MC& olx_create_rotation_matrix_(MC& rm, const VC& rv, FloatType ca) {
-  return olx_create_rotation_matrix_(rm, rv, ca, sqrt(1 - ca * ca));
+  return olx_create_rotation_matrix_(rm, rv,
+    ca, (FloatType)sqrt((FloatType)1 - ca * ca));
 }
 
 template <typename MC, typename VC>

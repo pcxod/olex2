@@ -2270,15 +2270,18 @@ olxstr RefinementModel::WriteInsExtras(const TCAtomPList* atoms,
         if (aa == 0) {
           aa = &di.AddItem("anharmonics");
         }
+        TDataItem &ai = aa->AddItem(a.GetResiLabel());
         olxstr_buf tmp;
         GramCharlier4 &ap = a.GetEllipsoid()->GetAnharmonicPart().get();
         for (size_t ci = 0; ci < ap.C.size(); ci++) {
-          tmp << ' ' << olxstr::FormatFloat(4, ap.C[ci]);
+          tmp << ' ' << olx_print("%.4le", ap.C[ci]);
         }
+        ai.AddField("Cijk", olxstr(tmp).SubStringFrom(1));
+        tmp.Clear();
         for (size_t ci = 0; ci < ap.D.size(); ci++) {
-          tmp << ' ' << olxstr::FormatFloat(4, ap.D[ci]);
+          tmp << ' ' << olx_print("%.4le", ap.D[ci]);
         }
-        aa->AddField(a.GetResiLabel(), olxstr(tmp).SubStringFrom(1));
+        ai.AddField("Dijkl", olxstr(tmp).SubStringFrom(1));
       }
     }
   }
@@ -2380,25 +2383,27 @@ void RefinementModel::ReadInsExtras(const TStrList &items) {
   TDataItem *a_adp = di.FindAnyItem("anharmonics");
   // read anharmonic ADP parts
   if (a_adp != 0) {
-    for (size_t i = 0; i < a_adp->FieldCount(); i++) {
-      TCAtom *a = aunit.FindCAtom(a_adp->GetFieldName(i));
+    for (size_t i = 0; i < a_adp->ItemCount(); i++) {
+      TDataItem &ai = a_adp->GetItemByIndex(i);
+      TCAtom *a = aunit.FindCAtom(ai.GetName());
       if (a == 0 || a->GetEllipsoid() == 0) {
         TBasicApp::NewLogEntry(logError) << "Could not locate suitable " <<
           a_adp->GetFieldName(i) << " for the anharmonic contribution";
         continue;
       }
-      TStrList toks(a_adp->GetFieldByIndex(i), ",");
-      if (toks.Count() != 25) {
-        TBasicApp::NewLogEntry(logError) << "Ignoring invalid anharmonic ADP for " <<
-          a_adp->GetFieldName(i);
+      TStrList c_toks(ai.FindField("Cijk"), " ");
+      TStrList d_toks(ai.FindField("Dijkl"), " ");
+      if (c_toks.Count() != 10 || d_toks.Count() != 15) {
+        TBasicApp::NewLogEntry(logError) << "Ignoring invalid anharmonic ADP for "
+          << ai.GetName();
         continue;
       }
       olx_object_ptr<GramCharlier4> ac(new GramCharlier4());
-      for (size_t ci = 0; ci < ac().C.size(); ci++) {
-        ac().C[ci] = toks[ci].ToDouble();
+      for (size_t ci = 0; ci < 10; ci++) {
+        ac().C[ci] = c_toks[ci].ToDouble();
       }
-      for (size_t ci = 0; ci < ac().D.size(); ci++) {
-        ac().D[ci] = toks[ac().C.size() + ci].ToDouble();
+      for (size_t ci = 0; ci < 15; ci++) {
+        ac().D[ci] = d_toks[ci].ToDouble();
       }
       a->GetEllipsoid()->SetAnharmonicPart(ac.release());
     }
