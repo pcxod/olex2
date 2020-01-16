@@ -560,7 +560,7 @@ void RefinementModel::AddOMIT(const TStrList& omit) {
   if (!omit.IsEmpty() && !omit[0].IsNumber()) {
     Omitted.Build(omit.Text(' '));
   }
-  else if (omit.Count() == 3) {  // reflection omit
+  else if (omit.Count() >= 3) {  // reflection omit
     Omit(vec3i(omit[0].ToInt(), omit[1].ToInt(), omit[2].ToInt()));
   }
   else {  // reflection transformation/filtering
