@@ -751,7 +751,8 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
   short scale = SFUtil::scaleSimple;
   double scale_value = 0;
   {
-    olxstr str_scale = Options.FindValue("scale").ToLowerCase();
+    olxstr str_scale = Options.FindValue("scale", "ext")
+      .ToLowerCase();
     if (!str_scale.IsEmpty()) {
       if (str_scale.CharAt(0) == 'r') {
         scale = SFUtil::scaleRegression;
@@ -759,7 +760,7 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
       else if (str_scale.CharAt(0) == 'e') {
         scale = SFUtil::scaleExternal;
         if (app.XFile().GetRM().Vars.VarCount() > 0) {
-          scale_value = app.XFile().GetRM().Vars.GetVar(0).GetValue();
+          scale_value = 1./app.XFile().GetRM().Vars.GetVar(0).GetValue();
         }
         else {
           TBasicApp::NewLogEntry(logWarning) << "Could not locate external "
@@ -784,6 +785,8 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
     }
     TArrayList<compd> F1(refs.Count());
     SFUtil::CalcSF(app.XFile(), refs, F1);
+    // this is a reference implementation for tests
+    //app.CalcSF(refs, F1);
     if (F1.Count() != F.Count()) {
       E.ProcessingError(__OlxSrcInfo, "F arrays mismatch");
       return;

@@ -2612,10 +2612,8 @@ void TLattice::SetAnis(const TCAtomPList& atoms, bool anis, bool anharmonic) {
         ee[0] = ee[1] = ee[2] = atoms[i]->GetUiso();
         atoms[i]->UpdateEllp(ee);
       }
-      if (anharmonic) {
-        atoms[i]->GetEllipsoid()->SetAnharmonicPart(
-          new GramCharlier4());
-      }
+      atoms[i]->GetEllipsoid()->SetAnharmonicPart(
+        anharmonic ? new GramCharlier4() : 0);
     }
   }
   GetUnitCell().UpdateEllipsoids();

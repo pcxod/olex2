@@ -285,6 +285,12 @@ namespace SFUtil {
         fo(_scatterers.Count())
       {}
       virtual ~SFCalculateTask() {}
+      double calc_B(const double* Q, const vec3i &h) const {
+        return exp(
+          (Q[0] * h[0] + Q[4] * h[2] + Q[5] * h[1])*h[0] +
+          (Q[1] * h[1] + Q[3] * h[2])*h[1] +
+          (Q[2] * h[2])*h[2]);
+      }
       void Run(size_t i) {
         const vec3i hkl = refs[i];  //make a copy, safer
         const double d_s2 = TReflection::ToCart(hkl, hkl2c).QLength()*0.25;
@@ -298,27 +304,31 @@ namespace SFUtil {
             double l = 0;
             for (size_t k = 0; k < parent._getusize(); k++) {
               // scattering vector + phase shift
-              double ca = cos(SFUtil::T_PI*(atoms[j]->ccrd().DotProd(rv[k]) + ps[k]));
+              const double tv = SFUtil::T_PI*(atoms[j]->ccrd().DotProd(rv[k]) + ps[k]);
+              double ca, sa;
+              olx_sincos(tv, &sa, &ca);
               if (olx_is_valid_index(atoms[j]->GetEllpId())) {
-                const double* Q = &U[j * 6];  // pick up the correct ellipsoid
-                const double B = exp(
-                  (Q[0] * rv[k][0] + Q[4] * rv[k][2] + Q[5] * rv[k][1])*rv[k][0] +
-                  (Q[1] * rv[k][1] + Q[3] * rv[k][2])*rv[k][1] +
-                  (Q[2] * rv[k][2])*rv[k][2]);
-                l += ca*B;
+                const double B = calc_B(&U[j * 6], rv[k]);
+                if (atoms[j]->GetEllipsoid()->IsAnharmonic()) {
+                  l += (atoms[j]->GetEllipsoid()->
+                    GetAnharmonicPart()().calculate(rv[k])*compd(ca*B, sa*B)).GetRe();
+                }
+                else {
+                  l += ca*B;
+                }
               }
               else {
                 l += ca;
               }
             }
-            double scv = fo[atoms[j]->GetTag()].Re();
+            double scv = fo[atoms[j]->GetTag()].GetRe();
             if (!olx_is_valid_index(atoms[j]->GetEllpId())) {
               scv *= exp(U[j * 6] * d_s2);
             }
             scv *= (l*atoms[j]->GetOccu());
             ir += scv;
           }
-          F[i] = ir*parent._getumult();
+          F[i] = ir.GetRe()*parent._getumult();
         }
         else {
           compd ir;
@@ -330,13 +340,15 @@ namespace SFUtil {
               double ca, sa;
               olx_sincos(tv, &sa, &ca);
               if (olx_is_valid_index(atoms[j]->GetEllpId())) {
-                const double* Q = &U[j * 6];  // pick up the correct ellipsoid
-                const double B = exp(
-                  (Q[0] * rv[k][0] + Q[4] * rv[k][2] + Q[5] * rv[k][1])*rv[k][0] +
-                  (Q[1] * rv[k][1] + Q[3] * rv[k][2])*rv[k][1] +
-                  (Q[2] * rv[k][2])*rv[k][2]);
-                l.Re() += ca*B;
-                l.Im() += sa*B;
+                const double B = calc_B(&U[j * 6], rv[k]);
+                if (atoms[j]->GetEllipsoid()->IsAnharmonic()) {
+                  l += atoms[j]->GetEllipsoid()->
+                    GetAnharmonicPart()().calculate(rv[k])*compd(ca*B, sa*B);
+                }
+                else {
+                  l.Re() += ca * B;
+                  l.Im() += sa * B;
+                }
               }
               else {
                 l.Re() += ca;

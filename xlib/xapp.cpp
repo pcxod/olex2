@@ -111,91 +111,117 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)
   CalcSFEx(refs, F, atoms, ml, sg_order);
 }
 //..............................................................................
-  void TXApp::CalcSFEx(const TRefList& refs, TArrayList<TEComplex<double> >& F,
+void TXApp::CalcSFEx(const TRefList& refs, TArrayList<TEComplex<double> >& F,
   const TSAtomPList &atoms, const smatd_list &ml, int sg_order) const
 {
   // initialise newly created atoms
   TAsymmUnit& au = XFile().GetAsymmUnit();
   const mat3d hkl2c = au.GetHklToCartesian();
   evecd quad(6);
-  const static double EQ_PI = 8*M_PI*M_PI;
-  const static double T_PI = 2*M_PI;
+  const static double EQ_PI = 8 * M_PI*M_PI;
+  const static double T_PI = 2 * M_PI;
   const static double TQ_PI = 2.0*M_PI*M_PI;
   const double r_e = XFile().GetRM().expl.GetRadiationEnergy();
 
   // the thermal ellipsoid scaling factors
-  double BM[6] = {hkl2c[0].Length(), hkl2c[1].Length(), hkl2c[2].Length(),
-    0, 0, 0};
-  BM[3] = 2*BM[1]*BM[2];
-  BM[4] = 2*BM[0]*BM[2];
-  BM[5] = 2*BM[0]*BM[1];
+  double BM[6] = { hkl2c[0].Length(), hkl2c[1].Length(), hkl2c[2].Length(),
+    0, 0, 0 };
+  BM[3] = 2 * BM[1] * BM[2];
+  BM[4] = 2 * BM[0] * BM[2];
+  BM[5] = 2 * BM[0] * BM[1];
   BM[0] *= BM[0];
   BM[1] *= BM[1];
   BM[2] *= BM[2];
 
-  ElementPList bais;
-  olx_array_ptr<double> Ucifs(6*atoms.Count() + 1);
-  TTypeList< AnAssociation3<const cm_Element*, compd, compd> > scatterers;
+  TTypeList<XScatterer> scatterers;
+  olxstr_dict<XScatterer *, true> scs;
+  ElementPList types;
+  const double ev = XFile().GetRM().expl.GetRadiationEnergy();
+  for (size_t i = 0; i < XFile().GetRM().SfacCount(); i++) {
+    XScatterer &sc = XFile().GetRM().GetSfacData(i);
+    scs(sc.GetLabel(), &sc);
+  }
+
+  olx_array_ptr<double> Ucifs(6 * atoms.Count() + 1);
   for (size_t i = 0; i < atoms.Count(); i++) {
     TSAtom& a = *atoms[i];
-    size_t ind = bais.IndexOf(a.GetType());
+    size_t ind = types.IndexOf(a.GetType());
     if (ind == InvalidIndex) {
-      scatterers.AddNew<const cm_Element*, compd, compd>(&a.GetType(), 0, 0);
-      bais.Add(a.GetType());
-      scatterers.GetLast().c =
-        scatterers.GetLast().GetA()->CalcFpFdp(r_e);
-      scatterers.GetLast().c -= scatterers.GetLast().GetA()->z;
-      ind = scatterers.Count() - 1;
+      types.Add(a.GetType());
+      scatterers.AddNew(a.GetType().symbol);
+      ind = types.Count() - 1;
     }
     a.SetTag(ind);
     ind = i * 6;
     TEllipsoid* elp = a.GetEllipsoid();
-    if (elp != NULL) {
+    if (elp != 0) {
       elp->GetShelxQuad(quad);  // default is Ucart
       au.UcartToUcif(quad);
       for (int k = 0; k < 6; k++) {
-        Ucifs[ind + k] = -TQ_PI*quad[k] * BM[k];
+        Ucifs[ind + k] = -TQ_PI * quad[k] * BM[k];
       }
     }
     else {
-      Ucifs[ind] = -EQ_PI*a.CAtom().GetUiso();
+      Ucifs[ind] = -EQ_PI * a.CAtom().GetUiso();
+    }
+  }
+
+  for (size_t i = 0; i < scatterers.Count(); i++) {
+    XScatterer *xs = scs.Find(scatterers[i].GetLabel(), 0);
+    if (xs == 0) {
+      scatterers[i].SetSource(*types[i], ev);
+    }
+    else {
+      if (xs->IsSet(XScatterer::setGaussian)) {
+        scatterers[i].SetGaussians(xs->GetGaussians());
+      }
+      else {
+        scatterers[i].SetGaussians(*types[i]->gaussians);
+      }
+      scatterers[i].SetFpFdp(xs->GetFpFdp());
     }
   }
 
   const size_t a_cnt = atoms.Count(),
-            m_cnt = ml.Count();
-  for( size_t i=0; i < refs.Count(); i++ )  {
+    m_cnt = ml.Count();
+  TArrayList<compd> f(scatterers.Count());
+  for (size_t i = 0; i < refs.Count(); i++) {
     const TReflection& ref = refs[i];
     const double d_s2 = ref.ToCart(hkl2c).QLength()*0.25;
-    for( size_t j=0; j < scatterers.Count(); j++)  {
-      scatterers[j].b = scatterers[j].GetA()->gaussians->calc_sq(d_s2);
-      scatterers[j].b += scatterers[j].GetC();
+    for (size_t j = 0; j < scatterers.Count(); j++) {
+      f[j] = scatterers[j].calc_sq_anomalous(d_s2);
     }
     compd ir;
-    for( size_t j=0; j < a_cnt; j++ )  {
+    for (size_t j = 0; j < a_cnt; j++) {
       compd l;
-      for( size_t k=0; k < m_cnt; k++ )  {
+      for (size_t k = 0; k < m_cnt; k++) {
         const vec3d hkl = ref.GetHkl()*ml[k].r;
-        double tv = T_PI*(atoms[j]->ccrd().DotProd(hkl) +
+        double tv = T_PI * (atoms[j]->ccrd().DotProd(hkl) +
           ml[k].t.DotProd(ref.GetHkl()));  // scattering vector + phase shift
         double ca, sa;
         olx_sincos(tv, &sa, &ca);
-        if( atoms[j]->GetEllipsoid() != NULL )  {
-          const double* Q = &Ucifs[j*6];  // pick up the correct ellipsoid
-          double B = (hkl[0]*(Q[0]*hkl[0]+Q[4]*hkl[2]+Q[5]*hkl[1]) +
-                      hkl[1]*(Q[1]*hkl[1]+Q[3]*hkl[2]) +
-                      hkl[2]*(Q[2]*hkl[2]));
+        if (atoms[j]->GetEllipsoid() != 0) {
+          const double* Q = &Ucifs[j * 6];  // pick up the correct ellipsoid
+          double B = (hkl[0] * (Q[0] * hkl[0] + Q[4] * hkl[2] + Q[5] * hkl[1]) +
+            hkl[1] * (Q[1] * hkl[1] + Q[3] * hkl[2]) +
+            hkl[2] * (Q[2] * hkl[2]));
           B = exp(B);
-          l.Re() += B*ca;
-          l.Im() += B*sa;
+          if (atoms[j]->GetEllipsoid()->IsAnharmonic()) {
+            l += atoms[j]->GetEllipsoid()->GetAnharmonicPart().get()
+              .calculate(hkl) * compd(B*ca, B*sa);
+          }
+          else {
+            l.Re() += B * ca;
+            l.Im() += B * sa;
+          }
         }
-        else  {
+        else {
           l.Re() += ca;
           l.Im() += sa;
         }
       }
-      compd scv = scatterers[atoms[j]->GetTag()].GetB();
-      if (atoms[j]->GetEllipsoid() == NULL) {
+      compd scv = f[atoms[j]->GetTag()];
+      if (atoms[j]->GetEllipsoid() == 0) {
         scv *= exp(Ucifs[j * 6] * d_s2);
       }
 
@@ -203,7 +229,7 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)
       scv *= l;
       ir += scv;
     }
-    F[i] = ir*sg_order;
+    F[i] = ir * sg_order;
   }
 }
 //..............................................................................

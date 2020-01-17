@@ -326,6 +326,9 @@ TMainForm::TMainForm(TGlXApp *Parent)
 //..............................................................................
 bool TMainForm::Destroy()  {
   Destroying = true;
+  tensor::tensor_rank_2::cleanup();
+  tensor::tensor_rank_3::cleanup();
+  tensor::tensor_rank_4::cleanup();
   SaveVFS(plGlobal);  // save virtual db to file
   SaveVFS(plStructure);
   FXApp->OnObjectsDestroy.Remove(this);

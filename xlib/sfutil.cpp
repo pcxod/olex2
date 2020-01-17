@@ -214,6 +214,7 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
       }
       F.SetCount(refs.Count());
       sw.start("Calculating structure factors");
+      // this is a reference implementation for tests
       //xapp.CalcSF(refs, F);
       //sw.start("Calculation structure factors A");
       //fastsymm version is just about 10% faster...
@@ -350,6 +351,9 @@ void SFUtil::_CalcSF(const TXFile& xfile, const IMillerIndexList& refs,
   TTypeList<XScatterer> scatterers;
   ElementPList types;
   PrepareCalcSF(au, U, scatterers, types, alist);
+  tensor::tensor_rank_2::initialise();
+  tensor::tensor_rank_3::initialise();
+  tensor::tensor_rank_4::initialise();
   const double ev = xfile.GetRM().expl.GetRadiationEnergy();
   olxstr_dict<XScatterer *, true> scs;
   for (size_t i=0; i < xfile.GetRM().SfacCount(); i++) {

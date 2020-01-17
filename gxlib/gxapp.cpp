@@ -2081,7 +2081,7 @@ ConstPtrList<TXAtom> TGXApp::FindXAtoms(const olxstr &Atoms, bool getAll,
       if (Tmp.Equalsi("to") || Tmp.Equalsi(">")) {
         if ((i + 1) < Toks.Count() && !rv.IsEmpty()) {
           i++;
-          TXAtom* XATo = NULL;
+          TXAtom* XATo = 0;
           if (!Toks[i].Equalsi("end")) {
             XATo = GetXAtom(Toks[i], ClearSelection);
             if (XATo == 0) {
@@ -2099,7 +2099,7 @@ ConstPtrList<TXAtom> TGXApp::FindXAtoms(const olxstr &Atoms, bool getAll,
             if (!FindHidden && !XA.IsVisible()) {
               continue;
             }
-            if (XATo != NULL) {
+            if (XATo != 0) {
               if (CompareStr(XA.GetLabel(), XAFrom->GetLabel(), true) > 0 &&
                 CompareStr(XA.GetLabel(), XATo->GetLabel(), true) < 0)
               {
@@ -3195,14 +3195,17 @@ void TGXApp::SelectRings(const olxstr& Condition, bool Invert) {
   }
 }
 //..............................................................................
-void TGXApp::SelectAtoms(const olxstr &Names, bool Invert)  {
+void TGXApp::SelectAtoms(const olxstr &Names, bool Invert) {
   TXAtomPList Sel = FindXAtoms(Names, true);
-  for( size_t i=0; i < Sel.Count(); i++ )  {
-    if( Invert )
+  for (size_t i = 0; i < Sel.Count(); i++) {
+    if (Invert) {
       GetRenderer().Select(*Sel[i]);
-    else
-      if( !Sel[i]->IsSelected() )
+    }
+    else {
+      if (!Sel[i]->IsSelected()) {
         GetRenderer().Select(*Sel[i]);
+      }
+    }
   }
 }
 //..............................................................................
