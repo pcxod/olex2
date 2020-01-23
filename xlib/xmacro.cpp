@@ -7476,7 +7476,7 @@ void XLibMacros::macSump(TStrObjList &Cmds, const TParamList &Options,
     for (size_t i = 0; i < catoms.Count(); i++) {
       XVar *v;
       XVarReference *vr = catoms[i]->GetVarRef(catom_var_name_Sof);
-      if (vr->relation_type == relation_None) {
+      if (vr != 0 && vr->relation_type == relation_None) {
         vr = 0;
       }
       size_t p_idx = vars.IndexOf(catoms[i]->GetPart());
