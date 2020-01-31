@@ -8,7 +8,7 @@
 ******************************************************************************/
 
 #ifndef __olx_sdl_tensor_H
-#define __olx_sdl_tesor_H
+#define __olx_sdl_tensor_H
 
 namespace esdl { namespace tensor {
   namespace utils {
