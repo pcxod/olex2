@@ -141,6 +141,10 @@ bool TBasicApp::HasInstance()  {
 //..............................................................................
 void TBasicApp::ReadOptions(const olxstr &fn) {
   try {
+    TStrList path_suffix, path_prefix;
+#ifndef __WIN32__
+    path_suffix.Add("/usr/local/bin");
+#endif
     if (TEFile::Exists(fn)) {
       TSettingsFile sf(fn);
       for (size_t i=0; i < sf.ParamCount(); i++) {
@@ -150,15 +154,30 @@ void TBasicApp::ReadOptions(const olxstr &fn) {
         }
         else if (sf.ParamName(i).Equalsi("PATH")) {
           olxstr path_ext = olxstr(sf.ParamValue(i)).TrimWhiteChars();
-          if (!path_ext.IsEmpty()) {
-            olxstr path = olx_getenv("PATH");
-            if (!path_ext.EndsWith(olx_env_sep())) {
-              path_ext << olx_env_sep();
-            }
-            olx_setenv("PATH", path_ext << path);
-          }
+          path_prefix.Strtok(path_ext, olx_env_sep());
         }
       }
+    }
+    if (!path_suffix.IsEmpty() || path_prefix.IsEmpty()) {
+      olxstr current_path = olx_getenv("PATH"), path;
+      for (size_t i = 0; i < path_prefix.Count(); i++) {
+        if (!current_path.Contains(path_prefix[i])) {
+          path << path_prefix[i] << olx_env_sep();
+        }
+      }
+      path << current_path;
+      if (!path.EndsWith(olx_env_sep())) {
+        path << olx_env_sep();
+      }
+      for (size_t i = 0; i < path_suffix.Count(); i++) {
+        if (!path.Contains(path_suffix[i])) {
+          path << path_suffix[i] << olx_env_sep();
+        }
+      }
+      if (path.EndsWith(olx_env_sep())) {
+        path.SetLength(path.Length()-1);
+      }
+      olx_setenv("PATH", path);
     }
   }
   catch(...)  {}
