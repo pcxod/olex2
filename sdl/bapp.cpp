@@ -160,17 +160,17 @@ void TBasicApp::ReadOptions(const olxstr &fn) {
     }
     if (!path_suffix.IsEmpty() || !path_prefix.IsEmpty()) {
       olxstr current_path = olx_getenv("PATH"), path;
+      if (!current_path.EndsWith(olx_env_sep())) {
+        current_path << olx_env_sep();
+      }
       for (size_t i = 0; i < path_prefix.Count(); i++) {
-        if (!current_path.Contains(path_prefix[i])) {
+        if (!current_path.Contains(path_prefix[i] + olx_env_sep())) {
           path << path_prefix[i] << olx_env_sep();
         }
       }
       path << current_path;
-      if (!path.EndsWith(olx_env_sep())) {
-        path << olx_env_sep();
-      }
       for (size_t i = 0; i < path_suffix.Count(); i++) {
-        if (!path.Contains(path_suffix[i])) {
+        if (!path.Contains(path_suffix[i] + olx_env_sep())) {
           path << path_suffix[i] << olx_env_sep();
         }
       }
