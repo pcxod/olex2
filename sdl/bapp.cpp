@@ -158,7 +158,7 @@ void TBasicApp::ReadOptions(const olxstr &fn) {
         }
       }
     }
-    if (!path_suffix.IsEmpty() || path_prefix.IsEmpty()) {
+    if (!path_suffix.IsEmpty() || !path_prefix.IsEmpty()) {
       olxstr current_path = olx_getenv("PATH"), path;
       for (size_t i = 0; i < path_prefix.Count(); i++) {
         if (!current_path.Contains(path_prefix[i])) {
