@@ -230,6 +230,18 @@ void TCAtom::ToDataItem(TDataItem& item) const {
     elp.AddField("yz", TEValue<double>(Q[3], E[3]).ToString());
     elp.AddField("xz", TEValue<double>(Q[4], E[4]).ToString());
     elp.AddField("xy", TEValue<double>(Q[5], E[5]).ToString());
+    if (GetEllipsoid()->IsAnharmonic()) {
+      const tensor::tensor_rank_3 &c = GetEllipsoid()->GetAnharmonicPart()().C;
+      const tensor::tensor_rank_4 &d = GetEllipsoid()->GetAnharmonicPart()().D;
+      olxstr_buf t;
+      for (size_t i = 0; i < c.data().Count(); i++) {
+        t << c.data()[i] << ',';
+      }
+      for (size_t i = 0; i < d.data().Count(); i++) {
+        t << d.data()[i] << ',';
+      }
+      elp.AddItem("CG", olxstr(t).TrimR(','));
+    }
   }
   if (*Type == iQPeakZ) {
     item.AddField("peak", QPeak);
@@ -250,7 +262,7 @@ PyObject* TCAtom::PyExport(bool export_attached_sites) {
       Esd[0], Esd[1], Esd[2]));
   if (!olx_is_valid_index(EllpId)) {
     PythonExt::SetDictItem(main, "uiso", Py_BuildValue("(dd)", Uiso, UisoEsd));
-    if (UisoOwner != NULL && UisoOwner->GetTag() >= 0) {
+    if (UisoOwner != 0 && UisoOwner->GetTag() >= 0) {
       PyObject* uo = PyDict_New();
       PythonExt::SetDictItem(uo, "id", Py_BuildValue("i", UisoOwner->GetTag()));
       PythonExt::SetDictItem(uo, "k", Py_BuildValue("d", UisoScale));
@@ -341,7 +353,7 @@ void TCAtom::FromDataItem(TDataItem& item) {
   Center[2] = ev.GetV();  Esd[2] = ev.GetE();
 
   TDataItem* adp = item.FindItem("adp");
-  if (adp != NULL) {
+  if (adp != 0) {
     double Q[6], E[6];
     if (adp->FieldCount() != 6) {
       throw TInvalidArgumentException(__OlxSourceInfo,
@@ -354,13 +366,26 @@ void TCAtom::FromDataItem(TDataItem& item) {
     }
     EllpId = Parent->NewEllp().Initialise(Q, E).GetId();
     Uiso = GetEllipsoid()->GetUeq();
+    TDataItem *cgi = adp->FindItem("CG");
+    if (cgi != 0) {
+      TStrList toks(cgi->GetValue(), ',');
+      if (toks.Count() == 25) {
+        olx_object_ptr<GramCharlier4> cg = new GramCharlier4();
+        for (size_t i = 0; i < 10; i++) {
+          cg().C[i] = toks[i].ToDouble();
+        }
+        for (size_t i = 0; i < 15; i++) {
+          cg().D[i] = toks[i + 10].ToDouble();
+        }
+      }
+    }
   }
   else {
     EllpId = InvalidIndex;
     ev = item.GetFieldByName("Uiso");
     Uiso = ev.GetV();  UisoEsd = ev.GetE();
     TDataItem* uo = item.FindItem("Uowner");
-    if (uo != NULL) {
+    if (uo != 0) {
       UisoOwner = &GetParent()->GetAtom(uo->GetFieldByName("id").ToSizeT());
       UisoScale = uo->GetFieldByName("k").ToDouble();
     }

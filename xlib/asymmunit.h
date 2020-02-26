@@ -343,6 +343,8 @@ public:
   void LibIsAtomDeleted(const TStrObjList& Params, TMacroData& E);
   void LibIsPeak(const TStrObjList& Params, TMacroData& E);
 
+  void LibSetAtomDisp(const TStrObjList& Params, TMacroData& E);
+
   void LibNPDCount(const TStrObjList& Params, TMacroData& E);
   void LibGetSymm(const TStrObjList& Params, TMacroData& E);
   void LibGetZ(const TStrObjList& Params, TMacroData& E);

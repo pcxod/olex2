@@ -1521,7 +1521,7 @@ void TAsymmUnit::LibIsPeak(const TStrObjList& Params, TMacroData& E) {
   }
   else {
     TCAtom* ca = FindCAtom(Params[0]);
-    if (ca != NULL) {
+    if (ca != 0) {
       E.SetRetVal(ca->GetType() == iQPeakZ);
     }
     else {
@@ -1784,6 +1784,20 @@ void TAsymmUnit::LibFractionalise(const TStrObjList& Params, TMacroData& E) {
   E.SetRetVal(Fractionalise(rv).ToString());
 }
 //..............................................................................
+void TAsymmUnit::LibSetAtomDisp(const TStrObjList& Params, TMacroData& E) {
+  size_t index = Params[0].ToSizeT();
+  if (index >= AtomCount()) {
+    throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, AtomCount());
+  }
+  TCAtom &a = GetAtom(index);
+  XScatterer *xs = RefMod->FindSfacData(a.GetType().symbol);
+  if (xs == 0) {
+    xs = new XScatterer(a.GetType().symbol);
+    RefMod->AddSfac(*xs);
+  }
+  xs->SetFpFdp(compd(Params[1].ToDouble(), Params[2].ToDouble()));
+}
+//..............................................................................
 //..............................................................................
 //..............................................................................
 IOlxObject *TAsymmUnit::VPtr::get_ptr() const {
@@ -1904,6 +1918,9 @@ TLibrary* TAsymmUnit::ExportLibrary(const olxstr& name)  {
   lib->Register(new TFunction<TAsymmUnit>(thip,
     &TAsymmUnit::LibFractionalise, "Fractionalise", fpOne|fpThree,
     "Returns fractional coordinates"));
+  lib->Register(new TFunction<TAsymmUnit>(thip,
+    &TAsymmUnit::LibSetAtomDisp, "SetAtomDisp", fpThree,
+    "Set atom's inelastic scattering part"));
   return lib;
 }
 //..............................................................................

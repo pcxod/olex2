@@ -858,7 +858,7 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
       q_draw->SetEnabled(true);
     }
   }  // integration
-  if (Options.GetBoolOption("m")) {
+  if (Options.Contains("m")) {
     FractMask* fm = new FractMask;
     app.BuildSceneMask(*fm, maskInc);
     app.XGrid().SetMask(*fm);

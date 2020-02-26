@@ -77,6 +77,7 @@ void RefinementModel::SetDefaults() {
   HKLF_s = def_HKLF_s;
   HKLF_mat.I();
   HKLF_wt = def_HKLF_wt;
+  HKLF_wt = def_HKLF_wt;
   HKLF_m = def_HKLF_m;
   MERG = def_MERG;
   OMIT_s = def_OMIT_s;
@@ -96,6 +97,7 @@ void RefinementModel::Clear(uint32_t clear_mask) {
   }
   SfacData.Clear();
   UserContent.Clear();
+  RefineDisp.Clear();
   for (size_t i = 0; i < Frags.Count(); i++) {
     delete Frags.GetValue(i);
   }
@@ -230,6 +232,7 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm,
   expl = rm.expl;
   used_weight = rm.used_weight;
   proposed_weight = rm.proposed_weight;
+  RefineDisp = rm.RefineDisp;
   LS = rm.LS;
   PLAN = rm.PLAN;
   HKLF = rm.HKLF;
@@ -1606,6 +1609,9 @@ void RefinementModel::ToDataItem(TDataItem& item) {
     .AddField("RefMeth", RefinementMethod)
     .AddField("SolMeth", SolutionMethod)
     .AddField("RefInArg", PersUtil::NumberListToStr(LS));
+  if (!RefineDisp.IsEmpty()) {
+    item.AddField("RefineDisp", RefineDisp.Text(','));
+  }
 
   // save used equivalent positions
   TArrayList<uint32_t> mat_tags(UsedSymm.Count());
@@ -1654,8 +1660,9 @@ void RefinementModel::ToDataItem(TDataItem& item) {
 
   if (!SfacData.IsEmpty()) {
     TDataItem& sfacs = item.AddItem("SFAC");
-    for (size_t i=0; i < SfacData.Count(); i++)
+    for (size_t i = 0; i < SfacData.Count(); i++) {
       SfacData.GetValue(i)->ToDataItem(sfacs);
+    }
   }
   selectedTableRows.ToDataItem(item.AddItem("selected_cif_records"));
   if (CVars.Validate()) {
@@ -1673,6 +1680,7 @@ void RefinementModel::FromDataItem(TDataItem& item) {
   PersUtil::NumberListFromStr(item.GetFieldByName("Weight"), used_weight);
   PersUtil::NumberListFromStr(item.GetFieldByName("ProposedWeight"),
     proposed_weight);
+  RefineDisp.Strtok(item.FindField("RefineDisp"), ',');
   ModelSource = item.FindField("ModelSrc");
   HKLSource = item.GetFieldByName("HklSrc");
   RefinementMethod = item.GetFieldByName("RefMeth");
@@ -1736,24 +1744,24 @@ void RefinementModel::FromDataItem(TDataItem& item) {
   SetUserFormula(item.FindField("UserContent"), false);
 
   TDataItem* info_tables = item.FindItem("INFO_TABLES");
-  if (info_tables != NULL)  {
+  if (info_tables != 0) {
     for (size_t i = 0; i < info_tables->ItemCount(); i++)
       InfoTables.Add(new InfoTab(*this, info_tables->GetItemByIndex(i)));
   }
   TDataItem* sfac = item.FindItem("SFAC");
-  if (sfac != NULL)  {
-    for (size_t i = 0; i < sfac->ItemCount(); i++)  {
+  if (sfac != 0) {
+    for (size_t i = 0; i < sfac->ItemCount(); i++) {
       XScatterer* sc = new XScatterer(EmptyString());
       sc->FromDataItem(sfac->GetItemByIndex(i));
       SfacData.Add(sc->GetLabel(), sc);
     }
   }
   TDataItem *cif_sel = item.FindItem("selected_cif_records");
-  if (cif_sel != NULL) {
+  if (cif_sel != 0) {
     selectedTableRows.FromDataItem(*cif_sel, aunit);
   }
   TDataItem *to_calc = item.FindItem("to_calculate");
-  if (to_calc != NULL) {
+  if (to_calc != 0) {
     CVars.FromDataItem(*to_calc, true);
   }
   aunit._UpdateConnInfo();
@@ -1863,9 +1871,10 @@ PyObject* RefinementModel::PyExport(bool export_conn) {
 
   if (!SfacData.IsEmpty()) {
     PyObject* sfac = PyDict_New();
-    for (size_t i = 0; i < SfacData.Count(); i++)
+    for (size_t i = 0; i < SfacData.Count(); i++) {
       PythonExt::SetDictItem(sfac, SfacData.GetKey(i).c_str(),
         SfacData.GetValue(i)->PyExport());
+    }
     PythonExt::SetDictItem(main, "sfac", sfac);
   }
 
@@ -1890,6 +1899,13 @@ PyObject* RefinementModel::PyExport(bool export_conn) {
   // restore matrix tags
   for (size_t i = 0; i < UsedSymm.Count(); i++) {
     UsedSymm.GetValue(i).symop.SetRawId(mat_tags[i]);
+  }
+  if (!RefineDisp.IsEmpty()) {
+    PyObject* disp = PyTuple_New(RefineDisp.Count());
+    for (size_t i = 0; i < RefineDisp.Count(); i++) {
+      PyTuple_SetItem(disp, i, PythonExt::BuildString(RefineDisp[i]));
+    }
+    PythonExt::SetDictItem(main, "refine_disp", disp);
   }
   return main;
 }
@@ -2288,6 +2304,9 @@ olxstr RefinementModel::WriteInsExtras(const TCAtomPList* atoms,
 
   di.AddItem("HklSrc").SetValue(
     olxstr('%') << encoding::percent::encode(HKLSource));
+  if (!RefineDisp.IsEmpty()) {
+    di.AddField("RefineDisp", RefineDisp.Text(','));
+  }
   TEStrBuffer bf;
   di.SaveToStrBuffer(bf);
   return bf.ToString();
@@ -2415,6 +2434,8 @@ void RefinementModel::ReadInsExtras(const TStrList &items) {
       HKLSource = encoding::percent::decode(HKLSource.SubStringFrom(1));
     }
   }
+  RefineDisp.Clear();
+  RefineDisp.Strtok(di.FindField("RefineDisp"), ',');
 }
 //..............................................................................
 void RefinementModel::BeforeAUUpdate_() {

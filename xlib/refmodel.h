@@ -96,6 +96,7 @@ protected:
   adirection *AddDirection(const TCAtomGroup &atoms, uint16_t type);
   // atoms omitted from the maps
   AtomRefList Omitted;
+  TStrList RefineDisp;
 public:
   // needs to be extended for the us of the batch numbers...
   struct HklStat : public MergeStats {
