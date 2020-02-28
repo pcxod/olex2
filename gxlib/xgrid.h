@@ -38,8 +38,8 @@ const short
   planeRenderModeLine    = 0x0010;
 
 //class TXGrid: public TGlMouseListener  {
-class TXGrid: public AGDrawObject  {
-  class TLegend : public AGlMouseHandlerImp  {
+class TXGrid : public AGDrawObject {
+  class TLegend : public AGlMouseHandlerImp {
     int Width, Height;
     int Top, Left;
     GLuint TextureId;
@@ -47,16 +47,16 @@ class TXGrid: public AGDrawObject  {
     TGlMaterial GlM;
   protected:
     vec3d Center;
-    virtual bool DoTranslate(const vec3d& t) {  Center += t;  return true;  }
-    virtual bool DoRotate(const vec3d&, double) {  return false;  }
-    virtual bool DoZoom(double zoom, bool inc)  { return false; }
-    const vec3d& GetCenter() const {  return Center;  }
+    virtual bool DoTranslate(const vec3d& t) { Center += t;  return true; }
+    virtual bool DoRotate(const vec3d&, double) { return false; }
+    virtual bool DoZoom(double zoom, bool inc) { return false; }
+    const vec3d& GetCenter() const { return Center; }
     void Init(unsigned char* RGB, GLenum format);
   public:
     TLegend(TGlRenderer& Render, const olxstr& collectionName);
     void SetData(unsigned char* RGB, GLsizei width, GLsizei height,
       GLenum format);
-    void Create(const olxstr& cName=EmptyString());
+    void Create(const olxstr& cName = EmptyString());
     void SetMaterial(const TGlMaterial &m) { GlM = m; }
     void Fit();
     virtual bool Orient(TGlPrimitive& P);
@@ -67,19 +67,18 @@ class TXGrid: public AGDrawObject  {
   };
 
   TArray3D<float>* ED;
-  FractMask* Mask;
   // if mask is specified
+  FractMask* Mask;
   GLuint PListId, NListId;
   char *TextData, *LegendData;
   array_2d<float> ContourData;
   float *ContourCrds[2], *ContourLevels;
   size_t ContourLevelCount;
-  //TGlPrimitive *FPrimitive;
   class TGXApp * XApp;
   void DeleteObjects();
   GLuint TextIndex;
   static TXGrid* Instance;
-  void RescaleSurface();
+  void RescaleSurface(bool collect_only);
   TGlTextBox *Info;
   TLegend *Legend;
   short RenderMode;
@@ -90,6 +89,8 @@ class TXGrid: public AGDrawObject  {
   TTypeList<vec3f> p_vertices, n_vertices;
   TTypeList<vec3f> p_normals, n_normals;
   TTypeList<IsoTriangle> p_triangles, n_triangles;
+  // use by RescaleSurface when collecting rather than rendering
+  olx_object_ptr<TTypeList<vec3f> > cp_vertices, cn_vertices;
 protected:
   float MaxVal, MinVal, Depth, Size, Scale;
   float box_min, box_step;
@@ -99,25 +100,27 @@ protected:
   bool MouseDown;
   void DoSmooth();
   void GlLine(float x1, float y1, float x2, float y2, float z);
-  int GetPolygonMode() const {  return RenderMode == planeRenderModeFill ? GL_FILL :
-    (RenderMode == planeRenderModeLine ? GL_LINE :
-    (RenderMode == planeRenderModePoint ? GL_POINT : -1));
+  int GetPolygonMode() const {
+    return RenderMode == planeRenderModeFill ? GL_FILL :
+      (RenderMode == planeRenderModeLine ? GL_LINE :
+      (RenderMode == planeRenderModePoint ? GL_POINT : -1));
   }
-  bool Is3D() const {  return RenderMode == planeRenderModeFill ||
-    RenderMode == planeRenderModeLine ||
-    RenderMode == planeRenderModePoint;
+  bool Is3D() const {
+    return RenderMode == planeRenderModeFill ||
+      RenderMode == planeRenderModeLine ||
+      RenderMode == planeRenderModePoint;
   }
   // updates the text information regarding current map
   void UpdateInfo();
-  class TContextClear: public AActionHandler  {
+  class TContextClear : public AActionHandler {
   public:
     TContextClear(TGlRenderer& Render);
-    virtual ~TContextClear()  {}
+    virtual ~TContextClear() {}
     bool Enter(const IOlxObject *Sender, const IOlxObject *Data, TActionQueue *);
     bool Exit(const IOlxObject *Sender, const IOlxObject *Data, TActionQueue *);
   };
-  static void _ResetLists()  {
-    if( Instance != NULL )  {
+  static void _ResetLists() {
+    if (Instance != 0) {
       Instance->PListId = Instance->NListId = ~0;
     }
   }
@@ -125,20 +128,20 @@ public:
   TXGrid(const olxstr& collectionName, TGXApp* xapp);
   virtual ~TXGrid();
   void Clear();
-  inline TArray3D<float>* Data()  {  return ED;  }
-  inline const TArray3D<float>* Data() const {  return ED;  }
+  TArray3D<float>* Data() { return ED; }
+  const TArray3D<float>* Data() const { return ED; }
   bool LoadFromFile(const olxstr& GridFile);
 
   void InitIso();
   void InitGrid(size_t maxX, size_t maxY, size_t MaxZ);
-  void InitGrid(const vec3s& dim)  {  InitGrid(dim[0], dim[1], dim[2]);  }
+  void InitGrid(const vec3s& dim) { InitGrid(dim[0], dim[1], dim[2]); }
   inline void SetValue(size_t i, size_t j, size_t k, float v) {
     ED->Data[i][j][k] = v;
   }
   inline double GetValue(int i, int j, int k) const {
     return ED->Data[i][j][k];
   }
-  template <class T> void SetValue(const T& ind, float v)  {
+  template <class T> void SetValue(const T& ind, float v) {
     ED->Data[(int)ind[0]][(int)ind[1]][(int)ind[2]] = v;
   }
   template <class T> inline float GetValue(const T& v) const {
@@ -147,45 +150,45 @@ public:
 
   // copies the 0yz x0z and xy0 layers to Maxyz xMaxyz and xyMaxZ
   void AdjustMap();
-  virtual void Create(const olxstr& cName=EmptyString());
+  virtual void Create(const olxstr& cName = EmptyString());
 
   virtual bool Orient(TGlPrimitive& P);
   virtual bool GetDimensions(vec3d& Max, vec3d& Min);
 
   void SetScale(float v);
-  inline double GetScale() const {  return Scale;  }
+  inline double GetScale() const { return Scale; }
   // this object will be deleted
-  void SetMask(FractMask& fm) {  Mask = &fm;  }
+  void SetMask(FractMask& fm) { Mask = &fm; }
 
   // extends the grid by +-1
-  bool IsExtended() const {  return Extended;  }
+  bool IsExtended() const { return Extended; }
   void SetExtended(bool v);
 
   void SetDepth(float v);
   void SetDepth(const vec3d& v);
-  float GetDepth() const {  return Depth;  }
-  vec3s GetDimVec() const {  return vec3s(MaxX, MaxY, MaxZ);  }
-  size_t GetPlaneSize() const {  return MaxDim;  }
+  float GetDepth() const { return Depth; }
+  vec3s GetDimVec() const { return vec3s(MaxX, MaxY, MaxZ); }
+  size_t GetPlaneSize() const { return MaxDim; }
   /* v=2^n values are acepted only (64, 128, 256, etc to be compatible with textures) */
   void SetPlaneSize(size_t v);
-  float GetSize() const {  return Size;  }
+  float GetSize() const { return Size; }
 
-  const TTypeList<vec3f> &GetPVertices() const {  return p_vertices;  }
-  const TTypeList<vec3f> &GetPNormals() const {  return p_normals;  }
-  const TTypeList<IsoTriangle> &GetPTriangles() const {  return p_triangles;  }
-  const TTypeList<vec3f> &GetNVertices() const {  return n_vertices;  }
-  const TTypeList<vec3f> &GetNNormals() const {  return n_normals;  }
-  const TTypeList<IsoTriangle> &GetNTriangles() const {  return n_triangles;  }
+  const TTypeList<vec3f> &GetPVertices() const { return p_vertices; }
+  const TTypeList<vec3f> &GetPNormals() const { return p_normals; }
+  const TTypeList<IsoTriangle> &GetPTriangles() const { return p_triangles; }
+  const TTypeList<vec3f> &GetNVertices() const { return n_vertices; }
+  const TTypeList<vec3f> &GetNNormals() const { return n_normals; }
+  const TTypeList<IsoTriangle> &GetNTriangles() const { return n_triangles; }
 
   DefPropP(float, MinHole)
-  DefPropP(float, MaxHole)
-  DefPropP(float, MinVal)
-  DefPropP(float, MaxVal)
+    DefPropP(float, MaxHole)
+    DefPropP(float, MinVal)
+    DefPropP(float, MaxVal)
 
-  inline bool IsEmpty() const {  return ED == NULL;  }
-  short GetRenderMode() const {  return RenderMode;  }
+    inline bool IsEmpty() const { return ED == NULL; }
+  short GetRenderMode() const { return RenderMode; }
 
-  size_t GetContourLevelCount() const {  return ContourLevelCount;  }
+  size_t GetContourLevelCount() const { return ContourLevelCount; }
   // sets new number of contours...
   void SetContourLevelCount(size_t v);
 
@@ -193,15 +196,16 @@ public:
     AGDrawObject::SetVisible(On);
     Info->SetVisible(On);
     Legend->SetVisible(On);
-    if( !On )
+    if (!On) {
       Clear();
+    }
   }
 
   bool OnMouseDown(const IOlxObject *Sender, const TMouseData& Data);
   bool OnMouseUp(const IOlxObject *Sender, const TMouseData& Data);
   bool OnMouseMove(const IOlxObject *Sender, const TMouseData& Data);
 
-  inline static TXGrid* GetInstance()  {  return Instance;  }
+  inline static TXGrid* GetInstance() { return Instance; }
 
   void LibScale(const TStrObjList& Params, TMacroData& E);
   void LibFix(const TStrObjList& Params, TMacroData& E);
@@ -215,15 +219,15 @@ public:
   void LibGetMax(const TStrObjList& Params, TMacroData& E);
   void LibRenderMode(const TStrObjList& Params, TMacroData& E);
   void LibIsvalid(const TStrObjList& Params, TMacroData& E);
-  class TLibrary*  ExportLibrary(const olxstr& name=EmptyString());
+  class TLibrary*  ExportLibrary(const olxstr& name = EmptyString());
 #ifdef _PYTHON
   static olxcstr &ModuleName();
   static PyObject *PyInit();
 #endif
   void ToDataItem(TDataItem& item, IOutputStream& zos) const;
   void FromDataItem(const TDataItem& item, IInputStream& zis);
-  // creates a blob at given screen coordinates (raster position)
-  TXBlob* CreateBlob(int x, int y) const;
+  // splits this object into separate blobs (1 - p, 2 - n, 3 - n+p)
+  TPtrList<TXBlob>::const_list_type CreateBlobs(int flag);
   const_strlist ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const;
 protected:
   struct TPlaneCalculationTask : public TaskBase {
@@ -236,7 +240,7 @@ protected:
     float minVal, maxVal, size, depth, hh;
     size_t max_dim;
     short mode;
-    MapUtil::MapGetter<float,2> map_getter;
+    MapUtil::MapGetter<float, 2> map_getter;
     void Run(size_t index);
     TPlaneCalculationTask(TXGrid& _parent,
       olx_array::array_3d<float> &_src_data,
@@ -244,13 +248,13 @@ protected:
       char* _text_data, size_t _max_dim, float _size,
       float _depth, const mat3f& _proj_m, const mat3f& _c2c,
       const vec3f& _center, short _mode) :
-        parent(_parent),
-        data(_data), src_data(_src_data), text_data(_text_data),
-        proj_m(_proj_m), c2c(_c2c), center(_center),
-        minVal(1000), maxVal(-1000),
-        size(_size), depth(_depth), hh((float)_max_dim/2), max_dim(_max_dim),
-        mode(_mode),
-        map_getter(src_data)
+      parent(_parent),
+      data(_data), src_data(_src_data), text_data(_text_data),
+      proj_m(_proj_m), c2c(_c2c), center(_center),
+      minVal(1000), maxVal(-1000),
+      size(_size), depth(_depth), hh((float)_max_dim / 2), max_dim(_max_dim),
+      mode(_mode),
+      map_getter(src_data)
     {}
     TPlaneCalculationTask* Replicate() const {
       return new TPlaneCalculationTask(parent, src_data, data, text_data,

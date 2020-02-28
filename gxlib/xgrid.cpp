@@ -376,7 +376,7 @@ void TXGrid::Create(const olxstr& cName) {
     TGlMaterial("1029;3628944717;645955712")));
   glpC->Vertices.SetCount(4);
   if (!olx_is_valid_index(PListId)) {
-    RescaleSurface();
+    RescaleSurface(false);
   }
 }
 //.............................................................................
@@ -402,7 +402,7 @@ bool TXGrid::Orient(TGlPrimitive& GlP) {
     return true;
   }
   if (Is3D()) {
-    if (ED == NULL) {
+    if (ED == 0) {
       return true;
     }
     if (&GlP == glpN) { // draw once only
@@ -707,7 +707,7 @@ void TXGrid::SetScale(float v) {
   }
   Scale = v;
   UpdateInfo();
-  if (_3d && ED != NULL) {
+  if (_3d && ED != 0) {
     p_triangles.Clear();
     p_normals.Clear();
     p_vertices.Clear();
@@ -765,7 +765,7 @@ void TXGrid::SetScale(float v) {
         n_triangles = IS.TriangleList();
       }
     }
-    RescaleSurface();
+    RescaleSurface(false);
   }
 }
 //.............................................................................
@@ -935,7 +935,7 @@ const_strlist TXGrid::ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const {
       out.Add("  texture {") << (li == 0 ? p_mat_name : n_mat_name) << "}}";
     }
   }
-  else if (Mask != NULL) {
+  else if (Mask != 0) {
     vec3d pts[3];
     for (int li = 0; li <= 1; li++) {
       const TTypeList<IsoTriangle>& trians = (li == 0 ? p_triangles : n_triangles);
@@ -1042,9 +1042,14 @@ const_strlist TXGrid::ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const {
   return out;
 }
 //.............................................................................
-void TXGrid::RescaleSurface() {
+void TXGrid::RescaleSurface(bool collect_only) {
+  if (collect_only) {
+    if (!cp_vertices.is_valid() || !cn_vertices.is_valid()) {
+      return;
+    }
+  }
   const TAsymmUnit& au = XApp->XFile().GetAsymmUnit();
-  if (!olx_is_valid_index(PListId)) {
+  if (!collect_only && !olx_is_valid_index(PListId)) {
     PListId = Parent.NewListId();
     NListId = Parent.NewListId();
   }
@@ -1057,9 +1062,13 @@ void TXGrid::RescaleSurface() {
       const TTypeList<vec3f>& verts = (li == 0 ? p_vertices : n_vertices);
       const TTypeList<vec3f>& norms = (li == 0 ? p_normals : n_normals);
       const TTypeList<IsoTriangle>& trians = (li == 0 ? p_triangles : n_triangles);
-      olx_gl::newList(li == 0 ? PListId : NListId, GL_COMPILE);
-      olx_gl::polygonMode(GL_FRONT_AND_BACK, GetPolygonMode());
-      olx_gl::begin(GL_TRIANGLES);
+      TTypeList<vec3f> *va = (li == 0 ? cp_vertices.get_ptr()
+        : cn_vertices.get_ptr());
+      if (!collect_only) {
+        olx_gl::newList(li == 0 ? PListId : NListId, GL_COMPILE);
+        olx_gl::polygonMode(GL_FRONT_AND_BACK, GetPolygonMode());
+        olx_gl::begin(GL_TRIANGLES);
+      }
       if (sphere) {
         for (size_t i = 0; i < trians.Count(); i++) {
           bool draw = true;
@@ -1069,42 +1078,57 @@ void TXGrid::RescaleSurface() {
               break;
             }
           }
-          if (!draw) continue;
-          for (int j = 0; j < 3; j++) {
-            olx_gl::normal(norms[trians[i].pointID[j]]);
-            olx_gl::vertex(verts[trians[i].pointID[j]]);
+          if (!draw) {
+            continue;
+          }
+          if (collect_only) {
+            for (int j = 0; j < 3; j++) {
+              va->AddCopy(verts[trians[i][j]]);
+            }
+          }
+          else {
+            for (int j = 0; j < 3; j++) {
+              olx_gl::normal(norms[trians[i][j]]);
+              olx_gl::vertex(verts[trians[i][j]]);
+            }
           }
         }
       }
       else {
         for (size_t i = 0; i < trians.Count(); i++) {
           for (int j = 0; j < 3; j++) {
-            olx_gl::normal(norms[trians[i].pointID[j]]);
-            olx_gl::vertex(verts[trians[i].pointID[j]]);
+            olx_gl::normal(norms[trians[i][j]]);
+            olx_gl::vertex(verts[trians[i][j]]);
           }
         }
       }
-      olx_gl::end();
-      olx_gl::polygonMode(GL_FRONT_AND_BACK, GL_FILL);
-      olx_gl::endList();
+      if (!collect_only) {
+        olx_gl::end();
+        olx_gl::polygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        olx_gl::endList();
+      }
     }
   }
-  else if (Mask != NULL) {
+  else if (Mask != 0) {
     vec3d pts[3];
     for (int li = 0; li <= 1; li++) {
       const TTypeList<vec3f>& verts = (li == 0 ? p_vertices : n_vertices);
       const TTypeList<vec3f>& norms = (li == 0 ? p_normals : n_normals);
       const TTypeList<IsoTriangle>& trians = (li == 0 ? p_triangles : n_triangles);
-      glNewList(li == 0 ? PListId : NListId, GL_COMPILE);
-      olx_gl::polygonMode(GL_FRONT_AND_BACK, GetPolygonMode());
-      olx_gl::begin(GL_TRIANGLES);
+      TTypeList<vec3f> *va = (li == 0 ? cp_vertices.get_ptr()
+        : cn_vertices.get_ptr());
+      if (!collect_only) {
+        olx_gl::newList(li == 0 ? PListId : NListId, GL_COMPILE);
+        olx_gl::polygonMode(GL_FRONT_AND_BACK, GetPolygonMode());
+        olx_gl::begin(GL_TRIANGLES);
+      }
       for (int x = -1; x <= 1; x++) {
         for (int y = -1; y <= 1; y++) {
           for (int z = -1; z <= 1; z++) {
             for (size_t i = 0; i < trians.Count(); i++) {
               bool draw = true;
               for (int j = 0; j < 3; j++) {
-                pts[j] = verts[trians[i].pointID[j]];
+                pts[j] = verts[trians[i][j]];
                 pts[j][0] = pts[j][0] / MaxX + x;
                 pts[j][1] = pts[j][1] / MaxY + y;
                 pts[j][2] = pts[j][2] / MaxZ + z;
@@ -1114,18 +1138,32 @@ void TXGrid::RescaleSurface() {
                 }
                 au.CellToCartesian(pts[j]);
               }
-              if (!draw)  continue;
-              for (int j = 0; j < 3; j++) {
-                olx_gl::normal(norms[trians[i].pointID[j]]);
-                olx_gl::vertex(pts[j]);
+              if (!draw) {
+                continue;
+              }
+              if (collect_only) {
+                for (int j = 0; j < 3; j++) {
+                  va->AddCopy(pts[j]);
+                }
+              }
+              else {
+                for (int j = 0; j < 3; j++) {
+                  olx_gl::normal(norms[trians[i][j]]);
+                  olx_gl::vertex(pts[j]);
+                }
               }
             }
           }
         }
       }
-      olx_gl::end();
-      olx_gl::polygonMode(GL_FRONT_AND_BACK, GL_FILL);
-      olx_gl::endList();
+      if (!collect_only) {
+        olx_gl::end();
+        olx_gl::polygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        olx_gl::endList();
+      }
+      else {
+
+      }
     }
   }
   else {
@@ -1135,9 +1173,13 @@ void TXGrid::RescaleSurface() {
         TTypeList<vec3f>& verts = (li == 0 ? p_vertices : n_vertices);
         const TTypeList<vec3f>& norms = (li == 0 ? p_normals : n_normals);
         const TTypeList<IsoTriangle>& trians = (li == 0 ? p_triangles : n_triangles);
-        glNewList(li == 0 ? PListId : NListId, GL_COMPILE);
-        olx_gl::polygonMode(GL_FRONT_AND_BACK, GetPolygonMode());
-        olx_gl::begin(GL_TRIANGLES);
+        TTypeList<vec3f> *va = (li == 0 ? cp_vertices.get_ptr()
+          : cn_vertices.get_ptr());
+        if (!collect_only) {
+          olx_gl::newList(li == 0 ? PListId : NListId, GL_COMPILE);
+          olx_gl::polygonMode(GL_FRONT_AND_BACK, GetPolygonMode());
+          olx_gl::begin(GL_TRIANGLES);
+        }
         for (float x = ExtMin[0]; x < ExtMax[0]; x++) {
           for (float y = ExtMin[1]; y < ExtMax[1]; y++) {
             for (float z = ExtMin[2]; z < ExtMax[2]; z++) {
@@ -1148,24 +1190,37 @@ void TXGrid::RescaleSurface() {
                   pts[j][0] = pts[j][0] / MaxX + x;
                   pts[j][1] = pts[j][1] / MaxY + y;
                   pts[j][2] = pts[j][2] / MaxZ + z;
-                  if (pts[j][0] > ExtMax[0] || pts[j][1] > ExtMax[1] || pts[j][2] > ExtMax[2]) {
+                  if (pts[j][0] > ExtMax[0] || pts[j][1] > ExtMax[1] ||
+                    pts[j][2] > ExtMax[2])
+                  {
                     draw = false;
                     break;
                   }
                   au.CellToCartesian(pts[j]);
                 }
-                if (!draw)  continue;
-                for (int j = 0; j < 3; j++) {
-                  olx_gl::normal(norms[trians[i].pointID[j]]);
-                  olx_gl::vertex(pts[j]);
+                if (!draw) {
+                  continue;
+                }
+                if (collect_only) {
+                  for (int j = 0; j < 3; j++) {
+                    va->AddCopy(pts[j]);
+                  }
+                }
+                else {
+                  for (int j = 0; j < 3; j++) {
+                    olx_gl::normal(norms[trians[i].pointID[j]]);
+                    olx_gl::vertex(pts[j]);
+                  }
                 }
               }
             }
           }
         }
-        olx_gl::end();
-        olx_gl::polygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        olx_gl::endList();
+        if (!collect_only) {
+          olx_gl::end();
+          olx_gl::polygonMode(GL_FRONT_AND_BACK, GL_FILL);
+          olx_gl::endList();
+        }
       }
     }
     else {
@@ -1179,18 +1234,31 @@ void TXGrid::RescaleSurface() {
           verts[i][2] /= (MaxZ - 1);
           au.CellToCartesian(verts[i]);
         }
-        glNewList(li == 0 ? PListId : NListId, GL_COMPILE);
-        olx_gl::polygonMode(GL_FRONT_AND_BACK, GetPolygonMode());
-        olx_gl::begin(GL_TRIANGLES);
+        TTypeList<vec3f> *va = (li == 0 ? cp_vertices.get_ptr()
+          : cn_vertices.get_ptr());
+        if (!collect_only) {
+          olx_gl::newList(li == 0 ? PListId : NListId, GL_COMPILE);
+          olx_gl::polygonMode(GL_FRONT_AND_BACK, GetPolygonMode());
+          olx_gl::begin(GL_TRIANGLES);
+        }
         for (size_t i = 0; i < trians.Count(); i++) {
-          for (int j = 0; j < 3; j++) {
-            olx_gl::normal(norms[trians[i].pointID[j]]);
-            olx_gl::vertex(verts[trians[i].pointID[j]]);  // cell drawing
+          if (collect_only) {
+            for (int j = 0; j < 3; j++) {
+              va->AddCopy(verts[trians[i].pointID[j]]);
+            }
+          }
+          else {
+            for (int j = 0; j < 3; j++) {
+              olx_gl::normal(norms[trians[i].pointID[j]]);
+              olx_gl::vertex(verts[trians[i].pointID[j]]);  // cell drawing
+            }
           }
         }
-        olx_gl::end();
-        olx_gl::polygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        olx_gl::endList();
+        if (!collect_only) {
+          olx_gl::end();
+          olx_gl::polygonMode(GL_FRONT_AND_BACK, GL_FILL);
+          olx_gl::endList();
+        }
       }
     }
   }
@@ -1235,66 +1303,104 @@ void TXGrid::InitIso() {
   }
 }
 //.............................................................................
-TXBlob* TXGrid::CreateBlob(int x, int) const {
-  if (!Is3D())  return NULL;
-  TXBlob* xb = new TXBlob(Parent, "blob");
-  //IS->GenerateSurface(Scale);
-  TPtrList<IsoTriangle> triags;
-  const TTypeList<vec3f>& vertices = n_vertices;
-  const TTypeList<vec3f>& normals = n_normals;
-  const TTypeList<IsoTriangle>& triangles = n_triangles;
-  TEBitArray verts(vertices.Count()), used_triags(triangles.Count());
-  verts.SetTrue(triangles[0].pointID[0]);
-  verts.SetTrue(triangles[0].pointID[1]);
-  verts.SetTrue(triangles[0].pointID[2]);
-  triags.Add(triangles[0]);
-  bool added = true;
-  size_t vec_cnt = 0;
-  while (added) {
-    added = false;
-    for (size_t i = 1; i < triangles.Count(); i++) {
-      if (used_triags[i])  continue;
-      IsoTriangle& t = triangles[i];
-      bool has_shared_point = false;
-      for (int j = 0; j < 3; j++) {
-        if (verts[t.pointID[j]]) {
-          has_shared_point = true;
-          //break;
-        }
+TPtrList<TXBlob>::const_list_type TXGrid::CreateBlobs(int flags) {
+  TPtrList<TXBlob> rv;
+  if (!Is3D() || (n_triangles.IsEmpty() && p_triangles.IsEmpty())) {
+    return rv;
+  }
+  cp_vertices = new TTypeList<vec3f>();
+  cn_vertices = new TTypeList<vec3f>();
+  RescaleSurface(true);
+  // compact the data
+  for (int li = 0; li <= 1; li++) {
+    TTypeList<vec3f> &va = (li == 0 ? cp_vertices() : cn_vertices());
+    olxset<vec3f, TComparableComparator> vset;
+    vset.AddAll(va);
+    TTypeList<IsoTriangle> triangles;
+    triangles.SetCapacity(va.Count() / 3);
+    for (size_t i = 0; i < va.Count(); i+=3) {
+      IsoTriangle &t = triangles.AddNew();
+      t[0] = vset.IndexOf(va[i]);
+      t[1] = vset.IndexOf(va[i+1]);
+      t[2] = vset.IndexOf(va[i+2]);
+    }
+    TArrayList<size_t> verts(vset.Count(),
+      olx_list_init::value(InvalidIndex));
+    TEBitArray used_triags(triangles.Count());
+    // map vertices to triangles
+    TArrayList<olx_pset<size_t> > v2t(vset.Count());
+    for (size_t i = 0; i < triangles.Count(); i++) {
+      for (size_t j = 0; j < 3; j++) {
+        v2t[triangles[i][j]].Add(i);
       }
-      if (has_shared_point) {
-        added = true;
-        used_triags.SetTrue(i);
-        triags.Add(t);
-        for (int j = 0; j < 3; j++) {
-          if (!verts[t.pointID[j]]) {
-            verts.SetTrue(t.pointID[j]);
-            vec_cnt++;
+    }
+    TArrayList<size_t> new_ids(vset.Count());
+    for (size_t i = 0; i < verts.Count(); i++) {
+      if (verts[i] == InvalidIndex) {
+        verts[i] = rv.Count();
+        TXBlob &blob = *rv.Add(new TXBlob(Parent, li ? "blob+" : "blob-"));
+        TArrayList<size_t> bt;
+        size_t cnt = 1;
+        olx_pset<size_t> st = v2t[i];
+        while (!st.IsEmpty()) {
+          size_t ti = st[st.Count() - 1];
+          st.Delete(st.Count() - 1);
+          bt.Add(ti);
+          const IsoTriangle &t = triangles[ti];
+          if (used_triags[ti]) {
+            continue;
+          }
+          used_triags.SetTrue(ti);
+          for (size_t j = 0; j < 3; j++) {
+            if (verts[t[j]] == InvalidIndex) {
+              cnt++;
+              verts[t[j]] = verts[i];
+              for (size_t k = 0; k < v2t[t[j]].Count(); k++) {
+                if (!used_triags[v2t[t[j]][k]]) {
+                  st.Add(v2t[t[j]][k]);
+                }
+              }
+            }
+          }
+        }
+        if (cnt < 25) {
+          delete rv.GetLast();
+          rv[rv.Count() - 1] = 0;
+          continue;
+        }
+        blob.vertices.SetCapacity(cnt);
+        blob.normals.SetCapacity(cnt);
+        for (size_t j = i; j < verts.Count(); j++) {
+          if (verts[j] == verts[i]) {
+            new_ids[j] = blob.vertices.Count();
+            blob.vertices.AddCopy(vset[j]);
+            vec3f n;
+            for (size_t k = 0; k < v2t[j].Count(); k++) {
+              IsoTriangle& t = triangles[v2t[j][k]];
+              n += (vset[t[1]] - vset[t[0]]).XProdVec(vset[t[2]] - vset[t[1]]);
+            }
+            blob.normals.AddCopy(n.Normalise());
+          }
+          else {
+            new_ids[j] = ~0;
+          }
+        }
+        blob.triangles.SetCapacity(bt.Count());
+        for (size_t i = 0; i < bt.Count(); i++) {
+          IsoTriangle& t = blob.triangles.Add(new IsoTriangle(triangles[bt[i]]));
+          for (size_t j = 0; j < 3; j++) {
+            t[j] = (int)new_ids[t[j]];
           }
         }
       }
     }
   }
-  xb->vertices.SetCapacity(vec_cnt);
-  xb->normals.SetCapacity(vec_cnt);
-  TArrayList<size_t> new_ids(vertices.Count());
-  for (size_t i = 0; i < verts.Count(); i++) {
-    if (verts[i]) {
-      new_ids[i] = xb->vertices.Count();
-      xb->vertices.AddCopy(vertices[i]);
-      xb->normals.AddCopy(normals[i]);
-    }
-    else
-      new_ids[i] = ~0;
-  }
-  xb->triangles.SetCapacity(triags.Count());
-  for (size_t i = 0; i < triags.Count(); i++) {
-    IsoTriangle& t = xb->triangles.Add(new IsoTriangle(*triags[i]));
-    t.pointID[0] = (int)new_ids[t.pointID[0]];
-    t.pointID[1] = (int)new_ids[t.pointID[1]];
-    t.pointID[2] = (int)new_ids[t.pointID[2]];
-  }
-  return xb;
+  cp_vertices = 0;
+  cn_vertices = 0;
+
+
+  rv.Pack();
+  return rv;
 }
 //.............................................................................
 //.............................................................................

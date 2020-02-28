@@ -410,11 +410,11 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
       ((TXLattice*)FObjectUnderMouse)->SetFixed(false);
   }
   else if (event.GetId() == ID_GridMenuCreateBlob) {
-    TXBlob* xb = FXApp->XGrid().CreateBlob(MousePositionX, MousePositionY);
-    if (xb != 0) {
-      FXApp->AddObjectToCreate(xb);
+    TPtrList<TXBlob> blobs = FXApp->XGrid().CreateBlobs(3);
+    for (size_t i = 0; i < blobs.Count(); i++) {
+      FXApp->AddObjectToCreate(blobs[i]);
+      blobs[i]->Create();
     }
-    xb->Create();
   }
   else if (event.GetId() == ID_GraphicsCollectivise) {
     if (FObjectUnderMouse->IsSelected()) {

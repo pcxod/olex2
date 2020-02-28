@@ -1778,6 +1778,25 @@ void TGlRenderer::LibLineWidth(const TStrObjList& Params, TMacroData& E) {
   }
 }
 //..............................................................................
+void LibPointSize(const TStrObjList& Params, TMacroData& E) {
+  if (Params.IsEmpty()) {
+    GLdouble ps = 0;
+    olx_gl::get(GL_POINT_SIZE, &ps);
+    E.SetRetVal(olxstr(ps) << ',' << olx_gl::isEnabled(GL_POINT_SMOOTH));
+  }
+  else {
+    olx_gl::pointSize(Params[0].ToDouble());
+    if (Params.Count() > 1) {
+      if (Params[1].ToBool()) {
+        olx_gl::enable(GL_POINT_SMOOTH);
+      }
+      else {
+        olx_gl::disable(GL_POINT_SMOOTH);
+      }
+    }
+  }
+}
+//..............................................................................
 void TGlRenderer::LibBasis(const TStrObjList& Params, TMacroData& E) {
   if (Params.IsEmpty()) {
     TDataItem di(0, EmptyString());
@@ -1853,6 +1872,12 @@ TLibrary*  TGlRenderer::ExportLibrary(const olxstr& name) {
       "LineWidth",
       fpNone | fpOne,
       "Returns/sets width of the raster OpenGl line")
+  );
+  lib->Register(
+    new TStaticFunction(&LibPointSize,
+      "PointSize",
+      fpNone | fpOne | fpTwo,
+      "Returns/sets point size")
   );
   lib->Register(
     new TFunction<TGlRenderer>(this, &TGlRenderer::LibBasis,

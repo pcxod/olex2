@@ -39,10 +39,13 @@ void TXBlob::Create(const olxstr& cName)  {
     SetCollectionName(cName);
   olxstr NewL;
   TGPCollection* GPC = Parent.FindCollectionX(GetCollectionName(), NewL);
-  if( GPC == NULL )
+  if (GPC == 0) {
     GPC = &Parent.NewCollection(NewL);
+  }
   GPC->AddObject(*this);
-  if( GPC->PrimitiveCount() != 0 )  return;
+  if (GPC->PrimitiveCount() != 0) {
+    return;
+  }
 
   TGraphicsStyle& GS = GPC->GetStyle();
   TGlPrimitive& GlP = GPC->NewPrimitive("Blob", sgloQuads);
@@ -70,20 +73,25 @@ bool TXBlob::Orient(TGlPrimitive& P)  {
   }
   olx_gl::begin(GL_TRIANGLES);
   for( size_t i=0; i < triangles.Count(); i++ )  {
+    if (normals.Count() == triangles.Count()) {
+      olx_gl::normal(normals[i]);
+    }
     for (int j = 0; j < 3; j++) {
-      olx_gl::normal(normals[triangles[i].pointID[j]]);
+      if (normals.Count() == vertices.Count()) {
+        olx_gl::normal(normals[triangles[i][j]]);
+      }
       if (use_color) {
         if (transparent) {
-          olx_gl::color(colors[triangles[i].pointID[j]][0],
-            colors[triangles[i].pointID[j]][1],
-            colors[triangles[i].pointID[j]][2],
+          olx_gl::color(colors[triangles[i][j]][0],
+            colors[triangles[i][j]][1],
+            colors[triangles[i][j]][2],
             to);
         }
         else {
-          olx_gl::color(colors[triangles[i].pointID[j]].Data());
+          olx_gl::color(colors[triangles[i][j]].Data());
         }
       }
-      olx_gl::vertex(vertices[triangles[i].pointID[j]]);  // cell drawing
+      olx_gl::vertex(vertices[triangles[i][j]]);  // cell drawing
     }
   }
   olx_gl::end();
