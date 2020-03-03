@@ -212,42 +212,30 @@ PyObject* pyRefModel(PyObject* self, PyObject* args) {
     }
   }
   TAsymmUnit& au = TXApp::GetInstance().XFile().GetAsymmUnit();
-  /* make the labels unique globally. This needs to be done since the number of
-  files containing atom labels (like VcV) and information may be miss
-  -represented
-  */
-  TStrList o_labels(au.AtomCount());
   LabelCorrector lc(TXApp::GetMaxLabelLength(), TXApp::DoRenameParts());
   for (size_t i = 0; i < au.AtomCount(); i++) {
     lc.Correct(au.GetAtom(i));
-    o_labels[i] = au.GetAtom(i).GetLabel();
-    au.GetAtom(i).SetLabel(au.GetAtom(i).GetResiLabel(!TXApp::DoRenameParts()),
-      false);
   }
-  PyObject *rv = TXApp::GetInstance().XFile().GetRM().PyExport(calc_connectivity);
-  // restore labels
-  for (size_t i = 0; i < au.AtomCount(); i++) {
-    au.GetAtom(i).SetLabel(o_labels[i], false);
-  }
-  return rv;
+  return TXApp::GetInstance().XFile().GetRM().PyExport(calc_connectivity);
 }
 //..............................................................................
-PyObject* pySGInfo(PyObject* self, PyObject* args)  {
-  TSpaceGroup* sg = NULL;
+PyObject* pySGInfo(PyObject* self, PyObject* args) {
+  TSpaceGroup* sg = 0;
   bool include_lattice = true;
-  if( PyTuple_Size(args) == 0 )  {
-    try  {  sg = &TXApp::GetInstance().XFile().GetLastLoaderSG();  }
-    catch(...)  {
+  if (PyTuple_Size(args) == 0) {
+    try { sg = &TXApp::GetInstance().XFile().GetLastLoaderSG(); }
+    catch (...) {
       return PythonExt::PyNone();
     }
   }
-  else  {
+  else {
     olxstr sg_name;
-    if( !PythonExt::ParseTuple(args, "w|b", &sg_name, &include_lattice) )
+    if (!PythonExt::ParseTuple(args, "w|b", &sg_name, &include_lattice))
       return PythonExt::InvalidArgumentException(__OlxSourceInfo, "w|b");
     sg = TSymmLib::GetInstance().FindGroupByName(sg_name);
-    if( sg == NULL )
+    if (sg == 0) {
       return PythonExt::PyNone();
+    }
   }
   PyObject* out = PyDict_New();
   PythonExt::SetDictItem(out, "Number",
@@ -269,71 +257,72 @@ PyObject* pySGInfo(PyObject* self, PyObject* args)  {
     PythonExt::BuildString(sg->GetPointGroup().GetBareName()));
   PythonExt::SetDictItem(out, "LaueClass",
     PythonExt::BuildString(sg->GetLaueClass().GetBareName()));
-  PythonExt::SetDictItem(out, "HallSymbol"
-    , PythonExt::BuildString(sg->GetHallSymbol()));
-    PyObject* latt_out;
-    PythonExt::SetDictItem(out, "Lattice", (latt_out=PyDict_New()));
-    const TCLattice& latt = sg->GetLattice();
-    PythonExt::SetDictItem(latt_out, "Name",
-      PythonExt::BuildString(latt.GetName()));
-    PythonExt::SetDictItem(latt_out, "Centering",
-      PythonExt::BuildString(latt.GetSymbol()));
-    PythonExt::SetDictItem(latt_out, "InsCode",
-      Py_BuildValue("i", latt.GetLatt()));
-    PyObject* latt_vec_out = PyTuple_New(latt.GetVectors().Count());
-    for( size_t i=0; i < latt.GetVectors().Count(); i++ )  {
-      PyTuple_SetItem(latt_vec_out, i,
-        Py_BuildValue("(ddd)",
-          latt.GetVectors()[i][0],
-          latt.GetVectors()[i][1],
-          latt.GetVectors()[i][2]));
-    }
-    PythonExt::SetDictItem(latt_out, "Translations", latt_vec_out);
-    PyObject* matr_out = PyTuple_New(sg->MatrixCount());
-    for( size_t i=0; i < sg->MatrixCount(); i++ )  {
-      const smatd& m = sg->GetMatrix(i);
-      PyTuple_SetItem(matr_out, i,
-        Py_BuildValue("(iiid)(iiid)(iiid)",
+  PythonExt::SetDictItem(out, "HallSymbol",
+    PythonExt::BuildString(sg->GetHallSymbol()));
+  PyObject* latt_out;
+  PythonExt::SetDictItem(out, "Lattice", (latt_out = PyDict_New()));
+  const TCLattice& latt = sg->GetLattice();
+  PythonExt::SetDictItem(latt_out, "Name",
+    PythonExt::BuildString(latt.GetName()));
+  PythonExt::SetDictItem(latt_out, "Centering",
+    PythonExt::BuildString(latt.GetSymbol()));
+  PythonExt::SetDictItem(latt_out, "InsCode",
+    Py_BuildValue("i", latt.GetLatt()));
+  PyObject* latt_vec_out = PyTuple_New(latt.GetVectors().Count());
+  for (size_t i = 0; i < latt.GetVectors().Count(); i++) {
+    PyTuple_SetItem(latt_vec_out, i,
+      Py_BuildValue("(ddd)",
+        latt.GetVectors()[i][0],
+        latt.GetVectors()[i][1],
+        latt.GetVectors()[i][2]));
+  }
+  PythonExt::SetDictItem(latt_out, "Translations", latt_vec_out);
+  PyObject* matr_out = PyTuple_New(sg->MatrixCount());
+  for (size_t i = 0; i < sg->MatrixCount(); i++) {
+    const smatd& m = sg->GetMatrix(i);
+    PyTuple_SetItem(matr_out, i,
+      Py_BuildValue("(iiid)(iiid)(iiid)",
         m.r[0][0], m.r[0][1], m.r[0][2], m.t[0],
         m.r[1][0], m.r[1][1], m.r[1][2], m.t[1],
         m.r[2][0], m.r[2][1], m.r[2][2], m.t[2]
       ));
-    }
-    PythonExt::SetDictItem(out, "Matrices", matr_out);
-    smatd_list ml;
-    sg->GetMatrices(ml, include_lattice ? mattAll : mattAll^mattCentering);
-    matr_out=PyTuple_New(ml.Count());
-    for( size_t i=0; i < ml.Count(); i++ )  {
-      const smatd& m = ml[i];
-      PyTuple_SetItem(matr_out, i,
+  }
+  PythonExt::SetDictItem(out, "Matrices", matr_out);
+  smatd_list ml;
+  sg->GetMatrices(ml, include_lattice ? mattAll : mattAll ^ mattCentering);
+  matr_out = PyTuple_New(ml.Count());
+  for (size_t i = 0; i < ml.Count(); i++) {
+    const smatd& m = ml[i];
+    PyTuple_SetItem(matr_out, i,
+      Py_BuildValue("(iiid)(iiid)(iiid)",
+        m.r[0][0], m.r[0][1], m.r[0][2], m.t[0],
+        m.r[1][0], m.r[1][1], m.r[1][2], m.t[1],
+        m.r[2][0], m.r[2][1], m.r[2][2], m.t[2]
+      ));
+  }
+  PythonExt::SetDictItem(out, "MatricesAll", matr_out);
+
+  TPtrList<TSymmElement> ref, sg_elm;
+  for (size_t i = 0; i < TSymmLib::GetInstance().SymmElementCount(); i++) {
+    ref.Add(TSymmLib::GetInstance().GetSymmElement(i));
+  }
+  sg->SplitIntoElements(ref, sg_elm);
+  PyObject* sysabs_out = PyTuple_New(sg_elm.Count());
+  for (size_t i = 0; i < sg_elm.Count(); i++) {
+    matr_out = PyTuple_New(sg_elm[i]->MatrixCount());
+    for (size_t j = 0; j < sg_elm[i]->MatrixCount(); j++) {
+      const smatd& m = sg_elm[i]->GetMatrix(j);
+      PyTuple_SetItem(matr_out, j,
         Py_BuildValue("(iiid)(iiid)(iiid)",
           m.r[0][0], m.r[0][1], m.r[0][2], m.t[0],
           m.r[1][0], m.r[1][1], m.r[1][2], m.t[1],
-          m.r[2][0], m.r[2][1], m.r[2][2], m.t[2]
-      ));
+          m.r[2][0], m.r[2][1], m.r[2][2], m.t[2]));
     }
-    PythonExt::SetDictItem(out, "MatricesAll", matr_out);
-
-    TPtrList<TSymmElement> ref, sg_elm;
-    for( size_t i=0; i < TSymmLib::GetInstance().SymmElementCount(); i++ )
-      ref.Add(TSymmLib::GetInstance().GetSymmElement(i));
-    sg->SplitIntoElements(ref, sg_elm);
-    PyObject* sysabs_out = PyTuple_New(sg_elm.Count());
-    for( size_t i=0; i < sg_elm.Count(); i++ )  {
-      matr_out = PyTuple_New(sg_elm[i]->MatrixCount());
-      for( size_t j=0; j < sg_elm[i]->MatrixCount(); j++ )  {
-        const smatd& m = sg_elm[i]->GetMatrix(j);
-        PyTuple_SetItem(matr_out, j,
-          Py_BuildValue("(iiid)(iiid)(iiid)",
-            m.r[0][0], m.r[0][1], m.r[0][2], m.t[0],
-            m.r[1][0], m.r[1][1], m.r[1][2], m.t[1],
-            m.r[2][0], m.r[2][1], m.r[2][2], m.t[2]));
-      }
-      PyTuple_SetItem(sysabs_out, i, Py_BuildValue("(OO)",
-        PythonExt::BuildString(sg_elm[i]->GetName()), matr_out));
-    }
-    PythonExt::SetDictItem(out, "SysAbs", sysabs_out);
-    PythonExt::SetDictItem(out, "Axis", PythonExt::BuildString(sg->GetAxis()));
+    PyTuple_SetItem(sysabs_out, i, Py_BuildValue("(OO)",
+      PythonExt::BuildString(sg_elm[i]->GetName()), matr_out));
+  }
+  PythonExt::SetDictItem(out, "SysAbs", sysabs_out);
+  PythonExt::SetDictItem(out, "Axis", PythonExt::BuildString(sg->GetAxis()));
   return out;
 }
 //..............................................................................

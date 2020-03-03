@@ -93,16 +93,34 @@ void TSimpleRestraint::ToDataItem(TDataItem& item) const {
 ConstPtrList<PyObject> TSimpleRestraint::PyExport(TPtrList<PyObject>& atoms,
   TPtrList<PyObject>& equiv)
 {
-  TTypeList<TAtomRefList> ats = Atoms.Expand(Parent.GetRM());
-  TPtrList<PyObject> rv(ats.Count());
-  for (size_t i=0; i < ats.Count(); i++) {
-    rv[i] = PyDict_New();
-    PythonExt::SetDictItem(rv[i], "allNonH", Py_BuildValue("b", AllNonHAtoms));
-    PythonExt::SetDictItem(rv[i], "esd1", Py_BuildValue("d", Esd));
-    PythonExt::SetDictItem(rv[i], "esd2", Py_BuildValue("d", Esd1));
-    PythonExt::SetDictItem(rv[i], "value", Py_BuildValue("d", Value));
-    PyObject* involved = PyTuple_New(ats[i].Count());
-    for( size_t j=0; j < ats[i].Count(); j++ )  {
+  size_t group_size = InvalidIndex;
+  switch (GetListType()) {
+  case rltGroup2:
+    group_size = 2;
+    break;
+  case rltGroup3:
+    group_size = 3;
+    break;
+  case rltGroup4:
+    group_size = 4;
+    break;
+  }
+  TTypeList<TAtomRefList> ats = Atoms.Expand(Parent.GetRM(), group_size);
+  TPtrList<PyObject> rv;
+  rv.Add(PyDict_New());
+  PythonExt::SetDictItem(rv[0], "allNonH", Py_BuildValue("b", AllNonHAtoms));
+  PythonExt::SetDictItem(rv[0], "esd1", Py_BuildValue("d", Esd));
+  PythonExt::SetDictItem(rv[0], "esd2", Py_BuildValue("d", Esd1));
+  PythonExt::SetDictItem(rv[0], "value", Py_BuildValue("d", Value));
+  TTypeList<index_t> all_atom_ids;
+  size_t total_cnt = 0;
+  for (size_t i = 0; i < ats.Count(); i++) {
+    total_cnt += ats[i].Count();
+  }
+  PyObject* involved = PyTuple_New(total_cnt);
+  total_cnt = 0;
+  for (size_t i = 0; i < ats.Count(); i++) {
+    for (size_t j = 0; j < ats[i].Count(); j++, total_cnt++) {
       PyObject* eq;
       if (ats[i][j].GetMatrix() == 0) {
         eq = Py_None;
@@ -111,11 +129,11 @@ ConstPtrList<PyObject> TSimpleRestraint::PyExport(TPtrList<PyObject>& atoms,
         eq = equiv[ats[i][j].GetMatrix()->GetId()];
       }
       Py_INCREF(eq);
-      PyTuple_SetItem(involved, j,
+      PyTuple_SetItem(involved, total_cnt,
         Py_BuildValue("OO", Py_BuildValue("i", ats[i][j].GetAtom().GetTag()), eq));
     }
-    PythonExt::SetDictItem(rv[i], "atoms", involved);
   }
+  PythonExt::SetDictItem(rv[0], "atoms", involved);
   return rv;
 }
 #endif

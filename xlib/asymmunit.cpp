@@ -1190,13 +1190,18 @@ PyObject* TAsymmUnit::PyExport(TPtrList<PyObject>& _atoms, bool export_conn) {
     PyObject* atoms = PyTuple_New(atom_cnt),
       *ri = PyDict_New();
 
-    if (i == 0)
+    if (i == 0) {
       PythonExt::SetDictItem(ri, "class", PythonExt::BuildString("default"));
+    }
     else {
-      PythonExt::SetDictItem(ri, "class", PythonExt::BuildString(r.GetClassName()));
-      PythonExt::SetDictItem(ri, "alias", Py_BuildValue("i", r.GetAlias()));
-      PythonExt::SetDictItem(ri, "number", Py_BuildValue("i", r.GetNumber()));
-      PythonExt::SetDictItem(ri, "chainId", Py_BuildValue("b", r.GetChainId()));
+      PythonExt::SetDictItem(ri, "class",
+        PythonExt::BuildString(r.GetClassName()));
+      PythonExt::SetDictItem(ri, "alias",
+        Py_BuildValue("i", r.GetAlias()));
+      PythonExt::SetDictItem(ri, "number",
+        Py_BuildValue("i", r.GetNumber()));
+      PythonExt::SetDictItem(ri, "chainId",
+        PythonExt::BuildString(r.GetChainId()));
     }
     atom_cnt = 0;
     for (size_t j = 0; j < r.Count(); j++) {

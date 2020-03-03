@@ -1835,9 +1835,10 @@ PyObject* RefinementModel::PyExport(bool export_conn) {
     PythonExt::SetDictItem(omit, "2theta", Py_BuildValue("d", OMIT_2t));
     if (!Omits.IsEmpty()) {
       PyObject* omits = PyTuple_New(Omits.Count());
-      for (size_t i = 0; i < Omits.Count(); i++)
-        PyTuple_SetItem(omits, i, Py_BuildValue("(iii)", Omits[i][0], Omits[i][1], Omits[i][2]));
-
+      for (size_t i = 0; i < Omits.Count(); i++) {
+        PyTuple_SetItem(omits, i,
+          Py_BuildValue("(iii)", Omits[i][0], Omits[i][1], Omits[i][2]));
+      }
       PythonExt::SetDictItem(omit, "hkl", omits);
     }
     PythonExt::SetDictItem(main, "merge", Py_BuildValue("i", MERG));

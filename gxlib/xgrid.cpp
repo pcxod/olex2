@@ -1377,9 +1377,15 @@ TPtrList<TXBlob>::const_list_type TXGrid::CreateBlobs(int flags) {
             vec3f n;
             for (size_t k = 0; k < v2t[j].Count(); k++) {
               IsoTriangle& t = triangles[v2t[j][k]];
-              n += (vset[t[1]] - vset[t[0]]).XProdVec(vset[t[2]] - vset[t[1]]);
+              n += (vset[t[1]] - vset[t[0]]).XProdVec(vset[t[2]] - vset[t[0]]);
             }
-            blob.normals.AddCopy(n.Normalise());
+            float ql = n.QLength();
+            if ( ql > 0) {
+              blob.normals.AddCopy(n / sqrt(ql));
+            }
+            else {
+              blob.normals.AddNew()[2] = 1;
+            }
           }
           else {
             new_ids[j] = ~0;

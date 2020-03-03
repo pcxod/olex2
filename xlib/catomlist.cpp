@@ -554,8 +554,9 @@ TTypeList<TAtomRefList> &AtomRefList::Expand(const RefinementModel& rm,
     for (size_t j = 0; j < refs.Count(); j++) {
       refs[j].Expand(rm, res, *residues[i]);
     }
-    if (group_size != InvalidSize)
+    if (group_size != InvalidSize) {
       EnsureAtomGroups(rm, res, group_size);
+    }
     if (res.IsEmpty()) {
       c_res.NullItem(i);
     }

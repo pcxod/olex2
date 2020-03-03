@@ -69,28 +69,33 @@ void TAfixGroup::ToDataItem(TDataItem& item) const {
   item.AddField("pivot_atom_id", Pivot->GetTag());
   IndexRange::Builder rb;
   for (size_t i = 0; i < Dependent.Count(); i++) {
-    if (!Dependent[i]->IsDeleted())
+    if (!Dependent[i]->IsDeleted()) {
       rb << Dependent[i]->GetTag();
+    }
   }
   item.AddItem("dependent_range", rb.GetString());
 }
 //..............................................................................
 #ifdef _PYTHON
-PyObject* TAfixGroup::PyExport(TPtrList<PyObject>& atoms)  {
+PyObject* TAfixGroup::PyExport(TPtrList<PyObject>& atoms) {
   PyObject* main = PyDict_New();
   PythonExt::SetDictItem(main, "afix", Py_BuildValue("i", Afix));
   PythonExt::SetDictItem(main, "u", Py_BuildValue("d", U));
   PythonExt::SetDictItem(main, "d", Py_BuildValue("d", D));
   PythonExt::SetDictItem(main, "pivot", Py_BuildValue("i", Pivot->GetTag()));
   size_t dep_cnt = 0;
-  for( size_t i=0; i < Dependent.Count(); i++ )  {
-    if( Dependent[i]->IsDeleted() )  continue;
+  for (size_t i = 0; i < Dependent.Count(); i++) {
+    if (Dependent[i]->IsDeleted()) {
+      continue;
+    }
     dep_cnt++;
   }
   PyObject* dependent = PyTuple_New(dep_cnt);
   dep_cnt = 0;
-  for( size_t i=0; i < Dependent.Count(); i++ )  {
-    if( Dependent[i]->IsDeleted() )  continue;
+  for (size_t i = 0; i < Dependent.Count(); i++) {
+    if (Dependent[i]->IsDeleted()) {
+      continue;
+    }
     PyTuple_SetItem(dependent, dep_cnt++,
       Py_BuildValue("i", Dependent[i]->GetTag()));
   }
