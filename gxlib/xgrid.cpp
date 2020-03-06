@@ -1641,6 +1641,17 @@ void TXGrid::LibFix(const TStrObjList& Params, TMacroData& E) {
   }
 }
 //.............................................................................
+void TXGrid::LibSplit(TStrObjList &Cmds, const TParamList &Options,
+  TMacroData &Error)
+{
+  TPtrList<TXBlob> blobs = CreateBlobs(2);
+  TGXApp &gxapp = TGXApp::GetInstance();
+  for (size_t i = 0; i < blobs.Count(); i++) {
+    gxapp.AddObjectToCreate(blobs[i]);
+    blobs[i]->Create();
+  }
+}
+//.............................................................................
 TLibrary*  TXGrid::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("xgrid") : name);
   lib->Register(new TFunction<TXGrid>(this,
@@ -1682,6 +1693,11 @@ TLibrary*  TXGrid::ExportLibrary(const olxstr& name)  {
     "Returns/sets grid rendering mode. Supported values: point, line, fill, "
     "plane, contour. Second argument may specify the number of colours in the "
     "plane gradient (2,3,5,7)") );
+  lib->Register(new TMacro<TXGrid>(this,
+    &TXGrid::LibSplit, "Split",
+    EmptyString(),
+    fpNone | fpOne,
+    "Split current grid view into individual blobs"));
 
   AGDrawObject::ExportLibrary(*lib);
   Info->ExportLibrary(*lib->AddLibrary("label"));

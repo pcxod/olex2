@@ -9292,83 +9292,21 @@ template <class list_t, typename accessor_t>
 void macSAME_expand(RefinementModel &rm, const list_t& groups,
   const accessor_t &acc)
 {
-  TAsymmUnit &au = rm.aunit;
-  olxdict<size_t, TSizeList, TPrimitiveComparator> atom_map;
-  atom_map.SetCapacity(groups[0].Count());
-  olxdict<size_t, size_t, TPrimitiveComparator> atom_set;
+  DistanceGenerator::atom_set_t atom_set;
   atom_set.SetCapacity(groups[0].Count());
-  olxset<idx_pair_t, TComparableComparator> bonds12, bonds13;
+  DistanceGenerator::atom_map_N_t atom_map;
+  atom_map.SetCapacity(groups[0].Count());
   for (size_t i = 0; i < groups[0].Count(); i++) {
    const  TCAtom &a = olx_ref::get(acc(groups[0][i]));
-    for (size_t j = 0; j < a.AttachedSiteCount(); j++) {
-      const TCAtom::Site &s1 = a.GetAttachedSite(j);
-      if (!s1.matrix.IsFirst() || s1.atom->IsDeleted() || s1.atom->GetType().z < 2) {
-        continue;
-      }
-    }
-    atom_set.Add(a.GetId(), i);
-  }
-  for (size_t i = 0; i < atom_set.Count(); i++) {
-    const TCAtom &a = au.GetAtom(atom_set.GetKey(i));
-    for (size_t j = 0; j < a.AttachedSiteCount(); j++) {
-      const TCAtom::Site &s1 = a.GetAttachedSite(j);
-      if (!s1.matrix.IsFirst() || !atom_set.HasKey(s1.atom->GetId())) {
-        continue;
-      }
-      bonds12.Add(idx_pair_t(a.GetId(), s1.atom->GetId()));
-      for (size_t k = j + 1; k < a.AttachedSiteCount(); k++) {
-        const TCAtom::Site &s2 = a.GetAttachedSite(k);
-        if (!s2.matrix.IsFirst() || !atom_set.HasKey(s2.atom->GetId())) {
-          continue;
-        }
-        bonds13.Add(idx_pair_t(s1.atom->GetId(), s2.atom->GetId()));
-      }
-    }
-    TSizeList & l = atom_map.Add(a.GetId());
+    atom_set.Add(a.GetId());
+    TSizeList &idl = atom_map.Add(a.GetId());
     for (size_t j = 1; j < groups.Count(); j++) {
-      l.Add(olx_ref::get(acc(groups[j][atom_set.GetValue(i)])).GetId());
+      idl.Add(olx_ref::get(acc(groups[j][i])).GetId());
     }
   }
-  olxset<TTypeList<idx_pair_t>, PairListComparator> added;
-  for (size_t i = 0; i < bonds12.Count(); i++) {
-    TSimpleRestraint &sr = rm.rSADI.AddNew();
-    TTypeList<idx_pair_t> pairs;
-    pairs.AddCopy(bonds12[i]);
-    TSizeList &l1 = atom_map[bonds12[i].a];
-    TSizeList &l2 = atom_map[bonds12[i].b];
-    for (size_t j = 0; j < l1.Count(); j++) {
-      pairs.AddCopy(idx_pair_t(au.GetAtom(l1[j]).GetId(),
-        au.GetAtom(l2[j]).GetId()));
-    }
-    QuickSorter::Sort(pairs, TComparableComparator());
-    if (added.Contains(pairs)) {
-      continue;
-    }
-    for (size_t i = 0; i < pairs.Count(); i++) {
-      sr.AddAtomPair(au.GetAtom(pairs[i].a), 0, au.GetAtom(pairs[i].b), 0);
-    }
-    added.Add(pairs);
-  }
-  for (size_t i = 0; i < bonds13.Count(); i++) {
-    TSimpleRestraint &sr = rm.rSADI.AddNew();
-    sr.SetEsd(sr.GetEsd() * 2);
-    TTypeList<idx_pair_t> pairs;
-    pairs.AddCopy(bonds13[i]);
-    TSizeList &l1 = atom_map[bonds13[i].a];
-    TSizeList &l2 = atom_map[bonds13[i].b];
-    for (size_t j = 0; j < l1.Count(); j++) {
-      pairs.AddCopy(idx_pair_t(au.GetAtom(l1[j]).GetId(),
-        au.GetAtom(l2[j]).GetId()));
-    }
-    QuickSorter::Sort(pairs, TComparableComparator());
-    if (added.Contains(pairs)) {
-      continue;
-    }
-    for (size_t i = 0; i < pairs.Count(); i++) {
-      sr.AddAtomPair(au.GetAtom(pairs[i].a), 0, au.GetAtom(pairs[i].b), 0);
-    }
-    added.Add(pairs);
-  }
+  DistanceGenerator d;
+  d.Generate(rm.aunit, atom_set, true, true);
+  d.GenerateSADI(rm, atom_map);
 }
 void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &E)

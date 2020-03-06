@@ -961,3 +961,107 @@ olxstr CXBondInfo::ToString(const TCAtom & from) const {
   }
   return olxstr(rv);
 }
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+void DistanceGenerator::Generate(const TAsymmUnit &au,
+  const DistanceGenerator::atom_set_t &atom_set,
+  bool generate_13, bool inclusive)
+{
+  for (size_t i = 0; i < atom_set.Count(); i++) {
+    TCAtom &a = au.GetAtom(atom_set[i]);
+    for (size_t j = 0; j < a.AttachedSiteCount(); j++) {
+      TCAtom::Site &s1 = a.GetAttachedSite(j);
+      if (!s1.matrix.IsFirst() || s1.atom->IsDeleted()) {
+        continue;
+      }
+      if (inclusive && !atom_set.Contains(s1.atom->GetId())) {
+        continue;
+      }
+      size_t a_idx, b_idx;
+      if (a.GetId() > s1.atom->GetId()) {
+        a_idx = s1.atom->GetId();
+        b_idx = a.GetId();
+      }
+      else {
+        a_idx = a.GetId();
+        b_idx = s1.atom->GetId();
+      }
+      distances_12.Add(idx_pair_t(a_idx, b_idx));
+      if (generate_13) {
+        bool set_atom = inclusive || atom_set.Contains(s1.atom->GetId());
+        for (size_t k = j + 1; k < a.AttachedSiteCount(); k++) {
+          TCAtom::Site &s2 = a.GetAttachedSite(k);
+          if (!s2.matrix.IsFirst() || s2.atom->IsDeleted()) {
+            continue;
+          }
+          // at least one of the atoms should be in the set if not inclusive
+          if (!atom_set.Contains(s2.atom->GetId())) {
+            if (!set_atom || inclusive) {
+              continue;
+            }
+          }
+          if (s1.atom->GetId() > s2.atom->GetId()) {
+            a_idx = s2.atom->GetId();
+            b_idx = s1.atom->GetId();
+          }
+          else {
+            a_idx = s1.atom->GetId();
+            b_idx = s2.atom->GetId();
+          }
+          distances_13.Add(idx_pair_t(a_idx, b_idx));
+        }
+      }
+    }
+  }
+
+}
+//........................................................................
+void DistanceGenerator::Generate(const TCAtomPList atoms, bool generate_13,
+  bool inclusive)
+{
+  if (atoms.IsEmpty()) {
+    return;
+  }
+  atom_set_t a_set;
+  for (size_t i = 0; i < atoms.Count(); i++) {
+    a_set.Add(atoms[i]->GetId());
+  }
+  Generate(*atoms[0]->GetParent(), a_set, generate_13, inclusive);
+}
+//........................................................................
+void DistanceGenerator::GenerateSADI_(
+  const DistanceGenerator::distance_set_t &d, double esd_k,
+  RefinementModel &rm, const DistanceGenerator::atom_map_1_t &atom_map)
+{
+  for (size_t i = 0; i < d.Count(); i++) {
+    TSimpleRestraint &sr = rm.rSADI.AddNew();
+    sr.SetEsd(sr.GetEsd() * esd_k);
+    sr.AddAtomPair(rm.aunit.GetAtom(d[i].a), 0, rm.aunit.GetAtom(d[i].b), 0);
+    sr.AddAtomPair(
+      rm.aunit.GetAtom(atom_map.Find(d[i].a, d[i].a)), 0,
+      rm.aunit.GetAtom(atom_map.Find(d[i].b, d[i].b)), 0);
+  }
+}
+//........................................................................
+void DistanceGenerator::GenerateSADI_(
+  const DistanceGenerator::distance_set_t &d, double esd_k,
+  RefinementModel &rm, const DistanceGenerator::atom_map_N_t &atom_map)
+{
+  size_t gc = atom_map.GetValue(0).Count();
+  for (size_t i = 0; i < d.Count(); i++) {
+    TSimpleRestraint &sr = rm.rSADI.AddNew();
+    sr.SetEsd(sr.GetEsd() * esd_k);
+    sr.AddAtomPair(rm.aunit.GetAtom(d[i].a), 0, rm.aunit.GetAtom(d[i].b), 0);
+    for (size_t j = 0; j < gc; j++) {
+      size_t a_midx = atom_map.IndexOf(d[i].a);
+      size_t b_midx = atom_map.IndexOf(d[i].b);
+      size_t a_idx = a_midx == InvalidIndex ? d[i].a : atom_map.GetValue(d[i].a)[j];
+      size_t b_idx = b_midx == InvalidIndex ? d[i].b : atom_map.GetValue(d[i].b)[j];
+      sr.AddAtomPair(rm.aunit.GetAtom(a_idx), 0, rm.aunit.GetAtom(b_idx), 0);
+    }
+  }
+}
+//........................................................................
+///////////////////////////////////////////////////////////////////////////////
+

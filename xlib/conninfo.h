@@ -140,5 +140,51 @@ public:
 #endif
 };
 
+struct DistanceGenerator {
+  struct idx_pair_t : public olx_pair_t<size_t, size_t> {
+    idx_pair_t(size_t a, size_t b)
+      : olx_pair_t<size_t, size_t>(a, b)
+    {}
+    int Compare(const idx_pair_t &p) const {
+      int d = olx_cmp(a, p.a);
+      if (d == 0) {
+        d = olx_cmp(b, p.b);
+      }
+      return d;
+    }
+  };
+  typedef olxset<idx_pair_t, TComparableComparator> distance_set_t;
+  typedef olxset<size_t, TPrimitiveComparator> atom_set_t;
+  typedef olxdict<size_t, size_t, TPrimitiveComparator> atom_map_1_t;
+  typedef olxdict<size_t, TSizeList, TPrimitiveComparator> atom_map_N_t;
+  distance_set_t distances_12, distances_13;
+  /* inclusive - if true only atoms in the groups are considered, otherwise -
+  the immediate environment is consedered too
+  Note that then generating restraints in non-exclusive mode - if the atom of
+  a 'dependent' group is not in the atom_map - the atom of the reference, 0
+  group will be used!
+  */
+  void Generate(const TAsymmUnit &au, const atom_set_t &atoms,
+    bool generate_13, bool inclusive);
+  void Generate(const TCAtomPList atoms, bool generate_13, bool inclusive);
+  void GenerateSADI(RefinementModel &rm, const atom_map_1_t &atom_map,
+    double esd13_k = 2.0) const
+  {
+    GenerateSADI_(distances_12, 1.0, rm, atom_map);
+    GenerateSADI_(distances_13, esd13_k, rm, atom_map);
+  }
+  void GenerateSADI(RefinementModel &rm, const atom_map_N_t &atom_map,
+    double esd13_k = 2.0) const
+  {
+    GenerateSADI_(distances_12, 1.0, rm, atom_map);
+    GenerateSADI_(distances_13, esd13_k, rm, atom_map);
+  }
+private:
+  static void GenerateSADI_(const distance_set_t &d, double esd_k,
+    RefinementModel &rm, const atom_map_1_t &atom_map);
+  static void GenerateSADI_(const distance_set_t &d, double esd_k,
+    RefinementModel &rm, const atom_map_N_t &atom_map);
+};
+
 EndXlibNamespace()
 #endif

@@ -657,10 +657,12 @@ void GXLibMacros::macName(TStrObjList &Cmds, const TParamList &Options,
       if (nameResi) {
         TUndoData *rud = app.SynchroniseResidues(
           TCAtomPList(xatoms, FunctionAccessor::MakeConst(&TXAtom::CAtom)));
-        if (ud != NULL)
+        if (ud != 0) {
           ud->AddAction(rud);
-        else
+        }
+        else {
           app.GetUndo().Push(rud);
+        }
       }
     }
   }
