@@ -636,7 +636,7 @@ void XLibMacros::Export(TLibrary& lib)  {
     fpNone|fpFive|psFileLoaded,
     "Calculates Tolman angle for the structure");
   xlib_InitMacro(Split,
-    "r-EADP,ISOR or SIMU to be placed for the split atoms",
+    "r-EADP,ISOR,SIMU,DELU,SAME to be placed for the split atoms",
     fpAny|psCheckFileTypeIns,
     "Splits provided atoms along the longest axis of the ADP");
   xlib_InitMacro(Bang,
@@ -9695,10 +9695,15 @@ void XLibMacros::macSplit(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &E)
 {
   TXApp &app = TXApp::GetInstance();
-  olxstr cr(Options.FindValue("r", EmptyString()).ToLowerCase());
+  TStrList restraints(Options.FindValue("r", EmptyString()).ToLowerCase(), ',');
   TCAtomPList Atoms(app.FindSAtoms(Cmds, false, true),
     FunctionAccessor::MakeConst(&TSAtom::CAtom));
-  if (Atoms.IsEmpty())  return;
+  if (Atoms.IsEmpty()) {
+    return;
+  }
+  bool same = restraints.Contains("same");
+  DistanceGenerator::atom_map_1_t atom_map;
+  DistanceGenerator::atom_set_t atom_set;
   TAsymmUnit& au = app.XFile().GetAsymmUnit();
   TLattice& latt = app.XFile().GetLattice();
   RefinementModel& rm = app.XFile().GetRM();
@@ -9706,7 +9711,9 @@ void XLibMacros::macSplit(TStrObjList &Cmds, const TParamList &Options,
   XVar& var = rm.Vars.NewVar();
   for (size_t i = 0; i < Atoms.Count(); i++) {
     TCAtom* CA = Atoms[i];
-    if (CA->GetEllipsoid() == NULL) continue;
+    if (CA->GetEllipsoid() == 0) {
+      continue;
+    }
     vec3d direction;
     double Length = 0;
     olxstr lbl = CA->GetLabel();
@@ -9755,23 +9762,29 @@ void XLibMacros::macSplit(TStrObjList &Cmds, const TParamList &Options,
     rm.Vars.AddVarRef(var, CA2, catom_var_name_Sof, relation_AsOneMinusVar, 1);
     CA2.SetOccu(0.5*sp);
     ProcessedAtoms.Add(CA2);
-    TSimpleRestraint* sr = 0;
-    if (cr.IsEmpty()) {
-      ;
+    if (same) {
+      atom_map.Add(CA2.GetId(), CA1.GetId());
+      atom_set.Add(CA2.GetId());
     }
-    else if (cr == "eadp") {
-      sr = &rm.rEADP.AddNew();
+    if (restraints.Contains("eadp")) {
+      rm.rEADP.AddNew().AddAtomPair(CA1, 0, CA2, 0);
     }
-    else if (cr == "isor") {
-      sr = &rm.rISOR.AddNew();
+    if (restraints.Contains("isor")) {
+      rm.rISOR.AddNew().AddAtomPair(CA1, 0, CA2, 0);
     }
-    else if (cr == "simu") {
-      sr = &rm.rSIMU.AddNew();
+    if (restraints.Contains("simu")) {
+      &rm.rSIMU.AddNew().AddAtomPair(CA1, 0, CA2, 0);
     }
-    if (sr != 0) {
-      sr->AddAtomPair(CA1, 0, CA2, 0);
+    if (restraints.Contains("delu")) {
+      &rm.rDELU.AddNew().AddAtomPair(CA1, 0, CA2, 0);
     }
   }
+  if (same) {
+    DistanceGenerator dg;
+    dg.Generate(au, atom_set, true, true);
+    dg.GenerateSADI(rm, atom_map, 2);
+  }
+
   latt.SetAnis(ProcessedAtoms, false);
   latt.Uniq();
   if (TXApp::DoUseSafeAfix()) {
