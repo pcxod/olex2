@@ -2588,7 +2588,9 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
   bool OverlayXFile = Options.Contains('*');
   if (Cmds.Count() >= 1 && !Cmds[0].IsEmpty()) {  // merge the file name if a long one...
     file_n = TEFile::ExpandRelativePath(Cmds.Text(' '));
-    if (TEFile::UnixPath(file_n.file_name).StartsFrom("http://")) {
+    if (TEFile::UnixPath(file_n.file_name).StartsFrom("http://") ||
+      TEFile::UnixPath(file_n.file_name).StartsFrom("https://"))
+    {
       TUrl url(TEFile::UnixPath(file_n.file_name));
       TStrList files;
       files << file_n.file_name;
