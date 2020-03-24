@@ -85,8 +85,19 @@ namespace esdl { namespace tensor {
     static void initialise() {
       heir_t::get_map();
     }
-
-    FloatType sum_up(const vec3i &h) const {
+    /* This is equivalent to h*T*h^t and in genenal e.g. for rank 3 T and h
+    tv = h*T:
+      for (size_t ti = 0; ti < 3; ti++) {
+        for (size_t tj = 0; tj < 3; tj++) {
+          for (size_t tk = 0; tk < 3; tk++) {
+            tv[ti] += h[tj] * h[tk] * T(tk, tj, ti);
+          }
+        }
+      }
+      return tv.DotProd(h)
+    */
+    template <typename vec_t>
+    FloatType sum_up(const vec_t &h) const {
       FloatType r = 0;
       const index_list_t &indices = heir_t::get_indices();
       for (size_t i = 0; i < indices.Count(); i++) {

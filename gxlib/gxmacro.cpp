@@ -422,7 +422,8 @@ void GXLibMacros::Export(TLibrary& lib) {
   gxlib_InitMacro(MSDSView,
     "s-scale [1]&;"
     "t-type [rmsd], msd&;"
-    "q-quality [5], max is set to 7;",
+    "q-quality [5], max is set to 7&;"
+    "a-anharmonicity display [all], anh, none",
     fpNone,
     "Shows/hides atom legend");
 
@@ -5787,7 +5788,7 @@ void GXLibMacros::macMSDSView(TStrObjList &Cmds, const TParamList &Options,
   bool add = false;
   TGPCollection *col = app.GetRenderer().FindCollection(col_name);
   if (col != 0 && col->ObjectCount() > 0) {
-    col->ClearPrimitives();
+    //col->ClearPrimitives();
     obj = dynamic_cast<TRMDSADP *>(&col->GetObject(0));
   }
   if (obj == 0) {
@@ -5802,6 +5803,15 @@ void GXLibMacros::macMSDSView(TStrObjList &Cmds, const TParamList &Options,
   int otype = Options.FindValue('t', "rmsd").Equalsi("rmsd") ? TRMDSADP::type_rmsd
     : TRMDSADP::type_msd;
   obj->SetType(otype);
+  olxstr anh_str = Options.FindValue("a");
+  int anh_type = TRMDSADP::anh_all;
+  if (anh_str.Equalsi("anh")) {
+    anh_type = TRMDSADP::anh_anh;
+  }
+  else if (anh_str.Equalsi("none")) {
+    anh_type = TRMDSADP::anh_none;
+  }
+  obj->SetAnhType(anh_type);
   obj->Create();
   if (add) {
     app.AddObjectToCreate(obj);

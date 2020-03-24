@@ -11,10 +11,11 @@
 #include "gxapp.h"
 
 TRMDSADP::TRMDSADP(TGlRenderer& r, const olxstr& collectionName,
-  uint32_t quality, int type)
+  uint32_t quality, int type, int anh_type)
   : AGDrawObject(r, collectionName),
   Quality(quality),
   Type(type),
+  AnhType(anh_type),
   Scale(1)
 {
   SetSelectable(false);
@@ -38,6 +39,12 @@ void TRMDSADP::Create(const olxstr& cName) {
   m.SetColorMaterial(true);
   GlP.SetProperties(m);
   size_t a_cnt = 0, a_i = 0;
+  const TAsymmUnit &au = TGXApp::GetInstance().XFile().GetAsymmUnit();
+  mat3d cell2cart_c = au.GetCellToCartesian()*au.GetCellToCartesian();
+  mat3d cell2cart_d = cell2cart_c *au.GetCellToCartesian();
+  mat3d cell2cart_ct = mat3d::Transpose(cell2cart_c);
+  mat3d cell2cart_dt = mat3d::Transpose(cell2cart_d);
+
   TGXApp::AtomIterator ai = TGXApp::GetInstance().GetAtoms();
   while (ai.HasNext()) {
     const TXAtom &a = ai.Next();
@@ -57,6 +64,8 @@ void TRMDSADP::Create(const olxstr& cName) {
   GlP.StartList();
   olx_gl::colorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
   olx_gl::begin(GL_TRIANGLES);
+  tensor::tensor_rank_3 tmp_t3;
+  tensor::tensor_rank_4 tmp_t4;
   while (ai.HasNext()) {
     const TXAtom &a = ai.Next();
     if (!a.IsVisible() || a.GetEllipsoid() == 0) {
@@ -70,8 +79,53 @@ void TRMDSADP::Create(const olxstr& cName) {
       vm = 0;
     }
     mat3f M = a.GetEllipsoid()->ExpandQuad();
+    olx_object_ptr<GramCharlier4> t = a.GetEllipsoid()->GetAnharmonicPart();
+    
+    if (t.is_valid() && AnhType != anh_none) {
+      GramCharlier4 &gc = t();
+      mat3d m3, m4;
+      for (size_t ti = 0; ti < 3; ti++) {
+        for (size_t tj = 0; tj < 3; tj++) {
+          for (size_t tk = 0; tk < 3; tk++) {
+            m3[tj][tk] = gc.C(ti, tj, tk);
+            for (size_t tl = 0; tl < 3; tl++) {
+              m4[tk][tl] = gc.D(ti, tj, tk, tl);
+            }
+          }
+          m4 = cell2cart_d * m4 * cell2cart_dt;
+          for (size_t tk = 0; tk < 3; tk++) {
+            for (size_t tl = 0; tl < 3; tl++) {
+              tmp_t4(ti, tj, tk, tl) = m4[tk][tl];
+            }
+          }
+        }
+        m3 = cell2cart_c * m3 * cell2cart_ct;
+        for (size_t tj = 0; tj < 3; tj++) {
+          for (size_t tk = 0; tk < 3; tk++) {
+            tmp_t3(ti, tj, tk) = m3[tj][tk];
+          }
+        }
+      }
+    }
     for (size_t i = 0; i < sph_v.Count(); i++) {
-      float d = (sph_v[i] * M).DotProd(sph_v[i]);
+      float d = 0;
+      if (t.is_valid() && AnhType != anh_none) {
+        float c_ = tmp_t3.sum_up(sph_v[i]);
+        float d_ = tmp_t4.sum_up(sph_v[i]);
+        if (AnhType == anh_all) {
+          d = (compf(1 + c_, d_) * (sph_v[i] * M).DotProd(sph_v[i])).mod();
+        }
+        else {
+          d = compf(c_, d_).mod();
+        }
+        if (d == 0) {
+          continue;
+        }
+      }
+      else {
+        d = (sph_v[i] * M).DotProd(sph_v[i]);
+      }
+      
       int sign = 1;
       if (d < 0) {
         sign = -1;
@@ -98,6 +152,9 @@ void TRMDSADP::Create(const olxstr& cName) {
       vec3f vec1 = vecs[sph_t[i][1]] - vecs[sph_t[i][0]];
       vec3f vec2 = vecs[sph_t[i][2]] - vecs[sph_t[i][0]];
       vec3f normal = vec1.XProdVec(vec2);
+      if (normal.IsNull()) {
+        continue;
+      }
       float S = vec1.XProdVal(vec2);
       normal = normal.Normalise()/sqrt(olx_abs(S));
       for (int j = 0; j < 3; j++) {
