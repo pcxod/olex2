@@ -5788,7 +5788,7 @@ void GXLibMacros::macMSDSView(TStrObjList &Cmds, const TParamList &Options,
   bool add = false;
   TGPCollection *col = app.GetRenderer().FindCollection(col_name);
   if (col != 0 && col->ObjectCount() > 0) {
-    //col->ClearPrimitives();
+    col->ClearPrimitives();
     obj = dynamic_cast<TRMDSADP *>(&col->GetObject(0));
   }
   if (obj == 0) {

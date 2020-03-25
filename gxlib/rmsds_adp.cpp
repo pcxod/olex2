@@ -27,7 +27,9 @@ void TRMDSADP::Create(const olxstr& cName) {
   }
 
   TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
-  GPC.AddObject(*this);
+  if (!GPC.GetObjects().Contains(this)) {
+    GPC.AddObject(*this);
+  }
   if (GPC.PrimitiveCount() != 0) {
     return;
   }

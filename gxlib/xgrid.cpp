@@ -281,25 +281,27 @@ TXGrid::TXGrid(const olxstr& collectionName, TGXApp* xapp)
   ExtMin(-1,-1,-1),
   ExtMax(1,1,1)
 {
-  if( Instance != NULL )
+  if (Instance != 0) {
     throw TFunctionFailedException(__OlxSourceInfo, "singleton");
+  }
   AGDrawObject::SetSelectable(false);
   new TContextClear(Parent);
-  Mask = NULL;
+  Mask = 0;
   Instance = this;
   Loading_ = Boxed = Extended = false;
   RenderMode = planeRenderModeFill;
   XApp = xapp;
   Depth = 0;
-  ED = NULL;
+  ED = 0;
+  ColorData = 0;
   MouseDown = false;
   Size = 10;
   // texture related data
   TextIndex = ~0;
-  TextData = NULL;
+  TextData = 0;
   // contour related data
-  ContourCrds[0] = ContourCrds[1] = NULL;
-  ContourLevels = NULL;
+  ContourCrds[0] = ContourCrds[1] = 0;
+  ContourLevels = 0;
   ContourLevelCount = 14;
   Scale = 1;
   //for textures, 2^n+2 (for border)...
@@ -313,7 +315,7 @@ TXGrid::TXGrid(const olxstr& collectionName, TGXApp* xapp)
   MinHole = MaxHole = 0;
   box_min = box_step = 0;
   PListId = NListId = ~0;
-  glpC = glpN = glpP = NULL;
+  glpC = glpN = glpP = 0;
 }
 //.............................................................................
 TXGrid::~TXGrid() {
@@ -322,7 +324,7 @@ TXGrid::~TXGrid() {
   delete Info;
   delete Legend;
   delete[] LegendData;
-  Instance = NULL;
+  Instance = 0;
 }
 //.............................................................................
 void TXGrid::Clear() {
@@ -402,9 +404,6 @@ bool TXGrid::Orient(TGlPrimitive& GlP) {
     return true;
   }
   if (Is3D()) {
-    if (ED == 0) {
-      return true;
-    }
     if (&GlP == glpN) { // draw once only
       olx_gl::callList(PListId);
     }
@@ -609,17 +608,19 @@ bool TXGrid::GetDimensions(vec3d &Max, vec3d &Min)  {
   return false;
 };
 //.............................................................................
-void TXGrid::InitGrid(size_t maxX, size_t maxY, size_t maxZ) {
+void TXGrid::InitGrid(size_t maxX, size_t maxY, size_t maxZ, bool use_colors) {
   DeleteObjects();
   _ResetLists();
   MaxX = maxX;
   MaxY = maxY;
   MaxZ = maxZ;
   MaxVal = MinVal = 0;
-  if (ED != 0) {
-    delete ED;
-  }
+  olx_del_obj(ED);
+  olx_del_obj(ColorData);
   ED = new TArray3D<float>(0, MaxX, 0, MaxY, 0, MaxZ);
+  if (use_colors) {
+    ColorData = new TArray3D<int>(0, MaxX, 0, MaxY, 0, MaxZ);
+  }
   TextData = new char[MaxDim*MaxDim * 3 + 1];
   ContourData.resize(MaxDim, MaxDim, false);
   ContourCrds[0] = new float[MaxDim];
@@ -635,29 +636,26 @@ void TXGrid::DeleteObjects() {
   if (ED != 0) {
     delete ED;
     MaxX = MaxY = MaxZ = 0;
-    ED = NULL;
+    ED = 0;
   }
   if (TextData != 0) {
     delete TextData;
-    TextData = NULL;
+    TextData = 0;
   }
-  p_triangles.Clear();
-  p_normals.Clear();
-  p_vertices.Clear();
-  n_triangles.Clear();
-  n_normals.Clear();
-  n_vertices.Clear();
-
+  triangles.Clear();
+  normals.Clear();
+  vertices.Clear();
+  colors.Clear();
   if (Mask != 0) {
     delete Mask;
-    Mask = NULL;
+    Mask = 0;
   }
   ContourData.clear();
-  if (ContourLevels != NULL) {
+  if (ContourLevels != 0) {
     delete[] ContourCrds[0];
     delete[] ContourCrds[1];
     delete[] ContourLevels;
-    ContourLevels = NULL;
+    ContourLevels = 0;
   }
 }
 //.............................................................................
@@ -708,12 +706,9 @@ void TXGrid::SetScale(float v) {
   Scale = v;
   UpdateInfo();
   if (_3d && ED != 0) {
-    p_triangles.Clear();
-    p_normals.Clear();
-    p_vertices.Clear();
-    n_triangles.Clear();
-    n_normals.Clear();
-    n_vertices.Clear();
+    triangles.Clear();
+    normals.Clear();
+    vertices.Clear();
     if (XApp->Get3DFrame().IsVisible() || Boxed) {
       double SZ = olx_round(
         (double)MaxX / XApp->XFile().GetAsymmUnit().GetAxes()[0]);
@@ -726,43 +721,45 @@ void TXGrid::SetScale(float v) {
       const mat3d c2c = XApp->XFile().GetAsymmUnit().GetCartesianToCell();
       MapUtil::Cell2Cart(MapUtil::MapGetter<float, 2>(ED->Data),
         points.Data, g2c, c2c);
-      CIsoSurface IS(points.Data);
+      CIsoSurface IS(points.Data, ColorData != 0 ? &ColorData->Data : 0);
       IS.GenerateSurface(Scale);
-      p_vertices = IS.VertexList();
-      p_normals = IS.NormalList();
-      p_triangles = IS.TriangleList();
-      for (size_t i = 0; i < p_vertices.Count(); i++) {
-        p_vertices[i] = p_vertices[i] * rm + tr;
+      vertices.Add(0).TakeOver(IS.VertexList());
+      normals.Add(0).TakeOver(IS.NormalList());
+      triangles.Add(0).TakeOver(IS.TriangleList());
+      if (ColorData != 0) {
+        colors.Add(0).TakeOver(IS.GetVertexData());
       }
-      for (size_t i = 0; i < p_normals.Count(); i++) {
-        p_normals[i] = p_normals[i] * XApp->Get3DFrame().GetNormals();
-      }
-      if (Scale < 0) {
+      else if (Scale < 0) {
         IS.GenerateSurface(-Scale);
-        n_vertices = IS.VertexList();
-        n_normals = IS.NormalList();
-        n_triangles = IS.TriangleList();
-        for (size_t i = 0; i < n_vertices.Count(); i++) {
-          n_vertices[i] = n_vertices[i] * rm + tr;
+        vertices.Add(0).TakeOver(IS.VertexList());
+        normals.Add(0).TakeOver(IS.NormalList());
+        triangles.Add(0).TakeOver(IS.TriangleList());
+      }
+      for (size_t li = 0; li < vertices.Count(); li++) {
+        for (size_t i = 0; i < vertices[li].Count(); i++) {
+          vertices[li][i] = vertices[li][i] * rm + tr;
         }
-        for (size_t i = 0; i < n_normals.Count(); i++) {
-          n_normals[i] = n_normals[i] * XApp->Get3DFrame().GetNormals();
+        for (size_t i = 0; i < normals[li].Count(); i++) {
+          normals[li][i] = normals[li][i] * XApp->Get3DFrame().GetNormals();
         }
       }
       delete &points;
       Boxed = true;
     }
     else {
-      CIsoSurface IS(ED->Data);
+      CIsoSurface IS(ED->Data, ColorData != 0 ? &ColorData->Data : 0);
       IS.GenerateSurface(Scale);
-      p_vertices = IS.VertexList();
-      p_normals = IS.NormalList();
-      p_triangles = IS.TriangleList();
-      if (Scale < 0) {
+      vertices.Add(0).TakeOver(IS.VertexList());
+      normals.Add(0).TakeOver(IS.NormalList());
+      triangles.Add(0).TakeOver(IS.TriangleList());
+      if (ColorData != 0) {
+        colors.Add(0).TakeOver(IS.GetVertexData());
+      }
+      else if (Scale < 0) {
         IS.GenerateSurface(-Scale);
-        n_vertices = IS.VertexList();
-        n_normals = IS.NormalList();
-        n_triangles = IS.TriangleList();
+        vertices.Add(0).TakeOver(IS.VertexList());
+        normals.Add(0).TakeOver(IS.NormalList());
+        triangles.Add(0).TakeOver(IS.TriangleList());
       }
     }
     RescaleSurface(false);
@@ -917,12 +914,14 @@ const_strlist TXGrid::ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const {
   out.Add("  union {");
   const TAsymmUnit& au = XApp->XFile().GetAsymmUnit();
   if (Boxed) {
-    for (int li = 0; li <= 1; li++) {
-      const TTypeList<IsoTriangle>& trians = (li == 0 ? p_triangles : n_triangles);
-      if (trians.IsEmpty()) continue;
+    for (int li = 0; li < triangles.Count(); li++) {
+      const TArrayList<IsoTriangle>& trians = triangles[li];
+      if (trians.IsEmpty()) {
+        continue;
+      }
       out.Add("  object { mesh {");
-      const TTypeList<vec3f>& verts = (li == 0 ? p_vertices : n_vertices);
-      const TTypeList<vec3f>& norms = (li == 0 ? p_normals : n_normals);
+      const TArrayList<vec3f>& verts = vertices[li];
+      const TArrayList<vec3f>& norms = normals[li];
       for (size_t i = 0; i < trians.Count(); i++) {
         out.Add("    smooth_triangle {");
         for (int j = 0; j < 3; j++) {
@@ -937,12 +936,14 @@ const_strlist TXGrid::ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const {
   }
   else if (Mask != 0) {
     vec3d pts[3];
-    for (int li = 0; li <= 1; li++) {
-      const TTypeList<IsoTriangle>& trians = (li == 0 ? p_triangles : n_triangles);
-      if (trians.IsEmpty()) continue;
-      const TTypeList<vec3f>& verts = (li == 0 ? p_vertices : n_vertices);
-      const TTypeList<vec3f>& norms = (li == 0 ? p_normals : n_normals);
+    for (int li = 0; li < triangles.Count(); li++) {
+      const TArrayList<IsoTriangle>& trians = triangles[li];
+      if (trians.IsEmpty()) {
+        continue;
+      }
       out.Add("  object { mesh {");
+      const TArrayList<vec3f>& verts = vertices[li];
+      const TArrayList<vec3f>& norms = normals[li];
       for (int x = -1; x <= 1; x++) {
         for (int y = -1; y <= 1; y++) {
           for (int z = -1; z <= 1; z++) {
@@ -977,12 +978,14 @@ const_strlist TXGrid::ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const {
   else {
     if (Extended) {
       vec3d pts[3]; // ext drawing
-      for (int li = 0; li <= 1; li++) {
-        const TTypeList<IsoTriangle>& trians = (li == 0 ? p_triangles : n_triangles);
-        if (trians.IsEmpty()) continue;
+      for (int li = 0; li < triangles.Count(); li++) {
+        const TArrayList<IsoTriangle>& trians = triangles[li];
+        if (trians.IsEmpty()) {
+          continue;
+        }
         out.Add("  object { mesh {");
-        const TTypeList<vec3f>& verts = (li == 0 ? p_vertices : n_vertices);
-        const TTypeList<vec3f>& norms = (li == 0 ? p_normals : n_normals);
+        const TArrayList<vec3f>& verts = vertices[li];
+        const TArrayList<vec3f>& norms = normals[li];
         for (float x = ExtMin[0]; x < ExtMax[0]; x++) {
           for (float y = ExtMin[1]; y < ExtMax[1]; y++) {
             for (float z = ExtMin[2]; z < ExtMax[2]; z++) {
@@ -993,13 +996,17 @@ const_strlist TXGrid::ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const {
                   pts[j][0] = pts[j][0] / MaxX + x;
                   pts[j][1] = pts[j][1] / MaxY + y;
                   pts[j][2] = pts[j][2] / MaxZ + z;
-                  if (pts[j][0] > ExtMax[0] || pts[j][1] > ExtMax[1] || pts[j][2] > ExtMax[2]) {
+                  if (pts[j][0] > ExtMax[0] || pts[j][1] > ExtMax[1] ||
+                    pts[j][2] > ExtMax[2])
+                  {
                     draw = false;
                     break;
                   }
                   au.CellToCartesian(pts[j]);
                 }
-                if (!draw)  continue;
+                if (!draw) {
+                  continue;
+                }
                 out.Add("    smooth_triangle {");
                 for (int j = 0; j < 3; j++) {
                   out.Add("    ") << pov::to_str(crdc.crd(pts[j]))
@@ -1015,12 +1022,14 @@ const_strlist TXGrid::ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const {
       }
     }
     else {
-      for (int li = 0; li <= 1; li++) {
-        const TTypeList<IsoTriangle>& trians = (li == 0 ? p_triangles : n_triangles);
-        if (trians.IsEmpty()) continue;
+      for (int li = 0; li < triangles.Count(); li++) {
+        const TArrayList<IsoTriangle>& trians = triangles[li];
+        if (trians.IsEmpty()) {
+          continue;
+        }
         out.Add("  object { mesh {");
-        TTypeList<vec3f> verts = (li == 0 ? p_vertices : n_vertices);
-        const TTypeList<vec3f>& norms = (li == 0 ? p_normals : n_normals);
+        const TArrayList<vec3f>& verts = vertices[li];
+        const TArrayList<vec3f>& norms = normals[li];
         for (size_t i = 0; i < verts.Count(); i++) {
           verts[i][0] /= MaxX;  verts[i][1] /= MaxY;  verts[i][2] /= MaxZ;
           au.CellToCartesian(verts[i]);
@@ -1058,16 +1067,19 @@ void TXGrid::RescaleSurface(bool collect_only) {
       XApp->Get3DFrame().IsSpherical();
     float qr = (float)olx_sqr(XApp->Get3DFrame().GetZoom());
     vec3f center = XApp->Get3DFrame().GetCenter();
-    for (int li = 0; li <= 1; li++) {
-      const TTypeList<vec3f>& verts = (li == 0 ? p_vertices : n_vertices);
-      const TTypeList<vec3f>& norms = (li == 0 ? p_normals : n_normals);
-      const TTypeList<IsoTriangle>& trians = (li == 0 ? p_triangles : n_triangles);
+    for (int li = 0; li < triangles.Count(); li++) {
+      const TArrayList<vec3f>& verts = vertices[li];
+      const TArrayList<vec3f>& norms = normals[li];
+      const TArrayList<IsoTriangle>& trians = triangles[li];
       TTypeList<vec3f> *va = (li == 0 ? cp_vertices.get_ptr()
         : cn_vertices.get_ptr());
       if (!collect_only) {
         olx_gl::newList(li == 0 ? PListId : NListId, GL_COMPILE);
         olx_gl::polygonMode(GL_FRONT_AND_BACK, GetPolygonMode());
         olx_gl::begin(GL_TRIANGLES);
+        if (ColorData != 0) {
+          olx_gl::enable(GL_COLOR_MATERIAL);
+        }
       }
       if (sphere) {
         for (size_t i = 0; i < trians.Count(); i++) {
@@ -1090,6 +1102,9 @@ void TXGrid::RescaleSurface(bool collect_only) {
             for (int j = 0; j < 3; j++) {
               olx_gl::normal(norms[trians[i][j]]);
               olx_gl::vertex(verts[trians[i][j]]);
+              if (ColorData != 0) {
+                olx_gl::color(colors[li][trians[i][j]]);
+              }
             }
           }
         }
@@ -1099,6 +1114,9 @@ void TXGrid::RescaleSurface(bool collect_only) {
           for (int j = 0; j < 3; j++) {
             olx_gl::normal(norms[trians[i][j]]);
             olx_gl::vertex(verts[trians[i][j]]);
+            if (ColorData != 0) {
+              olx_gl::color(colors[li][trians[i][j]]);
+            }
           }
         }
       }
@@ -1111,16 +1129,19 @@ void TXGrid::RescaleSurface(bool collect_only) {
   }
   else if (Mask != 0) {
     vec3d pts[3];
-    for (int li = 0; li <= 1; li++) {
-      const TTypeList<vec3f>& verts = (li == 0 ? p_vertices : n_vertices);
-      const TTypeList<vec3f>& norms = (li == 0 ? p_normals : n_normals);
-      const TTypeList<IsoTriangle>& trians = (li == 0 ? p_triangles : n_triangles);
+    for (int li = 0; li < triangles.Count(); li++) {
+      const TArrayList<vec3f>& verts = vertices[li];
+      const TArrayList<vec3f>& norms = normals[li];
+      const TArrayList<IsoTriangle>& trians = triangles[li];
       TTypeList<vec3f> *va = (li == 0 ? cp_vertices.get_ptr()
         : cn_vertices.get_ptr());
       if (!collect_only) {
         olx_gl::newList(li == 0 ? PListId : NListId, GL_COMPILE);
         olx_gl::polygonMode(GL_FRONT_AND_BACK, GetPolygonMode());
         olx_gl::begin(GL_TRIANGLES);
+        if (ColorData != 0) {
+          olx_gl::enable(GL_COLOR_MATERIAL);
+        }
       }
       for (int x = -1; x <= 1; x++) {
         for (int y = -1; y <= 1; y++) {
@@ -1150,6 +1171,9 @@ void TXGrid::RescaleSurface(bool collect_only) {
                 for (int j = 0; j < 3; j++) {
                   olx_gl::normal(norms[trians[i][j]]);
                   olx_gl::vertex(pts[j]);
+                  if (ColorData != 0) {
+                    olx_gl::color(colors[li][trians[i][j]]);
+                  }
                 }
               }
             }
@@ -1169,16 +1193,19 @@ void TXGrid::RescaleSurface(bool collect_only) {
   else {
     if (Extended) {
       vec3d pts[3]; // ext drawing
-      for (int li = 0; li <= 1; li++) {
-        TTypeList<vec3f>& verts = (li == 0 ? p_vertices : n_vertices);
-        const TTypeList<vec3f>& norms = (li == 0 ? p_normals : n_normals);
-        const TTypeList<IsoTriangle>& trians = (li == 0 ? p_triangles : n_triangles);
+      for (int li = 0; li < triangles.Count(); li++) {
+        const TArrayList<vec3f>& verts = vertices[li];
+        const TArrayList<vec3f>& norms = normals[li];
+        const TArrayList<IsoTriangle>& trians = triangles[li];
         TTypeList<vec3f> *va = (li == 0 ? cp_vertices.get_ptr()
           : cn_vertices.get_ptr());
         if (!collect_only) {
           olx_gl::newList(li == 0 ? PListId : NListId, GL_COMPILE);
           olx_gl::polygonMode(GL_FRONT_AND_BACK, GetPolygonMode());
           olx_gl::begin(GL_TRIANGLES);
+          if (ColorData != 0) {
+            olx_gl::enable(GL_COLOR_MATERIAL);
+          }
         }
         for (float x = ExtMin[0]; x < ExtMax[0]; x++) {
           for (float y = ExtMin[1]; y < ExtMax[1]; y++) {
@@ -1210,6 +1237,9 @@ void TXGrid::RescaleSurface(bool collect_only) {
                   for (int j = 0; j < 3; j++) {
                     olx_gl::normal(norms[trians[i].pointID[j]]);
                     olx_gl::vertex(pts[j]);
+                    if (ColorData != 0) {
+                      olx_gl::color(colors[li][trians[i][j]]);
+                    }
                   }
                 }
               }
@@ -1224,10 +1254,10 @@ void TXGrid::RescaleSurface(bool collect_only) {
       }
     }
     else {
-      for (int li = 0; li <= 1; li++) {
-        TTypeList<vec3f> verts = (li == 0 ? p_vertices : n_vertices);
-        const TTypeList<vec3f>& norms = (li == 0 ? p_normals : n_normals);
-        const TTypeList<IsoTriangle>& trians = (li == 0 ? p_triangles : n_triangles);
+      for (int li = 0; li < triangles.Count(); li++) {
+        const TArrayList<vec3f>& verts = vertices[li];
+        const TArrayList<vec3f>& norms = normals[li];
+        const TArrayList<IsoTriangle>& trians = triangles[li];
         for (size_t i = 0; i < verts.Count(); i++) {
           verts[i][0] /= (MaxX - 1);
           verts[i][1] /= (MaxY - 1);
@@ -1240,17 +1270,23 @@ void TXGrid::RescaleSurface(bool collect_only) {
           olx_gl::newList(li == 0 ? PListId : NListId, GL_COMPILE);
           olx_gl::polygonMode(GL_FRONT_AND_BACK, GetPolygonMode());
           olx_gl::begin(GL_TRIANGLES);
+          if (ColorData != 0) {
+            olx_gl::enable(GL_COLOR_MATERIAL);
+          }
         }
         for (size_t i = 0; i < trians.Count(); i++) {
           if (collect_only) {
             for (int j = 0; j < 3; j++) {
-              va->AddCopy(verts[trians[i].pointID[j]]);
+              va->AddCopy(verts[trians[i][j]]);
             }
           }
           else {
             for (int j = 0; j < 3; j++) {
-              olx_gl::normal(norms[trians[i].pointID[j]]);
-              olx_gl::vertex(verts[trians[i].pointID[j]]);  // cell drawing
+              olx_gl::normal(norms[trians[i][j]]);
+              olx_gl::vertex(verts[trians[i][j]]);  // cell drawing
+              if (ColorData != 0) {
+                olx_gl::color(colors[li][trians[i][j]]);
+              }
             }
           }
         }
@@ -1305,7 +1341,14 @@ void TXGrid::InitIso() {
 //.............................................................................
 TPtrList<TXBlob>::const_list_type TXGrid::CreateBlobs(int flags) {
   TPtrList<TXBlob> rv;
-  if (!Is3D() || (n_triangles.IsEmpty() && p_triangles.IsEmpty())) {
+  if (!Is3D()) {
+    return rv;
+  }
+  size_t t_cnt = 0;
+  for (size_t li = 0; li < triangles.Count(); li++) {
+    t_cnt += triangles[li].Count();
+  }
+  if (t_cnt < 25) {
     return rv;
   }
   cp_vertices = new TTypeList<vec3f>();
@@ -1370,6 +1413,7 @@ TPtrList<TXBlob>::const_list_type TXGrid::CreateBlobs(int flags) {
         }
         blob.vertices.SetCapacity(cnt);
         blob.normals.SetCapacity(cnt);
+        blob.SetSelectable(true);
         for (size_t j = i; j < verts.Count(); j++) {
           if (verts[j] == verts[i]) {
             new_ids[j] = blob.vertices.Count();
@@ -1582,7 +1626,7 @@ void TXGrid::ToDataItem(TDataItem& item, IOutputStream& zos) const {
         zos.Write(ED->Data[x][y], sizeof(float)*MaxZ);
       }
     }
-    if (Mask != NULL && Mask->GetMask() != 0) {
+    if (Mask != 0 && Mask->GetMask() != 0) {
       Mask->ToDataItem(item.AddItem("mask"), zos);
     }
   }
@@ -1656,43 +1700,43 @@ TLibrary*  TXGrid::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("xgrid") : name);
   lib->Register(new TFunction<TXGrid>(this,
     &TXGrid::LibGetMin, "GetMin",
-    fpNone, "Returns minimum value of the map") );
+    fpNone, "Returns minimum value of the map"));
   lib->Register(new TFunction<TXGrid>(this,
     &TXGrid::LibGetMax, "GetMax",
-    fpNone, "Returns maximum value of the map") );
+    fpNone, "Returns maximum value of the map"));
   lib->Register(new TFunction<TXGrid>(this,
     &TXGrid::LibExtended, "Extended",
-    fpNone|fpOne|fpSix, "Returns/sets extended size of the grid") );
+    fpNone | fpOne | fpSix, "Returns/sets extended size of the grid"));
   lib->Register(new TFunction<TXGrid>(this,
     &TXGrid::LibScale, "Scale",
-    fpNone|fpOne, "Returns/sets current scale") );
+    fpNone | fpOne, "Returns/sets current scale"));
   lib->Register(new TFunction<TXGrid>(this,
     &TXGrid::LibFix, "Fix",
     fpNone | fpTwo, "Sets the start and step for contours. Set step=0 to cancel."));
   lib->Register(new TFunction<TXGrid>(this,
     &TXGrid::LibSize, "Size",
-    fpNone|fpOne, "Returns/sets current size") );
+    fpNone | fpOne, "Returns/sets current size"));
   lib->Register(new TFunction<TXGrid>(this,
     &TXGrid::LibPlaneSize, "PlaneSize",
-    fpNone|fpOne, "Returns/sets current size") );
+    fpNone | fpOne, "Returns/sets current size"));
   lib->Register(new TFunction<TXGrid>(this,
     &TXGrid::LibDepth, "Depth",
-    fpNone|fpOne|fpThree, "Returns/sets current depth") );
+    fpNone | fpOne | fpThree, "Returns/sets current depth"));
   lib->Register(new TFunction<TXGrid>(this,
     &TXGrid::LibDepth, "MaxDepth",
-    fpNone, "Returns maximum available depth") );
+    fpNone, "Returns maximum available depth"));
   lib->Register(new TFunction<TXGrid>(this,
     &TXGrid::LibContours, "Contours",
-    fpNone|fpOne, "Returns/sets number of contour levels") );
+    fpNone | fpOne, "Returns/sets number of contour levels"));
   lib->Register(new TFunction<TXGrid>(this,
     &TXGrid::LibIsvalid, "IsValid",
-    fpNone|fpOne, "Returns true if grid data is initialised") );
+    fpNone | fpOne, "Returns true if grid data is initialised"));
   lib->Register(new TFunction<TXGrid>(this,
     &TXGrid::LibRenderMode, "RenderMode",
-    fpNone|fpOne|fpTwo,
+    fpNone | fpOne | fpTwo,
     "Returns/sets grid rendering mode. Supported values: point, line, fill, "
     "plane, contour. Second argument may specify the number of colours in the "
-    "plane gradient (2,3,5,7)") );
+    "plane gradient (2,3,5,7)"));
   lib->Register(new TMacro<TXGrid>(this,
     &TXGrid::LibSplit, "Split",
     EmptyString(),
@@ -1708,39 +1752,39 @@ TLibrary*  TXGrid::ExportLibrary(const olxstr& name)  {
 //.............................................................................
 //.............................................................................
 #ifdef _PYTHON
-PyObject* pyImport(PyObject* self, PyObject* args)  {
+PyObject* pyImport(PyObject* self, PyObject* args) {
   char* data;
   int dim1, dim2, dim3, focus1, focus2, focus3;
   int type, len;
-  if( !PyArg_ParseTuple(args, "(iii)(iii)s#i",
+  if (!PyArg_ParseTuple(args, "(iii)(iii)s#i",
     &dim1, &dim2, &dim3,
-    &focus1, &focus2, &focus3, &data, &len, &type) )
+    &focus1, &focus2, &focus3, &data, &len, &type))
   {
     return PythonExt::InvalidArgumentException(__OlxSourceInfo,
       "(iii)(iii)s#i");
   }
-  const size_t sz = dim1*dim2*dim3;
-  if( (type == 0 && sz*sizeof(double) != (size_t)len) ||
-      (type == 1 && sz*sizeof(int) != (size_t)len))
+  const size_t sz = dim1 * dim2*dim3;
+  if ((type == 0 && sz * sizeof(double) != (size_t)len) ||
+    (type == 1 && sz * sizeof(int) != (size_t)len))
   {
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "array size");
   }
   TEMemoryInputStream ms(data, len);
   TXGrid& g = *TXGrid::GetInstance();
   g.InitGrid(focus1, focus2, focus3);
-  for( int d1=0; d1 < focus1; d1++ )  {
-    for( int d2=0; d2 < focus2; d2++ )
-      for( int d3=0; d3 < focus3; d3++ )  {
+  for (int d1 = 0; d1 < focus1; d1++) {
+    for (int d2 = 0; d2 < focus2; d2++)
+      for (int d3 = 0; d3 < focus3; d3++) {
         float v;
-        if( type == 0 )  {
+        if (type == 0) {
           double _v;
-          ms.SetPosition(((d1*dim2+d2)*dim3+d3)*sizeof(double));
+          ms.SetPosition(((d1*dim2 + d2)*dim3 + d3) * sizeof(double));
           ms >> _v;
           v = (float)_v;
         }
-        else if( type == 1 )  {
+        else if (type == 1) {
           int _v;
-          ms.SetPosition(((d1*dim2+d2)*dim3+d3)*sizeof(int));
+          ms.SetPosition(((d1*dim2 + d2)*dim3 + d3) * sizeof(int));
           ms >> _v;
           v = (float)_v;
         }
@@ -1750,81 +1794,99 @@ PyObject* pyImport(PyObject* self, PyObject* args)  {
   return PythonExt::PyNone();
 }
 //.............................................................................
-PyObject* pySetValue(PyObject* self, PyObject* args)  {
-  int i, j, k;
+PyObject* pySetValue(PyObject* self, PyObject* args) {
+  int i, j, k, cl;
   float val;
-  if( !PyArg_ParseTuple(args, "iiif", &i, &j, &k, &val) )
-    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "iiif");
-  TXGrid::GetInstance()->SetValue(i, j, k, val);
+  if (!PyArg_ParseTuple(args, "iiif|i", &i, &j, &k, &val, &cl)) {
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "iiif|i");
+  }
+  TXGrid::GetInstance()->SetValue(i, j, k, val, (uint32_t)cl);
   return PythonExt::PyNone();
 }
 //.............................................................................
-PyObject *pyGetValue(PyObject *self, PyObject* args)  {
+PyObject *pyGetValue(PyObject *self, PyObject* args) {
   int i, j, k;
-  if( !PyArg_ParseTuple(args, "iii", &i, &j, &k) )
+  if (!PyArg_ParseTuple(args, "iii", &i, &j, &k)) {
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "iii");
+  }
   TXGrid *g = TXGrid::GetInstance();
-  if( g->Data() == NULL || !g->Data()->IsInRange(i,j,k) ) {
+  if (g->Data() == 0 || !g->Data()->IsInRange(i, j, k)) {
     return PythonExt::InvalidArgumentException(__OlxSourceInfo,
       "index - out of range");
   }
-  return Py_BuildValue("f", g->GetValue(i,j,k));
+  return Py_BuildValue("f", g->GetValue(i, j, k));
 }
 //.............................................................................
-PyObject* pyInit(PyObject* self, PyObject* args)  {
+PyObject* pyInit(PyObject* self, PyObject* args) {
   int i, j, k;
-  if( !PyArg_ParseTuple(args, "iii", &i, &j, &k) )
-    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "iii");
-  TXGrid::GetInstance()->InitGrid(i, j, k);
+  bool colors = false;
+  if (!PyArg_ParseTuple(args, "iii|i", &i, &j, &k, colors)) {
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "iii|i");
+  }
+  TXGrid::GetInstance()->InitGrid(i, j, k, colors);
   return PythonExt::PyTrue();
 }
 //.............................................................................
-PyObject *pyGetSize(PyObject *self, PyObject* args)  {
+PyObject *pyGetSize(PyObject *self, PyObject* args) {
   TXGrid *g = TXGrid::GetInstance();
-  if( g->Data() == NULL )
+  if (g->Data() == 0) {
     return Py_BuildValue("iii", 0, 0, 0);
+  }
   return Py_BuildValue("iii",
     g->Data()->Length1(), g->Data()->Length2(), g->Data()->Length3());
 }
 //.............................................................................
-PyObject* pySetMinMax(PyObject* self, PyObject* args)  {
+PyObject* pySetMinMax(PyObject* self, PyObject* args) {
   float min, max;
-  if( !PyArg_ParseTuple(args, "ff", &min, &max) )
+  if (!PyArg_ParseTuple(args, "ff", &min, &max)) {
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "ff");
+  }
   TXGrid::GetInstance()->SetMinVal(min);
   TXGrid::GetInstance()->SetMaxVal(max);
   return PythonExt::PyTrue();
 }
 //.............................................................................
-PyObject* pySetHole(PyObject* self, PyObject* args)  {
+PyObject* pySetHole(PyObject* self, PyObject* args) {
   float min, max;
-  if( !PyArg_ParseTuple(args, "ff", &min, &max) )
+  if (!PyArg_ParseTuple(args, "ff", &min, &max)) {
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "ff");
+  }
   TXGrid::GetInstance()->SetMinHole(min);
   TXGrid::GetInstance()->SetMaxHole(max);
   return PythonExt::PyTrue();
 }
 //.............................................................................
-PyObject* pySetVisible(PyObject* self, PyObject* args)  {
+PyObject* pySetVisible(PyObject* self, PyObject* args) {
   bool v;
-  if( !PyArg_ParseTuple(args, "b", &v) )
+  if (!PyArg_ParseTuple(args, "b", &v)) {
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "b");
+  }
   TXGrid::GetInstance()->SetVisible(v);
   return PythonExt::PyNone();
 }
 //.............................................................................
 PyObject* pyInitSurface(PyObject* self, PyObject* args)  {
   bool v;
-  if( !PyArg_ParseTuple(args, "b", &v) )
+  float mask_inc = -100;
+  if (!PyArg_ParseTuple(args, "b|f", &v, &mask_inc)) {
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "b");
-  if( v )
+  }
+  if (v) {
     TXGrid::GetInstance()->AdjustMap();
+  }
+  if (mask_inc != -100) {
+    FractMask* fm = new FractMask;
+    TGXApp &app = TGXApp::GetInstance();
+    app.BuildSceneMask(*fm, mask_inc);
+    TXGrid::GetInstance()->SetMask(*fm);
+
+  }
   TXGrid::GetInstance()->InitIso();
   return PythonExt::PyNone();
 }
 //.............................................................................
-PyObject* pyIsVisible(PyObject* self, PyObject* args)  {
-  return Py_BuildValue("b", TXGrid::GetInstance()->IsVisible() );
+PyObject* pyIsVisible(PyObject* self, PyObject* args) {
+  return Py_BuildValue("b", TXGrid::GetInstance()->IsVisible());
 }
 //.............................................................................
 //.............................................................................
@@ -1841,7 +1903,9 @@ static PyMethodDef XGRID_Methods[] = {
   "sets minimum and maximum vaues of the grid to be avoided"},
   {"IsVisible", pyIsVisible, METH_VARARGS, "returns grid visibility status"},
   {"SetVisible", pySetVisible, METH_VARARGS, "sets grid visibility"},
-  {"InitSurface", pyInitSurface, METH_VARARGS, "initialisess surface drawing"},
+  {"InitSurface", pyInitSurface, METH_VARARGS,
+   "initialisess surface drawing. If optional distance from VdW surface is"
+   " provided - the surface gets masked by the structure as well"},
   {NULL, NULL, 0, NULL}
   };
 

@@ -67,6 +67,7 @@ class TXGrid : public AGDrawObject {
   };
 
   TArray3D<float>* ED;
+  TArray3D<int>* ColorData;
   // if mask is specified
   FractMask* Mask;
   GLuint PListId, NListId;
@@ -86,10 +87,10 @@ class TXGrid : public AGDrawObject {
   vec3f ExtMin, ExtMax;
   TGlPrimitive* glpP, *glpN, *glpC;
   // these will keep the masked objects
-  TTypeList<vec3f> p_vertices, n_vertices;
-  TTypeList<vec3f> p_normals, n_normals;
-  TTypeList<IsoTriangle> p_triangles, n_triangles;
-  // use by RescaleSurface when collecting rather than rendering
+  TArrayList<vec3f_alist> vertices, normals;
+  TArrayList<TArrayList<IsoTriangle> > triangles;
+  TArrayList<TArrayList<int> > colors;
+  // used by RescaleSurface when collecting rather than rendering
   olx_object_ptr<TTypeList<vec3f> > cp_vertices, cn_vertices;
 protected:
   float MaxVal, MinVal, Depth, Size, Scale;
@@ -133,18 +134,27 @@ public:
   bool LoadFromFile(const olxstr& GridFile);
 
   void InitIso();
-  void InitGrid(size_t maxX, size_t maxY, size_t MaxZ);
+  void InitGrid(size_t maxX, size_t maxY, size_t MaxZ, bool colors=false);
   void InitGrid(const vec3s& dim) { InitGrid(dim[0], dim[1], dim[2]); }
-  inline void SetValue(size_t i, size_t j, size_t k, float v) {
+  void SetValue(size_t i, size_t j, size_t k, float v,
+    uint32_t cl = ~0)
+  {
     ED->Data[i][j][k] = v;
+    if (ColorData != 0) {
+      ColorData->Data[i][j][k] = cl;
+    }
   }
-  inline double GetValue(int i, int j, int k) const {
+  double GetValue(int i, int j, int k) const {
     return ED->Data[i][j][k];
   }
-  template <class T> void SetValue(const T& ind, float v) {
+  template <class T>
+  void SetValue(const T& ind, float v, uint32_t cl=~0) {
     ED->Data[(int)ind[0]][(int)ind[1]][(int)ind[2]] = v;
+    if (ColorData != 0) {
+      ColorData->Data[(int)ind[0]][(int)ind[1]][(int)ind[2]] = cl;
+    }
   }
-  template <class T> inline float GetValue(const T& v) const {
+  template <class T> float GetValue(const T& v) const {
     return ED->Data[(int)v[0]][(int)v[1]][(int)v[2]];
   }
 
@@ -156,7 +166,7 @@ public:
   virtual bool GetDimensions(vec3d& Max, vec3d& Min);
 
   void SetScale(float v);
-  inline double GetScale() const { return Scale; }
+  double GetScale() const { return Scale; }
   // this object will be deleted
   void SetMask(FractMask& fm) { Mask = &fm; }
 
@@ -169,30 +179,25 @@ public:
   float GetDepth() const { return Depth; }
   vec3s GetDimVec() const { return vec3s(MaxX, MaxY, MaxZ); }
   size_t GetPlaneSize() const { return MaxDim; }
-  /* v=2^n values are acepted only (64, 128, 256, etc to be compatible with textures) */
+  /* v=2^n values are acepted only (64, 128, 256, etc to be compatible with
+  textures)
+  */
   void SetPlaneSize(size_t v);
   float GetSize() const { return Size; }
 
-  const TTypeList<vec3f> &GetPVertices() const { return p_vertices; }
-  const TTypeList<vec3f> &GetPNormals() const { return p_normals; }
-  const TTypeList<IsoTriangle> &GetPTriangles() const { return p_triangles; }
-  const TTypeList<vec3f> &GetNVertices() const { return n_vertices; }
-  const TTypeList<vec3f> &GetNNormals() const { return n_normals; }
-  const TTypeList<IsoTriangle> &GetNTriangles() const { return n_triangles; }
+  DefPropP(float, MinHole);
+  DefPropP(float, MaxHole);
+  DefPropP(float, MinVal);
+  DefPropP(float, MaxVal);
 
-  DefPropP(float, MinHole)
-    DefPropP(float, MaxHole)
-    DefPropP(float, MinVal)
-    DefPropP(float, MaxVal)
-
-    inline bool IsEmpty() const { return ED == NULL; }
+  bool IsEmpty() const { return ED == 0; }
   short GetRenderMode() const { return RenderMode; }
 
   size_t GetContourLevelCount() const { return ContourLevelCount; }
   // sets new number of contours...
   void SetContourLevelCount(size_t v);
 
-  inline virtual void SetVisible(bool On) {
+  virtual void SetVisible(bool On) {
     AGDrawObject::SetVisible(On);
     Info->SetVisible(On);
     Legend->SetVisible(On);
