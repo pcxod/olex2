@@ -404,6 +404,9 @@ bool TXGrid::Orient(TGlPrimitive& GlP) {
     return true;
   }
   if (Is3D()) {
+    if (ColorData != 0) {
+      olx_gl::enable(GL_COLOR_MATERIAL);
+    }
     if (&GlP == glpN) { // draw once only
       olx_gl::callList(PListId);
     }
@@ -621,6 +624,9 @@ void TXGrid::InitGrid(size_t maxX, size_t maxY, size_t maxZ, bool use_colors) {
   if (use_colors) {
     ColorData = new TArray3D<int>(0, MaxX, 0, MaxY, 0, MaxZ);
   }
+  else {
+    ColorData = 0;
+  }
   TextData = new char[MaxDim*MaxDim * 3 + 1];
   ContourData.resize(MaxDim, MaxDim, false);
   ContourCrds[0] = new float[MaxDim];
@@ -637,6 +643,10 @@ void TXGrid::DeleteObjects() {
     delete ED;
     MaxX = MaxY = MaxZ = 0;
     ED = 0;
+  }
+  if (ColorData != 0) {
+    delete ColorData;
+    ColorData = 0;
   }
   if (TextData != 0) {
     delete TextData;
@@ -709,6 +719,7 @@ void TXGrid::SetScale(float v) {
     triangles.Clear();
     normals.Clear();
     vertices.Clear();
+    colors.Clear();
     if (XApp->Get3DFrame().IsVisible() || Boxed) {
       double SZ = olx_round(
         (double)MaxX / XApp->XFile().GetAsymmUnit().GetAxes()[0]);
@@ -1077,9 +1088,6 @@ void TXGrid::RescaleSurface(bool collect_only) {
         olx_gl::newList(li == 0 ? PListId : NListId, GL_COMPILE);
         olx_gl::polygonMode(GL_FRONT_AND_BACK, GetPolygonMode());
         olx_gl::begin(GL_TRIANGLES);
-        if (ColorData != 0) {
-          olx_gl::enable(GL_COLOR_MATERIAL);
-        }
       }
       if (sphere) {
         for (size_t i = 0; i < trians.Count(); i++) {
@@ -1139,9 +1147,6 @@ void TXGrid::RescaleSurface(bool collect_only) {
         olx_gl::newList(li == 0 ? PListId : NListId, GL_COMPILE);
         olx_gl::polygonMode(GL_FRONT_AND_BACK, GetPolygonMode());
         olx_gl::begin(GL_TRIANGLES);
-        if (ColorData != 0) {
-          olx_gl::enable(GL_COLOR_MATERIAL);
-        }
       }
       for (int x = -1; x <= 1; x++) {
         for (int y = -1; y <= 1; y++) {
@@ -1203,9 +1208,6 @@ void TXGrid::RescaleSurface(bool collect_only) {
           olx_gl::newList(li == 0 ? PListId : NListId, GL_COMPILE);
           olx_gl::polygonMode(GL_FRONT_AND_BACK, GetPolygonMode());
           olx_gl::begin(GL_TRIANGLES);
-          if (ColorData != 0) {
-            olx_gl::enable(GL_COLOR_MATERIAL);
-          }
         }
         for (float x = ExtMin[0]; x < ExtMax[0]; x++) {
           for (float y = ExtMin[1]; y < ExtMax[1]; y++) {
@@ -1270,9 +1272,6 @@ void TXGrid::RescaleSurface(bool collect_only) {
           olx_gl::newList(li == 0 ? PListId : NListId, GL_COMPILE);
           olx_gl::polygonMode(GL_FRONT_AND_BACK, GetPolygonMode());
           olx_gl::begin(GL_TRIANGLES);
-          if (ColorData != 0) {
-            olx_gl::enable(GL_COLOR_MATERIAL);
-          }
         }
         for (size_t i = 0; i < trians.Count(); i++) {
           if (collect_only) {
@@ -1819,11 +1818,11 @@ PyObject *pyGetValue(PyObject *self, PyObject* args) {
 //.............................................................................
 PyObject* pyInit(PyObject* self, PyObject* args) {
   int i, j, k;
-  bool colors = false;
-  if (!PyArg_ParseTuple(args, "iii|i", &i, &j, &k, colors)) {
+  PyObject *colors = 0;
+  if (!PyArg_ParseTuple(args, "iii|O", &i, &j, &k, &colors)) {
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "iii|i");
   }
-  TXGrid::GetInstance()->InitGrid(i, j, k, colors);
+  TXGrid::GetInstance()->InitGrid(i, j, k, colors == Py_True);
   return PythonExt::PyTrue();
 }
 //.............................................................................
