@@ -128,15 +128,26 @@ void TCifDP::LoadFromString(const olxstr &str_) {
     }
     if (line.CharAt(0) == '_') {  // parameter
       if (i + 1 < toks.Count()) {
-        ICifEntry *e = ICifEntry::FromToken(toks[i + 1], version);
-        e->SetName(line);
-        current_block->Add(e);
+        // take first comment and skip others
+        olxstr comment;
+        if (toks[i + 1].value.StartsFrom('#')) {
+          comment = toks[++i].value.SubStringFrom(1);
+          while (++i < toks.Count() && toks[i].value.StartsFrom('#')) {
+          }
+          i--;
+        }
+        if (++i < toks.Count()) {
+          ICifEntry *e = ICifEntry::FromToken(toks[i], version);
+          e->SetName(line);
+          if (!comment.IsEmpty()) {
+            e->SetComment(comment);
+          }
+          current_block->Add(e);
+          continue;
+        }
       }
-      else {
-        throw ParsingException(__OlxSourceInfo,
-          olxstr("missing value for ") << line, 0);
-      }
-      i++;
+      throw ParsingException(__OlxSourceInfo,
+        olxstr("missing value for ") << line, 0);
     }
     else if (line.StartsFromi("data_")) {
       olxstr dn = line.SubStringFrom(5);
@@ -170,10 +181,10 @@ void TCifDP::LoadFromString(const olxstr &str_) {
       }
     }
     else if (line.StartsFrom(';')) {
-      throw ParsingException(__OlxSourceInfo, "unnamed text block", i);
+      throw ParsingException(__OlxSourceInfo, "unnamed text block", toks[i].lineNumber);
     }
     else if (line.StartsFrom('\'')) {
-      throw ParsingException(__OlxSourceInfo, "unnamed text string", i);
+      throw ParsingException(__OlxSourceInfo, "unnamed text string", toks[i].lineNumber);
     }
   }
   Format();
