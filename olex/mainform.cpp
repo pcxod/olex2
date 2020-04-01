@@ -3417,7 +3417,7 @@ void TMainForm::OnIdle() {
     return;
   }
 #if !defined(__WIN32__)
-  if (!StartupInitialised && IsVisible() && FGlCanvas->IsShown()) {
+  if (!StartupInitialised && IsShownOnScreen() && FGlCanvas->IsShownOnScreen()) {
     StartupInit();
   }
 #endif
