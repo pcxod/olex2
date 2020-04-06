@@ -5374,8 +5374,14 @@ void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options,
       }
       row[3] = new cetString(Fo);
       row[4] = new cetString(s_m);
-      row[5] = new cetString(F[i].Re());
-      row[6] = new cetString(sp.IsCentrosymmetric() ? 0.0 : F[i].Im());
+      if (sp.IsCentrosymmetric()) {
+        row[5] = new cetString(olx_sign(F[i].Re()) * F[i].mod());
+        row[6] = new cetString(0.0);
+      }
+      else {
+        row[5] = new cetString(F[i].Re());
+        row[6] = new cetString("0");
+      }
     }
     else if (list_n == 4) {
       row[3] = new cetString(olxstr::FormatFloat(2, Fo_sq));

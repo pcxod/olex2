@@ -305,30 +305,28 @@ namespace SFUtil {
             for (size_t k = 0; k < parent._getusize(); k++) {
               // scattering vector + phase shift
               const double tv = SFUtil::T_PI*(atoms[j]->ccrd().DotProd(rv[k]) + ps[k]);
-              double ca, sa;
-              olx_sincos(tv, &sa, &ca);
+              double ca = std::cos(tv);
               if (olx_is_valid_index(atoms[j]->GetEllpId())) {
                 const double B = calc_B(&U[j * 6], rv[k]);
                 if (atoms[j]->GetEllipsoid()->IsAnharmonic()) {
+                  double sa = std::sin(tv);
                   l += (atoms[j]->GetEllipsoid()->
                     GetAnharmonicPart()().calculate(rv[k])*compd(ca*B, sa*B)).GetRe();
                 }
                 else {
-                  l += ca*B;
+                  l += ca * B;
                 }
               }
               else {
                 l += ca;
               }
             }
-            double scv = fo[atoms[j]->GetTag()].GetRe();
             if (!olx_is_valid_index(atoms[j]->GetEllpId())) {
-              scv *= exp(U[j * 6] * d_s2);
+              l *= exp(U[j * 6] * d_s2);
             }
-            scv *= (l*atoms[j]->GetOccu());
-            ir += scv;
+            ir += fo[atoms[j]->GetTag()] * (l*atoms[j]->GetOccu());
           }
-          F[i] = ir.GetRe()*parent._getumult();
+          F[i] = ir*parent._getumult();
         }
         else {
           compd ir;

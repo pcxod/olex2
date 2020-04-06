@@ -218,7 +218,7 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
       //xapp.CalcSF(refs, F);
       //sw.start("Calculation structure factors A");
       //fastsymm version is just about 10% faster...
-      CalcSF(xapp.XFile(), refs, F, !info_ex.centrosymmetric);
+      CalcSF(xapp.XFile(), refs, F, true);
       xapp.XFile().GetRM().DetwinShelx(refs, F, ms, info_ex);
       //xapp.XFile().GetRM().DetwinMixed(refs, F, ms, info_ex);
       //xapp.XFile().GetRM().DetwinAlgebraic(refs, ms, info_ex);
@@ -433,11 +433,6 @@ void SFUtil::_CalcSF(const TXFile& xfile, const IMillerIndexList& refs,
             TBasicApp::NewLogEntry(logError) << missing;
           }
         }
-      }
-    }
-    if (centro) {
-      for (size_t i = 0; i < F.Count(); i++) {
-        F[i].SetIm(0);
       }
     }
   }
