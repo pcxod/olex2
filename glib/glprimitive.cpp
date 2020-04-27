@@ -522,6 +522,9 @@ void TGlPrimitive::Draw() {
   case sgloPolygon: {
     PrepareColorRendering(GL_POLYGON);
     olx_gl::FlagDisabler fc(GL_CULL_FACE);
+    if (Normals.Count() == 1) {
+      SetNormal(Normals[0]);
+    }
     if (Colors.IsEmpty() || GetRenderer().IsSelecting()) {
       for (size_t i = 0; i < Vertices.Count(); i++) {
         DrawVertex(Vertices[i]);

@@ -1314,7 +1314,23 @@ void TAsymmUnit::RearrangeAtoms(const TSizeList &indices) {
 //..............................................................................
 //..............................................................................
 void TAsymmUnit::LibGetAtomCount(const TStrObjList& Params, TMacroData& E) {
-  E.SetRetVal(AtomCount());
+  if (Params.IsEmpty()) {
+    E.SetRetVal(AtomCount());
+  }
+  else {
+    cm_Element *atype = XElementLib::FindBySymbolEx(Params[0]);
+    if (atype == 0) {
+      E.ProcessingError(__OlxSrcInfo, "Unknown atom type");
+      return;
+    }
+    size_t ac = 0;
+    for (size_t i = 0; i < CAtoms.Count(); i++) {
+      if (!CAtoms[i]->IsDeleted() && CAtoms[i]->GetType() == *atype) {
+        ac++;
+      }
+    }
+    E.SetRetVal(ac);
+  }
 }
 //..............................................................................
 void TAsymmUnit::LibGetAtomCrd(const TStrObjList& Params, TMacroData& E) {
@@ -1821,8 +1837,8 @@ TLibrary* TAsymmUnit::ExportLibrary(const olxstr& name)  {
     "optional 5th parameter specifies if the position has to be tested for an "
     "existing atoms. If -1 is returned, the atom is not created"));
   lib->Register(new TFunction<TAsymmUnit>(thip,
-    &TAsymmUnit::LibGetAtomCount, "GetAtomCount", fpNone,
-    "Returns the atom count in the asymmetric unit"));
+    &TAsymmUnit::LibGetAtomCount, "GetAtomCount", fpNone|fpOne,
+    "Returns the atom count (type can be specified) in the asymmetric unit"));
   lib->Register(new TFunction<TAsymmUnit>(thip,
     &TAsymmUnit::LibGetSymm, "GetCellSymm", fpNone|fpOne,
     "Returns space group of currently loaded file as name: 'C2', 'I41/amd', "

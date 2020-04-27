@@ -192,6 +192,10 @@ void GXLibMacros::Export(TLibrary& lib) {
     "rings-creates planes for rings template, like NC5&;",
     fpAny,
     "Sets current view along the normal of the best plane");
+  gxlib_InitMacro(Lpln,
+    EmptyString(),
+    fpThree,
+    "Creates a lattice plane for the given Miller index");
   gxlib_InitMacro(Cent,
     "rings-finds rings specified by template and add centroids for each of them"
     ". For example cent -rings=C6",
@@ -2357,7 +2361,7 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
           continue;
         }
         XVarReference *ref = a.CAtom().GetVarRef(catom_var_name_Sof);
-        if (ref == NULL) {
+        if (ref == 0) {
           continue;
         }
         int v = int(ref->Parent.GetId());
@@ -2372,27 +2376,31 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   else if (Cmds.Count() == 1 && Cmds[0].Equalsi("isot")) {
-    if (flag == glSelectionNone) flag = glSelectionSelect;
+    if (flag == glSelectionNone) {
+      flag = glSelectionSelect;
+    }
     TGXApp::AtomIterator ai = app.GetAtoms();
     while (ai.HasNext()) {
       TXAtom& xa = ai.Next();
       if (!xa.IsVisible()) {
         continue;
       }
-      if (xa.GetEllipsoid() == NULL) {
+      if (xa.GetEllipsoid() == 0) {
         app.GetRenderer().Select(xa, flag);
       }
     }
   }
   else if (Cmds.Count() == 1 && Cmds[0].Equalsi("anis")) {
-    if (flag == glSelectionNone) flag = glSelectionSelect;
+    if (flag == glSelectionNone) {
+      flag = glSelectionSelect;
+    }
     TGXApp::AtomIterator ai = app.GetAtoms();
     while (ai.HasNext()) {
       TXAtom& xa = ai.Next();
       if (!xa.IsVisible()) {
         continue;
       }
-      if (xa.GetEllipsoid() != NULL) {
+      if (xa.GetEllipsoid() != 0) {
         app.GetRenderer().Select(xa, flag);
       }
     }
@@ -2410,7 +2418,9 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   else if (Cmds.Count() == 1 && Cmds[0].Equalsi("bonds")) {
-    if (flag == glSelectionNone) flag = glSelectionSelect;
+    if (flag == glSelectionNone) {
+      flag = glSelectionSelect;
+    }
     TGXApp::BondIterator bi = app.GetBonds();
     while (bi.HasNext()) {
       TXBond &b = bi.Next();
@@ -2540,28 +2550,33 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   else if (flag == glSelectionNone) {
-    size_t period=5;
-    TXAtomPList Atoms = app.FindXAtoms("sel", false, false);
-    if (Atoms.IsEmpty() && Cmds.Count() == 1) {
-      TGPCollection* gpc = app.GetRenderer().FindCollection(Cmds[0]);
-      if (gpc != NULL) {
-        for (size_t i = 0; i < gpc->ObjectCount(); i++) {
-          app.GetRenderer().Select(gpc->GetObject(i));
+    if (Cmds.IsEmpty()) {
+      size_t period = 5;
+      TXAtomPList Atoms = app.FindXAtoms("sel", false, false);
+      if (Atoms.IsEmpty() && Cmds.Count() == 1) {
+        TGPCollection* gpc = app.GetRenderer().FindCollection(Cmds[0]);
+        if (gpc != NULL) {
+          for (size_t i = 0; i < gpc->ObjectCount(); i++) {
+            app.GetRenderer().Select(gpc->GetObject(i));
+          }
+          return;
         }
-        return;
+      }
+      for (size_t i = 0; i <= Atoms.Count(); i += period) {
+        olxstr Tmp;
+        for (size_t j = 0; j < period; j++) {
+          if ((j + i) >= Atoms.Count()) {
+            break;
+          }
+          Tmp << Atoms[i + j]->GetGuiLabel();
+          Tmp.RightPadding((j + 1) * 14, ' ', true);
+        }
+        if (!Tmp.IsEmpty()) {
+          TBasicApp::NewLogEntry() << Tmp;
+        }
       }
     }
-    for (size_t i=0; i <= Atoms.Count(); i+=period) {
-      olxstr Tmp;
-      for( size_t j=0; j < period; j++ )  {
-        if( (j+i) >= Atoms.Count() )  break;
-        Tmp << Atoms[i+j]->GetGuiLabel();
-        Tmp.RightPadding((j+1)*14, ' ', true);
-      }
-      if (!Tmp.IsEmpty())
-        TBasicApp::NewLogEntry() << Tmp;
-    }
-    if (!Cmds.IsEmpty()) {
+    else { // !Cmds.IsEmpty()
       size_t whereIndex = Cmds.IndexOf("where");
       if (whereIndex >= 1 && whereIndex != InvalidIndex) {
         olxstr Tmp = Cmds[whereIndex-1];
@@ -5814,6 +5829,126 @@ void GXLibMacros::macMSDSView(TStrObjList &Cmds, const TParamList &Options,
   obj->SetAnhType(anh_type);
   obj->Create();
   if (add) {
+    app.AddObjectToCreate(obj);
+  }
+}
+//.............................................................................
+void GXLibMacros::macLpln(TStrObjList &Cmds, const TParamList &Options,
+  TMacroData &Error)
+{
+  vec3d idx(Cmds[0].ToDouble(), Cmds[1].ToDouble(), Cmds[2].ToDouble());
+  const TAsymmUnit &au = app.XFile().GetAsymmUnit();
+  mat3d cc = au.GetCellToCartesian();
+  vec3d o(0);
+  vec3d cps[6][4] = {
+    {0, cc[0], cc[0] + cc[1], cc[1]}, // a-b
+    {0, cc[0], cc[0] + cc[2], cc[2]}, // a-c
+    {0, cc[1], cc[1] + cc[2], cc[2]}, // b-c
+    {cc[2], cc[0] + cc[2], cc[0] + cc[1] + cc[2], cc[1] + cc[2]}, // a-b
+    {cc[1], cc[0]+ cc[1], cc[0] + cc[1] + cc[2], cc[2] + cc[1]}, // a-c
+    {cc[0], cc[1] + cc[0], cc[0] + cc[1] + cc[2], cc[2] + cc[0]}, // b-c
+  };
+
+  vec3d pn, p;
+  if (idx[0] == 0) {
+    if (idx[1] == 0) {
+      p = cc[2] / idx[2];
+      pn = cc[0].XProdVec(cc[1]);
+    }
+    else if (idx[2] == 0) {
+      p = cc[1] / idx[1];
+      pn = cc[0].XProdVec(cc[2]);
+    }
+    else {
+      p = cc[1] / idx[1];
+      pn = (cc[2] / idx[2] - p).XProdVec((cc[2] / idx[2] + cc[0]) - p);
+    }
+  }
+  else if (idx[1] == 0) {
+    if (idx[2] == 0) {
+      p = cc[0] / idx[0];
+      pn = cc[1].XProdVec(cc[2]);
+    }
+    else {
+      p = cc[0] / idx[0];
+      pn = (cc[2] / idx[2] - p).XProdVec((cc[2] / idx[0] + cc[1]) - p);
+    }
+  }
+  else if (idx[2] == 0) {
+    p = cc[0] / idx[0];
+    pn = (cc[1] / idx[1] - p).XProdVec((cc[1] / idx[1] + cc[2]) - p);
+  }
+  else {
+    p = cc[1] / idx[1];
+    pn = (cc[2]/idx[2] - p).XProdVec(cc[0]/idx[0] - p);
+  }
+  vec3d_list ipts;
+  double dn = pn.DotProd(p);
+  for (size_t i = 0; i < 6; i++) {
+    vec3d cpn = (cps[i][2] - cps[i][1]).XProdVec(cps[i][0] - cps[i][1]);
+    double cdn = cpn.DotProd(cps[i][3]);
+    if (cpn.DotProd(pn) == 0) {
+      continue;
+    }
+    //http://paulbourke.net/geometry/pointlineplane/
+    double ndp = pn.DotProd(cpn),
+      pn_ql = pn.QLength(),
+      cpn_ql = cpn.QLength();
+    double dv = pn_ql*cpn_ql - olx_sqr(ndp);
+    double c1 = (dn * cpn_ql - cdn * ndp)/dv,
+      c2 = (cdn * pn_ql - dn * ndp)/dv;
+    vec3d lo = pn * c1 + cpn * c2, // line origin
+      ld = pn.XProdVec(cpn); // line direction;
+    // test intersection with plane lines defining the cell face
+    for (size_t j = 0; j < 5; j++) {
+      size_t k = j == 4 ? 0 : j + 1;
+      vec3d clo = cps[i][j];
+      vec3d cld = cps[i][k] - cps[i][j];
+      vec3d od = lo - clo;
+      double d1343 = od.DotProd(cld);
+      double d4321 = cld.DotProd(ld);
+      double d1321 = od.DotProd(ld);
+      double d2121 = ld.QLength();
+      double d4343 = cld.QLength();
+      double denom = d2121 * d4343 - d4321 * d4321;
+      if (olx_abs(denom) < 1e-6) {
+        continue;
+      }
+      double numer = d1343 * d4321 - d1321 * d4343;
+      double mua = numer / denom;
+      double mub = (d1343 + d4321 * mua) / d4343;
+
+      vec3d pa = lo + ld * mua;
+      vec3d pb = clo + cld * mub;
+      if (pa.Equals(pb, 1e-6)) {
+        double qd1 = olx_sqr(pa.DistanceTo(cps[i][j]) + pa.DistanceTo(cps[i][k]));
+        double qd2 = cps[i][j].QDistanceTo(cps[i][k]);
+        if (olx_feq(qd1, qd2, 1e-6)) {
+          ipts.AddCopy(pa);
+        }
+      }
+    }
+  }
+  QuickSorter::Sort(ipts, TComparableComparator());
+  for (size_t i = 0; i < ipts.Count(); i++) {
+    size_t j = i;
+    while (++i < ipts.Count() && ipts[i].Equals(ipts[j], 1e-6)) {
+      ipts.NullItem(i);
+    }
+  }
+  ipts.Pack();
+  if (ipts.Count() > 2) {
+    vec3d centre = olx_mean(ipts);
+    olx_object_ptr<vec3f_alist> normals = new vec3f_alist(1);
+    normals()[0] = pn.Normalise();
+    olx_plane::Sort(ipts, DummyAccessor(), centre, pn);
+    TDUserObj *obj = new TDUserObj(app.GetRenderer(), sgloPolygon,
+      olxstr("lpln_") << idx.ToString());
+    obj->SetVertices(&vec3f_alist::FromList(ipts, DummyAccessor()).Release());
+    obj->SetNormals(normals.release());
+    olxstr dm = "255;4290805760;4290805760;4286611584;4286611584;4290822336;4290822336;24;24";
+    obj->SetMaterial(TGlMaterial(dm));
+    obj->Create();
     app.AddObjectToCreate(obj);
   }
 }

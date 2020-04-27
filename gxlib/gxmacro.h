@@ -50,6 +50,7 @@ public:
   DefMacro(Matr)
   DefMacro(Line)
   DefMacro(Mpln)
+  DefMacro(Lpln)
   DefMacro(Cent)
   DefMacro(SetView)
   DefMacro(ChemDraw)

@@ -2374,7 +2374,9 @@ void XLibMacros::macLstIns(TStrObjList &Cmds, const TParamList &Options, TMacroD
 void XLibMacros::macAddIns(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
-  if (!TXApp::GetInstance().CheckFileType<TIns>()) return;
+  if (!TXApp::GetInstance().CheckFileType<TIns>()) {
+    return;
+  }
   /* if instruction is parsed, it goes to current model, otherwise it stays in
   the ins file
   */
