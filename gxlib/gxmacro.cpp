@@ -5883,43 +5883,21 @@ void GXLibMacros::macLpln(TStrObjList &Cmds, const TParamList &Options,
     pn = (cc[2]/idx[2] - p).XProdVec(cc[0]/idx[0] - p);
   }
   vec3d_list ipts;
-  double dn = pn.DotProd(p);
   for (size_t i = 0; i < 6; i++) {
     vec3d cpn = (cps[i][2] - cps[i][1]).XProdVec(cps[i][0] - cps[i][1]);
     double cdn = cpn.DotProd(cps[i][3]);
-    if (cpn.DotProd(pn) == 0) {
+    vec3d lo, ld;
+    if (!gl_alg<>::PlanePlaneIntersect(p, pn, cdn, cpn, lo, ld)) {
       continue;
     }
-    //http://paulbourke.net/geometry/pointlineplane/
-    double ndp = pn.DotProd(cpn),
-      pn_ql = pn.QLength(),
-      cpn_ql = cpn.QLength();
-    double dv = pn_ql*cpn_ql - olx_sqr(ndp);
-    double c1 = (dn * cpn_ql - cdn * ndp)/dv,
-      c2 = (cdn * pn_ql - dn * ndp)/dv;
-    vec3d lo = pn * c1 + cpn * c2, // line origin
-      ld = pn.XProdVec(cpn); // line direction;
-    // test intersection with plane lines defining the cell face
     for (size_t j = 0; j < 5; j++) {
       size_t k = j == 4 ? 0 : j + 1;
       vec3d clo = cps[i][j];
       vec3d cld = cps[i][k] - cps[i][j];
-      vec3d od = lo - clo;
-      double d1343 = od.DotProd(cld);
-      double d4321 = cld.DotProd(ld);
-      double d1321 = od.DotProd(ld);
-      double d2121 = ld.QLength();
-      double d4343 = cld.QLength();
-      double denom = d2121 * d4343 - d4321 * d4321;
-      if (olx_abs(denom) < 1e-6) {
+      vec3d pa, pb;
+      if (!gl_alg<>::LineLineIntersect(lo, ld, clo, cld, pa, pb)) {
         continue;
       }
-      double numer = d1343 * d4321 - d1321 * d4343;
-      double mua = numer / denom;
-      double mub = (d1343 + d4321 * mua) / d4343;
-
-      vec3d pa = lo + ld * mua;
-      vec3d pb = clo + cld * mub;
       if (pa.Equals(pb, 1e-6)) {
         double qd1 = olx_sqr(pa.DistanceTo(cps[i][j]) + pa.DistanceTo(cps[i][k]));
         double qd2 = cps[i][j].QDistanceTo(cps[i][k]);

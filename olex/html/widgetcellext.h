@@ -57,7 +57,7 @@ public:
     wxHtmlRenderingInfo& WXUNUSED(info))
   {
     wxRect csz = m_Wnd->GetRect(),
-      nsz = nsz = CalcRect();
+      nsz = CalcRect();
     if (csz != nsz) {
       m_Wnd->SetSize(nsz);
     }

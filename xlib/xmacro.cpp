@@ -9781,10 +9781,10 @@ void XLibMacros::macSplit(TStrObjList &Cmds, const TParamList &Options,
       rm.rISOR.AddNew().AddAtomPair(CA1, 0, CA2, 0);
     }
     if (restraints.Contains("simu")) {
-      &rm.rSIMU.AddNew().AddAtomPair(CA1, 0, CA2, 0);
+      rm.rSIMU.AddNew().AddAtomPair(CA1, 0, CA2, 0);
     }
     if (restraints.Contains("delu")) {
-      &rm.rDELU.AddNew().AddAtomPair(CA1, 0, CA2, 0);
+      rm.rDELU.AddNew().AddAtomPair(CA1, 0, CA2, 0);
     }
   }
   if (same) {

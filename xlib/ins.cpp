@@ -29,6 +29,7 @@
 #include "label_corrector.h"
 #include "estopwatch.h"
 #include "absorpc.h"
+#include "utf8file.h"
 
 #undef AddAtom
 #undef GetObject
@@ -604,13 +605,14 @@ void TIns::_ReadExtras(TStrList &l, ParseContext &cx) {
     }
     else if (l[i].Contains("Refinement Information")) {
       size_t j = i;
-      while (++j < l.Count() && l[j].StartsFrom("REM ")) {
-        size_t eq_idx = l[j].FirstIndexOf('=', 4);
+      while (++j < l.Count() && l[j].TrimWhiteChars().StartsFrom("REM ")) {
+        olxstr s = l[j].TrimWhiteChars();
+        size_t eq_idx = s.FirstIndexOf('=', 4);
         if (eq_idx == InvalidIndex) {
           break;
         }
-        RefinementInfo(l[j].SubString(4, eq_idx - 4).TrimWhiteChars(),
-          l[j].SubStringFrom(eq_idx + 1).TrimWhiteChars());
+        RefinementInfo(s.SubString(4, eq_idx - 4).TrimWhiteChars(),
+          s.SubStringFrom(eq_idx + 1).TrimWhiteChars());
       }
       if (j == l.Count()) {
         j--;
@@ -1407,7 +1409,7 @@ void TIns::SaveForSolution(const olxstr& FileName, const olxstr& sMethod,
   SL.Add("HKLF ") << RefMod.GetHKLFStr();
   SL.Add("END");
 #ifdef _UNICODE
-  TEFile::WriteLines(FileName, TCStrList(SL));
+  TUtf8File::WriteLines(FileName, SL);
 #else
   TEFile::WriteLines(FileName, SL);
 #endif
