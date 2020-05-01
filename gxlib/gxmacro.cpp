@@ -182,7 +182,8 @@ void GXLibMacros::Export(TLibrary& lib) {
     "values pecify the view normal and nine values provide a full matrix");
   gxlib_InitMacro(Line,
     "n-just sets current view normal to the line without creating the object&;"
-    "f-consider input in fractional coordinates vs Cartesian",
+    "f-consider input in fractional coordinates vs Cartesian&;"
+    "e-adds esd to the value",
     fpAny,
     "Creates a line or best line for provided atoms");
   gxlib_InitMacro(Mpln,
@@ -1832,8 +1833,9 @@ void GXLibMacros::macLine(TStrObjList &Cmds, const TParamList &Options,
     process_atoms = false;
   }
   TXAtomPList Atoms;
-  if (process_atoms)
+  if (process_atoms) {
     Atoms = app.FindXAtoms(Cmds, true, true);
+  }
   if (Atoms.Count() > 2) {
     TSAtomPList satoms(Atoms, StaticCastAccessor<TSAtom>());
     mat3d params;
@@ -1845,8 +1847,7 @@ void GXLibMacros::macLine(TStrObjList &Cmds, const TParamList &Options,
       if (v.QLength() < 0.0001) continue;
       const double ca = params[2].CAngle(v);
       const double l = v.Length()*ca;
-      if (l > maxl) maxl = l;
-      if (l < minl) minl = l;
+      olx_update_min_max(l, minl, maxl);
     }
     from = center+params[2]*minl;
     to = center+params[2]*maxl;
@@ -1867,10 +1868,17 @@ void GXLibMacros::macLine(TStrObjList &Cmds, const TParamList &Options,
     return;
   }
   olxstr name = Options.FindValue('n');
-  if (Options.Contains('n') && name.IsEmpty())
-    app.GetRenderer().GetBasis().OrientNormal(to-from);
-  else
-    app.AddLine(name, from, to);
+  if (Options.Contains('n') && name.IsEmpty()) {
+    app.GetRenderer().GetBasis().OrientNormal(to - from);
+  }
+  else {
+    if (Options.GetBoolOption('e') && Atoms.Count() == 2) {
+      app.AddLine(name, *Atoms[0], *Atoms[1]);
+    }
+    else {
+      app.AddLine(name, from, to);
+    }
+  }
   app.Draw();
 }
 //.............................................................................

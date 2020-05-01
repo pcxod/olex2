@@ -2680,7 +2680,7 @@ TXLine *TGXApp::AddLine(const olxstr& Name, const vec3d& base, const vec3d& edge
     if (!gpc->GetObject(0).Is<TXLine>()) {
       TBasicApp::NewLogEntry(logError) << "The given collection name is alreay"
         " in use by other object type";
-      return NULL;
+      return 0;
     }
   }
   TXLine *XL = new TXLine(*GlRenderer,
@@ -2690,18 +2690,30 @@ TXLine *TGXApp::AddLine(const olxstr& Name, const vec3d& base, const vec3d& edge
   return &Lines.Add(XL);
 }
 //..............................................................................
+TXLine* TGXApp::AddLine(const olxstr& Name, const TSAtom& base, const TSAtom& edge) {
+  TXLine* x = AddLine(Name, base.crd(), edge.crd());
+  VcoVContainer vcovc(XFile().GetAsymmUnit());
+  TEValueD y = vcovc.CalcDistance(base, edge);
+  x->GetGlLabel().SetLabel(y.ToString());
+  return x;
+}
+//..............................................................................
 AGDrawObject* TGXApp::FindLooseObject(const olxstr &Name)  {
-  for( size_t i=0; i < LooseObjects.Count(); i++ )
-    if( LooseObjects[i]->GetPrimitives().GetName().Equalsi(Name) )
+  for (size_t i = 0; i < LooseObjects.Count(); i++) {
+    if (LooseObjects[i]->GetPrimitives().GetName().Equalsi(Name)) {
       return LooseObjects[i];
-  return NULL;
+    }
+  }
+  return 0;
 }
 //..............................................................................
 TDUserObj* TGXApp::FindUserObject(const olxstr &Name)  {
-  for( size_t i=0; i < UserObjects.Count(); i++ )
-    if( UserObjects[i].GetPrimitives().GetName().Equalsi(Name) )
+  for (size_t i = 0; i < UserObjects.Count(); i++) {
+    if (UserObjects[i].GetPrimitives().GetName().Equalsi(Name)) {
       return &UserObjects[i];
-  return NULL;
+    }
+  }
+  return 0;
 }
 //..............................................................................
 TSPlane *TGXApp::TmpPlane(const TXAtomPList* atoms, double weightExtent) {
