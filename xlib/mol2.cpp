@@ -120,8 +120,9 @@ void TMol2::LoadFromStrings(const TStrList& Strings) {
         break;
       }
       TStrList toks(line, ' ');
-      if (toks.Count() < 4)
+      if (toks.Count() < 4) {
         continue;
+      }
       TMol2Bond& MB = Bonds.Add(new TMol2Bond(Bonds.Count()));
       MB.a1 = toks[1].ToSizeT();
       MB.a2 = toks[2].ToSizeT();
@@ -143,7 +144,7 @@ bool TMol2::Adopt(TXFile &XF, int flags) {
   size_t id = 0;
   for (size_t i=0; i < objects.atoms.Count(); i++) {
     TSAtom& sa = objects.atoms[i];
-    if (!sa.IsAvailable() || (flags != 0 && !sa.IsAUAtom())) {
+    if (!sa.IsAvailable() || (flags == 0 && !sa.IsAUAtom())) {
       sa.SetTag(-1);
       continue;
     }

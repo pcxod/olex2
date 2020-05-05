@@ -2306,8 +2306,9 @@ void XLibMacros::macFile(TStrObjList &Cmds, const TParamList &Options,
   if (!removedSAtoms.IsEmpty()) {  // need to restore, a bit of mess here...
     ASObjectProvider& objects = XApp.XFile().GetLattice().GetObjects();
     for (size_t i = 0; i < objects.atoms.Count(); i++) {
-      if (removedSAtoms.Get(i))
+      if (removedSAtoms.Get(i)) {
         objects.atoms[i].SetDeleted(false);
+      }
     }
     TAsymmUnit& au = XApp.XFile().GetAsymmUnit();
     for (size_t i = 0; i < au.AtomCount(); i++) {

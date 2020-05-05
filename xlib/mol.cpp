@@ -127,7 +127,7 @@ bool TMol::Adopt(TXFile& XF, int flags) {
   size_t id = 0;
   for (size_t i=0; i < objects.atoms.Count(); i++) {
     TSAtom& sa = objects.atoms[i];
-    if (!sa.IsAvailable() || (flags !=0 && !sa.IsAUAtom())) {
+    if (!sa.IsAvailable() || (flags == 0 && !sa.IsAUAtom())) {
       sa.SetTag(-1);
       continue;
     }
