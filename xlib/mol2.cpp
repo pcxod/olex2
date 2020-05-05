@@ -137,13 +137,16 @@ void TMol2::LoadFromStrings(const TStrList& Strings) {
 }
 
 //..............................................................................
-bool TMol2::Adopt(TXFile &XF, int) {
+bool TMol2::Adopt(TXFile &XF, int flags) {
   Clear();
   const ASObjectProvider& objects = XF.GetLattice().GetObjects();
   size_t id = 0;
   for (size_t i=0; i < objects.atoms.Count(); i++) {
     TSAtom& sa = objects.atoms[i];
-    if (!sa.IsAvailable()) continue;
+    if (!sa.IsAvailable() || (flags != 0 && !sa.IsAUAtom())) {
+      sa.SetTag(-1);
+      continue;
+    }
     TCAtom& a = GetAsymmUnit().NewAtom();
     a.SetLabel(sa.GetLabel(), false);
     a.ccrd() = sa.crd();
@@ -153,13 +156,17 @@ bool TMol2::Adopt(TXFile &XF, int) {
   }
   for (size_t i=0; i < objects.bonds.Count(); i++) {
     TSBond& sb = objects.bonds[i];
-    if (!sb.IsAvailable()) continue;
+    if (!sb.IsAvailable() || sb.A().GetTag() < 0 || sb.B().GetTag() < 0) {
+      continue;
+    }
     TMol2Bond& mb = Bonds.AddNew(Bonds.Count());
     mb.a1 = sb.A().GetTag();
     mb.a2 = sb.B().GetTag();
     mb.BondType = TSBond::PercieveOrder(sb.A().GetType(), sb.B().GetType(),
       sb.Length());
-    if (mb.BondType == 0) mb.BondType = 1;
+    if (mb.BondType == 0) {
+      mb.BondType = 1;
+    }
   }
   GetAsymmUnit().SetZ((double)XF.GetLattice().GetUnitCell().MatrixCount());
   return true;

@@ -884,7 +884,7 @@ void TXFile::SaveToFile(const olxstr& FN, int flags) {
   TBasicCFile *LL = FLastLoader;
   if (!Loader->IsNative()) {
     if (LL != Loader) {
-      if (!Loader->Adopt(*this, 1)) {
+      if (!Loader->Adopt(*this, flags)) {
         throw TFunctionFailedException(__OlxSourceInfo,
           "could not adopt specified file format");
       }
@@ -896,7 +896,7 @@ void TXFile::SaveToFile(const olxstr& FN, int flags) {
     //  Loader->GetAsymmUnit().Sort();
   }
   OnFileSave.Enter(this);
-  IOlxObject* Cause = NULL;
+  IOlxObject* Cause = 0;
   try {
     if (!TBasicApp::GetInstance().GetOptions()
       .FindValue("absolute_hkl_path", FalseString()).ToBool())

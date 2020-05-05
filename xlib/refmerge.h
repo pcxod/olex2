@@ -13,7 +13,7 @@
 #include "estopwatch.h"
 BeginXlibNamespace()
 
-struct MergeStats  {
+struct MergeStats {
   double Rint, Rsigma, MeanIOverSigma;
   size_t
     SystematicAbsencesRemoved,
@@ -28,7 +28,7 @@ struct MergeStats  {
   double IndependentReflections;
   bool FriedelOppositesMerged;
   vec3i MinIndexes, MaxIndexes;
-  MergeStats()  {
+  MergeStats() {
     SetDefaults();
   }
   MergeStats(const MergeStats& ms) {
@@ -52,7 +52,7 @@ struct MergeStats  {
     IndependentReflections = ms.IndependentReflections;
     return *this;
   }
-  void SetDefaults()  {
+  void SetDefaults() {
     Rint = Rsigma = 0;
     MeanIOverSigma = 0;
     MinIndexes[0] = MinIndexes[1] = MinIndexes[2] = 100;
@@ -276,8 +276,9 @@ class RefMerger {
               mi_o_sig_cnt++;
             }
           }
-          if (ref->IsCentric())
+          if (ref->IsCentric()) {
             stats.CentricReflections += real_count;
+          }
           stats.UniqueReflections += real_count;
           stats.IndependentReflections +=
             (double)real_count / ref->GetMultiplicity();
@@ -655,24 +656,24 @@ public:
       }
       double sum_wght = 0, sum_wght_i = 0, sum_i = 0;
       for (size_t i = from; i < to; i++) {
-        const double w = 1. / (rl[i]->GetS() != 0 ? rl[i]->GetS() : 0.001);
+        const double w = 1. / olx_sqr(rl[i]->GetS() != 0 ? rl[i]->GetS() : 0.001);
         sum_wght += w;
         sum_wght_i += w*rl[i]->GetI();
         sum_i += rl[i]->GetI();
       }
       const double mean = sum_wght_i / sum_wght;
-      double sum_diff = 0, summ_i = 0, sig_top = 0;
+      double sum_diff = 0, sig_top = 0;
       for (size_t i = from; i < to; i++) {
         const double diff = rl[i]->GetI() - mean;
         sum_diff += (diff < 0 ? -diff : diff);
-        summ_i += rl[i]->GetI();
-        const double w = 1. / (rl[i]->GetS() != 0 ? rl[i]->GetS() : 0.001);
+        const double w = 1. / olx_sqr(rl[i]->GetS() != 0 ? rl[i]->GetS() : 0.001);
         sig_top += w*diff*diff;
       }
+      double s = sqrt(sig_top / (sum_wght * (cnt - 1)));
       return MergerOut(
         new TReflection(rl[from]->GetH(), rl[from]->GetK(), rl[from]->GetL(),
-          mean, 1. / sqrt(sum_wght)),
-        sqrt(sig_top / (sum_wght*(cnt - 1))),
+          mean, s),
+        s,
         sum_i,
         sum_diff
       );
@@ -687,24 +688,24 @@ public:
       }
       double sum_wght = 0, sum_wght_i = 0, sum_i = 0;
       for (size_t i = from; i < to; i++) {
-        const double w = 1. / (rl[i]->GetS() != 0 ? rl[i]->GetS() : 0.001);
+        const double w = 1. / olx_sqr(rl[i]->GetS() != 0 ? rl[i]->GetS() : 0.001);
         sum_wght += w;
         sum_wght_i += w*rl[i]->GetI();
         sum_i += rl[i]->GetI();
       }
       const double mean = sum_wght_i / sum_wght;
-      double sum_diff = 0, summ_i = 0, sig_top = 0;
+      double sum_diff = 0, sig_top = 0;
       for (size_t i = from; i < to; i++) {
         const double diff = rl[i]->GetI() - mean;
         sum_diff += (diff < 0 ? -diff : diff);
-        summ_i += rl[i]->GetI();
-        const double w = 1. / (rl[i]->GetS() != 0 ? rl[i]->GetS() : 0.001);
+        const double w = 1. / olx_sqr(rl[i]->GetS() != 0 ? rl[i]->GetS() : 0.001);
         sig_top += w*diff*diff;
       }
+      double s = sqrt(sig_top / (sum_wght * (cnt - 1)));
       return DryMergerOut(
         mean,
-        1. / sqrt(sum_wght),
-        sqrt(sig_top / (sum_wght*(cnt - 1))),
+        s,
+        s,
         sum_i,
         sum_diff
       );

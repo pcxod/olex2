@@ -265,48 +265,34 @@ void TPdb::LoadFromStrings(const TStrList& Strings) {
   }
 }
 //..............................................................................
-bool TPdb::Adopt(TXFile& XF, int) {
+bool TPdb::Adopt(TXFile& XF, int flags) {
   Clear();
-  // init AU
-  GetAsymmUnit().GetAxes() = XF.GetAsymmUnit().GetAxes();
-  GetAsymmUnit().GetAxisEsds() = XF.GetAsymmUnit().GetAxisEsds();
-  GetAsymmUnit().GetAngles() = XF.GetAsymmUnit().GetAngles();
-  GetAsymmUnit().GetAngleEsds() = XF.GetAsymmUnit().GetAngleEsds();
-  for (size_t i = 0; i < XF.GetAsymmUnit().MatrixCount(); i++) {
-    GetAsymmUnit().AddMatrix(XF.GetAsymmUnit().GetMatrix(i));
-  }
-  GetAsymmUnit().SetLatt(XF.GetAsymmUnit().GetLatt());
-  GetAsymmUnit().SetZ((double)XF.GetLattice().GetUnitCell().MatrixCount());
-  GetAsymmUnit().InitMatrices();
-  for (size_t i = 1; i < XF.GetAsymmUnit().ResidueCount(); i++) {
-    TResidue &r = XF.GetAsymmUnit().GetResidue(i);
-    GetAsymmUnit().NewResidue(r.GetClassName(), r.GetNumber(),
-      r.GetAlias(), r.GetChainId());
-  }
-
-  const ASObjectProvider& objects = XF.GetLattice().GetObjects();
-  for (size_t i = 0; i < objects.atoms.Count(); i++) {
-    TSAtom& sa = objects.atoms[i];
-    if (!sa.IsAvailable() || sa.GetType() == iQPeakZ) {
-      continue;
+  GetRM().Assign(XF.GetRM(), true);
+  if (flags != 0) {
+    const ASObjectProvider& objects = XF.GetLattice().GetObjects();
+    for (size_t i = 0; i < objects.atoms.Count(); i++) {
+      TSAtom& sa = objects.atoms[i];
+      if (!sa.IsAvailable() || sa.GetType() == iQPeakZ || sa.IsAUAtom()) {
+        continue;
+      }
+      TResidue* r = 0;
+      if (sa.CAtom().GetResiId() != 0) {
+        TResidue& ar = XF.GetAsymmUnit().GetResidue(sa.CAtom().GetResiId());
+        r = GetAsymmUnit().FindResidue(ar.GetChainId(), ar.GetNumber());
+      }
+      TCAtom& a = GetAsymmUnit().NewAtom(r);
+      a.SetLabel(sa.GetLabel(), false);
+      a.ccrd() = sa.ccrd();
+      a.SetType(sa.GetType());
+      a.SetPart(sa.CAtom().GetPart());
+      TEllipsoid* se = sa.GetEllipsoid();
+      if (se == 0) {
+        continue;
+      }
+      TEllipsoid& e = GetAsymmUnit().NewEllp();
+      e = *se;
+      a.AssignEllp(&e);
     }
-    TResidue *r = 0;
-    if (sa.CAtom().GetResiId() != 0) {
-      TResidue &ar = XF.GetAsymmUnit().GetResidue(sa.CAtom().GetResiId());
-      r = GetAsymmUnit().FindResidue(ar.GetChainId(), ar.GetNumber());
-    }
-    TCAtom& a = GetAsymmUnit().NewAtom(r);
-    a.SetLabel(sa.GetLabel(), false);
-    a.ccrd() = sa.ccrd();
-    a.SetType(sa.GetType());
-    a.SetPart(sa.CAtom().GetPart());
-    TEllipsoid* se = sa.GetEllipsoid();
-    if (se == 0) {
-      continue;
-    }
-    TEllipsoid& e = GetAsymmUnit().NewEllp();
-    e = *se;
-    a.AssignEllp(&e);
   }
   return true;
 }

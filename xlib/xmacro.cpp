@@ -278,7 +278,8 @@ void XLibMacros::Export(TLibrary& lib)  {
     "selection or all atoms are considered");
   xlib_InitMacro(File,
     "s-sort the main residue of the asymmetric unit&;"
-    "p-coordinate precision for files supporting this option",
+    "p-coordinate precision for files supporting this option&;"
+    "a-save asymmetric unit only ",
     fpNone|fpOne|psFileLoaded,
     "Saves current model to a file. By default an ins file is saved and "
     "loaded");
@@ -414,7 +415,10 @@ void XLibMacros::Export(TLibrary& lib)  {
     "visible/selected atoms");
   xlib_InitMacro(RTab, EmptyString(), fpAny^(fpNone)|psCheckFileTypeIns,
     "Adds RTAB with given name (first argument) for provided atoms/selection");
-  xlib_InitMacro(HklMerge, "z-zero negative intensity", fpAny|psFileLoaded,
+  xlib_InitMacro(HklMerge,
+    "m-merger [shelx], standard, unit"
+    "z-zero negative intensity",
+    fpAny|psFileLoaded,
     "Merges current HKL file (ehco HKLSrc()) to given file name. "
     "Warning: if no arguments provided, the current file is overwritten");
   xlib_InitMacro(HklAppend, "h&;k&;l&;c", fpAny,
@@ -2297,7 +2301,7 @@ void XLibMacros::macFile(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   else {
-    XApp.XFile().SaveToFile(Tmp);
+    XApp.XFile().SaveToFile(Tmp, Options.GetBoolOption('a') ? 0 : 1);
   }
   if (!removedSAtoms.IsEmpty()) {  // need to restore, a bit of mess here...
     ASObjectProvider& objects = XApp.XFile().GetLattice().GetObjects();
@@ -6873,16 +6877,31 @@ void XLibMacros::macRTab(TStrObjList &Cmds, const TParamList &Options,
 void XLibMacros::macHklMerge(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &E)
 {
+  olxstr merger = Options.FindValue("m");
   TXFile& xf = TXApp::GetInstance().XFile();
   TRefList refs;
-  RefinementModel::HklStat ms =
-    xf.GetRM().GetRefinementRefList<
-    TUnitCell::SymmSpace,RefMerger::StandardMerger>(
-      xf.GetUnitCell().GetSymmSpace(), refs);
+
+  RefinementModel::HklStat ms;
+  if (merger.Equals("standard")) {
+    ms = xf.GetRM().GetRefinementRefList<
+      TUnitCell::SymmSpace, RefMerger::StandardMerger>(
+        xf.GetUnitCell().GetSymmSpace(), refs);
+  }
+  else if (merger.Equals("unit")) {
+    ms = xf.GetRM().GetRefinementRefList<
+      TUnitCell::SymmSpace, RefMerger::UnitMerger>(
+        xf.GetUnitCell().GetSymmSpace(), refs);
+  }
+  else { // default
+    ms = xf.GetRM().GetRefinementRefList<
+      TUnitCell::SymmSpace, RefMerger::ShelxMerger>(
+        xf.GetUnitCell().GetSymmSpace(), refs);
+  }
   if (Options.Contains('z')) {
     for (size_t i=0; i < refs.Count(); i++) {
-      if (refs[i].GetI() < 0)
+      if (refs[i].GetI() < 0) {
         refs[i].SetI(0);
+      }
     }
   }
   TTTable<TStrList> tab(6, 2);
@@ -8527,7 +8546,7 @@ void XLibMacros::macExport(TStrObjList &Cmds, const TParamList &Options,
   }
   cif_dp::cetTable* hklLoop = C.FindLoop("_refln");
   if (hklLoop == 0) {
-    hklLoop = C.FindLoopGlobal("_diffrn_refln", true);
+    hklLoop = C.FindLoop("_diffrn_refln");
   }
   if (hklLoop == 0) {
     cif_dp::cetStringList *ci = dynamic_cast<cif_dp::cetStringList *>(
@@ -8544,7 +8563,7 @@ void XLibMacros::macExport(TStrObjList &Cmds, const TParamList &Options,
       TEFile::WriteLines(hkl_name, lines);
       ci = dynamic_cast<cif_dp::cetStringList *>(
         C.FindEntry("_shelx_fab_file"));
-      if (ci != NULL) {
+      if (ci != 0) {
         TEFile::WriteLines(TEFile::ChangeFileExt(hkl_name, "fab"),
           TCStrList(ci->lines));
       }
@@ -8584,7 +8603,7 @@ void XLibMacros::macExport(TStrObjList &Cmds, const TParamList &Options,
   {
     cif_dp::cetStringList *ci = dynamic_cast<cif_dp::cetStringList *>(
       C.FindEntry("_shelx_fab_file"));
-    if (ci != NULL) {
+    if (ci != 0) {
       TEFile::WriteLines(TEFile::ChangeFileExt(hkl_name, "fab"),
         TCStrList(ci->lines));
     }
@@ -8633,7 +8652,7 @@ void XLibMacros::macExport(TStrObjList &Cmds, const TParamList &Options,
       ci = dynamic_cast<cif_dp::cetStringList *>(
         C.FindEntry("_iucr_refine_instructions_details"));
     }
-    if (ci != NULL) {
+    if (ci != 0) {
       TCStrList lines(ci->lines);
       TEFile::WriteLines(res_name, lines);
       if (check_md5) {
