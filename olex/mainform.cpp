@@ -3288,7 +3288,9 @@ void TMainForm::RefineDataTable(bool TableDef, bool Create)  {
 //..............................................................................
 void TMainForm::OnMouseWheel(int x, int y, double delta) {
   size_t ind = Bindings.IndexOf("wheel");
-  if (ind == InvalidIndex)  return;
+  if (ind == InvalidIndex) {
+    return;
+  }
   olxstr cmd = Bindings.GetValue(ind);
   ind = TOlxVars::VarIndex("core_wheel_step");
   const olxstr& step(ind == InvalidIndex ? EmptyString()
@@ -3297,7 +3299,10 @@ void TMainForm::OnMouseWheel(int x, int y, double delta) {
     delta *= step.ToDouble();
   }
   cmd << delta;
+  uint8_t ll = Macros.GetLogLevel();
+  Macros.SetLogLevel(0);
   processMacro(cmd);
+  Macros.SetLogLevel(ll);
 }
 //..............................................................................
 void TMainForm::OnMouseMove(int x, int y) {

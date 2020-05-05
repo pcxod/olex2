@@ -407,16 +407,17 @@ void XLibMacros::Export(TLibrary& lib)  {
     " for flat reqular 4 and 6 membored rings. Then it searches for atoms within "
     "[4] A from the ring centre and with less than [25] angle between the plane "
     "normal and the (plane center-atom) vectors.");
-  xlib_InitMacro(MolInfo, "g-generation of the triangluation [5]&;s-source "
-    "([o]ctahedron, (t)etrahedron) &;o-use occupancy of the atoms in the "
-    "integration",
+  xlib_InitMacro(MolInfo,
+    "g-generation of the triangluation [5]&;"
+    "s-source ([o]ctahedron, (t)etrahedron) &;"
+    "o-use occupancy of the atoms in the integration",
     fpAny|psFileLoaded,
     "Prints molecular volume, surface area and other information for "
     "visible/selected atoms");
   xlib_InitMacro(RTab, EmptyString(), fpAny^(fpNone)|psCheckFileTypeIns,
     "Adds RTAB with given name (first argument) for provided atoms/selection");
   xlib_InitMacro(HklMerge,
-    "m-merger [shelx], standard, unit"
+    "m-merger [shelx], standard, unit&;"
     "z-zero negative intensity",
     fpAny|psFileLoaded,
     "Merges current HKL file (ehco HKLSrc()) to given file name. "

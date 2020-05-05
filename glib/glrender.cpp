@@ -1638,6 +1638,16 @@ void TGlRenderer::LibFog(TStrObjList &Cmds, const TParamList &Options,
 void TGlRenderer::LibZoom(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &E)
 {
+  olxstr wv = Options.FindValue("wheel");
+  if (!wv.IsEmpty()) {
+    double df = 300;
+    if (Options.GetBoolOption('a')) {
+      df /= (CalcZoom() * 4);
+    }
+    SetZoom(GetZoom() + wv.ToDouble() / df);
+    TBasicApp::GetInstance().Update();
+    return;
+  }
   if (Cmds.IsEmpty()) {
     SetZoom(CalcZoom());
     return;
@@ -1840,7 +1850,8 @@ TLibrary*  TGlRenderer::ExportLibrary(const olxstr& name) {
   );
   lib->Register(
     new TMacro<TGlRenderer>(this, &TGlRenderer::LibZoom, "Zoom",
-      "a-[false] set absolute zoom value vs. relative",
+      "a-[false] set absolute zoom value vs. relative&;"
+      "wheel-use mouse wheel to set zoom",
       fpNone | fpOne | fpTwo,
       "If no arguments provided - resets zoom to fit to screen, otherwise "
       "increments/decrements current zoom by provided value (default) or "
