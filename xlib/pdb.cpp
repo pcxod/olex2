@@ -11,6 +11,7 @@
 #include "unitcell.h"
 #include "bapp.h"
 #include "log.h"
+#include "label_corrector.h"
 
 void TPdb::Clear()  {
   GetRM().Clear(rm_clear_ALL);
@@ -44,7 +45,7 @@ void TPdb::SaveToStrings(TStrList& Strings) {
     if (a.IsDeleted()) {
       continue;
     }
-    olxstr label = olxstr(a.GetType().symbol) << (i + 1);
+    olxstr label = a.GetLabel();
     vec3d crd = GetAsymmUnit().Orthogonalise(a.ccrd());
     TResidue &r = GetAsymmUnit().GetResidue(a.GetResiId());
     olxstr r_name = r.GetClassName();
@@ -154,12 +155,7 @@ void TPdb::LoadFromStrings(const TStrList& Strings) {
 
   Title = "OLEX2: imported from PDB";
   for (size_t i = 0; i < Strings.Count(); i++) {
-    size_t spi = Strings[i].FirstIndexOf(' ');
-    if (spi == InvalidIndex || spi == 0) {
-      continue;
-    }
-    olxstr line = Strings[i].SubStringTo(spi).UpperCase();
-    if (line == "CRYST1") {
+    if (Strings[i].StartsFromi("CRYST1")) {
       toks.StrtokF(Strings[i], CrystF);
       if (toks.Count() < 7) {
         throw TFunctionFailedException(__OlxSourceInfo, "parsing failed");
@@ -187,7 +183,7 @@ void TPdb::LoadFromStrings(const TStrList& Strings) {
         GetAsymmUnit().SetZ(toks[9].ToDouble());
       }
     }
-    else if (line == "ATOM") {
+    else if (Strings[i].StartsFromi("ATOM")) {
       toks.Clear();
       toks.StrtokF(Strings[i], AtomF);
       if (toks.Count() < 12) {
@@ -239,7 +235,7 @@ void TPdb::LoadFromStrings(const TStrList& Strings) {
         CA.SetPart((int)(toks[3].UpperCase().CharAt(0) - 'A' + 1));
       }
     }
-    else if (line == "ANISOU") {
+    else if (Strings[i].StartsFromi("ANISOU")) {
       toks.Clear();
       toks.StrtokF(Strings[i], AnisF);
       if (toks.Count() < 16) {
@@ -252,7 +248,7 @@ void TPdb::LoadFromStrings(const TStrList& Strings) {
       QE[4] = toks[14].ToDouble();
       QE[5] = toks[13].ToDouble();
       QE /= 10000;
-      TCAtom* ca = GetAsymmUnit().FindCAtomById(toks[1].ToInt() - 1);
+      TCAtom* ca = GetAsymmUnit().FindCAtomById(toks[1].ToSizeT() - 1);
       if (ca != 0) {
         ca->UpdateEllp(QE);
         if (ca->GetEllipsoid()->IsNPD()) {
@@ -269,6 +265,7 @@ bool TPdb::Adopt(TXFile& XF, int flags) {
   Clear();
   GetRM().Assign(XF.GetRM(), true);
   if (flags != 0) {
+    LabelCorrector cr(AsymmUnit, 4, true);
     const ASObjectProvider& objects = XF.GetLattice().GetObjects();
     for (size_t i = 0; i < objects.atoms.Count(); i++) {
       TSAtom& sa = objects.atoms[i];
@@ -285,6 +282,7 @@ bool TPdb::Adopt(TXFile& XF, int flags) {
       a.ccrd() = sa.ccrd();
       a.SetType(sa.GetType());
       a.SetPart(sa.CAtom().GetPart());
+      cr.Correct(a);
       TEllipsoid* se = sa.GetEllipsoid();
       if (se == 0) {
         continue;
