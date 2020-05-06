@@ -2361,7 +2361,8 @@ void TMainForm::macEditIns(TStrObjList &Cmds, const TParamList &Options, TMacroD
       // clear rems, as they are recreated
       for (size_t i = 0; i < Ins.InsCount(); i++) {
         if (Ins.InsName(i).Equalsi("REM")) {
-          Ins.DelIns(i--);  continue;
+          Ins.DelIns(i--);
+          continue;
         }
       }
       SL.Clear();

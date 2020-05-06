@@ -1974,6 +1974,10 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm,
     cx.rm.Vars.AddSUMP(cx.Sump[i]);
   }
   ParseRestraints(cx.rm, ins, false);
+  _ReadExtras(SL, cx);
+  if (!cx.Extras.IsEmpty()) {
+    cx.rm.ReadInsExtras(cx.Extras);
+  }
   ins.Pack();
   Instructions.AddAll(ins);
   for (size_t i = 0; i < atom_labels.Count(); i++) {
