@@ -34,14 +34,16 @@ TXBond::TXBond(TNetwork* net, TGlRenderer& R, const olxstr& collectionName)
 }
 //..............................................................................
 TXBond::~TXBond() {
-  if (GetParentGroup() != NULL) {
+  if (GetParentGroup() != 0) {
     GetParentGroup()->Remove(*this);
   }
   delete Label;
 }
 //..............................................................................
 void TXBond::Update() {
-  if( !IsValid() )  return;
+  if (!IsValid()) {
+    return;
+  }
   vec3d C = B().crd() - A().crd();
   if (C.IsNull()) {
     Params().Null();
@@ -104,8 +106,10 @@ void TXBond::Create(const olxstr& cName) {
   if (this->Is<TXBond>()) {
     olxstr strRef = GetRef().ToString();
     if (!cName.IsEmpty())  {
-      SetCollectionName(cName);
-      NamesRegistry().Add(strRef, Legend = cName, true);
+      SetCollectionName(Legend = cName);
+      if (GetLegend(*this, 0) != Legend) {
+        NamesRegistry().Add(strRef, Legend, true);
+      }
     }
     else {
       Legend = NamesRegistry().Find(strRef, EmptyString());

@@ -193,8 +193,10 @@ void TXAtom::Create(const olxstr& cName) {
   SetCreated(true);
   olxstr Legend, strRef = GetRef().ToString();
   if (!cName.IsEmpty()) {
-    SetCollectionName(cName);
-    NamesRegistry().Add(strRef, Legend = cName, true);
+    SetCollectionName(Legend = cName);
+    if (GetLegend(*this, 0) != Legend) {
+      NamesRegistry().Add(strRef, Legend, true);
+    }
   }
   else {
     Legend = NamesRegistry().Find(strRef, EmptyString());
