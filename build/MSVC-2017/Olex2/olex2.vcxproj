@@ -54,7 +54,7 @@
     <ProjectGuid>{E77DD146-78F9-4A48-8BC6-8792226C1670}</ProjectGuid>
     <RootNamespace>olex2</RootNamespace>
     <Keyword>ManagedCProj</Keyword>
-    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-release-d|Win32'" Label="Configuration">

@@ -618,9 +618,7 @@ void TLattice::DoGrow(const TSAtomPList& atoms, bool GrowShell,
           continue;
         }
         const smatd m = uc.MulMatrix(site.matrix, atoms[i]->GetMatrix());
-        if (Objects.atomRegistry.Find(
-          TSAtom::Ref(site.atom->GetId(), m.GetId())) != 0)
-        {
+        if (Objects.atomRegistry.Find(site.atom->GetId(), m.GetId()) != 0) {
           continue;
         }
         size_t mi = matrices.IndexOf(&m);
@@ -791,7 +789,7 @@ void TLattice::GrowAtoms(const TCAtomPList& atoms, const smatd_list& matrices) {
 //..............................................................................
 TSAtom *TLattice::GrowAtom(TCAtom& atom, const smatd& matrix) {
   // check if unique
-  TSAtom *a = GetAtomRegistry().Find(TSAtom::Ref(atom.GetId(), matrix.GetId()));
+  TSAtom *a = GetAtomRegistry().Find(atom.GetId(), matrix.GetId());
   if (a != 0 && !a->IsDeleted()) {
     return a;
   }
@@ -858,7 +856,7 @@ void TLattice::RestoreAtom(const TSAtom::Ref& id) {
   if (smatd::GetContainerId(id.matrix_id) >= GetUnitCell().MatrixCount()) {
     throw TInvalidArgumentException(__OlxSourceInfo, "matrix ID");
   }
-  if (id.catom_id >= GetAsymmUnit().AtomCount()) {
+  if (id.catom->GetId() >= GetAsymmUnit().AtomCount()) {
     throw TInvalidArgumentException(__OlxSourceInfo, "catom ID");
   }
   smatd* matr = 0;
@@ -880,7 +878,7 @@ void TLattice::RestoreAtom(const TSAtom::Ref& id) {
       break;
     }
   }
-  TSAtom& sa = GenerateAtom(GetAsymmUnit().GetAtom(id.catom_id), *matr);
+  TSAtom& sa = GenerateAtom(GetAsymmUnit().GetAtom(id.catom->GetId()), *matr);
   sa.CAtom().SetDeleted(false);
   sa.crd() += origin_shift;
 }
@@ -1087,7 +1085,12 @@ void TLattice::UpdatePlaneDefinitions() {
   PlaneDefs.ForEach(ACollectionItem::TagSetter(0));
   for (size_t i = 0; i < Objects.planes.Count(); i++) {
     TSPlane& sp = Objects.planes[i];
-    if (sp.IsDeleted() || sp.GetDefId() >= PlaneDefs.Count()) { // would be odd
+    if (sp.IsDeleted()) {
+      continue;
+    }
+    //check consistency
+    if (sp.GetDefId() >= PlaneDefs.Count()) {
+      sp.SetDeleted(true);
       continue;
     }
     PlaneDefs[sp.GetDefId()].IncTag();
@@ -1104,12 +1107,18 @@ void TLattice::UpdatePlaneDefinitions() {
   }
   for (size_t i = 0; i < Objects.planes.Count(); i++) {
     TSPlane& sp = Objects.planes[i];
-    if (sp.IsDeleted() || sp.GetDefId() >= PlaneDefs.Count()) { // would be odd
+    if (sp.IsDeleted()) {
       continue;
     }
     sp._SetDefId(ids[sp.GetDefId()]);
   }
   PlaneDefs.Pack();
+}
+//..............................................................................
+void TLattice::_OnAUChange() {
+  for (size_t i = 0; i < PlaneDefs.Count(); i++) {
+    PlaneDefs[i].Sort();
+  }
 }
 //..............................................................................
 void TLattice::UpdateAsymmUnit() {
@@ -2639,20 +2648,25 @@ void TLattice::ToDataItem(TDataItem& item) const {
   // initialise bond tags
   size_t sbond_tag = 0;
   for (size_t i = 0; i < Objects.bonds.Count(); i++) {
-    if (Objects.bonds[i].IsDeleted())  continue;
+    if (Objects.bonds[i].IsDeleted()) {
+      continue;
+    }
     Objects.bonds[i].SetTag(sbond_tag++);
   }
   // initialise atom tags
   size_t satom_tag = 0;
   for (size_t i = 0; i < Objects.atoms.Count(); i++) {
-    if (Objects.atoms[i].IsDeleted())  continue;
+    if (Objects.atoms[i].IsDeleted()) {
+      continue;
+    }
     Objects.atoms[i].SetTag(satom_tag++);
   }
   // initialise fragment tags
   size_t frag_tag = 0;
   Network->SetTag(-1);
-  for (size_t i = 0; i < Fragments.Count(); i++)
+  for (size_t i = 0; i < Fragments.Count(); i++) {
     Fragments[i]->SetTag(frag_tag++);
+  }
   // save satoms - only the original CAtom Tag and the generating matrix tag
   TDataItem& atoms = item.AddItem("Atoms");
   for (size_t i = 0; i < Objects.atoms.Count(); i++) {
@@ -2713,7 +2727,7 @@ void TLattice::ToDataItem(TDataItem& item) const {
   }
 }
 //..............................................................................
-void TLattice::FromDataItem(TDataItem& item)  {
+void TLattice::FromDataItem(const TDataItem& item) {
   TActionQueueLock ql(&OnAtomsDeleted);
   Clear(true);
   ClearPlaneDefinitions();
@@ -2723,7 +2737,7 @@ void TLattice::FromDataItem(TDataItem& item)  {
   GetUnitCell().InitMatrices();
   const TDataItem& mat = item.GetItemByName("Matrices");
   Matrices.SetCapacity(mat.ItemCount());
-  for( size_t i=0; i < mat.ItemCount(); i++ )  {
+  for (size_t i = 0; i < mat.ItemCount(); i++) {
     smatd* m = new smatd(
       TSymmParser::SymmToMatrix(mat.GetItemByIndex(i).GetValue()));
     GetUnitCell().InitMatrixId(*Matrices.Add(m));
@@ -2732,55 +2746,32 @@ void TLattice::FromDataItem(TDataItem& item)  {
   // precreate fragments
   const TDataItem& frags = item.GetItemByName("Fragments");
   Fragments.SetCapacity(frags.ItemCount());
-  for( size_t i=0; i < frags.ItemCount(); i++ )
-    Fragments.Add(new TNetwork(this, NULL));
+  for (size_t i = 0; i < frags.ItemCount(); i++) {
+    Fragments.Add(new TNetwork(this, 0));
+  }
   // precreate bonds
   const TDataItem& bonds = item.GetItemByName("Bonds");
   Objects.bonds.IncCapacity(bonds.ItemCount());
-  for( size_t i=0; i < bonds.ItemCount(); i++ )
-    Objects.bonds.New(NULL);
+  for (size_t i = 0; i < bonds.ItemCount(); i++) {
+    Objects.bonds.New(0);
+  }
   // precreate and load atoms
   const TDataItem& atoms = item.GetItemByName("Atoms");
   Objects.atoms.IncCapacity(atoms.ItemCount());
-  for( size_t i=0; i < atoms.ItemCount(); i++ )
-    Objects.atoms.New(NULL);
-  for( size_t i=0; i < atoms.ItemCount(); i++ )
+  for (size_t i = 0; i < atoms.ItemCount(); i++) {
+    Objects.atoms.New(0);
+  }
+  for (size_t i = 0; i < atoms.ItemCount(); i++) {
     Objects.atoms[i].FromDataItem(atoms.GetItemByIndex(i), *this);
+  }
   // load bonds
-  for( size_t i=0; i < bonds.ItemCount(); i++ )
+  for (size_t i = 0; i < bonds.ItemCount(); i++) {
     Objects.bonds[i].FromDataItem(bonds.GetItemByIndex(i), *this);
+  }
   // load fragments
-  for( size_t i=0; i < frags.ItemCount(); i++ )
+  for (size_t i = 0; i < frags.ItemCount(); i++) {
     Fragments[i]->FromDataItem(frags.GetItemByIndex(i));
-  TDataItem *plane_defs = item.FindAnyItem("Plane_defs");
-  if (plane_defs != 0) {
-    for (size_t i = 0; i < plane_defs->ItemCount(); i++) {
-      PlaneDefs.AddNew(plane_defs->GetItemByIndex(i));
-    }
   }
-  TDataItem& planes = item.GetItemByName("Planes");
-  for (size_t i=0; i < planes.ItemCount(); i++) {
-    TSPlane& p = Objects.planes.New(Network);
-    p.FromDataItem(planes.GetItemByIndex(i));
-    if (p.GetDefId() == InvalidIndex) {
-      TSPlane::Def def = p.GetDef();
-      size_t di = InvalidIndex;
-      for (size_t j = 0; j < PlaneDefs.Count(); j++) {
-        if (PlaneDefs[j] == def)  {
-          di = j;
-          break;
-        }
-      }
-      if (di == InvalidIndex) {
-        p._SetDefId(PlaneDefs.Count());
-        PlaneDefs.AddNew(def);
-      }
-      else {
-        p._SetDefId(di);
-      }
-    }
-  }
-  //FinaliseLoading();
 }
 //..............................................................................
 void TLattice::FinaliseLoading() {
@@ -2796,6 +2787,38 @@ void TLattice::FinaliseLoading() {
     }
   }
   BuildAtomRegistry();
+}
+//..............................................................................
+void TLattice::LoadPlanes_(const TDataItem& item) {
+  TDataItem* plane_defs = item.FindAnyItem("Plane_defs");
+  const TXApp& app = TXApp::GetInstance();
+  if (plane_defs != 0) {
+    for (size_t i = 0; i < plane_defs->ItemCount(); i++) {
+      PlaneDefs.AddNew(plane_defs->GetItemByIndex(i), app);
+    }
+  }
+  TDataItem& planes = item.GetItemByName("Planes");
+  for (size_t i = 0; i < planes.ItemCount(); i++) {
+    TSPlane& p = Objects.planes.New(Network);
+    p.FromDataItem(planes.GetItemByIndex(i), app);
+    if (p.GetDefId() == InvalidIndex) {
+      TSPlane::Def def = p.GetDef();
+      size_t di = InvalidIndex;
+      for (size_t j = 0; j < PlaneDefs.Count(); j++) {
+        if (PlaneDefs[j] == def) {
+          di = j;
+          break;
+        }
+      }
+      if (di == InvalidIndex) {
+        p._SetDefId(PlaneDefs.Count());
+        PlaneDefs.AddNew(def);
+      }
+      else {
+        p._SetDefId(di);
+      }
+    }
+  }
 }
 //..............................................................................
 void TLattice::SetGrowInfo(GrowInfo* grow_info)  {
@@ -3085,12 +3108,12 @@ void TLattice::BuildAtomRegistry() {
       const size_t atom_cnt = GetAsymmUnit().AtomCount();
       au_slice = ((*aum_slice)[c_id] = new TSAtomPList(atom_cnt));
     }
-    else if ((*au_slice)[refs[i].catom_id] != 0 &&
-      (*au_slice)[refs[i].catom_id] != sa)
+    else if ((*au_slice)[refs[i].catom->GetId()] != 0 &&
+      (*au_slice)[refs[i].catom->GetId()] != sa)
     {
-      (*au_slice)[refs[i].catom_id]->SetDeleted(true);
+      (*au_slice)[refs[i].catom->GetId()]->SetDeleted(true);
     }
-    (*au_slice)[refs[i].catom_id] = sa;
+    (*au_slice)[refs[i].catom->GetId()] = sa;
   }
 }
 //..............................................................................

@@ -82,3 +82,34 @@ short TSBond::PercieveOrder(const cm_Element &a,
   return 0;
 }
 //..............................................................................
+int TSBond::Ref::Compare(const Ref& r) const {
+  if (a <= b) {
+    if (r.a <= r.b) {
+      return cmp(a, r.a, b, r.b);
+    }
+    else {
+      return cmp(a, r.b, b, r.a);
+    }
+  }
+  else {
+    if (r.a <= r.b) {
+      return cmp(b, r.a, a, r.b);
+    }
+    else {
+      return cmp(b, r.b, a, r.a);
+    }
+  }
+  const int rv = a.Compare(r.a);
+  return rv == 0 ? b.Compare(r.b) : rv;
+}
+//..............................................................................
+void TSBond::Ref::ToDataItem(TDataItem& item, bool use_id) const {
+  a.ToDataItem(item.AddItem("a"), use_id);
+  b.ToDataItem(item.AddItem("b"), use_id);
+}
+//..............................................................................
+void TSBond::Ref::FromDataItem(const TDataItem& item, const class TXApp& app) {
+  a.FromDataItem(item.GetItemByName('a'), app);
+  b.FromDataItem(item.GetItemByName('b'), app);
+}
+//..............................................................................

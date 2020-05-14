@@ -38,7 +38,8 @@ public:
 const olxstr TAsymmUnit::IdName("catom");
 
 TAsymmUnit::TAsymmUnit(TLattice *L)
-  : MainResidue(*(new TResidue(*this, 0, EmptyString(), 0, 0, TResidue::NoChainId()))),
+  : Id(InvalidIndex),
+  MainResidue(*(new TResidue(*this, 0, EmptyString(), 0, 0, TResidue::NoChainId()))),
   OnSGChange(Actions.New("AU_SG_CHANGE"))
 {
   Lattice = L;
@@ -609,8 +610,9 @@ void TAsymmUnit::DetachAtomType(short type, bool detach) {
 }
 //..............................................................................
 void TAsymmUnit::PackAtoms() {
-  for (size_t i = 0; i < Residues.Count(); i++)
+  for (size_t i = 0; i < Residues.Count(); i++) {
     GetResidue(i).Atoms.Pack(TCAtom::FlagsAnalyser(catom_flag_Deleted));
+  }
   CAtoms.Pack(TCAtom::FlagsAnalyser(catom_flag_Deleted));
   for (size_t i = 0; i < CAtoms.Count(); i++) {
     CAtoms[i]->SetId(i);
@@ -627,10 +629,10 @@ TEllipsoid& TAsymmUnit::NewEllp() {
 void TAsymmUnit::PackEllps() {
   size_t removed = 0;
   for (size_t i = 0; i < Ellipsoids.Count(); i++) {
-    if (Ellipsoids[i] == NULL)  {
+    if (Ellipsoids[i] == 0) {
       for (size_t j = 0; j < CAtoms.Count(); j++) {
         if (olx_is_valid_index(CAtoms[j]->GetEllpId()) &&
-          CAtoms[j]->GetEllpId() >(i - removed))
+          CAtoms[j]->GetEllpId() > (i - removed))
         {
           CAtoms[j]->SetEllpId(CAtoms[j]->GetEllpId() - 1);
         }
@@ -647,7 +649,7 @@ void TAsymmUnit::PackEllps() {
 }
 //..............................................................................
 void TAsymmUnit::NullEllp(size_t i) {
-  if (Ellipsoids[i] != NULL) {
+  if (Ellipsoids[i] != 0) {
     delete Ellipsoids[i];
     Ellipsoids[i] = 0;
   }
@@ -665,9 +667,15 @@ vec3d TAsymmUnit::GetOCenter(bool IncludeQ, bool IncludeH) const {
   vec3d P;
   double wght = 0;
   for (size_t i = 0; i < AtomCount(); i++) {
-    if (CAtoms[i]->IsDeleted())  continue;
-    if (!IncludeQ && CAtoms[i]->GetType() == iQPeakZ)  continue;
-    if (!IncludeH && CAtoms[i]->GetType() == iHydrogenZ)  continue;
+    if (CAtoms[i]->IsDeleted()) {
+      continue;
+    }
+    if (!IncludeQ && CAtoms[i]->GetType() == iQPeakZ) {
+      continue;
+    }
+    if (!IncludeH && CAtoms[i]->GetType() == iHydrogenZ) {
+      continue;
+    }
     P += CAtoms[i]->ccrd()*CAtoms[i]->GetOccu();
     wght += CAtoms[i]->GetOccu();
   }
@@ -1074,6 +1082,16 @@ void TAsymmUnit::FitAtoms(TTypeList<AnAssociation3<TCAtom*, const cm_Element*,
   }
 }
 //..............................................................................
+void TAsymmUnit::SetAtomTags_() {
+  size_t aid = 0;
+  for (size_t i = 0; i < ResidueCount(); i++) {
+    TResidue& r = GetResidue(i);
+    for (size_t j = 0; j < r.Count(); j++) {
+      r[j].SetTag(r[j].IsDeleted() ? -1 : aid++);
+    }
+  }
+}
+//..............................................................................
 void TAsymmUnit::ToDataItem(TDataItem& item) const {
   TDataItem& cell = item.AddItem("cell");
   cell.AddField("a", TEValueD(Axes[0], AxisEsds[0]).ToString());
@@ -1309,6 +1327,9 @@ void TAsymmUnit::RearrangeAtoms(const TSizeList &indices) {
     mr[i]->SetResiId(0);
   }
   MainResidue.AddAll(mr);
+  if (Lattice != 0) {
+    Lattice->_OnAUChange();
+  }
 }
 //..............................................................................
 //..............................................................................

@@ -31,14 +31,14 @@ TBasicCFile::TBasicCFile()
   AsymmUnit.SetRefMod(&RefMod);
 }
 //..............................................................................
-TBasicCFile::~TBasicCFile()  {
+TBasicCFile::~TBasicCFile() {
   /* this must be called, as the AU might get destroyed beforehand and then
   AfixGroups cause crash
   */
   RefMod.Clear(rm_clear_ALL);
 }
 //..............................................................................
-void TBasicCFile::SaveToFile(const olxstr& fn)  {
+void TBasicCFile::SaveToFile(const olxstr& fn) {
   TStopWatch sw(__FUNC__);
   TStrList L;
   sw.start("Saving to strings...");
@@ -46,7 +46,7 @@ void TBasicCFile::SaveToFile(const olxstr& fn)  {
   sw.start("UTF8 encoding to file");
   TUtf8File::WriteLines(fn, L, false);
   FileName = fn;
-};
+}
 //..............................................................................
 void TBasicCFile::PostLoad() {
   /* fix labels for not native formats, will not help for FE1A, because it
@@ -103,8 +103,8 @@ void TBasicCFile::LoadStrings(const TStrList &lines, const olxstr &nameToken) {
   PostLoad();
 }
 //..............................................................................
-void TBasicCFile::LoadFromFile(const olxstr& _fn)  {
-  TStopWatch(__FUNC__);
+void TBasicCFile::LoadFromFile(const olxstr& _fn) {
+  TStopWatch sw(__FUNC__);
   TXFile::NameArg file_n(_fn);
   TEFile::CheckFileExists(__OlxSourceInfo, file_n.file_name);
   TStrList L = TEFile::ReadLines(file_n.file_name);
@@ -163,6 +163,7 @@ void TBasicCFile::RearrangeAtoms(const TSizeList & new_indices) {
 TXFile::TXFile(ASObjectProvider& Objects) :
   Lattice(Objects),
   RefMod(Lattice.GetAsymmUnit()),
+  data_source(0),
   OnFileLoad(Actions.New("XFILELOAD")),
   OnFileSave(Actions.New("XFILESAVE")),
   OnFileClose(Actions.New("XFILECLOSE"))
@@ -215,7 +216,7 @@ TBasicCFile *TXFile::FindFormat(const olxstr &Ext)  {
 }
 //..............................................................................
 void TXFile::LastLoaderChanged() {
-  if (FLastLoader == NULL) {
+  if (FLastLoader == 0) {
     GetRM().Clear(rm_clear_ALL);
     GetLattice().Clear(true);
     return;
@@ -490,7 +491,7 @@ void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
 }
 //..............................................................................
 void TXFile::LoadFromStrings(const TStrList& lines, const olxstr &nameToken) {
-  TStopWatch(__FUNC__);
+  TStopWatch sw(__FUNC__);
   // this thows an exception if the file format loader does not exist
   const NameArg file_n(nameToken);
   const olxstr ext(TEFile::ExtractFileExt(file_n.file_name));
@@ -513,7 +514,7 @@ void TXFile::LoadFromStrings(const TStrList& lines, const olxstr &nameToken) {
 }
 //..............................................................................
 void TXFile::LoadFromStream(IInputStream& in, const olxstr &nameToken) {
-  TStopWatch(__FUNC__);
+  TStopWatch sw(__FUNC__);
   // this thows an exception if the file format loader does not exist
   const NameArg file_n(nameToken);
   const olxstr ext(TEFile::ExtractFileExt(file_n.file_name));
@@ -536,7 +537,7 @@ void TXFile::LoadFromStream(IInputStream& in, const olxstr &nameToken) {
 }
 //..............................................................................
 void TXFile::LoadFromFile(const olxstr & _fn) {
-  TStopWatch(__FUNC__);
+  TStopWatch sw(__FUNC__);
   const NameArg file_n(_fn);
   const olxstr ext(TEFile::ExtractFileExt(file_n.file_name));
   // this thows an exception if the file format loader does not exist
@@ -926,10 +927,10 @@ void TXFile::SaveToFile(const olxstr& FN, int flags) {
 //..............................................................................
 void TXFile::Close() {
   OnFileClose.Enter(this, FLastLoader);
-  FLastLoader = NULL;
+  FLastLoader = 0;
   RefMod.Clear(rm_clear_ALL);
   Lattice.Clear(true);
-  OnFileClose.Exit(this, NULL);
+  OnFileClose.Exit(this, 0);
 }
 //..............................................................................
 IOlxObject* TXFile::Replicate() const {
@@ -967,6 +968,15 @@ void TXFile::FromDataItem(const TDataItem& item) {
   GetLattice().FromDataItem(item.GetItemByName("Lattice"));
   GetRM().FromDataItem(item.GetItemByName("RefModel"));
   GetLattice().FinaliseLoading();
+  data_source = &item;
+}
+//..............................................................................
+void TXFile::FinaliseFromDataItem_() {
+  if (data_source == 0) {
+    throw TFunctionFailedException(__OlxSourceInfo, "invalid state");
+  }
+  GetLattice().LoadPlanes_(data_source->GetItemByName("Lattice"));
+  data_source = 0;
 }
 //..............................................................................
 const_strlist TXFile::ToJSON() const {

@@ -144,12 +144,14 @@ public:
     if ((FDrawStyle == adsEllipsoid || FDrawStyle == adsOrtep) &&
       GetEllipsoid() != NULL)
     {
-      if (GetEllipsoid()->IsNPD())
-        return (caDefIso*2*scale);
+      if (GetEllipsoid()->IsNPD()) {
+        return (caDefIso * 2 * scale);
+      }
       return scale;
     }
-    else
-      return FParams[0]*scale;
+    else {
+      return FParams[0] * scale;
+    }
   }
   bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d& Max, vec3d& Min);
@@ -197,9 +199,10 @@ public:
 
   const_strlist ToWrl(olx_cdict<TGlMaterial, olxstr> &materials) const;
   static const_strlist WrlDeclare(TGlRenderer &r);
-
-  static olxstr_dict<olxstr> &NamesRegistry() {
-    static olxstr_dict<olxstr> nr;
+  
+  typedef olxdict<TSAtom::Ref, olxstr, TComparableComparator> ref_dic_t;
+  static ref_dic_t&NamesRegistry() {
+    static ref_dic_t nr;
     return nr;
   }
 
@@ -325,7 +328,7 @@ public:
     void ClearPrimitives();
     static Settings& GetInstance(TGlRenderer &r) {
       AGOSettings *s = r.FindSettings("atoms");
-      if (s == NULL) {
+      if (s == 0) {
         return (Settings &)r.RegisterSettings(*(new Settings(r)), "atoms");
       }
       else {

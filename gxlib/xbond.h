@@ -104,8 +104,9 @@ public:
   virtual void ToDataItem(TDataItem& item) const;
   virtual void FromDataItem(const TDataItem& item, class TLattice& parent);
 
-  static olxstr_dict<olxstr> &NamesRegistry() {
-    static olxstr_dict<olxstr> nr;
+  typedef olxdict<TSBond::Ref, olxstr, TComparableComparator> ref_dic_t;
+  static ref_dic_t&NamesRegistry() {
+    static ref_dic_t nr;
     return nr;
   }
 
@@ -172,7 +173,7 @@ public:
     }
     static Settings& GetInstance(TGlRenderer &r) {
       AGOSettings *s = r.FindSettings("bond");
-      if (s == NULL) {
+      if (s == 0) {
         return (Settings &)r.RegisterSettings(*(new Settings(r)), "bond");
       }
       else {

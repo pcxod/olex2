@@ -47,8 +47,9 @@ void TXApp::Init(ASObjectProvider* objectProvider, ASelectionOwner* selOwner) {
   catch( const TIOException& exc )  {
     throw TFunctionFailedException(__OlxSourceInfo, exc);
   }
-  Files.Add((objectProvider == NULL ? new SObjectProvider()
+  Files.Add((objectProvider == 0 ? new SObjectProvider()
     : objectProvider)->CreateXFile());
+  Files[0].GetAsymmUnit().SetId_(0);
 
   DefineState(psFileLoaded, "Loaded file is expected");
   DefineState(psCheckFileTypeIns, "INS file is expected");
@@ -1410,5 +1411,49 @@ olxstr TXApp::GetPlatformString_(bool full) const {
   rv << ", Python: " << PY_VERSION;
 #endif
   return rv;
+}
+//..............................................................................
+TSAtom& TXApp::GetSAtom(size_t ind) const {
+  size_t li = 0;
+  while (ind >= Files[li].GetLattice().GetObjects().atoms.Count()) {
+    ind -= Files[li].GetLattice().GetObjects().atoms.Count();
+    if (++li >= Files.Count()) {
+      throw TIndexOutOfRangeException(__OlxSourceInfo, ind, 0, 0);
+    }
+  }
+  return Files[li].GetLattice().GetObjects().atoms[ind];
+}
+//..............................................................................
+TSBond& TXApp::GetSBond(size_t ind) const {
+  size_t li = 0;
+  while (ind >= Files[li].GetLattice().GetObjects().bonds.Count()) {
+    ind -= Files[li].GetLattice().GetObjects().bonds.Count();
+    if (++li >= Files.Count()) {
+      throw TIndexOutOfRangeException(__OlxSourceInfo, ind, 0, 0);
+    }
+  }
+  return Files[li].GetLattice().GetObjects().bonds[ind];
+}
+//..............................................................................
+TSAtom& TXApp::GetSAtom(const TSAtom::Ref& r) const {
+  TSAtom *a = Files[r.catom->GetParent()->GetId()].GetLattice()
+    .GetAtomRegistry().Find(r);
+  if (a == 0) {
+    throw TInvalidArgumentException(__OlxSourceInfo, "atom ref");
+  }
+  return *a;
+}
+//..............................................................................
+TSBond& TXApp::GetSBond(const TSBond::Ref& r) const {
+  TSBond* b = Files[r.a.catom->GetParent()->GetId()].GetLattice()
+    .GetAtomRegistry().Find(r);
+  if (b == 0 && r.a.catom->GetParent() != r.b.catom->GetParent()) {
+    b = Files[r.b.catom->GetParent()->GetId()].GetLattice()
+      .GetAtomRegistry().Find(r);
+  }
+  if (b == 0) {
+    throw TInvalidArgumentException(__OlxSourceInfo, "atom ref");
+  }
+  return *b;
 }
 //..............................................................................

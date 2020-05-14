@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Source Files">
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
@@ -590,8 +590,8 @@
     <ClInclude Include="..\..\..\sdl\tests\evalue_test.h">
       <Filter>tests</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\sdl\math\tensor.h">
-      <Filter>Header Files\math</Filter>
+    <ClInclude Include="..\..\..\sdl\comparable_operators.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

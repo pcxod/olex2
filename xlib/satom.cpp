@@ -15,16 +15,17 @@
 #include "unitcell.h"
 #include "pers_util.h"
 #include "index_range.h"
+#include "xapp.h"
 
 TSAtom::TSAtom(TNetwork *N)
   : TBasicNode<TNetwork, TSAtom, TSBond>(N),
-    Matrix(NULL)
+    Matrix(0), FCAtom(0), FEllipsoid(0)
 {
   SetType(sotAtom);
   Flags = 0;
 }
 //..............................................................................
-void  TSAtom::CAtom(TCAtom& S)  {
+void  TSAtom::CAtom(TCAtom& S) {
   FCAtom = &S;
   FCCenter = S.ccrd();
   FEllipsoid = S.GetEllipsoid();
@@ -50,26 +51,28 @@ void TSAtom::Assign(const TSAtom& S)  {
 //..............................................................................
 olxstr TSAtom::GetGuiLabel() const {
   olxstr rv = FCAtom->GetResiLabel();
-  if (Network == NULL || Matrix->IsFirst())
+  if (Network == 0 || Matrix->IsFirst()) {
     return rv;
-  else
-    return rv << '.' << TSymmParser::MatrixToSymmCode(
-      Network->GetLattice().GetUnitCell().GetSymmSpace(), *Matrix);
+  }
+  return rv << '.' << TSymmParser::MatrixToSymmCode(
+    Network->GetLattice().GetUnitCell().GetSymmSpace(), *Matrix);
 }
 //..............................................................................
-void TSAtom::RemoveNode(TSAtom& node)  {
+void TSAtom::RemoveNode(TSAtom& node) {
   size_t ind = Nodes.IndexOf(&node);
-  if( ind == InvalidIndex )  return;
+  if (ind == InvalidIndex) {
+    return;
+  }
   node.Nodes.Remove(this);
   Nodes.Delete(ind);
 }
 //..............................................................................
 olxstr TSAtom::GetGuiLabelEx() const {
   olxstr rv = FCAtom->GetResiLabel();
-  if (Network == NULL || Matrix->IsFirst())
+  if (Network == 0 || Matrix->IsFirst()) {
     return rv;
-  else
-    return rv << '(' << TSymmParser::MatrixToSymmEx(*Matrix) << ')';
+  }
+  return rv << '(' << TSymmParser::MatrixToSymmEx(*Matrix) << ')';
 }
 //..............................................................................
 void TSAtom::ToDataItem(TDataItem& item) const {
@@ -77,23 +80,27 @@ void TSAtom::ToDataItem(TDataItem& item) const {
   // need to save it for overlayed images etc
   item.AddField("crd", PersUtil::VecToStr(FCenter));
   item.AddField("flags", Flags);
-  if( Network->GetTag() >= 0 )  {
+  if (Network->GetTag() >= 0) {
     IndexRange::Builder rb;
-    for( size_t i=0; i < Nodes.Count(); i++ )  {
-      if( Nodes[i]->IsDeleted() )  continue;
+    for (size_t i = 0; i < Nodes.Count(); i++) {
+      if (Nodes[i]->IsDeleted()) {
+        continue;
+      }
       rb << Nodes[i]->GetTag();
     }
     item.AddField("node_range", rb.GetString(true));
-    for( size_t i=0; i < Bonds.Count(); i++ )  {
-      if( Bonds[i]->IsDeleted() )  continue;
+    for (size_t i = 0; i < Bonds.Count(); i++) {
+      if (Bonds[i]->IsDeleted()) {
+        continue;
+      }
       rb << Bonds[i]->GetTag();
     }
     item.AddField("bond_range", rb.GetString(true));
   }
   item.AddField("atom_id", FCAtom->GetTag());
 #ifdef _DEBUG
-  const TAsymmUnit &au = *FCAtom->GetParent();
-  for (size_t i=0; i < au.AtomCount(); i++) {
+  const TAsymmUnit& au = *FCAtom->GetParent();
+  for (size_t i = 0; i < au.AtomCount(); i++) {
     if (au.GetAtom(i).GetTag() == FCAtom->GetTag() &&
       &au.GetAtom(i) != FCAtom)
     {
@@ -107,35 +114,39 @@ void TSAtom::ToDataItem(TDataItem& item) const {
 void TSAtom::FromDataItem(const TDataItem& item, TLattice& parent) {
   const size_t net_id = item.GetFieldByName("net_id").ToInt();
   Network = &parent.GetFragment(net_id);
-  if( net_id != InvalidIndex )  {
+  if (net_id != InvalidIndex) {
     ASObjectProvider& objects = parent.GetObjects();
     const TDataItem* _nodes = item.FindItem("Nodes");
-    if( _nodes != NULL )  {
+    if (_nodes != 0) {
       TStrStrList nodes = _nodes->GetOrderedFieldList();
       Nodes.SetCapacity(nodes.Count());
-      for( size_t i=0; i < nodes.Count(); i++ )
+      for (size_t i = 0; i < nodes.Count(); i++) {
         Nodes.Add(objects.atoms[nodes.GetObject(i).ToSizeT()]);
+      }
       nodes = item.GetItemByName("Bonds").GetOrderedFieldList();
       Bonds.SetCapacity(nodes.Count());
-      for( size_t i=0; i < nodes.Count(); i++ )
+      for (size_t i = 0; i < nodes.Count(); i++) {
         Bonds.Add(objects.bonds[nodes.GetObject(i).ToSizeT()]);
+      }
     }
-    else  {  // index range then
+    else {  // index range then
       IndexRange::RangeItr ai(item.GetFieldByName("node_range"));
       Nodes.SetCapacity(ai.CalcSize());
-      while( ai.HasNext() )
+      while (ai.HasNext()) {
         Nodes.Add(objects.atoms[ai.Next()]);
+      }
       IndexRange::RangeItr bi(item.GetFieldByName("bond_range"));
       Bonds.SetCapacity(bi.CalcSize());
-      while( bi.HasNext() )
+      while (bi.HasNext()) {
         Bonds.Add(objects.bonds[bi.Next()]);
+      }
     }
   }
   TLattice& latt = Network->GetLattice();
   const size_t ca_id = item.GetFieldByName("atom_id").ToSizeT();
   CAtom(latt.GetAsymmUnit().GetAtom(ca_id));
   TDataItem* matrices = item.FindItem("Matrices");
-  if (matrices == NULL) {
+  if (matrices == 0) {
     Matrix = &latt.GetMatrix(item.GetFieldByName("matrix_id").ToSizeT());
   }
   else {
@@ -145,7 +156,7 @@ void TSAtom::FromDataItem(const TDataItem& item, TLattice& parent) {
   FCCenter = GetMatrix() * FCCenter;
   PersUtil::VecFromStr(item.GetFieldByName("crd"), FCenter);
   Flags = item.GetFieldByName("flags").ToInt();
-  if( CAtom().GetEllipsoid() != NULL )  {
+  if (CAtom().GetEllipsoid() != 0) {
     SetEllipsoid(&latt.GetUnitCell().GetEllipsoid(
       GetMatrix().GetContainerId(), CAtom().GetId()));
   }
@@ -160,8 +171,9 @@ TSAtom::Ref TSAtom::GetRef() const {
 }
 //..............................................................................
 bool TSAtom::operator == (const TSAtom::Ref& id) const {
-  return (FCAtom->GetId() == id.catom_id &&
-    IsGenerator(id.matrix_id));
+  return FCAtom->GetParent()->GetId() == id.catom->GetParent()->GetId() &&
+    FCAtom->GetId() == id.catom->GetId() &&
+    IsGenerator(id.matrix_id);
 }
 //..............................................................................
 bool TSAtom::IsGenerator(uint32_t m_id) const {
@@ -180,20 +192,56 @@ bool TSAtom::IsGenerator(uint32_t m_id) const {
 //..............................................................................
 TSAtom::Ref TSAtom::GetRef(const TCAtom &a, const smatd &generator) {
   if (generator.IsFirst()) {
-    return Ref(a.GetId(), generator.GetId());
+    return Ref(a, generator.GetId());
   }
   uint32_t m_id = generator.GetId();
   const TUnitCell &uc = a.GetParent()->GetLattice().GetUnitCell();
   for (size_t i=0; i < a.EquivCount(); i++) {
     uint32_t n_id = uc.MulMatrixId(a.GetEquiv(i), generator);
     if (smatd::IsFirst(n_id)) {
-      return Ref(a.GetId(), n_id);
+      return Ref(a, n_id);
     }
     if (n_id < m_id) {
       m_id = n_id;
     }
   }
-  return Ref(a.GetId(), m_id);
+  return Ref(a, m_id);
+}
+//..............................................................................
+int TSAtom::Ref::Compare(const Ref& r) const {
+  int rv = olx_cmp(catom->GetParent()->GetId(), r.catom->GetParent()->GetId());
+  if (rv == 0) {
+    rv = olx_cmp(catom->GetId(), r.catom->GetId());
+    if (rv == 0) {
+      rv = olx_cmp(matrix_id, r.matrix_id);
+    }
+  }
+  return rv;
+}
+//..............................................................................
+void TSAtom::Ref::ToDataItem(TDataItem& item, bool use_id) const {
+  item.AddField("au_id", catom->GetParent()->GetId())
+    .AddField("m_id", matrix_id);
+  if (use_id) {
+    item.AddField("a_id", catom->GetId());
+  }
+  else {
+    item.AddField("a_id", catom->GetTag());
+  }
+}
+//..............................................................................
+void TSAtom::Ref::FromDataItem(const TDataItem& item, const TXApp& app) {
+  size_t au_id = item.FindField("au_id", "0").ToSizeT();
+  if (au_id >= app.XFiles().Count()) {
+    throw TInvalidArgumentException(__OlxSourceInfo, "au_id");
+  }
+  const TAsymmUnit& au = app.XFiles()[au_id].GetAsymmUnit();
+  size_t a_id = item.GetFieldByName("a_id").ToSizeT();
+  if (a_id >= au.AtomCount()) {
+    throw TInvalidArgumentException(__OlxSourceInfo, "a_id");
+  }
+  catom = &au.GetAtom(a_id);
+  matrix_id = item.GetFieldByName("m_id").ToUInt();
 }
 //..............................................................................
 TLattice &TSAtom::GetParent() const { return GetNetwork().GetLattice(); }

@@ -14,6 +14,7 @@
 #include "lattice.h"
 #include "unitcell.h"
 #include "pers_util.h"
+#include "xapp.h"
 
 double TSPlane::CalcRMSD(const TSAtomPList& atoms) {
   if (atoms.Count() < 3) return -1;
@@ -123,23 +124,31 @@ void TSPlane::ToDataItem(TDataItem& item) const {
     if (Crds[i].GetA()->IsDeleted()) {
       continue;
     }
-    item.AddItem(iname, Crds[i].GetB()).AddField("atom_id",
-      Crds[i].GetA()->GetTag());
+    Crds[i].GetA()->GetRef().ToDataItem(item.AddItem(iname, Crds[i].GetB()));
   }
   item.AddField("normal", PersUtil::VecToStr(GetNormal()));
 }
 //..............................................................................
-void TSPlane::FromDataItem(const TDataItem& item) {
+void TSPlane::FromDataItem(const TDataItem& item, const TXApp& app) {
   olxstr di = item.FindField("def_id");
   if (!di.IsEmpty()) {
     DefId = di.ToSizeT();
   }
   Crds.Clear();
-  ASObjectProvider& objects = Network->GetLattice().GetObjects();
+  ASObjectProvider &p = GetNetwork().GetLattice().GetObjects();
   for (size_t i = 0; i < item.ItemCount(); i++) {
-    Crds.AddNew(
-      &objects.atoms[item.GetItemByIndex(i).GetFieldByName("atom_id").ToInt()],
-      item.GetItemByIndex(i).GetValue().ToDouble());
+    TDataItem& ai = item.GetItemByIndex(i);
+    // compatibility... 2020-05-14
+    {
+      olxstr old_id = ai.FindField("atom_id");
+      if (!old_id.IsEmpty()) {
+        size_t id = old_id.ToSizeT();
+        Crds.AddNew(&p.atoms[id],
+          ai.GetValue().ToDouble());
+        continue;
+      }
+    }
+    Crds.AddNew(&app.GetSAtom(TSAtom::Ref(ai, app)), ai.GetValue().ToDouble());
   }
   TTypeList< olx_pair_t<vec3d, double> > points;
   points.SetCapacity(Crds.Count());
@@ -219,48 +228,34 @@ TSPlane::Def::Def(const TSPlane& plane)
   QuickSorter::Sort(atoms);
 }
 //..............................................................................
-void TSPlane::Def::DefData::ToDataItem(TDataItem& item) const {
+void TSPlane::Def::DefData::ToDataItem(TDataItem& item, bool use_id) const {
   item.AddField("weight", weight);
-  ref.ToDataItem(item.AddItem("atom"));
+  ref.ToDataItem(item.AddItem("atom"), use_id);
 }
 //..............................................................................
-void TSPlane::Def::DefData::FromDataItem(const TDataItem& item)  {
-  weight = item.GetFieldByName("weight").ToDouble();
-  ref.FromDataItem(item.GetItemByIndex(0));  //!! may be changed if extended
-}
-//..............................................................................
-void TSPlane::Def::ToDataItem(TDataItem& item) const {
+void TSPlane::Def::ToDataItem(TDataItem& item, bool use_id) const {
   item.AddField("sides", sides);
   for (size_t i = 0; i < atoms.Count(); i++) {
-    atoms[i].ToDataItem(item.AddItem(i + 1));
+    atoms[i].ToDataItem(item.AddItem(i + 1), use_id);
   }
 }
 //..............................................................................
-void TSPlane::Def::FromDataItem(const TDataItem& item)  {
+void TSPlane::Def::FromDataItem(const TDataItem& item, const TXApp& app) {
   atoms.Clear();
   sides = item.GetFieldByName("sides").ToSizeT();
   for (size_t i = 0; i < item.ItemCount(); i++) {
-    atoms.AddNew(item.GetItemByIndex(i));
+    atoms.AddNew(item.GetItemByIndex(i), app);
   }
 }
 //..............................................................................
-TSPlane* TSPlane::Def::FromAtomRegistry(ASObjectProvider& ar, size_t def_id,
-  TNetwork* parent, const smatd& matr) const
+TSPlane* TSPlane::Def::FromAtomRegistry(struct ASObjectProvider& ar,
+  size_t def_id, TNetwork* parent, const smatd& matr) const
 {
   TTypeList<olx_pair_t<TSAtom*, double> > points;
-  const TUnitCell& uc = parent->GetLattice().GetUnitCell();
-  const TAsymmUnit& au = parent->GetLattice().GetAsymmUnit();
   if (matr.IsFirst()) {
     for (size_t i = 0; i < atoms.Count(); i++) {
-      TSAtom::Ref &ref = atoms[i].ref;
-      // 'fixing' potentially broke nodel
-      if (ref.catom_id >= au.AtomCount()) {
-        return 0;
-      }
-      smatd m = smatd::FromId(ref.matrix_id,
-        uc.GetMatrix(smatd::GetContainerId(ref.matrix_id)));
-      TSAtom* sa = ar.atomRegistry.Find(
-        TSAtom::GetRef(au.GetAtom(ref.catom_id), m));
+      TSAtom* sa = atoms[i].ref.catom->GetParent()->GetLattice()
+        .GetAtomRegistry().Find(atoms[i].ref);
       if (sa == 0) {
         return 0;
       }
@@ -270,14 +265,12 @@ TSPlane* TSPlane::Def::FromAtomRegistry(ASObjectProvider& ar, size_t def_id,
   else {
     for (size_t i = 0; i < atoms.Count(); i++) {
       TSAtom::Ref &ref = atoms[i].ref;
-      // 'fixing' potentially broke nodel
-      if (ref.catom_id >= au.AtomCount()) {
-        return 0;
-      }
+      const TUnitCell &uc = atoms[i].ref.catom->GetParent()->GetLattice()
+        .GetUnitCell();
       smatd m = uc.MulMatrix(smatd::FromId(ref.matrix_id,
         uc.GetMatrix(smatd::GetContainerId(ref.matrix_id))), matr);
-      TSAtom* sa = ar.atomRegistry.Find(
-        TSAtom::GetRef(au.GetAtom(ref.catom_id), m));
+      TSAtom* sa = atoms[i].ref.catom->GetParent()->GetLattice()
+        .GetAtomRegistry().Find(TSAtom::GetRef(*ref.catom, m));
       if (sa == 0) {
         return 0;
       }
@@ -288,5 +281,22 @@ TSPlane* TSPlane::Def::FromAtomRegistry(ASObjectProvider& ar, size_t def_id,
   p.DefId = def_id;
   p.Init(points);
   return &p;
+}
+//..............................................................................
+int TSPlane::Def::Compare(const TSPlane::Def& d) const {
+  int r = olx_cmp(atoms.Count(), d.atoms.Count());
+  if (r != 0) {
+    return r;
+  }
+  for (size_t i = 0; i < atoms.Count(); i++) {
+    r = atoms[i].Compare(d.atoms[i]);
+    if (r == 0) {
+      r = olx_cmp(atoms[i].weight, d.atoms[i].weight);
+    }
+    if (r != 0) {
+      return r;
+    }
+  }
+  return olx_cmp(sides, d.sides);
 }
 //..............................................................................

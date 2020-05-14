@@ -107,7 +107,7 @@ public:
   static TXApp& GetInstance() {
     TBasicApp& bai = TBasicApp::GetInstance();
     TXApp* xai = dynamic_cast<TXApp*>(&bai);
-    if (xai == NULL) {
+    if (xai == 0) {
       throw TFunctionFailedException(__OlxSourceInfo,
         "unsuitable application instance");
     }
@@ -227,6 +227,15 @@ public:
   static double Tang(TSBond *B1, TSBond *B2, TSBond *Middle,
     olxstr *Sequence=NULL);
   static const_strlist TangList(TSBond *Middle);
+
+  // finds an atom through global Id
+  TSAtom& GetSAtom(size_t ind) const;
+  // finds a bond through global Id
+  TSBond& GetSBond(size_t ind) const;
+  // global search through loaded Files
+  TSAtom& GetSAtom(const TSAtom::Ref& r) const;
+  // global search through loaded Files
+  TSBond& GetSBond(const TSBond::Ref& r) const;
 
   void ToDataItem(TDataItem& item) const;
   void FromDataItem(TDataItem& item);

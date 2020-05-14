@@ -76,6 +76,7 @@ protected:
   void ValidateTabs();
   void PostLoad(const olxstr &fn, TBasicCFile *loader, bool replicated);
   double CalcMass(const ContentList &) const;
+  TDataItem const* data_source;
 public:
   TXFile(ASObjectProvider& Objects);
   virtual ~TXFile();
@@ -161,6 +162,10 @@ public:
   const_strlist ToJSON() const;
   virtual void ToDataItem(TDataItem& item);
   virtual void FromDataItem(const TDataItem& item);
+  /* this loads planes, should be called after all files have been
+  loaded. For internal use
+  */
+  virtual void FinaliseFromDataItem_();
 
   void LibDataCount(const TStrObjList& Params, TMacroData& E);
   void LibCurrentData(const TStrObjList& Params, TMacroData& E);

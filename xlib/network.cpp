@@ -131,12 +131,12 @@ void TNetwork::Disassemble(ASObjectProvider& objects, TNetPList& Frags) {
       const smatd m = sa.GetMatrix().IsFirst() ? site.matrix :
         uc.MulMatrix(site.matrix, sa.GetMatrix());
       TSAtom* a = objects.atomRegistry.Find(
-        TSAtom::Ref(site.atom->GetId(), m.GetId()));
+        TSAtom::Ref(*site.atom, m.GetId()));
       if (a == 0 || !a->IsAvailable()) {
         for (size_t k = 0; k < site.atom->EquivCount(); k++) {
           uint32_t id = uc.MulMatrixId(site.atom->GetEquiv(k), m);
           a = objects.atomRegistry.Find(
-            TSAtom::Ref(site.atom->GetId(), id));
+            TSAtom::Ref(*site.atom, id));
           if (a != 0 && a->IsAvailable()) {
             break;
           }

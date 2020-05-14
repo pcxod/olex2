@@ -191,15 +191,15 @@ void TXAtom::ValidateDS(TGraphicsStyle& GS)  {
 //..............................................................................
 void TXAtom::Create(const olxstr& cName) {
   SetCreated(true);
-  olxstr Legend, strRef = GetRef().ToString();
+  olxstr Legend;
   if (!cName.IsEmpty()) {
     SetCollectionName(Legend = cName);
-    if (GetLegend(*this, 0) != Legend) {
-      NamesRegistry().Add(strRef, Legend, true);
-    }
+    //if (GetLegend(*this, 0) != Legend) {
+      NamesRegistry().Add(GetRef(), Legend, true);
+    //}
   }
   else {
-    Legend = NamesRegistry().Find(strRef, EmptyString());
+    Legend = NamesRegistry().Find(GetRef(), EmptyString());
     if (Legend.IsEmpty()) {
       Legend = GetLegend(*this);
     }

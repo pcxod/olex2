@@ -152,7 +152,7 @@ void PointAnalyser::ToDataItem_(TDataItem &di) const {
 //.............................................................................
 APointAnalyser *PointAnalyser::Load(const TDataItem &di) {
   TXApp &app = TXApp::GetInstance();
-  TSAtom::Ref ref(di.GetItemByName("AtomRef"));
+  TSAtom::Ref ref(di.GetItemByName("AtomRef"), TGXApp::GetInstance());
   TSAtom * sa = app.XFile().GetLattice().FindSAtom(ref);
   if (sa == 0) {
     return 0;

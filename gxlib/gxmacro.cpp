@@ -542,7 +542,6 @@ void GXLibMacros::macName(TStrObjList &Cmds, const TParamList &Options,
           }
         }
         else if (old[i]->GetObject(0).Is<TXAtom>()) {
-          TXAtom::NamesRegistry().Remove(old[i]->GetName());
           for (size_t j = 0; j < TXAtom::NamesRegistry().Count(); j++) {
             if (TXAtom::NamesRegistry().GetValue(j) == old[i]->GetName()) {
               TXAtom::NamesRegistry().Delete(j--);
@@ -604,7 +603,7 @@ void GXLibMacros::macName(TStrObjList &Cmds, const TParamList &Options,
     if (sel[0].Is<TXAtom>()) {
       for (size_t i = 0; i < sel.Count(); i++) {
         TXAtom &a = dynamic_cast<TXAtom &>(sel[i]);
-        TXAtom::NamesRegistry().Add(a.GetRef().ToString(), Cmds[1]);
+        TXAtom::NamesRegistry().Add(a.GetRef(), Cmds[1]);
         for (size_t j = 0; j < a.BondCount(); j++) {
           a.Bond(j).UpdateStyle();
         }
@@ -613,7 +612,7 @@ void GXLibMacros::macName(TStrObjList &Cmds, const TParamList &Options,
     else if (sel[0].Is<TXBond>()) {
       for (size_t i = 0; i < sel.Count(); i++) {
         TXBond &b = dynamic_cast<TXBond &>(sel[i]);
-        TXBond::NamesRegistry().Add(b.GetRef().ToString(), Cmds[1]);
+        TXBond::NamesRegistry().Add(b.GetRef(), Cmds[1]);
       }
     }
     else if (sel[0].Is<TXPlane>()) {
@@ -1887,7 +1886,7 @@ void GXLibMacros::macMpln(TStrObjList &Cmds, const TParamList &Options,
 {
   olxstr rings_name = Options.FindValue("rings");
   if (rings_name.IsEmpty()) {
-    TSPlane* plane = NULL;
+    TSPlane* plane = 0;
     bool orientOnly = Options.Contains('n'),
       reqular = Options.Contains('r');
     size_t sides_n = 0;
@@ -1904,8 +1903,9 @@ void GXLibMacros::macMpln(TStrObjList &Cmds, const TParamList &Options,
     TXAtomPList Atoms = app.FindXAtoms(Cmds, true, true);
     for (size_t i=0; i < Atoms.Count(); i++) {
       planeName << Atoms[i]->GetLabel();
-      if( i+1 < Atoms.Count() )
+      if (i + 1 < Atoms.Count()) {
         planeName << ' ';
+      }
     }
 
     if (Atoms.Count() < 3) {
@@ -1914,9 +1914,9 @@ void GXLibMacros::macMpln(TStrObjList &Cmds, const TParamList &Options,
     }
     if (orientOnly && name.IsEmpty()) {
       plane = app.TmpPlane(&Atoms, weightExtent);
-      if( plane != NULL )  {
+      if (plane != 0) {
         mat3d m = plane->GetBasis();
-        vec3d d1 = (m[2]+m[1]).Normalise();
+        vec3d d1 = (m[2] + m[1]).Normalise();
         vec3d d2 = m[0].XProdVec(d1).Normalise();
         app.GetRenderer().GetBasis().Orient(d1, d2, m[0]);
         app.SetGridDepth(plane->GetCenter());
@@ -1985,7 +1985,7 @@ void GXLibMacros::macMpln(TStrObjList &Cmds, const TParamList &Options,
     size_t cnt=0;
     for (size_t i=0; i < rings.Count(); i++) {
       if( app.AddPlane(name + olxstr(cnt+1),
-         TXAtomPList(rings[i], DynamicCastAccessor<TXAtom>()), false) != NULL)
+         TXAtomPList(rings[i], DynamicCastAccessor<TXAtom>()), false) != 0)
       {
         cnt++;
       }
@@ -3250,26 +3250,28 @@ void GXLibMacros::macLstGO(TStrObjList &Cmds, const TParamList &Options,
     }
     output.GetLastString() << "]->" << gpc.ObjectCount();
   }
-  olxstr_dict<const olxstr_dict<olxstr> *> regs;
-  regs.Add("atoms", &TXAtom::NamesRegistry());
-  regs.Add("bonds", &TXBond::NamesRegistry());
-  for (int ri = 0; ri < regs.Count(); ri++) {
-    const olxstr_dict<olxstr> &reg = *regs.GetValue(ri);
-    if (!reg.IsEmpty()) {
-      output.Add("Named collections, ") << regs.GetKey(ri);
-      olxstr_dict<int> unq;
-      for (size_t i = 0; i < reg.Count(); i++) {
-        size_t idx = unq.IndexOf(reg.GetValue(i));
-        if (idx == InvalidIndex) {
-          unq.Add(reg.GetValue(i), 1);
-        }
-        else {
-          unq.GetValue(idx)++;
-        }
-      }
-      for (size_t i = 0; i < unq.Count(); i++) {
-        output.Add(unq.GetKey(i)) << ": " << unq.GetValue(i);
-      }
+  if (!TXAtom::NamesRegistry().IsEmpty()) {
+    output.Add("Named collections, atoms");
+    olxstr_dict<TStrList> unq;
+    for (size_t i = 0; i < TXAtom::NamesRegistry().Count(); i++) {
+      olxstr cn = TXAtom::NamesRegistry().GetValue(i);
+      unq.Add(cn).Add(TXAtom::NamesRegistry().GetKey(i).catom->GetResiLabel());
+    }
+    for (size_t i = 0; i < unq.Count(); i++) {
+      output.Add(unq.GetKey(i)) << ": " << olxstr(" ").Join(unq.GetValue(i));
+    }
+  }
+  if (!TXBond::NamesRegistry().IsEmpty()) {
+    output.Add("Named collections, bonds");
+    olxstr_dict<TStrList> unq;
+    for (size_t i = 0; i < TXBond::NamesRegistry().Count(); i++) {
+      olxstr cn = TXBond::NamesRegistry().GetValue(i);
+      unq.Add(cn).Add(olxstr(
+        TXBond::NamesRegistry().GetKey(i).a.catom->GetResiLabel()) <<
+        "-" << TXBond::NamesRegistry().GetKey(i).b.catom->GetResiLabel());
+    }
+    for (size_t i = 0; i < unq.Count(); i++) {
+      output.Add(unq.GetKey(i)) << ": " << olxstr(" ").Join(unq.GetValue(i));
     }
   }
   if (!TXPlane::NamesRegistry().IsEmpty()) {
@@ -4769,7 +4771,7 @@ void GXLibMacros::macSetMaterial(TStrObjList &Cmds, const TParamList &Options,
     : EmptyString();
   if (!glm.is_valid() && !prm_name.Equals('*')) {
     E.ProcessingError(__OlxSrcInfo,
-      "The style can be reset to all promtives only");
+      "The style can be reset to all primtives only");
     return;
   }
   if (col_name.Equalsi("sel")) {
@@ -5151,12 +5153,14 @@ void GXLibMacros::macOFileDel(TStrObjList &Cmds, const TParamList &Options,
   }
   int ind = Cmds[0].ToInt();
   if (ind <= -1) {
-    if (app.XFiles().Count() > 1)
+    if (app.XFiles().Count() > 1) {
       app.DeleteXFile(app.XFiles().Count() - 1);
+    }
   }
   else {
-    if ((size_t)ind < app.XFiles().Count())
+    if ((size_t)ind < app.XFiles().Count()) {
       app.DeleteXFile(ind);
+    }
     else {
       Error.ProcessingError(__OlxSrcInfo,
         "no overlayed files at given position");

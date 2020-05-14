@@ -104,7 +104,7 @@ class TGXApp : public TXApp, AEventsDispatcher, public ASelectionOwner {
   double DeltaV;
   // drawing data and functions
   double FPictureResolution;
-  TStrList IndividualCollections;
+  olxstr_set<> IndividualCollections;
   /* makes sure that only bonds (and grow mode lines) with both atoms visible
   are visible, also considers H, and Q bonds special handling
   */
@@ -115,13 +115,16 @@ public:
   template <class obj_t, class act_t> struct TIterator {
     size_t offset, count;
     TTypeList<ObjectCaster<obj_t, act_t> > objects;
-    TIterator() : offset(0), count(0) {}
+    TIterator()
+      : offset(0), count(0)
+    {}
     bool HasNext() const { return (offset < count); }
     act_t& Next() {
       size_t off = offset;
       for (size_t i = 0; i < objects.Count(); i++) {
-        if (off >= objects[i].Count())
+        if (off >= objects[i].Count()) {
           off -= objects[i].Count();
+        }
         else {
           offset++;
           return objects[i][off];
@@ -132,16 +135,17 @@ public:
     void Reset() { offset = 0; }
     template <class Functor>
     const TIterator& ForEach(const Functor& f) const {
-      for (size_t i = 0; i < objects.Count(); i++)
+      for (size_t i = 0; i < objects.Count(); i++) {
         objects[i].ForEach(f);
+      }
       return *this;
     }
   };
   struct AtomIterator : public TIterator<TSAtom, TXAtom> {
     AtomIterator(const TGXApp& app) {
       for (size_t i = 0; i < app.XFiles().Count(); i++) {
-        objects.AddCopy(app.XFiles()[i].GetLattice().GetObjects().
-          atoms.GetAccessor<TXAtom>());
+        objects.AddCopy(app.XFiles()[i].GetLattice().GetObjects()
+          .atoms.GetAccessor<TXAtom>());
         count += objects.GetLast().Count();
       }
     }
@@ -149,8 +153,8 @@ public:
   struct BondIterator : public TIterator<TSBond, TXBond> {
     BondIterator(const TGXApp& app) {
       for (size_t i = 0; i < app.XFiles().Count(); i++) {
-        objects.AddCopy(app.XFiles()[i].GetLattice().GetObjects().
-          bonds.GetAccessor<TXBond>());
+        objects.AddCopy(app.XFiles()[i].GetLattice().GetObjects()
+          .bonds.GetAccessor<TXBond>());
         count += objects.GetLast().Count();
       }
     }
@@ -158,8 +162,8 @@ public:
   struct PlaneIterator : public TIterator<TSPlane, TXPlane> {
     PlaneIterator(const TGXApp& app) {
       for (size_t i = 0; i < app.XFiles().Count(); i++) {
-        objects.AddCopy(app.XFiles()[i].GetLattice().GetObjects().
-          planes.GetAccessor<TXPlane>());
+        objects.AddCopy(app.XFiles()[i].GetLattice().GetObjects()
+          .planes.GetAccessor<TXPlane>());
         count += objects.GetLast().Count();
       }
     }
@@ -183,21 +187,9 @@ protected:
   bool Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
     const IOlxObject *Data, TActionQueue *);
   void GetGPCollections(AGDObjList& GDObjects, TPtrList<TGPCollection>& Result);
-  struct BondRef {
-    const TLattice& latt;
-    TSBond::Ref ref;
-    BondRef(const TLattice& _latt, const TSBond::Ref& _ref)
-      : latt(_latt), ref(_ref) {}
-  };
-  struct AtomRef {
-    const TLattice& latt;
-    TSAtom::Ref ref;
-    AtomRef(const TLattice& _latt, const TSAtom::Ref& _ref)
-      : latt(_latt), ref(_ref) {}
-  };
   struct GroupData {
-    TTypeList<AtomRef> atoms;
-    TTypeList<BondRef> bonds;
+    TTypeList<TSAtom::Ref> atoms;
+    TTypeList<TSBond::Ref> bonds;
     olxstr collectionName;
     bool visible;
     index_t parent_id;
@@ -216,8 +208,8 @@ protected:
     }
   };
   struct {
-    TTypeList<AtomRef> atoms;
-    TTypeList<BondRef> bonds;
+    TTypeList<TSAtom::Ref> atoms;
+    TTypeList<TSBond::Ref> bonds;
     TTypeList<olxstr> labels;
     TTypeList<vec3d> centers;
     void Clear() {
@@ -239,9 +231,11 @@ protected:
   void _UpdateGroupIds();
   static size_t CalcMaxAtomTag(const TLattice& latt) {
     size_t ac = 0;
-    for (size_t i = 0; i < latt.GetObjects().atoms.Count(); i++)
-      if (!latt.GetObjects().atoms[i].IsDeleted())
+    for (size_t i = 0; i < latt.GetObjects().atoms.Count(); i++) {
+      if (!latt.GetObjects().atoms[i].IsDeleted()) {
         ac++;
+      }
+    }
     return ac;
   }
   static size_t CalcMaxBondTag(const TLattice& latt) {
@@ -254,8 +248,9 @@ protected:
   size_t GetAtomTag(TSAtom& sa, TSizeList& latt_sz) const {
     size_t off = 0;
     for (size_t i = 0; i < Files.Count(); i++) {
-      if (sa.GetNetwork().GetLattice() == Files[i].GetLattice())
+      if (sa.GetNetwork().GetLattice() == Files[i].GetLattice()) {
         return off + sa.GetTag();
+      }
       off += latt_sz[i];
     }
     return InvalidIndex;
@@ -263,31 +258,18 @@ protected:
   size_t GetBondTag(TSBond& sb, TSizeList& latt_sz) const {
     size_t off = 0;
     for (size_t i = 0; i < Files.Count(); i++) {
-      if (sb.GetNetwork().GetLattice() == Files[i].GetLattice())
+      if (sb.GetNetwork().GetLattice() == Files[i].GetLattice()) {
         return off + sb.GetTag();
+      }
       off += latt_sz[i];
     }
     return InvalidIndex;
   }
   TXAtom& GetXAtom(size_t ind) {
-    size_t li = 0;
-    while (ind >= Files[li].GetLattice().GetObjects().atoms.Count()) {
-      ind -= Files[li].GetLattice().GetObjects().atoms.Count();
-      if (++li >= Files.Count()) {
-        throw TIndexOutOfRangeException(__OlxSourceInfo, ind, 0, 0);
-      }
-    }
-    return static_cast<TXAtom&>(Files[li].GetLattice().GetObjects().atoms[ind]);
+    return static_cast<TXAtom&>(GetSAtom(ind));
   }
   TXBond& GetXBond(size_t ind) {
-    size_t li = 0;
-    while (ind >= Files[li].GetLattice().GetObjects().bonds.Count()) {
-      ind -= Files[li].GetLattice().GetObjects().bonds.Count();
-      if (++li >= Files.Count()) {
-        throw TIndexOutOfRangeException(__OlxSourceInfo, ind, 0, 0);
-      }
-    }
-    return static_cast<TXBond&>(Files[li].GetLattice().GetObjects().bonds[ind]);
+    return static_cast<TXBond&>(GetSBond(ind));
   }
   sorted::ObjectPrimitive<index_t>::cons_list_type GetVisibleCAtomTags();
   virtual olxstr GetPlatformString_(bool full) const;
@@ -332,7 +314,7 @@ protected:
   };
 public:
   // FileName - argv[0];
-  TGXApp(const olxstr& FileName, AGlScene *scene = NULL);
+  TGXApp(const olxstr& FileName, AGlScene* scene = 0);
   virtual ~TGXApp();
   void CreateObjects(bool CenterModel, bool init_visibility = true);
   void UpdateBonds();
@@ -377,10 +359,10 @@ public:
   TGlPrimitive *SelectPrimitive(int x, int y) const {
     return GlRenderer->SelectPrimitive(x, y);
   }
-  DefPropP(double, ExtraZoom)
-    //..............................................................................
-    // TXApp interface
-    TDBasis& DBasis() const { return *FDBasis; }
+  DefPropP(double, ExtraZoom);
+  //..............................................................................
+  // TXApp interface
+  TDBasis& DBasis() const { return *FDBasis; }
   THklFile& HklFile() { return *FHklFile; }
   TDFrame& DFrame() const { return *FDFrame; }
   TXGrid& XGrid() const { return *FXGrid; }

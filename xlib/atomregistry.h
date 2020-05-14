@@ -173,7 +173,7 @@ public:
   }
   //...........................................................................
   void Clear() {
-    if (data != NULL && --data->ref_cnt == 0) {
+    if (data != 0 && --data->ref_cnt == 0) {
       delete data;
     }
     data = 0;
@@ -209,8 +209,9 @@ public:
             if (au_slice == 0) {
               continue;
             }
-            if (a.GetId() >= au_slice->Count())
+            if (a.GetId() >= au_slice->Count()) {
               throw TFunctionFailedException(__OlxSourceInfo, "assert");
+            }
             TSAtom *sa = (*au_slice)[a.GetId()];
             if (sa != 0 && !sa->IsDeleted()) {
               rv.Add(sa);
@@ -222,11 +223,15 @@ public:
     return rv;
   }
   //...........................................................................
-  TSAtom* Find(const TSAtom::Ref& ref) const {
+  TSAtom* Find(const TSAtom::Ref &r) const {
+    return Find(r.catom->GetId(), r.matrix_id);
+  }
+  //...........................................................................
+  TSAtom* Find(size_t catom_id, uint32_t matrix_id) const {
     if (data == 0) {
       return 0;
     }
-    const vec3i t = smatd::GetT(ref.matrix_id);
+    const vec3i t = smatd::GetT(matrix_id);
     if (!data->registry.IsInRange(t)) {
       return 0;
     }
@@ -234,13 +239,13 @@ public:
     if (aum_slice == 0) {
       return 0;
     }
-    TSAtomPList* au_slice = (*aum_slice)[smatd::GetContainerId(ref.matrix_id)];
+    TSAtomPList* au_slice = (*aum_slice)[smatd::GetContainerId(matrix_id)];
     // the latter condition - if AU is the same but some objects use Q-peaks and
     // their number differs
-    if (au_slice == 0 || au_slice->Count() <= ref.catom_id) {
+    if (au_slice == 0 || au_slice->Count() <= catom_id) {
       return 0;
     }
-    return (*au_slice)[ref.catom_id];
+    return (*au_slice)[catom_id];
   }
   //...........................................................................
   TSBond* Find(const TSBond::Ref& ref) const {

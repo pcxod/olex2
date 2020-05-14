@@ -14,6 +14,7 @@
 #include "symmat.h"
 #include "typelist.h"
 #include "tptrlist.h"
+#include "comparable_operators.h"
 
 BeginXlibNamespace()
 
@@ -131,37 +132,37 @@ public:
   */
   void RemoveNode(TSAtom& node);
 
-  struct Ref {
-    size_t catom_id;
+  struct Ref : public comparable_operators<Ref> {
+    const TCAtom *catom;
     uint32_t matrix_id;
-    Ref() : catom_id(~0), matrix_id(~0) {}
-    Ref(size_t a_id, uint32_t m_id) : catom_id(a_id), matrix_id(m_id) {}
-    Ref(const Ref& r) : catom_id(r.catom_id), matrix_id(r.matrix_id)  {}
-    Ref(const TDataItem& item)  {  FromDataItem(item);  }
-    Ref& operator = (const Ref& r)  {
-      catom_id = r.catom_id;
+    Ref() : catom(0) {}
+    Ref(const TCAtom &a, uint32_t m_id)
+      : catom(&a), matrix_id(m_id)
+    {}
+    Ref(const Ref& r)
+      : catom(r.catom), matrix_id(r.matrix_id)
+    {}
+    Ref(const TDataItem& item, const class TXApp& app) {
+      FromDataItem(item, app);
+    }
+    Ref& operator = (const Ref& r) {
+      catom = r.catom;
       matrix_id = r.matrix_id;
       return *this;
     }
     bool operator == (const Ref& r) const {
-      return (catom_id == r.catom_id && matrix_id == r.matrix_id);
+      return (catom == r.catom &&
+        matrix_id == r.matrix_id);
     }
     bool operator == (const TSAtom& a) const {
       return a.operator == (*this);
     }
-    int Compare(const Ref& r) const {
-      const int rv = olx_cmp(catom_id, r.catom_id);
-      return rv ==0 ? olx_cmp(matrix_id, r.matrix_id) : rv;
-    }
-    void ToDataItem(TDataItem& item) const {
-      item.AddField("a_id", catom_id).AddField("m_id", matrix_id);
-    }
-    void FromDataItem(const TDataItem& item)  {
-      catom_id = item.GetFieldByName("a_id").ToSizeT();
-      matrix_id = item.GetFieldByName("m_id").ToUInt();
-    }
-    olxstr ToString() const {
-      return olxstr(catom_id) << matrix_id;
+    int Compare(const Ref& r) const;
+    void ToDataItem(TDataItem& item, bool use_id=false) const;
+    void FromDataItem(const TDataItem& item, const class TXApp &app);
+    void swap(Ref& r) {
+      olx_swap(catom, r.catom);
+      olx_swap(matrix_id, r.matrix_id);
     }
   };
 
