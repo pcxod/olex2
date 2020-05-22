@@ -213,7 +213,11 @@ PyObject* runReadImage(PyObject* self, PyObject* args)  {
       const size_t is = io().GetAvailableSizeT();
       olx_array_ptr<char> bf(is + 1);
       io().Read(bf(), is);
+#if PY_MAJOR_VERSION >= 3
+      PyObject* po = Py_BuildValue("y#", bf(), is);
+#else
       PyObject* po = Py_BuildValue("s#", bf(), is);
+#endif
       return po;
     }
   }
@@ -501,7 +505,11 @@ olxcstr PyFuncBody(const olxcstr& olexName, const olxcstr& pyName, char sep,
     res << pyName << "(*args):\n  ";
     res << "al = []\n  ";
     res << "for arg in args:\n    ";
+#if PY_MAJOR_VERSION >= 3
+    res << "al.append(str(arg))\n  ";
+#else
     res << "al.append(unicode(arg))\n  ";
+#endif
     res << "return " << module_name << ".f_ex('" << olexName << "', False, al)";
     return res;
   }
@@ -510,7 +518,11 @@ olxcstr PyFuncBody(const olxcstr& olexName, const olxcstr& pyName, char sep,
     res << pyName << "(*args, **kwds):\n  ";
     res << "al = []\n  ";
     res << "for arg in args:\n    ";
+#if PY_MAJOR_VERSION >= 3
+    res << "al.append(str(arg))\n  ";
+#else
     res << "al.append(unicode(arg))\n  ";
+#endif
     res << "return " << module_name << ".f_ex('" << olexName <<
       "', True, al, kwds)";
     return res;
@@ -851,7 +863,7 @@ bool PythonExt::ParseTuple(PyObject* tuple, const char* format, ...) {
     }
     else if (format[i] == 's') {
       char** cstr = va_arg(argptr, char**);
-      int len, *rlen = NULL;
+      int  len, *rlen = 0;
       if ((i + 1) < slen && format[i + 1] == '#') {
         rlen = va_arg(argptr, int*);
         i++;

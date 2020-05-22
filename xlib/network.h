@@ -38,9 +38,9 @@ public:
   // empties the content of the network
   void Clear();
   // adds a node to the network and assigns its NetId
-  void AddNode(TSAtom& N) { Nodes.Add(N)->SetIdInNetwork(NodeCount()); }
+  void AddNode(TSAtom& N);
   // adds a bond to the network and assigns its NetId
-  void AddBond(TSBond& B) { Bonds.Add(B)->SetIdInNetwork(BondCount()); }
+  void AddBond(TSBond& B);
 
   // copies the content of S to the net
   void Assign(TNetwork& S);

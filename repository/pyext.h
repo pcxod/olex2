@@ -14,13 +14,15 @@
 #include "etbuffer.h"
 
 #ifdef _PYTHON
-
+#if !defined OLX_CCAT
+#define OLX_CCAT(A, B) A ## B
+#endif
 #if PY_MAJOR_VERSION >= 3
-#define OlxInitPyModule(f_name, m_name, m_def) PyObject *f_name() \
- { return PythonExt::init_module(m_name, m_def); }
+#define OlxInitPyModule(m_name, m_def) PyMODINIT_FUNC OLX_CCAT(PyInit_, m_name)() \
+ { return PythonExt::init_module(#m_name, m_def); }
 #else
-#define OlxInitPyModule(f_name, m_name, m_def) void f_name() \
- { PythonExt::init_module(m_name, m_def); }
+#define OlxInitPyModule(m_name, m_def) void OLX_CCAT(init,m_name)() \
+ { PythonExt::init_module(#m_name, m_def); }
 #endif
 
 //---------------------------------------------------------------------------

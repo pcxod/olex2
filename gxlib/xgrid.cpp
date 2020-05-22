@@ -1754,7 +1754,8 @@ TLibrary*  TXGrid::ExportLibrary(const olxstr& name)  {
 PyObject* pyImport(PyObject* self, PyObject* args) {
   char* data;
   int dim1, dim2, dim3, focus1, focus2, focus3;
-  int type, len;
+  int type;
+  int len;
   if (!PyArg_ParseTuple(args, "(iii)(iii)s#i",
     &dim1, &dim2, &dim3,
     &focus1, &focus2, &focus3, &data, &len, &type))
