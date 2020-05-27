@@ -22,8 +22,9 @@ class OlexProcessorImp : public IOlex2Processor, public virtual IOlxObject {
   ALibraryContainer *LibraryContainer;
   // object destruction handler
   void ODH(APerishable *o) {
-    if (o == LibraryContainer)
-      LibraryContainer = NULL;
+    if (o == LibraryContainer) {
+      LibraryContainer = 0;
+    }
   }
 protected:
   macrolib::TEMacroLib Macros;
@@ -52,9 +53,11 @@ public:
     : LibraryContainer(lc),
     Macros(*this)
   {}
+
   virtual ~OlexProcessorImp() {
-    for (size_t i=0; i < CallbackFuncs.Count(); i++)
+    for (size_t i=0; i < CallbackFuncs.Count(); i++) {
       delete CallbackFuncs.GetValue(i);
+    }
     if (LibraryContainer) {
       LibraryContainer->RemoveDestructionObserver(
         DestructionObserver::Make(this, &OlexProcessorImp::ODH));
@@ -131,7 +134,7 @@ public:
     TMacroData err;
     err.SetLocation(location);
     Macros.ProcessTopMacro(cmd, err, *this,
-      quiet ? NULL : &OlexProcessorImp::AnalyseError);
+      quiet ? 0 : &OlexProcessorImp::AnalyseError);
     afterCall(cmd);
     return err.IsSuccessful();
   }
@@ -142,10 +145,25 @@ public:
     beforeCall(cmd);
     err.SetLocation(location);
     Macros.ProcessTopMacro(cmd, err, *this,
-      quiet ? NULL : &OlexProcessorImp::AnalyseError);
+      quiet ? 0 : &OlexProcessorImp::AnalyseError);
     afterCall(cmd);
     return err.IsSuccessful();
   }
+
+  virtual bool processMacroExt(const olxstr& cmd,
+    TStrObjList& args, const TParamList& options, TMacroData& me,
+    const olxstr& location = EmptyString(), bool quiet = false)
+  {
+    beforeCall(cmd);
+    me.SetLocation(location);
+    Macros.ProcessMacro(cmd, args, options, me);
+    afterCall(cmd);
+    if (!quiet) {
+      OlexProcessorImp::AnalyseError(me);
+    }
+    return me.IsSuccessful();
+  }
+
   virtual void callCallbackFunc(const olxstr& cbEvent, const TStrList& params) {
     beforeCall(cbEvent);
     TSizeList indexes;

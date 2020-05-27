@@ -171,50 +171,61 @@ ABasicFunction* TLibrary::LocateFunction(const olxstr& name, uint32_t argc)  {
   }
 }
 //..............................................................................
-ABasicFunction* TLibrary::LocateMacro(const olxstr& name, uint32_t argc)  {
-  if( argc == 0 )  {
+ABasicFunction* TLibrary::LocateMacro(const olxstr& name, uint32_t argc) {
+  if (argc == 0) {
     const size_t index = Macros.IndexOf(name);
-    return (index != InvalidIndex) ? Macros.GetValue( index ) : NULL;
+    return (index != InvalidIndex) ? Macros.GetValue(index) : 0;
   }
-  else  {
+  else {
     TSizeList list;
     Macros.GetIndices(name, list);
-    for( size_t i=0; i < list.Count(); i++ )  {
-      if( Macros.GetValue(list[i])->GetArgStateMask() & (1 << argc) )
+    for (size_t i = 0; i < list.Count(); i++) {
+      if (Macros.GetValue(list[i])->GetArgStateMask() & (1 << argc)) {
         return Macros.GetValue(list[i]);
+      }
     }
-    return NULL;
+    return 0;
   }
 }
 //..............................................................................
-ABasicFunction* TLibrary::FindFunction(const olxstr& name, uint32_t argc)  {
-  if( name.IndexOf('.') != InvalidIndex )  {
-    TLibrary* searchLib = this;
-    TStrList libPath(name, '.') ;
-    if (libPath.IsEmpty()) return NULL;
-    for( size_t i=0; i < libPath.Count()-1; i++ )  {
-      searchLib = searchLib->GetLibraryByName(libPath[i]);
-      if( searchLib == NULL )  break;
-    }
-    return (searchLib) ? searchLib->LocateFunction(libPath.GetLastString(), argc) : NULL;
-  }
-  else
-    return this->LocateFunction(name, argc);
-}
-//..............................................................................
-ABasicFunction* TLibrary::FindMacro(const olxstr& name, uint32_t argc)  {
-  if( name.IndexOf('.') != InvalidIndex && !name.EndsWith('.') )  {
+ABasicFunction* TLibrary::FindFunction(const olxstr& name, uint32_t argc) {
+  if (name.IndexOf('.') != InvalidIndex) {
     TLibrary* searchLib = this;
     TStrList libPath(name, '.');
-    if (libPath.IsEmpty()) return NULL;
-    for( size_t i=0; i < libPath.Count()-1; i++ )  {
-      searchLib = searchLib->GetLibraryByName(libPath[i]);
-      if( !searchLib )  break;
+    if (libPath.IsEmpty()) {
+      return 0;
     }
-    return (searchLib) ? searchLib->LocateMacro(libPath.GetLastString(), argc) : NULL;
+    for (size_t i = 0; i < libPath.Count() - 1; i++) {
+      searchLib = searchLib->GetLibraryByName(libPath[i]);
+      if (searchLib == 0) {
+        break;
+      }
+    }
+    return (searchLib) ? searchLib->LocateFunction(libPath.GetLastString(), argc) : 0;
   }
-  else
+  else {
+    return this->LocateFunction(name, argc);
+  }
+}
+//..............................................................................
+ABasicFunction* TLibrary::FindMacro(const olxstr& name, uint32_t argc) {
+  if (name.IndexOf('.') != InvalidIndex && !name.EndsWith('.')) {
+    TLibrary* searchLib = this;
+    TStrList libPath(name, '.');
+    if (libPath.IsEmpty()) {
+      return 0;
+    }
+    for (size_t i = 0; i < libPath.Count() - 1; i++) {
+      searchLib = searchLib->GetLibraryByName(libPath[i]);
+      if (!searchLib) {
+        break;
+      }
+    }
+    return (searchLib) ? searchLib->LocateMacro(libPath.GetLastString(), argc) : 0;
+  }
+  else {
     return this->LocateMacro(name, argc);
+  }
 }
 //..............................................................................
 size_t TLibrary::LocateSimilarFunctions(const olxstr& name, TBasicFunctionPList& store)  {
