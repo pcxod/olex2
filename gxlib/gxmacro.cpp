@@ -147,7 +147,8 @@ void GXLibMacros::Export(TLibrary& lib) {
     fpNone|fpTwo|psFileLoaded,
     "Changes the H-atom and H-bonds visibility");
   gxlib_InitMacro(Detach,
-    "u-re-attaches all or given atoms",
+    "u-re-attaches all or given atoms&;"
+    "m-umasks all or given atoms",
     fpAny | psFileLoaded,
     "Detaches/re-attaches given/selected atoms from/to the model");
   gxlib_InitMacro(Info,
@@ -1493,9 +1494,25 @@ void GXLibMacros::macDetach(TStrObjList &Cmds, const TParamList &Options,
 {
   TEBasis basis = app.GetRenderer().GetBasis();
   bool reattach = Options.GetBoolOption('u');
+  bool unmask = Options.Contains('m');
   TCAtomPList atoms = app.FindCAtoms(Cmds.Text(' '));
   for (size_t i = 0; i < atoms.Count(); i++) {
     atoms[i]->SetDetached(!reattach);
+    if (reattach && unmask) {
+      if (atoms[i]->IsMasked()) {
+        atoms[i]->SetMasked(false);
+      }
+    }
+  }
+  if (reattach && unmask) {
+    TGXApp::AtomIterator ai = app.GetAtoms();
+    while (ai.HasNext()) {
+      TXAtom& a = ai.Next();
+      if (!a.IsVisible() && a.CAtom().IsAvailable()) {
+        a.SetMasked(false);
+        a.SetVisible(true);
+      }
+    }
   }
   app.UpdateConnectivity();
   if (app.AtomLegend().IsVisible()) {
