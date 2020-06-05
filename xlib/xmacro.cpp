@@ -182,7 +182,8 @@ void XLibMacros::Export(TLibrary& lib)  {
     " and of the CIF file match&;"
     "f-creates final CIF with embedded RES file and HKL loop&;"
     "dn-new data name for the merged CIF&;"
-    "resolve-allows using skip_merged items to resolve empty items",
+    "resolve-allows using skip_merged items to resolve empty items&;"
+    "fcf-[false] - use _refln loop vs _diffrn_refln when embedding HKL",
     fpAny|psFileLoaded,
   "Merges loaded or provided as first argument cif with other cif(s)");
   xlib_InitMacro(CifExtract,
@@ -4483,7 +4484,7 @@ void CifMerge_UpdateAtomLoop(TCif &Cif) {
   }
 }
 
-void CifMerge_EmbeddData(TCif &Cif, bool insert) {
+void CifMerge_EmbeddData(TCif &Cif, bool insert, bool fcf_format) {
   TStopWatch sw(__FUNC__);
   sw.start("Embedding data");
   TXApp &xapp = TXApp::GetInstance();
@@ -4525,12 +4526,18 @@ void CifMerge_EmbeddData(TCif &Cif, bool insert) {
     if (TEFile::Exists(hkl_src)) {
       THklFile hkl;
       hkl.LoadFromFile(hkl_src, false);
-      cetTable &t = *THklFile::ExperimentalToCIF(hkl.RefList(), Cif);
+      cetTable *t;
+      if (fcf_format) {
+        t = THklFile::ExperimentalToFCF(hkl.RefList(), Cif);
+      }
+      else {
+        t = THklFile::ExperimentalToCIF(hkl.RefList(), Cif);
+      }
       if (use_md5) {
         olxstr_buf bf;
-        for (size_t i = 0; i < t.RowCount(); i++) {
-          for (size_t j = 0; j < t.ColCount(); j++) {
-            bf << t[i][j]->GetStringValue();
+        for (size_t i = 0; i < t->RowCount(); i++) {
+          for (size_t j = 0; j < t->ColCount(); j++) {
+            bf << (*t)[i][j]->GetStringValue();
           }
         }
         Cif.SetParam("_olex2_hkl_file_MD5",
@@ -4767,7 +4774,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
   if (Options.Contains('f')) {
     olxstr i_v = Options.FindValue('f');
     bool insert = i_v.IsEmpty() ? true : i_v.ToBool();
-    CifMerge_EmbeddData(*Cif, insert);
+    CifMerge_EmbeddData(*Cif, insert, Options.GetBoolOption("fcf"));
   }
   sw.start("Updating commonly mising parameters");
   // generate moiety string if does not exist
