@@ -20,6 +20,7 @@
 #include <sys/stat.h>
 
 using namespace patcher;
+using namespace updater;
 
 short PatchAPI::DoPatch(olx_object_ptr<AActionHandler> OnFileCopy,
   olx_object_ptr<AActionHandler> OnOverallCopy)
@@ -253,3 +254,41 @@ void PatchAPI::MarkPatchComplete() {
   );
 }
 //.............................................................................
+//.............................................................................
+//.............................................................................
+void SettingsFile::Init(const olxstr& file_name) {
+  source_file = file_name;
+  if (!TEFile::Exists(file_name)) return;
+  const TSettingsFile settings(file_name);
+  proxy = settings["proxy"];
+  repository = settings["repository"];
+  update_interval = settings["update"];
+  const olxstr last_update_str = settings.GetParam("lastupdate", "0");
+  last_updated = last_update_str.IsEmpty() ? 0 : last_update_str.RadInt<int64_t>();
+  extensions_to_skip.Strtok(settings["exceptions"], ';');
+  dest_repository = settings["dest_repository"];
+  src_for_dest = settings["src_for_dest"];
+  files_to_skip.Strtok(settings["skip"], ';');
+  olex2_port = settings["olex-port"];
+  ask_for_update = settings.GetParam("ask_update", TrueString()).ToBool();
+}
+//.............................................................................
+// save will change repo/update/ to repo...
+bool SettingsFile::Save() const {
+  TSettingsFile settings;
+  settings["proxy"] = proxy;
+  settings["repository"] = repository;
+  settings["update"] = update_interval;
+  settings["lastupdate"] = last_updated;
+  settings["exceptions"] = extensions_to_skip.Text(';');
+  settings["dest_repository"] = dest_repository;
+  settings["src_for_dest"] = src_for_dest;
+  settings["skip"] = files_to_skip.Text(';');
+  settings["olex-port"] = olex2_port;
+  settings["ask_update"] = ask_for_update;
+  try { settings.SaveSettings(source_file); }
+  catch (...) {
+    return false;
+  }
+  return true;
+}
