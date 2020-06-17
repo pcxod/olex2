@@ -704,7 +704,7 @@ const TRefList& RefinementModel::GetReflections() const {
     THklFile hf(HKLF_mat);
     HklFileMat = HKLF_mat;
     olx_object_ptr<TIns> ins = hf.LoadFromFile(HKLSource, true);
-    if (ins.is_valid()) {
+    if (ins.ok()) {
       evecd cell = evecd::FromAny(
         Composite::Vector(vec3d_list() << aunit.GetAxes() <<
           aunit.GetAngles()));
@@ -713,26 +713,26 @@ const TRefList& RefinementModel::GetReflections() const {
           aunit.GetAngleEsds()));
       bool cell_changed = false;
       for (int i = 0; i < 3; i++) {
-        if (olx_abs(aunit.GetAxes()[i] - ins().GetAsymmUnit().GetAxes()[i]) >
-          olx_min(aunit.GetAxisEsds()[i], ins().GetAsymmUnit().GetAxisEsds()[i]))
+        if (olx_abs(aunit.GetAxes()[i] - ins->GetAsymmUnit().GetAxes()[i]) >
+          olx_min(aunit.GetAxisEsds()[i], ins->GetAsymmUnit().GetAxisEsds()[i]))
         {
           cell_changed = true;
           break;
         }
-        if (olx_abs(aunit.GetAngles()[i] - ins().GetAsymmUnit().GetAngles()[i]) >
-          olx_min(aunit.GetAngleEsds()[i], ins().GetAsymmUnit().GetAngleEsds()[i]))
+        if (olx_abs(aunit.GetAngles()[i] - ins->GetAsymmUnit().GetAngles()[i]) >
+          olx_min(aunit.GetAngleEsds()[i], ins->GetAsymmUnit().GetAngleEsds()[i]))
         {
           cell_changed = true;
           break;
         }
       }
       if (cell_changed) {
-        OnCellDifference.Execute(this, &ins());
+        OnCellDifference.Execute(this, &ins);
       }
-      if (ins().GetRM().IsHKLFSet() && ins().GetRM().GetHKLF() != GetHKLF()) {
-        HKLF = ins().GetRM().GetHKLF();
-        if (ins().GetRM().Vars.GetBASFCount() != Vars.GetBASFCount()) {
-          TStrList l(ins().GetRM().GetBASFStr(), ' ');
+      if (ins->GetRM().IsHKLFSet() && ins->GetRM().GetHKLF() != GetHKLF()) {
+        HKLF = ins->GetRM().GetHKLF();
+        if (ins->GetRM().Vars.GetBASFCount() != Vars.GetBASFCount()) {
+          TStrList l(ins->GetRM().GetBASFStr(), ' ');
           // dirty tricks...
           const_cast<XVarManager &>(Vars).ClearBASF();
           const_cast<XVarManager &>(Vars).SetBASF(l);
@@ -2289,7 +2289,7 @@ olxstr RefinementModel::WriteInsExtras(const TCAtomPList* atoms,
         }
         TDataItem &ai = aa->AddItem(a.GetResiLabel());
         olxstr_buf tmp;
-        GramCharlier4 &ap = a.GetEllipsoid()->GetAnharmonicPart().get();
+        const GramCharlier4 &ap = a.GetEllipsoid()->GetAnharmonicPart();
         for (size_t ci = 0; ci < ap.C.size(); ci++) {
           tmp << ' ' << olx_print("%.4le", ap.C[ci]);
         }
@@ -2420,10 +2420,10 @@ void RefinementModel::ReadInsExtras(const TStrList &items) {
       }
       olx_object_ptr<GramCharlier4> ac(new GramCharlier4());
       for (size_t ci = 0; ci < 10; ci++) {
-        ac().C[ci] = c_toks[ci].ToDouble();
+        ac->C[ci] = c_toks[ci].ToDouble();
       }
       for (size_t ci = 0; ci < 15; ci++) {
-        ac().D[ci] = d_toks[ci].ToDouble();
+        ac->D[ci] = d_toks[ci].ToDouble();
       }
       a->GetEllipsoid()->SetAnharmonicPart(ac.release());
     }

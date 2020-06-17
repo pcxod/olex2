@@ -450,7 +450,7 @@ void TEMacroLib::ProcessMacro(const olxstr& Cmd, TMacroData& Error,
     exparse::expression_parser expr(Command);
     expr.root->expand_cmd();
     ProcessEvaluator(expr.root, Error, argv);
-  }
+  } 
   catch (const TExceptionBase &e) {
     Error.ProcessingException(__OlxSourceInfo, e);
   }

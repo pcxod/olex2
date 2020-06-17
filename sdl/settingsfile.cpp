@@ -45,10 +45,11 @@ void TSettingsFile::LoadSettings(const olxstr& fileName)  {
 void TSettingsFile::SaveSettings(const olxstr& fileName)  {
   olx_object_ptr<TUtf8File> f(TUtf8File::Create(fileName,false));
   for( size_t i=0; i < Lines.Count(); i++ )  {
-    if (!Lines.GetObject(i))
-      f().Writeln(Lines[i]);
+    if (!Lines.GetObject(i)) {
+      f->Writeln(Lines[i]);
+    }
     else {
-      f().Writeln(olxstr(Lines[i]) << '=' << Params.Get(Lines[i]));
+      f->Writeln(olxstr(Lines[i]) << '=' << Params.Get(Lines[i]));
     }
   }
 }

@@ -28,7 +28,7 @@ namespace esdl {
       //  "could not convert wcs to mbs");
     }
     olx_array_ptr<char> out = olx_malloc<char>(res + 1);
-    wcstombs(out(), wstr, res);
+    wcstombs(out, wstr, res);
     return olxcstr::FromExternal(out.release(), res, res+1);
   }
 
@@ -51,7 +51,7 @@ namespace esdl {
         "could not convert mbs to wcs");
     }
     olx_array_ptr<wchar_t> out = olx_malloc<wchar_t>(res + 1);
-    mbstowcs(out(), mbs, res);
+    mbstowcs(out, mbs, res);
     return olxwstr::FromExternal(out.release(), res, res+1);
   }
 

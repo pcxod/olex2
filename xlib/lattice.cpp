@@ -3331,7 +3331,7 @@ bool TLattice::IsPolymeric(bool use_peaks) const {
     // store Q-atom state
     for (size_t i = 0; i < au.AtomCount(); i++) {
       if (au.GetAtom(i).GetType() == iQPeakZ) {
-        df().Set(i, au.GetAtom(i).IsDeleted());
+        df->Set(i, au.GetAtom(i).IsDeleted());
         au.GetAtom(i).SetDeleted(true);
       }
     }
@@ -3341,7 +3341,7 @@ bool TLattice::IsPolymeric(bool use_peaks) const {
     // restore the Q-peaks state
     for (size_t i = 0; i < au.AtomCount(); i++) {
       if (au.GetAtom(i).GetType() == iQPeakZ) {
-        au.GetAtom(i).SetDeleted(df()[i]);
+        au.GetAtom(i).SetDeleted((*df)[i]);
       }
     }
   }

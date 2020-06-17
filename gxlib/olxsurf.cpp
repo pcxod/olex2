@@ -90,13 +90,13 @@ TMolSurf::TMolSurf(const TXAtomPList &atoms_, float probe_radius)
 
 olx_object_ptr<CIsoSurface> TMolSurf::Calculate(float iso_level) {
   olx_object_ptr<CIsoSurface> sf(new CIsoSurface(arr, &data));
-  sf().GenerateSurface(iso_level);
-  TArrayList<vec3f> &vertices = sf().VertexList();
+  sf->GenerateSurface(iso_level);
+  TArrayList<vec3f> &vertices = sf->VertexList();
   for (size_t i = 0; i < vertices.Count(); i++) {
     vertices[i] = (vertices[i] + min_v) / res;
   }
-  TArrayList<int> &vertex_data = sf().GetVertexData();
-  TArrayList<vec3f> &normals = sf().NormalList();
+  TArrayList<int> &vertex_data = sf->GetVertexData();
+  TArrayList<vec3f> &normals = sf->NormalList();
   for (size_t i = 0; i < vertex_data.Count(); i++) {
     if (vertex_data[i] != -1) {
       int idx = vertex_data[i];

@@ -26,23 +26,16 @@ const short
   papi_AccessDenied  = 4,
   papi_InvalidUpdate = 5;
 
-class PatchAPI  {
-  class DeletionExc: public TBasicException {
+class PatchAPI {
+  class DeletionExc : public TBasicException {
   public:
     DeletionExc(const olxstr& location, const olxstr& msg) :
-      TBasicException(location, msg )  {}
-    virtual IOlxObject* Replicate() const {  return new DeletionExc(*this);  }
+      TBasicException(location, msg) {}
+    virtual IOlxObject* Replicate() const { return new DeletionExc(*this); }
   };
 
-  static void CleanUp(AActionHandler* A, AActionHandler* B)  {
-    if( A != NULL )
-      delete A;
-    if( B != NULL )
-      delete B;
-  }
-
-  static void AfterFileCopy(const olxstr& src, const olxstr& dest)  {
-    if( !TEFile::DelFile(src) ) {
+  static void AfterFileCopy(const olxstr& src, const olxstr& dest) {
+    if (!TEFile::DelFile(src)) {
       throw DeletionExc(__OlxSourceInfo,
         olxstr("Failed to delete file: ") << src);
     }
@@ -55,23 +48,40 @@ class PatchAPI  {
     // does nothing if set manually
     bool Refresh();
   };
-  static DataDirSettings &GetDDSetting() {
+  static DataDirSettings& GetDDSetting() {
     static DataDirSettings st;
     return st;
   }
-  static TEFile* lock_file;
+  static TEFile*& LockFile() {
+    static TEFile* lock_file = 0;
+    return lock_file;
+  }
   static void _RestoreExecuableFlags();
-  static olxstr repository_tag, repository_base_dir,
-    shared_dir,
-    instance_dir;
+  
+  static olxstr& RepositoryTag() {
+    static olxstr repository_tag;
+    return repository_tag;
+  }
+  static olxstr& RepositoryBase() {
+    static olxstr repository_base;
+    return repository_base;
+  }
+  static olxstr& SharedDir() {
+    static olxstr shared_dir;
+    return shared_dir;
+  }
+  static olxstr& InstanceDir() {
+    static olxstr instance_dir;
+    return instance_dir;
+  }
 public:
-  ~PatchAPI()  {  UnlockUpdater();  }
+  ~PatchAPI() { UnlockUpdater(); }
   // if action handlers are passed along - they will be automatically deleted
-  static short DoPatch(AActionHandler* OnFileCopy=NULL,
-    AActionHandler* OnOverallCopy=NULL);
+  static short DoPatch(olx_object_ptr<AActionHandler> OnFileCopy = 0,
+    olx_object_ptr<AActionHandler> OnOverallCopy = 0);
   /* 2012.01.21 - the location is stored in the user dependent folder
   */
-  static olxstr GetUpdateLocationFileName()  {
+  static olxstr GetUpdateLocationFileName() {
     return TBasicApp::GetInstanceDir() + "__location.update";
   }
   /* writes patch dir into the the update location file */
@@ -80,41 +90,42 @@ public:
     return TEFile::Exists(GetUpdateLocationFileName());
   }
   static olxstr GetUpdateLocation();
-  static olxstr GetUpdaterPIDFileName()  {
+  static olxstr GetUpdaterPIDFileName() {
     return TBasicApp::GetInstanceDir() + "pid.update";
   }
-  static const char* GetUpdaterCmdFileName()  {  return "__cmds.update";  }
-  static const char* GetOlex2PIDFileExt()  {  return "olex2_pid";  }
-  static bool IsOlex2Running() {  return GetNumberOfOlex2Running() != 0;  }
+  static const char* GetUpdaterCmdFileName() { return "__cmds.update"; }
+  static const char* GetOlex2PIDFileExt() { return "olex2_pid"; }
+  static bool IsOlex2Running() { return GetNumberOfOlex2Running() != 0; }
   static size_t GetNumberOfOlex2Running();
   static bool LockUpdater();
   static bool UnlockUpdater();
 
-  static const char* GetTagFileName()  {  return "olex2.tag";  }
-  static const char* GetPatchFolder()  {  return "patch";  }
+  static const char* GetTagFileName() { return "olex2.tag"; }
+  static const char* GetPatchFolder() { return "patch"; }
   //reads current repository tag, returns EmptyString() in the case of error
-  static olxstr ReadRepositoryTag(const olxstr& base_dir=EmptyString());
-  static void SetDataDir(const olxstr &dir, bool is_static) {
-    if (dir.IsEmpty())
+  static olxstr ReadRepositoryTag(const olxstr& base_dir = EmptyString());
+  static void SetDataDir(const olxstr& dir, bool is_static) {
+    if (dir.IsEmpty()) {
       throw TInvalidArgumentException(__OlxSourceInfo, "empty data dir");
+    }
     GetDDSetting().is_static = is_static;
     GetDDSetting().data_dir = dir;
     GetDDSetting().is_manually_set = true;
   }
   /* return 'AppData' or OLEX2_DATADIR if defined
   */
-  static olxstr _GetSharedDirRoot(bool refresh=false);
+  static olxstr _GetSharedDirRoot(bool refresh = false);
   /* return _GetSharedDirRoot()/Olex2Data on windows or
   _GetSharedDirRoot()/data on other platforms (unless the OLEX2_DATADIR_STATIC
   is set to true
   */
-  static olxstr GetSharedDir(bool refresh=false);
+  static olxstr GetSharedDir(bool refresh = false);
   /* composes new instance dir and saves its info. The instance dir depends on
   the location of the executable and thus can be used to store instance
   specific updates etc
   */
   static olxstr ComposeInstanceDir(const olxstr& shared_dir,
-    const olxstr& _base_dir=EmptyString())
+    const olxstr& _base_dir = EmptyString())
   {
     olxstr new_shared_dir = shared_dir;
     const olxstr base_dir = _base_dir.IsEmpty() ? TBasicApp::GetBaseDir() :
@@ -132,26 +143,26 @@ public:
   folder is returned and used (for all versions of programs which may be
   installed and using this API
   */
-  static olxstr GetInstanceDir(bool refresh=false);
+  static olxstr GetInstanceDir(bool refresh = false);
   /* mostly for internal use, saves the origin of the MD5 hash to folder.info
   file */
   static void SaveLocationInfo(const olxstr& shared_dir,
-    const olxstr& base_dir=EmptyString())
+    const olxstr& base_dir = EmptyString())
   {
     TCStrList location_file_content;
     location_file_content.Add(TEFile::AddPathDelimeter(
       (base_dir.IsEmpty() ? TBasicApp::GetBaseDir() : base_dir)))
-        << patcher::PatchAPI::ReadRepositoryTag();
+      << patcher::PatchAPI::ReadRepositoryTag();
     TEFile::WriteLines(shared_dir + "folder.info", location_file_content);
   }
-  static olxstr ComposeOldSharedDir(const olxstr& shared_dir)  {
+  static olxstr ComposeOldSharedDir(const olxstr& shared_dir) {
     olxstr new_shared_dir = shared_dir;
 #ifdef __WIN32__
-  #ifdef _UNICODE
+#ifdef _UNICODE
     new_shared_dir << "Olex2u";
-  #else
+#else
     new_shared_dir << "Olex2";
-  #endif
+#endif
 #endif
     return TEFile::AddPathDelimeterI(new_shared_dir);
   }

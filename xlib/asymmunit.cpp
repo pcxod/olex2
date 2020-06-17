@@ -1597,7 +1597,7 @@ void TAsymmUnit::LibSetAtomU(const TStrObjList& Params, TMacroData& E) {
       }
     }
     if (ca.GetEllipsoid()->IsAnharmonic() && Params.Count() >= 32) {
-      GramCharlier4 &ac = ca.GetEllipsoid()->GetAnharmonicPart().get();
+      GramCharlier4 &ac = ca.GetEllipsoid()->GetAnharmonicPart();
       for (size_t i = 0; i < 10; i++) {
         ac.C[i] = Params[i + 7].ToDouble();
       }

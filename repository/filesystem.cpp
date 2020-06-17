@@ -58,7 +58,9 @@ bool TOSFileSystem::_DoAdoptStream(IInputStream& f, const olxstr& name)  {
     TEFile::Rename(name+".tmp", name);
     return true;
   }
-  catch( const TExceptionBase& )  {  return false;  }
+  catch( const TExceptionBase& )  {
+    return false;
+  }
 }
 //.............................................................................
 bool TOSFileSystem::_DoAdoptFile(const TFSItem& Src) {
@@ -70,8 +72,9 @@ bool TOSFileSystem::_DoAdoptFile(const TFSItem& Src) {
   if (TEFile::Exists(DFN)) {
     if (TEFile::FileLength(DFN) == Src.GetSize()) {
       TEFile f = TEFile(DFN, "rb");
-      if (MD5::Digest(f) == Src.GetDigest())
+      if (MD5::Digest(f) == Src.GetDigest()) {
         return true;
+      }
     }
   }
   olx_object_ptr<IInputStream> is;
@@ -82,7 +85,9 @@ bool TOSFileSystem::_DoAdoptFile(const TFSItem& Src) {
   catch(const TExceptionBase &) {
     return false;
   }
-  if (!is.is_valid())  return false;
+  if (!is.ok()) {
+    return false;
+  }
 
   try {
     olxstr path = TEFile::ExtractFilePath(DFN);
@@ -96,7 +101,7 @@ bool TOSFileSystem::_DoAdoptFile(const TFSItem& Src) {
       }
     }
     TEFile destFile(DFN, "wb+");
-    destFile << is();
+    destFile << *is;
     destFile.SetPosition(0);
     if (MD5::Digest(destFile) != Src.GetDigest()) {
       TBasicApp::NewLogEntry(logError) << "Digest mismatch for " << DFN <<
@@ -114,15 +119,15 @@ bool TOSFileSystem::_DoAdoptFile(const TFSItem& Src) {
   return true;
 }
 //.............................................................................
-bool TOSFileSystem::_DoNewDir(const olxstr& DN)  {
+bool TOSFileSystem::_DoNewDir(const olxstr& DN) {
   OnMkDir.Execute(this, &DN);
   return TEFile::MakeDirs(DN);
 }
 //.............................................................................
-bool TOSFileSystem::_DoesExist(const olxstr& FN, bool)  {
+bool TOSFileSystem::_DoesExist(const olxstr& FN, bool) {
   return TEFile::Exists(FN);
 }
-IInputStream* TOSFileSystem::_DoOpenFile(const olxstr& fileName)  {
+olx_object_ptr<IInputStream> TOSFileSystem::_DoOpenFile(const olxstr& fileName) {
   OnOpenFile.Execute(this, &fileName);
   return new TEFile(fileName, "rb");
 }
@@ -130,14 +135,17 @@ IInputStream* TOSFileSystem::_DoOpenFile(const olxstr& fileName)  {
 //.............................................................................
 //.............................................................................
 bool TUpdateFS::_DoesExist(const olxstr& df, bool) {
-  if (TOSFileSystem::_DoesExist(df, true)) return true;
+  if (TOSFileSystem::_DoesExist(df, true)) {
+    return true;
+  }
   return Proxied.Exists(
     Proxied.GetBase() + df.SubStringFrom(GetBase().Length()));
 }
 //.............................................................................
-IInputStream* TUpdateFS::_DoOpenFile(const olxstr& df) {
-  if (TOSFileSystem::_DoesExist(df, true))
+olx_object_ptr<IInputStream> TUpdateFS::_DoOpenFile(const olxstr& df) {
+  if (TOSFileSystem::_DoesExist(df, true)) {
     return TOSFileSystem::_DoOpenFile(df);
+  }
   return Proxied.OpenFile(
     Proxied.GetBase() + df.SubStringFrom(GetBase().Length()));
 }
@@ -146,113 +154,128 @@ IInputStream* TUpdateFS::_DoOpenFile(const olxstr& df) {
 //.............................................................................
 AFileSystem& TFSItem::GetIndexFS() const  {  return Index.IndexFS; }
 //.............................................................................
-void TFSItem::Clear()  {
-  for( size_t i=0; i < Items.Count(); i++ )
+void TFSItem::Clear() {
+  for (size_t i = 0; i < Items.Count(); i++) {
     delete Items.GetValue(i);  // destructor calls Clear()
+  }
   Items.Clear();
   Name.SetLength(0);
   DateTime = 0;
   Size = 0;
 }
 //.............................................................................
-size_t TFSItem::UpdateDigest()  {
-  if( !Digest.IsEmpty() )  return 0;
-  if( IsFolder() )  {
+size_t TFSItem::UpdateDigest() {
+  if (!Digest.IsEmpty()) {
+    return 0;
+  }
+  if (IsFolder()) {
     size_t rv = 0;
-    for( size_t i=0; i < Items.Count(); i++ )
+    for (size_t i = 0; i < Items.Count(); i++) {
       rv += Items.GetValue(i)->UpdateDigest();
+    }
     return rv;
   }
-  try  {
+  try {
     olxstr fn = Index.IndexFS.GetBase() + GetFullName();
-    if( !Index.IndexFS.Exists(fn) )  return 0;
-    IInputStream* is = Index.IndexFS.OpenFile(fn);
-    if( is == NULL )  return 0;
+    if (!Index.IndexFS.Exists(fn)) {
+      return 0;
+    }
+    olx_object_ptr<IInputStream> is = Index.IndexFS.OpenFile(fn);
+    if (is == 0) {
+      return 0;
+    }
     Digest = MD5::Digest(*is);
-    delete is;
     return 1;
   }
-  catch(...)  {  return 0;  }
+  catch (...) {
+    return 0;
+  }
 }
 //.............................................................................
-void TFSItem::operator >> (TStrList& S) const  {
-  olxstr str = olxstr::CharStr('\t', GetLevel()-1);
-  S.Add( str + GetName() );
+void TFSItem::operator >> (TStrList& S) const {
+  olxstr str = olxstr::CharStr('\t', GetLevel() - 1);
+  S.Add(str + GetName());
   str << DateTime;
   str << ',' << GetSize() << ',' << GetDigest() << ",{";
-  for( size_t i=0; i < Properties.Count(); i++ )  {
+  for (size_t i = 0; i < Properties.Count(); i++) {
     str << Properties[i];
-    if( (i+1) < Properties.Count() )
+    if ((i + 1) < Properties.Count()) {
       str << ';';
+    }
   }
-  if( !Properties.IsEmpty() && !Actions.IsEmpty() )
+  if (!Properties.IsEmpty() && !Actions.IsEmpty()) {
     str << ';';
-  for( size_t i=0; i < Actions.Count(); i++ )  {
+  }
+  for (size_t i = 0; i < Actions.Count(); i++) {
     str << "action:" << Actions[i];
-    if( (i+1) < Actions.Count() )
+    if ((i + 1) < Actions.Count()) {
       str << ';';
+    }
   }
   str << '}';
 
-  S.Add( str );
-  for( size_t i=0; i < Items.Count(); i++ )
+  S.Add(str);
+  for (size_t i = 0; i < Items.Count(); i++) {
     Item(i) >> S;
+  }
 }
 //.............................................................................
 size_t TFSItem::ReadStrings(size_t& index, TFSItem* caller, TStrList& strings,
   const TFSItem::SkipOptions* toSkip)
-  {
+{
   TStrList toks, propToks;
-  while( (index + 2) <= strings.Count() )  {
+  while ((index + 2) <= strings.Count()) {
     size_t level = strings[index].LeadingCharCount('\t'),
-        nextlevel = 0;
-    olxstr name( strings[index].Trim('\t') ),
-           ext( TEFile::ExtractFileExt(name) );
+      nextlevel = 0;
+    olxstr name(strings[index].Trim('\t')),
+      ext(TEFile::ExtractFileExt(name));
     bool skip = false, folder = false;
-    TFSItem* item = NULL;
-    if( (index+2) < strings.Count() )  {
-      nextlevel = strings[index+2].LeadingCharCount('\t');
-      if( nextlevel > level )
+    TFSItem* item = 0;
+    if ((index + 2) < strings.Count()) {
+      nextlevel = strings[index + 2].LeadingCharCount('\t');
+      if (nextlevel > level) {
         folder = true;
+      }
     }
-    if( toSkip != NULL )  {  // skip business
-      if( folder )  {
-        if( toSkip->filesToSkip != NULL )  {
-          for( size_t i=0; i < toSkip->filesToSkip->Count(); i++ )  {
-            if( (*toSkip->filesToSkip)[i].Equalsi(name) )  {
+    if (toSkip != 0) {  // skip business
+      if (folder) {
+        if (toSkip->filesToSkip != 0) {
+          for (size_t i = 0; i < toSkip->filesToSkip->Count(); i++) {
+            if ((*toSkip->filesToSkip)[i].Equalsi(name)) {
               skip = true;
               break;
             }
           }
-          if( skip )  {
-            index+=2;
-            for( size_t i=index; i < strings.Count(); i+=2 )  {
+          if (skip) {
+            index += 2;
+            for (size_t i = index; i < strings.Count(); i += 2) {
               nextlevel = strings[i].LeadingCharCount('\t');
-              if( nextlevel <= level )  {
+              if (nextlevel <= level) {
                 index = i;
                 break;
               }
             }
-            if( nextlevel > level )  //reached the end
+            if (nextlevel > level)  //reached the end
               return 0;
-            if( nextlevel < level )
+            if (nextlevel < level) {
               return  nextlevel;
+            }
             continue;
           }
         }
       }
-      else  {
-        if( toSkip->extsToSkip != NULL && !ext.IsEmpty() )  {
-          for( size_t i=0; i < toSkip->extsToSkip->Count(); i++ )  {
-            if( (*toSkip->extsToSkip)[i].Equalsi(ext) )  {
+      else {
+        if (toSkip->extsToSkip != 0 && !ext.IsEmpty()) {
+          for (size_t i = 0; i < toSkip->extsToSkip->Count(); i++) {
+            if ((*toSkip->extsToSkip)[i].Equalsi(ext)) {
               skip = true;
               break;
             }
           }
         }
-        if( !skip && toSkip->filesToSkip != NULL )  {
-          for( size_t i=0; i < toSkip->filesToSkip->Count(); i++ )  {
-            if( (*toSkip->filesToSkip)[i].Equalsi(name) )  {
+        if (!skip && toSkip->filesToSkip != 0) {
+          for (size_t i = 0; i < toSkip->filesToSkip->Count(); i++) {
+            if ((*toSkip->filesToSkip)[i].Equalsi(name)) {
               skip = true;
               break;
             }
@@ -260,30 +283,33 @@ size_t TFSItem::ReadStrings(size_t& index, TFSItem* caller, TStrList& strings,
         }
       }
     }  // end skip business
-    if( !skip )  {
+    if (!skip) {
       item = &NewItem(name);
       item->SetFolder(folder);
       index++;
       toks.Strtok(strings[index], ',', false);
-      if( toks.Count() < 2 )
+      if (toks.Count() < 2) {
         throw TInvalidArgumentException(__OlxSourceInfo, "token number");
-      item->SetDateTime( toks[0].Trim('\t').RadInt<int64_t>() );
+      }
+      item->SetDateTime(toks[0].Trim('\t').RadInt<int64_t>());
       item->SetSize(toks[1].RadInt<int64_t>());
       int start = 2;
-      if( toks.Count() > 3 )  {
+      if (toks.Count() > 3) {
         item->SetDigest(toks[2]);
         start++;
       }
-      for( size_t i=start; i < toks.Count(); i++ )  {
-        if( toks[i].StartsFrom('{') && toks[i].EndsWith('}') )  {
-          olxstr tmp = toks[i].SubString(1, toks[i].Length()-2);
+      for (size_t i = start; i < toks.Count(); i++) {
+        if (toks[i].StartsFrom('{') && toks[i].EndsWith('}')) {
+          olxstr tmp = toks[i].SubString(1, toks[i].Length() - 2);
           propToks.Clear();
           propToks.Strtok(tmp, ';');
-          for( size_t j=0; j < propToks.Count(); j++ )  {
-            if( propToks[j].StartsFrom("action:") )
+          for (size_t j = 0; j < propToks.Count(); j++) {
+            if (propToks[j].StartsFrom("action:")) {
               item->Actions.Add(propToks[j].SubStringFrom(7));
-            else
+            }
+            else {
               item->AddProperty(propToks[j]);
+            }
           }
         }
       }
@@ -292,13 +318,16 @@ size_t TFSItem::ReadStrings(size_t& index, TFSItem* caller, TStrList& strings,
     else
       index++;
     index++;
-    if( index < strings.Count() )  {
-      if( folder )  {
+    if (index < strings.Count()) {
+      if (folder) {
         size_t slevel = item->ReadStrings(index, this, strings, toSkip);
-        if( slevel != level )
+        if (slevel != level) {
           return slevel;
+        }
       }
-      if( nextlevel < level )  return  nextlevel;
+      if (nextlevel < level) {
+        return  nextlevel;
+      }
     }
   }
   return 0;
@@ -309,23 +338,24 @@ TFSItem& TFSItem::NewItem(const olxstr& name)  {
 }
 //.............................................................................
 olxstr TFSItem::GetFullName() const {
-  if (this->GetParent() == NULL)
+  if (this->GetParent() == 0) {
     return EmptyString();
+  }
   olxstr_buf res = GetName();
   olxstr ds = '\\';
-  const TFSItem *p = GetParent();
-  while( p->GetParent() != NULL )  {
+  const TFSItem* p = GetParent();
+  while (p->GetParent() != 0) {
     res << ds << p->GetName();
     p = p->GetParent();
   }
   return olxstr::FromExternal(
-          res.ReverseRead(olx_malloc<olxch>(res.Length()+1)), res.Length());
+    res.ReverseRead(olx_malloc<olxch>(res.Length() + 1)), res.Length());
 }
 //.............................................................................
 int TFSItem::GetLevel() const {
   int level = 0;
-  TFSItem *FI = const_cast<TFSItem*>(this);
-  while( FI && FI->GetParent() )  {
+  TFSItem* FI = const_cast<TFSItem*>(this);
+  while (FI && FI->GetParent()) {
     FI = FI->GetParent();
     level++;
   }
@@ -334,58 +364,63 @@ int TFSItem::GetLevel() const {
 //.............................................................................
 void TFSItem::SetProcessed(bool V) const {
   Processed = V;
-  for( size_t i=0; i < Count(); i++ )
+  for (size_t i = 0; i < Count(); i++) {
     Item(i).SetProcessed(V);
+  }
 }
-//.............................................................................
+//}............................................................................
 uint64_t TFSItem::CalcTotalItemsSize(const TStrList& props) const {
   // some folders like for plugins might have properties....
   if( !ValidateProperties(props) )  return 0;
   if( !IsFolder() )  return GetSize();
   uint64_t sz = 0;
-  for( size_t i=0; i < Count(); i++ )
+  for (size_t i = 0; i < Count(); i++) {
     sz += Item(i).CalcTotalItemsSize(props);
+  }
   return sz;
 }
 //.............................................................................
 uint64_t TFSItem::Synchronise(TFSItem& Dest, const TStrList& properties,
   TStrList* cmds)
 {
-  if( Parent == NULL )  {
+  if (Parent == 0) {
     uint64_t sz = CalcDiffSize(Dest, properties);
     Index.Progress.SetMax(sz);
-    if( sz == 0 )  return 0;  // nothing to do then ...
+    if (sz == 0) {
+      return 0;  // nothing to do then ...
+    }
     Index.Progress.SetPos(0);
     Index.OnProgress.Enter(this, &Index.Progress);
     SetProcessed(false);
   }
   /* check the repository files are at the destination - if not delete them
   (now implemented in TOSFileSystem */
-  for( size_t i=0; i < Dest.Count(); i++ )  {
+  for (size_t i = 0; i < Dest.Count(); i++) {
     TFSItem& FI = Dest.Item(i);
-    if( Index.Break )  // temination signal
+    if (Index.Break) { // temination signal
       return Index.Progress.GetPos();
+    }
     Index.Progress.SetAction(FI.GetFullName());
     Index.OnProgress.Execute(this, &Index.Progress);
 
     TFSItem* Res = FindByName(FI.GetName());
-    if( Res == NULL )  {
-      if( FI.GetParent() != NULL )  {
-        if( cmds != NULL ) {
+    if (Res == 0) {
+      if (FI.GetParent() != 0) {
+        if (cmds != 0) {
           cmds->Add("rm \'") << FI.GetIndexFS().GetBase() <<
             FI.GetFullName() << '\'';
         }
         TFSItem::Remove(FI);
       }
     }
-    else  {
+    else {
       Res->Processed = true;
-      if( !Res->ValidateProperties(properties) )
+      if (!Res->ValidateProperties(properties))
         continue;
-      if( FI.IsFolder() )
+      if (FI.IsFolder())
         Res->Synchronise(FI, properties, cmds);
-      else if( Dest.Index.ShallAdopt(*Res, FI) )  {
-        if( FI.UpdateFile(*Res) != NULL )  {
+      else if (Dest.Index.ShallAdopt(*Res, FI)) {
+        if (FI.UpdateFile(*Res) != 0) {
           Index.Progress.IncPos(FI.GetSize());
           Index.OnProgress.Execute(this, &Index.Progress);
         }
@@ -393,28 +428,30 @@ uint64_t TFSItem::Synchronise(TFSItem& Dest, const TStrList& properties,
     }
   }
   // add new files
-  for( size_t i=0; i < this->Count(); i++ )  {
+  for (size_t i = 0; i < this->Count(); i++) {
     TFSItem& FI = Item(i);
-    if( FI.IsProcessed() || !FI.ValidateProperties(properties) )
+    if (FI.IsProcessed() || !FI.ValidateProperties(properties))
       continue;
-    if( Index.Break )  // termination signal
+    if (Index.Break) { // termination signal
       return Index.Progress.GetPos();
+    }
     Index.Progress.SetAction(FI.GetFullName());
     Index.OnProgress.Execute(this, &Index.Progress);
-    if( FI.IsFolder() )  {
+    if (FI.IsFolder()) {
       TFSItem* Res = Dest.UpdateFile(FI);
-      if( Res != NULL)
+      if (Res != 0) {
         FI.Synchronise(*Res, properties, cmds);
+      }
     }
-    else  {
-      if( Dest.UpdateFile(FI) != NULL )  {
+    else {
+      if (Dest.UpdateFile(FI) != 0) {
         Index.Progress.IncPos(FI.GetSize());
         Index.OnProgress.Execute(this, &Index.Progress);
       }
     }
   }
-  if( this->GetParent() == NULL )  {
-    Index.OnProgress.Exit(NULL, &Index.Progress);
+  if (this->GetParent() == 0) {
+    Index.OnProgress.Exit(0, &Index.Progress);
   }
   return Index.Progress.GetMax();
 }
@@ -423,77 +460,82 @@ uint64_t TFSItem::CalcDiffSize(const TFSItem& Dest,
   const TStrList& properties) const
 {
   uint64_t sz = 0;
-  if( Parent == NULL )
+  if (Parent == 0) {
     SetProcessed(false);
+  }
   /* check the repository files are at the destination */
-  for( size_t i=0; i < Dest.Count(); i++ )  {
+  for (size_t i = 0; i < Dest.Count(); i++) {
     TFSItem& FI = Dest.Item(i);
     TFSItem* Res = FindByName(FI.GetName());
-    if( Res != NULL )  {
+    if (Res != 0) {
       Res->Processed = true;
-      if( !Res->ValidateProperties(properties) )
+      if (!Res->ValidateProperties(properties)) {
         continue;
-      if( FI.IsFolder() )
+      }
+      if (FI.IsFolder())
         sz += Res->CalcDiffSize(FI, properties);
-      else if( Dest.Index.ShallAdopt(*Res, FI) )  {
+      else if (Dest.Index.ShallAdopt(*Res, FI)) {
         sz += Res->GetSize();
       }
     }
   }
-  for( size_t i=0; i < this->Count(); i++ )  {
+  for (size_t i = 0; i < this->Count(); i++) {
     TFSItem& res = Item(i);
-    if( res.IsProcessed() || !res.ValidateProperties(properties) )
+    if (res.IsProcessed() || !res.ValidateProperties(properties)) {
       continue;
+    }
     sz += res.CalcTotalItemsSize(properties);
   }
   return sz;
 }
 //.............................................................................
-TFSItem* TFSItem::UpdateFile(TFSItem& item)  {
-  if( item.IsFolder() )  {
+TFSItem* TFSItem::UpdateFile(TFSItem& item) {
+  if (item.IsFolder()) {
     olxstr FN = GetIndexFS().GetBase() + item.GetFullName();
-    if( TEFile::Exists(FN) || GetIndexFS().NewDir(FN) )    {
+    if (TEFile::Exists(FN) || GetIndexFS().NewDir(FN)) {
       TFSItem* FI = FindByName(item.GetName());
-      if( FI == NULL )
+      if (FI == 0) {
         FI = &NewItem(item.GetName());
+      }
       *FI = item;
       return FI;
     }
-    return NULL;
+    return 0;
   }
-  else  {
+  else {
     // an error can be only caused by impossibility to open the file
-    try  {
+    try {
       TFSItem* FI = const_cast<TFSItem*>(this);
       // if names are different - we are looking at the content of this
       bool is_new = false;
-      if( this->GetName() != item.GetName() )  {
+      if (this->GetName() != item.GetName()) {
         FI = FindByName(item.GetName());
-        if( FI == NULL )  {
+        if (FI == 0) {
           FI = &NewItem(item.GetName());
           is_new = true;
         }
       }
-      if( !is_new && !Index.ShallAdopt(item, *FI) )  {
+      if (!is_new && !Index.ShallAdopt(item, *FI)) {
         *FI = item;  // just update so it does not trigger update next time
         return FI;
       }
-      if( GetIndexFS().AdoptFile(item) )  {
+      if (GetIndexFS().AdoptFile(item)) {
         TFSItem tmp(Index, this, EmptyString());
         tmp = *FI;
         *FI = item;
         bool res = Index.ProcessActions(*FI);
-        if( !res )
+        if (!res) {
           *FI = tmp;
-        return res ? FI : NULL;
+        }
+        return res ? FI : 0;
       }
-      else  {
+      else {
         Remove(*FI);
-        return NULL;
+        return 0;
       }
     }
-    catch( const TExceptionBase& )  {
-      return NULL;
+    catch (const TExceptionBase&) {
+      return 0;
     }
   }
 }
@@ -503,23 +545,26 @@ void TFSItem::DeleteItem(TFSItem* item) {
     item->DelFile();
     delete item;
   }
-  else
+  else {
     throw TInvalidArgumentException(__OlxSourceInfo, "item");
+  }
 }
 //.............................................................................
 void TFSItem::Remove(TFSItem& item)  {
   if( !item.GetIndexFS().HasAccess(afs_DeleteAccess) )
     return;
-  if( item.GetParent() == NULL )
+  if (item.GetParent() == 0) {
     throw TInvalidArgumentException(__OlxSourceInfo, "cannot delete ROOT");
+  }
   item.GetParent()->DeleteItem(&item);
 }
 //.............................................................................
 void TFSItem::DelFile() {
   if (!GetIndexFS().HasAccess(afs_DeleteAccess)) return;
   if (IsFolder()) {
-    for (size_t i=0; i < Count(); i++)
+    for (size_t i = 0; i < Count(); i++) {
       delete Items.GetValue(i);
+    }
     Items.Clear();
     // this will remove ALL files, not only the files in the index
     GetIndexFS().DelDir(GetIndexFS().GetBase() + GetFullName());
@@ -540,7 +585,7 @@ void TFSItem::_DelFile() {
   }
 }
 //.............................................................................
-TFSItem& TFSItem::operator = (const TFSItem& FI)  {
+TFSItem& TFSItem::operator = (const TFSItem& FI) {
   Name = FI.GetName();
   Size = FI.GetSize();
   DateTime = FI.GetDateTime();
@@ -551,59 +596,67 @@ TFSItem& TFSItem::operator = (const TFSItem& FI)  {
   return *this;
 }
 //.............................................................................
-void TFSItem::ListUniqueProperties(TStrList& uProps)  {
-  for( size_t i=0; i < Properties.Count(); i++ )
-    if( uProps.IndexOf( Properties[i] ) == InvalidIndex )
-      uProps.Add( Properties[i] );
-  for( size_t i=0; i < Items.Count(); i++ )
-    Item(i).ListUniqueProperties( uProps );
+void TFSItem::ListUniqueProperties(TStrList& uProps) {
+  for (size_t i = 0; i < Properties.Count(); i++) {
+    if (uProps.IndexOf(Properties[i]) == InvalidIndex) {
+      uProps.Add(Properties[i]);
+    }
+  }
+  for (size_t i = 0; i < Items.Count(); i++) {
+    Item(i).ListUniqueProperties(uProps);
+  }
 }
 //.............................................................................
 TFSItem* TFSItem::FindByFullName(const olxstr& Name) const {
   TStrList toks(TEFile::UnixPath(Name), '/');
-  if( toks.IsEmpty() )  return NULL;
+  if (toks.IsEmpty()) {
+    return 0;
+  }
 
   const TFSItem* root = this;
-  for( size_t i=0; i < toks.Count(); i++ )  {
-    root = root->FindByName( toks[i] );
-    if( root == NULL )  return const_cast<TFSItem*>(root);
+  for (size_t i = 0; i < toks.Count(); i++) {
+    root = root->FindByName(toks[i]);
+    if (root == 0) {
+      return const_cast<TFSItem*>(root);
+    }
   }
   return const_cast<TFSItem*>(root);
 }
 //.............................................................................
-TFSItem& TFSItem::NewItem(TFSItem* item)  {
+TFSItem& TFSItem::NewItem(TFSItem* item) {
   TPtrList<TFSItem> items;
-  while( item != NULL && item->GetParent() != NULL )  {
+  while (item != 0 && item->GetParent() != 0) {
     items.Add(item);
     item = item->GetParent();
   }
-// not in the items all path to the item
+  // not in the items all path to the item
   TFSItem* ti = this;
-  for( size_t i = items.Count(); i > 0;  i-- )  {
-    TFSItem* nti = ti->UpdateFile(*items[i-1]);
-    if( nti == NULL )
-      throw TFunctionFailedException( __OlxSourceInfo, "failed to update file");
+  for (size_t i = items.Count(); i > 0; i--) {
+    TFSItem* nti = ti->UpdateFile(*items[i - 1]);
+    if (nti == 0) {
+      throw TFunctionFailedException(__OlxSourceInfo, "failed to update file");
+    }
     ti = nti;
   }
   return *ti;
 }
 //.............................................................................
-void TFSItem::ClearNonexisting()  {
+void TFSItem::ClearNonexisting() {
   if (!olx_type<TOSFileSystem>::check(GetIndexFS())) {
     return;
   }
-  for( size_t i=0; i < Count(); i++ )  {
-    if( !Item(i).IsFolder() )  {
-      if( Index.ShouldExist(Item(i)) &&
-        !GetIndexFS().Exists(GetIndexFS().GetBase() + Item(i).GetFullName()) )
+  for (size_t i = 0; i < Count(); i++) {
+    if (!Item(i).IsFolder()) {
+      if (Index.ShouldExist(Item(i)) &&
+        !GetIndexFS().Exists(GetIndexFS().GetBase() + Item(i).GetFullName()))
       {
         delete Items.GetValue(i);
         Items.Delete(i--);
       }
     }
-    else  {
+    else {
       Item(i).ClearNonexisting();
-      if( Item(i).IsEmpty() )  {
+      if (Item(i).IsEmpty()) {
         delete Items.GetValue(i);
         Items.Delete(i--);
       }
@@ -611,12 +664,12 @@ void TFSItem::ClearNonexisting()  {
   }
 }
 //.............................................................................
-void TFSItem::ClearEmptyFolders()  {
-  for( size_t i=0; i < Count(); i++ )  {
-    if( Item(i).IsFolder() )  {
-      if( Item(i).Count() > 0 )
+void TFSItem::ClearEmptyFolders() {
+  for (size_t i = 0; i < Count(); i++) {
+    if (Item(i).IsFolder()) {
+      if (Item(i).Count() > 0)
         Item(i).ClearEmptyFolders();
-      if( Item(i).IsEmpty() )  {
+      if (Item(i).IsEmpty()) {
         delete Items.GetValue(i);
         Items.Delete(i);
         i--;
@@ -628,42 +681,46 @@ void TFSItem::ClearEmptyFolders()  {
 //.............................................................................
 //.............................................................................
 TFSIndex::TFSIndex(AFileSystem& fs) :
+  Root(*this, 0, "ROOT"),
   IndexFS(fs),
   OnBreak(Actions.New("ON_BREAK")),
   OnProgress(Actions.New("ON_PROGRESS")),
   OnAction(Actions.New("ON_ACTION"))
 {
-  Root = new TFSItem(*this, NULL, "ROOT");
   IndexLoaded = false;
   Break = false;
   OnBreak.Add(&IndexFS);
 }
 //.............................................................................
-TFSIndex::~TFSIndex()  {  delete Root;  }
+TFSIndex::~TFSIndex()  {}
 //.............................................................................
 void TFSIndex::LoadIndex(const olxstr& IndexFile,
   const TFSItem::SkipOptions* toSkip)
 {
-  if( IndexLoaded )  return;
+  if (IndexLoaded) {
+    return;
+  }
   GetRoot().Clear();
   // just try instead...
   //if( !IndexFS.Exists(IndexFile) )
   //  throw TFileDoesNotExistException(__OlxSourceInfo, IndexFile);
 
   olx_object_ptr<IInputStream> is;
-  try  { is = IndexFS.OpenFile(IndexFile); }
-  catch (TExceptionBase &exc) {
+  try {
+    is = IndexFS.OpenFile(IndexFile);
+  }
+  catch (TExceptionBase& exc) {
     throw TFunctionFailedException(__OlxSourceInfo,
       exc.GetException()->GetFullMessage());
   }
-  if (!is.is_valid()) {
+  if (!is.ok()) {
     throw TFunctionFailedException(__OlxSourceInfo,
       "could not load index file");
   }
   TStrList strings;
-  strings.LoadFromTextStream(is());
+  strings.LoadFromTextStream(is);
   size_t index = 0;
-  GetRoot().ReadStrings(index, NULL, strings, toSkip);
+  GetRoot().ReadStrings(index, 0, strings, toSkip);
   Properties.Clear();
   GetRoot().ListUniqueProperties(Properties);
   GetRoot().ClearNonexisting();
@@ -671,23 +728,26 @@ void TFSIndex::LoadIndex(const olxstr& IndexFile,
   IndexLoaded = true;
 }
 //.............................................................................
-void TFSIndex::SaveIndex(const olxstr &IndexFile) {
+void TFSIndex::SaveIndex(const olxstr& IndexFile) {
   TStrList strings;
   GetRoot().ClearEmptyFolders();
-  for( size_t i=0; i < GetRoot().Count(); i++ )
+  for (size_t i = 0; i < GetRoot().Count(); i++) {
     GetRoot().Item(i) >> strings;
+  }
   olx_object_ptr<TEFile> tmp_f(TEFile::TmpFile(EmptyString()));
-  TCStrList(strings).SaveToTextStream(tmp_f());
-  tmp_f().SetPosition(0);
-  try { IndexFS.AdoptStream(tmp_f(), IndexFile); }
-  catch(const TExceptionBase& exc)  {
+  TCStrList(strings).SaveToTextStream(tmp_f);
+  tmp_f->SetPosition(0);
+  try {
+    IndexFS.AdoptStream(tmp_f, IndexFile);
+  }
+  catch (const TExceptionBase& exc) {
     throw TFunctionFailedException(__OlxSourceInfo, exc,
       "could not save index");
   }
 }
 //.............................................................................
 uint64_t TFSIndex::Synchronise(AFileSystem& To, const TStrList& properties,
-  const TFSItem::SkipOptions* toSkip,TStrList* cmds,
+  const TFSItem::SkipOptions* toSkip, TStrList* cmds,
   const olxstr& indexName)
 {
   TFSIndex DestI(To);
@@ -695,20 +755,22 @@ uint64_t TFSIndex::Synchronise(AFileSystem& To, const TStrList& properties,
   Break = false;
   olxstr SrcInd = IndexFS.GetBase() + indexName;
   olxstr DestInd = To.GetBase() + indexName;
-  try  {
+  try {
     LoadIndex(SrcInd, toSkip);
-    if( To.Exists(DestInd) )
+    if (To.Exists(DestInd)) {
       DestI.LoadIndex(DestInd);
+    }
     // proxy events ...
-    DestI.OnAction.Add( new TActionProxy(OnAction) );
+    DestI.OnAction.Add(new TActionProxy(OnAction));
     uint64_t BytesTransfered = GetRoot().Synchronise(
       DestI.GetRoot(), properties, cmds);
-    if( BytesTransfered != 0 )
+    if (BytesTransfered != 0) {
       DestI.SaveIndex(DestInd);
+    }
     OnBreak.Remove(&DestI.OnBreak);
     return BytesTransfered;
   }
-  catch( const TExceptionBase& exc )  {
+  catch (const TExceptionBase& exc) {
     OnBreak.Remove(&DestI.OnBreak);
     throw TFunctionFailedException(__OlxSourceInfo, exc);
   }
@@ -720,13 +782,14 @@ uint64_t TFSIndex::CalcDiffSize(AFileSystem& To, const TStrList& properties,
   TFSIndex DestI(To);
   olxstr SrcInd = IndexFS.GetBase() + indexName;
   olxstr DestInd = To.GetBase() + indexName;
-  try  {
+  try {
     LoadIndex(SrcInd, toSkip);
-    if( To.Exists(DestInd) )
+    if (To.Exists(DestInd)) {
       DestI.LoadIndex(DestInd);
+    }
     return GetRoot().CalcDiffSize(DestI.GetRoot(), properties);
   }
-  catch( const TExceptionBase& exc )  {
+  catch (const TExceptionBase& exc) {
     throw TFunctionFailedException(__OlxSourceInfo, exc);
   }
 }
@@ -739,68 +802,74 @@ bool TFSIndex::UpdateFile(AFileSystem& To, const olxstr& fileName, bool Force,
   olxstr SrcInd = IndexFS.GetBase() + indexName;
   olxstr DestInd = To.GetBase() + indexName;
   bool res = false;
-  try  {
+  try {
     LoadIndex(SrcInd);
-    if( To.Exists(DestInd) )
+    if (To.Exists(DestInd)) {
       DestI.LoadIndex(DestInd);
+    }
 
     TFSItem* src = GetRoot().FindByFullName(fileName);
-    if( src == NULL )
+    if (src == 0) {
       throw TFileDoesNotExistException(__OlxSourceInfo, fileName);
+    }
     TFSItem* dest = DestI.GetRoot().FindByFullName(fileName);
-    if( dest != NULL )  {
+    if (dest != 0) {
       bool update = Force;
-      if( !update  )  {
-        if( !src->GetDigest().IsEmpty() && !dest->GetDigest().IsEmpty() )
+      if (!update) {
+        if (!src->GetDigest().IsEmpty() && !dest->GetDigest().IsEmpty()) {
           update = src->GetDigest() != dest->GetDigest();
+        }
         else {
           update = (src->GetDateTime() > dest->GetDateTime()) ||
             (src->GetSize() != dest->GetSize());
         }
       }
-      if( update )  {
+      if (update) {
         olxstr test = To.GetBase() + dest->GetFullName();
-        if( To.AdoptFile(*src) )  {
+        if (To.AdoptFile(*src)) {
           *dest = *src;
           res = true;
         }
       }
     }
-    else  {
+    else {
       DestI.GetRoot().NewItem(src);
       res = true;
     }
-    if( res )
+    if (res) {
       DestI.SaveIndex(DestInd);
+    }
     OnBreak.Remove(&DestI.OnBreak);
   }
-  catch( const TExceptionBase& exc )  {
+  catch (const TExceptionBase& exc) {
     OnBreak.Remove(&DestI.OnBreak);
     throw TFunctionFailedException(__OlxSourceInfo, exc);
   }
   return res;
 }
 //.............................................................................
-bool TFSIndex::ShallAdopt(const TFSItem& src, TFSItem& dest) const  {
-  if( !dest.GetDigest().IsEmpty() && !src.GetDigest().IsEmpty() )  {
-    if( src.GetActions().IndexOfi("delete") != InvalidIndex )
+bool TFSIndex::ShallAdopt(const TFSItem& src, TFSItem& dest) const {
+  if (!dest.GetDigest().IsEmpty() && !src.GetDigest().IsEmpty()) {
+    if (src.GetActions().IndexOfi("delete") != InvalidIndex) {
       return !(dest.GetDigest() == src.GetDigest() &&
         dest.GetSize() == src.GetSize());
-    if( dest.GetDigest() != src.GetDigest() ||
+    }
+    if (dest.GetDigest() != src.GetDigest() ||
       !dest.GetIndexFS().Exists(
-        dest.GetIndexFS().GetBase() + dest.GetFullName()) )
+        dest.GetIndexFS().GetBase() + dest.GetFullName()))
     {
       return true;
     }
   }
-  else  {  // do it the old way, based on timestamp then, but update the digest
+  else {  // do it the old way, based on timestamp then, but update the digest
     dest.SetDigest(src.GetDigest());
-    if( src.GetActions().IndexOfi("delete") != InvalidIndex )
+    if (src.GetActions().IndexOfi("delete") != InvalidIndex) {
       return !(dest.GetDateTime() == src.GetDateTime() &&
         dest.GetSize() == src.GetSize());
-    if( dest.GetDateTime() != src.GetDateTime() ||
+    }
+    if (dest.GetDateTime() != src.GetDateTime() ||
       !dest.GetIndexFS().Exists(
-        dest.GetIndexFS().GetBase() + dest.GetFullName()) )
+        dest.GetIndexFS().GetBase() + dest.GetFullName()))
     {
       return true;
     }
@@ -808,19 +877,19 @@ bool TFSIndex::ShallAdopt(const TFSItem& src, TFSItem& dest) const  {
   return false;
 }
 //.............................................................................
-bool TFSIndex::ProcessActions(TFSItem& item)  {
+bool TFSIndex::ProcessActions(TFSItem& item) {
   const TStrList& actions = item.GetActions();
-  bool res= true;
-  if( actions.IndexOfi("extract") != InvalidIndex )  {
+  bool res = true;
+  if (actions.IndexOfi("extract") != InvalidIndex) {
     olx_object_ptr<AZipFS> fs(ZipFSFactory::GetInstance(
       IndexFS.GetBase() + item.GetFullName(), false));
-    fs().OnProgress.Add(new TActionProxy(OnAction));
-    OnBreak.Add(&fs());
-    try  {  res = fs().ExtractAll(IndexFS.GetBase());  }
-    catch(...)  {  res = false;  }
-    OnBreak.Remove(&fs());
+    fs->OnProgress.Add(new TActionProxy(OnAction));
+    OnBreak.Add(&fs);
+    try { res = fs->ExtractAll(IndexFS.GetBase()); }
+    catch (...) { res = false; }
+    OnBreak.Remove(&fs);
   }
-  if( res && actions.IndexOfi("delete") != InvalidIndex ) {
+  if (res && actions.IndexOfi("delete") != InvalidIndex) {
     item._DelFile();
   }
   return res;

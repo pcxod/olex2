@@ -82,7 +82,7 @@ namespace olex2 {
       void *instance);
 
     static IOlex2Processor *&GetInstance() {
-      static IOlex2Processor* Instance=NULL;
+      static IOlex2Processor* Instance=0;
       return Instance;
     }
   };

@@ -60,7 +60,7 @@ struct olx_PyModuleDef {
       &olx_PyModuleDef::mod_clear,
       &olx_PyModuleDef::mod_free,
     };
-    moduleObj = PyModule_Create(moduleDef.get_ptr());
+    moduleObj = PyModule_Create(&moduleDef);
   }
 };
 //.............................................................................
@@ -208,15 +208,15 @@ PyObject* runReadImage(PyObject* self, PyObject* args)  {
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "w");
   }
   if (!name.IsEmpty()) {
-    olx_object_ptr<IInputStream> io = TFileHandlerManager::GetInputStream(name);
-    if (io.is_valid()) {
-      const size_t is = io().GetAvailableSizeT();
+    olx_object_ptr<IDataInputStream> io = TFileHandlerManager::GetInputStream(name);
+    if (io.ok()) {
+      const size_t is = io->GetAvailableSizeT();
       olx_array_ptr<char> bf(is + 1);
-      io().Read(bf(), is);
+      io->Read(bf, is);
 #if PY_MAJOR_VERSION >= 3
-      PyObject* po = Py_BuildValue("y#", bf(), is);
+      PyObject* po = Py_BuildValue("y#", &bf, is);
 #else
-      PyObject* po = Py_BuildValue("s#", bf(), is);
+      PyObject* po = Py_BuildValue("s#", &bf, is);
 #endif
       return po;
     }

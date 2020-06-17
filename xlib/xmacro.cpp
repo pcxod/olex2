@@ -3457,7 +3457,7 @@ void XLibMacros::funRemoveSE(const TStrObjList &Params, TMacroData &E) {
     sorted::PrimitiveAssociation<double, TSpaceGroup*> sglist;
     for (size_t i = 0; i < TSymmLib::GetInstance().SGCount(); i++) {
       double st = 0;
-      if (TSymmLib::GetInstance().GetGroup(i).Compare(ml).is_valid()) {
+      if (TSymmLib::GetInstance().GetGroup(i).Compare(ml).ok()) {
         sglist.Add(st, &TSymmLib::GetInstance().GetGroup(i));
       }
     }
@@ -3928,12 +3928,12 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options,
   else {
     olxstr cifFN = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "cif");
     if (TEFile::Exists(cifFN)) {
-      Cif1().LoadFromFile(cifFN);
+      Cif1->LoadFromFile(cifFN);
     }
     else {
       throw TFunctionFailedException(__OlxSourceInfo, "existing CIF is expected");
     }
-    Cif = &Cif1();
+    Cif = &Cif1;
   }
 
   TStrList SL, Dic;
@@ -4515,7 +4515,7 @@ void CifMerge_EmbeddData(TCif &Cif, bool insert, bool fcf_format) {
         res_f.SetPosition(0);
         size_t as = res_f.GetAvailableSizeT();
         olx_array_ptr<char> bf(as);
-        res_f.Read(bf(), as);
+        res_f.Read(&bf, as);
         olxcstr s = olxcstr::FromExternal(bf.release(), as);
         s.DeleteCharSet("\n\r\t ");
         Cif.SetParam("_olex2_res_file_MD5", MD5::Digest(s), false);
@@ -4652,13 +4652,13 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
     olxstr cifFN = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "cif");
     if (TEFile::Exists(cifFN)) {
       sw.start("Loading CIF");
-      Cif2().LoadFromFile(cifFN);
+      Cif2->LoadFromFile(cifFN);
     }
     else {
       throw TFunctionFailedException(__OlxSourceInfo,
         "existing cif is expected");
     }
-    Cif = &Cif2();
+    Cif = &Cif2;
   }
   if (Cif->HasDuplicateLabels()) {
     TBasicApp::NewLogEntry(logWarning) << "Sorry - the CIF contains duplicate "
@@ -4680,8 +4680,8 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
     try {
       TStrList toks(Cmds[i], '&');
       olxstr fn = toks[0];
-      olx_object_ptr<IInputStream> is = TFileHandlerManager::GetInputStream(fn);
-      if (!is.is_valid()) {
+      olx_object_ptr<IDataInputStream> is = TFileHandlerManager::GetInputStream(fn);
+      if (!is.ok()) {
         TBasicApp::NewLogEntry(logError) << "Could not find file: " << fn;
         continue;
       }
@@ -4694,7 +4694,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
           }
         }
       }
-      src.LoadFromStream(is());
+      src.LoadFromStream(is);
     }
     catch(...) {}  // most like the cif does not have cell, so pass it
     if (src.Count() == 0) {
@@ -4840,11 +4840,11 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
     cetTable *l = 0;
     size_t id_col_idx, fraction_col_idx;
     const XVarManager &vm = xapp.XFile().GetRM().Vars;
-    if (tw_lip.is_valid()) {
-      fraction_col_idx = tw_lip().b;
-      id_col_idx = tw_lip().a->ColIndex("_twin_individual_id");
+    if (tw_lip.ok()) {
+      fraction_col_idx = tw_lip->b;
+      id_col_idx = tw_lip->a->ColIndex("_twin_individual_id");
       if (id_col_idx != InvalidIndex) {
-        l = tw_lip().a;
+        l = tw_lip->a;
       }
     }
     if (l == 0 || l->RowCount() != (vm.GetBASFCount()+1)) {
@@ -4928,8 +4928,8 @@ void XLibMacros::macCifExtract(TStrObjList &Cmds, const TParamList &Options,
   else {
     external_cif = new TCif;
     try {
-      external_cif().LoadFromFile(Cmds[0]);
-      cif = &external_cif();
+      external_cif->LoadFromFile(Cmds[0]);
+      cif = &external_cif;
     }
     catch (const TExceptionBase &e) {
       throw TFunctionFailedException(__OlxSrcInfo, e);
@@ -7273,9 +7273,9 @@ void XLibMacros::macUpdate(TStrObjList &Cmds, const TParamList &Options,
 {
   TXApp& app = TXApp::GetInstance();
   olx_object_ptr<TXFile> xf(dynamic_cast<TXFile*>(app.XFile().Replicate()));
-  xf.p->p->LoadFromFile(Cmds.Text(' '));
+  xf->LoadFromFile(Cmds.Text(' '));
   RefinementModel &this_rm = app.XFile().GetRM(),
-    &that_rm = xf.p->p->GetRM();
+    &that_rm = xf->GetRM();
   if( !this_rm.Update(that_rm) )  {
     E.ProcessingError(__OlxSrcInfo, "Asymmetric units do not match");
     return;
@@ -7286,7 +7286,8 @@ void XLibMacros::macUpdate(TStrObjList &Cmds, const TParamList &Options,
 void XLibMacros::funCalcR(const TStrObjList& Params, TMacroData &E) {
   TXApp& xapp = TXApp::GetInstance();
   RefUtil::Stats rstat(!Params.IsEmpty() && Params[0].Contains("scale"));
-  if (!Params.IsEmpty() && Params[0].Containsi("print")) {
+  bool print = !Params.IsEmpty() && Params[0].Containsi("print");
+  if (print) {
     xapp.NewLogEntry() << "R1 (All, " << rstat.refs.Count() << ") = "
       << olxstr::FormatFloat(4, rstat.R1);
     xapp.NewLogEntry() << "R1 (I/sig >= 2, " << rstat.partial_R1_cnt << ") = "
@@ -7295,6 +7296,51 @@ void XLibMacros::funCalcR(const TStrObjList& Params, TMacroData &E) {
   }
   E.SetRetVal(
     olxstr(rstat.R1) << ',' << rstat.R1_partial << ',' << rstat.wR2);
+  if (!print) {
+    return;
+  }
+  // some test code for Flack calculation
+  TRefPList pos_, neg_;
+  TRefList refs;
+  vec3i mini(1000), maxi(-1000);
+  double th = 0;
+  for (size_t i = 0; i < rstat.refs.Count(); i++) {
+//    if (rstat.refs[i].GetI() < rstat.refs[i].GetS() * th) {
+//      continue;
+//    }
+    refs.AddCopy(rstat.refs[i]);
+    vec3i::UpdateMinMax(rstat.refs[i].GetHkl(), mini, maxi);
+  }
+  RefUtil::GetBijovetPairs(refs, mini, maxi, pos_, neg_,
+    xapp.XFile().GetLastLoaderSG().GetMatrices(mattAll).GetObject());
+  double up = 0, down = 0;
+  for (int p = 0; p <= 1; p++) {
+    TRefPList *pos = p == 0 ? &pos_ : &neg_,
+      *neg = p == 0 ? &neg_ : &pos_;
+    for (size_t i = 0; i < pos_.Count(); i++) {
+      double w = rstat.weights[(*pos)[i]->GetTag()];
+      double D1 = (*pos)[i]->GetI() - rstat.Fsq[(*pos)[i]->GetTag()];
+      double D2 = rstat.Fsq[(*neg)[i]->GetTag()] - rstat.Fsq[(*pos)[i]->GetTag()];
+      up += w * D1 * D2;
+      down += w * D2 * D2;
+    }
+  }
+  double k = up / down, obj = 0, obj_d = 0;
+  for (int p = 0; p <= 1; p++) {
+    TRefPList* pos = p == 0 ? &pos_ : &neg_,
+      * neg = p == 0 ? &neg_ : &pos_;
+    for (size_t i = 0; i < pos_.Count(); i++) {
+      double w = rstat.weights[(*pos)[i]->GetTag()];
+      double D1 = (*pos)[i]->GetI() - rstat.Fsq[(*pos)[i]->GetTag()];
+      double D2 = rstat.Fsq[(*neg)[i]->GetTag()] - rstat.Fsq[(*pos)[i]->GetTag()];
+      obj += w*olx_sqr((D1 - k*D2));
+      obj_d += w*D2 * D2;
+    }
+  }
+  double esd = obj / ((pos_.Count() - 1)*obj_d);
+
+  TBasicApp::NewLogEntry() << "X: " << TEValueD(k, sqrt(esd)).ToString() << " for "
+    << pos_.Count() << " pairs";
 }
 //.............................................................................
 olxstr XLibMacros::GetCompilationInfo() {
@@ -8580,7 +8626,7 @@ void XLibMacros::macExport(TStrObjList &Cmds, const TParamList &Options,
   }
   else {
     olx_object_ptr<THklFile::ref_list> refs = THklFile::FromCifTable(*hklLoop);
-    if (refs.is_valid()) {
+    if (refs.ok()) {
       olxstr md5;
       cif_dp::ICifEntry * md5i = C.FindEntry("_olex2_hkl_file_MD5");
       if (md5i != 0) {
@@ -8601,8 +8647,8 @@ void XLibMacros::macExport(TStrObjList &Cmds, const TParamList &Options,
       else if (use_md5) {
         TBasicApp::NewLogEntry(logWarning) << "HKL MD5: missing";
       }
-      THklFile::SaveToFile(hkl_name, refs().a);
-      if (!refs().b) {
+      THklFile::SaveToFile(hkl_name, refs->a);
+      if (!refs->b) {
         C.GetRM().SetHKLF(3);
         app.XFile().GetRM().SetHKLF(3);
       }
@@ -9655,8 +9701,9 @@ void XLibMacros::macRESI(TStrObjList &Cmds, const TParamList &Options,
     TResidue& main_resi = au.GetResidue(0);
     for (size_t i=0; i < atoms.Count(); i++) {
       TCAtom& ca = atoms[i]->CAtom();
-      if (olx_is_valid_index(ca.GetResiId()))
+      if (olx_is_valid_index(ca.GetResiId())) {
         main_resi.Add(ca);
+      }
     }
   }
   else {
@@ -9899,20 +9946,20 @@ void XLibMacros::funCif(const TStrObjList& Params, TMacroData &E)  {
     }
     olx_object_ptr<olx_pair_t<cif_dp::cetTable*, size_t> > t = cf.FindLoopItem(Params[0]);
     
-    if (!t.is_valid() || (idx != InvalidIndex && t().a->RowCount() < idx)) {
+    if (!t.ok() || (idx != InvalidIndex && t->a->RowCount() < idx)) {
       E.SetRetVal(XLibMacros::NAString());
       return;
     }
     // return all values
     if (idx == InvalidIndex) {
       TStrList rv;
-      for (size_t i = 0; i < t().a->RowCount(); i++) {
-        rv << (*t().a)[i][t().b]->GetStringValue();
+      for (size_t i = 0; i < t->a->RowCount(); i++) {
+        rv << (*t->a)[i][t->b]->GetStringValue();
       }
       E.SetRetVal(olxstr(",").Join(rv));
     }
     else {
-      E.SetRetVal((*t().a)[idx][t().b]->GetStringValue());
+      E.SetRetVal((*t->a)[idx][t->b]->GetStringValue());
     }
   }
 }
@@ -9920,13 +9967,15 @@ void XLibMacros::funCif(const TStrObjList& Params, TMacroData &E)  {
 void XLibMacros::funP4p(const TStrObjList& Params, TMacroData &E)  {
 }
 //.............................................................................
-void XLibMacros::funCrs(const TStrObjList& Params, TMacroData &E)  {
-  TXApp &app = TXApp::GetInstance();
+void XLibMacros::funCrs(const TStrObjList& Params, TMacroData& E) {
+  TXApp& app = TXApp::GetInstance();
   TCRSFile& cf = app.XFile().GetLastLoader<TCRSFile>();
-  if( Params[0].Equalsi("sg") )
-    E.SetRetVal(cf.GetSG() != NULL ? cf.GetSG()->GetName() : EmptyString());
-  else
+  if (Params[0].Equalsi("sg")) {
+    E.SetRetVal(cf.GetSG() != 0 ? cf.GetSG()->GetName() : EmptyString());
+  }
+  else {
     E.SetRetVal(XLibMacros::NAString());
+  }
 }
 //.............................................................................
 class helper_Tetrahedron  {

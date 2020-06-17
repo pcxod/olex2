@@ -40,8 +40,8 @@ void TCifDP::LoadFromStrings(const TStrList &lines) {
 void TCifDP::LoadFromStream(IInputStream & stream) {
   size_t sz = stream.GetSize();
   olx_array_ptr<char> data = new char[sz];
-  stream.Read(data(), sz);
-  LoadFromString(olxstr::FromUTF8(data(), sz));
+  stream.Read(data, sz);
+  LoadFromString(olxstr::FromUTF8(data, sz));
 }
 //..............................................................................
 void TCifDP::LoadFromString(const olxstr &str_) {
@@ -81,7 +81,7 @@ void TCifDP::LoadFromString(const olxstr &str_) {
         (toks[i].value.StartsFrom('_') || toks[i].value.StartsFrom('#')))
       {
         if (toks[i].value.StartsFrom('_')) {
-          t().AddCol(toks[i].value);
+          t->AddCol(toks[i].value);
         }
         else {
           h_comments.Add(toks[i].value);
@@ -95,9 +95,9 @@ void TCifDP::LoadFromString(const olxstr &str_) {
           continue;
         }
       }
-      if (t().ColCount() == 0 || ((i - st - comments.Count()) % t().ColCount()) > 0) {
+      if (t->ColCount() == 0 || ((i - st - comments.Count()) % t->ColCount()) > 0) {
         throw ParsingException(__OlxSourceInfo,
-          olxstr("invalid table ") << t().GetName(), st);
+          olxstr("invalid table ") << t->GetName(), st);
       }
       comments.AddAll(h_comments);
       for (size_t ii = st; ii < i;) {
@@ -105,8 +105,8 @@ void TCifDP::LoadFromString(const olxstr &str_) {
           ii++;
           continue;
         }
-        CifRow &r = t().AddRow();
-        for (size_t ij = 0; ij < t().ColCount(); ij++, ii++) {
+        CifRow &r = t->AddRow();
+        for (size_t ij = 0; ij < t->ColCount(); ij++, ii++) {
           if (toks.IsNull(ii)) {
             ij--;
             continue;
@@ -114,9 +114,9 @@ void TCifDP::LoadFromString(const olxstr &str_) {
           r[ij] = ICifEntry::FromToken(toks[ii], version);
         }
       }
-      if (t().RowCount() == 0) {
+      if (t->RowCount() == 0) {
         TBasicApp::NewLogEntry(logWarning) << "Ignoring empty table "
-          << t().GetName();
+          << t->GetName();
         continue;
       }
       current_block->Add(t.release());
@@ -584,7 +584,7 @@ void cetTable::Sort() {
 }
 void cetTable::SetName(const olxstr& nn) {
   for (size_t i = 0; i < data.ColCount(); i++) {
-    data.ColName(i) = nn + data.ColName(i).SubStringFrom(name().Length());
+    data.ColName(i) = nn + data.ColName(i).SubStringFrom(name->Length());
   }
   this->name = nn;
 }
@@ -669,18 +669,18 @@ void cetString::ToStrings(TStrList& list) const {
     line << (value.IsEmpty() ? GetEmptyValue() : value);
   }
   if (HasComment()) {
-    line << " # " << comment();
+    line << " # " << *comment;
   }
 }
 //..............................................................................
 //..............................................................................
 //..............................................................................
 void cetStringList::ToStrings(TStrList& list) const {
-  if (comment.is_valid()) {
-    list.Add("#") << comment();
+  if (comment.ok()) {
+    list.Add("#") << *comment;
   }
-  if (name.is_valid()) {
-    list.Add(name());
+  if (name.ok()) {
+    list.Add(*name);
   }
   list.Add(';');
   list.AddAll(lines);
@@ -960,11 +960,11 @@ cetList::~cetList() {
 }
 //.............................................................................
 void cetList::ToStrings(TStrList& list) const {
-  if (comment.is_valid()) {
-    list.Add("#") << comment();
+  if (comment.ok()) {
+    list.Add("#") << *comment;
   }
-  if (name.is_valid()) {
-    list.Add(name());
+  if (name.ok()) {
+    list.Add(*name);
   }
   if (data.IsEmpty()) {
     if (list.IsEmpty() || (list.GetLastString().Length() + 3) > 80) {
@@ -1021,11 +1021,11 @@ cetDict::~cetDict() {
 }
 //.............................................................................
 void cetDict::ToStrings(TStrList& list) const {
-  if (comment.is_valid()) {
-    list.Add("#") << comment();
+  if (comment.ok()) {
+    list.Add("#") << *comment;
   }
-  if (name.is_valid()) {
-    list.Add(name());
+  if (name.ok()) {
+    list.Add(name);
   }
   if (data.IsEmpty()) {
     if (list.IsEmpty() || (list.GetLastString().Length() + 3) > 80) {
@@ -1077,9 +1077,9 @@ ICifEntry *ICifEntry::FromToken(const CifToken &t, int version) {
     {
       if (t.value.Length() > 1 && t.value.EndsWith(';')) {
         olx_object_ptr<cetStringList> l = new cetStringList();
-        l().lines.Strtok(t.value.SubStringFrom(1, 1), '\n', false);
+        l->lines.Strtok(t.value.SubStringFrom(1, 1), '\n', false);
         if (t.value.CharAt(1) == '\n') {
-          l().lines.Delete(0);
+          l->lines.Delete(0);
         }
         return l.release();
       }
@@ -1101,22 +1101,22 @@ ICifEntry *ICifEntry::FromToken(const CifToken &t, int version) {
     case '[':
     {
       olx_object_ptr<cetList> l = new cetList();
-      l().FromToken(t);
+      l->FromToken(t);
       return l.release();
     }
     case '{':
     {
       olx_object_ptr<cetDict> d = new cetDict();
-      d().FromToken(t);
+      d->FromToken(t);
       return d.release();
     }
     case ';':
     {
       if (t.value.Length() > 1 && t.value.EndsWith(';')) {
         olx_object_ptr<cetStringList> l = new cetStringList();
-        l().lines.Strtok(t.value.SubStringFrom(1, 1), '\n', false);
+        l->lines.Strtok(t.value.SubStringFrom(1, 1), '\n', false);
         if (t.value.CharAt(1) == '\n') {
-          l().lines.Delete(0);
+          l->lines.Delete(0);
         }
         return l.release();
       }

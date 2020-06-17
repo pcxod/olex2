@@ -58,7 +58,6 @@ Stats::Stats(bool update_scale)
   wR2 = sqrt(sum_wsqd / wR2d);
   R1 = R1u / R1d;
   R1_partial = R1up / R1dp;
-
 }
 
 double Stats::UpdatePartialR1(double threshold) {

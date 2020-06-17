@@ -378,10 +378,10 @@ void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
         }
       }
       OnFileLoad.Execute(this);
-      if (generator.is_valid() && generator().IsValid()) {
+      if (generator.ok() && generator->IsValid()) {
         TBasicApp::NewLogEntry(logWarning) << "Displaying CIF bonds only, use "
           "'fuse' to recalculate from scratch";
-        GetLattice().Init(generator());
+        GetLattice().Init(generator);
       }
       else {
         GetLattice().Init();
@@ -429,8 +429,8 @@ void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
             try {
               olx_object_ptr<THklFile::ref_list> refs =
                 THklFile::FromCifTable(*hklLoop);
-              if (refs.is_valid()) {
-                GetRM().SetReflections(refs().a);
+              if (refs.ok()) {
+                GetRM().SetReflections(refs->a);
               }
               //if (!refs.b) {
               //  GetRM().SetHKLF(3);
@@ -441,7 +441,7 @@ void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
           else {
             cif_dp::cetStringList *ci = dynamic_cast<cif_dp::cetStringList *>(
               cif.FindEntry("_shelx_hkl_file"));
-            if (ci != NULL) {
+            if (ci != 0) {
               THklFile hkf;
               hkf.LoadFromStrings(ci->lines, false);
               GetRM().SetReflections(hkf.RefList());

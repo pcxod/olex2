@@ -19,19 +19,17 @@ public:
   olx_virtual_ptr() : cached(0) {}
   virtual ~olx_virtual_ptr() {}
   virtual IOlxObject *get_ptr() const = 0;
-  ptr &get() const {
-    IOlxObject *p = get_ptr();
-    if ((uint64_t)p == (uint64_t)cached) {
+  ptr& get() {
+    IOlxObject* p = get_ptr();
+    if ((uintptr_t)p == (uintptr_t)cached) {
       return *cached;
     }
-    ptr &rv = dynamic_cast<ptr &>(*p);
-    cached = &rv;
-    return rv;
+    ptr* rv = dynamic_cast<ptr*>(p);
+    cached = rv;
+    return *rv;
   }
-  ptr &operator()() const {
-    return get();
-  }
-  operator ptr& () const { return get(); }
+  operator const ptr& () const { return get(); }
+  operator ptr& () { return get(); }
   bool operator == (const olx_virtual_ptr &ap) const {
     return get_ptr() == ap.get_ptr();
   }
@@ -55,24 +53,32 @@ template <typename ptr> struct olx_vptr
     olx_object_ptr<olx_virtual_ptr<dptr> > proxied;
     ptr_proxy(olx_virtual_ptr<dptr> *p) : proxied(p) {}
     virtual IOlxObject *get_ptr() const {
-      return proxied().get_ptr();
+      return proxied->get_ptr();
     }
   };
+  olx_vptr(const olx_vptr& _p) : parent_t(_p) {}
   olx_vptr(ptr *_p) : parent_t(new actual_ptr<ptr>(_p)) {}
   olx_vptr(olx_virtual_ptr<ptr> *_p) : parent_t(_p) {}
   template <class dptr>
-  olx_vptr(olx_virtual_ptr<dptr> *_p) : parent_t(new ptr_proxy<dptr>(_p))
+  olx_vptr(olx_virtual_ptr<dptr> *_p)
+    : parent_t(new ptr_proxy<dptr>(_p))
   {}
-  olx_vptr(const olx_vptr& _p) : parent_t(_p) {}
+  
   olx_vptr& operator = (const olx_vptr& _p) {
     parent_t::p->template dec_ref<true, false>();
     parent_t::p = _p.p->inc_ref();
     return *this;
   }
-  IOlxObject *get_ptr() const { return parent_t::p->p->get_ptr(); }
-  ptr& get() const { return parent_t::p->p->get(); }
-  ptr& operator ()() const { return parent_t::p->p->get(); }
-  operator ptr& () const { return parent_t::p->p->get(); }
+
+  const ptr& operator *() const { return parent_t::p->p->get(); }
+  ptr& operator *() { return parent_t::p->p->get(); }
+
+  ptr* operator ->() const { return &parent_t::p->p->get(); }
+  ptr* operator &() const { return &parent_t::p->p->get(); }
+
+  operator const ptr& () const { return parent_t::p->p->get(); }
+  operator ptr& () { return parent_t::p->p->get(); }
+
   bool operator == (const olx_vptr &ap) const {
     return parent_t::p->p->get_ptr() == ap.p->p->get_ptr();
   }
@@ -82,7 +88,7 @@ template <typename ptr> struct olx_vptr
   // releases the object from ALL references
   ptr *release() const {
     ptr *p_ = parent_t::p->p;
-    parent_t::p->p = NULL;
+    parent_t::p->p = 0;
     return p_;
   }
 };

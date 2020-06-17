@@ -177,6 +177,11 @@ public:
   const vec3d& GetInversionCenter() const {  return InversionCenter;  }
 
   void GetMatrices(smatd_list& matrices, short Flags) const;
+  smatd_list::const_list_type GetMatrices(short Flags) const {
+    smatd_list matrices;
+    GetMatrices(matrices, Flags);
+    return matrices;
+  }
   /* fills a list of uniq transformations (3,3) without translation and returns
    the number of added matrices; the list is created from a call to
    GetMatrices(list, flag)

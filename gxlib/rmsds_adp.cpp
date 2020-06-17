@@ -83,8 +83,8 @@ void TRMDSADP::Create(const olxstr& cName) {
     mat3f M = a.GetEllipsoid()->ExpandQuad();
     olx_object_ptr<GramCharlier4> t = a.GetEllipsoid()->GetAnharmonicPart();
     
-    if (t.is_valid() && AnhType != anh_none) {
-      GramCharlier4 &gc = t();
+    if (t.ok() && AnhType != anh_none) {
+      GramCharlier4 &gc = t;
       mat3d m3, m4;
       for (size_t ti = 0; ti < 3; ti++) {
         for (size_t tj = 0; tj < 3; tj++) {
@@ -111,7 +111,7 @@ void TRMDSADP::Create(const olxstr& cName) {
     }
     for (size_t i = 0; i < sph_v.Count(); i++) {
       float d = 0;
-      if (t.is_valid() && AnhType != anh_none) {
+      if (t.ok() && AnhType != anh_none) {
         float c_ = tmp_t3.sum_up(sph_v[i]);
         float d_ = tmp_t4.sum_up(sph_v[i]);
         if (AnhType == anh_all) {

@@ -70,8 +70,9 @@ namespace exparse {
     virtual IEvaluable *undress() { return this; }
     int inc_ref() const { return ++ref_cnt_; }
     int dec_ref() const {
-      if (--ref_cnt_ < 0)
+      if (--ref_cnt_ < 0) {
         throw 1;
+      }
       return ref_cnt_;
     }
     int ref_cnt() const { return ref_cnt_; }
@@ -111,15 +112,16 @@ namespace exparse {
       }
       try {
         cast_operator co = get_cast_operator(ti);
-        if (co != NULL)
+        if (co != 0) {
           return caster<T>(co).cast(this);
+        }
       }
       catch (...) {}
       throw TCastException(__OlxSourceInfo, ti);
     }
     template <class T> static const T* cast_helper(const IEvaluable* i) {
       const T* ci = dynamic_cast<const T*>(i);
-      if (ci == NULL) {
+      if (ci == 0) {
         throw TCastException(__OlxSourceInfo, typeid(i));
       }
       return ci;
@@ -134,22 +136,26 @@ namespace exparse {
     {}
     IEvaluableHolder(IEvaluable *i)
       : val(i)
-    {}
+    {
+      i->inc_ref();
+    }
     ~IEvaluableHolder() {
-      if (val != 0 && val->ref_cnt() == 0) {
+      if (val != 0 && val->dec_ref() == 0) {
         delete val;
       }
     }
     IEvaluable * operator = (IEvaluable *i) {
-      if (val != 0 && val->ref_cnt() == 0) {
+      if (val != 0 && val->dec_ref() == 0) {
         delete val;
       }
       val = i;
+      i->inc_ref();
       return i;
     }
     IEvaluable * release() {
       IEvaluable *i = val;
       val = 0;
+      i->dec_ref();
       return i;
     }
     bool is_valid() const { return val != 0; }
@@ -208,8 +214,15 @@ namespace exparse {
     }
     bool final;  // does represent a number?
   public:
-    ANumberEvaluator(bool _final = false) : final(_final) {}
+    ANumberEvaluator(bool _final = false)
+      : final(_final)
+    {}
     bool is_final() const { return final; }
+    void set_final(bool v) { final = v; }
+
+    virtual void set_value(double v) {
+      throw TNotImplementedException(__OlxSourceInfo);
+    }
   };
   template <class BC, typename Type>
   struct TPrimitiveEvaluator : public ANumberEvaluator, public BC {
@@ -242,6 +255,9 @@ namespace exparse {
     }
     virtual IEvaluable* create_new(const void* v) const {
       return new TPrimitiveEvaluator<BC, Type>(*static_cast<const Type*>(v));
+    }
+    virtual void set_value(double v) {
+      BC::val = static_cast<Type>(v);
     }
   };
 

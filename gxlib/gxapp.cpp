@@ -120,7 +120,7 @@ public:
   ~xappXFileLoad() {}
   bool Enter(const IOlxObject *Sender, const IOlxObject *Data, TActionQueue *) {
     // cannot use in the constructor as options have not ben read in!
-    if (!recenter.is_valid()) {
+    if (!recenter.ok()) {
       recenter = FParent->GetOptions()
         .GetBoolOption("model.center_on_reload", true, true);
     }
@@ -247,7 +247,7 @@ public:
     }
     state = 3;
     FParent->GetRenderer().SetBasis(B);
-    if (!SameFile || recenter()) {
+    if (!SameFile || *recenter) {
       FParent->CenterView(!SameFile);
     }
     if (FParent->AtomLegend().IsVisible()) {
@@ -2309,9 +2309,9 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To,
       NL << j++;
       const olxstr oldL = XA->GetLabel();
       lc.SetLabel(XA->CAtom(), NL);
-      undo().AddAtom(XA->CAtom(), oldL);
+      undo->AddAtom(XA->CAtom(), oldL);
       processed << XA->CAtom();
-      NameHydrogens(*XA, lc, &undo());
+      NameHydrogens(*XA, lc, &undo);
       if (checkBonds) {
         CheckQBonds(*XA);
       }
@@ -2344,8 +2344,8 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To,
           NL << j++;
           const olxstr oldL = XA->GetLabel();
           lc.SetLabel(XA->CAtom(), NL);
-          undo().AddAtom(XA->CAtom(), oldL);
-          NameHydrogens(*XA, lc, &undo());
+          undo->AddAtom(XA->CAtom(), oldL);
+          NameHydrogens(*XA, lc, &undo);
           if (checkBonds) {
             CheckQBonds(*XA);
           }
@@ -2364,9 +2364,9 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To,
             bool recreate = XA->GetType() != *elm;
             const olxstr oldL = XA->GetLabel();
             lc.SetLabel(XA->CAtom(), NL);
-            undo().AddAtom(XA->CAtom(), oldL);
+            undo->AddAtom(XA->CAtom(), oldL);
             XA->CAtom().SetType(*elm);
-            NameHydrogens(*XA, lc, &undo());
+            NameHydrogens(*XA, lc, &undo);
             if (recreate) {
               ChangedAtoms.Add(XA);
               if (checkBonds) {
@@ -2385,8 +2385,8 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To,
             NL << j++;
             const olxstr oldL = XA->GetLabel();
             lc.SetLabel(XA->CAtom(), NL);
-            undo().AddAtom(XA->CAtom(), oldL);
-            NameHydrogens(*XA, lc, &undo());
+            undo->AddAtom(XA->CAtom(), oldL);
+            NameHydrogens(*XA, lc, &undo);
             if (checkBonds) {
               CheckQBonds(*XA);
             }
@@ -2431,9 +2431,9 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To,
           }
           const olxstr oldL = XA->GetLabel();
           lc.SetLabel(XA->CAtom(), NL, false);
-          undo().AddAtom(XA->CAtom(), oldL);
+          undo->AddAtom(XA->CAtom(), oldL);
           XA->CAtom().SetType(*elm);
-          NameHydrogens(*XA, lc, &undo());
+          NameHydrogens(*XA, lc, &undo);
           if (recreate) {
             ChangedAtoms.Add(XA);
             if (checkBonds) {
@@ -2457,14 +2457,14 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To,
       for (size_t i = 0; i < duplicates.Count(); i++) {
         olxstr l = duplicates[i]->GetLabel();
         lc.SetLabel(*duplicates[i], lc.CheckLabel(*duplicates[i], l, 0, false));
-        undo().AddAtom(*duplicates[i], l);
+        undo->AddAtom(*duplicates[i], l);
       }
       SynchroniseBonds(TXAtomPList(objects, DynamicCastAccessor<TXAtom>()));
       UpdateDuplicateLabels();
     }
   }
   if (NameResi) {
-    undo().AddAction(SynchroniseResidues(
+    undo->AddAction(SynchroniseResidues(
       TCAtomPList(Atoms, FunctionAccessor::MakeConst(&TXAtom::CAtom))));
   }
   if (FAtomLegend->IsVisible()) {
@@ -2521,7 +2521,7 @@ TUndoData* TGXApp::SynchroniseResidues(const TCAtomPList &refs) {
     for (size_t j = 0; j < rg.Count(); j++) {
       TCAtom *a = rg[j][refs[i]->GetTag()];
       if (a->GetLabel() != refs[i]->GetLabel()) {
-        undo().AddAtom(*a, a->GetLabel());
+        undo->AddAtom(*a, a->GetLabel());
         a->SetLabel(refs[i]->GetLabel(), false);
       }
     }
@@ -5813,7 +5813,7 @@ void TGXApp::LoadModel(const olxstr& fileName) {
   size_t contentLen = zin.GetLength();
   olx_array_ptr<unsigned char> bf = new unsigned char[contentLen + 1];
   zin.Read(bf, contentLen);
-  TEMemoryInputStream ms(bf(), contentLen);
+  TEMemoryInputStream ms(bf, contentLen);
   TDataFile df;
   df.LoadFromTextStream(ms);
   bf = 0;

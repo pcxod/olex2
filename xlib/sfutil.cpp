@@ -112,8 +112,8 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
     if (hklLoop == 0) {
       sw.start("Loading CIF");
       cif = new TCif();
-      cif().LoadFromFile(fcffn);
-      hklLoop = cif().FindLoopGlobal("_refln", false);
+      cif->LoadFromFile(fcffn);
+      hklLoop = cif->FindLoopGlobal("_refln", false);
       sw.stop();
     }
     if (hklLoop == 0) {
@@ -342,7 +342,7 @@ void SFUtil::_CalcSF(const TXFile& xfile, const IMillerIndexList& refs,
 {
   TSpaceGroup &sg = xfile.GetLastLoaderSG();
   olx_object_ptr<ISF_Util> sf_util = GetSF_Util_Instance(sg);
-  if (!sf_util.is_valid()) {
+  if (!sf_util.ok()) {
     throw TFunctionFailedException(__OlxSourceInfo, "invalid space group");
   }
   TAsymmUnit& au = xfile.GetAsymmUnit();
@@ -380,7 +380,7 @@ void SFUtil::_CalcSF(const TXFile& xfile, const IMillerIndexList& refs,
       }
     }
   }
-  sf_util().Calculate(
+  sf_util->Calculate(
     refs,
     au.GetHklToCartesian(),
     F, scatterers,

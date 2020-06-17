@@ -1205,7 +1205,7 @@ void THtmlManager::macGroup(TStrObjList &Cmds, const TParamList &Options,
 void THtmlManager::funSnippet(const TStrObjList &Params,
   TMacroData &E)
 {
-  IInputStream *is = TFileHandlerManager::GetInputStream(Params[0]);
+  olx_object_ptr<IDataInputStream> is = TFileHandlerManager::GetInputStream(Params[0]);
   if (is == 0) {
     TBasicApp::NewLogEntry(logError) <<
       (olxstr("THtmlSwitch::File does not exist: ").quote() << Params[0]);
@@ -1217,7 +1217,6 @@ void THtmlManager::funSnippet(const TStrObjList &Params,
 #else
   lines.LoadFromTextStream(*is);
 #endif
-  delete is;
   olxstr_dict<olxstr, true> values;
 
   size_t data_start=0;

@@ -22,37 +22,27 @@ TWString::TWString(const bool& v)
 : TTIString<wchar_t>(v ? WTrueString(): WFalseString()) 
 {}
 //..............................................................................
-TWString::TWString(const char *str)  {
+void TWString::init(const char* str, size_t len) {
   _Start = 0;
   _Increment = 8;
-  _Length = ((str==NULL) ? 0 : strlen(str));
-  SData = new Buffer(_Length+_Increment);
-  for( size_t i=0; i < _Length; i++ )
+  _Length = len == InvalidIndex ? strlen(str) : len;
+  SData = new Buffer(_Length + _Increment);
+  for (size_t i = 0; i < _Length; i++) {
     SData->Data[i] = str[i];
+  }
+}
+//..............................................................................
+TWString::TWString(const char *str)  {
+  init(str);
 }
 TWString::TWString(char * const & str)  {
-  _Start = 0;
-  _Increment = 8;
-  _Length = ((str==NULL) ? 0 : strlen(str));
-  SData = new Buffer(_Length+_Increment);
-  for( size_t i=0; i < _Length; i++ )
-    SData->Data[i] = str[i];
+  init(str);
 }
 TWString::TWString( const TCString& str )  {
-  _Start = 0;
-  _Increment = 8;
-  _Length = str.Length();
-  SData = new Buffer(_Length+_Increment);
-  for( size_t i=0; i < _Length; i++ )
-    SData->Data[i] = str[i];
+  init(str.c_str(), str.Length());
 }
 TWString::TWString( const TTIString<char>& str )  {
-  _Start = 0;
-  _Increment = 8;
-  _Length = str.Length();
-  SData = new Buffer(_Length+_Increment);
-  for( size_t i=0; i < _Length; i++ )
-    SData->Data[i] = str[i];
+  init(str.raw_str(), str.Length());
 }
 // primitive Type constructor
 TWString::TWString(const char& v) {

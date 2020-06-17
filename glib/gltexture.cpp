@@ -272,11 +272,13 @@ TGlTexture::Data TGlTexture::ReadData(const TGlTexture& tex) {
     GL_TEXTURE_HEIGHT, &rv.height);
   olx_gl::getTexLevelParam(tex.GetType(), tex.GetLevel(),
     GL_TEXTURE_BORDER, &rv.border);
-  if (rv.width == 0 || rv.height == 0)
+  if (rv.width == 0 || rv.height == 0) {
     return rv;
+  }
   rv.data = new unsigned char[rv.width*rv.height*4];
-  if (rv.data.is_null())
+  if (!rv.data) {
     throw TOutOfMemoryException(__OlxSourceInfo);
+  }
   olx_gl::pixelStore(GL_PACK_ALIGNMENT, 4);
   olx_gl::getTexImage(tex.GetType(), tex.GetLevel(), GL_RGBA,
     GL_UNSIGNED_BYTE, rv.data);
@@ -284,24 +286,26 @@ TGlTexture::Data TGlTexture::ReadData(const TGlTexture& tex) {
 }
 //.............................................................................
 void TGlTexture::WriteData(TGlTexture& tex, const TGlTexture::Data &data) {
-  if (data.data.is_null()) return;
+  if (!data.data) {
+    return;
+  }
   olx_gl::bindTexture(tex.GetType(), tex.GetId());
   olx_gl::pixelStore(GL_UNPACK_ALIGNMENT, 4);
   if (data.height != 0) {
     olx_gl::texImage(tex.GetType(), tex.GetLevel(), 4,
       data.width, data.height, data.border,
-      GL_RGBA, GL_UNSIGNED_BYTE, data.data());
+      GL_RGBA, GL_UNSIGNED_BYTE, data.data);
   }
   else {
     olx_gl::texImage(tex.GetType(), tex.GetLevel(), 4,
-      data.width, data.border, GL_RGBA, GL_UNSIGNED_BYTE, data.data());
+      data.width, data.border, GL_RGBA, GL_UNSIGNED_BYTE, data.data);
   }
 }
 //.............................................................................
 //.............................................................................
 //.............................................................................
-TTextureManager::~TTextureManager()  {
-  for( size_t i=0; i < Textures.Count(); i++ )  {
+TTextureManager::~TTextureManager() {
+  for (size_t i = 0; i < Textures.Count(); i++) {
     TGlTexture* tex = Textures.GetValue(i);
     GLuint texId = tex->GetId();
     olx_gl::deleteTextures(1, (GLuint*)&texId);
@@ -406,7 +410,7 @@ void TTextureManager::AfterContextChange() {
     return;
   }
   olx_array_ptr<GLuint> texIds(new  GLuint[Textures.Count()]);
-  olx_gl::genTextures((GLuint)Textures.Count(), texIds());
+  olx_gl::genTextures((GLuint)Textures.Count(), texIds);
   for (size_t i=0; i < Textures.Count(); i++) {
     TGlTexture &glt = *Textures.GetValue(i);
     if (glt.GetId() == ~0) {

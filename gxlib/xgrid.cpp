@@ -1064,7 +1064,7 @@ const_strlist TXGrid::ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const {
 //.............................................................................
 void TXGrid::RescaleSurface(bool collect_only) {
   if (collect_only) {
-    if (!cp_vertices.is_valid() || !cn_vertices.is_valid()) {
+    if (!cp_vertices.ok() || !cn_vertices.ok()) {
       return;
     }
   }
@@ -1082,8 +1082,7 @@ void TXGrid::RescaleSurface(bool collect_only) {
       const TArrayList<vec3f>& verts = vertices[li];
       const TArrayList<vec3f>& norms = normals[li];
       const TArrayList<IsoTriangle>& trians = triangles[li];
-      TTypeList<vec3f> *va = (li == 0 ? cp_vertices.get_ptr()
-        : cn_vertices.get_ptr());
+      TTypeList<vec3f> *va = (li == 0 ? &cp_vertices : &cn_vertices);
       if (!collect_only) {
         olx_gl::newList(li == 0 ? PListId : NListId, GL_COMPILE);
         olx_gl::polygonMode(GL_FRONT_AND_BACK, GetPolygonMode());
@@ -1141,8 +1140,7 @@ void TXGrid::RescaleSurface(bool collect_only) {
       const TArrayList<vec3f>& verts = vertices[li];
       const TArrayList<vec3f>& norms = normals[li];
       const TArrayList<IsoTriangle>& trians = triangles[li];
-      TTypeList<vec3f> *va = (li == 0 ? cp_vertices.get_ptr()
-        : cn_vertices.get_ptr());
+      TTypeList<vec3f> *va = (li == 0 ? &cp_vertices : &cn_vertices);
       if (!collect_only) {
         olx_gl::newList(li == 0 ? PListId : NListId, GL_COMPILE);
         olx_gl::polygonMode(GL_FRONT_AND_BACK, GetPolygonMode());
@@ -1202,8 +1200,7 @@ void TXGrid::RescaleSurface(bool collect_only) {
         const TArrayList<vec3f>& verts = vertices[li];
         const TArrayList<vec3f>& norms = normals[li];
         const TArrayList<IsoTriangle>& trians = triangles[li];
-        TTypeList<vec3f> *va = (li == 0 ? cp_vertices.get_ptr()
-          : cn_vertices.get_ptr());
+        TTypeList<vec3f> *va = (li == 0 ? &cp_vertices : &cn_vertices);
         if (!collect_only) {
           olx_gl::newList(li == 0 ? PListId : NListId, GL_COMPILE);
           olx_gl::polygonMode(GL_FRONT_AND_BACK, GetPolygonMode());
@@ -1266,8 +1263,7 @@ void TXGrid::RescaleSurface(bool collect_only) {
           verts[i][2] /= (MaxZ - 1);
           au.CellToCartesian(verts[i]);
         }
-        TTypeList<vec3f> *va = (li == 0 ? cp_vertices.get_ptr()
-          : cn_vertices.get_ptr());
+        TTypeList<vec3f> *va = (li == 0 ? &cp_vertices : &cn_vertices);
         if (!collect_only) {
           olx_gl::newList(li == 0 ? PListId : NListId, GL_COMPILE);
           olx_gl::polygonMode(GL_FRONT_AND_BACK, GetPolygonMode());
@@ -1355,7 +1351,7 @@ TPtrList<TXBlob>::const_list_type TXGrid::CreateBlobs(int flags) {
   RescaleSurface(true);
   // compact the data
   for (int li = 0; li <= 1; li++) {
-    TTypeList<vec3f> &va = (li == 0 ? cp_vertices() : cn_vertices());
+    TTypeList<vec3f> &va = (li == 0 ? cp_vertices : cn_vertices);
     olxset<vec3f, TComparableComparator> vset;
     vset.AddAll(va);
     TTypeList<IsoTriangle> triangles;

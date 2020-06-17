@@ -1679,7 +1679,7 @@ void TXAtomLabelAligner::Align() {
       p = r.GetBasis().GetMatrix()*p;
       if ((Atoms[i]->DrawStyle() == adsEllipsoid ||
         Atoms[i]->DrawStyle() == adsOrtep) &&
-        Atoms[i]->GetEllipsoid() != NULL)
+        Atoms[i]->GetEllipsoid() != 0)
       {
         p *= 1. / Atoms[i]->GetEllipsoid()->CalcScale(p);
       }
@@ -1705,12 +1705,12 @@ void TXAtomLabelAligner::Align() {
       if (!vector_font)
         off[1] -= rc.height / 2;
       vec3i c = vp;
-      positions.Add(calc_overlap(data(), w, h, c[0], c[1], rc) + ovr_extra,
+      positions.Add(calc_overlap(data, w, h, c[0], c[1], rc) + ovr_extra,
         olx_pair::make(off, c));
       v = v*rm;
     }
     vec3i lr = positions.GetValue(0).b;
-    fill_rect(data(), w, h, lr[0], lr[1], rc);
+    fill_rect(data, w, h, lr[0], lr[1], rc);
     l.TranslateBasis(positions.GetValue(0).a / r.GetZoom() - l.GetCenter());
     l.SetVisible(true);
   }

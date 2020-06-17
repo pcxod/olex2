@@ -19,36 +19,44 @@
 class THtmlImageCell : public wxHtmlCell, public AOlxCtrl {
   struct Rect {
     short left, top, right, bottom;
-    Rect(short l, short t, short r, short b) : left(l), top(t), right(r), bottom(b) {}
-    inline bool IsInside(short x, short y) const {
+    Rect(short l, short t, short r, short b)
+      : left(l), top(t), right(r), bottom(b)
+    {}
+    bool IsInside(short x, short y) const {
       return (x >= left && x <= right && y >= top && y <= bottom);
     }
   };
   struct Circle {
     short x, y;
     float qr;
-    Circle(short _x, short _y, float _r) : x(_x), y(_y), qr(_r*_r) {}
-    inline bool IsInside(short _x, short _y) const {
+    Circle(short _x, short _y, float _r)
+      : x(_x), y(_y), qr(_r* _r)
+    {}
+    bool IsInside(short _x, short _y) const {
       return (olx_sqr(_x - x) + olx_sqr(_y - y) <= qr);
     }
   };
   struct AShapeInfo {
     wxHtmlLinkInfo* link;
-    AShapeInfo(wxHtmlLinkInfo* lnk) : link(lnk) {}
+    AShapeInfo(wxHtmlLinkInfo* lnk)
+      : link(lnk)
+    {}
     virtual ~AShapeInfo() { delete link; }
     virtual bool IsInside(short x, short y) const = 0;
   };
   template <class Shape>
   struct ShapeInfo : public AShapeInfo {
     Shape shape;
-    ShapeInfo(const Shape& _shape, wxHtmlLinkInfo* lnk) : AShapeInfo(lnk), shape(_shape) {}
+    ShapeInfo(const Shape& _shape, wxHtmlLinkInfo* lnk)
+      : AShapeInfo(lnk), shape(_shape)
+    {}
     virtual bool IsInside(short x, short y) const { return shape.IsInside(x, y); }
   };
   TTypeList<AShapeInfo> Shapes;
   void Draw(wxDC& dc, int x, int y);
 public:
-  THtmlImageCell(wxWindow *window,
-    wxFSFile *input, int w = wxDefaultCoord, int h = wxDefaultCoord,
+  THtmlImageCell(wxHtmlWindowInterface* windowIface,
+    wxFSFile* input, int w = wxDefaultCoord, int h = wxDefaultCoord,
     double scale = 1.0, int align = wxHTML_ALIGN_BOTTOM,
     const wxString& mapname = wxEmptyString,
     bool WidthInPercent = false,
@@ -58,8 +66,9 @@ public:
     wxHtmlRenderingInfo& WXUNUSED(info)) {
     Draw(dc, x, y);
   }
-  virtual wxHtmlLinkInfo *GetLink(int x = 0, int y = 0) const;
-  wxScrolledWindow* GetWindow() { return m_window; }
+  virtual wxHtmlLinkInfo* GetLink(int x = 0, int y = 0) const;
+  wxHtmlWindowInterface* GetWindowInterface() { return m_windowIface; }
+  const wxHtmlWindowInterface* GetWindowInterface() const { return m_windowIface; }
   void SetImage(const wxImage& img);
   void AddRect(short l, short t, short r, short b, const wxString& href, const wxString& target) {
     Shapes.Add(new ShapeInfo<Rect>(Rect(l, t, r, b), new wxHtmlLinkInfo(href, target)));
@@ -68,7 +77,7 @@ public:
     Shapes.Add(new ShapeInfo<Circle>(Circle(x, y, r), new wxHtmlLinkInfo(href, target)));
   }
 #if wxUSE_GIF && wxUSE_TIMER
-  void AdvanceAnimation(wxTimer *timer);
+  void AdvanceAnimation(wxTimer* timer);
   virtual void Layout(int w);
 #endif
   void SetText(const wxString& text) { Text = text; }
@@ -77,34 +86,35 @@ public:
   void SetSource(const olxstr& text) { FSource = text; }
   const olxstr& GetSource() const { return FSource; }
 private:
-  wxBitmap           *m_bitmap;
-  wxFSFile           *File;
-  wxString           Text;
-  olxstr           FSource;
-  int                 m_bmpW, m_bmpH;
-  bool                m_showFrame : 1;
+  olx_object_ptr<wxBitmap> m_bitmap;
+  olx_object_ptr<wxFSFile> File;
+  wxString Text;
+  olxstr FSource;
+  int m_bmpW, m_bmpH;
+  bool m_showFrame : 1;
   bool WidthInPercent, HeightInPercent;
-  wxScrolledWindow   *m_window;
+  wxHtmlWindowInterface* m_windowIface;
 #if wxUSE_GIF && wxUSE_TIMER
-  wxGIFDecoder       *m_gifDecoder;
-  wxTimer            *m_gifTimer;
-  int                 m_physX, m_physY;
+  olx_object_ptr<wxGIFDecoder> m_gifDecoder;
+  olx_object_ptr<wxTimer> m_gifTimer;
+  int m_physX, m_physY;
+  size_t m_nCurrFrame;
 #endif
-  double              m_scale;
-  wxString            m_mapName;
+  double m_scale;
+  wxString m_mapName;
 
   DECLARE_NO_COPY_CLASS(THtmlImageCell)
 };
 
 #if wxUSE_GIF && wxUSE_TIMER
-class wxGIFTimer : public wxTimer  {
+class wxGIFTimer : public wxTimer {
 public:
-  wxGIFTimer(THtmlImageCell *cell) : m_cell(cell) {}
-  virtual void Notify()  {
+  wxGIFTimer(THtmlImageCell* cell) : m_cell(cell) {}
+  virtual void Notify() {
     m_cell->AdvanceAnimation(this);
   }
 private:
-  THtmlImageCell *m_cell;
+  THtmlImageCell* m_cell;
   DECLARE_NO_COPY_CLASS(wxGIFTimer)
 };
 #endif

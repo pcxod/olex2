@@ -193,10 +193,11 @@ public:
     return new TFunction<Base>(BaseInstance, Func, GetName(),
       ArgStateMask, GetDescription());
   }
-  Base &GetBaseInstance() const { return BaseInstance(); }
+  const Base &GetBaseInstance() const { return BaseInstance; }
+  Base& GetBaseInstance() { return BaseInstance; }
 protected:
   virtual void DoRun(const TStrObjList &Params, TMacroData& E)  {
-    (BaseInstance().*Func)(Params, E);
+    ((*BaseInstance).*Func)(Params, E);
   };
 };
 //------------------------------------------------------------------------------
@@ -269,12 +270,13 @@ public:
       OptionsToString(ValidOptions), ArgStateMask,
       GetDescription());
   }
-  Base &GetBaseInstance() const { return BaseInstance(); }
+  const Base& GetBaseInstance() const { return BaseInstance; }
+  Base& GetBaseInstance() { return BaseInstance; }
 protected:
   virtual void DoRun(TStrObjList &Params, const TParamList &Options,
     TMacroData& E)
   {
-    (BaseInstance().*Macro)(Params, Options, E);
+    ((*BaseInstance).*Macro)(Params, Options, E);
   }
 };
 //------------------------------------------------------------------------------

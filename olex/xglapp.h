@@ -32,6 +32,7 @@ private:
   void MacOpenFile(const wxString &fileName);
 public:
   TGlXApp() : pid_file(NULL)  {}
+  ~TGlXApp();
   bool Dispatch();
 //  int MainLoop();
   TEFile *GetPIDFile() const { return pid_file; }

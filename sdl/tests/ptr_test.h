@@ -19,32 +19,32 @@ namespace test {
     t.description = __FUNC__;
     Perishable p, p1;
     olx_perishable_ptr<Perishable> ptr(new Perishable);
-    delete &ptr();
-    if (ptr.is_valid()) {
+    delete &ptr;
+    if (ptr.ok()) {
       throw TFunctionFailedException(__OlxSourceInfo, "unexpected result");
     }
     ptr = new Perishable();
     delete ptr.release();
-    if (ptr.is_valid()) {
+    if (ptr.ok()) {
       throw TFunctionFailedException(__OlxSourceInfo, "unexpected result");
     }
     {
       Perishable p1_;
       ptr = &p1_;
     }
-    if (ptr.is_valid()) {
+    if (ptr.ok()) {
       throw TFunctionFailedException(__OlxSourceInfo, "unexpected result");
     }
     {
       ptr = &p;
       ptr = 0;
     }
-    if (ptr.is_valid()) {
+    if (ptr.ok()) {
       throw TFunctionFailedException(__OlxSourceInfo, "unexpected result");
     }
     olx_perishable_ptr<Perishable> ptr_(new Perishable);
     ptr_ = ptr;
-    if (ptr_.is_valid()) {
+    if (ptr_.ok()) {
       throw TFunctionFailedException(__OlxSourceInfo, "unexpected result");
     }
   }
@@ -80,12 +80,12 @@ namespace test {
     t.description = __FUNC__;
     VPtr *ptr = new VPtr(new VPtrTest_O(0));
     olx_vptr<VPtrTest_O> x(ptr);
-    if (x().v != 0) {
+    if (x->v != 0) {
       throw TFunctionFailedException(__OlxSourceInfo, "unexpected result");
     }
     // chnging the underlying object!
     ptr->set_inst(new VPtrTest_O(1));
-    if (x().v != 1) {
+    if (x->v != 1) {
       throw TFunctionFailedException(__OlxSourceInfo, "unexpected result");
     }
   }

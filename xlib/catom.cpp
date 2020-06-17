@@ -231,8 +231,8 @@ void TCAtom::ToDataItem(TDataItem& item) const {
     elp.AddField("xz", TEValue<double>(Q[4], E[4]).ToString());
     elp.AddField("xy", TEValue<double>(Q[5], E[5]).ToString());
     if (GetEllipsoid()->IsAnharmonic()) {
-      const tensor::tensor_rank_3 &c = GetEllipsoid()->GetAnharmonicPart()().C;
-      const tensor::tensor_rank_4 &d = GetEllipsoid()->GetAnharmonicPart()().D;
+      const tensor::tensor_rank_3 &c = GetEllipsoid()->GetAnharmonicPart()->C;
+      const tensor::tensor_rank_4 &d = GetEllipsoid()->GetAnharmonicPart()->D;
       olxstr_buf t;
       for (size_t i = 0; i < c.data().Count(); i++) {
         t << c.data()[i] << ',';
@@ -277,7 +277,7 @@ PyObject* TCAtom::PyExport(bool export_attached_sites) {
         E[0], E[1], E[2], E[3], E[4], E[5])
     );
     if (GetEllipsoid()->IsAnharmonic()) {
-      GramCharlier4 &a = GetEllipsoid()->GetAnharmonicPart().get();
+      GramCharlier4 &a = GetEllipsoid()->GetAnharmonicPart();
       PyObject* anh = PyDict_New();
       PythonExt::SetDictItem(anh, "C",
         Py_BuildValue("(dddddddddd)", a.C[0], a.C[1], a.C[2], a.C[3], a.C[4],
@@ -373,10 +373,10 @@ void TCAtom::FromDataItem(TDataItem& item) {
       if (toks.Count() == 25) {
         olx_object_ptr<GramCharlier4> cg = new GramCharlier4();
         for (size_t i = 0; i < 10; i++) {
-          cg().C[i] = toks[i].ToDouble();
+          cg->C[i] = toks[i].ToDouble();
         }
         for (size_t i = 0; i < 15; i++) {
-          cg().D[i] = toks[i + 10].ToDouble();
+          cg->D[i] = toks[i + 10].ToDouble();
         }
       }
     }

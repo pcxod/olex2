@@ -311,7 +311,7 @@ namespace SFUtil {
                 if (atoms[j]->GetEllipsoid()->IsAnharmonic()) {
                   double sa = std::sin(tv);
                   l += (atoms[j]->GetEllipsoid()->
-                    GetAnharmonicPart()().calculate(rv[k])*compd(ca*B, sa*B)).GetRe();
+                    GetAnharmonicPart()->calculate(rv[k])*compd(ca*B, sa*B)).GetRe();
                 }
                 else {
                   l += ca * B;
@@ -341,7 +341,7 @@ namespace SFUtil {
                 const double B = calc_B(&U[j * 6], rv[k]);
                 if (atoms[j]->GetEllipsoid()->IsAnharmonic()) {
                   l += atoms[j]->GetEllipsoid()->
-                    GetAnharmonicPart()().calculate(rv[k])*compd(ca*B, sa*B);
+                    GetAnharmonicPart()->calculate(rv[k])*compd(ca*B, sa*B);
                 }
                 else {
                   l.Re() += ca * B;

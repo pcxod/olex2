@@ -13,6 +13,7 @@
 #include "symmat.h"
 #include "reflection.h"
 #include "arrays.h"
+#include "bitarray.h"
 
 BeginXlibNamespace()
 
@@ -75,8 +76,9 @@ namespace RefUtil {
     void AdjustIntensity(TReflection& r) const {
       if (r.GetI() < h_o_s*r.GetS()) {
         r.SetI(h_o_s*r.GetS());
-        if (_stats != 0)
+        if (_stats != 0) {
           _stats->IntensityTransformed++;
+        }
       }
     }
     struct IntensityModifier {
@@ -98,37 +100,41 @@ namespace RefUtil {
     }
     pos.SetCapacity(refs.Count() / 2);
     neg.SetCapacity(refs.Count() / 2);
+    TEBitArray used(refs.Count());
     olx_array::TArray3D<TReflection*> hkl3d(min_indices, max_indices);
     for (size_t i = 0; i < refs.Count(); i++) {
       hkl3d(refs[i].GetHkl()) = &refs[i];
       refs[i].SetTag(i);
     }
-    size_t cnt = 0;
     for (size_t i = 0; i < refs.Count(); i++) {
-      if (refs[i].GetTag() < 0) {
+      if (used[i]) {
         continue;
       }
-      refs[i].SetTag(-1);
+      used.SetTrue(i);
       for (size_t mi = 0; mi < sp.matrices.Count(); mi++) {
         const vec3i& pi = refs[i].GetHkl();
-        vec3i ni;
-        refs[i].MulHkl(ni, sp.matrices[mi]);
+        vec3i ni = TReflection::MulHkl(refs[i].GetHkl(), sp.matrices[mi]);
         ni *= -1;
+        bool found = false;
         if (hkl3d.IsInRange(ni) && hkl3d(ni) != 0) {
           TReflection& n = *hkl3d(ni);
-          if (n.GetTag() < 0) {
+          if (used[n.GetTag()]) {
             continue;
           }
           pos.Add(refs[i]);
-          neg.Add(n)->SetTag(-1);
-          cnt++;
+          neg.Add(n);
+          used.SetTrue(n.GetTag());
+          found = true;
+        }
+        if (found) {
+          break;
         }
       }
     }
-    return cnt;
+    return pos.Count();
   }
 
-  /* Requires and instance of TXApp */
+  /* Requires an instance of TXApp */
   struct Stats {
     TRefList refs;
     evecd Fsq;

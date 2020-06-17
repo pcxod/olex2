@@ -39,7 +39,7 @@ struct MemberDestructionObserver : public ADestructionObserver {
     des_obs(des_obs)
   {}
   virtual void call(APerishable* obj) const {
-    (instance().*des_obs)(obj);
+    ((*(const_cast<MemberDestructionObserver *>(this)->instance)).*des_obs)(obj);
   }
   virtual bool operator == (const ADestructionObserver *p_) const {
     const MemberDestructionObserver *p =

@@ -65,7 +65,7 @@ namespace lcells {
       olxstr name;
       mutable olx_object_ptr<olxstr> fullName;
       uint64_t modified;
-      Entry(Entry *parent_ = NULL) : parent(parent_), modified(~0) {}
+      Entry(Entry *parent_ = 0) : parent(parent_), modified(~0) {}
       Entry(Entry *parent_, const olxstr &name_, uint64_t modified_)
         : parent(parent_), name(name_), modified(modified_) {}
       IDataOutputStream &ToStream(IDataOutputStream &out) const {
@@ -90,18 +90,18 @@ namespace lcells {
         }
       };
       const olxstr &FullName() const {
-        if (!fullName.is_valid()) {
+        if (!fullName.ok()) {
           olxstr_buf res = name;
           Entry *p = parent;
           olxstr ss = '/';
-          while (p != NULL) {
+          while (p != 0) {
             res << ss << p->name;
             p = p->parent;
           }
           fullName = olxstr::FromExternal(
             res.ReverseRead(olx_malloc<olxch>(res.Length() + 1)), res.Length());
         }
-        return fullName();
+        return fullName;
       }
     };
     struct ResultEntry : public CellInfo {

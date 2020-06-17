@@ -119,7 +119,7 @@ protected:
   virtual bool _DoesExist(const olxstr& df, bool) {
     return zip.FileExists(df);
   }
-  virtual IInputStream* _DoOpenFile(const olxstr& src);
+  virtual olx_object_ptr<IInputStream> _DoOpenFile(const olxstr& src);
   virtual bool _DoAdoptStream(IInputStream& file, const olxstr& name) {
     return false;
   }

@@ -1208,11 +1208,11 @@ index_t TNetwork::ShortestDistance(TSAtom &a, TSAtom &b)  {
   ////
   typedef TLinkedList<TSAtom*> list_t;
   olx_object_ptr<list_t> la_ptr(new list_t), lb_ptr(new list_t);
-  la_ptr().Add(&a)->SetTag(1);
-  lb_ptr().Add(&b)->SetTag(1);
+  la_ptr->Add(&a)->SetTag(1);
+  lb_ptr->Add(&b)->SetTag(1);
   while( true )  {
     olx_object_ptr<list_t> laa_ptr(new list_t), lbb_ptr(new list_t);
-    list_t::Iterator ia = la_ptr().GetIterator();
+    list_t::Iterator ia = la_ptr->GetIterator();
     while( ia.HasNext() )  {
       TSAtom *sa = ia.Next();
       if( sa->IsProcessed() || sa->GetTag() < 0 )
@@ -1222,13 +1222,13 @@ index_t TNetwork::ShortestDistance(TSAtom &a, TSAtom &b)  {
         if( n->GetTag() > 0 )
           return sa->GetTag() + n->GetTag() - 2;
         if( n->GetTag() < 0 )  continue;
-        laa_ptr().Add(n)->SetTag(sa->GetTag() + 1);
+        laa_ptr->Add(n)->SetTag(sa->GetTag() + 1);
       }
       // mark the front
       sa->SetTag(-sa->GetTag());
       sa->SetProcessed(true);
     }
-    list_t::Iterator ib = lb_ptr().GetIterator();
+    list_t::Iterator ib = lb_ptr->GetIterator();
     while( ib.HasNext() )  {
       TSAtom *sa = ib.Next();
       if( sa->IsProcessed() || sa->GetTag() < 0 )
@@ -1237,8 +1237,10 @@ index_t TNetwork::ShortestDistance(TSAtom &a, TSAtom &b)  {
         TSAtom *n = &sa->Node(i);
         if( n->GetTag() > 0 )
           return n->GetTag() + sa->GetTag() - 2;
-        if( n->GetTag() < 0 )  continue;
-        lbb_ptr().Add(n)->SetTag(sa->GetTag() + 1);
+        if (n->GetTag() < 0) {
+          continue;
+        }
+        lbb_ptr->Add(n)->SetTag(sa->GetTag() + 1);
       }
       sa->SetTag(-sa->GetTag());
       sa->SetProcessed(true);

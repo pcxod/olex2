@@ -1394,17 +1394,17 @@ fragments::fragment::build_graph() const
   mask_neighbours(atoms_, -1, -2);
   olx_object_ptr<node_t> root(new node_t(0, atoms_[0]));
   TQueue<TCAtom *> aqueue;
-  aqueue.Push(root().GetObject());
-  aqueue.Push(NULL);
+  aqueue.Push(root->GetObject());
+  aqueue.Push(0);
   index_t v = 0;
   while (!aqueue.IsEmpty()) {
     TCAtom *n = aqueue.Pop();
-    if (n == NULL) {
+    if (n == 0) {
       if (aqueue.IsEmpty()) {
         break;
       }
       v++;
-      aqueue.Push(NULL);
+      aqueue.Push(0);
       continue;
     }
     if (n->GetTag() != -1) {
@@ -1419,9 +1419,9 @@ fragments::fragment::build_graph() const
     }
   }
   TQueue<node_t*> queue;
-  queue.Push(&root());
+  queue.Push(&root);
   olxdict<TCAtom*, node_t*, TPointerComparator> map;
-  map.Add(root().GetObject(), &root());
+  map.Add(root->GetObject(), &root);
   while (!queue.IsEmpty()) {
     node_t *n = queue.Pop();
     for (size_t i = 0; i < n->GetObject()->AttachedSiteCount(); i++) {
@@ -1434,11 +1434,11 @@ fragments::fragment::build_graph() const
       }
     }
   }
-  calc_hashes(root());
+  calc_hashes(root);
   olxdict<node_t *, uint64_t, TPointerComparator> h2s;
-  mix_hashes(root(), map, h2s);
-  assign_hashes(root(), h2s);
-  root().SetRoot(true);
+  mix_hashes(root, map, h2s);
+  assign_hashes(root, h2s);
+  root->SetRoot(true);
   return root;
 }
 //.............................................................................
@@ -1767,14 +1767,14 @@ ConstTypeList<fragments::fragment> fragments::extract(const TCAtomPList &aua,
       olx_reverse(matching_set);
       fragment f1(matching_set);
       olx_object_ptr<fragment::node_t> fr1 = f1.build_graph();
-      CAtomGraphAnalyser ga(fr(), fr1());
+      CAtomGraphAnalyser ga(fr, fr1);
       ga.Invert = false;
-      if (!fr1().FullMatchEx(fr, ga)) { // should not happen
+      if (!fr1->FullMatchEx(fr, ga)) { // should not happen
         matching.Delete(matching.Count() - 1);
       }
       else {
         TTypeList<olx_pair_t<TCAtom *, TCAtom *> > m =
-          ga.CollectResult(fr(), fr1());
+          ga.CollectResult(fr, fr1);
         if (m.Count() != f_.count()) {
           throw TFunctionFailedException(__OlxSourceInfo, "assert");
         }

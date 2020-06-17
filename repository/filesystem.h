@@ -48,7 +48,7 @@ protected:
   dependent value will be returned
   */
   virtual bool _DoesExist(const olxstr& df, bool forced_check)=0;
-  virtual IInputStream* _DoOpenFile(const olxstr& src)=0;
+  virtual olx_object_ptr<IInputStream> _DoOpenFile(const olxstr& src)=0;
   virtual bool _DoAdoptStream(IInputStream& file, const olxstr& name) = 0;
   // handles OnBreak
   virtual bool Execute(const IOlxObject* , const IOlxObject* , TActionQueue *) {
@@ -57,7 +57,7 @@ protected:
  }
 public:
   AFileSystem() :
-    Index(NULL),
+    Index(0),
     Access(afs_FullAccess),
     Break(false),
     OnProgress(Actions.New("ON_PROGRESS")),
@@ -77,44 +77,51 @@ public:
 
   // deletes a file
   bool DelFile(const olxstr& f) {
-    if( (Access & afs_DeleteAccess) == 0 )
+    if ((Access & afs_DeleteAccess) == 0) {
       return false;
+    }
     return _DoDelFile(f);
  }
   // deletes a folder
   bool DelDir(const olxstr& d) {
-    if( (Access & afs_DeleteAccess) == 0 )
+    if ((Access & afs_DeleteAccess) == 0) {
       return false;
+    }
     return _DoDelDir(d);
  }
   // puts a file to the file system
   bool AdoptFile(const TFSItem& src) {
-    if( (Access & afs_WriteAccess) == 0 )
+    if ((Access & afs_WriteAccess) == 0) {
       return false;
+    }
     return _DoAdoptFile(src);
  }
   // creates a new folder
   bool NewDir(const olxstr& d) {
-    if( (Access & afs_WriteAccess) == 0 )
+    if ((Access & afs_WriteAccess) == 0) {
       return false;
+    }
     return _DoNewDir(d);
  }
   /* checks if the file exists, forced_check is applies to http FS, where
   the check can take some time. See _DoesExist description for more details. */
   bool Exists(const olxstr& fn, bool forced_check=false) {
-    if( (Access & afs_BrowseAccess) == 0 )
+    if ((Access & afs_BrowseAccess) == 0) {
       return false;
+    }
     return _DoesExist(fn, forced_check);
  }
   // returns a stream for a specified stream, must be deleted
-  IInputStream* OpenFile(const olxstr& src) {
-    if( (Access & afs_ReadAccess) == 0 )
-      return NULL;
+  olx_object_ptr<IInputStream> OpenFile(const olxstr& src) {
+    if ((Access & afs_ReadAccess) == 0) {
+      return 0;
+    }
     return _DoOpenFile(src);
  }
   bool AdoptStream(IInputStream& file, const olxstr& name) {
-    if( (Access & afs_WriteAccess) == 0 )
+    if ((Access & afs_WriteAccess) == 0) {
       return false;
+    }
     return _DoAdoptStream(file, name);
  }
   void RemoveAccessRight(uint16_t access) {
@@ -140,7 +147,7 @@ protected:
   virtual bool _DoNewDir(const olxstr& f);
   virtual bool _DoAdoptFile(const TFSItem& Source);
   virtual bool _DoesExist(const olxstr& df, bool);
-  virtual IInputStream* _DoOpenFile(const olxstr& src);
+  virtual olx_object_ptr<IInputStream> _DoOpenFile(const olxstr& src);
   virtual bool _DoAdoptStream(IInputStream& file, const olxstr& name);
 public:
   TOSFileSystem(const olxstr& base);
@@ -165,7 +172,7 @@ class TUpdateFS: public TOSFileSystem {
   bool own;
 protected:
   virtual bool _DoesExist(const olxstr& df, bool);
-  virtual IInputStream* _DoOpenFile(const olxstr& src);
+  virtual olx_object_ptr<IInputStream> _DoOpenFile(const olxstr& src);
 public:
   // if own_ is true (default), the proxied will be deleted in the end
   TUpdateFS(const olxstr& base, TOSFileSystem &proxied, bool own_=true)
@@ -178,13 +185,14 @@ public:
 //...........................................................................//
 //...........................................................................//
 //...........................................................................//
-class TFSItem: public IOlxObject {
+class TFSItem : public IOlxObject {
 public:
   struct SkipOptions {
-    TStrList *extsToSkip,  // extenstions to skip
-             *filesToSkip; // file names to skip
-    SkipOptions() : extsToSkip(NULL), filesToSkip(NULL) {}
- };
+    TStrList* extsToSkip,  // extenstions to skip
+      * filesToSkip; // file names to skip
+    SkipOptions() : extsToSkip(0), filesToSkip(0)
+    {}
+  };
 private:
   TFSItem* Parent;
   TFSIndex& Index;
@@ -206,7 +214,7 @@ public:
     Parent(parent),
     Index(index),
     Folder(false),
-    Processed(false) ,
+    Processed(false),
     DateTime(0),
     Size(0),
     Name(name) { }
@@ -216,7 +224,7 @@ public:
 
   void operator >> (TStrList& strings) const;
   size_t ReadStrings(size_t& index, TFSItem* caller, TStrList& strings,
-    const SkipOptions* toSkip=NULL);
+    const SkipOptions* toSkip = 0);
   // removes empty folders recursively
   void ClearEmptyFolders();
   // removes nonexiting files recursively
@@ -237,35 +245,39 @@ public:
   void AddProperty(const olxstr& p) { Properties.Add(p); }
   bool HasProperty(const olxstr& pn)  const {
     return Properties.IndexOf(pn) != InvalidIndex;
- }
+  }
   bool ValidateProperties(const TStrList& prs) const {
-    if( Properties.IsEmpty() || prs.IsEmpty() )  return true;
-    for( size_t i=0; i < prs.Count(); i++ )
-      if( Properties.IndexOf(prs[i]) != InvalidIndex )
+    if (Properties.IsEmpty() || prs.IsEmpty()) {
+      return true;
+    }
+    for (size_t i = 0; i < prs.Count(); i++) {
+      if (Properties.IndexOf(prs[i]) != InvalidIndex) {
         return true;
+      }
+    }
     return false;
- }
+  }
   void ListUniqueProperties(TStrList& Properties);
 
   const TStrList& GetActions() const { return Actions; }
 
-  DefPropBIsSet(Folder)
+  DefPropBIsSet(Folder);
 
   const olxstr& GetName() const { return Name; }
 
   int GetLevel()  const;
   olxstr GetFullName() const;
 
-  DefPropP(uint64_t, DateTime)
-  DefPropP(uint64_t, Size)
-  DefPropC(olxstr, Digest)
+  DefPropP(uint64_t, DateTime);
+  DefPropP(uint64_t, Size);
+  DefPropC(olxstr, Digest);
   // only updates the digest if current is empty
   size_t UpdateDigest();
 
   template <class SC> TFSItem* FindByName(const SC& Name) const {
-    return Items.Find(Name, NULL);
- }
-        // does a search of /parent_folder/parent_folder/file_name
+    return Items.Find(Name, 0);
+  }
+  // does a search of /parent_folder/parent_folder/file_name
   TFSItem* FindByFullName(const olxstr& Name) const;
 
   AFileSystem& GetIndexFS() const;
@@ -273,7 +285,7 @@ public:
   uint64_t CalcDiffSize(const TFSItem& Dest, const TStrList& properties) const;
   // syncronises two items
   uint64_t Synchronise(TFSItem& Dest, const TStrList& properties,
-    TStrList* cmds=NULL);
+    TStrList* cmds = 0);
   TFSItem* UpdateFile(TFSItem& FN);
   /* deletes underlying physical object (file or folder). If the object is a
   folder the content of that folder will be removed completely
@@ -291,9 +303,9 @@ public:
 //...........................................................................//
 //...........................................................................//
 //...........................................................................//
-class TFSIndex: public IOlxObject {
+class TFSIndex : public IOlxObject {
 private:
-  TFSItem *Root;
+  TFSItem Root;
   bool IndexLoaded;
   mutable bool Break;
 protected:
@@ -302,36 +314,36 @@ protected:
   TActionQList Actions;
   AFileSystem& IndexFS;
   TOnProgress Progress;
-  TActionQueue &OnBreak;
+  TActionQueue& OnBreak;
 public:
   TFSIndex(AFileSystem& fs);
   virtual ~TFSIndex();
 
   // this is to be used for the overal progress monitorring
-  TActionQueue &OnProgress;
+  TActionQueue& OnProgress;
   /* this is to be used for when an action is being applied to a file (like
   extract)
   */
-  TActionQueue &OnAction;
+  TActionQueue& OnAction;
 
   void LoadIndex(const olxstr& IndexFile,
-    const TFSItem::SkipOptions* toSkip=NULL);
+    const TFSItem::SkipOptions* toSkip = 0);
   void SaveIndex(const olxstr& IndexFile);
   /* returns the number transfered bytes.  If the dest_fs is not NULL, the
   difference is adopted by that file syste. If cmds is not NULL, the rm
   commands are stored in it
   */
   uint64_t Synchronise(AFileSystem& To, const TStrList& properties,
-    const TFSItem::SkipOptions* toSkip=NULL,
-    TStrList* cmds=NULL,
-    const olxstr& indexName="index.ind");
+    const TFSItem::SkipOptions* toSkip = 0, TStrList* cmds = 0,
+    const olxstr& indexName = "index.ind");
   uint64_t CalcDiffSize(AFileSystem& To, const TStrList& properties,
-    const TFSItem::SkipOptions* toSkip=NULL,
-    const olxstr& indexName="index.ind");
+    const TFSItem::SkipOptions* toSkip = 0,
+    const olxstr& indexName = "index.ind");
   // returns true if the file is updated (added) and false otherwise
   bool UpdateFile(AFileSystem& To, const olxstr& fileName, bool Force,
-    const olxstr& indexName="index.ind");
-  TFSItem& GetRoot()  const { return *Root; }
+    const olxstr& indexName = "index.ind");
+  const TFSItem& GetRoot()  const { return Root; }
+  TFSItem& GetRoot() { return Root; }
   /* checks if the file actions specify to delete it, if a delete action is
   found return false if the timestamps of the items and size match and false in
   other cases; updates the dest digest if empty
@@ -339,17 +351,17 @@ public:
   bool ShallAdopt(const TFSItem& src, TFSItem& dest) const;
   bool ShouldExist(const TFSItem& src)  const {
     return src.GetActions().IndexOfi("delete") == InvalidIndex;
- }
+  }
   // returns if the action was procesed (or not) successful
   bool ProcessActions(TFSItem& item);
   // stops the syncronisation and updates the index
   void DoBreak() {
     Break = true;
     OnBreak.Execute(this);
- }
+  }
   bool IsInterrupted() const {
     return Break && Progress.GetPos() != Progress.GetMax();
- }
+  }
   friend class TFSItem;
 };
 #endif

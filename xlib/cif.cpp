@@ -543,6 +543,16 @@ void TCif::Initialize() {
     label_occurrence.Add(label, 0)++;
     TResidue *resi = 0;
     int part = 0;
+    if (Part != InvalidIndex) {
+      olxstr p_str = ALoop->Get(i, Part).GetStringValue();
+      if (p_str.IsInt()) {
+        part = p_str.ToInt();
+        olxstr sfx = (olxch)('a' + olx_abs(part) - 1);
+        if (label.EndsWith(olxstr("_") << sfx) || label.EndsWith(olxstr("^") << sfx)) {
+          label.SetLength(label.Length() - 2);
+        }
+      }
+    }
     {
       size_t ui = label.IndexOf('_');
       if (ui != InvalidIndex) {

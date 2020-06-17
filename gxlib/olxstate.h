@@ -48,7 +48,7 @@ public:
     virtual bool operator ()(const olxstr &data) const {
       if (!data.IsEmpty())
         throw TInvalidArgumentException(__OlxSourceInfo, "data");
-      return (instance().*getter)();
+      return ((*instance).*getter)();
     }
   };
   template <class base_t>
@@ -60,7 +60,7 @@ public:
       : instance(instance), getter(getter)
     {}
     virtual bool operator ()(const olxstr &data) const {
-      return (instance().*getter)(data);
+      return ((*instance).*getter)(data);
     }
   };
   template <class base_t>
@@ -73,7 +73,7 @@ public:
       : instance(instance), state_id(state_id), getter(getter)
     {}
     virtual bool operator ()(const olxstr &data) const {
-      return (instance().*getter)(state_id, data);
+      return ((*instance).*getter)(state_id, data);
     }
   };
 
@@ -83,7 +83,7 @@ public:
   };
   template <class base_t>
   struct TMemberFunctionSetter_1 : public ISetter {
-    const olx_vptr<base_t> instance;
+    olx_vptr<base_t> instance;
     void (base_t::*setter)(bool v);
     TMemberFunctionSetter_1(const olx_vptr<base_t> &instance,
       void (base_t::*setter)(bool v))
@@ -92,19 +92,19 @@ public:
     virtual void operator ()(bool v, const olxstr &data) {
       if (!data.IsEmpty())
         throw TInvalidArgumentException(__OlxSourceInfo, "data");
-      (instance().*setter)(v);
+      ((*instance).*setter)(v);
     }
   };
   template <class base_t>
   struct TMemberFunctionSetter_2 : public ISetter {
-    const olx_vptr<base_t> instance;
+    olx_vptr<base_t> instance;
     void (base_t::*setter)(bool v, const olxstr &);
     TMemberFunctionSetter_2(const olx_vptr<base_t> &instance,
       void (base_t::*setter)(bool v, const olxstr &))
       : instance(instance), setter(setter)
     {}
     virtual void operator ()(bool v, const olxstr &data) {
-      (instance.*setter)(v, data);
+      ((*instance).*setter)(v, data);
     }
   };
   struct TMacroSetter : public ISetter {

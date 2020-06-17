@@ -233,7 +233,7 @@ TwxZipFileSystem::~TwxZipFileSystem() {
   zip.OnProgress.Remove(this);
 }
 //..............................................................................
-IInputStream* TwxZipFileSystem::_DoOpenFile(const olxstr& Source) {
+olx_object_ptr<IInputStream> TwxZipFileSystem::_DoOpenFile(const olxstr& Source) {
   TOnProgress Progress;
   olxstr fn( TEFile::UnixPath(Source) );
   Progress.SetAction( olxstr("Extracting ") << fn );
@@ -242,7 +242,7 @@ IInputStream* TwxZipFileSystem::_DoOpenFile(const olxstr& Source) {
   OnProgress.Enter(this, &Progress);
 
   IDataInputStream* rv = zip.OpenEntry(Source);
-  if (rv == NULL) {
+  if (rv == 0) {
     throw TFunctionFailedException(__OlxSourceInfo,
       olxstr("Could not locate zip entry: ") << fn);
   }

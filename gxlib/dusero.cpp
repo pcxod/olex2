@@ -56,11 +56,11 @@ void TDUserObj::Create(const olxstr& cName) {
   TGlPrimitive& GlP = GPC->NewPrimitive("Object", Type);
   GlP.SetProperties(GS.GetMaterial("Object", GlM));
   if (Type == sgloSphere) {
-    if (Vertices.is_valid() && Vertices().Count() == 3) {
+    if (Vertices.ok() && Vertices->Count() == 3) {
       Params().Resize(16);
       for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++) {
-          Params()[i * 4 + j] = Vertices()[i][j];
+          Params()[i * 4 + j] = (*Vertices)[i][j];
         }
       }
       Params()[15] = 1;
@@ -71,14 +71,14 @@ void TDUserObj::Create(const olxstr& cName) {
     GlP.Compile();
   }
   else {
-    if (Vertices.is_valid()) {
-      GlP.Vertices = Vertices();
+    if (Vertices.ok()) {
+      GlP.Vertices = *Vertices;
     }
-    if (Normals.is_valid()) {
-      GlP.Normals = Normals();
+    if (Normals.ok()) {
+      GlP.Normals = *Normals;
     }
-    if (Colors.is_valid()) {
-      GlP.Colors = Colors();
+    if (Colors.ok()) {
+      GlP.Colors = *Colors;
       //GlM.SetColorMaterial(true);
       //GlP.SetProperties(GlM);
     }
@@ -95,9 +95,9 @@ bool TDUserObj::Orient(TGlPrimitive& P) {
     else if (Params().Count() == 1) {
       olx_gl::scale(Params()[0]);
     }
-    else if (Vertices.is_valid()) {
-      for (size_t i = 0; i < Vertices().Count(); i++) {
-        olx_gl::translate(Vertices()[i]);
+    else if (Vertices.ok()) {
+      for (size_t i = 0; i < Vertices->Count(); i++) {
+        olx_gl::translate((*Vertices)[i]);
         P.Draw();
       }
       return true;
@@ -111,14 +111,14 @@ void TDUserObj::ToDataItem(TDataItem &di) const {
     .AddField("name", GetCollectionName())
     .AddField("flags", AGlMouseHandlerImp::glml_Flags);
   Basis.ToDataItem(di.AddItem("Basis"));
-  if (Vertices.is_valid()) {
-    di.AddField("vertices", PersUtil::VecListToStr(Vertices()));
+  if (Vertices.ok()) {
+    di.AddField("vertices", PersUtil::VecListToStr(*Vertices));
   }
-  if (Normals.is_valid()) {
-    di.AddField("normals", PersUtil::VecListToStr(Normals()));
+  if (Normals.ok()) {
+    di.AddField("normals", PersUtil::VecListToStr(*Normals));
   }
-  if (Colors.is_valid()) {
-    di.AddField("colors", PersUtil::NumberListToStr(Colors()));
+  if (Colors.ok()) {
+    di.AddField("colors", PersUtil::NumberListToStr(*Colors));
   }
   if (!Params().IsEmpty()) {
     di.AddField("params", PersUtil::NumberListToStr(Params()));
@@ -136,17 +136,17 @@ void TDUserObj::FromDataItem(const TDataItem &di) {
   olxstr v = di.FindField("vertices");
   if (!v.IsEmpty()) {
     Vertices = new vec3f_alist;
-    PersUtil::VecListFromStr(v, Vertices());
+    PersUtil::VecListFromStr(v, *Vertices);
   }
   v = di.FindField("normals");
   if (!v.IsEmpty()) {
     Normals = new vec3f_alist;
-    PersUtil::VecListFromStr(v, Normals());
+    PersUtil::VecListFromStr(v, *Normals);
   }
   v = di.FindField("colors");
   if (!v.IsEmpty()) {
     Colors = new TArrayList<uint32_t>;
-    PersUtil::NumberListFromStr(v, Colors());
+    PersUtil::NumberListFromStr(v, *Colors);
   }
   v = di.FindField("params");
   if (!v.IsEmpty()) {
@@ -178,8 +178,8 @@ const_strlist TDUserObj::ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const
     }
   }
   out.Add("  }");
-  if (Vertices.is_valid() && Vertices().Count() == 3) {
-    mat3d m(Vertices()[0], Vertices()[1], Vertices()[2]);
+  if (Vertices.ok() && Vertices->Count() == 3) {
+    mat3d m((*Vertices)[0], (*Vertices)[1], (*Vertices)[2]);
     out.Add("  transform {");
     out.Add("   matrix") << pov::to_str(crdc.matr(m),
       crdc.crd(Basis.GetCenter()));

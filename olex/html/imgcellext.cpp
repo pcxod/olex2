@@ -14,53 +14,58 @@
 #include "wx/dc.h"
 #include "wx/artprov.h"
 
-THtmlImageCell::THtmlImageCell(wxWindow *window, wxFSFile *input,
+THtmlImageCell::THtmlImageCell(wxHtmlWindowInterface* windowIface, wxFSFile *input,
   int w, int h, double scale, int align,
   const wxString& mapname,
-  bool width_per, bool height_per) : wxHtmlCell(), AOlxCtrl(window)
+  bool width_per, bool height_per)
+  : wxHtmlCell(), AOlxCtrl(windowIface->GetHTMLWindow())
 {
-  m_window = window ? wxStaticCast(window, wxScrolledWindow) : 0;
+  m_windowIface = windowIface;
   m_scale = scale;
   m_showFrame = false;
-  m_bitmap = 0;
   m_bmpW = w;
   m_bmpH = h;
   m_mapName = mapname;
   SetCanLiveOnPagebreak(false);
 #if wxUSE_GIF && wxUSE_TIMER
-  m_gifDecoder = 0;
-  m_gifTimer = 0;
   File = input;
   m_physX = m_physY = wxDefaultCoord;
+  m_nCurrFrame = 0;
 #endif
   if (m_bmpW && m_bmpH) {
     if (input != 0) {
       wxInputStream *s = input->GetStream();
       if (s != 0) {
+#if wxUSE_GIF && wxUSE_TIMER
         bool readImg = true;
-
-#if wxUSE_GIF && wxUSE_TIMER && !wxCHECK_VERSION(2,8,0)
-        if ((input->GetLocation().Matches(wxT("*.gif")) ||
-          input->GetLocation().Matches(wxT("*.GIF"))) && m_window)
+        if (m_windowIface &&
+          (input->GetLocation().Matches(wxT("*.gif")) ||
+            input->GetLocation().Matches(wxT("*.GIF"))))
         {
-          m_gifDecoder = new wxGIFDecoder(s, true);
-          if (m_gifDecoder->ReadGIF() == wxGIF_OK) {
+          m_gifDecoder = new wxGIFDecoder();
+          if (m_gifDecoder->LoadGIF(*s) == wxGIF_OK) {
             wxImage img;
-            if (m_gifDecoder->ConvertToImage(&img))
+            if (m_gifDecoder->ConvertToImage(0, &img)) {
               SetImage(img);
+            }
             readImg = false;
             if (m_gifDecoder->IsAnimation()) {
               m_gifTimer = new wxGIFTimer(this);
-              m_gifTimer->Start(m_gifDecoder->GetDelay(), true);
+              long delay = m_gifDecoder->GetDelay(0);
+              if (delay == 0) {
+                delay = 1;
+              }
+              m_gifTimer->Start(delay, true);
             }
             else {
-              wxDELETE(m_gifDecoder);
+              m_gifDecoder = 0;
             }
           }
           else {
-            wxDELETE(m_gifDecoder);
+            m_gifDecoder = 0;
           }
         }
+
         if (readImg)
 #endif // wxUSE_GIF && wxUSE_TIMER
         {
@@ -122,7 +127,6 @@ THtmlImageCell::THtmlImageCell(wxWindow *window, wxFSFile *input,
 //..............................................................................
 void THtmlImageCell::SetImage(const wxImage& img) {
   if (img.Ok()) {
-    delete m_bitmap;
     int ww = img.GetWidth();
     int hh = img.GetHeight();
     if (m_bmpW == wxDefaultCoord) {
@@ -152,40 +156,51 @@ void THtmlImageCell::SetImage(const wxImage& img) {
   }
 }
 //..............................................................................
-#if wxUSE_GIF && wxUSE_TIMER && !wxCHECK_VERSION(2,8,0)
-void THtmlImageCell::AdvanceAnimation(wxTimer *timer)  {
+#if wxUSE_GIF && wxUSE_TIMER
+void THtmlImageCell::AdvanceAnimation(wxTimer* timer) {
   wxImage img;
-  m_gifDecoder->GoNextFrame(true);
+  m_nCurrFrame++;
+  if (m_nCurrFrame == m_gifDecoder->GetFrameCount()) {
+    m_nCurrFrame = 0;
+  }
 
-  if( m_physX == wxDefaultCoord )  {
+  if (m_physX == wxDefaultCoord) {
     m_physX = m_physY = 0;
-    for(wxHtmlCell *cell = this; cell; cell = cell->GetParent() )  {
+    for (wxHtmlCell* cell = this; cell; cell = cell->GetParent()) {
       m_physX += cell->GetPosX();
       m_physY += cell->GetPosY();
     }
   }
 
-  int x, y;
-  m_window->CalcScrolledPosition(m_physX, m_physY, &x, &y);
-  wxRect rect(x, y, m_Width, m_Height);
+  wxWindow* win = m_windowIface->GetHTMLWindow();
+  wxPoint pos =
+    m_windowIface->HTMLCoordsToWindow(this, wxPoint(m_physX, m_physY));
+  wxRect rect(pos, wxSize(m_Width, m_Height));
 
-  if( m_window->GetClientRect().Intersects(rect) &&
-      m_gifDecoder->ConvertToImage(&img) )
+  if (win->GetClientRect().Intersects(rect) &&
+    m_gifDecoder->ConvertToImage(m_nCurrFrame, &img))
   {
-    if( (int)m_gifDecoder->GetWidth() != m_Width ||
-         (int)m_gifDecoder->GetHeight() != m_Height ||
-         m_gifDecoder->GetLeft() != 0 || m_gifDecoder->GetTop() != 0 )
-      {
-        wxBitmap bmp(img);
-        wxMemoryDC dc;
-        dc.SelectObject(*m_bitmap);
-        dc.DrawBitmap(bmp, m_gifDecoder->GetLeft(), m_gifDecoder->GetTop(), true /* use mask */);
-      }
-      else
-        SetImage(img);
-      m_window->Refresh(img.HasMask(), &rect);
+#if !defined(__WXMSW__) || wxUSE_WXDIB
+    if (m_gifDecoder->GetFrameSize(m_nCurrFrame) != wxSize(m_Width, m_Height) ||
+      m_gifDecoder->GetFramePosition(m_nCurrFrame) != wxPoint(0, 0))
+    {
+      wxBitmap bmp(img);
+      wxMemoryDC dc;
+      dc.SelectObject(*m_bitmap);
+      dc.DrawBitmap(bmp, m_gifDecoder->GetFramePosition(m_nCurrFrame),
+        true /* use mask */);
+    }
+    else
+#endif
+      SetImage(img);
+    win->Refresh(img.HasMask(), &rect);
   }
-  timer->Start(m_gifDecoder->GetDelay(), true);
+
+  long delay = m_gifDecoder->GetDelay(m_nCurrFrame);
+  if (delay == 0) {
+    delay = 1;
+  }
+  timer->Start(delay, true);
 }
 #endif
 //..............................................................................
@@ -194,16 +209,7 @@ void THtmlImageCell::Layout(int w) {
   m_physX = m_physY = wxDefaultCoord;
 }
 //..............................................................................
-
-THtmlImageCell::~THtmlImageCell()  {
-  if (File != 0) {
-    delete File;
-  }
-    delete m_bitmap;
-#if wxUSE_GIF && wxUSE_TIMER
-  delete m_gifTimer;
-  delete m_gifDecoder;
-#endif
+THtmlImageCell::~THtmlImageCell() {
 }
 //..............................................................................
 void THtmlImageCell::Draw(wxDC& dc, int x, int y) {
