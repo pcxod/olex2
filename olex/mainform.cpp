@@ -923,8 +923,10 @@ void TMainForm::XApp(Olex2App *XA)  {
 #endif
   {
     olxstr f = "GetCompilationInfo(full)";
-    if (processFunction(f, EmptyString(), true))
-      FXApp->NewLogEntry(logInfo, true) << "Welcome to Olex2 " << f;
+    if (processFunction(f, EmptyString(), true)) {
+      FXApp->NewLogEntry(logInfo, true) << "Welcome to Olex2-"
+        << patcher::PatchAPI::ReadRepositoryTag() << ' ' << f;
+    }
   }
   // menu initialisation
   MenuBar = new wxMenuBar;

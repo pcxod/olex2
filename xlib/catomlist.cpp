@@ -881,7 +881,22 @@ void AtomRefList::OnAUUpdate() {
     smatd dtm = uc.GetRelation(tm*all_refs[tr[i]], tr[i]->GetAtom().ccrd());
     tr[i]->UpdateMatrix(&dtm);
   }
-
+  const smatd* m = tr[0]->GetMatrix();
+  bool uniform = true;
+  for (size_t i = 1; i < tr.Count(); i++) {
+    if (uniform && m != tr[i]->GetMatrix()) {
+      uniform = false;
+    }
+  }
+  // the same symm? reduce to AU
+  if (uniform) {
+    if (m != 0) {
+      for (size_t i = 0; i < tr.Count(); i++) {
+        tr[i]->UpdateMatrix(0);
+      }
+    }
+    return;
+  }
 }
 //.............................................................................
 void AtomRefList::BeginAUSort() {
