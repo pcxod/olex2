@@ -7350,7 +7350,9 @@ olxstr XLibMacros::GetCompilationInfo() {
   revision = svn_revision_number;
 #endif
   olxstr rv = timestamp;
-  if( !revision.IsEmpty() )  rv << " svn.r" << revision;
+  if (!revision.IsEmpty()) {
+    rv << " svn.r" << revision;
+  }
 #ifdef _MSC_FULL_VER
   rv << " MSC:" << _MSC_FULL_VER;
 #elif __INTEL_COMPILER

@@ -74,12 +74,14 @@ protected:
       Progress.SetAction("Download complete");
       Progress.SetPos(0);
       OnProgress.Exit(this, &Progress);
+      return ms.release();
     }
     catch (...) {
       Progress.SetAction("Download failed");
       Progress.SetPos(0);
       OnProgress.Execute(this, &Progress);
       OnProgress.Exit(this, &Progress);
+      return 0;
     }
   }
 

@@ -271,8 +271,8 @@ namespace olx_grid_util {
   public:
     smoother(TTypeList<vec3f> &vertices,
       const TTypeList<IsoTriangle> &triangles);
-    /* smmoth the surface using a ratio contribution of any particular vertex
-    and 1-ratio contribution of neighbouring vertoces
+    /* smooth the surface using a ratio contribution of any particular vertex
+    and 1-ratio contribution of neighbouring vertices
     */
     void smooth(float ratio=0.5f);
   };

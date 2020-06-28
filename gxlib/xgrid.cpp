@@ -1253,16 +1253,11 @@ void TXGrid::RescaleSurface(bool collect_only) {
       }
     }
     else {
+      vec3d pts[3];
       for (int li = 0; li < triangles.Count(); li++) {
         const TArrayList<vec3f>& verts = vertices[li];
         const TArrayList<vec3f>& norms = normals[li];
         const TArrayList<IsoTriangle>& trians = triangles[li];
-        for (size_t i = 0; i < verts.Count(); i++) {
-          verts[i][0] /= (MaxX - 1);
-          verts[i][1] /= (MaxY - 1);
-          verts[i][2] /= (MaxZ - 1);
-          au.CellToCartesian(verts[i]);
-        }
         TTypeList<vec3f> *va = (li == 0 ? &cp_vertices : &cn_vertices);
         if (!collect_only) {
           olx_gl::newList(li == 0 ? PListId : NListId, GL_COMPILE);
@@ -1270,15 +1265,22 @@ void TXGrid::RescaleSurface(bool collect_only) {
           olx_gl::begin(GL_TRIANGLES);
         }
         for (size_t i = 0; i < trians.Count(); i++) {
+          for (int j = 0; j < 3; j++) {
+            pts[j] = verts[trians[i].pointID[j]];
+            pts[j][0] = pts[j][0] / MaxX;
+            pts[j][1] = pts[j][1] / MaxY;
+            pts[j][2] = pts[j][2] / MaxZ;
+            au.CellToCartesian(pts[j]);
+          }
           if (collect_only) {
             for (int j = 0; j < 3; j++) {
-              va->AddCopy(verts[trians[i][j]]);
+              va->AddCopy(pts[j]);
             }
           }
           else {
             for (int j = 0; j < 3; j++) {
               olx_gl::normal(norms[trians[i][j]]);
-              olx_gl::vertex(verts[trians[i][j]]);  // cell drawing
+              olx_gl::vertex(pts[j]);  // cell drawing
               if (ColorData != 0) {
                 olx_gl::color(colors[li][trians[i][j]]);
               }
@@ -1691,6 +1693,56 @@ void TXGrid::LibSplit(TStrObjList &Cmds, const TParamList &Options,
   }
 }
 //.............................................................................
+void TXGrid::LibProcess(TStrObjList& Cmds, const TParamList& Options,
+  TMacroData& Error)
+{
+  TGXApp& gxapp = TGXApp::GetInstance();
+  const TAsymmUnit& au = gxapp.XFile().GetAsymmUnit();
+  if (Cmds[0] == "smooth") {
+    float ratio = Options.FindValue("r", "0.8").ToFloat();
+    size_t N = Options.FindValue("n", "10").ToSizeT();
+
+    for (int li = 0; li < triangles.Count(); li++) {
+      TArrayList<vec3f>& norms = normals[li];
+      TTypeList<IsoTriangle> triags = triangles[li];
+      TTypeList<vec3f> verts(vertices[li].Count());
+      for (size_t i = 0; i < verts.Count(); i++) {
+        verts[i] = au.Orthogonalise(vertices[li][i]);
+      }
+      olx_grid_util::smoother sm(verts, triags);
+      for (int i = 0; i < N; i++) {
+        sm.smooth(ratio);
+      }
+
+      for (size_t i = 0; i < norms.Count(); i++) {
+        norms[i].Null();
+      }
+      for (size_t i = 0; i < triags.Count(); i++) {
+        const IsoTriangle& t = triags[i];
+        vec3f n = (verts[t[1]] - verts[t[0]]).XProdVec(verts[t[2]] - verts[t[0]]);
+        float ql = n.QLength();
+        for (size_t j = 0; j < 3; j++) {
+          if (ql > 0) {
+            norms[t[j]] += (n / sqrt(ql));
+          }
+        }
+      }
+      for (size_t i = 0; i < norms.Count(); i++) {
+        if (!norms[i].IsNull()) {
+          norms[i].Normalise();
+        }
+        else {
+          norms[i][2] = 1;
+        }
+      }
+      for (size_t i = 0; i < verts.Count(); i++) {
+        vertices[li][i] = au.Fractionalise(verts[i]);
+      }
+    }
+    RescaleSurface(false);
+  }
+}
+//.............................................................................
 TLibrary*  TXGrid::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("xgrid") : name);
   lib->Register(new TFunction<TXGrid>(this,
@@ -1737,6 +1789,12 @@ TLibrary*  TXGrid::ExportLibrary(const olxstr& name)  {
     EmptyString(),
     fpNone | fpOne,
     "Split current grid view into individual blobs"));
+  lib->Register(new TMacro<TXGrid>(this,
+    &TXGrid::LibProcess, "Process",
+    "r-ratio for smoothing [0.8]&;"
+    "n-number of cycles [10]",
+    fpAny ^ fpNone,
+    "Executes a grid process. Currently only 'smooth' is available"));
 
   AGDrawObject::ExportLibrary(*lib);
   Info->ExportLibrary(*lib->AddLibrary("label"));
