@@ -56,13 +56,8 @@ void TSimpleRestraint::Delete() {
 }
 //..............................................................................
 TSimpleRestraint &TSimpleRestraint::Validate() {
-  size_t gc = InvalidIndex;
-  switch (ListType) {
-  case rltGroup2: gc = 2; break;
-  case rltGroup3: gc = 3; break;
-  case rltGroup4: gc = 4; break;
-  }
-  Atoms.Validate(gc);
+  size_t group_size = ListType >= 2 && ListType <= 4 ? ListType : InvalidIndex;
+  Atoms.Validate(group_size);
   return *this;
 }
 //..............................................................................
@@ -93,18 +88,7 @@ void TSimpleRestraint::ToDataItem(TDataItem& item) const {
 ConstPtrList<PyObject> TSimpleRestraint::PyExport(TPtrList<PyObject>& atoms,
   TPtrList<PyObject>& equiv)
 {
-  size_t group_size = InvalidIndex;
-  switch (GetListType()) {
-  case rltGroup2:
-    group_size = 2;
-    break;
-  case rltGroup3:
-    group_size = 3;
-    break;
-  case rltGroup4:
-    group_size = 4;
-    break;
-  }
+  size_t group_size = ListType >= 2 && ListType <= 4 ? ListType : InvalidIndex;
   TTypeList<TAtomRefList> ats = Atoms.Expand(Parent.GetRM(), group_size);
   TPtrList<PyObject> rv;
   rv.Add(PyDict_New());
@@ -197,6 +181,29 @@ TIString TSimpleRestraint::ToString() const {
 //..............................................................................
 void TSimpleRestraint::OnAUUpdate() {
   Atoms.OnAUUpdate();
+  // reduce subgroups symmetry to AU
+  size_t group_size = ListType >= 2 && ListType <= 4 ? ListType : InvalidIndex;
+  if (group_size != InvalidIndex) {
+    TPtrList<ExplicitCAtomRef> tr = Atoms.GetExplicit();
+    for (size_t i = 0; i < tr.Count(); i+= group_size) {
+      const smatd* m = tr[i]->GetMatrix();
+      if (m == 0) {
+        continue;
+      }
+      bool uniform = true;
+      for (size_t j = i+1; j < i + group_size; j++) {
+        if (uniform && m != tr[j]->GetMatrix()) {
+          uniform = false;
+          break;
+        }
+      }
+      if (uniform && m != 0) {
+        for (size_t j = i; j < i + group_size; j++) {
+          tr[j]->UpdateMatrix(0);
+        }
+      }
+    }
+  }
 }
 //..............................................................................
 //..............................................................................
@@ -354,7 +361,7 @@ void TSRestraintList::FromDataItem(const TDataItem& item) {
   }
 }
 //..............................................................................
-TSimpleRestraint& TSRestraintList::AddNew()  {
+TSimpleRestraint& TSRestraintList::AddNew() {
   TSimpleRestraint& r = Restraints.Add(
     new TSimpleRestraint(*this, Restraints.Count(), RestraintListType));
   return RefMod.SetRestraintDefaults(r);
