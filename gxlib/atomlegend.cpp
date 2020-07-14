@@ -26,7 +26,7 @@ void TAtomLegend::Create(const olxstr& cName) {
     return;
   }
   TGraphicsStyle& GS = GPC.GetStyle();
-  Left = GS.GetParam("Left", Left, true).ToInt();
+  Left = GS.GetParam("Left", Parent.GetWidth()-Width*2, true).ToInt();
   Top = GS.GetParam("Top", Top, true).ToInt();
   Z = GS.GetParam("Z", Z).ToDouble();
   TGlMaterial glm("3077;0;0");
@@ -237,7 +237,8 @@ void TAtomLegend::SetVisible(bool v) {
 }
 //.............................................................................
 void TAtomLegend::SetPosition(int left, int top) {
-  Left = left;
-  Top = top;
+  GetPrimitives().GetStyle().SetParam("TOp", Top = top);
+  GetPrimitives().GetStyle().SetParam("Left", Left = left);
+  Center.Null();
 }
 //.............................................................................

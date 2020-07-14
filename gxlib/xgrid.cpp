@@ -112,9 +112,11 @@ void TXGrid::TLegend::Create(const olxstr& cName) {
   if (GPC.PrimitiveCount() != 0) {
     return;
   }
+  TGlFont& glf = Parent.GetScene().GetFont(~0, true);
   TGraphicsStyle& GS = GPC.GetStyle();
   Left = GS.GetParam("Left", Left, true).ToInt();
-  Top = GS.GetParam("Top", Top, true).ToInt();
+  // offest to by height to avoid overlap with text
+  Top = GS.GetParam("Top", glf.GetMaxHeight(), true).ToInt();
   Z = GS.GetParam("Z", Z).ToDouble();
   {
     TGlPrimitive& GlP = GPC.NewPrimitive("Plane", sgloQuads);
@@ -136,7 +138,6 @@ void TXGrid::TLegend::Create(const olxstr& cName) {
     GlP.Vertices.SetCount(4);
   }
 
-  TGlFont &glf = Parent.GetScene().GetFont(~0, true);
   TGlPrimitive& glpText = GPC.NewPrimitive("Text", sgloText);
   glpText.SetProperties(GS.GetMaterial("Text", glf.GetMaterial()));
   glpText.SetFont(&glf);

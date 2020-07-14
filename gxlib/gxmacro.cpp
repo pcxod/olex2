@@ -5408,7 +5408,9 @@ void GXLibMacros::macLegend(TStrObjList &Cmds, const TParamList &Options,
   }
   else {
     if (Options.GetBoolOption('r')) {
-      app.AtomLegend().SetPosition(0, 0);
+      app.AtomLegend().SetPosition(
+        app.GetRenderer().GetWidth()- app.AtomLegend().GetWidth()*2,
+        0);
     }
     app.AtomLegend().Update();
     app.AtomLegend().SetVisible(true);
