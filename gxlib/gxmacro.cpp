@@ -3272,7 +3272,7 @@ void GXLibMacros::macLstGO(TStrObjList &Cmds, const TParamList &Options,
     olxstr_dict<TStrList> unq;
     for (size_t i = 0; i < TXAtom::NamesRegistry().Count(); i++) {
       olxstr cn = TXAtom::NamesRegistry().GetValue(i);
-      unq.Add(cn).Add(TXAtom::NamesRegistry().GetKey(i).catom->GetResiLabel());
+      unq.Add(cn).Add(TXAtom::NamesRegistry().GetKey(i).GetCAtom(app).GetResiLabel());
     }
     for (size_t i = 0; i < unq.Count(); i++) {
       output.Add(unq.GetKey(i)) << ": " << olxstr(" ").Join(unq.GetValue(i));
@@ -3284,8 +3284,8 @@ void GXLibMacros::macLstGO(TStrObjList &Cmds, const TParamList &Options,
     for (size_t i = 0; i < TXBond::NamesRegistry().Count(); i++) {
       olxstr cn = TXBond::NamesRegistry().GetValue(i);
       unq.Add(cn).Add(olxstr(
-        TXBond::NamesRegistry().GetKey(i).a.catom->GetResiLabel()) <<
-        "-" << TXBond::NamesRegistry().GetKey(i).b.catom->GetResiLabel());
+        TXBond::NamesRegistry().GetKey(i).a.GetCAtom(app).GetResiLabel()) <<
+        "-" << TXBond::NamesRegistry().GetKey(i).b.GetCAtom(app).GetResiLabel());
     }
     for (size_t i = 0; i < unq.Count(); i++) {
       output.Add(unq.GetKey(i)) << ": " << olxstr(" ").Join(unq.GetValue(i));

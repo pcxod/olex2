@@ -139,7 +139,8 @@ void PointAnalyser::ToDataItem_(TDataItem &di) const {
   if (!center.ok()) {
     return;
   }
-  center->GetRef().ToDataItem(di.AddItem("AtomRef"));
+  TXApp& app = TXApp::GetInstance();
+  center->GetRef().ToDataItem(di.AddItem("AtomRef"), app);
   di.AddField("Colors", olxstr(',').Join(colors))
     .AddField("emboss", emboss).
     AddField("alpha", alpha);

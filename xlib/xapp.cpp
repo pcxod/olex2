@@ -1436,8 +1436,7 @@ TSBond& TXApp::GetSBond(size_t ind) const {
 }
 //..............................................................................
 TSAtom& TXApp::GetSAtom(const TSAtom::Ref& r) const {
-  TSAtom *a = Files[r.catom->GetParent()->GetId()].GetLattice()
-    .GetAtomRegistry().Find(r);
+  TSAtom *a = Files[r.au_id].GetLattice().GetAtomRegistry().Find(r);
   if (a == 0) {
     throw TInvalidArgumentException(__OlxSourceInfo, "atom ref");
   }
@@ -1445,11 +1444,9 @@ TSAtom& TXApp::GetSAtom(const TSAtom::Ref& r) const {
 }
 //..............................................................................
 TSBond& TXApp::GetSBond(const TSBond::Ref& r) const {
-  TSBond* b = Files[r.a.catom->GetParent()->GetId()].GetLattice()
-    .GetAtomRegistry().Find(r);
-  if (b == 0 && r.a.catom->GetParent() != r.b.catom->GetParent()) {
-    b = Files[r.b.catom->GetParent()->GetId()].GetLattice()
-      .GetAtomRegistry().Find(r);
+  TSBond* b = Files[r.a.au_id].GetLattice().GetAtomRegistry().Find(r);
+  if (b == 0 && r.a.au_id != r.b.au_id) {
+    b = Files[r.b.au_id].GetLattice().GetAtomRegistry().Find(r);
   }
   if (b == 0) {
     throw TInvalidArgumentException(__OlxSourceInfo, "atom ref");

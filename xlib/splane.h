@@ -147,8 +147,8 @@ public:
       int Compare(const DefData& d) const {
         return ref.Compare(d.ref);
       }
-      void ToDataItem(TDataItem& item, bool use_id=false) const;
-      void FromDataItem(const TDataItem& item, const class TXApp &app);
+      void ToDataItem(TDataItem& item, const TXApp& app, bool use_id=false) const;
+      void FromDataItem(const TDataItem& item, const TXApp &app);
     };
     TTypeList<DefData> atoms;
     size_t sides;
@@ -168,10 +168,10 @@ public:
       return Compare(d) == 0;
     }
     int Compare(const Def& d) const;
-    TSPlane* FromAtomRegistry(struct ASObjectProvider& ar, size_t def_id,
+    TSPlane* FromAtomRegistry(const TXApp& app, struct ASObjectProvider& ar, size_t def_id,
       class TNetwork* parent, const smatd& matr) const;
-    void ToDataItem(TDataItem& item, bool use_id=false) const;
-    void FromDataItem(const TDataItem& item, const class TXApp& app);
+    void ToDataItem(TDataItem& item, class TXApp& app, bool use_id=false) const;
+    void FromDataItem(const TDataItem& item, const TXApp& app);
     size_t GetSides() const { return sides; }
     void SetSides(size_t s) { sides = s; }
     TSPlane::Def& Sort() {
@@ -185,8 +185,8 @@ public:
   // not for external use
   void _SetDefId(size_t id) { DefId = id; }
 
-  void ToDataItem(TDataItem& item) const;
-  void FromDataItem(const TDataItem& item, const class TXApp& app);
+  void ToDataItem(TDataItem& item, const class TXApp& app) const;
+  void FromDataItem(const TDataItem& item, const TXApp& app);
 };
 
   typedef TTypeList<TSPlane> TSPlaneList;

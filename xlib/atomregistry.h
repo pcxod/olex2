@@ -224,7 +224,7 @@ public:
   }
   //...........................................................................
   TSAtom* Find(const TSAtom::Ref &r) const {
-    return Find(r.catom->GetId(), r.matrix_id);
+    return Find(r.atom_id, r.matrix_id);
   }
   //...........................................................................
   TSAtom* Find(size_t catom_id, uint32_t matrix_id) const {

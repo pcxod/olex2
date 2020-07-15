@@ -1688,12 +1688,12 @@ void TGXApp::CopySelection() const {
   for (size_t i=0; i < sel.Count(); i++) {
     TXAtom *a = dynamic_cast<TXAtom *>(&sel[i]);
     if (a != 0) {
-      a->GetRef().ToDataItem(atoms.AddItem(atoms.ItemCount()+1), true);
+      a->GetRef().ToDataItem(atoms.AddItem(atoms.ItemCount()+1), *this, true);
     }
     else {
       TXBond *b = dynamic_cast<TXBond *>(&sel[i]);
       if (b != 0) {
-        b->GetRef().ToDataItem(bonds.AddItem(bonds.ItemCount()+1), true);
+        b->GetRef().ToDataItem(bonds.AddItem(bonds.ItemCount()+1), *this, true);
       }
     }
   }
@@ -3679,14 +3679,14 @@ void TGXApp::RestoreGroup(TGlGroup& glg, const GroupData& gd) {
   TXAtomPList xatoms(gd.atoms.Count());
   TXBondPList xbonds(gd.bonds.Count());
   for (size_t i = 0; i < gd.atoms.Count(); i++) {
-    TLattice &l = gd.atoms[i].catom->GetParent()->GetLattice();
+    TLattice &l = gd.atoms[i].GetLattice(*this);
     TSAtom* sa = l.GetAtomRegistry().Find(gd.atoms[i]);
     if (sa != 0) {
       xatoms[i] = static_cast<TXAtom*>(sa);
     }
   }
   for (size_t i = 0; i < gd.bonds.Count(); i++) {
-    TLattice& l = gd.bonds[i].a.catom->GetParent()->GetLattice();
+    TLattice& l = gd.bonds[i].a.GetLattice(*this);
     TSBond* sb = l.GetAtomRegistry().Find(gd.bonds[i]);
     if (sb != 0) {
       xbonds[i] = static_cast<TXBond*>(sb);
@@ -3748,14 +3748,14 @@ void TGXApp::RestoreLabels() {
   TXAtomPList xatoms(LabelInfo.atoms.Count());
   TXBondPList xbonds(LabelInfo.bonds.Count());
   for (size_t i = 0; i < LabelInfo.atoms.Count(); i++) {
-    TLattice& l = LabelInfo.atoms[i].catom->GetParent()->GetLattice();
+    TLattice& l = LabelInfo.atoms[i].GetLattice(*this);
     TSAtom* sa = l.GetAtomRegistry().Find(LabelInfo.atoms[i]);
     if (sa != 0) {
       xatoms[i] = static_cast<TXAtom*>(sa);
     }
   }
   for (size_t i = 0; i < LabelInfo.bonds.Count(); i++) {
-    TLattice& l = LabelInfo.bonds[i].a.catom->GetParent()->GetLattice();
+    TLattice& l = LabelInfo.bonds[i].a.GetLattice(*this);
     TSBond* sb = l.GetAtomRegistry().Find(LabelInfo.bonds[i]);
     if (sb != 0) {
       xbonds[i] = static_cast<TXBond*>(sb);
@@ -5070,14 +5070,14 @@ void TGXApp::DeleteXFile(size_t index) {
   const TLattice& latt = Files[index].GetLattice();
   for (size_t i = 0; i < GroupDefs.Count(); i++) {
     for (size_t j = 0; j < GroupDefs[i].atoms.Count(); j++) {
-      if (GroupDefs[i].atoms[j].catom->GetParent()->GetId() == index) {
+      if (GroupDefs[i].atoms[j].au_id == index) {
         GroupDefs[i].atoms.NullItem(j);
       }
     }
     GroupDefs[i].atoms.Pack();
     for (size_t j = 0; j < GroupDefs[i].bonds.Count(); j++) {
-      if (GroupDefs[i].bonds[j].a.catom->GetParent()->GetId() == index ||
-        GroupDefs[i].bonds[j].b.catom->GetParent()->GetId() == index)
+      if (GroupDefs[i].bonds[j].a.au_id == index ||
+        GroupDefs[i].bonds[j].b.au_id == index)
       {
         GroupDefs[i].bonds.NullItem(j);
       }
@@ -5085,14 +5085,14 @@ void TGXApp::DeleteXFile(size_t index) {
     GroupDefs[i].bonds.Pack();
   }
   for (size_t i = 0; i < LabelInfo.atoms.Count(); i++) {
-    if (LabelInfo.atoms[i].catom->GetParent()->GetId() == index) {
+    if (LabelInfo.atoms[i].au_id == index) {
       LabelInfo.atoms.NullItem(i);
     }
   }
   LabelInfo.atoms.Pack();
   for (size_t i = 0; i < LabelInfo.bonds.Count(); i++) {
-    if (LabelInfo.bonds[i].a.catom->GetParent()->GetId() == index ||
-      LabelInfo.bonds[i].b.catom->GetParent()->GetId() == index)
+    if (LabelInfo.bonds[i].a.au_id == index ||
+      LabelInfo.bonds[i].b.au_id == index)
     {
       LabelInfo.bonds.NullItem(i);
     }
@@ -5120,14 +5120,14 @@ void TGXApp::DeleteXFiles() {
   }
   for (size_t i = 0; i < GroupDefs.Count(); i++) {
     for (size_t j = 0; j < GroupDefs[i].atoms.Count(); j++) {
-      if (GroupDefs[i].atoms[j].catom->GetParent()->GetId() > 0) {
+      if (GroupDefs[i].atoms[j].au_id > 0) {
         GroupDefs[i].atoms.NullItem(j);
       }
     }
     GroupDefs[i].atoms.Pack();
     for (size_t j = 0; j < GroupDefs[i].bonds.Count(); j++) {
-      if (GroupDefs[i].bonds[j].a.catom->GetParent()->GetId() > 0 ||
-        GroupDefs[i].bonds[j].b.catom->GetParent()->GetId() > 0)
+      if (GroupDefs[i].bonds[j].a.au_id > 0 ||
+        GroupDefs[i].bonds[j].b.au_id > 0)
       {
         GroupDefs[i].bonds.NullItem(j);
       }
@@ -5135,14 +5135,14 @@ void TGXApp::DeleteXFiles() {
     GroupDefs[i].bonds.Pack();
   }
   for (size_t i = 0; i < LabelInfo.atoms.Count(); i++) {
-    if (LabelInfo.atoms[i].catom->GetParent()->GetId() > 0) {
+    if (LabelInfo.atoms[i].au_id > 0) {
       LabelInfo.atoms.NullItem(i);
     }
   }
   LabelInfo.atoms.Pack();
   for (size_t i = 0; i < LabelInfo.bonds.Count(); i++) {
-    if (LabelInfo.bonds[i].a.catom->GetParent()->GetId() > 0 ||
-      LabelInfo.bonds[i].b.catom->GetParent()->GetId() > 0)
+    if (LabelInfo.bonds[i].a.au_id > 0 ||
+      LabelInfo.bonds[i].b.au_id > 0)
     {
       LabelInfo.bonds.NullItem(i);
     }
@@ -5290,7 +5290,7 @@ void TGXApp::SaveStructureStyle(TDataItem& item) const {
     TDataItem &pr = name_reg.AddItem("Atoms");
     for (size_t i = 0; i < TXAtom::NamesRegistry().Count(); i++) {
       TDataItem& di = pr.AddItem("item");
-      TXAtom::NamesRegistry().GetKey(i).ToDataItem(di);
+      TXAtom::NamesRegistry().GetKey(i).ToDataItem(di, *this);
       di.AddField("value", TXAtom::NamesRegistry().GetValue(i));
     }
   }
@@ -5298,7 +5298,7 @@ void TGXApp::SaveStructureStyle(TDataItem& item) const {
     TDataItem &pr = name_reg.AddItem("Bonds");
     for (size_t i = 0; i < TXBond::NamesRegistry().Count(); i++) {
       TDataItem& di = pr.AddItem("item");
-      TXBond::NamesRegistry().GetKey(i).ToDataItem(di);
+      TXBond::NamesRegistry().GetKey(i).ToDataItem(di, *this);
       di.AddField("value", TXBond::NamesRegistry().GetValue(i));
     }
   }

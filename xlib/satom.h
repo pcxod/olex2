@@ -133,35 +133,37 @@ public:
   void RemoveNode(TSAtom& node);
 
   struct Ref : public comparable_operators<Ref> {
-    const TCAtom *catom;
+    size_t au_id, atom_id;
     uint32_t matrix_id;
-    Ref() : catom(0) {}
-    Ref(const TCAtom &a, uint32_t m_id)
-      : catom(&a), matrix_id(m_id)
+    Ref() : au_id(~0), atom_id(~0), matrix_id(~0)
     {}
+    Ref(const TCAtom& a, uint32_t m_id);
     Ref(const Ref& r)
-      : catom(r.catom), matrix_id(r.matrix_id)
+      : au_id(r.au_id), atom_id(r.atom_id), matrix_id(r.matrix_id)
     {}
     Ref(const TDataItem& item, const class TXApp& app) {
       FromDataItem(item, app);
     }
     Ref& operator = (const Ref& r) {
-      catom = r.catom;
+      au_id = r.au_id;
+      atom_id = r.atom_id;
       matrix_id = r.matrix_id;
       return *this;
     }
     bool operator == (const Ref& r) const {
-      return (catom == r.catom &&
-        matrix_id == r.matrix_id);
+      return (au_id == r.au_id && atom_id == r.atom_id && matrix_id == r.matrix_id);
     }
     bool operator == (const TSAtom& a) const {
       return a.operator == (*this);
     }
+    TCAtom& GetCAtom(const class TXApp& app) const;
+    TLattice& GetLattice(const class TXApp& app) const;
     int Compare(const Ref& r) const;
-    void ToDataItem(TDataItem& item, bool use_id=false) const;
-    void FromDataItem(const TDataItem& item, const class TXApp &app);
+    void ToDataItem(TDataItem& item, const TXApp& app, bool use_id=false) const;
+    void FromDataItem(const TDataItem& item, const TXApp &app);
     void swap(Ref& r) {
-      olx_swap(catom, r.catom);
+      olx_swap(au_id, r.au_id);
+      olx_swap(atom_id, r.atom_id);
       olx_swap(matrix_id, r.matrix_id);
     }
   };
