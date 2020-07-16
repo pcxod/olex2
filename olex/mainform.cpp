@@ -1290,6 +1290,9 @@ void TMainForm::StartupInit() {
     return;
   }
   StartupInitialised = true;
+  if (FGlCanvas != 0) {
+    FGlCanvas->XApp(FXApp);
+  }
   wxFont Font(10, wxMODERN, wxNORMAL, wxNORMAL);//|wxFONTFLAG_ANTIALIASED);
   TGlMaterial glm("2049;0.698,0.698,0.698,1.000");
   AGlScene& gls = FXApp->GetRenderer().GetScene();
@@ -1340,10 +1343,6 @@ void TMainForm::StartupInit() {
     FXApp->CreateObjects(false);
     ShowAlert(e);
     //throw;
-  }
-  if (FGlCanvas != 0) {
-    FGlCanvas->XApp(FXApp);
-    FXApp->GetRenderer().Resize(FGlCanvas->GetSize().x, FGlCanvas->GetSize().y);
   }
   FXApp->Init(); // initialise the gl after styles reloaded
   if (!GradientPicture.IsEmpty()) { // need to call it after all objects are created
