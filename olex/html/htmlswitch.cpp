@@ -33,8 +33,8 @@ void THtmlSwitch::UpdateFileIndex()  {
     return;
   }
   olxstr FN = Files[FileIndex];
-  IInputStream *is = TFileHandlerManager::GetInputStream(FN);
-  if (is == NULL)  {
+  olx_object_ptr<IDataInputStream> is = TFileHandlerManager::GetInputStream(FN);
+  if (is == 0) {
     TBasicApp::NewLogEntry(logError) <<
       (olxstr("THtmlSwitch::File does not exist: ").quote() << FN);
     return;
@@ -44,7 +44,6 @@ void THtmlSwitch::UpdateFileIndex()  {
 #else
   Strings.LoadFromTextStream(*is);
 #endif
-  delete is;
   const olxstr ignore_open= "<!-- #ignoreif", ignore_close = "#ignoreif -->";
   for (size_t i = 0; i < Strings.Count(); i++)  {
     if (Strings[i].StartsFrom(ignore_open)) {

@@ -84,7 +84,7 @@ CalculatedVars::Object::FromDataItem(const TDataItem &di,
   else {
     x = new Object();
   }
-  x().FromDataItem_(di, parent, use_id);
+  x->FromDataItem_(di, parent, use_id);
   return x;
 }
 //.............................................................................
@@ -466,10 +466,10 @@ void CalculatedVars::FromDataItem(const TDataItem &di, bool use_id) {
   for (size_t i = 0; i < os.ItemCount(); i++) {
     olx_object_ptr<Object> o = Object::FromDataItem(
       os.GetItemByIndex(i), *this, use_id);
-    Object *& ao = objects.Add(o().GetQualifiedName(), o.get_ptr());
-    if (ao != o.get_ptr()) {
+    Object *& ao = objects.Add(o->GetQualifiedName(), &o);
+    if (ao != &o) {
       delete ao;
-      ao = o.get_ptr();
+      ao = &o;
     }
     o.release();
   }

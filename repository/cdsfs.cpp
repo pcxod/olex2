@@ -47,19 +47,21 @@ bool TSocketFS::_DoValidate(const THttpFileSystem::ResponseInfo& info,
       sf.SetParam("MD5", info.contentMD5);
       sf.SaveSettings(ifn);
     }
-    else if (TEFile::Exists(ifn))
+    else if (TEFile::Exists(ifn)) {
       TEFile::DelFile(ifn);
+    }
   }
   return valid;
 }
 //..............................................................................
-THttpFileSystem::AllocationInfo TSocketFS::_DoAllocateFile(const olxstr& src)  {
-  if (!BaseValid)
+THttpFileSystem::AllocationInfo TSocketFS::_DoAllocateFile(const olxstr& src) {
+  if (!BaseValid) {
     return THttpFileSystem::_DoAllocateFile(src);
+  }
   try {
     const olxstr fn = olxstr(Base()) << MD5::Digest(TUtf8::Encode(src));
     const olxstr ifn = olxstr(fn) << ".info";
-    if (TEFile::Exists(ifn) && GetIndex() != NULL) {
+    if (TEFile::Exists(ifn) && GetIndex() != 0) {
       olxstr src_fn = TEFile::OSPath(src);
       TFSItem* fi;
       if (src_fn.StartsFrom(GetBase())) {
@@ -68,27 +70,31 @@ THttpFileSystem::AllocationInfo TSocketFS::_DoAllocateFile(const olxstr& src)  {
       }
       else
         fi = GetIndex()->GetRoot().FindByFullName(src_fn);
-      if (fi != NULL) {
+      if (fi != 0) {
         const TSettingsFile sf(ifn);
-        if (sf["MD5"] == fi->GetDigest())
+        if (sf["MD5"] == fi->GetDigest()) {
           return AllocationInfo(new TEFile(fn, "a+b"), fi->GetDigest(), false);
+        }
       }
     }
     return AllocationInfo(new TEFile(fn, "w+b"), CEmptyString(), true);
   }
-  catch(...) { return AllocationInfo(NULL, CEmptyString(), true); }
+  catch (...) {
+    return AllocationInfo(0, CEmptyString(), true);
+  }
 }
 //..............................................................................
 THttpFileSystem::AllocationInfo& TSocketFS::_DoTruncateFile(AllocationInfo& file)
 {
-  if (file.file == NULL)
+  if (!file.file.ok()) {
     throw TInvalidArgumentException(__OlxSourceInfo, "file");
+  }
   const olxstr fn = file.file->GetName();
   const olxstr ifn = olxstr(fn) << ".info";
-  if (TEFile::Exists(ifn))
+  if (TEFile::Exists(ifn)) {
     TEFile::DelFile(ifn);
+  }
   file.file->SetTemporary(true);
-  delete file.file;
   file.truncated = true;
   file.digest.SetLength(0);
   file.file = new TEFile(fn, "w+b");

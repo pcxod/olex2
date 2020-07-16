@@ -114,10 +114,20 @@ namespace test {
     if (olx_abs(iv.cast<double>() - cos(M_PI * 30 / 180))) {
       throw TFunctionFailedException(__OlxSourceInfo, "var value");
     }
-    iv = _exp.build("b = 35");
+    iv = _exp.build("b = 35.0");
+    ANumberEvaluator& ne = dynamic_cast<ANumberEvaluator&>(iv.value());
+    ne.set_final(false); // prevent the follwing expression from 'collapsing'
     iv = _exp.build("cos pi*b/180");
-    if (olx_abs(iv.cast<double>() - cos(M_PI * 35 / 180))) {
+    ne.set_final(true); // make sure it is not marked as final!
+    if (olx_abs(iv.cast<double>() - cos(M_PI * 35 / 180)) > 1e-10) {
       throw TFunctionFailedException(__OlxSourceInfo, "var value");
+    }
+    // the trick with final allows evaluating values in a loop
+    for (int i = 0; i < 10; i++) {
+      ne.set_value(i * 10);
+      if (olx_abs(iv.cast<double>() - cos(M_PI * i * 10 / 180)) > 1e-10) {
+        throw TFunctionFailedException(__OlxSourceInfo, "var value");
+      }
     }
     //iv = _exp.build("if(a){ a = a.sub(0,3); }else{ a = a.sub(0,4); }");
   }

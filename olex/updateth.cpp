@@ -15,7 +15,7 @@
 
 UpdateThread::UpdateThread(const olxstr& patch_dir, bool force_update)
   : time_out(0),
-  PatchDir(patch_dir), srcFS(NULL), destFS(NULL), Index(NULL),
+  PatchDir(patch_dir),
   _DoUpdate(false), UpdateSize(0),
   OnDownload(Actions.New("ON_DOWNLOAD")),
   OnAction(Actions.New("ON_ACTION"))
@@ -23,15 +23,19 @@ UpdateThread::UpdateThread(const olxstr& patch_dir, bool force_update)
   ForceUpdate = force_update;
 }
 //.............................................................................
-void UpdateThread::DoInit(bool force)  {
-  if (!TBasicApp::HasInstance() || Terminate)
+void UpdateThread::DoInit(bool force) {
+  if (!TBasicApp::HasInstance() || Terminate) {
     return;
+  }
   try {
-    if (TEFile::Exists(patcher::PatchAPI::GetUpdateLocationFileName()))
+    if (TEFile::Exists(patcher::PatchAPI::GetUpdateLocationFileName())) {
       return;
+    }
     updater::UpdateAPI uapi;
-    srcFS = uapi.FindActiveUpdateRepositoryFS(NULL, force);
-    if( srcFS == NULL )  return;
+    srcFS = uapi.FindActiveUpdateRepositoryFS(0, force);
+    if (!srcFS.ok()) {
+      return;
+    }
     Index = new TFSIndex(*srcFS);
     destFS = new TUpdateFS(PatchDir,
       *(new TOSFileSystem(TBasicApp::GetBaseDir())));
@@ -39,44 +43,46 @@ void UpdateThread::DoInit(bool force)  {
     srcFS->OnProgress.Add(new TActionProxy(OnDownload));
     Index->OnAction.Add(new TActionProxy(OnAction));
   }
-  catch(const TExceptionBase& exc)  {
-    if( TBasicApp::HasInstance() )
+  catch (const TExceptionBase& exc) {
+    if (TBasicApp::HasInstance()) {
       TBasicApp::NewLogEntry(logExceptionTrace) << exc;
+    }
   }
 }
 //.............................................................................
-int UpdateThread::Run()  {
+int UpdateThread::Run() {
   DoInit(ForceUpdate);
-  if( !TBasicApp::HasInstance() || Terminate ||
-    srcFS == NULL || destFS == NULL || Index == NULL )
+  if (!TBasicApp::HasInstance() || Terminate ||
+    !srcFS.ok() || !destFS.ok() || !Index.ok())
   {
     CleanUp();
     return 0;
   }
   // try to lock updateAPI
-  while( !patcher::PatchAPI::LockUpdater() )  {
+  while (!patcher::PatchAPI::LockUpdater()) {
     olx_sleep(100);
-    if( Terminate || !TBasicApp::HasInstance() )  {
+    if (Terminate || !TBasicApp::HasInstance()) {
       CleanUp();
       return 0;
     }
   }
-  try  {
+  try {
     TStrList cmds;
     bool skip = (extensionsToSkip.IsEmpty() && filesToSkip.IsEmpty());
     // need to keep to check if sync was completed
     const uint64_t update_size =
-      Index->CalcDiffSize(*destFS, properties, skip ? NULL : &toSkip);
+      Index->CalcDiffSize(*destFS, properties, skip ? 0 : &toSkip);
     UpdateSize = update_size;
     patcher::PatchAPI::UnlockUpdater();
-    if( UpdateSize == 0 )  {
+    if (UpdateSize == 0) {
       // complete interupted update
-      if (TEFile::Exists(destFS->GetBase() + "index.ind"))
+      if (TEFile::Exists(destFS->GetBase() + "index.ind")) {
         MarkCompleted(cmds);
+      }
       return 0;
     }
-    while( !_DoUpdate )  {
-      if( Terminate || !TBasicApp::HasInstance() )  {  // nobody took care ?
+    while (!_DoUpdate) {
+      if (Terminate || !TBasicApp::HasInstance()) {  // nobody took care ?
         CleanUp();
         // safe to call without app instance
         patcher::PatchAPI::UnlockUpdater();
@@ -87,30 +93,32 @@ int UpdateThread::Run()  {
     // download completion file
     olxstr download_vf(patcher::PatchAPI::GetUpdateLocationFileName());
     // do not run subsequent temporary updates
-    if( TEFile::Exists(download_vf) )
+    if (TEFile::Exists(download_vf)) {
       return 0;
-  // try to lock updateAPI for update
-    while( !patcher::PatchAPI::LockUpdater() )  {
+    }
+    // try to lock updateAPI for update
+    while (!patcher::PatchAPI::LockUpdater()) {
       olx_sleep(100);
-      if( Terminate || !TBasicApp::HasInstance() )  {
+      if (Terminate || !TBasicApp::HasInstance()) {
         CleanUp();
         return 0;
       }
     }
     bool completed = false;
     try {
-      if( Index->Synchronise(*destFS, properties, skip ? NULL
-            : &toSkip, &cmds) == update_size )
+      if (Index->Synchronise(*destFS, properties, skip ? 0
+        : &toSkip, &cmds) == update_size)
       {
         completed = true;
       }
     }
-    catch(const TExceptionBase&)  {}
-    if( completed )
+    catch (const TExceptionBase&) {}
+    if (completed) {
       MarkCompleted(cmds);
+    }
     patcher::PatchAPI::UnlockUpdater();
   }
-  catch(const TExceptionBase&)  { // oups...
+  catch (const TExceptionBase&) { // oups...
     CleanUp();
     patcher::PatchAPI::UnlockUpdater();
     return 0;
@@ -118,9 +126,16 @@ int UpdateThread::Run()  {
   return 1;
 }
 //.............................................................................
+void UpdateThread::CleanUp() {
+  Index = 0; // depends on sdrcFS - should go first
+  srcFS = 0;
+  destFS = 0;
+}
+//.............................................................................
 void UpdateThread::OnSendTerminate()  {
-  if( Index != NULL )
+  if (Index.ok()) {
     Index->DoBreak();
+  }
 }
 //.............................................................................
 void UpdateThread::MarkCompleted(const TStrList &cmds_) {

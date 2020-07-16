@@ -184,7 +184,7 @@ TAG_HANDLER_PROC(tag) {
     src = TZipWrapper::ComposeFileName(THtml::SwitchSource(), src);
   }
 
-  wxFSFile *fsFile = TFileHandlerManager::GetFSFileHandler( src );
+  olx_object_ptr<wxFSFile> fsFile = TFileHandlerManager::GetFSFileHandler( src );
   if (fsFile == 0) {
     TBasicApp::NewLogEntry(logError) << "Could not locate image: '"
       << src << '\'';
@@ -193,8 +193,8 @@ TAG_HANDLER_PROC(tag) {
     mapName = mapName.Mid(1);
   }
   THtmlImageCell *cell = new THtmlImageCell(
-    m_WParser->GetWindowInterface()->GetHTMLWindow(),
-    fsFile,
+    m_WParser->GetWindowInterface(),
+    fsFile.release(),
     ax,
     ay,
     m_WParser->GetPixelScale(),
@@ -542,7 +542,7 @@ TAG_HANDLER_PROC(tag) {
         Btn = new TBmpButton(html, wxID_ANY, wxNullBitmap,
           wxDefaultPosition, wxDefaultSize, flags );
         ((TBmpButton*)Btn)->SetSource( buttonImage );
-        wxFSFile *fsFile = TFileHandlerManager::GetFSFileHandler(buttonImage);
+        olx_object_ptr<wxFSFile> fsFile = TFileHandlerManager::GetFSFileHandler(buttonImage);
         if (fsFile == 0) {
           TBasicApp::NewLogEntry(logError) <<
             "THTML: could not locate image for button: " << ObjectName;
@@ -565,7 +565,6 @@ TAG_HANDLER_PROC(tag) {
             }
             ((TBmpButton*)Btn)->SetBitmapLabel(image);
           }
-          delete fsFile;
         }
         if ((flags & wxBU_EXACTFIT) == 0) {
           Btn->WI.SetWidth(ax);
@@ -946,7 +945,7 @@ TAG_HANDLER_PROC(tag) {
     }
     olxstr src = tag.GetParam(wxT("SRC"));
     op->processFunction(src, SrcInfo, true);
-    IInputStream* ios = TFileHandlerManager::GetInputStream(src);
+    olx_object_ptr<IDataInputStream> ios = TFileHandlerManager::GetInputStream(src);
     Tree->SetFont(m_WParser->GetDC()->GetFont());
     CreatedObject = Tree;
     CreatedWindow = Tree;
@@ -973,7 +972,7 @@ TAG_HANDLER_PROC(tag) {
       Tree->OnEdit.Add(&html->Manager);
     }
     m_WParser->GetContainer()->InsertCell(new THtmlWidgetCell(Tree, fl));
-    if (ios == NULL) {  // create test tree
+    if (ios == 0) {  // create test tree
       TBasicApp::NewLogEntry(logError) <<
         "THTML: could not locate tree source: \'" << src << '\'';
       wxTreeItemId Root = Tree->AddRoot(wxT("Test data"));
@@ -992,7 +991,6 @@ TAG_HANDLER_PROC(tag) {
       list.LoadFromTextStream(*ios);
 #endif
       Tree->LoadFromStrings(list);
-      delete ios;
       if (tag.HasParam(wxT("EXPANDED"))) {
         Tree->ExpandAll();
       }
@@ -1020,8 +1018,8 @@ TAG_HANDLER_PROC(tag) {
     else if (srcTag) {
       olxstr src = tag.GetParam(wxT("SRC"));
       op->processFunction(src, SrcInfo, true);
-      IInputStream* ios = TFileHandlerManager::GetInputStream(src);
-      if (ios == NULL) {
+      olx_object_ptr<IDataInputStream> ios = TFileHandlerManager::GetInputStream(src);
+      if (ios == 0) {
         TBasicApp::NewLogEntry(logError) <<
           "THTML: could not locate list source: \'" << src << '\'';
       }
@@ -1031,7 +1029,6 @@ TAG_HANDLER_PROC(tag) {
 #else
         itemsList.LoadFromTextStream(*ios);
 #endif
-        delete ios;
       }
     }
     else if (itemsTag) {

@@ -49,24 +49,24 @@ namespace cif_dp {
     olx_object_ptr<olxstr> name, comment;
     ICifEntry() {}
     ICifEntry(const ICifEntry &e) {
-      if (e.name.is_valid()) {
-        name = new olxstr(e.name());
+      if (e.name.ok()) {
+        name = new olxstr(*e.name);
       }
-      if (e.comment.is_valid()) {
-        comment = new olxstr(e.comment());
+      if (e.comment.ok()) {
+        comment = new olxstr(*e.comment);
       }
     }
     virtual ~ICifEntry() {}
     virtual void ToStrings(TStrList& list) const = 0;
     virtual void Format() {}
-    bool HasName() const { return name.is_valid(); }
-    bool HasComment() const { return comment.is_valid(); }
+    bool HasName() const { return name.ok(); }
+    bool HasComment() const { return comment.ok(); }
     virtual bool IsSaveable() const { return true; }
     // if the returned valus is InvalidIndex - the object is not comparable
     virtual size_t GetCmpHash() const { return InvalidIndex; }
     const olxstr& GetName() const {
-      if (name.is_valid()) {
-        return name();
+      if (name.ok()) {
+        return *name;
       }
       throw TNotImplementedException(__OlxSourceInfo);
     }
@@ -74,8 +74,8 @@ namespace cif_dp {
       name = new olxstr(n);
     }
     const olxstr& GetComment() const {
-      if (comment.is_valid()) {
-        return comment();
+      if (comment.ok()) {
+        return *comment;
       }
       throw TNotImplementedException(__OlxSourceInfo);
     }
@@ -111,14 +111,14 @@ namespace cif_dp {
       comment = new olxstr(_value);
     }
     virtual void ToStrings(TStrList& list) const {
-      if (!comment().IsEmpty()) {
-        list.Add('#') << comment();
+      if (!comment->IsEmpty()) {
+        list.Add('#') << *comment;
       }
     }
     virtual bool HasComment() const { return true; }
-    virtual const olxstr& GetComment() const { return comment(); }
+    virtual const olxstr& GetComment() const { return *comment; }
     virtual ICifEntry* Replicate() const { return new cetComment(*this); }
-    virtual olxstr GetStringValue() const { return comment(); }
+    virtual olxstr GetStringValue() const { return *comment; }
   };
   /////////////////////////////////////////////////////////////////////////////
   struct cetString : public IStringCifEntry {

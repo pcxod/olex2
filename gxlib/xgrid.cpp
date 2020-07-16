@@ -112,10 +112,12 @@ void TXGrid::TLegend::Create(const olxstr& cName) {
   if (GPC.PrimitiveCount() != 0) {
     return;
   }
+  TGlFont& glf = Parent.GetScene().GetFont(~0, true);
   TGraphicsStyle& GS = GPC.GetStyle();
-  Left = GS.GetParam("Left", Left, true).ToInt();
-  Top = GS.GetParam("Top", Top, true).ToInt();
-  Z = GS.GetParam("Z", Z).ToDouble();
+  Left = GS.FindNumParam("Left", Left);
+  // offest to by height to avoid overlap with text
+  Top = GS.FindNumParam("Top", (int)glf.GetMaxHeight());
+  Z = GS.FindNumParam("Z", Z);
   {
     TGlPrimitive& GlP = GPC.NewPrimitive("Plane", sgloQuads);
     GlP.SetTextureId(TextureId);
@@ -136,7 +138,6 @@ void TXGrid::TLegend::Create(const olxstr& cName) {
     GlP.Vertices.SetCount(4);
   }
 
-  TGlFont &glf = Parent.GetScene().GetFont(~0, true);
   TGlPrimitive& glpText = GPC.NewPrimitive("Text", sgloText);
   glpText.SetProperties(GS.GetMaterial("Text", glf.GetMaterial()));
   glpText.SetFont(&glf);
@@ -1064,7 +1065,7 @@ const_strlist TXGrid::ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const {
 //.............................................................................
 void TXGrid::RescaleSurface(bool collect_only) {
   if (collect_only) {
-    if (!cp_vertices.is_valid() || !cn_vertices.is_valid()) {
+    if (!cp_vertices.ok() || !cn_vertices.ok()) {
       return;
     }
   }
@@ -1082,8 +1083,7 @@ void TXGrid::RescaleSurface(bool collect_only) {
       const TArrayList<vec3f>& verts = vertices[li];
       const TArrayList<vec3f>& norms = normals[li];
       const TArrayList<IsoTriangle>& trians = triangles[li];
-      TTypeList<vec3f> *va = (li == 0 ? cp_vertices.get_ptr()
-        : cn_vertices.get_ptr());
+      TTypeList<vec3f> *va = (li == 0 ? &cp_vertices : &cn_vertices);
       if (!collect_only) {
         olx_gl::newList(li == 0 ? PListId : NListId, GL_COMPILE);
         olx_gl::polygonMode(GL_FRONT_AND_BACK, GetPolygonMode());
@@ -1141,8 +1141,7 @@ void TXGrid::RescaleSurface(bool collect_only) {
       const TArrayList<vec3f>& verts = vertices[li];
       const TArrayList<vec3f>& norms = normals[li];
       const TArrayList<IsoTriangle>& trians = triangles[li];
-      TTypeList<vec3f> *va = (li == 0 ? cp_vertices.get_ptr()
-        : cn_vertices.get_ptr());
+      TTypeList<vec3f> *va = (li == 0 ? &cp_vertices : &cn_vertices);
       if (!collect_only) {
         olx_gl::newList(li == 0 ? PListId : NListId, GL_COMPILE);
         olx_gl::polygonMode(GL_FRONT_AND_BACK, GetPolygonMode());
@@ -1202,8 +1201,7 @@ void TXGrid::RescaleSurface(bool collect_only) {
         const TArrayList<vec3f>& verts = vertices[li];
         const TArrayList<vec3f>& norms = normals[li];
         const TArrayList<IsoTriangle>& trians = triangles[li];
-        TTypeList<vec3f> *va = (li == 0 ? cp_vertices.get_ptr()
-          : cn_vertices.get_ptr());
+        TTypeList<vec3f> *va = (li == 0 ? &cp_vertices : &cn_vertices);
         if (!collect_only) {
           olx_gl::newList(li == 0 ? PListId : NListId, GL_COMPILE);
           olx_gl::polygonMode(GL_FRONT_AND_BACK, GetPolygonMode());
@@ -1256,33 +1254,34 @@ void TXGrid::RescaleSurface(bool collect_only) {
       }
     }
     else {
+      vec3d pts[3];
       for (int li = 0; li < triangles.Count(); li++) {
         const TArrayList<vec3f>& verts = vertices[li];
         const TArrayList<vec3f>& norms = normals[li];
         const TArrayList<IsoTriangle>& trians = triangles[li];
-        for (size_t i = 0; i < verts.Count(); i++) {
-          verts[i][0] /= (MaxX - 1);
-          verts[i][1] /= (MaxY - 1);
-          verts[i][2] /= (MaxZ - 1);
-          au.CellToCartesian(verts[i]);
-        }
-        TTypeList<vec3f> *va = (li == 0 ? cp_vertices.get_ptr()
-          : cn_vertices.get_ptr());
+        TTypeList<vec3f> *va = (li == 0 ? &cp_vertices : &cn_vertices);
         if (!collect_only) {
           olx_gl::newList(li == 0 ? PListId : NListId, GL_COMPILE);
           olx_gl::polygonMode(GL_FRONT_AND_BACK, GetPolygonMode());
           olx_gl::begin(GL_TRIANGLES);
         }
         for (size_t i = 0; i < trians.Count(); i++) {
+          for (int j = 0; j < 3; j++) {
+            pts[j] = verts[trians[i].pointID[j]];
+            pts[j][0] = pts[j][0] / MaxX;
+            pts[j][1] = pts[j][1] / MaxY;
+            pts[j][2] = pts[j][2] / MaxZ;
+            au.CellToCartesian(pts[j]);
+          }
           if (collect_only) {
             for (int j = 0; j < 3; j++) {
-              va->AddCopy(verts[trians[i][j]]);
+              va->AddCopy(pts[j]);
             }
           }
           else {
             for (int j = 0; j < 3; j++) {
               olx_gl::normal(norms[trians[i][j]]);
-              olx_gl::vertex(verts[trians[i][j]]);  // cell drawing
+              olx_gl::vertex(pts[j]);  // cell drawing
               if (ColorData != 0) {
                 olx_gl::color(colors[li][trians[i][j]]);
               }
@@ -1355,7 +1354,7 @@ TPtrList<TXBlob>::const_list_type TXGrid::CreateBlobs(int flags) {
   RescaleSurface(true);
   // compact the data
   for (int li = 0; li <= 1; li++) {
-    TTypeList<vec3f> &va = (li == 0 ? cp_vertices() : cn_vertices());
+    TTypeList<vec3f> &va = (li == 0 ? cp_vertices : cn_vertices);
     olxset<vec3f, TComparableComparator> vset;
     vset.AddAll(va);
     TTypeList<IsoTriangle> triangles;
@@ -1695,6 +1694,56 @@ void TXGrid::LibSplit(TStrObjList &Cmds, const TParamList &Options,
   }
 }
 //.............................................................................
+void TXGrid::LibProcess(TStrObjList& Cmds, const TParamList& Options,
+  TMacroData& Error)
+{
+  TGXApp& gxapp = TGXApp::GetInstance();
+  const TAsymmUnit& au = gxapp.XFile().GetAsymmUnit();
+  if (Cmds[0] == "smooth") {
+    float ratio = Options.FindValue("r", "0.8").ToFloat();
+    size_t N = Options.FindValue("n", "10").ToSizeT();
+
+    for (int li = 0; li < triangles.Count(); li++) {
+      TArrayList<vec3f>& norms = normals[li];
+      TTypeList<IsoTriangle> triags = triangles[li];
+      TTypeList<vec3f> verts(vertices[li].Count());
+      for (size_t i = 0; i < verts.Count(); i++) {
+        verts[i] = au.Orthogonalise(vertices[li][i]);
+      }
+      olx_grid_util::smoother sm(verts, triags);
+      for (int i = 0; i < N; i++) {
+        sm.smooth(ratio);
+      }
+
+      for (size_t i = 0; i < norms.Count(); i++) {
+        norms[i].Null();
+      }
+      for (size_t i = 0; i < triags.Count(); i++) {
+        const IsoTriangle& t = triags[i];
+        vec3f n = (verts[t[1]] - verts[t[0]]).XProdVec(verts[t[2]] - verts[t[0]]);
+        float ql = n.QLength();
+        for (size_t j = 0; j < 3; j++) {
+          if (ql > 0) {
+            norms[t[j]] += (n / sqrt(ql));
+          }
+        }
+      }
+      for (size_t i = 0; i < norms.Count(); i++) {
+        if (!norms[i].IsNull()) {
+          norms[i].Normalise();
+        }
+        else {
+          norms[i][2] = 1;
+        }
+      }
+      for (size_t i = 0; i < verts.Count(); i++) {
+        vertices[li][i] = au.Fractionalise(verts[i]);
+      }
+    }
+    RescaleSurface(false);
+  }
+}
+//.............................................................................
 TLibrary*  TXGrid::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("xgrid") : name);
   lib->Register(new TFunction<TXGrid>(this,
@@ -1741,6 +1790,12 @@ TLibrary*  TXGrid::ExportLibrary(const olxstr& name)  {
     EmptyString(),
     fpNone | fpOne,
     "Split current grid view into individual blobs"));
+  lib->Register(new TMacro<TXGrid>(this,
+    &TXGrid::LibProcess, "Process",
+    "r-ratio for smoothing [0.8]&;"
+    "n-number of cycles [10]",
+    fpAny ^ fpNone,
+    "Executes a grid process. Currently only 'smooth' is available"));
 
   AGDrawObject::ExportLibrary(*lib);
   Info->ExportLibrary(*lib->AddLibrary("label"));

@@ -60,8 +60,8 @@ public:
 
     int Compare(const Ref& r) const;
 
-    void ToDataItem(TDataItem& item, bool use_id = false) const;
-    void FromDataItem(const TDataItem& item, const class TXApp& app);
+    void ToDataItem(TDataItem& item, const class TXApp& app, bool use_id = false) const;
+    void FromDataItem(const TDataItem& item, const TXApp& app);
   private:
     int cmp(const TSAtom::Ref& a1, const TSAtom::Ref& b1,
       const TSAtom::Ref& a2, const TSAtom::Ref& b2) const

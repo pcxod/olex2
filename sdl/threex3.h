@@ -58,26 +58,30 @@ public:
   }
 
   template <class AT> T QDistanceTo(const TVector3<AT>& v) const {
-    return olx_sqr(data[0] - v[0]) +
-      olx_sqr(data[1] - v[1]) + olx_sqr(data[2] - v[2]);
+    return static_cast<T>(olx_sqr(data[0] - v[0]) +
+      olx_sqr(data[1] - v[1]) + olx_sqr(data[2] - v[2]));
   }
   template <class AT> T DistanceTo(const TVector3<AT>& v) const {
-    return sqrt(QDistanceTo(v));
+    return static_cast<T>(sqrt(QDistanceTo(v)));
   }
   template <class AT> T CAngle(const TVector3<AT>& v) const {
     T l = QLength()*v.QLength();
-    if (l == 0)  throw TDivException(__OlxSourceInfo);
+    if (l == 0) {
+      throw TDivException(__OlxSourceInfo);
+    }
     l = DotProd(v) / sqrt(l);
     // treat possible rounding errors
-    if (l > 1)  l = 1;
-    else if (l < -1)  l = -1;
+    if (l > 1)  return 1;
+    if (l < -1)  return -1;
     return l;
   }
   template <class AT> bool IsParallel(const TVector3<AT>& v,
     T eps = T(1e-8)) const
   {
     T l = QLength()*v.QLength();
-    if (l == 0)  throw TDivException(__OlxSourceInfo);
+    if (l == 0) {
+      throw TDivException(__OlxSourceInfo);
+    }
     l = olx_abs(DotProd(v) / sqrt(l));
     return olx_abs(l - 1) < eps;
   }
@@ -327,40 +331,64 @@ public:
   }
   template <class AT>
   TVector3<T> operator + (const TVector3<AT>& v) const {
-    return TVector3<T>(data[0] + v[0], data[1] + v[1], data[2] + v[2]);
+    return TVector3<T>(
+      static_cast<T>(data[0] + v[0]),
+      static_cast<T>(data[1] + v[1]),
+      static_cast<T>(data[2] + v[2]));
   }
   template <class AT>
   TVector3<T> operator - (const TVector3<AT>& v) const {
-    return TVector3<T>(data[0] - v[0], data[1] - v[1], data[2] - v[2]);
+    return TVector3<T>(
+      static_cast<T>(data[0] - v[0]),
+      static_cast<T>(data[1] - v[1]),
+      static_cast<T>(data[2] - v[2]));
   }
   template <class AT>
   TVector3<T> operator * (const TVector3<AT>& v) const {
-    return TVector3<T>(data[0] * v[0], data[1] * v[1], data[2] * v[2]);
+    return TVector3<T>(
+      static_cast<T>(data[0] * v[0]),
+      static_cast<T>(data[1] * v[1]),
+      static_cast<T>(data[2] * v[2]));
   }
   template <class AT>
   TVector3<T> operator / (const TVector3<AT>& v) const {
-    return TVector3<T>(data[0] / v[0], data[1] / v[1], data[2] / v[2]);
+    return TVector3<T>(
+      static_cast<T>(data[0] / v[0]),
+      static_cast<T>(data[1] / v[1]),
+      static_cast<T>(data[2] / v[2]));
   }
 
   template <class AT> TVector3<T> operator + (AT v) const {
-    return TVector3<T>(data[0] + v, data[1] + v, data[2] + v);
+    return TVector3<T>(
+      static_cast<T>(data[0] + v),
+      static_cast<T>(data[1] + v),
+      static_cast<T>(data[2] + v));
   }
   template <class AT> TVector3<T> operator - (AT v) const {
-    return TVector3<T>(data[0] - v, data[1] - v, data[2] - v);
+    return TVector3<T>(
+      static_cast<T>(data[0] - v),
+      static_cast<T>(data[1] - v),
+      static_cast<T>(data[2] - v));
   }
   template <class AT> TVector3<T> operator * (AT v) const {
-    return TVector3<T>(data[0] * v, data[1] * v, data[2] * v);
+    return TVector3<T>(
+      static_cast<T>(data[0] * v),
+      static_cast<T>(data[1] * v),
+      static_cast<T>(data[2] * v));
   }
 
   template <class AT> TVector3<T> operator / (AT v) const {
-    return TVector3<T>(data[0] / v, data[1] / v, data[2] / v);
+    return TVector3<T>(
+      static_cast<T>(data[0] / v),
+      static_cast<T>(data[1] / v),
+      static_cast<T>(data[2] / v));
   }
 
   template <class AT> TVector3<T> ColMul(const TMatrix33<AT>& a) const {
     return TVector3<T>(
-      data[0] * (a[0][0] + a[0][1] + a[0][2]),
-      data[1] * (a[1][0] + a[1][1] + a[1][2]),
-      data[2] * (a[2][0] + a[2][1] + a[2][2]));
+      static_cast<T>(data[0] * (a[0][0] + a[0][1] + a[0][2])),
+      static_cast<T>(data[1] * (a[1][0] + a[1][1] + a[1][2])),
+      static_cast<T>(data[2] * (a[2][0] + a[2][1] + a[2][2])));
   }
 
   /* beware - row vector (or Mt is used), use M.v for column vector
@@ -368,9 +396,9 @@ public:
   */
   template <class AT> TVector3<T>  operator * (const TMatrix33<AT>& a) const {
     return TVector3<T>(
-      data[0] * a[0][0] + data[1] * a[1][0] + data[2] * a[2][0],
-      data[0] * a[0][1] + data[1] * a[1][1] + data[2] * a[2][1],
-      data[0] * a[0][2] + data[1] * a[1][2] + data[2] * a[2][2]);
+      static_cast<T>(data[0] * a[0][0] + data[1] * a[1][0] + data[2] * a[2][0]),
+      static_cast<T>(data[0] * a[0][1] + data[1] * a[1][1] + data[2] * a[2][1]),
+      static_cast<T>(data[0] * a[0][2] + data[1] * a[1][2] + data[2] * a[2][2]));
   }
   /* beware - row vector (or Mt is used), use M.v for column vector
   multiplication
@@ -514,15 +542,15 @@ public:
 
   template <class AT> TMatrix33<T> operator * (const TMatrix33<AT>& v) const {
     return TMatrix33<T>(
-      data[0][0] * v[0][0] + data[0][1] * v[1][0] + data[0][2] * v[2][0],
-      data[0][0] * v[0][1] + data[0][1] * v[1][1] + data[0][2] * v[2][1],
-      data[0][0] * v[0][2] + data[0][1] * v[1][2] + data[0][2] * v[2][2],
-      data[1][0] * v[0][0] + data[1][1] * v[1][0] + data[1][2] * v[2][0],
-      data[1][0] * v[0][1] + data[1][1] * v[1][1] + data[1][2] * v[2][1],
-      data[1][0] * v[0][2] + data[1][1] * v[1][2] + data[1][2] * v[2][2],
-      data[2][0] * v[0][0] + data[2][1] * v[1][0] + data[2][2] * v[2][0],
-      data[2][0] * v[0][1] + data[2][1] * v[1][1] + data[2][2] * v[2][1],
-      data[2][0] * v[0][2] + data[2][1] * v[1][2] + data[2][2] * v[2][2]);
+      static_cast<T>(data[0][0] * v[0][0] + data[0][1] * v[1][0] + data[0][2] * v[2][0]),
+      static_cast<T>(data[0][0] * v[0][1] + data[0][1] * v[1][1] + data[0][2] * v[2][1]),
+      static_cast<T>(data[0][0] * v[0][2] + data[0][1] * v[1][2] + data[0][2] * v[2][2]),
+      static_cast<T>(data[1][0] * v[0][0] + data[1][1] * v[1][0] + data[1][2] * v[2][0]),
+      static_cast<T>(data[1][0] * v[0][1] + data[1][1] * v[1][1] + data[1][2] * v[2][1]),
+      static_cast<T>(data[1][0] * v[0][2] + data[1][1] * v[1][2] + data[1][2] * v[2][2]),
+      static_cast<T>(data[2][0] * v[0][0] + data[2][1] * v[1][0] + data[2][2] * v[2][0]),
+      static_cast<T>(data[2][0] * v[0][1] + data[2][1] * v[1][1] + data[2][2] * v[2][1]),
+      static_cast<T>(data[2][0] * v[0][2] + data[2][1] * v[1][2] + data[2][2] * v[2][2]));
   }
   template <class AT> TMatrix33<T>& operator *= (const TMatrix33<AT>& v) {
     return (*this = (*this) * v);

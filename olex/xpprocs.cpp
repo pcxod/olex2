@@ -362,37 +362,38 @@ void TMainForm::funHtmlPanelWidth(const TStrObjList &Cmds, TMacroData &E)  {
     E.SetRetVal(HtmlManager.main->WI.GetWidth());
 }
 //..............................................................................
-void TMainForm::funColor(const TStrObjList& Params, TMacroData &E)  {
+void TMainForm::funColor(const TStrObjList& Params, TMacroData& E) {
   wxColourDialog CD(this);
   wxColor wc;
-  if( Params.Count() == 2 )  {
-     wxColor wxdef(Params[1].u_str());
-     wc = wxdef;
+  if (Params.Count() == 2) {
+    wxColor wxdef(Params[1].u_str());
+    wc = wxdef;
   }
   CD.GetColourData().SetColour(wc);
-  if( CD.ShowModal() == wxID_OK )  {
+  if (CD.ShowModal() == wxID_OK) {
     wc = CD.GetColourData().GetColour();
-    if( Params.IsEmpty() )  {
-      E.SetRetVal( (uint32_t)OLX_RGB(wc.Red(), wc.Green(), wc.Blue()) );
+    if (Params.IsEmpty()) {
+      E.SetRetVal((uint32_t)OLX_RGB(wc.Red(), wc.Green(), wc.Blue()));
     }
-    else if( Params[0].Equalsi("hex") )  {
+    else if (Params[0].Equalsi("hex")) {
       olx_array_ptr<char> p(olx_malloc<char>(8));
-      sprintf(p(), "#%.2x%.2x%.2x", wc.Red(), wc.Green(), wc.Blue());
-      E.SetRetVal<olxstr>(p());
+      sprintf(p, "#%.2x%.2x%.2x", wc.Red(), wc.Green(), wc.Blue());
+      E.SetRetVal<olxstr>(&p);
     }
   }
-  else
+  else {
     E.ProcessingError(__OlxSrcInfo, EmptyString());
+  }
 }
 //..............................................................................
 void TMainForm::funLoadDll(const TStrObjList &Cmds, TMacroData &E) {
   olx_object_ptr<wxDynamicLibrary>  dl = new wxDynamicLibrary(Cmds[0].u_str());
-  if (!dl().IsLoaded()) {
+  if (!dl->IsLoaded()) {
     E.ProcessingError(__OlxSrcInfo, "could not load the library");
     return;
   }
   typedef olex2::IOlex2Runnable* (*GOR)();
-  GOR gor = (GOR)dl().GetSymbol(wxT("GetOlex2Runnable"));
+  GOR gor = (GOR)dl->GetSymbol(wxT("GetOlex2Runnable"));
   if (gor == 0) {
     E.ProcessingError(__OlxSrcInfo, "could not locate initialisation point");
     return;
@@ -404,7 +405,7 @@ void TMainForm::funLoadDll(const TStrObjList &Cmds, TMacroData &E) {
   }
   if (!loadedDll.Contains(runnable)) {
     if (!runnable->Initialise(this)) {
-      dl().Detach();
+      dl->Detach();
     }
     else {
       loadedDll << runnable;
@@ -2012,21 +2013,21 @@ void TMainForm::macBind(TStrObjList &Cmds, const TParamList &Options, TMacroData
     E.ProcessingError(__OlxSrcInfo, olxstr("unknown binding parameter: ") << Cmds[0]);
 }
 //..............................................................................
-void TMainForm::macGrad(TStrObjList &Cmds, const TParamList &Options, TMacroData &E)  {
+void TMainForm::macGrad(TStrObjList& Cmds, const TParamList& Options, TMacroData& E) {
   bool invert = Options.Contains('i');
-  if( invert )  {
+  if (invert) {
     FXApp->GetRenderer().Background()->SetVisible(
       !FXApp->GetRenderer().Background()->IsVisible());
   }
-  else if( Cmds.Count() == 1 )  {
+  else if (Cmds.Count() == 1) {
     FXApp->GetRenderer().Background()->SetVisible(Cmds[0].ToBool());
   }
-  else if( Cmds.IsEmpty() && !Options.Contains('p'))  {
-    TdlgGradient *G = new TdlgGradient(this);
+  else if (Cmds.IsEmpty() && !Options.Contains('p')) {
+    TdlgGradient* G = new TdlgGradient(this);
     G->ShowModal();
     G->Destroy();
   }
-  else if( Cmds.Count() == 4 )  {
+  else if (Cmds.Count() == 4) {
     TGlOption v;
     v = Cmds[0].ToInt();  FXApp->GetRenderer().Background()->RB(v);
     v = Cmds[1].ToInt();  FXApp->GetRenderer().Background()->LB(v);
@@ -2035,20 +2036,19 @@ void TMainForm::macGrad(TStrObjList &Cmds, const TParamList &Options, TMacroData
   }
   if (Options.Contains('p')) {
     GradientPicture = Options.FindValue("p", GradientPicture);
-    if( GradientPicture.IsEmpty() )  {
+    if (GradientPicture.IsEmpty()) {
       TGlTexture* glt = FXApp->GetRenderer().Background()->GetTexture();
-      if( glt != NULL  )
+      if (glt != NULL)
         glt->SetEnabled(false);
     }
-    else if( TEFile::Exists(GradientPicture) )  {
-      wxFSFile* inf = TFileHandlerManager::GetFSFileHandler(GradientPicture);
-      if( inf == NULL )  {
+    else if (TEFile::Exists(GradientPicture)) {
+      olx_object_ptr<wxFSFile> inf = TFileHandlerManager::GetFSFileHandler(GradientPicture);
+      if (inf == 0) {
         E.ProcessingError(__OlxSrcInfo, "Image file does not exist: ") << GradientPicture;
         return;
       }
       wxImage img(*inf->GetStream());
-      delete inf;
-      if( !img.Ok() )  {
+      if (!img.Ok()) {
         E.ProcessingError(__OlxSrcInfo, "Invalid image file: ") << GradientPicture;
         return;
       }
@@ -2061,32 +2061,34 @@ void TMainForm::macGrad(TStrObjList &Cmds, const TParamList &Options, TMacroData
         sheight = (int)pow((double)2, (double)l);
       }
 
-      if( swidth != owidth || sheight != oheight )
+      if (swidth != owidth || sheight != oheight)
         img.Rescale(swidth, sheight);
 
       int cl = 3, bmpType = GL_RGB;
-      if( img.HasAlpha() )  {
-        cl ++;
+      if (img.HasAlpha()) {
+        cl++;
         bmpType = GL_RGBA;
       }
-      unsigned char* RGBData = new unsigned char[ swidth * sheight * cl];
-      for( int i=0; i < sheight; i++ )  {
-        for( int j=0; j < swidth; j++ )  {
-          int indexa = (i*swidth + (swidth-j-1)) * cl;
+      olx_array_ptr<unsigned char> rgbData(swidth * sheight * cl);
+      unsigned char* RGBData = &rgbData;;
+      for (int i = 0; i < sheight; i++) {
+        for (int j = 0; j < swidth; j++) {
+          int indexa = (i * swidth + (swidth - j - 1)) * cl;
           RGBData[indexa] = img.GetRed(j, i);
-          RGBData[indexa+1] = img.GetGreen(j, i);
-          RGBData[indexa+2] = img.GetBlue(j, i);
-          if( cl == 4 )
-            RGBData[indexa+3] = img.GetAlpha(j, i);
+          RGBData[indexa + 1] = img.GetGreen(j, i);
+          RGBData[indexa + 2] = img.GetBlue(j, i);
+          if (cl == 4) {
+            RGBData[indexa + 3] = img.GetAlpha(j, i);
+          }
         }
       }
       TGlTexture* glt = FXApp->GetRenderer().Background()->GetTexture();
-      if( glt != NULL  ) {
+      if (glt != 0) {
         FXApp->GetRenderer().GetTextureManager().Replace2DTexture(
           *glt, 0, swidth, sheight, 0, bmpType, RGBData);
         glt->SetEnabled(true);
       }
-      else  {
+      else {
         int glti = FXApp->GetRenderer().GetTextureManager().Add2DTexture(
           "grad", 0, swidth, sheight, 0, bmpType, RGBData);
         FXApp->GetRenderer().Background()->SetTexture(
@@ -2100,7 +2102,6 @@ void TMainForm::macGrad(TStrObjList &Cmds, const TParamList &Options, TMacroData
         glt->SetMinFilter(tpFilterLinear);
         glt->SetEnabled(true);
       }
-      delete [] RGBData;
     }
   }
   TStateRegistry::GetInstance().SetState(FXApp->stateGradientOn,
@@ -2702,7 +2703,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
         THklFile hkl;
         sw.start("Loading HKL file");
         olx_object_ptr<TIns> hkl_ins = hkl.LoadFromFile(file_n.file_name, true);
-        if (!hkl_ins.is_valid()) {
+        if (!hkl_ins.ok()) {
           olxstr src_fn = TEFile::ChangeFileExt(file_n.file_name, "p4p");
           if (!TEFile::Exists(src_fn)) {
             src_fn = TEFile::ChangeFileExt(file_n.file_name, "crs");
@@ -2718,9 +2719,9 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
         }
         else {
           TIns *ins = (TIns *)FXApp->XFile().FindFormat("ins");
-          ins->GetRM().Assign(hkl_ins().GetRM(), true);
+          ins->GetRM().Assign(hkl_ins->GetRM(), true);
           FXApp->XFile().SetLastLoader(ins);
-          TInsList *sgi = hkl_ins().FindIns("SPGR");
+          TInsList *sgi = hkl_ins->FindIns("SPGR");
           bool force_sg = false;
           if (sgi != 0) {
             TSpaceGroup *sg = TSymmLib::GetInstance().FindGroupByName(
@@ -3421,14 +3422,13 @@ void TMainForm::macStoreParam(TStrObjList &Cmds, const TParamList &Options,
 void TMainForm::macCreateBitmap(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &E)
 {
-  wxFSFile* inf = TFileHandlerManager::GetFSFileHandler(Cmds[1]);
-  if (inf == NULL) {
+  olx_object_ptr<wxFSFile> inf = TFileHandlerManager::GetFSFileHandler(Cmds[1]);
+  if (inf == 0) {
     E.ProcessingError(__OlxSrcInfo, "Image file does not exist: ").quote() <<
       Cmds[1];
     return;
   }
   wxImage img(*inf->GetStream());
-  delete inf;
   if (!img.Ok()) {
     E.ProcessingError(__OlxSrcInfo, "Invalid image file: ") << Cmds[1];
     return;
@@ -3448,7 +3448,8 @@ void TMainForm::macCreateBitmap(TStrObjList &Cmds, const TParamList &Options,
     bmpType = GL_RGBA;
   }
 
-  unsigned char* RGBData = new unsigned char[swidth * sheight * cl];
+  olx_array_ptr<unsigned char> rgbData(swidth * sheight * cl);
+  unsigned char* RGBData = &rgbData;
   for (int i = 0; i < sheight; i++) {
     for (int j = 0; j < swidth; j++) {
       int indexa = (i*swidth + (swidth - j - 1)) * cl;
@@ -3461,10 +3462,7 @@ void TMainForm::macCreateBitmap(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   bool Created = (FXApp->FindGlBitmap(Cmds[0]) == NULL);
-
   TGlBitmap* glB = FXApp->CreateGlBitmap(Cmds[0], 0, 0, swidth, sheight, RGBData, bmpType);
-  delete[] RGBData;
-
   int Top = FInfoBox->IsVisible() ? (FInfoBox->GetTop() + FInfoBox->GetHeight()) : 0;
   if (Created) {
     for (size_t i = 0; i < FXApp->GlBitmapCount(); i++) {
@@ -5644,11 +5642,11 @@ void TMainForm::macSetMaterial(TStrObjList &Cmds, const TParamList &Options, TMa
     }
     else {
       m = new TGlMaterial(Cmds[1]);
-      st.GetStyle()->SetMaterial(sn, m.get());
+      st.GetStyle()->SetMaterial(sn, m);
     }
     TGXApp::BondIterator bi = FXApp->GetBonds();
     sorted::PointerPointer<TGPCollection> processed;
-    if (m.is_valid()) {
+    if (m.ok()) {
       while (bi.HasNext()) {
         TXBond &b = bi.Next();
         if (b.GetPrimitiveMask() != 1) continue;
@@ -5677,11 +5675,12 @@ void TMainForm::macSetMaterial(TStrObjList &Cmds, const TParamList &Options, TMa
     }
     return;
   }
-  if (mat == NULL) {
+  if (mat == 0) {
     E.SetUnhandled(true);
   }
-  else
+  else {
     *mat = TGlMaterial(Cmds[1]);
+  }
 }
 //..............................................................................
 void TMainForm::funChooseMaterial(const TStrObjList &Params, TMacroData &E)  {
@@ -6107,7 +6106,7 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options,
     return;
   }
   olx_object_ptr<TBasicCFile> f = dynamic_cast<TBasicCFile *>(ld->Replicate());
-  f().LoadStrings(content);
+  f->LoadStrings(content);
   if (Options.Contains("rr")) {
     olxstr resi = Options.FindValue("rr");
     TPtrList<TResidue> resis = FXApp->XFile().GetAsymmUnit().FindResidues(resi);
@@ -6115,12 +6114,12 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options,
       E.ProcessingError(__OlxSrcInfo, "no given residues found");
       return;
     }
-    if (resis[0]->Count() > f().GetAsymmUnit().AtomCount()) {
+    if (resis[0]->Count() > f->GetAsymmUnit().AtomCount()) {
       E.ProcessingError(__OlxSrcInfo, "not enough atoms provided");
       return;
     }
     TAsymmUnit &au = FXApp->XFile().GetAsymmUnit(),
-      &fau = f().GetAsymmUnit();
+      &fau = f->GetAsymmUnit();
     for (size_t i = 0; i < resis.Count(); i++) {
       TTypeList<align::pair> pairs;
       for (size_t j = 0; j < resis[i]->Count(); j++) {
@@ -6183,7 +6182,7 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options,
     TXApp::DoRenameParts());
   // invert the coordinates
   if (Options.GetBoolOption('i')) {
-    TAsymmUnit &au = f().GetAsymmUnit();
+    TAsymmUnit &au = f->GetAsymmUnit();
     vec3d cnt;
     vec3d_alist crds(au.AtomCount());
     for (size_t i = 0; i < au.AtomCount(); i++) {
@@ -6195,7 +6194,7 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options,
       au.GetAtom(i).ccrd() = au.Fractionalise(-crds[i] + cnt + cnt);
     }
   }
-  FXApp->AdoptAtoms(f().GetAsymmUnit(), xatoms, xbonds);
+  FXApp->AdoptAtoms(f->GetAsymmUnit(), xatoms, xbonds);
   int part = Options.FindValue("p", "-100").ToInt();
   const int npart = FXApp->XFile().GetAsymmUnit().GetNextPart(true);
   const double occu = Options.FindValue("o", "-1").ToDouble();
@@ -6610,8 +6609,8 @@ double ProbFactorEx(double scale)  {
   return summ * 100 / max_val;
 
 }
-void TMainForm::macADPDisp(TStrObjList &Cmds, const TParamList &Options,
-  TMacroData &Error)
+void TMainForm::macADPDisp(TStrObjList& Cmds, const TParamList& Options,
+  TMacroData& Error)
 {
   double s50 = TGXApp::ProbFactor(50);
   if (Cmds.Count() == 2) {
@@ -6621,25 +6620,25 @@ void TMainForm::macADPDisp(TStrObjList &Cmds, const TParamList &Options,
     out.ColName(2) = "50% ADP scale, %";
     out.ColName(3) = "Scaled ADP level, %";
 
-    olx_object_ptr<TXFile> f1(dynamic_cast<TXFile *>(FXApp->XFile().Replicate()));
-    olx_object_ptr<TXFile> f2(dynamic_cast<TXFile *>(FXApp->XFile().Replicate()));
-    f1().LoadFromFile(Cmds[0]);
-    f2().LoadFromFile(Cmds[1]);
-    TAsymmUnit &au1 = f1().GetAsymmUnit(),
-      &au2 = f2().GetAsymmUnit();
+    olx_object_ptr<TXFile> f1(dynamic_cast<TXFile*>(FXApp->XFile().Replicate()));
+    olx_object_ptr<TXFile> f2(dynamic_cast<TXFile*>(FXApp->XFile().Replicate()));
+    f1->LoadFromFile(Cmds[0]);
+    f2->LoadFromFile(Cmds[1]);
+    TAsymmUnit& au1 = f1->GetAsymmUnit(),
+      & au2 = f2->GetAsymmUnit();
     if (au1.AtomCount() != au2.AtomCount()) {
       Error.ProcessingError(__OlxSrcInfo, "asymmetric units mismatch");
       return;
     }
     for (size_t i = 0; i < au1.AtomCount(); i++) {
-      TCAtom &a1 = au1.GetAtom(i);
-      if (a1.GetEllipsoid() == NULL) {
+      TCAtom& a1 = au1.GetAtom(i);
+      if (a1.GetEllipsoid() == 0) {
         TBasicApp::NewLogEntry() << "No ADP for " << a1.GetLabel() <<
           " skipping..";
         continue;
       }
-      TCAtom *a2 = au2.FindCAtom(a1.GetLabel());
-      if (a2 == NULL) {
+      TCAtom* a2 = au2.FindCAtom(a1.GetLabel());
+      if (a2 == 0) {
         TBasicApp::NewLogEntry() << "No pair for " << a1.GetLabel() <<
           " skipping..";
         continue;
@@ -6647,15 +6646,16 @@ void TMainForm::macADPDisp(TStrObjList &Cmds, const TParamList &Options,
       vec3d dv = a2->ccrd() - a1.ccrd();
       dv -= dv.Floor<int>();
       for (int j = 0; j < 3; j++) {
-        if (dv[j] > 0.5)
+        if (dv[j] > 0.5) {
           dv[j] -= 1;
+        }
       }
       dv = au1.Orthogonalise(dv);
       double s = a1.GetEllipsoid()->CalcScale(dv);
-      TStrList &r = out.AddRow();
+      TStrList& r = out.AddRow();
       r[0] = a1.GetLabel();
       r[1] = olxstr::FormatFloat(4, dv.Length());
-      r[2] = olxstr::FormatFloat(4, s*100/s50);
+      r[2] = olxstr::FormatFloat(4, s * 100 / s50);
       r[3] = olxstr::FormatFloat(4, ProbFactorEx(s));
     }
     TBasicApp::NewLogEntry() << out.CreateTXTList("Summary", true, false, "  ");
@@ -6670,25 +6670,30 @@ void TMainForm::macADPDisp(TStrObjList &Cmds, const TParamList &Options,
     tab.ColName(2) = "b/A";
     TGXApp::AtomIterator ai = FXApp->GetAtoms();
     while (ai.HasNext()) {
-      TXAtom &a = ai.Next();
-      if (a.GetEllipsoid() == 0) continue;
+      TXAtom& a = ai.Next();
+      if (a.GetEllipsoid() == 0) {
+        continue;
+      }
       for (size_t i = 0; i < a.BondCount(); i++) {
-        if (a.Bond(i).GetTag() != 0) continue;
+        if (a.Bond(i).GetTag() != 0) {
+          continue;
+        }
         a.Bond(i).SetTag(1);
-        TSAtom &b = a.Bond(i).Another(a);
-        TStrList &r = tab.AddRow();
+        TSAtom& b = a.Bond(i).Another(a);
+        TStrList& r = tab.AddRow();
         r[0] << a.GetLabel() << '-' << b.GetLabel();
-        double sa = tb/a.GetEllipsoid()->CalcScale((b.crd()-a.crd()).Normalise());
+        double sa = tb / a.GetEllipsoid()->CalcScale((b.crd() - a.crd()).Normalise());
         if (&a.Bond(i).A() == &a)
           a.Bond(i).Params()[3] = sa;
-        r[1] =  olxstr::FormatFloat(3, sa);
+        r[1] = olxstr::FormatFloat(3, sa);
         if (b.GetEllipsoid() == 0) {
           r[2] = '-';
           continue;
         }
-        double sb = tb/b.GetEllipsoid()->CalcScale((a.crd() - b.crd()).Normalise());
-        if (&a.Bond(i).A() == &b)
+        double sb = tb / b.GetEllipsoid()->CalcScale((a.crd() - b.crd()).Normalise());
+        if (&a.Bond(i).A() == &b) {
           a.Bond(i).Params()[3] = sb;
+        }
         r[2] = olxstr::FormatFloat(3, sb);
       }
     }
@@ -6717,12 +6722,12 @@ void TMainForm::macRegisterFonts(TStrObjList &Cmds, const TParamList &Options,
   for (size_t i = 0; i < fonts.Count(); i++) {
     olxstr fnt = base_dir + fonts[i];
     if (AddFontResource(fnt.u_str()) >= 1) {
-      toRemove().fonts.Add(fnt);
+      toRemove->fonts.Add(fnt);
       TBasicApp::NewLogEntry(logInfo) << "Registered '" <<
         fonts[i] << "'";
     }
   }
-  if (!toRemove().fonts.IsEmpty()) {
+  if (!toRemove->fonts.IsEmpty()) {
     TEGC::AddP(toRemove.release());
   }
   SendMessage(HWND_BROADCAST, WM_FONTCHANGE, 0, 0);

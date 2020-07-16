@@ -215,15 +215,14 @@ size_t THttpFileSystem::GetDataOffset(const char* bf, size_t len, bool crlf) {
   return 0;
 }
 //..............................................................................
-IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source) {
+olx_object_ptr<IInputStream> THttpFileSystem::_DoOpenFile(const olxstr& Source) {
   TOnProgress Progress;
   DoConnect();
-  const size_t BufferSize = 1024*16;
-  char* Buffer = new char[BufferSize+1];
+  const size_t BufferSize = 1024 * 16;
+  olx_array_ptr<char> Buffer(BufferSize + 1);
   AllocationInfo allocation_info = _DoAllocateFile(Source);
-  if (allocation_info.file == NULL) {
-    delete [] Buffer;
-    return NULL;
+  if (!allocation_info.file.ok()) {
+    return 0;
   }
   // if the file length is not 0, it means that the CDS of any kind is in place...
   uint64_t starting_file_len = allocation_info.file->Length();
@@ -232,28 +231,25 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source) {
   int ThisRead = _read(Buffer, 512);
   // find the data start offset
   bool crlf = false;
-  try  {  crlf = IsCrLf(Buffer, ThisRead);  }
-  catch(...)  {
-    delete [] Buffer;
-    delete allocation_info.file;
-    return NULL;
+  try {
+    crlf = IsCrLf(Buffer, ThisRead);
+  }
+  catch (...) {
+    return 0;
   }
   uint64_t TotalRead = starting_file_len;
   size_t data_off = GetDataOffset(Buffer, ThisRead, crlf);
   const olxcstr line_break(crlf ? "\r\n" : "\n");
   ResponseInfo info =
-    ParseResponseInfo(olxcstr(Buffer, data_off), line_break, Source);
+    ParseResponseInfo(olxcstr(&Buffer, data_off), line_break, Source);
   if (!info.HasData()) {
-    delete allocation_info.file;
-    delete [] Buffer;
-    return NULL;
+    return 0;
   }
   // validate if we continue download for the same file...
   if (!allocation_info.truncated && allocation_info.digest != info.contentMD5) {
     _DoTruncateFile(allocation_info);
-    if (allocation_info.file == NULL) {
-      delete [] Buffer;
-      return NULL;
+    if (!allocation_info.file.ok()) {
+      return 0;
     }
     starting_file_len = TotalRead = 0;
   }
@@ -261,31 +257,35 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source) {
   Progress.SetAction(Source);
   Progress.SetMax(info.contentLength);
   OnProgress.Enter(this, &Progress);
-  TotalRead = starting_file_len+ThisRead-data_off-1;
-  allocation_info.file->Write(&Buffer[data_off+1],
-    (size_t)(TotalRead-starting_file_len));
+  TotalRead = starting_file_len + ThisRead - data_off - 1;
+  allocation_info.file->Write(&Buffer[data_off + 1],
+    (size_t)(TotalRead - starting_file_len));
   bool restarted = false;
   while (TotalRead != info.contentLength) {
-    if (TotalRead > info.contentLength) // could happen?
+    if (TotalRead > info.contentLength) { // could happen?
       break;
+    }
     ThisRead = _read(Buffer, BufferSize);
     if (restarted && ThisRead > 0) {
       data_off = GetDataOffset(Buffer, ThisRead, crlf);
       if (data_off == 0) {
         TBasicApp::NewLogEntry(logInfo, true) <<
           "Restarted download: header is to short, retrying";
-        if( _OnReadFailed(info, TotalRead) )
+        if (_OnReadFailed(info, TotalRead)) {
           continue;  //try another attempt
+        }
         break;
       }
       // get the info
       ResponseInfo new_info =
-        ParseResponseInfo(olxcstr(Buffer, data_off), line_break, Source);
-      if (!new_info.HasData())
+        ParseResponseInfo(olxcstr(&Buffer, data_off), line_break, Source);
+      if (!new_info.HasData()) {
         break;
+      }
 
-      if (TotalRead == 0)  // 1. previously restarted from 2
+      if (TotalRead == 0) { // 1. previously restarted from 2
         info = new_info;
+      }
       else if (new_info != info) {  // have to restart...
         TBasicApp::NewLogEntry(logInfo, true) <<
           "Restarted download: info mismatch old={" << '(' <<
@@ -293,9 +293,8 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source) {
           new_info.contentMD5 << ',' << new_info.contentLength << '}';
         info = new_info;
         _DoTruncateFile(allocation_info);
-        if (allocation_info.file == NULL) {
-          delete [] Buffer;
-          return NULL;
+        if (!allocation_info.file.ok()) {
+          return 0;
         }
         TotalRead = 0;
         if (_OnReadFailed(info, TotalRead)) {
@@ -306,9 +305,9 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source) {
         }
         break;
       }
-      ThisRead = ThisRead-data_off-1;
-      allocation_info.file->Write(&Buffer[data_off+1], ThisRead);
-      Progress.SetPos(TotalRead+=ThisRead);
+      ThisRead = ThisRead - data_off - 1;
+      allocation_info.file->Write(&Buffer[data_off + 1], ThisRead);
+      Progress.SetPos(TotalRead += ThisRead);
       OnProgress.Execute(this, &Progress);
       restarted = false;  //proceed to normal operation
       continue;
@@ -321,35 +320,36 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source) {
       break;
     }
     else {
-      if (this->Break) // user terminated
+      if (this->Break) { // user terminated
         break;
+      }
       allocation_info.file->Write(Buffer, ThisRead);
-      Progress.SetPos(TotalRead+=ThisRead);
+      Progress.SetPos(TotalRead += ThisRead);
       OnProgress.Execute(this, &Progress);
     }
   }
-  delete [] Buffer;
   allocation_info.file->SetPosition(0);
-  if (!_DoValidate(info, *allocation_info.file)) {  // premature completion?
+  if (!_DoValidate(info, allocation_info.file)) {  // premature completion?
     Progress.SetPos(0);
     OnProgress.Exit(this, &Progress);
-    delete allocation_info.file;
-    return NULL;
+    return 0;
   }
   Progress.SetPos(info.contentLength);
   OnProgress.Exit(this, &Progress);
-  return allocation_info.file;
+  return allocation_info.file.release();
 }
 //..............................................................................
 int THttpFileSystem::_read(char* dest, size_t dest_sz) const {
   int rl = recv(Socket, dest, dest_sz, 0);
-  if (rl <= 0 || (size_t)rl == dest_sz)
+  if (rl <= 0 || (size_t)rl == dest_sz) {
     return rl;
+  }
   size_t total_sz = rl;
   while (total_sz < dest_sz) {
-    rl = recv(Socket, &dest[total_sz], dest_sz-total_sz, 0);
-    if (rl <= 0)
+    rl = recv(Socket, &dest[total_sz], dest_sz - total_sz, 0);
+    if (rl <= 0) {
       return total_sz;
+    }
     total_sz += rl;
   }
   return total_sz;

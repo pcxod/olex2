@@ -113,8 +113,8 @@ olxstr esdl::olx_print(const char *format_, ...) {
   try {
     olx_object_ptr<olx_print_i_cont> val;
     for (size_t i=0; i < format.Length(); i++) {
-      if (val.is_valid()) {
-        olxstr val_str = val().ToString();
+      if (val.ok()) {
+        olxstr val_str = val->ToString();
         if (f_width != 0) {
           if (val_str.Length() < f_width) {
             val_str.Padding(f_width, ' ', false, false);
@@ -287,8 +287,8 @@ olxstr esdl::olx_print(const char *format_, ...) {
         str_st = i; // finished here
       }
     }
-    if (val.is_valid()) {
-      olxstr val_str = val().ToString();
+    if (val.ok()) {
+      olxstr val_str = val->ToString();
       if (f_width != 0) {
         if (val_str.Length() < f_width) {
           val_str.Padding(f_width, ' ', false, false);

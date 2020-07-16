@@ -16,6 +16,7 @@
 #include "tptrlist.h"
 #include "dataitem.h"
 #include "leq.h"
+#include "olxvptr.h"
 
 #ifdef _PYTHON
   #include "pyext.h"
@@ -112,7 +113,7 @@ private:
   XVarReference* Vars[12]; //x,y,z,occu,uiso,U
   static olxstr VarNames[];
   CXConnInfo* ConnInfo;
-  void SetId(size_t id)  {  Id = id;  }
+  void SetId(size_t id) { Id = id; }
   int SortSitesByDistanceAsc(const Site &s1, const Site &s2) const;
   int SortSitesByDistanceDsc(const Site &s1, const Site &s2) const {
     return -SortSitesByDistanceAsc(s1, s2);
@@ -135,14 +136,14 @@ public:
   void SetLabel(const olxstr& L, bool validate=true);
 
   // returns atom label
-  const olxstr& GetLabel() const {  return Label;  }
+  const olxstr& GetLabel() const { return Label; }
   /* if ResiId == -1 works the same as GetLabel(), otherwise appends '_' and
   the Residue number. If add part is true also adds '^' + parts as a Latin
   letter
   */
   olxstr GetResiLabel(bool add_part=false) const;
 
-  size_t AttachedSiteCount() const {  return AttachedSites.Count();  }
+  size_t AttachedSiteCount() const { return AttachedSites.Count(); }
   bool IsAttachedTo(const TCAtom& ca) const {
     for( size_t i=0; i < AttachedSites.Count(); i++ )
       if( AttachedSites[i].atom == &ca )
@@ -166,7 +167,7 @@ public:
   // aplies conninfo to the list of attached sites
   void UpdateAttachedSites();
 
-  size_t AttachedSiteICount() const {  return AttachedSitesI.Count();  }
+  size_t AttachedSiteICount() const { return AttachedSitesI.Count(); }
   TCAtom::Site& GetAttachedSiteI(size_t i) const {
     return AttachedSitesI[i];
   }
@@ -178,10 +179,10 @@ public:
   */
   bool AttachSiteI(TCAtom* atom, const smatd& matrix);
   // pointers only compared!
-  bool operator == (const TCAtom& ca) const {  return this == &ca;  }
-  bool operator == (const TCAtom* ca) const {  return this == ca;  }
-  bool operator != (const TCAtom& ca) const {  return this != &ca;  }
-  bool operator != (const TCAtom* ca) const {  return this != ca;  }
+  bool operator == (const TCAtom& ca) const { return this == &ca; }
+  bool operator == (const TCAtom* ca) const { return this == ca; }
+  bool operator != (const TCAtom& ca) const { return this != &ca; }
+  bool operator != (const TCAtom* ca) const { return this != ca; }
 
   void  Assign(const TCAtom& S);
 
@@ -206,25 +207,27 @@ public:
   size_t GetDegeneracy() const {  return EquivCount()+1;  }
   // used by TUnitCell to initialise position symmetry
   void AddEquiv(const smatd& m) {
-    if (Equivs == NULL) Equivs = new smatd_list;
+    if (Equivs == 0) {
+      Equivs = new smatd_list;
+    }
     Equivs->AddCopy(m);
   }
   // number of non identity symmops under which the position is invariant
-  size_t EquivCount() const {  return Equivs == NULL ? 0 : Equivs->Count();  }
-  const smatd& GetEquiv(size_t i) const {  return Equivs->GetItem(i);  }
+  size_t EquivCount() const { return Equivs == 0 ? 0 : Equivs->Count(); }
+  const smatd& GetEquiv(size_t i) const { return Equivs->GetItem(i); }
   struct SiteSymmCon GetSiteConstraints() const;
   void AssignEquivs(const TCAtom& a);
   // to be used externally by the UnitCell!
   void ClearEquivs();
 
-  CXConnInfo& GetConnInfo() const {  return *ConnInfo;  }
+  CXConnInfo& GetConnInfo() const { return *ConnInfo; }
   void SetConnInfo(CXConnInfo& ci);
 
   int GetAfix() const;
   DefPropP(TAfixGroup*, ParentAfixGroup)
   DefPropP(TAfixGroup*, DependentAfixGroup)
   size_t DependentHfixGroupCount() const {
-    return DependentHfixGroups == NULL ? 0 : DependentHfixGroups->Count();
+    return DependentHfixGroups == 0 ? 0 : DependentHfixGroups->Count();
   }
   TAfixGroup& GetDependentHfixGroup(size_t i) {
     return *DependentHfixGroups->GetItem(i);
@@ -236,16 +239,19 @@ public:
     DependentHfixGroups->Remove(&hg);
   }
   void ClearDependentHfixGroups() {
-    if( DependentHfixGroups != NULL ) DependentHfixGroups->Clear();
+    if (DependentHfixGroups != 0) {
+      DependentHfixGroups->Clear();
+    }
   }
   void AddDependentHfixGroup(TAfixGroup& hg) {
-    if( DependentHfixGroups == NULL )
+    if (DependentHfixGroups == 0) {
       DependentHfixGroups = new TPtrList<TAfixGroup>;
+    }
     DependentHfixGroups->Add(&hg);
   }
-  DefPropP(double, Occu)
+  DefPropP(double, Occu);
   // return chemical coccupancy, i.e. CrystOccu*site_multiplicity
-  double GetChemOccu() const {  return GetOccu()*GetDegeneracy();  }
+  double GetChemOccu() const { return GetOccu() * GetDegeneracy(); }
   DefPropP(double, OccuEsd);
   DefPropP(double, Uiso);
   DefPropP(double, UisoEsd);
@@ -277,25 +283,28 @@ public:
 // IXVarReferencer implementation
   virtual size_t VarCount() const {  return 12;  }
   virtual XVarReference* GetVarRef(size_t i) const {
-    if( i >= VarCount() )
+    if (i >= VarCount()) {
       throw TInvalidArgumentException(__OlxSourceInfo, "var index");
+    }
     return Vars[i];
   }
   virtual olxstr GetVarName(size_t i) const {
-    if( i >= VarCount() )
+    if (i >= VarCount()) {
       throw TInvalidArgumentException(__OlxSourceInfo, "var index");
+    }
     return VarNames[i];
   }
   virtual void SetVarRef(size_t i, XVarReference* var_ref) {
-    if( i >= VarCount() )
+    if (i >= VarCount()) {
       throw TInvalidArgumentException(__OlxSourceInfo, "var index");
+    }
     Vars[i] = var_ref;
   }
   virtual IXVarReferencerContainer& GetParentContainer() const;
   virtual double GetValue(size_t var_index) const;
   virtual void SetValue(size_t var_index, const double& val);
-  virtual bool IsValid() const {  return !IsDeleted();  }
-  virtual olxstr GetIdName() const {  return Label;  }
+  virtual bool IsValid() const { return !IsDeleted(); }
+  virtual olxstr GetIdName() const { return Label; }
 #ifdef _DEBUG
   void SetTag(index_t v) { ACollectionItem::SetTag(v); }
 #endif
@@ -379,7 +388,6 @@ public:
   procedure
   */
   static void SetTagRecursively(TCAtom &a, index_t v);
-
   friend class TAsymmUnit;
 };
 //..............................................................................

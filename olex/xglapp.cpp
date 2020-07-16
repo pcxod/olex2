@@ -257,6 +257,9 @@ bool TGlXApp::OnInit() {
   return true;
 }
 //..............................................................................
+TGlXApp::~TGlXApp() {
+}
+//..............................................................................
 int TGlXApp::OnExit() {
   // do all operations before TEGC is deleted
   if (pid_file != 0) {

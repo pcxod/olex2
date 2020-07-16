@@ -302,26 +302,26 @@ void XLibMacros::macTestR(TStrObjList &Cmds, const TParamList &Options,
   }
   olxstr fn = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "olex2_hklf5.hkl");
   olx_object_ptr<TUtf8File> outs = TUtf8File::Open(fn, "wb", false);
-  THklFile::SaveToStream(out, outs());
-  outs().Writeln(EmptyString());
-  outs().Writeln("TITL Olex2 generated HKLF5 file");
+  THklFile::SaveToStream(out, outs);
+  outs->Writeln(EmptyString());
+  outs->Writeln("TITL Olex2 generated HKLF5 file");
   olxstr t = olx_print("CELL %.5lf %.4lf %.4lf %.4lf %.4lf %.4lf %.4lf",
     xapp.XFile().GetRM().expl.GetRadiation(),
     au.GetAxes()[0], au.GetAxes()[1], au.GetAxes()[2],
     au.GetAngles()[0], au.GetAngles()[1], au.GetAngles()[2]);
-  outs().Writeln(t);
+  outs->Writeln(t);
   t = olx_print("ZERR %.5lf %.4lf %.4lf %.4lf %.4lf %.4lf %.4lf",
     au.GetZ(),
     au.GetAxisEsds()[0], au.GetAxisEsds()[1], au.GetAxisEsds()[2],
     au.GetAngleEsds()[0], au.GetAngleEsds()[1], au.GetAngleEsds()[2]);
-  outs().Writeln(t);
-  outs().Writeln(olx_print("BASF %.4lf", 1.0 - hits.GetValue(0).b));
-  outs().Writeln(
+  outs->Writeln(t);
+  outs->Writeln(olx_print("BASF %.4lf", 1.0 - hits.GetValue(0).b));
+  outs->Writeln(
     olx_print("REM Matrix: %.3lf %.3lft %.3lft %.3lft %.3lft %.3lft %.3lft"
       "%.3lft %.3lft",
       rot_m[0][0], rot_m[0][1], rot_m[0][2],
       rot_m[1][0], rot_m[1][1], rot_m[1][2],
       rot_m[2][0], rot_m[2][1], rot_m[2][2]
     ));
-  outs().Writeln("HKLF 5");
+  outs->Writeln("HKLF 5");
 }

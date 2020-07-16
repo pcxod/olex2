@@ -91,7 +91,7 @@ TMemoryBlock *TFileHandlerManager::GetMemoryBlock(const olxstr& FN) {
   return mb;
 }
 //..............................................................................
-IDataInputStream *TFileHandlerManager::_GetInputStream(const olxstr &FN) {
+olx_object_ptr<IDataInputStream> TFileHandlerManager::_GetInputStream(const olxstr &FN) {
 #ifdef __WXWIDGETS__
   if (TZipWrapper::IsZipFile(FN)) {
     TZipEntry ze;
@@ -119,7 +119,7 @@ IDataInputStream *TFileHandlerManager::_GetInputStream(const olxstr &FN) {
 }
 //..............................................................................
 #ifdef __WXWIDGETS__
-wxFSFile *TFileHandlerManager::_GetFSFileHandler(const olxstr &FN) {
+olx_object_ptr<wxFSFile> TFileHandlerManager::_GetFSFileHandler(const olxstr &FN) {
   static wxString st(wxT("OCTET")), es;
   if (TZipWrapper::IsZipFile(FN)) {
     TZipEntry ze;
@@ -176,9 +176,9 @@ void TFileHandlerManager::_LoadFromStream(IDataInputStream& is,
 {
   // validation of the stream
   olx_array_ptr<char> fSignature(SignatureLength() + 1);
-  is.Read(fSignature(), SignatureLength());
+  is.Read(fSignature, SignatureLength());
   fSignature[SignatureLength()] = '\0';
-  if (olxcstr(fSignature()) != Signature()) {
+  if (olxcstr(*fSignature) != Signature()) {
     throw TFunctionFailedException(__OlxSourceInfo, "invalid file signature");
   }
   int16_t fVersion;
@@ -231,7 +231,7 @@ const TMemoryBlock* TFileHandlerManager::FindMemoryBlock(const olxstr& bn) {
   return Handler()->FMemoryBlocks.Find(TEFile::UnixPath(bn), 0);
 }
 //..............................................................................
-IDataInputStream *TFileHandlerManager::GetInputStream(const olxstr &FN) {
+olx_object_ptr<IDataInputStream> TFileHandlerManager::GetInputStream(const olxstr &FN) {
   if (FN.IsEmpty()) {
     return 0;
   }
@@ -239,7 +239,7 @@ IDataInputStream *TFileHandlerManager::GetInputStream(const olxstr &FN) {
 }
 //..............................................................................
 #ifdef __WXWIDGETS__
-wxFSFile *TFileHandlerManager::GetFSFileHandler(const olxstr &FN) {
+olx_object_ptr<wxFSFile> TFileHandlerManager::GetFSFileHandler(const olxstr &FN) {
   return Handler()->_GetFSFileHandler(LocateFile(FN));
 }
 #endif
@@ -445,12 +445,12 @@ PyObject* fsext_pyReadFile(PyObject* self, PyObject* args) {
   if (!PythonExt::ParseTuple(args, "w", &name)) {
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "w");
   }
-  olx_object_ptr<IInputStream> io = TFileHandlerManager::GetInputStream(name);
-  if (!name.IsEmpty() && io.is_valid())  {
-    const size_t is = io().GetAvailableSizeT();
+  olx_object_ptr<IDataInputStream> io = TFileHandlerManager::GetInputStream(name);
+  if (!name.IsEmpty() && io.ok())  {
+    const size_t is = io->GetAvailableSizeT();
     olx_array_ptr<char> bf(is + 1);
-    io().Read(bf(), is);
-    PyObject* po = Py_BuildValue("s#", bf(), is);
+    io->Read(bf, is);
+    PyObject* po = Py_BuildValue("s#", *bf, is);
     return po;
   }
   return PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo,

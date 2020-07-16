@@ -17,7 +17,8 @@ template <typename ptr> struct olx_ptr_  {
     : p(_p), ref_cnt(1)
   {}
   olx_ptr_* inc_ref()  {
-    ref_cnt++;  return this;
+    ref_cnt++;
+    return this;
   }
   template <bool do_del, bool is_array> int dec_ref() {
     int rc = --ref_cnt;
@@ -37,149 +38,167 @@ template <typename ptr> struct olx_ptr_  {
   bool operator == (const olx_ptr_ &ap) const {
     return p == ap.p;
   }
+  bool operator != (const olx_ptr_& ap) const {
+    return p != ap.p;
+  }
 };
 
-template <typename ptr> struct olx_object_ptr {
+template <class heir_t, typename ptr>
+struct olx_ptr_base {
+  typedef olx_ptr_base<heir_t, ptr> this_t;
+  heir_t& self() { return *static_cast<heir_t*>(this); }
+  const heir_t& self() const {
+    return *static_cast<const heir_t*>(this);
+  }
+protected:
   olx_ptr_<ptr>* p;
-  olx_object_ptr() {
+public:
+  olx_ptr_base() {
     p = new olx_ptr_<ptr>(0);
   }
-  olx_object_ptr(ptr* _p) {
-    p = new olx_ptr_<ptr>(_p);
+  olx_ptr_base(ptr *p_) {
+    p = new olx_ptr_<ptr>(p_);
   }
-  olx_object_ptr(const olx_object_ptr& _p)
+  olx_ptr_base(const heir_t& _p)
     : p(_p.p->inc_ref())
   {}
-  ~olx_object_ptr() {
-    p->template dec_ref<true, false>();
+
+  // use this to prevent the pointer from the removal
+  void inc_ref() {
+    p->inc_ref();
   }
-  olx_object_ptr& operator = (const olx_object_ptr& _p) {
-    p->template dec_ref<true, false>();
+
+  virtual ~olx_ptr_base() {
+    self().dec_ref();
+  }
+
+  this_t& operator = (const this_t& _p) {
+    self().dec_ref();
     p = _p.p->inc_ref();
     return *this;
   }
-  olx_object_ptr& operator = (ptr *p_) {
-    if (--p->ref_cnt <= 0 && p->p != 0) {
-      delete p->p;
+  bool ok() const { return p->p != 0; }
+  ptr* release() {
+    ptr* p_ = p->p;
+    p->p = 0;
+    return p_;
+  }
+  bool operator == (const this_t& ap) const {
+    return *p == *ap.p;
+  }
+  bool operator != (const this_t& ap) const {
+    return !(operator == (ap));
+  }
+
+  bool operator == (uintptr_t pv) const {
+    return reinterpret_cast<uintptr_t>(p->p) == pv;
+  }
+  bool operator != (uintptr_t pv) const {
+    return reinterpret_cast<uintptr_t>(p->p) != pv;
+  }
+};
+
+template <typename ptr> struct olx_object_ptr
+  : public olx_ptr_base<olx_object_ptr<ptr>, ptr >
+{
+  typedef olx_ptr_base<olx_object_ptr<ptr>, ptr> parent_t;
+  olx_object_ptr() {}
+  olx_object_ptr(ptr* p)
+    : parent_t(p)
+  {}
+  olx_object_ptr(const olx_object_ptr &p)
+    : parent_t(p)
+  {}
+  olx_object_ptr& operator = (const olx_object_ptr& _p) {
+    parent_t::p->template dec_ref<true, false>();
+    parent_t::p = _p.p->inc_ref();
+    return *this;
+  }
+  olx_object_ptr& operator = (ptr* p_) {
+    if (--parent_t::p->ref_cnt <= 0 && parent_t::p->p != 0) {
+      delete parent_t::p->p;
     }
-    p->p = p_;
-    p->ref_cnt = 1;
+    parent_t::p->p = p_;
+    parent_t::p->ref_cnt = 1;
     return *this;
   }
   olx_object_ptr& operator = (const ptr &p_) {
-    if (--p->ref_cnt <= 0 && p->p != 0) {
-      delete p->p;
+    if (--parent_t::p->ref_cnt <= 0 && parent_t::p->p != 0) {
+      delete parent_t::p->p;
     }
-    p->p = new ptr(p_);
-    p->ref_cnt = 1;
+    parent_t::p->p = new ptr(p_);
+    parent_t::p->ref_cnt = 1;
     return *this;
   }
-  bool is_valid() const { return p->p != 0; }
-  ptr* get_ptr() const { return p->p; }
-  ptr& get() const { return *p->p; }
-  ptr& operator ()() const { return *p->p; }
-  operator ptr& () const { return *p->p; }
-  // releases the object from ALL references
-  ptr *release() const {
-    ptr *p_ = p->p;
-    p->p = 0;
-    return p_;
-  }
-  bool operator == (const olx_object_ptr &ap) const {
-    return *p == *ap.p;
+ 
+  const ptr* operator &() const { return parent_t::p->p; }
+  ptr* operator &() { return parent_t::p->p; }
+
+  const ptr& operator *() const { return *parent_t::p->p; }
+  ptr& operator *() { return *parent_t::p->p; }
+
+  const ptr* operator ->() const { return parent_t::p->p; }
+  ptr* operator ->() { return parent_t::p->p; }
+
+  operator const ptr& () const { return *parent_t::p->p; }
+  operator ptr& () { return *parent_t::p->p; }
+
+protected:
+  friend parent_t;
+  void dec_ref() {
+    parent_t::p->template dec_ref<true, false>();
   }
 };
 
-template <typename ptr> struct olx_array_ptr {
-  olx_ptr_<ptr>* p;
-  olx_array_ptr() {
-    p = new olx_ptr_<ptr>(0);
-  }
-  olx_array_ptr(ptr* _p) {
-    p = new olx_ptr_<ptr>(_p);
-  }
-  olx_array_ptr(const olx_array_ptr& _p) : p(_p.p->inc_ref())
+template <typename ptr> struct olx_array_ptr
+  : public olx_ptr_base<olx_array_ptr<ptr>, ptr>
+{
+  typedef olx_ptr_base<olx_array_ptr<ptr>, ptr> parent_t;
+  olx_array_ptr() {}
+  olx_array_ptr(ptr* p)
+  : parent_t(p)
   {}
-  olx_array_ptr(size_t sz) : p(new olx_ptr_<ptr>(new ptr[sz]))
+  olx_array_ptr(const olx_array_ptr &p)
+    : parent_t(p)
+  {}
+  olx_array_ptr(size_t sz)
+    : parent_t(new ptr[sz])
   {}
 
-  ~olx_array_ptr() {
-    p->template dec_ref<true, true>();
-  }
-  olx_array_ptr& operator = (const olx_array_ptr& _p) {
-    p->template dec_ref<true, true>();
-    p = _p.p->inc_ref();
-    return *this;
-  }
-  olx_array_ptr& operator = (ptr *p_)  {
-    if (--p->ref_cnt <= 0 && p->p != 0) {
-      delete[] p->p;
+  olx_array_ptr& operator = (ptr* p_) {
+    if (--parent_t::p->ref_cnt <= 0 && parent_t::p->p != 0) {
+      delete[] parent_t::p->p;
     }
-    p->p = p_;
-    p->ref_cnt = 1;
+    parent_t::p->p = p_;
+    parent_t::p->ref_cnt = 1;
     return *this;
   }
-  bool is_null() const { return p->p == 0; }
-  bool is_valid() const { return p->p != 0; }
-  ptr* get() const { return p->p; }
-  ptr* operator ()() const { return p->p; }
-  operator ptr* () const {  return p->p;  }
-  // releases the array from ALL references
-  ptr *release() const {
-    ptr *p_ = p->p;
-    p->p = 0;
-    return p_;
-  }
-  bool operator == (const olx_array_ptr &ap) const {
-    return *p == *ap.p;
-  }
+
+  const ptr* operator *() const { return parent_t::p->p; }
+  ptr* operator *() { return parent_t::p->p; }
+
+  const ptr* operator &() const { return parent_t::p->p; }
+  ptr* operator &() { return parent_t::p->p; }
+
+  operator const ptr* () const {  return parent_t::p->p;  }
+  operator ptr* () { return parent_t::p->p; }
+  
+  template <typename idx_t_>
+  const ptr& operator [] (idx_t_ i) const { return parent_t::p->p[i]; }
+  template <typename idx_t_>
+  ptr& operator [] (idx_t_ i) { return parent_t::p->p[i]; }
+
   static olx_array_ptr copy(const ptr *p, size_t sz) {
     ptr *rv = new ptr[sz];
     memcpy(rv, p, sz*sizeof(ptr));
     return olx_array_ptr(rv);
   }
-};
 
-/* the underlying object/array will not be deleted. This allows to have a single
-pointer to be shared between may objetc - replacing it becomes simple
-*/
-template <typename ptr> struct olx_shared_ptr {
-  olx_ptr_<ptr>* p;
-  olx_shared_ptr() {
-    p = new olx_ptr_<ptr>(0);
-  }
-  olx_shared_ptr(ptr* _p) {
-    p = new olx_ptr_<ptr>(_p);
-  }
-  olx_shared_ptr(const olx_shared_ptr& _p)
-    : p(_p.p->inc_ref())
-  {}
-  ~olx_shared_ptr()  {
-    p->template dec_ref<false, false>();
-  }
-  olx_shared_ptr& operator = (const olx_shared_ptr& _p) {
-    p->template dec_ref<false, false>();
-    p = _p.p->inc_ref();
-    return *this;
-  }
-  /* simply replaces the underlying object pointer - it does not modify the
-  reference count (same as replace)
-  */
-  olx_shared_ptr& operator = (ptr *p_) {
-    p->p = p_;
-    return *this;
-  }
-  ptr& operator ()() const { return *p->p; }
-  bool is_valid() const { return p->p != 0; }
-  operator ptr& () const { return *p->p; }
-  bool operator == (const olx_shared_ptr &ap) const {
-    return *p == *ap->p;
-  }
-  // replaces the object from ALL references and returns previous value
-  ptr *replace(ptr *_p) const {
-    ptr *p_ = p->p;
-    p->p = _p;
-    return p_;
+  typedef ptr object_t;
+protected:
+  friend parent_t;
+  void dec_ref() {
+    parent_t::p->template dec_ref<true, true>();
   }
 };
 
@@ -252,7 +271,7 @@ protected:
     int dec_ref() {
       int rc = --ref_cnt;
       if (rc <= 0) {
-        if (p != NULL) {
+        if (p != 0) {
           (*deallocator_func)(p);
         }
         delete this;
@@ -285,9 +304,18 @@ public:
     p = new olx_dll_ptr(p_);
     return *this;
   }
-  ptr* operator ()() const { return p->p; }
-  bool is_valid() const { return p->p != 0; }
-  operator ptr* () const { return p->p; }
+  bool ok() const { return p->p != 0; }
+
+  const ptr* operator ->() const { return p->p; }
+  ptr* operator ->() { return p->p; }
+
+  const ptr* operator *() const { return p->p; }
+  ptr* operator *() { return p->p; }
+
+  //operator const ptr* () const { return p->p; }
+  //operator ptr* () { return p->p; }
+
+  virtual const ptr* get_ptr() const { return p->p; }
 
   static olx_dll_ptr copy(const ptr *p, size_t sz) {
     size_t tsz = sz*sizeof(ptr);

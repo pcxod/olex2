@@ -171,8 +171,8 @@ TSAtom::Ref TSAtom::GetRef() const {
 }
 //..............................................................................
 bool TSAtom::operator == (const TSAtom::Ref& id) const {
-  return FCAtom->GetParent()->GetId() == id.catom->GetParent()->GetId() &&
-    FCAtom->GetId() == id.catom->GetId() &&
+  return FCAtom->GetParent()->GetId() == id.au_id &&
+    FCAtom->GetId() == id.atom_id &&
     IsGenerator(id.matrix_id);
 }
 //..............................................................................
@@ -208,10 +208,16 @@ TSAtom::Ref TSAtom::GetRef(const TCAtom &a, const smatd &generator) {
   return Ref(a, m_id);
 }
 //..............................................................................
+TSAtom::Ref::Ref(const TCAtom& a, uint32_t m_id)
+  : au_id(a.GetParent()->GetId()),
+  atom_id(a.GetId()),
+  matrix_id(m_id)
+{}
+//..............................................................................
 int TSAtom::Ref::Compare(const Ref& r) const {
-  int rv = olx_cmp(catom->GetParent()->GetId(), r.catom->GetParent()->GetId());
+  int rv = olx_cmp(au_id, r.au_id);
   if (rv == 0) {
-    rv = olx_cmp(catom->GetId(), r.catom->GetId());
+    rv = olx_cmp(atom_id, r.atom_id);
     if (rv == 0) {
       rv = olx_cmp(matrix_id, r.matrix_id);
     }
@@ -219,29 +225,36 @@ int TSAtom::Ref::Compare(const Ref& r) const {
   return rv;
 }
 //..............................................................................
-void TSAtom::Ref::ToDataItem(TDataItem& item, bool use_id) const {
-  item.AddField("au_id", catom->GetParent()->GetId())
+void TSAtom::Ref::ToDataItem(TDataItem& item, const class TXApp& app, bool use_id) const {
+  item.AddField("au_id", au_id)
     .AddField("m_id", matrix_id);
   if (use_id) {
-    item.AddField("a_id", catom->GetId());
+    item.AddField("a_id", atom_id);
   }
   else {
-    item.AddField("a_id", catom->GetTag());
+    item.AddField("a_id", app.XFiles()[au_id].GetAsymmUnit().GetAtom(atom_id).GetTag());
   }
 }
 //..............................................................................
 void TSAtom::Ref::FromDataItem(const TDataItem& item, const TXApp& app) {
-  size_t au_id = item.FindField("au_id", "0").ToSizeT();
+  au_id = item.FindField("au_id", "0").ToSizeT();
   if (au_id >= app.XFiles().Count()) {
     throw TInvalidArgumentException(__OlxSourceInfo, "au_id");
   }
   const TAsymmUnit& au = app.XFiles()[au_id].GetAsymmUnit();
-  size_t a_id = item.GetFieldByName("a_id").ToSizeT();
-  if (a_id >= au.AtomCount()) {
+  atom_id = item.GetFieldByName("a_id").ToSizeT();
+  if (atom_id >= au.AtomCount()) {
     throw TInvalidArgumentException(__OlxSourceInfo, "a_id");
   }
-  catom = &au.GetAtom(a_id);
   matrix_id = item.GetFieldByName("m_id").ToUInt();
+}
+//..............................................................................
+TCAtom& TSAtom::Ref::GetCAtom(const TXApp& app) const {
+  return app.XFiles()[au_id].GetAsymmUnit().GetAtom(atom_id);
+}
+//..............................................................................
+TLattice& TSAtom::Ref::GetLattice(const TXApp& app) const {
+  return app.XFiles()[au_id].GetLattice();
 }
 //..............................................................................
 TLattice &TSAtom::GetParent() const { return GetNetwork().GetLattice(); }

@@ -53,9 +53,9 @@ protected:
   }
 
   void _Clear();
-  IDataInputStream *_GetInputStream(const olxstr &FN);
+  olx_object_ptr<IDataInputStream> _GetInputStream(const olxstr &FN);
 #ifdef __WXWIDGETS__
-  wxFSFile *_GetFSFileHandler( const olxstr &FN );
+  olx_object_ptr<wxFSFile> _GetFSFileHandler( const olxstr &FN );
 #endif
   TMemoryBlock *_AddMemoryBlock(const olxstr& name, const char *bf,
     size_t length, short persistenceId);
@@ -66,9 +66,9 @@ protected:
     return FMemoryBlocks.HasKey(TEFile::UnixPath(EM));
   }
 public:
-  static IDataInputStream *GetInputStream(const olxstr &FN);
+  static olx_object_ptr<IDataInputStream> GetInputStream(const olxstr &FN);
 #ifdef __WXWIDGETS__
-  static wxFSFile *GetFSFileHandler(const olxstr &FN);
+  static olx_object_ptr<wxFSFile> GetFSFileHandler(const olxstr &FN);
 #endif
   static void Clear(short persistenceMask = ~0);
   static void AddBaseDir(const olxstr& bd);

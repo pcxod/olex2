@@ -1273,9 +1273,10 @@ void TMainForm::XApp(Olex2App *XA)  {
 #endif
   try  {
     nui_interface = olx_nui::Initialise();
-    if( nui_interface != NULL )
+    if (nui_interface != 0) {
       nui_interface->InitProcessing(olx_nui::INUI::processSkeleton
-      |olx_nui::INUI::processVideo);
+        | olx_nui::INUI::processVideo);
+    }
   }
   catch(const TExceptionBase &e)  {
     FXApp->NewLogEntry(logError) << e.GetException()->GetError();
@@ -1289,9 +1290,6 @@ void TMainForm::StartupInit() {
     return;
   }
   StartupInitialised = true;
-  if (FGlCanvas != NULL) {
-    FGlCanvas->XApp(FXApp);
-  }
   wxFont Font(10, wxMODERN, wxNORMAL, wxNORMAL);//|wxFONTFLAG_ANTIALIASED);
   TGlMaterial glm("2049;0.698,0.698,0.698,1.000");
   AGlScene& gls = FXApp->GetRenderer().GetScene();
@@ -1316,7 +1314,7 @@ void TMainForm::StartupInit() {
 
   olxstr T(FXApp->GetConfigDir());
   T << FLastSettingsFile;
-  if( !TEFile::Exists(T) )  {
+  if (!TEFile::Exists(T)) {
     T = TBasicApp::GetBaseDir();
     TEFile::AddPathDelimeterI(T);
     T << FLastSettingsFile;
@@ -1343,10 +1341,14 @@ void TMainForm::StartupInit() {
     ShowAlert(e);
     //throw;
   }
-
+  if (FGlCanvas != 0) {
+    FGlCanvas->XApp(FXApp);
+    FXApp->GetRenderer().Resize(FGlCanvas->GetSize().x, FGlCanvas->GetSize().y);
+  }
   FXApp->Init(); // initialise the gl after styles reloaded
-  if( !GradientPicture.IsEmpty() )  // need to call it after all objects are created
+  if (!GradientPicture.IsEmpty()) { // need to call it after all objects are created
     processMacro(olxstr("grad ") << " -p=\'" << GradientPicture << '\'');
+  }
 
   processMacro(olxstr("showwindow help ") << HelpWindowVisible);
   processMacro(olxstr("showwindow info ") << InfoWindowVisible);
@@ -1359,8 +1361,8 @@ void TMainForm::StartupInit() {
 
   if (TEFile::Exists(FXApp->GetBaseDir() + "settings.xld")) {
     TDataFile settings;
-    settings.LoadFromXLFile(FXApp->GetBaseDir() + "settings.xld", NULL);
-    settings.Include(NULL);
+    settings.LoadFromXLFile(FXApp->GetBaseDir() + "settings.xld", 0);
+    settings.Include(0);
     TDataItem* sh = settings.Root().FindItemi("shortcuts");
     if (sh != NULL) {
       try {
@@ -1381,7 +1383,7 @@ void TMainForm::StartupInit() {
     }
     sh = settings.Root().FindItemi("menus");
     ABasicFunction *cm_macro = GetLibrary().FindMacro("CreateMenu");
-    if (sh != NULL && cm_macro != NULL) {
+    if (sh != 0 && cm_macro != 0) {
       TMacroData me;
       me.SetLocation(__OlxSrcInfo);
       try {
@@ -2650,7 +2652,7 @@ void TMainForm::PostCmdHelp(const olxstr &Cmd, bool Full)  {
   }
 }
 //..............................................................................
-void TMainForm::SaveSettings(const olxstr &FN)  {
+void TMainForm::SaveSettings(const olxstr& FN) {
   TDataFile DF;
   TDataItem* I = &DF.Root().AddItem("Folders");
   I->AddField("Styles",
@@ -2663,7 +2665,7 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
   I = &DF.Root().AddItem("HTML");
   I->AddField("Minimized", FHtmlMinimized);
   I->AddField("OnLeft", FHtmlOnLeft);
-  if( !FHtmlWidthFixed )
+  if (!FHtmlWidthFixed)
     I->AddField("Width", olxstr(FHtmlPanelWidth) << '%');
   else
     I->AddField("Width", FHtmlPanelWidth);
@@ -2675,9 +2677,11 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
     I->AddField("NormalFont", normal);
     I->AddField("FixedFont", fixed);
   }
-  if( !IsIconized() )  {  // otherwise left and top are -32000 causing all sort of problems...
+  if (!IsIconized()) {  // otherwise left and top are -32000 causing all sort of problems...
     I = &DF.Root().AddItem("Window");
-    if( IsMaximized() )  I->AddField("Maximized", true);
+    if (IsMaximized()) {
+      I->AddField("Maximized", true);
+    }
     int w_w = 0, w_h = 0;
     GetSize(&w_w, &w_h);
     I->AddField("Width", w_w);
@@ -2708,8 +2712,7 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
   I->AddField("ThreadCount", FXApp->GetMaxThreadCount());
 
   I = &DF.Root().AddItem("Recent_files");
-  for (size_t i=0; i < olx_min(FRecentFilesToShow, FRecentFiles.Count()); i++)
-  {
+  for (size_t i = 0; i < olx_min(FRecentFilesToShow, FRecentFiles.Count()); i++) {
     olxstr x = TEFile::CreateRelativePath(FRecentFiles[i]);
     if (x.Length() > FRecentFiles[i].Length()) {
       x = FRecentFiles[i];
@@ -2718,7 +2721,7 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
   }
 
   I = &DF.Root().AddItem("Stored_params");
-  for( size_t i=0; i < StoredParams.Count(); i++ )  {
+  for (size_t i = 0; i < StoredParams.Count(); i++) {
     TDataItem& it = I->AddItem(StoredParams.GetKey(i));
     it.AddField("value", olxstr().quote('"') << StoredParams.GetValue(i));
   }
@@ -2727,7 +2730,7 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
   try {
     FXApp->GetRenderer().GetStyles().ToDataItem(DF.Root().AddItem("Styles"));
   }
-  catch (const TExceptionBase & e) {
+  catch (const TExceptionBase& e) {
     TBasicApp::NewLogEntry(logExceptionTrace) << e;
     FXApp->GetRenderer().GetStyles().Clear();
   }
@@ -2748,14 +2751,14 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
           this->UpdateUserOptions("gl_stereo", FalseString());
         }
       }
-      catch (const TExceptionBase &e) {
+      catch (const TExceptionBase& e) {
         TBasicApp::NewLogEntry(logExceptionTrace) << e;
       }
     }
   }
 }
 //..............................................................................
-void TMainForm::LoadSettings(const olxstr &FN)  {
+void TMainForm::LoadSettings(const olxstr& FN) {
   if (!TEFile::Exists(FN)) {
     return;
   }
@@ -2768,12 +2771,12 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
       f.Close();
       if (l.Contains('\\') && !l.Contains(ds)) { // no escapes, needs converting
         TCStrList t = TEFile::ReadCLines(FN);
-        for (size_t i=0; i < t.Count(); i++)
+        for (size_t i = 0; i < t.Count(); i++)
           t[i].Replace('\\', ds);
         try {
           TEFile::WriteLines(FN, t);
         }
-        catch (const TExceptionBase &e) {
+        catch (const TExceptionBase& e) {
           TBasicApp::NewLogEntry(logException) << e;
         }
       }
@@ -2785,9 +2788,10 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
   olxstr Tmp;
   DF.LoadFromXLFile(FN, &Log);
 
-  TDataItem *I = DF.Root().FindItem("Folders");
-  if( I == NULL )
+  TDataItem* I = DF.Root().FindItem("Folders");
+  if (I == 0) {
     return;
+  }
   StylesDir = TEFile::ExpandRelativePath(
     exparse::parser_util::unquote(I->FindField("Styles")));
   processFunction(StylesDir);
@@ -2800,16 +2804,16 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
     processFunction(XLibMacros::CurrentDir());
 
   I = DF.Root().FindItem("HTML");
-  if( I != NULL )  {
+  if (I != 0) {
     Tmp = I->FindField("Minimized");
     FHtmlMinimized = Tmp.IsEmpty() ? false : Tmp.ToBool();
     Tmp = I->FindField("OnLeft");
     FHtmlOnLeft = Tmp.IsEmpty() ? true : Tmp.ToBool();
 
     Tmp = I->FindField("Width");
-    if( !Tmp.IsEmpty() )  {
+    if (!Tmp.IsEmpty()) {
       FHtmlWidthFixed = !Tmp.EndsWith('%');
-      FHtmlPanelWidth = ((!FHtmlWidthFixed) ? Tmp.SubStringTo(Tmp.Length()-1).ToDouble()
+      FHtmlPanelWidth = ((!FHtmlWidthFixed) ? Tmp.SubStringTo(Tmp.Length() - 1).ToDouble()
         : Tmp.ToDouble());
       if (!FHtmlWidthFixed && FHtmlPanelWidth >= 0.5) {
         FHtmlPanelWidth = 0.25;
@@ -2820,11 +2824,11 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
     }
 
     Tmp = I->FindField("Tooltips", EmptyString());
-    if( !Tmp.IsEmpty() )
+    if (!Tmp.IsEmpty())
       HtmlManager.main->SetShowTooltips(Tmp.ToBool());
 
     Tmp = I->FindField("Borders");
-    if( !Tmp.IsEmpty() && Tmp.IsNumber() )
+    if (!Tmp.IsEmpty() && Tmp.IsNumber())
       HtmlManager.main->SetBorders(Tmp.ToInt());
 
     olxstr nf(I->FindField("NormalFont", EmptyString()));
@@ -2834,14 +2838,14 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
 
   SkipSizing = true;
   I = DF.Root().FindItem("Window");
-  if( I != NULL )  {
-    if( I->FindField("Maximized", FalseString()).ToBool() )  {
+  if (I != 0) {
+    if (I->FindField("Maximized", FalseString()).ToBool()) {
       int l = I->FindField("X", "0").ToInt(),
-          t = I->FindField("Y", "0").ToInt();
-        Move(l, t);
+        t = I->FindField("Y", "0").ToInt();
+      Move(l, t);
       Maximize();
     }
-    else  {
+    else {
       int w = I->FindField("Width", "100").ToInt(),
         h = I->FindField("Height", "100").ToInt(),
         l = I->FindField("X", "0").ToInt(),
@@ -2849,12 +2853,13 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
       SetSize(l, t, w, h);
     }
   }
-  else
+  else {
     Maximize();
+  }
   SkipSizing = false;
 
   I = DF.Root().FindItem("Windows");
-  if( I != NULL )  {
+  if (I != 0) {
     HelpWindowVisible = I->FindField("Help", TrueString()).ToBool();
     InfoWindowVisible = I->FindField("Info", TrueString()).ToBool();
     CmdLineVisible = I->FindField("CmdLine", FalseString()).ToBool();
@@ -2862,41 +2867,41 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
   TEFile::ChangeDir(XLibMacros::CurrentDir());
 
   I = DF.Root().FindItem("Recent_files");
-  if( I != NULL )  {
+  if (I != 0) {
     MenuFile->AppendSeparator();
-    int i=0;
+    int i = 0;
     TStrList uniqNames;
     olxstr T = TEFile::ExpandRelativePath(I->FindField(olxstr("file") << i));
-    while( !T.IsEmpty() )  {
-      if( T.EndsWithi(".ins") || T.EndsWithi(".res") )  {
+    while (!T.IsEmpty()) {
+      if (T.EndsWithi(".ins") || T.EndsWithi(".res")) {
         T = TEFile::ChangeFileExt(T, EmptyString());
       }
       TEFile::OSPathI(T);
-      if( uniqNames.IndexOf(T) == InvalidIndex )
+      if (uniqNames.IndexOf(T) == InvalidIndex)
         uniqNames.Add(T);
       i++;
       T = I->FindField(olxstr("file") << i);
     }
-    for( size_t j=0; j < olx_min(uniqNames.Count(), FRecentFilesToShow); j++ )  {
+    for (size_t j = 0; j < olx_min(uniqNames.Count(), FRecentFilesToShow); j++) {
       processFunction(uniqNames[j]);
-      MenuFile->AppendCheckItem((int)(ID_FILE0+j), uniqNames[j].u_str());
+      MenuFile->AppendCheckItem((int)(ID_FILE0 + j), uniqNames[j].u_str());
       FRecentFiles.Add(uniqNames[j],
-        MenuFile->FindItemByPosition(MenuFile->GetMenuItemCount()-1));
+        MenuFile->FindItemByPosition(MenuFile->GetMenuItemCount() - 1));
     }
   }
   try {
     I = &DF.Root().GetItemByName("Defaults");
   }
-  catch(const TExceptionBase &e) {
+  catch (const TExceptionBase& e) {
     FXApp->CreateObjects(false);
     ShowAlert(e, "Failed to load settings, reseting to the defaults...");
     processMacro("default");
     return;
   }
   DefStyle = TEFile::ExpandRelativePath(I->FindField("Style"));
-    processFunction(DefStyle);
+  processFunction(DefStyle);
   DefSceneP = TEFile::ExpandRelativePath(I->FindField("Scene"));
-    processFunction(DefSceneP);
+  processFunction(DefSceneP);
   // loading default style if provided ?
   if (TEFile::Exists(DefStyle)) {
     TDataFile SDF;
@@ -2919,7 +2924,7 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
           // it would be weird if distributed version is not current... but might happen
           FXApp->GetRenderer().GetStyles().FromDataItem(
             (d_version <= l_version) ? last_saved_style : distributed_style,
-              false);
+            false);
         }
         catch (...) {  // recover...
           FXApp->GetRenderer().GetStyles().FromDataItem(last_saved_style,
@@ -2955,33 +2960,39 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
 #else
   const olxstr& defGlTVal = TrueString();
 #endif
-  UseGlTooltip( I->FindField("GlTooltip", defGlTVal).ToBool() );
-  if( I->FieldExists("ThreadCount") )
+  UseGlTooltip(I->FindField("GlTooltip", defGlTVal).ToBool());
+  if (I->FieldExists("ThreadCount")) {
     FXApp->SetMaxThreadCount(I->FindField("ThreadCount", "1").ToInt());
-  else  {
+  }
+  else {
     int cpu_cnt = wxThread::GetCPUCount();
-    if( cpu_cnt > 0 )
+    if (cpu_cnt > 0) {
       FXApp->SetMaxThreadCount(cpu_cnt);
+    }
   }
-  if( FBgColor.GetRGB() == 0xffffffff )  {  // only if the information got lost
-    olxstr T( I->FindField("BgColor") );
-    if( !T.IsEmpty() )  FBgColor.FromString(T);
+  if (FBgColor.GetRGB() == 0xffffffff) {  // only if the information got lost
+    olxstr T(I->FindField("BgColor"));
+    if (!T.IsEmpty()) {
+      FBgColor.FromString(T);
+    }
   }
-  bool whiteOn =  I->FindField("WhiteOn", FalseString()).ToBool();
+  bool whiteOn = I->FindField("WhiteOn", FalseString()).ToBool();
   FXApp->GetRenderer().LightModel.SetClearColor(
     whiteOn ? 0xffffffff : FBgColor.GetRGB());
 
   GradientPicture = TEFile::ExpandRelativePath(
     I->FindField("GradientPicture", EmptyString()));
-  if( !TEFile::Exists(GradientPicture) )
+  if (!TEFile::Exists(GradientPicture)) {
     GradientPicture.SetLength(0);
+  }
   olxstr T = I->FindField("Gradient", EmptyString());
-  if( !T.IsEmpty() )
+  if (!T.IsEmpty()) {
     processMacro(olxstr("grad ") << T);
+  }
 
   I = DF.Root().FindItem("Stored_params");
-  if (I != NULL)  {
-    for (size_t i=0; i < I->ItemCount(); i++) {
+  if (I != 0) {
+    for (size_t i = 0; i < I->ItemCount(); i++) {
       TDataItem& pd = I->GetItemByIndex(i);
       olxstr v = pd.FindField("value");
       processFunction(v, EmptyString(), true);
@@ -3650,20 +3661,22 @@ bool TMainForm::OnMouseDblClick(int x, int y, short Flags, short Buttons) {
   return true;
 }
 //..............................................................................
-bool TMainForm::Show(bool v)  {
+bool TMainForm::Show(bool v) {
   bool res = wxFrame::Show(v);
   FXApp->SetMainFormVisible(v);
   if (v) {
     FXApp->GetRenderer().GetScene().SetEnabled(true);
   }
-  if (CmdLineVisible)
+  if (CmdLineVisible) {
     FCmdLine->SetFocus();
-  else
+  }
+  else {
     FGlCanvas->SetFocus();
+  }
   return res;
 }
 //..............................................................................
-void TMainForm::UseGlTooltip(bool v)  {
+void TMainForm::UseGlTooltip(bool v) {
   if (v == _UseGlTooltip) {
     return;
   }
@@ -3838,37 +3851,34 @@ void TMainForm::DoUpdateFiles()  {
   TBasicApp::LeaveCriticalSection();
 }
 //..............................................................................
-size_t TMainForm::DownloadFiles(const TStrList &files, const olxstr &dest) {
+size_t TMainForm::DownloadFiles(const TStrList& files, const olxstr& dest) {
   if (files.IsEmpty()) return 0;
   THttpFileSystem fs;
-  size_t cnt=0;
+  size_t cnt = 0;
   updater::SettingsFile sf(updater::UpdateAPI::GetSettingsFileName());
   TUrl proxy(sf.proxy);
-  for (size_t i=0; i < files.Count(); i++) {
+  for (size_t i = 0; i < files.Count(); i++) {
     TUrl url(TEFile::UnixPath(files[i]));
     if (!proxy.GetHost().IsEmpty())
       url.SetProxy(proxy);
     fs.SetUrl(url);
-    TEFile* file = NULL;
+    olx_object_ptr<TEFile> file;
     try {
       file = fs.OpenFileAsFile(url.GetPath());
-      if( file != NULL )  {
-        if( !TEFile::Exists(dest) )
+      if (file != 0) {
+        if (!TEFile::Exists(dest)) {
           TEFile::MakeDir(dest);
+        }
         const olxstr dest_fn = TEFile::AddPathDelimeter(dest) <<
           TEFile::ExtractFileName(url.GetPath());
         TEFile dest(dest_fn, "wb+");
         dest << *file;
-        TEFile* df = file;
-        file = NULL;
-        delete df;
+        file = 0;
         dest.Close();
         cnt++;
       }
     }
-    catch(const TExceptionBase& e)  {
-      if( file != NULL )
-        delete file;
+    catch (const TExceptionBase& e) {
       TBasicApp::NewLogEntry(logError) << e.GetException()->GetFullMessage();
     }
   }

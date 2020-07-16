@@ -248,7 +248,7 @@ bool TWinProcess::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
       else  {
         CallsWasted = 0;
         dwRead = 0;
-        if (ReadFile(OutRead, Bf(), olx_min(BfC-1, dwAvail), &dwRead, 0) == 0
+        if (ReadFile(OutRead, Bf, olx_min(BfC-1, dwAvail), &dwRead, 0) == 0
             || dwRead == 0)  // error, the child might ended
         {
           Terminated = true;
@@ -409,14 +409,14 @@ int TWxProcess::OutputReaderThread::Run(){
       bool terminated = false;
       const int BfC = 512;
       olx_array_ptr<char> Bf(new char[BfC]);
-      if (in->Read(Bf(), BfC).Eof()) {
+      if (in->Read(Bf, BfC).Eof()) {
         terminated = true;
       }
       size_t lr = in->LastRead();
       volatile olx_scope_cs cs_(parent.GetOutputLock());
       parent.GetOutput().Write(Bf, lr);
       if (parent.GetDubStream() != 0) {
-        parent.GetDubStream()->Write(Bf(), lr);
+        parent.GetDubStream()->Write(Bf, lr);
       }
       AOlxThread::Yield();
       if (terminated) {

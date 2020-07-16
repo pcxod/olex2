@@ -65,7 +65,7 @@ public:
     return IdString();
   }
   void GetReady();
-  virtual bool IsValid() const { return center.is_valid(); }
+  virtual bool IsValid() const { return center.ok(); }
   static olxstr IdString() {
     static olxstr name = "SolidAngles";
     return name;

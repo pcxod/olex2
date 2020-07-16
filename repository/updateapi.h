@@ -37,7 +37,7 @@ const short
 // Olex2 settings file wrapper
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-struct SettingsFile  {
+struct SettingsFile {
   olxstr source_file;
   olxstr repository,  // repository for local update
     proxy,            // repository proxy
@@ -54,112 +54,33 @@ struct SettingsFile  {
   SettingsFile(const olxstr& file_name) {
     Init(file_name);
   }
-  void Init(const olxstr& file_name)  {
-    source_file = file_name;
-    if( !TEFile::Exists(file_name) ) return;
-    const TSettingsFile settings(file_name);
-    proxy = settings["proxy"];
-    repository = settings["repository"];
-    update_interval = settings["update"];
-    const olxstr last_update_str = settings.GetParam("lastupdate", "0");
-    if( last_update_str.IsEmpty() )
-      last_updated = 0;
-    else
-      last_updated = last_update_str.RadInt<int64_t>();
-    extensions_to_skip.Strtok(settings["exceptions"], ';');
-    dest_repository = settings["dest_repository"];
-    src_for_dest = settings["src_for_dest"];
-    files_to_skip.Strtok(settings["skip"], ';');
-    olex2_port = settings["olex-port"];
-    ask_for_update = settings.GetParam("ask_update", TrueString()).ToBool();
-  }
+  void Init(const olxstr& file_name);
   // save will change repo/update/ to repo...
-  bool Save() {
-    TSettingsFile settings;
-    settings["proxy"] = proxy;
-    settings["repository"] = repository;
-    settings["update"] = update_interval;
-    settings["lastupdate"] = last_updated;
-    settings["exceptions"] = extensions_to_skip.Text(';');
-    settings["dest_repository"] = dest_repository;
-    settings["src_for_dest"] = src_for_dest;
-    settings["skip"] = files_to_skip.Text(';');
-    settings["olex-port"] = olex2_port;
-    settings["ask_update"] = ask_for_update;
-    try  {  settings.SaveSettings(source_file);  }
-    catch(...)  {  return false;  }
-    return true;
-  }
-  bool IsValid() const {  return TEFile::Exists(source_file);  }
+  bool Save() const;
+  bool IsValid() const { return TEFile::Exists(source_file); }
 };
 
 // Olex2 updater/installer API
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-class UpdateAPI  {
+class UpdateAPI {
   mutable TStrList log;
-  AActionHandler *f_lsnr, *p_lsnr;
-  void CleanUp(AActionHandler *fl=NULL, AActionHandler *pl=NULL)  {
-    if( f_lsnr != NULL )  delete f_lsnr;
-    if( p_lsnr != NULL )  delete p_lsnr;
-    p_lsnr = pl;
-    f_lsnr = fl;
-  }
-  void InitAQueues(TActionQueue &f, TActionQueue &p)  {
-    if( f_lsnr != NULL )  {
-      f.Add(f_lsnr);
-      f_lsnr = NULL;
-    }
-    if( p_lsnr != NULL )  {
-      p.Add( p_lsnr );
-      p_lsnr = NULL;
-    }
-  }
-  //...........................................................................
+  olx_object_ptr<AActionHandler> f_lsnr, p_lsnr;
+  void InitAQueues(TActionQueue& f, TActionQueue& p);
   short _Update(AFileSystem& SrcFS, const TStrList& properties,
-    const TFSItem::SkipOptions* toSkip)
-  {
-    try  {
-      TOSFileSystem DestFS(TBasicApp::GetBaseDir()); // local file system
-      TFSIndex FI(SrcFS);
-      InitAQueues(SrcFS.OnProgress, FI.OnProgress);
-      if( FI.Synchronise(DestFS, properties, toSkip) == 0)
-        return uapi_UptoDate;
-      return uapi_OK;
-    }
-    catch( TExceptionBase& exc )  {
-      TStrList out;
-      exc.GetException()->GetStackTrace(out);
-      log.AddAll(out);
-      return uapi_UpdateError;
-    }
-  }
-  //.............................................................................
-  short _Update(AFileSystem& src, AFileSystem& dest)  {
-    try  {
-      TFSIndex FI( src );
-      InitAQueues(src.OnProgress, FI.OnProgress);
-      TStrList empty;
-      if( FI.Synchronise(dest, empty, NULL) == 0 )
-        return uapi_UptoDate;
-      return uapi_OK;
-    }
-    catch( TExceptionBase& exc )  {
-      TStrList out;
-      exc.GetException()->GetStackTrace(out);
-      log.AddAll(out);
-      return uapi_UpdateError;
-    }
-  }
+    const TFSItem::SkipOptions* toSkip);
+  short _Update(AFileSystem& src, AFileSystem& dest);
   //.............................................................................
   SettingsFile settings;
   olxstr Tag;
-  static const olxstr new_installation_fn;
+  static olxstr NewInstallationFN() {
+    return "new_installation";
+  }
   static const_strlist GetSystemTags();
 public:
   UpdateAPI();
-  ~UpdateAPI()  {  CleanUp();  }
+  ~UpdateAPI();
   /* calls IsInstallRequired and if required, checks for
   GetInstallationFileName in the basedir, fetches (using default or provided
   repository or zip file) GetInstallationFileName and extracts to basedir
@@ -167,59 +88,64 @@ public:
   uapi_InstallError or uapi_InvalidRepository or uapi_NoSource in case of an
   error
   */
-  short DoInstall(AActionHandler* download_lsnr, AActionHandler* extract_lsnr,
+  short DoInstall(olx_object_ptr<AActionHandler> download_lsnr,
+    olx_object_ptr < AActionHandler> extract_lsnr,
     const olxstr& repo);
   // provided handlers must be created with new, and will be deleted
-  short InstallPlugin(AActionHandler* download_lsnr,
-    AActionHandler* extract_lsnr, const olxstr& name);
+  short InstallPlugin(olx_object_ptr<AActionHandler> download_lsnr,
+    olx_object_ptr<AActionHandler> extract_lsnr, const olxstr& name);
 
-  static const_strlist GetPluginProperties(const olxstr &p);
+  static const_strlist GetPluginProperties(const olxstr& p);
 
-  SettingsFile& GetSettings() {  return settings;  }
+  SettingsFile& GetSettings() { return settings; }
 
-  const SettingsFile& GetSettings() const {  return settings;  }
+  const SettingsFile& GetSettings() const { return settings; }
   void EvaluateProperties(TStrList& props) const;
 
-  short DoUpdate(AActionHandler* file_slnr, AActionHandler* progress_lsnr);
+  short DoUpdate(olx_object_ptr<AActionHandler> file_slnr,
+    olx_object_ptr<AActionHandler> progress_lsnr);
   // updates specified repository (if any provided)
-  short DoSynch(AActionHandler* file_slnr, AActionHandler* progress_lsnr);
-  const TStrList& GetLog() const {  return log;  }
+  short DoSynch(olx_object_ptr<AActionHandler> file_slnr,
+    olx_object_ptr<AActionHandler> progress_lsnr);
+  const TStrList& GetLog() const { return log; }
   /* if fails or the repository is uptodate return NULL, res can be NULL, if
   not it will be set to updater::uapi_UptoDate or an error code
   */
-  AFileSystem* FindActiveUpdateRepositoryFS(short* res, bool force=false) const;
+  olx_object_ptr<AFileSystem> FindActiveUpdateRepositoryFS(short* res,
+    bool force = false) const;
   //returns true if the program will/allowed try to update itself
-  bool WillUpdate(bool force=false) const;
+  bool WillUpdate(bool force = false) const;
   // creates an FS from string - ftpfs, httpfs, os-fs or zipfs
-  static AFileSystem* FSFromString(const olxstr& repo_str,
+  static olx_object_ptr < AFileSystem> FSFromString(const olxstr& repo_str,
     const olxstr& proxy_str);
   static const TStrList& GetDefaultRepositories();
-  static olxstr GetSettingsFileName()  {
+  static olxstr GetSettingsFileName() {
     return TBasicApp::GetInstanceDir() + "usettings.dat";
   }
-  static olxstr GetIndexFileName()  {
+  static olxstr GetIndexFileName() {
     return TBasicApp::GetBaseDir() + "index.ind";
   }
-  static olxstr GetMirrorsFileName()  {
+  static olxstr GetMirrorsFileName() {
     return TBasicApp::GetInstanceDir() + "mirrors.txt";
   }
-  static bool IsNewInstallation()  {
-    return TEFile::Exists(TBasicApp::GetBaseDir() + new_installation_fn);
+  static bool IsNewInstallation() {
+    return TEFile::Exists(TBasicApp::GetBaseDir() + NewInstallationFN());
   }
-  static void TagInstallationAsNew()  {
-    TEFile(TBasicApp::GetBaseDir() + new_installation_fn, "w+");
+  static void TagInstallationAsNew() {
+    TEFile f(TBasicApp::GetBaseDir() + NewInstallationFN(), "w+");
+    f.Close();
   }
-  static void TagInstallationAsOld()  {
-    TEFile::DelFile(TBasicApp::GetBaseDir() + new_installation_fn);
+  static void TagInstallationAsOld() {
+    TEFile::DelFile(TBasicApp::GetBaseDir() + NewInstallationFN());
   }
-  static const char* GetTagsFileName()  {  return "tags.txt";  }
+  static const char* GetTagsFileName() { return "tags.txt"; }
   // transforms /olex2-distro/tag or /olex2-distro/tag/update to /olex2-distro
   olxstr TrimTagPart(const olxstr& path) const;
   /* transforms /olex2-distro to to /olex2/distro/tag or
   /olex2/distro/tag/update
   */
   olxstr AddTagPart(const olxstr& path, bool Update) const;
-  const olxstr& GetTag() const {  return Tag;  }
+  const olxstr& GetTag() const { return Tag; }
 
   static bool IsInstallRequired() {
     return !TEFile::Exists(GetIndexFileName());
@@ -228,17 +154,15 @@ public:
   (http://www.olex2.org/olex2-distro/, if down - checks the mirrors.txt file,
   if no valid repositories found, returns empty string
   */
-  olxstr FindActiveRepositoryUrl() const  {
+  olxstr FindActiveRepositoryUrl() const {
     olxstr repo_name;
-    AFileSystem* fs = FindActiveRepositoryFS(&repo_name,
-      GetInstallationFileName());
-    if( fs != NULL )  delete fs;
+    FindActiveRepositoryFS(&repo_name, GetInstallationFileName());
     return repo_name;
   }
   /* as above, but returns newly created file system wrapper or NULL if failed;
   if check file is not empty, the file existence will be also checked */
-  AFileSystem* FindActiveRepositoryFS(olxstr* repo_name=NULL,
-    const olxstr& check_file=EmptyString()) const;
+  olx_object_ptr<AFileSystem> FindActiveRepositoryFS(olxstr* repo_name = 0,
+    const olxstr& check_file = EmptyString()) const;
   // fills list with available repositories
   void GetAvailableRepositories(TStrList& res) const;
   // fills list with available repositories

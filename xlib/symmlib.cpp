@@ -1402,12 +1402,12 @@ TSpaceGroup &TSymmLib::InitSpaceGroup(TSpaceGroup &sg) {
       {
         double st = 0;
         olx_object_ptr<vec3d> r = g.Compare(ml);
-        if (r.is_valid()) {
+        if (r.ok()) {
           if (st == 0) {
             sg.Number = g.GetNumber();
             sg.FullName = g.GetFullName() + " (*)";
             sg.Name = g.GetName() + " (*)";
-            sg.InversionCenter = g.GetInversionCenter() + r.get()/2;
+            sg.InversionCenter = g.GetInversionCenter() + *r/2;
             break;
           }
         }

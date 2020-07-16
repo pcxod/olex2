@@ -48,9 +48,13 @@ public:
   // return true if the ellipsoid is not positively defined
   bool IsNPD() const {  return NPD;  }
 
-  bool IsAnharmonic() const { return anharmonic.is_valid(); }
+  bool IsAnharmonic() const { return anharmonic.ok(); }
 
   const olx_object_ptr<GramCharlier4> &GetAnharmonicPart() const {
+    return anharmonic;
+  }
+
+  olx_object_ptr<GramCharlier4>& GetAnharmonicPart() {
     return anharmonic;
   }
 

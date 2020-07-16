@@ -106,11 +106,11 @@ public:
   void TakeOver(TActionQueue& aq);
 
   size_t HandlerCount() const { return Handlers.Count(); };
-  AActionHandler& GetHandler(size_t i) const { return Handlers[i](); }
+  AActionHandler& GetHandler(size_t i) const { return Handlers[i]; }
 
   size_t DispatcherCount() const {  return Dispatchers.Count(); };
   AEventsDispatcher& GetDispatcher(size_t i) const {
-    return Dispatchers[i].Dispatcher();
+    return Dispatchers[i].Dispatcher;
   }
   // adds new handler
   void Add(const olx_vptr<AActionHandler> &handler);

@@ -28,16 +28,16 @@ const uint16_t  // extra request headers
   httpHeaderESession = 0x0001,
   httpHeaderPlatform = 0x0002;
 
-class THttpFileSystem: public AFileSystem  {
+class THttpFileSystem : public AFileSystem {
   bool Connected;
   TUrl Url;
-  static olxcstr &SessionInfo_() {
+  static olxcstr& SessionInfo_() {
     static olxcstr s;
     return s;
   }
   uint16_t ExtraHeaders;
 #ifdef __WIN32__
-  static bool &Initialised_() {
+  static bool& Initialised_() {
     static bool i;
     return i;
   }
@@ -58,18 +58,18 @@ protected:
   };
 
   void DoConnect();
-  typedef olxdict<olxcstr,olxcstr,olxstrComparator<false> > HeadersDict;
+  typedef olxdict<olxcstr, olxcstr, olxstrComparator<false> > HeadersDict;
   struct ResponseInfo {
     HeadersDict headers;
     olxcstr status, contentMD5;
     olxstr source;
     uint64_t contentLength;
-    ResponseInfo() : contentLength(~0)  {}
-    bool IsOK() const {  return status.EndsWithi("200 OK");  }
+    ResponseInfo() : contentLength(~0) {}
+    bool IsOK() const { return status.EndsWithi("200 OK"); }
     // note that only length and digest are compared
     bool operator == (const ResponseInfo& i) const {
       return contentLength == i.contentLength &&
-             contentMD5 == i.contentMD5;
+        contentMD5 == i.contentMD5;
     }
     bool operator != (const ResponseInfo& i) const {
       return !(this->operator == (i));
@@ -79,8 +79,8 @@ protected:
       return (contentLength != InvalidSize && IsOK() && headers.HasKey("ETag"));
     }
   };
-  struct AllocationInfo  {
-    TEFile* file;
+  struct AllocationInfo {
+    olx_object_ptr<TEFile> file;
     olxcstr digest;
     bool truncated;
     AllocationInfo(TEFile* _file, const olxcstr& _digest, bool _truncated)
@@ -93,9 +93,9 @@ protected:
   + ('#'+pos)
   */
   olxcstr GenerateRequest(const olxcstr& cmd, const olxcstr& file_name,
-    uint64_t position=0);
-  bool IsConnected() const {  return Connected;  }
-  const TUrl& GetUrl() const {  return Url;  }
+    uint64_t position = 0);
+  bool IsConnected() const { return Connected; }
+  const TUrl& GetUrl() const { return Url; }
   /* if false returned, the procedure is terminated, true means the the
   connection was re-established
   */
@@ -118,10 +118,10 @@ protected:
     return AllocationInfo(TEFile::TmpFile(), CEmptyString(), true);
   }
   virtual AllocationInfo& _DoTruncateFile(AllocationInfo& file) {
-    if (file.file == NULL)
+    if (!file.file.ok()) {
       throw TInvalidArgumentException(__OlxSourceInfo, "file");
+    }
     file.file->SetTemporary(true);
-    delete file.file;
     file.file = TEFile::TmpFile();
     file.digest.SetLength(0);
     file.truncated = true;
@@ -135,12 +135,12 @@ protected:
   void GetAddress(struct sockaddr* Result);
   bool Connect();
   void Disconnect();
-  virtual bool _DoDelFile(const olxstr& f) {  return false;  }
-  virtual bool _DoDelDir(const olxstr& f)  {  return false;  }
-  virtual bool _DoNewDir(const olxstr& f)  {  return false;  }
-  virtual bool _DoAdoptFile(const TFSItem& Source) {  return false;  }
+  virtual bool _DoDelFile(const olxstr& f) { return false; }
+  virtual bool _DoDelDir(const olxstr& f) { return false; }
+  virtual bool _DoNewDir(const olxstr& f) { return false; }
+  virtual bool _DoAdoptFile(const TFSItem& Source) { return false; }
   virtual bool _DoesExist(const olxstr& df, bool);
-  virtual IInputStream* _DoOpenFile(const olxstr& src);
+  virtual olx_object_ptr<IInputStream> _DoOpenFile(const olxstr& src);
   virtual bool _DoAdoptStream(IInputStream& file, const olxstr& name) {
     return false;
   }
@@ -155,15 +155,15 @@ public:
   /* returns temporary file, which gets deleted when object is deleted, use
   SetTemporary to change it
   */
-  TEFile* OpenFileAsFile(const olxstr& Source)  {
-    return (TEFile*)OpenFile(Source);
+  olx_object_ptr<TEFile> OpenFileAsFile(const olxstr& Source) {
+    return (TEFile*)OpenFile(Source).release();
   }
   void SetUrl(const TUrl& url);
   DefPropP(uint16_t, ExtraHeaders)
-  static const olxcstr &GetSessionInfo() {
-      return SessionInfo_();
-    }
-  static void SetSessionInfo(const olxcstr &si) {
+    static const olxcstr& GetSessionInfo() {
+    return SessionInfo_();
+  }
+  static void SetSessionInfo(const olxcstr& si) {
     SessionInfo_() = si;
   }
 };

@@ -157,23 +157,23 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
             }
           }
           olx_object_ptr<ref_list> refs = FromCifTable(*hklLoop);
-          if (refs.is_valid()) {
-            Refs = refs().a;
-            HKLF = (refs().b ? 4 : 3);
+          if (refs.ok()) {
+            Refs = refs->a;
+            HKLF = (refs->b ? 4 : 3);
           }
           if (get_ins && cif.FindEntry("_cell_length_a") != 0) {
             rv = new TIns;
-            rv().GetRM().Assign(cif.GetRM(), true);
+            rv->GetRM().Assign(cif.GetRM(), true);
           }
         }
         catch(TExceptionBase& e) {
           olx_object_ptr<ref_list> refs = FromTonto(SL);
-          if (!refs.is_valid()) {
+          if (!refs.ok()) {
             throw TFunctionFailedException(__OlxSrcInfo, e,
               "unsupported file format");
           }
-          Refs = refs().a;
-          HKLF = (refs().b ? 4 : 3);
+          Refs = refs->a;
+          HKLF = (refs->b ? 4 : 3);
         }
         MaxHkl = vec3i(-100);
         MinHkl = vec3i(100);
@@ -264,7 +264,7 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
       TStrList toks = SL.SubListFrom(i).GetObject();
       olx_object_ptr<TIns> ins(new TIns);
       try {
-        ins().LoadFromStrings(toks);
+        ins->LoadFromStrings(toks);
         rv = ins;
       }
       catch (const TExceptionBase &e) {
@@ -293,14 +293,17 @@ void THklFile::UpdateRef(const TReflection& R) {
 }
 //..............................................................................
 void THklFile::InitHkl3D() {
-  if (Hkl3D != NULL)  return;
+  if (Hkl3D != 0) {
+    return;
+  }
   volatile TStopWatch sw(__FUNC__);
   TArray3D<TRefPList*> &hkl3D = *(new TArray3D<TRefPList*>(MinHkl, MaxHkl));
   for (size_t i=0; i < Refs.Count(); i++) {
     TReflection &r1 = Refs[i];
     TRefPList *&rl = hkl3D(r1.GetHkl());
-    if (rl == NULL)
+    if (rl == 0) {
       rl = new TRefPList();
+    }
     rl->Add(r1);
   }
   Hkl3D = &hkl3D;
@@ -316,10 +319,13 @@ ConstPtrList<TReflection> THklFile::AllRefs(const vec3i& idx,
   }
   InitHkl3D();
   for (size_t j=0; j < ri.Count(); j++) {
-    if (!Hkl3D->IsInRange(ri[j])) continue;
+    if (!Hkl3D->IsInRange(ri[j])) {
+      continue;
+    }
     TRefPList* r = Hkl3D->Value(ri[j]);
-    if (r != NULL)
+    if (r != 0) {
       rv.AddAll(*r);
+    }
   }
   return rv;
 }
@@ -330,7 +336,7 @@ void THklFile::Append(TReflection& hkl) {
   Refs.Add(hkl);
 }
 //..............................................................................
-void THklFile::EndAppend()  {
+void THklFile::EndAppend() {
   //Refs.QuickSorter.SortSF(Refs, HklCmp);
 }
 //..............................................................................
@@ -401,8 +407,8 @@ olx_object_ptr<THklFile::ref_list> THklFile::FromCifTable(
     ref.SetOmitted(zero_found);
   }
   olx_object_ptr<ref_list> rv(new ref_list);
-  rv().a.TakeOver(refs);
-  rv().b = intensity;
+  rv->a.TakeOver(refs);
+  rv->b = intensity;
   return rv;
 }
 //..............................................................................
@@ -435,8 +441,9 @@ olx_object_ptr<THklFile::ref_list> THklFile::FromTonto(const TStrList &l_) {
   idx = data.FirstIndexOf('{', idx+key_keys.Length());
   if (idx == InvalidIndex) return rv;
   olxstr keys;
-  if (!parser_util::parse_brackets(data, keys, idx))
+  if (!parser_util::parse_brackets(data, keys, idx)) {
     return rv;
+  }
   TStrList ktoks(keys, ' ');
   const size_t hi = ktoks.IndexOfi("h=");
   const size_t ki = ktoks.IndexOfi("k=");
@@ -478,8 +485,8 @@ olx_object_ptr<THklFile::ref_list> THklFile::FromTonto(const TStrList &l_) {
       );
   }
   rv = new ref_list;
-  rv().a.TakeOver(refs);
-  rv().b = intensity;
+  rv->a.TakeOver(refs);
+  rv->b = intensity;
   return rv;
 }
 //..............................................................................

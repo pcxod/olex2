@@ -235,10 +235,11 @@ void TLattice::GenerateBondsAndFragments(TArrayList<vec3d> *ocrd) {
 //..............................................................................
 void TLattice::BuildPlanes() {
   ClearPlanes();
+  TXApp& app = TXApp::GetInstance();
   for (size_t i = 0; i < PlaneDefs.Count(); i++) {
     TSPlane::Def& pd = PlaneDefs[i];
     for (size_t j = 0; j < Matrices.Count(); j++) {
-      TSPlane* p = pd.FromAtomRegistry(Objects, i, Network, *Matrices[j]);
+      TSPlane* p = pd.FromAtomRegistry(app, Objects, i, Network, *Matrices[j]);
       if (p != 0) {
         bool uniq = true;
         for (size_t k = 0; k < Objects.planes.Count() - 1; k++) {
@@ -856,7 +857,7 @@ void TLattice::RestoreAtom(const TSAtom::Ref& id) {
   if (smatd::GetContainerId(id.matrix_id) >= GetUnitCell().MatrixCount()) {
     throw TInvalidArgumentException(__OlxSourceInfo, "matrix ID");
   }
-  if (id.catom->GetId() >= GetAsymmUnit().AtomCount()) {
+  if (id.atom_id >= GetAsymmUnit().AtomCount()) {
     throw TInvalidArgumentException(__OlxSourceInfo, "catom ID");
   }
   smatd* matr = 0;
@@ -878,7 +879,7 @@ void TLattice::RestoreAtom(const TSAtom::Ref& id) {
       break;
     }
   }
-  TSAtom& sa = GenerateAtom(GetAsymmUnit().GetAtom(id.catom->GetId()), *matr);
+  TSAtom& sa = GenerateAtom(GetAsymmUnit().GetAtom(id.atom_id), *matr);
   sa.CAtom().SetDeleted(false);
   sa.crd() += origin_shift;
 }
@@ -980,6 +981,7 @@ TSAtom& TLattice::NewAtom(const vec3d& center) {
 }
 //..............................................................................
 TSPlanePList TLattice::NewPlane(const TSAtomPList& Atoms, double weightExtent) {
+  TXApp& app = TXApp::GetInstance();
   TSPlane* Plane = TmpPlane(Atoms, weightExtent);
   TSPlanePList rv;
   if (Plane != 0) {
@@ -997,7 +999,7 @@ TSPlanePList TLattice::NewPlane(const TSAtomPList& Atoms, double weightExtent) {
       if (IsGenerated()) {
         delete Plane;
         for (size_t i = 0; i < Matrices.Count(); i++) {
-          TSPlane* p = pd.FromAtomRegistry(Objects, PlaneDefs.Count() - 1,
+          TSPlane* p = pd.FromAtomRegistry(app, Objects, PlaneDefs.Count() - 1,
             Network, *Matrices[i]);
           if (p != 0) {
             bool uniq = true;
@@ -2630,6 +2632,7 @@ void TLattice::SetAnis(const TCAtomPList& atoms, bool anis, bool anharmonic) {
 }
 //..............................................................................
 void TLattice::ToDataItem(TDataItem& item) const {
+  TXApp& app = TXApp::GetInstance();
   item.AddField("delta", Delta);
   item.AddField("deltai", DeltaI);
   GetAsymmUnit().ToDataItem(item.AddItem("AUnit"));
@@ -2718,12 +2721,12 @@ void TLattice::ToDataItem(TDataItem& item) const {
     }
     size_t odi = valid_planes[i]->GetDefId();
     valid_planes[i]->_SetDefId(di);
-    valid_planes[i]->ToDataItem(planes.AddItem("Plane"));
+    valid_planes[i]->ToDataItem(planes.AddItem("Plane"), app);
     valid_planes[i]->_SetDefId(odi);
   }
   TDataItem &plane_defs = item.AddItem("Plane_defs");
   for (size_t i = 0; i < defs.Count(); i++) {
-    defs[i]->ToDataItem(plane_defs.AddItem("Def"));
+    defs[i]->ToDataItem(plane_defs.AddItem("Def"), app);
   }
 }
 //..............................................................................
@@ -3108,12 +3111,12 @@ void TLattice::BuildAtomRegistry() {
       const size_t atom_cnt = GetAsymmUnit().AtomCount();
       au_slice = ((*aum_slice)[c_id] = new TSAtomPList(atom_cnt));
     }
-    else if ((*au_slice)[refs[i].catom->GetId()] != 0 &&
-      (*au_slice)[refs[i].catom->GetId()] != sa)
+    else if ((*au_slice)[refs[i].atom_id] != 0 &&
+      (*au_slice)[refs[i].atom_id] != sa)
     {
-      (*au_slice)[refs[i].catom->GetId()]->SetDeleted(true);
+      (*au_slice)[refs[i].atom_id]->SetDeleted(true);
     }
-    (*au_slice)[refs[i].catom->GetId()] = sa;
+    (*au_slice)[refs[i].atom_id] = sa;
   }
 }
 //..............................................................................
@@ -3331,7 +3334,7 @@ bool TLattice::IsPolymeric(bool use_peaks) const {
     // store Q-atom state
     for (size_t i = 0; i < au.AtomCount(); i++) {
       if (au.GetAtom(i).GetType() == iQPeakZ) {
-        df().Set(i, au.GetAtom(i).IsDeleted());
+        df->Set(i, au.GetAtom(i).IsDeleted());
         au.GetAtom(i).SetDeleted(true);
       }
     }
@@ -3341,7 +3344,7 @@ bool TLattice::IsPolymeric(bool use_peaks) const {
     // restore the Q-peaks state
     for (size_t i = 0; i < au.AtomCount(); i++) {
       if (au.GetAtom(i).GetType() == iQPeakZ) {
-        au.GetAtom(i).SetDeleted(df()[i]);
+        au.GetAtom(i).SetDeleted((*df)[i]);
       }
     }
   }

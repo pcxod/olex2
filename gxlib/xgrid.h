@@ -226,6 +226,8 @@ public:
   void LibIsvalid(const TStrObjList& Params, TMacroData& E);
   void LibSplit(TStrObjList &Cmds, const TParamList &Options,
     TMacroData &Error);
+  void LibProcess(TStrObjList& Cmds, const TParamList& Options,
+    TMacroData& Error);
   class TLibrary*  ExportLibrary(const olxstr& name = EmptyString());
 #ifdef _PYTHON
   static olxcstr &ModuleName();

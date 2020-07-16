@@ -44,8 +44,8 @@ PointAnalyser::PointAnalyser(TXAtom &c)
 
   alpha = 0x9c;
   dry_run = false;
-  olx_pdict<uint32_t, int> highest;
-  const TLattice &latt = ((TSAtom &)center()).GetParent();
+  olx_pdict<size_t, int> highest;
+  const TLattice &latt = ((TSAtom &)center).GetParent();
   for (size_t i = 0; i < latt.GetObjects().atoms.Count(); i++) {
     TXAtom &a = (TXAtom &)latt.GetObjects().atoms[i];
     if (!a.IsAvailable()) {
@@ -80,9 +80,9 @@ uint32_t PointAnalyser::Analyse(vec3f &p_) {
   int r = 0, g = 0, b = 0;
   vec3f p = p_;
   float maxd = 1;
-  sorted::ObjectPrimitive<uint32_t> added;
-  const TLattice &latt = ((TSAtom &)center()).GetParent();
-  const TSAtom &cnt = center();
+  sorted::ObjectPrimitive<size_t> added;
+  const TLattice& latt = ((TSAtom&)center).GetParent();
+  const TSAtom &cnt = center;
   for (size_t i = 0; i < latt.GetObjects().atoms.Count(); i++) {
     TSAtom &a = latt.GetObjects().atoms[i];
     if (&a == &cnt || !a.IsAvailable())
@@ -136,14 +136,15 @@ uint32_t PointAnalyser::Analyse(vec3f &p_) {
 }
 //.............................................................................
 void PointAnalyser::ToDataItem_(TDataItem &di) const {
-  if (!center.is_valid()) {
+  if (!center.ok()) {
     return;
   }
-  center().GetRef().ToDataItem(di.AddItem("AtomRef"));
+  TXApp& app = TXApp::GetInstance();
+  center->GetRef().ToDataItem(di.AddItem("AtomRef"), app);
   di.AddField("Colors", olxstr(',').Join(colors))
     .AddField("emboss", emboss).
     AddField("alpha", alpha);
-  ContentList cl = center().CAtom().GetParent()->GetContentList();
+  ContentList cl = center->CAtom().GetParent()->GetContentList();
   TDataItem &rdi = di.AddItem("Radii");
   for (size_t i = 0; i < cl.Count(); i++) {
     rdi.AddField(cl[i].element->symbol, cl[i].element->r_custom);

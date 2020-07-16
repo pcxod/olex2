@@ -12,15 +12,17 @@ UseEsdlNamespace()
 
 void *GlobalEsdlFunction(olx_malloc_)(size_t sz)  {
   void *r = malloc(sz);
-  if( sz != 0 && r == NULL )
+  if (sz != 0 && r == 0) {
     throw TOutOfMemoryException(__OlxSourceInfo);
+  }
   return r;
 }
 //.............................................................................
 void *GlobalEsdlFunction(olx_realloc_)(void *a, size_t sz)  {
   void *r = realloc(a, sz);
-  if( sz != 0 && r == NULL )
+  if (sz != 0 && r == 0) {
     throw TOutOfMemoryException(__OlxSourceInfo);
+  }
   return r;
 }
 //.............................................................................

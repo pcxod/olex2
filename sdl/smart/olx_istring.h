@@ -107,12 +107,11 @@ template <class T, typename TC> class TTSString : public T  {
     T::_Length = len == InvalidIndex ? o_strlen(str) : len;
     T::SData = new struct T::Buffer(T::_Length + T::_Increment, str, T::_Length);
   }
-template <class SC>
-  void InitFromString(const SC& str)  {
+  template <class SC> void InitFromString(const SC& str) {
     T::SData = str.Data_();
     T::_Length = str.Length();
     T::_Start = str.Start_();
-    if (T::SData != NULL) {
+    if (T::SData != 0) {
       T::SData->RefCnt++;
     }
     T::_Increment = 8;
@@ -121,17 +120,17 @@ template <class SC>
     T::_Start = 0;
     T::_Increment = 8;
     T::_Length = ((len == InvalidIndex) ? o_strlen(str) : len);
-    if (T::SData != NULL) {
+    if (T::SData != 0) {
       if (T::SData->RefCnt == 1) { // owed by this object
         T::SData->SetCapacity(T::_Length);
         olx_memcpy(T::SData->Data, str, T::_Length);
       }
       else {
         T::SData->RefCnt--;
-        T::SData = NULL;
+        T::SData = 0;
       }
     }
-    if (T::SData == NULL) {
+    if (T::SData == 0) {
       T::SData = new struct T::Buffer(T::_Length + T::_Increment, str,
         T::_Length);
     }
@@ -139,11 +138,13 @@ template <class SC>
   }
 
 public:
-  TTSString() : T()  {}
+  TTSString() : T() {}
   //...........................................................................
   TTSString(const TTSString& str, size_t start, size_t length) {
     T::SData = str.SData;
-    if( T::SData != NULL )  T::SData->RefCnt++;
+    if (T::SData != 0) {
+      T::SData->RefCnt++;
+    }
     T::_Start = str._Start + start;
     T::_Length = length;
     T::_Increment = 8;
@@ -163,7 +164,7 @@ public:
     T::OnCopy(str);
   }
   //...........................................................................
-  TTSString(const TC* str, size_t len=InvalidIndex)  {
+  TTSString(const TC* str, size_t len = InvalidIndex) {
     InitFromCharStr(str, len);
   }
   TTSString(TC* const& str, size_t len=InvalidIndex) {
@@ -178,13 +179,15 @@ public:
     T::SData->Data[0] = v;
   }
   //...........................................................................
-  TTSString(const TTIString<TC>& str)  { InitFromString(str);  }
+  TTSString(const TTIString<TC>& str) {
+    InitFromString(str);
+  }
   //...........................................................................
   /* allocates requested size, if the change_size is false (default), the size
   of the string stays the same and ony the capacity is increased
   */
   TTSString &Allocate(size_t sz, bool change_size=false)  {
-    if (T::SData == NULL) {
+    if (T::SData == 0) {
       T::SData = new struct T::Buffer(sz);
     }
     else {
@@ -201,7 +204,7 @@ public:
   {}
   //...........................................................................
 #if defined(__WXWIDGETS__)
-  TTSString(const wxString& v)  {
+  TTSString(const wxString& v) {
     InitFromCharStr((const TC*)v.c_str(), v.Length());
   }
 #endif
@@ -238,7 +241,7 @@ public:
     T::operator << (v);  return *this;
   }
   //...........................................................................
-  TTSString& operator << (const TC& v)  {
+  TTSString& operator << (const TC& v) {
     T::checkBufferForModification(T::_Length + 1);
     T::SData->Data[T::_Length] = v;
     T::_Length++;
@@ -267,14 +270,14 @@ public:
   }
   //...........................................................................
   //...........................................................................
-  TTSString& operator = (const TTIString<TC>& v)   {
-    if (T::SData != NULL && --T::SData->RefCnt == 0) {
+  TTSString& operator = (const TTIString<TC>& v) {
+    if (T::SData != 0 && --T::SData->RefCnt == 0) {
       delete T::SData;
     }
     T::_Start = v.Start_();
     T::_Length = v.Length();
     T::SData = v.Data_();
-    if (T::SData != NULL) {
+    if (T::SData != 0) {
       T::SData->RefCnt++;
     }
     return *this;
@@ -284,12 +287,12 @@ public:
    return AssignCharStr((const TC*)v.c_str(), v.Length());
  }
 #endif
-  template <class AC> TTSString& operator = (const AC& v)  {
-    T::operator = (v);
-    return *this;
-  }
   //...........................................................................
-  //...........................................................................
+ template <class AC> TTSString& operator = (const AC& v) {
+   T::operator = (v);
+   return *this;
+ }
+ //...........................................................................
   TTSString& operator = (TC* const& str)  {  return AssignCharStr(str);  }
   TTSString& operator = (const TC* str)   {  return AssignCharStr(str);  }
   //...........................................................................
@@ -302,17 +305,17 @@ public:
     T::_Start = 0;
     T::_Increment = 8;
     T::_Length = 1;
-    if (T::SData != NULL) {
+    if (T::SData != 0) {
       if (T::SData->RefCnt == 1) { // owed by this object
         T::SData->SetCapacity(T::_Length);
         T::SData->Data[0] = ch;
       }
       else {
         T::SData->RefCnt--;
-        T::SData = NULL;
+        T::SData = 0;
       }
     }
-    if (T::SData == NULL) {
+    if (T::SData == 0) {
       T::SData = new struct T::Buffer(T::_Length + T::_Increment);
       T::SData->Data[0] = ch;
     }
@@ -329,13 +332,13 @@ public:
     if (&v == this) {
       return *this;
     }
-    if (T::SData != NULL && --T::SData->RefCnt == 0) {
+    if (T::SData != 0 && --T::SData->RefCnt == 0) {
       delete T::SData;
     }
     T::_Start = v._Start;
     T::_Length = v._Length;
     T::SData = v.SData;
-    if (T::SData != NULL) {
+    if (T::SData != 0) {
       T::SData->RefCnt++;
     }
     T::OnCopy(v);
@@ -405,10 +408,10 @@ public:
     return (ch == L' ' || ch == L'\t');
   }
   static size_t o_strlen(const char* cstr)  {
-    return (cstr==NULL) ? 0 : strlen(cstr);
+    return (cstr==0) ? 0 : strlen(cstr);
   }
   static size_t o_strlen(const wchar_t* wstr)  {
-    return (wstr==NULL) ? 0 : wcslen(wstr);
+    return (wstr==0) ? 0 : wcslen(wstr);
   }
   static size_t o_strlen(const T &str)  { return str.Length(); }
   static const char* o_data(const char* cstr)  { return cstr; }
@@ -2170,7 +2173,7 @@ public:
   //...........................................................................
   void SetIncrement(size_t ni)  {  T::_Increment = ni;  }
   void SetCapacity(size_t newc)  {
-    if (T::SData == NULL) {
+    if (T::SData == 0) {
       T::SData = new struct T::Buffer(newc + T::_Increment);
     }
     else if (newc > T::GetCapacity()) {
@@ -2203,16 +2206,16 @@ public:
     T::_Start = 0;
     T::_Increment = 8;
     T::_Length = len;
-    if (T::SData != NULL) {
+    if (T::SData != 0) {
       if (T::SData->RefCnt == 1) { // owed by this object
         T::SData->SetCapacity(T::_Length);
       }
       else {
         T::SData->RefCnt--;
-        T::SData = NULL;
+        T::SData = 0;
       }
     }
-    if (T::SData == NULL) {
+    if (T::SData == 0) {
       T::SData = new struct T::Buffer(T::_Length);
     }
     ios.Read((void*)T::SData->Data, T::_Length*sizeof(TC));

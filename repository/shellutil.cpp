@@ -147,7 +147,7 @@ olxstr TShellUtil::GetSpecialFolderLocation(short folderId) {
     }
     olx_array_ptr<olxch> data(new olxch[sz / sizeof(olxch) + 1]);
     if (RegQueryValueEx(key, olxT("ProgramFilesDir"),
-      NULL, NULL, (LPBYTE)data(), &sz) != ERROR_SUCCESS)
+      NULL, NULL, (LPBYTE)&data, &sz) != ERROR_SUCCESS)
     {
       return EmptyString();
     }
@@ -163,7 +163,7 @@ olxstr TShellUtil::GetSpecialFolderLocation(short folderId) {
   if (SHGetSpecialFolderLocation(NULL, FID, &items) == NOERROR) {
     olx_array_ptr<olxch> bf(new olxch[MAX_PATH]);
     olxstr retVal;
-    if (SHGetPathFromIDList(items, bf())) {
+    if (SHGetPathFromIDList(items, bf)) {
       retVal = olxstr::FromExternal(bf.release());
     }
     // release memory allocated by the funciton
@@ -222,9 +222,9 @@ olxstr TShellUtil::PickFolder(const olxstr& Title,
   if (TEFile::Exists(RootFolder)) {
     ULONG eaten;
     olx_array_ptr<WCHAR> tmp(new WCHAR[RootFolder.Length()+1]);
-    memcpy(tmp(), RootFolder.raw_str(), RootFolder.RawLen());
+    memcpy(tmp, RootFolder.raw_str(), RootFolder.RawLen());
     tmp[RootFolder.Length()] = '\0';
-    desktopFolder->ParseDisplayName(NULL, NULL, tmp(), &eaten,
+    desktopFolder->ParseDisplayName(NULL, NULL, tmp, &eaten,
       &rootFolder, NULL);
   }
   BROWSEINFO bi;
@@ -275,10 +275,10 @@ olxstr TShellUtil::PickFile(const olxstr& Title, const olxstr &Filter,
   ofn.lpstrFilter = f.u_str();
   olx_array_ptr<olxch> bf(new olxch[MAX_PATH]);
   if (DefFile.Length()+1 < MAX_PATH) {
-    olx_memcpy(bf(), DefFile.u_str(), DefFile.Length());
-    bf()[DefFile.Length()] = '\0';
+    olx_memcpy(&bf, DefFile.u_str(), DefFile.Length());
+    bf[DefFile.Length()] = '\0';
   }
-  ofn.lpstrFile = bf();
+  ofn.lpstrFile = bf;
   ofn.nMaxFile = MAX_PATH;
   ofn.lpstrTitle = Title.u_str();
   if (!DefFolder.IsEmpty()) {
@@ -435,8 +435,8 @@ olxstr TShellUtil::GetFileVersion(const olxstr &fn, const olxstr &lang) {
       olx_array_ptr<olxch> pBuf(new olxch[len+1]);
       olxch *pValue[1];
       UINT pLen;
-      GetFileVersionInfo(fn.u_str(), 0, len, pBuf());
-      if (VerQueryValue(pBuf(),
+      GetFileVersionInfo(fn.u_str(), 0, len, pBuf);
+      if (VerQueryValue(pBuf,
             (olxstr("StringFileInfo\\") << lang << "\\ProductVersion").u_str(),
             (void**)&pValue[0], &pLen))
       {

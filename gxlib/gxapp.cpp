@@ -120,7 +120,7 @@ public:
   ~xappXFileLoad() {}
   bool Enter(const IOlxObject *Sender, const IOlxObject *Data, TActionQueue *) {
     // cannot use in the constructor as options have not ben read in!
-    if (!recenter.is_valid()) {
+    if (!recenter.ok()) {
       recenter = FParent->GetOptions()
         .GetBoolOption("model.center_on_reload", true, true);
     }
@@ -247,7 +247,7 @@ public:
     }
     state = 3;
     FParent->GetRenderer().SetBasis(B);
-    if (!SameFile || recenter()) {
+    if (!SameFile || *recenter) {
       FParent->CenterView(!SameFile);
     }
     if (FParent->AtomLegend().IsVisible()) {
@@ -740,7 +740,9 @@ double TGXApp::ProbFactor(double Prob) {
 }
 //..............................................................................
 void TGXApp::Init() {
-  try { CreateObjects(false); }
+  try { 
+    CreateObjects(false);
+  }
   catch (const TExceptionBase &e) {
     GetRenderer().GetStyles().Clear();
     try {
@@ -1688,12 +1690,12 @@ void TGXApp::CopySelection() const {
   for (size_t i=0; i < sel.Count(); i++) {
     TXAtom *a = dynamic_cast<TXAtom *>(&sel[i]);
     if (a != 0) {
-      a->GetRef().ToDataItem(atoms.AddItem(atoms.ItemCount()+1), true);
+      a->GetRef().ToDataItem(atoms.AddItem(atoms.ItemCount()+1), *this, true);
     }
     else {
       TXBond *b = dynamic_cast<TXBond *>(&sel[i]);
       if (b != 0) {
-        b->GetRef().ToDataItem(bonds.AddItem(bonds.ItemCount()+1), true);
+        b->GetRef().ToDataItem(bonds.AddItem(bonds.ItemCount()+1), *this, true);
       }
     }
   }
@@ -2309,9 +2311,9 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To,
       NL << j++;
       const olxstr oldL = XA->GetLabel();
       lc.SetLabel(XA->CAtom(), NL);
-      undo().AddAtom(XA->CAtom(), oldL);
+      undo->AddAtom(XA->CAtom(), oldL);
       processed << XA->CAtom();
-      NameHydrogens(*XA, lc, &undo());
+      NameHydrogens(*XA, lc, &undo);
       if (checkBonds) {
         CheckQBonds(*XA);
       }
@@ -2344,8 +2346,8 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To,
           NL << j++;
           const olxstr oldL = XA->GetLabel();
           lc.SetLabel(XA->CAtom(), NL);
-          undo().AddAtom(XA->CAtom(), oldL);
-          NameHydrogens(*XA, lc, &undo());
+          undo->AddAtom(XA->CAtom(), oldL);
+          NameHydrogens(*XA, lc, &undo);
           if (checkBonds) {
             CheckQBonds(*XA);
           }
@@ -2364,9 +2366,9 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To,
             bool recreate = XA->GetType() != *elm;
             const olxstr oldL = XA->GetLabel();
             lc.SetLabel(XA->CAtom(), NL);
-            undo().AddAtom(XA->CAtom(), oldL);
+            undo->AddAtom(XA->CAtom(), oldL);
             XA->CAtom().SetType(*elm);
-            NameHydrogens(*XA, lc, &undo());
+            NameHydrogens(*XA, lc, &undo);
             if (recreate) {
               ChangedAtoms.Add(XA);
               if (checkBonds) {
@@ -2385,8 +2387,8 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To,
             NL << j++;
             const olxstr oldL = XA->GetLabel();
             lc.SetLabel(XA->CAtom(), NL);
-            undo().AddAtom(XA->CAtom(), oldL);
-            NameHydrogens(*XA, lc, &undo());
+            undo->AddAtom(XA->CAtom(), oldL);
+            NameHydrogens(*XA, lc, &undo);
             if (checkBonds) {
               CheckQBonds(*XA);
             }
@@ -2431,9 +2433,9 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To,
           }
           const olxstr oldL = XA->GetLabel();
           lc.SetLabel(XA->CAtom(), NL, false);
-          undo().AddAtom(XA->CAtom(), oldL);
+          undo->AddAtom(XA->CAtom(), oldL);
           XA->CAtom().SetType(*elm);
-          NameHydrogens(*XA, lc, &undo());
+          NameHydrogens(*XA, lc, &undo);
           if (recreate) {
             ChangedAtoms.Add(XA);
             if (checkBonds) {
@@ -2457,14 +2459,14 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To,
       for (size_t i = 0; i < duplicates.Count(); i++) {
         olxstr l = duplicates[i]->GetLabel();
         lc.SetLabel(*duplicates[i], lc.CheckLabel(*duplicates[i], l, 0, false));
-        undo().AddAtom(*duplicates[i], l);
+        undo->AddAtom(*duplicates[i], l);
       }
       SynchroniseBonds(TXAtomPList(objects, DynamicCastAccessor<TXAtom>()));
       UpdateDuplicateLabels();
     }
   }
   if (NameResi) {
-    undo().AddAction(SynchroniseResidues(
+    undo->AddAction(SynchroniseResidues(
       TCAtomPList(Atoms, FunctionAccessor::MakeConst(&TXAtom::CAtom))));
   }
   if (FAtomLegend->IsVisible()) {
@@ -2521,7 +2523,7 @@ TUndoData* TGXApp::SynchroniseResidues(const TCAtomPList &refs) {
     for (size_t j = 0; j < rg.Count(); j++) {
       TCAtom *a = rg[j][refs[i]->GetTag()];
       if (a->GetLabel() != refs[i]->GetLabel()) {
-        undo().AddAtom(*a, a->GetLabel());
+        undo->AddAtom(*a, a->GetLabel());
         a->SetLabel(refs[i]->GetLabel(), false);
       }
     }
@@ -3679,14 +3681,14 @@ void TGXApp::RestoreGroup(TGlGroup& glg, const GroupData& gd) {
   TXAtomPList xatoms(gd.atoms.Count());
   TXBondPList xbonds(gd.bonds.Count());
   for (size_t i = 0; i < gd.atoms.Count(); i++) {
-    TLattice &l = gd.atoms[i].catom->GetParent()->GetLattice();
+    TLattice &l = gd.atoms[i].GetLattice(*this);
     TSAtom* sa = l.GetAtomRegistry().Find(gd.atoms[i]);
     if (sa != 0) {
       xatoms[i] = static_cast<TXAtom*>(sa);
     }
   }
   for (size_t i = 0; i < gd.bonds.Count(); i++) {
-    TLattice& l = gd.bonds[i].a.catom->GetParent()->GetLattice();
+    TLattice& l = gd.bonds[i].a.GetLattice(*this);
     TSBond* sb = l.GetAtomRegistry().Find(gd.bonds[i]);
     if (sb != 0) {
       xbonds[i] = static_cast<TXBond*>(sb);
@@ -3748,14 +3750,14 @@ void TGXApp::RestoreLabels() {
   TXAtomPList xatoms(LabelInfo.atoms.Count());
   TXBondPList xbonds(LabelInfo.bonds.Count());
   for (size_t i = 0; i < LabelInfo.atoms.Count(); i++) {
-    TLattice& l = LabelInfo.atoms[i].catom->GetParent()->GetLattice();
+    TLattice& l = LabelInfo.atoms[i].GetLattice(*this);
     TSAtom* sa = l.GetAtomRegistry().Find(LabelInfo.atoms[i]);
     if (sa != 0) {
       xatoms[i] = static_cast<TXAtom*>(sa);
     }
   }
   for (size_t i = 0; i < LabelInfo.bonds.Count(); i++) {
-    TLattice& l = LabelInfo.bonds[i].a.catom->GetParent()->GetLattice();
+    TLattice& l = LabelInfo.bonds[i].a.GetLattice(*this);
     TSBond* sb = l.GetAtomRegistry().Find(LabelInfo.bonds[i]);
     if (sb != 0) {
       xbonds[i] = static_cast<TXBond*>(sb);
@@ -5070,14 +5072,14 @@ void TGXApp::DeleteXFile(size_t index) {
   const TLattice& latt = Files[index].GetLattice();
   for (size_t i = 0; i < GroupDefs.Count(); i++) {
     for (size_t j = 0; j < GroupDefs[i].atoms.Count(); j++) {
-      if (GroupDefs[i].atoms[j].catom->GetParent()->GetId() == index) {
+      if (GroupDefs[i].atoms[j].au_id == index) {
         GroupDefs[i].atoms.NullItem(j);
       }
     }
     GroupDefs[i].atoms.Pack();
     for (size_t j = 0; j < GroupDefs[i].bonds.Count(); j++) {
-      if (GroupDefs[i].bonds[j].a.catom->GetParent()->GetId() == index ||
-        GroupDefs[i].bonds[j].b.catom->GetParent()->GetId() == index)
+      if (GroupDefs[i].bonds[j].a.au_id == index ||
+        GroupDefs[i].bonds[j].b.au_id == index)
       {
         GroupDefs[i].bonds.NullItem(j);
       }
@@ -5085,14 +5087,14 @@ void TGXApp::DeleteXFile(size_t index) {
     GroupDefs[i].bonds.Pack();
   }
   for (size_t i = 0; i < LabelInfo.atoms.Count(); i++) {
-    if (LabelInfo.atoms[i].catom->GetParent()->GetId() == index) {
+    if (LabelInfo.atoms[i].au_id == index) {
       LabelInfo.atoms.NullItem(i);
     }
   }
   LabelInfo.atoms.Pack();
   for (size_t i = 0; i < LabelInfo.bonds.Count(); i++) {
-    if (LabelInfo.bonds[i].a.catom->GetParent()->GetId() == index ||
-      LabelInfo.bonds[i].b.catom->GetParent()->GetId() == index)
+    if (LabelInfo.bonds[i].a.au_id == index ||
+      LabelInfo.bonds[i].b.au_id == index)
     {
       LabelInfo.bonds.NullItem(i);
     }
@@ -5120,14 +5122,14 @@ void TGXApp::DeleteXFiles() {
   }
   for (size_t i = 0; i < GroupDefs.Count(); i++) {
     for (size_t j = 0; j < GroupDefs[i].atoms.Count(); j++) {
-      if (GroupDefs[i].atoms[j].catom->GetParent()->GetId() > 0) {
+      if (GroupDefs[i].atoms[j].au_id > 0) {
         GroupDefs[i].atoms.NullItem(j);
       }
     }
     GroupDefs[i].atoms.Pack();
     for (size_t j = 0; j < GroupDefs[i].bonds.Count(); j++) {
-      if (GroupDefs[i].bonds[j].a.catom->GetParent()->GetId() > 0 ||
-        GroupDefs[i].bonds[j].b.catom->GetParent()->GetId() > 0)
+      if (GroupDefs[i].bonds[j].a.au_id > 0 ||
+        GroupDefs[i].bonds[j].b.au_id > 0)
       {
         GroupDefs[i].bonds.NullItem(j);
       }
@@ -5135,14 +5137,14 @@ void TGXApp::DeleteXFiles() {
     GroupDefs[i].bonds.Pack();
   }
   for (size_t i = 0; i < LabelInfo.atoms.Count(); i++) {
-    if (LabelInfo.atoms[i].catom->GetParent()->GetId() > 0) {
+    if (LabelInfo.atoms[i].au_id > 0) {
       LabelInfo.atoms.NullItem(i);
     }
   }
   LabelInfo.atoms.Pack();
   for (size_t i = 0; i < LabelInfo.bonds.Count(); i++) {
-    if (LabelInfo.bonds[i].a.catom->GetParent()->GetId() > 0 ||
-      LabelInfo.bonds[i].b.catom->GetParent()->GetId() > 0)
+    if (LabelInfo.bonds[i].a.au_id > 0 ||
+      LabelInfo.bonds[i].b.au_id > 0)
     {
       LabelInfo.bonds.NullItem(i);
     }
@@ -5290,7 +5292,7 @@ void TGXApp::SaveStructureStyle(TDataItem& item) const {
     TDataItem &pr = name_reg.AddItem("Atoms");
     for (size_t i = 0; i < TXAtom::NamesRegistry().Count(); i++) {
       TDataItem& di = pr.AddItem("item");
-      TXAtom::NamesRegistry().GetKey(i).ToDataItem(di);
+      TXAtom::NamesRegistry().GetKey(i).ToDataItem(di, *this);
       di.AddField("value", TXAtom::NamesRegistry().GetValue(i));
     }
   }
@@ -5298,7 +5300,7 @@ void TGXApp::SaveStructureStyle(TDataItem& item) const {
     TDataItem &pr = name_reg.AddItem("Bonds");
     for (size_t i = 0; i < TXBond::NamesRegistry().Count(); i++) {
       TDataItem& di = pr.AddItem("item");
-      TXBond::NamesRegistry().GetKey(i).ToDataItem(di);
+      TXBond::NamesRegistry().GetKey(i).ToDataItem(di, *this);
       di.AddField("value", TXBond::NamesRegistry().GetValue(i));
     }
   }
@@ -5813,7 +5815,7 @@ void TGXApp::LoadModel(const olxstr& fileName) {
   size_t contentLen = zin.GetLength();
   olx_array_ptr<unsigned char> bf = new unsigned char[contentLen + 1];
   zin.Read(bf, contentLen);
-  TEMemoryInputStream ms(bf(), contentLen);
+  TEMemoryInputStream ms(bf, contentLen);
   TDataFile df;
   df.LoadFromTextStream(ms);
   bf = 0;

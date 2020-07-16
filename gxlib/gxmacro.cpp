@@ -147,7 +147,8 @@ void GXLibMacros::Export(TLibrary& lib) {
     fpNone|fpTwo|psFileLoaded,
     "Changes the H-atom and H-bonds visibility");
   gxlib_InitMacro(Detach,
-    "u-re-attaches all or given atoms",
+    "u-re-attaches all or given atoms&;"
+    "m-umasks all or given atoms",
     fpAny | psFileLoaded,
     "Detaches/re-attaches given/selected atoms from/to the model");
   gxlib_InitMacro(Info,
@@ -1493,9 +1494,25 @@ void GXLibMacros::macDetach(TStrObjList &Cmds, const TParamList &Options,
 {
   TEBasis basis = app.GetRenderer().GetBasis();
   bool reattach = Options.GetBoolOption('u');
+  bool unmask = Options.Contains('m');
   TCAtomPList atoms = app.FindCAtoms(Cmds.Text(' '));
   for (size_t i = 0; i < atoms.Count(); i++) {
     atoms[i]->SetDetached(!reattach);
+    if (reattach && unmask) {
+      if (atoms[i]->IsMasked()) {
+        atoms[i]->SetMasked(false);
+      }
+    }
+  }
+  if (reattach && unmask) {
+    TGXApp::AtomIterator ai = app.GetAtoms();
+    while (ai.HasNext()) {
+      TXAtom& a = ai.Next();
+      if (!a.IsVisible() && a.CAtom().IsAvailable()) {
+        a.SetMasked(false);
+        a.SetVisible(true);
+      }
+    }
   }
   app.UpdateConnectivity();
   if (app.AtomLegend().IsVisible()) {
@@ -3255,7 +3272,7 @@ void GXLibMacros::macLstGO(TStrObjList &Cmds, const TParamList &Options,
     olxstr_dict<TStrList> unq;
     for (size_t i = 0; i < TXAtom::NamesRegistry().Count(); i++) {
       olxstr cn = TXAtom::NamesRegistry().GetValue(i);
-      unq.Add(cn).Add(TXAtom::NamesRegistry().GetKey(i).catom->GetResiLabel());
+      unq.Add(cn).Add(TXAtom::NamesRegistry().GetKey(i).GetCAtom(app).GetResiLabel());
     }
     for (size_t i = 0; i < unq.Count(); i++) {
       output.Add(unq.GetKey(i)) << ": " << olxstr(" ").Join(unq.GetValue(i));
@@ -3267,8 +3284,8 @@ void GXLibMacros::macLstGO(TStrObjList &Cmds, const TParamList &Options,
     for (size_t i = 0; i < TXBond::NamesRegistry().Count(); i++) {
       olxstr cn = TXBond::NamesRegistry().GetValue(i);
       unq.Add(cn).Add(olxstr(
-        TXBond::NamesRegistry().GetKey(i).a.catom->GetResiLabel()) <<
-        "-" << TXBond::NamesRegistry().GetKey(i).b.catom->GetResiLabel());
+        TXBond::NamesRegistry().GetKey(i).a.GetCAtom(app).GetResiLabel()) <<
+        "-" << TXBond::NamesRegistry().GetKey(i).b.GetCAtom(app).GetResiLabel());
     }
     for (size_t i = 0; i < unq.Count(); i++) {
       output.Add(unq.GetKey(i)) << ": " << olxstr(" ").Join(unq.GetValue(i));
@@ -4758,7 +4775,7 @@ void GXLibMacros::macSetMaterial(TStrObjList &Cmds, const TParamList &Options,
   if (!Cmds[1].Equalsi("None")) {
     try {
       glm = new TGlMaterial();
-      glm().FromString(Cmds[1], true);
+      glm->FromString(Cmds[1], true);
     }
     catch (...) {
       glm = 0;
@@ -4769,7 +4786,7 @@ void GXLibMacros::macSetMaterial(TStrObjList &Cmds, const TParamList &Options,
   olxstr col_name = di != InvalidIndex ? Cmds[0].SubStringTo(di) : Cmds[0];
   olxstr prm_name = di != InvalidIndex ? Cmds[0].SubStringFrom(di + 1)
     : EmptyString();
-  if (!glm.is_valid() && !prm_name.Equals('*')) {
+  if (!glm.ok() && !prm_name.Equals('*')) {
     E.ProcessingError(__OlxSrcInfo,
       "The style can be reset to all primtives only");
     return;
@@ -4790,12 +4807,12 @@ void GXLibMacros::macSetMaterial(TStrObjList &Cmds, const TParamList &Options,
       TGraphicsStyle* gs = app.GetRenderer().GetStyles().FindStyle(col_name);
       if (gs != 0) {
         if (prm_name == '*') {
-          if (!glm.is_valid()) {
+          if (!glm.ok()) {
             gs->Clear();
           }
           else {
             for (size_t pi = 0; pi < gs->PrimitiveStyleCount(); pi++) {
-              gs->GetPrimitiveStyle(pi).SetProperties(glm());
+              gs->GetPrimitiveStyle(pi).SetProperties(glm);
             }
           }
           found = true;
@@ -4803,7 +4820,7 @@ void GXLibMacros::macSetMaterial(TStrObjList &Cmds, const TParamList &Options,
         else {
           TGlMaterial* mat = gs->FindMaterial(prm_name);
           if (mat != 0) {
-            *mat = glm();
+            *mat = glm;
             found = true;
           }
 
@@ -4820,15 +4837,15 @@ void GXLibMacros::macSetMaterial(TStrObjList &Cmds, const TParamList &Options,
     bool found = false;
     if (!prm_name.IsEmpty()) {
       if (prm_name == '*') {
-        if (!glm.is_valid()) {
+        if (!glm.ok()) {
           colls[ci]->ClearPrimitives();
           colls[ci]->GetStyle().Clear();
         }
         else {
           for (int pi = 0; pi < colls[ci]->PrimitiveCount(); pi++) {
             TGlPrimitive &glp = colls[ci]->GetPrimitive(pi);
-            glp.SetProperties(glm());
-            colls[ci]->GetStyle().SetMaterial(glp.GetName(), glm());
+            glp.SetProperties(glm);
+            colls[ci]->GetStyle().SetMaterial(glp.GetName(), glm);
           }
         }
         found = true;
@@ -4836,12 +4853,12 @@ void GXLibMacros::macSetMaterial(TStrObjList &Cmds, const TParamList &Options,
       else {
         TGlPrimitive* glp = colls[ci]->FindPrimitiveByName(prm_name);
         if (glp != 0) {
-          glp->SetProperties(glm());
-          colls[ci]->GetStyle().SetMaterial(prm_name, glm());
+          glp->SetProperties(glm);
+          colls[ci]->GetStyle().SetMaterial(prm_name, glm);
           found = true;
         }
       }
-      if (!glm.is_valid() && colls[ci]->ObjectCount() > 0) {
+      if (!glm.ok() && colls[ci]->ObjectCount() > 0) {
         colls[ci]->GetObject(0).Create(colls[ci]->GetName());
       }
     }
@@ -4849,7 +4866,7 @@ void GXLibMacros::macSetMaterial(TStrObjList &Cmds, const TParamList &Options,
       for (size_t i = 0; i < colls[ci]->ObjectCount(); i++)  {
         TGlGroup *glg = dynamic_cast<TGlGroup*>(&colls[ci]->GetObject(i));
         if (glg != 0) {
-          glg->SetGlM(glm());
+          glg->SetGlM(glm);
           found = true;
         }
       }
@@ -4859,7 +4876,7 @@ void GXLibMacros::macSetMaterial(TStrObjList &Cmds, const TParamList &Options,
         << "' is not processed";
     }
   }
-  if (!undo().mat_list.IsEmpty()) {
+  if (!undo->mat_list.IsEmpty()) {
     app.GetUndo().Push(undo.release());
   }
 }
@@ -5264,10 +5281,10 @@ void GXLibMacros::macCalcSurf(TStrObjList &Cmds, const TParamList &Options,
     Cmds.IsEmpty() ? -0.1f : Cmds[0].ToFloat());
 
   TXBlob *blob = new TXBlob(app.GetRenderer(), "Blob");
-  blob->vertices = sf().VertexList();
-  blob->normals = sf().NormalList();
-  blob->triangles = sf().TriangleList();
-  TArrayList<int> owners = sf().GetVertexData();
+  blob->vertices = sf->VertexList();
+  blob->normals = sf->NormalList();
+  blob->triangles = sf->TriangleList();
+  TArrayList<int> owners = sf->GetVertexData();
   if (true) {
     for (int i = 0; i < 2; i++) {
       olx_grid_util::smoother sm(blob->vertices, blob->triangles);
@@ -5382,21 +5399,20 @@ void GXLibMacros::macCalcSurf(TStrObjList &Cmds, const TParamList &Options,
 void GXLibMacros::macLegend(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
+  olxstr reset = Options.FindValue("r", "-");
+  if (reset != '-') {
+    bool bottom= reset.Contains("b"),
+      right = reset.Contains("r");
+    app.AtomLegend().ResetPosition(right, bottom);
+    app.AtomLegend().Update();
+    app.AtomLegend().SetVisible(true);
+    return;
+  }
   bool v = !app.AtomLegend().IsVisible();
   if (!Cmds.IsEmpty()) {
     v = Cmds[0].ToBool();
   }
-  if (!v) {
-    app.AtomLegend().SetVisible(false);
-  }
-  else {
-    if (Options.GetBoolOption('r')) {
-      app.AtomLegend().SetPosition(0, 0);
-    }
-    app.AtomLegend().Update();
-    app.AtomLegend().SetVisible(true);
-  }
-  
+  app.AtomLegend().SetVisible(v);
 }
 //.............................................................................
 template <typename functor_t>
@@ -5930,7 +5946,7 @@ void GXLibMacros::macLpln(TStrObjList &Cmds, const TParamList &Options,
   if (ipts.Count() > 2) {
     vec3d centre = olx_mean(ipts);
     olx_object_ptr<vec3f_alist> normals = new vec3f_alist(1);
-    normals()[0] = pn.Normalise();
+    (*normals)[0] = pn.Normalise();
     olx_plane::Sort(ipts, DummyAccessor(), centre, pn);
     TDUserObj *obj = new TDUserObj(app.GetRenderer(), sgloPolygon,
       olxstr("lpln_") << idx.ToString());

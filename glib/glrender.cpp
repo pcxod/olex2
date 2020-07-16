@@ -983,14 +983,14 @@ AGDrawObject* TGlRenderer::SelectObject(int x, int y) {
   if (GLUSelection) {
     AGDrawObject *Result = 0;
     olx_array_ptr<GLuint> selectBuf(new GLuint[MAXSELECT]);
-    if (!GetScene().StartSelect(x, y, selectBuf())) {
+    if (!GetScene().StartSelect(x, y, selectBuf)) {
       return 0;
     }
     DrawObjects(x, y, true, false);
     int hits = GetScene().EndSelect();
     if (hits >= 1) {
       if (hits == 1) {
-        GLuint in = selectBuf()[(hits - 1) * 4 + 3];
+        GLuint in = selectBuf[(hits - 1) * 4 + 3];
         if (in >= 1 && in <= ObjectCount()) {
           Result = &GetObject(in - 1);
         }
@@ -999,15 +999,15 @@ AGDrawObject* TGlRenderer::SelectObject(int x, int y) {
         unsigned int maxz = ~0;
         GLuint in = 0;
         for (int i = 0; i < hits; i++) {
-          if (selectBuf()[i * 4 + 1] < maxz) {
+          if (selectBuf[i * 4 + 1] < maxz) {
             in = i;
-            maxz = selectBuf()[i * 4 + 1];
+            maxz = selectBuf[i * 4 + 1];
           }
         }
         if ((int)(in)* 4 + 3 < 0) {
           return 0;
         }
-        in = selectBuf()[(in)* 4 + 3] - 1;
+        in = selectBuf[(in)* 4 + 3] - 1;
         if (in < ObjectCount()) {
           Result = &GetObject(in);
         }
@@ -1054,7 +1054,7 @@ TGlPrimitive* TGlRenderer::SelectPrimitive(int x, int y) {
   if (GLUSelection) {
     TGlPrimitive *Result = 0;
     olx_array_ptr<GLuint> selectBuf(new GLuint[MAXSELECT]);
-    if (!GetScene().StartSelect(x, y, selectBuf())) {
+    if (!GetScene().StartSelect(x, y, selectBuf)) {
       return 0;
     }
     DrawObjects(x, y, false, true);
@@ -1062,7 +1062,7 @@ TGlPrimitive* TGlRenderer::SelectPrimitive(int x, int y) {
     int hits = olx_gl::renderMode(GL_RENDER);
     if (hits >= 1) {
       if (hits == 1) {
-        GLuint in = selectBuf()[(hits - 1) * 4 + 3];
+        GLuint in = selectBuf[(hits - 1) * 4 + 3];
         if (in >= 1 && in <= (PrimitiveCount() + 1)) {
           Result = &GetPrimitive(in - 1);
         }
@@ -1071,12 +1071,12 @@ TGlPrimitive* TGlRenderer::SelectPrimitive(int x, int y) {
         unsigned int maxz = ~0;
         GLuint in = 0;
         for (int i = 0; i < hits; i++) {
-          if (selectBuf()[i * 4 + 1] < maxz) {
+          if (selectBuf[i * 4 + 1] < maxz) {
             in = i;
-            maxz = selectBuf()[i * 4 + 1];
+            maxz = selectBuf[i * 4 + 1];
           }
         }
-        in = selectBuf()[in * 4 + 3];
+        in = selectBuf[in * 4 + 3];
         if (in >= 1 && in <= (PrimitiveCount() + 1)) {
           Result = &GetPrimitive(in - 1);
         }

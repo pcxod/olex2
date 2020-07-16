@@ -116,7 +116,7 @@ void TSPlane::Invert() {
   olx_reverse(Crds);
 }
 //..............................................................................
-void TSPlane::ToDataItem(TDataItem& item) const {
+void TSPlane::ToDataItem(TDataItem& item, const TXApp& app) const {
   item.AddField("def_id", GetDefId());
   size_t cnt = 0;
   olxstr iname("atom");
@@ -124,7 +124,7 @@ void TSPlane::ToDataItem(TDataItem& item) const {
     if (Crds[i].GetA()->IsDeleted()) {
       continue;
     }
-    Crds[i].GetA()->GetRef().ToDataItem(item.AddItem(iname, Crds[i].GetB()));
+    Crds[i].GetA()->GetRef().ToDataItem(item.AddItem(iname, Crds[i].GetB()), app);
   }
   item.AddField("normal", PersUtil::VecToStr(GetNormal()));
 }
@@ -228,15 +228,15 @@ TSPlane::Def::Def(const TSPlane& plane)
   QuickSorter::Sort(atoms);
 }
 //..............................................................................
-void TSPlane::Def::DefData::ToDataItem(TDataItem& item, bool use_id) const {
+void TSPlane::Def::DefData::ToDataItem(TDataItem& item, const TXApp& app, bool use_id) const {
   item.AddField("weight", weight);
-  ref.ToDataItem(item.AddItem("atom"), use_id);
+  ref.ToDataItem(item.AddItem("atom"), app, use_id);
 }
 //..............................................................................
-void TSPlane::Def::ToDataItem(TDataItem& item, bool use_id) const {
+void TSPlane::Def::ToDataItem(TDataItem& item, class TXApp& app, bool use_id) const {
   item.AddField("sides", sides);
   for (size_t i = 0; i < atoms.Count(); i++) {
-    atoms[i].ToDataItem(item.AddItem(i + 1), use_id);
+    atoms[i].ToDataItem(item.AddItem(i + 1), app, use_id);
   }
 }
 //..............................................................................
@@ -248,13 +248,13 @@ void TSPlane::Def::FromDataItem(const TDataItem& item, const TXApp& app) {
   }
 }
 //..............................................................................
-TSPlane* TSPlane::Def::FromAtomRegistry(struct ASObjectProvider& ar,
+TSPlane* TSPlane::Def::FromAtomRegistry(const TXApp& app, ASObjectProvider& ar,
   size_t def_id, TNetwork* parent, const smatd& matr) const
 {
   TTypeList<olx_pair_t<TSAtom*, double> > points;
   if (matr.IsFirst()) {
     for (size_t i = 0; i < atoms.Count(); i++) {
-      TSAtom* sa = atoms[i].ref.catom->GetParent()->GetLattice()
+      TSAtom* sa = atoms[i].ref.GetLattice(app)
         .GetAtomRegistry().Find(atoms[i].ref);
       if (sa == 0) {
         return 0;
@@ -265,12 +265,11 @@ TSPlane* TSPlane::Def::FromAtomRegistry(struct ASObjectProvider& ar,
   else {
     for (size_t i = 0; i < atoms.Count(); i++) {
       TSAtom::Ref &ref = atoms[i].ref;
-      const TUnitCell &uc = atoms[i].ref.catom->GetParent()->GetLattice()
-        .GetUnitCell();
+      const TUnitCell &uc = atoms[i].ref.GetLattice(app).GetUnitCell();
       smatd m = uc.MulMatrix(smatd::FromId(ref.matrix_id,
         uc.GetMatrix(smatd::GetContainerId(ref.matrix_id))), matr);
-      TSAtom* sa = atoms[i].ref.catom->GetParent()->GetLattice()
-        .GetAtomRegistry().Find(TSAtom::GetRef(*ref.catom, m));
+      TSAtom* sa = atoms[i].ref.GetLattice(app)
+        .GetAtomRegistry().Find(ref.atom_id, m.GetId());
       if (sa == 0) {
         return 0;
       }

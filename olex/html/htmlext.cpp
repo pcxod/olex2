@@ -738,14 +738,13 @@ bool THtml::SetObjectImage(AOlxCtrl* Obj, const olxstr& src) {
     return false;
   const std::type_info &ti = typeid(*Obj);
   if (ti == typeid(TBmpButton) || ti == typeid(THtmlImageCell)) {
-    wxFSFile *fsFile = TFileHandlerManager::GetFSFileHandler(src);
-    if (fsFile == NULL) {
+    olx_object_ptr<wxFSFile> fsFile = TFileHandlerManager::GetFSFileHandler(src);
+    if (fsFile == 0) {
       TBasicApp::NewLogEntry(logError) <<
         "Setimage: could not locate specified file: " << src;
       return false;
     }
     wxImage image(*(fsFile->GetStream()), wxBITMAP_TYPE_ANY);
-    delete fsFile;
     if (!image.Ok()) {
       TBasicApp::NewLogEntry(logError) <<
         "Setimage: could not read specified file: " << src;
@@ -759,7 +758,7 @@ bool THtml::SetObjectImage(AOlxCtrl* Obj, const olxstr& src) {
     else if (ti == typeid(THtmlImageCell)) {
       ((THtmlImageCell*)Obj)->SetImage(image);
       ((THtmlImageCell*)Obj)->SetSource(src);
-      ((THtmlImageCell*)Obj)->GetWindow()->Refresh(true);
+      ((THtmlImageCell*)Obj)->GetWindowInterface()->GetHTMLWindow()->Refresh(true);
     }
   }
   else if (ti == typeid(TImgButton)) {

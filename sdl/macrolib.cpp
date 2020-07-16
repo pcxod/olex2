@@ -64,39 +64,41 @@ void TEMacro::DoRun(TStrObjList &Params, const TParamList &Options,
 }
 ABasicFunction *TEMacro::Replicate() const {
   throw 1;
-  return NULL;
+  return 0;
 }
 //.............................................................................
 //.............................................................................
 //.............................................................................
-olxstr TEMacroLib::SubstituteArgs(const olxstr &arg_, const TStrList &argv,
-  const olxstr &location)
+olxstr TEMacroLib::SubstituteArgs(const olxstr& arg_, const TStrList& argv,
+  const olxstr& location)
 {
   if (is_quoted(arg_) || argv.IsEmpty()) return arg_;
   olxstr arg(arg_);
   size_t index = arg.FirstIndexOf('%');  // argument by index
-  while (index != InvalidIndex && index < (arg.Length()-1)) {
+  while (index != InvalidIndex && index < (arg.Length() - 1)) {
     size_t iindex = index;
     while (++iindex < arg.Length() && olxstr::o_isdigit(arg.CharAt(iindex)))
       ;
-    olxstr args = arg.SubString(index+1, iindex-index-1);
+    olxstr args = arg.SubString(index + 1, iindex - index - 1);
     if (!args.IsEmpty()) {
-      size_t pindex = args.ToSizeT()-1;  // index of the parameter
+      size_t pindex = args.ToSizeT() - 1;  // index of the parameter
       // check if valid argument index
       if (pindex < argv.Count()) {
-        arg.Delete(index, args.Length()+1); // delete %xx value
+        arg.Delete(index, args.Length() + 1); // delete %xx value
         arg.Insert(argv[pindex], index);  // insert value parameter
         index += argv[pindex].Length();
       }
-      else  {
+      else {
         TBasicApp::NewLogEntry(logError) << location << ": wrong argument "
-          "index - " << (pindex+1);
+          "index - " << (pindex + 1);
       }
     }
-    if (++index < arg.Length())
+    if (++index < arg.Length()) {
       index = arg.FirstIndexOf('%', index);
-    else
+    }
+    else {
       break;
+    }
   }
   return arg;
 }
@@ -105,18 +107,19 @@ ABasicFunction *TEMacroLib::FindEvaluator(const olxstr &name, bool macro_first) 
   olex2::IOlex2Processor *ip = olex2::IOlex2Processor::GetInstance();
   ABasicFunction *f = macro_first ? ip->GetLibrary().FindMacro(name)
     : ip->GetLibrary().FindFunction(name);
-  if (f == NULL) {
+  if (f == 0) {
     f = macro_first ? ip->GetLibrary().FindFunction(name)
       : ip->GetLibrary().FindMacro(name);
   }
   return f;
 }
 //.............................................................................
-ABasicFunction *TEMacroLib::FindEvaluator(exparse::expression_tree *&e,
-  olxstr &name)
+ABasicFunction* TEMacroLib::FindEvaluator(exparse::expression_tree*& e,
+  olxstr& name)
 {
-  if (e->evator != NULL)
+  if (e->evator != 0) {
     return FindEvaluator(name = e->evator->name, e->macro_call);
+  }
   return FindEvaluator(name = e->data, e->macro_call);
 }
 //.............................................................................
@@ -195,38 +198,48 @@ olxstr TEMacroLib::ProcessEvaluator(
   return EmptyString();
 }
 //.............................................................................
-TEMacroLib::arg_t TEMacroLib::EvaluateArg(exparse::expression_tree *t,
-  TMacroData& me, const TStrList &argv)
+TEMacroLib::arg_t TEMacroLib::EvaluateArg(exparse::expression_tree* t,
+  TMacroData& me, const TStrList& argv)
 {
   if (t->data.StartsFrom('-')) {
     if (t->data.IsNumber() ||
-       (t->data.Length() > 1 && olxstr::o_isdigit(t->data.CharAt(1))))
+      (t->data.Length() > 1 && olxstr::o_isdigit(t->data.CharAt(1))))
     {
       return arg_t(EmptyString(), t->data);
     }
     size_t ei = t->data.IndexOf('=');
     if (ei != InvalidIndex) {
-      return arg_t(t->data.SubString(1, ei-1),
-        unquote(SubstituteArgs(t->data.SubStringFrom(ei+1), argv)));
+      return arg_t(t->data.SubString(1, ei - 1),
+        unquote(SubstituteArgs(t->data.SubStringFrom(ei + 1), argv)));
     }
     return arg_t(t->data.SubStringFrom(1), EmptyString());
   }
   if (t->data == '=') {
-    if (t->left == NULL || t->left->data.IsEmpty())
+    if (t->left == 0 || t->left->data.IsEmpty()) {
       throw TInvalidArgumentException(__OlxSourceInfo, "option name");
+    }
     olxstr n = t->left->data.StartsFrom('-') ? t->left->data.SubStringFrom(1)
       : t->left->data;
     olxstr v = t->right ? ProcessEvaluator(t->right, me, argv) : EmptyString();
     return arg_t(n, unquote(v));
   }
-  if (t->evator)
+  if (t->evator != 0) {
     return arg_t(EmptyString(), ProcessEvaluator(t, me, argv));
+  }
   olxstr val;
-  if (t->priority) val << '(';
-  if (t->left) val << ProcessEvaluator(t->left, me, argv);
+  if (t->priority) {
+    val << '(';
+  }
+  if (t->left) {
+    val << ProcessEvaluator(t->left, me, argv);
+  }
   val << unquote(SubstituteArgs(t->data, argv));
-  if (t->priority) val << ')';
-  if (t->right) val << ProcessEvaluator(t->right, me, argv);
+  if (t->priority) {
+    val << ')';
+  }
+  if (t->right) {
+    val << ProcessEvaluator(t->right, me, argv);
+  }
   return arg_t(EmptyString(), val);
 }
 //.............................................................................
@@ -243,11 +256,11 @@ TEMacroLib::TEMacroLib(olex2::IOlex2Processor& olexProcessor)
   }
 }
 //.............................................................................
-void TEMacroLib::Load(const TDataItem& m_root)  {
-  for( size_t i=0; i < m_root.ItemCount(); i++ )  {
+void TEMacroLib::Load(const TDataItem& m_root) {
+  for (size_t i = 0; i < m_root.ItemCount(); i++) {
     const TDataItem& m_def = m_root.GetItemByIndex(i);
     const TDataItem* di = m_def.FindItem("body");
-    if( di == NULL )  {
+    if (di == 0) {
       TBasicApp::NewLogEntry(logError) << "Macro body is not defined: " <<
         m_def.GetName();
       continue;
@@ -283,17 +296,18 @@ void TEMacroLib::Init()  {
     "Internal use for calling registered callback functions"));
 }
 //.............................................................................
-
 bool TEMacroLib::ProcessFunction(olxstr& Cmd, TMacroData& E, bool has_owner,
   const TStrList &argv)
 {
   if (Cmd.IndexOf('(') == InvalidIndex) {
-    if (is_quoted(Cmd))
+    if (is_quoted(Cmd)) {
       Cmd = unquote(Cmd);
+    }
     return true;
   }
-  if ((LogLevel&macro_log_function) != 0)
+  if ((LogLevel & macro_log_function) != 0) {
     TBasicApp::NewLogEntry(logInfo) << Cmd;
+  }
   E.GetStack().Push(Cmd);
   size_t specialFunctionIndex = Cmd.IndexOf('$');
   while( specialFunctionIndex != InvalidIndex &&
@@ -338,8 +352,9 @@ bool TEMacroLib::ProcessFunction(olxstr& Cmd, TMacroData& E, bool has_owner,
           Cmd.Delete(specialFunctionIndex, i - specialFunctionIndex + 1);
           Cmd.Insert(spFunction, specialFunctionIndex);
         }
-        else
+        else {
           Cmd.Delete(specialFunctionIndex, i - specialFunctionIndex + 1);
+        }
         specialFunctionIndex = next_unescaped('$', Cmd, 0);
         if (specialFunctionIndex == InvalidIndex) {
           E.GetStack().Pop();
@@ -371,31 +386,44 @@ bool TEMacroLib::ProcessFunction(olxstr& Cmd, TMacroData& E, bool has_owner,
 void TEMacroLib::ProcessMacro(const olxstr& Cmd, TMacroData& Error,
   const TStrList &argv)
 {
-  if (Cmd.IsEmpty()) return;
-  if ((GetLogLevel()&macro_log_macro) != 0)
+  if (Cmd.IsEmpty()) {
+    return;
+  }
+  if ((GetLogLevel() & macro_log_macro) != 0) {
     TBasicApp::NewLogEntry(logInfo) << Cmd;
+  }
   olxstr Command = olxstr(Cmd).TrimWhiteChars();
-  if (Command.IsEmpty()) return;
+  if (Command.IsEmpty()) {
+    return;
+  }
   // processing environment variables
   size_t ind = Command.FirstIndexOf('|');
   while (ind != InvalidIndex) {
     if (is_escaped(Command, ind)) {
       Command.Delete(ind - 1, 1);
-      if (++ind >= Command.Length()) break;
+      if (++ind >= Command.Length()) {
+        break;
+      }
       ind = Command.FirstIndexOf('|', ind);
       continue;
     }
-    if (ind+1 >= Command.Length()) break;
+    if (ind + 1 >= Command.Length()) {
+      break;
+    }
     size_t ind1 = Command.FirstIndexOf('|', ind+1);
     if (ind1 == InvalidIndex) break;
     if (is_escaped(Command, ind1)) {
       Command.Delete(ind1 - 1, 1);
-      if (++ind1 >= Command.Length())  break;
+      if (++ind1 >= Command.Length()) {
+        break;
+      }
       ind = Command.FirstIndexOf('|', ind1);
       continue;
     }
     if (ind1 == ind+1) { // leave these - could be operators
-      if (++ind1 >= Command.Length())  break;
+      if (++ind1 >= Command.Length()) {
+        break;
+      }
       ind = Command.FirstIndexOf('|', ind1);
       continue;
     }
@@ -409,47 +437,71 @@ void TEMacroLib::ProcessMacro(const olxstr& Cmd, TMacroData& Error,
       Command.Insert(eval, ind);
       ind1 = ind + eval.Length();
     }
-    else  // variable is not found - leave as it is
+    else { // variable is not found - leave as it is
       ind1 = ind + var_name.Length();
+    }
 
-    if (++ind1 >= Command.Length())  break;
+    if (++ind1 >= Command.Length()) {
+      break;
+    }
     ind = Command.FirstIndexOf('|', ind1);
   }
   try {
     exparse::expression_parser expr(Command);
     expr.root->expand_cmd();
     ProcessEvaluator(expr.root, Error, argv);
-  }
+  } 
   catch (const TExceptionBase &e) {
     Error.ProcessingException(__OlxSourceInfo, e);
   }
 }
 //.............................................................................
-void TEMacroLib::ParseMacro(const TDataItem& macro_def, TEMacro& macro)  {
+void TEMacroLib::ProcessMacro(const olxstr& Cmd, TStrObjList& args,
+  const TParamList& options, TMacroData& me)
+{
+  olex2::IOlex2Processor* ip = olex2::IOlex2Processor::GetInstance();
+  ABasicFunction *f = ip->GetLibrary().FindMacro(Cmd, args.Count());
+  if (f == 0) {
+    me.NonexitingMacroError(Cmd);
+    return;
+  }
+  try {
+    f->Run(args, options, me);
+  }
+  catch (const TExceptionBase& e) {
+    me.ProcessingException(__OlxSourceInfo, e);
+  }
+}
+//.............................................................................
+void TEMacroLib::ParseMacro(const TDataItem& macro_def, TEMacro& macro) {
   olxstr Tmp;
   TDataItem* di = macro_def.FindItem("cmd");
-  if( di != NULL )  {
-    for( size_t i=0; i < di->ItemCount(); i++ )
-      if( ExtractItemVal(di->GetItemByIndex(i), Tmp) )
+  if (di != 0) {
+    for (size_t i = 0; i < di->ItemCount(); i++) {
+      if (ExtractItemVal(di->GetItemByIndex(i), Tmp)) {
         macro.AddCmd(Tmp);
+      }
+    }
   }
   di = macro_def.FindItem("args");
-  if( di != NULL )  {
-    for( size_t i=0; i < di->ItemCount(); i++ )  {
+  if (di != 0) {
+    for (size_t i = 0; i < di->ItemCount(); i++) {
       const TDataItem& tdi = di->GetItemByIndex(i);
       macro.AddArg(tdi.FindField("name"), tdi.FindField("def"));
     }
   }
   di = macro_def.FindItem("onabort");
-  if( di != NULL )  {
-    for( size_t i=0; i < di->ItemCount(); i++ )
-      if( ExtractItemVal(di->GetItemByIndex(i), Tmp) )
+  if (di != 0) {
+    for (size_t i = 0; i < di->ItemCount(); i++) {
+      if (ExtractItemVal(di->GetItemByIndex(i), Tmp)) {
         macro.AddOnAbortCmd(Tmp);
+      }
+    }
   }
 }
 //.............................................................................
-void TEMacroLib::funIF(exparse::evaluator<exparse::expression_tree> *t,
-  TMacroData &me, const TStrList &argv)
+void TEMacroLib::funIF(exparse::evaluator<exparse::expression_tree>* t,
+  TMacroData& me, const TStrList& argv)
 {
   if (t->args.Count() < 2) {
     me.ProcessingError(__OlxSrcInfo,
@@ -457,16 +509,19 @@ void TEMacroLib::funIF(exparse::evaluator<exparse::expression_tree> *t,
     return;
   }
   arg_t r = EvaluateArg(t->args[0], me, argv);
-  if (!me.IsSuccessful()) return;
+  if (!me.IsSuccessful()) {
+    return;
+  }
   bool condition = r.GetB().ToBool();
-  size_t bi=InvalidIndex;
+  size_t bi = InvalidIndex;
   if (condition) {
     if (t->args.Count() == 2) { // if cond expr
       bi = 1;
     }
     // if cond then expr
-    else if (t->args[1]->data.Equalsi("then"))
+    else if (t->args[1]->data.Equalsi("then")) {
       bi = 2;
+    }
   }
   else {
     if (t->args.Count() > 2) {
@@ -479,21 +534,26 @@ void TEMacroLib::funIF(exparse::evaluator<exparse::expression_tree> *t,
         bi = 4;
       }
       // if cond the true_exp
-      else if (t->args.Count() == 3)
+      else if (t->args.Count() == 3) {
         bi = 0;
+      }
     }
   }
   // is none?
-  if (bi == 0) return;
+  if (bi == 0) {
+    return;
+  }
   if (bi == InvalidIndex) {
     me.ProcessingError(__OlxSrcInfo,
       "incorrect syntax - condition and at least one command are expected");
     return;
   }
   r = EvaluateArg(t->args[bi], me, argv);
-  if (r.GetB().Equalsi("none") || r.GetB().IsBool()) return;
+  if (r.GetB().Equalsi("none") || r.GetB().IsBool()) {
+    return;
+  }
   TStrList toks = TParamList::StrtokLines(r.GetB(), ">>", false);
-  for (size_t i=0; i < toks.Count(); i++) {
+  for (size_t i = 0; i < toks.Count(); i++) {
     exparse::expression_parser expr(toks[i]);
     expr.root->expand_cmd();
     ProcessEvaluator(expr.root, me, argv, true);
@@ -527,7 +587,9 @@ void TEMacroLib::funOr(exparse::evaluator<exparse::expression_tree> *t,
   }
   for( size_t i=0; i < t->args.Count(); i++ )  {
     arg_t a = EvaluateArg(t->args[i], E, argv);
-    if (!E.IsSuccessful()) return;
+    if (!E.IsSuccessful()) {
+      return;
+    }
     if (a.GetB().ToBool()) {
       E.SetRetVal(true);
       return;
@@ -544,8 +606,9 @@ void TEMacroLib::funNot(exparse::evaluator<exparse::expression_tree> *t,
     return;
   }
   arg_t a = EvaluateArg(t->args[0], E, argv);
-  if (!E.IsSuccessful()) return;
-  E.SetRetVal(!a.GetB().ToBool());
+  if (E.IsSuccessful()) {
+    E.SetRetVal(!a.GetB().ToBool());
+  }
 }
 //..............................................................................
 void TEMacroLib::funLastError(const TStrObjList& Params, TMacroData &E) {
@@ -561,8 +624,12 @@ void TEMacroLib::funLogLevel(const TStrObjList& Params, TMacroData &E) {
   }
   else  {
     uint8_t ll = 0;
-    if( Params[0].IndexOfi('m') != InvalidIndex )  ll |= macro_log_macro;
-    if( Params[0].IndexOfi('f') != InvalidIndex )  ll |= macro_log_function;
+    if (Params[0].IndexOfi('m') != InvalidIndex) {
+      ll |= macro_log_macro;
+    }
+    if (Params[0].IndexOfi('f') != InvalidIndex) {
+      ll |= macro_log_function;
+    }
     SetLogLevel(ll);
   }
 }

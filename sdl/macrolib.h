@@ -109,12 +109,16 @@ public:
     Base& base_instance, void (Base::*ErrorAnalyser)(TMacroData& error))
   {
     ProcessMacro(Cmd, Error);
-    if (ErrorAnalyser != NULL)
+    if (ErrorAnalyser != 0) {
       (base_instance.*ErrorAnalyser)(Error);
+    }
   }
   //..............................................................................
   void ProcessMacro(const olxstr& Cmd, TMacroData& Error,
     const TStrList &argv=TStrList());
+  //..............................................................................
+  void ProcessMacro(const olxstr& Cmd, TStrObjList& args,
+    const TParamList& options, TMacroData& Error);
   DefPropP(uint8_t, LogLevel)
 };
 

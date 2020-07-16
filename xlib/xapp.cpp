@@ -208,8 +208,8 @@ void TXApp::CalcSFEx(const TRefList& refs, TArrayList<TEComplex<double> >& F,
             hkl[2] * (Q[2] * hkl[2]));
           B = exp(B);
           if (atoms[j]->GetEllipsoid()->IsAnharmonic()) {
-            l += atoms[j]->GetEllipsoid()->GetAnharmonicPart().get()
-              .calculate(hkl) * compd(B*ca, B*sa);
+            l += atoms[j]->GetEllipsoid()->GetAnharmonicPart()
+              ->calculate(hkl) * compd(B*ca, B*sa);
           }
           else {
             l.Re() += B * ca;
@@ -1181,49 +1181,49 @@ WBoxInfo TXApp::CalcWBox(const TSAtomPList& atoms, const TDoubleList* radii,
 //..............................................................................
 double TXApp::GetMinHBondAngle()  {
   TXApp &a = GetInstance();
-  if (a.min_hbond_angle.is_valid()) {
-    return a.min_hbond_angle();
+  if (a.min_hbond_angle.ok()) {
+    return *a.min_hbond_angle;
   }
   else {
     a.min_hbond_angle = TBasicApp::GetInstance().GetOptions()
       .FindValue("hbond_min_angle", "120").ToDouble();
-    return a.min_hbond_angle();
+    return *a.min_hbond_angle;
   }
 }
 //..............................................................................
 bool TXApp::DoPreserveFVARs() {
   TXApp &a = GetInstance();
-  if (a.preserve_fvars.is_valid()) {
-    return a.preserve_fvars();
+  if (a.preserve_fvars.ok()) {
+    return *a.preserve_fvars;
   }
   else {
     a.preserve_fvars = TBasicApp::GetInstance().GetOptions()
       .FindValue("preserve_fvars", FalseString()).ToBool();
-    return a.preserve_fvars();
+    return *a.preserve_fvars;
   }
 }
 //..............................................................................
 bool TXApp::DoUseSafeAfix() {
   TXApp &a = GetInstance();
-  if (a.safe_afix.is_valid()) {
-    return a.safe_afix();
+  if (a.safe_afix.ok()) {
+    return *a.safe_afix;
   }
   else {
     a.safe_afix = TBasicApp::GetInstance().GetOptions()
       .FindValue("safe_afix", TrueString()).ToBool();
-    return a.safe_afix();
+    return *a.safe_afix;
   }
 }
 //..............................................................................
 bool TXApp::DoRenameParts() {
   TXApp &a = GetInstance();
-  if (a.rename_parts.is_valid()) {
-    return a.rename_parts();
+  if (a.rename_parts.ok()) {
+    return *a.rename_parts;
   }
   else {
     a.rename_parts = TBasicApp::GetInstance().GetOptions()
       .FindValue("rename_parts", TrueString()).ToBool();
-    return a.rename_parts();
+    return *a.rename_parts;
   }
 }
 //..............................................................................
@@ -1436,8 +1436,7 @@ TSBond& TXApp::GetSBond(size_t ind) const {
 }
 //..............................................................................
 TSAtom& TXApp::GetSAtom(const TSAtom::Ref& r) const {
-  TSAtom *a = Files[r.catom->GetParent()->GetId()].GetLattice()
-    .GetAtomRegistry().Find(r);
+  TSAtom *a = Files[r.au_id].GetLattice().GetAtomRegistry().Find(r);
   if (a == 0) {
     throw TInvalidArgumentException(__OlxSourceInfo, "atom ref");
   }
@@ -1445,11 +1444,9 @@ TSAtom& TXApp::GetSAtom(const TSAtom::Ref& r) const {
 }
 //..............................................................................
 TSBond& TXApp::GetSBond(const TSBond::Ref& r) const {
-  TSBond* b = Files[r.a.catom->GetParent()->GetId()].GetLattice()
-    .GetAtomRegistry().Find(r);
-  if (b == 0 && r.a.catom->GetParent() != r.b.catom->GetParent()) {
-    b = Files[r.b.catom->GetParent()->GetId()].GetLattice()
-      .GetAtomRegistry().Find(r);
+  TSBond* b = Files[r.a.au_id].GetLattice().GetAtomRegistry().Find(r);
+  if (b == 0 && r.a.au_id != r.b.au_id) {
+    b = Files[r.b.au_id].GetLattice().GetAtomRegistry().Find(r);
   }
   if (b == 0) {
     throw TInvalidArgumentException(__OlxSourceInfo, "atom ref");

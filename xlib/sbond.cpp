@@ -103,9 +103,9 @@ int TSBond::Ref::Compare(const Ref& r) const {
   return rv == 0 ? b.Compare(r.b) : rv;
 }
 //..............................................................................
-void TSBond::Ref::ToDataItem(TDataItem& item, bool use_id) const {
-  a.ToDataItem(item.AddItem("a"), use_id);
-  b.ToDataItem(item.AddItem("b"), use_id);
+void TSBond::Ref::ToDataItem(TDataItem& item, const TXApp& app, bool use_id) const {
+  a.ToDataItem(item.AddItem("a"), app, use_id);
+  b.ToDataItem(item.AddItem("b"), app, use_id);
 }
 //..............................................................................
 void TSBond::Ref::FromDataItem(const TDataItem& item, const class TXApp& app) {

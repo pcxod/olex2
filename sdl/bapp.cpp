@@ -560,13 +560,13 @@ void BAPP_Encode(const TStrObjList& Params, TMacroData &E) {
     olx_array_ptr<uint8_t> bf(bf_sz);
     uint64_t available = in.GetSize();
     while (available > bf_sz) {
-      in.Read(bf(), bf_sz);
-      out.Write(encoding::base85::encode(bf(), bf_sz));
+      in.Read(bf, bf_sz);
+      out.Write(encoding::base85::encode(bf, bf_sz));
       available -= bf_sz;
     }
     if (available > 0) {
-      in.Read(bf(), available);
-      out.Write(encoding::base85::encode(bf(), available));
+      in.Read(bf, available);
+      out.Write(encoding::base85::encode(bf, available));
     }
   }
   else {
@@ -585,13 +585,13 @@ void BAPP_Decode(const TStrObjList& Params, TMacroData &E) {
     olx_array_ptr<uint8_t> bf(bf_sz);
     uint64_t available = in.GetSize();
     while (available > bf_sz) {
-      in.Read(bf(), bf_sz);
-      out.Write(encoding::base85::decode(bf(), bf_sz));
+      in.Read(bf, bf_sz);
+      out.Write(encoding::base85::decode(bf, bf_sz));
       available -= bf_sz;
     }
     if (available > 0) {
-      in.Read(bf(), available);
-      out.Write(encoding::base85::decode(bf(), available));
+      in.Read(bf, available);
+      out.Write(encoding::base85::decode(bf, available));
     }
   }
   else {

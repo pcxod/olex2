@@ -17,13 +17,15 @@
 #include "wx/wx.h"
 #endif
 
-TLangDict::TLangDict()  {
+TLangDict::TLangDict() {
   CurrentLanguageEncodingStr = "ISO8859-1";
 }
 //..............................................................................
-TLangDict::~TLangDict()  {  Clear();  }
+TLangDict::~TLangDict() {
+  Clear();
+}
 //..............................................................................
-void TLangDict::Clear()  {
+void TLangDict::Clear() {
   for (size_t i = 0; i < Records.Count(); i++) {
     delete Records.GetValue(i);
   }
@@ -42,8 +44,10 @@ void TLangDict::SetCurrentLanguage(const olxstr& fileName, const olxstr& lang) {
   Clear();
   olx_object_ptr<TUtf8File> f = TUtf8File::Open(fileName, "rb", true);
   TCStrList sl;
-  sl.LoadFromTextStream(f());
-  if (sl.Count() < 2)  return;
+  sl.LoadFromTextStream(f);
+  if (sl.Count() < 2) {
+    return;
+  }
 
   TCStrList toks(sl[0], '\t');  // languages
   if (toks.Count() < 2) {
@@ -61,23 +65,9 @@ void TLangDict::SetCurrentLanguage(const olxstr& fileName, const olxstr& lang) {
     throw TFunctionFailedException(__OlxSourceInfo,
       "Number of languages mismatches the number of encodings");
   }
-
-#ifndef _UNICODE
-  wxCSConv csc(toks1[CurrentLanguageIndex].u_str());
-  if (!csc.IsOk()) {
-    throw TFunctionFailedException(__OlxSourceInfo,
-      (olxstr("Could not locate the following encoding ") <<
-        toks1[CurrentLanguageIndex] << '\n'));
-  }
-  else {
-    CurrentLanguage = toks[CurrentLanguageIndex];
-    CurrentLanguageEncodingStr = toks1[CurrentLanguageIndex];
-  }
-  TTBuffer<char> c_bf(1024);
-#else
   CurrentLanguage = toks[CurrentLanguageIndex];
   CurrentLanguageEncodingStr = toks1[CurrentLanguageIndex];
-#endif
+
 #ifdef __WXWIDGETS__
   wxMBConvUTF8 utf8;
   TTBuffer<wchar_t> wc_bf(4096);
@@ -94,18 +84,18 @@ void TLangDict::SetCurrentLanguage(const olxstr& fileName, const olxstr& lang) {
       TBasicApp::NewLogEntry() << "Error reading dictionary at line " << i;
       continue;
     }
-#ifdef _UNICODE
+    olx_object_ptr<olxstr> str;
     if (toks[CurrentLanguageIndex].Length() < 2) {  // take language 1
 #ifdef __WXWIDGETS__
       wc_bf.SetCapacity(toks[1].Length());
       int c = utf8.MB2WC(wc_bf.Data(), toks[1].c_str(), wc_bf.GetCapacity());
-      Records.Add(toks[0], new olxstr((const olxch *)wc_bf.Data(), c));
+      str = new olxstr((const olxch*)wc_bf.Data(), c);
 #else
       try {
-        Records.Add(toks[0],
-          new olxstr(olxwstr::FromCStr(toks[1].c_str())));
+        str = new olxstr(olxwstr::FromCStr(toks[1].c_str()));
       }
       catch (...) {
+        continue;
       }
 #endif
     }
@@ -114,33 +104,25 @@ void TLangDict::SetCurrentLanguage(const olxstr& fileName, const olxstr& lang) {
       wc_bf.SetCapacity(toks[CurrentLanguageIndex].Length());
       size_t c = utf8.MB2WC(wc_bf.Data(), toks[CurrentLanguageIndex].c_str(),
         wc_bf.GetCapacity());
-      Records.Add(toks[0], new olxstr((const olxch *)wc_bf.Data(), c));
+      str = new olxstr((const olxch *)wc_bf.Data(), c);
 #else
       try {
-        Records.Add(toks[0],
-          new olxstr(olxwstr::FromCStr(toks[CurrentLanguageIndex].c_str())));
+        str = new olxstr(olxwstr::FromCStr(toks[CurrentLanguageIndex].c_str()));
       }
       catch (...) {
+        continue;
       }
 #endif
     }
-#else
-    if (toks[CurrentLanguageIndex].Length() < 2) {
-      wc_bf.SetCapacity(toks[1].Length());
-      c_bf.SetCapacity(toks[1].Length());
-      int c = utf8.MB2WC(wc_bf.Data(), toks[1].c_str(), wc_bf.GetCapacity());
-      csc.FromWChar(c_bf.Data(), c_bf.GetCapacity(), wc_bf.Data(), c);
-      Records.Add(toks[0], new olxstr(c_bf.Data()));
+    if (str.ok()) {
+      size_t idx = Records.IndexOf(*str);
+      if (idx == InvalidIndex) {
+        Records.Add(toks[0], str.release());
+      }
+      else {
+        *Records.GetValue(idx) = *str;
+      }
     }
-    else {
-      wc_bf.SetCapacity(toks[CurrentLanguageIndex].Length());
-      c_bf.SetCapacity(toks[CurrentLanguageIndex].Length());
-      size_t c = utf8.MB2WC(wc_bf.Data(), toks[CurrentLanguageIndex].c_str(),
-        wc_bf.GetCapacity());
-      csc.FromWChar(c_bf.Data(), c_bf.GetCapacity(), wc_bf.Data(), c);
-      Records.Add(toks[0], new olxstr(c_bf.Data(), c));
-    }
-#endif
   }
 }
 //..............................................................................

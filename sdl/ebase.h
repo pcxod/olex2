@@ -97,14 +97,28 @@ template <typename T> T *olx_malloc(size_t sz) {
 template <typename T> T *olx_realloc(T *a, size_t sz) {
   return (T*)olx_realloc_(a, sz*sizeof(T));
 }
-template <typename T> void olx_free(T *a) {  if( a != NULL )  free(a);  }
-template <typename T> void olx_del_obj(T *a) { if (a != NULL) delete a;  }
-template <typename T> void olx_del_arr(T *a) { if (a != NULL) delete [] a; }
+template <typename T> void olx_free(T *a) {
+  if( a != 0 )  free(a);
+}
+template <typename T> void olx_del_obj(T *a) {
+  if (a != 0) delete a;
+}
+template <typename T> void olx_del_arr(T *a) {
+  if (a != 0) delete [] a;
+}
 template <typename T> T *olx_memcpy(T *dest, const T *src, size_t sz) {
   return (T *)memcpy(dest, src, sz*sizeof(T));
 }
 template <typename T> T *olx_memmove(T *dest, const T *src, size_t sz) {
   return (T *)memmove(dest, src, sz*sizeof(T));
+}
+template <typename T, typename T1>
+T* olx_memcpy(T* dest, const T1 &src, size_t sz) {
+  return (T*)memcpy(dest, src, sz * sizeof(T));
+}
+template <typename T, typename T1>
+T* olx_memmove(T* dest, const T1& src, size_t sz) {
+  return (T*)memmove(dest, src, sz * sizeof(T));
 }
 
 template <typename A>
@@ -123,122 +137,133 @@ bool olx_type_check(const A &a, const B &b) {
 // string base
 template <class T> class TTIString {
 public:
-  struct Buffer  {
-    T *Data;
+  struct Buffer {
+    T* Data;
     unsigned int RefCnt;
     size_t Length;
-    Buffer(size_t len, const T *data=NULL, size_t tocopy=0)  {
+    Buffer(size_t len, const T* data = NULL, size_t tocopy = 0) {
       Data = ((len != 0) ? olx_malloc<T>(len) : (T*)NULL);
-      if( data != NULL )
+      if (data != NULL)
         olx_memcpy(Data, data, tocopy);
       RefCnt = 1;
       Length = len;
     }
     // creates object from external array, must be created with malloc
-    Buffer(T *data, size_t len)  {
+    Buffer(T* data, size_t len) {
       Data = data;
       RefCnt = 1;
       Length = len;
     }
-    ~Buffer()  {  olx_free(Data);  }
-    void SetCapacity(size_t newlen)  {
-      if( newlen > Length )  {
+    ~Buffer() { olx_free(Data); }
+    void SetCapacity(size_t newlen) {
+      if (newlen > Length) {
         Data = olx_realloc(Data, newlen);
         Length = newlen;
       }
     }
   };
 protected:
-  mutable Buffer *SData;  // do not have much choice with c_str ...
-  void IncLength(size_t len)  {  _Length += len;  }
-  void DecLength(size_t len)  {  _Length -= len;  }
-  size_t GetCapacity()  const {  return SData == NULL ? 0 : SData->Length;  }
+  mutable Buffer* SData;  // do not have much choice with c_str ...
+  void IncLength(size_t len) { _Length += len; }
+  void DecLength(size_t len) { _Length -= len; }
+  size_t GetCapacity()  const { return SData == NULL ? 0 : SData->Length; }
   size_t _Increment, _Length;
   mutable size_t _Start;
   TTIString() {}
   void checkBufferForModification(size_t newSize) const {
-    if( SData == NULL )
+    if (SData == 0) {
       SData = new Buffer(newSize + _Increment);
-    else if( SData->RefCnt > 1 )  {
+    }
+    else if (SData->RefCnt > 1) {
       SData->RefCnt--;
-      Buffer *newData = new Buffer(newSize + _Increment, &SData->Data[_Start],
+      Buffer* newData = new Buffer(newSize + _Increment, &SData->Data[_Start],
         olx_min(_Length, newSize));
       SData = newData;
       _Start = 0;
     }
-    else if( SData->RefCnt == 1 && _Start != 0 )  {
-      if( _Length != 0 )
-        memmove(SData->Data, &SData->Data[_Start], _Length*sizeof(T));
+    else if (SData->RefCnt == 1 && _Start != 0) {
+      if (_Length != 0) {
+        memmove(SData->Data, &SData->Data[_Start], _Length * sizeof(T));
+      }
       _Start = 0;
     }
-    if( SData->Length < newSize )
-      SData->SetCapacity((size_t)(newSize*1.5)+_Increment);
+    if (SData->Length < newSize) {
+      SData->SetCapacity((size_t)(newSize * 1.5) + _Increment);
+    }
   }
 public:
   TTIString(const TTIString& str) {
     SData = str.SData;
-    if( SData != NULL )  SData->RefCnt++;
+    if (SData != 0) {
+      SData->RefCnt++;
+    }
     _Length = str._Length;
     _Start = str._Start;
     _Increment = 8;
   }
   virtual ~TTIString() {
-    if (SData != NULL && --SData->RefCnt == 0) {
+    if (SData != 0 && --SData->RefCnt == 0) {
       delete SData;
-      SData = NULL;
+      SData = 0;
       _Length = 0;
     }
   }
   // might not have '\0' char, to be used with Length or RawLen (char count)
-  T * raw_str() const { return ((SData == NULL) ? NULL : &SData->Data[_Start]);  }
+  T* raw_str() const { return ((SData == 0) ? 0 : &SData->Data[_Start]); }
   // length in bytes
-  size_t RawLen() const {  return _Length*sizeof(T);  }
+  size_t RawLen() const { return _Length * sizeof(T); }
   // length in items
-  size_t Length() const { return _Length;  }
+  size_t Length() const { return _Length; }
   // for internal: use with caution!
-  inline Buffer *Data_() const {  return SData;  }
+  inline Buffer* Data_() const { return SData; }
   // for internal stuff
-  size_t Start_() const { return _Start;  }
+  size_t Start_() const { return _Start; }
   /* standard api requires terminating '\0'; the use of raw_str and Length() is
  preferable
  */
-  const T * u_str() const {
-    if( SData == NULL ) return NULL;
-    if( (SData->Length == (_Start+_Length)) ||
-        (SData->Data[_Start+_Length] != '\0') )
+  const T* u_str() const {
+    if (SData == 0) {
+      return 0;
+    }
+    if ((SData->Length == (_Start + _Length)) ||
+      (SData->Data[_Start + _Length] != '\0'))
     {
       checkBufferForModification(_Length + 1);
-      SData->Data[_Start+_Length] = '\0';
+      SData->Data[_Start + _Length] = '\0';
     }
     return &SData->Data[_Start];
   }
-  bool IsEmpty() const { return _Length == 0;  }
+  bool IsEmpty() const { return _Length == 0; }
   T CharAt(size_t i) const {
 #ifdef _DEBUG
-    if( i >= _Length )
+    if (i >= _Length) {
       TExceptionBase::ThrowIndexOutOfRange(__POlxSourceInfo, i, 0, _Length);
+    }
 #endif
     return SData->Data[_Start + i];
   }
   T operator[] (size_t i) const {
 #ifdef _DEBUG
-    if( i >= _Length )
+    if (i >= _Length) {
       TExceptionBase::ThrowIndexOutOfRange(__POlxSourceInfo, i, 0, _Length);
+    }
 #endif
     return SData->Data[_Start + i];
   }
   /* reads content of the string to external buffer, which must be able to
  accommodate string length + 1 for the end of string char
   */
-  T *Read(T *v)  {
-    if( SData == NULL ) return NULL;
+  T* Read(T* v) {
+    if (SData == 0) {
+      return 0;
+    }
     olx_memcpy(v, &SData->Data[_Start], _Length);
     v[_Length] = L'\0';
     return v;
   }
   typedef T CharT;
   // this does not help in GCC,
-  template <typename,typename> friend class TTSString;
+  template <typename, typename> friend class TTSString;
 };
 
 typedef TTIString<olxch> TIString;
