@@ -740,7 +740,9 @@ double TGXApp::ProbFactor(double Prob) {
 }
 //..............................................................................
 void TGXApp::Init() {
-  try { CreateObjects(false); }
+  try { 
+    CreateObjects(false);
+  }
   catch (const TExceptionBase &e) {
     GetRenderer().GetStyles().Clear();
     try {

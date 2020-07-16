@@ -26,8 +26,8 @@ void TAtomLegend::Create(const olxstr& cName) {
     return;
   }
   TGraphicsStyle& GS = GPC.GetStyle();
-  Left = GS.GetParam("Left", Parent.GetWidth()-Width*2, true).ToInt();
-  Top = GS.GetParam("Top", Top, true).ToInt();
+  Left = GS.FindNumParam("Left", Left);
+  Top = GS.FindNumParam("Top", Top);
   Z = GS.GetParam("Z", Z).ToDouble();
   TGlMaterial glm("3077;0;0");
   TGlPrimitive& GlP = GPC.NewPrimitive("Plane", sgloQuads);
@@ -51,7 +51,7 @@ void TAtomLegend::Fit() {
     Parent.GetScene().FindFontIndexForType<TXAtom>(), true);
   const uint16_t th = glf.TextHeight(EmptyString());
   const double LineSpacer = 0.05*th;
-  Width = glf.GetMaxHeight();
+  Width = glf.GetMaxHeight()*2;
   Height = glf.GetMaxHeight() * text.Count();
   Height += (uint16_t)olx_round(LineSpacer*(text.Count() - 1));
 }
@@ -81,7 +81,7 @@ bool TAtomLegend::Orient(TGlPrimitive& P) {
     const double hh = Parent.GetHeight() / 2;
     double scale = glf.IsVectorFont() ? es
       : (Parent.GetViewZoom() == 1.0 ? 1.0 : 1. / Parent.GetExtraZoom());
-    const double GlLeft = ((Left + GetCenter()[0])*es + Width*scale - hw) + 5;
+    const double GlLeft = ((Left + GetCenter()[0])*es + Width*scale/2 - hw) + 5;
     const double GlTop = (hh - (Top - GetCenter()[1])*es - Height*scale) +
       (glf.IsVectorFont() ? glf.GetPointSize()*scale/2.5 : 0.1);
     const double LineSpacer = 0.05*th;
@@ -108,7 +108,7 @@ bool TAtomLegend::Orient(TGlPrimitive& P) {
     const double hh = Parent.GetHeight() / (2 * es);
     double xx = GetCenter()[0], xy = -GetCenter()[1];
     const double z = Z - 0.01;
-    double w = Width, h = Height;
+    double w = Width/2, h = Height;
     if (!glf.IsVectorFont()) {
       w /= Parent.GetExtraZoom();
       h /= Parent.GetExtraZoom();
@@ -130,7 +130,7 @@ bool TAtomLegend::Orient(TGlPrimitive& P) {
     double scale = glf.IsVectorFont() ? es
       : (Parent.GetViewZoom() == 1.0 ? 1.0 : 1. / Parent.GetExtraZoom());
     const double z = Z - 0.01;
-    double w = Width, h = Height;
+    double w = Width/2, h = Height;
     if (!glf.IsVectorFont()) {
       w /= Parent.GetExtraZoom();
       h /= Parent.GetExtraZoom();
@@ -237,8 +237,19 @@ void TAtomLegend::SetVisible(bool v) {
 }
 //.............................................................................
 void TAtomLegend::SetPosition(int left, int top) {
-  GetPrimitives().GetStyle().SetParam("TOp", Top = top);
-  GetPrimitives().GetStyle().SetParam("Left", Left = left);
+  GetPrimitives().GetStyle().SetParam("Top", Top = top, true);
+  GetPrimitives().GetStyle().SetParam("Left", Left = left, true);
   Center.Null();
+}
+//.............................................................................
+void TAtomLegend::ResetPosition(bool right, bool bottom) {
+  int top = 0, left = 0;
+  if (right) {
+    left = Parent.GetWidth() - GetWidth();
+  }
+  if (bottom) {
+    top = Parent.GetHeight() - GetHeight();
+  }
+  SetPosition(left, top);
 }
 //.............................................................................

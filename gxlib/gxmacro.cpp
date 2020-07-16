@@ -5399,23 +5399,20 @@ void GXLibMacros::macCalcSurf(TStrObjList &Cmds, const TParamList &Options,
 void GXLibMacros::macLegend(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
+  olxstr reset = Options.FindValue("r", "-");
+  if (reset != '-') {
+    bool bottom= reset.Contains("b"),
+      right = reset.Contains("r");
+    app.AtomLegend().ResetPosition(right, bottom);
+    app.AtomLegend().Update();
+    app.AtomLegend().SetVisible(true);
+    return;
+  }
   bool v = !app.AtomLegend().IsVisible();
   if (!Cmds.IsEmpty()) {
     v = Cmds[0].ToBool();
   }
-  if (!v) {
-    app.AtomLegend().SetVisible(false);
-  }
-  else {
-    if (Options.GetBoolOption('r')) {
-      app.AtomLegend().SetPosition(
-        app.GetRenderer().GetWidth()- app.AtomLegend().GetWidth()*2,
-        0);
-    }
-    app.AtomLegend().Update();
-    app.AtomLegend().SetVisible(true);
-  }
-  
+  app.AtomLegend().SetVisible(v);
 }
 //.............................................................................
 template <typename functor_t>

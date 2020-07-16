@@ -114,10 +114,10 @@ void TXGrid::TLegend::Create(const olxstr& cName) {
   }
   TGlFont& glf = Parent.GetScene().GetFont(~0, true);
   TGraphicsStyle& GS = GPC.GetStyle();
-  Left = GS.GetParam("Left", Left, true).ToInt();
+  Left = GS.FindNumParam("Left", Left);
   // offest to by height to avoid overlap with text
-  Top = GS.GetParam("Top", glf.GetMaxHeight(), true).ToInt();
-  Z = GS.GetParam("Z", Z).ToDouble();
+  Top = GS.FindNumParam("Top", (int)glf.GetMaxHeight());
+  Z = GS.FindNumParam("Z", Z);
   {
     TGlPrimitive& GlP = GPC.NewPrimitive("Plane", sgloQuads);
     GlP.SetTextureId(TextureId);
