@@ -3806,15 +3806,20 @@ void XLibMacros::funHKLSrc(const TStrObjList& Params, TMacroData &E) {
   else {
     olxstr fn = xapp.XFile().GetRM().GetHKLSource();
     if (TEFile::Exists(fn) && !TEFile::IsDir(fn)) {  // check the format...
-      TEFile f(fn, "rb");
-      if (!THklFile::IsHKLFileLine(f.ReadLine())) {
-        f.Close();
-        fn = TEFile::AddPathDelimeter(TEFile::ExtractFilePath(fn)) <<
-          MD5::Digest(fn) << ".hkl";
-        if (!TEFile::Exists(fn)) {
-          TBasicApp::NewLogEntry() << "Creating HKL file...";
-          THklFile::SaveToFile(fn, xapp.XFile().GetRM().GetReflections());
-          xapp.XFile().GetRM().SetHKLSource(fn);
+      static TEFile::FileID fid;
+      TEFile::FileID tfid = TEFile::GetFileID(fn);
+      if (tfid != fid) {
+        fid = tfid;
+        TEFile f(fn, "rb");
+        if (!THklFile::IsHKLFileLine(f.ReadLine())) {
+          f.Close();
+          fn = TEFile::AddPathDelimeter(TEFile::ExtractFilePath(fn)) <<
+            MD5::Digest(fn) << ".hkl";
+          if (!TEFile::Exists(fn)) {
+            TBasicApp::NewLogEntry() << "Creating HKL file...";
+            THklFile::SaveToFile(fn, xapp.XFile().GetRM().GetReflections());
+            xapp.XFile().GetRM().SetHKLSource(fn);
+          }
         }
       }
     }
