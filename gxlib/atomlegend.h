@@ -19,6 +19,10 @@ BeginGxlNamespace()
 class TAtomLegend : public AGlMouseHandlerImp {
   int Width, Height;
   int Top, Left;
+  // single column width - up to 3 columns with 2 char element symbol
+  int ColWidth,
+    // space between the legend and the text
+    FirstSpacer;
   GLuint TextureId;
   double Z;
   TStrList text;

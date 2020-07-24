@@ -10,7 +10,9 @@ TAtomLegend::TAtomLegend(TGlRenderer& Render, const olxstr& collectionName)
   SetMoveable(true);
   SetSelectable(false);
   Top = Left = 0;
-  Width = 32;
+  FirstSpacer = 5;
+  ColWidth = 16;
+  Width = ColWidth*2;
   Height = 128;
   Z = 0;
   TextureId = ~0;
@@ -39,7 +41,6 @@ void TAtomLegend::Create(const olxstr& cName) {
   glpText.SetProperties(GS.GetMaterial("Text", glf.GetMaterial()));
   glpText.SetFont(&glf);
   glpText.Params[0] = -1;
-
   TGlPrimitive& sp = GPC.NewPrimitive("Sphere", sgloSphere);
   sp.Params[0] = 1; sp.Params[1] = sp.Params[2] = 16;
   sp.SetProperties(glm);
@@ -51,7 +52,16 @@ void TAtomLegend::Fit() {
     Parent.GetScene().FindFontIndexForType<TXAtom>(), true);
   const uint16_t th = glf.TextHeight(EmptyString());
   const double LineSpacer = 0.05*th;
-  Width = glf.GetMaxHeight()*2;
+  ColWidth = glf.GetMaxHeight();
+  int max_w = 0;
+  for (size_t i = 0; i < text.Count(); i++) {
+    TTextRect r = glf.GetTextRect(text[i]);
+    int w = olx_round(r.left + r.width);
+    if (w > max_w) {
+      max_w = w;
+    }
+  }
+  Width = ColWidth + max_w + FirstSpacer;
   Height = glf.GetMaxHeight() * text.Count();
   Height += (uint16_t)olx_round(LineSpacer*(text.Count() - 1));
 }
@@ -81,7 +91,7 @@ bool TAtomLegend::Orient(TGlPrimitive& P) {
     const double hh = Parent.GetHeight() / 2;
     double scale = glf.IsVectorFont() ? es
       : (Parent.GetViewZoom() == 1.0 ? 1.0 : 1. / Parent.GetExtraZoom());
-    const double GlLeft = ((Left + GetCenter()[0])*es + Width*scale/2 - hw) + 5;
+    const double GlLeft = ((Left + GetCenter()[0])*es + ColWidth*scale - hw) + FirstSpacer;
     const double GlTop = (hh - (Top - GetCenter()[1])*es - Height*scale) +
       (glf.IsVectorFont() ? glf.GetPointSize()*scale/2.5 : 0.1);
     const double LineSpacer = 0.05*th;
@@ -108,7 +118,7 @@ bool TAtomLegend::Orient(TGlPrimitive& P) {
     const double hh = Parent.GetHeight() / (2 * es);
     double xx = GetCenter()[0], xy = -GetCenter()[1];
     const double z = Z - 0.01;
-    double w = Width/2, h = Height;
+    double w = ColWidth, h = Height;
     if (!glf.IsVectorFont()) {
       w /= Parent.GetExtraZoom();
       h /= Parent.GetExtraZoom();
@@ -130,7 +140,7 @@ bool TAtomLegend::Orient(TGlPrimitive& P) {
     double scale = glf.IsVectorFont() ? es
       : (Parent.GetViewZoom() == 1.0 ? 1.0 : 1. / Parent.GetExtraZoom());
     const double z = Z - 0.01;
-    double w = Width/2, h = Height;
+    double w = ColWidth, h = Height;
     if (!glf.IsVectorFont()) {
       w /= Parent.GetExtraZoom();
       h /= Parent.GetExtraZoom();
