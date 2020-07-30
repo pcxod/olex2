@@ -96,7 +96,7 @@ private:
   wxHtmlWindowInterface* m_windowIface;
 #if wxUSE_GIF && wxUSE_TIMER
   olx_object_ptr<wxGIFDecoder> m_gifDecoder;
-  olx_object_ptr<wxTimer> m_gifTimer;
+  olx_object_ptr<class TGIFTimer> m_gifTimer;
   int m_physX, m_physY;
   size_t m_nCurrFrame;
 #endif
@@ -107,15 +107,13 @@ private:
 };
 
 #if wxUSE_GIF && wxUSE_TIMER
-class wxGIFTimer : public wxTimer {
+class TGIFTimer : public wxTimer {
 public:
-  wxGIFTimer(THtmlImageCell* cell) : m_cell(cell) {}
-  virtual void Notify() {
-    m_cell->AdvanceAnimation(this);
-  }
+  TGIFTimer(THtmlImageCell* cell);
+  virtual void Notify();
 private:
   THtmlImageCell* m_cell;
-  DECLARE_NO_COPY_CLASS(wxGIFTimer)
+  DECLARE_NO_COPY_CLASS(TGIFTimer)
 };
 #endif
 

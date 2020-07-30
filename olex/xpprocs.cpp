@@ -2894,11 +2894,8 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
       }
       UpdateInfoBox();
       // check if the associated HKL file has the same name and location
-      olxstr
-        hkl_fn = TEFile::OSPath(FXApp->XFile().GetRM().GetHKLSource())
-        .DeleteSequencesOf(TEFile::GetPathDelimeter()),
-        src_fn = TEFile::OSPath(FXApp->XFile().LastLoader()->GetFileName())
-        .DeleteSequencesOf(TEFile::GetPathDelimeter());
+      olxstr hkl_fn = TEFile::OSPath(FXApp->XFile().GetRM().GetHKLSource()),
+        src_fn = TEFile::OSPath(FXApp->XFile().LastLoader()->GetFileName());
 #ifdef __WIN32__
       if (!TEFile::ChangeFileExt(hkl_fn, EmptyString()).Equalsi(
         TEFile::ChangeFileExt(src_fn, EmptyString())))
