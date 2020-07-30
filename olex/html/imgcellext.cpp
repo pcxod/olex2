@@ -50,7 +50,7 @@ THtmlImageCell::THtmlImageCell(wxHtmlWindowInterface* windowIface, wxFSFile *inp
             }
             readImg = false;
             if (m_gifDecoder->IsAnimation()) {
-              m_gifTimer = new wxGIFTimer(this);
+              m_gifTimer = new TGIFTimer(this);
               long delay = m_gifDecoder->GetDelay(0);
               if (delay == 0) {
                 delay = 1;
@@ -160,6 +160,9 @@ void THtmlImageCell::SetImage(const wxImage& img) {
 void THtmlImageCell::AdvanceAnimation(wxTimer* timer) {
   wxImage img;
   m_nCurrFrame++;
+  if (!m_gifDecoder.ok()) {
+    return;
+  }
   if (m_nCurrFrame == m_gifDecoder->GetFrameCount()) {
     m_nCurrFrame = 0;
   }
@@ -201,6 +204,17 @@ void THtmlImageCell::AdvanceAnimation(wxTimer* timer) {
     delay = 1;
   }
   timer->Start(delay, true);
+}
+//..............................................................................
+//..............................................................................
+//..............................................................................
+TGIFTimer::TGIFTimer(THtmlImageCell* cell)
+: m_cell(cell)
+{
+  TBasicApp::NewLogEntry() << "x";
+}
+void TGIFTimer::Notify() {
+  m_cell->AdvanceAnimation(this);
 }
 #endif
 //..............................................................................
