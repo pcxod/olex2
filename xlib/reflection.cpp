@@ -88,36 +88,31 @@ bool TReflection::IsAbsent(const vec3i& hkl, const SymmSpace::InfoEx& info)  {
   return false;
 }
 //..............................................................................
-bool TReflection::FromString(const olxstr& Str)  {
-  TStrList Toks(Str, ' ');
-  if( Toks.Count() > 5 )  {
-    hkl[0] = Toks[1].ToInt();
-    hkl[1] = Toks[2].ToInt();
-    hkl[2] = Toks[3].ToInt();
-    I = Toks[4].ToDouble();
-    S = Toks[5].ToDouble();
-    if( Toks.Count() > 6 )
-      SetBatch(Toks[6].ToInt());
+bool TReflection::FromString(const olxstr& str) {
+  if (str.Length() >= 28) {
+    hkl[0] = str.SubString(0, 4).ToInt();
+    hkl[1] = str.SubString(4, 4).ToInt();
+    hkl[2] = str.SubString(8, 4).ToInt();
+    I = str.SubString(12, 8).ToDouble();
+    S = str.SubString(20, 8).ToDouble();
+    if (str.Length() > 28) {
+      SetBatch(str.SubStringFrom(28).ToInt());
+    }
     return true;
   }
   return false;
 }
 //..............................................................................
 bool TReflection::FromNString(const olxstr& str) {
-  TStrList Toks(str, ' ');
-  if (Toks.Count() > 5) {
-    if( Toks[0].GetLast() != '.' )  return false;
-    Toks[0].SetLength(Toks[0].Length()-1);
-    SetTag(Toks[0].ToInt());
+  if (str.Length() >= 38) {
+    olxstr tag = str.SubStringTo(10).Trim(' ');
+    if (!tag.EndsWith('.')) {
+      return false;
+    }
+    tag.SetLength(tag.Length()-1);
+    SetTag(tag.ToInt());
     SetOmitted(GetTag() < 0);
-    hkl[0] = Toks[1].ToInt();
-    hkl[1] = Toks[2].ToInt();
-    hkl[2] = Toks[3].ToInt();
-    I = Toks[4].ToDouble();
-    S = Toks[5].ToDouble();
-    if (Toks.Count() > 6)
-      SetBatch(Toks[6].ToInt());
-    return true;
+    return FromString(str.SubStringFrom(10));
   }
   return false;
 }
