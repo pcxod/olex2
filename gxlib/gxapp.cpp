@@ -145,7 +145,7 @@ public:
           }
           else {
             if (bi != InvalidIndex) {
-              cif.GetBlock(bi).GetName() == fn.data_name;
+              equal = cif.GetBlock(bi).GetName() == fn.data_name;
             }
             else {
               equal = false;
