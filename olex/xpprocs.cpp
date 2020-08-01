@@ -2382,8 +2382,8 @@ void TMainForm::macEditIns(TStrObjList &Cmds, const TParamList &Options, TMacroD
   dlg->Destroy();
 }
 //..............................................................................
-void TMainForm::macHklEdit(TStrObjList &Cmds, const TParamList &Options,
-  TMacroData &E)
+void TMainForm::macHklEdit(TStrObjList& Cmds, const TParamList& Options,
+  TMacroData& E)
 {
   TStopWatch sw(__FUNC__);
   olxstr HklFN = FXApp->XFile().LocateHklFile();
@@ -2397,7 +2397,7 @@ void TMainForm::macHklEdit(TStrObjList &Cmds, const TParamList &Options,
   THklFile Hkl;
   Hkl.LoadFromFile(HklFN, false);
   for (size_t i = 0; i < Hkl.RefCount(); i++) {
-    Hkl[i].SetTag(i+1);
+    Hkl[i].SetTag(i + 1);
   }
   sw.start("Preparing input");
   TStrList SL;
@@ -2405,10 +2405,10 @@ void TMainForm::macHklEdit(TStrObjList &Cmds, const TParamList &Options,
   SL.Add("REM and remove '-' char if you want the reflection to be used in the refinement");
   SL.Add();
   if (Cmds.Count() != 3 && FXApp->CheckFileType<TIns>()) {
-    const TTypeList<RefinementModel::BadReflection> &bad_refs =
+    const TTypeList<RefinementModel::BadReflection>& bad_refs =
       FXApp->XFile().GetRM().GetBadReflectionList();
-    for (size_t i=0; i < bad_refs.Count(); i++) {
-      olxstr &Tmp = SL.Add("REM   ");
+    for (size_t i = 0; i < bad_refs.Count(); i++) {
+      olxstr& Tmp = SL.Add("REM   ");
       Tmp.stream(' ') << bad_refs[i].index[0] << bad_refs[i].index[1] <<
         bad_refs[i].index[2] << "Error/esd=" << bad_refs[i].factor;
       TRefPList refs = Hkl.AllRefs(bad_refs[i].index, matrices);
@@ -2418,7 +2418,7 @@ void TMainForm::macHklEdit(TStrObjList &Cmds, const TParamList &Options,
       SL.Add();
     }
   }
-  else  {
+  else {
     TReflection Refl(Cmds[0].ToInt(), Cmds[1].ToInt(), Cmds[2].ToInt());
     TRefPList refs = Hkl.AllRefs(Refl, matrices);
     for (size_t i = 0; i < refs.Count(); i++) {
@@ -2426,25 +2426,29 @@ void TMainForm::macHklEdit(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   sw.stop();
-  TdlgEdit *dlg = new TdlgEdit(this, true);
+  TdlgEdit* dlg = new TdlgEdit(this, true);
   dlg->SetText(SL.Text('\n'));
-  if( dlg->ShowModal() == wxID_OK )  {
-    olxstr Tmp = dlg->GetText();
-    SL.Clear();
-    SL.Strtok(Tmp, '\n');
-    TReflection R(0, 0, 0);
-    for (size_t i=0; i < SL.Count(); i++) {
-      if (SL[i].ToUpperCase().StartsFrom("REM")) {
-        continue;
-      }
-      R.FromNString(SL[i]);
-      Hkl.UpdateRef(R);
-    }
-    sw.start("Saving HKL");
-    Hkl.SaveToFile(HklFN);
-    sw.stop();
+  olxstr txt;
+  if (dlg->ShowModal() == wxID_OK) {
+    txt = dlg->GetText();
   }
   dlg->Destroy();
+  if (txt.IsEmpty()) {
+    return;
+  }
+  SL.Clear();
+  SL.Strtok(txt, '\n');
+  TReflection R(0, 0, 0);
+  for (size_t i = 0; i < SL.Count(); i++) {
+    if (SL[i].ToUpperCase().StartsFrom("REM")) {
+      continue;
+    }
+    R.FromNString(SL[i]);
+    Hkl.UpdateRef(R);
+  }
+  sw.start("Saving HKL");
+  Hkl.SaveToFile(HklFN);
+  sw.stop();
 }
 //..............................................................................
 void TMainForm::macHklView(TStrObjList &Cmds, const TParamList &Options, TMacroData &E)  {
