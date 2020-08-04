@@ -1068,8 +1068,9 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
     if (Toks.Count() == 16) {  // a special case for expanded sfac
       int NumberCount = 0;
       for (size_t i = 2; i < Toks.Count(); i++) {
-        if (Toks[i].IsNumber())
+        if (Toks[i].IsNumber()) {
           NumberCount++;
+        }
       }
       if (NumberCount > 0 && NumberCount < 14) {
         TBasicApp::NewLogEntry(logError) << "Possibly not well formed SFAC "
@@ -1121,8 +1122,9 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
       ? Toks[1].SubStringFrom(1) : Toks[1]);
     XScatterer* sc = new XScatterer(lb);
     sc->SetFpFdp(compd(Toks[2].ToDouble(), Toks[3].ToDouble()));
-    if (Toks.Count() >= 5)
+    if (Toks.Count() >= 5) {
       sc->SetMu(Toks[4].ToDouble());
+    }
     cx.rm.AddSfac(*sc);
   }
   else if (Toks[0].Equalsi("REM")) {
@@ -1419,7 +1421,7 @@ TStrList::const_list_type TIns::SaveSfacUnit(const RefinementModel& rm,
   TStrList& list, size_t pos)
 {
   TStrList sfac;
-  sorted::ObjectComparable<olxstr> elms;
+  olxstr_set<true> elms;
   short state = 0;
   for (size_t i = 0; i < rm.GetUserContent().Count(); i++) {
     olxstr es = rm.GetUserContent()[i].element->symbol;
@@ -1429,11 +1431,11 @@ TStrList::const_list_type TIns::SaveSfacUnit(const RefinementModel& rm,
         es << olx_abs(rm.GetUserContent()[i].charge);
       }
     }
-    if (!elms.AddUnique(es).b) {
+    if (!elms.Add(es)) {
       continue;
     }
     XScatterer* sd = rm.FindSfacData(es);
-    if (sd != NULL && sd->IsSFAC()) {
+    if (sd != 0 && sd->IsSFAC()) {
       TStrList lines;
       HyphenateIns(sd->ToInsString(), lines);
       list.Insert(pos, lines);
@@ -1459,7 +1461,9 @@ TStrList::const_list_type TIns::SaveSfacUnit(const RefinementModel& rm,
   }
   for (size_t i = 0; i < rm.aunit.AtomCount(); i++) {
     TCAtom &a = rm.aunit.GetAtom(i);
-    if (a.IsDeleted()) continue;
+    if (a.IsDeleted()) {
+      continue;
+    }
     int ch = a.GetCharge();
     if (ch == 0) {
       continue;
