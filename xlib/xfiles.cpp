@@ -158,6 +158,20 @@ void TBasicCFile::RearrangeAtoms(const TSizeList & new_indices) {
   GetRM().AfterAUSort_();
 }
 //----------------------------------------------------------------------------//
+// Utils
+//----------------------------------------------------------------------------//
+bool ExpandHKLSource(RefinementModel &rm, const olxstr& fn) {
+  olxstr hkl_src = rm.GetHKLSource();
+  if (!hkl_src.IsEmpty() && !TEFile::IsAbsolutePath(hkl_src)) {
+    hkl_src = TEFile::ExpandRelativePath(hkl_src,
+      TEFile::ExtractFilePath(fn));
+    rm.SetHKLSource(hkl_src);
+    return true;
+  }
+  return false;
+}
+
+//----------------------------------------------------------------------------//
 // TXFile function bodies
 //----------------------------------------------------------------------------//
 TXFile::TXFile(ASObjectProvider& Objects) :
@@ -360,6 +374,7 @@ void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
               TBasicApp::NewLogEntry(logError) << "Loading the refinement model "
                 "from the embedded RES file.";
               GetRM().Assign(ins.GetRM(), false);
+              ExpandHKLSource(GetRM(), fn);
               rm_updated = true;
             }
             else {
@@ -549,12 +564,7 @@ void TXFile::LoadFromFile(const olxstr & _fn) {
   }
   try {
     Loader->LoadFromFile(_fn);
-    olxstr hkl_src = Loader->GetRM().GetHKLSource();
-    if (!hkl_src.IsEmpty() && !TEFile::IsAbsolutePath(hkl_src)) {
-      hkl_src = TEFile::ExpandRelativePath(hkl_src,
-        TEFile::ExtractFilePath(_fn));
-      Loader->GetRM().SetHKLSource(hkl_src);
-    }
+    ExpandHKLSource(Loader->GetRM(), _fn);
   }
   catch (const TExceptionBase& exc) {
     if (replicated) {
