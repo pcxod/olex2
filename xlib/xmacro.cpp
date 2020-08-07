@@ -505,7 +505,9 @@ void XLibMacros::Export(TLibrary& lib)  {
     " deviation from the special position 0.2 A");
   xlib_InitMacro(Afix,
     "n-to accept N atoms in the rings for afix 66&;"
-    "s-sorts atoms for 5 and 6 membered rings [true]&;",
+    "s-sorts atoms for 5 and 6 membered rings [true]&;"
+    "c-changes the afix (if any) for the given atoms&;"
+    ,
     (fpAny^fpNone)|psCheckFileTypeIns,
     "Sets atoms AFIX, special cases are 56,69,66,69,76,79,106,109,116 and "
     "119");
@@ -7949,13 +7951,24 @@ void XLibMacros::macAfix(TStrObjList &Cmds, const TParamList &Options,
       }
     }
     else if (!Atoms.IsEmpty()) {
+      // simply override the AFIX number
+      if (Options.GetBoolOption('c')) {
+        for (size_t i = 0; i < Atoms.Count(); i++) {
+          if (Atoms[i]->CAtom().GetParentAfixGroup() != 0) {
+            Atoms[i]->CAtom().GetParentAfixGroup()->SetAfix(afix);
+          }
+        }
+        return;
+      }
+      
       if (Atoms[0]->CAtom().GetUisoOwner() != 0) {
         TBasicApp::NewLogEntry(logError) << "Cannot use '" <<
           Atoms[0]->GetLabel() << "' as a pivot for the AFIX group";
       }
       else {
-        if (Atoms[0]->CAtom().GetDependentAfixGroup() != 0)
+        if (Atoms[0]->CAtom().GetDependentAfixGroup() != 0) {
           Atoms[0]->CAtom().GetDependentAfixGroup()->Clear();
+        }
         TAfixGroup& ag = rm.AfixGroups.New(&Atoms[0]->CAtom(), afix);
         for (size_t i = 1; i < Atoms.Count(); i++) {
           ag.AddDependent(Atoms[i]->CAtom());
