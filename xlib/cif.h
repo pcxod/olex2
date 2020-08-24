@@ -17,7 +17,7 @@
 #include "cifdp.h"
 BeginXlibNamespace()
 
-class TCif: public TBasicCFile  {
+class TCif : public TBasicCFile {
 private:
   cif_dp::TCifDP data_provider;
   size_t block_index;
@@ -27,7 +27,7 @@ private:
   smatd_list Matrices;
   olxstr_dict<size_t, true> MatrixMap;
   // to be used inernally for locating atoms in the tables
-  ConstPtrList<TCAtom> FindAtoms(const TStrList &names);
+  ConstPtrList<TCAtom> FindAtoms(const TStrList& names);
   bool has_duplicate_labels;
 protected:
   static cif_dp::cetTable* LoopFromDef(cif_dp::CifBlock& dp,
@@ -56,26 +56,26 @@ public:
   /* Saves the content into a TDataItem object which can later be saved to XML
   or other formats
   */
-  void ToDataItem(TDataItem &d) const;
+  void ToDataItem(TDataItem& d) const;
   /* Loads content from a TDataItem object
   */
-  void FromDataItem(const TDataItem &i);
+  void FromDataItem(const TDataItem& i);
   /* Adopts the content of a file (asymmetric unit, loops, etc) to a specified
   source file. If the second argument is 0 - the atoms are taken from the AU
   otherwise - from the latttice (allows saving grown structures)
   */
-  virtual bool Adopt(TXFile &, int);
+  virtual bool Adopt(TXFile&, int);
   //Finds a value by name
   cif_dp::ICifEntry* FindEntry(const olxstr& name) const {
-    return (block_index == InvalidIndex) ? NULL :
-      data_provider[block_index].param_map.Find(name, NULL);
+    return (block_index == InvalidIndex) ? 0 :
+      data_provider[block_index].param_map.Find(name, 0);
   }
   template <class Entry> Entry* FindParam(const olxstr& name) const {
     return dynamic_cast<Entry*>(FindEntry(name));
   }
- /* Returns the value of the given param as a string. Mght have '\n' as lines
- separator
- */
+  /* Returns the value of the given param as a string. Mght have '\n' as lines
+  separator
+  */
   olxstr GetParamAsString(const olxstr& name) const;
   //Returns true if a specified parameter exists
   template <typename Str> bool ParamExists(const Str& name) const {
@@ -86,8 +86,8 @@ public:
   created on stack
   */
   void SetParam(const cif_dp::ICifEntry& value);
-  void SetParam(const olxstr& name, const olxstr& value, bool quoted)  {
-    if( quoted ) {
+  void SetParam(const olxstr& name, const olxstr& value, bool quoted) {
+    if (quoted) {
       SetParam(cif_dp::cetString(name, olxstr('\'') << value << '\''));
     }
     else {
@@ -109,7 +109,7 @@ public:
   }
   // removes a parameters or a table by name
   template <class SC>
-  bool Remove(const SC &name) {
+  bool Remove(const SC& name) {
     return data_provider[block_index].Remove(name);
   }
   // returns the value of a specified parameter
@@ -117,11 +117,11 @@ public:
     return *data_provider[block_index].param_map.GetValue(i);
   }
   // matrics access functions
-  size_t MatrixCount() const {  return Matrices.Count();  }
-  const smatd& GetMatrix(size_t i) const {  return Matrices[i];  }
+  size_t MatrixCount() const { return Matrices.Count(); }
+  const smatd& GetMatrix(size_t i) const { return Matrices[i]; }
   const smatd& GetMatrixById(const olxstr& id) const {
     size_t id_ind = MatrixMap.IndexOf(id);
-    if( id_ind == InvalidIndex ) {
+    if (id_ind == InvalidIndex) {
       throw TInvalidArgumentException(__OlxSrcInfo,
         olxstr("matrix id: '") << id << '\'');
     }
@@ -147,25 +147,28 @@ public:
     return *data_provider[block_index].table_map.GetValue(i);
   }
   // Finds an item in any of the loops and returns the loop and the item index
-  olx_object_ptr<olx_pair_t<cif_dp::cetTable*, size_t> > FindLoopItem(const olxstr &name);
+  olx_object_ptr<olx_pair_t<cif_dp::cetTable*, size_t> > FindLoopItem(const olxstr& name);
   //Returns a loop specified by name or NULL
   template <class T>
   cif_dp::cetTable* FindLoop(const T& name) const {
-    if( block_index == InvalidIndex )  return NULL;
-    return data_provider[block_index].table_map.Find(name, NULL);
+    if (block_index == InvalidIndex) {
+      return 0;
+    }
+    return data_provider[block_index].table_map.Find(name, 0);
   }
   // traverses the data blocks to find loop by name
   template <class T>
-  cif_dp::cetTable* FindLoopGlobal(const T& name, bool set_current)  {
-    for( size_t i=0; i < data_provider.Count(); i++ )  {
-      cif_dp::cetTable* l = data_provider[i].table_map.Find(name, NULL);
-      if( l != NULL )  {
-        if( set_current )
+  cif_dp::cetTable* FindLoopGlobal(const T& name, bool set_current) {
+    for (size_t i = 0; i < data_provider.Count(); i++) {
+      cif_dp::cetTable* l = data_provider[i].table_map.Find(name, 0);
+      if (l != 0) {
+        if (set_current) {
           SetCurrentBlock(i);
+        }
         return l;
       }
     }
-    return NULL;
+    return 0;
   }
   //Returns the name of a loop specified by the index
   const olxstr& GetLoopName(size_t i) const {
@@ -177,7 +180,7 @@ public:
       : data_provider[block_index].table_map.Count();
   }
   // return number of blocks with atoms
-  size_t BlockCount() const {  return data_provider.Count();  }
+  size_t BlockCount() const { return data_provider.Count(); }
   // changes current block index, i.e. loads structure from different block
   void SetCurrentBlock(size_t i) {
     block_index = i;
@@ -186,18 +189,22 @@ public:
   /* Sets current block and creates if specified to in the case the block does
   not exist. When a block is created, parent can be used to create save_blocks
   */
-  void SetCurrentBlock(const olxstr& block_name, bool create=false,
-    cif_dp::CifBlock *parent=NULL)
+  void SetCurrentBlock(const olxstr& block_name, bool create = false,
+    cif_dp::CifBlock* parent = 0)
   {
     cif_dp::CifBlock* cb = data_provider.Find(block_name);
-    if (cb == NULL && create) {
-      cb = &data_provider.Add(block_name, parent);
+    if (cb == 0) {
+      if (create) {
+        cb = &data_provider.Add(block_name, parent);
+      }
     }
-    block_index = data_provider.IndexOf(*cb);
+    if (cb != 0) {
+      block_index = data_provider.IndexOf(*cb);
+    }
     _LoadCurrent();
   }
   // renames current block
-  void RenameCurrentBlock(const olxstr& new_name)  {
+  void RenameCurrentBlock(const olxstr& new_name) {
     data_provider.Rename(data_provider[block_index].GetName(), new_name);
   }
   // returns given block
@@ -209,7 +216,7 @@ public:
     return data_provider[i];
   }
   // returns current block index, might be InvalidIndex
-  size_t GetBlockIndex() const {  return block_index;  }
+  size_t GetBlockIndex() const { return block_index; }
   // creates a new loop from comma separated column names
   cif_dp::cetTable& AddLoopDef(const olxstr& col_names);
   /* this is the only loop, which is not automatically created from structure
@@ -220,19 +227,19 @@ protected:
   static void MultValue(olxstr& Val, const olxstr& N);
 public:
   bool ResolveParamsFromDictionary(
-    TStrList &Dic,   // the dictionary containing the cif fields
+    TStrList& Dic,   // the dictionary containing the cif fields
     olxstr& String,    // the string in which the parameters are stores
     olxch Quote,           // %10%, #10#, ...
-    olxstr (*ResolveExternal)(const olxstr& valueName) = NULL,
+    olxstr(*ResolveExternal)(const olxstr& valueName) = 0,
     bool DoubleTheta = true) const;
   /* creates a table from a loop using provided table definition. Fills the
   list of used symmetry. label_options specify if the label suffix should be
   placed in brackets (1) and/or placed a superscript (4) or subscript (2)
   */
   bool CreateTable(TDataItem* TableDefinitions, TTTable<TStrList>& Table,
-    smatd_list& SymmList, int label_options=0) const;
-  const TCifDataManager& GetDataManager() const {  return DataManager;  }
-  virtual IOlxObject* Replicate() const {  return new TCif;  }
+    smatd_list& SymmList, int label_options = 0) const;
+  const TCifDataManager& GetDataManager() const { return DataManager; }
+  virtual IOlxObject* Replicate() const { return new TCif; }
 };
 //---------------------------------------------------------------------------
 struct AtomCifEntry : public cif_dp::IStringCifEntry {
@@ -245,13 +252,13 @@ struct AtomCifEntry : public cif_dp::IStringCifEntry {
   AtomCifEntry(TCAtom& _data)
     : data(_data), save_part(false)
   {}
-  virtual size_t Count() const {  return 1;  }
-  virtual bool IsSaveable() const {  return !data.IsDeleted();  }
-  virtual size_t GetCmpHash() const {  return data.GetId();  }
+  virtual size_t Count() const { return 1; }
+  virtual bool IsSaveable() const { return !data.IsDeleted(); }
+  virtual size_t GetCmpHash() const { return data.GetId(); }
   virtual const olxstr& operator [] (size_t) const {
-    return  (label=data.GetResiLabel());
+    return  (label = data.GetResiLabel());
   }
-  virtual const olxstr& GetComment() const {  return EmptyString();  }
+  virtual const olxstr& GetComment() const { return EmptyString(); }
   virtual cif_dp::ICifEntry* Replicate() const {
     return new AtomCifEntry(*this);
   }
@@ -261,13 +268,14 @@ struct AtomCifEntry : public cif_dp::IStringCifEntry {
 struct AtomPartCifEntry : public cif_dp::IStringCifEntry {
   TCAtom& data;
   mutable olxstr tmp_val;
-  AtomPartCifEntry(const AtomPartCifEntry& v) : data(v.data)  {}
-  AtomPartCifEntry(TCAtom& _data) : data(_data)  {}
-  virtual size_t Count() const {  return 1;  }
-  virtual bool IsSaveable() const {  return !data.IsDeleted();  }
+  AtomPartCifEntry(const AtomPartCifEntry& v) : data(v.data) {}
+  AtomPartCifEntry(TCAtom& _data) : data(_data) {}
+  virtual size_t Count() const { return 1; }
+  virtual bool IsSaveable() const { return !data.IsDeleted(); }
   virtual const olxstr& operator [] (size_t) const {
-    return  (tmp_val = (int)data.GetPart());  }
-  virtual const olxstr& GetComment() const {  return EmptyString();  }
+    return  (tmp_val = (int)data.GetPart());
+  }
+  virtual const olxstr& GetComment() const { return EmptyString(); }
   virtual cif_dp::ICifEntry* Replicate() const {
     return new AtomPartCifEntry(*this);
   }
@@ -278,8 +286,8 @@ struct AtomPartCifEntry : public cif_dp::IStringCifEntry {
     else {
       tmp_val = (int)data.GetPart();
     }
-    if( list.IsEmpty() ||
-        (list.GetLastString().Length() + data.GetLabel().Length() + 1 > 80) )
+    if (list.IsEmpty() ||
+      (list.GetLastString().Length() + data.GetLabel().Length() + 1 > 80))
     {
       list.Add(' ') << tmp_val;
     }

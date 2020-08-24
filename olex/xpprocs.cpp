@@ -2858,33 +2858,48 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
       if (FXApp->CheckFileType<TCif>()) {
         TCif& cif = FXApp->XFile().GetLastLoader<TCif>();
         if (cif.BlockCount() > 1) {
-          FXApp->NewLogEntry() << "The following data blocks are available:";
-          for (size_t i = 0; i < cif.BlockCount(); i++) {
-            FXApp->NewLogEntry() << '#' << i << ": " << cif.GetBlock(i).GetName();
+          bool skip_first = cif.GetBlock(0).GetName().IsEmpty();
+          if ((skip_first && cif.BlockCount() > 2) || (!skip_first && cif.BlockCount() > 1)) {
+            FXApp->NewLogEntry() << "The following data blocks are available:";
+            for (size_t i = skip_first ? 1 : 0; i < cif.BlockCount(); i++) {
+              FXApp->NewLogEntry() << '#' << i << ": " << cif.GetBlock(i).GetName();
+            }
           }
         }
         if (!file_n.data_name.IsEmpty()) {
           FXApp->NewLogEntry() << "Loading: " << file_n.data_name;
         }
+        else {
+          FXApp->NewLogEntry() << "Current block: " << cif.GetBlockIndex();
+        }
         FXApp->Draw();
-        olxstr hklFileName = TEFile::ChangeFileExt(file_n.file_name, "hkl");
-        olxstr insFileName = TEFile::ChangeFileExt(file_n.file_name, "ins");
+        olxstr file_path = TEFile::AddPathDelimeter(TEFile::ExtractFilePath(file_n.file_name));
+        olxstr hklFileName = file_path + cif.GetDataName() + ".hkl";
+        olxstr insFileName = file_path + cif.GetDataName() + ".ins";
         TMacroData er;
         if (!TEFile::Exists(hklFileName) && cif.GetAsymmUnit().AtomCount() == 0) {
           size_t block_index = cif.GetBlockIndex();
-          if (cif.FindLoopGlobal("_refln", true) != NULL ||
-            cif.FindEntry("_shelx_hkl_file") != NULL)
+          if (cif.FindLoopGlobal("_refln", true) != 0 ||
+            cif.FindEntry("_shelx_hkl_file") != 0)
           {
             Macros.ProcessMacro(olxstr("export ").quote() << hklFileName, er);
             if (!er.IsProcessingError()) {
+              olxstr file_name = TEFile::ChangeFileExt(TEFile::ExtractFileName(file_n.file_name),
+                EmptyString());
+              bool name_matches = file_name.Equalsi(cif.GetDataName());
+              // for mismatching name the 'normal' procedure will fail
+              if (!name_matches) {
+                Macros.ProcessMacro("CifExtract", er);
+              }
               if (!TEFile::Exists(insFileName)) {
                 TIns ins;
                 ins.Adopt(FXApp->XFile(), 0);
                 ins.GetRM().SetHKLSource(hklFileName);
                 ins.SaveToFile(insFileName);
                 Macros.ProcessMacro(olxstr("@reap \'") << insFileName << '\'', er);
-                if (!er.IsProcessingError())
+                if (!er.IsProcessingError()) {
                   Macros.ProcessMacro("reset", er);
+                }
                 FXApp->Draw();
                 return;
               }

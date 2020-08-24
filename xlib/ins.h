@@ -92,6 +92,8 @@ protected:
   void __ProcessConn(ParseContext& cx);
   // also updates the RM user content if any of the types missing
   void FixTypeListAndLabels();
+  // deals with SFAC/DISP
+  static bool ProcessSFAC(ParseContext& cx, const TStrList &toks, bool update_rm);
   enum InsType {
     insNone,
     insHeader,
