@@ -190,10 +190,11 @@ PyObject* runWriteImage(PyObject* self, PyObject* args) {
   olxstr name;
   int persistenceId = 0;
   int length = 0;
-  if (!PythonExt::ParseTuple(args, "ws#|i", &name, &data, &length,
+  olxcstr format = PythonExt::UpdateBinaryFormat("ws#|i");
+  if (!PythonExt::ParseTuple(args, format.c_str(), &name, &data, &length,
     &persistenceId))
   {
-    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "ws#|i");
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, format.c_str());
   }
   if (data != 0 && !name.IsEmpty()) {
     TFileHandlerManager::AddMemoryBlock(name, data, length, persistenceId);
@@ -213,11 +214,8 @@ PyObject* runReadImage(PyObject* self, PyObject* args)  {
       const size_t is = io->GetAvailableSizeT();
       olx_array_ptr<char> bf(is + 1);
       io->Read(bf, is);
-#if PY_MAJOR_VERSION >= 3
-      PyObject* po = Py_BuildValue("y#", &bf, is);
-#else
-      PyObject* po = Py_BuildValue("s#", &bf, is);
-#endif
+      PyObject* po = Py_BuildValue(PythonExt::UpdateBinaryFormat("s#").c_str(),
+        &bf, is);
       return po;
     }
   }
@@ -868,6 +866,21 @@ bool PythonExt::ParseTuple(PyObject* tuple, const char* format, ...) {
         rlen = &len;
       }
       if (!PyArg_Parse(io, "s#", cstr, rlen)) {
+        va_end(argptr);
+        return false;
+      }
+    }
+    else if (format[i] == 'y') {
+      char** cstr = va_arg(argptr, char**);
+      int  len, * rlen = 0;
+      if ((i + 1) < slen && format[i + 1] == '#') {
+        rlen = va_arg(argptr, int*);
+        i++;
+      }
+      else {
+        rlen = &len;
+      }
+      if (!PyArg_Parse(io, "y#", cstr, rlen)) {
         va_end(argptr);
         return false;
       }

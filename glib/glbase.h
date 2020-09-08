@@ -839,9 +839,13 @@ struct olx_gl {
   struct FlagManager {
     olx_pdict<GLenum, FlagChanger *>  state;
     ~FlagManager() {
+      clear();
+    }
+    void clear() {
       for (size_t i = 0; i < state.Count(); i++) {
         delete state.GetValue(i);
       }
+      state.Clear();
     }
     void enable(GLenum f) {
       size_t idx = state.IndexOf(f);

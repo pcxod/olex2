@@ -103,6 +103,7 @@ public:
 //----------------------------------------------------------------------------//
 //..............................................................................
 bool TGlXApp::OnInit() {
+  wxLocale wx_lc(wxLANGUAGE_ENGLISH);
   setlocale(LC_NUMERIC, "C");
   wxApp::SetAppName(wxT("olex2"));
   Instance() = this;
