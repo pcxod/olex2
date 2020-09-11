@@ -62,14 +62,14 @@ public:
 
 };
 
-class TGlPrimitive: public AGroupObject  {
+class TGlPrimitive : public AGroupObject {
   TGlRenderer& Renderer;
   olxstr  Name;
 protected:
   GLUquadricObj* Quadric;
   bool Compiled;
   short Type;
-  virtual AGOProperties* NewProperties() const {  return new TGlMaterial;  }
+  virtual AGOProperties* NewProperties() const { return new TGlMaterial; }
   TGlClipPlanes* ClipPlanes;
   AEvaluator* Evaluator;
   TGPCollection* ParentCollection;
@@ -82,100 +82,108 @@ protected:
   TEBasis* Basis;
   void CreateQuadric();
   GLuint ListId,
-         TextureId,
-         OwnerId,
-         QuadricDrawStyle,
-         QuadricNormals,
-         QuadricOrientation;
+    TextureId,
+    OwnerId,
+    QuadricDrawStyle,
+    QuadricNormals,
+    QuadricOrientation;
 
   void SetType(short T);
 
   // helper functions
   void DrawVertex2(size_t i) const {
     DrawVertex(Vertices[i]);
-    DrawVertex(Vertices[i+1]);
+    DrawVertex(Vertices[i + 1]);
   }
   void DrawVertex2c(size_t i) const {
     DrawVertex(Vertices[i], Colors[i]);
-    DrawVertex(Vertices[i+1], Colors[i+1]);
+    DrawVertex(Vertices[i + 1], Colors[i + 1]);
   }
   void DrawVertex2t(size_t i) const {
     DrawVertex(Vertices[i], TextureCrds[i]);
-    DrawVertex(Vertices[i+1], TextureCrds[i+1]);
+    DrawVertex(Vertices[i + 1], TextureCrds[i + 1]);
   }
   void DrawVertex2ct(size_t i) const {
     DrawVertex(Vertices[i], Colors[i], TextureCrds[i]);
-    DrawVertex(Vertices[i+1], Colors[i+1], TextureCrds[i+1]);
+    DrawVertex(Vertices[i + 1], Colors[i + 1], TextureCrds[i + 1]);
   }
   void DrawVertex3(size_t i) const {
-    for (int j=0; j < 3; j++)
-      DrawVertex(Vertices[i+j]);
+    for (int j = 0; j < 3; j++) {
+      DrawVertex(Vertices[i + j]);
+    }
   }
   void DrawVertex3c(size_t i) const {
-    for (int j=0; j < 3; j++)
-      DrawVertex(Vertices[i+j], Colors[i+j]);
+    for (int j = 0; j < 3; j++) {
+      DrawVertex(Vertices[i + j], Colors[i + j]);
+    }
   }
   void DrawVertex3t(size_t i) const {
-    for (int j=0; j < 3; j++)
-      DrawVertex(Vertices[i+j], TextureCrds[i+j]);
+    for (int j = 0; j < 3; j++) {
+      DrawVertex(Vertices[i + j], TextureCrds[i + j]);
+    }
   }
   void DrawVertex3ct(size_t i) const {
-    for (int j=0; j < 3; j++)
-      DrawVertex(Vertices[i+j], Colors[i+j], TextureCrds[i+j]);
+    for (int j = 0; j < 3; j++) {
+      DrawVertex(Vertices[i + j], Colors[i + j], TextureCrds[i + j]);
+    }
   }
   void DrawVertex4(size_t i) const {
-    for (int j=0; j < 4; j++)
-      DrawVertex(Vertices[i+j]);
+    for (int j = 0; j < 4; j++) {
+      DrawVertex(Vertices[i + j]);
+    }
   }
   void DrawVertex4c(size_t i) const {
-    for (int j=0; j < 4; j++)
-      DrawVertex(Vertices[i+j], Colors[i+j]);
+    for (int j = 0; j < 4; j++) {
+      DrawVertex(Vertices[i + j], Colors[i + j]);
+    }
   }
   void DrawVertex4t(size_t i) const {
-    for (int j=0; j < 4; j++)
-      DrawVertex(Vertices[i+j], TextureCrds[i+j]);
+    for (int j = 0; j < 4; j++) {
+      DrawVertex(Vertices[i + j], TextureCrds[i + j]);
+    }
   }
   void DrawVertex4ct(size_t i) const {
-    for (int j=0; j < 4; j++)
-      DrawVertex(Vertices[i+j], Colors[i+j], TextureCrds[i+j]);
+    for (int j = 0; j < 4; j++) {
+      DrawVertex(Vertices[i + j], Colors[i + j], TextureCrds[i + j]);
+    }
   }
   // creates a triangle based polyhedra
-  void TriangularFromEdges(const vec3d *edges, size_t count, double sz,
-    const TTypeList<vec3s> &faces);
+  void TriangularFromEdges(const vec3d* edges, size_t count, double sz,
+    const TTypeList<vec3s>& faces);
+  mutable olx_gl::FlagManager flagManager;
 public:
   TGlPrimitive(TObjectGroup& ParentG, TGlRenderer& ParentR, short type);
   ~TGlPrimitive();
 
-  TGlRenderer& GetRenderer() const {  return Renderer;  }
+  TGlRenderer& GetRenderer() const { return Renderer; }
   void Compile();
   void Draw();
 
-  DefPropP(GLuint, ListId)
-  DefPropP(GLuint, TextureId)
-  DefPropP(GLuint, OwnerId) // to be used by the owner of the object
+  DefPropP(GLuint, ListId);
+  DefPropP(GLuint, TextureId);
+  DefPropP(GLuint, OwnerId); // to be used by the owner of the object
 
-  DefPropP(GLuint, QuadricDrawStyle)
-  DefPropP(GLuint, QuadricNormals)
-  DefPropP(GLuint, QuadricOrientation)
+  DefPropP(GLuint, QuadricDrawStyle);
+  DefPropP(GLuint, QuadricNormals);
+  DefPropP(GLuint, QuadricOrientation);
 
 
   /* fills the list woth parameter names */
   virtual void ListParams(TStrList& List);
 
   /* sets the type and expands Params vector*/
-  short GetType() const {  return Type;  }
+  short GetType() const { return Type; }
 
-  DefPropP(TGlClipPlanes*, ClipPlanes)
-  DefPropP(const olxstr*, String)
-  DefPropP(TGlFont*, Font)
-  DefPropP(TEBasis*, Basis)
-  DefPropP(AEvaluator*, Evaluator)
-  DefPropP(TGPCollection*, ParentCollection)
+  DefPropP(TGlClipPlanes*, ClipPlanes);
+  DefPropP(const olxstr*, String);
+  DefPropP(TGlFont*, Font);
+  DefPropP(TEBasis*, Basis);
+  DefPropP(TGPCollection*, ParentCollection);
 
-  DefPropC(olxstr, Name)
+  DefPropC(olxstr, Name);
 
   TGlMaterial& GetProperties() const {
-    return (TGlMaterial &)AGroupObject::GetProperties();
+    return (TGlMaterial&)AGroupObject::GetProperties();
   }
   AGOProperties& SetProperties(const AGOProperties& C);
 
@@ -185,27 +193,30 @@ public:
   */
   void MakeTetrahedron(double sz);
   void MakeOctahedron(double sz);
-  static void CallList(TGlPrimitive* GlP)  {
-    if( GlP->IsList() )
+  static void CallList(TGlPrimitive* GlP) {
+    if (GlP->IsList()) {
       olx_gl::callList(GlP->GetListId());
-    else
+    }
+    else {
       GlP->Draw();
+    }
   }
-  static void CallList(GLuint i)  {  olx_gl::callList(i);  }
-  void StartList()  {
-    if( !olx_is_valid_index(ListId) )
+  static void CallList(GLuint i) { olx_gl::callList(i); }
+  void StartList() {
+    if (!olx_is_valid_index(ListId)) {
       throw TInvalidArgumentException(__OlxSourceInfo, "ListId");
+    }
     olx_gl::newList(ListId, GL_COMPILE);
   }
-  static void EndList()  { olx_gl::endList();  }
-  bool IsCompiled() const {  return Compiled;  }
+  static void EndList() { olx_gl::endList(); }
+  bool IsCompiled() const { return Compiled; }
   // for internal use mostly
   bool IsCompilable() const;
-  bool IsList() const {  return Type == sgloCommandList;  }
+  bool IsList() const { return Type == sgloCommandList; }
 
-  struct TextureCrd  {
+  struct TextureCrd {
     float s, t, r, q;
-    TextureCrd() : s(0), t(0), r(0), q(1)  {}
+    TextureCrd() : s(0), t(0), r(0), q(1) {}
   };
   TArrayList<vec3f> Vertices, Normals;
   TArrayList<TextureCrd> TextureCrds;
@@ -221,14 +232,14 @@ public:
   evecd Params;
 
   void SetColor(const uint32_t& cl) const;
-  static void SetNormal(const vec3d& v)   {  olx_gl::normal(v);  }
-  static void SetNormal(const vec3f& v)   {  olx_gl::normal(v);  }
-  static void SetTexCrd(const TextureCrd& c)  {
+  static void SetNormal(const vec3d& v) { olx_gl::normal(v); }
+  static void SetNormal(const vec3f& v) { olx_gl::normal(v); }
+  static void SetTexCrd(const TextureCrd& c) {
     olx_gl::texCoord(c.s, c.t, c.r, c.q);
   }
 
-  static void DrawVertex(const vec3d& v)  {  olx_gl::vertex(v);  }
-  static void DrawVertex(const vec3f& v)  {  olx_gl::vertex(v);  }
+  static void DrawVertex(const vec3d& v) { olx_gl::vertex(v); }
+  static void DrawVertex(const vec3f& v) { olx_gl::vertex(v); }
 
   template <class vec_class>
   void DrawVertex(const vec_class& v, const uint32_t& c) const {
@@ -244,7 +255,7 @@ public:
     DrawVertex(v);
   }
   template <class vec_class>
-  static void DrawVertex(const vec_class& v, const TextureCrd& tc)  {
+  static void DrawVertex(const vec_class& v, const TextureCrd& tc) {
     SetTexCrd(tc);
     DrawVertex(v);
   }

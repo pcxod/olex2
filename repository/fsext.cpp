@@ -428,10 +428,11 @@ PyObject* fsext_pyNewFile(PyObject* self, PyObject* args) {
   olxstr name;
   int persistenceId = 0;
   int length = 0;
-  if (!PythonExt::ParseTuple(args, "ws#|i",
+  olxcstr format = PythonExt::UpdateBinaryFormat("ws#|i");
+  if (!PythonExt::ParseTuple(args, format.c_str(),
     &name, &data, &length, &persistenceId))
   {
-    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "ws#|i");
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, format.c_str());
   }
   if (data != 0 && !name.IsEmpty() && length > 0) {
     TFileHandlerManager::AddMemoryBlock(name, data, length, persistenceId);
@@ -450,7 +451,8 @@ PyObject* fsext_pyReadFile(PyObject* self, PyObject* args) {
     const size_t is = io->GetAvailableSizeT();
     olx_array_ptr<char> bf(is + 1);
     io->Read(bf, is);
-    PyObject* po = Py_BuildValue("s#", *bf, is);
+    PyObject* po = Py_BuildValue(PythonExt::UpdateBinaryFormat("s#").c_str(),
+      *bf, is);
     return po;
   }
   return PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo,

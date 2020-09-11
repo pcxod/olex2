@@ -2382,8 +2382,8 @@ void TMainForm::macEditIns(TStrObjList &Cmds, const TParamList &Options, TMacroD
   dlg->Destroy();
 }
 //..............................................................................
-void TMainForm::macHklEdit(TStrObjList &Cmds, const TParamList &Options,
-  TMacroData &E)
+void TMainForm::macHklEdit(TStrObjList& Cmds, const TParamList& Options,
+  TMacroData& E)
 {
   TStopWatch sw(__FUNC__);
   olxstr HklFN = FXApp->XFile().LocateHklFile();
@@ -2397,7 +2397,7 @@ void TMainForm::macHklEdit(TStrObjList &Cmds, const TParamList &Options,
   THklFile Hkl;
   Hkl.LoadFromFile(HklFN, false);
   for (size_t i = 0; i < Hkl.RefCount(); i++) {
-    Hkl[i].SetTag(i+1);
+    Hkl[i].SetTag(i + 1);
   }
   sw.start("Preparing input");
   TStrList SL;
@@ -2405,10 +2405,10 @@ void TMainForm::macHklEdit(TStrObjList &Cmds, const TParamList &Options,
   SL.Add("REM and remove '-' char if you want the reflection to be used in the refinement");
   SL.Add();
   if (Cmds.Count() != 3 && FXApp->CheckFileType<TIns>()) {
-    const TTypeList<RefinementModel::BadReflection> &bad_refs =
+    const TTypeList<RefinementModel::BadReflection>& bad_refs =
       FXApp->XFile().GetRM().GetBadReflectionList();
-    for (size_t i=0; i < bad_refs.Count(); i++) {
-      olxstr &Tmp = SL.Add("REM   ");
+    for (size_t i = 0; i < bad_refs.Count(); i++) {
+      olxstr& Tmp = SL.Add("REM   ");
       Tmp.stream(' ') << bad_refs[i].index[0] << bad_refs[i].index[1] <<
         bad_refs[i].index[2] << "Error/esd=" << bad_refs[i].factor;
       TRefPList refs = Hkl.AllRefs(bad_refs[i].index, matrices);
@@ -2418,7 +2418,7 @@ void TMainForm::macHklEdit(TStrObjList &Cmds, const TParamList &Options,
       SL.Add();
     }
   }
-  else  {
+  else {
     TReflection Refl(Cmds[0].ToInt(), Cmds[1].ToInt(), Cmds[2].ToInt());
     TRefPList refs = Hkl.AllRefs(Refl, matrices);
     for (size_t i = 0; i < refs.Count(); i++) {
@@ -2426,25 +2426,29 @@ void TMainForm::macHklEdit(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   sw.stop();
-  TdlgEdit *dlg = new TdlgEdit(this, true);
+  TdlgEdit* dlg = new TdlgEdit(this, true);
   dlg->SetText(SL.Text('\n'));
-  if( dlg->ShowModal() == wxID_OK )  {
-    olxstr Tmp = dlg->GetText();
-    SL.Clear();
-    SL.Strtok(Tmp, '\n');
-    TReflection R(0, 0, 0);
-    for (size_t i=0; i < SL.Count(); i++) {
-      if (SL[i].ToUpperCase().StartsFrom("REM")) {
-        continue;
-      }
-      R.FromNString(SL[i]);
-      Hkl.UpdateRef(R);
-    }
-    sw.start("Saving HKL");
-    Hkl.SaveToFile(HklFN);
-    sw.stop();
+  olxstr txt;
+  if (dlg->ShowModal() == wxID_OK) {
+    txt = dlg->GetText();
   }
   dlg->Destroy();
+  if (txt.IsEmpty()) {
+    return;
+  }
+  SL.Clear();
+  SL.Strtok(txt, '\n');
+  TReflection R(0, 0, 0);
+  for (size_t i = 0; i < SL.Count(); i++) {
+    if (SL[i].ToUpperCase().StartsFrom("REM")) {
+      continue;
+    }
+    R.FromNString(SL[i]);
+    Hkl.UpdateRef(R);
+  }
+  sw.start("Saving HKL");
+  Hkl.SaveToFile(HklFN);
+  sw.stop();
 }
 //..............................................................................
 void TMainForm::macHklView(TStrObjList &Cmds, const TParamList &Options, TMacroData &E)  {
@@ -2854,33 +2858,48 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
       if (FXApp->CheckFileType<TCif>()) {
         TCif& cif = FXApp->XFile().GetLastLoader<TCif>();
         if (cif.BlockCount() > 1) {
-          FXApp->NewLogEntry() << "The following data blocks are available:";
-          for (size_t i = 0; i < cif.BlockCount(); i++) {
-            FXApp->NewLogEntry() << '#' << i << ": " << cif.GetBlock(i).GetName();
+          bool skip_first = cif.GetBlock(0).GetName().IsEmpty();
+          if ((skip_first && cif.BlockCount() > 2) || (!skip_first && cif.BlockCount() > 1)) {
+            FXApp->NewLogEntry() << "The following data blocks are available:";
+            for (size_t i = skip_first ? 1 : 0; i < cif.BlockCount(); i++) {
+              FXApp->NewLogEntry() << '#' << i << ": " << cif.GetBlock(i).GetName();
+            }
           }
         }
         if (!file_n.data_name.IsEmpty()) {
           FXApp->NewLogEntry() << "Loading: " << file_n.data_name;
         }
+        else {
+          FXApp->NewLogEntry() << "Current block: " << cif.GetBlockIndex();
+        }
         FXApp->Draw();
-        olxstr hklFileName = TEFile::ChangeFileExt(file_n.file_name, "hkl");
-        olxstr insFileName = TEFile::ChangeFileExt(file_n.file_name, "ins");
+        olxstr file_path = TEFile::AddPathDelimeter(TEFile::ExtractFilePath(file_n.file_name));
+        olxstr hklFileName = file_path + cif.GetDataName() + ".hkl";
+        olxstr insFileName = file_path + cif.GetDataName() + ".ins";
         TMacroData er;
         if (!TEFile::Exists(hklFileName) && cif.GetAsymmUnit().AtomCount() == 0) {
           size_t block_index = cif.GetBlockIndex();
-          if (cif.FindLoopGlobal("_refln", true) != NULL ||
-            cif.FindEntry("_shelx_hkl_file") != NULL)
+          if (cif.FindLoopGlobal("_refln", true) != 0 ||
+            cif.FindEntry("_shelx_hkl_file") != 0)
           {
             Macros.ProcessMacro(olxstr("export ").quote() << hklFileName, er);
             if (!er.IsProcessingError()) {
+              olxstr file_name = TEFile::ChangeFileExt(TEFile::ExtractFileName(file_n.file_name),
+                EmptyString());
+              bool name_matches = file_name.Equalsi(cif.GetDataName());
+              // for mismatching name the 'normal' procedure will fail
+              if (!name_matches) {
+                Macros.ProcessMacro("CifExtract", er);
+              }
               if (!TEFile::Exists(insFileName)) {
                 TIns ins;
                 ins.Adopt(FXApp->XFile(), 0);
                 ins.GetRM().SetHKLSource(hklFileName);
                 ins.SaveToFile(insFileName);
                 Macros.ProcessMacro(olxstr("@reap \'") << insFileName << '\'', er);
-                if (!er.IsProcessingError())
+                if (!er.IsProcessingError()) {
                   Macros.ProcessMacro("reset", er);
+                }
                 FXApp->Draw();
                 return;
               }

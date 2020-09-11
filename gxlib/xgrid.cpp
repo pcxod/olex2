@@ -937,8 +937,8 @@ const_strlist TXGrid::ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const {
       for (size_t i = 0; i < trians.Count(); i++) {
         out.Add("    smooth_triangle {");
         for (int j = 0; j < 3; j++) {
-          out.Add("    ") << pov::to_str(crdc.crd(verts[trians[i].pointID[j]]))
-            << pov::to_str(crdc.normal(norms[trians[i].pointID[j]]));
+          out.Add("    ") << pov::to_str(crdc.crd(verts[trians[i][j]]))
+            << pov::to_str(crdc.normal(norms[trians[i][j]]));
         }
         out.Add("    }");
       }
@@ -962,7 +962,7 @@ const_strlist TXGrid::ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const {
             for (size_t i = 0; i < trians.Count(); i++) {
               bool draw = true;
               for (int j = 0; j < 3; j++) {
-                pts[j] = verts[trians[i].pointID[j]];
+                pts[j] = verts[trians[i][j]];
                 pts[j][0] = pts[j][0] / MaxX + x;
                 pts[j][1] = pts[j][1] / MaxY + y;
                 pts[j][2] = pts[j][2] / MaxZ + z;
@@ -976,7 +976,7 @@ const_strlist TXGrid::ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const {
               out.Add("    smooth_triangle {");
               for (int j = 0; j < 3; j++) {
                 out.Add("    ") << pov::to_str(crdc.crd(pts[j]))
-                  << pov::to_str(crdc.normal(norms[trians[i].pointID[j]]));
+                  << pov::to_str(crdc.normal(norms[trians[i][j]]));
               }
               out.Add("    }");
             }
@@ -1093,7 +1093,7 @@ void TXGrid::RescaleSurface(bool collect_only) {
         for (size_t i = 0; i < trians.Count(); i++) {
           bool draw = true;
           for (int j = 0; j < 3; j++) {
-            if ((verts[trians[i].pointID[j]] - center).QLength() > qr) {
+            if ((verts[trians[i][j]] - center).QLength() > qr) {
               draw = false;
               break;
             }
@@ -1189,9 +1189,6 @@ void TXGrid::RescaleSurface(bool collect_only) {
         olx_gl::polygonMode(GL_FRONT_AND_BACK, GL_FILL);
         olx_gl::endList();
       }
-      else {
-
-      }
     }
   }
   else {
@@ -1213,7 +1210,7 @@ void TXGrid::RescaleSurface(bool collect_only) {
               for (size_t i = 0; i < trians.Count(); i++) {
                 bool draw = true;
                 for (int j = 0; j < 3; j++) {
-                  pts[j] = verts[trians[i].pointID[j]];
+                  pts[j] = verts[trians[i][j]];
                   pts[j][0] = pts[j][0] / MaxX + x;
                   pts[j][1] = pts[j][1] / MaxY + y;
                   pts[j][2] = pts[j][2] / MaxZ + z;
@@ -1267,7 +1264,7 @@ void TXGrid::RescaleSurface(bool collect_only) {
         }
         for (size_t i = 0; i < trians.Count(); i++) {
           for (int j = 0; j < 3; j++) {
-            pts[j] = verts[trians[i].pointID[j]];
+            pts[j] = verts[trians[i][j]];
             pts[j][0] = pts[j][0] / MaxX;
             pts[j][1] = pts[j][1] / MaxY;
             pts[j][2] = pts[j][2] / MaxZ;
@@ -1445,8 +1442,6 @@ TPtrList<TXBlob>::const_list_type TXGrid::CreateBlobs(int flags) {
   }
   cp_vertices = 0;
   cn_vertices = 0;
-
-
   rv.Pack();
   return rv;
 }
@@ -1694,6 +1689,25 @@ void TXGrid::LibSplit(TStrObjList &Cmds, const TParamList &Options,
   }
 }
 //.............................................................................
+struct FloatVC {
+  static int& eps() {
+    static int eps_ = 75;
+    return eps_;
+  }
+  FloatVC() {
+  }
+  int Compare(const vec3f& a, const vec3f& b) const {
+    int e = eps();
+    for (int i = 0; i < 3; i++) {
+      int r = olx_cmp((int)(a[i] * e), (int)(b[i] * e));
+      if (r != 0) {
+        return r;
+      }
+    }
+    return 0;
+  }
+};
+
 void TXGrid::LibProcess(TStrObjList& Cmds, const TParamList& Options,
   TMacroData& Error)
 {
@@ -1702,13 +1716,35 @@ void TXGrid::LibProcess(TStrObjList& Cmds, const TParamList& Options,
   if (Cmds[0] == "smooth") {
     float ratio = Options.FindValue("r", "0.8").ToFloat();
     size_t N = Options.FindValue("n", "10").ToSizeT();
-
+    int eps = Options.FindValue("m", "0").ToInt();
     for (int li = 0; li < triangles.Count(); li++) {
+      if (eps > 0) {
+        FloatVC::eps() = eps;
+        olxset<vec3f, FloatVC> vset;
+        vset.AddAll(vertices[li]);
+        if (vset.Count() != vertices[li].Count()) {
+          for (size_t i = 0; i < triangles[li].Count(); i++) {
+            for (size_t j = 0; j < 3; j++) {
+              triangles[li][i][j] = vset.IndexOf(vertices[li][triangles[li][i][j]]);
+            }
+          }
+          vertices[li] = vset;
+        }
+      }
       TArrayList<vec3f>& norms = normals[li];
       TTypeList<IsoTriangle> triags = triangles[li];
       TTypeList<vec3f> verts(vertices[li].Count());
-      for (size_t i = 0; i < verts.Count(); i++) {
-        verts[i] = au.Orthogonalise(vertices[li][i]);
+      if (!Boxed) {
+        for (size_t i = 0; i < verts.Count(); i++) {
+          verts[i] = vertices[li][i];
+          verts[i][0] /= MaxX;
+          verts[i][1] /= MaxY;
+          verts[i][2] /= MaxZ;
+          au.CellToCartesian(verts[i]);
+        }
+      }
+      else {
+        verts = vertices[li];
       }
       olx_grid_util::smoother sm(verts, triags);
       for (int i = 0; i < N; i++) {
@@ -1736,8 +1772,16 @@ void TXGrid::LibProcess(TStrObjList& Cmds, const TParamList& Options,
           norms[i][2] = 1;
         }
       }
-      for (size_t i = 0; i < verts.Count(); i++) {
-        vertices[li][i] = au.Fractionalise(verts[i]);
+      if (!Boxed) {
+        for (size_t i = 0; i < verts.Count(); i++) {
+          vertices[li][i] = au.Fractionalise(verts[i]);
+          vertices[li][i][0] *= MaxX;
+          vertices[li][i][1] *= MaxY;
+          vertices[li][i][2] *= MaxZ;
+        }
+      }
+      else {
+        vertices[li] = verts;
       }
     }
     RescaleSurface(false);
@@ -1793,7 +1837,8 @@ TLibrary*  TXGrid::ExportLibrary(const olxstr& name)  {
   lib->Register(new TMacro<TXGrid>(this,
     &TXGrid::LibProcess, "Process",
     "r-ratio for smoothing [0.8]&;"
-    "n-number of cycles [10]",
+    "n-number of cycles [10]&;"
+    "m-merge close vertices",
     fpAny ^ fpNone,
     "Executes a grid process. Currently only 'smooth' is available"));
 
@@ -1811,12 +1856,13 @@ PyObject* pyImport(PyObject* self, PyObject* args) {
   int dim1, dim2, dim3, focus1, focus2, focus3;
   int type;
   int len;
-  if (!PyArg_ParseTuple(args, "(iii)(iii)s#i",
+  olxcstr format = PythonExt::UpdateBinaryFormat("(iii)(iii)s#i");
+  if (!PyArg_ParseTuple(args, format.c_str(),
     &dim1, &dim2, &dim3,
     &focus1, &focus2, &focus3, &data, &len, &type))
   {
     return PythonExt::InvalidArgumentException(__OlxSourceInfo,
-      "(iii)(iii)s#i");
+      format.c_str());
   }
   const size_t sz = dim1 * dim2*dim3;
   if ((type == 0 && sz * sizeof(double) != (size_t)len) ||

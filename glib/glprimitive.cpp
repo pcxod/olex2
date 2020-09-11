@@ -201,32 +201,23 @@ void TGlPrimitive::Compile() {
 }
 //..............................................................................
 void TGlPrimitive::PrepareColorRendering(uint16_t _begin) const {
-  if (Colors.Count() >= Vertices.Count() &&
-    !Renderer.ForcePlain() &&
-    !Renderer.IsSelecting())
-  {
-    olx_gl::pushAttrib(GL_LIGHTING_BIT);
+  if (!Renderer.ForcePlain() &&  !Renderer.IsSelecting()) {
     if (_begin == GL_POINT ||
       _begin == GL_LINES ||
       _begin == GL_LINE_STRIP ||
       _begin == GL_LINE_LOOP)
     {
-      olx_gl::disable(GL_LIGHTING);
+      flagManager.disable(GL_LIGHTING);
     }
-    olx_gl::enable(GL_COLOR_MATERIAL);
-    olx_gl::colorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+    //flagManager.enable(GL_COLOR_MATERIAL);
+    //olx_gl::colorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
   }
   olx_gl::begin(_begin);
 }
 //..............................................................................
 void TGlPrimitive::EndColorRendering() const {
   olx_gl::end();
-  if (Colors.Count() >= Vertices.Count() &&
-    !Renderer.ForcePlain() &&
-    !Renderer.IsSelecting())
-  {
-    olx_gl::popAttrib();
-  }
+  flagManager.clear();
 }
 //..............................................................................
 void TGlPrimitive::SetColor(const uint32_t& cl) const {

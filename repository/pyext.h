@@ -258,6 +258,14 @@ public:
     Py_DECREF(val);
     return 0;
   }
+
+  static olxcstr UpdateBinaryFormat(const char *f) {
+#if PY_MAJOR_VERSION >= 3
+    return olxcstr(f).Replace("s#", "y#");
+#else
+    return f;
+#endif
+  }
   static PyObject* PyNone() { Py_INCREF(Py_None);  return Py_None; }
   static PyObject* PyTrue() { Py_INCREF(Py_True);  return Py_True; }
   static PyObject* PyFalse() { Py_INCREF(Py_False);  return Py_False; }

@@ -781,6 +781,81 @@ void TIns::_ProcessAfix0(ParseContext& cx)  {
   }
 }
 //..............................................................................
+bool TIns::ProcessSFAC(ParseContext& cx, const TStrList& Toks, bool update_rm) {
+  if (Toks[0].Equalsi("SFAC")) {
+    bool expandedSfacProcessed = false;
+    if (Toks.Count() == 16) {  // a special case for expanded sfac
+      int NumberCount = 0;
+      for (size_t i = 2; i < Toks.Count(); i++) {
+        if (Toks[i].IsNumber()) {
+          NumberCount++;
+        }
+      }
+      if (NumberCount > 0 && NumberCount < 14) {
+        TBasicApp::NewLogEntry(logError) << "Possibly not well formed SFAC "
+          << Toks[0];
+      }
+      else  if (NumberCount == 14) {
+        olxstr lb(Toks[1].CharAt(0) == '$'
+          ? Toks[1].SubStringFrom(1) : Toks[1]);
+        cm_Element* elm = XElementLib::FindBySymbolEx(lb);
+        if (elm == 0) {
+          throw TFunctionFailedException(__OlxSourceInfo,
+            olxstr("Could not find suitable scatterer for ").quote()
+            << Toks[1]);
+        }
+        lb = XScatterer::NormaliseCharge(lb, elm);
+        if (update_rm) {
+          cx.rm.AddUserContent(*elm, 0, XScatterer::ChargeFromLabel(lb));
+        }
+        cx.BasicAtoms.Add(lb, elm);
+        expandedSfacProcessed = true;
+        XScatterer* sc = new XScatterer(lb);
+        sc->SetGaussians(
+          cm_Gaussians(
+            Toks[2].ToDouble(), Toks[4].ToDouble(), Toks[6].ToDouble(),
+            Toks[8].ToDouble(), Toks[3].ToDouble(), Toks[5].ToDouble(),
+            Toks[7].ToDouble(), Toks[9].ToDouble(), Toks[10].ToDouble())
+        );
+        sc->SetFpFdp(compd(Toks[11].ToDouble(), Toks[12].ToDouble()));
+        sc->SetMu(Toks[13].ToDouble());
+        sc->SetR(Toks[14].ToDouble());
+        sc->SetWeight(Toks[15].ToDouble());
+        cx.rm.AddSfac(*sc);
+      }
+    }
+    if (!expandedSfacProcessed) {
+      for (size_t j = 1; j < Toks.Count(); j++) {
+        if (XElementLib::IsElement(Toks[j])) {
+          cx.BasicAtoms.Add(Toks[j], XElementLib::FindBySymbol(Toks[j]));
+          if (cx.BasicAtoms.GetLast().Object == 0) {
+            throw TFunctionFailedException(__OlxSourceInfo,
+              olxstr("Could not find suitable scatterer for ").quote()
+              << Toks[j]);
+          }
+          if (update_rm) {
+            cx.rm.AddUserContent(Toks[j]);
+          }
+        }
+      }
+    }
+  }
+  else if (Toks[0].Equalsi("DISP") && Toks.Count() >= 4) {
+    const olxstr lb(Toks[1].CharAt(0) == '$'
+      ? Toks[1].SubStringFrom(1) : Toks[1]);
+    XScatterer* sc = new XScatterer(lb);
+    sc->SetFpFdp(compd(Toks[2].ToDouble(), Toks[3].ToDouble()));
+    if (Toks.Count() >= 5) {
+      sc->SetMu(Toks[4].ToDouble());
+    }
+    cx.rm.AddSfac(*sc);
+  }
+  else {
+    return false;
+  }
+  return true;
+}
+//..............................................................................
 bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
   ParseContext& cx, size_t& i)
 {
@@ -824,7 +899,9 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
       frag->Reset(a, b, c, al, be, ga);
     TStrList f_toks;
     while (++i < ins.Count() && !ins[i].StartsFromi("FEND")) {
-      if (ins[i].IsEmpty())  continue;
+      if (ins[i].IsEmpty()) {
+        continue;
+      }
       f_toks.Strtok(ins[i], ' ');
       if (f_toks.Count() > 4) {
         frag->Add(f_toks[0], f_toks[2].ToDouble(), f_toks[3].ToDouble(),
@@ -929,7 +1006,7 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
       {
         cx.AfixGroups.Pop();
       }
-      if (afixg != NULL) {
+      if (afixg != 0) {
         switch (m) {
         case 1:
         case 4:
@@ -974,7 +1051,7 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
         }
         if (m > 16) {  // FRAG
           Fragment* frag = cx.rm.FindFragByCode(m);
-          if (frag == NULL) {
+          if (frag == 0) {
             throw TInvalidArgumentException(__OlxSourceInfo,
               "fitted group should be preceeded by the FRAG..FEND with the same code");
           }
@@ -992,7 +1069,7 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
           }
         }
         if (!cx.SetNextPivot) {
-          if (cx.LastRideable == NULL) {
+          if (cx.LastRideable == 0) {
             throw TFunctionFailedException(__OlxSourceInfo,
               "undefined pivot atom for a fitted group");
           }
@@ -1063,67 +1140,8 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
         "RESI alias number");
     }
   }
-  else if (Toks[0].Equalsi("SFAC")) {
-    bool expandedSfacProcessed = false;
-    if (Toks.Count() == 16) {  // a special case for expanded sfac
-      int NumberCount = 0;
-      for (size_t i = 2; i < Toks.Count(); i++) {
-        if (Toks[i].IsNumber())
-          NumberCount++;
-      }
-      if (NumberCount > 0 && NumberCount < 14) {
-        TBasicApp::NewLogEntry(logError) << "Possibly not well formed SFAC "
-          << Toks[0];
-      }
-      else  if (NumberCount == 14) {
-        olxstr lb(Toks[1].CharAt(0) == '$'
-          ? Toks[1].SubStringFrom(1) : Toks[1]);
-        cm_Element *elm = XElementLib::FindBySymbolEx(lb);
-        if (elm == 0) {
-          throw TFunctionFailedException(__OlxSourceInfo,
-            olxstr("Could not find suitable scatterer for ").quote()
-            << Toks[1]);
-        }
-        lb = XScatterer::NormaliseCharge(lb, elm);
-        cx.rm.AddUserContent(*elm, 0, XScatterer::ChargeFromLabel(lb));
-        cx.BasicAtoms.Add(lb, elm);
-        expandedSfacProcessed = true;
-        XScatterer* sc = new XScatterer(lb);
-        sc->SetGaussians(
-          cm_Gaussians(
-            Toks[2].ToDouble(), Toks[4].ToDouble(), Toks[6].ToDouble(),
-            Toks[8].ToDouble(), Toks[3].ToDouble(), Toks[5].ToDouble(),
-            Toks[7].ToDouble(), Toks[9].ToDouble(), Toks[10].ToDouble())
-        );
-        sc->SetFpFdp(compd(Toks[11].ToDouble(), Toks[12].ToDouble()));
-        sc->SetMu(Toks[13].ToDouble());
-        sc->SetR(Toks[14].ToDouble());
-        sc->SetWeight(Toks[15].ToDouble());
-        cx.rm.AddSfac(*sc);
-      }
-    }
-    if (!expandedSfacProcessed) {
-      for (size_t j = 1; j < Toks.Count(); j++) {
-        if (XElementLib::IsElement(Toks[j])) {
-          cx.BasicAtoms.Add(Toks[j], XElementLib::FindBySymbol(Toks[j]));
-          if (cx.BasicAtoms.GetLast().Object == NULL) {
-            throw TFunctionFailedException(__OlxSourceInfo,
-              olxstr("Could not find suitable scatterer for ").quote()
-              << Toks[j]);
-          }
-          cx.rm.AddUserContent(Toks[j]);
-        }
-      }
-    }
-  }
-  else if (Toks[0].Equalsi("DISP") && Toks.Count() >= 4) {
-    const olxstr lb(Toks[1].CharAt(0) == '$'
-      ? Toks[1].SubStringFrom(1) : Toks[1]);
-    XScatterer* sc = new XScatterer(lb);
-    sc->SetFpFdp(compd(Toks[2].ToDouble(), Toks[3].ToDouble()));
-    if (Toks.Count() >= 5)
-      sc->SetMu(Toks[4].ToDouble());
-    cx.rm.AddSfac(*sc);
+  else if (ProcessSFAC(cx, Toks, true)) {
+   ;
   }
   else if (Toks[0].Equalsi("REM")) {
     if (Toks.Count() > 1) {
@@ -1204,11 +1222,13 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
   return true;
 }
 //..............................................................................
-void TIns::UpdateParams()  {
-  for( size_t i =0; i < Ins.Count(); i++ )  {
-    if( Ins.GetObject(i) == NULL )  continue;  // might happen if load failed
-    for( size_t j=0; j < Ins.GetObject(i)->Count(); j++ )  {
-      if( Ins.GetObject(i)->GetObject(j) != NULL )  {
+void TIns::UpdateParams() {
+  for (size_t i = 0; i < Ins.Count(); i++) {
+    if (Ins.GetObject(i) == 0) {
+      continue;  // might happen if load failed
+    }
+    for (size_t j = 0; j < Ins.GetObject(i)->Count(); j++) {
+      if (Ins.GetObject(i)->GetObject(j) != 0) {
         Ins.GetObject(i)->GetString(j) =
           Ins.GetObject(i)->GetObject(j)->GetLabel();
       }
@@ -1216,22 +1236,48 @@ void TIns::UpdateParams()  {
   }
 }
 //..............................................................................
-void TIns::DelIns(size_t i)  {
+void TIns::DelIns(size_t i) {
   delete Ins.GetObject(i);
   Ins.Delete(i);
 }
 //..............................................................................
-TInsList* TIns::FindIns(const olxstr &Name)  {
-  size_t i = Ins.IndexOfi(Name);
-  return i != InvalidIndex ? Ins.GetObject(i) : NULL;
+TInsList* TIns::FindIns(const olxstr& Name) {
+  return Ins.FindObjecti(Name, 0);
 }
 //..............................................................................
-bool TIns::InsExists(const olxstr &Name)  {
-  return FindIns(Name) != NULL;
+bool TIns::InsExists(const olxstr& Name) {
+  return FindIns(Name) != 0;
 }
 //..............................................................................
-bool TIns::AddIns(const TStrList& toks, RefinementModel& rm, bool CheckUniq)  {
+bool TIns::AddIns(const TStrList& toks, RefinementModel& rm, bool CheckUniq) {
   // special instructions
+  if (toks.IsEmpty()) {
+    return false;
+  }
+  ParseContext cx(rm);
+  if (ProcessSFAC(cx, toks, false)) {
+    ContentList cl = rm.GetUserContent();
+    bool added = false;
+    for (size_t i = 0; i < cx.BasicAtoms.Count(); i++) {
+      const cm_Element * e = cx.BasicAtoms.GetObject(i);
+      int charge = XScatterer::ChargeFromLabel(cx.BasicAtoms[i]);
+      bool found = false;
+      for (size_t j = 0; j < cl.Count(); j++) {
+        if (cl[j].charge == charge && cl[j].element == e) {
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        cl.AddNew(*cx.BasicAtoms.GetObject(i), 0, charge);
+        added = true;
+      }
+    }
+    if (added) {
+      rm.SetUserContent(cl);
+    }
+    return true;
+  }
   if (_ParseIns(rm, toks) || ParseRestraint(rm, toks)) {
     return true;
   }
@@ -1240,10 +1286,10 @@ bool TIns::AddIns(const TStrList& toks, RefinementModel& rm, bool CheckUniq)  {
     bool unique = false;
     for (size_t i = 0; i < Ins.Count(); i++) {
       if (Ins[i].Equalsi(toks[0])) {
-        TInsList *ps = Ins.GetObject(i);
-        if (ps->Count() == (toks.Count()-1)) {
-          for (size_t j=0; j < ps->Count(); j++) {
-            if (!ps->GetString(j).Equalsi(toks[j+1])) {
+        TInsList* ps = Ins.GetObject(i);
+        if (ps->Count() == (toks.Count() - 1)) {
+          for (size_t j = 0; j < ps->Count(); j++) {
+            if (!ps->GetString(j).Equalsi(toks[j + 1])) {
               unique = true;
               break;
             }
@@ -1255,10 +1301,10 @@ bool TIns::AddIns(const TStrList& toks, RefinementModel& rm, bool CheckUniq)  {
       }
     }
   }
-  TInsList& Params = *(new TInsList(toks.Count()-1));
-  for (size_t i=1; i < toks.Count(); i++) {
-    Params[i-1] = toks[i];
-    Params.GetObject(i-1) = GetAsymmUnit().FindCAtom(toks[i]);
+  TInsList& Params = *(new TInsList(toks.Count() - 1));
+  for (size_t i = 1; i < toks.Count(); i++) {
+    Params[i - 1] = toks[i];
+    Params.GetObject(i - 1) = GetAsymmUnit().FindCAtom(toks[i]);
   }
   // end
   Ins.Add(toks[0], &Params);
@@ -1419,7 +1465,7 @@ TStrList::const_list_type TIns::SaveSfacUnit(const RefinementModel& rm,
   TStrList& list, size_t pos)
 {
   TStrList sfac;
-  sorted::ObjectComparable<olxstr> elms;
+  olxstr_set<true> elms;
   short state = 0;
   for (size_t i = 0; i < rm.GetUserContent().Count(); i++) {
     olxstr es = rm.GetUserContent()[i].element->symbol;
@@ -1429,11 +1475,11 @@ TStrList::const_list_type TIns::SaveSfacUnit(const RefinementModel& rm,
         es << olx_abs(rm.GetUserContent()[i].charge);
       }
     }
-    if (!elms.AddUnique(es).b) {
+    if (!elms.Add(es)) {
       continue;
     }
     XScatterer* sd = rm.FindSfacData(es);
-    if (sd != NULL && sd->IsSFAC()) {
+    if (sd != 0 && sd->IsSFAC()) {
       TStrList lines;
       HyphenateIns(sd->ToInsString(), lines);
       list.Insert(pos, lines);
@@ -1459,7 +1505,9 @@ TStrList::const_list_type TIns::SaveSfacUnit(const RefinementModel& rm,
   }
   for (size_t i = 0; i < rm.aunit.AtomCount(); i++) {
     TCAtom &a = rm.aunit.GetAtom(i);
-    if (a.IsDeleted()) continue;
+    if (a.IsDeleted()) {
+      continue;
+    }
     int ch = a.GetCharge();
     if (ch == 0) {
       continue;

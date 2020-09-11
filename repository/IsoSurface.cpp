@@ -711,7 +711,7 @@ smoother::smoother(TTypeList<vec3f> &v,
   n_map(v.Count())
 {
   for (size_t i = 0; i < triangles.Count(); i++) {
-    const int *p = &triangles[i].pointID[0];
+    const int *p = &triangles[i][0];
     n_map[p[0]].Add(p[1]);    n_map[p[0]].Add(p[2]);
     n_map[p[1]].Add(p[0]);    n_map[p[1]].Add(p[2]);
     n_map[p[2]].Add(p[0]);    n_map[p[2]].Add(p[1]);
