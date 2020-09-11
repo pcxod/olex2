@@ -30,62 +30,69 @@ static _auto_BI _autoMaxBond[] = {
 };
 
 // helper function
-size_t imp_auto_AtomCount(const TAsymmUnit& au)  {
+size_t imp_auto_AtomCount(const TAsymmUnit& au) {
   size_t ac = 0;
-  for( size_t i=0; i < au.AtomCount(); i++ )  {
+  for (size_t i = 0; i < au.AtomCount(); i++) {
     const TCAtom& a = au.GetAtom(i);
-      if( a.IsDeleted() || a.GetType() < 3 )  continue;
+    if (a.IsDeleted() || a.GetType() < 3) {
+      continue;
+    }
     ac++;
   }
   return ac;
 }
 
-void XLibMacros::funATA(const TStrObjList &Cmds, TMacroData &Error)  {
+void XLibMacros::funATA(const TStrObjList& Cmds, TMacroData& Error) {
   TXApp& xapp = TXApp::GetInstance();
   olxstr folder(Cmds.IsEmpty() ? EmptyString() : Cmds[0]);
   int arg = 0;
-  if( folder.IsNumber() )  {
+  if (folder.IsNumber()) {
     arg = folder.ToInt();
     folder.SetLength(0);
   }
-  olex2::IOlex2Processor::GetInstance()->processMacro("clean -npd -d");
+  bool dry_run = arg == -1;
+  if (!dry_run) {
+    olex2::IOlex2Processor::GetInstance()->processMacro("clean -npd -d");
+  }
   static olxstr FileName(xapp.XFile().GetFileName());
-  if( !folder.IsEmpty() )
+  if (!folder.IsEmpty()) {
     TAutoDB::GetInstance().ProcessFolder(folder);
-
+  }
   TLattice& latt = xapp.XFile().GetLattice();
   TAsymmUnit& au = latt.GetAsymmUnit();
   ElementPList elm_l;
-  if( arg == 1 )
+  if (arg == 1) {
     elm_l = olx_analysis::helper::get_user_elements();
+  }
   TAutoDB::AnalysisStat stat;
   uint64_t st = TETime::msNow();
   TAutoDB::GetInstance().AnalyseStructure(xapp.XFile().GetFileName(), latt,
-    NULL, stat, elm_l.IsEmpty() ? NULL : &elm_l);
+    0, stat, dry_run, elm_l.IsEmpty() ? 0 : &elm_l);
   st = TETime::msNow() - st;
   TBasicApp::NewLogEntry(logInfo) << "Elapsed time " << st << " ms";
-
   olex2::IOlex2Processor::GetInstance()->processMacro("fuse");
   size_t ac = imp_auto_AtomCount(au);
-  if( ac == 0 )  // clearly something is wrong when it happens...
+  if (ac == 0) { // clearly something is wrong when it happens...
     ac = 1;
+  }
   // sometimes things get stuck while there are some NPD atoms
-  if ((double)stat.ConfidentAtomTypes/ac < 0.2) {
+  if ((double)stat.ConfidentAtomTypes / ac < 0.2 && !dry_run) {
     olex2::IOlex2Processor::GetInstance()->processMacro("clean -d");
   }
-  Error.SetRetVal(olxstr(stat.AtomTypeChanges!=0) << ';' <<
-    (double)stat.ConfidentAtomTypes*100/ac);
+  Error.SetRetVal(olxstr(stat.AtomTypeChanges != 0) << ';' <<
+    (double)stat.ConfidentAtomTypes * 100 / ac);
 }
 //..............................................................................
-void XLibMacros::macAtomInfo(TStrObjList &Cmds, const TParamList &Options,
-  TMacroData &Error)
+void XLibMacros::macAtomInfo(TStrObjList& Cmds, const TParamList& Options,
+  TMacroData& Error)
 {
   TXApp& xapp = TXApp::GetInstance();
   TSAtomPList satoms;
   xapp.FindSAtoms(Cmds.Text(' '), satoms);
   TStrList report;
-  for( size_t i=0; i < satoms.Count(); i++ )
+  for (size_t i = 0; i < satoms.Count(); i++) {
     TAutoDB::GetInstance().AnalyseNode(*satoms[i], report);
+  }
   xapp.NewLogEntry() << report;
 }
 //..............................................................................

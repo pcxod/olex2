@@ -2876,8 +2876,8 @@ void XLibMacros::macFixUnit(TStrObjList &Cmds, const TParamList &Options,
   xf.GetRM().SetUserContent(content);
 }
 //.............................................................................
-void XLibMacros::macGenDisp(TStrObjList &Cmds, const TParamList &Options,
-  TMacroData &Error)
+void XLibMacros::macGenDisp(TStrObjList& Cmds, const TParamList& Options,
+  TMacroData& Error)
 {
   const bool neutron = Options.GetBoolOption('n');
   const bool full = Options.GetBoolOption('f') || neutron;
@@ -2885,9 +2885,23 @@ void XLibMacros::macGenDisp(TStrObjList &Cmds, const TParamList &Options,
 
   RefinementModel& rm = TXApp::GetInstance().XFile().GetRM();
   const ContentList& content = rm.GetUserContent();
+  if (!force) {
+    size_t cnt = 0;
+    for (size_t i = 0; i < content.Count(); i++) {
+      XScatterer* s = rm.FindSfacData(content[i].element->symbol);
+      if (s != 0 && s->IsSet(XScatterer::setDispersion | XScatterer::setMu)) {
+        continue;
+      }
+      cnt++;
+    }
+    if (cnt == 0) {
+      return;
+    }
+  }
+
   const double en = rm.expl.GetRadiationEnergy();
   cm_Absorption_Coefficient_Reg ac;
-  olxstr_dict<compd> ext_registry;
+  olxstr_dict<TDoubleList> ext_registry;
   olxstr source = Options.FindValue("source");
   if (!source.IsEmpty()) {
     olxstr fn = "spy.sfac.generate_DISP(";
@@ -2897,20 +2911,27 @@ void XLibMacros::macGenDisp(TStrObjList &Cmds, const TParamList &Options,
     else if (source.Equalsi("henke")) {
       fn << "henke)";
     }
+    else if (source.Equalsi("auto")) {
+      fn << "auto)";
+    }
     else {
       Error.ProcessingError(__OlxSrcInfo, "Unknown source");
       return;
     }
     if (!olex2::IOlex2Processor::GetInstance()->processFunction(fn, true)) {
-      Error.ProcessingError(__OlxSrcInfo, "Failed to extarct data from cctbx");
+      Error.ProcessingError(__OlxSrcInfo, "Failed to extract data from cctbx");
       return;
     }
     TStrList e_lines(fn, ';');
     for (size_t i = 0; i < e_lines.Count(); i++) {
       TStrList e_toks(e_lines[i], ',');
-      if (e_toks.Count() == 3) {
-        ext_registry.Add(e_toks[0],
-          compd(e_toks[1].ToDouble(), e_toks[2].ToDouble()));
+      if (e_toks.Count() >= 3) {
+        TDoubleList& dl = ext_registry.Add(e_toks[0]);
+        dl.Add(e_toks[1].ToDouble());
+        dl.Add(e_toks[2].ToDouble());
+        if (e_toks.Count() > 3) {
+          dl.Add(e_toks[3].ToDouble());
+        }
       }
     }
   }
@@ -2919,29 +2940,37 @@ void XLibMacros::macGenDisp(TStrObjList &Cmds, const TParamList &Options,
       TBasicApp::NewLogEntry() << "Skipping DISP generation for neutron data";
       return;
     }
-    for (size_t i=0; i < content.Count(); i++) {
+    for (size_t i = 0; i < content.Count(); i++) {
       if (!force) {
-        XScatterer *s = rm.FindSfacData(content[i].element->symbol);
-        if (s != 0 && s->IsSet(XScatterer::setDispersion)) {
+        XScatterer* s = rm.FindSfacData(content[i].element->symbol);
+        if (s != 0 && s->IsSet(XScatterer::setDispersion|XScatterer::setMu)) {
           continue;
         }
       }
       XScatterer* sc = new XScatterer(content[i].element->symbol);
       size_t ext_idx = ext_registry.IndexOf(content[i].element->symbol);
+      bool mu_set = false;
       if (ext_idx != InvalidIndex) {
-        sc->SetFpFdp(ext_registry.GetValue(ext_idx));
+        const TDoubleList& dl = ext_registry.GetValue(ext_idx);
+        sc->SetFpFdp(compd(dl[0], dl[1]));
+        if (dl.Count() > 2) {
+          sc->SetMu(dl[2]);
+          mu_set = true;
+        }
       }
       else {
         sc->SetFpFdp(content[i].element->CalcFpFdp(en) - content[i].element->z);
       }
-      try {
-        double absorpc =
-          ac.CalcMuOverRhoForE(en, ac.get(content[i].element->symbol));
-        sc->SetMu(absorpc*content[i].element->GetMr()/0.6022142);
-      }
-      catch(...) {
-        TBasicApp::NewLogEntry() << "Could not locate absorption data for: " <<
-          content[i].element->symbol;
+      if (!mu_set) {
+        try {
+          double absorpc =
+            ac.CalcMuOverRhoForE(en, ac.get(content[i].element->symbol));
+          sc->SetMu(absorpc * content[i].element->GetMr() / 0.6022142);
+        }
+        catch (...) {
+          TBasicApp::NewLogEntry() << "Could not locate absorption data for: " <<
+            content[i].element->symbol;
+        }
       }
       rm.AddSfac(*sc);
     }
@@ -2949,39 +2978,47 @@ void XLibMacros::macGenDisp(TStrObjList &Cmds, const TParamList &Options,
   else {
     for (size_t i = 0; i < content.Count(); i++) {
       if (!force) {
-        XScatterer *s = rm.FindSfacData(content[i].element->symbol);
+        XScatterer* s = rm.FindSfacData(content[i].element->symbol);
         if (s != 0 && s->IsSet(XScatterer::setAll)) {
           continue;
         }
       }
       XScatterer* sc = new XScatterer(*content[i].element, en);
-        if (neutron) {
-          sc->SetFpFdp(compd(0, 0));
+      bool mu_set = false;
+      if (neutron) {
+        sc->SetFpFdp(compd(0, 0));
+      }
+      else {
+        size_t ext_idx = ext_registry.IndexOf(content[i].element->symbol);
+        if (ext_idx != InvalidIndex) {
+          const TDoubleList& dl = ext_registry.GetValue(ext_idx);
+          sc->SetFpFdp(compd(dl[0], dl[1]));
+          if (dl.Count() > 2) {
+            sc->SetMu(dl[2]);
+            mu_set = true;
+          }
         }
         else {
-          size_t ext_idx = ext_registry.IndexOf(content[i].element->symbol);
-          if (ext_idx != InvalidIndex) {
-            sc->SetFpFdp(ext_registry.GetValue(ext_idx));
-          }
-          else {
-            sc->SetFpFdp(content[i].element->CalcFpFdp(en) - content[i].element->z);
-          }
+          sc->SetFpFdp(content[i].element->CalcFpFdp(en) - content[i].element->z);
         }
+      }
       try {
         double absorpc =
           ac.CalcMuOverRhoForE(en, ac.get(content[i].element->symbol));
         CXConnInfo& ci = rm.Conn.GetConnInfo(*content[i].element);
-        sc->SetMu(absorpc*content[i].element->GetMr() / 0.6022142);
+        if (!mu_set) {
+          sc->SetMu(absorpc * content[i].element->GetMr() / 0.6022142);
+        }
         sc->SetR(ci.r);
         sc->SetWeight(content[i].element->GetMr());
-        delete &ci;
+        delete& ci;
       }
       catch (...) {
         TBasicApp::NewLogEntry() << "Could not locate absorption data for: " <<
           content[i].element->symbol;
       }
       if (neutron) {
-        if (content[i].element->neutron_scattering == NULL) {
+        if (content[i].element->neutron_scattering == 0) {
           TBasicApp::NewLogEntry() << "Could not locate neutron data for: " <<
             content[i].element->symbol;
         }
