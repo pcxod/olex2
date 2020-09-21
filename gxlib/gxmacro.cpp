@@ -2605,9 +2605,21 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
       size_t whereIndex = Cmds.IndexOf("where");
       if (whereIndex >= 1 && whereIndex != InvalidIndex) {
         olxstr Tmp = Cmds[whereIndex-1];
-        while (olx_is_valid_index(whereIndex)) { Cmds.Delete(whereIndex--); }
+        while (olx_is_valid_index(whereIndex)) {
+          Cmds.Delete(whereIndex--);
+        }
+        olxstr expression = Cmds.Text(' ');
+        size_t el = expression.Length();
+        while (expression.Replace("xatom.", "atom.").Length() != el) {
+          el = expression.Length();
+        }
+        el = expression.Length();
+        while (expression.Replace("xbond.", "bond.").Length() != el) {
+          el = expression.Length();
+        }
+
         if (Tmp.Equalsi("atoms")) {
-          app.SelectAtomsWhere(Cmds.Text(' '));
+          app.SelectAtomsWhere(expression);
         }
         else if (Tmp.Equalsi("bonds")) {
           app.SelectBondsWhere(Cmds.Text(' '));
