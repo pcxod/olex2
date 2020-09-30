@@ -784,10 +784,18 @@ bool TEFile::SetFileTimes(const olxstr& fileName, uint64_t AccTime, uint64_t Mod
 }
 //..............................................................................
 time_t TEFile::FileAge(const olxstr& fileName) {
+  olxstr _name(OLX_OS_PATH(fileName));
   struct STAT_STR the_stat;
-  if (STAT(OLXSTR(OLX_OS_PATH(fileName)), &the_stat) != 0) {
+  if (STAT(OLXSTR(_name), &the_stat) != 0) {
+    olxstr fn;
+    if (!IsAbsolutePath(fileName)) {
+      fn <<  CurrentDir() << "->" << _name;
+    }
+    else {
+      fn = _name;
+    }
     throw TInvalidArgumentException(__OlxSourceInfo,
-      olxstr("Invalid file '") << fileName << '\'');
+      olxstr("Invalid file '") << fn << '\'');
   }
 #if defined(__BORLANDC__) || defined(_MSC_VER) || defined(__GNUC__)
   return the_stat.st_mtime;
@@ -810,8 +818,15 @@ TEFile::FileID TEFile::GetFileID(const olxstr& fileName) {
   time_t _timestamp = 0;
   struct STAT_STR the_stat;
   if (STAT(OLXSTR(_name), &the_stat) != 0) {
+    olxstr fn;
+    if (!IsAbsolutePath(fileName)) {
+      fn << CurrentDir() << "->" << _name;
+    }
+    else {
+      fn = _name;
+    }
     throw TInvalidArgumentException(__OlxSourceInfo,
-      olxstr("Invalid file '") << _name << '\'');
+      olxstr("Invalid file '") << fn << '\'');
   }
 #if defined(__BORLANDC__) || defined(_MSC_VER) || defined(__GNUC__)
   _timestamp = the_stat.st_mtime;
@@ -1009,8 +1024,11 @@ olxstr TEFile::UNCFileName(const olxstr& LocalFN) {
 #endif
 }
 //..............................................................................
-void TEFile::CheckFileExists(const olxstr& location, const olxstr& fileName)  {
+void TEFile::CheckFileExists(const olxstr& location, const olxstr& fileName) {
   if (!Exists(fileName)) {
+    if (!IsAbsolutePath(fileName)) {
+      throw TFileDoesNotExistException(location, CurrentDir() + "->" + fileName);
+    }
     throw TFileDoesNotExistException(location, fileName);
   }
 }

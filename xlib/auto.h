@@ -198,7 +198,7 @@ public:
 
   bool IsSameType(const TAutoDBNetNode& dbn, bool ExtraLevel) const;
   bool IsMetricSimilar(const TAutoDBNetNode& nd, double& cfom,
-    uint16_t* cindexes, bool ExtraLevel)  const;
+    uint16_t* cindexes, bool ExtraLevel) const;
 
   void SaveToStream(IDataOutputStream& output) const;
   void LoadFromStream(IDataInputStream& input);
@@ -224,7 +224,7 @@ public:
   TAutoDBNetNode& Node(size_t i) { return Nodes[i]; }
   void SaveToStream(IDataOutputStream& output) const;
   void LoadFromStream(IDataInputStream& input);
-  bool Contains(TAutoDBNode* nd)  const {
+  bool Contains(TAutoDBNode* nd) const {
     for (size_t i = 0; i < Nodes.Count(); i++)
       if (Nodes[i].Center() == nd) {
         return true;
@@ -254,7 +254,6 @@ class TAutoDB : public IOlxObject {
   TTypeList< TPtrList<TAutoDBNode> > Nodes;
   TXFile& XFile;
   olxstr src_file;
-  static TAutoDB* Instance;
   //TSStrPObjList<olxstr,TAutoDBFolder*, true> Folders;
   TAutoDBRegistry registry;
   TTypeList<TAutoDBNet> Nets;
@@ -291,7 +290,7 @@ private:
   // maximim element promotion
   int BAIDelta;
   // ratio beyond which search for element promotion
-  double URatio, URatioFormula;
+  double URatio, URatioFormula, LengthVar, AngleVar;
   bool EnforceFormula;
 public:
   /* the instance must be created with Replicate to avoid problems
@@ -302,7 +301,8 @@ public:
 
   void ProcessFolder(const olxstr& folder);
   void SaveToStream(IDataOutputStream& output) const;
-  void LoadFromStream(IDataInputStream& input);
+  void LoadFromStream(IDataInputStream& input, bool clear);
+  void Clear();
 protected:
   void AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
     double& Uiso, AnalysisStat& stat, bool dry_run,
@@ -322,14 +322,21 @@ public:
   const AnalysisStat& GetStats() const { return LastStat; }
   const olxstr& GetLastFileName() const { return LastFileName; }
   void AnalyseNode(TSAtom& sa, TStrList& report);
+  static TAutoDB*& GetInstance_() {
+    static TAutoDB* inst = 0;
+    return inst;
+  }
   static TAutoDB& GetInstance();
   TAutoDBNode* Node(size_t i) { return LocateNode(i); }
   TAutoDBIdObject& Reference(size_t i) const { return registry.GetIdObject(i); }
-  DefPropP(int, BAIDelta)
-    DefPropP(double, URatio)
-    DefPropBIsSet(EnforceFormula)
+  DefPropP(int, BAIDelta);
+  DefPropP(double, URatio);
+  DefPropP(double, LengthVar);
+  DefPropP(double, AngleVar);
+  DefPropBIsSet(EnforceFormula);
 
-    template <class NodeClass>
+
+  template <class NodeClass>
   struct THitStruct {
     double Fom;
     NodeClass* Node;
@@ -369,15 +376,19 @@ public:
       meanFom = 0;
     }
     double MeanFom() {
-      if (meanFom != 0)  return meanFom;
-      for (size_t i = 0; i < hits.Count(); i++)
+      if (meanFom != 0) {
+        return meanFom;
+      }
+      for (size_t i = 0; i < hits.Count(); i++) {
         meanFom += hits[i].Fom;
+      }
       return meanFom /= hits.Count();
     }
     double MeanFomN(size_t cnt) {
       double mf = 0;
-      for (size_t i = 0; i < cnt; i++)
+      for (size_t i = 0; i < cnt; i++) {
         mf += hits[i].Fom;
+      }
       return mf /= cnt;
     }
     void Sort() {
@@ -388,7 +399,8 @@ public:
     double fom;
     const cm_Element& type;
     Type(double _fom, const cm_Element& _type)
-      : fom(_fom), type(_type) {}
+      : fom(_fom), type(_type)
+    {}
   };
   struct TGuessCount {
     TCAtom* atom;
@@ -571,7 +583,7 @@ public:
   void ReInit(const TAsymmUnit& au);
   void InitAtom(TAutoDB::TGuessCount& guess);
   void Permutate();
-  DefPropBIsSet(Active)
+  DefPropBIsSet(Active);
 };
 
 EndXlibNamespace()
