@@ -22,9 +22,12 @@ public:
 class BoxVolumeValidator : public IVolumeValidator {
   vec3d_alist norms;
   vec3d_alist centres;
+  bool inclusive;
 public:
-  BoxVolumeValidator(const vec3d_alist &n, const vec3d_alist &c)
-    : norms(n), centres(c)
+  BoxVolumeValidator(const vec3d_alist &n, const vec3d_alist &c,
+    bool inclusive=false)
+    : norms(n), centres(c),
+    inclusive(inclusive)
   {
     if (norms.Count() != 6 || norms.Count() != centres.Count()) {
       throw TInvalidArgumentException(__OlxSourceInfo, "volume definition");
@@ -32,8 +35,54 @@ public:
   }
   virtual bool IsInside(const vec3d &c) const {
     for (int fi = 0; fi < 6; fi++) {
-      if ((c - centres[fi]).DotProd(norms[fi]) > 0) {
+      double t = (c - centres[fi]).DotProd(norms[fi]);
+      if (inclusive) {
+        if (t >= 0) {
+          return false;
+        }
+      }
+      else if (t > 0) {
         return false;
+      }
+    }
+    return true;
+  }
+};
+
+class BoxValidator : public IVolumeValidator {
+  vec3d from, to;
+  bool from_inclusive, to_inclusive;
+public:
+  BoxValidator(const vec3d& from, const vec3d& to,
+    bool from_inclusive = false, bool to_inclusive = false)
+    : from(from), to(to),
+    from_inclusive(from_inclusive), to_inclusive(to_inclusive)
+  {}
+  virtual bool IsInside(const vec3d& c) const {
+    for (int i = 0; i < 3; i++) {
+      if (from_inclusive) {
+        if (to_inclusive) {
+          if (c[i] < from[i] || c[i] > to[i]) {
+            return false;
+          }
+        }
+        else {
+          if (c[i] < from[i] || c[i] >= to[i]) {
+            return false;
+          }
+        }
+      }
+      else {
+        if (to_inclusive) {
+          if (c[i] <= from[i] || c[i] > to[i]) {
+            return false;
+          }
+        }
+        else {
+          if (c[i] <= from[i] || c[i] >= to[i]) {
+            return false;
+          }
+        }
       }
     }
     return true;
@@ -43,12 +92,18 @@ public:
 class SphereVolumeValidator : public IVolumeValidator {
   vec3d centre;
   double qr;
+  bool inclusive;
 public:
-  SphereVolumeValidator(const vec3d &c, double r)
-    : centre(c), qr(r*r)
+  SphereVolumeValidator(const vec3d &c, double r, bool inclusive=false)
+    : centre(c), qr(r*r),
+    inclusive(inclusive)
   {}
   virtual bool IsInside(const vec3d &c) const {
-    return (c - centre).QLength() < qr;
+    double t = (c - centre).QLength();
+    if (inclusive) {
+      return t <= qr;
+    }
+    return  t < qr;
   }
 };
 

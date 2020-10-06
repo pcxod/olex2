@@ -491,7 +491,7 @@ void GXLibMacros::macPack(TStrObjList &Cmds, const TParamList &Options,
     if (app.Get3DFrame().IsVisible()) {
       if (app.Get3DFrame().IsSpherical()) {
         app.XFile().GetLattice().GenerateSphere(app.Get3DFrame().GetCenter(),
-          app.Get3DFrame().GetZoom(), ClearCont);
+          app.Get3DFrame().GetZoom(), 0, ClearCont);
       }
       else {
         vec3d_alist norms(6), centres(6);
@@ -499,7 +499,7 @@ void GXLibMacros::macPack(TStrObjList &Cmds, const TParamList &Options,
           norms[i] = app.Get3DFrame().Faces[i].GetN();
           centres[i] = app.Get3DFrame().Faces[i].GetCenter();
         }
-        app.XFile().GetLattice().GenerateBox(norms, centres, ClearCont);
+        app.XFile().GetLattice().GenerateBox(norms, centres, 0, ClearCont);
       }
     }
   }

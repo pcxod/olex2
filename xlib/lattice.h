@@ -67,7 +67,7 @@ protected:
   void BuildPlanes();
   void InitBody();
   void Disassemble(bool create_planes = true);
-  TSAtom& GenerateAtom(TCAtom& a, smatd& symop, TNetwork* net = NULL);
+  TSAtom& GenerateAtom(TCAtom& a, smatd& symop, TNetwork* net = 0);
   static void _CreateFrags(TCAtom& start, TCAtomPList& dest);
 public:
   TLattice(ASObjectProvider& ObjectProvider);
@@ -90,27 +90,30 @@ public:
   void AddLatticeContent(const TLattice& latt);
   // generates atoms inside the unit cell only
   void GenerateCell();
-  void Generate(const IVolumeValidator& validator, bool clear_content);
+  void Generate(const IVolumeValidator& validator, TCAtomPList* Template,
+    bool clear_content, bool cart_validator);
   /* generates atoms inside the given box, the volume is
   given by 6 planes defined by normal and centres
   */
   void GenerateBox(const vec3d_alist& norms, const vec3d_alist& centres,
-    bool clear_content)
+    TCAtomPList* Template, bool clear_content)
   {
-    Generate(BoxVolumeValidator(norms, centres), clear_content);
+    Generate(BoxVolumeValidator(norms, centres), Template, clear_content, true);
   }
-  /* generates asymmetric units within sphere volume at center */
+  /* generates atoms within sphere volume at center */
   void GenerateSphere(const vec3d& center, double rad,
-    bool clear_content)
+    TCAtomPList* Template, bool clear_content)
   {
-    Generate(SphereVolumeValidator(center, rad), clear_content);
+    Generate(SphereVolumeValidator(center, rad), Template, clear_content, true);
   }
-  // generates atoms within specified volume
+  /* generates atoms within specified volume
+  * if atoms is true - generates atoms vs asymmetric units
+  */
   void Generate(const vec3d& MFrom, const vec3d& MTo, TCAtomPList* Template,
-    bool ClearCont);
-  /* generates asymmetric units within sphere volume at center */
+    bool ClearCont, bool atoms);
+  /* generates asymmetric units/atoms within sphere volume at center */
   void Generate(const vec3d& center, double rad, TCAtomPList* Template,
-    bool ClearCont);
+    bool ClearCont, bool atoms);
   // checks if there are more than one matrix
   bool IsGenerated() const {
     return !(Matrices.Count() == 1 && Matrices[0]->IsFirst());
@@ -118,7 +121,7 @@ public:
 
   bool IsPolymeric(bool use_peaks) const;
 
-  /* generates matrices to fil the given volume */
+  /* generates matrices to fill the given volume */
   ConstPtrList<smatd> GenerateMatrices(const vec3d& VFrom,
     const vec3d& VTo);
   // finds matrices to be used for the next grow operation in GrowFragments

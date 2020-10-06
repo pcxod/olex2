@@ -347,7 +347,7 @@ void TLattice::Generate(TCAtomPList* Template, bool ClearCont) {
       OnAtomsDeleted.Exit(this);
     }
   }
-  const TCAtomPList &al = (Template != NULL && !Template->IsEmpty())
+  const TCAtomPList &al = (Template != 0 && !Template->IsEmpty())
     ? *Template : GetAsymmUnit().GetAtoms();
   Objects.atoms.IncCapacity(Matrices.Count()*al.Count());
   for (size_t i = 0; i < Matrices.Count(); i++) {
@@ -380,7 +380,7 @@ void TLattice::GenerateCell() {
       sa.ccrd() = m*ca.ccrd();
       vec3i t = -sa.ccrd().Floor<int>();
       sa.ccrd() += t;
-      // 209-02-11, H13A 2 0.499999!! 0.230127 0.251084
+      // 2019-02-11, H13A 2 0.499999!! 0.230127 0.251084
       for (int k = 0; k < 3; k++) {
         if (olx_abs(sa.ccrd()[k] - 1) < 1e-3) {
           t[k] -= 1;
@@ -408,42 +408,48 @@ void TLattice::GenerateCell() {
   OnStructureGrow.Exit(this);
 }
 //..............................................................................
-void TLattice::Generate(const IVolumeValidator &v, bool clear_content) {
+void TLattice::Generate(const IVolumeValidator& v, TCAtomPList *Template,
+  bool clear_content, bool cart_validator)
+{
   OnStructureGrow.Enter(this);
-  if( clear_content )  {
+  if (clear_content) {
     ClearAtoms();
     ClearMatrices();
   }
   const TUnitCell& uc = GetUnitCell();
   TAsymmUnit& au = GetAsymmUnit();
   olx_pdict<uint32_t, smatd*> matrices;
-  for( size_t i=0; i < uc.MatrixCount(); i++ )  {
+  const TCAtomPList& al = (Template != 0 && !Template->IsEmpty())
+    ? *Template : GetAsymmUnit().GetAtoms();
+  for (size_t i = 0; i < uc.MatrixCount(); i++) {
     const smatd& m = uc.GetMatrix(i);
-    for( int di = -3; di <= 3; di++ )  {
-      for( int dj = -3; dj <= 3; dj++ )  {
-        for( int dk = -3; dk <= 3; dk++ )  {
+    for (int di = -3; di <= 3; di++) {
+      for (int dj = -3; dj <= 3; dj++) {
+        for (int dk = -3; dk <= 3; dk++) {
           const vec3d t(di, dj, dk);
           const uint32_t m_id = smatd::GenerateId((uint8_t)i, t);
           smatd* lm = matrices.Find(m_id, 0);
           bool matrix_created = false;
-          if( lm == NULL )  {
+          if (lm == 0) {
             lm = new smatd(m);
             lm->t += t;
             lm->SetRawId(m_id);
             matrix_created = true;
           }
-          for( size_t j=0; j < au.AtomCount(); j++ )  {
-            TCAtom& ca = au.GetAtom(j);
-            if (ca.IsDeleted()) {
+          for (size_t j = 0; j < al.Count(); j++) {
+            TCAtom& ca = *al[j];
+            if (!ca.IsAvailable()) {
               continue;
             }
-            vec3d p = m*ca.ccrd() + t;
-            const vec3d c = au.CellToCartesian(p);
-            if (!v.IsInside(c)) {
+            vec3d p = m * ca.ccrd() + t;
+            if (cart_validator) {
+              au.CellToCartesian(p);
+            }
+            if (!v.IsInside(p)) {
               continue;
             }
             GenerateAtom(ca, *lm);
-            if( matrix_created )  {
+            if (matrix_created) {
               matrices.Add(m_id, lm);
               matrix_created = false;
             }
@@ -464,28 +470,39 @@ void TLattice::Generate(const IVolumeValidator &v, bool clear_content) {
 }
 //..............................................................................
 void TLattice::Generate(const vec3d& MFrom, const vec3d& MTo,
-  TCAtomPList* Template, bool ClearCont)
+  TCAtomPList* Template, bool ClearCont, bool atoms)
 {
   OnStructureGrow.Enter(this);
   if (ClearCont) {
     ClearAtoms();
     ClearMatrices();
   }
-  Matrices.AddAll(GenerateMatrices(MFrom, MTo));
-  Generate(Template, ClearCont);
+  if (!atoms) {
+    Matrices.AddAll(GenerateMatrices(MFrom, MTo));
+    Generate(Template, ClearCont);
+  }
+  else {
+    Generate(BoxValidator(MFrom, MTo, true, true),
+      Template, ClearCont, false);
+  }
   OnStructureGrow.Exit(this);
 }
 //..............................................................................
 void TLattice::Generate(const vec3d& center, double rad, TCAtomPList* Template,
-  bool ClearCont)
+  bool ClearCont, bool atoms)
 {
   OnStructureGrow.Enter(this);
   if (ClearCont) {
     ClearAtoms();
     ClearMatrices();
   }
-  Matrices.AddAll(GenerateMatrices(center, rad));
-  Generate(Template, ClearCont);
+  if (!atoms) {
+    Matrices.AddAll(GenerateMatrices(center, rad));
+    Generate(Template, ClearCont);
+  }
+  else {
+    Generate(SphereVolumeValidator(center, rad, true), Template, ClearCont, true);
+  }
   OnStructureGrow.Exit(this);
 }
 //..............................................................................
