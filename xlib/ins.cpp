@@ -704,6 +704,16 @@ void TIns::_FinishParsing(ParseContext& cx, bool header_only) {
 TStrList& TIns::Preprocess(TStrList& l) {
   // combine lines
   for (size_t i = 0; i < l.Count(); i++) {
+    if (l[i].StartsFromi("REM") && l[i].Containsi("olex2.stop_parsing")) {
+      while (++i < l.Count()) {
+        if (l[i].StartsFromi("REM") &&
+          l[i].Containsi("olex2.resume_parsing"))
+        {
+          break;
+        }
+      }
+      continue;
+    }
     if (l[i].EndsWith('=') &&
       (!l[i].StartsFromi("REM") ||
         l[i].IndexOf("olex2.restraint.") != InvalidIndex ||
