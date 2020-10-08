@@ -2294,30 +2294,44 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
       }
     }
   }
-  else if (Cmds.Count() == 1 && TSymmParser::IsRelSymm(Cmds[0])) {
+  else if (Cmds.Count() >= 1 && TSymmParser::IsRelSymm(Cmds[0])) {
     if (flag == glSelectionNone) {
       flag = glSelectionSelect;
     }
     const smatd matr = TSymmParser::SymmCodeToMatrix(
       app.XFile().GetUnitCell(), Cmds[0]);
-    TGXApp::AtomIterator ai = app.GetAtoms();
-    while (ai.HasNext()) {
-      TXAtom& a = ai.Next();
-      if (a.IsDeleted() || !a.IsVisible()) {
-        continue;
+    if (Cmds.Count() == 1) {
+      TGXApp::AtomIterator ai = app.GetAtoms();
+      while (ai.HasNext()) {
+        TXAtom& a = ai.Next();
+        if (a.IsDeleted() || !a.IsVisible()) {
+          continue;
+        }
+        if (a.IsGenerator(matr)) {
+          app.GetRenderer().Select(a, flag);
+        }
       }
-      if (a.IsGenerator(matr)) {
-        app.GetRenderer().Select(a, flag);
+      TGXApp::BondIterator bi = app.GetBonds();
+      while (bi.HasNext()) {
+        TXBond& b = bi.Next();
+        if (b.IsDeleted() || !b.IsVisible()) {
+          continue;
+        }
+        if (b.A().IsGenerator(matr) && b.B().IsGenerator(matr)) {
+          app.GetRenderer().Select(b, flag);
+        }
       }
     }
-    TGXApp::BondIterator bi = app.GetBonds();
-    while (bi.HasNext()) {
-      TXBond& b = bi.Next();
-      if (b.IsDeleted() || !b.IsVisible()) {
-        continue;
-      }
-      if (b.A().IsGenerator(matr) && b.B().IsGenerator(matr)) {
-        app.GetRenderer().Select(b, flag);
+    else {
+      TXAtomPList atoms = app.FindXAtoms(Cmds.SubListFrom(1).GetObject(), true, false);
+      for (size_t i = 0; i < atoms.Count(); i++) {
+        TXAtom& a = *atoms[i];
+        if (a.IsDeleted() || !a.IsVisible()) {
+          continue;
+        }
+        if (a.IsGenerator(matr)) {
+          app.GetRenderer().Select(a, flag);
+        }
       }
     }
   }
@@ -2358,8 +2372,9 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
       TGXApp::AtomIterator ai = app.GetAtoms();
       while (ai.HasNext()) {
         TXAtom& xa = ai.Next();
-        if (afixes.Contains(xa.CAtom().GetAfix()))
+        if (afixes.Contains(xa.CAtom().GetAfix())) {
           app.GetRenderer().Select(xa, flag);
+        }
       }
     }
   }
