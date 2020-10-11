@@ -462,6 +462,44 @@ void TUnitCell::FindSymmEq() const {
   }
 }
 //..............................................................................
+TCAtom& TUnitCell::FindClosest(const vec3d& from, double& dist) const {
+  const smatd* minMatr = 0;
+  const TAsymmUnit& au = GetLattice().GetAsymmUnit();
+  vec3i mint;
+  double minD = 10000;
+  size_t air = InvalidIndex;
+  for (size_t ai = 0; ai < au.AtomCount(); ai++) {
+    TCAtom& a = au.GetAtom(ai);
+    if (a.IsDeleted()) {
+      continue;
+    }
+    for (size_t i = 0; i < Matrices.Count(); i++) {
+      const smatd& matr = Matrices[i];
+      vec3d v = matr * from - a.ccrd();
+      const vec3i shift = -v.Round<int>();
+      for (int ii = -1; ii <= 1; ii++) {
+        for (int ij = -1; ij <= 1; ij++) {
+          for (int ik = -1; ik <= 1; ik++) {
+            const vec3i shift1(shift[0] + ii, shift[1] + ij, shift[2] + ik);
+            const double D = au.Orthogonalise(v + shift1).QLength();
+            if (D < minD) {
+              minD = D;
+              minMatr = &matr;
+              mint = shift1;
+              air = ai;
+            }
+          }
+        }
+      }
+    }
+  }
+  if (air == InvalidIndex) {
+    throw TFunctionFailedException(__OlxSourceInfo, "");
+  }
+  dist = sqrt(minD);
+  return au.GetAtom(air);
+}
+//..............................................................................
 smatd* TUnitCell::GetClosest(const vec3d& to, const vec3d& from,
   bool ConsiderOriginal, double* dist) const
 {
@@ -1378,6 +1416,13 @@ IOlxObject *TUnitCell::VPtr::get_ptr() const {
   return &TXApp::GetInstance().XFile().GetUnitCell();
 }
 //..............................................................................
+void TUnitCell::LibClosest(const TStrObjList& Params, TMacroData& E) {
+  vec3d v = vec3d(Params[0].ToDouble(), Params[1].ToDouble(), Params[2].ToDouble());
+  double d = 0;
+  TCAtom& a = FindClosest(v, d);
+  E.SetRetVal(olxstr(a.GetLabel()) << ", " << d);
+}
+//..............................................................................
 //..............................................................................
 //..............................................................................
 TLibrary* TUnitCell::ExportLibrary(const olxstr& name)  {
@@ -1395,6 +1440,10 @@ TLibrary* TUnitCell::ExportLibrary(const olxstr& name)  {
     new TFunction<TUnitCell>(thip, &TUnitCell::LibMatrixCount, "MatrixCount",
       fpNone,
     "Returns the number of matrices in the unit cell") );
+  lib->Register(
+    new TFunction<TUnitCell>(thip, &TUnitCell::LibClosest, "Closest",
+      fpThree,
+      "Returns the name and the distance to the closes atom from the given point"));
   return lib;
 }
 //..............................................................................
