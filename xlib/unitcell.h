@@ -166,6 +166,9 @@ public:
   }
   smatd* GetClosest(const vec3d& to, const vec3d& from, bool ConsiderOriginal,
     double* dist = 0) const;
+  /* Finds a closest 'real' atom to the coordinate
+  */
+  TCAtom& FindClosest(const vec3d& from, double& dist) const;
   /* Finds a symmetry matrix linking two symmetry dependent positions.
   Throws an exception if the relation cannot be found.
   */
@@ -557,6 +560,7 @@ public:
   void LibVolumeEx(const TStrObjList& Params, TMacroData& E);
   void LibCellEx(const TStrObjList& Params, TMacroData& E);
   void LibMatrixCount(const TStrObjList& Params, TMacroData& E);
+  void LibClosest(const TStrObjList& Params, TMacroData& E);
   class TLibrary*  ExportLibrary(const olxstr& name = EmptyString());
   struct VPtr : public olx_virtual_ptr<TUnitCell> {
     virtual IOlxObject *get_ptr() const;
