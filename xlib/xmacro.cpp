@@ -697,7 +697,8 @@ void XLibMacros::Export(TLibrary& lib)  {
     "Calculates previously defined variables and stores the named values in "
     "olex2.calculated.* variables");
   xlib_InitMacro(Pack,
-    "c-specifies if current lattice content should not be deleted",
+    "c-specifies if current lattice content should not be deleted&;"
+    "a-generate atoms vs asymmetric units",
     fpAny | psFileLoaded,
     "Packs structure within default or given volume(6 or 2 values for "
     "parallelepiped "
@@ -10680,10 +10681,12 @@ void XLibMacros::macPack(TStrObjList &Cmds, const TParamList &Options,
     size_t number_count = 0;
     for (size_t i = 0; i < Cmds.Count(); i++)  {
       if (Cmds[i].IsNumber())  {
-        if (!(number_count % 2))
+        if (!(number_count % 2)) {
           From[number_count / 2] = Cmds[i].ToDouble();
-        else
+        }
+        else {
           To[number_count / 2] = Cmds[i].ToDouble();
+        }
         number_count++;
         Cmds.Delete(i--);
       }
@@ -10709,8 +10712,9 @@ void XLibMacros::macPack(TStrObjList &Cmds, const TParamList &Options,
         From[1] = From[2] = From[0];
         To[1] = To[2] = To[0];
       }
-      app.XFile().GetLattice().Generate(
-        From, To, TemplAtoms.IsEmpty() ? NULL : &TemplAtoms, ClearCont);
+      app.XFile().GetLattice().Generate(From, To,
+        &TemplAtoms, ClearCont,
+        Options.GetBoolOption('a'));
     }
     else {
       TSAtomPList xatoms = app.FindSAtoms(Cmds, true, true);
@@ -10720,10 +10724,12 @@ void XLibMacros::macPack(TStrObjList &Cmds, const TParamList &Options,
         cent += xatoms[i]->crd()*xatoms[i]->CAtom().GetChemOccu();
         wght += xatoms[i]->CAtom().GetChemOccu();
       }
-      if (wght != 0)
+      if (wght != 0) {
         cent /= wght;
-      app.XFile().GetLattice().Generate(
-        cent, From[0], TemplAtoms.IsEmpty() ? NULL : &TemplAtoms, ClearCont);
+      }
+      app.XFile().GetLattice().Generate(cent, From[0],
+        &TemplAtoms, ClearCont,
+        Options.GetBoolOption('a'));
     }
   }
 }

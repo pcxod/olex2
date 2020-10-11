@@ -34,15 +34,12 @@ const int16_t ffZipped  = 0x0001;
 const char FileSignature [] = "OADB";  // olex auto .. db
 const long FileSignatureLength = 4;  // must not change ever!
 
-// variations
-const double LengthVar = 0.03,
-             AngleVar  = 5.4;
-
 //..............................................................................
 void TAutoDBRegistry::SaveToStream(IDataOutputStream& output) const {
   output << (uint32_t)entries.Count();
-  for( size_t i=0; i < entries.Count(); i++ )
+  for (size_t i = 0; i < entries.Count(); i++) {
     output << TUtf8::Encode(entries.GetKey(i));
+  }
 }
 //..............................................................................
 void TAutoDBRegistry::LoadFromStream(IDataInputStream& input) {
@@ -73,8 +70,9 @@ void TAutoDBRegistry::LoadMap(IDataInputStream& input) {
     input >> tmp;
     size_t idx = entries.IndexOf(TUtf8::Decode(tmp));
     input >> tmp;
-    if (idx != InvalidIndex)
+    if (idx != InvalidIndex) {
       entries.GetValue(idx)->reference = TUtf8::Decode(tmp);
+    }
   }
 }
 //..............................................................................
@@ -157,16 +155,20 @@ void TAutoDBNode::_PreCalc()  {
 }
 //..............................................................................
 double TAutoDBNode::CalcAngle(size_t i, size_t j)  const {
-  vec3d a(AttachedNodes[i].GetCenter()-Center),
-        b(AttachedNodes[j].GetCenter()-Center);
-  if( a.QLength()*b.QLength() == 0 )  {
-    TBasicApp::NewLogEntry(logError) <<  "Overlapping atoms encountered";
+  vec3d a(AttachedNodes[i].GetCenter() - Center),
+    b(AttachedNodes[j].GetCenter() - Center);
+  if (a.QLength() * b.QLength() == 0) {
+    TBasicApp::NewLogEntry(logError) << "Overlapping atoms encountered";
     return 0;
   }
   double ca = a.CAngle(b);
-  if( ca < -1 )  ca = -1;
-  if( ca > 1 )  ca = 1;
-  return acos(ca)*180.0/M_PI;
+  if (ca < -1) {
+    ca = -1;
+  }
+  if (ca > 1) {
+    ca = 1;
+  }
+  return acos(ca) * 180.0 / M_PI;
 }
 //..............................................................................
 void TAutoDBNode::SaveToStream(IDataOutputStream& output) const {
@@ -175,19 +177,21 @@ void TAutoDBNode::SaveToStream(IDataOutputStream& output) const {
   output << (float)Center[1];
   output << (float)Center[2];
   output << (int)AttachedNodes.Count();
-  for( size_t i=0; i < AttachedNodes.Count(); i++ )
+  for (size_t i = 0; i < AttachedNodes.Count(); i++) {
     AttachedNodes[i].SaveToStream(output);
+  }
 }
 //..............................................................................
-void TAutoDBNode::LoadFromStream(IDataInputStream& in)  {
+void TAutoDBNode::LoadFromStream(IDataInputStream& in) {
   Element = &XElementLib::GetByIndex(in.Read<uint32_t>());
   float val;
   Center[0] = (in >> val);
   Center[1] = (in >> val);
   Center[2] = (in >> val);
   uint32_t cnt = in.Read<uint32_t>();
-  for( uint32_t i=0; i < cnt; i++ )
+  for (uint32_t i = 0; i < cnt; i++) {
     AttachedNodes.Add(*(new TAttachedNode(in)));
+  }
   TAutoDBNode::SortCenter = Center;
   QuickSorter::SortSF(AttachedNodes, SortMetricsFunc);
   _PreCalc();
@@ -198,8 +202,9 @@ olxstr TAutoDBNode::ToString() const {
   tmp << '{';
   for (size_t i=0; i < AttachedNodes.Count(); i++) {
     tmp << AttachedNodes[i].GetType().symbol;
-    if ((i+1) < AttachedNodes.Count())
+    if ((i + 1) < AttachedNodes.Count()) {
       tmp << ',';
+    }
   }
   tmp << '}'; /* << '[';
   for( size_t i=0; i < Params.Count(); i++ )  {
@@ -212,120 +217,157 @@ olxstr TAutoDBNode::ToString() const {
 //..............................................................................
 double TAutoDBNode::SearchCompare(const TAutoDBNode& dbn, double* fom) const {
   double _fom = 0;
-  size_t mc = (AttachedNodes.Count() > 4 ) ? AttachedNodes.Count()
+  size_t mc = (AttachedNodes.Count() > 4) ? AttachedNodes.Count()
     : Params.Count();
-  for( size_t i=0; i < mc; i++ ) {
+  // variations
+  const double LengthVar = TAutoDB::GetInstance().GetLengthVar(),
+    AngleVar = TAutoDB::GetInstance().GetAngleVar();
+  for (size_t i = 0; i < mc; i++) {
     double diff = Params[i] - dbn.Params[i];
-    if( i < AttachedNodes.Count() )  {
-      if( olx_abs(diff) > LengthVar )
+    if (i < AttachedNodes.Count()) {
+      if (olx_abs(diff) > LengthVar) {
         return diff;
+      }
     }
-    else  {
-      if( olx_abs(diff) > AngleVar )
-        return diff/180;
+    else {
+      if (olx_abs(diff) > AngleVar) {
+        return diff / 180;
+      }
       diff /= 180;
     }
-    _fom += diff*diff;
+    _fom += diff * diff;
   }
-  if( fom != NULL )
-    *fom += _fom/Params.Count();
-  return 0;
-/*
-  for( size_t i=0; i < Params.Count(); i++ )  {
-    double diff = Params[i] - dbn.Params[i];
-    if( diff < 0 )  return -1;
-    if( diff > 0 )  return 1;
+  if (fom != 0) {
+    *fom += _fom / Params.Count();
   }
   return 0;
-*/
+  /*
+    for( size_t i=0; i < Params.Count(); i++ )  {
+      double diff = Params[i] - dbn.Params[i];
+      if( diff < 0 )  return -1;
+      if( diff > 0 )  return 1;
+    }
+    return 0;
+  */
 }
 //..............................................................................
 int TAutoDBNode::UpdateCompare(const TAutoDBNode& dbn) const {
-  double diff = Element->z - dbn.Element->z;
-  if( diff == 0 )  {
-    diff = olx_cmp(AttachedNodes.Count(), dbn.AttachedNodes.Count());
-    if( diff == 0 )  {
-      for( size_t i=0; i < AttachedNodes.Count(); i++ )  {
-        diff = AttachedNodes[i].GetType().z - dbn.AttachedNodes[i].GetType().z;
-        if( diff != 0 )  return (int)diff;
+  int z_diff = Element->z - dbn.Element->z;
+  if (z_diff == 0) {
+    size_t c_diff = olx_cmp(AttachedNodes.Count(), dbn.AttachedNodes.Count());
+    if (c_diff == 0) {
+      for (size_t i = 0; i < AttachedNodes.Count(); i++) {
+        z_diff = AttachedNodes[i].GetType().z - dbn.AttachedNodes[i].GetType().z;
+        if (z_diff != 0) {
+          return z_diff;
+        }
       }
-      for( size_t i=0; i < Params.Count(); i++ )  {
-        diff = Params[i] - dbn.Params[i];
-        if( diff < 0 )  return -1;
-        if( diff > 0 )  return 1;
+      for (size_t i = 0; i < Params.Count(); i++) {
+        double p_diff = Params[i] - dbn.Params[i];
+        if (p_diff < 0) {
+          return -1;
+        }
+        if (p_diff > 0) {
+          return 1;
+        }
       }
       return 0;
     }
-    else
-      return (int)diff;
+    else {
+      return (int)c_diff;
+    }
   }
-  else
-    return (int)diff;
+  else {
+    return z_diff;
+  }
 }
 //..............................................................................
 bool TAutoDBNode::IsSameType(const TAutoDBNode& dbn) const {
   int diff = Element->z - dbn.Element->z;
-  if( diff != 0 )  return false;
+  if (diff != 0) {
+    return false;
+  }
   diff = olx_cmp(AttachedNodes.Count(), dbn.AttachedNodes.Count());
-  if( diff != 0 )  return false;
-  for( size_t i=0; i < AttachedNodes.Count(); i++ )  {
+  if (diff != 0) {
+    return false;
+  }
+  for (size_t i = 0; i < AttachedNodes.Count(); i++) {
     diff = AttachedNodes[i].GetType().z - dbn.AttachedNodes[i].GetType().z;
-    if( diff != 0 )  return false;
+    if (diff != 0) {
+      return false;
+    }
   }
   return true;
 }
 //..............................................................................
 bool TAutoDBNode::IsSimilar(const TAutoDBNode& dbn) const {
-  double diff = Element->z - dbn.Element->z;
-  if( diff == 0 )  {
-    diff = olx_cmp(AttachedNodes.Count(), dbn.AttachedNodes.Count());
-    if( diff == 0 )  {
+  int z_diff = (int)Element->z - dbn.Element->z;
+  if (z_diff == 0) {
+    size_t c_diff = olx_cmp(AttachedNodes.Count(), dbn.AttachedNodes.Count());
+    if (c_diff == 0) {
       // check types
-      for( size_t i=0; i < AttachedNodes.Count(); i++ )  {
-        diff = AttachedNodes[i].GetType().z -
-               dbn.AttachedNodes[i].GetType().z;
-        if( diff != 0 )  return false;
+      for (size_t i = 0; i < AttachedNodes.Count(); i++) {
+        z_diff = AttachedNodes[i].GetType().z -
+          dbn.AttachedNodes[i].GetType().z;
+        if (z_diff != 0) {
+          return false;
+        }
       }
       // check distance and angles
-      for( size_t i=0; i < Params.Count(); i++ )  {
-        diff = olx_abs(Params[i] - dbn.Params[i]);
-        if( i < AttachedNodes.Count() )  {
-          if( diff > 0.005 ) return false;
+      for (size_t i = 0; i < Params.Count(); i++) {
+        double p_diff = olx_abs(Params[i] - dbn.Params[i]);
+        if (i < AttachedNodes.Count()) {
+          if (p_diff > 0.005) {
+            return false;
+          }
         }
         else
-          if( diff > 4 ) return false;
+          if (p_diff > 4) {
+            return false;
+          }
       }
       return true;
     }
-    else
+    else {
       return false;
+    }
   }
-  else
+  else {
     return false;
+  }
 }
 //..............................................................................
-bool TAutoDBNode::IsMetricSimilar(const TAutoDBNode& dbn, double& fom) const {
-  if( AttachedNodes.Count() != dbn.AttachedNodes.Count() )  return false;
+bool TAutoDBNode::IsMetricSimilar(const TAutoDBNode& dbn, double& fom) const
+{
+  if (AttachedNodes.Count() != dbn.AttachedNodes.Count()) {
+    return false;
+  }
   // check distance and angles
   double _fom = 0;
-  size_t mc = (AttachedNodes.Count() > 4 )
+  size_t mc = (AttachedNodes.Count() > 4)
     ? AttachedNodes.Count() : Params.Count();
-  for( size_t i=0; i < mc; i++ ) {
-//  for( size_t i=0; i < Params.Count(); i++ ) {
+  const double len_var = TAutoDB::GetInstance_()->GetLengthVar(),
+    ang_var = TAutoDB::GetInstance_()->GetAngleVar();
+  for (size_t i = 0; i < mc; i++) {
+    //  for( size_t i=0; i < Params.Count(); i++ ) {
     double diff = olx_abs(Params[i] - dbn.Params[i]);
-    if( i < AttachedNodes.Count() )  {
-      if( diff > LengthVar )  return false;
+    if (i < AttachedNodes.Count()) {
+      if (diff > len_var) {
+        return false;
+      }
     }
     /* 5.7 degrees give about 0.1 deviation in distance for 1A bonds
     (b^2+a^2-2abcos)^1/2
     */
-    else  {
-      if( diff > AngleVar ) return false;
-      diff = diff/180.0;
+    else {
+      if (diff > ang_var) {
+        return false;
+      }
+      diff = diff / 180.0;
     }
-    _fom += diff*diff;
+    _fom += diff * diff;
   }
-  fom += _fom/Params.Count();
+  fom += _fom / Params.Count();
   return true;
 }
 //..............................................................................
@@ -334,73 +376,96 @@ bool TAutoDBNode::IsMetricSimilar(const TAutoDBNode& dbn, double& fom) const {
 bool TAutoDBNetNode::IsMetricSimilar(const TAutoDBNetNode& nd, double& cfom,
   uint16_t* cindexes, bool ExtraLevel) const
 {
-  if( nd.AttachedNodes.Count() != AttachedNodes.Count() )  return false;
+  if (nd.AttachedNodes.Count() != AttachedNodes.Count()) {
+    return false;
+  }
   // have to do a full comparison, as the node order is unknown ...
   const uint16_t con =
     (uint16_t)olx_min(MaxConnectivity, AttachedNodes.Count());
   TAutoDBNetNode* nodes[MaxConnectivity];
-  for( uint16_t i=0; i < con; i++ )
+  for (uint16_t i = 0; i < con; i++) {
     nodes[i] = AttachedNodes[i];
+  }
   uint16_t indexes[MaxConnectivity];
-  for( uint16_t i=0; i < nd.AttachedNodes.Count(); i++ )  {
-    for( uint16_t j=0; j < con; j++ )  {
-      if( nodes[j] == NULL ) continue;
-      if( nodes[j]->FCenter->IsMetricSimilar(
-        *nd.AttachedNodes[i]->FCenter, cfom) )
+  for (uint16_t i = 0; i < nd.AttachedNodes.Count(); i++) {
+    for (uint16_t j = 0; j < con; j++) {
+      if (nodes[j] == 0) {
+        continue;
+      }
+      if (nodes[j]->FCenter->IsMetricSimilar(
+        *nd.AttachedNodes[i]->FCenter, cfom))
       {
-        nodes[j] = NULL;
+        nodes[j] = 0;
         indexes[i] = j;
-        if( cindexes != NULL )
+        if (cindexes != 0) {
           cindexes[i] = j;
+        }
         break;
       }
     }
   }
   int ndcnt = 0;
-  for( uint16_t i=0; i < con; i++ )
-    if( nodes[i] != NULL )  ndcnt++;
-
-  if( !ExtraLevel )  {
-    if( ndcnt != 0 )  return false;
+  for (uint16_t i = 0; i < con; i++) {
+    if (nodes[i] != 0) {
+      ndcnt++;
+    }
   }
-  else  {
-    if( ndcnt != 0 )  return false;
-    else  {
-      for( uint16_t i=0; i < con; i++ )
-        if( !nd.AttachedNodes[i]->IsMetricSimilar(
-            *AttachedNodes[indexes[i]], cfom, NULL, false) )
+
+  if (!ExtraLevel) {
+    if (ndcnt != 0) {
+      return false;
+    }
+  }
+  else {
+    if (ndcnt != 0) {
+      return false;
+    }
+    else {
+      for (uint16_t i = 0; i < con; i++) {
+        if (!nd.AttachedNodes[i]->IsMetricSimilar(
+          *AttachedNodes[indexes[i]], cfom, 0, false))
+        {
           return false;
+        }
+      }
     }
   }
   return true;
 }
 //..............................................................................
 bool TAutoDBNetNode::IsSameType(const TAutoDBNetNode& dbn, bool ExtraLevel)
-  const
+const
 {
-  if( !FCenter->IsSameType(*dbn.FCenter) )  return false;
+  if (!FCenter->IsSameType(*dbn.FCenter)) {
+    return false;
+  }
   TPtrList<TAutoDBNetNode> nodes;
   nodes.AddAll(AttachedNodes);
   TSizeList indexes;
-  indexes.SetCapacity( nodes.Count() );
-  for( size_t i=0; i < dbn.AttachedNodes.Count(); i++ )  {
-    for(size_t j=0; j < nodes.Count(); j++ )  {
-      if( nodes[j] == NULL ) continue;
-      if( nodes[j]->FCenter->IsSameType(*dbn.AttachedNodes[i]->FCenter) )  {
-        nodes[j] = NULL;
+  indexes.SetCapacity(nodes.Count());
+  for (size_t i = 0; i < dbn.AttachedNodes.Count(); i++) {
+    for (size_t j = 0; j < nodes.Count(); j++) {
+      if (nodes[j] == 0) {
+        continue;
+      }
+      if (nodes[j]->FCenter->IsSameType(*dbn.AttachedNodes[i]->FCenter)) {
+        nodes[j] = 0;
         indexes.Add(j);
         break;
       }
     }
   }
   nodes.Pack();
-  if( !ExtraLevel )
+  if (!ExtraLevel) {
     return nodes.IsEmpty();
-  else  {
-    if( nodes.Count() != 0 )  return false;
-    for( size_t i=0; i < dbn.AttachedNodes.Count(); i++ )  {
-      if( !dbn.AttachedNodes[i]->IsSameType(
-          *AttachedNodes[indexes[i]], false) )
+  }
+  else {
+    if (nodes.Count() != 0) {
+      return false;
+    }
+    for (size_t i = 0; i < dbn.AttachedNodes.Count(); i++) {
+      if (!dbn.AttachedNodes[i]->IsSameType(
+        *AttachedNodes[indexes[i]], false))
       {
         return false;
       }
@@ -412,10 +477,11 @@ bool TAutoDBNetNode::IsSameType(const TAutoDBNetNode& dbn, bool ExtraLevel)
 void TAutoDBNetNode::SaveToStream(IDataOutputStream& output) const {
   output << FCenter->GetId();
   output << (uint8_t)AttachedNodes.Count();
-  for( size_t i=0; i < AttachedNodes.Count(); i++ )
+  for (size_t i = 0; i < AttachedNodes.Count(); i++) {
     output << AttachedNodes[i]->GetId();
+  }
 }
-void TAutoDBNetNode::LoadFromStream(IDataInputStream& input)  {
+void TAutoDBNetNode::LoadFromStream(IDataInputStream& input) {
 #ifdef __GNUC__  // dunno how it is implemented, but need 8 bits here
   unsigned char cnt;
 #else
@@ -425,7 +491,7 @@ void TAutoDBNetNode::LoadFromStream(IDataInputStream& input)  {
   input >> ind;
   FCenter = TAutoDB::GetInstance().Node(ind);
   input >> cnt;
-  for( size_t i=0; i < cnt; i++ )  {
+  for (size_t i = 0; i < cnt; i++) {
     input >> ind;
     AttachedNodes.Add(&TAutoDBNet::GetCurrentlyLoading().Node(ind));
   }
@@ -433,21 +499,23 @@ void TAutoDBNetNode::LoadFromStream(IDataInputStream& input)  {
 //..............................................................................
 olxstr TAutoDBNetNode::ToString(int level) const {
   olxstr tmp = FCenter->ToString();
-  if( level == 1 )  {
+  if (level == 1) {
     tmp << '{';
-    for( size_t i=0; i < AttachedNodes.Count(); i++ )  {
+    for (size_t i = 0; i < AttachedNodes.Count(); i++) {
       tmp << AttachedNodes[i]->FCenter->ToString();
-      if( (i+1) < AttachedNodes.Count() )
+      if ((i + 1) < AttachedNodes.Count()) {
         tmp << ',';
+      }
     }
     tmp << '}';
   }
-  else if( level == 2 )  {
+  else if (level == 2) {
     tmp << '[';
-    for( size_t i=0; i < AttachedNodes.Count(); i++ )  {
+    for (size_t i = 0; i < AttachedNodes.Count(); i++) {
       tmp << AttachedNodes[i]->ToString(1);
-      if( (i+1) < AttachedNodes.Count() )
+      if ((i + 1) < AttachedNodes.Count()) {
         tmp << ',';
+      }
     }
     tmp << ']';
   }
@@ -456,17 +524,19 @@ olxstr TAutoDBNetNode::ToString(int level) const {
 //..............................................................................
 //..............................................................................
 //..............................................................................
-TAutoDBNet* TAutoDBNet::CurrentlyLoading = NULL;
+TAutoDBNet* TAutoDBNet::CurrentlyLoading = 0;
 //..............................................................................
 void TAutoDBNet::SaveToStream(IDataOutputStream& output) const {
   output << (uint32_t)FReference->id;
   output << (uint16_t)Nodes.Count();
-  for( size_t i=0; i < Nodes.Count(); i++ )
+  for (size_t i = 0; i < Nodes.Count(); i++) {
     Nodes[i].SetId((int32_t)i);
-  for( size_t i=0; i < Nodes.Count(); i++ )
+  }
+  for (size_t i = 0; i < Nodes.Count(); i++) {
     Nodes[i].SaveToStream(output);
+  }
 }
-void TAutoDBNet::LoadFromStream(IDataInputStream& input)  {
+void TAutoDBNet::LoadFromStream(IDataInputStream& input) {
   TAutoDBNet::CurrentlyLoading = this;
   uint32_t ind;
   uint16_t cnt;
@@ -474,14 +544,17 @@ void TAutoDBNet::LoadFromStream(IDataInputStream& input)  {
   FReference = &TAutoDB::GetInstance().Reference(ind);
   input >> cnt;
   Nodes.SetCapacity(cnt);
-  for( uint16_t i=0; i < cnt; i++ )
-    Nodes.Add(new TAutoDBNetNode(NULL));
-  for( uint16_t i=0; i < cnt; i++ )
+  for (uint16_t i = 0; i < cnt; i++) {
+    Nodes.Add(new TAutoDBNetNode(0));
+  }
+  for (uint16_t i = 0; i < cnt; i++) {
     Nodes[i].LoadFromStream(input);
+  }
   // build index
-  for( uint16_t i=0; i < cnt; i++ )
-    Nodes[i].Center()->AddParent(this,i);
-  TAutoDBNet::CurrentlyLoading = NULL;
+  for (uint16_t i = 0; i < cnt; i++) {
+    Nodes[i].Center()->AddParent(this, i);
+  }
+  TAutoDBNet::CurrentlyLoading = 0;
 }
 //..............................................................................
 //..............................................................................
@@ -492,44 +565,59 @@ int UpdateNodeSortFunc(const TAutoDBNode* a, const TAutoDBNode* b)  {
 //..............................................................................
 int SearchCompareFunc(const TAutoDBNode &a, const TAutoDBNode &b)  {
   double v = a.SearchCompare(b);
-  if( v < 0 )  return -1;
-  if( v > 0 )  return 1;
-  return 0;
+  return v < 0 ? -1 : (v > 0 ? 1 : 0);
 }
 //..............................................................................
 //..............................................................................
-TAutoDB* TAutoDB::Instance = NULL;
 
-
-TAutoDB::TAutoDB(TXFile& xfile, ALibraryContainer& lc) : XFile(xfile)  {
-  if( Instance != NULL )  {
+TAutoDB::TAutoDB(TXFile& xfile, ALibraryContainer& lc)
+  : XFile(xfile)
+{
+  if (GetInstance_() != 0) {
     throw TFunctionFailedException(__OlxSourceInfo,
       "duplicated object instance");
   }
-  Instance = this;
-  for( uint16_t i=0; i < MaxConnectivity-1; i++ )
+  GetInstance_() = this;
+  for (uint16_t i = 0; i < MaxConnectivity - 1; i++) {
     Nodes.AddNew();
+  }
   BAIDelta = -1;
   URatio = 1.5;
+  LengthVar = 0.03;
+  AngleVar = 5.4;
   EnforceFormula = false;
   lc.GetLibrary().AttachLibrary(ExportLibrary());
 }
 //..............................................................................
-TAutoDB::~TAutoDB()  {
-  for( size_t i=0; i < Nodes.Count(); i++ )
-    for( size_t j=0; j < Nodes[i].Count(); j++ )
+TAutoDB::~TAutoDB() {
+  for (size_t i = 0; i < Nodes.Count(); i++) {
+    for (size_t j = 0; j < Nodes[i].Count(); j++) {
       delete Nodes[i][j];
-  Instance = NULL;
-  delete &XFile;
+    }
+  }
+  GetInstance_() = 0;
+  delete& XFile;
 }
 //..............................................................................
-void TAutoDB::PrepareForSearch()  {
-  for( size_t i=0; i < Nodes.Count(); i++ )
+void TAutoDB::Clear() {
+  for (size_t i = 0; i < Nodes.Count(); i++) {
+    for (size_t j = 0; j < Nodes[i].Count(); j++) {
+      delete Nodes[i][j];
+    }
+  }
+  Nodes.Clear();
+}
+//..............................................................................
+void TAutoDB::PrepareForSearch() {
+  for (size_t i = 0; i < Nodes.Count(); i++) {
     QuickSorter::SortSF(Nodes[i], SearchCompareFunc);
+  }
 }
 //..............................................................................
-void TAutoDB::ProcessFolder(const olxstr& folder)  {
-  if( !TEFile::Exists(folder) )  return;
+void TAutoDB::ProcessFolder(const olxstr& folder) {
+  if (!TEFile::Exists(folder)) {
+    return;
+  }
   olxstr uf = TEFile::TrimPathDelimeter(folder);
   TFileTree ft(uf);
   ft.Expand();
@@ -538,19 +626,19 @@ void TAutoDB::ProcessFolder(const olxstr& folder)  {
 
   TOnProgress progress;
   progress.SetMax(files.Count());
-  for( size_t i=0; i < Nodes.Count(); i++ )  {
-    Nodes[i].SetCapacity(Nodes[i].Count() + files.Count()*100);
-    Nodes[i].SetIncrement(64*1024);
+  for (size_t i = 0; i < Nodes.Count(); i++) {
+    Nodes[i].SetCapacity(Nodes[i].Count() + files.Count() * 100);
+    Nodes[i].SetIncrement(64 * 1024);
   }
-  for( size_t i=0; i < files.Count(); i++ )  {
+  for (size_t i = 0; i < files.Count(); i++) {
     progress.SetPos(i);
     TBasicApp::NewLogEntry() << "Processing: " << files[i];
     olxstr digest;
-    try  {
+    try {
       TEFile f(files[i], "rb");
       digest = MD5::Digest(f);
     }
-    catch(...) {
+    catch (...) {
       TBasicApp::NewLogEntry(logError) << "Reading failed, skipping";
       continue;
     }
@@ -558,42 +646,43 @@ void TAutoDB::ProcessFolder(const olxstr& folder)  {
       TBasicApp::NewLogEntry(logError) << "Duplicate entry, skipping";
       continue;
     }
-    try  {
+    try {
       XFile.LoadFromFile(files[i]);
       TCif& cif = XFile.GetLastLoader<TCif>();
       olxstr r1 = cif.GetParamAsString("_refine_ls_R_factor_gt");
-      if( r1.Length() && r1.ToDouble() > 5 )  {
+      if (r1.Length() && r1.ToDouble() > 5) {
         TBasicApp::NewLogEntry() << "Skipped: r1=" << r1;
         continue;
       }
       olxstr shift = cif.GetParamAsString("_refine_ls_shift/su_max");
-      if( shift.Length() && shift.ToDouble() > 0.05 )  {
+      if (shift.Length() && shift.ToDouble() > 0.05) {
         TBasicApp::NewLogEntry() << "Skipped: shift=" << shift;
         continue;
       }
       olxstr gof = cif.GetParamAsString("_refine_ls_goodness_of_fit_ref");
-      if( gof.Length() && olx_abs(1-gof.ToDouble()) > 0.1 )  {
+      if (gof.Length() && olx_abs(1 - gof.ToDouble()) > 0.1) {
         TBasicApp::NewLogEntry() << "Skipped: GOF=" << gof;
         continue;
       }
       bool has_parts = false;
-      TAsymmUnit &au = XFile.GetAsymmUnit();
-      for (size_t ai=0; ai < au.AtomCount(); ai++) {
+      TAsymmUnit& au = XFile.GetAsymmUnit();
+      for (size_t ai = 0; ai < au.AtomCount(); ai++) {
         if (au.GetAtom(ai).GetPart() != 0) {
           has_parts = true;
           break;
         }
       }
-      if( has_parts )  {
+      if (has_parts) {
         TBasicApp::NewLogEntry() << "Skipped: contains disorder";
         continue;
       }
       XFile.GetLattice().CompaqAll();
-      TAutoDBIdObject &adf = registry.Add(digest, files[i]);
-      for( size_t j=0; j < XFile.GetLattice().FragmentCount(); j++ )
+      TAutoDBIdObject& adf = registry.Add(digest, files[i]);
+      for (size_t j = 0; j < XFile.GetLattice().FragmentCount(); j++) {
         ProcessNodes(&adf, XFile.GetLattice().GetFragment(j));
+      }
     }
-    catch( const TExceptionBase& e)  {
+    catch (const TExceptionBase& e) {
       TBasicApp::NewLogEntry(logError) << "Failed to process: " << files[i];
       TBasicApp::NewLogEntry(logExceptionTrace) << e;
     }
@@ -609,55 +698,59 @@ void TAutoDB::ProcessFolder(const olxstr& folder)  {
     tf.Close();
     TEFile::Rename(src_file + ".tmp", src_file + ".map");
   }
-  catch(const TExceptionBase &e) {
+  catch (const TExceptionBase& e) {
     throw TFunctionFailedException(__OlxSourceInfo, e);
   }
 }
 //..............................................................................
-struct TTmpNetData  {
+struct TTmpNetData {
   TSAtom* Atom;
   TAutoDBNode* Node;
   TTypeList<olx_pair_t<TCAtom*, vec3d> >* neighbours;
 };
-void TAutoDB::ProcessNodes(TAutoDBIdObject* currentFile, TNetwork& net)  {
-  if( net.NodeCount() == 0 )  return;
+void TAutoDB::ProcessNodes(TAutoDBIdObject* currentFile, TNetwork& net) {
+  if (net.NodeCount() == 0) {
+    return;
+  }
   TTypeList< TTmpNetData* > netMatch;
   TTmpNetData* netItem;
-  for( size_t i=0; i < net.NodeCount(); i++ )
+  for (size_t i = 0; i < net.NodeCount(); i++) {
     net.Node(i).SetTag(1);
-  for( size_t i=0; i < net.NodeCount(); i++ )  {
-    if (net.Node(i).GetType().z < 2 ||net.Node(i).IsDeleted())
+  }
+  for (size_t i = 0; i < net.NodeCount(); i++) {
+    if (net.Node(i).GetType().z < 2 || net.Node(i).IsDeleted()) {
       continue;
+    }
     netItem = new TTmpNetData;
     netItem->neighbours = new TTypeList<olx_pair_t<TCAtom*, vec3d> >;
     netItem->Atom = &net.Node(i);
     TAutoDBNode* dbn = new TAutoDBNode(net.Node(i), netItem->neighbours);
     /* instead of MaxConnectivity we use Nodes.Count() to comply with db
     format */
-    if( dbn->NodeCount() < 1 || dbn->NodeCount() > Nodes.Count() )  {
+    if (dbn->NodeCount() < 1 || dbn->NodeCount() > Nodes.Count()) {
       delete dbn;
       delete netItem->neighbours;
       delete netItem;
     }
-    else  {
-      TPtrList<TAutoDBNode>& segment = Nodes[dbn->NodeCount()-1];
-      for( size_t j=0; j < segment.Count(); j++ )  {
-        if( segment[j]->IsSimilar(*dbn) )  {
+    else {
+      TPtrList<TAutoDBNode>& segment = Nodes[dbn->NodeCount() - 1];
+      for (size_t j = 0; j < segment.Count(); j++) {
+        if (segment[j]->IsSimilar(*dbn)) {
           netItem->Node = segment[j];
           delete dbn;
-          dbn = NULL;
+          dbn = 0;
           break;
         }
       }
-      if( dbn != NULL )  {
+      if (dbn != 0) {
         netItem->Node = dbn;
-        Nodes[dbn->NodeCount()-1].Add(dbn);
+        Nodes[dbn->NodeCount() - 1].Add(dbn);
       }
       netMatch.AddCopy(netItem);
     }
   }
   // construct the network
-  if( netMatch.Count() > 1 )  {
+  if (netMatch.Count() > 1) {
     /*this gives a one-to-one match between CAtoms and net nodes with
     CAtom->GetId(). However there is a problems since the fragments represent
     current content of the asymmetric unit and therefore some atoms might be
@@ -666,83 +759,89 @@ void TAutoDB::ProcessNodes(TAutoDBIdObject* currentFile, TNetwork& net)  {
     */
     net.GetLattice().GetAsymmUnit().GetAtoms().ForEach(
       ACollectionItem::TagSetter(-1));
-    for( size_t i=0; i < netMatch.Count(); i++ )
+    for (size_t i = 0; i < netMatch.Count(); i++) {
       netMatch[i]->Atom->CAtom().SetTag(i);
+    }
     TAutoDBNet& net = Nets.AddNew(currentFile);
     // precreate nodes
-    for( uint32_t i=0; i < netMatch.Count(); i++ )  {
+    for (uint32_t i = 0; i < netMatch.Count(); i++) {
       net.NewNode(netMatch[i]->Node);
       netMatch[i]->Node->AddParent(&net, i); // build index
     }
     // build connectivity
-    for( size_t i=0; i < netMatch.Count(); i++ )  {
-      for( size_t j=0; j < netMatch[i]->neighbours->Count(); j++ )  {
-        if( netMatch[i]->neighbours->GetItem(j).GetA()->GetTag() < 0 )
+    for (size_t i = 0; i < netMatch.Count(); i++) {
+      for (size_t j = 0; j < netMatch[i]->neighbours->Count(); j++) {
+        if (netMatch[i]->neighbours->GetItem(j).GetA()->GetTag() < 0) {
           continue;
+        }
         net.Node(i).AttachNode(
           &net.Node(netMatch[i]->neighbours->GetItem(j).GetA()->GetTag()));
       }
     }
-    for( size_t i=0; i < netMatch.Count(); i++ ) {
+    for (size_t i = 0; i < netMatch.Count(); i++) {
       delete netMatch[i]->neighbours;
       delete netMatch[i];
     }
   }
-//  for( size_t i=0; i < Nodes.Count(); i++ )
-//    Nodes[i]->Average();
+  //  for( size_t i=0; i < Nodes.Count(); i++ )
+  //    Nodes[i]->Average();
 
   return;
 }
 //..............................................................................
-TAutoDBNet* TAutoDB::BuildSearchNet(TNetwork& net, TSAtomPList& cas)  {
+TAutoDBNet* TAutoDB::BuildSearchNet(TNetwork& net, TSAtomPList& cas) {
   TStopWatch sw(__FUNC__);
-  if( net.NodeCount() == 0 )  return NULL;
+  if (net.NodeCount() == 0) {
+    return 0;
+  }
   TPtrList<TTmpNetData> netMatch;
-  for( size_t i=0; i < net.NodeCount(); i++ )
+  for (size_t i = 0; i < net.NodeCount(); i++) {
     net.Node(i).SetTag(1);
-  for( size_t i=0; i < net.NodeCount(); i++ )  {
-//    if( net.Node(i).GetType() != iQPeakZ &&
-    if( net.Node(i).GetType() != iHydrogenZ ) {
-      TTmpNetData *netItem = new TTmpNetData;
+  }
+  for (size_t i = 0; i < net.NodeCount(); i++) {
+    //    if( net.Node(i).GetType() != iQPeakZ &&
+    if (net.Node(i).GetType() != iHydrogenZ) {
+      TTmpNetData* netItem = new TTmpNetData;
       netItem->neighbours = new TTypeList<olx_pair_t<TCAtom*, vec3d> >;
       netItem->Atom = &net.Node(i);
       TAutoDBNode* dbn = new TAutoDBNode(net.Node(i), netItem->neighbours);
-      if( dbn->NodeCount() < 1 || dbn->NodeCount() > 12 )  {
+      if (dbn->NodeCount() < 1 || dbn->NodeCount() > 12) {
         delete dbn;
         delete netItem->neighbours;
         delete netItem;
       }
-      else  {
+      else {
         netItem->Node = dbn;
         netMatch.Add(netItem);
       }
     }
   }
   // construct the network
-  if( netMatch.Count() > 0 )  {
-    for( size_t i=0; i < net.GetLattice().GetAsymmUnit().AtomCount(); i++ )
+  if (netMatch.Count() > 0) {
+    for (size_t i = 0; i < net.GetLattice().GetAsymmUnit().AtomCount(); i++)
       net.GetLattice().GetAsymmUnit().GetAtom(i).SetTag(-1);
-    TAutoDBNet* dbnet = new TAutoDBNet(NULL);
-    for( size_t i=0; i < netMatch.Count(); i++ )  {
+    TAutoDBNet* dbnet = new TAutoDBNet(0);
+    for (size_t i = 0; i < netMatch.Count(); i++) {
       dbnet->NewNode(netMatch[i]->Node);
       cas.Add(netMatch[i]->Atom);
       netMatch[i]->Atom->CAtom().SetTag(i);
     }
-    for( size_t i=0; i < netMatch.Count(); i++ )  {
-      for( size_t j=0; j < netMatch[i]->neighbours->Count(); j++ )  {
-        if( netMatch[i]->neighbours->GetItem(j).GetA()->GetTag() < 0 )
+    for (size_t i = 0; i < netMatch.Count(); i++) {
+      for (size_t j = 0; j < netMatch[i]->neighbours->Count(); j++) {
+        if (netMatch[i]->neighbours->GetItem(j).GetA()->GetTag() < 0) {
           continue;
+        }
         dbnet->Node(i).AttachNode(
           &dbnet->Node(netMatch[i]->neighbours->GetItem(j).GetA()->GetTag()));
       }
     }
-    for( size_t i=0; i < netMatch.Count(); i++ ) {
+    for (size_t i = 0; i < netMatch.Count(); i++) {
       delete netMatch[i]->neighbours;
       delete netMatch[i];
     }
     return dbnet;
   }
-  return NULL;
+  return 0;
 }
 //..............................................................................
 void TAutoDB::SaveToStream(IDataOutputStream& output) const {
@@ -753,67 +852,60 @@ void TAutoDB::SaveToStream(IDataOutputStream& output) const {
   registry.SaveToStream(output);
   uint32_t nodeCount = 0;
   output << (uint32_t)Nodes.Count();
-  for( uint32_t i=0; i < Nodes.Count(); i++ )  {
+  for (uint32_t i = 0; i < Nodes.Count(); i++) {
     output << (uint32_t)Nodes[i].Count();
-    for( uint32_t j=0; j < Nodes[i].Count(); j++ )  {
-      Nodes[i][j]->SetId(nodeCount+j);
+    for (uint32_t j = 0; j < Nodes[i].Count(); j++) {
+      Nodes[i][j]->SetId(nodeCount + j);
       Nodes[i][j]->SaveToStream(output);
     }
     nodeCount += (uint32_t)Nodes[i].Count();
   }
 
   output << (uint32_t)Nets.Count();
-  for( uint32_t i=0; i < Nets.Count(); i++ )
+  for (uint32_t i = 0; i < Nets.Count(); i++) {
     Nets[i].SaveToStream(output);
+  }
 }
 //..............................................................................
-void TAutoDB::LoadFromStream(IDataInputStream& input)  {
+void TAutoDB::LoadFromStream(IDataInputStream& input, bool clear) {
+  TStopWatch sw(__FUNC__);
   // validation of the file
-  char fileSignature[FileSignatureLength+1];
-  input.Read( fileSignature, FileSignatureLength );
+  char fileSignature[FileSignatureLength + 1];
+  input.Read(fileSignature, FileSignatureLength);
   fileSignature[FileSignatureLength] = '\0';
-  if( olxstr(fileSignature) != FileSignature )
+  if (olxstr(fileSignature) != FileSignature) {
     throw TFunctionFailedException(__OlxSourceInfo, "invalid file signature");
+  }
   uint16_t fileVersion;
   input >> fileVersion;
-  if( fileVersion != FileVersion )
+  if (fileVersion != FileVersion) {
     throw TFunctionFailedException(__OlxSourceInfo, "invalid file version");
+  }
   // read file flags
   input >> fileVersion;
   // end of the file validation
   registry.LoadFromStream(input);
-  uint32_t ind, listCount, nodeCount=0;
+  uint32_t ind, listCount, nodeCount = 0;
   input >> listCount;  // nt MaxConnectivity is overriden!
   Nodes.Clear();
   Nodes.SetCapacity(listCount);
-
-  TOnProgress pg;
-  pg.SetAction("Loading database...");
-  pg.SetMax(listCount);
-  TBasicApp::GetInstance().OnProgress.Enter(NULL, &pg);
-
-  for( uint32_t i=0; i < listCount; i++ )  {
+  for (uint32_t i = 0; i < listCount; i++) {
     Nodes.AddNew();
     input >> ind;
     Nodes[i].SetCapacity(ind);
-    for( uint32_t j=0; j < ind; j++ )  {
+    for (uint32_t j = 0; j < ind; j++) {
       Nodes[i].Add(new TAutoDBNode(input));
       Nodes[i][j]->SetId(nodeCount + j);
     }
     nodeCount += ind;
-    pg.SetPos(i);
-    TBasicApp::GetInstance().OnProgress.Execute(NULL, &pg);
   }
 
   input >> ind;
   Nets.SetCapacity(ind);
-  for( uint32_t i=0; i < ind; i++ )
+  for (uint32_t i = 0; i < ind; i++) {
     Nets.Add(new TAutoDBNet(input));
-
+  }
   PrepareForSearch();
-  pg.SetPos(pg.GetMax());
-  TBasicApp::GetInstance().OnProgress.Execute(NULL, &pg);
-  TBasicApp::GetInstance().OnProgress.Exit(NULL, &pg);
 }
 //..............................................................................
 void TAutoDB::AnalyseNode(TSAtom& sa, TStrList& report) {
@@ -1953,7 +2045,7 @@ void TAtomTypePermutator::Permutate() {
 }
 //..............................................................................
 TAutoDB& TAutoDB::GetInstance() {
-  if (Instance == 0) {
+  if (GetInstance_() == 0) {
     TXApp& app = TXApp::GetInstance();
     olxstr fn,
       bd_fn = app.GetBaseDir() + "acidb.db";
@@ -1966,20 +2058,20 @@ TAutoDB& TAutoDB::GetInstance() {
         TEFile::Copy(bd_fn, fn);
       }
     }
-    TEGC::AddP(Instance = new TAutoDB(
+    TEGC::AddP(GetInstance_() = new TAutoDB(
       *(dynamic_cast<TXFile*>(app.XFile().Replicate())), app));
     if (TEFile::Exists(fn)) {
       TEFile dbf(fn, "rb");
-      Instance->LoadFromStream(dbf);
+      GetInstance_()->LoadFromStream(dbf, false);
       olxstr map_fn = fn + ".map";
       if (TEFile::Exists(map_fn)) {
         dbf.Open(map_fn, "rb");
-        Instance->registry.LoadMap(dbf);
+        GetInstance_()->registry.LoadMap(dbf);
       }
     }
-    Instance->src_file = fn;
+    GetInstance_()->src_file = fn;
   }
-  return *Instance;
+  return *GetInstance_();
 }
 //..............................................................................
 //..............................................................................

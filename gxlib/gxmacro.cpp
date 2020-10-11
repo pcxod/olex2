@@ -491,7 +491,7 @@ void GXLibMacros::macPack(TStrObjList &Cmds, const TParamList &Options,
     if (app.Get3DFrame().IsVisible()) {
       if (app.Get3DFrame().IsSpherical()) {
         app.XFile().GetLattice().GenerateSphere(app.Get3DFrame().GetCenter(),
-          app.Get3DFrame().GetZoom(), ClearCont);
+          app.Get3DFrame().GetZoom(), 0, ClearCont);
       }
       else {
         vec3d_alist norms(6), centres(6);
@@ -499,7 +499,7 @@ void GXLibMacros::macPack(TStrObjList &Cmds, const TParamList &Options,
           norms[i] = app.Get3DFrame().Faces[i].GetN();
           centres[i] = app.Get3DFrame().Faces[i].GetCenter();
         }
-        app.XFile().GetLattice().GenerateBox(norms, centres, ClearCont);
+        app.XFile().GetLattice().GenerateBox(norms, centres, 0, ClearCont);
       }
     }
   }
@@ -2294,30 +2294,44 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
       }
     }
   }
-  else if (Cmds.Count() == 1 && TSymmParser::IsRelSymm(Cmds[0])) {
+  else if (Cmds.Count() >= 1 && TSymmParser::IsRelSymm(Cmds[0])) {
     if (flag == glSelectionNone) {
       flag = glSelectionSelect;
     }
     const smatd matr = TSymmParser::SymmCodeToMatrix(
       app.XFile().GetUnitCell(), Cmds[0]);
-    TGXApp::AtomIterator ai = app.GetAtoms();
-    while (ai.HasNext()) {
-      TXAtom& a = ai.Next();
-      if (a.IsDeleted() || !a.IsVisible()) {
-        continue;
+    if (Cmds.Count() == 1) {
+      TGXApp::AtomIterator ai = app.GetAtoms();
+      while (ai.HasNext()) {
+        TXAtom& a = ai.Next();
+        if (a.IsDeleted() || !a.IsVisible()) {
+          continue;
+        }
+        if (a.IsGenerator(matr)) {
+          app.GetRenderer().Select(a, flag);
+        }
       }
-      if (a.IsGenerator(matr)) {
-        app.GetRenderer().Select(a, flag);
+      TGXApp::BondIterator bi = app.GetBonds();
+      while (bi.HasNext()) {
+        TXBond& b = bi.Next();
+        if (b.IsDeleted() || !b.IsVisible()) {
+          continue;
+        }
+        if (b.A().IsGenerator(matr) && b.B().IsGenerator(matr)) {
+          app.GetRenderer().Select(b, flag);
+        }
       }
     }
-    TGXApp::BondIterator bi = app.GetBonds();
-    while (bi.HasNext()) {
-      TXBond& b = bi.Next();
-      if (b.IsDeleted() || !b.IsVisible()) {
-        continue;
-      }
-      if (b.A().IsGenerator(matr) && b.B().IsGenerator(matr)) {
-        app.GetRenderer().Select(b, flag);
+    else {
+      TXAtomPList atoms = app.FindXAtoms(Cmds.SubListFrom(1).GetObject(), true, false);
+      for (size_t i = 0; i < atoms.Count(); i++) {
+        TXAtom& a = *atoms[i];
+        if (a.IsDeleted() || !a.IsVisible()) {
+          continue;
+        }
+        if (a.IsGenerator(matr)) {
+          app.GetRenderer().Select(a, flag);
+        }
       }
     }
   }
@@ -2358,8 +2372,9 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
       TGXApp::AtomIterator ai = app.GetAtoms();
       while (ai.HasNext()) {
         TXAtom& xa = ai.Next();
-        if (afixes.Contains(xa.CAtom().GetAfix()))
+        if (afixes.Contains(xa.CAtom().GetAfix())) {
           app.GetRenderer().Select(xa, flag);
+        }
       }
     }
   }
@@ -2605,9 +2620,21 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
       size_t whereIndex = Cmds.IndexOf("where");
       if (whereIndex >= 1 && whereIndex != InvalidIndex) {
         olxstr Tmp = Cmds[whereIndex-1];
-        while (olx_is_valid_index(whereIndex)) { Cmds.Delete(whereIndex--); }
+        while (olx_is_valid_index(whereIndex)) {
+          Cmds.Delete(whereIndex--);
+        }
+        olxstr expression = Cmds.Text(' ');
+        size_t el = expression.Length();
+        while (expression.Replace("xatom.", "atom.").Length() != el) {
+          el = expression.Length();
+        }
+        el = expression.Length();
+        while (expression.Replace("xbond.", "bond.").Length() != el) {
+          el = expression.Length();
+        }
+
         if (Tmp.Equalsi("atoms")) {
-          app.SelectAtomsWhere(Cmds.Text(' '));
+          app.SelectAtomsWhere(expression);
         }
         else if (Tmp.Equalsi("bonds")) {
           app.SelectBondsWhere(Cmds.Text(' '));

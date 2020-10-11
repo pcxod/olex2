@@ -126,6 +126,7 @@ public:
     AddAtoms(xatoms);
     gxapp.SetZoomAfterModelBuilt(gxapp
       .GetOptions().GetBoolOption("model.center_on_update", true, true));
+    part = Options.FindValue('p', DefNoPart).ToInt();
     return (Initialised = true);
   }
 
@@ -158,14 +159,20 @@ public:
         }
         TXAtom& nxa = gxapp.AddAtom(Atoms[i]);
         TCAtom& na = nxa.CAtom();
-        // set parts
-        int part = Atoms[i]->CAtom().GetPart();
-        if (part == 0) {
-          part++;
+        bool set_parts = part == DefNoPart;
+        if (set_parts) {
+          // set parts
+          part = Atoms[i]->CAtom().GetPart();
+          if (part == 0) {
+            part++;
+          }
+          Atoms[i]->CAtom().SetPart(part);
+          // take care of negative parts too
+          na.SetPart(olx_sign(part) * (olx_abs(part) + 1));
         }
-        Atoms[i]->CAtom().SetPart(part);
-        // take care of negative parts too
-        na.SetPart(olx_sign(part)*(olx_abs(part) + 1));
+        else {
+          na.SetPart(part);
+        }
         na.SetUiso(Atoms[i]->CAtom().GetUiso());
         // link occupancies
         const double sp = 1. / Atoms[i]->CAtom().GetDegeneracy();

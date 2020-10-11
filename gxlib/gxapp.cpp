@@ -3032,8 +3032,8 @@ TUndoData* TGXApp::DeleteXAtoms(TXAtomPList& L) {
 //..............................................................................
 void TGXApp::SelectBondsWhere(const olxstr &Where, bool Invert) {
   olxstr str = Where.ToLowerCase();
-  if (str.Contains("xatom") || str.Contains("satom")) {
-    NewLogEntry(logError) << "SelectBonds: xatom/satom are not allowed here";
+  if (str.Contains("atom")) {
+    NewLogEntry(logError) << "SelectBonds: atom are not allowed here";
     return;
   }
   if (str.Contains(" sel.")) {
@@ -3046,11 +3046,11 @@ void TGXApp::SelectBondsWhere(const olxstr &Where, bool Invert) {
   }
   TXFactoryRegister rf;
   TTXBond_EvaluatorFactory *xbond =
-    (TTXBond_EvaluatorFactory*)rf.BindingFactory("xbond");
+    (TTXBond_EvaluatorFactory*)rf.FindBinding("bond");
   TTGlGroupEvaluatorFactory *sel =
-    (TTGlGroupEvaluatorFactory*)rf.BindingFactory("sel");
+    (TTGlGroupEvaluatorFactory*)rf.FindBinding("sel");
   sel->SetTGlGroup(&GlRenderer->GetSelection());
-  TSyntaxParser SyntaxParser(&rf, Where);
+  TExpressionParser SyntaxParser(&rf, Where);
   if (!SyntaxParser.Errors().Count()) {
     BondIterator bi(*this);
     while (bi.HasNext()) {
@@ -3069,8 +3069,8 @@ void TGXApp::SelectBondsWhere(const olxstr &Where, bool Invert) {
 //..............................................................................
 void TGXApp::SelectAtomsWhere(const olxstr &Where, bool Invert) {
   olxstr str = Where.ToLowerCase();
-  if (str.Contains("xbond") || str.Contains("sbond")) {
-    NewLogEntry(logError) << "SelectAtoms: xbond/satom are not allowed here";
+  if (str.Contains("bond")) {
+    NewLogEntry(logError) << "SelectAtoms: bond/atom are not allowed here";
     return;
   }
   if (str.Contains(" sel.")) {
@@ -3085,11 +3085,11 @@ void TGXApp::SelectAtomsWhere(const olxstr &Where, bool Invert) {
   }
   TXFactoryRegister rf;
   TTXAtom_EvaluatorFactory *xatom =
-    (TTXAtom_EvaluatorFactory*)rf.BindingFactory("xatom");
+    (TTXAtom_EvaluatorFactory*)rf.FindBinding("atom");
   TTGlGroupEvaluatorFactory *sel =
-    (TTGlGroupEvaluatorFactory*)rf.BindingFactory("sel");
+    (TTGlGroupEvaluatorFactory*)rf.FindBinding("sel");
   sel->SetTGlGroup(&GlRenderer->GetSelection());
-  TSyntaxParser SyntaxParser(&rf, Where);
+  TExpressionParser SyntaxParser(&rf, Where);
   if (!SyntaxParser.Errors().Count()) {
     AtomIterator ai(*this);
     while (ai.HasNext()) {

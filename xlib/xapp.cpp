@@ -35,6 +35,8 @@ TXApp::TXApp(const olxstr &basedir, ASObjectProvider* objectProvider,
   ASelectionOwner* selOwner)
   : TBasicApp(basedir), Library(EmptyString(), this)
 {
+  max_label_length = 0;
+  interactions_i = false;
   Init(objectProvider, selOwner);
 }
 //..............................................................................

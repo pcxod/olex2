@@ -473,16 +473,6 @@ public:
   void SaveXFile(const olxstr &fn, int flags = 0) {
     XFile().SaveToFile(fn, flags);
   }
-  void Generate(const vec3d& From, const vec3d& To,
-    TCAtomPList* Template, bool ClearPrevCont)
-  {
-    XFile().GetLattice().Generate(From, To, Template, ClearPrevCont);
-  }
-  void Generate(const vec3d& center, double rad,
-    TCAtomPList* Template, bool ClearPrevCont)
-  {
-    XFile().GetLattice().Generate(center, rad, Template, ClearPrevCont);
-  }
   void Uniq() { XFile().GetLattice().Uniq(); }
   void GrowFragments(bool Shell, TCAtomPList* Template = NULL) {
     XFile().GetLattice().GrowFragments(Shell, Template);

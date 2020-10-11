@@ -12,12 +12,28 @@
 #endif
 
 #include "seval.h"
+#include "asymmunit.h"
+#include "residue.h"
+#include "atomref.h"
+#include "lattice.h"
 
-IEvaluator *TSFactoryRegister::Evaluator(const olxstr& name)  {
+IEvaluator* TSFactoryRegister::Evaluator(const olxstr& name) {
   TStrList toks(name, '.');
-  IEvaluatorFactory* factory = FactoryMap.Find(toks[0], NULL);
-  toks.Delete(0);
-  return factory ? factory->Evaluator(toks.Text('.')) : NULL;
+  IEvaluatorFactory* factory = FactoryMap.Find(toks[0], 0);
+  if (factory == 0) {
+    olxstr en = toks.Text('.');
+    for (size_t i = 0; i < FactoryMap.Count(); i++) {
+      IEvaluator* e = FactoryMap.GetValue(i)->Evaluator(en);
+      if (e != 0) {
+        return e;
+      }
+    }
+    return 0;
+  }
+  else {
+    toks.Delete(0);
+    return factory->Evaluator(toks.Text('.'));
+  }
 }
 // constructor to create instaces of registered evaluators
 TTSAtom_EvaluatorFactory::TTSAtom_EvaluatorFactory(
@@ -40,9 +56,11 @@ TTSAtom_EvaluatorFactory::TTSAtom_EvaluatorFactory(
   Evaluators.Add("occu", new TSAtom_OccuEvaluator(provider));
   // register new instance of TSAtom_BcEvaluator
   Evaluators.Add("bc", new TSAtom_BcEvaluator(provider));
+  Evaluators.Add("rc", new TSAtom_ResiClassEvaluator(provider));
+  Evaluators.Add("rn", new TSAtom_ResiNumEvaluator(provider));
 
   IEvaluatorFactory *tSAtomBaiEvaluatorFactory =
-    FactoryRegister->Factory("TTBasicAtomInfoEvaluatorFactory");
+    FactoryRegister->FindFactory("TTBasicAtomInfoEvaluatorFactory");
   for( size_t i=0; i < tSAtomBaiEvaluatorFactory->EvaluatorCount(); i++ ) {
     Evaluators.Add(olxstr("bai.") << tSAtomBaiEvaluatorFactory->EvaluatorName(i),
       tSAtomBaiEvaluatorFactory->Evaluator(i)->NewInstance(provider));
@@ -64,19 +82,45 @@ TTBasicAtomInfoEvaluatorFactory::TTBasicAtomInfoEvaluatorFactory(
   Evaluators.Add("z", new TBaiZEvaluator(provider));
 }
 //.............................................................................
-TSFactoryRegister::TSFactoryRegister()  {
-  TTBasicAtomInfoEvaluatorFactory *tTBasicAtomInfoEvaluatorFactory =
+TSFactoryRegister::TSFactoryRegister() {
+  TTBasicAtomInfoEvaluatorFactory* tTBasicAtomInfoEvaluatorFactory =
     new TTBasicAtomInfoEvaluatorFactory(this, new TTBasicAtomInfoDataProvider);
   Factories.Add("TTBasicAtomInfoEvaluatorFactory",
     tTBasicAtomInfoEvaluatorFactory);
   FactoryMap.Add("bai", tTBasicAtomInfoEvaluatorFactory);
-  TTSAtom_EvaluatorFactory *tTSAtom_EvaluatorFactory =
+  TTSAtom_EvaluatorFactory* tTSAtom_EvaluatorFactory =
     new TTSAtom_EvaluatorFactory(this, new TTSAtom_DataProvider);
   Factories.Add("TTSAtom_EvaluatorFactory", tTSAtom_EvaluatorFactory);
-  FactoryMap.Add("SAtom", tTSAtom_EvaluatorFactory);
+  FactoryMap.Add("Atom", tTSAtom_EvaluatorFactory);
 }
-
-TSFactoryRegister::~TSFactoryRegister()  {
-  for( size_t i=0; i < Factories.Count(); i++ )
+//.............................................................................
+TSFactoryRegister::~TSFactoryRegister() {
+  for (size_t i = 0; i < Factories.Count(); i++) {
     delete Factories.GetValue(i);
+  }
 }
+//.............................................................................
+//.............................................................................
+//.............................................................................
+const olxstr& TSAtom_ResiClassEvaluator::EvaluateString() const {
+  const TCAtom& a = Parent->GetTSAtom()->CAtom();
+  return a.GetResiId() == 0 ? EmptyString()
+    : a.GetParent()->GetResidue(a.GetResiId()).GetClassName();
+}
+//.............................................................................
+double TSAtom_ResiNumEvaluator::EvaluateDouble() const {
+  const TCAtom& a = Parent->GetTSAtom()->CAtom();
+  return a.GetResiId() == 0 ? 0
+    : a.GetParent()->GetResidue(a.GetResiId()).GetNumber();
+}
+//.............................................................................
+bool TSAtom_TypeEvaluator::operator == (const IEvaluator& val) const {
+  olxstr v = val.EvaluateString();
+  if (v.StartsFrom('$')) {
+    SortedElementPList elms = TAtomReference::DecodeTypes(
+      v.SubStringFrom(1), Parent->GetTSAtom()->GetParent().GetAsymmUnit());
+    return elms.Contains(Parent->GetTSAtom()->GetType());
+  }
+  return !EvaluateString().Comparei(val.EvaluateString());
+}
+//.............................................................................
