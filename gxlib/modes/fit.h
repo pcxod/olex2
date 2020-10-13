@@ -153,13 +153,13 @@ public:
       atom_map.SetCapacity(Atoms.Count());
       DistanceGenerator::atom_set_t atom_set;
       atom_set.SetCapacity(Atoms.Count());
+      bool set_parts = part == DefNoPart;
       for (size_t i = split_offset; i < Atoms.Count(); i++) {
         if (Atoms[i]->crd().QDistanceTo(original_crds[i]) < 0.01) {
           continue;
         }
         TXAtom& nxa = gxapp.AddAtom(Atoms[i]);
         TCAtom& na = nxa.CAtom();
-        bool set_parts = part == DefNoPart;
         if (set_parts) {
           // set parts
           part = Atoms[i]->CAtom().GetPart();
@@ -171,7 +171,8 @@ public:
           na.SetPart(olx_sign(part) * (olx_abs(part) + 1));
         }
         else {
-          na.SetPart(part);
+          Atoms[i]->CAtom().SetPart(part);
+          na.SetPart(olx_sign(part) * (olx_abs(part) + 1));
         }
         na.SetUiso(Atoms[i]->CAtom().GetUiso());
         // link occupancies

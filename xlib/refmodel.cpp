@@ -2283,6 +2283,9 @@ olxstr RefinementModel::WriteInsExtras(const TCAtomPList* atoms,
     TDataItem *aa = 0;
     for (size_t i = 0; i < aunit.AtomCount(); i++) {
       TCAtom &a = aunit.GetAtom(i);
+      if (a.IsDeleted()) {
+        continue;
+      }
       if (a.GetEllipsoid() != 0 && a.GetEllipsoid()->IsAnharmonic()) {
         if (aa == 0) {
           aa = &di.AddItem("anharmonics");
@@ -2407,8 +2410,8 @@ void RefinementModel::ReadInsExtras(const TStrList &items) {
       TDataItem &ai = a_adp->GetItemByIndex(i);
       TCAtom *a = aunit.FindCAtom(ai.GetName());
       if (a == 0 || a->GetEllipsoid() == 0) {
-        TBasicApp::NewLogEntry(logError) << "Could not locate suitable " <<
-          a_adp->GetFieldName(i) << " for the anharmonic contribution";
+        TBasicApp::NewLogEntry(logError) << "Could not locate " <<
+          ai.GetName() << " for the anharmonic contribution";
         continue;
       }
       TStrList c_toks(ai.FindField("Cijk"), " ");

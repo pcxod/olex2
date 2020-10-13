@@ -2282,7 +2282,9 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
       ASObjectProvider &op = f->GetLattice().GetObjects();
       for (size_t j=0; j < op.atoms.Count(); j++) {
         TXAtom &a = (TXAtom &)op.atoms[j];
-        if (!a.IsAvailable()) continue;
+        if (!a.IsAvailable()) {
+          continue;
+        }
         app.GetRenderer().Select(a, flag);
       }
       for (size_t j=0; j < op.bonds.Count(); j++) {
@@ -2347,10 +2349,10 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
         break;
     }
     if (!parts.IsEmpty()) {
-      olxstr cond = "xatom.part==";
+      olxstr cond = "atom.part==";
       cond << parts[0];
       for (size_t i=1; i < parts.Count(); i++)
-        cond << "||xatom.part==" << parts[i];
+        cond << "||atom.part==" << parts[i];
       app.SelectAtomsWhere(cond);
     }
   }
