@@ -836,7 +836,31 @@ struct olx_gl {
     }
   };
 
+  class ColorMatertialChanger {
+    GLint original_face, original_value;
+    GLint current_face, current_value;
+    void restore() {
+      if (original_face != current_face || original_value != current_value) {
+        olx_gl::colorMaterial(original_face, original_value);
+      }
+    }
+  public:
+    ColorMatertialChanger() {
+      original_face = current_face = olx_gl::getInt(GL_COLOR_MATERIAL_FACE);
+      original_value = current_value = olx_gl::getInt(GL_COLOR_MATERIAL_PARAMETER);
+    }
+    void set(GLint face, GLint value) {
+      if (face != current_face || value != current_value) {
+        olx_gl::colorMaterial(current_face = face, current_value = value);
+      }
+    }
+    ~ColorMatertialChanger() { restore(); }
+  };
+
   struct FlagManager {
+  private:
+    olx_object_ptr<ColorMatertialChanger> cm_ptr;
+  public:
     olx_pdict<GLenum, FlagChanger *>  state;
     ~FlagManager() {
       clear();
@@ -846,6 +870,7 @@ struct olx_gl {
         delete state.GetValue(i);
       }
       state.Clear();
+      cm_ptr = 0;
     }
     void enable(GLenum f) {
       size_t idx = state.IndexOf(f);
@@ -864,6 +889,12 @@ struct olx_gl {
       else {
         state.GetValue(idx)->disable();
       }
+    }
+    void colorMaterial(GLint face, GLint value) {
+      if (!cm_ptr.ok()) {
+        cm_ptr = new ColorMatertialChanger();
+      }
+      cm_ptr->set(face, value);
     }
   };
 

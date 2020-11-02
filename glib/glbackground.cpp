@@ -34,7 +34,8 @@ void TGlBackground::Create(const olxstr& cName) {
     GlM.SetFlags(sglmAmbientF | sglmDiffuseF | sglmTransparent | sglmIdentityDraw);
   }
   else {
-    GlM.SetFlags(sglmAmbientF | sglmIdentityDraw | sglmColorMat);
+    // just enable GL_COLOR_MATERIAL
+    GlM.SetFlags(sglmIdentityDraw | sglmColorMat);
   }
   GlM.AmbientF = 0x7f4f4f4f;
   GlM.DiffuseF = 0x7f4f4f4f;
@@ -84,7 +85,10 @@ bool TGlBackground::Orient(TGlPrimitive& P)  {
   P.Colors[2] = FColors[2].GetRGB();
   P.Vertices[3] = vec3d(-HW, HH, MaxZ);
   P.Colors[3] = FColors[3].GetRGB();
-  return false;
+  olx_gl::ColorMatertialChanger cl_c;
+  cl_c.set(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+  P.Draw();
+  return true;
 }
 //..............................................................................
 void TGlBackground::LT(const TGlOption& v)  {

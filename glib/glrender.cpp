@@ -226,6 +226,7 @@ void TGlRenderer::InitLights() {
   olx_gl::hint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
   olx_gl::clearDepth(1.0f);
   olx_gl::depthFunc(GL_LEQUAL);
+  olx_gl::colorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
   LightModel.Init();
 }
 //..............................................................................
@@ -1139,17 +1140,18 @@ void TGlRenderer::Select(AGDrawObject& G, bool v) {
 }
 //..............................................................................
 void TGlRenderer::Select(AGDrawObject& G, glSelectionFlag v) {
-  if (v == glSelectionSelect) {
+  switch (v) {
+  case glSelectionSelect:
     if (!G.IsSelected()) {
       Select(G);
     }
-  }
-  else if (v == glSelectionUnselect) {
+    break;
+  case glSelectionUnselect:
     if (G.IsSelected()) {
       Deselect(G);
     }
-  }
-  else if (v == glSelectionInvert) {
+    break;
+  case glSelectionInvert:
     Select(G, !G.IsSelected());
   }
 }

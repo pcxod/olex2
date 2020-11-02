@@ -405,8 +405,9 @@ bool TXGrid::Orient(TGlPrimitive& GlP) {
     return true;
   }
   if (Is3D()) {
+    olx_gl::FlagManager fm;
     if (ColorData != 0) {
-      olx_gl::enable(GL_COLOR_MATERIAL);
+      fm.enable(GL_COLOR_MATERIAL);
     }
     if (&GlP == glpN) { // draw once only
       olx_gl::callList(PListId);
@@ -420,8 +421,9 @@ bool TXGrid::Orient(TGlPrimitive& GlP) {
     return true;
   }
   if (&GlP == glpC) {
-    if ((RenderMode&planeRenderModePlane) != 0)
+    if ((RenderMode & planeRenderModePlane) != 0) {
       return true;
+    }
   }
   else {
     if ((RenderMode&planeRenderModeContour) != 0 &&
@@ -554,9 +556,13 @@ bool TXGrid::Orient(TGlPrimitive& GlP) {
     for (size_t i = 1; i < ContourLevelCount; i++) {
       ContourLevels[i] = ContourLevels[i - 1] + contour_step;
     }
-
+    TGlOption c_cl = 0;
+    TGlPrimitive* mp = GetPrimitives().FindPrimitiveByName("eMap");
+    if (mp != 0) {
+      c_cl = mp->GetProperties().AmbientF;
+    }
     GlP.PrepareColorRendering(GL_LINES);
-    olx_gl::color(0, 0, 0);
+    olx_gl::color(c_cl.Data());
     cm.DoContour(ContourData.data, 0, (int)MaxDim - 1, 0, (int)MaxDim - 1,
       ContourCrds[0], ContourCrds[1],
       ContourLevelCount, ContourLevels, mf);
@@ -632,8 +638,9 @@ void TXGrid::InitGrid(size_t maxX, size_t maxY, size_t maxZ, bool use_colors) {
   ContourData.resize(MaxDim, MaxDim, false);
   ContourCrds[0] = new float[MaxDim];
   ContourCrds[1] = new float[MaxDim];
+  float step = (MaxDim + 1)/(float)MaxDim;
   for (int i = 0; i < (int)MaxDim; i++) {
-    ContourCrds[0][i] = ContourCrds[1][i] = (float)(i - (int)MaxDim / 2);
+    ContourCrds[0][i] = ContourCrds[1][i] = step*i - (float)MaxDim / 2;
   }
   ContourLevels = new float[ContourLevelCount];
   MaxHole = MinHole = 0;
