@@ -22,17 +22,20 @@ TGlBackground::TGlBackground(TGlRenderer& r, const olxstr& collectionName, bool 
 }
 //..............................................................................
 void TGlBackground::Create(const olxstr& cName) {
-  if( !cName.IsEmpty() )
+  if (!cName.IsEmpty()) {
     SetCollectionName(cName);
+  }
   TGPCollection& GPC = Parent.FindOrCreateCollection( GetCollectionName() );
   GPC.AddObject(*this);
   if( GPC.PrimitiveCount() != 0 )  return;
 
   TGlMaterial GlM;
-  if( FCeiling )
-    GlM.SetFlags(sglmAmbientF|sglmDiffuseF|sglmTransparent|sglmIdentityDraw);
-  else
-    GlM.SetFlags(sglmAmbientF|sglmIdentityDraw);
+  if (FCeiling) {
+    GlM.SetFlags(sglmAmbientF | sglmDiffuseF | sglmTransparent | sglmIdentityDraw);
+  }
+  else {
+    GlM.SetFlags(sglmAmbientF | sglmIdentityDraw | sglmColorMat);
+  }
   GlM.AmbientF = 0x7f4f4f4f;
   GlM.DiffuseF = 0x7f4f4f4f;
   GlM.AmbientB = 0x7f4f4f4f;
@@ -59,14 +62,19 @@ void TGlBackground::SetTexture(TGlTexture* tx)  {
 }
 //..............................................................................
 bool TGlBackground::Orient(TGlPrimitive& P)  {
-  if( Parent.IsColorStereo() )  return true;
-  if( Texture != NULL )
+  if (Parent.IsColorStereo()) {
+    return true;
+  }
+  if (Texture != 0) {
     P.SetTextureId(Texture->GetId());
+  }
   double Scale = Parent.GetScale();
   double HW = (Parent.GetWidth()+1)/2*Scale;
   double HH = (Parent.GetHeight()+1)/2*Scale;
   double MaxZ = Parent.CalcRasterZ(0.001);
-  if( !FCeiling )  MaxZ = -MaxZ;
+  if (!FCeiling) {
+    MaxZ = -MaxZ;
+  }
 
   P.Vertices[0] = vec3d(-HW, -HH, MaxZ);
   P.Colors[0] = FColors[0].GetRGB();
