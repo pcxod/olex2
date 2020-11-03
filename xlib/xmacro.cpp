@@ -4837,13 +4837,6 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
   if (hall_symbol.IsEmpty() || hall_symbol == '?') {
     Cif->SetParam("_space_group_name_Hall", sg.GetHallSymbol(), true);
   }
-  else {
-    if (!olxstr(hall_symbol).TrimWhiteChars().Equalsi(sg.GetHallSymbol())) {
-      TBasicApp::NewLogEntry(logWarning) << "Note that the provided '" <<
-        hall_symbol << "' and calculated '" << sg.GetHallSymbol() <<
-        "' are different";
-    }
-  }
   Cif->SetParam("_space_group_name_H-M_alt", sg.GetFullName(), true);
   Cif->SetParam("_space_group_IT_number", sg.GetNumber(), false);
   if( !sg.IsCentrosymmetric() &&

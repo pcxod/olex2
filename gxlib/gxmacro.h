@@ -80,6 +80,7 @@ public:
   DefMacro(TLS)
   DefMacro(Udiff)
   DefMacro(MSDSView)
+  DefMacro(ScaleN)
 
   DefFunc(MatchFiles)
   DefFunc(ExtraZoom)

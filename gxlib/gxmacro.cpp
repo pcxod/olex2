@@ -23,6 +23,7 @@
 #include "atomlegend.h"
 #include "xtls.h"
 #include "rmsds_adp.h"
+#include "glalg.h"
 
 #define gxlib_InitMacro(macroName, validOptions, argc, desc)\
   lib.Register(\
@@ -432,6 +433,11 @@ void GXLibMacros::Export(TLibrary& lib) {
     "a-anharmonicity display [all], anh, none",
     fpNone,
     "Shows/hides atom legend");
+
+  gxlib_InitMacro(ScaleN,
+    EmptyString(),
+    fpNone,
+    "Scales normal of the first plane to touch the plane");
 
   gxlib_InitFunc(ExtraZoom, fpNone|fpOne,
     "Sets/reads current extra zoom (default zoom correction)");
@@ -2102,7 +2108,7 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
     TBasicApp::NewLogEntry(logError) << "Unavailable in a mode";
     return;
   }
-  glSelectionFlag flag=glSelectionNone;
+  glSelectionFlag flag = glSelectionNone;
   if (Options.GetBoolOption('a')) {
     flag = glSelectionSelect;
   }
@@ -2345,15 +2351,22 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
         parts.Add(Cmds[i].ToInt());
         Cmds.Delete(i--);
       }
-      else
+      else {
         break;
+      }
     }
-    if (!parts.IsEmpty()) {
-      olxstr cond = "atom.part==";
-      cond << parts[0];
-      for (size_t i=1; i < parts.Count(); i++)
-        cond << "||atom.part==" << parts[i];
-      app.SelectAtomsWhere(cond);
+    if (flag == glSelectionNone) {
+      flag = glSelectionSelect;
+    }
+    TXAtomPList atoms = app.FindXAtoms(Cmds, true, false);
+    for (size_t i = 0; i < atoms.Count(); i++) {
+      TXAtom& a = *atoms[i];
+      if (a.IsDeleted() || !a.IsVisible()) {
+        continue;
+      }
+      if (parts.Contains(a.CAtom().GetPart())) {
+        app.GetRenderer().Select(a, flag);
+      }
     }
   }
   else if (Cmds.Count() > 1 && Cmds[0].Equalsi("afix")) {
@@ -2364,8 +2377,9 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
         afixes.AddUnique(Cmds[i].ToInt());
         Cmds.Delete(i--);
       }
-      else
+      else {
         break;
+      }
     }
     if (!afixes.IsEmpty()) {
       if (flag == glSelectionNone) {
@@ -2417,33 +2431,19 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
       }
     }
   }
-  else if (Cmds.Count() == 1 && Cmds[0].Equalsi("isot")) {
+  else if (Cmds.Count() >= 1 && (Cmds[0].Equalsi("isot") || Cmds[0].Equalsi("anis"))) {
     if (flag == glSelectionNone) {
       flag = glSelectionSelect;
     }
-    TGXApp::AtomIterator ai = app.GetAtoms();
-    while (ai.HasNext()) {
-      TXAtom& xa = ai.Next();
-      if (!xa.IsVisible()) {
+    TXAtomPList atoms = app.FindXAtoms(Cmds.SubListFrom(1).GetObject(), true, false);
+    bool isot = Cmds[0].Equalsi("isot");
+    for (size_t i = 0; i < atoms.Count(); i++) {
+      TXAtom& a = *atoms[i];
+      if (a.IsDeleted() || !a.IsVisible()) {
         continue;
       }
-      if (xa.GetEllipsoid() == 0) {
-        app.GetRenderer().Select(xa, flag);
-      }
-    }
-  }
-  else if (Cmds.Count() == 1 && Cmds[0].Equalsi("anis")) {
-    if (flag == glSelectionNone) {
-      flag = glSelectionSelect;
-    }
-    TGXApp::AtomIterator ai = app.GetAtoms();
-    while (ai.HasNext()) {
-      TXAtom& xa = ai.Next();
-      if (!xa.IsVisible()) {
-        continue;
-      }
-      if (xa.GetEllipsoid() != 0) {
-        app.GetRenderer().Select(xa, flag);
+      if ((isot && a.GetEllipsoid() == 0) || (!isot && a.GetEllipsoid() != 0)) {
+        app.GetRenderer().Select(a, flag);
       }
     }
   }
@@ -2591,13 +2591,13 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
         TStrList(Cmds.Text(' ', 2), ';'), app.XFile().GetAsymmUnit());
     }
   }
-  else if (flag == glSelectionNone) {
-    if (Cmds.IsEmpty()) {
+  else if (Cmds.IsEmpty()) {
+    if (flag == glSelectionNone) {
       size_t period = 5;
       TXAtomPList Atoms = app.FindXAtoms("sel", false, false);
       if (Atoms.IsEmpty() && Cmds.Count() == 1) {
         TGPCollection* gpc = app.GetRenderer().FindCollection(Cmds[0]);
-        if (gpc != NULL) {
+        if (gpc != 0) {
           for (size_t i = 0; i < gpc->ObjectCount(); i++) {
             app.GetRenderer().Select(gpc->GetObject(i));
           }
@@ -2617,99 +2617,96 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
           TBasicApp::NewLogEntry() << Tmp;
         }
       }
-    }
-    else { // !Cmds.IsEmpty()
-      size_t whereIndex = Cmds.IndexOf("where");
-      if (whereIndex >= 1 && whereIndex != InvalidIndex) {
-        olxstr Tmp = Cmds[whereIndex-1];
-        while (olx_is_valid_index(whereIndex)) {
-          Cmds.Delete(whereIndex--);
+      olxstr seli = app.GetSelectionInfo(Options.Contains('l'));
+      if (!seli.IsEmpty()) {
+        app.NewLogEntry() << seli;
+        if (Options.Contains('c')) {
+          app.ToClipboard(seli);
         }
-        olxstr expression = Cmds.Text(' ');
-        size_t el = expression.Length();
-        while (expression.Replace("xatom.", "atom.").Length() != el) {
-          el = expression.Length();
-        }
-        el = expression.Length();
-        while (expression.Replace("xbond.", "bond.").Length() != el) {
-          el = expression.Length();
-        }
-
-        if (Tmp.Equalsi("atoms")) {
-          app.SelectAtomsWhere(expression);
-        }
-        else if (Tmp.Equalsi("bonds")) {
-          app.SelectBondsWhere(Cmds.Text(' '));
-        }
-        else {
-          Error.ProcessingError(__OlxSrcInfo, "undefined keyword: ") << Tmp;
-        }
-        return;
-      }
-      else {
-        size_t idx;
-        if ((idx = Cmds.IndexOf("rings")) != InvalidIndex) {
-          Cmds.Delete(idx);
-          app.SelectRings(Cmds.Text(' '));
-        }
-        else if ((idx = Cmds.IndexOf("collection")) != InvalidIndex) {
-          TTypeList<Wildcard> masks;
-          for (size_t i = 0; i < Cmds.Count(); i++) {
-            if (i == idx) {
-              continue;
-            }
-            masks.AddNew(Cmds[i]);
-          }
-          for (size_t i = 0; i < app.GetRenderer().CollectionCount(); i++) {
-            TGPCollection &c = app.GetRenderer().GetCollection(i);
-            for (size_t j = 0; j < masks.Count(); j++) {
-              if (masks[j].DoesMatch(c.GetName())) {
-                for (size_t oi = 0; oi < c.ObjectCount(); oi++) {
-                  app.GetRenderer().Select(c.GetObject(oi));
-                }
-              }
-            }
-          }
-        }
-        else {
-          app.SelectAtoms(Cmds.Text(' '));
-        }
-        return;
       }
     }
-    olxstr seli = app.GetSelectionInfo(Options.Contains('l'));
-    if (!seli.IsEmpty()) {
-      app.NewLogEntry() << seli;
-      if (Options.Contains('c')) {
-        app.ToClipboard(seli);
-      }
+    if (flag == glSelectionSelect) {
+      app.SelectAll(true);
+    }
+    else if (flag == glSelectionUnselect) {
+      app.SelectAll(false);
+    }
+    else if (flag == glSelectionInvert) {
+      app.GetRenderer().InvertSelection();
     }
   }
-  else {
-    if (Cmds.IsEmpty()) {
-      if (flag == glSelectionSelect) {
-        app.SelectAll(true);
-      }
-      else if (flag == glSelectionUnselect) {
-        app.SelectAll(false);
-      }
-      else if (flag == glSelectionInvert) {
-        app.GetRenderer().InvertSelection();
-      }
+  else { // !Cmds.IsEmpty()
+    if (flag == glSelectionNone) {
+      flag = glSelectionSelect;
     }
-    else {
+    bool processed = false;
+    size_t idx = Cmds.IndexOf("where");
+    if (idx >= 1 && idx != InvalidIndex) {
+      olxstr Tmp = Cmds[idx -1];
+      while (olx_is_valid_index(idx)) {
+        Cmds.Delete(idx--);
+      }
+      olxstr expression = Cmds.Text(' ');
+      size_t el = expression.Length();
+      while (expression.Replace("xatom.", "atom.").Length() != el) {
+        el = expression.Length();
+      }
+      el = expression.Length();
+      while (expression.Replace("xbond.", "bond.").Length() != el) {
+        el = expression.Length();
+      }
+
+      if (Tmp.Equalsi("atoms")) {
+        olx_object_ptr<TXAtomPList> atoms = app.FindAtomsWhere(expression);
+        if (atoms.ok()) {
+          for (size_t ii = 0; ii < atoms->Count(); ii++) {
+            app.GetRenderer().Select(*atoms->GetItem(ii), flag);
+          }
+        }
+      }
+      else if (Tmp.Equalsi("bonds")) {
+        olx_object_ptr<TXBondPList> bonds = app.FindBondsWhere(expression);
+        if (bonds.ok()) {
+          for (size_t ii = 0; ii < bonds->Count(); ii++) {
+            app.GetRenderer().Select(*bonds->GetItem(ii), flag);
+          }
+        }
+      }
+      else {
+        Error.ProcessingError(__OlxSrcInfo, "undefined keyword: ") << Tmp;
+      }
+      processed = true;
+    }
+    if (!processed && (idx = Cmds.IndexOf("rings")) != InvalidIndex) {
+      Cmds.Delete(idx);
+      app.SelectRings(Cmds.Text(' '), flag);
+      processed = true;
+    }
+    if (!processed && (idx = Cmds.IndexOf("collection")) != InvalidIndex) {
+      TTypeList<Wildcard> masks;
+      for (size_t i = 0; i < Cmds.Count(); i++) {
+        if (i == idx) {
+          continue;
+        }
+        masks.AddNew(Cmds[i]);
+      }
+      for (size_t i = 0; i < app.GetRenderer().CollectionCount(); i++) {
+        TGPCollection &c = app.GetRenderer().GetCollection(i);
+        for (size_t j = 0; j < masks.Count(); j++) {
+          if (masks[j].DoesMatch(c.GetName())) {
+            for (size_t oi = 0; oi < c.ObjectCount(); oi++) {
+              app.GetRenderer().Select(c.GetObject(oi), flag);
+            }
+          }
+        }
+      }
+      processed = true;
+    }
+    if (!processed) {
       TXAtomPList atoms = app.FindXAtoms(Cmds.Text(' '), false, false);
-      TGlRenderer &r = app.GetRenderer();
-      for (size_t i=0; i < atoms.Count(); i++) {
-        if (flag == glSelectionSelect) {
-          r.Select(*atoms[i], true);
-        }
-        else if (flag == glSelectionUnselect) {
-          r.Select(*atoms[i], false);
-        }
-        else if (flag == glSelectionInvert || flag == glSelectionNone) {
-          r.Select(*atoms[i], !atoms[i]->IsSelected());
-        }
+      TGlRenderer& r = app.GetRenderer();
+      for (size_t i = 0; i < atoms.Count(); i++) {
+        r.Select(*atoms[i], flag);
       }
     }
   }
@@ -3945,7 +3942,7 @@ void GXLibMacros::macKill(TStrObjList &Cmds, const TParamList &Options,
       if (sel[i].Is<TGlGroup>()) {
         if (!group_deletion) {
           group_deletion = true;
-          TBasicApp::NewLogEntry() << "Please use 'ungroup' to delete groups";
+          TBasicApp::NewLogEntry() << "Please ungroup groups using 'group -u' before deleting";
         }
         continue;
       }
@@ -5987,3 +5984,26 @@ void GXLibMacros::macLpln(TStrObjList &Cmds, const TParamList &Options,
     app.AddObjectToCreate(obj);
   }
 }
+//.............................................................................
+void GXLibMacros::macScaleN(TStrObjList& Cmds, const TParamList& Options,
+  TMacroData& Error)
+{
+  TGlGroup& glg = app.GetSelection();
+  if (glg.Count() != 2 || !glg[0].Is<TXPlane>() || !glg[1].Is<TXPlane>()) {
+    Error.ProcessingError(__OlxSrcInfo, "two planes are expected");
+    return;
+  }
+  TXPlane& p1 = (TXPlane&)glg[0],
+    &p2 = (TXPlane&)glg[1];
+  vec3d out,
+    n = p1.GetNormal();
+
+  if (gl_alg<double>::VectorPlaneIntersection(p1.GetCenter(), p1.GetCenter() + n,
+    p2.GetNormal(), p2.GetCenter(), out))
+  {
+    double l = (out - p1.GetCenter()).Length();
+    p1.SetNormalScale(l);
+    TBasicApp::NewLogEntry() << olx_print("Scaled to: %.3lf", l);
+  }
+}
+//.............................................................................

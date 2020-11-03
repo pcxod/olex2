@@ -3030,18 +3030,18 @@ TUndoData* TGXApp::DeleteXAtoms(TXAtomPList& L) {
   return undo;
 }
 //..............................................................................
-void TGXApp::SelectBondsWhere(const olxstr &Where, bool Invert) {
+olx_object_ptr<TXBondPList> TGXApp::FindBondsWhere(const olxstr &Where) {
   olxstr str = Where.ToLowerCase();
   if (str.Contains("atom")) {
     NewLogEntry(logError) << "SelectBonds: atom are not allowed here";
-    return;
+    return 0;
   }
   if (str.Contains(" sel.")) {
     if (GlRenderer->GetSelection().Count() != 1 ||
       !GlRenderer->GetSelection()[0].Is<TXBond>())
     {
       NewLogEntry(logError) << "SelectBonds: please select one bond only";
-      return;
+      return 0;
     }
   }
   TXFactoryRegister rf;
@@ -3052,35 +3052,40 @@ void TGXApp::SelectBondsWhere(const olxstr &Where, bool Invert) {
   sel->SetTGlGroup(&GlRenderer->GetSelection());
   TExpressionParser SyntaxParser(&rf, Where);
   if (!SyntaxParser.Errors().Count()) {
+    olx_object_ptr<TXBondPList> rv = new TXBondPList();
     BondIterator bi(*this);
     while (bi.HasNext()) {
       TXBond& xb = bi.Next();
-      if (xb.IsSelected()) continue;
+      if (!xb.IsVisible() || xb.IsDeleted()) {
+        continue;
+      }
       xbond->provider->SetTXBond(&xb);
       if (SyntaxParser.Evaluate()) {
-        GetRenderer().Select(xb);
+        rv->Add(xb);
       }
     }
+    return rv;
   }
   else {
     NewLogEntry(logError) << SyntaxParser.Errors().Text(NewLineSequence());
   }
+  return 0;
 }
 //..............................................................................
-void TGXApp::SelectAtomsWhere(const olxstr &Where, bool Invert) {
+olx_object_ptr<TXAtomPList> TGXApp::FindAtomsWhere(const olxstr &Where) {
   olxstr str = Where.ToLowerCase();
   if (str.Contains("bond")) {
     NewLogEntry(logError) << "SelectAtoms: bond/atom are not allowed here";
-    return;
+    return 0;
   }
   if (str.Contains(" sel.")) {
     if (GlRenderer->GetSelection().Count() != 1) {
       NewLogEntry(logError) << "SelectAtoms: please select one atom only";
-      return;
+      return 0;
     }
     if (!GlRenderer->GetSelection()[0].Is<TXAtom>()) {
       NewLogEntry(logError) << "SelectAtoms: please select an atom";
-      return;
+      return 0;
     }
   }
   TXFactoryRegister rf;
@@ -3091,21 +3096,24 @@ void TGXApp::SelectAtomsWhere(const olxstr &Where, bool Invert) {
   sel->SetTGlGroup(&GlRenderer->GetSelection());
   TExpressionParser SyntaxParser(&rf, Where);
   if (!SyntaxParser.Errors().Count()) {
+    olx_object_ptr<TXAtomPList> rv = new TXAtomPList();
     AtomIterator ai(*this);
     while (ai.HasNext()) {
       TXAtom& xa = ai.Next();
-      if (xa.IsSelected()) {
+      if (!xa.IsVisible() || xa.IsDeleted()) {
         continue;
       }
       xatom->provider->SetTXAtom(&xa);
       if (SyntaxParser.Evaluate()) {
-        GetRenderer().Select(xa);
+        rv->Add(xa);
       }
     }
+    return rv;
   }
   else {
     NewLogEntry(logError) << SyntaxParser.Errors().Text(NewLineSequence());
   }
+  return 0;
 }
 //..............................................................................
 bool GetRing(TSAtomPList& atoms, TTypeList<TSAtomPList>& rings) {
@@ -3172,7 +3180,7 @@ void SortRing(TSAtomPList& atoms) {
   }
 }
 
-void TGXApp::SelectRings(const olxstr& Condition, bool Invert) {
+void TGXApp::SelectRings(const olxstr& Condition, glSelectionFlag flag) {
   if (Condition.StartsFrom('*')) {
     TXAtomPList atoms = FindXAtoms(Condition.SubStringFrom(1), false, false);
     TTypeList<TSAtomPList> rings;
@@ -3183,7 +3191,7 @@ void TGXApp::SelectRings(const olxstr& Condition, bool Invert) {
       for (size_t i = 0; i < rings.Count(); i++) {
         for (size_t j = 0; j < rings[i].Count(); j++) {
           TXAtom* xa = dynamic_cast<TXAtom*>(rings[i][j]);
-          GetRenderer().Select(*xa, true);
+          GetRenderer().Select(*xa, flag);
         }
       }
     }
@@ -3210,23 +3218,19 @@ void TGXApp::SelectRings(const olxstr& Condition, bool Invert) {
     all.ForEach(ACollectionItem::IndexTagSetter());
     for (size_t i = 0; i < all.Count(); i++) {
       if ((size_t)all[i]->GetTag() == i && all[i]->IsVisible()) {
-        GlRenderer->Select(*all[i]);
+        GlRenderer->Select(*all[i], flag);
       }
     }
   }
 }
 //..............................................................................
-void TGXApp::SelectAtoms(const olxstr &Names, bool Invert) {
+void TGXApp::SelectAtoms(const olxstr &Names, glSelectionFlag flag) {
+  if (flag == glSelectionNone) {
+    flag = glSelectionSelect;
+  }
   TXAtomPList Sel = FindXAtoms(Names, true);
   for (size_t i = 0; i < Sel.Count(); i++) {
-    if (Invert) {
-      GetRenderer().Select(*Sel[i]);
-    }
-    else {
-      if (!Sel[i]->IsSelected()) {
-        GetRenderer().Select(*Sel[i]);
-      }
-    }
+    GetRenderer().Select(*Sel[i], flag);
   }
 }
 //..............................................................................

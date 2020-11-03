@@ -611,14 +611,14 @@ public:
   TXAtom &AddAtom(TXAtom* templ = NULL);
   // adopts atoms of the auinit and returns newly created atoms and bonds
   void AdoptAtoms(const TAsymmUnit& au, TXAtomPList& atoms, TXBondPList& bonds);
-  void SelectAtoms(const olxstr& Names, bool Invert = false);
-  void SelectAtomsWhere(const olxstr& Where, bool Invert = false);
-  void SelectBondsWhere(const olxstr& Where, bool Invert = false);
+  void SelectAtoms(const olxstr& Names, glSelectionFlag flag);
+  olx_object_ptr<TXAtomPList> FindAtomsWhere(const olxstr& Where);
+  olx_object_ptr< TXBondPList> FindBondsWhere(const olxstr& Where);
   /* allows selcting rings: Condition describes the rings to select:
     C5N - content and 1-4, substitutions..
     SelectRing( "C6 1-4") selects all 1,4 substituted benzene rings
   */
-  void SelectRings(const olxstr& Condition, bool Invert = false);
+  void SelectRings(const olxstr& Condition, glSelectionFlag flag);
   TTypeList<TSAtomPList>& FindRings(const olxstr& Condition,
     TTypeList<TSAtomPList>& rings);
   ConstTypeList<TSAtomPList> FindRings(const olxstr& Condition) {
