@@ -121,6 +121,6 @@ bool TSAtom_TypeEvaluator::operator == (const IEvaluator& val) const {
       v.SubStringFrom(1), Parent->GetTSAtom()->GetParent().GetAsymmUnit());
     return elms.Contains(Parent->GetTSAtom()->GetType());
   }
-  return !EvaluateString().Comparei(val.EvaluateString());
+  return EvaluateString().Comparei(val.EvaluateString()) == 0;
 }
 //.............................................................................

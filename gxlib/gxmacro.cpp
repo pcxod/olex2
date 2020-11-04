@@ -436,8 +436,18 @@ void GXLibMacros::Export(TLibrary& lib) {
 
   gxlib_InitMacro(ScaleN,
     EmptyString(),
-    fpNone,
+    fpNone|fpOne,
     "Scales normal of the first plane to touch the plane");
+
+  lib.Register(new TMacro<GXLibMacros>(this, &GXLibMacros::macPiPi,
+    "PiPi",
+    "n-when two planes selected - draws a line from centroid of the first plane to "
+    "the intersection point with the other plane&;"
+    "s-when two planes selected - draws the shift vector as a line&;",
+    fpAny | psFileLoaded,
+    EmptyString()),
+    libChain
+  );
 
   gxlib_InitFunc(ExtraZoom, fpNone|fpOne,
     "Sets/reads current extra zoom (default zoom correction)");
@@ -1100,7 +1110,7 @@ void GXLibMacros::macInfo(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
   TStrList Output;
-  app.InfoList(Cmds.IsEmpty() ? EmptyString() : Cmds.Text(' '),
+  app.InfoList(Cmds,
     Output, Options.Contains("p"),
     Options.FindValue('p', "-3").ToInt(),
     Options.GetBoolOption('f', false, false)
@@ -1501,7 +1511,7 @@ void GXLibMacros::macDetach(TStrObjList &Cmds, const TParamList &Options,
   TEBasis basis = app.GetRenderer().GetBasis();
   bool reattach = Options.GetBoolOption('u');
   bool unmask = Options.Contains('m');
-  TCAtomPList atoms = app.FindCAtoms(Cmds.Text(' '));
+  TCAtomPList atoms = app.FindCAtoms(Cmds);
   for (size_t i = 0; i < atoms.Count(); i++) {
     atoms[i]->SetDetached(!reattach);
     if (reattach && unmask) {
@@ -2096,6 +2106,127 @@ void GXLibMacros::macCell(TStrObjList &Cmds, const TParamList &Options,
   app.CenterView();
 }
 //.............................................................................
+template <class analyser_t>
+void macSel_sel(TGXApp& app, TStrObjList& Cmds, glSelectionFlag flag, const analyser_t &analyser) {
+  if (flag == glSelectionSelect) {
+    TGXApp::AtomIterator ai = app.GetAtoms();
+    while (ai.HasNext()) {
+      TXAtom& a = ai.Next();
+      if (!a.IsVisible()) {
+        continue;
+      }
+      if (analyser.OnItem(a)) {
+        app.GetRenderer().Select(a, flag);
+      }
+    }
+  }
+  else {
+    if (flag == glSelectionNone) {
+      flag = glSelectionSelect;
+    }
+    TXAtomPList atoms = app.FindXAtoms(Cmds, true, false);
+    for (size_t i = 0; i < atoms.Count(); i++) {
+      TXAtom& a = *atoms[i];
+      if (!a.IsVisible()) {
+        continue;
+      }
+      if (analyser.OnItem(a)) {
+        app.GetRenderer().Select(a, flag);
+      }
+    }
+  }
+}
+
+struct macSel_part_analyser {
+  TIntList parts;
+  bool OnItem(const TXAtom& a) const {
+    return parts.Contains(a.CAtom().GetPart());
+  }
+};
+
+struct macSel_afix_analyser {
+  TIntList afixes;
+  bool OnItem(const TXAtom& a) const {
+    return afixes.Contains(a.CAtom().GetAfix());
+  }
+};
+
+struct macSel_anis_analyser {
+  bool isot;
+  bool OnItem(const TXAtom& a) const {
+    return (isot && a.GetEllipsoid() == 0) || (!isot && a.GetEllipsoid() != 0);
+  }
+};
+
+struct macSel_fvar_analyser {
+  TIntList vars;
+  bool OnItem(const TXAtom& a) const {
+    XVarReference* ref = a.CAtom().GetVarRef(catom_var_name_Sof);
+    if (ref == 0) {
+      return false;
+    }
+    int v = int(ref->Parent.GetId());
+    if (ref->relation_type == relation_AsOneMinusVar) {
+      v *= -1;
+    }
+    return vars.Contains(v);
+  }
+};
+
+void macSel_sel_part(TGXApp &app, TStrObjList &Cmds, glSelectionFlag flag) {
+  Cmds.Delete(0);
+  macSel_part_analyser analyser;
+  for (size_t i = 0; Cmds.Count(); i++) {
+    if (Cmds[i].IsNumber()) {
+      analyser.parts.Add(Cmds[i].ToInt());
+      Cmds.Delete(i--);
+    }
+    else {
+      break;
+    }
+  }
+  macSel_sel(app, Cmds, flag, analyser);
+}
+
+void macSel_sel_fvar(TGXApp& app, TStrObjList& Cmds, glSelectionFlag flag) {
+  Cmds.Delete(0);
+  macSel_fvar_analyser analyser;
+  for (size_t i = 0; Cmds.Count(); i++) {
+    if (Cmds[i].IsNumber()) {
+      int& v = analyser.vars.Add(Cmds[i].ToInt());
+      v = olx_sign(v) * (olx_abs(v) - 1);
+      Cmds.Delete(i--);
+    }
+    else {
+      break;
+    }
+  }
+
+  macSel_sel(app, Cmds, flag, analyser);
+}
+
+void macSel_sel_afix(TGXApp& app, TStrObjList& Cmds, glSelectionFlag flag) {
+  Cmds.Delete(0);
+  macSel_afix_analyser analyser;
+  for (size_t i = 0; Cmds.Count(); i++) {
+    if (Cmds[i].IsNumber()) {
+      analyser.afixes.Add(Cmds[i].ToInt());
+      Cmds.Delete(i--);
+    }
+    else {
+      break;
+    }
+  }
+  macSel_sel(app, Cmds, flag, analyser);
+}
+
+void macSel_sel_anis(TGXApp & app, TStrObjList & Cmds, glSelectionFlag flag) {
+  macSel_anis_analyser analyser;
+  analyser.isot = Cmds[0].Equalsi("isot");
+  Cmds.Delete(0);
+  macSel_sel(app, Cmds, flag, analyser);
+}
+
 void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
@@ -2344,108 +2475,16 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   else if (Cmds.Count() > 1 && Cmds[0].Equalsi("part")) {
-    Cmds.Delete(0);
-    TIntList parts;
-    for (size_t i=0; Cmds.Count(); i++) {
-      if (Cmds[i].IsNumber()) {
-        parts.Add(Cmds[i].ToInt());
-        Cmds.Delete(i--);
-      }
-      else {
-        break;
-      }
-    }
-    if (flag == glSelectionNone) {
-      flag = glSelectionSelect;
-    }
-    TXAtomPList atoms = app.FindXAtoms(Cmds, true, false);
-    for (size_t i = 0; i < atoms.Count(); i++) {
-      TXAtom& a = *atoms[i];
-      if (a.IsDeleted() || !a.IsVisible()) {
-        continue;
-      }
-      if (parts.Contains(a.CAtom().GetPart())) {
-        app.GetRenderer().Select(a, flag);
-      }
-    }
+    macSel_sel_part(app, Cmds, flag);
   }
   else if (Cmds.Count() > 1 && Cmds[0].Equalsi("afix")) {
-    Cmds.Delete(0);
-    SortedObjectList<int, TPrimitiveComparator> afixes;
-    for (size_t i=0; Cmds.Count(); i++) {
-      if (Cmds[i].IsNumber()) {
-        afixes.AddUnique(Cmds[i].ToInt());
-        Cmds.Delete(i--);
-      }
-      else {
-        break;
-      }
-    }
-    if (!afixes.IsEmpty()) {
-      if (flag == glSelectionNone) {
-        flag = glSelectionSelect;
-      }
-      TGXApp::AtomIterator ai = app.GetAtoms();
-      while (ai.HasNext()) {
-        TXAtom& xa = ai.Next();
-        if (afixes.Contains(xa.CAtom().GetAfix())) {
-          app.GetRenderer().Select(xa, flag);
-        }
-      }
-    }
+  macSel_sel_afix(app, Cmds, flag);
   }
   else if (Cmds.Count() > 1 && Cmds[0].Equalsi("fvar")) {
-    if (flag == glSelectionNone) {
-      flag = glSelectionSelect;
-    }
-    Cmds.Delete(0);
-    TIntList fvars;
-    for (size_t i=0; Cmds.Count(); i++) {
-      if (Cmds[i].IsNumber()) {
-        int &v = fvars.Add(Cmds[i].ToInt());
-        v = olx_sign(v)*(olx_abs(v)-1);
-        Cmds.Delete(i--);
-      }
-      else
-        break;
-    }
-    if (!fvars.IsEmpty()) {
-      TGXApp::AtomIterator ai = app.GetAtoms();
-      while (ai.HasNext()) {
-        TXAtom &a = ai.Next();
-        if (!a.IsVisible()) {
-          continue;
-        }
-        XVarReference *ref = a.CAtom().GetVarRef(catom_var_name_Sof);
-        if (ref == 0) {
-          continue;
-        }
-        int v = int(ref->Parent.GetId());
-        if (ref->relation_type == relation_AsOneMinusVar)
-          v *= -1;
-        for (size_t i=0; i < fvars.Count(); i++) {
-          if (fvars[i] == v) {
-            app.GetRenderer().Select(a, flag);
-          }
-        }
-      }
-    }
+    macSel_sel_fvar(app, Cmds, flag);
   }
   else if (Cmds.Count() >= 1 && (Cmds[0].Equalsi("isot") || Cmds[0].Equalsi("anis"))) {
-    if (flag == glSelectionNone) {
-      flag = glSelectionSelect;
-    }
-    TXAtomPList atoms = app.FindXAtoms(Cmds.SubListFrom(1).GetObject(), true, false);
-    bool isot = Cmds[0].Equalsi("isot");
-    for (size_t i = 0; i < atoms.Count(); i++) {
-      TXAtom& a = *atoms[i];
-      if (a.IsDeleted() || !a.IsVisible()) {
-        continue;
-      }
-      if ((isot && a.GetEllipsoid() == 0) || (!isot && a.GetEllipsoid() != 0)) {
-        app.GetRenderer().Select(a, flag);
-      }
-    }
+    macSel_sel_anis(app, Cmds, flag);
   }
   else if (Cmds.Count() == 1 && Cmds[0].Equalsi("atoms")) {
     TGXApp::AtomIterator ai = app.GetAtoms();
@@ -2547,9 +2586,9 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
         app.GetUndo().Push(app.SetGraphicsVisible(&fr, true));
       }
       else {
-        TSAtomPList atoms;
-        if (app.FindSAtoms(EmptyString(), atoms, true)) {
-          const WBoxInfo bs = TXApp::CalcWBox(atoms, NULL, TSAtom::weight_occu);
+        TSAtomPList atoms = app.FindSAtoms(TStrList(), true);
+        if (!atoms.IsEmpty()) {
+          const WBoxInfo bs = TXApp::CalcWBox(atoms, 0, TSAtom::weight_occu);
           T3DFrameCtrl& fr = app.Get3DFrame();
           vec3d nx = bs.normals[0] * bs.s_from[0];
           vec3d px = bs.normals[0] * bs.s_to[0];
@@ -2594,7 +2633,7 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
   else if (Cmds.IsEmpty()) {
     if (flag == glSelectionNone) {
       size_t period = 5;
-      TXAtomPList Atoms = app.FindXAtoms("sel", false, false);
+      TXAtomPList Atoms = app.FindXAtoms(TStrList() << "sel", false, false);
       if (Atoms.IsEmpty() && Cmds.Count() == 1) {
         TGPCollection* gpc = app.GetRenderer().FindCollection(Cmds[0]);
         if (gpc != 0) {
@@ -2636,7 +2675,8 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   else { // !Cmds.IsEmpty()
-    if (flag == glSelectionNone) {
+    bool flag_set = (flag != glSelectionNone);
+    if (!flag_set) {
       flag = glSelectionSelect;
     }
     bool processed = false;
@@ -2655,9 +2695,8 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
       while (expression.Replace("xbond.", "bond.").Length() != el) {
         el = expression.Length();
       }
-
       if (Tmp.Equalsi("atoms")) {
-        olx_object_ptr<TXAtomPList> atoms = app.FindAtomsWhere(expression);
+        olx_object_ptr<TXAtomPList> atoms = app.FindXAtomsWhere(expression);
         if (atoms.ok()) {
           for (size_t ii = 0; ii < atoms->Count(); ii++) {
             app.GetRenderer().Select(*atoms->GetItem(ii), flag);
@@ -2665,7 +2704,7 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
         }
       }
       else if (Tmp.Equalsi("bonds")) {
-        olx_object_ptr<TXBondPList> bonds = app.FindBondsWhere(expression);
+        olx_object_ptr<TXBondPList> bonds = app.FindXBondsWhere(expression);
         if (bonds.ok()) {
           for (size_t ii = 0; ii < bonds->Count(); ii++) {
             app.GetRenderer().Select(*bonds->GetItem(ii), flag);
@@ -2703,7 +2742,7 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
       processed = true;
     }
     if (!processed) {
-      TXAtomPList atoms = app.FindXAtoms(Cmds.Text(' '), false, false);
+      TXAtomPList atoms = app.FindXAtoms(Cmds, false, false);
       TGlRenderer& r = app.GetRenderer();
       for (size_t i = 0; i < atoms.Count(); i++) {
         r.Select(*atoms[i], flag);
@@ -3974,13 +4013,13 @@ void GXLibMacros::macKill(TStrObjList &Cmds, const TParamList &Options,
   }
   else {
     if (Options.GetBoolOption("au")) {
-      TCAtomPList atoms = app.FindCAtoms(Cmds.Text(' '), false);
+      TCAtomPList atoms = app.FindCAtoms(Cmds, false);
       for (size_t i = 0; i < atoms.Count(); i++) {
         atoms[i]->SetDeleted(true);
       }
     }
     else {
-      TXAtomPList Atoms = app.FindXAtoms(Cmds.Text(' '), true, false),
+      TXAtomPList Atoms = app.FindXAtoms(Cmds, true, false),
         Selected;
       if (Atoms.IsEmpty() && Cmds.Count() == 1) {
         TGPCollection *col = app.GetRenderer().FindCollection(Cmds[0]);
@@ -5989,21 +6028,70 @@ void GXLibMacros::macScaleN(TStrObjList& Cmds, const TParamList& Options,
   TMacroData& Error)
 {
   TGlGroup& glg = app.GetSelection();
-  if (glg.Count() != 2 || !glg[0].Is<TXPlane>() || !glg[1].Is<TXPlane>()) {
-    Error.ProcessingError(__OlxSrcInfo, "two planes are expected");
+  if ((glg.Count() + Cmds.Count()) != 2 || !glg[0].Is<TXPlane>()) {
+    Error.ProcessingError(__OlxSrcInfo, "two planes or a plane and a value are expected ");
     return;
   }
-  TXPlane& p1 = (TXPlane&)glg[0],
-    &p2 = (TXPlane&)glg[1];
-  vec3d out,
-    n = p1.GetNormal();
-
-  if (gl_alg<double>::VectorPlaneIntersection(p1.GetCenter(), p1.GetCenter() + n,
-    p2.GetNormal(), p2.GetCenter(), out))
-  {
-    double l = (out - p1.GetCenter()).Length();
-    p1.SetNormalScale(l);
-    TBasicApp::NewLogEntry() << olx_print("Scaled to: %.3lf", l);
+  double d = 0;
+  TXPlane& p1 = (TXPlane&)glg[0];
+  if (Cmds.IsEmpty()) {
+    if (!glg[1].Is<TXPlane>()) {
+      Error.ProcessingError(__OlxSrcInfo, "two planes are expected ");
+      return;
+    }
+    TXPlane& p2 = (TXPlane&)glg[1];
+    vec3d out;
+    if (gl_alg<double>::VectorPlaneIntersection(p1.GetCenter(), p1.GetCenter() + p1.GetNormal(),
+      p2.GetNormal(), p2.GetCenter(), out))
+    {
+      d = (out - p1.GetCenter()).Length();
+    }
+  }
+  else {
+    d = Cmds[0].ToDouble();
+  }
+  if (d > 0) {
+    p1.SetNormalScale(d);
+    TBasicApp::NewLogEntry() << olx_print("Scaled to: %.3lf", d);
   }
 }
 //.............................................................................
+//.............................................................................
+void GXLibMacros::macPiPi(TStrObjList& Cmds, const TParamList& Options,
+  TMacroData& Error)
+{
+  if (Options.Contains('n') || Options.Contains('s')) {
+    TGlGroup& glg = app.GetSelection();
+    if (glg.Count() != 2 || !glg[0].Is<TXPlane>() || !glg[0].Is<TXPlane>()) {
+      Error.ProcessingError(__OlxSrcInfo, "two planes are expected ");
+      return;
+    }
+    TXPlane& p1 = (TXPlane&)glg[0];
+    TXPlane& p2 = (TXPlane&)glg[1];
+    vec3d out;
+    if (gl_alg<double>::VectorPlaneIntersection(p1.GetCenter(), p1.GetCenter() + p1.GetNormal(),
+      p2.GetNormal(), p2.GetCenter(), out))
+    {
+      if (Options.Contains('n')) {
+        olxstr ln = Options['n'];
+        if (ln.IsEmpty()) {
+          ln = "pipi_n";
+        }
+        app.AddLine(ln, p1.GetCenter(), out);
+      }
+      if (Options.Contains('s')) {
+        olxstr ln = Options['s'];
+        if (ln.IsEmpty()) {
+          ln = "pipi_s";
+        }
+        app.AddLine(ln, out, p2.GetCenter());
+      }
+    }
+    else {
+      Error.ProcessingError(__OlxSrcInfo, "perpendicular planes");
+    }
+  }
+  else {
+    Error.SetUnhandled(true);
+  }
+}

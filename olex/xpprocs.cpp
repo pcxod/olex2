@@ -1216,7 +1216,7 @@ void TMainForm::macHide(TStrObjList &Cmds, const TParamList &Options, TMacroData
     sel.Clear();
   }
   else {
-    TXAtomPList Atoms = FXApp->FindXAtoms(Cmds.Text(' '), true);
+    TXAtomPList Atoms = FXApp->FindXAtoms(Cmds, true);
     if (Atoms.IsEmpty()) return;
     AGDObjList go(Atoms, StaticCastAccessor<AGDrawObject>());
     if (ab) {

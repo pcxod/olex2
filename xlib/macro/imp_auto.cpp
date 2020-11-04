@@ -118,8 +118,7 @@ void XLibMacros::macAtomInfo(TStrObjList& Cmds, const TParamList& Options,
   TMacroData& Error)
 {
   TXApp& xapp = TXApp::GetInstance();
-  TSAtomPList satoms;
-  xapp.FindSAtoms(Cmds.Text(' '), satoms);
+  TSAtomPList satoms = xapp.FindSAtoms(Cmds);
   TStrList report;
   for (size_t i = 0; i < satoms.Count(); i++) {
     TAutoDB::GetInstance().AnalyseNode(*satoms[i], report);

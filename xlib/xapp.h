@@ -136,20 +136,9 @@ public:
     ElementPList& ringDesc);
   void FindRings(const olxstr& Condition, TTypeList<TSAtomPList>& rings);
   //
-  virtual bool FindSAtoms(const olxstr& condition, TSAtomPList& res,
-    bool ReturnAll=true, bool ClearSelection=true);
-  ConstPtrList<TSAtom> FindSAtoms(
-    const olxstr& condition, bool ReturnAll=true, bool ClearSelection=true)
-  {
-    TSAtomPList atoms;
-    FindSAtoms(condition, atoms, ReturnAll, ClearSelection);
-    return atoms;
-  }
-  ConstPtrList<TSAtom> FindSAtoms(
-    const TStrObjList& names, bool ReturnAll=true, bool ClearSelection=true)
-  {
-    return FindSAtoms(names.Text(' '), ReturnAll, ClearSelection);
-  }
+  olx_object_ptr<TSAtomPList> FindSAtomsWhere(const olxstr& Where);
+  virtual TSAtomPList::const_list_type FindSAtoms(
+    const IStrList& names, bool ReturnAll = true, bool ClearSelection = true);
   ConstPtrList<SObject> GetSelected(bool unselect=true) const;
   ASelectionOwner *GetSelectionOwner() const { return SelectionOwner; }
   // finds Cp, Ph, Naph and Cp* rings and adds corresponding afixes

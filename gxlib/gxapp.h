@@ -83,7 +83,7 @@ class TGXApp : public TXApp, AEventsDispatcher, public ASelectionOwner {
   TTypeListExt<TXGrowPoint, AGDrawObject> XGrowPoints;
   TTypeListExt<TXGrowLine, AGDrawObject> XGrowLines;
   TTypeListExt<TDUserObj, AGDrawObject> UserObjects;
-  olxstr AtomsToGrow;
+  TStrList AtomsToGrow;
   smatd_list UsedTransforms;
   TTypeListExt<TXReflection, AGDrawObject> XReflections;
   TPtrList<TGlBitmap> GlBitmaps;
@@ -477,7 +477,7 @@ public:
   void GrowFragments(bool Shell, TCAtomPList* Template = NULL) {
     XFile().GetLattice().GrowFragments(Shell, Template);
   }
-  void GrowAtoms(const olxstr& Atoms, bool Shell, TCAtomPList* Template = NULL);
+  void GrowAtoms(const IStrList& Atoms, bool Shell, TCAtomPList* Template = NULL);
   void GrowAtom(TXAtom *XA, bool Shell, TCAtomPList* Template = NULL);
   void Grow(const TXGrowPoint& growPoint);
   void ChangeAtomType(TXAtom *A, const olxstr& Element);
@@ -519,7 +519,7 @@ public:
   bool GetXGrowLinesVisible() const { return FXGrowLinesVisible; }
   void LabelGrowBonds();
   short GetGrowMode() const { return FGrowMode; }
-  void SetGrowMode(short v, const olxstr& atoms);
+  void SetGrowMode(short v, const IStrList& atoms);
   //
   void SetXGrowPointsVisible(bool v);
   bool GetXGrowPointsVisible() const { return XGrowPointsVisible; }
@@ -542,14 +542,12 @@ public:
   ConstPtrList<TXAtom> GetXAtoms(const olxstr& AtomName);
   ConstPtrList<TXBond> GetXBonds(const olxstr& BondName);
   // these two do a command line parsing "sel C1 $N C?? C4 to end"
-  ConstPtrList<TCAtom> FindCAtoms(const olxstr& Atoms, bool ClearSelection = true);
-  ConstPtrList<TXAtom> FindXAtoms(const olxstr& Atoms, bool getAll = true,
+  ConstPtrList<TCAtom> FindCAtoms(const IStrList& Atoms, bool ClearSelection = true);
+  ConstPtrList<TXAtom> FindXAtoms(const IStrList& Atoms, bool getAll = true,
     bool ClearSelection = true, bool FindHidden = false);
-  ConstPtrList<TXAtom> FindXAtoms(const TStrObjList &Cmds, bool GetAll,
-    bool unselect);
   // this function will return atoms WITHOUT atoms of the overlayed files!
-  virtual bool FindSAtoms(const olxstr& condition, TSAtomPList& res,
-    bool ReturnAll = true, bool ClearSelection = true);
+  virtual TSAtomPList::const_list_type FindSAtoms(
+    const IStrList& names, bool ReturnAll = true, bool ClearSelection = true);
 protected:
   /* the function simply checks if there are any invisible bonds connectd to the
    atom. Normally this happens when a Q-peak is renamed
@@ -571,7 +569,7 @@ public:
   TUndoData* SynchroniseResidues(const TCAtomPList &reference);
 
 
-  void InfoList(const olxstr& Atoms, TStrList& Info, bool Sort,
+  void InfoList(const IStrList& Atoms, TStrList& Info, bool Sort,
     int precision = 3, bool cart = false);
 
   void UpdateAtomPrimitives(int Mask, TXAtomPList* Atoms = NULL);
@@ -611,9 +609,9 @@ public:
   TXAtom &AddAtom(TXAtom* templ = NULL);
   // adopts atoms of the auinit and returns newly created atoms and bonds
   void AdoptAtoms(const TAsymmUnit& au, TXAtomPList& atoms, TXBondPList& bonds);
-  void SelectAtoms(const olxstr& Names, glSelectionFlag flag);
-  olx_object_ptr<TXAtomPList> FindAtomsWhere(const olxstr& Where);
-  olx_object_ptr< TXBondPList> FindBondsWhere(const olxstr& Where);
+  void SelectAtoms(const IStrList& Names, glSelectionFlag flag);
+  olx_object_ptr<TXAtomPList> FindXAtomsWhere(const olxstr& Where);
+  olx_object_ptr< TXBondPList> FindXBondsWhere(const olxstr& Where);
   /* allows selcting rings: Condition describes the rings to select:
     C5N - content and 1-4, substitutions..
     SelectRing( "C6 1-4") selects all 1,4 substituted benzene rings

@@ -23,6 +23,7 @@
 #include "twinning.h"
 #include "sfutil.h"
 #include "datafile.h"
+#include "seval.h"
 
 TXApp::TXApp(const olxstr &basedir, bool)
   : TBasicApp(basedir), Library(EmptyString(), this)
@@ -402,8 +403,7 @@ TUndoData* TXApp::FixHL() {
     new TUndoActionImplMF<TXApp>(this, &TXApp::undoName));
   olx_pdict<int, TSAtomPList> frags;
   TIntList frag_id;
-  TSAtomPList satoms;
-  FindSAtoms(EmptyString(), satoms, false, true);  //the selection might be returned
+  TSAtomPList satoms = FindSAtoms(TStrList(), false, true);  //the selection might be returned
   if (!satoms.IsEmpty()) {
     for (size_t i = 0; i < satoms.Count(); i++) {
       if (!satoms[i]->IsAUAtom())  continue;
@@ -559,22 +559,64 @@ void TXApp::FindRings(const olxstr& Condition, TTypeList<TSAtomPList>& rings) {
   rings.Pack();
 }
 //..............................................................................
-bool TXApp::FindSAtoms(const olxstr& condition, TSAtomPList& res,
+olx_object_ptr<TSAtomPList> TXApp::FindSAtomsWhere(const olxstr& Where) {
+  olxstr str = Where.ToLowerCase();
+  if (str.Contains("bond")) {
+    NewLogEntry(logError) << "SelectAtoms: bond/atom are not allowed here";
+    return 0;
+  }
+  if (str.Contains(" sel.")) {
+    NewLogEntry(logError) << "Usupported expression";
+    return 0;
+  }
+  
+  TSFactoryRegister rf;
+  TTSAtom_EvaluatorFactory* satom =
+    (TTSAtom_EvaluatorFactory*)rf.FindBinding("atom");
+  TExpressionParser SyntaxParser(&rf, Where);
+  if (!SyntaxParser.Errors().Count()) {
+    olx_object_ptr<TSAtomPList> rv = new TSAtomPList();
+    ASObjectProvider& objects = XFile().GetLattice().GetObjects();
+    for (size_t i = 0; i < objects.atoms.Count(); i++) {
+      TSAtom& a = objects.atoms[i];
+      if (!a.IsAvailable()) {
+        continue;
+      }
+      satom->provider->SetTSAtom(&a);
+      if (SyntaxParser.Evaluate()) {
+        rv->Add(a);
+      }
+    }
+    return rv;
+  }
+  else {
+    NewLogEntry(logError) << SyntaxParser.Errors().Text(NewLineSequence());
+  }
+  return 0;
+}
+//..............................................................................
+TSAtomPList::const_list_type TXApp::FindSAtoms(const IStrList& toks_,
   bool ReturnAll, bool ClearSelection)
 {
   if (SelectionOwner != 0) {
     SelectionOwner->SetDoClearSelection(ClearSelection);
   }
-  TSAtomPList atoms;
+  TSAtomPList res;
+  TStrList toks(toks_);
   // try the selection first
-  if (condition.IsEmpty() || condition.Equals("sel")) {
+  if (toks.IsEmpty() || (toks.Count() == 1 && toks[0].Equals("sel"))) {
     if (SelectionOwner != 0) {
-      SelectionOwner->ExpandSelectionEx(atoms);
+      SelectionOwner->ExpandSelectionEx(res);
     }
   }
-  if (!condition.IsEmpty()) {
-    TStrList toks(condition, ' ');
-    //TLattice& latt = XFile().GetLattice();
+  else if (!toks.IsEmpty()) {
+    if (toks.Count() > 1 && toks[0].Equalsi("where")) {
+      olx_object_ptr<TSAtomPList> atoms = FindSAtomsWhere(olxstr(' ').JoinRange(toks, 1));
+      if (atoms.ok()) {
+        return atoms.release();
+      }
+      return res;
+    }
     ASObjectProvider& objects = XFile().GetLattice().GetObjects();
     for (size_t i = 0; i < toks.Count(); i++) {
       if (toks[i].StartsFrom("#s")) {  // TSAtom.LattId
@@ -584,13 +626,11 @@ bool TXApp::FindSAtoms(const olxstr& condition, TSAtomPList& res,
         if (objects.atoms[lat_id].CAtom().IsAvailable()) {
           res.Add(objects.atoms[lat_id]);
         }
-        toks.Delete(i);
-        i--;
+        toks.Delete(i--);
       }
       // should not be here, but the parser will choke on it
       else if (toks[i].IsNumber()) {
-        toks.Delete(i);
-        i--;
+        toks.Delete(i--);
       }
     }
     olxstr new_c = toks.Text(' ');
@@ -600,7 +640,7 @@ bool TXApp::FindSAtoms(const olxstr& condition, TSAtomPList& res,
       size_t atomAGroup;
       ar.Expand(XFile().GetRM(), ag, EmptyString(), atomAGroup);
       if (!ag.IsEmpty()) {
-        atoms.SetCapacity(atoms.Count() + ag.Count());
+        res.SetCapacity(res.Count() + ag.Count());
         TAsymmUnit& au = XFile().GetAsymmUnit();
         for (size_t i = 0; i < au.AtomCount(); i++)
           au.GetAtom(i).SetTag(au.GetAtom(i).GetId());
@@ -619,12 +659,12 @@ bool TXApp::FindSAtoms(const olxstr& condition, TSAtomPList& res,
             // get an atom from the asymm unit
             if (ag[i].GetMatrix() == 0) {
               if (sa.IsAUAtom()) {
-                atoms.Add(sa);
+                res.Add(sa);
               }
             }
             else {
               if (sa.IsGenerator(*ag[i].GetMatrix())) {
-                atoms.Add(sa);
+                res.Add(sa);
               }
             }
           }
@@ -632,17 +672,17 @@ bool TXApp::FindSAtoms(const olxstr& condition, TSAtomPList& res,
       }
     }
   }
-  else if (atoms.IsEmpty() && ReturnAll) {
+  else if (res.IsEmpty() && ReturnAll) {
     ASObjectProvider& objects = XFile().GetLattice().GetObjects();
     const size_t ac = objects.atoms.Count();
-    atoms.SetCapacity(ac);
-    for (size_t i = 0; i < ac; i++)
+    res.SetCapacity(ac);
+    for (size_t i = 0; i < ac; i++) {
       if (objects.atoms[i].CAtom().IsAvailable()) {
-        atoms.Add(objects.atoms[i]);
+        res.Add(objects.atoms[i]);
       }
+    }
   }
-  res.AddAll(atoms);
-  return !atoms.IsEmpty();
+  return res;
 }
 //..............................................................................
 ConstPtrList<SObject> TXApp::GetSelected(bool unselect) const {

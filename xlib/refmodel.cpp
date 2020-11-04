@@ -2766,7 +2766,7 @@ void RefinementModel::LibShareADP(TStrObjList &Cmds, const TParamList &Options,
     ang = Cmds[0].ToDouble();
     Cmds.Delete(0);
   }
-  TXApp::GetInstance().FindSAtoms(Cmds.Text(' '), atoms);
+  atoms = TXApp::GetInstance().FindSAtoms(Cmds);
   if (atoms.Count() < 3) {
     E.ProcessingError(__OlxSrcInfo, "At least three atoms are expected");
     return;

@@ -2367,32 +2367,58 @@ public:
 
   template <class list_t, typename accessor_t>
   static TTSString Join(const list_t &l, const accessor_t &accessor,
-    const TTSString &sep)
+    const TTSString &sep, size_t start=0, size_t end=InvalidIndex)
   {
-    size_t sz = l.Count();
-    if (sz == 0) return EmptyString();
+    if (end == InvalidIndex) {
+      end = l.Count();
+    }
+    if (start == end) {
+      return EmptyString();
+    }
+#ifdef _DEBUG
+    if (start >= l.Count()) {
+      TExceptionBase::ThrowIndexOutOfRange(__POlxSourceInfo, start, 0, l.Count());
+    }
+    if (end > l.Count()) {
+      TExceptionBase::ThrowIndexOutOfRange(__POlxSourceInfo, end, 0, l.Count());
+    }
+#endif
     TTStrBuffer<TC, TTSString<T, TC> > rv;
-    rv << TTSString(accessor(olx_ref::get(l[0])));
-    sz -= 1;
-    for (size_t i = 1; i < sz; i++)
+    for (size_t i = start; i < end; i++) {
       rv << sep << TTSString(accessor(olx_ref::get(l[i])));
-    if (sz > 0)
-      rv << sep << TTSString(accessor(olx_ref::get(l[sz])));
-    return TTSString(rv);
+    }
+    return TTSString(rv).SubStringFrom(sep.Length());
   }
 
   template <class list_t>
-  static TTSString Join(const list_t &l, const TTSString &sep)
+  static TTSString Join(const list_t &l, const TTSString &sep,
+    size_t start=0, size_t end = InvalidIndex)
   {
-    return Join(l, DummyAccessor(), sep);
+    return Join(l, DummyAccessor(), sep, start, end);
   }
 
   template <class list_t>
-  TTSString Join(const list_t &l) const { return Join(l, *this); }
+  TTSString Join(const list_t &l) const {
+    return Join(l, *this);
+  }
 
   template <class list_t, typename accessor_t>
   TTSString Join(const list_t &l, const accessor_t &acc) const {
     return Join(l, acc, *this);
+  }
+
+  template <class list_t>
+  TTSString JoinRange(const list_t& l,
+    size_t start, size_t end = InvalidIndex) const
+  {
+    return Join(l, *this, start, end);
+  }
+
+  template <class list_t, typename accessor_t>
+  TTSString JoinRange(const list_t& l, const accessor_t& acc,
+    size_t start, size_t end = InvalidIndex) const
+  {
+    return Join(l, acc, *this, start, end);
   }
 };
 
