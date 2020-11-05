@@ -171,7 +171,7 @@ bool TXPlane::Orient(TGlPrimitive& P) {
   else if (P.GetOwnerId() == 3) {
     TXBond::Settings st = TXBond::GetSettings(Parent);
     vec3d v = GetNormal();
-    double scale = 1.5 - 0.2;
+    double scale = normalScale - 0.2; // 1.5 - 0.2;
     olx_gl::translate(GetCenter());
     olx_gl::rotate(acos(v[2])*180/M_PI, -v[1], v[0], 0.0);
     olx_gl::scale(0.5, 0.5, scale);
@@ -340,5 +340,19 @@ const_strlist TXPlane::ToWrl(olx_cdict<TGlMaterial, olxstr> &materials) const {
 void TXPlane::Invert() {
   TSPlane::Invert();
   RM.Transpose();
+}
+//..............................................................................
+void TXPlane::SetNormalScale(double sn) {
+  normalScale = sn;
+}
+//..............................................................................
+void TXPlane::ToDataItem(TDataItem& di, const TXApp& app) const {
+  TSPlane::ToDataItem(di, app);
+  di.AddField("ns", normalScale);
+}
+//..............................................................................
+void TXPlane::FromDataItem(const TDataItem& di, const TXApp& app) {
+  TSPlane::FromDataItem(di, app);
+  normalScale = di.FindField("ns", "1.5").ToDouble();
 }
 //..............................................................................

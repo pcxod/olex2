@@ -222,23 +222,23 @@ public:
 };
 // evaluator implementation for scalar length
 class TXBond_LengthEvaluator
-  : public TEvaluator<ITXBond_DataProvider,IDoubleEvaluator,TXBond_LengthEvaluator>
+  : public TEvaluator<ITXBond_DataProvider,IFloatEvaluator,TXBond_LengthEvaluator>
 {
 public:
   TXBond_LengthEvaluator(ITXBond_DataProvider* parent)
     : parent_t(parent)
   {}
-  double EvaluateDouble() const {  return Parent->GetTXBond()->Length();  }
+  double EvaluateFloat() const {  return Parent->GetTXBond()->Length();  }
 };
 // evaluator implementation for scalar type
 class TXBond_TypeEvaluator
-  : public TEvaluator<ITXBond_DataProvider,IDoubleEvaluator,TXBond_TypeEvaluator>
+  : public TEvaluator<ITXBond_DataProvider,IIntEvaluator,TXBond_TypeEvaluator>
 {
 public:
   TXBond_TypeEvaluator(ITXBond_DataProvider* parent)
     : parent_t(parent)
   {}
-  double EvaluateDouble() const {  return Parent->GetTXBond()->GetType();  }
+  long EvaluateInt() const {  return Parent->GetTXBond()->GetType();  }
 };
 
 class TXFactoryRegister : public TSFactoryRegister {

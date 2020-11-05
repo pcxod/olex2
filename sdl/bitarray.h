@@ -50,15 +50,19 @@ public:
 #endif
     return (FData[intIndex] & bitIndex) != 0;
   }
-  inline void Set(size_t index, bool v)  {
-    size_t intIndex = index/8;
-    size_t bitIndex = (size_t)1 << index%8;
+  inline void Set(size_t index, bool v) {
+    size_t intIndex = index / 8;
+    size_t bitIndex = (size_t)1 << index % 8;
 #ifdef _DEBUG
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, intIndex,
       0, FCharCount);
 #endif
-    if( !v )  FData[intIndex] &= ~bitIndex;
-    else      FData[intIndex] |= bitIndex;
+    if (!v) {
+      FData[intIndex] &= ~bitIndex;
+    }
+    else {
+      FData[intIndex] |= bitIndex;
+    }
   }
   inline void SetTrue(size_t index)   {
     size_t intIndex = index/8;

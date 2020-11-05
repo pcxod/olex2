@@ -48,10 +48,9 @@ public:
     : entries(dbf.entries)
   {}
   ~TAutoDBRegistry() {
-    for (size_t i = 0; i < entries.Count(); i++) {
-      delete entries.GetValue(i);
-    }
+    Clear();
   }
+  void Clear();
   TAutoDBRegistry& operator = (const TAutoDBRegistry& dbf) {
     entries = dbf.entries;
     return *this;
@@ -272,6 +271,7 @@ protected:
     throw TInvalidArgumentException(__OlxSourceInfo, "index");
   }
   //............................................................................
+  void SafeSave(const olxstr& file_name);
 public:
   // structre to store analysis statistics
   struct AnalysisStat {
@@ -280,7 +280,7 @@ public:
     AnalysisStat() { Clear(); }
     void Clear() {
       AtomTypeChanges = ConfidentAtomTypes = SNAtomTypeAssignments = 0;
-      FormulaConstrained = AtomDeltaConstrained;
+      FormulaConstrained = AtomDeltaConstrained = false;
     }
   };
 private:
@@ -299,9 +299,10 @@ public:
   TAutoDB(TXFile& xfile, ALibraryContainer& lc);
   virtual ~TAutoDB();
 
-  void ProcessFolder(const olxstr& folder);
+  void ProcessFolder(const olxstr& folder, bool allow_disorder=false,
+    double max_r=5.0, double max_shift_over_esd=0.05, double max_GoF_dev=0.1);
   void SaveToStream(IDataOutputStream& output) const;
-  void LoadFromStream(IDataInputStream& input, bool clear);
+  void LoadFromStream(IDataInputStream& input);
   void Clear();
 protected:
   void AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
@@ -413,8 +414,8 @@ public:
     TTypeList<Type> list1, list2, list3,
       enforced;
   };
-  void ValidateResult(const olxstr& fileName, const TLattice& au,
-    TStrList& report);
+  TStrList::const_list_type ValidateResult(const olxstr& fileName,
+    const TLattice& latt);
 
   ConstTypeList<TAnalysisResult> AnalyseStructure(TLattice& latt);
   static bool ChangeType(TCAtom& a, const cm_Element& e, bool dry_run);
@@ -446,6 +447,10 @@ protected:
   void LibBAIDelta(const TStrObjList& Params, TMacroData& E);
   void LibURatio(const TStrObjList& Params, TMacroData& E);
   void LibEnforceFormula(const TStrObjList& Params, TMacroData& E);
+  void LibTolerance(const TStrObjList& Params, TMacroData& E);
+  void LibLoad(TStrObjList& Cmds, const TParamList& Options, TMacroData& E);
+  void LibSave(TStrObjList& Cmds, const TParamList& Options, TMacroData& E);
+  void LibDigest(TStrObjList& Cmds, const TParamList& Options, TMacroData& E);
   class TLibrary* ExportLibrary(const olxstr& name = EmptyString());
   ///////////////////////////////////////////////////////////////////////////////
   template <class NodeType>

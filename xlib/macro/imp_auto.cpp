@@ -44,19 +44,26 @@ size_t imp_auto_AtomCount(const TAsymmUnit& au) {
 
 void XLibMacros::funATA(const TStrObjList& Cmds, TMacroData& Error) {
   TXApp& xapp = TXApp::GetInstance();
-  olxstr folder(Cmds.IsEmpty() ? EmptyString() : Cmds[0]);
+  olxstr arg_0 = Cmds.IsEmpty() ? EmptyString() : Cmds[0];
   int arg = 0;
-  if (folder.IsNumber()) {
-    arg = folder.ToInt();
-    folder.SetLength(0);
+  TSAtomPList atoms;
+  if (arg_0.IsNumber()) {
+    arg = arg_0.ToInt();
+    arg_0.SetLength(0);
+    if (Cmds.Count() > 1) {
+      atoms = xapp.FindSAtoms(Cmds.SubListFrom(1).GetObject(), false);
+    }
+  }
+  else if(TEFile::Exists(arg_0)) {
+    TAutoDB::GetInstance().ProcessFolder(arg_0);
+    return;
+  }
+  else {
+    atoms = xapp.FindSAtoms(Cmds, false);
   }
   bool dry_run = arg == -1;
   if (!dry_run) {
     olex2::IOlex2Processor::GetInstance()->processMacro("clean -npd -d");
-  }
-  static olxstr FileName(xapp.XFile().GetFileName());
-  if (!folder.IsEmpty()) {
-    TAutoDB::GetInstance().ProcessFolder(folder);
   }
   TLattice& latt = xapp.XFile().GetLattice();
   TAsymmUnit& au = latt.GetAsymmUnit();
@@ -64,6 +71,26 @@ void XLibMacros::funATA(const TStrObjList& Cmds, TMacroData& Error) {
   if (arg == 1) {
     elm_l = olx_analysis::helper::get_user_elements();
   }
+  // save fixed types
+  TEBitArray fixed_atoms;
+  if (!atoms.IsEmpty()) {
+    fixed_atoms.SetSize(au.AtomCount());
+    for (size_t i = 0; i < fixed_atoms.Count(); i++) {
+      if (au.GetAtom(i).IsFixedType()) {
+        fixed_atoms.SetTrue(i);
+      }
+    }
+    au.GetAtoms().ForEach(ACollectionItem::TagSetter(0));
+    for (size_t i = 0; i < atoms.Count(); i++) {
+      atoms[i]->CAtom().SetTag(1);
+    }
+    for (size_t i = 0; i < au.AtomCount(); i++) {
+      if (au.GetAtom(i).GetTag() == 0) {
+        au.GetAtom(i).SetFixedType(true);
+      }
+    }
+  }
+
   TAutoDB::AnalysisStat stat;
   uint64_t st = TETime::msNow();
   TAutoDB::GetInstance().AnalyseStructure(xapp.XFile().GetFileName(), latt,
@@ -81,14 +108,17 @@ void XLibMacros::funATA(const TStrObjList& Cmds, TMacroData& Error) {
   }
   Error.SetRetVal(olxstr(stat.AtomTypeChanges != 0) << ';' <<
     (double)stat.ConfidentAtomTypes * 100 / ac);
+  // restore fixed types
+  for (size_t i = 0; i < fixed_atoms.Count(); i++) {
+    au.GetAtom(i).SetFixedType(fixed_atoms[i]);
+  }
 }
 //..............................................................................
 void XLibMacros::macAtomInfo(TStrObjList& Cmds, const TParamList& Options,
   TMacroData& Error)
 {
   TXApp& xapp = TXApp::GetInstance();
-  TSAtomPList satoms;
-  xapp.FindSAtoms(Cmds.Text(' '), satoms);
+  TSAtomPList satoms = xapp.FindSAtoms(Cmds);
   TStrList report;
   for (size_t i = 0; i < satoms.Count(); i++) {
     TAutoDB::GetInstance().AnalyseNode(*satoms[i], report);
@@ -101,9 +131,8 @@ void XLibMacros::macVATA(TStrObjList &Cmds, const TParamList &Options,
 {
   TXApp& xapp = TXApp::GetInstance();
   TEFile log(Cmds.Text(' '), "a+b");
-  TStrList report;
-  TAutoDB::GetInstance().ValidateResult(
-    xapp.XFile().GetFileName(), xapp.XFile().GetLattice(), report);
+  TStrList report = TAutoDB::GetInstance().ValidateResult(
+    xapp.XFile().GetFileName(), xapp.XFile().GetLattice());
   report.SaveToTextStream(log);
 }
 //..............................................................................

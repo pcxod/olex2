@@ -19,10 +19,12 @@ class TXPlane : public TSPlane, public AGDrawObject {
 private:
   mat3d RM;
   vec3d MaxV;
+  double normalScale;
 public:
   TXPlane(TNetwork* net, TGlRenderer& Render, const olxstr& collectionName)
     : TSPlane(net),
-    AGDrawObject(Render, collectionName)
+    AGDrawObject(Render, collectionName),
+    normalScale(1.5)
   {}
   virtual ~TXPlane() {}
   void Create(const olxstr& cName = EmptyString());
@@ -60,6 +62,15 @@ public:
     static olx_pdict<size_t, olxstr> nr;
     return nr;
   }
+
+  double GetNormalScale() const {
+    return normalScale;
+  }
+
+  void SetNormalScale(double sn);
+
+  void ToDataItem(TDataItem& di, const TXApp& app) const;
+  void FromDataItem(const TDataItem& di, const TXApp& app);
 };
 
 typedef TTypeList<TXPlane> TXPlaneList;

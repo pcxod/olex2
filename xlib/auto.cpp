@@ -45,7 +45,7 @@ void TAutoDBRegistry::SaveToStream(IDataOutputStream& output) const {
 void TAutoDBRegistry::LoadFromStream(IDataInputStream& input) {
   uint32_t fc;
   input >> fc;
-  entries.SetCapacity(fc);
+  entries.SetCapacity(entries.Count() + fc);
   olxcstr tmp;
   for( uint32_t i=0; i < fc; i++ )  {
     input >> tmp;
@@ -64,7 +64,6 @@ void TAutoDBRegistry::SaveMap(IDataOutputStream& output) {
 void TAutoDBRegistry::LoadMap(IDataInputStream& input) {
   uint32_t fc;
   input >> fc;
-  entries.SetCapacity(fc);
   olxcstr tmp;
   for( uint32_t i=0; i < fc; i++ )  {
     input >> tmp;
@@ -76,9 +75,17 @@ void TAutoDBRegistry::LoadMap(IDataInputStream& input) {
   }
 }
 //..............................................................................
+void TAutoDBRegistry::Clear() {
+  for (size_t i = 0; i < entries.Count(); i++) {
+    delete entries.GetValue(i);
+  }
+  entries.Clear();
+}
+
 //..............................................................................
 //..............................................................................
-TAttachedNode::TAttachedNode(IDataInputStream& in)  {
+//..............................................................................
+TAttachedNode::TAttachedNode(IDataInputStream& in) {
   uint32_t ind;
   in >> ind;
   Element = &XElementLib::GetByIndex(ind);
@@ -606,6 +613,7 @@ void TAutoDB::Clear() {
     }
   }
   Nodes.Clear();
+  registry.Clear();
 }
 //..............................................................................
 void TAutoDB::PrepareForSearch() {
@@ -614,7 +622,9 @@ void TAutoDB::PrepareForSearch() {
   }
 }
 //..............................................................................
-void TAutoDB::ProcessFolder(const olxstr& folder) {
+void TAutoDB::ProcessFolder(const olxstr& folder, bool allow_disorder,
+  double max_r, double max_shift_over_esd, double max_GoF_dev)
+{
   if (!TEFile::Exists(folder)) {
     return;
   }
@@ -650,31 +660,33 @@ void TAutoDB::ProcessFolder(const olxstr& folder) {
       XFile.LoadFromFile(files[i]);
       TCif& cif = XFile.GetLastLoader<TCif>();
       olxstr r1 = cif.GetParamAsString("_refine_ls_R_factor_gt");
-      if (r1.Length() && r1.ToDouble() > 5) {
+      if (r1.Length() && r1.ToDouble() > max_r) {
         TBasicApp::NewLogEntry() << "Skipped: r1=" << r1;
         continue;
       }
       olxstr shift = cif.GetParamAsString("_refine_ls_shift/su_max");
-      if (shift.Length() && shift.ToDouble() > 0.05) {
+      if (shift.Length() && shift.ToDouble() > max_shift_over_esd) {
         TBasicApp::NewLogEntry() << "Skipped: shift=" << shift;
         continue;
       }
       olxstr gof = cif.GetParamAsString("_refine_ls_goodness_of_fit_ref");
-      if (gof.Length() && olx_abs(1 - gof.ToDouble()) > 0.1) {
-        TBasicApp::NewLogEntry() << "Skipped: GOF=" << gof;
+      if (gof.Length() && olx_abs(1 - gof.ToDouble()) > max_GoF_dev) {
+        TBasicApp::NewLogEntry() << "Skipped: GoF=" << gof;
         continue;
       }
-      bool has_parts = false;
-      TAsymmUnit& au = XFile.GetAsymmUnit();
-      for (size_t ai = 0; ai < au.AtomCount(); ai++) {
-        if (au.GetAtom(ai).GetPart() != 0) {
-          has_parts = true;
-          break;
+      if (!allow_disorder) {
+        bool has_parts = false;
+        TAsymmUnit& au = XFile.GetAsymmUnit();
+        for (size_t ai = 0; ai < au.AtomCount(); ai++) {
+          if (au.GetAtom(ai).GetPart() != 0) {
+            has_parts = true;
+            break;
+          }
         }
-      }
-      if (has_parts) {
-        TBasicApp::NewLogEntry() << "Skipped: contains disorder";
-        continue;
+        if (has_parts) {
+          TBasicApp::NewLogEntry() << "Skipped: contains disorder";
+          continue;
+        }
       }
       XFile.GetLattice().CompaqAll();
       TAutoDBIdObject& adf = registry.Add(digest, files[i]);
@@ -688,15 +700,19 @@ void TAutoDB::ProcessFolder(const olxstr& folder) {
     }
   }
   PrepareForSearch();
+  SafeSave(src_file);
+}
+//..............................................................................
+void TAutoDB::SafeSave(const olxstr& file_name) {
   try {
-    TEFile tf(src_file + ".tmp", "wb+");
+    TEFile tf(file_name + ".tmp", "wb+");
     SaveToStream(tf);
     tf.Close();
-    TEFile::Rename(src_file + ".tmp", src_file);
-    tf.Open(src_file + ".tmp", "wb+");
+    TEFile::Rename(file_name + ".tmp", file_name);
+    tf.Open(file_name + ".tmp", "wb+");
     registry.SaveMap(tf);
     tf.Close();
-    TEFile::Rename(src_file + ".tmp", src_file + ".map");
+    TEFile::Rename(file_name + ".tmp", file_name + ".map");
   }
   catch (const TExceptionBase& e) {
     throw TFunctionFailedException(__OlxSourceInfo, e);
@@ -867,7 +883,7 @@ void TAutoDB::SaveToStream(IDataOutputStream& output) const {
   }
 }
 //..............................................................................
-void TAutoDB::LoadFromStream(IDataInputStream& input, bool clear) {
+void TAutoDB::LoadFromStream(IDataInputStream& input) {
   TStopWatch sw(__FUNC__);
   // validation of the file
   char fileSignature[FileSignatureLength + 1];
@@ -887,8 +903,7 @@ void TAutoDB::LoadFromStream(IDataInputStream& input, bool clear) {
   registry.LoadFromStream(input);
   uint32_t ind, listCount, nodeCount = 0;
   input >> listCount;  // nt MaxConnectivity is overriden!
-  Nodes.Clear();
-  Nodes.SetCapacity(listCount);
+  Nodes.SetCapacity(Nodes.Count() + listCount);
   for (uint32_t i = 0; i < listCount; i++) {
     Nodes.AddNew();
     input >> ind;
@@ -1532,8 +1547,9 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
     }
     TTypeList< THitList<TAutoDBNetNode> > &guessN =
       !guesses[i].list3.IsEmpty() ? guesses[i].list3 : guesses[i].list2;
-    for (size_t j=0; j < guessN.Count(); j++)
+    for (size_t j = 0; j < guessN.Count(); j++) {
       guessN.GetItem(j).Sort();
+    }
     QuickSorter::SortSF(guessN, THitList<TAutoDBNetNode>::SortByFOMFunc);
     double cfom = 0;
     // just for sorting
@@ -1748,8 +1764,6 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
                   break;
                 }
               }
-//              else  {
-//              }
             }
           }
         }
@@ -1776,7 +1790,7 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
           }
         }
         else {
-         type = 0;  //guesses[i].list1->Item(0).BAI;
+          type = 0;  //guesses[i].list1->Item(0).BAI;
         }
         for (size_t j=0; j < guesses[i].list1.Count(); j++) {
           tmp << guesses[i].list1[j].Type->symbol << '(' <<
@@ -1819,15 +1833,16 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
   }
 }
 //..............................................................................
-void TAutoDB::ValidateResult(const olxstr& fileName, const TLattice& latt,
-  TStrList& report)
+TStrList::const_list_type TAutoDB::ValidateResult(const olxstr& fileName,
+  const TLattice& latt)
 {
+  TStrList report;
   olxstr cifFN = TEFile::ChangeFileExt(fileName, "cif");
   report.Add("Starting analysis of ").quote() << cifFN << " on " <<
     TETime::FormatDateTime(TETime::Now());
   if (!TEFile::Exists(cifFN)) {
     report.Add(olxstr("The cif file does not exist"));
-    return;
+    return report;
   }
   try {
     XFile.LoadFromFile(cifFN);
@@ -1836,14 +1851,14 @@ void TAutoDB::ValidateResult(const olxstr& fileName, const TLattice& latt,
   catch (const TExceptionBase& exc) {
     report.Add("Failed to load due to ").quote() <<
       exc.GetException()->GetError();
-    return;
+    return report;
   }
   TSpaceGroup& sga = TSymmLib::GetInstance().FindSG(latt.GetAsymmUnit());
   TSpaceGroup& sgb = TSymmLib::GetInstance().FindSG(XFile.GetAsymmUnit());
   if (&sga != &sgb) {
     report.Add("Inconsistent space group. Changed from ").quote() <<
       sgb.GetName() << " to '" << sga.GetName() << '\'';
-    return;
+    return report;
   }
   report.Add(olxstr("Current space group is ") << sga.GetName());
   // have to locate possible translation using 'hard' method
@@ -1902,6 +1917,7 @@ void TAutoDB::ValidateResult(const olxstr& fileName, const TLattice& latt,
   report.Add(olxstr("------Analysis complete with ") << extraAtoms
     << " extra atoms and " << missingAtoms << " missing atoms-----");
   report.Add(EmptyString());
+  return report;
 }
 //..............................................................................
 //..............................................................................
@@ -2047,22 +2063,15 @@ void TAtomTypePermutator::Permutate() {
 TAutoDB& TAutoDB::GetInstance() {
   if (GetInstance_() == 0) {
     TXApp& app = TXApp::GetInstance();
-    olxstr fn,
-      bd_fn = app.GetBaseDir() + "acidb.db";
-    if (app.IsBaseDirWriteable() || !app.HasSharedDir()) {
-      fn = bd_fn;
-    }
-    else {
-      fn = app.GetSharedDir() + "acidb.db";
-      if (!TEFile::Exists(fn) && TEFile::Exists(bd_fn)) {
-        TEFile::Copy(bd_fn, fn);
-      }
+    olxstr fn = app.GetSharedDir() + "acidb.db";
+    if (!TEFile::Exists(fn)) {
+      TEFile::Copy(app.GetBaseDir() + "acidb.db", fn);
     }
     TEGC::AddP(GetInstance_() = new TAutoDB(
       *(dynamic_cast<TXFile*>(app.XFile().Replicate())), app));
     if (TEFile::Exists(fn)) {
       TEFile dbf(fn, "rb");
-      GetInstance_()->LoadFromStream(dbf, false);
+      GetInstance_()->LoadFromStream(dbf);
       olxstr map_fn = fn + ".map";
       if (TEFile::Exists(map_fn)) {
         dbf.Open(map_fn, "rb");
@@ -2103,6 +2112,46 @@ void TAutoDB::LibEnforceFormula(const TStrObjList& Params, TMacroData& E) {
   }
 }
 //..............................................................................
+void TAutoDB::LibTolerance(const TStrObjList& Params, TMacroData& E) {
+  if (Params.IsEmpty()) {
+    E.SetRetVal(olxstr() << LengthVar << ',' << AngleVar);
+  }
+  else {
+    LengthVar = Params[0].ToDouble();
+    AngleVar = Params[1].ToDouble();
+  }
+}
+//..............................................................................
+void TAutoDB::LibLoad(TStrObjList& Cmds, const TParamList& Options, TMacroData& E) {
+  TEFile in(Cmds[0], "rb");
+  if (Options.GetBoolOption('c')) {
+    Clear();
+  }
+  LoadFromStream(in);
+  olxstr map_fn = Cmds[0] + ".map";
+  if (TEFile::Exists(map_fn)) {
+    TEFile dbf(map_fn, "rb");
+    GetInstance_()->registry.LoadMap(dbf);
+  }
+  src_file = Cmds[0];
+}
+//..............................................................................
+void TAutoDB::LibSave(TStrObjList& Cmds, const TParamList& Options, TMacroData& E) {
+  bool overwrite = Options.GetBoolOption('f');
+  if (!overwrite && TEFile::Exists(Cmds[0])) {
+    return;
+  }
+  SafeSave(Cmds[0]);
+}
+//..............................................................................
+void TAutoDB::LibDigest(TStrObjList& Cmds, const TParamList& Options, TMacroData& E) {
+  ProcessFolder(Cmds[0],
+    Options.GetBoolOption('d'),
+    Options.FindValue('r', "5").ToDouble(),
+    Options.FindValue('s', "0.05").ToDouble(),
+    Options.FindValue('f', "0.1").ToDouble());
+}
+//..............................................................................
 TLibrary* TAutoDB::ExportLibrary(const olxstr& name) {
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("ata") : name);
   lib->Register(
@@ -2119,6 +2168,32 @@ TLibrary* TAutoDB::ExportLibrary(const olxstr& name) {
     new TFunction<TAutoDB>(this, &TAutoDB::LibEnforceFormula, "EnforceFormula",
       fpNone | fpOne,
       "Returns/sets user formula enforcement option")
+  );
+  lib->Register(
+    new TFunction<TAutoDB>(this, &TAutoDB::LibTolerance, "Tolerance",
+      fpNone | fpTwo,
+      "Returns/sets maximum deviations for lengths and angles")
+  );
+  lib->Register(
+    new TMacro<TAutoDB>(this, &TAutoDB::LibLoad, "Load",
+      "c-clear the current content [false]",
+      fpOne,
+      "Loads ACIDB from the given file")
+  );
+  lib->Register(
+    new TMacro<TAutoDB>(this, &TAutoDB::LibSave, "Save",
+      "f-overwrite the file if exists [false]",
+      fpOne,
+      "Saves ACIDB to the given file")
+  );
+  lib->Register(
+    new TMacro<TAutoDB>(this, &TAutoDB::LibDigest, "Digest",
+      "d-allow disorder [false]&;"
+      "r-max R1 [5]&;"
+      "s-max shift/esd [0.05]&;"
+      "f-max deviation of GoF from 1 [0.1]&;",
+      fpOne,
+      "Digests CIFs from the given folder and update the ACIDB")
   );
   return lib;
 }

@@ -894,10 +894,11 @@ void TMainForm::OnBond(wxCommandEvent& event)  {
 }
 //..............................................................................
 void TMainForm::OnSelection(wxCommandEvent& m) {
-  if (m.GetId() == ID_SelGroup)
+  if (m.GetId() == ID_SelGroup) {
     processMacro("group");
+  }
   else if (m.GetId() == ID_SelUnGroup) {
-    TGlGroup *GlR = NULL;
+    TGlGroup* GlR = 0;
     if (FObjectUnderMouse != 0 && FObjectUnderMouse->Is<TGlGroup>()) {
       FXApp->Ungroup(*((TGlGroup*)FObjectUnderMouse));
     }

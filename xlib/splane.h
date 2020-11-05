@@ -185,8 +185,8 @@ public:
   // not for external use
   void _SetDefId(size_t id) { DefId = id; }
 
-  void ToDataItem(TDataItem& item, const class TXApp& app) const;
-  void FromDataItem(const TDataItem& item, const TXApp& app);
+  virtual void ToDataItem(TDataItem& item, const class TXApp& app) const;
+  virtual void FromDataItem(const TDataItem& item, const TXApp& app);
 };
 
   typedef TTypeList<TSPlane> TSPlaneList;

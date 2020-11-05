@@ -7,15 +7,13 @@
 * the root folder.                                                            *
 ******************************************************************************/
 
-#ifdef __BORLANDC__
-  #pragma hdrstop
-#endif
-
 #include "seval.h"
 #include "asymmunit.h"
 #include "residue.h"
 #include "atomref.h"
+#include "unitcell.h"
 #include "lattice.h"
+#include "symmparser.h"
 
 IEvaluator* TSFactoryRegister::Evaluator(const olxstr& name) {
   TStrList toks(name, '.');
@@ -58,6 +56,7 @@ TTSAtom_EvaluatorFactory::TTSAtom_EvaluatorFactory(
   Evaluators.Add("bc", new TSAtom_BcEvaluator(provider));
   Evaluators.Add("rc", new TSAtom_ResiClassEvaluator(provider));
   Evaluators.Add("rn", new TSAtom_ResiNumEvaluator(provider));
+  Evaluators.Add("symm", new TSAtom_SymmEvaluator(provider));
 
   IEvaluatorFactory *tSAtomBaiEvaluatorFactory =
     FactoryRegister->FindFactory("TTBasicAtomInfoEvaluatorFactory");
@@ -102,13 +101,13 @@ TSFactoryRegister::~TSFactoryRegister() {
 //.............................................................................
 //.............................................................................
 //.............................................................................
-const olxstr& TSAtom_ResiClassEvaluator::EvaluateString() const {
+olxstr TSAtom_ResiClassEvaluator::EvaluateString() const {
   const TCAtom& a = Parent->GetTSAtom()->CAtom();
   return a.GetResiId() == 0 ? EmptyString()
     : a.GetParent()->GetResidue(a.GetResiId()).GetClassName();
 }
 //.............................................................................
-double TSAtom_ResiNumEvaluator::EvaluateDouble() const {
+long TSAtom_ResiNumEvaluator::EvaluateInt() const {
   const TCAtom& a = Parent->GetTSAtom()->CAtom();
   return a.GetResiId() == 0 ? 0
     : a.GetParent()->GetResidue(a.GetResiId()).GetNumber();
@@ -121,6 +120,19 @@ bool TSAtom_TypeEvaluator::operator == (const IEvaluator& val) const {
       v.SubStringFrom(1), Parent->GetTSAtom()->GetParent().GetAsymmUnit());
     return elms.Contains(Parent->GetTSAtom()->GetType());
   }
-  return !EvaluateString().Comparei(val.EvaluateString());
+  return EvaluateString().Comparei(val.EvaluateString()) == 0;
+}
+//.............................................................................
+bool TSAtom_SymmEvaluator::operator == (const IEvaluator& val) const {
+  olxstr v = val.EvaluateString();
+  smatd matr;
+  if (v.IsNumber()) {
+    matr = TSymmParser::SymmCodeToMatrix(Parent->GetTSAtom()->GetParent().GetUnitCell(), v);
+  }
+  else {
+    matr = TSymmParser::SymmToMatrix(v);
+    Parent->GetTSAtom()->GetParent().GetUnitCell().InitMatrixId(matr);
+  }
+  return Parent->GetTSAtom()->IsGenerator(matr);
 }
 //.............................................................................

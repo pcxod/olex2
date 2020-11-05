@@ -22,7 +22,7 @@ TXLine::TXLine(TGlRenderer& r, const olxstr& collectionName,
   Init();
 }
 //..............................................................................
-TXLine::TXLine(TGlRenderer& Renderer) 
+TXLine::TXLine(TGlRenderer& Renderer)
   : TXBond(NULL, Renderer, EmptyString())
 {
   SetMoveable(true);

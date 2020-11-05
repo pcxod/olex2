@@ -66,9 +66,8 @@ public:
       GrowShells = true;
       mode = gmCovalent;
     }
-    const olxstr AtomsToGrow = Cmds.Text(' ');
     olex2.processMacro("cursor(hand)");
-    gxapp.SetGrowMode(mode, AtomsToGrow);
+    gxapp.SetGrowMode(mode, Cmds);
     gxapp.SetXGrowLinesVisible(true);
     gxapp.SetZoomAfterModelBuilt(false);
     return true;

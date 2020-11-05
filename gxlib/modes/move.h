@@ -18,7 +18,7 @@ public:
   TMoveMode(size_t id) : AMode(id) {}
   bool Initialise_(TStrObjList& Cmds, const TParamList& Options) {
     Copy = Options.Contains('c');
-    TXAtomPList Atoms = gxapp.FindXAtoms(Cmds.Text(' '), true);
+    TXAtomPList Atoms = gxapp.FindXAtoms(Cmds, true);
     for (size_t i = 0; i < Atoms.Count(); i++) {
       Center += Atoms[i]->ccrd();
     }
