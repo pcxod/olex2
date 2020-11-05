@@ -162,35 +162,38 @@ namespace SFUtil {
   template <class RefList, class MatList>
   void ExpandToP1(const RefList& hkl_list, const TArrayList<compd>& F,
     const MatList& ml,
-    TArrayList<StructureFactor>& out)
+    TArrayList<StructureFactor>& out_)
   {
     const size_t ml_cnt = ml.Count();
-    out.SetCount(ml_cnt* hkl_list.Count());
+    TTypeList<StructureFactor> tmp(ml_cnt * hkl_list.Count());
     for (size_t i = 0; i < hkl_list.Count(); i++) {
       const size_t off = i*ml_cnt;
       for (size_t j = 0; j < ml_cnt; j++) {
         const smatd& m = ml[j];
         const size_t ind = off + j;
         vec3i hkl = TReflection::GetHkl(hkl_list[i]);
-        out[ind].hkl = hkl*m.r;
-        out[ind].ps = m.t.DotProd(hkl);
-        if (out[ind].ps != 0) {
+        tmp[ind].hkl = hkl*m.r;
+        tmp[ind].ps = m.t.DotProd(hkl);
+        if (tmp[ind].ps != 0) {
           double ca = 1, sa = 0;
-          olx_sincos(-T_PI*out[ind].ps, &sa, &ca);
-          out[ind].val = F[i] * compd(ca, sa);
+          olx_sincos(-T_PI*tmp[ind].ps, &sa, &ca);
+          tmp[ind].val = F[i] * compd(ca, sa);
         }
         else {
-          out[ind].val = F[i];
+          tmp[ind].val = F[i];
         }
       }
     }
-    QuickSorter::Sort(out, TComparableComparator());
-    for (size_t i = 0; i < out.Count(); i++) {
+    QuickSorter::Sort(tmp, TComparableComparator());
+    for (size_t i = 0; i < tmp.Count(); i++) {
       size_t j = i;
-      while (++j < out.Count() && out[i].hkl == out[j].hkl) {
-        out.Delete(j--);
+      while (++j < tmp.Count() && tmp[i].hkl == tmp[j].hkl) {
+        tmp.NullItem(j);
       }
+      i = j - 1;
     }
+    tmp.Pack();
+    out_ = tmp;
   }
   /* find minimum and maximum values of the miller indexes of the structure
  factor
