@@ -86,36 +86,45 @@ struct TEvaluator : public evaluator_t {
 };
 // evaluator implementation for scalar part
 class TSAtom_PartEvaluator
-  : public TEvaluator<ITSAtom_DataProvider,IDoubleEvaluator,TSAtom_PartEvaluator> {
+  : public TEvaluator<ITSAtom_DataProvider,IIntEvaluator,TSAtom_PartEvaluator> {
 public:
   TSAtom_PartEvaluator(ITSAtom_DataProvider* parent)
     : parent_t(parent)
   {}
-  double EvaluateDouble() const {
+  long EvaluateInt() const {
     return Parent->GetTSAtom()->CAtom().GetPart();
   }
 };
 
-// evaluator implementation for scalar uiso
+// evaluator implementation for atom symm code
+class TSAtom_SymmEvaluator
+  : public TEvaluator<ITSAtom_DataProvider, IEvaluator, TSAtom_SymmEvaluator> {
+public:
+  TSAtom_SymmEvaluator(ITSAtom_DataProvider* parent)
+    : parent_t(parent)
+  {}
+  bool operator == (const IEvaluator& val) const;
+};
+// evaluator implementation for atom type
 class TSAtom_TypeEvaluator
   : public TEvaluator<ITSAtom_DataProvider,IStringEvaluator,TSAtom_TypeEvaluator> {
 public:
   TSAtom_TypeEvaluator(ITSAtom_DataProvider* parent)
     : parent_t(parent)
   {}
-  const olxstr& EvaluateString() const {
+  olxstr EvaluateString() const {
     return Parent->GetTSAtom()->GetType().symbol;
   }
   bool operator == (const IEvaluator& val) const;
 };
 // evaluator implementation for scalar uiso
 class TSAtom_UisoEvaluator
-  : public TEvaluator<ITSAtom_DataProvider,IDoubleEvaluator,TSAtom_UisoEvaluator> {
+  : public TEvaluator<ITSAtom_DataProvider,IFloatEvaluator,TSAtom_UisoEvaluator> {
 public:
   TSAtom_UisoEvaluator(ITSAtom_DataProvider* parent)
     : parent_t(parent)
   {}
-  double EvaluateDouble() const {
+  double EvaluateFloat() const {
     return Parent->GetTSAtom()->CAtom().GetUiso();
   }
 };
@@ -126,52 +135,52 @@ public:
   TSAtom_LabelEvaluator(ITSAtom_DataProvider* parent)
     : parent_t(parent)
   {}
-  const olxstr& EvaluateString() const {
+  olxstr EvaluateString() const {
     return Parent->GetTSAtom()->GetLabel();
   }
 };
 // evaluator implementation for scalar peak
 class TSAtom_PeakEvaluator
-  : public TEvaluator<ITSAtom_DataProvider,IDoubleEvaluator,TSAtom_PeakEvaluator> {
+  : public TEvaluator<ITSAtom_DataProvider,IFloatEvaluator,TSAtom_PeakEvaluator> {
 public:
   TSAtom_PeakEvaluator(ITSAtom_DataProvider* parent)
     : parent_t(parent)
   {}
-  double EvaluateDouble() const {
+  double EvaluateFloat() const {
     return Parent->GetTSAtom()->CAtom().GetQPeak();
   }
 };
 // evaluator implementation for scalar peak
 class TSAtom_OccuEvaluator
-  : public TEvaluator<ITSAtom_DataProvider,IDoubleEvaluator,TSAtom_OccuEvaluator> {
+  : public TEvaluator<ITSAtom_DataProvider,IFloatEvaluator,TSAtom_OccuEvaluator> {
 public:
   TSAtom_OccuEvaluator(ITSAtom_DataProvider* parent)
     : parent_t(parent)
   {}
-  double EvaluateDouble() const {
+  double EvaluateFloat() const {
     return Parent->GetTSAtom()->CAtom().GetChemOccu();
   }
 };
 // evaluator implementation for scalar afix
 class TSAtom_AfixEvaluator
-  : public TEvaluator<ITSAtom_DataProvider,IDoubleEvaluator,TSAtom_AfixEvaluator> {
+  : public TEvaluator<ITSAtom_DataProvider,IFloatEvaluator,TSAtom_AfixEvaluator> {
 public:
   TSAtom_AfixEvaluator(ITSAtom_DataProvider* parent)
     : parent_t(parent)
   {}
-  double EvaluateDouble() const {
+  double EvaluateFloat() const {
     return Parent->GetTSAtom()->CAtom().GetAfix();
   }
 };
 // evaluator implementation for scalar bc
 class TSAtom_BcEvaluator
-  : public TEvaluator<ITSAtom_DataProvider,IDoubleEvaluator,TSAtom_BcEvaluator> {
+  : public TEvaluator<ITSAtom_DataProvider,IIntEvaluator,TSAtom_BcEvaluator> {
 public:
   TSAtom_BcEvaluator(ITSAtom_DataProvider* parent)
     : parent_t(parent)
   {}
-  double EvaluateDouble() const {
-    return (double)Parent->GetTSAtom()->BondCount();
+  long EvaluateInt() const {
+    return (long)Parent->GetTSAtom()->BondCount();
   }
 };
 
@@ -182,16 +191,16 @@ public:
   TSAtom_ResiClassEvaluator(ITSAtom_DataProvider* parent)
     : parent_t(parent)
   {}
-  const olxstr& EvaluateString() const;
+  olxstr EvaluateString() const;
 };
 // evaluator implementation for scalar peak
 class TSAtom_ResiNumEvaluator
-  : public TEvaluator<ITSAtom_DataProvider, IDoubleEvaluator, TSAtom_ResiNumEvaluator> {
+  : public TEvaluator<ITSAtom_DataProvider, IIntEvaluator, TSAtom_ResiNumEvaluator> {
 public:
   TSAtom_ResiNumEvaluator(ITSAtom_DataProvider* parent)
     : parent_t(parent)
   {}
-  double EvaluateDouble() const;
+  long EvaluateInt() const;
 };
 
 // evaluator implementation for bool selected
@@ -228,21 +237,21 @@ public:
 
 // evaluator implementation for scalar mw
 class TBaiMwEvaluator
-  : public TEvaluator<ITBasicAtomInfoDataProvider,IDoubleEvaluator,TBaiMwEvaluator> {
+  : public TEvaluator<ITBasicAtomInfoDataProvider,IFloatEvaluator,TBaiMwEvaluator> {
 public:
   TBaiMwEvaluator(ITBasicAtomInfoDataProvider* parent)
     : parent_t(parent)
   {}
-  double EvaluateDouble() const {  return Parent->GetType()->GetMr();  }
+  double EvaluateFloat() const {  return Parent->GetType()->GetMr();  }
 };
 // evaluator implementation for scalar z
 class TBaiZEvaluator
-  : public TEvaluator<ITBasicAtomInfoDataProvider,IDoubleEvaluator,TBaiZEvaluator> {
+  : public TEvaluator<ITBasicAtomInfoDataProvider,IFloatEvaluator,TBaiZEvaluator> {
 public:
   TBaiZEvaluator(ITBasicAtomInfoDataProvider* parent)
     : parent_t(parent)
   {}
-  double EvaluateDouble() const {  return Parent->GetType()->z;  }
+  double EvaluateFloat() const {  return Parent->GetType()->z;  }
 };
 // evaluator implementation for string name
 class TBaiNameEvaluator
@@ -251,7 +260,7 @@ public:
   TBaiNameEvaluator(ITBasicAtomInfoDataProvider* parent)
     : parent_t(parent)
   {}
-  const olxstr& EvaluateString() const {  return Parent->GetType()->name;  }
+  olxstr EvaluateString() const {  return Parent->GetType()->name;  }
 };
 // evaluator implementation for string type
 class TBaiTypeEvaluator
@@ -260,7 +269,7 @@ public:
   TBaiTypeEvaluator(ITBasicAtomInfoDataProvider* parent)
     : parent_t(parent)
   {}
-  const olxstr& EvaluateString() const { return Parent->GetType()->symbol; }
+  olxstr EvaluateString() const { return Parent->GetType()->symbol; }
 };
 
 // factory class implementation

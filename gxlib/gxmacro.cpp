@@ -6036,7 +6036,7 @@ void GXLibMacros::macScaleN(TStrObjList& Cmds, const TParamList& Options,
   TXPlane& p1 = (TXPlane&)glg[0];
   if (Cmds.IsEmpty()) {
     if (!glg[1].Is<TXPlane>()) {
-      Error.ProcessingError(__OlxSrcInfo, "two planes are expected ");
+      Error.ProcessingError(__OlxSrcInfo, "two planes are expected");
       return;
     }
     TXPlane& p2 = (TXPlane&)glg[1];
@@ -6063,7 +6063,7 @@ void GXLibMacros::macPiPi(TStrObjList& Cmds, const TParamList& Options,
   if (Options.Contains('n') || Options.Contains('s')) {
     TGlGroup& glg = app.GetSelection();
     if (glg.Count() != 2 || !glg[0].Is<TXPlane>() || !glg[0].Is<TXPlane>()) {
-      Error.ProcessingError(__OlxSrcInfo, "two planes are expected ");
+      Error.ProcessingError(__OlxSrcInfo, "two planes are expected");
       return;
     }
     TXPlane& p1 = (TXPlane&)glg[0];

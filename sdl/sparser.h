@@ -87,16 +87,10 @@ public:
     }
     virtual IOlxObject* Replicate()  const { return new TCastException(*this); }
   };
-  virtual short EvaluateShort()           const { throw TCastException(__OlxSourceInfo); }
-  virtual int EvaluateInt()               const { throw TCastException(__OlxSourceInfo); }
-  virtual long EvaluateLong()             const { throw TCastException(__OlxSourceInfo); }
-  virtual float EvaluateFloat()           const { throw TCastException(__OlxSourceInfo); }
-  virtual double EvaluateDouble()         const { throw TCastException(__OlxSourceInfo); }
-  virtual unsigned short EvaluateUshort() const { throw TCastException(__OlxSourceInfo); }
-  virtual unsigned int EvaluateUint()     const { throw TCastException(__OlxSourceInfo); }
-  virtual unsigned long EvaluateUlong()   const { throw TCastException(__OlxSourceInfo); }
-  virtual bool EvaluateBool()             const { throw TCastException(__OlxSourceInfo); }
-  virtual const olxstr& EvaluateString()  const { throw TCastException(__OlxSourceInfo); }
+  virtual long EvaluateInt()             const { throw TCastException(__OlxSourceInfo); }
+  virtual double EvaluateFloat()         const { throw TCastException(__OlxSourceInfo); }
+  virtual bool EvaluateBool()            const { throw TCastException(__OlxSourceInfo); }
+  virtual olxstr EvaluateString()        const { throw TCastException(__OlxSourceInfo); }
 };
 
 class IStringEvaluator : public IEvaluator {
@@ -108,27 +102,25 @@ public:
   bool operator >= (const IEvaluator& val)  const { return EvaluateString().Comparei(val.EvaluateString()) >= 0; }
   bool operator < (const IEvaluator& val)   const { return EvaluateString().Comparei(val.EvaluateString()) < 0; }
   bool operator <= (const IEvaluator& val)  const { return EvaluateString().Comparei(val.EvaluateString()) <= 0; }
-  const olxstr& EvaluateString() const = 0;
+
+  long EvaluateInt()           const { return EvaluateString().RadInt<long>(); }
+  double EvaluateFloat()       const { return EvaluateString().ToDouble(); }
+  bool EvaluateBool()          const { return EvaluateString().ToBool(); }
+  olxstr EvaluateString()       const = 0;
 };
 
-class IDoubleEvaluator: public IEvaluator  {
+class IFloatEvaluator: public IEvaluator  {
 public:
-  bool operator == (const IEvaluator &val) const  {  return EvaluateDouble() == val.EvaluateDouble();  }
-  bool operator != (const IEvaluator &val) const  {  return EvaluateDouble() != val.EvaluateDouble();  }
-  bool operator > (const IEvaluator &val) const   {  return EvaluateDouble() > val.EvaluateDouble();  }
-  bool operator >= (const IEvaluator &val) const  {  return EvaluateDouble() >= val.EvaluateDouble();  }
-  bool operator < (const IEvaluator &val) const   {  return EvaluateDouble() < val.EvaluateDouble();  }
-  bool operator <= (const IEvaluator &val) const  {  return EvaluateDouble() <= val.EvaluateDouble();  }
+  bool operator == (const IEvaluator &val) const  {  return EvaluateFloat() == val.EvaluateFloat();  }
+  bool operator != (const IEvaluator &val) const  {  return EvaluateFloat() != val.EvaluateFloat();  }
+  bool operator > (const IEvaluator &val) const   {  return EvaluateFloat() > val.EvaluateFloat();  }
+  bool operator >= (const IEvaluator &val) const  {  return EvaluateFloat() >= val.EvaluateFloat();  }
+  bool operator < (const IEvaluator &val) const   {  return EvaluateFloat() < val.EvaluateFloat();  }
+  bool operator <= (const IEvaluator &val) const  {  return EvaluateFloat() <= val.EvaluateFloat();  }
 
-  bool   EvaluateBool()            const {  return (EvaluateDouble()!=0);  }
-  short   EvaluateShort()          const {  return (short)EvaluateDouble();  }
-  int   EvaluateInt()              const {  return (int)EvaluateDouble();  }
-  long   EvaluateLong()            const {  return (long)EvaluateDouble();  }
-  float   EvaluateFloat()          const {  return (float)EvaluateDouble();  }
-  double EvaluateDouble()          const = 0;
-  unsigned short   EvaluateUshort()const {  return (unsigned short)EvaluateDouble();  }
-  unsigned int   EvaluateUint()    const {  return (unsigned int)EvaluateDouble();  }
-  unsigned long   EvaluateUlong()  const {  return (unsigned long)EvaluateDouble();  }
+  long EvaluateInt()           const { return (long)EvaluateFloat(); }
+  olxstr EvaluateString()      const { return olxstr(EvaluateFloat()); }
+  double EvaluateFloat()       const = 0;
 };
 
 class IIntEvaluator : public IEvaluator {
@@ -140,15 +132,9 @@ public:
   bool operator < (const IEvaluator& val) const { return EvaluateInt() < val.EvaluateInt(); }
   bool operator <= (const IEvaluator& val) const { return EvaluateInt() <= val.EvaluateInt(); }
 
-  bool EvaluateBool()            const { return (EvaluateInt() != 0); }
-  short EvaluateShort()          const { return (short)EvaluateInt(); }
-  int EvaluateInt()              const = 0;
-  long EvaluateLong()            const { return (long)EvaluateInt(); }
-  float EvaluateFloat()          const { return (float)EvaluateInt(); }
-  double EvaluateDouble()          const { return (double)EvaluateInt(); }
-  unsigned short EvaluateUshort()const { return (unsigned short)EvaluateInt(); }
-  unsigned int EvaluateUint()    const { return (unsigned int)EvaluateInt(); }
-  unsigned long EvaluateUlong()  const { return (unsigned long)EvaluateInt(); }
+  double EvaluateFloat()       const { return (double)EvaluateInt(); }
+  olxstr EvaluateString()      const { return olxstr(EvaluateInt()); }
+  long EvaluateInt()           const = 0;
 };
 
 class IBoolEvaluator : public IEvaluator {
@@ -156,23 +142,24 @@ public:
   bool operator == (const IEvaluator& val) const { return EvaluateBool() == val.EvaluateBool(); }
   bool operator != (const IEvaluator& val) const { return EvaluateBool() != val.EvaluateBool(); }
   bool   EvaluateBool() const = 0;
+  olxstr EvaluateString() const { return olxstr(EvaluateBool()); }
 };
 
 class TStringEvaluator : public IStringEvaluator {
   olxstr Value;
 public:
   TStringEvaluator(const olxstr& Val) { Value = Val; }
-  const olxstr& EvaluateString() const { return Value; }
+  olxstr EvaluateString() const { return Value; }
   void SetValue(const olxstr& v) { Value = v; }
   IEvaluator* NewInstance(IDataProvider*) { return new TStringEvaluator(Value); }
 };
 
-class TScalarEvaluator : public IDoubleEvaluator {
+class TScalarEvaluator : public IFloatEvaluator {
   double Value;
 public:
   TScalarEvaluator(double Val) { Value = Val; }
-  ~TScalarEvaluator() { ; }
-  double EvaluateDouble() const { return Value; }
+  ~TScalarEvaluator() {}
+  double EvaluateFloat() const { return Value; }
   void SetValue(double v) { Value = v; }
   IEvaluator* NewInstance(IDataProvider*) { return new TScalarEvaluator(Value); }
 };
