@@ -2054,7 +2054,7 @@ ConstPtrList<TXAtom> TGXApp::FindXAtoms(const IStrList& toks, bool getAll,
   bool ClearSelection, bool FindHidden)
 {
   TXAtomPList rv;
-  if (toks.IsEmpty()) {  // return selection/all atoms
+  if (olx_list_and(toks, &olxstr::IsEmpty, true)) {  // return selection/all atoms
     TGlGroup& sel = GetRenderer().GetSelection();
     atoms_from_group(sel, rv);
     ACollectionItem::Unify(rv);
@@ -2090,6 +2090,9 @@ ConstPtrList<TXAtom> TGXApp::FindXAtoms(const IStrList& toks, bool getAll,
     TStrList Toks(toks);
     for (size_t i = 0; i < Toks.Count(); i++) {
       olxstr Tmp = Toks[i];
+      if (Tmp.IsEmpty()) {
+        continue;
+      }
       if (Tmp.Equalsi("sel")) {
         rv += GetSelectedXAtoms(ClearSelection);
         continue;

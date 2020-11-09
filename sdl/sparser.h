@@ -212,19 +212,19 @@ public:
     FIterator = itr;
     FPropertyEvaluator = PE;
   }
-  bool   EvaluateBool() const {
+  bool EvaluateBool() const {
     FPropertyEvaluator->Data(FCollection->Item(FIterator->EvaluateInt()));
     return FPropertyEvaluator->EvaluateBool();
   }
-  int   EvaluateInt()  const {
+  long EvaluateInt()  const {
     FPropertyEvaluator->Data(FCollection->Item(FIterator->EvaluateInt()));
     return FPropertyEvaluator->EvaluateInt();
   }
-  double EvaluateDouble() const {
+  double EvaluateFloat() const {
     FPropertyEvaluator->Data(FCollection->Item(FIterator->EvaluateInt()));
     return FPropertyEvaluator->EvaluateDouble();
   }
-  const olxstr& EvaluateString() const {
+  olxstr EvaluateString() const {
     FPropertyEvaluator->Data(FCollection->Item(FIterator->EvaluateInt()));
     return FPropertyEvaluator->EvaluateString();
   }
