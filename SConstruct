@@ -279,15 +279,12 @@ else:
   try: 
     if sys.platform[:6] == 'darwin':
       env.Append(CCFLAGS = '-D__MAC__')
-      if architecture == '64bit':
-        env.ParseConfig("wx-config --cxxflags --version=3.0 --static=yes --libs std gl")
-        env.Append(CCFLAGS=['-mmacosx-version-min=10.5'])
-        env.Append(LINKFLAGS=['-mmacosx-version-min=10.5'])
-      else:
-        env.ParseConfig("wx-config --cxxflags --version=2.9 --static=yes --libs std gl")
+      env.ParseConfig("wx-config --cxxflags --libs std gl")
+      env.Append(CCFLAGS=['-mmacosx-version-min=10.5'])
+      env.Append(LINKFLAGS=['-mmacosx-version-min=10.5'])
       env.Append(FRAMEWORKS=['OpenGL', 'AGL'])
     else:
-      env.ParseConfig("wx-config --cxxflags --version=2.9 --static=yes --libs std gl")
+      env.ParseConfig("wx-config --cxxflags --libs std gl")
       env.Append(LIBS=['libGL', 'libGLU'])
 #!!!
     tests_env = env.Clone()
