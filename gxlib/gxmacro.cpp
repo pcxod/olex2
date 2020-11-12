@@ -2108,7 +2108,10 @@ void GXLibMacros::macCell(TStrObjList &Cmds, const TParamList &Options,
 //.............................................................................
 template <class analyser_t>
 void macSel_sel(TGXApp& app, TStrObjList& Cmds, glSelectionFlag flag, const analyser_t &analyser) {
-  if (flag == glSelectionSelect) {
+  if (flag == glSelectionSelect || Cmds.IsEmpty()) {
+    if (flag == glSelectionNone) {
+      flag = glSelectionSelect;
+    }
     TGXApp::AtomIterator ai = app.GetAtoms();
     while (ai.HasNext()) {
       TXAtom& a = ai.Next();
@@ -2188,6 +2191,19 @@ void macSel_sel_part(TGXApp &app, TStrObjList &Cmds, glSelectionFlag flag) {
   macSel_sel(app, Cmds, flag, analyser);
 }
 
+struct macSel_symm_analyser {
+  smatd_list symms;
+  bool OnItem(const TXAtom& a) const {
+    for (size_t i = 0; i < symms.Count(); i++) {
+      if (a.IsGenerator(symms[i])) {
+        return true;
+      }
+    }
+    return false;
+  }
+};
+
+
 void macSel_sel_fvar(TGXApp& app, TStrObjList& Cmds, glSelectionFlag flag) {
   Cmds.Delete(0);
   macSel_fvar_analyser analyser;
@@ -2220,10 +2236,30 @@ void macSel_sel_afix(TGXApp& app, TStrObjList& Cmds, glSelectionFlag flag) {
   macSel_sel(app, Cmds, flag, analyser);
 }
 
-void macSel_sel_anis(TGXApp & app, TStrObjList & Cmds, glSelectionFlag flag) {
+void macSel_sel_anis(TGXApp & app, TStrObjList& Cmds, glSelectionFlag flag) {
   macSel_anis_analyser analyser;
   analyser.isot = Cmds[0].Equalsi("isot");
   Cmds.Delete(0);
+  macSel_sel(app, Cmds, flag, analyser);
+}
+
+void macSel_sel_symm(TGXApp& app, TStrObjList& Cmds, glSelectionFlag flag) {
+  macSel_symm_analyser analyser;
+  TUnitCell& uc = app.XFile().GetUnitCell();
+  for (size_t i = 0; i < Cmds.Count(); i++) {
+    if (TSymmParser::IsRelSymm(Cmds[i])) {
+      analyser.symms.AddNew(TSymmParser::SymmCodeToMatrix(uc, Cmds[i]));
+      Cmds.Delete(i--);
+    }
+    else if (TSymmParser::IsAbsSymm(Cmds[i])) {
+      analyser.symms.AddNew(TSymmParser::SymmToMatrix(Cmds[i]));
+      uc.InitMatrixId(analyser.symms.GetLast());
+      Cmds.Delete(i--);
+    }
+    else {
+      break;
+    }
+  }
   macSel_sel(app, Cmds, flag, analyser);
 }
 
@@ -2434,45 +2470,7 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   else if (Cmds.Count() >= 1 && TSymmParser::IsRelSymm(Cmds[0])) {
-    if (flag == glSelectionNone) {
-      flag = glSelectionSelect;
-    }
-    const smatd matr = TSymmParser::SymmCodeToMatrix(
-      app.XFile().GetUnitCell(), Cmds[0]);
-    if (Cmds.Count() == 1) {
-      TGXApp::AtomIterator ai = app.GetAtoms();
-      while (ai.HasNext()) {
-        TXAtom& a = ai.Next();
-        if (a.IsDeleted() || !a.IsVisible()) {
-          continue;
-        }
-        if (a.IsGenerator(matr)) {
-          app.GetRenderer().Select(a, flag);
-        }
-      }
-      TGXApp::BondIterator bi = app.GetBonds();
-      while (bi.HasNext()) {
-        TXBond& b = bi.Next();
-        if (b.IsDeleted() || !b.IsVisible()) {
-          continue;
-        }
-        if (b.A().IsGenerator(matr) && b.B().IsGenerator(matr)) {
-          app.GetRenderer().Select(b, flag);
-        }
-      }
-    }
-    else {
-      TXAtomPList atoms = app.FindXAtoms(Cmds.SubListFrom(1).GetObject(), true, false);
-      for (size_t i = 0; i < atoms.Count(); i++) {
-        TXAtom& a = *atoms[i];
-        if (a.IsDeleted() || !a.IsVisible()) {
-          continue;
-        }
-        if (a.IsGenerator(matr)) {
-          app.GetRenderer().Select(a, flag);
-        }
-      }
-    }
+    macSel_sel_symm(app, Cmds, flag);
   }
   else if (Cmds.Count() > 1 && Cmds[0].Equalsi("part")) {
     macSel_sel_part(app, Cmds, flag);
