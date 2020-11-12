@@ -603,13 +603,14 @@ TSAtomPList::const_list_type TXApp::FindSAtoms(const IStrList& toks_,
   }
   TSAtomPList res;
   TStrList toks(toks_);
+  toks.Pack();
   // try the selection first
   if (toks.IsEmpty() || (toks.Count() == 1 && toks[0].Equals("sel"))) {
     if (SelectionOwner != 0) {
       SelectionOwner->ExpandSelectionEx(res);
     }
   }
-  else if (!toks.IsEmpty()) {
+  if (!toks.IsEmpty()) {
     if (toks.Count() > 1 && toks[0].Equalsi("where")) {
       olx_object_ptr<TSAtomPList> atoms = FindSAtomsWhere(olxstr(' ').JoinRange(toks, 1));
       if (atoms.ok()) {
@@ -636,7 +637,7 @@ TSAtomPList::const_list_type TXApp::FindSAtoms(const IStrList& toks_,
     olxstr new_c = toks.Text(' ');
     if (!new_c.IsEmpty()) {
       TCAtomGroup ag;
-      TAtomReference ar(toks.Text(' '), SelectionOwner);
+      TAtomReference ar(new_c, SelectionOwner);
       size_t atomAGroup;
       ar.Expand(XFile().GetRM(), ag, EmptyString(), atomAGroup);
       if (!ag.IsEmpty()) {
