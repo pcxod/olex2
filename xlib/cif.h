@@ -217,8 +217,11 @@ public:
   }
   // returns current block index, might be InvalidIndex
   size_t GetBlockIndex() const { return block_index; }
-  // creates a new loop from comma separated column names
-  cif_dp::cetTable& AddLoopDef(const olxstr& col_names);
+  /* creates a new loop from comma separated column names.
+  * The table will be replaced disregarding "replace" flag if the columns do not
+  match.
+  */
+  cif_dp::cetTable& AddLoopDef(const olxstr& col_names, bool replace=false);
   /* this is the only loop, which is not automatically created from structure
   data! If the loop does not exist it is automatically created
   */

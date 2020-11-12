@@ -154,11 +154,11 @@ public:
     if (experimental) {
       t_ = &out.AddLoopDef(
         "_diffrn_refln_index_h,_diffrn_refln_index_k,_diffrn_refln_index_l,"
-        "_diffrn_refln_intensity_net,_diffrn_refln_intensity_u");
+        "_diffrn_refln_intensity_net,_diffrn_refln_intensity_u", true);
     }
     else {
       t_ = &out.AddLoopDef(
-        "_refln_index_h,_refln_index_k,_refln_index_l");
+        "_refln_index_h,_refln_index_k,_refln_index_l", true);
       if (intensity) {
         if (measured) {
           t_->AddCol("_refln_F_squared_meas");
