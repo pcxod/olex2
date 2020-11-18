@@ -8704,7 +8704,7 @@ void XLibMacros::macExport(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   else {
-    olx_object_ptr<THklFile::ref_list> refs = THklFile::FromCifTable(*hklLoop);
+    olx_object_ptr<THklFile::ref_list> refs = THklFile::FromCifTable(*hklLoop, mat3d().I());
     if (refs.ok()) {
       olxstr md5;
       cif_dp::ICifEntry * md5i = C.FindEntry("_olex2_hkl_file_MD5");
@@ -10679,6 +10679,25 @@ void XLibMacros::funHKLF(const TStrObjList &args, TMacroData &E) {
       }
       xf.GetRM().Vars.SetBASF(sl);
     }
+  }
+  else if (args.Count() >= 1 && args[0].Equalsi("remove")) {
+    mat3d hklfm = xf.GetRM().GetHKLF_mat();
+    if (hklfm.IsI()) {
+      return;
+    }
+    olxstr hklfn = xf.GetRM().GetHKLSource();
+    if (args.Count() >= 2) {
+      if (!TEFile::IsAbsolutePath(args[1])) {
+        hklfn = TEFile::ExtractFilePath(hklfn) + args[1];
+      }
+      else {
+        hklfn = args[1];
+      }
+    }
+    THklFile::SaveToFile(hklfn, xf.GetRM().GetReflections());
+    xf.GetRM().SetHKLSource(hklfn);
+    hklfm.I();
+    xf.GetRM().SetHKLF_mat(hklfm);
   }
   else {
     xf.GetRM().Vars.ClearBASF();

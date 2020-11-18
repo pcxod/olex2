@@ -279,57 +279,57 @@ void TMainForm::funFPS(const TStrObjList& Params, TMacroData &E) {
     E.SetRetVal(10*(1000./TimePerFrame));
 }
 //..............................................................................
-void TMainForm::funCursor(const TStrObjList& Params, TMacroData &E)  {
-  if( CursorStack.Count() > 10 )  {
+void TMainForm::funCursor(const TStrObjList& Params, TMacroData& E) {
+  if (CursorStack.Count() > 10) {
     CursorStack.Clear();
     TBasicApp::NewLogEntry(logError) << "Cursor stack size limit reached and cleared";
   }
-  if( Params.IsEmpty() )  {
-    if( !CursorStack.IsEmpty() )  {
-      olx_pair_t<wxCursor,wxString> ci = CursorStack.Pop();
+  if (Params.IsEmpty()) {
+    if (!CursorStack.IsEmpty()) {
+      olx_pair_t<wxCursor, wxString> ci = CursorStack.Pop();
       SetCursor(ci.GetA());
       FGlCanvas->SetCursor(ci.GetA());
       SetStatusText(ci.GetB());
     }
-    else  {
+    else {
       wxCursor cr(wxCURSOR_ARROW);
       SetCursor(cr);
       FGlCanvas->SetCursor(cr);
       SetStatusText(wxT(""));
     }
   }
-  else  {
+  else {
     if (!Params[0].Equalsi("user")) {
-      CursorStack.Push(olx_pair_t<wxCursor,wxString>(
+      CursorStack.Push(olx_pair_t<wxCursor, wxString>(
         FGlCanvas->GetCursor(), GetStatusBar()->GetStatusText()));
     }
-    if( Params[0].Equalsi("busy") )  {
+    if (Params[0].Equalsi("busy")) {
       wxCursor cr(wxCURSOR_WAIT);
       SetCursor(cr);
       FGlCanvas->SetCursor(cr);
-      if( Params.Count() == 2 )
+      if (Params.Count() == 2)
         SetStatusText(Params[1].u_str());
     }
-    else if( Params[0].Equalsi("brush") )  {
+    else if (Params[0].Equalsi("brush")) {
       wxCursor cr(wxCURSOR_PAINT_BRUSH);
       SetCursor(cr);
       FGlCanvas->SetCursor(cr);
     }
-    else if( Params[0].Equalsi("hand") )  {
+    else if (Params[0].Equalsi("hand")) {
       wxCursor cr(wxCURSOR_HAND);
       SetCursor(cr);
       FGlCanvas->SetCursor(cr);
     }
-    else if( Params[0].Equalsi("arrow") )  {
+    else if (Params[0].Equalsi("arrow")) {
       wxCursor cr(wxCURSOR_ARROW);
       SetCursor(cr);
       FGlCanvas->SetCursor(cr);
     }
-    else if (Params[0].Equalsi("user") && Params.Count() == 3)  {
+    else if (Params[0].Equalsi("user") && Params.Count() == 3) {
       SetUserCursor(Params[1], Params[2]);
     }
-    else  {
-      if( TEFile::Exists(Params[0]) )  {
+    else {
+      if (TEFile::Exists(Params[0])) {
         wxImage img;
         img.LoadFile(Params[0].u_str());
         img.SetMaskColour(254, 254, 254);

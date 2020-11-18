@@ -156,7 +156,7 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
                 "no reflection loop found");
             }
           }
-          olx_object_ptr<ref_list> refs = FromCifTable(*hklLoop);
+          olx_object_ptr<ref_list> refs = FromCifTable(*hklLoop, Basis);
           if (refs.ok()) {
             Refs = refs->a;
             HKLF = (refs->b ? 4 : 3);
@@ -363,9 +363,10 @@ void THklFile::SaveToFile(const olxstr& FN, const TRefList& refs) {
 }
 //..............................................................................
 olx_object_ptr<THklFile::ref_list> THklFile::FromCifTable(
-  const cif_dp::cetTable &t)
+  const cif_dp::cetTable &t, const mat3d& basis)
 {
-  bool intensity = true;
+  bool intensity = true,
+    transform = !basis.IsI();
   TRefList refs;
   olxstr prefix = t.GetName();
   const size_t hInd = t.ColIndex(prefix + "_index_h");
@@ -396,7 +397,11 @@ olx_object_ptr<THklFile::ref_list> THklFile::FromCifTable(
       r[kInd]->GetStringValue().ToInt(),
       r[lInd]->GetStringValue().ToInt(),
       r[mInd]->GetStringValue().ToDouble(),
-      r[sInd]->GetStringValue().ToDouble()));
+      r[sInd]->GetStringValue().ToDouble())
+    );
+    if (transform) {
+      ref.SetHkl((basis * ref.GetHkl()).Round<int>());
+    }
     if (batch != InvalidIndex) {
       ref.SetBatch(r[batch]->GetStringValue().ToInt());
     }

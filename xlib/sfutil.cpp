@@ -191,9 +191,9 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
     sw.stop();
   }
   else {  // olex2 calculated SF
-    olxstr hklFileName = xapp.XFile().LocateHklFile();
-    if (!TEFile::Exists(hklFileName)) {
-      return "could not locate hkl file";
+    RefinementModel& rm = xapp.XFile().GetRM();
+    if (rm.GetReflections().IsEmpty()) {
+      return "no reflections";
     }
     sw.start("Loading/Filtering/Merging HKL");
     TUnitCell::SymmSpace sp = xapp.XFile().GetUnitCell().GetSymmSpace();
@@ -201,7 +201,6 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
     if (friedelPairs == fpMerge) {
       info_ex.centrosymmetric = true;
     }
-    RefinementModel& rm = xapp.XFile().GetRM();
     if (rm.GetHKLF() < 5) {
       RefinementModel::HklStat ms;
       if (!sp.IsCentrosymmetric() && info_ex.centrosymmetric) {

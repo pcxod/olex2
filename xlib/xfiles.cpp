@@ -443,7 +443,7 @@ void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
           if (hklLoop != 0) {
             try {
               olx_object_ptr<THklFile::ref_list> refs =
-                THklFile::FromCifTable(*hklLoop);
+                THklFile::FromCifTable(*hklLoop, GetRM().GetHKLF_mat());
               if (refs.ok()) {
                 GetRM().SetReflections(refs->a);
               }
@@ -457,7 +457,7 @@ void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
             cif_dp::cetStringList *ci = dynamic_cast<cif_dp::cetStringList *>(
               cif.FindEntry("_shelx_hkl_file"));
             if (ci != 0) {
-              THklFile hkf;
+              THklFile hkf(GetRM().GetHKLF_mat());
               hkf.LoadFromStrings(ci->lines, false);
               GetRM().SetReflections(hkf.RefList());
             }

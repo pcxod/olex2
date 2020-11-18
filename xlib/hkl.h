@@ -240,7 +240,8 @@ public:
   (Fsq, true). Throws TInvalidArgumentException if required columns are not
   found.
   */
-  static olx_object_ptr<ref_list> FromCifTable(const cif_dp::cetTable &);
+  static olx_object_ptr<ref_list> FromCifTable(const cif_dp::cetTable &,
+    const mat3d &basis);
   /* tries to read Tonto like reflcetions file. The function fails if the
   returned pointer is NOT valid. if the reflections I is amplitudes (F, false)
   or intensity (Fsq, true).
