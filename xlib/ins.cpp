@@ -1252,7 +1252,7 @@ void TIns::DelIns(size_t i) {
 }
 //..............................................................................
 TInsList* TIns::FindIns(const olxstr& Name) {
-  return Ins.FindObjecti(Name, 0);
+  return Ins.FindPointeri(Name, 0);
 }
 //..............................................................................
 bool TIns::InsExists(const olxstr& Name) {

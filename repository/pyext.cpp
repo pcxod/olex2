@@ -49,7 +49,7 @@ struct olx_PyModuleDef {
   }
 
   olx_PyModuleDef(const olxcstr &m_name, PyMethodDef *m_def) {
-    moduleDef = new PyModuleDef{
+    PyModuleDef m = {
       PyModuleDef_HEAD_INIT,
       m_name.c_str(),
       0,
@@ -60,6 +60,8 @@ struct olx_PyModuleDef {
       &olx_PyModuleDef::mod_clear,
       &olx_PyModuleDef::mod_free,
     };
+    moduleDef = (PyModuleDef*)(new char[sizeof(m)]);
+    memcpy(&moduleDef, &m, sizeof(m));
     moduleObj = PyModule_Create(&moduleDef);
   }
 };
