@@ -131,26 +131,6 @@ void TGlMaterial::Init(bool skip) const {
       olx_gl::colorMaterial(GL_FRONT, GL_AMBIENT);
       olx_gl::color(AmbientF.Data());
     }
-    if (Flags & sglmAmbientB) {
-      olx_gl::colorMaterial(GL_BACK, GL_AMBIENT);
-      olx_gl::color(AmbientB.Data());
-    }
-    if (Flags & sglmDiffuseF) {
-      olx_gl::colorMaterial(GL_FRONT, GL_DIFFUSE);
-      olx_gl::color(DiffuseF.Data());
-    }
-    if (Flags & sglmDiffuseB) {
-      olx_gl::colorMaterial(GL_BACK, GL_DIFFUSE);
-      olx_gl::color(DiffuseB.Data());
-    }
-    if (Flags & sglmEmissionF) {
-      olx_gl::colorMaterial(GL_FRONT, GL_EMISSION);
-      olx_gl::color(EmissionF.Data());
-    }
-    if (Flags & sglmEmissionB) {
-      olx_gl::colorMaterial(GL_BACK, GL_EMISSION);
-      olx_gl::color(EmissionB.Data());
-    }
     if (Flags & sglmSpecularF) {
       olx_gl::colorMaterial(GL_FRONT, GL_SPECULAR);
       olx_gl::color(SpecularF.Data());
@@ -165,6 +145,7 @@ void TGlMaterial::Init(bool skip) const {
     if (Flags & sglmShininessB) {
       olx_gl::material(GL_BACK, GL_SHININESS, ShininessB);
     }
+    olx_gl::colorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
   }
 }
 //..............................................................................

@@ -23,6 +23,8 @@ public:
   enum {
     anh_none,
     anh_anh,
+    anh_anh_C,
+    anh_anh_D,
     anh_all
   };
 private:

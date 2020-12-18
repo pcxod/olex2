@@ -684,7 +684,8 @@ void XLibMacros::Export(TLibrary& lib)  {
     " the rest. If the variance-covariance matrix existsm also calculates the "
     "esd.");
   xlib_InitMacro(TestR,
-    "s-update the scale",
+    "s-update the scale&;"
+    "t-tolerance [0.01A]",
     fpAny | psFileLoaded,
     "Test for twinning.");
   xlib_InitMacro(HKLF5,

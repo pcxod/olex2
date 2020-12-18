@@ -17,8 +17,13 @@ void RelativePathTest(OlxTests& t)  {
          base2="c:\\windows\\drivers\\test",
          base3="/tmp/test";
   olxstr path1="c:\\windows\\sys32",
-         path2="c:\\test",
-         path3="/tmp/test/test/tmp";
+#ifdef __WIN32__
+         path3="\\\\tmp\\test\\test\\tmp",
+#else
+    path3 = "/tmp/test/test/tmp",
+#endif
+    path2 = "c:\\test"
+    ;
   olxstr rel1=TEFile::CreateRelativePath(path1,base1),
          rel2=TEFile::CreateRelativePath(path2,base1),
          rel3=TEFile::CreateRelativePath(path1,base2),
@@ -45,7 +50,7 @@ void RelativePathTest(OlxTests& t)  {
     throw TFunctionFailedException(__OlxSourceInfo, "failed to expand relative path");
   if( TEFile::WinPath(TEFile::ExpandRelativePath(rel4,base2)) != path2 )
     throw TFunctionFailedException(__OlxSourceInfo, "failed to expand relative path");
-  if( TEFile::UnixPath(TEFile::ExpandRelativePath(rel5,base3)) != path3 )
+  if( TEFile::ExpandRelativePath(rel5,base3) != path3 )
     throw TFunctionFailedException(__OlxSourceInfo, "failed to expand relative path");
 }
 //...................................................................................................

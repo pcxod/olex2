@@ -5784,7 +5784,7 @@ void GXLibMacros::macTLS(TStrObjList &Cmds, const TParamList &Options,
     Options.FindValue("start_color", "0xff0000").SafeUInt<uint32_t>(),
     Options.FindValue("end_color", "0x0000ff").SafeUInt<uint32_t>(),
     q,
-    Options.FindValue("g", TrueString()).ToBool()
+    Options.GetBoolOption("g", false, true)
   );
   if (!show.IsEmpty()) {
     olxstr obj_type_str = Options.FindValue("type", "diff");
@@ -5913,6 +5913,12 @@ void GXLibMacros::macMSDSView(TStrObjList &Cmds, const TParamList &Options,
   int anh_type = TRMDSADP::anh_all;
   if (anh_str.Equalsi("anh")) {
     anh_type = TRMDSADP::anh_anh;
+  }
+  else if (anh_str.Equalsi("C")) {
+    anh_type = TRMDSADP::anh_anh_C;
+  }
+  else if (anh_str.Equalsi("D")) {
+    anh_type = TRMDSADP::anh_anh_D;
   }
   else if (anh_str.Equalsi("none")) {
     anh_type = TRMDSADP::anh_none;

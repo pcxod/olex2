@@ -79,8 +79,6 @@ void TDUserObj::Create(const olxstr& cName) {
     }
     if (Colors.ok()) {
       GlP.Colors = *Colors;
-      //GlM.SetColorMaterial(true);
-      //GlP.SetProperties(GlM);
     }
   }
 }

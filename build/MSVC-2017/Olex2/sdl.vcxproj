@@ -760,6 +760,7 @@
     <ClInclude Include="..\..\..\sdl\tests\spline_test.h" />
     <ClInclude Include="..\..\..\sdl\tests\string_test.h" />
     <ClInclude Include="..\..\..\sdl\tests\sys_test.h" />
+    <ClInclude Include="..\..\..\sdl\tests\tensor_test.h" />
     <ClInclude Include="..\..\..\sdl\threex3.h" />
     <ClInclude Include="..\..\..\sdl\tptrlist.h" />
     <ClInclude Include="..\..\..\sdl\typelist.h" />

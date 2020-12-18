@@ -9,6 +9,7 @@
 
 #ifndef __olx_sdl_tensor_H
 #define __olx_sdl_tensor_H
+#include "threex3.h"
 
 namespace esdl { namespace tensor {
   namespace utils {
@@ -24,7 +25,7 @@ namespace esdl { namespace tensor {
   typedef TArrayList<index_t> index_list_t;
 
   template <class heir_t, typename FloatType>
-  class tensor_base {
+  class tensor_base: public IOlxObject {
     heir_t &self() { return *(heir_t*)this; }
     const heir_t &self() const { return *(heir_t*)this; }
   protected:
@@ -80,7 +81,7 @@ namespace esdl { namespace tensor {
     static size_t get_multiplicity(size_t i) {
       return get_multiplicity_()[i];
     }
-    /* this might be required in a multithreaded environment!
+    /* this might be required in a multithreaded envirenment!
     */
     static void initialise() {
       heir_t::get_map();
@@ -130,6 +131,14 @@ namespace esdl { namespace tensor {
 
     const TArrayList<FloatType> &data() const {
       return self().data_;
+    }
+
+    virtual TIString ToString() const {
+      olxstr_buf s;
+      for (size_t i = 0; i < data().Count(); i++) {
+        s << olx_print("%10.3le ", data()[i]);
+      }
+      return olxstr(s);
     }
   };
 
@@ -199,6 +208,23 @@ namespace esdl { namespace tensor {
     }
     FloatType & operator ()(size_t i, size_t j) {
       return data_[get_map()[i][j]];
+    }
+
+    tensor_rank_2_t transform(const mat3d& rm) const {
+      tensor_rank_2_t r;
+      const index_list_t& indices = get_indices();
+      for (size_t i = 0; i < indices.Count(); i++) {
+        const tensor::index_t& idx = indices[i];
+        size_t dli = parent_t::get_linear_idx(idx);
+        for (size_t l = 0; l < 3; l++) {
+          for (size_t m = 0; m < 3; m++) {
+            size_t li = linearise(l, m);
+            double p_ = rm[idx[0]][l] * rm[idx[1]][m];
+            r.data()[dli] += p_ * data_[li];
+          }
+        }
+      }
+      return r;
     }
 
     static const index_list_t &get_indices() {
@@ -318,6 +344,25 @@ namespace esdl { namespace tensor {
       return data_[get_map()[i][j][k]];
     }
 
+    tensor_rank_3_t transform(const mat3d& rm) const {
+      tensor_rank_3_t r;
+      const index_list_t& indices = get_indices();
+      for (size_t i = 0; i < indices.Count(); i++) {
+        const tensor::index_t& idx = indices[i];
+        size_t dli = parent_t::get_linear_idx(idx);
+        for (size_t l = 0; l < 3; l++) {
+          for (size_t m = 0; m < 3; m++) {
+            for (size_t n = 0; n < 3; n++) {
+              size_t li = linearise(l, m, n);
+              double p_ = rm[idx[0]][l] * rm[idx[1]][m] * rm[idx[2]][n];
+              r.data()[dli] += p_ * data_[li];
+            }
+          }
+        }
+      }
+      return r;
+    }
+
     static const index_list_t &get_indices() {
       static index_list_t indices;
       if (indices.IsEmpty()) {
@@ -432,6 +477,27 @@ namespace esdl { namespace tensor {
     }
     FloatType & operator ()(size_t i, size_t j, size_t k, size_t l) {
       return data_[get_map()[i][j][k][l]];
+    }
+
+    tensor_rank_4_t transform(const mat3d& rm) const {
+      tensor_rank_4_t r;
+      const index_list_t& indices = get_indices();
+      for (size_t i = 0; i < indices.Count(); i++) {
+        const tensor::index_t& idx = indices[i];
+        size_t dli = parent_t::get_linear_idx(idx);
+        for (size_t l = 0; l < 3; l++) {
+          for (size_t m = 0; m < 3; m++) {
+            for (size_t n = 0; n < 3; n++) {
+              for (size_t p = 0; p < 3; p++) {
+                size_t li = linearise(l, m, n, p);
+                double pr = rm[idx[0]][l] * rm[idx[1]][m] * rm[idx[2]][n] * rm[idx[3]][p];
+                r.data()[dli] += pr * data_[li];
+              }
+            }
+          }
+        }
+      }
+      return r;
     }
 
     static const index_list_t &get_indices() {

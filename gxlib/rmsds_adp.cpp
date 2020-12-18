@@ -37,15 +37,13 @@ void TRMDSADP::Create(const olxstr& cName) {
   GS.SetSaveable(false);
   TGlPrimitive& GlP = GPC.NewPrimitive("MSDS", sgloCommandList);
   TGlMaterial &m = GS.GetMaterial("MSDS",
-    TGlMaterial("85;0;4286611584;4290822336;64"));
+    TGlMaterial("16469;4278190080;4286611584;4290822336;64"));
   m.SetColorMaterial(true);
   GlP.SetProperties(m);
   size_t a_cnt = 0, a_i = 0;
   const TAsymmUnit &au = TGXApp::GetInstance().XFile().GetAsymmUnit();
-  mat3d cell2cart_c = au.GetCellToCartesian()*au.GetCellToCartesian();
-  mat3d cell2cart_d = cell2cart_c *au.GetCellToCartesian();
+  mat3d cell2cart_c = au.GetCellToCartesian();
   mat3d cell2cart_ct = mat3d::Transpose(cell2cart_c);
-  mat3d cell2cart_dt = mat3d::Transpose(cell2cart_d);
 
   TGXApp::AtomIterator ai = TGXApp::GetInstance().GetAtoms();
   while (ai.HasNext()) {
@@ -82,43 +80,32 @@ void TRMDSADP::Create(const olxstr& cName) {
     }
     mat3f M = a.GetEllipsoid()->ExpandQuad();
     olx_object_ptr<GramCharlier4> t = a.GetEllipsoid()->GetAnharmonicPart();
-    
+    if (!t.ok() && AnhType != anh_none && AnhType != anh_all) {
+      continue;
+    }
     if (t.ok() && AnhType != anh_none) {
       GramCharlier4 &gc = t;
-      mat3d m3, m4;
-      for (size_t ti = 0; ti < 3; ti++) {
-        for (size_t tj = 0; tj < 3; tj++) {
-          for (size_t tk = 0; tk < 3; tk++) {
-            m3[tj][tk] = gc.C(ti, tj, tk);
-            for (size_t tl = 0; tl < 3; tl++) {
-              m4[tk][tl] = gc.D(ti, tj, tk, tl);
-            }
-          }
-          m4 = cell2cart_d * m4 * cell2cart_dt;
-          for (size_t tk = 0; tk < 3; tk++) {
-            for (size_t tl = 0; tl < 3; tl++) {
-              tmp_t4(ti, tj, tk, tl) = m4[tk][tl];
-            }
-          }
-        }
-        m3 = cell2cart_c * m3 * cell2cart_ct;
-        for (size_t tj = 0; tj < 3; tj++) {
-          for (size_t tk = 0; tk < 3; tk++) {
-            tmp_t3(ti, tj, tk) = m3[tj][tk];
-          }
-        }
-      }
+      tmp_t3 = gc.C.transform(cell2cart_c);
+      tmp_t4 = gc.D.transform(cell2cart_c);
     }
     for (size_t i = 0; i < sph_v.Count(); i++) {
       float d = 0;
       if (t.ok() && AnhType != anh_none) {
         float c_ = tmp_t3.sum_up(sph_v[i]);
+        c_ *= M_PI * M_PI * M_PI * 4. / 3;
         float d_ = tmp_t4.sum_up(sph_v[i]);
+        d_ *= M_PI * M_PI * M_PI * M_PI * 2. / 3;
         if (AnhType == anh_all) {
-          d = (compf(1 + c_, d_) * (sph_v[i] * M).DotProd(sph_v[i])).mod();
+          d = (compf(1 + d_, -c_) * (sph_v[i] * M).DotProd(sph_v[i])).mod();
         }
-        else {
-          d = compf(c_, d_).mod();
+        else if (AnhType == anh_anh) {
+          d = compf(d_, -c_).mod();
+        }
+        else if (AnhType == anh_anh_C) {
+          d = -c_;
+        }
+        else if (AnhType == anh_anh_D) {
+          d = d_;
         }
         if (d == 0) {
           continue;
@@ -130,6 +117,7 @@ void TRMDSADP::Create(const olxstr& cName) {
       
       int sign = 1;
       if (d < 0) {
+        vm = 0;
         sign = -1;
         d = -d;
       }

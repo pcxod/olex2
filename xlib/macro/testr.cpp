@@ -280,13 +280,14 @@ void XLibMacros::macTestR(TStrObjList &Cmds, const TParamList &Options,
     TBasicApp::NewLogEntry() << olx_print("%4.3lft %4.3lft %4.3lft",
       rot_m[i][0], rot_m[i][1], rot_m[i][2]);
   }
+  double tol = olx_sqr(Options.FindValue("t", "0.25").ToDouble());
   TRefList out;
   for (size_t i = 0; i < rstat.refs.Count(); i++) {
     TReflection &r = *(new TReflection(rstat.refs[i]));
     r.SetBatch(1);
     vec3d tr = rot_m * vec3d(rstat.refs[i].GetHkl());
     vec3i tri = tr.Round<int>();
-    if (TReflection::ToCart(tr - tri, hm).QLength() > 0.005*0.005) {
+    if ((tr - tri).QLength() > tol) {
       out.Add(r);
       continue;
     }

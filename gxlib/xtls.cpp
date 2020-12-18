@@ -40,7 +40,7 @@ TDUserObj *XTLS::CreateUdiffObject(const vec3f_alist &crds,
   TGXApp &app = TGXApp::GetInstance();
   TDUserObj *obj = app.FindUserObject(obj_name);
   if (obj == 0) {
-    TGlMaterial m("85;0;4286611584;4290822336;64");
+    TGlMaterial m("16469;4278190080;4286611584;4290822336;64");
     m.SetColorMaterial(true);
     obj = new TDUserObj(app.GetRenderer(), sgloTriangles, obj_name);
     obj->SetMaterial(m);

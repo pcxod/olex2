@@ -29,6 +29,7 @@
 #include "tests/sys_test.h"
 #include "tests/spline_test.h"
 #include "tests/matrix_test.h"
+#include "tests/tensor_test.h"
 #include "tests/mat_id_test.h"
 #include "tests/symmparser_test.h"
 #include "tests/vcov_test.h"
@@ -99,6 +100,8 @@ int main(int argc, char* argv[]) {
   tests.Add(&test::FuncTests);
   tests.Add(&test::PtrTests);
   tests.Add(&test::BindingTests);
+  tests.Add(&test::TensorTransform);
+
   tests.run();
   if( argc > 1 )  {
     olxstr data_dir = argv[1];
