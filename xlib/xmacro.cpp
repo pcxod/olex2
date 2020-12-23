@@ -5352,10 +5352,10 @@ void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options,
     SFUtil::CalcSF(xapp.XFile(), refs, F);
   }
   double scale_k = 1, scale_a = 0;
-  olxstr scale_str = Options.FindValue("scale", "regression");
+  olxstr scale_str = Options.FindValue("scale", convert ? "none" : "regression");
   if (scale_str.Equalsi("none")) {
   }
-  if (scale_str.Equalsi("external")) {
+  else if (scale_str.Equalsi("external")) {
     scale_k = 1. / olx_sqr(xapp.XFile().GetRM().Vars.GetVar(0).GetValue());
   }
   else if (scale_str.Equalsi("simple")) {
@@ -5411,9 +5411,9 @@ void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options,
     TReflection& r = refs[i];
     double Fo2 = r.GetI()*scale_k + scale_a;
     double sigFo2 = r.GetS()*scale_k;
-    double Fo_sq = F[i].qmod();
+    double Fc_sq = F[i].qmod();
     if (exti != 0) {
-      double k = cr.CalcForF2(refs[i].GetHkl(), Fo_sq);
+      double k = cr.CalcForF2(refs[i].GetHkl(), Fc_sq);
       Fo2 *= k;
       sigFo2 *= k;
     }
@@ -5446,7 +5446,7 @@ void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options,
       }
     }
     else if (list_n == 4) {
-      row[3] = new cetString(olxstr::FormatFloat(2, Fo_sq));
+      row[3] = new cetString(olxstr::FormatFloat(2, Fc_sq));
       row[4] = new cetString(olxstr::FormatFloat(2, Fo2));
       row[5] = new cetString(olxstr::FormatFloat(2, sigFo2));
       row[6] = new cetString('o');

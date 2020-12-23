@@ -122,6 +122,12 @@ void TRMDSADP::Create(const olxstr& cName) {
         d = -d;
       }
       if (Type == type_rmsd) {
+        if (AnhType == anh_anh_C) {
+          d = pow(d, 1./3);
+        }
+        else if (AnhType == anh_anh_D) {
+          d = pow(d, 1. / 4);
+        }
         d = sqrt(d);
       }
       vecs[i] = a.crd() + sph_v[i] * (Scale * d);

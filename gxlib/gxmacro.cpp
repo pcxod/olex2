@@ -405,7 +405,7 @@ void GXLibMacros::Export(TLibrary& lib) {
       "between Uobs and Utls will be rendered&;"
       "s-scale [125]&;"
       "g-do not use gradient&;"
-      "start_color-starting colur for the gradient&;"
+      "start_color-starting color for the gradient&;"
       "end_color-final gradient color&;"
       "quality-the sphere quality [5]&;"
       "q-quiet&;"

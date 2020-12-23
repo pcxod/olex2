@@ -2464,8 +2464,7 @@ void TMainForm::OnNavigation(wxNavigationKeyEvent& event) {
     event.Skip(false);
   }
   else {
-    FGlCanvas->SetFocus();
-    event.Skip(false);
+    event.Skip(true);
   }
 }
 //..............................................................................

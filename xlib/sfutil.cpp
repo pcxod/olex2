@@ -126,11 +126,11 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
     // list 3, F
     size_t mfInd = hklLoop->ColIndex("_refln_F_meas");
     size_t sfInd = hklLoop->ColIndex("_refln_F_sigma");
-    bool squared = false;
+    bool fo_squared = false, fc_squared = false;;
     if (mfInd == InvalidIndex) {
       mfInd = hklLoop->ColIndex("_refln_F_squared_meas");
       sfInd = hklLoop->ColIndex("_refln_F_squared_sigma");
-      squared = true;
+      fo_squared = true;
     }
     const size_t aInd = hklLoop->ColIndex("_refln_A_calc");
     const size_t bInd = hklLoop->ColIndex("_refln_B_calc");
@@ -147,6 +147,7 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
     }
     int list = (fcInd | fcpInd) != InvalidIndex ? 6
       : ((aInd | bInd) != InvalidIndex ? 3 : -6);
+    fc_squared = list == -6;
     refs.SetCapacity(hklLoop->RowCount());
     F.SetCount(hklLoop->RowCount());
     for (size_t i=0; i < hklLoop->RowCount(); i++) {
@@ -157,8 +158,9 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
         row[lInd]->GetStringValue().ToInt(),
         row[mfInd]->GetStringValue().ToDouble(),
         row[sfInd]->GetStringValue().ToDouble());
-      if (squared) {
-        ref.SetI(sqrt(olx_max(0.0, ref.GetI())));
+      if (!fo_squared) {
+        ref.SetS(olx_abs(ref.GetI())*ref.GetS() * sqrt(2.0));
+        ref.SetI(olx_sqr(ref.GetI()));
       }
       compd rv;
       if (list == 3) {
@@ -174,15 +176,15 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
           row[fcpInd]->GetStringValue().ToDouble()*M_PI / 180);
       }
       if (mapType == mapTypeDiff) {
-        double dI = (ref.GetI() - rv.mod());
+        double dI = (sqrt(olx_max(0, ref.GetI())) - rv.mod());
         F[i] = compd::polar(dI, rv.arg());
       }
       else if (mapType == mapType2OmC) {
-        double dI = 2*ref.GetI() - rv.mod();
+        double dI = 2* sqrt(olx_max(0, ref.GetI())) - rv.mod();
         F[i] = compd::polar(dI, rv.arg());
       }
       else if (mapType == mapTypeObs) {
-        F[i] = compd::polar(ref.GetI(), rv.arg());
+        F[i] = compd::polar(sqrt(olx_max(0, ref.GetI())), rv.arg());
       }
       else {
         F[i] = rv;
