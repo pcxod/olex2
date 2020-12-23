@@ -33,7 +33,7 @@ TBasicApp::TBasicApp(const olxstr& FileName, bool read_options)
     OnTimer(ActionList.New("TIMER")),
     OnIdle(ActionList.New("IDLE"))
 {
-  if (Instance_() != NULL) {
+  if (Instance_() != 0) {
     throw TFunctionFailedException(__OlxSourceInfo,
       "an application instance already exists");
   }
@@ -56,13 +56,13 @@ TBasicApp::TBasicApp(const olxstr& FileName, bool read_options)
   if (read_options) {
     ReadOptions(GetBaseDir() + ".options");
   }
-  OnIdle.Add(new TActionHandler());
+  OnTimer.Add(new TActionHandler());
 }
 //..............................................................................
 TBasicApp::~TBasicApp() {
   Instance_() = 0;
   delete Log;
-  if (LogFile != NULL) {
+  if (LogFile != 0) {
     delete LogFile;
   }
 }
@@ -70,23 +70,26 @@ TBasicApp::~TBasicApp() {
 olxstr TBasicApp::GetModuleName() {
   olxstr name;
 #ifdef __WIN32__
-  olxch * bf;
+  olx_array_ptr<olxch> bf;
   DWORD rv = MAX_PATH;
   int n=1;
   while (rv == MAX_PATH) {
-    if (n > 1) delete [] bf;
+    if (n > 1) {
+      delete[] bf.release();
+    }
     bf = new olxch[MAX_PATH*n];
     rv = GetModuleFileName((HMODULE)Module().GetHandle(), bf, MAX_PATH*n);
     n++;
   }
-  name = olxstr::FromExternal(bf, rv);
+  name = olxstr::FromExternal(bf.release(), rv);
 #else
   Dl_info dl_info;
   dladdr((const void *)&TBasicApp::GetModuleMD5Hash, &dl_info);
   name = olxstr::FromCStr(dl_info.dli_fname);
   if (!TEFile::IsAbsolutePath(name)) {
-    if (HasInstance())
+    if (HasInstance()) {
       name = TEFile::ExpandRelativePath(name, GetBaseDir());
+    }
     else {
       name = TEFile::ExpandRelativePath(name, TEFile::CurrentDir());
     }
@@ -136,7 +139,7 @@ const olxstr &TBasicApp::GetModuleMD5Hash() {
 }
 //..............................................................................
 bool TBasicApp::HasInstance()  {
-  return Instance_() != NULL;
+  return Instance_() != 0;
 }
 //..............................................................................
 void TBasicApp::ReadOptions(const olxstr &fn) {
@@ -187,10 +190,12 @@ void TBasicApp::SaveOptions() const {
   try {
     TSettingsFile st;
     olxstr fn = GetConfigDir() + ".options";
-    if (TEFile::Exists(fn))
+    if (TEFile::Exists(fn)) {
       st.LoadSettings(fn);
-    for (size_t i=0; i < Options.Count(); i++)
+    }
+    for (size_t i = 0; i < Options.Count(); i++) {
       st.SetParam(Options.GetName(i), Options.GetValue(i));
+    }
     st.SaveSettings(fn);
   }
   catch (const TExceptionBase &e) {
@@ -198,35 +203,39 @@ void TBasicApp::SaveOptions() const {
   }
 }
 //..............................................................................
-olxstr TBasicApp::GuessBaseDir(const olxstr& _path, const olxstr& var_name)  {
+olxstr TBasicApp::GuessBaseDir(const olxstr& _path, const olxstr& var_name) {
   olxstr bd, path;
   TStrList toks;
   if (!_path.StartsFrom(' ')) { // empty executable name
     TParamList::StrtokParams(_path, ' ', toks);
   }
-  if( !toks.IsEmpty() )
+  if (!toks.IsEmpty()) {
     path = toks[0];
-  if( !var_name.IsEmpty() )  {
+  }
+  if (!var_name.IsEmpty()) {
     bd = olx_getenv(var_name);
   }
   else {
-    if( !TEFile::IsDir(path) )
+    if (!TEFile::IsDir(path)) {
       bd = TEFile::ExtractFilePath(path);
-    else
+    }
+    else {
       bd = path;
+    }
     bd = TEFile::ExpandRelativePath(bd, TEFile::CurrentDir());
   }
-  if( bd.IsEmpty() || !TEFile::Exists(bd) ) {
+  if (bd.IsEmpty() || !TEFile::Exists(bd)) {
     bd = TEFile::CurrentDir();
   }
   TEFile::AddPathDelimeterI(bd);
   olxstr en = TEFile::ExtractFileName(path);
-  if( en.IsEmpty() )
+  if (en.IsEmpty()) {
     en = "unknown.exe";
+  }
   return bd << en;
 }
 //..............................................................................
-const olxstr& TBasicApp::SetBaseDir(const olxstr& _bd)  {
+const olxstr& TBasicApp::SetBaseDir(const olxstr& _bd) {
   olxstr bd = TEFile::ExtractFilePath(olxstr(_bd).Trim('"').Trim('\''));
   if (!TEFile::Exists(bd) || !TEFile::IsDir(bd)) {
     bd = TEFile::ExtractFilePath(TBasicApp::GetModuleName());
@@ -242,27 +251,29 @@ const olxstr& TBasicApp::SetBaseDir(const olxstr& _bd)  {
   inst.BaseDirWriteable = false;
   // and test it now
   const olxstr tmp_dir = inst.BaseDir + "_t__m___p____DIR";
-  if( TEFile::Exists(tmp_dir) )  {  // would be odd
-    if( TEFile::RmDir(tmp_dir) )
+  if (TEFile::Exists(tmp_dir)) {  // would be odd
+    if (TEFile::RmDir(tmp_dir)) {
       inst.BaseDirWriteable = true;
+    }
   }
-  else if( TEFile::MakeDir(tmp_dir) )  {
-    if( TEFile::RmDir(tmp_dir) )
+  else if (TEFile::MakeDir(tmp_dir)) {
+    if (TEFile::RmDir(tmp_dir)) {
       inst.BaseDirWriteable = true;
+    }
   }
   return inst.BaseDir;
 }
 //..............................................................................
 const olxstr& TBasicApp::SetSharedDir(const olxstr& cd) {
   TBasicApp& inst = GetInstance();
-  if( !TEFile::Exists(cd) )  {
-    if( !TEFile::MakeDir(cd) )
-      if( !TEFile::MakeDirs(cd) ) {
+  if (!TEFile::Exists(cd)) {
+    if (!TEFile::MakeDir(cd))
+      if (!TEFile::MakeDirs(cd)) {
         throw TFunctionFailedException(__OlxSourceInfo,
           olxstr("Could not create common dir: ").quote() << cd);
       }
   }
-  else if( !TEFile::IsDir(cd) )  {
+  else if (!TEFile::IsDir(cd)) {
     throw TFunctionFailedException(__OlxSourceInfo,
       olxstr("Invalid shared dir: ").quote() << cd);
   }
@@ -291,8 +302,9 @@ void TBasicApp::SetConfigdDir(const olxstr &cd) {
   ConfigDir = (TEFile::IsAbsolutePath(cd) ? cd : _GetInstanceDir() + cd);
   TEFile::AddPathDelimeterI(ConfigDir);
   if (!TEFile::Exists(ConfigDir)) {
-    if (!TEFile::MakeDirs(ConfigDir))
+    if (!TEFile::MakeDirs(ConfigDir)) {
       throw TInvalidArgumentException(__OlxSourceInfo, "ConfigDir");
+    }
   }
 }
 //..............................................................................
@@ -349,13 +361,18 @@ olxstr TBasicApp::GetPlatformString_(bool) const {
 }
 //..............................................................................
 bool TBasicApp::CreateLogFile(const olxstr &file_name) {
-  if (LogFile != NULL) return false;
+  if (LogFile != 0) {
+    return false;
+  }
   olxstr l_name=file_name;
   if (!TEFile::IsAbsolutePath(file_name)) {
-    if (!TEFile::IsDir(InstanceDir)) return false;
-    olxstr ld = InstanceDir + "logs";
-    if (!TEFile::Exists(ld) && !TEFile::MakeDir(ld))
+    if (!TEFile::IsDir(InstanceDir)) {
       return false;
+    }
+    olxstr ld = InstanceDir + "logs";
+    if (!TEFile::Exists(ld) && !TEFile::MakeDir(ld)) {
+      return false;
+    }
     l_name = TEFile::AddPathDelimeterI(ld) << file_name;
     olxstr ts = TETime::FormatDateTime("yyMMdd-hhmmss", TETime::Now());
     l_name << '-' << ts << ".olx.log";
@@ -372,8 +389,9 @@ bool TBasicApp::CreateLogFile(const olxstr &file_name) {
 //..............................................................................
 void TBasicApp::CleanupLogs(const olxstr &dir_name) {
   olxstr dn = dir_name;
-  if (dn.IsEmpty())
+  if (dn.IsEmpty()) {
     dn = InstanceDir + "/logs";
+  }
   if (!TEFile::IsDir(dn)) return;
   TStrList log_files;
   TEFile::ListDir(dn, log_files, "*.log", sefAll);
@@ -485,7 +503,7 @@ void BAPP_Profiling(const TStrObjList& Params, TMacroData &E)  {
 //..............................................................................
 void BAPP_LogFileName(const TStrObjList& Params, TMacroData &E)  {
   TEFile *f = TBasicApp::GetInstance().GetLogFile();
-  E.SetRetVal(f == NULL ? EmptyString() : f->GetName());
+  E.SetRetVal(f == 0 ? EmptyString() : f->GetName());
 }
 //..............................................................................
 void BAPP_BaseDir(const TStrObjList& Params, TMacroData &E)  {

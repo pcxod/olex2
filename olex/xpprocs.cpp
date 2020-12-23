@@ -925,12 +925,15 @@ void TMainForm::macClear(TStrObjList &Cmds, const TParamList &Options,
 void TMainForm::macRota(TStrObjList &Cmds, const TParamList &Options, TMacroData &Error)  {
   if( Cmds.Count() == 2 )  {  // rota x 90 syntax
     double angle = Cmds[1].ToDouble();
-    if( Cmds[0] == "1" || Cmds[0] == "x"  || Cmds[0] == "a" )
-      FXApp->GetRenderer().GetBasis().RotateX(FXApp->GetRenderer().GetBasis().GetRX()+angle);
-    else if( Cmds[0] == "2" || Cmds[0] == "y"  || Cmds[0] == "b" )
-      FXApp->GetRenderer().GetBasis().RotateY(FXApp->GetRenderer().GetBasis().GetRY()+angle);
-    else if( Cmds[0] == "3" || Cmds[0] == "z"  || Cmds[0] == "c" )
-      FXApp->GetRenderer().GetBasis().RotateZ(FXApp->GetRenderer().GetBasis().GetRZ()+angle);
+    if (Cmds[0] == "1" || Cmds[0] == "x" || Cmds[0] == "a") {
+      FXApp->GetRenderer().GetBasis().RotateX(FXApp->GetRenderer().GetBasis().GetRX() + angle);
+    }
+    else if (Cmds[0] == "2" || Cmds[0] == "y" || Cmds[0] == "b") {
+      FXApp->GetRenderer().GetBasis().RotateY(FXApp->GetRenderer().GetBasis().GetRY() + angle);
+    }
+    else if (Cmds[0] == "3" || Cmds[0] == "z" || Cmds[0] == "c") {
+      FXApp->GetRenderer().GetBasis().RotateZ(FXApp->GetRenderer().GetBasis().GetRZ() + angle);
+    }
   }
   /* rota x y z 90 1 syntax - rotation around (x,y,z) 90 degrees with 1 degree
   inc
@@ -941,7 +944,12 @@ void TMainForm::macRota(TStrObjList &Cmds, const TParamList &Options, TMacroData
     FRotationVector[2] = Cmds[2].ToDouble();
     FRotationAngle = Cmds[3].ToDouble();
     FRotationIncrement = Cmds[4].ToDouble();
-    FMode = FMode | mRota;
+    if (FRotationVector.IsEmpty()) {
+      FMode &= ~mRota;
+    }
+    else {
+      FMode = FMode | mRota;
+    }
   }
   else  {
     Error.ProcessingError(__OlxSrcInfo, "wrong parameters");

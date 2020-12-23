@@ -47,7 +47,7 @@ protected:
   TStrList Arguments;
   virtual olxstr GetPlatformString_(bool full) const;
 
-  /* this list of actions will be processes in the next OnIdle call
+  /* this list of actions will be processes in the next OnTimer call
   (from the main thread)
   */
   TTypeList<IOlxAction> Actions;

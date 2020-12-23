@@ -1676,7 +1676,9 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
       FXApp->GetRenderer().GetBasis().RotateZ(
         FXApp->GetRenderer().GetBasis().GetRZ() + FRotationIncrement*FRotationVector[2]);
       FRotationAngle -= olx_abs(FRotationVector.Length()*FRotationIncrement);
-      if (FRotationAngle < 0)  FMode ^= mRota;
+      if (FRotationAngle < 0) {
+        FMode ^= mRota;
+      }
       Draw = true;
     }
     if ((FMode & mFade) != 0) {
