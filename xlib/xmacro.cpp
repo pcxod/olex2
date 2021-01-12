@@ -233,7 +233,8 @@ void XLibMacros::Export(TLibrary& lib)  {
     "p-put added H atoms to given part (sometimes needed when add/del bonds) "
     "are used in conjunction with parts&;"
     "a-changes AFIX to the given value (like 3 is needed sometimes for complex)"
-    " connectivity",
+    " connectivity&;"
+    "d-distance for the AFIX",
     fpAny,
     "Adds hydrogen atoms to all or provided atoms, however the ring atoms are "
     "treated separately and added all the time");
@@ -830,7 +831,7 @@ void XLibMacros::Export(TLibrary& lib)  {
     "Returns location of the folder, where Olex2 stores structure related "
     "data");
   xlib_InitFunc(HAddCount, fpNone | psFileLoaded,
-    "calculates the number of H atoms HAdd will add");
+    "Calculates the number of H atoms HAdd will add");
 }
 //.............................................................................
 void XLibMacros::macTransform(TStrObjList &Cmds,
@@ -1641,6 +1642,7 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options,
       ca.SetDetached(false);
     }
   }
+  const size_t original_ac = au.AtomCount();
   TActionQueueLock q_draw(XApp.FindActionQueue(olxappevent_GL_DRAW));
   try {
     TLattice &latt = XApp.XFile().GetLattice();
@@ -1810,6 +1812,26 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options,
   catch(const TExceptionBase& e)  {
     Error.ProcessingError(__OlxSrcInfo, e.GetException()->GetError());
   }
+
+  try {
+    double h_d = Options.FindValue('d', "-1").ToDouble();
+    if (h_d > 0) {
+      for (size_t i = original_ac; i < au.AtomCount(); i++) {
+        TCAtom& a = au.GetAtom(i);
+        if (a.IsDeleted() || a.GetParentAfixGroup() == 0) {
+          continue;
+        }
+        TCAtom& pivot = a.GetParentAfixGroup()->GetPivot();
+        vec3d d = au.Orthogonalise(a.ccrd() - pivot.ccrd()).NormaliseTo(h_d);
+        a.ccrd() = pivot.ccrd() + au.Fractionalise(d);
+        a.GetParentAfixGroup()->SetD(h_d);
+      }
+    }
+  }
+  catch (const TExceptionBase& e) {
+    Error.ProcessingError(__OlxSrcInfo, e.GetException()->GetError());
+  }
+
   XApp.XFile().GetLattice().Init();
   // look at ring N...
   if (Hfix == 0) {
@@ -1879,11 +1901,6 @@ void XLibMacros::macHImp(TStrObjList& Cmds, const TParamList& Options,
   TMacroData& Error)
 {
   TXApp& XApp = TXApp::GetInstance();
-  if (XApp.XFile().GetLattice().IsGenerated()) {
-    Error.ProcessingError(__OlxSrcInfo,
-      "The procedure is not applicable for the grown structure");
-    return;
-  }
   bool increase = false,
     decrease = false;
   if (!Cmds[0].IsNumber()) {
@@ -1903,8 +1920,9 @@ void XLibMacros::macHImp(TStrObjList& Cmds, const TParamList& Options,
   TSAtomPList satoms = XApp.FindSAtoms(Cmds, true);
   const double delta = XApp.XFile().GetLattice().GetDelta();
   for (size_t i = 0; i < satoms.Count(); i++) {
-    if (satoms[i]->GetType() != iHydrogenZ)
+    if (satoms[i]->GetType() != iHydrogenZ) {
       continue;
+    }
     TSAtom& h = *satoms[i], * attached = 0;
     size_t ac = 0;
     for (size_t j = 0; j < h.NodeCount(); j++) {
@@ -1919,10 +1937,12 @@ void XLibMacros::macHImp(TStrObjList& Cmds, const TParamList& Options,
       continue;
     }
     vec3d v(h.crd() - attached->crd());
-    if (increase || decrease)
+    if (increase || decrease) {
       v.NormaliseTo(v.Length() + val);
-    else
+    }
+    else {
       v.NormaliseTo(val);
+    }
     v += attached->crd();
     double qd1 = v.QDistanceTo(attached->crd());
     double qd2 = attached->GetType().r_bonding + h.GetType().r_bonding + delta;

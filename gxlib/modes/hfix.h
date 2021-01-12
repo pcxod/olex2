@@ -15,6 +15,7 @@
 
 class THfixMode : public AModeWithLabels {
   int Hfix;
+  double d;
 protected:
   TXlConGen* xlConGen;
 public:
@@ -24,6 +25,7 @@ public:
     if (!gxapp.CheckFileType<TIns>()) {
       return false;
     }
+    d = Options.FindValue('d', "-1").ToDouble();
     Hfix = Cmds.IsEmpty() ? 0 : Cmds[0].ToInt();
     xlConGen = new TXlConGen(gxapp.XFile().GetRM());
     SetUserCursor(Hfix, "hfix");
@@ -55,7 +57,7 @@ public:
       }
       else {
         olex2.processMacro(
-          olxstr("hadd ") << Hfix << " #c" << XA->CAtom().GetId());
+          olxstr("hadd ") << Hfix << " #c" << XA->CAtom().GetId() << " -d=" << d);
       }
       return true;
     }

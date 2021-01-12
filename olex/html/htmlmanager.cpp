@@ -618,6 +618,9 @@ void THtmlManager::funGetValue(const TStrObjList &Params, TMacroData &E) {
   else {
     E.SetRetVal(c.html->GetObjectValue(c.ctrl));
   }
+  if (Params.Count() == 2 && E.GetRetVal().IsEmpty()) {
+    E.SetRetVal(Params[1]);
+  }
 }
 //.............................................................................
 void THtmlManager::funSetValue(const TStrObjList &Params, TMacroData &E) {
@@ -1344,8 +1347,9 @@ TLibrary *THtmlManager::ExportLibrary(const olxstr &name) {
   InitMacroD(Library, THtmlManager, LstObj, EmptyString(),
     fpNone|fpOne,
     "Prints the list of available HTML objects");
-  this_InitFuncD(GetValue, fpOne,
-    "Returns value of specified object");
+  this_InitFuncD(GetValue, fpOne|fpTwo,
+    "Returns value of specified object. When the value is empty and two params"
+    " are provided - the second parameters is returned instead");
   this_InitFuncD(GetData, fpOne,
     "Returns data associated with specified object");
   this_InitFuncD(GetState, fpOne|fpTwo,
