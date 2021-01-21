@@ -742,9 +742,9 @@ public:
   /* column vector */
   template <class AT> TVector3<AT> operator * (const TVector3<AT>& a) const {
     return TVector3<AT>(
-      a[0] * data[0][0] + a[1] * data[0][1] + a[2] * data[0][2],
-      a[0] * data[1][0] + a[1] * data[1][1] + a[2] * data[1][2],
-      a[0] * data[2][0] + a[1] * data[2][1] + a[2] * data[2][2]);
+      static_cast<AT>(a[0] * data[0][0] + a[1] * data[0][1] + a[2] * data[0][2]),
+      static_cast<AT>(a[0] * data[1][0] + a[1] * data[1][1] + a[2] * data[1][2]),
+      static_cast<AT>(a[0] * data[2][0] + a[1] * data[2][1] + a[2] * data[2][2]));
   }
   // for real symmetric matrices only
   static void EigenValues(TMatrix33& A, TMatrix33& I) {

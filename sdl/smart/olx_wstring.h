@@ -23,6 +23,7 @@ BeginEsdlNamespace()
 
 class TWString : public TTIString<wchar_t>, public IOlxObject {
 public:
+  typedef TTIString<wchar_t> parent_t;
   class CharW : public linked_operators<wchar_t, CharW, char> {
     size_t Index;
     TWString* Instance;
@@ -103,19 +104,6 @@ protected:
     }
     return *this;
   }
-  inline const wchar_t* printFormat(const char)                   const { return L"%c"; }
-  inline const wchar_t* printFormat(const short int)              const { return L"%hd"; }
-  inline const wchar_t* printFormat(const unsigned short int)     const { return L"%hu"; }
-  inline const wchar_t* printFormat(const int)                    const { return L"%d"; }
-  inline const wchar_t* printFormat(const unsigned int)           const { return L"%u"; }
-  inline const wchar_t* printFormat(const long int)               const { return L"%ld"; }
-  inline const wchar_t* printFormat(const unsigned long int)      const { return L"%lu"; }
-  inline const wchar_t* printFormat(const long long int)          const { return L"%lld"; }
-  inline const wchar_t* printFormat(const unsigned long long int) const { return L"%llu"; }
-  inline const wchar_t* printFormat(const float)                  const { return L"%f"; }
-  inline const wchar_t* printFormat(const double)                 const { return L"%lf"; }
-  inline const wchar_t* printFormat(const long double)            const { return L"%Lf"; }
-
   void OnCopy(const TWString&);
   void init(const char* str, size_t len = InvalidIndex);
 public:
@@ -134,11 +122,11 @@ public:
   // float numbers need trimming of the 0000
   TWString(const float& v) {
     setTypeValue(printFormat(v), v);
-    TrimFloat();
+    parent_t::TrimFloat();
   }
   TWString(const double& v) {
     setTypeValue(printFormat(v), v);
-    TrimFloat();
+    parent_t::TrimFloat();
   }
 
   virtual ~TWString() {}
@@ -150,33 +138,14 @@ public:
   template <typename T> inline TWString& operator << (const T& v) {
     return writeType(printFormat(v), v);
   }
-  TWString& TrimFloat() {
-    size_t fp_pos = InvalidIndex;
-    for (size_t i = 0; i < _Length; i++) {
-      if (CharAt(i) == L'.') {
-        fp_pos = i;
-        break;
-      }
-    }
-    if (fp_pos == InvalidIndex) {
-      return *this;
-    }
-    while (_Length > 1 && CharAt(_Length - 1) == L'0') {
-      _Length--;
-    }
-    if (_Length > 0 && CharAt(_Length - 1) == L'.') {
-      _Length--;
-    }
-    return *this;
-  }
   TWString& operator << (const float& v) {
     writeType(printFormat(v), v);
-    TrimFloat();
+    parent_t::TrimFloat();
     return *this;
   }
   TWString& operator << (const double& v) {
     writeType(printFormat(v), v);
-    TrimFloat();
+    parent_t::TrimFloat();
     return *this;
   }
   /* there is just no way with borland to put it TTIString as it would swear about
@@ -190,8 +159,9 @@ public:
 
   TWString& Append(const char* data, size_t len) {
     checkBufferForModification(_Length + len);
-    for (size_t i = 0; i < len; i++)
+    for (size_t i = 0; i < len; i++) {
       SData->Data[_Start + _Length + i] = data[i];
+    }
     _Length += len;
     return *this;
   }
@@ -206,19 +176,21 @@ public:
   }
   TWString& operator = (const float& v) {
     assignTypeValue(printFormat(v), v);
-    TrimFloat();
+    parent_t::TrimFloat();
     return *this;
   }
   TWString& operator = (const double& v) {
     assignTypeValue(printFormat(v), v);
-    TrimFloat();
+    parent_t::TrimFloat();
     return *this;
   }
 protected:
   inline wchar_t* Data() const { return ((SData == 0) ? 0 : &SData->Data[_Start]); }
 public:
   const char* c_str() const;
-  inline const wchar_t* u_str() const { return ((SData == 0) ? L"" : TTIString<wchar_t>::u_str()); }
+  inline const wchar_t* u_str() const {
+    return ((SData == 0) ? L"" : TTIString<wchar_t>::u_str());
+  }
   inline const wchar_t* wc_str() const { return u_str(); }
   inline CharW operator[] (size_t i) {
 #ifdef _DEBUG
@@ -248,6 +220,18 @@ public:
   //............................................................................
   virtual TIString ToString() const;
   //............................................................................
+  static const wchar_t* printFormat(const char)                   { return L"%c"; }
+  static const wchar_t* printFormat(const short int)              { return L"%hd"; }
+  static const wchar_t* printFormat(const unsigned short int)     { return L"%hu"; }
+  static const wchar_t* printFormat(const int)                    { return L"%d"; }
+  static const wchar_t* printFormat(const unsigned int)           { return L"%u"; }
+  static const wchar_t* printFormat(const long int)               { return L"%ld"; }
+  static const wchar_t* printFormat(const unsigned long int)      { return L"%lu"; }
+  static const wchar_t* printFormat(const long long int)          { return L"%lld"; }
+  static const wchar_t* printFormat(const unsigned long long int) { return L"%llu"; }
+  static const wchar_t* printFormat(const float)                  { return L"%f"; }
+  static const wchar_t* printFormat(const double)                 { return L"%lf"; }
+  static const wchar_t* printFormat(const long double)            { return L"%Lf"; }
 };
 
 #include "strbuf.h"

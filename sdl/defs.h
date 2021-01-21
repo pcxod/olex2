@@ -10,25 +10,6 @@
 #ifndef __olx_sdl_defs_H
 #define __olx_sdl_defs_H
 
-#ifndef NULL
-  #ifdef __cplusplus
-    #define NULL    0
-  #else
-    #define NULL    ((void *)0)
-   #endif
-#endif
-
-#ifndef olx_min
-  #define olx_min(a, b)  (((a) < (b)) ? (a) : (b))
-#endif
-#ifndef olx_max
-  #define olx_max(a, b)  (((a) > (b)) ? (a) : (b))
-#endif
-
-#ifndef M_PI
-  #define M_PI 3.14159265358979323846
-#endif
-
 #ifndef __WIN32__
   #ifdef __WINDOWS__
     #define __WIN32__ 1
@@ -47,12 +28,6 @@
 
 #ifndef __FUNC__
   #define __FUNC__ __FUNCTION__
-#endif
-
-// just a complaint about functions having loops, are not expandable inline
-#ifdef __BORLANDC__
-  #pragma warn -8027
-  #pragma warn -8022  //hidden virtual functions ...
 #endif
 
 // mingw gcc
@@ -74,7 +49,7 @@
   #include <stdint.h>
 #endif
 
-#ifdef __WIN32__  //linux
+#ifdef __WIN32__ 
 # if (defined(_MSC_VER) && (_MSC_VER >= 1600)) || defined(__GNUC__)
     #include <stdint.h>
 # else
@@ -109,6 +84,25 @@
 //#  pragma warning(3:4263)
 // secure functions alternative warning
 #  pragma warning(disable:4996)
+#endif
+
+#ifndef NULL
+#ifdef __cplusplus
+#define NULL    0
+#else
+#define NULL    ((void *)0)
+#endif
+#endif
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
+#ifndef olx_min
+#define olx_min(a, b)  (((a) < (b)) ? (a) : (b))
+#endif
+#ifndef olx_max
+#define olx_max(a, b)  (((a) > (b)) ? (a) : (b))
 #endif
 
 #endif

@@ -1815,7 +1815,7 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options,
 
   try {
     double h_d = Options.FindValue('d', "-1").ToDouble();
-    if (h_d > 0) {
+    if (h_d > 0.5 && h_d < 2) {
       for (size_t i = original_ac; i < au.AtomCount(); i++) {
         TCAtom& a = au.GetAtom(i);
         if (a.IsDeleted() || a.GetParentAfixGroup() == 0) {

@@ -7,9 +7,10 @@
 * the root folder.                                                            *
 ******************************************************************************/
 
-#include "olx_cstring.h"
-#include "olx_wstring.h"
 #include <locale.h>
+#include "../ebase.h"
+#include "olx_wstring.h"
+#include "olx_cstring.h"
 #include "../egc.h"
 
 TWString::TWString() {

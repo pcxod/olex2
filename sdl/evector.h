@@ -10,6 +10,7 @@
 #ifndef __olx_evector_H
 #define __olx_evector_H
 #include <math.h>
+#include <stdarg.h>
 #include "ebase.h"
 #include "typelist.h"
 #include "tptrlist.h"
@@ -60,7 +61,7 @@ public:
   }
 };
 
-template <typename FT> class TVector : public VecOp<TVector<FT>, FT> {
+template <typename FT> class TVector : public VecOp<TVector<FT>, FT>, public IOlxObject {
 protected:
   size_t Fn;
   FT *FData;
@@ -68,21 +69,6 @@ public:
   TVector()
     : Fn(0), FData(0)
   {}
-
-  TVector(FT a, FT b, FT c)
-    : Fn(3)
-  {
-    FData = new FT[Fn];
-    FData[0] = a;  FData[1] = b;  FData[2] = c;
-  }
-
-  TVector(FT a, FT b, FT c, FT d, FT e, FT f)
-    : Fn(6)
-  {
-    FData = new FT[Fn];
-    FData[0] = a;  FData[1] = b;  FData[2] = c;
-    FData[3] = d;  FData[4] = e;  FData[5] = f;
-  }
 
   template <typename AType> TVector(const TVector<AType>& V)
     : Fn(V.Count())
@@ -384,27 +370,24 @@ public:
     return true;
   }
 
-  // for console APP only
-  void Print() const {
-    for (size_t i = 0; i < Fn; i++) {
-      printf("%05.4e\t", FData[i]);
+  TIString ToString() const {
+    if (Fn == 0) {
+      return EmptyString();
     }
+    olxstr_buf t;
+    olxcstr fmt;
+    if (olx_is_float(olx_get_primitive_type(FData[0]))) {
+      fmt = olxcstr("%12.4") << olx_format_modifier(FData[0]) << "e";
+    }
+    else {
+      fmt = olxcstr("%6") << &olxcstr::printFormat(olx_get_primitive_type(FData[0]))[1];
+    }
+    for (size_t i = 0; i < Fn; i++) {
+      t << olx_to_str(FData[i], fmt.c_str());
+    }
+    return olxstr(t);
   }
 
-  template <typename SC> SC StrRepr() const {
-    if (Fn == 0) {
-      return SC();
-    }
-    SC rv;
-    rv << FData[0];
-    for (size_t i = 1; i < Fn; i++) {
-      rv << ", " << FData[i];
-    }
-    return rv;
-  }
-  TIString ToString() const { return StrRepr<olxstr>(); }
-  olxcstr  ToCStr() const { return StrRepr<olxcstr>(); }
-  olxwstr  ToWStr() const { return StrRepr<olxwstr>(); }
   void ToStreamSafe(IOutputStream& out) const {
     uint32_t sz = (uint32_t)Fn; //TODO: check overflow
     out.Write(&sz, sizeof(sz));
@@ -506,24 +489,21 @@ public:
     }
     return c;
   }
+  static olx_object_ptr<TVector<FT> > build(size_t c, ...) {
+    va_list argptr;
+    va_start(argptr, c);
+    TVector<FT>* r = new TVector<FT>(c);
+    for (size_t i = 0; i < c; i++) {
+      (*r)[i] = va_arg(argptr, FT);
+    }
+    va_end(argptr);
+    return olx_object_ptr<TVector<FT> >(r);
+  }
 public:
   typedef FT list_item_type;
   typedef FT number_type;
   typedef ConstVector<FT> const_vec_type;
 };
-
-typedef TVector<float> evecf;
-typedef TVector<double> evecd;
-typedef TVector<int> eveci;
-typedef TVector<size_t> evecsz;
-
-typedef TTypeList<eveci> eveci_list;
-typedef TTypeList<evecf> evecf_list;
-typedef TTypeList<evecd> evecd_list;
-
-typedef TPtrList<eveci> eveci_plist;
-typedef TPtrList<evecf> evecf_plist;
-typedef TPtrList<evecd> evecd_plist;
 
 template <typename FT>
 class SharedVector
@@ -563,6 +543,19 @@ public:
 public:
   typedef FT number_type;
 };
-  
+
+typedef TVector<int> eveci;
+typedef TVector<float> evecf;
+typedef TVector<double> evecd;
+typedef TVector<size_t> evecsz;
+
+typedef TTypeList<eveci> eveci_list;
+typedef TTypeList<evecf> evecf_list;
+typedef TTypeList<evecd> evecd_list;
+
+typedef TPtrList<eveci> eveci_plist;
+typedef TPtrList<evecf> evecf_plist;
+typedef TPtrList<evecd> evecd_plist;
+
 EndEsdlNamespace()
 #endif

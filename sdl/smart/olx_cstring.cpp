@@ -8,8 +8,9 @@
 ******************************************************************************/
 
 #include <string>
-#include "olx_wstring.h"
+#include "../ebase.h"
 #include "olx_cstring.h"
+#include "olx_wstring.h"
 #include "../egc.h"
 
 TCString::TCString()

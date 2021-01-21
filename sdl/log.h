@@ -99,6 +99,10 @@ public:
       buffer << lst.Text(NewLineSequence());
       return *this;
     }
+    LogEntry& operator << (const IOlxObject& o) {
+      buffer << o.ToString();
+      return *this;
+    }
   };
 //..............................................................................
   LogEntry NewEntry(int evt=logDefault, bool annotate=false,

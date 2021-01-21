@@ -31,11 +31,13 @@ public:
         TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid stream position");
         return 0;  // make the compiler happy
       }
-      else
+      else {
         return ~0;
+      }
     }
-    else
+    else {
       return static_cast<IT>(sz);
+    }
   }
   static size_t CheckSizeT(uint64_t sz, bool do_throw=true)  {
     return CheckSize<size_t>(sz, do_throw);

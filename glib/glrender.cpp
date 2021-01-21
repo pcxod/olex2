@@ -1797,7 +1797,7 @@ void LibPointSize(const TStrObjList& Params, TMacroData& E) {
     E.SetRetVal(olxstr(ps) << ',' << olx_gl::isEnabled(GL_POINT_SMOOTH));
   }
   else {
-    olx_gl::pointSize(Params[0].ToDouble());
+    olx_gl::pointSize(Params[0].ToFloat());
     if (Params.Count() > 1) {
       if (Params[1].ToBool()) {
         olx_gl::enable(GL_POINT_SMOOTH);

@@ -10,6 +10,7 @@
 #ifndef __olx_sdl_complex_h
 #define __olx_sdl_complex_h
 #include "ebase.h"
+#include <complex>
 BeginEsdlNamespace()
 
 template <class T> class TEComplex  {
@@ -137,6 +138,9 @@ public:
   inline TEComplex operator - (const TEComplex& _compl) const {
     return TEComplex<T>(_A-_compl._A, _B-_compl._B);
   }
+  inline TEComplex operator - () const {
+    return TEComplex<T>(-_A, -_B);
+  }
   inline TEComplex operator * (const TEComplex& _compl) const {
     return TEComplex<T>(_A*_compl._A - _B*_compl._B ,_B*_compl._A + _A*_compl._B);
   }
@@ -158,8 +162,63 @@ public:
 
 };
 
+template <typename T> T olx_abs(const TEComplex<T> &n) {
+  return n.abs();
+}
+
+template <typename T> T olx_abs(const std::complex<T>& n) {
+  return std::abs(n);
+}
+
+template <typename T1, typename T2>
+TEComplex<T2> operator / (T1 n, const TEComplex<T2>& c) {
+  T2 dv = c.qmod();
+  return TEComplex<T2>((n * c.GetRe()) / dv, (- n * c.GetIm()) / dv);
+}
+
+template <typename T> TEComplex<T> olx_exp(const TEComplex<T>& n) {
+  T v = exp(n.GetRe());
+  return TEComplex<T>(v * cos(n.GetIm()), v*sin(n.GetIm()));
+}
+
+template <typename T> T olx_sqr(const TEComplex<T>& n) {
+  return n.qmod();
+}
+
+template <typename T> T olx_exp(const T& n) {
+  return std::exp(n);
+}
+
 typedef TEComplex<double> compd;
 typedef TEComplex<float> compf;
+
+template <typename T>
+static const char* olx_format_modifier(const TEComplex<T>& n) {
+  static olxcstr fmt = olxcstr() << olx_format_modifier(n.GetRe())
+    << "e%ci%.4";
+  return fmt.c_str();
+}
+
+/* if the fmt is used - it should take re, char sign of the im and im as
+* arguments
+*/
+template <typename T>
+olxstr olx_to_str(const TEComplex<T> &n, const char* fmt = 0) {
+  if (fmt == 0) {
+    return olx_print((olxcstr("%12.4") << olx_format_modifier(n.GetRe()) << "e%ci%.4f").c_str(),
+      n.GetRe(), (char)olx_sign_char(n.GetIm()), olx_abs(n.GetIm()))
+      .RightPadding(20, ' ');
+  }
+  return olx_print(fmt,
+    n.GetRe(), (char)olx_sign_char(n.GetIm()), olx_abs(n.GetIm()))
+    .RightPadding(20, ' ');
+}
+
+template <typename T>
+const T& olx_get_primitive_type(const TEComplex<T>& n) {
+  return n.GetRe();
+}
+
 
 EndEsdlNamespace()
 #endif

@@ -69,12 +69,6 @@ public:\
   #include <WinSock2.h>
   #include <windows.h>
 #endif
-// there is a mistery how it manages to disapper!!!!
-#ifdef __BORLANDC__
-  #if !defined(__MT__)
-    #define __MT__
-  #endif
-#endif
 
 BeginEsdlNamespace()
 #include "olxptr.h"
@@ -141,10 +135,11 @@ public:
     T* Data;
     unsigned int RefCnt;
     size_t Length;
-    Buffer(size_t len, const T* data = NULL, size_t tocopy = 0) {
-      Data = ((len != 0) ? olx_malloc<T>(len) : (T*)NULL);
-      if (data != NULL)
+    Buffer(size_t len, const T* data = 0, size_t tocopy = 0) {
+      Data = ((len != 0) ? olx_malloc<T>(len) : (T*)0);
+      if (data != 0) {
         olx_memcpy(Data, data, tocopy);
+      }
       RefCnt = 1;
       Length = len;
     }
@@ -166,7 +161,7 @@ protected:
   mutable Buffer* SData;  // do not have much choice with c_str ...
   void IncLength(size_t len) { _Length += len; }
   void DecLength(size_t len) { _Length -= len; }
-  size_t GetCapacity()  const { return SData == NULL ? 0 : SData->Length; }
+  size_t GetCapacity()  const { return SData == 0 ? 0 : SData->Length; }
   size_t _Increment, _Length;
   mutable size_t _Start;
   TTIString() {}
@@ -258,9 +253,44 @@ public:
       return 0;
     }
     olx_memcpy(v, &SData->Data[_Start], _Length);
-    v[_Length] = L'\0';
+    v[_Length] = '\0';
     return v;
   }
+  void TrimFloat() {
+    size_t fp_pos = InvalidIndex, exp_pos = InvalidIndex;
+    for (size_t i = 0; i < _Length; i++) {
+      if (CharAt(i) == '.') {
+        fp_pos = i;
+      }
+      else if (CharAt(i) == 'e') {
+        exp_pos = i;
+        break;
+      }
+    }
+    if (fp_pos == InvalidIndex && exp_pos == InvalidIndex) {
+      return;
+    }
+    // check for e+/-000
+    if (exp_pos != InvalidIndex) {
+      for (size_t i = exp_pos + 2; i < _Length; i++) {
+        if (CharAt(i) != '0') {
+          return;
+        }
+      }
+      _Length = exp_pos-1;
+      if (fp_pos == InvalidIndex) {
+        return;
+      }
+    }
+    
+    while (_Length > 1 && CharAt(_Length - 1) == '0') {
+      _Length--;
+    }
+    if (_Length > 0 && CharAt(_Length - 1) == '.') {
+      _Length--;
+    }
+  }
+  //...........................................................................
   typedef T CharT;
   // this does not help in GCC,
   template <typename, typename> friend class TTSString;
