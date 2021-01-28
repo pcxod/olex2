@@ -9,6 +9,7 @@
 
 #ifndef __olx_sdl_ostr_H
 #define __olx_sdl_ostr_H
+#include <cstdarg>
 #include "olx_istring.h"
 BeginEsdlNamespace()
 
@@ -21,8 +22,10 @@ public:
   }
 };
 
-// this throws exceptions
-extern olxstr olx_print(const char *format, ...);
+// this throws exceptions, manages va_end
+extern olxstr olx_print(const char* format, va_list args);
+extern olxstr olx_print(const char* format, ...);
+extern olxstr olx_print(olxcstr format, ...);
 
 static bool olx_is_float(const float&) { return true; }
 static bool olx_is_float(const double&) { return true; }
@@ -64,11 +67,26 @@ const T& olx_get_primitive_type(const T& n) {
 }
 
 template <typename T>
-olxstr olx_to_str(T n, const char *fmt=0) {
-  if (fmt == 0) {
-    return olx_print(olxcstr::printFormat(n), n);
-  }
-  return olx_print(fmt, n);
+olxstr olx2str_ext(T n, const olxcstr &f) {
+  return olx_print(f, n);
+}
+
+template <typename T>
+olxstr strof(T n) {
+  return olxstr(n);
+}
+
+static olxstr strof(const char* str) {
+  return olxstr(str);
+}
+
+static olxstr strof(const wchar_t* str) {
+  return olxstr(str);
+}
+
+template <typename ch_t>
+olxstr strof(const TTIString<ch_t> &str) {
+  return olxstr(str);
 }
 
 EndEsdlNamespace()

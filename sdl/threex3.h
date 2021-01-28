@@ -440,7 +440,7 @@ public:
     return true;
   }
   template <class SC> SC StrRepr() const {
-    SC rv(data[0], 100);
+    SC rv(data[0], 64);
     return rv << ", " << data[1] << ", " << data[2];
   }
   TIString ToString() const { return StrRepr<olxstr>(); }
@@ -449,9 +449,13 @@ public:
 
   int Compare(const TVector3 &v) const {
     int d = olx_cmp(data[0], v[0]);
-    if (d != 0) return d;
+    if (d != 0) {
+      return d;
+    }
     d = olx_cmp(data[1], v[1]);
-    if (d != 0) return d;
+    if (d != 0) {
+      return d;
+    }
     return olx_cmp(data[2], v[2]);
   }
 public:
@@ -865,11 +869,8 @@ public:
 
 protected:  // used in GaussSolve to sort the matrix
   static void MatrixElementsSort(TMatrix33<T>& arr, TVector3<T>& b) {
-    T bf[3];
     for (size_t i = 0; i < 3; i++) {
-      bf[0] = olx_abs(arr[0][i]);
-      bf[1] = olx_abs(arr[1][i]);
-      bf[2] = olx_abs(arr[2][i]);
+      T bf[3] = { olx_abs(arr[0][i]), olx_abs(arr[1][i]), olx_abs(arr[2][i]) };
       size_t n = 0;
       if (bf[1] > bf[n]) {
         n = 1;
@@ -887,7 +888,52 @@ public:
   typedef T number_type;
 };
 
-  typedef TVector3<float>  vec3f;
+template <typename T>
+olxstr vec2str_ext(const TVector3<T>& n, const olxcstr &fmt) {
+  return olx_print(
+    olxcstr('{', fmt.Length()*3+5) << fmt << ',' << fmt << ',' << fmt << '}',
+    n[0], n[1], n[2]);
+}
+
+template <typename T>
+olxcstr vec_element_fmt(const TVector3<T>& n) {
+  olxcstr f;
+  if (olx_is_float(n[0])) {
+    f << "%6.3" << olx_format_modifier(n[0]) << 'f';
+  }
+  else {
+    f << "%6";
+  }
+  return f;
+}
+
+
+template <typename T>
+olxstr mat2str_ext(const TMatrix33<T>& n, const olxcstr &fmt) {
+  olxcstr f = olxcstr('{', fmt.Length() * 3 + 5) << fmt << ',' << fmt << ',' << fmt << '}';
+  return olxstr_buf(olx_print(f, n[0][0], n[0][1], n[0][2]))
+    << '\n' << olx_print(f, n[1][0], n[1][1], n[1][2])
+    << '\n' << olx_print(f, n[2][0], n[2][1], n[2][2]);
+}
+
+template <typename T>
+olxstr vec2str(const TVector3<T>& n) {
+  return vec2str_ext(n, vec_element_fmt(n));
+}
+
+template <typename T>
+olxstr mat2str(const TMatrix33<T>& n) {
+  return mat2str_ext(n, vec_element_fmt(n[0]));
+}
+
+template <typename T>
+olxstr strof(const TVector3<T>& n) { return vec2str(n); }
+
+template <typename T>
+olxstr strof(const TMatrix33<T>& n) { return mat2str(n); }
+
+
+typedef TVector3<float>  vec3f;
   typedef TVector3<double> vec3d;
   typedef TVector3<int>    vec3i;
   typedef TVector3<size_t> vec3s;
@@ -919,6 +965,17 @@ public:
   typedef TPtrList<mat3i> mat3i_plist;
   typedef TPtrList<mat3f> mat3f_plist;
   typedef TPtrList<mat3d> mat3d_plist;
+
+template <class T>
+olxstr strof(const TTypeList<TVector3<T> > &v) {
+  return olxstr(",").Join(v, FunctionAccessor::MakeStatic(&vec2str<T>));
+}
+
+template <class T>
+olxstr strof(const TArrayList<TVector3<T> >& v) {
+  return olxstr(",").Join(v, FunctionAccessor::MakeStatic(&vec2str<T>));
+}
+
 
 EndEsdlNamespace()
 #endif

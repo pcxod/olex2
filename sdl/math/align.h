@@ -210,21 +210,21 @@ struct inertia {
 
   struct out {
     TVector3<FloatT> moments, center;
-    TMatrix33<FloatT> axis;
+    TMatrix33<FloatT> axes;
     void sort() {
       bool swaps = true;
       while (swaps) {
         swaps = false;
         for (int i = 0; i < 2; i++) {
           if (moments[i] > moments[i + 1]) {
-            olx_swap(axis[i], axis[i + 1]);
+            olx_swap(axes[i], axes[i + 1]);
             olx_swap(moments[i], moments[i + 1]);
             swaps = true;
           }
         }
       }
       // keep the orientation system
-      axis[2] = axis[0].XProdVec(axis[1]).Normalise();
+      axes[2] = axes[0].XProdVec(axes[1]).Normalise();
     }
   };
 
@@ -257,7 +257,7 @@ struct inertia {
     I[1][0] = I[0][1];
     I[2][0] = I[0][2];
     I[2][1] = I[1][2];
-    TMatrix33<FloatT>::EigenValues(I, rv.axis.I());
+    TMatrix33<FloatT>::EigenValues(I, rv.axes.I());
     for (int i = 0; i < 3; i++) {
       rv.moments[i] = I[i][i] < 0 ? 0 : sqrt(I[i][i]);
     }
@@ -267,6 +267,11 @@ struct inertia {
   template <class list_t, class accessor_t>
   static out calc(const list_t &list, const accessor_t &accessor) {
     return calc(list, accessor, unit_weight());
+  }
+  // calcualtion with unit weights
+  template <class list_t>
+  static out calc(const list_t& list) {
+    return calc(list, DummyAccessor(), unit_weight());
   }
 };  // end struct inertia
 

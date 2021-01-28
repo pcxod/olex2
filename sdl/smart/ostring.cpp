@@ -6,7 +6,6 @@
 * This source file is distributed under the terms of the licence located in   *
 * the root folder.                                                            *
 ******************************************************************************/
-#include <cstdarg>
 #include "ostring.h"
 #include "../exception.h"
 
@@ -14,28 +13,32 @@ const olxcstr &esdl::CEmptyString()  {
   static olxcstr rv("");
   return rv;
 }
+//..............................................................................
 const olxcstr &esdl::CTrueString()  {
   static olxcstr rv("true");
   return rv;
 }
+//..............................................................................
 const olxcstr &esdl::CFalseString()  {
   static olxcstr rv("false");
   return rv;
 }
-
+//..............................................................................
 const olxwstr &esdl::WEmptyString()  {
   static olxwstr rv(L"");
   return rv;
 }
+//..............................................................................
 const olxwstr &esdl::WTrueString()  {
   static olxwstr rv(L"true");
   return rv;
 }
+//..............................................................................
 const olxwstr &esdl::WFalseString()  {
   static olxwstr rv("false");
   return rv;
 }
-
+//..............................................................................
 #ifdef _UNICODE
 const olxstr &esdl::EmptyString()  {  return WEmptyString();  }
 const olxstr &esdl::TrueString()  {  return WTrueString();  }
@@ -45,11 +48,11 @@ const olxstr &esdl::EmptyString()  {  return CEmptyString();  }
 const olxstr &esdl::TrueString()  {  return CTrueString();  }
 const olxstr &esdl::FalseString()  { return CFalseString();  }
 #endif
-
+//..............................................................................
 struct olx_print_i_cont {
   virtual olxstr ToString() = 0;
 };
-
+//..............................................................................
 template <typename T>
 struct olx_print_cont : public olx_print_i_cont {
   const T &value;
@@ -60,7 +63,7 @@ struct olx_print_cont : public olx_print_i_cont {
     return olxstr(value);
   }
 };
-
+//..............................................................................
 template <typename T>
 struct olx_print_cont_f : public olx_print_i_cont {
   const T &value;
@@ -83,18 +86,19 @@ struct olx_print_cont_f : public olx_print_i_cont {
     return trim ?rv.TrimFloat() : rv;
   }
 };
-
+//..............................................................................
 template <typename T>
 olx_print_i_cont *olx_print_makec(const T &v) {
   return new olx_print_cont<T>(v);
 }
+//..............................................................................
 template <typename T>
 olx_print_i_cont *olx_print_makec(const T &v, int fp_cnt,
   bool expf, bool trim)
 {
   return new olx_print_cont_f<T>(v, fp_cnt, expf, trim);
 }
-
+//..............................................................................
 bool olx_print_check_next(const olxstr &format, olxch what, size_t &idx) {
   if (idx + 1 < format.Length() && format.CharAt(idx + 1) == what) {
     idx++;
@@ -102,10 +106,8 @@ bool olx_print_check_next(const olxstr &format, olxch what, size_t &idx) {
   }
   return false;
 }
-
-olxstr esdl::olx_print(const char *format_, ...) {
-  va_list argptr;
-  va_start(argptr, format_);
+//..............................................................................
+olxstr esdl::olx_print(const char *format_, va_list argptr) {
   const olxstr format = format_;
   olxstr_buf rv;
   size_t str_st = 0, f_width = 0;
@@ -306,4 +308,16 @@ olxstr esdl::olx_print(const char *format_, ...) {
     rv << format.SubStringFrom(str_st);
   }
   return olxstr(rv);
+}
+//..............................................................................
+olxstr esdl::olx_print(const char* format, ...) {
+  va_list argptr;
+  va_start(argptr, format);
+  return olx_print(format, argptr);
+}
+//..............................................................................
+olxstr esdl::olx_print(olxcstr format, ...) {
+  va_list argptr;
+  va_start(argptr, format);
+  return olx_print(format.c_str(), argptr);
 }

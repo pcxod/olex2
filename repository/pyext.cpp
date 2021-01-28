@@ -845,7 +845,7 @@ bool PythonExt::ParseTuple(PyObject* tuple, const char* format, ...) {
         os->Append(str, len);
       }
       else if (io->ob_type == &PyUnicode_Type) {
-        Py_ssize_t usz = PyUnicode_GetSize(io);
+        Py_ssize_t usz = olx_PyUnicode_Length(io);
         TTBuffer<wchar_t> wc_bf(usz + 1);
         usz = Olx_PyUnicode_AsWideChar(io, wc_bf.Data(), usz);
         if (usz > 0) {

@@ -1063,5 +1063,65 @@ void DistanceGenerator::GenerateSADI_(
   }
 }
 //........................................................................
+void DistanceGenerator::GenerateDFIX(TCAtomPList& atoms_, bool explict,
+  double esd_12, double esd_13)
+{
+  if (atoms_.IsEmpty()) {
+    return;
+  }
+  DistanceGenerator ds;
+  DistanceGenerator::atom_set_t atoms;
+  atoms.SetCapacity(atoms_.Count());
+  TAsymmUnit& au = *atoms_[0]->GetParent();
+  for (size_t i = 0; i < atoms_.Count(); i++) {
+    if (atoms_[i]->IsDeleted()) {
+      continue;
+    }
+    atoms.Add(atoms_[i]->GetId());
+  }
+  ds.Generate(au, atoms, esd_13 > 0, true);
+  olx_pdict<int, TSimpleRestraint*> d12, d13;
+  if (esd_12 > 0) {
+    for (size_t i = 0; i < ds.distances_12.Count(); i++) {
+      TCAtom& a = au.GetAtom(ds.distances_12[i].a);
+      TCAtom& b = au.GetAtom(ds.distances_12[i].b);
+      double d = au.Orthogonalise(a.ccrd() - b.ccrd()).Length();
+      int nd = static_cast<int>(d * 50);
+      TSimpleRestraint* r12 = d12.Find(nd, 0);
+      if (r12 == 0) {
+        r12 = &au.GetRefMod()->rDFIX.AddNew();
+        r12->SetEsd(0.02);
+        r12->SetValue(static_cast<double>(nd) / 50);
+        d12.Add(nd, r12);
+      }
+      r12->AddAtomPair(a, 0, b, 0);
+    }
+  }
+  if (esd_13 > 0) {
+    for (size_t i = 0; i < ds.distances_13.Count(); i++) {
+      TCAtom& a = au.GetAtom(ds.distances_13[i].a);
+      TCAtom& b = au.GetAtom(ds.distances_13[i].b);
+      double d = au.Orthogonalise(a.ccrd() - b.ccrd()).Length();
+      int nd = static_cast<int>(d * 50);
+      TSimpleRestraint* r13 = d13.Find(nd, 0);
+      if (r13 == 0) {
+        r13 = &au.GetRefMod()->rDFIX.AddNew();
+        r13->SetEsd(0.04);
+        r13->SetValue(static_cast<double>(nd) / 50);
+        d13.Add(nd, r13);
+      }
+      r13->AddAtomPair(a, 0, b, 0);
+    }
+  }
+  if (!explict) {
+    for (size_t i = 0; i < d12.Count(); i++) {
+      d12.GetValue(i)->ConvertToImplicit();
+    }
+    for (size_t i = 0; i < d13.Count(); i++) {
+      d13.GetValue(i)->ConvertToImplicit();
+    }
+  }
+}
+//........................................................................
 ///////////////////////////////////////////////////////////////////////////////
 

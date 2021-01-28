@@ -179,6 +179,12 @@ struct DistanceGenerator {
     GenerateSADI_(distances_12, 1.0, rm, atom_map);
     GenerateSADI_(distances_13, esd13_k, rm, atom_map);
   }
+  /* Generates a set of 1-2 and 1-3 DFIXes for the given connected set of atoms
+  * in the RefinementModel of the AU of first atom in the set.
+  * Set esd to a negatove value to suppress the generation of the related DFIXes.
+  */
+  static void GenerateDFIX(TCAtomPList &atoms, bool explict = true,
+    double esd_12=0.02, double esd_13=0.04);
 private:
   static void GenerateSADI_(const distance_set_t &d, double esd_k,
     RefinementModel &rm, const atom_map_1_t &atom_map);

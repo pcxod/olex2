@@ -214,21 +214,19 @@ public:
     smatd_list generators;
     bool polymeric;
     void init_generators();
-    static void build_coordinate(
-      TCAtom &a, const smatd &m, vec3d_list &res);
-    ConstTypeList<vec3d> build_coordinates() const;
+    mutable TTypeList<olx_pair_t<vec3d, size_t> > crds_;
     // traces a ring from breadth-first expansion
     TTypeList<TCAtomPList>::const_list_type trace_ring_b(TQueue<TCAtom*> &q,
-      TCAtomPList &ring, bool flag=false);
+      TCAtomPList &ring, bool flag=false) const;
     // traces a ring from breadth-first expansion
-    TTypeList<TCAtomPList>::const_list_type trace_ring_b(TCAtom &a);
+    TTypeList<TCAtomPList>::const_list_type trace_ring_b(TCAtom &a) const;
     /* traces a ring from depth-first expansion. The ring tags must go in
     descending order
     */
     static ConstPtrList<TCAtom> trace_ring_d(TCAtom &a);
-    void trace_substituent(ring::substituent &s);
+    void trace_substituent(ring::substituent &s) const;
     static ConstPtrList<TCAtom> ring_sorter(const TCAtomPList &r);
-    void init_ring(size_t i, TTypeList<ring> &rings);
+    void init_ring(size_t i, TTypeList<ring> &rings) const;
     /* expects graph prepared by trace substituent or by the breadth-first
     expansion, returns the atom where the branch's trunk stops.
     a - the atom at the far end of the branch
@@ -290,9 +288,18 @@ public:
       atoms_ = atoms;
       init_generators();
     }
+    // index refers to the atom Id in the AU
+    const TTypeList<olx_pair_t<vec3d, size_t> > &build_coordinates_ext() const;
+    ConstTypeList<vec3d> build_coordinates() const {
+      vec3d_list rv(build_coordinates_ext(),
+        FunctionAccessor::MakeConst(&olx_pair_t<vec3d,size_t>::GetA));
+      return rv;
+    }
     bool is_disjoint() const;
     bool is_regular() const;
     bool is_flat() const;
+    // checks if symmetry generators is empty
+    bool is_complete() const { return generators.Count() < 2; }
     bool is_polymeric() const { return polymeric; }
     fragment &pack() {
       atoms_.Pack(TCAtom::FlagsAnalyser(catom_flag_Deleted));
@@ -302,7 +309,7 @@ public:
     size_t find_central_index() const;
     olxstr formula() const { return alg::formula(atoms_); }
     void breadth_first_tags(size_t start = InvalidIndex,
-      TCAtomPList *ring_atoms = NULL)
+      TCAtomPList *ring_atoms = 0) const
     {
       breadth_first_tags(atoms(), start, ring_atoms);
     }
@@ -310,9 +317,9 @@ public:
       depth_first_tags(atoms());
     }
     /* traces the rings back from the breadth-first tag assignment */
-    ConstTypeList<ring> get_rings(const TCAtomPList &r_atoms);
+    ConstTypeList<ring> get_rings(const TCAtomPList &r_atoms) const;
     /* finds ring substituents and sorts substituents and the rings */
-    void init_rings(TTypeList<ring> &rings);
+    void init_rings(TTypeList<ring> &rings) const;
     tree_node build_tree();
     void mask_neighbours(index_t a_tag, index_t nbh_tag) const {
       mask_neighbours(atoms(), a_tag, nbh_tag);
@@ -363,6 +370,26 @@ public:
   static ConstTypeList<fragment> extract(TAsymmUnit &au, const fragment &f) {
     return extract(au.GetAtoms(), f);
   }
+};
+
+class NetTools {
+public:
+  typedef AnAssociation3<TCAtom*, smatd, bool> conn_atom_t;
+  typedef olx_pair_t<TCAtom*, vec3d> atom_t;
+  // atom and its position in the fragment
+  NetTools(fragments::fragment &frag, const TCAtomPList &nodes, bool verbose=false);
+  
+  TTypeList<TTypeList<atom_t> >::const_list_type extract_triangles();
+private:
+  bool verbose;
+  TCAtomPList nodes;
+  olxdict<size_t, size_t, TPrimitiveComparator> conn_map;
+  TTypeList<TTypeList<conn_atom_t> > conn_info;
+  void set_tags(TCAtom& a, const smatd& m,
+    TTypeList<TTypeList<conn_atom_t> >& conn,
+    olxdict<size_t, size_t, TPrimitiveComparator>& con_map);
+  void set_tags_(TCAtom& a, const smatd& m,
+    TTypeList<conn_atom_t>& dest);
 };
 
 class Analysis {

@@ -203,7 +203,7 @@ static const char* olx_format_modifier(const TEComplex<T>& n) {
 * arguments
 */
 template <typename T>
-olxstr olx_to_str(const TEComplex<T> &n, const char* fmt = 0) {
+olxstr strof(const TEComplex<T> &n, const char* fmt = 0) {
   if (fmt == 0) {
     return olx_print((olxcstr("%12.4") << olx_format_modifier(n.GetRe()) << "e%ci%.4f").c_str(),
       n.GetRe(), (char)olx_sign_char(n.GetIm()), olx_abs(n.GetIm()))

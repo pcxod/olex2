@@ -45,24 +45,30 @@ UseEsdlNamespace()
 //.............................................................................
 TBasicException::~TBasicException()  {
   if (GetAutoLogging()) {
-    if (TBasicApp::HasInstance())
+    if (TBasicApp::HasInstance()) {
       TBasicApp::GetLog().NewEntry(logExceptionTrace) << *this;
+    }
   }
-  if( Cause != NULL )
+  if (Cause != 0) {
     delete Cause;
+  }
 }
 
 olxstr TBasicException::GetFullMessage() const {
   olxstr rv;
   const char* n_n = GetNiceName();
-  if( n_n != NULL )
+  if (n_n != 0) {
     rv = n_n;
-  else
+  }
+  else {
     rv = EsdlClassName(*this);
-  if( Message.IsEmpty() )
+  }
+  if (Message.IsEmpty()) {
     rv << " at " << Location;
-  else
+  }
+  else {
     rv << ' ' << Message << " at " << Location;
+  }
   return rv;
 }
 //.............................................................................

@@ -460,7 +460,7 @@ void TEMacroLib::ProcessMacro(const olxstr& Cmd, TStrObjList& args,
   const TParamList& options, TMacroData& me)
 {
   olex2::IOlex2Processor* ip = olex2::IOlex2Processor::GetInstance();
-  ABasicFunction *f = ip->GetLibrary().FindMacro(Cmd, args.Count());
+  ABasicFunction *f = ip->GetLibrary().FindMacro(Cmd, (uint32_t)args.Count());
   if (f == 0) {
     me.NonexitingMacroError(Cmd);
     return;

@@ -383,7 +383,7 @@ public:
       fmt = olxcstr("%6") << &olxcstr::printFormat(olx_get_primitive_type(FData[0]))[1];
     }
     for (size_t i = 0; i < Fn; i++) {
-      t << olx_to_str(FData[i], fmt.c_str());
+      t << olx2str_ext(FData[i], fmt);
     }
     return olxstr(t);
   }
@@ -541,6 +541,7 @@ public:
     return *this;
   }
 public:
+  typedef FT list_item_type;
   typedef FT number_type;
 };
 

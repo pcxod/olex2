@@ -18,9 +18,11 @@
 #define OLX_CCAT(A, B) A ## B
 #endif
 #if PY_MAJOR_VERSION >= 3
+inline size_t olx_PyUnicode_Length(PyObject* pobj) { return PyUnicode_GetLength(pobj); }
 #define OlxInitPyModule(m_name, m_def) PyMODINIT_FUNC OLX_CCAT(PyInit_, m_name)() \
  { return PythonExt::init_module(#m_name, m_def); }
 #else
+inline size_t olx_PyUnicode_Length(PyObject* pobj) { return PyUnicode_GetSize(pobj); }
 #define OlxInitPyModule(m_name, m_def) void OLX_CCAT(init,m_name)() \
  { PythonExt::init_module(#m_name, m_def); }
 #endif
@@ -197,7 +199,7 @@ public:
       rv = crv;
     }
     else if (pobj->ob_type == &PyUnicode_Type) {
-      size_t sz = PyUnicode_GetSize(pobj);
+      size_t sz = olx_PyUnicode_Length(pobj);
       TTBuffer<wchar_t> wc_bf(sz + 1);
       sz = Olx_PyUnicode_AsWideChar(pobj, wc_bf.Data(), sz);
       if (sz > 0) {

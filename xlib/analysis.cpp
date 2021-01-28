@@ -2,6 +2,7 @@
 #include "equeue.h"
 #include "auto.h"
 #include "eset.h"
+#include "symmparser.h"
 
 using namespace olx_analysis;
 
@@ -618,7 +619,7 @@ fragments::cart_ring fragments::ring::to_cart() const {
       }
     }
     if (!found) {
-      TBasicApp::NewLogEntry() << alg::label(atoms);
+      TBasicApp::NewLogEntry() << alg::label(atoms, ' ');
       throw TFunctionFailedException(__OlxSourceInfo, "disconnected ring");
     }
     else {
@@ -712,54 +713,42 @@ void fragments::fragment::order_list(TCAtomPList &inp) {
   }
 }
 //.............................................................................
-void fragments::fragment::build_coordinate(
-  TCAtom &a, const smatd &m_, vec3d_list &res)
+const TTypeList<olx_pair_t<vec3d, size_t> > &
+  fragments::fragment::build_coordinates_ext() const
 {
-  const vec3d v = m_.IsFirst() ? a.ccrd() : m_*a.ccrd();
-  res[a.GetTag()] = a.GetParent()->Orthogonalise(v);
-  a.SetTag(-1);
-  const TUnitCell &uc = a.GetParent()->GetLattice().GetUnitCell();
-  for (size_t i=0; i < a.AttachedSiteCount(); i++) {
-    TCAtom::Site &st = a.GetAttachedSite(i);
-    if (st.atom->GetTag() < 0) {
+  if (atoms_.IsEmpty() || !crds_.IsEmpty()) {
+    return crds_;
+  }
+  crds_.SetCapacity(atoms_.Count());
+  const TAsymmUnit& au = *atoms_[0]->GetParent();
+  for (size_t i = 0; i < atoms_.Count(); i++) {
+    const TCAtom& a = *atoms_[i];
+    if (!a.IsAvailable()) {
       continue;
     }
-    smatd m = uc.MulMatrix(m_, st.matrix);
-    build_coordinate(*st.atom, m, res);
+    crds_.AddNew(au.Orthogonalise(a.ccrd()), a.GetId());
   }
-}
-//.............................................................................
-ConstTypeList<vec3d> fragments::fragment::build_coordinates() const {
-  vec3d_list crds(atoms_.Count(), true);
-  if (atoms_.IsEmpty()) {
-    return crds;
-  }
-  atoms_.ForEach(ACollectionItem::IndexTagSetter());
-  build_coordinate(*atoms_[0],
-    atoms_[0]->GetParent()->GetLattice().GetUnitCell().GetMatrix(0),
-    crds);
   if (generators.Count() > 1) { // grow missing coordinates
-    const TAsymmUnit &au = *atoms_[0]->GetParent();
-    crds.SetCapacity(crds.Count()*(generators.Count()));
-    const size_t crds_cnt = crds.Count();
+    crds_.SetCapacity(crds_.Count()*(generators.Count()));
+    const size_t crds_cnt = crds_.Count();
     for (size_t i=1; i < generators.Count(); i++) {
       for (size_t j=0; j < crds_cnt; j++) {
         vec3d v = au.Orthogonalise(
-          generators[i]*au.Fractionalise(crds[j]));
+          generators[i]*au.GetAtom(crds_[j].b).ccrd());
         bool uniq = true;
-        for (size_t k=0; k < crds.Count(); k++) {
-          if (crds[k].Equals(v, 1e-3)) {
+        for (size_t k=0; k < crds_.Count(); k++) {
+          if (crds_[k].a.Equals(v, 1e-3)) {
             uniq = false;
             break;
           }
         }
         if (uniq) {
-          crds.AddNew(v);
+          crds_.AddNew(v, crds_[j].b);
         }
       }
     }
   }
-  return crds;
+  return crds_;
 }
 //.............................................................................
 void fragments::fragment::init_generators() {
@@ -885,9 +874,7 @@ bool fragments::fragment::is_flat() const {
   if (atoms_.IsEmpty()) {
     return true;
   }
-  vec3d n;
   vec3d_list crds = build_coordinates();
-  double rmsd = 0;
   if (crds.Count() <= 3) {
     return true;
   }
@@ -897,8 +884,8 @@ bool fragments::fragment::is_flat() const {
       points[i].a = crds[i];
       points[i].b = 1;
     }
-    vec3d center;
-    rmsd = TSPlane::CalcPlane(points, n, center, plane_best);
+    vec3d n, center;
+    double rmsd = TSPlane::CalcPlane(points, n, center, plane_best);
     return rmsd < 0.05;
   }
 }
@@ -974,7 +961,7 @@ void fragments::fragment::breadth_first_tags(const TCAtomPList &atoms,
   }
 }
 //.............................................................................
-void fragments::fragment::init_rings(TTypeList<fragments::ring> &rings) {
+void fragments::fragment::init_rings(TTypeList<fragments::ring> &rings) const {
   for (size_t i=0; i < rings.Count(); i++) {
     init_ring(i, rings);
     QuickSorter::Sort(rings[i].substituents);
@@ -1013,7 +1000,7 @@ void fragments::fragment::init_rings(TTypeList<fragments::ring> &rings) {
   QuickSorter::Sort(rings);
 }
 //.............................................................................
-void fragments::fragment::init_ring(size_t i, TTypeList<ring> &rings) {
+void fragments::fragment::init_ring(size_t i, TTypeList<ring> &rings) const {
   if (atoms_.IsEmpty()) {
     return;
   }
@@ -1144,7 +1131,7 @@ ConstPtrList<TCAtom> fragments::fragment::trace_ring_d(TCAtom &ra) {
 }
 //.............................................................................
 TTypeList<TCAtomPList>::const_list_type fragments::fragment::trace_ring_b(
-  TQueue<TCAtom*> &queue, TCAtomPList &ring, bool flag)
+  TQueue<TCAtom*> &queue, TCAtomPList &ring, bool flag) const
 {
   TTypeList<TCAtomPList> rv;
   typedef TQueue<TCAtom *> queue_t;
@@ -1238,7 +1225,7 @@ TTypeList<TCAtomPList>::const_list_type fragments::fragment::trace_ring_b(
 }
 //.............................................................................
 TTypeList<TCAtomPList>::const_list_type fragments::fragment::trace_ring_b(
-  TCAtom &a)
+  TCAtom &a) const
 {
   TTypeList<TCAtomPList> rings;
   TCAtomPList &ring = rings.AddNew();
@@ -1264,7 +1251,7 @@ TTypeList<TCAtomPList>::const_list_type fragments::fragment::trace_ring_b(
   return rings;
 }
 //.............................................................................
-void fragments::fragment::trace_substituent(ring::substituent &s) {
+void fragments::fragment::trace_substituent(ring::substituent &s) const {
   atoms_.ForEach(
     TCAtom::FlagSetter(catom_flag_Processed, false));
   s.parent.atoms.ForEach(
@@ -1486,7 +1473,7 @@ TCAtomPList::const_list_type fragments::fragment::get_matching_set(
 }
 //.............................................................................
 ConstTypeList<fragments::ring> fragments::fragment::get_rings(
-  const TCAtomPList &r_atoms)
+  const TCAtomPList &r_atoms) const
 {
   TTypeList<fragments::ring> rv;
   if (r_atoms.IsEmpty()) {
@@ -1800,6 +1787,177 @@ ConstTypeList<fragments::fragment> fragments::extract(const TCAtomPList &aua,
     }
   }
   return rv;
+}
+//.............................................................................
+//.............................................................................
+//.............................................................................
+NetTools::NetTools(fragments::fragment& frag, const TCAtomPList& nodes_, bool verbose)
+  : verbose(verbose), nodes(nodes_)
+{
+  if (!frag.is_polymeric() || frag.count() == 0 || nodes_.IsEmpty()) {
+    return;
+  }
+  conn_map.SetCapacity(nodes.Count());
+  for (size_t i = 0; i < nodes.Count(); i++) {
+    conn_map.Add(nodes[i]->GetId(), i);
+  }
+  const smatd &I = frag[0].GetParent()->GetLattice().GetUnitCell().GetMatrix(0);
+  conn_info.SetCount(nodes.Count());
+  for (size_t i = 0; i < nodes.Count(); i++) {
+    frag.atoms().ForEach(ACollectionItem::TagSetter(-1));
+    set_tags(*nodes[i], I, conn_info, conn_map);
+  }
+}
+//.............................................................................
+TTypeList<TTypeList<NetTools::atom_t> >::const_list_type NetTools::extract_triangles() {
+  TTypeList<TTypeList<NetTools::atom_t> > rv;
+  if (nodes.IsEmpty()) {
+    return rv;
+  }
+  vec3d_list fitted_centres;
+  const TAsymmUnit& au = *nodes[0]->GetParent();
+  for (size_t i = 0; i < conn_info.Count(); i++) {
+    TTypeList<olx_pair_t<vec3d, size_t> > centres;
+    if (verbose) {
+      TBasicApp::NewLogEntry() << "From " << nodes[i]->GetLabel();
+    }
+    vec3d centre = au.Orthogonalise(nodes[i]->ccrd());
+    for (size_t j = 0; j < conn_info[i].Count(); j++) {
+      vec3d c = au.Orthogonalise(conn_info[i][j].b * conn_info[i][j].a->ccrd());
+      if (verbose) {
+        TBasicApp::NewLogEntry() << " to " << conn_info[i][j].a->GetLabel() <<
+          ": " << centre.DistanceTo(c)
+          << " (" << TSymmParser::MatrixToSymm(conn_info[i][j].b) << ")" << " "
+          << conn_info[i][j].c;
+      }
+      if (conn_info[i][j].c) {
+        centres.AddNew(c, j);
+      }
+    }
+    if (centres.Count() >= 2) {
+      for (size_t i1 = 0; i1 < centres.Count(); i1++) {
+        for (size_t i2 = i1 + 1; i2 < centres.Count(); i2++) {
+          const TTypeList<conn_atom_t>& con1 = conn_info[conn_map[conn_info[i][centres[i1].b].a->GetId()]];
+          bool connected = false;
+          smatd rm = conn_info[i][centres[i2].b].b * conn_info[i][centres[i1].b].b.Inverse();
+          for (size_t c = 0; c < con1.Count(); c++) {
+            if (con1[c].a->GetId() == conn_info[i][centres[i2].b].a->GetId() &&
+              con1[c].b == rm)
+            {
+              connected = true;
+              break;
+            }
+          }
+          if (!connected) {
+            if (verbose) {
+              TBasicApp::NewLogEntry() << conn_info[i][centres[i1].b].a->GetLabel()
+                << " is not connected to " << conn_info[i][centres[i2].b].a->GetLabel()
+                << " (" << TSymmParser::MatrixToSymm(rm) << ")";
+            }
+            continue;
+          }
+          vec3d c = (centre + centres[i1].a + centres[i2].a) / 3;
+          bool uniq = true;
+          for (size_t ci = 0; ci < fitted_centres.Count(); ci++) {
+            if (fitted_centres[ci].QDistanceTo(c) < 1e-4) {
+              uniq = false;
+              break;
+            }
+          }
+          if (uniq) {
+            fitted_centres << c;
+            TTypeList<NetTools::atom_t>& r = rv.AddNew();
+            r.AddNew(nodes[i], centre);
+            r.AddNew(conn_info[i][centres[i1].b].a, centres[i1].a);
+            r.AddNew(conn_info[i][centres[i2].b].a, centres[i2].a);
+          }
+        }
+      }
+    }
+  }
+  return rv;
+}
+//.............................................................................
+void NetTools::set_tags_(TCAtom& a, const smatd& m,
+  TTypeList<conn_atom_t>& dest)
+{
+  a.SetTag(1);
+  for (size_t i = 0; i < a.AttachedSiteCount(); i++) {
+    const TCAtom::Site& s = a.GetAttachedSite(i);
+    if (!m.IsFirst() && !s.matrix.IsFirst()) {
+      continue;
+    }
+    if (s.atom->GetTag() != -1) {
+      continue;
+    }
+    smatd rm = m.IsFirst() ? s.matrix : m;
+    if (conn_map.HasKey(s.atom->GetId())) {
+      bool uniq = true;
+      for (size_t l = 0; l < dest.Count(); l++) {
+        if (dest[l].a == s.atom && dest[l].b == rm) {
+          uniq = false;
+          break;
+        }
+      }
+      if (uniq) {
+        dest.Add(new conn_atom_t(s.atom, rm, m.IsFirst()));
+      }
+      continue;
+    }
+    if (s.atom->GetTag() == -1) {
+      set_tags_(*s.atom, rm, dest);
+    }
+  }
+}
+//.............................................................................
+void NetTools::set_tags(TCAtom& a, const smatd& m,
+  TTypeList<TTypeList<conn_atom_t> >& conn,
+  olxdict<size_t, size_t, TPrimitiveComparator>& con_map)
+{
+  a.SetTag(1);
+  for (size_t i = 0; i < a.AttachedSiteCount(); i++) {
+    const TCAtom::Site& s = a.GetAttachedSite(i);
+    /* //     enable this for just 'real' ligands
+    if (!s.matrix.IsFirst()) {
+      continue;
+    }
+    */
+    if (s.atom->GetTag() != -1) {
+      continue;
+    }
+    TTypeList<conn_atom_t>& dest = conn[con_map[a.GetId()]];
+    size_t d = dest.Count();
+    set_tags_(*s.atom, s.matrix, dest);
+    for (size_t j = d; j < dest.Count(); j++) {
+      TTypeList<conn_atom_t>& dest_j = conn[con_map[dest[j].a->GetId()]];
+      for (size_t k = j + 1; k < dest.Count(); k++) {
+        smatd rm = dest[k].b * dest[j].b.Inverse();
+        bool uniq = true;
+        for (size_t l = 0; l < dest_j.Count(); l++) {
+          if (dest_j[l].a == dest[k].a && dest_j[l].b == rm) {
+            uniq = false;
+            break;
+          }
+        }
+        if (uniq) {
+          dest_j.AddNew(dest[k].a, rm, m.IsI());
+        }
+        uniq = true;
+        rm = dest[j].b * dest[k].b.Inverse();
+
+        TTypeList<conn_atom_t>& dest_k = conn[con_map[dest[k].a->GetId()]];
+        for (size_t l = 0; l < dest_k.Count(); l++) {
+          if (dest_k[l].a == dest[j].a && dest_k[l].b == rm) {
+            uniq = false;
+            break;
+          }
+        }
+        if (uniq) {
+          dest_k.AddNew(dest[j].a, rm, m.IsI());
+        }
+      }
+    }
+  }
 }
 //.............................................................................
 //.............................................................................

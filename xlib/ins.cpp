@@ -1641,7 +1641,7 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
     TSameGroup &sg = rm.rSAME[a.GetSameId()];
     if (sg.IsValidForSave() && sg.IsReference()) {
       for (size_t i = 0; i < sg.DependentCount(); i++) {
-        TSameGroup & dg = sg.GetDependent(i);
+        TSameGroup &dg = sg.GetDependent(i);
         if (!dg.IsValidForSave()) {
           continue;
         }
@@ -1666,6 +1666,13 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
     if (sg.IsValidForSave() && !sg.IsReference() && sg.GetAtoms().IsExplicit()) {
       TAtomRefList atoms = sg.GetAtoms().ExpandList(rm);
       for (size_t i = 0; i < atoms.Count(); i++) {
+        // check for "embedded" same
+        if (olx_is_valid_index(atoms[i].GetAtom().GetSameId()) &&
+          atoms[i].GetAtom().GetSameId() != sg.GetId())
+        {
+          _SaveAtom(rm, atoms[i].GetAtom(), part, afix, spec, sfac, sl, index,
+            true, checkResi);
+        }
         _SaveAtom(rm, atoms[i].GetAtom(), part, afix, spec, sfac, sl, index,
           false, checkResi);
       }
