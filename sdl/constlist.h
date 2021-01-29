@@ -39,8 +39,7 @@ public:
       delete p;
     }
   }
-  //operator const obj_t &() const {  return GetObject();  }
-  const obj_t& GetObject() const {
+  const obj_t& obj() const {
     if (p == 0) {
       throw_invalid(__POlxSourceInfo);
     }

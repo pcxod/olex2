@@ -511,11 +511,7 @@ bool TXAtom::Orient(TGlPrimitive& GlP) {
       }
       else {
         olx_gl::orient(GetEllipsoid()->GetMatrix());
-        olx_gl::scale(
-          GetEllipsoid()->GetSX()*scale,
-          GetEllipsoid()->GetSY()*scale,
-          GetEllipsoid()->GetSZ()*scale
-        );
+        olx_gl::scale(GetEllipsoid()->GetNorms()*scale);
         if (GlP.GetOwnerId() == xatom_SphereId && !Parent.IsSelecting()) {
           if (ActualSphere != ~0) {
             olx_gl::callList(ActualSphere);
@@ -764,9 +760,7 @@ const_strlist TXAtom::ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const
     GetEllipsoid() != 0 && !GetEllipsoid()->IsNPD())
   {
     mat3d m = GetEllipsoid()->GetMatrix()*GetDrawScale();
-    m[0] *= GetEllipsoid()->GetSX();
-    m[1] *= GetEllipsoid()->GetSY();
-    m[2] *= GetEllipsoid()->GetSZ();
+    m.Scale(GetEllipsoid()->GetNorms());
     out.Add("  transform {");
     out.Add("   matrix") << pov::to_str(crdc.matr(m), crdc.crd(crd()));
     out.Add("   }");
@@ -869,9 +863,7 @@ const_strlist TXAtom::ToWrl(olx_cdict<TGlMaterial, olxstr> &materials) const
   {
     mat3d m = GetEllipsoid()->GetMatrix()*GetDrawScale(),
       q;
-    m[0] *= GetEllipsoid()->GetSX();
-    m[1] *= GetEllipsoid()->GetSY();
-    m[2] *= GetEllipsoid()->GetSZ();
+    m.Scale(GetEllipsoid()->GetNorms());
     m = crdc.matr(m);
     vec3d scale(m[0].Length(), m[1].Length(), m[2].Length());
     m[0] /= scale[0];
@@ -1214,10 +1206,8 @@ void TXAtom::CreatePoly(const TSAtomPList& bound, short type,
     else if (type == polyBipyramid) {
       vec3d normal, pc;
       if (_normal == 0 || _pc == 0) {
-        vec3d rms;
-        mat3d normals;
-        TSPlane::CalcPlanes(bound, normals, rms, pc);
-        normal = normals[2];
+        plane::mean<>::out po = plane::mean<>::calc(bound, TSAtom::CrdAccessor());
+        normal = po.normals[2];
       }
       else {
         normal = *_normal;
@@ -1322,18 +1312,16 @@ void TXAtom::CreatePolyhedron(bool v) {
   double ratio = sv.Length() / sd;
   if (ratio < 0.2) {  // atom is inside
     // test for Cp-kind polyhedron, should be drawn as two of the other kind (atom outside)
-    vec3d pc, rms;
-    mat3d normals;
-    TSPlane::CalcPlanes(bound, normals, rms, pc);
-    const double pd = normals[0].DotProd(pc) / normals[0].Length();
-    const double pd_x = normals[2].DotProd(pc) / normals[2].Length();
-    normals.Normalise();
+    plane::mean<>::out po = plane::mean<>::calc(bound, TSAtom::CrdAccessor());
+    const double pd = po.normals[0].DotProd(po.center) / po.normals[0].Length();
+    const double pd_x = po.normals[2].DotProd(po.center) / po.normals[2].Length();
+    po.normals.Normalise();
     int deviating = 0, deviating_x = 0;
     for (size_t i = 0; i < bound.Count(); i++) {
-      if (olx_abs(bound[i]->crd().DotProd(normals[0]) - pd) > rms[0]) {
+      if (olx_abs(bound[i]->crd().DotProd(po.normals[0]) - pd) > po.rms[0]) {
         deviating++;
       }
-      if (olx_abs(bound[i]->crd().DotProd(normals[2]) - pd_x) > rms[2]) {
+      if (olx_abs(bound[i]->crd().DotProd(po.normals[2]) - pd_x) > po.rms[2]) {
         deviating_x++;
       }
     }
@@ -1341,7 +1329,7 @@ void TXAtom::CreatePolyhedron(bool v) {
       CreatePoly(bound, polyRegular);
     }
     else { // two polyhedra of atom outside..
-      CreatePoly(bound, polyBipyramid, &normals[2], &pc);
+      CreatePoly(bound, polyBipyramid, &po.normals[2], &po.center);
     }
   }
   else { // atom outside

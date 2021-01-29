@@ -489,7 +489,7 @@ ConstTypeList<Index::ResultEntry> IndexManager::Search(const olxstr &cfg_name,
   TBasicApp::NewLogEntry() << "  " << cell.cell.ToString() << ", "
     << TCLattice::SymbolForLatt(cell.lattice);
   TBasicApp::NewLogEntry() << "  Niggli cell: "
-    << Niggli::reduce_const(cell.lattice, cell.cell).GetObject().ToString();
+    << Niggli::reduce_const(cell.lattice, cell.cell).obj().ToString();
   TBasicApp::NewLogEntry() << "  Cell volume: "
     << olxstr::FormatFloat(2, cell.volume);
   TBasicApp::NewLogEntry() << "  Reduced cell volume: "

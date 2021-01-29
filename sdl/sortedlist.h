@@ -208,7 +208,7 @@ public:
     : _parent_t(l)
   {}
   SortedObjectList(const ConstSortedObjectList<ObjectClass,Comparator>& l)
-    : _parent_t(l.GetObject().cmp)
+    : _parent_t(l.obj().cmp)
   {
     _parent_t::TakeOver(l.Release(), true);
   }
@@ -272,7 +272,7 @@ public:
     : _parent_t(l)
   {}
   SortedPointerList(const ConstSortedPointerList<ObjectClass,Comparator>& l)
-  : _parent_t(l.GetObject().cmp)
+  : _parent_t(l.obj().cmp)
   {
     _parent_t::TakeOver(l.Release(), true);
   }
@@ -291,7 +291,9 @@ public:
   {
     SortedPointerList rv;
     rv.SetCapacity(l.Count());
-    for (size_t i=0; i < l.Count(); i++) rv.Add(l[i]);
+    for (size_t i = 0; i < l.Count(); i++) {
+      rv.Add(l[i]);
+    }
     return rv;
   }
   template <class LT, class accessor_t> static
@@ -300,7 +302,9 @@ public:
   {
     SortedPointerList rv(cmp);
     rv.SetCapacity(l.Count());
-    for (size_t i=0; i < l.Count(); i++) rv.Add(accessor(l[i]));
+    for (size_t i = 0; i < l.Count(); i++) {
+      rv.Add(accessor(l[i]));
+    }
     return rv;
   }
   template <class LT, class accessor_t> static
@@ -309,7 +313,9 @@ public:
   {
       SortedPointerList rv;
       rv.SetCapacity(l.Count());
-      for (size_t i = 0; i < l.Count(); i++) rv.Add(accessor(l[i]));
+      for (size_t i = 0; i < l.Count(); i++) {
+        rv.Add(accessor(l[i]));
+      }
       return rv;
     }
 public:

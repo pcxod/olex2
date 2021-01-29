@@ -234,7 +234,7 @@ public:
     return *this;
   }
   TTStrList& operator << (const ConstStrList<TTStrList<T> >& list) {
-    return *this << list.GetObject();
+    return *this << list.obj();
   }
 
   string_type& Insert(size_t i) { return Strings.Insert(i, new T)->String; }
@@ -933,20 +933,20 @@ public:
   list_item_type Text(const list_item_type& Sep,
     size_t start=InvalidIndex, size_t end=InvalidIndex) const
   {
-    return parent_t::GetObject().Text(Sep, start, end);
+    return parent_t::obj().Text(Sep, start, end);
   }
   size_t Count() const {
-    return parent_t::GetObject().Count();
+    return parent_t::obj().Count();
   }
   bool IsEmpty() const { return Count() == 0; }
   const list_item_type& operator [] (size_t i) const {
-    return parent_t::GetObject()[i];
+    return parent_t::obj()[i];
   }
   size_t IndexOfi(const list_item_type& i) const {
-    return parent_t::GetObject().IndexOfi(i);
+    return parent_t::obj().IndexOfi(i);
   }
   size_t IndexOf(const list_item_type& i) const {
-    return parent_t::GetObject().IndexOf(i);
+    return parent_t::obj().IndexOf(i);
   }
 };
 
@@ -969,9 +969,9 @@ public:
     return *this;
   }
   list_obj_type& GetObject(size_t i) const {
-    return parent_tt::GetObject().GetObject(i);
+    return parent_tt::obj().GetObject(i);
   }
-  const list_t& GetObject() const { return parent_tt::GetObject(); }
+  const list_t& obj() const { return parent_tt::obj(); }
 };
 
 // string access interfaces

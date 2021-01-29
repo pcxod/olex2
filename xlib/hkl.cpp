@@ -261,7 +261,7 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
         " invalid reflections";
     }
     if (get_ins && (SL.Count() - i) > 2) {
-      TStrList toks = SL.SubListFrom(i).GetObject();
+      TStrList toks = SL.SubListFrom(i).obj();
       olx_object_ptr<TIns> ins(new TIns);
       try {
         ins->LoadFromStrings(toks);

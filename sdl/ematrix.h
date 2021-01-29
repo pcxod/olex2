@@ -58,7 +58,7 @@ public:
   }
 
   ConstMatrix<FT> operator * (const ConstMatrix<FT>& C) const {
-    return operator *(C.GetObject());
+    return operator *(C.obj());
   }
   ConstMatrix<FT> operator + (FT V) const {  return TMatrix<FT>(Self()) += V;  }
   ConstMatrix<FT> operator - (FT V) const {  return TMatrix<FT>(Self()) -= V;  }
@@ -69,14 +69,14 @@ public:
     return TMatrix<FT>(Self()) += c;
   }
   ConstMatrix<FT> operator + (const ConstMatrix<FT>& c) const {
-    return TMatrix<FT>(Self()) += c.GetObject();
+    return TMatrix<FT>(Self()) += c.obj();
   }
   template <class AFT>
   ConstMatrix<FT> operator - (const TMatrix<AFT>& c) const {
     return TMatrix<FT>(Self()) -= c;
   }
   ConstMatrix<FT> operator - (const ConstMatrix<FT>& c) const {
-    return TMatrix<FT>(Self()) -= c.GetObject();
+    return TMatrix<FT>(Self()) -= c.obj();
   }
 };
 

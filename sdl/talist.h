@@ -155,11 +155,11 @@ public:
   }
 //..............................................................................
   TArrayList& AddAll(const SharedArrayList<T>& list) {
-    return AddAll(list.GetObject());
+    return AddAll(list.obj());
   }
 //..............................................................................
   TArrayList& AddAll(const ConstArrayList<T>& list) {
-    return AddAll(list.GetObject());
+    return AddAll(list.obj());
   }
 //..............................................................................
   template <class List> TArrayList& operator += (const List& list)  {

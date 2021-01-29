@@ -46,12 +46,14 @@ void XLibMacros::funATA(const TStrObjList& Cmds, TMacroData& Error) {
   TXApp& xapp = TXApp::GetInstance();
   olxstr arg_0 = Cmds.IsEmpty() ? EmptyString() : Cmds[0];
   int arg = 0;
-  TSAtomPList atoms;
+  TCAtomPList atoms;
   if (arg_0.IsNumber()) {
     arg = arg_0.ToInt();
     arg_0.SetLength(0);
     if (Cmds.Count() > 1) {
-      atoms = xapp.FindSAtoms(Cmds.SubListFrom(1).GetObject(), false);
+      atoms = TCAtomPList(
+        xapp.FindSAtoms(Cmds.SubListFrom(1).obj(), false),
+        FunctionAccessor::MakeConst(&TSAtom::CAtom));
     }
   }
   else if(TEFile::Exists(arg_0)) {
@@ -59,7 +61,9 @@ void XLibMacros::funATA(const TStrObjList& Cmds, TMacroData& Error) {
     return;
   }
   else {
-    atoms = xapp.FindSAtoms(Cmds, false);
+    atoms = TCAtomPList(
+      xapp.FindSAtoms(Cmds, false),
+      FunctionAccessor::MakeConst(&TSAtom::CAtom));
   }
   bool dry_run = arg == -1;
   if (!dry_run) {
@@ -82,7 +86,7 @@ void XLibMacros::funATA(const TStrObjList& Cmds, TMacroData& Error) {
     }
     au.GetAtoms().ForEach(ACollectionItem::TagSetter(0));
     for (size_t i = 0; i < atoms.Count(); i++) {
-      atoms[i]->CAtom().SetTag(1);
+      atoms[i]->SetTag(1);
     }
     for (size_t i = 0; i < au.AtomCount(); i++) {
       if (au.GetAtom(i).GetTag() == 0) {

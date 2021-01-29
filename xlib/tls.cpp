@@ -25,13 +25,13 @@ typedef linear_to_sym<mat3d> to_sym3d;
 
 TLS::TLS(const TSAtomPList &atoms_) : atoms(atoms_)
 {
-  if (atoms.IsEmpty())
+  if (atoms.IsEmpty()) {
     throw TInvalidArgumentException(__OlxSourceInfo, "atom list");
+  }
   TLSfreeParameters = 21;
   RtoLaxes.I();
   //Use an atom as origin (reducing numerical errors on distances)
-  origin = olx_mean(atoms,
-    FunctionAccessor::MakeConst<vec3d, TSAtom>(&TSAtom::crd));
+  origin = olx_mean(atoms, TSAtom::CrdAccessor());
   /*
   Calculate errors on Uij input - to be replaced be VcV when available from
   Olex2

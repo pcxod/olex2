@@ -205,11 +205,11 @@ public:
   }
   //..............................................................................
   TPtrList& AddAll(const SharedPtrList<T>& list) {
-    return AddAll(list.GetObject());
+    return AddAll(list.obj());
   }
   //..............................................................................
   TPtrList& AddAll(const ConstPtrList<T>& list) {
-    return AddAll(list.GetObject());
+    return AddAll(list.obj());
   }
   //..............................................................................
   template <class List> TPtrList& AddAll(const List& l) {

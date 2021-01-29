@@ -234,8 +234,9 @@ struct inertia {
     const w_accessor_t &w_accessor)
   {
     out rv;
-    if (list.Count() < 2)
+    if (list.Count() < 2) {
       return rv;
+    }
     FloatT w_sum = 0;
     for (size_t i = 0; i < list.Count(); i++) {
       FloatT w = w_accessor(list[i]);
@@ -263,12 +264,12 @@ struct inertia {
     }
     return rv;
   }
-  // calcualtion with unit weights
+  // calculation with unit weights
   template <class list_t, class accessor_t>
   static out calc(const list_t &list, const accessor_t &accessor) {
     return calc(list, accessor, unit_weight());
   }
-  // calcualtion with unit weights
+  // calculation with unit weights
   template <class list_t>
   static out calc(const list_t& list) {
     return calc(list, DummyAccessor(), unit_weight());

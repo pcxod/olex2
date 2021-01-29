@@ -15,27 +15,24 @@
 #include "unitcell.h"
 #include "pers_util.h"
 #include "xapp.h"
+#include "math/plane.h"
 
 double TSPlane::CalcRMSD(const TSAtomPList& atoms) {
-  if (atoms.Count() < 3) return -1;
-  TArrayList<olx_pair_t<vec3d, double> > Points(atoms.Count());
-  for (size_t i = 0; i < atoms.Count(); i++) {
-    Points[i].a = atoms[i]->crd();
-    Points[i].b = 1;
+  if (atoms.Count() < 3) {
+    return -1;
   }
-  vec3d p, c;
-  return CalcPlane(Points, p, c);
+  return plane::mean<>::calc(atoms, TSAtom::CrdAccessor()).rms[0];
 }
 //..............................................................................
 double TSPlane::CalcRMSD(const TAtomEnvi& atoms) {
-  if (atoms.Count() < 3) return -1;
-  TArrayList<olx_pair_t<vec3d, double> > Points(atoms.Count());
-  for (size_t i = 0; i < atoms.Count(); i++) {
-    Points[i].a = atoms.GetCrd(i);
-    Points[i].b = 1;
+  if (atoms.Count() < 3) {
+    return -1;
   }
-  vec3d p, c;
-  return CalcPlane(Points, p, c);
+  vec3d_list Points(atoms.Count(), true);
+  for (size_t i = 0; i < atoms.Count(); i++) {
+    Points[i] = atoms.GetCrd(i);
+  }
+  return plane::mean<>::calc(Points).rms[0];
 }
 //..............................................................................
 void TSPlane::Init(const TTypeList< olx_pair_t<TSAtom*, double> >& atoms) {
@@ -49,8 +46,9 @@ void TSPlane::Init(const TTypeList< olx_pair_t<TSAtom*, double> >& atoms) {
 }
 //..............................................................................
 void TSPlane::_Init(const TTypeList<olx_pair_t<vec3d, double> >& points) {
-  vec3d rms;
-  CalcPlanes(points, Normals, rms, Center);
+  plane::mean<>::out po = plane::mean<>::calc_for_pairs(points);
+  Normals = po.normals;
+  Center = po.center;
   const double nl = GetNormal().Length();
   Distance = GetNormal().DotProd(Center) / nl;
   Normals[0] /= nl;
@@ -58,7 +56,7 @@ void TSPlane::_Init(const TTypeList<olx_pair_t<vec3d, double> >& points) {
     Normals[1] *= -1;
     Normals[2] *= -1;
   }
-  wRMSD = rms[0];
+  wRMSD = po.rms[0];
 }
 //..............................................................................
 double TSPlane::CalcRMSD() const {
@@ -82,28 +80,6 @@ double TSPlane::CalcWeightedRMSD() const {
     qw += olx_sqr(Crds[i].GetB());
   }
   return sqrt(qd / qw);
-}
-//..............................................................................
-bool TSPlane::CalcPlanes(const TSAtomPList& atoms, mat3d& params, vec3d& rms,
-  vec3d& center)
-{
-  TTypeList< olx_pair_t<vec3d, double> > Points;
-  Points.SetCapacity(atoms.Count());
-  for (size_t i = 0; i < atoms.Count(); i++) {
-    Points.AddNew(atoms[i]->crd(), 1.0);
-  }
-  return CalcPlanes(Points, params, rms, center);
-}
-//..............................................................................
-double TSPlane::CalcPlane(const TSAtomPList& atoms,
-  vec3d& Params, vec3d& center, const short type)
-{
-  TTypeList< olx_pair_t<vec3d, double> > Points;
-  Points.SetCapacity(atoms.Count());
-  for (size_t i = 0; i < atoms.Count(); i++) {
-    Points.AddNew(atoms[i]->crd(), 1.0);
-  }
-  return CalcPlane(Points, Params, center, type);
 }
 //..............................................................................
 double TSPlane::Angle(const TSBond& Bd) const {

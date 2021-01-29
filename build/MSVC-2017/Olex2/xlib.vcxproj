@@ -25,6 +25,14 @@
       <Configuration>Unicode-release-d</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
+    <ProjectConfiguration Include="Unicode-release-py3|Win32">
+      <Configuration>Unicode-release-py3</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Unicode-release-py3|x64">
+      <Configuration>Unicode-release-py3</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="Unicode-release-static|Win32">
       <Configuration>Unicode-release-static</Configuration>
       <Platform>Win32</Platform>
@@ -84,6 +92,13 @@
     <WholeProgramOptimization>false</WholeProgramOptimization>
     <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <CLRSupport>false</CLRSupport>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-release-d|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <CharacterSet>Unicode</CharacterSet>
@@ -119,6 +134,13 @@
     <WholeProgramOptimization>false</WholeProgramOptimization>
     <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <CLRSupport>false</CLRSupport>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
@@ -142,6 +164,10 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="work.props" />
   </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="work.props" />
+  </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-release-d|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="work.props" />
@@ -162,13 +188,19 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="work.props" />
   </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="work.props" />
+  </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <_ProjectFileVersion>10.0.30128.1</_ProjectFileVersion>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">$(SolutionDir)$(Platform)\$(Configuration)\lib\</OutDir>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">$(SolutionDir)$(Platform)\$(Configuration)\lib\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">$(SolutionDir)$(Platform)\$(Configuration)\lib\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">$(SolutionDir)$(Platform)\$(Configuration)\obj\$(ProjectName)\</IntDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">$(SolutionDir)$(Platform)\$(Configuration)\obj\$(ProjectName)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">$(SolutionDir)$(Platform)\$(Configuration)\obj\$(ProjectName)\</IntDir>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Unicode-release|Win32'">$(SolutionDir)$(Platform)\$(Configuration)\lib\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Unicode-release|Win32'">$(SolutionDir)$(Platform)\$(Configuration)\obj\$(ProjectName)\</IntDir>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Unicode-release-static|Win32'">$(SolutionDir)$(Platform)\$(Configuration)\lib</OutDir>
@@ -177,8 +209,10 @@
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Unicode-release-d|Win32'">$(Configuration)\</IntDir>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|x64'">$(SolutionDir)$(Platform)\$(Configuration)\lib\</OutDir>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|x64'">$(SolutionDir)$(Platform)\$(Configuration)\lib\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|x64'">$(SolutionDir)$(Platform)\$(Configuration)\lib\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|x64'">$(SolutionDir)$(Platform)\$(Configuration)\obj\$(ProjectName)\</IntDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|x64'">$(SolutionDir)$(Platform)\$(Configuration)\obj\$(ProjectName)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|x64'">$(SolutionDir)$(Platform)\$(Configuration)\obj\$(ProjectName)\</IntDir>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Unicode-release|x64'">$(SolutionDir)$(Platform)\$(Configuration)\lib\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Unicode-release|x64'">$(SolutionDir)$(Platform)\$(Configuration)\obj\$(ProjectName)\</IntDir>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Unicode-release-static|x64'">$(SolutionDir)$(Platform)\$(Configuration)\lib</OutDir>
@@ -198,6 +232,12 @@
     <ReferencePath>$(ReferencePath)</ReferencePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
+    <ExecutablePath>$(ExecutablePath)</ExecutablePath>
+    <IncludePath>$(IncludePath)</IncludePath>
+    <ReferencePath>$(ReferencePath)</ReferencePath>
+    <LibraryPath>$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|x64'">
     <ExecutablePath>$(ExecutablePath)</ExecutablePath>
     <IncludePath>$(IncludePath)</IncludePath>
@@ -205,6 +245,12 @@
     <LibraryPath>$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|x64'">
+    <ExecutablePath>$(ExecutablePath)</ExecutablePath>
+    <IncludePath>$(IncludePath)</IncludePath>
+    <ReferencePath>$(ReferencePath)</ReferencePath>
+    <LibraryPath>$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|x64'">
     <ExecutablePath>$(ExecutablePath)</ExecutablePath>
     <IncludePath>$(IncludePath)</IncludePath>
     <ReferencePath>$(ReferencePath)</ReferencePath>
@@ -232,6 +278,27 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <IntrinsicFunctions>false</IntrinsicFunctions>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <AdditionalIncludeDirectories>..\..\..\sdl;..\..\..\repository;..\..\..\xlib;$(OLX_PY_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_PYTHON;_UNICODE;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <MinimalRebuild>false</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <StructMemberAlignment>Default</StructMemberAlignment>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <BrowseInformation>true</BrowseInformation>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <InlineFunctionExpansion>Default</InlineFunctionExpansion>
@@ -350,6 +417,30 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <IntrinsicFunctions>false</IntrinsicFunctions>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <AdditionalIncludeDirectories>..\..\..\sdl;..\..\..\repository;..\..\..\xlib;$(OLX_PY_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_PYTHON;_UNICODE;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <StructMemberAlignment>Default</StructMemberAlignment>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <BrowseInformation>true</BrowseInformation>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|x64'">
     <Midl>
       <TargetEnvironment>X64</TargetEnvironment>
     </Midl>
@@ -589,20 +680,28 @@
     <ClCompile Include="..\..\..\xlib\chemdata.cpp">
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">/bigobj %(AdditionalOptions)</AdditionalOptions>
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">/bigobj %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">/bigobj %(AdditionalOptions)</AdditionalOptions>
       <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">Default</BasicRuntimeChecks>
       <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">Default</BasicRuntimeChecks>
+      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">Default</BasicRuntimeChecks>
       <BrowseInformation Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
       </BrowseInformation>
       <BrowseInformation Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
+      </BrowseInformation>
+      <BrowseInformation Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
       </BrowseInformation>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
       </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
+      </DebugInformationFormat>
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|x64'">/bigobj %(AdditionalOptions)</AdditionalOptions>
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|x64'">/bigobj %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|x64'">/bigobj %(AdditionalOptions)</AdditionalOptions>
       <MinimalRebuild Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|x64'">false</MinimalRebuild>
       <MinimalRebuild Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|x64'">false</MinimalRebuild>
+      <MinimalRebuild Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|x64'">false</MinimalRebuild>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\chnexp.cpp" />
     <ClCompile Include="..\..\..\xlib\congen.cpp" />
@@ -664,11 +763,15 @@
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
       </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
+      </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Ag.cpp">
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
+      </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
       </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Al.cpp">
@@ -676,11 +779,15 @@
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
       </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
+      </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Ar.cpp">
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
+      </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
       </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_As.cpp">
@@ -688,11 +795,15 @@
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
       </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
+      </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_At.cpp">
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
+      </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
       </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Au.cpp">
@@ -700,11 +811,15 @@
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
       </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
+      </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_B.cpp">
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
+      </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
       </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Ba.cpp">
@@ -712,11 +827,15 @@
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
       </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
+      </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Be.cpp">
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
+      </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
       </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Bi.cpp">
@@ -724,11 +843,15 @@
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
       </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
+      </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Br.cpp">
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
+      </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
       </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_C.cpp">
@@ -736,11 +859,15 @@
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
       </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
+      </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Ca.cpp">
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
+      </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
       </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Cd.cpp">
@@ -748,11 +875,15 @@
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
       </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
+      </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Ce.cpp">
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
+      </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
       </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Cl.cpp">
@@ -760,11 +891,15 @@
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
       </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
+      </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Co.cpp">
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
+      </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
       </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Cr.cpp">
@@ -772,11 +907,15 @@
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
       </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
+      </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Cs.cpp">
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
+      </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
       </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Cu.cpp">
@@ -784,11 +923,15 @@
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
       </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
+      </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_D.cpp">
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
+      </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
       </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Dy.cpp">
@@ -796,11 +939,15 @@
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
       </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
+      </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Er.cpp">
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
+      </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
       </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Eu.cpp">
@@ -808,11 +955,15 @@
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
       </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
+      </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_F.cpp">
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
+      </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
       </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Fe.cpp">
@@ -820,11 +971,15 @@
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
       </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
+      </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Fr.cpp">
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
+      </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
       </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Ga.cpp">
@@ -832,11 +987,15 @@
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
       </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
+      </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Gd.cpp">
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
+      </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
       </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Ge.cpp">
@@ -844,11 +1003,15 @@
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
       </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
+      </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_H.cpp">
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
+      </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
       </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_He.cpp">
@@ -856,11 +1019,15 @@
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
       </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
+      </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Hf.cpp">
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
+      </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
       </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Hg.cpp">
@@ -868,11 +1035,15 @@
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
       </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
+      </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Ho.cpp">
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
+      </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
       </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_I.cpp">
@@ -880,11 +1051,15 @@
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
       </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
+      </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_In.cpp">
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
+      </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
       </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Ir.cpp">
@@ -892,11 +1067,15 @@
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
       </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
+      </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_K.cpp">
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
+      </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
       </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Kr.cpp">
@@ -904,11 +1083,15 @@
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
       </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
+      </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_La.cpp">
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
+      </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
       </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Li.cpp">
@@ -916,11 +1099,15 @@
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
       </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
+      </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Lu.cpp">
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
+      </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
       </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Mg.cpp">
@@ -928,11 +1115,15 @@
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
       </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
+      </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Mn.cpp">
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
+      </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
       </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Mo.cpp">
@@ -940,11 +1131,15 @@
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
       </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
+      </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_N.cpp">
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
+      </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
       </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Na.cpp">
@@ -952,11 +1147,15 @@
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
       </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
+      </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Nb.cpp">
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
+      </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
       </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Nd.cpp">
@@ -964,11 +1163,15 @@
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
       </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
+      </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Ne.cpp">
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
+      </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
       </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Ni.cpp">
@@ -976,11 +1179,15 @@
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
       </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
+      </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_O.cpp">
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
+      </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
       </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Os.cpp">
@@ -988,11 +1195,15 @@
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
       </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
+      </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_P.cpp">
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
+      </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
       </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Pa.cpp">
@@ -1000,11 +1211,15 @@
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
       </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
+      </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Pb.cpp">
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
+      </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
       </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Pd.cpp">
@@ -1012,11 +1227,15 @@
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
       </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
+      </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Pm.cpp">
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
+      </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
       </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Po.cpp">
@@ -1024,11 +1243,15 @@
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
       </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
+      </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Pr.cpp">
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
+      </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
       </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Pt.cpp">
@@ -1036,11 +1259,15 @@
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
       </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
+      </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Ra.cpp">
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
+      </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
       </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Rb.cpp">
@@ -1048,11 +1275,15 @@
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
       </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
+      </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Re.cpp">
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
+      </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
       </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Rh.cpp">
@@ -1060,11 +1291,15 @@
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
       </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
+      </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Rn.cpp">
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
+      </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
       </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Ru.cpp">
@@ -1072,11 +1307,15 @@
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
       </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
+      </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_S.cpp">
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
+      </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
       </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Sb.cpp">
@@ -1084,11 +1323,15 @@
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
       </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
+      </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Sc.cpp">
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
+      </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
       </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Se.cpp">
@@ -1096,11 +1339,15 @@
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
       </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
+      </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Si.cpp">
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
+      </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
       </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Sm.cpp">
@@ -1108,11 +1355,15 @@
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
       </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
+      </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Sn.cpp">
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
+      </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
       </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Sr.cpp">
@@ -1120,11 +1371,15 @@
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
       </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
+      </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Ta.cpp">
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
+      </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
       </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Tb.cpp">
@@ -1132,11 +1387,15 @@
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
       </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
+      </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Tc.cpp">
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
+      </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
       </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Te.cpp">
@@ -1144,11 +1403,15 @@
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
       </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
+      </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Th.cpp">
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
+      </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
       </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Ti.cpp">
@@ -1156,11 +1419,15 @@
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
       </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
+      </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Tl.cpp">
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
+      </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
       </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Tm.cpp">
@@ -1168,11 +1435,15 @@
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
       </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
+      </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_U.cpp">
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
+      </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
       </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_V.cpp">
@@ -1180,11 +1451,15 @@
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
       </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
+      </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_W.cpp">
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
+      </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
       </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Xe.cpp">
@@ -1192,11 +1467,15 @@
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
       </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
+      </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Y.cpp">
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
+      </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
       </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Yb.cpp">
@@ -1204,17 +1483,23 @@
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
       </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
+      </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Zn.cpp">
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
       </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
+      </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\henke\henke_Zr.cpp">
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
       </DebugInformationFormat>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-debug-py3|Win32'">
+      </DebugInformationFormat>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Unicode-release-py3|Win32'">
       </DebugInformationFormat>
     </ClCompile>
     <ClCompile Include="..\..\..\xlib\cif.cpp" />

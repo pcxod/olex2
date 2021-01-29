@@ -1205,7 +1205,7 @@ bool TAutoDB::A2Pemutate(TCAtom& a1, TCAtom& a2, const cm_Element& e1,
   if ((v & 9) != 0) {
     if (!a1.IsFixedType()) {
       if (!dry_run) {
-        TBasicApp::NewLogEntry() << "Skipping fixed type atoms '" <<
+        TBasicApp::NewLogEntry(logInfo) << "Skipping fixed type atoms '" <<
           a1.GetLabel() << '\'';
       }
       return false;
@@ -1214,7 +1214,7 @@ bool TAutoDB::A2Pemutate(TCAtom& a1, TCAtom& a2, const cm_Element& e1,
   if ((v & 6) != 0) {
     if (!a1.IsFixedType()) {
       if (!dry_run) {
-        TBasicApp::NewLogEntry() << "Skipping fixed type atoms '" <<
+        TBasicApp::NewLogEntry(logInfo) << "Skipping fixed type atoms '" <<
           a2.GetLabel() << '\'';
       }
       return false;

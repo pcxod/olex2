@@ -1012,12 +1012,12 @@ const_strlist TXFile::ToJSON() const {
     if (a.GetEllipsoid() != NULL) {
       l << ", \"matrix\":[";
       mat3d m = a.GetEllipsoid()->GetMatrix();
-      m[0] *= a.GetEllipsoid()->GetSX();
-      m[1] *= a.GetEllipsoid()->GetSY();
-      m[2] *= a.GetEllipsoid()->GetSZ();
-      for (int mi=0; mi < 3; mi++)
-        for (int mj=0; mj < 3; mj++)
+      m.Scale(a.GetEllipsoid()->GetNorms());
+      for (int mi = 0; mi < 3; mi++) {
+        for (int mj = 0; mj < 3; mj++) {
           l << m[mi][mj] << ',';
+        }
+      }
       l.SetLength(l.Length()-1); // strip last comma
       l << ']';
     }

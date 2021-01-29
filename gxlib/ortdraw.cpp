@@ -32,9 +32,7 @@ ort_atom::ort_atom(const OrtDraw& parent, const TXAtom& a) :
   const TSAtom& sa = atom;
   if (sa.GetEllipsoid() != 0) {
     mat3f& _elpm = *(new mat3f(sa.GetEllipsoid()->GetMatrix()));
-    _elpm[0] *= sa.GetEllipsoid()->GetSX();
-    _elpm[1] *= sa.GetEllipsoid()->GetSY();
-    _elpm[2] *= sa.GetEllipsoid()->GetSZ();
+    _elpm.Scale(sa.GetEllipsoid()->GetNorms());
     _elpm *= (float)atom.GetDrawScale();
     elpm = new mat3f(_elpm);
     p_elpm = &(_elpm *= parent.ProjMatr);

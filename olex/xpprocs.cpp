@@ -875,13 +875,15 @@ void TMainForm::macPictPS(TStrObjList &Cmds, const TParamList &Options,
   }
 }
 //..............................................................................
-void TMainForm::macPictTEX(TStrObjList &Cmds, const TParamList &Options, TMacroData &Error)  {
+void TMainForm::macPictTEX(TStrObjList& Cmds, const TParamList& Options, TMacroData& Error) {
   OrtDrawTex od;
   short color_mode = 0;
-  if( Options.Contains("color_fill") )
+  if (Options.Contains("color_fill")) {
     color_mode = ortep_color_fill;
-  else if( Options.Contains("color_line") )
+  }
+  else if (Options.Contains("color_line")) {
     color_mode = ortep_color_lines;
+  }
   od.SetColorMode(color_mode);
   od.Render(Cmds[0]);
 }
@@ -890,7 +892,7 @@ void TMainForm::macPictPR(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
   olxstr file_name = (Cmds[0].EndsWith(".pov") ? Cmds[0] : olxstr(Cmds[0]) << ".pov");
-  TEFile::WriteLines(file_name, TCStrList(FXApp->ToPov().GetObject()));
+  TEFile::WriteLines(file_name, TCStrList(FXApp->ToPov().obj()));
 }
 //..............................................................................
 void TMainForm::macClear(TStrObjList &Cmds, const TParamList &Options,
@@ -1972,8 +1974,9 @@ void TMainForm::macFlush(TStrObjList &Cmds, const TParamList &Options,
     TUtf8File::WriteLines(FXApp->GetInstanceDir() + fn,
       cmds.SubListFrom(cmds.Count() - olx_min(999, cmds.Count())));
   }
-  else
+  else {
     E.SetUnhandled(true);
+  }
 }
 //..............................................................................
 void TMainForm::macShowStr(TStrObjList &Cmds, const TParamList &Options,
@@ -2361,7 +2364,7 @@ void TMainForm::macEditIns(TStrObjList &Cmds, const TParamList &Options, TMacroD
   Ins.SaveHeader(SL, true);
   SL.Add("HKLF ") << Ins.GetRM().GetHKLFStr();
   SL.Add();
-  SL.AddAll(Ins.GetFooter().GetObject());
+  SL.AddAll(Ins.GetFooter().obj());
   Ins.SaveExtras(SL, NULL, NULL, Ins.GetRM());
   TdlgEdit *dlg = new TdlgEdit(this, true);
   dlg->SetText(SL.Text('\n'));
@@ -4084,1018 +4087,112 @@ void TMainForm::funChooseDir(const TStrObjList& Params, TMacroData &E) {
     E.ProcessingError(__OlxSrcInfo, EmptyString());
 }
 //..............................................................................
-struct FormulaFitter {
-  typedef olx_pair_t<double, TTypeList<ElementCount> > atype;
-  olxstr_dict <olx_object_ptr<atype> > input;
-  sorted::PointerPointer<const cm_Element> elements;
-  ematd inm, VcV; // inverted normal matrix
-  evecd nr; // parameter estimations
-  double S, R1;
-  sorted::PrimitiveAssociation<double, size_t> residuals;
-  void fit() {
-    elements.Clear();
-    residuals.Clear();
-    for (size_t i = 0; i < input.Count(); i++) {
-      const atype &v = input.GetValue(i);
-      for (size_t j = 0; j < v.GetB().Count(); j++) {
-        elements.AddUnique(v.GetB()[j].element);
-      }
-    }
-    ematd mt(input.Count(), elements.Count());
-    evecd r(input.Count());
-    for (size_t i = 0; i < input.Count(); i++) {
-      atype & v = input.GetValue(i);
-      for (size_t j = 0; j < v.GetB().Count(); j++) {
-        size_t ei = elements.IndexOf(v.GetB()[j].element);
-        mt[i][ei] = v.GetB()[j].count;
-      }
-      r[i] = v.GetA();
-    }
-    ematd m = mt;
-    mt.Transpose();
-    math::LU::Invert(inm = mt*m);
-    nr = (inm*mt)*r;
-    double R1t = 0, R1b = 0;
-    S = 0;
-    for (size_t i = 0; i < input.Count(); i++) {
-      atype & v = input.GetValue(i);
-      double calc = 0;
-      for (size_t j = 0; j < v.GetB().Count(); j++) {
-        size_t ei = elements.IndexOf(v.GetB()[j].element);
-        calc += v.GetB()[j].count*nr[ei];
-      }
-      double diff = v.GetA() - calc;
-      R1t += olx_abs(diff);
-      R1b += v.GetA();
-      double r = diff*diff;
-      S += r;
-      residuals.Add(r, i);
-    }
-    R1 = R1t / R1b;
-    VcV = inm*(S / (input.Count() - elements.Count()));
+typedef double comp_t;
+
+comp_t calc_(double v, const TVector<comp_t> & p) {
+  comp_t e = 0;
+  for (size_t i = 0; i < p.Count() - 1; i+=2) {
+    e += p[i]*olx_exp(p[i+1]*v);
   }
-  void printResiduals(size_t count=10) {
-    TBasicApp::NewLogEntry() << count << " Highest residuals:";
-    size_t top = olx_min(residuals.Count(), count);
-    for (size_t i = 0; i < top; i++) {
-      size_t idx = residuals.Count() - i - 1;
-      const olxstr &key = input.GetKey(residuals.GetValue(idx));
-      TBasicApp::NewLogEntry() << olxstr::FormatFloat(3, residuals.GetKey(idx))
-        << ": " << key;
-    }
-    TBasicApp::NewLogEntry() << "Mean residual: " <<
-      olxstr::FormatFloat(3, S / input.Count());
+  return e + p.GetLast();
+}
+
+comp_t calc_d(size_t i, double v, const TVector<comp_t>& p) {
+  if (i+1 >= p.Count()) {
+    return 1;
   }
-  bool filterResiduals(double th=0) {
-    if (th == 0) {
-      th = (S / input.Count()) * 9;
-    }
-    TStrList keys;
-    for (size_t i = 0; i < residuals.Count(); i++) {
-      size_t idx = residuals.Count() - i - 1;
-      if (residuals.GetKey(idx) > th)
-        keys << input.GetKey(residuals.GetValue(idx));
-      else
-        break;
-    }
-    for (size_t i = 0; i < keys.Count(); i++) {
-      input.Delete(input.IndexOf(keys[i]));
-    }
-    return !keys.IsEmpty();
+  if ((i & 1)) { //b
+    return olx_exp(p[i]*v)*v* p[i + 1];
   }
-  void printResults() {
-    TSizeList cnts(elements.Count(), olx_list_init::zero());
-    for (size_t i = 0; i < input.Count(); i++) {
-      atype & v = input.GetValue(i);
-      for (size_t j = 0; j < v.GetB().Count(); j++) {
-        cnts[elements.IndexOf(v.GetB()[j].element)]++;
-      }
-    }
-    for (size_t i = 0; i < elements.Count(); i++) {
-      double vsu = sqrt(VcV[i][i]);
-      TEValueD v(nr[i], vsu);
-      double r = olx_sphere_radius(nr[i]);
-      TEValueD v1(r, r/3*vsu/nr[i]);
-      TBasicApp::NewLogEntry() << elements[i]->symbol << ' ' <<
-        v.ToString() << ' ' <<
-        v1.ToString() <<
-        " observations: " << cnts[i];
-    }
-    TBasicApp::NewLogEntry() << "R1 = " << olxstr::FormatFloat(2, R1*100);
+  else { //a
+    return olx_exp(p[i + 1]*v);
   }
-  TEValueD estimate(const TTypeList<ElementCount> &f) {
-    double res = 0, su = 0;
-    for (size_t j = 0; j < f.Count(); j++) {
-      size_t ei = elements.IndexOf(f[j].element);
-      if (ei == InvalidIndex)
-        return TEValueD(-1.0);
-      res += f[j].count*nr[ei];
-      su += olx_sqr(f[j].count)*VcV[ei][ei];
-      //for (size_t k = 0; k < f.Count(); k++) {
-      //  if (k == j) continue;
-      //  size_t vi = elements.IndexOf(&f[k].element);
-      //  su += 2 * f[j].count*f[k].count*VcV[ei][vi];
-      //}
-    }
-    return TEValueD(res, sqrt(su));
-  }
-  void toDataItem(TDataItem &di) {
-    TDataItem &ei = di.AddItem("elements");
-    for (size_t i = 0; i < elements.Count(); i++) {
-      ei.AddItem(elements[i]->symbol, nr[i]);
-    }
-    olxstr v;
-    v.Allocate(elements.Count()*(elements.Count() + 1) * 10 / 2);
-    for (size_t i = 0; i < elements.Count(); i++) {
-      for (size_t j = i; j < elements.Count(); j++) {
-        v << VcV[i][j] << ' ';
-      }
-    }
-    di.AddItem("VcV", v);
-  }
-  void fromDataItem(const TDataItem &di) {
-    elements.Clear();
-    TDataItem &ei = di.GetItemByName("elements");
-    elements.SetCapacity(ei.ItemCount());
-    nr.Resize(ei.ItemCount());
-    for (size_t i = 0; i < ei.ItemCount(); i++) {
-      TDataItem &e = ei.GetItemByIndex(i);
-      elements.Add(XElementLib::FindBySymbol(e.GetName()));
-      nr[i] = e.GetValue().ToDouble();
-    }
-    TStrList toks(di.GetItemByName("VcV").GetValue(), ' ');
-    VcV.Resize(ei.ItemCount(), ei.ItemCount());
-    for (size_t i = 0, idx = 0; i < elements.Count(); i++) {
-      for (size_t j = i; j < elements.Count(); j++, idx++) {
-        VcV[i][j] = VcV[j][i] = toks[idx].ToDouble();
-      }
-    }
-  }
-};
-class ExtractInfoTask : public TaskBase {
-  TCif cif;
-  const TStrList &files;
-  TLattice latt;
-  RefinementModel rm;
-  TStrList &out;
-public:
-  ExtractInfoTask(const TStrList &files, TStrList &out) :
-    files(files),
-    latt(*(new SObjectProvider)),
-    rm(latt.GetAsymmUnit()),
-    out(out)
-  {
-    latt.GetAsymmUnit().SetRefMod(&rm);
-  }
-  void Run(size_t i) {
-    try {
-      cif.LoadFromFile(files[i]);
-      rm.Clear(rm_clear_ALL);
-      latt.Clear(false);
-      rm.Assign(cif.GetRM(), true);
-      latt.Init();
-      olx_critical_section *cs = GetCriticalSection();
-      if (cs) cs->enter();
-      olxstr &l = out.Add(TEFile::ExtractFileName(files[i]));
-      l << ' ' << latt.GetAsymmUnit().SummFormula(' ') << ' ' <<
-        latt.GetAsymmUnit().CalcCellVolume();
-      if (cs) cs->leave();
-    }
-    catch (...) {
-    }
-  }
-  ExtractInfoTask *Replicate() {
-    return new ExtractInfoTask(files, out);
-  }
-};
+}
 
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroData &Error)  {
-  return;
-  {
-    TDataFile df;
-    FXApp->XFile().GetLastLoader<TCif>().ToDataItem(df.Root().AddItem("CIF"));
-    df.SaveToXMLFile("q:/devel/1cif.xml");
-    //df.LoadFromXMLFile("e:/1cif.xml");
-    //df.SaveToXMLFile("e:/2cif.xml");
-    //FXApp->XFile().GetLastLoader<TCif>().FromDataItem(df.Root().GetItemByName("CIF"));
-    //FXApp->XFile().GetLastLoader<TCif>().SaveToFile("e:/1cif.cif");
-  }
-  {
-    TDataFile df;
-    FXApp->XFile().ToDataItem(df.Root().AddItem("OXM"));
-    //df.LoadFromXMLFile("e:/1.xml");
-    df.SaveToXMLFile("e:/1o.xml");
-    //FXApp->XFile().FromDataItem(df.Root().GetItemByName("OXM"));
-    //FXApp->XFile().EndUpdate();
-    return;
-  }
-  olxstr sf = FXApp->XFile().GetAsymmUnit().SummFormula(' ', true);
+  //typedef std::complex<double> comp_t;
+  TGXApp &app = TGXApp::GetInstance();
+  const mat3d hkl2c = app.XFile().GetAsymmUnit().GetHklToCartesian();
+  const TRefList &refs = app.XFile().GetRM().GetReflections();
 
-  if (false) {
-    TFileTree ft("f:/r2");
-    ft.Expand();
-    TStrList files;
-    ft.GetRoot().ListFiles(files, "*.cif");
-    TStrList out;
-    ExtractInfoTask task(files, out);
-    OlxListTask::Run(task, files.Count(), tLinearTask, 20);
-    TEFile::WriteLines("e:/c-v.txt", TCStrList(out));
+  TMatrix<comp_t> mm(refs.Count(), 9);
+  TVector<comp_t> p(9), t(refs.Count()), r(refs.Count());
+  for (size_t i = 0; i < p.Count()-1; i++) {
+    p[i] = 1;
   }
-  {
-    FormulaFitter fitter;
-    olxstr result_file = "e:/vol-res.xld";
-    if (TEFile::Exists(result_file)) {
-      TDataFile df;
-      df.LoadFromXLFile(result_file);
-      fitter.fromDataItem(df.Root());
-    }
-    else {
-      TStrList f = TEFile::ReadLines("e:/c-v.txt");
-      typedef olx_pair_t<double, TTypeList<ElementCount> > atype;
-      //f.LoadFromFile("C:/Users/Oleg Dolomanov/Dropbox/content-volume-out.txt");
-      for (size_t li = 0; li < f.Count(); li++) {
-        TStrList toks(f[li].Replace('\t', ' '), ' ');
-        if (toks.Count() < 3) continue;
-        if (toks[0].Equalsi("rem")) continue;
-        double vol = toks.GetLastString().ToDouble();
-        fitter.input.Add(toks[0],
-          new atype(vol,
-          XElementLib::ParseElementString(toks.Text(' ', 1, toks.Count() - 1))));
+  evecd a(refs.Count());
+  cm_Element &e = XElementLib::GetByIndex(iOxygenIndex);
+  p[0] = e.gaussians->a1;
+  p[1] = e.gaussians->b1;
+  p[2] = e.gaussians->a2/2;
+  p[3] = e.gaussians->b2;
+  p[4] = e.gaussians->a3/2;
+  p[5] = e.gaussians->b3;
+  p[6] = e.gaussians->a4;
+  p[7] = e.gaussians->b4;
+  p[8] = e.gaussians->c;
+  for (size_t i = 0; i < refs.Count(); i++) {
+    a[i] = refs[i].ToCart(hkl2c).QLength() * 0.25;
+    t[i] = e.gaussians->calc_sq(a[i]);
+  }
+  size_t cnt = 0;
+  double r_sq_p = 0;
+  while (true) {
+    double r_sq = 0;
+    for (size_t i = 0; i < refs.Count(); i++) {
+      r[i] = t[i] - calc_(a[i], p);
+      r_sq += olx_sqr(r[i]);
+      for (size_t j = 0; j < p.Count(); j++) {
+        mm[i][j] = calc_d(j, a[i], p);
       }
-      fitter.fit();
-      fitter.printResults();
-      fitter.printResiduals(10);
-      while (fitter.filterResiduals()) {
-        fitter.fit();
-        fitter.printResults();
-        fitter.printResiduals(10);
-      }
-      TDataFile df;
-      fitter.toDataItem(df.Root());
-      df.SaveToXLFile(result_file);
     }
-
-    if (Cmds.Count() > 0) {
-      TTypeList<ElementCount> f =
-        XElementLib::ParseElementString(Cmds.Text(' '));
-      TBasicApp::NewLogEntry() << "Calculated: " << fitter.estimate(f).ToString();
+    if (cnt > 0) {
+      if (r_sq_p <= r_sq) {
+        TBasicApp::NewLogEntry() << "Terminating R_sq:" << r_sq;
+        break;
+      }
+    }
+    TMatrix<comp_t> tm = mm.Transpose(mm);
+    TMatrix<comp_t> nm = tm * mm;
+    math::LU::Invert(nm);
+    //TBasicApp::NewLogEntry() << nm;
+    TVector<comp_t> rev = tm * r;
+    TVector<comp_t> s = rev* nm;
+    TBasicApp::NewLogEntry() << "Shift:\n" << s;
+    s *= 0.75;
+    p += s;
+    TBasicApp::NewLogEntry() << "Vector:\n" << p;
+    TBasicApp::NewLogEntry() << "R_sq:" << r_sq << ", " << r_sq_p;
+    r_sq_p = r_sq;
+    if (cnt++ > 50) {
+      break;
     }
   }
-  //{
-  //  TStrList f;
-  //  typedef olx_pair_t<double, TTypeList<ElementCount> > atype;
-  //    olxstr_dict <olx_object_ptr<atype> > input;
-  //  f.LoadFromFile("C:/Users/Oleg Dolomanov/Dropbox/content-volume-out.txt");
-  //  for (size_t li = 0; li < f.Count(); li++) {
-  //    TStrList toks(f[li].Replace('\t', ' '), ' ');
-  //    if (toks.Count() < 3) continue;
-  //    double vol = toks.GetLastString().ToDouble();
-  //    input.Add(toks[0],
-  //      new atype(vol,
-  //        XElementLib::ParseElementString(toks.Text(' ', 1, toks.Count() - 1))));
-  //  }
-  //  ematd mt(input.Count(), 2), rt(1, input.Count());
-  //  evecd r(input.Count());
-  //  for (size_t i = 0; i < input.Count(); i++) {
-  //    atype & v = input.GetValue(i);
-  //    double cnt = 0, vs=0;
-  //    for (size_t j = 0; j < v.GetB().Count(); j++) {
-  //      cnt += v.GetB()[j].count;
-  //      vs += v.GetB()[j].count*olx_sphere_volume(v.GetB()[j].element.r_vdw);
-  //    }
-  //    mt[i][0] = -cnt;
-  //    mt[i][1] = 1;
-  //    r[i] = rt[0][i] = (v.GetA() - vs);
-  //  }
-  //  ematd m = mt;
-  //  mt.Transpose();
-  //  ematd nm = mt*m, inm = nm;
-  //  math::LU::Invert(inm);
-  //  evecd nr = (inm*mt)*r;
-  //  //ematd H = (m*inm)*mt, I(H.RowCount(), H.ColCount());
-  //  //I.I();
-  //  //ematd ImH = I - H;
-  //  //evecd S = (rt*ImH)*r;
-  //  double R1t=0, R1b=0, mr=10000;
-  //  for (size_t i = 0; i < input.Count(); i++) {
-  //    atype & v = input.GetValue(i);
-  //    double cnt = 0, vs = 0;
-  //    for (size_t j = 0; j < v.GetB().Count(); j++) {
-  //      cnt += v.GetB()[j].count;
-  //      vs += v.GetB()[j].count*olx_sphere_volume(v.GetB()[j].element.r_vdw);
-  //    }
-  //    double calc = vs - cnt*nr[0] + nr[1];
-  //    double diff = v.GetA() - calc;
-  //    R1t += olx_abs(diff);
-  //    R1b += v.GetA();
-  //    double r = diff*diff;
-  //    if (i == 0) {
-  //      mr = r;
-  //    }
-  //    else if (r < mr) {
-  //      mr = r;
-  //    }
-  //  }
-  //  double R1 = R1t / R1b;
-  //  ematd VcV = inm*(mr / (input.Count() - 2));
-  //  for (size_t i = 0; i < nr.Count(); i++) {
-  //    TEValueD v(nr[i], sqrt(VcV[i][i]));
-  //    TBasicApp::NewLogEntry() << v.ToString();
-  //  }
-  //  if (Cmds.Count() > 0) {
-  //    TTypeList<ElementCount> f =
-  //      XElementLib::ParseElementString(Cmds.Text(' '));
-  //    double cnt = 0, vs = 0;
-  //    for (size_t j = 0; j < f.Count(); j++) {
-  //      cnt += f[j].count;
-  //      vs += f[j].count*olx_sphere_volume(f[j].element..r_vdw);
-  //    }
-  //    double calc = vs - cnt*nr[0] + nr[1];
-  //    TBasicApp::NewLogEntry() << "Calculated: " << calc;
-  //  }
-  //}
-//  TDataFile df;
-//  FXApp->XFile().ToDataItem(df.Root().AddItem("str"));
-//  df.SaveToXMLFile("e:/1.xml");
-
-  //TXAtomPList atoms = FindXAtoms(Cmds, false, true);
-  //if (atoms.Count() == 2) {
-  //  if (atoms[0]->GetEllipsoid() != NULL) {
-  //    double s = atoms[0]->GetEllipsoid()->CalcScale(
-  //      (atoms[1]->crd() - atoms[0]->crd()));
-  //    for (size_t i = 0; i < atoms[0]->BondCount(); i++) {
-  //      TXBond &b = atoms[0]->Bond(i);
-  //      if ((b.A() == *atoms[0] && b.B() == *atoms[1]) ||
-  //        (b.A() == *atoms[1] && b.B() == *atoms[2]))
-  //      {
-  //        b.Params()[3] = 1;
-  //      }
-  //    }
-  //    TBasicApp::NewLogEntry() << s << ", " << ProbFactorEx(s);
-  //  }
-  //}
-  //return;
-  //TXApp& xapp = TXApp::GetInstance();
-  //TRefList refs;// = xapp.XFile().GetRM().GetFriedelPairs();
-  ////xapp.XFile().GetRM().FilterHkl(refs, ms);
-  //TArrayList<compd> F;
-  //TUnitCell::SymSpace sp = xapp.XFile().GetUnitCell().GetSymSpace();
-  //RefinementModel::HklStat ms =
-  //  xapp.XFile().GetRM().GetRefinementRefList<TUnitCell::SymSpace, RefMerger::ShelxMerger>(sp, refs);
-  //F.SetCount(refs.Count());
-  //SFUtil::CalcSF(xapp.XFile(), refs, F);
-  //double scale_k =1./olx_sqr(xapp.XFile().GetRM().Vars.GetVar(0).GetValue());
-  //double sums[5] = {0.0,0.0,0.0,0.0,0.0};
-  //const vec3i min_i = ms.MinIndexes, max_i = ms.MaxIndexes;
-  //TRefPList pos, neg;
-  //RefUtil::GetBijovetPairs(refs, min_i, max_i, pos, neg, sp);
-  //TArray3D<TReflection*> hkl3d(min_i, max_i);
-  //cm_Absorption_Coefficient_Reg ac;
-  //ContentList cont = xapp.XFile().GetAsymmUnit().GetContentList();
-  //double mass = 0, mu=0;
-  //for( size_t i=0; i < cont.Count(); i++ )  {
-  //  double v = ac.CalcMuenOverRhoForE(
-  //    xapp.XFile().GetRM().expl.GetRadiationEnergy(), ac.locate(cont[i].element.symbol));
-  //  mu += (cont[i].count*cont[i].element.GetMr())*v;
-  //}
-  //mu *= xapp.XFile().GetAsymmUnit().GetZ()/xapp.XFile().GetAsymmUnit().CalcCellVolume();
-  //mu /= 6.022142;
-  //xapp.NewLogEntry() << mu;
-  //for( size_t i=0; i < refs.Count(); i++ )  {
-  //  hkl3d(refs[i].GetHkl()) = &refs[i];
-  //  refs[i].SetTag(i);
-  //}
-  //for( size_t i=0; i < refs.Count(); i++ )  {
-  //  if( refs[i].GetTag() < 0 )  continue;
-  //  refs[i].SetTag(-1);
-  //  if( refs[i].GetI()/refs[i].GetS() < 2 )  continue;
-  //  for( size_t mi=0; mi < sp.Count(); mi++ )  {
-  //    const vec3i& pi = refs[i].GetHkl();
-  //    vec3i ni;
-  //    refs[i].MulHkl(ni, sp[mi]);
-  //    ni *= -1;
-  //    if( hkl3d.IsInRange(ni) && hkl3d(ni) != NULL ) {
-  //      TReflection& n = *hkl3d(ni);
-  //      if( n.GetTag() < 0 )  continue;
-  //      //const double y = (refs[i].GetI() - n.GetI())/(refs[i].GetI() + n.GetI());
-  //      //const double x = (F[i].qmod() - F[n.GetTag()].qmod())/(F[i].qmod() + F[n.GetTag()].qmod());
-  //      const double w = 1./olx_sqr(refs[i].GetS());
-  //      const double y = (refs[i].GetI()*scale_k - F[i].qmod());
-  //      const double x = (F[n.GetTag()].qmod() - F[i].qmod());
-  //      sums[0] += w*x;
-  //      sums[1] += w*y;
-  //      sums[2] += w*x*y;
-  //      sums[3] += w*x*x;
-  //      sums[4] += w;
-  //      n.SetTag(-1);
-  //    }
-  //  }
-  //}
-  //double k = (sums[2]-sums[0]*sums[1]/sums[4])/(sums[3]-sums[0]*sums[0]/sums[4]),
-  //  //x = (k-1.0)/2,
-  //  a = (sums[0] - k*sums[1])/sums[4];
-  //xapp.NewLogEntry() << TEValueD(k, sqrt(sums[4]/(sums[3]-sums[0]*sums[0]/sums[4]))).ToString();
-
-  //TSymmLib& sl = TSymmLib::GetInstance();
-  //for( size_t i=0; i < sl.SGCount(); i++ )  {
-  //  TSpaceGroup& sg = sl.GetGroup(i);
-  //  smatd_list ml, ml1;
-  //  for( size_t j=0; j < sg.MatrixCount(); j++ )
-  //    ml.AddCopy(sg.GetMatrix(j));
-  //  sg.GetMatrices(ml1, mattAll);
-  //  const olxstr hse = HallSymbol::Evaluate(
-  //    sg.GetLattice().GetLatt()*(sg.IsCentrosymmetric() ? 1 : -1), ml);
-  //  const olxstr hs = olxstr(sg.GetHallSymbol()).TrimWhiteChars();
-  //  if( hse != hs )
-  //    TBasicApp::NewLogEntry() << hs << ": \t" << hse;
-  //  SymSpace::Info si = SymSpace::GetInfo(ml1);
-  //  if( si.latt != sg.GetLattice().GetLatt() || si.centrosymmetric != sg.IsCentrosymmetric() ||
-  //    (sg.MatrixCount()+1) != si.matrices.Count() )
-  //    TBasicApp::NewLogEntry() << sg.GetName();
-  //  for( size_t j=0; j < ml.Count(); j++ )  {
-  //    bool found = false;
-  //    for( size_t k=0; k < si.matrices.Count(); k++ )  {
-  //      if( *si.matrices[k] ==  ml[j])  {
-  //        found = true;
-  //        break;
-  //      }
-  //    }
-  //    if( !found )
-  //      break;
-  //  }
-  //}
-  //return;
-  //TStrList out;
-  //vec3d_alist mult_vl(3), mult_vl_kr(3);
-  //mat3d_alist mult_ml(9);
-  //mat3d sym_mat;
-  //sym_mat[0][1] = sym_mat[1][1] = -1;
-  //sym_mat[1][0] = sym_mat[2][2] = 1;
-  //CompositeVector<vec3d_alist, double> cv_(mult_vl);
-  //CompositeVector<vec3d_alist, double> cv_kr(mult_vl_kr);
-  //CompositeMatrix<mat3d_alist, double> cm_(mult_ml, 3, 3);
-  //olx_mat::KroneckerProduct(sym_mat, sym_mat, cm_);
-  //mat3d tr_mat(
-  //  0.0255, 0.0134, -0.0072,
-  //  0.0134, 0.0417, -0.007,
-  //  -0.0072, -0.007, -0.0407);
-  //mult_vl[0] = tr_mat[0];
-  //mult_vl[1] = tr_mat[1];
-  //mult_vl[2] = tr_mat[2];
-  //ematd cm_out(9, 9);
-  //evecd cv_out(9), kr_out(9);
-  //olx_vec::MulMatrix(cv_, cm_, cv_out);
-  //olx_mat::MulMatrix(cm_, cm_, cm_out);
-  //olx_vec::MulMatrixT(cv_, cm_, kr_out);
-  //olx_vec::MulMatrixT(cv_, cm_, cv_kr);
-  //for( int i=0; i < 3; i++ )
-  //  FXApp->GetLog() << mult_vl_kr[i].ToString() << '\n';
-  //tr_mat = sym_mat*tr_mat*mat3d::Transpose(sym_mat);
-  //for( int i=0; i < 3; i++ )
-  //  FXApp->GetLog() << tr_mat[i].ToString() << '\n';
-  //return;
-  //TMatrix<int> kt_1(2,2), kt_2(2,2);
-  //kt_1[0][0] = 1;  kt_1[0][1] = 2;
-  //kt_1[1][0] = 3;  kt_1[1][1] = 4;
-  //kt_2[0][0] = 0;  kt_2[0][1] = 5;
-  //kt_2[1][0] = 6;  kt_2[1][1] = 7;
-  //TMatrix<int> kr_o(4, 4);
-  //KroneckerProduct(kt_1, kt_2, kr_o);
-  //TETable kr_t(kr_o.RowCount(), kr_o.ColCount());
-  //for( int i=0; i < kr_o.RowCount(); i++ )  {
-  //  for( int j=0; j < kr_o.ColCount(); j++ )
-  //    kr_t[i][j] = kr_o[i][j];
-  //}
-  //kr_t.CreateTXTList(out, "vcov", true, true, ' ');
-  //TBasicApp::GetLog() << out << '\n';
-
-  //TXAtomPList xatoms;
-  //if( !FindXAtoms(Cmds, xatoms, false, true) )  {
-  //  return;
-  //}
-  ////TXApp& xapp = TXApp::GetInstance();
-  //VcoVContainer vcovc(xapp.XFile().GetAsymmUnit());
-  //xapp.NewLogEntry() << "Using " << xapp.InitVcoV(vcovc) << " matrix for the calculation";
-  //TSAtomPList atoms(xatoms, StaticCastAccessor<TSAtom>());
-  //mat3d_list matrices;
-  //vcovc.GetVcoV(atoms, matrices);
-  ////vcovc.GetMatrix().FindVcoV(atoms, matrices);
-  //const size_t m_dim = (size_t)sqrt((double)matrices.Count());
-  //TETable tab(m_dim*3, m_dim*3);
-  //for( size_t i=0; i < m_dim; i++ )  {
-  //  for( size_t j=0; j < m_dim; j++ )  {
-  //    for( int mi = 0; mi < 3; mi++ )  {
-  //      for( int mj = 0; mj < 3; mj ++ )  {
-  //        tab[i*3+mi][j*3+mj] = olxstr::FormatFloat(-3,matrices[i*m_dim+j][mi][mj], true);
-  //      }
-  //    }
-  //  }
-  //}
-  //TBasicApp::NewLogEntry() << tab.CreateTXTList("vcov", true, true, ' ');
-
-  //TSocketFS fs(TUrl("http://localhost:8082"));
-  //if( fs.Exists("dist/cds.jar", true) )  {
-  //  TEFile* ef = fs.OpenFileAsFile("dist/cds.jar");
-  //  TEFile ef1("e:/1.tmp", "w+b");
-  //  ef1 << *ef;
-  //  delete ef;
-  //}
-  //TArray3D<double> src(0, 99, 0, 99, 0, 99), dest(0, 9, 0, 9, 0, 9);
-  //const vec3s src_d = src.GetSize();
-  //for( size_t i=0; i < src_d[0]; i++ )
-  //  for( size_t j=0; j < src_d[1]; j++ )
-  //    for( size_t k=0; k < src_d[2]; k++ )
-  //      src.Data[i][j][k] = k;
-  //smatdd g2c(mat3d(0, 1, 0, -1, 0, 0, 0, 0, 1), vec3d(0,0,0));  // xyz->
-  //MapUtil::Cell2Cart(
-  //  MapUtil::MapGetter<double, 1>(src.Data, src.GetSize()), dest.Data, dest.GetSize(),
-  //  g2c, mat3d().I());
-  //size_t v = src_d.Sum();
-
-  //cif_dp::TCifDP cdp;
-  //TStrList _sl;
-  //_sl.LoadFromFile("e:/tmp/vdlee142.cif");
-  //cdp.LoadFromStrings(_sl);
-  //_sl.Clear();
-  //cdp.SaveToStrings(_sl);
-  //for( size_t i=0; i < cdp.Count(); i++ )  {
-  //  cif_dp::CifBlock& cb = cdp[i];
-  //  for( size_t j=0; j < cb.table_map.Count(); j++ )
-  //    TBasicApp::GetLog() << cb.table_map.GetValue(j)->GetName() << '\n';
-  //}
-  //TCStrList(_sl).SaveToFile("e:/tmp/test_vdlee142.cif");
-  //return;
-
-  //uint64_t test_a = 1021;
-  //uint64_t test_b = test_a%10, test_c = test_a/10;
-  //uint64_t test_d = test_a/10, test_e = test_a-test_d*10;
-  //FXApp->SetActiveXFile(0);
-  //TAsymmUnit& _au = FXApp->XFile().GetAsymmUnit();
-  //TUnitCell& uc = FXApp->XFile().GetUnitCell();
-  //size_t ac = (size_t)olx_round((uc.CalcVolume()/18.6)/uc.MatrixCount());
-  //TPSTypeList<double, TCAtom*> atoms;
-  //for( size_t i=0; i < _au.AtomCount(); i++ )
-  //  atoms.Add(_au.GetAtom(i).GetUiso(), &_au.GetAtom(i));
-  //if( ac < _au.AtomCount() )  {
-  //  size_t df = _au.AtomCount() - ac;
-  //  for( size_t i=0; i < df; i++ )  {
-  //    atoms.GetObject(atoms.Count()-i-1)->SetDeleted(true);
-  //  }
-  //  FXApp->XFile().EndUpdate();
-  //}
-  //return;
-
-  //wxImage img;
-  //img.LoadFile(wxT("c:/tmp/tex2d.jpg"));
-  //int tex_id = FXApp->GetRenderer().GetTextureManager().Add2DTexture("shared_site", 1, img.GetWidth(), img.GetHeight(), 0, GL_RGB, img.GetData());
-  //if( tex_id != -1 )  {
-  //  TXAtomPList xatoms;
-  //  FindXAtoms(Cmds, xatoms, true, true);
-  //  for( size_t i=0; i < xatoms.Count(); i++ )  {
-  //    xatoms[i]->Primitives()->Primitive(0)->Texture(tex_id);
-  //  }
-  //}
-  //return;
-  //olxstr hklfn = FXApp->LocateHklFile();
-  //if( TEFile::Exists(hklfn) )  {
-  //  const TRefPList& fpp = FXApp->XFile().GetRM().GetFriedelPairs();
-  //  if( fpp.IsEmpty() )  return;
-
-  //  TRefList refs, nrefs, fp;
-  //  fp.SetCapacity(fpp.Count());
-  //  for( size_t i=0; i < fpp.Count(); i++ )
-  //    fp.AddNew( *fpp[i] );
-  //  const vec3i_list empty_omits;
-  //  smatd_list ml;
-  //  FXApp->XFile().GetLastLoaderSG().GetMatrices(ml, mattAll^mattIdentity);
-  //  MergeStats stat = RefMerger::Merge<smatd_list,RefMerger::ShelxMerger>(ml, fp, refs, empty_omits, false);
-  //  nrefs.SetCapacity(refs.Count());
-  //  for( size_t i=0; i < refs.Count(); i++ )
-  //    nrefs.AddNew(refs[i]).GetHkl() *= -1;
-  //  TArrayList<compd> FP(refs.Count()), FN(refs.Count());
-  //  SFUtil::CalcSF(FXApp->XFile(), refs, FP, true);
-  //  SFUtil::CalcSF(FXApp->XFile(), nrefs, FN, true);
-  //  double pscale = SFUtil::CalcFScale(FP, refs);
-  //  double nscale = SFUtil::CalcFScale(FN, nrefs);
-  //  double sx = 0, sy = 0, sxs = 0, sxy = 0;
-  //  const size_t f_cnt = FP.Count();
-  //  for( size_t i=0; i < f_cnt; i++ )  {
-  //    const double I = pscale*pscale*refs[i].GetI();
-  //    const double pqm = FP[i].qmod();
-  //    const double nqm = FN[i].qmod();
-  //    sx += (nqm - pqm);
-  //    sy += (I - pqm);
-  //    sxy += (nqm - pqm)*(I - pqm);
-  //    sxs += (nqm - pqm)*(nqm - pqm);
-  //  }
-  //  double k = (sxy - sx*sy/f_cnt)/(sxs - sx*sx/f_cnt);
-  //  double a = (sy - k*sx)/f_cnt;
-  //  double sdiff = 0;
-  //  for( size_t i=0; i < f_cnt; i++ )  {
-  //    const double I = pscale*pscale*refs[i].GetI();
-  //    const double pqm = FP[i].qmod();
-  //    const double nqm = FN[i].qmod();
-  //    sdiff += olx_sqr((I - pqm) - k*(nqm - pqm) - a);
-  //  }
-  //  TBasicApp::GetLog() << "K: " << TEValue<double>(k, sqrt(sdiff/(f_cnt*(f_cnt-1)))).ToString() << '\n';
-  //}
-  //return;
-//  TSymmLib& sl = TSymmLib::GetInstance();
-//  smatd_list ml;
-//  static const size_t dim = 29;
-//  bool** cell[dim];
-//  for( size_t i=0; i < dim; i++ )  {
-//    cell[i] = new bool*[dim];
-//    for( size_t j=0; j < dim; j++ )  {
-//      cell[i][j] = new bool[dim];
-//    }
-//  }
-//  vec3d p1;
-//  vec3i ip;
-//  for( size_t i=0; i < sl.SGCount(); i++ )  {
-//    ml.Clear();
-//    sl.GetGroup(i).GetMatrices(ml, mattAll);
-//    for( size_t i1=0; i1 < dim; i1++ )
-//      for( size_t i2=0; i2 < dim; i2++ )
-//        for( size_t i3=0; i3 < dim; i3++ )
-//          cell[i1][i2][i3] = false;
-//    int sets = 0, mi1 = 0, mi2 = 0, mi3 = 0;
-//    for( size_t i1=0; i1 < dim; i1++ )  {
-//      const double d1 = (double)i1/dim;
-//      for( size_t i2=0; i2 < dim; i2++ )  {
-//        const double d2 = (double)i2/dim;
-//        for( size_t i3=0; i3 < dim; i3++ )  {
-//          const double d3 = (double)i3/dim;
-//          if( cell[i1][i2][i3] )  continue;
-//          int vc = 0;
-//          vec3i minv;
-//          for( size_t l=1; l < ml.Count(); l++)  {  // skip I
-//            p1 = ml[l] * vec3d(d1,d2,d3);
-//            p1 *= dim;
-//            for( size_t k=0; k < 3; k++ )  {
-//              ip[k] = olx_round(p1[k]);
-//              while( ip[k] < 0  )   ip[k] += dim;
-//              while( ip[k] >= dim ) ip[k] -= dim;
-//            }
-//            if( cell[ip[0]][ip[1]][ip[2]] )  continue;
-//            if( vc++ == 0 )
-//              minv = ip;
-//            else if( ip.QLength() < minv.QLength() )
-//              minv = ip;
-//            cell[ip[0]][ip[1]][ip[2]] = true;
-//            sets++;
-//          }
-//          if( minv[0] > mi1 )  mi1 = minv[0];
-//          if( minv[1] > mi2 )  mi2 = minv[1];
-//          if( minv[2] > mi3 )  mi3 = minv[2];
-//        }
-//      }
-//    }
-//    TBasicApp::GetLog() << sl.GetGroup(i).GetName() << "; mc = " <<
-//      ml.Count() << " - " << (double)sets*100/(dim*dim*dim) << "% {" << mi1 << ',' << mi2 << ',' << mi3 << "}\n";
-//  }
-//  for( size_t i=0; i < dim; i++ )  {
-//    for( size_t j=0; j < dim; j++ )
-//      delete [] cell[i][j];
-//    delete [] cell[i];
-//  }
-//    return;
-//  TEBitArray ba;
-//  olxstr rr = ba.FormatString(31);
-//  if( FXApp->XFile().HasLastLoader() )  {
-//    mat3d h2c = mat3d::Transpose(FXApp->XFile().GetAsymmUnit().GetHklToCartesian());
-//    TBasicApp::GetLog() << 1./h2c[0][0] << ',' << 1./h2c[1][1] << ',' << 1./h2c[2][2] << '\n';
-//    mat3d r, I;
-//    r[0][0] = h2c[0].DotProd(h2c[0]);  r[0][1] = h2c[0].DotProd(h2c[1]);  r[0][2] = h2c[0].DotProd(h2c[2]);
-//    r[0][1] = r[1][0];                 r[1][1] = h2c[1].DotProd(h2c[1]);  r[1][2] = h2c[1].DotProd(h2c[2]);
-//    r[2][0] = r[0][2];                 r[2][1] = r[1][2];                 r[2][2] = h2c[2].DotProd(h2c[2]);
-//
-//    mat3d::EigenValues(r, I.I() );
-//    TBasicApp::GetLog() << r[0][0] << ',' << r[1][1] << ',' << r[2][2] << '\n';
-//    TBasicApp::GetLog() << 1./r[0][0] << ',' << 1./r[1][1] << ',' << 1./r[2][2] << '\n';
-//  }
-//
-//  olxstr fn( FXApp->XFile().GetFileName() );
-//  for( size_t i=0; i < 250; i++ )  {
-//    Macros.ProcessMacro(olxstr("@reap '") << fn << '\'', Error);
-//    Dispatch(ID_TIMER, msiEnter, (AEventsDispatcher*)this, NULL);
-//    FHtml->Update();
-//    FXApp->Draw();
-//    wxTheApp->Dispatch();
-//  }
-//  return;
-//  if( !Cmds.IsEmpty() )  {
-//    TAtomReference ar(Cmds.Text(' '));
-//    TCAtomGroup ag;
-//    size_t atomAGroup;
-//    olxstr unp(ar.Expand(FXApp->XFile().GetRM(), ag, EmptyString(), atomAGroup));
-//    TBasicApp::GetLog() << "Expanding " << ar.GetExpression() << " to atoms \n";
-//    for( size_t i=0; i < ag.Count(); i++ )
-//      TBasicApp::GetLog() << ag[i].GetFullLabel(FXApp->XFile().GetRM()) << ' ';
-//    TBasicApp::GetLog() << "\nUnprocessed instructions " << (unp.IsEmpty() ? olxstr("none") : unp) << '\n';
-//    return;
-//  }
-//#ifndef __BORLANDC__
-//  BTree<int, int> tree;
-//  tree.Add(0,0);
-//  tree.Add(-1,-10);
-//  tree.Add(1,10);
-//  tree.Add(-2,-20);
-//  tree.Add(-2,-21);
-//  tree.Add(-2,-22);
-//  tree.Add(-2,-23);
-//  tree.Add(2,20);
-//  tree.Add(-3,-30);
-//  tree.Add(3,30);
-//  tree.Add(3,31);
-//  tree.Add(3,32);
-//  tree.Add(3,33);
-//  tree.Add(4,40);
-//  int* tv = NULL;
-//  tv = tree.Find(0);
-//  tv = tree.Find(1);
-//  tv = tree.Find(2);
-//  tv = tree.Find(3);
-//  tv = tree.Find(4);
-//  tv = tree.Find(-1);
-//  tv = tree.Find(-2);
-//  tv = tree.Find(-3);
-//  Test_BTreeTraverser tt;
-//  tree.Traverser.Traverse(tree, tt);
-//
-//  BTree2<int,int> tree2;
-//  tree2.Add(0,0,0);
-//  tree2.Add(0,1,1);
-//  tv = tree2.Find(0,1);
-//  tree2.Traverser.FullTraverse(tree2, tt);
-//
-//  BTree3<int, int> tree3;
-//  tree3.Add(0, 0, 0, 0);
-//  tree3.Add(0, 1, 0, 1);
-//  tree3.Add(0, 0, 1, 2);
-//  tree3.Add(1, 0, 1, 3);
-//  tv = tree3.Find(0, 0, 1);
-//  tv = tree3.Find(0, 0, 0);
-//  tv = tree3.Find(0, 1, 0);
-//  tree3.Traverser.FullTraverse(tree3, tt);
-//#endif
-//  if( Cmds.IsEmpty() )  return;
-//  const olxcstr atom_s("ATOM");
-//  TCStrList lst, toks;
-//  char bf[256];
-//  char format[] = "%s";
-//  TIntList AtomF;
-//  AtomF.Add(6);  //"ATOM  "
-//  AtomF.Add(5);  //serial number
-//  AtomF.Add(5);  //name
-//  AtomF.Add(4);  //residue name
-//  AtomF.Add(2);  //chain ID      #21
-//  AtomF.Add(4);  //  residue sequence number #26
-//  AtomF.Add(12);  // x                        #38
-//  AtomF.Add(8);  // y
-//  AtomF.Add(8);  // z
-//  AtomF.Add(6);  // occupancy
-//  AtomF.Add(6);  // temperature factor  #66
-//  AtomF.Add(12);  // element             #78
-//  AtomF.Add(2);  // charge
-//
-//  lst.LoadFromFile(Cmds[0]);
-//  for( size_t i=0; i < lst.Count(); i++ )  {
-//    if( lst[i].StartsFrom(atom_s) )  {
-//      toks.Clear();
-//      toks.Strtok(lst[i], ' ');
-//      memset(bf, 32, 255);
-//      toks.Delete( toks.Count()-2 );
-//      int offset = 0;
-//      for( size_t j=0; j < olx_min(AtomF.Count(),toks.Count()); j++ )  {
-//        if( j > 0 )  {
-//          offset += AtomF[j];
-//          memcpy(&bf[offset-toks[j].Length()], toks[j].c_str(), toks[j].Length() );
-//        }
-//        else if( j == 0 )  {
-//          memcpy(&bf[offset], toks[j].c_str(), toks[j].Length() );
-//          offset += AtomF[j];
-//        }
-//      }
-//      bf[offset] = '\0';
-//      lst[i] = bf;
-//    }
-//  }
-//  lst.Pack();
-//  lst.SaveToFile( Cmds[0] + ".out" );
-//  return;
-///*
-//  TStrList lst, toks;
-//  TEFile sgFile( FXApp->BaseDir() + "sg.txt", "rb" );
-//  TDataFile df;
-//  df.LoadFromXLFile( FXApp->BaseDir() + "symmlib.xld" );
-//  lst.LoadFromStream( sgFile );
-//  for( size_t i=2; i < lst.Count(); i++ )  {
-//    toks.Clear();
-//    olxstr::Strtok( olxstr::RemoveMultiSpaces( lst[i], true ), ' ', toks);
-//    if( toks.Count() < 7 )  continue;
-//    olxstr axis, num;
-//    int si = toks[0].IndexOf(':');
-//    if( si != -1 )  {
-//      num = toks[0].SubStringTo(si);
-//      axis = toks[0].SubStringFrom(si+1);
-//    }
-//    else
-//      num = toks[0];
-//
-//    for( size_t j=0; j < df.Root().ItemCount(); j++ )  {
-//      if( df.Root().Item(j).FindField( "#" ) == num &&
-//          df.Root().Item(j).FindField("AXIS") == axis )  {
-//        TBasicApp::GetLog() << ( olxstr("Found ") << df.Root().Item(j).GetName() );
-//        olxstr tmp = toks[1];
-//        tmp << ' ' << toks[2] << ' ' << toks[3] << ' ' << toks[4];
-//        df.Root().Item(j).SetFieldValue( "FULL", tmp );
-//        break;
-//      }
-//    }
-//  }
-//  // validating
-//  for( size_t i=0; i < df.Root().ItemCount(); i++ )  {
-//    olxstr tmp = df.Root().Item(i).FindField("FULL");
-//    if( tmp.IsEmpty() )  {
-//      if( df.Root().Item(i).GetName().Length() == 4 )  {
-//        tmp << df.Root().Item(i).GetName()[0] << ' ' <<
-//               df.Root().Item(i).GetName()[1] << ' ' <<
-//               df.Root().Item(i).GetName()[2] << ' ' <<
-//               df.Root().Item(i).GetName()[3];
-//        TBasicApp::GetLog() << ( olxstr("Empty, but patched for ") << df.Root().Item(i).GetName() );
-//      }
-//      else
-//        TBasicApp::GetLog() << ( olxstr("Empty val for ") << df.Root().Item(i).GetName() );
-//      continue;
-//    }
-//    toks.Clear();
-//    olxstr::Strtok( tmp, ' ', toks );
-//    if( toks.Count() != 4 )  {
-//      TBasicApp::GetLog() << ( olxstr("Wrong toks count for ") << df.Root().Item(i).GetName() );
-//      continue;
-//    }
-//  }
-//  // saving
-//  df.SaveToXLFile( FXApp->BaseDir() + "sg.xld" );
-//*/
-///*
-//  if( !FXApp->CheckFileType<TIns>() )  return;
-//
-//  TIns *Ins = (TIns*)FXApp->XFile().GetLastLoader();
-//  olxstr HklFN = Ins->GetHKLSource();
-//  if( !TEFile::Exists(HklFN) )  {
-//    Error.ProcessingError(__OlxSrcInfo, "could not locate HKL file" );
-//    return;
-//  }
-//  TScattererItLib scatlib;
-//
-//  THklFile Hkl;
-//  Hkl.LoadFromFile(HklFN);
-//  TVectorD vec(3);
-//  TMatrixD M( Ins->GetAsymmUnit().GetHklToCartesian() );
-//
-//  double minV = 1000, maxV = 0;
-//  TEFile out( TEFile::ChangeFileExt(Ins->GetFileName(), "out"), "wb+" );
-//  olxstr tmp;
-//  Hkl.AnalyseReflections(*TSymmLib::GetInstance().FindSG(Ins->GetAsymmUnit()));
-////  Hkl.AnalyseReflections( *TSymmLib::GetInstance().FindGroup("P-1") );
-//  for( size_t i=0; i < Hkl.RefCount(); i++ )  {
-//    TReflection* ref = Hkl.Ref(i);
-//    tmp = ref->ToString();
-//    tmp << ' ' << ref->IsCentric() << ' ' << ref->GetDegeneracy();
-//    out.Writenl(tmp);
-//  }
-//  double cm = 0, am = 0, integ = 0, meanFs = 0;
-//  int cc = 0, ac = 0, arc = 0;
-//  double cd = 0, ad = 0;
-//
-//  long minH = (long)Hkl.GetMinValues()[0];
-//  long maxH = (long)Hkl.GetMaxValues()[0];
-//  long minK = (long)Hkl.GetMinValues()[1];
-//  long maxK = (long)Hkl.GetMaxValues()[1];
-//  long minL = (long)Hkl.GetMinValues()[2];
-//  long maxL = (long)Hkl.GetMaxValues()[2];
-//
-//
-//  typedef AnAssociation4<double, double, int, double> refc;
-//  TArray3D<refc*> Hkl3D(minH, maxH, minK, maxK, minL, maxL);
-//
-//  TTypeList<refc*> allRefs;
-//
-//
-//  for( size_t i=0; i < Hkl.RefCount(); i++ )  {
-//    TReflection* ref = Hkl.Ref(i);
-//
-//    if( olx_abs(ref->Data()[0])/ref->Data()[1] > 3 )
-//      continue;
-//
-//    if( ref->Data()[0] < 0 )
-//      continue;
-//
-//    refc* ref1 = Hkl3D[ref->H()][ref->K()][ref->L()];
-//    if( ref1 != NULL )  {
-//      ref1->A() += ref->Data()[0];
-//      ref1->B() += QRT(ref->Data()[1]);
-//      ref1->C() ++;
-//      ref1->D() += QRT(ref->Data()[0]);
-//    }
-//    else
-//      Hkl3D[ref->H()][ref->K()][ref->L()] =
-//        new refc(ref->Data()[0], QRT(ref->Data()[1]), 1, QRT(ref->Data()[0]) );
-//  }
-//
-//  allRefs.SetCapacity( Hkl.RefCount() );
-//
-//  for( int i=minH; i < maxH; i++ )  {
-//    for( int j=minK; j < maxK; j++ )  {
-//      for( int k=minL; k < maxL; k++ )  {
-//        refc* ref1 = Hkl3D[i][j][k];
-//        if( ref1 != NULL )  {
-//          ref1->A() /= ref1->C();
-//          ref1->B() /= sqrt(ref1->GetB());
-//          ref1->D() /= ref1->C();
-//          ref1->D() -= QRT( ref1->GetA() );
-//          ref1->D() = sqrt( ref1->GetD() );
-//          allRefs.AddACopy( ref1 );
-//        }
-//      }
-//    }
-//  }
-//
-//  integ = 0;
-//  meanFs = 0;
-//  for( size_t i=0; i < allRefs.Count(); i++ )  {
-////    meanFs += allRefs[i]->GetA();
-//    meanFs += allRefs[i]->GetA()/olx_max(allRefs[i]->GetB(), allRefs[i]->GetD());
-//    //}
-//    delete allRefs[i];
-//  }
-//  if( allRefs.Count() != 0 )
-//    meanFs /= allRefs.Count();
-//
-//  for( size_t i=0; i < allRefs.Count(); i++ )
-//    integ += olx_abs( (allRefs[i]->GetA()/olx_max(allRefs[i]->GetB(), allRefs[i]->GetD()))/meanFs -1 );
-////    integ += olx_abs(allRefs[i]->GetA()/meanFs -1 );
-//
-//  if( allRefs.Count() != 0 )
-//    integ /= allRefs.Count();
-//  TBasicApp::GetLog() << (olxstr("Calculated value: ") << integ );
-//*/
-//  // qpeak anlysis
-//  TPSTypeList<double, TCAtom*> SortedQPeaks;
-//  TDoubleList vals;
-//  int cnt = 0;
-//  TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
-//  for( size_t i=0; i < au.AtomCount(); i++ )  {
-//    if( au.GetAtom(i).GetType() == iQPeakZ )  {
-//      SortedQPeaks.Add(au.GetAtom(i).GetQPeak(), &au.GetAtom(i));
-//    }
-//  }
-//  vals.Add(0);
-//  for( size_t i=SortedQPeaks.Count()-1; i != InvalidIndex; i-- )  {
-//    if( (SortedQPeaks.GetKey(i) - SortedQPeaks.GetKey(i-1))/SortedQPeaks.GetKey(i) > 0.1 )  {
-//      TBasicApp::GetLog() << ( olxstr("Threshold here: ") << SortedQPeaks.GetObject(i)->GetLabel() << '\n' );
-//      vals.GetLast() += SortedQPeaks.GetKey(i);
-//      cnt++;
-//      vals.GetLast() /= cnt;
-//      cnt = 0;
-//      vals.Add(0);
-//      continue;
-//    }
-//    vals.GetLast() += SortedQPeaks.GetKey(i);
-//    cnt ++;
-//  }
-//  if( cnt != 0 )
-//    vals.GetLast() /= cnt;
-//  for( size_t i=0; i < vals.Count(); i++ )
-//    TBasicApp::GetLog() << vals[i] << '\n';
 }
 //..............................................................................
-void TMainForm::macIT(TStrObjList &Cmds, const TParamList &Options, TMacroData &Error)  {
+void TMainForm::macIT(TStrObjList& Cmds, const TParamList& Options, TMacroData& Error) {
   TXAtomPList xatoms;
-  if( !FindXAtoms(Cmds, xatoms, true, true) )  {
+  if (!FindXAtoms(Cmds, xatoms, true, true)) {
     Error.ProcessingError(__OlxSrcInfo, "no atoms provided");
     return;
   }
   inertia<>::out io = inertia<>::calc(xatoms,
-    FunctionAccessor::Make(&TSAtom::crd),
+    TSAtom::CrdAccessor(),
     FunctionAccessor::MakeStatic(&TSAtom::weight_occu_z));
   io.sort();
-  if (Options.Contains("o"))  {
-    io.axis[2] = io.axis[0].XProdVec(io.axis[1]).Normalise();
-    FXApp->GetRenderer().GetBasis().Orient(io.axis, false);
+  if (Options.Contains("o")) {
+    io.axes[2] = io.axes[0].XProdVec(io.axes[1]).Normalise();
+    FXApp->GetRenderer().GetBasis().Orient(io.axes, false);
     FXApp->GetRenderer().GetBasis().SetCenter(
       FXApp->GetRenderer().GetBasis().GetCenter() - io.center);
   }
   else {
-  TBasicApp::NewLogEntry() <<
-    "Ixx =  " << olxstr::FormatFloat(3, io.moments[0]) <<
-    "  Iyy = "  << olxstr::FormatFloat(3, io.moments[1]) <<
-    "  Izz = "  << olxstr::FormatFloat(3, io.moments[2]);
-  TBasicApp::NewLogEntry() << "Eigen vectors:";
-  for( size_t i=0; i < 3; i++ )
-    TBasicApp::NewLogEntry() << io.axis[i].ToString();
+    TBasicApp::NewLogEntry() <<
+      "Ixx =  " << olxstr::FormatFloat(3, io.moments[0]) <<
+      "  Iyy = " << olxstr::FormatFloat(3, io.moments[1]) <<
+      "  Izz = " << olxstr::FormatFloat(3, io.moments[2]);
+    TBasicApp::NewLogEntry() << "Eigen vectors:";
+    TBasicApp::NewLogEntry() << strof(io.axes);
   }
 }
 //..............................................................................

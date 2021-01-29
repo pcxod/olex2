@@ -419,12 +419,10 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
   else if (event.GetId() == ID_GraphicsCollectivise) {
     if (FObjectUnderMouse->IsSelected()) {
       if (FObjectUnderMouse->Is<TXAtom>()) {
-        FXApp->Collectivise(
-          FXApp->GetSelection().Extract<TXAtom>().GetObject());
+        FXApp->Collectivise(FXApp->GetSelection().Extract<TXAtom>().obj());
       }
       else if (FObjectUnderMouse->Is<TXBond>()) {
-        FXApp->Collectivise(
-          FXApp->GetSelection().Extract<TXBond>().GetObject());
+        FXApp->Collectivise(FXApp->GetSelection().Extract<TXBond>().obj());
       }
     }
     else {
@@ -439,12 +437,10 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
   else if (event.GetId() == ID_GraphicsIndividualise) {
     if (FObjectUnderMouse->IsSelected()) {
       if (FObjectUnderMouse->Is<TXAtom>()) {
-        FXApp->Individualise(
-          FXApp->GetSelection().Extract<TXAtom>().GetObject());
+        FXApp->Individualise(FXApp->GetSelection().Extract<TXAtom>().obj());
       }
       else if (FObjectUnderMouse->Is<TXBond>()) {
-        FXApp->Individualise(
-          FXApp->GetSelection().Extract<TXBond>().GetObject());
+        FXApp->Individualise(FXApp->GetSelection().Extract<TXBond>().obj());
       }
     }
     else {

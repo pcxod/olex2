@@ -66,13 +66,9 @@ TDUserObj *XTLS::CreateUdiffObject(const vec3f_alist &crds,
     vec3f_alist lc(sph_v.Count());
     if (obj_type == xtls_obj_diff) {
       m1 = from[i]->GetMatrix();
-      m1[0] *= from[i]->GetSX();
-      m1[1] *= from[i]->GetSY();
-      m1[2] *= from[i]->GetSZ();
+      m1.Scale(from[i]->GetNorms());
       m2 = to[i]->GetMatrix();
-      m2[0] *= to[i]->GetSX();
-      m2[1] *= to[i]->GetSY();
-      m2[2] *= to[i]->GetSZ();
+      m2.Scale(to[i]->GetNorms());
       etm = m2.Inverse();
     }
     else if (obj_type == xtls_obj_rmsd) {

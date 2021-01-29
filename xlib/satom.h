@@ -251,6 +251,14 @@ public:
     return TypeAnalyser_<DummyAccessor>(DummyAccessor(), e.z);
   }
 
+  struct CrdAccessor {
+    template <class T>
+    const vec3d& operator () (const T& a) const {
+      return olx_ref::get(a).crd();
+    }
+    typedef vec3d return_type;
+  };
+
 };
 
 typedef TTypeList<TSAtom> TSAtomList;

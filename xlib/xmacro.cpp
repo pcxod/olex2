@@ -645,7 +645,13 @@ void XLibMacros::Export(TLibrary& lib)  {
     fpNone|fpFive|psFileLoaded,
     "Calculates Tolman angle for the structure");
   xlib_InitMacro(Split,
-    "r-EADP,ISOR,SIMU,DELU,SAME to be placed for the split atoms",
+    "r-EADP,ISOR,SIMU,DELU,SAME to be placed for the split atoms&;"
+    "p1-part to assign to the first component [1]&;"
+    "p2-part to assign to the second component [2]&;"
+    "s-strip any non-digit suffix from the label [false]&;"
+    "s1-suffix to add to the first component [1]&;"
+    "s2-suffix to add to the second component [2]&;"
+    ,
     fpAny|psCheckFileTypeIns,
     "Splits provided atoms along the longest axis of the ADP");
   xlib_InitMacro(Bang,
@@ -4636,7 +4642,7 @@ void CifMerge_EmbeddData(TCif &Cif, bool insert, bool fcf_format) {
               if (l.StartsFrom("loop_") || l.StartsFrom('_')) {
                 try {
                   cif_dp::TCifDP fabc;
-                  fabc.LoadFromStrings(fab.lines.SubListFrom(fi).GetObject());
+                  fabc.LoadFromStrings(fab.lines.SubListFrom(fi).obj());
                   for (size_t bc = 0; bc < fabc.Count(); bc++) {
                     for (size_t fj = 0; fj < fabc[bc].param_map.Count(); fj++) {
                       Cif.SetParam(*fabc[bc].param_map.GetValue(fj));
@@ -5478,7 +5484,7 @@ void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options,
       row[6] = new cetString(olxstr::FormatFloat(2, F[i].arg()*180/M_PI));
     }
   }
-  TEFile::WriteLines(fn, TCStrList(fcf_dp.SaveToStrings().GetObject()));
+  TEFile::WriteLines(fn, TCStrList(fcf_dp.SaveToStrings().obj()));
 }
 //.............................................................................
 struct XLibMacros_StrF  {
@@ -6658,16 +6664,15 @@ void XLibMacros::macPiPi(TStrObjList &Cmds, const TParamList &Options, TMacroDat
             for( int z=-2; z <= 2; z++ )  {
               smatd mat = _mat;
               mat.t += vec3d(x,y,z);
-              TTypeList<olx_pair_t<vec3d, double> > points;
-              vec3d plane_params, plane_center;
+              vec3d_list points;
               for( size_t pi=0; pi < planes[j].Count(); pi++ )  {
-                points.AddNew(mat*planes[j].GetAtom(pi).ccrd(), 1.0);
-                au.CellToCartesian(points.GetLast().a);
+                points.AddNew(mat*planes[j].GetAtom(pi).ccrd());
+                au.CellToCartesian(points.GetLast());
               }
-              TSPlane::CalcPlane(points, plane_params, plane_center);
-              const double pccd = planes[i].GetCenter().DistanceTo(plane_center);
+              plane::mean<>::out po = plane::mean<>::calc(points);
+              const double pccd = planes[i].GetCenter().DistanceTo(po.center);
               if( pccd < 1 || pccd > max_d )  continue;
-              const double pcpd = olx_abs(planes[i].DistanceTo(plane_center));
+              const double pcpd = olx_abs(planes[i].DistanceTo(po.center));
               if( pcpd < 1 )  continue;   // ajacent planes?
               //const double plane_d = plane_params.DotProd(plane_center)/plane_params.Length()
               //plane_params.Normalise();
@@ -6678,19 +6683,21 @@ void XLibMacros::macPiPi(TStrObjList &Cmds, const TParamList &Options, TMacroDat
                   TSymmParser::MatrixToSymmCode(uc.GetSymmSpace(), mat) <<
                   " (" << TSymmParser::MatrixToSymmEx(mat) << ")";
                 TBasicApp::NewLogEntry() << "angle: " <<
-                  olxstr::FormatFloat(3, planes[i].Angle(plane_params)) <<
+                  olxstr::FormatFloat(3, planes[i].Angle(po.normals[0])) <<
                   ", centroid-centroid distance: " << olxstr::FormatFloat(3, pccd) <<
                   ", shift distance " << olxstr::FormatFloat(3, shift);
-                if (!transforms.Contains(mat))
+                if (!transforms.Contains(mat)) {
                   transforms.AddCopy(mat);
+                }
               }
             }
           }
         }
       }
     }
-    if( int_cnt == 0 )
+    if (int_cnt == 0) {
       TBasicApp::NewLogEntry() << "No interactions found";
+    }
   }
   if( Options.Contains('g') && !transforms.IsEmpty() )  {
     TLattice& xlatt = xapp.XFile().GetLattice();
@@ -7398,7 +7405,7 @@ void XLibMacros::funCalcR(const TStrObjList& Params, TMacroData &E) {
     vec3i::UpdateMinMax(rstat.refs[i].GetHkl(), mini, maxi);
   }
   RefUtil::GetBijovetPairs(refs, mini, maxi, pos_, neg_,
-    xapp.XFile().GetLastLoaderSG().GetMatrices(mattAll).GetObject());
+    xapp.XFile().GetLastLoaderSG().GetMatrices(mattAll).obj());
   double up = 0, down = 0;
   for (int p = 0; p <= 1; p++) {
     TRefPList *pos = p == 0 ? &pos_ : &neg_,
@@ -7951,11 +7958,9 @@ void XLibMacros::macAfix(TStrObjList &Cmds, const TParamList &Options,
       }
       else {
         if (Options.GetBoolOption("s", false, true) && (m == 5 || m == 6)) {
-          vec3d normal, center;
           TSAtomPList atoms = Atoms;
-          TSPlane::CalcPlane(atoms, normal, center);
-          olx_plane::Sort(atoms, FunctionAccessor::MakeConst(
-            (const vec3d& (TSAtom::*)() const)&TSAtom::crd), center, normal);
+          plane::mean<>::out po = plane::mean<>::calc(atoms, TSAtom::CrdAccessor());
+          plane::Sort(atoms, TSAtom::CrdAccessor(), po.center, po.normals[0]);
           if (atoms[0] != Atoms[0]) {
             size_t idx = atoms.IndexOf(Atoms[0]);
             atoms.ShiftL(idx);
@@ -8408,11 +8413,8 @@ void XLibMacros::macSadi(TStrObjList &Cmds, const TParamList &Options,
       restraints << sr2;
       for (size_t i = 0; i < parts.Count(); i++) {
         TSAtomPList &atoms = parts.GetValue(i);
-        vec3d normal, center;
-        TSPlane::CalcPlane(atoms, normal, center);
-        olx_plane::Sort(atoms, FunctionAccessor::MakeConst(
-          (const vec3d& (TSAtom::*)() const)&TSAtom::crd),
-          center, normal);
+        plane::mean<>::out po = plane::mean<>::calc(atoms, TSAtom::CrdAccessor());
+        plane::Sort(atoms, TSAtom::CrdAccessor(), po.center, po.normals[0]);
         for (size_t j = 1; j < atoms.Count(); j++) {
           sr2.AddAtomPair(
             atoms[j-1]->CAtom(), &atoms[j-1]->GetMatrix(),
@@ -9885,6 +9887,12 @@ void XLibMacros::macSplit(TStrObjList &Cmds, const TParamList &Options,
     return;
   }
   bool same = restraints.Contains("same");
+  bool stripSuffix = Options.GetBoolOption('s');
+  int p1 = Options.FindValue("p1", "1").ToInt();
+  int p2 = Options.FindValue("p2", "2").ToInt();
+  olxstr s1 = Options.FindValue("s1", "a");
+  olxstr s2 = Options.FindValue("s2", "b");
+
   DistanceGenerator::atom_map_1_t atom_map;
   DistanceGenerator::atom_set_t atom_set;
   TAsymmUnit& au = app.XFile().GetAsymmUnit();
@@ -9897,27 +9905,17 @@ void XLibMacros::macSplit(TStrObjList &Cmds, const TParamList &Options,
     if (CA->GetEllipsoid() == 0) {
       continue;
     }
-    vec3d direction;
-    double Length = 0;
+    size_t max_idx = olx_max_idx(CA->GetEllipsoid()->GetNorms());
+    vec3d direction = CA->GetEllipsoid()->GetMatrix()[max_idx];
+    double Length = CA->GetEllipsoid()->GetNorms()[max_idx];
+
     olxstr lbl = CA->GetLabel();
-    if (CA->GetEllipsoid()->GetSX() > CA->GetEllipsoid()->GetSY()) {
-      if (CA->GetEllipsoid()->GetSX() > CA->GetEllipsoid()->GetSZ()) {
-        Length = CA->GetEllipsoid()->GetSX();
-        direction = CA->GetEllipsoid()->GetMatrix()[0];
-      }
-      else {
-        Length = CA->GetEllipsoid()->GetSZ();
-        direction = CA->GetEllipsoid()->GetMatrix()[2];
-      }
-    }
-    else {
-      if (CA->GetEllipsoid()->GetSY() > CA->GetEllipsoid()->GetSZ()) {
-        Length = CA->GetEllipsoid()->GetSY();
-        direction = CA->GetEllipsoid()->GetMatrix()[1];
-      }
-      else {
-        Length = CA->GetEllipsoid()->GetSZ();
-        direction = CA->GetEllipsoid()->GetMatrix()[2];
+    if (stripSuffix) {
+      for (size_t li = CA->GetType().symbol.Length(); li < lbl.Length(); li++) {
+        if (!olxstr::o_isdigit(lbl.CharAt(li))) {
+          lbl.SetLength(li-1);
+          break;
+        }
       }
     }
     direction *= Length;
@@ -9929,18 +9927,18 @@ void XLibMacros::macSplit(TStrObjList &Cmds, const TParamList &Options,
     TCAtom& CA1 = A.CAtom();
     CA1.Assign(*CA);
     CA1.SetSameId(~0);
-    CA1.SetPart(1);
+    CA1.SetPart(p1);
     CA1.ccrd() += direction;
     A.ccrd() = CA1.ccrd();
-    CA1.SetLabel(lc.CheckLabel(CA1, lbl + 'a', 0, true), false);
+    CA1.SetLabel(lc.CheckLabel(CA1, lbl + s1, 0, true), false);
     // link occupancies
     rm.Vars.AddVarRef(var, CA1, catom_var_name_Sof, relation_AsVar, 1);
     CA1.SetOccu(0.5*sp);
     ProcessedAtoms.Add(CA1);
     TCAtom& CA2 = *CA;
-    CA2.SetPart(2);
+    CA2.SetPart(p2);
     CA2.ccrd() -= direction;
-    CA2.SetLabel(lc.CheckLabel(CA2, lbl + 'b', 0, true), false);
+    CA2.SetLabel(lc.CheckLabel(CA2, lbl + s2, 0, true), false);
     // link occupancies
     rm.Vars.AddVarRef(var, CA2, catom_var_name_Sof, relation_AsOneMinusVar, 1);
     CA2.SetOccu(0.5*sp);
@@ -10646,7 +10644,7 @@ void XLibMacros::macD2CG(TStrObjList &Cmds, const TParamList &Options,
   TSAtom &a = *ma.atoms[0];
   TSAtomCPList atoms;
   if (ma.atoms.Count() > 1) {
-    atoms = ma.atoms.GetObject().SubListFrom(1);
+    atoms = ma.atoms.obj().SubListFrom(1);
   }
   else {
     atoms.SetCapacity(ma.planes[0]->Count());

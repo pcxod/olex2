@@ -1839,7 +1839,7 @@ void TIns::SaveToStrings(TStrList& SL) {
   }
   SL.Add("HKLF ") << RefMod.GetHKLFStr();
   SL.Add(EmptyString());
-  SL.AddAll(GetFooter().GetObject());
+  SL.AddAll(GetFooter().obj());
   SL.Add("END");
   for (size_t i = 0; i < peaks.Count(); i++) {
     TCAtom &p = *peaks[i];

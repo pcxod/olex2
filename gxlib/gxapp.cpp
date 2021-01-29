@@ -1080,8 +1080,7 @@ olxstr TGXApp::GetSelectionInfo(bool list) const {
           PlaneSort::Sorter::DoSort(atoms, transforms, vec3d(),
             b.GetNormal(), sorted_atoms);
           vec3d_alist pts;
-          pts << vec3d_alist::FromList(sorted_atoms,
-            FunctionAccessor::Make(&TSAtom::crd));
+          pts << vec3d_alist::FromList(sorted_atoms, TSAtom::CrdAccessor());
           VcoVContainer::TriangleTwistBP tt(pts);
           double v = tt.calc();
           if (v > 60) {
@@ -2581,11 +2580,8 @@ void TGXApp::InfoList(const IStrList &Atoms, TStrList &Info, bool sort,
     Table[i][5] = olxstr::FormatFloat(3, A.GetUiso());
     if (A.GetEllipsoid() != 0) {
       Table[i][6] << olxstr::FormatFloat(3,
-        pow(A.GetEllipsoid()->GetSX()*A.GetEllipsoid()->GetSY()*
-          A.GetEllipsoid()->GetSZ(), 2. / 3));
-      Table[i][7] << olxstr::FormatFloat(3,
-        A.GetEllipsoid()->GetSX()*A.GetEllipsoid()->GetSY()*
-        A.GetEllipsoid()->GetSZ() * 4 * M_PI / 3);
+        pow(A.GetEllipsoid()->GetNorms().Prod(), 2. / 3));
+      Table[i][7] << olxstr::FormatFloat(3, A.GetEllipsoid()->CalcVolume());
     }
     else {
       Table[i][6] << '.';
@@ -6042,10 +6038,8 @@ void TGXApp::CreateRings(bool force, bool create) {
     FindRings(str_rings[i], rings);
   }
   for (size_t i=0; i < rings.Count(); i++) {
-    vec3d normal, center;
-    if (TSPlane::CalcPlane(rings[i], normal, center) > 0.05 ||
-      !TNetwork::IsRingRegular(rings[i]))
-    {
+    plane::mean<>::out po = plane::mean<>::calc(rings[i], TSAtom::CrdAccessor());
+    if (po.rms[0] > 0.05 || !TNetwork::IsRingRegular(rings[i])) {
       continue;
     }
     olxstr_buf label;

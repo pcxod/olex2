@@ -40,7 +40,7 @@ void THtmlSwitch::UpdateFileIndex()  {
     return;
   }
 #ifdef _UNICODE
-  Strings = TUtf8File::ReadLines(*is, false).GetObject();
+  Strings = TUtf8File::ReadLines(*is, false).obj();
 #else
   Strings.LoadFromTextStream(*is);
 #endif

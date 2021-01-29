@@ -884,9 +884,8 @@ bool fragments::fragment::is_flat() const {
       points[i].a = crds[i];
       points[i].b = 1;
     }
-    vec3d n, center;
-    double rmsd = TSPlane::CalcPlane(points, n, center, plane_best);
-    return rmsd < 0.05;
+    plane::mean<>::out po = plane::mean<>::calc(crds);
+    return po.rms[0] < 0.05;
   }
 }
 //.............................................................................

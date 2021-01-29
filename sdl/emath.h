@@ -592,5 +592,71 @@ static typename accessor_t::return_type olx_mean(
   return cnt == 0 ? rv : rv / cnt;
 }
 
+template <class list_t>
+size_t olx_max_idx(const list_t& l,
+  size_t from = 0, size_t to = InvalidIndex)
+{
+  if (to == InvalidIndex) {
+    to = l.Count();
+  }
+  size_t max_i = from;
+  for (size_t i = from + 1; i < to; i++) {
+    if (l[i] > l[max_i]) {
+      max_i = i;
+    }
+  }
+  return max_i;
+}
+
+template <class list_t, class accessor_t>
+static typename accessor_t::return_type olx_max_idx(
+  const list_t& l, const accessor_t& accessor,
+  size_t from = 0, size_t to = InvalidIndex)
+{
+  if (to == InvalidIndex) {
+    to = l.Count();
+  }
+  size_t max_i = from;
+  for (size_t i = from + 1; i < to; i++) {
+    if (accessor(l[i]) > accessor(l[max_i])) {
+      max_i = i;
+    }
+  }
+  return max_i;
+}
+
+template <class list_t>
+size_t olx_min_idx(const list_t& l,
+  size_t from = 0, size_t to = InvalidIndex)
+{
+  if (to == InvalidIndex) {
+    to = l.Count();
+  }
+  size_t min_i = from;
+  for (size_t i = from + 1; i < to; i++) {
+    if (l[i] < l[min_i]) {
+      min_i = i;
+    }
+  }
+  return min_i;
+}
+
+template <class list_t, class accessor_t>
+static typename accessor_t::return_type olx_min_idx(
+  const list_t& l, const accessor_t& accessor,
+  size_t from = 0, size_t to = InvalidIndex)
+{
+  if (to == InvalidIndex) {
+    to = l.Count();
+  }
+  size_t min_i = from;
+  for (size_t i = from + 1; i < to; i++) {
+    if (accessor(l[i]) < accessor(l[min_i])) {
+      min_i = i;
+    }
+  }
+  return min_i;
+}
+
 EndEsdlNamespace()
 #endif

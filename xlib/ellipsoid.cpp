@@ -12,7 +12,6 @@
 
 TEllipsoid::TEllipsoid() : Quad(6), Esd(6) {
   Matrix.I();
-  SX = SY = SZ = 0;
   NPD = false;
 }
 //..............................................................................
@@ -20,7 +19,7 @@ TEllipsoid::TEllipsoid(const TEllipsoid& e)
   : NPD(e.NPD),
   Quad(e.Quad),
   Esd(e.Esd),
-  SX(e.SX), SY(e.SY), SZ(e.SZ),
+  Norms(e.Norms),
   Id(e.Id)
 {
   if (e.IsAnharmonic()) {
@@ -33,24 +32,15 @@ void TEllipsoid::Initialise() {
   mat3d::EigenValues(M, Matrix.I());
   if ((M[0][0] <= 0) || (M[1][1] <= 0) || (M[2][2] <= 0)) {
     NPD = true;
-    SX = sqrt(olx_abs(M[0][0]));
-    SY = sqrt(olx_abs(M[1][1]));
-    SZ = sqrt(olx_abs(M[2][2]));
   }
-  else {
-    // calculate axis lengths
-    SX = sqrt(M[0][0]);
-    SY = sqrt(M[1][1]);
-    SZ = sqrt(M[2][2]);
-    NPD = false;
-  }
+  Norms = vec3d(sqrt(olx_abs(M[0][0])),
+    sqrt(olx_abs(M[1][1])),
+    sqrt(olx_abs(M[2][2])));
 }
 //..............................................................................
 void TEllipsoid::operator = (const TEllipsoid &E) {
   Matrix = E.GetMatrix();
-  SX = E.GetSX();
-  SY = E.GetSY();
-  SZ = E.GetSZ();
+  Norms = E.GetNorms();
   Quad = E.Quad;
   Esd = E.Esd;
   NPD = E.NPD;
@@ -73,20 +63,20 @@ void TEllipsoid::Mult(const mat3d &Matr) {
   // get eigen values/vectors
   mat3d::EigenValues(N, Matrix.I());
   // assign new eigen values
-  SX = sqrt(N[0][0]);
-  SY = sqrt(N[1][1]);
-  SZ = sqrt(N[2][2]);
+  Norms = vec3d(sqrt(N[0][0]), sqrt(N[1][1]), sqrt(N[2][2]));
 }
 //..............................................................................
 void TEllipsoid::Mult(const mat3d &Matr, const ematd &J, const ematd &Jt) {
-  if (NPD)  return;
+  if (NPD) {
+    return;
+  }
   Mult(Matr);
   if (!Esd.IsNull()) {
     ematd em(6, 6);
     for (int i = 0; i < 6; i++) {
       em[i][i] = olx_sqr(Esd[shelx_to_linear(i)]);
     }
-    em = J * em*Jt;
+    em = J * em * Jt;
     for (int i = 0; i < 6; i++) {
       Esd[linear_to_shelx(i)] = sqrt(em[i][i]);
     }
@@ -102,10 +92,11 @@ void TEllipsoid::Mult(const mat3d &Matr, const ematd &VcV) {
 }
 //..............................................................................
 void TEllipsoid::ToSpherical(double r) {
-  Quad[0] = Quad[1] = Quad[2] = SX = SY = SZ = r;
+  Quad[0] = Quad[1] = Quad[2] = r;
   Quad[3] = Quad[4] = Quad[5] = 0;
   Esd.Null();
   Matrix.I();
+  Norms = vec3d(r);
   NPD = r <= 0;
 }
 //..............................................................................
@@ -125,7 +116,7 @@ ConstMatrix<double> TEllipsoid::GetTransformationJ(const mat3d &tm) {
 }
 //..............................................................................
 double TEllipsoid::CalcScale(const vec3d &v) {
-  mat3d etm = mat3d::Scale(Matrix, vec3d(SX, SY, SZ));
+  mat3d etm = mat3d::Scale(Matrix, Norms);
   vec3d nv = (v*etm.Inverse()).Normalise()*etm;
   return sqrt(v.QLength() / nv.QLength());
 }

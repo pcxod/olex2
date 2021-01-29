@@ -78,7 +78,7 @@ public:
   }
   olxdict(const olxdict& ad) : SortedL(ad) {}
   olxdict(const const_olxdict<KType,VType,Comparator>& ad)
-    : SortedL(ad.GetObject().cmp)
+    : SortedL(ad.obj().cmp)
   {
     SortedL::TakeOver(ad.Release(), true);
   }

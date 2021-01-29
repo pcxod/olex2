@@ -1851,19 +1851,18 @@ void GXLibMacros::macSetView(TStrObjList &Cmds, const TParamList &Options,
       normal = (xatoms[1]->crd()-xatoms[0]->crd()).Normalise();
     }
     else {
-      TSAtomPList satoms(xatoms, StaticCastAccessor<TSAtom>());
-      mat3d params;
-      vec3d rms;
-      TSPlane::CalcPlanes(satoms, params, rms, center);
-      normal = params[2];
+      plane::mean<>::out po = plane::mean<>::calc(xatoms, TSAtom::CrdAccessor());
+      normal = po.normals[2];
     }
   }
   if (process) {
     app.GetRenderer().GetBasis().OrientNormal(normal);
-    if (do_center && has_center)
+    if (do_center && has_center) {
       app.GetRenderer().GetBasis().SetCenter(-center);
-    if (app.XGrid().IsVisible() && has_center)
+    }
+    if (app.XGrid().IsVisible() && has_center) {
       app.SetGridDepth(center);
+    }
     app.Draw();
   }
 }
@@ -1913,24 +1912,23 @@ void GXLibMacros::macLine(TStrObjList &Cmds, const TParamList &Options,
     Atoms = app.FindXAtoms(Cmds, true, true);
   }
   if (Atoms.Count() > 2) {
-    TSAtomPList satoms(Atoms, StaticCastAccessor<TSAtom>());
-    mat3d params;
-    vec3d rms, center;
-    TSPlane::CalcPlanes(satoms, params, rms, center);
+    plane::mean<>::out po = plane::mean<>::calc(Atoms, TSAtom::CrdAccessor());
     double maxl = -1000, minl = 1000;
-    for( size_t i=0; i < satoms.Count(); i++ )  {
-      vec3d v = satoms[i]->crd() - center;
-      if (v.QLength() < 0.0001) continue;
-      const double ca = params[2].CAngle(v);
+    for( size_t i=0; i < Atoms.Count(); i++ )  {
+      vec3d v = Atoms[i]->crd() - po.center;
+      if (v.QLength() < 0.0001) {
+        continue;
+      }
+      const double ca = po.normals[2].CAngle(v);
       const double l = v.Length()*ca;
       olx_update_min_max(l, minl, maxl);
     }
-    from = center+params[2]*minl;
-    to = center+params[2]*maxl;
+    from = po.center+po.normals[2]*minl;
+    to = po.center+po.normals[2]*maxl;
     double rmsd = 0;
     for (size_t i = 0; i < Atoms.Count(); i++) {
-      vec3d v = Atoms[i]->crd() - center;
-      rmsd += (v - params[2]*params[2].DotProd(v)).QLength();
+      vec3d v = Atoms[i]->crd() - po.center;
+      rmsd += (v - po.normals[2]*po.normals[2].DotProd(v)).QLength();
     }
     TBasicApp::NewLogEntry() << "RMSD/A: " <<
       olxstr::FormatFloat(3, sqrt(rmsd/Atoms.Count()));
@@ -2078,7 +2076,7 @@ void GXLibMacros::macCent(TStrObjList &Cmds, const TParamList &Options,
 {
   olxstr rings_name = Options.FindValue("rings");
   if (rings_name.IsEmpty()) {
-    app.AddCentroid(app.FindXAtoms(Cmds, true, true).GetObject());
+    app.AddCentroid(app.FindXAtoms(Cmds, true, true).obj());
   }
   else {
     TTypeList<TSAtomPList> rings = app.FindRings(rings_name);
@@ -3329,7 +3327,7 @@ void GXLibMacros::macIndividualise(TStrObjList &Cmds, const TParamList &Options,
     app.Individualise(bonds, level, mask);
   }
   else {
-    app.Individualise(app.FindXAtoms(Cmds, false, false).GetObject(),
+    app.Individualise(app.FindXAtoms(Cmds, false, false).obj(),
       level, mask);
   }
 }
@@ -3354,7 +3352,7 @@ void GXLibMacros::macCollectivise(TStrObjList &Cmds, const TParamList &Options,
     app.Collectivise(bonds);
   }
   else {
-    app.Collectivise(app.FindXAtoms(Cmds, false, false).GetObject());
+    app.Collectivise(app.FindXAtoms(Cmds, false, false).obj());
   }
 }
 //.............................................................................
@@ -6060,7 +6058,7 @@ void GXLibMacros::macLpln(TStrObjList &Cmds, const TParamList &Options,
     vec3d centre = olx_mean(ipts);
     olx_object_ptr<vec3f_alist> normals = new vec3f_alist(1);
     (*normals)[0] = pn.Normalise();
-    olx_plane::Sort(ipts, DummyAccessor(), centre, pn);
+    plane::Sort(ipts, DummyAccessor(), centre, pn);
     TDUserObj *obj = new TDUserObj(app.GetRenderer(), sgloPolygon,
       olxstr("lpln_") << idx.ToString());
     obj->SetVertices(&vec3f_alist::FromList(ipts, DummyAccessor()).Release());

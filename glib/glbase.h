@@ -134,6 +134,14 @@ struct olx_gl {
     glScaled(_x, _y, _z);
   }
 
+  static void scale(const vec3d &v) {
+    glScaled(v[0], v[1], v[2]);
+  }
+
+  static void scale(const vec3f& v) {
+    glScalef(v[0], v[1], v[2]);
+  }
+
   static void scale(int S) {
     scale(S, S, S);
   }

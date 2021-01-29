@@ -776,7 +776,7 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
         }
       }
       if (HKLF >= 5) {
-        non_overlapping_1 = GetNonoverlappingRefs(refs).GetObject()
+        non_overlapping_1 = GetNonoverlappingRefs(refs).obj()
           .Filter(olx_alg::olx_eq(1,
           FunctionAccessor::MakeConst(&TReflection::GetBatch)));
         batch_1.SetCapacity(refs.Count());
@@ -2143,43 +2143,43 @@ bool RefinementModel::IsDefaultRestraint(const TSameGroup &r) const {
   return r.Esd12 == 0.02 && r.Esd13 == 0.02;
 }
 //..............................................................................
-bool RefinementModel::IsDefaultRestraint(const TSimpleRestraint &r) const {
+bool RefinementModel::IsDefaultRestraint(const TSimpleRestraint& r) const {
   const TSRestraintList& container = r.GetParent();
-  if( container.GetIdName().Equals("DFIX") )  {
+  if (container.GetIdName().Equals("DFIX")) {
     return r.GetEsd() == DEFS[0];
   }
-  else if( container.GetIdName().Equals("DANG") )  {
-    return r.GetEsd() == DEFS[0]*2;
+  else if (container.GetIdName().Equals("DANG")) {
+    return r.GetEsd() == DEFS[0] * 2;
   }
-  else if( container.GetIdName().Equals("SADI") )  {
+  else if (container.GetIdName().Equals("SADI")) {
     return r.GetEsd() == DEFS[0];
   }
-  else if( container.GetIdName().Equals("CHIV") )  {
+  else if (container.GetIdName().Equals("CHIV")) {
     return r.GetEsd() == DEFS[1];
   }
-  else if( container.GetIdName().Equals("FLAT") )  {
+  else if (container.GetIdName().Equals("FLAT")) {
     return r.GetEsd() == DEFS[1];
   }
-  else if( container.GetIdName().Equals("DELU") )  {
+  else if (container.GetIdName().Equals("DELU")) {
     return r.GetEsd() == DEFS[2] && r.GetEsd1() == DEFS[2];
   }
-  else if( container.GetIdName().Equals("RIGU") )  {
+  else if (container.GetIdName().Equals("RIGU")) {
     return r.GetEsd() == 0.004 && r.GetEsd1() == 0.004;
   }
-  else if( container.GetIdName().Equals("SIMU") )  {
-    return r.GetEsd() == DEFS[3] && r.GetEsd1() == DEFS[3]*2 &&
+  else if (container.GetIdName().Equals("SIMU")) {
+    return r.GetEsd() == DEFS[3] && r.GetEsd1() == DEFS[3] * 2 &&
       r.GetValue() == 2;
   }
-  else if( container.GetIdName().Equals("ISOR") )  {
+  else if (container.GetIdName().Equals("ISOR")) {
     return r.GetEsd() == 0.1 && r.GetEsd1() == 0.2;
   }
-  else if( container.GetIdName().Equals("olex2.restraint.angle") )  {
+  else if (container.GetIdName().Equals("olex2.restraint.angle")) {
     return r.GetEsd() == 0.02;
   }
-  else if( container.GetIdName().Equals("olex2.restraint.dihedral") )  {
+  else if (container.GetIdName().Equals("olex2.restraint.dihedral")) {
     return r.GetEsd() == 0.04;
   }
-  else if( container.GetIdName().StartsFromi("olex2.restraint.adp") )  {
+  else if (container.GetIdName().StartsFromi("olex2.restraint.adp")) {
     return r.GetEsd() == 0.1;
   }
   return false;
@@ -2262,7 +2262,7 @@ olxstr RefinementModel::WriteInsExtras(const TCAtomPList* atoms,
   for (size_t i = 0; i < aunit.AtomCount(); i++) {
     TCAtom &a = aunit.GetAtom(i);
     if (!a.IsDeleted() && a.IsFixedType()) {
-      fixed_types << ' ' << a.GetLabel();
+      fixed_types << ' ' << a.GetResiLabel();
     }
   }
   if (!fixed_types.IsEmpty()) {
@@ -2449,7 +2449,7 @@ void RefinementModel::BeforeAUUpdate_() {
   }
   TPtrList<ExplicitCAtomRef> rs;
   for (size_t i = 0; i < InfoTables.Count(); i++) {
-    rs.AddAll(InfoTables[i].GetAtoms().GetExplicit().GetObject());
+    rs.AddAll(InfoTables[i].GetAtoms().GetExplicit().obj());
   }
   TPtrList<TSRestraintList> restraints = GetRestraints();
   for (size_t i = 0; i < restraints.Count(); i++) {
@@ -2832,14 +2832,15 @@ void RefinementModel::LibShareADP(TStrObjList &Cmds, const TParamList &Options,
       as.Add(new TGroupCAtom(atoms[i]->CAtom(), atoms[i]->GetMatrix()));
     }
     d = AddDirection(as, direction_normal);
-    TSPlane::CalcPlane(atoms, normal, center);
+    plane::mean<>::out po = plane::mean<>::calc(atoms, TSAtom::CrdAccessor());
+    center = po.center;
+    normal = po.normals[0];
   }
   if (d == 0) {
     E.ProcessingError(__OlxSrcInfo, "could not add direction object");
     return;
   }
-  olx_plane::Sort(atoms, FunctionAccessor::MakeConst(
-    (const vec3d& (TSAtom::*)() const)&TSAtom::crd), center, normal);
+  plane::Sort(atoms, TSAtom::CrdAccessor(), center, normal);
   double ra = atoms.Count()*ang;
   for (size_t i = 1; i < atoms.Count(); i++) {
     SharedRotatedADPs.items.Add(

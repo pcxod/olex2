@@ -21,9 +21,10 @@ namespace PlaneSort {
     Sorter() { }
     void DoSort(const TSPlane& sp) {
       sortedPlane.SetCount(sp.Count());
-      for (size_t i = 0; i < sp.Count(); i++)
+      for (size_t i = 0; i < sp.Count(); i++) {
         sortedPlane[i] = sp.GetAtom(i).crd();
-      olx_plane::Sort(sortedPlane, ListAccessor(sortedPlane), sp.GetCenter(),
+      }
+      plane::Sort(sortedPlane, ListAccessor(sortedPlane), sp.GetCenter(),
         sp.GetNormal());
     }
 
@@ -42,7 +43,7 @@ namespace PlaneSort {
         sorted[i].a = p.GetAtom(i).crd();
         sorted[i].b = &p.GetAtom(i);
       }
-      olx_plane::Sort(sorted, PointAccessor(), p.GetCenter(), p.GetNormal());
+      plane::Sort(sorted, PointAccessor(), p.GetCenter(), p.GetNormal());
       for (size_t i = 0; i < sorted.Count(); i++) {
         sorted[i].b->SetTag((index_t)i);
       }
@@ -61,7 +62,7 @@ namespace PlaneSort {
         sorted[i].a = atoms[i]->crd() + transforms.Get(atoms[i]->GetTag());
         sorted[i].b = atoms[i];
       }
-      olx_plane::Sort(sorted, PointAccessor(), center, normal);
+      plane::Sort(sorted, PointAccessor(), center, normal);
       output.SetCount(sorted.Count());
       for (size_t i = 0; i < sorted.Count(); i++) {
         output[i] = sorted[i].b;

@@ -1181,41 +1181,47 @@ TXApp::CalcVolumeInfo TXApp::CalcVolume(const ElementRadii* radii)  {
 }
 //..............................................................................
 WBoxInfo TXApp::CalcWBox(const TSAtomPList& atoms, const TDoubleList* radii,
-                        double (*weight_calculator)(const TSAtom&))
+  double (*weight_calculator)(const TSAtom&))
 {
-  if( radii != NULL && atoms.Count() != radii->Count() )
+  if (radii != 0 && atoms.Count() != radii->Count()) {
     throw TInvalidArgumentException(__OlxSourceInfo, "radii count");
+  }
   TArrayList<olx_pair_t<vec3d, double> > crds(atoms.Count());
-  for( size_t i=0; i < atoms.Count(); i++ )  {
+  for (size_t i = 0; i < atoms.Count(); i++) {
     crds[i].a = atoms[i]->crd();
     crds[i].b = (*weight_calculator)(*atoms[i]);
   }
 
   WBoxInfo rv;
-  vec3d rms;
-  TSPlane::CalcPlanes(crds, rv.normals, rms, rv.center);
-  for( int i=0; i < 3; i++ )  {
-    rv.d[i] = rv.normals[i].DotProd(rv.center)/rv.normals[i].Length();
+  plane::mean<>::out po = plane::mean<>::calc_for_pairs(crds);
+  rv.normals = po.normals;
+  rv.center = po.center;
+  for (int i = 0; i < 3; i++) {
+    rv.d[i] = rv.normals[i].DotProd(rv.center) / rv.normals[i].Length();
     rv.normals[i].Normalise();
-    for( size_t j=0; j < crds.Count(); j++ )  {
+    for (size_t j = 0; j < crds.Count(); j++) {
       const double d = crds[j].GetA().DotProd(rv.normals[i]) - rv.d[i];
-      if( radii != NULL )  {
+      if (radii != 0) {
         const double d1 = d - radii->GetItem(j);
-        if( d1 < rv.r_from[i] )
+        if (d1 < rv.r_from[i]) {
           rv.r_from[i] = d1;
+        }
         const double d2 = d + radii->GetItem(j);
-        if( d2 > rv.r_to[i] )
+        if (d2 > rv.r_to[i]) {
           rv.r_to[i] = d2;
+        }
       }
       const double d1 = d - atoms[j]->GetType().r_sfil;
-      if( d1 < rv.s_from[i] )
+      if (d1 < rv.s_from[i]) {
         rv.s_from[i] = d1;
+      }
       const double d2 = d + atoms[j]->GetType().r_sfil;
-      if( d2 > rv.s_to[i] )
+      if (d2 > rv.s_to[i]) {
         rv.s_to[i] = d2;
+      }
     }
   }
-  if( radii == NULL )  {
+  if (radii == 0) {
     rv.r_from = rv.s_from;
     rv.r_to = rv.s_to;
   }

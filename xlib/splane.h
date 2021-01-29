@@ -12,6 +12,7 @@
 #include "xbase.h"
 #include "typelist.h"
 #include "satom.h"
+#include "math/plane.h"
 
 BeginXlibNamespace()
 
@@ -39,7 +40,7 @@ class TSPlane : public TSObject<TNetwork> {
     }
   };
 public:
-  TSPlane() : TSObject<TNetwork>(NULL), DefId(InvalidIndex)
+  TSPlane() : TSObject<TNetwork>(0), DefId(InvalidIndex)
   {}
   TSPlane(TNetwork* Parent, size_t def_id = InvalidIndex)
     : TSObject<TNetwork>(Parent), Distance(0), wRMSD(0), Flags(0),
@@ -47,10 +48,10 @@ public:
   {}
   virtual ~TSPlane() {}
 
-  DefPropBFIsSet(Deleted, Flags, plane_flag_deleted)
+  DefPropBFIsSet(Deleted, Flags, plane_flag_deleted);
 
-    // an association point, weight is provided
-    void Init(const TTypeList<olx_pair_t<TSAtom*, double> >& Points);
+  // an association point, weight is provided
+  void Init(const TTypeList<olx_pair_t<TSAtom*, double> >& Points);
 
   inline const vec3d& GetNormal() const { return Normals[0]; }
   // note that the Normal (or Z) is the first row of the matrix
@@ -97,26 +98,6 @@ public:
   static vec3d GetCrystallographicDirection(const mat3d& m,
     const vec3d& n, const vec3d& p);
   vec3d GetCrystallographicDirection() const;
-  // static members
-    /* calculates all three planes - best, worst and the complimentary,
-    the normals are sorted by rms ascending, so the best plane is at [0] and the
-    worst - at [2] Returns true if the function succeded (point cound > 2)
-    */
-  template <class List> static bool CalcPlanes(const List& Points,
-    mat3d& params, vec3d& rms, vec3d& center);
-  // a convinience function for non-weighted plane
-  static bool CalcPlanes(const TSAtomPList& atoms, mat3d& params, vec3d& rms,
-    vec3d& center);
-  /* calculates the A,B and C for the best/worst plane Ax*By*Cz+D=0, D can be
-  calculated as D = center.DotProd({A,B,C})
-   for the point, weight association
-   returns sqrt(smallest eigen value/point.Count())
-  */
-  template <class List> static double CalcPlane(const List& Points,
-    vec3d& Params, vec3d& center, const short plane_type = plane_best);
-  // a convinience function for non-weighted planes
-  static double CalcPlane(const TSAtomPList& Points,
-    vec3d& Params, vec3d& center, const short plane_type = plane_best);
   // returns sqrt(smallest eigen value/point.Count())
   static double CalcRMSD(const TSAtomPList& atoms);
   static double CalcRMSD(const TAtomEnvi& atoms);
@@ -189,87 +170,8 @@ public:
   virtual void FromDataItem(const TDataItem& item, const TXApp& app);
 };
 
-  typedef TTypeList<TSPlane> TSPlaneList;
-  typedef TPtrList<TSPlane> TSPlanePList;
-
-/* RMSD will be 'valid', i.e. as equal to directly calculated only for
-unit/equal weights, otherwise it will become smaller than directly calculated
-one since the priority will be given to some points and
-RMSD'=(sum(w^2*distances^2)/sum(w^2))^0.5, where distance will be smaller for
-higher weights... there are functions to calculate both values
-*/
-template <class List>  // olx_pair_t<vec3d, double> list, returning & on []
-bool TSPlane::CalcPlanes(const List& Points, mat3d& Params, vec3d& rms,
-  vec3d& center)
-{
-  if (Points.Count() < 3) {
-    return false;
-  }
-  center.Null();
-  double mass = 0, qmass = 0;
-  center.Null();
-  for (size_t i = 0; i < Points.Count(); i++) {
-    center += Points[i].GetA()*Points[i].GetB();
-    mass += Points[i].GetB();
-    qmass += olx_sqr(Points[i].GetB());
-  }
-  if (mass == 0) {
-    return false;
-  }
-  center /= mass;
-  mat3d m;
-  for (size_t i = 0; i < Points.Count(); i++) {
-    const vec3d t = (Points[i].GetA() - center)*Points[i].GetB();
-    m[0][0] += (t[0] * t[0]);
-    m[0][1] += (t[0] * t[1]);
-    m[0][2] += (t[0] * t[2]);
-    m[1][1] += (t[1] * t[1]);
-    m[1][2] += (t[1] * t[2]);
-    m[2][2] += (t[2] * t[2]);
-  }
-  m[1][0] = m[0][1];
-  m[2][0] = m[0][2];
-  m[2][1] = m[1][2];
-  mat3d::EigenValues(m /= qmass, Params.I());
-  for (int i = 0; i < 3; i++) {
-    rms[i] = (m[i][i] < 0 ? 0 : sqrt(m[i][i]));
-  }
-  bool swaps = true;
-  while (swaps) {
-    swaps = false;
-    for (int i = 0; i < 2; i++) {
-      if (rms[i] > rms[i + 1]) {
-        olx_swap(Params[i], Params[i + 1]);
-        olx_swap(rms[i], rms[i + 1]);
-        swaps = true;
-      }
-    }
-  }
-  return true;
-}
-//..............................................................................
-// returns RMS or a negative number if an error occured
-template <class List>
-double TSPlane::CalcPlane(const List& Points, vec3d& Params, vec3d& center,
-  const short type)
-{
-  mat3d normals;
-  vec3d rms;
-  if (CalcPlanes(Points, normals, rms, center)) {
-    if (type == plane_best) {
-      Params = normals[0];
-      return rms[0];
-    }
-    else if (type == plane_worst) {
-      Params = normals[2];
-      return rms[2];
-    }
-    Params = normals[1];
-    return rms[1];
-  }
-  return -1;
-}
-//..............................................................................
+typedef TTypeList<TSPlane> TSPlaneList;
+typedef TPtrList<TSPlane> TSPlanePList;
 
 EndXlibNamespace()
 #endif
