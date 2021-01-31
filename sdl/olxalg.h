@@ -210,9 +210,13 @@ template <typename obj> inline void olx_swap(obj& o1, obj& o2) {
 }
 // returns 10^val, cannot put it to emath due to dependencies...
 template <typename FT> FT olx_pow10(size_t val)  {
-  if (val == 0)  return 1;
+  if (val == 0) {
+    return 1;
+  }
   FT rv = 10;
-  while (--val > 0) rv *= 10;
+  while (--val > 0) {
+    rv *= 10;
+  }
   return rv;
 }
 /* comparison function (useful for the size_t on Win64, where size_t=uint64_t
@@ -223,5 +227,20 @@ int olx_cmp(T1 a, T2 b) { return a < b ? -1 : (a > b ? 1 : 0); }
 template <typename T, typename T1> bool olx_is(const T1 &v) {
   return typeid(T) == typeid(olx_ref::get(v));
 };
+
+template<typename from_t, typename to_t>
+void olx_copy(const from_t &f, to_t &t, size_t cnt, size_t f_off=0, size_t t_off=0) {
+  for (size_t i = 0; i < cnt; i++) {
+    t[t_off+i] = f[f_off+i];
+  }
+}
+template<typename from_t, typename to_t, class Accessor>
+void olx_copy(const from_t& f, to_t& t, const Accessor &a,
+  size_t cnt, size_t f_off, size_t t_off)
+{
+  for (size_t i = 0; i < cnt; i++) {
+    t[t_off + i] = a(f[f_off + i]);
+  }
+}
 
 #endif

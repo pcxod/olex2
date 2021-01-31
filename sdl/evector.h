@@ -369,23 +369,8 @@ public:
     }
     return true;
   }
-
   TIString ToString() const {
-    if (Fn == 0) {
-      return EmptyString();
-    }
-    olxstr_buf t;
-    olxcstr fmt;
-    if (olx_is_float(olx_get_primitive_type(FData[0]))) {
-      fmt = olxcstr("%12.4") << olx_format_modifier(FData[0]) << "e";
-    }
-    else {
-      fmt = olxcstr("%6") << &olxcstr::printFormat(olx_get_primitive_type(FData[0]))[1];
-    }
-    for (size_t i = 0; i < Fn; i++) {
-      t << olx2str_ext(FData[i], fmt);
-    }
-    return olxstr(t);
+    return olxstr(", ").Join(*this);
   }
 
   void ToStreamSafe(IOutputStream& out) const {
@@ -489,14 +474,11 @@ public:
     }
     return c;
   }
-  static olx_object_ptr<TVector<FT> > build(size_t c, ...) {
-    va_list argptr;
-    va_start(argptr, c);
-    TVector<FT>* r = new TVector<FT>(c);
-    for (size_t i = 0; i < c; i++) {
-      (*r)[i] = va_arg(argptr, FT);
-    }
-    va_end(argptr);
+  // using variardic is BAD as passing '2' will be an int,not the desired type...
+  static olx_object_ptr<TVector<FT> > build(FT n1, FT n2, FT n3, FT n4, FT n5, FT n6) {
+    TVector<FT>* r = new TVector<FT>(6);
+    (*r)[0] = n1; (*r)[1] = n2; (*r)[2] = n3;
+    (*r)[3] = n4; (*r)[4] = n5; (*r)[5] = n6;
     return olx_object_ptr<TVector<FT> >(r);
   }
 public:
@@ -524,6 +506,26 @@ public:
 public:
   typedef FT number_type;
 };
+
+template <typename FT>
+static olxstr strof(const TVector<FT> &v) {
+  if (v.IsEmpty()) {
+    return EmptyString();
+  }
+  olxstr_buf t;
+  olxcstr fmt;
+  if (olx_is_float(olx_get_primitive_type(v[0]))) {
+    fmt = olxcstr("%12.4") << olx_format_modifier(v[0]) << "e";
+  }
+  else {
+    fmt = olxcstr("%6") << &olxcstr::printFormat(olx_get_primitive_type(v[0]))[1];
+  }
+  for (size_t i = 0; i < v.Count(); i++) {
+    t << olx2str_ext(v[i], fmt);
+  }
+  return olxstr(t);
+}
+
 
 template <typename FT>
 class ConstVector

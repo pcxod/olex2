@@ -30,12 +30,12 @@
 #undef GetObject
 
 // sorts largest -> smallest
-int TLattice_SortAtomsById(const TSAtom* a1, const TSAtom* a2)  {
+int TLattice_SortAtomsById(const TSAtom* a1, const TSAtom* a2) {
   return olx_cmp(a1->CAtom().GetId(), a2->CAtom().GetId());
 }
-int TLattice_AtomsSortByDistance(const TSAtom* A1, const TSAtom* A2)  {
+int TLattice_AtomsSortByDistance(const TSAtom* A1, const TSAtom* A2) {
   const double d = A1->crd().QLength() - A2->crd().QLength();
-  return (d < 0 ? -1 : ((d > 0 ) ? 1 : 0));
+  return (d < 0 ? -1 : ((d > 0) ? 1 : 0));
 }
 
 TLattice::TLattice(ASObjectProvider& ObjectProvider) :
@@ -939,7 +939,7 @@ TSAtomPList TLattice::NewCentroid(const TSAtomPList& Atoms)  {
   const smatd itm = UnitCell->InvMatrix(Atoms[0]->GetMatrix());
   for (size_t i=0; i < Atoms.Count(); i++) {
     cc += itm*Atoms[i]->ccrd();
-    ce += vec3d::Qrt(Atoms[i]->CAtom().ccrdEsd());
+    ce += olx_sqr(Atoms[i]->CAtom().ccrdEsd());
   }
   ce.Sqrt();
   ce /= Atoms.Count();
@@ -1742,11 +1742,11 @@ void TLattice::TransformFragments(const TSAtomPList& fragAtoms,
   /* transform may come with random Tag, so need to process ADP's manually -
   cannot pick from UC
   */
-  const mat3d abc2xyz(mat3d::Transpose(GetAsymmUnit().GetCellToCartesian())),
-              xyz2abc(mat3d::Transpose(GetAsymmUnit().GetCartesianToCell()));
+  const mat3d abc2xyz(GetAsymmUnit().GetCellToCartesian().GetT()),
+              xyz2abc(GetAsymmUnit().GetCartesianToCell().GetT());
   const mat3d etm = abc2xyz*transform.r*xyz2abc;
   ematd J = TEllipsoid::GetTransformationJ(etm),
-    Jt = ematd::Transpose(J);
+    Jt = J.GetTranspose();
   if (update_equiv) {
     GetAsymmUnit().GetRefMod()->BeforeAUUpdate_();
   }
@@ -1758,8 +1758,9 @@ void TLattice::TransformFragments(const TSAtomPList& fragAtoms,
       for (size_t j=0; j < fragAtoms[i]->GetNetwork().NodeCount(); j++) {
         TSAtom& SA = fragAtoms[i]->GetNetwork().Node(j);
         SA.CAtom().ccrd() = transform * SA.CAtom().ccrd();
-        if (SA.CAtom().GetEllipsoid() != NULL)
+        if (SA.CAtom().GetEllipsoid() != 0) {
           SA.CAtom().GetEllipsoid()->Mult(etm, J, Jt);
+        }
       }
     }
   }

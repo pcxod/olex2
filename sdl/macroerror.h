@@ -28,7 +28,7 @@ const unsigned short
   // these are for special handling
   peUnhandled           = 0x1000;
 
-class TMacroData: public IOlxObject  {
+class TMacroData : public IOlxObject {
   unsigned short ProcessError;
   bool DeleteObject;
   olxstr ErrorInfo, Location;
@@ -36,9 +36,10 @@ class TMacroData: public IOlxObject  {
   str_stack Stack;
 public:
   TMacroData();
-  virtual ~TMacroData()  {
-    if( DeleteObject )
+  virtual ~TMacroData() {
+    if (DeleteObject) {
       delete RetValue;
+    }
   }
 
   void operator = (const TMacroData& ME);
@@ -49,16 +50,18 @@ public:
   void WrongState(const ABasicFunction& caller);
   void SetUnhandled(bool v) { olx_set_bit(v, ProcessError, peUnhandled); }
 
-  void Reset()  {
+  void Reset() {
     ProcessError = 0;
     ErrorInfo.SetLength(0);
     Location.SetLength(0);
-    if( DeleteObject )  delete RetValue;
+    if (DeleteObject) {
+      delete RetValue;
+    }
     DeleteObject = false;
-    RetValue = (IOlxObject*)NULL;
+    RetValue = 0;
     Stack.Clear();
   }
-  void ClearErrorFlag()  {  ProcessError = 0;  }
+  void ClearErrorFlag() { ProcessError = 0; }
 
   void ProcessingException(const ABasicFunction& caller,
     const TExceptionBase& exc);
@@ -67,47 +70,47 @@ public:
     const TExceptionBase& exc);
 
   bool IsSuccessful() const {
-    return ((ProcessError&0x0FFF) == 0);
+    return ((ProcessError & 0x0FFF) == 0);
   }
   bool DoesFunctionExist() const {
-    return (ProcessError&peNonexistingFunction) == 0;
+    return (ProcessError & peNonexistingFunction) == 0;
   }
   bool IsProcessingError() const {
-    return (ProcessError&peProcessingError) != 0;
+    return (ProcessError & peProcessingError) != 0;
   }
   bool IsProcessingException() const {
-    return (ProcessError&peProcessingException) != 0;
+    return (ProcessError & peProcessingException) != 0;
   }
   bool IsInvalidOption() const {
-    return (ProcessError&peInvalidOption) != 0;
+    return (ProcessError & peInvalidOption) != 0;
   }
   bool IsInvalidArguments() const {
-    return (ProcessError&peInvalidArgCount) != 0;
+    return (ProcessError & peInvalidArgCount) != 0;
   }
   bool IsIllegalState() const {
-    return (ProcessError&peIllegalState) != 0;
+    return (ProcessError & peIllegalState) != 0;
   }
 
   bool IsHandled() const {
-    return (ProcessError&peUnhandled) == 0;
+    return (ProcessError & peUnhandled) == 0;
   }
 
-  const olxstr& GetInfo() const {  return ErrorInfo;  }
+  const olxstr& GetInfo() const { return ErrorInfo; }
   DefPropC(olxstr, Location)
 
-  olxstr GetRetVal() const;
+    olxstr GetRetVal() const;
 
-  bool HasRetVal() const {  return RetValue != NULL;  }
-  IOlxObject* RetObj() const {  return RetValue;  }
+  bool HasRetVal() const { return RetValue != 0; }
+  IOlxObject* RetObj() const { return RetValue; }
 
-  str_stack& GetStack() {  return Stack;  }
+  str_stack& GetStack() { return Stack; }
 
-  void PrintStack(int logEvt=logError, bool annotate=false,
-    const olxstr &prefix=EmptyString()) const;
+  void PrintStack(int logEvt = logError, bool annotate = false,
+    const olxstr& prefix = EmptyString()) const;
 
   // the type is validated
   template <class EObj> EObj* GetRetObj() {
-    EObj *r = dynamic_cast<EObj *>(RetValue);
+    EObj* r = dynamic_cast<EObj*>(RetValue);
     if (r == 0) {
       throw TCastException(__OlxSourceInfo, EsdlObjectName(*RetValue),
         EsdlClassName(EObj));
@@ -115,25 +118,29 @@ public:
     return r;
   }
   template <class PT> void SetRetVal(const PT& val) {
-    if (DeleteObject)  delete RetValue;
+    if (DeleteObject) {
+      delete RetValue;
+    }
     DeleteObject = true;
-    RetValue = new TEPType<PT>(val);
+    RetValue = createWrapper(val);
   }
 
   template <class PT> void SetRetVal(PT* val) {
-    if (DeleteObject)  delete RetValue;
+    if (DeleteObject) {
+      delete RetValue;
+    }
     DeleteObject = false;
     RetValue = val;
   }
 
   class TCastException : public TBasicException {
-    public:
-      TCastException(const olxstr& location, const olxstr& from,
-        const olxstr& to)
-        : TBasicException(location,
-            olxstr("Cannot cast '") << from << "' to '"  << to << '\'')
-      {}
-    virtual IOlxObject* Replicate() const {  return new TCastException(*this);  }
+  public:
+    TCastException(const olxstr& location, const olxstr& from,
+      const olxstr& to)
+      : TBasicException(location,
+        olxstr("Cannot cast '") << from << "' to '" << to << '\'')
+    {}
+    virtual IOlxObject* Replicate() const { return new TCastException(*this); }
   };
 
 };

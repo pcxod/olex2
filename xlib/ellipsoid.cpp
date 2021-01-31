@@ -56,7 +56,7 @@ void TEllipsoid::Mult(const mat3d &Matr) {
   }
   mat3d N = ExpandQuad();
   // do trasformation of the eigen vectors
-  N = Matr * N * mat3d::Transpose(Matr);
+  N = Matr * N * Matr.GetT();
   // store new quadratic form
   Quad[0] = N[0][0];  Quad[1] = N[1][1];  Quad[2] = N[2][2];
   Quad[3] = N[1][2];  Quad[4] = N[0][2];  Quad[5] = N[0][1];
@@ -84,7 +84,9 @@ void TEllipsoid::Mult(const mat3d &Matr, const ematd &J, const ematd &Jt) {
 }
 //..............................................................................
 void TEllipsoid::Mult(const mat3d &Matr, const ematd &VcV) {
-  if (NPD)  return;
+  if (NPD) {
+    return;
+  }
   Mult(Matr);
   for (int i = 0; i < 6; i++) {
     Esd[linear_to_shelx(i)] = sqrt(VcV[i][i]);
@@ -105,10 +107,10 @@ ConstMatrix<double> TEllipsoid::GetTransformationJ(const mat3d &tm) {
   using namespace math;
   typedef linear_from_sym<mat3d> from_sym3d;
   typedef linear_to_sym<mat3d> to_sym3d;
-  for (int i=0; i < 6; i++) {
+  for (size_t i=0; i < 6; i++) {
     from_sym3d m = dmat::M_x_OneSym_x_Mt(tm,
       to_sym3d::get_i(i), to_sym3d::get_j(i));
-    for (int j = 0; j < 6; j++) {
+    for (size_t j = 0; j < 6; j++) {
       J(j, i) = m(j); // dUdm
     }
   }

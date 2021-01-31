@@ -134,8 +134,9 @@ public:
       return;
     }
     FData = new TVector<FT>[Fn];
-    for (size_t i = 0; i < Fn; i++)
+    for (size_t i = 0; i < Fn; i++) {
       FData[i] = M[i];
+    }
   }
 
   TMatrix(const ConstMatrix<FT>& v) : FData(0) {
@@ -386,7 +387,7 @@ public:
       FData[i][which] /= v;
     }
   }
-
+  // Transposeds this matrix
   TMatrix& Transpose() {
     if (Fn == 0 || Fm == 0) {
       ;
@@ -414,14 +415,22 @@ public:
     return *this;
   }
 
-  static ConstMatrix<FT> Transpose(const TMatrix& matr) {
-    TMatrix m(matr.ColCount(), matr.RowCount());
-    for (size_t i = 0; i < matr.RowCount(); i++) {
-      for (size_t j = 0; j < matr.ColCount(); j++) {
-        m(j, i) = matr(i, j);
+  TMatrix& T() {
+    return Transpose();
+  }
+
+  ConstMatrix<FT> GetTranspose() const {
+    TMatrix m(Fm, Fn);
+    for (size_t i = 0; i < Fn; i++) {
+      for (size_t j = 0; j < Fm; j++) {
+        m(j, i) = FData[i][j];
       }
     }
     return m;
+  }
+
+  ConstMatrix<FT> GetT() const {
+    return GetTranspose();
   }
 
   FT Trace() const {
@@ -781,14 +790,16 @@ public:
   typedef FT number_type;
 };
 
-  typedef TMatrix<float> ematf;
-  typedef TMatrix<double> ematd;
 
-  typedef TTypeList<ematf> ematf_list;
-  typedef TTypeList<ematd> ematd_list;
-  typedef TPtrList<ematf> ematf_plist;
-  typedef TPtrList<ematd> ematd_plist;
-
+template <typename FT>
+static olxstr strof(const TMatrix<FT> &m) {
+  olxstr_buf t;
+  for (size_t i = 0; i < m.RowCount(); i++) {
+    t << strof(m[i]) << "\n";
+  }
+  return olxstr(t);
+}
+  
 template <typename FT>
 class ConstMatrix
   : public const_mat<TMatrix<FT> >,
@@ -807,5 +818,14 @@ public:
 public:
   typedef FT number_type;
 };
+
+typedef TMatrix<float> ematf;
+typedef TMatrix<double> ematd;
+
+typedef TTypeList<ematf> ematf_list;
+typedef TTypeList<ematd> ematd_list;
+typedef TPtrList<ematf> ematf_plist;
+typedef TPtrList<ematd> ematd_plist;
+
 EndEsdlNamespace()
 #endif

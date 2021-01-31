@@ -62,10 +62,10 @@ TLS::TLS(const TSAtomPList &atoms_) : atoms(atoms_)
 void TLS::printTLS(const olxstr &title) const {
   TTTable<TStrList> tab(12, 3);
   tab[0][0] = "T";  tab[4][0] = "L";  tab[8][0] = "S";
-  int sacc [9] = {0, 1, 2, 1, 3, 4, 2, 4, 5};
-  for (int i=0; i < 3; i++ )  {
-    for (int j=0; j < 3; j++) {
-      int idx = i*3+j;
+  size_t sacc [9] = {0, 1, 2, 1, 3, 4, 2, 4, 5};
+  for (size_t i=0; i < 3; i++ )  {
+    for (size_t j=0; j < 3; j++) {
+      size_t idx = i*3+j;
       tab[1+j][i] =
         TEValueD(GetT()[i][j], sqrt(TLS_VcV[sacc[idx]][sacc[idx]])).ToString();
       tab[5+j][i] =
@@ -106,8 +106,9 @@ void TLS::printDiff(const olxstr &title) const {
     double dV = (v - v_tls);
     R1 += olx_abs(dV);
     R2 += dV*dV;
-    for (size_t j=0; j < 6; j++)
-      tab[idx+1][j+1] = olxstr::FormatFloat(-3, Q[j], true);
+    for (size_t j = 0; j < 6; j++) {
+      tab[idx + 1][j + 1] = olxstr::FormatFloat(-3, Q[j], true);
+    }
     tab[idx][7] = olxstr::FormatFloat(-3, dV, true);
     tab[idx][8] = olxstr::FormatFloat(3, v, true);
     tab[idx][9] = olxstr::FormatFloat(-3, 100*dV/v);
@@ -159,37 +160,39 @@ void TLS::UijErrors(ematd &weights){
   Rcart.Print();*/
 }
 
-void TLS::createDM(ematd &dm, evecd &UijC) {
-  dm.Resize(6*atoms.Count(),TLSfreeParameters).Null();
-  UijC.Resize(6*atoms.Count()).Null();
+void TLS::createDM(ematd& dm, evecd& UijC) {
+  dm.Resize(6 * atoms.Count(), TLSfreeParameters).Null();
+  UijC.Resize(6 * atoms.Count()).Null();
   evecd quad(6);
-  for( size_t i=0; i < atoms.Count(); i++ )  {
-    if ( atoms[i]->GetEllipsoid() == NULL ) {
+  for (size_t i = 0; i < atoms.Count(); i++) {
+    if (atoms[i]->GetEllipsoid() == 0) {
       throw TInvalidArgumentException(__OlxSourceInfo,
         "Isotropic atom: invalid TLS input");
     }
     vec3d r = atoms[i]->crd() - origin;
     mat3d Atls(0, r[2], -r[1], -r[2], 0, r[0], r[1], -r[0], 0);
-    mat3d AtlsT = mat3d::Transpose(Atls);
-    size_t idx = i*6;
-  //  Utls = Tmat + Atls*Smat + mat3d::Transpose(Smat)*AtlsT + Atls*Lmat*AtlsT;
-    for (int j=0; j < 6; j++)  {
-      dm(idx+j, j) = 1;  // T
+    mat3d AtlsT = Atls.GetT();
+    size_t idx = i * 6;
+    //  Utls = Tmat + Atls*Smat + mat3d::Transpose(Smat)*AtlsT + Atls*Lmat*AtlsT;
+    for (size_t j = 0; j < 6; j++) {
+      dm(idx + j, j) = 1;  // T
       from_sym3d m =
         dmat::M_x_OneSym_x_Mt(Atls, to_sym3d::get_i(j), to_sym3d::get_j(j));
-      for (int k=0; k < 6; k++)
-        dm(idx+k, 6+j) = m(k);
+      for (size_t k = 0; k < 6; k++) {
+        dm(idx + k, 6 + j) = m(k);
+      }
     }
-    for (int j=0; j < 9; j++) {
+    for (size_t j = 0; j < 9; j++) {
       from_sym3d m =
-        dmat::M_x_One(Atls, j/3, j%3) + dmat::One_x_M(AtlsT, j%3, j/3);
-      for (int  k=0; k < 6; k++)
-        dm(idx+k, 12+j) = m(k);
+        dmat::M_x_One(Atls, j / 3, j % 3) + dmat::One_x_M(AtlsT, j % 3, j / 3);
+      for (size_t k = 0; k < 6; k++) {
+        dm(idx + k, 12 + j) = m(k);
+      }
     }
     /************************************************************/
     atoms[i]->GetEllipsoid()->GetShelxQuad(quad);
-    for (int j=0; j < 6; j++)
-      UijC[idx+j]  = quad[TEllipsoid::shelx_to_linear(j)];
+    for (int j = 0; j < 6; j++)
+      UijC[idx + j] = quad[TEllipsoid::shelx_to_linear(j)];
   }
 }
 
@@ -221,10 +224,10 @@ bool TLS::calcTLS(const ematd &designM, const evecd &UijC,
       Ds(i,i) = olx_sqr(D(i,i));
     }
   }
-  TLS_VcV = svd.vt*Ds*ematd::Transpose(svd.vt);
+  TLS_VcV = svd.vt*Ds*svd.vt.GetTranspose();
   // Compute tls elements from decomposition matrices
-  svd.vt.Transpose();
-  svd.u.Transpose();
+  svd.vt.T();
+  svd.u.T();
   ematd Ap = svd.vt*D*svd.u; // pseudo inverse
   evecd tlsElements = Ap*b;
   // normalise the VcV matrix by S(Np-Ndof)
@@ -247,31 +250,33 @@ void TLS::RotateLaxes() {
   //Rotates TLS tensors to L principle axes
   Lmat.EigenValues(Lmat, RtoLaxes.I());
   origin = RtoLaxes*origin;
-  mat3d tm = mat3d::Transpose(RtoLaxes);
+  mat3d tm = RtoLaxes.GetT();
   Tmat = RtoLaxes * Tmat * tm;
   Smat = RtoLaxes * Smat * tm;
   // in general the transformation is new = J*old*JT, J - the Jacobian
   ematd J(TLSfreeParameters, TLSfreeParameters);
-  for (int i=0; i < 6; i++) {
+  for (size_t i=0; i < 6; i++) {
     from_sym3d m = dmat::M_x_OneSym_x_Mt(RtoLaxes,
       to_sym3d::get_i(i), to_sym3d::get_j(i));
-    for (int j=0; j < 6; j++)
-      J(j, i) = J(j+6, i+6) = m(j); // dTdT, // dSdS
+    for (size_t j = 0; j < 6; j++) {
+      J(j, i) = J(j + 6, i + 6) = m(j); // dTdT, // dSdS
+    }
   }
-  for (int i=0; i < 9; i++) {
+  for (size_t i=0; i < 9; i++) {
     mat3d m = dmat::M_x_One_x_Mt(RtoLaxes, i/3, i%3);
-    for (int j=0; j < 9; j++)
-      J(12+j, 12+i) = m[j/3][j%3]; // dSdS
+    for (size_t j = 0; j < 9; j++) {
+      J(12 + j, 12 + i) = m[j / 3][j % 3]; // dSdS
+    }
   }
-  TLS_VcV = J*TLS_VcV*ematd::Transpose(J);
+  TLS_VcV = J*TLS_VcV*J.GetTranspose();
 }
 
-ConstTypeList<evecd> TLS::calcUijEllipse (const TSAtomPList &atoms) {
+ConstTypeList<evecd> TLS::calcUijEllipse(const TSAtomPList& atoms) {
   /* For each atom, calc U_ij from current TLS matrices */
   evecd_list Ellipsoids(atoms.Count());
-  mat3d RtoLaxesT = mat3d::Transpose(RtoLaxes);  //inverse
-  for( size_t i=0; i < atoms.Count(); i++ )  {
-    mat3d UtlsLaxes = calcUijCart(RtoLaxes*atoms[i]->crd());
+  mat3d RtoLaxesT = RtoLaxes.GetT();  //inverse
+  for (size_t i = 0; i < atoms.Count(); i++) {
+    mat3d UtlsLaxes = calcUijCart(RtoLaxes * atoms[i]->crd());
     mat3d UtlsCell = RtoLaxesT * UtlsLaxes * RtoLaxes;
     ShelxQuad(UtlsCell, Ellipsoids[i].Resize(6));
   }
@@ -281,8 +286,8 @@ ConstTypeList<evecd> TLS::calcUijEllipse (const TSAtomPList &atoms) {
 mat3d TLS::calcUijCart(const vec3d &position) {
   vec3d r = position - origin;
   mat3d Atls(0, r[2], -r[1], -r[2], 0, r[0], r[1], -r[0], 0);
-  mat3d AtlsT = mat3d::Transpose(Atls);
-  return Tmat + Atls*Smat + mat3d::Transpose(Smat)*AtlsT + Atls*Lmat*AtlsT;
+  mat3d AtlsT = Atls.GetT();
+  return Tmat + Atls*Smat + Smat.GetT()*AtlsT + Atls*Lmat*AtlsT;
 }
 
 vec3d TLS::FigOfMerit(const evecd_list &Elps, const ematd &weights) {
@@ -314,16 +319,17 @@ void TLS::symS() {
   r[1] = (Smat[2][0] - Smat[0][2])/(Lmat[2][2] + Lmat[0][0]);
   r[2] = (Smat[0][1] - Smat[1][0])/(Lmat[0][0] + Lmat[1][1]);
   mat3d P(0, r[2], -r[1], -r[2], 0, r[0], r[1], -r[0], 0);
-  mat3d Pt = mat3d::Transpose(P);
+  mat3d Pt = P.GetT();
 
-  Tmat = Tmat + P*Lmat*Pt + P*Smat + mat3d::Transpose(Smat)*Pt;
+  Tmat = Tmat + P*Lmat*Pt + P*Smat + Smat.GetT()*Pt;
   Smat = Smat + Lmat*Pt;
   origin = origin + r; //Origin wrt L axes
   // update VcV
   ematd J(TLSfreeParameters, TLSfreeParameters);
-  for (int i=0; i < 9; i++) {
-    if (i < 6)
-      J(i,i) = J(6+i, 6+i) = 1; // dTdT, dLdL
+  for (size_t i=0; i < 9; i++) {
+    if (i < 6) {
+      J(i, i) = J(6 + i, 6 + i) = 1; // dTdT, dLdL
+    }
     J(12+i, 12+i) = 1; // dSdS
   }
   for (size_t i=0; i < 6; i++) {
@@ -331,37 +337,42 @@ void TLS::symS() {
       dmat::M_x_OneSym_x_Mt(P, to_sym3d::get_i(i), to_sym3d::get_j(i));
     mat3d dSdL
       = dmat::OneSym_x_M(Pt, to_sym3d::get_i(i), to_sym3d::get_j(i));
-    for (int j=0; j < 9; j++) {
-      if (j < 6)
-        J(j, i+6) = dTdL(j);
+    for (size_t j=0; j < 9; j++) {
+      if (j < 6) {
+        J(j, i + 6) = dTdL(j);
+      }
       J(j+12, i+6) = dSdL[j/3][j%3];
     }
   }
-  for (int i=0; i < 9; i++) {
+  for (size_t i=0; i < 9; i++) {
     mat3d dTdS = dmat::M_x_One(P, i/3, i%3) + dmat::One_x_M(Pt, i%3, i/3);
-    for (int j=0; j < 9; j++)
-      J(j, i+12) = dTdS[j/3][j%3];
+    for (size_t j = 0; j < 9; j++) {
+      J(j, i + 12) = dTdS[j / 3][j % 3];
+    }
   }
-  TLS_VcV = J*TLS_VcV*ematd::Transpose(J);
+  TLS_VcV = J*TLS_VcV*J.GetTranspose();
 }
 
 void TLS::diagS(mat3d &split, mat3d &Tmatrix, mat3d &Smatrix){
   // Calc split of L-principle axes
-  for (int i=0; i<3; i++) {
-    for (int j=0; j<3 ; j++) {
-      for (int k =0; k <3; k++)
-        split[i][j] = epsil(i,j,k)*Smat[j][k]/Lmat[j][j];
+  for (size_t i=0; i<3; i++) {
+    for (size_t j=0; j<3 ; j++) {
+      for (size_t k = 0; k < 3; k++) {
+        split[i][j] = epsil(i, j, k) * Smat[j][k] / Lmat[j][j];
+      }
     }
   }
   // Calc change to T matrix
   mat3d temp;
-  for (int i=0; i<3; i++){
-    for(int j=0; j<3 ; j++){
-      for (int k =0; k <3; k++){
-        if(i!=j)
-          temp[i][j] = temp[i][j]+ Smat[k][i]*Smat[k][j]/Lmat[k][k];
-        else if(i!=k) //i==j !=k
-          temp[i][j] = temp[i][j]+ Smat[k][i]*Smat[k][j]/Lmat[k][k];
+  for (size_t i=0; i<3; i++){
+    for(size_t j=0; j<3 ; j++){
+      for (size_t k =0; k <3; k++){
+        if (i != j) {
+          temp[i][j] = temp[i][j] + Smat[k][i] * Smat[k][j] / Lmat[k][k];
+        }
+        else if (i != k) { //i==j !=k
+          temp[i][j] = temp[i][j] + Smat[k][i] * Smat[k][j] / Lmat[k][k];
+        }
         //no contrib from i=j=k
       }
       Tmatrix[i][j] = Tmat[i][j] - temp[i][j];
@@ -369,12 +380,13 @@ void TLS::diagS(mat3d &split, mat3d &Tmatrix, mat3d &Smatrix){
     }
   }
   //Change to S matrix
-  for (int i=0; i<3; i++) {
-    for (int j=0; j<3 ; j++) {
-      for (int m =0; m <3; m++) {
-        for (int n =0; n <3; n++) {
-          if( i!=j )
-            temp[i][j] += epsil(m,n,j)*Lmat[i][m]*split[n][i];
+  for (size_t i=0; i<3; i++) {
+    for (size_t j=0; j<3 ; j++) {
+      for (size_t m =0; m <3; m++) {
+        for (size_t n =0; n <3; n++) {
+          if (i != j) {
+            temp[i][j] += epsil(m, n, j) * Lmat[i][m] * split[n][i];
+          }
              // sum ( epsil * L *split ) see TLS notes
         }
       }
@@ -383,7 +395,7 @@ void TLS::diagS(mat3d &split, mat3d &Tmatrix, mat3d &Smatrix){
   Smatrix = Smat + temp;
 }
 
-int TLS::epsil(int i, int j, int k) const{
+int TLS::epsil(size_t i, size_t j, size_t k) const{
   //antiSym tensor Epsilon_(i,j,k)
   //    = +1, even perms of 0,1,2
   //    = -1, odd perms
@@ -397,8 +409,9 @@ int TLS::epsil(int i, int j, int k) const{
       (i==2 && j==1 && k==0) ||
       (i==0 && j==2 && k==1) )
     return -1;
-  else if (i==j || i==k || k==j)
+  else if (i == j || i == k || k == j) {
     return 0;  // returns zero eg for i==j > 2;
+  }
   else {
     throw TInvalidArgumentException(__OlxSourceInfo,
       "epsilon_i,j,k not permutation of 0,1,2");
@@ -419,16 +432,18 @@ TEValueD TLS::BondCorrect(const TSAtom &atom1, const TSAtom &atom2){
   dBdL[1] = (1./2.)*(vec[0] + vec[2]);
   dBdL[2] = (1./2.)*(vec[1] + vec[0]);
 
-  for (int i=0; i<3; i++)
-    for (int j=0; j<3; j++)
-      rv.E() += dBdL[i]*dBdL[j]*TLS_VcV[acc[i]][acc[j]];
+  for (size_t i = 0; i < 3; i++) {
+    for (size_t j = 0; j < 3; j++) {
+      rv.E() += dBdL[i] * dBdL[j] * TLS_VcV[acc[i]][acc[j]];
+    }
+  }
   rv.E() = sqrt(rv.GetE());
   return rv;
 }
 
 evecd TLS::extrapolate(const TSAtom &atom) {
   mat3d UtlsLaxes = calcUijCart(RtoLaxes*atom.crd());
-  mat3d UtlsCell= mat3d::Transpose(RtoLaxes) * UtlsLaxes * RtoLaxes;
+  mat3d UtlsCell= RtoLaxes.GetT() * UtlsLaxes * RtoLaxes;
   return ShelxQuad(UtlsCell);
 }
 

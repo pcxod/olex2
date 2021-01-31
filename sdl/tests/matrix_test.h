@@ -185,8 +185,8 @@ void TestSVD(OlxTests& t)  {
           for( size_t i=0; i < svd.w.Count(); i++ )
             s(i,i) = svd.w(i);
           TMatrix<FT> m1 = svd.u*s*svd.vt,
-            up = svd.u*TMatrix<FT>::Transpose(svd.u),
-            vtp = svd.vt*TMatrix<FT>::Transpose(svd.vt);
+            up = svd.u*svd.u.GetT(),
+            vtp = svd.vt*svd.vt.GetT();
           for( size_t i=0; i < vtp.RowCount(); i++ )  {
             for( size_t j=0; j < vtp.ColCount(); j++ )  {
               if( olx_abs(vtp(i,j)-(i==j ? 1 : 0)) > 1e-10 )
@@ -276,7 +276,7 @@ void TestEigenDecomposition(OlxTests& t)  {
   ematd m(3,3), I(3,3);
   m = PlainMatrix<double>(&mv[0][0], 3, 3);
   ematd::EigenValues(m, I.I());
-  ematd m1 = ematd::Transpose(I)*m*I;
+  ematd m1 = I.GetT()*m*I;
   for( int i=0; i < 3; i++ )  {
     for( int j=0; j < 3; j++ )  {
       if( olx_abs(mv[i][j]-m1(i,j)) > 1e-8 ) {
@@ -307,7 +307,7 @@ void TestMatrixDiff(OlxTests& t)  {
         throw TFunctionFailedException(__OlxSourceInfo, "assert");
 
     r = dmat::M_x_One_x_Mt(m, j/3, j%3);
-    t = m*tm*mat3d::Transpose(m);
+    t = m*tm*m.GetT();
     for (int i1=0; i1 < 3; i1++)
       if (!r[i1].Equals(t[i1], 1e-8))
         throw TFunctionFailedException(__OlxSourceInfo, "assert");
@@ -331,7 +331,7 @@ void TestMatrixDiff(OlxTests& t)  {
         throw TFunctionFailedException(__OlxSourceInfo, "assert");
 
     r = dmat::M_x_OneSym_x_Mt(m, a[j][0], a[j][1]);
-    t = m*tm*mat3d::Transpose(m);
+    t = m*tm*m.GetT();
     for (int i1=0; i1 < 3; i1++)
       if (!r[i1].Equals(t[i1], 1e-8))
         throw TFunctionFailedException(__OlxSourceInfo, "assert");

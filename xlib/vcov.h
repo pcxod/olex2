@@ -149,8 +149,9 @@ public:
   template <class atom_list>
   void ProcessSymmetry(const atom_list& atoms, mat3d_list& ms) {
     mat3d_alist mt(atoms.Count());
-    for (size_t i = 0; i < atoms.Count(); i++)
-      mt[i] = mat3d::Transpose(atoms[i]->GetMatrix().r);
+    for (size_t i = 0; i < atoms.Count(); i++) {
+      mt[i] = atoms[i]->GetMatrix().r.GetT();
+    }
     for (size_t i = 0; i < atoms.Count(); i++) {
       for (size_t j = 0; j < atoms.Count(); j++) {
         const size_t ind = i*atoms.Count() + j;
@@ -171,9 +172,8 @@ public:
     }
     vcov.FindVcoV(as, m);
     ProcessSymmetry(as, m);
-    mat3d c2f(as[0]->CAtom().GetParent()->GetCellToCartesian());
-    mat3d c2f_t(
-      mat3d::Transpose(as[0]->CAtom().GetParent()->GetCellToCartesian()));
+    mat3d c2f = as[0]->CAtom().GetParent()->GetCellToCartesian();
+    mat3d c2f_t = as[0]->CAtom().GetParent()->GetCellToCartesian().GetT();
     for (size_t i = 0; i < m.Count(); i++) {
       m[i] = c2f_t*m[i] * c2f;
     }

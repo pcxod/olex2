@@ -191,7 +191,7 @@ void  TAsymmUnit::InitMatrices() {
   Cartesian2Cell[2][1] = bs*cAs;
 
   Cartesian2Cell[2][2] = cs;
-  Cartesian2CellT = mat3d::Transpose(Cartesian2Cell);
+  Cartesian2CellT = Cartesian2Cell.GetTranspose();
   // cell to cartesian transformation matrix
   Cell2Cartesian.Null();
   Cell2Cartesian[0][0] = Axes[0];
@@ -202,7 +202,7 @@ void  TAsymmUnit::InitMatrices() {
   Cell2Cartesian[2][1] = -Axes[2] * (cB*cG - cA) / sG;
 
   Cell2Cartesian[2][2] = 1. / cs;
-  Cell2CartesianT = mat3d::Transpose(Cell2Cartesian);
+  Cell2CartesianT = Cell2Cartesian.GetTranspose();
 
   // init hkl to cartesian transformation matrix
 //  TMatrixD m( *Cartesian2Cell );
@@ -221,7 +221,7 @@ void  TAsymmUnit::InitMatrices() {
 
   UcifToUxyz = m * Cell2Cartesian;
   UcifToUxyzT = UcifToUxyz;
-  UcifToUxyz.Transpose();
+  UcifToUxyz.T();
 
   m[0][0] = 1. / Hkl2Cartesian[0].Length();
   m[1][1] = 1. / Hkl2Cartesian[1].Length();
@@ -229,7 +229,7 @@ void  TAsymmUnit::InitMatrices() {
 
   UxyzToUcif = Cartesian2Cell * m;
   UxyzToUcifT = UxyzToUcif;
-  UxyzToUcif.Transpose();
+  UxyzToUcif.T();
   //ematd DG(6,6);
   //// a b c alpha beta gamma
   //// o11 o21 o22 o31 o32 o33
@@ -1428,12 +1428,12 @@ void TAsymmUnit::LibGetAtomUiso(const TStrObjList& Params, TMacroData& E) {
 void TAsymmUnit::LibGetCell(const TStrObjList& Params, TMacroData& E) {
   evecd V(6);
   if (Params.IsEmpty() || Params[0].Equalsi("cell")) {
-    V[0] = Axes[0];    V[1] = Axes[1];    V[2] = Axes[2];
-    V[3] = Angles[0];  V[4] = Angles[1];  V[5] = Angles[2];
+    olx_copy(Axes, V, 3);
+    olx_copy(Angles, V, 3, 0, 3);
   }
   else if (Params[0].Equalsi("esd")) {
-    V[0] = AxisEsds[0];    V[1] = AxisEsds[1];    V[2] = AxisEsds[2];
-    V[3] = AngleEsds[0];  V[4] = AngleEsds[1];  V[5] = AngleEsds[2];
+    olx_copy(AxisEsds, V, 3);
+    olx_copy(AngleEsds, V, 3, 0, 3);
   }
   E.SetRetVal(V.ToString());
 }
@@ -1466,7 +1466,7 @@ void TAsymmUnit::LibSetAtomCrd(const TStrObjList& Params, TMacroData& E) {
   for (int i = 0; i < 3; i++) {
     XVarReference* vr = ca.GetVarRef(catom_var_name_X + i);
     const double val = Params[i + 1].ToDouble();
-    if (vr != NULL) {  // should preserve the variable - smtbx
+    if (vr != 0) {  // should preserve the variable - smtbx
       if (vr->relation_type == relation_AsVar) {
         vr->Parent.SetValue(val / vr->coefficient);
       }

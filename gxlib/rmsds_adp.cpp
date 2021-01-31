@@ -43,7 +43,7 @@ void TRMDSADP::Create(const olxstr& cName) {
   size_t a_cnt = 0, a_i = 0;
   const TAsymmUnit &au = TGXApp::GetInstance().XFile().GetAsymmUnit();
   mat3d cell2cart_c = au.GetCellToCartesian();
-  mat3d cell2cart_ct = mat3d::Transpose(cell2cart_c);
+  mat3d cell2cart_ct = cell2cart_c.GetT();
 
   TGXApp::AtomIterator ai = TGXApp::GetInstance().GetAtoms();
   while (ai.HasNext()) {

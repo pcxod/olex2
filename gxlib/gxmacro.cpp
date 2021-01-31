@@ -4412,8 +4412,7 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
             the matrix wil be used on fractional coordinates like R*x + t and
             knowing that m-1 = mt :
             */
-            mat3d m1 = mat3d::Transpose(
-              au.GetCellToCartesian()*m*au.GetCartesianToCell());
+            mat3d m1 = (au.GetCellToCartesian()*m*au.GetCartesianToCell()).GetT();
             olxstr_buf mo;
             for (int i = 0; i < 3; i++) {
               TLog::LogEntry e = TBasicApp::NewLogEntry();
@@ -4475,8 +4474,7 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
                 continue;
               }
               pms.AddCopy(tm);
-              mat3d m1 = mat3d::Transpose(
-                au.GetCellToCartesian()*tm*au.GetCartesianToCell());
+              mat3d m1 = (au.GetCellToCartesian()*tm*au.GetCartesianToCell()).GetT();
               TBasicApp::NewLogEntry() << NewLineSequence() <<
                 "Transformation matrix (fractional) for " <<
                 TSymmParser::MatrixToSymmEx(sg.GetMatrix(mi)) << ':';
@@ -4587,8 +4585,7 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
               center *= -1;
             }
             vec3d total_t = align_info.align_out.center_a - center*m;
-            mat3d m1 = mat3d::Transpose(
-              au.GetCellToCartesian()*m*au.GetCartesianToCell());
+            mat3d m1 = (au.GetCellToCartesian()*m*au.GetCartesianToCell()).GetT();
             olxstr_buf mo;
             for (int i = 0; i < 3; i++) {
               for (int j = 0; j < 3; j++) {
@@ -5306,7 +5303,7 @@ void GXLibMacros::macTwinView(TStrObjList &Cmds, const TParamList &Options,
       m[i / 3][i % 3] = Cmds[i].ToDouble();
     }
     if (Options.GetBoolOption('t')) {
-      m = mat3d::Transpose(m);
+      m = m.GetT();
     }
   }
   if (!Options.GetBoolOption('c', true, true)) {
@@ -5802,7 +5799,7 @@ void GXLibMacros::macTLS(TStrObjList &Cmds, const TParamList &Options,
       xatoms[i]->crd() = basis * (xatoms[i]->crd() - center) + center;
     }
   }
-  mat3d basis_t = mat3d::Transpose(basis);
+  mat3d basis_t = basis.GetT();
 
   xlib::TLS tls(TSAtomPList(xatoms, StaticCastAccessor<TSAtom>()));
   if (!Options.GetBoolOption('q')) {

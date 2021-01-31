@@ -79,17 +79,21 @@ bool AGlMouseHandler::EventHandler::OnMouseMove(AGlMouseHandler& Sender,
         = ra*Current_Basis and so on, this leads to three linear equations for
         three values of the rotation vector...
         */
-        mat3d basis(mat3d::Transpose(Sender.DoGetRenderer().GetBasis().GetMatrix()));
+        mat3d basis = Sender.DoGetRenderer().GetBasis().GetMatrix().GetT();
         if (Data.Shift == sssCtrl) {
           double RZ = 0;
-          if (SX > Sender.DoGetRenderer().GetWidth() / 2)
+          if (SX > Sender.DoGetRenderer().GetWidth() / 2) {
             RZ -= (double)dy / FRotationDiv;
-          else
+          }
+          else {
             RZ += (double)dy / FRotationDiv;
-          if (SY > Sender.DoGetRenderer().GetHeight() / 2)
+          }
+          if (SY > Sender.DoGetRenderer().GetHeight() / 2) {
             RZ -= (double)dx / FRotationDiv;
-          else
+          }
+          else {
             RZ += (double)dx / FRotationDiv;
+          }
           if (RZ != 0) {
             res = Sender.DoRotate(mat3d::CramerSolve(basis,
               vec3d(0, 0, 1)).Normalise(), RZ*M_PI / 180);

@@ -1152,7 +1152,7 @@ void OrtDraw::Render(const olxstr& fileName) {
       ort_circle *c = new ort_circle(*this, cnt,
         static_cast<float>(rings[i].Basis.GetZoom())*DrawScale, false);
       c->basis = new mat3f(
-        mat3d::Transpose(rings[i].Basis.GetMatrix())
+        rings[i].Basis.GetMatrix().GetT()
         *app.GetRenderer().GetBasis().GetMatrix());
       objects.Add(c);
       all_points.Add(&c->center);

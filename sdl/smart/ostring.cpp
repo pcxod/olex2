@@ -107,7 +107,7 @@ bool olx_print_check_next(const olxstr &format, olxch what, size_t &idx) {
   return false;
 }
 //..............................................................................
-olxstr esdl::olx_print(const char *format_, va_list argptr) {
+olxstr esdl::olx_print_(const char *format_, va_list argptr) {
   const olxstr format = format_;
   olxstr_buf rv;
   size_t str_st = 0, f_width = 0;
@@ -313,11 +313,11 @@ olxstr esdl::olx_print(const char *format_, va_list argptr) {
 olxstr esdl::olx_print(const char* format, ...) {
   va_list argptr;
   va_start(argptr, format);
-  return olx_print(format, argptr);
+  return olx_print_(format, argptr);
 }
 //..............................................................................
 olxstr esdl::olx_print(olxcstr format, ...) {
   va_list argptr;
   va_start(argptr, format);
-  return olx_print(format.c_str(), argptr);
+  return olx_print_(format.c_str(), argptr);
 }

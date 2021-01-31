@@ -651,6 +651,7 @@ void XLibMacros::Export(TLibrary& lib)  {
     "s-strip any non-digit suffix from the label [false]&;"
     "s1-suffix to add to the first component [1]&;"
     "s2-suffix to add to the second component [2]&;"
+    "n-take an average of the directions [true]&;"
     ,
     fpAny|psCheckFileTypeIns,
     "Splits provided atoms along the longest axis of the ADP");
@@ -2605,52 +2606,52 @@ void XLibMacros::ChangeCell(const mat3d& tm, const TSpaceGroup& new_sg,
     tm[1].ToString() << NewLineSequence() <<
     tm[2].ToString();
   TBasicApp::NewLogEntry() << "New space group: " << new_sg.GetName();
-  const mat3d tm_t(mat3d::Transpose(tm));
+  const mat3d tm_t = tm.GetT();
   xapp.XFile().UpdateAsymmUnit();
   TAsymmUnit& au = xapp.XFile().LastLoader()->GetAsymmUnit();
   const mat3d i_tm(tm.Inverse());
-  const mat3d f2c = mat3d::Transpose((
-    mat3d::Transpose(au.GetCellToCartesian())*tm));
+  const mat3d f2c = (au.GetCellToCartesian().GetT() * tm).GetT();
   mat3d ax_err;
-  ax_err[0] = vec3d::Qrt(au.GetAxisEsds());
+  ax_err[0] = olx_sqr(au.GetAxisEsds());
   ax_err[1] = ax_err[0];  ax_err[2] = ax_err[0];
   mat3d an_err;
-  an_err[0] = vec3d::Qrt(au.GetAngleEsds());
+  an_err[0] = olx_sqr(au.GetAngleEsds());
   an_err[1] = an_err[0];  an_err[2] = an_err[0];
   // prepare positive matrix for error estimation
   mat3d tm_p(tm);
-  for( size_t i=0; i < 3; i++ )
-    for( size_t j=0; j < 3; j++ )
+  for (size_t i = 0; i < 3; i++)
+    for (size_t j = 0; j < 3; j++)
       tm_p[i][j] = olx_abs(tm_p[i][j]);
   ax_err *= tm_p;
   an_err *= tm_p;
   au.GetAxes()[0] = f2c[0].Length();  au.GetAxisEsds()[0] = sqrt(ax_err[0][0]);
   au.GetAxes()[1] = f2c[1].Length();  au.GetAxisEsds()[1] = sqrt(ax_err[1][1]);
   au.GetAxes()[2] = f2c[2].Length();  au.GetAxisEsds()[2] = sqrt(ax_err[2][2]);
-  au.GetAngles()[0] = acos(f2c[1].CAngle(f2c[2]))*180.0/M_PI;
+  au.GetAngles()[0] = acos(f2c[1].CAngle(f2c[2])) * 180.0 / M_PI;
   au.GetAngleEsds()[0] = sqrt(an_err[0][0]);
-  au.GetAngles()[1] = acos(f2c[0].CAngle(f2c[2]))*180.0/M_PI;
+  au.GetAngles()[1] = acos(f2c[0].CAngle(f2c[2])) * 180.0 / M_PI;
   au.GetAngleEsds()[1] = sqrt(an_err[1][1]);
-  au.GetAngles()[2] = acos(f2c[0].CAngle(f2c[1]))*180.0/M_PI;
+  au.GetAngles()[2] = acos(f2c[0].CAngle(f2c[1])) * 180.0 / M_PI;
   au.GetAngleEsds()[2] = sqrt(an_err[2][2]);
   const mat3d old_cac = au.GetCartesianToCell();
   au.InitMatrices();
-  const mat3d elptm = mat3d::Transpose(au.GetCellToCartesian())
-    *i_tm*mat3d::Transpose(old_cac);
+  const mat3d elptm = au.GetCellToCartesian().GetT()
+    * i_tm * old_cac.GetT();
   ematd J = TEllipsoid::GetTransformationJ(elptm),
-    Jt = ematd::Transpose(J);
-  for( size_t i=0; i < au.AtomCount(); i++ )  {
+    Jt = J.GetT();
+  for (size_t i = 0; i < au.AtomCount(); i++) {
     TCAtom& ca = au.GetAtom(i);
     ca.ccrd() = i_tm * ca.ccrd();
-    if( ca.GetEllipsoid() != NULL )
+    if (ca.GetEllipsoid() != 0) {
       ca.GetEllipsoid()->Mult(elptm, J, Jt);
+    }
   }
   TBasicApp::NewLogEntry() << "New cell: " <<
     TEValueD(au.GetAxes()[0], au.GetAxisEsds()[0]).ToString() << ' ' <<
     TEValueD(au.GetAxes()[1], au.GetAxisEsds()[1]).ToString() << ' ' <<
-    TEValueD(au.GetAxes()[2], au.GetAxisEsds()[2]).ToString() << ' '  <<
-    TEValueD(au.GetAngles()[0], au.GetAngleEsds()[0]).ToString() << ' '  <<
-    TEValueD(au.GetAngles()[1], au.GetAngleEsds()[1]).ToString() << ' '  <<
+    TEValueD(au.GetAxes()[2], au.GetAxisEsds()[2]).ToString() << ' ' <<
+    TEValueD(au.GetAngles()[0], au.GetAngleEsds()[0]).ToString() << ' ' <<
+    TEValueD(au.GetAngles()[1], au.GetAngleEsds()[1]).ToString() << ' ' <<
     TEValueD(au.GetAngles()[2], au.GetAngleEsds()[2]).ToString();
   TBasicApp::NewLogEntry(logError) << "Cell esd's are estimated!";
   bool save = false;
@@ -2659,7 +2660,7 @@ void XLibMacros::ChangeCell(const mat3d& tm, const TSpaceGroup& new_sg,
     if (!hkl_fn.IsEmpty()) {
       THklFile hklf;
       hklf.LoadFromFile(hkl_fn, false);
-      for (size_t i=0; i < hklf.RefCount(); i++)
+      for (size_t i = 0; i < hklf.RefCount(); i++)
         hklf[i].SetHkl((tm_t * vec3d(hklf[i].GetHkl())).Round<int>());
       hklf.SaveToFile(resHKL_FN);
       xapp.XFile().GetRM().SetHKLSource(resHKL_FN);
@@ -2669,15 +2670,16 @@ void XLibMacros::ChangeCell(const mat3d& tm, const TSpaceGroup& new_sg,
       TBasicApp::NewLogEntry(logError) << "Could not locate source HKL file";
     }
   }
-  else  {
-    const mat3d hklf_mat = tm_t*xapp.XFile().LastLoader()->GetRM().GetHKLF_mat();
+  else {
+    const mat3d hklf_mat = tm_t * xapp.XFile().LastLoader()->GetRM().GetHKLF_mat();
     xapp.XFile().LastLoader()->GetRM().SetHKLF_mat(hklf_mat);
   }
   au.ChangeSpaceGroup(new_sg);
   au.InitMatrices();
   xapp.XFile().LastLoaderChanged();
-  if (save)
+  if (save) {
     xapp.XFile().SaveToFile(xapp.XFile().GetFileName());
+  }
 }
 //.............................................................................
 TSpaceGroup* XLibMacros_macSGS_FindSG(TPtrList<TSpaceGroup>& sgs,
@@ -9892,7 +9894,7 @@ void XLibMacros::macSplit(TStrObjList &Cmds, const TParamList &Options,
   int p2 = Options.FindValue("p2", "2").ToInt();
   olxstr s1 = Options.FindValue("s1", "a");
   olxstr s2 = Options.FindValue("s2", "b");
-
+  bool normalise = Options.GetBoolOption('n', false, true);
   DistanceGenerator::atom_map_1_t atom_map;
   DistanceGenerator::atom_set_t atom_set;
   TAsymmUnit& au = app.XFile().GetAsymmUnit();
@@ -9900,15 +9902,42 @@ void XLibMacros::macSplit(TStrObjList &Cmds, const TParamList &Options,
   RefinementModel& rm = app.XFile().GetRM();
   TCAtomPList ProcessedAtoms;
   XVar& var = rm.Vars.NewVar();
+  vec3d direction;
+  double Length=0;
+  size_t ac = 0;
+  if (normalise) {
+    for (size_t i = 0; i < Atoms.Count(); i++) {
+      TCAtom* CA = Atoms[i];
+      if (CA->GetEllipsoid() == 0) {
+        continue;
+      }
+      size_t max_idx = olx_max_idx(CA->GetEllipsoid()->GetNorms());
+      vec3d d = CA->GetEllipsoid()->GetMatrix()[max_idx];
+      if (ac > 0) {
+        // ensure complimentery
+        if (d.DotProd(direction) < 0) {
+          d *= -1;
+        }
+      }
+      direction += d;
+      Length += CA->GetEllipsoid()->GetNorms()[max_idx];
+      ac++;
+    }
+    if (ac != 0) {
+      Length /= ac;
+      direction /= ac;
+    }
+  }
   for (size_t i = 0; i < Atoms.Count(); i++) {
     TCAtom* CA = Atoms[i];
     if (CA->GetEllipsoid() == 0) {
       continue;
     }
-    size_t max_idx = olx_max_idx(CA->GetEllipsoid()->GetNorms());
-    vec3d direction = CA->GetEllipsoid()->GetMatrix()[max_idx];
-    double Length = CA->GetEllipsoid()->GetNorms()[max_idx];
-
+    if (!normalise) {
+      size_t max_idx = olx_max_idx(CA->GetEllipsoid()->GetNorms());
+      direction = CA->GetEllipsoid()->GetMatrix()[max_idx];
+      Length = CA->GetEllipsoid()->GetNorms()[max_idx];
+    }
     olxstr lbl = CA->GetLabel();
     if (stripSuffix) {
       for (size_t li = CA->GetType().symbol.Length(); li < lbl.Length(); li++) {
@@ -9918,9 +9947,7 @@ void XLibMacros::macSplit(TStrObjList &Cmds, const TParamList &Options,
         }
       }
     }
-    direction *= Length;
-    direction /= 2;
-    au.CartesianToCell(direction);
+    vec3d sv = au.Fractionalise(direction * Length/2);
     const double sp = 1. / CA->GetDegeneracy();
     TAsymmUnit::TLabelChecker lc(au);
     TSAtom &A = latt.NewAtom(vec3d());
@@ -9928,7 +9955,7 @@ void XLibMacros::macSplit(TStrObjList &Cmds, const TParamList &Options,
     CA1.Assign(*CA);
     CA1.SetSameId(~0);
     CA1.SetPart(p1);
-    CA1.ccrd() += direction;
+    CA1.ccrd() += sv;
     A.ccrd() = CA1.ccrd();
     CA1.SetLabel(lc.CheckLabel(CA1, lbl + s1, 0, true), false);
     // link occupancies
@@ -9937,7 +9964,7 @@ void XLibMacros::macSplit(TStrObjList &Cmds, const TParamList &Options,
     ProcessedAtoms.Add(CA1);
     TCAtom& CA2 = *CA;
     CA2.SetPart(p2);
-    CA2.ccrd() -= direction;
+    CA2.ccrd() -= sv;
     CA2.SetLabel(lc.CheckLabel(CA2, lbl + s2, 0, true), false);
     // link occupancies
     rm.Vars.AddVarRef(var, CA2, catom_var_name_Sof, relation_AsOneMinusVar, 1);
@@ -10912,13 +10939,13 @@ vec3d Orthogonalise(const vec3d &ax, const vec3d &an) {
   au.GetAxes() = ax;
   au.GetAngles() = an;
   au.InitMatrices();
-  mat3d S = au.GetCellToCartesian()*mat3d::Transpose(au.GetCellToCartesian()),
+  mat3d S = au.GetCellToCartesian()*au.GetCellToCartesian().GetT(),
     S_sq = S, I;
   mat3d::EigenValues(S_sq, I.I());
   S_sq[0][0] = 1. / sqrt(S_sq[0][0]);
   S_sq[1][1] = 1. / sqrt(S_sq[1][1]);
   S_sq[2][2] = 1. / sqrt(S_sq[2][2]);
-  S_sq = mat3d::Transpose(I)*S_sq*I;
+  S_sq = I.GetT()*S_sq*I;
   return vec3d(
     S_sq[0].DotProd(S[0]), S_sq[1].DotProd(S[1]), S_sq[2].DotProd(S[2]));
 }
@@ -10968,12 +10995,12 @@ void XLibMacros::macLowdin(TStrObjList &Cmds, const TParamList &Options,
     }
     S = TXApp::GetInstance().XFile().GetAsymmUnit().GetCellToCartesian();
   }
-  S_sq = S = S*mat3d::Transpose(S);
+  S_sq = S = S*S.GetT();
   mat3d::EigenValues(S_sq, I.I());
   S_sq[0][0] = 1. / sqrt(S_sq[0][0]);
   S_sq[1][1] = 1. / sqrt(S_sq[1][1]);
   S_sq[2][2] = 1. / sqrt(S_sq[2][2]);
-  S_sq = mat3d::Transpose(I)*S_sq*I;
+  S_sq = I.GetT()*S_sq*I;
   TBasicApp::NewLogEntry() << "Orthogonalised cell axis lengths:";
   TBasicApp::NewLogEntry() << "(" << olxstr::FormatFloat(3, S_sq[0].DotProd(S[0]))
     << ", " << olxstr::FormatFloat(3, S_sq[1].DotProd(S[1]))
@@ -11060,7 +11087,7 @@ void XLibMacros::macHKLF5(TStrObjList &Cmds, const TParamList &Options,
         right[off + i] = dr.GetHkl()[i] * w * w;
       }
     }
-    ematd dmt = ematd::Transpose(dm);
+    ematd dmt = dm.GetT();
     ematd inm = dmt * dm;
     if (!math::LU::Invert(inm)) {
       TBasicApp::NewLogEntry(logWarning) << "Failed to invert the normal matrix";

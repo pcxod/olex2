@@ -977,7 +977,7 @@ void RefinementModel::DetwinAlgebraic(TRefList& refs, const HklStat& st,
   if (Vars.HasBASF()) {
     TDoubleList scales = GetScales();
     merohedral tw(info_ex, refs, st, scales,
-      mat3d::Transpose(GetTWIN_mat()), GetTWIN_n());
+      GetTWIN_mat().GetT(), GetTWIN_n());
     detwinner_algebraic dtw(scales);
     TRefList dtr;
     dtr.SetCapacity(refs.Count());
@@ -1014,7 +1014,7 @@ void RefinementModel::DetwinMixed(TRefList& refs, const TArrayList<compd>& F,
       throw TInvalidArgumentException(__OlxSourceInfo, "F.size()!=refs.size()");
     }
     merohedral(info_ex, refs, st, GetBASFAsDoubleList(),
-      mat3d::Transpose(GetTWIN_mat()), 2).detwin(detwinner_mixed(), refs, F);
+      GetTWIN_mat().GetT(), 2).detwin(detwinner_mixed(), refs, F);
   }
 }
 //.............................................................................
@@ -1027,7 +1027,7 @@ void RefinementModel::DetwinShelx(TRefList& refs, const TArrayList<compd>& F,
       throw TInvalidArgumentException(__OlxSourceInfo, "F.size()!=refs.size()");
     }
     merohedral(info_ex, refs, st, GetBASFAsDoubleList(),
-      mat3d::Transpose(GetTWIN_mat()), 2).detwin(detwinner_shelx(), refs, F);
+      GetTWIN_mat().GetT(), 2).detwin(detwinner_shelx(), refs, F);
   }
 }
 //.............................................................................

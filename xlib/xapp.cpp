@@ -251,7 +251,7 @@ void TXApp::CalcSFEx(const TRefList& refs, TArrayList<TEComplex<double> >& F,
         int tn = rm.HasTWIN() ? rm.GetTWIN_n() : 0;
         twinning::general twin(info_ex, rm.GetReflections(),
           RefUtil::ResolutionAndSigmaFilter(rm), basf,
-          mat3d::Transpose(rm.GetTWIN_mat()), tn);
+          rm.GetTWIN_mat().GetT(), tn);
         TArrayList<compd> F(twin.unique_indices.Count());
         SFUtil::CalcSF(XFile(), twin.unique_indices, F);
         twin.calc_fsq(F, Fsq);
@@ -266,7 +266,7 @@ void TXApp::CalcSFEx(const TRefList& refs, TArrayList<TEComplex<double> >& F,
         TArrayList<compd> F(refs.Count());
         SFUtil::CalcSF(XFile(), refs, F, rv.MERG != 4);
         twinning::merohedral twin(
-          info_ex, refs, rv, basf, mat3d::Transpose(rm.GetTWIN_mat()),
+          info_ex, refs, rv, basf, rm.GetTWIN_mat().GetT(),
           rm.GetTWIN_n());
         twin.calc_fsq(F, Fsq);
       }
@@ -1149,31 +1149,42 @@ void TXApp::PrintRadii(int which, const ElementRadii& radii,
   }
 }
 //..............................................................................
-TXApp::CalcVolumeInfo TXApp::CalcVolume(const ElementRadii* radii)  {
+TXApp::CalcVolumeInfo TXApp::CalcVolume(const ElementRadii* radii) {
   ASObjectProvider& objects = XFile().GetLattice().GetObjects();
   const size_t ac = objects.atoms.Count();
   const size_t bc = objects.bonds.Count();
-  for( size_t i=0; i < bc; i++ )
+  for (size_t i = 0; i < bc; i++) {
     objects.bonds[i].SetTag(0);
-  double Vi=0, Vt=0;
-  for( size_t i=0; i < ac; i++ )  {
+  }
+  double Vi = 0, Vt = 0;
+  for (size_t i = 0; i < ac; i++) {
     TSAtom& SA = objects.atoms[i];
-    if( SA.IsDeleted() || !SA.CAtom().IsAvailable() )  continue;
-    if( SA.GetType() == iQPeakZ )  continue;
+    if (SA.IsDeleted() || !SA.CAtom().IsAvailable()) {
+      continue;
+    }
+    if (SA.GetType() == iQPeakZ) {
+      continue;
+    }
     const double R1 = GetVdWRadius(SA, radii);
-    Vt += M_PI*(R1*R1*R1)*4.0/3;
-    for( size_t j=0; j < SA.BondCount(); j++ )  {
+    Vt += M_PI * (R1 * R1 * R1) * 4.0 / 3;
+    for (size_t j = 0; j < SA.BondCount(); j++) {
       TSBond& SB = SA.Bond(j);
-      if( SB.GetTag() != 0 )  continue;
+      if (SB.GetTag() != 0) {
+        continue;
+      }
       const TSAtom& OA = SB.Another(SA);
       SB.SetTag(1);
-      if( OA.IsDeleted() || !OA.CAtom().IsAvailable() )  continue;
-      if( OA.GetType() == iQPeakZ )  continue;
+      if (OA.IsDeleted() || !OA.CAtom().IsAvailable()) {
+        continue;
+      }
+      if (OA.GetType() == iQPeakZ) {
+        continue;
+      }
       const double d = SB.Length();
       const double R2 = GetVdWRadius(OA, radii);
-      const double h2 = (R1*R1 - (R2-d)*(R2-d))/(2*d);
-      const double h1 = (R1+R2-d-h2);
-      Vi += M_PI*( h1*h1*(R1-h1/3) + h2*h2*(R2-h2/3));
+      const double h2 = (R1 * R1 - (R2 - d) * (R2 - d)) / (2 * d);
+      const double h1 = (R1 + R2 - d - h2);
+      Vi += M_PI * (h1 * h1 * (R1 - h1 / 3) + h2 * h2 * (R2 - h2 / 3));
       //Vt += M_PI*(R1*R1*R1 + R2*R2*R2)*4.0/3;
     }
   }

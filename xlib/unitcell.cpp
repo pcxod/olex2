@@ -191,14 +191,14 @@ void TUnitCell::UpdateEllipsoids() {
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();
   const size_t ac = au.AtomCount();
   const size_t mc = Matrices.Count();
-  const mat3d abc2xyz(mat3d::Transpose(au.GetCellToCartesian())),
-    xyz2abc(mat3d::Transpose(au.GetCartesianToCell()));
+  const mat3d abc2xyz = au.GetCellToCartesian().GetT(),
+    xyz2abc = au.GetCartesianToCell().GetT();
   ClearEllipsoids();
   Ellipsoids.SetCount(ac);
   for (size_t i = 0; i < mc; i++) {
     mat3d tm = abc2xyz*Matrices[i].r*xyz2abc;
     ematd J = TEllipsoid::GetTransformationJ(tm),
-      Jt = ematd::Transpose(J);
+      Jt = J.GetT();
     for (size_t j = 0; j < ac; j++) {
       if (i == 0) {
         Ellipsoids[j].SetCount(mc);

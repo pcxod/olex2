@@ -4152,16 +4152,16 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroData
         break;
       }
     }
-    TMatrix<comp_t> tm = mm.Transpose(mm);
+    TMatrix<comp_t> tm = mm.GetT();
     TMatrix<comp_t> nm = tm * mm;
     math::LU::Invert(nm);
     //TBasicApp::NewLogEntry() << nm;
     TVector<comp_t> rev = tm * r;
     TVector<comp_t> s = rev* nm;
-    TBasicApp::NewLogEntry() << "Shift:\n" << s;
+    TBasicApp::NewLogEntry() << "Shift:\n" << strof(s);
     s *= 0.75;
     p += s;
-    TBasicApp::NewLogEntry() << "Vector:\n" << p;
+    TBasicApp::NewLogEntry() << "Vector:\n" << strof(p);
     TBasicApp::NewLogEntry() << "R_sq:" << r_sq << ", " << r_sq_p;
     r_sq_p = r_sq;
     if (cnt++ > 50) {

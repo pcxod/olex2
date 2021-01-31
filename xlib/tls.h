@@ -32,7 +32,7 @@ public:
   const vec3d& GetOrigin() const { return origin; }
   const vec3d& GetFoM() const { return FoM; }
   void RotateElps(const mat3d &basis) {
-    mat3d basis_t = mat3d::Transpose(basis);
+    mat3d basis_t = basis.GetT();
     for (size_t i = 0; i < newElps.Count(); i++) {
       ShelxQuad(basis*TEllipsoid::ExpandShelxQuad(newElps[i])*basis_t,
         newElps[i]);
@@ -83,7 +83,7 @@ private:
   void diagS(mat3d &split, mat3d &Tmatrix, mat3d &Smatrix); //Splits L axes to make S diagonal
 
   //helper mathods:
-  int epsil(int i, int j, int k) const;
+  int epsil(size_t i, size_t j, size_t k) const;
 };
 
 EndXlibNamespace()
