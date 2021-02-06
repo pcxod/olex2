@@ -213,16 +213,27 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
         ms = rm.GetRefinementRefList<
           TUnitCell::SymmSpace, RefMerger::ShelxMerger>(sp, refs);
       }
-      F.SetCount(refs.Count());
       sw.start("Calculating structure factors");
-      // this is a reference implementation for tests
-      //xapp.CalcSF(refs, F);
-      //sw.start("Calculation structure factors A");
-      //fastsymm version is just about 10% faster...
-      CalcSF(xapp.XFile(), refs, F, true);
-      xapp.XFile().GetRM().DetwinShelx(refs, F, ms, info_ex);
-      //xapp.XFile().GetRM().DetwinMixed(refs, F, ms, info_ex);
-      //xapp.XFile().GetRM().DetwinAlgebraic(refs, ms, info_ex);
+      if (xapp.XFile().GetRM().Vars.HasBASF()) {
+        twinning::merohedral dt(info_ex, refs,
+          xapp.XFile().GetRM().GetBASFAsDoubleList(),
+          xapp.XFile().GetRM().GetTWIN_mat(), 2);
+        F.SetCount(dt.Fc_indices.Count());
+        CalcSF(xapp.XFile(), dt.Fc_indices, F, true);
+        dt.detwin(twinning::detwinner_shelx(), refs, F);
+        F.SetCount(refs.Count());
+        //CalcSF(xapp.XFile(), refs, F, true);
+        //xapp.XFile().GetRM().DetwinMixed(refs, F, ms, info_ex);
+        //xapp.XFile().GetRM().DetwinAlgebraic(refs, ms, info_ex);
+      }
+      else {
+        F.SetCount(refs.Count());
+        // this is a reference implementation for tests
+        //xapp.CalcSF(refs, F);
+        //sw.start("Calculation structure factors A");
+        //fastsymm version is just about 10% faster...
+        CalcSF(xapp.XFile(), refs, F, true);
+      }
     }
     else {
       twinning::general twin(info_ex, rm.GetReflections(),

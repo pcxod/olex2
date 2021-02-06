@@ -976,7 +976,7 @@ void RefinementModel::DetwinAlgebraic(TRefList& refs, const HklStat& st,
   using namespace twinning;
   if (Vars.HasBASF()) {
     TDoubleList scales = GetScales();
-    merohedral tw(info_ex, refs, st, scales,
+    merohedral tw(info_ex, refs, scales,
       GetTWIN_mat().GetT(), GetTWIN_n());
     detwinner_algebraic dtw(scales);
     TRefList dtr;
@@ -990,44 +990,16 @@ void RefinementModel::DetwinAlgebraic(TRefList& refs, const HklStat& st,
         obs_twin_mate_generator<merohedral::iterator>(
           merohedral::iterator(tw, i), refs), dtr);
       for (size_t j = s; j < dtr.Count(); j++) {
-        if (tw.hkl_to_ref_map(dtr[j].GetHkl())) {
-          size_t ri = tw.hkl_to_ref_map(dtr[j].GetHkl());
-          if (ri == InvalidIndex) {
-            continue;
-          }
-          TReflection& r = refs[ri];
-          r.SetI(dtr[j].GetI());
-          r.SetS(dtr[j].GetS());
-          r.SetTag(-1);
+        size_t ri = tw.find(dtr[j].GetHkl());
+        if (ri == InvalidIndex) {
+          continue;
         }
+        TReflection& r = refs[ri];
+        r.SetI(dtr[j].GetI());
+        r.SetS(dtr[j].GetS());
+        r.SetTag(-1);
       }
     }
-  }
-}
-//.............................................................................
-void RefinementModel::DetwinMixed(TRefList& refs, const TArrayList<compd>& F,
-  const HklStat& st, const SymmSpace::InfoEx& info_ex) const
-{
-  using namespace twinning;
-  if (Vars.HasBASF()) {
-    if (refs.Count() != F.Count()) {
-      throw TInvalidArgumentException(__OlxSourceInfo, "F.size()!=refs.size()");
-    }
-    merohedral(info_ex, refs, st, GetBASFAsDoubleList(),
-      GetTWIN_mat().GetT(), 2).detwin(detwinner_mixed(), refs, F);
-  }
-}
-//.............................................................................
-void RefinementModel::DetwinShelx(TRefList& refs, const TArrayList<compd>& F,
-  const HklStat& st, const SymmSpace::InfoEx& info_ex) const
-{
-  using namespace twinning;
-  if (Vars.HasBASF()) {
-    if (refs.Count() != F.Count()) {
-      throw TInvalidArgumentException(__OlxSourceInfo, "F.size()!=refs.size()");
-    }
-    merohedral(info_ex, refs, st, GetBASFAsDoubleList(),
-      GetTWIN_mat().GetT(), 2).detwin(detwinner_shelx(), refs, F);
   }
 }
 //.............................................................................

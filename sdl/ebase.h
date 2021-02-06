@@ -256,13 +256,13 @@ public:
     v[_Length] = '\0';
     return v;
   }
-  void TrimFloat() {
+  void TrimFloat(size_t start=0) {
     size_t fp_pos = InvalidIndex, exp_pos = InvalidIndex;
-    for (size_t i = 0; i < _Length; i++) {
+    for (size_t i = start; i < _Length; i++) {
       if (CharAt(i) == '.') {
         fp_pos = i;
       }
-      else if (CharAt(i) == 'e') {
+      else if (fp_pos != InvalidIndex && CharAt(i) == 'e') {
         exp_pos = i;
         break;
       }

@@ -263,11 +263,11 @@ void TXApp::CalcSFEx(const TRefList& refs, TArrayList<TEComplex<double> >& F,
           TUnitCell::SymmSpace, RefMerger::ShelxMerger>(sp, refs);
         if (rv.FriedelOppositesMerged)
           info_ex.centrosymmetric = true;
-        TArrayList<compd> F(refs.Count());
-        SFUtil::CalcSF(XFile(), refs, F, rv.MERG != 4);
         twinning::merohedral twin(
-          info_ex, refs, rv, basf, rm.GetTWIN_mat().GetT(),
+          info_ex, refs, basf, rm.GetTWIN_mat(),
           rm.GetTWIN_n());
+        TArrayList<compd> F(twin.Fc_indices.Count());
+        SFUtil::CalcSF(XFile(), twin.Fc_indices, F, rv.MERG != 4);
         twin.calc_fsq(F, Fsq);
       }
     }

@@ -451,6 +451,7 @@ protected:
   void LibLoad(TStrObjList& Cmds, const TParamList& Options, TMacroData& E);
   void LibSave(TStrObjList& Cmds, const TParamList& Options, TMacroData& E);
   void LibDigest(TStrObjList& Cmds, const TParamList& Options, TMacroData& E);
+  void LibLock(TStrObjList& Cmds, const TParamList& Options, TMacroData& E);
   class TLibrary* ExportLibrary(const olxstr& name = EmptyString());
   ///////////////////////////////////////////////////////////////////////////////
   template <class NodeType>

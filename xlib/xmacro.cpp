@@ -428,10 +428,10 @@ void XLibMacros::Export(TLibrary& lib)  {
     "moves reflection back into the refinement list. See excludeHkl for more "
     "details");
   xlib_InitMacro(HklExclude,
-    "h-semicolon separated list of indexes&;k&;l&;c-true/false to use provided"
-    " indexes in any reflection. The default is in any one reflection",
+    "h-semicolon separated list of Indices&;k&;l&;c-true/false to use provided"
+    " Indices in any reflection. The default is in any one reflection",
     fpAny,
-    "Excludes reflections with give indexes from the hkl file -h=1;2 : all "
+    "Excludes reflections with give Indices from the hkl file -h=1;2 : all "
     "reflections where h=1 or 2");
   xlib_InitMacro(HklImport,
     "batch-for separator formatted file specifies that there is a batch "
@@ -1277,9 +1277,9 @@ void XLibMacros::macHklStat(TStrObjList &Cmds, const TParamList &Options,
     tab[17][0] << "Mean I/sig";
     tab[17][1] << olxstr::FormatFloat(3, hs.MeanIOverSigma);
     tab[18][0] << "HKL range (refinement)";
-    tab[18][1] << "h=[" << hs.MinIndexes[0] << ',' << hs.MaxIndexes[0] << "] "
-      << "k=[" << hs.MinIndexes[1] << ',' << hs.MaxIndexes[1] << "] "
-      << "l=[" << hs.MinIndexes[2] << ',' << hs.MaxIndexes[2] << "] ";
+    tab[18][1] << "h=[" << hs.MinIndices[0] << ',' << hs.MaxIndices[0] << "] "
+      << "k=[" << hs.MinIndices[1] << ',' << hs.MaxIndices[1] << "] "
+      << "l=[" << hs.MinIndices[2] << ',' << hs.MaxIndices[2] << "] ";
     tab[19][0] << "HKL range (file)";
     tab[19][1] << "h=[" << hs.FileMinInd[0] << ',' << hs.FileMaxInd[0] << "] "
       << "k=[" << hs.FileMinInd[1] << ',' << hs.FileMaxInd[1] << "] "
@@ -1532,14 +1532,14 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options,
     if (elm.z < 2) { // H,D,Q
       continue;
     }
-    TSizeList h_indexes;
+    TSizeList h_Indices;
     for (size_t j = 0; j < sa.NodeCount(); j++) {
       const cm_Element& elm1 = sa.Node(j).GetType();
       if (elm1 == iHydrogenZ) {
-        h_indexes << j;
+        h_Indices << j;
       }
     }
-    if (h_indexes.IsEmpty()) {
+    if (h_Indices.IsEmpty()) {
       continue;
     }
     TArrayList<olx_pair_t<TCAtom const*, smatd> > all;
@@ -1560,8 +1560,8 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options,
         continue;
       }
       // analyse angles
-      for (size_t k = 0; k < h_indexes.Count(); k++) {
-        vec3d base = sa.Node(h_indexes[k]).ccrd();
+      for (size_t k = 0; k < h_Indices.Count(); k++) {
+        vec3d base = sa.Node(h_Indices[k]).ccrd();
         const vec3d v1 = au.Orthogonalise(sa.ccrd() - base);
         const vec3d v2 = au.Orthogonalise(cvec - base);
         const double c_a = v1.CAngle(v2);
@@ -1584,7 +1584,7 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options,
             InfoTab& it_a = rm.AddRTAB(
               sa.GetType().symbol + ca.GetType().symbol);
             it_a.AddAtom(sa.CAtom(), 0);
-            it_a.AddAtom(sa.Node(h_indexes[k]).CAtom(), 0);
+            it_a.AddAtom(sa.Node(h_Indices[k]).CAtom(), 0);
             it_a.AddAtom(*const_cast<TCAtom*>(&ca), mt);
             if (rm.ValidateInfoTab(it_a)) {
               TBasicApp::NewLogEntry() << it_a.InsStr() << " a=" <<
@@ -4901,12 +4901,12 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
   // checking some possibly missing bits
   if (Cif->FindEntry("_diffrn_reflns_limit_h_max") == NULL) {
     RefinementModel::HklStat hs = xapp.XFile().GetRM().GetMergeStat();
-    Cif->SetParam("_diffrn_reflns_limit_h_min", hs.MinIndexes[0], false);
-    Cif->SetParam("_diffrn_reflns_limit_k_min", hs.MinIndexes[1], false);
-    Cif->SetParam("_diffrn_reflns_limit_l_min", hs.MinIndexes[2], false);
-    Cif->SetParam("_diffrn_reflns_limit_h_max", hs.MaxIndexes[0], false);
-    Cif->SetParam("_diffrn_reflns_limit_k_max", hs.MaxIndexes[1], false);
-    Cif->SetParam("_diffrn_reflns_limit_l_max", hs.MaxIndexes[2], false);
+    Cif->SetParam("_diffrn_reflns_limit_h_min", hs.MinIndices[0], false);
+    Cif->SetParam("_diffrn_reflns_limit_k_min", hs.MinIndices[1], false);
+    Cif->SetParam("_diffrn_reflns_limit_l_min", hs.MinIndices[2], false);
+    Cif->SetParam("_diffrn_reflns_limit_h_max", hs.MaxIndices[0], false);
+    Cif->SetParam("_diffrn_reflns_limit_k_max", hs.MaxIndices[1], false);
+    Cif->SetParam("_diffrn_reflns_limit_l_max", hs.MaxIndices[2], false);
   }
   // batch scales
   if (xapp.XFile().GetRM().Vars.HasBASF()) {
@@ -7248,7 +7248,7 @@ void XLibMacros::macHklSplit(TStrObjList &Cmds, const TParamList &Options,
     }
   }
 
-  TArray3D<size_t> hkl3d(stats.MinIndexes, stats.MaxIndexes);
+  TArray3D<size_t> hkl3d(stats.MinIndices, stats.MaxIndices);
   hkl3d.FastInitWith(0);
   for (size_t i = 0; i < refs.Count(); i++) {
     hkl3d(refs[i].GetHkl()) = i + 1;
@@ -10242,7 +10242,7 @@ void XLibMacros::funVVol(const TStrObjList& Params, TMacroData &E) {
   E.SetRetVal(olxstr::FormatFloat(2, vi.total-vi.overlapping));
   TBasicApp::NewLogEntry(logWarning) << "Please note that this is a highly "
     "approximate procedure. Volume of current fragment is calculated using a "
-    "maximum two overlaping spheres, to calculate packing indexes, use "
+    "maximum two overlaping spheres, to calculate packing Indices, use "
     "calcvoid or MolInfo instead";
   TBasicApp::NewLogEntry() << "Molecular volume (A): " <<
     olxstr::FormatFloat(2, vi.total-vi.overlapping);

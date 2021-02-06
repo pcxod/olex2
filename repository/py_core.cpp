@@ -380,15 +380,15 @@ PyObject* pyHklStat(PyObject* self, PyObject* args)  {
       Py_BuildValue("d", hs.MeanIOverSigma));
     PythonExt::SetDictItem(out, "Completeness",
       Py_BuildValue("d", hs.Completeness));
-    PythonExt::SetDictItem(out, "MaxIndexes",
-      Py_BuildValue("(iii)", hs.MaxIndexes[0],
-        hs.MaxIndexes[1], hs.MaxIndexes[2]));
-    PythonExt::SetDictItem(out, "MinIndexes",
-      Py_BuildValue("(iii)", hs.MinIndexes[0],
-        hs.MinIndexes[1], hs.MinIndexes[2]));
-    PythonExt::SetDictItem(out, "FileMaxIndexes", Py_BuildValue("(iii)",
+    PythonExt::SetDictItem(out, "MaxIndices",
+      Py_BuildValue("(iii)", hs.MaxIndices[0],
+        hs.MaxIndices[1], hs.MaxIndices[2]));
+    PythonExt::SetDictItem(out, "MinIndices",
+      Py_BuildValue("(iii)", hs.MinIndices[0],
+        hs.MinIndices[1], hs.MinIndices[2]));
+    PythonExt::SetDictItem(out, "FileMaxIndices", Py_BuildValue("(iii)",
       hs.FileMaxInd[0], hs.FileMaxInd[1], hs.FileMaxInd[2]));
-    PythonExt::SetDictItem(out, "FileMinIndexes", Py_BuildValue("(iii)",
+    PythonExt::SetDictItem(out, "FileMinIndices", Py_BuildValue("(iii)",
       hs.FileMinInd[0], hs.FileMinInd[1], hs.FileMinInd[2]));
     PythonExt::SetDictItem(out, "ReflectionAPotMax",
       Py_BuildValue("i", hs.ReflectionAPotMax));

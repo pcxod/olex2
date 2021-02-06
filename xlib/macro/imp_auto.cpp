@@ -204,13 +204,32 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
     double avQPeak = 0;
     bool OnlyQPeakModel = true;
     for (size_t i = 0; i < au.AtomCount(); i++) {
-      if (au.GetAtom(i).IsDeleted())  continue;
-      if (au.GetAtom(i).GetType() != iQPeakZ)
+      TCAtom& a = au.GetAtom(i);
+      if (a.IsDeleted()) {
+        continue;
+      }
+      if (a.GetType() != iQPeakZ) {
         OnlyQPeakModel = false;
+      }
       else {
-        SortedQPeaks.Add(au.GetAtom(i).GetQPeak(), &au.GetAtom(i));
-        avQPeak += au.GetAtom(i).GetQPeak();
-        cnt++;
+        // leave close to other atoms alone
+        bool close = false;
+        for (size_t j = 0; j < a.AttachedSiteCount(); j++) {
+          TCAtom::Site& as = a.GetAttachedSite(j);
+          if (as.atom->IsDeleted() || as.atom->GetType().z < 5) {
+            continue;
+          }
+          double d = au.Orthogonalise(as.matrix * as.atom->ccrd() - a.ccrd()).QLength();
+          if (d < olx_sqr(1)) {
+            close = true;
+            break;
+          }
+        }
+        if (!close) {
+          SortedQPeaks.Add(au.GetAtom(i).GetQPeak(), &au.GetAtom(i));
+          avQPeak += au.GetAtom(i).GetQPeak();
+          cnt++;
+        }
       }
     }
     if (cnt != 0) {
@@ -243,12 +262,11 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
 
       TBasicApp::NewLogEntry(logInfo) << "Average QPeak: " << avQPeak;
       TBasicApp::NewLogEntry(logInfo) << "QPeak steps:";
-      for (size_t i = 0; i < vals.Count(); i++)
+      for (size_t i = 0; i < vals.Count(); i++) {
         TBasicApp::NewLogEntry(logInfo) << vals[i].GetA();
-
+      }
       //    double thVal = 2;
       double thVal = (avQPeak < 2) ? 2 : avQPeak*0.75;
-
       TBasicApp::NewLogEntry(logInfo) << "QPeak threshold:" << thVal;
 
       if (SortedQPeaks.Count() == 1) {  // only one peak present
@@ -404,7 +422,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
         if (Uisos[i] > 1e-6) {
           for (size_t j = 0; j < frag.NodeCount(); j++) {
             TSAtom& sa = frag.Node(j);
-            if (sa.IsDeleted() || sa.GetType() == iHydrogenZ) {
+            if (sa.IsDeleted() || sa.GetType() == iHydrogenZ || sa.CAtom().IsFixedType()) {
               continue;
             }
             if (sa.GetType() != iQPeakZ && sa.CAtom().GetUiso() > Uisos[i] * 3) {
@@ -468,7 +486,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
           bool found = false;
           int min_dz = 100;
           size_t closest_idx = InvalidIndex;
-          const cm_Element *to_asign = NULL;
+          const cm_Element *to_asign = 0;
           for (size_t j = 0; j < StandAlone.Count(); j++) {
             int dz = olx_abs(sa.GetType().z - StandAlone[j]->z);
             if (dz < min_dz) {
@@ -511,7 +529,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
     }
     for (size_t j = 0; j < latt.GetFragment(i).NodeCount(); j++) {
       TSAtom& sa = latt.GetFragment(i).Node(j);
-      if (sa.IsDeleted() || sa.CAtom().IsDeleted() || sa.GetType().GetMr() < 3) {
+      if (sa.IsDeleted() || sa.CAtom().IsDeleted() || sa.GetType().z < 2) {
         continue;
       }
       TTypeList<olx_pair_t<TCAtom*, vec3d> > neighbours;
@@ -521,7 +539,8 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
           continue;
         }
         if (nd.GetDistance(k) < (neighbours[k].GetA()->GetType().r_bonding + aqV) &&
-          neighbours[k].GetA()->GetType() != iHydrogenZ) {
+          neighbours[k].GetA()->GetType() != iHydrogenZ)
+        {
           if (neighbours[k].GetA()->GetType() == iQPeakZ ||
             neighbours[k].GetA()->GetType() <= iFluorineZ)
           {
@@ -539,7 +558,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
   // check blown up
   for (size_t i = 0; i < au.AtomCount(); i++) {
     TCAtom &ca = au.GetAtom(i);
-    if (ca.IsDeleted() || ca.GetType() == iHydrogenZ) {
+    if (ca.IsDeleted() || ca.GetType() == iHydrogenZ || ca.IsFixedType()) {
       continue;
     }
     if (ca.GetType() != iQPeakZ && ca.GetUiso() > 0.125) {
@@ -548,8 +567,9 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
       {
         continue;
       }
-      TBasicApp::NewLogEntry(logInfo) << ca.GetLabel() << " blown up";
-      olx_analysis::helper::delete_atom(ca);
+      if (olx_analysis::helper::delete_atom(ca)) {
+        TBasicApp::NewLogEntry(logInfo) << ca.GetLabel() << " blown up";
+      }
     }
   }
   // treating NPD atoms... promoting to the next available type

@@ -242,7 +242,10 @@ void helper::reset_u(TCAtom &a, double r) {
   }
 }
 //.............................................................................
-void helper::delete_atom(TCAtom &a) {
+bool helper::delete_atom(TCAtom &a) {
+  if (a.IsFixedType()) {
+    return false;
+  }
   a.SetDeleted(true);
   TPtrList<TAfixGroup> ags;
   if (a.GetDependentAfixGroup() != 0) {
@@ -256,6 +259,7 @@ void helper::delete_atom(TCAtom &a) {
       delete_atom((*ags[i])[j]);
     }
   }
+  return true;
 }
 //.............................................................................
 size_t helper::get_demoted_index(const cm_Element &e, const SortedElementPList &elms) {

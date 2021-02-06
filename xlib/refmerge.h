@@ -27,7 +27,7 @@ struct MergeStats {
   // symmetry independent reflections = sum(1/multiplicity)
   double IndependentReflections;
   bool FriedelOppositesMerged;
-  vec3i MinIndexes, MaxIndexes;
+  vec3i MinIndices, MaxIndices;
   MergeStats() {
     SetDefaults();
   }
@@ -47,16 +47,16 @@ struct MergeStats {
     FriedelOppositesMerged = ms.FriedelOppositesMerged;
     GTRefs = ms.GTRefs;
     ReflectionAPotMax = ms.ReflectionAPotMax;
-    MinIndexes = ms.MinIndexes;
-    MaxIndexes = ms.MaxIndexes;
+    MinIndices = ms.MinIndices;
+    MaxIndices = ms.MaxIndices;
     IndependentReflections = ms.IndependentReflections;
     return *this;
   }
   void SetDefaults() {
     Rint = Rsigma = 0;
     MeanIOverSigma = 0;
-    MinIndexes[0] = MinIndexes[1] = MinIndexes[2] = 100;
-    MaxIndexes[0] = MaxIndexes[1] = MaxIndexes[2] = -100;
+    MinIndices[0] = MinIndices[1] = MinIndices[2] = 100;
+    MaxIndices[0] = MaxIndices[1] = MaxIndices[2] = -100;
     GTRefs = OmittedByUser = UniqueReflections = 0;
     CentricReflections = SystematicAbsencesRemoved =
       UniqueSystematicAbsencesRemoved = InconsistentEquivalents = 0;
@@ -132,8 +132,8 @@ class RefMerger {
             stats.MeanIOverSigma += ios;
             mi_o_sig_cnt++;
           }
-          vec3i::UpdateMinMax(ref->GetHkl(), stats.MinIndexes,
-            stats.MaxIndexes);
+          vec3i::UpdateMinMax(ref->GetHkl(), stats.MinIndices,
+            stats.MaxIndices);
           stats.IndependentReflections += 1. / mo.ref->GetMultiplicity();
         }
         else {
@@ -210,8 +210,8 @@ class RefMerger {
             stats.MeanIOverSigma += ios;
             mi_o_sig_cnt++;
           }
-          vec3i::UpdateMinMax(ref->GetHkl(), stats.MinIndexes,
-            stats.MaxIndexes);
+          vec3i::UpdateMinMax(ref->GetHkl(), stats.MinIndices,
+            stats.MaxIndices);
           stats.UniqueReflections++;
           stats.IndependentReflections += 1. / ref->GetMultiplicity();
         }
@@ -265,8 +265,8 @@ class RefMerger {
         }
         if (!ref->IsAbsent()) {
           for (size_t j = from; j < i; j++) {
-            vec3i::UpdateMinMax(refs[j]->GetHkl(), stats.MinIndexes,
-              stats.MaxIndexes);
+            vec3i::UpdateMinMax(refs[j]->GetHkl(), stats.MinIndices,
+              stats.MaxIndices);
             if (!UseBatch || refs[j]->GetBatch() > 0) {
               double ios = refs[j]->GetI() / refs[j]->GetS();
               if (ios >= gt_v) {
@@ -351,8 +351,8 @@ class RefMerger {
           stats.MeanIOverSigma += ios;
           mi_o_sig_cnt++;
         }
-        vec3i::UpdateMinMax(ref->GetHkl(), stats.MinIndexes,
-          stats.MaxIndexes);
+        vec3i::UpdateMinMax(ref->GetHkl(), stats.MinIndices,
+          stats.MaxIndices);
       }
     }
     stats.Rint = (SI_tot != 0) ? Sdiff / SI_tot : 0.0;
@@ -414,8 +414,8 @@ class RefMerger {
           stats.MeanIOverSigma += ios;
           mi_o_sig_cnt++;
         }
-        vec3i::UpdateMinMax(ref->GetHkl(), stats.MinIndexes,
-          stats.MaxIndexes);
+        vec3i::UpdateMinMax(ref->GetHkl(), stats.MinIndices,
+          stats.MaxIndices);
         stats.UniqueReflections++;
       }
     }

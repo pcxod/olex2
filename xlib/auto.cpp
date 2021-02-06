@@ -2152,6 +2152,15 @@ void TAutoDB::LibDigest(TStrObjList& Cmds, const TParamList& Options, TMacroData
     Options.FindValue('f', "0.1").ToDouble());
 }
 //..............................................................................
+void TAutoDB::LibLock(TStrObjList& Cmds, const TParamList& Options, TMacroData& E) {
+  bool unlock = Options.GetBoolOption('u');
+  TXApp& app = TXApp::GetInstance();
+  TSAtomPList atoms = app.FindSAtoms(Cmds);
+  for (size_t i = 0; i < atoms.Count(); i++) {
+    atoms[i]->CAtom().SetFixedType(!unlock);
+  }
+}
+//..............................................................................
 TLibrary* TAutoDB::ExportLibrary(const olxstr& name) {
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("ata") : name);
   lib->Register(
@@ -2193,7 +2202,13 @@ TLibrary* TAutoDB::ExportLibrary(const olxstr& name) {
       "s-max shift/esd [0.05]&;"
       "f-max deviation of GoF from 1 [0.1]&;",
       fpOne,
-      "Digests CIFs from the given folder and update the ACIDB")
+      "Digests CIFs from the given folder and updates the ACIDB")
+  );
+  lib->Register(
+    new TMacro<TAutoDB>(this, &TAutoDB::LibLock, "Lock",
+      "u-unlock [false]",
+      fpAny,
+      "Locks/unlocks atoms for ata")
   );
   return lib;
 }

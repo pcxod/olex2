@@ -127,13 +127,15 @@ public:
     return writeType(printFormat(v), v);
   }
   TCString& operator << (const float& v) {
+    size_t l = _Length;
     writeType(printFormat(v), v);
-    parent_t::TrimFloat();
+    parent_t::TrimFloat(l);
     return *this;
   }
   TCString& operator << (const double& v) {
+    size_t l = _Length;
     writeType(printFormat(v), v);
-    parent_t::TrimFloat();
+    parent_t::TrimFloat(l);
     return *this;
   }
   /* there is just no way with borland to put it TTIString as it would swear about

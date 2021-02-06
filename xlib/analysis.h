@@ -67,7 +67,7 @@ namespace helper {
   // resets the atom ADP
   void reset_u(TCAtom &a, double r=0.025);
   // also deletes any riding groups
-  void delete_atom(TCAtom &a);
+  bool delete_atom(TCAtom &a);
   size_t get_demoted_index(const cm_Element &e, const SortedElementPList &elms);
   bool can_demote(const cm_Element &e, const SortedElementPList &elms);
   // as above, but also checks if the demoted type conenctivity is OK

@@ -52,8 +52,8 @@ namespace RefUtil {
       stats.OMIT_2t = rm.GetOMIT_2t();
       stats.SHEL_lr = rm.GetSHEL_lr();
       stats.SHEL_hr = rm.GetSHEL_hr();
-      stats.MinIndexes = vec3i(100, 100, 100);
-      stats.MaxIndexes = -stats.MinIndexes;
+      stats.MinIndices = vec3i(100, 100, 100);
+      stats.MaxIndices = -stats.MinIndices;
     }
     bool IsOutside(const TReflection& r) const {
       const double d = 1 / r.ToCart(rm.aunit.GetHklToCartesian()).Length();
@@ -66,7 +66,7 @@ namespace RefUtil {
       if (_stats != 0) {
         olx_update_min_max(r.GetI(), _stats->MinI, _stats->MaxI);
         olx_update_min_max(d, _stats->MinD, _stats->MaxD);
-        vec3i::UpdateMinMax(r.GetHkl(), _stats->MinIndexes, _stats->MaxIndexes);
+        vec3i::UpdateMinMax(r.GetHkl(), _stats->MinIndices, _stats->MaxIndices);
       }
       return false;
     }
