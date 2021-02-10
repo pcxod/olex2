@@ -23,28 +23,45 @@ namespace alg {
   olxstr formula(const TCAtomPList &atoms, double mult=1);
   olxstr label(const TCAtomPList &atoms, const olxstr &sp=EmptyString());
   olxstr label(const TCAtomGroup &atoms, const olxstr &sp=EmptyString());
+  // if the atoms share a single residue -it is returned, 0 otherwise
+  template <class atom_plist_t, class accessor_t>
+  TResidue* get_resi(const atom_plist_t& atoms, const accessor_t& ac=DummyAccessor()) {
+    if (atoms.IsEmpty()) {
+      return 0;
+    }
+    size_t r_id = ac(atoms[0]).GetResiId();
+    for (size_t i = 1; i < atoms.Count(); i++) {
+      if (ac(atoms[i]).GetResiId() != r_id) {
+        return 0;
+      }
+    }
+    return &ac(atoms[0]).GetParent()->GetResidue(r_id);
+  }
   // applicable to TS/XAtom containers
   template <class atom_plist_t>
   olxstr label(const atom_plist_t &atoms, bool add_sym, const olxstr &sp) {
     olxstr_buf rv;
     for( size_t i=0; i < atoms.Count(); i++ ) {
-      if (!rv.IsEmpty())  rv << sp;
-      rv << atoms[i]->GetGuiLabel();
+      rv << sp << (add_sym ? atoms[i]->GetGuiLabelEx() : atoms[i]->GetGuiLabel());
     }
-    return rv;
+    return rv.IsEmpty() ? EmptyString() : olxstr(rv).SubStringFrom(sp.Length());
   }
   // returns true if any of the atoms is from the original asymmetric unit
   template <class atom_plist_t> bool has_I(const atom_plist_t &atoms) {
-    for( size_t i=0; i < atoms.Count(); i++ )
-      if (atoms[i]->GetMatrix().IsFirst())
+    for (size_t i = 0; i < atoms.Count(); i++) {
+      if (atoms[i]->GetMatrix().IsFirst()) {
         return true;
+      }
+    }
     return false;
   }
   // returns true if all atoms are from the original asymmetric unit
   template <class atom_plist_t> bool are_all_I(const atom_plist_t &atoms) {
-    for( size_t i=0; i < atoms.Count(); i++ )
-      if (!atoms[i]->GetMatrix().IsFirst())
+    for (size_t i = 0; i < atoms.Count(); i++) {
+      if (!atoms[i]->GetMatrix().IsFirst()) {
         return false;
+      }
+    }
     return true;
   }
   const cm_Element &find_heaviest(const TCAtomPList &atoms);
@@ -385,7 +402,7 @@ private:
   TCAtomPList nodes;
   olxdict<size_t, size_t, TPrimitiveComparator> conn_map;
   TTypeList<TTypeList<conn_atom_t> > conn_info;
-  void set_tags(TCAtom& a, const smatd& m,
+  void set_tags(TCAtom& a,
     TTypeList<TTypeList<conn_atom_t> >& conn,
     olxdict<size_t, size_t, TPrimitiveComparator>& con_map);
   void set_tags_(TCAtom& a, const smatd& m,

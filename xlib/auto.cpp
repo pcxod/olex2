@@ -968,8 +968,8 @@ void TAutoDB::AnalyseNode(TSAtom& sa, TStrList& report) {
         double cfom = 0;
         TAutoDBNetNode& netnd = segment[i]->GetParent(j)->Node(
           segment[i]->GetParentIndex(j));
-        //TBasicApp::NewLogEntry(logInfo) << Nodes[i]->GetParent(j)->Reference()->GetName();
-        if (netnd.IsMetricSimilar(node, cfom, NULL, false)) {
+        //TBasicApp::NewLogEntry(logVerbose) << Nodes[i]->GetParent(j)->Reference()->GetName();
+        if (netnd.IsMetricSimilar(node, cfom, 0, false)) {
           //
           found = false;
           for (size_t k = 0; k < S2Match.Count(); k++) {
@@ -987,7 +987,7 @@ void TAutoDB::AnalyseNode(TSAtom& sa, TStrList& report) {
               segment[i]->GetParent(j)->Reference());
           }
           //
-          if (netnd.IsMetricSimilar(node, cfom, NULL, true)) {
+          if (netnd.IsMetricSimilar(node, cfom, 0, true)) {
             //
             found = false;
             for (size_t k = 0; k < S3Match.Count(); k++) {
@@ -1145,7 +1145,7 @@ void TAutoDB::TAnalyseNetNodeTask::Run(size_t index) {
         TAutoDBNetNode& netnd = segnd.GetParent(j)->Node(
           segnd.GetParentIndex(j));
         cfom = 0;
-        if (nd.IsMetricSimilar(netnd, cfom, NULL, false)) {
+        if (nd.IsMetricSimilar(netnd, cfom, 0, false)) {
           found = false;
           for (size_t k = 0; k < gc.list2.Count(); k++) {
             if (*gc.list2[k].Type == netnd.Center()->GetType()) {
@@ -1157,7 +1157,7 @@ void TAutoDB::TAnalyseNetNodeTask::Run(size_t index) {
           if (!found) {
             gc.list2.AddNew(netnd.Center()->GetType(), &netnd, cfom);
           }
-          if (nd.IsMetricSimilar(netnd, cfom, NULL, true)) {
+          if (nd.IsMetricSimilar(netnd, cfom, 0, true)) {
             found = false;
             for (size_t k = 0; k < gc.list3.Count(); k++) {
               if (*gc.list3[k].Type == netnd.Center()->GetType()) {
@@ -1205,7 +1205,7 @@ bool TAutoDB::A2Pemutate(TCAtom& a1, TCAtom& a2, const cm_Element& e1,
   if ((v & 9) != 0) {
     if (!a1.IsFixedType()) {
       if (!dry_run) {
-        TBasicApp::NewLogEntry(logInfo) << "Skipping fixed type atoms '" <<
+        TBasicApp::NewLogEntry(logVerbose) << "Skipping fixed type atom '" <<
           a1.GetLabel() << '\'';
       }
       return false;
@@ -1214,7 +1214,7 @@ bool TAutoDB::A2Pemutate(TCAtom& a1, TCAtom& a2, const cm_Element& e1,
   if ((v & 6) != 0) {
     if (!a1.IsFixedType()) {
       if (!dry_run) {
-        TBasicApp::NewLogEntry(logInfo) << "Skipping fixed type atoms '" <<
+        TBasicApp::NewLogEntry(logVerbose) << "Skipping fixed type atom '" <<
           a2.GetLabel() << '\'';
       }
       return false;
@@ -1223,7 +1223,7 @@ bool TAutoDB::A2Pemutate(TCAtom& a1, TCAtom& a2, const cm_Element& e1,
   bool changes = false;
   if ((v & 1) != 0) {
     if (!dry_run) {
-      TBasicApp::NewLogEntry(logInfo) << "A2 assignment: " <<
+      TBasicApp::NewLogEntry(logVerbose) << "A2 assignment: " <<
         a1.GetLabel() << " -> " << e1.symbol;
       a1.SetType(e1);
     }
@@ -1231,7 +1231,7 @@ bool TAutoDB::A2Pemutate(TCAtom& a1, TCAtom& a2, const cm_Element& e1,
   }
   if ((v & 2) != 0) {
     if (!dry_run) {
-      TBasicApp::NewLogEntry(logInfo) << "A2 assignment: " <<
+      TBasicApp::NewLogEntry(logVerbose) << "A2 assignment: " <<
         a2.GetLabel() << " -> " << e2.symbol;
       a2.SetType(e2);
     }
@@ -1239,7 +1239,7 @@ bool TAutoDB::A2Pemutate(TCAtom& a1, TCAtom& a2, const cm_Element& e1,
   }
   if ((v & 4) != 0) {
     if (!dry_run) {
-      TBasicApp::NewLogEntry(logInfo) << "A2 assignment: " <<
+      TBasicApp::NewLogEntry(logVerbose) << "A2 assignment: " <<
         a2.GetLabel() << " -> " << e1.symbol;
       a2.SetType(e1);
     }
@@ -1247,7 +1247,7 @@ bool TAutoDB::A2Pemutate(TCAtom& a1, TCAtom& a2, const cm_Element& e1,
   }
   if ((v & 8) != 0) {
     if (!dry_run) {
-      TBasicApp::NewLogEntry(logInfo) << "A2 assignment: " <<
+      TBasicApp::NewLogEntry(logVerbose) << "A2 assignment: " <<
         a1.GetLabel() << " -> " << e2.symbol;
       a1.SetType(e2);
     }
@@ -1433,7 +1433,7 @@ bool TAutoDB::ChangeType(TCAtom &a, const cm_Element &e, bool dry_run) {
   }
   if (a.IsFixedType()) {
     if (!dry_run) {
-      TBasicApp::NewLogEntry() << "Skipping fixed type atoms '" <<
+      TBasicApp::NewLogEntry(logVerbose) << "Skipping fixed type atom '" <<
         a.GetLabel() << '\'';
     }
     return false;
@@ -1735,10 +1735,12 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
       }
       //else if( Uiso == 0 )
       //  searchLighter = true;
-      if (permutator != 0 && permutator->IsActive())
-        permutator->InitAtom( guesses[i] );
-      for (size_t j=0; j < guesses[i].list1.Count(); j++)
+      if (permutator != 0 && permutator->IsActive()) {
+        permutator->InitAtom(guesses[i]);
+      }
+      for (size_t j = 0; j < guesses[i].list1.Count(); j++) {
         guesses[i].list1[j].Sort();
+      }
       QuickSorter::SortSF(guesses[i].list1,
         THitList<TAutoDBNode>::SortByFOMFunc);
       olxstr tmp;
@@ -1808,7 +1810,7 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
           if (proposed_atoms != 0) {
             change = proposed_atoms->Contains(type);
           }
-          else if (BAIDelta != -1) {
+          if (change && BAIDelta != -1) {
             change = (olx_abs(type->z - guesses[i].atom->GetType().z) < BAIDelta);
           }
           if (change) {
@@ -1829,7 +1831,7 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
   }
   delete sn;
   if (!dry_run) {
-    TBasicApp::NewLogEntry(logInfo) << log;
+    TBasicApp::NewLogEntry(logVerbose) << log;
   }
 }
 //..............................................................................
@@ -1959,7 +1961,7 @@ void TAtomTypePermutator::InitAtom(TAutoDB::TGuessCount& guess) {
       if (pm != 0 && pm->Tries.Count()) {
         //Atoms.Delete(pmIndex);
         pm->Tries.Clear();
-        TBasicApp::NewLogEntry(logInfo) << "Converged " << guess.atom->GetLabel();
+        TBasicApp::NewLogEntry(logVerbose) << "Converged " << guess.atom->GetLabel();
       }
       return;
     }
@@ -2032,7 +2034,7 @@ void TAtomTypePermutator::Permutate() {
       }
     }
     if (permuted) {
-      TBasicApp::NewLogEntry(logInfo) << Atoms[i].Atom->GetLabel() <<
+      TBasicApp::NewLogEntry(logVerbose) << Atoms[i].Atom->GetLabel() <<
         " permutated";
     }
     else {
@@ -2043,12 +2045,12 @@ void TAtomTypePermutator::Permutate() {
           type = Atoms[i].Tries[j].GetA();
           minDelta = olx_sqr(Atoms[i].Tries[j].GetB() - 0.025);
         }
-        TBasicApp::NewLogEntry(logInfo) << Atoms[i].Atom->GetLabel() <<
+        TBasicApp::NewLogEntry(logVerbose) << Atoms[i].Atom->GetLabel() <<
           " permutation to " << Atoms[i].Tries[j].GetA()->symbol <<
           " leads to Uiso = " << Atoms[i].Tries[j].GetB();
       }
       if (type != 0) {
-        TBasicApp::NewLogEntry(logInfo) << "Most probable type is " <<
+        TBasicApp::NewLogEntry(logVerbose) << "Most probable type is " <<
           type->symbol;
         if (&Atoms[i].Atom->GetType() != type) {
           Atoms[i].Atom->SetLabel(type->symbol, false);

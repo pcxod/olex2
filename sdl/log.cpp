@@ -10,7 +10,8 @@
 #include "log.h"
 #include "etime.h"
 
-TLog::TLog() :
+TLog::TLog()
+  : verbose(false),
   OnInfo(Actions.New("ONINF")),
   OnWarning(Actions.New("ONWRN")),
   OnError(Actions.New("ONERR")),
@@ -18,13 +19,15 @@ TLog::TLog() :
   OnPost(Actions.New("ONPOST"))
   {}
 //..............................................................................
-TLog::~TLog()  {
-  for( size_t i=0; i < Streams.Count(); i++ )
-    if( Streams[i].GetB() )
+TLog::~TLog() {
+  for (size_t i = 0; i < Streams.Count(); i++) {
+    if (Streams[i].GetB()) {
       delete Streams[i].GetA();
+    }
+  }
 }
 //..............................................................................
-size_t TLog::Write(const void *Data, size_t size)  {
+size_t TLog::Write(const void* Data, size_t size) {
   throw TNotImplementedException(__OlxSourceInfo);
 }
 //..............................................................................
@@ -49,17 +52,19 @@ TLog::LogEntry::LogEntry(TLog& _parent, int _evt, bool annotate,
   }
 }
 //..............................................................................
-TLog::LogEntry::~LogEntry()  {
+TLog::LogEntry::~LogEntry() {
+  if (evt == logVerbose && !parent.IsVerbose()) {
+    return;
+  }
   buffer << NewLineSequence();
   olxstr res = buffer;
   parent.OnPost.Execute(&parent, &res);
-  if( evt == logDefault )  {
+  if (evt == logDefault) {
     parent << res;
-    //parent.Flush();
   }
-  else  {
-    TActionQueue* ac = NULL;
-    switch( evt )  {
+  else {
+    TActionQueue* ac = 0;
+    switch (evt) {
     case logInfo:
       ac = &parent.OnInfo;
       break;
@@ -79,9 +84,8 @@ TLog::LogEntry::~LogEntry()  {
       ac = &parent.OnInfo;
       break;
     }
-    if( !ac->Enter(&parent, &res) )  {
+    if (!ac->Enter(&parent, &res)) {
       parent << res;
-      //parent.Flush();
     }
     ac->Exit(&parent);
   }
@@ -93,8 +97,9 @@ TLog::LogEntry& TLog::LogEntry::operator << (const TExceptionBase &e) {
     e.GetException()->GetStackTrace(l);
     buffer << l.Text(NewLineSequence());
   }
-  else
+  else {
     buffer << e.GetException()->GetFullMessage();
+  }
   return *this;
 }
 //..............................................................................

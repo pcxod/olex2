@@ -1528,10 +1528,6 @@ ConstPtrList<TCAtom> fragments::fragment::ring_sorter(const TCAtomPList &r) {
       }
     }
     if (!set) {
-#ifdef _DEBUG
-      TBasicApp::NewLogEntry(logWarning) << "DEBUG: " <<
-        "Failed to sort " << alg::label(r) << " ring";
-#endif
       return new TCAtomPList(r);
     }
   }
@@ -1675,7 +1671,7 @@ struct CAtomGraphAnalyser  {
   {
     if ((TETime::msNow() - start_time) >= 60000) {
       throw TFunctionFailedException(__OlxSourceInfo,
-        olxstr("the procedure was terminated. Number of permutations: ") <<
+        olxstr("the procedure has been terminated. Number of permutations: ") <<
         permutations << ", number of calls: " << CallsCount
         );
     }
@@ -1804,11 +1800,10 @@ NetTools::NetTools(fragments::fragment& frag, const TCAtomPList& nodes_, bool ve
   for (size_t i = 0; i < nodes.Count(); i++) {
     conn_map.Add(nodes[i]->GetId(), i);
   }
-  const smatd &I = frag[0].GetParent()->GetLattice().GetUnitCell().GetMatrix(0);
   conn_info.SetCount(nodes.Count());
   for (size_t i = 0; i < nodes.Count(); i++) {
     frag.atoms().ForEach(ACollectionItem::TagSetter(-1));
-    set_tags(*nodes[i], I, conn_info, conn_map);
+    set_tags(*nodes[i], conn_info, conn_map);
   }
 }
 //.............................................................................
@@ -1825,6 +1820,7 @@ TTypeList<TTypeList<NetTools::atom_t> >::const_list_type NetTools::extract_trian
       TBasicApp::NewLogEntry() << "From " << nodes[i]->GetLabel();
     }
     vec3d centre = au.Orthogonalise(nodes[i]->ccrd());
+    vec3d_list vertices;
     for (size_t j = 0; j < conn_info[i].Count(); j++) {
       vec3d c = au.Orthogonalise(conn_info[i][j].b * conn_info[i][j].a->ccrd());
       if (verbose) {
@@ -1832,17 +1828,24 @@ TTypeList<TTypeList<NetTools::atom_t> >::const_list_type NetTools::extract_trian
           ": " << centre.DistanceTo(c)
           << " (" << TSymmParser::MatrixToSymm(conn_info[i][j].b) << ")" << " "
           << conn_info[i][j].c;
+        vertices << c;
       }
       if (conn_info[i][j].c) {
         centres.AddNew(c, j);
       }
+    }
+    if (verbose && vertices.Count() == 4) {
+      TBasicApp::NewLogEntry() << "Volume around " << nodes[i]->GetLabel()
+        << ": " << olxstr::FormatFloat(2,
+          olx_tetrahedron_volume(vertices[0],
+            vertices[1], vertices[2], vertices[3]));
     }
     if (centres.Count() >= 2) {
       for (size_t i1 = 0; i1 < centres.Count(); i1++) {
         for (size_t i2 = i1 + 1; i2 < centres.Count(); i2++) {
           const TTypeList<conn_atom_t>& con1 = conn_info[conn_map[conn_info[i][centres[i1].b].a->GetId()]];
           bool connected = false;
-          smatd rm = conn_info[i][centres[i2].b].b * conn_info[i][centres[i1].b].b.Inverse();
+          smatd rm = conn_info[i][centres[i1].b].b.Inverse() * conn_info[i][centres[i2].b].b;
           for (size_t c = 0; c < con1.Count(); c++) {
             if (con1[c].a->GetId() == conn_info[i][centres[i2].b].a->GetId() &&
               con1[c].b == rm)
@@ -1887,10 +1890,9 @@ void NetTools::set_tags_(TCAtom& a, const smatd& m,
   a.SetTag(1);
   for (size_t i = 0; i < a.AttachedSiteCount(); i++) {
     const TCAtom::Site& s = a.GetAttachedSite(i);
-    if (!m.IsFirst() && !s.matrix.IsFirst()) {
-      continue;
-    }
-    if (s.atom->GetTag() != -1) {
+    if (s.atom->GetTag() != -1 ||
+      (!m.IsFirst() && !s.matrix.IsFirst()))
+    {
       continue;
     }
     smatd rm = m.IsFirst() ? s.matrix : m;
@@ -1913,7 +1915,7 @@ void NetTools::set_tags_(TCAtom& a, const smatd& m,
   }
 }
 //.............................................................................
-void NetTools::set_tags(TCAtom& a, const smatd& m,
+void NetTools::set_tags(TCAtom& a,
   TTypeList<TTypeList<conn_atom_t> >& conn,
   olxdict<size_t, size_t, TPrimitiveComparator>& con_map)
 {
@@ -1934,7 +1936,7 @@ void NetTools::set_tags(TCAtom& a, const smatd& m,
     for (size_t j = d; j < dest.Count(); j++) {
       TTypeList<conn_atom_t>& dest_j = conn[con_map[dest[j].a->GetId()]];
       for (size_t k = j + 1; k < dest.Count(); k++) {
-        smatd rm = dest[k].b * dest[j].b.Inverse();
+        smatd rm = dest[j].b.Inverse() * dest[k].b;
         bool uniq = true;
         for (size_t l = 0; l < dest_j.Count(); l++) {
           if (dest_j[l].a == dest[k].a && dest_j[l].b == rm) {
@@ -1943,11 +1945,11 @@ void NetTools::set_tags(TCAtom& a, const smatd& m,
           }
         }
         if (uniq) {
-          dest_j.AddNew(dest[k].a, rm, m.IsI());
+          dest_j.AddNew(dest[k].a, rm, s.matrix.IsFirst());
         }
+        // check reverse link
         uniq = true;
-        rm = dest[j].b * dest[k].b.Inverse();
-
+        rm = dest[k].b.Inverse() * dest[j].b;
         TTypeList<conn_atom_t>& dest_k = conn[con_map[dest[k].a->GetId()]];
         for (size_t l = 0; l < dest_k.Count(); l++) {
           if (dest_k[l].a == dest[j].a && dest_k[l].b == rm) {
@@ -1956,7 +1958,7 @@ void NetTools::set_tags(TCAtom& a, const smatd& m,
           }
         }
         if (uniq) {
-          dest_k.AddNew(dest[j].a, rm, m.IsI());
+          dest_k.AddNew(dest[j].a, rm, s.matrix.IsFirst());
         }
       }
     }

@@ -536,7 +536,9 @@ void XLibMacros::Export(TLibrary& lib)  {
     fpAny|psCheckFileTypeIns,
     "Similar distances restraint");
   xlib_InitMacro(RRings,
-    "cs-do not clear selection" ,
+    "cs-do not clear selection&;"
+    "i-generate implicit restraints&;"
+    ,
     fpAny,
     "Makes all provided rings [like C6 or NC5] regular (flat and all distances"
     " similar). If a selection is given - the whole rings must be selected");
@@ -8600,57 +8602,97 @@ void XLibMacros::macChiv(TStrObjList &Cmds, const TParamList &Options,
   }
 }
 //.............................................................................
-void XLibMacros::macRRings(TStrObjList &Cmds, const TParamList &Options,
-  TMacroData &E)
+TPtrList<TSimpleRestraint>::const_list_type reguralise_ring(TSAtomPList &ring,
+  double d12, double esd)
 {
+  RefinementModel &rm = *ring[0]->CAtom().GetParent()->GetRefMod();
+  TSimpleRestraint& dr12 = d12 < 0 ? rm.rSADI.AddNew() : rm.rDFIX.AddNew();
+  TSimpleRestraint& dr13 = rm.rSADI.AddNew();
+  if (d12 > 0) {
+    dr12.SetValue(d12);
+  }
+  dr12.SetEsd(esd);
+  dr13.SetEsd(esd * 2);
+  TSimpleRestraint& flat = rm.rFLAT.AddNew();
+  flat.SetEsd(0.1);
+  for (size_t i = 0; i < ring.Count(); i++) {
+    flat.AddAtom(ring[i]->CAtom(), &ring[i]->GetMatrix());
+    if ((i + 1) < ring.Count()) {
+      dr12.AddAtomPair(ring[i]->CAtom(), &ring[i]->GetMatrix(),
+        ring[i + 1]->CAtom(), &ring[i + 1]->GetMatrix());
+    }
+    else {
+      dr12.AddAtomPair(ring[i]->CAtom(), &ring[i]->GetMatrix(),
+        ring[0]->CAtom(), &ring[0]->GetMatrix());
+    }
+    if ((i + 2) < ring.Count()) {
+      dr13.AddAtomPair(ring[i]->CAtom(), &ring[i]->GetMatrix(),
+        ring[i + 2]->CAtom(), &ring[i + 2]->GetMatrix());
+    }
+    else {
+      size_t idx = (i + 2) - ring.Count();
+      dr13.AddAtomPair(ring[i]->CAtom(), &ring[i]->GetMatrix(),
+        ring[idx]->CAtom(), &ring[idx]->GetMatrix());
+    }
+  }
+  TPtrList<TSimpleRestraint> rv;
+  return (rv << dr12 << dr13 << flat);
+}
+void XLibMacros::macRRings(TStrObjList& Cmds, const TParamList& Options,
+  TMacroData& E)
+{
+  using namespace olx_analysis;
   double l = 1.39, e = 0.01;
   XLibMacros::Parse(Cmds, "dd", &l, &e);
   TTypeList<TSAtomPList> rings;
-  TXApp &app = TXApp::GetInstance();
+  TXApp& app = TXApp::GetInstance();
   olxstr cmd = Cmds.IsEmpty() ? olxstr("sel") : Cmds[0];
-  try  {  app.FindRings(cmd, rings);  }
-  catch(const TExceptionBase& exc)  {
+  try {
+    app.FindRings(cmd, rings);
+  }
+  catch (const TExceptionBase& exc) {
     throw TFunctionFailedException(__OlxSourceInfo, exc);
   }
-  for (size_t i=0; i < rings.Count(); i++) {
-    TBasicApp::NewLogEntry() << "Processing ring: " <<
-      olx_analysis::alg::label(rings[i], true, '-');
-    if (!olx_analysis::alg::has_I(rings[i])) {
+  if (Options.GetBoolOption('i')) {
+    olxstr_dict<TSAtomPList> resi_rings;
+    olxstr_set<> unique;
+    for (size_t i = 0; i < rings.Count(); i++) {
+      if (!alg::has_I(rings[i])) {
+        continue;
+      }
+      TResidue* r = alg::get_resi(rings[i], TSAtom::CAtomAccessor());
+      if (r == 0 || r->GetId() == 0) {
+        continue;
+      }
+      TPtrList<TSimpleRestraint> rs = reguralise_ring(rings[i], l, e);
+      rs[0]->ConvertToImplicit();
+      olxstr r_str = rs[0]->ToString();
+      if (unique.Contains(r_str)) {
+        for (size_t j = 0; j < rs.Count(); j++) {
+          rs[j]->GetParent().Release(*rs[j]);
+          delete rs[j];
+        }
+      }
+      else {
+        rs[1]->ConvertToImplicit();
+        rs[2]->ConvertToImplicit();
+        unique.Add(r_str);
+      }
+    }
+    return;
+  }
+  for (size_t i = 0; i < rings.Count(); i++) {
+    TBasicApp::NewLogEntry(logVerbose) << "Processing ring: " <<
+      alg::label(rings[i], true, '-');
+    if (!alg::has_I(rings[i])) {
       TBasicApp::NewLogEntry() << "Skipping - no atoms of the asymmetric unit";
       continue;
     }
-    TSimpleRestraint& dr12 = l < 0 ? app.XFile().GetRM().rSADI.AddNew()
-      : app.XFile().GetRM().rDFIX.AddNew();
-    TSimpleRestraint& dr13 = app.XFile().GetRM().rSADI.AddNew();
-    if (l > 0) dr12.SetValue(l);
-    dr12.SetEsd(e);
-    dr13.SetEsd(e*2);
-    TSimpleRestraint& flat = app.XFile().GetRM().rFLAT.AddNew();
-    flat.SetEsd(0.1);
-    for (size_t j=0; j < rings[i].Count(); j++) {
-      flat.AddAtom(rings[i][j]->CAtom(), &rings[i][j]->GetMatrix());
-      if ((j+1) < rings[i].Count()) {
-        dr12.AddAtomPair(rings[i][j]->CAtom(), &rings[i][j]->GetMatrix(),
-          rings[i][j+1]->CAtom(), &rings[i][j+1]->GetMatrix());
-      }
-      else {
-        dr12.AddAtomPair(rings[i][j]->CAtom(), &rings[i][j]->GetMatrix(),
-          rings[i][0]->CAtom(), &rings[i][0]->GetMatrix());
-      }
-      if ((j+2) < rings[i].Count()) {
-        dr13.AddAtomPair(rings[i][j]->CAtom(), &rings[i][j]->GetMatrix(),
-          rings[i][j+2]->CAtom(), &rings[i][j+2]->GetMatrix());
-      }
-      else {
-        size_t idx = (j+2) - rings[i].Count();
-        dr13.AddAtomPair(rings[i][j]->CAtom(), &rings[i][j]->GetMatrix(),
-          rings[i][idx]->CAtom(), &rings[i][idx]->GetMatrix());
-      }
-    }
+    TPtrList<TSimpleRestraint> rs = reguralise_ring(rings[i], l, e);
     TBasicApp::NewLogEntry() << "Placing the following restraints: ";
-    TBasicApp::NewLogEntry() << dr12.ToString();
-    TBasicApp::NewLogEntry() << dr13.ToString();
-    TBasicApp::NewLogEntry() << flat.ToString() << NewLineSequence();
+    TBasicApp::NewLogEntry() << rs[0]->ToString();
+    TBasicApp::NewLogEntry() << rs[1]->ToString();
+    TBasicApp::NewLogEntry() << rs[2]->ToString() << NewLineSequence();
   }
 }
 //.............................................................................

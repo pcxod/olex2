@@ -468,7 +468,7 @@ protected:
     const cm_Element* type = &ca.GetType();
     if (heavier) {
       if (!dry_run) {
-        TBasicApp::NewLogEntry(logInfo) << "Searching element heavier for " <<
+        TBasicApp::NewLogEntry(logVerbose) << "Searching element heavier for " <<
           ca.GetLabel();
       }
       for (size_t j = 0; j < list.Count(); j++) {
@@ -511,7 +511,7 @@ protected:
     }
     else if (lighter) {
       if (!dry_run) {
-        TBasicApp::NewLogEntry(logInfo) << "Searching element lighter for " <<
+        TBasicApp::NewLogEntry(logVerbose) << "Searching element lighter for " <<
           ca.GetLabel();
       }
       for (size_t j = 0; j < list.Count(); j++) {
@@ -564,7 +564,7 @@ protected:
       stat.AtomTypeChanges++;
       if (!dry_run) {
         olx_analysis::helper::reset_u(ca);
-        TBasicApp::NewLogEntry(logInfo) << tmp;
+        TBasicApp::NewLogEntry(logVerbose) << tmp;
       }
       return true;
     }

@@ -932,9 +932,6 @@
     <ClInclude Include="..\..\..\xlib\p4p.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\xlib\packutil.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\xlib\reflection.h">
       <Filter>Header Files</Filter>
     </ClInclude>

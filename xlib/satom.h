@@ -259,6 +259,14 @@ public:
     typedef vec3d return_type;
   };
 
+  struct CAtomAccessor {
+    template <class T>
+    const TCAtom& operator () (const T& a) const {
+      return olx_ref::get(a).CAtom();
+    }
+    typedef TCAtom return_type;
+  };
+
 };
 
 typedef TTypeList<TSAtom> TSAtomList;

@@ -18,6 +18,7 @@ BeginEsdlNamespace()
 
 enum  {
   logDefault,
+  logVerbose, // as logInfo but may be discarded if TLog is not verbose
   logInfo,
   logWarning,
   logError,
@@ -28,6 +29,7 @@ class TLog : public IOlxObject, public IDataOutputStream {
   // stream, to delete at the end
   TArrayList<olx_pair_t<IDataOutputStream*, bool> > Streams;
   TActionQList Actions;
+  bool verbose;
 protected:
   virtual size_t Write(const void* Data, size_t size);
   virtual uint64_t GetSize() const { return 0; }
@@ -50,6 +52,9 @@ protected:
 public:
   TLog();
   virtual ~TLog();
+
+  bool IsVerbose() const { return verbose; }
+  void SetVerbose(bool v) { verbose = v; }
   // if own is true, the object will be deleted in the end
   void AddStream(IDataOutputStream* stream, bool own) {
     Streams.Add(olx_pair_t<IDataOutputStream*, bool>(stream, own));
