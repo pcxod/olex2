@@ -4944,7 +4944,7 @@ void GXLibMacros::macSetMaterial(TStrObjList &Cmds, const TParamList &Options,
           colls[ci]->GetStyle().Clear();
         }
         else {
-          for (int pi = 0; pi < colls[ci]->PrimitiveCount(); pi++) {
+          for (size_t pi = 0; pi < colls[ci]->PrimitiveCount(); pi++) {
             TGlPrimitive &glp = colls[ci]->GetPrimitive(pi);
             glp.SetProperties(glm);
             colls[ci]->GetStyle().SetMaterial(glp.GetName(), glm);

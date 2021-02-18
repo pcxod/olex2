@@ -2630,6 +2630,127 @@ RefinementModel::EXTI::Shelxl RefinementModel::GetShelxEXTICorrector() const {
     aunit.GetHklToCartesian());
 }
 //..............................................................................
+void RefinementModel::SetHKLF(const IStrList& hklf) {
+  if (hklf.IsEmpty()) {
+    throw TInvalidArgumentException(__OlxSourceInfo, "empty HKLF");
+  }
+  HKLF = hklf[0].ToInt();
+  if (HKLF > 4) {
+    MERG = 0;
+  }
+  if (hklf.Count() > 1) {
+    HKLF_s = hklf[1].ToDouble();
+  }
+  if (hklf.Count() > 10) {
+    for (int i = 0; i < 9; i++) {
+      HKLF_mat[i / 3][i % 3] = hklf[2 + i].ToDouble();
+    }
+  }
+  else if (hklf.Count() > 2) {
+    TBasicApp::NewLogEntry(logError) <<
+      (olxstr("Invalid HKLF matrix ignored: ").quote() << TStrList(hklf).Text(' ', 2));
+  }
+  if (hklf.Count() > 11) {
+    HKLF_wt = hklf[11].ToDouble();
+  }
+  if (hklf.Count() > 12) {
+    HKLF_m = hklf[12].ToInt();
+  }
+  HKLF_set = true;
+}
+//..............................................................................
+void RefinementModel::SetHKLF_mat(const mat3d& v) {
+  if (HKLF_mat != v) { // make sure it gets applied to the reflections
+    _Reflections.Clear();
+  }
+  HKLF_mat = v;
+  HKLF_set = true;
+}
+//..............................................................................
+void RefinementModel::SetTWIN(const IStrList& twin) {
+  if (twin.Count() > 8) {
+    for (size_t i = 0; i < 9; i++) {
+      TWIN_mat[i / 3][i % 3] = twin[i].ToDouble();
+    }
+  }
+  if (twin.Count() > 9) {
+    TWIN_n = twin[9].ToInt();
+  }
+  TWIN_set = true;
+}
+//..............................................................................
+olxstr RefinementModel::GetUserContentStr() const {
+  olxstr_buf rv;
+  for (size_t i = 0; i < UserContent.Count(); i++) {
+    rv << ' ' << UserContent[i].ToString();
+  }
+  return rv.IsEmpty() ? rv : olxstr(rv).SubStringFrom(1);
+}
+//..............................................................................
+void RefinementModel::SetUserContentType(const IStrList& sfac) {
+  UserContent.Clear();
+  for (size_t i = 0; i < sfac.Count(); i++) {
+    AddUserContent(sfac[i], 0);
+  }
+}
+//..............................................................................
+void RefinementModel::SetUserContent(const IStrList& sfac,
+  const IStrList& unit)
+{
+  if (sfac.Count() != unit.Count()) {
+    throw TInvalidArgumentException(__OlxSourceInfo,
+      "UNIT/SFAC lists mismatch");
+  }
+  UserContent.Clear();
+  for (size_t i = 0; i < sfac.Count(); i++) {
+    AddUserContent(sfac[i], unit[i].ToDouble(),
+      XScatterer::ChargeFromLabel(sfac[i]));
+  }
+}
+//..............................................................................
+void RefinementModel::SetUserContentSize(const IStrList& unit) {
+  if (UserContent.Count() != unit.Count()) {
+    throw TInvalidArgumentException(__OlxSourceInfo,
+      "UNIT/SFAC lists mismatch");
+  }
+  for (size_t i = 0; i < UserContent.Count(); i++) {
+    UserContent[i].count = unit[i].ToDouble();
+  }
+}
+//..............................................................................
+void RefinementModel::AddUserContent(const olxstr& type, double amount, int charge) {
+  const cm_Element* elm = XElementLib::FindBySymbolEx(type);
+  if (elm == 0) {
+    throw TInvalidArgumentException(__OlxSourceInfo, "element");
+  }
+  UserContent.AddNew(*elm, amount, XScatterer::ChargeFromLabel(type));
+}
+//..............................................................................
+void RefinementModel::SetUserFormula(const olxstr& frm, bool mult_z) {
+  UserContent.Clear();
+  XElementLib::ParseElementString(frm, UserContent);
+  for (size_t i = 0; i < UserContent.Count(); i++) {
+    UserContent[i].count *= (mult_z ? aunit.GetZ() : 1.0);
+  }
+}
+//..............................................................................
+void RefinementModel::AddEXYZ(const IStrList& exyz) {
+  if (exyz.Count() < 2) {
+    throw TFunctionFailedException(__OlxSourceInfo, "incomplete EXYZ group");
+  }
+  TExyzGroup& gr = ExyzGroups.New();
+  for (size_t i = 0; i < exyz.Count(); i++) {
+    TCAtom* ca = aunit.FindCAtom(exyz[i]);
+    if (ca == NULL) {
+      gr.Clear();
+      throw TFunctionFailedException(__OlxSourceInfo,
+        olxstr("unknown atom: ") << exyz[i]);
+    }
+    gr.Add(*ca);
+  }
+}
+//..............................................................................
+//..............................................................................
 //..............................................................................
 //..............................................................................
 void RefinementModel::LibHasOccu(const TStrObjList& Params,

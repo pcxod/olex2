@@ -38,7 +38,7 @@ void TCifDP::LoadFromStrings(const TStrList &lines) {
 }
 //.............................................................................
 void TCifDP::LoadFromStream(IInputStream & stream) {
-  size_t sz = stream.GetSize();
+  size_t sz = (size_t)stream.GetSize();
   olx_array_ptr<char> data = new char[sz];
   stream.Read(data, sz);
   LoadFromString(olxstr::FromUTF8(data, sz));

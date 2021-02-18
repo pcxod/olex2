@@ -46,7 +46,8 @@ template <class vec_type> struct OctahedronFP  {
 // vertices are as from http://en.wikipedia.org/wiki/Tetrahedron
 template <class vec_type> struct TetrahedronFP  {
   static const vec_type *vertices() {
-    const static double k = 1./sqrt(3.0);
+    typedef typename vec_type::number_type FT;
+    const static FT k = (FT)1./sqrt((FT)3.0);
     static vec_type v[4] = {
       vec_type(k, k, k), vec_type(-k, -k, k), vec_type(-k, k, -k),
       vec_type(k, -k, -k)

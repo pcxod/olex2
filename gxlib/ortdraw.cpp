@@ -1060,7 +1060,7 @@ void OrtDraw::Render(const olxstr& fileName) {
       break;
       case 1: // centroid
       {
-        ort_circle *c = new ort_circle(*this, cnt, DrawScale*gp.Params[0], true);
+        ort_circle *c = new ort_circle(*this, cnt, DrawScale*(float)gp.Params[0], true);
         if ((GetColorMode() & ortep_color_planes) != 0) {
           c->color = gp.GetProperties().AmbientF.GetRGB();
         }
@@ -1305,10 +1305,10 @@ void OrtDraw::Render(const olxstr& fileName) {
       c[1] += al.GetParent().GetHeight() - al.GetTop();
       c[1] -= glf.GetMaxHeight()*i * 1.05f;
       c[2] = -0.01f;
-      ort_circle *cr = new ort_circle(*this, c, glf.GetMaxHeight()/2, true);
+      ort_circle *cr = new ort_circle(*this, c, (float)glf.GetMaxHeight()/2, true);
       cr->color = al.GetMaterials()[i].AmbientF.GetRGB();
       objects.Add(cr);
-      cr = new ort_circle(*this, c, glf.GetMaxHeight() / 2, false);
+      cr = new ort_circle(*this, c, (float)glf.GetMaxHeight() / 2, false);
       cr->color = 0;
       objects.Add(cr);
     }

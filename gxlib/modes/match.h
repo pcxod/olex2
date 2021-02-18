@@ -160,8 +160,7 @@ void TMatchMode::FitAtoms(TXAtomPList& AtomsToMatch, bool group) {
     vec3d vec1 = AtomsToMatch[3]->crd() - orgn;
     vec3d vec2 = AtomsToMatch[2]->crd() - orgn;
     vec3d rv = vec1.XProdVec(vec2).Normalise();
-    mat3d rm;
-    olx_create_rotation_matrix(rm, rv, vec1.CAngle(vec2));
+    mat3d rm = mat3d::CreateRotationMatrix(rv, vec1.CAngle(vec2));
     TransformAtoms(atomsA, rm, rm*AtomsToMatch[0]->crd() - orgn);
   }
   else if (AtomsToMatch.Count() == 6) {
@@ -172,8 +171,7 @@ void TMatchMode::FitAtoms(TXAtomPList& AtomsToMatch, bool group) {
     v2 = rv.Normal(v2);
     // replacing the rotation vector for the one with correct orientation
     rv = v1.XProdVec(v2).Normalise();
-    mat3d rm;
-    olx_create_rotation_matrix(rm, rv, v1.CAngle(v2));
+    mat3d rm = mat3d::CreateRotationMatrix(rv, v1.CAngle(v2));
     TransformAtoms(atomsA, rm, rm*AtomsToMatch[0]->crd() - AtomsToMatch[1]->crd());
   }
   else {

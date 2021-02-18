@@ -614,7 +614,7 @@ void TXAtom::GetDefSphereMaterial(const TCAtom& Atom, TGlMaterial& M,
         }
       }
     }
-    M.DiffuseF[3] = olx_max(defs.GetQPeakMinAlpha(), M.DiffuseF[3]);
+    M.DiffuseF[3] = olx_max((float)defs.GetQPeakMinAlpha(), M.DiffuseF[3]);
     return;
   }
 //////////
@@ -1662,7 +1662,7 @@ void TXAtomLabelAligner::Align() {
     sorted::PrimitiveAssociation<double, olx_pair_t<vec3d, vec3i> >
       positions;
     vec3d v(1, 0, 0);
-    for (int j = 0; j < 360 / Positions; j++) {
+    for (size_t j = 0; j < 360 / Positions; j++) {
       vec3d p = v;
       p = r.GetBasis().GetMatrix()*p;
       if ((Atoms[i]->DrawStyle() == adsEllipsoid ||

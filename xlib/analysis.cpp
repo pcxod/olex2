@@ -1790,6 +1790,140 @@ ConstTypeList<fragments::fragment> fragments::extract(const TCAtomPList &aua,
 //.............................................................................
 //.............................................................................
 //.............................................................................
+Framework::Framework(const fragments::fragment& frag,
+  const olx_pset<index_t>& nodes)
+{
+  if (!frag.is_polymeric() || frag.count() == 0 || nodes.IsEmpty()) {
+    return;
+  }
+  atoms.AddAll(frag.atoms());
+  conn_info.SetCount(nodes.Count());
+  vertex_map.SetCapacity(nodes.Count());
+  // build vertices
+  for (size_t i = 0; i < nodes.Count(); i++) {
+    Vertex& v = vertices.AddNew(i);
+    for (size_t j = 0; j < frag.count(); j++) {
+      if (frag[j].GetTag() == nodes[i]) {
+        v.atoms.Add(frag[j]);
+      }
+    }
+    v.SetTag(nodes[i]);
+    vertex_map.Add(nodes[i], &v);
+  }
+  for (size_t i = 0; i < nodes.Count(); i++) {
+    for (size_t j = 0; j < frag.count(); j++) {
+      if (!nodes.Contains(frag[j].GetTag())) {
+        frag[i].SetTag(-1);
+      }
+    }
+    set_tags(vertices[i]);
+
+  }
+}
+//.............................................................................
+void Framework::set_tags_(Framework::Vertex& v,
+  TCAtom &a, const smatd &m,
+  TTypeList<conn_atom_t>& dest)
+{
+  a.SetTag(1);
+  for (size_t i = 0; i < a.AttachedSiteCount(); i++) {
+    const TCAtom::Site& s = a.GetAttachedSite(i);
+    if (!m.IsFirst() && !s.matrix.IsFirst()) {
+      continue;
+    }
+    smatd rm = m.IsFirst() ? s.matrix : m;
+    if (s.atom->GetTag() > 1 && s.atom->GetTag() != v.GetTag()) {
+      bool uniq = true;
+      for (size_t l = 0; l < dest.Count(); l++) {
+        if (dest[l].a->GetTag() == s.atom->GetTag() && dest[l].b == rm) {
+          uniq = false;
+          break;
+        }
+      }
+      if (uniq) {
+        dest.Add(new conn_atom_t(vertex_map.Get(s.atom->GetTag()), rm, m.IsFirst()));
+      }
+      continue;
+    }
+    if (s.atom->GetTag() == -1) {
+      set_tags_(v, *s.atom, rm, dest);
+    }
+  }
+}
+//.............................................................................
+void Framework::set_tags(Framework::Vertex& v) {
+  for (size_t vai = 0; vai < v.atoms.Count(); vai++) {
+    TCAtom& a = *v.atoms[vai];
+    for (size_t i = 0; i < a.AttachedSiteCount(); i++) {
+      const TCAtom::Site& s = a.GetAttachedSite(i);
+      if (s.atom->GetTag() != -1) {
+        // directly bound
+        if (s.atom->GetTag() != v.GetTag()) {
+
+        }
+        continue;
+      }
+      TTypeList<conn_atom_t>& dest = conn_info[v.id];
+      size_t d = dest.Count();
+      set_tags_(v, *s.atom, s.matrix, dest);
+      Linker* linker = 0;
+      for (size_t i = 0; i < atoms.Count(); i++) {
+        if (atoms[i]->GetTag() == 1) {
+          if (linker == 0) {
+            size_t id = vertices.Count();
+            linker = &linkers.AddNew();
+          }
+          linker->atoms.Add(atoms[i]);
+        }
+      }
+      if (linker != 0) {
+        linker->vertices << &v;
+      }
+      for (size_t j = d; j < dest.Count(); j++) {
+        if (linker != 0) {
+          linker->vertices << dest[j].a;
+        }
+        TTypeList<conn_atom_t>& dest_j = conn_info[dest[j].a->id];
+        for (size_t k = j + 1; k < dest.Count(); k++) {
+          smatd rm = dest[j].b.Inverse() * dest[k].b;
+          bool uniq = true;
+          for (size_t l = 0; l < dest_j.Count(); l++) {
+            if (dest_j[l].a == dest[k].a && dest_j[l].b == rm) {
+              uniq = false;
+              break;
+            }
+          }
+          if (uniq) {
+            dest_j.AddNew(dest[k].a, rm, s.matrix.IsFirst());
+          }
+          // check reverse link
+          uniq = true;
+          rm = dest[k].b.Inverse() * dest[j].b;
+          TTypeList<conn_atom_t>& dest_k = conn_info[dest[k].a->id];
+          for (size_t l = 0; l < dest_k.Count(); l++) {
+            if (dest_k[l].a == dest[j].a && dest_k[l].b == rm) {
+              uniq = false;
+              break;
+            }
+          }
+          if (uniq) {
+            dest_k.AddNew(dest[j].a, rm, s.matrix.IsFirst());
+          }
+        }
+      }
+    }
+  }
+}
+//.............................................................................
+void Framework::describe() const {
+  for (size_t i = 0; i < linkers.Count(); i++) {
+    TBasicApp::NewLogEntry() << alg::label(linkers[i].atoms, " ");
+
+  }
+}
+//.............................................................................
+//.............................................................................
+//.............................................................................
 NetTools::NetTools(fragments::fragment& frag, const TCAtomPList& nodes_, bool verbose)
   : verbose(verbose), nodes(nodes_)
 {
@@ -1803,7 +1937,7 @@ NetTools::NetTools(fragments::fragment& frag, const TCAtomPList& nodes_, bool ve
   conn_info.SetCount(nodes.Count());
   for (size_t i = 0; i < nodes.Count(); i++) {
     frag.atoms().ForEach(ACollectionItem::TagSetter(-1));
-    set_tags(*nodes[i], conn_info, conn_map);
+    set_tags(*nodes[i]);
   }
 }
 //.............................................................................
@@ -1816,7 +1950,7 @@ TTypeList<TTypeList<NetTools::atom_t> >::const_list_type NetTools::extract_trian
   const TAsymmUnit& au = *nodes[0]->GetParent();
   for (size_t i = 0; i < conn_info.Count(); i++) {
     TTypeList<olx_pair_t<vec3d, size_t> > centres;
-    if (verbose) {
+    if (TBasicApp::GetLog().IsVerbose()) {
       TBasicApp::NewLogEntry() << "From " << nodes[i]->GetLabel();
     }
     vec3d centre = au.Orthogonalise(nodes[i]->ccrd());
@@ -1915,10 +2049,7 @@ void NetTools::set_tags_(TCAtom& a, const smatd& m,
   }
 }
 //.............................................................................
-void NetTools::set_tags(TCAtom& a,
-  TTypeList<TTypeList<conn_atom_t> >& conn,
-  olxdict<size_t, size_t, TPrimitiveComparator>& con_map)
-{
+void NetTools::set_tags(TCAtom& a) {
   a.SetTag(1);
   for (size_t i = 0; i < a.AttachedSiteCount(); i++) {
     const TCAtom::Site& s = a.GetAttachedSite(i);
@@ -1930,11 +2061,11 @@ void NetTools::set_tags(TCAtom& a,
     if (s.atom->GetTag() != -1) {
       continue;
     }
-    TTypeList<conn_atom_t>& dest = conn[con_map[a.GetId()]];
+    TTypeList<conn_atom_t>& dest = conn_info[conn_map[a.GetId()]];
     size_t d = dest.Count();
     set_tags_(*s.atom, s.matrix, dest);
     for (size_t j = d; j < dest.Count(); j++) {
-      TTypeList<conn_atom_t>& dest_j = conn[con_map[dest[j].a->GetId()]];
+      TTypeList<conn_atom_t>& dest_j = conn_info[conn_map[dest[j].a->GetId()]];
       for (size_t k = j + 1; k < dest.Count(); k++) {
         smatd rm = dest[j].b.Inverse() * dest[k].b;
         bool uniq = true;
@@ -1950,7 +2081,7 @@ void NetTools::set_tags(TCAtom& a,
         // check reverse link
         uniq = true;
         rm = dest[k].b.Inverse() * dest[j].b;
-        TTypeList<conn_atom_t>& dest_k = conn[con_map[dest[k].a->GetId()]];
+        TTypeList<conn_atom_t>& dest_k = conn_info[conn_map[dest[k].a->GetId()]];
         for (size_t l = 0; l < dest_k.Count(); l++) {
           if (dest_k[l].a == dest[j].a && dest_k[l].b == rm) {
             uniq = false;

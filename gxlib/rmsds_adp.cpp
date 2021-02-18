@@ -91,9 +91,9 @@ void TRMDSADP::Create(const olxstr& cName) {
     for (size_t i = 0; i < sph_v.Count(); i++) {
       float d = 0;
       if (t.ok() && AnhType != anh_none) {
-        float c_ = tmp_t3.sum_up(sph_v[i]);
+        float c_ = (float)tmp_t3.sum_up(sph_v[i]);
         c_ *= M_PI * M_PI * M_PI * 4. / 3;
-        float d_ = tmp_t4.sum_up(sph_v[i]);
+        float d_ = (float)tmp_t4.sum_up(sph_v[i]);
         d_ *= M_PI * M_PI * M_PI * M_PI * 2. / 3;
         if (AnhType == anh_all) {
           d = (compf(1 + d_, -c_) * (sph_v[i] * M).DotProd(sph_v[i])).mod();
@@ -123,10 +123,10 @@ void TRMDSADP::Create(const olxstr& cName) {
       }
       if (Type == type_rmsd) {
         if (AnhType == anh_anh_C) {
-          d = pow(d, 1./3);
+          d = pow(d, 1.0f/3);
         }
         else if (AnhType == anh_anh_D) {
-          d = pow(d, 1. / 4);
+          d = pow(d, 1.0f/4);
         }
         d = sqrt(d);
       }

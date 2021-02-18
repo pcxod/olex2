@@ -226,46 +226,13 @@ public:
   
   olxstr GetHKLFStr() const;
 
-  template <class list> void SetHKLF(const list& hklf) {
-    if (hklf.IsEmpty()) {
-      throw TInvalidArgumentException(__OlxSourceInfo, "empty HKLF");
-    }
-    HKLF = hklf[0].ToInt();
-    if (HKLF > 4) {
-      MERG = 0;
-    }
-    if (hklf.Count() > 1) {
-      HKLF_s = hklf[1].ToDouble();
-    }
-    if( hklf.Count() > 10 )  {
-      for (int i = 0; i < 9; i++) {
-        HKLF_mat[i / 3][i % 3] = hklf[2 + i].ToDouble();
-      }
-    }
-    else if (hklf.Count() > 2) {
-      TBasicApp::NewLogEntry(logError) <<
-        (olxstr("Invalid HKLF matrix ignored: ").quote() << hklf.Text(' ', 2));
-    }
-    if (hklf.Count() > 11) {
-      HKLF_wt = hklf[11].ToDouble();
-    }
-    if (hklf.Count() > 12) {
-      HKLF_m = hklf[12].ToInt();
-    }
-    HKLF_set = true;
-  }
+  void SetHKLF(const IStrList& hklf);
   // special handling of possibly merged numerical values...
   void SetHKLFString(const olxstr &str);
   int GetHKLF() const {  return HKLF;  }
   void SetHKLF(int v)  {  HKLF = v;  HKLF_set = true;  }
   const mat3d& GetHKLF_mat() const {  return HKLF_mat;  }
-  void SetHKLF_mat(const mat3d& v) {
-    if (HKLF_mat != v) { // make sure it gets applied to the reflections
-      _Reflections.Clear();
-    }
-    HKLF_mat = v;
-    HKLF_set = true;
-  }
+  void SetHKLF_mat(const mat3d& v);
   double GetHKLF_s() const {  return HKLF_s;  }
   void SetHKLF_s(double v)  {  HKLF_s = v;  HKLF_set = true;  }
   double GetHKLF_wt() const {  return HKLF_wt;  }
@@ -327,17 +294,7 @@ public:
   TDoubleList::const_list_type GetScales() const;
   olxstr GetBASFStr() const;
 
-  template <class list> void SetTWIN(const list& twin) {
-    if (twin.Count() > 8) {
-      for (size_t i = 0; i < 9; i++) {
-        TWIN_mat[i / 3][i % 3] = twin[i].ToDouble();
-      }
-    }
-    if (twin.Count() > 9) {
-      TWIN_n = twin[9].ToInt();
-    }
-    TWIN_set = true;
-  }
+  void SetTWIN(const IStrList& twin);
   olxstr GetTWINStr() const;
   const mat3d& GetTWIN_mat()  const {  return TWIN_mat;  }
   void SetTWIN_mat(const mat3d& m)  {  TWIN_mat = m;  TWIN_set = true;  }
@@ -452,82 +409,25 @@ Friedel opposites of components 1 ... m
   }
   // user content management
   const ContentList& GetUserContent() const {  return UserContent;  }
-  const olxstr GetUserContentStr() const {
-    olxstr rv;
-    for (size_t i = 0; i < UserContent.Count(); i++) {
-      rv << ' ' << UserContent[i].ToString();
-    }
-    return rv.IsEmpty() ? rv : rv.SubStringFrom(1);
-  }
-  template <class StrLst> void SetUserContentType(const StrLst& sfac) {
-    UserContent.Clear();
-    for (size_t i = 0; i < sfac.Count(); i++) {
-      AddUserContent(sfac[i], 0);
-    }
-  }
-  template <class StrLst> void SetUserContent(const StrLst& sfac,
-    const StrLst& unit)
-  {
-    if (sfac.Count() != unit.Count()) {
-      throw TInvalidArgumentException(__OlxSourceInfo,
-        "UNIT/SFAC lists mismatch");
-    }
-    UserContent.Clear();
-    for (size_t i = 0; i < sfac.Count(); i++) {
-      AddUserContent(sfac[i], unit[i].ToDouble(),
-        XScatterer::ChargeFromLabel(sfac[i]));
-    }
-  }
+  olxstr GetUserContentStr() const;
+  void SetUserContentType(const IStrList& sfac);
+  void SetUserContent(const IStrList& sfac, const IStrList& unit);
   void SetUserContent(const olxstr& sfac, const olxstr& unit)  {
     SetUserContent(TStrList(sfac, ' '), TStrList(unit, ' '));
   }
-  void SetUserContent(const ContentList& cnt)  {
+  void SetUserContent(const ContentList& cnt) {
     UserContent = cnt;
   }
-  template <class StrLst> void SetUserContentSize(const StrLst& unit)  {
-    if (UserContent.Count() != unit.Count()) {
-      throw TInvalidArgumentException(__OlxSourceInfo,
-        "UNIT/SFAC lists mismatch");
-    }
-    for (size_t i = 0; i < UserContent.Count(); i++) {
-      UserContent[i].count = unit[i].ToDouble();
-    }
-  }
-  void AddUserContent(const olxstr& type, double amount=0, int charge=0) {
-    const cm_Element* elm = XElementLib::FindBySymbolEx(type);
-    if (elm == NULL) {
-      throw TInvalidArgumentException(__OlxSourceInfo, "element");
-    }
-    UserContent.AddNew(*elm, amount, XScatterer::ChargeFromLabel(type));
-  }
+  void SetUserContentSize(const IStrList& unit);
+  void AddUserContent(const olxstr& type, double amount = 0, int charge = 0);
   void AddUserContent(const cm_Element& elm, double amount = 0, int charge = 0) {
     UserContent.AddNew(elm, amount, charge);
   }
-  void SetUserFormula(const olxstr& frm, bool mult_z=true)  {
-    UserContent.Clear();
-    XElementLib::ParseElementString(frm, UserContent);
-    for (size_t i = 0; i < UserContent.Count(); i++) {
-      UserContent[i].count *= (mult_z ? aunit.GetZ() : 1.0);
-    }
-  }
+  void SetUserFormula(const olxstr& frm, bool mult_z = true);
   // returns the restrained distance or -1
   double FindRestrainedDistance(const TCAtom& a1, const TCAtom& a2);
 
-  template <class list> void AddEXYZ(const list& exyz) {
-    if (exyz.Count() < 2) {
-      throw TFunctionFailedException(__OlxSourceInfo, "incomplete EXYZ group");
-    }
-    TExyzGroup& gr = ExyzGroups.New();
-    for (size_t i = 0; i < exyz.Count(); i++) {
-      TCAtom* ca = aunit.FindCAtom(exyz[i]);
-      if (ca == NULL) {
-        gr.Clear();
-        throw TFunctionFailedException(__OlxSourceInfo,
-          olxstr("unknown atom: ") << exyz[i]);
-      }
-      gr.Add(*ca);
-    }
-  }
+  void AddEXYZ(const IStrList& exyz);
 
   RefinementModel& Assign(const RefinementModel& rm, bool AssignAUnit);
   /* updates refinable params - BASF, FVAR, WGHT, returns false if objects
@@ -538,11 +438,11 @@ Friedel opposites of components 1 ... m
   Fragment& GetFrag(size_t i)  {  return *Frags.GetValue(i);  }
   const Fragment& GetFrag(size_t i) const {  return *Frags.GetValue(i);  }
   Fragment* FindFragByCode(int code) const { return Frags.Find(code, NULL); }
-  Fragment& AddFrag(int code, double a=1, double b=1, double c=1, double al=90,
-    double be=90, double ga=90)
+  Fragment& AddFrag(int code, double a = 1, double b = 1, double c = 1,
+    double al = 90, double be = 90, double ga = 90)
   {
     size_t ind = Frags.IndexOf(code);
-    if( ind != InvalidIndex )  {
+    if (ind != InvalidIndex) {
       throw TFunctionFailedException(__OlxSourceInfo,
         "duplicated FRAG instruction");
     }
@@ -564,8 +464,9 @@ Friedel opposites of components 1 ... m
         Omits, mergeFP);
       stats.MERG = MERG;
     }
-    else
+    else {
       stats = RefMerger::MergeInP1<Merger>(refs, out, Omits);
+    }
     return AdjustIntensity(out, stats);
   }
   // Friedel pairs always merged
@@ -588,7 +489,7 @@ Friedel opposites of components 1 ... m
     return AdjustIntensity(out, stats);
   }
   // P1 merged, unfiltered
-  template <class Merger> HklStat GetAllP1RefList(TRefList& out)  {
+  template <class Merger> HklStat GetAllP1RefList(TRefList& out) {
     HklStat stats;
     TRefList refs(GetReflections());
     vec3i_list empty_omits;
@@ -596,7 +497,7 @@ Friedel opposites of components 1 ... m
     return stats;
   }
   // P1 merged, filtered
-  template <class Merger> HklStat GetFilteredP1RefList(TRefList& out)  {
+  template <class Merger> HklStat GetFilteredP1RefList(TRefList& out) {
     HklStat stats;
     TRefList refs;
     FilterHkl(refs, stats);
@@ -645,9 +546,9 @@ Friedel opposites of components 1 ... m
     return vec3i(aunit.GetAxes()/d + tol);
   }
   double CalcCompletenessTo2Theta(double tt, bool Laue);
-  IXVarReferencerContainer& GetRefContainer(const olxstr& id_name)  {
-    try {  return *RefContainers.Get(id_name);  }
-    catch(...)  {
+  IXVarReferencerContainer& GetRefContainer(const olxstr& id_name) {
+    try { return *RefContainers.Get(id_name); }
+    catch (...) {
       throw TInvalidArgumentException(__OlxSourceInfo, "container id");
     }
   }

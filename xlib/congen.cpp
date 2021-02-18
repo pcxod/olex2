@@ -86,7 +86,7 @@ void AConstraintGenerator::DoGenerateAtom(TResidue &r, TCAtomPList& created,
 vec3d AConstraintGenerator::Generate_1(short group,
   const TAtomEnvi& envi) const
 {
-  double dis = Distances.Get(AConstraintGenerator::GenId(group, envi.Count()));
+  double dis = Distances.Get(AConstraintGenerator::GenId(group, (uint16_t)envi.Count()));
   // proposed by Luc, see Afix 13 in shelxl
   bool AnglesEqual = (envi.Count() == 3);
   if (AnglesEqual) {

@@ -902,14 +902,15 @@ void TXApp::AutoAfixRings(int afix, TSAtom* sa, bool TryPyridine) {
 //..............................................................................
 void TXApp::SetAtomUiso(TSAtom& sa, double val) {
   RefinementModel& rm = *sa.CAtom().GetParent()->GetRefMod();
-  if( sa.CAtom().GetEllipsoid() == NULL )  {
-    if( val <= -0.5 )  {
+  if (sa.CAtom().GetEllipsoid() == 0) {
+    if (val <= -0.5) {
       size_t ni = InvalidIndex;
-      for( size_t i=0; i < sa.NodeCount(); i++ ) {
+      for (size_t i = 0; i < sa.NodeCount(); i++) {
         TSAtom& nd = sa.Node(i);
-        if( nd.IsDeleted() || nd.GetType() == iQPeakZ )
+        if (nd.IsDeleted() || nd.GetType() == iQPeakZ) {
           continue;
-        if( ni != InvalidIndex )  {  // to many bonds
+        }
+        if (ni != InvalidIndex) {  // to many bonds
           ni = InvalidIndex;
           break;
         }
@@ -918,21 +919,21 @@ void TXApp::SetAtomUiso(TSAtom& sa, double val) {
       /* make sure that there is only one atom in the envi and it has proper
       Uiso
       */
-      if( ni != InvalidIndex && sa.Node(ni).CAtom().GetUisoOwner() == NULL )  {
+      if (ni != InvalidIndex && sa.Node(ni).CAtom().GetUisoOwner() == 0) {
         rm.Vars.FreeParam(sa.CAtom(), catom_var_name_Uiso);
         sa.CAtom().SetUisoOwner(&sa.Node(ni).CAtom());
         sa.CAtom().SetUisoScale(olx_abs(val));
-        sa.CAtom().SetUiso(olx_abs(val)*sa.Node(ni).CAtom().GetUiso());
+        sa.CAtom().SetUiso(olx_abs(val) * sa.Node(ni).CAtom().GetUiso());
       }
       else
         throw TInvalidArgumentException(__OlxSourceInfo, "U owner");
     }
     else {
-      if (val > 1 && int(val / 10) >= rm.Vars.VarCount()) {
+      if (val > 1 && size_t(val / 10) >= rm.Vars.VarCount()) {
         rm.Vars.NewVar(0.025);
       }
       rm.Vars.SetParam(sa.CAtom(), catom_var_name_Uiso, val);
-      sa.CAtom().SetUisoOwner(NULL);
+      sa.CAtom().SetUisoOwner(0);
     }
   }
 }

@@ -193,16 +193,16 @@ public:
           sf.val*sin_cosX[ix][sf.hkl[0] - minInd];
       }
       for (size_t iy = 0; iy < dim[1]; iy++) {
-        for (int i = 0; i < kLen; i++) {
-          int idxi = i + mini[1] - minInd;
-          for (int j = 0; j < lLen; j ++) {
+        for (size_t i = 0; i < kLen; i++) {
+          int idxi = (int)i + mini[1] - minInd;
+          for (size_t j = 0; j < lLen; j ++) {
             T[j] += S[i][j] * sin_cosY[iy][idxi];
           }
         }
         int d2 = mini[2] - minInd;
         for (size_t iz = 0; iz < dim[2]; iz++) {
           compd R;
-          for (int i = 0; i < lLen; i++) {
+          for (size_t i = 0; i < lLen; i++) {
             R += T[i] * sin_cosZ[iz][i + d2];
           }
           const double val = R.Re() / vol;
@@ -253,13 +253,15 @@ public:
       sum(0), sq_sum(0), vol(_volume), maxVal(-1000), minVal(1000)
     {
       S = new compd*[kLen];
-      for (size_t i = 0; i < kLen; i++)
+      for (size_t i = 0; i < kLen; i++) {
         S[i] = new compd[lLen];
+      }
       T = new compd[lLen];
     }
     ~TCalcPattTask() {
-      for (size_t i = 0; i < kLen; i++)
+      for (size_t i = 0; i < kLen; i++) {
         delete[] S[i];
+      }
       delete[] S;
       delete[] T;
     }
@@ -287,12 +289,15 @@ public:
           if (val < minVal)  minVal = val;
           map[ix][iy][iz] = (FloatT)val;
         }
-        for (size_t i = 0; i < lLen; i++)
+        for (size_t i = 0; i < lLen; i++) {
           T[i].Null();
+        }
       }
-      for (size_t i = 0; i < kLen; i++)
-        for (size_t j = 0; j < lLen; j++)
+      for (size_t i = 0; i < kLen; i++) {
+        for (size_t j = 0; j < lLen; j++) {
           S[i][j].Null();
+        }
+      }
     }
     TCalcPattTask* Replicate() {
       return new TCalcPattTask(map, dim, vol,

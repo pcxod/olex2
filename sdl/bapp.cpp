@@ -583,7 +583,7 @@ void BAPP_Encode(const TStrObjList& Params, TMacroData &E) {
   TEFile in(Params[0], "rb");
   TEFile out(Params[1], "w+b");
   if (Params[2].Equalsi("85")) {
-    uint64_t bf_sz = 4 * 64 * 256;
+    size_t bf_sz = 4 * 64 * 256;
     olx_array_ptr<uint8_t> bf(bf_sz);
     uint64_t available = in.GetSize();
     while (available > bf_sz) {
@@ -592,8 +592,8 @@ void BAPP_Encode(const TStrObjList& Params, TMacroData &E) {
       available -= bf_sz;
     }
     if (available > 0) {
-      in.Read(bf, available);
-      out.Write(encoding::base85::encode(bf, available));
+      in.Read(bf, (size_t)available);
+      out.Write(encoding::base85::encode(bf, (size_t)available));
     }
   }
   else {
@@ -608,7 +608,7 @@ void BAPP_Decode(const TStrObjList& Params, TMacroData &E) {
   TEFile in(Params[0], "rb");
   TEFile out(Params[1], "w+b");
   if (Params[2].Equalsi("85")) {
-    uint64_t bf_sz = 5 * 64 * 256;
+    size_t bf_sz = 5 * 64 * 256;
     olx_array_ptr<uint8_t> bf(bf_sz);
     uint64_t available = in.GetSize();
     while (available > bf_sz) {
@@ -617,8 +617,8 @@ void BAPP_Decode(const TStrObjList& Params, TMacroData &E) {
       available -= bf_sz;
     }
     if (available > 0) {
-      in.Read(bf, available);
-      out.Write(encoding::base85::decode(bf, available));
+      in.Read(bf, (size_t)available);
+      out.Write(encoding::base85::decode(bf, (size_t)available));
     }
   }
   else {

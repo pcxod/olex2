@@ -162,7 +162,8 @@ void XLibMacros::Export(TLibrary& lib)  {
     "and element types as any subsequent argument. Alternatively can take a "
     "few selected atoms of different type to be modelled as the type swapping "
     "disorder or a set of atoms of the same type and new element type on the "
-    "command line."
+    "command line. For the single selected atom that is bound to parts - "
+    "splits the atom into the parts with EXYZ/EADP constraints"
 );
 //_____________________________________________________________________________
   xlib_InitMacro(EADP, EmptyString(), fpAny|psCheckFileTypeIns,
@@ -3074,15 +3075,61 @@ void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options,
     E.ProcessingError(__OlxSrcInfo, "No atoms provided");
     return;
   }
+  RefinementModel& rm = xapp.XFile().GetRM();
+  TAsymmUnit& au = xapp.XFile().GetAsymmUnit();
   if (atoms.Count() == 1 && Cmds.IsEmpty()) {
-    E.ProcessingError(__OlxSrcInfo, "Please specify additional atom type(s)");
+    if (atoms[0]->CAtom().GetPart() != 0) {
+      E.ProcessingError(__OlxSrcInfo, "Select an atom in part 0 for this operation");
+      return;
+    }
+    TCAtom& src = atoms[0]->CAtom();
+    olxset<TCAtom*, TPointerComparator> ptms;
+    for (size_t i = 0; i < src.AttachedSiteCount(); i++) {
+      TCAtom& a = src.GetAttachedAtom(i);
+      if (a.GetPart() != 0) {
+        ptms << &a;
+      }
+    }
+    if (ptms.Count() < 2) {
+      E.ProcessingError(__OlxSrcInfo, "At least 2 parts attached are expected");
+      return;
+    }
+    olxstr scr_label = src.GetLabel();
+    TExyzGroup& exyz = rm.ExyzGroups.New();
+    TSimpleRestraint& eadp = rm.rEADP.AddNew();
+    for (size_t i = 0; i < ptms.Count(); i++) {
+      TCAtom& pa = *ptms[i];
+      TCAtom& a = (i == 0 ? src : au.NewAtom());
+      exyz.Add(a);
+      a.SetPart(pa.GetPart());
+      eadp.AddAtom(a, 0);
+      XVarReference* occu = pa.GetVarRef(catom_var_name_Sof);
+      if (occu != 0) {
+        rm.Vars.AddVarRef(occu->Parent, a, catom_var_name_Sof,
+          occu->relation_type, occu->coefficient);
+      }
+      else {
+        a.SetOccu(pa.GetOccu());
+      }
+      if (i > 0) {
+        a.ccrd() = src.ccrd();
+        a.SetType(src.GetType());
+        a.AssignEquivs(src);
+        if (src.GetEllipsoid() != 0) {
+          TEllipsoid &elp = au.NewEllp();
+          elp = *src.GetEllipsoid();
+          a.SetEllpId(elp.GetId());
+        }
+        a.SetUiso(src.GetUiso());
+      }
+      a.SetLabel(scr_label + olxch('a' + i), false);
+    }
+    xapp.XFile().EndUpdate();
     return;
   }
   const bool set_eadp = Options.GetBoolOption("eadp", false, true);
   TCAtomPList processed;
   TPtrList<TExyzGroup> groups;
-  RefinementModel& rm = xapp.XFile().GetRM();
-  TAsymmUnit& au = xapp.XFile().GetAsymmUnit();
   TPtrList<cm_Element> elements;
   for (size_t i=0; i < Cmds.Count(); i++) {
     cm_Element* elm = XElementLib::FindBySymbol(Cmds[i]);
@@ -3131,8 +3178,9 @@ void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options,
       }
     }
     for (size_t i=0; i < atoms.Count(); i++) {
-      if (atoms[i]->CAtom().GetExyzGroup() != NULL)
+      if (atoms[i]->CAtom().GetExyzGroup() != 0) {
         atoms[i]->CAtom().GetExyzGroup()->Clear();
+      }
       groups.Add(rm.ExyzGroups.New())->Add(atoms[i]->CAtom());
       for (size_t j=1; j < atoms.Count(); j++) {
         TCAtom& ref = atoms[(i+j)%atoms.Count()]->CAtom();
@@ -3215,15 +3263,17 @@ void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options,
     if (set_eadp) {
       for (size_t i=0; i < groups.Count(); i++) {
         TSimpleRestraint& sr = rm.rEADP.AddNew();
-        for (size_t j=0; j < groups[i]->Count(); j++)
+        for (size_t j = 0; j < groups[i]->Count(); j++) {
           sr.AddAtom((*groups[i])[j], 0);
+        }
       }
     }
   }
   const int part = au.GetNextPart();
   for (size_t i=0; i < groups.Count(); i++) {
-    for (size_t j=0; j < groups[i]->Count(); j++)
-      (*groups[i])[j].SetPart((int8_t)(part+j));
+    for (size_t j = 0; j < groups[i]->Count(); j++) {
+      (*groups[i])[j].SetPart((int8_t)(part + j));
+    }
   }
   // force the split atom to become isotropic
   xapp.XFile().GetLattice().SetAnis(processed, false);

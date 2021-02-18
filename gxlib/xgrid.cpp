@@ -35,7 +35,7 @@ vec3i CalculateColour(float v, size_t colour_count, const vec3i* colours) {
   if (v < 0) {
     v = 0;
   }
-  int idx1 = olx_floor(v),
+  size_t idx1 = olx_floor(v),
     idx2 = idx1 + 1;
   if (idx2 >= colour_count) {
     idx2 = colour_count - 1;
@@ -483,8 +483,8 @@ bool TXGrid::Orient(TGlPrimitive& GlP) {
   const TGlOption& end_p =
     GetPrimitives().FindPrimitiveByName("+Surface")->GetProperties().AmbientF;
   vec3i colours2[] = {
-    vec3i(start_p[0] * 255, start_p[1] * 255, start_p[2] * 255),
-    vec3i(end_p[0] * 255, end_p[1] * 255, end_p[2] * 255)
+    vec3i(int(start_p[0] * 255), int(start_p[1] * 255), int(start_p[2] * 255)),
+    vec3i(int(end_p[0] * 255), int(end_p[1] * 255), int(end_p[2] * 255))
   };
   vec3i colours3[] = { colours2[0], vec3i(255,255,255), colours2[1]};
   const vec3i *colours;
@@ -933,7 +933,7 @@ const_strlist TXGrid::ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const {
   out.Add("  union {");
   const TAsymmUnit& au = XApp->XFile().GetAsymmUnit();
   if (Boxed) {
-    for (int li = 0; li < triangles.Count(); li++) {
+    for (size_t li = 0; li < triangles.Count(); li++) {
       const TArrayList<IsoTriangle>& trians = triangles[li];
       if (trians.IsEmpty()) {
         continue;
@@ -955,7 +955,7 @@ const_strlist TXGrid::ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const {
   }
   else if (Mask != 0) {
     vec3d pts[3];
-    for (int li = 0; li < triangles.Count(); li++) {
+    for (size_t li = 0; li < triangles.Count(); li++) {
       const TArrayList<IsoTriangle>& trians = triangles[li];
       if (trians.IsEmpty()) {
         continue;
@@ -997,7 +997,7 @@ const_strlist TXGrid::ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const {
   else {
     if (Extended) {
       vec3d pts[3]; // ext drawing
-      for (int li = 0; li < triangles.Count(); li++) {
+      for (size_t li = 0; li < triangles.Count(); li++) {
         const TArrayList<IsoTriangle>& trians = triangles[li];
         if (trians.IsEmpty()) {
           continue;
@@ -1041,7 +1041,7 @@ const_strlist TXGrid::ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const {
       }
     }
     else {
-      for (int li = 0; li < triangles.Count(); li++) {
+      for (size_t li = 0; li < triangles.Count(); li++) {
         const TArrayList<IsoTriangle>& trians = triangles[li];
         if (trians.IsEmpty()) {
           continue;
@@ -1086,7 +1086,7 @@ void TXGrid::RescaleSurface(bool collect_only) {
       XApp->Get3DFrame().IsSpherical();
     float qr = (float)olx_sqr(XApp->Get3DFrame().GetZoom());
     vec3f center = XApp->Get3DFrame().GetCenter();
-    for (int li = 0; li < triangles.Count(); li++) {
+    for (size_t li = 0; li < triangles.Count(); li++) {
       const TArrayList<vec3f>& verts = vertices[li];
       const TArrayList<vec3f>& norms = normals[li];
       const TArrayList<IsoTriangle>& trians = triangles[li];
@@ -1144,7 +1144,7 @@ void TXGrid::RescaleSurface(bool collect_only) {
   }
   else if (Mask != 0) {
     vec3d pts[3];
-    for (int li = 0; li < triangles.Count(); li++) {
+    for (size_t li = 0; li < triangles.Count(); li++) {
       const TArrayList<vec3f>& verts = vertices[li];
       const TArrayList<vec3f>& norms = normals[li];
       const TArrayList<IsoTriangle>& trians = triangles[li];
@@ -1201,7 +1201,7 @@ void TXGrid::RescaleSurface(bool collect_only) {
   else {
     if (Extended) {
       vec3d pts[3]; // ext drawing
-      for (int li = 0; li < triangles.Count(); li++) {
+      for (size_t li = 0; li < triangles.Count(); li++) {
         const TArrayList<vec3f>& verts = vertices[li];
         const TArrayList<vec3f>& norms = normals[li];
         const TArrayList<IsoTriangle>& trians = triangles[li];
@@ -1259,7 +1259,7 @@ void TXGrid::RescaleSurface(bool collect_only) {
     }
     else {
       vec3d pts[3];
-      for (int li = 0; li < triangles.Count(); li++) {
+      for (size_t li = 0; li < triangles.Count(); li++) {
         const TArrayList<vec3f>& verts = vertices[li];
         const TArrayList<vec3f>& norms = normals[li];
         const TArrayList<IsoTriangle>& trians = triangles[li];
@@ -1724,7 +1724,7 @@ void TXGrid::LibProcess(TStrObjList& Cmds, const TParamList& Options,
     float ratio = Options.FindValue("r", "0.8").ToFloat();
     size_t N = Options.FindValue("n", "10").ToSizeT();
     int eps = Options.FindValue("m", "0").ToInt();
-    for (int li = 0; li < triangles.Count(); li++) {
+    for (size_t li = 0; li < triangles.Count(); li++) {
       if (eps > 0) {
         FloatVC::eps() = eps;
         olxset<vec3f, FloatVC> vset;
@@ -1754,7 +1754,7 @@ void TXGrid::LibProcess(TStrObjList& Cmds, const TParamList& Options,
         verts = vertices[li];
       }
       olx_grid_util::smoother sm(verts, triags);
-      for (int i = 0; i < N; i++) {
+      for (size_t i = 0; i < N; i++) {
         sm.smooth(ratio);
       }
 

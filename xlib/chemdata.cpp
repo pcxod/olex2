@@ -996,7 +996,7 @@ olxstr_dict<cm_Element *, true> &XElementLib::GetElementDict() {
 //..............................................................................
 //..............................................................................
 cm_Element* XElementLib::FindBySymbol(const olxstr& symbol) {
-  return GetElementDict().Find(symbol, NULL);
+  return GetElementDict().Find(symbol, 0);
 }
 //..............................................................................
 cm_Element& XElementLib::GetByIndex(short ind) {
@@ -1004,18 +1004,22 @@ cm_Element& XElementLib::GetByIndex(short ind) {
 }
 //..............................................................................
 cm_Element* XElementLib::FindByZ(short z) {
-  if (z <= 0 || z > iMaxElementIndex)  return NULL;
+  if (z <= 0 || z > iMaxElementIndex) {
+    return 0;
+  }
   TPtrList<cm_Element> &l = GetElementList();
-  short idx = z;
-  while (l[idx]->z < z && ++idx < iMaxElementIndex)
-    ;
-  if (idx < iMaxElementIndex && l[idx]->z == z)
+  size_t idx = z;
+  while (l[idx]->z < z && ++idx < iMaxElementIndex) {
+  }
+  if (idx < iMaxElementIndex && l[idx]->z == z) {
     return l[idx];
-  while (l[idx]->z > z && --idx > 0)
-    ;
-  if (idx >= 0 && l[idx]->z == z)
+  }
+  while (l[idx]->z > z && --idx > 0) {
+  }
+  if (idx >= 0 && l[idx]->z == z) {
     return l[idx];
-  return NULL;
+  }
+  return 0;
 }
 //..............................................................................
 cm_Element* XElementLib::NextZ(const cm_Element& elm) {
@@ -1024,10 +1028,10 @@ cm_Element* XElementLib::NextZ(const cm_Element& elm) {
       "cannot iterate the Q-peaks");
   }
   TPtrList<cm_Element> &l = GetElementList();
-  short idx = elm.index;
-  while (++idx < l.Count() && l[idx]->z != elm.z+1)
-    ;
-  return (idx < l.Count() ? l[idx] : NULL);
+  size_t idx = elm.index;
+  while (++idx < l.Count() && l[idx]->z != elm.z + 1) {
+  }
+  return (idx < l.Count() ? l[idx] : 0);
 }
 //..............................................................................
 cm_Element* XElementLib::PrevZ(const cm_Element& elm)  {
@@ -1036,49 +1040,58 @@ cm_Element* XElementLib::PrevZ(const cm_Element& elm)  {
       "cannot iterate the Q-peaks");
   }
   TPtrList<cm_Element> &l = GetElementList();
-  short idx = elm.index;
+  size_t idx = elm.index;
   while (--idx >= 0 && l[idx]->z != elm.z-1)
     ;
-  return (idx >= 0 ? l[idx] : NULL);
+  return (idx >= 0 ? l[idx] : 0);
 }
 //..............................................................................
 cm_Element *XElementLib::NextGroup(int group, const cm_Element *e) {
-  if (e == NULL) return NULL;
+  if (e == 0) {
+    return 0;
+  }
   TPtrList<cm_Element> &l = GetElementList();
-  if (IsGroup(group, *e))
+  if (IsGroup(group, *e)) {
     return l[e->index];
-  short idx = e->index;
-  while (++idx < l.Count() && !IsGroup(group, *l[idx]))
-    ;
-  return (idx < l.Count() ? l[idx] : NULL);
+  }
+  size_t idx = e->index;
+  while (++idx < l.Count() && !IsGroup(group, *l[idx])) {
+  }
+  return (idx < l.Count() ? l[idx] : 0);
 }
 //..............................................................................
 cm_Element *XElementLib::PrevGroup(int group, const cm_Element *e) {
-  if (e == NULL) return NULL;
+  if (e == 0) {
+    return 0;
+  }
   TPtrList<cm_Element> &l = GetElementList();
-  if (IsGroup(group, *e))
+  if (IsGroup(group, *e)) {
     return l[e->index];
-  short idx = e->index;
-  while (--idx >= 0 && !IsGroup(group, *l[idx]))
-    ;
-  return (idx >= 0 ? l[idx] : NULL);
+  }
+  size_t idx = e->index;
+  while (--idx >= 0 && !IsGroup(group, *l[idx])) {
+  }
+  return (idx >= 0 ? l[idx] : 0);
 }
 //..............................................................................
 cm_Element* XElementLib::FindBySymbolEx(const olxstr& label) {
-  if (label.IsEmpty() || !olxstr::o_isalpha(label.CharAt(0)))
-    return NULL;
+  if (label.IsEmpty() || !olxstr::o_isalpha(label.CharAt(0))) {
+    return 0;
+  }
   olxstr lbl = label.ToUpperCase();
-  if (lbl.Length() > 2)  lbl = lbl.SubStringTo(2);
+  if (lbl.Length() > 2) {
+    lbl = lbl.SubStringTo(2);
+  }
   // check for 2 char label
   olxstr_dict<cm_Element *, true> &d = GetElementDict();
   if (lbl.Length() == 2 && (lbl.CharAt(1) >= 'A' && lbl.CharAt(1) <= 'Z')) {
-    cm_Element *e = d.Find(lbl, NULL);
+    cm_Element *e = d.Find(lbl, 0);
     if (e != 0) {
       return e;
     }
   }
   //check for single char label
-  return d.Find(lbl.SubStringTo(1), NULL);
+  return d.Find(lbl.SubStringTo(1), 0);
 }
 //..............................................................................
 ContentList& XElementLib::ParseElementString(const olxstr& su,
@@ -1088,7 +1101,9 @@ ContentList& XElementLib::ParseElementString(const olxstr& su,
   bool nowCnt = false;
   TStrList toks;
   for (size_t i=0; i < su.Length(); i++) {
-    if (olxstr::o_iswhitechar(su[i]))  continue;
+    if (olxstr::o_iswhitechar(su[i])) {
+      continue;
+    }
     if (nowCnt) {
       if (olxstr::o_isdigit(su[i]) || su[i] == '.') {
         cnt << su[i];
@@ -1233,7 +1248,7 @@ void XElementLib::ExpandShortcut(const olxstr& sh, ContentList& res, double cnt)
   }
   else {  // just add whatever is provided
     cm_Element* elm = XElementLib::FindBySymbolEx(sh);
-    if (elm == NULL) {
+    if (elm == 0) {
       throw TInvalidArgumentException(__OlxSourceInfo, "element/shortcut");
     }
     shc.AddNew(*elm, 1, XScatterer::ChargeFromLabel(sh));
@@ -1256,7 +1271,7 @@ void XElementLib::ExpandShortcut(const olxstr& sh, ContentList& res, double cnt)
 }
 //..............................................................................
 ContentList& XElementLib::SortContentList(ContentList& cl) {
-  const cm_Element *c_type = NULL, *h_type = NULL;
+  const cm_Element *c_type = 0, *h_type = 0;
   ElementPList elms;
   for (size_t i = 0; i < cl.Count(); i++) {
     elms.Add(cl[i].element);
@@ -1269,12 +1284,12 @@ ContentList& XElementLib::SortContentList(ContentList& cl) {
   }
   QuickSorter::Sort(elms, ElementSymbolSorter(),
     SyncSortListener::MakeSingle(cl));
-  if (c_type != NULL && h_type != NULL) {
-    if (c_type != NULL && elms.Count() > 1) {
+  if (c_type != 0 && h_type != 0) {
+    if (c_type != 0 && elms.Count() > 1) {
       size_t ind = elms.IndexOf(c_type);
       cl.Move(ind, 0);
     }
-    if (h_type != NULL && elms.Count() > 2) {
+    if (h_type != 0 && elms.Count() > 2) {
       size_t ind = elms.IndexOf(h_type);
       cl.Move(ind, 1);
     }

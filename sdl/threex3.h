@@ -50,7 +50,7 @@ public:
   FT QLength() const {
     return (data[0] * data[0] + data[1] * data[1] + data[2] * data[2]);
   }
-  FT Length() const { return sqrt(QLength()); }
+  FT Length() const { return (FT)sqrt(QLength()); }
   static size_t Count() { return 3; }
   static bool IsEmpty() { return false; }
   static void Resize(size_t s) {
@@ -174,7 +174,7 @@ public:
   // a*b*sin = a*b*(1-cos^2) = a*b - DotProd^2
   template <class AT> FT XProdVal(const TVector3<AT>& v) const {
     const FT dp = DotProd(v);
-    return sqrt(QLength()*v.QLength() - dp * dp);
+    return (FT)sqrt(QLength()*v.QLength() - dp * dp);
   }
   template <class AT> TVector3<FT> XProdVec(const TVector3<AT>& v) const
   {
@@ -832,12 +832,29 @@ protected:
     }
   }
 public:
+  static TMatrix33 CreateRotationMatrix(const TVector3<FT>& rv, FT ca, FT sa) {
+    TMatrix33 rm;
+    return olx_create_rotation_matrix_(rm, rv, ca, sa);
+  }
+  // for cosine of the rotation angle
+  static TMatrix33 CreateRotationMatrix(const TVector3<FT>& rv, FT ca) {
+    TMatrix33 rm;
+    return olx_create_rotation_matrix_(rm, rv, ca);
+  }
+  // for angle in degrees
+  static TMatrix33 GetRotationMatrix(const TVector3<FT>& rv, FT angle) {
+    TMatrix33 rm;
+    FT ra = (angle * M_PI) / 180;
+    return olx_create_rotation_matrix_(rm, rv, cos(ra), sin(ra));
+  }
   /* solves a set of equations by the Cramer rule {equation arr.c = b },
   returns c
   */
   static TVector3<FT> CramerSolve(const TMatrix33<FT>& arr, const TVector3<FT>& b) {
     FT det = arr.Determinant();
-    if (olx_abs(det) < 1e-15) throw TDivException(__OlxSourceInfo);
+    if (olx_abs(det) < 1e-15) {
+      throw TDivException(__OlxSourceInfo);
+    }
     // det( {b[0], a12, a13}, {b[1], a22, a23}, {b[2], a32, a33} )/det
     return TVector3<FT>(
       b[0] * (arr[1][1] * arr[2][2] - arr[1][2] * arr[2][1]) -

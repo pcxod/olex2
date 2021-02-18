@@ -142,12 +142,13 @@ public:
   FILE* Handle() const {  return FHandle;  }
   FILE* ReleaseHandle() {
     FILE* rv = FHandle;
-    FHandle = NULL;
+    FHandle = 0;
     return rv;
   }
   int FileNo() const {
-    if( FHandle == NULL )
+    if (FHandle == 0) {
       throw TInvalidArgumentException(__OlxSourceInfo, "NULL handle");
+    }
 #ifdef _MSC_VER
     return _fileno(FHandle);
 #else

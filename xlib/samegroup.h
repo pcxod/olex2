@@ -34,7 +34,7 @@ public:
   const TSameGroupList& GetParent() const { return Parent; }
   TSameGroupList& GetParent() { return Parent; }
   TSameGroup* GetParentGroup() const { return ParentGroup; }
-  int16_t GetId() const { return Id; }
+  uint16_t GetId() const { return Id; }
 
   void Assign(const TSameGroup& sg);
   // this is called internally by the RM

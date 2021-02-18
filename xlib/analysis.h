@@ -389,6 +389,49 @@ public:
   }
 };
 
+class Framework {
+public:
+  struct Edge {
+    class Vertex* that;
+    smatd matrix;
+    Edge()
+      : that(0)
+    {}
+  };
+  struct Vertex : public ACollectionItem {
+    Vertex(size_t id)
+      : id(id)
+    {}
+
+    size_t id;
+    vec3d center;
+    TTypeList<Edge> neighbours;
+    TCAtomPList atoms;
+  };
+
+  struct Linker {
+    TCAtomPList atoms;
+    olxset<Vertex*, TPointerComparator> vertices;
+  };
+
+  TCAtomPList atoms;
+  TTypeList<Vertex> vertices;
+  TTypeList<Linker> linkers;
+  // node tags must be gt 1
+  Framework(const fragments::fragment& frag,
+    const olx_pset<index_t> &nodes);
+
+  typedef AnAssociation3<Vertex*, smatd, bool> conn_atom_t;
+  TTypeList<TTypeList<conn_atom_t> > conn_info;
+  void set_tags(Vertex &v);
+  void set_tags_(Vertex& v,
+    TCAtom& a, const smatd& m,
+    TTypeList<conn_atom_t>& dest);
+  olxdict<index_t, Vertex*, TPrimitiveComparator> vertex_map;
+
+  void describe() const;
+};
+
 class NetTools {
 public:
   typedef AnAssociation3<TCAtom*, smatd, bool> conn_atom_t;
@@ -402,9 +445,7 @@ private:
   TCAtomPList nodes;
   olxdict<size_t, size_t, TPrimitiveComparator> conn_map;
   TTypeList<TTypeList<conn_atom_t> > conn_info;
-  void set_tags(TCAtom& a,
-    TTypeList<TTypeList<conn_atom_t> >& conn,
-    olxdict<size_t, size_t, TPrimitiveComparator>& con_map);
+  void set_tags(TCAtom& a);
   void set_tags_(TCAtom& a, const smatd& m,
     TTypeList<conn_atom_t>& dest);
 };

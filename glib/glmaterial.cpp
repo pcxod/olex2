@@ -229,7 +229,7 @@ void TGlMaterial::FromString(const olxstr& str, bool safe) {
   }
   TStrList toks(str, ';');
   Flags = toks[0].ToInt();
-  int ind = 1;
+  size_t ind = 1;
   if (!safe) {
     if ((Flags & sglmAmbientF) != 0) {
       AmbientF.FromString(toks[ind++]);

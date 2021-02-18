@@ -541,7 +541,7 @@ void CIsoSurface::CalculateNormals() {
     const float S = vec1.XProdVal(vec2);
     vec3f normal = vec1.XProdVec(vec2);
     if (S > 0) { // weight up normals of little triangles (hight curvature)
-      normal /= sqrt(S);
+      normal /= (float)sqrt(S);
     }
     Normals[Triangles[i][0]] += normal;
     Normals[Triangles[i][1]] += normal;
