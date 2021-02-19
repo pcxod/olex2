@@ -1573,9 +1573,8 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options,
             InfoTab& it_d = rm.AddRTAB(
               sa.GetType().symbol + ca.GetType().symbol);
             it_d.AddAtom(sa.CAtom(), 0);
-            const smatd* mt = (!(all[j].GetB().t.IsNull() &&
-              all[j].GetB().r.IsI()) ? &all[j].GetB() : 0);
-            if (mt != 0 && transforms.IndexOf(*mt) == InvalidIndex) {
+            const smatd* mt = (!all[j].GetB().IsI() ? &all[j].GetB() : 0);
+            if (mt != 0 && !transforms.Contains(*mt)) {
               transforms.AddCopy(*mt);
             }
             it_d.AddAtom(*const_cast<TCAtom*>(&ca), mt);
@@ -1597,9 +1596,8 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options,
           else {
             InfoTab& it = rm.AddHTAB();
             it.AddAtom(sa.CAtom(), 0);
-            const smatd* mt = (!(all[j].GetB().t.IsNull() &&
-              all[j].GetB().r.IsI()) ? &all[j].GetB() : 0);
-            if (mt != 0 && transforms.IndexOf(*mt) == InvalidIndex) {
+            const smatd* mt = (!all[j].GetB().IsI() ? &all[j].GetB() : 0);
+            if (mt != 0 && !transforms.Contains(*mt)) {
               transforms.AddCopy(*mt);
             }
             it.AddAtom(*const_cast<TCAtom*>(&ca), mt);
@@ -8960,10 +8958,10 @@ void XLibMacros::macSgen(TStrObjList &Cmds, const TParamList &Options,
   // check if a single full matrix is given
   if (Cmds.Count() == 12 && olx_list_and(Cmds, &olxstr::IsNumber)) {
     smatdd m;
-    for (int i = 0; i < 9; i++) {
+    for (size_t i = 0; i < 9; i++) {
       m.r[i / 3][i % 3] = Cmds[i].ToDouble();
     }
-    for (int i = 0; i < 3; i++) {
+    for (size_t i = 0; i < 3; i++) {
       m.t[i] = Cmds[9 + i].ToDouble();
     }
     TLattice & latt = app.XFile().GetLattice();
@@ -8996,6 +8994,13 @@ void XLibMacros::macSgen(TStrObjList &Cmds, const TParamList &Options,
         validSymm = true;
       }
       catch (const TExceptionBase &) {}
+    }
+    else if (Cmds[i].StartsFromi('$') && Cmds[i].SubStringFrom(1).IsInt()) {
+      const smatd *m = app.XFile().GetRM().FindUsedSymm(Cmds[i]);
+      if (m != 0) {
+        matr = *m;
+      }
+      validSymm = true;
     }
     if (!validSymm) {
       try {

@@ -107,8 +107,8 @@ AAtomRef* ExplicitCAtomRef::Clone(RefinementModel& rm) const {
 olxstr ExplicitCAtomRef::GetExpression(TResidue *r) const {
   olxstr rv = atom->GetLabel();
   bool valid_s = true;
-  bool use_resi = (atom->GetResiId() !=0 &&
-    (r == 0 || r->GetId() != atom->GetResiId()));
+  bool use_resi = (r != 0 && r->GetId() != atom->GetResiId()) ||
+    (r == 0 && atom->GetResiId() != 0);
   if (use_resi) {
     if (matrix != 0) {
       valid_s = false;
@@ -711,37 +711,29 @@ void AtomRefList::UpdateResi() {
     return;
   }
   uint32_t r_id = 0;
-  // special, easy to handle case
-  if (atom_refs.Count() == 2) {
-    ExplicitCAtomRef &r0 = *atom_refs[0];
-    ExplicitCAtomRef &r1 = *atom_refs[1];
-    if ((r1.GetMatrix() != 0 && r0.GetMatrix() != 0) ||
-      (r1.GetMatrix() == 0 && r0.GetMatrix() == 0))
-    {
-      if (r0.GetAtom().GetResiId() == r1.GetAtom().GetResiId()) {
-        r_id = r0.GetAtom().GetResiId();
-      }
-      else {
-        return;
-      }
-    }
-    if (r1.GetMatrix() != 0) {
-      r_id = r1.GetAtom().GetResiId();
-    }
-    else if (r0.GetMatrix() != 0) {
-      r_id = r0.GetAtom().GetResiId();
+  size_t m_idx = InvalidIndex, m_cnt = 0;
+  for (size_t i = 0; i < atom_refs.Count(); i++) {
+    ExplicitCAtomRef& r = *atom_refs[i];
+    if (r.GetMatrix() != 0) {
+      m_cnt++;
+      m_idx = i;
     }
   }
-  else {
+  if (m_cnt == 0 || m_cnt == atom_refs.Count()) {
     r_id = atom_refs[0]->GetAtom().GetResiId();
     for (size_t i = 1; i < atom_refs.Count(); i++) {
-      ExplicitCAtomRef &r = *atom_refs[i];
+      ExplicitCAtomRef& r = *atom_refs[i];
       uint32_t ri = r.GetAtom().GetResiId();
       if (ri != r_id) {
         return;
       }
-      r_id = ri;
     }
+  }
+  else if (m_cnt == 1) {
+    r_id = atom_refs[m_idx]->GetAtom().GetResiId();
+  }
+  else {
+    return;
   }
   if (r_id != 0) {
     residue = rm.aunit.GetResidue(r_id).GetNumberStr();
