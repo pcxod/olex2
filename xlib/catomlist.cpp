@@ -750,12 +750,9 @@ void AtomRefList::Clear() {
 olxstr AtomRefList::BuildExpression(TResidue *r) const {
   olxstr_buf rv;
   for (size_t i = 0; i < refs.Count(); i++) {
-    rv << refs[i].GetExpression(r);
-    if ((i + 1) < refs.Count()) {
-      rv << ' ';
-    }
+    rv << ' ' << refs[i].GetExpression(r);
   }
-  return rv;
+  return rv.IsEmpty() ? EmptyString() : olxstr(rv).SubStringFrom(1);
 }
 //.............................................................................
 olxstr AtomRefList::GetExpression() const {

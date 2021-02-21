@@ -622,8 +622,9 @@ TSAtomPList::const_list_type TXApp::FindSAtoms(const IStrList& toks_,
     for (size_t i = 0; i < toks.Count(); i++) {
       if (toks[i].StartsFrom("#s")) {  // TSAtom.LattId
         const size_t lat_id = toks[i].SubStringFrom(2).ToSizeT();
-        if (lat_id >= objects.atoms.Count())
+        if (lat_id >= objects.atoms.Count()) {
           throw TInvalidArgumentException(__OlxSourceInfo, "satom id");
+        }
         if (objects.atoms[lat_id].CAtom().IsAvailable()) {
           res.Add(objects.atoms[lat_id]);
         }
@@ -636,6 +637,7 @@ TSAtomPList::const_list_type TXApp::FindSAtoms(const IStrList& toks_,
     }
     olxstr new_c = toks.Text(' ');
     if (!new_c.IsEmpty()) {
+      TSAtomPList res1;
       TCAtomGroup ag;
       TAtomReference ar(new_c, SelectionOwner);
       size_t atomAGroup;
@@ -643,33 +645,31 @@ TSAtomPList::const_list_type TXApp::FindSAtoms(const IStrList& toks_,
       if (!ag.IsEmpty()) {
         res.SetCapacity(res.Count() + ag.Count());
         TAsymmUnit& au = XFile().GetAsymmUnit();
-        for (size_t i = 0; i < au.AtomCount(); i++)
-          au.GetAtom(i).SetTag(au.GetAtom(i).GetId());
+        objects.atoms.ForEach(ACollectionItem::TagSetter(-1));
+        au.GetAtoms().ForEach(ACollectionItem::TagSetter(-1));
         for (size_t i = 0; i < ag.Count(); i++) {
-          if ((size_t)ag[i].GetAtom()->GetTag() != ag[i].GetAtom()->GetId()) {
+          ag[i].GetAtom()->SetTag(i);
+        }
+        for (size_t i = 0; i < objects.atoms.Count(); i++) {
+          TSAtom& sa = objects.atoms[i];
+          if (sa.CAtom().GetTag() == -1 || !sa.CAtom().IsAvailable()) {
             continue;
           }
-          for (size_t j = 0; j < objects.atoms.Count(); j++) {
-            TSAtom& sa = objects.atoms[j];
-            if (!sa.CAtom().IsAvailable()) {
-              continue;
+          // get an atom from the asymm unit
+          if (ag[sa.CAtom().GetTag()].GetMatrix() == 0) {
+            if (sa.IsAUAtom()) {
+              res1.Add(sa);
             }
-            if (sa.CAtom().GetTag() != ag[i].GetAtom()->GetTag()) {
-              continue;
-            }
-            // get an atom from the asymm unit
-            if (ag[i].GetMatrix() == 0) {
-              if (sa.IsAUAtom()) {
-                res.Add(sa);
-              }
-            }
-            else {
-              if (sa.IsGenerator(*ag[i].GetMatrix())) {
-                res.Add(sa);
-              }
+          }
+          else {
+            if (sa.IsGenerator(*ag[sa.CAtom().GetTag()].GetMatrix())) {
+              res1.Add(sa);
             }
           }
         }
+        // restore the original order, obviously of #s is in - it is messed up...
+        QuickSorter::Sort(res1, ACollectionItem::TagComparator(TSAtom::CAtomAccessor()));
+        res.AddAll(res1);
       }
     }
   }
