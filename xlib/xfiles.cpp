@@ -205,6 +205,7 @@ TXFile::~TXFile() {
 void TXFile::TakeOver(TXFile &f) {
   OnFileLoad.TakeOver(f.OnFileLoad);
   OnFileSave.TakeOver(f.OnFileSave);
+  OnFileClose.TakeOver(f.OnFileClose);
   /* This should be left along as it is needed for ALL files
   */
   //GetLattice().OnDisassemble.TakeOver(
@@ -392,7 +393,7 @@ void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
           generator = new CifConnectivityGenerator(cif, GetAsymmUnit());
         }
       }
-      OnFileLoad.Execute(this);
+      OnFileLoad.Execute(this, Loader);
       if (generator.ok() && generator->IsValid()) {
         TBasicApp::NewLogEntry(logWarning) << "Displaying CIF bonds only, use "
           "'fuse' to recalculate from scratch";
@@ -406,7 +407,7 @@ void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
       OnFileLoad.Exit(this, &exc);
       throw TFunctionFailedException(__OlxSourceInfo, exc);
     }
-    OnFileLoad.Exit(this);
+    OnFileLoad.Exit(this, Loader);
   }
   TSpaceGroup &sg = TSymmLib::GetInstance().FindSG(Loader->GetAsymmUnit());;
   if (FSG != &sg) {
@@ -518,6 +519,9 @@ void TXFile::LoadFromStrings(const TStrList& lines, const olxstr &nameToken) {
   }
   try {
     Loader->LoadStrings(lines, nameToken);
+    if (FLastLoader != 0) {
+      OnFileClose.Execute(this, FLastLoader);
+    }
   }
   catch (const TExceptionBase& exc) {
     if (replicated) {
@@ -541,6 +545,9 @@ void TXFile::LoadFromStream(IInputStream& in, const olxstr &nameToken) {
   }
   try {
     Loader->LoadFromStream(in, nameToken);
+    if (FLastLoader != 0) {
+      OnFileClose.Execute(this, FLastLoader);
+    }
   }
   catch (const TExceptionBase& exc) {
     if (replicated) {
@@ -565,6 +572,9 @@ void TXFile::LoadFromFile(const olxstr & _fn) {
   try {
     Loader->LoadFromFile(_fn);
     ExpandHKLSource(Loader->GetRM(), _fn);
+    if (FLastLoader != 0) {
+      OnFileClose.Execute(this, FLastLoader);
+    }
   }
   catch (const TExceptionBase& exc) {
     if (replicated) {

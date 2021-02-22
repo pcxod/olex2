@@ -2684,7 +2684,7 @@ olxstr RefinementModel::GetUserContentStr() const {
   for (size_t i = 0; i < UserContent.Count(); i++) {
     rv << ' ' << UserContent[i].ToString();
   }
-  return rv.IsEmpty() ? rv : olxstr(rv).SubStringFrom(1);
+  return rv.IsEmpty() ? EmptyString() : olxstr(rv).SubStringFrom(1);
 }
 //..............................................................................
 void RefinementModel::SetUserContentType(const IStrList& sfac) {

@@ -688,9 +688,7 @@ void cetStringList::ToStrings(TStrList& list) const {
 }
 //..............................................................................
 olxstr cetStringList::GetStringValue() const {
-  TStrList val;
-  ToStrings(val);
-  return olxstr(NewLineSequence()).Join(val);
+  return olxstr(NewLineSequence()).Join(lines);
 }
 //..............................................................................
 //..............................................................................

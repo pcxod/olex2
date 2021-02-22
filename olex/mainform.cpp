@@ -247,9 +247,9 @@ TMainForm::TMainForm(TGlXApp *Parent)
     
   idle_time = idle_start = 0;
   TEGC::AddP(&HtmlManager);
-  nui_interface = NULL;
-  _UpdateThread = NULL;
-  ActionProgress = UpdateProgress = NULL;
+  nui_interface = 0;
+  _UpdateThread = 0;
+  ActionProgress = UpdateProgress = 0;
   SkipSizing = false;
   Destroying = false;
 #ifdef __WIN32__
@@ -271,15 +271,15 @@ TMainForm::TMainForm(TGlXApp *Parent)
   PythonExt::GetInstance()->Register(
     TXGrid::ModuleName(), &TXGrid::PyInit);
   //TOlxVars::Init().OnVarChange->Add(this, ID_VarChange);
-  FGlCanvas = NULL;
-  FXApp = NULL;
-  FGlConsole = NULL;
-  FInfoBox = NULL;
-  GlTooltip = NULL;
+  FGlCanvas = 0;
+  FXApp = 0;
+  FGlConsole = 0;
+  FInfoBox = 0;
+  GlTooltip = 0;
 
   MousePositionX = MousePositionY = -1;
 
-  LabelToEdit = NULL;
+  LabelToEdit = 0;
 
   TimePerFrame = 50;
   DrawSceneTimer = 0;
@@ -300,8 +300,8 @@ TMainForm::TMainForm(TGlXApp *Parent)
   Modes = new TModeRegistry();
 
   FParent = Parent;
-  ObjectUnderMouse(NULL);
-  FHelpItem = NULL;
+  ObjectUnderMouse(0);
+  FHelpItem = 0;
   FTimer = new TTimer;
   HelpFontColorCmd.SetFlags(sglmAmbientF);
   HelpFontColorTxt.SetFlags(sglmAmbientF);
@@ -324,7 +324,7 @@ TMainForm::TMainForm(TGlXApp *Parent)
   ExceptionFontColor.AmbientF = 0x0000ff;
 }
 //..............................................................................
-bool TMainForm::Destroy()  {
+bool TMainForm::Destroy() {
   Destroying = true;
   tensor::tensor_rank_2::cleanup();
   tensor::tensor_rank_3::cleanup();
@@ -340,12 +340,12 @@ bool TMainForm::Destroy()  {
   }
   SaveSettings(FXApp->GetConfigDir() + FLastSettingsFile);
   HtmlManager.Destroy();
-  if (_UpdateThread != NULL) {
+  if (_UpdateThread != 0) {
     _UpdateThread->OnTerminate.Remove(this);
     _UpdateThread->Join(true);
     delete _UpdateThread;
   }
-  if (UpdateProgress != NULL) {
+  if (UpdateProgress != 0) {
     delete UpdateProgress;
   }
   // clean up it here
@@ -356,13 +356,6 @@ bool TMainForm::Destroy()  {
   FXApp->XFile().GetRM().OnCellDifference.Remove(this);
 
   delete Modes;
-  // delete FIOExt;
-
-  //   if( FXApp->XFile().GetLastLoader() ) // save curent settings
-  //   {
-  //     T = TEFile::ChangeFileExt(FXApp->XFile().FileName(), "xlds");
-  //     FXApp->Render()->Styles()->SaveToFile(T);
-  //   }
   FTimer->OnTimer.Clear();
   delete FTimer;
   delete pmGraphics;
@@ -378,13 +371,16 @@ bool TMainForm::Destroy()  {
 
   // leave it for the end
   delete _ProcessManager;
+#ifdef _CUSTOM_BUILD_
+  CustomCodeBase::Finalise();
+#endif
   // the order is VERY important!
   TOlxVars::Finalise();
   PythonExt::Finilise();
   return wxFrame::Destroy();
 }
 //..............................................................................
-TMainForm::~TMainForm()  {
+TMainForm::~TMainForm() {
   GetInstance() = 0;
 }
 //..............................................................................
@@ -1365,7 +1361,7 @@ void TMainForm::StartupInit() {
     settings.LoadFromXLFile(FXApp->GetBaseDir() + "settings.xld", 0);
     settings.Include(0);
     TDataItem* sh = settings.Root().FindItemi("shortcuts");
-    if (sh != NULL) {
+    if (sh != 0) {
       try {
         olxstr cmd;
         for (size_t i=0; i < sh->ItemCount(); i++) {
@@ -1394,21 +1390,27 @@ void TMainForm::StartupInit() {
           TParamList opts;
           params << item.FindField("title") << item.FindField("macro");
           olxstr bf = item.FindField("before");
-          if (!bf.IsEmpty())
+          if (!bf.IsEmpty()) {
             params << bf;
+          }
 
           olxstr modeDep = item.FindField("modedependent");
-          if (!modeDep.IsEmpty())
+          if (!modeDep.IsEmpty()) {
             opts.AddParam('m', modeDep);
+          }
           olxstr stateDep = item.FindField("statedependent");
-          if (!stateDep.IsEmpty())
+          if (!stateDep.IsEmpty()) {
             opts.AddParam('s', stateDep);
-          if (item.GetName().Equalsi("radio"))
+          }
+          if (item.GetName().Equalsi("radio")) {
             opts.AddParam('r', EmptyString());
-          if (item.GetName().Equalsi("sep"))
+          }
+          if (item.GetName().Equalsi("sep")) {
             opts.AddParam('#', EmptyString());
-          if (item.GetName().Equalsi("check"))
+          }
+          if (item.GetName().Equalsi("check")) {
             opts.AddParam('c', EmptyString());
+          }
           cm_macro->Run(params, opts, me);
         }
       }
