@@ -413,6 +413,9 @@ void CalculatedVars::Clear() {
 }
 //.............................................................................
 void CalculatedVars::CalcAll() const {
+  if (vars.IsEmpty()) {
+    return;
+  }
   TXApp &app = TXApp::GetInstance();
   VcoVContainer vcovc(app.XFile().GetAsymmUnit());
   try {

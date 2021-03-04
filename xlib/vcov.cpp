@@ -54,7 +54,7 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au) {
   for (size_t i = 1; i < param_cnt; i++) { // skipp OSF
     toks.Clear();
     toks.Strtok(sl[i + 7], ' ');
-    if (toks[0].ToSizeT() != i + 1 || toks.Count() != 6) {
+    if (toks.IsEmpty() || toks[0].ToSizeT() != i + 1 || toks.Count() != 6) {
       if (toks.Count() == 5) {
         continue;
       }
