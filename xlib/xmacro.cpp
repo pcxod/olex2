@@ -10330,8 +10330,9 @@ void XLibMacros::macCalcVol(TStrObjList &Cmds, const TParamList &Options,
 void XLibMacros::funVVol(const TStrObjList& Params, TMacroData &E) {
   TXApp &app = TXApp::GetInstance();
   ElementRadii radii;
-  if( Params.Count() == 1 && TEFile::Exists(Params[0]) )
+  if (Params.Count() == 1 && TEFile::Exists(Params[0])) {
     radii = TXApp::ReadRadii(Params[0]);
+  }
   TXApp::PrintVdWRadii(radii, app.XFile().GetAsymmUnit().GetContentList());
 
   const TXApp::CalcVolumeInfo vi = app.CalcVolume(&radii);
