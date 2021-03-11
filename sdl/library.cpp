@@ -178,6 +178,15 @@ ABasicFunction* TLibrary::LocateFunction(const olxstr& name, uint32_t argc) {
     TSizeList list;
     Functions.GetIndices(name, list);
     for (size_t i = 0; i < list.Count(); i++) {
+      if (argc >= 10) {
+        uint32_t mm = Macros.GetValue(list[i])->GetArgStateMask();
+        uint32_t im = (fpAny ^ (1 << 10));
+        // any or any but not fewer than
+        if (mm == fpAny || mm > im) {
+          return Macros.GetValue(list[i]);
+        }
+        continue;
+      }
       if (Functions.GetValue(list[i])->GetArgStateMask() & (1 << argc)) {
         return Functions.GetValue(list[i]);
       }
@@ -195,6 +204,15 @@ ABasicFunction* TLibrary::LocateMacro(const olxstr& name, uint32_t argc) {
     TSizeList list;
     Macros.GetIndices(name, list);
     for (size_t i = 0; i < list.Count(); i++) {
+      if (argc >= 10) {
+        uint32_t mm = Macros.GetValue(list[i])->GetArgStateMask();
+        uint32_t im = (fpAny ^ (1 << 10));
+        // any or any but not fewer than
+        if (mm == fpAny || mm > im) {
+          return Macros.GetValue(list[i]);
+        }
+        continue;
+      }
       if (Macros.GetValue(list[i])->GetArgStateMask() & (1 << argc)) {
         return Macros.GetValue(list[i]);
       }
