@@ -30,9 +30,7 @@ TEllipsoid::TEllipsoid(const TEllipsoid& e)
 void TEllipsoid::Initialise() {
   mat3d M = ExpandQuad();
   mat3d::EigenValues(M, Matrix.I());
-  if ((M[0][0] <= 0) || (M[1][1] <= 0) || (M[2][2] <= 0)) {
-    NPD = true;
-  }
+  NPD = ((M[0][0] <= 0) || (M[1][1] <= 0) || (M[2][2] <= 0));
   Norms = vec3d(sqrt(olx_abs(M[0][0])),
     sqrt(olx_abs(M[1][1])),
     sqrt(olx_abs(M[2][2])));

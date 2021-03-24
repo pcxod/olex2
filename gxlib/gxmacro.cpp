@@ -203,7 +203,8 @@ void GXLibMacros::Export(TLibrary& lib) {
     "Creates a lattice plane for the given Miller index");
   gxlib_InitMacro(Cent,
     "rings-finds rings specified by template and add centroids for each of them"
-    ". For example cent -rings=C6",
+    ". For example cent -rings=C6&;"
+    "n-name for the centroid",
     fpAny,
     "Creates a centroid for given/selected/all atoms");
   gxlib_InitMacro(Cell, "r-shows reciprocal cell",
@@ -2075,13 +2076,20 @@ void GXLibMacros::macCent(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
   olxstr rings_name = Options.FindValue("rings");
+  TXAtomPList atoms;
   if (rings_name.IsEmpty()) {
-    app.AddCentroid(app.FindXAtoms(Cmds, true, true).obj());
+    atoms = app.AddCentroid(app.FindXAtoms(Cmds, true, true).obj());
   }
   else {
     TTypeList<TSAtomPList> rings = app.FindRings(rings_name);
     for (size_t i = 0; i < rings.Count(); i++) {
-      app.AddCentroid(TXAtomPList(rings[i], DynamicCastAccessor<TXAtom>()));
+      atoms.AddAll(app.AddCentroid(TXAtomPList(rings[i], DynamicCastAccessor<TXAtom>())).obj());
+    }
+  }
+  olxstr name = Options.FindValue('n', EmptyString());
+  if (!name.IsEmpty()) {
+    for (size_t i = 0; i < atoms.Count(); i++) {
+      atoms[i]->CAtom().SetLabel(name, false);
     }
   }
 }
