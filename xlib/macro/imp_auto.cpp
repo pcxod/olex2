@@ -192,7 +192,8 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
       changeNPD = _v.ToSizeT();
     }
   }
-  const bool analyseQ = !Options.Contains("aq");
+  const bool skipClose = Options.GetBoolOption("sc", false,true);
+  const bool analyseQ = Options.GetBoolOption("aq");
   const bool assignTypes = !Options.Contains("at");
   const double aqV = Options.FindValue("aq", "0.2").ToDouble(); // R+aqV
   // qpeak analysis
@@ -214,20 +215,25 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
       else {
         // leave close to other atoms alone
         bool close = false;
-        for (size_t j = 0; j < a.AttachedSiteCount(); j++) {
-          TCAtom::Site& as = a.GetAttachedSite(j);
-          if (as.atom->IsDeleted() || as.atom->GetType().z < 5) {
-            continue;
-          }
-          double d = au.Orthogonalise(as.matrix * as.atom->ccrd() - a.ccrd()).QLength();
-          if ((as.atom->GetType().z < 15 && d < olx_sqr(1.0)) ||
-            (as.atom->GetType().z >= 15 && d < olx_sqr(1.3)))
-          {
-            close = true;
-            break;
+        if (skipClose) {
+          for (size_t j = 0; j < a.AttachedSiteCount(); j++) {
+            TCAtom::Site& as = a.GetAttachedSite(j);
+            if (as.atom->IsDeleted() || as.atom->GetType().z < 5) {
+              continue;
+            }
+            double d = au.Orthogonalise(as.matrix * as.atom->ccrd() - a.ccrd()).QLength();
+            if ((as.atom->GetType().z < 15 && d < olx_sqr(1.0)) ||
+              (as.atom->GetType().z >= 15 && d < olx_sqr(1.3)))
+            {
+              close = true;
+              break;
+            }
           }
         }
-        if (!close) {
+        if (close) {
+          a.SetDeleted(true);
+        }
+        else {
           SortedQPeaks.Add(a.GetQPeak(), &a);
           avQPeak += a.GetQPeak();
           cnt++;
