@@ -193,9 +193,10 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   const bool skipClose = Options.GetBoolOption("sc", false,true);
-  const bool analyseQ = Options.GetBoolOption("aq");
+  olxstr aq_str = Options.FindValue("aq");
+  const bool analyseQ = aq_str.IsEmpty();
   const bool assignTypes = !Options.Contains("at");
-  const double aqV = Options.FindValue("aq", "0.2").ToDouble(); // R+aqV
+  const double aqV = (aq_str.IsEmpty() ? olxstr("0.2") : aq_str).ToDouble(); // R+aqV
   // qpeak analysis
   TAsymmUnit& au = xapp.XFile().GetAsymmUnit();
   if (analyseQ) {
