@@ -272,6 +272,7 @@ protected:
   }
   //............................................................................
   void SafeSave(const olxstr& file_name);
+  void DoInitialise();
 public:
   // structre to store analysis statistics
   struct AnalysisStat {
@@ -300,7 +301,8 @@ public:
   virtual ~TAutoDB();
 
   void ProcessFolder(const olxstr& folder, bool allow_disorder=false,
-    double max_r=5.0, double max_shift_over_esd=0.05, double max_GoF_dev=0.1);
+    double max_r=5.0, double max_shift_over_esd=0.05, double max_GoF_dev=0.1,
+    const olxstr &dest=EmptyString());
   void SaveToStream(IDataOutputStream& output) const;
   void LoadFromStream(IDataInputStream& input);
   void Clear();
@@ -327,7 +329,8 @@ public:
     static TAutoDB* inst = 0;
     return inst;
   }
-  static TAutoDB& GetInstance();
+  static TAutoDB& GetInstance(bool init=true);
+  class TLibrary* ExportLibrary(const olxstr& name = EmptyString());
   TAutoDBNode* Node(size_t i) { return LocateNode(i); }
   TAutoDBIdObject& Reference(size_t i) const { return registry.GetIdObject(i); }
   DefPropP(int, BAIDelta);
@@ -448,11 +451,11 @@ protected:
   void LibURatio(const TStrObjList& Params, TMacroData& E);
   void LibEnforceFormula(const TStrObjList& Params, TMacroData& E);
   void LibTolerance(const TStrObjList& Params, TMacroData& E);
+  void LibClear(TStrObjList& Cmds, const TParamList& Options, TMacroData& E);
   void LibLoad(TStrObjList& Cmds, const TParamList& Options, TMacroData& E);
   void LibSave(TStrObjList& Cmds, const TParamList& Options, TMacroData& E);
   void LibDigest(TStrObjList& Cmds, const TParamList& Options, TMacroData& E);
   void LibLock(TStrObjList& Cmds, const TParamList& Options, TMacroData& E);
-  class TLibrary* ExportLibrary(const olxstr& name = EmptyString());
   ///////////////////////////////////////////////////////////////////////////////
   template <class NodeType>
   bool AnalyseUiso(TCAtom& ca, const TTypeList< THitList<NodeType> >& list,

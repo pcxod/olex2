@@ -149,14 +149,14 @@ void TAutoDBNode::FromCAtom(const TCAtom& ca, const smatd &m_,
   _PreCalc();
 }
 //..............................................................................
-void TAutoDBNode::_PreCalc()  {
-  Params.Resize( (AttachedNodes.Count()+1)*AttachedNodes.Count()/2);
+void TAutoDBNode::_PreCalc() {
+  Params.Resize((AttachedNodes.Count() + 1) * AttachedNodes.Count() / 2);
   size_t index = AttachedNodes.Count();
-  for( size_t i=0; i < AttachedNodes.Count(); i++ )  {
+  for (size_t i = 0; i < AttachedNodes.Count(); i++) {
     Params[i] = CalcDistance(i);
-    for( size_t j=i+1; j < AttachedNodes.Count(); j++ )  {
-      Params[index] = CalcAngle(i,j);
-      index ++;
+    for (size_t j = i + 1; j < AttachedNodes.Count(); j++) {
+      Params[index] = CalcAngle(i, j);
+      index++;
     }
   }
 }
@@ -227,8 +227,8 @@ double TAutoDBNode::SearchCompare(const TAutoDBNode& dbn, double* fom) const {
   size_t mc = (AttachedNodes.Count() > 4) ? AttachedNodes.Count()
     : Params.Count();
   // variations
-  const double LengthVar = TAutoDB::GetInstance().GetLengthVar(),
-    AngleVar = TAutoDB::GetInstance().GetAngleVar();
+  const double LengthVar = TAutoDB::GetInstance_()->GetLengthVar(),
+    AngleVar = TAutoDB::GetInstance_()->GetAngleVar();
   for (size_t i = 0; i < mc; i++) {
     double diff = Params[i] - dbn.Params[i];
     if (i < AttachedNodes.Count()) {
@@ -496,7 +496,7 @@ void TAutoDBNetNode::LoadFromStream(IDataInputStream& input) {
 #endif
   int32_t ind;
   input >> ind;
-  FCenter = TAutoDB::GetInstance().Node(ind);
+  FCenter = TAutoDB::GetInstance_()->Node(ind);
   input >> cnt;
   for (size_t i = 0; i < cnt; i++) {
     input >> ind;
@@ -548,7 +548,7 @@ void TAutoDBNet::LoadFromStream(IDataInputStream& input) {
   uint32_t ind;
   uint16_t cnt;
   input >> ind;
-  FReference = &TAutoDB::GetInstance().Reference(ind);
+  FReference = &TAutoDB::GetInstance_()->Reference(ind);
   input >> cnt;
   Nodes.SetCapacity(cnt);
   for (uint16_t i = 0; i < cnt; i++) {
@@ -593,7 +593,6 @@ TAutoDB::TAutoDB(TXFile& xfile, ALibraryContainer& lc)
   LengthVar = 0.03;
   AngleVar = 5.4;
   EnforceFormula = false;
-  lc.GetLibrary().AttachLibrary(ExportLibrary());
 }
 //..............................................................................
 TAutoDB::~TAutoDB() {
@@ -612,8 +611,12 @@ void TAutoDB::Clear() {
       delete Nodes[i][j];
     }
   }
-  Nodes.Clear();
   registry.Clear();
+  Nodes.Clear();
+  Nodes.SetCapacity(MaxConnectivity);
+  for (uint16_t i = 0; i < MaxConnectivity - 1; i++) {
+    Nodes.AddNew();
+  }
 }
 //..............................................................................
 void TAutoDB::PrepareForSearch() {
@@ -623,7 +626,8 @@ void TAutoDB::PrepareForSearch() {
 }
 //..............................................................................
 void TAutoDB::ProcessFolder(const olxstr& folder, bool allow_disorder,
-  double max_r, double max_shift_over_esd, double max_GoF_dev)
+  double max_r, double max_shift_over_esd, double max_GoF_dev,
+  const olxstr &dest)
 {
   if (!TEFile::Exists(folder)) {
     return;
@@ -700,7 +704,7 @@ void TAutoDB::ProcessFolder(const olxstr& folder, bool allow_disorder,
     }
   }
   PrepareForSearch();
-  SafeSave(src_file);
+  SafeSave(dest.IsEmpty() ? src_file : dest);
 }
 //..............................................................................
 void TAutoDB::SafeSave(const olxstr& file_name) {
@@ -921,6 +925,8 @@ void TAutoDB::LoadFromStream(IDataInputStream& input) {
     Nets.Add(new TAutoDBNet(input));
   }
   PrepareForSearch();
+  TBasicApp::NewLogEntry(logInfo) << "Loaded " << Nets.Count() << " graphs with"
+    " max connectivity of " << Nodes.Count();
 }
 //..............................................................................
 void TAutoDB::AnalyseNode(TSAtom& sa, TStrList& report) {
@@ -2062,25 +2068,38 @@ void TAtomTypePermutator::Permutate() {
   }
 }
 //..............................................................................
-TAutoDB& TAutoDB::GetInstance() {
+void TAutoDB::DoInitialise() {
+  TStopWatch sw(__FUNC__);
+  TXApp& app = TXApp::GetInstance();
+  olxstr fn = app.GetSharedDir() + "acidb.db";
+  if (!TEFile::Exists(fn)) {
+    TEFile::Copy(app.GetBaseDir() + "acidb.db", fn);
+  }
+  if (TEFile::Exists(fn)) {
+    TEFile dbf(fn, "rb");
+    GetInstance_()->LoadFromStream(dbf);
+    olxstr map_fn = fn + ".map";
+    if (TEFile::Exists(map_fn)) {
+      dbf.Open(map_fn, "rb");
+      GetInstance_()->registry.LoadMap(dbf);
+    }
+  }
+  GetInstance_()->src_file = fn;
+}
+//..............................................................................
+TAutoDB& TAutoDB::GetInstance(bool init) {
   if (GetInstance_() == 0) {
     TXApp& app = TXApp::GetInstance();
-    olxstr fn = app.GetSharedDir() + "acidb.db";
-    if (!TEFile::Exists(fn)) {
-      TEFile::Copy(app.GetBaseDir() + "acidb.db", fn);
-    }
     TEGC::AddP(GetInstance_() = new TAutoDB(
       *(dynamic_cast<TXFile*>(app.XFile().Replicate())), app));
-    if (TEFile::Exists(fn)) {
-      TEFile dbf(fn, "rb");
-      GetInstance_()->LoadFromStream(dbf);
-      olxstr map_fn = fn + ".map";
-      if (TEFile::Exists(map_fn)) {
-        dbf.Open(map_fn, "rb");
-        GetInstance_()->registry.LoadMap(dbf);
-      }
+    if (init) {
+      GetInstance_()->DoInitialise();
     }
-    GetInstance_()->src_file = fn;
+  }
+  else {
+    if (GetInstance_()->src_file.IsEmpty()) {
+      GetInstance_()->DoInitialise();
+    }
   }
   return *GetInstance_();
 }
@@ -2124,18 +2143,31 @@ void TAutoDB::LibTolerance(const TStrObjList& Params, TMacroData& E) {
   }
 }
 //..............................................................................
+void TAutoDB::LibClear(TStrObjList& Cmds, const TParamList& Options, TMacroData& E) {
+  Clear();
+  src_file = EmptyString();
+}
+//..............................................................................
 void TAutoDB::LibLoad(TStrObjList& Cmds, const TParamList& Options, TMacroData& E) {
-  TEFile in(Cmds[0], "rb");
-  if (Options.GetBoolOption('c')) {
-    Clear();
+  olxstr fn;
+  if (Cmds.IsEmpty()) {
+    TXApp& app = TXApp::GetInstance();
+    fn = app.GetSharedDir() + "acidb.db";
+    if (!TEFile::Exists(fn)) {
+      TEFile::Copy(app.GetBaseDir() + "acidb.db", fn);
+    }
   }
+  else {
+    fn = Cmds[0];
+  }
+  TEFile in(fn, "rb");
   LoadFromStream(in);
-  olxstr map_fn = Cmds[0] + ".map";
+  olxstr map_fn = fn + ".map";
   if (TEFile::Exists(map_fn)) {
     TEFile dbf(map_fn, "rb");
     GetInstance_()->registry.LoadMap(dbf);
   }
-  src_file = Cmds[0];
+  src_file = fn;
 }
 //..............................................................................
 void TAutoDB::LibSave(TStrObjList& Cmds, const TParamList& Options, TMacroData& E) {
@@ -2147,11 +2179,26 @@ void TAutoDB::LibSave(TStrObjList& Cmds, const TParamList& Options, TMacroData& 
 }
 //..............................................................................
 void TAutoDB::LibDigest(TStrObjList& Cmds, const TParamList& Options, TMacroData& E) {
+  if (Cmds.Count() == 2) {
+    Clear();
+  }
   ProcessFolder(Cmds[0],
     Options.GetBoolOption('d'),
     Options.FindValue('r', "5").ToDouble(),
     Options.FindValue('s', "0.05").ToDouble(),
-    Options.FindValue('f', "0.1").ToDouble());
+    Options.FindValue('f', "0.1").ToDouble(),
+    Cmds.Count() == 2 ? Cmds[1] : EmptyString());
+  if (Cmds.Count() == 2 && !GetInstance_()->src_file.IsEmpty() &&
+    GetInstance_()->src_file != Cmds[1])
+  {
+    TEFile in(GetInstance_()->src_file, "rb");
+    LoadFromStream(in);
+    olxstr map_fn = src_file + ".map";
+    if (TEFile::Exists(map_fn)) {
+      TEFile dbf(map_fn, "rb");
+      GetInstance_()->registry.LoadMap(dbf);
+    }
+  }
 }
 //..............................................................................
 void TAutoDB::LibLock(TStrObjList& Cmds, const TParamList& Options, TMacroData& E) {
@@ -2187,9 +2234,16 @@ TLibrary* TAutoDB::ExportLibrary(const olxstr& name) {
   );
   lib->Register(
     new TMacro<TAutoDB>(this, &TAutoDB::LibLoad, "Load",
-      "c-clear the current content [false]",
-      fpOne,
-      "Loads ACIDB from the given file")
+      EmptyString(),
+      fpNone|fpOne,
+      "Loads ACIDB from the given file merging with current data."
+      " Loads the default if no arguments are given")
+  );
+  lib->Register(
+    new TMacro<TAutoDB>(this, &TAutoDB::LibClear, "Clear",
+      EmptyString(),
+      fpNone,
+      "Clears current data")
   );
   lib->Register(
     new TMacro<TAutoDB>(this, &TAutoDB::LibSave, "Save",
@@ -2202,9 +2256,11 @@ TLibrary* TAutoDB::ExportLibrary(const olxstr& name) {
       "d-allow disorder [false]&;"
       "r-max R1 [5]&;"
       "s-max shift/esd [0.05]&;"
-      "f-max deviation of GoF from 1 [0.1]&;",
-      fpOne,
-      "Digests CIFs from the given folder and updates the ACIDB")
+      "f-max deviation of GoF from 1 [0.1]&;"
+      ,
+      fpOne|fpTwo,
+      "Digests CIFs from the given folder and updates the ACIDB."
+      " Destination DB can be specified as second parameter.")
   );
   lib->Register(
     new TMacro<TAutoDB>(this, &TAutoDB::LibLock, "Lock",

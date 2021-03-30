@@ -803,7 +803,7 @@ void TCif::Initialize() {
           AtomCifEntry * ci1 = dynamic_cast<AtomCifEntry *>(Row[ALabel]);
           AtomCifEntry * ci2 = dynamic_cast<AtomCifEntry *>(Row[ALabel1]);
           AtomCifEntry * ha = dynamic_cast<AtomCifEntry *>(Row[ALabel2]);
-          if (ci1 != 0 && ci2 != 0) {
+          if (ci1 != 0 && ci2 != 0 && ha != 0) {
             ACifValue* cv;
             if (Row[SymmA]->GetStringValue() == '.') {
               cv = new CifHBond(ci1->data, ha->data, ci2->data, ev);

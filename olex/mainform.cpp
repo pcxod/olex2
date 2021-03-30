@@ -97,6 +97,7 @@
 #include "math/libmath.h"
 #include "libfile.h"
 #include "gxmacro.h"
+#include "auto.h"
 
 #ifdef _CUSTOM_BUILD_
   #include "custom_base.h"
@@ -914,6 +915,8 @@ void TMainForm::XApp(Olex2App *XA)  {
   Library.AttachLibrary(XA->XGrid().ExportLibrary());
   Library.AttachLibrary(XA->XFile().DUnitCell->ExportLibrary());
   Library.AttachLibrary(TFileHandlerManager::ExportLibrary());
+  Library.AttachLibrary(TAutoDB::GetInstance(false).ExportLibrary());
+
   TOlxVars::ExportLibrary(EmptyString(), &Library);
 
 #ifdef _CUSTOM_BUILD_
