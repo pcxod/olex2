@@ -1841,7 +1841,7 @@ void Framework::set_tags_(Framework::Vertex& v,
         }
       }
       if (uniq) {
-        dest.Add(new conn_atom_t(vertex_map.Get(s.atom->GetTag()), rm, m.IsFirst()));
+        dest.Add(new conn_atom_t(vertex_map.Get(s.atom->GetTag()), rm, m.IsFirst() || rm.IsI()));
       }
       continue;
     }
@@ -1894,7 +1894,7 @@ void Framework::set_tags(Framework::Vertex& v) {
             }
           }
           if (uniq) {
-            dest_j.AddNew(dest[k].a, rm, s.matrix.IsFirst());
+            dest_j.AddNew(dest[k].a, rm, s.matrix.IsFirst() || rm.IsI());
           }
           // check reverse link
           uniq = true;
@@ -1907,7 +1907,7 @@ void Framework::set_tags(Framework::Vertex& v) {
             }
           }
           if (uniq) {
-            dest_k.AddNew(dest[j].a, rm, s.matrix.IsFirst());
+            dest_k.AddNew(dest[j].a, rm, s.matrix.IsFirst() || rm.IsI());
           }
         }
       }
@@ -1950,7 +1950,7 @@ TTypeList<TTypeList<NetTools::atom_t> >::const_list_type NetTools::extract_trian
   const TAsymmUnit& au = *nodes[0]->GetParent();
   for (size_t i = 0; i < conn_info.Count(); i++) {
     TTypeList<olx_pair_t<vec3d, size_t> > centres;
-    if (TBasicApp::GetLog().IsVerbose()) {
+    if (verbose) {
       TBasicApp::NewLogEntry() << "From " << nodes[i]->GetLabel();
     }
     vec3d centre = au.Orthogonalise(nodes[i]->ccrd());
@@ -2039,7 +2039,7 @@ void NetTools::set_tags_(TCAtom& a, const smatd& m,
         }
       }
       if (uniq) {
-        dest.Add(new conn_atom_t(s.atom, rm, m.IsFirst()));
+        dest.Add(new conn_atom_t(s.atom, rm, m.IsFirst() || rm.IsI()));
       }
       continue;
     }
@@ -2076,7 +2076,7 @@ void NetTools::set_tags(TCAtom& a) {
           }
         }
         if (uniq) {
-          dest_j.AddNew(dest[k].a, rm, s.matrix.IsFirst());
+          dest_j.AddNew(dest[k].a, rm, s.matrix.IsFirst() || rm.IsI());
         }
         // check reverse link
         uniq = true;
@@ -2089,7 +2089,7 @@ void NetTools::set_tags(TCAtom& a) {
           }
         }
         if (uniq) {
-          dest_k.AddNew(dest[j].a, rm, s.matrix.IsFirst());
+          dest_k.AddNew(dest[j].a, rm, s.matrix.IsFirst() || rm.IsI());
         }
       }
     }
