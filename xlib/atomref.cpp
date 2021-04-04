@@ -255,8 +255,6 @@ olxstr TAtomReference::Expand(RefinementModel& rm, TCAtomGroup& atoms,
         if (i == 0) {
           unprocessed.Add(toks[j]);
         }
-        succeded = false;
-        break;
       }
     }
     if (succeded) {

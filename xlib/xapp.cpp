@@ -598,9 +598,6 @@ olx_object_ptr<TSAtomPList> TXApp::FindSAtomsWhere(const olxstr& Where) {
 TSAtomPList::const_list_type TXApp::FindSAtoms(const IStrList& toks_,
   bool ReturnAll, bool ClearSelection)
 {
-  if (SelectionOwner != 0) {
-    SelectionOwner->SetDoClearSelection(ClearSelection);
-  }
   TSAtomPList res;
   TStrList toks(toks_);
   toks.Pack();
@@ -608,6 +605,7 @@ TSAtomPList::const_list_type TXApp::FindSAtoms(const IStrList& toks_,
   if (toks.IsEmpty() || (toks.Count() == 1 && toks[0].Equals("sel"))) {
     if (SelectionOwner != 0) {
       SelectionOwner->ExpandSelectionEx(res);
+      SelectionOwner->SetDoClearSelection(ClearSelection);
     }
   }
   if (!toks.IsEmpty()) {
