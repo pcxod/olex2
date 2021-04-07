@@ -639,7 +639,7 @@ TSAtomPList::const_list_type TXApp::FindSAtoms(const IStrList& toks_,
       TCAtomGroup ag;
       TAtomReference ar(new_c, SelectionOwner);
       size_t atomAGroup;
-      ar.Expand(XFile().GetRM(), ag, EmptyString(), atomAGroup);
+      ar.Expand(XFile().GetRM(), ag, "*", atomAGroup);
       if (!ag.IsEmpty()) {
         res.SetCapacity(res.Count() + ag.Count());
         TAsymmUnit& au = XFile().GetAsymmUnit();
