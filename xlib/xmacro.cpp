@@ -2946,6 +2946,9 @@ void XLibMacros::macGenDisp(TStrObjList& Cmds, const TParamList& Options,
     else if (source.Equalsi("auto")) {
       fn << "auto)";
     }
+    else if (source.Equalsi("brennan")) {
+      fn << "brennan)";
+    }
     else {
       Error.ProcessingError(__OlxSrcInfo, "Unknown source");
       return;
