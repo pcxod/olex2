@@ -1,12 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
-    <ProjectConfiguration Include="Unicode-debug|Win32">
-      <Configuration>Unicode-debug</Configuration>
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
-    <ProjectConfiguration Include="Unicode-debug|x64">
-      <Configuration>Unicode-debug</Configuration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
@@ -29,11 +29,11 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
-  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <CharacterSet>Unicode</CharacterSet>
     <PlatformToolset>v141</PlatformToolset>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|x64'" Label="Configuration">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <CharacterSet>Unicode</CharacterSet>
     <PlatformToolset>v141</PlatformToolset>
   </PropertyGroup>
@@ -41,10 +41,10 @@
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>$(SolutionDir)$(Configuration)\exe\</OutDir>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|x64'">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>$(SolutionDir)$(Configuration)\exe\</OutDir>
     <LibraryPath>C:\Program Files %28x86%29\Microsoft Research KinectSDK\lib;$(OLX_PROGRAM_FILES)Microsoft SDKs\Windows\v7.1\Lib\x64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
@@ -68,7 +68,7 @@
       <AdditionalIncludeDirectories>..\..\sdl;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <AdditionalIncludeDirectories>..\..\..\sdl;..\..\..\xlib</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_DEBUG;_NO_PYTHON;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -87,7 +87,7 @@
       <IgnoreSpecificDefaultLibraries>libcmtd</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|x64'">
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <AdditionalIncludeDirectories>..\..\..\sdl;..\..\..\xlib</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_DEBUG;_NO_PYTHON;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
