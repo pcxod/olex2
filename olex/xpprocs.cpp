@@ -5398,8 +5398,8 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options,
       cmd << " #s" << xatoms[i]->GetOwnerId();
       atoms << ' ' << xatoms[i]->CAtom().GetId();
     }
-    Modes->OnModeExit.Add(olxstr("Callback onFragmentImport \'") << atoms
-      .SubStringFrom(1) << '\'');
+    Modes->OnModeExit.Add(olxstr("Callback onFragmentImport ").quote()
+      << atoms.SubStringFrom(1));
   }
 }
 //..............................................................................
@@ -5411,8 +5411,9 @@ void TMainForm::macExportFrag(TStrObjList &Cmds, const TParamList &Options,
   TNetPList nets;
   for (size_t i=0; i < xatoms.Count(); i++) {
     TNetwork* net = &xatoms[i]->GetNetwork();
-    if (nets.IndexOf(net) == InvalidIndex)
+    if (!nets.Contains(net)) {
       nets.Add(net);
+    }
   }
   if (nets.Count() != 1) {
     E.ProcessingError(__OlxSrcInfo,
@@ -5424,8 +5425,9 @@ void TMainForm::macExportFrag(TStrObjList &Cmds, const TParamList &Options,
   if (FN.IsEmpty()) return;
   TXyz xyz;
   for (size_t i=0; i < nets[0]->NodeCount(); i++) {
-    if (nets[0]->Node(i).IsDeleted() || nets[0]->Node(i).GetType() == iQPeakZ)
+    if (nets[0]->Node(i).IsDeleted() || nets[0]->Node(i).GetType() == iQPeakZ) {
       continue;
+    }
     TCAtom& ca = xyz.GetAsymmUnit().NewAtom();
     ca.ccrd() = nets[0]->Node(i).crd();
     ca.SetType(nets[0]->Node(i).GetType());

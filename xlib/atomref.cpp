@@ -9,12 +9,13 @@
 
 #include "atomref.h"
 #include "xapp.h"
+#include "label_utils.h"
 
 TAtomReference::TAtomReference(const olxstr& expression,
   ASelectionOwner* selectionOwner)
   : Expression(expression), SelectionOwner(selectionOwner)
 {
-  if (SelectionOwner == NULL && TXApp::HasInstance()) {
+  if (SelectionOwner == 0 && TXApp::HasInstance()) {
     SelectionOwner = TXApp::GetInstance().GetSelectionOwner();
   }
 }
@@ -188,16 +189,13 @@ size_t TAtomReference::_Expand(RefinementModel& rm, TCAtomGroup& atoms,
   if (Expression.CharAt(0) == '$') {  // sfac type
     olxstr sfac = ((resi_ind == InvalidIndex) ? Expression.SubStringFrom(1)
       : Expression.SubString(1, resi_ind - 1));
-    SortedElementPList elms = DecodeTypes(sfac, rm.aunit);
-    //if( elms.IsEmpty() )  {
-    //  throw TInvalidArgumentException(__OlxSourceInfo,
-    //    olxstr("sfac=") << sfac);
-    //}
+    olx_object_ptr<IAtomSelectionCriterium> cr = BuildCriteria(sfac, rm.aunit);
+    AtomLabelInfo li(Expression);
     for (size_t i = 0; i < residues.Count(); i++) {
       for (size_t j = 0; j < residues[i]->Count(); j++) {
         TCAtom& ca = residues[i]->GetAtom(j);
         // cannot use IsValid here, $H will not work
-        if (!ca.IsDeleted() && elms.Contains(&ca.GetType())) {
+        if (!ca.IsDeleted() && cr->Match(ca) && li.DoesMatch(ca, false)) {
           atoms.AddNew(&ca, eqiv);
         }
       }
@@ -207,9 +205,6 @@ size_t TAtomReference::_Expand(RefinementModel& rm, TCAtomGroup& atoms,
     olxstr aname = ((resi_ind == InvalidIndex) ? Expression
       : Expression.SubStringTo(resi_ind));
     for (size_t i = 0; i < residues.Count(); i++) {
-      if (residues[i] == 0) {
-        continue;
-      }
       for (size_t j = 0; j < residues[i]->Count(); j++) {
         TCAtom* ca = &residues[i]->GetAtom(j);
         // must be unique!
@@ -288,7 +283,7 @@ ConstSortedElementPList TAtomReference::ExpandAcronym(const olxstr &type,
 }
 //.............................................................................
 ConstSortedElementPList TAtomReference::DecodeTypes(const olxstr &types,
-  const TAsymmUnit & au)
+  const TAsymmUnit &au)
 {
   SortedElementPList res;
   if (types.StartsFrom('*')) {
@@ -350,3 +345,93 @@ ConstSortedElementPList TAtomReference::DecodeTypes(const olxstr &types,
   return res;
 }
 //.............................................................................
+//.............................................................................
+olx_object_ptr <IAtomSelectionCriterium> TAtomReference::BuildCriteria(
+  const olxstr& types, const TAsymmUnit& au)
+{
+  if (types.StartsFrom('*')) {
+    olx_object_ptr<AtomSelectionAndCriterium> rv = new AtomSelectionAndCriterium();
+    SortedElementPList res;
+    AtomSelectionOrCriterium* ocr = new AtomSelectionOrCriterium();
+    rv->criteria.Add(ocr);
+    for (size_t i = 0; i < au.AtomCount(); i++) {
+      res.AddUnique(&au.GetAtom(i).GetType());
+    }
+    for (size_t i = 0; i < res.Count(); i++) {
+      ocr->criteria.Add(new AtomTypeSelectionCriterium(*res[i]));
+    }
+    if (types.Length() == 1) {
+      return rv.release();
+    }
+    TStrList exc(types.SubStringFrom(types.CharAt(1) == '-' ? 2 : 1), ',');
+    for (size_t i = 0; i < exc.Count(); i++) {
+      const cm_Element* elm = XElementLib::FindBySymbol(exc[i]);
+      if (elm == 0) {
+        if (!XElementLib::IsElementShortcut(exc[i])) {
+          rv->criteria.Add(
+            new AtomSelectionNotCriterium(
+              new AtomLabelSelectionCriterium(exc[i]))
+          );
+          continue;
+        }
+        ConstSortedElementPList elms = ExpandAcronym(exc[i], au);
+        for (size_t i = 0; i < elms.Count(); i++) {
+          rv->criteria.Add(
+            new AtomSelectionNotCriterium(
+              new AtomTypeSelectionCriterium(*elms[i]))
+          );
+        }
+      }
+      else {
+        rv->criteria.Add(
+          new AtomSelectionNotCriterium(
+            new AtomTypeSelectionCriterium(*elm))
+        );
+      }
+    }
+    return rv.release();
+  }
+  else {
+    olx_object_ptr<AtomSelectionAndCriterium> and = new AtomSelectionAndCriterium();
+    AtomSelectionOrCriterium *or = new AtomSelectionOrCriterium();
+    and->criteria.Add(or);
+    TStrList tps(types, ',');
+    for (size_t i = 0; i < tps.Count(); i++) {
+      bool subtract = tps[i].StartsFrom('-');
+      olxstr elm_name = subtract ? tps[i].SubStringFrom(1) : tps[i];
+      const cm_Element* elm = XElementLib::FindBySymbol(elm_name);
+      if (elm == 0) {
+        if (!XElementLib::IsElementShortcut(tps[i])) {
+          AtomLabelSelectionCriterium *cr = new AtomLabelSelectionCriterium(elm_name);
+          if (subtract) {
+            and->criteria.Add(new AtomSelectionNotCriterium(cr));
+          }
+          else {
+            or->criteria.Add(cr);
+          }
+          continue;
+        }
+        ConstSortedElementPList elms = ExpandAcronym(tps[i], au);
+        for (size_t i = 0; i < elms.Count(); i++) {
+          AtomTypeSelectionCriterium *cr = new AtomTypeSelectionCriterium(*elms[i]);
+          if (subtract) {
+            and->criteria.Add(new AtomSelectionNotCriterium(cr));
+          }
+          else {
+            or->criteria.Add(cr);
+          }
+        }
+      }
+      else {
+        AtomTypeSelectionCriterium* cr = new AtomTypeSelectionCriterium(*elm);
+        if (subtract) {
+          and->criteria.Add(new AtomSelectionNotCriterium(cr));
+        }
+        else {
+          or->criteria.Add(cr);
+        }
+      }
+    }
+    return and.release();
+  }
+}

@@ -35,19 +35,114 @@ public:
   DefPropP(bool, DoClearSelection)
 };
 
-class TAtomReference : public IOlxObject  {
+struct IAtomSelectionCriterium {
+  virtual bool Match(const TCAtom& a) const = 0;
+  virtual ~IAtomSelectionCriterium() {}
+};
+
+struct AtomSelectionNotCriterium : public IAtomSelectionCriterium {
+  IAtomSelectionCriterium *c;
+  AtomSelectionNotCriterium(IAtomSelectionCriterium* c) : c(c) {}
+  ~AtomSelectionNotCriterium() {
+    delete c;
+  }
+  virtual bool Match(const TCAtom& a) const {
+    return !c->Match(a);
+  }
+};
+
+struct AtomTypeSelectionCriterium : public IAtomSelectionCriterium {
+  const cm_Element& e;
+  AtomTypeSelectionCriterium(const cm_Element& e) : e(e) {}
+  virtual bool Match(const TCAtom& a) const {
+    return e.GetIndex() == a.GetType().GetIndex();
+  }
+};
+
+struct AtomLabelSelectionCriterium : public IAtomSelectionCriterium {
+  olxstr label;
+  AtomLabelSelectionCriterium(const olxstr& l) : label(l) {}
+  virtual bool Match(const TCAtom& a) const {
+    return label.Equalsi(a.GetLabel());
+  }
+};
+
+struct AtomZSelectionCriterium : public IAtomSelectionCriterium {
+  const cm_Element& e;
+  AtomZSelectionCriterium(const cm_Element& e) : e(e) {}
+  virtual bool Match(const TCAtom& a) const {
+    return e.z == a.GetType().z;
+  }
+};
+
+struct AtomFlagSelectionCriterium : public IAtomSelectionCriterium {
+  short flag;
+  AtomFlagSelectionCriterium(short flag) : flag(flag) {}
+  virtual bool Match(const TCAtom& a) const {
+    return a.CheckFlags(flag);
+  }
+};
+
+struct AtomPartSelectionCriterium : public IAtomSelectionCriterium {
+  int part;
+  AtomPartSelectionCriterium(int part) : part(part) {}
+  virtual bool Match(const TCAtom& a) const {
+    return a.GetPart() == part;
+  }
+};
+
+struct AtomAFIXSelectionCriterium : public IAtomSelectionCriterium {
+  int afix;
+  AtomAFIXSelectionCriterium(int afix) : afix(afix) {}
+  virtual bool Match(const TCAtom& a) const {
+    return a.GetAfix() == afix;
+  }
+};
+
+struct AtomSelectionLogicalCriterium : public IAtomSelectionCriterium {
+  TPtrList<IAtomSelectionCriterium> criteria;
+  ~AtomSelectionLogicalCriterium() {
+    for (size_t i = 0; i < criteria.Count(); i++) {
+      delete criteria[i];
+    }
+  }
+};
+
+struct AtomSelectionOrCriterium : public AtomSelectionLogicalCriterium {
+  virtual bool Match(const TCAtom& a) const {
+    for (size_t i = 0; i < criteria.Count(); i++) {
+      if (criteria[i]->Match(a)) {
+        return true;
+      }
+    }
+    return false;
+  }
+};
+
+struct AtomSelectionAndCriterium : public AtomSelectionLogicalCriterium {
+  virtual bool Match(const TCAtom& a) const {
+    for (size_t i = 0; i < criteria.Count(); i++) {
+      if (!criteria[i]->Match(a)) {
+        return false;
+      }
+    }
+    return true;
+  }
+};
+
+class TAtomReference : public IOlxObject {
   olxstr Expression;
 protected:
-  inline bool IsValidAtom(TCAtom* ca)  {
+  inline bool IsValidAtom(TCAtom* ca) {
     return !ca->IsDeleted() && ca->GetType().z > 1;
   }
   ASelectionOwner* SelectionOwner;
 public:
   // if a NULL selectionOwner is given - the one of the TXApp is used
   TAtomReference(const olxstr& expression,
-    ASelectionOwner* selectionOwner=NULL);
+    ASelectionOwner* selectionOwner = 0);
 
-  const olxstr& GetExpression() const {  return Expression;  }
+  const olxstr& GetExpression() const { return Expression; }
 
   size_t _Expand(RefinementModel& rm, TCAtomGroup& atoms,
     TResidue* CurrResi);
@@ -55,14 +150,18 @@ public:
   olxstr Expand(RefinementModel& rm, TCAtomGroup& atoms, const olxstr& DefResi,
     size_t& atomAGroup);
 
-  /* decodes M to all metals, extensions are possible... */
-  static ConstSortedElementPList ExpandAcronym(const olxstr &type,
-    const TAsymmUnit & au);
+  /* decodes M to all metals, X to halogens, extensions are possible... 
+  */
+  static ConstSortedElementPList ExpandAcronym(const olxstr& type,
+    const TAsymmUnit& au);
   /*Returns a list of elements reffered like $C,O - all O and C or $*,C
   (alternatively: $*-C - all but C
   */
-  static ConstSortedElementPList DecodeTypes(const olxstr &types,
-    const TAsymmUnit & au);
+  static ConstSortedElementPList DecodeTypes(const olxstr& types,
+    const TAsymmUnit& au);
+  /* returns root criteria */
+  static olx_object_ptr <IAtomSelectionCriterium>
+    BuildCriteria(const olxstr& expr, const TAsymmUnit& au);
 };
 
 EndXlibNamespace()

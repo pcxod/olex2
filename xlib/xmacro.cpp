@@ -701,7 +701,7 @@ void XLibMacros::Export(TLibrary& lib)  {
     fpAny | psFileLoaded,
     "Test for twinning.");
   xlib_InitMacro(HKLF5,
-    EmptyString(),
+    "e-do not report an errors",
     fpAny | psFileLoaded,
     "HKLF5 utils.");
   xlib_InitMacro(CalcVars,
@@ -738,6 +738,11 @@ void XLibMacros::Export(TLibrary& lib)  {
     "Does the calculation for the curretly loaded file, 6 cell parameters or"
     "for a file that has space-separated lines starting with Id followed by"
     " the 6 cell parameters");
+  xlib_InitMacro(Adopt,
+    "c-clear current structure&;"
+    "z-min Z to import&;",
+    fpOne | psFileLoaded,
+    "Imports given structure content");
   //_____________________________________________________________________________
 
   xlib_InitFunc(FileName, fpNone|fpOne,
@@ -11132,10 +11137,13 @@ void XLibMacros::macHKLF5(TStrObjList &Cmds, const TParamList &Options,
     }
     Cmds.Add(fof);
   }
+  bool report_error= Options.GetBoolOption('e', false, true);
   THklFile hf;
   hf.LoadFromFile(Cmds[0], false);
   if (hf.RefCount() == 0 || !hf[0].IsBatchSet()) {
-    Error.ProcessingError(__OlxSrcInfo, "HKLF5 file is expected");
+    if (report_error) {
+      Error.ProcessingError(__OlxSrcInfo, "HKLF5 file is expected");
+    }
     return;
   }
   typedef olx_pair_t<size_t, size_t> pair_t;
@@ -11160,8 +11168,10 @@ void XLibMacros::macHKLF5(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   if (batches.IsEmpty()) {
-    Error.ProcessingError(__OlxSrcInfo,
-      "could not locate any negative batch numbers");
+    if (report_error) {
+      Error.ProcessingError(__OlxSrcInfo,
+        "could not locate any negative batch numbers");
+    }
     return;
   }
   const TAsymmUnit &au = TXApp::GetInstance().XFile().GetAsymmUnit();
@@ -11222,5 +11232,36 @@ void XLibMacros::macHKLF5(TStrObjList &Cmds, const TParamList &Options,
       sqrt(r_sq)/ data.Count(), data.Count());
   }
 
+}
+//..............................................................................
+void XLibMacros::macAdopt(TStrObjList& Cmds, const TParamList& Options,
+  TMacroData& E)
+{
+  TXApp& app = TXApp::GetInstance();
+  TBasicCFile* ld = app.XFile().FindFormat(TEFile::ExtractFileExt(Cmds[0]));
+  if (ld == 0) {
+    E.ProcessingError(__OlxSrcInfo, "Invalid file format");
+    return;
+  }
+  olx_object_ptr<TBasicCFile> f = dynamic_cast<TBasicCFile*>(ld->Replicate());
+  f->LoadFromFile(Cmds[0]);
+  TAsymmUnit& au = app.XFile().GetAsymmUnit();
+  if (Options.GetBoolOption('c')) {
+    au.GetAtoms().ForEach(TCAtom::FlagSetter(catom_flag_Deleted, true));
+  }
+  int min_z = Options.FindValue("z", "-1").ToInt();
+  TAsymmUnit& tau = f->GetAsymmUnit();
+  for (size_t i = 0; i < tau.AtomCount(); i++) {
+    TCAtom& a = tau.GetAtom(i);
+    if (a.GetType() < min_z) {
+      continue;
+    }
+    TCAtom& na = au.NewAtom();
+    na.SetType(a.GetType());
+    na.SetLabel(a.GetLabel(), false);
+    na.ccrd() = au.Fractionalise(tau.Orthogonalise(a.ccrd()));
+    na.SetPart(a.GetPart());
+  }
+  app.XFile().EndUpdate();
 }
 //..............................................................................

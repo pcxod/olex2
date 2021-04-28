@@ -48,7 +48,8 @@ const short
   catom_flag_Processed  = 0x0040, // generic flag
   catom_flag_FixedType  = 0x0080,
   catom_flag_RingAtom   = 0x0100,
-  catom_flag_Centroid   = 0x0200
+  catom_flag_Centroid   = 0x0200,
+  catom_flag_Polymer    = 0x0400 // atom belongs to a polymeric entity
   ;
 
 class TEllipsoid;
@@ -267,6 +268,8 @@ public:
   DefPropBFIsSet(FixedType, Flags, catom_flag_FixedType);
   DefPropBFIsSet(RingAtom, Flags, catom_flag_RingAtom);
   DefPropBFIsSet(Centroid, Flags, catom_flag_Centroid);
+  DefPropBFIsSet(Polymer, Flags, catom_flag_Polymer);
+  bool CheckFlags(short v) const { return (Flags & v) == v; }
   bool IsAvailable() const {
     return
       (Flags&(catom_flag_Detached|catom_flag_Masked|catom_flag_Deleted)) == 0;
