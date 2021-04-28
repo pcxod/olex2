@@ -392,9 +392,9 @@ olx_object_ptr <IAtomSelectionCriterium> TAtomReference::BuildCriteria(
     return rv.release();
   }
   else {
-    olx_object_ptr<AtomSelectionAndCriterium> and = new AtomSelectionAndCriterium();
-    AtomSelectionOrCriterium *or = new AtomSelectionOrCriterium();
-    and->criteria.Add(or);
+    olx_object_ptr<AtomSelectionAndCriterium> and_cr = new AtomSelectionAndCriterium();
+    AtomSelectionOrCriterium *or_cr = new AtomSelectionOrCriterium();
+    and_cr->criteria.Add(or_cr);
     TStrList tps(types, ',');
     for (size_t i = 0; i < tps.Count(); i++) {
       bool subtract = tps[i].StartsFrom('-');
@@ -404,10 +404,10 @@ olx_object_ptr <IAtomSelectionCriterium> TAtomReference::BuildCriteria(
         if (!XElementLib::IsElementShortcut(tps[i])) {
           AtomLabelSelectionCriterium *cr = new AtomLabelSelectionCriterium(elm_name);
           if (subtract) {
-            and->criteria.Add(new AtomSelectionNotCriterium(cr));
+            and_cr->criteria.Add(new AtomSelectionNotCriterium(cr));
           }
           else {
-            or->criteria.Add(cr);
+            or_cr->criteria.Add(cr);
           }
           continue;
         }
@@ -415,23 +415,23 @@ olx_object_ptr <IAtomSelectionCriterium> TAtomReference::BuildCriteria(
         for (size_t i = 0; i < elms.Count(); i++) {
           AtomTypeSelectionCriterium *cr = new AtomTypeSelectionCriterium(*elms[i]);
           if (subtract) {
-            and->criteria.Add(new AtomSelectionNotCriterium(cr));
+            and_cr->criteria.Add(new AtomSelectionNotCriterium(cr));
           }
           else {
-            or->criteria.Add(cr);
+            or_cr->criteria.Add(cr);
           }
         }
       }
       else {
         AtomTypeSelectionCriterium* cr = new AtomTypeSelectionCriterium(*elm);
         if (subtract) {
-          and->criteria.Add(new AtomSelectionNotCriterium(cr));
+          and_cr->criteria.Add(new AtomSelectionNotCriterium(cr));
         }
         else {
-          or->criteria.Add(cr);
+          or_cr->criteria.Add(cr);
         }
       }
     }
-    return and.release();
+    return and_cr.release();
   }
 }
