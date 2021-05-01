@@ -17,5 +17,12 @@ class OlexPyCore {
 public:
   static PyObject *PyInit();
   static olxcstr &ModuleName();
+  //
+  static olxstr GetRunningPythonThreadsCount_VarName() {
+    static olxstr n = "python_running_thread_count";
+    return n;
+  }
+
+  static size_t GetRunningPythonThreadsCount();
 };
 #endif

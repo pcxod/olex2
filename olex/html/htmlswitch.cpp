@@ -84,7 +84,7 @@ void THtmlSwitch::UpdateFileIndex()  {
       }
       else {
         TBasicApp::NewLogEntry(logError) <<
-          (olxstr("Invalid function in ingnoreif: ").quote() << fn);
+          (olxstr("Invalid function in ignoreif: ").quote() << fn);
         i = j+1; // skip the block
       }
       i--;

@@ -1516,6 +1516,19 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
     return false;
   }
 
+  if (MsgId == ID_TIMER && wxThread::IsMain() &&
+    StartupInitialised && Py_IsInitialized() && PyEval_ThreadsInitialized())
+  {
+    size_t tc = OlexPyCore::GetRunningPythonThreadsCount();
+    if (tc > 0) {
+      PyGILState_STATE st = PyGILState_Ensure();
+      Py_BEGIN_ALLOW_THREADS
+        olx_sleep(5);
+      Py_END_ALLOW_THREADS
+        PyGILState_Release(st);
+    }
+  }
+
   bool res = true, Silent = (FMode & mSilent) != 0, Draw = false;
   static bool actionEntered = false, downloadEntered = false;
   if (MsgId == ID_GLDRAW && !IsIconized()) {

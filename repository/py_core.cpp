@@ -605,6 +605,31 @@ PyObject* pyOnPlatonRun(PyObject* self, PyObject* args) {
   return PythonExt::PyFalse();
 }
 //..............................................................................
+size_t OlexPyCore::GetRunningPythonThreadsCount() {
+  return TOlxVars::FindValue(
+    OlexPyCore::GetRunningPythonThreadsCount_VarName(), "0").ToSizeT();
+}
+//..............................................................................
+PyObject* pyIncRuningThreads(PyObject* self, PyObject* args) {
+  size_t tc = TOlxVars::FindValue(
+    OlexPyCore::GetRunningPythonThreadsCount_VarName(), "0").ToSizeT();
+  TOlxVars::SetVar(OlexPyCore::GetRunningPythonThreadsCount_VarName(), tc+1);
+  return PythonExt::PyTrue();
+}
+//..............................................................................
+PyObject* pyDecRuningThreads(PyObject* self, PyObject* args) {
+  size_t tc = TOlxVars::FindValue(
+    OlexPyCore::GetRunningPythonThreadsCount_VarName(), "0").ToSizeT();
+  if (tc == 0) {
+    TBasicApp::NewLogEntry(logError) << olxstr(__OlxSourceInfo) << ": current value is 0";
+    tc == 1;
+  }
+  TOlxVars::SetVar(OlexPyCore::GetRunningPythonThreadsCount_VarName(), tc - 1);
+  return PythonExt::PyTrue();
+}
+//..............................................................................
+//..............................................................................
+//..............................................................................
 static PyMethodDef CORE_Methods[] = {
   {"UpdateRepository", pyUpdateRepository, METH_VARARGS,
   "Updates specified local repository from the http one. Takes the following "
@@ -654,6 +679,10 @@ static PyMethodDef CORE_Methods[] = {
   "Windows only - creates exclusive lock file" },
   { "DeleteLock", pyDeleteLock, METH_VARARGS,
   "Windows only - deletes previously created lock file" },
+  { "IncRunningThreadsCount", pyIncRuningThreads, METH_VARARGS,
+  "Increments the number of running Python threads - needed to allow them ro run" },
+  { "DecRunningThreadsCount", pyDecRuningThreads, METH_VARARGS,
+  "Decrements the number of running Python threads" },
   { NULL, NULL, 0, NULL }
    };
 
