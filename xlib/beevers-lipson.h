@@ -107,6 +107,7 @@ public:
       }
     }
     /* http://smallcode.weblogs.us/2006/11/27/calculate-standard-deviation-in-one-pass/
+    * https://www.strchr.com/standard_deviation_in_one_pass
     for one pass calculation of the variance
     */
     MapInfo mi = { 0, 1000, -1000 };
@@ -124,6 +125,7 @@ public:
         mi.maxVal = tasks[i].maxVal;
       }
     }
+    // sum should be ~0, but just in case...
     double map_mean = sum / dim.Prod();
     mi.sigma = sqrt(sq_sum / dim.Prod() - map_mean*map_mean);
     // clean up of allocated data
@@ -170,7 +172,8 @@ public:
       sin_cosX(_scX), sin_cosY(_scY), sin_cosZ(_scZ),
       mini(_min), maxi(_max),
       kLen(_max[1] - _min[1] + 1), lLen(_max[2] - _min[2] + 1), minInd(_minInd),
-      sum(0), sq_sum(0), vol(_volume), maxVal(-1000), minVal(1000)
+      sum(0), sq_sum(0), vol(_volume),
+      maxVal(-1000), minVal(1000)
     {
       S = new compd*[kLen];
       for (size_t i = 0; i < kLen; i++) {
@@ -206,7 +209,7 @@ public:
             R += T[i] * sin_cosZ[iz][i + d2];
           }
           const double val = R.Re() / vol;
-          sum += ((val < 0) ? -val : val);
+          sum += val;
           sq_sum += val*val;
           if (val > maxVal) {
             maxVal = val;
@@ -285,8 +288,7 @@ public:
           const double val = R.mod() / vol;
           sum += val;
           sq_sum += val*val;
-          if (val > maxVal)  maxVal = val;
-          if (val < minVal)  minVal = val;
+          olx_update_min_max(val, minVal, maxVal);
           map[ix][iy][iz] = (FloatT)val;
         }
         for (size_t i = 0; i < lLen; i++) {

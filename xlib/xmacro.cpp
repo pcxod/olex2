@@ -7437,7 +7437,7 @@ void XLibMacros::macUpdate(TStrObjList &Cmds, const TParamList &Options,
   app.XFile().EndUpdate();
 }
 //.............................................................................
-void XLibMacros::funCalcR(const TStrObjList& Params, TMacroData &E) {
+void XLibMacros::funCalcR(const TStrObjList& Params, TMacroData& E) {
   TXApp& xapp = TXApp::GetInstance();
   RefUtil::Stats rstat(!Params.IsEmpty() && Params[0].Contains("scale"));
   bool print = !Params.IsEmpty() && Params[0].Containsi("print");
@@ -7450,51 +7450,50 @@ void XLibMacros::funCalcR(const TStrObjList& Params, TMacroData &E) {
   }
   E.SetRetVal(
     olxstr(rstat.R1) << ',' << rstat.R1_partial << ',' << rstat.wR2);
-  if (!print) {
+  if (!print || xapp.XFile().GetLastLoaderSG().IsCentrosymmetric()) {
     return;
   }
-  // some test code for Flack calculation
-  TRefPList pos_, neg_;
-  TRefList refs;
-  vec3i mini(1000), maxi(-1000);
-  double th = 0;
-  for (size_t i = 0; i < rstat.refs.Count(); i++) {
-//    if (rstat.refs[i].GetI() < rstat.refs[i].GetS() * th) {
-//      continue;
-//    }
-    refs.AddCopy(rstat.refs[i]);
-    vec3i::UpdateMinMax(rstat.refs[i].GetHkl(), mini, maxi);
-  }
-  RefUtil::GetBijovetPairs(refs, mini, maxi, pos_, neg_,
-    xapp.XFile().GetLastLoaderSG().GetMatrices(mattAll).obj());
-  double up = 0, down = 0;
-  for (int p = 0; p <= 1; p++) {
-    TRefPList *pos = p == 0 ? &pos_ : &neg_,
-      *neg = p == 0 ? &neg_ : &pos_;
-    for (size_t i = 0; i < pos_.Count(); i++) {
-      double w = rstat.weights[(*pos)[i]->GetTag()];
-      double D1 = (*pos)[i]->GetI() - rstat.Fsq[(*pos)[i]->GetTag()];
-      double D2 = rstat.Fsq[(*neg)[i]->GetTag()] - rstat.Fsq[(*pos)[i]->GetTag()];
+  // Flack
+  {
+    TRefPList refs;
+    vec3i mini(1000), maxi(-1000);
+    double th = 0;
+    for (size_t i = 0; i < rstat.refs.Count(); i++) {
+      //if (rstat.refs[i].GetI() < rstat.refs[i].GetS() * th) {
+      //  continue;
+      //}
+      refs.Add(rstat.refs[i]);
+      refs.GetLast()->SetTag(i);
+    }
+    vec3i_list mi_n(refs.Count());
+    for (size_t i = 0; i < mi_n.Count(); i++) {
+      mi_n[i] = -rstat.refs[i].GetHkl();
+    }
+    TArrayList<compd> F_n(mi_n.Count());
+    SFUtil::CalcSF(xapp.XFile(), mi_n, F_n, true);
+    TDoubleList Fsq_n = TDoubleList::FromList(F_n, FunctionAccessor::MakeConst(&compd::qmod));
+
+    double up = 0, down = 0;
+    for (size_t i = 0; i < refs.Count(); i++) {
+      double w = rstat.weights[refs[i]->GetTag()];
+      double D1 = refs[i]->GetI() - rstat.Fsq[refs[i]->GetTag()];
+      double D2 = Fsq_n[i] - rstat.Fsq[refs[i]->GetTag()];
       up += w * D1 * D2;
       down += w * D2 * D2;
     }
-  }
-  double k = up / down, obj = 0, obj_d = 0;
-  for (int p = 0; p <= 1; p++) {
-    TRefPList* pos = p == 0 ? &pos_ : &neg_,
-      * neg = p == 0 ? &neg_ : &pos_;
-    for (size_t i = 0; i < pos_.Count(); i++) {
-      double w = rstat.weights[(*pos)[i]->GetTag()];
-      double D1 = (*pos)[i]->GetI() - rstat.Fsq[(*pos)[i]->GetTag()];
-      double D2 = rstat.Fsq[(*neg)[i]->GetTag()] - rstat.Fsq[(*pos)[i]->GetTag()];
-      obj += w*olx_sqr((D1 - k*D2));
-      obj_d += w*D2 * D2;
+    double k = up / down, obj = 0, obj_d = 0;
+    for (size_t i = 0; i < refs.Count(); i++) {
+      double w = rstat.weights[refs[i]->GetTag()];
+      double D1 = refs[i]->GetI() - rstat.Fsq[refs[i]->GetTag()];
+      double D2 = Fsq_n[i] - rstat.Fsq[refs[i]->GetTag()];
+      obj += w * olx_sqr((D1 - k * D2));
+      obj_d += w * D2 * D2;
     }
-  }
-  double esd = obj / ((pos_.Count() - 1)*obj_d);
+    double esd = obj / ((refs.Count() - 1) * obj_d);
 
-  TBasicApp::NewLogEntry() << "X: " << TEValueD(k, sqrt(esd)).ToString() << " for "
-    << pos_.Count() << " pairs";
+    TBasicApp::NewLogEntry() << "Flack X: " << TEValueD(k, sqrt(esd)).ToString() << " for "
+      << refs.Count() << " pairs";
+  }
 }
 //.............................................................................
 olxstr XLibMacros::GetCompilationInfo() {
