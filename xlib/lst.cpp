@@ -287,17 +287,17 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
       }
       FlackF = true;
     }
-    else if (!FlackF && SL[i].Contains("Flack x") && // 2013 version
+    else if (!FlackF && SL[i].Contains("Flack x") && // >= 2013 version
       SL[i].Contains("fit to all intensities"))
     {
       Toks.Clear();
       Toks.Strtok(SL[i], ' ');
       if (Toks.Count() > 3) {
         TEValueD flack_c = Toks[3]; // 'classical' Flack
+        params("flack", flack_c.ToString());
         if (++i < SL.Count()) {
           Toks.Clear();
           Toks.Strtok(SL[i], ' ');
-          bool flack_found = false;
           if (!Toks.IsEmpty()) {
             if (Toks[0].Contains('*')) {
               if (++i < SL.Count()) {
@@ -310,16 +310,9 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
             }
             if (!Toks.IsEmpty() && !Toks[0].Equalsi("No")) {
               TEValueD flack = Toks[0];
-              params("flack", flack.ToString());
-              flack_found = true;
+              params("parson", flack.ToString());
             }
           }
-          if (!flack_found) {
-            params("flack", flack_c.ToString());
-          }
-        }
-        else {
-          params("flack", flack_c.ToString());
         }
         FlackF = true;
       }

@@ -96,8 +96,10 @@ public:
   const olxstr& GetCause(size_t i) const {  return ErrorMsgs[i].GetB();  }
 
   olxstr_dict<olxstr, true> params;
-  // max_shift, mean_shift, F000, Mu, Rho, flack, wR2, S, rS, R1, R1all,
-  // param_n, ref_4sig, hole, peak, Rint, Rsig, ref_total, ref_unique
+  /* max_shift, mean_shift, F000, Mu, Rho, flack, flack_type (Q, x), wR2, S,
+  rS, R1, R1all, param_n, ref_4sig, hole, peak, Rint, Rsig, ref_total,
+  ref_unique
+   */
 };
 
 EndXlibNamespace()
