@@ -840,7 +840,7 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
 
   app.XGrid().SetMaxHole((float)(mi.sigma*1.4));
   app.XGrid().SetMinHole((float)(-mi.sigma*1.4));
-  app.XGrid().SetScale((float)(-mi.sigma*6));
+  app.XGrid().SetScale((float)(-mi.sigma*3.3));
   //app.XGrid().SetScale( -(mi.maxVal - mi.minVal)/2.5 );
   app.XGrid().SetMinVal((float)mi.minVal);
   app.XGrid().SetMaxVal((float)mi.maxVal);
@@ -859,7 +859,7 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
     TArrayList<MapUtil::peak> Peaks;
     TTypeList<MapUtil::peak> MergedPeaks;
     vec3d norm(1. / dim[0], 1. / dim[1], 1. / dim[2]);
-    MapUtil::Integrate<float>(map.Data, (float)(mi.sigma * 6), Peaks);
+    MapUtil::Integrate<float>(map.Data, (float)(mi.sigma * 3.3), Peaks);
     MapUtil::MergePeaks(uc.GetSymmSpace(), norm, Peaks, MergedPeaks);
     QuickSorter::SortSF(MergedPeaks, MapUtil::PeakSortByWeight);
     for (size_t i = 0; i < MergedPeaks.Count(); i++) {
