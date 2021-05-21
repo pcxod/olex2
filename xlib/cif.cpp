@@ -877,9 +877,9 @@ void TCif::Initialize() {
         for (size_t i = 0; i < ALoop->RowCount(); i++) {
           const CifRow& r = (*ALoop)[i];
           XScatterer* sc = new XScatterer(r[ind_s]->GetStringValue());
-          sc->SetFpFdp(
-            compd(r[ind_r]->GetStringValue().ToDouble(),
-              r[ind_i]->GetStringValue().ToDouble()));
+          TEValueD fp = r[ind_r]->GetStringValue();
+          TEValueD fdp = r[ind_i]->GetStringValue();
+          sc->SetFpFdp(compd(fp.GetV(), fdp.GetV()));
           GetRM().AddSfac(*sc);
         }
       }

@@ -622,7 +622,7 @@ PyObject* pyDecRuningThreads(PyObject* self, PyObject* args) {
     OlexPyCore::GetRunningPythonThreadsCount_VarName(), "0").ToSizeT();
   if (tc == 0) {
     TBasicApp::NewLogEntry(logError) << olxstr(__OlxSourceInfo) << ": current value is 0";
-    tc == 1;
+    tc = 1;
   }
   TOlxVars::SetVar(OlexPyCore::GetRunningPythonThreadsCount_VarName(), tc - 1);
   return PythonExt::PyTrue();
