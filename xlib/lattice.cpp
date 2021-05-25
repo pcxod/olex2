@@ -2810,10 +2810,10 @@ void TLattice::FinaliseLoading() {
   BuildAtomRegistry();
 }
 //..............................................................................
-void TLattice::LoadPlanes_(const TDataItem& item) {
+void TLattice::LoadPlanes_(const TDataItem& item, bool rebuild_defs) {
   TDataItem* plane_defs = item.FindAnyItem("Plane_defs");
   const TXApp& app = TXApp::GetInstance();
-  if (plane_defs != 0) {
+  if (plane_defs != 0 && !rebuild_defs) {
     for (size_t i = 0; i < plane_defs->ItemCount(); i++) {
       PlaneDefs.AddNew(plane_defs->GetItemByIndex(i), app);
     }
@@ -2822,7 +2822,7 @@ void TLattice::LoadPlanes_(const TDataItem& item) {
   for (size_t i = 0; i < planes.ItemCount(); i++) {
     TSPlane& p = Objects.planes.New(Network);
     p.FromDataItem(planes.GetItemByIndex(i), app);
-    if (p.GetDefId() == InvalidIndex) {
+    if (p.GetDefId() == InvalidIndex || rebuild_defs) {
       TSPlane::Def def = p.GetDef();
       size_t di = InvalidIndex;
       for (size_t j = 0; j < PlaneDefs.Count(); j++) {

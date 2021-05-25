@@ -995,7 +995,12 @@ void TXFile::FinaliseFromDataItem_() {
   if (data_source == 0) {
     throw TFunctionFailedException(__OlxSourceInfo, "invalid state");
   }
-  GetLattice().LoadPlanes_(data_source->GetItemByName("Lattice"));
+  TDataItem* root = data_source->GetParent();
+  while (root->GetLevel() > 1) {
+    root = root->GetParent();
+  }
+  const int version = root == 0 ? 0 : root->FindField("version", "0").ToInt();
+  GetLattice().LoadPlanes_(data_source->GetItemByName("Lattice"), version < 1);
   data_source = 0;
 }
 //..............................................................................
@@ -1305,8 +1310,14 @@ void TXFile::LibGetF000(const TStrObjList& Params, TMacroData& E) {
       }
     }
     if (!processed) {
-      f0 += cont[i].element->CalcFpFdp(r_e);
-      f0.Re() -= cont[i].element->z;
+      try {
+        f0 += cont[i].element->CalcFpFdp(r_e);
+        f0.Re() -= cont[i].element->z;
+      }
+      catch (...) {
+        TBasicApp::NewLogEntry() << "Failed to calculated DISP for " <<
+          cont[i].element->symbol;
+      }
       F000 += cont[i].count*f0.mod();
     }
   }

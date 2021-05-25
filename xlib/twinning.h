@@ -313,7 +313,8 @@ namespace twinning {
       bool HasNext() const {
         return (current == 0 ||
           ((off - current) != InvalidIndex &&
-            parent.all_refs[off - current].GetBatch() < 0));
+            parent.all_refs[off - current].GetBatch() < 0 &&
+            parent.all_refs[off - current].GetTag() >= 0));
       }
       TReflection Next() const {
         if (current_mero < parent.mero_matrices.Count()) {

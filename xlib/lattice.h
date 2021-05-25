@@ -306,7 +306,7 @@ public:
   /* if multiple overlayed files saved - planes reading has to be done
   after all files have been loaded. For internal use by TXFile
   */
-  void LoadPlanes_(const TDataItem &item);
+  void LoadPlanes_(const TDataItem &item, bool rebuild_defs);
 
   void LibGetFragmentCount(const TStrObjList& Params, TMacroData& E);
   void LibGetFragmentAtoms(const TStrObjList& Params, TMacroData& E);
