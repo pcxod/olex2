@@ -173,6 +173,13 @@ public:
     return (Items[FCount++] = Obj);
   }
 //..............................................................................
+  T& Add() {
+    if (FCapacity == FCount) {
+      SetCapacity((size_t)(1.5 * FCount + FIncrement));
+    }
+    return Items[FCount++];
+  }
+  //..............................................................................
   TArrayList& operator << (const T& o) {  Add(o);  return *this;  }
 //..............................................................................
   TArrayList& operator << (const TArrayList& l) { return AddAll(l); }

@@ -976,8 +976,7 @@ void RefinementModel::DetwinAlgebraic(TRefList& refs, const HklStat& st,
   using namespace twinning;
   if (Vars.HasBASF()) {
     TDoubleList scales = GetScales();
-    merohedral tw(info_ex, refs, scales,
-      GetTWIN_mat().GetT(), GetTWIN_n());
+    handler obs(info_ex, refs, scales, GetTWIN_mat(), GetTWIN_n());
     detwinner_algebraic dtw(scales);
     TRefList dtr;
     dtr.SetCapacity(refs.Count());
@@ -986,11 +985,9 @@ void RefinementModel::DetwinAlgebraic(TRefList& refs, const HklStat& st,
         continue;
       }
       const size_t s = dtr.Count();
-      dtw.detwin(
-        obs_twin_mate_generator<merohedral::iterator>(
-          merohedral::iterator(tw, i), refs), dtr);
+      dtw.detwin(obs.iterate(i), dtr);
       for (size_t j = s; j < dtr.Count(); j++) {
-        size_t ri = tw.find(dtr[j].GetHkl());
+        size_t ri = obs.find_obs(dtr[j].GetHkl());
         if (ri == InvalidIndex) {
           continue;
         }

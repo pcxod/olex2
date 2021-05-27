@@ -215,15 +215,18 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
       }
       sw.start("Calculating structure factors");
       if (xapp.XFile().GetRM().Vars.HasBASF()) {
-        twinning::merohedral dt(info_ex, refs,
+        twinning::handler dt(info_ex, refs,
           xapp.XFile().GetRM().GetBASFAsDoubleList(),
           xapp.XFile().GetRM().GetTWIN_mat(), 2);
-        F.SetCount(dt.Fc_indices.Count());
-        CalcSF(xapp.XFile(), dt.Fc_indices, F, true);
+        F.SetCount(dt.unique_indices.Count());
+        //TArrayList<compd> Fc(dt.unique_indices.Count());
+        CalcSF(xapp.XFile(), dt.unique_indices, F, true);
         dt.detwin(twinning::detwinner_shelx(), refs, F);
+        //dt.detwin_and_merge(twinning::detwinner_shelx(),
+        //  RefMerger::ShelxMerger(), refs, Fc, &F);
+
         F.SetCount(refs.Count());
         //CalcSF(xapp.XFile(), refs, F, true);
-        //xapp.XFile().GetRM().DetwinMixed(refs, F, ms, info_ex);
         //xapp.XFile().GetRM().DetwinAlgebraic(refs, ms, info_ex);
       }
       else {
@@ -236,7 +239,7 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
       }
     }
     else {
-      twinning::general twin(info_ex, rm.GetReflections(),
+      twinning::handler twin(info_ex, rm.GetReflections(),
         RefUtil::ResolutionAndSigmaFilter(rm), rm.GetBASFAsDoubleList());
       TArrayList<compd> Fc(twin.unique_indices.Count());
       SFUtil::CalcSF(xapp.XFile(), twin.unique_indices, Fc);

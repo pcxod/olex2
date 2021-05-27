@@ -12,6 +12,7 @@
 #include "reflection.h"
 #include "refmodel.h"
 #include "refutil.h"
+#include "arrays.h"
 
 BeginXlibNamespace()
 namespace twinning {
@@ -19,8 +20,11 @@ namespace twinning {
   struct twin_mate_calc {
     compd fc;
     double scale;
-    twin_mate_calc(const compd& _fc, double _scale) : fc(_fc), scale(_scale) {}
-    twin_mate_calc() : scale(0)
+    twin_mate_calc(const compd& _fc, double _scale)
+      : fc(_fc), scale(_scale)
+    {}
+    twin_mate_calc()
+      : scale(0)
     {}
     double f_sq_calc() const { return fc.qmod() * scale; }
   };
@@ -29,13 +33,17 @@ namespace twinning {
     twin_mate_obs(double _f_obs_sq, double _sig_obs, double _scale)
       : f_obs_sq(_f_obs_sq), sig_obs(_sig_obs), scale(_scale)
     {}
-    twin_mate_obs() : f_obs_sq(0), sig_obs(0), scale(0) {}
+    twin_mate_obs()
+      : f_obs_sq(0), sig_obs(0), scale(0)
+    {}
   };
   struct detwin_result {
     double f_sq, sig;
     detwin_result() : f_sq(0), sig(0)
     {}
-    detwin_result(double _f_sq, double _sig) : f_sq(_f_sq), sig(_sig) {}
+    detwin_result(double _f_sq, double _sig)
+      : f_sq(_f_sq), sig(_sig)
+    {}
   };
   struct twin_mate_full : public twin_mate_calc, public detwin_result {
     twin_mate_full(const compd& _fc, double _f_sq, double _sig, double _scale)
@@ -44,414 +52,92 @@ namespace twinning {
     twin_mate_full()
     {}
   };
-  // uses only Fc
-  struct detwinner_shelx {
-    template <typename twin_generator_t>
-    static detwin_result detwin(const twin_generator_t& itr) {
-      olx_object_ptr<twin_mate_full> pr = itr.NextFull();
-      double sum_f_sq = pr->f_sq_calc();
-      while (itr.HasNext()) {
-        sum_f_sq += itr.NextCalc().f_sq_calc();
-      }
-      double s = pr->fc.qmod() / sum_f_sq;
-      return detwin_result(pr->f_sq * s, pr->sig * s);
-    }
-  };
-  // uses both Fc and F_obs
-  struct detwinner_mixed {
-    template <typename twin_generator_t>
-    static detwin_result detwin(const twin_generator_t& itr) {
-      TTypeList<twin_mate_full> all;
-      while (itr.HasNext()) {
-        all.Add(itr.NextFull().release());
-      }
-      double f_sq = 0, s_sq = 0;
-      for (size_t i = 0; i < all.Count(); i++) {
-        double dn = 0;
-        size_t s = i;
-        for (size_t j = 0; j < all.Count(); j++, s++) {
-          size_t ind = (s >= all.Count() ? s - all.Count() : s);
-          dn += all[j].fc.qmod() * all[ind].scale;
-        }
-        double coeff = all[i].scale * all[0].fc.qmod() / dn;
-        f_sq += coeff * all[i].f_sq;
-        s_sq += coeff * olx_sqr(all[i].sig);
-      }
-      return detwin_result(f_sq, sqrt(s_sq));
-    }
-  };
-  // uses only scales and Fobs to deconvolute the intensities into components
-  struct detwinner_algebraic {
-    ematd _m;
-    template <typename list_t> detwinner_algebraic(const list_t& scales)
-      : _m(scales.Count(), scales.Count())
-    {
-      for (size_t i = 0; i < scales.Count(); i++) {
-        size_t s = i;
-        for (size_t j = 0; j < scales.Count(); j++, s++) {
-          _m[i][s >= scales.Count() ? s - scales.Count() : s] = scales[j];
-        }
-      }
-      if (!math::LU::Invert(_m)) {
-        throw TFunctionFailedException(__OlxSourceInfo, "cannot invert the matrix");
-      }
-    }
-    template <typename twin_generator_t>
-    void detwin(const twin_generator_t& itr, TTypeList<TReflection>& res) const {
-      TTypeList<TReflection> all;
-      evecd I(_m.ColCount()), S(_m.ColCount());
-      while (itr.HasNext()) {
-        TReflection& r = all.AddCopy(itr.NextObs());
-        const size_t si = olx_abs(r.GetBatch()) - 1;
-        if (si >= _m.ColCount()) {
-          throw TInvalidArgumentException(__OlxSourceInfo, "batch number");
-        }
-        I[si] = r.GetI();
-        S[si] = olx_sqr(r.GetS());
-      }
-      I = _m * I;
-      S = _m * S;
-      for (size_t i = 0; i < all.Count(); i++) {
-        if (i > 0 && all[i].GetHkl() == all[0].GetHkl()) {
-          continue;
-        }
-        TReflection& r = res.AddCopy(all[i]);
-        r.SetI(I[i]);
-        r.SetS(sqrt(S[i]));
-      }
-    }
-  };
 
-  template <typename twin_iterator> struct twin_mate_generator {
-    const twin_iterator& itr;
-    const TDoubleList& scales;
-    const TArrayList<compd>& Fc;
-    twin_mate_generator(const twin_iterator& _itr, const TDoubleList& _scales,
-      const TArrayList<compd>& _Fc)
-      : itr(_itr), scales(_scales), Fc(_Fc)
-    {}
-    bool HasNext() const { return itr.HasNext(); }
-    olx_object_ptr<twin_mate_full> NextFull() const {
-      TReflection r = itr.Next();
-      if (r.GetTag() < 0  || (size_t)r.GetTag() > Fc.Count()) {
-        throw TIndexOutOfRangeException(__OlxSourceInfo, r.GetTag(), 0, Fc.Count());
-      }
-      const size_t bi = olx_abs(r.GetBatch()) - 1;
-      if (bi >= scales.Count()) {
-        throw TInvalidArgumentException(__OlxSourceInfo,
-          olxstr("batch number in: ").quote() << r.ToString());
-      }
-      return new twin_mate_full(
-        Fc[r.GetTag()], r.GetI(), r.GetS(), scales[bi]);
-    }
-    twin_mate_calc NextCalc() const {
-      TReflection r = itr.Next();
-      if (r.GetTag() < 0 || (size_t)r.GetTag() > Fc.Count()) {
-        throw TIndexOutOfRangeException(__OlxSourceInfo, r.GetTag(), 0, Fc.Count());
-      }
-      const size_t bi = olx_abs(r.GetBatch()) - 1;
-      if (bi >= scales.Count()) {
-        throw TInvalidArgumentException(__OlxSourceInfo,
-          olxstr("batch number in: ").quote() << r.ToString());
-      }
-      return twin_mate_calc(Fc[r.GetTag()], scales[bi]);
-    }
-  };
-
-  template <typename twin_iterator> struct obs_twin_mate_generator {
-    const twin_iterator& itr;
-    const TRefList& refs;
-    obs_twin_mate_generator(const twin_iterator& _itr, const TRefList& _refs)
-      : itr(_itr), refs(_refs)
-    {}
-    bool HasNext() const { return itr.HasNext(); }
-    TReflection NextObs() const {
-      TReflection r = itr.Next();
-      return TReflection(refs[r.GetTag()], r.GetBatch());
-    }
-  };
-  // convinience method
-  template <typename twin_calc_generator_t>
-  double calc_f_sq(const twin_calc_generator_t& tw) {
-    double res = tw.NextCalc().f_sq_calc();
-    while (tw.HasNext()) {
-      res += tw.NextCalc().f_sq_calc();
-    }
-    return res;
-  }
-
-  struct merohedral {
+  class handler {
+  public:
     struct iterator {
-      const merohedral& parent;
-      const size_t src_index;
-      mutable int current;
-      mutable vec3i index;
-      const int n, hn;
-      iterator(const merohedral& _parent, size_t _src_index)
-        : parent(_parent),
-        src_index(_src_index),
-        current(0),
-        index(parent.all_refs[src_index].GetHkl()),
-        n(olx_abs(parent.n)),
-        hn(n / 2)
+      const handler& obs;
+      size_t h_idx;
+      mutable size_t current;
+      mutable double scale;
+      iterator(const handler& parent, size_t h_idx)
+        : obs(parent), h_idx(h_idx),
+        current(InvalidIndex), scale(0)
       {}
-      bool HasNext() const { return current < n; }
-      TReflection Next() const {
-        int i = current++;
-        if (parent.n < 0 && i >= hn) {
-          index = -index;
-        }
-        TReflection rv = TReflection(
-          parent.all_refs[src_index], index, (i + 1) * (i == 0 ? 1 : -1));
-        rv.SetTag(parent.find(index));
-        if (HasNext()) {
-          index = TReflection::Standardise(parent.matrix * index, parent.sym_info);
-        }
-        return rv;
+      bool has_next() const {
+        return current == InvalidIndex || obs.components[h_idx].Count() > current;
       }
-    };
-    static vec3i_list::const_list_type calc_range(const SymmSpace::InfoEx& sym_info,
-      const TRefList& all_refs, const mat3i& tm,
-      olx_object_ptr<TArray3D<size_t> >& map_)
-    {
-      vec3i_list rv;
-      rv.SetCapacity(all_refs.Count());
-      vec3i min_idx(100), max_idx(-100);
-      for (size_t i = 0; i < all_refs.Count(); i++) {
-        vec3i::UpdateMinMax(all_refs[i].GetHkl(), min_idx, max_idx);
-        vec3i::UpdateMinMax(TReflection::Standardise(tm * all_refs[i].GetHkl(), sym_info),
-          min_idx, max_idx);
-      }
-      map_ = new TArray3D<size_t>(min_idx, max_idx);
-      TArray3D<size_t> &map = *map_;
-      map.FastInitWith(-1);
-      for (size_t i = 0; i < all_refs.Count(); i++) {
-        map(all_refs[i].GetHkl()) = i;
-        rv << all_refs[i].GetHkl();
-      }
-      for (size_t i = 0; i < all_refs.Count(); i++) {
-        vec3i hkl = TReflection::Standardise(tm * all_refs[i].GetHkl(), sym_info);
-        size_t& found = map(hkl);
-        if (found == InvalidIndex) {
-          found = rv.Count();
-          rv << hkl;
-        }
-      }
-      return rv;
-    }
-    merohedral(const SymmSpace::InfoEx& _sym_info, const TRefList& _all_refs,
-      const TDoubleList& _scales,
-      const mat3i& tm, int _n)
-      : sym_info(_sym_info), all_refs(_all_refs),
-      scales(_scales),
-      matrix(tm), n(_n),
-      Fc_indices(calc_range(_sym_info, _all_refs, tm, hkl_to_ref_map))
-    {
-      scales.Insert(0, 1 - olx_sum(scales));
-    }
-    template <typename detwinner_t>
-    void detwin(const detwinner_t& dt, TRefList& out,
-      const TArrayList<compd>& Fc)
-    {
-      out = all_refs;
-      for (size_t i = 0; i < out.Count(); i++) {
-        TReflection& r = out[i];
-        iterator itr(*this, i);
-        detwin_result res =
-          dt.detwin(twin_mate_generator<iterator>(itr, scales, Fc));
-        r.SetI(res.f_sq);
-        r.SetS(res.sig);
-        r.SetBatch(TReflection::NoBatchSet);
-      }
-    }
-    void calc_fsq(const TArrayList<compd>& Fc, evecd& Fsq) {
-      Fsq.Resize(all_refs.Count());
-      for (size_t i = 0; i < all_refs.Count(); i++) {
-        Fsq[i] = calc_f_sq(
-          twin_mate_generator<iterator>(iterator(*this, i), scales, Fc));
-      }
-    }
-    static ConstTypeList<mat3i> expand(const mat3i& m, int _n) {
-      mat3i_list rv;
-      if (_n == 0) {
-        return rv;
-      }
-      rv.AddCopy(m);
-      const size_t n = _n < 0 ? _n / 2 : _n;
-      for (size_t i = 2; i < n; i++) {
-        rv.AddCopy(rv[i - 1] * m);
-      }
-      if (_n < 0) {
-        rv.SetCapacity(rv.Count() * 2 + 1);
-        size_t cnt = rv.Count();
-        for (size_t i = 0; i < cnt; i++) {
-          rv.AddCopy(rv[i] * -1);
-        }
-        rv.AddNew().I() *= -1;
-      }
-      return rv;
-    }
-    size_t find(const vec3i v) const {
-      return hkl_to_ref_map->IsInRange(v) ? (*hkl_to_ref_map)(v) : InvalidIndex;
-    }
-    const SymmSpace::InfoEx& sym_info;
-    const TRefList& all_refs;
-    TDoubleList scales;
-    olx_object_ptr<TArray3D<size_t> > hkl_to_ref_map;
-    vec3i_list Fc_indices;
-    mat3i matrix;
-    int n;
-  };
-  /**/
-  struct general {
-    struct iterator {
-      const general& parent;
-      mutable size_t current, current_mero;
-      const size_t off;
-      iterator(const general& _parent, size_t start)
-        : parent(_parent), current(0), current_mero(0), off(start) {}
-      bool HasNext() const {
-        return (current == 0 ||
-          ((off - current) != InvalidIndex &&
-            parent.all_refs[off - current].GetBatch() < 0 &&
-            parent.all_refs[off - current].GetTag() >= 0));
-      }
-      TReflection Next() const {
-        if (current_mero < parent.mero_matrices.Count()) {
-          TReflection& src = parent.all_refs[off - current];
-          vec3i index = TReflection::Standardise(
-            parent.mero_matrices[current_mero++] * src.GetHkl(),
-            parent.sym_info);
-          int bn = int(olx_abs(src.GetBatch()) + current_mero * parent.parts);
-          TReflection rv = TReflection(src, index, bn);
-          rv.SetTag(
-            parent.F_indices->IsInRange(index) ? (*parent.F_indices)(index)
-            : -1);
-          return rv;
-        }
-        current_mero = 0; //reset merohedral iterator
-        return parent.all_refs[off - current++];
-      }
-    };
-    general(const SymmSpace::InfoEx& _sym_info, const TRefList& _all_refs,
-      const RefUtil::ResolutionAndSigmaFilter& filter,
-      const TDoubleList& _scales,
-      const mat3i& mero_m = mat3i(),
-      int mero_n = 0)
-      : sym_info(_sym_info),
-      all_refs(_all_refs),
-      scales(_scales),
-      F_indices(0),
-      parts(1)
-    {
-      filter.SetStats(ms);
-      vec3i mi(100, 100, 100), mx = -mi;
-      vec3i_list s_refs(_all_refs.Count());
-      for (size_t i = 0; i < all_refs.Count(); i++) {
-        s_refs[i] = TReflection::Standardise(all_refs[i].GetHkl(), sym_info);
-        vec3i::UpdateMinMax(s_refs[i], mi, mx);
-      }
-      TArray3D<size_t>& hkl3d = *(F_indices = new TArray3D<size_t>(mi, mx));
-      F_indices->FastInitWith(-1);
-      reflections.Clear().SetCapacity(all_refs.Count());
-      for (size_t i = all_refs.Count() - 1; i != InvalidIndex; i--) {
-        if (all_refs[i].IsOmitted()) {
-          ms.OmittedByUser++;
-          continue;
-        }
-        if (filter.IsOutside(all_refs[i])) {
-          all_refs[i].SetTag(-1);
-          continue;
-        }
-        if (all_refs[i].GetBatch() > 0) {
-          ms.TotalReflections++;
-        }
-        const vec3i& hkl = s_refs[i];
-        if (TReflection::IsAbsent(hkl, sym_info) || filter.IsOmitted(hkl)) {
-          if (all_refs[i].GetBatch() > 0) {
-            size_t j = i;
-            bool all_absent = true;
-            while (--j != InvalidIndex && all_refs[j].GetBatch() < 0) {
-              if (!TReflection::IsAbsent(all_refs[j].GetHkl(), sym_info) &&
-                !filter.IsOmitted(TReflection::Standardise(
-                  all_refs[j].GetHkl(), sym_info)))
-              {
-                all_absent = false;
-                break;
-              }
-            }
-            if (all_absent) {
-              all_refs[i].SetTag(-1);
-              ms.SystematicAbsencesRemoved++;
-              i = j + 1;
-              continue;
-            }
-          }
-        }
-        if (hkl3d(hkl) == InvalidIndex) {
-          all_refs[i].SetTag(hkl3d(hkl) = unique_indices.Count());
-          unique_indices.AddCopy(hkl);
+      const vec3i& next_index() const {
+        if (++current == 0) {
+          scale = obs.scales[olx_abs(obs.measured[h_idx].GetBatch()) - 1].value;
+          return obs.measured[h_idx].GetHkl();
         }
         else {
-          all_refs[i].SetTag(hkl3d(hkl));
-        }
-        if (all_refs[i].GetBatch() >= 0) {
-          reflections.AddCopy(all_refs[i]).SetTag(i);
+          scale = obs.components[h_idx][current - 1].scale.value;
+          return obs.components[h_idx][current - 1].index;
         }
       }
-      reflections.ForEach(
-        RefUtil::ResolutionAndSigmaFilter::IntensityModifier(filter));
-      mero_matrices = merohedral::expand(mero_m, mero_n);
-      if (!mero_matrices.IsEmpty()) {
-        if (scales.Count() <= mero_matrices.Count()) {
-          throw TFunctionFailedException(__OlxSourceInfo,
-            "too few scale parameters");
-        }
-        parts = int(scales.Count() - mero_matrices.Count());
-        double pbs = 1 - olx_sum(scales, 0, parts),
-          tbs = 1 - olx_sum(scales, parts);
-        TDoubleList scs((parts + 1) * (mero_matrices.Count() + 1));
-        for (size_t i = 0; i <= mero_matrices.Count(); i++) {
-          double s = (i == 0) ? tbs : scales[parts + i - 1];
-          for (int j = 0; j <= parts; j++) {
-            scs[i * (parts + 1) + j] = (j == 0 ? pbs : scales[j - 1]) * s;
-          }
-        }
-        scales = scs;
-        parts++;
+      const TReflection& next_obs() const {
+        vec3i hkl = next_index();
+        return obs.measured[obs.find_obs(hkl)];
       }
-      else {
-        scales.Insert(0, 1 - olx_sum(scales));
+    };
+    struct twin_mate_generator {
+      const iterator& itr;
+      const TArrayList<compd>& Fc;
+      twin_mate_generator(const iterator& _itr, const TArrayList<compd>& _Fc)
+        : itr(_itr), Fc(_Fc)
+      {}
+      bool has_next() const { return itr.has_next(); }
+      olx_object_ptr<twin_mate_full> next_full() const {
+        vec3i hkl = itr.next_index();
+        const map_et& r = itr.obs.hkl_to_ref_map->Value(hkl);
+        return new twin_mate_full(
+          Fc[r.a],
+          itr.obs.measured[itr.h_idx].GetI(),
+          itr.obs.measured[itr.h_idx].GetS(),
+          itr.scale);
       }
+      twin_mate_calc next_calc() const {
+        vec3i hkl = itr.next_index();
+        return twin_mate_calc(Fc[itr.obs.find_calc(hkl)], itr.scale);
+      }
+    };
+    // constructors
+    handler(const SymmSpace::InfoEx& _sym_info, const TRefList& refs,
+      const TDoubleList& _scales,
+      const mat3d& tm, int n);
+
+    handler(const SymmSpace::InfoEx& _sym_info, const TRefList& refs,
+      const RefUtil::ResolutionAndSigmaFilter& filter,
+      const TDoubleList& _scales);
+
+    iterator iterate(size_t i) const {
+      return iterator(*this, i);
     }
-    ~general() {
-      if (F_indices != 0) {
-        delete F_indices;
-      }
+
+    size_t find_calc(const vec3i& h) const {
+      return hkl_to_ref_map->Value(h).a;
     }
-    void calc_fsq(const TArrayList<compd>& Fc, evecd& Fsq) {
-      Fsq.Resize(reflections.Count());
-      for (size_t i = 0; i < reflections.Count(); i++) {
-        iterator itr(*this, reflections[i].GetTag());
-        Fsq[i] = calc_f_sq(twin_mate_generator<iterator>(itr, scales, Fc));
-      }
+
+    size_t find_obs(const vec3i& h) const {
+      return hkl_to_ref_map->Value(h).b;
     }
 
     template <typename detwinner_t>
     void detwin(const detwinner_t& dt, TRefList& out,
       const TArrayList<compd>& Fc)
     {
-      out = reflections;
+      out = measured;
       for (size_t i = 0; i < out.Count(); i++) {
         TReflection& r = out[i];
-        twinning::general::iterator itr(*this, r.GetTag());
-        detwin_result res = dt.detwin(
-          twin_mate_generator<iterator>(itr, scales, Fc));
+        detwin_result res = dt.detwin(twin_mate_generator(iterate(i), Fc));
         r.SetI(res.f_sq);
         r.SetS(res.sig);
         r.SetBatch(TReflection::NoBatchSet);
       }
     }
+
     template <typename detwinner_t, typename merger_t>
     void detwin_and_merge(const detwinner_t& dt, const merger_t& merger,
       TRefList& out, const TArrayList<compd>& Fc, TArrayList<compd>* pF)
@@ -463,14 +149,14 @@ namespace twinning {
       si.centrosymmetric = true;
       RefMerger::Merge<merger_t>(sym_info, to_merge, out, vec3i_list());
       to_merge.DeleteItems(false);
-      if (pF != NULL) {
+      if (pF != 0) {
         TArrayList<compd>& F = *pF;
-        TArray3D<size_t>& hkl3d = *F_indices;
+        olx_array::TArray3D<map_et>& map = *hkl_to_ref_map;
         F.SetCount(out.Count());
         for (size_t i = 0; i < out.Count(); i++) {
           size_t f_i;
-          if (!hkl3d.IsInRange(out[i].GetHkl()) ||
-            (f_i = hkl3d(out[i].GetHkl())) == InvalidIndex)
+          if (!map.IsInRange(out[i].GetHkl()) ||
+            (f_i = map(out[i].GetHkl()).a) == InvalidIndex)
           {
             throw TFunctionFailedException(__OlxSourceInfo,
               "merging does not match");
@@ -479,15 +165,63 @@ namespace twinning {
         }
       }
     }
+    void calc_fsq(const TArrayList<compd>& Fc, evecd& Fsq) {
+      Fsq.Resize(measured.Count());
+      for (size_t i = 0; i < measured.Count(); i++) {
+        Fsq[i] = calc_f_sq_1(twin_mate_generator(iterate(i), Fc));
+      }
+    }
+
+  protected:
+    double calc_f_sq_1(const twin_mate_generator& itr) {
+      double res = itr.next_calc().f_sq_calc();
+      while (itr.has_next()) {
+        res += itr.next_calc().f_sq_calc();
+      }
+      return res;
+    }
+    struct BASF_p {
+      double value;
+      BASF_p(double v)
+        : value(v)
+      {}
+    };
+    struct twin_component {
+      vec3i index;
+      const BASF_p& scale;
+      twin_component(const vec3i& index, const BASF_p& scale)
+        : index(index), scale(scale)
+      {}
+    };
+  private:
+    void calc_range();
     const SymmSpace::InfoEx& sym_info;
-    const TRefList& all_refs;
-    TRefList reflections;
+    TTypeList<TTypeList<twin_component> > components;
+    TTypeList< BASF_p> scales;
+    typedef olx_pair_t<size_t, size_t> map_et;
+    olx_object_ptr<olx_array::TArray3D<map_et> > hkl_to_ref_map;
+  public:
+    TRefList measured;
     vec3i_list unique_indices;
     RefinementModel::HklStat ms;
-    TDoubleList scales;
-    TArray3D<size_t>* F_indices;
-    mat3i_list mero_matrices;
-    int parts;
+  };
+
+
+  // uses only scales and Fobs to deconvolute the intensities into components
+  struct detwinner_algebraic {
+    ematd _m;
+    detwinner_algebraic(const TDoubleList& scales);
+    void detwin(const handler::iterator& itr, TTypeList<TReflection>& res) const;
+  };
+
+  // uses only Fc
+  struct detwinner_shelx {
+    detwin_result detwin(const handler::twin_mate_generator& itr) const;
+  };
+
+  // uses both Fc and F_obs
+  struct detwinner_mixed {
+    detwin_result detwin(const handler::twin_mate_generator& itr) const;
   };
 }; //end of the twinning namespace
 EndXlibNamespace()

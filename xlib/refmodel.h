@@ -530,7 +530,6 @@ Friedel opposites of components 1 ... m
   // uses algebraic relation
   void DetwinAlgebraic(TRefList& refs, const HklStat& st,
     const SymmSpace::InfoEx& info_ex) const;
-  // convinience method for mrehedral::detwin<> with  detwin_mixed
   // returns the number of pairs
   int GetFriedelPairCount() const {
     GetReflections();

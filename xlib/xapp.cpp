@@ -248,14 +248,12 @@ void TXApp::CalcSFEx(const TRefList& refs, TArrayList<TEComplex<double> >& F,
     double exti = rm.Vars.HasEXTI() ? rm.Vars.GetEXTI().GetValue() : 0;
     if (!basf.IsEmpty()) {
       if (rm.GetHKLF() >= 5) {
-        int tn = rm.HasTWIN() ? rm.GetTWIN_n() : 0;
-        twinning::general twin(info_ex, rm.GetReflections(),
-          RefUtil::ResolutionAndSigmaFilter(rm), basf,
-          rm.GetTWIN_mat().GetT(), tn);
+        twinning::handler twin(info_ex, rm.GetReflections(),
+          RefUtil::ResolutionAndSigmaFilter(rm), basf);
         TArrayList<compd> F(twin.unique_indices.Count());
         SFUtil::CalcSF(XFile(), twin.unique_indices, F);
         twin.calc_fsq(F, Fsq);
-        refs.TakeOver(twin.reflections);
+        refs.TakeOver(twin.measured);
         rv = twin.ms;
       }
       else {
@@ -263,11 +261,11 @@ void TXApp::CalcSFEx(const TRefList& refs, TArrayList<TEComplex<double> >& F,
           TUnitCell::SymmSpace, RefMerger::ShelxMerger>(sp, refs);
         if (rv.FriedelOppositesMerged)
           info_ex.centrosymmetric = true;
-        twinning::merohedral twin(
+        twinning::handler twin(
           info_ex, refs, basf, rm.GetTWIN_mat(),
           rm.GetTWIN_n());
-        TArrayList<compd> F(twin.Fc_indices.Count());
-        SFUtil::CalcSF(XFile(), twin.Fc_indices, F, rv.MERG != 4);
+        TArrayList<compd> F(twin.unique_indices.Count());
+        SFUtil::CalcSF(XFile(), twin.unique_indices, F, rv.MERG != 4);
         twin.calc_fsq(F, Fsq);
       }
     }
