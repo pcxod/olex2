@@ -217,7 +217,8 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
       if (xapp.XFile().GetRM().Vars.HasBASF()) {
         twinning::handler dt(info_ex, refs,
           xapp.XFile().GetRM().GetBASFAsDoubleList(),
-          xapp.XFile().GetRM().GetTWIN_mat(), 2);
+          xapp.XFile().GetRM().GetTWIN_mat(),
+          xapp.XFile().GetRM().GetTWIN_n());
         F.SetCount(dt.unique_indices.Count());
         //TArrayList<compd> Fc(dt.unique_indices.Count());
         CalcSF(xapp.XFile(), dt.unique_indices, F, true);
