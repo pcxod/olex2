@@ -25,9 +25,11 @@ Stats::Stats(bool update_scale)
   double wR2d = 0, R1u = 0, R1d = 0, R1up = 0, R1dp = 0;
   TDoubleList wght = rm.used_weight;
   while (wght.Count() < 6) {
-    wght.Add(0);
+    wght.Add(0.0);
   }
-  wght[5] = 1. / 3;
+  if (wght[5] == 0) {
+    wght[5] = 1. / 3;
+  }
   wsqd.Resize(refs.Count());
   weights.Resize(refs.Count());
 
@@ -36,13 +38,31 @@ Stats::Stats(bool update_scale)
     r *= scale_k;
     r.SetTag(i);
     vec3i::UpdateMinMax(r.GetHkl(), min_hkl, max_hkl);
-    double Fc2 = Fsq[i];
+    const double Fc2 = Fsq[i];
     const double Fc = sqrt(olx_abs(Fc2));
     const double Fo2 = r.GetI();
     const double Fo = sqrt(Fo2 < 0 ? 0 : Fo2);
-    const double P = wght[5] * olx_max(0, Fo2) + (1.0 - wght[5])*Fc2;
-    const double w =
-      1. / (olx_sqr(r.GetS()) + olx_sqr(wght[0] * P) + wght[1] * P + wght[2]);
+    const double P = wght[5] * olx_max(0, Fo2) + (1.0 - wght[5]) * Fc2;
+    mat3d h2c = rm.aunit.GetHklToCartesian();
+    const double stl = 1./sqrt(4*r.ToCart(h2c).QLength());
+    double q = 1.0;
+    if (wght[2] == 0) {
+      q = 1.0;
+    }
+    else if (wght[2] > 0) {
+      q = olx_exp(wght[2] * olx_sqr(stl));
+    }
+    else {
+      q = 1 - olx_exp(wght[2] * olx_sqr(stl));
+    }
+    double t = olx_sqr(r.GetS()) + olx_sqr(wght[0] * P) + wght[1] * P;
+    if (wght[3] != 0) {
+      t += wght[3];
+    }
+    if(wght[4] != 0) {
+      t += wght[4] * stl * rm.expl.GetRadiation();
+    }
+    const double w = q / t;
     weights[i] = w;
     wsqd[i] = w * olx_sqr(Fo2 - Fc2);
     sum_wsqd += wsqd[i];

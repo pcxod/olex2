@@ -79,12 +79,14 @@ void GXLibMacros::Export(TLibrary& lib) {
     "fcfmc-calculates FCF Fc-Fc map&;"
     "scale-scale to use for difference maps, currently available simple(s) "
     "sum(Fo^2)/sum(Fc^2)) and regression(r)&;"
+    "anom_only-Create Fc Map only using anomalous dispersion scattering factor, "
+    "neglecting atom contribution&;"
     "r-resolution in Angstrems&;"
     "i-integrates the map&;"
     "m-mask the structure&;"
     "map-show map[true]"
     , fpNone | psFileLoaded,
-  "Calculates fourier map");
+  "Calculates fourier map of selected type");
 
   gxlib_InitMacro(Qual,
     EmptyString(),
@@ -271,7 +273,8 @@ void GXLibMacros::Export(TLibrary& lib) {
   gxlib_InitMacro(Esd,
     "label-creates a graphics label&;"
     "l-consider the list of bonds as independent&;"
-    "c-copies printed values to the clipboard",
+    "c-copies printed values to the clipboard&;"
+    "p-prints floating point numbers with requested precision for values calculated",
     fpAny|psFileLoaded,
     "This procedure calculates possible parameters for the selection and "
     "evaluates their esd using the variance-covariance matrix coming from the "
@@ -799,8 +802,10 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
   }
   short src = Options.GetBoolOption("fcf") ? SFUtil::sfOriginFcf
     : SFUtil::sfOriginOlex2;
+  bool anom_only = Options.GetBoolOption("anom_only");
+  if (anom_only) src = SFUtil::sfOriginOlex2;
   olxstr err = SFUtil::GetSF(refs, F, mapType, src,
-    scale, scale_value, SFUtil::fpMerge);
+    scale, scale_value, SFUtil::fpMerge, anom_only);
   if (!err.IsEmpty()) {
     E.ProcessingError(__OlxSrcInfo, err);
     return;
@@ -3593,10 +3598,19 @@ void GXLibMacros::macEsd(TStrObjList &Cmds, const TParamList &Options,
     }
     else if (sel.Count() == 2) {
       if (olx_list_and(sel, &IOlxObject::Is<TXAtom>)) {
-        values.Add(((TXAtom&)sel[0]).GetLabel()) << " to " <<
-          ((TXAtom&)sel[1]).GetLabel() << " distance: " <<
-          vcovc.CalcDistance((TXAtom&)sel[0], (TXAtom&)sel[1]).ToString() <<
-          " A";
+        if (Options.Contains('p')){
+         const int precision = Options.FindValue('p','6').ToInt();
+         TEValue<double> d(vcovc.CalcDistance((TXAtom&)sel[0], (TXAtom&)sel[1]));
+         values.Add(((TXAtom&)sel[0]).GetLabel()) << " to " <<
+           ((TXAtom&)sel[1]).GetLabel() << " distance: " <<
+           olxstr().FormatFloat(precision, d.GetV()) << "(ESD=" << olxstr().FormatFloat(precision, d.GetE()) << ')' << " A";
+        }
+        else
+         values.Add(((TXAtom&)sel[0]).GetLabel()) << " to " <<
+           ((TXAtom&)sel[1]).GetLabel() << " distance: " <<
+           vcovc.CalcDistance((TXAtom&)sel[0], (TXAtom&)sel[1]).ToString() <<
+           " A";
+
       }
       else if (olx_list_and(sel, &IOlxObject::Is<TXBond>)) {
         TSBond& b1 = ((TXBond&)sel[0]);
@@ -3718,14 +3732,29 @@ void GXLibMacros::macEsd(TStrObjList &Cmds, const TParamList &Options,
         TSAtom& a1 = (TXAtom&)sel[0];
         TSAtom& a2 = (TXAtom&)sel[1];
         TSAtom& a3 = (TXAtom&)sel[2];
-        values.Add(a1.GetLabel()) << '-' << a2.GetLabel() << '-' << a3.GetLabel()
-          << " angle (numerical): " << vcovc.CalcAngle(a1, a2, a3).ToString();
-        values.Add(a1.GetLabel()) << '-' << a2.GetLabel() << '-' << a3.GetLabel()
-          << " angle (analytical): " << vcovc.CalcAngleA(a1, a2, a3).ToString();
+        if (Options.Contains('p')) {
+         const int precision = Options.FindValue('p','6').ToInt();
+         TEValue<double> a(vcovc.CalcAngle(a1, a2, a3));
+         TEValue<double> aA(vcovc.CalcAngleA(a1, a2, a3));
+         TEValue<double> d(vcovc.CalcAtomToVectorDistance(a1, a2, a3));
+         values.Add(a1.GetLabel()) << '-' << a2.GetLabel() << '-' << a3.GetLabel() << " angle(numerical): " <<
+           olxstr().FormatFloat(precision, a.GetV()) << "(ESD=" << olxstr().FormatFloat(precision, a.GetE()) << ')';
+         values.Add(a1.GetLabel()) << '-' << a2.GetLabel() << '-' << a3.GetLabel() << " angle(numerical): " <<
+           olxstr().FormatFloat(precision, aA.GetV()) << "(ESD=" << olxstr().FormatFloat(precision, aA.GetE()) << ')';
+         values.Add(a1.GetLabel()) << " to " <<
+           a2.GetLabel() << '-' << a3.GetLabel() << " distance: " <<
+           olxstr().FormatFloat(precision, d.GetV()) << "(ESD=" << olxstr().FormatFloat(precision, d.GetE()) << ')' << " A";
+        }
+        else{
+         values.Add(a1.GetLabel()) << '-' << a2.GetLabel() << '-' << a3.GetLabel()
+           << " angle (numerical): " << vcovc.CalcAngle(a1, a2, a3).ToString();
+         values.Add(a1.GetLabel()) << '-' << a2.GetLabel() << '-' << a3.GetLabel()
+           << " angle (analytical): " << vcovc.CalcAngleA(a1, a2, a3).ToString();
 
-        values.Add(a1.GetLabel()) << " to " <<
-          a2.GetLabel() << '-' << a3.GetLabel() << " distance: " <<
-          vcovc.CalcAtomToVectorDistance(a1, a2, a3).ToString();
+         values.Add(a1.GetLabel()) << " to " <<
+           a2.GetLabel() << '-' << a3.GetLabel() << " distance: " <<
+           vcovc.CalcAtomToVectorDistance(a1, a2, a3).ToString();
+        }
       }
       else if (
         (sel[0].Is<TXPlane>() && sel[1].Is<TXAtom>() &&

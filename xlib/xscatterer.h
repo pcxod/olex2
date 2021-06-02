@@ -119,6 +119,9 @@ public:
   compd calc_sq_anomalous(double sqv) const {
     return compd(gaussians.calc_sq(sqv) + fpfdp.GetRe(), fpfdp.GetIm());
   }
+  compd calc_anomalous() const {
+    return GetFpFdp();
+  }
   bool IsSFAC() const { return (set_items == setAll); }
   bool IsDISP() const {
     return (set_items == setDispersion ||

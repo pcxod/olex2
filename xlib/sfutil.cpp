@@ -91,7 +91,7 @@ void SFUtil::FindMinMax(const TArrayList<StructureFactor>& F,
 }
 //..............................................................................
 olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
-  short mapType, short sfOrigin, short scaleType, double scale, short friedelPairs)
+  short mapType, short sfOrigin, short scaleType, double scale, short friedelPairs, bool anom_only)
 {
   TXApp& xapp = TXApp::GetInstance();
   TStopWatch sw(__FUNC__);
@@ -220,7 +220,7 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
           xapp.XFile().GetRM().GetTWIN_mat(), 2);
         F.SetCount(dt.unique_indices.Count());
         //TArrayList<compd> Fc(dt.unique_indices.Count());
-        CalcSF(xapp.XFile(), dt.unique_indices, F, true);
+        CalcSF(xapp.XFile(), dt.unique_indices, F, true, anom_only);
         dt.detwin(twinning::detwinner_shelx(), refs, F);
         //dt.detwin_and_merge(twinning::detwinner_shelx(),
         //  RefMerger::ShelxMerger(), refs, Fc, &F);
@@ -235,14 +235,14 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
         //xapp.CalcSF(refs, F);
         //sw.start("Calculation structure factors A");
         //fastsymm version is just about 10% faster...
-        CalcSF(xapp.XFile(), refs, F, true);
+        CalcSF(xapp.XFile(), refs, F, true, anom_only);
       }
     }
     else {
       twinning::handler twin(info_ex, rm.GetReflections(),
         RefUtil::ResolutionAndSigmaFilter(rm), rm.GetBASFAsDoubleList());
       TArrayList<compd> Fc(twin.unique_indices.Count());
-      SFUtil::CalcSF(xapp.XFile(), twin.unique_indices, Fc);
+      SFUtil::CalcSF(xapp.XFile(), twin.unique_indices, Fc, anom_only);
       twin.detwin_and_merge(twinning::detwinner_shelx(),
         RefMerger::ShelxMerger(), refs, Fc, &F);
     }
@@ -353,7 +353,7 @@ void SFUtil::PrepareCalcSF(const TAsymmUnit& au, double* U,
 }
 //..............................................................................
 void SFUtil::_CalcSF(const TXFile& xfile, const IMillerIndexList& refs,
-  TArrayList<TEComplex<double> >& F, bool UseFdp)
+  TArrayList<TEComplex<double> >& F, bool UseFdp, const bool anom_only)
 {
   TSpaceGroup &sg = xfile.GetLastLoaderSG();
   olx_object_ptr<ISF_Util> sf_util = GetSF_Util_Instance(sg);
@@ -400,7 +400,8 @@ void SFUtil::_CalcSF(const TXFile& xfile, const IMillerIndexList& refs,
     au.GetHklToCartesian(),
     F, scatterers,
     alist,
-    U
+    U,
+    anom_only
   );
   bool centro = sg.IsCentrosymmetric() && sg.GetInversionCenter().IsNull();
   // apply modifications

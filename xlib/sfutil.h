@@ -66,7 +66,8 @@ namespace SFUtil {
       const mat3d& hkl2c, TArrayList<compd>& F,
       const TTypeList<XScatterer>& scatterers,
       const TCAtomPList& atoms,
-      const double* U) const = 0;
+      const double* U,
+      const bool anom_only = false) const = 0;
     virtual size_t GetSGOrder() const = 0;
   };
 
@@ -207,15 +208,16 @@ namespace SFUtil {
     short mapType, short sfOrigin = sfOriginOlex2,
     short scaleType = scaleSimple,
     double scale = 0,
-    short friedelPairs = fpDefault);
+    short friedelPairs = fpDefault,
+    bool anom_only = false);
   // calculates the structure factors for given reflections
   void _CalcSF(const TXFile& xfile, const IMillerIndexList& refs,
-    TArrayList<compd>& F, bool UseFpFdp);
+    TArrayList<compd>& F, bool UseFpFdp, bool anom_only = false);
   template <class IndexList>
   void CalcSF(const TXFile& xfile, const IndexList& refs,
-    TArrayList<compd>& F, bool UseFdp = true)
+    TArrayList<compd>& F, bool UseFdp = true, bool anom_only = false)
   {
-    _CalcSF(xfile, MillerIndexList<IndexList>(refs), F, UseFdp);
+    _CalcSF(xfile, MillerIndexList<IndexList>(refs), F, UseFdp, anom_only);
   }
   /* returns an instance according to __OLX_USE_FASTSYMM, must be deleted with
  delete
@@ -264,7 +266,7 @@ namespace SFUtil {
     {
       sg::GenUniqueHkl(hkl, out, ps);
     }
-    template <class RefList, bool centro> struct SFCalculateTask
+    template <class RefList, bool centro, bool anom_only> struct SFCalculateTask
       : public TaskBase
     {
       const SF_Util& parent;
@@ -281,7 +283,8 @@ namespace SFUtil {
         const mat3d& _hkl2c,
         TArrayList<compd>& _F,
         const TTypeList<XScatterer>& _scatterers,
-        const TCAtomPList& _atoms, const double* _U)
+        const TCAtomPList& _atoms, const double* _U,
+        const bool anom_only = false)
         : parent(_parent), refs(_refs), hkl2c(_hkl2c), F(_F),
         scatterers(_scatterers), atoms(_atoms), U(_U),
         rv(_parent._getusize()), ps(_parent._getusize()),
@@ -298,8 +301,15 @@ namespace SFUtil {
         const vec3i hkl = refs[i];  //make a copy, safer
         const double d_s2 = TReflection::ToCart(hkl, hkl2c).QLength()*0.25;
         parent._generateu(hkl, rv, ps);
-        for (size_t j = 0; j < scatterers.Count(); j++) {
-          fo[j] = scatterers[j].calc_sq_anomalous(d_s2);
+        if (anom_only) {
+          for (size_t j = 0; j < scatterers.Count(); j++) {
+            fo[j] = scatterers[j].calc_anomalous();
+          }
+        }
+        else {
+         for (size_t j = 0; j < scatterers.Count(); j++) {
+           fo[j] = scatterers[j].calc_sq_anomalous(d_s2);
+         }
         }
         if (centro) {
           compd ir = 0;
@@ -308,11 +318,11 @@ namespace SFUtil {
             for (size_t k = 0; k < parent._getusize(); k++) {
               // scattering vector + phase shift
               const double tv = SFUtil::T_PI*(atoms[j]->ccrd().DotProd(rv[k]) + ps[k]);
-              double ca = std::cos(tv);
+              double ca, sa;
+              olx_sincos(tv, &sa, &ca);
               if (olx_is_valid_index(atoms[j]->GetEllpId())) {
                 const double B = calc_B(&U[j * 6], rv[k]);
                 if (atoms[j]->GetEllipsoid()->IsAnharmonic()) {
-                  double sa = std::sin(tv);
                   l += (atoms[j]->GetEllipsoid()->
                     GetAnharmonicPart()->calculate(rv[k])*compd(ca*B, sa*B)).GetRe();
                 }
@@ -324,17 +334,20 @@ namespace SFUtil {
                 l += ca;
               }
             }
+            compd scv = fo[atoms[j]->GetTag()];
             if (!olx_is_valid_index(atoms[j]->GetEllpId())) {
-              l *= exp(U[j * 6] * d_s2);
+              scv *= exp(U[j * 6] * d_s2);
             }
-            ir += fo[atoms[j]->GetTag()] * (l*atoms[j]->GetOccu());
+            scv *= atoms[j]->GetOccu();
+            scv *= l;
+            ir += scv;
           }
           F[i] = ir*parent._getumult();
         }
         else {
-          compd ir;
+          compd ir = 0;
           for (size_t j = 0; j < atoms.Count(); j++) {
-            compd l;
+            compd l = 0;
             for (size_t k = 0; k < parent._getusize(); k++) {
               // scattering vector + phase shift
               const double tv = SFUtil::T_PI*(atoms[j]->ccrd().DotProd(rv[k]) + ps[k]);
@@ -410,17 +423,32 @@ namespace SFUtil {
     virtual void Calculate(const IMillerIndexList& refs,
       const mat3d& hkl2c, TArrayList<compd>& F,
       const TTypeList<XScatterer>& scatterers, const TCAtomPList& atoms,
-      const double* U) const
+      const double* U, const bool anom_only = false) const
     {
       if (centrosymmetric) {
-        SFCalculateTask<TRefList, true> task(*this, refs, hkl2c, F, scatterers,
-          atoms, U);
-        OlxListTask::Run(task, refs.Count(), tLinearTask, 50);
+        if(anom_only){
+          SFCalculateTask<TRefList, true, true> task(*this, refs, hkl2c, F, scatterers,
+            atoms, U);
+          OlxListTask::Run(task, refs.Count(), tLinearTask, 50);
+        }
+        else{
+          SFCalculateTask<TRefList, true, false> task(*this, refs, hkl2c, F, scatterers,
+            atoms, U);
+          OlxListTask::Run(task, refs.Count(), tLinearTask, 50);
+        }
       }
       else {
-        SFCalculateTask<TRefList, false> task(*this, refs, hkl2c, F,
-          scatterers, atoms, U);
-        OlxListTask::Run(task, refs.Count(), tLinearTask, 50);
+        if (anom_only){
+          SFCalculateTask<TRefList, false, true> task(*this, refs, hkl2c, F,
+            scatterers, atoms, U);
+          OlxListTask::Run(task, refs.Count(), tLinearTask, 50);
+        }
+        else{
+          SFCalculateTask<TRefList, false, false> task(*this, refs, hkl2c, F,
+            scatterers, atoms, U);
+          OlxListTask::Run(task, refs.Count(), tLinearTask, 50);
+        }
+        
       }
     }
     virtual size_t GetSGOrder() const { return sg::size; }
