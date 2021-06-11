@@ -201,6 +201,7 @@ public:
   static DefFunc(CCrd) // cell coordinates of atoms
   static DefFunc(Crd) // cartesian coordinates of atoms
   static DefFunc(CalcR) // calculates R factors
+  static DefFunc(CalcAbs)
   static DefFunc(GetCompilationInfo)
   static DefFunc(SGList)
   static DefFunc(HKLF)

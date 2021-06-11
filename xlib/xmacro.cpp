@@ -223,7 +223,9 @@ void XLibMacros::Export(TLibrary& lib)  {
     "t-adds extra elements (comma separated -t=Se,I) to the donor list. "
     "Defaults are [N,O,F,Cl,S,Br]&;"
     "g-generates found interactions&;"
-    "c-add carbon in the atom list",
+    "c-add carbon in the atom list&;"
+    "d-the distance parameter is considered as a delta to define max D-A "
+      "distance < rD+rA+delta",
     fpNone|fpOne|fpTwo|psFileLoaded,
     "Adds HTAB instructions to the ins file, maximum bond length [2.9] and "
     "minimal angle [150] might be provided. If the default length is changed"
@@ -816,6 +818,9 @@ void XLibMacros::Export(TLibrary& lib)  {
     "Returns center of given (selected) atoms in fractional coordinates");
   xlib_InitFunc(CalcR, fpNone|fpOne|psFileLoaded,
     "Calculates R1, R1 for I/sig >2 and wR2. If 'print' is provided - prints "
+    "detailed info");
+  xlib_InitFunc(CalcAbs, fpNone | fpOne | psFileLoaded,
+    "Calculates Flack X and Q params. If 'print' is provided - prints "
     "detailed info");
   xlib_InitFunc(GetCompilationInfo, fpAny,
     "Returns compilation info");
@@ -1463,6 +1468,7 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options,
   const bool use_c = Options.GetBoolOption("c");
   double def_max_d = 2.9,
     def_min_ang = TXApp::GetMinHBondAngle();
+  bool use_delta = Options.GetBoolOption('d');
 #ifdef _PYTHON
   olex2::IOlex2Processor *op = olex2::IOlex2Processor::GetInstance();
   if (op != 0) {
@@ -1477,28 +1483,36 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options,
     }
   }
 #endif
+  if (use_delta) {
+    def_max_d = 1.75;
+  }
   double max_d = def_max_d, min_ang = def_min_ang;
   size_t cnt = XLibMacros::Parse(Cmds, "dd", &max_d, &min_ang);
   if (cnt == 1) {
     if (max_d > 10) {
       min_ang = max_d;
-      max_d = 2.9;
+      max_d = def_max_d;
     }
   }
   if (max_d > 5) {
-    if (min_ang < 5)
+    if (min_ang < 5) {
       olx_swap(max_d, min_ang);
-    else
-      max_d = 2.9;
+    }
+    else {
+      max_d = def_max_d;
+    }
   }
 #ifdef _PYTHON
   if (op != 0) {
-    op->processMacro(olx_print("spy.SetParam('snum.cif.htab_max_d', %lf)", max_d));
+    if (!use_delta) {
+      op->processMacro(olx_print("spy.SetParam('snum.cif.htab_max_d', %lf)", max_d));
+    }
     op->processMacro(olx_print("spy.SetParam('snum.cif.htab_min_angle', %lf)", min_ang));
   }
 #endif
-  TAsymmUnit& au = TXApp::GetInstance().XFile().GetAsymmUnit();
-  RefinementModel& rm = TXApp::GetInstance().XFile().GetRM();
+  TXFile& xfile = TXApp::GetInstance().XFile();
+  TAsymmUnit& au = xfile.GetAsymmUnit();
+  RefinementModel& rm = xfile.GetRM();
   TStrList current;
   for (size_t i = 0; i < rm.InfoTabCount(); i++) {
     InfoTab& it = rm.GetInfoTab(i);
@@ -1517,8 +1531,14 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options,
   bais.Add(iChlorineZ);
   bais.Add(iSulphurZ);
   bais.Add(iBromineZ);
-  TBasicApp::NewLogEntry() << "Processing HTAB with max D-A distance " <<
-    max_d << " and minimum angle " << min_ang;
+  if (use_delta) {
+    TBasicApp::NewLogEntry() << "Processing HTAB with max D-A distance of rD+rA+" <<
+      max_d << "A and minimum angle " << min_ang;
+  }
+  else {
+    TBasicApp::NewLogEntry() << "Processing HTAB with max D-A distance " <<
+      max_d << "A and minimum angle " << min_ang;
+  }
   min_ang = cos(min_ang*M_PI / 180.0);
   if (Options.Contains('t')) {
     TStrList elm(Options.FindValue('t'), ',');
@@ -1552,20 +1572,35 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options,
       continue;
     }
     TArrayList<olx_pair_t<TCAtom const*, smatd> > all;
-    uc.FindInRangeAM(sa.ccrd(), elm.r_bonding + 0.4, max_d, all);
+    if (use_delta) {
+      uc.FindInRangeAM(sa.ccrd(),
+        // skip covalent H-bonds
+        elm.r_bonding + sa.GetParent().GetDelta() + 0.4,
+        elm.r_bonding + max_d + 2, all);
+    }
+    else {
+      uc.FindInRangeAM(sa.ccrd(),
+        // skip covalent H-bonds
+        elm.r_bonding + sa.GetParent().GetDelta() + 0.4,
+        max_d, all);
+    }
     for (size_t j = 0; j < all.Count(); j++) {
       const TCAtom& ca = *all[j].GetA();
       if (!TNetwork::IsBondAllowed(sa, ca, all[j].GetB())) {
         continue;
       }
       const cm_Element& elm1 = ca.GetType();
-      if (bais.IndexOf(elm1.z) == InvalidIndex) {
+      if (!bais.Contains(elm1.z)) {
         continue;
       }
       vec3d cvec(all[j].GetB()*ca.ccrd()),
         bond(cvec - sa.ccrd());
       const double d = au.CellToCartesian(bond).Length();
-      if (d < (elm.r_bonding + elm1.r_bonding + 0.4)) { // coval bond
+      // skip covalent bonds
+      if (d < (elm.r_bonding + elm1.r_bonding + sa.GetParent().GetDelta())) {
+        continue;
+      }
+      if (use_delta && d > (elm.r_bonding + elm1.r_bonding + max_d)) {
         continue;
       }
       // analyse angles
@@ -7450,9 +7485,41 @@ void XLibMacros::funCalcR(const TStrObjList& Params, TMacroData& E) {
   }
   E.SetRetVal(
     olxstr(rstat.R1) << ',' << rstat.R1_partial << ',' << rstat.wR2);
-  if (!print || xapp.XFile().GetLastLoaderSG().IsCentrosymmetric()) {
+}
+//.............................................................................
+olxstr XLibMacros::GetCompilationInfo() {
+  olxstr timestamp(olxstr(__DATE__) << ' ' << __TIME__), revision;
+#ifdef _SVN_REVISION_AVAILABLE
+  timestamp = compile_timestamp;
+  revision = svn_revision_number;
+#endif
+  olxstr rv = timestamp;
+  if (!revision.IsEmpty()) {
+    rv << " svn.r" << revision;
+  }
+#ifdef _MSC_FULL_VER
+  rv << " MSC:" << _MSC_FULL_VER;
+#elif __INTEL_COMPILER
+  rv << " Intel:" << __INTEL_COMPILER;
+#elif __GNUC__
+  rv << " GCC:" << __GNUC__ << '.' << __GNUC_MINOR__ << '.' << __GNUC_PATCHLEVEL__;
+#endif
+  rv << " on " << TBasicApp::GetPlatformString(true);
+#ifdef _CUSTOM_BUILD_
+  rv << " for " << CustomCodeBase::GetName();
+#endif
+  return rv;
+}
+//.............................................................................
+void XLibMacros::funCalcAbs(const TStrObjList& Params, TMacroData& E) {
+  TXApp& xapp = TXApp::GetInstance();
+  if (xapp.XFile().GetLastLoaderSG().IsCentrosymmetric()) {
     return;
   }
+  TBasicApp::NewLogEntry(logWarning) << "For testing only!";
+  RefUtil::Stats rstat(!Params.IsEmpty() && Params[0].Contains("scale"));
+  bool print = !Params.IsEmpty() && Params[0].Containsi("print");
+  TStrList rv;
   // Flack
   {
     TRefPList refs;
@@ -7487,37 +7554,86 @@ void XLibMacros::funCalcR(const TStrObjList& Params, TMacroData& E) {
       double D1 = refs[i]->GetI() - rstat.Fsq[refs[i]->GetTag()];
       double D2 = Fsq_n[i] - rstat.Fsq[refs[i]->GetTag()];
       obj += w * olx_sqr((D1 - k * D2));
-      obj_d += w * D2 * D2;
     }
-    double esd = obj / ((refs.Count() - 1) * obj_d);
+    double esd = obj / ((refs.Count() - 1) * down);
+    olxstr v_str = TEValueD(k, sqrt(esd)).ToString();
+    if (print) {
+      TBasicApp::NewLogEntry() << "Flack X: " << v_str << " for "
+        << refs.Count() << " pairs";
+    }
+    rv << v_str;
+  }
+  ////////////////////////////////////////////////////////////////////////
+    // Parson's Q
+  TRefPList pos, neg;
+  TRefList refs;
+  TSizeList Fsi;
+  Fsi.SetCapacity(rstat.refs.Count());
+  vec3i mini(1000), maxi(-1000);
+  double th = 2;
+  for (size_t i = 0; i < rstat.refs.Count(); i++) {
+    if (rstat.refs[i].GetI() < rstat.refs[i].GetS() * th) {
+      continue;
+    }
+    if (rstat.refs[i].IsCentric()) {
+      continue;
+    }
+    refs.AddCopy(rstat.refs[i]);
+    Fsi.Add(i);
+    vec3i::UpdateMinMax(rstat.refs[i].GetHkl(), mini, maxi);
+  }
 
-    TBasicApp::NewLogEntry() << "Flack X: " << TEValueD(k, sqrt(esd)).ToString() << " for "
-      << refs.Count() << " pairs";
+  RefUtil::GetBijovetPairs(refs, mini, maxi, pos, neg,
+    xapp.XFile().GetLastLoaderSG().GetMatrices(mattAll).obj());
+  double max_Dsingle = 0;
+  for (size_t i = 0; i < pos.Count(); i++) {
+    double Fsqp = rstat.Fsq[Fsi[pos[i]->GetTag()]];
+    double Fsqn = rstat.Fsq[Fsi[neg[i]->GetTag()]];
+    double Dsingle = olx_abs(Fsqp - Fsqn);
+    if (Dsingle > max_Dsingle) {
+      max_Dsingle = Dsingle;
+    }
   }
-}
-//.............................................................................
-olxstr XLibMacros::GetCompilationInfo() {
-  olxstr timestamp(olxstr(__DATE__) << ' ' << __TIME__), revision;
-#ifdef _SVN_REVISION_AVAILABLE
-  timestamp = compile_timestamp;
-  revision = svn_revision_number;
-#endif
-  olxstr rv = timestamp;
-  if (!revision.IsEmpty()) {
-    rv << " svn.r" << revision;
+  double up = 0, down = 0;
+  size_t count = 0;
+  for (size_t i = 0; i < pos.Count(); i++) {
+    double Ip = pos[i]->GetI(), In = neg[i]->GetI();
+    double Dobs = (Ip - In);
+    if (olx_abs(Dobs) > 2 * max_Dsingle) {
+      continue;
+    }
+    double Fsqp = rstat.Fsq[Fsi[pos[i]->GetTag()]];
+    double Fsqn = rstat.Fsq[Fsi[neg[i]->GetTag()]];
+    double Qobs = Dobs / (Ip + In);
+    double Qsingle = (Fsqp - Fsqn) / (Fsqp + Fsqn);
+    up += Qobs * Qsingle;
+    down += Qsingle * Qsingle;
+    count++;
   }
-#ifdef _MSC_FULL_VER
-  rv << " MSC:" << _MSC_FULL_VER;
-#elif __INTEL_COMPILER
-  rv << " Intel:" << __INTEL_COMPILER;
-#elif __GNUC__
-  rv << " GCC:" << __GNUC__ << '.' << __GNUC_MINOR__ << '.' << __GNUC_PATCHLEVEL__;
-#endif
-  rv << " on " << TBasicApp::GetPlatformString(true);
-#ifdef _CUSTOM_BUILD_
-  rv << " for " << CustomCodeBase::GetName();
-#endif
-  return rv;
+
+  double k = up / down, obj = 0, obj_d = 0;
+  for (size_t i = 0; i < pos.Count(); i++) {
+    double Ip = pos[i]->GetI(), In = neg[i]->GetI();
+    double Dobs = (Ip - In);
+    if (olx_abs(Dobs) > 2 * max_Dsingle) {
+      continue;
+    }
+    double Fsqp = rstat.Fsq[Fsi[pos[i]->GetTag()]];
+    double Fsqn = rstat.Fsq[Fsi[neg[i]->GetTag()]];
+    double Qobs = Dobs / (Ip + In);
+    double Qsingle = (Fsqp - Fsqn) / (Fsqp + Fsqn);
+    obj += olx_sqr(Qobs - k * Qsingle);
+  }
+  double esd = obj / ((count - 1) * down);
+  k = (1 - k) / 2;
+  esd /= 2;
+  olxstr str_v = TEValueD(k, sqrt(esd)).ToString();
+  if (print) {
+    TBasicApp::NewLogEntry() << "Parson's Q: " << str_v << " for "
+      << count << " pairs";
+  }
+  rv << str_v;
+  E.SetRetVal(olxstr(",").Join(rv));
 }
 //.............................................................................
 void XLibMacros::funGetCompilationInfo(const TStrObjList& Params,

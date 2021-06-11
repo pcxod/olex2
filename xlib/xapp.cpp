@@ -284,8 +284,8 @@ void TXApp::CalcSFEx(const TRefList& refs, TArrayList<TEComplex<double> >& F,
     }
     if (exti != 0) {
       RefinementModel::EXTI::Shelxl cr = rm.GetShelxEXTICorrector();
-      for (size_t i = 0; i < Fsq.Count(); i++) {
-        Fsq[i] /= cr.CalcForF2(refs[i].GetHkl(), Fsq[i]);
+      for (size_t i = 0; i < refs.Count(); i++) {
+        refs[i].Scale(cr.CalcForF2(refs[i].GetHkl(), Fsq[i]));
       }
     }
     if (scale) {

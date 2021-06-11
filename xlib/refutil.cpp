@@ -22,6 +22,7 @@ Stats::Stats(bool update_scale)
       TReflection::SigmaWeightCalculator<2>(),
       TReflection::IoverSigmaFilter(3));
   }
+  
   double wR2d = 0, R1u = 0, R1d = 0, R1up = 0, R1dp = 0;
   TDoubleList wght = rm.used_weight;
   while (wght.Count() < 6) {
@@ -32,7 +33,7 @@ Stats::Stats(bool update_scale)
   }
   wsqd.Resize(refs.Count());
   weights.Resize(refs.Count());
-
+  mat3d h2c = rm.aunit.GetHklToCartesian();
   for (size_t i = 0; i < refs.Count(); i++) {
     TReflection& r = refs[i];
     r *= scale_k;
@@ -43,7 +44,6 @@ Stats::Stats(bool update_scale)
     const double Fo2 = r.GetI();
     const double Fo = sqrt(Fo2 < 0 ? 0 : Fo2);
     const double P = wght[5] * olx_max(0, Fo2) + (1.0 - wght[5]) * Fc2;
-    mat3d h2c = rm.aunit.GetHklToCartesian();
     const double stl = 1./sqrt(4*r.ToCart(h2c).QLength());
     double q = 1.0;
     if (wght[2] == 0) {

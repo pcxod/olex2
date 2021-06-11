@@ -148,6 +148,7 @@ public:
     TAsymmUnit& au = gxapp.XFile().GetAsymmUnit();
     TAsymmUnit::TLabelChecker lck(au);
     XVar& xv = rm.Vars.NewVar(0.75);
+    olxset<TAfixGroup*, TPointerComparator> afix_groups;
     if (DoSplit) {
       DistanceGenerator::atom_map_1_t atom_map;
       atom_map.SetCapacity(Atoms.Count());
@@ -202,6 +203,54 @@ public:
         Atoms[i]->CAtom().ccrd() = au.Fractionalise(crds[i]);
         atom_map.Add(Atoms[i]->CAtom().GetId(), na.GetId());
         atom_set.Add(Atoms[i]->CAtom().GetId());
+        if (Atoms[i]->CAtom().GetParentAfixGroup() != 0) {
+          afix_groups.Add(Atoms[i]->CAtom().GetParentAfixGroup());
+        }
+      }
+      for (size_t i = 0; i < afix_groups.Count(); i++) {
+        TAfixGroup& ag = *afix_groups[i];
+        size_t matched_cnt = 0;
+        for (size_t j = 0; j < ag.Count(); j++) {
+          if (atom_map.HasKey(ag[j].GetId())) {
+            matched_cnt++;
+          }
+          else {
+            break;
+          }
+        }
+        // cannot do much here
+        if (matched_cnt != ag.Count()) {
+          continue;
+        }
+        TCAtom* pivot = 0;
+        if (!atom_map.HasKey(ag.GetPivot().GetId())) {
+          // neither here
+          if (ag.Count() + 1 < Atoms.Count()) {
+            continue;
+          }
+          for (size_t j = 0; j < Atoms.Count(); j++) {
+            Atoms[j]->CAtom().SetTag(0);
+          }
+        }
+        else {
+          pivot = &au.GetAtom(atom_map[ag.GetPivot().GetId()]);
+        }
+        TAfixGroup& nag = rm.AfixGroups.New(pivot,
+          ag.GetAfix(), ag.GetD(), ag.GetU());
+        for (size_t j = 0; j < ag.Count(); j++) {
+          nag.AddDependent(au.GetAtom(atom_map[ag[j].GetId()]));
+          ag[j].SetTag(1);
+        }
+        // this will happen only for single AFIX group
+        if (pivot == 0) {
+          for (size_t j = 0; j < Atoms.Count(); j++) {
+            if (Atoms[j]->CAtom().GetTag() == 0) {
+              nag.SetPivot(Atoms[j]->CAtom());
+              break;
+            }
+          }
+          break;
+        }
       }
       if (Restrain) {
         DistanceGenerator ds;

@@ -283,8 +283,7 @@ namespace SFUtil {
         const mat3d& _hkl2c,
         TArrayList<compd>& _F,
         const TTypeList<XScatterer>& _scatterers,
-        const TCAtomPList& _atoms, const double* _U,
-        const bool anom_only = false)
+        const TCAtomPList& _atoms, const double* _U)
         : parent(_parent), refs(_refs), hkl2c(_hkl2c), F(_F),
         scatterers(_scatterers), atoms(_atoms), U(_U),
         rv(_parent._getusize()), ps(_parent._getusize()),
