@@ -279,6 +279,12 @@ public:
 
   const vec3d& GetRotationCenter() const { return RotationCenter; }
 
+  void SetSrcCoordinates(const vec3d_alist& crds) {
+    if (Atoms.Count() == crds.Count()) {
+      src_crds = crds;
+    }
+  }
+
   const vec3d_alist &GetSrcCoordinates() const {
     return src_crds;
   }

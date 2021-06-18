@@ -19,7 +19,7 @@ enum  {
 class TFitMode : public AEventsDispatcher, public AMode {
   TXGroup* group;
   TXAtomPList Atoms, AtomsToMatch;
-  vec3d_alist original_crds;
+  vec3d_alist original_crds, saved_crds;
   bool Initialised, DoSplit, Restrain, RestrainU;
   int afix, part;
   size_t split_offset;
@@ -340,8 +340,11 @@ public:
       if (!gxapp.GetRenderer().GetSelection().Is<TXGroup>()) {
         return true;
       }
-      for (size_t i = 0; i < Atoms.Count(); i++) {
-        Atoms[i]->CAtom().ccrd() = au.Fractionalise(Atoms[i]->crd());
+      if(original_crds.Count() == Atoms.Count()) {
+        saved_crds.SetCount(Atoms.Count());
+        for (size_t i = 0; i < Atoms.Count(); i++) {
+          saved_crds[i] = Atoms[i]->crd();
+        }
       }
       Atoms.Clear();
       AtomsToMatch.Clear();
@@ -353,7 +356,14 @@ public:
         group->SetAngleInc(AngleInc*M_PI / 180);
       }
       Atoms = group->Extract<TXAtom>();
+      if (Atoms.Count() == saved_crds.Count()) {
+        for (size_t i = 0; i < Atoms.Count(); i++) {
+          Atoms[i]->crd() = saved_crds[i];
+        }
+      }
+      saved_crds.Clear();
       group->Update();
+      group->SetSrcCoordinates(original_crds);
       group->SetSelected(true);
     }
     return true;
