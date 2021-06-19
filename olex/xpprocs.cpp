@@ -2564,7 +2564,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
     TEFile::ListDir(conf_dir, pid_files, olxstr("*.") <<
       patcher::PatchAPI::GetOlex2PIDFileExt(), sefAll);
     size_t del_cnt = 0;
-    olxstr spidfn = TGlXApp::GetInstance()->GetPIDFile() == NULL ? EmptyString()
+    olxstr spidfn = TGlXApp::GetInstance()->GetPIDFile() == 0 ? EmptyString()
       : TGlXApp::GetInstance()->GetPIDFile()->GetName();
 #ifdef __linux__
     size_t ext_len = olxstr::o_strlen(patcher::PatchAPI::GetOlex2PIDFileExt()) + 1;
@@ -2592,7 +2592,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
     }
     if (del_cnt != 0) {
       TBasicApp::NewLogEntry(logError) << "It appears that Olex2 has crashed "
-        "last time: skipping loading of the the last file. Please contact "
+        "last time: skip loading of the last file. Please contact "
         "Olex2 team if the problem persists";
       return;
     }
@@ -2788,8 +2788,8 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
             ins->SaveForSolution(
               TEFile::ChangeFileExt(file_n.file_name, "ins"),
               EmptyString(), EmptyString(), false);
-            Macros.ProcessMacro(olxstr("reap '") <<
-              TEFile::ChangeFileExt(file_n.file_name, "ins") << '\'', Error);
+            Macros.ProcessMacro(olxstr("reap ").quote() <<
+              TEFile::ChangeFileExt(file_n.file_name, "ins"), Error);
             sw.start("Solving the structure");
             Macros.ProcessMacro("solve", Error);
           }  // sge, if succeseded will run reap and solve
@@ -2799,6 +2799,24 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
       else {
         file_n.file_name = TEFile::ChangeFileExt(file_n.file_name, "ins");
       }
+    }
+    // and of p4p files
+    if (TEFile::ExtractFileExt(file_n.file_name).Equalsi("p4p")) {
+      olxstr ins_fn = TEFile::ChangeFileExt(file_n.file_name, "ins");
+      if (TEFile::Exists(ins_fn)) {
+        TBasicApp::NewLogEntry(logWarning) << "Loading the INS file instead of P4P";
+        return;
+      }
+      else {
+        TBasicApp::NewLogEntry(logWarning) << "Creating and loading the INS file instead of P4P";
+        TP4PFile p4p;
+        p4p.LoadFromFile(file_n.file_name);
+        TIns ins;
+        ins.GetRM().Assign(p4p.GetRM(), true);
+        ins.SaveForSolution(ins_fn, EmptyString(), EmptyString(), false);
+      }
+      Macros.ProcessMacro(olxstr("reap ").quote() << ins_fn, Error);
+      return;
     }
     try {
       bool update_vfs =
@@ -2823,7 +2841,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
       FXApp->ClearStructureRelated();
       FXApp->XFile().GetRM().Clear(rm_clear_ALL);
       FXApp->XFile().GetLattice().Clear(true);
-      FXApp->XFile().SetLastLoader(NULL);
+      FXApp->XFile().SetLastLoader(0);
       FXApp->CreateObjects(true);
       // following shelx, try relaod the ins file?
       bool is_ok = false;
