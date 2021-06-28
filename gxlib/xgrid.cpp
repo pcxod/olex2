@@ -1993,6 +1993,15 @@ PyObject* pyInitSurface(PyObject* self, PyObject* args)  {
   return PythonExt::PyNone();
 }
 //.............................................................................
+PyObject* pySetSurfaceScale(PyObject* self, PyObject* args) {
+    float scale;
+    if (!PyArg_ParseTuple(args, "f", &scale)) {
+        return PythonExt::InvalidArgumentException(__OlxSourceInfo, "f");
+    }
+    TXGrid::GetInstance()->SetScale(scale);
+    return PythonExt::PyTrue();
+}
+//.............................................................................
 PyObject* pyIsVisible(PyObject* self, PyObject* args) {
   return Py_BuildValue("b", TXGrid::GetInstance()->IsVisible());
 }
@@ -2014,6 +2023,8 @@ static PyMethodDef XGRID_Methods[] = {
   {"InitSurface", pyInitSurface, METH_VARARGS,
    "initialisess surface drawing. If optional distance from VdW surface is"
    " provided - the surface gets masked by the structure as well"},
+  {"SetSurfaceScale", pySetSurfaceScale, METH_VARARGS,
+   "Sets Scale (e.g. Isovalue) of surface drawing. Float expected."},
   {NULL, NULL, 0, NULL}
   };
 
