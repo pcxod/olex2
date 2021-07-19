@@ -2909,6 +2909,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
         if (!TEFile::Exists(hklFileName) && cif.GetAsymmUnit().AtomCount() == 0) {
           size_t block_index = cif.GetBlockIndex();
           if (cif.FindLoopGlobal("_refln", true) != 0 ||
+            cif.FindLoopGlobal("_diffrn_refln", true) ||
             cif.FindEntry("_shelx_hkl_file") != 0)
           {
             Macros.ProcessMacro(olxstr("export ").quote() << hklFileName, er);

@@ -1514,7 +1514,7 @@ void TAsymmUnit::LibGetAtomLabel(const TStrObjList& Params, TMacroData& E) {
     throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, AtomCount());
   }
   olxstr newLabel;
-  if (Params[1].IsNumber()) {
+  if (Params.Count() > 1 && Params[1].IsNumber()) {
     int inc = Params[1].ToInt();
     int v = GetAtom(index).GetType().GetIndex() + inc;
     if (v >= 0 && v <= iQPeakIndex) {
@@ -1523,8 +1523,7 @@ void TAsymmUnit::LibGetAtomLabel(const TStrObjList& Params, TMacroData& E) {
     }
   }
   else {
-    E.ProcessingError(__OlxSrcInfo, "a number is expected");
-    E.SetRetVal(E.GetInfo());
+    E.SetRetVal(GetAtom(index).GetLabel());
     return;
   }
 }
@@ -1925,10 +1924,11 @@ TLibrary* TAsymmUnit::ExportLibrary(const olxstr& name)  {
     &TAsymmUnit::LibSetAtomLabel, "SetAtomlabel", fpTwo,
     "Sets atom labels to provided value. The first parameter is the atom ID"));
   lib->Register(new TFunction<TAsymmUnit>(thip,
-    &TAsymmUnit::LibGetAtomLabel, "GetAtomlabel", fpTwo,
+    &TAsymmUnit::LibGetAtomLabel, "GetAtomlabel", fpOne|fpTwo,
     "The takes two arguments - the atom ID and increment. The increment is "
     "used to navigate through the periodic table, so increment +1 will return "
-    "next element and -1 the previous element in the periodic table"));
+    "next element and -1 the previous element in the periodic table. With one"
+    " argument returns the specified atom label"));
   lib->Register(new TFunction<TAsymmUnit>(thip,
     &TAsymmUnit::LibIsAtomDeleted, "IsAtomDeleted", fpOne,
     "Checks status of specified atom"));
