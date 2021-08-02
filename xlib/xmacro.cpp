@@ -4679,7 +4679,7 @@ void CifMerge_EmbeddData(TCif &Cif, bool insert, bool fcf_format) {
     Cif.Remove("_olex2_hkl_file_MD5");
     Cif.Remove("_olex2_fab_file_MD5");
   }
-  Cif.Remove("_refln");
+  //Cif.Remove("_refln");
   if (insert) {
     olxstr res_fn = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "res");
     if (TEFile::Exists(res_fn)) {
