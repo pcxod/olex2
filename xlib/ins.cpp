@@ -57,6 +57,7 @@ void TIns::Clear() {
   R1 = -1;
   RefinementInfo.Clear();
   included.Clear();
+  GetRM().Vars.SetMinVarCount(1);
 }
 //..............................................................................
 void TIns::LoadFromFile(const olxstr& fileName) {
@@ -649,15 +650,14 @@ void TIns::_FinishParsing(ParseContext& cx, bool header_only) {
     else if (toks[0].StartsFromi("ANIS")) {
       Ins.Delete(i--);
       try {
-        double Q[6];
-        memset(&Q[0], 0, sizeof(Q));
+        evecd Q(6);
         AtomRefList rl(cx.rm, toks.Text(' ', 1));
         TTypeList<TAtomRefList> atoms;
         rl.Expand(cx.rm, atoms);
         for (size_t j = 0; j < atoms.Count(); j++) {
           for (size_t k = 0; k < atoms[j].Count(); k++) {
             TCAtom& ca = atoms[j][k].GetAtom();
-            if (ca.GetEllipsoid() == NULL) {
+            if (ca.GetEllipsoid() == 0) {
               Q[0] = Q[1] = Q[2] = ca.GetUiso();
               ca.UpdateEllp(Q);
             }
@@ -682,7 +682,7 @@ void TIns::_FinishParsing(ParseContext& cx, bool header_only) {
   olxdict<TCAtom*, TCAtomPList, TPointerComparator> extras;
   for (size_t i=0; i < GetAsymmUnit().AtomCount(); i++) {
     TCAtom &a = GetAsymmUnit().GetAtom(i);
-    if (a.GetUisoOwner() != NULL && a.GetAfix() == 0) {
+    if (a.GetUisoOwner() != 0 && a.GetAfix() == 0) {
       extras.Add(a.GetUisoOwner()).Add(a);
     }
   }
@@ -728,31 +728,44 @@ TStrList& TIns::Preprocess(TStrList& l) {
   }
   // include files
   for (size_t i = 0; i < l.Count(); i++) {
-    if (l[i].StartsFrom('+')) {
-      olxstr fn = l[i].SubStringFrom(1);
+    if (l[i].StartsFrom('+') && l[i].Length() > 1) {
+      bool expand = l[i].CharAt(1) == '+';
+      olxstr fn = l[i].SubStringFrom(expand ? 2 : 1);
       if (!TEFile::Exists(fn)) {
         TBasicApp::NewLogEntry(logError) << "Included file missing: " << fn;
+        l.Delete(i--);
         continue;
       }
-      included.Add(fn);
+      if (TEFile::ExtractFileExt(fn).Equalsi("bodd")) {
+        GetRM().Vars.SetMinVarCount(4);
+      }
+      included.Add(fn, expand);
       TStrList lst = TEFile::ReadLines(fn);
+      if (!expand) {
+        for (size_t j = 0; j < lst.Count(); j++) {
+          if (lst[j].StartsFrom('!')) {
+            lst[j].SetLength(0);
+          }
+        }
+      }
+      lst.Pack();
       l.Delete(i);
       l.Insert(i, lst);
-      i += lst.Count();
+      i += (lst.Count() - 1);
     }
   }
   return l;
 }
 //..............................................................................
-void TIns::_ProcessAfix0(ParseContext& cx)  {
+void TIns::_ProcessAfix0(ParseContext& cx) {
   if (!cx.AfixGroups.IsEmpty()) {
     int old_m = cx.AfixGroups.Top().GetB()->GetM();
     bool valid = true;
     if (cx.AfixGroups.Top().GetA() > 0) {
       if (old_m != 0) {
         TBasicApp::NewLogEntry(logError) << olxstr("Incomplete AFIX group") <<
-        (cx.Last != NULL ? (olxstr(" at ") << cx.Last->GetLabel())
-          : EmptyString());
+          (cx.Last != NULL ? (olxstr(" at ") << cx.Last->GetLabel())
+            : EmptyString());
         valid = false;
       }
       else {
@@ -2684,7 +2697,7 @@ TStrList::const_list_type TIns::SaveHeader(TStrList& SL,
   if (ValidateRestraintNames) {
     ValidateRestraintsAtomNames(GetRM());
   }
-  SaveRestraints(SL, NULL, NULL, GetRM());
+  SaveRestraints(SL, 0, 0, GetRM());
   _SaveRefMethod(SL);
   _SaveSizeTemp(SL);
   for (size_t i=0; i < GetRM().InfoTabCount(); i++) {
@@ -2694,27 +2707,16 @@ TStrList::const_list_type TIns::SaveHeader(TStrList& SL,
     }
   }
   GetRM().Conn.ToInsList(SL);
-  olx_cset<olxstr> incs;
-  {
-    for (size_t i = 0; i < included.Count(); i++) {
-      try {
-        TStrList lines = TEFile::ReadLines(included[i]);
-        for (size_t j = 0; j < lines.Count(); j++) {
-          incs.Add(TStrList(lines[j], ' ').Text(' '));
-        }
-      }
-      catch (...) {
-      }
-      SL.Add('+') << included[i];
+  for (size_t i = 0; i < included.Count(); i++) {
+    if (included.GetObject(i)) { // has been expanded?
+      continue;
     }
+    SL.Add('+') << included[i];
   }
   // copy "unknown" instructions except rems and 'L1 2 0.62516 0.10472 0.43104'
   for (size_t i=0; i < Ins.Count(); i++) {
     if (GetInsType(Ins[i], Ins.GetObject(i)) == insHeader) {
       olxstr ic = Ins.GetObject(i)->Text(' ');
-      if (incs.Contains(Ins[i] + ' ' + ic)) {
-        continue;
-      }
       HyphenateIns(Ins[i] + ' ', ic, SL);
     }
   }
@@ -2744,10 +2746,29 @@ TStrList::const_list_type TIns::SaveHeader(TStrList& SL,
 }
 //..............................................................................
 TStrList::const_list_type TIns::GetFooter() {
+  olx_cset<olxstr> incs;
+  {
+    for (size_t i = 0; i < included.Count(); i++) {
+      if (included.GetObject(i)) { // has been expanded?
+        continue;
+      }
+      try {
+        TStrList lines = TEFile::ReadLines(included[i]);
+        for (size_t j = 0; j < lines.Count(); j++) {
+          incs.Add(TStrList(lines[j], ' ').Text(' ').ToLowerCase());
+        }
+      }
+      catch (...) {
+      }
+    }
+  }
   TStrList rv;
   for (size_t i = 0; i < Ins.Count(); i++) {
     if (GetInsType(Ins[i], Ins.GetObject(i)) == insFooter) {
       olxstr ic = Ins.GetObject(i)->Text(' ');
+      if (incs.Contains((Ins[i] + ' ' + ic).ToLowerCase())) {
+        continue;
+      }
       HyphenateIns(Ins[i] + ' ', ic, rv);
     }
   }
@@ -2763,6 +2784,7 @@ void TIns::ParseHeader(const TStrList& in) {
     delete Ins.GetObject(i);
   }
   Ins.Clear();
+  included.Clear();
   Skipped.Clear();
   Title.SetLength(0);
   GetRM().Clear(rm_clear_DEF);
@@ -3037,7 +3059,7 @@ TIns::InsType TIns::GetInsType(const olxstr &ins, const TInsList *params) const 
   if (params == 0 || ins.Equalsi("REM") || ins.Equalsi("NEUT")) {
     return insNone;
   }
-  if (params->Count() >= 4 && ins.StartsFromi('l')) {
+  if (params->Count() >= 4 && (ins.StartsFromi('l') || ins.Equalsi("bede"))) {
     return insFooter;
   }
   return insHeader;
