@@ -151,7 +151,7 @@ public:
   const olxstr& GetFileName() const {
     return FLastLoader != 0 ? FLastLoader->GetFileName() : EmptyString();
   }
-  /* returns 'file_path/.olex' if the folder does not exists - it tryes to
+  /* returns 'file_path/olex2' if the folder does not exists - it tries to
   create one and may throw an exception if it fails.
   */
   olxstr GetStructureDataFolder() const;

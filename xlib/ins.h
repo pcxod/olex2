@@ -56,7 +56,7 @@ class TIns : public TBasicCFile {
       ins = 0;
     }
   };
-  TStrList included;
+  TStringToList<olxstr, bool> included;
 private:
   TStringToList<olxstr, TInsList*> Ins;  // instructions
   TStrList Skipped;
@@ -244,6 +244,9 @@ public:
   static bool DoPreserveInvalid() {
     return TBasicApp::GetInstance().GetOptions()
       .FindValue("preserve_invalid_ins", FalseString()).ToBool();
+  }
+  const TStringToList<olxstr, bool>& getIncluded() const {
+    return included;
   }
   virtual IOlxObject* Replicate() const { return new TIns; }
 };

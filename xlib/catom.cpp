@@ -190,7 +190,7 @@ void TCAtom::AssignEllp(TEllipsoid* NV) {
 }
 //..............................................................................
 void TCAtom::UpdateEllp(const TEllipsoid &NV) {
-  double Q[6], E[6];
+  evecd Q(6), E(6);
   NV.GetShelxQuad(Q, E);
   if( EllpId == InvalidIndex )  {
     TEllipsoid& elp = Parent->NewEllp();
@@ -221,7 +221,7 @@ void TCAtom::ToDataItem(TDataItem& item) const {
     }
   }
   else {
-    double Q[6], E[6];
+    evecd Q(6), E(6);
     GetEllipsoid()->GetShelxQuad(Q, E);
     TDataItem& elp = item.AddItem("adp");
     elp.AddField("xx", TEValue<double>(Q[0], E[0]).ToString());

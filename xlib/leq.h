@@ -145,54 +145,59 @@ public:
 };
 
 class XVarManager {
-  TTypeList<XVar> Vars, ReservedVars;
+  TTypeList<XVar> Vars,
+    /* [BASF 1...N] + EXTI - this are implict and not writtent to the FVAR line
+    but can be used with SUMP */
+    ReservedVars;
   TTypeList<XLEQ> Equations;
   TTypeList<XVarReference> References;
   uint16_t NextVar;  // this controls there variables go in sebsequent calls
   void UpdateIds();
-  void RemoveReservedVar(XVar &v,
-    olxset<XLEQ *, TPointerComparator> &leq_to_remove,
-    olxset<XVarReference *, TPointerComparator> &ref_to_remove);
+  void RemoveReservedVar(XVar& v,
+    olxset<XLEQ*, TPointerComparator>& leq_to_remove,
+    olxset<XVarReference*, TPointerComparator>& ref_to_remove);
   void FinaliseReservedVarRemoval(
-    olxset<XLEQ *, TPointerComparator> &leq_to_remove,
-    olxset<XVarReference *, TPointerComparator> &ref_to_remove);
+    olxset<XLEQ*, TPointerComparator>& leq_to_remove,
+    olxset<XVarReference*, TPointerComparator>& ref_to_remove);
+  // 1 or 4 in the case of LONE/BEDE
+  size_t min_var_count;
 public:
 
   class RefinementModel& RM;
 
-  static olxstr RelationNames[];
+  static const olxstr& RelationName(int idx);
   static short RelationIndex(const olxstr& rn);
 
   XVarManager(RefinementModel& rm);
 
-  XVar& NewVar(double val = 0.5, bool reindex=true);
+  XVar& NewVar(double val = 0.5, bool reindex = true);
   /* returns existing variable or creates a new one. Sets a limit of 1024
   variables
   */
   XVar& GetReferencedVar(size_t ind);
-  size_t VarCount() const {  return Vars.Count();  }
-  const XVar& GetVar(size_t i) const {  return Vars[i];  }
-  XVar& GetVar(size_t i)  {  return Vars[i];  }
+  size_t VarCount() const { return Vars.Count(); }
+  const XVar& GetVar(size_t i) const { return Vars[i]; }
+  XVar& GetVar(size_t i) { return Vars[i]; }
 
   /* For internal use - returns an instance form Vars or Reservedvars
   according to the id
   */
   XVar& GetVar_(size_t id);
-  bool IsReserved(const XVar &v) const {
+  bool IsReserved(const XVar& v) const {
     return v.GetId() >= Vars.Count();
   }
 
-  olxstr getReservedVarName(size_t i) const;
+  olxstr GetReservedVarName(size_t i) const;
 
   XLEQ& NewEquation(double val = 1.0, double sig = 0.01);
-  size_t EquationCount() const {  return Equations.Count();  }
-  const XLEQ& GetEquation(size_t i) const {  return Equations[i];  }
-  XLEQ& GetEquation(size_t i)  {  return Equations[i];  }
+  size_t EquationCount() const { return Equations.Count(); }
+  const XLEQ& GetEquation(size_t i) const { return Equations[i]; }
+  XLEQ& GetEquation(size_t i) { return Equations[i]; }
   XLEQ& ReleaseEquation(size_t i);
 
-  size_t VarRefCount() const {  return References.Count();  }
-  XVarReference& GetVarRef(size_t i) {  return References[i];  }
-  const XVarReference& GetVarRef(size_t i) const {  return References[i];  }
+  size_t VarRefCount() const { return References.Count(); }
+  XVarReference& GetVarRef(size_t i) { return References[i]; }
+  const XVarReference& GetVarRef(size_t i) const { return References[i]; }
   // clears all the data and Nulls atoms' varrefs
   void ClearAll();
   // does not clear the data, just resets the NextVar
@@ -214,7 +219,7 @@ public:
   // restrores previously released var reference
   void RestoreRef(IXVarReferencer& r, short var_name, XVarReference* vr);
   // removes all unused variables and invalid/incomplete equations
-  void Validate(bool remove_single=false);
+  void Validate(bool remove_single = false);
   /* helps with parsing SHELX specific paramter representation, returns actual
   value of the param
   */
@@ -229,22 +234,22 @@ public:
   double GetParam(const IXVarReferencer& r, short param_name,
     double override_val) const;
   // parses FVAR and assignes variable values
-  void AddFVAR(const TStrList &fvar);
+  void AddFVAR(const TStrList& fvar);
   bool HasEXTI() const;
-  const XVar &GetEXTI() const;
+  const XVar& GetEXTI() const;
   void SetEXTI(double val, double esd);
-  XVar &GetEXTI();
+  XVar& GetEXTI();
   void ClearEXTI();
 
-  void SetBASF(const TStrList &bs);
+  void SetBASF(const TStrList& bs);
   void ClearBASF();
   size_t GetBASFCount() const;
   bool HasBASF() const { return GetBASFCount() > 0; }
-  const XVar &GetBASF(size_t i) const;
-  XVar &GetBASF(size_t i);
+  const XVar& GetBASF(size_t i) const;
+  XVar& GetBASF(size_t i);
 
   olxstr GetFVARStr() const;
-  void AddSUMP(const TStrList &sump);
+  void AddSUMP(const TStrList& sump);
   // Validate must be called first to get valid count of equations
   olxstr GetSUMPStr(size_t ind) const;
   void Assign(const XVarManager& vm);
@@ -256,6 +261,9 @@ public:
   PyObject* PyExport(TPtrList<PyObject>& atoms);
 #endif
   void FromDataItem(const TDataItem& item);
+
+  size_t GetMinVarCount() const { return min_var_count; }
+  void SetMinVarCount(size_t cnt) { min_var_count = cnt; }
 };
 
 

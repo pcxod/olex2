@@ -12,7 +12,15 @@
 #include "srestraint.h"
 #include "xapp.h"
 
-olxstr XVarManager::RelationNames[] = {"None", "var", "one_minus_var"};
+const olxstr& XVarManager::RelationName(int idx) {
+  static olxstr rn [] = {"None", "var", "one_minus_var"};
+#ifdef _DEBUG
+  if (idx < 0 || idx > 2) {
+    throw TIndexOutOfRangeException(__OlxSourceInfo, 0, 2, idx);
+  }
+#endif
+  return rn[idx];
+}
 
 //.............................................................................
 void XVarReference::ToDataItem(TDataItem& item) const {
@@ -20,7 +28,7 @@ void XVarReference::ToDataItem(TDataItem& item) const {
   item.AddField("id_name", referencer.GetParentContainer().GetIdName());
   item.AddField("owner_id", referencer.GetPersistentId());
   item.AddField("k", coefficient);
-  item.AddField("rel", XVarManager::RelationNames[relation_type]);
+  item.AddField("rel", XVarManager::RelationName(relation_type));
 }
 //.............................................................................
 #ifdef _PYTHON
@@ -32,7 +40,7 @@ PyObject* XVarReference::PyExport(TPtrList<PyObject>& atoms)  {
     Py_BuildValue("i", referencer.GetPersistentId()));
   PythonExt::SetDictItem(main, "index", Py_BuildValue("i", var_index));
   PythonExt::SetDictItem(main, "relation",
-    PythonExt::BuildString(XVarManager::RelationNames[relation_type]));
+    PythonExt::BuildString(XVarManager::RelationName(relation_type)));
   PythonExt::SetDictItem(main, "k", Py_BuildValue("d", coefficient));
   return main;
 }
@@ -235,6 +243,7 @@ XVarManager::XVarManager(RefinementModel& rm) : RM(rm) {
   NewVar(1.0).SetId(0);
   // unset EXTI
   ReservedVars.Add((XVar *)0);
+  min_var_count = 1;
 }
 //.............................................................................
 void XVarManager::Clear() {
@@ -284,6 +293,7 @@ void XVarManager::Assign(const XVarManager& vm) {
   if (ReservedVars.IsEmpty()) { // odd eh?
     ReservedVars.Add((XVar *)0);
   }
+  min_var_count = vm.min_var_count;
 }
 //.............................................................................
 XVar& XVarManager::GetVar_(size_t id) {
@@ -326,7 +336,7 @@ XVarReference& XVarManager::AddVarRef(XVar& var, IXVarReferencer& a,
   short var_name, short relation, double coeff)
 {
   XVarReference* prf = a.GetVarRef(var_name);
-  if (prf != NULL && olx_is_valid_index(prf->GetId())) {
+  if (prf != 0 && olx_is_valid_index(prf->GetId())) {
     prf->Parent._RemRef(*prf);
     References.Delete(prf->GetId());
   }
@@ -386,7 +396,7 @@ double XVarManager::SetParam(IXVarReferencer& ca, short var_index, double val) {
   // means that the parameter is fixed, therefore we use Vars[0] for this...
   short var_rel = relation_None;
   double coeff = 0, actual_val = val;
-  XVar* var = NULL;
+  XVar* var = 0;
   if (olx_abs(val) > 5) {
     int iv = (int)(val / 10);
     double a_val = olx_abs(val - iv * 10);
@@ -425,9 +435,9 @@ void XVarManager::FixParam(IXVarReferencer& ca, short var_index) {
 //.............................................................................
 void XVarManager::FreeParam(IXVarReferencer& ca, short var_index) {
   XVarReference* vr = ca.GetVarRef(var_index);
-  if (vr != NULL && olx_is_valid_index(vr->GetId())) {
+  if (vr != 0 && olx_is_valid_index(vr->GetId())) {
     vr->Parent._RemRef(*vr);
-    ca.SetVarRef(var_index, NULL);
+    ca.SetVarRef(var_index, 0);
     References.Delete(vr->GetId());
     for (size_t i = 0; i < References.Count(); i++) {
       References[i].SetId(i);
@@ -441,7 +451,7 @@ double XVarManager::GetParam(const IXVarReferencer& ca, short var_index,
   double val) const
 {
   const XVarReference* vr = ca.GetVarRef(var_index);
-  if (vr == NULL) {
+  if (vr == 0) {
     return val;
   }
   if (vr->relation_type == relation_None) {
@@ -471,13 +481,13 @@ void XVarManager::Validate(bool consider_single) {
       }
     }
   }
-  // start from 1 to leave global scale
-  for (size_t i = 1; i < Vars.Count(); i++) {
+  // start from 1 or 4 to leave global scale and possibly BEDE/LONE
+  for (size_t i = min_var_count; i < Vars.Count(); i++) {
     XVar& v = Vars[i];
     if (!v.IsUsed(consider_single)) {
       for (size_t j = 0; j < v._RefCount(); j++) {
         XVarReference& vr = v.GetRef(j);
-        vr.referencer.SetVarRef(vr.var_index, NULL);
+        vr.referencer.SetVarRef(vr.var_index, 0);
         References.NullItem(vr.GetId());
       }
       Vars.NullItem(i);
@@ -508,7 +518,7 @@ void XVarManager::UpdateIds() {
 //.............................................................................
 short XVarManager::RelationIndex(const olxstr& rn) {
   for (short i = 0; i <= relation_Last; i++) {
-    if (RelationNames[i] == rn) {
+    if (RelationName(i) == rn) {
       return i;
     }
   }
@@ -567,7 +577,7 @@ void XVarManager::Describe(TStrList& lst) {
       }
       if (!ref_added) {
         if (Equations[i][j].IsReserved()) {
-          eq_des << getReservedVarName(Equations[i][j].GetId() - Vars.Count());
+          eq_des << GetReservedVarName(Equations[i][j].GetId() - Vars.Count());
         }
         else {
           eq_des << '?';
@@ -656,6 +666,7 @@ void XVarManager::ToDataItem(TDataItem& item) const {
   for (size_t i = 0; i < Vars.Count(); i++) {
     Vars[i].ToDataItem(vars.AddItem("item"));
   }
+  vars.AddField("min_count", min_var_count);
   TDataItem& rvars = item.AddItem("rvars");
   if (!ReservedVars.IsEmpty()) {
     for (size_t i = 0; i < ReservedVars.Count() - 1; i++) {
@@ -705,6 +716,7 @@ void XVarManager::FromDataItem(const TDataItem& item) {
     Vars.Add(XVar::FromDataItem(vars.GetItemByIndex(i), *this))
       .SetId(cnt);
   }
+  min_var_count = vars.FindField("min_count", 1).ToSizeT();
 
   {
     TDataItem* rvars = item.FindItem("rvars");
@@ -789,7 +801,7 @@ olxstr XVarManager::GetSUMPStr(size_t ind) const {
   return rv;
 }
 //.............................................................................
-olxstr XVarManager::getReservedVarName(size_t i) const {
+olxstr XVarManager::GetReservedVarName(size_t i) const {
   if (i + 1 == ReservedVars.Count()) {
     return "EXTI";
   }
