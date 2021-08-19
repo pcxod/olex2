@@ -10508,31 +10508,56 @@ void XLibMacros::funSGList(const TStrObjList &, TMacroData &E) {
 }
 //..............................................................................
 int RSA_BondOrder(const TCAtom &a, const TCAtom ::Site &to) {
+  size_t a_cnt = 0;
+  for (size_t i = 0; i < a.AttachedSiteCount(); i++) {
+    if (a.GetAttachedAtom(i).GetType().z >= 1) {
+      a_cnt++;
+    }
+  }
+  if (a.GetType().z == iCarbonZ && a_cnt == 4) {
+    return 1;
+  }
+  if (a.GetType().z == iNitrogenZ && a_cnt == 3) {
+    return 1;
+  }
+  if (a.GetType().z == iOxygenZ) {
+    return a_cnt == 2 ? 1 : 2;
+  }
+  size_t b_cnt = 0;
+  for (size_t i = 0; i < to.atom->AttachedSiteCount(); i++) {
+    if (to.atom->GetAttachedAtom(i).GetType().z >= 1) {
+      b_cnt++;
+    }
+  }
+  if (to.atom->GetType().z == iCarbonZ && b_cnt == 4) {
+    return 1;
+  }
+  if (to.atom->GetType().z == iNitrogenZ && b_cnt == 3) {
+    return 1;
+  }
+  if (to.atom->GetType().z == iOxygenZ) {
+    return a_cnt == 2 ? 1 : 2;
+  }
   double d = a.GetParent()->Orthogonalise(a.ccrd()-to.matrix*to.atom->ccrd())
     .Length();
   if (a.GetType().z == iCarbonZ || to.atom->GetType().z == iCarbonZ) {
-    const cm_Element &other = (a.GetType().z == iCarbonZ ? to.atom->GetType()
+    const cm_Element& other = (a.GetType().z == iCarbonZ ? to.atom->GetType()
       : a.GetType());
     if (other.z == iCarbonZ) { //C-C
-      if (d < 1.2) return 3;
-      if (d < 1.45) return 2;
-      return 1;
-    }
-    if (other.z == iOxygenZ) { //C-O
-      if (d < 1.3) return 2;
-      return 1;
+      if (d < 1.27) return 3;
+      if (d < 1.44) return 2;
     }
     if (other.z == iNitrogenZ) { //C-N
-      if (d < 1.2) return 3;
-      if (d < 1.4) return 2;
-      return 1;
+      if (d < 1.27) return 3;
+      if (d < 1.405) return 2;
     }
   }
   if (a.GetType().z == iNitrogenZ || to.atom->GetType().z == iNitrogenZ) {
-    const cm_Element &other = (a.GetType().z == iCarbonZ ? to.atom->GetType()
+    const cm_Element &other = (a.GetType().z == iNitrogenZ ? to.atom->GetType()
       : a.GetType());
-    if (other.z == iOxygenZ) {
-      if (d < 1.2) return 2;
+    if (other.z == iNitrogenZ) { //N-N
+      if (d < 1.15) return 3;
+      if (d < 1.32) return 2;
       return 1;
     }
   }

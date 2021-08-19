@@ -182,6 +182,7 @@ public:
   void LibGetDensity(const TStrObjList& Params, TMacroData& E);
 
   void LibRefinementInfo(const TStrObjList& Params, TMacroData& E);
+  void LibIncludedFiles(const TStrObjList& Params, TMacroData& E);
 
   TLibrary* ExportLibrary(const olxstr& name = EmptyString());
 

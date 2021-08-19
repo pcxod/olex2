@@ -378,11 +378,15 @@ olx_object_ptr<THklFile::ref_list> THklFile::FromCifTable(
   if (mInd == InvalidIndex) {
     mInd = t.ColIndex(prefix + "_F_squared_meas");
     sInd = t.ColIndex(prefix + "_F_squared_sigma");
-    if (mInd == InvalidIndex) {
-      mInd = t.ColIndex(prefix + "_F_meas");
-      sInd = t.ColIndex(prefix + "_F_sigma");
-      intensity = false;
-    }
+  }
+  if (mInd == InvalidIndex) {
+    mInd = t.ColIndex(prefix + "_F_meas");
+    sInd = t.ColIndex(prefix + "_F_sigma");
+    intensity = false;
+  }
+  if (mInd == InvalidIndex) {
+    mInd = t.ColIndex(prefix + "_intensity_meas");
+    sInd = t.ColIndex(prefix + "_intensity_sigma");
   }
   if ((hInd | kInd | lInd | mInd | sInd) == InvalidIndex) {
     throw TInvalidArgumentException(__OlxSourceInfo,

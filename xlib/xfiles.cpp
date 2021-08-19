@@ -1359,6 +1359,15 @@ void TXFile::LibRefinementInfo(const TStrObjList& Params, TMacroData& E) {
   }
 }
 //..............................................................................
+void TXFile::LibIncludedFiles(const TStrObjList& Params, TMacroData& E) {
+  try {
+    TIns &i = GetLastLoader<TIns>();
+    E.SetRetVal(i.GetIncluded().Text('\n'));
+  }
+  catch (const TExceptionBase& e) {
+  }
+}
+//..............................................................................
 TLibrary* TXFile::ExportLibrary(const olxstr& name) {
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("xf") : name);
   olx_vptr<TXFile> thip(new VPtr);
@@ -1440,8 +1449,13 @@ TLibrary* TXFile::ExportLibrary(const olxstr& name) {
     new TFunction<TXFile>(thip, &TXFile::LibRefinementInfo, "RefinementInfo",
     fpNone | fpOne | psCheckFileTypeIns,
     "Sets/returns refinement information.")
-    );
+  );
 
+  lib->Register(
+    new TFunction<TXFile>(thip, &TXFile::LibIncludedFiles, "GetIncludedFiles",
+      fpNone,
+      "Returns a new line ('\\\n') separated list of included files (+file_name in INS).")
+  );
   lib->AttachLibrary(Lattice.GetAsymmUnit().ExportLibrary());
   lib->AttachLibrary(Lattice.GetUnitCell().ExportLibrary());
   lib->AttachLibrary(Lattice.ExportLibrary());

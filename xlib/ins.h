@@ -245,7 +245,7 @@ public:
     return TBasicApp::GetInstance().GetOptions()
       .FindValue("preserve_invalid_ins", FalseString()).ToBool();
   }
-  const TStringToList<olxstr, bool>& getIncluded() const {
+  const TStringToList<olxstr, bool>& GetIncluded() const {
     return included;
   }
   virtual IOlxObject* Replicate() const { return new TIns; }

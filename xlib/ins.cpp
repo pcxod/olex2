@@ -214,7 +214,7 @@ void TIns::LoadFromStrings(const TStrList& FileContent) {
       else if (ParseIns(InsFile, Toks, cx, i)) {
         continue;
       }
-      else if (Toks[0].Equalsi("END")) {   //reset RESI to default
+      else if (Toks[0].Equalsi("END")) { //reset RESI to default
         // this will help with recognising ins after end which to be ignored
         Ins.Add(Toks[0]);
         cx.End = true;
@@ -224,6 +224,10 @@ void TIns::LoadFromStrings(const TStrList& FileContent) {
       }
       else if (Toks[0].Equalsi("TITL")) {
         SetTitle(Toks.Text(' ', 1));
+      }
+      else if (Toks[0].Equalsi("BEDE") || Toks[0].Equalsi("LONE")) {
+        GetRM().Vars.SetMinVarCount(4);
+        Ins.Add(InsFile[i]);
       }
       // atom should have at least 7 parameters
       else if (Toks.Count() < 6 || Toks.Count() > 12) {
@@ -731,16 +735,17 @@ TStrList& TIns::Preprocess(TStrList& l) {
     if (l[i].StartsFrom('+') && l[i].Length() > 1) {
       bool expand = l[i].CharAt(1) == '+';
       olxstr fn = l[i].SubStringFrom(expand ? 2 : 1);
-      if (!TEFile::Exists(fn)) {
-        TBasicApp::NewLogEntry(logError) << "Included file missing: " << fn;
+      olxstr rfn = TEFile::ExpandRelativePath(fn, TEFile::CurrentDir());
+      if (!TEFile::Exists(rfn)) {
+        TBasicApp::NewLogEntry(logError) << "Included file missing: " << rfn;
         l.Delete(i--);
         continue;
       }
-      if (TEFile::ExtractFileExt(fn).Equalsi("bodd")) {
+      if (TEFile::ExtractFileExt(rfn).Equalsi("bodd")) {
         GetRM().Vars.SetMinVarCount(4);
       }
       included.Add(fn, expand);
-      TStrList lst = TEFile::ReadLines(fn);
+      TStrList lst = TEFile::ReadLines(rfn);
       if (!expand) {
         for (size_t j = 0; j < lst.Count(); j++) {
           if (lst[j].StartsFrom('!')) {
@@ -2753,7 +2758,8 @@ TStrList::const_list_type TIns::GetFooter() {
         continue;
       }
       try {
-        TStrList lines = TEFile::ReadLines(included[i]);
+        olxstr rfn = TEFile::ExpandRelativePath(included[i], TEFile::CurrentDir());
+        TStrList lines = TEFile::ReadLines(rfn);
         for (size_t j = 0; j < lines.Count(); j++) {
           incs.Add(TStrList(lines[j], ' ').Text(' ').ToLowerCase());
         }

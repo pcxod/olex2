@@ -151,7 +151,7 @@ public:
 
   inline const T& Get(size_t ind ) const {
 #ifdef _DEBUG
-    TIndexOutOfRangeException::ValidateRange(__POlxSourceINfo, ind, 0, Size);
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, ind, 0, Size);
 #endif
     return _Data[ind];
   }
