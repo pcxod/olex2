@@ -44,7 +44,7 @@ vec3i CalculateColour(float v, size_t colour_count, const vec3i* colours) {
   vec3i rv;
   for (int ci = 0; ci < 3; ci++) {
     float x = ((colours[idx2][ci] - colours[idx1][ci])*v + colours[idx1][ci]);
-    rv[ci] = (char)(x);
+    rv[ci] = (char) x;
   }
   return rv;
 }
@@ -522,7 +522,13 @@ bool TXGrid::Orient(TGlPrimitive& GlP) {
     for (size_t i = 0; i < MaxDim; i++) {
       for (size_t j = 0; j < MaxDim; j++) {
         const size_t off = (i + j*MaxDim) * 3;
-        vec3i cl = CalculateColour(ContourData[i][j] / max_v, colour_count, colours);
+        vec3i cl;
+        if (ContourData[i][j] > max_v) {
+         cl = CalculateColour(1.0, colour_count, colours);
+        }
+        else {
+         cl = CalculateColour(ContourData[i][j] / max_v, colour_count, colours);
+        }
         for (int ci = 0; ci < 3; ci++) {
           TextData[off + ci] = cl[ci];
         }
