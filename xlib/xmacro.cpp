@@ -4660,7 +4660,9 @@ void CifMerge_UpdateAtomLoop(TCif &Cif) {
   }
 }
 
-void CifMerge_EmbeddData(TCif &Cif, bool insert, bool fcf_format) {
+void CifMerge_EmbeddData(TCif &Cif, bool insert_res, bool insert_hkl,
+  bool insert_fab, bool hkl_fcf_format)
+{
   TStopWatch sw(__FUNC__);
   sw.start("Embedding data");
   TXApp &xapp = TXApp::GetInstance();
@@ -4679,8 +4681,7 @@ void CifMerge_EmbeddData(TCif &Cif, bool insert, bool fcf_format) {
     Cif.Remove("_olex2_hkl_file_MD5");
     Cif.Remove("_olex2_fab_file_MD5");
   }
-  //Cif.Remove("_refln");
-  if (insert) {
+  if (insert_res) {
     olxstr res_fn = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "res");
     if (TEFile::Exists(res_fn)) {
       cetStringList res("_iucr_refine_instructions_details");
@@ -4697,16 +4698,19 @@ void CifMerge_EmbeddData(TCif &Cif, bool insert, bool fcf_format) {
         Cif.SetParam("_olex2_res_file_MD5", MD5::Digest(s), false);
       }
     }
-    // embedd HKL
+  }
+  if (insert_hkl) {
     olxstr hkl_src = xapp.XFile().LocateHklFile();
     if (TEFile::Exists(hkl_src)) {
       THklFile hkl;
       hkl.LoadFromFile(hkl_src, false);
-      cetTable *t;
-      if (fcf_format) {
+      cetTable* t;
+      if (hkl_fcf_format) {
+        Cif.Remove("_refln");
         t = THklFile::ExperimentalToFCF(hkl.RefList(), Cif);
       }
       else {
+        Cif.Remove("_diffrn_refln");
         t = THklFile::ExperimentalToCIF(hkl.RefList(), Cif);
       }
       if (use_md5) {
@@ -4720,7 +4724,8 @@ void CifMerge_EmbeddData(TCif &Cif, bool insert, bool fcf_format) {
           MD5::Digest(olxcstr(olxstr(bf).DeleteChars(' '))), false);
       }
     }
-    // try inserting FAB file
+  }
+  if (insert_fab) {
     if (xapp.CheckFileType<TIns>()) {
       TIns &ins = xapp.XFile().GetLastLoader<TIns>();
       if (ins.InsExists("ABIN")) {
@@ -4728,7 +4733,7 @@ void CifMerge_EmbeddData(TCif &Cif, bool insert, bool fcf_format) {
           olxstr fab_name = TEFile::ChangeFileExt(xapp.XFile().LocateHklFile(),
             "fab");
           if (!TEFile::Exists(fab_name)) {
-            TBasicApp::NewLogEntry(logError) << "FAB file is missing";
+            TBasicApp::NewLogEntry(logWarning) << "FAB file is missing";
           }
           else {
             cetStringList fab("_shelx_fab_file");
@@ -4948,9 +4953,22 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   if (Options.Contains('f')) {
+    bool insert_res = false,
+      insert_hkl = false,
+      insert_fab = false;
     olxstr i_v = Options.FindValue('f');
-    bool insert = i_v.IsEmpty() ? true : i_v.ToBool();
-    CifMerge_EmbeddData(*Cif, insert, Options.GetBoolOption("fcf"));
+    if (i_v.IsEmpty() || i_v.IsBool()) {
+      if (i_v.IsEmpty() ? true : i_v.ToBool()) {
+        insert_res = insert_hkl = insert_fab = true;
+      }
+    }
+    else {
+      insert_res = i_v.Containsi("res");
+      insert_hkl = i_v.Containsi("hkl");
+      insert_fab = i_v.Containsi("fab");
+    }
+    CifMerge_EmbeddData(*Cif, insert_res, insert_hkl, insert_fab,
+      Options.GetBoolOption("fcf"));
   }
   sw.start("Updating commonly mising parameters");
   // generate moiety string if does not exist
