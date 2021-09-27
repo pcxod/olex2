@@ -673,21 +673,25 @@ void TGXApp::CenterModel() {
   GlRenderer->UpdateMinMax(min, max);
 }
 //..............................................................................
-void TGXApp::CenterView(bool calcZoom)  {
+void TGXApp::CenterView(bool calcZoom) {
   double weight = 0;
   vec3d center;
   vec3d maX(-100, -100, -100), miN(100, 100, 100);
   AtomIterator ai = GetAtoms();
   while (ai.HasNext()) {
     const TXAtom& a = ai.Next();
-    if (!a.IsVisible()) continue;
+    if (!a.IsVisible()) {
+      continue;
+    }
     center += a.crd();
     vec3d::UpdateMinMax(a.crd(), miN, maX);
     weight += 1;
   }
-  if (weight == 0)  return;
+  if (weight == 0) {
+    return;
+  }
   for (size_t i = 0; i < Files.Count(); i++) {
-    TDUnitCell &uc = *XFile(i).DUnitCell;
+    TDUnitCell& uc = *XFile(i).DUnitCell;
     if (uc.IsVisible()) {
       for (size_t j = 0; j < uc.VertexCount(); j++) {
         center += uc.GetVertex(j);
@@ -696,19 +700,24 @@ void TGXApp::CenterView(bool calcZoom)  {
       }
     }
   }
-  for (size_t i=0; i < XReflections.Count(); i++) {
-    if (!XReflections[i].IsVisible())  continue;
+  for (size_t i = 0; i < XReflections.Count(); i++) {
+    if (!XReflections[i].IsVisible()) {
+      continue;
+    }
     center += XReflections[i].GetCenter();
     weight += 1;
     vec3d::UpdateMinMax(XReflections[i].GetCenter(), miN, maX);
   }
-  if (weight == 0)  return;
+  if (weight == 0) {
+    return;
+  }
   center /= weight;
   center *= -1;
   GlRenderer->ClearMinMax();
-  GlRenderer->UpdateMinMax(miN+center, maX+center);
-  if (calcZoom)
-    GlRenderer->GetBasis().SetZoom(GlRenderer->CalcZoom()*ExtraZoom);
+  GlRenderer->UpdateMinMax(miN + center, maX + center);
+  if (calcZoom) {
+    GlRenderer->GetBasis().SetZoom(GlRenderer->CalcZoom() * ExtraZoom);
+  }
   GlRenderer->GetBasis().SetCenter(center);
 }
 //..............................................................................
@@ -1572,8 +1581,8 @@ void TGXApp::Select(const vec3d& From, const vec3d& To) {
   Draw();
 }
 //..............................................................................
-bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
-  const IOlxObject *Data, TActionQueue *)
+bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IOlxObject* Sender,
+  const IOlxObject* Data, TActionQueue*)
 {
   static bool ObjectsStored = false, LoadingFile = false, Disassembling = false;
   if (MsgId == ID_OnSelect) {
@@ -1590,19 +1599,12 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
       ClearXObjects();
     }
     else if (MsgSubId == msiExit) {
-      if (Files.Count() >1) {
+      if (Files.Count() > 1) {
         AlignXFiles();
         UpdateBonds();
       }
       if (ZoomAfterModelBuilt) {
-        // this is set in TMainForm::Dispatch
-        size_t cc_idx = TOlxVars::VarIndex("console_command");
-        bool act = true;
-        if (cc_idx != InvalidIndex) {
-          act = GetOptions().GetBoolOption("model.center_on_update", true, true);
-          TOlxVars::UnsetVar("console_command");
-        }
-        if (act) {
+        if (GetOptions().GetBoolOption("model.center_on_update", true, true)) {
           CenterView(true);
         }
       }
@@ -1613,18 +1615,19 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
     }
   }
   else if (MsgId == ID_OnFileLoad) {
-    if (MsgSubId == msiEnter)  {
+    if (MsgSubId == msiEnter) {
       SelectionCopy[0].Clear();
       StoreGroup(GetSelection(), SelectionCopy[0]);
       StoreLabels();
       ClearLines();
       LoadingFile = true;
     }
-    else if (MsgSubId == msiExit)
+    else if (MsgSubId == msiExit) {
       LoadingFile = false;
+    }
   }
   else if (MsgId == ID_OnFileClose) {
-    if (MsgSubId == msiExit)  {
+    if (MsgSubId == msiExit) {
       ClearGroupDefinitions();
       ClearLabels();
       ClearLines();
@@ -1641,9 +1644,10 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
       UpdateDuplicateLabels();
     }
     else if (MsgSubId == msiEnter) {  // backup the selection
-      if (ObjectsStored)
+      if (ObjectsStored) {
         ObjectsStored = false;
-      else  if (!LoadingFile) {
+      }
+      else if (!LoadingFile) {
         SelectionCopy[0].Clear();
         StoreGroup(GetSelection(), SelectionCopy[0]);
         StoreLabels();
