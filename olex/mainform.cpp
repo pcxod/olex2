@@ -1653,13 +1653,15 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
           Tasks.Delete(i);
           i--;
         }
-        else
+        else {
           Tasks[i].LastCalled = TETime::Now();
+        }
         processMacro(tmp, "Scheduled task");
       }
     }
-    for (size_t i = 0; i < RunWhenVisibleTasks.Count(); i++)
+    for (size_t i = 0; i < RunWhenVisibleTasks.Count(); i++) {
       RunWhenVisibleTasks[i]->Run();
+    }
     RunWhenVisibleTasks.DeleteItems().Clear();
     // end tasks ...
     FTimer->OnTimer.SetEnabled(true);
@@ -1728,16 +1730,19 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
       }
     }
     if (FXApp->GetFader().IsVisible()) {
-      if (!FXApp->GetFader().Increment())
+      if (!FXApp->GetFader().Increment()) {
         FXApp->GetFader().SetVisible(false);
+      }
       Draw = true;
     }
-    if (MouseMoveTimeElapsed < 2500)
+    if (MouseMoveTimeElapsed < 2500) {
       MouseMoveTimeElapsed += FTimer->GetInterval();
+    }
     if (MouseMoveTimeElapsed > 500 && MouseMoveTimeElapsed < 5000) {
       olxstr tt = this->FXApp->GetObjectInfoAt(MousePositionX, MousePositionY);
-      if (!_UseGlTooltip)
+      if (!_UseGlTooltip) {
         FGlCanvas->SetToolTip(tt.u_str());
+      }
       else if (GlTooltip != 0) {
         if (tt.IsEmpty()) {
           if (GlTooltip->IsVisible()) {
@@ -1751,11 +1756,15 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
           GlTooltip->Fit();
           int x = MousePositionX - GlTooltip->GetWidth() / 2,
             y = MousePositionY - GlTooltip->GetHeight() - 4;
-          if (x < 0)  x = 0;
-          if ((size_t)(x + GlTooltip->GetWidth()) > (size_t)FXApp->GetRenderer().GetWidth())
+          if (x < 0) {
+            x = 0;
+          }
+          if ((size_t)(x + GlTooltip->GetWidth()) > (size_t)FXApp->GetRenderer().GetWidth()) {
             x = FXApp->GetRenderer().GetWidth() - GlTooltip->GetWidth();
-          if (y < 0)
+          }
+          if (y < 0) {
             y = 0;
+          }
           GlTooltip->SetLeft(x); // put it off the mouse
           GlTooltip->SetTop(y);
           GlTooltip->SetZ(FXApp->GetRenderer().GetMaxRasterZ());
@@ -1778,7 +1787,7 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
     }
     // here it cannot be done with scope_cs - GTK would freese the main loop...
     TBasicApp::EnterCriticalSection();
-    if (_UpdateThread != NULL && _UpdateThread->GetUpdateSize() != 0) {
+    if (_UpdateThread != 0 && _UpdateThread->GetUpdateSize() != 0) {
       TBasicApp::LeaveCriticalSection();
       if (wxApp::IsMainLoopRunning()) {
         FTimer->OnTimer.SetEnabled(false);
@@ -1786,8 +1795,9 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
         FTimer->OnTimer.SetEnabled(true);
       }
     }
-    else
+    else {
       TBasicApp::LeaveCriticalSection();
+    }
     // deal with updates
     if (wxIsMainThread()) {
       static bool UpdateExecuted = false;

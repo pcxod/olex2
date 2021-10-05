@@ -46,7 +46,7 @@ TBasicApp::TBasicApp(const olxstr& FileName, bool read_options)
   GetSystemInfo(&si);
   MaxThreadCount = (short)si.dwNumberOfProcessors;
 #endif
-  LogFile = NULL;
+  LogFile = 0;
   Log = new TLog;
 
   Profiling = MainFormVisible = false;
@@ -56,7 +56,13 @@ TBasicApp::TBasicApp(const olxstr& FileName, bool read_options)
   if (read_options) {
     ReadOptions(GetBaseDir() + ".options");
   }
-  OnTimer.Add(new TActionHandler());
+  TActionHandler *ah = new TActionHandler();
+/* For some reason timer events do not always pass through modal dialogs on Linux/Mac
+* So this code works only on Windows!
+  OnTimer.Add(ah);
+  Sticking to the one that works on all platforms, possibly not the most efficient way?
+*/
+  OnIdle.Add(ah);
 }
 //..............................................................................
 TBasicApp::~TBasicApp() {
