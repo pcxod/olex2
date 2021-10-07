@@ -35,7 +35,7 @@ olxstr TExyzGroup::ToString() const {
     return EmptyString();
   }
   atoms.UpdateResi();
-  olxstr_buf rv = "EXYZ";
+  olxstr_buf rv = olxstr("EXYZ");
   if (!atoms.GetResi().IsEmpty()) {
     rv << '_' << atoms.GetResi();
   }
