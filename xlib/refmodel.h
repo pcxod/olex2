@@ -427,7 +427,7 @@ Friedel opposites of components 1 ... m
   // returns the restrained distance or -1
   double FindRestrainedDistance(const TCAtom& a1, const TCAtom& a2);
 
-  void AddEXYZ(const IStrList& exyz);
+  void AddEXYZ(const IStrList& exyz, const olxstr &resi);
 
   RefinementModel& Assign(const RefinementModel& rm, bool AssignAUnit);
   /* updates refinable params - BASF, FVAR, WGHT, returns false if objects

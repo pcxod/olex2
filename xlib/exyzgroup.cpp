@@ -16,11 +16,30 @@ void TExyzGroup::Clear()  {  Parent.Delete(Id);  }
 void TExyzGroup::Assign(const TExyzGroup& ag) {
   for (size_t i = 0; i < ag.Atoms.Count(); i++) {
     Atoms.Add(Parent.RM.aunit.FindCAtomById(ag.Atoms[i]->GetId()));
-    if (Atoms.GetLast() == NULL) {
+    if (Atoms.GetLast() == 0) {
       throw TFunctionFailedException(__OlxSourceInfo, "asymmetric units mismatch");
     }
     Atoms.GetLast()->SetExyzGroup(this);
   }
+}
+//..............................................................................
+olxstr TExyzGroup::ToString() const {
+  AtomRefList atoms(Parent.RM);
+  for (size_t i = 0; i < Atoms.Count(); i++) {
+    if (Atoms[i]->IsDeleted()) {
+      continue;
+    }
+    atoms.AddExplicit(*Atoms[i]);
+  }
+  if (atoms.IsEmpty()) {
+    return EmptyString();
+  }
+  atoms.UpdateResi();
+  olxstr_buf rv = "EXYZ";
+  if (!atoms.GetResi().IsEmpty()) {
+    rv << '_' << atoms.GetResi();
+  }
+  return olxstr(rv << ' ' << atoms.GetExpression());
 }
 //..............................................................................
 void TExyzGroup::ToDataItem(TDataItem& item) const {

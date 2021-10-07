@@ -2393,6 +2393,39 @@ void TMainForm::macEditIns(TStrObjList &Cmds, const TParamList &Options, TMacroD
   dlg->Destroy();
 }
 //..............................................................................
+const_strlist macHklEdit_SaveRef(THklFile &Hkl, TRefPList &refs, bool hklf5) {
+  TStrList SL;
+  for (size_t i = 0; i < refs.Count(); i++) {
+    if (refs[i]->GetTag() == 0) {
+      continue;
+    }
+    if (hklf5) {
+      size_t r_start = olx_abs(refs[i]->GetTag()) - 1,
+        r_end = r_start;
+      // find reflection start
+      while (--r_start < InvalidIndex && Hkl[r_start].GetBatch() < 0) {
+      }
+      r_start++;
+      if (refs[i]->GetBatch() < 0) {
+        // find the end
+        while (++r_end < Hkl.RefCount() && Hkl[r_end].GetBatch() < 0) {
+        }
+        if (r_end == Hkl.RefCount()) {
+          r_end = Hkl.RefCount();
+        }
+      }
+      for (size_t k = r_start; k <= r_end; k++) {
+        SL.Add(Hkl[k].ToNString());
+        Hkl[k].SetTag(0);
+      }
+    }
+    else {
+      SL.Add(refs[i]->ToNString());
+    }
+  }
+  return SL;
+}
+
 void TMainForm::macHklEdit(TStrObjList& Cmds, const TParamList& Options,
   TMacroData& E)
 {
@@ -2411,6 +2444,7 @@ void TMainForm::macHklEdit(TStrObjList& Cmds, const TParamList& Options,
     Hkl[i].SetTag(i + 1);
   }
   sw.start("Preparing input");
+  const bool hklf5 = FXApp->XFile().GetRM().GetHKLF() >= 5;
   TStrList SL;
   SL.Add("REM Please put \'-\' char in the front of reflections you wish to omit");
   SL.Add("REM and remove '-' char if you want the reflection to be used in the refinement");
@@ -2423,18 +2457,15 @@ void TMainForm::macHklEdit(TStrObjList& Cmds, const TParamList& Options,
       Tmp.stream(' ') << bad_refs[i].index[0] << bad_refs[i].index[1] <<
         bad_refs[i].index[2] << "Error/esd=" << bad_refs[i].factor;
       TRefPList refs = Hkl.AllRefs(bad_refs[i].index, matrices);
-      for (size_t j = 0; j < refs.Count(); j++) {
-        SL.Add(refs[j]->ToNString());
-      }
+      SL.AddAll(macHklEdit_SaveRef(Hkl, refs, hklf5).obj());
       SL.Add();
     }
   }
   else {
-    TReflection Refl(Cmds[0].ToInt(), Cmds[1].ToInt(), Cmds[2].ToInt());
-    TRefPList refs = Hkl.AllRefs(Refl, matrices);
-    for (size_t i = 0; i < refs.Count(); i++) {
-      SL.Add(refs[i]->ToNString());
-    }
+    TRefPList refs = Hkl.AllRefs(
+      TReflection(Cmds[0].ToInt(), Cmds[1].ToInt(), Cmds[2].ToInt()),
+      matrices);
+    SL.AddAll(macHklEdit_SaveRef(Hkl, refs, hklf5).obj());
   }
   sw.stop();
   TdlgEdit* dlg = new TdlgEdit(this, true);
@@ -2456,6 +2487,17 @@ void TMainForm::macHklEdit(TStrObjList& Cmds, const TParamList& Options,
     }
     R.FromNString(SL[i]);
     Hkl.UpdateRef(R);
+    // make sure the mates have the same fate
+    if (hklf5 && R.GetBatch() >= 0) {
+      bool omit = R.GetTag() < 0;
+      size_t start = olx_abs(R.GetTag()) - 1, end = start;
+      while (--start < InvalidIndex && Hkl[start].GetBatch() < 0) {
+      }
+      start++;
+      for (size_t j = start; j < end; j++) {
+        Hkl[j].SetOmitted(omit);
+      }
+    }
   }
   sw.start("Saving HKL");
   Hkl.SaveToFile(HklFN);

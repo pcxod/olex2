@@ -22,12 +22,12 @@ public:
   {}
   ~TExyzGroup() {
     for (size_t i = 0; i < Atoms.Count(); i++) {
-      Atoms[i]->SetExyzGroup(NULL);
+      Atoms[i]->SetExyzGroup(0);
     }
   }
-  DefPropP(size_t, Id)
-    TCAtom& Add(TCAtom& ca) {
-    if (ca.GetExyzGroup() != NULL) {
+  DefPropP(size_t, Id);
+  TCAtom& Add(TCAtom& ca) {
+    if (ca.GetExyzGroup() != 0) {
       ca.GetExyzGroup()->Remove(ca);
     }
     ca.SetExyzGroup(this);
@@ -36,7 +36,7 @@ public:
   }
   void Remove(TCAtom& ca) {
     Atoms.Remove(&ca);
-    ca.SetExyzGroup(NULL);
+    ca.SetExyzGroup(0);
   }
   TCAtom& operator [] (size_t i) {  return *Atoms[i];  }
   const TCAtom& operator [] (size_t i) const {  return *Atoms[i];  }
@@ -52,6 +52,7 @@ public:
   }
   void Assign(const TExyzGroup& ags);
   void Clear();
+  olxstr ToString() const;
   void ToDataItem(TDataItem& item) const;
 #ifdef _PYTHON
   PyObject* PyExport(TPtrList<PyObject>& atoms);

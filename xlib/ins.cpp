@@ -2530,17 +2530,10 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
 
   // equivalent EXYZ constraint
   for (size_t i = 0; i < rm.ExyzGroups.Count(); i++) {
-    TExyzGroup& sr = rm.ExyzGroups[i];
-    if (sr.IsEmpty()) {
-      continue;
+    olxstr s = rm.ExyzGroups[i].ToString();
+    if (!s.IsEmpty()) {
+      HyphenateIns(s, SL);
     }
-    olxstr Tmp = "EXYZ";
-    for (size_t j = 0; j < sr.Count(); j++)  {
-      if (!sr[j].IsDeleted()) {
-        Tmp << ' ' << sr[j].GetResiLabel();
-      }
-    }
-    HyphenateIns(Tmp, SL);
   }
   // store the eqiv ...
   for (size_t i = 0; i < rm.UsedSymmCount(); i++) {
@@ -2886,7 +2879,7 @@ bool TIns::ParseRestraint(RefinementModel &rm, const TStrList& _toks,
   }
 
   if (ins_name.Equalsi("EXYZ")) {
-    rm.AddEXYZ(toks.SubListFrom(1));
+    rm.AddEXYZ(toks.SubListFrom(1), resi);
     return true;
   }
   else if (ins_name.Equalsi("DFIX")) {

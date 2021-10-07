@@ -2731,14 +2731,18 @@ void RefinementModel::SetUserFormula(const olxstr& frm, bool mult_z) {
   }
 }
 //..............................................................................
-void RefinementModel::AddEXYZ(const IStrList& exyz) {
+void RefinementModel::AddEXYZ(const IStrList& exyz, const olxstr& resi_name) {
   if (exyz.Count() < 2) {
     throw TFunctionFailedException(__OlxSourceInfo, "incomplete EXYZ group");
   }
   TExyzGroup& gr = ExyzGroups.New();
+  TResidue* resi = 0;
+  if (!resi_name.IsEmpty()) {
+    resi = aunit.FindResidue(resi_name);
+  }
   for (size_t i = 0; i < exyz.Count(); i++) {
-    TCAtom* ca = aunit.FindCAtom(exyz[i]);
-    if (ca == NULL) {
+    TCAtom* ca = aunit.FindCAtom(exyz[i], resi);
+    if (ca == 0) {
       gr.Clear();
       throw TFunctionFailedException(__OlxSourceInfo,
         olxstr("unknown atom: ") << exyz[i]);
@@ -2758,7 +2762,7 @@ void RefinementModel::LibHasOccu(const TStrObjList& Params,
     TCAtom &a = aunit.GetAtom(i);
     if (a.IsDeleted()) continue;
     XVarReference *vr = a.GetVarRef(catom_var_name_Sof);
-    if (vr == NULL || vr->relation_type != relation_None ||
+    if (vr == 0 || vr->relation_type != relation_None ||
         olx_abs(a.GetChemOccu()-1) > 1e-3)
     {
       has = true;
