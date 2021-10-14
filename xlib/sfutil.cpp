@@ -200,19 +200,9 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
     sw.start("Loading/Filtering/Merging HKL");
     TUnitCell::SymmSpace sp = xapp.XFile().GetUnitCell().GetSymmSpace();
     SymmSpace::InfoEx info_ex = SymmSpace::Compact(sp);
-    if (friedelPairs == fpMerge) {
-      info_ex.centrosymmetric = true;
-    }
     if (rm.GetHKLF() < 5) {
-      RefinementModel::HklStat ms;
-      if (!sp.IsCentrosymmetric() && info_ex.centrosymmetric) {
-        ms = rm.GetFourierRefList<
-          TUnitCell::SymmSpace, RefMerger::ShelxMerger>(sp, refs);
-      }
-      else {
-        ms = rm.GetRefinementRefList<
-          TUnitCell::SymmSpace, RefMerger::ShelxMerger>(sp, refs);
-      }
+      RefinementModel::HklStat ms = rm.GetRefinementRefList<
+        TUnitCell::SymmSpace, RefMerger::ShelxMerger>(sp, refs);
       sw.start("Calculating structure factors");
       if (xapp.XFile().GetRM().Vars.HasBASF()) {
         twinning::handler dt(info_ex, refs,

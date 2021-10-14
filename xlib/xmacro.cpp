@@ -3984,10 +3984,11 @@ void XLibMacros::funHKLSrc(const TStrObjList& Params, TMacroData &E) {
         TEFile f(fn, "rb");
         if (!THklFile::IsHKLFileLine(f.ReadLine())) {
           f.Close();
-          fn = TEFile::AddPathDelimeter(TEFile::ExtractFilePath(fn)) <<
-            MD5::Digest(fn) << ".hkl";
+          olxstr nfn = TEFile::ChangeFileExt(fn, "hkl.fcf");
+          TEFile::Rename(fn, nfn);
           if (!TEFile::Exists(fn)) {
             TBasicApp::NewLogEntry() << "Creating HKL file...";
+            xapp.XFile().GetRM().SetHKLSource(nfn);
             THklFile::SaveToFile(fn, xapp.XFile().GetRM().GetReflections());
             xapp.XFile().GetRM().SetHKLSource(fn);
           }
@@ -5582,7 +5583,7 @@ void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options,
       }
       else {
         row[5] = new cetString(F[i].Re());
-        row[6] = new cetString("0");
+        row[6] = new cetString(F[i].Im());
       }
     }
     else if (list_n == 4) {
