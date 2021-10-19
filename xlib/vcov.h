@@ -94,7 +94,7 @@ public:
         if (sc.map[6].param != -2 || sc.map[7].param != -2 ||
           sc.map[8].param != -2) // is not constrained?
         {
-          TBasicApp::NewLogEntry(logError) << "Unable to located given atom: "
+          TBasicApp::NewLogEntry(logError) << "Unable to locate given atom: "
             << atoms[i]->GetLabel();
         }
       }

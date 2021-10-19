@@ -1307,7 +1307,7 @@ void XLibMacros::macHklStat(TStrObjList &Cmds, const TParamList &Options,
     }
     tab[21][0] << "Average redundancy (+symm eqivs)";
     if (hs.HKLF >= 5) {
-      tab[20][1] = NAString();
+      tab[21][1] = NAString();
     }
     else {
       tab[21][1] << olxstr::FormatFloat(2,
