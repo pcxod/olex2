@@ -1913,7 +1913,7 @@ TLibrary* TAsymmUnit::ExportLibrary(const olxstr& name)  {
     &TAsymmUnit::LibSetAtomPart, "SetAtomPart", fpTwo,
     "Sets part of the atom specified atom"));
   lib->Register(new TFunction<TAsymmUnit>(thip,
-    &TAsymmUnit::LibSetAtomU, "SetAtomU", fpSeven | fpTwo,
+    &TAsymmUnit::LibSetAtomU, "SetAtomU", fpAny,
     "Sets atoms Uiso/anis first paramater is the atom ID followed by 1 or six "
     "parameters"));
   lib->Register(new TFunction<TAsymmUnit>(thip,
