@@ -1294,7 +1294,7 @@ void TXFile::LibGetF000(const TStrObjList& Params, TMacroData& E) {
   double F000 = 0;
   for (size_t i = 0; i < cont.Count(); i++) {
     XScatterer *xs = GetRM().FindSfacData(cont[i].element->symbol);
-    compd f0 = cont[i].element->gaussians->calc_sq(0);
+    compd f0 = round(cont[i].element->gaussians->calc_sq(0));
     bool processed = false;
     if (xs != 0) {
       if (xs->IsSet(XScatterer::setGaussian) &&
