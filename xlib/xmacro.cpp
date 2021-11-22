@@ -512,10 +512,20 @@ void XLibMacros::Export(TLibrary& lib)  {
     "n-to accept N atoms in the rings for afix 66&;"
     "s-sorts atoms for 5 and 6 membered rings [true]&;"
     "c-changes the afix (if any) for the given atoms&;"
+    "d-defines the distance to be used for a new AFIX;"
     ,
     (fpAny^fpNone)|psCheckFileTypeIns,
     "Sets atoms AFIX, special cases are 56,69,66,69,76,79,106,109,116 and "
     "119");
+  xlib_InitMacro(RefineHDist,
+    EmptyString(),
+    (fpNone) | psCheckFileTypeIns,
+    "Sets atoms AFIX m3 to m4 and m7 to m8");
+  xlib_InitMacro(NeutronHDist,
+    EmptyString(),
+    (fpNone) | psCheckFileTypeIns,
+    "Sets atoms AFIX m3 and m7 to an increased neutron-like distances"
+    "from Allen and Bruno, Acta Cryst., 2010, B66, 380-386.");
   xlib_InitMacro(Dfix,
     "i-[false] places implicit restraint&;"
     "cs-do not clear selection",
@@ -8125,6 +8135,11 @@ void XLibMacros::macAfix(TStrObjList &Cmds, const TParamList &Options,
       for (int i = 0; i < pos[i]; i++) {
         ag.AddDependent(*atoms[i].a);
       }
+      if (Options.Contains("d")) {
+        const double dist = Options.FindValue("d", "1").ToDouble();
+        XLibMacros::Parse(Cmds, "d", &dist);
+        ag.SetD(dist);
+      }
       app.XFile().EndUpdate();
       return;
     }
@@ -8199,6 +8214,11 @@ void XLibMacros::macAfix(TStrObjList &Cmds, const TParamList &Options,
         for (size_t i = 1; i < Atoms.Count(); i++) {
           ag.AddDependent(Atoms[i]->CAtom());
         }
+        if (Options.Contains("d")) {
+          const double dist = Options.FindValue("d", "1").ToDouble();
+          XLibMacros::Parse(Cmds, "d", &dist);
+          ag.SetD(dist);
+        }
       }
     }
   }
@@ -8253,8 +8273,113 @@ void XLibMacros::macAfix(TStrObjList &Cmds, const TParamList &Options,
         for (size_t i = 1; i < Atoms.Count(); i++) {
           ag.AddDependent(Atoms[i]->CAtom());
         }
+        if (Options.Contains("d")) {
+          const double dist = Options.FindValue("d", "1").ToDouble();
+          XLibMacros::Parse(Cmds, "d", &dist);
+          ag.SetD(dist);
+        }
       }
     }
+  }
+}
+void XLibMacros::macRefineHDist(TStrObjList& Cmds, const TParamList& Options,
+    TMacroData& E)
+{
+  TXApp& app = TXApp::GetInstance();
+  RefinementModel& rm = app.XFile().GetRM();
+  TSAtomPList Atoms = app.FindSAtoms(Cmds, false, !Options.Contains("cs"));
+  for (size_t group = 0; group < rm.AfixGroups.Count(); group++) {
+    TCAtom& pivot = rm.AfixGroups[group].GetPivot();
+    if (!Atoms.IsEmpty()) {
+      bool is_selected = false;
+      for (size_t a = 0; a < Atoms.Count(); a++)
+        if (pivot != Atoms[a]->CAtom())
+          continue;
+        else
+          is_selected = true;
+      if (!is_selected)
+        continue;
+    }
+    int n = rm.AfixGroups[group].GetN();
+    if (n != 3 && n != 7) continue;
+    int m = rm.AfixGroups[group].GetM();
+    if (m != 1 && m != 2 && m != 3 && m != 4 && m != 8 && m != 9 && m != 12 && m != 13 && m != 14 && m != 15 && m != 16) continue;
+    //might have been easier if i gave the ones that are to be changed....
+    int new_afix = m * 10 + n + 1;
+    rm.AfixGroups[group].SetAfix(new_afix);
+  }
+}
+void XLibMacros::macNeutronHDist(TStrObjList& Cmds, const TParamList& Options,
+    TMacroData& E)
+{
+  TXApp& app = TXApp::GetInstance();
+  RefinementModel& rm = app.XFile().GetRM();
+  TSAtomPList Atoms = app.FindSAtoms(Cmds, false, !Options.Contains("cs"));
+  for (size_t group = 0; group < rm.AfixGroups.Count(); group++) {
+    TCAtom& pivot = rm.AfixGroups[group].GetPivot();
+    if (!Atoms.IsEmpty()) {
+      bool is_selected = false;
+      for (size_t a = 0; a < Atoms.Count(); a++)
+        if (pivot != Atoms[a]->CAtom())
+          continue;
+        else
+          is_selected = true;
+      if (!is_selected)
+        continue;
+    }
+    int n = rm.AfixGroups[group].GetN();
+    if (n != 3 && n != 7) continue;
+    int m = rm.AfixGroups[group].GetM();
+    //might have been easier if i gave the ones that are to be changed....
+    if (m != 1 && m != 2 && m != 3 && m != 4 && m != 8 && m != 9 && m != 12 && m != 13 && m != 14 && m != 15 && m != 16) continue;
+    double d = 1.1;
+    const int charge = pivot.GetCharge();
+    if (charge == 5)
+      //BH (terminal)
+      d = 1.185;
+    else if (charge == 6) {
+      if (m == 1)
+        //Z3-Csp3-H
+        d = 1.083;
+      else if(m == 2)
+        //Z2-Csp3-H2
+        d = 1.091;
+      else if(m == 3 || m == 12 || m == 13)
+        //Z-Csp3-H3
+        d = 1.077;
+      else if (m == 4)
+        //aromatic carbon
+        d = 1.083;
+      else if (m == 9)
+        //ending CH2
+        d = 1.082;
+      else if(m == 16)
+        //C-Csp1-H
+        d = 1.042;
+    }
+    else if (charge == 8) {
+      if (m == 8 || m == 14)
+        // Z-OH
+        d = 0.983;
+    }
+    else if (charge == 7) {
+      if (m == 4)
+        //Z2-NH
+        d = 1.027;
+      if (m == 9)
+        //C(ar)-NH2
+        d = 1.011;
+      if (m == 13)
+        //N+-H
+        d = 1.036;
+    }
+    else if (charge == 16)
+      //SH
+      d = 1.338;
+    else if (charge == 14)
+      //SiH
+      d = 1.506;
+    rm.AfixGroups[group].SetD(d);
   }
 }
 //.............................................................................
