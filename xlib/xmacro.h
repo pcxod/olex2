@@ -160,6 +160,7 @@ public:
   static DefMacro(D2CG)
   static DefMacro(TestR)
   static DefMacro(HKLF5)
+  static DefMacro(TestHKLF)
   static DefMacro(CalcVars)
   static DefMacro(Pack)
   static DefMacro(Grow)

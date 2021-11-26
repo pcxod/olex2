@@ -53,15 +53,20 @@ void THklFile::UpdateMinMax(const TReflection& r) {
 }
 //..............................................................................
 void THklFile::Clear3D() {
-  if (Hkl3D == NULL)  return;
+  if (Hkl3D == 0) {
+    return;
+  }
   for (int i=MinHkl[0]; i <= MaxHkl[0]; i++) {
-    for (int j=MinHkl[1]; j <= MaxHkl[1]; j++)
-      for (int k=MinHkl[2]; k <= MaxHkl[2]; k++)
-        if (Hkl3D->Value(i,j,k) != NULL)
-          delete Hkl3D->Value(i,j,k);
+    for (int j = MinHkl[1]; j <= MaxHkl[1]; j++) {
+      for (int k = MinHkl[2]; k <= MaxHkl[2]; k++) {
+        if (Hkl3D->Value(i, j, k) != 0) {
+          delete Hkl3D->Value(i, j, k);
+        }
+      }
+    }
   }
   delete Hkl3D;
-  Hkl3D = NULL;
+  Hkl3D = 0;
 }
 //..............................................................................
 olx_object_ptr<TIns> THklFile::LoadFromFile(const olxstr& FN, bool get_ins,

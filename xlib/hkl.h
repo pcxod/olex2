@@ -71,7 +71,10 @@ public:
   int GetHKLF() const { return HKLF; }
   void SetHKLF(int v) { HKLF = v; }
   void Clear();
-  void Sort()  {  QuickSorter::SortSF(Refs, HklCmp);  }
+  void Sort() { QuickSorter::SortSF(Refs, HklCmp); }
+  template <typename comparator_t> void Sort(const comparator_t& cmp) {
+    QuickSorter::Sort(Refs, cmp);
+  }
   /* reads the HKL file, marking reflections after 000 or new line as omitted.
   Returns all remaining information information as an Ins file or NULL
   */

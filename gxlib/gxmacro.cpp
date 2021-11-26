@@ -803,7 +803,9 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
   short src = Options.GetBoolOption("fcf") ? SFUtil::sfOriginFcf
     : SFUtil::sfOriginOlex2;
   bool anom_only = Options.GetBoolOption("anom_only");
-  if (anom_only) src = SFUtil::sfOriginOlex2;
+  if (anom_only) {
+    src = SFUtil::sfOriginOlex2;
+  }
   olxstr err = SFUtil::GetSF(refs, F, mapType, src,
     scale, scale_value, SFUtil::fpMerge, anom_only);
   if (!err.IsEmpty()) {

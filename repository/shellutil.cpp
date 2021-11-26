@@ -342,7 +342,10 @@ void TShellUtil::ListMACAddresses(TShellUtil::MACInfo& rv) {
     return;
   PIP_ADAPTER_INFO pai = ai;
   do {
-    if (pai->AddressLength == 6) {
+    /* 6 - MIB_IF_TYPE_ETHERNET, 71 - IF_TYPE_IEEE80211
+    https://docs.microsoft.com/en-us/windows/win32/api/iptypes/ns-iptypes-ip_adapter_info
+    */
+    if (pai->AddressLength == 6 && (pai->Type == 6 || pai->Type == 71)) {
       _MACFromArray( (unsigned char*)&pai->Address[0],
         (char*)&(pai->Description[0]), rv, 6, false);
     }

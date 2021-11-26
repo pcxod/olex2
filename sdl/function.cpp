@@ -27,7 +27,8 @@ olxstr ABasicLibrary::GetQualifiedName() const {
 bool ABasicFunction::ValidateState(const TStrObjList &Params, TMacroData &E) {
   const size_t argC = Params.Count(),
     arg_m = ((size_t)1 << argC);
-  if( (ArgStateMask&fpAny) < fpAny &&
+  if (argC <= 14 &&
+      (ArgStateMask&fpAny) < fpAny &&
       (ArgStateMask&arg_m) == 0)
   {
     E.WrongArgCount(*this, argC);

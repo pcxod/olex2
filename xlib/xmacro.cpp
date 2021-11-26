@@ -716,6 +716,10 @@ void XLibMacros::Export(TLibrary& lib)  {
     "e-do not report an errors",
     fpAny | psFileLoaded,
     "HKLF5 utils.");
+  xlib_InitMacro(TestHKLF,
+    "e-do not report an errors",
+    fpTwo,
+    "HKLF5 utils.");
   xlib_InitMacro(CalcVars,
     EmptyString(),
     fpAny | psFileLoaded,
@@ -11517,6 +11521,99 @@ void XLibMacros::macHKLF5(TStrObjList &Cmds, const TParamList &Options,
   }
 
 }
+//..............................................................................
+//..............................................................................
+//..............................................................................
+struct macTestHKLF_sorter {
+  int Compare(const TReflection *r1, const TReflection* r2) const {
+    return -olx_cmp(r1->GetI(), r2->GetI());
+  }
+};
+void XLibMacros::macTestHKLF(TStrObjList& Cmds, const TParamList& Options,
+  TMacroData& E)
+{
+  THklFile f1, f2;
+  f1.LoadFromFile(Cmds[0], false);
+  f2.LoadFromFile(Cmds[1], false);
+  if (f1.RefCount() != f2.RefCount()) {
+    E.ProcessingError(__OlxSrcInfo, "missmatching reflection count");
+    return;
+  }
+  macTestHKLF_sorter cmp;
+  f1.Sort(cmp);
+  f2.Sort(cmp);
+  // estimate scale
+  double scale = 0;
+  size_t cnt = 0;
+  for (size_t i = 0; i < f1.RefCount(); i++) {
+    if (f1[i].GetS() <= 0 || f2[i].GetS() <= 0 || f2[i].GetI() == 0) {
+      continue;
+    }
+    double ios1 = f1[i].GetI() / f1[i].GetS(),
+      ios2 = f2[i].GetI() / f2[i].GetS();
+    if (olx_abs(ios1 - ios2) > 0.001) {
+      continue;
+    }
+    if (ios1 < 4) {
+      break;
+    }
+    scale += f1[i].GetI() / f2[i].GetI();
+    cnt++;
+  }
+  if (cnt == 0) {
+    E.ProcessingError(__OlxSrcInfo, "failed to estimate scale");
+    return;
+  }
+  scale /= cnt;
+  TBasicApp::NewLogEntry() << "Estimated scale: " << olxstr::FormatFloat(3, scale);
+  size_t max_data = olx_min(200, f1.RefCount());
+  ematd dm(max_data * 3, 9);
+  evecd right(max_data * 3);
+  for (size_t hi = 0; hi < max_data; hi++) {
+    const TReflection& sr = f1[hi];
+    const TReflection& dr = f2[hi];
+    size_t off = hi * 3;
+    double w = sr.GetHkl().QLength();
+    for (size_t i = 0; i < 3; i++) {
+      for (size_t j = 0; j < 3; j++) {
+        dm[off + i][i * 3 + j] = sr.GetHkl()[j] * w * w;
+      }
+      right[off + i] = dr.GetHkl()[i] * w * w;
+    }
+  }
+  ematd dmt = dm.GetT();
+  ematd inm = dmt * dm;
+  if (!math::LU::Invert(inm)) {
+    TBasicApp::NewLogEntry(logWarning) << "Failed to invert the normal matrix";
+    return;
+  }
+  evecd b = dmt * right;
+  b = inm * b;
+  mat3d tm;
+  TBasicApp::NewLogEntry() << "HKLF matrix :";
+  for (size_t i = 0; i < 3; i++) {
+    for (size_t j = 0; j < 3; j++) {
+      tm[i][j] = b[i * 3 + j];
+      if (olx_abs(tm[i][j]) < 1e-6) {
+        tm[i][j] = 0;
+      }
+    }
+    TBasicApp::NewLogEntry() << olx_print("%5.3lft %5.3lft %5.3lft",
+      tm[i][0], tm[i][1], tm[i][2]);
+  }
+  //// test
+  //double r_sq = 0;
+  //for (size_t hi = 0; hi < f1.RefCount(); hi++) {
+  //  const TReflection& sr = hf[data[hi].b];
+  //  const TReflection& dr = hf[data[hi].a];
+  //  vec3d res = tm * vec3d(sr.GetHkl());
+  //  r_sq += TReflection::ToCart(res - dr.GetHkl(), hm).QLength();
+  //}
+  //TBasicApp::NewLogEntry() << olx_print("R fit: %.2le for %z data",
+  //  sqrt(r_sq) / data.Count(), data.Count());
+
+}
+
 //..............................................................................
 void XLibMacros::macAdopt(TStrObjList& Cmds, const TParamList& Options,
   TMacroData& E)
