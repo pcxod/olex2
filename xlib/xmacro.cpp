@@ -2969,8 +2969,33 @@ void XLibMacros::macGenDisp(TStrObjList& Cmds, const TParamList& Options,
   const bool full = Options.GetBoolOption('f') || neutron;
   const bool force = Options.GetBoolOption("force");
 
-  RefinementModel& rm = TXApp::GetInstance().XFile().GetRM();
-  const ContentList& content = rm.GetUserContent();
+  TXFile &xf = TXApp::GetInstance().XFile();
+  RefinementModel& rm = xf.GetRM();
+  ContentList content = rm.GetUserContent();
+  // merge contents lists if needed
+  {
+    olx_pset<short> uc_set;
+    for (size_t i = 0; i < content.Count(); i++) {
+      uc_set.Add(content[i].element->GetIndex());
+    }
+    ContentList cc = rm.aunit.GetContentList(xf.GetUnitCell().MatrixCount());
+    bool updated = false;
+    for (size_t i = 0; i < cc.Count(); i++) {
+      if (cc[i].element->z <= 0  ||
+        uc_set.Contains(cc[i].element->GetIndex()))
+      {
+        continue;
+      }
+      else {
+        uc_set.Add(cc[i].element->GetIndex());
+        content.AddCopy(cc[i]);
+        updated = true;
+      }
+    }
+    if (updated) {
+      rm.SetUserContent(content);
+    }
+  }
   if (!force) {
     size_t cnt = 0;
     for (size_t i = 0; i < content.Count(); i++) {
