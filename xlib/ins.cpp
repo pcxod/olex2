@@ -1252,9 +1252,6 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
 //..............................................................................
 void TIns::UpdateParams() {
   for (size_t i = 0; i < Ins.Count(); i++) {
-    if (Ins.GetObject(i) == 0) {
-      continue;  // might happen if load failed
-    }
     for (size_t j = 0; j < Ins.GetObject(i)->Count(); j++) {
       if (Ins.GetObject(i)->GetObject(j) != 0) {
         Ins.GetObject(i)->GetString(j) =

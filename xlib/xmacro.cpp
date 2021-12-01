@@ -2978,7 +2978,7 @@ void XLibMacros::macGenDisp(TStrObjList& Cmds, const TParamList& Options,
     for (size_t i = 0; i < content.Count(); i++) {
       uc_set.Add(content[i].element->GetIndex());
     }
-    ContentList cc = rm.aunit.GetContentList(xf.GetUnitCell().MatrixCount());
+    ContentList cc = rm.aunit.GetContentList((double)xf.GetUnitCell().MatrixCount());
     bool updated = false;
     for (size_t i = 0; i < cc.Count(); i++) {
       if (cc[i].element->z <= 0  ||
@@ -3888,9 +3888,45 @@ void XLibMacros::funIns(const TStrObjList& Params, TMacroData &E) {
     TIns& I = TXApp::GetInstance().XFile().GetLastLoader<TIns>();
     if (Params[0].Equalsi("R1")) {
       E.SetRetVal(I.GetR1() < 0 ? NAString() : olxstr(I.GetR1()));
+      return;
     }
-    if (!I.InsExists(Params[0])) {
-      E.SetRetVal(NAString());
+    // return all instruction values '\n' separated
+    if (Params[0].EndsWith('*')) {
+      olxstr ins_name = Params[0].SubStringFrom(0, 1);
+      TStrList rv;
+      for (size_t i = 0; i < I.InsCount(); i++) {
+        if (I.InsName(i).Equalsi(ins_name)) {
+          const TInsList& ip = I.InsParams(i);
+          rv.Add(ip.Text(' '));
+        }
+      }
+      E.SetRetVal(rv.IsEmpty() ? NAString() : rv.Text('\n'));
+      return;
+    }
+    /* check instructions with some arg(s) existance, return true/false
+    * name can end with ' ' to search for no-args instruction
+    */
+    if (Params[0].Contains(' ')) {
+      TStrList toks(Params[0], ' ');
+      for (size_t i = 0; i < I.InsCount(); i++) {
+        if (I.InsName(i).Equalsi(toks[0])) {
+          const TInsList& ip = I.InsParams(i);
+          if (ip.Count() != toks.Count() - 1) {
+            continue;
+          }
+          if (ip.IsEmpty()) {
+            E.SetRetVal(TrueString());
+            return;
+          }
+          for (size_t j = 0; j < ip.Count(); j++) {
+            if (ip[j].Equalsi(toks[j + 1])) {
+              E.SetRetVal(TrueString());
+              return;
+            }
+          }
+        }
+      }
+      E.SetRetVal(FalseString());
       return;
     }
     TInsList* insv = I.FindIns(Params[0]);
