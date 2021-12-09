@@ -2996,6 +2996,7 @@ void XLibMacros::macGenDisp(TStrObjList& Cmds, const TParamList& Options,
       rm.SetUserContent(content);
     }
   }
+  TStrList elms;
   if (!force) {
     size_t cnt = 0;
     for (size_t i = 0; i < content.Count(); i++) {
@@ -3003,9 +3004,9 @@ void XLibMacros::macGenDisp(TStrObjList& Cmds, const TParamList& Options,
       if (s != 0 && s->IsSet(XScatterer::setDispersion | XScatterer::setMu)) {
         continue;
       }
-      cnt++;
+      elms.Add(content[i].element->symbol);
     }
-    if (cnt == 0) {
+    if (elms.IsEmpty()) {
       return;
     }
   }
@@ -3017,21 +3018,26 @@ void XLibMacros::macGenDisp(TStrObjList& Cmds, const TParamList& Options,
   if (!source.IsEmpty()) {
     olxstr fn = "spy.sfac.generate_DISP(";
     if (source.Equalsi("sasaki")) {
-      fn << "sasaki)";
+      fn << "sasaki";
     }
     else if (source.Equalsi("henke")) {
-      fn << "henke)";
+      fn << "henke";
     }
     else if (source.Equalsi("auto")) {
-      fn << "auto)";
+      fn << "auto";
     }
     else if (source.Equalsi("brennan")) {
-      fn << "brennan)";
+      fn << "brennan";
     }
     else {
       Error.ProcessingError(__OlxSrcInfo, "Unknown source");
       return;
     }
+    // may request just the elements in question...
+    if (false && !elms.IsEmpty()) {
+      (fn << ",-elements=").quote() << elms.Text(',');
+    }
+    fn << ')';
     if (!olex2::IOlex2Processor::GetInstance()->processFunction(fn, true)) {
       Error.ProcessingError(__OlxSrcInfo, "Failed to extract data from cctbx");
       return;
@@ -3934,7 +3940,7 @@ void XLibMacros::funIns(const TStrObjList& Params, TMacroData &E) {
       E.SetRetVal(insv->Text(' '));
     }
     else {
-      E.SetRetVal(EmptyString());
+      E.SetRetVal(NAString());
     }
   }
   else {
