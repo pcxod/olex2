@@ -693,7 +693,7 @@ void XLibMacros::Export(TLibrary& lib)  {
     "R2'=sum(i=1..3,j=1..3)((Uobs_ij-Utls_ij)^2)/sum(i=1..3,j=1..3)(Uobs_ij^2)"
     );
   xlib_InitMacro(RSA,
-    EmptyString(),
+    "c-copy to clipboard",
     fpAny|psFileLoaded,
     "Identifies chiral centres and prints R/S their stereo configuration");
   xlib_InitMacro(CONF,
@@ -10888,6 +10888,7 @@ void XLibMacros::macRSA(TStrObjList &Cmds, const TParamList &Options,
 {
   TXApp &app = TXApp::GetInstance();
   const TAsymmUnit &au = app.XFile().GetAsymmUnit();
+  TStrList result;
   for (size_t i=0; i < au.AtomCount(); i++) {
     TCAtom &a = au.GetAtom(i);
     if (a.IsDeleted() || a.GetType() < 2) {
@@ -10941,8 +10942,15 @@ void XLibMacros::macRSA(TStrObjList &Cmds, const TParamList &Options,
       else {
         lbl << " S";
       }
-      TBasicApp::NewLogEntry() << lbl << " (" << w << ')';
+      result.Add(lbl) << lbl << " (" << w << ')';
     }
+  }
+  if (result.IsEmpty()) {
+    return;
+  }
+  TBasicApp::NewLogEntry() << result;
+  if (Options.GetBoolOption('c')) {
+    TBasicApp::GetInstance().ToClipboard(result);
   }
 }
 //..............................................................................
