@@ -19,10 +19,12 @@ namespace esdl {
     if (sz == 0) {
       return CEmptyString();
     }
-    const size_t res = wcstombs(NULL, wstr, 0);
+    const size_t res = wcstombs(0, wstr, 0);
     if (res == InvalidSize) {
-      TBasicApp::NewLogEntry(logWarning) <<
-        "wcstombs has failed, defaulting to UTF8";
+      if (TBasicApp::HasInstance()) {
+        TBasicApp::NewLogEntry(logWarning) <<
+          "wcstombs has failed, defaulting to UTF8";
+      }
       return TUtf8::Encode(wstr, sz);
       //TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo,
       //  "could not convert wcs to mbs");
@@ -45,7 +47,7 @@ namespace esdl {
     if (sz == 0) {
       return WEmptyString();
     }
-    const size_t res = mbstowcs(NULL, mbs, 0);
+    const size_t res = mbstowcs(0, mbs, 0);
     if (res == InvalidSize) {
       TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo,
         "could not convert mbs to wcs");
