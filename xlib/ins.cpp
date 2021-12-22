@@ -2695,25 +2695,39 @@ TStrList::const_list_type TIns::SaveHeader(TStrList& SL,
   SaveRestraints(SL, 0, 0, GetRM());
   _SaveRefMethod(SL);
   _SaveSizeTemp(SL);
-  for (size_t i=0; i < GetRM().InfoTabCount(); i++) {
+  for (size_t i = 0; i < GetRM().InfoTabCount(); i++) {
     if (GetRM().GetInfoTab(i).IsValid()) {
       GetRM().GetInfoTab(i).UpdateResi();
       SL.Add(GetRM().GetInfoTab(i).InsStr());
     }
   }
   GetRM().Conn.ToInsList(SL);
+  olx_cset<olxstr> incs;
   for (size_t i = 0; i < included.Count(); i++) {
-    if (included.GetObject(i)) { // has been expanded?
-      continue;
+    if (!included.GetObject(i)) { // has been expanded?
+      try {
+        olxstr rfn = TEFile::ExpandRelativePath(included[i], TEFile::CurrentDir());
+        TStrList lines = TEFile::ReadLines(rfn);
+        for (size_t j = 0; j < lines.Count(); j++) {
+          incs.Add(TStrList(lines[j], ' ').Text(' ').ToLowerCase());
+        }
+      }
+      catch (...) {
+      }
+      SL.Add('+') << included[i];
     }
-    SL.Add('+') << included[i];
   }
+
   // copy "unknown" instructions except rems and 'L1 2 0.62516 0.10472 0.43104'
   for (size_t i=0; i < Ins.Count(); i++) {
-    if (GetInsType(Ins[i], Ins.GetObject(i)) == insHeader) {
-      olxstr ic = Ins.GetObject(i)->Text(' ');
-      HyphenateIns(Ins[i] + ' ', ic, SL);
+    if (GetInsType(Ins[i], Ins.GetObject(i)) != insHeader) {
+      continue;
     }
+    olxstr ic = Ins.GetObject(i)->Text(' ');
+    if (incs.Contains((Ins[i] + ' ' + ic).ToLowerCase())) {
+      continue;
+    }
+    HyphenateIns(Ins[i] + ' ', ic, SL);
   }
   SL << Skipped;
   if (!GetRM().OmittedAtoms().IsEmpty()) {
@@ -2741,6 +2755,10 @@ TStrList::const_list_type TIns::SaveHeader(TStrList& SL,
 }
 //..............................................................................
 TStrList::const_list_type TIns::GetFooter() {
+  if (true) {
+    TStrList rv;
+    return rv;
+  }
   olx_cset<olxstr> incs;
   {
     for (size_t i = 0; i < included.Count(); i++) {
@@ -3055,8 +3073,8 @@ TIns::InsType TIns::GetInsType(const olxstr &ins, const TInsList *params) const 
   if (params == 0 || ins.Equalsi("REM") || ins.Equalsi("NEUT")) {
     return insNone;
   }
-  if (params->Count() >= 4 && (ins.StartsFromi('l') || ins.Equalsi("bede"))) {
-    return insFooter;
-  }
+  //if (params->Count() >= 4 && (ins.StartsFromi('l') || ins.Equalsi("bede"))) {
+  //  return insFooter;
+  //}
   return insHeader;
 }
