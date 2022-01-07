@@ -1306,13 +1306,20 @@ bool TIns::AddIns(const TStrList& toks, RefinementModel& rm, bool CheckUniq) {
   if (_ParseIns(rm, toks) || ParseRestraint(rm, toks)) {
     return true;
   }
+  if ((toks[0].StartsFromi("HTAB") || toks[0].StartsFromi("RTAB") ||
+    toks[0].StartsFromi("MPLA") || toks[0].StartsFromi("CONF")) &&
+    (toks.Count() > 2 || toks[0].StartsFromi("CONF")))
+  {
+    rm.AddInfoTab(toks);
+    return true;
+  }
   // check for uniqueness
   if (CheckUniq) {
-    bool unique = false;
     for (size_t i = 0; i < Ins.Count(); i++) {
       if (Ins[i].Equalsi(toks[0])) {
         TInsList* ps = Ins.GetObject(i);
         if (ps->Count() == (toks.Count() - 1)) {
+          bool unique = false;
           for (size_t j = 0; j < ps->Count(); j++) {
             if (!ps->GetString(j).Equalsi(toks[j + 1])) {
               unique = true;

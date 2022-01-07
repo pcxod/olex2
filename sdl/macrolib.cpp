@@ -34,7 +34,7 @@ void TEMacro::DoRun(TStrObjList &Params, const TParamList &Options,
   olex2::IOlex2Processor *ip = olex2::IOlex2Processor::GetInstance();
   olxstr location = __OlxSourceInfo;
   for (size_t i = 0; i < Args.Count(); i++) {
-    // cehck if is an option
+    // check if is an option
     if (Args[i].StartsFrom('-')) {
       args.Add(Options.FindValue(Args[i].SubStringFrom(1), Args.GetObject(i)));
     }
