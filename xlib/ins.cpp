@@ -3080,8 +3080,11 @@ TIns::InsType TIns::GetInsType(const olxstr &ins, const TInsList *params) const 
   if (params == 0 || ins.Equalsi("REM") || ins.Equalsi("NEUT")) {
     return insNone;
   }
-  //if (params->Count() >= 4 && (ins.StartsFromi('l') || ins.Equalsi("bede"))) {
-  //  return insFooter;
-  //}
+  if (params->Count() >= 4 && (ins.Equalsi("lone") || ins.Equalsi("bede"))) {
+    return insHeader;
+  }
+  if (params->Count() >= 4 && ins.StartsFromi('l')) {
+    return insFooter;
+  }
   return insHeader;
 }
