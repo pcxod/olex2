@@ -5052,7 +5052,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
     CifMerge_EmbeddData(*Cif, insert_res, insert_hkl, insert_fab,
       Options.GetBoolOption("fcf"));
   }
-  sw.start("Updating commonly mising parameters");
+  sw.start("Updating commonly missing parameters");
   // generate moiety string if does not exist
   const olxstr cif_moiety = Cif->GetParamAsString("_chemical_formula_moiety");
   if (cif_moiety.IsEmpty() || cif_moiety == '?') {
@@ -5166,13 +5166,37 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
   sw.start("Processing selected geometric measuremenets");
   xapp.XFile().GetRM().GetSelectedTableRows().Process(*Cif);
   sw.start("Saving the result");
+  olxstr file_name = Cif->GetFileName();
   {
     olxstr new_dn = Options.FindValue("dn", EmptyString());
     if (Cif->GetBlockIndex() != InvalidIndex && !new_dn.IsEmpty()) {
       Cif->RenameCurrentBlock(new_dn);
+      file_name = TEFile::ExtractFilePath(file_name) + new_dn + ".cif";
+      ICifEntry *res_e = Cif->FindEntry("_shelx_res_file");
+      if (res_e == 0) {
+        res_e = Cif->FindEntry("_iucr_refine_instructions_details");
+      }
+      if (res_e != 0) {
+        cetStringList* res = dynamic_cast<cetStringList*>(res_e);
+        if (res != 0) {
+          for (size_t i = 0; i < res->Count(); i++) {
+            size_t si = res->lines[i].IndexOf("REM <HklSrc");
+            if (si == InvalidIndex) {
+              continue;
+            }
+            while (res->lines[i].StartsFromi("REM") &&
+              !res->lines[i].EndsWith('>') &&
+              ++i < res->lines.Count())
+            {
+              res->lines.Delete(i);
+            }
+            res->lines[i] = olxstr("REM <HklSrc \".\\\\") << new_dn << ".hkl\">";
+          }
+        }
+      }
     }
   }
-  Cif->SaveToFile(Cif->GetFileName());
+  Cif->SaveToFile(file_name);
 }
 //.............................................................................
 void XLibMacros::macCifExtract(TStrObjList &Cmds, const TParamList &Options,

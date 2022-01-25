@@ -190,6 +190,9 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
         F[i] = rv;
       }
     }
+    sw.start("Expanding the set");
+    TUnitCell::SymmSpace sp = xapp.XFile().GetUnitCell().GetSymmSpace();
+    
     sw.stop();
   }
   else {  // olex2 calculated SF
@@ -400,6 +403,7 @@ void SFUtil::_CalcSF(const TXFile& xfile, const IMillerIndexList& refs,
     TXApp &xapp = TXApp::GetInstance();
     TUnitCell::SymmSpace sp = xapp.XFile().GetUnitCell().GetSymmSpace();
     SymmSpace::InfoEx info_ex = SymmSpace::Compact(sp);
+    //info_ex.centrosymmetric = true;
     olxdict<uint32_t, compd, TPrimitiveComparator> fab;
     if (xapp.CheckFileType<TIns>()) {
       TIns &ins = xapp.XFile().GetLastLoader<TIns>();
@@ -417,16 +421,15 @@ void SFUtil::_CalcSF(const TXFile& xfile, const IMillerIndexList& refs,
             TReflection &r = hkl[i];
             r.Standardise(info_ex);
             uint32_t key = r.GetHKLHash();
-#ifdef _DEBUG
             if (fab.HasKey(key)) {
-              TBasicApp::NewLogEntry(logError) <<
-                "Duplicate modifications in the FAB";
+              continue;
             }
-#endif
             fab.Add(key, compd(r.GetI(), r.GetS()));
           }
           for (size_t i = 0; i < F.Count(); i++) {
-            size_t idx = fab.IndexOf(TReflection::CalcHKLHash(refs[i]));
+            uint32_t key = TReflection::CalcHKLHash(
+                TReflection::Standardise(refs[i], info_ex));
+            size_t idx = fab.IndexOf(key);
             if (idx == InvalidIndex) {
               missing << refs[i].ToString();
             }
