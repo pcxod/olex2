@@ -693,7 +693,8 @@ void XLibMacros::Export(TLibrary& lib)  {
     "R2'=sum(i=1..3,j=1..3)((Uobs_ij-Utls_ij)^2)/sum(i=1..3,j=1..3)(Uobs_ij^2)"
     );
   xlib_InitMacro(RSA,
-    "c-copy to clipboard",
+    "c-copy to clipboard&;"
+    "d-print debug info",
     fpAny|psFileLoaded,
     "Identifies chiral centres and prints R/S their stereo configuration");
   xlib_InitMacro(CONF,
@@ -5171,7 +5172,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
     olxstr new_dn = Options.FindValue("dn", EmptyString());
     if (Cif->GetBlockIndex() != InvalidIndex && !new_dn.IsEmpty()) {
       Cif->RenameCurrentBlock(new_dn);
-      file_name = TEFile::ExtractFilePath(file_name) + new_dn + ".cif";
+      //file_name = TEFile::ExtractFilePath(file_name) + new_dn + ".cif";
       ICifEntry *res_e = Cif->FindEntry("_shelx_res_file");
       if (res_e == 0) {
         res_e = Cif->FindEntry("_iucr_refine_instructions_details");
@@ -10747,6 +10748,9 @@ void XLibMacros::funSGList(const TStrObjList &, TMacroData &E) {
 }
 //..............................................................................
 int RSA_BondOrder(const TCAtom &a, const TCAtom ::Site &to) {
+  if (a.GetType() == iHydrogenZ || to.atom->GetType() == iHydrogenZ) {
+    return 1;
+  }
   size_t a_cnt = 0;
   for (size_t i = 0; i < a.AttachedSiteCount(); i++) {
     if (a.GetAttachedAtom(i).GetType().z >= 1) {
@@ -10783,20 +10787,32 @@ int RSA_BondOrder(const TCAtom &a, const TCAtom ::Site &to) {
     const cm_Element& other = (a.GetType().z == iCarbonZ ? to.atom->GetType()
       : a.GetType());
     if (other.z == iCarbonZ) { //C-C
-      if (d < 1.27) return 3;
-      if (d < 1.44) return 2;
+      if (d < 1.27) {
+        return 3;
+      }
+      if (d < 1.44) {
+        return 2;
+      }
     }
     if (other.z == iNitrogenZ) { //C-N
-      if (d < 1.27) return 3;
-      if (d < 1.405) return 2;
+      if (d < 1.27) {
+        return 3;
+      }
+      if (d < 1.405) {
+        return 2;
+      }
     }
   }
   if (a.GetType().z == iNitrogenZ || to.atom->GetType().z == iNitrogenZ) {
     const cm_Element &other = (a.GetType().z == iNitrogenZ ? to.atom->GetType()
       : a.GetType());
     if (other.z == iNitrogenZ) { //N-N
-      if (d < 1.15) return 3;
-      if (d < 1.32) return 2;
+      if (d < 1.15) {
+        return 3;
+      }
+      if (d < 1.32) {
+        return 2;
+      }
       return 1;
     }
   }
@@ -10808,7 +10824,7 @@ typedef TTypeList<SiteInfo > AtomEnvList;
 int RSA_CompareSites(const SiteInfo &a, const SiteInfo &b) {
   return olx_cmp(a.GetB()->z, b.GetB()->z);
 }
-int RSA_GetAtomPriorityX(AtomEnvList &a, AtomEnvList &b) {
+int RSA_GetAtomPriorityX(AtomEnvList &a, AtomEnvList &b, bool debug) {
   size_t sz = a.Count();
   if (sz == 0) {
     return 0;
@@ -10818,13 +10834,13 @@ int RSA_GetAtomPriorityX(AtomEnvList &a, AtomEnvList &b) {
     size_t bi = b.Count()-i-1;
     int res = RSA_CompareSites(a[ai], b[bi]);
     if (a[ai].GetA() != 0) {
-      if (a[ai].a->atom->GetTag() == 0) {
-        a[ai].a->atom->SetTag(2);
+      if ((a[ai].a->atom->GetTag() & 2) == 0) {
+        a[ai].a->atom->SetTag(a[ai].a->atom->GetTag() | 2);
       }
     }
     if (b[bi].GetA() != 0) {
-      if (b[bi].a->atom->GetTag() == 0) {
-        b[bi].a->atom->SetTag(3);
+      if ((b[bi].a->atom->GetTag() & 4) == 0) {
+        b[bi].a->atom->SetTag(b[bi].a->atom->GetTag() | 4);
       }
     }
     if (res != 0) {
@@ -10838,12 +10854,21 @@ int RSA_GetAtomPriorityX(AtomEnvList &a, AtomEnvList &b) {
       TCAtom &atomA = *a[i].GetA()->atom;
       for (size_t j=0; j < atomA.AttachedSiteCount(); j++) {
         TCAtom::Site &s = atomA.GetAttachedSite(j);
-        if (s.atom->GetTag() != 0 ||
-          s.atom->GetType() == iQPeakZ || s.atom->IsDeleted())
-        {
+        if (s.atom->GetType().z < 1 || s.atom->IsDeleted()) {
           continue;
         }
-        aa.Add(new SiteInfo(&s, &s.atom->GetType()));
+        // stop propagation as the site is in use
+        if (s.atom->GetTag() != 0) {
+          if ((s.atom->GetTag() & 2) == 0) {
+            aa.Add(new SiteInfo(0, &s.atom->GetType()));
+          }
+          else {
+            continue;
+          }
+        }
+        else {
+          aa.Add(new SiteInfo(&s, &s.atom->GetType()));
+        }
         int bo = RSA_BondOrder(atomA, s);
         for (int k = 1; k < bo; k++) {
           aa.Add(new SiteInfo(0, &s.atom->GetType()));
@@ -10854,12 +10879,21 @@ int RSA_GetAtomPriorityX(AtomEnvList &a, AtomEnvList &b) {
       TCAtom &atomB = *b[i].GetA()->atom;
       for (size_t j=0; j < atomB.AttachedSiteCount(); j++) {
         TCAtom::Site &s = atomB.GetAttachedSite(j);
-        if (s.atom->GetTag() != 0 ||
-          s.atom->GetType() == iQPeakZ || s.atom->IsDeleted())
-        {
+        if (s.atom->GetType().z < 1 || s.atom->IsDeleted()) {
           continue;
         }
-        bb.Add(new SiteInfo(&s, &s.atom->GetType()));
+        // stop propagation as the site is in use
+        if (s.atom->GetTag() != 0) {
+          if ((s.atom->GetTag() & 4) == 0) {
+            bb.Add(new SiteInfo(0, &s.atom->GetType()));
+          }
+          else {
+            continue;
+          }
+        }
+        else {
+          bb.Add(new SiteInfo(&s, &s.atom->GetType()));
+        }
         int bo = RSA_BondOrder(atomB, s);
         for (int k = 1; k < bo; k++) {
           bb.Add(new SiteInfo(0, &s.atom->GetType()));
@@ -10868,10 +10902,10 @@ int RSA_GetAtomPriorityX(AtomEnvList &a, AtomEnvList &b) {
     }
     // padd the branches
     while (aa.Count() < bb.Count()) {
-      aa.Add(new SiteInfo(0, &XElementLib::GetByIndex(iQPeakIndex)));
+      aa.Add(new SiteInfo(0, &XElementLib::GetByIndex(iHydrogenIndex)));
     }
     while (bb.Count() < aa.Count()) {
-      bb.Add(new SiteInfo(0, &XElementLib::GetByIndex(iQPeakIndex)));
+      bb.Add(new SiteInfo(0, &XElementLib::GetByIndex(iHydrogenIndex)));
     }
     BubbleSorter::SortSF(aa, &RSA_CompareSites);
     for (size_t ai = 0; ai < aa.Count(); ai++) {
@@ -10884,27 +10918,51 @@ int RSA_GetAtomPriorityX(AtomEnvList &a, AtomEnvList &b) {
     }
     bb.ReleaseAll();
   }
-  if (!a.IsEmpty()) {
-    a.DeleteRange(0, sz);
+  if (debug) {
+    olxstr_buf out1, out2;
+    for (size_t i = 0; i < a.Count(); i++) {
+      if (i == sz) {
+        out1 << " -> ";
+        out2 << " -> ";
+      }
+      olxstr sa, sb;
+      if (a[i].a == 0) {
+        sa << "{" << a[i].b->symbol << "}";
+      }
+      else {
+        sa << a[i].a->atom->GetLabel();
+      }
+      if (b[i].a == 0) {
+        sb << "{" << b[i].b->symbol << "}";
+      }
+      else {
+        sb << b[i].a->atom->GetLabel();
+      }
+      out1 << sa.RightPadding(5, ' ');
+      out2 << sb.RightPadding(5, ' ');
+    }
+    TBasicApp::NewLogEntry() << out1;
+    TBasicApp::NewLogEntry() << out2;
   }
-  if (!b.IsEmpty()) {
-    b.DeleteRange(0, sz);
-  }
-  return RSA_GetAtomPriorityX(a, b);
+  a.DeleteRange(0, sz);
+  b.DeleteRange(0, sz);
+  return RSA_GetAtomPriorityX(a, b, debug);
 }
 struct RSA_EnviSorter {
   TCAtom &center;
-  RSA_EnviSorter(TCAtom &center)
-    : center(center)
+  bool debug;
+  RSA_EnviSorter(TCAtom &center, bool debug)
+    : center(center),
+    debug(debug)
   {}
 
   int Comparator(const TCAtom::Site &a, const TCAtom ::Site &b) const {
     a.atom->GetParent()->GetAtoms().ForEach(ACollectionItem::TagSetter(0));
-    center.SetTag(1);
+    center.SetTag(6);
     AtomEnvList ea, eb;
     ea.Add(new SiteInfo(&a, &a.atom->GetType()));
     eb.Add(new SiteInfo(&b, &b.atom->GetType()));
-    return RSA_GetAtomPriorityX(ea, eb);
+    return RSA_GetAtomPriorityX(ea, eb, debug);
   }
 };
 void XLibMacros::macRSA(TStrObjList &Cmds, const TParamList &Options,
@@ -10912,6 +10970,7 @@ void XLibMacros::macRSA(TStrObjList &Cmds, const TParamList &Options,
 {
   TXApp &app = TXApp::GetInstance();
   const TAsymmUnit &au = app.XFile().GetAsymmUnit();
+  bool debug = Options.GetBoolOption('d');
   TStrList result;
   for (size_t i=0; i < au.AtomCount(); i++) {
     TCAtom &a = au.GetAtom(i);
@@ -10927,7 +10986,10 @@ void XLibMacros::macRSA(TStrObjList &Cmds, const TParamList &Options,
       attached.Add(a.GetAttachedSite(j));
     }
     if (attached.Count() == 4) {
-      RSA_EnviSorter es(a);
+      if (debug) {
+        TBasicApp::NewLogEntry() << "For " << a.GetLabel();
+      }
+      RSA_EnviSorter es(a, debug);
       BubbleSorter::SortMF(attached, es, &RSA_EnviSorter::Comparator);
       bool chiral=true;
       olxstr w;

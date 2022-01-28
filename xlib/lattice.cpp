@@ -2123,11 +2123,36 @@ size_t TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom,
         }
       }
       else if (v > 118 && d1 > 1.33 && d2 > 1.33) {
-        if (!dry_run) {
-          TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() << ": ArNH";
-          cg.FixAtom(AE, fgNH1, h_elm, 0, generated);
+        bool has_do = false;
+        for (size_t ei = 0; ei < 2; ei++) {
+          for (size_t si = 0; si < AE.GetCAtom(ei).AttachedSiteCount(); si++) {
+            TCAtom::Site& s = AE.GetCAtom(ei).GetAttachedSite(si);
+            if (s.atom->GetId() == AE.GetBase().CAtom().GetId() || s.atom->IsDeleted()) {
+              continue;
+            }
+            if (s.atom->GetType() == iOxygenZ) {
+              double d = GetAsymmUnit().Orthogonalise(
+                s.matrix * s.atom->ccrd() - AE.GetCAtom(ei).ccrd()).Length();
+              if (d < 1.3) {
+                has_do = true;
+                break;
+              }
+            }
+          }
+          if (has_do) {
+            break;
+          }
         }
-        count += 1;
+        if (!has_do) {
+          if (!dry_run) {
+            TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() << ": ArNH";
+            cg.FixAtom(AE, fgNH1, h_elm, 0, generated);
+          }
+          count += 1;
+        }
+        else if (!dry_run) {
+          TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() << ": Ar(C=O)N, skipping";
+        }
       }
       else {
         if ((d1 + d2) > 2.70 && v < 140) {

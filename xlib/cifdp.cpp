@@ -163,7 +163,9 @@ void TCifDP::LoadFromString(const olxstr &str_) {
         TBasicApp::NewLogEntry(logInfo) << "New name: " << dn;
       }
       if (current_block->GetName().IsEmpty() && current_block->params.IsEmpty()) {
+        data_map.Delete(0);
         current_block->SetName(dn);
+        data_map.Add(dn, current_block);
       }
       else {
         current_block = &Add(dn);
