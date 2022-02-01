@@ -4061,7 +4061,7 @@ void XLibMacros::funHKLSrc(const TStrObjList& Params, TMacroData &E) {
     if (TEFile::Exists(fn) && !TEFile::IsDir(fn)) {  // check the format...
       static TEFile::FileID fid;
       TEFile::FileID tfid = TEFile::GetFileID(fn);
-      if (tfid != fid) {
+      if (tfid != fid && !fn.EndsWith(".hkl.fcf")) {
         fid = tfid;
         TEFile f(fn, "rb");
         if (!THklFile::IsHKLFileLine(f.ReadLine())) {

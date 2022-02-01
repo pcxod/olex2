@@ -10,6 +10,7 @@
 #ifndef __olx_xlib_reflection
 #define __olx_xlib_reflection
 #include "symmspace.h"
+#include "ecomplex.h"
 BeginXlibNamespace()
 
 const int
@@ -17,28 +18,28 @@ const int
   reflection_convert_F_to_Fsq = 1,
   reflection_convert_Fsq_toF = 2;
 
-class TReflection: public ACollectionItem {
+class TReflection : public ACollectionItem {
 public:
   static const int16_t NoBatchSet = 0xFE;
   static const uint32_t
-    FlagMask  = 0x000000FF, FlagLen  = 8,
-    MultMask  = 0x0000FF00, MultLen  = 8, MultOff = FlagLen,
-    BatchMask = 0xFFFF0000, BatchLen = 16, BatchOff = FlagLen+MultLen;
+    FlagMask = 0x000000FF, FlagLen = 8,
+    MultMask = 0x0000FF00, MultLen = 8, MultOff = FlagLen,
+    BatchMask = 0xFFFF0000, BatchLen = 16, BatchOff = FlagLen + MultLen;
   static const uint16_t
     bitCentric = 0x0001,
-    bitAbsent  = 0x0002,
+    bitAbsent = 0x0002,
     bitOmitted = 0x0004;
 private:
   vec3i hkl;
   double I, S;
   // first 8 bits - flags, next 8 - multiplicity, then batch number
   uint32_t Flags;
-  void _init(int batch=NoBatchSet) {
+  void _init(int batch = NoBatchSet) {
     _reset_flags(0, 1, batch);
     SetTag(1);
   }
   void _reset_flags(int flags, int mult, int batch) {
-    Flags = flags|(mult<<MultOff)|(batch<<BatchOff);
+    Flags = flags | (mult << MultOff) | (batch << BatchOff);
   }
 public:
   TReflection()
@@ -46,18 +47,18 @@ public:
   {
     _init();
   }
-  TReflection(const TReflection& r)  { *this = r; }
-  TReflection(const TReflection& r, int bacth_n)  {
+  TReflection(const TReflection& r) { *this = r; }
+  TReflection(const TReflection& r, int bacth_n) {
     *this = r;
     SetBatch(bacth_n);
   }
-  TReflection(const TReflection& r, const vec3i& _hkl, int batch_n=NoBatchSet)
+  TReflection(const TReflection& r, const vec3i& _hkl, int batch_n = NoBatchSet)
     : hkl(_hkl), I(r.I), S(r.S), Flags(r.Flags)
   {
     SetBatch(batch_n);
   }
   TReflection(int h, int k, int l)
-    : hkl(h,k,l), I(0), S(0)
+    : hkl(h, k, l), I(0), S(0)
   {
     _init();
   }
@@ -66,12 +67,12 @@ public:
   {
     _init();
   }
-  TReflection(int h, int k, int l, double _I, double _S, int batch=NoBatchSet)
-    : hkl(h,k,l), I(_I), S(_S)
+  TReflection(int h, int k, int l, double _I, double _S, int batch = NoBatchSet)
+    : hkl(h, k, l), I(_I), S(_S)
   {
     _init(batch);
   }
-  TReflection(int h, int k, int l, const olx_pair_t<double, double> &IS,
+  TReflection(int h, int k, int l, const olx_pair_t<double, double>& IS,
     int batch = NoBatchSet)
     : hkl(h, k, l), I(IS.a), S(IS.b)
   {
@@ -82,14 +83,14 @@ public:
   {
     _init(batch);
   }
-  TReflection(const vec3i& _hkl, olx_pair_t<double, double> &IS,
+  TReflection(const vec3i& _hkl, olx_pair_t<double, double>& IS,
     int batch = NoBatchSet)
     : hkl(_hkl), I(IS.a), S(IS.a)
   {
     _init(batch);
   }
-  virtual ~TReflection()  {}
-  TReflection& operator = (const TReflection &r) {
+  virtual ~TReflection() {}
+  TReflection& operator = (const TReflection& r) {
     hkl = r.hkl;
     I = r.I;
     S = r.S;
@@ -97,33 +98,33 @@ public:
     SetTag(r.GetTag());
     return *this;
   }
-  int GetH() const {  return hkl[0];  }
-  void SetH(int v)   {  hkl[0] = v;  }
-  int GetK() const {  return hkl[1];  }
-  void SetK(int v)   {  hkl[1] = v;  }
-  int GetL() const {  return hkl[2];  }
-  void SetL(int v)   {  hkl[2] = v;  }
-  vec3i& GetHkl()  { return hkl; }
+  int GetH() const { return hkl[0]; }
+  void SetH(int v) { hkl[0] = v; }
+  int GetK() const { return hkl[1]; }
+  void SetK(int v) { hkl[1] = v; }
+  int GetL() const { return hkl[2]; }
+  void SetL(int v) { hkl[2] = v; }
+  vec3i& GetHkl() { return hkl; }
   const vec3i& GetHkl() const { return hkl; }
   TReflection& SetHkl(const vec3i& _hkl) { hkl = _hkl;  return *this; }
   /* returns HKL identifying hash for individual values up to 9 bits*/
-  static uint32_t CalcHKLHash(const vec3i &hkl);
+  static uint32_t CalcHKLHash(const vec3i& hkl);
   uint32_t GetHKLHash() const { return CalcHKLHash(hkl); }
   /* returns HKL identifying hash for individual values up to 20 bits*/
-  static uint64_t CalcHKLHash64(const vec3i &hkl);
+  static uint64_t CalcHKLHash64(const vec3i& hkl);
   uint64_t GetHKLHash64() const { return CalcHKLHash64(hkl); }
   //...........................................................................
   DefPropP(double, I)
-  DefPropP(double, S)
-  void SetI(const olx_pair_t<double, double> &IS) {
+    DefPropP(double, S)
+    void SetI(const olx_pair_t<double, double>& IS) {
     I = IS.a;
     S = IS.b;
   }
   // scaling
-  TReflection &operator *= (double s) {
+  TReflection& operator *= (double s) {
     return Scale(s);
   }
-  TReflection &Scale(double s) {
+  TReflection& Scale(double s) {
     I *= s;
     S *= s;
     return *this;
@@ -131,35 +132,35 @@ public:
   //...........................................................................
   // these values are intialised by Analyse
   DefPropBFIsSet(Centric, Flags, bitCentric)
-  DefPropBFIsSet(Absent, Flags, bitAbsent)
-  DefPropBFIsSet(Omitted, Flags, bitOmitted)
-  //...........................................................................
-  template <class VC>
+    DefPropBFIsSet(Absent, Flags, bitAbsent)
+    DefPropBFIsSet(Omitted, Flags, bitOmitted)
+    //...........................................................................
+    template <class VC>
   bool EqHkl(const VC& v) const {
     return ((int)v[0] == hkl[0]) && ((int)v[1] == hkl[1]) &&
-            ((int)v[2] == hkl[2]);
+      ((int)v[2] == hkl[2]);
   }
   template <class VC>
-   bool EqNegHkl (const VC& v) const {
+  bool EqNegHkl(const VC& v) const {
     return ((int)v[0] == -hkl[0]) && ((int)v[1] == -hkl[1]) &&
       ((int)v[2] == -hkl[2]);
-   }
+  }
   template <class VC, class MC>
   static VC MulHkl(const VC& hkl, const MC& mat) {
-    return VC((hkl[0]*mat[0][0] + hkl[1]*mat[1][0] + hkl[2]*mat[2][0]),
-      (hkl[0]*mat[0][1] + hkl[1]*mat[1][1] + hkl[2]*mat[2][1]),
-      (hkl[0]*mat[0][2] + hkl[1]*mat[1][2] + hkl[2]*mat[2][2]));
+    return VC((hkl[0] * mat[0][0] + hkl[1] * mat[1][0] + hkl[2] * mat[2][0]),
+      (hkl[0] * mat[0][1] + hkl[1] * mat[1][1] + hkl[2] * mat[2][1]),
+      (hkl[0] * mat[0][2] + hkl[1] * mat[1][2] + hkl[2] * mat[2][2]));
   }
   static vec3i MulHkl(const vec3i& hkl, const smatd& mat) {
     return MulHkl(hkl, mat.r);
   }
   // generates an equivalent using rounding on the resulting indexes
   template <class VC, class MC>
-  static vec3i MulHklR(const VC &hkl, const MC& mat) {
+  static vec3i MulHklR(const VC& hkl, const MC& mat) {
     return vec3i(
-      olx_round(hkl[0]*mat[0][0] + hkl[1]*mat[1][0] + hkl[2]*mat[2][0]),
-      olx_round(hkl[0]*mat[0][1] + hkl[1]*mat[1][1] + hkl[2]*mat[2][1]),
-      olx_round(hkl[0]*mat[0][2] + hkl[1]*mat[1][2] + hkl[2]*mat[2][2]));
+      olx_round(hkl[0] * mat[0][0] + hkl[1] * mat[1][0] + hkl[2] * mat[2][0]),
+      olx_round(hkl[0] * mat[0][1] + hkl[1] * mat[1][1] + hkl[2] * mat[2][1]),
+      olx_round(hkl[0] * mat[0][2] + hkl[1] * mat[1][2] + hkl[2] * mat[2][2]));
   }
   vec3i operator * (const smatd& mat) const { return MulHkl(hkl, mat.r); }
   template <class MC> vec3i operator * (const MC& mat) const {
@@ -172,37 +173,60 @@ public:
   Also performs the reflection analysis, namely:
   Initialises Absent flag
   */
-  template <class MatList> void Standardise(const MatList& ml)  {
+  template <class MatList> void Standardise(const MatList& ml) {
     hkl = Standardise(hkl, ml);
     SetAbsent(IsAbsent(hkl, ml));
   }
-//..............................................................................
+  //..............................................................................
+    /* Standardises an index using a list of matrices and if idx is not 0 - stores
+    the matrix index in it
+    */
   template <class MatList> static vec3i Standardise(const vec3i& _hkl,
-    const MatList& ml)
+    const MatList& ml, size_t* idx = 0)
   {
+    if (idx != 0) {
+      *idx = 0;
+    }
     vec3i new_hkl = _hkl;
-    for( size_t i=0; i < ml.Count(); i++ )  {
-      vec3i hklv = _hkl*ml[i].r;
-        if( (hklv[2] > new_hkl[2]) ||
-          ((hklv[2] == new_hkl[2]) && (hklv[1] > new_hkl[1])) ||
-          ((hklv[2] == new_hkl[2]) && (hklv[1] == new_hkl[1]) &&
-           (hklv[0] > new_hkl[0])) )
+    for (size_t i = 0; i < ml.Count(); i++) {
+      vec3i hklv = _hkl * ml[i].r;
+      if ((hklv[2] > new_hkl[2]) ||
+        ((hklv[2] == new_hkl[2]) && (hklv[1] > new_hkl[1])) ||
+        ((hklv[2] == new_hkl[2]) && (hklv[1] == new_hkl[1]) &&
+          (hklv[0] > new_hkl[0])))
       {
         new_hkl = hklv;
+        if (idx != 0) {
+          *idx = i;
+        }
       }
     }
     return new_hkl;
   }
-//..............................................................................
+  //..............................................................................
+  template <class MatList> static compd PhaseShift(const vec3i& hkl,
+    const MatList& ml, size_t idx)
+  {
+    if (idx > 0 && idx < ml.Count()) {
+      double ps = ml[idx].t.DotProd(hkl);
+      if (olx_abs(ps - olx_round(ps)) < 0.01) {
+        return 1;
+      }
+      return compd::polar(-2*M_PI * ps);
+    }
+    throw TInvalidArgumentException(__OlxSourceInfo, "index");
+  }
+  //..............................................................................
   template <class MatList> static bool IsAbsent(const vec3i& hkl,
     const MatList& ml)
   {
-    for( size_t i=0; i < ml.Count(); i++ )  {
-      vec3i hklv = hkl*ml[i].r;
-      if( hkl == hklv )  {  // only if there is no change
+    for (size_t i = 0; i < ml.Count(); i++) {
+      vec3i hklv = hkl * ml[i].r;
+      if (hkl == hklv) {  // only if there is no change
         const double ps = ml[i].t.DotProd(hkl);
-        if( olx_abs( ps - olx_round(ps) ) > 0.01 )
+        if (olx_abs(ps - olx_round(ps)) > 0.01) {
           return true;
+        }
       }
     }
     return false;
@@ -217,8 +241,32 @@ public:
     SetAbsent(IsAbsent(hkl, info));
   }
 //..............................................................................
-  static vec3i Standardise(const vec3i& _hkl, const SymmSpace::InfoEx& info);
+  /* Standardies an index and keeps the matrix index in idx. Whnd idx:
+  *  0 - no changes,
+  * -1 - inversion used
+  * > 0 - a matrix index idx-2 is used inversion
+  * < 0 - a matrix index abs(idx)-2 is used with inversion
+  */
+  static vec3i Standardise(const vec3i& _hkl, const SymmSpace::InfoEx& info,
+    int *idx=0);
 //..............................................................................
+  static compd PhaseShift(const vec3i& hkl, const SymmSpace::InfoEx& info,
+    int idx)
+  {
+    if (idx == 0) {
+      return 1;
+    }
+    size_t a_idx = olx_abs(idx);
+    if (idx < info.matrices.Count()+2) {
+      double ps = info.matrices[a_idx-2].t.DotProd(hkl);
+      if (olx_abs(ps - olx_round(ps)) < 0.01) {
+        return 1;
+      }
+      return compd::polar(-2*M_PI * ps);
+    }
+    throw TInvalidArgumentException(__OlxSourceInfo, "index");
+  }
+  //..............................................................................
   static bool IsAbsent(const vec3i& hkl, const SymmSpace::InfoEx& info);
 //..............................................................................
   inline double PhaseShift(const smatd& m) const {  return m.t.DotProd(hkl);  }
@@ -256,13 +304,7 @@ public:
   int CompareToWithBatch(const TReflection &r) const {
     int res = GetBatch() - r.GetBatch();  // prioritise by batch number
     if (res == 0) {
-      res = hkl[2] - r.hkl[2];
-      if (res == 0) {
-        res = hkl[1] - r.hkl[1];
-        if (res == 0) {
-          res = hkl[0] - r.hkl[0];
-        }
-      }
+      res = CompareTo(r);
     }
     return res;
   }

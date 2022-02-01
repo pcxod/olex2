@@ -18,8 +18,11 @@
   static const uint16_t bitCentric, bitAbsent, bitOmitted;
 #endif
 
-vec3i TReflection::Standardise(const vec3i& _hkl, const SymmSpace::InfoEx& info)  {
+vec3i TReflection::Standardise(const vec3i& _hkl, const SymmSpace::InfoEx& info, int *idx)  {
   vec3i hkl = _hkl;
+  if (idx != 0) {
+    *idx = 0;
+  }
   if( info.centrosymmetric )  {
     vec3i hklv = -hkl, new_hkl = hkl;
     if( (hklv[2] > hkl[2]) ||
@@ -27,6 +30,9 @@ vec3i TReflection::Standardise(const vec3i& _hkl, const SymmSpace::InfoEx& info)
       ((hklv[2] == hkl[2]) && (hklv[1] == hkl[1]) && (hklv[0] > hkl[0])) )
     {
       new_hkl = hklv;
+      if (idx != 0) {
+        *idx = -1;
+      }
     }
     for( size_t i=0; i < info.matrices.Count(); i++ )  {
       hklv = hkl*info.matrices[i].r;
@@ -35,6 +41,9 @@ vec3i TReflection::Standardise(const vec3i& _hkl, const SymmSpace::InfoEx& info)
         ((hklv[2] == new_hkl[2]) && (hklv[1] == new_hkl[1]) && (hklv[0] > new_hkl[0])) )
       {
         new_hkl = hklv;
+        if (idx != 0) {
+          *idx = i+2;
+        }
       }
       hklv *= -1;
       if( (hklv[2] > new_hkl[2]) ||
@@ -42,6 +51,9 @@ vec3i TReflection::Standardise(const vec3i& _hkl, const SymmSpace::InfoEx& info)
         ((hklv[2] == new_hkl[2]) && (hklv[1] == new_hkl[1]) && (hklv[0] > new_hkl[0])) )
       {
         new_hkl = hklv;
+        if (idx != 0) {
+          *idx = -(int)i - 2;
+        }
       }
     }
     hkl = new_hkl;
@@ -55,6 +67,9 @@ vec3i TReflection::Standardise(const vec3i& _hkl, const SymmSpace::InfoEx& info)
         ((hklv[2] == new_hkl[2]) && (hklv[1] == new_hkl[1]) && (hklv[0] > new_hkl[0])) )
       {
         new_hkl = hklv;
+        if (idx != 0) {
+          *idx = i+2;
+        }
       }
     }
     hkl = new_hkl;

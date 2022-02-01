@@ -277,7 +277,7 @@ void TXApp::CalcSFEx(const TRefList& refs, TArrayList<TEComplex<double> >& F,
       }
       TArrayList<compd> F(refs.Count());
       Fsq.Resize(refs.Count());
-      SFUtil::CalcSF(XFile(), refs, F, !info_ex.centrosymmetric);
+      SFUtil::CalcSF(XFile(), refs, F, true);
       for (size_t i = 0; i < F.Count(); i++) {
         Fsq[i] = F[i].qmod();
       }

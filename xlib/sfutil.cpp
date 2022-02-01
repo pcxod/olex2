@@ -95,6 +95,8 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
 {
   TXApp& xapp = TXApp::GetInstance();
   TStopWatch sw(__FUNC__);
+  TUnitCell::SymmSpace sp = xapp.XFile().GetUnitCell().GetSymmSpace();
+  SymmSpace::InfoEx info_ex = SymmSpace::Compact(sp);
   if (sfOrigin == sfOriginFcf) {
     olxstr fcffn = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "fcf");
     cif_dp::cetTable* hklLoop = 0;
@@ -150,7 +152,11 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
     fc_squared = list == -6;
     refs.SetCapacity(hklLoop->RowCount());
     F.SetCount(hklLoop->RowCount());
-    for (size_t i=0; i < hklLoop->RowCount(); i++) {
+    olx_pset<uint32_t> read_in;
+    if (list == 3 && !info_ex.centrosymmetric) {
+      read_in.SetCapacity(refs.Count());
+    }
+    for (size_t i = 0; i < hklLoop->RowCount(); i++) {
       const cif_dp::CifRow& row = (*hklLoop)[i];
       TReflection& ref = refs.AddNew(
         row[hInd]->GetStringValue().ToInt(),
@@ -166,6 +172,10 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
       if (list == 3) {
         rv.Re() = row[aInd]->GetStringValue().ToDouble();
         rv.Im() = row[bInd]->GetStringValue().ToDouble();
+        if (!info_ex.centrosymmetric) {
+          read_in.Add(TReflection::CalcHKLHash(
+            TReflection::Standardise(ref.GetHkl(), info_ex)));
+        }
       }
       else if (list == 6) {
         rv = compd::polar(row[fcInd]->GetStringValue().ToDouble(),
@@ -190,8 +200,24 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
         F[i] = rv;
       }
     }
-    sw.start("Expanding the set");
-    TUnitCell::SymmSpace sp = xapp.XFile().GetUnitCell().GetSymmSpace();
+    // expand the FPs
+    if (list == 3 && !info_ex.centrosymmetric) {
+      F.SetCapacity(F.Count() * 2);
+      refs.SetCapacity(refs.Count() * 2);
+      size_t sz = refs.Count();
+      for (size_t i = 0; i < sz; i++) {
+        vec3i nr = -refs[i].GetHkl();
+        uint32_t h = TReflection::CalcHKLHash(
+          TReflection::Standardise(nr, info_ex));
+        if (read_in.Contains(h)) {
+          continue;
+        }
+        refs.Add(new TReflection(nr, refs[i].GetI(), refs[i].GetS()));
+        F.Add(F[i].conj());
+      }
+    }
+    //sw.start("Expanding the set");
+    //TUnitCell::SymmSpace sp = xapp.XFile().GetUnitCell().GetSymmSpace();
     
     sw.stop();
   }
@@ -201,8 +227,6 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
       return "no reflections";
     }
     sw.start("Loading/Filtering/Merging HKL");
-    TUnitCell::SymmSpace sp = xapp.XFile().GetUnitCell().GetSymmSpace();
-    SymmSpace::InfoEx info_ex = SymmSpace::Compact(sp);
     if (rm.GetHKLF() < 5) {
       RefinementModel::HklStat ms = rm.GetRefinementRefList<
         TUnitCell::SymmSpace, RefMerger::ShelxMerger>(sp, refs);
@@ -283,9 +307,7 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
           F[i] = compd::polar(dI, F[i].arg()) - F[i];
         }
         else if (mapType == mapType2OmC) {
-          dI *= 2;
-          dI -= F[i].mod();
-          F[i] = compd::polar(dI, F[i].arg());
+          F[i] = compd::polar(2*dI, F[i].arg()) - F[i];
         }
         else if (mapType == mapTypeObs) {
           F[i] = compd::polar(dI, F[i].arg());
@@ -397,14 +419,9 @@ void SFUtil::_CalcSF(const TXFile& xfile, const IMillerIndexList& refs,
     U,
     anom_only
   );
-  bool centro = sg.IsCentrosymmetric() && sg.GetInversionCenter().IsNull();
   // apply modifications
   try {
     TXApp &xapp = TXApp::GetInstance();
-    TUnitCell::SymmSpace sp = xapp.XFile().GetUnitCell().GetSymmSpace();
-    SymmSpace::InfoEx info_ex = SymmSpace::Compact(sp);
-    //info_ex.centrosymmetric = true;
-    olxdict<uint32_t, compd, TPrimitiveComparator> fab;
     if (xapp.CheckFileType<TIns>()) {
       TIns &ins = xapp.XFile().GetLastLoader<TIns>();
       if (ins.InsExists("ABIN")) {
@@ -414,28 +431,36 @@ void SFUtil::_CalcSF(const TXFile& xfile, const IMillerIndexList& refs,
           TBasicApp::NewLogEntry(logError) << "FAB file is missing";
         }
         else {
+          TUnitCell::SymmSpace sp = xapp.XFile().GetUnitCell().GetSymmSpace();
+          SymmSpace::InfoEx info_ex = SymmSpace::Compact(sp);
+          olxdict<uint32_t, compd, TPrimitiveComparator> fab;
           THklFile hkl;
           TStrList missing;
           hkl.LoadFromFile(fab_name, false, "free");
           for (size_t i = 0; i < hkl.RefCount(); i++) {
             TReflection &r = hkl[i];
-            r.Standardise(info_ex);
-            uint32_t key = r.GetHKLHash();
-            if (fab.HasKey(key)) {
-              continue;
+            int idx;
+            vec3i si = TReflection::Standardise(r.GetHkl(), info_ex, &idx);
+            compd v(r.GetI(), r.GetS());
+            fab.Add(TReflection::CalcHKLHash(si),
+              v * TReflection::PhaseShift(r.GetHkl(), info_ex, idx));
+            if (!info_ex.centrosymmetric) {
+              vec3i ni = -r.GetHkl();
+              si = TReflection::Standardise(ni, info_ex, &idx);
+              fab.Add(TReflection::CalcHKLHash(si),
+                v.conj() * TReflection::PhaseShift(ni, info_ex, idx));
             }
-            fab.Add(key, compd(r.GetI(), r.GetS()));
           }
           for (size_t i = 0; i < F.Count(); i++) {
-            uint32_t key = TReflection::CalcHKLHash(
-                TReflection::Standardise(refs[i], info_ex));
-            size_t idx = fab.IndexOf(key);
+            int mi;
+            vec3i stf = TReflection::Standardise(refs[i], info_ex, &mi);
+            size_t idx = fab.IndexOf(TReflection::CalcHKLHash(stf));
             if (idx == InvalidIndex) {
               missing << refs[i].ToString();
+              continue;
             }
-            else {
-              F[i] += fab.GetValue(idx);
-            }
+            compd ps = TReflection::PhaseShift(refs[i], info_ex, mi);
+            F[i] += fab.GetValue(idx) / ps;
           }
           if (!missing.IsEmpty()) {
             TBasicApp::NewLogEntry(logError) << "Missing modifications for the"
