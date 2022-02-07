@@ -930,8 +930,9 @@ void TCif::Initialize() {
 //..............................................................................
 cetTable* TCif::LoopFromDef(CifBlock& dp, const TStrList& col_names)  {
   cetTable* tab = new cetTable();
-  for( size_t i=0; i < col_names.Count(); i++ )
+  for (size_t i = 0; i < col_names.Count(); i++) {
     tab->AddCol(col_names[i]);
+  }
   return &(cetTable&)dp.Add(tab);
 }
 //..............................................................................
@@ -1187,7 +1188,10 @@ smatd TCif::SymmCodeToMatrix(const olxstr &Code) const {
   return mSymm;
 }
 //..............................................................................
-
+olxstr TCif::MatrixToCode(const smatd& m) const {
+  return TSymmParser::MatrixToSymmCode(Matrices, m);
+}
+//..............................................................................
 const_strlist CIF_ParseArgumemnts(const olxstr &arg, olxch q) {
   TStrList args;
   size_t s = 0;
@@ -1780,5 +1784,19 @@ void AtomCifEntry::ToStrings(TStrList& list) const {
 //..............................................................................
 olxstr AtomCifEntry::GetStringValue() const {
   return data.GetResiLabel(save_part);
+}
+//..............................................................................
+//..............................................................................
+//..............................................................................
+void SymmCifEntry::ToStrings(TStrList& list) const {
+  olxstr al = GetStringValue();
+  if (list.IsEmpty() ||
+    (list.GetLastString().Length() + al.Length() + 1 > 80))
+  {
+    list.Add(' ') << al;
+  }
+  else {
+    list.GetLastString() << ' ' << al;
+  }
 }
 //..............................................................................

@@ -2358,14 +2358,25 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options,
 }
 //..............................................................................
 void TMainForm::macEditIns(TStrObjList &Cmds, const TParamList &Options, TMacroData &E)  {
-  TIns& Ins = FXApp->XFile().GetLastLoader<TIns>();
+  TBasicCFile* loader = FXApp->XFile().LastLoader();
+  olx_object_ptr<TIns> ins_p;
+  if (olx_is <TIns *>(loader) ) {
+    ins_p = dynamic_cast<TIns*>(loader);
+    ins_p.inc_ref();
+  }
+  else {
+    ins_p = new TIns();
+    ins_p->Adopt(FXApp->XFile(), 0);
+    loader = 0;
+  }
+  TIns& Ins = *ins_p;
   TStrList SL;
   FXApp->XFile().UpdateAsymmUnit();  // synchronise au's
   Ins.SaveHeader(SL, true);
   SL.Add("HKLF ") << Ins.GetRM().GetHKLFStr();
   SL.Add();
   SL.AddAll(Ins.GetFooter().obj());
-  Ins.SaveExtras(SL, NULL, NULL, Ins.GetRM());
+  Ins.SaveExtras(SL, 0, 0, Ins.GetRM());
   TdlgEdit *dlg = new TdlgEdit(this, true);
   dlg->SetText(SL.Text('\n'));
   try {
@@ -2380,6 +2391,9 @@ void TMainForm::macEditIns(TStrObjList &Cmds, const TParamList &Options, TMacroD
       SL.Clear();
       SL.Strtok(dlg->GetText(), '\n');
       Ins.ParseHeader(SL);
+      if (loader == 0) {
+        FXApp->XFile().LastLoader()->GetRM().Assign(Ins.GetRM(), false);
+      }
       FXApp->XFile().LastLoaderChanged();
       BadReflectionsTable(false);
       UpdateInfoBox();

@@ -15,57 +15,62 @@ cleanup class must be chosen to avoid memory leaks!
 #include "linked_list.h"
 BeginEsdlNamespace()
 
-template <typename T, class cleanupClass=DummyCleanup<T> >
+template <typename T, class cleanupClass=DummyCleanup>
 class TUDTypeList : public TLinkedList<T, cleanupClass> {
   typedef TLinkedList<T, cleanupClass> parent_t;
   mutable size_t pos;
-  mutable typename parent_t::Entry *cur;
+  mutable typename parent_t::Entry* cur;
 public:
-  TUDTypeList() : pos(InvalidIndex), cur(NULL) {}
-  virtual ~TUDTypeList()  {  Clear();  }
-  void Clear()  {
+  TUDTypeList() : pos(InvalidIndex), cur(0) {}
+  virtual ~TUDTypeList() { Clear(); }
+  void Clear() {
     parent_t::Clear();
-    cur = NULL;
+    cur = 0;
     pos = InvalidIndex;
   }
-  TUDTypeList& Reset()  {
-    cur = NULL;
+  TUDTypeList& Reset() {
+    cur = 0;
     pos = InvalidIndex;
     return *this;
   }
   T& operator [] (size_t ind) const {
-    if( ind >= parent_t::count )
+    if (ind >= parent_t::count) {
       TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid index");
-    if( pos == (ind-1) )
+    }
+    if (pos == (ind - 1)) {
       return Next();
-    else if( ind == 0 )  {
+    }
+    else if (ind == 0) {
       cur = parent_t::first;
       pos = 0;
       return cur->data;
     }
     pos = 0;
     cur = parent_t::first;
-    while( ind-- != 1 )  {
+    while (ind-- != 1) {
       cur = cur->next;
       pos++;
     }
     return cur->data;
   }
-  T& Add(T v)  {
+  T& Add(T v) {
     pos++;
     return parent_t::Add(v);
   }
 protected:
   bool HasNext() const {
-    return (cur == NULL ? parent_t::first : cur->next) != NULL;
+    return (cur == 0 ? parent_t::first : cur->next) != 0;
   }
   T& Next() const {
-    if( cur != NULL )
+    if (cur != 0) {
       cur = cur->next;
-    else
+    }
+    else {
       cur = parent_t::first;
-    if( cur == NULL )
+    }
+    if (cur == 0) {
       TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "end of the list");
+    }
     pos++;
     return cur->data;
   }

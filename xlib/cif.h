@@ -116,7 +116,7 @@ public:
   cif_dp::ICifEntry& ParamValue(size_t i) const {
     return *data_provider[block_index].param_map.GetValue(i);
   }
-  // matrics access functions
+  // matrices access functions
   size_t MatrixCount() const { return Matrices.Count(); }
   const smatd& GetMatrix(size_t i) const { return Matrices[i]; }
   const smatd& GetMatrixById(const olxstr& id) const {
@@ -127,6 +127,7 @@ public:
     }
     return Matrices[MatrixMap.GetValue(id_ind)];
   }
+  const smatd_list& GetMatrices() const { return Matrices; }
   // special for CIF dues to the MatrixMap...
   smatd SymmCodeToMatrix(const olxstr& code) const;
   /*Transforms a symmetry code written like "22_565" to the symmetry operation
@@ -135,6 +136,7 @@ public:
   olxstr SymmCodeToSymm(const olxstr& Code) const {
     return TSymmParser::MatrixToSymm(SymmCodeToMatrix(Code));
   }
+  olxstr MatrixToCode(const smatd &m) const;
   //............................................................................
   //Returns the data name of the file (data_XXX, returns XXX in this case)
   inline const olxstr& GetDataName() const {
@@ -268,11 +270,16 @@ struct AtomCifEntry : public cif_dp::IStringCifEntry {
   virtual void ToStrings(TStrList& list) const;
   virtual olxstr GetStringValue() const;
 };
+
 struct AtomPartCifEntry : public cif_dp::IStringCifEntry {
-  TCAtom& data;
+  const TCAtom& data;
   mutable olxstr tmp_val;
-  AtomPartCifEntry(const AtomPartCifEntry& v) : data(v.data) {}
-  AtomPartCifEntry(TCAtom& _data) : data(_data) {}
+  AtomPartCifEntry(const AtomPartCifEntry& v)
+    : data(v.data)
+  {}
+  AtomPartCifEntry(const TCAtom& _data)
+    : data(_data)
+  {}
   virtual size_t Count() const { return 1; }
   virtual bool IsSaveable() const { return !data.IsDeleted(); }
   virtual const olxstr& operator [] (size_t) const {
@@ -300,6 +307,38 @@ struct AtomPartCifEntry : public cif_dp::IStringCifEntry {
   }
   virtual olxstr GetStringValue() const {
     return (tmp_val = (int)data.GetPart());
+  }
+};
+
+struct SymmCifEntry : public cif_dp::IStringCifEntry {
+  const TCif& parent;
+  const smatd& data;
+  mutable olxstr tmp_val;
+  SymmCifEntry(const SymmCifEntry& v)
+    : parent(v.parent), data(v.data)
+  {}
+  SymmCifEntry(const TCif& parent, const smatd &_data)
+    : parent(parent), data(_data)
+  {}
+  virtual size_t Count() const { return 1; }
+  virtual bool IsSaveable() const { return true; }
+  virtual size_t GetCmpHash() const { return data.GetId(); }
+  virtual const olxstr& operator [] (size_t) const {
+    if (tmp_val.IsEmpty()) {
+      if (data.IsFirst()) {
+        return (tmp_val = ".");
+      }
+      return  (tmp_val = parent.MatrixToCode(data));
+    }
+    return tmp_val;
+  }
+  virtual const olxstr& GetComment() const { return EmptyString(); }
+  virtual cif_dp::ICifEntry* Replicate() const {
+    return new SymmCifEntry(*this);
+  }
+  virtual void ToStrings(TStrList& list) const;
+  virtual olxstr GetStringValue() const {
+    return (*this)[0];
   }
 };
 

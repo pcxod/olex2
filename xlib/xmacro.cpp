@@ -677,7 +677,8 @@ void XLibMacros::Export(TLibrary& lib)  {
     "Prints bonds and angles table for selected/given atoms");
   xlib_InitMacro(CalcVol,
     "n-normalises bonds before the calculation&;"
-    "cs-do not clear the selection",
+    "cs-do not clear the selection&;"
+    ,
     fpNone|fpOne,
     "Calculates tetrahedron or bipyramidal shape volume for given (selected) "
     "atom");
@@ -722,7 +723,7 @@ void XLibMacros::Export(TLibrary& lib)  {
     fpTwo,
     "HKLF5 utils.");
   xlib_InitMacro(CalcVars,
-    EmptyString(),
+    "cif-produce CIF report for the measures",
     fpAny | psFileLoaded,
     "Calculates previously defined variables and stores the named values in "
     "olex2.calculated.* variables");
@@ -11257,6 +11258,17 @@ void XLibMacros::macCalcVars(TStrObjList &Cmds, const TParamList &Options,
 {
   TXApp& xapp = TXApp::GetInstance();
   xapp.XFile().GetRM().CVars.CalcAll();
+  if (Options.GetBoolOption("cif")) {
+    TCif xx;
+    xx.Adopt(xapp.XFile(), 0);
+    TPtrList<cif_dp::ICifEntry> cif = xapp.XFile().GetRM().CVars.ToCIF(xx);
+    TStrList out;
+    for (size_t i = 0; i < cif.Count(); i++) {
+      cif[i]->ToStrings(out);
+    }
+    cif.DeleteItems();
+    TBasicApp::NewLogEntry() << out;
+  }
 }
 //.............................................................................
 void XLibMacros::funHKLF(const TStrObjList &args, TMacroData &E) {

@@ -83,7 +83,7 @@ void DirectionalListTest(OlxTests& t)  {
   if( (test[5] = 7) != 7 )
     throw TFunctionFailedException(__OlxSourceInfo, "Assignment is broken");
 
-  TUDTypeList<int*, NewCleanup<int> > test1;
+  TUDTypeList<int*, NewCleanup> test1;
   for( int i=0; i < 10; i++ )
     test1.Add(new int(i));
   for( int i=0; i < 10; i++ )  {

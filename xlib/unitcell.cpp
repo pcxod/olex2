@@ -52,16 +52,16 @@ void TUnitCell::Clear()  {
   ClearEllipsoids();
 }
 //..............................................................................
-smatd& TUnitCell::InitMatrixId(smatd& m) const {
-  for( size_t i=0; i < Matrices.Count(); i++ )  {
-    if( Matrices[i].r == m.r )  {
-      const vec3d dt = m.t-Matrices[i].t;
-      const int8_t ta = olx_round_t<int8_t>(m.t[0]-Matrices[i].t[0]);
+smatd& TUnitCell::InitMatrixId(const smatd_list& Matrices, smatd& m) {
+  for (size_t i = 0; i < Matrices.Count(); i++) {
+    if (Matrices[i].r == m.r) {
+      const vec3d dt = m.t - Matrices[i].t;
+      const int8_t ta = olx_round_t<int8_t>(m.t[0] - Matrices[i].t[0]);
       const int8_t tb = olx_round_t<int8_t>(m.t[1] - Matrices[i].t[1]);
       const int8_t tc = olx_round_t<int8_t>(m.t[2] - Matrices[i].t[2]);
-      if( olx_abs(dt[0]-ta) < 1e-6 &&
-          olx_abs(dt[1]-tb) < 1e-6 &&
-          olx_abs(dt[2]-tc) < 1e-6 )
+      if (olx_abs(dt[0] - ta) < 1e-6 &&
+        olx_abs(dt[1] - tb) < 1e-6 &&
+        olx_abs(dt[2] - tc) < 1e-6)
       {
         m.SetId((uint8_t)i, ta, tb, tc);
         return m;
@@ -70,7 +70,6 @@ smatd& TUnitCell::InitMatrixId(smatd& m) const {
   }
   throw TInvalidArgumentException(__OlxSourceInfo, "could not locate matrix");
 }
-//..............................................................................
 smatd_list TUnitCell::MulMatrices(const smatd_list& in,
   const smatd& transform) const
 {

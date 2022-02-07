@@ -636,7 +636,7 @@ void TMainForm::XApp(Olex2App *XA)  {
   this_InitMacroD(EditAtom, "cs-do not clear the selection",
     fpAny|psFileLoaded,
     "Shows information for the given atom and all of its dependents");
-  this_InitMacro(EditIns, , fpNone|psCheckFileTypeIns);
+  this_InitMacro(EditIns, , fpNone|psFileLoaded);
   this_InitMacro(HklEdit, , fpNone|fpOne|fpThree);
   this_InitMacro(HklView, , fpNone|fpOne);
 

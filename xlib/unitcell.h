@@ -95,7 +95,10 @@ public:
   /* initialises the matrix container id, throws an excpetion if matrix is not
   found
   */
-  smatd& InitMatrixId(smatd& m) const;
+  smatd& InitMatrixId(smatd& m) const {
+    return InitMatrixId(Matrices, m);
+  }
+  static smatd& InitMatrixId(const smatd_list& Matrices, smatd& m);
   /* if there is a list of transforms calculated in the asymmetric unit and a
   symmetry operator needs to be applied to it, this is the function. Note that
   the list of input matrices and the transformation matrix should have valid

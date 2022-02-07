@@ -66,6 +66,23 @@ public:
   template <class AT> FT DistanceTo(const TVector3<AT>& v) const {
     return static_cast<FT>(sqrt(QDistanceTo(v)));
   }
+
+  /* distance between this point and a line segment. Returns -1 within is true and
+  the point is outside of the given segment
+  http://paulbourke.net/geometry/pointlineplane/
+  */
+  template <class AT>
+  FT DistanceTo(const TVector3<AT>& a, const TVector3<AT>& b, bool within=false) const
+  {
+    TVector3 v = b - a;
+    FT u = (*this - a).DotProd(v)/v.QLength();
+    if (within && (u < 0 || u > 1)) {
+      return -1;
+    }
+    TVector3 intersection = a + v * u;
+    return this->DistanceTo(intersection);
+  }
+
   template <class AT> FT CAngle(const TVector3<AT>& v) const {
     FT l = QLength()*v.QLength();
     if (l == 0) {

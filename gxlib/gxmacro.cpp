@@ -359,7 +359,7 @@ void GXLibMacros::Export(TLibrary& lib) {
     "Fragment matching, alignment and label transfer routine");
   gxlib_InitMacro(SetMaterial, EmptyString(), fpTwo | fpThree,
     "Assigns provided value to specified material");
-  gxlib_InitMacro(DefineVar, EmptyString(), fpOne|psFileLoaded,
+  gxlib_InitMacro(DefineVar, EmptyString(), fpOne|fpTwo|psFileLoaded,
     "Defines a variable to be calculated with CalcVars. The argument is "
     "the variable name.");
 
@@ -5085,21 +5085,23 @@ void GXLibMacros::macDefineVar(TStrObjList &Cmds, const TParamList &Options,
   RefinementModel &rm = app.XFile().GetRM();
   CalculatedVars &cv = rm.CVars;
   TGlGroup &g = app.GetSelection();
+  olxstr msg;
   if (g.Count() == 2) {
     if (g[0].Is<TXPlane>() && g[1].Is<TXPlane>()) {
       CalculatedVars::Object
         *p1 = CalculatedVars::Object::create((TXPlane&)g[0], cv),
         *p2 = CalculatedVars::Object::create((TXPlane&)g[1], cv);
-      cv.AddVar(new CalculatedVars::Var(Cmds[0] + "cc"))
-        .AddRef(*p1, "c").AddRef(*p2, "c").type = cv_vt_distance;
-      cv.AddVar(new CalculatedVars::Var(Cmds[0] + "pc"))
-        .AddRef(*p1, "c").AddRef(*p2).type = cv_vt_distance;
-      cv.AddVar(new CalculatedVars::Var(Cmds[0] + "a"))
-        .AddRef(*p1).AddRef(*p2).type = cv_vt_angle;
-      cv.AddVar(new CalculatedVars::Var(Cmds[0] + "sa"))
-        .AddRef(*p1, "c").AddRef(*p2).type = cv_vt_shift;
-      cv.AddVar(new CalculatedVars::Var(Cmds[0] + "sb"))
-        .AddRef(*p1).AddRef(*p2, "c").type = cv_vt_shift;
+      cv.AddVar(new CalculatedVars::Var(cv_vt_distance, Cmds[0] + "cc"))
+        .AddRef(*p1, "c").AddRef(*p2, "c");
+      cv.AddVar(new CalculatedVars::Var(cv_vt_distance, Cmds[0] + "pc"))
+        .AddRef(*p1, "c").AddRef(*p2);
+      cv.AddVar(new CalculatedVars::Var(cv_vt_angle, Cmds[0] + "a"))
+        .AddRef(*p1).AddRef(*p2);
+      cv.AddVar(new CalculatedVars::Var(cv_vt_shift, Cmds[0] + "sa"))
+        .AddRef(*p1, "c").AddRef(*p2);
+      cv.AddVar(new CalculatedVars::Var(cv_vt_shift, Cmds[0] + "sb"))
+        .AddRef(*p1).AddRef(*p2, "c");
+      msg = "Defined plane-plane parameters";
     }
     else if ((g[0].Is<TXPlane>() && g[1].Is<TXBond>()) ||
       (g[1].Is<TXPlane>() && g[0].Is<TXBond>()))
@@ -5109,27 +5111,70 @@ void GXLibMacros::macDefineVar(TStrObjList &Cmds, const TParamList &Options,
       CalculatedVars::Object
         *p1 = CalculatedVars::Object::create(p, cv),
         *p2 = CalculatedVars::Object::create(b, cv);
-      cv.AddVar(new CalculatedVars::Var(Cmds[0]))
-        .AddRef(*p1, "n").AddRef(*p2).type = cv_vt_angle;
+      cv.AddVar(new CalculatedVars::Var(cv_vt_angle, Cmds[0]))
+        .AddRef(*p1, "n").AddRef(*p2);
+      msg = "Defined plane normal-line angle";
     }
     else if (g[0].Is<TXAtom>() && g[1].Is<TXAtom>()) {
       CalculatedVars::Object
         *p1 = CalculatedVars::Object::create((TXAtom &)g[0], cv),
         *p2 = CalculatedVars::Object::create((TXAtom &)g[1], cv);
-      cv.AddVar(new CalculatedVars::Var(Cmds[0]))
-        .AddRef(*p1).AddRef(*p2).type = cv_vt_distance;
+      cv.AddVar(new CalculatedVars::Var(cv_vt_distance, Cmds[0]))
+        .AddRef(*p1).AddRef(*p2);
+      msg = "Defined atom-atom distance";
+    }
+    else if ((g[0].Is<TXBond>() && g[1].Is<TXAtom>()) ||
+      (g[1].Is<TXBond>() && g[0].Is<TXAtom>()))
+    {
+      TXBond& b = (TXBond&)(g[g[0].Is<TXBond>() ? 0 : 1]);
+      TXAtom& a = (TXAtom&)(g[g[0].Is<TXBond>() ? 1 : 0]);
+      CalculatedVars::Object
+        * p1 = CalculatedVars::Object::create(b, cv),
+        * p2 = CalculatedVars::Object::create(a, cv);
+      cv.AddVar(new CalculatedVars::Var(cv_vt_distance, Cmds[0]))
+        .AddRef(*p1).AddRef(*p2);
+      cv.AddVar(new CalculatedVars::Var(cv_vt_distance, Cmds[0] + "cc"))
+        .AddRef(*p1, "c").AddRef(*p2);
+      msg = "Defined atom-bond distances";
     }
   }
-  else if (g.Count() == 3 &&
-    olx_list_and_st(g, &olx_is<TXAtom, TGlGroup::list_item_type>))
-  {
-    CalculatedVars::Object
-      *p1 = CalculatedVars::Object::create((TXAtom &)g[0], cv),
-      *p2 = CalculatedVars::Object::create((TXAtom &)g[1], cv),
-      *p3 = CalculatedVars::Object::create((TXAtom &)g[2], cv);
-    cv.AddVar(new CalculatedVars::Var(Cmds[0]))
-      .AddRef(*p1).AddRef(*p2).AddRef(*p3).type = cv_vt_angle;
-
+  else if (g.Count() == 3) {
+    if (olx_list_and_st(g, &olx_is<TXAtom, TGlGroup::list_item_type>)) {
+      CalculatedVars::Object
+        * p1 = CalculatedVars::Object::create((TXAtom&)g[0], cv),
+        * p2 = CalculatedVars::Object::create((TXAtom&)g[1], cv),
+        * p3 = CalculatedVars::Object::create((TXAtom&)g[2], cv);
+      cv.AddVar(new CalculatedVars::Var(cv_vt_angle, Cmds[0]))
+        .AddRef(*p1).AddRef(*p2).AddRef(*p3);
+      msg = "Defined atom-atom-atom angle";
+    }
+    else if (olx_list_and_st(g, &olx_is<TXPlane, TGlGroup::list_item_type>)) {
+      CalculatedVars::Object
+        * p1 = CalculatedVars::Object::create((TXPlane&)g[0], cv),
+        * p2 = CalculatedVars::Object::create((TXPlane&)g[1], cv),
+        * p3 = CalculatedVars::Object::create((TXPlane&)g[2], cv);
+      cv.AddVar(new CalculatedVars::Var(cv_vt_angle, Cmds[0]))
+        .AddRef(*p1, "c").AddRef(*p2, "c").AddRef(*p3, "c");
+      msg = "Defined angle between plane centroids";
+    }
+  }
+  else if (g.Count() == 4) {
+    if (olx_list_and_st(g, &olx_is<TXAtom, TGlGroup::list_item_type>)) {
+      CalculatedVars::Object
+        * p1 = CalculatedVars::Object::create((TXAtom&)g[0], cv),
+        * p2 = CalculatedVars::Object::create((TXAtom&)g[1], cv),
+        * p3 = CalculatedVars::Object::create((TXAtom&)g[2], cv),
+        * p4 = CalculatedVars::Object::create((TXAtom&)g[3], cv);
+      cv.AddVar(new CalculatedVars::Var(cv_vt_angle, Cmds[0]))
+        .AddRef(*p1).AddRef(*p2).AddRef(*p3).AddRef(*p4);
+      msg = "Defined dihedral angle";
+    }
+  }
+  if (msg.IsEmpty()) {
+    TBasicApp::NewLogEntry(logWarning) << "Could not process the input";
+  }
+  else {
+    TBasicApp::NewLogEntry() << msg << ": " << Cmds[0];
   }
   //
 }

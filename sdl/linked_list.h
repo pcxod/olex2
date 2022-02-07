@@ -15,48 +15,55 @@ avoid memory leaks!
 #include "ebase.h"
 BeginEsdlNamespace()
 
-template <class T> class NewCleanup {
+class NewCleanup {
 public:
+  template <class T>
   static void DoCleanup(T* v) { delete v; }
 };
-template <class T> class FreeCleanup {
+class FreeCleanup {
 public:
+  template <class T>
   static void DoCleanup(T* v) { free(v); }
 };
-template <class T> class DummyCleanup {
+class DummyCleanup {
 public:
+  template <class T>
   static void DoCleanup(T& v) {}
 };
 
 // primitive linked list
-template <typename T, class cleanupClass=DummyCleanup<T> > class TLinkedList {
+template <typename T, class cleanupClass=DummyCleanup>
+class TLinkedList {
 protected:
-  struct Entry  {
+  struct Entry {
     T data;
     Entry* next;
-    Entry(T& d) : data(d), next(NULL) {}
-    ~Entry()  { cleanupClass::DoCleanup(data); }
+    Entry(T& d) : data(d), next(0) {}
+    ~Entry() { cleanupClass::DoCleanup(data); }
   };
   size_t count;
   Entry *first, *last;
 public:
-  TLinkedList() : count(0), first(NULL), last(NULL) {}
+  TLinkedList() : count(0), first(0), last(0) {}
   virtual ~TLinkedList() { Clear(); }
   void Clear() {
-    if (first == NULL ) return;
+    if (first == 0) {
+      return;
+    }
     Entry *cur = first->next;
-    while (cur != NULL) {
+    while (cur != 0) {
       last = cur->next;
       delete cur;
       cur = last;
     }
     delete first;
-    first = last = NULL;
+    first = last = 0;
     count = 0;
   }
   T& Add(T v) {
-    if (first == NULL)
+    if (first == 0) {
       last = first = new Entry(v);
+    }
     else {
       last->next = new Entry(v);
       last = last->next;
@@ -65,21 +72,37 @@ public:
     return last->data;
   }
 
+  template <typename T1>
+  void AddAll(const T1 *all, size_t sz) {
+    for (size_t i = 0; i < sz; i++) {
+      Add(all[i]);
+    }
+  }
+
+  template <class list_t>
+  void AddAll(const list_t &all) {
+    for (size_t i = 0; i < all.Count(); i++) {
+      Add(all[i]);
+    }
+  }
+
   struct Iterator {
     const TLinkedList &parent;
     Entry *cur;
-    Iterator(const TLinkedList &_parent) : parent(_parent), cur(NULL) {}
+    Iterator(const TLinkedList &_parent) : parent(_parent), cur(0) {}
     bool HasNext() const {
-      return (cur == NULL ? parent.first : cur->next) != NULL;
+      return (cur == 0 ? parent.first : cur->next) != 0;
     }
-    bool IsEmpty() const { return cur == NULL; }
+    bool IsEmpty() const { return cur == 0; }
     size_t Count() const { return parent.count; }
     T& Next() {
-      if (cur != NULL)
+      if (cur != 0) {
         cur = cur->next;
-      else
+      }
+      else {
         cur = parent.first;
-      if (cur == NULL) {
+      }
+      if (cur == 0) {
         TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo,
           "end of the list");
       }

@@ -12,6 +12,7 @@
 #include "evalue.h"
 #include "catom.h"
 #include "dataitem.h"
+#include "cifdp.h"
 
 BeginXlibNamespace()
 
@@ -31,25 +32,37 @@ public:
     olxstr name;
     TCAtomGroup atoms;
     uint16_t type;
-    Object() {}
+    // initialised when saving
+    mutable size_t group_id, obj_id;
+    Object(uint16_t type)
+    : type(type), group_id(InvalidIndex), obj_id(InvalidIndex)
+    {}
     Object(const Object &o, CalculatedVars &parent);
-    ConstPtrList<const class TSAtom> GetAtoms() const;
+    ConstPtrList<class TSAtom> GetAtoms() const;
     virtual TDataItem& ToDataItem(TDataItem &i, bool use_id) const;
     virtual void FromDataItem_(const TDataItem &i,
       CalculatedVars &parent, bool use_id);
     static olx_object_ptr<Object> FromDataItem(const TDataItem &i,
       CalculatedVars &parent, bool use_id);
-    olxstr GetQualifiedName() const;
+    olxstr GetTypeName() const;
+    olxstr GetQualifiedName() const {
+      return GetTypeName() << '.' << name;
+    }
     bool IsValid() const;
+
+    bool SameAtoms(const Object& o, bool order_matters) const;
 
     static Object *create(class TSAtom &a, CalculatedVars &parent);
     static Object *create(class TSBond &b, CalculatedVars &parent);
     static Object *create(class TSPlane &p, CalculatedVars &parent);
+    static Object* Clone(Object& a, CalculatedVars& parent);
+  protected:
+    static uint16_t DecodeType(const olxstr& v);
   };
 
   struct Plane : public Object {
     vec3d normal;
-    Plane() {}
+    Plane() : Object(cv_ot_plane) {}
     Plane(const Plane &o, CalculatedVars &parent)
       : Object(o, parent), normal(o.normal)
     {}
@@ -63,8 +76,12 @@ public:
     ObjectRef(const ObjectRef &o) : object(o.object), prop(o.prop) {
       object.IncRef();
     }
-    ObjectRef(Object &o) : object(o) { o.IncRef(); }
-    ObjectRef(Object &o, const olxstr &p) : object(o), prop(p) { o.IncRef(); }
+    ObjectRef(Object &o) : object(o) {
+      o.IncRef();
+    }
+    ObjectRef(Object &o, const olxstr &p) : object(o), prop(p) {
+      o.IncRef();
+    }
     ~ObjectRef() {
       object.DecRef();
     }
@@ -72,13 +89,17 @@ public:
       olxstr rv = object.GetQualifiedName();
       return prop.IsEmpty() ? rv : (rv << '.' << prop);
     }
+    olxstr GetName() const;
   };
 
   struct Var {
     olxstr name;
     TTypeList<ObjectRef> refs;
     uint16_t type;
-    Var(const olxstr &n) : name(n)
+    // transient field
+    mutable TEValueD value;
+    Var(uint16_t type, const olxstr &n)
+      : type(type), name(n)
     {}
     Var &AddRef(Object& o, const olxstr &prop=EmptyString()) {
       refs.Add(new ObjectRef(o, prop));
@@ -88,14 +109,19 @@ public:
     void ToDataItem(TDataItem &i) const;
     bool IsValid() const {
       for (size_t i = 0; i < refs.Count(); i++) {
-        if (!refs[i].object.IsValid())
+        if (!refs[i].object.IsValid()) {
           return false;
+        }
       }
       return true;
     }
+    olxstr GetName() const;
     static Var *Clone(const Var &v, CalculatedVars &parent);
-    static olx_pair_t<olxstr, olxstr> parseObject(const olxstr on);
+    static olx_pair_t<olxstr, olxstr> parseObject(const olxstr &on);
     static Var *FromDataItem(const TDataItem &i, CalculatedVars &parent);
+    bool ToCIF(olx_pdict<uint16_t, cif_dp::cetTable*> out) const;
+  protected:
+    static uint16_t DecodeType(const olxstr& v);
   };
 protected:
   RefinementModel &rm;
@@ -119,6 +145,7 @@ public:
   void FromDataItem(const TDataItem &i, bool use_id);
 
   void CalcAll() const;
+  TPtrList<cif_dp::ICifEntry>::const_list_type ToCIF(const class TCif &cif) const;
 };
 
 EndXlibNamespace()
