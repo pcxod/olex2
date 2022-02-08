@@ -407,6 +407,8 @@ Friedel opposites of components 1 ... m
   XScatterer* FindSfacData(const olxstr& label) const {
     return SfacData.Find(label, 0);
   }
+  bool RemoveSfacData(const olxstr& name);
+  void DeleteSfacData(size_t i);
   // user content management
   const ContentList& GetUserContent() const {  return UserContent;  }
   olxstr GetUserContentStr() const;
@@ -585,7 +587,13 @@ Friedel opposites of components 1 ... m
   struct VPtr : public olx_virtual_ptr<RefinementModel> {
     virtual IOlxObject *get_ptr() const;
   };
-
+  
+  const TStrList& GetRefineDisp() const {
+    return RefineDisp;
+  }
+  TStrList& GetRefineDisp() {
+    return RefineDisp;
+  }
   struct ReleasedItems {
     TSimpleRestraintPList restraints;
     TPtrList<TSameGroup> sameList;

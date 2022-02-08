@@ -268,7 +268,9 @@ void XLibMacros::Export(TLibrary& lib)  {
     "Lists all instructions of currently loaded Ins file");
   xlib_InitMacro(FixHL, EmptyString(), fpNone|psFileLoaded,
     "Fixes hydrogen atom labels");
-  xlib_InitMacro(Fix, EmptyString(), (fpAny^fpNone)|psCheckFileTypeIns,
+  xlib_InitMacro(Fix,
+    "c-when fixing DISP, removes DISP as well",
+    (fpAny^fpNone)|psCheckFileTypeIns,
     "Fixes specified parameters of atoms: XYZ, Uiso, Occu");
   xlib_InitMacro(Free, EmptyString(), (fpAny^fpNone)|psFileLoaded,
     "Frees specified parameters of atoms: XYZ, Uiso, Occu");
@@ -2081,14 +2083,14 @@ void XLibMacros::macFix(TStrObjList &Cmds, const TParamList &Options,
     return;
   }
 
-  if (vars.Equalsi("XYZ")) {
+  if (vars.Containsi("XYZ")) {
     for (size_t i = 0; i < atoms.Count(); i++) {
       for (short j = 0; j < 3; j++) {
         xapp.XFile().GetRM().Vars.FixParam(atoms[i]->CAtom(), catom_var_name_X + j);
       }
     }
   }
-  else if (vars.Equalsi("UISO")) {
+  if (vars.Containsi("UISO")) {
     for (size_t i = 0; i < atoms.Count(); i++) {
       if (atoms[i]->GetEllipsoid() == 0) {// isotropic atom
         xapp.SetAtomUiso(*atoms[i], var_val);
@@ -2101,7 +2103,7 @@ void XLibMacros::macFix(TStrObjList &Cmds, const TParamList &Options,
       }
     }
   }
-  else if (vars.Equalsi("OCCU")) {
+  if (vars.Containsi("OCCU")) {
     const ASObjectProvider& objects = xapp.XFile().GetLattice().GetObjects();
     objects.atoms.ForEach(ACollectionItem::TagSetter(0));
     XVar *var = 0;
@@ -2145,6 +2147,25 @@ void XLibMacros::macFix(TStrObjList &Cmds, const TParamList &Options,
               catom_var_name_Sof, rel, var_val);
           }
         }
+      }
+    }
+  }
+  if (vars.Containsi("DISP")) {
+    olxstr_set<true> types;
+    for (size_t i = 0; i < atoms.Count(); i++) {
+      types.Add(atoms[i]->GetType().symbol);
+    }
+    TStrList& disp = xapp.XFile().GetRM().GetRefineDisp();
+    for (size_t i = 0; i < disp.Count(); i++) {
+      size_t idx = disp[i].IndexOf('.');
+      olxstr type = (idx == InvalidIndex ? disp[i] : disp[i].SubStringTo(idx));
+      if (types.Contains(type)) {
+        disp.Delete(i--);
+      }
+    }
+    if (Options.GetBoolOption('c')) {
+      for (size_t i = 0; i < types.Count(); i++) {
+        xapp.XFile().GetRM().RemoveSfacData(types[i]);
       }
     }
   }
@@ -2221,6 +2242,24 @@ void XLibMacros::macFree(TStrObjList &Cmds, const TParamList &Options,
         for (size_t j = 0; j < hs.Count(); j++) {
           rm.Vars.AddVarRef(v, *hs[j], catom_var_name_Sof, relation_AsVar, 1);
         }
+      }
+    }
+  }
+  if (vars.Containsi("DISP")) {
+    olxstr_set<> types;
+    TStrList &disp = xapp.XFile().GetRM().GetRefineDisp();
+    for (size_t i = 0; i < disp.Count(); i++) {
+      size_t idx = disp[i].IndexOf('.');
+      if (idx == InvalidIndex) {
+        types.Add(disp[i]);
+      }
+      else {
+        types.Add(disp[i].SubStringTo(idx));
+      }
+    }
+    for (size_t i = 0; i < atoms.Count(); i++) {
+      if (types.Add(atoms[i]->GetType().symbol)) {
+        disp.Add(atoms[i]->GetType().symbol);
       }
     }
   }

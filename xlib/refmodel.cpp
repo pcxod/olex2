@@ -2751,6 +2751,19 @@ void RefinementModel::AddEXYZ(const IStrList& exyz, const olxstr& resi_name) {
   }
 }
 //..............................................................................
+bool RefinementModel::RemoveSfacData(const olxstr& name) {
+  size_t idx = SfacData.IndexOf(name);
+  if (idx != InvalidIndex) {
+    DeleteSfacData(idx);
+    return true;
+  }
+  return false;
+}
+//..............................................................................
+void RefinementModel::DeleteSfacData(size_t idx) {
+  delete SfacData.GetValue(idx);
+  SfacData.Delete(idx);
+}
 //..............................................................................
 //..............................................................................
 //..............................................................................

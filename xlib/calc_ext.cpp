@@ -601,7 +601,7 @@ void CalculatedVars::CalcAll() const {
     }
     olxstr strv = v.ToString();
     TOlxVars::SetVar(vn, strv);
-    TBasicApp::NewLogEntry(logVerbose) << vn << '=' << strv;
+    TBasicApp::NewLogEntry(logInfo) << vn << '=' << strv;
   }
 }
 //.............................................................................
