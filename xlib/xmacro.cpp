@@ -271,9 +271,9 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(Fix,
     "c-when fixing DISP, removes DISP as well",
     (fpAny^fpNone)|psCheckFileTypeIns,
-    "Fixes specified parameters of atoms: XYZ, Uiso, Occu");
+    "Fixes specified parameters of atoms: XYZ, Uiso, Occu, Disp");
   xlib_InitMacro(Free, EmptyString(), (fpAny^fpNone)|psFileLoaded,
-    "Frees specified parameters of atoms: XYZ, Uiso, Occu");
+    "Frees specified parameters of atoms: XYZ, Uiso, Occu, Disp");
   xlib_InitMacro(Isot, "npd-makes all NPD atoms isotropic",
     fpAny|psFileLoaded,
     "Makes provided atoms isotropic, if no arguments provided, current "
