@@ -300,14 +300,9 @@ namespace SFUtil {
         const vec3i hkl = refs[i];  //make a copy, safer
         const double d_s2 = TReflection::ToCart(hkl, hkl2c).QLength()*0.25;
         parent._generateu(hkl, rv, ps);
-        if (anom_only) {
-          for (size_t j = 0; j < scatterers.Count(); j++) {
-            fo[j] = scatterers[j].calc_anomalous();
-          }
-        }
-        else {
+        if (!anom_only) {
          for (size_t j = 0; j < scatterers.Count(); j++) {
-           fo[j] = scatterers[j].calc_sq_anomalous(d_s2);
+           fo[j] = scatterers[j].calc_sq(d_s2);
          }
         }
         if (centro) {
@@ -333,7 +328,9 @@ namespace SFUtil {
                 l += ca;
               }
             }
-            compd scv = fo[atoms[j]->GetTag()];
+            const Disp* disp = &atoms[j]->GetDisp();
+            compd scv = fo[atoms[j]->GetTag()] +
+              (disp == 0 ? scatterers[atoms[j]->GetTag()].GetFpFdp() : disp->value);
             if (!olx_is_valid_index(atoms[j]->GetEllpId())) {
               scv *= exp(U[j * 6] * d_s2);
             }
@@ -368,7 +365,9 @@ namespace SFUtil {
                 l.Im() += sa;
               }
             }
-            compd scv = fo[atoms[j]->GetTag()];
+            const Disp* disp = &atoms[j]->GetDisp();
+            compd scv = fo[atoms[j]->GetTag()] +
+              (disp == 0 ? scatterers[atoms[j]->GetTag()].GetFpFdp() : disp->value);
             if (!olx_is_valid_index(atoms[j]->GetEllpId())) {
               scv *= exp(U[j * 6] * d_s2);
             }

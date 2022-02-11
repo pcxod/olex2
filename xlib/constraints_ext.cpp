@@ -275,7 +275,7 @@ adirection* adirection::FromDataItem(const TDataItem& di,
     return static_direction().CreateFromDataItem(di, rm);
   }
   else {
-    return direction().CreateFromDataItem(di, rm);
+    return direction(type).CreateFromDataItem(di, rm);
   }
 }
 //.............................................................................
@@ -436,7 +436,9 @@ void same_group_constraint::UpdateParams(const TStrList& toks)  {}
 olxstr same_group_constraint::Describe() const {
   olxstr rv;
   for (size_t i=0; i < groups.Count(); i++) {
-    if (!rv.IsEmpty()) rv << ", ";
+    if (!rv.IsEmpty()) {
+      rv << ", ";
+    }
     rv << '[' << olx_analysis::alg::label(groups[i], ',') << ']';
   }
   return olxstr('{') << rv << '}';
@@ -460,7 +462,7 @@ void tls_group_constraint::FromToks(const TStrList& toks, RefinementModel& rm,
   if (toks.Count() < 4) {
     return;
   }
-  TAtomReference aref(toks.Text(' ', 1));
+  TAtomReference aref(toks.Text(' '));
   TCAtomGroup agroup;
   size_t atomAGroup;
   aref.Expand(rm, agroup, EmptyString(), atomAGroup);
@@ -533,4 +535,95 @@ PyObject* tls_group_constraint::PyExport() const {
 }
 #endif
 
+//.............................................................................
+//.............................................................................
+//.............................................................................
+olxstr same_disp_constraint::ToInsStr(const RefinementModel& rm) const {
+  olxstr_buf rv;
+  olxstr ws(' ');
+  rv << GetName();
+  for (size_t i = 0; i < atoms.Count(); i++) {
+    rv << ws << atoms[i]->GetResiLabel();
+  }
+  return olxstr(rv);
+}
+//.............................................................................
+void same_disp_constraint::FromToks(const TStrList& toks, RefinementModel& rm,
+  TTypeList<same_disp_constraint>& out)
+{
+  if (toks.Count() < 2) {
+    return;
+  }
+  TAtomReference aref(toks.Text(' '));
+  TCAtomGroup agroup;
+  size_t atomAGroup;
+  aref.Expand(rm, agroup, EmptyString(), atomAGroup);
+  if (agroup.Count() < 2) {
+    throw TInvalidArgumentException(__OlxSourceInfo, "atom number");
+  }
+  TCAtomPList l(agroup, FunctionAccessor::MakeConst(&TGroupCAtom::GetAtom));
+  out.Add(new same_disp_constraint(l));
+}
+//.............................................................................
+same_disp_constraint* same_disp_constraint::Copy(
+  RefinementModel& rm, const same_disp_constraint& c)
+{
+  TCAtomPList l(c.atoms.Count());
+  for (size_t i = 0; i < c.atoms.Count(); i++) {
+    TCAtom* a = rm.aunit.FindCAtomById(c.atoms[i]->GetId());
+    if (a == 0) {
+      throw TFunctionFailedException(__OlxSourceInfo,
+        "asymmetric units do not match");
+    }
+    l[i] = a;
+  }
+  return new same_disp_constraint(l);
+}
+//.............................................................................
+const olxstr& same_disp_constraint::GetName() {
+  static olxstr name("olex2.constraint.same_disp");
+  return name;
+}
+//.............................................................................
+olxstr same_disp_constraint::Describe() const {
+  return olxstr("Same disp [") << olx_analysis::alg::label(atoms, ',') << ']';
+}
+//.............................................................................
+void same_disp_constraint::UpdateParams(const TStrList& toks) {
+  if (!toks.IsEmpty()) {
+    throw TNotImplementedException(__OlxSourceInfo);
+  }
+}
+//.............................................................................
+void same_disp_constraint::ToDataItem(TDataItem& di) const {
+  IndexRange::Builder rb;
+  for (size_t i = 0; i < atoms.Count(); i++) {
+    rb << atoms[i]->GetTag();
+  }
+  di.AddField("atoms", rb.GetString());
+}
+//.............................................................................
+same_disp_constraint* same_disp_constraint::FromDataItem(const TDataItem& di,
+  const RefinementModel& rm)
+{
+  IndexRange::RangeItr ai(di.GetFieldByName("atoms"));
+  TCAtomPList l;
+  while (ai.HasNext()) {
+    l.Add(rm.aunit.GetAtom(ai.Next()));
+  }
+  if (l.Count() < 2) {
+    throw TInvalidArgumentException(__OlxSourceInfo, "atom number");
+  }
+  return new same_disp_constraint(l);
+}
+//.............................................................................
+#ifdef _PYTHON
+PyObject* same_disp_constraint::PyExport() const {
+  PyObject* a = PyTuple_New(atoms.Count());
+  for (size_t i = 0; i < atoms.Count(); i++) {
+    PyTuple_SetItem(a, i, Py_BuildValue("i", atoms[i]->GetTag()));
+  }
+  return a;
+}
+#endif
 //.............................................................................

@@ -60,19 +60,27 @@ class TExyzGroups;
 struct CXConnInfo;
 class RefinementModel;
 
-class TCAtom: public ACollectionItem, public IXVarReferencer  {
+struct Disp {
+  compd value;
+  double fp_su, fdp_su;
+  Disp() : fp_su(0), fdp_su(0) {}
+  Disp(const compd &v) : value(v), fp_su(0), fdp_su(0) {}
+
+};
+
+class TCAtom : public ACollectionItem, public IXVarReferencer {
 public:
   struct Site {  // identifies an atomic site, matrix*atom.ccrd()
     TCAtom* atom;
     smatd matrix;
-    Site(TCAtom* a, const smatd& m) : atom(a), matrix(m)  {}
-    Site(const Site& s) : atom(s.atom), matrix(s.matrix)  {}
-    Site& operator = (const Site& s)  {
+    Site(TCAtom* a, const smatd& m) : atom(a), matrix(m) {}
+    Site(const Site& s) : atom(s.atom), matrix(s.matrix) {}
+    Site& operator = (const Site& s) {
       atom = s.atom;
       matrix = s.matrix;
       return *this;
     }
-    int Compare(const Site &s) const {
+    int Compare(const Site& s) const {
       int r = olx_cmp(atom->GetId(), s.atom->GetId());
       if (r == 0) {
         return olx_cmp(matrix.GetId(), s.matrix.GetId());
@@ -108,33 +116,32 @@ private:
   TTypeList<TCAtom::Site> AttachedSites, AttachedSitesI;
   smatd_list* Equivs;
   /* Afix group is a fitted group, Hfix group the immediate dependent group */
-  TAfixGroup* DependentAfixGroup, *ParentAfixGroup;
+  TAfixGroup* DependentAfixGroup, * ParentAfixGroup;
   TPtrList<TAfixGroup>* DependentHfixGroups;
   TExyzGroup* ExyzGroup;
   XVarReference* Vars[12]; //x,y,z,occu,uiso,U
   static olxstr VarNames[];
   CXConnInfo* ConnInfo;
   void SetId(size_t id) { Id = id; }
-  int SortSitesByDistanceAsc(const Site &s1, const Site &s2) const;
-  int SortSitesByDistanceDsc(const Site &s1, const Site &s2) const {
+  int SortSitesByDistanceAsc(const Site& s1, const Site& s2) const;
+  int SortSitesByDistanceDsc(const Site& s1, const Site& s2) const {
     return -SortSitesByDistanceAsc(s1, s2);
   }
   // Shelxl SPEC
   double SpecialPositionDeviation;
+  olx_object_ptr<Disp> disp;
 public:
   TCAtom(TAsymmUnit* Parent);
   virtual ~TCAtom();
-  TAsymmUnit* GetParent() const {  return Parent; }
-  //TBasicAtomInfo& GetAtomInfo() const {  return *FAtomInfo; }
-  //void SetAtomInfo(TBasicAtomInfo& A);
-  const cm_Element& GetType() const {  return *Type; }
+  TAsymmUnit* GetParent() const { return Parent; }
+  const cm_Element& GetType() const { return *Type; }
   void SetType(const cm_Element& A);
 
   /* function validates and changes the atom type. If validate is true, the
   atom type is guessed from the label and changed. If validate is false, the
   label is set without changing the atom type
   */
-  void SetLabel(const olxstr& L, bool validate=true);
+  void SetLabel(const olxstr& L, bool validate = true);
 
   // returns atom label
   const olxstr& GetLabel() const { return Label; }
@@ -142,15 +149,10 @@ public:
   the Residue number. If add part is true also adds '^' + parts as a Latin
   letter
   */
-  olxstr GetResiLabel(bool add_part=false) const;
+  olxstr GetResiLabel(bool add_part = false) const;
 
   size_t AttachedSiteCount() const { return AttachedSites.Count(); }
-  bool IsAttachedTo(const TCAtom& ca) const {
-    for( size_t i=0; i < AttachedSites.Count(); i++ )
-      if( AttachedSites[i].atom == &ca )
-        return true;
-    return false;
-  }
+  bool IsAttachedTo(const TCAtom& ca) const;
   TCAtom::Site& GetAttachedSite(size_t i) const {
     return AttachedSites.GetItem(i);
   }
@@ -161,7 +163,7 @@ public:
   unique
   */
   bool AttachSite(TCAtom* atom, const smatd& matrix);
-  void ClearAttachedSites()  {
+  void ClearAttachedSites() {
     AttachedSites.Clear();
     AttachedSitesI.Clear();
   }
@@ -187,15 +189,15 @@ public:
 
   void  Assign(const TCAtom& S);
 
-  size_t GetId() const {  return Id;  }
-  DefPropP(uint32_t, ResiId)
-  DefPropP(uint32_t, FragmentId)
-  DefPropP(uint16_t, SameId)
-  DefPropP(size_t, EllpId)
-  DefPropP(TExyzGroup*, ExyzGroup)
-  DefPropP(double, SpecialPositionDeviation)
+  size_t GetId() const { return Id; }
+  DefPropP(uint32_t, ResiId);
+  DefPropP(uint32_t, FragmentId);
+  DefPropP(uint16_t, SameId);
+  DefPropP(size_t, EllpId);
+  DefPropP(TExyzGroup*, ExyzGroup);
+  DefPropP(double, SpecialPositionDeviation);
 
-  int GetPart() const { return (int)(int8_t)(PartAndCharge&0x00ff); }
+  int GetPart() const { return (int)(int8_t)(PartAndCharge & 0x00ff); }
   void SetPart(int v) {
     PartAndCharge = (PartAndCharge & 0xff00) | (uint8_t)v;
   }
@@ -205,7 +207,7 @@ public:
   }
 
   // returns multiplicity of the position
-  size_t GetDegeneracy() const {  return EquivCount()+1;  }
+  size_t GetDegeneracy() const { return EquivCount() + 1; }
   // used by TUnitCell to initialise position symmetry
   void AddEquiv(const smatd& m) {
     if (Equivs == 0) {
@@ -225,8 +227,8 @@ public:
   void SetConnInfo(CXConnInfo& ci);
 
   int GetAfix() const;
-  DefPropP(TAfixGroup*, ParentAfixGroup)
-  DefPropP(TAfixGroup*, DependentAfixGroup)
+  DefPropP(TAfixGroup*, ParentAfixGroup);
+  DefPropP(TAfixGroup*, DependentAfixGroup);
   size_t DependentHfixGroupCount() const {
     return DependentHfixGroups == 0 ? 0 : DependentHfixGroups->Count();
   }
@@ -272,19 +274,19 @@ public:
   bool CheckFlags(short v) const { return (Flags & v) == v; }
   bool IsAvailable() const {
     return
-      (Flags&(catom_flag_Detached|catom_flag_Masked|catom_flag_Deleted)) == 0;
+      (Flags & (catom_flag_Detached | catom_flag_Masked | catom_flag_Deleted)) == 0;
   }
-  bool IsGrowable() const {  return GetDegeneracy() > 1;  }
+  bool IsGrowable() const { return GetDegeneracy() > 1; }
   TEllipsoid* GetEllipsoid() const;
   void UpdateEllp(const TEllipsoid& NV);
-  void AssignEllp(TEllipsoid *NV);
+  void AssignEllp(TEllipsoid* NV);
 
-  vec3d& ccrd()  {  return Center;  }
-  vec3d const& ccrd() const {  return Center;  }
-  vec3d& ccrdEsd()  {  return Esd;  }
-  vec3d const& ccrdEsd() const {  return Esd;  }
-// IXVarReferencer implementation
-  virtual size_t VarCount() const {  return 12;  }
+  vec3d& ccrd() { return Center; }
+  vec3d const& ccrd() const { return Center; }
+  vec3d& ccrdEsd() { return Esd; }
+  vec3d const& ccrdEsd() const { return Esd; }
+  // IXVarReferencer implementation
+  virtual size_t VarCount() const { return 12; }
   virtual XVarReference* GetVarRef(size_t i) const {
     if (i >= VarCount()) {
       throw TInvalidArgumentException(__OlxSourceInfo, "var index");
@@ -311,7 +313,9 @@ public:
 #ifdef _DEBUG
   void SetTag(index_t v) { ACollectionItem::SetTag(v); }
 #endif
-//
+  const olx_object_ptr<Disp>& GetDisp() const { return disp; }
+  olx_object_ptr<Disp>& GetDisp() { return disp; }
+  //
   void ToDataItem(TDataItem& item) const;
   void FromDataItem(TDataItem& item);
 #ifdef _PYTHON
@@ -319,31 +323,34 @@ public:
 #endif
   static int CompareAtomLabels(const olxstr& S, const olxstr& S1);
 
-  template <class Accessor> struct FlagsAnalyser_ {
-    const Accessor &accessor;
+  template <class Accessor>
+  struct FlagsAnalyser_ {
+    const Accessor& accessor;
     const short ref_flags;
-    FlagsAnalyser_(const Accessor &accessor_, short _ref_flags)
+    FlagsAnalyser_(const Accessor& accessor_, short _ref_flags)
       : accessor(accessor_), ref_flags(_ref_flags)
     {}
     template <class Item>
     bool OnItem(const Item& o, size_t) const {
-      return (olx_ref::get(accessor(o)).Flags&ref_flags) != 0;
+      return (olx_ref::get(accessor(o)).Flags & ref_flags) != 0;
     }
   };
-  template <class acc_t> static FlagsAnalyser_<acc_t>
-  FlagsAnalyser(const acc_t &acc, short flag) {
+  template <class acc_t>
+  static FlagsAnalyser_<acc_t>
+    FlagsAnalyser(const acc_t& acc, short flag) {
     return FlagsAnalyser_<acc_t>(acc, flag);
   }
   static FlagsAnalyser_<DummyAccessor>
-  FlagsAnalyser(short flags) {
+    FlagsAnalyser(short flags) {
     return FlagsAnalyser_<DummyAccessor>(DummyAccessor(), flags);
   }
 
-  template <class Accessor> struct FlagSetter_ {
-    const Accessor &accessor;
+  template <class Accessor>
+  struct FlagSetter_ {
+    const Accessor& accessor;
     const short ref_flags;
     bool set;
-    FlagSetter_(const Accessor &accessor_, short ref_flags_, bool set_)
+    FlagSetter_(const Accessor& accessor_, short ref_flags_, bool set_)
       : accessor(accessor_), ref_flags(ref_flags_), set(set_)
     {}
     template <class Item>
@@ -351,46 +358,50 @@ public:
       return olx_set_bit(set, olx_ref::get(accessor(o)).Flags, ref_flags);
     }
   };
-  template <class acc_t> static FlagSetter_<acc_t>
-  FlagSetter(const acc_t &acc, short ref_flags, bool set) {
+  template <class acc_t>
+  static FlagSetter_<acc_t>
+    FlagSetter(const acc_t& acc, short ref_flags, bool set) {
     return FlagSetter_<acc_t>(acc, ref_flags, set);
   }
   static FlagSetter_<DummyAccessor>
-  FlagSetter(short ref_flags, bool set) {
+    FlagSetter(short ref_flags, bool set) {
     return FlagSetter_<DummyAccessor>(DummyAccessor(), ref_flags, set);
   }
 
-  template <class Accessor> struct TypeAnalyser_ {
-    const Accessor &accessor;
+  template <class Accessor>
+  struct TypeAnalyser_ {
+    const Accessor& accessor;
     const short ref_type;
-    TypeAnalyser_(const Accessor &accessor_, short _ref_type)
+    TypeAnalyser_(const Accessor& accessor_, short _ref_type)
       : accessor(accessor_), ref_type(_ref_type)
     {}
     template <class Item> bool OnItem(const Item& o, size_t) const {
       return olx_ref::get(accessor(o)).GetType() == ref_type;
     }
   };
-  template <class acc_t> static TypeAnalyser_<acc_t>
-  TypeAnalyser(const acc_t &acc, const cm_Element &e) {
+  template <class acc_t>
+  static TypeAnalyser_<acc_t>
+    TypeAnalyser(const acc_t& acc, const cm_Element& e) {
     return TypeAnalyser_<acc_t>(acc, e.z);
   }
-  template <class acc_t> static TypeAnalyser_<acc_t>
-  TypeAnalyser(const acc_t &acc, short z) {
+  template <class acc_t>
+  static TypeAnalyser_<acc_t>
+    TypeAnalyser(const acc_t& acc, short z) {
     return TypeAnalyser_<acc_t>(acc, z);
   }
   static TypeAnalyser_<DummyAccessor>
-  TypeAnalyser(short z) {
+    TypeAnalyser(short z) {
     return TypeAnalyser_<DummyAccessor>(DummyAccessor(), z);
   }
   static TypeAnalyser_<DummyAccessor>
-  TypeAnalyser(const cm_Element &e) {
+    TypeAnalyser(const cm_Element& e) {
     return TypeAnalyser_<DummyAccessor>(DummyAccessor(), e.z);
   }
 
   /* recursive tag setter, uses Processed property to define the ermination
   procedure
   */
-  static void SetTagRecursively(TCAtom &a, index_t v);
+  static void SetTagRecursively(TCAtom& a, index_t v);
   friend class TAsymmUnit;
 };
 //..............................................................................
@@ -399,55 +410,45 @@ public:
 //..............................................................................
 class TCAtomComparator  {
 public:
-  template <class item_a_t, class item_b_t>
-  static int Compare(const item_a_t &a1_, const item_b_t &a2_) {
-    const TCAtom &a1 = olx_ref::get(a1_),
-      &a2 = olx_ref::get(a2_);
-    if (a1.GetFragmentId() != a2.GetFragmentId())
-      return a1.GetFragmentId() - a2.GetFragmentId();
-    if (a1.GetResiId() != a2.GetResiId())
-      return olx_cmp(a1.GetResiId(), a2.GetResiId());
-    // by label
-    if (a1.GetType() == a2.GetType())
-      return TCAtom::CompareAtomLabels(a1.GetLabel(), a2.GetLabel());
-    // by mass
-    return olx_cmp(a1.GetType().GetMr(), a2.GetType().GetMr());
+  static int Compare(const TCAtom& a1, const TCAtom& a2);
+  static int Compare(const TCAtom* a1, const TCAtom* a2) {
+    return Compare(*a1, *a2);
   }
 };
 //..............................................................................
-class TCAtomCenterComparator  {
+class TCAtomCenterComparator {
 public:
-  static int Compare(const TCAtom &a1, const TCAtom &a2)  {
+  static int Compare(const TCAtom& a1, const TCAtom& a2) {
     return olx_cmp(a1.ccrd().QLength(), a2.ccrd().QLength());
   }
 };
 //..............................................................................
-class TGroupCAtom  {
+class TGroupCAtom {
   TCAtom* Atom;
   const smatd* Matrix;
   olxstr Name;
 public:
-  TGroupCAtom() : Atom(NULL), Matrix(NULL)  {}
-  TGroupCAtom(TCAtom* a, const smatd* m=NULL) : Atom(a), Matrix(m)  {}
+  TGroupCAtom() : Atom(0), Matrix(0) {}
+  TGroupCAtom(TCAtom* a, const smatd* m = 0) : Atom(a), Matrix(m) {}
   TGroupCAtom(TCAtom& a, const smatd& m)
-    : Atom(&a), Matrix(m.IsFirst() ? NULL : &m)  {}
-  TGroupCAtom(const olxstr& name, TCAtom* a, const smatd* m=NULL)
-    : Atom(a), Matrix(m), Name(name)  {}
+    : Atom(&a), Matrix(m.IsFirst() ? 0 : &m) {}
+  TGroupCAtom(const olxstr& name, TCAtom* a, const smatd* m = 0)
+    : Atom(a), Matrix(m), Name(name) {}
   TGroupCAtom(const TGroupCAtom& ga)
-    : Atom(ga.Atom), Matrix(ga.Matrix), Name(ga.Name)  {}
-  TGroupCAtom(const TDataItem& di, const RefinementModel& rm)  {
+    : Atom(ga.Atom), Matrix(ga.Matrix), Name(ga.Name) {}
+  TGroupCAtom(const TDataItem& di, const RefinementModel& rm) {
     FromDataItem(di, rm);
   }
   DefPropP(TCAtom*, Atom)
-  const smatd* GetMatrix() const {  return Matrix;  }
+    const smatd* GetMatrix() const { return Matrix; }
   vec3d ccrd() const {
-    return Matrix == NULL ? Atom->ccrd() : *Matrix*Atom->ccrd();
+    return Matrix == 0 ? Atom->ccrd() : *Matrix * Atom->ccrd();
   }
   DefPropC(olxstr, Name)
-  /* if atom's Residue is default or residue number equals to ResiNumber - it
-  it dropped
-  */
-  olxstr GetFullLabel(const RefinementModel& rm, int ResiNumber) const;
+    /* if atom's Residue is default or residue number equals to ResiNumber - it
+    it dropped
+    */
+    olxstr GetFullLabel(const RefinementModel& rm, int ResiNumber) const;
   /* if Resiname is number - calls the function above with ResiNumber.ToInt(),
   else if it is empty - calls the single argument function, otherwise compares
   the atoms' residue name with ResiName and if the names match - drops it

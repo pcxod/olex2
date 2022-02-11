@@ -42,6 +42,7 @@ TCAtom::TCAtom(TAsymmUnit* _Parent) : Parent(_Parent)  {
   ConnInfo = 0;
   SpecialPositionDeviation = 0;
   memset(Vars, 0, sizeof(Vars));
+  disp = 0;
 }
 //..............................................................................
 TCAtom::~TCAtom() {
@@ -81,6 +82,15 @@ void TCAtom::SetLabel(const olxstr& L, bool validate) {
   else {
     Label = L;
   }
+}
+//..............................................................................
+bool TCAtom::IsAttachedTo(const TCAtom& ca) const {
+  for (size_t i = 0; i < AttachedSites.Count(); i++) {
+    if (AttachedSites[i].atom == &ca) {
+      return true;
+    }
+  }
+  return false;
 }
 //..............................................................................
 void TCAtom::SetType(const cm_Element& t) {
@@ -155,6 +165,10 @@ void TCAtom::Assign(const TCAtom& S)  {
   Esd = S.Esd;
   AssignEquivs(S);
   Flags = S.Flags;
+  disp = 0;
+  if (S.GetDisp().ok()) {
+    disp = new Disp(*S.GetDisp());
+  }
 }
 //..............................................................................
 int TCAtom::GetAfix() const {
@@ -207,13 +221,13 @@ void TCAtom::ToDataItem(TDataItem& item) const {
   item.AddField("type", Type->symbol);
   item.AddField("part", GetPart());
   item.AddField("charge", GetCharge());
-  item.AddField("sof", TEValue<double>(Occu, OccuEsd).ToString());
+  item.AddField("sof", TEValueD(Occu, OccuEsd).ToString());
   item.AddField("flags", Flags);
-  item.AddField("x", TEValue<double>(Center[0], Esd[0]).ToString());
-  item.AddField("y", TEValue<double>(Center[1], Esd[1]).ToString());
-  item.AddField("z", TEValue<double>(Center[2], Esd[2]).ToString());
+  item.AddField("x", TEValueD(Center[0], Esd[0]).ToString());
+  item.AddField("y", TEValueD(Center[1], Esd[1]).ToString());
+  item.AddField("z", TEValueD(Center[2], Esd[2]).ToString());
   if (!olx_is_valid_index(EllpId)) {
-    item.AddField("Uiso", TEValue<double>(Uiso, UisoEsd).ToString());
+    item.AddField("Uiso", TEValueD(Uiso, UisoEsd).ToString());
     if (UisoOwner != NULL && UisoOwner->GetTag() >= 0) {
       TDataItem& uo = item.AddItem("Uowner");
       uo.AddField("id", UisoOwner->GetTag());
@@ -224,12 +238,12 @@ void TCAtom::ToDataItem(TDataItem& item) const {
     evecd Q(6), E(6);
     GetEllipsoid()->GetShelxQuad(Q, E);
     TDataItem& elp = item.AddItem("adp");
-    elp.AddField("xx", TEValue<double>(Q[0], E[0]).ToString());
-    elp.AddField("yy", TEValue<double>(Q[1], E[1]).ToString());
-    elp.AddField("zz", TEValue<double>(Q[2], E[2]).ToString());
-    elp.AddField("yz", TEValue<double>(Q[3], E[3]).ToString());
-    elp.AddField("xz", TEValue<double>(Q[4], E[4]).ToString());
-    elp.AddField("xy", TEValue<double>(Q[5], E[5]).ToString());
+    elp.AddField("xx", TEValueD(Q[0], E[0]).ToString());
+    elp.AddField("yy", TEValueD(Q[1], E[1]).ToString());
+    elp.AddField("zz", TEValueD(Q[2], E[2]).ToString());
+    elp.AddField("yz", TEValueD(Q[3], E[3]).ToString());
+    elp.AddField("xz", TEValueD(Q[4], E[4]).ToString());
+    elp.AddField("xy", TEValueD(Q[5], E[5]).ToString());
     if (GetEllipsoid()->IsAnharmonic()) {
       const tensor::tensor_rank_3 &c = GetEllipsoid()->GetAnharmonicPart()->C;
       const tensor::tensor_rank_4 &d = GetEllipsoid()->GetAnharmonicPart()->D;
@@ -242,6 +256,10 @@ void TCAtom::ToDataItem(TDataItem& item) const {
       }
       elp.AddItem("CG", olxstr(t).TrimR(','));
     }
+  }
+  if (disp.ok()) {
+    item.AddField("fp", TEValueD(disp->value.GetRe(), disp->fp_su).ToString());
+    item.AddField("fdp", TEValueD(disp->value.GetIm(), disp->fdp_su).ToString());
   }
   if (*Type == iQPeakZ) {
     item.AddField("peak", QPeak);
@@ -291,6 +309,10 @@ PyObject* TCAtom::PyExport(bool export_attached_sites) {
       PythonExt::SetDictItem(main, "anharmonic_adp", anh);
     }
   }
+  if (disp.ok()) {
+    PythonExt::SetDictItem(main, "disp", Py_BuildValue("(dd)",
+      disp->value.GetRe(), disp->value.GetIm()));
+  }
   if (*Type == iQPeakZ) {
     PythonExt::SetDictItem(main, "peak", Py_BuildValue("d", QPeak));
   }
@@ -339,7 +361,7 @@ void TCAtom::FromDataItem(TDataItem& item) {
   if (Type == 0) {
     throw TFunctionFailedException(__OlxSourceInfo, "invalid atom type");
   }
-  TEValue<double> ev;
+  TEValueD ev;
   Label = item.GetFieldByName("label");
   SetPart(item.GetFieldByName("part").ToInt());
   SetCharge(item.FindField("charge", '0').ToInt());
@@ -390,6 +412,14 @@ void TCAtom::FromDataItem(TDataItem& item) {
       UisoOwner = &GetParent()->GetAtom(uo->GetFieldByName("id").ToSizeT());
       UisoScale = uo->GetFieldByName("k").ToDouble();
     }
+  }
+  size_t fp_idx = item.FieldIndex("fp");
+  if (fp_idx != InvalidIndex) {
+    TEValueD fp(item.GetFieldByIndex(fp_idx));
+    TEValueD fdp(item.GetFieldByName("fdp"));
+    disp = new Disp(compd(fp.GetV(), fdp.GetV()));
+    disp->fp_su = fp.GetE();
+    disp->fdp_su = fdp.GetE();
   }
   if (*Type == iQPeakZ) {
     QPeak = item.GetFieldByName("peak").ToDouble();
@@ -573,6 +603,24 @@ SiteSymmCon TCAtom::GetSiteConstraints() const {
   }
   return rv;
 }
+//..............................................................................
+//..............................................................................
+//..............................................................................
+int TCAtomComparator::Compare(const TCAtom& a1, const TCAtom& a2) {
+  if (a1.GetFragmentId() != a2.GetFragmentId()) {
+    return a1.GetFragmentId() - a2.GetFragmentId();
+  }
+  if (a1.GetResiId() != a2.GetResiId()) {
+    return olx_cmp(a1.GetResiId(), a2.GetResiId());
+  }
+  // by label
+  if (a1.GetType() == a2.GetType()) {
+    return TCAtom::CompareAtomLabels(a1.GetLabel(), a2.GetLabel());
+  }
+  // by mass
+  return olx_cmp(a1.GetType().GetMr(), a2.GetType().GetMr());
+}
+
 //..............................................................................
 //..............................................................................
 //..............................................................................

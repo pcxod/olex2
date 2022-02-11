@@ -60,10 +60,12 @@ RefinementModel::RefinementModel(TAsymmUnit& au) :
   rcRegister.Add(SharedRotatedADPs.GetName(), &SharedRotatedADPs);
   rcRegister.Add(Directions.GetName(), &Directions);
   rcRegister.Add(SameGroups.GetName(), &SameGroups);
+  rcRegister.Add(SameDisp.GetName(), &SameDisp);
   rcRegister.Add(cTLS.GetName(), &cTLS);
   rcList.Add(&Directions);
   rcList.Add(&SharedRotatedADPs);
   rcList.Add(&SameGroups);
+  rcList.Add(&SameDisp);
   rcList1 << rDFIX <<rDANG << rSADI << rCHIV << rFLAT << rDELU
     << rSIMU << rISOR  << rEADP <<
     rAngle << rDihedralAngle << rFixedUeq << rSimilarUeq << rSimilarAdpVolume
@@ -97,7 +99,6 @@ void RefinementModel::Clear(uint32_t clear_mask) {
   }
   SfacData.Clear();
   UserContent.Clear();
-  RefineDisp.Clear();
   for (size_t i = 0; i < Frags.Count(); i++) {
     delete Frags.GetValue(i);
   }
@@ -123,8 +124,6 @@ void RefinementModel::Clear(uint32_t clear_mask) {
       rSAME.Delete(to_del);
     }
   }
-  //ExyzGroups.Clear();
-  //AfixGroups.Clear();
   InfoTables.Clear();
   UsedSymm.Clear();
   used_weight.Clear();
@@ -232,7 +231,6 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm,
   expl = rm.expl;
   used_weight = rm.used_weight;
   proposed_weight = rm.proposed_weight;
-  RefineDisp = rm.RefineDisp;
   LS = rm.LS;
   PLAN = rm.PLAN;
   HKLF = rm.HKLF;
@@ -1429,19 +1427,25 @@ const_strlist RefinementModel::Describe() {
   if (!SameGroups.items.IsEmpty()) {
     lst.Add(olxstr(++sec_num)) << ". Same fragment constrains";
     for (size_t i = 0; i < SameGroups.items.Count(); i++) {
-      if (!SameGroups.items[i].IsValid()) {
-        continue;
+      if (SameGroups.items[i].IsValid()) {
+        lst.Add(SameGroups.items[i].Describe());
       }
-      lst.Add(SameGroups.items[i].Describe());
+    }
+  }
+  if (!SameDisp.items.IsEmpty()) {
+    lst.Add(olxstr(++sec_num)) << ". Same DISP constrains";
+    for (size_t i = 0; i < SameDisp.items.Count(); i++) {
+      if (SameDisp.items[i].IsValid()) {
+        lst.Add(SameDisp.items[i].Describe());
+      }
     }
   }
   if (!SharedRotatedADPs.items.IsEmpty()) {
     lst.Add(olxstr(++sec_num)) << ". Shared rotated ADPs";
     for (size_t i = 0; i < SharedRotatedADPs.items.Count(); i++) {
-      if (!SharedRotatedADPs.items[i].IsValid()) {
-        continue;
+      if (SharedRotatedADPs.items[i].IsValid()) {
+        lst.Add(SharedRotatedADPs.items[i].Describe());
       }
-      lst.Add(SharedRotatedADPs.items[i].Describe());
     }
   }
   TStrList vars;
@@ -1578,9 +1582,6 @@ void RefinementModel::ToDataItem(TDataItem& item) {
     .AddField("RefMeth", RefinementMethod)
     .AddField("SolMeth", SolutionMethod)
     .AddField("RefInArg", PersUtil::NumberListToStr(LS));
-  if (!RefineDisp.IsEmpty()) {
-    item.AddField("RefineDisp", RefineDisp.Text(','));
-  }
 
   // save used equivalent positions
   TArrayList<uint32_t> mat_tags(UsedSymm.Count());
@@ -1649,7 +1650,6 @@ void RefinementModel::FromDataItem(TDataItem& item) {
   PersUtil::NumberListFromStr(item.GetFieldByName("Weight"), used_weight);
   PersUtil::NumberListFromStr(item.GetFieldByName("ProposedWeight"),
     proposed_weight);
-  RefineDisp.Strtok(item.FindField("RefineDisp"), ',');
   ModelSource = item.FindField("ModelSrc");
   HKLSource = item.GetFieldByName("HklSrc");
   RefinementMethod = item.GetFieldByName("RefMeth");
@@ -1668,10 +1668,12 @@ void RefinementModel::FromDataItem(TDataItem& item) {
   AfixGroups.FromDataItem(item.GetItemByName("AFIX"));
   ExyzGroups.FromDataItem(item.GetItemByName("EXYZ"));
   rSAME.FromDataItem(item.GetItemByName("SAME"));
-  for (size_t i = 0; i < rcList1.Count(); i++)
+  for (size_t i = 0; i < rcList1.Count(); i++) {
     rcList1[i]->FromDataItem(item.FindItem(rcList1[i]->GetIdName()));
-  for (size_t i = 0; i < rcList.Count(); i++)
+  }
+  for (size_t i = 0; i < rcList.Count(); i++) {
     rcList[i]->FromDataItem(item.FindItem(rcList[i]->GetName()), *this);
+  }
 
   TDataItem& hklf = item.GetItemByName("HKLF");
   HKLF = hklf.GetValue().ToInt();
@@ -1869,13 +1871,6 @@ PyObject* RefinementModel::PyExport(bool export_conn) {
   // restore matrix tags
   for (size_t i = 0; i < UsedSymm.Count(); i++) {
     UsedSymm.GetValue(i).symop.SetRawId(mat_tags[i]);
-  }
-  if (!RefineDisp.IsEmpty()) {
-    PyObject* disp = PyTuple_New(RefineDisp.Count());
-    for (size_t i = 0; i < RefineDisp.Count(); i++) {
-      PyTuple_SetItem(disp, i, PythonExt::BuildString(RefineDisp[i]));
-    }
-    PythonExt::SetDictItem(main, "refine_disp", disp);
   }
   return main;
 }
@@ -2274,12 +2269,29 @@ olxstr RefinementModel::WriteInsExtras(const TCAtomPList* atoms,
       }
     }
   }
-
+  // write disp part
+  {
+    TDataItem* aa = 0;
+    for (size_t i = 0; i < aunit.AtomCount(); i++) {
+      TCAtom& a = aunit.GetAtom(i);
+      if (a.IsDeleted()) {
+        continue;
+      }
+      if (a.GetDisp().ok()) {
+        if (aa == 0) {
+          aa = &di.AddItem("dispersion");
+        }
+        const Disp& disp = a.GetDisp();
+        aa->AddItem(a.GetResiLabel(),
+          olxstr::FormatFloat(4,disp.value.GetA()) << ' '
+          << olxstr::FormatFloat(4, disp.value.GetB())
+        );
+      }
+    }
+  }
+  //
   di.AddItem("HklSrc").SetValue(
     olxstr('%') << encoding::percent::encode(HKLSource));
-  if (!RefineDisp.IsEmpty()) {
-    di.AddField("RefineDisp", RefineDisp.Text(','));
-  }
   TEStrBuffer bf;
   di.SaveToStrBuffer(bf);
   return bf.ToString();
@@ -2302,7 +2314,8 @@ void RefinementModel::ReadInsExtras(const TStrList &items) {
   TDataItem *constraints = di.FindItem("constraints");
   if (constraints != 0) {
     for (size_t i = 0; i < constraints->ItemCount(); i++) {
-      TStrList toks(constraints->GetItemByIndex(i).GetValue(), ' ');
+      TDataItem& constraint = constraints->GetItemByIndex(i);
+      TStrList toks(constraint.GetValue(), ' ');
       IConstraintContainer *cc = rcRegister.Find(toks[0], 0);
       if (cc != 0) {
         cc->FromToks(toks.SubListFrom(1), *this);
@@ -2312,28 +2325,30 @@ void RefinementModel::ReadInsExtras(const TStrList &items) {
         if (ca == 0) {
           TBasicApp::NewLogEntry() << (olxstr(
             "Invalid Olex2 constraint: ").quote()
-            << constraints->GetItemByIndex(i).GetValue());
+            << constraint.GetValue());
           continue;
         }
-        if (ca->GetAfix() != 0)  // already set
+        if (ca->GetAfix() != 0) { // already set
           continue;
+        }
         TAfixGroup& ag = AfixGroups.New(ca, -1);
         for (size_t ti = 2; ti < toks.Count(); ti++) {
           ca = aunit.FindCAtom(toks[ti]);
           if (ca == 0) {
             TBasicApp::NewLogEntry(logError) << (olxstr(
               "Warning - possibly invalid Olex2 constraint: ").quote()
-              << constraints->GetItemByIndex(i).GetValue());
+              << constraint.GetValue());
             continue;
           }
-          if (ca->GetAfix() == 0)
+          if (ca->GetAfix() == 0) {
             ag.AddDependent(*ca);
+          }
         }
       }
       else {
         TBasicApp::NewLogEntry() << (olxstr(
           "Unknown Olex2 constraint: ").quote()
-          << constraints->GetItemByIndex(i).GetValue());
+          << constraint.GetValue());
       }
     }
   }
@@ -2351,7 +2366,7 @@ void RefinementModel::ReadInsExtras(const TStrList &items) {
     }
   }
   TDataItem *selected_cif_records = di.FindItem("selected_cif_records");
-  if (selected_cif_records != NULL) {
+  if (selected_cif_records != 0) {
     try {
       selectedTableRows.FromDataItem(*selected_cif_records, aunit);
     }
@@ -2370,6 +2385,13 @@ void RefinementModel::ReadInsExtras(const TStrList &items) {
       TBasicApp::NewLogEntry(logError) <<
         "While loading variables definitions: " <<
         e.GetException()->GetFullMessage();
+    }
+  }
+  for (size_t i = 0; i < aunit.AtomCount(); i++) {
+    TCAtom& a = aunit.GetAtom(i);
+    a.GetDisp() = 0;
+    if (a.GetEllipsoid() != 0) {
+      a.GetEllipsoid()->SetAnharmonicPart(0);
     }
   }
   TDataItem *a_adp = di.FindAnyItem("anharmonics");
@@ -2400,6 +2422,26 @@ void RefinementModel::ReadInsExtras(const TStrList &items) {
       a->GetEllipsoid()->SetAnharmonicPart(ac.release());
     }
   }
+  TDataItem* a_disp = di.FindAnyItem("dispersion");
+  // read atom disp
+  if (a_disp != 0) {
+    for (size_t i = 0; i < a_disp->ItemCount(); i++) {
+      TDataItem& ai = a_disp->GetItemByIndex(i);
+      TCAtom* a = aunit.FindCAtom(ai.GetName());
+      if (a == 0) {
+        TBasicApp::NewLogEntry(logError) << "Could not locate " <<
+          ai.GetName() << " for the DISP value";
+        continue;
+      }
+      TStrList toks(ai.GetValue(), ' ');
+      if (toks.Count() != 2) {
+        TBasicApp::NewLogEntry(logError) << "Ignoring invalid DISP for "
+          << ai.GetName();
+        continue;
+      }
+      a->GetDisp() = new Disp(compd(toks[0].ToDouble(), toks[1].ToDouble()));
+    }
+  }
   TDataItem *hs = di.FindItem("HklSrc");
   if (hs != 0) {
     HKLSource = hs->GetValue();
@@ -2407,8 +2449,6 @@ void RefinementModel::ReadInsExtras(const TStrList &items) {
       HKLSource = encoding::percent::decode(HKLSource.SubStringFrom(1));
     }
   }
-  RefineDisp.Clear();
-  RefineDisp.Strtok(di.FindField("RefineDisp"), ',');
 }
 //..............................................................................
 void RefinementModel::BeforeAUUpdate_() {
@@ -2765,6 +2805,17 @@ void RefinementModel::DeleteSfacData(size_t idx) {
   SfacData.Delete(idx);
 }
 //..............................................................................
+void RefinementModel::InitDisp(TCAtom& a) const {
+  XScatterer* xs = FindSfacData(a.GetType().symbol);
+  if (xs == 0) {
+    a.GetDisp() = new Disp(a.GetType().CalcFpFdp(expl.GetRadiationEnergy()));
+    a.GetDisp()->value.A() -= a.GetType().z;
+  }
+  else {
+    a.GetDisp() = new Disp(xs->GetFpFdp());
+  }
+}
+//..............................................................................
 //..............................................................................
 //..............................................................................
 void RefinementModel::LibHasOccu(const TStrObjList& Params,
@@ -2862,7 +2913,6 @@ void RefinementModel::LibUpdateCRParams(const TStrObjList& Params,
 void RefinementModel::LibShareADP(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &E)
 {
-  //size_t n = Cmds.Count();
   TSAtomPList atoms;
   double ang = -1001;
   if (Cmds.Count() > 0 && Cmds[0].IsNumber()) {
@@ -2878,8 +2928,9 @@ void RefinementModel::LibShareADP(TStrObjList &Cmds, const TParamList &Options,
     E.ProcessingError(__OlxSrcInfo, "At least three atoms are expected");
     return;
   }
-  if (ang == -1001)
+  if (ang == -1001) {
     ang = 360. / atoms.Count();
+  }
   adirection *d = 0;
   vec3d center, normal;
   // consider special cases... CF3, CM3 etc - need to find the bond direction
@@ -2888,8 +2939,9 @@ void RefinementModel::LibShareADP(TStrObjList &Cmds, const TParamList &Options,
     for (size_t i = 0; i < atoms.Count(); i++) {
       for (size_t j = 0; j < atoms[i]->NodeCount(); j++) {
         TSAtom &a = atoms[i]->Node(j);
-        if (a.IsDeleted() || a.GetType() == iQPeakZ || a.GetType() == iHydrogenZ)
+        if (a.IsDeleted() || a.GetType().z < 2) {
           continue;
+        }
         if (cnt[i] != 0) {  // attached to more than 2 atoms, invalidate
           cnt[i] = 0;
           break;
@@ -2956,6 +3008,28 @@ void RefinementModel::LibShareADP(TStrObjList &Cmds, const TParamList &Options,
   }
 }
 //..............................................................................
+void RefinementModel::LibShareDisp(TStrObjList& Cmds, const TParamList& Options,
+  TMacroData& E)
+{
+  TXApp& app = TXApp::GetInstance();
+  TSAtomPList atoms_ = app.FindSAtoms(Cmds);
+  TCAtomPList atoms(atoms_, FunctionAccessor::MakeConst(&TSAtom::CAtom));
+  if (atoms.Count() < 2) {
+    E.ProcessingError(__OlxSrcInfo, "too few atoms");
+    return;
+  }
+  app.XFile().GetAsymmUnit().GetAtoms().ForEach(ACollectionItem::TagSetter(0));
+  atoms.ForEach(ACollectionItem::TagSetter(1));
+  for (size_t i = 0; i < SameDisp.items.Count(); i++) {
+    for (size_t j = 0; j < SameDisp.items[i].atoms.Count(); j++) {
+      if (SameDisp.items[i].atoms[j]->GetTag() == 1) {
+        SameDisp.items[i].atoms.Delete(j--);
+      }
+    }
+  }
+  SameDisp.items.AddNew(atoms);
+}
+//..............................................................................
 void RefinementModel::LibCalcCompleteness(const TStrObjList& Params,
   TMacroData& E)
 {
@@ -3019,7 +3093,7 @@ void RefinementModel::LibNewRestraint(TStrObjList &Cmds,
   const TParamList &Options, TMacroData &E)
 {
   size_t st = 1;
-  TSimpleRestraint *sr = NULL;
+  TSimpleRestraint *sr = 0;
   if (Cmds[0].Equalsi("sadi")) {
     sr = &rSADI.AddNew();
   }
@@ -3046,7 +3120,7 @@ void RefinementModel::LibNewRestraint(TStrObjList &Cmds,
   else if (Cmds[0].Equalsi("rigu")) {
     sr = &rRIGU.AddNew();
   }
-  if (sr == NULL) {
+  if (sr == 0) {
     E.ProcessingError(__OlxSrcInfo, "unknown restraint: ").quote() << Cmds[0];
     return;
   }
@@ -3056,7 +3130,7 @@ void RefinementModel::LibNewRestraint(TStrObjList &Cmds,
       E.ProcessingError(__OlxSrcInfo, "atom index out of bonds");
       return;
     }
-    sr->AddAtom(aunit.GetAtom(ai), NULL);
+    sr->AddAtom(aunit.GetAtom(ai), 0);
   }
   double s = Options.FindValue("s1", '0').ToDouble();
   if (s != 0) {
@@ -3093,78 +3167,84 @@ TLibrary* RefinementModel::ExportLibrary(const olxstr& name) {
   lib->Register(
     new TFunction<RefinementModel>(thip, &RefinementModel::LibOSF,
       "OSF",
-      fpNone|fpOne,
-"Returns/sets OSF"));
+      fpNone | fpOne,
+      "Returns/sets OSF"));
   lib->Register(
     new TFunction<RefinementModel>(thip, &RefinementModel::LibFVar,
       "FVar",
-      fpOne|fpTwo|fpThree,
-"Returns/sets FVAR referred by index"));
+      fpOne | fpTwo | fpThree,
+      "Returns/sets FVAR referred by index"));
   lib->Register(
     new TFunction<RefinementModel>(thip, &RefinementModel::LibBASF,
-    "BASF",
-    fpOne | fpTwo | fpThree,
-    "Returns/sets BASF referred by index"));
+      "BASF",
+      fpOne | fpTwo | fpThree,
+      "Returns/sets BASF referred by index"));
   lib->Register(
     new TFunction<RefinementModel>(thip, &RefinementModel::LibEXTI,
       "Exti",
-      fpNone|fpOne|fpTwo,
-"Returns/sets EXTI"));
+      fpNone | fpOne | fpTwo,
+      "Returns/sets EXTI"));
   lib->Register(
     new TFunction<RefinementModel>(thip, &RefinementModel::LibUpdateCRParams,
       "UpdateCR",
-      fpAny^(fpNone|fpOne|fpTwo),
-"Updates constraint or restraint parameters (name, index, {values})") );
+      fpAny ^ (fpNone | fpOne | fpTwo),
+      "Updates constraint or restraint parameters (name, index, {values})"));
   lib->Register(
     new TFunction<RefinementModel>(thip, &RefinementModel::LibCalcCompleteness,
       "Completeness",
-      fpOne|fpTwo,
-"Calculates completeness to the given 2 theta value") );
+      fpOne | fpTwo,
+      "Calculates completeness to the given 2 theta value"));
   lib->Register(
     new TMacro<RefinementModel>(thip, &RefinementModel::LibShareADP,
       "ShareADP", EmptyString(),
       fpAny,
-"Creates a rotated ADP constraint for given atoms. Currently works only for "
-"T-X3 groups (X-CMe3, X-CF3 etc) and for rings"
-));
+      "Creates a rotated ADP constraint for given atoms. Currently works only for "
+      "T-X3 groups (X-CMe3, X-CF3 etc) and for rings"
+      ));
 
   lib->Register(
+    new TMacro<RefinementModel>(thip, &RefinementModel::LibShareDisp,
+      "ShareDisp", EmptyString(),
+      fpAny,
+      "Creates same DISP constraint"
+      ));
+  lib->Register(
     new TFunction<RefinementModel>(thip, &RefinementModel::LibHasOccu,
-    "HasOccu",
-    fpNone,
-    "Returns true if occupancy of any of the atoms is refined or deviates from 1"));
+      "HasOccu",
+      fpNone,
+      "Returns true if occupancy of any of the atoms is refined or deviates from 1"));
 
   lib->Register(
     new TFunction<RefinementModel>(thip, &RefinementModel::LibMaxIndex,
-    "MaxIndex",
-    fpNone|fpOne,
-    "Calculates largest Miller index for current structure or the given 2 "
-    "theta value"));
+      "MaxIndex",
+      fpNone | fpOne,
+      "Calculates largest Miller index for current structure or the given 2 "
+      "theta value"));
 
   lib->Register(
     new TMacro<RefinementModel>(thip, &RefinementModel::LibNewAfixGroup,
-    "NewAfixGroup",
-    "d-distance when applicable&;"
-    "sof-occupancy [11]&;"
-    "u-default U value for atoms",
-    fpAny^(fpNone|fpOne|fpTwo),
-    "Creates a new AFIX group expects AFIX code and atom ids"));
+      "NewAfixGroup",
+      "d-distance when applicable&;"
+      "sof-occupancy [11]&;"
+      "u-default U value for atoms",
+      fpAny ^ (fpNone | fpOne | fpTwo),
+      "Creates a new AFIX group expects AFIX code and atom ids"));
 
   lib->Register(
     new TMacro<RefinementModel>(thip, &RefinementModel::LibNewRestraint,
-    "NewRestraint",
-    "s1-standard deviation 1&;"
-    "s2-standard deviation 2",
-    fpAny ^ (fpNone|fpOne),
-    "Creates a new restraint expects restraint name, parameters if required "
-    "and atom ids"));
+      "NewRestraint",
+      "s1-standard deviation 1&;"
+      "s2-standard deviation 2",
+      fpAny ^ (fpNone | fpOne),
+      "Creates a new restraint expects restraint name, parameters if required "
+      "and atom ids"));
 
   lib->Register(
     new TFunction<RefinementModel>(thip, &RefinementModel::LibModelSrc,
-    "ModelSrc",
-    fpNone | fpOne,
-    "Sets the source for this model - an identifier for the external code when "
-    "reading a model file."));
+      "ModelSrc",
+      fpNone | fpOne,
+      "Sets the source for this model - an identifier for the external code when "
+      "reading a model file."));
 
   return lib;
 }

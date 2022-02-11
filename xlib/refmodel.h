@@ -96,7 +96,6 @@ protected:
   adirection *AddDirection(const TCAtomGroup &atoms, uint16_t type);
   // atoms omitted from the maps
   AtomRefList Omitted;
-  TStrList RefineDisp;
 public:
   // needs to be extended for the us of the batch numbers...
   struct HklStat : public MergeStats {
@@ -133,13 +132,15 @@ public:
       double _factor=0)
     : index(_index), Fo(_Fo), Fc(_Fc), esd(_esd), factor(_factor)
     {
-      if (factor == 0 && esd != 0)
-        factor = (Fo-Fc)/esd;
+      if (factor == 0 && esd != 0) {
+        factor = (Fo - Fc) / esd;
+      }
     }
     BadReflection() : Fo(0), Fc(0), esd(0), factor(0) {}
     void UpdateFactor() {
-      if (esd != 0)
-        factor = (Fo-Fc)/esd;
+      if (esd != 0) {
+        factor = (Fo - Fc) / esd;
+      }
     }
     static int CompareDirect(const BadReflection &r1, const BadReflection &r2) {
       return olx_cmp(r1.factor, r2.factor);
@@ -198,6 +199,7 @@ public:
   TAsymmUnit& aunit;
   ConstraintContainer<rotated_adp_constraint> SharedRotatedADPs;
   ConstraintContainer<same_group_constraint> SameGroups;
+  ConstraintContainer<same_disp_constraint> SameDisp;
   ConstraintContainer<adirection> Directions;
   ConstraintContainer<tls_group_constraint> cTLS;
   // restraints and constraints register
@@ -409,6 +411,7 @@ Friedel opposites of components 1 ... m
   }
   bool RemoveSfacData(const olxstr& name);
   void DeleteSfacData(size_t i);
+  void InitDisp(TCAtom& a) const;
   // user content management
   const ContentList& GetUserContent() const {  return UserContent;  }
   olxstr GetUserContentStr() const;
@@ -577,6 +580,7 @@ Friedel opposites of components 1 ... m
   void LibMaxIndex(const TStrObjList& Params, TMacroData& E);
   // restraints & constraints related functions
   void LibShareADP(TStrObjList &Cmds, const TParamList &Opts, TMacroData &E);
+  void LibShareDisp(TStrObjList& Cmds, const TParamList& Opts, TMacroData& E);
   void LibNewAfixGroup(TStrObjList &Cmds, const TParamList &Options,
     TMacroData &E);
   void LibNewRestraint(TStrObjList &Cmds, const TParamList &Options,
@@ -588,12 +592,6 @@ Friedel opposites of components 1 ... m
     virtual IOlxObject *get_ptr() const;
   };
   
-  const TStrList& GetRefineDisp() const {
-    return RefineDisp;
-  }
-  TStrList& GetRefineDisp() {
-    return RefineDisp;
-  }
   struct ReleasedItems {
     TSimpleRestraintPList restraints;
     TPtrList<TSameGroup> sameList;

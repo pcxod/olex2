@@ -1831,12 +1831,7 @@ void TAsymmUnit::LibSetAtomDisp(const TStrObjList& Params, TMacroData& E) {
     throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, AtomCount());
   }
   TCAtom &a = GetAtom(index);
-  XScatterer *xs = RefMod->FindSfacData(a.GetType().symbol);
-  if (xs == 0) {
-    xs = new XScatterer(a.GetType().symbol);
-    RefMod->AddSfac(*xs);
-  }
-  xs->SetFpFdp(compd(Params[1].ToDouble(), Params[2].ToDouble()));
+  a.GetDisp() = new Disp(compd(Params[1].ToDouble(), Params[2].ToDouble()));
 }
 //..............................................................................
 //..............................................................................

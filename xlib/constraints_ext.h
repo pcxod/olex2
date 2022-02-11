@@ -78,7 +78,7 @@ struct static_direction : public adirection {
 struct direction : public adirection {
   TCAtomGroup atoms;
   uint16_t type;
-  direction() {}
+  direction(uint16_t _type) : type(type) {}
   direction(const olxstr &id, const TCAtomGroup &_atoms,
     uint16_t _type)
   : adirection(id),
@@ -90,9 +90,11 @@ struct direction : public adirection {
   virtual adirection* CreateFromDataItem(const TDataItem& di,
     const RefinementModel& rm) const;
   virtual bool IsValid() const {
-    for( size_t i=0; i < atoms.Count(); i++ )
-      if( atoms[i].GetAtom()->IsDeleted() )
+    for (size_t i = 0; i < atoms.Count(); i++) {
+      if (atoms[i].GetAtom()->IsDeleted()) {
         return false;
+      }
+    }
     return true;
   }
   olxstr ToInsStr(const RefinementModel& rm) const;
@@ -103,15 +105,15 @@ struct direction : public adirection {
 #endif
 };
 
-struct rotated_adp_constraint  {
-  const TCAtom &source, &destination;
-  adirection &dir;
+struct rotated_adp_constraint {
+  const TCAtom& source, & destination;
+  adirection& dir;
   double angle;
   bool refine_angle;
-  rotated_adp_constraint(TCAtom &_source, TCAtom &_destination,
-    adirection &_dir,
+  rotated_adp_constraint(TCAtom& _source, TCAtom& _destination,
+    adirection& _dir,
     double _angle, bool _refine_angle)
-  : source(_source),
+    : source(_source),
     destination(_destination),
     dir(_dir),
     angle(_angle),
@@ -119,7 +121,7 @@ struct rotated_adp_constraint  {
   {
     _dir.IncRef();
   }
-  ~rotated_adp_constraint()  {
+  ~rotated_adp_constraint() {
     dir.DecRef();
   }
   bool IsValid() const {
@@ -141,28 +143,30 @@ struct rotated_adp_constraint  {
 #endif
 };
 
-struct same_group_constraint  {
+struct same_group_constraint {
 protected:
   same_group_constraint() {}
 public:
   TTypeList<TCAtomPList> groups;
-  same_group_constraint(const TTypeList<TCAtomPList>::const_list_type &groups_)
-  : groups(groups_)
+  same_group_constraint(const TTypeList<TCAtomPList>::const_list_type& groups_)
+    : groups(groups_)
   {}
-  bool IsValid()  {
-    size_t cnt=0;
-    for( size_t i=0; i < groups.Count(); i++ )  {
+  bool IsValid() {
+    size_t cnt = 0;
+    for (size_t i = 0; i < groups.Count(); i++) {
       bool complete = true;
-      for( size_t j=0; j < groups[i].Count(); j++ )  {
-        if( groups[i][j]->IsDeleted() )  {
+      for (size_t j = 0; j < groups[i].Count(); j++) {
+        if (groups[i][j]->IsDeleted()) {
           complete = false;
           break;
         }
       }
-      if( complete )
+      if (complete) {
         cnt++;
-      else
+      }
+      else {
         groups.NullItem(i);
+      }
     }
     groups.Pack();
     return cnt > 1;
@@ -193,8 +197,9 @@ public:
   {}
   bool IsValid() {
     for (size_t i=0; i < atoms.Count(); i++) {
-      if (atoms[i]->IsDeleted())
-        atoms[i] = NULL;
+      if (atoms[i]->IsDeleted()) {
+        atoms[i] = 0;
+      }
     }
     atoms.Pack();
     return atoms.Count() > 3;
@@ -214,6 +219,40 @@ public:
   PyObject* PyExport() const;
 #endif
 };
+
+struct same_disp_constraint {
+protected:
+  same_disp_constraint() {}
+public:
+  TCAtomPList atoms;
+  same_disp_constraint(const TCAtomPList& atoms_)
+    : atoms(atoms_)
+  {}
+  bool IsValid() {
+    for (size_t i = 0; i < atoms.Count(); i++) {
+      if (atoms[i]->IsDeleted()) {
+        atoms[i] = 0;
+      }
+    }
+    atoms.Pack();
+    return atoms.Count() > 1;
+  }
+  olxstr ToInsStr(const RefinementModel& rm) const;
+  static void FromToks(const TStrList& toks, RefinementModel& rm,
+    TTypeList<same_disp_constraint>& out);
+  static same_disp_constraint*
+    Copy(RefinementModel& rm, const same_disp_constraint& c);
+  static const olxstr& GetName();
+  olxstr Describe() const;
+  void UpdateParams(const TStrList& toks);
+  void ToDataItem(TDataItem& di) const;
+  static same_disp_constraint* FromDataItem(const TDataItem& di,
+    const RefinementModel& rm);
+#ifdef _PYTHON
+  PyObject* PyExport() const;
+#endif
+};
+
 class IConstraintContainer {
 public:
   virtual ~IConstraintContainer() {}
@@ -232,75 +271,85 @@ public:
 };
 
 template <typename constraint_t>
-class ConstraintContainer : public IConstraintContainer  {
+class ConstraintContainer : public IConstraintContainer {
 public:
   ConstraintContainer() {}
   ~ConstraintContainer() {}
   // validates all the constraints and removes the invalid ones
-  void ValidateAll()  {
-    for( size_t i=0; i < items.Count(); i++ )
-      if( !items[i].IsValid() )
+  void ValidateAll() {
+    for (size_t i = 0; i < items.Count(); i++) {
+      if (!items[i].IsValid()) {
         items.NullItem(i);
+      }
+    }
     items.Pack();
   }
-  void Clear()  {  items.Clear();  }
+  void Clear() { items.Clear(); }
   void Assign(RefinementModel& rm, const IConstraintContainer& cn_) {
     const ConstraintContainer* cn =
       dynamic_cast<const ConstraintContainer*>(&cn_);
     items.Clear();
-    for( size_t i=0; i < cn->items.Count(); i++ )
+    for (size_t i = 0; i < cn->items.Count(); i++) {
       items.Add(constraint_t::Copy(rm, cn->items[i]));
+    }
   }
-  void FromToks(const TStrList& toks, RefinementModel& rm)  {
+  void FromToks(const TStrList& toks, RefinementModel& rm) {
     constraint_t::FromToks(toks, rm, items);
   }
   const_strlist ToInsList(const RefinementModel& rm) const {
     TStrList out;
     out.SetCapacity(items.Count());
-    for( size_t i=0; i < items.Count(); i++ )
-      if( items[i].IsValid() )
+    for (size_t i = 0; i < items.Count(); i++) {
+      if (items[i].IsValid()) {
         out.Add(items[i].ToInsStr(rm));
+      }
+    }
     return out;
   }
   TDataItem& ToDataItem(TDataItem& di) const {
-    size_t cnt=0;
-    for( size_t i=0; i < items.Count(); i++ )  {
-      if( items[i].IsValid() )
+    size_t cnt = 0;
+    for (size_t i = 0; i < items.Count(); i++) {
+      if (items[i].IsValid()) {
         items[i].ToDataItem(di.AddItem(cnt++));
+      }
     }
     return di;
   }
-  void FromDataItem(const TDataItem* di, const RefinementModel& rm)  {
+  void FromDataItem(const TDataItem* di, const RefinementModel& rm) {
     Clear();
-    if( di != NULL )
+    if (di != 0) {
       FromDataItem(*di, rm);
+    }
   }
-  void FromDataItem(const TDataItem& di, const RefinementModel& rm)  {
+  void FromDataItem(const TDataItem& di, const RefinementModel& rm) {
     Clear();
-    for( size_t i=0; i < di.ItemCount(); i++ )
+    for (size_t i = 0; i < di.ItemCount(); i++) {
       items.Add(constraint_t::FromDataItem(di.GetItemByIndex(i), rm));
+    }
   }
-  void UpdateParams(size_t index, const TStrList& toks)  {
+  void UpdateParams(size_t index, const TStrList& toks) {
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, index, 0, items.Count());
     items[index].UpdateParams(toks);
   }
 #ifdef _PYTHON
   PyObject* PyExport() const {
     size_t cnt = 0;
-    for( size_t i=0; i < items.Count(); i++ )  {
-      if( items[i].IsValid() )
+    for (size_t i = 0; i < items.Count(); i++) {
+      if (items[i].IsValid()) {
         cnt++;
+      }
     }
     PyObject* all = PyTuple_New(cnt);
     cnt = 0;
-    for( size_t i=0; i < items.Count(); i++ )  {
-      if( items[i].IsValid() )
+    for (size_t i = 0; i < items.Count(); i++) {
+      if (items[i].IsValid()) {
         PyTuple_SetItem(all, cnt++, items[i].PyExport());
+      }
     }
     return all;
   }
 #endif
-  const olxstr& GetName() const {  return constraint_t::GetName();  }
+  const olxstr& GetName() const { return constraint_t::GetName(); }
   TTypeList<constraint_t> items;
 };
 

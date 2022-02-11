@@ -2154,14 +2154,7 @@ void XLibMacros::macFix(TStrObjList &Cmds, const TParamList &Options,
     olxstr_set<true> types;
     for (size_t i = 0; i < atoms.Count(); i++) {
       types.Add(atoms[i]->GetType().symbol);
-    }
-    TStrList& disp = xapp.XFile().GetRM().GetRefineDisp();
-    for (size_t i = 0; i < disp.Count(); i++) {
-      size_t idx = disp[i].IndexOf('.');
-      olxstr type = (idx == InvalidIndex ? disp[i] : disp[i].SubStringTo(idx));
-      if (types.Contains(type)) {
-        disp.Delete(i--);
-      }
+      atoms[i]->CAtom().GetDisp() = 0;
     }
     if (Options.GetBoolOption('c')) {
       for (size_t i = 0; i < types.Count(); i++) {
@@ -2246,20 +2239,10 @@ void XLibMacros::macFree(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   if (vars.Containsi("DISP")) {
-    olxstr_set<> types;
-    TStrList &disp = xapp.XFile().GetRM().GetRefineDisp();
-    for (size_t i = 0; i < disp.Count(); i++) {
-      size_t idx = disp[i].IndexOf('.');
-      if (idx == InvalidIndex) {
-        types.Add(disp[i]);
-      }
-      else {
-        types.Add(disp[i].SubStringTo(idx));
-      }
-    }
+    RefinementModel& rm = xapp.XFile().GetRM();
     for (size_t i = 0; i < atoms.Count(); i++) {
-      if (types.Add(atoms[i]->GetType().symbol)) {
-        disp.Add(atoms[i]->GetType().symbol);
+      if (!atoms[i]->CAtom().GetDisp().ok()) {
+        rm.InitDisp(atoms[i]->CAtom());
       }
     }
   }
@@ -9713,7 +9696,7 @@ void XLibMacros::macConstrain(TStrObjList &Cmds,
     //for( size_t i=0; i < atoms.Count(); i++ )
     //  e_sr->AddAtom(atoms[i]->CAtom(), NULL);
   }
-  else if( Cmds[0].Equalsi("site") || Cmds[0].Equalsi("xyz"))  { // EXYZ
+  else if (Cmds[0].Equalsi("site") || Cmds[0].Equalsi("xyz")) { // EXYZ
     Cmds.Delete(0);
     MacroInput mi = ExtractSelection(Cmds, true);
     TSAtomPList atoms = mi.atoms;
@@ -9725,24 +9708,31 @@ void XLibMacros::macConstrain(TStrObjList &Cmds,
       FunctionAccessor::MakeConst(&TSAtom::CAtom));
     // search optimisation
     sorted::PointerPointer<TCAtom> s_catoms;
-    for( size_t i=0; i < atoms.Count(); i++ )
+    for (size_t i = 0; i < atoms.Count(); i++) {
       s_catoms.AddUnique(&atoms[i]->CAtom());
-    TExyzGroup *e_g = NULL;
-    for( size_t i=0; i < rm.rEADP.Count(); i++ )  {
-      TExyzGroup &sr = rm.ExyzGroups[i];
-      for( size_t j=0; j < sr.Count(); j++ )  {
-        if( s_catoms.IndexOf(&sr[j]) != InvalidIndex )  {
+    }
+    TExyzGroup* e_g = 0;
+    for (size_t i = 0; i < rm.rEADP.Count(); i++) {
+      TExyzGroup& sr = rm.ExyzGroups[i];
+      for (size_t j = 0; j < sr.Count(); j++) {
+        if (s_catoms.IndexOf(&sr[j]) != InvalidIndex) {
           e_g = &sr;
           break;
         }
-        if( e_g != NULL )  break;
+        if (e_g != 0) {
+          break;
+        }
       }
-      if( e_g != NULL )  break;
+      if (e_g != 0) {
+        break;
+      }
     }
-    if( e_g == NULL )
+    if (e_g == 0) {
       e_g = &rm.ExyzGroups.New();
-    for( size_t i=0; i < atoms.Count(); i++ )
+    }
+    for (size_t i = 0; i < atoms.Count(); i++) {
       e_g->Add(atoms[i]->CAtom());
+    }
   }
   else if (Cmds[0].Equalsi("same") && // same group constraint
           (Cmds.Count() > 1 && Cmds[1].Equalsi("group")))
@@ -9752,8 +9742,9 @@ void XLibMacros::macConstrain(TStrObjList &Cmds,
       n = Cmds[2].ToSizeT();
       Cmds.DeleteRange(0, 3);
     }
-    else
+    else {
       Cmds.DeleteRange(0, 2);
+    }
     MacroInput mi = ExtractSelection(Cmds, true);
     TSAtomPList atoms = mi.atoms;
     if (n != InvalidSize && atoms.Count() > n*3) {
@@ -9815,19 +9806,35 @@ void XLibMacros::macConstrain(TStrObjList &Cmds,
         ConstTypeList<TCAtomPList>(groups));
     }
   }
-  else if (Cmds[0].Equalsi("same") && // same group constraint
-          (Cmds.Count() > 1 && Cmds[1].Equalsi("adp")))
+  else if (Cmds[0].Equalsi("same") && // same ADP constraint
+    (Cmds.Count() > 1 && Cmds[1].Equalsi("adp")))
   {
     Cmds.DeleteRange(0, 2);
-    ABasicFunction *bf =
+    ABasicFunction* bf =
       olex2::IOlex2Processor::GetInstance()->GetLibrary().FindMacro(
-      "xf.rm.ShareADP");
-    if (bf == NULL) {
+        "xf.rm.ShareADP");
+    if (bf == 0) {
       E.ProcessingError(__OlxSrcInfo, "could not locate required function");
       return;
     }
-    else
+    else {
       bf->Run(Cmds, Options, E);
+    }
+  }
+  else if (Cmds[0].Equalsi("same") && // same ADP constraint
+    (Cmds.Count() > 1 && Cmds[1].Equalsi("disp")))
+  {
+    Cmds.DeleteRange(0, 2);
+    ABasicFunction* bf =
+      olex2::IOlex2Processor::GetInstance()->GetLibrary().FindMacro(
+        "xf.rm.ShareDisp");
+    if (bf == 0) {
+      E.ProcessingError(__OlxSrcInfo, "could not locate required function");
+      return;
+    }
+    else {
+      bf->Run(Cmds, Options, E);
+    }
   }
 }
 //..............................................................................
@@ -10014,7 +10021,7 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
   }
   TXApp &app = TXApp::GetInstance();
   TSAtomPList atoms = app.FindSAtoms(Cmds, false, true);
-  TSameGroup *created = NULL;
+  TSameGroup *created = 0;
   if (atoms.Count() == 1 && invert) {
     if (atoms[0]->CAtom().GetResiId() != 0) {
       TSameGroup& sg = app.XFile().GetRM().rSAME.New();

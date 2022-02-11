@@ -2360,7 +2360,7 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options,
 void TMainForm::macEditIns(TStrObjList &Cmds, const TParamList &Options, TMacroData &E)  {
   TBasicCFile* loader = FXApp->XFile().LastLoader();
   olx_object_ptr<TIns> ins_p;
-  if (olx_is <TIns *>(loader) ) {
+  if (olx_is<TIns>(loader) ) {
     ins_p = dynamic_cast<TIns*>(loader);
     ins_p.inc_ref();
   }

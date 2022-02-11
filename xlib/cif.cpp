@@ -754,8 +754,7 @@ void TCif::Initialize() {
     }
   }
   // geometric parameters
-  ALoop = FindLoop("_geom_bond");
-  if (ALoop != 0) {
+  if ((ALoop = FindLoop("_geom_bond")) != 0) {
     try {
       const size_t ALabel = ALoop->ColIndex("_geom_bond_atom_site_label_1");
       const size_t ALabel1 = ALoop->ColIndex("_geom_bond_atom_site_label_2");
@@ -787,8 +786,7 @@ void TCif::Initialize() {
         ALoop->GetName() << " loop: " << e.GetException()->GetFullMessage();
     }
   }
-  ALoop = FindLoop("_geom_hbond");
-  if (ALoop != 0) {
+  if ((ALoop = FindLoop("_geom_hbond")) != 0) {
     try {
       const size_t ALabel = ALoop->ColIndex("_geom_hbond_atom_site_label_D");
       const size_t ALabel1 = ALoop->ColIndex("_geom_hbond_atom_site_label_A");
@@ -822,8 +820,7 @@ void TCif::Initialize() {
         ALoop->GetName() << " loop: " << e.GetException()->GetFullMessage();
     }
   }
-  ALoop = FindLoop("_geom_angle");
-  if (ALoop != 0) {
+  if ((ALoop = FindLoop("_geom_angle")) != 0) {
     try {
       const size_t ind_l = ALoop->ColIndex("_geom_angle_atom_site_label_1");
       const size_t ind_m = ALoop->ColIndex("_geom_angle_atom_site_label_2");
@@ -866,9 +863,8 @@ void TCif::Initialize() {
         ALoop->GetName() << " loop: " << e.GetException()->GetFullMessage();
     }
   }
-  // read in the dispersion values
-  ALoop = FindLoop("_atom_type");
-  if (ALoop != 0) {
+  // read in the dispersion values for types
+  if ((ALoop = FindLoop("_atom_type")) != 0) {
     try {
       const size_t ind_s = ALoop->ColIndex("_atom_type_symbol");
       const size_t ind_r = ALoop->ColIndex("_atom_type_scat_dispersion_real");
@@ -888,6 +884,37 @@ void TCif::Initialize() {
       throw TFunctionFailedException(__OlxSourceInfo, e,
         olxstr("while reading ").quote() << ALoop->GetName() << " loop");
     }
+  }
+  // read in the dispersion values for sites
+  if ((ALoop = FindLoop("_atom_site_dispersion")) != 0) {
+    try {
+      const size_t ind_l = ALoop->ColIndex("_atom_site_dispersion_label");
+      const size_t ind_r = ALoop->ColIndex("_atom_site_dispersion_real");
+      const size_t ind_i = ALoop->ColIndex("_atom_site_dispersion_imag");
+      if ((ind_l | ind_r | ind_i) != InvalidIndex) {
+        for (size_t i = 0; i < ALoop->RowCount(); i++) {
+          const CifRow& r = (*ALoop)[i];
+          AtomCifEntry* ci = dynamic_cast<AtomCifEntry*>(r[ind_l]);
+          if (ci == 0) {
+            TBasicApp::NewLogEntry(logError) <<
+              (olxstr("Wrong atom in the disp loop ").quote() <<
+                ALoop->Get(i, ALabel).GetStringValue() << " removing");
+            ALoop->DelRow(i--);
+            continue;
+          }
+          TEValueD fp = r[ind_r]->GetStringValue();
+          TEValueD fdp = r[ind_i]->GetStringValue();
+          ci->data.GetDisp() = new Disp(compd(fp.GetV(), fdp.GetV()));
+          ci->data.GetDisp()->fp_su = fp.GetE();
+          ci->data.GetDisp()->fdp_su = fdp.GetE();
+        }
+      }
+    }
+    catch (const TExceptionBase& e) {
+      throw TFunctionFailedException(__OlxSourceInfo, e,
+        olxstr("while reading ").quote() << ALoop->GetName() << " loop");
+    }
+
   }
   // identify EXYZ/EADP
   {
