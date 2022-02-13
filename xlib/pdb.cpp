@@ -65,7 +65,7 @@ void TPdb::SaveToStrings(TStrList& Strings) {
       label.c_str(),
       p_num.c_str(),
       r_name.c_str(),
-      r.GetChainId(),
+      r.HasChainId() ? r.GetChainId() : ' ',
       r_num.c_str(),
       crd[0],
       crd[1],

@@ -65,6 +65,39 @@ void IsNumberTest(OlxTests& t)  {
     if( invalid_int_str[i].IsUInt() )
       throw TFunctionFailedException(__OlxSourceInfo, olxstr("invalid number is not recognised: '") << invalid_uint_str[i] << '\'');
   }
+  olxstr ws = "   ";
+  if (!ws.TrimWhiteChars().IsEmpty()) {
+    throw TFunctionFailedException(__OlxSourceInfo, "trimming is not working");
+  }
+  ws = "a   ";
+  if (ws.TrimWhiteChars() != "a") {
+    throw TFunctionFailedException(__OlxSourceInfo, "trimming is not working");
+  }
+  ws = " a   ";
+  if (ws.TrimWhiteChars() != "a") {
+    throw TFunctionFailedException(__OlxSourceInfo, "trimming is not working");
+  }
+  ws = " a   ";
+  if (olxstr(ws).TrimWhiteChars(true,false) != "a   ") {
+    throw TFunctionFailedException(__OlxSourceInfo, "trimming is not working");
+  }
+  ws = " a   ";
+  if (olxstr(ws).TrimWhiteChars(false, true) != " a") {
+    throw TFunctionFailedException(__OlxSourceInfo, "trimming is not working");
+  }
+  if (olxstr(ws).TrimL(' ') != "a   ") {
+    throw TFunctionFailedException(__OlxSourceInfo, "trimming is not working");
+  }
+  if (olxstr(ws).TrimR(' ') != " a") {
+    throw TFunctionFailedException(__OlxSourceInfo, "trimming is not working");
+  }
+  if (olxstr(ws).TrimWhiteChars(false, true) != " a") {
+    throw TFunctionFailedException(__OlxSourceInfo, "trimming is not working");
+  }
+  ws = "  a";
+  if (ws.TrimWhiteChars() != "a") {
+    throw TFunctionFailedException(__OlxSourceInfo, "trimming is not working");
+  }
 }
 //...................................................................................................
 void SubstringTest(OlxTests& t)  {

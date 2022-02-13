@@ -1957,7 +1957,7 @@ public:
     while (TTIString<TC>::CharAt(start) == wht && ++start < T::_Length) {
     }
     T::_Start += start;
-    T::_Length = (T::_Length + 1 - start);
+    T::_Length = (T::_Length - start);
     return *this;
   }
   //...........................................................................
@@ -1992,18 +1992,20 @@ public:
     if (T::_Length == 0) {
       return *this;
     }
-    size_t start = 0, end = T::_Length - 1;
+    size_t start = 0, end = T::_Length;
     if (leading) {
       while (o_iswhitechar(TTIString<TC>::CharAt(start)) && ++start < end) {
       }
     }
     if (trailing) {
-      while (end > start && o_iswhitechar(TTIString<TC>::CharAt(end))) {
-        end--;
+      while (--end > start && o_iswhitechar(TTIString<TC>::CharAt(end))) {
       }
     }
+    else {
+      end--;
+    }
     T::_Start += start;
-    T::_Length = (end + 1 - start);
+    T::_Length = (end - start + 1);
     return *this;
   }
   //...........................................................................

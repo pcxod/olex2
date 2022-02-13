@@ -635,6 +635,7 @@ void XLibMacros::Export(TLibrary& lib)  {
     "(or selection)");
   xlib_InitMacro(RESI,
     "a-alias&;"
+    "c-chain id (coule be a part of reidue name with *:chain_id&;"
     "all-searches selected subfragment and creates residues",
     (fpAny^fpNone)|psFileLoaded,
     "Creates residue with given class name and optionally number and adds "
@@ -10284,7 +10285,14 @@ void XLibMacros::macRESI(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &E)
 {
   TXApp &app = TXApp::GetInstance();
-  olxstr resi_class = Cmds[0];
+  size_t chid_sep = Cmds[0].IndexOf(':');
+  olxstr resi_class = chid_sep == InvalidIndex ? Cmds[0] : Cmds[0].SubStringTo(chid_sep);
+  olxstr ch_id = chid_sep == InvalidIndex ? TResidue::NoChainId() :
+    Cmds[0].SubStringFrom(chid_sep + 1);
+  ch_id = Options.FindValue('c', ch_id);
+  if (ch_id.IsEmpty()) {
+    ch_id = TResidue::NoChainId();
+  }
   int resi_number = TResidue::NoResidue;
   if (resi_class.IsNumber()) {
     resi_number = resi_class.ToInt();
@@ -10367,10 +10375,6 @@ void XLibMacros::macRESI(TStrObjList &Cmds, const TParamList &Options,
       }
     }
     else {
-      olxstr ch_id = Options.FindValue('c', TResidue::NoChainId());
-      if (ch_id.IsEmpty()) {
-        ch_id = TResidue::NoChainId();
-      }
       TResidue& resi = au.NewResidue(resi_class, resi_number,
         Options.FindValue('a', resi_number).ToInt(),
         ch_id.CharAt(0));
