@@ -2153,13 +2153,19 @@ void XLibMacros::macFix(TStrObjList &Cmds, const TParamList &Options,
   }
   if (vars.Containsi("DISP")) {
     olxstr_set<true> types;
+    RefinementModel &rm = xapp.XFile().GetRM();
+    rm.aunit.GetAtoms().ForEach(ACollectionItem::TagSetter(0));
     for (size_t i = 0; i < atoms.Count(); i++) {
       types.Add(atoms[i]->GetType().symbol);
       atoms[i]->CAtom().GetDisp() = 0;
+      atoms[i]->CAtom().SetTag(1);
+    }
+    for (size_t i = 0; i < rm.SameDisp.items.Count(); i++) {
+      rm.SameDisp.items[i].atoms.Pack(ACollectionItem::TagAnalyser(1));
     }
     if (Options.GetBoolOption('c')) {
       for (size_t i = 0; i < types.Count(); i++) {
-        xapp.XFile().GetRM().RemoveSfacData(types[i]);
+        rm.RemoveSfacData(types[i]);
       }
     }
   }
@@ -2241,10 +2247,15 @@ void XLibMacros::macFree(TStrObjList &Cmds, const TParamList &Options,
   }
   if (vars.Containsi("DISP")) {
     RefinementModel& rm = xapp.XFile().GetRM();
+    rm.aunit.GetAtoms().ForEach(ACollectionItem::TagSetter(0));
     for (size_t i = 0; i < atoms.Count(); i++) {
       if (!atoms[i]->CAtom().GetDisp().ok()) {
         rm.InitDisp(atoms[i]->CAtom());
       }
+      atoms[i]->CAtom().SetTag(1);
+    }
+    for (size_t i = 0; i < rm.SameDisp.items.Count(); i++) {
+      rm.SameDisp.items[i].atoms.Pack(ACollectionItem::TagAnalyser(1));
     }
   }
 }
@@ -9807,28 +9818,14 @@ void XLibMacros::macConstrain(TStrObjList &Cmds,
         ConstTypeList<TCAtomPList>(groups));
     }
   }
-  else if (Cmds[0].Equalsi("same") && // same ADP constraint
-    (Cmds.Count() > 1 && Cmds[1].Equalsi("adp")))
+  else if (Cmds.Count() > 1 && Cmds[0].Equalsi("same") && // same ADP constraint
+    (Cmds[1].Equalsi("adp") || Cmds[1].Equalsi("disp")))
   {
+    olxstr target = Cmds[1];
     Cmds.DeleteRange(0, 2);
     ABasicFunction* bf =
       olex2::IOlex2Processor::GetInstance()->GetLibrary().FindMacro(
-        "xf.rm.ShareADP");
-    if (bf == 0) {
-      E.ProcessingError(__OlxSrcInfo, "could not locate required function");
-      return;
-    }
-    else {
-      bf->Run(Cmds, Options, E);
-    }
-  }
-  else if (Cmds[0].Equalsi("same") && // same ADP constraint
-    (Cmds.Count() > 1 && Cmds[1].Equalsi("disp")))
-  {
-    Cmds.DeleteRange(0, 2);
-    ABasicFunction* bf =
-      olex2::IOlex2Processor::GetInstance()->GetLibrary().FindMacro(
-        "xf.rm.ShareDisp");
+        olxstr("xf.rm.ShareADP") << target);
     if (bf == 0) {
       E.ProcessingError(__OlxSrcInfo, "could not locate required function");
       return;
@@ -10006,6 +10003,21 @@ void macSAME_expand(RefinementModel &rm, const list_t& groups,
 void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &E)
 {
+  if (!Cmds.IsEmpty() && (Cmds[0].Equalsi("adp") || Cmds[0].Equalsi("disp"))) {
+    olxstr target = Cmds[0];
+    Cmds.Delete(0);
+    ABasicFunction* bf =
+    olex2::IOlex2Processor::GetInstance()->GetLibrary().FindMacro(
+      olxstr("xf.rm.Share") << target);
+    if (bf == 0) {
+      E.ProcessingError(__OlxSrcInfo, "could not locate required function");
+        return;
+    }
+    else {
+      bf->Run(Cmds, Options, E);
+    }
+    return;
+  }
   const bool invert = Options.Contains("i"),
     expand = Options.Contains("e"),
     self = Options.GetBoolOption('s'),
