@@ -25,6 +25,29 @@ TSAtom::TSAtom(TNetwork *N)
   Flags = 0;
 }
 //..............................................................................
+TSAtom::TSAtom(TNetwork* N, TCAtom::Site& site)
+  : TBasicNode<TNetwork, TSAtom, TSBond>(N)
+{
+  CAtom(*site.atom);
+  Matrix = &site.matrix;
+  FCCenter = site.matrix * FCAtom->ccrd();
+  FCenter = FCAtom->GetParent()->Orthogonalise(FCCenter);
+}
+//..............................................................................
+TSAtom::TSAtom(TNetwork* N, ExplicitCAtomRef& aref)
+  : TBasicNode<TNetwork, TSAtom, TSBond>(N)
+{
+  CAtom(aref.GetAtom());
+  Matrix = aref.GetMatrix();
+  if (Matrix != 0) {
+    FCCenter = (*Matrix) * FCAtom->ccrd();
+  }
+  else {
+    FCCenter = FCAtom->ccrd();
+  }
+  FCenter = FCAtom->GetParent()->Orthogonalise(FCCenter);
+}
+//..............................................................................
 void  TSAtom::CAtom(TCAtom& S) {
   FCAtom = &S;
   FCCenter = S.ccrd();

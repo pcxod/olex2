@@ -139,7 +139,7 @@ public:
   olxstr MatrixToCode(const smatd &m) const;
   //............................................................................
   //Returns the data name of the file (data_XXX, returns XXX in this case)
-  inline const olxstr& GetDataName() const {
+  const olxstr& GetDataName() const {
     return (block_index == InvalidIndex) ? EmptyString()
       : data_provider[block_index].GetName();
   }
@@ -198,6 +198,8 @@ public:
     if (cb == 0) {
       if (create) {
         cb = &data_provider.Add(block_name, parent);
+        block_index = data_provider.Count() - 1;
+        return;
       }
     }
     if (cb != 0) {
@@ -224,6 +226,8 @@ public:
   match.
   */
   cif_dp::cetTable& AddLoopDef(const olxstr& col_names, bool replace=false);
+  /* adds a new table or a table with matching cols */
+  bool Add(const cif_dp::cetTable& tab);
   /* this is the only loop, which is not automatically created from structure
   data! If the loop does not exist it is automatically created
   */
@@ -312,7 +316,7 @@ struct AtomPartCifEntry : public cif_dp::IStringCifEntry {
 
 struct SymmCifEntry : public cif_dp::IStringCifEntry {
   const TCif& parent;
-  const smatd& data;
+  smatd data;
   mutable olxstr tmp_val;
   SymmCifEntry(const SymmCifEntry& v)
     : parent(v.parent), data(v.data)

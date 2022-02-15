@@ -591,6 +591,27 @@ void cetTable::SetName(const olxstr& nn) {
   this->name = nn;
 }
 //.............................................................................
+bool cetTable::Add(const cetTable& t) {
+  if (t.ColCount() != ColCount()) {
+    return false;
+  }
+  TArrayList<size_t> cids(ColCount());
+  for (size_t i = 0; i < ColCount(); i++) {
+    size_t ci = t.ColIndex(ColName(i));
+    if (ci == InvalidIndex) {
+      return false;
+    }
+    cids[i] = ci;
+  }
+  for (size_t i = 0; i < t.RowCount(); i++) {
+    CifRow &r = AddRow();
+    for (size_t j = 0; j < ColCount(); j++) {
+      r[j] = t[i][cids[j]]->Replicate();
+    }
+  }
+  return true;
+}
+//.............................................................................
 //.............................................................................
 //.............................................................................
 void cetString::SetValue_(const olxstr &val) {

@@ -422,7 +422,9 @@ void XLibMacros::Export(TLibrary& lib)  {
     fpAny|psFileLoaded,
     "Prints molecular volume, surface area and other information for "
     "visible/selected atoms");
-  xlib_InitMacro(RTab, EmptyString(), fpAny^(fpNone)|psCheckFileTypeIns,
+  xlib_InitMacro(RTab, 
+    "p-print values in CIF format",
+    fpAny | psCheckFileTypeIns,
     "Adds RTAB with given name (first argument) for provided atoms/selection");
   xlib_InitMacro(HklMerge,
     "m-merger [shelx], standard, unit&;"
@@ -5201,6 +5203,50 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
   Cif->SetParam(description);
   sw.start("Processing selected geometric measuremenets");
   xapp.XFile().GetRM().GetSelectedTableRows().Process(*Cif);
+  {
+    olx_object_ptr<VcoVContainer> vcovc = new VcoVContainer(xapp.XFile().GetAsymmUnit());
+    olxstr src_mat;
+    try {
+      src_mat = xapp.InitVcoV(*vcovc);
+    }
+    catch (TExceptionBase& e) {
+      TBasicApp::NewLogEntry() << "Could not initialise VcoV matrix";
+      vcovc = 0;
+    }
+    if (vcovc.ok()) {
+      sw.start("Adding extra info tables");
+      try {
+        xapp.XFile().GetRM().CVars.CalcAll(vcovc);
+        TTypeList<cif_dp::cetTable> tabs = xapp.XFile().GetRM().CVars.ToCIF(*Cif);
+        size_t added = 0;
+        for (size_t i = 0; i < tabs.Count(); i++) {
+          if (!Cif->Add(tabs[i])) {
+            TBasicApp::NewLogEntry(logWarning) << "Failed to add "
+              << tabs[i].GetName() << " table";
+          }
+          else {
+            added++;
+          }
+        }
+        tabs = xapp.XFile().GetRM().ExportInfo(*Cif, vcovc);
+        for (size_t i = 0; i < tabs.Count(); i++) {
+          if (!Cif->Add(tabs[i])) {
+            TBasicApp::NewLogEntry(logWarning) << "Failed to add "
+              << tabs[i].GetName() << " table";
+          }
+          else {
+            added++;
+          }
+        }
+        if (added > 0) {
+          xapp.NewLogEntry() << "Using " << src_mat << " matrix for calculations";
+        }
+      }
+      catch (...) {
+        TBasicApp::NewLogEntry(logWarning) << "Failed to calculate defined variables";
+      }
+    }
+  }
   sw.start("Saving the result");
   olxstr file_name = Cif->GetFileName();
   {
@@ -7212,6 +7258,24 @@ void XLibMacros::macMolInfo(TStrObjList& Cmds, const TParamList& Options, TMacro
 void XLibMacros::macRTab(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
+  if (Options.GetBoolOption('p')) {
+    TXApp& app = TXApp::GetInstance();
+    RefinementModel& rm = app.XFile().GetRM();
+    olx_object_ptr<TCif> cif = new TCif();
+    cif->Adopt(app.XFile(), 0);
+    using namespace cif_dp;
+    TTypeList<cetTable> tabs = app.XFile().GetRM().ExportInfo(*cif);
+    TStrList out;
+    for (size_t i = 0; i < tabs.Count(); i++) {
+      tabs[i].ToStrings(out);
+    }
+    TBasicApp::NewLogEntry() << out;
+    return;
+  }
+  if (Cmds.IsEmpty()) {
+    Error.ProcessingError(__OlxSrcInfo, "A name and 1 to 4 atoms is expected");
+    return;
+  }
   olxstr name = Cmds[0];
   TSAtomPList atoms = TXApp::GetInstance().FindSAtoms(Cmds.SubListFrom(1), true, true);
   if (atoms.IsEmpty()) {
@@ -11323,12 +11387,11 @@ void XLibMacros::macCalcVars(TStrObjList &Cmds, const TParamList &Options,
   if (Options.GetBoolOption("cif")) {
     TCif xx;
     xx.Adopt(xapp.XFile(), 0);
-    TPtrList<cif_dp::ICifEntry> cif = xapp.XFile().GetRM().CVars.ToCIF(xx);
+    TTypeList<cif_dp::cetTable> cif = xapp.XFile().GetRM().CVars.ToCIF(xx);
     TStrList out;
     for (size_t i = 0; i < cif.Count(); i++) {
-      cif[i]->ToStrings(out);
+      cif[i].ToStrings(out);
     }
-    cif.DeleteItems();
     TBasicApp::NewLogEntry() << out;
   }
 }

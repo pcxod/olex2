@@ -990,6 +990,15 @@ cetTable& TCif::AddLoopDef(const olxstr& col_names, bool replace) {
   return *LoopFromDef(data_provider[block_index], toks);
 }
 //..............................................................................
+bool TCif::Add(const cetTable& tab) {
+  cetTable *t = FindLoop(tab.GetName());
+  if (t == 0) {
+    data_provider[block_index].Add(tab.Replicate());
+    return true;
+  }
+  return t->Add(tab);
+}
+//..............................................................................
 cetTable& TCif::GetPublicationInfoLoop() {
   const static olxstr publ_ln("_publ_author"), publ_jn("_publ_requested_journal");
   cetTable *CF = FindLoop(publ_ln);
@@ -1002,18 +1011,18 @@ cetTable& TCif::GetPublicationInfoLoop() {
     "_publ_author_name,_publ_author_email,_publ_author_address");
 }
 //..............................................................................
-bool TCif::Adopt(TXFile &XF, int flags) {
+bool TCif::Adopt(TXFile& XF, int flags) {
   Clear();
   double Q[6], E[6];  // quadratic form of s thermal ellipsoid
   GetRM().Assign(XF.GetRM(), true);
   if (flags != 0) {
-    ASObjectProvider &objects = XF.GetLattice().GetObjects();
+    ASObjectProvider& objects = XF.GetLattice().GetObjects();
     for (size_t i = 0; i < objects.atoms.Count(); i++) {
-      TSAtom &a = objects.atoms[i];
+      TSAtom& a = objects.atoms[i];
       if (!a.IsAvailable() || a.IsAUAtom()) {
         continue;
       }
-      TCAtom & ca = AsymmUnit.NewAtom();
+      TCAtom& ca = AsymmUnit.NewAtom();
       ca.SetLabel(a.GetLabel(), false);
       ca.SetPart(a.CAtom().GetPart());
       ca.SetType(a.GetType());
@@ -1026,7 +1035,7 @@ bool TCif::Adopt(TXFile &XF, int flags) {
       ca.SetUiso(a.CAtom().GetUiso());
       ca.SetUisoEsd(a.CAtom().GetUisoEsd());
       if (a.GetEllipsoid() != 0) {
-        TEllipsoid &e = AsymmUnit.NewEllp();
+        TEllipsoid& e = AsymmUnit.NewEllp();
         e = *a.GetEllipsoid();
         ca.SetEllpId(AsymmUnit.EllpCount() - 1);
       }
@@ -1049,7 +1058,7 @@ bool TCif::Adopt(TXFile &XF, int flags) {
   data_provider.Add(Title.Replace(' ', "%20"));
   block_index = 0;
   {
-    olex2::IOlex2Processor *op = olex2::IOlex2Processor::GetInstance();
+    olex2::IOlex2Processor* op = olex2::IOlex2Processor::GetInstance();
     olxstr ad = "Olex2";
     if (op != 0) {
       olxstr ci = "GetCompilationInfo('full')";
@@ -1065,7 +1074,7 @@ bool TCif::Adopt(TXFile &XF, int flags) {
   SetParam("_chemical_formula_moiety",
     XF.GetLattice().CalcMoietyStr(false), true);
   SetParam("_chemical_formula_sum", GetAsymmUnit()._SummFormula(' ',
-    1./olx_max(GetAsymmUnit().GetZPrime(), 0.01)), true);
+    1. / olx_max(GetAsymmUnit().GetZPrime(), 0.01)), true);
   SetParam("_chemical_formula_weight",
     olxstr::FormatFloat(2, GetAsymmUnit().MolWeight()), false);
   const TAsymmUnit& au = GetAsymmUnit();
@@ -1090,7 +1099,7 @@ bool TCif::Adopt(TXFile &XF, int flags) {
   SetParam("_diffrn_ambient_temperature",
     XF.GetRM().expl.IsTemperatureSet() ? temp_v.ToString() : olxstr('?'), false);
   SetParam("_diffrn_radiation_wavelength", XF.GetRM().expl.GetRadiation(), false);
-  if( XF.GetRM().expl.GetCrystalSize().QLength() > 1.e-6 )  {
+  if (XF.GetRM().expl.GetCrystalSize().QLength() > 1.e-6) {
     SetParam("_exptl_crystal_size_max", XF.GetRM().expl.GetCrystalSize()[0], false);
     SetParam("_exptl_crystal_size_mid", XF.GetRM().expl.GetCrystalSize()[1], false);
     SetParam("_exptl_crystal_size_min", XF.GetRM().expl.GetCrystalSize()[2], false);
@@ -1100,10 +1109,10 @@ bool TCif::Adopt(TXFile &XF, int flags) {
     const RefinementModel::HklStat& hkl_stat = XF.GetRM().GetMergeStat();
     if (hkl_stat.TotalReflections != 0) {
       SetParam("_diffrn_reflns_number",
-        hkl_stat.TotalReflections-hkl_stat.SystematicAbsencesRemoved, false);
+        hkl_stat.TotalReflections - hkl_stat.SystematicAbsencesRemoved, false);
       SetParam("_reflns_number_total", hkl_stat.UniqueReflections, false);
       const char* hkl = "hkl";
-      for (int i = 0; i < 3; i++)  {
+      for (int i = 0; i < 3; i++) {
         SetParam(olxstr("_diffrn_reflns_limit_") << hkl[i] << "_min",
           hkl_stat.FileMinInd[i], false);
         SetParam(olxstr("_diffrn_reflns_limit_") << hkl[i] << "_max",
@@ -1111,27 +1120,28 @@ bool TCif::Adopt(TXFile &XF, int flags) {
       }
       if (hkl_stat.MaxD > 0)
         SetParam("_diffrn_reflns_theta_min",
-        olxstr::FormatFloat(2,
-        asin(XF.GetRM().expl.GetRadiation()/(2*hkl_stat.MaxD))*180/M_PI),
-        false);
+          olxstr::FormatFloat(2,
+            asin(XF.GetRM().expl.GetRadiation() / (2 * hkl_stat.MaxD)) * 180 / M_PI),
+          false);
       if (hkl_stat.MinD > 0)
         SetParam("_diffrn_reflns_theta_max",
-        olxstr::FormatFloat(2,
-        asin(XF.GetRM().expl.GetRadiation()/(2*hkl_stat.MinD))*180/M_PI),
-        false);
+          olxstr::FormatFloat(2,
+            asin(XF.GetRM().expl.GetRadiation() / (2 * hkl_stat.MinD)) * 180 / M_PI),
+          false);
       SetParam("_diffrn_reflns_av_R_equivalents",
         olxstr::FormatFloat(4, hkl_stat.Rint), false);
       SetParam("_diffrn_reflns_av_unetI/netI",
         olxstr::FormatFloat(4, hkl_stat.Rsigma), false);
     }
   }
-  catch(const TExceptionBase&)  {
+  catch (const TExceptionBase&) {
     TBasicApp::NewLogEntry() << __OlxSrcInfo << ": failed to update HKL "
       "statistics section of the CIF";
   }
-  if( XF.GetAsymmUnit().IsQPeakMinMaxInitialised() )
+  if (XF.GetAsymmUnit().IsQPeakMinMaxInitialised()) {
     SetParam("_refine_diff_density_max", XF.GetAsymmUnit().GetMaxQPeak(),
-    false);
+      false);
+  }
   TSpaceGroup& sg = XF.GetLastLoaderSG();
   SetParam("_space_group_crystal_system",
     sg.GetBravaisLattice().GetName().ToLowerCase(), true);
@@ -1142,9 +1152,9 @@ bool TCif::Adopt(TXFile &XF, int flags) {
     cetTable& Loop = AddLoopDef("_space_group_symop_id,"
       "_space_group_symop_operation_xyz");
     sg.GetMatrices(Matrices, mattAll);
-    for (size_t i=0; i < Matrices.Count(); i++) {
+    for (size_t i = 0; i < Matrices.Count(); i++) {
       CifRow& row = Loop.AddRow();
-      row[0] = new cetString(i+1);
+      row[0] = new cetString(i + 1);
       row[1] = new cetString(TSymmParser::MatrixToSymmEx(Matrices[i]));
     }
   }
@@ -1166,15 +1176,15 @@ bool TCif::Adopt(TXFile &XF, int flags) {
     CifRow& Row = atom_loop.AddRow();
     Row[0] = new cetString(A.GetResiLabel());
     Row[1] = new cetString(A.GetType().symbol);
-    for (int j = 0; j < 3; j++) {
+    for (size_t j = 0; j < 3; j++) {
       Row.Set(j + 2,
         new cetString(TEValueD(A.ccrd()[j], A.ccrdEsd()[j]).ToString()));
     }
     Row.Set(5, new cetString(TEValueD(A.GetUiso(), A.GetUisoEsd()).ToString()));
-    Row.Set(6, new cetString(A.GetEllipsoid() == NULL ? "Uiso" : "Uani"));
+    Row.Set(6, new cetString(A.GetEllipsoid() == 0 ? "Uiso" : "Uani"));
     Row.Set(7, new cetString(TEValueD(olx_round(A.GetChemOccu(), 1000),
-      A.GetOccuEsd()*A.GetDegeneracy()).ToString()));
-    if (A.GetParentAfixGroup() != NULL && A.GetParentAfixGroup()->IsRiding()) {
+      A.GetOccuEsd() * A.GetDegeneracy()).ToString()));
+    if (A.GetParentAfixGroup() != 0 && A.GetParentAfixGroup()->IsRiding()) {
       Row.Set(8, new cetString("R"));
     }
     else {
@@ -1188,12 +1198,12 @@ bool TCif::Adopt(TXFile &XF, int flags) {
     else {
       Row[10] = new cetString('.');
     }
-    if (A.GetEllipsoid() != NULL) {
+    if (A.GetEllipsoid() != 0) {
       A.GetEllipsoid()->GetShelxQuad(Q, E);
       GetAsymmUnit().UcartToUcif(Q);
       CifRow& Row1 = u_loop.AddRow();
       Row1[0] = new AtomCifEntry(A);
-      for (int j = 0; j < 6; j++) {
+      for (size_t j = 0; j < 6; j++) {
         Row1.Set(j + 1, new cetString(TEValueD(Q[j], E[j]).ToString()));
       }
     }

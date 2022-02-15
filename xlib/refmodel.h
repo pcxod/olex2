@@ -342,6 +342,8 @@ Friedel opposites of components 1 ... m
   InfoTab& AddHTAB();
   InfoTab& AddRTAB(const olxstr& codename);
   InfoTab& AddCONF();
+  TTypeList<cif_dp::cetTable>::const_list_type ExportInfo(const TCif &cif,
+    olx_object_ptr<VcoVContainer> vcovc=0) const;
   // internal: this should be called before the AU atom coordinates are changed
   void BeforeAUUpdate_();
   // internal: this should be called after the AU atom coordinates are changed

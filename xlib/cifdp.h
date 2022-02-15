@@ -247,6 +247,8 @@ namespace cif_dp {
     size_t RowCount() const { return data.RowCount(); }
     void SetRowCount(size_t sz) { data.SetRowCount(sz); }
     void SetRowCapacity(size_t sz) { data.SetRowCapacity(sz); }
+    /* add the table content if the column names match*/
+    bool Add(const cetTable& t);
     virtual void ToStrings(TStrList& list) const;
     virtual void Format() {}
     virtual ICifEntry* Replicate() const { return new cetTable(*this); }

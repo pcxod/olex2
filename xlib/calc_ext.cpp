@@ -406,7 +406,7 @@ bool CalculatedVars::Var::ToCIF(olx_pdict<uint16_t, cif_dp::cetTable*> out)
       descr << ", " << refs[3].GetName();
     }
     r[4] = new cetString(descr);
-    r[5] = new cetString(".");
+    r[5] = new cetString("yes");
   }
   break;
   }
@@ -579,19 +579,21 @@ void CalculatedVars::Clear() {
   eqivs.Clear();
 }
 //.............................................................................
-void CalculatedVars::CalcAll() const {
+void CalculatedVars::CalcAll(olx_object_ptr<VcoVContainer> vcovc) const {
   if (vars.IsEmpty()) {
     return;
   }
-  TXApp &app = TXApp::GetInstance();
-  VcoVContainer vcovc(app.XFile().GetAsymmUnit());
-  try {
-    olxstr src_mat = app.InitVcoV(vcovc);
-    app.NewLogEntry() << "Using " << src_mat << " matrix for the calculation";
-  }
-  catch (TExceptionBase& e) {
-    throw TFunctionFailedException(__OlxSourceInfo, e,
-      "could not initialise");
+  if (!vcovc.ok()) {
+    TXApp& app = TXApp::GetInstance();
+    vcovc = new VcoVContainer(app.XFile().GetAsymmUnit());
+    try {
+      olxstr src_mat = app.InitVcoV(*vcovc);
+      app.NewLogEntry() << "Using " << src_mat << " matrix for the calculation";
+    }
+    catch (TExceptionBase& e) {
+      throw TFunctionFailedException(__OlxSourceInfo, e,
+        "could not initialise");
+    }
   }
   for (size_t i = 0; i < vars.Count(); i++) {
     olxstr vn = olxstr("olex2.calculated.") << vars.GetKey(i);
@@ -716,8 +718,10 @@ struct ObjType {
     return r;
   }
 };
-TPtrList<cif_dp::ICifEntry>::const_list_type CalculatedVars::ToCIF(const TCif& cif) const {
-  TPtrList<cif_dp::ICifEntry> rv;
+TTypeList<cif_dp::cetTable>::const_list_type
+CalculatedVars::ToCIF(const TCif& cif) const
+{
+  TTypeList<cif_dp::cetTable> rv;
   if (vars.IsEmpty()) {
     return rv;
   }

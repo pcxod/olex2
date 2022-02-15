@@ -13,6 +13,7 @@
 #include "catom.h"
 #include "dataitem.h"
 #include "cifdp.h"
+#include "vcov.h"
 
 BeginXlibNamespace()
 
@@ -144,8 +145,8 @@ public:
   void ToDataItem(TDataItem &i, bool use_id) const;
   void FromDataItem(const TDataItem &i, bool use_id);
 
-  void CalcAll() const;
-  TPtrList<cif_dp::ICifEntry>::const_list_type ToCIF(const class TCif &cif) const;
+  void CalcAll(olx_object_ptr<VcoVContainer> vcovc=0) const;
+  TTypeList<cif_dp::cetTable>::const_list_type ToCIF(const class TCif &cif) const;
 };
 
 EndXlibNamespace()

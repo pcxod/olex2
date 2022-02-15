@@ -243,6 +243,7 @@ public:
   void UpdateResi();
   void Clear();
   bool IsEmpty() const { return refs.IsEmpty(); }
+  size_t RefCount() const { return refs.Count(); }
   AtomRefList &Validate(size_t group_size = InvalidSize);
   void Assign(const AtomRefList &arl);
   void ToDataItem(TDataItem &di) const;

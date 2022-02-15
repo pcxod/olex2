@@ -23,6 +23,7 @@
 #include "math/composite.h"
 #include "estopwatch.h"
 #include "encodings.h"
+#include "vcov.h"
 
 RefinementModel::RefinementModel(TAsymmUnit& au) :
   Omitted(*this),
@@ -417,6 +418,194 @@ InfoTab& RefinementModel::AddRTAB(const olxstr& codename) {
 //.............................................................................
 InfoTab& RefinementModel::AddCONF() {
   return InfoTables.Add(new InfoTab(*this, infotab_conf));
+}
+//.............................................................................
+TTypeList<cif_dp::cetTable>::const_list_type
+  RefinementModel::ExportInfo(const TCif& cif, olx_object_ptr<VcoVContainer> vcovc) const
+{
+  TPtrList<const InfoTab> rtabs;
+  TTypeList<cif_dp::cetTable> rv;
+  for (size_t i = 0; i < InfoTabCount(); i++) {
+    const InfoTab& t = GetInfoTab(i);
+    if (t.GetType() == infotab_rtab && t.IsValid()) {
+      rtabs << t;
+    }
+  }
+  if (rtabs.IsEmpty()) {
+    return rv;
+  }
+  if (!vcovc.ok()) {
+    TXApp& app = TXApp::GetInstance();
+    vcovc = new VcoVContainer(app.XFile().GetAsymmUnit());
+    try {
+      olxstr src_mat = app.InitVcoV(*vcovc);
+      app.NewLogEntry() << "Using " << src_mat << " matrix for the calculation";
+    }
+    catch (TExceptionBase& e) {
+      throw TFunctionFailedException(__OlxSourceInfo, e,
+        "could not initialise");
+    }
+  }
+  typedef olx_pair_t<TTypeList<TCAtom::Site>, TEValueD> value_t;
+  TTypeList<value_t> chvs, others;
+  smatd IM = smatd().I();
+  for (size_t i = 0; i < rtabs.Count(); i++) {
+    size_t rc = rtabs[i]->GetAtoms().RefCount();
+    TTypeList<ExplicitCAtomRef> atoms = rtabs[i]->GetAtoms()
+      .ExpandList(*this, rtabs[i]->GetAtoms().RefCount());
+    if (rc == 1) {
+      for (size_t j = 0; j < atoms.Count(); j++) {
+        TTypeList<TCAtom::Site> env;
+        for (size_t k = 0; k < atoms[j].GetAtom().AttachedSiteCount(); k++) {
+          TCAtom::Site& s = atoms[j].GetAtom().GetAttachedSite(k);
+          if (!s.atom->IsDeleted()) {
+            env.AddNew(s);
+          }
+        }
+        if (env.Count() == 4) {
+          TTypeList<TSAtom> re;
+          for (size_t k = 0; k < env.Count(); k++) {
+            re.Add(new TSAtom(0, env[k]));
+            re.GetLast()._SetMatrix(env[k].matrix);
+          }
+          chvs.Add(new value_t(env, vcovc->CalcTetrahedronVolume(re[0], re[1], re[2], re[3])));
+        }
+      }
+    }
+    else if (rc == 2) {
+      for (size_t j = 0; j < atoms.Count(); j += 2) {
+        TSAtom a(0, atoms[j]), b(0, atoms[j + 1]);
+        if (atoms[j].GetMatrix() == 0) {
+          a._SetMatrix(IM);
+        }
+        if (atoms[j + 1].GetMatrix() == 0) {
+          b._SetMatrix(IM);
+        }
+        TTypeList<TCAtom::Site> env;
+        for (int it = 0; it < 2; it++) {
+          smatd m = atoms[j + it].GetMatrix() == 0 ? IM : *atoms[j + it].GetMatrix();
+          env.Add(new TCAtom::Site(&atoms[j + it].GetAtom(), m));
+        }
+        others.Add(new value_t(env, vcovc->CalcDistance(a, b)));
+      }
+    }
+    else if (rc == 3) {
+      for (size_t j = 0; j < atoms.Count(); j += 3) {
+        TSAtom a(0, atoms[j]), b(0, atoms[j + 1]), c(0, atoms[j + 2]);
+        if (atoms[j].GetMatrix() == 0) {
+          a._SetMatrix(IM);
+        }
+        if (atoms[j + 1].GetMatrix() == 0) {
+          b._SetMatrix(IM);
+        }
+        if (atoms[j + 2].GetMatrix() == 0) {
+          c._SetMatrix(IM);
+        }
+        TTypeList<TCAtom::Site> env;
+        for (int it = 0; it < 3; it++) {
+          smatd m = atoms[j + it].GetMatrix() == 0 ? IM : *atoms[j + it].GetMatrix();
+          env.Add(new TCAtom::Site(&atoms[j + it].GetAtom(), m));
+        }
+        others.Add(new value_t(env, vcovc->CalcAngle(a, b, c)));
+      }
+    }
+    else if (rc == 4) {
+      for (size_t j = 0; j < atoms.Count(); j += 4) {
+        TSAtom a(0, atoms[j]), b(0, atoms[j + 1]), c(0, atoms[j + 2]), d(0, atoms[j + 3]);
+        if (atoms[j].GetMatrix() == 0) {
+          a._SetMatrix(IM);
+        }
+        if (atoms[j + 1].GetMatrix() == 0) {
+          b._SetMatrix(IM);
+        }
+        if (atoms[j + 2].GetMatrix() == 0) {
+          c._SetMatrix(IM);
+        }
+        if (atoms[j + 3].GetMatrix() == 0) {
+          d._SetMatrix(IM);
+        }
+        TTypeList<TCAtom::Site> env;
+        for (int it = 0; it < 4; it++) {
+          smatd m = atoms[j + it].GetMatrix() == 0 ? IM : *atoms[j + it].GetMatrix();
+          env.Add(new TCAtom::Site(&atoms[j + it].GetAtom(), m));
+        }
+        others.Add(new value_t(env, vcovc->CalcTAngle(a, b, c, d)));
+      }
+    }
+  }
+  using namespace cif_dp;
+
+  if (!others.IsEmpty()) {
+    olx_object_ptr<cetTable> d_tab = new cetTable(
+      "_geom_contact_atom_site_label_1,"
+      "_geom_contact_atom_site_label_2,_geom_contact_site_symmetry_2,"
+      "_geom_contact_distance,_geom_contact_publ_flag");
+    olx_object_ptr<cetTable> a_tab = new cetTable(
+      "_geom_angle_atom_site_label_1,_geom_angle_site_symmetry_1,"
+      "_geom_angle_atom_site_label_2,"
+      "_geom_angle_atom_site_label_3,_geom_angle_site_symmetry_3,"
+      "_geom_angle,_geom_angle_publ_flag");
+    olx_object_ptr<cetTable> t_tab = new cetTable(
+      "_geom_torsion_atom_site_label_1,_geom_torsion_site_symmetry_1,"
+      "_geom_torsion_atom_site_label_2,_geom_torsion_site_symmetry_2,"
+      "_geom_torsion_atom_site_label_3,_geom_torsion_site_symmetry_3,"
+      "_geom_torsion_atom_site_label_4,_geom_torsion_site_symmetry_4,"
+      "_geom_torsion,_geom_torsion_publ_flag");
+    for (size_t i = 0; i < others.Count(); i++) {
+      CifRow* row = 0;
+      if (others[i].a.Count() == 1) {
+      }
+      if (others[i].a.Count() == 2) {
+        row = &d_tab->AddRow();
+        (*row)[0] = new AtomCifEntry(*others[i].a[0].atom);
+        (*row)[1] = new AtomCifEntry(*others[i].a[1].atom);
+        (*row)[2] = new SymmCifEntry(cif, others[i].a[1].matrix);
+        (*row)[3] = new cetString(others[i].b.ToString());
+      }
+      else if (others[i].a.Count() == 3) {
+        row = &a_tab->AddRow();
+        if (!others[i].a[1].matrix.IsI()) {
+          smatd im = others[i].a[1].matrix.Inverse();
+          others[i].a[0].matrix *= im;
+          others[i].a[2].matrix *= im;
+        }
+        (*row)[0] = new AtomCifEntry(*others[i].a[0].atom);
+        (*row)[1] = new SymmCifEntry(cif, others[i].a[0].matrix);
+        (*row)[2] = new AtomCifEntry(*others[i].a[1].atom);
+        (*row)[3] = new AtomCifEntry(*others[i].a[2].atom);
+        (*row)[4] = new SymmCifEntry(cif, others[i].a[2].matrix);
+        (*row)[5] = new cetString(others[i].b.ToString());
+      }
+      else if (others[i].a.Count() == 4) {
+        row = &t_tab->AddRow();
+        for (size_t j = 0; j < 4; j++) {
+          (*row)[j*2] = new AtomCifEntry(*others[i].a[j].atom);
+          (*row)[j*2+1] = new SymmCifEntry(cif, others[i].a[j].matrix);
+        }
+        (*row)[8] = new cetString(others[i].b.ToString());
+      }
+      else {
+        continue;
+      }
+      for (size_t j = 0; j < row->Count(); j++) {
+        SymmCifEntry* se = dynamic_cast<SymmCifEntry*>(row->GetItem(j));
+        if (se != 0) {
+          TUnitCell::InitMatrixId(cif.GetMatrices(), se->data);
+        }
+      }
+      row->GetLast() = new cetString("yes");
+    }
+    if (d_tab->RowCount() > 0) {
+      rv.Add(d_tab.release());
+    }
+    if (a_tab->RowCount() > 0) {
+      rv.Add(a_tab.release());
+    }
+    if (t_tab->RowCount() > 0) {
+      rv.Add(t_tab.release());
+    }
+  }
+  return rv;
 }
 //.............................................................................
 void RefinementModel::Validate() {

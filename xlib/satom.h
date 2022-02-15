@@ -46,7 +46,9 @@ protected:
   static int _SortBondsByLengthAsc(const TSBond &b1, const TSBond &b2);
   static int _SortBondsByLengthDsc(const TSBond &b1, const TSBond &b2);
 public:
-  TSAtom(TNetwork *N);
+  TSAtom(TNetwork* N);
+  TSAtom(TNetwork* N, TCAtom::Site& site);
+  TSAtom(TNetwork* N, class ExplicitCAtomRef& aref);
   virtual ~TSAtom()  {}
   void Assign(const TSAtom& S);
   // Is/Set
