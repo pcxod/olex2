@@ -185,7 +185,10 @@ void XLibMacros::Export(TLibrary& lib)  {
     "f-creates final CIF with embedded RES file and HKL loop&;"
     "dn-new data name for the merged CIF&;"
     "resolve-allows using skip_merged items to resolve empty items&;"
-    "fcf-[false] - use _refln loop vs _diffrn_refln when embedding HKL",
+    "fcf-[false] - use _refln loop vs _diffrn_refln when embedding HKL&;"
+    "vars-[false] - add a list of calculated variables&;"
+    "rtab-[false] - add RTABs to the related tables&;"
+    ,
     fpAny|psFileLoaded,
   "Merges loaded or provided as first argument cif with other cif(s)");
   xlib_InitMacro(CifExtract,
@@ -5203,7 +5206,9 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
   Cif->SetParam(description);
   sw.start("Processing selected geometric measuremenets");
   xapp.XFile().GetRM().GetSelectedTableRows().Process(*Cif);
-  {
+  bool insert_vars = Options.GetBoolOption("vars"),
+    insert_rtab = Options.GetBoolOption("rtab");
+  if (insert_vars || insert_rtab) {
     olx_object_ptr<VcoVContainer> vcovc = new VcoVContainer(xapp.XFile().GetAsymmUnit());
     olxstr src_mat;
     try {
@@ -5217,25 +5222,29 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
       sw.start("Adding extra info tables");
       try {
         xapp.XFile().GetRM().CVars.CalcAll(vcovc);
-        TTypeList<cif_dp::cetTable> tabs = xapp.XFile().GetRM().CVars.ToCIF(*Cif);
         size_t added = 0;
-        for (size_t i = 0; i < tabs.Count(); i++) {
-          if (!Cif->Add(tabs[i])) {
-            TBasicApp::NewLogEntry(logWarning) << "Failed to add "
-              << tabs[i].GetName() << " table";
-          }
-          else {
-            added++;
+        if (insert_vars) {
+          TTypeList<cif_dp::cetTable> tabs = xapp.XFile().GetRM().CVars.ToCIF(*Cif);
+          for (size_t i = 0; i < tabs.Count(); i++) {
+            if (!Cif->Add(tabs[i])) {
+              TBasicApp::NewLogEntry(logWarning) << "Failed to add "
+                << tabs[i].GetName() << " table";
+            }
+            else {
+              added++;
+            }
           }
         }
-        tabs = xapp.XFile().GetRM().ExportInfo(*Cif, vcovc);
-        for (size_t i = 0; i < tabs.Count(); i++) {
-          if (!Cif->Add(tabs[i])) {
-            TBasicApp::NewLogEntry(logWarning) << "Failed to add "
-              << tabs[i].GetName() << " table";
-          }
-          else {
-            added++;
+        if (insert_rtab) {
+          TTypeList<cif_dp::cetTable> tabs = xapp.XFile().GetRM().ExportInfo(*Cif, vcovc);
+          for (size_t i = 0; i < tabs.Count(); i++) {
+            if (!Cif->Add(tabs[i])) {
+              TBasicApp::NewLogEntry(logWarning) << "Failed to add "
+                << tabs[i].GetName() << " table";
+            }
+            else {
+              added++;
+            }
           }
         }
         if (added > 0) {
