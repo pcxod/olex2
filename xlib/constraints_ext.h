@@ -78,7 +78,7 @@ struct static_direction : public adirection {
 struct direction : public adirection {
   TCAtomGroup atoms;
   uint16_t type;
-  direction(uint16_t _type) : type(type) {}
+  direction(uint16_t type) : type(type) {}
   direction(const olxstr &id, const TCAtomGroup &_atoms,
     uint16_t _type)
   : adirection(id),
