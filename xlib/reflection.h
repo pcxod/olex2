@@ -253,11 +253,11 @@ public:
   static compd PhaseShift(const vec3i& hkl, const SymmSpace::InfoEx& info,
     int idx)
   {
-    if (idx == 0) {
+    if (idx == 0 || idx == -1) {
       return 1;
     }
     size_t a_idx = olx_abs(idx);
-    if (idx < info.matrices.Count()+2) {
+    if (a_idx < info.matrices.Count()+2) {
       double ps = info.matrices[a_idx-2].t.DotProd(hkl);
       if (olx_abs(ps - olx_round(ps)) < 0.01) {
         return 1;

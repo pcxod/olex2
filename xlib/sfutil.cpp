@@ -422,8 +422,9 @@ void SFUtil::_CalcSF(const TXFile& xfile, const IMillerIndexList& refs,
   // apply modifications
   try {
     TXApp &xapp = TXApp::GetInstance();
+    THklFile hkl;
     if (xapp.CheckFileType<TIns>()) {
-      TIns &ins = xapp.XFile().GetLastLoader<TIns>();
+      TIns& ins = xapp.XFile().GetLastLoader<TIns>();
       if (ins.InsExists("ABIN")) {
         olxstr fab_name = TEFile::ChangeFileExt(xapp.XFile().LocateHklFile(),
           "fab");
@@ -431,43 +432,52 @@ void SFUtil::_CalcSF(const TXFile& xfile, const IMillerIndexList& refs,
           TBasicApp::NewLogEntry(logError) << "FAB file is missing";
         }
         else {
-          TUnitCell::SymmSpace sp = xapp.XFile().GetUnitCell().GetSymmSpace();
-          SymmSpace::InfoEx info_ex = SymmSpace::Compact(sp);
-          olxdict<uint32_t, compd, TPrimitiveComparator> fab;
-          THklFile hkl;
-          TStrList missing;
           hkl.LoadFromFile(fab_name, false, "free");
-          for (size_t i = 0; i < hkl.RefCount(); i++) {
-            TReflection &r = hkl[i];
-            int idx;
-            vec3i si = TReflection::Standardise(r.GetHkl(), info_ex, &idx);
-            compd v(r.GetI(), r.GetS());
-            fab.Add(TReflection::CalcHKLHash(si),
-              v * TReflection::PhaseShift(r.GetHkl(), info_ex, idx));
-            if (!info_ex.centrosymmetric) {
-              vec3i ni = -r.GetHkl();
-              si = TReflection::Standardise(ni, info_ex, &idx);
-              fab.Add(TReflection::CalcHKLHash(si),
-                v.conj() * TReflection::PhaseShift(ni, info_ex, idx));
-            }
-          }
-          for (size_t i = 0; i < F.Count(); i++) {
-            int mi;
-            vec3i stf = TReflection::Standardise(refs[i], info_ex, &mi);
-            size_t idx = fab.IndexOf(TReflection::CalcHKLHash(stf));
-            if (idx == InvalidIndex) {
-              missing << refs[i].ToString();
-              continue;
-            }
-            compd ps = TReflection::PhaseShift(refs[i], info_ex, mi);
-            F[i] += fab.GetValue(idx) / ps;
-          }
-          if (!missing.IsEmpty()) {
-            TBasicApp::NewLogEntry(logError) << "Missing modifications for the"
-              " following reflections";
-            TBasicApp::NewLogEntry(logError) << missing;
-          }
         }
+      }
+    }
+    else if (xapp.CheckFileType<TCif>()) {
+      using namespace cif_dp;
+      TCif& cif = xapp.XFile().GetLastLoader<TCif>();
+      cetStringList* s_fab = dynamic_cast<cetStringList *>(cif.FindEntry("_shelx_fab_file"));
+      if (s_fab != 0) {
+        hkl.LoadFromStrings(s_fab->lines, false, "free");
+      }
+    }
+    if (hkl.RefCount() != 0) {
+      TUnitCell::SymmSpace sp = xapp.XFile().GetUnitCell().GetSymmSpace();
+      SymmSpace::InfoEx info_ex = SymmSpace::Compact(sp);
+      olxdict<uint32_t, compd, TPrimitiveComparator> fab;
+      TStrList missing;
+      for (size_t i = 0; i < hkl.RefCount(); i++) {
+        TReflection& r = hkl[i];
+        int idx;
+        vec3i si = TReflection::Standardise(r.GetHkl(), info_ex, &idx);
+        compd v(r.GetI(), r.GetS());
+        fab.Add(TReflection::CalcHKLHash(si),
+          v * TReflection::PhaseShift(r.GetHkl(), info_ex, idx));
+        if (!info_ex.centrosymmetric) {
+          vec3i ni = -r.GetHkl();
+          si = TReflection::Standardise(ni, info_ex, &idx);
+          fab.Add(TReflection::CalcHKLHash(si),
+            v.conj() * TReflection::PhaseShift(ni, info_ex, idx));
+        }
+      }
+      for (size_t i = 0; i < F.Count(); i++) {
+        int mi;
+        vec3i stf = TReflection::Standardise(refs[i], info_ex, &mi);
+        size_t idx = fab.IndexOf(TReflection::CalcHKLHash(stf));
+        if (idx == InvalidIndex) {
+          missing << refs[i].ToString();
+          continue;
+        }
+        compd ps = TReflection::PhaseShift(refs[i], info_ex, mi);
+        F[i] += fab.GetValue(idx) / ps;
+      }
+      if (!missing.IsEmpty()) {
+        TBasicApp::NewLogEntry(logError) << "Missing modifications for the"
+          " following reflections";
+        TBasicApp::NewLogEntry(logError) << missing;
       }
     }
   }
