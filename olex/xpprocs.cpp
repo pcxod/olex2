@@ -2397,8 +2397,10 @@ void TMainForm::macEditIns(TStrObjList &Cmds, const TParamList &Options, TMacroD
       FXApp->XFile().LastLoaderChanged();
       BadReflectionsTable(false);
       UpdateInfoBox();
+      E.SetRetVal<bool>(true);
     }
     else  {
+      E.SetRetVal<bool>(false);
     }
   }
   catch (const TExceptionBase& e)  {

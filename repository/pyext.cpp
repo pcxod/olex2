@@ -417,6 +417,9 @@ PyObject* runOlexFunctionEx(PyObject* self, PyObject* args) {
         (er.GetStack().IsEmpty() ? name : er.GetStack().Top());
     }
     if (er.IsSuccessful()) {
+      if (er.RetObj() != 0) {
+        return PythonExt::BuildString(er.RetObj()->ToString());
+      }
       return Py_BuildValue("b", true);
     }
     else {
