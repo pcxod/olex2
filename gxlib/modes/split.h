@@ -50,6 +50,7 @@ protected:
     }
   }
   olxstr ReCon; // restraint or constraint to use for split atoms
+  bool doSplit;
 public:
   TSplitMode(size_t id) : AMode(id) {
     gxapp.OnObjectsCreate.Add(this, mode_split_ObjectsCreate, msiExit);
@@ -67,6 +68,7 @@ public:
     }
     gxapp.SetZoomAfterModelBuilt(gxapp
       .GetOptions().GetBoolOption("model.center_on_update", true, true));
+    doSplit = Options.GetBoolOption('s', false, true);
     return true;
   }
 
@@ -82,9 +84,10 @@ public:
     gxapp.XFile().GetLattice().OnDisassemble.Remove(this);
     gxapp.OnObjectsCreate.Remove(this);
     TGXApp::AtomIterator ai = gxapp.GetAtoms();
-    while (ai.HasNext())
+    while (ai.HasNext()) {
       ai.Next().SetMoveable(false);
-    if (SplitAtoms.IsEmpty()) {
+    }
+    if (SplitAtoms.IsEmpty() || !doSplit) {
       gxapp.XFile().GetLattice().UpdateConnectivity();
       return;
     }
@@ -150,7 +153,7 @@ public:
           split = false;
           break;
         }
-      if (split) {
+      if (split && doSplit) {
         TXAtom &xa = gxapp.AddAtom(XA);
         const TAsymmUnit& au = gxapp.XFile().GetAsymmUnit();
         TAsymmUnit::TLabelChecker lck(au);

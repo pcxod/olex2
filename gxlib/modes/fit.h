@@ -21,7 +21,7 @@ class TFitMode : public AEventsDispatcher, public AMode {
   TXAtomPList Atoms, AtomsToMatch;
   vec3d_alist original_crds, saved_crds;
   bool Initialised, DoSplit, Restrain, RestrainU;
-  int afix, part;
+  int afix, part, var;
   size_t split_offset;
   class OnUniqHandler : public AActionHandler {
     TFitMode& fit_mode;
@@ -127,6 +127,7 @@ public:
     gxapp.SetZoomAfterModelBuilt(gxapp
       .GetOptions().GetBoolOption("model.center_on_update", true, true));
     part = Options.FindValue('p', DefNoPart).ToInt();
+    var = Options.FindValue('v', 0).ToInt() - 1;
     return (Initialised = true);
   }
 
@@ -147,7 +148,8 @@ public:
     RefinementModel& rm = gxapp.XFile().GetRM();
     TAsymmUnit& au = gxapp.XFile().GetAsymmUnit();
     TAsymmUnit::TLabelChecker lck(au);
-    XVar& xv = rm.Vars.NewVar(0.75);
+    XVar& xv = (var < 0 || var >= rm.Vars.VarCount() ? rm.Vars.NewVar(0.75) :
+      rm.Vars.GetVar(var));
     olxset<TAfixGroup*, TPointerComparator> afix_groups;
     if (DoSplit) {
       DistanceGenerator::atom_map_1_t atom_map;
