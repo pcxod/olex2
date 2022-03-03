@@ -438,7 +438,9 @@ void GXLibMacros::Export(TLibrary& lib) {
     "q-quality [5], max is set to 7&;"
     "a-anharmonicity display [all], anh, none",
     fpNone,
-    "Shows/hides atom legend");
+    "Shows RMSD or MSD Surfaces. Use 'kill MSDS' to disable. "
+    "a=anh shows 3rd and 4th order contribution only "
+    "a=none shows 2nd order contribution only");
 
   gxlib_InitMacro(ScaleN,
     EmptyString(),
