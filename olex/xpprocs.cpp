@@ -2732,13 +2732,21 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
     ff.Add("*.mol", "MDL MOL");
     ff.Add("*.mas", "XD master");
     ff.Add("*.mol2", "Tripos MOL2");
+    ff.Add("*.cif_pets", "PETS");
     if (!OverlayXFile) {
       ff.Add("*.oxm", "Olex2 model");
       ff.Add("*.cfx_LANA", "Stoe data file");
     }
+
     file_n.file_name = PickFile("Open File",
       ff.GetString(),
       XLibMacros::CurrentDir(), EmptyString(), true);
+    if (!file_n.file_name.IsEmpty()) {
+      TStrObjList args;
+      args.Add(file_n.file_name);
+      Macros.ProcessMacro("@reap", args, Options, Error);
+      return;
+    }
   }
   // the dialog has been successfully executed
   if (!file_n.file_name.IsEmpty()) {

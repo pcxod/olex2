@@ -84,6 +84,7 @@ namespace cif_dp {
     }
     virtual ICifEntry* Replicate() const = 0;
     virtual olxstr GetStringValue() const = 0;
+    TIString ToString() const { return GetStringValue(); }
     static ICifEntry *FromToken(const CifToken &t, int version);
   };
   /////////////////////////////////////////////////////////////////////////////

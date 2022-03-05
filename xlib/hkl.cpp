@@ -267,14 +267,23 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
     }
     if (get_ins && (SL.Count() - i) > 2) {
       TStrList toks = SL.SubListFrom(i).obj();
-      olx_object_ptr<TIns> ins(new TIns);
-      try {
-        ins->LoadFromStrings(toks);
-        rv = ins;
+      bool have_cell = false;
+      for (size_t li = 0; li < toks.Count(); li++) {
+        if (toks[li].StartsFromi("CELL")) {
+          have_cell = true;
+          break;
+        }
       }
-      catch (const TExceptionBase &e) {
-        TBasicApp::NewLogEntry(logInfo) << "Failed on reading INS from HKL: "
-          << e.GetException()->GetFullMessage();
+      if (have_cell) {
+        olx_object_ptr<TIns> ins(new TIns);
+        try {
+          ins->LoadFromStrings(toks);
+          rv = ins;
+        }
+        catch (const TExceptionBase& e) {
+          TBasicApp::NewLogEntry(logInfo) << "Failed on reading INS from HKL: "
+            << e.GetException()->GetFullMessage();
+        }
       }
     }
   }

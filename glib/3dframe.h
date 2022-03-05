@@ -80,28 +80,32 @@ public:
   T3DFrameCtrl(TGlRenderer& prnt, const olxstr& cName);
   void Create(const olxstr& cName);
   virtual bool GetDimensions(vec3d& _mn, vec3d& _mx) {
-    for (int i = 0; i < 8; i++)
+    for (int i = 0; i < 8; i++) {
       vec3d::UpdateMinMax(edges[i], _mn, _mx);
+    }
     return true;
   }
   virtual void SetBasis() const {}
   virtual void SetVisible(bool v);
   virtual bool Orient(TGlPrimitive& p);
   const vec3d& GetEdge(size_t i) const {
-    if (i >= 8)
+    if (i >= 8) {
       throw TIndexOutOfRangeException(__OlxSourceInfo, i, 0, 8);
+    }
     return edges[i];
   }
   void SetEdge(size_t i, const vec3d& val) {
-    if (i >= 8)
+    if (i >= 8) {
       throw TIndexOutOfRangeException(__OlxSourceInfo, i, 0, 8);
+    }
     edges[i] = val;
   }
   // recalculates normals etc for the new edges
   void UpdateEdges();
   void Translate(const vec3d& t) {
-    for (int i = 0; i < 8; i++)
+    for (int i = 0; i < 8; i++) {
       edges[i] += t;
+    }
     center += t;
   }
   double GetVolume() const {

@@ -73,13 +73,14 @@ T3DFrameCtrl::T3DFrameCtrl(TGlRenderer& prnt, const olxstr& cName)
   UpdateEdges();
 }
 //.............................................................................
-void T3DFrameCtrl::Create(const olxstr& cName)  {
-  if( !cName.IsEmpty() )  SetCollectionName(cName);
-  for( size_t i=0; i < Faces.Count(); i++ )
+void T3DFrameCtrl::Create(const olxstr& cName) {
+  if (!cName.IsEmpty())  SetCollectionName(cName);
+  for (size_t i = 0; i < Faces.Count(); i++) {
     Faces[i].Create(EmptyString());
+  }
   TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
   GPC.AddObject(*this);
-  if( GPC.PrimitiveCount() != 0 )  return;
+  if (GPC.PrimitiveCount() != 0)  return;
   TGraphicsStyle& GS = GPC.GetStyle();
   TGlPrimitive& sph = GPC.NewPrimitive("Sphere", sgloSphere);
   sph.Params[0] = 1;
@@ -125,12 +126,14 @@ bool T3DFrameCtrl::Orient(TGlPrimitive& p)  {
 void T3DFrameCtrl::SetVisible(bool v) {
   AGDrawObject::SetVisible(v);
   if (!v) {
-    for (int i = 0; i < 6; i++)
+    for (int i = 0; i < 6; i++) {
       Faces[i].SetVisible(v);
+    }
   }
   else {
-    for (int i = 0; i < 6; i++)
+    for (int i = 0; i < 6; i++) {
       Faces[i].SetVisible(!IsSpherical());
+    }
   }
 }
 //.............................................................................
@@ -138,8 +141,9 @@ bool T3DFrameCtrl::DoRotate(const vec3d& vec, double angle)  {
   mat3d m;
   olx_create_rotation_matrix(m, vec, cos(angle), sin(angle));
   vec3d cnt = GetCenter();
-  for( int i=0; i < 8; i++ )
-    edges[i] = (edges[i]-cnt)*m+cnt;
+  for (int i = 0; i < 8; i++) {
+    edges[i] = (edges[i] - cnt) * m + cnt;
+  }
   UpdateEdges();
   return !sphere;
 }
@@ -147,14 +151,19 @@ bool T3DFrameCtrl::DoRotate(const vec3d& vec, double angle)  {
 bool T3DFrameCtrl::DoZoom(double zoom_, bool inc)  {
   const double vol = GetVolume();
   double z;
-  if (inc)
+  if (inc) {
     z = 1.0 + zoom_;
-  else
+  }
+  else {
     z = zoom_;
-  if (vol*z < 0.1 && z < 1.0)  return true;
+  }
+  if (vol * z < 0.1 && z < 1.0) {
+    return true;
+  }
   vec3d cnt = GetCenter();
-  for( int i=0; i < 8; i++ )
-    edges[i] = (edges[i]-cnt)*z+cnt;
+  for (int i = 0; i < 8; i++) {
+    edges[i] = (edges[i] - cnt) * z + cnt;
+  }
   zoom *= z;
   return true;
 }
@@ -167,7 +176,7 @@ bool T3DFrameCtrl::OnTranslate(size_t sender, const vec3d& t)  {
   Faces[sender].GetB() += dir;
   Faces[sender].GetC() += dir;
   Faces[sender].GetD() += dir;
-  center += dir;
+  center = olx_mean(olx_as_list(edges, 8));
   return true;
 }
 //.............................................................................
@@ -176,10 +185,7 @@ void T3DFrameCtrl::UpdateEdges()  {
     norms[i] = (Faces[i].GetC()-Faces[i].GetB()).XProdVec(
       Faces[i].GetA()-Faces[i].GetB()).Normalise();
   }
-  center.Null();
-  for (int i = 0; i < 8; i++)
-    center += edges[i];
-  center /= 8;
+  center = olx_mean(olx_as_list(edges, 8));
   vec3d sz = GetSize();
   if (sz[0] > sz[1]) {
     zoom = (sz[0] > sz[2] ? sz[0] : sz[2]);

@@ -226,4 +226,41 @@ void olx_list_call_st(const list_t &l, func_t f) {
   for (size_t i=0; i < l.Count(); i++)
     (*f)(olx_ref::get(l[i]));
 };
+
+template <typename item_t>
+struct olx_as_list_ {
+  item_t* arr;
+  size_t sz;
+  olx_as_list_(item_t *arr, size_t sz)
+    : arr(arr), sz(sz)
+  {}
+
+  size_t Count() const { return sz; }
+  item_t& operator [] (size_t i) const { return arr[i]; }
+  typedef item_t list_item_type;
+};
+
+template <typename item_t>
+struct olx_as_const_list_ {
+  const item_t* arr;
+  size_t sz;
+  olx_as_const_list_(const item_t* arr, size_t sz)
+    : arr(arr), sz(sz)
+  {}
+
+  size_t Count() const { return sz; }
+  const item_t& operator [] (size_t i) const { return arr[i]; }
+  typedef item_t list_item_type;
+};
+
+template <typename item_t>
+olx_as_list_<item_t> olx_as_list(item_t* arr, size_t sz) {
+  return olx_as_list_<item_t>(arr, sz);
+}
+
+template <typename item_t>
+olx_as_const_list_<item_t> olx_as_const_list(const item_t* arr, size_t sz) {
+  return olx_as_const_list_<item_t>(arr, sz);
+}
+
 #endif
