@@ -8537,7 +8537,7 @@ void XLibMacros::macNeutronHDist(TStrObjList& Cmds, const TParamList& Options,
     //might have been easier if i gave the ones that are to be changed....
     if (m != 1 && m != 2 && m != 3 && m != 4 && m != 8 && m != 9 && m != 12 && m != 13 && m != 14 && m != 15 && m != 16) continue;
     double d = 1.1;
-    const int charge = pivot.GetCharge();
+    const int charge = pivot.GetType().z;
     if (charge == 5)
       //BH (terminal)
       d = 1.185;
