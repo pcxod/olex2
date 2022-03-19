@@ -282,6 +282,8 @@ public:
   */
   static bool ParseTuple(PyObject* tuple, const char* format, ...);
 
+  static PyObject* ToPython(const TDataItem& i, PyObject* to=0);
+
   static olxcstr &ModuleName();
 
   static PyObject *init_module(const olxcstr &name, PyMethodDef *m_def);

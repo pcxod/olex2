@@ -29,6 +29,7 @@ RefinementModel::RefinementModel(TAsymmUnit& au) :
   Omitted(*this),
   HklStatFileID(EmptyString(), 0, 0),
   HklFileID(EmptyString(), 0, 0),
+  GenericStore(0, "Generic"),
   Vars(*this),
   rDFIX(*this, rltGroup2, "DFIX", rptValue|rptEsd, true),
   rDANG(*this, rltGroup2, "DANG", rptValue|rptEsd, true),
@@ -146,6 +147,7 @@ void RefinementModel::Clear(uint32_t clear_mask) {
   Vars.Clear();
   Vars.ClearBASF();
   Vars.ClearEXTI();
+  GenericStore.Clear();
   if ((clear_mask & rm_clear_AFIX) != 0) {
     AfixGroups.Clear();
   }
@@ -310,6 +312,7 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm,
   Omitted.Assign(rm.Omitted);
   selectedTableRows.Assign(rm.selectedTableRows, aunit);
   CVars.Assign(rm.CVars);
+  GenericStore = rm.GenericStore;
   return *this;
 }
 //.............................................................................
@@ -1831,6 +1834,7 @@ void RefinementModel::ToDataItem(TDataItem& item) {
   for (size_t i = 0; i < UsedSymm.Count(); i++) {
     UsedSymm.GetValue(i).symop.SetRawId(mat_tags[i]);
   }
+  item.AddCopy(GenericStore, false);
 }
 //.............................................................................
 void RefinementModel::FromDataItem(TDataItem& item) {
@@ -1925,6 +1929,10 @@ void RefinementModel::FromDataItem(TDataItem& item) {
     CVars.FromDataItem(*to_calc, true);
   }
   aunit._UpdateConnInfo();
+  TDataItem* store = item.FindItem(GenericStore.GetName());
+  if (store != 0) {
+    GenericStore = *store;
+  }
 }
 //.............................................................................
 #ifdef _PYTHON
@@ -2060,6 +2068,10 @@ PyObject* RefinementModel::PyExport(bool export_conn) {
   // restore matrix tags
   for (size_t i = 0; i < UsedSymm.Count(); i++) {
     UsedSymm.GetValue(i).symop.SetRawId(mat_tags[i]);
+  }
+
+  if (GenericStore.ItemCount() != 0 || GenericStore.FieldCount() != 0) {
+    PythonExt::ToPython(GenericStore, main);
   }
   return main;
 }
@@ -2479,6 +2491,9 @@ olxstr RefinementModel::WriteInsExtras(const TCAtomPList* atoms,
     }
   }
   //
+  if (GenericStore.ItemCount() != 0 || GenericStore.FieldCount() != 0) {
+    di.AddCopy(GenericStore);
+  }
   di.AddItem("HklSrc").SetValue(
     olxstr('%') << encoding::percent::encode(HKLSource));
   TEStrBuffer bf;
@@ -2630,6 +2645,10 @@ void RefinementModel::ReadInsExtras(const TStrList &items) {
       }
       a->GetDisp() = new Disp(compd(toks[0].ToDouble(), toks[1].ToDouble()));
     }
+  }
+  TDataItem* gs = di.FindItem(GenericStore.GetName());
+  if (gs != 0) {
+    GenericStore = *gs;
   }
   TDataItem *hs = di.FindItem("HklSrc");
   if (hs != 0) {
@@ -3342,6 +3361,26 @@ void RefinementModel::LibModelSrc(const TStrObjList &Params, TMacroData &E) {
   }
 }
 //..............................................................................
+void RefinementModel::LibStoreParam(TStrObjList& Cmds, const TParamList& Opts,
+  TMacroData& E)
+{
+  TStrList toks(Cmds[0], '.');
+  TDataItem* di = &GenericStore;
+  for (size_t i = 0; i < toks.Count() - 1; i++) {
+    TDataItem *di1 = di->FindItem(toks[i]);
+    if (di1 == 0) {
+      for (size_t j = i; j < toks.Count() - 1; j++) {
+        di = &di->AddItem(toks[j]);
+      }
+      break;
+    }
+    else {
+      di = di1;
+    }
+  }
+  di->AddField(toks.GetLastString(), Cmds[1]);
+}
+//..............................................................................
 //..............................................................................
 //..............................................................................
 IOlxObject *RefinementModel::VPtr::get_ptr() const {
@@ -3435,6 +3474,12 @@ TLibrary* RefinementModel::ExportLibrary(const olxstr& name) {
       "Sets the source for this model - an identifier for the external code when "
       "reading a model file."));
 
+  lib->Register(
+    new TMacro<RefinementModel>(thip, &RefinementModel::LibStoreParam,
+      "StoreParam", EmptyString(),
+      fpTwo,
+      "Stores given parameter"
+      ));
   return lib;
 }
 //..............................................................................

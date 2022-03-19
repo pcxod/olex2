@@ -170,6 +170,7 @@ protected:
   long d_to_key(double d, bool centro) const {
     return olx_round(d*1e5) * (centro ? -1 : 1);
   }
+  TDataItem GenericStore;
 public:
   RefinementModel(TAsymmUnit& au);
   virtual ~RefinementModel() {  Clear(rm_clear_DEF);  }
@@ -588,6 +589,7 @@ Friedel opposites of components 1 ... m
   void LibNewRestraint(TStrObjList &Cmds, const TParamList &Options,
     TMacroData &E);
   void LibModelSrc(const TStrObjList &Params, TMacroData &E);
+  void LibStoreParam(TStrObjList& Cmds, const TParamList& Opts, TMacroData& E);
 
   TLibrary* ExportLibrary(const olxstr& name=EmptyString());
   struct VPtr : public olx_virtual_ptr<RefinementModel> {

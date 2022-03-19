@@ -602,12 +602,12 @@ void TMainForm::XApp(Olex2App *XA)  {
     "r-[split] a restraint/constraint for split atoms; [grow] show radial "
     "bonds between the same atoms; [fit] rotation angle increment (smooth "
     "rotation by default); [name] synchronise names in the residues&;"
-    "v-[grow] use user provided delta for connectivity analysis, default 2A&;"
+    "v-[grow] use user provided delta for connectivity analysis, default 2A; "
+    "[fit] variable index&;"
     "shells-[grow] grow atom shells vs fragments&;"
     "l-[name] lock atom types after naming&;"
     "e-a macro to run on mode exit&;"
     "d-[hfix] distance&;"
-    "v-[fit] variable index&;"
     ,
     (fpAny^fpNone)|psFileLoaded,
     "Turns specified mode on. Valid mode: fixu, fixc, grow, himp, match, move,"

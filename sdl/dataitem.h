@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2022 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -35,7 +35,7 @@ protected:
   TDataItem& AddItem(TDataItem& Item);
   olxstr* FieldPtr(const olxstr &Name) {
     const size_t i = Fields.IndexOf(Name);
-    return (i != InvalidIndex) ? &Fields.GetValue(i).a : NULL;
+    return (i != InvalidIndex) ? &Fields.GetValue(i).a : 0;
   }
   // to be called from the parser
   void _AddField(const olxstr& name, const olxstr& val) {
@@ -60,9 +60,15 @@ public:
 
   TDataItem& AddItem(const olxstr& Name, const olxstr& value=EmptyString());
   /* if extend is true the item's content is extended instead of being
-  overwritten
+  overwritten. This function creates a refence to the original item values
+  rather than copying them!
   */
   void AddContent(TDataItem& DI, bool extend=false);
+  /* Adds a copy if DI to current item, if extend is true and an item with the
+  * same name exists - its content will be extended otherwise this may create
+  * items with the same name
+  */
+  void AddCopy(const TDataItem& DI, bool extend = false);
   // implementation of the include instruction object.item
   TDataItem& AddItem(const olxstr &Name, TDataItem *Reference);
   void DeleteItem(TDataItem *Item);
@@ -136,8 +142,9 @@ public:
   // deletes field by index
   void DeleteFieldByIndex(size_t index, bool updateIndices = false) {
     Fields.Delete(index);
-    if (updateIndices)
+    if (updateIndices) {
       UpdateFieldIndices(index);
+    }
   }
   /* deletes field by name, only deletes the first one if there are several
   with the same name. Returns true if the field is deleted.
@@ -166,14 +173,16 @@ public:
 
   TDataItem* GetParent() const { return Parent; }
   size_t GetLevel() const { return Level; }
-  olxstr GetFullName(const olxstr &sep='.', const TDataItem *upto=NULL) const;
-  DefPropC(olxstr, Name)
+  olxstr GetFullName(const olxstr &sep='.', const TDataItem *upto=0) const;
+  DefPropC(olxstr, Name);
   const olxstr &GetValue() const {  return Value; }
   void SetValue(const olxstr &V)  {  Value = V; }
   // for use with whatsoever, initialised twith NULL
-  DefPropP(void*, Data)
+  DefPropP(void*, Data);
 
   void Validate(TStrList& Log);
+
+  TDataItem& operator = (const TDataItem& i);
 
   class TNonexistingDataItemException: public TBasicException  {
   public:

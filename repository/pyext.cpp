@@ -941,3 +941,23 @@ PyObject *PythonExt::init_module(const olxcstr &name, PyMethodDef *md) {
 #endif
 }
 #endif
+//.............................................................................
+PyObject* PythonExt::ToPython(const TDataItem &di, PyObject* to) {
+  PyObject* t = PyDict_New(),
+     *f = PyDict_New();
+  PythonExt::SetDictItem(t, "name", PythonExt::BuildString(di.GetName()));
+  PythonExt::SetDictItem(t, "value", PythonExt::BuildString(di.GetValue()));
+  for (size_t i = 0; i < di.FieldCount(); i++) {
+    PythonExt::SetDictItem(f, PythonExt::BuildString(di.GetFieldName(i)),
+      PythonExt::BuildString(di.GetFieldByIndex(i)));
+  }
+  PythonExt::SetDictItem(t, "fields", f);
+  if (to != 0) {
+    PythonExt::SetDictItem(to, di.GetName(), t);
+  }
+  for (size_t i = 0; i < di.ItemCount(); i++) {
+    ToPython(di.GetItemByIndex(i), t);
+  }
+  return t;
+}
+//.............................................................................
