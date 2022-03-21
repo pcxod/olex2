@@ -2070,9 +2070,7 @@ PyObject* RefinementModel::PyExport(bool export_conn) {
     UsedSymm.GetValue(i).symop.SetRawId(mat_tags[i]);
   }
 
-  if (GenericStore.ItemCount() != 0 || GenericStore.FieldCount() != 0) {
-    PythonExt::ToPython(GenericStore, main);
-  }
+  PythonExt::ToPython(GenericStore, main);
   return main;
 }
 #endif
@@ -3378,7 +3376,12 @@ void RefinementModel::LibStoreParam(TStrObjList& Cmds, const TParamList& Opts,
       di = di1;
     }
   }
-  di->AddField(toks.GetLastString(), Cmds[1]);
+  if (toks.GetLastString() == "value") {
+    di->SetValue(Cmds[1]);
+  }
+  else {
+    di->AddField(toks.GetLastString(), Cmds[1]);
+  }
 }
 //..............................................................................
 //..............................................................................
