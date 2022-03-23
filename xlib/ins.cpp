@@ -17,6 +17,7 @@
 #include "efile.h"
 #include "lst.h"
 #include "p4p.h"
+#include "p4p.h"
 #include "crs.h"
 #include "cif.h"
 #include "symmlib.h"
@@ -1978,6 +1979,11 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm,
   if (index.IsEmpty()) {
     return;
   }
+  olxstr_set<false> sfacs;
+  for (size_t i = 0; i < rm.SfacCount(); i++) {
+    sfacs.Add(rm.GetSfacData(i).GetLabel());
+  }
+  TBasicApp::NewLogEntry() << olxstr(" ").Join(sfacs);
   size_t atomCount = 0;
   ParseContext cx(rm);
   Preprocess(SL);
@@ -2019,7 +2025,9 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm,
     else if (Toks.Count() < 6) { // should be at least
       ins.Add(Tmp);
     }
-    else if (!XElementLib::IsElement(Toks[1])) { // is a valid atom
+    else if (!XElementLib::IsElement(Toks[1]) && // is a valid atom type?
+      !sfacs.Contains(Toks[1]))
+    {
       ins.Add(Tmp);
     }
     // should be four numbers
@@ -2029,7 +2037,7 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm,
       ins.Add(Tmp);
     }
     else {
-      cm_Element* elm = XElementLib::FindBySymbol(Toks[1]);
+      cm_Element* elm = XElementLib::FindBySymbolEx(Toks[1]);
       if (elm == 0) {// wrong SFAC
         throw TInvalidArgumentException(__OlxSourceInfo,
           "unknown element symbol");
@@ -2044,6 +2052,7 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm,
           cx.Resi->Add(*atom);
         }
       }
+      atom->SetCharge(XScatterer::ChargeFromLabel(Toks[1]));
       _ParseAtom(Toks, cx, atom);
       atomCount++;
       atom_labels.AddNew(atom, Toks[0]);
@@ -2275,42 +2284,52 @@ TCAtom* TIns::_ParseAtom(TStrList& Toks, ParseContext& cx, TCAtom* atom) {
   return atom;
 }
 //..............................................................................
-olxstr TIns::AtomToString(RefinementModel& rm, TCAtom& CA, index_t SfacIndex)  {
+olxstr TIns::AtomToString(RefinementModel& rm, TCAtom& CA, index_t SfacIndex) {
   evecd Q(6);
   olxstr Tmp = CA.GetLabel();
   Tmp.RightPadding(6, ' ', true);
-  if( SfacIndex < 0 )
+  if (SfacIndex < 0) {
     Tmp << CA.GetType().symbol;
-  else
+    if (CA.GetCharge() != 0) {
+      Tmp << olx_sign_char(CA.GetCharge());
+      int ch = olx_abs(CA.GetCharge());
+      if (ch > 1) {
+        Tmp << ch;
+      }
+    }
+  }
+  else {
     Tmp << SfacIndex;
+  }
 
-  Tmp.RightPadding(Tmp.Length()+4, ' ', true);
-  for( short j=0; j < 3; j++ )  {
+  Tmp.RightPadding(Tmp.Length() + 4, ' ', true);
+  for (short j = 0; j < 3; j++) {
     Tmp << olxstr::FormatFloat(-5,
-      rm.Vars.GetParam(CA, catom_var_name_X+j)) << ' ';
+      rm.Vars.GetParam(CA, catom_var_name_X + j)) << ' ';
   }
 
   // save occupancy
   Tmp << olxstr::FormatFloat(-5,
     rm.Vars.GetParam(CA, catom_var_name_Sof)) << ' ';
   // save Uiso, Uanis
-  if( CA.GetEllipsoid() != NULL )  {
+  if (CA.GetEllipsoid() != 0) {
     CA.GetEllipsoid()->GetShelxQuad(Q);
     rm.aunit.UcartToUcif(Q);
 
-    for( short j = 0; j < 6; j++ )  {
+    for (short j = 0; j < 6; j++) {
       Tmp << olxstr::FormatFloat(-5,
-        rm.Vars.GetParam(CA, catom_var_name_U11+j, Q[j])) << ' ';
+        rm.Vars.GetParam(CA, catom_var_name_U11 + j, Q[j])) << ' ';
     }
   }
-  else  {
-    double v = (CA.GetUisoOwner() == NULL
+  else {
+    double v = (CA.GetUisoOwner() == 0
       ? rm.Vars.GetParam(CA, catom_var_name_Uiso) : -CA.GetUisoScale());
     Tmp << olxstr::FormatFloat(-5, v) << ' ';
   }
   // Q-Peak
-  if( CA.GetType() == iQPeakZ )
+  if (CA.GetType() == iQPeakZ) {
     Tmp << olxstr::FormatFloat(-3, CA.GetQPeak());
+  }
   return Tmp;
 }
 //..............................................................................
