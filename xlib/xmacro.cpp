@@ -11164,7 +11164,7 @@ void XLibMacros::macRSA(TStrObjList &Cmds, const TParamList &Options,
       else {
         lbl << " S";
       }
-      result.Add(lbl) << lbl << " (" << w << ')';
+      result.Add(lbl) << " (" << w << ')';
     }
   }
   if (result.IsEmpty()) {

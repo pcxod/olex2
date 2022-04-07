@@ -415,7 +415,9 @@ void GXLibMacros::Export(TLibrary& lib) {
       "end_color-final gradient color&;"
       "quality-the sphere quality [5]&;"
       "q-quiet&;"
-      "type-object type [diff], rmsds&;",
+      "type-object type [diff], rmsds&;"
+      "libr-[false] - prints TLS bonds corrections&;"
+      ,
       0),
     libReplace
   );
@@ -5947,6 +5949,43 @@ void GXLibMacros::macTLS(TStrObjList &Cmds, const TParamList &Options,
       if (xatoms[i]->GetMatrix().IsFirst())
         *xatoms[i]->CAtom().GetEllipsoid() = tls.GetElpList()[i];
     }
+  }
+  if (Options.GetBoolOption("libr")) {
+    VcoVContainer vcovc(app.XFile().GetAsymmUnit());
+    try {
+      olxstr src_mat = app.InitVcoV(vcovc);
+      app.NewLogEntry() << "Using " << src_mat << " matrix for the calculation";
+    }
+    catch (TExceptionBase& e) {
+      Error.ProcessingError(__OlxSrcInfo, e.GetException()->GetError());
+      return;
+    }
+    TTable btab(0, 5);
+    btab.ColName(0) = "A";
+    btab.ColName(1) = "B";
+    btab.ColName(2) = "Distance";
+    btab.ColName(3) = "TLS distance";
+    btab.ColName(4) = "Diff";
+    TGXApp::AtomIterator ai = app.GetAtoms();
+    ai.ForEach(ACollectionItem::TagSetter(0));
+    xatoms.ForEach(ACollectionItem::TagSetter(1));
+    TGXApp::BondIterator bi = app.GetBonds();
+    while (bi.HasNext()) {
+      TXBond& b = bi.Next();
+      if (!b.IsVisible() || b.A().GetTag() != 1 || b.B().GetTag() != 1) {
+        continue;
+      }
+      TEValueD cb = tls.BondCorrect(b.A(), b.B());
+      TStrList& r = btab.AddRow();
+      r[0] = b.A().CAtom().GetResiLabel();
+      r[1] = b.B().CAtom().GetResiLabel();
+      TEValueD rb = vcovc.CalcDistance(b.A(), b.B());
+      r[2] = rb.ToString();
+      r[3] = cb.ToString();
+      r[4] = (cb - rb).ToString();
+    }
+    TBasicApp::NewLogEntry() << NewLineSequence() <<
+      btab.CreateTXTList("TLS correcttion for bonds", true, false, ' ');
   }
 }
 //.............................................................................
