@@ -1099,55 +1099,72 @@ IOlxObject *TXFile::VPtr::get_ptr() const {
 void TXFile::LibGetFormula(const TStrObjList& Params, TMacroData& E)  {
   bool list = false, html = false, split = false, unit=false;
   int digits = -1;
-  if( Params.Count() > 0 )  {
-    if( Params[0].Equalsi("list") )
+  if (Params.Count() > 0) {
+    if (Params[0].Containsi("list")) {
       list = true;
-    else if( Params[0].Equalsi("html") )
+    }
+    else if (Params[0].Containsi("html")) {
       html = true;
-    else if( Params[0].Equalsi("split") )
+    }
+    else if (Params[0].Containsi("split")) {
       split = true;
-    else if( Params[0].Equalsi("unit") )
+    }
+    if (Params[0].Containsi("unit")) {
       unit = true;
+    }
   }
-  if (Params.Count() == 2)
-    digits = Params[1].ToInt();
-
-  const ContentList& content = GetRM().GetUserContent();
+  if (Params.Count() == 2) {
+    digits = Params[1].IsEmpty() ? -1 : Params[1].ToInt();
+  }
+  bool au = Params.Count() > 2 ? Params[2].ToBool() : false;
+  const ContentList& content = au ? GetAsymmUnit().GetContentList(
+      GetAsymmUnit().GetZ()/GetAsymmUnit().GetZPrime())
+    : GetRM().GetUserContent();
   olxstr rv;
   for (size_t i=0; i < content.Count(); i++) {
     rv << content[i].element->symbol;
-    if (list)  rv << ':';
-    else if (split) rv << ' ';
+    if (list) {
+      rv << ':';
+    }
+    else if (split) {
+      rv << ' ';
+    }
     bool subAdded = false;
     const double dv = unit ? olx_round(content[i].count)
       : (content[i].count/GetAsymmUnit().GetZ());
     olxstr tmp = (digits > 0) ? olxstr::FormatFloat(digits, dv) : olxstr(dv);
-    if (tmp.IndexOf('.') != InvalidIndex)
+    if (tmp.Contains('.')) {
       tmp.TrimFloat();
+    }
     if (html) {
       if (olx_abs(dv-1) > 0.01 && olx_abs(dv) > 0.01) {
         rv << "<sub>" << tmp;
         subAdded = true;
       }
     }
-    else
+    else {
       rv << tmp;
+    }
 
     if ((i+1) <  content.Count()) {
-      if (list)
+      if (list) {
         rv << ',';
+      }
       else
         if (html) {
-          if( subAdded )
+          if (subAdded) {
             rv << "</sub>";
+          }
         }
-        else
+        else {
           rv << ' ';
+        }
     }
-    else  // have to close the html tag
-      if (html && subAdded)
+    else { // have to close the html tag
+      if (html && subAdded) {
         rv << "</sub>";
-
+      }
+    }
   }
   E.SetRetVal(rv);
 }
@@ -1373,11 +1390,14 @@ TLibrary* TXFile::ExportLibrary(const olxstr& name) {
   olx_vptr<TXFile> thip(new VPtr);
   lib->Register(
     new TFunction<TXFile>(thip, &TXFile::LibGetFormula, "GetFormula",
-      fpNone|fpOne|fpTwo|psFileLoaded,
-      "Returns a string for content of the asymmetric unit. Takes single or "
-      "none parameters. If parameter equals 'html' and html formatted string is"
-      " returned, for 'list' parameter a string like 'C:26,N:45' is returned. "
-      "If no parameter is specified, just formula is returned")
+      fpNone|fpOne|fpTwo|fpThree|psFileLoaded,
+      "Returns a string for the user content or content of the asymmetric unit "
+      "(third argument should be 'true'). When the first argument contains "
+      "'html' an html formatted string is returned, for 'list' a string like "
+      "'C:26,N:45' is returned, for 'split' a space separated formula like "
+      "is 'C 1 N 1' isreturned. If there is 'unit' in the first argument - "
+      "the values as on the UNIT line are returned. The second argument specifies "
+      "the nunber of digits for rounding rounding, leave empty for no rounding.")
    );
 
   lib->Register(
