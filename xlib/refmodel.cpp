@@ -89,10 +89,12 @@ void RefinementModel::SetDefaults() {
   SHEL_hr = def_SHEL_hr;
   SHEL_lr = def_SHEL_lr;
   HKLF_set = MERG_set = OMIT_set = TWIN_set = SHEL_set = false;
-  DEFS_set = false;
+  DEFS_set = SWAT_set = false;
   DEFS << 0.02 << 0.1 << 0.01 << 0.04 << 1;
   TWIN_n = def_TWIN_n;
   TWIN_mat.I() *= -1;
+  SWAT[0] = 0;
+  SWAT[1] = 2;
 }
 //.............................................................................
 void RefinementModel::Clear(uint32_t clear_mask) {
@@ -257,6 +259,9 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm,
   TWIN_set = rm.TWIN_set;
   DEFS = rm.DEFS;
   DEFS_set = rm.DEFS_set;
+  SWAT_set = rm.SWAT_set;
+  SWAT[0] = rm.SWAT[0];
+  SWAT[1] = rm.SWAT[1];
   ModelSource = rm.ModelSource;
   HKLSource = rm.HKLSource;
   RefinementMethod = rm.RefinementMethod;
@@ -322,6 +327,30 @@ void RefinementModel::SetDEFS(const TStrList &df) {
     DEFS[i] = df[i].ToDouble();
   }
   DEFS_set = true;
+}
+//.............................................................................
+void RefinementModel::SetSWAT(const TStrList& df) {
+  if (df.Count() == 2) {
+    SWAT[0] = df[0];
+    SWAT[1] = df[1];
+    SWAT_set = true;
+  }
+  else {
+    SWAT[0] = 0;
+    SWAT[1] = 2;
+    SWAT_set = true;
+  }
+}
+//.............................................................................
+olxstr RefinementModel::GetSWATStr() const {
+  if (!IsSWATSet()) {
+    return EmptyString();
+  }
+  olxstr cmd = "SWAT";
+  if (SWAT[0].GetV() == 0 && SWAT[1].GetV() == 2) {
+    return cmd;
+  }
+  return cmd << ' ' << SWAT[0].GetV() << ' ' << SWAT[1].GetV();
 }
 //.............................................................................
 TDoubleList::const_list_type RefinementModel::GetBASFAsDoubleList() const {
@@ -2035,6 +2064,10 @@ PyObject* RefinementModel::PyExport(bool export_conn) {
     PythonExt::SetDictItem(main, "exti",
       Py_BuildValue("f", Vars.GetEXTI().GetValue()));
   }
+  if (IsSWATSet()) {
+    PythonExt::SetDictItem(main, "swat",
+      Py_BuildValue("(dd)", SWAT[0].GetV(), SWAT[1].GetV()));
+  }
 
   PythonExt::SetDictItem(main, "conn", Conn.PyExport());
 
@@ -2873,6 +2906,15 @@ RefinementModel::EXTI::Shelxl RefinementModel::GetShelxEXTICorrector() const {
     aunit.GetHklToCartesian());
 }
 //..............................................................................
+RefinementModel::SWAT::Shelxl RefinementModel::GetShelxSWATCorrector() const {
+  if (!SWAT_set) {
+    return SWAT::Shelxl(0, 0, mat3d());
+  }
+  return SWAT::Shelxl(SWAT[0].GetV(),
+    SWAT[1].GetV(),
+    aunit.GetHklToCartesian());
+}
+//..............................................................................
 void RefinementModel::SetHKLF(const IStrList& hklf) {
   if (hklf.IsEmpty()) {
     throw TInvalidArgumentException(__OlxSourceInfo, "empty HKLF");
@@ -3022,6 +3064,11 @@ void RefinementModel::InitDisp(TCAtom& a) const {
   }
 }
 //..............................................................................
+double RefinementModel::SWAT::Shelxl::CalcForFc(const vec3i& mi) const {
+  double stol_sq = 0.25 * EXTI::HklToCart(mi, hkl2cart).QLength();
+  return 1 - g * exp(-8 * M_PI * M_PI * U * stol_sq);
+}
+//..............................................................................
 //..............................................................................
 //..............................................................................
 void RefinementModel::LibHasOccu(const TStrObjList& Params,
@@ -3089,8 +3136,8 @@ void RefinementModel::LibBASF(const TStrObjList& Params, TMacroData& E)  {
   }
 }
 //..............................................................................
-void RefinementModel::LibEXTI(const TStrObjList& Params, TMacroData& E)  {
-  if( Params.IsEmpty() )  {
+void RefinementModel::LibEXTI(const TStrObjList& Params, TMacroData& E) {
+  if (Params.IsEmpty()) {
     if (Vars.HasEXTI()) {
       E.SetRetVal(Vars.GetEXTI().ToString());
     }
@@ -3101,6 +3148,21 @@ void RefinementModel::LibEXTI(const TStrObjList& Params, TMacroData& E)  {
   else {
     Vars.SetEXTI(Params[0].ToDouble(),
       Params.Count() == 1 ? 0.0 : Params[1].ToDouble());
+  }
+}
+//..............................................................................
+void RefinementModel::LibSWAT(const TStrObjList& Params, TMacroData& E) {
+  if (Params.IsEmpty()) {
+    if (SWAT_set) {
+      E.SetRetVal(olxstr(SWAT[0].ToString()) << ' ' << SWAT[1].ToString());
+    }
+    else {
+      E.SetRetVal<olxstr>("n/a");
+    }
+  }
+  else {
+    SWAT[0] = Params[0];
+    SWAT[1] = Params[1];
   }
 }
 //..............................................................................
@@ -3415,6 +3477,11 @@ TLibrary* RefinementModel::ExportLibrary(const olxstr& name) {
       "Exti",
       fpNone | fpOne | fpTwo,
       "Returns/sets EXTI"));
+  lib->Register(
+    new TFunction<RefinementModel>(thip, &RefinementModel::LibSWAT,
+      "Swat",
+      fpNone | fpTwo | fpFour,
+      "Returns/sets SWAT"));
   lib->Register(
     new TFunction<RefinementModel>(thip, &RefinementModel::LibUpdateCRParams,
       "UpdateCR",

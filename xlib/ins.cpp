@@ -417,6 +417,9 @@ bool TIns::_ParseIns(RefinementModel& rm, const TStrList& Toks) {
     }
     rm.Vars.SetEXTI(ev.GetV(), ev.GetE());
   }
+  else if (Toks[0].Equalsi("SWAT")) {
+    rm.SetSWAT(Toks.SubListFrom(1));
+  }
   else if (Toks[0].Equalsi("SIZE") && (Toks.Count() == 4)) {
     rm.expl.SetCrystalSize(Toks[1].ToDouble(), Toks[2].ToDouble(),
       Toks[3].ToDouble());
@@ -2762,6 +2765,9 @@ TStrList::const_list_type TIns::SaveHeader(TStrList& SL,
 
   if (GetRM().Vars.HasEXTI()) {
     SL.Add("EXTI ") << GetRM().Vars.GetEXTI().GetValue();
+  }
+  if (GetRM().IsSWATSet()) {
+    SL.Add(GetRM().GetSWATStr());
   }
 
   _SaveHklInfo(SL, false);

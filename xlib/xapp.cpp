@@ -245,7 +245,6 @@ void TXApp::CalcSFEx(const TRefList& refs, TArrayList<TEComplex<double> >& F,
     TUnitCell::SymmSpace sp = XFile().GetUnitCell().GetSymmSpace();
     const TDoubleList basf = rm.GetBASFAsDoubleList();
     SymmSpace::InfoEx info_ex = SymmSpace::Compact(sp);
-    double exti = rm.Vars.HasEXTI() ? rm.Vars.GetEXTI().GetValue() : 0;
     if (!basf.IsEmpty()) {
       if (rm.GetHKLF() >= 5) {
         twinning::handler twin(info_ex, rm.GetReflections(),
@@ -282,11 +281,18 @@ void TXApp::CalcSFEx(const TRefList& refs, TArrayList<TEComplex<double> >& F,
         Fsq[i] = F[i].qmod();
       }
     }
-    if (exti != 0) {
+    if (rm.Vars.HasEXTI()) {
       RefinementModel::EXTI::Shelxl cr = rm.GetShelxEXTICorrector();
       for (size_t i = 0; i < refs.Count(); i++) {
-        refs[i].Scale(cr.CalcForF2(refs[i].GetHkl(), Fsq[i]));
+        Fsq[i] *= olx_sqr(cr.CalcForFc(refs[i].GetHkl(), Fsq[i]));
       }
+    }
+    else if (rm.IsSWATSet()) {
+      RefinementModel::SWAT::Shelxl cr = rm.GetShelxSWATCorrector();
+      for (size_t i = 0; i < refs.Count(); i++) {
+        Fsq[i] *= olx_sqr(cr.CalcForFc(refs[i].GetHkl()));
+      }
+
     }
     if (scale) {
       double scale_k = 1. / olx_sqr(rm.Vars.GetVar(0).GetValue());

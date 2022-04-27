@@ -5684,15 +5684,26 @@ void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options,
       list_n;
     return;
   }
+  const RefinementModel& rm = xapp.XFile().GetRM();
   if (!convert) {
     F.SetCount(refs.Count());
     SFUtil::CalcSF(xapp.XFile(), refs, F);
+    RefinementModel::EXTI::Shelxl ecr = rm.GetShelxEXTICorrector();
+    RefinementModel::SWAT::Shelxl scr = rm.GetShelxSWATCorrector();
+    if (ecr.IsValid() || scr.IsValid()) {
+      for (size_t i = 0; i < F.Count(); i++) {
+        if (ecr.IsValid()) {
+          F[i] *= ecr.CalcForFc(refs[i].GetHkl(), F[i].qmod());
+        }
+        else {
+          F[i] *= scr.CalcForFc(refs[i].GetHkl());
+        }
+      }
+    }
   }
   double scale_k = 1, scale_a = 0;
-  olxstr scale_str = Options.FindValue("scale", convert ? "none" : "regression");
-  if (scale_str.Equalsi("none")) {
-  }
-  else if (scale_str.Equalsi("external")) {
+  olxstr scale_str = Options.FindValue("scale", convert ? "regression" : "external");
+  if (scale_str.Equalsi("external")) {
     scale_k = 1. / olx_sqr(xapp.XFile().GetRM().Vars.GetVar(0).GetValue());
   }
   else if (scale_str.Equalsi("simple")) {
@@ -5741,19 +5752,11 @@ void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options,
 
   cetTable* ref_tab = new cetTable(col_names);
   cif_data.Add(ref_tab);
-  const RefinementModel &rm = xapp.XFile().GetRM();
-  RefinementModel::EXTI::Shelxl cr = rm.GetShelxEXTICorrector();
-  double exti = cr.IsValid();
   for (size_t i = 0; i < refs.Count(); i++) {
     TReflection& r = refs[i];
     double Fo2 = r.GetI()*scale_k + scale_a;
     double sigFo2 = r.GetS()*scale_k;
     double Fc_sq = F[i].qmod();
-    if (exti != 0) {
-      double k = cr.CalcForF2(refs[i].GetHkl(), Fc_sq);
-      Fo2 *= k;
-      sigFo2 *= k;
-    }
     CifRow& row = ref_tab->AddRow();
     row[0] = new cetString(r.GetH());
     row[1] = new cetString(r.GetK());

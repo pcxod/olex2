@@ -85,7 +85,8 @@ protected:
   mat3d TWIN_mat;
   int TWIN_n;
   bool TWIN_set, OMIT_set, MERG_set, HKLF_set, SHEL_set,
-    DEFS_set;
+    DEFS_set, SWAT_set;
+  TEValueD SWAT[2];
   vec3i_list Omits;
   TDoubleList DEFS;
   olxstr_dict<IXVarReferencerContainer*, false> RefContainers;
@@ -321,6 +322,10 @@ Friedel opposites of components 1 ... m
   void SetDEFS(const TStrList &df);
   olxstr GetDEFSStr() const;
   bool IsDEFSSet() const {  return DEFS_set;  }
+
+  void SetSWAT(const TStrList& df);
+  olxstr GetSWATStr() const;
+  bool IsSWATSet() const { return SWAT_set; }
 
   DefPropC(olxstr, RefinementMethod)
   DefPropC(olxstr, SolutionMethod)
@@ -578,6 +583,7 @@ Friedel opposites of components 1 ... m
   void LibBASF(const TStrObjList& Params, TMacroData& E);
   void LibFVar(const TStrObjList& Params, TMacroData& E);
   void LibEXTI(const TStrObjList& Params, TMacroData& E);
+  void LibSWAT(const TStrObjList& Params, TMacroData& E);
   void LibUpdateCRParams(const TStrObjList& Params, TMacroData& E);
   void LibCalcCompleteness(const TStrObjList& Params, TMacroData& E);
   void LibMaxIndex(const TStrObjList& Params, TMacroData& E);
@@ -617,11 +623,11 @@ Friedel opposites of components 1 ... m
       Shelxl(double l, double x, const mat3d &hkl2cart)
         : l_sq_o_4(l*l*0.25), k(l*l*l*x*0.001 / 2), hkl2cart(hkl2cart)
       {}
-      double CalcForF2(const vec3i &mi, double Fc_sq) const {
+      double CalcForFo2(const vec3i &mi, double Fc_sq) const {
         const double x = EXTI::HklToCart(mi, hkl2cart).QLength()*l_sq_o_4;
         return sqrt(1 + Fc_sq * k / sqrt(x*(1 - x)));
       }
-      double CalcForF(const vec3i &mi, double Fc_sq) const {
+      double CalcForFc(const vec3i &mi, double Fc_sq) const {
         const double x = EXTI::HklToCart(mi, hkl2cart).QLength()*l_sq_o_4;
         return pow(1 + Fc_sq * k / sqrt(x*(1 - x)), -0.25);
       }
@@ -642,8 +648,41 @@ Friedel opposites of components 1 ... m
     }
   };
 
+  // SWAT stuff
+  struct SWAT {
+    struct Shelxl {
+      double g, U;
+      const mat3d hkl2cart;
+      Shelxl(double g, double U, const mat3d &hkl2cart)
+        : g(g), U(U), hkl2cart(hkl2cart)
+      {}
+
+      double CalcForFc(const vec3i& mi) const;
+
+      double CalcForFo2(const vec3i& mi) const {
+        return 1./olx_sqr(CalcForFc(mi));
+      }
+
+      bool IsValid() const { return g != 0; }
+    };
+
+    template <class RefList, class FList, class Corrector>
+    static void CorrectF(const RefList& refs, FList& F, const Corrector& cr) {
+      if (!cr.IsValid()) {
+        return;
+      }
+      if (refs.Count() != F.Count()) {
+        throw TInvalidArgumentException(__OlxSrcInfo, "arrays size");
+      }
+      for (size_t i = 0; i < refs.Count(); i++) {
+        F[i] *= cr.CalcForF(TReflection::GetHkl(refs[i]));
+      }
+    }
+  };
+
   EXTI::Shelxl GetShelxEXTICorrector() const;
-  
+  SWAT::Shelxl GetShelxSWATCorrector() const;
+
 };
 
 EndXlibNamespace()

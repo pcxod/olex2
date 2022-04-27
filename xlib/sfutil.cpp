@@ -267,7 +267,19 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
 
     //xapp.XFile().GetRM().DetwinRatio(refs, F, ms, info_ex);
     //xapp.XFile().GetRM().DetwinAlgebraic(refs, ms, info_ex);
-
+    RefinementModel::EXTI::Shelxl exti_cr = rm.GetShelxEXTICorrector();
+    RefinementModel::SWAT::Shelxl swat_cr = rm.GetShelxSWATCorrector();
+    if (exti_cr.IsValid() || swat_cr.IsValid()) {
+      sw.start("EXTI/SWAT");
+      for (size_t i = 0; i < F.Count(); i++) {
+        if (exti_cr.IsValid()) {
+          F[i] *= exti_cr.CalcForFc(refs[i].GetHkl(), F[i].qmod());
+        }
+        else {
+          F[i] *= swat_cr.CalcForFc(refs[i].GetHkl());
+        }
+      }
+    }
     sw.start("Scaling structure factors");
     if (mapType != mapTypeCalc) {
       // find a linear scale between F
@@ -276,28 +288,24 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
         k = scale;
       }
       else if (scaleType == scaleRegression) {
-        CalcFScale(F, refs, k, a);
-        if (TBasicApp::GetInstance().IsProfiling()) {
-          TBasicApp::NewLogEntry(logInfo) << "Fc^2 = " << k << "*Fo^2" <<
-            (a >= 0 ? " +" : " ") << a;
+          CalcFScale(F, refs, k, a);
+          if (TBasicApp::GetInstance().IsProfiling()) {
+            TBasicApp::NewLogEntry(logInfo) << "Fc^2 = " << k << "*Fo^2" <<
+              (a >= 0 ? " +" : " ") << a;
+          }
         }
-      }
       else {  // simple scale on I/sigma > 3
         k = CalcFScale(F, refs,
           TReflection::SigmaWeightCalculator<1>(),
           TReflection::IoverSigmaFilter(2));
-        if (TBasicApp::GetInstance().IsProfiling())
+        if (TBasicApp::GetInstance().IsProfiling()) {
           TBasicApp::NewLogEntry(logInfo) << "Fc^2 = " << k << "*Fo^2";
+        }
+
       }
-      RefinementModel::EXTI::Shelxl cr = rm.GetShelxEXTICorrector();
-      bool apply_ext = cr.IsValid();
-      const size_t f_cnt = F.Count();
-      for (size_t i=0; i < f_cnt; i++) {
+      for (size_t i=0; i < F.Count(); i++) {
         const TReflection &r = refs[i];
         double I = r.GetI();
-        if (apply_ext) {
-          F[i] *= cr.CalcForF(r.GetHkl(), F[i].qmod());
-        }
         double dI = I < 0 ? 0 : sqrt(I);
         dI *= k;
         if (scaleType == scaleRegression) {
