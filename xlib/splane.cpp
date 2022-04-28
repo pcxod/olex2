@@ -174,7 +174,7 @@ vec3d TSPlane::GetCrystallographicDirection(const mat3d &m,
   vec3d hkl;
   double d = n.DotProd(p);
   if (olx_abs(d) < 1e-3) {
-    return hkl(1000);
+    return hkl;
   }
   for (int i=0; i < 3; i++) {
     hkl[i] = n.DotProd(m[i])/d;
