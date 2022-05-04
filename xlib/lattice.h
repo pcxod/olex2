@@ -252,8 +252,10 @@ protected:
   GrowInfo* _GrowInfo;
   // returns true if the info is valid and applied
   bool ApplyGrowInfo();
-  // removes H2O and R3N from the list of potential hydrogen bond forming atoms
-  void RemoveNonHBonding(class TAtomEnvi& envi, size_t max);
+  /* removes H2O and R3N from the list of potential hydrogen bond forming atoms
+  also removes pivots linked to the a_envi base through a metal
+  */
+  void RemoveNonHBonding(class TAtomEnvi& p_envi, size_t max);
   //  void AnalyseHBonding(class TAtomEnvi& Envi);
   size_t _AnalyseAtomHAdd(class AConstraintGenerator& cg, TSAtom& atom,
     TSAtomPList& ProcessingAtoms, bool dry_run,

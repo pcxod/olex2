@@ -3163,6 +3163,10 @@ void RefinementModel::LibSWAT(const TStrObjList& Params, TMacroData& E) {
   else {
     SWAT[0] = Params[0];
     SWAT[1] = Params[1];
+    if (Params.Count() == 4) {
+      SWAT[0].E() = Params[2].ToDouble();
+      SWAT[1].E() = Params[3].ToDouble();
+    }
   }
 }
 //..............................................................................
@@ -3479,7 +3483,7 @@ TLibrary* RefinementModel::ExportLibrary(const olxstr& name) {
       "Returns/sets EXTI"));
   lib->Register(
     new TFunction<RefinementModel>(thip, &RefinementModel::LibSWAT,
-      "Swat",
+      "SWAT",
       fpNone | fpTwo | fpFour,
       "Returns/sets SWAT"));
   lib->Register(

@@ -2566,14 +2566,42 @@ size_t TLattice::AnalyseHAdd(AConstraintGenerator& cg, const TSAtomPList& atoms,
 }
 //..............................................................................
 void TLattice::RemoveNonHBonding(TAtomEnvi& Envi, size_t max) {
+  // find pivots linked through a metal and remove them
   for (size_t i = 0; i < Envi.Count(); i++) {
     TSAtom* SA = FindSAtom(Envi.GetCAtom(i));
     TAtomEnvi AE = UnitCell->GetAtomEnviList(*SA);
+    bool remove = false;
+    for (size_t j = 0; j < AE.Count(); j++) {
+      if (XElementLib::IsMetal(AE.GetCAtom(j).GetType())) {
+        for (size_t k = 0; k < AE.GetCAtom(j).AttachedSiteCount(); k++) {
+          const TCAtom::Site& s = AE.GetCAtom(j).GetAttachedSite(k);
+          if (s.atom->GetId() == Envi.GetBase().CAtom().GetId()) {
+            double d = GetAsymmUnit().Orthogonalise(
+              s.matrix * s.atom->ccrd() - Envi.GetBase().ccrd()).QLength();
+            if (d < 1e-3) {
+              remove = true;
+              break;
+            }
+          }
+          if (remove) {
+            break;
+          }
+        }
+      }
+      if (remove) {
+        break;
+      }
+    }
+    if (remove) {
+      Envi.Delete(i--);
+      continue;
+    }
     if (SA->GetType() == iOxygenZ) {
       if (AE.Count() == 1) {
         const double d = AE.GetCrd(0).DistanceTo(SA->crd());
         if (d > 1.8 && XElementLib::IsMetal(SA->GetType())) { // coordination bond?
           Envi.Exclude(SA->CAtom());
+          i--;
         }
       }
       else if (AE.Count() == 2) {  // not much can be done here ... needs thinking
@@ -2587,6 +2615,7 @@ void TLattice::RemoveNonHBonding(TAtomEnvi& Envi, size_t max) {
     else if (SA->GetType() == iNitrogenZ) {
       if (AE.Count() > 3) {
         Envi.Exclude(SA->CAtom());
+        i--;
       }
     }
   }
