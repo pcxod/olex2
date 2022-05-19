@@ -11861,10 +11861,10 @@ void XLibMacros::macTestHKLF(TStrObjList& Cmds, const TParamList& Options,
     }
     double ios1 = f1[i].GetI() / f1[i].GetS(),
       ios2 = f2[i].GetI() / f2[i].GetS();
-    if (olx_abs(ios1 - ios2) > 0.001) {
+    if (olx_abs(ios1 - ios2) > 0.01) {
       continue;
     }
-    if (ios1 < 4) {
+    if (ios1 < 9) {
       break;
     }
     scale += f1[i].GetI() / f2[i].GetI();
@@ -11876,6 +11876,14 @@ void XLibMacros::macTestHKLF(TStrObjList& Cmds, const TParamList& Options,
   }
   scale /= cnt;
   TBasicApp::NewLogEntry() << "Estimated scale: " << olxstr::FormatFloat(3, scale);
+  
+  double r1_up = 0, r1_dn = 0;
+  for (size_t i = 0; i < f1.RefCount(); i++) {
+    r1_up += olx_abs(olx_abs(f1[i].GetI())/scale - olx_abs(f2[i].GetI()));
+    r1_dn += olx_abs(f1[i].GetI())/scale + olx_abs(f2[i].GetI());
+  }
+  TBasicApp::NewLogEntry() << "R1: " << olxstr::FormatFloat(3, r1_up*200/ r1_dn, true);
+
   size_t max_data = olx_min(200, f1.RefCount());
   ematd dm(max_data * 3, 9);
   evecd right(max_data * 3);
