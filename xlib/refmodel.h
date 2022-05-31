@@ -290,7 +290,7 @@ public:
   void SetSHEL_hr(double v)  {  SHEL_hr = v;  SHEL_set = true;  }
   bool HasSHEL() const {  return SHEL_set;  }
   void SetSHEL(const TStrList& shel);
-  void ClearShell() { SHEL_set = false; }
+  void ClearSHEL() { SHEL_set = false; }
   olxstr GetSHELStr() const {  return olxstr(SHEL_lr) << ' ' << SHEL_hr;  }
 
   TDoubleList::const_list_type GetBASFAsDoubleList() const;
@@ -326,6 +326,7 @@ Friedel opposites of components 1 ... m
   void SetSWAT(const TStrList& df);
   olxstr GetSWATStr() const;
   bool IsSWATSet() const { return SWAT_set; }
+  void ClearSWAT() { SWAT_set = false; }
 
   DefPropC(olxstr, RefinementMethod)
   DefPropC(olxstr, SolutionMethod)

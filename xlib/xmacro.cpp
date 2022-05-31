@@ -2528,7 +2528,9 @@ void XLibMacros::macAddIns(TStrObjList &Cmds, const TParamList &Options,
 void XLibMacros::macDelIns(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &E)
 {
-  if (!TXApp::GetInstance().CheckFileType<TIns>()) return;
+  if (!TXApp::GetInstance().CheckFileType<TIns>()) {
+    return;
+  }
   TIns& Ins = TXApp::GetInstance().XFile().GetLastLoader<TIns>();
   if (Cmds[0].IsNumber()) {
     int insIndex = Cmds[0].ToInt();
@@ -2541,7 +2543,7 @@ void XLibMacros::macDelIns(TStrObjList &Cmds, const TParamList &Options,
       rm.ClearOmit();
     }
     else if (Cmds[0].Equalsi("SHEL")) {
-      rm.ClearShell();
+      rm.ClearSHEL();
     }
     else if (Cmds[0].Equalsi("TWIN")) {
       rm.RemoveTWIN();
@@ -2567,14 +2569,19 @@ void XLibMacros::macDelIns(TStrObjList &Cmds, const TParamList &Options,
     else if (Cmds[0].Equalsi("CONF")) {
       rm.ClearInfoTab("CONF");
     }
-    for (size_t i = 0; i < Ins.InsCount(); i++) {
-      if (Ins.InsName(i).Equalsi(Cmds[0])) {
-        Ins.DelIns(i--);
-        continue;
+    else if (Cmds[0].Equalsi("SWAT")) {
+      rm.ClearSWAT();
+    }
+    else {
+      for (size_t i = 0; i < Ins.InsCount(); i++) {
+        if (Ins.InsName(i).Equalsi(Cmds[0])) {
+          Ins.DelIns(i--);
+          continue;
+        }
       }
     }
   }
-  OnDelIns().Exit(NULL, &Cmds[0]);
+  OnDelIns().Exit(0, &Cmds[0]);
 }
 //.............................................................................
 void XLibMacros::macLS(TStrObjList &Cmds, const TParamList &Options,
@@ -11839,6 +11846,45 @@ struct macTestHKLF_sorter {
     return -olx_cmp(r1->GetI(), r2->GetI());
   }
 };
+
+olxcstr GetFingerprint(const THklFile& f) {
+  TTypeList<olx_pair_t<double, size_t> > rv;
+  double minI = 1e3, maxI = -1e-3;
+  for (size_t i = 0; i < f.RefCount(); i++) {
+    olx_update_min_max(f[i].GetI(), minI, maxI);
+  }
+  double range = maxI - minI,
+    scale = 99 / range;
+  for (size_t i = 0; i < 10; i++) {
+    rv.AddNew(0, 0);
+  }
+  for (size_t i = 0; i < f.RefCount(); i++) {
+    int I = olx_round((f[i].GetI() - minI) * scale);
+    if (I < 0) {
+      I = 0;
+    }
+    else if (I > 99) {
+      I = 99;
+    }
+    int idx = I / (int)rv.Count();
+    // stabilise potential rounding errors, does this make any sense?
+    if (olx_abs(I - idx * (int)rv.Count()) < 2) {
+      continue;
+    }
+    rv[idx].a += I;
+    rv[idx].b++;
+  }
+  olxcstr txt;
+  for (size_t i = 0; i < rv.Count(); i++) {
+    if (rv[i].b == 0) {
+      continue;
+    }
+    txt << rv[i].b << '(' << olxcstr::FormatFloat(1, rv[i].a / rv[i].b)
+      << ')' << ' ';
+  }
+  return txt;
+}
+
 void XLibMacros::macTestHKLF(TStrObjList& Cmds, const TParamList& Options,
   TMacroData& E)
 {
@@ -11877,6 +11923,9 @@ void XLibMacros::macTestHKLF(TStrObjList& Cmds, const TParamList& Options,
   scale /= cnt;
   TBasicApp::NewLogEntry() << "Estimated scale: " << olxstr::FormatFloat(3, scale);
   
+  TBasicApp::NewLogEntry() << "Fingerprint 1: " << GetFingerprint(f1);
+  TBasicApp::NewLogEntry() << "Fingerprint 2: " << GetFingerprint(f2);
+
   double r1_up = 0, r1_dn = 0;
   for (size_t i = 0; i < f1.RefCount(); i++) {
     r1_up += olx_abs(olx_abs(f1[i].GetI())/scale - olx_abs(f2[i].GetI()));

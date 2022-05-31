@@ -336,7 +336,7 @@ void RefinementModel::SetSWAT(const TStrList& df) {
     SWAT_set = true;
   }
   else {
-    SWAT[0] = 0;
+    SWAT[0] = 1;
     SWAT[1] = 2;
     SWAT_set = true;
   }
@@ -3161,6 +3161,7 @@ void RefinementModel::LibSWAT(const TStrObjList& Params, TMacroData& E) {
     }
   }
   else {
+    SWAT_set = true;
     SWAT[0] = Params[0];
     SWAT[1] = Params[1];
     if (Params.Count() == 4) {
