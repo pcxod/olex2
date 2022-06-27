@@ -86,8 +86,9 @@ rotated_adp_constraint* rotated_adp_constraint::FromDataItem(
 }
 //.............................................................................
 void rotated_adp_constraint::UpdateParams(const TStrList& toks)  {
-  if( toks.Count() != 1 )
+  if (toks.Count() != 1) {
     throw TInvalidArgumentException(__OlxSourceInfo, "argument number");
+  }
   angle = toks[0].ToDouble();
 }
 //.............................................................................
@@ -95,6 +96,104 @@ olxstr rotated_adp_constraint::Describe() const {
   olxstr rv = "ADP of ";
   return rv << destination.GetLabel() << " is the ADP of " << source.GetLabel() <<
     " rotated " << angle << " degrees around " << dir.Describe();
+}
+//.............................................................................
+//.............................................................................
+//.............................................................................
+void rotating_adp_constraint::FromToks(const TStrList& toks, RefinementModel& rm,
+  TTypeList<rotating_adp_constraint>& out)
+{
+  if (toks.Count() < 6) {
+    return;
+  }
+  TCAtom* src = rm.aunit.FindCAtom(toks[0]),
+    * dest = rm.aunit.FindCAtom(toks[1]);
+  if (src == 0 || dest == 0) {
+    return;
+  }
+  double s = toks[2].ToDouble(), 
+    a = toks[4].ToDouble(),
+    b = toks[5].ToDouble(),
+    g = toks[6].ToDouble();
+  bool refine_size = toks[3].ToBool(),
+    refine_angle = toks[7].ToBool();
+  out.Add(new rotating_adp_constraint(*src, *dest, s, refine_size, a, b, g, refine_angle));
+}
+//.............................................................................
+rotating_adp_constraint* rotating_adp_constraint::Copy(
+  RefinementModel& rm, const rotating_adp_constraint& c)
+{
+  TCAtom* ref = rm.aunit.FindCAtomById(c.source.GetId());
+  TCAtom* atom = rm.aunit.FindCAtomById(c.destination.GetId());
+  if (ref == 0 || atom == 0) {
+    throw TFunctionFailedException(__OlxSourceInfo,
+      "asymmetric units do not match");
+  }
+  return new rotating_adp_constraint(*ref,
+    *atom, c.size, c.refine_size,
+    c.alpha, c.beta, c.gamma, c.refine_angle);
+}
+//.............................................................................
+#ifdef _PYTHON
+PyObject* rotating_adp_constraint::PyExport() const {
+  return Py_BuildValue("i,i,d,b,d,d,d,b", source.GetTag(), destination.GetTag(),
+    size, refine_size, alpha, beta, gamma, refine_angle
+  );
+}
+#endif
+//.............................................................................
+olxstr rotating_adp_constraint::ToInsStr(const RefinementModel& rm) const {
+  return olxstr("", 64).stream(' ') << GetName() << source.GetLabel()
+    << destination.GetLabel() << size << refine_size <<
+    alpha << beta << gamma << refine_angle;
+}
+//.............................................................................
+const olxstr& rotating_adp_constraint::GetName() {
+  static olxstr name("olex2.constraint.rotating_adp");
+  return name;
+}
+//.............................................................................
+void rotating_adp_constraint::ToDataItem(TDataItem& di) const {
+  di.AddField("source", source.GetTag())
+    .AddField("destination", destination.GetTag())
+    .AddField("size", size)
+    .AddField("refine_size", refine_size)
+    .AddField("alpha", size)
+    .AddField("beta", size)
+    .AddField("gamma", gamma)
+    .AddField("refine_angle", refine_angle);
+}
+//.............................................................................
+rotating_adp_constraint* rotating_adp_constraint::FromDataItem(
+  const TDataItem& di, const RefinementModel& rm)
+{
+  return new rotating_adp_constraint(
+    rm.aunit.GetAtom(di.GetFieldByName("source").ToSizeT()),
+    rm.aunit.GetAtom(di.GetFieldByName("destination").ToSizeT()),
+    di.GetFieldByName("size").ToDouble(),
+    di.GetFieldByName("refine_size").ToBool(),
+    di.GetFieldByName("alpha").ToDouble(),
+    di.GetFieldByName("beta").ToDouble(),
+    di.GetFieldByName("gamma").ToDouble(),
+    di.GetFieldByName("refine_angle").ToBool()
+  );
+}
+//.............................................................................
+void rotating_adp_constraint::UpdateParams(const TStrList& toks) {
+  if (toks.Count() != 4) {
+    throw TInvalidArgumentException(__OlxSourceInfo, "argument number");
+  }
+  size = toks[0].ToDouble();
+  alpha = toks[1].ToDouble();
+  beta = toks[2].ToDouble();
+  gamma = toks[3].ToDouble();
+}
+//.............................................................................
+olxstr rotating_adp_constraint::Describe() const {
+  olxstr rv = "ADP of ";
+  return rv << destination.GetLabel() << " is the ADP of " << source.GetLabel() <<
+    " scaled by " << size << " and rotated (" <<
+    alpha << ", " << beta << ", " << gamma << ")";
 }
 //.............................................................................
 //.............................................................................

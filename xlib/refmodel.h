@@ -200,6 +200,7 @@ public:
     &OnCellDifference;
   TAsymmUnit& aunit;
   ConstraintContainer<rotated_adp_constraint> SharedRotatedADPs;
+  ConstraintContainer<rotating_adp_constraint> SharedRotatingADPs;
   ConstraintContainer<same_group_constraint> SameGroups;
   ConstraintContainer<same_disp_constraint> SameDisp;
   ConstraintContainer<adirection> Directions;

@@ -60,12 +60,14 @@ RefinementModel::RefinementModel(TAsymmUnit& au) :
   RefContainers(rDANG.GetIdName(), &rDANG);
   RefContainers(TAsymmUnit::_GetIdName(), &aunit);
   rcRegister.Add(SharedRotatedADPs.GetName(), &SharedRotatedADPs);
+  rcRegister.Add(SharedRotatingADPs.GetName(), &SharedRotatingADPs);
   rcRegister.Add(Directions.GetName(), &Directions);
   rcRegister.Add(SameGroups.GetName(), &SameGroups);
   rcRegister.Add(SameDisp.GetName(), &SameDisp);
   rcRegister.Add(cTLS.GetName(), &cTLS);
   rcList.Add(&Directions);
   rcList.Add(&SharedRotatedADPs);
+  rcList.Add(&SharedRotatingADPs);
   rcList.Add(&SameGroups);
   rcList.Add(&SameDisp);
   rcList1 << rDFIX <<rDANG << rSADI << rCHIV << rFLAT << rDELU
@@ -1669,6 +1671,14 @@ const_strlist RefinementModel::Describe() {
       }
     }
   }
+  if (!SharedRotatingADPs.items.IsEmpty()) {
+    lst.Add(olxstr(++sec_num)) << ". Shared rotating ADPs";
+    for (size_t i = 0; i < SharedRotatingADPs.items.Count(); i++) {
+      if (SharedRotatingADPs.items[i].IsValid()) {
+        lst.Add(SharedRotatingADPs.items[i].Describe());
+      }
+    }
+  }
   TStrList vars;
   Vars.Describe(vars);
   if (!vars.IsEmpty()) {
@@ -3174,8 +3184,8 @@ void RefinementModel::LibSWAT(const TStrObjList& Params, TMacroData& E) {
 void RefinementModel::LibUpdateCRParams(const TStrObjList& Params,
   TMacroData& E)
 {
-  IConstraintContainer* cc = rcRegister.Find(Params[0], NULL);
-  if( cc == NULL )  {
+  IConstraintContainer* cc = rcRegister.Find(Params[0], 0);
+  if (cc == 0) {
     E.ProcessingError(__OlxSrcInfo, olxstr("Undefined container for: '") <<
       Params[0] << '\'');
     return;
@@ -3197,6 +3207,14 @@ void RefinementModel::LibShareADP(TStrObjList &Cmds, const TParamList &Options,
     Cmds.Delete(0);
   }
   atoms = TXApp::GetInstance().FindSAtoms(Cmds);
+  // special case of rotating ADP
+  if (atoms.Count() == 2) {
+    SharedRotatingADPs.items.Add(
+      new rotating_adp_constraint(
+        atoms[0]->CAtom(), atoms[1]->CAtom(), 1, false, 0, 0, 0, true));
+
+    return;
+  }
   if (atoms.Count() < 3) {
     E.ProcessingError(__OlxSrcInfo, "At least three atoms are expected");
     return;

@@ -143,6 +143,44 @@ struct rotated_adp_constraint {
 #endif
 };
 
+struct rotating_adp_constraint {
+  const TCAtom& source, & destination;
+  double size, alpha, beta, gamma;
+  bool refine_angle, refine_size;
+  rotating_adp_constraint(TCAtom& _source, TCAtom& _destination,
+    double size,
+    bool refine_size,
+    double alpha, double beta, double gamma, bool refine_angle)
+    : source(_source),
+    destination(_destination),
+    size(size),
+    alpha(alpha),
+    beta(beta),
+    gamma(gamma),
+    refine_size(refine_size),
+    refine_angle(refine_angle)
+  {}
+  ~rotating_adp_constraint() {
+  }
+  bool IsValid() const {
+    return !(source.IsDeleted() || destination.IsDeleted());
+  }
+  olxstr ToInsStr(const RefinementModel& rm) const;
+  static void FromToks(const TStrList& toks, RefinementModel& rm,
+    TTypeList<rotating_adp_constraint>& out);
+  static rotating_adp_constraint*
+    Copy(RefinementModel& rm, const rotating_adp_constraint& c);
+  static const olxstr& GetName();
+  olxstr Describe() const;
+  void UpdateParams(const TStrList& toks);
+  void ToDataItem(TDataItem& di) const;
+  static rotating_adp_constraint* FromDataItem(const TDataItem& di,
+    const RefinementModel& rm);
+#ifdef _PYTHON
+  PyObject* PyExport() const;
+#endif
+};
+
 struct same_group_constraint {
 protected:
   same_group_constraint() {}
