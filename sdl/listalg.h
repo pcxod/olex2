@@ -198,7 +198,7 @@ bool olx_list_and_st(const list_t &l, func_t f, bool if_empty=true) {
 };
 
 template <class list_t, typename func_t>
-bool list_or(const list_t &l, func_t f, bool if_empty=false) {
+bool olx_list_or(const list_t &l, func_t f, bool if_empty=false) {
   if (l.IsEmpty()) return if_empty;
   for (size_t i=0; i < l.Count(); i++) {
     if ((olx_ref::get(l[i]).*f)())
@@ -225,6 +225,19 @@ template <class list_t, typename func_t>
 void olx_list_call_st(const list_t &l, func_t f) {
   for (size_t i=0; i < l.Count(); i++)
     (*f)(olx_ref::get(l[i]));
+};
+
+template <class list_t, typename func_t, typename arg_t>
+void olx_list_call(const list_t& l, func_t f, arg_t arg ) {
+  for (size_t i = 0; i < l.Count(); i++) {
+    (olx_ref::get(l[i]).*f)(arg);
+  }
+};
+template <class list_t, typename func_t, typename arg_t>
+void olx_list_call_st(const list_t& l, func_t f, arg_t arg) {
+  for (size_t i = 0; i < l.Count(); i++) {
+    (*f)(olx_ref::get(l[i]), arg);
+  }
 };
 
 template <typename item_t>
