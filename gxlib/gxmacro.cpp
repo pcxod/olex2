@@ -470,7 +470,10 @@ void GXLibMacros::Export(TLibrary& lib) {
   gxlib_InitFunc(FBond, fpNone | fpOne,
     "Sets/prints bond unit length");
   gxlib_InitFunc(ObjectSettings, fpTwo|fpThree,
-    "Gets/sets aobject settings for atom or bond");
+    "Gets/sets object's settings for atoms and bonds");
+  gxlib_InitFunc(Visible, fpOne | fpTwo,
+    "Gets/sets given collection's visibility. When setting visibility, current one"
+    " is returned.");
 }
 //.............................................................................
 bool InvertFittedFragment() {
@@ -6224,7 +6227,6 @@ void GXLibMacros::macScaleN(TStrObjList& Cmds, const TParamList& Options,
   }
 }
 //.............................................................................
-//.............................................................................
 void GXLibMacros::macPiPi(TStrObjList& Cmds, const TParamList& Options,
   TMacroData& Error)
 {
@@ -6261,5 +6263,26 @@ void GXLibMacros::macPiPi(TStrObjList& Cmds, const TParamList& Options,
   }
   else {
     Error.SetUnhandled(true);
+  }
+}
+//.............................................................................
+void GXLibMacros::funVisible(const TStrObjList& Params, TMacroData& E) {
+  TGPCollection* gpc = app.GetRenderer().FindCollection(Params[0]);
+  if (gpc == 0) {
+    E.SetRetVal(false);
+    return;
+  }
+  if (Params.Count() == 1) {
+    if (gpc->ObjectCount() == 1) {
+      E.SetRetVal(gpc->GetObject(0).IsVisible());
+    }
+    else {
+      bool rv = olx_list_or(gpc->GetObjects(), &AGDrawObject::IsVisible, false);
+      E.SetRetVal(rv);
+    }
+  }
+  else {
+    E.SetRetVal(olx_list_or(gpc->GetObjects(), &AGDrawObject::IsVisible, false));
+    olx_list_call(gpc->GetObjects(), &AGDrawObject::SetVisible, Params[1].ToBool());
   }
 }

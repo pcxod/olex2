@@ -13,6 +13,7 @@
 #include <sys/stat.h>
 #include "exception.h"
 #include "estrlist.h"
+#include "exparse/exptree.h"
 
 #include "library.h"
 #include "bapp.h"
@@ -1267,5 +1268,30 @@ olxstr TEFile::UnquotePath(const olxstr &p) {
   using namespace exparse;
   olxstr rv = parser_util::unescape(parser_util::unquote(p));
   return rv.Replace("\\\\", '\\');
+}
+//..............................................................................
+//..............................................................................
+//..............................................................................
+TStrList::const_list_type TEFile::Path::Split(const olxstr& path) {
+  return TStrList(TEFile::OSPath(path), OLX_PATH_DEL);
+}
+//..............................................................................
+TEFile::Path TEFile::Path::GetParent() {
+  using namespace exparse::parser_util;
+  size_t s_id = path.LastIndexOf(OLX_PATH_DEL);
+  while (s_id != InvalidIndex && s_id > 0 && is_escaped(path, s_id)) {
+    s_id = path.LastIndexOf(OLX_PATH_DEL, s_id);
+  }
+  if (s_id != InvalidIndex) {
+    return TEFile::Path(path.SubStringTo(s_id));
+  }
+  return EmptyString();
+}
+//..............................................................................
+bool TEFile::Path::ChDir() {
+  if (path.IsEmpty()) {
+    return false;
+  }
+  return TEFile::ChangeDir(path);
 }
 //..............................................................................

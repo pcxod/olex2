@@ -371,6 +371,11 @@ bool TIns::_ParseIns(RefinementModel& rm, const TStrList& Toks) {
   if (Toks[0].Equalsi("FVAR")) {
     rm.Vars.AddFVAR(Toks.SubListFrom(1));
   }
+  else if (Toks[0].Equalsi("TWST")) {
+    if (Toks.Count() == 2) {
+      rm.SetTWST(Toks[1].ToInt());
+    }
+  }
   else if (Toks[0].Equalsi("WGHT")) {
     if (rm.used_weight.Count() != 0) {
       rm.proposed_weight.SetCount(Toks.Count() - 1);
@@ -2781,6 +2786,9 @@ TStrList::const_list_type TIns::SaveHeader(TStrList& SL,
   }
   if (RefMod.used_weight.IsEmpty()) {
     wght << "0.1";
+  }
+  if (RefMod.GetHKLF() >= 5 && RefMod.getTWST() != 1) {
+    SL.Add("TWST ") << RefMod.getTWST();
   }
   _SaveFVar(RefMod, SL);
   return rv;

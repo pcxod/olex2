@@ -64,6 +64,9 @@ smatd& TUnitCell::InitMatrixId(const smatd_list& Matrices, smatd& m) {
         olx_abs(dt[2] - tc) < 1e-6)
       {
         m.SetId((uint8_t)i, ta, tb, tc);
+        if (m.GetContainerId() != i) {
+          throw TInvalidArgumentException(__OlxSourceInfo, "translation overflow");
+        }
         return m;
       }
     }
@@ -81,6 +84,9 @@ smatd_list TUnitCell::MulMatrices(const smatd_list& in,
     const int8_t tb = olx_round_t<int8_t>(out[i].t[1] - Matrices[index].t[1]);
     const int8_t tc = olx_round_t<int8_t>(out[i].t[2] - Matrices[index].t[2]);
     out[i].SetId(index, ta, tb, tc);
+    if (out[i].GetContainerId() != index) {
+      throw TInvalidArgumentException(__OlxSourceInfo, "translation overflow");
+    }
   }
   return out;
 }

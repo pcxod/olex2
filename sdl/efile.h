@@ -360,6 +360,19 @@ public:
     TEFile out(fn, "wb");
     return lines.SaveToTextStream(out);
   }
+
+  struct Path {
+    Path(const Path& p)
+    : path(p.path)
+    {}
+    Path(const olxstr& p)
+      : path(TEFile::OSPath(p))
+    {}
+    TStrList::const_list_type Split(const olxstr& path);
+    Path GetParent();
+    bool ChDir();
+    olxstr path;
+  };
 };
 
 EndEsdlNamespace()

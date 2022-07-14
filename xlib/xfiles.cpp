@@ -951,6 +951,7 @@ void TXFile::Close() {
   RefMod.Clear(rm_clear_ALL);
   Lattice.Clear(true);
   OnFileClose.Exit(this, 0);
+  TEFile::Path(TEFile::CurrentDir()).GetParent().ChDir();
 }
 //..............................................................................
 IOlxObject* TXFile::Replicate() const {

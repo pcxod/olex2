@@ -83,7 +83,7 @@ protected:
   double OMIT_s, OMIT_2t;
   double SHEL_lr, SHEL_hr;
   mat3d TWIN_mat;
-  int TWIN_n;
+  int TWIN_n, TWST;
   bool TWIN_set, OMIT_set, MERG_set, HKLF_set, SHEL_set,
     DEFS_set, SWAT_set;
   TEValueD SWAT[2];
@@ -97,6 +97,8 @@ protected:
   adirection *AddDirection(const TCAtomGroup &atoms, uint16_t type);
   // atoms omitted from the maps
   AtomRefList Omitted;
+  // to be used with 'stack_restraints' option
+  mutable size_t next_restraint_pos;
 public:
   // needs to be extended for the us of the batch numbers...
   struct HklStat : public MergeStats {
@@ -268,6 +270,12 @@ public:
   const AtomRefList &OmittedAtoms() const { return Omitted; }
   olxstr GetOMITStr() const {
     return olxstr(OMIT_s) << ' ' << OMIT_2t;
+  }
+  void SetTWST(int batch_n) {
+    TWST = batch_n;
+  }
+  int getTWST() const {
+    return TWST;
   }
   // processed user omits (hkl) and returns the number of removed reflections
   size_t ProcessOmits(TRefList& refs);

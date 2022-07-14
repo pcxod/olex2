@@ -89,6 +89,7 @@ public:
   DefFunc(GetMaterial)
   DefFunc(FBond)
   DefFunc(ObjectSettings)
+  DefFunc(Visible)
 
   static int QPeakSortA(const TCAtom &a, const TCAtom &b);
   static int QPeakSortD(const TCAtom &a, const TCAtom &b) {

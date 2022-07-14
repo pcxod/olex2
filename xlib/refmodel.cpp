@@ -97,6 +97,8 @@ void RefinementModel::SetDefaults() {
   TWIN_mat.I() *= -1;
   SWAT[0] = 0;
   SWAT[1] = 2;
+  TWST = 1;
+  next_restraint_pos = 10000;
 }
 //.............................................................................
 void RefinementModel::Clear(uint32_t clear_mask) {
@@ -259,6 +261,7 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm,
   TWIN_mat = rm.TWIN_mat;
   TWIN_n = rm.TWIN_n;
   TWIN_set = rm.TWIN_set;
+  TWST = rm.TWST;
   DEFS = rm.DEFS;
   DEFS_set = rm.DEFS_set;
   SWAT_set = rm.SWAT_set;
@@ -981,7 +984,7 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
     if (!update) {
       return _HklStat;
     }
-    else  {
+    else {
       completeness_cache.Clear();
       HklStatFileID = HklFileID;
       _HklStat.SetDefaults();
@@ -998,7 +1001,7 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
       }
       if (HKLF >= 5) {
         non_overlapping_1 = GetNonoverlappingRefs(refs).obj()
-          .Filter(olx_alg::olx_eq(1,
+          .Filter(olx_alg::olx_eq(TWST,
           FunctionAccessor::MakeConst(&TReflection::GetBatch)));
         batch_1.SetCapacity(refs.Count());
         for (size_t i = 0; i < refs.Count(); i++) {
@@ -2210,7 +2213,7 @@ double RefinementModel::CalcCompletenessTo2Theta(double tt, bool Laue) {
   FilterHkl(refs_, st);
   if (GetHKLF() >= 5) {
     for (size_t i = 0; i < refs_.Count(); i++) {
-      if (refs_[i].GetBatch() == 1) {
+      if (refs_[i].GetBatch() == TWST) {
         refs.Add(refs_[i]);
       }
     }
@@ -2341,6 +2344,9 @@ TSimpleRestraint & RefinementModel::SetRestraintDefaults(
   }
   else if (container.GetIdName().StartsFromi("olex2.restraint.adp")) {
     r.SetEsd(0.1);
+  }
+  if (TXApp::DoStackRestraints()) {
+    r.SetPosition(next_restraint_pos++);
   }
   return r;
 }

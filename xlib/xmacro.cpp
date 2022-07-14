@@ -1365,7 +1365,7 @@ void XLibMacros::macHklStat(TStrObjList &Cmds, const TParamList &Options,
       xapp.XFile().GetRM().GetFriedelPairCount();
     if (hs.HKLF >= 5) {
       xapp.NewLogEntry() << "Note that the merging stats are given for batch "
-        "#1 only";
+        "#" << xapp.XFile().GetRM().getTWST() << " only";
     }
     return;
   }

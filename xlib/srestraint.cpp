@@ -120,26 +120,36 @@ ConstPtrList<PyObject> TSimpleRestraint::PyExport(TPtrList<PyObject>& atoms,
     PythonExt::SetDictItem(rv[0], "atoms", involved);
   }
   else {
-    for (size_t i = 0; i < ats.Count(); i++) {
+    if (AllNonHAtoms) {
       rv.Add(PyDict_New());
-      PythonExt::SetDictItem(rv.GetLast(), "allNonH", Py_BuildValue("b", AllNonHAtoms));
-      PythonExt::SetDictItem(rv.GetLast(), "esd1", Py_BuildValue("d", Esd));
-      PythonExt::SetDictItem(rv.GetLast(), "esd2", Py_BuildValue("d", Esd1));
-      PythonExt::SetDictItem(rv.GetLast(), "value", Py_BuildValue("d", Value));
-      PyObject* involved = PyTuple_New(ats[i].Count());
-      for (size_t j = 0; j < ats[i].Count(); j++) {
-        PyObject* eq;
-        if (ats[i][j].GetMatrix() == 0) {
-          eq = Py_None;
+      PythonExt::SetDictItem(rv[0], "allNonH", Py_BuildValue("b", AllNonHAtoms));
+      PythonExt::SetDictItem(rv[0], "esd1", Py_BuildValue("d", Esd));
+      PythonExt::SetDictItem(rv[0], "esd2", Py_BuildValue("d", Esd1));
+      PythonExt::SetDictItem(rv[0], "value", Py_BuildValue("d", Value));
+      PythonExt::SetDictItem(rv.GetLast(), "atoms", PyTuple_New(0));
+    }
+    else {
+      for (size_t i = 0; i < ats.Count(); i++) {
+        rv.Add(PyDict_New());
+        PythonExt::SetDictItem(rv.GetLast(), "allNonH", Py_BuildValue("b", AllNonHAtoms));
+        PythonExt::SetDictItem(rv.GetLast(), "esd1", Py_BuildValue("d", Esd));
+        PythonExt::SetDictItem(rv.GetLast(), "esd2", Py_BuildValue("d", Esd1));
+        PythonExt::SetDictItem(rv.GetLast(), "value", Py_BuildValue("d", Value));
+        PyObject* involved = PyTuple_New(ats[i].Count());
+        for (size_t j = 0; j < ats[i].Count(); j++) {
+          PyObject* eq;
+          if (ats[i][j].GetMatrix() == 0) {
+            eq = Py_None;
+          }
+          else {
+            eq = equiv[ats[i][j].GetMatrix()->GetId()];
+          }
+          Py_INCREF(eq);
+          PyTuple_SetItem(involved, j,
+            Py_BuildValue("OO", Py_BuildValue("i", ats[i][j].GetAtom().GetTag()), eq));
         }
-        else {
-          eq = equiv[ats[i][j].GetMatrix()->GetId()];
-        }
-        Py_INCREF(eq);
-        PyTuple_SetItem(involved, j,
-          Py_BuildValue("OO", Py_BuildValue("i", ats[i][j].GetAtom().GetTag()), eq));
+        PythonExt::SetDictItem(rv.GetLast(), "atoms", involved);
       }
-      PythonExt::SetDictItem(rv.GetLast(), "atoms", involved);
     }
   }
   return rv;

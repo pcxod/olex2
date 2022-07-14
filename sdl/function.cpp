@@ -209,16 +209,20 @@ void AMacro::Run(TStrObjList &Params, const TParamList &Options,
 olxstr AMacro::GetSignature() const {
   if (ValidOptions.Count()) {
     olxstr res = ABasicFunction::GetSignature();
-    if ((GetArgStateMask()&fpAny_Options) != 0)
+    if ((GetArgStateMask() & fpAny_Options) != 0) {
       res << "; registered options - ";
-    else
+    }
+    else {
       res << "; valid options - ";
-    for (size_t i=0; i < ValidOptions.Count(); i++)
-      res << ValidOptions.GetKey(i)  << ';';
+    }
+    for (size_t i = 0; i < ValidOptions.Count(); i++) {
+      res << ValidOptions.GetKey(i) << ';';
+    }
     return res;
   }
-  else
+  else {
     return ABasicFunction::GetSignature();
+  }
 }
 //.............................................................................
 //.............................................................................
@@ -228,13 +232,19 @@ void FunctionChainer::RunMacro(TStrObjList &Params, const TParamList &Options,
 {
   for (size_t i=functions.Count()-1; i != InvalidIndex; i--) {
     functions[i]->Run(Params, Options, E);
-    if (E.IsHandled() || !E.IsSuccessful())
+    if (E.IsHandled() || !E.IsSuccessful()) {
       break;
-    if (!E.IsHandled() && (i+1) < functions.Count())
+    }
+    if (!E.IsHandled() && (i + 1) < functions.Count()) {
       E.SetUnhandled(false);
+    }
   }
-  if (!E.IsHandled())
+  if (E.IsProcessingException()) {
+    // leave the stack trace in tact
+  }
+  else if (!E.IsHandled()) {
     E.ProcessingError(__OlxSourceInfo, "unhandled macro call");
+  }
 }
 //.............................................................................
 void FunctionChainer::RunFunction(const TStrObjList &Params, TMacroData& E) {

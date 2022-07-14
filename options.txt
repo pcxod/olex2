@@ -26,6 +26,7 @@ interactions_from [H] - sets a list of atoms for which to display short contacts
 interactions_to [N,O,F,Cl,S,Br,Se] - sets a list of atoms for which to display short contacts
 absolute_hkl_path [false] - saves absolute path in the INS file
 group_restraints [false] - groups restraints by involved atoms
+stack_restraints [true] - add new restraints to the bottom of the restraint list
 use_hkl_cell [true] - if HKL file has CELL instruction - Olex2 overrdes current file CELL with the
   parameters
 path [] - extensions to the system PATH (prepended)

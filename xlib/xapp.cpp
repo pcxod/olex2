@@ -1308,8 +1308,9 @@ size_t TXApp::GetMaxLabelLength() {
 }
 //..............................................................................
 void TXApp::InitInteractions() {
-  if (interactions_i)
+  if (interactions_i) {
     return;
+  }
   TStrList toks(TBasicApp::GetInstance().GetOptions()
     .FindValue("interactions_from", "H"), ',');
   for (size_t i=0; i < toks.Count(); i++) {
@@ -1346,6 +1347,19 @@ SortedObjectList<int, TPrimitiveComparator>& TXApp::GetInteractionsTo() {
   TXApp &a = GetInstance();
   a.InitInteractions();
   return a.interactions_to;
+}
+//..............................................................................
+bool TXApp::DoStackRestraints() {
+  TXApp& a = GetInstance();
+  if (a.stack_restraints.ok()) {
+    return *a.stack_restraints;
+  }
+  else {
+    a.stack_restraints = TBasicApp::GetInstance().GetOptions()
+      .FindValue("stack_restraints", TrueString()).ToBool();
+    return *a.stack_restraints;
+  }
+
 }
 //..............................................................................
 const_strlist TXApp::BangList(const TSAtom& A) {

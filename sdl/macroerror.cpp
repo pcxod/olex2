@@ -11,13 +11,13 @@
 #include "function.h"
 #include "bapp.h"
 
-TMacroData::TMacroData()  {
+TMacroData::TMacroData() {
   DeleteObject = false;
   ProcessError = 0;
-  RetValue = NULL;
+  RetValue = 0;
 }
 //.............................................................................
-void TMacroData::operator = (const TMacroData& ME)  {
+void TMacroData::operator = (const TMacroData& ME) {
   ProcessError = ME.ProcessError;
   ErrorInfo = ME.ErrorInfo;
   RetValue = ME.RetValue;
@@ -32,7 +32,7 @@ olxstr& TMacroData::ProcessingError(const olxstr& location,
   return ErrorInfo;
 }
 //.............................................................................
-void TMacroData::NonexitingMacroError(const olxstr& macroName)  {
+void TMacroData::NonexitingMacroError(const olxstr& macroName) {
   ErrorInfo = "Macro/function '";
   ErrorInfo << macroName;
   ErrorInfo << "' does not exist";
@@ -51,8 +51,9 @@ void TMacroData::ProcessingException(const ABasicFunction& caller,
 {
   ErrorInfo = caller.GetRuntimeSignature();
   const TBasicException* exc = Exc.GetException();
-  if( exc->GetCause() == NULL )
+  if (exc->GetCause() == 0) {
     ErrorInfo << NewLineSequence() << ' ' << exc->GetFullMessage();
+  }
   else  {
     TStrList output;
     exc->GetStackTrace(output);
@@ -88,7 +89,7 @@ void TMacroData::WrongState(const ABasicFunction& func)  {
 }
 //.............................................................................
 olxstr TMacroData::GetRetVal() const {
-  if (RetValue == NULL) {
+  if (RetValue == 0) {
     return EmptyString();
   }
   //  if( !EsdlInstanceOf(*RetValue, olxstr) )

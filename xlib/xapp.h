@@ -68,6 +68,7 @@ protected:
   olx_object_ptr<double> min_hbond_angle;
   olx_object_ptr<bool> safe_afix;
   olx_object_ptr<bool> rename_parts;
+  olx_object_ptr<bool> stack_restraints;
   size_t max_label_length;
   bool interactions_i;
   SortedObjectList<int, TPrimitiveComparator> interactions_from,
@@ -210,6 +211,7 @@ public:
   // used in the analysis of what short interactions to display
   static SortedObjectList<int, TPrimitiveComparator>& GetInteractionsFrom();
   static SortedObjectList<int, TPrimitiveComparator>& GetInteractionsTo();
+  static bool DoStackRestraints();
 
   static const_strlist BangList(const TSAtom &A);
   static void BangTable(const TSAtom& A, TTTable<TStrList>& Table);

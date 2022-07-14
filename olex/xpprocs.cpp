@@ -2871,7 +2871,6 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
       olxstr ins_fn = TEFile::ChangeFileExt(file_n.file_name, "ins");
       if (TEFile::Exists(ins_fn)) {
         TBasicApp::NewLogEntry(logWarning) << "Loading the INS file instead of P4P";
-        return;
       }
       else {
         TBasicApp::NewLogEntry(logWarning) << "Creating and loading the INS file instead of P4P";
