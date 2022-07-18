@@ -190,7 +190,7 @@ public:
         if (new_l.Length() > Atoms[i]->GetType().symbol.Length()) {
           lc = olxstr::o_tolower(new_l.GetLast());
         }
-        if (olxstr::o_isalpha(lc)) {
+        if (olxstr::o_isalpha(lc) && lc < 'z') {
           new_l[new_l.Length() - 1] = ++lc;
         }
         else {
