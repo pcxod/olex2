@@ -1273,7 +1273,8 @@ olxstr TEFile::UnquotePath(const olxstr &p) {
 //..............................................................................
 //..............................................................................
 TStrList::const_list_type TEFile::Path::Split(const olxstr& path) {
-  return TStrList(TEFile::OSPath(path), OLX_PATH_DEL);
+  TStrList rv(TEFile::OSPath(path), OLX_PATH_DEL);
+  return rv;
 }
 //..............................................................................
 TEFile::Path TEFile::Path::GetParent() {

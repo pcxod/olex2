@@ -384,6 +384,19 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
       crds[0] = (M*crds[0])*dis + envi.crd();
       crds[1] = (M*crds[1])*dis + envi.crd();
     }
+    if (crds.IsEmpty()) { // "random" in Z-X placement
+      vec3d Vec1(0, 0, 1);
+      vec3d RotVec(0, 1, 0);
+      double ang = water_angle * M_PI / 360;
+      olx_create_rotation_matrix(M, RotVec, cos(ang));
+      crds.AddNew(M* Vec1);
+      olx_create_rotation_matrix(M, RotVec, cos(-ang), sin(-ang));
+      crds.AddNew(M* Vec1);
+      // final 180 degree rotation
+      olx_create_rotation_matrix(M, Vec1, 0, 1);
+      crds[0] = (M * crds[0]) * dis + envi.crd();
+      crds[1] = (M * crds[1]) * dis + envi.crd();
+    }
     break;
   case fgOH1:
     dis = Distances.Get(GenId(fgOH1, envi.Count() == 3 ? 3 : 0));

@@ -271,6 +271,7 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm,
   HKLSource = rm.HKLSource;
   RefinementMethod = rm.RefinementMethod;
   SolutionMethod = rm.SolutionMethod;
+  next_restraint_pos = rm.next_restraint_pos;
 
   for (size_t i = 0; i < rm.Frags.Count(); i++) {
     Frags(rm.Frags.GetKey(i), new Fragment(*rm.Frags.GetValue(i)));
