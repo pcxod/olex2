@@ -154,7 +154,7 @@ bool TSameGroup::DoOverlap(const TSameGroup &g) const {
 }
 //.............................................................................
 bool TSameGroup::IsValidForSave() const {
-  return !Atoms.IsEmpty();
+  return !Atoms.IsEmpty() && Atoms.IsValid();
 }
 //.............................................................................
 bool TSameGroup::AreAllAtomsUnique() const {
