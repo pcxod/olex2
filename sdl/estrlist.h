@@ -156,6 +156,7 @@ public:
   virtual ~TTStrList() { Clear(); }
 
   TTStrList& TakeOver(TTStrList& d, bool do_delete = false) {
+    Strings.DeleteItems();
     Strings.TakeOver(d.Strings);
     if (do_delete) {
       delete& d;

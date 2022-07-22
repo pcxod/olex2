@@ -1240,29 +1240,33 @@ void TMainForm::macHide(TStrObjList &Cmds, const TParamList &Options, TMacroData
   }
 }
 //..............................................................................
-void TMainForm::macExec(TStrObjList &Cmds, const TParamList &Options, TMacroData &Error)  {
+void TMainForm::macExec(TStrObjList& Cmds, const TParamList& Options, TMacroData& Error) {
   bool Asyn = !Options.GetBoolOption('s'), // synchronously
     Cout = !Options.GetBoolOption('o'),    // catch output
     quite = Options.GetBoolOption('q');
 
-  olxstr dubFile(Options.FindValue('s',EmptyString()));
+  olxstr dubFile(Options.FindValue('s', EmptyString()));
 
   olxstr Tmp;
-  for( size_t i=0; i < Cmds.Count(); i++ )
+  for (size_t i = 0; i < Cmds.Count(); i++) {
     Tmp << AProcess::PrepareArg(Cmds[i]) << ' ';
+  }
   TBasicApp::NewLogEntry(logInfo) << "EXEC: " << Tmp;
   short flags = 0;
-  if( (Cout && Asyn) || Asyn )  {  // the only combination
-    if( !Cout )
+  if ((Cout && Asyn) || Asyn) {  // the only combination
+    if (!Cout) {
       flags = quite ? spfQuiet : 0;
-    else
-      flags = quite ? spfRedirected|spfQuiet : spfRedirected;
+    }
+    else {
+      flags = quite ? spfRedirected | spfQuiet : spfRedirected;
+    }
   }
-  else
+  else {
     flags = spfSynchronised;
+  }
 
 #if defined(__WIN32__)
-  TWinProcess* Process  = new TWinProcess(Tmp, flags);
+  TWinProcess* Process = new TWinProcess(Tmp, flags);
 #elif defined(__WXWIDGETS__)
   TWxProcess* Process = new TWxProcess(Tmp, flags);
 #endif
@@ -1270,31 +1274,32 @@ void TMainForm::macExec(TStrObjList &Cmds, const TParamList &Options, TMacroData
   if (!t_cmd.IsEmpty()) {
     Process->SetOnTerminateCmds(TParamList::StrtokLines(t_cmd, ">>"));
   }
-  if( (Cout && Asyn) || Asyn )  {  // the only combination
-    if( !Cout )  {
+  if ((Cout && Asyn) || Asyn) {  // the only combination
+    if (!Cout) {
       _ProcessManager->OnCreate(*Process);
-      if( !Process->Execute() )  {
+      if (!Process->Execute()) {
         _ProcessManager->OnTerminate(*Process);
-        Error.ProcessingError(__OlxSrcInfo, "failed to launch a new process" );
+        Error.ProcessingError(__OlxSrcInfo, "failed to launch a new process");
         return;
       }
     }
-    else  {
+    else {
       _ProcessManager->OnCreate(*Process);
-      if( !dubFile.IsEmpty() )  {
+      if (!dubFile.IsEmpty()) {
         TEFile* df = new TEFile(dubFile, "wb+");
         Process->SetDubStream(df);
       }
-      if( !Process->Execute() )  {
+      if (!Process->Execute()) {
         _ProcessManager->OnTerminate(*Process);
-        Error.ProcessingError(__OlxSrcInfo, "failed to launch a new process" );
+        Error.ProcessingError(__OlxSrcInfo, "failed to launch a new process");
         return;
       }
     }
   }
   else {
-    if( !Process->Execute() )
+    if (!Process->Execute()) {
       Error.ProcessingError(__OlxSrcInfo, "failed to launch a new process");
+    }
     delete Process;
   }
 }
@@ -2288,15 +2293,47 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options,
     released.sameList[i]->GetParent().Release(*released.sameList[i]);
   }
   au.Release(TPtrList<TResidue>(residues_to_release));
-  TdlgEdit *dlg = new TdlgEdit(this, true);
-  dlg->SetText(SL.Text('\n'));
-  bool undo = false;
-  // prevent logging to interfere!
-  FXApp->SetDisplayFrozen(true);
-  if (dlg->ShowModal() == wxID_OK) {
-    SL.Clear();
+  bool undo = false, external_ok = false;
+  olxstr extre = FXApp->GetOptions().FindValue("external_editor", EmptyString());
+  if (!extre.IsEmpty()) {
+    olxstr fn = TEFile::AddPathDelimeter(FXApp->GetInstanceDir()) + "atoms.txt";
+    TUtf8File::WriteLines(fn, SL, true);
+    time_t age = TEFile::FileAge(fn);
+    olxstr cmdl;
+    if (extre.Contains("%f")) {
+      cmdl = extre.Replace("%f", AProcess::PrepareArg(fn));
+    }
+    else {
+      cmdl << extre << ' ';
+      cmdl << AProcess::PrepareArg(fn);
+    }
+    TWxProcess p(cmdl, spfSynchronised);
+    if (p.Execute()) {
+      if (TEFile::FileAge(fn) != age) {
+        SL = TUtf8File::ReadLines(fn);
+      }
+      else {
+        undo = true;
+      }
+      external_ok = true;
+    }
+  }
+  if (!external_ok) {
+    TdlgEdit* dlg = new TdlgEdit(this, true);
+    dlg->SetText(SL.Text('\n'));
+    // prevent logging to interfere!
+    FXApp->SetDisplayFrozen(true);
+    if (dlg->ShowModal() == wxID_OK) {
+      SL.Clear();
+      SL.Strtok(dlg->GetText(), '\n');
+    }
+    else {
+      undo = true;
+    }
+    dlg->Destroy();
+  }
+  if (!undo) {
     FXApp->XFile().GetRM().Vars.Clear();
-    SL.Strtok(dlg->GetText(), '\n');
     TStrList NewIns;
     try {
       TIns ins_;
@@ -2312,13 +2349,10 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options,
       }
       FXApp->XFile().EndUpdate();
     }
-    catch (const TExceptionBase &e) {
+    catch (const TExceptionBase& e) {
       undo = true;
       TBasicApp::NewLogEntry(logExceptionTrace) << e;
     }
-  }
-  else {
-    undo = true;
   }
   if (undo) {
     au.Restore(TPtrList<TResidue>(residues_to_release));
@@ -2353,7 +2387,6 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options,
       delete residues_to_release[i];
     }
   }
-  dlg->Destroy();
   FXApp->SetDisplayFrozen(false);
 }
 //..............................................................................

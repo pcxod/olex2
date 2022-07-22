@@ -323,7 +323,9 @@ TWxProcess::TWxProcess(const olxstr& cmdl, short flags)
 //.............................................................................
 TWxProcess::~TWxProcess() {
   outputReader.DoStop();
-  outputReader.Join();
+  if (outputReader.IsRunning()) {
+    outputReader.Join();
+  }
   if (IsTerminateOnDelete()) {
     Terminate();
   }
@@ -331,7 +333,9 @@ TWxProcess::~TWxProcess() {
 //.............................................................................
 bool TWxProcess::Terminate() {
   outputReader.DoStop();
-  outputReader.Join();
+  if (outputReader.IsRunning()) {
+    outputReader.Join();
+  }
   SetTerminated();
   AProcess::OnTerminate.Execute((AProcess *)this);
   if (ProcessId >= 0) {
@@ -346,7 +350,9 @@ bool TWxProcess::Terminate() {
 void TWxProcess::Detach() {
   AProcess::OnTerminate.Clear();
   outputReader.DoStop();
-  outputReader.Join();
+  if (outputReader.IsRunning()) {
+    outputReader.Join();
+  }
   wxProcess::Detach();
   // according to docs, we should not delete the object ?
   TEGC::AddP((AProcess *)this);
