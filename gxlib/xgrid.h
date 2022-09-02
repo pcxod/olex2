@@ -75,6 +75,7 @@ class TXGrid : public AGDrawObject {
   array_2d<float> ContourData;
   float *ContourCrds[2], *ContourLevels;
   size_t ContourLevelCount;
+  bool ReverseColors;
   class TGXApp * XApp;
   void DeleteObjects();
   GLuint TextIndex;
@@ -229,6 +230,7 @@ public:
   void LibProcess(TStrObjList& Cmds, const TParamList& Options,
     TMacroData& Error);
   class TLibrary*  ExportLibrary(const olxstr& name = EmptyString());
+  void LibReverseColors(const TStrObjList& Params, TMacroData& E);
 #ifdef _PYTHON
   static olxcstr &ModuleName();
   static PyObject *PyInit();

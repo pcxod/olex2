@@ -3078,8 +3078,11 @@ void XLibMacros::macGenDisp(TStrObjList& Cmds, const TParamList& Options,
       fn << "brennan";
     }
     else {
-      Error.ProcessingError(__OlxSrcInfo, "Unknown source");
-      return;
+      if (!TEFile::Exists(source)) {
+        Error.ProcessingError(__OlxSrcInfo, "Unknown source");
+        return;
+      }
+      fn.quote() << source;
     }
     // may request just the elements in question...
     if (false && !elms.IsEmpty()) {
@@ -9275,9 +9278,9 @@ void XLibMacros::macExport(TStrObjList &Cmds, const TParamList &Options,
     E.ProcessingError(__OlxSrcInfo, "the hkl file already exists");
     return;
   }
-  cif_dp::cetTable* hklLoop = C.FindLoop("_refln");
+  cif_dp::cetTable* hklLoop = C.FindLoop("_diffrn_refln");
   if (hklLoop == 0) {
-    hklLoop = C.FindLoop("_diffrn_refln");
+    hklLoop = C.FindLoop("_refln");
   }
   if (hklLoop == 0) {
     cif_dp::cetStringList *ci = dynamic_cast<cif_dp::cetStringList *>(

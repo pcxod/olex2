@@ -29,9 +29,12 @@
 http://www.andrewnoske.com/wiki/Code_-_heatmaps_and_color_gradients
 */
 
-vec3i CalculateColour(float v, size_t colour_count, const vec3i* colours) {
+vec3i CalculateColour(float v, size_t colour_count, const vec3i* colours, bool reverse) {
+  if (reverse) {
+    v = -v;
+  }
   v = ((v + 1) / 2) * (colour_count - 1);
-  // should not happen, but
+  // should not happen as v should be normalised to +/-1, but
   if (v < 0) {
     v = 0;
   }
@@ -317,6 +320,7 @@ TXGrid::TXGrid(const olxstr& collectionName, TGXApp* xapp)
   box_min = box_step = 0;
   PListId = NListId = ~0;
   glpC = glpN = glpP = 0;
+  ReverseColors = false;
 }
 //.............................................................................
 TXGrid::~TXGrid() {
@@ -389,7 +393,7 @@ void TXGrid::TPlaneCalculationTask::Run(size_t ind) {
     p = proj_m*p;
     p -= center;
     p *= c2c;
-    const float val = map_getter.Get(p);
+    float val = map_getter.Get(p);
     if (val < minVal) {
       minVal = val;
     }
@@ -524,10 +528,10 @@ bool TXGrid::Orient(TGlPrimitive& GlP) {
         const size_t off = (i + j*MaxDim) * 3;
         vec3i cl;
         if (ContourData[i][j] > max_v) {
-         cl = CalculateColour(1.0, colour_count, colours);
+          cl = CalculateColour(1.0, colour_count, colours, ReverseColors);
         }
         else {
-         cl = CalculateColour(ContourData[i][j] / max_v, colour_count, colours);
+          cl = CalculateColour(ContourData[i][j] / max_v, colour_count, colours, ReverseColors);
         }
         for (int ci = 0; ci < 3; ci++) {
           TextData[off + ci] = cl[ci];
@@ -578,7 +582,7 @@ bool TXGrid::Orient(TGlPrimitive& GlP) {
     float legend_step = (maxVal - minVal) / 32;
     for (int i = 0; i < 32; i++) {
       float val = minVal + legend_step*i;
-      vec3i cl = CalculateColour(val / max_v, colour_count, colours);
+      vec3i cl = CalculateColour(val / max_v, colour_count, colours, ReverseColors);
       size_t off = i * 32 * 3;
       for (int j = 0; j < 32 * 3; j += 3) {
         for (int ci = 0; ci < 3; ci++) {
@@ -1627,6 +1631,7 @@ void TXGrid::ToDataItem(TDataItem& item, IOutputStream& zos) const {
     item.AddField("max_z", MaxZ);
     item.AddField("box_min", box_min);
     item.AddField("box_step", box_step);
+    item.AddField("reverse_colors", ReverseColors);
     for (size_t x = 0; x < MaxX; x++) {
       for (size_t y = 0; y < MaxY; y++) {
         zos.Write(ED->Data[x][y], sizeof(float)*MaxZ);
@@ -1665,6 +1670,7 @@ void TXGrid::FromDataItem(const TDataItem& item, IInputStream& zis) {
   Depth = item.GetFieldByName("depth").ToFloat();
   box_min = item.FindField("box_min", "0").ToFloat();
   box_step = item.FindField("box_step", "0").ToFloat();
+  ReverseColors = item.FindField("reverse_colors", FalseString()).ToBool();
   for (size_t x = 0; x < MaxX; x++) {
     for (size_t y = 0; y < MaxY; y++) {
       zis.Read(ED->Data[x][y], sizeof(float)*MaxZ);
@@ -1801,7 +1807,16 @@ void TXGrid::LibProcess(TStrObjList& Cmds, const TParamList& Options,
   }
 }
 //.............................................................................
-TLibrary*  TXGrid::ExportLibrary(const olxstr& name)  {
+void TXGrid::LibReverseColors(const TStrObjList& Params, TMacroData& E) {
+  if (Params.IsEmpty()) {
+    E.SetRetVal(ReverseColors);
+  }
+  else {
+    ReverseColors = Params[0].ToBool();
+  }
+}
+//.............................................................................
+TLibrary* TXGrid::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("xgrid") : name);
   lib->Register(new TFunction<TXGrid>(this,
     &TXGrid::LibGetMin, "GetMin",
@@ -1854,6 +1869,9 @@ TLibrary*  TXGrid::ExportLibrary(const olxstr& name)  {
     "m-merge close vertices",
     fpAny ^ fpNone,
     "Executes a grid process. Currently only 'smooth' is available"));
+  lib->Register(new TFunction<TXGrid>(this,
+    &TXGrid::LibReverseColors, "ReverseColors",
+    fpNone | fpOne, "Returns/sets reverse colors for plane rendering"));
 
   AGDrawObject::ExportLibrary(*lib);
   Info->ExportLibrary(*lib->AddLibrary("label"));

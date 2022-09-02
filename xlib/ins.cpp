@@ -1440,8 +1440,9 @@ void TIns::SaveForSolution(const olxstr& FileName, const olxstr& sMethod,
   const olxstr& comments, bool rems, bool save_atoms)
 {
   TStrList SL, mtoks;
-  if (sMethod.IsEmpty())
+  if (sMethod.IsEmpty()) {
     mtoks.Add("TREF");
+  }
   else {
     mtoks.Strtok(sMethod, "\\n");
     size_t spi = mtoks[0].IndexOf(' ');
@@ -1457,7 +1458,6 @@ void TIns::SaveForSolution(const olxstr& FileName, const olxstr& sMethod,
   if (!comments.IsEmpty() && rems) {
     SL.Add("REM ") << comments;
   }
-// try to estimate Z'
   SL.Add(_CellToString());
   SL.Add(_ZerrToString());
   _SaveSymm(SL);
