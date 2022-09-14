@@ -222,6 +222,7 @@ void TIns::LoadFromStrings(const TStrList& FileContent) {
         cx.Resi = &GetAsymmUnit().GetResidue(0);
         cx.AfixGroups.Clear();
         cx.Part = 0;
+        cx.PartOccu = 0;
       }
       else if (Toks[0].Equalsi("TITL")) {
         SetTitle(Toks.Text(' ', 1));

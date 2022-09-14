@@ -772,3 +772,10 @@ void TCAtom::SetTagRecursively(TCAtom &a, index_t v) {
     SetTagRecursively(aa, v);
   }
 }
+//..............................................................................
+TIString TCAtom::ToString() const {
+  olxstr_buf rv = GetResiLabel(true);
+  rv << " {Id:" << GetId() << ", Tag: " << GetTag() << '}';
+  return olxstr(rv);
+}
+//..............................................................................

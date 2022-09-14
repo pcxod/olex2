@@ -310,6 +310,7 @@ public:
   virtual void SetValue(size_t var_index, const double& val);
   virtual bool IsValid() const { return !IsDeleted(); }
   virtual olxstr GetIdName() const { return Label; }
+  virtual TIString ToString() const;
 #ifdef _DEBUG
   void SetTag(index_t v) { ACollectionItem::SetTag(v); }
 #endif

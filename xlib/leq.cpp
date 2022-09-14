@@ -87,7 +87,9 @@ void XVar::ToDataItem(TDataItem& item) const {
 PyObject* XVar::PyExport(TPtrList<PyObject>& atoms) {
   size_t rc = 0;
   for (size_t i = 0; i < References.Count(); i++) {
-    if (References[i]->referencer.IsValid()) {
+    if (References[i]->referencer.IsValid() &&
+      References[i]->referencer.GetPersistentId() >= 0)
+    {
       rc++;
     }
   }
@@ -97,7 +99,9 @@ PyObject* XVar::PyExport(TPtrList<PyObject>& atoms) {
   if (rc != 0) {
     rc = 0;
     for (size_t i = 0; i < References.Count(); i++) {
-      if (References[i]->referencer.IsValid()) {
+      if (References[i]->referencer.IsValid() &&
+        References[i]->referencer.GetPersistentId() >= 0)
+      {
         PyTuple_SetItem(refs, rc++, References[i]->PyExport(atoms));
       }
     }
