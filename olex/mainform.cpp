@@ -2649,7 +2649,8 @@ olxstr TMainForm::ExpandCommand(const olxstr &Cmd, bool inc_files) {
 //..............................................................................
 void TMainForm::PostCmdHelp(const olxstr &Cmd, bool Full)  {
   ABasicFunction *MF = FXApp->GetLibrary().FindMacro(Cmd);
-  if (MF != NULL) {
+  bool printed = false;
+  if (MF != 0) {
     FGlConsole->PrintText(olxstr("Built in macro ") << MF->GetName());
     FGlConsole->PrintText(olxstr(" Signature: ") << MF->GetSignature());
     FGlConsole->PrintText((olxstr(" Description: ") <<
@@ -2661,13 +2662,18 @@ void TMainForm::PostCmdHelp(const olxstr &Cmd, bool Full)  {
           << MF->GetOptions().GetValue(i));
       }
     }
+    printed = true;
   }
   MF = FXApp->GetLibrary().FindFunction(Cmd);
-  if (MF != NULL) {
+  if (MF != 0) {
     FGlConsole->PrintText(olxstr("Built in function ") << MF->GetName());
     FGlConsole->PrintText(olxstr(" Signature: ") << MF->GetSignature());
     FGlConsole->PrintText((olxstr(" Description: ") <<
       MF->GetDescription()).Replace('\t', "  "));
+    printed = true;
+  }
+  if (printed) {
+    TBasicApp::NewLogEntry() << NewLineSequence();
   }
 }
 //..............................................................................
