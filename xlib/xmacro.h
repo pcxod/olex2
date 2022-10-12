@@ -168,6 +168,7 @@ public:
   static DefMacro(SetCharge)
   static DefMacro(Lowdin)
   static DefMacro(Adopt)
+  static DefMacro(ADPInfo)
 
   static DefFunc(Lst)
   static DefFunc(FileName)

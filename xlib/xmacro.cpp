@@ -769,6 +769,10 @@ void XLibMacros::Export(TLibrary& lib)  {
     "z-min Z to import&;",
     fpOne | psFileLoaded,
     "Imports given structure content");
+  xlib_InitMacro(ADPInfo,
+    EmptyString(),
+    fpNone | psFileLoaded,
+    "Prints various ADP information");
   //_____________________________________________________________________________
 
   xlib_InitFunc(FileName, fpNone|fpOne,
@@ -12014,5 +12018,60 @@ void XLibMacros::macAdopt(TStrObjList& Cmds, const TParamList& Options,
     na.SetPart(a.GetPart());
   }
   app.XFile().EndUpdate();
+}
+//..............................................................................
+olxstr fmt_adp_ca_as_ang(double ca) {
+  return olxstr::FormatFloat(2, acos(ca) * 180 / M_PI);
+}
+
+void XLibMacros::macADPInfo(TStrObjList& Cmds, const TParamList& Options,
+  TMacroData& E)
+{
+  TXApp& app = TXApp::GetInstance();
+  TPtrList<SObject> objs = app.GetSelected(false);
+  if (objs.IsEmpty()) {
+    return;
+  }
+  const TSAtom* a = dynamic_cast<TSAtom*>(objs[0]);
+  if (a == 0 || a->GetEllipsoid() == 0) {
+    return;
+  }
+  const TEllipsoid& e = *a->GetEllipsoid();
+
+  app.NewLogEntry() << "ADP axes:";
+  for (size_t i = 0; i < 3; i++) {
+    app.NewLogEntry() << '#' << (i+1) << "=" << strof(e.GetMatrix()[i]);
+  }
+  const mat3d& G = app.XFile().GetAsymmUnit().GetCellToCartesian();
+  app.NewLogEntry() << "Cell basis:";
+  for (size_t i = 0; i < 3; i++) {
+    app.NewLogEntry() << (char)('A'+i) << "=" << strof(G[i]);
+  }
+  for (size_t i = 0; i < 3; i++) {
+    olxstr tmp = "Angles for #";
+    tmp << (i + 1) << " and";
+    for (size_t j = 0; j < 3; j++) {
+      tmp << ' ' << (char)('A' + j) << ": "
+        << fmt_adp_ca_as_ang(e.GetMatrix()[i].CAngle(G[j]));
+      tmp << ',';
+    }
+    app.NewLogEntry() << tmp.SubStringFrom(0, 1);
+  }
+  if (objs.Count() == 1) {
+    return;
+  }
+  TSAtom* b = dynamic_cast<TSAtom*>(objs[1]);
+  if (b == 0) {
+    return;
+  }
+  olxstr tmp;
+  tmp << "Angles between " << a->GetLabel() << '-' <<
+    b->GetLabel() << " and ";
+  vec3d d = b->crd() - a->crd();
+  for (size_t i = 0; i < 3; i++) {
+    tmp << "#" << (i + 1) << ' '
+      << fmt_adp_ca_as_ang(e.GetMatrix()[i].CAngle(d))  << ", ";
+  }
+  app.NewLogEntry() << tmp.SubStringFrom(0,2);
 }
 //..............................................................................
