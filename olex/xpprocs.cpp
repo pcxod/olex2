@@ -1140,63 +1140,73 @@ void TMainForm::macSetEnv(TStrObjList &Cmds, const TParamList &Options,
   }
 }
 //..............................................................................
-void TMainForm::macHelp(TStrObjList &Cmds, const TParamList &Options,
-  TMacroData &Error)
+void TMainForm::macHelp(TStrObjList& Cmds, const TParamList& Options,
+  TMacroData& Error)
 {
-  if (FHelpItem == NULL) {  // just print out built in functions if any
-    if (Cmds.IsEmpty())
+  if (FHelpItem == 0) {  // just print out built in functions if any
+    if (Cmds.IsEmpty()) {
       return;
+    }
     PostCmdHelp(Cmds[0], true);
     return;
   }
   if (Cmds.IsEmpty()) {
-    if( !Options.Count() )  {
-      size_t period=6;
+    if (!Options.Count()) {
+      size_t period = 6;
       olxstr Tmp;
-      for( size_t i=0; i <= FHelpItem->ItemCount(); i+=period )  {
+      for (size_t i = 0; i <= FHelpItem->ItemCount(); i += period) {
         Tmp.SetLength(0);
-        for( size_t j=0; j < period; j++ )  {
-          if( (i+j) >= FHelpItem->ItemCount() )
+        for (size_t j = 0; j < period; j++) {
+          if ((i + j) >= FHelpItem->ItemCount())
             break;
           Tmp << FHelpItem->GetItemByIndex(i + j).GetName();
-          Tmp.RightPadding((j+1)*10, ' ', true);
+          Tmp.RightPadding((j + 1) * 10, ' ', true);
         }
         FGlConsole->PrintText(Tmp);
       }
       return;
     }
-    else  {
-      if( Options.GetName(0)[0] ==  'c' )  {  // show categories
+    else {
+      if (Options.GetName(0)[0] == 'c') {  // show categories
         TStrList Cats;
-        TDataItem *Cat;
-        for( size_t i=0; i < FHelpItem->ItemCount(); i++ )  {
+        TDataItem* Cat;
+        for (size_t i = 0; i < FHelpItem->ItemCount(); i++) {
           Cat = FHelpItem->GetItemByIndex(i).FindItemi("category");
-          if( Cat == NULL )  continue;
-          for( size_t j=0; j < Cat->ItemCount(); j++ )  {
-            if (Cats.IndexOf(Cat->GetItemByIndex(j).GetName()) == InvalidIndex)
+          if (Cat == 0) {
+            continue;
+          }
+          for (size_t j = 0; j < Cat->ItemCount(); j++) {
+            if (Cats.IndexOf(Cat->GetItemByIndex(j).GetName()) == InvalidIndex) {
               Cats.Add(Cat->GetItemByIndex(j).GetName());
+            }
           }
         }
-        if( Cats.Count() )
+        if (Cats.Count()) {
           FGlConsole->PrintText("Macro categories: ");
-        else
+        }
+        else {
           FGlConsole->PrintText("No macro categories was found...");
+        }
         Cats.QSort(true);
-        for( size_t i=0; i < Cats.Count(); i++ )
+        for (size_t i = 0; i < Cats.Count(); i++) {
           FGlConsole->PrintText(Cats[i]);
+        }
       }
     }
   }
   else {
-    if (Options.IsEmpty())
+    if (Options.IsEmpty()) {
       PostCmdHelp(Cmds[0], true);
+    }
     else {
-      if (Options.GetName(0)[0] ==  'c') {  // show categories
+      if (Options.GetName(0)[0] == 'c') {  // show categories
         FGlConsole->PrintText(olxstr("Macros for category: ") << Cmds[0]);
-        for( size_t i=0; i < FHelpItem->ItemCount(); i++ )  {
-          TDataItem *Cat = FHelpItem->GetItemByIndex(i).FindItemi("category");
-          if (Cat == NULL) continue;
-          for (size_t j=0; j < Cat->ItemCount(); j++) {
+        for (size_t i = 0; i < FHelpItem->ItemCount(); i++) {
+          TDataItem* Cat = FHelpItem->GetItemByIndex(i).FindItemi("category");
+          if (Cat == 0) {
+            continue;
+          }
+          for (size_t j = 0; j < Cat->ItemCount(); j++) {
             if (Cat->GetItemByIndex(j).GetName().Equalsi(Cmds[0])) {
               FGlConsole->PrintText(FHelpItem->GetItemByIndex(i).GetName());
               break;
@@ -2124,7 +2134,38 @@ void TMainForm::macGrad(TStrObjList& Cmds, const TParamList& Options, TMacroData
     FXApp->GetRenderer().Background()->IsVisible(), EmptyString(), true);
 }
 //..............................................................................
-void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options,
+//..............................................................................
+olx_pair_t<bool,bool> RunExternalEdit(TStrList &SL, const olxstr& fn_) {
+  bool undo = false, external_ok = false;
+  TBasicApp &bapp = TBasicApp::GetInstance();
+  olxstr extre = bapp.GetOptions().FindValue("external_editor", EmptyString());
+  if (!extre.IsEmpty()) {
+    olxstr fn = TEFile::AddPathDelimeter(bapp.GetInstanceDir()) + fn_;
+    TUtf8File::WriteLines(fn, SL, true);
+    time_t age = TEFile::FileAge(fn);
+    olxstr cmdl;
+    if (extre.Contains("%f")) {
+      cmdl = extre.Replace("%f", AProcess::PrepareArg(fn));
+    }
+    else {
+      cmdl << extre << ' ';
+      cmdl << AProcess::PrepareArg(fn);
+    }
+    TWxProcess p(cmdl, spfSynchronised);
+    if (p.Execute()) {
+      if (TEFile::FileAge(fn) != age) {
+        SL = TUtf8File::ReadLines(fn);
+      }
+      else {
+        undo = true;
+      }
+      external_ok = true;
+    }
+  }
+  return olx_pair::make(undo, external_ok);
+}
+//..............................................................................
+  void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &E)
 {
   if (Modes->GetCurrent() != 0) {
@@ -2293,32 +2334,8 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options,
     released.sameList[i]->GetParent().Release(*released.sameList[i]);
   }
   au.Release(TPtrList<TResidue>(residues_to_release));
-  bool undo = false, external_ok = false;
-  olxstr extre = FXApp->GetOptions().FindValue("external_editor", EmptyString());
-  if (!extre.IsEmpty()) {
-    olxstr fn = TEFile::AddPathDelimeter(FXApp->GetInstanceDir()) + "atoms.txt";
-    TUtf8File::WriteLines(fn, SL, true);
-    time_t age = TEFile::FileAge(fn);
-    olxstr cmdl;
-    if (extre.Contains("%f")) {
-      cmdl = extre.Replace("%f", AProcess::PrepareArg(fn));
-    }
-    else {
-      cmdl << extre << ' ';
-      cmdl << AProcess::PrepareArg(fn);
-    }
-    TWxProcess p(cmdl, spfSynchronised);
-    if (p.Execute()) {
-      if (TEFile::FileAge(fn) != age) {
-        SL = TUtf8File::ReadLines(fn);
-      }
-      else {
-        undo = true;
-      }
-      external_ok = true;
-    }
-  }
-  if (!external_ok) {
+  olx_pair_t<bool, bool> res = RunExternalEdit(SL, "atoms.txt");
+  if (!res.b) {
     TdlgEdit* dlg = new TdlgEdit(this, true);
     dlg->SetText(SL.Text('\n'));
     // prevent logging to interfere!
@@ -2328,11 +2345,11 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options,
       SL.Strtok(dlg->GetText(), '\n');
     }
     else {
-      undo = true;
+      res.a = true;
     }
     dlg->Destroy();
   }
-  if (!undo) {
+  if (!res.a) {
     FXApp->XFile().GetRM().Vars.Clear();
     TStrList NewIns;
     try {
@@ -2350,11 +2367,11 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options,
       FXApp->XFile().EndUpdate();
     }
     catch (const TExceptionBase& e) {
-      undo = true;
+      res.a = true;
       TBasicApp::NewLogEntry(logExceptionTrace) << e;
     }
   }
-  if (undo) {
+  if (res.a) { // undo
     au.Restore(TPtrList<TResidue>(residues_to_release));
     if (Ins != 0) {
       for (size_t i = 0; i < RemovedIns.Count(); i++) {
@@ -2410,10 +2427,23 @@ void TMainForm::macEditIns(TStrObjList &Cmds, const TParamList &Options, TMacroD
   SL.Add();
   SL.AddAll(Ins.GetFooter().obj());
   Ins.SaveExtras(SL, 0, 0, Ins.GetRM());
-  TdlgEdit *dlg = new TdlgEdit(this, true);
-  dlg->SetText(SL.Text('\n'));
-  try {
+
+  olx_pair_t<bool, bool> res = RunExternalEdit(SL, "ins.txt");
+  if (!res.b) {
+    TdlgEdit* dlg = new TdlgEdit(this, true);
+    dlg->SetText(SL.Text('\n'));
     if (dlg->ShowModal() == wxID_OK) {
+      SL.Clear();
+      SL.Strtok(dlg->GetText(), '\n');
+    }
+    else {
+      res.a = true;
+    }
+    dlg->Destroy();
+  }
+
+  try {
+    if (!res.a) {
       // clear rems, as they are recreated
       for (size_t i = 0; i < Ins.InsCount(); i++) {
         if (Ins.InsName(i).Equalsi("REM")) {
@@ -2421,8 +2451,6 @@ void TMainForm::macEditIns(TStrObjList &Cmds, const TParamList &Options, TMacroD
           continue;
         }
       }
-      SL.Clear();
-      SL.Strtok(dlg->GetText(), '\n');
       Ins.ParseHeader(SL);
       if (loader == 0) {
         FXApp->XFile().LastLoader()->GetRM().Assign(Ins.GetRM(), false);
@@ -2439,7 +2467,6 @@ void TMainForm::macEditIns(TStrObjList &Cmds, const TParamList &Options, TMacroD
   catch (const TExceptionBase& e)  {
     TBasicApp::NewLogEntry(logExceptionTrace) << e;
   }
-  dlg->Destroy();
 }
 //..............................................................................
 const_strlist macHklEdit_SaveRef(THklFile &Hkl, TRefPList &refs, bool hklf5) {
