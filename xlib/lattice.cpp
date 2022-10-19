@@ -108,7 +108,7 @@ ConstPtrList<smatd> TLattice::GenerateMatrices(
       vec3d c = m*ca.ccrd();
       vec3i t = -c.Floor<int>();
       c += t;
-      for (int tx = ts[0]; tx <= tt[1]; tx++) {
+      for (int tx = ts[0]; tx <= tt[0]; tx++) {
         for (int ty = ts[1]; ty <= tt[1]; ty++) {
           for (int tz = ts[2]; tz <= tt[2]; tz++) {
             vec3i t_(tx, ty, tz);

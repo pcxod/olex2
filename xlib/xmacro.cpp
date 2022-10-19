@@ -1972,6 +1972,33 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options,
     XApp.GetUndo().Push(
       XApp.XFile().GetLattice().ValidateHGroups(true, true));
   }
+  // warn if different AFIX groups on single atom
+  {
+    olx_pdict<size_t, olx_pset<int> > map;
+    RefinementModel &rm = XApp.XFile().GetRM();
+    for (size_t i = 0; i < rm.AfixGroups.Count(); i++) {
+      TAfixGroup& g = rm.AfixGroups[i];
+      if (g.GetPivot().IsDeleted()) {
+        continue;
+      }
+      map.Add(g.GetPivot().GetId()).Add(g.GetAfix());
+    }
+    olxstr msg;
+    for (size_t i = 0; i < map.Count(); i++) {
+      if (map.GetValue(i).Count() > 1) {
+        msg << au.GetAtom(map.GetKey(i)).GetResiLabel() << " (";
+        for (size_t j = 0; j < map.GetValue(i).Count(); j++) {
+          msg << map.GetValue(i)[j] << ", ";
+        }
+        msg.SetLength(msg.Length() - 2);
+        msg << ") ";
+      }
+    }
+    if (!msg.IsEmpty()) {
+      TBasicApp::NewLogEntry(logWarning) << "The following atom(s) have mixed AFIX groups:";
+      TBasicApp::NewLogEntry() << msg;
+    }
+  }
 }
 //.............................................................................
 void XLibMacros::macHImp(TStrObjList& Cmds, const TParamList& Options,
