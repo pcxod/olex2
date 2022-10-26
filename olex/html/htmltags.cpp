@@ -28,10 +28,13 @@ bool GetBoolAttribute(const wxHtmlTag &tag, const olxstr &attr,
 {
   if (tag.HasParam(attr.u_str())) {
     olxstr v = tag.GetParam(attr.u_str());
-    if (v.IsBool())
+    if (!v.IsBool()) {
+      olex2::IOlex2Processor::GetInstance()->processFunction(v);
+    }
+    if (v.IsBool()) {
       return v.ToBool();
-    else
-      return true;
+    }
+    return true;
   }
   return if_absent;
 }
@@ -165,7 +168,7 @@ TAG_HANDLER_PROC(tag) {
   }
   if (!text.IsEmpty()) {
     int textW = 0, textH = 0;
-    m_WParser->GetDC()->GetTextExtent( text, &textW, &textH );
+    m_WParser->GetDC()->GetTextExtent(text, &textW, &textH);
     if (textW > ax) {
       ax = textW;
     }
@@ -175,8 +178,9 @@ TAG_HANDLER_PROC(tag) {
   }
 
   olxstr src = tag.GetParam(wxT("SRC"));
-  if (op != NULL)
+  if (op != 0) {
     op->processFunction(src, EmptyString(), true);
+  }
 
   if (TZipWrapper::IsZipFile(THtml::SwitchSource()) &&
     !TZipWrapper::IsZipFile(src))
