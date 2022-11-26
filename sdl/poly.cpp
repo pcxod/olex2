@@ -92,41 +92,43 @@ void TPolynom::SetSize(size_t S)  {
     throw TFunctionFailedException(__OlxSourceInfo, "The evaluation function is not defined");
 }
 //..............................................................................
-TPolynom* TPolynom::PowX(size_t Members, size_t p) const {
-  if( p == 1 )
-    return &( *(new TPolynom(FAddEvaluator, FEvaluator, FPolySort)) = *this );
-  if( p == 2 )
+olx_object_ptr<TPolynom> TPolynom::PowX(size_t Members, size_t p) const {
+  if (p == 1) {
+    return &(*(new TPolynom(FAddEvaluator, FEvaluator, FPolySort)) = *this);
+  }
+  if (p == 2) {
     return this->Qrt();
+  }
 
-  TPolynom* R = PowX((short)(sqrt((double)(Members*2)+1)), (short)(p/2));
-  if( p%2 )
+  olx_object_ptr<TPolynom> R = PowX((short)(sqrt((double)(Members * 2) + 1)), (short)(p / 2));
+  if ((p % 2) != 0) {
     Members /= FMembers.Count();
-  if( Members < 5 )  Members = 5;
-  if( R->FMembers.Count() > Members )
+  }
+  if (Members < 5) {
+    Members = 5;
+  }
+  if (R->FMembers.Count() > Members) {
     R->SetSize(Members);
-  TPolynom* C = R->Qrt();
-  delete R;
-  if( (p%2) != 0 )  {
-    R = C->Mul(*this);
-    delete C;
-    return R;
+  }
+  olx_object_ptr<TPolynom> C = R->Qrt();
+  if ((p % 2) != 0) {
+    return C->Mul(*this);
   }
   return C;
 }
 //..............................................................................
-TPolynom* TPolynom::Pow(short p) const {
-  if( p == 1 )
-    return &( *(new TPolynom(FAddEvaluator, FEvaluator, FPolySort)) = *this );
-  if( p == 2 )
+olx_object_ptr<TPolynom> TPolynom::Pow(short p) const {
+  if (p == 1) {
+    return &(*(new TPolynom(FAddEvaluator, FEvaluator, FPolySort)) = *this);
+  }
+  if (p == 2) {
     return this->Qrt();
+  }
 
-  TPolynom* R = Pow((short)(p/2));
-  TPolynom* C = R->Qrt();
-  delete R;
-  if( (p%2) != 0 )  {
-    R = C->Mul(*this);
-    delete C;
-    return R;
+  olx_object_ptr<TPolynom> R = Pow((short)(p / 2));
+  olx_object_ptr<TPolynom> C = R->Qrt();
+  if ((p % 2) != 0) {
+    return C->Mul(*this);
   }
   return C;
 }
@@ -153,63 +155,68 @@ olxstr TPolynom::Values()  {
   return T;
 }
 //..............................................................................
-TPolynom* TPolynom::Mul(const TPolynom& P) const {
-  TPolynom *NP = new TPolynom(FAddEvaluator, FEvaluator, FPolySort);
-  for( size_t i=0; i < FMembers.Count(); i++ )  {
-    for( size_t j=0; j < P.FMembers.Count(); j++ )  {
+olx_object_ptr<TPolynom> TPolynom::Mul(const TPolynom& P) const {
+  TPolynom* NP = new TPolynom(FAddEvaluator, FEvaluator, FPolySort);
+  for (size_t i = 0; i < FMembers.Count(); i++) {
+    for (size_t j = 0; j < P.FMembers.Count(); j++) {
       TPolynomMember* PM2 = new TPolynomMember;
       *PM2 = P.FMembers[j];
       PM2->Mul(FMembers[i]);
-      if( FAddEvaluator != NULL )  {
-        if( FAddEvaluator(*PM2) )
+      if (FAddEvaluator != 0) {
+        if (FAddEvaluator(*PM2)) {
           NP->FMembers.Add(PM2);
-        else
+        }
+        else {
           delete PM2;
+        }
       }
-      else
+      else {
         NP->FMembers.Add(PM2);
+      }
     }
   }
   NP->Combine();
   return NP;
 }
 //..............................................................................
-TPolynom* TPolynom::Qrt() const {
-  TPolynom *NP = new TPolynom(FAddEvaluator, FEvaluator, FPolySort);
-  NP->FMembers.SetCapacity(FMembers.Count() + (FMembers.Count()-1)*FMembers.Count()/2);
-  for( size_t i=0; i < FMembers.Count(); i++ )  {
-    TPolynomMember* PM1 = new TPolynomMember;
+olx_object_ptr<TPolynom> TPolynom::Qrt() const {
+  olx_object_ptr<TPolynom> NP = new TPolynom(FAddEvaluator, FEvaluator, FPolySort);
+  NP->FMembers.SetCapacity(FMembers.Count() + (FMembers.Count() - 1) * FMembers.Count() / 2);
+  for (size_t i = 0; i < FMembers.Count(); i++) {
+    olx_object_ptr<TPolynomMember> PM1 = new TPolynomMember;
     *PM1 = FMembers[i];
-    for( size_t j=0; j < PM1->Members().Count(); j++ )
+    for (size_t j = 0; j < PM1->Members().Count(); j++) {
       PM1->Members()[j].Extent *= 2;
-
-    PM1->MulMult( PM1->GetMult() );
-    if( FAddEvaluator != NULL )  {
-      if( FAddEvaluator(*PM1) )
-        NP->FMembers.Add(PM1);
-      else
-        delete PM1;
     }
-    else
-      NP->FMembers.Add(PM1);
+
+    PM1->MulMult(PM1->GetMult());
+    if (FAddEvaluator != 0) {
+      if (FAddEvaluator(*PM1)) {
+        NP->FMembers.Add(PM1.release());
+      }
+    }
+    else {
+      NP->FMembers.Add(PM1.release());
+    }
   }
-  for( size_t i=0; i < FMembers.Count(); i++ )  {
-    for( size_t j=i+1; j < FMembers.Count(); j++ )  {
-      TPolynomMember* PM1 = new TPolynomMember;
+  for (size_t i = 0; i < FMembers.Count(); i++) {
+    for (size_t j = i + 1; j < FMembers.Count(); j++) {
+      olx_object_ptr <TPolynomMember> PM1 = new TPolynomMember;
       *PM1 = FMembers[j];
-      PM1->MulMult( FMembers[i].GetMult()*2 );
-      for( size_t k=0; k < FMembers[i].Members().Count(); k++ )
+      PM1->MulMult(FMembers[i].GetMult() * 2);
+      for (size_t k = 0; k < FMembers[i].Members().Count(); k++) {
         PM1->AddMember() = FMembers[i].Members()[k];
+      }
 
       PM1->Combine();
-      if( FAddEvaluator != NULL )  {
-        if( FAddEvaluator(*PM1) )
-          NP->FMembers.Add(PM1);
-        else
-          delete PM1;
+      if (FAddEvaluator != 0) {
+        if (FAddEvaluator(*PM1)) {
+          NP->FMembers.Add(PM1.release());
+        }
       }
-      else
-        NP->FMembers.Add(PM1);
+      else {
+        NP->FMembers.Add(PM1.release());
+      }
     }
   }
   NP->Combine();

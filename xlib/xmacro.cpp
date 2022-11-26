@@ -1981,7 +1981,16 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options,
       if (g.GetPivot().IsDeleted()) {
         continue;
       }
-      map.Add(g.GetPivot().GetId()).Add(g.GetAfix());
+      bool all_deleted = true;
+      for (size_t j = 0; j < g.Count(); j++) {
+        if (!g[j].IsDeleted()) {
+          all_deleted = false;
+          break;
+        }
+      }
+      if (!all_deleted) {
+        map.Add(g.GetPivot().GetId()).Add(g.GetAfix());
+      }
     }
     olxstr msg;
     for (size_t i = 0; i < map.Count(); i++) {
@@ -6412,37 +6421,39 @@ void XLibMacros::macCalcCHN(TStrObjList &Cmds, const TParamList &Options,
     NewLineSequence() << chn.Composition();
 }
 //.............................................................................
-void XLibMacros::macCalcMass(TStrObjList &Cmds, const TParamList &Options,
-  TMacroData &Error)
+void XLibMacros::macCalcMass(TStrObjList& Cmds, const TParamList& Options,
+  TMacroData& Error)
 {
   TXApp& xapp = TXApp::GetInstance();
-  if( !xapp.XFile().HasLastLoader() && Cmds.IsEmpty() )  {
+  if (!xapp.XFile().HasLastLoader() && Cmds.IsEmpty()) {
     Error.ProcessingError(__OlxSrcInfo,
       "Nor file is loaded neither formula is provided");
     return;
   }
   TIPattern ip;
-  if( Cmds.Count() == 1 )  {
+  if (Cmds.Count() == 1) {
     olxstr err;
-    if( !ip.Calc(Cmds[0], err, true, 0.5) )  {
+    if (!ip.Calc(Cmds[0], err, true, 0.5)) {
       Error.ProcessingError(__OlxSrcInfo,
         "could not parse the given expression: ") << err;
       return;
     }
   }
-  else  {
+  else {
     olxstr err;
-    if( !ip.Calc(xapp.XFile().GetAsymmUnit().SummFormula(
-      EmptyString()), err, true, 0.5) )
+    if (!ip.Calc(xapp.XFile().GetAsymmUnit().SummFormula(
+      EmptyString()), err, true, 0.5))
     {
       Error.ProcessingError(__OlxSrcInfo,
         "could not parse the given expression: ") << err;
       return;
     }
   }
-  for( size_t i=0; i < ip.PointCount(); i++ )  {
+  for (size_t i = 0; i < ip.PointCount(); i++) {
     const TSPoint& point = ip.Point(i);
-    if( point.Y < 0.001 )  break;
+    if (point.Y < 0.001) {
+      break;
+    }
     olxstr Msg = point.X;
     Msg.RightPadding(11, ' ');
     Msg << ": " << point.Y;
@@ -6452,15 +6463,14 @@ void XLibMacros::macCalcMass(TStrObjList &Cmds, const TParamList &Options,
     "    -- NOTE THAT NATURAL DISTRIBUTION OF ISOTOPES IS ASSUMED --";
   TBasicApp::NewLogEntry() << "******* ******* SPECTRUM ******* ********";
   ip.SortDataByMolWeight();
-  for( size_t i=0; i < ip.PointCount(); i++ )  {
+  for (size_t i = 0; i < ip.PointCount(); i++) {
     const TSPoint& point = ip.Point(i);
-    if( point.Y < 1 )  continue;
+    if (point.Y < 1) {
+      continue;
+    }
     olxstr Msg = point.X;
     Msg.RightPadding(11, ' ');
-    Msg << "|";
-    long yVal = olx_round(point.Y/2);
-    for( long j=0; j < yVal; j++ )
-      Msg << '-';
+    Msg << "|" << olxstr::CharStr('-', olx_round(point.Y / 2));
     xapp.NewLogEntry() << Msg;
   }
 }
@@ -7526,8 +7536,9 @@ void XLibMacros::macHklImport(TStrObjList &Cmds, const TParamList &Options,
   Cmds.Delete(Cmds.Count() - 1);
   if (Cmds[1].Equalsi("fixed")) {
     TSizeList format;
-    for (size_t i = 2; i < Cmds.Count(); i++)
+    for (size_t i = 2; i < Cmds.Count(); i++) {
       format.Add(Cmds[i].ToSizeT());
+    }
     if (format.Count() < 5 || format.Count() > 6) {
       E.ProcessingError(__OlxSrcInfo, "5 or 6 numbers are expected");
       return;
@@ -7554,7 +7565,10 @@ void XLibMacros::macHklImport(TStrObjList &Cmds, const TParamList &Options,
     }
     const bool has_batch = Options.Contains("batch");
     TRefList refs;
-    const olxch sep = Cmds[2].CharAt(0);
+    olxch sep = ' ';
+    if (Cmds[2] == "\\t") {
+      sep = '\t';
+    }
     for (size_t i = 0; i < lines.Count(); i++) {
       TStrList toks(lines[i], sep);
       if (toks.Count() < 5) {

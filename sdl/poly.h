@@ -12,6 +12,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include "typelist.h"
+#include "olxptr.h"
 BeginEsdlNamespace()
 
 // Binominal polynomial routins
@@ -24,19 +25,19 @@ struct TSPoint  {
 
 typedef TTypeList<TSPoint> TPolySerie;
 
-struct TPMember  {
+struct TPMember {
   size_t Id;
   int Extent;
   const void* Data;
   bool Used;
-  TPMember() : Id(0), Extent(1), Data(NULL) {}
+  TPMember() : Id(0), Extent(1), Data(0), Used(false) {}
   bool operator == (const TPMember& P) const {
-    if( P.Id != Id )          return false;
-    if( P.Extent != Extent )  return false;
-    if( P.Data != Data )      return false;
+    if (P.Id != Id || P.Extent != Extent || P.Data != Data) {
+      return false;
+    }
     return true;
   }
-  TPMember& operator = (const TPMember& P)  {
+  TPMember& operator = (const TPMember& P) {
     Id = P.Id;
     Extent = P.Extent;
     Data = P.Data;
@@ -46,56 +47,61 @@ struct TPMember  {
 //------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------
-class TPolynomMember  {
+class TPolynomMember {
   TTypeList<TPMember> FMembers;
   double FMult;
 protected:
-  void SetUsed(bool Value)  {
-    for( size_t i=0; i < FMembers.Count(); i++ )
+  void SetUsed(bool Value) {
+    for (size_t i = 0; i < FMembers.Count(); i++)
       FMembers[i].Used = Value;
   }
 public:
   TPolynomMember() : FMult(1) {}
   ~TPolynomMember() {}
-  TPMember& AddMember()  {
+  TPMember& AddMember() {
     TPMember& P = FMembers.AddNew();
-    P.Id = FMembers.Count()-1;
+    P.Id = FMembers.Count() - 1;
     return P;
   }
 
-  bool operator == (const TPolynomMember& P) const  {
-    if( FMembers.Count() != P.FMembers.Count() )
+  bool operator == (const TPolynomMember& P) const {
+    if (FMembers.Count() != P.FMembers.Count()) {
       return false;
-    for( size_t i=0; i < FMembers.Count(); i++ )
-      if( !(FMembers[i] == P.FMembers[i]) )
+    }
+    for (size_t i = 0; i < FMembers.Count(); i++) {
+      if (!(FMembers[i] == P.FMembers[i])) {
         return false;
+      }
+    }
     return true;
   }
 
-  TPolynomMember& operator = (const TPolynomMember& P)  {
+  TPolynomMember& operator = (const TPolynomMember& P) {
     FMembers.Clear();
     FMult = P.FMult;
     FMembers.AddAll(P.FMembers);
     return *this;
   }
-  TTypeList<TPMember>& Members() {  return FMembers;  }
-  const TTypeList<TPMember>& Members() const {  return FMembers;  }
+
+  TTypeList<TPMember>& Members() { return FMembers; }
+  const TTypeList<TPMember>& Members() const { return FMembers; }
   void Mul(const TPolynomMember& P);
-  double GetMult() const {  return FMult;  }
-  void IncMult(double c) { FMult +=c; }
-  void MulMult(double c) { FMult *=c; }
+  double GetMult() const { return FMult; }
+  void IncMult(double c) { FMult += c; }
+  void MulMult(double c) { FMult *= c; }
   void Combine();
 
   olxstr Values() const {
     olxstr T;
-    if( FMult != 1)  {
+    if (FMult != 1) {
       T = (double)FMult;
       T << '*';
     }
-    for( size_t i = 0; i < FMembers.Count(); i++ )  {
-      T << (char)('a'+FMembers[i].Id);
-      if( FMembers[i].Extent != 1 )
+    for (size_t i = 0; i < FMembers.Count(); i++) {
+      T << (char)('a' + FMembers[i].Id);
+      if (FMembers[i].Extent != 1) {
         T << '^' << FMembers[i].Extent;
+      }
     }
     return T;
   }
@@ -109,14 +115,14 @@ typedef int (PolySort)(const TPolynomMember &P, const TPolynomMember &P1);
 //------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------
-class TPolynom: public IOlxObject  {
+class TPolynom : public IOlxObject {
   TTypeList<TPolynomMember> FMembers;
 protected:
-  void Clear()  {  FMembers.Clear();  }
+  void Clear() { FMembers.Clear(); }
   void Combine();
-  AddEvaluator *FAddEvaluator;
-  Evaluator *FEvaluator;
-  PolySort *FPolySort;
+  AddEvaluator* FAddEvaluator;
+  Evaluator* FEvaluator;
+  PolySort* FPolySort;
   void SetSize(size_t s);
 public:
   TPolynom(AddEvaluator* av, Evaluator* v, PolySort* v1) :
@@ -126,24 +132,24 @@ public:
   {}
 
   ~TPolynom() {}
-  TPolynomMember& AddMember()  {  return FMembers.AddNew();  }
-  TTypeList<TPolynomMember>& Members()  {  return FMembers;  }
-  const TTypeList<TPolynomMember>& Members() const {  return FMembers;  }
-  TPolynom* Pow(short p) const;
+  TPolynomMember& AddMember() { return FMembers.AddNew(); }
+  TTypeList<TPolynomMember>& Members() { return FMembers; }
+  const TTypeList<TPolynomMember>& Members() const { return FMembers; }
+  olx_object_ptr<TPolynom> Pow(short p) const;
   void SetThreshold(double Threshold);
-  TPolynom* PowX(size_t MembersToLeave, size_t p) const;
-  TPolynom* Mul(const TPolynom& P) const;
+  olx_object_ptr<TPolynom> PowX(size_t MembersToLeave, size_t p) const;
+  olx_object_ptr<TPolynom> Mul(const TPolynom& P) const;
 
   void MulSelf(const TPolynom& P);
 
-  TPolynom&  operator = (const TPolynom& P)  {
+  TPolynom& operator = (const TPolynom& P) {
     FMembers.Clear();
     FMembers.AddAll(P.FMembers);
     return *this;
   }
 
-  TPolynom* Qrt() const;
-  void SetEvaluator(Evaluator *v){ FEvaluator = v; };
+  olx_object_ptr<TPolynom> Qrt() const;
+  void SetEvaluator(Evaluator* v) { FEvaluator = v; };
   olxstr Values();
 };
 

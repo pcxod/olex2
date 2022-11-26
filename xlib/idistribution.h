@@ -32,13 +32,13 @@ class TIDistribution {
   size_t MaxPoints;
 protected:
   void Evail(const TPolynomMember& PM, double& M, double& W) const;
-  TPolySerie* PolynomToSerie(const TPolynom& P);
+  olx_object_ptr<TPolySerie> PolynomToSerie(const TPolynom& P);
 public:
   TIDistribution();
   ~TIDistribution() {}
   void AddIsotope(const cm_Element& elm, size_t count);
   void Calc(TPolySerie& S);
-  DefPropP(double, Threshold)
+  DefPropP(double, Threshold);
   void SetMaxPoints(size_t v)  {  MaxPoints = v;  }
   static void CombineSerie(TPolySerie& serie, double threshold);
 };

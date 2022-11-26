@@ -1193,8 +1193,9 @@ void GXLibMacros::macLabels(TStrObjList &Cmds, const TParamList &Options,
         break;
       }
     }
-    if (!sel.IsEmpty() && bonds_only && !app.AreLabelsVisible())
+    if (!sel.IsEmpty() && bonds_only && !app.AreLabelsVisible()) {
       lmode = lmBonds;
+    }
   }
   else {
     if (Options.Contains('p'))   lmode |= lmPart;
@@ -1223,8 +1224,9 @@ void GXLibMacros::macLabels(TStrObjList &Cmds, const TParamList &Options,
       app.SetLabelsVisible(Cmds[0].ToBool());
       Cmds.Delete(0);
     }
-    else
+    else {
       app.SetLabelsVisible(!app.AreLabelsVisible());
+    }
   }
   else {
     app.SetLabelsMode(lmode |= lmQPeak);

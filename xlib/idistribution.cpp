@@ -106,114 +106,120 @@ TIDistribution::TIDistribution()  {
 }
 //..............................................................................
 void TIDistribution::AddIsotope(const cm_Element& elm, size_t count)  {
-  TPolynom *P = new TPolynom(NULL, PEvaluator, PPolyEvaluator);
+  TPolynom P(0, PEvaluator, PPolyEvaluator);
   for( short i=0; i < elm.isotope_count; i++ )  {
-    TPMember& PPM = P->AddMember().AddMember();
+    TPMember& PPM = P.AddMember().AddMember();
     PPM.Id = i;
     PPM.Data = &elm.isotopes[i];
   }
-//  P1 = P->Pow(count);  // exact calculation
-  TPolynom* P1 = P->PowX(20, count);
+  //TPolynom* P1 = P->Pow(count);  // exact calculation
+  olx_object_ptr<TPolynom> P1 = P.PowX(20, count);
 //  BasicApp->Log->Information(P1->Values());
   P1->SetThreshold(Threshold);
-  TPolySerie* Serie = PolynomToSerie(*P1);
-  delete P1;
+  olx_object_ptr<TPolySerie> Serie = PolynomToSerie(*P1);
   for( int i=30; i < 100; i+=10 )  {
-    P1 = P->PowX(i, count);
+    P1 = P.PowX(i, count);
     P1->SetThreshold(Threshold);
-    TPolySerie* Serie1 = PolynomToSerie(*P1);
+    olx_object_ptr<TPolySerie> Serie1 = PolynomToSerie(*P1);
     if( Serie->Count() == Serie1->Count() )  {
-      delete Serie1;
       break;
     }
     else  {
-      delete Serie;
-      delete P1;
       Serie = Serie1;
     }
   }
-  delete Serie;
 /****************************************************************/
    //  ShowMessage(P1->Values());
 /****************************************************************/
-  Polynomes.Add(P1);
-  delete P;
+  Polynomes.Add(P1.release());
 }
 //..............................................................................
 void TIDistribution::Evail(const TPolynomMember& PM, double& M, double& W) const {
   W *= PM.GetMult();
-  for( size_t i=0; i < PM.Members().Count(); i++ )  {
+  for (size_t i = 0; i < PM.Members().Count(); i++) {
     const cm_Isotope* Is = (const cm_Isotope*)PM.Members()[i].Data;
     M += Is->Mr * PM.Members()[i].Extent;
-    for( int j=0; j < PM.Members()[i].Extent; j++ )
+    for (int j = 0; j < PM.Members()[i].Extent; j++) {
       W *= Is->W;
+    }
   }
 }
 //..............................................................................
 void  TIDistribution::CombineSerie(TPolySerie& S, double threshold) {
   QuickSorter::SortSF(S, _SerieSort);
-  for( size_t j=0; j < S.Count(); j++ )  {
-    TSPoint& SP = S[j++];
-    if( j == S.Count() ) break;
-    TSPoint& SP1 = S[j];
-    while( olx_abs(SP.X - SP1.X) < threshold )  {
-      SP.Y += SP1.Y;
+  for (size_t j = 0; j < S.Count(); j++) {
+    TSPoint* SP = &S[j];
+    if (++j == S.Count()) {
+      break;
+    }
+    TSPoint* SP1 = &S[j];
+    while (olx_abs(SP->X - SP1->X) < threshold) {
+      SP->X += (SP1->X - SP->X) * SP1->Y/ (SP->Y + SP1->Y);
+      SP->Y += SP1->Y;
       S.NullItem(j);
-      j++;
-      if( j == S.Count() ) break;
+      if (++j == S.Count()) {
+        break;
+      }
+      SP1 = &S[j];
     }
     j--;
   }
   S.Pack();
 }
 //..............................................................................
-TPolySerie* TIDistribution::PolynomToSerie(const TPolynom& P) {
+olx_object_ptr<TPolySerie> TIDistribution::PolynomToSerie(const TPolynom& P) {
   TPolySerie* Serie = new TPolySerie;
-  for( size_t j=0; j < P.Members().Count(); j++ )  {
+  for (size_t j = 0; j < P.Members().Count(); j++) {
     const TPolynomMember& PM = P.Members()[j];
-    TSPoint& SP = Serie->AddNew(0,1);
+    TSPoint& SP = Serie->AddNew(0, 1);
     Evail(PM, SP.X, SP.Y);
   }
   CombineSerie(*Serie, 0.5);
   return Serie;
 }
 //..............................................................................
-void TIDistribution::Calc(TPolySerie& S)  {
+void TIDistribution::Calc(TPolySerie& S) {
   TPtrList<TIsotopeData> Layer;
   Layer.Add(Root);
   TTypeList<TPolySerie> Series;
-  while( true )  {
+  while (true) {
     double EC = 1;
-    for( size_t i=0; i < Polynomes.Count(); i++ )
-      Series.Add(PolynomToSerie(Polynomes[i]));
-    for( size_t i=0; i < Series.Count(); i++ )
+    for (size_t i = 0; i < Polynomes.Count(); i++) {
+      Series.Add(PolynomToSerie(Polynomes[i]).release());
+    }
+    for (size_t i = 0; i < Series.Count(); i++) {
       EC *= Series[i].Count();
+    }
 
-    if( EC > MaxPoints )  {
-      if( Threshold*10 > 0.5 )  break;
+    if (EC > MaxPoints) {
+      if (Threshold * 10 > 0.5) {
+        break;
+      }
       Series.Clear();
       Threshold *= 10;
-      for( size_t i=0; i < Polynomes.Count(); i++ )  {
-        if( Polynomes[i].Members().Count() > 1 )
+      for (size_t i = 0; i < Polynomes.Count(); i++) {
+        if (Polynomes[i].Members().Count() > 1) {
           Polynomes[i].SetThreshold(Threshold);
+        }
       }
     }
-    else
+    else {
       break;
+    }
   }
   QuickSorter::SortSF(Series, _SeriesSort);
-  for( size_t i=0; i < Series.Count(); i++ )  {
+  for (size_t i = 0; i < Series.Count(); i++) {
     TPolySerie& sr = Series[i];
     size_t c = Layer.Count();
     Layer.SetCapacity(c + sr.Count());
-    for( size_t j = 0; j < c; j++ )  {
-      for( size_t k=0; k < sr.Count(); k++ )  {
-        TIsotopeData* D1 = Layer.Add( new TIsotopeData);
+    for (size_t j = 0; j < c; j++) {
+      for (size_t k = 0; k < sr.Count(); k++) {
+        TIsotopeData* D1 = Layer.Add(new TIsotopeData);
         D1->M = sr[k].X;
         D1->W = sr[k].Y;
         Layer[j]->Children.Add(D1);
       }
-      Layer[j] = NULL;
+      Layer[j] = 0;
     }
     Layer.Pack();
   }

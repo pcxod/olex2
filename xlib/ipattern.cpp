@@ -17,24 +17,25 @@
 
 void TIPattern::Clear()  {  Points.Clear();  }
 //..............................................................................
-bool TIPattern::Calc(const olxstr& Exp, olxstr& Msg, bool Combine, double Delta)  {
+bool TIPattern::Calc(const olxstr& Exp, olxstr& Msg, bool Combine, double Delta) {
   Clear();
   olxstr Tmp;
   TCHNExp CHN;
-  TStringToList<olxstr,double> SL;
+  TStringToList<olxstr, double> SL;
   TIDistribution ID;
   CHN.LoadFromExpression(Exp);
   CHN.MolWeight(); // to check the correctness of the formula
-  if( !Msg.IsEmpty() )  {
+  if (!Msg.IsEmpty()) {
     return false;
   }
   CHN.CalcSummFormula(SL);
-  for( size_t i=0; i < SL.Count(); i++ )  {
+  for (size_t i = 0; i < SL.Count(); i++) {
     cm_Element* elm = XElementLib::FindBySymbol(SL[i]);
-    if( elm == NULL )
+    if (elm == 0) {
       return false;
+    }
     int occupancy = (int)SL.GetObject(i);
-    if( occupancy == 0 )  {
+    if (occupancy == 0) {
       occupancy++;
       TBasicApp::NewLogEntry(logError) << "The occupancy is set to 1 for " << elm->symbol <<
         " the molecular weight might be incorrect";
@@ -42,14 +43,16 @@ bool TIPattern::Calc(const olxstr& Exp, olxstr& Msg, bool Combine, double Delta)
     ID.AddIsotope(*elm, occupancy);
   }
   ID.Calc(Points);
-  if( !Points.IsEmpty() )  {
-    if( Combine )
+  if (!Points.IsEmpty()) {
+    if (Combine) {
       TIDistribution::CombineSerie(Points, Delta);
+    }
     QuickSorter::SortSF(Points, &TSPoint::SPointsSortA);
     // normalisation of the serie
-    double MaxY = 100.0/Points[0].Y; // normalisation factor
-    for( size_t i=0; i < Points.Count(); i++ )
+    double MaxY = 100.0 / Points[0].Y; // normalisation factor
+    for (size_t i = 0; i < Points.Count(); i++) {
       Points[i].Y *= MaxY;
+    }
   }
   return true;
 }

@@ -110,24 +110,29 @@ public:
   static void SaveToFile(const olxstr& FN, const TRefList& Reflections);
   template <class ref_list_t>
   static void SaveToStream(const ref_list_t& refs, IDataOutputStream &out) {
-    if (refs.IsEmpty()) return;
+    if (refs.IsEmpty()) {
+      return;
+    }
     double scale = RefListUtil::CalcScale(refs);
     TReflection NullRef;
-    if (olx_ref::get(refs[0]).IsBatchSet())
+    if (olx_ref::get(refs[0]).IsBatchSet()) {
       NullRef.SetBatch(0);
+    }
     const size_t ref_str_len = NullRef.ToString().Length();
-    const size_t bf_sz = ref_str_len + 1;
+    const size_t bf_sz = ref_str_len + 16;
     olx_array_ptr<char> ref_bf(new char[bf_sz]);
     for (size_t i = 0; i < refs.Count(); i++) {
       const TReflection &r = olx_ref::get(refs[i]);
-      if (!r.IsOmitted())
+      if (!r.IsOmitted()) {
         out.Writecln(r.ToCBuffer(ref_bf, bf_sz, scale), ref_str_len);
+      }
     }
     out.Writecln(NullRef.ToCBuffer(ref_bf, bf_sz, 1), ref_str_len);
     for (size_t i = 0; i < refs.Count(); i++) {
       const TReflection &r = olx_ref::get(refs[i]);
-      if (r.IsOmitted())
+      if (r.IsOmitted()) {
         out.Writecln(r.ToCBuffer(ref_bf, bf_sz, scale), ref_str_len);
+      }
     }
   }
   protected:
