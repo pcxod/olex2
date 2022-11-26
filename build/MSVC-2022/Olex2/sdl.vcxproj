@@ -1,0 +1,681 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug-static|Win32">
+      <Configuration>Debug-static</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug-static|x64">
+      <Configuration>Debug-static</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Profile|Win32">
+      <Configuration>Profile</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Profile|x64">
+      <Configuration>Profile</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release-static|Win32">
+      <Configuration>Release-static</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release-static|x64">
+      <Configuration>Release-static</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{01EB4F8B-6F6E-4FD4-908E-37E02AA6EA63}</ProjectGuid>
+    <RootNamespace>sdl</RootNamespace>
+    <Keyword>ManagedCProj</Keyword>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-static|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <CLRSupport>false</CLRSupport>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <CLRSupport>false</CLRSupport>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-static|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <CLRSupport>false</CLRSupport>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <CLRSupport>false</CLRSupport>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <CLRSupport>false</CLRSupport>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-static|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <CLRSupport>false</CLRSupport>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <CLRSupport>false</CLRSupport>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-static|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <CLRSupport>false</CLRSupport>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <CLRSupport>false</CLRSupport>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <CLRSupport>false</CLRSupport>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug-static|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="work.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="work.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release-static|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="work.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="work.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="work.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug-static|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="work.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release-static|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="work.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="work.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="work.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.30128.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)$(Platform)\$(Configuration)\lib\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)$(Platform)\$(Configuration)\lib\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)$(Platform)\$(Configuration)\obj\$(ProjectName)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)$(Platform)\$(Configuration)\obj\$(ProjectName)\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)$(Platform)\$(Configuration)\lib\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)$(Platform)\$(Configuration)\lib\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)$(Platform)\$(Configuration)\obj\$(ProjectName)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)$(Platform)\$(Configuration)\obj\$(ProjectName)\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release-static|Win32'">$(SolutionDir)$(Platform)\$(Configuration)\lib\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release-static|Win32'">$(SolutionDir)$(Platform)\$(Configuration)\obj\$(ProjectName)\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release-static|x64'">$(SolutionDir)$(Platform)\$(Configuration)\lib\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release-static|x64'">$(SolutionDir)$(Platform)\$(Configuration)\obj\$(ProjectName)\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">$(SolutionDir)$(Platform)\$(Configuration)\lib\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">$(SolutionDir)$(Platform)\$(Configuration)\obj\$(ProjectName)\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(SolutionDir)$(Platform)\$(Configuration)\lib\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(SolutionDir)$(Platform)\$(Configuration)\obj\$(ProjectName)\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug-static|Win32'">$(SolutionDir)$(Platform)\$(Configuration)\lib\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug-static|Win32'">$(SolutionDir)$(Platform)\$(Configuration)\obj\$(ProjectName)\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug-static|x64'">$(SolutionDir)$(Platform)\$(Configuration)\lib\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug-static|x64'">$(SolutionDir)$(Platform)\$(Configuration)\obj\$(ProjectName)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ExecutablePath>$(ExecutablePath)</ExecutablePath>
+    <IncludePath>$(IncludePath)</IncludePath>
+    <ReferencePath>$(ReferencePath)</ReferencePath>
+    <LibraryPath>$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ExecutablePath>$(ExecutablePath)</ExecutablePath>
+    <IncludePath>$(IncludePath)</IncludePath>
+    <ReferencePath>$(ReferencePath)</ReferencePath>
+    <LibraryPath>$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
+      <IntrinsicFunctions>false</IntrinsicFunctions>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <PreprocessorDefinitions>_UNICODE;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <MinimalRebuild>false</MinimalRebuild>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <StructMemberAlignment>Default</StructMemberAlignment>
+      <FloatingPointModel>Precise</FloatingPointModel>
+      <FloatingPointExceptions>true</FloatingPointExceptions>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <BrowseInformation>true</BrowseInformation>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <SmallerTypeCheck>false</SmallerTypeCheck>
+      <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <IntrinsicFunctions>false</IntrinsicFunctions>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <PreprocessorDefinitions>_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <StructMemberAlignment>Default</StructMemberAlignment>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <FloatingPointExceptions>false</FloatingPointExceptions>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <BrowseInformation>true</BrowseInformation>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
+      <IntrinsicFunctions>false</IntrinsicFunctions>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <PreprocessorDefinitions>_UNICODE;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <MinimalRebuild>false</MinimalRebuild>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <StructMemberAlignment>Default</StructMemberAlignment>
+      <FloatingPointModel>Precise</FloatingPointModel>
+      <FloatingPointExceptions>true</FloatingPointExceptions>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <BrowseInformation>true</BrowseInformation>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <AdditionalIncludeDirectories>$(OLX_WX_DIR)\include</AdditionalIncludeDirectories>
+      <SmallerTypeCheck>false</SmallerTypeCheck>
+      <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <OmitFramePointers>false</OmitFramePointers>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <PreprocessorDefinitions>_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <MinimalRebuild>false</MinimalRebuild>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <StructMemberAlignment>Default</StructMemberAlignment>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <FloatingPointExceptions>false</FloatingPointExceptions>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <BrowseInformation>false</BrowseInformation>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>None</DebugInformationFormat>
+      <AdditionalIncludeDirectories>$(OLX_WX_DIR)\include</AdditionalIncludeDirectories>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release-static|Win32'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <IntrinsicFunctions>false</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
+      <PreprocessorDefinitions>_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <MinimalRebuild>false</MinimalRebuild>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <StructMemberAlignment>Default</StructMemberAlignment>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <FloatingPointExceptions>false</FloatingPointExceptions>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <BrowseInformation>
+      </BrowseInformation>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+      <CallingConvention>Cdecl</CallingConvention>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release-static|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <PreprocessorDefinitions>_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <MinimalRebuild>false</MinimalRebuild>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <StructMemberAlignment>16Bytes</StructMemberAlignment>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <FloatingPointExceptions>false</FloatingPointExceptions>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <BrowseInformation>
+      </BrowseInformation>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+      <CallingConvention>Cdecl</CallingConvention>
+    </ClCompile>
+    <Lib>
+      <OutputFile>$(OutDir)sdl.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <PreprocessorDefinitions>_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <MinimalRebuild>false</MinimalRebuild>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <StructMemberAlignment>Default</StructMemberAlignment>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Precise</FloatingPointModel>
+      <FloatingPointExceptions>true</FloatingPointExceptions>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <BrowseInformation>true</BrowseInformation>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <CallingConvention>Cdecl</CallingConvention>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <PreprocessorDefinitions>_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <MinimalRebuild>false</MinimalRebuild>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <StructMemberAlignment>Default</StructMemberAlignment>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Precise</FloatingPointModel>
+      <FloatingPointExceptions>true</FloatingPointExceptions>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <BrowseInformation>false</BrowseInformation>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <CallingConvention>Cdecl</CallingConvention>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+    </ClCompile>
+    <Lib>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+      <LinkTimeCodeGeneration>false</LinkTimeCodeGeneration>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug-static|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <IntrinsicFunctions>false</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <PreprocessorDefinitions>_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <MinimalRebuild>false</MinimalRebuild>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <StructMemberAlignment>16Bytes</StructMemberAlignment>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <FloatingPointExceptions>false</FloatingPointExceptions>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <BrowseInformation>true</BrowseInformation>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <CallingConvention>Cdecl</CallingConvention>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug-static|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <IntrinsicFunctions>false</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <PreprocessorDefinitions>_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <MinimalRebuild>false</MinimalRebuild>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <StructMemberAlignment>16Bytes</StructMemberAlignment>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <FloatingPointExceptions>false</FloatingPointExceptions>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <BrowseInformation>true</BrowseInformation>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <CallingConvention>Cdecl</CallingConvention>
+    </ClCompile>
+    <Lib>
+      <OutputFile>$(OutDir)sdlx64.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <Reference Include="System">
+      <CopyLocalSatelliteAssemblies>true</CopyLocalSatelliteAssemblies>
+      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+    </Reference>
+    <Reference Include="System.Data">
+      <CopyLocalSatelliteAssemblies>true</CopyLocalSatelliteAssemblies>
+      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+    </Reference>
+    <Reference Include="System.Xml">
+      <CopyLocalSatelliteAssemblies>true</CopyLocalSatelliteAssemblies>
+      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\sdl\actions.cpp" />
+    <ClCompile Include="..\..\..\sdl\bapp.cpp" />
+    <ClCompile Include="..\..\..\sdl\bitarray.cpp" />
+    <ClCompile Include="..\..\..\sdl\datafile.cpp" />
+    <ClCompile Include="..\..\..\sdl\dataitem.cpp" />
+    <ClCompile Include="..\..\..\sdl\ebase.cpp" />
+    <ClCompile Include="..\..\..\sdl\ebasis.cpp" />
+    <ClCompile Include="..\..\..\sdl\efile.cpp" />
+    <ClCompile Include="..\..\..\sdl\egc.cpp" />
+    <ClCompile Include="..\..\..\sdl\emath.cpp" />
+    <ClCompile Include="..\..\..\sdl\ememstream.cpp" />
+    <ClCompile Include="..\..\..\sdl\estopwatch.cpp" />
+    <ClCompile Include="..\..\..\sdl\etime.cpp" />
+    <ClCompile Include="..\..\..\sdl\exception.cpp" />
+    <ClCompile Include="..\..\..\sdl\filetree.cpp" />
+    <ClCompile Include="..\..\..\sdl\function.cpp" />
+    <ClCompile Include="..\..\..\sdl\groupobj.cpp" />
+    <ClCompile Include="..\..\..\sdl\integration.cpp" />
+    <ClCompile Include="..\..\..\sdl\istream.cpp" />
+    <ClCompile Include="..\..\..\sdl\libfile.cpp" />
+    <ClCompile Include="..\..\..\sdl\library.cpp" />
+    <ClCompile Include="..\..\..\sdl\log.cpp" />
+    <ClCompile Include="..\..\..\sdl\macroerror.cpp" />
+    <ClCompile Include="..\..\..\sdl\macrolib.cpp" />
+    <ClCompile Include="..\..\..\sdl\math\evaln.cpp" />
+    <ClCompile Include="..\..\..\sdl\math\libmath.cpp" />
+    <ClCompile Include="..\..\..\sdl\md5.cpp" />
+    <ClCompile Include="..\..\..\sdl\os_util.cpp" />
+    <ClCompile Include="..\..\..\sdl\smart\olx_cstring.cpp" />
+    <ClCompile Include="..\..\..\sdl\smart\olx_istring.cpp" />
+    <ClCompile Include="..\..\..\sdl\smart\olx_wstring.cpp" />
+    <ClCompile Include="..\..\..\sdl\olxthpool.cpp" />
+    <ClCompile Include="..\..\..\sdl\smart\ostring.cpp" />
+    <ClCompile Include="..\..\..\sdl\paramlist.cpp" />
+    <ClCompile Include="..\..\..\sdl\poly.cpp" />
+    <ClCompile Include="..\..\..\sdl\settingsfile.cpp" />
+    <ClCompile Include="..\..\..\sdl\sha.cpp" />
+    <ClCompile Include="..\..\..\sdl\roman.cpp" />
+    <ClCompile Include="..\..\..\sdl\sparser.cpp" />
+    <ClCompile Include="..\..\..\sdl\testsuit.cpp" />
+    <ClCompile Include="..\..\..\sdl\undo.cpp" />
+    <ClCompile Include="..\..\..\sdl\exparse\evaluable.cpp" />
+    <ClCompile Include="..\..\..\sdl\exparse\expbuilder.cpp" />
+    <ClCompile Include="..\..\..\sdl\exparse\exptree.cpp" />
+    <ClCompile Include="..\..\..\sdl\wildcard.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\sdl\actions.h" />
+    <ClInclude Include="..\..\..\sdl\arrays.h" />
+    <ClInclude Include="..\..\..\sdl\association.h" />
+    <ClInclude Include="..\..\..\sdl\bapp.h" />
+    <ClInclude Include="..\..\..\sdl\bitarray.h" />
+    <ClInclude Include="..\..\..\sdl\citem.h" />
+    <ClInclude Include="..\..\..\sdl\comparable_operators.h" />
+    <ClInclude Include="..\..\..\sdl\constlist.h" />
+    <ClInclude Include="..\..\..\sdl\datafile.h" />
+    <ClInclude Include="..\..\..\sdl\dataitem.h" />
+    <ClInclude Include="..\..\..\sdl\datastream.h" />
+    <ClInclude Include="..\..\..\sdl\defs.h" />
+    <ClInclude Include="..\..\..\sdl\destruction_obs.h" />
+    <ClInclude Include="..\..\..\sdl\eaccessor.h" />
+    <ClInclude Include="..\..\..\sdl\ebase.h" />
+    <ClInclude Include="..\..\..\sdl\ebasis.h" />
+    <ClInclude Include="..\..\..\sdl\ebtree.h" />
+    <ClInclude Include="..\..\..\sdl\ecomplex.h" />
+    <ClInclude Include="..\..\..\sdl\edict.h" />
+    <ClInclude Include="..\..\..\sdl\edlist.h" />
+    <ClInclude Include="..\..\..\sdl\efile.h" />
+    <ClInclude Include="..\..\..\sdl\efilelist.h" />
+    <ClInclude Include="..\..\..\sdl\egc.h" />
+    <ClInclude Include="..\..\..\sdl\egraph.h" />
+    <ClInclude Include="..\..\..\sdl\ellist.h" />
+    <ClInclude Include="..\..\..\sdl\emath.h" />
+    <ClInclude Include="..\..\..\sdl\ematrix.h" />
+    <ClInclude Include="..\..\..\sdl\ememstream.h" />
+    <ClInclude Include="..\..\..\sdl\encodings.h" />
+    <ClInclude Include="..\..\..\sdl\equeue.h" />
+    <ClInclude Include="..\..\..\sdl\eset.h" />
+    <ClInclude Include="..\..\..\sdl\esort.h" />
+    <ClInclude Include="..\..\..\sdl\estack.h" />
+    <ClInclude Include="..\..\..\sdl\estlist.h" />
+    <ClInclude Include="..\..\..\sdl\estopwatch.h" />
+    <ClInclude Include="..\..\..\sdl\estrbuffer.h" />
+    <ClInclude Include="..\..\..\sdl\estrlist.h" />
+    <ClInclude Include="..\..\..\sdl\etable.h" />
+    <ClInclude Include="..\..\..\sdl\etbuffer.h" />
+    <ClInclude Include="..\..\..\sdl\etime.h" />
+    <ClInclude Include="..\..\..\sdl\etraverse.h" />
+    <ClInclude Include="..\..\..\sdl\eutf8.h" />
+    <ClInclude Include="..\..\..\sdl\exparse\evaluable.h" />
+    <ClInclude Include="..\..\..\sdl\evalue.h" />
+    <ClInclude Include="..\..\..\sdl\evector.h" />
+    <ClInclude Include="..\..\..\sdl\exception.h" />
+    <ClInclude Include="..\..\..\sdl\exparse\statements.h" />
+    <ClInclude Include="..\..\..\sdl\filetree.h" />
+    <ClInclude Include="..\..\..\sdl\file_filter.h" />
+    <ClInclude Include="..\..\..\sdl\function.h" />
+    <ClInclude Include="..\..\..\sdl\groupobj.h" />
+    <ClInclude Include="..\..\..\sdl\hashing.h" />
+    <ClInclude Include="..\..\..\sdl\index_range.h" />
+    <ClInclude Include="..\..\..\sdl\integration.h" />
+    <ClInclude Include="..\..\..\sdl\ipimp.h" />
+    <ClInclude Include="..\..\..\sdl\istream.h" />
+    <ClInclude Include="..\..\..\sdl\libfile.h" />
+    <ClInclude Include="..\..\..\sdl\library.h" />
+    <ClInclude Include="..\..\..\sdl\linked_list.h" />
+    <ClInclude Include="..\..\..\sdl\linked_operators.h" />
+    <ClInclude Include="..\..\..\sdl\listalg.h" />
+    <ClInclude Include="..\..\..\sdl\log.h" />
+    <ClInclude Include="..\..\..\sdl\macroerror.h" />
+    <ClInclude Include="..\..\..\sdl\macrolib.h" />
+    <ClInclude Include="..\..\..\sdl\math\align.h" />
+    <ClInclude Include="..\..\..\sdl\math\composite.h" />
+    <ClInclude Include="..\..\..\sdl\math\dmatrix.h" />
+    <ClInclude Include="..\..\..\sdl\math\evaln.h" />
+    <ClInclude Include="..\..\..\sdl\math\geom.h" />
+    <ClInclude Include="..\..\..\sdl\math\integration.h" />
+    <ClInclude Include="..\..\..\sdl\math\libmath.h" />
+    <ClInclude Include="..\..\..\sdl\math\mmath.h" />
+    <ClInclude Include="..\..\..\sdl\math\plane.h" />
+    <ClInclude Include="..\..\..\sdl\math\spline.h" />
+    <ClInclude Include="..\..\..\sdl\md5.h" />
+    <ClInclude Include="..\..\..\sdl\olxalg.h" />
+    <ClInclude Include="..\..\..\sdl\olxfunc.h" />
+    <ClInclude Include="..\..\..\sdl\olxpptr.h" />
+    <ClInclude Include="..\..\..\sdl\olxptr.h" />
+    <ClInclude Include="..\..\..\sdl\olxvptr.h" />
+    <ClInclude Include="..\..\..\sdl\roman.h" />
+    <ClInclude Include="..\..\..\sdl\shared.h" />
+    <ClInclude Include="..\..\..\sdl\smart\olx_cstring.h" />
+    <ClInclude Include="..\..\..\sdl\smart\olx_istring.h" />
+    <ClInclude Include="..\..\..\sdl\smart\olx_strcvt.h" />
+    <ClInclude Include="..\..\..\sdl\smart\olx_wstring.h" />
+    <ClInclude Include="..\..\..\sdl\olxmps.h" />
+    <ClInclude Include="..\..\..\sdl\olxth.h" />
+    <ClInclude Include="..\..\..\sdl\olxthpool.h" />
+    <ClInclude Include="..\..\..\sdl\os_util.h" />
+    <ClInclude Include="..\..\..\sdl\smart\ostring.h" />
+    <ClInclude Include="..\..\..\sdl\paramlist.h" />
+    <ClInclude Include="..\..\..\sdl\pers_util.h" />
+    <ClInclude Include="..\..\..\sdl\poly.h" />
+    <ClInclude Include="..\..\..\sdl\ptypes.h" />
+    <ClInclude Include="..\..\..\sdl\settingsfile.h" />
+    <ClInclude Include="..\..\..\sdl\sha.h" />
+    <ClInclude Include="..\..\..\sdl\singleton.h" />
+    <ClInclude Include="..\..\..\sdl\smart\strbuf.h" />
+    <ClInclude Include="..\..\..\sdl\sorted.h" />
+    <ClInclude Include="..\..\..\sdl\sortedlist.h" />
+    <ClInclude Include="..\..\..\sdl\sparser.h" />
+    <ClInclude Include="..\..\..\sdl\strmask.h" />
+    <ClInclude Include="..\..\..\sdl\talist.h" />
+    <ClInclude Include="..\..\..\sdl\testsuit.h" />
+    <ClInclude Include="..\..\..\sdl\tests\alg_test.h" />
+    <ClInclude Include="..\..\..\sdl\tests\binding_test.h" />
+    <ClInclude Include="..\..\..\sdl\tests\container_test.h" />
+    <ClInclude Include="..\..\..\sdl\tests\encoding_test.h" />
+    <ClInclude Include="..\..\..\sdl\tests\evalue_test.h" />
+    <ClInclude Include="..\..\..\sdl\tests\exparse_test.h" />
+    <ClInclude Include="..\..\..\sdl\tests\file_test.h" />
+    <ClInclude Include="..\..\..\sdl\tests\irange_test.h" />
+    <ClInclude Include="..\..\..\sdl\tests\matrix_test.h" />
+    <ClInclude Include="..\..\..\sdl\tests\olx_func_test.h" />
+    <ClInclude Include="..\..\..\sdl\tests\ptr_test.h" />
+    <ClInclude Include="..\..\..\sdl\tests\roman_test.h" />
+    <ClInclude Include="..\..\..\sdl\tests\sort_test.h" />
+    <ClInclude Include="..\..\..\sdl\tests\spline_test.h" />
+    <ClInclude Include="..\..\..\sdl\tests\string_test.h" />
+    <ClInclude Include="..\..\..\sdl\tests\sys_test.h" />
+    <ClInclude Include="..\..\..\sdl\tests\tensor_test.h" />
+    <ClInclude Include="..\..\..\sdl\threex3.h" />
+    <ClInclude Include="..\..\..\sdl\tptrlist.h" />
+    <ClInclude Include="..\..\..\sdl\typelist.h" />
+    <ClInclude Include="..\..\..\sdl\undo.h" />
+    <ClInclude Include="..\..\..\sdl\utf16.h" />
+    <ClInclude Include="..\..\..\sdl\utf8file.h" />
+    <ClInclude Include="..\..\..\sdl\wildcard.h" />
+    <ClInclude Include="..\..\..\sdl\xldwriter.h" />
+    <ClInclude Include="..\..\..\sdl\exparse\builtins.h" />
+    <ClInclude Include="..\..\..\sdl\exparse\context.h" />
+    <ClInclude Include="..\..\..\sdl\exparse\expbuilder.h" />
+    <ClInclude Include="..\..\..\sdl\exparse\explib.h" />
+    <ClInclude Include="..\..\..\sdl\exparse\expsyn.h" />
+    <ClInclude Include="..\..\..\sdl\exparse\exptree.h" />
+    <ClInclude Include="..\..\..\sdl\exparse\expvalue.h" />
+    <ClInclude Include="..\..\..\sdl\exparse\funcwrap.h" />
+    <ClInclude Include="..\..\..\sdl\xml.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ReadMe.txt" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

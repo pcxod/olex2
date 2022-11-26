@@ -1,0 +1,62 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros">
+    <BINDIR>D:\devel\bin</BINDIR>
+    <OLX_WX_VER>31</OLX_WX_VER>
+    <OLX_WX_DIR>D:\devel\wxWidgets-3.1.0</OLX_WX_DIR>
+    <OLX_DEV>D:\devel\svn\olex2\trunk</OLX_DEV>
+    <OLX_AC_VER>4</OLX_AC_VER>
+  </PropertyGroup>
+  <PropertyGroup Label="UserMacros" Condition="'$(Platform)' == 'Win32'">
+    <OLX_PY_DIR>D:\Python38x32</OLX_PY_DIR>
+    <RUNDIR>D:\devel\rundir-py3x32</RUNDIR>
+    <PYTHONHOME>d:\devel\rundir-py3x32\Python38</PYTHONHOME>
+  </PropertyGroup>
+  <PropertyGroup Label="UserMacros" Condition="'$(Platform)' == 'x64'">
+    <OLX_PY_DIR>D:\Python38x64</OLX_PY_DIR>
+    <RUNDIR>D:\devel\rundir-py3</RUNDIR>
+    <PYTHONHOME>d:\devel\rundir-py3\Python38</PYTHONHOME>
+  </PropertyGroup>
+  <PropertyGroup />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(OLX_DEV)\sdl;$(OLX_DEV)\xlib;$(OLX_DEV)\repository;$(OLX_PY_DIR)\include</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <BuildMacro Include="OLX_WX_VER">
+      <Value>$(OLX_WX_VER)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="OLX_PY_DIR">
+      <Value>$(OLX_PY_DIR)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="OLX_WX_DIR">
+      <Value>$(OLX_WX_DIR)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="OLX_DEV">
+      <Value>$(OLX_DEV)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="OLX_JDK">
+      <Value>$(OLX_JDK)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="RUNDIR">
+      <Value>$(RUNDIR)</Value>
+    </BuildMacro>
+    <BuildMacro Include="BINDIR">
+      <Value>$(BINDIR)</Value>
+    </BuildMacro>
+    <BuildMacro Include="PYTHONHOME">
+      <Value>$(PYTHONHOME)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="OLX_AC_VER">
+      <Value>$(OLX_AC_VER)</Value>
+    </BuildMacro>
+  </ItemGroup>
+</Project>

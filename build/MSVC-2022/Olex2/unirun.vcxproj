@@ -1,0 +1,317 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Profile|Win32">
+      <Configuration>Profile</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Profile|x64">
+      <Configuration>Profile</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{FB67F543-EB17-4693-8A9A-4AA27F184129}</ProjectGuid>
+    <RootNamespace>ulaunch</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="work.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.30128.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)$(Platform)\$(Configuration)\exe\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)$(Platform)\$(Configuration)\obj\$(ProjectName)\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)$(Platform)\$(Configuration)\exe\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)$(Platform)\$(Configuration)\obj\$(ProjectName)\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)$(Configuration)\exe\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">$(SolutionDir)$(Platform)\$(Configuration)\exe\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(Configuration)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">$(SolutionDir)$(Platform)\$(Configuration)\obj\$(ProjectName)\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(SolutionDir)$(Platform)\$(Configuration)\exe\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(Platform)\$(Configuration)\no_py\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(SolutionDir)$(Platform)\$(Configuration)\obj\$(ProjectName)\</IntDir>
+    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OLX_PROGRAM_FILES)Microsoft SDKs\Windows\v7.1\Lib\x64;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>$(OLX_WX_DIR)\lib\vc_lib\mswud;$(OLX_WX_DIR)\include;../../../sdl;../../../repository;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_UNICODE;_DEBUG;__WXWIDGETS__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <FloatingPointModel>Precise</FloatingPointModel>
+      <BrowseInformation>true</BrowseInformation>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
+      <SmallerTypeCheck>false</SmallerTypeCheck>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <FloatingPointExceptions>true</FloatingPointExceptions>
+      <IntrinsicFunctions>false</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>sdl.lib;wxexpatd.lib;wxjpegd.lib;wxbase$(OLX_WX_VER)ud.lib;wxbase$(OLX_WX_VER)ud_net.lib;wxmsw$(OLX_WX_VER)ud_gl.lib;wxmsw$(OLX_WX_VER)ud_richtext.lib;wxmsw$(OLX_WX_VER)ud_html.lib;wxmsw$(OLX_WX_VER)ud_core.lib;wxmsw$(OLX_WX_VER)ud_adv.lib;wxpngd.lib;wxregexud.lib;wxtiffd.lib;wxzlibd.lib;mapi32.lib;glu32.lib;user32.lib;opengl32.lib;gdi32.lib;ole32.lib;advapi32.lib;comdlg32.lib;comctl32.lib;shell32.lib;rpcrt4.lib;oleaut32.lib;kernel32.lib;wsock32.lib;Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OLX_WX_DIR)\lib\vc_lib;$(SolutionDir)$(Platform)\$(Configuration)\lib\</AdditionalLibraryDirectories>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AssemblyDebug>true</AssemblyDebug>
+      <SubSystem>Console</SubSystem>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention>
+      </DataExecutionPrevention>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>$(OLX_WX_DIR)\lib\vc_lib\mswud;$(OLX_WX_DIR)\include;../../../sdl;../../../repository;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_UNICODE;_DEBUG;__WXWIDGETS__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <FloatingPointModel>Precise</FloatingPointModel>
+      <BrowseInformation>true</BrowseInformation>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
+      <SmallerTypeCheck>false</SmallerTypeCheck>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <FloatingPointExceptions>true</FloatingPointExceptions>
+      <IntrinsicFunctions>false</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <OmitFramePointers>false</OmitFramePointers>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>sdl.lib;wxexpatd.lib;wxjpegd.lib;wxbase$(OLX_WX_VER)ud.lib;wxbase$(OLX_WX_VER)ud_net.lib;wxmsw$(OLX_WX_VER)ud_gl.lib;wxmsw$(OLX_WX_VER)ud_richtext.lib;wxmsw$(OLX_WX_VER)ud_html.lib;wxmsw$(OLX_WX_VER)ud_core.lib;wxmsw$(OLX_WX_VER)ud_adv.lib;wxpngd.lib;wxregexud.lib;wxtiffd.lib;wxzlibd.lib;mapi32.lib;glu32.lib;user32.lib;opengl32.lib;gdi32.lib;ole32.lib;advapi32.lib;comdlg32.lib;comctl32.lib;shell32.lib;rpcrt4.lib;oleaut32.lib;kernel32.lib;wsock32.lib;Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OLX_WX_DIR)\lib\vc_x64_lib;$(SolutionDir)$(Platform)\$(Configuration)\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AssemblyDebug>true</AssemblyDebug>
+      <SubSystem>Windows</SubSystem>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention>
+      </DataExecutionPrevention>
+      <TargetMachine>MachineX64</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <AdditionalIncludeDirectories>$(OLX_WX_DIR)\lib\vc_lib\mswu;$(OLX_WX_DIR)\include;../../../sdl;../../../repository;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_UNICODE;__WXWIDGETS__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <WarningLevel>Level2</WarningLevel>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>sdl.lib;wxexpat.lib;wxjpeg.lib;wxbase$(OLX_WX_VER)u.lib;wxbase$(OLX_WX_VER)u_net.lib;wxmsw$(OLX_WX_VER)u_gl.lib;wxmsw$(OLX_WX_VER)u_richtext.lib;wxmsw$(OLX_WX_VER)u_html.lib;wxmsw$(OLX_WX_VER)u_core.lib;wxmsw$(OLX_WX_VER)u_adv.lib;wxpng.lib;wxregexu.lib;wxtiff.lib;wxzlib.lib;mapi32.lib;glu32.lib;user32.lib;opengl32.lib;gdi32.lib;ole32.lib;advapi32.lib;comdlg32.lib;comctl32.lib;shell32.lib;rpcrt4.lib;oleaut32.lib;kernel32.lib;wsock32.lib;Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OLX_WX_DIR)\lib\vc_lib;$(SolutionDir)$(Configuration)\lib;</AdditionalLibraryDirectories>
+      <SubSystem>Console</SubSystem>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention>
+      </DataExecutionPrevention>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <AdditionalIncludeDirectories>$(OLX_WX_DIR)\lib\vc_lib\mswu;$(OLX_WX_DIR)\include;../../../sdl;../../../repository;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_UNICODE;__WXWIDGETS__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Precise</FloatingPointModel>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <FloatingPointExceptions>true</FloatingPointExceptions>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>sdl.lib;wxexpat.lib;wxjpeg.lib;wxbase$(OLX_WX_VER)u.lib;wxbase$(OLX_WX_VER)u_net.lib;wxmsw$(OLX_WX_VER)u_gl.lib;wxmsw$(OLX_WX_VER)u_richtext.lib;wxmsw$(OLX_WX_VER)u_html.lib;wxmsw$(OLX_WX_VER)u_core.lib;wxmsw$(OLX_WX_VER)u_adv.lib;wxpng.lib;wxregexu.lib;wxtiff.lib;wxzlib.lib;mapi32.lib;glu32.lib;user32.lib;opengl32.lib;gdi32.lib;ole32.lib;advapi32.lib;comdlg32.lib;comctl32.lib;shell32.lib;rpcrt4.lib;oleaut32.lib;kernel32.lib;wsock32.lib;Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OLX_WX_DIR)\lib\vc_lib;$(SolutionDir)$(Configuration)\lib;</AdditionalLibraryDirectories>
+      <SubSystem>Console</SubSystem>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention>
+      </DataExecutionPrevention>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <AdditionalIncludeDirectories>$(OLX_WX_DIR)\lib\vc_lib\mswu;$(OLX_WX_DIR)\include;../../../sdl;../../../repository;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_UNICODE;__WXWIDGETS__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>None</DebugInformationFormat>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <FloatingPointExceptions>false</FloatingPointExceptions>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>sdl.lib;wxexpat.lib;wxjpeg.lib;wxbase$(OLX_WX_VER)u.lib;wxbase$(OLX_WX_VER)u_net.lib;wxmsw$(OLX_WX_VER)u_gl.lib;wxmsw$(OLX_WX_VER)u_richtext.lib;wxmsw$(OLX_WX_VER)u_html.lib;wxmsw$(OLX_WX_VER)u_core.lib;wxmsw$(OLX_WX_VER)u_adv.lib;wxpng.lib;wxregexu.lib;wxtiff.lib;wxzlib.lib;mapi32.lib;glu32.lib;user32.lib;opengl32.lib;gdi32.lib;ole32.lib;advapi32.lib;comdlg32.lib;comctl32.lib;shell32.lib;rpcrt4.lib;oleaut32.lib;kernel32.lib;wsock32.lib;Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OLX_WX_DIR)\lib\vc_lib;$(SolutionDir)$(Platform)\$(Configuration)\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <SubSystem>Console</SubSystem>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention>
+      </DataExecutionPrevention>
+      <TargetMachine>MachineX64</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <AdditionalIncludeDirectories>$(OLX_WX_DIR)\lib\vc_lib\mswu;$(OLX_WX_DIR)\include;../../../sdl;../../../repository;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_UNICODE;__WXWIDGETS__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Precise</FloatingPointModel>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <FloatingPointExceptions>true</FloatingPointExceptions>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>sdl.lib;wxexpat.lib;wxjpeg.lib;wxbase$(OLX_WX_VER)u.lib;wxbase$(OLX_WX_VER)u_net.lib;wxmsw$(OLX_WX_VER)u_gl.lib;wxmsw$(OLX_WX_VER)u_richtext.lib;wxmsw$(OLX_WX_VER)u_html.lib;wxmsw$(OLX_WX_VER)u_core.lib;wxmsw$(OLX_WX_VER)u_adv.lib;wxpng.lib;wxregexu.lib;wxtiff.lib;wxzlib.lib;mapi32.lib;glu32.lib;user32.lib;opengl32.lib;gdi32.lib;ole32.lib;advapi32.lib;comdlg32.lib;comctl32.lib;shell32.lib;rpcrt4.lib;oleaut32.lib;kernel32.lib;wsock32.lib;Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OLX_WX_DIR)\lib\vc_lib;$(SolutionDir)$(Platform)\$(Configuration)\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <SubSystem>Console</SubSystem>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention>
+      </DataExecutionPrevention>
+      <TargetMachine>MachineX64</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\repository\cdsfs.cpp" />
+    <ClCompile Include="..\..\..\repository\filesystem.cpp" />
+    <ClCompile Include="..\..\..\repository\httpfs.cpp" />
+    <ClCompile Include="..\..\..\repository\wxzipfs.cpp" />
+    <ClCompile Include="..\..\..\unirun\main.cpp" />
+    <ClCompile Include="..\..\..\repository\patchapi.cpp" />
+    <ClCompile Include="..\..\..\repository\shellutil.cpp" />
+    <ClCompile Include="..\..\..\repository\updateapi.cpp" />
+    <ClCompile Include="..\..\..\repository\url.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\repository\httpfs.h" />
+    <ClInclude Include="..\..\..\repository\patchapi.h" />
+    <ClInclude Include="..\..\..\repository\updateapi.h" />
+    <ClInclude Include="..\..\..\repository\wxftpfs.h" />
+    <ClInclude Include="..\..\..\repository\wxzipfs.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ReadMe.txt" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
