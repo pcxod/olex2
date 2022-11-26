@@ -204,6 +204,8 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(CifCreate, EmptyString(), fpNone|psFileLoaded,
     "Creates cif from current file, variance-covariance matrix should be "
     "available");
+  xlib_InitMacro(CifCreate_4NoSpherA2, EmptyString(), fpNone|psFileLoaded,
+    "Creates cif from current file");
   xlib_InitMacro(FcfCreate,
     "scale-[external],simple, regression or none&;"
     "c-[false] converts current fcf to the given list format",
@@ -5684,6 +5686,51 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   cif.SaveToFile(TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "cif"));
+}
+//.............................................................................
+void XLibMacros::macCifCreate_4NoSpherA2(TStrObjList &Cmds, const TParamList &Options,
+  TMacroData &Error)
+{
+  TXApp& xapp = TXApp::GetInstance();
+  TAsymmUnit& _au = xapp.XFile().GetAsymmUnit();
+  for (size_t i = 0; i < _au.AtomCount(); i++) {
+    TCAtom& a = _au.GetAtom(i);
+    if (a.GetEllipsoid() != NULL) {
+      TEllipsoid& elp = *a.GetEllipsoid();
+      a.SetUiso(elp.GetUeq());
+    }
+    else if (a.GetType() == iHydrogenZ && a.GetUisoEsd() == 0) {
+      a.SetUiso(olx_round(a.GetUiso(), 100000));
+    }
+  }
+  TCif cif;
+  cif.Adopt(xapp.XFile(), 0);
+  TAsymmUnit& au = cif.GetAsymmUnit();
+  for (size_t i = 0; i < au.AtomCount(); i++) {
+    if (au.GetAtom(i).GetType() == iQPeakZ) {
+      au.GetAtom(i).SetDeleted(true);
+    }
+  }
+  TLattice latt(*(new SObjectProvider));
+  latt.GetAsymmUnit().SetRefMod(&xapp.XFile().GetRM());
+  latt.GetAsymmUnit().Assign(xapp.XFile().GetAsymmUnit());
+  for (size_t i = 0; i < latt.GetAsymmUnit().AtomCount(); i++) {
+    TCAtom& a = latt.GetAsymmUnit().GetAtom(i);
+    if (a.IsDetached()) {
+      a.SetDetached(false);
+    }
+    if (a.IsMasked()) {
+      a.SetMasked(false);
+    }
+  }
+  latt.GetAsymmUnit()._UpdateConnInfo();
+  latt.GetAsymmUnit().DetachAtomType(iQPeakZ, true);
+  latt.Init();
+  latt.CompaqAll();
+  ASObjectProvider& objects = latt.GetObjects();
+
+  latt.GrowFragments(false, NULL);
+  cif.SaveToFile(TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "cif_NoSpherA2"));
 }
 //.............................................................................
 void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options,
