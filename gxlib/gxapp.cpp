@@ -4488,7 +4488,7 @@ void TGXApp::Collectivise(const TXAtomPList& atoms, short _level, int32_t mask) 
 //..............................................................................
 size_t TGXApp::GetNextAvailableLabel(const olxstr& AtomType) {
   size_t nextLabel = 0;
-  cm_Element* elm = XElementLib::FindBySymbol(AtomType);
+  const cm_Element* elm = XElementLib::FindBySymbol(AtomType);
   if (elm == 0) {
     return nextLabel + 1;
   }

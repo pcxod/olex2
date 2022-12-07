@@ -61,7 +61,7 @@ void TCAtom::SetLabel(const olxstr& L, bool validate) {
     if (L.IsEmpty()) {
       throw TInvalidArgumentException(__OlxSourceInfo, "empty label");
     }
-    cm_Element *atype = XElementLib::FindBySymbolEx(L);
+    const cm_Element *atype = XElementLib::FindBySymbolEx(L);
     if (atype == 0) {
       throw TInvalidArgumentException(__OlxSourceInfo,
         olxstr("Unknown element: '") << L << '\'');

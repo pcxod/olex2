@@ -105,8 +105,8 @@ void TMol2::LoadFromStrings(const TStrList& Strings) {
       if (toks.Count() < 6)  continue;
       vec3d crd(toks[2].ToDouble(), toks[3].ToDouble(), toks[4].ToDouble());
       TStrList ent(toks[5], '.');
-      cm_Element *elm = XElementLib::FindBySymbol(ent[0]);
-      if (elm != NULL) {
+      const cm_Element *elm = XElementLib::FindBySymbol(ent[0]);
+      if (elm != 0) {
         TCAtom& CA = GetAsymmUnit().NewAtom();
         CA.ccrd() = crd;
         CA.SetLabel(toks[1], false);

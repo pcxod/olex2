@@ -2302,7 +2302,7 @@ void Analysis::funFindScale(const TStrObjList& Params, TMacroData& E) {
       TSAtom &a = latt.GetObjects().atoms[i];
       if (a.GetType() == iQPeakZ && apply) {
         int z = olx_round(a.CAtom().GetQPeak()*scale);
-        cm_Element *tp = XElementLib::FindByZ(z),
+        const cm_Element *tp = XElementLib::FindByZ(z),
           *tp1 = NULL;
         // find previous halogen vs noble gas or alkaline metal
         if (tp != NULL) {

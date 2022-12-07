@@ -53,7 +53,7 @@ AtomTypeMask::AtomTypeMask(const olxstr &exp, const TAsymmUnit &) {
       else if (en.Equalsi('X')) {
         types.AddUnique(AtomType(-3, true));
       }
-      cm_Element *elm = XElementLib::FindBySymbol(en);
+      const cm_Element *elm = XElementLib::FindBySymbol(en);
       if (elm == NULL) {
         throw TInvalidArgumentException(__OlxSourceInfo,
           olxstr("element ").quote() << en);
@@ -73,7 +73,7 @@ AtomTypeMask::AtomTypeMask(const olxstr &exp, const TAsymmUnit &) {
         types.AddUnique(AtomType(-3, excl));
       }
       else {
-        cm_Element *elm = XElementLib::FindBySymbol(en);
+        const cm_Element *elm = XElementLib::FindBySymbol(en);
         if (elm == NULL) {
           throw TInvalidArgumentException(__OlxSourceInfo,
             olxstr("element ").quote() << en);

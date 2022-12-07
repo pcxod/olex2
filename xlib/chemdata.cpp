@@ -995,8 +995,36 @@ olxstr_dict<cm_Element *, true> &XElementLib::GetElementDict() {
 }
 //..............................................................................
 //..............................................................................
-cm_Element* XElementLib::FindBySymbol(const olxstr& symbol) {
-  return GetElementDict().Find(symbol, 0);
+cm_Element* XElementLib::FindBySymbol(const olxstr& symbol, int *charge) {
+  if (charge == 0) {
+    return GetElementDict().Find(symbol, 0);
+  }
+  else {
+    cm_Element* e = FindBySymbolEx(symbol);
+    if (e == 0) {
+      return 0;
+    }
+    olxstr cs = symbol.SubStringFrom(e->symbol.Length());
+    if (cs.IsEmpty()) {
+      *charge = 0;
+      return e;
+    }
+    bool st = olxstr::o_isoneof(cs.CharAt(0), '+', '-'),
+      ed = olxstr::o_isoneof(cs.GetLast(), '+', '-');
+    if (!st && !ed) {
+      return 0;
+    }
+    if (st) {
+      int s = (cs.CharAt(0) == '-' ? -1 : 1);
+      *charge = (cs.Length() == 1 ? s : s * cs.SubStringFrom(1).ToInt());
+      return e;
+    }
+    else {
+      int s = (cs.GetLast() == '-' ? -1 : 1);
+      *charge = (cs.Length() == 1 ? s : s * cs.SubStringFrom(0, 1).ToInt());
+      return e;
+    }
+  }
 }
 //..............................................................................
 cm_Element& XElementLib::GetByIndex(short ind) {

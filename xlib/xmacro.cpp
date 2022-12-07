@@ -3064,20 +3064,19 @@ void XLibMacros::macGenDisp(TStrObjList& Cmds, const TParamList& Options,
   ContentList content = rm.GetUserContent();
   // merge contents lists if needed
   {
-    olx_pset<short> uc_set;
+    olx_pset<int> uc_set;
     for (size_t i = 0; i < content.Count(); i++) {
-      uc_set.Add(content[i].element->GetIndex());
+      uc_set.Add(content[i].hashCode());
     }
     ContentList cc = rm.aunit.GetContentList((double)xf.GetUnitCell().MatrixCount());
     bool updated = false;
     for (size_t i = 0; i < cc.Count(); i++) {
-      if (cc[i].element->z <= 0  ||
-        uc_set.Contains(cc[i].element->GetIndex()))
-      {
+      int key = cc[i].hashCode();
+      if (cc[i].element->z <= 0 || uc_set.Contains(key)) {
         continue;
       }
       else {
-        uc_set.Add(cc[i].element->GetIndex());
+        uc_set.Add(key);
         content.AddCopy(cc[i]);
         updated = true;
       }
@@ -3089,12 +3088,17 @@ void XLibMacros::macGenDisp(TStrObjList& Cmds, const TParamList& Options,
   TStrList elms;
   if (!force) {
     size_t cnt = 0;
+    short flags = XScatterer::setDispersion | XScatterer::setMu;
+    if (full) {
+      flags |= XScatterer::setGaussian;
+    }
     for (size_t i = 0; i < content.Count(); i++) {
-      XScatterer* s = rm.FindSfacData(content[i].element->symbol);
-      if (s != 0 && s->IsSet(XScatterer::setDispersion | XScatterer::setMu)) {
+      olxstr cl = content[i].element->GetChargedLabel(content[i].charge);
+      XScatterer* s = rm.FindSfacData(cl);
+      if (s != 0 && s->IsSet(flags)) {
         continue;
       }
-      elms.Add(content[i].element->symbol);
+      elms.Add(cl);
     }
     if (elms.IsEmpty()) {
       return;

@@ -174,7 +174,7 @@ void TIns::LoadFromFile(const olxstr& fileName) {
 void TIns::LoadFromStrings(const TStrList& FileContent) {
   Clear();
   ParseContext cx(GetRM());
-  cm_Element& elmQPeak = XElementLib::GetByIndex(iQPeakIndex);
+  const cm_Element& elmQPeak = XElementLib::GetByIndex(iQPeakIndex);
   cx.Resi = &GetAsymmUnit().GetResidue(0);
   cx.ins = this;
   TStrList Toks, InsFile(FileContent);
@@ -836,7 +836,7 @@ bool TIns::ProcessSFAC(ParseContext& cx, const TStrList& Toks, bool update_rm) {
       else  if (NumberCount == 14) {
         olxstr lb(Toks[1].CharAt(0) == '$'
           ? Toks[1].SubStringFrom(1) : Toks[1]);
-        cm_Element* elm = XElementLib::FindBySymbolEx(lb);
+        const cm_Element* elm = XElementLib::FindBySymbolEx(lb);
         if (elm == 0) {
           throw TFunctionFailedException(__OlxSourceInfo,
             olxstr("Could not find suitable scatterer for ").quote()
@@ -864,16 +864,17 @@ bool TIns::ProcessSFAC(ParseContext& cx, const TStrList& Toks, bool update_rm) {
     }
     if (!expandedSfacProcessed) {
       for (size_t j = 1; j < Toks.Count(); j++) {
-        if (XElementLib::IsElement(Toks[j])) {
-          cx.BasicAtoms.Add(Toks[j], XElementLib::FindBySymbol(Toks[j]));
-          if (cx.BasicAtoms.GetLast().Object == 0) {
-            throw TFunctionFailedException(__OlxSourceInfo,
-              olxstr("Could not find suitable scatterer for ").quote()
-              << Toks[j]);
-          }
-          if (update_rm) {
-            cx.rm.AddUserContent(Toks[j]);
-          }
+        int charge = 0;
+        const cm_Element* e = XElementLib::FindBySymbol(Toks[j], &charge);
+        if (e == 0) {
+          throw TFunctionFailedException(__OlxSourceInfo,
+            olxstr("Could not find suitable scatterer for ").quote()
+            << Toks[j]);
+
+        }
+        cx.BasicAtoms.Add(Toks[j], e);
+        if (update_rm) {
+          cx.rm.AddUserContent(Toks[j]);
         }
       }
     }
@@ -1567,7 +1568,12 @@ TStrList::const_list_type TIns::SaveSfacUnit(const RefinementModel& rm,
         double en = rm.expl.GetRadiationEnergy();
         scp = (sd = new XScatterer(a.GetType(), en));
         sd->SetLabel(l);
-        sd->SetFpFdp(a.GetType().CalcFpFdp(en) - a.GetType().z);
+        try {
+          sd->SetFpFdp(a.GetType().CalcFpFdp(en) - a.GetType().z);
+        }
+        catch (...) {
+          //sd->SetFpFdp(0);
+        }
         try {
           double absorpc =
             ac.CalcMuOverRhoForE(en, ac.get(a.GetType().symbol));
@@ -2046,7 +2052,7 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm,
       ins.Add(Tmp);
     }
     else {
-      cm_Element* elm = XElementLib::FindBySymbolEx(Toks[1]);
+      const cm_Element* elm = XElementLib::FindBySymbolEx(Toks[1]);
       if (elm == 0) {// wrong SFAC
         throw TInvalidArgumentException(__OlxSourceInfo,
           "unknown element symbol");
@@ -2127,8 +2133,8 @@ void TIns::SavePattSolution(const olxstr& FileName,
     BasicAtoms.Add(GetRM().GetUserContent()[i].element);
   TSizeList Sfacs;
   for (size_t i = 0; i < atoms.Count(); i++) {
-    cm_Element* elm = XElementLib::FindBySymbolEx(atoms[i].GetName());
-    if (elm == NULL) {
+    const cm_Element* elm = XElementLib::FindBySymbolEx(atoms[i].GetName());
+    if (elm == 0) {
       throw TFunctionFailedException(__OlxSourceInfo,
         olxstr("Unknown element: ") << atoms[i].GetName());
     }
@@ -2138,13 +2144,15 @@ void TIns::SavePattSolution(const olxstr& FileName,
       BasicAtoms.Add(elm);
       Sfacs.Add(BasicAtoms.Count() - 1);
     }
-    else
+    else {
       Sfacs.Add(index);
+    }
   }
   TStrList SL;
   SL.Add("TITLE ") << GetTitle();
-  if (!comments.IsEmpty())
+  if (!comments.IsEmpty()) {
     SL.Add("REM ") << comments;
+  }
 
   SL.Add(_CellToString());
   SL.Add(_ZerrToString());

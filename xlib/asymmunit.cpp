@@ -927,7 +927,7 @@ void TAsymmUnit::TLabelChecker::SetLabel(TCAtom &a, const olxstr& label,
 //..............................................................................
 //..............................................................................
 double TAsymmUnit::CountElementOccupancy(const olxstr& Symbol) const {
-  cm_Element* elm = XElementLib::FindBySymbol(Symbol);
+  const cm_Element* elm = XElementLib::FindBySymbol(Symbol);
   if (elm == 0) {
     throw TInvalidArgumentException(__OlxSourceInfo,
       olxstr("unknown element: ").quote() << Symbol);
@@ -1339,7 +1339,7 @@ void TAsymmUnit::LibGetAtomCount(const TStrObjList& Params, TMacroData& E) {
     E.SetRetVal(AtomCount());
   }
   else {
-    cm_Element *atype = XElementLib::FindBySymbolEx(Params[0]);
+    const cm_Element *atype = XElementLib::FindBySymbolEx(Params[0]);
     if (atype == 0) {
       E.ProcessingError(__OlxSrcInfo, "Unknown atom type");
       return;

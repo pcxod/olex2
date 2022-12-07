@@ -38,7 +38,7 @@ public:
     void AddExceptions(const TStrList &e) {
       for (size_t i = 0; i < e.Count(); i++) {
         if (e[i].StartsFrom('$')) {
-          cm_Element *elm = XElementLib::FindBySymbol(e[i].SubStringFrom(1));
+          const cm_Element *elm = XElementLib::FindBySymbol(e[i].SubStringFrom(1));
           if (elm == 0) {
             throw TInvalidArgumentException(__OlxSourceInfo,
               olxstr("element ").quote() << e[i].SubStringFrom(1));

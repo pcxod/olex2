@@ -45,8 +45,8 @@ public:
   scatterer no found, throws exception
   */
   XScatterer(const olxstr& lbl, double energy) : mu(0), set_items(0) {
-    cm_Element* src = XElementLib::FindBySymbol(lbl);
-    if (src == NULL) {
+    const cm_Element* src = XElementLib::FindBySymbol(lbl);
+    if (src == 0) {
       throw TInvalidArgumentException(__OlxSourceInfo,
         olxstr("unknown scatterer symbol: ").quote() << lbl);
     }

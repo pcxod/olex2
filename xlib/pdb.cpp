@@ -208,7 +208,7 @@ void TPdb::LoadFromStrings(const TStrList& Strings) {
         CA.SetUiso(toks[12].ToDouble() / (8 * olx_sqr(M_PI)));
       }
       olxstr name = toks[2].TrimWhiteChars();
-      cm_Element *type = 0;
+      const cm_Element *type = 0;
       if (toks.Count() > 13) {
         type = XElementLib::FindBySymbol(toks[13].TrimWhiteChars());
       }

@@ -455,7 +455,7 @@ void ConnInfo::FromDataItem(const TDataItem& item) {
   Clear();
   TDataItem& ti_item = item.GetItemByName("TYPE");
   for (size_t i = 0; i < ti_item.ItemCount(); i++) {
-    cm_Element* elm = XElementLib::FindBySymbol(
+    const cm_Element* elm = XElementLib::FindBySymbol(
       ti_item.GetItemByIndex(i).GetName());
     if (elm == 0) {
       throw TInvalidArgumentException(__OlxSourceInfo,

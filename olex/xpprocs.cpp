@@ -808,7 +808,7 @@ void TMainForm::macPictPS(TStrObjList &Cmds, const TParamList &Options,
         }
       }
       else if (toks[i].CharAt(1) == '$') {  // atom type
-        cm_Element* elm = XElementLib::FindBySymbol(toks[i].SubStringFrom(2));
+        const cm_Element* elm = XElementLib::FindBySymbol(toks[i].SubStringFrom(2));
         if (elm == 0) {
           continue;
         }
@@ -842,7 +842,7 @@ void TMainForm::macPictPS(TStrObjList &Cmds, const TParamList &Options,
         }
       }
       else if (toks[i].CharAt(1) == '$') {  // atom type
-        cm_Element* elm = XElementLib::FindBySymbol(toks[i].SubStringFrom(2));
+        const cm_Element* elm = XElementLib::FindBySymbol(toks[i].SubStringFrom(2));
         if (elm == 0) {
           continue;
         }

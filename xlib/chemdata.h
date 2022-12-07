@@ -204,6 +204,19 @@ public:
   bool operator != (short _z) const {  return z != _z;  }
   int Compare(const cm_Element &e) const { return z - e.z; }
   const olxstr &GetSymbol() const { return symbol; }
+  
+  olxstr GetChargedLabel(int charge) const {
+    if (charge == 0) {
+      return symbol;
+    }
+    olxstr rv = symbol;
+    rv << olx_sign_char(charge);
+    if (olx_abs(charge) > 1) {
+      rv << olx_abs(charge);
+    }
+    return rv;
+  }
+  
   short GetIndex() const { return index; }
   friend class XElementLib;
 };
@@ -242,6 +255,11 @@ struct ElementCount {
   bool operator == (const ElementCount& e) const {
     return element == e.element && charge == e.charge;
   }
+  
+  int hashCode() const {
+    return element->GetIndex() + charge * 200;
+  }
+
   olxstr ToString() const {
     return ToString(*element, count, charge);
   }
@@ -305,7 +323,7 @@ public:
     return ev_angstrom/lambda;
   }
   // and exact symbol as C or Cr is expected
-  static cm_Element* FindBySymbol(const olxstr& symbol);
+  static cm_Element* FindBySymbol(const olxstr& symbol, int *charge=0);
   // for compatibility with old routines...
   static cm_Element& GetByIndex(short);
   // finds an element by Z
@@ -319,15 +337,15 @@ public:
   // extracts symbol from a label, like C for C1 or Cr for Cr2
   static const olxstr& ExtractSymbol(const olxstr& label)  {
     cm_Element* type = FindBySymbolEx(label);
-    return type == NULL ? EmptyString() : type->symbol;
+    return type == 0 ? EmptyString() : type->symbol;
   }
   // returns true if labels is a symbol
-  static bool IsElement(const olxstr& label) {
-    return FindBySymbol(label) != NULL;
+  static bool IsElement(const olxstr& label, int *charge=0) {
+    return FindBySymbol(label, charge) != 0;
   }
   // checks if p is a label starting from an element symbol
   static bool IsAtom(const olxstr& label)  {
-    return (FindBySymbolEx(label) != NULL);
+    return (FindBySymbolEx(label) != 0);
   }
 
   /* parses a string like C37H41P2BRhClO into a list of element names and their

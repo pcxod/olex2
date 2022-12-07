@@ -1185,8 +1185,9 @@ void TXFile::LibSetFormula(const TStrObjList& Params, TMacroData& E) {
       }
       const cm_Element* elm =
         XElementLib::FindBySymbol(toks[i].SubStringTo(ind));
-      if (elm == NULL)
+      if (elm == 0) {
         throw TInvalidArgumentException(__OlxSourceInfo, "element");
+      }
       content.AddNew(*elm,
         toks[i].SubStringFrom(ind + 1).ToDouble()*GetAsymmUnit().GetZ());
     }

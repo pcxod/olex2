@@ -587,7 +587,7 @@ void TCif::Initialize() {
     TCAtom& A = GetAsymmUnit().NewAtom(resi);
     A.SetLabel(label, false);
     A.SetPart(part);
-    cm_Element* type = 0;
+    const cm_Element* type = 0;
     if (ASymbol != InvalidIndex) {
       type = XElementLib::FindBySymbolEx(ALoop->Get(i, ASymbol).GetStringValue());
     }

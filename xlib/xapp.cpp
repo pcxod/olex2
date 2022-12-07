@@ -530,8 +530,8 @@ void TXApp::RingContentFromStr(const olxstr& Condition,
   }
 
   for (size_t i = 0; i < toks.Count(); i++) {
-    cm_Element* elm = XElementLib::FindBySymbol(toks[i]);
-    if (elm == NULL) {
+    const cm_Element* elm = XElementLib::FindBySymbol(toks[i]);
+    if (elm == 0) {
       throw TInvalidArgumentException(__OlxSourceInfo,
         olxstr("Unknown element: ") << toks[i]);
     }
@@ -541,7 +541,7 @@ void TXApp::RingContentFromStr(const olxstr& Condition,
 void TXApp::FindRings(const olxstr& Condition, TTypeList<TSAtomPList>& rings) {
   ElementPList ring;
   // external ring connectivity
-  TTypeList< ElementPList > extRing;
+  TTypeList<ElementPList> extRing;
   RingContentFromStr(Condition, ring);
   for (size_t i = 0; i < XFile().GetLattice().FragmentCount(); i++) {
     XFile().GetLattice().GetFragment(i).FindRings(ring, rings);
@@ -1019,20 +1019,24 @@ void TXApp::UpdateRadii(const olxstr &fn, const olxstr &rtype, bool log) {
     for (size_t i = 0; i < elements.ItemCount(); i++) {
       TDataItem &e = elements.GetItemByIndex(i);
       cm_Element* cme = XElementLib::FindBySymbol(e.GetName());
-      if (cme == NULL) {
+      if (cme == 0) {
         TBasicApp::NewLogEntry(logError) << "Undefined element: '" <<
           e.GetName() << '\'';
         continue;
       }
       for (size_t j = 0; j < e.FieldCount(); j++) {
-        if (e.GetFieldName(j).Equals("sfil"))
+        if (e.GetFieldName(j).Equals("sfil")) {
           cme->r_sfil = e.GetFieldByIndex(j).ToDouble();
-        else if (e.GetFieldName(j).Equals("pers"))
+        }
+        else if (e.GetFieldName(j).Equals("pers")) {
           cme->r_pers = e.GetFieldByIndex(j).ToDouble();
-        else if (e.GetFieldName(j).Equals("vdw"))
+        }
+        else if (e.GetFieldName(j).Equals("vdw")) {
           cme->r_vdw = e.GetFieldByIndex(j).ToDouble();
-        else if (e.GetFieldName(j).Equals("bonding"))
+        }
+        else if (e.GetFieldName(j).Equals("bonding")) {
           cme->r_bonding = e.GetFieldByIndex(j).ToDouble();
+        }
       }
     }
     if (log) {
@@ -1055,7 +1059,7 @@ void TXApp::UpdateRadii(const olxstr &fn, const olxstr &rtype, bool log) {
     if (rtype.Equalsi("sfil")) {
       for (size_t i = 0; i < radii.Count(); i++) {
         cm_Element* cme = XElementLib::FindBySymbol(radii.GetKey(i));
-        if (cme != NULL && cme->r_sfil != radii.GetValue(i)) {
+        if (cme != 0 && cme->r_sfil != radii.GetValue(i)) {
           cme->r_sfil = radii.GetValue(i);
           changed << cme->symbol;
         }
@@ -1064,7 +1068,7 @@ void TXApp::UpdateRadii(const olxstr &fn, const olxstr &rtype, bool log) {
     else if (rtype.Equalsi("pers")) {
       for (size_t i = 0; i < radii.Count(); i++) {
         cm_Element* cme = XElementLib::FindBySymbol(radii.GetKey(i));
-        if (cme != NULL && cme->r_pers != radii.GetValue(i)) {
+        if (cme != 0 && cme->r_pers != radii.GetValue(i)) {
           cme->r_pers = radii.GetValue(i);
           changed << cme->symbol;
         }
@@ -1073,7 +1077,7 @@ void TXApp::UpdateRadii(const olxstr &fn, const olxstr &rtype, bool log) {
     else if (rtype.Equalsi("vdw")) {
       for (size_t i = 0; i < radii.Count(); i++) {
         cm_Element* cme = XElementLib::FindBySymbol(radii.GetKey(i));
-        if (cme != NULL && cme->r_vdw != radii.GetValue(i)) {
+        if (cme != 0 && cme->r_vdw != radii.GetValue(i)) {
           cme->r_vdw = radii.GetValue(i);
           changed << cme->symbol;
         }
@@ -1082,7 +1086,7 @@ void TXApp::UpdateRadii(const olxstr &fn, const olxstr &rtype, bool log) {
     else if (rtype.Equalsi("bonding")) {
       for (size_t i = 0; i < radii.Count(); i++) {
         cm_Element* cme = XElementLib::FindBySymbol(radii.GetKey(i));
-        if (cme != NULL && cme->r_bonding != radii.GetValue(i)) {
+        if (cme != 0 && cme->r_bonding != radii.GetValue(i)) {
           cme->r_bonding = radii.GetValue(i);
           changed << cme->symbol;
         }

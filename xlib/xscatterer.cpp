@@ -18,7 +18,12 @@ void XScatterer::SetSource(const cm_Element& src, double energy) {
   Label = src.symbol;
   wt = src.GetMr();
   r = src.r_bonding;
-  fpfdp = src.CalcFpFdp(energy) - src.z;
+  try {
+    fpfdp = src.CalcFpFdp(energy) - src.z;
+  }
+  catch (...) {
+    fpfdp = 0;
+  }
   source = &src;
   set_items = setAll^setMu;
 }

@@ -1691,7 +1691,7 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
         !processed.Contains(&sn->Node(i)))
     {
       int change_evt = -1;
-      cm_Element* l_elm = &XElementLib::GetByIndex(sn->Node(i).GetTag());
+      const cm_Element* l_elm = &XElementLib::GetByIndex(sn->Node(i).GetTag());
       // change to only provided atoms if in the guess list
       if( proposed_atoms != 0 )  {
         if( proposed_atoms->IndexOf(l_elm) != InvalidIndex )  {
