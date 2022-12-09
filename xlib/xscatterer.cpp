@@ -10,7 +10,7 @@
 #include "xscatterer.h"
 
 void XScatterer::SetSource(const cm_Element& src, double energy) {
-  if (src.gaussians == NULL) {
+  if (src.gaussians == 0) {
     throw TInvalidArgumentException(__OlxSourceInfo,
       "given scatterer is only partially initialised");
   }
@@ -18,14 +18,15 @@ void XScatterer::SetSource(const cm_Element& src, double energy) {
   Label = src.symbol;
   wt = src.GetMr();
   r = src.r_bonding;
+  source = &src;
+  set_items = setAll ^ setMu;
   try {
     fpfdp = src.CalcFpFdp(energy) - src.z;
   }
   catch (...) {
     fpfdp = 0;
+    set_items ^= setDispersion;
   }
-  source = &src;
-  set_items = setAll^setMu;
 }
 //.............................................................................
 void XScatterer::Merge(const XScatterer& sc) {

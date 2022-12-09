@@ -1325,3 +1325,27 @@ ContentList& XElementLib::SortContentList(ContentList& cl) {
   return cl;
 }
 //..............................................................................
+ContentList& XElementLib::MergeCharges(ContentList& cl) {
+  size_t mc = 0;
+  for (size_t i = 0; i < cl.Count(); i++) {
+    if (cl.IsNull(i)) {
+      continue;
+    }
+    for (size_t j = i+1; j < cl.Count(); j++) {
+      if (cl.IsNull(j)) {
+        continue;
+      }
+      if (*cl[i].element == *cl[j].element) {
+        cl[i].count += cl[j].count;
+        cl.NullItem(j);
+        mc++;
+        continue;
+      }
+    }
+  }
+  if (mc > 0) {
+    cl.Pack();
+  }
+  return cl;
+}
+//..............................................................................

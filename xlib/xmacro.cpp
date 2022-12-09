@@ -3139,6 +3139,9 @@ void XLibMacros::macGenDisp(TStrObjList& Cmds, const TParamList& Options,
       Error.ProcessingError(__OlxSrcInfo, "Failed to extract data from cctbx");
       return;
     }
+    if (fn == "OK") { // nothing else needs to be done
+      return;
+    }
     TStrList e_lines(fn, ';');
     for (size_t i = 0; i < e_lines.Count(); i++) {
       TStrList e_toks(e_lines[i], ',');

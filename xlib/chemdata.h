@@ -361,6 +361,10 @@ public:
   descending; returns a reference to th provide ContentList
   */
   static ContentList& SortContentList(ContentList& cl);
+  /* merges charges charged entities, as the resuls the charge becomes
+  meaningless
+  */
+  static ContentList& MergeCharges(ContentList& cl);
 
   // checks if a string is a shortcut for element group
   static bool IsElementShortcut(const olxstr& c)  {

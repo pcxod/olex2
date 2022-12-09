@@ -1118,9 +1118,10 @@ void TXFile::LibGetFormula(const TStrObjList& Params, TMacroData& E)  {
     digits = Params[1].IsEmpty() ? -1 : Params[1].ToInt();
   }
   bool au = Params.Count() > 2 ? Params[2].ToBool() : false;
-  const ContentList& content = au ? GetAsymmUnit().GetContentList(
+  ContentList content = au ? GetAsymmUnit().GetContentList(
       GetAsymmUnit().GetZ()/GetAsymmUnit().GetZPrime())
     : GetRM().GetUserContent();
+  XElementLib::MergeCharges(content);
   olxstr rv;
   for (size_t i=0; i < content.Count(); i++) {
     rv << content[i].element->symbol;
@@ -1312,7 +1313,7 @@ void TXFile::LibGetF000(const TStrObjList& Params, TMacroData& E) {
   double r_e = GetRM().expl.GetRadiationEnergy();
   double F000 = 0;
   for (size_t i = 0; i < cont.Count(); i++) {
-    XScatterer *xs = GetRM().FindSfacData(cont[i].element->symbol);
+    XScatterer *xs = GetRM().FindSfacData(cont[i].element->GetChargedLabel(cont[i].charge));
     compd f0 = round(cont[i].element->gaussians->calc_sq(0));
     bool processed = false;
     if (xs != 0) {

@@ -715,6 +715,7 @@ ContentList::const_list_type TAsymmUnit::GetContentList(double mult) const {
 //..............................................................................
 olxstr TAsymmUnit::_SummFormula(const olxstr &Sep, double mult) const {
   ContentList cl = GetContentList(mult);
+  XElementLib::MergeCharges(cl);
   olxstr rv;
   for (size_t i = 0; i < cl.Count(); i++) {
     rv << cl[i].element->symbol;

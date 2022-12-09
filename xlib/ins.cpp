@@ -1569,12 +1569,6 @@ TStrList::const_list_type TIns::SaveSfacUnit(const RefinementModel& rm,
         scp = (sd = new XScatterer(a.GetType(), en));
         sd->SetLabel(l);
         try {
-          sd->SetFpFdp(a.GetType().CalcFpFdp(en) - a.GetType().z);
-        }
-        catch (...) {
-          //sd->SetFpFdp(0);
-        }
-        try {
           double absorpc =
             ac.CalcMuOverRhoForE(en, ac.get(a.GetType().symbol));
           sd->SetMu(absorpc*a.GetType().GetMr() / 0.6022142);
@@ -1586,7 +1580,12 @@ TStrList::const_list_type TIns::SaveSfacUnit(const RefinementModel& rm,
         }
       }
       TStrList lines;
-      HyphenateIns(sd->ToInsString(), lines);
+      try {
+        HyphenateIns(sd->ToInsString(), lines);
+      }
+      catch (...) {
+        lines.Add("SFAC") << ' ' << sd->GetLabel();
+      }
       list.Insert(pos, lines);
       pos += lines.Count();
       sfac << l;
