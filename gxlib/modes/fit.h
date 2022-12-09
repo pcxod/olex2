@@ -114,6 +114,7 @@ public:
     AtomsToMatch.Clear();
     SetUserCursor('0', "<F>");
     TXAtomPList xatoms = gxapp.GetSelection().Extract<TXAtom>();
+    xatoms.Pack(TSAtom::TypeAnalyser(iQPeakZ));
     undo = new TFitModeUndo(xatoms);
     original_crds.SetCount(xatoms.Count());
     for (size_t i = 0; i < xatoms.Count(); i++) {
