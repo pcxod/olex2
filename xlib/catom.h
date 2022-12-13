@@ -100,7 +100,8 @@ private:
   uint32_t FragmentId,
     ResiId;
   uint16_t SameId, Flags;
-  int16_t PartAndCharge;
+  // lower 8 bits - part, 9-10 - chirality, 10-16 - charge
+  int16_t PartAndChargeAndChirality;
   double
     Occu,  // occupancy and its variable
     OccuEsd,
@@ -197,15 +198,38 @@ public:
   DefPropP(TExyzGroup*, ExyzGroup);
   DefPropP(double, SpecialPositionDeviation);
 
-  int GetPart() const { return (int)(int8_t)(PartAndCharge & 0x00ff); }
+  int GetPart() const { return (int)(int8_t)(PartAndChargeAndChirality & 0x00ff); }
   void SetPart(int v) {
-    PartAndCharge = (PartAndCharge & 0xff00) | (uint8_t)v;
+    PartAndChargeAndChirality = (PartAndChargeAndChirality & 0xff00) | (uint8_t)v;
   }
-  int GetCharge() const { return (int)(int8_t)((PartAndCharge & 0xff00) >> 8); }
+  int GetCharge() const { return (int)(int8_t)((PartAndChargeAndChirality & 0xff00) >> 10); }
   void SetCharge(int v) {
-    PartAndCharge = ((int16_t)v << 8) | (PartAndCharge & 0x00ff);
+    PartAndChargeAndChirality = ((int16_t)v << 10) | (PartAndChargeAndChirality & 0x03ff);
   }
 
+  bool IsChiral() const {
+    return (PartAndChargeAndChirality & 0x0300) != 0;
+  }
+
+  void ClearChiralFlag() {
+    PartAndChargeAndChirality &= ~0x0300;
+  }
+
+  bool IsChiralR() const {
+    return (PartAndChargeAndChirality & 0x0100) != 0;
+  }
+
+  void SetChiralR(bool v) {
+    olx_set_bit(v, PartAndChargeAndChirality, 0x0100);
+  }
+
+  bool IsChiralS() const {
+    return (PartAndChargeAndChirality & 0x0200) != 0;
+  }
+
+  void SetChiralS(bool v) {
+    olx_set_bit(v, PartAndChargeAndChirality, 0x0200);
+  }
   // returns multiplicity of the position
   size_t GetDegeneracy() const { return EquivCount() + 1; }
   // used by TUnitCell to initialise position symmetry

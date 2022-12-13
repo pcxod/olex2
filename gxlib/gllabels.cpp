@@ -46,7 +46,9 @@ void TXGlLabels::Clear()  {  Marks.Clear();  }
 void TXGlLabels::RenderLabel(const vec3d &crd, const olxstr &label,
   size_t index, TXGlLabels::RenderContext &rc) const
 {
-  if (label.IsEmpty())  return;
+  if (label.IsEmpty()) {
+    return;
+  }
   rc.primitive.SetString(&label);
   const double Z = Parent.CalcRasterZ(0.001);
   if (!rc.font.IsVectorFont()) {
@@ -255,6 +257,22 @@ bool TXGlLabels::Orient(TGlPrimitive& P) {
         Tmp << ", " << ':' << ca.GetSameId();
       }
 #endif
+      if ((Mode & lmChirality) != 0 && ca.IsChiral()) {
+        if (ca.IsChiralR()) {
+          Tmp << ", " << 'R';
+        }
+        else if (ca.IsChiralS()) {
+          Tmp << ", " << 'S';
+        }
+      }
+      if ((Mode & lmCharge) != 0 && ca.GetCharge() != 0) {
+        if (ca.GetCharge() > 0) {
+          Tmp << ", +" << ca.GetCharge();
+        }
+        else {
+          Tmp << ", " << ca.GetCharge();
+        }
+      }
       if (!Tmp.IsEmpty()) {
         Tmp = Tmp.SubStringFrom(2);
         RenderLabel(XA.crd(), Tmp, i, rc);

@@ -507,6 +507,7 @@
     <ClCompile Include="..\..\..\xlib\atomregistry.cpp" />
     <ClCompile Include="..\..\..\xlib\auto.cpp" />
     <ClCompile Include="..\..\..\xlib\calc_ext.cpp" />
+    <ClCompile Include="..\..\..\xlib\chirality.cpp" />
     <ClCompile Include="..\..\..\xlib\constraints_ext.cpp" />
     <ClCompile Include="..\..\..\xlib\hall.cpp" />
     <ClCompile Include="..\..\..\xlib\infotab.cpp" />

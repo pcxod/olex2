@@ -988,6 +988,7 @@ void TAsymmUnit::ChangeSpaceGroup(const TSpaceGroup& sg) {
       Matrices.AddCopy(sg.GetMatrix(i));
     }
   }
+  olx_list_call(CAtoms, &TCAtom::ClearChiralFlag);
 }
 //..............................................................................
 double TAsymmUnit::CalcCellVolume() const {

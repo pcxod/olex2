@@ -79,6 +79,7 @@ namespace alg {
   */
   double rate_envi(const TUnitCell &uc, const vec3d& fcrd, double r);
 }; // end namespace alg
+
 namespace helper {
   ConstSortedElementPList get_user_elements();
   // resets the atom ADP
@@ -481,6 +482,14 @@ public:
 
   static TLibrary *ExportLibrary(const olxstr& name = "analysis");
 };
+
+namespace chirality {
+  /* analysis R/S chirality of the atoms and if the atom is chiral - 
+  returns a string of substituents. Forn no chiral atoms returns an empty
+  string.
+  */
+  olxstr rsa_analyse(TCAtom &a, bool debug=false);
+}; // namespace chirality
 }; // end namespace olx_analysis
 EndXlibNamespace()
 #endif

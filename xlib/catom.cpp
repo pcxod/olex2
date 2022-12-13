@@ -20,7 +20,7 @@ olxstr TCAtom::VarNames[] = {"Scale", "X", "Y", "Z", "Sof",
   "Uiso", "U11", "U22", "U33", "U23", "U13", "U12"};
 
 TCAtom::TCAtom(TAsymmUnit* _Parent) : Parent(_Parent)  {
-  PartAndCharge = 0;
+  PartAndChargeAndChirality = 0;
   Occu   = 1;
   QPeak  = 0;
   SetId(0);

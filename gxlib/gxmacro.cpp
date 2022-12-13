@@ -119,27 +119,29 @@ void GXLibMacros::Export(TLibrary& lib) {
   gxlib_InitMacro(TelpV, EmptyString(), fpOne,
     "Calculates ADP scale for given thermal probability (in %)");
   gxlib_InitMacro(Labels,
-    "p-part&;"
-    "l-label&;"
-    "s-SPEC&;"
-    "v-variables&;"
-    "o-occupancy&;"
-    "co-chemical occupancy&;"
     "a-afix&;"
-    "h-show hydrogen atom labels&;"
-    "f-fixed parameters&;"
-    "u-Uiso&;"
-    "r-Uiso multiplier for riding atoms&;"
     "ao-actual occupancy (as in the ins file)&;"
-    "qi-Q peak intensity&;"
-    "i-display labels for identity atoms only&;"
     "b-bond lengths&;"
+    "co-chemical occupancy&;"
+    "c-charge&;"
+    "ch-chiraliry&;"
+    "f-fixed parameters&;"
+    "h-show hydrogen atom labels&;"
+    "i-display labels for identity atoms only&;"
+    "l-label&;"
+    "o-occupancy&;"
+    "p-part&;"
+    "qi-Q peak intensity&;"
+    "r-Uiso multiplier for riding atoms&;"
     "rn-residue number&;"
     "rc-residue class&;"
+    "s-SPEC&;"
+    "v-variables&;"
+    "u-Uiso&;"
     ,
     fpAny,
-    "Shows/hides atom labels. Takes no argument is given to invert current "
-    "labels visibility or a boolean value");
+    "Shows/hides atom labels. Options may work as argument too. No options/args toggles the"
+    "labels visibility [a boolean value can be used as an arg]");
   gxlib_InitMacro(Label,
     "type-type of labels to make - subscript, brackers, default&;"
     "symm-symmetry dependent tag type {[$], #, X, full}&;"
@@ -1183,7 +1185,30 @@ void GXLibMacros::macInfo(TStrObjList &Cmds, const TParamList &Options,
 void GXLibMacros::macLabels(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
+  static olxstr_dict<uint32_t> opts;
+  if (opts.IsEmpty()) {
+    opts.Add("a", lmAfix);
+    opts.Add("ao", lmAOcc);
+    opts.Add("b", lmBonds);
+    opts.Add("c", lmCharge);
+    opts.Add("ch", lmChirality);
+    opts.Add("co", lmCOccu);
+    opts.Add("f", lmFixed);
+    opts.Add("h", lmHydr);
+    opts.Add("i", lmIdentity);
+    opts.Add("l", lmLabels);
+    opts.Add("o", lmOccp);
+    opts.Add("p", lmPart);
+    opts.Add("u", lmUiso);
+    opts.Add("r", lmUisR);
+    opts.Add("qi", lmQPeakI);
+    opts.Add("rn", lmResiNumber);
+    opts.Add("rc", lmResiName);
+    opts.Add("s", lmSpec);
+    opts.Add("v", lmOVar);
+  }
   uint32_t lmode = 0;
+
   if (Options.IsEmpty()) {
     TGlGroup &sel = app.GetSelection();
     bool bonds_only = true;
@@ -1198,23 +1223,12 @@ void GXLibMacros::macLabels(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   else {
-    if (Options.Contains('p'))   lmode |= lmPart;
-    if (Options.Contains('l'))   lmode |= lmLabels;
-    if (Options.Contains('v'))   lmode |= lmOVar;
-    if (Options.Contains('o'))   lmode |= lmOccp;
-    if (Options.Contains("ao"))  lmode |= lmAOcc;
-    if (Options.Contains('u'))   lmode |= lmUiso;
-    if (Options.Contains('r'))   lmode |= lmUisR;
-    if (Options.Contains('a'))   lmode |= lmAfix;
-    if (Options.Contains('h'))   lmode |= lmHydr;
-    if (Options.Contains('f'))   lmode |= lmFixed;
-    if (Options.Contains("qi"))  lmode |= lmQPeakI;
-    if (Options.Contains('i'))   lmode |= lmIdentity;
-    if (Options.Contains("co"))  lmode |= lmCOccu;
-    if (Options.Contains("s"))  lmode |= lmSpec;
-    if (Options.Contains("b"))  lmode |= lmBonds;
-    if (Options.Contains("rn"))  lmode |= lmResiNumber;
-    if (Options.Contains("rc"))  lmode |= lmResiName;
+    for (size_t i = 0; i < Options.Count(); i++) {
+      uint32_t ov = opts.Find(Options.GetName(i), -1);
+      if (ov != -1) {
+        lmode |= ov;
+      }
+    }
   }
   if (lmode == 0) {
     lmode |= lmLabels;

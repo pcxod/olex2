@@ -1731,6 +1731,7 @@ void TLattice::TransformFragments(const TSAtomPList& fragAtoms,
       "Cannot perform this operation on grown structure";
     return;
   }
+  olx_list_call(GetAsymmUnit().GetAtoms(), &TCAtom::ClearChiralFlag);
   bool update_equiv = true;
   try {
     smatd m = transform;

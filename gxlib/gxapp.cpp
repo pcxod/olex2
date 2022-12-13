@@ -25,6 +25,7 @@
 #include "symmparser.h"
 #include "efile.h"
 #include "xlattice.h"
+#include "analysis.h"
 #include "egc.h"
 #include "eutf8.h"
 #include "ememstream.h"
@@ -3348,7 +3349,19 @@ void TGXApp::SetLabelsVisible(bool v)  {
     UpdateDuplicateLabels();
 }
 //..............................................................................
-void TGXApp::SetLabelsMode(uint32_t lmode)  {  FLabels->SetMode(lmode); }
+void TGXApp::SetLabelsMode(uint32_t lmode)  {
+  if ((lmode & lmChirality) != 0) {
+    TAsymmUnit& au = XFile().GetAsymmUnit();
+    for (size_t i = 0; i < au.AtomCount(); i++) {
+      TCAtom& a = au.GetAtom(i);
+      if (a.IsDeleted() || a.GetType() < 2 || a.AttachedSiteCount() < 4) {
+        continue;
+      }
+      olx_analysis::chirality::rsa_analyse(a, false);
+    }
+  }
+  FLabels->SetMode(lmode);
+}
 //..............................................................................
 short TGXApp::GetLabelsMode()      const {  return FLabels->GetMode(); }
 //..............................................................................
