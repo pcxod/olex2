@@ -139,7 +139,7 @@ void GXLibMacros::Export(TLibrary& lib) {
     "v-variables&;"
     "u-Uiso&;"
     ,
-    fpAny,
+    fpAny|fpAny_Options,
     "Shows/hides atom labels. Options may work as argument too. No options/args toggles the"
     "labels visibility [a boolean value can be used as an arg]");
   gxlib_InitMacro(Label,
@@ -1102,7 +1102,9 @@ void GXLibMacros::macBRad(TStrObjList &Cmds, const TParamList &Options,
   TXBondPList bonds;
   bool absolute = Options.GetBoolOption('a');
   if (Cmds.Count() == 1 && Cmds[0].Equalsi("hbonds")) {
-    if (absolute) r /= 0.02;
+    if (absolute) {
+      r /= 0.02f;
+    }
     TGXApp::BondIterator bi = app.GetBonds();
     bonds.SetCapacity(bi.count/10);
     while (bi.HasNext()) {
@@ -1113,15 +1115,18 @@ void GXLibMacros::macBRad(TStrObjList &Cmds, const TParamList &Options,
     app.BondRad(r, &bonds);
   }
   else {
-    if (absolute) r /= 0.1f;
+    if (absolute) {
+      r /= 0.1f;
+    }
     bonds = app.GetBonds(Cmds, true);
     if (bonds.IsEmpty() && Cmds.IsEmpty()) {  // get all non-H
       TGXApp::BondIterator bi = app.GetBonds();
       bonds.SetCapacity(bi.count);
       while (bi.HasNext()) {
         TXBond& xb = bi.Next();
-        if (xb.GetType() != sotHBond)
+        if (xb.GetType() != sotHBond) {
           bonds.Add(xb);
+        }
       }
       TXBond::GetSettings(app.GetRenderer()).SetRadius(r);
       TDRing::GetSettings(app.GetRenderer()).SetTubeR(r / 13.3);
@@ -1223,10 +1228,29 @@ void GXLibMacros::macLabels(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   else {
-    for (size_t i = 0; i < Options.Count(); i++) {
-      uint32_t ov = opts.Find(Options.GetName(i), -1);
-      if (ov != -1) {
-        lmode |= ov;
+    if (Options.Count() == 1) {
+      const olxstr& o = Options.GetName(0);
+      for (size_t i = 0; i < o.Length(); i++) {
+        if ((i + 1) < o.Length()) {
+          uint32_t ov = opts.Find(o.SubString(i, 2), ~0);
+          if (ov != ~0) {
+            lmode |= ov;
+            i++;
+            continue;
+          }
+        }
+        uint32_t ov = opts.Find(o.CharAt(i), -1);
+        if (ov != -1) {
+          lmode |= ov;
+        }
+      }
+    }
+    else {
+      for (size_t i = 0; i < Options.Count(); i++) {
+        uint32_t ov = opts.Find(Options.GetName(i), -1);
+        if (ov != -1) {
+          lmode |= ov;
+        }
       }
     }
   }
@@ -3174,8 +3198,9 @@ void GXLibMacros::macCalcVoid(TStrObjList &Cmds, const TParamList &Options,
   TBasicApp::NewLogEntry() << "Extra distance from the surface: " << surfdis;
 
   float resolution = Options.FindValue("r", "0.2").ToFloat();
-  if( resolution < 0.005 )
-    resolution = 0.005;
+  if (resolution < 0.005f) {
+    resolution = 0.005f;
+  }
   rv('r', resolution);
   resolution = 1.0f/resolution;
   const vec3i dim(au.GetAxes()*resolution);

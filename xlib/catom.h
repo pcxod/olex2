@@ -100,7 +100,7 @@ private:
   uint32_t FragmentId,
     ResiId;
   uint16_t SameId, Flags;
-  // lower 8 bits - part, 9-10 - chirality, 10-16 - charge
+  // lower 8 bits - part, 9-10 - chirality, 11-15 - charge, 16 - charge sign
   int16_t PartAndChargeAndChirality;
   double
     Occu,  // occupancy and its variable
@@ -202,9 +202,18 @@ public:
   void SetPart(int v) {
     PartAndChargeAndChirality = (PartAndChargeAndChirality & 0xff00) | (uint8_t)v;
   }
-  int GetCharge() const { return (int)(int8_t)((PartAndChargeAndChirality & 0xff00) >> 10); }
+  int GetCharge() const {
+    int c = ((PartAndChargeAndChirality & 0x7c00) >> 10);
+    return PartAndChargeAndChirality & 0x8000 ? -c : c;
+  }
   void SetCharge(int v) {
-    PartAndChargeAndChirality = ((int16_t)v << 10) | (PartAndChargeAndChirality & 0x03ff);
+    if (v < 0) {
+      PartAndChargeAndChirality = ((int16_t)(-v) << 10) | (PartAndChargeAndChirality & 0x03ff)
+        | 0x8000;
+    }
+    else {
+      PartAndChargeAndChirality = ((int16_t)v << 10) | (PartAndChargeAndChirality & 0x03ff);
+    }
   }
 
   bool IsChiral() const {
@@ -220,7 +229,7 @@ public:
   }
 
   void SetChiralR(bool v) {
-    olx_set_bit(v, PartAndChargeAndChirality, 0x0100);
+    PartAndChargeAndChirality = (PartAndChargeAndChirality & ~0x0300) | 0x0100;
   }
 
   bool IsChiralS() const {
@@ -228,7 +237,7 @@ public:
   }
 
   void SetChiralS(bool v) {
-    olx_set_bit(v, PartAndChargeAndChirality, 0x0200);
+    PartAndChargeAndChirality = (PartAndChargeAndChirality & ~0x0300) | 0x0200;
   }
   // returns multiplicity of the position
   size_t GetDegeneracy() const { return EquivCount() + 1; }

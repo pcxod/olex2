@@ -920,7 +920,7 @@ void XLibMacros::macInv(TStrObjList &Cmds, const TParamList &Options,
   // forces inversion for sg without center of inversion
   bool Force = Options.Contains("f");
   TXApp& xapp = TXApp::GetInstance();
-  TSpaceGroup* sg = NULL;
+  TSpaceGroup* sg = 0;
   try { sg = &xapp.XFile().GetLastLoaderSG(); }
   catch (...) {
     Error.ProcessingError(__OlxSrcInfo, "unknown file space group");
@@ -966,7 +966,7 @@ void XLibMacros::macInv(TStrObjList &Cmds, const TParamList &Options,
   xapp.XFile().GetLattice().TransformFragments(atoms, tm);
   size_t s_c = specials.IndexOf(sg->GetName());
   if (s_c != InvalidIndex) {
-    TBasicApp::NewLogEntry() << "Changing spacegroup from "
+    TBasicApp::NewLogEntry() << "Changing space group from "
       << specials.GetKey(s_c) << " to " << specials.GetValue(s_c);
     sg = TSymmLib::GetInstance().FindGroupByName(specials.GetValue(s_c));
     if (sg == 0) {
@@ -983,6 +983,11 @@ void XLibMacros::macInv(TStrObjList &Cmds, const TParamList &Options,
     TBasicApp::NewLogEntry() << "Please note that only visible fragments have been "
       "transformed. Reload the file to undo the transformation and use 'fmol' "
       "to show all fragments.";
+  }
+  IOlex2Processor* op = IOlex2Processor::GetInstance();
+  if (op != 0) {
+    op->processMacro("move");
+    op->processMacro("center");
   }
 }
 //.............................................................................
@@ -1252,17 +1257,17 @@ void XLibMacros::macSort(TStrObjList &Cmds, const TParamList &Options,
   }
 }
 //.............................................................................
-void XLibMacros::macRun(TStrObjList &Cmds, const TParamList &Options, TMacroData &Error)  {
+void XLibMacros::macRun(TStrObjList& Cmds, const TParamList& Options, TMacroData& Error) {
   using namespace olex2;
   IOlex2Processor* op = IOlex2Processor::GetInstance();
-  if( op == NULL ) {
+  if (op == 0) {
     throw TFunctionFailedException(__OlxSourceInfo,
       "this function requires Olex2 processor implementation");
   }
   TStrList allCmds = TParamList::StrtokLines(Cmds.Text(' '), ">>");
-  for( size_t i=0; i < allCmds.Count(); i++ )  {
-    if( !op->processMacro(allCmds[i]) )  {
-      if( (i+1) < allCmds.Count() ) {
+  for (size_t i = 0; i < allCmds.Count(); i++) {
+    if (!op->processMacro(allCmds[i])) {
+      if ((i + 1) < allCmds.Count()) {
         TBasicApp::NewLogEntry(logError) <<
           "Not all macros in the provided list were executed";
       }
@@ -11483,7 +11488,7 @@ void XLibMacros::macConvert(TStrObjList &Cmds, const TParamList &Options,
 void XLibMacros::macSetCharge(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
-  uint8_t ch = Cmds[0].ToInt();
+  int8_t ch = Cmds[0].ToInt();
   TXApp &app = TXApp::GetInstance();
   TSAtomPList atoms = app.FindSAtoms(Cmds.SubListFrom(1), true);
   for (size_t i = 0; i < atoms.Count(); i++) {

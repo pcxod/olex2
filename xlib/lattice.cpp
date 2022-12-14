@@ -1731,7 +1731,6 @@ void TLattice::TransformFragments(const TSAtomPList& fragAtoms,
       "Cannot perform this operation on grown structure";
     return;
   }
-  olx_list_call(GetAsymmUnit().GetAtoms(), &TCAtom::ClearChiralFlag);
   bool update_equiv = true;
   try {
     smatd m = transform;
@@ -1751,8 +1750,10 @@ void TLattice::TransformFragments(const TSAtomPList& fragAtoms,
   if (update_equiv) {
     GetAsymmUnit().GetRefMod()->BeforeAUUpdate_();
   }
-  for (size_t i = 0; i < fragAtoms.Count(); i++)
+  for (size_t i = 0; i < fragAtoms.Count(); i++) {
     fragAtoms[i]->GetNetwork().SetTag(i);
+    fragAtoms[i]->CAtom().ClearChiralFlag();
+  }
 
   for (size_t i=0; i < fragAtoms.Count(); i++) {
     if ((size_t)fragAtoms[i]->GetNetwork().GetTag() == i) {
