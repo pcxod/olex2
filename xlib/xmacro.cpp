@@ -561,6 +561,7 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(RRings,
     "cs-do not clear selection&;"
     "i-generate implicit restraints&;"
+    "t-use the selection as a ring template rather than actual ring"
     ,
     fpAny,
     "Makes all provided rings [like C6 or NC5] regular (flat and all distances"
@@ -9286,8 +9287,18 @@ void XLibMacros::macRRings(TStrObjList& Cmds, const TParamList& Options,
   XLibMacros::Parse(Cmds, "dd", &l, &e);
   TTypeList<TSAtomPList> rings;
   TXApp& app = TXApp::GetInstance();
-  olxstr cmd = Cmds.IsEmpty() ? olxstr("sel") : Cmds[0];
+  olxstr cmd;
+  if (Cmds.IsEmpty()) {
+    cmd = "sel";
+    if (Options.GetBoolOption('t')) {
+      cmd << 't';
+    }
+  }
+  else {
+    cmd = Cmds[0];
+  }
   try {
+    
     app.FindRings(cmd, rings);
     if (rings.Count() == 0) {
       TBasicApp::NewLogEntry() << "No rings found, stopping...";

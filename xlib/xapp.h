@@ -133,8 +133,15 @@ public:
   void NameHydrogens(TSAtom& a, TAsymmUnit::TLabelChecker &lc, TUndoData* ud);
   // fixes hydrogen atom labels
   TUndoData* FixHL();
+  /* rearranges atoms to follow a ring and returns true if a ring sequence is 
+  found; modifies tags of the given atoms and their immediate environment
+  */
+  static bool TXApp::GetRingSequence(TSAtomPList& atoms);
   static void RingContentFromStr(const olxstr& textDescr,
     ElementPList& ringDesc);
+  /* Condition could be a ring template like C2N2C2, or 'sel' to apply to the
+  selected ring or 'selt' - to use the selected ring as a template
+  */
   void FindRings(const olxstr& Condition, TTypeList<TSAtomPList>& rings);
   //
   olx_object_ptr<TSAtomPList> FindSAtomsWhere(const olxstr& Where);

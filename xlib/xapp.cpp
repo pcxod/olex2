@@ -538,13 +538,77 @@ void TXApp::RingContentFromStr(const olxstr& Condition,
     ringDesc.Add(elm);
   }
 }
+
+bool TXApp::GetRingSequence(TSAtomPList& atoms) {
+  if (atoms.Count() < 3) {
+    return false;
+  }
+  // mask the given atoms with tag i+1
+  for (size_t i = 0; i < atoms.Count(); i++) {
+    TSAtom& a = *atoms[i];
+    for (size_t j = 0; j < a.NodeCount(); j++) {
+      a.Node(j).SetTag(0);
+    }
+  }
+  for (size_t i = 0; i < atoms.Count(); i++) {
+    atoms[i]->SetTag(i + 1);
+  }
+  for (size_t i = 0; i < atoms.Count()-1; i++) {
+    TSAtom& a = *atoms[i];
+    bool found = false;
+    a.SetTag(-1);
+    for (size_t j = 0; j < a.NodeCount(); j++) {
+      if (a.Node(j).GetTag() > 0) {
+        if (a.Node(j).GetTag() != i + 1) {
+          size_t tag = a.Node(j).GetTag();
+          atoms[i + 1]->SetTag(tag);
+          atoms[tag - 1]->SetTag(i + 2);
+          atoms.Swap(tag - 1, i + 1);
+          found = true;
+          break;
+        }
+      }
+    }
+    if (!found) {
+      return false;
+    }
+  }
+  // now that the 'tail' is connected to the 'head'
+  {
+    TSAtom& tail = *atoms.GetLast();
+    for (size_t i = 0; i < tail.NodeCount(); i++) {
+      if (tail.Node(i).GetOwnerId() == atoms[0]->GetOwnerId()) {
+        return true;
+      }
+    }
+  }
+  return true;
+}
+
 void TXApp::FindRings(const olxstr& Condition, TTypeList<TSAtomPList>& rings) {
   ElementPList ring;
-  // external ring connectivity
-  TTypeList<ElementPList> extRing;
-  RingContentFromStr(Condition, ring);
-  for (size_t i = 0; i < XFile().GetLattice().FragmentCount(); i++) {
-    XFile().GetLattice().GetFragment(i).FindRings(ring, rings);
+  if (Condition.StartsFrom("sel")) {
+    TSAtomPList atoms(GetSelected().obj(), DynamicCastAccessor<TSAtom>());
+    atoms.Pack();
+    if (!GetRingSequence(atoms)) {
+      TBasicApp::NewLogEntry() << "The selection is not a ring";
+      return;
+    }
+    if (Condition.EndsWith("t")) {
+      ring = ElementPList(atoms,
+        FunctionAccessor::MakeConst(&TSAtom::GetType));
+    }
+    else {
+      rings.AddCopy(atoms);
+    }
+  }
+  else {
+    RingContentFromStr(Condition, ring);
+  }
+  if (rings.IsEmpty()) {
+    for (size_t i = 0; i < XFile().GetLattice().FragmentCount(); i++) {
+      XFile().GetLattice().GetFragment(i).FindRings(ring, rings);
+    }
   }
 
   for (size_t i = 0; i < rings.Count(); i++) {
