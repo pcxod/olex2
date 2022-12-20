@@ -9289,6 +9289,10 @@ void XLibMacros::macRRings(TStrObjList& Cmds, const TParamList& Options,
   olxstr cmd = Cmds.IsEmpty() ? olxstr("sel") : Cmds[0];
   try {
     app.FindRings(cmd, rings);
+    if (rings.Count() == 0) {
+      TBasicApp::NewLogEntry() << "No rings found, stopping...";
+      return;
+    }
   }
   catch (const TExceptionBase& exc) {
     throw TFunctionFailedException(__OlxSourceInfo, exc);

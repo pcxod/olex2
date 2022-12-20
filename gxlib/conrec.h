@@ -105,12 +105,12 @@ public:
           Each triangle is then indexed by the parameter m, and the 3
           vertices of each triangle are indexed by parameters m1,m2,and m3.
           It is assumed that the centre of the box is always vertex 2
-          though this isimportant only when all 3 vertices lie exactly on
+          though this is important only when all 3 vertices lie exactly on
           the same contour level, in which case only the side of the box
           is drawn.
           vertex 4 +-------------------+ vertex 3
           | \               / |
-          |   \    m-3    /   |
+          |   \    m=3    /   |
           |     \       /     |
           |       \   /       |
           |  m=2    X   m=2   |       the centre is vertex 0

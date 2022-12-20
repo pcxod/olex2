@@ -39,7 +39,7 @@ protected:
   /* Adds a macro or a function to the given container. If an object with the
   same name and number of arguments already exists and replace is set to false
   the TDuplicateEntry exception will be thrown. Otherwise, if do_return is
-  set to true, the duplicate object will be return or delete if it is set to
+  set to true, the duplicate object will be returned or deleted if it is set to
   false. Note that if the description of the fm is empty - the description of
   the previous function will be copied to
   */
