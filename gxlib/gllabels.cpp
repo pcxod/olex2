@@ -189,10 +189,9 @@ bool TXGlLabels::Orient(TGlPrimitive& P) {
       }
       if ((Mode & lmCOccu) != 0) {
         const double val = ca.GetChemOccu();
-        if (olx_abs(val - 1) < 1e-5) {
-          continue;
+        if (olx_abs(val - 1) > 1e-5) {
+          Tmp << ", " << olxstr::FormatFloat(3, val);
         }
-        Tmp << ", " << olxstr::FormatFloat(3, val);
       }
       if ((Mode & lmUiso) != 0 && ca.GetUisoOwner() == 0) {
         Tmp << ", " << olxstr::FormatFloat(2, rm.Vars.GetParam(ca, catom_var_name_Uiso));

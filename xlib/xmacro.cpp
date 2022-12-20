@@ -60,6 +60,7 @@
   lib.Register(new TStaticFunction(&XLibMacros::fun##funcName, #funcName, argc, desc))
 
 using namespace cif_dp;
+using namespace olex2;
 void HKLCreate(TStrObjList &Cmds, const TParamList &Options, TMacroData &E);
 
 void XLibMacros::Export(TLibrary& lib)  {
@@ -1259,7 +1260,6 @@ void XLibMacros::macSort(TStrObjList &Cmds, const TParamList &Options,
 }
 //.............................................................................
 void XLibMacros::macRun(TStrObjList& Cmds, const TParamList& Options, TMacroData& Error) {
-  using namespace olex2;
   IOlex2Processor* op = IOlex2Processor::GetInstance();
   if (op == 0) {
     throw TFunctionFailedException(__OlxSourceInfo,
@@ -3929,17 +3929,16 @@ void XLibMacros::funLSM(const TStrObjList& Params, TMacroData &E) {
     TXApp::GetInstance().XFile().GetRM().SetRefinementMethod(Params[0]);
 }
 //.............................................................................
-void XLibMacros::funRun(const TStrObjList& Params, TMacroData &E) {
-  using namespace olex2;
+void XLibMacros::funRun(const TStrObjList& Params, TMacroData& E) {
   IOlex2Processor* op = IOlex2Processor::GetInstance();
-  if( op == NULL ) {
+  if (op == 0) {
     throw TFunctionFailedException(__OlxSourceInfo,
       "this function requires Olex2 processor implementation");
   }
   TStrList allCmds = TParamList::StrtokLines(Params.Text(' '), ">>");
-  for( size_t i=0; i < allCmds.Count(); i++ )  {
-    if( !op->processMacro(allCmds[i]) )  {
-      if( (i+1) < allCmds.Count() ) {
+  for (size_t i = 0; i < allCmds.Count(); i++) {
+    if (!op->processMacro(allCmds[i])) {
+      if ((i + 1) < allCmds.Count()) {
         TBasicApp::NewLogEntry(logError) <<
           "Not all macros in the provided list were executed";
       }
@@ -4408,21 +4407,23 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options,
   TBasicApp::NewLogEntry(logInfo) << "Tables file: " << RF;
 }
 //.............................................................................
-olxstr XLibMacros::CifResolve(const olxstr& func)  {
-  using namespace olex2;
+olxstr XLibMacros::CifResolve(const olxstr& func) {
   IOlex2Processor* op = IOlex2Processor::GetInstance();
-  if( op == NULL )  return func;
+  if (op == 0) {
+    return func;
+  }
   olxstr rv = func;
   op->processFunction(rv);
   return rv;
 }
 //.............................................................................
-bool XLibMacros::ProcessExternalFunction(olxstr& func)  {
-  using namespace olex2;
+bool XLibMacros::ProcessExternalFunction(olxstr& func) {
   IOlex2Processor* op = IOlex2Processor::GetInstance();
-  if( op == NULL )  return false;
+  if (op == 0) {
+    return false;
+  }
   olxstr rv = func;
-  if( op->processFunction(rv) )  {
+  if (op->processFunction(rv)) {
     func = rv;
     return true;
   }
@@ -6327,7 +6328,6 @@ void XLibMacros::macFlush(TStrObjList &Cmds, const TParamList &Options,
 void XLibMacros::macSGE(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &E)
 {
-  using namespace olex2;
   TXApp& xapp = TXApp::GetInstance();
   IOlex2Processor* op = IOlex2Processor::GetInstance();
   if (op == 0) {
@@ -6818,7 +6818,6 @@ void XLibMacros::macReset(TStrObjList &Cmds, const TParamList &Options,
   {
     return;
   }
-  using namespace olex2;
   IOlex2Processor* op = IOlex2Processor::GetInstance();
   olxstr newSg = Options.FindValue('s'),
          content = olxstr::DeleteChars(Options.FindValue('c'), ' '),

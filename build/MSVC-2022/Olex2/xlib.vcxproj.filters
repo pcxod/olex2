@@ -819,6 +819,9 @@
     <ClCompile Include="..\..\..\xlib\twinning.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\xlib\chirality.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\xlib\afixgroup.h">
