@@ -168,6 +168,11 @@ public:
       olx_swap(atom_id, r.atom_id);
       olx_swap(matrix_id, r.matrix_id);
     }
+    // a string hash for the plane definition
+    TIString ToString() const {
+      olxstr_buf rv;
+      return olxstr(rv << au_id << atom_id << matrix_id);
+    }
   };
 
   bool operator == (const Ref& id) const;

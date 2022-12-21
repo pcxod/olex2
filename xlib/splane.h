@@ -13,6 +13,7 @@
 #include "typelist.h"
 #include "satom.h"
 #include "math/plane.h"
+#include "md5.h"
 
 BeginXlibNamespace()
 
@@ -130,6 +131,11 @@ public:
       }
       void ToDataItem(TDataItem& item, const TXApp& app, bool use_id=false) const;
       void FromDataItem(const TDataItem& item, const TXApp &app);
+      // a string hash for the plane definition
+      TIString ToString() const {
+        olxstr_buf rv;
+        return olxstr(rv << ref.ToString() << weight);
+      }
     };
     TTypeList<DefData> atoms;
     size_t sides;
@@ -158,6 +164,15 @@ public:
     TSPlane::Def& Sort() {
       QuickSorter::Sort(atoms);
       return *this;
+    }
+
+    // a string hash for the plane definition
+    TIString ToString() const {
+      olxstr_buf rv;
+      for (size_t i = 0; i < atoms.Count(); i++) {
+        rv << atoms[i].ToString();
+      }
+      return olxstr(MD5::Digest(olxstr(rv << sides)));
     }
   };
 
