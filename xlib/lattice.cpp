@@ -1994,8 +1994,17 @@ size_t TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom,
       }
     }
     else if (AE.Count() == 3) {
-      double v = olx_tetrahedron_volume(
-        atom.crd(), AE.GetCrd(0), AE.GetCrd(1), AE.GetCrd(2));
+      double v = 0;
+      try {
+        v = olx_tetrahedron_volume(
+          atom.crd(), AE.GetCrd(0), AE.GetCrd(1), AE.GetCrd(2));
+      }
+      catch (const TDivException& e) {
+        if (!dry_run) {
+          TBasicApp::NewLogEntry(logWarning) << "Check environment parts/connectivity for "
+            << atom.GetLabel();
+        }
+      }
       if (v > 0.3) {
         if (!dry_run) {
           TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() << ": XYZCH";
