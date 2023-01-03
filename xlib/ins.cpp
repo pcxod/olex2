@@ -2795,7 +2795,7 @@ TStrList::const_list_type TIns::SaveHeader(TStrList& SL,
   if (RefMod.used_weight.IsEmpty()) {
     wght << "0.1";
   }
-  if (RefMod.GetHKLF() >= 5 && RefMod.getTWST() != 1) {
+  if (RefMod.getTWST() != 0) {
     SL.Add("TWST ") << RefMod.getTWST();
   }
   _SaveFVar(RefMod, SL);

@@ -136,7 +136,7 @@ public:
   /* rearranges atoms to follow a ring and returns true if a ring sequence is 
   found; modifies tags of the given atoms and their immediate environment
   */
-  static bool TXApp::GetRingSequence(TSAtomPList& atoms);
+  static bool GetRingSequence(TSAtomPList& atoms);
   static void RingContentFromStr(const olxstr& textDescr,
     ElementPList& ringDesc);
   /* Condition could be a ring template like C2N2C2, or 'sel' to apply to the

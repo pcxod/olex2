@@ -97,7 +97,7 @@ void RefinementModel::SetDefaults() {
   TWIN_mat.I() *= -1;
   SWAT[0] = 0;
   SWAT[1] = 2;
-  TWST = 1;
+  TWST = 0;
   next_restraint_pos = 10000;
 }
 //.............................................................................
@@ -1002,7 +1002,7 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
       }
       if (HKLF >= 5) {
         non_overlapping_1 = GetNonoverlappingRefs(refs).obj()
-          .Filter(olx_alg::olx_eq(TWST,
+          .Filter(olx_alg::olx_eq(TWST == 0 ? 1 : TWST,
           FunctionAccessor::MakeConst(&TReflection::GetBatch)));
         batch_1.SetCapacity(refs.Count());
         for (size_t i = 0; i < refs.Count(); i++) {
@@ -1024,6 +1024,7 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
           2);
       }
       _HklStat.HKLF = HKLF;
+      _HklStat.TWST = TWST;
       _HklStat.HKLF_mat = HKLF_mat;
       _HklStat.HKLF_m = HKLF_m;
       _HklStat.HKLF_s = HKLF_s;
@@ -2213,8 +2214,9 @@ double RefinementModel::CalcCompletenessTo2Theta(double tt, bool Laue) {
   HklStat st;
   FilterHkl(refs_, st);
   if (GetHKLF() >= 5) {
+    int twst = TWST == 0 ? 1 : TWST;
     for (size_t i = 0; i < refs_.Count(); i++) {
-      if (refs_[i].GetBatch() == TWST) {
+      if (refs_[i].GetBatch() == twst) {
         refs.Add(refs_[i]);
       }
     }
@@ -2826,6 +2828,7 @@ RefinementModel::HklStat& RefinementModel::HklStat::operator = (
   MaxI = hs.MaxI;
   MinI = hs.MinI;
   HKLF = hs.HKLF;
+  TWST = hs.TWST;
   HKLF_m = hs.HKLF_m;
   HKLF_s = hs.HKLF_s;
   HKLF_mat = hs.HKLF_mat;
@@ -2848,6 +2851,7 @@ void RefinementModel::HklStat::SetDefaults() {
   HKLF_s = def_HKLF_s;
   HKLF_mat.I();
   HKLF = -1;
+  TWST = 0;
   FilteredOff = IntensityTransformed = OmittedByUser = 0;
   DataCount = TotalReflections = OmittedReflections = 0;
   MERG = def_MERG;
@@ -2868,7 +2872,7 @@ bool RefinementModel::HklStat::need_updating(const RefinementModel &r) const {
     r.HKLF_m == HKLF_m &&
     r.HKLF_s == HKLF_s &&
     r.HKLF_mat == HKLF_mat &&
-    r.MERG == MERG;
+    r.MERG == MERG && r.TWST == TWST;
   if (!eq || omits.Count() != r.Omits.Count()) {
     return true;
   }

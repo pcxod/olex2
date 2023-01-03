@@ -106,7 +106,7 @@ public:
       OMIT_s, OMIT_2t, SHEL_lr, SHEL_hr, MaxI, MinI, HKLF_m, HKLF_s;
     double Completeness;
     mat3d HKLF_mat;
-    int MERG, HKLF;
+    int MERG, HKLF, TWST;
     vec3i_list omits;
     size_t FilteredOff, // by LimD, OMIT_2t, SHEL_hr, SHEL_lr
       OmittedReflections, // refs after 0 0 0
