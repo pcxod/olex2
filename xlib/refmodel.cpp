@@ -24,6 +24,7 @@
 #include "estopwatch.h"
 #include "encodings.h"
 #include "vcov.h"
+#include "olxvar.h"
 
 RefinementModel::RefinementModel(TAsymmUnit& au) :
   Omitted(*this),
@@ -986,6 +987,7 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
       return _HklStat;
     }
     else {
+      TOlxVars::GetInstance()->SetVar("merge_stats_updated", TrueString());
       completeness_cache.Clear();
       HklStatFileID = HklFileID;
       _HklStat.SetDefaults();
