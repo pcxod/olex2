@@ -223,8 +223,6 @@ protected:
   olxstr GradientPicture;
   TGlConsole *FGlConsole;
   TGlTextBox *FHelpWindow, *FInfoBox, *GlTooltip;
-  // a list of commands called when a file is changed by another process
-  TStrList FOnListenCmds;
   TMacroData MacroError;
 
   void PreviewHelp(const olxstr& Cmd);

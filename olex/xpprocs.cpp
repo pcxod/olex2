@@ -958,17 +958,19 @@ void TMainForm::macRota(TStrObjList &Cmds, const TParamList &Options, TMacroData
   }
 }
 //..............................................................................
-void TMainForm::macListen(TStrObjList &Cmds, const TParamList &Options, TMacroData &Error)  {
-  if( Cmds.Count() != 0 )  {
+void TMainForm::macListen(TStrObjList& Cmds, const TParamList& Options, TMacroData& Error) {
+  if (!Cmds.IsEmpty()) {
     FMode |= mListen;
     FListenFile = TEFile::OSPath(Cmds.Text(' '));
     TBasicApp::NewLogEntry() << "Listening for: '" << FListenFile << '\'';
   }
-  else  {
-    if( FMode & mListen )
+  else {
+    if (FMode & mListen) {
       TBasicApp::NewLogEntry() << "Listening for: '" << FListenFile << '\'';
-    else
+    }
+    else {
       TBasicApp::NewLogEntry() << "Not in a listening mode";
+    }
   }
 }
 //..............................................................................
@@ -2719,7 +2721,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
   TXFile::NameArg file_n;
   // a switch showing if the last file is remembered
   bool Blind = Options.GetBoolOption('b');
-  bool ReadStyle = !Options.Contains('r');
+  bool ReadStyle = Options.GetBoolOption('r', false, true);
   bool OverlayXFile = Options.Contains('*');
   if (Cmds.Count() >= 1 && !Cmds[0].IsEmpty()) {  // merge the file name if a long one...
     file_n = TEFile::ExpandRelativePath(Cmds.Text(' '));

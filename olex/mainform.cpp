@@ -397,7 +397,7 @@ void TMainForm::XApp(Olex2App *XA)  {
   TLibrary &Library = XA->GetLibrary();
   this_InitMacroAD(Reap, @reap,
     "b-blind&;"
-    "r-also relaod the default style&;"
+    "r-prevent resetting the style to default&;"
     "*-read and overlay",
     fpAny,
     "This macro loads a file if provided as an argument. If no argument is "
@@ -1670,15 +1670,9 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
       static time_t FileMT = TEFile::FileAge(FListenFile);
       time_t FileT = TEFile::FileAge(FListenFile);
       if (FileMT != FileT) {
-        FObjectUnderMouse = NULL;
-        processMacro((olxstr("@reap -b -r \"") << FListenFile) + '\"', "OnListen");
-        for (size_t i = 0; i < FOnListenCmds.Count(); i++) {
-          if (!processMacro(FOnListenCmds[i], "OnListen"))
-            break;
-        }
+        FObjectUnderMouse = 0;
+        processMacro((olxstr("reap_listen -b -r \"") << FListenFile) + '\"', "OnListen");
         FileMT = FileT;
-        if (!FOnListenCmds.IsEmpty())
-          Draw = true;
       }
     }
     if ((FMode & mRota) != 0) {
