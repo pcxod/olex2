@@ -252,13 +252,13 @@ void TAtomLegend::SetPosition(int left, int top) {
   Center.Null();
 }
 //.............................................................................
-void TAtomLegend::ResetPosition(bool right, bool bottom) {
-  int top = 0, left = 0;
+void TAtomLegend::ResetPosition(bool right, bool bottom, int margin) {
+  int top = margin, left = margin;
   if (right) {
-    left = Parent.GetWidth() - GetWidth();
+    left = Parent.GetWidth() - GetWidth() - margin;
   }
   if (bottom) {
-    top = Parent.GetHeight() - GetHeight();
+    top = Parent.GetHeight() - GetHeight() - margin;
   }
   SetPosition(left, top);
 }

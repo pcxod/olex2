@@ -24,6 +24,7 @@
 #include "xtls.h"
 #include "rmsds_adp.h"
 #include "glalg.h"
+#include "listalg.h"
 
 #define gxlib_InitMacro(macroName, validOptions, argc, desc)\
   lib.Register(\
@@ -394,7 +395,8 @@ void GXLibMacros::Export(TLibrary& lib) {
     fpAny,
     "For testing only for now");
   gxlib_InitMacro(Legend,
-    "r-reset the position",
+    "r-reset the position, r-for right, b-for bottom; could take absolute"
+    " position like 10,12 and with relative - margin, like -r=10 or -r=r,10",
     fpNone | fpOne,
     "Shows/hides atom legend");
   gxlib_InitMacro(AdjustStyle,
@@ -5635,9 +5637,19 @@ void GXLibMacros::macLegend(TStrObjList &Cmds, const TParamList &Options,
 {
   olxstr reset = Options.FindValue("r", "-");
   if (reset != '-') {
-    bool bottom= reset.Contains("b"),
-      right = reset.Contains("r");
-    app.AtomLegend().ResetPosition(right, bottom);
+    TStrList toks(reset, ',');
+    if (toks.Count() == 2 && olx_list_and(toks, &olxstr::IsInt)) {
+      app.AtomLegend().SetPosition(toks[0].ToInt(), toks[1].ToInt());
+    }
+    else {
+      int margin = 0;
+      bool bottom = reset.Contains("b"),
+        right = reset.Contains("r");
+      if (toks.GetLastString().IsInt()) {
+        margin = toks.GetLastString().ToInt();
+      }
+      app.AtomLegend().ResetPosition(right, bottom, margin);
+    }
     app.AtomLegend().Update();
     app.AtomLegend().SetVisible(true);
     return;
