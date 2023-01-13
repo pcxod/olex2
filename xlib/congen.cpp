@@ -288,7 +288,7 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
         else if (pivoting->Count() == 1) {
           vec3d RotVec;
           vec3d PlaneN = (envi.crd() - pivoting->GetCrd(0)).Normalise();
-          if (PlaneN.Equals(Z, 1e-3)) {
+          if (PlaneN.IsParallel(Z, 1e-3)) {
             RotVec = X;
           }
           else {
@@ -308,7 +308,7 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
       if (pivoting == 0 || pivoting->IsEmpty()) {
         vec3d RotVec;
         vec3d PlaneN = (envi.crd() - envi.GetCrd(0)).Normalise();
-        if (PlaneN.Equals(Z, 1e-3)) {
+        if (PlaneN.IsParallel(Z, 1e-3)) {
           RotVec = X;
         }
         else {

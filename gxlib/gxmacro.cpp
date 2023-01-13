@@ -5645,7 +5645,7 @@ void GXLibMacros::macLegend(TStrObjList &Cmds, const TParamList &Options,
       int margin = 0;
       bool bottom = reset.Contains("b"),
         right = reset.Contains("r");
-      if (toks.GetLastString().IsInt()) {
+      if (!toks.IsEmpty() && toks.GetLastString().IsInt()) {
         margin = toks.GetLastString().ToInt();
       }
       app.AtomLegend().ResetPosition(right, bottom, margin);
