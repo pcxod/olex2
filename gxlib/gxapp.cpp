@@ -3926,7 +3926,7 @@ void TGXApp::SetHydrogensVisible(bool v)  {
 }
 //..............................................................................
 void TGXApp::UpdateConnectivity() {
-  XFile().GetLattice().OnDisassemble.Enter(NULL);
+  XFile().GetLattice().OnDisassemble.Enter(0);
   XFile().GetLattice().OnDisassemble.SetEnabled(false);
   for (size_t i = 0; i < Files.Count(); i++) {
     Files[i].GetLattice().OnDisassemble.SetEnabled(false);
@@ -3934,7 +3934,7 @@ void TGXApp::UpdateConnectivity() {
     Files[i].GetLattice().OnDisassemble.SetEnabled(true);
   }
   XFile().GetLattice().OnDisassemble.SetEnabled(true);
-  XFile().GetLattice().OnDisassemble.Exit(NULL);
+  XFile().GetLattice().OnDisassemble.Exit(0);
 }
 //..............................................................................
 void TGXApp::SetQPeaksVisible(bool v) {
@@ -3942,13 +3942,32 @@ void TGXApp::SetQPeaksVisible(bool v) {
     FQPeaksVisible = v;
     for (size_t i = 0; i < Files.Count(); i++) {
       Files[i].GetAsymmUnit().DetachAtomType(
-        iQPeakZ, !FQPeaksVisible);
+        iQPeakZ, !FQPeaksVisible, true);
     }
     if (v && !XFile().GetLattice().IsGenerated()) {
       XFile().GetLattice().CompaqQ();
     }
     else {
       UpdateConnectivity();
+    }
+    if (v) {
+      TGXApp::AtomIterator ai = GetAtoms();
+      while (ai.HasNext()) {
+        TXAtom& a = ai.Next();
+        if (a.GetType() == iQPeakZ && !a.IsVisible() && a.CAtom().IsAvailable()) {
+          a.SetMasked(false);
+          a.SetVisible(true);
+        }
+      }
+      if (FQPeakBondsVisible) {
+        BondIterator bi(*this);
+        while (bi.HasNext()) {
+          TXBond& xb = bi.Next();
+          if (xb.A().GetType() == iQPeakZ || xb.B().GetType() == iQPeakZ) {
+            xb.SetVisible(true);
+          }
+        }
+      }
     }
     if (AtomLegend().IsVisible()) {
       AtomLegend().Update();
@@ -3957,32 +3976,36 @@ void TGXApp::SetQPeaksVisible(bool v) {
   }
 }
 //..............................................................................
-void TGXApp::SetQPeakBondsVisible(bool v, bool update_groups)  {
+void TGXApp::SetQPeakBondsVisible(bool v, bool update_groups) {
   FQPeakBondsVisible = v;
-  if( !v )  {
+  if (!v) {
     BondIterator bi(*this);
-    while( bi.HasNext() )  {
+    while (bi.HasNext()) {
       TXBond& xb = bi.Next();
-      if( xb.A().GetType() == iQPeakZ || xb.B().GetType() == iQPeakZ )
+      if (xb.A().GetType() == iQPeakZ || xb.B().GetType() == iQPeakZ) {
         xb.SetVisible(v);
+      }
     }
-    if( FXGrowLinesVisible )  {
-      for( size_t i=0; i < XGrowLines.Count(); i++ )  {
-        if( XGrowLines[i].XAtom().GetType() == iQPeakZ ||
-          XGrowLines[i].CAtom().GetType() == iQPeakZ )
+    if (FXGrowLinesVisible) {
+      for (size_t i = 0; i < XGrowLines.Count(); i++) {
+        if (XGrowLines[i].XAtom().GetType() == iQPeakZ ||
+          XGrowLines[i].CAtom().GetType() == iQPeakZ)
+        {
           XGrowLines[i].SetVisible(v);
+        }
       }
     }
   }
-  else  {
+  else {
     BondIterator bi(*this);
-    while( bi.HasNext() )  {
+    while (bi.HasNext()) {
       TXBond& xb = bi.Next();
-      if( xb.A().GetType() == iQPeakZ || xb.B().GetType() == iQPeakZ )
+      if (xb.A().GetType() == iQPeakZ || xb.B().GetType() == iQPeakZ)
         xb.SetVisible(xb.A().IsVisible() && xb.B().IsVisible());
     }
-    if( update_groups )
+    if (update_groups) {
       RestoreGroups();
+    }
   }
 }
 //..............................................................................
@@ -4143,8 +4166,9 @@ void TGXApp::ShowPart(const TIntList& parts, bool show, bool visible_only) {
       xa.SetVisible(!show);
       xa.SetMasked(show);
     }
-    if (xa.IsVisible())
+    if (xa.IsVisible()) {
       xa.SetVisible(xa.IsAvailable());
+    }
   }
   _maskInvisible();
   UpdateConnectivity();
