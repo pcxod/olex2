@@ -1056,8 +1056,8 @@ void DistanceGenerator::GenerateSADI_(
     for (size_t j = 0; j < gc; j++) {
       size_t a_midx = atom_map.IndexOf(d[i].a);
       size_t b_midx = atom_map.IndexOf(d[i].b);
-      size_t a_idx = a_midx == InvalidIndex ? d[i].a : atom_map.GetValue(d[i].a)[j];
-      size_t b_idx = b_midx == InvalidIndex ? d[i].b : atom_map.GetValue(d[i].b)[j];
+      size_t a_idx = a_midx == InvalidIndex ? d[i].a : atom_map.GetValue(a_midx)[j];
+      size_t b_idx = b_midx == InvalidIndex ? d[i].b : atom_map.GetValue(b_midx)[j];
       sr.AddAtomPair(rm.aunit.GetAtom(a_idx), 0, rm.aunit.GetAtom(b_idx), 0);
     }
   }

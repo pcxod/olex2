@@ -316,6 +316,10 @@ PyObject* TCAtom::PyExport(bool export_attached_sites) {
   if (*Type == iQPeakZ) {
     PythonExt::SetDictItem(main, "peak", Py_BuildValue("d", QPeak));
   }
+  else if (IsChiral()) {
+    PyObject* rsa = PythonExt::BuildString(IsChiralR() ? "R" : "S");
+    PythonExt::SetDictItem(main, "rsa", rsa);
+  }
   if (export_attached_sites) {
     size_t cnt = 0;
     for (size_t i = 0; i < AttachedSites.Count(); i++) {

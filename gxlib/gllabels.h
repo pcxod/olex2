@@ -37,6 +37,7 @@ const uint32_t
   lmSpec     = 0x00008000,  // enforced special position 
   lmChirality= 0x00010000,  // R/S
   lmCharge   = 0x00020000,  // Charge
+  lmSame     = 0x00040000,  // same group
 
   lmBonds      = 0x00100000,  // exclusive for bond lengths
   lmResiName   = 0x00200000,  // residue name

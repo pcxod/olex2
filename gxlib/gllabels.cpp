@@ -158,7 +158,7 @@ bool TXGlLabels::Orient(TGlPrimitive& P) {
         }
       }
       if ((Mode & lmPart) != 0 && ca.GetPart() != 0) {
-        Tmp << ", " << (int)ca.GetPart();
+        Tmp << ", " << ca.GetPart();
       }
       if ((Mode & lmSpec) != 0 && ca.GetSpecialPositionDeviation() > 1e-3) {
         Tmp << ", "
@@ -251,11 +251,9 @@ bool TXGlLabels::Orient(TGlPrimitive& P) {
       if ((Mode & lmConRes) != 0 && ca.GetOccu() != 1.0) {
         Tmp << ", " << olxstr::FormatFloat(3, ca.GetOccu());
       }
-#ifdef _DEBUG
-      if (olx_is_valid_index(ca.GetSameId())) {
+      if ((Mode & lmSame) != 0 && olx_is_valid_index(ca.GetSameId())) {
         Tmp << ", " << ':' << ca.GetSameId();
       }
-#endif
       if ((Mode & lmChirality) != 0 && ca.IsChiral()) {
         if (ca.IsChiralR()) {
           Tmp << ", " << 'R';

@@ -137,6 +137,7 @@ void GXLibMacros::Export(TLibrary& lib) {
     "rn-residue number&;"
     "rc-residue class&;"
     "s-SPEC&;"
+    "sm-SAME&;"
     "v-variables&;"
     "u-Uiso&;"
     ,
@@ -156,7 +157,7 @@ void GXLibMacros::Export(TLibrary& lib) {
     "Changes the H-atom and H-bonds visibility");
   gxlib_InitMacro(Detach,
     "u-re-attaches all or given atoms&;"
-    "m-umasks all or given atoms",
+    "m-unmasks all or given atoms",
     fpAny | psFileLoaded,
     "Detaches/re-attaches given/selected atoms from/to the model");
   gxlib_InitMacro(Info,
@@ -1213,6 +1214,7 @@ void GXLibMacros::macLabels(TStrObjList &Cmds, const TParamList &Options,
     opts.Add("rc", lmResiName);
     opts.Add("s", lmSpec);
     opts.Add("v", lmOVar);
+    opts.Add("sm", lmSame);
   }
   uint32_t lmode = 0;
 
@@ -1310,6 +1312,7 @@ void GXLibMacros::macLabel(TStrObjList &Cmds, const TParamList &Options,
   TXAtomPList atoms;
   TXBondPList bonds;
   TPtrList<TXLine> lines;
+  bool relabel = false;
   if (Cmds.IsEmpty()) {
     TGlGroup& sel = app.GetSelection();
     for (size_t i=0; i < sel.Count(); i++) {
@@ -1347,177 +1350,206 @@ void GXLibMacros::macLabel(TStrObjList &Cmds, const TParamList &Options,
     app.LabelGrowBonds();
   }
   else {
-    atoms = app.FindXAtoms(Cmds, true, false);
-  }
-  short lt = 0, symm_tag = 0, resi = 0;
-  const olxstr str_lt = Options.FindValue("type");
-  olxstr str_symm_tag = Options.FindValue("symm");
-  // enforce the default
-  if (str_lt.Containsi("brackets")) {
-    lt = 1;
-  }
-  if (str_lt.Containsi("subscript") || str_lt.Containsi("sb")) {
-    lt |= 2;
-  }
-  if (str_lt.Containsi("superscript") || str_lt.Containsi("sp")) {
-    lt |= 4;
-  }
-  olxstr resi_sep = Options.FindValue("resi");
-  if (!resi_sep.IsEmpty()) {
-    if (resi_sep.GetLast() == '#') {
-      resi = 1;
-    }
-    else {
-      resi = 2;
-    }
-    resi_sep.SetLength(resi_sep.Length() - 1);
-  }
-  // have to kill labels in this case, for consistency of _$ or ^#
-  if (str_symm_tag == '$' || str_symm_tag == '#' || str_symm_tag == 'X') {
-    for (size_t i = 0; i < app.LabelCount(); i++) {
-      app.GetLabel(i).SetVisible(false);
-    }
-    symm_tag = (str_symm_tag == '$' ? 1 : (str_symm_tag == '#' ? 2 : 3));
-  }
-  else if (str_symm_tag.Equals("full")) {
-    symm_tag = 4;
-  }
-  TTypeList<uint32_t> equivs;
-  for (size_t i = 0; i < atoms.Count(); i++) {
-    TXGlLabel& gxl = atoms[i]->GetGlLabel();
-    olxstr lb;
-    if (lt != 0 &&
-      atoms[i]->GetLabel().Length() > atoms[i]->GetType().symbol.Length())
-    {
-      olxstr bcc = atoms[i]->GetLabel().SubStringFrom(
-        atoms[i]->GetType().symbol.Length());
-      lb = atoms[i]->GetType().symbol;
-      if ((lt & 1) == 1) {
-        bcc = olxstr('(') << bcc << ')';
+    TStrList to_relabel, labels;
+    for (size_t i = 0; i < Cmds.Count(); i++) {
+      size_t ei = Cmds[i].IndexOf('=');
+      if (ei == InvalidIndex) {
+        continue;
       }
-      if ((lt & 2) == 2) {
-        lb << "\\-" << bcc;
-      }
-      else if ((lt & 4) == 4) {
-        lb << "\\+" << bcc;
+      to_relabel.Add(Cmds[i].SubStringTo(ei));
+      labels.Add(Cmds[i].SubStringFrom(ei + 1));
+    }
+    if (!to_relabel.IsEmpty() && to_relabel.Count() == labels.Count()) {
+      atoms = app.FindXAtoms(to_relabel, true, false);
+      if (atoms.Count() == labels.Count()) {
+        for (size_t i = 0; i < atoms.Count(); i++) {
+          TXGlLabel& gxl = atoms[i]->GetGlLabel();
+          gxl.SetLabel(labels[i]);
+          gxl.SetVisible(true);
+          gxl.SetOffset(atoms[i]->crd());
+          relabel = true;
+        }
       }
       else {
-        lb << bcc;
+        E.ProcessingError(__OlxSrcInfo,
+          "number of atoms does not match to the number of labels");
+        return;
       }
     }
     else {
-      lb = atoms[i]->GetLabel();
+      atoms = app.FindXAtoms(Cmds, true, false);
     }
-    if (resi != 0 && atoms[i]->CAtom().GetResiId() != 0) {
-      lb << resi_sep;
-      if (resi == 1) {
-        lb << atoms[i]->CAtom().GetParent()->GetResidue(
-          atoms[i]->CAtom().GetResiId()).GetNumber();
+  }
+  if (!relabel) {
+    short lt = 0, symm_tag = 0, resi = 0;
+    const olxstr str_lt = Options.FindValue("type");
+    olxstr str_symm_tag = Options.FindValue("symm");
+    // enforce the default
+    if (str_lt.Containsi("brackets")) {
+      lt = 1;
+    }
+    if (str_lt.Containsi("subscript") || str_lt.Containsi("sb")) {
+      lt |= 2;
+    }
+    if (str_lt.Containsi("superscript") || str_lt.Containsi("sp")) {
+      lt |= 4;
+    }
+    olxstr resi_sep = Options.FindValue("resi");
+    if (!resi_sep.IsEmpty()) {
+      if (resi_sep.GetLast() == '#') {
+        resi = 1;
       }
       else {
-        lb << atoms[i]->CAtom().GetParent()->GetResidue(
-          atoms[i]->CAtom().GetResiId()).GetClassName();
+        resi = 2;
       }
+      resi_sep.SetLength(resi_sep.Length() - 1);
     }
-    if (!atoms[i]->IsAUAtom()) {
-      if (symm_tag >= 1  && symm_tag <= 3) {
-        size_t pos = equivs.IndexOf(atoms[i]->GetMatrix().GetId());
-        if (pos == InvalidIndex)  {
-          equivs.AddCopy(atoms[i]->GetMatrix().GetId());
-          pos = equivs.Count() - 1;
+    // have to kill labels in this case, for consistency of _$ or ^#
+    if (str_symm_tag == '$' || str_symm_tag == '#' || str_symm_tag == 'X') {
+      for (size_t i = 0; i < app.LabelCount(); i++) {
+        app.GetLabel(i).SetVisible(false);
+      }
+      symm_tag = (str_symm_tag == '$' ? 1 : (str_symm_tag == '#' ? 2 : 3));
+    }
+    else if (str_symm_tag.Equals("full")) {
+      symm_tag = 4;
+    }
+    TTypeList<uint32_t> equivs;
+    for (size_t i = 0; i < atoms.Count(); i++) {
+      TXGlLabel& gxl = atoms[i]->GetGlLabel();
+      olxstr lb;
+      if (lt != 0 &&
+        atoms[i]->GetLabel().Length() > atoms[i]->GetType().symbol.Length())
+      {
+        olxstr bcc = atoms[i]->GetLabel().SubStringFrom(
+          atoms[i]->GetType().symbol.Length());
+        lb = atoms[i]->GetType().symbol;
+        if ((lt & 1) == 1) {
+          bcc = olxstr('(') << bcc << ')';
         }
-        if (symm_tag == 1) {
-          lb << "_$" << (pos + 1);
+        if ((lt & 2) == 2) {
+          lb << "\\-" << bcc;
         }
-        else if (symm_tag == 2) {
-          lb << "\\+" << (pos + 1);
+        else if ((lt & 4) == 4) {
+          lb << "\\+" << bcc;
         }
         else {
-          lb << "\\+" << RomanNumber::To(pos + 1).ToLowerCase();
+          lb << bcc;
         }
       }
-      else if (symm_tag == 4) {
-        lb << ' ' << TSymmParser::MatrixToSymmEx(atoms[i]->GetMatrix());
+      else {
+        lb = atoms[i]->GetLabel();
       }
-    }
-    gxl.SetOffset(atoms[i]->crd());
-    gxl.SetLabel(lb);
-    gxl.SetVisible(true);
-  }
-  TPtrList<TXGlLabel> labels;
-  if (!bonds.IsEmpty()) {
-    VcoVContainer vcovc(app.XFile().GetAsymmUnit());
-    bool have_vcov = false;
-    try {
-      olxstr src_mat = app.InitVcoV(vcovc);
-      app.NewLogEntry() << "Using " << src_mat <<
-        " matrix for the calculation";
-      have_vcov = true;
-    }
-    catch (const TExceptionBase&) {}
-    const TCifDataManager *dm = 0;
-    if (app.CheckFileType<TCif>()) {
-      dm = &app.XFile().GetLastLoader<TCif>().GetDataManager();
-    }
-    for (size_t i = 0; i < bonds.Count(); i++) {
-      TXGlLabel& l = bonds[i]->GetGlLabel();
-      l.SetOffset(bonds[i]->GetCenter());
-      bool matched = false;
-      if (dm != 0) {
-        ACifValue *v = dm->Match(bonds[i]->A(), bonds[i]->B());
-        if (v != 0) {
-          matched = true;
-          l.SetLabel(v->GetValue().ToString());
-        }
-      }
-      if (!matched) {
-        if (have_vcov) {
-          l.SetLabel(vcovc.CalcDistance(bonds[i]->A(),
-            bonds[i]->B()).ToString());
+      if (resi != 0 && atoms[i]->CAtom().GetResiId() != 0) {
+        lb << resi_sep;
+        if (resi == 1) {
+          lb << atoms[i]->CAtom().GetParent()->GetResidue(
+            atoms[i]->CAtom().GetResiId()).GetNumber();
         }
         else {
-          l.SetLabel(olxstr::FormatFloat(3, bonds[i]->Length()));
+          lb << atoms[i]->CAtom().GetParent()->GetResidue(
+            atoms[i]->CAtom().GetResiId()).GetClassName();
         }
       }
-      labels.Add(l)->SetVisible(true);
-      l.TranslateBasis(-l.GetCenter());
+      if (!atoms[i]->IsAUAtom()) {
+        if (symm_tag >= 1 && symm_tag <= 3) {
+          size_t pos = equivs.IndexOf(atoms[i]->GetMatrix().GetId());
+          if (pos == InvalidIndex) {
+            equivs.AddCopy(atoms[i]->GetMatrix().GetId());
+            pos = equivs.Count() - 1;
+          }
+          if (symm_tag == 1) {
+            lb << "_$" << (pos + 1);
+          }
+          else if (symm_tag == 2) {
+            lb << "\\+" << (pos + 1);
+          }
+          else {
+            lb << "\\+" << RomanNumber::To(pos + 1).ToLowerCase();
+          }
+        }
+        else if (symm_tag == 4) {
+          lb << ' ' << TSymmParser::MatrixToSymmEx(atoms[i]->GetMatrix());
+        }
+      }
+      gxl.SetOffset(atoms[i]->crd());
+      gxl.SetLabel(lb);
+      gxl.SetVisible(true);
     }
-  }
-  for (size_t i = 0; i < lines.Count(); i++) {
-    lines[i]->GetGlLabel().SetVisible(true);
-  }
-  TStrList l_out;
-  l_out.Add();
-  for (size_t i = 0; i < equivs.Count(); i++) {
-    smatd m = app.XFile().GetUnitCell().GetMatrix(
-      smatd::GetContainerId(equivs[i]));
-    m.t += smatd::GetT(equivs[i]);
-    olxstr line;
-    if (symm_tag == 1) {
-      line << "$" << (i + 1);
+    TPtrList<TXGlLabel> labels;
+    if (!bonds.IsEmpty()) {
+      VcoVContainer vcovc(app.XFile().GetAsymmUnit());
+      bool have_vcov = false;
+      try {
+        olxstr src_mat = app.InitVcoV(vcovc);
+        app.NewLogEntry() << "Using " << src_mat <<
+          " matrix for the calculation";
+        have_vcov = true;
+      }
+      catch (const TExceptionBase&) {}
+      const TCifDataManager* dm = 0;
+      if (app.CheckFileType<TCif>()) {
+        dm = &app.XFile().GetLastLoader<TCif>().GetDataManager();
+      }
+      for (size_t i = 0; i < bonds.Count(); i++) {
+        TXGlLabel& l = bonds[i]->GetGlLabel();
+        l.SetOffset(bonds[i]->GetCenter());
+        bool matched = false;
+        if (dm != 0) {
+          ACifValue* v = dm->Match(bonds[i]->A(), bonds[i]->B());
+          if (v != 0) {
+            matched = true;
+            l.SetLabel(v->GetValue().ToString());
+          }
+        }
+        if (!matched) {
+          if (have_vcov) {
+            l.SetLabel(vcovc.CalcDistance(bonds[i]->A(),
+              bonds[i]->B()).ToString());
+          }
+          else {
+            l.SetLabel(olxstr::FormatFloat(3, bonds[i]->Length()));
+          }
+        }
+        labels.Add(l)->SetVisible(true);
+        l.TranslateBasis(-l.GetCenter());
+      }
     }
-    else if (symm_tag == 2) {
-      line << (i + 1);
+    for (size_t i = 0; i < lines.Count(); i++) {
+      lines[i]->GetGlLabel().SetVisible(true);
     }
-    else {
-      line << RomanNumber::To(i + 1).ToLowerCase();
+    TStrList l_out;
+    l_out.Add();
+    for (size_t i = 0; i < equivs.Count(); i++) {
+      smatd m = app.XFile().GetUnitCell().GetMatrix(
+        smatd::GetContainerId(equivs[i]));
+      m.t += smatd::GetT(equivs[i]);
+      olxstr line;
+      if (symm_tag == 1) {
+        line << "$" << (i + 1);
+      }
+      else if (symm_tag == 2) {
+        line << (i + 1);
+      }
+      else {
+        line << RomanNumber::To(i + 1).ToLowerCase();
+      }
+      line.RightPadding(4, ' ', true) << TSymmParser::MatrixToSymmEx(m);
+      if (i != 0 && (i % 3) == 0) {
+        l_out.Add();
+      }
+      l_out.GetLastString() << line.RightPadding(26, ' ');
     }
-    line.RightPadding(4, ' ', true) << TSymmParser::MatrixToSymmEx(m);
-    if (i != 0 && (i % 3) == 0) {
-      l_out.Add();
+    TBasicApp::NewLogEntry() << l_out << NewLineSequence();
+    for (size_t i = 0; i < labels.Count(); i++) {
+      TXGlLabel& l = *labels[i];
+      vec3d off(-l.GetRect().width / 2, -l.GetRect().height / 2, 0);
+      const double scale1 =
+        l.GetFont().IsVectorFont() ? 1.0 / app.GetRenderer().GetScale() : 1.0;
+      const double scale = scale1 / app.GetRenderer().GetBasis().GetZoom();
+      l.TranslateBasis(off * scale);
+      l.SetVisible(true);
     }
-    l_out.GetLastString() << line.RightPadding(26, ' ');
-  }
-  TBasicApp::NewLogEntry() << l_out << NewLineSequence();
-
-  for (size_t i = 0; i < labels.Count(); i++) {
-    TXGlLabel& l = *labels[i];
-    vec3d off(-l.GetRect().width / 2, -l.GetRect().height / 2, 0);
-    const double scale1 =
-      l.GetFont().IsVectorFont() ? 1.0 / app.GetRenderer().GetScale() : 1.0;
-    const double scale = scale1 / app.GetRenderer().GetBasis().GetZoom();
-    l.TranslateBasis(off*scale);
-    l.SetVisible(true);
   }
   if (Options.GetBoolOption('a') && !atoms.IsEmpty()) {
     TGlRenderer &r = app.GetRenderer();

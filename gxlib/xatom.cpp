@@ -1669,7 +1669,11 @@ void TXAtomLabelAligner::Align() {
         Atoms[i]->DrawStyle() == adsOrtep) &&
         Atoms[i]->GetEllipsoid() != 0)
       {
-        p *= 1. / Atoms[i]->GetEllipsoid()->CalcScale(p);
+        try {
+          p *= 1. / Atoms[i]->GetEllipsoid()->CalcScale(p);
+        }
+        catch (const TDivException& exc) {
+        }
       }
       p *= Atoms[i]->GetDrawScale();
       vec3d off = (p*Offset)*ProjMatr;

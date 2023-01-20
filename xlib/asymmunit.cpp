@@ -600,11 +600,14 @@ TCAtom *TAsymmUnit::FindCAtomDirect(const olxstr &label) const {
   return 0;
 }
 //..............................................................................
-void TAsymmUnit::DetachAtomType(short type, bool detach) {
+void TAsymmUnit::DetachAtomType(short type, bool detach, bool unmask) {
   const size_t ac = CAtoms.Count();
   for (size_t i = 0; i < ac; i++) {
     if (CAtoms[i]->GetType() == type) {
       CAtoms[i]->SetDetached(detach);
+      if (!detach && unmask) {
+        CAtoms[i]->SetMasked(false);
+      }
     }
   }
 }
