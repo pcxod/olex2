@@ -529,9 +529,10 @@ void TIns::_ProcessSame(ParseContext& cx, const TIndexList *index)  {
       }
     }
     // now process the reference group
-    olxstr_buf warns;
+    olx_pdict<uint16_t, size_t> overrides;
+    bool valid = false;
     if (max_atoms != 0 && ca != 0) {
-      bool valid = true;
+      valid = true;
       TSameGroup& sg = sgl.New();  // main, reference, group
       for (size_t j = 0; j < max_atoms; j++) {
         if (index == 0) {
@@ -557,8 +558,7 @@ void TIns::_ProcessSame(ParseContext& cx, const TIndexList *index)  {
           continue;
         }
         if (olx_is_valid_index(a.GetSameId())) {
-          warns << "\nOverriding same group from " << a.GetSameId() << " to " <<
-            sg.GetId() << " for " << a.GetResiLabel();
+          overrides.Add(a.GetSameId(), 0)++;
         }
         sg.Add(a);
       }
@@ -571,8 +571,19 @@ void TIns::_ProcessSame(ParseContext& cx, const TIndexList *index)  {
         sgl.Delete(all_groups << sg);
       }
     }
-    if (!warns.IsEmpty()) {
-      TBasicApp::NewLogEntry(logWarning) << warns;
+    if (valid && !overrides.IsEmpty()) {
+      if (overrides.Count() == 1 &&
+        overrides.GetValue(0) == sgl[sgl.Count()-1].GetAtoms().RefCount())
+      {
+        TBasicApp::NewLogEntry(logInfo) << "Self-referencing SAME group found: "
+          << sgl[overrides.GetKey(0)].GetAtoms().GetExpression()
+          << " referenced by "
+          << sgl[sgl.Count() - 1].GetAtoms().GetExpression();
+      }
+      else { // multiple overrides for different groups
+        TBasicApp::NewLogEntry(logWarning) <<
+          "Possibly incorrectly constructed SAME groups located";
+      }
     }
   }
 }
@@ -2795,8 +2806,8 @@ TStrList::const_list_type TIns::SaveHeader(TStrList& SL,
   if (RefMod.used_weight.IsEmpty()) {
     wght << "0.1";
   }
-  if (RefMod.getTWST() != 0) {
-    SL.Add("TWST ") << RefMod.getTWST();
+  if (RefMod.HasTWST() != 0) {
+    SL.Add("TWST ") << RefMod.GetTWST();
   }
   _SaveFVar(RefMod, SL);
   return rv;

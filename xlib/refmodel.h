@@ -39,7 +39,9 @@ static const double
 enum {
   def_HKLF_m = 0,
   def_MERG = 2,
-  def_TWIN_n = 2
+  def_TWIN_n = 2,
+  // unset, completeness for all batches, merge stats - for the largest set
+  def_TWST = -1 
 };
 
 // clear constants...
@@ -274,8 +276,11 @@ public:
   void SetTWST(int batch_n) {
     TWST = batch_n;
   }
-  int getTWST() const {
+  int GetTWST() const {
     return TWST;
+  }
+  bool HasTWST() const {
+    return TWST != def_TWST;
   }
   // processed user omits (hkl) and returns the number of removed reflections
   size_t ProcessOmits(TRefList& refs);

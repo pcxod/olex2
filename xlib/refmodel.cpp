@@ -98,7 +98,7 @@ void RefinementModel::SetDefaults() {
   TWIN_mat.I() *= -1;
   SWAT[0] = 0;
   SWAT[1] = 2;
-  TWST = 0;
+  TWST = def_TWST;
   next_restraint_pos = 10000;
 }
 //.............................................................................
@@ -993,7 +993,8 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
       _HklStat.SetDefaults();
       TRefList refs;
       FilterHkl(refs, _HklStat);
-      TRefPList non_overlapping_1, batch_1;
+      TRefPList measured_refs,
+        merge_stats_refs;
       if (HKLF >= 5) {
         if (!refs.IsEmpty() && !refs[0].IsBatchSet()) {
           TBasicApp::NewLogEntry(logWarning) << "HKL file is not compatible with"
@@ -1003,16 +1004,37 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
         }
       }
       if (HKLF >= 5) {
-        non_overlapping_1 = GetNonoverlappingRefs(refs).obj()
-          .Filter(olx_alg::olx_eq(TWST == 0 ? 1 : TWST,
-          FunctionAccessor::MakeConst(&TReflection::GetBatch)));
-        batch_1.SetCapacity(refs.Count());
+        if (TWST <= 0) {
+          measured_refs = refs.ptr().Filter(olx_alg::olx_gt(0,
+              FunctionAccessor::MakeConst(&TReflection::GetBatch)));
+          olx_pdict<int16_t, size_t> batches;
+          for (size_t i = 0; i < measured_refs.Count(); i++) {
+            int16_t b = measured_refs[i]->GetBatch();
+            batches.Add(b, 0)++;
+          }
+          // find the most occupied batch for merge stats
+          size_t max_c = batches.GetValue(0), max_i = 0;
+          for (size_t i = 1; i < batches.Count(); i++) {
+            if (batches.GetValue(i) > max_c) {
+              max_c = batches.GetValue(i);
+              max_i = i;
+            }
+          }
+          merge_stats_refs = measured_refs.Filter(
+            olx_alg::olx_eq(batches.GetKey(max_i),
+            FunctionAccessor::MakeConst(&TReflection::GetBatch)));
+        }
+        else {
+          measured_refs = refs.ptr().Filter(olx_alg::olx_eq(TWST,
+              FunctionAccessor::MakeConst(&TReflection::GetBatch)));
+          /* leave empty to indicate that a measured refs do not mix batches and
+          are good for merging
+          */
+          //merge_stats_refs = measured_refs;
+        }
         for (size_t i = 0; i < refs.Count(); i++) {
           if (refs[i].GetBatch() >= 0) {
             _HklStat.DataCount++;
-            if (refs[i].GetBatch() == 1) {
-              batch_1.Add(refs[i]);
-            }
           }
           refs[i].SetBatch(TReflection::NoBatchSet);
         }
@@ -1065,25 +1087,21 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
         }
       }
       if (HKLF >= 5) {
-        if (!non_overlapping_1.IsEmpty()) {
-          MergeStats st =
-            RefMerger::DryMerge<RefMerger::ShelxMerger>(sp, non_overlapping_1,
+        _HklStat.Rint = _HklStat.Rsigma = -1;
+        _HklStat.InconsistentEquivalents = 0;
+        MergeStats st =
+          RefMerger::DryMerge<RefMerger::ShelxMerger>(sp, measured_refs,
+            vec3i_list(), info_ex.centrosymmetric);
+        // for mixed batches this is the only useful info
+        _HklStat.UniqueReflections = st.UniqueReflections;
+        // check if measured_refs have mixed batches
+        if (!merge_stats_refs.IsEmpty()) {
+          st = RefMerger::DryMerge<RefMerger::ShelxMerger>(sp, merge_stats_refs,
               vec3i_list(), info_ex.centrosymmetric);
-          _HklStat.Rint = st.Rint;
-          _HklStat.Rsigma = st.Rsigma;
-          _HklStat.InconsistentEquivalents = st.InconsistentEquivalents;
         }
-        else {
-          _HklStat.Rint = _HklStat.Rsigma = -1;
-          _HklStat.InconsistentEquivalents = 0;
-        }
-        if (!batch_1.IsEmpty()) {
-          MergeStats st =
-            RefMerger::DryMerge<RefMerger::ShelxMerger>(sp, batch_1,
-              vec3i_list(), info_ex.centrosymmetric);
-          _HklStat.UniqueReflections = st.UniqueReflections;
-        }
-        _HklStat.ReflectionAPotMax = 0;
+        _HklStat.Rint = st.Rint;
+        _HklStat.Rsigma = st.Rsigma;
+        _HklStat.InconsistentEquivalents = st.InconsistentEquivalents;
       }
       else {
         _HklStat.DataCount = _HklStat.UniqueReflections;
@@ -2216,9 +2234,13 @@ double RefinementModel::CalcCompletenessTo2Theta(double tt, bool Laue) {
   HklStat st;
   FilterHkl(refs_, st);
   if (GetHKLF() >= 5) {
-    int twst = TWST == 0 ? 1 : TWST;
     for (size_t i = 0; i < refs_.Count(); i++) {
-      if (refs_[i].GetBatch() == twst) {
+      if (TWST <= 0) {
+        if (refs_[i].GetBatch() >= 0 ) {
+          refs.Add(refs_[i]);
+        }
+      }
+      else if (refs_[i].GetBatch() == TWST) {
         refs.Add(refs_[i]);
       }
     }
@@ -2853,7 +2875,7 @@ void RefinementModel::HklStat::SetDefaults() {
   HKLF_s = def_HKLF_s;
   HKLF_mat.I();
   HKLF = -1;
-  TWST = 0;
+  TWST = def_TWST;
   FilteredOff = IntensityTransformed = OmittedByUser = 0;
   DataCount = TotalReflections = OmittedReflections = 0;
   MERG = def_MERG;

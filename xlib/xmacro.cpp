@@ -1378,9 +1378,9 @@ void XLibMacros::macHklStat(TStrObjList &Cmds, const TParamList &Options,
     xapp.NewLogEntry() << Output;
     xapp.NewLogEntry() << "Friedel pairs measured (in P1): " <<
       xapp.XFile().GetRM().GetFriedelPairCount();
-    if (hs.HKLF >= 5) {
+    if (hs.HKLF >= 5 && xapp.XFile().GetRM().HasTWST()) {
       xapp.NewLogEntry() << "Note that the merging stats are given for batch "
-        "#" << xapp.XFile().GetRM().getTWST() << " only";
+        "#" << xapp.XFile().GetRM().GetTWST() << " only";
     }
     return;
   }
