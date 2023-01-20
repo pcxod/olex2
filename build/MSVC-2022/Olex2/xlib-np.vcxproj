@@ -505,6 +505,7 @@
     <ClCompile Include="..\..\..\xlib\auto.cpp" />
     <ClCompile Include="..\..\..\xlib\calc_ext.cpp" />
     <ClCompile Include="..\..\..\xlib\catomlist.cpp" />
+    <ClCompile Include="..\..\..\xlib\chirality.cpp" />
     <ClCompile Include="..\..\..\xlib\cifdp.cpp" />
     <ClCompile Include="..\..\..\xlib\constraints_ext.cpp" />
     <ClCompile Include="..\..\..\xlib\hall.cpp" />
@@ -564,6 +565,7 @@
     <ClCompile Include="..\..\..\xlib\macro\testsymm.cpp" />
     <ClCompile Include="..\..\..\xlib\symmspace.cpp" />
     <ClCompile Include="..\..\..\xlib\tls.cpp" />
+    <ClCompile Include="..\..\..\xlib\twinning.cpp" />
     <ClCompile Include="..\..\..\xlib\unitcell.cpp" />
     <ClCompile Include="..\..\..\xlib\vcov.cpp" />
     <ClCompile Include="..\..\..\xlib\macro\wilson.cpp" />
