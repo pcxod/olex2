@@ -252,7 +252,14 @@ bool TXGlLabels::Orient(TGlPrimitive& P) {
         Tmp << ", " << olxstr::FormatFloat(3, ca.GetOccu());
       }
       if ((Mode & lmSame) != 0 && olx_is_valid_index(ca.GetSameId())) {
-        Tmp << ", " << ':' << ca.GetSameId();
+        const TSameGroup &sg = ca.GetParent()->GetRefMod()->rSAME[ca.GetSameId()];
+        Tmp << ", ";
+        if (sg.GetParentGroup() == 0) {
+          Tmp << ca.GetSameId();
+        }
+        else {
+          Tmp << sg.GetParentGroup()->GetId() << ':' << ca.GetSameId();
+        }
       }
       if ((Mode & lmChirality) != 0 && ca.IsChiral()) {
         if (ca.IsChiralR()) {

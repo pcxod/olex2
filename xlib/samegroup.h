@@ -29,7 +29,7 @@ protected:
   void ClearAtomIds() { SetAtomIds(~0); }
 public:
   TSameGroup(uint16_t id, TSameGroupList& parent);
-  ~TSameGroup() { Clear(); }
+  ~TSameGroup();
 
   const TSameGroupList& GetParent() const { return Parent; }
   TSameGroupList& GetParent() { return Parent; }
@@ -66,13 +66,17 @@ public:
   // compares pointer addresses only!
   bool operator == (const TSameGroup& sr) const { return this == &sr; }
 
+  int Compare(const TSameGroup& g) const;
+
   const AtomRefList &GetAtoms() const { return Atoms; }
   AtomRefList &GetAtoms() { return Atoms; }
 
   size_t DependentCount() const { return Dependent.Count(); }
   TSameGroup& GetDependent(size_t i) { return *Dependent[i]; }
   const TSameGroup& GetDependent(size_t i) const { return *Dependent[i]; }
-
+  void PackDependent(index_t tag) {
+    Dependent.Pack(ACollectionItem::TagAnalyser(tag));
+  }
   bool IsValidForSave() const;
   // returns true if contains only unique atoms
   bool AreAllAtomsUnique() const;
@@ -119,6 +123,7 @@ public:
   void Release(TSameGroup& sg);
   void Restore(TSameGroup& sg);
   void Delete(const TPtrList <TSameGroup> &groups);
+  void Sort();
   // this is called internally by the RM
   void OnAUUpdate();
   void BeginAUSort();

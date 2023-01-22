@@ -2384,8 +2384,11 @@ olx_pair_t<bool,bool> RunExternalEdit(TStrList &SL, const olxstr& fn_) {
     for (size_t i = 0; i < released.restraints.Count(); i++) {
       released.restraints[i]->GetParent().Restore(*released.restraints[i]);
     }
-    for (size_t i = 0; i < released.sameList.Count(); i++) {
-      released.sameList[i]->GetParent().Restore(*released.sameList[i]);
+    if (!released.sameList.IsEmpty()) {
+      for (size_t i = 0; i < released.sameList.Count(); i++) {
+        released.sameList[i]->GetParent().Restore(*released.sameList[i]);
+      }
+      released.sameList[0]->GetParent().Sort();
     }
   }
   else {

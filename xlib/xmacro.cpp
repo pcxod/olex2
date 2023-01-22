@@ -268,7 +268,7 @@ void XLibMacros::Export(TLibrary& lib)  {
     "q-quiet if has not added",
     (fpAny^fpNone)|psCheckFileTypeIns,
     "Adds an instruction to the INS file");
-  xlib_InitMacro(DelIns, EmptyString(), fpOne|psCheckFileTypeIns,
+  xlib_InitMacro(DelIns, EmptyString(), fpAny^fpNone|psCheckFileTypeIns,
     "A number or the name (will remove all accurances) can be provided");
   xlib_InitMacro(LstIns, EmptyString(), fpNone|psCheckFileTypeIns,
     "Lists all instructions of currently loaded Ins file");
@@ -2623,6 +2623,25 @@ void XLibMacros::macDelIns(TStrObjList &Cmds, const TParamList &Options,
     else if (Cmds[0].Equalsi("SWAT")) {
       rm.ClearSWAT();
     }
+    else if (Cmds[0].Equalsi("SAME")) {
+      TSAtomPList atoms = TXApp::GetInstance().FindSAtoms(Cmds.SubListFrom(1), false);
+      if (!atoms.IsEmpty()) {
+        TPtrList<TSameGroup> groups;
+        for (size_t i = 0; i < atoms.Count(); i++) {
+          if (olx_is_valid_index(atoms[i]->CAtom().GetSameId())) {
+            RefinementModel &rm = *atoms[i]->GetParent().GetAsymmUnit().GetRefMod();
+            groups.Add(rm.rSAME[atoms[i]->CAtom().GetSameId()]);
+          }
+        }
+        if (groups.IsEmpty()) {
+          return;
+        }
+        groups[0]->GetParent().Delete(groups);
+      }
+      else if (Cmds.Count() == 1) {
+        rm.rSAME.Clear();
+      }
+    }
     else {
       for (size_t i = 0; i < Ins.InsCount(); i++) {
         if (Ins.InsName(i).Equalsi(Cmds[0])) {
@@ -2640,10 +2659,12 @@ void XLibMacros::macLS(TStrObjList &Cmds, const TParamList &Options,
 {
   int ls = -1;
   XLibMacros::Parse(Cmds, "i", &ls);
-  if (ls != -1)
+  if (ls != -1) {
     TXApp::GetInstance().XFile().GetRM().SetIterations((int)ls);
-  if (!Cmds.IsEmpty())
+  }
+  if (!Cmds.IsEmpty()) {
     TXApp::GetInstance().XFile().GetRM().SetRefinementMethod(Cmds[0]);
+  }
 }
 //.............................................................................
 void XLibMacros::macUpdateWght(TStrObjList &Cmds, const TParamList &Options,
@@ -2651,12 +2672,14 @@ void XLibMacros::macUpdateWght(TStrObjList &Cmds, const TParamList &Options,
 {
   RefinementModel& rm = TXApp::GetInstance().XFile().GetRM();
   if (Cmds.IsEmpty() && rm.proposed_weight.IsEmpty()) return;
-  if (Cmds.IsEmpty())
+  if (Cmds.IsEmpty()) {
     rm.used_weight = rm.proposed_weight;
+  }
   else {
     rm.used_weight.SetCount(Cmds.Count());
-    for (size_t i=0; i < Cmds.Count(); i++)
+    for (size_t i = 0; i < Cmds.Count(); i++) {
       rm.used_weight[i] = Cmds[i].ToDouble();
+    }
   }
 }
 //.............................................................................
@@ -2667,8 +2690,9 @@ void XLibMacros::macUser(TStrObjList &Cmds, const TParamList &Options, TMacroDat
   else if (!TEFile::ChangeDir(Cmds[0])) {
     Error.ProcessingError(__OlxSrcInfo, "could not change current folder");
   }
-  else
+  else {
     CurrentDir() = Cmds[0];
+  }
 }
 //.............................................................................
 void XLibMacros::macDir(TStrObjList &Cmds, const TParamList &Options, TMacroData &Error)  {
@@ -10469,7 +10493,7 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
     E.ProcessingError(__OlxSrcInfo, "invalid input arguments");
     return;
   }
-  app.XFile().GetRM().rSAME.FixIds();
+  app.XFile().GetRM().rSAME.Sort();
 }
 //.............................................................................
 void XLibMacros::macRIGU(TStrObjList &Cmds, const TParamList &Options,

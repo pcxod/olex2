@@ -572,9 +572,7 @@ void TIns::_ProcessSame(ParseContext& cx, const TIndexList *index)  {
       }
     }
     if (valid && !overrides.IsEmpty()) {
-      if (overrides.Count() == 1 &&
-        overrides.GetValue(0) == sgl[sgl.Count()-1].GetAtoms().RefCount())
-      {
+      if (overrides.Count() == 1) {
         TBasicApp::NewLogEntry(logInfo) << "Self-referencing SAME group found: "
           << sgl[overrides.GetKey(0)].GetAtoms().GetExpression()
           << " referenced by "
@@ -586,6 +584,7 @@ void TIns::_ProcessSame(ParseContext& cx, const TIndexList *index)  {
       }
     }
   }
+  sgl.Sort();
 }
 //..............................................................................
 void TIns::__ProcessConn(ParseContext& cx) {

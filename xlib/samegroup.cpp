@@ -17,6 +17,13 @@ TSameGroup::TSameGroup(uint16_t id, TSameGroupList& parent)
   ParentGroup(0), Esd12(0.02), Esd13(0.02)
 {}
 //.............................................................................
+TSameGroup::~TSameGroup() {
+  Clear();
+  // manage in batch when needed onstead
+  //if (ParentGroup != 0) {
+  //  ParentGroup->RemoveDependent(*this);
+  //}
+}
 void TSameGroup::SetAtomIds(uint16_t id) {
   if (!Atoms.IsExplicit()) {
     return;
@@ -186,6 +193,35 @@ void TSameGroup::EndAUSort() {
   }
 }
 //.............................................................................
+int TSameGroup::Compare(const TSameGroup& g) const {
+  if (GetParentGroup() != 0) {
+    if (g.GetParentGroup() == 0) {
+      return 1;
+    }
+  }
+  else {
+    if (g.GetParentGroup() == 0) {
+      return -1;
+    }
+  }
+  // equivalent from point of view of ParentGroup, check first atom Id
+  if (!Atoms.IsExplicit() || !g.Atoms.IsExplicit()) {
+    return 0;
+  }
+  TAtomRefList this_atoms = Atoms.ExpandList(Parent.RM);
+  TAtomRefList that_atoms = Atoms.ExpandList(g.Parent.RM);
+  if (this_atoms.IsEmpty()) {
+    if (that_atoms.IsEmpty()) {
+      return 0;
+    }
+    return -1;
+  }
+  else if (that_atoms.IsEmpty()) {
+    return 1;
+  }
+  return olx_cmp(this_atoms[0].GetAtom().GetId(), that_atoms[0].GetAtom().GetId());
+}
+//.............................................................................
 //.............................................................................
 //.............................................................................
 void TSameGroupList::Release(TSameGroup& sg) {
@@ -194,6 +230,9 @@ void TSameGroupList::Release(TSameGroup& sg) {
       "SAME group parent differs");
   }
   if (Groups.Count() <= sg.GetId() || &Groups[sg.GetId()] != &sg) {
+#ifdef _DEBUG
+    throw TFunctionFailedException(__OlxSrcInfo, "assert");
+#endif
     return;
   }
   Groups.Release(sg.GetId());
@@ -226,9 +265,11 @@ void TSameGroupList::Restore(TSameGroup& sg)  {
 void TSameGroupList::Delete(const TPtrList <TSameGroup> &groups_) {
   Groups.ForEach(ACollectionItem::TagSetter(0));
   TPtrList <TSameGroup> groups = groups_;
+  ACollectionItem::Unify(groups);
+  // implicit recursion
   for (size_t i = 0; i < groups.Count(); i++) {
     for (size_t j = 0; j < groups[i]->DependentCount(); j++) {
-      groups.AddUnique(groups[i]->GetDependent(j));
+      groups.Add(groups[i]->GetDependent(j));
     }
   }
   for (size_t i = 0; i < groups.Count(); i++) {
@@ -238,7 +279,21 @@ void TSameGroupList::Delete(const TPtrList <TSameGroup> &groups_) {
     }
     groups[i]->SetTag(1);
   }
+  for (size_t i = 0; i < Groups.Count(); i++) {
+    Groups[i].PackDependent(1);
+    if (Groups[i].GetParentGroup() == 0 && Groups[i].DependentCount() == 0) {
+      Groups[i].SetTag(1);
+    }
+  }
   Groups.Pack(ACollectionItem::TagAnalyser(1));
+  for (size_t i = 0; i < Groups.Count(); i++) {
+    Groups[i].SetId((uint16_t)i);
+  }
+  FixIds();
+}
+//.............................................................................
+void TSameGroupList::Sort() {
+  QuickSorter::Sort(Groups);
   for (size_t i = 0; i < Groups.Count(); i++) {
     Groups[i].SetId((uint16_t)i);
   }
