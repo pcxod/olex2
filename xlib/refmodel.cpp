@@ -1013,16 +1013,18 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
             batches.Add(b, 0)++;
           }
           // find the most occupied batch for merge stats
-          size_t max_c = batches.GetValue(0), max_i = 0;
-          for (size_t i = 1; i < batches.Count(); i++) {
-            if (batches.GetValue(i) > max_c) {
-              max_c = batches.GetValue(i);
-              max_i = i;
+          if (batches.Count() > 1) {
+            size_t max_c = batches.GetValue(0), max_i = 0;
+            for (size_t i = 1; i < batches.Count(); i++) {
+              if (batches.GetValue(i) > max_c) {
+                max_c = batches.GetValue(i);
+                max_i = i;
+              }
             }
+            merge_stats_refs = measured_refs.Filter(
+              olx_alg::olx_eq(batches.GetKey(max_i),
+                FunctionAccessor::MakeConst(&TReflection::GetBatch)));
           }
-          merge_stats_refs = measured_refs.Filter(
-            olx_alg::olx_eq(batches.GetKey(max_i),
-            FunctionAccessor::MakeConst(&TReflection::GetBatch)));
         }
         else {
           measured_refs = refs.ptr().Filter(olx_alg::olx_eq(TWST,
@@ -1087,20 +1089,22 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
         }
       }
       if (HKLF >= 5) {
-        _HklStat.Rint = _HklStat.Rsigma = -1;
+        _HklStat.Rint = -1;
         _HklStat.InconsistentEquivalents = 0;
-        MergeStats st =
-          RefMerger::DryMerge<RefMerger::ShelxMerger>(sp, measured_refs,
-            vec3i_list(), info_ex.centrosymmetric);
-        // for mixed batches this is the only useful info
-        _HklStat.UniqueReflections = st.UniqueReflections;
+        _HklStat.UniqueReflections = 0;
+        MergeStats st;
+        if (!measured_refs.IsEmpty()) {
+          st = RefMerger::DryMerge<RefMerger::ShelxMerger>(sp, measured_refs,
+              vec3i_list(), info_ex.centrosymmetric);
+          // for mixed batches this is the only useful info
+          _HklStat.UniqueReflections = st.UniqueReflections;
+        }
         // check if measured_refs have mixed batches
         if (!merge_stats_refs.IsEmpty()) {
           st = RefMerger::DryMerge<RefMerger::ShelxMerger>(sp, merge_stats_refs,
               vec3i_list(), info_ex.centrosymmetric);
+          _HklStat.Rint = st.Rint;
         }
-        _HklStat.Rint = st.Rint;
-        _HklStat.Rsigma = st.Rsigma;
         _HklStat.InconsistentEquivalents = st.InconsistentEquivalents;
       }
       else {
@@ -2250,6 +2254,10 @@ double RefinementModel::CalcCompletenessTo2Theta(double tt, bool Laue) {
   }
   for (size_t i = 0; i < refs.Count(); i++) {
     refs[i]->Standardise(info_ex);
+  }
+  if (refs.IsEmpty()) {
+    completeness_cache.Add(key, 0);
+    return 0;
   }
   QuickSorter::SortSF(refs, &TReflection::Compare);
   size_t u_cnt = 0;
