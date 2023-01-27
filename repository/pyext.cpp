@@ -452,23 +452,33 @@ PyObject* runOlexFunctionEx(PyObject* self, PyObject* args) {
   }
 }
 //.............................................................................
-PyObject* runPrintText(PyObject* self, PyObject* args)  {
-  for (Py_ssize_t i=0; i < PyTuple_Size(args); i++) {
+PyObject* runPrintText(PyObject* self, PyObject* args) {
+  static time_t last = TETime::msNow();
+  Py_ssize_t sz = PyTuple_Size(args);
+  if (sz == 0) {
+    return PythonExt::PyNone();
+  }
+  for (Py_ssize_t i = 0; i < sz; i++) {
     PyObject* po = PyTuple_GetItem(args, i);
     olxstr s = PythonExt::ParseStr(po).Trim('\'');
-    bool nl=false;
+    bool nl = false;
     if (s.EndsWith("\r\n")) {
       nl = true;
-      s.SetLength(s.Length()-1);
+      s.SetLength(s.Length() - 1);
     }
     else if (s.EndsWith('\n') || s.EndsWith('\r')) {
       nl = true;
-      s.SetLength(s.Length()-1);
+      s.SetLength(s.Length() - 1);
     }
     if (nl) {
       TBasicApp::NewLogEntry();
     }
     TBasicApp::GetLog() << s;
+  }
+  time_t now = TETime::msNow();
+  if (now - last > 50) {
+    TBasicApp::GetInstance().Update();
+    last = now;
   }
   return PythonExt::PyNone();
 }
