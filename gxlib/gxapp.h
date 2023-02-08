@@ -342,7 +342,7 @@ public:
   void InitFadeMode();
 
   // implementation of BasicApp function - renders the scene
-  virtual void Update() { Draw(); }
+  virtual void Update();
   DefPropBIsSet(MainFormVisible)
     // renders the scene and returns used time in ms
     uint64_t Draw();

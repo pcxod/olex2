@@ -359,8 +359,9 @@ PyObject* runGetProfileInfo(PyObject* self, PyObject* args)  {
 PyObject* runOlexMacro(PyObject* self, PyObject* args)  {
   IOlex2Processor* o_r = PythonExt::GetInstance()->GetOlexProcessor();
   olxstr macroName;
-  if( !PythonExt::ParseTuple(args, "w", &macroName) )
+  if (!PythonExt::ParseTuple(args, "w", &macroName)) {
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "w");
+  }
   bool res = o_r->processMacro(macroName);
   return Py_BuildValue("b", res);
 }
@@ -454,10 +455,12 @@ PyObject* runOlexFunctionEx(PyObject* self, PyObject* args) {
 //.............................................................................
 PyObject* runPrintText(PyObject* self, PyObject* args) {
   static time_t last = TETime::msNow();
+  static size_t line_cnt = 0;
   Py_ssize_t sz = PyTuple_Size(args);
   if (sz == 0) {
     return PythonExt::PyNone();
   }
+  time_t now = TETime::msNow();
   for (Py_ssize_t i = 0; i < sz; i++) {
     PyObject* po = PyTuple_GetItem(args, i);
     olxstr s = PythonExt::ParseStr(po).Trim('\'');
@@ -472,12 +475,18 @@ PyObject* runPrintText(PyObject* self, PyObject* args) {
     }
     if (nl) {
       TBasicApp::NewLogEntry();
+      line_cnt++;
     }
     TBasicApp::GetLog() << s;
   }
-  time_t now = TETime::msNow();
-  if (now - last > 50) {
+  time_t diff = now - last;
+  if (diff >= 50) {
     TBasicApp::GetInstance().Update();
+    last = now;
+  }
+  else if (line_cnt > 5 && diff >= 25) {
+    TBasicApp::GetInstance().Update();
+    line_cnt = 0;
     last = now;
   }
   return PythonExt::PyNone();

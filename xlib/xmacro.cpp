@@ -2135,6 +2135,35 @@ void XLibMacros::macFix(TStrObjList &Cmds, const TParamList &Options,
     Cmds.Delete(0);
   }
   TXApp& xapp = TXApp::GetInstance();
+  // special case
+  if (vars.Equalsi("H")) {
+    TAfixGroups& ags = xapp.XFile().GetRM().AfixGroups;
+    for (size_t i = 0; i < ags.Count(); i++) {
+      int N = ags[i].GetN(),
+        M = ags[i].GetM();
+      if (N == 4 || N == 7 || N == 8) {
+        bool change = false;
+        for (size_t j = 0; j < ags[i].Count(); j++) {
+          if (ags[i][j].GetType() == iHydrogenZ) {
+            change = true;
+            break;
+          }
+        }
+        if (change) {
+          if (M == 14) {
+            ags[i].SetAfix(83);
+          }
+          else if (M == 13) {
+            ags[i].SetAfix(33);
+          }
+          else {
+            ags[i].SetAfix(M * 10 + 3);
+          }
+        }
+      }
+    }
+    return;
+  }
   TSAtomPList atoms = xapp.FindSAtoms(Cmds, true, true);
   if (atoms.IsEmpty()) {
     return;
@@ -5375,6 +5404,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
               res->lines.Delete(i);
             }
             res->lines[i] = olxstr("REM <HklSrc \".\\\\") << new_dn << ".hkl\">";
+            break;
           }
         }
       }
@@ -9533,6 +9563,21 @@ void XLibMacros::macExport(TStrObjList &Cmds, const TParamList &Options,
     }
     if (ci != 0) {
       TCStrList lines(ci->lines);
+      // update HklSrc just in case!
+      for (size_t i = 0; i < lines.Count(); i++) {
+        size_t si = lines[i].IndexOf("REM <HklSrc");
+        if (si == InvalidIndex) {
+          continue;
+        }
+        while (lines[i].StartsFromi("REM") &&
+          !lines[i].EndsWith('>') &&
+          ++i < lines.Count())
+        {
+          lines.Delete(i);
+        }
+        lines[i] = olxstr("REM <HklSrc \".\\\\") << TEFile::ExtractFileName(hkl_name) << "\">";
+        break;
+      }
       TEFile::WriteLines(res_name, lines);
       if (check_md5) {
         olxstr md5;

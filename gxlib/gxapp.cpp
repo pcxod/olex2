@@ -3846,6 +3846,14 @@ void TGXApp::UpdateLabels()  {
     r.GetObject(i).UpdateLabel();
   }
 }
+void TGXApp::Update() {
+  Draw();
+#ifdef __WXWIDGETS__
+  if (wxTheApp->Pending()) {
+    wxTheApp->Dispatch();
+  }
+#endif
+}
 //..............................................................................
 uint64_t TGXApp::Draw() {
   if (!IsMainFormVisible() || DisplayFrozen) {
