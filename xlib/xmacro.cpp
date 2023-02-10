@@ -556,6 +556,7 @@ void XLibMacros::Export(TLibrary& lib)  {
     "i-[false] makes an implicit restaraint&;"
     "r-[true] when two atoms selected creates a rotor restraint, can be false"
     " when -i is used&;"
+    "c-similar bonds from the first atoms to the rest&;"
     "cs-do not clear selection",
     fpAny|psCheckFileTypeIns,
     "Similar distances restraint");
@@ -9030,51 +9031,88 @@ void XLibMacros::macTria(TStrObjList &Cmds, const TParamList &Options,
   }
 }
 //.............................................................................
-void XLibMacros::macSadi(TStrObjList &Cmds, const TParamList &Options,
-  TMacroData &E)
+void XLibMacros::macSadi(TStrObjList& Cmds, const TParamList& Options,
+  TMacroData& E)
 {
   double esd = 0.02;  // esd for sadi
   bool esd_set = ParseResParam(Cmds, esd);
   MacroInput mi = ExtractSelection(Cmds, !Options.Contains("cs"));
-  TXApp &app = TXApp::GetInstance();
+  TXApp& app = TXApp::GetInstance();
   TSAtomPList Atoms;
-  if (!mi.atoms.IsEmpty())
+  if (!mi.atoms.IsEmpty()) {
     Atoms = mi.atoms;
+  }
   else {
-    for (size_t i=0; i < mi.bonds.Count(); i++)
+    for (size_t i = 0; i < mi.bonds.Count(); i++) {
       Atoms << mi.bonds[i]->A() << mi.bonds[i]->B();
+    }
+  }
+  if (Atoms.IsEmpty()) {
+    return;
   }
   TPtrList<TSimpleRestraint> restraints;
-  TSimpleRestraint &sr = app.XFile().GetRM().rSADI.AddNew();
+  TSimpleRestraint& sr = app.XFile().GetRM().rSADI.AddNew();
   restraints << sr;
-  if (esd_set) sr.SetEsd(esd);
+  if (esd_set) {
+    sr.SetEsd(esd);
+  }
   esd = sr.GetEsd();
   if (Atoms.Count() == 1) {  // special case
-    TSimpleRestraint &sr1 = app.XFile().GetRM().rSADI.AddNew();
+    TSimpleRestraint& sr1 = app.XFile().GetRM().rSADI.AddNew();
     restraints << sr1;
     sr1.SetEsd(esd);
-    sr.SetEsd(esd*2);
-    TSAtom* A = Atoms[0];
-    double td = 0;
-    for (size_t i=0; i < A->NodeCount(); i++) {
-      TSAtom& SA = A->Node(i);
-      if (SA.IsDeleted() || SA.GetType() == iQPeakZ) continue;
+    sr.SetEsd(esd * 2);
+    const TSAtom &A = *Atoms[0];
+    double md12 = 0;
+    TSAtomPList envi12;
+    for (size_t i = 0; i < A.NodeCount(); i++) {
+      TSAtom& SA = A.Node(i);
+      if (SA.IsDeleted() || SA.GetType() == iQPeakZ) {
+        continue;
+      }
+      envi12 << SA;
+      md12 += A.crd().DistanceTo(SA.crd());
+    }
+    if (envi12.IsEmpty()) {
+      return;
+    }
+    md12 /= envi12.Count();
+    for (size_t i = 0; i < envi12.Count(); i++) {
+      const TSAtom& SA = *envi12[i];
+      double d = A.crd().DistanceTo(SA.crd());
+      if (olx_abs(d-md12) / md12 > 0.15) {
+        TBasicApp::NewLogEntry() << "Skipping " << A.GetGuiLabel() << '-' <<
+          SA.GetGuiLabel() << ": high deviation from the mean value "
+          << olxstr::FormatFloat(3, md12);
+        continue;
+      }
       sr1.AddAtomPair(
-        A->CAtom(), &A->GetMatrix(),
+        A.CAtom(), &A.GetMatrix(),
         SA.CAtom(), &SA.GetMatrix());
-      if (td == 0)  // need this one to remove opposite atoms from restraint
-        td = A->crd().DistanceTo(SA.crd()) * 2;
-      for (size_t j=i+1; j < A->NodeCount(); j++) {
-        TSAtom& SA1 = A->Node(j);
+
+      double md13 = 0;
+      TSAtomPList envi13;
+      for (size_t j = i + 1; j < A.NodeCount(); j++) {
+        TSAtom& SA1 = A.Node(j);
         if (SA1.IsDeleted() || SA1.GetType() == iQPeakZ ||
-           (SA.CAtom().GetPart() != SA1.CAtom().GetPart()))
+          (SA.CAtom().GetPart() != SA1.CAtom().GetPart()))
         {
-         continue;
+          continue;
         }
-        const double d = SA.crd().DistanceTo(SA1.crd());
-        if( d/td > 0.85 ) {
+        envi13 << SA1;
+        md13 += SA.crd().DistanceTo(SA1.crd());
+      }
+      if (envi13.IsEmpty()) {
+        continue;
+      }
+      md13 /= envi13.Count();
+      for (size_t j = 0; j < envi13.Count(); j++) {
+        const TSAtom& SA1 = *envi13[j];
+        d = SA.crd().DistanceTo(SA1.crd());
+        if (olx_abs(d - md13) / md13 > 0.25) {
           TBasicApp::NewLogEntry() << "Skipping " << SA.GetGuiLabel() << '-' <<
-            SA1.GetGuiLabel() << ": high deviation from the rest of the bonds";
+            SA1.GetGuiLabel() << ": high deviation from the mean value "
+            << olxstr::FormatFloat(3, md13);
           continue;
         }
         sr.AddAtomPair(
@@ -9087,35 +9125,41 @@ void XLibMacros::macSadi(TStrObjList &Cmds, const TParamList &Options,
     if (Options.GetBoolOption('r')) {
       for (size_t i = 0; i < Atoms[0]->NodeCount(); i++) {
         TSAtom& n = Atoms[0]->Node(i);
-        if (n.IsDeleted() || n.GetType() == iQPeakZ || &n == Atoms[1])
+        if (n.IsDeleted() || n.GetType() == iQPeakZ || &n == Atoms[1]) {
           continue;
+        }
         sr.AddAtomPair(
           Atoms[0]->CAtom(), &Atoms[0]->GetMatrix(),
           n.CAtom(), &n.GetMatrix());
       }
-      TSimpleRestraint &sr1 = app.XFile().GetRM().rSADI.AddNew();
-      if (esd_set) sr1.SetEsd(esd);
+      TSimpleRestraint& sr1 = app.XFile().GetRM().rSADI.AddNew();
+      if (esd_set) {
+        sr1.SetEsd(esd);
+      }
       restraints << sr1;
       olx_pdict<int, TSAtomPList> parts;
       for (size_t i = 0; i < Atoms[0]->NodeCount(); i++) {
         TSAtom& n = Atoms[0]->Node(i);
-        if (n.IsDeleted() || n.GetType() == iQPeakZ || &n == Atoms[1])
+        if (n.IsDeleted() || n.GetType() == iQPeakZ || &n == Atoms[1]) {
           continue;
+        }
         parts.Add(n.CAtom().GetPart()).Add(n);
         sr1.AddAtomPair(
           Atoms[1]->CAtom(), &Atoms[1]->GetMatrix(),
           n.CAtom(), &n.GetMatrix());
       }
-      TSimpleRestraint &sr2 = app.XFile().GetRM().rSADI.AddNew();
-      if (esd_set) sr2.SetEsd(esd);
+      TSimpleRestraint& sr2 = app.XFile().GetRM().rSADI.AddNew();
+      if (esd_set) {
+        sr2.SetEsd(esd);
+      }
       restraints << sr2;
       for (size_t i = 0; i < parts.Count(); i++) {
-        TSAtomPList &atoms = parts.GetValue(i);
+        TSAtomPList& atoms = parts.GetValue(i);
         plane::mean<>::out po = plane::mean<>::calc(atoms, TSAtom::CrdAccessor());
         plane::Sort(atoms, TSAtom::CrdAccessor(), po.center, po.normals[0]);
         for (size_t j = 1; j < atoms.Count(); j++) {
           sr2.AddAtomPair(
-            atoms[j-1]->CAtom(), &atoms[j-1]->GetMatrix(),
+            atoms[j - 1]->CAtom(), &atoms[j - 1]->GetMatrix(),
             atoms[j]->CAtom(), &atoms[j]->GetMatrix());
         }
         if (atoms.Count() > 2) {
@@ -9130,8 +9174,10 @@ void XLibMacros::macSadi(TStrObjList &Cmds, const TParamList &Options,
         E.ProcessingError(__OlxSrcInfo, "not applicable to explicit restraints");
         return;
       }
-      TSimpleRestraint &sr1 = app.XFile().GetRM().rSADI.AddNew();
-      if (esd_set) sr1.SetEsd(esd);
+      TSimpleRestraint& sr1 = app.XFile().GetRM().rSADI.AddNew();
+      if (esd_set) {
+        sr1.SetEsd(esd);
+      }
       restraints << sr1;
       sr1.AddAtomPair(Atoms[0]->CAtom(), 0, Atoms[1]->CAtom(), 0);
     }
@@ -9145,20 +9191,29 @@ void XLibMacros::macSadi(TStrObjList &Cmds, const TParamList &Options,
       Atoms[2]->CAtom(), &Atoms[2]->GetMatrix());
   }
   else {
-    if ((Atoms.Count()%2) != 0 ) {
-      E.ProcessingError(__OlxSrcInfo, "even number of atoms is expected");
-      return;
+    if (Options.GetBoolOption('c')) {
+      for (size_t i = 1; i < Atoms.Count(); i++) {
+        sr.AddAtomPair(Atoms[0]->CAtom(), &Atoms[0]->GetMatrix(),
+          Atoms[i]->CAtom(), &Atoms[i]->GetMatrix());
+      }
     }
-    for (size_t i=0; i < Atoms.Count(); i += 2 ) {
-      sr.AddAtomPair(Atoms[i]->CAtom(), &Atoms[i]->GetMatrix(),
-        Atoms[i+1]->CAtom(), &Atoms[i+1]->GetMatrix());
+    else {
+      if ((Atoms.Count() % 2) != 0) {
+        E.ProcessingError(__OlxSrcInfo, "even number of atoms is expected");
+        return;
+      }
+      for (size_t i = 0; i < Atoms.Count(); i += 2) {
+        sr.AddAtomPair(Atoms[i]->CAtom(), &Atoms[i]->GetMatrix(),
+          Atoms[i + 1]->CAtom(), &Atoms[i + 1]->GetMatrix());
+      }
     }
   }
   bool to_impl = Options.GetBoolOption('i');
   TBasicApp::NewLogEntry() << "Placing the following restraints: ";
   for (size_t i = 0; i < restraints.Count(); i++) {
-    if (to_impl)
+    if (to_impl) {
       restraints[i]->ConvertToImplicit();
+    }
     TBasicApp::NewLogEntry() << restraints[i]->ToString();
   }
 }
