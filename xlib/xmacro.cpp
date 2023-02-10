@@ -557,6 +557,7 @@ void XLibMacros::Export(TLibrary& lib)  {
     "r-[true] when two atoms selected creates a rotor restraint, can be false"
     " when -i is used&;"
     "c-similar bonds from the first atoms to the rest&;"
+    "v-do not filter distances by deviation&;"
     "cs-do not clear selection",
     fpAny|psCheckFileTypeIns,
     "Similar distances restraint");
@@ -9050,6 +9051,7 @@ void XLibMacros::macSadi(TStrObjList& Cmds, const TParamList& Options,
   if (Atoms.IsEmpty()) {
     return;
   }
+  bool validate = !Options.GetBoolOption('v');
   TPtrList<TSimpleRestraint> restraints;
   TSimpleRestraint& sr = app.XFile().GetRM().rSADI.AddNew();
   restraints << sr;
@@ -9080,7 +9082,7 @@ void XLibMacros::macSadi(TStrObjList& Cmds, const TParamList& Options,
     for (size_t i = 0; i < envi12.Count(); i++) {
       const TSAtom& SA = *envi12[i];
       double d = A.crd().DistanceTo(SA.crd());
-      if (olx_abs(d-md12) / md12 > 0.15) {
+      if (validate && olx_abs(d-md12) / md12 > 0.15) {
         TBasicApp::NewLogEntry() << "Skipping " << A.GetGuiLabel() << '-' <<
           SA.GetGuiLabel() << ": high deviation from the mean value "
           << olxstr::FormatFloat(3, md12);
@@ -9109,7 +9111,7 @@ void XLibMacros::macSadi(TStrObjList& Cmds, const TParamList& Options,
       for (size_t j = 0; j < envi13.Count(); j++) {
         const TSAtom& SA1 = *envi13[j];
         d = SA.crd().DistanceTo(SA1.crd());
-        if (olx_abs(d - md13) / md13 > 0.25) {
+        if (validate && olx_abs(d - md13) / md13 > 0.25) {
           TBasicApp::NewLogEntry() << "Skipping " << SA.GetGuiLabel() << '-' <<
             SA1.GetGuiLabel() << ": high deviation from the mean value "
             << olxstr::FormatFloat(3, md13);
