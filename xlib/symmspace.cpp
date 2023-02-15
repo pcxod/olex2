@@ -8,6 +8,7 @@
 ******************************************************************************/
 
 #include "symmspace.h"
+#include "symmlib.h"
 
 using namespace SymmSpace;
 
@@ -67,5 +68,29 @@ void Info::normalise(const vec3d_list &translations) {
     matrices[i].t = t;
   }
   normalise();
+}
+//.............................................................................
+smatd_list::const_list_type Info::expand() const {
+  smatd_list ml = matrices;
+  if (latt != 1) {
+    vec3d_list vecs = TSymmLib::GetInstance()
+      .GetLatticeByNumber(latt).GetVectors();
+    size_t mc = ml.Count();
+    for (size_t i = 0; i < mc; i++) {
+      for (size_t j = 0; j < vecs.Count(); j++) {
+        ml.AddCopy(ml[i]).t += vecs[j];
+      }
+    }
+  }
+  if (centrosymmetric) {
+    size_t mc = ml.Count();
+    smatd im;
+    im.r.I() *= -1;
+    im.t = -inv_trans * 2;
+    for (size_t i = 0; i < mc; i++) {
+      ml.Add(new smatd(ml[i])) *= im;
+    }
+  }
+  return ml;
 }
 //.............................................................................

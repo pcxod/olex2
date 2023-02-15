@@ -1091,24 +1091,24 @@ void XLibMacros::macSAInfo(TStrObjList &Cmds, const TParamList &Options, TMacroD
   }
 }
 //.............................................................................
-void XLibMacros::macSGInfo(TStrObjList &Cmds, const TParamList &Options, TMacroData &E)  {
-  if( Cmds.IsEmpty() )  {
+void XLibMacros::macSGInfo(TStrObjList& Cmds, const TParamList& Options, TMacroData& E) {
+  if (Cmds.IsEmpty()) {
     TPtrList<TSpaceGroup> sgList;
     TSymmLib& symlib = TSymmLib::GetInstance();
-    for( size_t i=0; i < symlib.BravaisLatticeCount(); i++ )  {
+    for (size_t i = 0; i < symlib.BravaisLatticeCount(); i++) {
       TBravaisLattice& bl = symlib.GetBravaisLattice(i);
       bl.FindSpaceGroups(sgList);
       TBasicApp::NewLogEntry() << "------------------- " << bl.GetName() <<
-        " --- "  << sgList.Count();
+        " --- " << sgList.Count();
       olxstr tmp, tmp1;
       sorted::PrimitiveAssociation<int, TSpaceGroup*> SortedSG;
-      for( size_t j=0; j < sgList.Count(); j++ )
+      for (size_t j = 0; j < sgList.Count(); j++)
         SortedSG.Add(sgList[j]->GetNumber(), sgList[j]);
-      for( size_t j=0; j < SortedSG.Count(); j++ )  {
+      for (size_t j = 0; j < SortedSG.Count(); j++) {
         tmp1 << SortedSG.GetValue(j)->GetName() << "(#" << SortedSG.GetKey(j) << ')';
         tmp << tmp1.RightPadding(15, ' ', true);
         tmp1.SetLength(0);
-        if( tmp.Length() > 60 )  {
+        if (tmp.Length() > 60) {
           TBasicApp::NewLogEntry() << tmp;
           tmp.SetLength(0);
         }
@@ -1120,11 +1120,24 @@ void XLibMacros::macSGInfo(TStrObjList &Cmds, const TParamList &Options, TMacroD
   }
   const bool Inversion = Options.Contains("i"),
     Centering = Options.Contains("c");
-  TSpaceGroup* sg = TSymmLib::GetInstance().FindGroupByName(Cmds[0]);
+  TSpaceGroup* sg = 0;
+  if (Cmds[0].Contains('(')) { // Hall symbol with basis change
+    SymmSpace::Info gi = HallSymbol::Expand(Cmds[0]);
+    olxstr sh = HallSymbol::Evaluate(gi);
+    TBasicApp::NewLogEntry() << "Input Hall symbol '" << Cmds[0]
+      << "', normalised Hall symbol '" << sh << '\'';
+    sg = TSymmLib::GetInstance().FindGroupByHallSymbol(sh);
+  }
+  else {
+    sg = TSymmLib::GetInstance().FindGroupByName(Cmds[0]);
+    if (sg == 0) {
+      sg = TSymmLib::GetInstance().FindGroupByHallSymbol(Cmds[0]);
+    }
+  }
   bool LaueClassPG = false;
-  if( sg == NULL )  {
+  if (sg == 0) {
     sg = TSymmLib::GetInstance().FindGroupByName(olxstr("P") << Cmds[0]);
-    if( !sg )  {
+    if (sg == 0) {
       E.ProcessingError(__OlxSrcInfo,
         "Could not find specified space group/Laue class/Point group: ") <<
         Cmds[0];
@@ -1132,29 +1145,29 @@ void XLibMacros::macSGInfo(TStrObjList &Cmds, const TParamList &Options, TMacroD
     }
     LaueClassPG = true;
   }
-  if( LaueClassPG )  {
+  if (LaueClassPG) {
     TPtrList<TSpaceGroup> sgList;
     sorted::PrimitiveAssociation<int, TSpaceGroup*> SortedSG;
-    if( &sg->GetLaueClass() == sg )  {
+    if (&sg->GetLaueClass() == sg) {
       TBasicApp::NewLogEntry() << "Space groups of the Laue class " <<
         sg->GetBareName();
-      TSymmLib::GetInstance().FindLaueClassGroups( *sg, sgList);
-      for( size_t j=0; j < sgList.Count(); j++ )
+      TSymmLib::GetInstance().FindLaueClassGroups(*sg, sgList);
+      for (size_t j = 0; j < sgList.Count(); j++)
         SortedSG.Add(sgList[j]->GetNumber(), sgList[j]);
       olxstr tmp, tmp1;
-      for( size_t j=0; j < SortedSG.Count(); j++ )  {
+      for (size_t j = 0; j < SortedSG.Count(); j++) {
         tmp1 << SortedSG.GetValue(j)->GetName() << "(#" << SortedSG.GetKey(j)
           << ')';
         tmp << tmp1.RightPadding(15, ' ', true);
         tmp1.SetLength(0);
-        if( tmp.Length() > 60 )  {
+        if (tmp.Length() > 60) {
           TBasicApp::NewLogEntry() << tmp;
           tmp.SetLength(0);
         }
       }
       TBasicApp::NewLogEntry() << tmp;
     }
-    if( &sg->GetPointGroup() == sg )  {
+    if (&sg->GetPointGroup() == sg) {
       sgList.Clear();
       SortedSG.Clear();
       olxstr tmp, tmp1;
@@ -1162,14 +1175,14 @@ void XLibMacros::macSGInfo(TStrObjList &Cmds, const TParamList &Options, TMacroD
         sg->GetBareName();
       TSymmLib::GetInstance().FindPointGroupGroups(*sg, sgList);
       sorted::PrimitiveAssociation<int, TSpaceGroup*> SortedSG;
-      for( size_t j=0; j < sgList.Count(); j++ )
+      for (size_t j = 0; j < sgList.Count(); j++)
         SortedSG.Add(sgList[j]->GetNumber(), sgList[j]);
-      for( size_t j=0; j < SortedSG.Count(); j++ )  {
+      for (size_t j = 0; j < SortedSG.Count(); j++) {
         tmp1 << SortedSG.GetValue(j)->GetName() << "(#" << SortedSG.GetKey(j)
           << ')';
         tmp << tmp1.RightPadding(15, ' ', true);
         tmp1.SetLength(0);
-        if( tmp.Length() > 60 )  {
+        if (tmp.Length() > 60) {
           TBasicApp::NewLogEntry() << tmp;
           tmp.SetLength(0);
         }
@@ -1186,13 +1199,15 @@ void XLibMacros::macSGInfo(TStrObjList &Cmds, const TParamList &Options, TMacroD
   TBasicApp::NewLogEntry() << "Hall symbol: " << sg->GetHallSymbol();
 
   TSymmLib::GetInstance().GetGroupByNumber(sg->GetNumber(), AllGroups);
-  if( AllGroups.Count() > 1 )  {
+  if (AllGroups.Count() > 1) {
     TBasicApp::NewLogEntry() << "Alternative settings:";
     olxstr tmp;
-    for( size_t i=0; i < AllGroups.Count(); i++ )  {
-      if( AllGroups[i] == sg )  continue;
+    for (size_t i = 0; i < AllGroups.Count(); i++) {
+      if (AllGroups[i] == sg) {
+        continue;
+      }
       tmp << AllGroups[i]->GetName() << '(' << AllGroups[i]->GetFullName()
-        <<  ") ";
+        << ") ";
     }
     TBasicApp::NewLogEntry() << tmp;
   }
@@ -1201,18 +1216,23 @@ void XLibMacros::macSGInfo(TStrObjList &Cmds, const TParamList &Options, TMacroD
   TBasicApp::NewLogEntry() << "Laue class: " << sg->GetLaueClass().GetBareName();
   TBasicApp::NewLogEntry() << "Point group: " << sg->GetPointGroup().GetBareName();
   short Flags = mattAll;
-  if( !Centering )  Flags ^= mattCentering;
-  if( !Inversion )  Flags ^= mattInversion;
+  if (!Centering) {
+    Flags ^= mattCentering;
+  }
+  if (!Inversion) {
+    Flags ^= mattInversion;
+  }
   sg->GetMatrices(SGMatrices, Flags);
 
   TTTable<TStrList> tab(SGMatrices.Count(), 2);
 
-  for( size_t i=0; i < SGMatrices.Count(); i++ )
+  for (size_t i = 0; i < SGMatrices.Count(); i++) {
     tab[i][0] = TSymmParser::MatrixToSymmEx(SGMatrices[i]);
+  }
 
   TStrList Output;
   tab.CreateTXTList(Output, "Symmetry operators", true, true, ' ');
-  if( !sg->GetInversionCenter().IsNull() )  {
+  if (!sg->GetInversionCenter().IsNull()) {
     const vec3d& ic = sg->GetInversionCenter();
     TBasicApp::NewLogEntry() << "Inversion center position: " << olxstr::FormatFloat(3, ic[0])
       << ", " << olxstr::FormatFloat(3, ic[1]) << ", " << olxstr::FormatFloat(3, ic[2]);
@@ -1220,14 +1240,16 @@ void XLibMacros::macSGInfo(TStrObjList &Cmds, const TParamList &Options, TMacroD
   // possible systematic absences
   Output.Add("Elements causing systematic absences: ");
   TPtrList<TSymmElement> ref, sg_elm;
-  for( size_t i=0; i < TSymmLib::GetInstance().SymmElementCount(); i++ )
+  for (size_t i = 0; i < TSymmLib::GetInstance().SymmElementCount(); i++)
     ref.Add(TSymmLib::GetInstance().GetSymmElement(i));
   sg->SplitIntoElements(ref, sg_elm);
-  if( sg_elm.IsEmpty() )
+  if (sg_elm.IsEmpty()) {
     Output.GetLastString() << "none";
-  else  {
-    for( size_t i=0; i < sg_elm.Count(); i++ )
+  }
+  else {
+    for (size_t i = 0; i < sg_elm.Count(); i++) {
       Output.GetLastString() << sg_elm[i]->GetName() << ' ';
+    }
   }
   TBasicApp::NewLogEntry() << Output;
 }

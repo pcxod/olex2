@@ -31,6 +31,7 @@
 #include "estopwatch.h"
 #include "absorpc.h"
 #include "utf8file.h"
+#include "analysis.h"
 
 #undef AddAtom
 #undef GetObject
@@ -585,6 +586,40 @@ void TIns::_ProcessSame(ParseContext& cx, const TIndexList *index)  {
     }
   }
   sgl.Sort();
+  // validate overlapping refrerence groups
+  //cx.au.GetAtoms().ForEach(ACollectionItem::IndexTagSetter());
+  //for (size_t i = 0; i < sgl.Count(); i++) {
+  //  if (sgl[i].GetParentGroup() != 0) {
+  //    continue;
+  //  }
+  //  if (!sgl[i].GetAtoms().IsExplicit()) {
+  //    continue;
+  //  }
+  //  TAtomRefList atoms = sgl[i].GetAtoms().ExpandList(cx.rm);
+  //  for (size_t j = 0; j < atoms.Count(); j++) {
+  //    atoms[j].GetAtom().SetTag(i);
+  //  }
+  //}
+  //olxset<TCAtom*, TPointerComparator> overlaping;
+  //for (size_t i = 0; i < sgl.Count(); i++) {
+  //  if (sgl[i].GetParentGroup() != 0) {
+  //    continue;
+  //  }
+  //  if (!sgl[i].GetAtoms().IsExplicit()) {
+  //    continue;
+  //  }
+  //  TAtomRefList atoms = sgl[i].GetAtoms().ExpandList(cx.rm);
+  //  for (size_t j = 0; j < atoms.Count(); j++) {
+  //    if (atoms[j].GetAtom().GetTag() != i) {
+  //      overlaping.Add(&atoms[j].GetAtom());
+  //    }
+  //  }
+  //}
+  //if (!overlaping.IsEmpty()) {
+  //  TBasicApp::NewLogEntry(logWarning) <<
+  //    "Overlpping reference groups involcing these atoms: " <<
+  //    olx_analysis::alg::label(TCAtomPList(overlaping));
+  //}
 }
 //..............................................................................
 void TIns::__ProcessConn(ParseContext& cx) {

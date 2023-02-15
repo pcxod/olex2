@@ -261,7 +261,7 @@ is lower and int > 0 - symmetry is higher (normally never returned :))
 */
 typedef olx_pair_t<TBravaisLattice*,int> TBravaisLatticeRef;
 
-class TSymmLib: public IOlxObject  {
+class TSymmLib : public IOlxObject {
   sorted::StringAssociation<TSpaceGroup*, true> SpaceGroups;
   TStringToList<olxstr, TCLattice*> Lattices;
   TStringToList<olxstr, TBravaisLattice*> BravaisLattices;
@@ -272,27 +272,27 @@ class TSymmLib: public IOlxObject  {
   void InitRelations();
   static TSymmLib* Instance;
   int extra_added;
-  TSpaceGroup &CreateNewFromCompact(int latt,
-    const smatd_list& compact_matrices, const olxstr &hall_sb=EmptyString());
-  TSpaceGroup &InitSpaceGroup(TSpaceGroup &sg);
-  TSpaceGroup &CreateNew(const SymmSpace::Info &si_info, const olxstr &hall_sb);
+  TSpaceGroup& CreateNewFromCompact(int latt,
+    const smatd_list& compact_matrices, const olxstr& hall_sb = EmptyString());
+  TSpaceGroup& InitSpaceGroup(TSpaceGroup& sg);
+  TSpaceGroup& CreateNew(const SymmSpace::Info& si_info, const olxstr& hall_sb);
 public:
   // 21.06.2008, the file name is not used
-  TSymmLib(const olxstr& FN=EmptyString());
+  TSymmLib(const olxstr& FN = EmptyString());
   virtual ~TSymmLib();
   // creates a dummy space group if not found
   TSpaceGroup& FindSG(const TAsymmUnit& AU);
 
-  TSpaceGroup &CreateNew(const olxstr &hall);
-  TSpaceGroup &CreateNew(const SymmSpace::Info &si_info);
+  TSpaceGroup& CreateNew(const olxstr& hall);
+  TSpaceGroup& CreateNew(const SymmSpace::Info& si_info);
   // searches for expanded space groups like in the CIF
   template <class SymmSpaceT>
-  TSpaceGroup& FindSymSpace(const SymmSpaceT &sp) {
+  TSpaceGroup& FindSymSpace(const SymmSpaceT& sp) {
     smatd_list all_ml(sp);
     SymmSpace::Info si = SymmSpace::GetInfo(all_ml);
     olxstr hs = HallSymbol::Evaluate(si);
-    TSpaceGroup *sg = hall_symbols.Find(hs, NULL);
-    return sg == NULL ? CreateNew(si, hs) : *sg;
+    TSpaceGroup* sg = hall_symbols.Find(hs, 0);
+    return sg == 0 ? CreateNew(si, hs) : *sg;
   }
   size_t FindBravaisLattices(TAsymmUnit& AU,
     TTypeList<TBravaisLatticeRef>& res) const;
@@ -303,62 +303,66 @@ public:
   size_t FindLaueClassGroups(const TSpaceGroup& LaueClass,
     TPtrList<TSpaceGroup>& res) const;
 
-  size_t SGCount() const {  return SpaceGroups.Count();  }
-  TSpaceGroup& GetGroup(size_t i) const {  return *SpaceGroups.GetValue(i);  }
+  size_t SGCount() const { return SpaceGroups.Count(); }
+  TSpaceGroup& GetGroup(size_t i) const { return *SpaceGroups.GetValue(i); }
   void GetGroupByNumber(int N, TPtrList<TSpaceGroup>& res) const;
-  TSpaceGroup* FindGroupByName(const olxstr& Name) const {
-    return SpaceGroups.Find(Name);
+  TSpaceGroup* FindGroupByName(const olxstr& Name,
+    TSpaceGroup* def = 0) const
+  {
+    return SpaceGroups.Find(Name, def);
   }
-  TSpaceGroup* FindGroupByHallSymbol(const olxstr &hs,
-  TSpaceGroup *def=NULL) const
- {
+  TSpaceGroup* FindGroupByHallSymbol(const olxstr& hs,
+    TSpaceGroup* def = 0) const
+  {
     return hall_symbols.Find(hs, def);
   }
 
-  size_t SymmElementCount() const {  return SymmetryElements.Count();  }
+  size_t SymmElementCount() const { return SymmetryElements.Count(); }
   TSymmElement& GetSymmElement(size_t i) const {
     return SymmetryElements[i];
   }
   TSymmElement* FindSymmElement(const olxstr& name) const;
 
-  size_t LatticeCount() const {  return Lattices.Count();  }
+  size_t LatticeCount() const { return Lattices.Count(); }
   TCLattice& GetLatticeByIndex(size_t i) const {
     return *Lattices.GetObject(i);
   }
   TCLattice& GetLatticeByNumber(short latt) const {
-    size_t l = olx_abs(latt)-1;
-    if( l >= Lattices.Count() )
+    size_t l = olx_abs(latt) - 1;
+    if (l >= Lattices.Count()) {
       throw TCLattice::TIncorrectLattExc(__OlxSourceInfo, latt);
+    }
     return *Lattices.GetObject(l);
   }
   TCLattice* FindLattice(const olxstr& Symbol) const {
-    return Lattices.FindPointeri(Symbol, NULL);
+    return Lattices.FindPointeri(Symbol, 0);
   }
 
-  size_t PointGroupCount() const {  return PointGroups.Count();  }
-  TSpaceGroup& GetPointGroup(size_t i) const {  return *PointGroups[i];  }
+  size_t PointGroupCount() const { return PointGroups.Count(); }
+  TSpaceGroup& GetPointGroup(size_t i) const { return *PointGroups[i]; }
 
-  size_t BravaisLatticeCount() const {  return BravaisLattices.Count();  }
-  TBravaisLattice&  GetBravaisLattice(size_t i) const {
+  size_t BravaisLatticeCount() const { return BravaisLattices.Count(); }
+  TBravaisLattice& GetBravaisLattice(size_t i) const {
     return *BravaisLattices.GetObject(i);
   }
-  TBravaisLattice *FindBravaisLattice(const olxstr& Name) const {
-    return BravaisLattices.FindPointeri(Name, NULL);
+  TBravaisLattice* FindBravaisLattice(const olxstr& Name) const {
+    return BravaisLattices.FindPointeri(Name, 0);
   }
 
   template <typename MatList> void ExpandLatt(smatd_list& out,
     const MatList& ml, short _latt) const
   {
     const TCLattice& latt = GetLatticeByNumber(_latt);
-    out.SetCapacity(latt.GetVectors().Count()*ml.Count()* (_latt > 0 ? 2 : 1));
+    out.SetCapacity(latt.GetVectors().Count() * ml.Count() * (_latt > 0 ? 2 : 1));
     out.AddNew().r.I();
-    for (size_t i=0;  i < ml.Count(); i++) {
+    for (size_t i = 0; i < ml.Count(); i++) {
       const smatd& m = ml[i];
-      if (!m.r.IsI())  // skip I matrix - always the first one
+      if (!m.r.IsI()) {  // skip I matrix - always the first one
         out.AddNew(m);
+      }
     }
     const size_t mc = out.Count();
-    for (size_t i= 0; i < latt.GetVectors().Count(); i++) {
+    for (size_t i = 0; i < latt.GetVectors().Count(); i++) {
       for (size_t j = 0; j < mc; j++) {
         out.AddCopy(out[j]).t += latt.GetVectors()[i];
       }
@@ -373,10 +377,10 @@ public:
     }
   }
 
-  static bool IsInitialised()  {  return Instance != NULL;  }
+  static bool IsInitialised() { return Instance != 0; }
 
-  static TSymmLib& GetInstance()  {
-    if( Instance == NULL ) {
+  static TSymmLib& GetInstance() {
+    if (Instance == 0) {
       throw TFunctionFailedException(__OlxSourceInfo,
         "object is not initialised");
     }

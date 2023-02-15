@@ -271,8 +271,9 @@ SymmSpace::Info HallSymbol::Expand_(const olxstr &_hs) const {
   for (size_t i=1; i < toks.Count(); i++) {
     olxstr axis;
     bool neg = toks[i].StartsFrom('-');
-    if (neg)
+    if (neg) {
       toks[i] = toks[i].SubStringFrom(1);
+    }
     if (toks[i].Length() > 1 ) {
       axis = toks[i].SubStringTo(2);
       size_t ai = r_dict.IndexOf(axis);
@@ -281,19 +282,22 @@ SymmSpace::Info HallSymbol::Expand_(const olxstr &_hs) const {
           previous = axis.CharAt(0)-'0';
           smatd& m = info.matrices.AddNew();
           m.r = rotation_id::get(find_diagonal(dir, axis.CharAt(1)));
-          if (neg)
+          if (neg) {
             m.r *= -1;
+          }
           toks[i] = toks[i].SubStringFrom(2);
         }
-        else
+        else {
           axis.SetLength(0);
+        }
       }
       else {
         previous = axis.CharAt(0)-'0';
         smatd& m = info.matrices.AddNew();
         m.r = rotation_id::get(r_dict.GetValue(ai));
-        if (neg)
+        if (neg) {
           m.r *= -1;
+        }
         toks[i] = toks[i].SubStringFrom(2);
       }
     }
@@ -332,8 +336,9 @@ SymmSpace::Info HallSymbol::Expand_(const olxstr &_hs) const {
       }
       smatd& m = info.matrices.AddNew();
       m.r = rotation_id::get(r_dict.GetValue(ai));
-      if (neg)
+      if (neg) {
         m.r *= -1;
+      }
       toks[i] = toks[i].SubStringFrom(1);
       previous = axis.CharAt(0)-'0';
     }
@@ -360,35 +365,62 @@ SymmSpace::Info HallSymbol::Expand_(const olxstr &_hs) const {
       info.matrices.Delete(info.matrices.Count()-1);
     }
     else if(m_id == i_id) {
-      if (info.matrices.GetLast().t.IsNull(1e-3))
-        info.matrices.Delete(info.matrices.Count()-1);
+      if (info.matrices.GetLast().t.IsNull(1e-3)) {
+        info.matrices.Delete(info.matrices.Count() - 1);
+      }
     }
-    else
+    else {
       r_hash.Add(m_id);
+    }
   }
+  bool add_I = true;
   if (!change_of_basis.IsI()) {
     smatd cob_i = change_of_basis.Inverse();
-    for (size_t i=0; i < info.matrices.Count(); i++) {
-      smatdd m = info.matrices[i];
-      m = change_of_basis*m*cob_i;
-      info.matrices[i].t = m.t;
-      for (int ii=0; ii < 3; ii++)
-        for (int jj=0; jj < 3; jj++)
-      info.matrices[i].r[ii][jj] = olx_round(m.r[ii][jj]);
+    if (info.latt != 1) {
+      info.matrices.Insert(0, new smatd).r.I();
+      smatd_list matrices = info.expand();
+      for (size_t i = 0; i < matrices.Count(); i++) {
+        smatdd m = matrices[i];
+        m = change_of_basis * m * cob_i;
+        matrices[i].t = m.t;
+        for (int ii = 0; ii < 3; ii++) {
+          for (int jj = 0; jj < 3; jj++) {
+            matrices[i].r[ii][jj] = olx_round(m.r[ii][jj]);
+          }
+        }
+      }
+      info = SymmSpace::GetInfo(matrices);
+      add_I = false;
+    }
+    else {
+      for (size_t i = 0; i < info.matrices.Count(); i++) {
+        smatdd m = info.matrices[i];
+        m = change_of_basis * m * cob_i;
+        info.matrices[i].t = m.t;
+        for (int ii = 0; ii < 3; ii++) {
+          for (int jj = 0; jj < 3; jj++) {
+            info.matrices[i].r[ii][jj] = olx_round(m.r[ii][jj]);
+          }
+        }
+      }
     }
   }
   for (size_t i=0; i < info.matrices.Count(); i++) {
     for (size_t j=i; j < info.matrices.Count(); j++) {
       smatd m = info.matrices[i]*info.matrices[j];
       int id = rotation_id::get(m.r);
-      if (i_id == id) continue;
+      if (i_id == id) {
+        continue;
+      }
       if (r_hash.IndexOf(id) == InvalidIndex) {
         r_hash.Add(id);
         info.matrices.AddCopy(m);
       }
     }
   }
-  info.matrices.InsertNew(0).r.I();
+  if (add_I) {
+    info.matrices.InsertNew(0).r.I();
+  }
   info.normalise(
     TSymmLib::GetInstance().GetLatticeByNumber(info.latt).GetVectors());
   return info;
