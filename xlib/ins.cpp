@@ -1420,7 +1420,12 @@ void TIns::HyphenateIns(const olxstr &InsName, const olxstr &Ins,
     }
   }
   else {
-    Res.Add(InsName + Tmp);
+    if (Tmp.IsEmpty()) {
+      Res.Add(InsName).TrimWhiteChars();
+    }
+    else {
+      Res.Add(InsName + Tmp);
+    }
   }
 }
 //..............................................................................
@@ -2390,6 +2395,9 @@ olxstr TIns::AtomToString(RefinementModel& rm, TCAtom& CA, index_t SfacIndex) {
   // Q-Peak
   if (CA.GetType() == iQPeakZ) {
     Tmp << olxstr::FormatFloat(-3, CA.GetQPeak());
+  }
+  else {
+    Tmp.SetLength(Tmp.Length() - 1);
   }
   return Tmp;
 }

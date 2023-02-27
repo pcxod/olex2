@@ -5422,7 +5422,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
               continue;
             }
             while (res->lines[i].StartsFromi("REM") &&
-              !res->lines[i].EndsWith('>') &&
+              !res->lines[i].TrimWhiteChars().EndsWith('>') &&
               ++i < res->lines.Count())
             {
               res->lines.Delete(i);
@@ -9649,7 +9649,7 @@ void XLibMacros::macExport(TStrObjList &Cmds, const TParamList &Options,
           continue;
         }
         while (lines[i].StartsFromi("REM") &&
-          !lines[i].EndsWith('>') &&
+          !lines[i].TrimWhiteChars().EndsWith('>') &&
           ++i < lines.Count())
         {
           lines.Delete(i);
