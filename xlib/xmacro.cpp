@@ -889,6 +889,29 @@ void XLibMacros::Export(TLibrary& lib)  {
     "Calculates the number of H atoms HAdd will add");
 }
 //.............................................................................
+//.............................................................................
+//.............................................................................
+template <class list_t> void UpdateHklSrc(list_t &lines, olxstr newv) {
+  for (size_t i = 0; i < lines.Count(); i++) {
+    size_t si = lines[i].IndexOf("REM <HklSrc");
+    if (si == InvalidIndex) {
+      continue;
+    }
+    size_t idx = i;
+    while (lines[i].StartsFromi("REM") &&
+      !lines[i].TrimWhiteChars().EndsWith('>') &&
+      ++i < lines.Count())
+    {}
+    if (i > idx) {
+      lines.DeleteRange(idx + 1, i - idx);
+    }
+    lines[idx] = olxstr("REM <HklSrc \".\\\\") << newv << "\">";
+    return;
+  }
+}
+//.............................................................................
+//.............................................................................
+//.............................................................................
 void XLibMacros::macTransform(TStrObjList &Cmds,
   const TParamList &Options, TMacroData &Error)
 {
@@ -5416,20 +5439,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
       if (res_e != 0) {
         cetStringList* res = dynamic_cast<cetStringList*>(res_e);
         if (res != 0) {
-          for (size_t i = 0; i < res->Count(); i++) {
-            size_t si = res->lines[i].IndexOf("REM <HklSrc");
-            if (si == InvalidIndex) {
-              continue;
-            }
-            while (res->lines[i].StartsFromi("REM") &&
-              !res->lines[i].TrimWhiteChars().EndsWith('>') &&
-              ++i < res->lines.Count())
-            {
-              res->lines.Delete(i);
-            }
-            res->lines[i] = olxstr("REM <HklSrc \".\\\\") << new_dn << ".hkl\">";
-            break;
-          }
+          UpdateHklSrc(res->lines, new_dn);
         }
       }
     }
@@ -9642,21 +9652,7 @@ void XLibMacros::macExport(TStrObjList &Cmds, const TParamList &Options,
     }
     if (ci != 0) {
       TCStrList lines(ci->lines);
-      // update HklSrc just in case!
-      for (size_t i = 0; i < lines.Count(); i++) {
-        size_t si = lines[i].IndexOf("REM <HklSrc");
-        if (si == InvalidIndex) {
-          continue;
-        }
-        while (lines[i].StartsFromi("REM") &&
-          !lines[i].TrimWhiteChars().EndsWith('>') &&
-          ++i < lines.Count())
-        {
-          lines.Delete(i);
-        }
-        lines[i] = olxstr("REM <HklSrc \".\\\\") << TEFile::ExtractFileName(hkl_name) << "\">";
-        break;
-      }
+      UpdateHklSrc(lines, TEFile::ExtractFileName(hkl_name));
       TEFile::WriteLines(res_name, lines);
       if (check_md5) {
         olxstr md5;
