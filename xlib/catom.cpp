@@ -745,7 +745,19 @@ void TCAtom::SetValue(size_t var_index, const double& val) {
     case catom_var_name_X:     Center[0] = val;  break;
     case catom_var_name_Y:     Center[1] = val;  break;
     case catom_var_name_Z:     Center[2] = val;  break;
-    case catom_var_name_Sof:   Occu = val;  break;
+    case catom_var_name_Sof:
+    {
+      // try to fix rounding
+      double v = 192 * val;
+      long rv = olx_round(v);
+      if (olx_abs(v - rv) < 1e-3) {
+        Occu = (double)rv/192;
+      }
+      else {
+        Occu = val;
+      }
+    }
+      break;
     case catom_var_name_Uiso:  Uiso = val;  break;
     case catom_var_name_U11:
     case catom_var_name_U22:

@@ -4732,7 +4732,7 @@ void CifMerge_UpdateAtomLoop(TCif &Cif) {
         }
       }
       cetTable* tab = Cif.FindLoop("_atom_site");
-      if (tab == NULL || tab->RowCount() != tau.AtomCount()) {
+      if (tab == 0 || tab->RowCount() != tau.AtomCount()) {
         TBasicApp::NewLogEntry() << "Could not locate the atom_site loop or"
           " its content mismatches the asymmetric unit";
       }
@@ -4896,7 +4896,7 @@ void CifMerge_UpdateAtomLoop(TCif &Cif) {
             }
           }
           if (has_special_positions) {
-            if (a.GetDegeneracy() == 1) {
+            if (a.GetDegeneracy() == 1 && olx_abs(a.GetChemOccu()-1) < 1e-3) {
               tab->Set(ri, rf_occu_ind, new cetString('.'));
             }
             else {

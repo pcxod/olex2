@@ -650,17 +650,22 @@ void TIns::__ProcessConn(ParseContext& cx) {
 void TIns::_ReadExtras(TStrList &l, ParseContext &cx) {
   cx.Extras.Clear();
   for (size_t i = 0; i < l.Count(); i++) {
-    if (l[i].Equals("REM <olex2.extras>")) {
+    if (l[i].TrimWhiteChars(false, true).Equals("REM <olex2.extras>")) {
       size_t j = i;
-      while (++j != l.Count() && !l[j].Equals("REM </olex2.extras>"))
-        ;
+      while (++j < l.Count() && l[j].StartsFrom("REM") &&
+        !l[j].TrimWhiteChars(false, true).Equals("REM </olex2.extras>"))
+      {}
       if (j == l.Count()) {
         TBasicApp::NewLogEntry(logError) << "Failed to read Olex2 extra "
           "information";
         return;
       }
-      l.SubList(i + 1, j - i - 1, cx.Extras);
-      l.DeleteRange(i, j-i+1);
+      size_t inc = 0;
+      if (j < l.Count() && l[j].StartsFrom("REM")) {
+        inc++;
+      }
+      l.SubList(i + 1, j - i - inc, cx.Extras);
+      l.DeleteRange(i, j-i+inc);
       i = j;
     }
     else if (l[i].Contains("Refinement Information")) {
