@@ -4577,7 +4577,8 @@ void CifMerge_UpdateAtomLoop(TCif &Cif) {
     const TAsymmUnit &tau = Cif.GetAsymmUnit();
     bool match = (tau.AtomCount() <= au.AtomCount()),
       has_parts = false,
-      has_special_positions = false;
+      has_special_positions = false,
+      has_disorder = false;
     if (match) {
       size_t ind = 0;
       for (size_t i = 0; i < tau.AtomCount(); i++, ind++) {
@@ -4612,6 +4613,9 @@ void CifMerge_UpdateAtomLoop(TCif &Cif) {
         }
         if (a.GetDegeneracy() != 1) {
           has_special_positions = true;
+        }
+        else if (olx_abs(a.GetOccu()-1) > 1e-3) {
+          has_disorder = true;
         }
       }
     }
@@ -4769,7 +4773,7 @@ void CifMerge_UpdateAtomLoop(TCif &Cif) {
           rf_adp_ind = tab->ColCount() - 1;
         }
         size_t rf_occu_ind = tab->ColIndex("_atom_site_refinement_flags_occupancy");
-        if (has_special_positions && rf_occu_ind == InvalidIndex) {
+        if ((has_disorder || has_special_positions) && rf_occu_ind == InvalidIndex) {
           tab->AddCol("_atom_site_refinement_flags_occupancy");
           rf_occu_ind = tab->ColCount() - 1;
         }
@@ -4788,8 +4792,9 @@ void CifMerge_UpdateAtomLoop(TCif &Cif) {
             i++;
           }
           // last condition must not ever happen
-          if (i >= au.AtomCount() || ri >= tab->RowCount())
+          if (i >= au.AtomCount() || ri >= tab->RowCount()) {
             break;
+          }
           TCAtom &a = au.GetAtom(i);
           if (a.GetType() == iHydrogenZ) {
             int& h = h_t.Add(0);
@@ -4895,7 +4900,7 @@ void CifMerge_UpdateAtomLoop(TCif &Cif) {
               tab->Set(ri, dg_ind, new cetString((int)a.GetPart()));
             }
           }
-          if (has_special_positions) {
+          if (has_special_positions || has_disorder) {
             if (a.GetDegeneracy() == 1 && olx_abs(a.GetChemOccu()-1) < 1e-3) {
               tab->Set(ri, rf_occu_ind, new cetString('.'));
             }
@@ -5894,11 +5899,21 @@ void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options,
     RefinementModel::SWAT::Shelxl scr = rm.GetShelxSWATCorrector();
     if (ecr.IsValid() || scr.IsValid()) {
       for (size_t i = 0; i < F.Count(); i++) {
-        if (ecr.IsValid()) {
-          F[i] *= ecr.CalcForFc(refs[i].GetHkl(), F[i].qmod());
+        if (list_n == 4) {
+          if (ecr.IsValid()) {
+            refs[i] *= ecr.CalcForFo2(refs[i].GetHkl(), F[i].qmod());
+          }
+          else {
+            refs[i] *= scr.CalcForFo2(refs[i].GetHkl());
+          }
         }
         else {
-          F[i] *= scr.CalcForFc(refs[i].GetHkl());
+          if (ecr.IsValid()) {
+            F[i] *= ecr.CalcForFc(refs[i].GetHkl(), F[i].qmod());
+          }
+          else {
+            F[i] *= scr.CalcForFc(refs[i].GetHkl());
+          }
         }
       }
     }
