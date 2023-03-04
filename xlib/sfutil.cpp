@@ -91,7 +91,8 @@ void SFUtil::FindMinMax(const TArrayList<StructureFactor>& F,
 }
 //..............................................................................
 olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
-  short mapType, short sfOrigin, short scaleType, double scale, short friedelPairs, bool anom_only)
+  short mapType, short sfOrigin, short scaleType, double scale,
+  short friedelPairs, bool anom_only)
 {
   TXApp& xapp = TXApp::GetInstance();
   TStopWatch sw(__FUNC__);
@@ -283,33 +284,44 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
     sw.start("Scaling structure factors");
     if (mapType != mapTypeCalc) {
       // find a linear scale between F
-      double a = 0, k = 1;
+      olx_pair_t<double, double> r_scale(1, 0);
       if (scaleType == scaleExternal) {
-        k = scale;
+        double sc = RefUtil::CalcFScale(rm, F, refs);
+        if (olx_abs((sc - scale) / (sc + scale)) > 0.01) {
+          TBasicApp::NewLogEntry(logWarning) << "External scale deviates too much."
+            "Using updated value of " << olxstr::FormatFloat(2, sc) <<
+            " vs the given value of " << olxstr::FormatFloat(2, scale);
+          r_scale.a = sc;
+        }
+        else {
+          r_scale.a = scale;
+        }
       }
-      else if (scaleType == scaleRegression) {
-          CalcFScale(F, refs, k, a);
+      else if (scaleType == scaleExternalForced) {
+        r_scale.a = scale;
+      }
+      else {
+        if (scaleType == scaleRegression) {
+          r_scale = RefUtil::CalcFScaleR(rm, F, refs);
           if (TBasicApp::GetInstance().IsProfiling()) {
-            TBasicApp::NewLogEntry(logInfo) << "Fc^2 = " << k << "*Fo^2" <<
-              (a >= 0 ? " +" : " ") << a;
+            TBasicApp::NewLogEntry(logInfo) << "Fc = " << r_scale.a << "*Fo" <<
+              (r_scale.b >= 0 ? " +" : " ") << r_scale.b;
           }
         }
-      else {  // simple scale on I/sigma > 3
-        k = CalcFScale(F, refs,
-          TReflection::SigmaWeightCalculator<1>(),
-          TReflection::IoverSigmaFilter(2));
-        if (TBasicApp::GetInstance().IsProfiling()) {
-          TBasicApp::NewLogEntry(logInfo) << "Fc^2 = " << k << "*Fo^2";
+        else {
+          r_scale.a = RefUtil::CalcFScale(rm, F, refs);
+          if (TBasicApp::GetInstance().IsProfiling()) {
+            TBasicApp::NewLogEntry(logInfo) << "Fc = " << r_scale.a << "*Fo";
+          }
         }
-
       }
       for (size_t i=0; i < F.Count(); i++) {
         const TReflection &r = refs[i];
         double I = r.GetI();
         double dI = I < 0 ? 0 : sqrt(I);
-        dI *= k;
+        dI *= r_scale.a;
         if (scaleType == scaleRegression) {
-          dI += a;
+          dI += r_scale.b;
         }
         if (mapType == mapTypeDiff) {
           F[i] = compd::polar(dI, F[i].arg()) - F[i];

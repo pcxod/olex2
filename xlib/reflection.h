@@ -426,31 +426,6 @@ public:
     double Calculate(const TReflection &r) const { return 1; }
   };
 
-  template <int ext>
-  struct SigmaWeightCalculator {
-    double Calculate(const TReflection &r) const {
-      if (ext == 1) {
-        return 1. / olx_max(r.GetS(), 1e-6);
-      }
-      else if (ext == 2) {
-        return 1. / olx_max(r.GetS()*r.GetS(), 1e-6);
-      }
-      else {
-        return 1. / olx_max(pow(r.GetS(), (double)ext), 1e-6);
-      }
-    }
-  };
-
-  /* Reflection tag must match index in the weights! */
-  struct CustomWeightCalculator {
-    const evecd &weights;
-    CustomWeightCalculator(const evecd &weights)
-      : weights(weights)
-    {}
-    double Calculate(const TReflection &r) const {
-      return weights[r.GetTag()];
-    }
-  };
 };
 
 class IMillerIndexList {

@@ -17,60 +17,42 @@ Stats::Stats(bool update_scale)
   RefinementModel& rm = xapp.XFile().GetRM();
   double scale_k = 1. / olx_sqr(rm.Vars.GetVar(0).GetValue());
   xapp.CalcFsq(refs, Fsq, false);
+  weights.Resize(refs.Count());
+  ShelxWeightCalculator weight_c(rm.used_weight,
+    rm.aunit.GetHklToCartesian(), scale_k);
   if (update_scale) {
-    scale_k = SFUtil::CalcF2Scale(Fsq, refs,
-      TReflection::SigmaWeightCalculator<2>(),
-      TReflection::IoverSigmaFilter(3));
+    weight_c.scale = CalcScale(Fsq_evaluator(), Fsq, refs,
+      SigmaWeightCalculator<2>(),
+      TReflection::DummyFilter());
+  }
+  for (size_t i = 0; i < refs.Count(); i++) {
+    weights[i] = weight_c.Calculate(refs[i], Fsq[i]);
+    refs[i].SetTag(i);
+  }
+  if (update_scale) {
+    scale_k = CalcScale(Fsq_evaluator(), Fsq, refs,
+      CustomWeightCalculator::make(weights),
+      TReflection::DummyFilter());
   }
   
   double wR2d = 0, R1u = 0, R1d = 0, R1up = 0, R1dp = 0;
-  TDoubleList wght = rm.used_weight;
-  while (wght.Count() < 6) {
-    wght.Add(0.0);
-  }
-  if (wght[5] == 0) {
-    wght[5] = 1. / 3;
-  }
   wsqd.Resize(refs.Count());
-  weights.Resize(refs.Count());
-  mat3d h2c = rm.aunit.GetHklToCartesian();
   for (size_t i = 0; i < refs.Count(); i++) {
     TReflection& r = refs[i];
     r *= scale_k;
-    r.SetTag(i);
     vec3i::UpdateMinMax(r.GetHkl(), min_hkl, max_hkl);
     const double Fc2 = Fsq[i];
     const double Fc = sqrt(olx_abs(Fc2));
     const double Fo2 = r.GetI();
     const double Fo = sqrt(Fo2 < 0 ? 0 : Fo2);
-    const double P = wght[5] * olx_max(0, Fo2) + (1.0 - wght[5]) * Fc2;
-    const double stl = 1./sqrt(4*r.ToCart(h2c).QLength());
-    double q = 1.0;
-    if (wght[2] == 0) {
-      q = 1.0;
-    }
-    else if (wght[2] > 0) {
-      q = olx_exp(wght[2] * olx_sqr(stl));
-    }
-    else {
-      q = 1 - olx_exp(wght[2] * olx_sqr(stl));
-    }
-    double t = olx_sqr(r.GetS()) + olx_sqr(wght[0] * P) + wght[1] * P;
-    if (wght[3] != 0) {
-      t += wght[3];
-    }
-    if(wght[4] != 0) {
-      t += wght[4] * stl * rm.expl.GetRadiation();
-    }
-    const double w = q / t;
-    weights[i] = w;
-    wsqd[i] = w * olx_sqr(Fo2 - Fc2);
+    wsqd[i] = weights[i] * olx_sqr(Fo2 - Fc2);
     sum_wsqd += wsqd[i];
-    wR2d += w * olx_sqr(Fo2);
-    R1u += olx_abs(Fo - Fc);
+    wR2d += weights[i] * olx_sqr(Fo2);
+    double Fd = olx_abs(Fo - Fc);
+    R1u += Fd;
     R1d += Fo;
     if (Fo2 >= partical_threshold * r.GetS()) {
-      R1up += olx_abs(Fo - Fc);
+      R1up += Fd;
       R1dp += Fo;
       partial_R1_cnt++;
     }

@@ -78,10 +78,11 @@ void GXLibMacros::Export(TLibrary& lib) {
     "obs-calculates observed map&;"
     "calc-calculates calculated map&;"
     "fcfmc-calculates FCF Fc-Fc map&;"
-    "scale-scale to use for difference maps, currently available simple(s) "
-    "sum(Fo^2)/sum(Fc^2)) and regression(r)&;"
-    "anom_only-Create Fc Map only using anomalous dispersion scattering factor, "
-    "neglecting atom contribution&;"
+    "scale-scale to use for difference maps, [external], external-forced, simple,"
+    " regression. External may be replace with simple if not reliable."
+    "&;"
+    "anom_only-Create Fc Map only using anomalous dispersion scattering factor,"
+    " neglecting atom contribution&;"
     "r-resolution in Angstrems&;"
     "i-integrates the map&;"
     "m-mask the structure&;"
@@ -793,23 +794,24 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
   short scale = SFUtil::scaleSimple;
   double scale_value = 0;
   {
-    olxstr str_scale = Options.FindValue("scale", "ext")
+    olxstr str_scale = Options.FindValue("scale", EmptyString())
       .ToLowerCase();
-    if (!str_scale.IsEmpty()) {
-      if (str_scale.CharAt(0) == 'r') {
-        scale = SFUtil::scaleRegression;
-      }
-      else if (str_scale.CharAt(0) == 'e') {
-        scale = SFUtil::scaleExternal;
-        if (app.XFile().GetRM().Vars.VarCount() > 0) {
-          scale_value = 1./app.XFile().GetRM().Vars.GetVar(0).GetValue();
-        }
-        else {
-          TBasicApp::NewLogEntry(logWarning) << "Could not locate external "
-            "scale - using the default";
-          scale = SFUtil::scaleSimple;
+    if (str_scale.IsEmpty() || str_scale.StartsFromi("external")) {
+      scale = SFUtil::scaleExternal;
+      if (app.XFile().GetRM().Vars.VarCount() > 0) {
+        scale_value = 1. / app.XFile().GetRM().Vars.GetVar(0).GetValue();
+        if (str_scale.EndsWithi("forced")) {
+          scale = SFUtil::scaleExternalForced;
         }
       }
+      else {
+        TBasicApp::NewLogEntry(logWarning) << "Could not locate external "
+          "scale - using the default";
+        scale = SFUtil::scaleSimple;
+      }
+    }
+    else if (str_scale.Equalsi("regression")) {
+      scale = SFUtil::scaleRegression;
     }
   }
   short src = Options.GetBoolOption("fcf") ? SFUtil::sfOriginFcf

@@ -26,7 +26,8 @@ namespace SFUtil {
     mapType2OmC = 3;
   static const short scaleSimple = 0,  // scale for difference map
     scaleRegression = 1,
-    scaleExternal = 2;
+    scaleExternal = 2,
+    scaleExternalForced = 3;
   static const short sfOriginFcf = 0,  // structure factor origin
     sfOriginOlex2 = 1;
   // merge Friedel pairs
@@ -37,11 +38,6 @@ namespace SFUtil {
   static const double MT_PI = -M_PI * 2;
   const static double EQ_PI = 8 * M_PI*M_PI;
   const static double TQ_PI = 2 * M_PI*M_PI;
-
-  static double GetFsq(double v) { return v; }
-  static double GetFsq(const compd &v) { return v.qmod(); }
-  static double GetF(double v) { return v; }
-  static double GetF(const compd &v) { return v.mod(); }
 
   struct StructureFactor {
     vec3i hkl;  // hkl indexes
@@ -77,86 +73,6 @@ namespace SFUtil {
     TTypeList<XScatterer>& scatterers,
     ElementPList &types,
     TCAtomPList& alist);
-  /* calculates the scale sum(w*Fc*Fc)/sum(w*Fo^2) Fc = k*Fo.
-  F - a list of doubles (F) or complex values
-  refs - a list of reflections (Fo^2), sqrt of I will be taken
-  */
-  template <class FList, class RefList, class weight_t, class filter_t>
-  static double CalcFScale(const FList& F, const RefList& refs,
-    const weight_t &weights, const filter_t filter)
-  {
-    double sFo = 0, sFc = 0;
-    for (size_t i = 0; i < F.Count(); i++) {
-      if (filter.DoesPass(olx_ref::get(refs[i]))) {
-        const TReflection &r = olx_ref::get(refs[i]);
-        double Fo = r.GetI() <= 0 ? 0 : sqrt(r.GetI());
-        double w = weights.Calculate(r);
-        sFo += w * Fo * Fo;
-        sFc += w* Fo * GetF(F[i]);
-      }
-    }
-    return sFc / sFo;
-  }
-  /* calculates the scale sum(Fc^2*Fo^2)/sum(Fo^4) Fc^2 = k*Fo^2 for selected
-  reflections.
-  F - a list of doubles (Fsq) or complex values (F)
-  refs - a list of reflections (Fo^2)
-  */
-  template <class FList, class RefList, class weight_t, class filter_t>
-  double CalcF2Scale(const FList& F, const RefList& refs,
-    const weight_t &weights, const filter_t filter)
-  {
-    double sF2o = 0, sF2c = 0;
-    const size_t f_cnt = F.Count();
-    for (size_t i = 0; i < f_cnt; i++) {
-      if (filter.DoesPass(olx_ref::get(refs[i]))) {
-        const TReflection &r = olx_ref::get(refs[i]);
-        double F2o = r.GetI();
-        double w = weights.Calculate(r);
-        sF2o += w*F2o * F2o;
-        sF2c += w*F2o * GetFsq(F[i]);
-      }
-    }
-    return sF2c / sF2o;
-  }
-  /* calculates a best line scale : Fc = k*Fo + a.
-  F - a list of doubles (F) or complex values (F)
-  refs - a list of doubles (Fo) or reflections (Fo^2)
-  */
-  template <class FList, class RefList>
-  void CalcFScale(const FList& F, const RefList& refs, double& k, double& a) {
-    double sx = 0, sy = 0, sxs = 0, sxy = 0;
-    const size_t f_cnt = F.Count();
-    for (size_t i = 0; i < f_cnt; i++) {
-      const double I = TReflection::GetF(refs[i]);
-      const double qm = GetF(F[i]);
-      sx += I;
-      sy += qm;
-      sxy += I*qm;
-      sxs += I*I;
-    }
-    k = (sxy - sx*sy / f_cnt) / (sxs - sx*sx / f_cnt);
-    a = (sy - k*sx) / f_cnt;
-  }
-  /* calculates a best line scale : Fc^2 = k*Fo^2 + a.
-  F - a list of doubles (Fsq) or complex values (F)
-  refs - a list of doubles (Fo^2) or reflections (Fo^2)
-  */
-  template <class FList, class RefList>
-  void CalcF2Scale(const FList& F, const RefList& refs, double& k, double& a) {
-    double sx = 0, sy = 0, sxs = 0, sxy = 0;
-    const size_t f_cnt = F.Count();
-    for (size_t i = 0; i < f_cnt; i++) {
-      const double I = TReflection::GetFsq(refs[i]);
-      const double qm = GetFsq(F[i]);
-      sx += I;
-      sy += qm;
-      sxy += I*qm;
-      sxs += I*I;
-    }
-    k = (sxy - sx*sy / f_cnt) / (sxs - sx*sx / f_cnt);
-    a = (sy - k*sx) / f_cnt;
-  }
   // expands structure factors to P1 for given space group
   void ExpandToP1(const TArrayList<vec3i>& hkl, const TArrayList<compd>& F,
     const TSpaceGroup& sg, TArrayList<StructureFactor>& out);

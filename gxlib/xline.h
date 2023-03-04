@@ -18,6 +18,9 @@ class TXLine : protected TXBond, AGlMouseHandler {
 private:
   vec3d FBase, FEdge;
   void Init(bool update_label=true);
+  virtual bool IsMaskSaveable() const { return true; }
+  virtual bool IsStyleSaveable() const { return true; }
+  virtual bool IsRadiusSaveable() const { return true; }
 protected:
   virtual bool DoTranslate(const vec3d& t);
   virtual bool DoRotate(const vec3d& vec, double angle) {
@@ -46,9 +49,7 @@ public:
   TXLine(TGlRenderer& Renderer, const olxstr& collectionName,
     const vec3d& base, const vec3d& edge);
   TXLine(TGlRenderer& Renderer);
-  void Create(const olxstr& cName=EmptyString()) {
-    TXBond::Create(cName);
-  }
+  void Create(const olxstr& cName = EmptyString());
   virtual ~TXLine() {}
 
   const vec3d& GetBase() const { return FBase; }

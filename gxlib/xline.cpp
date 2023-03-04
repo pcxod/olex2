@@ -44,6 +44,11 @@ void TXLine::Init(bool update_label) {
   }
 }
 //..............................................................................
+void TXLine::Create(const olxstr& cName) {
+  TXBond::Create(cName);
+  //TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
+}
+//..............................................................................
 bool TXLine::Orient(TGlPrimitive& GlP)  {
   olxstr Length = olxstr::FormatFloat(3, Params()[3]);
   if (GlP.GetType() == sgloText) {

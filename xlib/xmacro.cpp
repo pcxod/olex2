@@ -5918,18 +5918,16 @@ void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options,
       }
     }
   }
-  double scale_k = 1, scale_a = 0;
-  olxstr scale_str = Options.FindValue("scale", convert ? "regression" : "external");
+  olx_pair_t<double, double> r_scale(1,0);
+  olxstr scale_str = Options.FindValue("scale", convert ? "simple" : "external");
   if (scale_str.Equalsi("external")) {
-    scale_k = 1. / olx_sqr(xapp.XFile().GetRM().Vars.GetVar(0).GetValue());
+    r_scale.a  = 1. / olx_sqr(xapp.XFile().GetRM().Vars.GetVar(0).GetValue());
   }
   else if (scale_str.Equalsi("simple")) {
-    scale_k = SFUtil::CalcF2Scale(F, refs,
-      TReflection::SigmaWeightCalculator<2>(),
-      TReflection::IoverSigmaFilter(3));
+    r_scale.a = RefUtil::CalcFsqScale(rm, F, refs);
   }
   else if (scale_str.Equalsi("regression")) {
-    SFUtil::CalcF2Scale(F, refs, scale_k, scale_a);
+    r_scale = RefUtil::CalcFsqScaleR(rm, F, refs);
   }
   else {
     Error.ProcessingError(__OlxSrcInfo, olxstr("unsupported scale: ") << scale_str);
@@ -5971,8 +5969,8 @@ void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options,
   cif_data.Add(ref_tab);
   for (size_t i = 0; i < refs.Count(); i++) {
     TReflection& r = refs[i];
-    double Fo2 = r.GetI()*scale_k + scale_a;
-    double sigFo2 = r.GetS()*scale_k;
+    double Fo2 = r.GetI()* r_scale.a + r_scale.b;
+    double sigFo2 = r.GetS() * r_scale.a;
     double Fc_sq = F[i].qmod();
     CifRow& row = ref_tab->AddRow();
     row[0] = new cetString(r.GetH());
