@@ -78,9 +78,8 @@ void GXLibMacros::Export(TLibrary& lib) {
     "obs-calculates observed map&;"
     "calc-calculates calculated map&;"
     "fcfmc-calculates FCF Fc-Fc map&;"
-    "scale-scale to use for difference maps, [external], external-forced, simple,"
-    " regression. External may be replace with simple if not reliable."
-    "&;"
+    "scale-scale to use for difference maps, [external], external-forced, sigma,"
+    " shelx. External may be replace with shelxl if the two differ too much.&;"
     "anom_only-Create Fc Map only using anomalous dispersion scattering factor,"
     " neglecting atom contribution&;"
     "r-resolution in Angstrems&;"
@@ -791,7 +790,7 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
   TRefList refs;
   TArrayList<compd> F;
   st.start("Obtaining structure factors");
-  short scale = SFUtil::scaleSimple;
+  short scale = SFUtil::scaleShelx;
   double scale_value = 0;
   {
     olxstr str_scale = Options.FindValue("scale", EmptyString())
@@ -807,11 +806,11 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
       else {
         TBasicApp::NewLogEntry(logWarning) << "Could not locate external "
           "scale - using the default";
-        scale = SFUtil::scaleSimple;
+        scale = SFUtil::scaleShelx;
       }
     }
-    else if (str_scale.Equalsi("regression")) {
-      scale = SFUtil::scaleRegression;
+    else if (str_scale.Equalsi("sigma")) {
+      scale = SFUtil::scaleSigma;
     }
   }
   short src = Options.GetBoolOption("fcf") ? SFUtil::sfOriginFcf
@@ -5600,8 +5599,8 @@ void GXLibMacros::macCalcSurf(TStrObjList &Cmds, const TParamList &Options,
       TArrayList<compd> F;
       olxstr err = SFUtil::GetSF(refs, F, SFUtil::mapTypeDiff,
         Options.Contains("fcf") ? SFUtil::sfOriginFcf : SFUtil::sfOriginOlex2,
-        (Options.FindValue("scale", "r").ToLowerCase().CharAt(0) == 'r') ?
-        SFUtil::scaleRegression : SFUtil::scaleSimple);
+        (Options.FindValue("scale", "r").Equalsi("sigma")) ?
+        SFUtil::scaleSigma : SFUtil::scaleShelx);
       if (!err.IsEmpty()) {
         E.ProcessingError(__OlxSrcInfo, err);
         return;

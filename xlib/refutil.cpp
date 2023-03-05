@@ -6,6 +6,45 @@
 
 using namespace RefUtil;
 
+
+ShelxWeightCalculator::ShelxWeightCalculator(const TDoubleList& wght_,
+  const mat3d& h2c, double scale)
+  :wght(wght_),
+  h2c(h2c),
+  scale(scale)
+{
+  bool fix_f = wght.Count() < 6;
+  while (wght.Count() < 6) {
+    wght.Add(0.0);
+  }
+  if (fix_f) {
+    wght[5] = 1. / 3;
+  }
+}
+//.............................................................................
+double ShelxWeightCalculator::Calculate(const TReflection& r, double Fc2) const {
+  const double Fo2 = scale * r.GetI();
+  const double P = wght[5] * olx_max(0, Fo2) + (1.0 - wght[5]) * Fc2;
+  double stl = 0;
+  if (wght[2] != 0 || wght[4] != 0) {
+    stl = 1. / sqrt(4 * r.ToCart(h2c).QLength());
+  }
+  double q = 1.0;
+  if (wght[2] > 0) {
+    q = olx_exp(wght[2] * olx_sqr(stl));
+  }
+  else if (wght[2] < 0) {
+    q = 1 - olx_exp(wght[2] * olx_sqr(stl));
+  }
+  double t = olx_sqr(scale * r.GetS()) + olx_sqr(wght[0] * P) + wght[1] * P + wght[3];
+  if (wght[4] != 0) {
+    t += wght[4] * stl;
+  }
+  return q / t;
+}
+//.............................................................................
+//.............................................................................
+//.............................................................................
 Stats::Stats(bool update_scale)
 : sum_wsqd(0),
   partial_R1_cnt(0),
@@ -42,7 +81,7 @@ Stats::Stats(bool update_scale)
     r *= scale_k;
     vec3i::UpdateMinMax(r.GetHkl(), min_hkl, max_hkl);
     const double Fc2 = Fsq[i];
-    const double Fc = sqrt(olx_abs(Fc2));
+    const double Fc = sqrt(Fc2);
     const double Fo2 = r.GetI();
     const double Fo = sqrt(Fo2 < 0 ? 0 : Fo2);
     wsqd[i] = weights[i] * olx_sqr(Fo2 - Fc2);
@@ -61,7 +100,7 @@ Stats::Stats(bool update_scale)
   R1 = R1u / R1d;
   R1_partial = R1up / R1dp;
 }
-
+//.............................................................................
 double Stats::UpdatePartialR1(double threshold) {
   partical_threshold = threshold;
   double R1up = 0, R1dp = 0;
@@ -79,7 +118,7 @@ double Stats::UpdatePartialR1(double threshold) {
   }
   return (R1_partial = R1up / olx_max(1, R1dp));
 }
-
+//.............................................................................
 TRefPList::const_list_type Stats::GetBadRefs_(size_t N, double th,
   bool use_n, double *wR2) const
 {

@@ -94,9 +94,7 @@ void XLibMacros::Export(TLibrary& lib)  {
     "in current folder)");
   xlib_InitMacro(GraphPD,
     "r-resolution in degrees [0.5]&;fcf-take structure factors from the FCF "
-    "file, otherwise calculate from current model&;s-use simple scale when "
-    "calculating structure factors from the mode, otherwise regression scaling"
-    " will be used",
+    "file, otherwise calculate from current model&;",
     fpNone|psFileLoaded,
     "Prints a intensity vs. 2 theta graph");
   xlib_InitMacro(Wilson,
@@ -208,7 +206,7 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(CifCreate_4NoSpherA2, EmptyString(), fpNone|psFileLoaded,
     "Creates cif from current file");
   xlib_InitMacro(FcfCreate,
-    "scale-[external],simple, regression or none&;"
+    "scale-[external],sigma, shelxl or none&;"
     "c-[false] converts current fcf to the given list format",
     (fpAny^fpNone)|psFileLoaded,
     "Creates fcf from current file. Expects a number as in the shelx list "
@@ -5918,16 +5916,19 @@ void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options,
       }
     }
   }
-  olx_pair_t<double, double> r_scale(1,0);
+  double scale = 1;
   olxstr scale_str = Options.FindValue("scale", convert ? "simple" : "external");
   if (scale_str.Equalsi("external")) {
-    r_scale.a  = 1. / olx_sqr(xapp.XFile().GetRM().Vars.GetVar(0).GetValue());
+    scale  = 1. / olx_sqr(xapp.XFile().GetRM().Vars.GetVar(0).GetValue());
   }
-  else if (scale_str.Equalsi("simple")) {
-    r_scale.a = RefUtil::CalcFsqScale(rm, F, refs);
+  else if (scale_str.Equalsi("sigma")) {
+    scale = RefUtil::CalcFsqScaleSigma(rm, F, refs);
   }
-  else if (scale_str.Equalsi("regression")) {
-    r_scale = RefUtil::CalcFsqScaleR(rm, F, refs);
+  else if (scale_str.Equalsi("shelx")) {
+    scale = RefUtil::CalcFsqScaleShelx(rm, F, refs);
+  }
+  else if (scale_str.Equalsi("none")) {
+    ;
   }
   else {
     Error.ProcessingError(__OlxSrcInfo, olxstr("unsupported scale: ") << scale_str);
@@ -5969,8 +5970,8 @@ void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options,
   cif_data.Add(ref_tab);
   for (size_t i = 0; i < refs.Count(); i++) {
     TReflection& r = refs[i];
-    double Fo2 = r.GetI()* r_scale.a + r_scale.b;
-    double sigFo2 = r.GetS() * r_scale.a;
+    double Fo2 = r.GetI()* scale;
+    double sigFo2 = r.GetS() * scale;
     double Fc_sq = F[i].qmod();
     CifRow& row = ref_tab->AddRow();
     row[0] = new cetString(r.GetH());

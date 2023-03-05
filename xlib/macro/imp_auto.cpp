@@ -808,7 +808,7 @@ double TryPoint(TArray3D<float>& map, const TUnitCell& uc, const vec3i& p,
   TArrayList<compd> F;
   TArrayList<SFUtil::StructureFactor> P1SF;
   const TUnitCell::SymmSpace sym_space = uc.GetSymmSpace();
-  SFUtil::GetSF(refs, F, SFUtil::mapTypeDiff, SFUtil::sfOriginOlex2, SFUtil::scaleRegression);
+  SFUtil::GetSF(refs, F, SFUtil::mapTypeDiff, SFUtil::sfOriginOlex2, SFUtil::scaleSigma);
   SFUtil::ExpandToP1(refs, F, sym_space, P1SF);
   const vec3s dim = map.GetSize();
   const vec3d norm(1./dim[0], 1./dim[1], 1./dim[2]);
@@ -841,7 +841,7 @@ void XLibMacros::funFATA(const TStrObjList& Cmds, TMacroData& E) {
   TRefList refs;
   TArrayList<compd> F;
   olxstr err(SFUtil::GetSF(refs, F, SFUtil::mapTypeDiff,
-    SFUtil::sfOriginOlex2, SFUtil::scaleRegression));
+    SFUtil::sfOriginOlex2, SFUtil::scaleSigma));
   if (!err.IsEmpty()) {
     E.ProcessingError(__OlxSrcInfo, err);
     return;

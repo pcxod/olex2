@@ -24,8 +24,8 @@ namespace SFUtil {
     mapTypeObs = 1,
     mapTypeCalc = 2,
     mapType2OmC = 3;
-  static const short scaleSimple = 0,  // scale for difference map
-    scaleRegression = 1,
+  static const short scaleSigma = 0,  // scale for difference map
+    scaleShelx = 1,
     scaleExternal = 2,
     scaleExternalForced = 3;
   static const short sfOriginFcf = 0,  // structure factor origin
@@ -122,7 +122,7 @@ namespace SFUtil {
  */
   olxstr GetSF(TRefList& refs, TArrayList<compd>& F,
     short mapType, short sfOrigin = sfOriginOlex2,
-    short scaleType = scaleSimple,
+    short scaleType = scaleShelx,
     double scale = 0,
     short friedelPairs = fpDefault,
     bool anom_only = false);

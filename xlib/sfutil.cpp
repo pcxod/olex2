@@ -284,53 +284,43 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
     sw.start("Scaling structure factors");
     if (mapType != mapTypeCalc) {
       // find a linear scale between F
-      olx_pair_t<double, double> r_scale(1, 0);
+      double scale_k = 1;
       if (scaleType == scaleExternal) {
-        double sc = RefUtil::CalcFScale(rm, F, refs);
+        double sc = RefUtil::CalcFScaleShelx(rm, F, refs);
         if (olx_abs((sc - scale) / (sc + scale)) > 0.01) {
           TBasicApp::NewLogEntry(logWarning) << "External scale deviates too much."
             "Using updated value of " << olxstr::FormatFloat(2, sc) <<
             " vs the given value of " << olxstr::FormatFloat(2, scale);
-          r_scale.a = sc;
+          scale_k = sc;
         }
         else {
-          r_scale.a = scale;
+          scale_k = scale;
         }
       }
       else if (scaleType == scaleExternalForced) {
-        r_scale.a = scale;
+        scale_k = scale;
       }
       else {
-        if (scaleType == scaleRegression) {
-          r_scale = RefUtil::CalcFScaleR(rm, F, refs);
-          if (TBasicApp::GetInstance().IsProfiling()) {
-            TBasicApp::NewLogEntry(logInfo) << "Fc = " << r_scale.a << "*Fo" <<
-              (r_scale.b >= 0 ? " +" : " ") << r_scale.b;
-          }
+        if (scaleType == scaleSigma) {
+          scale_k= RefUtil::CalcFScaleSigma(rm, F, refs);
         }
         else {
-          r_scale.a = RefUtil::CalcFScale(rm, F, refs);
-          if (TBasicApp::GetInstance().IsProfiling()) {
-            TBasicApp::NewLogEntry(logInfo) << "Fc = " << r_scale.a << "*Fo";
-          }
+          scale_k = RefUtil::CalcFScaleShelx(rm, F, refs);
+        }
+        if (TBasicApp::GetInstance().IsProfiling()) {
+          TBasicApp::NewLogEntry(logInfo) << "Fc = " << scale_k << "*Fo";
         }
       }
       for (size_t i=0; i < F.Count(); i++) {
-        const TReflection &r = refs[i];
-        double I = r.GetI();
-        double dI = I < 0 ? 0 : sqrt(I);
-        dI *= r_scale.a;
-        if (scaleType == scaleRegression) {
-          dI += r_scale.b;
-        }
+        double Fo = scale_k * TReflection::GetF(refs[i]);
         if (mapType == mapTypeDiff) {
-          F[i] = compd::polar(dI, F[i].arg()) - F[i];
+          F[i] = compd::polar(Fo, F[i].arg()) - F[i];
         }
         else if (mapType == mapType2OmC) {
-          F[i] = compd::polar(2*dI, F[i].arg()) - F[i];
+          F[i] = compd::polar(2*Fo, F[i].arg()) - F[i];
         }
         else if (mapType == mapTypeObs) {
-          F[i] = compd::polar(dI, F[i].arg());
+          F[i] = compd::polar(Fo, F[i].arg());
         }
       }
     }
