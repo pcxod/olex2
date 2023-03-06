@@ -1004,9 +1004,9 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
         }
       }
       if (HKLF >= 5) {
+        measured_refs = refs.ptr().Filter(olx_alg::olx_gt(0,
+          FunctionAccessor::MakeConst(&TReflection::GetBatch)));
         if (TWST <= 0) {
-          measured_refs = refs.ptr().Filter(olx_alg::olx_gt(0,
-              FunctionAccessor::MakeConst(&TReflection::GetBatch)));
           olx_pdict<int16_t, size_t> batches;
           for (size_t i = 0; i < measured_refs.Count(); i++) {
             int16_t b = measured_refs[i]->GetBatch();
@@ -1027,12 +1027,8 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
           }
         }
         else {
-          measured_refs = refs.ptr().Filter(olx_alg::olx_eq(TWST,
+          merge_stats_refs = refs.ptr().Filter(olx_alg::olx_eq(TWST,
               FunctionAccessor::MakeConst(&TReflection::GetBatch)));
-          /* leave empty to indicate that a measured refs do not mix batches and
-          are good for merging
-          */
-          //merge_stats_refs = measured_refs;
         }
         for (size_t i = 0; i < refs.Count(); i++) {
           if (refs[i].GetBatch() >= 0) {
@@ -1046,7 +1042,7 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
       if (!refs.IsEmpty()) {
         bool mergeFP = (MERG == 4 || MERG == 3 || sp.IsCentrosymmetric());
         _HklStat = RefMerger::DryMerge<RefMerger::ShelxMerger>(
-          sp, refs, (HKLF >= 5 ? vec3i_list() : Omits), mergeFP,
+          sp, refs, Omits, mergeFP,
           2);
       }
       _HklStat.HKLF = HKLF;
@@ -1090,19 +1086,23 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
       }
       if (HKLF >= 5) {
         _HklStat.Rint = -1;
+        _HklStat.Rsigma = -1;
+        _HklStat.MeanIOverSigma = -1;
         _HklStat.InconsistentEquivalents = 0;
         _HklStat.UniqueReflections = 0;
         MergeStats st;
         if (!measured_refs.IsEmpty()) {
           st = RefMerger::DryMerge<RefMerger::ShelxMerger>(sp, measured_refs,
-              vec3i_list(), info_ex.centrosymmetric);
+              Omits, info_ex.centrosymmetric);
           // for mixed batches this is the only useful info
           _HklStat.UniqueReflections = st.UniqueReflections;
+          _HklStat.MeanIOverSigma = st.MeanIOverSigma;
         }
         // check if measured_refs have mixed batches
         if (!merge_stats_refs.IsEmpty()) {
           st = RefMerger::DryMerge<RefMerger::ShelxMerger>(sp, merge_stats_refs,
-              vec3i_list(), info_ex.centrosymmetric);
+              Omits, info_ex.centrosymmetric);
+          _HklStat.Rsigma = st.Rsigma;
           _HklStat.Rint = st.Rint;
         }
         _HklStat.InconsistentEquivalents = st.InconsistentEquivalents;

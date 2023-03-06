@@ -115,7 +115,8 @@ void XLibMacros::Export(TLibrary& lib)  {
     "aq-disables analysis of the Q-peaks based on thresholds&;"
     "at-disables lonely atom types assignment to O and Cl&;"
     "d-before 'blown up' atoms, a possibility to demote will be checked&;"
-    "cs-[true] skips peaks close to real atoms - within 1A for Z < 15 and within 1.3A for Z >= 15 from analysis&;"
+    "cs-[true] skips peaks close to real atoms - within 1A for Z < 15 and "
+    "within 1.3A for Z >= 15 from analysis&;"
     ,
     fpNone,
     "Tidies up current model");
