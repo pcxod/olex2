@@ -73,7 +73,7 @@ bool olxCommandAction::Run() {
   TStrList toks(cmd, ">>");
   olex2::IOlex2Processor *ip = olex2::IOlex2Processor::GetInstance();
   for (size_t i = 0; i < toks.Count(); i++) {
-    if (!ip->processMacro(olxstr::DeleteSequencesOf(toks[i], ' '))) {
+    if (!ip->processMacro(toks[i])) {
       return false;
     }
   }

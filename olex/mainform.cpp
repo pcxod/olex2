@@ -2066,10 +2066,14 @@ void TMainForm::PreviewHelp(const olxstr& Cmd)  {
 }
 //..............................................................................
 bool TMainForm::ImportFrag(const olxstr& line) {
+  if (!FXApp->XFile().HasLastLoader()) {
+    return false;
+  }
   olxstr trimmed_content = line;
   trimmed_content.Trim(' ').Replace('\r', '\n').Trim('\n').DeleteSequencesOf('\n');
-  if (!trimmed_content.StartsFromi("FRAG") || !trimmed_content.EndsWithi("FEND"))
+  if (!trimmed_content.StartsFromi("FRAG") || !trimmed_content.EndsWithi("FEND")) {
     return false;
+  }
   TStrList lines(trimmed_content, '\n');
   if (lines.Count() < 4) {
     return false;

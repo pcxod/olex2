@@ -415,11 +415,15 @@ void THtmlManager::macUpdate(TStrObjList &Cmds, const TParamList &Options,
 {
   THtml *html = (Cmds.Count() == 1) ? FindHtml(Cmds[0]) : main;
   if (html == 0) {
-    E.ProcessingError(__OlxSrcInfo,
-      "undefined html window: ").quote() << (Cmds.IsEmpty() ? "main" : Cmds[0]);
+    if (!Options.GetBoolOption('q')) {
+      E.ProcessingError(__OlxSrcInfo,
+        "undefined html window: ").quote() << (Cmds.IsEmpty() ? "main" : Cmds[0]);
+    }
     return;
   }
-  if (html->GetParentCell() != 0 && html->GetParentCell()->GetFloatY() != 0) {
+  if (html->GetParentCell() != 0 &&
+    html->GetParentCell()->GetFloatY() != 0 && false)
+  {
     main->Freeze();
     html->LoadPage(html->FileName.u_str());
     wxClientDC dc(main);
@@ -1299,7 +1303,8 @@ TLibrary *THtmlManager::ExportLibrary(const olxstr &name) {
     fpAny^(fpNone|fpOne),
     "Changes state of the HTML switch, accepts masks like '*-picture-*'"
   );
-  InitMacroD(Library, THtmlManager, Update, EmptyString(),
+  InitMacroD(Library, THtmlManager, Update,
+    "q-quiet if the given window does not exist",
     fpNone|fpOne,
     "Reloads the content of the main or given named HTML window"
   );

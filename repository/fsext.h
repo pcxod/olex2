@@ -90,6 +90,8 @@ public:
   static olxstr GetBlockDateTime(size_t i);
   static short GetPersistenceId(size_t i);
   static bool Exists(const olxstr& fn);
+  // does not affect the file system - can only remove a cached file
+  static bool Remove(const olxstr& fn);
 
   void LibExists(const TStrObjList& Params, TMacroData& E);
   void LibDump(TStrObjList &Cmds, const TParamList &Options,

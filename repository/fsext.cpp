@@ -351,6 +351,18 @@ bool TFileHandlerManager::Exists(const olxstr& fn) {
   return Handler()->IsMemoryBlock(fn);
 }
 //..............................................................................
+bool TFileHandlerManager::Remove(const olxstr& fn) {
+  size_t idx = Handler()->FMemoryBlocks.IndexOf(fn);
+  if (idx == InvalidIndex) {
+    return false;
+  }
+  TMemoryBlock* mb = Handler()->FMemoryBlocks.GetValue(idx);
+  delete[] mb->Buffer;
+  delete mb;
+  Handler()->FMemoryBlocks.Delete(idx);
+  return true;
+}
+//..............................................................................
 //..............................................................................
 //..............................................................................
 void TFileHandlerManager::LibExists(const TStrObjList& Params,
@@ -465,7 +477,18 @@ PyObject* fsext_pyClear(PyObject* self, PyObject* args) {
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "|i");
   }
   TFileHandlerManager::Clear(mask);
-  return Py_BuildValue("b", true);
+  return PythonExt::PyTrue();
+}
+//..............................................................................
+PyObject* fsext_pyRmFile(PyObject* self, PyObject* args) {
+  olxstr name;
+  if (!PythonExt::ParseTuple(args, "w", &name)) {
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "w");
+  }
+  if (TFileHandlerManager::Remove(name)) {
+    return PythonExt::PyTrue();
+  }
+  return PythonExt::PyFalse();
 }
 //..............................................................................
 static PyMethodDef OLEXFS_Methods[] = {
@@ -483,6 +506,9 @@ static PyMethodDef OLEXFS_Methods[] = {
   { "Clear", fsext_pyClear, METH_VARARGS,
   "clears content of the VFS. Mask can be given to remove items with "
   "particular persistence level" },
+  { "RmFile", fsext_pyRmFile, METH_VARARGS,
+  "removes a cached/memory file - does not affect the file system"
+  },
   { NULL, NULL, 0, NULL }
 };
 //..............................................................................

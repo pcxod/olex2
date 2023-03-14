@@ -186,22 +186,25 @@ void THtml::OnChar(wxKeyEvent& event) {
   OnKey.Execute((const AOlxCtrl *)this, &KE);
 }
 //.............................................................................
-void THtml::UpdateSwitchState(THtmlSwitch &Switch, olxstr &String)  {
-  if( !Switch.IsToUpdateSwitch() )  return;
+void THtml::UpdateSwitchState(THtmlSwitch& Switch, olxstr& String) {
+  if (!Switch.IsToUpdateSwitch())  return;
   olxstr Tmp = "<!-- #include ";
   Tmp << Switch.GetName() << ' ';
-  for( size_t i=0; i < Switch.FileCount(); i++ )
+  for (size_t i = 0; i < Switch.FileCount(); i++) {
     Tmp << Switch.GetFile(i) << ';';
-  for( size_t i=0; i < Switch.GetParams().Count(); i++ )  {
+  }
+  for (size_t i = 0; i < Switch.GetParams().Count(); i++) {
     Tmp << Switch.GetParams().GetName(i) << '=';
-    if( Switch.GetParams().GetValue(i).FirstIndexOf(' ') == InvalidIndex )
+    if (Switch.GetParams().GetValue(i).FirstIndexOf(' ') == InvalidIndex) {
       Tmp << Switch.GetParams().GetValue(i);
-    else
+    }
+    else {
       Tmp << '\'' << Switch.GetParams().GetValue(i) << '\'';
+    }
     Tmp << ';';
   }
 
-  Tmp << Switch.GetFileIndex()+1 << ';' << " -->";
+  Tmp << Switch.GetFileIndex() + 1 << ';' << " -->";
   String = Tmp;
 }
 //.............................................................................
@@ -274,7 +277,7 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip) {
     if (stm != 0) {
       tmp = Lst[i].SubStringFrom(stm == 1 ? Tag1.Length() : Tag.Length());
       Toks.Clear();
-      Toks.Strtok(tmp, ' '); // extract item name
+      Toks.Strtok(tmp, ' ', false); // extract item name
       if ((stm == 1 && Toks.Count() < 4) ||
         (stm == 2 && Toks.Count() < 3)) {
         TBasicApp::NewLogEntry(logError) << "Wrong #include[if] syntax: " << tmp;

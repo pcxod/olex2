@@ -858,7 +858,8 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitFunc(GetCompilationInfo, fpAny,
     "Returns compilation info");
   xlib_InitFunc(Cell, fpOne|psFileLoaded,
-    "Returns value of teh given parameter: a, b, c, alpha, beta, gamma, volume"
+    "Returns value of the requested parameter: a, b, c, alpha, beta, gamma, "
+    "volume"
   );
   xlib_InitFunc(Cif, fpOne| fpTwo |psCheckFileTypeCif,
     "Returns instruction value (all data after the instruction). In case the "
@@ -9508,10 +9509,10 @@ void XLibMacros::macRRings(TStrObjList& Cmds, const TParamList& Options,
   }
 }
 //.............................................................................
-void XLibMacros::macDelta(TStrObjList &Cmds, const TParamList &Options,
-  TMacroData &E)
+void XLibMacros::macDelta(TStrObjList& Cmds, const TParamList& Options,
+  TMacroData& E)
 {
-  TXApp &app = TXApp::GetInstance();
+  TXApp& app = TXApp::GetInstance();
   if (Cmds.Count() == 1) {
     double delta = Cmds[0].ToDouble();
     if (delta < 0.1 || delta > 0.9)
@@ -9524,10 +9525,10 @@ void XLibMacros::macDelta(TStrObjList &Cmds, const TParamList &Options,
   }
 }
 //.............................................................................
-void XLibMacros::macDeltaI(TStrObjList &Cmds, const TParamList &Options,
-  TMacroData &E)
+void XLibMacros::macDeltaI(TStrObjList& Cmds, const TParamList& Options,
+  TMacroData& E)
 {
-  TXApp &app = TXApp::GetInstance();
+  TXApp& app = TXApp::GetInstance();
   if (Cmds.Count() == 1) {
     double deltai = Cmds[0].ToDouble();
     if (deltai < 0.9) deltai = 0.9;
@@ -9535,19 +9536,19 @@ void XLibMacros::macDeltaI(TStrObjList &Cmds, const TParamList &Options,
       deltai = 3;
     app.XFile().GetLattice().SetDeltaI(deltai);
   }
-  else  {
+  else {
     TBasicApp::NewLogEntry() << "Current delta (short interactions bonds) is: "
       << app.XFile().GetLattice().GetDeltaI();
   }
 }
 //.............................................................................
-void XLibMacros::macExport(TStrObjList &Cmds, const TParamList &Options,
-  TMacroData &E)
+void XLibMacros::macExport(TStrObjList& Cmds, const TParamList& Options,
+  TMacroData& E)
 {
-  TXApp &app = TXApp::GetInstance();
+  TXApp& app = TXApp::GetInstance();
   const bool use_md5 = app.GetOptions().FindValue("cif.use_md5", FalseString()).ToBool();
   TCif& C = app.XFile().GetLastLoader<TCif>();
-  olxstr hkl_name = (!Cmds.IsEmpty() ? Cmds[0]: C.GetDataName() + ".hkl");
+  olxstr hkl_name = (!Cmds.IsEmpty() ? Cmds[0] : C.GetDataName() + ".hkl");
   if (!Cmds.IsEmpty()) {
     if (TEFile::ExtractFileExt(hkl_name).IsEmpty()) {
       hkl_name << ".hkl";
@@ -9562,10 +9563,10 @@ void XLibMacros::macExport(TStrObjList &Cmds, const TParamList &Options,
     hklLoop = C.FindLoop("_refln");
   }
   if (hklLoop == 0) {
-    cif_dp::cetStringList *ci = dynamic_cast<cif_dp::cetStringList *>(
+    cif_dp::cetStringList* ci = dynamic_cast<cif_dp::cetStringList*>(
       C.FindEntry("_shelx_hkl_file"));
     if (ci == 0) {
-      ci = dynamic_cast<cif_dp::cetStringList *>(
+      ci = dynamic_cast<cif_dp::cetStringList*>(
         C.FindEntry("_iucr_refine_reflections_details"));
     }
     if (ci == 0) {
@@ -9573,6 +9574,11 @@ void XLibMacros::macExport(TStrObjList &Cmds, const TParamList &Options,
     }
     else {
       TCStrList lines(ci->lines);
+      for (size_t i = 0; i < lines.Count(); i++) {
+        if (lines[i].TrimWhiteChars(false, true) == ')') {
+          lines[i] = ';';
+        }
+      }
       TEFile::WriteLines(hkl_name, lines);
       ci = dynamic_cast<cif_dp::cetStringList *>(
         C.FindEntry("_shelx_fab_file"));
