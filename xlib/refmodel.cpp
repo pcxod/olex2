@@ -3508,7 +3508,15 @@ void RefinementModel::LibStoreParam(TStrObjList& Cmds, const TParamList& Opts,
     di->SetValue(Cmds[1]);
   }
   else {
-    di->AddField(toks.GetLastString(), Cmds[1]);
+    if (Cmds[1].IsEmpty()) {
+      TDataItem * i = di->FindItem(toks.GetLastString());
+      if (i != 0) {
+        di->DeleteItem(i);
+      }
+    }
+    else {
+      di->AddField(toks.GetLastString(), Cmds[1]);
+    }
   }
 }
 //..............................................................................

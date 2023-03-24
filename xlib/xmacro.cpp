@@ -2177,9 +2177,11 @@ void XLibMacros::macFix(TStrObjList &Cmds, const TParamList &Options,
   olxstr vars(Cmds[0]);
   Cmds.Delete(0);
   double var_val = 0;
+  bool has_var_val = false;
   if (!Cmds.IsEmpty() && Cmds[0].IsNumber()) {
     var_val = Cmds[0].ToDouble();
     Cmds.Delete(0);
+    has_var_val = true;
   }
   TXApp& xapp = TXApp::GetInstance();
   // special case
@@ -2226,7 +2228,9 @@ void XLibMacros::macFix(TStrObjList &Cmds, const TParamList &Options,
   if (vars.Containsi("UISO")) {
     for (size_t i = 0; i < atoms.Count(); i++) {
       if (atoms[i]->GetEllipsoid() == 0) {// isotropic atom
-        xapp.SetAtomUiso(*atoms[i], var_val);
+        if (has_var_val) {
+          xapp.SetAtomUiso(*atoms[i], var_val);
+        }
         xapp.XFile().GetRM().Vars.FixParam(atoms[i]->CAtom(), catom_var_name_Uiso);
       }
       else {

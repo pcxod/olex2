@@ -565,7 +565,10 @@ void THtml::ScrollWindow(int dx, int dy, const wxRect* rect)  {
 bool THtml::AddControl(const olxstr& Name, AOlxCtrl *Object, wxWindow* wxWin,
   bool Manage)
 {
-  if (Name.IsEmpty())  return true;  // an anonymous object
+  // an anonymous object
+  if (Name.IsEmpty()) {
+    return false;
+  }
   size_t idx = Objects.IndexOf(Name);
   if (idx != InvalidIndex) {
     Objects.GetEntry(idx).val.a = Object;

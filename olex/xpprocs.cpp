@@ -3234,7 +3234,9 @@ void TMainForm::macPopup(TStrObjList &Cmds, const TParamList &Options, TMacroDat
   THtmlManager::TPopupData *pd = HtmlManager.Popups.Find(Cmds[0], NULL);
   if (pd != 0) {
     try { pd->Html->LoadPage(Cmds[1].u_str()); }
-    catch (...) {}
+    catch (...) {
+      TBasicApp::NewLogEntry(logWarning) << "Failed to load '" << Cmds[1] << '\'';
+    }
     if (Options.Contains('w') && Options.Contains('h')) {
 #ifdef __WXGTK__  // any another way to force move ???
       pd->Dialog->SetSize(5000, 5000, 0, 0);
@@ -3243,7 +3245,7 @@ void TMainForm::macPopup(TStrObjList &Cmds, const TParamList &Options, TMacroDat
       pd->Dialog->GetClientSize(&width, &height);
       pd->Html->SetSize(width, height);
     }
-    if (!pd->Dialog->IsShown() && !Options.Contains('s')) {
+    if (!pd->Dialog->IsShown() && !Options.GetBoolOption('s')) {
       pd->Dialog->Show(true);
     }
     return;
