@@ -536,7 +536,16 @@ void TCif::Initialize() {
       "Failed to locate required fields in atoms loop";
     return;
   }
-  const MatrixListAdaptor<TCif> MatrixList(*this);
+  // need to put Identity first as it might not be!
+  smatd_list MatrixList = this->Matrices;
+  for (size_t i = 0; i < MatrixList.Count(); i++) {
+    if (MatrixList[i].IsI()) {
+      MatrixList.Delete(i);
+      break;
+    }
+  }
+  MatrixList.Insert(0, new smatd()).I();
+  //
   olxstr_dict<size_t> label_occurrence;
   for (size_t i = 0; i < ALoop->RowCount(); i++) {
     olxstr label = ALoop->Get(i, ALabel).GetStringValue();
@@ -628,13 +637,18 @@ void TCif::Initialize() {
         GetRM().Vars.FixParam(A, catom_var_name_Sof);
       }
     }
+    size_t site_mult = InvalidIndex;
     // try to guess what it is
     if (Degen != InvalidIndex && DegenFunction == 0) {
       double a = ALoop->Get(i, Degen).GetStringValue().ToDouble();
-      double b =
-        (double)TUnitCell::GetPositionMultiplicity(MatrixList, A.ccrd());
+      site_mult = TUnitCell::GetPositionMultiplicity(MatrixList, A.ccrd());
+      double b = static_cast<double>(site_mult);
       if (olx_abs(a - b) < 1e-3) {
         DegenFunction = 1;
+        // check if both DegenFunction is the same for 1 and 2!
+        if ((olx_abs((double)MatrixCount() / b - a) < 1e-3)) {
+          DegenFunction = 0;
+        }
       }
       else if (olx_abs((double)MatrixCount() / b - a) < 1e-3) {
         DegenFunction = 2;
@@ -644,18 +658,21 @@ void TCif::Initialize() {
       }
     }
     if (DegenFunction == 0) {
-      size_t degen = TUnitCell::GetPositionMultiplicity(MatrixList, A.ccrd());
+      double degen = static_cast<double>(site_mult == InvalidIndex ?
+        TUnitCell::GetPositionMultiplicity(MatrixList, A.ccrd()) : site_mult);
       if (degen != 1) {
-        A.SetOccu(A.GetOccu() / (double)degen);
-        A.SetOccuEsd(A.GetOccuEsd() / (double)degen);
+        A.SetOccu(A.GetOccu() / degen);
+        A.SetOccuEsd(A.GetOccuEsd() / degen);
       }
     }
     else {
       double degen = ALoop->Get(i, Degen).GetStringValue().ToDouble();
-      if (DegenFunction == 2)
+      if (DegenFunction == 2) {
         degen = (double)MatrixCount() / degen;
-      else if (DegenFunction == 3)
+      }
+      else if (DegenFunction == 3) {
         degen = 1. / degen;
+      }
       if (degen != 1) {
         A.SetOccu(A.GetOccu() / degen);
         A.SetOccuEsd(A.GetOccuEsd() / degen);
