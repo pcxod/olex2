@@ -715,6 +715,47 @@ static const cm_Isotope _cm_isotope_U[] = {
   {234.040947, 0.000055, &_cm_neutron_U234},
   {235.043924, 0.0072, &_cm_neutron_U235},
   {238.050785, 0.992745, &_cm_neutron_U238}};
+static const cm_Isotope _cm_isotope_Pm[] = {
+  {144.912744, 1, NULL} };
+static const cm_Isotope _cm_isotope_Po[] = {
+  {208.982416, 1, NULL} };
+static const cm_Isotope _cm_isotope_At[] = {
+  {209.987131, 1, NULL} };
+static const cm_Isotope _cm_isotope_Rn[] = {
+  {222.017570, 1, NULL} };
+static const cm_Isotope _cm_isotope_Ac[] = {
+  {227.027747, 1, NULL} };
+static const cm_Isotope _cm_isotope_Np[] = {
+  {237.048167, 1, NULL} };
+static const cm_Isotope _cm_isotope_Pu[] = {
+  {244.064198, 1, NULL} };
+static const cm_Isotope _cm_isotope_Am[] = {
+  {243.061373, 1, NULL} };
+static const cm_Isotope _cm_isotope_Cm[] = {
+  {247.070347, 1, NULL} };
+static const cm_Isotope _cm_isotope_Bk[] = {
+  {247.070299, 1, NULL} };
+static const cm_Isotope _cm_isotope_Cf[] = {
+  {251.079580, 1, NULL} };
+static const cm_Isotope _cm_isotope_Es[] = {
+  {252.082972, 1, NULL} };
+static const cm_Isotope _cm_isotope_Fm[] = {
+  {257.095099, 1, NULL} };
+static const cm_Isotope _cm_isotope_Md[] = {
+  {258.098425, 1, NULL} };
+static const cm_Isotope _cm_isotope_No[] = {
+  {259.101024, 1, NULL} };
+static const cm_Isotope _cm_isotope_Lw[] = {
+  {262.109692, 1, NULL} };
+static const cm_Isotope _cm_isotope_Rf[] = {
+  {263.118313, 1, NULL} };
+static const cm_Isotope _cm_isotope_Tc[] = {
+  {97.907216, 1, NULL} };
+static const cm_Isotope _cm_isotope_Fr[] = {
+  {223.019731, 1, NULL} };
+static const cm_Isotope _cm_isotope_Ra[] = {
+  {226.025403, 1, NULL} };
+
 //static const cm_Gaussians _cm_gaussians_H(0.489918, 0.262003, 0.196767, 0.049879, 20.6593, 7.74039, 49.5519, 2.20159, 0.001305);
 static const cm_Gaussians _cm_gaussians_H(0.493002, 0.322912, 0.140191, 0.040810, 10.5109, 26.1257, 3.14236, 57.7997, 0.003038);
 static const cm_Gaussians _cm_gaussians_He(0.8734, 0.6309, 0.3112, 0.178, 9.1037, 3.3568, 22.9276, 0.9821, 0.0064);
@@ -857,7 +898,7 @@ static cm_Element _cm_element_Y("Y", "Yttrium", 0x8000, 39, 2.00, 1.9, 0.3, 1.78
 static cm_Element _cm_element_Zr("Zr", "Zirconium", 0x8000, 40, 2.00, 1.75, 0.3, 1.59, 2.09, &_cm_gaussians_Zr, _cm_isotope_Zr, 5, _cm_henke_Zr, 508, &_cm_neutron_Zr);
 static cm_Element _cm_element_Nb("Nb", "Niobium", 0x8000, 41, 2.00, 1.64, 0.3, 1.43, 1.93, &_cm_gaussians_Nb, _cm_isotope_Nb, 1, _cm_henke_Nb, 508, &_cm_neutron_Nb);
 static cm_Element _cm_element_Mo("Mo", "Molybdenum", 0x8000, 42, 2.00, 1.54, 0.3, 1.36, 1.86, &_cm_gaussians_Mo, _cm_isotope_Mo, 7, _cm_henke_Mo, 508, &_cm_neutron_Mo);
-static cm_Element _cm_element_Tc("Tc", "Technetium", 0x8000, 43, 2.00, 1.47, 0.3, 1.35, 1.85, &_cm_gaussians_Tc, NULL, 0, _cm_henke_Tc, 508, &_cm_neutron_Tc);
+static cm_Element _cm_element_Tc("Tc", "Technetium", 0x8000, 43, 2.00, 1.47, 0.3, 1.35, 1.85, &_cm_gaussians_Tc, _cm_isotope_Tc, 1, _cm_henke_Tc, 508, &_cm_neutron_Tc);
 static cm_Element _cm_element_Ru("Ru", "Ruthenium", 0xFF, 44, 2.00, 1.46, 0.3, 1.33, 1.83, &_cm_gaussians_Ru, _cm_isotope_Ru, 7, _cm_henke_Ru, 508, &_cm_neutron_Ru);
 static cm_Element _cm_element_Rh("Rh", "Rhodium", 0x8000, 45, 2.00, 1.45, 0.3, 1.35, 1.85, &_cm_gaussians_Rh, _cm_isotope_Rh, 1, _cm_henke_Rh, 508, &_cm_neutron_Rh);
 static cm_Element _cm_element_Pd("Pd", "Palladium", 0x8000, 46, 1.63, 1.39, 0.3, 1.38, 1.88, &_cm_gaussians_Pd, _cm_isotope_Pd, 6, _cm_henke_Pd, 507, &_cm_neutron_Pd);
@@ -875,7 +916,7 @@ static cm_Element _cm_element_La("La", "Lanthanum", 0x8000, 57, 2.00, 2.07, 0.3,
 static cm_Element _cm_element_Ce("Ce", "Cerium", 0x8000, 58, 2.00, 2.04, 0.3, 1.83, 2.33, &_cm_gaussians_Ce, _cm_isotope_Ce, 4, _cm_henke_Ce, 508, &_cm_neutron_Ce);
 static cm_Element _cm_element_Pr("Pr", "Praseodymium", 0x8000, 59, 2.00, 2.03, 0.3, 1.82, 2.32, &_cm_gaussians_Pr, _cm_isotope_Pr, 1, _cm_henke_Pr, 508, &_cm_neutron_Pr);
 static cm_Element _cm_element_Nd("Nd", "Neodymium", 0x8000, 60, 2.00, 2.01, 0.3, 1.81, 2.31, &_cm_gaussians_Nd, _cm_isotope_Nd, 7, _cm_henke_Nd, 508, &_cm_neutron_Nd);
-static cm_Element _cm_element_Pm("Pm", "Promethium", 0x8000, 61, 2.00, 1.99, 0.3, 1.81, 2.31, &_cm_gaussians_Pm, NULL, 0, _cm_henke_Pm, 508, &_cm_neutron_Pm);
+static cm_Element _cm_element_Pm("Pm", "Promethium", 0x8000, 61, 2.00, 1.99, 0.3, 1.81, 2.31, &_cm_gaussians_Pm, _cm_isotope_Pm, 1, _cm_henke_Pm, 508, &_cm_neutron_Pm);
 static cm_Element _cm_element_Sm("Sm", "Samarium", 0x8000, 62, 2.00, 1.98, 0.3, 1.8, 2.3, &_cm_gaussians_Sm, _cm_isotope_Sm, 7, _cm_henke_Sm, 508, &_cm_neutron_Sm);
 static cm_Element _cm_element_Eu("Eu", "Europium", 0x8000, 63, 2.00, 1.98, 0.3, 2, 2.5, &_cm_gaussians_Eu, _cm_isotope_Eu, 2, _cm_henke_Eu, 514, &_cm_neutron_Eu);
 static cm_Element _cm_element_Gd("Gd", "Gadolinium", 0x8000, 64, 2.00, 1.96, 0.3, 1.79, 2.29, &_cm_gaussians_Gd, _cm_isotope_Gd, 7, _cm_henke_Gd, 514, &_cm_neutron_Gd);
@@ -898,27 +939,27 @@ static cm_Element _cm_element_Hg("Hg", "Mercury", 0xFFFF, 80, 1.55, 1.32, 0.3, 1
 static cm_Element _cm_element_Tl("Tl", "Thallium", 0x8000, 81, 1.96, 1.45, 0.3, 1.64, 2.14, &_cm_gaussians_Tl, _cm_isotope_Tl, 2, _cm_henke_Tl, 516, &_cm_neutron_Tl);
 static cm_Element _cm_element_Pb("Pb", "Lead", 0x8000, 82, 2.02, 1.46, 0.3, 1.6, 2.1, &_cm_gaussians_Pb, _cm_isotope_Pb, 4, _cm_henke_Pb, 516, &_cm_neutron_Pb);
 static cm_Element _cm_element_Bi("Bi", "Bismuth", 0x8000, 83, 2.00, 1.48, 0.3, 1.6, 2.1, &_cm_gaussians_Bi, _cm_isotope_Bi, 1, _cm_henke_Bi, 516, &_cm_neutron_Bi);
-static cm_Element _cm_element_Po("Po", "Polonium", 0x8000, 84, 2.00, 1.4, 0.3, 1.6, 2.1, &_cm_gaussians_Po, NULL, 0, _cm_henke_Po, 516, &_cm_neutron_Po);
-static cm_Element _cm_element_At("At", "Astatine", 0x8000, 85, 2.00, 1.21, 0.3, 1.6, 2.1, &_cm_gaussians_At, NULL, 0, _cm_henke_At, 516, &_cm_neutron_At);
-static cm_Element _cm_element_Rn("Rn", "Radon", 0x8000, 86, 2.00, 1.5, 0.3, 1.8, 2.3, &_cm_gaussians_Rn, NULL, 0, _cm_henke_Rn, 516, &_cm_neutron_Rn);
-static cm_Element _cm_element_Fr("Fr", "Francium", 0x8000, 87, 2.00, 2.6, 0.3, 2.8, 3.3, &_cm_gaussians_Fr, NULL, 0, _cm_henke_Fr, 516, &_cm_neutron_Fr);
-static cm_Element _cm_element_Ra("Ra", "Radium", 0x8000, 88, 2.00, 2.21, 0.3, 2.2, 2.7, &_cm_gaussians_Ra, NULL, 0, _cm_henke_Ra, 516, &_cm_neutron_Ra);
-static cm_Element _cm_element_Ac("Ac", "Actinium", 0x8000, 89, 2.00, 2.15, 0.3, 1.9, 2.4, &_cm_gaussians_Ac, NULL, 0, _cm_henke_Ac, 516, &_cm_neutron_Ac);
+static cm_Element _cm_element_Po("Po", "Polonium", 0x8000, 84, 2.00, 1.4, 0.3, 1.6, 2.1, &_cm_gaussians_Po, _cm_isotope_Po, 1, _cm_henke_Po, 516, &_cm_neutron_Po);
+static cm_Element _cm_element_At("At", "Astatine", 0x8000, 85, 2.00, 1.21, 0.3, 1.6, 2.1, &_cm_gaussians_At, _cm_isotope_At, 1, _cm_henke_At, 516, &_cm_neutron_At);
+static cm_Element _cm_element_Rn("Rn", "Radon", 0x8000, 86, 2.00, 1.5, 0.3, 1.8, 2.3, &_cm_gaussians_Rn, _cm_isotope_Rn, 1, _cm_henke_Rn, 516, &_cm_neutron_Rn);
+static cm_Element _cm_element_Fr("Fr", "Francium", 0x8000, 87, 2.00, 2.6, 0.3, 2.8, 3.3, &_cm_gaussians_Fr, _cm_isotope_Fr, 1, _cm_henke_Fr, 516, &_cm_neutron_Fr);
+static cm_Element _cm_element_Ra("Ra", "Radium", 0x8000, 88, 2.00, 2.21, 0.3, 2.2, 2.7, &_cm_gaussians_Ra, _cm_isotope_Ra, 1, _cm_henke_Ra, 516, &_cm_neutron_Ra);
+static cm_Element _cm_element_Ac("Ac", "Actinium", 0x8000, 89, 2.00, 2.15, 0.3, 1.9, 2.4, &_cm_gaussians_Ac, _cm_isotope_Ac, 1, _cm_henke_Ac, 516, &_cm_neutron_Ac);
 static cm_Element _cm_element_Th("Th", "Thorium", 0x8000, 90, 2.00, 2.06, 0.3, 1.85, 2.35, &_cm_gaussians_Th, _cm_isotope_Th, 1, _cm_henke_Th, 516, &_cm_neutron_Th);
 static cm_Element _cm_element_Pa("Pa", "Protactinium", 0x8000, 91, 2.00, 2.00, 0.3, 1.8, 2.3, &_cm_gaussians_Pa, _cm_isotope_Pa, 1, _cm_henke_Pa, 516, &_cm_neutron_Pa);
 static cm_Element _cm_element_U("U", "Uranium", 0x8000, 92, 1.86, 1.96, 0.3, 1.8, 2.3, &_cm_gaussians_U, _cm_isotope_U, 3, _cm_henke_U, 514, &_cm_neutron_U);
-static cm_Element _cm_element_Np("Np", "Neptunium", 0x8000, 93, 2.00, 1.9, 0.3, 1.8, 2.3, &_cm_gaussians_Np, NULL, 0, NULL, 0, &_cm_neutron_Np);
-static cm_Element _cm_element_Pu("Pu", "Plutonium", 0x8000, 94, 2.00, 1.87, 0.3, 1.8, 2.3, &_cm_gaussians_Pu, NULL, 0, NULL, 0, NULL);
-static cm_Element _cm_element_Am("Am", "Americium", 0x8000, 95, 2.00, 1.8, 0.3, 1.8, 2.3, &_cm_gaussians_Am, NULL, 0, NULL, 0, &_cm_neutron_Am);
-static cm_Element _cm_element_Cm("Cm", "Curium", 0x8000, 96, 2.00, 1.69, 0.3, 1.8, 2.3, &_cm_gaussians_Cm, NULL, 0, NULL, 0, NULL);
-static cm_Element _cm_element_Bk("Bk", "Berkelium", 0x8000, 97, 2.00, 1.54, 0.3, 1.8, 2.3, &_cm_gaussians_Bk, NULL, 0, NULL, 0, NULL);
-static cm_Element _cm_element_Cf("Cf", "Californium", 0x8000, 98, 2.00, 1.83, 0.3, 1.8, 2.3, &_cm_gaussians_Cf, NULL, 0, NULL, 0, NULL);
-static cm_Element _cm_element_Es("Es", "Einsteinium", 0x8000, 99, 2.00, 1.5, 0.3, 1.8, 2.3, NULL, NULL, 0, NULL, 0, NULL);
-static cm_Element _cm_element_Fm("Fm", "Fermium", 0x8000, 100, 2.00, 1.5, 0.3, 1.8, 2.3, NULL, NULL, 0, NULL, 0, NULL);
-static cm_Element _cm_element_Md("Md", "Mendelevium", 0x8000, 101, 2.00, 1.5, 0.3, 1.8, 2.3, NULL, NULL, 0, NULL, 0, NULL);
-static cm_Element _cm_element_No("No", "Nobelium", 0x8000, 102, 2.00, 1.5, 0.3, 1.8, 2.3, NULL, NULL, 0, NULL, 0, NULL);
-static cm_Element _cm_element_Lr("Lr", "Lawrencium", 0x8000, 103, 2.00, 1.5, 0.3, 1.8, 2.3, NULL, NULL, 0, NULL, 0, NULL);
-static cm_Element _cm_element_Ku("Ku", "?", 0x8000, 104, 2.00, 1.5, 0.3, 1.8, 2.3, NULL, NULL, 0, NULL, 0, NULL);
+static cm_Element _cm_element_Np("Np", "Neptunium", 0x8000, 93, 2.00, 1.9, 0.3, 1.8, 2.3, &_cm_gaussians_Np, _cm_isotope_Np, 1, NULL, 0, &_cm_neutron_Np);
+static cm_Element _cm_element_Pu("Pu", "Plutonium", 0x8000, 94, 2.00, 1.87, 0.3, 1.8, 2.3, &_cm_gaussians_Pu, _cm_isotope_Pu, 1, NULL, 0, NULL);
+static cm_Element _cm_element_Am("Am", "Americium", 0x8000, 95, 2.00, 1.8, 0.3, 1.8, 2.3, &_cm_gaussians_Am, _cm_isotope_Am, 1, NULL, 0, &_cm_neutron_Am);
+static cm_Element _cm_element_Cm("Cm", "Curium", 0x8000, 96, 2.00, 1.69, 0.3, 1.8, 2.3, &_cm_gaussians_Cm, _cm_isotope_Cm, 1, NULL, 0, NULL);
+static cm_Element _cm_element_Bk("Bk", "Berkelium", 0x8000, 97, 2.00, 1.54, 0.3, 1.8, 2.3, &_cm_gaussians_Bk, _cm_isotope_Bk, 1, NULL, 0, NULL);
+static cm_Element _cm_element_Cf("Cf", "Californium", 0x8000, 98, 2.00, 1.83, 0.3, 1.8, 2.3, &_cm_gaussians_Cf, _cm_isotope_Cf, 1, NULL, 0, NULL);
+static cm_Element _cm_element_Es("Es", "Einsteinium", 0x8000, 99, 2.00, 1.5, 0.3, 1.8, 2.3, NULL, _cm_isotope_Es, 1, NULL, 0, NULL);
+static cm_Element _cm_element_Fm("Fm", "Fermium", 0x8000, 100, 2.00, 1.5, 0.3, 1.8, 2.3, NULL, _cm_isotope_Fm, 1, NULL, 0, NULL);
+static cm_Element _cm_element_Md("Md", "Mendelevium", 0x8000, 101, 2.00, 1.5, 0.3, 1.8, 2.3, NULL, _cm_isotope_Md, 1, NULL, 0, NULL);
+static cm_Element _cm_element_No("No", "Nobelium", 0x8000, 102, 2.00, 1.5, 0.3, 1.8, 2.3, NULL, _cm_isotope_No, 1, NULL, 0, NULL);
+static cm_Element _cm_element_Lr("Lr", "Lawrencium", 0x8000, 103, 2.00, 1.5, 0.3, 1.8, 2.3, NULL, _cm_isotope_Lw, 1, NULL, 0, NULL);
+static cm_Element _cm_element_Ku("Rf", "Rutherfordium", 0x8000, 104, 2.00, 1.5, 0.3, 1.8, 2.3, NULL, _cm_isotope_Rf, 1, NULL, 0, NULL);
 static cm_Element _cm_element_Q("Q", "Peak", 0x0, -1, 0, 0, 0.2, 0.77, 1.27, NULL, NULL, 0, NULL, 0, NULL);
 static cm_Element _cm_element_D("D", "Deuterium", 0xFFFFFF, 1, 1.09, 0.23, 0.12, 0.32, 0.82, &_cm_gaussians_H, _cm_isotope_H, 2, _cm_henke_H, 501, &_cm_neutron_H2);
 
