@@ -3194,7 +3194,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
   }
 }
 //..............................................................................
-void TMainForm::macPopup(TStrObjList &Cmds, const TParamList &Options, TMacroData &E)  {
+void TMainForm::macPopup(TStrObjList& Cmds, const TParamList& Options, TMacroData& E) {
   int width = Options.FindValue("w", "100").ToInt(),
     height = Options.FindValue("h", "200").ToInt(),
     x = Options.FindValue("x", "0").ToInt(),
@@ -3231,7 +3231,7 @@ void TMainForm::macPopup(TStrObjList &Cmds, const TParamList &Options, TMacroDat
     iBorder = wxNO_BORDER;
   }
   // check if the popup already exists
-  THtmlManager::TPopupData *pd = HtmlManager.Popups.Find(Cmds[0], NULL);
+  THtmlManager::TPopupData* pd = HtmlManager.Popups.Find(Cmds[0], 0);
   if (pd != 0) {
     try { pd->Html->LoadPage(Cmds[1].u_str()); }
     catch (...) {
@@ -3250,8 +3250,8 @@ void TMainForm::macPopup(TStrObjList &Cmds, const TParamList &Options, TMacroDat
     }
     return;
   }
-  TDialog *dlg = new TDialog(this, title.u_str(), wxT("htmlPopupWindow"), wxPoint(x,y),
-    wxSize(width, height), iBorder);
+  TDialog* dlg = new TDialog(this, title.u_str(), wxT("htmlPopupWindow"),
+    wxPoint(x, y), wxSize(width, height), iBorder);
   pd = &HtmlManager.NewPopup(dlg, Cmds[0]);
   dlg->OnResize.Add(pd->Html, html_parent_resize, msiExecute);
   pd->Html->SetWebFolder(TutorialDir);
@@ -3263,8 +3263,10 @@ void TMainForm::macPopup(TStrObjList &Cmds, const TParamList &Options, TMacroDat
   pd->Html->SetOnDblClickData(onDblClick.Replace("\\(", '('));
   dlg->GetClientSize(&width, &height);
   pd->Html->SetSize(width, height);
-  try  {  pd->Html->LoadPage(Cmds[1].u_str());  }
-  catch( ... )  {}
+  try {  pd->Html->LoadPage(Cmds[1].u_str());  }
+  catch (...) {
+    TBasicApp::NewLogEntry(logWarning) << "Failed to load '" << Cmds[1] << '\'';
+  }
 
   pd->Html->OnKey.Add(this, ID_HTMLKEY);
   pd->Html->OnDblClick.Add(this, ID_ONLINK);

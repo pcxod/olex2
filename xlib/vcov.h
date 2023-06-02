@@ -64,17 +64,21 @@ public:
   VcoVMatrix();
   ~VcoVMatrix() {  Clear();  }
   void Clear() {
-    if( data == NULL )  return;
+    if (data == 0) {
+      return;
+    }
     Index.Clear();
-    for( size_t i=0; i < count; i++ )
-      delete [] data[i];
-    delete [] data;
-    data = NULL;
+    for (size_t i = 0; i < count; i++) {
+      delete[] data[i];
+    }
+    delete[] data;
+    data = 0;
   }
   double operator () (size_t i, size_t j) const { return Get(i,j); }
   double Get(size_t i, size_t j) const {
-    if (diagonal)
-      return (i==j) ? data[0][i] : 0;
+    if (diagonal) {
+      return (i == j) ? data[0][i] : 0;
+    }
     return (j <= i ) ? data[i][j] : data[j][i];
   }
   // reads the shelxl VcoV matrix
@@ -137,7 +141,7 @@ public:
   }
   // for tests
   double Find(const olxstr& atom, const short va, const short vy) const;
-  bool IsEmpty() const { return data == NULL; }
+  bool IsEmpty() const { return data == 0; }
 };
 
 class VcoVContainer {
@@ -265,7 +269,7 @@ public:
     bool swaps = true;
     while (swaps) {
       swaps = false;
-      for (short i = 0; i < 2; i++) {
+      for (size_t i = 0; i < 2; i++) {
         if (m[i][i] > m[i + 1][i + 1]) {
           olx_swap(vecs[i], vecs[i + 1]);
           olx_swap(m[i][i], m[i + 1][i + 1]);
@@ -669,8 +673,9 @@ protected:
     const eval& e)
   {
     CellEsd ced(*this, points);
-    if (GetMatrix().IsEmpty())
+    if (GetMatrix().IsEmpty()) {
       return TEValue<double>(e.calc(), sqrt(ced.DoCalc(e)));
+    }
     TDoubleList df(points.Count() * 3);
     CompositeVector<list> pts(points);
     CalcDiff(pts, df, e);
@@ -1054,6 +1059,18 @@ public:
       TetrahedronVolume<pnt_pt, pnt_pt, pnt_pt, pnt_pt>(
         pnt_pt(ch.points[0]), pnt_pt(ch.points[1]), pnt_pt(ch.points[2]),
         pnt_pt(ch.points[3])));
+  }
+  // tetrahedron volume defined by centroid of atoms and 3 other atoms
+  TEValue<double> CalcTetrahedronVolume(const TSAtomCPList& atoms,
+    size_t i, size_t j, size_t k)
+  {
+    CalcWHelper ch(*this, atoms);
+    typedef CentroidEvaluator<vec3d_list, TDoubleList> cnt_t;
+    return ch.DoCalc(
+      TetrahedronVolume<cnt_t, pnt_pt, pnt_pt, pnt_pt>(
+        cnt_t(ch.points, ch.weights),
+        pnt_pt(ch.points[i]),
+        pnt_pt(ch.points[j]), pnt_pt(ch.points[k])));
   }
   // alignment RMSD crds should be prepeared, i.e. inverted
   TEValue<double> CalcAlignmentRMSD(const TSAtomCPList& atoms,

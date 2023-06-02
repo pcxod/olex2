@@ -242,8 +242,10 @@ void TAtomLegend::Update() {
 //.............................................................................
 void TAtomLegend::SetVisible(bool v) {
   AGDrawObject::SetVisible(v);
-  GetPrimitives().GetStyle().SetParam("visible",
-    v ? TrueString() : FalseString(), true);
+  if (GetPrimitives().HasStyle()) {
+    GetPrimitives().GetStyle().SetParam("visible",
+      v ? TrueString() : FalseString(), true);
+  }
 }
 //.............................................................................
 void TAtomLegend::SetPosition(int left, int top) {

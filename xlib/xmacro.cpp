@@ -11198,7 +11198,14 @@ void XLibMacros::macRSA(TStrObjList &Cmds, const TParamList &Options,
     if (a.IsDeleted() || a.GetType() < 2 || a.AttachedSiteCount() < 4) {
       continue;
     }
-    olxstr w = olx_analysis::chirality::rsa_analyse(a, debug);
+    olxstr w;
+    try {
+      w = olx_analysis::chirality::rsa_analyse(a, debug);
+    }
+    catch (const TDivException& exc) {
+      TBasicApp::NewLogEntry(logInfo) << "Check connectivity for " << a.GetLabel();
+      continue;
+    }
     if (w.IsEmpty()) {
       continue;
     }
