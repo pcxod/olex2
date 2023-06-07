@@ -850,7 +850,9 @@ void RefinementModel::SetReflections(const TRefList &refs) const {
   _Reflections.SetCapacity(refs.Count());
   const bool use_batch = HKLF >= 5;
   for (size_t i = 0; i < refs.Count(); i++) {
-    if (refs[i].IsOmitted()) continue;
+    if (refs[i].IsOmitted()) {
+      continue;
+    }
     TReflection& r = _Reflections.AddNew(refs[i]);
     if (HKLF == 3) {
       double F = r.GetI()*HKLF_s;
@@ -1039,11 +1041,24 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
       }
       TUnitCell::SymmSpace sp =
         aunit.GetLattice().GetUnitCell().GetSymmSpace();
+      SymmSpace::InfoEx info_ex = SymmSpace::Compact(sp);
+      info_ex.centrosymmetric = sp.IsCentrosymmetric();
       if (!refs.IsEmpty()) {
         bool mergeFP = (MERG == 4 || MERG == 3 || sp.IsCentrosymmetric());
+        // standardise OMITs when merging is enabled
+        for (size_t i = 0; i < Omits.Count(); i++) {
+          Omits[i] = TReflection::Standardise(Omits[i], info_ex);
+        }
+        QuickSorter::Sort(Omits);
+        for (size_t i = 1; i < Omits.Count(); i++) {
+          size_t j = i - 1;
+          while (i < Omits.Count() && Omits[i] == Omits[j]) {
+            Omits.NullItem(i++);
+          }
+        }
+        Omits.Pack();
         _HklStat = RefMerger::DryMerge<RefMerger::ShelxMerger>(
-          sp, refs, Omits, mergeFP,
-          2);
+          sp, refs, Omits, mergeFP, 2);
       }
       _HklStat.HKLF = HKLF;
       _HklStat.TWST = TWST;
@@ -1058,8 +1073,6 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
       sw.start("Analysing reflections: absent, completeness, limits");
       mat3d h2c = aunit.GetHklToCartesian();
       size_t e_cnt = 0;
-      SymmSpace::InfoEx info_ex = SymmSpace::Compact(sp);
-      info_ex.centrosymmetric = sp.IsCentrosymmetric();
       double min_ds_sq = olx_sqr(1. / _HklStat.MinD)+1e-5,
         max_ds_sq = olx_sqr(1. / _HklStat.MaxD)-1e-5;
       olx_pair_t<vec3i, vec3i> range = CalcIndicesToD(_HklStat.MinD, &info_ex);
