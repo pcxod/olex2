@@ -638,6 +638,7 @@ protected:
       vars[i] += 2 * delta;
     }
   }
+
   struct CalcHelper {
     VcoVContainer& base;
     vec3d_alist points;
@@ -648,25 +649,46 @@ protected:
       base.GetVcoV(atoms, m);
       base.AtomsToPoints(atoms, points);
     }
+    template <class a_list, class p_list> CalcHelper(VcoVContainer& _base,
+      const a_list& atoms, const p_list& pts)
+      : base(_base), points(atoms.Count())
+    {
+      mat3d_list m1;
+      base.GetVcoV(atoms, m1);
+      base.AtomsToPoints(atoms, points);
+      size_t ac = atoms.Count(),
+        total = ac + pts.Count();
+      points.SetCount(total);
+      m.SetCount(olx_sqr(total));
+      // pad with 0
+      for (size_t i = 0; i < total; i++) {
+        if (i >= ac) {
+          points[i] = pts[i - ac];
+        }
+        for (size_t j = 0; j < total; j++) {
+          if (i < ac && j < ac) {
+            m[i * total + j] = m1[i * ac + j];
+          }
+        }
+      }
+    }
     template <class Eval> TEValue<double> DoCalc(const Eval& e) {
       return base.DoCalcForPoints(points, m, e);
     }
   };
-  struct CalcWHelper {
-    VcoVContainer& base;
-    vec3d_alist points;
+
+  struct CalcWHelper : public CalcHelper {
     TDoubleList weights;
-    mat3d_list m;
     template <class list> CalcWHelper(VcoVContainer& _base, const list& atms)
-      : base(_base), points(atms.Count()),
+      : CalcHelper(_base, atms),
       weights(atms.Count(), olx_list_init::value(1.0))
-    {
-      base.GetVcoV(atms, m);
-      base.AtomsToPoints(atms, points);
-    }
-    template <class Eval> TEValue<double> DoCalc(const Eval& e) {
-      return base.DoCalcForPoints(points, m, e);
-    }
+    {}
+
+    template <class a_list, class p_list> CalcWHelper(VcoVContainer & _base,
+      const a_list& atms, const p_list& pts)
+      : CalcHelper(_base, atms, pts),
+      weights(atms.Count() + pts.Count(), olx_list_init::value(1.0))
+    {}
   };
   template <class list, typename eval>
   TEValue<double> DoCalcForPoints(list& points, const mat3d_list& vcov,
@@ -907,6 +929,16 @@ public:
     const TSAtom& a1, const TSAtom& a2)
   {
     CalcWHelper ch(*this, TSAtomCPList(plane) << a1 << a2);
+    return ch.DoCalc(
+      Angle2<plnn_et, VectorProxy>(
+        plnn_et(crd_slice(ch.points, 0, plane.Count()), weight_slice(ch.weights,
+          0, plane.Count()), pn),
+        VectorProxy(ch.points[plane.Count()], ch.points[plane.Count() + 1])));
+  }
+  TEValue<double> CalcP2VAngle(const TSAtomCPList& plane, const vec3d& pn,
+    const vec3d& a1, const vec3d& a2)
+  {
+    CalcWHelper ch(*this, TSAtomCPList(plane), vec3d_list() << a1 << a2);
     return ch.DoCalc(
       Angle2<plnn_et, VectorProxy>(
         plnn_et(crd_slice(ch.points, 0, plane.Count()), weight_slice(ch.weights,

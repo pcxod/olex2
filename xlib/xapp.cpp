@@ -1392,7 +1392,7 @@ void TXApp::InitInteractions() {
   }
   toks.Clear();
   toks.Strtok(TBasicApp::GetInstance().GetOptions()
-    .FindValue("interactions_to", "N,O,F,Cl,S,Br,Se"), ',');
+    .FindValue("interactions_to", "N,O,F,Cl,S,Br,Se,I"), ',');
   for (size_t i=0; i < toks.Count(); i++) {
     cm_Element *e = XElementLib::FindBySymbol(toks[i]);
     if (e == NULL) {

@@ -278,7 +278,8 @@ void GXLibMacros::Export(TLibrary& lib) {
     "label-creates a graphics label&;"
     "l-consider the list of bonds as independent&;"
     "c-copies printed values to the clipboard&;"
-    "p-prints floating point numbers with requested precision for values calculated",
+    "p-prints floating point numbers with requested precision for values calculated&;"
+    "v-computes polyhedron volume",
     fpAny|psFileLoaded,
     "This procedure calculates possible parameters for the selection and "
     "evaluates their esd using the variance-covariance matrix coming from the "
@@ -3504,34 +3505,39 @@ void GXLibMacros::macLstGO(TStrObjList &Cmds, const TParamList &Options,
   TBasicApp::NewLogEntry() << output;
 }
 //.............................................................................
-class Esd_Tetrahedron  {
+//.............................................................................
+//.............................................................................
+class Esd_Tetrahedron {
   TSAtomPList atoms;
   olxstr Name;
   TEValue<double> Volume;
   VcoVContainer& vcov;
 protected:
-  void CalcVolume()  {
-    Volume =
-      vcov.CalcTetrahedronVolume(*atoms[0], *atoms[1], *atoms[2], *atoms[3]);
+  void CalcVolume() {
+    Volume = vcov.CalcTetrahedronVolume(
+      *atoms[0], *atoms[1], *atoms[2], *atoms[3]);
   }
 public:
   Esd_Tetrahedron(const olxstr& name, const VcoVContainer& _vcov)
-    : Volume(-1,0), vcov(const_cast<VcoVContainer&>(_vcov))
+    : Volume(-1, 0), vcov(const_cast<VcoVContainer&>(_vcov))
   {
     Name = name;
   }
-  void Add( TSAtom* a )  {
-    atoms.Add( a );
-    if( atoms.Count() == 4 )
+  void Add(TSAtom* a) {
+    atoms.Add(a);
+    if (atoms.Count() == 4) {
       CalcVolume();
+    }
   }
-  const olxstr& GetName() const  {  return Name;  }
-  double GetVolume() const {  return Volume.GetV();  }
-  double GetEsd() const {  return Volume.GetE();  }
+  const olxstr& GetName() const { return Name; }
+  double GetVolume() const { return Volume.GetV(); }
+  double GetEsd() const { return Volume.GetE(); }
 };
+
 int Esd_ThSort(const Esd_Tetrahedron &th1, const Esd_Tetrahedron &th2)  {
   return olx_cmp(th1.GetVolume(), th2.GetVolume());
 }
+
 olx_pair_t<size_t, size_t> Esd_FindOppositePair(TSAtomPList &atoms) {
   double ma = 0;
   size_t idx = InvalidIndex, for_ = InvalidIndex;
@@ -3557,6 +3563,29 @@ olx_pair_t<size_t, size_t> Esd_FindOppositePair(TSAtomPList &atoms) {
   return olx_pair::make(for_-1, idx-1);
 }
 
+size_t Esd_CutsThrough(const TSAtomCPList &atoms,
+  size_t i, size_t j, size_t k,
+  const vec3d &c, const vec3d &n)
+{
+  for (size_t ai = 0; ai < atoms.Count(); ai++) {
+    if (ai == i || ai == j || ai == k) {
+      continue;
+    }
+    vec3d v = atoms[ai]->crd() - c;
+    // on the other side of the centre?
+    if (n.DotProd(v) < 0) {
+      // projection inside the face? - face cuts through
+      vec3d p = vec3d(atoms[ai]->crd()).Project(c, n);
+      if (gl_alg<>::IsPointInTriangle(p,
+        atoms[i]->crd(), atoms[j]->crd(), atoms[k]->crd()))
+      {
+        return ai;
+      }
+    }
+  }
+  return InvalidIndex;
+}
+
 void GXLibMacros::macEsd(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
@@ -3571,7 +3600,54 @@ void GXLibMacros::macEsd(TStrObjList &Cmds, const TParamList &Options,
   }
   TStrList values;
   TGlGroup& sel = app.GetSelection();
-  if (Options.Contains('l')) {
+  if (Options.GetBoolOption('v')) {
+#if !defined(DEBUG)
+    TBasicApp::NewLogEntry() << "Not implemented yet!";
+    return;
+#endif // DEBUG)
+
+    TSAtomCPList atoms = sel.Extract<TXAtom>();
+    if (atoms.Count() < 4) {
+      Error.ProcessingError(__OlxSrcInfo,
+        "at least 4 atoms are expected for volume calculation");
+      return;
+    }
+    TTypeList<Esd_Tetrahedron> tetrahedra;
+    vec3d centre = olx_mean(atoms, FunctionAccessor::MakeConst(&TXAtom::crd));
+    double sum_v = 0, sum_esd_2 = 0;
+    for (size_t i = 0; i < atoms.Count(); i++) {
+      const TSAtom& a = *atoms[i];
+      for (size_t j = i+1; j < atoms.Count(); j++) {
+        const TSAtom& b = *atoms[j];
+        for (size_t k = j+1; k < atoms.Count(); k++) {
+          const TSAtom& c = *atoms[k];
+          vec3d face_c = (a.crd() + b.crd() + c.crd()) / 3;
+          vec3d face_n = (a.crd() - b.crd()).XProdVec(c.crd() - b.crd());
+          olxstr label = olxstr(atoms[i]->GetLabel()) << '-'
+            << atoms[j]->GetLabel() << '-'
+            << atoms[k]->GetLabel();
+          if (face_n.DotProd(face_c - centre) < 0) {
+            face_n *= -1;
+          }
+          size_t ca = Esd_CutsThrough(atoms, i, j, k, face_c, face_n);
+          if (ca != InvalidIndex) {
+            TBasicApp::NewLogEntry(logInfo) << "Skipping " << label << " cuts "
+              << atoms[ca]->GetLabel();
+            continue;
+          }
+          TEValueD V = vcovc.CalcTetrahedronVolume(atoms, i, j, k);
+          sum_v += V.GetV();
+          sum_esd_2 += olx_sqr(V.GetE());
+          TBasicApp::NewLogEntry() << label << ": " << V.ToString();
+          //vec3d S = (a.crd() - b.crd()).XProdVal(c.crd() - b.crd())/2;
+          
+        }
+      }
+    }
+    TBasicApp::NewLogEntry() << "Total: " << TEValueD(sum_v, sqrt(sum_esd_2)).ToString();
+    return;
+  }
+  if (Options.GetBoolOption('l')) {
     for (size_t i = 0; i < sel.Count(); i++) {
       if (sel[i].Is<TXBond>()) {
         TXBond &xb = (TXBond&)sel[i];
@@ -3644,7 +3720,7 @@ void GXLibMacros::macEsd(TStrObjList &Cmds, const TParamList &Options,
         double v = 0, esd = 0;
         for (size_t i = 0; i < tetrahedra.Count(); i++) {
           v += tetrahedra[i].GetVolume();
-          esd += tetrahedra[i].GetEsd()*tetrahedra[i].GetEsd();
+          esd += olx_sqr(tetrahedra[i].GetEsd());
         }
         TEValue<double> ev(v, sqrt(esd));
         if (removed) {
@@ -3746,6 +3822,20 @@ void GXLibMacros::macEsd(TStrObjList &Cmds, const TParamList &Options,
         TEValue<double> v(vcovc.CalcP2VAngle(atoms, xp.GetNormal(), sb.A(), sb.B()));
         values.Add(sb.A().GetLabel()) << '-' << sb.B().GetLabel() <<
           " to plane normal " << olxstr(pld) << "angle: " << v.ToString();
+      }
+      else if ((sel[0].Is<TXLine>() && sel[1].Is<TXPlane>()) ||
+        (sel[1].Is<TXLine>() && sel[0].Is<TXPlane>()))
+      {
+        TSAtomCPList atoms;
+        TXPlane& xp = (TXPlane&)sel[sel[0].Is<TXPlane>() ? 0 : 1];
+        olxstr_buf pld;
+        for (size_t i = 0; i < xp.Count(); i++) {
+          atoms.Add(xp.GetAtom(i));
+          pld << atoms.GetLast()->GetLabel() << ' ';
+        }
+        TXLine& ln = ((TXLine&)sel[sel[0].Is<TXLine>() ? 0 : 1]);
+        TEValue<double> v(vcovc.CalcP2VAngle(atoms, xp.GetNormal(), ln.GetBase(), ln.GetEdge()));
+        values.Add("Line to plane normal ") << olxstr(pld) << "angle: " << v.ToString();
       }
       else if (olx_list_and(sel, &IOlxObject::Is<TXPlane>)) {
         TSAtomCPList p1, p2;
