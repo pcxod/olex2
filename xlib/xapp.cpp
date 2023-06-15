@@ -70,14 +70,19 @@ TXApp::~TXApp() {
 }
 //..............................................................................
 bool TXApp::CheckProgramState(unsigned int specialCheck)  {
-  if (specialCheck & psFileLoaded) {
+  if ((specialCheck & psFileLoaded) != 0) {
     return XFile().HasLastLoader();
   }
- if ((specialCheck&psCheckFileTypeIns) != 0 && (CheckFileType<TIns>() ||
+  const uint32_t file_flags = psCheckFileTypeIns | psCheckFileTypeCif
+    | psCheckFileTypeP4P | psCheckFileTypeCRS;
+  if ((specialCheck & file_flags) != 0 && !XFile().HasLastLoader()) {
+    return false;
+  }
+  if ((specialCheck&psCheckFileTypeIns) != 0 && (CheckFileType<TIns>() ||
    XFile().LastLoader()->IsNative()))
-   {
+  {
    return true;
-   }
+ }
  if ((specialCheck&psCheckFileTypeP4P) != 0 && CheckFileType<TP4PFile>()) {
    return true;
  }
