@@ -435,7 +435,9 @@ void GXLibMacros::Export(TLibrary& lib) {
       "end_color-end gradient color [0x0000ff]&;"
       "quality-the sphere quality [5]&;"
       "type-object type [diff], rmsd&;"
-      "r-reset the object style",
+      "r-reset the object style&;"
+      "n-[udiff] collection name&;"
+      "c-[true] center the object for 2 atoms&;",
       fpAny,
       "Renders a difference between two sets of ADPs")
   );
@@ -6178,7 +6180,10 @@ void GXLibMacros::macUdiff(TStrObjList &Cmds, const TParamList &Options,
       xatoms[i] = 0;
     }
   }
-  if (xatoms.Pack().Count() < 6 || (xatoms.Count() % 2) != 0) {
+  xatoms.Pack();
+  if (xatoms.Count() != 2 &&
+    (xatoms.Count() < 6 || (xatoms.Count() % 2) != 0))
+  {
     Error.ProcessingError(__OlxSrcInfo,
       "at least 3 pairs of anisotropic atoms expected");
     return;
@@ -6194,12 +6199,17 @@ void GXLibMacros::macUdiff(TStrObjList &Cmds, const TParamList &Options,
     u_from[i] = xatoms[i]->GetEllipsoid();
     u_to[i] = new TEllipsoid(*xatoms[i + aag]->GetEllipsoid());
   }
-  TNetwork::AlignInfo rv = TNetwork::GetAlignmentRMSD(satomp, false,
-    TSAtom::weight_unit);
-  mat3d m;
-  QuaternionToMatrix(rv.align_out.quaternions[0], m);
-  for (size_t i = 0; i < aag; i++) {
-    u_to[i]->Mult(m);
+  if (xatoms.Count() > 2) {
+    TNetwork::AlignInfo rv = TNetwork::GetAlignmentRMSD(satomp, false,
+      TSAtom::weight_unit);
+    mat3d m;
+    QuaternionToMatrix(rv.align_out.quaternions[0], m);
+    for (size_t i = 0; i < aag; i++) {
+      u_to[i]->Mult(m);
+    }
+  }
+  else if (Options.GetBoolOption('c')) { // center the object between the atoms
+    crds[0] = (xatoms[0]->crd() + xatoms[1]->crd()) / 2;
   }
   int q = Options.FindValue("quality", "5").ToUInt();
   if (q > 7) {
@@ -6217,7 +6227,7 @@ void GXLibMacros::macUdiff(TStrObjList &Cmds, const TParamList &Options,
   TDUserObj *obj = xtls.CreateUdiffObject(crds,
     u_from, u_to,
     Options.FindValue('s', obj_type == glx_ext::xtls_obj_diff ? "125" : "3").ToFloat(),
-    "udiff",
+    Options.FindValue('n', "udiff"),
     obj_type);
   if (Options.GetBoolOption('r')) {
     TGlMaterial m("85;0;4286611584;4290822336;64");

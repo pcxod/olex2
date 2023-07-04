@@ -12075,7 +12075,8 @@ void XLibMacros::macADPInfo(TStrObjList& Cmds, const TParamList& Options,
 
   app.NewLogEntry() << "ADP axes:";
   for (size_t i = 0; i < 3; i++) {
-    app.NewLogEntry() << '#' << (i+1) << "=" << strof(e.GetMatrix()[i]);
+    app.NewLogEntry() << '#' << (i+1) << "=" << strof(e.GetMatrix()[i])
+      << ", l=" << olxstr::FormatFloat(3, e.GetNorms()[i]) << 'A';
   }
   const mat3d& G = app.XFile().GetAsymmUnit().GetCellToCartesian();
   app.NewLogEntry() << "Cell basis:";
@@ -12083,7 +12084,7 @@ void XLibMacros::macADPInfo(TStrObjList& Cmds, const TParamList& Options,
     app.NewLogEntry() << (char)('A'+i) << "=" << strof(G[i]);
   }
   for (size_t i = 0; i < 3; i++) {
-    olxstr tmp = "Angles for #";
+    olxstr tmp = "Angles/deg for #";
     tmp << (i + 1) << " and";
     for (size_t j = 0; j < 3; j++) {
       tmp << ' ' << (char)('A' + j) << ": "

@@ -19,6 +19,7 @@ TEllipsoid::TEllipsoid(const TEllipsoid& e)
   : NPD(e.NPD),
   Quad(e.Quad),
   Esd(e.Esd),
+  Matrix(e.Matrix),
   Norms(e.Norms),
   Id(e.Id)
 {

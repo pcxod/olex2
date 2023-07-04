@@ -39,12 +39,12 @@ TDUserObj *XTLS::CreateUdiffObject(const vec3f_alist &crds,
   }
   TGXApp &app = TGXApp::GetInstance();
   TDUserObj *obj = app.FindUserObject(obj_name);
+  olx_object_ptr<TDUserObj> obj_ptr;
   if (obj == 0) {
     TGlMaterial m("16469;4278190080;4286611584;4290822336;64");
     m.SetColorMaterial(true);
-    obj = new TDUserObj(app.GetRenderer(), sgloTriangles, obj_name);
+    obj_ptr = obj = new TDUserObj(app.GetRenderer(), sgloTriangles, obj_name);
     obj->SetMaterial(m);
-    app.AddObjectToCreate(obj);
   }
   else {
     app.GetRenderer().RemoveCollection(obj->GetPrimitives());
@@ -59,6 +59,9 @@ TDUserObj *XTLS::CreateUdiffObject(const vec3f_alist &crds,
   vec3f_alist &alln = *(new vec3f_alist(sph_t.Count()*from.Count()*3));
   TArrayList<uint32_t> &colors =
     *(new TArrayList<uint32_t>(sph_t.Count()*from.Count()*3));
+  obj->SetVertices(&allv);
+  obj->SetNormals(&alln);
+  obj->SetColors(&colors);
   TArrayList<float> pd(sph_v.Count()*from.Count());
   float max_d = -1000, min_d = 1000;
   mat3d m1, m2, etm, Mdiff;
@@ -105,7 +108,7 @@ TDUserObj *XTLS::CreateUdiffObject(const vec3f_alist &crds,
         normal = normal.Normalise() / sqrt(S);
       }
       for (int k=0; k < 3; k++) {
-        allv[idx+k] = lc[sph_t[j][k]] + crds[i];
+        allv[idx+k] = lc[sph_t[j][k]] +crds[i];
         alln[idx+k] += normal;
       }
     }
@@ -154,11 +157,11 @@ TDUserObj *XTLS::CreateUdiffObject(const vec3f_alist &crds,
       alln[i][2] = 1;
     }
   }
-  obj->SetVertices(&allv);
-  obj->SetNormals(&alln);
-  obj->SetColors(&colors);
   obj->SetVisible(true);
   obj->Create();
+  if (obj_ptr.ok()) {
+    app.AddObjectToCreate(obj_ptr.release());
+  }
   return obj;
 }
 //.............................................................................
