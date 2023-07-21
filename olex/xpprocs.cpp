@@ -2717,7 +2717,9 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
       TBasicApp::NewLogEntry(logError) << "It appears that Olex2 has crashed "
         "last time: skip loading of the last file. Please contact "
         "Olex2 team if the problem persists";
+#if !defined(_DEBUG)
       return;
+#endif
     }
   }
 

@@ -637,7 +637,7 @@ void TAsymmUnit::PackEllps() {
         if (olx_is_valid_index(CAtoms[j]->GetEllpId()) &&
           CAtoms[j]->GetEllpId() > (i - removed))
         {
-          CAtoms[j]->SetEllpId(CAtoms[j]->GetEllpId() - 1);
+          CAtoms[j]->SetEllpId(CAtoms[j]->GetEllpId() - removed);
         }
       }
       removed++;
