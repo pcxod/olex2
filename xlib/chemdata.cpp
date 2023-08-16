@@ -1376,7 +1376,8 @@ ContentList& XElementLib::MergeCharges(ContentList& cl) {
       if (cl.IsNull(j)) {
         continue;
       }
-      if (*cl[i].element == *cl[j].element) {
+      // distinguish H and D
+      if (cl[i].element->GetIndex() == cl[j].element->GetIndex()) {
         cl[i].count += cl[j].count;
         cl.NullItem(j);
         mc++;

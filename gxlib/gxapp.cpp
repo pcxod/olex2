@@ -1850,7 +1850,7 @@ ConstPtrList<TXAtom> TGXApp::XAtomsByType(const cm_Element& AI,
     if (!FindHidden && !xa.IsVisible()) {
       continue;
     }
-    if (xa.GetType() == AI && li.DoesMatch(xa.CAtom(), false)) {
+    if (xa.GetType().GetIndex() == AI.GetIndex() && li.DoesMatch(xa.CAtom(), false)) {
       l.Add(xa);
     }
   }
