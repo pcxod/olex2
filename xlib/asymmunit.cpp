@@ -631,23 +631,20 @@ TEllipsoid& TAsymmUnit::NewEllp() {
 //..............................................................................
 void TAsymmUnit::PackEllps() {
   size_t removed = 0;
-  for (size_t i = 0; i < Ellipsoids.Count(); i++) {
-    if (Ellipsoids[i] == 0) {
-      for (size_t j = 0; j < CAtoms.Count(); j++) {
-        if (olx_is_valid_index(CAtoms[j]->GetEllpId()) &&
-          CAtoms[j]->GetEllpId() > (i - removed))
-        {
-          CAtoms[j]->SetEllpId(CAtoms[j]->GetEllpId() - removed);
-        }
-      }
-      removed++;
-    }
-    else {
-      Ellipsoids[i]->SetId(i - removed);
+  TPtrList<TEllipsoid> elps(CAtoms.Count());
+  for (size_t i = 0; i < CAtoms.Count(); i++) {
+    if (olx_is_valid_index(CAtoms[i]->GetEllpId())) {
+      elps[i] = Ellipsoids[CAtoms[i]->GetEllpId()];
     }
   }
-  if (removed != 0) {
-    Ellipsoids.Pack();
+  Ellipsoids.Pack();
+  for (size_t i = 0; i < Ellipsoids.Count(); i++) {
+    Ellipsoids[i]->SetId(i);
+  }
+  for (size_t i = 0; i < elps.Count(); i++) {
+    if (elps[i] != 0) {
+      CAtoms[i]->SetEllpId(elps[i]->GetId());
+    }
   }
 }
 //..............................................................................
