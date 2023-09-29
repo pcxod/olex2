@@ -10961,15 +10961,23 @@ void XLibMacros::funCell(const TStrObjList& Params, TMacroData &E)  {
 void XLibMacros::funCif(const TStrObjList& Params, TMacroData &E)  {
   TXApp &app = TXApp::GetInstance();
   TCif& cf = app.XFile().GetLastLoader<TCif>();
-  if (cf.ParamExists(Params[0])) {
-    E.SetRetVal(cf.GetParamAsString(Params[0]));
+  olxstr param = Params[0];
+  size_t block_index = InvalidIndex;
+  size_t bix = param.IndexOf('#');
+  if (bix != InvalidIndex) {
+    block_index = param.SubStringFrom(bix+1).ToSizeT();
+    param = param.SubStringTo(bix);
+  }
+  if (cf.ParamExists(param, block_index)) {
+    E.SetRetVal(cf.GetParamAsString(param, block_index));
   }
   else {
     size_t idx = InvalidIndex;
     if (Params.Count() == 2) {
       idx = Params[1].ToSizeT();
     }
-    olx_object_ptr<olx_pair_t<cif_dp::cetTable*, size_t> > t = cf.FindLoopItem(Params[0]);
+    olx_object_ptr<olx_pair_t<cif_dp::cetTable*, size_t> > t =
+      cf.FindLoopItem(param, block_index);
     
     if (!t.ok() || (idx != InvalidIndex && t->a->RowCount() < idx)) {
       E.SetRetVal(XLibMacros::NAString());

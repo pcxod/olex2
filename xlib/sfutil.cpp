@@ -289,7 +289,7 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
         double sc = RefUtil::CalcFScaleShelx(rm, F, refs);
         if (olx_abs((sc - scale) / (sc + scale)) > 0.01) {
           TBasicApp::NewLogEntry(logWarning) << "External scale deviates too much."
-            "Using updated value of " << olxstr::FormatFloat(2, sc) <<
+            " Using updated value of " << olxstr::FormatFloat(2, sc) <<
             " vs the given value of " << olxstr::FormatFloat(2, scale);
           scale_k = sc;
         }

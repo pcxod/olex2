@@ -38,6 +38,13 @@ protected:
     return LoopFromDef(dp, TStrList(col_names, ','));
   }
   void _LoadCurrent();
+  size_t get_bix(size_t block_idx) const {
+    size_t bix = block_idx == InvalidIndex ? block_index : block_idx;
+    if (bix == InvalidIndex || bix >= data_provider.Count()) {
+      throw TInvalidArgumentException(__OlxSourceInfo, "CIF block index");
+    }
+    return bix;
+  }
 public:
   TCif();
   virtual ~TCif();
@@ -73,14 +80,15 @@ public:
   template <class Entry> Entry* FindParam(const olxstr& name) const {
     return dynamic_cast<Entry*>(FindEntry(name));
   }
-  /* Returns the value of the given param as a string. Mght have '\n' as lines
+  /* Returns the value of the given param as a string. Might have '\n' as lines
   separator
   */
-  olxstr GetParamAsString(const olxstr& name) const;
+  olxstr GetParamAsString(const olxstr& name, size_t block_idx=InvalidIndex) const;
   //Returns true if a specified parameter exists
-  template <typename Str> bool ParamExists(const Str& name) const {
-    return (block_index == InvalidIndex) ? false
-      : data_provider[block_index].param_map.HasKey(name);
+  template <typename Str> bool ParamExists(const Str& name,
+    size_t block_idx=InvalidIndex) const
+  {
+    return data_provider[get_bix(block_idx)].param_map.HasKey(name);
   }
   /*Adds/Sets given parameter a value, the value is replicated, so can be
   created on stack
@@ -149,7 +157,8 @@ public:
     return *data_provider[block_index].table_map.GetValue(i);
   }
   // Finds an item in any of the loops and returns the loop and the item index
-  olx_object_ptr<olx_pair_t<cif_dp::cetTable*, size_t> > FindLoopItem(const olxstr& name);
+  olx_object_ptr<olx_pair_t<cif_dp::cetTable*, size_t> > FindLoopItem(const olxstr& name,
+    size_t block_idx=InvalidIndex);
   //Returns a loop specified by name or NULL
   template <class T>
   cif_dp::cetTable* FindLoop(const T& name) const {

@@ -224,9 +224,12 @@ void TCif::SaveToStrings(TStrList& Strings)  {
   data_provider.SaveToStrings(Strings);
 }
 //..............................................................................
-olxstr TCif::GetParamAsString(const olxstr &Param) const {
-  if (block_index == InvalidIndex)  return EmptyString();
-  ICifEntry* ce = data_provider[block_index].param_map.Find(Param, 0);
+olxstr TCif::GetParamAsString(const olxstr &Param, size_t block_idx) const {
+  size_t bix = block_idx == InvalidIndex ? block_index : block_idx;
+  if (bix == InvalidIndex || bix >= data_provider.Count()) {
+    return EmptyString();
+  }
+  ICifEntry* ce = data_provider[bix].param_map.Find(Param, 0);
   if (ce == 0) {
     return EmptyString();
   }
@@ -1807,13 +1810,11 @@ void TCif::FromDataItem(const TDataItem &di_) {
 }
 //..............................................................................
 olx_object_ptr<olx_pair_t<cif_dp::cetTable*, size_t> >
-  TCif::FindLoopItem(const olxstr &name)
+  TCif::FindLoopItem(const olxstr &name, size_t block_idx)
 {
-  if (block_index == InvalidIndex) {
-    return 0;
-  }
-  for (size_t i = 0; i < data_provider[block_index].table_map.Count(); i++) {
-    cetTable *tab = data_provider[block_index].table_map.GetValue(i);
+  size_t bix = get_bix(block_idx);
+  for (size_t i = 0; i < data_provider[bix].table_map.Count(); i++) {
+    cetTable *tab = data_provider[bix].table_map.GetValue(i);
     size_t ci = tab->ColIndex(name);
     if (ci != InvalidIndex) {
       return olx_pair::New(tab, ci);
