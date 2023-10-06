@@ -4786,6 +4786,7 @@ void CifMerge_UpdateAtomLoop(TCif &Cif) {
           tab->AddCol("_atom_site_disorder_group");
           dg_ind = tab->ColCount() - 1;
         }
+        size_t occu_ind = tab->ColIndex("_atom_site_occupancy");
 
         TIntList h_t;
         size_t ri = 0;
@@ -4866,7 +4867,7 @@ void CifMerge_UpdateAtomLoop(TCif &Cif) {
           if (rD.Contains(&a)) {
             pos_t << 'D';
           }
-          if (a.GetParentAfixGroup() != NULL) {
+          if (a.GetParentAfixGroup() != 0) {
             if (a.GetParentAfixGroup()->IsRefinable()) {
               pos_t << 'G';
             }
@@ -4912,7 +4913,18 @@ void CifMerge_UpdateAtomLoop(TCif &Cif) {
               tab->Set(ri, rf_occu_ind, new cetString('P'));
             }
           }
-          if (st_order_ind != InvalidIndex) {
+          // make CheckCif happy...
+          if (a.GetPart() < 0 && st_order_ind != InvalidIndex &&
+            occu_ind != InvalidIndex && a.GetDegeneracy() != 1)
+          {
+            if (tab->GetData()[ri][occu_ind] != 0) {
+              TEValueD occu(tab->Get(ri, occu_ind).ToString());
+              occu /= a.GetDegeneracy();
+              tab->Set(ri, occu_ind, new cetString(occu.ToString()));
+              tab->Set(ri, st_order_ind, new cetString(1));
+            }
+          }
+          else if (st_order_ind != InvalidIndex) {
             tab->Set(ri, st_order_ind, new cetString(a.GetDegeneracy()));
           }
         }

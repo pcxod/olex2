@@ -1693,6 +1693,7 @@ void TAsymmUnit::LibNewAtom(const TStrObjList& Params, TMacroData& E) {
         ca->SetDeleted(false);
         ca->SetType(XElementLib::GetByIndex(iQPeakIndex));
         ca->SetQPeak(Params[0].ToDouble());
+        ca->AssignEllp(0);
         _UpdateQPeaks();
         E.SetRetVal(ca->GetId());
         return;
