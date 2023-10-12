@@ -966,12 +966,32 @@ void THtmlManager::funSetState(const TStrObjList &Params, TMacroData &E)  {
 }
 //.............................................................................
 void THtmlManager::funSetEnabled(const TStrObjList &Params, TMacroData &E) {
+  bool enabled = Params[1].ToBool();
+  if (Params[0].Contains('*')) {
+    olxstr name = Params[0];
+    const size_t ind = name.IndexOf('.');
+    olxstr hn = (ind == InvalidIndex) ? EmptyString() : name.SubStringTo(ind);
+    THtml* html = (ind == InvalidIndex) ? main : FindHtml(name.SubStringTo(ind));
+    olxstr objName = (ind == InvalidIndex) ? name : name.SubStringFrom(ind + 1);
+    if (html == 0) {
+      E.ProcessingError(__OlxSrcInfo,
+        "could not locate specified popup: ").quote() << hn;
+      return;
+    }
+    Wildcard wc(objName);
+    for (size_t i = 0; i < html->Objects.Count(); i++) {
+      if (wc.DoesMatch(html->Objects.GetKey(i))) {
+        html->Objects.GetValue(i).GetA()->WI.SetEnabled(enabled);
+      }
+    }
+    return;
+  }
   Control c = FindControl(Params[0], E, 1, __OlxSrcInfo);
   if (c.ctrl == 0) {
     E.ProcessingError(__OlxSrcInfo, "undefined control: ").quote() << Params[0];
     return;
   }
-  c.ctrl->WI.SetEnabled(Params[1].ToBool());
+  c.ctrl->WI.SetEnabled(enabled);
 }
 //.............................................................................
 void THtmlManager::funSetItems(const TStrObjList &Params, TMacroData &E) {
