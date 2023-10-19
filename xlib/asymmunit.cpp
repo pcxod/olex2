@@ -590,9 +590,9 @@ TCAtom * TAsymmUnit::FindCAtom(const olxstr &Label, TResidue* resi) const {
   return 0;
 }
 //..............................................................................
-TCAtom *TAsymmUnit::FindCAtomDirect(const olxstr &label) const {
+TCAtom* TAsymmUnit::FindCAtomDirect(const olxstr& label) const {
   const size_t ac = CAtoms.Count();
-  for( size_t i =0; i < ac; i++ )  {
+  for (size_t i = 0; i < ac; i++) {
     if (CAtoms[i]->GetLabel().Equalsi(label)) {
       return CAtoms[i];
     }
@@ -974,19 +974,15 @@ int TAsymmUnit::GetNextPart(bool neg) const {
 void TAsymmUnit::ChangeSpaceGroup(const TSpaceGroup& sg) {
   OnSGChange.Execute(this, &sg);
   Latt = sg.GetLattice().GetLatt();
-  if (!sg.IsCentrosymmetric() && Latt > 0) {
+  if (!sg.IsCentrosymmetric()) {
     Latt = -Latt;
   }
   Matrices.Clear();
   if (sg.IsCentrosymmetric() && !sg.GetInversionCenter().IsNull(1e-3)) {
-    sg.GetMatrices(Matrices, mattAll^mattCentering);
-    Matrices.Delete(0);
-    Latt = -sg.GetLattice().GetLatt();
+    sg.GetMatrices(Matrices, mattAll^(mattCentering|mattIdentity));
   }
   else {
-    for (size_t i = 0; i < sg.MatrixCount(); i++) {
-      Matrices.AddCopy(sg.GetMatrix(i));
-    }
+    Matrices = sg.GetMatrices();
   }
   olx_list_call(CAtoms, &TCAtom::ClearChiralFlag);
 }

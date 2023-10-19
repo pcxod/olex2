@@ -358,8 +358,9 @@ void XLibMacros::Export(TLibrary& lib)  {
   "by the preceeding sort types."
  );
   xlib_InitMacro(SGInfo,
-    "c-include lattice centering matrices&;i-include inversion generated "
-    "matrices if any",
+    "c-include lattice centering matrices&;"
+    "i - include inversion generated matrices if any&;"
+    "s-print ShelX compatible LATT/SYMM cards",
     fpNone|fpOne,
     "Prints space group information.");
   xlib_InitMacro(SAInfo, EmptyString(), fpAny,
@@ -1156,6 +1157,38 @@ void XLibMacros::macSGInfo(TStrObjList& Cmds, const TParamList& Options, TMacroD
     if (sg == 0) {
       sg = TSymmLib::GetInstance().FindGroupByHallSymbol(Cmds[0]);
     }
+  }
+  if (Options.GetBoolOption('s')) {
+    if (sg == 0) {
+      try {
+        sg = &TSymmLib::GetInstance().CreateNew(Cmds[0]);
+      }
+      catch (const TExceptionBase& e) {}
+    }
+    if (sg == 0) {
+      E.ProcessingError(__OlxSrcInfo, "undefined space group");
+      return;
+    }
+    smatd_list matrices;
+    short latt = sg->GetLattice().GetLatt();
+    if (!sg->IsCentrosymmetric()) {
+      latt = -latt;
+    }
+    if (sg->IsCentrosymmetric() && !sg->GetInversionCenter().IsNull(1e-3)) {
+      sg->GetMatrices(matrices, mattAll ^ (mattCentering|mattIdentity));
+    }
+    else {
+      matrices = sg->GetMatrices();
+    }
+    TStrList out;
+    out.Add("LATT ") << latt;
+    for (size_t i = 0; i < matrices.Count(); i++) {
+      out.Add("SYMM ") << TSymmParser::MatrixToSymmEx(matrices[i]);
+    }
+    TBasicApp::NewLogEntry() << out;
+    TBasicApp::GetInstance().ToClipboard(out);
+    TBasicApp::NewLogEntry() << "Copied to clipboard";
+    return;
   }
   bool LaueClassPG = false;
   if (sg == 0) {
@@ -2878,9 +2911,11 @@ void XLibMacros::ChangeCell(const mat3d& tm, const TSpaceGroup& new_sg,
   an_err[1] = an_err[0];  an_err[2] = an_err[0];
   // prepare positive matrix for error estimation
   mat3d tm_p(tm);
-  for (size_t i = 0; i < 3; i++)
-    for (size_t j = 0; j < 3; j++)
+  for (size_t i = 0; i < 3; i++) {
+    for (size_t j = 0; j < 3; j++) {
       tm_p[i][j] = olx_abs(tm_p[i][j]);
+    }
+  }
   ax_err *= tm_p;
   an_err *= tm_p;
   au.GetAxes()[0] = f2c[0].Length();  au.GetAxisEsds()[0] = sqrt(ax_err[0][0]);
@@ -2981,23 +3016,36 @@ void XLibMacros::macSGS(TStrObjList &Cmds, const TParamList &Options,
   }
   if (Cmds.Count() == 10) {  // transformation provided?
     TSpaceGroup* sg = TSymmLib::GetInstance().FindGroupByName(Cmds[9]);
-    if (sg == NULL) {
+    if (sg == 0) {
+      try {
+        sg = &TSymmLib::GetInstance().CreateNew(Cmds[9]);
+      }
+      catch (const TExceptionBase& e) {}
+    }
+    if (sg == 0) {
       E.ProcessingError(__OlxSrcInfo, "undefined space group");
       return;
     }
     mat3d tm;
-    for (int i=0; i < 9; i++)
-      tm[i/3][i%3] = Cmds[i].ToDouble();
+    for (int i = 0; i < 9; i++) {
+      tm[i / 3][i % 3] = Cmds[i].ToDouble();
+    }
     if (!tm.IsI()) {
       ChangeCell(tm, *sg, hkl_fn);
       TBasicApp::NewLogEntry() << "The cell, atomic coordinates and ADP's are "
         "transformed using user transform";
     }
+    else {
+      TAsymmUnit& au = xapp.XFile().LastLoader()->GetAsymmUnit();
+      au.ChangeSpaceGroup(*sg);
+      au.InitMatrices();
+      xapp.XFile().LastLoaderChanged();
+    }
     return;
   }
   TSpaceGroup* sg_ = Cmds.Count() == 1 ? &xapp.XFile().GetLastLoaderSG() :
     TSymmLib::GetInstance().FindGroupByName(Cmds[1]);
-  if (sg_ == NULL)  {
+  if (sg_ == 0)  {
     E.ProcessingError(__OlxSrcInfo, "undefined space group");
     return;
   }

@@ -1016,58 +1016,66 @@ size_t TSpaceGroup::GetUniqMatrices(smatd_list& matrices, short Flags) const  {
 }
 //..............................................................................
 void TSpaceGroup::GetMatrices(smatd_list& matrices, short Flags) const {
-  // add identity, if not requested - delete in the end
-  matrices.AddNew().r.I();
-  for( size_t i=0; i < MatrixCount(); i++ )  {
-    smatd* m = NULL;
+  if ((Flags & mattIdentity) != 0) {
+    matrices.AddNew().r.I();
+  }
+  for (size_t i = 0; i < MatrixCount(); i++) {
+    smatd* m = 0;
     const smatd& mt = Matrices[i];
-    if( (Flags & mattTranslation) == 0 )  {
-      if( mt.t.IsNull() )
+    if ((Flags & mattTranslation) == 0) {
+      if (mt.t.IsNull()) {
         m = new smatd(mt);
+      }
     }
-    else
+    else {
       m = new smatd(mt);
-    if( m == NULL )  continue;
+    }
+    if (m == 0) {
+      continue;
+    }
     matrices.Add(*m);
   }
-  if( (Flags & mattCentering) == mattCentering )  {
-    for( size_t i=0; i <= MatrixCount(); i++ )  {
-      const smatd& mt = (i==0 ? matrices[0] : Matrices[i-1]);
-      for( size_t j=0; j < Latt.GetVectors().Count(); j++ )  {
+  if ((Flags & mattCentering) == mattCentering) {
+    for (size_t i = 0; i <= MatrixCount(); i++) {
+      const smatd& mt = (i == 0 ? matrices[0] : Matrices[i - 1]);
+      for (size_t j = 0; j < Latt.GetVectors().Count(); j++) {
         const vec3d& v = Latt.GetVectors()[j];
         bool add = true;
-        if( (Flags & mattTranslation) == 0 && i != InvalidIndex )  {
-          for( int k=0; k < 3; k++ )  {
+        if ((Flags & mattTranslation) == 0 && i != InvalidIndex) {
+          for (int k = 0; k < 3; k++) {
             double dv = mt.t[k] - v[k];
-            int iv = (int)dv;  dv -= iv;
-            if( olx_abs(dv) < 0.01 || olx_abs(dv) > 0.99 )  dv = 0;
-            if( dv != 0 )  {
+            int iv = (int)dv;
+            dv -= iv;
+            if (olx_abs(dv) < 0.01 || olx_abs(dv) > 0.99) {
+              dv = 0;
+            }
+            if (dv != 0) {
               add = false;
               break;
             }
           }
         }
-        if( add )
+        if (add) {
           matrices.AddCopy(mt).t += v;
+        }
       }
     }
   }
-  if( CentroSymmetric && ((Flags & mattInversion) == mattInversion) )  {
+  if (CentroSymmetric && ((Flags & mattInversion) == mattInversion)) {
     const size_t mc = matrices.Count();
     smatd im;
     im.r.I() *= -1;
-    im.t = -InversionCenter*2;
-    for( size_t i=0; i < mc; i++ ) {
+    im.t = -InversionCenter * 2;
+    for (size_t i = 0; i < mc; i++) {
       matrices.Add(new smatd(matrices[i])) *= im;
     }
-    if( (Flags & mattIdentity) == 0 ) {
+    if ((Flags & mattIdentity) == 0) {
       matrices.Insert(0, new smatd).I() *= im;
     }
   }
-  for( size_t i=0; i < matrices.Count(); i++ )
+  for (size_t i = 0; i < matrices.Count(); i++) {
     matrices[i].t -= matrices[i].t.Floor<int>();
-  if( (Flags & mattIdentity) == 0 )
-    matrices.Delete(0);
+  }
 }
 //..............................................................................
 //..............................................................................

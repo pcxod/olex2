@@ -176,6 +176,10 @@ public:
   */
   const vec3d& GetInversionCenter() const {  return InversionCenter;  }
 
+  const smatd_list& GetMatrices() const {
+    return Matrices;
+  }
+
   void GetMatrices(smatd_list& matrices, short Flags) const;
   smatd_list::const_list_type GetMatrices(short Flags) const {
     smatd_list matrices;
