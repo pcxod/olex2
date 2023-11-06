@@ -1016,9 +1016,10 @@ size_t TSpaceGroup::GetUniqMatrices(smatd_list& matrices, short Flags) const  {
 }
 //..............................................................................
 void TSpaceGroup::GetMatrices(smatd_list& matrices, short Flags) const {
-  if ((Flags & mattIdentity) != 0) {
-    matrices.AddNew().r.I();
-  }
+  /* add identity, if not requested - delete in the end this is needed in the case
+  of requested centering!
+  */
+  matrices.AddNew().r.I();
   for (size_t i = 0; i < MatrixCount(); i++) {
     smatd* m = 0;
     const smatd& mt = Matrices[i];
@@ -1075,6 +1076,9 @@ void TSpaceGroup::GetMatrices(smatd_list& matrices, short Flags) const {
   }
   for (size_t i = 0; i < matrices.Count(); i++) {
     matrices[i].t -= matrices[i].t.Floor<int>();
+  }
+  if ((Flags & mattIdentity) == 0) {
+    matrices.Delete(0);
   }
 }
 //..............................................................................
