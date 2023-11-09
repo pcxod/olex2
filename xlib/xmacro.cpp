@@ -399,8 +399,14 @@ void XLibMacros::Export(TLibrary& lib)  {
     EmptyString(),
     fpTwo | psCheckFileTypeIns,
     "Adds SHEL command to trim reflections");
-  xlib_InitMacro(Reset, "s-space group&;c-content&;f-alternative file name&;"
-    "rem-exclude remarks&;atoms-saves the atom list alongside",
+  xlib_InitMacro(Reset,
+    "s-space group&;"
+    "c-content&;"
+    "f-alternative file name&;"
+    "rem-exclude remarks&;"
+    "atoms-saves the atom list alongside&;"
+    "sfac-removes SFAC/DISP lines&;"
+    ,
     fpAny|psFileLoaded,
     "Resets current structure for the solution with ShelX");
   xlib_InitMacro(Degen, "cs-clear selection", fpAny|psFileLoaded,
@@ -7003,7 +7009,7 @@ void XLibMacros::macReset(TStrObjList &Cmds, const TParamList &Options,
   else if (xapp.CheckFileType<TCRSFile>()) {
     TSpaceGroup* sg = xapp.XFile().GetLastLoader<TCRSFile>().GetSG();
     if (newSg.IsEmpty()) {
-      if (sg == NULL) {
+      if (sg == 0) {
         E.ProcessingError(__OlxSrcInfo,
           "please specify a space group with -s=SG switch");
         return;
@@ -7018,7 +7024,7 @@ void XLibMacros::macReset(TStrObjList &Cmds, const TParamList &Options,
     ins.GetRM().SetUserFormula(content);
   }
   if (ins.GetRM().GetUserContent().IsEmpty()) {
-    if (op != NULL) {
+    if (op != 0) {
       content = "getuserinput(1, \'Please, enter structure composition\', \'C1\')";
       if (op->processFunction(content)) {
         ins.GetRM().SetUserFormula(content);
@@ -7032,7 +7038,7 @@ void XLibMacros::macReset(TStrObjList &Cmds, const TParamList &Options,
   }
   if (!newSg.IsEmpty()) {
     TStrList sg_toks(newSg, '~', false);
-    TSpaceGroup* sg = NULL;
+    TSpaceGroup* sg = 0;
     if (sg_toks.Count() == 1) {
       sg = TSymmLib::GetInstance().FindGroupByName(sg_toks[0]);
     }
@@ -7087,9 +7093,12 @@ void XLibMacros::macReset(TStrObjList &Cmds, const TParamList &Options,
   }
   olxstr FN = TEFile::ChangeFileExt(fileName, "ins"),
     lstFN = TEFile::ChangeFileExt(fileName, "lst");
-
-  ins.SaveForSolution(FN, Cmds.Text(' '), newSg, !Options.Contains("rem"),
-    Options.Contains("atoms"));
+  if (Options.GetBoolOption("sfac")) {
+    ins.GetRM().ClearSfacData();
+  }
+  ins.SaveForSolution(FN, Cmds.Text(' '), newSg,
+    Options.GetBoolOption("rem", false, false),
+    Options.GetBoolOption("atoms"));
   if (TEFile::Exists(lstFN)) {
     olxstr lstTmpFN(lstFN);
     lstTmpFN << ".tmp";

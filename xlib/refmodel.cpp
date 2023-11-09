@@ -3119,6 +3119,13 @@ void RefinementModel::DeleteSfacData(size_t idx) {
   SfacData.Delete(idx);
 }
 //..............................................................................
+void RefinementModel::ClearSfacData() {
+  for (size_t i = 0; i < SfacData.Count(); i++) {
+    delete SfacData.GetValue(i);
+  }
+  SfacData.Clear();
+}
+//..............................................................................
 void RefinementModel::InitDisp(TCAtom& a) const {
   XScatterer* xs = FindSfacData(a.GetType().symbol);
   if (xs == 0) {

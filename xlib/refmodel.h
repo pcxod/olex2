@@ -434,6 +434,7 @@ Friedel opposites of components 1 ... m
   }
   bool RemoveSfacData(const olxstr& name);
   void DeleteSfacData(size_t i);
+  void ClearSfacData();
   void InitDisp(TCAtom& a) const;
   // user content management
   const ContentList& GetUserContent() const {  return UserContent;  }
