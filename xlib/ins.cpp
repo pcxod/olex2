@@ -1416,8 +1416,16 @@ void TIns::HyphenateIns(const olxstr &InsName, const olxstr &Ins,
         Tmp = olxstr(' ') << Tmp.SubStringFrom(spindex + 1);
       }
       else {
-        Res.Add(InsName + Tmp.SubStringTo(sz - InsName.Length() - 2));
-        Tmp = Tmp.SubStringFrom(sz - InsName.Length() - 2);
+        if (Tmp.Length() > (size_t)sz - InsName.Length() - 2) {
+          Res.Add(InsName + Tmp.SubStringTo(sz - InsName.Length() - 2));
+          Tmp = Tmp.SubStringFrom(sz - InsName.Length() - 2);
+        }
+        else {
+          Res.Add(InsName);
+          Res.Add(Tmp);
+          Tmp.SetLength(0);
+
+        }
       }
     }
     if (!Tmp.IsEmpty()) {
@@ -1503,10 +1511,12 @@ void TIns::SaveForSolution(const olxstr& FileName, const olxstr& sMethod,
   else {
     mtoks.Strtok(sMethod, "\\n");
     size_t spi = mtoks[0].IndexOf(' ');
-    if (spi != InvalidIndex)
+    if (spi != InvalidIndex) {
       RefMod.SetSolutionMethod(mtoks[0].SubStringTo(spi));
-    else
+    }
+    else {
       RefMod.SetSolutionMethod(mtoks[0]);
+    }
   }
 
   UpdateParams();

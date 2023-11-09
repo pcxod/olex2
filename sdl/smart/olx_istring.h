@@ -362,6 +362,12 @@ public:
     return SubString(from, T::_Length-from-indexFromEnd);
   }
   TTSString SubStringTo(size_t to, size_t indexFromStart=0) const {
+#ifdef _DEBUG
+    if (to > T::_Length) {
+      TExceptionBase::ThrowIndexOutOfRange(__POlxSourceInfo, to, 0,
+        T::_Length);
+    }
+#endif
     return SubString(indexFromStart, to-indexFromStart);
   }
   //...........................................................................
