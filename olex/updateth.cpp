@@ -12,8 +12,10 @@
 #include "updateapi.h"
 #include "patchapi.h"
 #include "log.h"
+#include "zipfs.h"
 
-UpdateThread::UpdateThread(const olxstr& patch_dir, bool force_update)
+UpdateThread::UpdateThread(const olxstr& patch_dir, bool force_update,
+  bool reinstall, bool cleanup)
   : time_out(0),
   PatchDir(patch_dir),
   _DoUpdate(false), UpdateSize(0),
@@ -21,9 +23,11 @@ UpdateThread::UpdateThread(const olxstr& patch_dir, bool force_update)
   OnAction(Actions.New("ON_ACTION"))
 {
   ForceUpdate = force_update;
+  this->reinstall = reinstall;
+  this->cleanup = cleanup;
 }
 //.............................................................................
-void UpdateThread::DoInit(bool force) {
+void UpdateThread::DoInit() {
   if (!TBasicApp::HasInstance() || Terminate) {
     return;
   }
@@ -32,8 +36,16 @@ void UpdateThread::DoInit(bool force) {
       return;
     }
     updater::UpdateAPI uapi;
-    srcFS = uapi.FindActiveUpdateRepositoryFS(0, force);
+    srcFS = uapi.FindActiveRepositoryFS(0, ForceUpdate, !reinstall);
     if (!srcFS.ok()) {
+      return;
+    }
+    if (reinstall) {
+      destFS = new TUpdateFS(PatchDir,
+        *(new TOSFileSystem(TBasicApp::GetBaseDir())));
+      uapi.EvaluateProperties(properties);
+      srcFS->OnProgress.Add(new TActionProxy(OnDownload));
+
       return;
     }
     Index = new TFSIndex(*srcFS);
@@ -51,9 +63,10 @@ void UpdateThread::DoInit(bool force) {
 }
 //.............................................................................
 int UpdateThread::Run() {
-  DoInit(ForceUpdate);
+  DoInit();
   if (!TBasicApp::HasInstance() || Terminate ||
-    !srcFS.ok() || !destFS.ok() || !Index.ok())
+    !srcFS.ok() || !destFS.ok() ||
+    (!reinstall && !Index.ok()))
   {
     CleanUp();
     return 0;
@@ -65,6 +78,23 @@ int UpdateThread::Run() {
       CleanUp();
       return 0;
     }
+  }
+  if (reinstall) {
+    olxstr inst_fn = updater::UpdateAPI::GetInstallationFileName();
+    updater::UpdateAPI uapi;
+    olx_object_ptr<IInputStream> s = srcFS->OpenFile(srcFS->GetBase() + inst_fn);
+    if (!s.ok()) {
+      TBasicApp::NewLogEntry(logError) << "Could not locate: " << inst_fn;
+      return 0;
+    }
+    destFS->AdoptStream(*s, destFS->GetBase() + inst_fn);
+    olx_object_ptr<AZipFS> zp = ZipFSFactory::GetInstance(destFS->GetBase() + inst_fn, false);
+    if (zp->ExtractAll(destFS->GetBase())) {
+      TEFile::DelFile(destFS->GetBase() + inst_fn);
+      TEFile rfn(uapi.GetReinstallFileName(), "w+b");
+      patcher::PatchAPI::MarkPatchComplete();
+    }
+    return 1;
   }
   try {
     TStrList cmds;
@@ -127,7 +157,7 @@ int UpdateThread::Run() {
 }
 //.............................................................................
 void UpdateThread::CleanUp() {
-  Index = 0; // depends on sdrcFS - should go first
+  Index = 0; // depends on srcFS - should go first
   srcFS = 0;
   destFS = 0;
 }

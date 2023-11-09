@@ -110,9 +110,10 @@ public:
   const TStrList& GetLog() const { return log; }
   /* if fails or the repository is uptodate return NULL, res can be NULL, if
   not it will be set to updater::uapi_UptoDate or an error code
+  update - will add /update to non-zip FS
   */
-  olx_object_ptr<AFileSystem> FindActiveUpdateRepositoryFS(short* res,
-    bool force = false) const;
+  olx_object_ptr<AFileSystem> FindActiveRepositoryFS(short* res,
+    bool force = false, bool update = true) const;
   //returns true if the program will/allowed try to update itself
   bool WillUpdate(bool force = false) const;
   // creates an FS from string - ftpfs, httpfs, os-fs or zipfs
@@ -121,6 +122,12 @@ public:
   static const TStrList& GetDefaultRepositories();
   static olxstr GetSettingsFileName() {
     return TBasicApp::GetInstanceDir() + "usettings.dat";
+  }
+  static olxstr GetReinstallFileName() {
+    return TBasicApp::GetInstanceDir() + "__reinstall";
+  }
+  static olxstr GetCleanUpFileName() {
+    return TBasicApp::GetInstanceDir() + "__cleanup";
   }
   static olxstr GetIndexFileName() {
     return TBasicApp::GetBaseDir() + "index.ind";

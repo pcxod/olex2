@@ -5818,7 +5818,11 @@ void TMainForm::macUpdate(TStrObjList &Cmds, const TParamList &Options,
       "Updates already available, please restart the program to apply";
     return;
   }
-  CreateUpdateThread(Options.GetBoolOption('f', true, true));
+  CreateUpdateThread(
+    Options.GetBoolOption('f', true, true),
+    Options.GetBoolOption("reinstall"),
+    Options.GetBoolOption("cleanup")
+ );
 }
 //..............................................................................
 void TMainForm::macElevate(TStrObjList &Cmds, const TParamList &Options, TMacroData &E)  {

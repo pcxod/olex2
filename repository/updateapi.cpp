@@ -114,7 +114,7 @@ short UpdateAPI::DoUpdate(olx_object_ptr < AActionHandler> _f_lsnr,
   toSkip.filesToSkip = sf.files_to_skip.IsEmpty() ? 0 : &sf.files_to_skip;
 
   short res = updater::uapi_NoSource;
-  olx_object_ptr<AFileSystem> srcFS = FindActiveUpdateRepositoryFS(&res);
+  olx_object_ptr<AFileSystem> srcFS = FindActiveRepositoryFS(&res);
   if (srcFS == 0) {
     return res;
   }
@@ -435,7 +435,7 @@ olx_object_ptr<AFileSystem> UpdateAPI::FSFromString(const olxstr& _repo,
     return 0;
   }
   try {
-    AFileSystem* FS = 0;
+    AFileSystem *FS;
     olxstr repo = _repo;
     if (TEFile::Exists(repo)) {
       if (TEFile::ExtractFileExt(repo).Equalsi("zip")) {
@@ -499,7 +499,9 @@ bool UpdateAPI::WillUpdate(bool force) const {
   return update;
 }
 //.............................................................................
-olx_object_ptr<AFileSystem> UpdateAPI::FindActiveUpdateRepositoryFS(short* res, bool force) const {
+olx_object_ptr<AFileSystem> UpdateAPI::FindActiveRepositoryFS(short* res,
+  bool force, bool update) const
+{
   if (Tag.IsEmpty()) {
     if (res != 0) {
       *res = updater::uapi_InvalidInstallation;
@@ -524,13 +526,13 @@ olx_object_ptr<AFileSystem> UpdateAPI::FindActiveUpdateRepositoryFS(short* res, 
     if (WillUpdate(force)) {
       olx_object_ptr<AFileSystem> FS = FindActiveRepositoryFS(&repo,
         (AddTagPart(EmptyString(), true)+"index.ind").SubStringFrom(1));
-      if (FS == 0) {
+      if (!FS.ok()) {
         if (res != 0) {
           *res = updater::uapi_NoSource;
         }
         return 0;
       }
-      FS->SetBase(AddTagPart(FS->GetBase(), true));
+      FS->SetBase(AddTagPart(FS->GetBase(), update));
       return FS;
     }
   }

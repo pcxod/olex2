@@ -680,7 +680,9 @@ void TMainForm::XApp(Olex2App *XA)  {
   this_InitMacroD(UpdateOptions, EmptyString(), fpNone,
     "Shows the Update Options dialog");
   this_InitMacroD(Update,
-    "f-force [true]",
+    "f-force [true]&;"
+    "reinstall-reinstalls Olex2 completely&;"
+    ,
     fpNone,
     "Does check for the updates");
   this_InitMacro(Reload, , fpOne);
@@ -1468,7 +1470,7 @@ void TMainForm::StartupInit() {
   }
 }
 //..............................................................................
-bool TMainForm::CreateUpdateThread(bool force) {
+bool TMainForm::CreateUpdateThread(bool force, bool reinstall, bool cleanup) {
   volatile olx_scope_cs cs(TBasicApp::GetCriticalSection());
   if (_UpdateThread != NULL || !updater::UpdateAPI().WillUpdate(force))
     return false;
@@ -1496,7 +1498,9 @@ bool TMainForm::CreateUpdateThread(bool force) {
 #endif
     _UpdateThread = new UpdateThread(FXApp->GetInstanceDir() +
       patcher::PatchAPI::GetPatchFolder(),
-      force);
+      force,
+      reinstall,
+      cleanup);
     _UpdateThread->OnTerminate.Add(this, ID_UpdateThreadTerminate);
     _UpdateThread->OnDownload.Add(this, ID_UpdateThreadDownload);
     _UpdateThread->OnAction.Add(this, ID_UpdateThreadAction);
@@ -2508,26 +2512,29 @@ void TMainForm::OnSize(wxSizeEvent& event) {
   OnResize();
 }
 //..............................................................................
-void TMainForm::OnResize()  {
-  int w=0, h=0, l=0;
+void TMainForm::OnResize() {
+  if (!wxIsMainThread()) {
+    return;
+  }
+  int w = 0, h = 0, l = 0;
   int dheight = InfoWindowVisible ? FInfoBox->GetHeight() : 1;
   GetClientSize(&w, &h);
-  if( FHtmlMinimized )  {
-    if( FHtmlOnLeft )  {
+  if (FHtmlMinimized) {
+    if (FHtmlOnLeft) {
       HtmlManager.main->SetSize(0, 0, 10, h);
       l = 10;
       w = w - l;
     }
-    else  {
-      HtmlManager.main->SetSize(w-10, 0, 10, h);
-      w = w-10;
+    else {
+      HtmlManager.main->SetSize(w - 10, 0, 10, h);
+      w = w - 10;
     }
   }
   else {
     HtmlManager.main->Freeze();
     if (FHtmlOnLeft) {
       const int cw = (FHtmlWidthFixed ? (int)FHtmlPanelWidth
-        : (int)(w*FHtmlPanelWidth));
+        : (int)(w * FHtmlPanelWidth));
       HtmlManager.main->SetClientSize(cw, -1);
       HtmlManager.main->SetSize(-1, h);
       HtmlManager.main->Move(0, 0);
@@ -2536,7 +2543,7 @@ void TMainForm::OnResize()  {
     }
     else {
       const int cw = (FHtmlWidthFixed ? (int)FHtmlPanelWidth
-        : (int)(w*FHtmlPanelWidth));
+        : (int)(w * FHtmlPanelWidth));
       HtmlManager.main->SetClientSize(cw, -1);
       HtmlManager.main->SetSize(-1, h);
       HtmlManager.main->Move((int)(w - HtmlManager.main->GetSize().GetWidth()), 0);

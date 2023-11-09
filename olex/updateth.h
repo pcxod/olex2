@@ -23,14 +23,15 @@ class UpdateThread : public AOlxThread {
   TFSItem::SkipOptions toSkip;
   olxstr PatchDir;
   volatile bool _DoUpdate;
-  bool ForceUpdate;
+  bool ForceUpdate, reinstall, cleanup;
   void CleanUp();
-  void DoInit(bool force);
+  void DoInit();
   virtual void OnSendTerminate();
   TActionQList Actions;
   void MarkCompleted(const TStrList& cmds);
 public:
-  UpdateThread(const olxstr& patch_dir, bool force_update);
+  UpdateThread(const olxstr& patch_dir, bool force_update,
+    bool reinstall, bool cleanup);
 
   virtual ~UpdateThread() { CleanUp(); }
   void DoUpdate() { _DoUpdate = true; }
