@@ -977,6 +977,8 @@ void THtmlManager::funSetEnabled(const TStrObjList &Params, TMacroData &E) {
 #ifdef _DEBUG
       E.ProcessingError(__OlxSrcInfo,
         "could not locate specified popup: ").quote() << hn;
+#else
+      E.ClearErrorFlag();
 #endif
       return;
     }
@@ -992,6 +994,8 @@ void THtmlManager::funSetEnabled(const TStrObjList &Params, TMacroData &E) {
   if (c.ctrl == 0) {
 #ifdef _DEBUG
     E.ProcessingError(__OlxSrcInfo, "undefined control: ").quote() << Params[0];
+#else
+    E.ClearErrorFlag();
 #endif
     return;
   }
