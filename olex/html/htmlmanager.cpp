@@ -974,8 +974,10 @@ void THtmlManager::funSetEnabled(const TStrObjList &Params, TMacroData &E) {
     THtml* html = (ind == InvalidIndex) ? main : FindHtml(name.SubStringTo(ind));
     olxstr objName = (ind == InvalidIndex) ? name : name.SubStringFrom(ind + 1);
     if (html == 0) {
+#ifdef _DEBUG
       E.ProcessingError(__OlxSrcInfo,
         "could not locate specified popup: ").quote() << hn;
+#endif
       return;
     }
     Wildcard wc(objName);
@@ -988,7 +990,9 @@ void THtmlManager::funSetEnabled(const TStrObjList &Params, TMacroData &E) {
   }
   Control c = FindControl(Params[0], E, 1, __OlxSrcInfo);
   if (c.ctrl == 0) {
+#ifdef _DEBUG
     E.ProcessingError(__OlxSrcInfo, "undefined control: ").quote() << Params[0];
+#endif
     return;
   }
   c.ctrl->WI.SetEnabled(enabled);

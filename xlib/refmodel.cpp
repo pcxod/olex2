@@ -1015,7 +1015,7 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
             batches.Add(b, 0)++;
           }
           // find the most occupied batch for merge stats
-          if (batches.Count() > 1) {
+          if (batches.Count() > 0) {
             size_t max_c = batches.GetValue(0), max_i = 0;
             for (size_t i = 1; i < batches.Count(); i++) {
               if (batches.GetValue(i) > max_c) {
