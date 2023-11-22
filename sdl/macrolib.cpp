@@ -34,20 +34,16 @@ void TEMacro::DoRun(TStrObjList &Params, const TParamList &Options,
   olex2::IOlex2Processor *ip = olex2::IOlex2Processor::GetInstance();
   olxstr location = __OlxSourceInfo;
   for (size_t i = 0; i < Args.Count(); i++) {
-    // check if is an option
-    if (Args[i].StartsFrom('-')) {
-      args.Add(Options.FindValue(Args[i].SubStringFrom(1), Args.GetObject(i)));
-    }
     if (i < Params.Count()) {
       args.Add(Params[i]);
     }
-    // processing needs to be done for the defaults only - the rest already ARE
+    // processing needs to be done for the defaults only - the rest already have been
     else {
       ip->processFunction(args.Add(Args.GetObject(i)), location);
     }
   }
   for (size_t i = 0; i < Commands.Count(); i++) {
-    TEMacroLib::ProcessEvaluator(Commands[i].root, E, args);
+    TEMacroLib::ProcessEvaluator(Commands[i].root, E, args, &Options);
     if (!E.IsSuccessful()) {
       break;
     }
@@ -55,7 +51,7 @@ void TEMacro::DoRun(TStrObjList &Params, const TParamList &Options,
   if (!E.IsSuccessful() && !OnAbort.IsEmpty()) {
     E.ClearErrorFlag();
     for (size_t i = 0; i < OnAbort.Count(); i++) {
-      TEMacroLib::ProcessEvaluator(OnAbort[i].root, E, args);
+      TEMacroLib::ProcessEvaluator(OnAbort[i].root, E, args, &Options);
       if (!E.IsSuccessful()) {
         break;
       }
@@ -124,8 +120,8 @@ ABasicFunction* TEMacroLib::FindEvaluator(exparse::expression_tree*& e,
 }
 //.............................................................................
 olxstr TEMacroLib::ProcessEvaluator(
-  exparse::expression_tree *e, TMacroData& me,
-  const TStrList &argv, bool allow_dummy)
+  exparse::expression_tree *e, TMacroData& me, const TStrList &argv,
+  const TParamList* global_options, bool allow_dummy)
 {
   me.GetStack().Push(e->ToStringBuffer());
   olxstr name = e->evator == 0 ? e->data : e->evator->name;
@@ -166,6 +162,15 @@ olxstr TEMacroLib::ProcessEvaluator(
     }
     if (f->HasOptions()) {
       Cmds.Pack();
+      if (global_options != 0) {
+        for (size_t i = 0; i < global_options->Count(); i++) {
+          // do not overwrite local
+          if (Options.Contains(global_options->GetName(i))) {
+            continue;
+          }
+          Options.AddParam(global_options->GetName(i), global_options->GetValue(i));
+        }
+      }
       f->Run(Cmds, Options, me);
     }
     else {
@@ -556,7 +561,7 @@ void TEMacroLib::funIF(exparse::evaluator<exparse::expression_tree>* t,
   for (size_t i = 0; i < toks.Count(); i++) {
     exparse::expression_parser expr(toks[i]);
     expr.root->expand_cmd();
-    ProcessEvaluator(expr.root, me, argv, true);
+    ProcessEvaluator(expr.root, me, argv, 0, true);
   }
 }
 //.............................................................................

@@ -96,7 +96,8 @@ public:
   reports non-existent macro/function
   */
   static olxstr ProcessEvaluator(exparse::expression_tree *e,
-    TMacroData& me, const TStrList &argv, bool allow_dummy=false);
+    TMacroData& me, const TStrList &argv, const TParamList* global_options=0,
+    bool allow_dummy=false);
   static arg_t EvaluateArg(exparse::expression_tree *t,
     TMacroData& me, const TStrList &argv);
   /* if has_owner is true, then in the case the function does not exist no
