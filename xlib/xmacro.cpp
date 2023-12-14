@@ -9915,7 +9915,7 @@ void XLibMacros::macAddBond(TStrObjList &Cmds, const TParamList &Options,
   TXApp &app = TXApp::GetInstance();
   TSAtomPList atoms = app.FindSAtoms(Cmds, false, true);
   if ((atoms.Count() % 2) != 0) {
-    E.ProcessingError(__OlxSrcInfo, "even number if atoms is expected");
+    E.ProcessingError(__OlxSrcInfo, "even number of atoms is expected");
     return;
   }
   for (size_t i=0; i < atoms.Count(); i += 2) {
