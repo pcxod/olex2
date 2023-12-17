@@ -240,7 +240,7 @@ TTypeList<CifToken>::const_list_type TCifDP::TokenizeString(const olxstr &str_,
             break;
           }
         }
-        if (str.CharAt(i) != ch) {
+        if (i >= str.Length() || str.CharAt(i) != ch) {
           i--;
         }
         toks.Add(
