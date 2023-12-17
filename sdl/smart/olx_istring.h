@@ -1079,11 +1079,11 @@ public:
     unsigned short Rad = 10;
     if (data[sts] == '0') {
       negative = false;
-      if (len == 1) {
+      if (len-sts == 1) {
         return true;
       }
       if (data[sts + 1] == 'x' || data[sts + 1] == 'X') {
-        if (len == 2) {
+        if (len-sts == 2) {
           return false;
         }
         Rad = 16;
