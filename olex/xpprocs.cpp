@@ -3086,10 +3086,16 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
         TEFile::ChangeFileExt(src_fn, EmptyString()))
       {
 #endif
-        TBasicApp::NewLogEntry() << "Note that the associated HKL file differs"
-          " from the loaded file name:";
-        TBasicApp::NewLogEntry() << "SRC: " << src_fn;
-        TBasicApp::NewLogEntry() << "HKL: " << hkl_fn;
+        if (FXApp->CheckFileType<TCif> ()) {
+          TBasicApp::NewLogEntry()
+            << "Note that the reflections will be only read from the CIF";
+        }
+        else {
+          TBasicApp::NewLogEntry() << "Note that the associated HKL file differs"
+            " from the loaded file name:";
+          TBasicApp::NewLogEntry() << "SRC: " << src_fn;
+          TBasicApp::NewLogEntry() << "HKL: " << hkl_fn;
+        }
       }
       // changes the loaded position of the box to left
       OnResize();

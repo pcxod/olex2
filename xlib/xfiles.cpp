@@ -375,7 +375,8 @@ void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
               TBasicApp::NewLogEntry(logError) << "Loading the refinement model "
                 "from the embedded RES file.";
               GetRM().Assign(ins.GetRM(), false);
-              ExpandHKLSource(GetRM(), fn);
+              //ExpandHKLSource(GetRM(), fn);
+              GetRM().SetHKLSource(EmptyString());
               rm_updated = true;
             }
             else {
@@ -426,49 +427,54 @@ void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
   if (GetRM().GetHKLSource().IsEmpty() ||
      !TEFile::Exists(GetRM().GetHKLSource()))
   {
-    olxstr src = LocateHklFile();
-    if (!src.IsEmpty() && !TEFile::Existsi(olxstr(src), src)) {
-      src.SetLength(0);
-    }
-    GetRM().SetHKLSource(src);
-    try {
-      if (src.IsEmpty()) {
-        GetRM().SetReflections(TRefList());
-        if (FLastLoader->Is<TCif>()) {
-          TCif &cif = GetLastLoader<TCif>();
-          cif_dp::cetTable* hklLoop = cif.FindLoop("_refln");
-          if (hklLoop == 0) {
-            // sorting out tonto loop
-            hklLoop = cif.FindLoop("_diffrn_refln");
-          }
-          if (hklLoop != 0) {
-            try {
-              olx_object_ptr<THklFile::ref_list> refs =
-                THklFile::FromCifTable(*hklLoop, GetRM().GetHKLF_mat());
-              if (refs.ok()) {
-                GetRM().SetReflections(refs->a);
-              }
-              //if (!refs.b) {
-              //  GetRM().SetHKLF(3);
-              //}
+    // read refs from the CIF
+    if (FLastLoader->Is<TCif>()) {
+      GetRM().SetReflections(TRefList());
+      try {
+        TCif& cif = GetLastLoader<TCif>();
+        cif_dp::cetTable* hklLoop = cif.FindLoop("_refln");
+        if (hklLoop == 0) {
+          // sorting out tonto loop
+          hklLoop = cif.FindLoop("_diffrn_refln");
+        }
+        if (hklLoop != 0) {
+          try {
+            olx_object_ptr<THklFile::ref_list> refs =
+              THklFile::FromCifTable(*hklLoop, GetRM().GetHKLF_mat());
+            if (refs.ok()) {
+              GetRM().SetReflections(refs->a);
             }
-            catch (TExceptionBase &) {}
+            //if (!refs.b) {
+            //  GetRM().SetHKLF(3);
+            //}
           }
-          else {
-            cif_dp::cetStringList *ci = dynamic_cast<cif_dp::cetStringList *>(
-              cif.FindEntry("_shelx_hkl_file"));
-            if (ci != 0) {
-              THklFile hkf(GetRM().GetHKLF_mat());
-              hkf.LoadFromStrings(ci->lines, false);
-              GetRM().SetReflections(hkf.RefList());
-            }
+          catch (TExceptionBase&) {}
+        }
+        else {
+          cif_dp::cetStringList* ci = dynamic_cast<cif_dp::cetStringList*>(
+            cif.FindEntry("_shelx_hkl_file"));
+          if (ci == 0) {
+            ci = dynamic_cast<cif_dp::cetStringList*>(
+              cif.FindEntry("_iucr_refine_reflections_details"));
+          }
+          if (ci != 0) {
+            THklFile hkf(GetRM().GetHKLF_mat());
+            hkf.LoadFromStrings(ci->lines, false);
+            GetRM().SetReflections(hkf.RefList());
           }
         }
       }
+      catch (const TExceptionBase& e) {
+        TBasicApp::NewLogEntry(logWarning)
+          << "Failed to extract HKL data from CIF";
+      }
     }
-    catch (const TExceptionBase &e) {
-      TBasicApp::NewLogEntry(logWarning) << "Failed to extract HKL data from "
-        "CIF";
+    else {
+      olxstr src = LocateHklFile();
+      if (!src.IsEmpty() && !TEFile::Existsi(olxstr(src), src)) {
+        src.SetLength(0);
+      }
+      GetRM().SetHKLSource(src);
     }
   }
   // try resolve the residues

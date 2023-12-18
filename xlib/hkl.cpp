@@ -75,6 +75,7 @@ olx_object_ptr<TIns> THklFile::LoadFromFile(const olxstr& FN, bool get_ins,
   try {
     TEFile::CheckFileExists(__OlxSourceInfo, FN);
     TStrList SL = TEFile::ReadLines(FN);
+    SL.Pack();
     if (SL.IsEmpty()) {
       throw TEmptyFileException(__OlxSrcInfo, FN);
     }
@@ -83,6 +84,30 @@ olx_object_ptr<TIns> THklFile::LoadFromFile(const olxstr& FN, bool get_ins,
   catch (const TExceptionBase& e) {
     throw TFunctionFailedException(__OlxSourceInfo, e);
   }
+}
+//..............................................................................
+size_t GetCrystalsDataOffset(const TStrList& SL) {
+  int i = 0;
+  while (i < SL.Count() && SL[i].StartsFrom('#')) {
+    i++;
+  }
+  if (i >= SL.Count() || !SL[i].StartsFromi("READ")) {
+    return false;
+  }
+  while (++i < SL.Count() && SL[i].Equals("END")) {
+    continue;
+  }
+  if (i >= SL.Count() || SL[i].Length() < 30) {
+    return false;
+  }
+  const olxstr& l = SL[i];
+  if (l.SubString(0, 4).IsInt() && l.SubString(4, 4).IsInt() &&
+    l.SubString(8, 4).IsInt() && l.SubString(12, 10).IsNumber() &&
+    l.SubString(22, 8).IsNumber())
+  {
+    return i;
+  }
+  return InvalidIndex;
 }
 //..............................................................................
 olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
@@ -132,8 +157,9 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
     }
     TSizeList fl = TSizeList::FromList(TStrList(format, ","),
       FunctionAccessor::MakeConst(&olxstr::ToSizeT));
+    size_t crystals_data_off = GetCrystalsDataOffset(SL);
     if (fl.IsEmpty()) {
-      fl << 4 << 4 << 4 << 8 << 8;
+      fl << 4 << 4 << 4 << (crystals_data_off == InvalidIndex ? 8 : 10)  << 8;
     }
     else {
       if (fl.Count() < 5) {
@@ -147,7 +173,7 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
       fidx5 = fidx4 + fl[4]
       ;
     {  // validate if 'real' HKL, not fcf
-      if (!IsHKLFileLine(SL[0], fl)) {
+      if (crystals_data_off == InvalidIndex && !IsHKLFileLine(SL[0], fl)) {
         TCif cif;
         try {
           cif.LoadFromStrings(SL);
@@ -156,10 +182,10 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
           if (hklLoop == 0) {
             // tonto mess?
             hklLoop = cif.FindLoopGlobal("_diffrn_refln", true);
-            if (hklLoop == 0) {
-              throw TInvalidArgumentException(__OlxSourceInfo,
-                "no reflection loop found");
-            }
+          }
+          if (hklLoop == 0) {
+            throw TInvalidArgumentException(__OlxSourceInfo,
+              "no reflection loop found");
           }
           olx_object_ptr<ref_list> refs = FromCifTable(*hklLoop, Basis);
           if (refs.ok()) {
@@ -188,7 +214,9 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
     }
     bool ZeroRead = false,
       HasBatch = false;
-    size_t line_length = 0, i=0;
+    size_t line_length = crystals_data_off == InvalidIndex ?
+      0 : SL[crystals_data_off].Length(),
+      i = crystals_data_off == InvalidIndex ? 0 : crystals_data_off;
     const bool apply_basis = !Basis.IsI();
     size_t removed_cnt = 0;
     const size_t line_cnt = SL.Count();

@@ -295,7 +295,7 @@ namespace RefUtil {
     double partical_threshold; // = 2;
     size_t partial_R1_cnt;
     vec3i min_hkl, max_hkl;
-    Stats(bool update_scale);
+    Stats(bool update_scale, bool fcf);
 
     double UpdatePartialR1(double threshold);
 

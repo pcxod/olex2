@@ -43,6 +43,7 @@
 #include "analysis.h"
 #include "tls.h"
 #include "math/plane.h"
+#include "refutil.h"
 
 #ifdef _CUSTOM_BUILD_
   #include "custom_base.h"
@@ -5917,12 +5918,15 @@ void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
   TXApp& xapp = TXApp::GetInstance();
+  RefinementModel& rm = xapp.XFile().GetRM();
   const int list_n = Cmds[0].ToInt();
   const olxstr fn = (Cmds.Count() > 1 ? Cmds.Text(' ', 1) :
     TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "fcf"));
   TUnitCell::SymmSpace sp = xapp.XFile().GetUnitCell().GetSymmSpace();
   TRefList refs;
   TArrayList<compd> F;
+  evecd F_sq;
+
   bool convert = Options.GetBoolOption('c');
   if (convert) {
     olxstr err = SFUtil::GetSF(refs, F, SFUtil::mapTypeCalc, SFUtil::sfOriginFcf,
@@ -5939,7 +5943,7 @@ void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options,
         TUnitCell::SymmSpace, RefMerger::ShelxMerger>(sp, refs);
     }
     col_names << "_refln_F_squared_calc,_refln_F_squared_meas,"
-      "_refln_F_squared_sigma,_refln_observed_status";
+      "_refln_F_squared_sigma,_refln_F_squared_weight,_refln_observed_status";
   }
   else if (list_n == 6) {
     if (!convert) {
@@ -5961,28 +5965,33 @@ void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options,
       list_n;
     return;
   }
-  const RefinementModel& rm = xapp.XFile().GetRM();
   if (!convert) {
-    F.SetCount(refs.Count());
-    SFUtil::CalcSF(xapp.XFile(), refs, F);
-    RefinementModel::EXTI::Shelxl ecr = rm.GetShelxEXTICorrector();
-    RefinementModel::SWAT::Shelxl scr = rm.GetShelxSWATCorrector();
-    if (ecr.IsValid() || scr.IsValid()) {
-      for (size_t i = 0; i < F.Count(); i++) {
-        if (list_n == 4) {
-          if (ecr.IsValid()) {
-            refs[i] *= ecr.CalcForFo2(refs[i].GetHkl(), F[i].qmod());
+    if (list_n == 4) {
+      xapp.CalcFsq(refs, F_sq, false);
+    }
+    else {
+
+      F.SetCount(refs.Count());
+      SFUtil::CalcSF(xapp.XFile(), refs, F);
+      RefinementModel::EXTI::Shelxl ecr = rm.GetShelxEXTICorrector();
+      RefinementModel::SWAT::Shelxl scr = rm.GetShelxSWATCorrector();
+      if (ecr.IsValid() || scr.IsValid()) {
+        for (size_t i = 0; i < F.Count(); i++) {
+          if (list_n == 4) {
+            if (ecr.IsValid()) {
+              refs[i] *= ecr.CalcForFo2(refs[i].GetHkl(), F[i].qmod());
+            }
+            else {
+              refs[i] *= scr.CalcForFo2(refs[i].GetHkl());
+            }
           }
           else {
-            refs[i] *= scr.CalcForFo2(refs[i].GetHkl());
-          }
-        }
-        else {
-          if (ecr.IsValid()) {
-            F[i] *= ecr.CalcForFc(refs[i].GetHkl(), F[i].qmod());
-          }
-          else {
-            F[i] *= scr.CalcForFc(refs[i].GetHkl());
+            if (ecr.IsValid()) {
+              F[i] *= ecr.CalcForFc(refs[i].GetHkl(), F[i].qmod());
+            }
+            else {
+              F[i] *= scr.CalcForFc(refs[i].GetHkl());
+            }
           }
         }
       }
@@ -6006,6 +6015,9 @@ void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options,
     Error.ProcessingError(__OlxSrcInfo, olxstr("unsupported scale: ") << scale_str);
     return;
   }
+
+  RefUtil::ShelxWeightCalculator weight_c(rm.used_weight,
+    rm.aunit.GetHklToCartesian(), scale);
 
   TCifDP fcf_dp;
   CifBlock& cif_data = fcf_dp.Add(
@@ -6044,7 +6056,7 @@ void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options,
     TReflection& r = refs[i];
     double Fo2 = r.GetI()* scale;
     double sigFo2 = r.GetS() * scale;
-    double Fc_sq = F[i].qmod();
+    double Fc_sq = list_n ==4 ? F_sq[i] : F[i].qmod();
     CifRow& row = ref_tab->AddRow();
     row[0] = new cetString(r.GetH());
     row[1] = new cetString(r.GetK());
@@ -6077,7 +6089,8 @@ void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options,
       row[3] = new cetString(olxstr::FormatFloat(2, Fc_sq));
       row[4] = new cetString(olxstr::FormatFloat(2, Fo2));
       row[5] = new cetString(olxstr::FormatFloat(2, sigFo2));
-      row[6] = new cetString('o');
+      row[6] = new cetString(olxstr::FormatFloat(2, weight_c.Calculate(r, Fc_sq)));
+      row[7] = new cetString('o');
     }
     else if (list_n == 6) {
       row[3] = new cetString(olxstr::FormatFloat(2, Fo2));
@@ -8004,7 +8017,17 @@ void XLibMacros::macUpdate(TStrObjList &Cmds, const TParamList &Options,
 //.............................................................................
 void XLibMacros::funCalcR(const TStrObjList& Params, TMacroData& E) {
   TXApp& xapp = TXApp::GetInstance();
-  RefUtil::Stats rstat(!Params.IsEmpty() && Params[0].Contains("scale"));
+  bool scale = false;
+  bool fcf = false;
+  if (!Params.IsEmpty()) {
+    if (Params[0].Contains("scale")) {
+      scale = true;
+    }
+    if (Params[0].Contains("fcf")) {
+      fcf = true;
+    }
+  }
+  RefUtil::Stats rstat(scale, fcf);
   bool print = !Params.IsEmpty() && Params[0].Containsi("print");
   if (print) {
     xapp.NewLogEntry() << "R1 (All, " << rstat.refs.Count() << ") = "
@@ -8047,7 +8070,7 @@ void XLibMacros::funCalcAbs(const TStrObjList& Params, TMacroData& E) {
     return;
   }
   TBasicApp::NewLogEntry(logWarning) << "For testing only!";
-  RefUtil::Stats rstat(!Params.IsEmpty() && Params[0].Contains("scale"));
+  RefUtil::Stats rstat(!Params.IsEmpty() && Params[0].Contains("scale"), false);
   bool print = !Params.IsEmpty() && Params[0].Containsi("print");
   TStrList rv;
   // Flack
@@ -9631,6 +9654,7 @@ void XLibMacros::macExport(TStrObjList& Cmds, const TParamList& Options,
     E.ProcessingError(__OlxSrcInfo, "the hkl file already exists");
     return;
   }
+  size_t crystals_data_idx = InvalidIndex;
   cif_dp::cetTable* hklLoop = C.FindLoop("_diffrn_refln");
   if (hklLoop == 0) {
     hklLoop = C.FindLoop("_refln");
@@ -9652,8 +9676,24 @@ void XLibMacros::macExport(TStrObjList& Cmds, const TParamList& Options,
           lines[i] = ';';
         }
       }
-      TEFile::WriteLines(hkl_name, lines);
-      ci = dynamic_cast<cif_dp::cetStringList *>(
+      crystals_data_idx = THklFile::GetCrystalsDataOffset(lines);
+      if (crystals_data_idx != InvalidIndex) {
+        TBasicApp::NewLogEntry() << "Exportint Crystals data set, take note of AFIX";
+        THklFile hkl;
+        hkl.LoadFromStrings(lines, false);
+        hkl.SaveToFile(hkl_name);
+        olxstr res_name = TEFile::ChangeFileExt(hkl_name, "res");
+        if (!TEFile::Exists(res_name)) {
+          TIns ins;
+          ins.Adopt(app.XFile(), 0);
+          ins.SaveToFile(res_name);
+        }
+        return;
+      }
+      else {
+        TEFile::WriteLines(hkl_name, lines);
+      }
+      ci = dynamic_cast<cif_dp::cetStringList*>(
         C.FindEntry("_shelx_fab_file"));
       if (ci != 0) {
         TEFile::WriteLines(TEFile::ChangeFileExt(hkl_name, "fab"),

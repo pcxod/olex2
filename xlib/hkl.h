@@ -103,7 +103,6 @@ public:
   */
   static bool IsHKLFileLine(const olxstr& l, const olxstr &format = EmptyString());
   static bool IsHKLFileLine(const olxstr& l, const TSizeList &format);
-
   // saves to file a list of reflections
   static void SaveToFile(const olxstr& FN, const TRefPList& Reflections);
   // saves to file a list of reflections
@@ -250,11 +249,34 @@ public:
   */
   static olx_object_ptr<ref_list> FromCifTable(const cif_dp::cetTable &,
     const mat3d &basis);
-  /* tries to read Tonto like reflcetions file. The function fails if the
+  /* tries to read Tonto like reflections file. The function fails if the
   returned pointer is NOT valid. if the reflections I is amplitudes (F, false)
   or intensity (Fsq, true).
  */
   static olx_object_ptr<ref_list> FromTonto(const TStrList &);
+
+  // returns the line number where the hkl data starts or InvalidIndex
+  template <class list_t>
+  static size_t GetCrystalsDataOffset(const list_t& SL) {
+    int i = 0;
+    while (i < SL.Count() && SL[i].StartsFrom('#')) {
+      i++;
+    }
+    while (++i < SL.Count() && !SL[i].StartsFromi("END")) {
+      continue;
+    }
+    if (++i >= SL.Count() || SL[i].Length() < 30) {
+      return InvalidIndex;
+    }
+    const olxstr& l = SL[i];
+    if (l.SubString(0, 4).IsInt() && l.SubString(4, 4).IsInt() &&
+      l.SubString(8, 4).IsInt() && l.SubString(12, 10).IsNumber() &&
+      l.SubString(22, 8).IsNumber())
+    {
+      return i;
+    }
+    return InvalidIndex;
+  }
 };
 //---------------------------------------------------------------------------
 

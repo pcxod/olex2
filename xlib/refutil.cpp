@@ -3,6 +3,7 @@
 #include "sfutil.h"
 #include "xapp.h"
 #include "refutil.h"
+#include "cif.h"
 
 using namespace RefUtil;
 
@@ -45,7 +46,7 @@ double ShelxWeightCalculator::Calculate(const TReflection& r, double Fc2) const 
 //.............................................................................
 //.............................................................................
 //.............................................................................
-Stats::Stats(bool update_scale)
+Stats::Stats(bool update_scale, bool fcf)
 : sum_wsqd(0),
   partial_R1_cnt(0),
   min_hkl(1000),
@@ -55,18 +56,62 @@ Stats::Stats(bool update_scale)
   TXApp& xapp = TXApp::GetInstance();
   RefinementModel& rm = xapp.XFile().GetRM();
   double scale_k = 1. / olx_sqr(rm.Vars.GetVar(0).GetValue());
-  xapp.CalcFsq(refs, Fsq, false);
-  weights.Resize(refs.Count());
-  ShelxWeightCalculator weight_c(rm.used_weight,
-    rm.aunit.GetHklToCartesian(), scale_k);
-  if (update_scale) {
-    weight_c.scale = CalcScale(Fsq_evaluator(), Fsq, refs,
-      SigmaWeightCalculator<2>(),
-      TReflection::DummyFilter());
+  if (fcf) {
+    scale_k = 1;
+    using namespace cif_dp;
+    TCif cif;
+    cif.LoadFromFile(TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "fcf"));
+    cetTable *rl = cif.FindLoop("_refln");
+    if (rl == 0) {
+      throw TInvalidArgumentException(__OlxSourceInfo, "FCF file, LIST 4 is expected");
+    }
+    size_t h_idx = rl->ColIndex("_refln_index_h");
+    size_t k_idx = rl->ColIndex("_refln_index_k");
+    size_t l_idx = rl->ColIndex("_refln_index_l");
+    size_t Fc_sq_idx = rl->ColIndex("_refln_F_squared_calc");
+    size_t Fo_sq_idx = rl->ColIndex("_refln_F_squared_meas");
+    size_t sig_idx = rl->ColIndex("_refln_F_squared_sigma");
+    size_t weight_idx = rl->ColIndex("_refln_F_squared_weight");
+    if ((h_idx | k_idx | l_idx | Fc_sq_idx | sig_idx | Fo_sq_idx) == InvalidIndex) {
+      throw TInvalidArgumentException(__OlxSourceInfo,
+        "FCF file, LIST 4 with weighst is expected");
+    }
+    refs.SetCapacity(rl->RowCount());
+    Fsq.SetCount(rl->RowCount());
+    if (weight_idx != InvalidIndex) {
+      weights.SetCount(rl->RowCount());
+    }
+    for (size_t i = 0; i < rl->RowCount(); i++) {
+      TReflection* r = new TReflection(
+        (*rl)[i][h_idx]->GetStringValue().ToInt(),
+        (*rl)[i][k_idx]->GetStringValue().ToInt(),
+        (*rl)[i][l_idx]->GetStringValue().ToInt(),
+        (*rl)[i][Fo_sq_idx]->GetStringValue().ToDouble(),
+        (*rl)[i][sig_idx]->GetStringValue().ToDouble());
+      refs.Add(r);
+      Fsq[i] = (*rl)[i][Fc_sq_idx]->GetStringValue().ToDouble();
+      if (weight_idx != InvalidIndex) {
+        weights[i] = (*rl)[i][weight_idx]->GetStringValue().ToDouble();
+      }
+      refs[i].SetTag(i);
+    }
   }
-  for (size_t i = 0; i < refs.Count(); i++) {
-    weights[i] = weight_c.Calculate(refs[i], Fsq[i]);
-    refs[i].SetTag(i);
+  else {
+    xapp.CalcFsq(refs, Fsq, false);
+  }
+  if (weights.IsEmpty()) {
+    weights.Resize(refs.Count());
+    ShelxWeightCalculator weight_c(rm.used_weight,
+      rm.aunit.GetHklToCartesian(), scale_k);
+    if (update_scale) {
+      weight_c.scale = CalcScale(Fsq_evaluator(), Fsq, refs,
+        SigmaWeightCalculator<2>(),
+        TReflection::DummyFilter());
+    }
+    for (size_t i = 0; i < refs.Count(); i++) {
+      weights[i] = weight_c.Calculate(refs[i], Fsq[i]);
+      refs[i].SetTag(i);
+    }
   }
   if (update_scale) {
     scale_k = CalcScale(Fsq_evaluator(), Fsq, refs,
