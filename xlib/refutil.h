@@ -22,65 +22,14 @@ namespace RefUtil {
     const RefinementModel& rm;
     mutable RefinementModel::HklStat *_stats;
     double h_o_s, min_d, max_d;
+    bool standardise_for_omit;
+    smatd_list standardisation_matrices;
   public:
-    ResolutionAndSigmaFilter(const RefinementModel& _rm) : rm(_rm),
-      _stats(0)
-    {
-      double SHEL_hr = rm.GetSHEL_hr();
-      double SHEL_lr = rm.GetSHEL_lr();
-      if (SHEL_hr > SHEL_lr) {
-        olx_swap(SHEL_hr, SHEL_lr);
-      }
-      h_o_s = 0.5*rm.GetOMIT_s();
-      const double two_sin_2t = 2 * sin(rm.GetOMIT_2t()*M_PI / 360.0);
-      min_d = rm.expl.GetRadiation() / (two_sin_2t == 0 ? 1e-6 : two_sin_2t);
-      if (rm.HasSHEL() && SHEL_hr > min_d) {
-        min_d = SHEL_hr;
-      }
-      max_d = SHEL_lr;
-    }
-    void SetStats(RefinementModel::HklStat &stats) const {
-      _stats = &stats;
-      stats.LimDmax = max_d;
-      stats.LimDmin = min_d;
-      stats.MinD = 100;
-      stats.MaxD = -100;
-      stats.MinI = 100;
-      stats.MaxI = -100;
-      stats.MERG = rm.GetMERG();
-      stats.OMIT_s = rm.GetOMIT_s();
-      stats.OMIT_2t = rm.GetOMIT_2t();
-      stats.SHEL_lr = rm.GetSHEL_lr();
-      stats.SHEL_hr = rm.GetSHEL_hr();
-      stats.MinIndices = vec3i(100, 100, 100);
-      stats.MaxIndices = -stats.MinIndices;
-    }
-    bool IsOutside(const TReflection& r) const {
-      const double d = 1 / r.ToCart(rm.aunit.GetHklToCartesian()).Length();
-      if ((h_o_s > 0 && r.GetI() < h_o_s*r.GetS()) || d >= max_d || d <= min_d) {
-        if (_stats != 0) {
-          _stats->FilteredOff++;
-        }
-        return true;
-      }
-      if (_stats != 0) {
-        olx_update_min_max(r.GetI(), _stats->MinI, _stats->MaxI);
-        olx_update_min_max(d, _stats->MinD, _stats->MaxD);
-        vec3i::UpdateMinMax(r.GetHkl(), _stats->MinIndices, _stats->MaxIndices);
-      }
-      return false;
-    }
-    bool IsOmitted(const vec3i& hkl) const {
-      return (rm.GetOmits().IndexOf(hkl) != InvalidIndex);
-    }
-    void AdjustIntensity(TReflection& r) const {
-      if (r.GetI() < h_o_s*r.GetS()) {
-        r.SetI(h_o_s*r.GetS());
-        if (_stats != 0) {
-          _stats->IntensityTransformed++;
-        }
-      }
-    }
+    ResolutionAndSigmaFilter(const RefinementModel& _rm);
+    void SetStats(RefinementModel::HklStat& stats) const;
+    bool IsOutside(const TReflection& r) const;
+    bool IsOmitted(const vec3i& hkl) const;
+    void AdjustIntensity(TReflection& r) const;
     struct IntensityModifier {
       const ResolutionAndSigmaFilter& parent;
       IntensityModifier(const ResolutionAndSigmaFilter& _parent) : parent(_parent) {}

@@ -262,7 +262,13 @@ public:
     while (i < SL.Count() && SL[i].StartsFrom('#')) {
       i++;
     }
-    while (++i < SL.Count() && !SL[i].StartsFromi("END")) {
+    if (i == 0) {
+      return InvalidIndex;
+    }
+    while (++i < SL.Count() && !SL[i].TrimWhiteChars().Equalsi("END")) {
+      if (i > 20) {
+        return InvalidIndex;
+      }
       continue;
     }
     if (++i >= SL.Count() || SL[i].Length() < 30) {

@@ -18,37 +18,37 @@
   static const uint16_t bitCentric, bitAbsent, bitOmitted;
 #endif
 
-vec3i TReflection::Standardise(const vec3i& _hkl, const SymmSpace::InfoEx& info, int *idx)  {
+vec3i TReflection::Standardise(const vec3i& _hkl, const SymmSpace::InfoEx& info, int* idx) {
   vec3i hkl = _hkl;
   if (idx != 0) {
     *idx = 0;
   }
-  if( info.centrosymmetric )  {
+  if (info.centrosymmetric) {
     vec3i hklv = -hkl, new_hkl = hkl;
-    if( (hklv[2] > hkl[2]) ||
+    if ((hklv[2] > hkl[2]) ||
       ((hklv[2] == hkl[2]) && (hklv[1] > hkl[1])) ||
-      ((hklv[2] == hkl[2]) && (hklv[1] == hkl[1]) && (hklv[0] > hkl[0])) )
+      ((hklv[2] == hkl[2]) && (hklv[1] == hkl[1]) && (hklv[0] > hkl[0])))
     {
       new_hkl = hklv;
       if (idx != 0) {
         *idx = -1;
       }
     }
-    for( size_t i=0; i < info.matrices.Count(); i++ )  {
-      hklv = hkl*info.matrices[i].r;
-      if( (hklv[2] > new_hkl[2]) ||
+    for (size_t i = 0; i < info.matrices.Count(); i++) {
+      hklv = hkl * info.matrices[i].r;
+      if ((hklv[2] > new_hkl[2]) ||
         ((hklv[2] == new_hkl[2]) && (hklv[1] > new_hkl[1])) ||
-        ((hklv[2] == new_hkl[2]) && (hklv[1] == new_hkl[1]) && (hklv[0] > new_hkl[0])) )
+        ((hklv[2] == new_hkl[2]) && (hklv[1] == new_hkl[1]) && (hklv[0] > new_hkl[0])))
       {
         new_hkl = hklv;
         if (idx != 0) {
-          *idx = i+2;
+          *idx = i + 2;
         }
       }
       hklv *= -1;
-      if( (hklv[2] > new_hkl[2]) ||
+      if ((hklv[2] > new_hkl[2]) ||
         ((hklv[2] == new_hkl[2]) && (hklv[1] > new_hkl[1])) ||
-        ((hklv[2] == new_hkl[2]) && (hklv[1] == new_hkl[1]) && (hklv[0] > new_hkl[0])) )
+        ((hklv[2] == new_hkl[2]) && (hklv[1] == new_hkl[1]) && (hklv[0] > new_hkl[0])))
       {
         new_hkl = hklv;
         if (idx != 0) {
@@ -58,17 +58,17 @@ vec3i TReflection::Standardise(const vec3i& _hkl, const SymmSpace::InfoEx& info,
     }
     hkl = new_hkl;
   }
-  else  {
+  else {
     vec3i new_hkl = hkl;
-    for( size_t i=0; i < info.matrices.Count(); i++ )  {
-      vec3i hklv = hkl*info.matrices[i].r;
-      if( (hklv[2] > new_hkl[2]) ||
+    for (size_t i = 0; i < info.matrices.Count(); i++) {
+      vec3i hklv = hkl * info.matrices[i].r;
+      if ((hklv[2] > new_hkl[2]) ||
         ((hklv[2] == new_hkl[2]) && (hklv[1] > new_hkl[1])) ||
-        ((hklv[2] == new_hkl[2]) && (hklv[1] == new_hkl[1]) && (hklv[0] > new_hkl[0])) )
+        ((hklv[2] == new_hkl[2]) && (hklv[1] == new_hkl[1]) && (hklv[0] > new_hkl[0])))
       {
         new_hkl = hklv;
         if (idx != 0) {
-          *idx = i+2;
+          *idx = i + 2;
         }
       }
     }
@@ -77,27 +77,31 @@ vec3i TReflection::Standardise(const vec3i& _hkl, const SymmSpace::InfoEx& info,
   return hkl;
 }
 //..............................................................................
-bool TReflection::IsAbsent(const vec3i& hkl, const SymmSpace::InfoEx& info)  {
+bool TReflection::IsAbsent(const vec3i& hkl, const SymmSpace::InfoEx& info) {
   bool absent = false;
-  for( size_t i=0; i < info.matrices.Count(); i++ )  {
-    vec3i hklv = hkl*info.matrices[i].r;
-    if( hkl == hklv || (info.centrosymmetric && hkl == -hklv) )  {
+  for (size_t i = 0; i < info.matrices.Count(); i++) {
+    vec3i hklv = hkl * info.matrices[i].r;
+    if (hkl == hklv || (info.centrosymmetric && hkl == -hklv)) {
       const double ps = info.matrices[i].t.DotProd(hkl);
-      if( !(absent = (olx_abs( ps - olx_round(ps) ) > 0.01)) )  {
-        for( size_t j=0; j < info.vertices.Count(); j++ )  {
-          const double ps = (info.matrices[i].t+info.vertices[j]).DotProd(hkl);
-          if( (absent = (olx_abs( ps - olx_round(ps) ) > 0.01)) )
+      if (!(absent = (olx_abs(ps - olx_round(ps)) > 0.01))) {
+        for (size_t j = 0; j < info.vertices.Count(); j++) {
+          const double ps = (info.matrices[i].t + info.vertices[j]).DotProd(hkl);
+          if ((absent = (olx_abs(ps - olx_round(ps)) > 0.01))) {
             return true;
+          }
         }
       }
-      if( absent )  return true;
+      if (absent) {
+        return true;
+      }
     }
   }
-  if( !absent )  {  // check for Identity and centering
-    for( size_t i=0; i < info.vertices.Count(); i++ )  {
+  if (!absent) {  // check for Identity and centering
+    for (size_t i = 0; i < info.vertices.Count(); i++) {
       const double ps = info.vertices[i].DotProd(hkl);
-      if( (absent = (olx_abs( ps - olx_round(ps) ) > 0.01)) )
+      if ((absent = (olx_abs(ps - olx_round(ps)) > 0.01))) {
         return true;
+      }
     }
   }
   return false;
@@ -208,19 +212,23 @@ void TReflection::Analyse(const SymmSpace::InfoEx& info)  {
           for( size_t j=0; j < info.vertices.Count(); j++ )  {
             const double ps =
               (info.matrices[i].t+info.vertices[j]).DotProd(hkl);
-            if( (absent = (olx_abs( ps - olx_round(ps) ) > 0.01)) )
+            if ((absent = (olx_abs(ps - olx_round(ps)) > 0.01))) {
               SetAbsent(true);
+            }
           }
         }
-        else
+        else {
           SetAbsent(true);
+        }
       }
     }
-    else if( !info.centrosymmetric && hkl == -hklv )
+    else if (!info.centrosymmetric && hkl == -hklv) {
       SetCentric(true);
+    }
   }
-  if( info.centrosymmetric )
+  if (info.centrosymmetric) {
     SetCentric(true);
+  }
 }
 //..............................................................................
 uint32_t TReflection::CalcHKLHash(const vec3i &hkl) {

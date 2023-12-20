@@ -105,12 +105,11 @@ handler::handler(const SymmSpace::InfoEx& _sym_info, const TRefList& refs,
       throw TInvalidArgumentException(__OlxSourceInfo,
         olxstr("batch number in: ").quote() << refs[i].ToString());
     }
-    vec3i hkl = TReflection::Standardise(refs[i].GetHkl(), sym_info);
-    if (refs[i].IsOmitted() || filter.IsOmitted(hkl)) {
+    if (refs[i].IsOmitted() || filter.IsOmitted(refs[i].GetHkl())) {
       ms.OmittedByUser++;
       continue;
     }
-    if (filter.IsOutside(hkl)) {
+    if (filter.IsOutside(refs[i].GetHkl())) {
       ms.FilteredOff++;
       continue;
     }

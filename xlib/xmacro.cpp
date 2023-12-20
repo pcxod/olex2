@@ -736,13 +736,13 @@ void XLibMacros::Export(TLibrary& lib)  {
     fpAny | psFileLoaded,
     "Test for twinning.");
   xlib_InitMacro(HKLF5,
-    "e-do not report an errors",
+    "e-do not report errors",
     fpAny | psFileLoaded,
     "HKLF5 utils.");
   xlib_InitMacro(TestHKLF,
     "e-do not report an errors",
     fpTwo,
-    "HKLF5 utils.");
+    "HKLF testing utils.");
   xlib_InitMacro(CalcVars,
     "cif-produce CIF report for the measures",
     fpAny | psFileLoaded,
@@ -4663,7 +4663,7 @@ void CifMerge_UpdateAtomLoop(TCif &Cif) {
             }
           }
         }
-        if (a.ccrd().QDistanceTo(ta.ccrd()) > 1e-3) {
+        if (a.ccrd().QDistanceTo(ta.ccrd()) > 5e-3) {
           match = false;
           break;
         }

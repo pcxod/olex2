@@ -1045,9 +1045,11 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
       info_ex.centrosymmetric = sp.IsCentrosymmetric();
       if (!refs.IsEmpty()) {
         bool mergeFP = (MERG == 4 || MERG == 3 || sp.IsCentrosymmetric());
-        // standardise OMITs when merging is enabled
-        for (size_t i = 0; i < Omits.Count(); i++) {
-          Omits[i] = TReflection::Standardise(Omits[i], info_ex);
+        if (HKLF < 5 && MERG != 0) {
+          // standardise OMITs when merging is enabled
+          for (size_t i = 0; i < Omits.Count(); i++) {
+            Omits[i] = TReflection::Standardise(Omits[i], info_ex);
+          }
         }
         QuickSorter::Sort(Omits);
         for (size_t i = 1; i < Omits.Count(); i++) {
@@ -1155,16 +1157,12 @@ RefinementModel::HklStat& RefinementModel::FilterHkl(TRefList& out,
     }
     bool add = true;
     for (size_t j = start; j <= i; j++) {
-      if (all_refs[j].IsOmitted()) {
+      if (all_refs[j].IsOmitted() || rsf.IsOmitted(all_refs[j].GetHkl())) {
         stats.OmittedReflections++;
         add = false;
         break;
       }
       if (rsf.IsOutside(all_refs[j])) {
-        add = false;
-        break;
-      }
-      if (HKLF >= 5 && Omits.Contains(all_refs[j].GetHkl())) {
         add = false;
         break;
       }

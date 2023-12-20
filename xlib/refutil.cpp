@@ -4,10 +4,92 @@
 #include "xapp.h"
 #include "refutil.h"
 #include "cif.h"
+#include "unitcell.h"
 
 using namespace RefUtil;
 
-
+ResolutionAndSigmaFilter::ResolutionAndSigmaFilter(const RefinementModel& _rm) : rm(_rm),
+_stats(0)
+{
+  double SHEL_hr = rm.GetSHEL_hr();
+  double SHEL_lr = rm.GetSHEL_lr();
+  if (SHEL_hr > SHEL_lr) {
+    olx_swap(SHEL_hr, SHEL_lr);
+  }
+  h_o_s = 0.5 * rm.GetOMIT_s();
+  const double two_sin_2t = 2 * sin(rm.GetOMIT_2t() * M_PI / 360.0);
+  min_d = rm.expl.GetRadiation() / (two_sin_2t == 0 ? 1e-6 : two_sin_2t);
+  if (rm.HasSHEL() && SHEL_hr > min_d) {
+    min_d = SHEL_hr;
+  }
+  max_d = SHEL_lr;
+  standardise_for_omit = rm.GetHKLF() < 5 && rm.GetMERG() != 0;
+  if (standardise_for_omit) {
+    standardisation_matrices.SetCapacity(rm.aunit.MatrixCount() * (rm.aunit.GetLatt() > 0 ? 2 : 1) + 1);
+    standardisation_matrices.AddAll(rm.aunit.GetMatices());
+    if (rm.aunit.GetLatt() > 0) {
+      standardisation_matrices.AddNew().I() *= -1;
+      for (size_t i = 0; i < rm.aunit.MatrixCount(); i++) {
+        standardisation_matrices.AddCopy(rm.aunit.GetMatrix(i)) *= -1;
+      }
+    }
+  }
+}
+//.............................................................................
+void ResolutionAndSigmaFilter::SetStats(RefinementModel::HklStat& stats) const {
+  _stats = &stats;
+  stats.LimDmax = max_d;
+  stats.LimDmin = min_d;
+  stats.MinD = 100;
+  stats.MaxD = -100;
+  stats.MinI = 100;
+  stats.MaxI = -100;
+  stats.MERG = rm.GetMERG();
+  stats.OMIT_s = rm.GetOMIT_s();
+  stats.OMIT_2t = rm.GetOMIT_2t();
+  stats.SHEL_lr = rm.GetSHEL_lr();
+  stats.SHEL_hr = rm.GetSHEL_hr();
+  stats.MinIndices = vec3i(100, 100, 100);
+  stats.MaxIndices = -stats.MinIndices;
+}
+//.............................................................................
+bool ResolutionAndSigmaFilter::IsOutside(const TReflection& r) const {
+  const double d = 1 / r.ToCart(rm.aunit.GetHklToCartesian()).Length();
+  if ((h_o_s > 0 && r.GetI() < h_o_s * r.GetS()) || d >= max_d || d <= min_d) {
+    if (_stats != 0) {
+      _stats->FilteredOff++;
+    }
+    return true;
+  }
+  if (_stats != 0) {
+    olx_update_min_max(r.GetI(), _stats->MinI, _stats->MaxI);
+    olx_update_min_max(d, _stats->MinD, _stats->MaxD);
+    vec3i::UpdateMinMax(r.GetHkl(), _stats->MinIndices, _stats->MaxIndices);
+  }
+  return false;
+}
+//.............................................................................
+bool ResolutionAndSigmaFilter::IsOmitted(const vec3i& hkl) const {
+  if (standardise_for_omit) {
+    return rm.GetOmits().Contains(
+      TReflection::Standardise(hkl, standardisation_matrices));
+  }
+  else {
+    return rm.GetOmits().Contains(hkl);
+  }
+}
+//.............................................................................
+void ResolutionAndSigmaFilter::AdjustIntensity(TReflection& r) const {
+  if (r.GetI() < h_o_s * r.GetS()) {
+    r.SetI(h_o_s * r.GetS());
+    if (_stats != 0) {
+      _stats->IntensityTransformed++;
+    }
+  }
+}
+//.............................................................................
+//.............................................................................
+//.............................................................................
 ShelxWeightCalculator::ShelxWeightCalculator(const TDoubleList& wght_,
   const mat3d& h2c, double scale)
   :wght(wght_),
