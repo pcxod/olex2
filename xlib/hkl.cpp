@@ -75,7 +75,6 @@ olx_object_ptr<TIns> THklFile::LoadFromFile(const olxstr& FN, bool get_ins,
   try {
     TEFile::CheckFileExists(__OlxSourceInfo, FN);
     TStrList SL = TEFile::ReadLines(FN);
-    SL.Pack();
     if (SL.IsEmpty()) {
       throw TEmptyFileException(__OlxSrcInfo, FN);
     }

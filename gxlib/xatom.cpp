@@ -447,7 +447,7 @@ bool TXAtom::Orient(TGlPrimitive& GlP) {
     if (IsSpecialDrawing()) { // draw separate atoms
       const mat3d& m = Parent.GetBasis().GetMatrix();
       vec3d v(m[0][0], m[1][0], m[2][0]);
-      v *= 0.75;
+      v *= 0.1;
       if (exyz->Count() == 2) {
         if (&(*exyz)[1] == &CAtom()) {
           c += v;

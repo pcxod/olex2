@@ -975,11 +975,10 @@ void THtmlManager::funSetEnabled(const TStrObjList &Params, TMacroData &E) {
     olxstr objName = (ind == InvalidIndex) ? name : name.SubStringFrom(ind + 1);
     if (html == 0) {
 #ifdef _DEBUG
-      E.ProcessingError(__OlxSrcInfo,
-        "could not locate specified popup: ").quote() << hn;
-#else
-      E.ClearErrorFlag();
+      TBasicApp::NewLogEntry(logError)  <<
+        (olxstr("could not locate specified popup: ").quote() << hn);
 #endif
+      E.ClearErrorFlag();
       return;
     }
     Wildcard wc(objName);
@@ -993,10 +992,10 @@ void THtmlManager::funSetEnabled(const TStrObjList &Params, TMacroData &E) {
   Control c = FindControl(Params[0], E, 1, __OlxSrcInfo);
   if (c.ctrl == 0) {
 #ifdef _DEBUG
-    E.ProcessingError(__OlxSrcInfo, "undefined control: ").quote() << Params[0];
-#else
-    E.ClearErrorFlag();
+    TBasicApp::NewLogEntry(logError) <<
+      (olxstr("undefined control: ").quote() << Params[0]);
 #endif
+    E.ClearErrorFlag();
     return;
   }
   c.ctrl->WI.SetEnabled(enabled);
