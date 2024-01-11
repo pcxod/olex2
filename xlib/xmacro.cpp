@@ -44,6 +44,7 @@
 #include "tls.h"
 #include "math/plane.h"
 #include "refutil.h"
+#include "hkl_util.h"
 
 #ifdef _CUSTOM_BUILD_
   #include "custom_base.h"
@@ -12006,50 +12007,22 @@ struct macTestHKLF_sorter {
   }
 };
 
-olxcstr GetFingerprint(const THklFile& f) {
-  TTypeList<olx_pair_t<double, size_t> > rv;
-  double minI = 1e3, maxI = -1e-3;
-  for (size_t i = 0; i < f.RefCount(); i++) {
-    olx_update_min_max(f[i].GetI(), minI, maxI);
-  }
-  double range = maxI - minI,
-    scale = 99 / range;
-  for (size_t i = 0; i < 10; i++) {
-    rv.AddNew(0, 0);
-  }
-  for (size_t i = 0; i < f.RefCount(); i++) {
-    int I = olx_round((f[i].GetI() - minI) * scale);
-    if (I < 0) {
-      I = 0;
-    }
-    else if (I > 99) {
-      I = 99;
-    }
-    int idx = I / (int)rv.Count();
-    // stabilise potential rounding errors, does this make any sense?
-    if (olx_abs(I - idx * (int)rv.Count()) < 2) {
-      continue;
-    }
-    rv[idx].a += I;
-    rv[idx].b++;
-  }
-  olxcstr txt;
-  for (size_t i = 0; i < rv.Count(); i++) {
-    if (rv[i].b == 0) {
-      continue;
-    }
-    txt << rv[i].b << '(' << olxcstr::FormatFloat(1, rv[i].a / rv[i].b)
-      << ')' << ' ';
-  }
-  return txt;
-}
-
 void XLibMacros::macTestHKLF(TStrObjList& Cmds, const TParamList& Options,
   TMacroData& E)
 {
   THklFile f1, f2;
   f1.LoadFromFile(Cmds[0], false);
   f2.LoadFromFile(Cmds[1], false);
+
+  hkl_util::fingerprint_t fp1 = hkl_util::calc_fingerprint(f1.RefList(), 25);
+  hkl_util::fingerprint_t fp2 = hkl_util::calc_fingerprint(f2.RefList(), 25);
+
+  TBasicApp::NewLogEntry() << "Fingerprint_N 1: " << hkl_util::fingerprint2str(fp1, true);
+  TBasicApp::NewLogEntry() << "Fingerprint_N 2: " << hkl_util::fingerprint2str(fp2, true);
+
+  TBasicApp::NewLogEntry() << "Fingerprint 1: " << hkl_util::fingerprint2str(fp1, false);
+  TBasicApp::NewLogEntry() << "Fingerprint 2: " << hkl_util::fingerprint2str(fp2, false);
+
   if (f1.RefCount() != f2.RefCount()) {
     E.ProcessingError(__OlxSrcInfo, "missmatching reflection count");
     return;
@@ -12081,9 +12054,6 @@ void XLibMacros::macTestHKLF(TStrObjList& Cmds, const TParamList& Options,
   }
   scale /= cnt;
   TBasicApp::NewLogEntry() << "Estimated scale: " << olxstr::FormatFloat(3, scale);
-  
-  TBasicApp::NewLogEntry() << "Fingerprint 1: " << GetFingerprint(f1);
-  TBasicApp::NewLogEntry() << "Fingerprint 2: " << GetFingerprint(f2);
 
   double r1_up = 0, r1_dn = 0;
   for (size_t i = 0; i < f1.RefCount(); i++) {
@@ -12091,6 +12061,8 @@ void XLibMacros::macTestHKLF(TStrObjList& Cmds, const TParamList& Options,
     r1_dn += olx_abs(f1[i].GetI())/scale + olx_abs(f2[i].GetI());
   }
   TBasicApp::NewLogEntry() << "R1: " << olxstr::FormatFloat(3, r1_up*200/ r1_dn, true);
+  TBasicApp::NewLogEntry() << "Correlation: " <<
+    olxstr::FormatFloat(3, hkl_util::corelate(fp1, fp2), true);
 
   size_t max_data = olx_min(200, f1.RefCount());
   ematd dm(max_data * 3, 9);

@@ -166,6 +166,7 @@ np_repository = Split("""./repository/filesystem.cpp   ./repository/shellutil.cp
                          ./repository/httpfs.cpp       ./repository/IsoSurface.cpp
                          ./repository/fsext.cpp        ./repository/eprocess.cpp
                          ./repository/olxvar.cpp       ./repository/cdsfs.cpp
+                         ./repository/hkl_util.cpp
                          """)
 py_repository = Split("""./repository/pyext.cpp
                          ./repository/py_core.cpp ./repository/updateapi.cpp 

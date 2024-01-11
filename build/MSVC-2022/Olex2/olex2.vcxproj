@@ -515,6 +515,7 @@
     <ClCompile Include="..\..\..\repository\filesystem.cpp" />
     <ClCompile Include="..\..\..\repository\fsext.cpp" />
     <ClCompile Include="..\..\..\repository\hkl_py.cpp" />
+    <ClCompile Include="..\..\..\repository\hkl_util.cpp" />
     <ClCompile Include="..\..\..\repository\httpfs.cpp" />
     <ClCompile Include="..\..\..\olex\imagep.cpp" />
     <ClCompile Include="..\..\..\repository\IsoSurface.cpp" />

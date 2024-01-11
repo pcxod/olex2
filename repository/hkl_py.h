@@ -19,6 +19,9 @@ class hkl_py  {
 public:
   static PyObject* Read(PyObject* self, PyObject* args);
   static PyObject* Write(PyObject* self, PyObject* args);
+  static PyObject* Fingerprint(PyObject* self, PyObject* args);
+  static PyObject* FormatFingerprint(PyObject* self, PyObject* args);
+  static PyObject* Corelate(PyObject* self, PyObject* args);
   static olxcstr &ModuleName();
   static PyObject *PyInit();
 };
