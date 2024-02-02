@@ -629,7 +629,8 @@ TAG_HANDLER_PROC(tag) {
         ExpandMacroShortcuts(tag.GetParam(wxT("HINT")),macro_map));
     }
     if (tag.HasParam(wxT("DOWN"))) {
-      Btn->SetDown(tag.GetParam(wxT("DOWN")).CmpNoCase(wxT("true")) == 0);
+      Btn->SetDown(
+        ExpandMacroShortcuts(tag.GetParam(wxT("DOWN")).CmpNoCase(wxT("true")), macro_map) == 0);
     }
 
     olxstr modeDependent = tag.GetParam(wxT("MODEDEPENDENT"));
@@ -712,7 +713,7 @@ TAG_HANDLER_PROC(tag) {
       CreatedObject = Box;
       CreatedWindow = Box;
       if (tag.HasParam(wxT("ITEMS"))) {
-        olxstr Items = tag.GetParam(wxT("ITEMS"));
+        olxstr Items = ExpandMacroShortcuts(tag.GetParam(wxT("ITEMS")), macro_map);
         op->processFunction(Items, SrcInfo, true);
         TStrList SL(Items, ';');
         Box->AddItems(SL);
@@ -771,14 +772,14 @@ TAG_HANDLER_PROC(tag) {
     int min = 0, max = 100, value = 0;
     try {
       if (tag.HasParam(wxT("MIN"))) {
-        olxstr v = tag.GetParam(wxT("MIN"));
+        olxstr v = ExpandMacroShortcuts(tag.GetParam(wxT("MIN")), macro_map);
         if (!v.IsEmpty()) {
           op->processFunction(v, SrcInfo, true);
           min = (int)v.ToDouble();
         }
       }
       if (tag.HasParam(wxT("MAX"))) {
-        olxstr v = tag.GetParam(wxT("MAX"));
+        olxstr v = ExpandMacroShortcuts(tag.GetParam(wxT("MAX")), macro_map);
         if (!v.IsEmpty()) {
           op->processFunction(v, SrcInfo, true);
           max = (int)v.ToDouble();
@@ -813,7 +814,7 @@ TAG_HANDLER_PROC(tag) {
           new wxHtmlContainerCell(m_WParser->GetContainer());
         THtml::WordCell* wc =
           new THtml::WordCell(Label.u_str(), *m_WParser->GetDC());
-        if (LinkInfo != NULL) {
+        if (LinkInfo != 0) {
           wc->SetLink(*LinkInfo);
         }
         wc->SetDescent(0);
@@ -892,7 +893,7 @@ TAG_HANDLER_PROC(tag) {
     CreatedObject = Box;
     CreatedWindow = Box;
     if (tag.HasParam(wxT("CHECKED"))) {
-      Tmp = tag.GetParam(wxT("CHECKED"));
+      Tmp = ExpandMacroShortcuts(tag.GetParam(wxT("CHECKED")), macro_map);
       op->processFunction(Tmp, SrcInfo, false);
       if (Tmp.IsEmpty()) {
         Box->SetChecked(true);
