@@ -102,15 +102,16 @@ public:
   }
   template <class T> const VType& Find(const T& key, const VType& def) const {
     size_t ind = SortedL::IndexOf(key);
-    if( ind == InvalidIndex )
+    if (ind == InvalidIndex) {
       return def;
+    }
     return SortedL::operator[] (ind).val;
   }
   void Clear()  {  SortedL::Clear();  }
   size_t Count() const {  return SortedL::Count();  }
   bool IsEmpty() const {  return SortedL::IsEmpty();  }
+  void SetCapacity(const olx_capacity_t &c) { SortedL::SetCapacity(c); }
   void SetCapacity(size_t c)  { SortedL::SetCapacity(c); }
-  void SetIncrement(size_t inc) { SortedL::SetIncrement(inc);  }
   VType& GetValue(size_t ind)  {  return SortedL::operator[] (ind).val;  }
   const VType& GetValue(size_t ind) const {
     return SortedL::operator[] (ind).val;
@@ -142,9 +143,11 @@ public:
     return SortedL::IndexOf(key);
   }
   template <class T> size_t IndexOfValue(const T& val) const {
-    for( size_t i=0; i < SortedL::Count(); i++ )
-      if( SortedL::operator [] (i).val == val )
+    for (size_t i = 0; i < SortedL::Count(); i++) {
+      if (SortedL::operator [] (i).val == val) {
         return i;
+      }
+    }
     return InvalidIndex;
   }
   template <class T> bool Remove(const T& key)  {

@@ -564,7 +564,7 @@ void XLibMacros::Export(TLibrary& lib)  {
     "i-[false] makes an implicit restaraint&;"
     "r-[true] when two atoms selected creates a rotor restraint, can be false"
     " when -i is used&;"
-    "c-similar bonds from the first atoms to the rest&;"
+    "c-similar bonds from the first atom to the rest&;"
     "v-do not filter distances by deviation&;"
     "cs-do not clear selection",
     fpAny|psCheckFileTypeIns,

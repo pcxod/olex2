@@ -20,32 +20,31 @@ template <typename> class SharedPtrList;
 template <typename> class ConstPtrList;
 
 template <class T> class TPtrList : public IOlxObject {
-  size_t FCount, FCapacity;
-  size_t FIncrement;
+  size_t FCount;
+  olx_capacity_t cap;
   T **Items;
   void Allocate() {
-    if (FCapacity == 0) {
+    if (cap.capacity == 0) {
       olx_free(Items);
       Items = 0;
     }
     else {
-      Items = olx_realloc<T*>(Items, FCapacity);
+      Items = olx_realloc<T*>(Items, cap.capacity);
     }
   }
 
   void init(size_t size) {
     FCount = size;
-    FIncrement = 5;
-    FCapacity = FCount;
+    cap.capacity = FCount;
     Items = 0;
     if (size != 0) {
       Allocate();
-      memset(Items, 0, FCapacity * sizeof(T*));
+      memset(Items, 0, cap.capacity * sizeof(T*));
     }
   }
   void checkSize() {
-    if (FCapacity == FCount) {
-      SetCapacity((size_t)(1.5*FCount + FIncrement));
+    if (cap.capacity == FCount) {
+      SetCapacity(cap.new_size(FCount));
     }
   }
   void init_from_array(size_t size, const T** array) {
@@ -57,7 +56,13 @@ public:
   TPtrList() {
     init(0);
   }
-  // allocates size elements (can be accessed diretly)
+  explicit TPtrList(const olx_capacity_t &cap)
+    : cap(cap)
+  {
+    init(cap.capacity);
+    FCount = 0;
+  }
+  // allocates size elements
   TPtrList(size_t size) {
     init(size);
   }
@@ -110,7 +115,8 @@ public:
     if (Items != 0) {
       free(Items);
       Items = 0;
-      FCount = FCapacity = 0;
+      FCount = 0;
+      cap.capacity = 0;
     }
   }
   //..............................................................................
@@ -139,10 +145,9 @@ public:
   TPtrList &TakeOver(TPtrList& l, bool do_delete = false) {
     olx_free(Items);
     FCount = l.FCount;
-    FCapacity = l.FCapacity;
-    FIncrement = l.FIncrement;
+    cap = l.cap;
     Items = l.Items;
-    l.FCount = l.FCapacity = 0;
+    l.FCount = l.cap.capacity = 0;
     l.Items = 0;
     if (do_delete) {
       delete &l;
@@ -315,7 +320,7 @@ public:
     TIndexOutOfRangeException::ValidateRange(
       __POlxSourceInfo, index, 0, FCount + 1);
 #endif
-    SetCapacity(FCount + FIncrement + list.Count());
+    SetCapacity(FCount + cap.inc + list.Count());
     const size_t lc = list.Count();
     memmove(&Items[index + lc], &Items[index], (FCount - index) * sizeof(T*));
     memcpy(&Items[index], list.Items, lc * sizeof(T*));
@@ -328,7 +333,7 @@ public:
     TIndexOutOfRangeException::ValidateRange(
       __POlxSourceInfo, index, 0, FCount + 1);
 #endif
-    SetCapacity(FCount + FIncrement + list.Count());
+    SetCapacity(FCount + cap.inc + list.Count());
     const size_t lc = list.Count();
     memmove(&Items[index + lc], &Items[index], (FCount - index) * sizeof(T*));
     for (size_t i = 0; i < lc; i++) {
@@ -343,7 +348,7 @@ public:
     TIndexOutOfRangeException::ValidateRange(
       __POlxSourceInfo, index, 0, FCount + 1);
 #endif
-    SetCapacity(FCount + FIncrement + cnt);
+    SetCapacity(FCount + cap.inc + cnt);
     memmove(&Items[index + cnt], &Items[index], (FCount - index) * sizeof(T*));
     FCount += cnt;
     return *this;
@@ -379,19 +384,23 @@ public:
     return Items[FCount - 1];
   }
   //..............................................................................
-  TPtrList& SetCapacity(size_t v) {
-    if (v < FCapacity) {
-      return *this;
-    }
-    FCapacity = v;
-    Allocate();
-    // initialise the rest of items to NULL
-    memset(&Items[FCount], 0, (FCapacity - FCount) * sizeof(T*));
-    return *this;
+  olx_capacity_t& GetCapacity() { return cap; }
+  const olx_capacity_t& GetCapacity() const { return cap; }
+  //..............................................................................
+  TPtrList& SetCapacity(const olx_capacity_t &c) {
+    cap.inc = c.inc;
+    cap.inc_k = c.inc_k;
+    return SetCapacity(c.capacity);
   }
   //..............................................................................
-  TPtrList& SetIncrement(size_t v) {
-    FIncrement = v;
+  TPtrList& SetCapacity(size_t v) {
+    if (v < cap.capacity) {
+      return *this;
+    }
+    cap.capacity = v;
+    Allocate();
+    // initialise the rest of items to NULL
+    memset(&Items[FCount], 0, (cap.capacity - FCount) * sizeof(T*));
     return *this;
   }
   //..............................................................................
@@ -588,9 +597,9 @@ public:
     return cnt;
   }
   //..............................................................................
-    // make list capcity equal to its size
+    // make list capacity equal to size
   TPtrList& Fit() {
-    FCapacity = FCount;
+    cap.capacity = FCount;
     Allocate();
     return *this;
   }
@@ -608,8 +617,8 @@ public:
       return *this;
     }
     if (v > FCount) {
-      if (v > FCapacity) {
-        SetCapacity(v + FIncrement);
+      if (v > cap.capacity) {
+        SetCapacity(v + (shrink ? 0 : cap.inc));
       }
       FCount = v;
     }
@@ -649,7 +658,7 @@ public:
         "indices list size");
     }
     // allocate the list of NULLs
-    T** ni = olx_malloc<T*>(FCapacity = FCount);
+    T** ni = olx_malloc<T*>(cap.capacity = FCount);
     for (size_t i = 0; i < FCount; i++) {
 #ifdef _DEBUG
       TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo,
@@ -701,6 +710,7 @@ public:
   }
 public:
   typedef item_t *list_item_type;
+  olx_list_2_std;
 };
 
 template <typename item_t>

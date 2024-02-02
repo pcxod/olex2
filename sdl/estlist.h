@@ -72,20 +72,25 @@ protected:
 //..............................................................................
 public:
   TSTypeList() {}
+  explicit TSTypeList(const olx_capacity_t& cap)
+    : Data(cap)
+  {}
   TSTypeList(const ComparatorType &cmp) : cmp(cmp) {}
 //..............................................................................
   /* copy constructor */
   TSTypeList(const TSTypeList& list) : cmp(list.cmp) {
     Data.SetCount(list.Count());
-    for (size_t i=0; i < list.Data.Count(); i++)
+    for (size_t i = 0; i < list.Data.Count(); i++) {
       Data[i] = new EntryType(*list.Data[i]);
+    }
   }
 //..............................................................................
   TSTypeList &operator = (const TSTypeList &l) {
     Data.DeleteItems();
     Data.SetCount(l.Count());
-    for (size_t i=0; i < l.Count(); i++)
+    for (size_t i = 0; i < l.Count(); i++) {
       Data[i] = new EntryType(*l.Data[i]);
+    }
     return *this;
   }
 //..............................................................................
@@ -98,25 +103,31 @@ public:
   }
 //..............................................................................
   size_t IndexOfValue(const B& v) const {
-    for (size_t i=0; i < Data.Count(); i++)
+    for (size_t i = 0; i < Data.Count(); i++) {
       if (Data[i]->Value == v)
         return i;
+    }
     return InvalidIndex;
   }
 //..............................................................................
-  // retrieves indexes of all entries with same key and returns the number
+  // retrieves indices of all entries with same key and returns the number
   // of added entries
   template <class T, class size_t_list_t>
   size_t GetIndices(const T& key, size_t_list_t& il)  {
-    if (Data.IsEmpty())  return 0;
+    if (Data.IsEmpty()) {
+      return 0;
+    }
     if (Data.Count() == 1) {
-      if (cmp.Compare(Data[0], key) != 0)
+      if (cmp.Compare(Data[0], key) != 0) {
         return 0;
+      }
       il.Add(0);
       return 1;
     }
     const size_t index =  IndexOf(key);
-    if (index == InvalidIndex)  return 0;
+    if (index == InvalidIndex) {
+      return 0;
+    }
     il.Add(index);
     size_t i = index+1, addedc = il.Count()+1;
     // go forward
@@ -128,19 +139,21 @@ public:
       i = index - 1;
       while (i > 0 && (cmp.Compare(Data[i], key) == 0)) {
         il.Add(i);
-        if (i == 0)  break;
+        if (i == 0) {
+          break;
+        }
         i--;
       }
     }
     return il.Count() - addedc;
   }
 //..............................................................................
-  bool IsNull(size_t index) const {  return Data[index] == NULL;  }
+  bool IsNull(size_t index) const {  return Data[index] == 0;  }
 //..............................................................................
   void NullItem(size_t i) {
-    if (Data[i] != NULL) {
+    if (Data[i] != 0) {
       delete Data[i];
-      Data[i] = NULL;
+      Data[i] = 0;
     }
   }
 //..............................................................................
@@ -181,50 +194,56 @@ public:
 //..............................................................................
   B& GetLastValue() const {  return Data.GetLast()->Value;  }
 //..............................................................................
+  olx_capacity_t& GetCapacity() { return Data.GetCapacity(); }
+  const olx_capacity_t& GetCapacity() const { return Data.GetCapacity(); }
+//..............................................................................
   TSTypeList& SetCapacity(size_t v)  {
     Data.SetCapacity(v);
     return *this;
   }
 //..............................................................................
-  TSTypeList& SetIncrement(size_t v)  {
-    Data.SetIncrement(v);
-    return *this;
-  }
-//..............................................................................
   template <class T> B& Find(const T& key) const {
     const size_t ind = IndexOf(key);
-    if (ind != InvalidIndex)
+    if (ind != InvalidIndex) {
       return Data[ind]->Value;
+    }
     throw TFunctionFailedException(__OlxSourceInfo,
       "no object at specified location");
   }
 //..............................................................................
   template <class T> const B& Find(const T& key, const B& def) const {
     const size_t ind = IndexOf(key);
-    if (ind != InvalidIndex)
+    if (ind != InvalidIndex) {
       return Data[ind]->Value;
+    }
     return def;
   }
   //..............................................................................
   EntryType& Add(const A& key, const B& Value) {
     EntryType *entry = new EntryType(key, Value);
-    if (Data.IsEmpty())
+    if (Data.IsEmpty()) {
       Data.Add(entry);
+    }
     else if (Data.Count() == 1) {
-      if (cmp.Compare(Data[0], key) < 0)
+      if (cmp.Compare(Data[0], key) < 0) {
         Data.Add(entry);
-      else
+      }
+      else {
         Data.Insert(0, entry);
+      }
     }
     else {
       // smaller than the first
-      if (cmp.Compare(Data[0], key) >= 0)
+      if (cmp.Compare(Data[0], key) >= 0) {
         Data.Insert(0, entry);
+      }
       // larger than the last
-      else if (cmp.Compare(Data.GetLast(), key) <= 0)
+      else if (cmp.Compare(Data.GetLast(), key) <= 0) {
         Data.Add(entry);
-      else if (Data.Count() == 2) // an easy case then with two items
+      }
+      else if (Data.Count() == 2) { // an easy case then with two items
         Data.Insert(1, entry);
+      }
       else {
         const size_t pos = FindInsertIndex(key);
         if (pos == InvalidIndex ) {
@@ -240,10 +259,12 @@ public:
   TSTypeList &Merge(const TSTypeList &l, bool replace=true) {
     for (size_t i=0; i < l.Count(); i++) {
       size_t idx = IndexOf(l.GetKey(i));
-      if (idx == InvalidIndex)
+      if (idx == InvalidIndex) {
         Add(l.GetKey(i), l.GetValue(i));
-      else if (replace)
+      }
+      else if (replace) {
         Data[idx]->Value = l.GetValue(i);
+      }
     }
     return *this;
   }

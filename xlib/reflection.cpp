@@ -42,7 +42,7 @@ vec3i TReflection::Standardise(const vec3i& _hkl, const SymmSpace::InfoEx& info,
       {
         new_hkl = hklv;
         if (idx != 0) {
-          *idx = i + 2;
+          *idx = (int)i + 2;
         }
       }
       hklv *= -1;
@@ -68,7 +68,7 @@ vec3i TReflection::Standardise(const vec3i& _hkl, const SymmSpace::InfoEx& info,
       {
         new_hkl = hklv;
         if (idx != 0) {
-          *idx = i + 2;
+          *idx = (int)i + 2;
         }
       }
     }

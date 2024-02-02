@@ -37,6 +37,8 @@ protected:
 public:
   // creates a new empty objects
   TTypeListExt() {}
+  // allocates storage for the given capacity
+  explicit TTypeListExt(const olx_capacity_t& cap) : List(cap) {}
   TTypeListExt(size_t size, bool do_allocate = true) : List(size) {
     if (do_allocate) {
       for (size_t i = 0; i < size; i++) {
@@ -366,15 +368,19 @@ public:
     return Assign(list);
   }
   //..............................................................................
+  olx_capacity_t& GetCapacity() { return List.GetCapacity(); }
+  const olx_capacity_t& GetCapacity() const { return List.GetCapacity(); }
+  //..............................................................................
+  TTypeListExt& SetCapacity(const olx_capacity_t &c) {
+    List.SetCapacity(c);
+    return *this;
+  }
+  //..............................................................................
   TTypeListExt& SetCapacity(size_t v) {
     List.SetCapacity(v);
     return *this;
   }
   //..............................................................................
-  TTypeListExt& SetIncrement(size_t v) {
-    List.SetIncrement(v);
-    return *this;
-  }
   //..............................................................................
   void Delete(size_t index) {
     if (List[index] != 0) {
@@ -391,8 +397,9 @@ public:
       List.Count() + 1);
 #endif
     for (size_t i = 0; i < count; i++) {
-      if (List[from + i] != NULL)
+      if (List[from + i] != 0) {
         delete (DestructCast*)List[from + i];
+      }
     }
     List.DeleteRange(from, count);
   }
@@ -420,7 +427,9 @@ public:
   }
   //..............................................................................
   TTypeListExt& Shrink(size_t newSize) {
-    if (newSize >= List.Count())  return *this;
+    if (newSize >= List.Count()) {
+      return *this;
+    }
     for (size_t i = newSize; i < List.Count(); i++)
       if (List[i] != 0) {
         delete (DestructCast*)List[i];
@@ -565,6 +574,7 @@ public:
   };
   typedef T list_item_type;
   typedef ConstTypeListExt<T, DestructCast> const_list_type;
+  olx_list_2_std;
 };
 
 template <class T>

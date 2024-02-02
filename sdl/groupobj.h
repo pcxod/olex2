@@ -28,6 +28,10 @@ protected:
   size_t GetObjectGroupId() const {  return ObjectGroupId;  }
 public:
   AGOProperties() : ObjectGroupId(InvalidIndex) {}
+  explicit AGOProperties(const olx_capacity_t &cap)
+    : ObjectGroupId(InvalidIndex),
+    Objects(cap)
+  {}
   virtual ~AGOProperties() {}
   // adds an object (reference or a pointer) to the group and returns it
   template <class AGO>
@@ -44,7 +48,7 @@ public:
   }
   void ClearObjects()  {  Objects.Clear();  }
   void SetObjectCapacity(size_t cap)  {  Objects.SetCapacity(cap);  }
-  void SetObjectIncrement(size_t inc) {  Objects.SetIncrement(inc);  }
+  void SetObjectIncrement(size_t inc) {  Objects.GetCapacity().inc = inc;  }
 
   virtual bool operator == (const AGOProperties& C) const = 0;
   virtual AGOProperties& operator = (const AGOProperties& C) = 0;

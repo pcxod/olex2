@@ -102,8 +102,6 @@ extern const olxwstr &WTrueString();
 
 template <class T, typename TC> class TTSString : public T  {
   void InitFromCharStr(const TC* str, size_t len) {
-    T::_Start = 0;
-    T::_Increment = 8;
     T::_Length = len == InvalidIndex ? o_strlen(str) : len;
     T::SData = new struct T::Buffer(T::_Length + T::_Increment, str, T::_Length);
   }
@@ -114,11 +112,9 @@ template <class T, typename TC> class TTSString : public T  {
     if (T::SData != 0) {
       T::SData->RefCnt++;
     }
-    T::_Increment = 8;
   }
   TTSString& AssignCharStr(const TC* str, size_t len = ~0) {
     T::_Start = 0;
-    T::_Increment = 8;
     T::_Length = ((len == InvalidIndex) ? o_strlen(str) : len);
     if (T::SData != 0) {
       if (T::SData->RefCnt == 1) { // owed by this object
@@ -139,6 +135,7 @@ template <class T, typename TC> class TTSString : public T  {
 
 public:
   TTSString() : T() {}
+  explicit TTSString(const olx_capacity_t &cap) : T(cap.capacity) {}
   //...........................................................................
   TTSString(const TTSString& str, size_t start, size_t length) {
     T::SData = str.SData;
@@ -147,7 +144,6 @@ public:
     }
     T::_Start = str._Start + start;
     T::_Length = length;
-    T::_Increment = 8;
     T::OnCopy(str);
   }
   //...........................................................................
@@ -172,10 +168,8 @@ public:
   }
   //...........................................................................
   TTSString(const TC& v) {
-    T::_Start = 0;
-    T::_Increment = 8;
     T::_Length = 1;
-    T::SData = new struct T::Buffer(T::_Length+T::_Increment);
+    T::SData = new struct T::Buffer(T::_Length + T::_Increment);
     T::SData->Data[0] = v;
   }
   //...........................................................................

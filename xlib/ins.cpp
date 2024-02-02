@@ -524,8 +524,12 @@ void TIns::_ProcessSame(ParseContext& cx, const TIndexList *index)  {
       sg1.Esd13 = esd2;
       if (sg1.GetAtoms().IsExplicit()) {
         TTypeList<ExplicitCAtomRef> atoms = sg1.GetAtoms().ExpandList(cx.rm);
-        if (atoms.Count() > max_atoms) {
-          max_atoms = atoms.Count();
+        size_t ac = atoms.Count();
+        //size_t x = olx_count(atoms, TCAtom::TypeAnalyser(
+        //  FunctionAccessor::MakeConst(&ExplicitCAtomRef::GetAtom),
+        //  iHydrogenZ));
+        if (ac > max_atoms) {
+          max_atoms = ac;
         }
       }
     }

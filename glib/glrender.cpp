@@ -111,9 +111,9 @@ TGlRenderer::TGlRenderer(AGlScene *S, size_t width, size_t height)
   FGlImageChanged = true; // will cause its update
   FGlImage = 0;
   TextureManager = new TTextureManager();
-  FTranslucentObjects.SetIncrement(16);
-  FCollections.SetIncrement(16);
-  FGObjects.SetIncrement(16);
+  FTranslucentObjects.SetCapacity(olx_reserve(0, 16));
+  FCollections.SetCapacity(olx_reserve(0, 16));
+  FGObjects.SetCapacity(olx_reserve(0, 16));
   MaxRasterZ = 1;
 
   NearPlane = 1;

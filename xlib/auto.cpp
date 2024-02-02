@@ -641,8 +641,8 @@ void TAutoDB::ProcessFolder(const olxstr& folder, bool allow_disorder,
   TOnProgress progress;
   progress.SetMax(files.Count());
   for (size_t i = 0; i < Nodes.Count(); i++) {
-    Nodes[i].SetCapacity(Nodes[i].Count() + files.Count() * 100);
-    Nodes[i].SetIncrement(64 * 1024);
+    Nodes[i].SetCapacity(
+      olx_reserve(Nodes[i].Count() + files.Count() * 100, 64 * 1024));
   }
   for (size_t i = 0; i < files.Count(); i++) {
     progress.SetPos(i);

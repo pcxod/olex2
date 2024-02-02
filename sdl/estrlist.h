@@ -89,6 +89,10 @@ protected:
 public:
   TTStrList() {}
 
+  explicit TTStrList(const olx_capacity_t &cap)
+    : Strings(cap)
+  {}
+
   template <class T1> TTStrList(const TTStrList<T1>& list) {
     Strings.SetCapacity(list.Count());
     for (size_t i = 0; i < list.Count(); i++) {
@@ -179,6 +183,11 @@ public:
     }
     return *this;
   }
+
+  //..............................................................................
+  olx_capacity_t& GetCapacity() { return Strings.GetCapacity(); }
+  const olx_capacity_t& GetCapacity() const { return Strings.GetCapacity(); }
+  //..............................................................................
 
   void SetCapacity(size_t cap) { Strings.SetCapacity(cap); }
   string_type& operator [] (size_t i) const {
@@ -718,6 +727,7 @@ public:
   };
   typedef typename T::string_type list_item_type;
   typedef ConstStrList<TTStrList<T> > const_list_type;
+  olx_list_2_std;
 };
 
 
