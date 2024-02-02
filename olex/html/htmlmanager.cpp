@@ -378,7 +378,7 @@ void THtmlManager::funIsItem(const TStrObjList &Params, TMacroData &E) {
     return;
   }
   olxstr itemName((Params.Count() == 1) ? Params[0] : Params[1]);
-  E.SetRetVal(html->GetRoot().FindSwitch(itemName) != NULL);
+  E.SetRetVal(html->GetRoot().FindSwitch(itemName) != 0);
 }
 //.............................................................................
 void THtml::SetShowTooltips(bool v, const olxstr& html_name)  {
@@ -713,12 +713,16 @@ THtmlManager::Control THtmlManager::FindControl(const olxstr &name,
   THtml* html = (ind == InvalidIndex) ? main : FindHtml(name.SubStringTo(ind));
   olxstr objName = (ind == InvalidIndex) ? name : name.SubStringFrom(ind + 1);
   if (html == 0) {
+    const size_t ci = main->Objects.IndexOf(name);
+    if (ci != InvalidIndex) {
+      return Control(main, main->GetObject(ci), main->GetWindow(ci), name);
+    }
     me.ProcessingError(location,
-      "could not locate specified popup: ").quote() << hn;
+      "could not locate specified popup/item: ").quote() << (hn << '/' << name);
     return Control(0, 0, 0, objName);
   }
   if (objName.Equals("self")) {
-    if (needs == 1) {
+    if (needs == 1) { //AOlxCtrl
       me.ProcessingError(__OlxSrcInfo,
         "wrong control name: ").quote() << objName;
     }
@@ -729,8 +733,13 @@ THtmlManager::Control THtmlManager::FindControl(const olxstr &name,
     me.ProcessingError(__OlxSrcInfo,
       "wrong html object name: ").quote() << objName;
   }
-  return Control(html, ci == InvalidIndex ? 0 : html->GetObject(ci),
-    ci == InvalidIndex ? 0 : html->GetWindow(ci), objName);
+  AOlxCtrl* ctrl = 0;
+  wxWindow* wxw = 0;
+  if (ci != InvalidIndex) {
+    ctrl = html->GetObject(ci);
+    wxw = html->GetWindow(ci);
+  }
+  return Control(html, ctrl, wxw, objName);
 }
 //.............................................................................
 void THtmlManager::funGetState(const TStrObjList &Params, TMacroData &E) {
@@ -843,8 +852,7 @@ void THtmlManager::macLstObj(TStrObjList &Cmds, const TParamList &Options,
       "undefined html window: ").quote() << hn;
     return;
   }
-  TStrList all;
-  all.SetCapacity(html->Objects.Count());
+  TStrList all(olx_reserve(html->Objects.Count()));
   for (size_t i = 0; i < html->Objects.Count(); i++)
     all.Add(html->Objects.GetKey(i));
   for (size_t i = 0; i < Popups.Count(); i++) {

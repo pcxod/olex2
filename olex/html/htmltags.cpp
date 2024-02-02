@@ -630,7 +630,7 @@ TAG_HANDLER_PROC(tag) {
     }
     if (tag.HasParam(wxT("DOWN"))) {
       Btn->SetDown(
-        ExpandMacroShortcuts(tag.GetParam(wxT("DOWN")).CmpNoCase(wxT("true")), macro_map) == 0);
+        ExpandMacroShortcuts(tag.GetParam(wxT("DOWN")), macro_map).ToBool());
     }
 
     olxstr modeDependent = tag.GetParam(wxT("MODEDEPENDENT"));
