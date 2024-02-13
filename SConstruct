@@ -30,7 +30,7 @@ if not architecture:
 elif architecture == '64bit':
   sse = None
   env_arch = 'x86_64'
-print 'Build architecture: ' + architecture
+print('Build architecture: ' + architecture)
 
 if debug or sys.platform[:3] != 'win' or architecture == '64bit':
   sse = None
@@ -39,10 +39,10 @@ else:
   if sse == 'NONE' or not sse:
     sse = None
   elif sse not in ['SSE', 'SSE2']:
-    print 'Invalid SSE instruction: \'' + sse + '\', aborting...'
+    print('Invalid SSE instruction: \'' + sse + '\', aborting...')
     sys.exit(1)
   else:
-    print 'Using ' + sse
+    print('Using ' + sse)
 
 AddOption('--olx_profile',
           dest='olx_profile',
@@ -61,7 +61,7 @@ else:
 variables = Variables()
 variables.AddVariables(
     EnumVariable('TOOL', 'The tool to use', def_tool, allowed_values=\
-     ('vc8', 'vc9', 'vc10', 'vc11', 'gnu', 'intel'))
+     ('vc8', 'vc9', 'vc10', 'vc11', 'vc14.2', 'gnu', 'intel'))
     )
 env = Environment(ENV = os.environ, variables = variables, TARGET_ARCH=env_arch)
 Help(variables.GenerateHelpText(env))
@@ -85,6 +85,8 @@ elif env['TOOL'] == 'gnu':
     Tool('g++')(env)
 elif env['TOOL'] == 'vc11':
   env = Environment(ENV = os.environ, variables = variables, TARGET_ARCH=env_arch, MSVC_VERSION='11.0')
+elif env['TOOL'] == 'vc14.2':
+  env = Environment(ENV = os.environ, variables = variables, TARGET_ARCH=env_arch, MSVC_VERSION='14.2')
 elif env['TOOL'] == 'intel':
     Tool('intelc')(env)
 env.Append(CCFLAGS = ['-D_UNICODE', '-DUNICODE'])
@@ -107,7 +109,7 @@ out_dir += '/py' + sys.version[:3]
 if sse:
   out_dir += '-' + sse
 out_dir += '/'
-print 'Building location: ' + out_dir
+print('Building location: ' + out_dir)
 ################################################################################################
 #if possible create a revision version file...
 try:
@@ -118,29 +120,29 @@ try:
   revision = 0
   for f in stat:
     if f.text_status == pysvn.wc_status_kind.modified:
-      print 'Modified: ' + f.path
+      print('Modified: ' + f.path)
       has_modified = True
     elif f.text_status == pysvn.wc_status_kind.deleted:
-      print 'Deleted: ' + f.path
+      print('Deleted: ' + f.path)
       has_modified = True
     elif f.text_status == pysvn.wc_status_kind.added:
-      print 'Added: ' + f.path
+      print('Added: ' + f.path)
       has_modified = True
     if revision == 0 and f.entry and f.entry.revision:
       revision = f.entry.revision.number
   if has_modified:
-    print '!Warning the svn has local modifications, the revisision number mignt be not valid'
+    print('!Warning the svn has local modifications, the revisision number mignt be not valid')
   if revision != 0:
     env.Append(CCFLAGS = ['-D_SVN_REVISION_AVAILABLE'])
     srvf = file('svn_revision.h', 'wb')
-    print >> srvf, 'const int svn_revision_number = ' + str(revision) + ';'
+    print('const int svn_revision_number = ' + str(revision) + ';', file=srvf)
     #print >> srvf, 'const char* compile_timestamp="' + time.asctime() + '";'
     # a date is enough - otherwise files including this will be always recompiled...
-    print >> srvf, 'const char* compile_timestamp="' + time.strftime("%Y.%m.%d", time.gmtime()) + '";'
+    print('const char* compile_timestamp="' + time.strftime("%Y.%m.%d", time.gmtime()) + '";', file=srvf)
     srvf.close()
-    print 'Current repository revision: ' + str(revision)
+    print('Current repository revision: ' + str(revision))
 except:
-  print 'Unfortunately could not update the revision information'
+  print('Unfortunately could not update the revision information')
 ################################################################################################
 #get file lists
 sdl = Glob('./sdl/*.cpp')
@@ -189,7 +191,7 @@ def fileListToStringList(src_dir, file_list):
     
 item_index=0
 for file in gxlib:
-  if string.find(file.name, 'wglscene.cpp') != -1:
+  if 'wglscene.cpp' in file.name:
     gxlib.pop(item_index)
     break
   item_index += 1
@@ -219,7 +221,7 @@ if sys.platform[:3] == 'win':
     else:
       wxFolder = os.environ.get('OLX_WX_DIR')
   if not wxFolder:
-    print 'Please provide --wxdir=wxWidgets_root_folder or set OLX_WX_DIR system variable to point to wxWidgets root folder'
+    print('Please provide --wxdir=wxWidgets_root_folder or set OLX_WX_DIR system variable to point to wxWidgets root folder')
     Exit(0)
   if wxFolder[-1] != '/' or wxFolder[-1] != '\\':
     wxFolder += '/'
@@ -236,7 +238,7 @@ if sys.platform[:3] == 'win':
   if not wxVersion:
     wxVersion = os.environ.get('OLX_WX_VER')
   if not wxVersion:
-    print 'Please provide --wxver=number or set OLX_WX_VER system variable'
+    print('Please provide --wxver=number or set OLX_WX_VER system variable')
     Exit(0)
 
   pyFolder = os.path.split(sys.executable)[0] + '\\'
@@ -295,7 +297,7 @@ else:
     env.ParseConfig("python-config --includes")
     env.ParseConfig("python-config --libs")
   except:
-    print 'Please make sure that wxWidgets and Python config scripts are available'
+    print('Please make sure that wxWidgets and Python config scripts are available')
     Exit(1)
     
 #sdl
@@ -370,6 +372,7 @@ tests_files = generic_files_list + fileListToStringList('tests/tests', tests)
 tests_files.append('./repository/olxvar.cpp')
 tests_files.append('./repository/fsext.cpp')
 tests_files.append('./repository/shellutil.cpp')
+tests_files.append('./repository/hkl_util.cpp')
 if sys.platform[:3] == 'win':
   tests_env.Append(LINKFLAGS=['/MANIFEST', '/PDB:' + out_dir + 'exe/tests.pdb'])
 tests_files = processFileNameList(tests_files, tests_env, out_dir+'tests')
@@ -378,4 +381,4 @@ tests_env.Program(out_dir+'exe/tests', tests_files)
 try:
   import _imaging
 except:
-  print '!! You will need to install PIL' 
+  print('!! You will need to install PIL')
