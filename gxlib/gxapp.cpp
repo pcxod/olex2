@@ -2122,18 +2122,14 @@ ConstPtrList<TXAtom> TGXApp::FindXAtoms(const IStrList& toks, bool getAll,
               continue;
             }
             if (XATo != 0) {
-              if (CompareStr(XA.GetLabel(), XAFrom->GetLabel(), true) > 0 &&
-                CompareStr(XA.GetLabel(), XATo->GetLabel(), true) < 0)
+              if (XA.CAtom().GetId() > XAFrom->CAtom().GetId() &&
+                XA.CAtom().GetId() < XATo->CAtom().GetId())
               {
                 rv.Add(XA);
               }
             }
-            else {
-              if (CompareStr(XA.GetLabel(), XAFrom->GetLabel(), true) > 0 &&
-                XA.GetType() == XAFrom->GetType())
-              {
-                rv.Add(XA);
-              }
+            else if (XA.CAtom().GetId() > XAFrom->CAtom().GetId()) {
+              rv.Add(XA);
             }
           }
           if (XATo != 0) {
