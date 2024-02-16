@@ -41,20 +41,19 @@ namespace hkl_util {
   {
     TTypeList<olx_pair_t<double, size_t> > rv;
     rv.SetCapacity(fp_len);
-
     double minI = 1e3, maxI = -1e-3;
     for (size_t i = 0; i < refs.Count(); i++) {
       olx_update_min_max(refs[i].GetI(), minI, maxI);
     }
     // max(I/N) = N (-1)
-    const int max_v = ((int)(fp_len * fp_len) - 1);
+    const int max_v = (int)(fp_len * fp_len) - 1;
     double range = maxI - minI,
       scale = max_v / range;
     for (size_t i = 0; i < fp_len; i++) {
       rv.AddNew(0, 0);
     }
     for (size_t i = 0; i < refs.Count(); i++) {
-      int I = olx_round((refs[i].GetI() - minI) * scale);
+      int I = (int)((refs[i].GetI() - minI) * scale);
       if (I < 0) {
         I = 0;
       }
@@ -62,16 +61,19 @@ namespace hkl_util {
         I = max_v;
       }
       int idx = I / (int)fp_len;
-      // stabilise potential rounding errors
-      if (olx_abs(I - idx * (int)fp_len) < 2) {
-        continue;
-      }
       rv[idx].a += I;
       rv[idx].b++;
+    }
+    double cnt_scale = 10000.0 / refs.Count();
+    for (size_t i = 0; i < rv.Count(); i++) {
+      rv[i].a /= rv[i].b;
+      rv[i].b = olx_round(rv[i].b * cnt_scale);
+      rv[i].a *= rv[i].b;
     }
     return rv;
 
   }
+
   
   static typename fingerprint_t::const_list_type calc_fingerprint(const TCStrList& lines,
     size_t l_len, size_t fp_len = 10)
