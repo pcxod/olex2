@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2024 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -27,6 +27,8 @@ protected:
   void SetAtomIds(uint16_t);
   // on release
   void ClearAtomIds() { SetAtomIds(~0); }
+  // re-orders this groups and dependent groups atoms according to tags
+  void Reorder();
 public:
   TSameGroup(uint16_t id, TSameGroupList& parent);
   ~TSameGroup();
@@ -41,6 +43,9 @@ public:
   void OnAUUpdate();
   void BeginAUSort();
   void EndAUSort();
+
+  TStrList::const_list_type Analyse(bool log,
+    TPtrList<const TSameGroup> *offending=0) const;
 
   void Clear() {
     SetAtomIds(~0);
@@ -83,6 +88,15 @@ public:
 
   bool DoOverlap(const TSameGroup &g) const;
 
+  // returns OVERLAP_ bit mask
+  int DoOverlapEx(const TSameGroup& g) const;
+
+  bool IsSubgroupOf(const TSameGroup& g) const;
+
+  bool IsSupergroupOf(const TSameGroup& g) const {
+    return g.IsSubgroupOf(*this);
+  }
+
   double Esd12, Esd13;
 
   void ToDataItem(TDataItem& item) const;
@@ -102,16 +116,14 @@ public:
   class RefinementModel& RM;
 
   TSameGroupList(RefinementModel& parent) : RM(parent) {}
-  TSameGroup& New() {
-    return Groups.Add(new TSameGroup((uint16_t)Groups.Count(), *this));
-  }
-  TSameGroup& Build(const olxstr &exp, const olxstr &resi=EmptyString());
-  TSameGroup& NewDependent(TSameGroup& on) {
-    TSameGroup& rv = Groups.Add(
-      new TSameGroup((uint16_t)Groups.Count(), *this));
-    on.AddDependent(rv);
+  TSameGroup& New(TSameGroup* ref=0) {
+    TSameGroup& rv = Groups.Add(new TSameGroup((uint16_t)Groups.Count(), *this));
+    if (ref != 0) {
+      ref->AddDependent(rv);
+    }
     return rv;
   }
+  TSameGroup& Build(const olxstr &exp, const olxstr &resi=EmptyString());
   void FixIds();
   TSameGroup& operator [] (size_t i) { return Groups[i]; }
   const TSameGroup& operator [] (size_t i) const { return Groups[i]; }
@@ -124,6 +136,8 @@ public:
   void Restore(TSameGroup& sg);
   void Delete(const TPtrList <TSameGroup> &groups);
   void Sort();
+  void Analyse();
+  void PrepareSave();
   // this is called internally by the RM
   void OnAUUpdate();
   void BeginAUSort();

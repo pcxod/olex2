@@ -1,3 +1,12 @@
+/******************************************************************************
+* Copyright (c) 2004-2024 O. Dolomanov, OlexSys                               *
+*                                                                             *
+* This file is part of the OlexSys Development Framework.                     *
+*                                                                             *
+* This source file is distributed under the terms of the licence located in   *
+* the root folder.                                                            *
+******************************************************************************/
+
 #include "gxmacro.h"
 #include "sfutil.h"
 #include "maputil.h"
@@ -232,7 +241,9 @@ void GXLibMacros::Export(TLibrary& lib) {
     "u-unselect all&;"
     "l-consider the list of bonds as independent when printing info&;"
     "c-copies printed values to the clipboard&;"
-    "i-invert selection&;",
+    "i-invert selection&;"
+    "p-extra part to use (along with 0) in the case of disorder with sel sel&;"
+    ,
     fpAny,
     "If no arguments provided, prints current selection. This includes "
     "distances, angles and torsion angles and other geometrical parameters. "
@@ -2466,26 +2477,35 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
     if (atoms.IsEmpty()) {
       return;
     }
+    olxstr extra_part = Options.FindValue('p');
+    olx_object_ptr<olx_pset<int> > parts;
+    if (extra_part.IsInt()) {
+      parts = new olx_pset<int>();
+      parts->Add(0);
+      parts->Add(extra_part.ToInt());
+    }
     TAsymmUnit& au = app.XFile().GetAsymmUnit();
     ACollectionItem::Unify(atoms);
     using namespace olx_analysis;
     TCAtomPList fa(atoms, FunctionAccessor::MakeConst(&TSAtom::CAtom));
     fragments::fragment fr(fa);
     TTypeList<fragments::fragment> frags =
-      fragments::extract(app.XFile().GetAsymmUnit(), fr);
+      fragments::extract(app.XFile().GetAsymmUnit(), fr, &parts);
     app.XFile().GetAsymmUnit().GetAtoms().ForEach(
-      ACollectionItem::TagSetter(0));
+      ACollectionItem::TagSetter(-1));
+    // ensure the atom selection order is the same for all frags!
+    olx_pdict<size_t, TXAtom*> au_atoms;
+    TGXApp::AtomIterator ai = app.GetAtoms();
+    while (ai.HasNext()) {
+      TXAtom& a = ai.Next();
+      if (a.IsAUAtom()) {
+        au_atoms.Add(a.CAtom().GetId(), &a);
+      }
+    }
     for (size_t fi = 0; fi <= frags.Count(); fi++) {
       fragments::fragment *f = (fi == 0 ? &fr : &frags[fi - 1]);
       for (size_t j = 0; j < f->count(); j++) {
-        (*f)[j].SetTag(1);
-      }
-    }
-    TGXApp::AtomIterator ai = app.GetAtoms();
-    while (ai.HasNext()) {
-      TXAtom &a = ai.Next();
-      if (a.IsVisible() && a.CAtom().GetTag() == 1) {
-        app.GetRenderer().Select(a, flag);
+        app.GetRenderer().Select(*au_atoms[(*f)[j].GetId()], flag);
       }
     }
   }

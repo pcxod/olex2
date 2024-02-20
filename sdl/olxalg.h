@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2015 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2024 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -200,6 +200,25 @@ public:
     return op_<to_t, Accessor, op_ge>(to, a);
   }
 };
+
+// can turn a bool function into an anlyaser for filtering/packing
+struct FunctionAccessorAnalyser {
+  template <class acc_t>
+  struct AccessorAnalyser_ {
+    const acc_t& acc;
+    AccessorAnalyser_(const acc_t& acc) : acc(acc) {}
+    template <class item_t>
+    bool OnItem(const item_t& item, size_t idx = InvalidIndex) const {
+      return acc(item);
+    }
+  };
+
+  template <class acc_t>
+  static AccessorAnalyser_<acc_t> Make(const acc_t& acc) {
+    return AccessorAnalyser_<acc_t>(acc);
+  }
+};
+
 
 /* swaps two objects using a temporary variable (copy constructor must be
 available for complex types) */

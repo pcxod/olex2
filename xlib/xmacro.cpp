@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2024 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -641,7 +641,9 @@ void XLibMacros::Export(TLibrary& lib)  {
     "e-expand SAME into the list of SADI&;"
     "s-generates 'self' same restrain so that the fragment matches itself in "
     "reverse order&;"
-    "all-find fragments matching the selection and applies SAME to them",
+    "all-find fragments matching the selection and applies SAME to them&;"
+    "p-extra part to use (along with 0) in the case of disorder and -all&;"
+    ,
     fpAny|psFileLoaded,
     "Creates SAME instruction for two fragments (two selected atoms or two "
     "atoms provided) or number_of_groups and groups following each another "
@@ -10593,7 +10595,7 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
         netA.Node(res[i].GetA()).SetTag(0);
       }
       TBasicApp::NewLogEntry();
-      TSameGroup& d_sg = app.XFile().GetRM().rSAME.NewDependent(*sg);
+      TSameGroup& d_sg = app.XFile().GetRM().rSAME.New(sg);
       for (size_t i = 0; i < res.Count(); i++) {
         if (netB.Node(res[i].GetB()).GetType().z < 2 ||
           netB.Node(res[i].GetB()).GetTag() == 0)
@@ -10621,30 +10623,19 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
     }
     else {
       TPtrList<TSameGroup> deps;
-      TSameGroup* sg = 0;
-      if (olx_is_valid_index(atoms[0]->CAtom().GetSameId())) {
-        TSameGroup &asg = app.XFile().GetRM().rSAME[
-          atoms[0]->CAtom().GetSameId()];
-        if (asg.GetParentGroup() == 0) {
-          sg = &asg;
-        }
-      }
-      if (sg == 0) {
-        sg = &app.XFile().GetRM().rSAME.New();
-      }
+      TSameGroup& ref = app.XFile().GetRM().rSAME.New();
       for (size_t i = 0; i < groups_count - 1; i++) {
-        deps.Add(app.XFile().GetRM().rSAME.NewDependent(*sg));
-      }
-      if (!sg->GetAtoms().IsEmpty()) {
-        sg = 0;
+        deps.Add(app.XFile().GetRM().rSAME.New(&ref));
       }
       for (size_t i = 0; i < cnt; i++) {
-        if (sg != 0) {
-          sg->Add(atoms[i]->CAtom());
-        }
+        ref.Add(atoms[i]->CAtom());
         for (size_t j = 1; j < groups_count; j++) {
           deps[j - 1]->Add(atoms[cnt*j + i]->CAtom());
         }
+      }
+      TBasicApp::NewLogEntry() << "Reference: " << ref.GetAtoms().GetExpression();
+      for (size_t i = 0; i < groups_count - 1; i++) {
+        TBasicApp::NewLogEntry() << "Dependent: " << deps[i]->GetAtoms().GetExpression();
       }
       TBasicApp::NewLogEntry() << "SAME instruction is added";
     }
@@ -10679,7 +10670,7 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
       if (sg == 0) {
         sg = &app.XFile().GetRM().rSAME.New();
       }
-      TSameGroup &dep = app.XFile().GetRM().rSAME.NewDependent(*sg);
+      TSameGroup &dep = app.XFile().GetRM().rSAME.New(sg);
       if (!sg->GetAtoms().IsEmpty()) {
         sg = 0;
       }
@@ -10704,11 +10695,18 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
   }
   else if (groups_count == InvalidSize && atoms.Count() > 2 && all) {
     using namespace olx_analysis;
+    olxstr extra_part = Options.FindValue('p');
+    olx_object_ptr<olx_pset<int> > parts;
+    if (extra_part.IsInt()) {
+      parts = new olx_pset<int>();
+      parts->Add(0);
+      parts->Add(extra_part.ToInt());
+    }
     TCAtomPList fa(atoms, FunctionAccessor::MakeConst(&TSAtom::CAtom));
     ACollectionItem::Unify(fa);
     fragments::fragment fr(fa);
     TTypeList<fragments::fragment> frags =
-      fragments::extract(app.XFile().GetAsymmUnit(), fr);
+      fragments::extract(app.XFile().GetAsymmUnit(), fr, &parts);
     RefinementModel &rm = app.XFile().GetRM();
     if (!frags.IsEmpty()) {
       if (expand) {
@@ -10730,7 +10728,7 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
           }
         }
         for (size_t fi = 0; fi < frags.Count(); fi++) {
-          TSameGroup &dg = rm.rSAME.NewDependent(rg);
+          TSameGroup &dg = rm.rSAME.New(&rg);
           for (size_t i = 0; i < frags[0].count(); i++) {
             if (fr[i].GetType().z > 1) {
               dg.Add(frags[fi][i]);
@@ -10863,7 +10861,7 @@ void XLibMacros::macRESI(TStrObjList &Cmds, const TParamList &Options,
           }
         }
         for (size_t fi = 0; fi < frags.Count(); fi++) {
-          TSameGroup &dg = rm.rSAME.NewDependent(rg);
+          TSameGroup &dg = rm.rSAME.New(&rg);
           for (size_t i = 0; i < frags[0].count(); i++) {
             if (fr[i].GetType().z > 1) {
               dg.Add(frags[fi][i]);

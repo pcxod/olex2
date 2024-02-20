@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2024 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -534,7 +534,6 @@ void TIns::_ProcessSame(ParseContext& cx, const TIndexList *index)  {
       }
     }
     // now process the reference group
-    olx_pdict<uint16_t, size_t> overrides;
     bool valid = false;
     if (max_atoms != 0 && ca != 0) {
       valid = true;
@@ -562,9 +561,6 @@ void TIns::_ProcessSame(ParseContext& cx, const TIndexList *index)  {
           max_atoms++; // do not count the H atoms!
           continue;
         }
-        if (olx_is_valid_index(a.GetSameId())) {
-          overrides.Add(a.GetSameId(), 0)++;
-        }
         sg.Add(a);
       }
       if (valid) {
@@ -576,54 +572,9 @@ void TIns::_ProcessSame(ParseContext& cx, const TIndexList *index)  {
         sgl.Delete(all_groups << sg);
       }
     }
-    if (valid && !overrides.IsEmpty()) {
-      if (overrides.Count() == 1) {
-        TBasicApp::NewLogEntry(logInfo) << "Self-referencing SAME group found: "
-          << sgl[overrides.GetKey(0)].GetAtoms().GetExpression()
-          << " referenced by "
-          << sgl[sgl.Count() - 1].GetAtoms().GetExpression();
-      }
-      else { // multiple overrides for different groups
-        TBasicApp::NewLogEntry(logWarning) <<
-          "Possibly incorrectly constructed SAME groups located";
-      }
-    }
   }
+  sgl.Analyse();
   sgl.Sort();
-  // validate overlapping refrerence groups
-  //cx.au.GetAtoms().ForEach(ACollectionItem::IndexTagSetter());
-  //for (size_t i = 0; i < sgl.Count(); i++) {
-  //  if (sgl[i].GetParentGroup() != 0) {
-  //    continue;
-  //  }
-  //  if (!sgl[i].GetAtoms().IsExplicit()) {
-  //    continue;
-  //  }
-  //  TAtomRefList atoms = sgl[i].GetAtoms().ExpandList(cx.rm);
-  //  for (size_t j = 0; j < atoms.Count(); j++) {
-  //    atoms[j].GetAtom().SetTag(i);
-  //  }
-  //}
-  //olxset<TCAtom*, TPointerComparator> overlaping;
-  //for (size_t i = 0; i < sgl.Count(); i++) {
-  //  if (sgl[i].GetParentGroup() != 0) {
-  //    continue;
-  //  }
-  //  if (!sgl[i].GetAtoms().IsExplicit()) {
-  //    continue;
-  //  }
-  //  TAtomRefList atoms = sgl[i].GetAtoms().ExpandList(cx.rm);
-  //  for (size_t j = 0; j < atoms.Count(); j++) {
-  //    if (atoms[j].GetAtom().GetTag() != i) {
-  //      overlaping.Add(&atoms[j].GetAtom());
-  //    }
-  //  }
-  //}
-  //if (!overlaping.IsEmpty()) {
-  //  TBasicApp::NewLogEntry(logWarning) <<
-  //    "Overlpping reference groups involcing these atoms: " <<
-  //    olx_analysis::alg::label(TCAtomPList(overlaping));
-  //}
 }
 //..............................................................................
 void TIns::__ProcessConn(ParseContext& cx) {
@@ -1728,6 +1679,25 @@ TStrList::const_list_type TIns::SaveSfacUnit(const RefinementModel& rm,
   return sfac;
 }
 //..............................................................................
+
+void SaveSAMEReferences(TStrList& sl, TSameGroup &sg) {
+  for (size_t i = 0; i < sg.DependentCount(); i++) {
+    TSameGroup& dg = sg.GetDependent(i);
+    if (!dg.IsValidForSave()) {
+      continue;
+    }
+    olxstr_buf tmp("SAME");
+    if (!dg.GetAtoms().GetResi().IsEmpty()) {
+      tmp << '_' << dg.GetAtoms().GetResi();
+    }
+    tmp << ' ' << olxstr(dg.Esd12).TrimFloat() << ' '
+      << olxstr(dg.Esd13).TrimFloat() << ' '
+      << dg.GetAtoms().GetExpression();
+    TIns::HyphenateIns(olxstr(tmp), sl);
+  }
+
+}
+
 void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
   double &spec, TStrList* sfac, TStrList &sl, TIndexList* index,
   bool checkSame, bool checkResi)
@@ -1745,42 +1715,25 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
   }
   if (checkSame && olx_is_valid_index(a.GetSameId())) {  // "
     TSameGroup &sg = rm.rSAME[a.GetSameId()];
-    if (sg.IsValidForSave() && sg.IsReference()) {
-      for (size_t i = 0; i < sg.DependentCount(); i++) {
-        TSameGroup &dg = sg.GetDependent(i);
-        if (!dg.IsValidForSave()) {
-          continue;
-        }
-        olxstr_buf tmp("SAME");
-        if (!dg.GetAtoms().GetResi().IsEmpty()) {
-          tmp << '_' << dg.GetAtoms().GetResi();
-        }
-        tmp << ' ' << olxstr(dg.Esd12).TrimFloat() << ' '
-          << olxstr(dg.Esd13).TrimFloat() << ' '
-          << dg.GetAtoms().GetExpression();
-        HyphenateIns(olxstr(tmp), sl);
+    if (sg.IsValidForSave()) {
+      if (sg.IsReference()) {
+        SaveSAMEReferences(sl, sg);
       }
       if (sg.GetAtoms().IsExplicit()) {
         TAtomRefList atoms = sg.GetAtoms().ExpandList(rm);
+        uint16_t last_sid_header = sg.GetId();
         for (size_t i = 0; i < atoms.Count(); i++) {
+          uint16_t sid = atoms[i].GetAtom().GetSameId();
+          // check for "embedded" same
+          if (olx_is_valid_index(sid) &&
+            sid != last_sid_header && rm.rSAME[sid].IsReference())
+          {
+            SaveSAMEReferences(sl, rm.rSAME[sid]);
+            last_sid_header = sid;
+          }
           _SaveAtom(rm, atoms[i].GetAtom(), part, afix, spec, sfac, sl, index,
             false, checkResi);
         }
-      }
-      return;
-    }
-    if (sg.IsValidForSave() && !sg.IsReference() && sg.GetAtoms().IsExplicit()) {
-      TAtomRefList atoms = sg.GetAtoms().ExpandList(rm);
-      for (size_t i = 0; i < atoms.Count(); i++) {
-        // check for "embedded" same
-        if (olx_is_valid_index(atoms[i].GetAtom().GetSameId()) &&
-          atoms[i].GetAtom().GetSameId() != sg.GetId())
-        {
-          _SaveAtom(rm, atoms[i].GetAtom(), part, afix, spec, sfac, sl, index,
-            true, checkResi);
-        }
-        _SaveAtom(rm, atoms[i].GetAtom(), part, afix, spec, sfac, sl, index,
-          false, checkResi);
       }
       return;
     }
@@ -1903,9 +1856,10 @@ void TIns::SaveToStrings(TStrList& SL) {
     }
   }
   ValidateRestraintsAtomNames(GetRM());
+  GetRM().rSAME.PrepareSave();
   UpdateParams();
   TStrList sfac = SaveHeader(SL, false);
-  SaveExtras(SL, NULL, NULL, GetRM());
+  SaveExtras(SL, 0, 0, GetRM());
   SL.Add(EmptyString());
   int afix = 0, part = 0;
   double spec = 0;
@@ -1928,16 +1882,17 @@ void TIns::SaveToStrings(TStrList& SL) {
         continue;
       }
       if (ac.GetFragmentId() != fragmentId || !olx_is_valid_index(fragmentId)) {
-        if (olx_is_valid_index(fragmentId))
+        if (olx_is_valid_index(fragmentId)) {
           SL.Add(EmptyString());
+        }
         fragmentId = ac.GetFragmentId();
       }
-      if (ac.GetParentAfixGroup() != NULL &&
+      if (ac.GetParentAfixGroup() != 0 &&
         !ac.GetParentAfixGroup()->GetPivot().IsDeleted())
       {
         continue;
       }
-      _SaveAtom(GetRM(), ac, part, afix, spec, &sfac, SL, NULL, true, false);
+      _SaveAtom(GetRM(), ac, part, afix, spec, &sfac, SL, 0, true, false);
     }
   }
   if (afix != 0) {
@@ -1954,7 +1909,7 @@ void TIns::SaveToStrings(TStrList& SL) {
   }
 }
 //..............................................................................
-void TIns::_DrySaveAtom(TCAtom& a, TSizeList &indices,
+void TIns::_DrySaveAtom(TCAtom& a, TSizeList &indices, bool use_tags,
   bool checkSame, bool checkResi)
 {
   if (a.IsDeleted() || a.IsSaved()) {
@@ -1969,20 +1924,8 @@ void TIns::_DrySaveAtom(TCAtom& a, TSizeList &indices,
   }
   if (checkSame && olx_is_valid_index(a.GetSameId())) {
     TSameGroup& sg = a.GetParent()->GetRefMod()->rSAME[a.GetSameId()];
-    if (sg.IsValidForSave() && sg.IsReference()) {
-      if (sg.GetAtoms().IsExplicit()) {
-        TAtomRefList atoms = sg.GetAtoms().ExpandList(*a.GetParent()->GetRefMod());
-        for (size_t i = 0; i < atoms.Count(); i++) {
-          _DrySaveAtom(atoms[i].GetAtom(), indices, false, checkResi);
-        }
-      }
-      return;
-    }
-    if (sg.IsValidForSave() && !sg.IsReference() && sg.GetAtoms().IsExplicit()) {
+    if (sg.IsValidForSave() && sg.GetAtoms().IsExplicit()) {
       TAtomRefList atoms = sg.GetAtoms().ExpandList(*a.GetParent()->GetRefMod());
-      if (atoms.IsEmpty() || atoms[0].GetAtom().IsSaved()) {
-        return;
-      }
       for (size_t i = 0; i < atoms.Count(); i++) {
         _DrySaveAtom(atoms[i].GetAtom(), indices, false, checkResi);
       }
@@ -1993,7 +1936,7 @@ void TIns::_DrySaveAtom(TCAtom& a, TSizeList &indices,
     _DrySaveAtom(*a.GetUisoOwner(), indices, checkSame, checkResi);
   }
   TAfixGroup* ag = a.GetDependentAfixGroup();
-  indices.Add(a.GetTag());
+  indices.Add(use_tags ? a.GetTag() : a.GetId());
   a.SetSaved(true);
   for (size_t i = 0; i < a.DependentHfixGroupCount(); i++) {
     TAfixGroup& hg = a.GetDependentHfixGroup(i);
@@ -2012,11 +1955,16 @@ void TIns::_DrySaveAtom(TCAtom& a, TSizeList &indices,
   }
 }
 //..............................................................................
-TSizeList::const_list_type TIns::DrySave(const TAsymmUnit& au) {
+TSizeList::const_list_type TIns::DrySave(const TAsymmUnit& au, bool use_tags) {
   TSizeList rv;
   rv.SetCapacity(au.AtomCount());
+  au.GetRefMod()->rSAME.PrepareSave();
+  TEBitArray saved_flag(au.AtomCount());
   for (size_t i = 0; i < au.AtomCount(); i++) {
-    au.GetAtom(i).SetSaved(false);
+    if (au.GetAtom(i).IsSaved()) {
+      saved_flag.SetTrue(i);
+      au.GetAtom(i).SetSaved(false);
+    }
     au.GetAtom(i).SetTag((index_t)i);
   }
   for (size_t i = 0; i < au.ResidueCount(); i++) {
@@ -2031,12 +1979,15 @@ TSizeList::const_list_type TIns::DrySave(const TAsymmUnit& au) {
       {
         continue;
       }
-      _DrySaveAtom(ac, rv, true, false);
+      _DrySaveAtom(ac, rv, use_tags, true, false);
     }
   }
   for (size_t i = 0; i < au.AtomCount(); i++) {
-    if (!au.GetAtom(i).IsSaved()) {
-      rv.Add(au.GetAtom(i).GetTag());
+    //if (!au.GetAtom(i).IsSaved()) {
+    //  rv.Add(au.GetAtom(i).GetTag());
+    //}
+    if (saved_flag[i]) {
+      au.GetAtom(i).SetSaved(true);
     }
   }
   return rv;

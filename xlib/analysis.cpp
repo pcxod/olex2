@@ -1,3 +1,12 @@
+/******************************************************************************
+* Copyright (c) 2004-2024 O. Dolomanov, OlexSys                               *
+*                                                                             *
+* This file is part of the OlexSys Development Framework.                     *
+*                                                                             *
+* This source file is distributed under the terms of the licence located in   *
+* the root folder.                                                            *
+******************************************************************************/
+
 #include "analysis.h"
 #include "equeue.h"
 #include "auto.h"
@@ -113,7 +122,7 @@ bool alg::check_connectivity(const TCAtom &a, const cm_Element &e) {
     nitrogen_c = 0;
   for (size_t i=0; i < a.AttachedSiteCount(); i++) {
     TCAtom &aa = a.GetAttachedAtom(i);
-    if (aa.GetType() != iQPeakZ && !aa.IsDeleted()) {
+    if (aa.GetType() != iQPeakZ && aa.IsAvailable()) {
       cc++;
       if (XElementLib::IsMetal(aa.GetType())) {
         metal_c++;
@@ -365,7 +374,9 @@ ConstPtrList<TCAtom> peaks::extract(TAsymmUnit &au,
   peaks.SetCapacity(au.AtomCount());
   for (size_t i=0; i < au.AtomCount(); i++) {
     TCAtom &a = au.GetAtom(i);
-    if (a.IsDeleted()) continue;
+    if (a.IsDeleted()) {
+      continue;
+    }
     if (a.GetType() == iQPeakZ) {
       peaks.Add(a);
     }
@@ -645,7 +656,9 @@ int fragments::ring::substituent::Compare(
   const fragments::ring::substituent &s) const
 {
   int r = olx_cmp(ring_count, s.ring_count);
-  if (r != 0) return r;
+  if (r != 0) {
+    return r;
+  }
   if (ring_count == 1) {
     r = -olx_cmp(atoms.Count(), s.atoms.Count());
     if (r != 0) {
@@ -675,11 +688,23 @@ void fragments::fragment::mask_neighbours(const TCAtomPList &atoms, index_t at,
   }
 }
 //.............................................................................
-size_t fragments::fragment::get_neighbour_count(const TCAtom &a, index_t t) {
+size_t fragments::fragment::get_neighbour_count(const TCAtom &a) {
   size_t rv = 0;
   for (size_t i = 0; i < a.AttachedSiteCount(); i++) {
     TCAtom &aa = a.GetAttachedAtom(i);
-    if (aa.IsDeleted() || aa.GetType().z < 0 || aa.GetTag() != t) {
+    if (!aa.IsAvailable() || aa.GetType().z < 0) {
+      continue;
+    }
+    rv++;
+  }
+  return rv;
+}
+//.............................................................................
+size_t fragments::fragment::get_neighbour_count(const TCAtom& a, index_t t) {
+  size_t rv = 0;
+  for (size_t i = 0; i < a.AttachedSiteCount(); i++) {
+    TCAtom& aa = a.GetAttachedAtom(i);
+    if (!aa.IsAvailable() || aa.GetType().z < 0 || aa.GetTag() != t) {
       continue;
     }
     rv++;
@@ -760,7 +785,7 @@ void fragments::fragment::init_generators() {
     return;
   }
   if (atoms_[0]->GetParent()->HasLattice()) {
-    generators.AddAll(
+    generators.AddCopyAll(
       atoms_[0]->GetParent()->GetLattice().GetFragmentGrowMatrices(atoms_,
       true, &polymeric));
   }
@@ -924,22 +949,22 @@ void fragments::fragment::breadth_first_tags(const TCAtomPList &atoms,
     start = 0;
   }
   queue.Push(atoms[start]);
-  queue.Push(NULL);
+  queue.Push(0);
   index_t tv = 0;
   while (!queue.IsEmpty()) {
     TCAtom *a = queue.Pop();
-    if (a == NULL) {
+    if (a == 0) {
       if (queue.IsEmpty()) {
         break;
       }
       tv++;
-      queue.Push(NULL);
+      queue.Push(0);
       continue;
     }
     if (a->GetTag() != -1) {
       if (a->GetTag() >= tv) {
         a->SetRingAtom(true);
-        if (ring_atoms != NULL) {
+        if (ring_atoms != 0) {
           ring_atoms->AddUnique(a);
         }
       }
@@ -956,7 +981,7 @@ void fragments::fragment::breadth_first_tags(const TCAtomPList &atoms,
       }
       else if (st.atom->GetTag() >= tv) {
         st.atom->SetRingAtom(true);
-        if (ring_atoms != NULL) {
+        if (ring_atoms != 0) {
           ring_atoms->AddUnique(st.atom);
         }
       }
@@ -1017,16 +1042,16 @@ void fragments::fragment::init_ring(size_t i, TTypeList<ring> &rings) const {
   for (size_t i = 0; i < r.atoms.Count(); i++) {
     queue.Push(r.atoms[i])->SetTag(-1);
   }
-  queue.Push(NULL);
+  queue.Push(0);
   index_t tv = 0;
   while (!queue.IsEmpty()) {
     TCAtom *a = queue.Pop();
-    if (a == NULL) {
+    if (a == 0) {
       if (queue.IsEmpty()) {
         break;
       }
       tv++;
-      queue.Push(NULL);
+      queue.Push(0);
       continue;
     }
     if (a->GetTag() != -1) {
@@ -1046,7 +1071,9 @@ void fragments::fragment::init_ring(size_t i, TTypeList<ring> &rings) const {
   for (size_t i=0; i < r.atoms.Count(); i++) {
     for (size_t j=0; j < r.atoms[i]->AttachedSiteCount(); j++) {
       TCAtom &a = r.atoms[i]->GetAttachedAtom(j);
-      if (!a.IsAvailable()) continue;
+      if (!a.IsAvailable()) {
+        continue;
+      }
       if (a.GetTag() == 1 && a.GetType().z > 1) {
         ring::substituent &s = r.substituents.Add(
           new ring::substituent(r, *r.atoms[i]));
@@ -1108,6 +1135,9 @@ ConstPtrList<TCAtom> fragments::fragment::trace_ring_d(TCAtom &ra) {
     size_t ring_c = ring.Count();
     for (size_t i = 0; i < b->AttachedSiteCount(); i++) {
       TCAtom &aa = b->GetAttachedAtom(i);
+      if (!aa.IsAvailable()) {
+        continue;
+      }
       if (aa.GetTag() == b->GetTag() - 1) {
         a = ring.Add(aa);
         added = true;
@@ -1143,14 +1173,16 @@ TTypeList<TCAtomPList>::const_list_type fragments::fragment::trace_ring_b(
   ring.ForEach(
     TCAtom::FlagSetter(catom_flag_Processed, true));
 
-  TCAtom *la = NULL;
+  TCAtom *la = 0;
   while (!queue.IsEmpty()) {
     TCAtom *a = queue.Pop();
     TCAtomPList to_queue;
     bool stop = false;
     for (size_t i = 0; i < a->AttachedSiteCount(); i++) {
       TCAtom::Site &st = a->GetAttachedSite(i);
-      if (!st.atom->IsAvailable()) continue;
+      if (!st.atom->IsAvailable()) {
+        continue;
+      }
       if (st.atom->GetTag() < a->GetTag()) {
         if (st.atom->IsProcessed()) {
           la = st.atom;
@@ -1215,7 +1247,7 @@ TTypeList<TCAtomPList>::const_list_type fragments::fragment::trace_ring_b(
     }
   }
   // trim
-  if (la != NULL) {
+  if (la != 0) {
     while (ring.Count() > 0 &&
       ring[ring.Count()-1]->GetTag() <= la->GetTag())
     {
@@ -1314,17 +1346,17 @@ uint64_t fragments::fragment::calc_node_hash(
   mask_neighbours(-1, -2);
   TQueue<TCAtom *> aqueue;
   aqueue.Push(nd.GetObject());
-  aqueue.Push(NULL);
+  aqueue.Push(0);
   index_t v = 0;
   TArrayList<size_t> counts(16, olx_list_init::zero());
   while (!aqueue.IsEmpty()) {
     TCAtom *n = aqueue.Pop();
-    if (n == NULL) {
+    if (n == 0) {
       if (aqueue.IsEmpty()) {
         break;
       }
       v++;
-      aqueue.Push(NULL);
+      aqueue.Push(0);
       continue;
     }
     if (n->GetTag() != -1) {
@@ -1337,7 +1369,7 @@ uint64_t fragments::fragment::calc_node_hash(
     counts[v] += (size_t)n->GetType().z;
     for (size_t i = 0; i < n->AttachedSiteCount(); i++) {
       TCAtom &aa = n->GetAttachedAtom(i);
-      if (aa.GetTag() == -1) {
+      if (aa.GetTag() == -1 && aa.IsAvailable()) {
         aqueue.Push(&aa);
       }
     }
@@ -1403,7 +1435,7 @@ fragments::fragment::build_graph() const
     n->SetTag(v);
     for (size_t i = 0; i < n->AttachedSiteCount(); i++) {
       TCAtom &aa = n->GetAttachedAtom(i);
-      if (aa.GetTag() == -1) {
+      if (aa.GetTag() == -1 && aa.IsAvailable()) {
         aqueue.Push(&aa);
       }
     }
@@ -1416,7 +1448,7 @@ fragments::fragment::build_graph() const
     node_t *n = queue.Pop();
     for (size_t i = 0; i < n->GetObject()->AttachedSiteCount(); i++) {
       TCAtom &aa = n->GetObject()->GetAttachedAtom(i);
-      if (aa.GetTag() < 0) {
+      if (aa.GetTag() < 0 || !aa.IsAvailable()) {
         continue;
       }
       if (aa.GetTag() > n->GetObject()->GetTag()) {
@@ -1433,7 +1465,9 @@ fragments::fragment::build_graph() const
 }
 //.............................................................................
 bool fragments::fragment::does_match(TCAtom &a, TCAtom &b, TCAtomPList &p) {
-  if (a.GetType() != b.GetType() || a.IsRingAtom() != b.IsRingAtom()) {
+  if (a.GetType() != b.GetType() || a.IsRingAtom() != b.IsRingAtom() ||
+    get_neighbour_count(a) != get_neighbour_count(b))
+  {
     return false;
   }
   a.SetTag(4);
@@ -1441,11 +1475,13 @@ bool fragments::fragment::does_match(TCAtom &a, TCAtom &b, TCAtomPList &p) {
   TEBitArray used(b.AttachedSiteCount());
   for (size_t i = 0; i < a.AttachedSiteCount(); i++) {
     TCAtom &aa = a.GetAttachedAtom(i);
-    if (aa.GetTag() != 2) continue;
+    if (aa.GetTag() != 2 || !aa.IsAvailable()) {
+      continue;
+    }
     bool matched = false;
     for (size_t j = 0; j < b.AttachedSiteCount(); j++) {
       TCAtom &ba = b.GetAttachedAtom(j);
-      if (ba.GetTag() > 1 || ba.GetType() != aa.GetType() || used[j]) {
+      if (ba.GetTag() > 1 || ba.GetType() != aa.GetType() || used[j] || !ba.IsAvailable()) {
         continue;
       }
       if (does_match(aa, ba, p)) {
@@ -1682,7 +1718,7 @@ struct CAtomGraphAnalyser  {
 };
 
 ConstTypeList<fragments::fragment> fragments::extract(const TCAtomPList &aua,
-  const fragment &f_)
+  const fragment &f_, const olx_pset<int>* parts)
 {
   if (f_.is_disjoint()) {
     throw TInvalidArgumentException(__OlxSourceInfo,
@@ -1695,7 +1731,9 @@ ConstTypeList<fragments::fragment> fragments::extract(const TCAtomPList &aua,
     fragment x(aua);
     for (size_t i = 0; i < aua.Count(); i++) {
       TCAtom &a = *aua[i];
-      if (a.GetType().z < 0 && a.IsAvailable()) {
+      if (a.IsAvailable() && (a.GetType().z < 0 ||
+        (parts != 0 && !parts->Contains(a.GetPart()))))
+      {
         a.SetDeleted(true);
         arr.SetTrue(i);
       }
@@ -1730,7 +1768,7 @@ ConstTypeList<fragments::fragment> fragments::extract(const TCAtomPList &aua,
   TCAtomPList of_interest;
   for (size_t i = 0; i < aua.Count(); i++) {
     TCAtom &a = *aua[i];
-    if (a.IsDeleted() || a.GetType() != f[0].GetType() ||
+    if (!a.IsAvailable() || a.GetType() != f[0].GetType() ||
       fragment::get_neighbour_count(a, 0) < bc)
     {
       continue;
@@ -1765,7 +1803,6 @@ ConstTypeList<fragments::fragment> fragments::extract(const TCAtomPList &aua,
           throw TFunctionFailedException(__OlxSourceInfo, "assert");
         }
         f_.atoms().ForEach(ACollectionItem::IndexTagSetter());
-        
         for (size_t j = 0; j < m.Count(); j++) {
           matching_set[m[j].a->GetTag()] = m[j].b;
         }
@@ -1828,7 +1865,7 @@ void Framework::set_tags_(Framework::Vertex& v,
   a.SetTag(1);
   for (size_t i = 0; i < a.AttachedSiteCount(); i++) {
     const TCAtom::Site& s = a.GetAttachedSite(i);
-    if (!m.IsFirst() && !s.matrix.IsFirst()) {
+    if ((!m.IsFirst() && !s.matrix.IsFirst()) || !s.atom->IsAvailable()) {
       continue;
     }
     smatd rm = m.IsFirst() ? s.matrix : m;
@@ -2177,7 +2214,7 @@ double Analysis::find_scale(TLattice &latt) {
         hits = ares[i].list2;
       else  {
         hits = ares[i].list1;
-        hits.AddAll(ares[i].enforced);
+        hits.AddCopyAll(ares[i].enforced);
       }
       size_t m = olx_min(2, hits.Count());
       for (size_t j=0; j < m; j++) {

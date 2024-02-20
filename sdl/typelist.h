@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2024 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -129,25 +129,23 @@ public:
   //..............................................................................
   const TPtrList<T>& ptr() const { return List; }
   //..............................................................................
-    //virtual IOlxObject* Replicate() const {
-    //  TTypeListExt* list =
-    //    new TTypeListExt(Count(), false);
-    //  for( size_t i=0; i < Count(); i++ )
-    //    list->List[i] = new T(*List[i]);
-    //  return list;
-    //}
-  //..............................................................................
-    /* creates new copies of the objest, be careful as the copy constructor must
-    exist
-    */
-  template <class alist> void AddAll(const alist& list) {
+  // creates new copies of objects, be careful as the copy constructor must exist
+  template <class alist> void AddCopyAll(const alist& list) {
     List.SetCapacity(list.Count() + List.Count());
     for (size_t i = 0; i < list.Count(); i++) {
       List.Add(new T(list[i]));
     }
   }
   //..............................................................................
-    //adds a new object into the list - will be deleted
+  // objects will be deleted - make sure the owning container releases them!
+  template <class alist> void AddAll(const alist& list) {
+    List.SetCapacity(list.Count() + List.Count());
+    for (size_t i = 0; i < list.Count(); i++) {
+      List.Add(list[i]);
+    }
+  }
+  //..............................................................................
+  //adds a new object into the list - will be deleted
   template <class obj_t>
   obj_t& Add(obj_t& Obj) { return *List.Add(&Obj); }
   //adds a new object into the list - will be deleted
@@ -605,6 +603,17 @@ template <class T>
     template <class alist> TTypeList& operator = (const alist& list)  {
       TTypeListExt<T,T>::operator = (list);
       return *this;
+    }
+    template <class Functor>
+    ConstTypeList<T> Filter(const Functor& f) const {
+      TTypeList rv;
+      rv.SetCapacity(this->List.Count());
+      for (size_t i = 0; i < this->List.Count(); i++) {
+        if (f.OnItem(this->GetItem(i), i)) {
+          rv.Add(new T(this->GetItem(i)));
+        }
+      }
+      return rv;
     }
   public:
     typedef T list_item_type;

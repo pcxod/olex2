@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2024 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -796,7 +796,7 @@ void TXFile::Sort(const TStrList& ins, const TParamList &options) {
   GetAsymmUnit().GetAtoms().ForEach(ACollectionItem::IndexTagSetter());
   GetRM().Sort_();
   {
-    TSizeList indices = TIns::DrySave(GetAsymmUnit());
+    TSizeList indices = TIns::DrySave(GetAsymmUnit(), true);
     if (indices.Count() != GetAsymmUnit().AtomCount()) {
       throw TFunctionFailedException(__OlxSourceInfo, "assert");
     }
@@ -825,7 +825,7 @@ void TXFile::UpdateAtomIds() {
     UpdateAsymmUnit();
   }
   TAsymmUnit &au = GetAsymmUnit();
-  TSizeList indices = TIns::DrySave(au);
+  TSizeList indices = TIns::DrySave(au, true);
   if (indices.Count() != au.AtomCount()) {
     throw TFunctionFailedException(__OlxSourceInfo, "assert");
   }

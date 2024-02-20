@@ -27,7 +27,7 @@ class AAtomRef : public ACollectionItem {
 public:
   virtual ~AAtomRef() {}
   // returns either an atom label or a string of C1_tol kind or $C
-  virtual olxstr GetExpression(TResidue *r=NULL) const = 0;
+  virtual olxstr GetExpression(TResidue *r=0) const = 0;
   virtual bool IsExpandable() const = 0;
   virtual bool IsExplicit() const = 0;
   virtual size_t Expand(const RefinementModel& rm, TAtomRefList_& res,
@@ -50,7 +50,7 @@ public:
   {
     DealWithSymm(ar.matrix);
   }
-  ExplicitCAtomRef(TCAtom& _atom, const smatd* _matrix=NULL) :
+  ExplicitCAtomRef(TCAtom& _atom, const smatd* _matrix=0) :
     atom(&_atom)
   {
     DealWithSymm(_matrix);
@@ -118,7 +118,7 @@ public:
   virtual bool IsExplicit() const { return false; }
   virtual size_t Expand(const RefinementModel& rm, TAtomRefList_& res,
     TResidue& resi) const;
-  // may return NULL
+  // may return 0
   static AAtomRef* NewInstance(const RefinementModel& rm, const olxstr& exp,
     const olxstr& resi, TResidue* _resi);
   virtual AAtomRef* Clone(RefinementModel& rm) const {
@@ -178,23 +178,20 @@ class AtomRefList {
   olxstr residue;
   olxstr expression;
   bool ContainsImplicitAtoms;
-  olxstr BuildExpression(TResidue *r) const;
+  olxstr BuildExpression(TResidue* r) const;
   void EnsureAtomGroups(const RefinementModel& rm, TAtomRefList& al,
     size_t groups_size) const;
   void EnsureAtomGroups(size_t group_size);
-  static int RefTagCmp(const ExplicitCAtomRef &a, const ExplicitCAtomRef &b) {
-    return olx_cmp(a.GetAtom().GetTag(), b.GetAtom().GetTag());
-  }
-  static int RefIdCmp(const ExplicitCAtomRef &a, const ExplicitCAtomRef &b) {
+  static int RefIdCmp(const ExplicitCAtomRef& a, const ExplicitCAtomRef& b) {
     return olx_cmp(a.GetAtom().GetId(), b.GetAtom().GetId());
   }
-  TTypeList<AAtomRef> &GetRefs() { return refs; }
+  TTypeList<AAtomRef>& GetRefs() { return refs; }
 public:
   /* creates an instance of the object from given expression for given residue
   class, number or alias. Empty residue specifies the main residue.
   */
   AtomRefList(RefinementModel& rm, const olxstr& exp,
-    const olxstr& resi=EmptyString());
+    const olxstr& resi = EmptyString());
   AtomRefList(RefinementModel& rm)
     : rm(rm), ContainsImplicitAtoms(false)
   {}
@@ -204,59 +201,66 @@ public:
   residue. One of the list type constants can be provided to validate the lists
   content to have pairs or triplets of atoms
   */
-  TTypeList<TAtomRefList> &Expand(const RefinementModel& rm,
-    TTypeList<TAtomRefList>& res, size_t group_size=InvalidSize) const;
+  TTypeList<TAtomRefList>& Expand(const RefinementModel& rm,
+    TTypeList<TAtomRefList>& res, size_t group_size = InvalidSize) const;
   TTypeList<TAtomRefList>::const_list_type Expand(const RefinementModel& rm,
-    size_t group_size=InvalidSize) const
+    size_t group_size = InvalidSize) const
   {
     TTypeList<TAtomRefList> res;
     return Expand(rm, res, group_size);
   }
   TAtomRefList::const_list_type ExpandList(const RefinementModel& rm,
-    size_t group_size=InvalidSize) const;
+    size_t group_size = InvalidSize) const;
   /* parses the expression into a list */
-  void Build(const olxstr& exp, const olxstr& resi=EmptyString());
+  void Build(const olxstr& exp, const olxstr& resi = EmptyString());
   /* if implicit is true - the residue class of the atoms is used to build an
   implicit atom list.
   */
-  void Build(const TPtrList<class TSAtom> &atoms, bool implicit=false);
+  void Build(const TPtrList<class TSAtom>& atoms, bool implicit = false);
   /* recreates the expression for the object. If there are any explicit atom
   names - the new names will come from the updated model. Implicit atoms will
   stay as provided in the constructor
   */
   olxstr GetExpression() const;
-  const olxstr &GetResi() const { return residue; }
+  const olxstr& GetResi() const { return residue; }
   /* checks if any of the references are expandable */
   bool IsExpandable() const;
   bool IsValid() const;
   /* this can be used to decide if the atom list is valid */
   virtual bool IsExplicit() const;
   /* converts this list to list of exlicit references */
-  AtomRefList &ConvertToExplicit();
+  AtomRefList& ConvertToExplicit();
   /* converts this list to list of implicit references */
-  AtomRefList &ConvertToImplicit();
-  void AddExplicit(TCAtom &a, const smatd *m = NULL) {
+  AtomRefList& ConvertToImplicit();
+  void AddExplicit(TCAtom& a, const smatd* m = 0) {
     refs.Add(new ExplicitCAtomRef(a, m));
   }
-  void AddExplicit(class TSAtom &a);
+  void AddExplicit(class TSAtom& a);
   // checks if all atoms are in the same RESI
   void UpdateResi();
   void Clear();
   bool IsEmpty() const { return refs.IsEmpty(); }
   size_t RefCount() const { return refs.Count(); }
-  AtomRefList &Validate(size_t group_size = InvalidSize);
-  void Assign(const AtomRefList &arl);
-  void ToDataItem(TDataItem &di) const;
-  void FromDataItem(const TDataItem &di);
+  AtomRefList& Validate(size_t group_size = InvalidSize);
+  void Assign(const AtomRefList& arl);
+  void ToDataItem(TDataItem& di) const;
+  void FromDataItem(const TDataItem& di);
   /* returns all explicit references */
   TPtrList<ExplicitCAtomRef>::const_list_type GetExplicit() const;
   void OnAUUpdate();
   /* sorts the references by atom tag */
-  void SortByTag(const TPtrList<AtomRefList> &sync);
+  void SortByTag(const TPtrList<AtomRefList>& sync);
   void BeginAUSort();
   void EndAUSort(bool allow_implicit);
-};
+  /* sorts explicit refs according to atom tags, calls to ConvertToExplicit
+  if needed
+  */
+  void SortExplicitRefs();
 
+  static int RefTagCmp(const ExplicitCAtomRef& a, const ExplicitCAtomRef& b) {
+    return olx_cmp(a.GetAtom().GetTag(), b.GetAtom().GetTag());
+  }
+};
 EndXlibNamespace()
 
 #endif

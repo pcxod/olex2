@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2024 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -688,6 +688,7 @@ public:
   };
   typedef T *list_item_type;
   typedef ConstPtrList<T> const_list_type;
+  olx_list_2_std;
 };
 
 #ifndef __BORLANDC__

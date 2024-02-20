@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2024 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -2112,6 +2112,7 @@ ConstPtrList<TXAtom> TGXApp::FindXAtoms(const IStrList& toks, bool getAll,
             }
           }
           TXAtom* XAFrom = rv.GetLast();
+          TXAtomPList l;
           AtomIterator ai(*this);
           while (ai.HasNext()) {
             TXAtom& XA = ai.Next();
@@ -2125,13 +2126,19 @@ ConstPtrList<TXAtom> TGXApp::FindXAtoms(const IStrList& toks, bool getAll,
               if (XA.CAtom().GetId() > XAFrom->CAtom().GetId() &&
                 XA.CAtom().GetId() < XATo->CAtom().GetId())
               {
-                rv.Add(XA);
+                l.Add(XA);
               }
             }
             else if (XA.CAtom().GetId() > XAFrom->CAtom().GetId()) {
-              rv.Add(XA);
+              l.Add(XA);
             }
           }
+          QuickSorter::Sort(l, ComplexComparator::Make(
+            ComplexAccessor::MakeP(
+              TSAtom::CAtomAccessor(),
+              FunctionAccessor::MakeConst(&TCAtom::GetId)),
+            TPrimitiveComparator()));
+          rv.AddAll(l);
           if (XATo != 0) {
             rv.Add(XATo);
           }

@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2024 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -35,7 +35,7 @@ ExplicitCAtomRef::ExplicitCAtomRef(const TDataItem & di, RefinementModel& rm) {
   size_t aid = di.GetFieldByName("atom_id").ToSizeT();
   uint32_t eid = di.GetFieldByName("eqiv_id").ToUInt();
   atom = &rm.aunit.GetAtom(aid);
-  DealWithSymm(eid == ~0 ? NULL : &rm.GetUsedSymm(eid));
+  DealWithSymm(eid == ~0 ? 0 : &rm.GetUsedSymm(eid));
 }
 //.............................................................................
 ExplicitCAtomRef::~ExplicitCAtomRef() {
@@ -397,7 +397,8 @@ size_t ListAtomRef::Expand(const RefinementModel& rm, TAtomRefList& res,
 }
 //.............................................................................
 void ListAtomRef::ToDataItem(TDataItem &di) const {
-  di.AddField("type", GetTypeId());
+  di.AddField("type", GetTypeId())
+    .AddField("operation", op);
   start.ToDataItem(di.AddItem("start"));
   end.ToDataItem(di.AddItem("end"));
 }
@@ -767,7 +768,7 @@ olxstr AtomRefList::GetExpression() const {
 //.............................................................................
 void AtomRefList::AddExplicit(class TSAtom &a) {
   refs.Add(new ExplicitCAtomRef(a.CAtom(),
-    a.GetMatrix().IsFirst() ? NULL : &a.GetMatrix()));
+    a.GetMatrix().IsFirst() ? 0 : &a.GetMatrix()));
 }
 //.............................................................................
 TPtrList<ExplicitCAtomRef>::const_list_type AtomRefList::GetExplicit() const {
@@ -799,14 +800,11 @@ AtomRefList &AtomRefList::ConvertToExplicit() {
   if (!IsExplicit()) {
     throw TInvalidArgumentException(__OlxSourceInfo, "list type");
   }
-  TTypeList<AAtomRef> nrefs;
+  TTypeList<AAtomRef> nrefs(olx_reserve(refs.Count()));
   for (size_t i = 0; i < refs.Count(); i++) {
     TAtomRefList lrefs;
     refs[i].Expand(rm, lrefs, rm.aunit.GetResidue(0));
-    nrefs.SetCapacity(nrefs.Count() + lrefs.Count());
-    for (size_t j = 0; j < lrefs.Count(); j++) {
-      nrefs.Add(lrefs[j]);
-    }
+    nrefs.AddAll(lrefs);
     lrefs.ReleaseAll();
   }
   refs.TakeOver(nrefs);
@@ -897,6 +895,7 @@ void AtomRefList::BeginAUSort() {
 }
 //.............................................................................
 void AtomRefList::EndAUSort(bool allow_implicit) {
+  //return;
   /* In order to avoid the H atoms, Tags are used */
   if (!IsExplicit() || refs.Count() <= 3 || !allow_implicit) {
     return;
@@ -969,12 +968,8 @@ void AtomRefList::EndAUSort(bool allow_implicit) {
   }
   refs.ForEach(ACollectionItem::TagSetter(0));
   to_release.ForEach(ACollectionItem::TagSetter(1));
-  for (size_t i = 0; i < refs.Count(); i++) {
-    if (refs[i].GetTag() == 1) {
-      refs.Release(i--);
-    }
-  }
-  refs.Clear();
+  refs.Pack(ACollectionItem::TagAnalyser(0));
+  refs.ReleaseAll();
   for (size_t i = 0; i < newl.Count(); i++) {
     refs.Add(newl[i]);
   }
@@ -1003,9 +998,17 @@ void AtomRefList::EndAUSort(bool allow_implicit) {
   //refs.Release(refs.Count() - 1);
   //refs.Clear();
   //refs.Add(list);
-  expression = BuildExpression(NULL);
+  expression = BuildExpression(0);
 }
 //.............................................................................
+void AtomRefList::SortExplicitRefs() {
+  if (!IsExplicit()) {
+    return;
+  }
+  QuickSorter::Sort(refs, ComplexComparator::Make(
+    DynamicCastAccessor<ExplicitCAtomRef>(),
+    FunctionComparator::Make(&AtomRefList::RefTagCmp)));
+}
 //.............................................................................
 void AtomRefList::SortByTag(const TPtrList<AtomRefList> &sync) {
   if (!IsExplicit()) {

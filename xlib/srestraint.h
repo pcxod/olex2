@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2024 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -18,12 +18,15 @@ class RefinementModel;
 class TSRestraintList;
 // restraint atom list types
 const short
-  rltNone   = 0, // default value for the constructor...
-  rltAtoms  = 1, // set of independent atoms
-  rltGroup2 = 2, // set of "bonds" - atom pairs
-  rltGroup3 = 3, // set of "angles" - atom triplets
-  rltGroup4 = 4, // dihedrals
-  rltGroup  = 5; // atoms represent a group
+  rltNone    = 0, // default value for the constructor...
+  rltAtoms1N = 1, // set of independent atoms
+  rltAtoms2N = 2, // set of 2 or more independent atoms
+  rltAtoms3N = 3, // set of 3 or more independent atoms
+  rltAtoms4N = 4, // set of 4 or more independent atoms
+
+  rltGroup2  = 5, // set of "bonds" - atom pairs
+  rltGroup3  = 6, // set of "angles" - atom triplets
+  rltGroup4  = 7; // dihedrals
 
 const short
   rptNone   = 0x0000,

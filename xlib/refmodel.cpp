@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2024 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -35,18 +35,18 @@ RefinementModel::RefinementModel(TAsymmUnit& au) :
   rDFIX(*this, rltGroup2, "DFIX", rptValue|rptEsd, true),
   rDANG(*this, rltGroup2, "DANG", rptValue|rptEsd, true),
   rSADI(*this, rltGroup2, "SADI", rptEsd, true),
-  rCHIV(*this, rltAtoms, "CHIV", rptValue|rptEsd, true),
-  rFLAT(*this, rltGroup, "FLAT", rptEsd, true),
-  rDELU(*this, rltAtoms, "DELU", rptEsd|rptEsd1, false),
-  rSIMU(*this, rltAtoms, "SIMU", rptEsd|rptEsd1|rptValue1, false),
-  rISOR(*this, rltAtoms, "ISOR", rptEsd, false),
-  rEADP(*this, rltAtoms, "EADP", rptNone, true),
+  rCHIV(*this, rltAtoms1N, "CHIV", rptValue|rptEsd, true),
+  rFLAT(*this, rltAtoms4N, "FLAT", rptEsd, true),
+  rDELU(*this, rltAtoms2N, "DELU", rptEsd|rptEsd1, false),
+  rSIMU(*this, rltAtoms2N, "SIMU", rptEsd|rptEsd1|rptValue1, false),
+  rISOR(*this, rltAtoms1N, "ISOR", rptEsd, false),
+  rEADP(*this, rltAtoms2N, "EADP", rptNone, true),
   rAngle(*this, rltGroup3, "olex2.restraint.angle", rptValue|rptEsd, true),
   rDihedralAngle(*this, rltGroup4, "olex2.restraint.dihedral", rptValue|rptEsd, true),
-  rFixedUeq(*this, rltAtoms, "olex2.restraint.adp_u_eq", rptValue|rptEsd, false),
-  rSimilarUeq(*this, rltAtoms, "olex2.restraint.adp_u_eq_similar", rptEsd, false),
-  rSimilarAdpVolume(*this, rltAtoms, "olex2.restraint.adp_volume_similar", rptEsd, false),
-  rRIGU(*this, rltAtoms, "RIGU", rptEsd|rptEsd1, false),
+  rFixedUeq(*this, rltAtoms1N, "olex2.restraint.adp_u_eq", rptValue|rptEsd, false),
+  rSimilarUeq(*this, rltAtoms2N, "olex2.restraint.adp_u_eq_similar", rptEsd, false),
+  rSimilarAdpVolume(*this, rltAtoms2N, "olex2.restraint.adp_volume_similar", rptEsd, false),
+  rRIGU(*this, rltAtoms2N, "RIGU", rptEsd|rptEsd1, false),
   ExyzGroups(*this),
   AfixGroups(*this),
   rSAME(*this),
