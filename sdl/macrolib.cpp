@@ -168,7 +168,10 @@ olxstr TEMacroLib::ProcessEvaluator(
           if (Options.Contains(global_options->GetName(i))) {
             continue;
           }
-          Options.AddParam(global_options->GetName(i), global_options->GetValue(i));
+          else if (f->GetOptions().HasKey(global_options->GetName(i))) {
+            Options.AddParam(global_options->GetName(i),
+              global_options->GetValue(i));
+          }
         }
       }
       f->Run(Cmds, Options, me);

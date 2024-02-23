@@ -503,6 +503,7 @@ void TIns::_ProcessSame(ParseContext& cx, const TIndexList *index)  {
     TStrList& sl = cx.Same[i].a;
     TPtrList<TSameGroup> all_groups;
     size_t max_atoms = 0;
+    olx_pdict<size_t, TPtrList<TSameGroup>> size_groups;
     for (size_t j=0; j < sl.Count(); j++) {
        TStrList toks(sl[j], ' ');
        size_t resi_ind = toks[0].IndexOf('_');
@@ -525,19 +526,18 @@ void TIns::_ProcessSame(ParseContext& cx, const TIndexList *index)  {
       if (sg1.GetAtoms().IsExplicit()) {
         TTypeList<ExplicitCAtomRef> atoms = sg1.GetAtoms().ExpandList(cx.rm);
         size_t ac = atoms.Count();
-        //size_t x = olx_count(atoms, TCAtom::TypeAnalyser(
-        //  FunctionAccessor::MakeConst(&ExplicitCAtomRef::GetAtom),
-        //  iHydrogenZ));
         if (ac > max_atoms) {
           max_atoms = ac;
         }
+        size_groups.Add(ac).Add(sg1);
       }
     }
     // now process the reference group
     bool valid = false;
     if (max_atoms != 0 && ca != 0) {
       valid = true;
-      TSameGroup& sg = sgl.New();  // main, reference, group
+      TCAtomPList atoms;
+      TPtrList<TSameGroup> refs;
       for (size_t j = 0; j < max_atoms; j++) {
         if (index == 0) {
           if (ca->GetId() + j >= cx.au.AtomCount()) {
@@ -561,15 +561,30 @@ void TIns::_ProcessSame(ParseContext& cx, const TIndexList *index)  {
           max_atoms++; // do not count the H atoms!
           continue;
         }
-        sg.Add(a);
-      }
-      if (valid) {
-        for (size_t j = 0; j < all_groups.Count(); j++) {
-          sg.AddDependent(*all_groups[j]);
+        atoms << a;
+        for (size_t szi = 0; szi < size_groups.Count(); szi++) {
+          if (atoms.Count() == size_groups.GetKey(szi)) {
+            TSameGroup& sg = sgl.New();  // main, reference, group
+            refs.Add(sg);
+            for (size_t ai = 0; ai < atoms.Count(); ai++) {
+              sg.Add(*atoms[ai]);
+            }
+            for (size_t di = 0; di < size_groups.GetValue(szi).Count(); di++) {
+              sg.AddDependent(*size_groups.GetValue(szi)[di]);
+            }
+            size_groups.Delete(szi);
+            break;
+          }
         }
       }
-      else {
-        sgl.Delete(all_groups << sg);
+      // no refs created or not all dependent created
+      if (refs.IsEmpty()) {
+        sgl.Delete(all_groups);
+      }
+      else if (!size_groups.IsEmpty()) {
+        for (size_t gi = 0; gi < size_groups.Count(); gi++) {
+          sgl.Delete(size_groups.GetValue(gi));
+        }
       }
     }
   }

@@ -628,7 +628,7 @@ void TSameGroupList::PrepareSave() {
     Groups[i].SetTag(sg_atoms[&Groups[i]].Count());
   }
   QuickSorter::Sort(Groups,
-    ReverseComparator::Make( ACollectionItem::TagComparator()));
+    ReverseComparator::Make(ACollectionItem::TagComparator()));
   for (size_t i = 0; i < Groups.Count(); i++) {
     Groups[i].SetId((uint16_t)i);
     Groups[i].SetTag(sg_atoms[&Groups[i]].Count());

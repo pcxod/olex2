@@ -1675,7 +1675,7 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
       time_t FileT = TEFile::FileAge(FListenFile);
       if (FileMT != FileT) {
         FObjectUnderMouse = 0;
-        processMacro((olxstr("reap_listen -b -r \"") << FListenFile) + '\"', "OnListen");
+        processMacro((olxstr("reap_listen \"") << FListenFile) + '\"', "OnListen");
         FileMT = FileT;
       }
     }
