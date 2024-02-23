@@ -1717,26 +1717,50 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
     TSameGroup &sg = rm.rSAME[a.GetSameId()];
     if (sg.IsValidForSave()) {
       if (sg.IsReference()) {
-        SaveSAMEReferences(sl, sg);
-      }
-      if (sg.GetAtoms().IsExplicit()) {
-        TAtomRefList atoms = sg.GetAtoms().ExpandList(rm);
-        uint16_t last_sid_header = sg.GetId();
-        for (size_t i = 0; i < atoms.Count(); i++) {
-          uint16_t sid = atoms[i].GetAtom().GetSameId();
-          // check for "embedded" same
-          if (olx_is_valid_index(sid) &&
-            sid != last_sid_header && rm.rSAME[sid].IsReference())
-          {
-            SaveSAMEReferences(sl, rm.rSAME[sid]);
-            last_sid_header = sid;
+        if (sg.GetAtoms().IsExplicit()) {
+          olx_pset<uint16_t> saved_headers;
+          TAtomRefList atoms;
+          TPtrList<TSameGroup> sgs = rm.rSAME.FindSupergroups(sg);
+          if (!sgs.IsEmpty()) {
+            atoms = sgs[0]->GetAtoms().ExpandList(rm);
+            // check if attached at the root atom
+            TAtomRefList atoms1 = sg.GetAtoms().ExpandList(rm);
+            if (!atoms1.IsEmpty() && !atoms.IsEmpty() &&
+              atoms[0].GetAtom() == atoms1[0].GetAtom())
+            {
+              SaveSAMEReferences(sl, sg);
+              saved_headers.Add(sg.GetId());
+            }
+            SaveSAMEReferences(sl, *sgs[0]);
+            saved_headers.Add(sgs[0]->GetId());
           }
-          _SaveAtom(rm, atoms[i].GetAtom(), part, afix, spec, sfac, sl, index,
-            false, checkResi);
+          else {
+            SaveSAMEReferences(sl, sg);
+            saved_headers.Add(sg.GetId());
+            atoms = sg.GetAtoms().ExpandList(rm);
+          }
+          for (size_t i = 0; i < atoms.Count(); i++) {
+            uint16_t sid = atoms[i].GetAtom().GetSameId();
+            // check for "embedded" same
+            if (olx_is_valid_index(sid) &&
+              !saved_headers.Contains(sid) && rm.rSAME[sid].IsReference())
+            {
+              SaveSAMEReferences(sl, rm.rSAME[sid]);
+              saved_headers.Add(sid);
+            }
+            _SaveAtom(rm, atoms[i].GetAtom(), part, afix, spec, sfac, sl, index,
+              false, checkResi);
+          }
+        }
+        else {
+          SaveSAMEReferences(sl, sg);
         }
       }
+      else { // leave the atom order for non-references as in the file
+        _SaveAtom(rm, a, part, afix, spec, sfac, sl, index, false, checkResi);
+      }
       return;
-    }
+    } // continue to save if sg is invalid
   }
   if (a.GetUisoOwner() != 0 && !a.GetUisoOwner()->IsSaved()) {
     _SaveAtom(rm, *a.GetUisoOwner(), part, afix, spec, sfac, sl, index,
@@ -1826,7 +1850,7 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
   }
   if (ag != 0) {  // save dependent rigid group
     size_t sc = 0;
-    for (size_t i=0; i < ag->Count(); i++) {
+    for (size_t i = 0; i < ag->Count(); i++) {
       if (!(*ag)[i].IsDeleted() && !(*ag)[i].IsSaved()) {
         _SaveAtom(rm, (*ag)[i], part, afix, spec, sfac, sl, index, checkSame,
           checkResi);
@@ -1842,13 +1866,13 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
 //..............................................................................
 void TIns::SaveToStrings(TStrList& SL) {
   FixTypeListAndLabels();
-  for (size_t i=0; i < GetAsymmUnit().AtomCount(); i++) {
-    TCAtom &ca = GetAsymmUnit().GetAtom(i);
+  for (size_t i = 0; i < GetAsymmUnit().AtomCount(); i++) {
+    TCAtom& ca = GetAsymmUnit().GetAtom(i);
     if (ca.IsDeleted()) {
       continue;
     }
     olxstr lb = ca.GetLabel();
-    lb.Replace('\t' ,' ').Replace('_', ' ');
+    lb.Replace('\t', ' ').Replace('_', ' ');
     if (lb.Contains(' ')) {
       TBasicApp::NewLogEntry(logError) << "Changing invalid atom labels for" <<
         (olxstr(' ').quote() << ca.GetLabel());
@@ -1856,7 +1880,9 @@ void TIns::SaveToStrings(TStrList& SL) {
     }
   }
   ValidateRestraintsAtomNames(GetRM());
+  GetRM().rSAME.BeginAUSort();
   GetRM().rSAME.PrepareSave();
+  GetRM().rSAME.EndAUSort();
   UpdateParams();
   TStrList sfac = SaveHeader(SL, false);
   SaveExtras(SL, 0, 0, GetRM());
@@ -1865,14 +1891,14 @@ void TIns::SaveToStrings(TStrList& SL) {
   double spec = 0;
   uint32_t fragmentId = ~0;
   TCAtomPList peaks;
-  for (size_t i=0; i < GetAsymmUnit().ResidueCount(); i++) {
+  for (size_t i = 0; i < GetAsymmUnit().ResidueCount(); i++) {
     TResidue& residue = GetAsymmUnit().GetResidue(i);
     if (i != 0 && !residue.IsEmpty()) {
       SL.Add();
       SL.Add(residue.ToString());
       fragmentId = ~0;
     }
-    for (size_t j=0; j < residue.Count(); j++) {
+    for (size_t j = 0; j < residue.Count(); j++) {
       TCAtom& ac = residue[j];
       if (ac.IsDeleted() || ac.IsSaved()) {
         continue;
@@ -1903,13 +1929,13 @@ void TIns::SaveToStrings(TStrList& SL) {
   SL.AddAll(GetFooter().obj());
   SL.Add("END");
   for (size_t i = 0; i < peaks.Count(); i++) {
-    TCAtom &p = *peaks[i];
+    TCAtom& p = *peaks[i];
     SL.Add(p.GetLabel()).stream(' ') << "1" <<
       p.ccrd()[0] << p.ccrd()[1] << p.ccrd()[2] << "11" << "0.05" << p.GetQPeak();
   }
 }
 //..............................................................................
-void TIns::_DrySaveAtom(TCAtom& a, TSizeList &indices, bool use_tags,
+void TIns::_DrySaveAtom(TCAtom& a, TSizeList& indices, bool use_tags,
   bool checkSame, bool checkResi)
 {
   if (a.IsDeleted() || a.IsSaved()) {
@@ -1923,14 +1949,25 @@ void TIns::_DrySaveAtom(TCAtom& a, TSizeList &indices, bool use_tags,
     return;
   }
   if (checkSame && olx_is_valid_index(a.GetSameId())) {
-    TSameGroup& sg = a.GetParent()->GetRefMod()->rSAME[a.GetSameId()];
-    if (sg.IsValidForSave() && sg.GetAtoms().IsExplicit()) {
-      TAtomRefList atoms = sg.GetAtoms().ExpandList(*a.GetParent()->GetRefMod());
+    RefinementModel& rm = *a.GetParent()->GetRefMod();
+    TSameGroup& sg = rm.rSAME[a.GetSameId()];
+    if (sg.IsValidForSave() && sg.GetAtoms().IsExplicit() && sg.IsReference()) {
+      TAtomRefList atoms;
+      TPtrList<TSameGroup> sgs = rm.rSAME.FindSupergroups(sg);
+      if (!sgs.IsEmpty()) {
+        atoms = sgs[0]->GetAtoms().ExpandList(rm);
+      }
+      else {
+        atoms = sg.GetAtoms().ExpandList(rm);
+      }
       for (size_t i = 0; i < atoms.Count(); i++) {
         _DrySaveAtom(atoms[i].GetAtom(), indices, false, checkResi);
       }
-      return;
     }
+    else {
+      _DrySaveAtom(a, indices, false, checkResi);
+    }
+    return;
   }
   if (a.GetUisoOwner() != 0 && !a.GetUisoOwner()->IsSaved()) {
     _DrySaveAtom(*a.GetUisoOwner(), indices, checkSame, checkResi);
@@ -1983,9 +2020,6 @@ TSizeList::const_list_type TIns::DrySave(const TAsymmUnit& au, bool use_tags) {
     }
   }
   for (size_t i = 0; i < au.AtomCount(); i++) {
-    //if (!au.GetAtom(i).IsSaved()) {
-    //  rv.Add(au.GetAtom(i).GetTag());
-    //}
     if (saved_flag[i]) {
       au.GetAtom(i).SetSaved(true);
     }

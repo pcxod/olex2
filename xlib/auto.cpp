@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2024 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -1290,7 +1290,7 @@ ConstTypeList<TAutoDB::TAnalysisResult> TAutoDB::AnalyseStructure(TLattice& latt
 {
   TTypeList<TAutoDB::TAnalysisResult> res;
   for (size_t i = 0; i < latt.FragmentCount(); i++) {
-    res.AddAll(AnalyseNet(latt.GetFragment(i)));
+    res.AddCopyAll(AnalyseNet(latt.GetFragment(i)));
   }
   return res;
 }

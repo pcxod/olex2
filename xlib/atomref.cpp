@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2024 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -253,7 +253,7 @@ olxstr TAtomReference::Expand(RefinementModel& rm, TCAtomGroup& atoms,
       }
     }
     if (succeded) {
-      atoms.AddAll(tmp_atoms);
+      atoms.AddCopyAll(tmp_atoms);
       if (atomAGroup == 0) {
         atomAGroup = tmp_atoms.Count();
       }

@@ -594,6 +594,7 @@ Friedel opposites of components 1 ... m
   bool IsDefaultRestraint(const TSameGroup &restraint) const;
   // feeds on .options - instance static
   bool DoShowRestraintDefaults() const;
+  void SortAtomsOrderOut();
   void LibHasOccu(const TStrObjList& Params, TMacroData& E);
   void LibOSF(const TStrObjList& Params, TMacroData& E);
   void LibBASF(const TStrObjList& Params, TMacroData& E);

@@ -1326,7 +1326,7 @@ void XLibMacros::macSort(TStrObjList &Cmds, const TParamList &Options,
   TStrList cmds = (Cmds.IsEmpty() ? TStrList("+ml moiety", ' ')
     : TStrList(Cmds));
   TXApp::GetInstance().XFile().Sort(cmds, Options);
-  TBasicApp::NewLogEntry() << "Atom order after sorting :";
+  TBasicApp::NewLogEntry() << "Atom order after sorting:";
   olxstr_buf atoms;
   olxstr ws = ' ';
   const TAsymmUnit &au = TXApp::GetInstance().XFile().GetAsymmUnit();
@@ -10659,37 +10659,22 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
         FunctionAccessor::MakeConst(&TSAtom::CAtom));
     }
     else {
-      TSameGroup *sg = 0;
-      if (olx_is_valid_index(atoms[0]->CAtom().GetSameId())) {
-        TSameGroup &asg = app.XFile().GetRM().rSAME[
-          atoms[0]->CAtom().GetSameId()];
-        if (asg.GetParentGroup() == 0) {
-          sg = &asg;
-        }
-      }
-      if (sg == 0) {
-        sg = &app.XFile().GetRM().rSAME.New();
-      }
-      TSameGroup &dep = app.XFile().GetRM().rSAME.New(sg);
-      if (!sg->GetAtoms().IsEmpty()) {
-        sg = 0;
-      }
+      TSameGroup& sg = app.XFile().GetRM().rSAME.New();
+      TSameGroup& dep = app.XFile().GetRM().rSAME.New(&sg);
       if (atoms[0]->IsConnectedTo(*atoms.GetLast())) {
         for (size_t i = 0; i < atoms.Count(); i++) {
-          if (sg != 0) {
-            sg->Add(atoms[i]->CAtom());
-          }
+          sg.Add(atoms[i]->CAtom());
           dep.Add(atoms[i == 0 ? 0 : atoms.Count() - i]->CAtom());
         }
       }
       else {
         for (size_t i = 0; i < atoms.Count(); i++) {
-          if (sg != 0) {
-            sg->Add(atoms[i]->CAtom());
-          }
+          sg.Add(atoms[i]->CAtom());
           dep.Add(atoms[atoms.Count() - i - 1]->CAtom());
         }
       }
+      TBasicApp::NewLogEntry() << "Reference: " << sg.GetAtoms().GetExpression();
+      TBasicApp::NewLogEntry() << "Dependent: " << dep.GetAtoms().GetExpression();
       TBasicApp::NewLogEntry() << "SAME instruction is added";
     }
   }
@@ -10729,11 +10714,16 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
         }
         for (size_t fi = 0; fi < frags.Count(); fi++) {
           TSameGroup &dg = rm.rSAME.New(&rg);
-          for (size_t i = 0; i < frags[0].count(); i++) {
+          for (size_t i = 0; i < frags[fi].count(); i++) {
             if (fr[i].GetType().z > 1) {
               dg.Add(frags[fi][i]);
             }
           }
+        }
+        TBasicApp::NewLogEntry() << "Reference: " << rg.GetAtoms().GetExpression();
+        for (size_t i = 0; i < rg.DependentCount(); i++) {
+          TBasicApp::NewLogEntry() << "Dependent: " <<
+            rg.GetDependent(i).GetAtoms().GetExpression();
         }
       }
     }

@@ -791,20 +791,34 @@ void TXFile::Sort(const TStrList& ins, const TParamList &options) {
         acs);
     }
   }
+  bool changes = true;
+  size_t changes_cnt = 0;
   // comply to residues before dry-save
-  GetAsymmUnit().ComplyToResidues();
-  GetAsymmUnit().GetAtoms().ForEach(ACollectionItem::IndexTagSetter());
-  GetRM().Sort_();
-  {
+  while (changes) {
+    changes = false;
+    GetAsymmUnit().ComplyToResidues();
+    GetAsymmUnit().GetAtoms().ForEach(ACollectionItem::IndexTagSetter());
+    GetRM().Sort_();
     TSizeList indices = TIns::DrySave(GetAsymmUnit(), true);
     if (indices.Count() != GetAsymmUnit().AtomCount()) {
       throw TFunctionFailedException(__OlxSourceInfo, "assert");
     }
     GetAsymmUnit().RearrangeAtoms(indices);
+    TSizeList indices1 = TIns::DrySave(GetAsymmUnit(), true);
+    for (size_t i = 0; i < indices.Count(); i++) {
+      if (indices[i] != indices1[i]) {
+        changes = true;
+        break;
+      }
+    }
+    GetAsymmUnit().SetNonHAtomTags_();
+    GetAsymmUnit()._UpdateAtomIds();
+    if (++changes_cnt > 3) {
+      TBasicApp::NewLogEntry(logError) << "Atom order resolution has not converged!";
+      break;
+    }
   }
-  GetAsymmUnit().SetNonHAtomTags_();
   GetRM().AfterAUSort_();
-  GetAsymmUnit()._UpdateAtomIds();
   // 2010.11.29, ASB bug fix for ADPS on H...
   GetUnitCell().UpdateEllipsoids();
   GetLattice().RestoreADPs(false);

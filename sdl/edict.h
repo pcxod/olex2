@@ -60,11 +60,19 @@ public:
       : key(_key), value(_value)
     {}
   };
-
+  
   olxdict() {}
 
   olxdict(const Comparator& cmp)
     : SortedL(cmpt_t(cmp))
+  {}
+
+  olxdict(const olx_capacity_t& cap)
+    : SortedL(cap)
+  {}
+
+  olxdict(const Comparator& cmp, const olx_capacity_t& cap)
+    : SortedL(cmpt_t(cmp), cap)
   {}
   olxdict(const Entry _values[], size_t cnt, const Comparator& cmp)
     : SortedL(cmpt_t(cmp))

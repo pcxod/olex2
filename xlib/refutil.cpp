@@ -26,7 +26,7 @@ _stats(0)
   standardise_for_omit = rm.GetHKLF() < 5 && rm.GetMERG() != 0;
   if (standardise_for_omit) {
     standardisation_matrices.SetCapacity(rm.aunit.MatrixCount() * (rm.aunit.GetLatt() > 0 ? 2 : 1) + 1);
-    standardisation_matrices.AddAll(rm.aunit.GetMatices());
+    standardisation_matrices.AddCopyAll(rm.aunit.GetMatices());
     if (rm.aunit.GetLatt() > 0) {
       standardisation_matrices.AddNew().I() *= -1;
       for (size_t i = 0; i < rm.aunit.MatrixCount(); i++) {

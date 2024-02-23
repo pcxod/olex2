@@ -253,6 +253,7 @@ TStrList::const_list_type TSameGroup::Analyse(bool report,
   if (!IsReference()) {
     return log;
   }
+  olxset< const TSameGroup*, TPointerComparator> conflicted;
   TAtomRefList this_atoms = Atoms.ExpandList(Parent.RM);
   for (size_t i = 0; i < Dependent.Count(); i++) {
     const TSameGroup& dg = *Dependent[i];
@@ -264,13 +265,10 @@ TStrList::const_list_type TSameGroup::Analyse(bool report,
         log.Add(Atoms.GetExpression());
         log.Add(dg.Atoms.GetExpression());
       }
-      if (offending != 0) {
-        offending->Add(dg);
-      }
-      continue;
+      conflicted.Add(&dg);
     }
     olxstr mixed;
-    for (size_t ai = 0; ai < this_atoms.Count(); ai++) {
+    for (size_t ai = 0; ai < olx_min(this_atoms.Count(), that_atoms.Count()); ai++) {
       if (this_atoms[ai].GetAtom().GetType() !=
         that_atoms[ai].GetAtom().GetType())
       {
@@ -283,13 +281,16 @@ TStrList::const_list_type TSameGroup::Analyse(bool report,
     if (!mixed.IsEmpty()) {
       if (report) {
         log.Add("Mixed atom types: ") << mixed.SubStringFrom(2);
-        log.Add(Atoms.GetExpression());
-        log.Add(dg.Atoms.GetExpression());
+        if (!conflicted.Contains(&dg)) {
+          log.Add(Atoms.GetExpression());
+          log.Add(dg.Atoms.GetExpression());
+        }
       }
-      if (offending != 0) {
-        offending->Add(dg);
-      }
+      conflicted.Add(&dg);
     }
+  }
+  if (offending != 0) {
+    offending->AddAll(conflicted);
   }
   return log;
 }
@@ -538,11 +539,11 @@ void TSameGroupList::Analyse() {
       if (ov == OVERLAP_NONE) {
         continue;
       }
-      if ((ov & OVERLAP_SAME) != 0) {
-        log.Add("");
-      }
       if (ov == OVERLAP_OVERLAP) {
         log.Add("Invalid SAME - overlapping SAME do not share all of the atoms");
+      }
+      else {
+        log.Add("Overlapping reference groups detected");
       }
     }
   }
@@ -553,7 +554,6 @@ void TSameGroupList::Analyse() {
 //.............................................................................
 void TSameGroupList::PrepareSave() {
   TIndexList tags = TIndexList::FromList(RM.aunit.GetAtoms(), TCAtom::TagAccessor());
-  this->BeginAUSort();
   typedef TPtrList<TSameGroup> ref_l_t;
   ref_l_t refs = Groups.ptr().Filter(
     FunctionAccessorAnalyser::Make(
@@ -564,19 +564,14 @@ void TSameGroupList::PrepareSave() {
   for (size_t i = 0; i < Groups.Count(); i++) {
     sg_atoms.Add(&Groups[i], Groups[i].GetAtoms().ExpandList(RM));
   }
-  /* check if any of the atom in dependent groups come from a refence group
-  * If they do - rearrange 
+  /* Several complex scenario to be considered:
+   - check if any of the atom in dependent groups come from a refence group
+   - dependent groups belongs to multiple reference groups
   */
-  for (size_t i = 0; i < refs.Count(); i++) {
-    TSameGroup& sg = *refs[i];
-    for (size_t j = 0; j < sg.DependentCount(); j++) {
-
-    }
-  }
   size_t merge_cnt = 0;
   FunctionAccessor::ConstFunctionAccessorR_<TCAtom, ExplicitCAtomRef> acc =
     FunctionAccessor::MakeConst(&ExplicitCAtomRef::GetAtom);
-  // merge refrence groups first - meging will mess up Atom's Same Gropu ids!
+  // merge reference groups
   Groups.ForEach(ACollectionItem::TagSetter(0));
   for (size_t i = 0; i < refs.Count(); i++) {
     TSameGroup& sg1 = *refs[i];
@@ -625,19 +620,26 @@ void TSameGroupList::PrepareSave() {
     }
   }
   if (merge_cnt > 0) {
+    refs.Pack(ACollectionItem::TagAnalyser(2));
     Groups.Pack(ACollectionItem::TagAnalyser(2));
-    for (size_t i = 0; i < Groups.Count(); i++) {
-      Groups[i].SetId((uint16_t)i);
-    }
-    FixIds();
   }
-  /* Find overlaps between any same group with reference groups to
-  sort out atom's order
-  */
-  Groups.ForEach(ACollectionItem::TagSetter(0));
+  // make sure subgroups survive!
   for (size_t i = 0; i < Groups.Count(); i++) {
-    TSameGroup& sg1 = Groups[i];
-    if (sg1.GetTag() != 0 || !sg1.IsReference()) {
+    Groups[i].SetTag(sg_atoms[&Groups[i]].Count());
+  }
+  QuickSorter::Sort(Groups,
+    ReverseComparator::Make( ACollectionItem::TagComparator()));
+  for (size_t i = 0; i < Groups.Count(); i++) {
+    Groups[i].SetId((uint16_t)i);
+    Groups[i].SetTag(sg_atoms[&Groups[i]].Count());
+  }
+  FixIds();
+  /* Find overlaps between any ref groups
+  */
+  refs.ForEach(ACollectionItem::TagSetter(0));
+  for (size_t i = 0; i < refs.Count(); i++) {
+    TSameGroup& sg1 = *refs[i];
+    if (sg1.GetTag() != 0) {
       continue;
     }
     ref_l_t overlapping;
@@ -645,11 +647,9 @@ void TSameGroupList::PrepareSave() {
     // implicit recursion
     for (size_t oi = 0; oi < overlapping.Count(); oi++) {
       TAtomRefList& sg1_a = sg_atoms[overlapping[oi]];
-      for (size_t j = i + 1; j < Groups.Count(); j++) {
-        TSameGroup& sg2 = Groups[j];
-        if (sg2.GetTag() != 0 ||
-          !(overlapping[oi]->IsReference() || sg2.IsReference()))
-        {
+      for (size_t j = i + 1; j < refs.Count(); j++) {
+        TSameGroup& sg2 = *refs[j];
+        if (sg2.GetTag() != 0) {
           continue;
         }
         int ov = ACollectionItem::AnalyseOverlap(sg1_a, sg_atoms[&sg2], acc);
@@ -660,30 +660,14 @@ void TSameGroupList::PrepareSave() {
       }
     }
     if (overlapping.Count() > 1) {
-      bool changes = true;
-      // sort - supergroups first
-      while (changes) {
-        changes = false;
-        for (size_t gi = 0; gi < overlapping.Count() - 1; gi++) {
-          int ov = ACollectionItem::AnalyseOverlap(
-            sg_atoms[overlapping[gi]], sg_atoms[overlapping[gi + 1]], acc);
-          if (ov == OVERLAP_SUBGROUP) {
-            changes = true;
-            overlapping.Swap(gi, gi + 1);
-          }
-        }
-      }
-      { /* continous numbering for reference groups within the supergroup but
-        anchored to the first atom within the SG
+      SortSupergroups(overlapping, sg_atoms);
+      { /* continous numbering reference groups within the supergroup
         */
         // mask supergroup with -1
         TAtomRefList& sg_ar = sg_atoms[overlapping[0]];
         sg_ar.ForEach(ACollectionItem::TagSetter(acc, -1));
         // mask reference groups with group_id
         for (size_t gi = 1; gi < overlapping.Count(); gi++) {
-          if (!overlapping[gi]->IsReference()) {
-            continue;
-          }
           TAtomRefList& ar = sg_atoms[overlapping[gi]];
           for (size_t ai = 0; ai < ar.Count(); ai++) {
             ar[ai].GetAtom().SetTag(overlapping[gi]->GetId());
@@ -710,23 +694,8 @@ void TSameGroupList::PrepareSave() {
       for (size_t gi = 0; gi < overlapping.Count(); gi++) {
         TSameGroup* sg = overlapping[gi];
         TAtomRefList& ar1 = sg_atoms[sg];
-        if (!sg->IsReference()) {
-          sg = sg->GetParentGroup();
-          TAtomRefList& ar2 = sg_atoms[sg];
-          if (ar1.Count() != ar2.Count()) {
-            throw TInvalidArgumentException(__OlxSrcInfo, "atoms list sizes");
-          }
-          for (size_t ai = 0; ai < ar1.Count(); ai++) {
-            ar2[ai].GetAtom().SetTag(ar1[ai].GetAtom().GetTag());
-          }
-          QuickSorter::Sort(ar2, FunctionComparator::Make(&AtomRefList::RefTagCmp));
-        }
         for (size_t di = 0; di < sg->DependentCount(); di++) {
           TAtomRefList& ar2 = sg_atoms[&sg->GetDependent(di)];
-          if (&ar1 == &ar2) {
-            sg->GetDependent(di).Atoms.SortExplicitRefs();
-            continue;
-          }
           if (ar1.Count() != ar2.Count()) {
             throw TInvalidArgumentException(__OlxSrcInfo, "atoms list sizes");
           }
@@ -741,10 +710,74 @@ void TSameGroupList::PrepareSave() {
       }
     }
   }
-  RM.aunit.SetNonHAtomTags_();
-  this->EndAUSort();
   for (size_t i = 0; i < RM.aunit.AtomCount(); i++) {
     RM.aunit.GetAtom(i).SetTag(tags[i]);
+  }
+}
+//..............................................................................
+TPtrList<TSameGroup>::const_list_type
+TSameGroupList::FindSupergroups(const TSameGroup& sg,
+  const olxdict<const TSameGroup*, TAtomRefList, TPointerComparator>* sg_atoms) const
+{
+  TPtrList<TSameGroup> rv;
+  if (!sg.IsReference()) {
+    return rv;
+  }
+  typedef olxdict<const TSameGroup*, TAtomRefList, TPointerComparator> dict_t;
+  olx_object_ptr<dict_t> sg_atoms_p;
+  if (sg_atoms == 0) {
+    sg_atoms_p = new dict_t(olx_reserve(Groups.Count()));
+    sg_atoms = &sg_atoms_p;
+    for (size_t i = 0; i < Groups.Count(); i++) {
+      if (!Groups[i].IsReference()) {
+        continue;
+      }
+      sg_atoms_p->Add(&Groups[i], Groups[i].GetAtoms().ExpandList(RM));
+    }
+  }
+  TAtomRefList& ar1 = (*sg_atoms)[&sg];
+  for (size_t i = 0; i < Groups.Count(); i++) {
+    if (!Groups[i].IsReference() || sg.GetId() == Groups[i].GetId()) {
+      continue;
+    }
+    TAtomRefList ar2 = (*sg_atoms)[&Groups[i]];
+    int ov = ACollectionItem::AnalyseOverlap(ar2, ar1, ExplicitCAtomRef::AtomAccessor());
+    if (ov == OVERLAP_SUPERGROUP) {
+      rv.Add(Groups[i]);
+    }
+  }
+  SortSupergroups(rv, *sg_atoms);
+  return rv;
+}
+//..............................................................................
+void TSameGroupList::SortSupergroups(
+  TPtrList<TSameGroup>& groups,
+  const olxdict<const TSameGroup*, TAtomRefList, TPointerComparator>& sg_atoms)
+{
+  if (groups.Count() < 2) {
+    return;
+  }
+  else if (groups.Count() == 2) {
+    if (ACollectionItem::AnalyseOverlap(
+      sg_atoms[groups[0]], sg_atoms[groups[1]],
+      ExplicitCAtomRef::AtomAccessor()) == OVERLAP_SUBGROUP)
+    {
+      groups.Swap(0, 1);
+    }
+    return;
+  }
+  bool changes = true;
+  while (changes) {
+    changes = false;
+    for (size_t gi = 0; gi < groups.Count() - 1; gi++) {
+      int ov = ACollectionItem::AnalyseOverlap(
+        sg_atoms[groups[gi]], sg_atoms[groups[gi + 1]],
+        ExplicitCAtomRef::AtomAccessor());
+      if (ov == OVERLAP_SUBGROUP) {
+        changes = true;
+        groups.Swap(gi, gi + 1);
+      }
+    }
   }
 }
 //..............................................................................

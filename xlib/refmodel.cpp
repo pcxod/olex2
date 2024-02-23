@@ -2834,7 +2834,7 @@ void RefinementModel::Sort_() {
   rSIMU.SortAtomsByTags();
   rDELU.SortAtomsByTags();
 }
-  //..............................................................................
+//..............................................................................
 TPtrList<const TSRestraintList>::const_list_type
 RefinementModel::GetRestraints() const
 {
@@ -2856,6 +2856,10 @@ TPtrList<TSRestraintList>::const_list_type RefinementModel::GetRestraints() {
 void RefinementModel::SetHKLFString(const olxstr &str) {
   TStrList toks(olxstr(str).Replace('-', " -"), ' ');
   SetHKLF(toks);
+}
+//..............................................................................
+void RefinementModel::SortAtomsOrderOut() {
+  throw TNotImplementedException(__OlxSrcInfo);
 }
 //..............................................................................
 RefinementModel::HklStat& RefinementModel::HklStat::operator = (

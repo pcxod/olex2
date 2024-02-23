@@ -138,6 +138,13 @@ public:
   void Sort();
   void Analyse();
   void PrepareSave();
+  // works on Reference groups only
+  TPtrList<TSameGroup>::const_list_type
+    FindSupergroups(const TSameGroup& sg,
+      const olxdict<const TSameGroup*, TAtomRefList, TPointerComparator>* sg_atoms=0) const;
+  // supergroups first
+  static void SortSupergroups(TPtrList<TSameGroup> &groups,
+    const olxdict<const TSameGroup*, TAtomRefList, TPointerComparator>& sg_atoms);
   // this is called internally by the RM
   void OnAUUpdate();
   void BeginAUSort();

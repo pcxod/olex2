@@ -26,6 +26,12 @@ public:
   TTSortedListBase(const Comparator &cmp)
     : cmp(cmp)
   {}
+  TTSortedListBase(const olx_capacity_t &cap)
+    : list(cap)
+  {}
+  TTSortedListBase(const Comparator& cmp, const olx_capacity_t& cap)
+    : list(cap), cmp(cmp)
+  {}
   TTSortedListBase(const TTSortedListBase& l)
     : list(l.list), cmp(l.cmp)
   {}
@@ -86,6 +92,12 @@ public:
   TTSortedList(const Comparator &cmp)
     : __parent_t(cmp)
   {}
+  TTSortedList(const olx_capacity_t& cap)
+    : __parent_t(cap)
+  {}
+  TTSortedList(const Comparator& cmp, const olx_capacity_t& cap)
+    : __parent_t(cmp, cap)
+  {}
   TTSortedList(const TTSortedList& l)
     : __parent_t(l)
   {}
@@ -114,6 +126,12 @@ public:
   SortedTypeList() {}
   SortedTypeList(const Comparator & cmp)
     : _parent_t(cmp)
+  {}
+  SortedTypeList(const olx_capacity_t& cap)
+    :_parent_t(cap)
+  {}
+  SortedTypeList(const Comparator& cmp, const olx_capacity_t& cap)
+    : _parent_t(cmp, cap)
   {}
   SortedTypeList(const SortedTypeList& l)
     : _parent_t(l)
@@ -151,6 +169,9 @@ template <class ObjectClass> class TObjectList {
   TPtrList<ObjectClass> list;
 public:
   TObjectList() {}
+  TObjectList(const olx_capacity_t &cap)
+    : list(cap)
+  {}
   TObjectList(const TObjectList& li) {
     SetCapacity(li.Count());
     for (size_t i = 0; i < li.Count(); i++) {
@@ -207,6 +228,12 @@ public:
   SortedObjectList() {}
   SortedObjectList(const Comparator &cmp) :
     _parent_t(cmp)
+  {}
+  SortedObjectList(const olx_capacity_t& cap)
+  : _parent_t(cap)
+  {}
+  SortedObjectList(const Comparator& cmp, const olx_capacity_t& cap) :
+    _parent_t(cmp, cap)
   {}
   SortedObjectList(const SortedObjectList& l)
     : _parent_t(l)

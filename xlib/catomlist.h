@@ -21,7 +21,7 @@ BeginXlibNamespace()
 class RefinementModel;
 class ExplicitCAtomRef;
 
-typedef TTypeListExt<ExplicitCAtomRef, IOlxObject> TAtomRefList_;
+typedef TTypeListExt<ExplicitCAtomRef, IOlxObject> TAtomRefList;
 
 class AAtomRef : public ACollectionItem {
 public:
@@ -30,7 +30,7 @@ public:
   virtual olxstr GetExpression(TResidue *r=0) const = 0;
   virtual bool IsExpandable() const = 0;
   virtual bool IsExplicit() const = 0;
-  virtual size_t Expand(const RefinementModel& rm, TAtomRefList_& res,
+  virtual size_t Expand(const RefinementModel& rm, TAtomRefList& res,
     TResidue& resi) const = 0;
   virtual AAtomRef* Clone(RefinementModel& rm) const = 0;
   virtual void ToDataItem(TDataItem &di) const = 0;
@@ -61,7 +61,7 @@ public:
   virtual bool IsExpandable() const { return false; }
   virtual bool IsExplicit() const { return true; }
   virtual bool IsValid() const;
-  virtual size_t Expand(const RefinementModel &, TAtomRefList_& res,
+  virtual size_t Expand(const RefinementModel &, TAtomRefList& res,
     TResidue &) const
   {
     res.Add(new ExplicitCAtomRef(*this));
@@ -91,8 +91,12 @@ public:
     static olxstr t = "explicit";
     return t;
   }
+
+  struct AtomAccessor {
+    TCAtom& operator() (ExplicitCAtomRef& r) const { return r.GetAtom(); }
+    const TCAtom& operator() (const ExplicitCAtomRef& r) const { return r.GetAtom(); }
+  };
 };
-typedef TTypeListExt<ExplicitCAtomRef, IOlxObject> TAtomRefList;
 
 /*
 Last - last atom of a residue,
@@ -116,7 +120,7 @@ public:
   }
   virtual bool IsExpandable() const { return true; }
   virtual bool IsExplicit() const { return false; }
-  virtual size_t Expand(const RefinementModel& rm, TAtomRefList_& res,
+  virtual size_t Expand(const RefinementModel& rm, TAtomRefList& res,
     TResidue& resi) const;
   // may return 0
   static AAtomRef* NewInstance(const RefinementModel& rm, const olxstr& exp,
@@ -156,7 +160,7 @@ public:
   }
   // * is special char
   virtual olxstr GetExpression(TResidue *r) const;
-  virtual size_t Expand(const RefinementModel& rm, TAtomRefList_& res,
+  virtual size_t Expand(const RefinementModel& rm, TAtomRefList& res,
     TResidue& resi) const;
   virtual AAtomRef* Clone(RefinementModel& rm) const {
     return new ListAtomRef(*start.Clone(rm), *end.Clone(rm), op);
