@@ -26,6 +26,7 @@ protected:
   // do not use it directly - use LoadStrings instead
   virtual void LoadFromStrings(const TStrList& Strings) = 0;
   void GenerateCellForCartesianFormat();
+  virtual void SaveToStrings(TStrList& Strings) = 0;
 public:
   TBasicCFile();
   virtual ~TBasicCFile();
@@ -39,7 +40,6 @@ public:
   /* this function could be const, but many file handlers might do some
   preprocessing of changes before flushing...
   */
-  virtual void SaveToStrings(TStrList& Strings) = 0;
   virtual void SaveToFile(const olxstr& fileName);
   virtual void LoadFromFile(const olxstr& fileName);
   // default implementation read strings and calls LoadStrings
@@ -189,6 +189,8 @@ public:
   struct VPtr : public olx_virtual_ptr<TXFile> {
     virtual IOlxObject *get_ptr() const;
   };
+  // include leading '.'!
+  static const olxstr& Olex2SameExt();
 
   /* describes a file name with which may carry reference to the dataset in the
   case of multiple-dataset files

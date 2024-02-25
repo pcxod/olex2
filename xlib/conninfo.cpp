@@ -1063,6 +1063,39 @@ void DistanceGenerator::GenerateSADI_(
   }
 }
 //........................................................................
+TStrList::const_list_type DistanceGenerator::GenerateSADIList_(
+  const DistanceGenerator::distance_set_t& d, double esd,
+  const TAsymmUnit& au, const DistanceGenerator::atom_map_1_t& atom_map)
+{
+  TStrList rv;
+  for (size_t i = 0; i < d.Count(); i++) {
+    rv.Add("SADI ") << esd << ' ' << au.GetAtom(d[i].a).GetResiLabel()
+      << ' ' << au.GetAtom(d[i].b).GetResiLabel();
+  }
+  return rv;
+}
+//........................................................................
+TStrList::const_list_type DistanceGenerator::GenerateSADIList_(
+  const DistanceGenerator::distance_set_t& d, double esd,
+  const TAsymmUnit& au, const DistanceGenerator::atom_map_N_t& atom_map)
+{
+  TStrList rv;
+  size_t gc = atom_map.GetValue(0).Count();
+  for (size_t i = 0; i < d.Count(); i++) {
+    olxstr &sadi = rv.Add("SADI ") << esd << ' ' << au.GetAtom(d[i].a).GetResiLabel()
+      << ' ' << au.GetAtom(d[i].b).GetResiLabel();
+    for (size_t j = 0; j < gc; j++) {
+      size_t a_midx = atom_map.IndexOf(d[i].a);
+      size_t b_midx = atom_map.IndexOf(d[i].b);
+      size_t a_idx = a_midx == InvalidIndex ? d[i].a : atom_map.GetValue(a_midx)[j];
+      size_t b_idx = b_midx == InvalidIndex ? d[i].b : atom_map.GetValue(b_midx)[j];
+      sadi << ' ' << au.GetAtom(a_idx).GetResiLabel()
+        << ' ' << au.GetAtom(b_idx).GetResiLabel();
+    }
+  }
+  return rv;
+}
+//........................................................................
 void DistanceGenerator::GenerateDFIX(TCAtomPList& atoms_, bool explict,
   double esd_12, double esd_13)
 {

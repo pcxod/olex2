@@ -69,6 +69,7 @@ protected:
   olx_object_ptr<bool> safe_afix;
   olx_object_ptr<bool> rename_parts;
   olx_object_ptr<bool> stack_restraints;
+  olx_object_ptr<bool> external_explicit_same;
   size_t max_label_length;
   bool interactions_i;
   SortedObjectList<int, TPrimitiveComparator> interactions_from,
@@ -219,6 +220,8 @@ public:
   static SortedObjectList<int, TPrimitiveComparator>& GetInteractionsFrom();
   static SortedObjectList<int, TPrimitiveComparator>& GetInteractionsTo();
   static bool DoStackRestraints();
+  static bool DoUseExternalExplicitSAME();
+  void ResetOptions();
 
   static const_strlist BangList(const TSAtom &A);
   static void BangTable(const TSAtom& A, TTTable<TStrList>& Table);

@@ -58,17 +58,22 @@ TCAtom& TSameGroup::Add(TCAtom& ca) {
 }
 //.............................................................................
 void TSameGroup::ToDataItem(TDataItem& item) const {
-  item.AddField("esd12", Esd12)
-    .AddField("esd13", Esd13)
-    .AddField("AtomList", Atoms.GetExpression());
+  item.AddField("ID", GetId()); // for the user reference only!
+  if (!IsReference()) {
+    item.AddField("esd12", Esd12)
+      .AddField("esd13", Esd13);
+  }
+  item.AddField("AtomList", Atoms.GetExpression());
   IndexRange::Builder irb;
   for (size_t i = 0; i < Dependent.Count(); i++) {
     if (Dependent[i]->IsValidForSave()) {
       irb << Dependent[i]->GetTag();
     }
   }
-  item.AddField("dependent", irb.GetString());
-  if (ParentGroup != 0) {
+  if (IsReference()) {
+    item.AddField("dependent", irb.GetString());
+  }
+  else {
     item.AddField("parent", ParentGroup->GetTag());
   }
 }
@@ -109,16 +114,19 @@ PyObject* TSameGroup::PyExport(PyObject* main, TPtrList<PyObject>& allGroups,
 //.............................................................................
 void TSameGroup::FromDataItem(TDataItem& item) {
   Clear();
-  Esd12 = item.GetFieldByName("esd12").ToDouble();
-  Esd13 = item.GetFieldByName("esd13").ToDouble();
+  Esd12 = item.FindField("esd12", "0").ToDouble();
+  Esd13 = item.FindField("esd13", "0").ToDouble();
   if (item.FieldExists("AtomList")) {
     Atoms.Build(item.GetFieldByName("AtomList"));
-    IndexRange::RangeItr di(item.GetFieldByName("dependent"));
-    while (di.HasNext()) {
-      AddDependent(Parent[di.Next()]);
+    olxstr dep_l = item.FindField("dependent");
+    if (!dep_l.IsEmpty()) {
+      IndexRange::RangeItr di(dep_l);
+      while (di.HasNext()) {
+        AddDependent(Parent[di.Next()]);
+      }
     }
   }
-  else {
+  else { // backwards compatibility
     TAsymmUnit& au = Parent.RM.aunit;
     const TDataItem* _atoms = item.FindItem("atoms");
     if (_atoms != 0) {
@@ -779,5 +787,38 @@ void TSameGroupList::SortSupergroups(
       }
     }
   }
+}
+//..............................................................................
+TStrList::const_list_type TSameGroupList::GenerateList() const {
+  TStrList rv;
+  for (size_t gi = 0; gi < Groups.Count(); gi++) {
+    const TSameGroup& sg = Groups[gi];
+    if (!sg.IsReference() || !sg.GetAtoms().IsExplicit()) {
+      continue;
+    }
+    TAtomRefList ar = sg.GetAtoms().ExpandList(RM);
+    TArrayList<TAtomRefList> di_atoms(sg.DependentCount());
+    for (size_t di=0; di < sg.DependentCount(); di++) {
+      di_atoms[di] = sg.GetDependent(di).GetAtoms().ExpandList(RM);
+      if (ar.Count() != di_atoms[di].Count()) {
+        throw TInvalidArgumentException(__OlxSrcInfo, "atoms list sizes");
+      }
+    }
+    const olx_capacity_t cap = olx_reserve(ar.Count() * sg.DependentCount());
+    DistanceGenerator::atom_set_t atom_set(cap);
+    DistanceGenerator::atom_map_N_t atom_map(cap);
+    for (size_t i = 0; i < ar.Count(); i++) {
+      const  TCAtom& a = ar[i].GetAtom();
+      atom_set.Add(a.GetId());
+      TSizeList& idl = atom_map.Add(a.GetId());
+      for (size_t j = 0; j < di_atoms.Count(); j++) {
+        idl.Add(di_atoms[j][i].GetAtom().GetId());
+      }
+    }
+    DistanceGenerator d;
+    d.Generate(RM.aunit, atom_set, true, true);
+    rv.AddAll(d.GenerateSADIList(RM.aunit, atom_map));
+  }
+  return rv;
 }
 //..............................................................................

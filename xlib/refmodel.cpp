@@ -2458,7 +2458,7 @@ bool RefinementModel::DoShowRestraintDefaults() const {
 olxstr RefinementModel::WriteInsExtras(const TCAtomPList* atoms,
   bool write_internals) const
 {
-  TDataItem di(NULL, "root");
+  TDataItem di(0, "root");
   typedef olx_pair_t<const TSRestraintList*, TIns::RCInfo> ResInfo;
   TTypeList<ResInfo> restraints;
   restraints.AddNew(&rAngle, TIns::RCInfo(1, 1, -1, true));
@@ -2476,10 +2476,15 @@ olxstr RefinementModel::WriteInsExtras(const TCAtomPList* atoms,
       }
     }
   }
-  if (!rl.IsEmpty()) {
+  if (!rl.IsEmpty() ||
+    (TXApp::DoUseExternalExplicitSAME() && rSAME.Count() > 0))
+  {
     TDataItem &ri = di.AddItem("restraints");
     for (size_t i = 0; i < rl.Count(); i++) {
       ri.AddItem("item", rl[i]);
+    }
+    if (rSAME.Count() > 0) {
+      rSAME.ToDataItem(ri.AddItem("SAME"));
     }
   }
   rl.Clear();
@@ -2600,11 +2605,15 @@ void RefinementModel::ReadInsExtras(const TStrList &items) {
   TDataItem *restraints = di.FindItem("restraints");
   if (restraints != 0) {
     for (size_t i = 0; i < restraints->ItemCount(); i++) {
-      TStrList toks(restraints->GetItemByIndex(i).GetValue(), ' ');
+      TDataItem& item = restraints->GetItemByIndex(i);
+      if (item.GetName() == "SAME") {
+        rSAME.FromDataItem(item);
+        continue;
+      }
+      TStrList toks(item.GetValue(), ' ');
       if (!TIns::ParseRestraint(*this, toks)) {
         TBasicApp::NewLogEntry() << (olxstr(
-          "Invalid Olex2 restraint: ").quote()
-          << restraints->GetItemByIndex(i).GetValue());
+          "Invalid Olex2 restraint: ").quote() << item.GetValue());
       }
     }
   }

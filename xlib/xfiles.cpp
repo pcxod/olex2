@@ -44,8 +44,14 @@ void TBasicCFile::SaveToFile(const olxstr& fn) {
   sw.start("Saving to strings...");
   SaveToStrings(L);
   sw.start("UTF8 encoding to file");
-  TUtf8File::WriteLines(fn, L, false);
-  FileName = fn;
+  try {
+    FileName = fn;
+    TUtf8File::WriteLines(fn, L, false);
+  }
+  catch (const TExceptionBase& exc) {
+    FileName.SetLength(0);
+    throw TFunctionFailedException(__OlxSourceInfo, exc);
+  }
 }
 //..............................................................................
 void TBasicCFile::PostLoad() {
@@ -99,7 +105,6 @@ void TBasicCFile::LoadStrings(const TStrList &lines, const olxstr &nameToken) {
     FileName.SetLength(0);
     throw TFunctionFailedException(__OlxSourceInfo, exc);
   }
-  FileName = nameToken;
   PostLoad();
 }
 //..............................................................................
@@ -112,12 +117,13 @@ void TBasicCFile::LoadFromFile(const olxstr& _fn) {
     throw TEmptyFileException(__OlxSourceInfo, _fn);
   }
   try {
+    FileName = file_n.file_name;
     LoadStrings(L, _fn);
   }
   catch (const TExceptionBase& exc) {
+    FileName.SetLength(0);
     throw TFunctionFailedException(__OlxSourceInfo, exc);
   }
-  FileName = file_n.file_name;
 }
 //..............................................................................
 void TBasicCFile::GenerateCellForCartesianFormat() {
@@ -939,6 +945,16 @@ void TXFile::SaveToFile(const olxstr& FN, int flags) {
   OnFileSave.Enter(this);
   IOlxObject* Cause = 0;
   try {
+    // save external SAME if used
+    if (olx_is<TIns>(Loader) && TXApp::DoUseExternalExplicitSAME()) {
+      TIns& ins = *dynamic_cast<TIns*>(Loader);
+      TStrList same = GetRM().rSAME.GenerateList();
+      if (!same.IsEmpty()) {
+        olxstr inc_name_full = TEFile::ChangeFileExt(FN, Olex2SameExt());
+        TUtf8File::WriteLines(inc_name_full, same, false);
+        ins.IncludeSameFile(TEFile::ExtractFileName(inc_name_full));
+      }
+    }
     if (!TBasicApp::GetInstance().GetOptions()
       .FindValue("absolute_hkl_path", FalseString()).ToBool())
     {
@@ -1631,5 +1647,10 @@ olxstr TXFile::GetStructureDataFolder() const {
     }
   }
   return EmptyString();
+}
+//..............................................................................
+const olxstr& TXFile::Olex2SameExt() {
+  static olxstr ext = "olex2_same";
+  return ext;
 }
 //..............................................................................

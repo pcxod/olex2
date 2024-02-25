@@ -643,6 +643,7 @@ void XLibMacros::Export(TLibrary& lib)  {
     "reverse order&;"
     "all-find fragments matching the selection and applies SAME to them&;"
     "p-extra part to use (along with 0) in the case of disorder and -all&;"
+    "export-generates list of SADI for current SAME list&;"
     ,
     fpAny|psFileLoaded,
     "Creates SAME instruction for two fragments (two selected atoms or two "
@@ -10472,10 +10473,8 @@ template <class list_t, typename accessor_t>
 void macSAME_expand(RefinementModel &rm, const list_t& groups,
   const accessor_t &acc)
 {
-  DistanceGenerator::atom_set_t atom_set;
-  atom_set.SetCapacity(groups[0].Count());
-  DistanceGenerator::atom_map_N_t atom_map;
-  atom_map.SetCapacity(groups[0].Count());
+  DistanceGenerator::atom_set_t atom_set(olx_reserve(groups[0].Count()));
+  DistanceGenerator::atom_map_N_t atom_map(olx_reserve(groups[0].Count()));
   for (size_t i = 0; i < groups[0].Count(); i++) {
    const  TCAtom &a = olx_ref::get(acc(groups[0][i]));
     atom_set.Add(a.GetId());
@@ -10491,6 +10490,11 @@ void macSAME_expand(RefinementModel &rm, const list_t& groups,
 void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &E)
 {
+  if (Options.GetBoolOption("export")) {
+    TXApp& app = TXApp::GetInstance();
+    TBasicApp::NewLogEntry() << app.XFile().GetRM().rSAME.GenerateList();
+    return;
+  }
   if (!Cmds.IsEmpty() && (Cmds[0].Equalsi("adp") || Cmds[0].Equalsi("disp"))) {
     olxstr target = Cmds[0];
     Cmds.Delete(0);
@@ -10506,8 +10510,8 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
     }
     return;
   }
-  const bool invert = Options.Contains("i"),
-    expand = Options.Contains("e"),
+  const bool invert = Options.GetBoolOption('i'),
+    expand = Options.GetBoolOption('e'),
     self = Options.GetBoolOption('s'),
     all = Options.GetBoolOption("all");
   if (all && self) {

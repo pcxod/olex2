@@ -24,6 +24,12 @@ public:
   olxset(const cmp_t &cmp)
     : list_t(cmp)
   {}
+  olxset(const olx_capacity_t &cap)
+    : list_t(cap)
+  {}
+  olxset(const cmp_t& cmp, const olx_capacity_t& cap)
+    : list_t(cmp, cap)
+  {}
   olxset(const object_t _values[], size_t cnt, const cmp_t &cmp)
     : list_t(cmp)
   {

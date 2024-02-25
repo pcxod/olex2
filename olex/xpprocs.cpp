@@ -3552,38 +3552,41 @@ void TMainForm::macUpdateOptions(TStrObjList &Cmds, const TParamList &Options,
   dlg->Destroy();
 }
 //..............................................................................
-void TMainForm::macReload(TStrObjList &Cmds, const TParamList &Options,
-  TMacroData &E)
+void TMainForm::macReload(TStrObjList& Cmds, const TParamList& Options,
+  TMacroData& E)
 {
-  if( Cmds[0].Equalsi("macro") )  {
-    if( TEFile::Exists(FXApp->GetBaseDir() + "macro.xld") )  {
+  if (Cmds[0].Equalsi("macro")) {
+    if (TEFile::Exists(FXApp->GetBaseDir() + "macro.xld")) {
       TStrList SL;
       FMacroFile.LoadFromXLFile(FXApp->GetBaseDir() + "macro.xld", &SL);
       TDataItem* root = FMacroFile.Root().FindItem("xl_macro");
       FMacroFile.Include(&SL);
-      TBasicApp::NewLogEntry() << SL;
+      TBasicApp::NewLogEntry(logInfo) << SL;
       Macros.Load(*root);
     }
   }
-  else if( Cmds[0].Equalsi("help") )  {
-    if( TEFile::Exists(FXApp->GetBaseDir() + "help.xld") )  {
+  else if (Cmds[0].Equalsi("help")) {
+    if (TEFile::Exists(FXApp->GetBaseDir() + "help.xld")) {
       TStrList SL;
       FHelpFile.LoadFromXLFile(FXApp->GetBaseDir() + "help.xld", &SL);
       FHelpItem = FHelpFile.Root().FindItem("xl_help");
       TBasicApp::NewLogEntry() << SL;
     }
   }
-  else if( Cmds[0].Equalsi("dictionary") )  {
+  else if (Cmds[0].Equalsi("dictionary")) {
     FXApp->SetCurrentLanguage(FXApp->Dictionary.GetCurrentLanguage());
   }
-  else if( Cmds[0].Equalsi("options") )  {
+  else if (Cmds[0].Equalsi("options")) {
     olxstr of = FXApp->GetConfigDir() + ".options";
     if (TEFile::Exists(of)) {
       TSettingsFile st;
       st.LoadSettings(of);
-      for (size_t i=0; i < st.ParamCount(); i++) {
+      FXApp->ResetOptions();
+      olxstr_buf info = "Loaded options:";
+      for (size_t i = 0; i < st.ParamCount(); i++) {
         TBasicApp::GetInstance().UpdateOption(
           st.ParamName(i), st.ParamValue(i));
+        info << NewLineSequence() << st.ParamName(i) << ": " << st.ParamValue(i);
       }
     }
   }

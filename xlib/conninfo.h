@@ -179,6 +179,18 @@ struct DistanceGenerator {
     GenerateSADI_(distances_12, 1.0, rm, atom_map);
     GenerateSADI_(distances_13, esd13_k, rm, atom_map);
   }
+  TStrList::const_list_type GenerateSADIList(const TAsymmUnit& au,
+    const atom_map_1_t& atom_map, double esd12 = 0.02, double esd13 = 0.04) const
+  {
+    TStrList rv = GenerateSADIList_(distances_12, esd12, au, atom_map);
+    return rv.AddAll(GenerateSADIList_(distances_13, esd13, au, atom_map));
+  }
+  TStrList::const_list_type GenerateSADIList(const TAsymmUnit& au,
+    const atom_map_N_t& atom_map, double esd12 = 0.02,double esd13 = 0.04) const
+  {
+    TStrList rv = GenerateSADIList_(distances_12, esd12, au, atom_map);
+    return rv.AddAll(GenerateSADIList_(distances_13, esd13, au, atom_map));
+  }
   /* Generates a set of 1-2 and 1-3 DFIXes for the given connected set of atoms
   * in the RefinementModel of the AU of first atom in the set.
   * Set esd to a negatove value to suppress the generation of the related DFIXes.
@@ -190,6 +202,12 @@ private:
     RefinementModel &rm, const atom_map_1_t &atom_map);
   static void GenerateSADI_(const distance_set_t &d, double esd_k,
     RefinementModel &rm, const atom_map_N_t &atom_map);
+  static TStrList::const_list_type GenerateSADIList_(
+    const distance_set_t& d, double esd, const TAsymmUnit& au,
+    const atom_map_1_t& atom_map);
+  static TStrList::const_list_type GenerateSADIList_(
+    const distance_set_t& d, double esd, const TAsymmUnit& au,
+    const atom_map_N_t& atom_map);
 };
 
 EndXlibNamespace()

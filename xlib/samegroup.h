@@ -151,6 +151,8 @@ public:
   void SortGroupContent();
   void EndAUSort();
 
+  TStrList::const_list_type GenerateList() const;
+
   void ToDataItem(TDataItem& item) const;
 #ifdef _PYTHON
   PyObject* PyExport(TPtrList<PyObject>& atoms, TPtrList<PyObject>& equiv);

@@ -1432,7 +1432,27 @@ bool TXApp::DoStackRestraints() {
       .FindValue("stack_restraints", TrueString()).ToBool();
     return *a.stack_restraints;
   }
-
+}
+//..............................................................................
+bool TXApp::DoUseExternalExplicitSAME() {
+  TXApp& a = GetInstance();
+  if (a.external_explicit_same.ok()) {
+    return *a.external_explicit_same;
+  }
+  else {
+    a.external_explicit_same = TBasicApp::GetInstance().GetOptions()
+      .FindValue("external_explicit_same", TrueString()).ToBool();
+    return *a.external_explicit_same;
+  }
+}
+//..............................................................................
+void TXApp::ResetOptions() {
+  preserve_fvars.reset();
+  min_hbond_angle.reset();
+  safe_afix.reset();
+  rename_parts.reset();
+  stack_restraints.reset();
+  external_explicit_same.reset();
 }
 //..............................................................................
 const_strlist TXApp::BangList(const TSAtom& A) {

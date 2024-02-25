@@ -251,6 +251,8 @@ public:
   const TStringToList<olxstr, bool>& GetIncluded() const {
     return included;
   }
+  // updates olex2_same file
+  void IncludeSameFile(const olxstr& olex2_same);
   virtual IOlxObject* Replicate() const { return new TIns; }
 };
 
