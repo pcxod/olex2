@@ -295,17 +295,22 @@ PyObject* TCAtom::PyExport(bool export_attached_sites) {
         E[0], E[1], E[2], E[3], E[4], E[5])
     );
     if (GetEllipsoid()->IsAnharmonic()) {
-      GramCharlier4 &a = GetEllipsoid()->GetAnharmonicPart();
+      GramCharlier &a = GetEllipsoid()->GetAnharmonicPart();
       PyObject* anh = PyDict_New();
-      PythonExt::SetDictItem(anh, "C",
-        Py_BuildValue("(dddddddddd)", a.C[0], a.C[1], a.C[2], a.C[3], a.C[4],
-          a.C[5], a.C[6], a.C[7], a.C[8], a.C[9])
-      );
-      PythonExt::SetDictItem(anh, "D",
-        Py_BuildValue("(ddddddddddddddd)",
-          a.D[0], a.D[1], a.D[2], a.D[3], a.D[4], a.D[5], a.D[6], a.D[7],
-          a.D[8], a.D[9], a.D[10], a.D[11], a.D[12], a.D[13], a.D[14])
-      );
+      if (a.order >= 3) {
+        PythonExt::SetDictItem(anh, "C",
+          Py_BuildValue("(dddddddddd)", a.C[0], a.C[1], a.C[2], a.C[3], a.C[4],
+            a.C[5], a.C[6], a.C[7], a.C[8], a.C[9])
+        );
+      }
+      if (a.order >= 4) {
+        PythonExt::SetDictItem(anh, "D",
+          Py_BuildValue("(ddddddddddddddd)",
+            a.D[0], a.D[1], a.D[2], a.D[3], a.D[4], a.D[5], a.D[6], a.D[7],
+            a.D[8], a.D[9], a.D[10], a.D[11], a.D[12], a.D[13], a.D[14])
+        );
+      }
+      PythonExt::SetDictItem(anh, "order", Py_BuildValue("i", a.order));
       PythonExt::SetDictItem(main, "anharmonic_adp", anh);
     }
   }
@@ -397,7 +402,7 @@ void TCAtom::FromDataItem(TDataItem& item) {
     if (cgi != 0) {
       TStrList toks(cgi->GetValue(), ',');
       if (toks.Count() == 25) {
-        olx_object_ptr<GramCharlier4> cg = new GramCharlier4();
+        olx_object_ptr<GramCharlier> cg = new GramCharlier();
         for (size_t i = 0; i < 10; i++) {
           cg->C[i] = toks[i].ToDouble();
         }

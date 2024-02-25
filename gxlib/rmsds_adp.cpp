@@ -79,12 +79,12 @@ void TRMDSADP::Create(const olxstr& cName) {
       vm = 0;
     }
     mat3f M = a.GetEllipsoid()->ExpandQuad();
-    olx_object_ptr<GramCharlier4> t = a.GetEllipsoid()->GetAnharmonicPart();
+    olx_object_ptr<GramCharlier> t = a.GetEllipsoid()->GetAnharmonicPart();
     if (!t.ok() && AnhType != anh_none && AnhType != anh_all) {
       continue;
     }
     if (t.ok() && AnhType != anh_none) {
-      GramCharlier4 &gc = t;
+      GramCharlier &gc = t;
       tmp_t3 = gc.C.transform(cell2cart_c);
       tmp_t4 = gc.D.transform(cell2cart_c);
     }

@@ -1593,13 +1593,17 @@ void TAsymmUnit::LibSetAtomU(const TStrObjList& Params, TMacroData& E) {
         V[i] = GetRefMod()->Vars.SetParam(ca, catom_var_name_U11 + i, val);
       }
     }
-    if (ca.GetEllipsoid()->IsAnharmonic() && Params.Count() >= 32) {
-      GramCharlier4 &ac = ca.GetEllipsoid()->GetAnharmonicPart();
-      for (size_t i = 0; i < 10; i++) {
-        ac.C[i] = Params[i + 7].ToDouble();
+    if (ca.GetEllipsoid()->IsAnharmonic() && Params.Count() >= 17) {
+      GramCharlier &ac = ca.GetEllipsoid()->GetAnharmonicPart();
+      if (ac.order >= 3) {
+        for (size_t i = 0; i < 10; i++) {
+          ac.C[i] = Params[i + 7].ToDouble();
+        }
       }
-      for (size_t i = 0; i < 15; i++) {
-        ac.D[i] = Params[i + 17].ToDouble();
+      if (ac.order >= 4) {
+        for (size_t i = 0; i < 15; i++) {
+          ac.D[i] = Params[i + 17].ToDouble();
+        }
       }
     }
     ca.GetEllipsoid()->Initialise(V);

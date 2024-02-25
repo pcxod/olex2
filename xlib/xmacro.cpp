@@ -2191,8 +2191,9 @@ void XLibMacros::macAnis(TStrObjList &Cmds, const TParamList &Options,
     catoms.Pack(TCAtom::TypeAnalyser(iHydrogenZ));
   }
   catoms.Pack(TCAtom::TypeAnalyser(iQPeakZ));
+  int anharm = Options.FindValue("a", "0").ToInt();
   TXApp::GetInstance().XFile().GetLattice().SetAnis(
-    catoms, true, Options.GetBoolOption('a'));
+    catoms, true, anharm);
 }
 //.............................................................................
 void XLibMacros::macIsot(TStrObjList &Cmds, const TParamList &Options,

@@ -2555,16 +2555,20 @@ olxstr RefinementModel::WriteInsExtras(const TCAtomPList* atoms,
         }
         TDataItem &ai = aa->AddItem(a.GetResiLabel());
         olxstr_buf tmp;
-        const GramCharlier4 &ap = a.GetEllipsoid()->GetAnharmonicPart();
-        for (size_t ci = 0; ci < ap.C.size(); ci++) {
-          tmp << ' ' << olx_print("%.4le", ap.C[ci]);
+        const GramCharlier &ap = a.GetEllipsoid()->GetAnharmonicPart();
+        if (ap.order >= 3) {
+          for (size_t ci = 0; ci < ap.C.size(); ci++) {
+            tmp << ' ' << olx_print("%.4le", ap.C[ci]);
+          }
+          ai.AddField("Cijk", olxstr(tmp).SubStringFrom(1));
         }
-        ai.AddField("Cijk", olxstr(tmp).SubStringFrom(1));
         tmp.Clear();
-        for (size_t ci = 0; ci < ap.D.size(); ci++) {
-          tmp << ' ' << olx_print("%.4le", ap.D[ci]);
+        if (ap.order >= 4) {
+          for (size_t ci = 0; ci < ap.D.size(); ci++) {
+            tmp << ' ' << olx_print("%.4le", ap.D[ci]);
+          }
+          ai.AddField("Dijkl", olxstr(tmp).SubStringFrom(1));
         }
-        ai.AddField("Dijkl", olxstr(tmp).SubStringFrom(1));
       }
     }
   }
@@ -2713,17 +2717,41 @@ void RefinementModel::ReadInsExtras(const TStrList &items) {
       }
       TStrList c_toks(ai.FindField("Cijk"), " ");
       TStrList d_toks(ai.FindField("Dijkl"), " ");
-      if (c_toks.Count() != 10 || d_toks.Count() != 15) {
+      int expected_order = 0;
+      olx_object_ptr<GramCharlier> ac;
+      if (c_toks.Count() != 0 && d_toks.Count() != 0) {
+        expected_order = 4;
+        if (c_toks.Count() != 10 || d_toks.Count() != 15) {
+          TBasicApp::NewLogEntry(logError) << "Ignoring invalid anharmonic ADP for "
+            << ai.GetName();
+          continue;
+        }
+        ac = new GramCharlier();
+        ac->order = 4;
+        for (size_t ci = 0; ci < 10; ci++) {
+          ac->C[ci] = c_toks[ci].ToDouble();
+        }
+        for (size_t ci = 0; ci < 15; ci++) {
+          ac->D[ci] = d_toks[ci].ToDouble();
+        }
+      }
+      else if (c_toks.Count() != 0) {
+        expected_order = 3;
+        if (c_toks.Count() != 10) {
+          TBasicApp::NewLogEntry(logError) << "Ignoring invalid anharmonic ADP for "
+            << ai.GetName();
+          continue;
+        }
+        ac = new GramCharlier();
+        ac->order = 3;
+        for (size_t ci = 0; ci < 10; ci++) {
+          ac->C[ci] = c_toks[ci].ToDouble();
+        }
+      }
+      else {
         TBasicApp::NewLogEntry(logError) << "Ignoring invalid anharmonic ADP for "
           << ai.GetName();
         continue;
-      }
-      olx_object_ptr<GramCharlier4> ac(new GramCharlier4());
-      for (size_t ci = 0; ci < 10; ci++) {
-        ac->C[ci] = c_toks[ci].ToDouble();
-      }
-      for (size_t ci = 0; ci < 15; ci++) {
-        ac->D[ci] = d_toks[ci].ToDouble();
       }
       a->GetEllipsoid()->SetAnharmonicPart(ac.release());
     }

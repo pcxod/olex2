@@ -24,7 +24,7 @@ TEllipsoid::TEllipsoid(const TEllipsoid& e)
   Id(e.Id)
 {
   if (e.IsAnharmonic()) {
-    SetAnharmonicPart(new GramCharlier4(e.GetAnharmonicPart()));
+    SetAnharmonicPart(new GramCharlier(e.GetAnharmonicPart()));
   }
 }
 //..............................................................................
@@ -44,7 +44,7 @@ void TEllipsoid::operator = (const TEllipsoid &E) {
   Esd = E.Esd;
   NPD = E.NPD;
   if (E.IsAnharmonic()) {
-    SetAnharmonicPart(new GramCharlier4(E.GetAnharmonicPart()));
+    SetAnharmonicPart(new GramCharlier(E.GetAnharmonicPart()));
   }
 }
 //..............................................................................
