@@ -145,33 +145,18 @@ public:
 struct GramCharlier {
   tensor::tensor_rank_3 C;
   tensor::tensor_rank_4 D;
-  int order = 0;
+  int order;
 
-  GramCharlier() {};
-  GramCharlier(const GramCharlier& o) : C(o.C), D(o.D), order(o.order) {};
-  GramCharlier& operator = (const GramCharlier& o) {
-    C = o.C;
-    D = o.D;
-    order = o.order;
-    return *this;
-  };
-
-  virtual compd calculate(const vec3i& h) {
-    const double pi_sq = M_PI * M_PI;
-    double c = C.sum_up(h), d = D.sum_up(h);
-    if (order == 3) {
-      return compd(
-        1,
-        -c * pi_sq * M_PI * 4 / 3);
-    }
-    else if (order == 4) {
-      return compd(
-        1 + d * pi_sq * pi_sq * 2 / 3,
-        -c * pi_sq * M_PI * 4 / 3);
-    }
-    else
-      return compd(1, 0);
-  };
+  GramCharlier(int order);
+  GramCharlier(const IStrList& str) {
+    FromStrings(str);
+  }
+  compd Calculate(const vec3i& h) const;
+  void FromStrings(const IStrList& str);
+  TDataItem& ToDataItem(TDataItem &i) const;
+  static olx_object_ptr<GramCharlier> FromDataItem(const TDataItem& i);
+protected:
+  GramCharlier() {}
 };
 
   typedef TTypeList<TEllipsoid>  TEllpList;

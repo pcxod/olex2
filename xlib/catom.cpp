@@ -400,16 +400,9 @@ void TCAtom::FromDataItem(TDataItem& item) {
     Uiso = GetEllipsoid()->GetUeq();
     TDataItem *cgi = adp->FindItem("CG");
     if (cgi != 0) {
-      TStrList toks(cgi->GetValue(), ',');
-      if (toks.Count() == 25) {
-        olx_object_ptr<GramCharlier> cg = new GramCharlier();
-        for (size_t i = 0; i < 10; i++) {
-          cg->C[i] = toks[i].ToDouble();
-        }
-        for (size_t i = 0; i < 15; i++) {
-          cg->D[i] = toks[i + 10].ToDouble();
-        }
-      }
+      olx_object_ptr<GramCharlier> cg = new GramCharlier(
+        TStrList(cgi->GetValue(), ','));
+      GetEllipsoid()->SetAnharmonicPart(cg.release());
     }
   }
   else {

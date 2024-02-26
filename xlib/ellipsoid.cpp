@@ -125,3 +125,89 @@ double TEllipsoid::CalcScale(const vec3d &v) {
   return sqrt(v.QLength() / nv.QLength());
 }
 //..............................................................................
+//..............................................................................
+//..............................................................................
+GramCharlier::GramCharlier(int order)
+  : order(order)
+{
+  if (order < 3 || order > 4) {
+    throw TInvalidArgumentException(__OlxSrcInfo, "order");
+  }
+}
+//..............................................................................
+compd GramCharlier::Calculate(const vec3i& h) const {
+  const double pi_sq = M_PI * M_PI;
+  double c = C.sum_up(h), d = D.sum_up(h);
+  if (order == 3) {
+    return compd(
+      1,
+      -c * pi_sq * M_PI * 4 / 3);
+  }
+  else if (order == 4) {
+    return compd(
+      1 + d * pi_sq * pi_sq * 2 / 3,
+      -c * pi_sq * M_PI * 4 / 3);
+  }
+  return compd(1, 0);
+}
+//..............................................................................
+void GramCharlier::FromStrings(const IStrList& str) {
+  if (str.Count() >= 10) {
+    order = 3;
+    for (size_t i = 0; i < 10; i++) {
+      C[i] = str[i].ToDouble();
+    }
+    if (str.Count() >= 25) {
+      order = 4;
+      for (size_t i = 0; i < 10; i++) {
+        D[i] = str[i + 10].ToDouble();
+      }
+    }
+  }
+  else {
+    throw TInvalidArgumentException(__OlxSrcInfo, "argument number");
+  }
+}
+//..............................................................................
+TDataItem& GramCharlier::ToDataItem(TDataItem& ai) const {
+  olxstr_buf tmp;
+  olxstr sep = ' ';
+  if (order >= 3) {
+    for (size_t ci = 0; ci < C.size(); ci++) {
+      tmp << sep << olx_print("%.4le", C[ci]);
+    }
+    ai.AddField("Cijk", olxstr(tmp).SubStringFrom(1));
+  }
+  tmp.Clear();
+  if (order >= 4) {
+    for (size_t ci = 0; ci < D.size(); ci++) {
+      tmp << sep << olx_print("%.4le", D[ci]);
+    }
+    ai.AddField("Dijkl", olxstr(tmp).SubStringFrom(1));
+  }
+  return ai;
+}
+//..............................................................................
+olx_object_ptr<GramCharlier> GramCharlier::FromDataItem(const TDataItem& ai) {
+  olx_object_ptr<GramCharlier> rv = new GramCharlier();
+  GramCharlier& p = rv;
+  TStrList c_toks(ai.FindField("Cijk"), ' ');
+  TStrList d_toks(ai.FindField("Dijkl"), ' ');
+  if (c_toks.Count() == 10) {
+    for (size_t ci = 0; ci < 10; ci++) {
+      p.C[ci] = c_toks[ci].ToDouble();
+    }
+    p.order = 3;
+    if (d_toks.Count() == 15) {
+      p.order = 4;
+      for (size_t ci = 0; ci < 15; ci++) {
+        p.D[ci] = d_toks[ci].ToDouble();
+      }
+    }
+  }
+  else {
+    rv.reset();
+  }
+  return rv;
+}
+//..............................................................................

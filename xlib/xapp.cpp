@@ -217,7 +217,7 @@ void TXApp::CalcSFEx(const TRefList& refs, TArrayList<TEComplex<double> >& F,
           B = exp(B);
           if (atoms[j]->GetEllipsoid()->IsAnharmonic()) {
             l += atoms[j]->GetEllipsoid()->GetAnharmonicPart()
-              ->calculate(hkl) * compd(B*ca, B*sa);
+              ->Calculate(hkl) * compd(B*ca, B*sa);
           }
           else {
             l.Re() += B * ca;

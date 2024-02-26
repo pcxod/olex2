@@ -1965,7 +1965,7 @@ void TIns::_DrySaveAtom(TCAtom& a, TSizeList& indices, bool use_tags,
   if (checkResi && a.GetResiId() != 0) {
     const TResidue& resi = a.GetParent()->GetResidue(a.GetResiId());
     for (size_t i = 0; i < resi.Count(); i++) {
-      _DrySaveAtom(resi[i], indices, checkSame, false);
+      _DrySaveAtom(resi[i], indices, use_tags, checkSame, false);
     }
     return;
   }
@@ -1982,16 +1982,16 @@ void TIns::_DrySaveAtom(TCAtom& a, TSizeList& indices, bool use_tags,
         atoms = sg.GetAtoms().ExpandList(rm);
       }
       for (size_t i = 0; i < atoms.Count(); i++) {
-        _DrySaveAtom(atoms[i].GetAtom(), indices, false, checkResi);
+        _DrySaveAtom(atoms[i].GetAtom(), indices, use_tags, false, checkResi);
       }
     }
     else {
-      _DrySaveAtom(a, indices, false, checkResi);
+      _DrySaveAtom(a, indices, use_tags, false, checkResi);
     }
     return;
   }
   if (a.GetUisoOwner() != 0 && !a.GetUisoOwner()->IsSaved()) {
-    _DrySaveAtom(*a.GetUisoOwner(), indices, checkSame, checkResi);
+    _DrySaveAtom(*a.GetUisoOwner(), indices, use_tags, checkSame, checkResi);
   }
   TAfixGroup* ag = a.GetDependentAfixGroup();
   indices.Add(use_tags ? a.GetTag() : a.GetId());
@@ -2000,14 +2000,14 @@ void TIns::_DrySaveAtom(TCAtom& a, TSizeList& indices, bool use_tags,
     TAfixGroup& hg = a.GetDependentHfixGroup(i);
     for (size_t j = 0; j < hg.Count(); j++) {
       if (!hg[j].IsDeleted() && !hg[j].IsSaved()) {
-        _DrySaveAtom(hg[j], indices, checkSame, checkResi);
+        _DrySaveAtom(hg[j], indices, use_tags, checkSame, checkResi);
       }
     }
   }
   if (ag != 0) {  // save dependent rigid group
     for (size_t i = 0; i < ag->Count(); i++) {
       if (!(*ag)[i].IsDeleted() && !(*ag)[i].IsSaved()) {
-        _DrySaveAtom((*ag)[i], indices, checkSame, checkResi);
+        _DrySaveAtom((*ag)[i], indices, use_tags, checkSame, checkResi);
       }
     }
   }

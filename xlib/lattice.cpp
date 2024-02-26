@@ -2706,15 +2706,8 @@ void TLattice::SetAnis(const TCAtomPList& atoms, bool anis, int anharmonic) {
         ee[0] = ee[1] = ee[2] = atoms[i]->GetUiso();
         atoms[i]->UpdateEllp(ee);
       }
-      if (anharmonic != 0) {
-        GramCharlier* gc = new GramCharlier();
-        gc->order = anharmonic;
-        if (anharmonic == 4) {
-          atoms[i]->GetEllipsoid()->SetAnharmonicPart(gc);
-        }
-        else if (anharmonic == 3) {
-          atoms[i]->GetEllipsoid()->SetAnharmonicPart(gc);
-        }
+      if (anharmonic > 2) {
+        atoms[i]->GetEllipsoid()->SetAnharmonicPart(new GramCharlier(anharmonic));
       }
       else {
         atoms[i]->GetEllipsoid()->SetAnharmonicPart(0);
