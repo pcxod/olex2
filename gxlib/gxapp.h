@@ -183,6 +183,7 @@ protected:
   TDSphere *FDSphere;
   TAtomLegend *FAtomLegend;
 
+  virtual bool HasGUI_() const { return true; }
   void FragmentVisible(TNetwork *N, bool V);
   bool Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
     const IOlxObject *Data, TActionQueue *);

@@ -45,6 +45,8 @@
 #include "math/plane.h"
 #include "refutil.h"
 #include "hkl_util.h"
+#include "olxdll.h"
+#include "refinement_listener.h"
 
 #ifdef _CUSTOM_BUILD_
   #include "custom_base.h"
@@ -899,6 +901,11 @@ void XLibMacros::Export(TLibrary& lib)  {
     "data");
   xlib_InitFunc(HAddCount, fpNone | psFileLoaded,
     "Calculates the number of H atoms HAdd will add");
+  xlib_InitFunc(SetOlex2RefinementListener, fpOne,
+    "Sets/unsets the olex2.refine listener if possible. Returs empty string if successfull.");
+  xlib_InitFunc(SetOlex2RefinementInterrupt, fpNone | fpOne,
+    "Sets the internal Olex2 refinement listener variable to true (or the bool"
+    " value given)");
 }
 //.............................................................................
 //.............................................................................
@@ -11762,6 +11769,34 @@ void XLibMacros::funHAddCount(const TStrObjList& Params, TMacroData &E) {
   TXlConGen xlConGen(rm);
   TUnitCell &uc = app.XFile().GetUnitCell();
   E.SetRetVal(app.XFile().GetLattice().AnalyseHAdd(xlConGen, satoms, true));
+}
+//..............................................................................
+void XLibMacros::funSetOlex2RefinementListener(const TStrObjList& Params,
+  TMacroData& E)
+{
+  olxstr dl_name = "smtbx_refinement_least_squares_ext.pyd";
+  OlxDll dl(dl_name, true, false);
+  if (!dl.ok()) {
+    E.SetRetVal(olxstr("Library not found: ") + dl_name);
+    return;
+  }
+  typedef bool (*ProgressListener)(size_t max, size_t pos);
+  typedef void (*SetProgressListener)(ProgressListener listener);
+  olex2::RefinementListener::Continue() = true;
+  olxstr m_name = "SetRefinementProgressListener";
+  SetProgressListener ps = dl.get<SetProgressListener>(m_name);
+  if (ps == 0) {
+    E.SetRetVal(olxstr("Symbol not found: ") + m_name);
+    return;
+  }
+  olex2::RefinementListener::ResetInstance();
+  (*ps)(Params[0].ToBool() ? &olex2::RefinementListener::OnProgress : 0);
+}
+//..............................................................................
+void XLibMacros::funSetOlex2RefinementInterrupt(const TStrObjList& Params,
+  TMacroData& E)
+{
+  olex2::RefinementListener::Continue() = Params.IsEmpty() ? false : !Params[0].ToBool();
 }
 //..............................................................................
 void XLibMacros::macConvert(TStrObjList &Cmds, const TParamList &Options,

@@ -401,7 +401,7 @@ void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
         }
       }
       OnFileLoad.Execute(this, Loader);
-      if (generator.ok() && generator->IsValid()) {
+      if (generator.ok() && generator->IsValid() && TBasicApp::HasGUI()) {
         TBasicApp::NewLogEntry(logWarning) << "Displaying CIF bonds only, use "
           "'fuse' to recalculate from scratch";
         GetLattice().Init(generator);

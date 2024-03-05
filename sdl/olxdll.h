@@ -19,13 +19,16 @@ struct OlxDll : public IOlxObject {
 #else
   void* handle;
 #endif
-  OlxDll(const olxstr& file) : handle(0) {
+  OlxDll(const olxstr& file, bool has_ext=false, bool check_file=true) : handle(0) {
+    olxstr lib_name = file;
+    if (!has_ext) {
 #ifdef __WIN32__
-    olxstr lib_name = file + ".dll";
+      lib_name << ".dll";
 #else
-    olxstr lib_name = file + ".so";
+      lib_name << ".so";
 #endif
-    if (!TEFile::Exists(lib_name)) {
+    }
+    if (check_file && !TEFile::Exists(lib_name)) {
       return;
     }
 

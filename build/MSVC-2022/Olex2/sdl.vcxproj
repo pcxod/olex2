@@ -610,6 +610,7 @@
     <ClInclude Include="..\..\..\sdl\math\spline.h" />
     <ClInclude Include="..\..\..\sdl\md5.h" />
     <ClInclude Include="..\..\..\sdl\olxalg.h" />
+    <ClInclude Include="..\..\..\sdl\olxdll.h" />
     <ClInclude Include="..\..\..\sdl\olxfunc.h" />
     <ClInclude Include="..\..\..\sdl\olxpptr.h" />
     <ClInclude Include="..\..\..\sdl\olxptr.h" />

@@ -103,6 +103,8 @@
   #include "custom_base.h"
 #endif
 
+#include "refinement_listener.h"
+
 #ifdef __GNUC__
   #undef Bool
 #endif
@@ -245,7 +247,6 @@ TMainForm::TMainForm(TGlXApp *Parent)
     Bind(wxEVT_MENU, &TMainForm::OnGraphicsStyle, this, ID_GStyleSave);
     Bind(wxEVT_MENU, &TMainForm::OnGraphicsStyle, this, ID_GStyleOpen);
   }
-    
   idle_time = idle_start = 0;
   TEGC::AddP(&HtmlManager);
   nui_interface = 0;
@@ -1527,10 +1528,10 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
     size_t tc = OlexPyCore::GetRunningPythonThreadsCount();
     if (tc > 0) {
       PyGILState_STATE st = PyGILState_Ensure();
-      Py_BEGIN_ALLOW_THREADS
-        olx_sleep(5);
-      Py_END_ALLOW_THREADS
-        PyGILState_Release(st);
+      Py_BEGIN_ALLOW_THREADS;
+      olx_sleep(5);
+      Py_END_ALLOW_THREADS;
+      PyGILState_Release(st);
     }
   }
 

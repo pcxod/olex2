@@ -212,6 +212,10 @@ public:
   static DefFunc(HKLF)
   static DefFunc(StrDir)
   static DefFunc(HAddCount)
+  // requires smtbx_refinement_least_squares_ext.pyd
+  static DefFunc(SetOlex2RefinementListener)
+  // might do nothing id no listener set!
+  static DefFunc(SetOlex2RefinementInterrupt)
 
   static void ChangeCell(const mat3d& tm, const TSpaceGroup& sg,
     const olxstr& resHKL_FN);
