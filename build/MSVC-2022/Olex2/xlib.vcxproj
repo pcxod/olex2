@@ -409,6 +409,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\repository\refinement_listener.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ac.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ag.cpp" />
@@ -1155,6 +1156,7 @@
     <ClCompile Include="..\..\..\xlib\ciftab.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\repository\refinement_listener.h" />
     <ClInclude Include="..\..\..\sdl\tests\file_test.h" />
     <ClInclude Include="..\..\..\xlib\afixgroup.h" />
     <ClInclude Include="..\..\..\xlib\analysis.h" />

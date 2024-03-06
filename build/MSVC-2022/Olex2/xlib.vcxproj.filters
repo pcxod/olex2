@@ -822,6 +822,9 @@
     <ClCompile Include="..\..\..\xlib\chirality.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\repository\refinement_listener.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\xlib\afixgroup.h">
@@ -1110,6 +1113,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\xlib\label_utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\repository\refinement_listener.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
