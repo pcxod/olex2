@@ -1931,10 +1931,10 @@ size_t TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom,
           count += 3;
         }
         else {
-          if (d < 1.25) {
+          if (d < 1.35) {
             if (NAE.Count() > 1) {
               bool done = false;
-              if (NAE.Count() == 2) { // check acetylene again
+              if (NAE.Count() == 2 && d < 1.2) { // check acetylene again
                 vec3d v = (NAE.GetCAtom(0) == atom.CAtom() ? NAE.GetCrd(1)
                   : NAE.GetCrd(0));
                 double ang = (v - NAE.GetBase().crd())
