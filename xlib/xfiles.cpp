@@ -846,9 +846,6 @@ void TXFile::UpdateAtomIds() {
   }
   TAsymmUnit &au = GetAsymmUnit();
   TSizeList indices = TIns::DrySave(au, true);
-  if (indices.Count() != au.AtomCount()) {
-    throw TFunctionFailedException(__OlxSourceInfo, "assert");
-  }
   bool uniform = true;
   for (size_t i = 0; i < indices.Count(); i++) {
     if (indices[i] != i) {

@@ -2397,7 +2397,7 @@ olxstr TIns::AtomToString(RefinementModel& rm, TCAtom& CA, index_t SfacIndex) {
 
   Tmp.RightPadding(Tmp.Length() + 4, ' ', true);
   for (short j = 0; j < 3; j++) {
-    Tmp << olxstr::FormatFloat(-5,
+    Tmp << olxstr::FormatFloat(-6,
       rm.Vars.GetParam(CA, catom_var_name_X + j)) << ' ';
   }
 
