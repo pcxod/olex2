@@ -1651,3 +1651,17 @@ const olxstr& TXFile::Olex2SameExt() {
   return ext;
 }
 //..............................................................................
+void TXFile::SetLastLoader(const TBasicCFile* ll) {
+  if (ll == 0) {
+    FLastLoader = 0;
+    return;
+  }
+  for (size_t i = 0; i < FileFormats.Count(); i++) {
+    if (olx_type_check(*ll, *FileFormats.GetObject(i))) {
+      FLastLoader = FileFormats.GetObject(i);
+      return;
+    }
+  }
+  throw TInvalidArgumentException(__OlxSourceInfo, "unknown loader type!");
+}
+//..............................................................................

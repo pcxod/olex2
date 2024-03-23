@@ -4043,7 +4043,7 @@ bool TMainForm::PopupMenu(wxMenu* menu, const wxPoint& p)  {
 //..............................................................................
 void TMainForm::UpdateInfoBox()  {
   FInfoBox->Clear();
-  if( FXApp->XFile().HasLastLoader() )  {
+  if (FXApp->XFile().HasLastLoader()) {
     FInfoBox->PostText(olxstr("\\-") <<
       TEFile::ExtractFilePath(FXApp->XFile().GetFileName()));
     FInfoBox->PostText(TEFile::ExtractFileName(FXApp->XFile().GetFileName()));
@@ -4066,8 +4066,9 @@ void TMainForm::afterCall(const olxstr &cmd) {
 void TMainForm::OnNonIdle() {
   if (idle_start != 0) {
     idle_start = TETime::msNow() - idle_start;
-    if (idle_start > 10000)
+    if (idle_start > 10000) {
       idle_time += idle_start;
+    }
   }
   idle_start = 0;
 }

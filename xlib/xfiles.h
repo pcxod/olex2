@@ -117,18 +117,27 @@ public:
     if (FLastLoader == 0) {
       throw TFunctionFailedException(__OlxSourceInfo, "no last loader");
     }
-    if (!FLastLoader->Is<LoaderClass>()) {
+    LoaderClass* rv = dynamic_cast<LoaderClass*>(FLastLoader);
+    if (rv == 0) {
       throw TInvalidArgumentException(__OlxSourceInfo, "wrong last loader type");
     }
-    return *(LoaderClass*)FLastLoader;
+    return *rv;
   }
-  void SetLastLoader(TBasicCFile* ll) { FLastLoader = ll; }
-  // returns true if a file is loaded
-  bool HasLastLoader() const { return FLastLoader != NULL; }
-  /* returns last loader object to access properties of the base class if type
-  is not required
+  /* this will use a loader from internal registry - not what is provided unless
+  it is owned by this object. COuld also be used to reset the last loader to null
   */
-  TBasicCFile* LastLoader() const { return FLastLoader; }
+  void SetLastLoader(const TBasicCFile* ll);
+  // returns true if a file is loaded
+  bool HasLastLoader() const { return FLastLoader != 0; }
+  /* returns last loader object to access properties of the base class if type
+  is not required. Use HasLastLoader to check if valid!
+  */
+  TBasicCFile* LastLoader() const {
+    if (FLastLoader == 0) {
+      throw TFunctionFailedException(__OlxSourceInfo, "no last loader");
+    }
+    return FLastLoader;
+  }
   // locates related HKL file, processes raw or hkc file if necessary
   olxstr LocateHklFile();
   void UpdateAsymmUnit();

@@ -6538,7 +6538,7 @@ void XLibMacros::macSGE(TStrObjList &Cmds, const TParamList &Options,
   TSpaceGroup* sg = 0;
   if (Options.GetBoolOption("f") ||
     (xapp.CheckFileType<TCRSFile>() &&
-    ((TCRSFile*)xapp.XFile().LastLoader())->HasSG()))
+    xapp.XFile().GetLastLoader<TCRSFile>().HasSG()))
   {
     sg = &xapp.XFile().GetLastLoaderSG();
     TBasicApp::NewLogEntry() << "Choosing CRS file space group: " <<
