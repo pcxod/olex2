@@ -108,6 +108,7 @@ public:
   static DefMacro(Cif2Doc)
   static DefMacro(CifCreate)
   static DefMacro(CifCreate_4NoSpherA2)
+  static DefMacro(XYZCluster_4NoSpherA2)
   static DefMacro(FcfCreate)
 
   static DefMacro(CalcCHN)

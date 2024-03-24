@@ -47,6 +47,7 @@
 #include "hkl_util.h"
 #include "olxdll.h"
 #include "refinement_listener.h"
+#include "xyz.h"
 
 #ifdef _CUSTOM_BUILD_
   #include "custom_base.h"
@@ -210,6 +211,8 @@ void XLibMacros::Export(TLibrary& lib)  {
     "available");
   xlib_InitMacro(CifCreate_4NoSpherA2, EmptyString(), fpNone|psFileLoaded,
     "Creates cif from current file");
+  xlib_InitMacro(XYZCluster_4NoSpherA2, EmptyString(), fpNone|fpOne|psFileLoaded,
+    "Creates a cluster of atoms from the current file and saves them to an xyz file");
   xlib_InitMacro(FcfCreate,
     "scale-[external],sigma, shelxl or none&;"
     "c-[false] converts current fcf to the given list format",
@@ -5883,8 +5886,8 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options,
   cif.SaveToFile(TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "cif"));
 }
 //.............................................................................
-void XLibMacros::macCifCreate_4NoSpherA2(TStrObjList &Cmds, const TParamList &Options,
-  TMacroData &Error)
+void XLibMacros::macCifCreate_4NoSpherA2(TStrObjList& Cmds, const TParamList& Options,
+    TMacroData& Error)
 {
   TXApp& xapp = TXApp::GetInstance();
   TAsymmUnit& _au = xapp.XFile().GetAsymmUnit();
@@ -5908,7 +5911,7 @@ void XLibMacros::macCifCreate_4NoSpherA2(TStrObjList &Cmds, const TParamList &Op
   }
   TLattice latt(*(new SObjectProvider));
   latt.GetAsymmUnit().SetRefMod(&xapp.XFile().GetRM());
-  latt.GetAsymmUnit().Assign(xapp.XFile().GetAsymmUnit());
+  latt.GetAsymmUnit().Assign(_au);
   for (size_t i = 0; i < latt.GetAsymmUnit().AtomCount(); i++) {
     TCAtom& a = latt.GetAsymmUnit().GetAtom(i);
     if (a.IsDetached()) {
@@ -5926,6 +5929,51 @@ void XLibMacros::macCifCreate_4NoSpherA2(TStrObjList &Cmds, const TParamList &Op
 
   latt.GrowFragments(false, NULL);
   cif.SaveToFile(TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "cif_NoSpherA2"));
+}
+//.............................................................................
+void XLibMacros::macXYZCluster_4NoSpherA2(TStrObjList &Cmds, const TParamList &Options,
+  TMacroData &Error)
+{
+  TXApp& app = TXApp::GetInstance();
+  // Create a copy of the xfile object to work without disturbing the main window
+  olx_object_ptr<TXFile> xf = dynamic_cast<TXFile*>(app.XFile().Replicate());
+  xf->SetLastLoader(app.XFile().LastLoader()); // !! dangerous
+  xf->GetRM().Assign(app.XFile().GetRM(), true);
+  xf->GetLattice().Init();
+  // Access to its ASU
+  TAsymmUnit& au = xf->GetAsymmUnit();
+  // Loop over all atoms in the ASU and delete the Q-peaks
+  for (size_t i = 0; i < au.AtomCount(); i++) {
+    if (au.GetAtom(i).GetType() == iQPeakZ) {
+      au.GetAtom(i).SetDeleted(true);
+    }
+  }
+  // Get the radius to grow from the Cmd, otherwise stick to 12.0
+  double radius(12.0);
+  for (size_t i = 0; i < Cmds.Count(); i++) {
+    if (Cmds[i].IsNumber()) {
+      radius = Cmds[i].ToDouble();
+      Cmds.Delete(i--);
+    }
+  }
+  TCAtomPList TemplAtoms;
+  TSAtomPList atoms = app.FindSAtoms(Cmds);
+  ACollectionItem::Unify(atoms, FunctionAccessor::MakeConst(&TSAtom::CAtom));
+  TemplAtoms.AddAll(atoms, FunctionAccessor::MakeConst(&TSAtom::CAtom));
+  // Calcualte the controid of the atoms in the ASU
+  vec3d cent;
+  double wght = 0;
+  for (size_t i = 0; i < atoms.Count(); i++) {
+    cent += atoms[i]->crd() * atoms[i]->CAtom().GetChemOccu();
+    wght += atoms[i]->CAtom().GetChemOccu();
+  }
+  if (wght != 0) {
+    cent /= wght;
+  }
+  // Generate the cluster
+  xf->GetLattice().Generate(cent, radius, &TemplAtoms, false, false);
+  // Write to an XYZ File
+  xf->SaveToFile(TEFile::ChangeFileExt(app.XFile().GetFileName(), "xyz"));
 }
 //.............................................................................
 void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options,
