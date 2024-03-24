@@ -59,13 +59,13 @@ class TExyzGroup;
 class TExyzGroups;
 struct CXConnInfo;
 class RefinementModel;
+struct Atom3DId;
 
 struct Disp {
   compd value;
   double fp_su, fdp_su;
   Disp() : fp_su(0), fdp_su(0) {}
   Disp(const compd &v) : value(v), fp_su(0), fdp_su(0) {}
-
 };
 
 class TCAtom : public ACollectionItem, public IXVarReferencer {
@@ -356,6 +356,7 @@ public:
   PyObject* PyExport(bool export_attached_sites);
 #endif
   static int CompareAtomLabels(const olxstr& S, const olxstr& S1);
+  Atom3DId Get3DId() const;
 
   template <class Accessor>
   struct FlagsAnalyser_ {
@@ -495,5 +496,46 @@ public:
 //..............................................................................
 typedef TTypeList<TGroupCAtom> TCAtomGroup;
 //..............................................................................
+// with stores coordinates with float type precision
+struct Atom3DId {
+  const static uint64_t
+    z_mask = 0x00000000000000FF,
+    a_mask = 0x0000000001FFFF00,
+    b_mask = 0x000003FFFE000000,
+    c_mask = 0x07FFFC0000000000,
+    a_sig  = 0x0800000000000000,
+    b_sig  = 0x1000000000000000,
+    c_sig  = 0x2000000000000000,
+    mask_m = 0x000000000001FFFF, // max crd value
+    cell_m = 16 // max unit cells in each direction
+    ;
+  /*  0-8 - z
+  9-25, 26-42, 43-59 - a, b c, 60-62 - signs
+  */
+  uint64_t id;
+  vec3d get_crd() const;
+  int8_t get_z() const {
+    return (int8_t)(id & z_mask);
+  }
+  Atom3DId(uint64_t id=~0) : id(id) {}
+  Atom3DId(int8_t z, const vec3d& crd, int64_t multiplier = 1);
+  Atom3DId& operator = (const Atom3DId& i) {
+    this->id = i.id;
+    return *this;
+  }
+  Atom3DId& operator = (const uint64_t& i) {
+    this->id = i;
+    return *this;
+  }
+  Atom3DId& operator = (const olxstr& s);
+  bool operator == (const Atom3DId& i) const {
+    return id == i.id;
+  }
+  int Compare(const Atom3DId& i) const {
+    return olx_cmp(id, i.id);
+  }
+
+  olxstr ToString() const;
+};
 EndXlibNamespace()
 #endif

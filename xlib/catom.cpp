@@ -793,3 +793,71 @@ TIString TCAtom::ToString() const {
   return olxstr(rv);
 }
 //..............................................................................
+Atom3DId TCAtom::Get3DId() const {
+  return Atom3DId((int8_t)GetType().z, Center);
+}
+//..............................................................................
+//..............................................................................
+//..............................................................................
+Atom3DId::Atom3DId(int8_t z, const vec3d& crd, int64_t multiplier) {
+  id = z;
+  static const int64_t k = mask_m / cell_m;
+  int64_t x = multiplier == 1 ? (int64_t)(crd[0] * k)
+    : ((int64_t)(crd[0] * multiplier)) / multiplier * k;
+  if (x < 0) {
+    id |= a_sig;
+    id |= (((-x) << 8) & a_mask);
+  }
+  else {
+    id |= ((olx_abs(x) << 8) & a_mask);
+  }
+  x = multiplier == 1 ? (int64_t)(crd[1] * k)
+    : ((int64_t)(crd[1] * multiplier)) / multiplier * k;
+  if (x < 0) {
+    id |= b_sig;
+    id |= (((-x) << 25) & b_mask);
+  }
+  else {
+    id |= ((x << 25) & b_mask);
+  }
+  x = multiplier == 1 ? (int64_t)(crd[2] * k)
+    : ((int64_t)(crd[2] * multiplier)) / multiplier * k;
+  if (x < 0) {
+    id |= c_sig;
+    id |= (((-x) << 42) & c_mask);
+  }
+  else {
+    id |= ((x << 42) & c_mask);
+  }
+  double d = get_crd().DistanceTo(crd);
+  if (d > 1.e-3) {
+    id = id;
+  }
+}
+//..............................................................................
+vec3d Atom3DId::get_crd() const {
+  static const double k = (double)cell_m / mask_m;
+  vec3d r((double)((id & a_mask) >> 8) * k,
+    (double)((id & b_mask) >> 25) * k,
+    (double)((id & c_mask) >> 42) * k);
+  if ((id & a_sig) != 0) {
+    r[0] = -r[0];
+  }
+  if ((id & b_sig) != 0) {
+    r[1] = -r[1];
+  }
+  if ((id & c_sig) != 0) {
+    r[2] = -r[2];
+  }
+  return r;
+}
+//..............................................................................
+olxstr Atom3DId::ToString() const {
+  return olxstr(id);
+}
+//..............................................................................
+Atom3DId& Atom3DId::operator = (const olxstr& s) {
+  s.ToNumber(id);
+  return *this;
+}
+//..............................................................................

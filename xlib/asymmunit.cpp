@@ -1330,6 +1330,30 @@ void TAsymmUnit::RearrangeAtoms(const TSizeList &indices) {
   }
 }
 //..............................................................................
+TCAtom* TAsymmUnit::FindCAtom(const Atom3DId& id) const {
+  for (size_t i = 0; i < CAtoms.Count(); i++) {
+    if (CAtoms[i]->Get3DId() == id) {
+      return CAtoms[i];
+    }
+  }
+  return 0;
+}
+//..............................................................................
+TCAtomPList::const_list_type TAsymmUnit::FindCAtoms(
+  const TArrayList<Atom3DId>& ids) const
+{
+  olxdict<Atom3DId, TCAtom*, TComparableComparator> ar(
+    olx_reserve(CAtoms.Count()));
+  for (size_t i = 0; i < CAtoms.Count(); i++) {
+    ar.Add(CAtoms[i]->Get3DId(), CAtoms[i]);
+  }
+  TCAtomPList rv(ids.Count());
+  for (size_t i = 0; i < ids.Count(); i++) {
+    rv[i] = ar.Find(ids[i], 0);
+  }
+  return rv;
+}
+//..............................................................................
 //..............................................................................
 //..............................................................................
 void TAsymmUnit::LibGetAtomCount(const TStrObjList& Params, TMacroData& E) {

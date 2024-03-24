@@ -104,7 +104,7 @@ public:
   static ConstArrayList<T> FromList(const List& list) {
     TArrayList rv(list.Count());
     for (size_t i = 0; i < list.Count(); i++) {
-      rv[i] = accessor(list[i]);
+      rv[i] = list[i];
     }
     return rv;
   }

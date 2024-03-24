@@ -156,6 +156,7 @@
 #include "estopwatch.h"
 #include "ememstream.h"
 #include "pers_util.h"
+#include "encodings.h"
 //#include "gl2ps/gl2ps.c"
 
 int CalcL(int v) {
@@ -1448,6 +1449,25 @@ void TMainForm::macSave(TStrObjList &Cmds, const TParamList &Options,
       df.SaveToXLFile(Tmp);
     }
   }
+  else if (Tmp == "ginfo") {
+    Tmp = (Cmds.Count() == 1) ? TEFile::ChangeFileExt(Cmds[0], "ogi")
+      : TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "ogi");
+    const ASObjectProvider& op = FXApp->XFile().GetLattice().GetObjects();
+    TArrayList<uint64_t> ids(olx_reserve(op.atoms.Count()));
+    for (size_t i = 0; i < op.atoms.Count(); i++) {
+      const TSAtom& a = op.atoms[i];
+      if (a.IsDeleted()) {
+        continue;
+      }
+      ids.Add(Atom3DId(a.GetType().z, a.ccrd()).id);
+    }
+    TDataFile df;
+    df.Root().AddItem("GrowInfo")
+      .AddItem("Atoms",
+        encoding::base85::encode((const uint8_t*)ids.GetData(),
+          ids.Count() * sizeof(uint64_t)));
+    df.SaveToXLFile(Tmp);
+  }
 }
 //..............................................................................
 void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options,
@@ -1612,6 +1632,32 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options,
         FXApp->GetRenderer().GetBasis().FromDataItem(dim->GetItemByName("Basis"));
         FXApp->GetRenderer().ClearMinMax();
         FXApp->GetRenderer().UpdateMinMax(mid, mad);
+      }
+    }
+  }
+  else if (Cmds[0].Equalsi("ginfo")) {
+    olxstr FN = Cmds.Text(' ', 1);
+    if (FXApp->XFile().HasLastLoader()) {
+      FN = (!FN.IsEmpty() ? TEFile::ChangeFileExt(FN, "ogi")
+        : TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "ogi"));
+    }
+    if (TEFile::Exists(FN)) {
+      if (!TEFile::IsAbsolutePath(FN)) {
+        FN = TEFile::AddPathDelimeter(TEFile::CurrentDir()) << FN;
+      }
+      TDataFile df;
+      df.LoadFromXLFile(FN);
+      olxstr str_ids = df.Root()
+        .GetItemByName("GrowInfo").GetItemByName("Atoms").GetValue();
+      olxcstr id_data = encoding::base85::decode(str_ids);
+
+      TArrayList<uint64_t> nids(id_data.Length() / sizeof(uint64_t));
+      memcpy(&nids[0], id_data.c_str(), id_data.Length());
+      olx_object_ptr<TLattice::GrowInfo> gi = FXApp->XFile().GetLattice().Match(
+        TArrayList<Atom3DId>::FromList(nids));
+      if (gi.ok()) {
+        FXApp->XFile().GetLattice().SetGrowInfo(gi.release());
+        FXApp->XFile().GetLattice().Init();
       }
     }
   }
@@ -3582,7 +3628,7 @@ void TMainForm::macReload(TStrObjList& Cmds, const TParamList& Options,
       TSettingsFile st;
       st.LoadSettings(of);
       FXApp->ResetOptions();
-      olxstr_buf info = "Loaded options:";
+      olxstr_buf info = olxstr("Loaded options:");
       for (size_t i = 0; i < st.ParamCount(); i++) {
         TBasicApp::GetInstance().UpdateOption(
           st.ParamName(i), st.ParamValue(i));

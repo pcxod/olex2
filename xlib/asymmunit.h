@@ -221,6 +221,9 @@ public:
   TCAtom* FindCAtomById(size_t id) const {
     return (id >= CAtoms.Count()) ? 0 : CAtoms[id];
   }
+  TCAtom* FindCAtom(const Atom3DId& id) const;
+  /* returned list size will match the input size but may contains nulls */
+  TCAtomPList::const_list_type FindCAtoms(const TArrayList<Atom3DId> & ids) const;
   /* makes specified type detached or attached. When re-attaching the atoms they
   could also be unmasked
   */

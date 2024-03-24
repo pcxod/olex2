@@ -92,6 +92,9 @@ public:
   inline size_t MatrixCount() const { return Matrices.Count(); }
   // the identity matrix is always the first
   inline const smatd& GetMatrix(size_t i) const { return Matrices[i]; }
+  const smatd_list& GetMatrices() const {
+    return Matrices;
+  }
   /* initialises the matrix container id, throws an excpetion if matrix is not
   found
   */

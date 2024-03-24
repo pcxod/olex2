@@ -239,13 +239,13 @@ public:
   bool operator != (const TLattice& l) const { return this != &l; }
   bool operator != (const TLattice* l) const { return this != l; }
   struct GrowInfo {
-    smatd_plist matrices;  // the list of all matrices
-    TArrayList<TIndexList> info;  // TCAtomId -> matrix;
-    size_t unc_matrix_count;
-    ~GrowInfo() { matrices.DeleteItems(); }
+    TArrayList<TUIntList> info;  // TCAtomId -> matrices;
+    size_t unc_matrix_count; // for sanity check
   };
   // takes the ownership of the provided object
   void SetGrowInfo(GrowInfo* grow_info);
+  // tries to rebuild grows structure
+  olx_object_ptr<GrowInfo> Match(const TTypeList<Atom3DId> &ids);
   // returns an object created with new
   GrowInfo* GetGrowInfo() const;
 protected:
