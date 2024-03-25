@@ -96,6 +96,7 @@
 #include "exparse/exptree.h"
 #include "math/libmath.h"
 #include "libfile.h"
+#include "libstr.h"
 #include "gxmacro.h"
 #include "auto.h"
 
@@ -907,6 +908,7 @@ void TMainForm::XApp(Olex2App *XA)  {
     "Gets/Sets display update status");
   Library.AttachLibrary(FXApp->ExportLibrary());
   Library.AttachLibrary(LibFile::ExportLibrary());
+  Library.AttachLibrary(LibStr::ExportLibrary());
   Library.AttachLibrary(LibMath::ExportLibrary());
   //Library.AttachLibrary(olxstr::ExportLibrary("str"));
   Library.AttachLibrary(PythonExt::GetInstance()->ExportLibrary());

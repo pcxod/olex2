@@ -508,6 +508,7 @@
     <ClCompile Include="..\..\..\sdl\istream.cpp" />
     <ClCompile Include="..\..\..\sdl\libfile.cpp" />
     <ClCompile Include="..\..\..\sdl\library.cpp" />
+    <ClCompile Include="..\..\..\sdl\libstr.cpp" />
     <ClCompile Include="..\..\..\sdl\log.cpp" />
     <ClCompile Include="..\..\..\sdl\macroerror.cpp" />
     <ClCompile Include="..\..\..\sdl\macrolib.cpp" />
@@ -592,10 +593,12 @@
     <ClInclude Include="..\..\..\sdl\istream.h" />
     <ClInclude Include="..\..\..\sdl\libfile.h" />
     <ClInclude Include="..\..\..\sdl\library.h" />
+    <ClInclude Include="..\..\..\sdl\libstr.h" />
     <ClInclude Include="..\..\..\sdl\linked_list.h" />
     <ClInclude Include="..\..\..\sdl\linked_operators.h" />
     <ClInclude Include="..\..\..\sdl\listalg.h" />
     <ClInclude Include="..\..\..\sdl\log.h" />
+    <ClInclude Include="..\..\..\sdl\logfile.h" />
     <ClInclude Include="..\..\..\sdl\macroerror.h" />
     <ClInclude Include="..\..\..\sdl\macrolib.h" />
     <ClInclude Include="..\..\..\sdl\math\align.h" />

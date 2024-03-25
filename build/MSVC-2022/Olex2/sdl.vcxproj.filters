@@ -177,6 +177,9 @@
     <ClCompile Include="..\..\..\sdl\roman.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\sdl\libstr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\sdl\actions.h">
@@ -597,6 +600,12 @@
       <Filter>tests</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\sdl\olxdll.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\libstr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\logfile.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

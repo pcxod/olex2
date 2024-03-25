@@ -16,12 +16,15 @@ class Wildcard {
   TStrList toks;
   olxstr mask;
   size_t toksEnd, toksStart;
-  bool hasWildcards;
+  bool hasWildcards, caseInsensitive;
 public:
-  Wildcard()
-    : toksEnd(InvalidIndex), toksStart(InvalidIndex), hasWildcards(false)
+  Wildcard(bool caseInsensitive = true)
+    : toksEnd(InvalidIndex), toksStart(InvalidIndex), hasWildcards(false),
+    caseInsensitive(caseInsensitive)
   {}
-  Wildcard(const olxstr& msk) { Build(msk); }
+  Wildcard(const olxstr& msk, bool caseInsensitive=true) {
+    Build(msk);
+  }
   void Build(const olxstr& msk);
   bool DoesMatch(const olxstr& _str) const;
   const olxstr &GetMask() const {
@@ -41,7 +44,7 @@ public:
   WildcardList()
   {}
   // adds a mask or a string item
-  void Add(const olxstr &item);
+  void Add(const olxstr &item, bool caseInsensitive=true);
   bool DoesMatch(const olxstr &value) const;
   /* return [wildcard mask or the matching item] or empty string if there is
   no match
