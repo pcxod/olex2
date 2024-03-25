@@ -800,7 +800,7 @@ Atom3DId TCAtom::Get3DId() const {
 //..............................................................................
 //..............................................................................
 Atom3DId::Atom3DId(int8_t z, const vec3d& crd, int64_t multiplier) {
-  id = z;
+  id = ((uint64_t)z) & z_mask;
   static const int64_t k = mask_m / cell_m;
   int64_t x = multiplier == 1 ? (int64_t)(crd[0] * k)
     : ((int64_t)(crd[0] * multiplier)) / multiplier * k;
@@ -828,10 +828,6 @@ Atom3DId::Atom3DId(int8_t z, const vec3d& crd, int64_t multiplier) {
   }
   else {
     id |= ((x << 42) & c_mask);
-  }
-  double d = get_crd().DistanceTo(crd);
-  if (d > 1.e-3) {
-    id = id;
   }
 }
 //..............................................................................

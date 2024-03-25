@@ -2969,6 +2969,7 @@ bool TLattice::ApplyGrowInfo() {
       if (idx == InvalidIndex) {
         Matrices.Add(new smatd(m));
         idx = Matrices.Count() - 1;
+        mmap.Add(mi[j], idx);
       }
       GenerateAtom(ca, *Matrices[idx]);
     }
@@ -3442,7 +3443,6 @@ olx_object_ptr<TLattice::GrowInfo> TLattice::Match(
   const TUnitCell& uc = GetUnitCell();
   olx_object_ptr<GrowInfo> gi = new GrowInfo();
   gi->info.SetCount(au.AtomCount());
-  //gi->matrices.SetCount(Matrices.Count());
   gi->unc_matrix_count = uc.MatrixCount();
   const TCAtomPList& atoms = au.GetAtoms();
   const smatd_list& matrices = uc.GetMatrices();
