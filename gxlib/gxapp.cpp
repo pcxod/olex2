@@ -14,6 +14,7 @@
 #include "gllabels.h"
 #include "xplane.h"
 #include "xline.h"
+#include "xangle.h"
 #include "xgrowline.h"
 #include "xgrowpoint.h"
 #include "xgrid.h"
@@ -588,6 +589,16 @@ void TGXApp::CreateObjects(bool centerModel, bool init_visibility)  {
     }
   }
   Lines.Pack();
+
+  for (size_t i = 0; i < Angles.Count(); i++) {
+    if (Angles[i].IsVisible()) {
+      Angles[i].Create();
+    }
+    else {
+      Angles.NullItem(i);
+    }
+  }
+  Angles.Pack();
 
   for (size_t i=0; i < LooseObjects.Count(); i++) {
     if (!LooseObjects[i]->IsVisible()) {
@@ -1621,6 +1632,7 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IOlxObject* Sender,
       StoreGroup(GetSelection(), SelectionCopy[0]);
       StoreLabels();
       ClearLines();
+      ClearAngles();
       LoadingFile = true;
     }
     else if (MsgSubId == msiExit) {
@@ -1632,6 +1644,7 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IOlxObject* Sender,
       ClearGroupDefinitions();
       ClearLabels();
       ClearLines();
+      ClearAngles();
       XGrid().Clear();
       CreateObjects(false);
       GetRenderer().SetZoom(GetRenderer().CalcZoom());
@@ -2681,16 +2694,16 @@ TXGlLabel *TGXApp::AddLabel(const olxstr& Name, const vec3d& center, const olxst
   return gl;
 }
 //..............................................................................
-TXLine *TGXApp::AddLine(const olxstr& Name, const vec3d& base, const vec3d& edge)  {
-  TGPCollection *gpc = GetRenderer().FindCollection(Name);
+TXLine* TGXApp::AddLine(const olxstr& Name, const vec3d& base, const vec3d& edge) {
+  TGPCollection* gpc = GetRenderer().FindCollection(Name);
   if (gpc != 0 && gpc->ObjectCount() != 0) {
     if (!gpc->GetObject(0).Is<TXLine>()) {
-      TBasicApp::NewLogEntry(logError) << "The given collection name is alreay"
+      TBasicApp::NewLogEntry(logError) << "The given collection name is already"
         " in use by other object type";
       return 0;
     }
   }
-  TXLine *XL = new TXLine(*GlRenderer,
+  TXLine* XL = new TXLine(*GlRenderer,
     Name.IsEmpty() ? olxstr("TXLine") << LooseObjects.Count() : Name,
     base, edge);
   XL->Create();
@@ -2701,6 +2714,35 @@ TXLine* TGXApp::AddLine(const olxstr& Name, const TSAtom& base, const TSAtom& ed
   TXLine* x = AddLine(Name, base.crd(), edge.crd());
   VcoVContainer vcovc(XFile().GetAsymmUnit());
   TEValueD y = vcovc.CalcDistance(base, edge);
+  x->GetGlLabel().SetLabel(y.ToString());
+  return x;
+}
+//..............................................................................
+TXAngle* TGXApp::AddAngle(const olxstr& Name, const vec3d& center,
+  const vec3d& from, const vec3d& to)
+{
+  TGPCollection* gpc = GetRenderer().FindCollection(Name);
+  if (gpc != 0 && gpc->ObjectCount() != 0) {
+    if (!gpc->GetObject(0).Is<TXAngle>()) {
+      TBasicApp::NewLogEntry(logError) << "The given collection name is already"
+        " in use by other object type";
+      return 0;
+    }
+  }
+  TXAngle* XA = new TXAngle(*GlRenderer,
+    Name.IsEmpty() ? olxstr("TXAngle") << LooseObjects.Count() : Name,
+    center, from, to);
+  XA->Create();
+  XA->GetGlLabel().SetVisible(true);
+  return &Angles.Add(XA);
+}
+//..............................................................................
+TXAngle* TGXApp::AddAngle(const olxstr& Name, const TSAtom& center,
+  const TSAtom& from, const TSAtom& to)
+{
+  TXAngle* x = AddAngle(Name, center.crd(), from.crd(), to.crd());
+  VcoVContainer vcovc(XFile().GetAsymmUnit());
+  TEValueD y = vcovc.CalcAngle(from, center, to);
   x->GetGlLabel().SetLabel(y.ToString());
   return x;
 }
@@ -4081,6 +4123,9 @@ void TGXApp::SetStructureVisible(bool v) {
     if (!Lines[i].IsDeleted()) {
       Lines[i].SetVisible(v);
     }
+  }
+  for (size_t i = 0; i < Angles.Count(); i++) {
+    Angles[i].SetVisible(v);
   }
   PlaneIterator(*this).ForEach(AGDrawObject::FlagSetter(sgdoHidden, !v));
   XLabels.ForEach(AGDrawObject::FlagSetter(sgdoHidden, !v));
@@ -5480,6 +5525,13 @@ void TGXApp::ToDataItem(TDataItem& item, IOutputStream& zos) const {
     }
   }
 
+  TDataItem& angles = item.AddItem("Angles");
+  for (size_t i = 0; i < Angles.Count(); i++) {
+    if (Angles[i].IsVisible()) {
+      Angles[i].ToDataItem(angles.AddItem("object"));
+    }
+  }
+
   TDataItem &user_objects = item.AddItem("UserObjects");
   for (size_t i=0; i < UserObjects.Count(); i++) {
     if (UserObjects[i].IsVisible()) {
@@ -5561,6 +5613,7 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis) {
   ClearXObjects();
   ClearLabels();
   ClearLines();
+  ClearAngles();
   LabelInfo.Clear();
   ClearGroupDefinitions();
   DeleteXFiles();
@@ -5620,6 +5673,15 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis) {
       for (size_t i = 0; i < lines->ItemCount(); i++) {
         Lines.Add(new TXLine(*GlRenderer))
           .FromDataItem(lines->GetItemByIndex(i));
+      }
+    }
+  }
+  {
+    TDataItem* angles = item.FindItem("Angles");
+    if (angles != 0) {
+      for (size_t i = 0; i < angles->ItemCount(); i++) {
+        Angles.Add(
+          new TXAngle(*GlRenderer, angles->GetItemByIndex(i)));
       }
     }
   }

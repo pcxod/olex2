@@ -68,6 +68,7 @@ class TDBasis;
 class TGraphicsObjects;
 class TXGlLabels;
 class TXLine;
+class TXAngle;
 class TDRing;
 class TXGrowLine;
 class TXGrowPoint;
@@ -91,6 +92,7 @@ class TGXApp : public TXApp, AEventsDispatcher, public ASelectionOwner {
   TTypeListExt<TDRing, AGDrawObject> Rings;
   TXGlLabels *FLabels;
   TTypeListExt<TXLine, AGDrawObject> Lines;
+  TTypeListExt<TXAngle, AGDrawObject> Angles;
   // have to manage memory ourselves - base class is used
   AGDObjList LooseObjects;
   AGDObjList ObjectsToCreate;
@@ -597,7 +599,12 @@ public:
 
   TXLine *AddLine(const olxstr& Name, const vec3d& base, const vec3d& edge);
   TXLine* AddLine(const olxstr& Name, const TSAtom& base, const TSAtom& edge);
+  TXAngle* AddAngle(const olxstr& Name, const vec3d& center,
+    const vec3d& from, const vec3d& to);
+  TXAngle* AddAngle(const olxstr& Name, const TSAtom& center,
+    const TSAtom& from, const TSAtom& to);
   void ClearLines() { Lines.Clear(); }
+  void ClearAngles() { Angles.Clear(); }
   size_t LineCount() const { return Lines.Count(); }
   TXLine &GetLine(size_t i) const { return Lines[i]; }
   TXGlLabel *AddLabel(const olxstr& Name, const vec3d& center, const olxstr& T);

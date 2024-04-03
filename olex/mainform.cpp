@@ -49,6 +49,7 @@
 #include "symmparser.h"
 #include "xreflection.h"
 #include "xline.h"
+#include "xangle.h"
 
 #include "ins.h"
 #include "cif.h"
@@ -1311,6 +1312,8 @@ void TMainForm::StartupInit() {
     gls.CreateFont("AtomLabels", Font.GetNativeFontInfoDesc())).SetMaterial(glm);
   gls.RegisterFontForType<TXBond>(
     gls.CreateFont("BondLabels", Font.GetNativeFontInfoDesc())).SetMaterial(glm);
+  gls.RegisterFontForType<TXAngle>(
+    gls.CreateFont("AngleLabels", Font.GetNativeFontInfoDesc())).SetMaterial(glm);
   gls.CreateFont("Tooltip", Font.GetNativeFontInfoDesc()).SetMaterial(glm);
   gls.RegisterFontForType<TDBasis>(gls._GetFont(4));
   gls.RegisterFontForType<TDUnitCell>(gls._GetFont(4));

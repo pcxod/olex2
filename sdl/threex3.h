@@ -204,7 +204,7 @@ public:
   this vector) N = this*cos(this,point)*point.length/this.length =
   this*DotProd(this, point)/this.QLength
   */
-  template <class AT> TVector3<FT> Normal(
+  template <class AT> TVector3<FT> NormalThrough(
     const TVector3<AT>& point) const
   {
     FT m = QLength();
@@ -217,6 +217,32 @@ public:
       point[1] - data[1] * m,
       point[2] - data[2] * m);
   }
+  /* intesection point of a normal through this point to a vector defined
+  by a and b
+  */
+  template <class AT>
+  TVector3 NormalIntersection(const TVector3<AT>& a, const TVector3<AT>& b) const
+  {
+    TVector3 v = b - a;
+    FT m = v.QLength();
+    if (m == 0) {
+      throw TDivException(__OlxSourceInfo);
+    }
+    FT u = (*this - a).DotProd(v) / m;
+    return a + v * u;
+  }
+
+  //https://gamedev.stackexchange.com/questions/60630/how-do-i-find-the-circumcenter-of-a-triangle-in-3d
+  static TVector3 Circumcenter(const TVector3& a, const TVector3& b,
+    const TVector3& c)
+  {
+    vec3d ab = a - b, cb = c - b;
+    vec3d normal = ab.XProdVec(cb);
+    vec3d cc = (normal.XProdVec(ab) * cb.QLength() +
+      cb.XProdVec(normal) * ab.QLength()) / (2 * normal.QLength());
+    return cc + b;
+  }
+
   // convenience method
   static TVector3 Normal(const TVector3 &a, const TVector3 &b,
     const TVector3 &c)

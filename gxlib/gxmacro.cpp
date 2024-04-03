@@ -34,6 +34,7 @@
 #include "rmsds_adp.h"
 #include "glalg.h"
 #include "listalg.h"
+#include "xangle.h"
 
 #define gxlib_InitMacro(macroName, validOptions, argc, desc)\
   lib.Register(\
@@ -200,11 +201,16 @@ void GXLibMacros::Export(TLibrary& lib) {
     "form, which specify a view from k1*a+l1*b+m1*c to k2*a+l2*b+m2*c, three "
     "values pecify the view normal and nine values provide a full matrix");
   gxlib_InitMacro(Line,
-    "n-just sets current view normal to the line without creating the object&;"
+    "n-just sets current view normal to the line without creating the object"
+    " or the collection name to put the bond to&;"
     "f-consider input in fractional coordinates vs Cartesian&;"
     "e-adds esd to the value",
     fpAny,
     "Creates a line or best line for provided atoms");
+  gxlib_InitMacro(Angle,
+    "n-the collection name",
+    fpAny,
+    "Creates an angle object atoms/bonds");
   gxlib_InitMacro(Mpln,
     "n-just orient, do not create plane&;"
     "r-create regular plane&;"
@@ -2060,7 +2066,18 @@ void GXLibMacros::macLine(TStrObjList &Cmds, const TParamList &Options,
   app.Draw();
 }
 //.............................................................................
-void GXLibMacros::macMpln(TStrObjList &Cmds, const TParamList &Options,
+void GXLibMacros::macAngle(TStrObjList& Cmds, const TParamList& Options,
+  TMacroData& Error)
+{
+  TXAtomPList Atoms = app.FindXAtoms(Cmds, false, true);
+  if (Atoms.Count() != 3) {
+    return;
+  }
+  olxstr name = Options.FindValue('n');
+  app.AddAngle(name, *Atoms[1], *Atoms[0], *Atoms[2]);
+}
+//.............................................................................
+void GXLibMacros::macMpln(TStrObjList & Cmds, const TParamList & Options,
   TMacroData &Error)
 {
   olxstr rings_name = Options.FindValue("rings");

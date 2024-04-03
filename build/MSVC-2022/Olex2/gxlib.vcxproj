@@ -492,6 +492,7 @@
     <ClCompile Include="..\..\..\gxlib\rmsds_adp.cpp" />
     <ClCompile Include="..\..\..\gxlib\solid_angles.cpp" />
     <ClCompile Include="..\..\..\gxlib\wxglscene.cpp" />
+    <ClCompile Include="..\..\..\gxlib\xangle.cpp" />
     <ClCompile Include="..\..\..\gxlib\xatom.cpp" />
     <ClCompile Include="..\..\..\gxlib\xblob.cpp" />
     <ClCompile Include="..\..\..\gxlib\xbond.cpp" />
@@ -567,6 +568,7 @@
     <ClInclude Include="..\..\..\gxlib\solid_angles.h" />
     <ClInclude Include="..\..\..\gxlib\wglscene.h" />
     <ClInclude Include="..\..\..\gxlib\wxglscene.h" />
+    <ClInclude Include="..\..\..\gxlib\xangle.h" />
     <ClInclude Include="..\..\..\gxlib\xatom.h" />
     <ClInclude Include="..\..\..\gxlib\xblob.h" />
     <ClInclude Include="..\..\..\gxlib\xbond.h" />
