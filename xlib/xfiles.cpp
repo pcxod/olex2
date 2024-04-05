@@ -946,11 +946,11 @@ void TXFile::SaveToFile(const olxstr& FN, int flags) {
     if (olx_is<TIns>(Loader) && TXApp::DoUseExternalExplicitSAME()) {
       TIns& ins = *dynamic_cast<TIns*>(Loader);
       TStrList same = GetRM().rSAME.GenerateList();
+      olxstr inc_name_full = TEFile::ChangeFileExt(FN, Olex2SameExt());
       if (!same.IsEmpty()) {
-        olxstr inc_name_full = TEFile::ChangeFileExt(FN, Olex2SameExt());
         TUtf8File::WriteLines(inc_name_full, same, false);
-        ins.IncludeSameFile(TEFile::ExtractFileName(inc_name_full));
       }
+      ins.UpdateSameFile(TEFile::ExtractFileName(inc_name_full), !same.IsEmpty());
     }
     if (!TBasicApp::GetInstance().GetOptions()
       .FindValue("absolute_hkl_path", FalseString()).ToBool())

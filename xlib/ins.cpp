@@ -3216,13 +3216,15 @@ TIns::InsType TIns::GetInsType(const olxstr &ins, const TInsList *params) const 
   return insHeader;
 }
 //..............................................................................
-void TIns::IncludeSameFile(const olxstr& olex2_same) {
+void TIns::UpdateSameFile(const olxstr& olex2_same, bool include) {
   olxstr ext = olxstr(".") << TEFile::ExtractFileExt(olex2_same);
   for (size_t i = 0; i < included.Count(); i++) {
     if (included[i].EndsWith(ext)) {
       included.Delete(i--);
     }
   }
-  included.Add(TEFile::ExtractFileName(olex2_same), false);
+  if (include) {
+    included.Add(TEFile::ExtractFileName(olex2_same), false);
+  }
 }
 //..............................................................................

@@ -252,7 +252,7 @@ public:
     return included;
   }
   // updates olex2_same file
-  void IncludeSameFile(const olxstr& olex2_same);
+  void UpdateSameFile(const olxstr& olex2_same, bool include);
   virtual IOlxObject* Replicate() const { return new TIns; }
 };
 
