@@ -236,9 +236,9 @@ public:
   static TVector3 Circumcenter(const TVector3& a, const TVector3& b,
     const TVector3& c)
   {
-    vec3d ab = a - b, cb = c - b;
-    vec3d normal = ab.XProdVec(cb);
-    vec3d cc = (normal.XProdVec(ab) * cb.QLength() +
+    TVector3 ab = a - b, cb = c - b;
+    TVector3 normal = ab.XProdVec(cb);
+    TVector3 cc = (normal.XProdVec(ab) * cb.QLength() +
       cb.XProdVec(normal) * ab.QLength()) / (2 * normal.QLength());
     return cc + b;
   }
