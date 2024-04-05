@@ -7,29 +7,32 @@
 * the root folder.                                                            *
 ******************************************************************************/
 #pragma once
-#include "gxbase.h"
-#include "glrender.h"
-#include "gdrawobject.h"
 #include "ematrix.h"
 #include "edict.h"
+#include "glrender.h"
+#include "glmousehandler.h"
 #include "gllabel.h"
 BeginGxlNamespace()
 
-class TXAngle : public AGDrawObject {
+class TXAngle : public AGlMouseHandlerImp {
   TXGlLabel* Label;
-  TGlMaterial material;
-  vec3d center, from, to;
+  vec3d center, from, to, draw_center;
+  double thickness, radius;
   virtual bool IsMaskSaveable() const { return true; }
   virtual bool IsStyleSaveable() const { return true; }
   virtual bool IsRadiusSaveable() const { return true; }
+  void Init();
+  virtual bool DoRotate(const vec3d& vec, double angle) {
+    return false;
+  }
+  virtual bool DoTranslate(const vec3d& t);
+  virtual bool DoZoom(double zoom, bool inc);
 protected:
   public:
   TXAngle(TGlRenderer& Render, const olxstr& collectionName,
     const vec3d& cnt, const vec3d &from, const vec3d& to);
   TXAngle(TGlRenderer& Render, const TDataItem &di);
   virtual ~TXAngle();
-  void SetMaterial(const olxstr& mat) { material.FromString(mat); }
-  void SetMaterial(const TGlMaterial& glm) { material = glm; }
   void Create(const olxstr& cName = EmptyString());
   bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d& Max, vec3d& Min) { return false; }

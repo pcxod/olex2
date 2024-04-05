@@ -11,29 +11,48 @@
 #include "styles.h"
 #include "glprimitive.h"
 #include "pers_util.h"
+#include "gxapp.h"
 
 //..............................................................................
 TXAngle::TXAngle(TGlRenderer& R, const olxstr& collectionName,
   const vec3d& cnt, const vec3d& from, const vec3d& to)
-  : AGDrawObject(R, collectionName),
-  material("85;0;4286611584;4290822336;64"),
+  : AGlMouseHandlerImp(R, collectionName),
   center(cnt), from(from), to(to),
+  thickness(1), radius(1),
   settings(0)
 {
   Label = new TXGlLabel(GetParent(), PLabelsCollectionName());
   Label->SetOffset((from + to)/ 2);
+  Init();
 }
 //...........................................................................
 TXAngle::TXAngle(TGlRenderer& R, const TDataItem& di)
-  : AGDrawObject(R, EmptyString()),
+  : AGlMouseHandlerImp(R, EmptyString()),
+  thickness(1), radius(1),
   settings(0)
 {
   Label = new TXGlLabel(GetParent(), PLabelsCollectionName());
   FromDataItem(di);
+  Init();
 }
 //...........................................................................
 TXAngle::~TXAngle() {
   delete Label;
+}
+//...........................................................................
+void TXAngle::Init() {
+  SetMoveable(true);
+  SetZoomable(true);
+
+  vec3d intersect = center.NormalIntersection(from, to);
+  vec3d ab_center = (from + to) / 2;
+  vec3d shift = intersect - ab_center;
+  vec3d ba = from - to;
+  draw_center = center -
+    ba.NormaliseTo((shift).Length()) * olx_sign(ba.DotProd(shift));
+  if (radius != 1) {
+    draw_center = ab_center + (draw_center - ab_center) * radius;
+  }
 }
 //...........................................................................
 void TXAngle::Create(const olxstr& cName) {
@@ -58,29 +77,21 @@ void TXAngle::Create(const olxstr& cName) {
   }
   TStrList pnames;
   ListPrimitives(pnames);
-
+  TGlMaterial def_m("85;4294967040;4286611584;4290822336;64");
   TGraphicsStyle& GS = GPC->GetStyle();
-  //GS.SetSaveable(false);
   for (size_t i = 0; i < pnames.Count(); i++) {
     if ((pmask & (1 << i)) != 0) {
       TGlPrimitive& GlP = GPC->NewPrimitive(pnames[i], sgloCommandList);
-      GlP.SetProperties(GS.GetMaterial(pnames[i], material));
+      GlP.SetProperties(GS.GetMaterial(pnames[i], def_m));
       GlP.SetOwnerId(i);
     }
   }
 }
 //...........................................................................
 bool TXAngle::Orient(TGlPrimitive& glp) {
-  vec3d::Circumcenter(from, center, to);
-  
-  vec3d intersect = center.NormalIntersection(from, to);
-  vec3d shift = intersect - (from + to) / 2;
-  vec3d ba = from - to;
-  vec3d new_cnt = center -
-    ba.NormaliseTo((shift).Length()) * olx_sign(ba.DotProd(shift));
-  vec3d a = from - new_cnt;
-  vec3d b = to - new_cnt;
-  olx_gl::translate(new_cnt);
+  vec3d a = (from - draw_center) * radius;
+  vec3d b = (to - draw_center) * radius;
+  olx_gl::translate(draw_center);
   vec3d normal = a.XProdVec(b).Normalise();
 
   int sections = GetSettings().GetSections();
@@ -88,6 +99,9 @@ bool TXAngle::Orient(TGlPrimitive& glp) {
   double ca = cos(ang/sections/2);
   mat3d rm;
   if (glp.GetOwnerId() == 0) {
+    if (thickness != 1) {
+      olx_gl::lineWidth(thickness);
+    }
     olx_gl::begin(GL_LINES);
     olx_create_rotation_matrix(rm, normal, ca);
     for (int i = 0; i < sections; i++) {
@@ -97,16 +111,25 @@ bool TXAngle::Orient(TGlPrimitive& glp) {
       a *= rm;
     }
     olx_gl::end();
+    if (thickness != 1) {
+      olx_gl::lineWidth(1./thickness);
+    }
   }
   if (glp.GetOwnerId() == 1) {
     const TStringToList<olxstr, TGlPrimitive*>& primtives =
       GetSettings().GetPrimitives(true);
     ca = cos(ang / sections);
     olx_create_rotation_matrix(rm, normal, ca);
-    a = from - new_cnt;
+    a = (from - draw_center) * radius;
     for (int i = 0; i < sections; i++) {
       olx_gl::translate(a);
+      if (thickness != 1) {
+        olx_gl::scale(thickness);
+      }
       primtives.GetObject(0)->Draw();
+      if (thickness != 1) {
+        olx_gl::scale(1./thickness);
+      }
       olx_gl::translate(-a);
       a *= rm;
     }
@@ -127,6 +150,8 @@ void TXAngle::ToDataItem(TDataItem& i) const {
   i.AddField("from", PersUtil::VecToStr(from))
     .AddField("to", PersUtil::VecToStr(to))
     .AddField("center", PersUtil::VecToStr(center))
+    .AddField("thickness", thickness)
+    .AddField("radius", radius)
     ;
   Label->ToDataItem(i.AddItem("label"));
 }
@@ -137,6 +162,8 @@ void TXAngle::FromDataItem(const TDataItem& i) {
   PersUtil::VecFromStr(i.GetFieldByName("to"), to);
   PersUtil::VecFromStr(i.GetFieldByName("center"), center);
   Label->FromDataItem(i.GetItemByName("label"));
+  thickness = i.FindField("thickness", "1").ToDouble();
+  radius = i.FindField("radius", "1").ToDouble();
 }
 //...........................................................................
 void TXAngle::ListDrawingStyles(TStrList& List) {
@@ -160,14 +187,36 @@ uint32_t TXAngle::GetPrimitiveMask() const {
     GetSettings().GetMask(), IsMaskSaveable());
 }
 //...........................................................................
+bool TXAngle::DoTranslate(const vec3d& t_) {
+  vec3d t = TGXApp::GetConstrainedDirection(t_);
+  radius += t.Length() * olx_sign(t[1]);
+  if (radius < 0.3) {
+    radius = 0.3;
+  }
+  else if (radius > 1) {
+    radius = 1;
+  }
+  return true;
+}
+//...........................................................................
+bool TXAngle::DoZoom(double zoom, bool inc) {
+  thickness += zoom;
+  if (thickness < 1) {
+    thickness = 1;
+  }
+  else if (thickness > 5) {
+    thickness = 5;
+  }
+  return true;
+}
 //...........................................................................
 //...........................................................................
 void TXAngle::Settings::CreatePrimitives() {
   ClearPrimitives();
   TGlPrimitive& sph = parent.NewPrimitive(sgloSphere);
   sph.Params[0] = 0.04;
-  sph.Params[1] = 5;
-  sph.Params[2] = 5;
+  sph.Params[1] = 8;
+  sph.Params[2] = 8;
   sph.Compile();
   primitives.Add("Sphere", &sph);
 }
