@@ -14,7 +14,7 @@
 
 TSameGroup::TSameGroup(uint16_t id, TSameGroupList& parent)
 : Atoms(parent.RM), Id(id), Parent(parent),
-  ParentGroup(0), Esd12(0.02), Esd13(0.02)
+  ParentGroup(0), Esd12(0.02), Esd13(0.04)
 {}
 //.............................................................................
 TSameGroup::~TSameGroup() {

@@ -2525,6 +2525,9 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
         app.GetRenderer().Select(*au_atoms[(*f)[j].GetId()], flag);
       }
     }
+    if (!frags.IsEmpty()) {
+      TBasicApp::NewLogEntry() << "Total of " << (frags.Count()+1) << " fragments found";
+    }
   }
   else if (Cmds.Count() == 1 && Cmds[0].Equalsi("res")) {
     //app.GetRenderer().ClearSelection();

@@ -1956,8 +1956,8 @@ void TIns::SaveToStrings(TStrList& SL) {
   }
 }
 //..............................................................................
-void TIns::_DrySaveAtom(TCAtom& a, TSizeList& indices, bool use_tags,
-  bool checkSame, bool checkResi)
+void TIns::_DrySaveAtom(TCAtom& a, TSizeList& indices, bool checkSame,
+  bool checkResi)
 {
   if (a.IsDeleted() || a.IsSaved()) {
     return;
@@ -1965,7 +1965,7 @@ void TIns::_DrySaveAtom(TCAtom& a, TSizeList& indices, bool use_tags,
   if (checkResi && a.GetResiId() != 0) {
     const TResidue& resi = a.GetParent()->GetResidue(a.GetResiId());
     for (size_t i = 0; i < resi.Count(); i++) {
-      _DrySaveAtom(resi[i], indices, use_tags, checkSame, false);
+      _DrySaveAtom(resi[i], indices, checkSame, false);
     }
     return;
   }
@@ -1982,40 +1982,39 @@ void TIns::_DrySaveAtom(TCAtom& a, TSizeList& indices, bool use_tags,
         atoms = sg.GetAtoms().ExpandList(rm);
       }
       for (size_t i = 0; i < atoms.Count(); i++) {
-        _DrySaveAtom(atoms[i].GetAtom(), indices, use_tags, false, checkResi);
+        _DrySaveAtom(atoms[i].GetAtom(), indices, false, checkResi);
       }
     }
     else {
-      _DrySaveAtom(a, indices, use_tags, false, checkResi);
+      _DrySaveAtom(a, indices, false, checkResi);
     }
     return;
   }
   if (a.GetUisoOwner() != 0 && !a.GetUisoOwner()->IsSaved()) {
-    _DrySaveAtom(*a.GetUisoOwner(), indices, use_tags, checkSame, checkResi);
+    _DrySaveAtom(*a.GetUisoOwner(), indices, checkSame, checkResi);
   }
   TAfixGroup* ag = a.GetDependentAfixGroup();
-  indices.Add(use_tags ? a.GetTag() : a.GetId());
+  indices.Add(a.GetId());
   a.SetSaved(true);
   for (size_t i = 0; i < a.DependentHfixGroupCount(); i++) {
     TAfixGroup& hg = a.GetDependentHfixGroup(i);
     for (size_t j = 0; j < hg.Count(); j++) {
       if (!hg[j].IsDeleted() && !hg[j].IsSaved()) {
-        _DrySaveAtom(hg[j], indices, use_tags, checkSame, checkResi);
+        _DrySaveAtom(hg[j], indices, checkSame, checkResi);
       }
     }
   }
   if (ag != 0) {  // save dependent rigid group
     for (size_t i = 0; i < ag->Count(); i++) {
       if (!(*ag)[i].IsDeleted() && !(*ag)[i].IsSaved()) {
-        _DrySaveAtom((*ag)[i], indices, use_tags, checkSame, checkResi);
+        _DrySaveAtom((*ag)[i], indices, checkSame, checkResi);
       }
     }
   }
 }
 //..............................................................................
-TSizeList::const_list_type TIns::DrySave(const TAsymmUnit& au, bool use_tags) {
-  TSizeList rv;
-  rv.SetCapacity(au.AtomCount());
+TSizeList::const_list_type TIns::DrySave(const TAsymmUnit& au) {
+  TSizeList rv(olx_reserve(au.AtomCount()));
   au.GetRefMod()->rSAME.PrepareSave();
   TEBitArray saved_flag(au.AtomCount());
   bool check_same = !TXApp::DoUseExternalExplicitSAME();
@@ -2024,13 +2023,17 @@ TSizeList::const_list_type TIns::DrySave(const TAsymmUnit& au, bool use_tags) {
       saved_flag.SetTrue(i);
       au.GetAtom(i).SetSaved(false);
     }
-    au.GetAtom(i).SetTag((index_t)i);
   }
+  TSizeList deleted;
   for (size_t i = 0; i < au.ResidueCount(); i++) {
     TResidue& residue = au.GetResidue(i);
     for (size_t j = 0; j < residue.Count(); j++) {
       TCAtom& ac = residue[j];
-      if (ac.IsDeleted() || ac.IsSaved()) {
+      if (ac.IsDeleted()) {
+        deleted.Add(ac.GetId());
+        continue;
+      }
+      if (ac.IsSaved()) {
         continue;
       }
       if (ac.GetParentAfixGroup() != 0 &&
@@ -2038,7 +2041,7 @@ TSizeList::const_list_type TIns::DrySave(const TAsymmUnit& au, bool use_tags) {
       {
         continue;
       }
-      _DrySaveAtom(ac, rv, use_tags, check_same, false);
+      _DrySaveAtom(ac, rv, check_same, false);
     }
   }
   for (size_t i = 0; i < au.AtomCount(); i++) {
@@ -2046,7 +2049,7 @@ TSizeList::const_list_type TIns::DrySave(const TAsymmUnit& au, bool use_tags) {
       au.GetAtom(i).SetSaved(true);
     }
   }
-  return rv;
+  return rv << deleted;
 }
 //..............................................................................
 bool TIns::Adopt(TXFile &XF, int) {

@@ -82,9 +82,7 @@ protected:
   static void _SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
     double &spec, TStrList* sfac, TStrList& sl,
     TIndexList* index = 0, bool checkSame = true, bool checkResi = true);
-  // use_tags or Id
   static void _DrySaveAtom(TCAtom& a, TSizeList &indices,
-    bool use_tags,
     bool checkSame = true, bool checkResi = true);
 
   static void _ProcessSame(ParseContext& cx, const TIndexList *atomIndex = 0);
@@ -137,9 +135,8 @@ public:
   static bool SaveAtomsToStrings(RefinementModel& rm, const TCAtomPList& CAtoms,
     TIndexList& index, TStrList& SL,
     RefinementModel::ReleasedItems* processed);
-  /* returns atim tags/indices as they will be saved according to constraints */
-  static TSizeList::const_list_type DrySave(const TAsymmUnit& au,
-  bool use_tags);
+  /* returns atom Ids as they will be saved according to constraints */
+  static TSizeList::const_list_type DrySave(const TAsymmUnit& au);
   static void ValidateRestraintsAtomNames(RefinementModel& rm,
     bool report = true);
   static bool ParseRestraint(RefinementModel &rm, const TStrList& toks,

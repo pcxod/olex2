@@ -629,11 +629,12 @@ void TXFile::Sort(const TStrList& ins, const TParamList &options) {
     return;
   }
   olxdict<TCAtom *, size_t, TPointerComparator> original_ids;
+  TAsymmUnit &au = GetAsymmUnit();
   if (!FLastLoader->IsNative()) {
     UpdateAsymmUnit();
-    original_ids.SetCapacity(GetAsymmUnit().AtomCount());
-    for (size_t i = 0; i < GetAsymmUnit().AtomCount(); i++) {
-      original_ids.Add(&GetAsymmUnit().GetAtom(i), i);
+    original_ids.SetCapacity(au.AtomCount());
+    for (size_t i = 0; i < au.AtomCount(); i++) {
+      original_ids.Add(&au.GetAtom(i), i);
     }
   }
   const bool sort_resi_n = options.GetBoolOption("rn", false, true);
@@ -642,7 +643,7 @@ void TXFile::Sort(const TStrList& ins, const TParamList &options) {
   default_sorter.sequence.AddNew(&AtomSorter::atom_cmp_Mw);
   default_sorter.sequence.AddNew(&AtomSorter::atom_cmp_Label);
   TStrList labels;
-  TCAtomPList &list = GetAsymmUnit().GetResidue(0).GetAtomList();
+  TCAtomPList &list = au.GetResidue(0).GetAtomList();
   size_t moiety_index = InvalidIndex, h_cnt = 0, del_h_cnt = 0, free_h_cnt = 0;
   bool keeph = true;
   for (size_t i = 0; i < list.Count(); i++) {
@@ -778,22 +779,22 @@ void TXFile::Sort(const TStrList& ins, const TParamList &options) {
     }
     if (keeph) {
       // this will not work with SAME
-      AtomSorter::KeepH(list, GetAsymmUnit(), &AtomSorter::atom_cmp_Label);
+      AtomSorter::KeepH(list, au, &AtomSorter::atom_cmp_Label);
     }
   }
   catch (const TExceptionBase& exc) {
     TBasicApp::NewLogEntry(logError) << exc.GetException()->GetError();
   }
   if (sort_resi_n) {
-    GetAsymmUnit().SortResidues();
+    au.SortResidues();
     if (!FLastLoader->IsNative()) {
       FLastLoader->GetAsymmUnit().SortResidues();
     }
   }
   if (options.GetBoolOption("r", false, true)) {
     // apply default sorting to the residues
-    for (size_t i = 1; i < GetAsymmUnit().ResidueCount(); i++) {
-      AtomSorter::Sort(GetAsymmUnit().GetResidue(i).GetAtomList(),
+    for (size_t i = 1; i < au.ResidueCount(); i++) {
+      AtomSorter::Sort(au.GetResidue(i).GetAtomList(),
         acs);
     }
   }
@@ -802,23 +803,20 @@ void TXFile::Sort(const TStrList& ins, const TParamList &options) {
   // comply to residues before dry-save
   while (changes) {
     changes = false;
-    GetAsymmUnit().ComplyToResidues();
-    GetAsymmUnit().GetAtoms().ForEach(ACollectionItem::IndexTagSetter());
+    au.ComplyToResidues();
+    au.GetAtoms().ForEach(ACollectionItem::IndexTagSetter());
     GetRM().Sort_();
-    TSizeList indices = TIns::DrySave(GetAsymmUnit(), true);
-    if (indices.Count() != GetAsymmUnit().AtomCount()) {
-      throw TFunctionFailedException(__OlxSourceInfo, "assert");
-    }
-    GetAsymmUnit().RearrangeAtoms(indices);
-    TSizeList indices1 = TIns::DrySave(GetAsymmUnit(), true);
+    TSizeList indices = TIns::DrySave(au);
+    au.RearrangeAtoms(indices);
+    TSizeList indices1 = TIns::DrySave(au);
     for (size_t i = 0; i < indices.Count(); i++) {
       if (indices[i] != indices1[i]) {
         changes = true;
         break;
       }
     }
-    GetAsymmUnit().SetNonHAtomTags_();
-    GetAsymmUnit()._UpdateAtomIds();
+    au.SetNonHAtomTags_();
+    au._UpdateAtomIds();
     if (++changes_cnt > 3) {
       TBasicApp::NewLogEntry(logError) << "Atom order resolution has not converged!";
       break;
@@ -831,12 +829,11 @@ void TXFile::Sort(const TStrList& ins, const TParamList &options) {
 
   if (!FLastLoader->IsNative()) {
     TSizeList new_indices(original_ids.Count(), olx_list_init::zero());
-    for (size_t i = 0; i < GetAsymmUnit().AtomCount(); i++) {
-      new_indices[i] =
-        original_ids[&GetAsymmUnit().GetAtom(i)];
+    for (size_t i = 0; i < au.AtomCount(); i++) {
+      new_indices[i] = original_ids[&au.GetAtom(i)];
     }
     FLastLoader->RearrangeAtoms(new_indices);
-    FLastLoader->GetAsymmUnit().AssignResidues(GetAsymmUnit());
+    FLastLoader->GetAsymmUnit().AssignResidues(au);
   }
 }
 //..............................................................................
@@ -845,7 +842,7 @@ void TXFile::UpdateAtomIds() {
     UpdateAsymmUnit();
   }
   TAsymmUnit &au = GetAsymmUnit();
-  TSizeList indices = TIns::DrySave(au, true);
+  TSizeList indices = TIns::DrySave(au);
   bool uniform = true;
   for (size_t i = 0; i < indices.Count(); i++) {
     if (indices[i] != i) {
@@ -943,14 +940,18 @@ void TXFile::SaveToFile(const olxstr& FN, int flags) {
   IOlxObject* Cause = 0;
   try {
     // save external SAME if used
-    if (olx_is<TIns>(Loader) && TXApp::DoUseExternalExplicitSAME()) {
+    if (olx_is<TIns>(Loader)) {
       TIns& ins = *dynamic_cast<TIns*>(Loader);
-      TStrList same = GetRM().rSAME.GenerateList();
       olxstr inc_name_full = TEFile::ChangeFileExt(FN, Olex2SameExt());
-      if (!same.IsEmpty()) {
-        TUtf8File::WriteLines(inc_name_full, same, false);
+      bool inc = false;
+      if (TXApp::DoUseExternalExplicitSAME()) {
+        TStrList same = GetRM().rSAME.GenerateList();
+        if (!same.IsEmpty()) {
+          TUtf8File::WriteLines(inc_name_full, same, false);
+          inc = true;
+        }
       }
-      ins.UpdateSameFile(TEFile::ExtractFileName(inc_name_full), !same.IsEmpty());
+      ins.UpdateSameFile(TEFile::ExtractFileName(inc_name_full), inc);
     }
     if (!TBasicApp::GetInstance().GetOptions()
       .FindValue("absolute_hkl_path", FalseString()).ToBool())

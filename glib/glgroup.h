@@ -79,9 +79,7 @@ public:
   bool IsEmpty() const { return Objects.IsEmpty(); }
   AGDrawObject& GetObject(size_t i) const { return *Objects[i]; }
   AGDrawObject& operator [] (size_t i) const { return *Objects[i]; }
-  void SortObjectsByTag() {
-    QuickSorter::Sort(Objects, ACollectionItem::TagComparator());
-  }
+  void SortObjectsByTag();
   /* returns true if there are at least two groupable objects, moving the
   ungroupable ones to the provided list
   */

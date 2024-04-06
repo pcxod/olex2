@@ -1441,7 +1441,7 @@ bool TXApp::DoUseExternalExplicitSAME() {
   }
   else {
     a.external_explicit_same = TBasicApp::GetInstance().GetOptions()
-      .FindValue("external_explicit_same", TrueString()).ToBool();
+      .FindValue("external_explicit_same", FalseString()).ToBool();
     return *a.external_explicit_same;
   }
 }
