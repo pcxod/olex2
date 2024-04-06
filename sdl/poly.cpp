@@ -10,6 +10,7 @@
 #include "poly.h"
 #include "exception.h"
 #include "emath.h"
+#include "esort.h"
 UseEsdlNamespace()
 
 // Binominal polynomial routins

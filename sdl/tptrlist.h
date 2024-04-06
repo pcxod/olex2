@@ -11,7 +11,6 @@
 #define __olx_sdl_ptrlist_H
 #include "shared.h"
 #include "constlist.h"
-#include "esort.h"
 #include "etraverse.h"
 #include "exception.h"
 BeginEsdlNamespace()
@@ -649,13 +648,17 @@ public:
   }
   //..............................................................................
   template <class size_t_list_t>
-  TPtrList& Rearrange(const size_t_list_t &indices) {
+  TPtrList& Rearrange(const size_t_list_t &indices, bool inplace=true) {
     if (FCount < 2) {
       return *this;
     }
     if (FCount != indices.Count()) {
       throw TInvalidArgumentException(__OlxSourceInfo,
         "indices list size");
+    }
+    if (inplace) {
+      olx_list_rearrange(*this, indices);
+      return *this;
     }
     // allocate the list of NULLs
     T** ni = olx_malloc<T*>(cap.capacity = FCount);

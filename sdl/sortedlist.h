@@ -11,6 +11,7 @@
 #define __olx_sdl_sortedlist_H
 #include "typelist.h"
 #include "sorted.h"
+#include "esort.h"
 BeginEsdlNamespace()
 
 template <typename, typename> class ConstSortedObjectList;

@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2024 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -10,33 +10,34 @@
 #ifndef __olx_sdl_list_alg_H
 #define __olx_sdl_list_alg_H
 
-struct olx_list_caster  {
-  template <class To> struct SimpleCast  {
-    template <class From> static To OnItem(From o)  {
+struct olx_list_caster {
+  template <class To> struct SimpleCast {
+    template <class From> static To OnItem(From o) {
       return (To)o;
     }
   };
-  struct CopyCast  {
-    template <class From, class To> static To& OnItem(From o)  {
+  struct CopyCast {
+    template <class From, class To> static To& OnItem(From o) {
       return *(new To(o));
     }
   };
-  template <class To> struct AssignCast  {
-    template <class From> static To OnItem(From o)  {
+  template <class To> struct AssignCast {
+    template <class From> static To OnItem(From o) {
       return *(new To) = o;
     }
   };
-  template <typename To, class accessor> struct AccessorCast  {
-    template <class From> static To OnItem(From o)  {
+  template <typename To, class accessor> struct AccessorCast {
+    template <class From> static To OnItem(From o) {
       return accessor::Access(o);
     }
   };
 
   template <typename ListA, typename ListB, class Caster>
-  static void Cast(const ListA& from, ListB& to, const Caster& caster)  {
-    to.SetCapacity(to.Count()+from.Count());
-    for( size_t i=0; i < from.Count(); i++ )
+  static void Cast(const ListA& from, ListB& to, const Caster& caster) {
+    to.SetCapacity(to.Count() + from.Count());
+    for (size_t i = 0; i < from.Count(); i++) {
       to.Add(caster.OnItem(from[i]));
+    }
   }
 };
 
@@ -128,13 +129,14 @@ public:
 };
 
 // the items must have copy constructors
-template <typename seq_t> static seq_t &olx_reverse(seq_t &seq, size_t sz)  {
-  const size_t hsz = sz/2;
-  for( size_t i=0; i < hsz; i++ )
-    olx_swap(seq[i], seq[sz-1-i]);
+template <typename seq_t> static seq_t& olx_reverse(seq_t& seq, size_t sz) {
+  const size_t hsz = sz / 2;
+  for (size_t i = 0; i < hsz; i++) {
+    olx_swap(seq[i], seq[sz - 1 - i]);
+  }
   return seq;
 }
-template <class seq_t> static seq_t &olx_reverse(seq_t &seq)  {
+template <class seq_t> static seq_t& olx_reverse(seq_t& seq) {
   return olx_reverse(seq, seq.Count());
 }
 
@@ -179,66 +181,112 @@ struct olx_list_reverse {
 };
 
 template <class list_t, typename func_t>
-bool olx_list_and(const list_t &l, func_t f, bool if_empty=true) {
+bool olx_list_and(const list_t& l, func_t f, bool if_empty = true) {
   if (l.IsEmpty()) return if_empty;
-  for (size_t i=0; i < l.Count(); i++) {
-    if (!(olx_ref::get(l[i]).*f)())
+  for (size_t i = 0; i < l.Count(); i++) {
+    if (!(olx_ref::get(l[i]).*f)()) {
       return false;
+    }
   }
   return true;
-};
+}
 template <class list_t, typename func_t>
-bool olx_list_and_st(const list_t &l, func_t f, bool if_empty=true) {
+bool olx_list_and_st(const list_t& l, func_t f, bool if_empty = true) {
   if (l.IsEmpty()) return if_empty;
-  for (size_t i=0; i < l.Count(); i++) {
-    if (!(*f)(olx_ref::get(l[i])))
+  for (size_t i = 0; i < l.Count(); i++) {
+    if (!(*f)(olx_ref::get(l[i]))) {
       return false;
+    }
   }
   return true;
-};
+}
 
 template <class list_t, typename func_t>
-bool olx_list_or(const list_t &l, func_t f, bool if_empty=false) {
+bool olx_list_or(const list_t& l, func_t f, bool if_empty = false) {
   if (l.IsEmpty()) return if_empty;
-  for (size_t i=0; i < l.Count(); i++) {
-    if ((olx_ref::get(l[i]).*f)())
+  for (size_t i = 0; i < l.Count(); i++) {
+    if ((olx_ref::get(l[i]).*f)()) {
       return true;
+    }
   }
   return false;
 };
 template <class list_t, typename func_t>
-bool olx_list_or_st(const list_t &l, func_t f, bool if_empty=false) {
+bool olx_list_or_st(const list_t& l, func_t f, bool if_empty = false) {
   if (l.IsEmpty()) return if_empty;
-  for (size_t i=0; i < l.Count(); i++) {
-    if ((*f)(olx_ref::get(l[i])))
+  for (size_t i = 0; i < l.Count(); i++) {
+    if ((*f)(olx_ref::get(l[i]))) {
       return true;
+    }
   }
   return false;
-};
+}
 
 template <class list_t, typename func_t>
-void olx_list_call(const list_t &l, func_t f) {
-  for (size_t i=0; i < l.Count(); i++)
+void olx_list_call(const list_t& l, func_t f) {
+  for (size_t i = 0; i < l.Count(); i++) {
     (olx_ref::get(l[i]).*f)();
-};
+  }
+}
 template <class list_t, typename func_t>
-void olx_list_call_st(const list_t &l, func_t f) {
-  for (size_t i=0; i < l.Count(); i++)
+void olx_list_call_st(const list_t& l, func_t f) {
+  for (size_t i = 0; i < l.Count(); i++) {
     (*f)(olx_ref::get(l[i]));
-};
+  }
+}
 
 template <class list_t, typename func_t, typename arg_t>
-void olx_list_call(const list_t& l, func_t f, arg_t arg ) {
+void olx_list_call(const list_t& l, func_t f, arg_t arg) {
   for (size_t i = 0; i < l.Count(); i++) {
     (olx_ref::get(l[i]).*f)(arg);
   }
-};
+}
 template <class list_t, typename func_t, typename arg_t>
 void olx_list_call_st(const list_t& l, func_t f, arg_t arg) {
   for (size_t i = 0; i < l.Count(); i++) {
     (*f)(olx_ref::get(l[i]), arg);
   }
-};
+}
+
+/*
+Rearranges a list inplace using Swap according to the given permutation list
+https://medium.com/@kevingxyz/permutation-in-place-8528581a5553
+*/
+template <class list_t, typename plist_t>
+void olx_list_rearrange(list_t &l, const plist_t &perm) {
+  for (size_t i = 0; i < l.Count(); i++) {
+    size_t tsw = perm[i];
+    while (tsw < i) {
+      tsw = perm[tsw];
+    }
+    l.Swap(i, tsw);
+  }
+}
+// with permutation accessor
+template <class list_t, typename plist_t, class perm_acc_t>
+void olx_list_rearrange(list_t& l, const plist_t& perm, const perm_acc_t& perm_acc) {
+  for (size_t i = 0; i < l.Count(); i++) {
+    size_t tsw = perm_acc(perm[i]);
+    while (tsw < i) {
+      tsw = perm_acc(perm[tsw]);
+    }
+    l.Swap(i, tsw);
+  }
+}
+// with permutation acccessor and a swap listener
+template <class list_t, typename plist_t, class perm_acc_t, class listener_t>
+void olx_list_rearrange(list_t& l, const plist_t& perm,
+  const perm_acc_t& perm_acc, const listener_t& listener)
+{
+  for (size_t i = 0; i < l.Count(); i++) {
+    size_t tsw = perm_acc(perm[i]);
+    while (tsw < i) {
+      tsw = perm_acc(perm[tsw]);
+    }
+    l.Swap(i, tsw);
+    listener.OnSwap(i, tsw);
+  }
+}
 
 template <typename item_t>
 struct olx_as_list_ {

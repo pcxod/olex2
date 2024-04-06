@@ -135,7 +135,10 @@ template <class T, typename TC> class TTSString : public T  {
 
 public:
   TTSString() : T() {}
-  explicit TTSString(const olx_capacity_t &cap) : T(cap.capacity) {}
+  TTSString(const olx_capacity_t& cap) {
+    T::_Increment = cap.inc;
+    T::checkBufferForModification(cap.capacity);
+  }
   //...........................................................................
   TTSString(const TTSString& str, size_t start, size_t length) {
     T::SData = str.SData;

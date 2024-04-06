@@ -11,6 +11,7 @@
 #define __olx_sdl_sortedTL_H
 #include "tptrlist.h"
 #include "sorted.h"
+#include "esort.h"
 #undef GetObject
 
 BeginEsdlNamespace()

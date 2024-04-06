@@ -9,7 +9,6 @@
 
 #ifndef __olx_sdl_typelist_H
 #define __olx_sdl_typelist_H
-#include "esort.h"
 #include "etraverse.h"
 #include "exception.h"
 #include "tptrlist.h"

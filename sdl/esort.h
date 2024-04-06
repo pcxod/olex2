@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2024 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -11,6 +11,7 @@
 #define __olx_sdl_esort_H
 #include "ebase.h"
 #include "equeue.h"
+
 BeginEsdlNamespace()
 
 /* a comparator for primitive types, or object having < and > operators only
@@ -133,7 +134,6 @@ struct ComplexComparator {
     }
 };
 //.............................................................................
-
 struct ReverseComparator {
   template <class cmp_t> struct ReverseComparator_ {
     const cmp_t &cmp;
@@ -198,23 +198,22 @@ struct ReverseComparator {
     return ReverseComparator_<cmp_t>(cmp);
   }
 };
-
 //.............................................................................
 struct DummySortListener {
   static void OnSwap(size_t, size_t)  {}
   static void OnMove(size_t, size_t)  {}
 };
-
+//.............................................................................
 struct SyncSortListener {
   template <class list_t, class acc_t>
   struct SyncSortListener_1 {
     list_t& list;
     acc_t acc;
-    SyncSortListener_1(list_t& _list, const acc_t &a)
+    SyncSortListener_1(list_t& _list, const acc_t& a)
       : list(_list), acc(a)
     {}
-    void OnSwap(size_t i, size_t j) const {  acc(list).Swap(i, j);  }
-    void OnMove(size_t i, size_t j) const {  acc(list).Move(i, j);  }
+    void OnSwap(size_t i, size_t j) const { acc(list).Swap(i, j); }
+    void OnMove(size_t i, size_t j) const { acc(list).Move(i, j); }
   };
   template <class list_t, class acc_t>
   struct SyncSortListener_N {
@@ -224,12 +223,14 @@ struct SyncSortListener {
       : list(_list), acc(acc)
     {}
     void OnSwap(size_t i, size_t j) const {
-      for (size_t li = 0; li < list.Count(); li++)
+      for (size_t li = 0; li < list.Count(); li++) {
         olx_ref::get(acc(list[li])).Swap(i, j);
+      }
     }
     void OnMove(size_t i, size_t j) const {
-      for (size_t li = 0; li < list.Count(); li++)
+      for (size_t li = 0; li < list.Count(); li++) {
         olx_ref::get(acc(list[li])).Move(i, j);
+      }
     }
   };
   /* synchronises a single list */
@@ -343,8 +344,10 @@ struct QuickSorter : public SortInterface<QuickSorter> {
           pi = tv.GetA();
           for (size_t i = tv.GetA(); i < tv.GetB(); i++) {
             if (cmp.Compare(list[i], mid) <= 0) {
-              listener.OnSwap(i, pi);
-              list.list.Swap(i, pi);
+              if (i != pi) {
+                listener.OnSwap(i, pi);
+                list.list.Swap(i, pi);
+              }
               pi++;
             }
           }
@@ -354,10 +357,12 @@ struct QuickSorter : public SortInterface<QuickSorter> {
             ml = olx_max(l1, l2);
           bool sp = (l1 == 0 || l2 == 0) ? true
             : (ml > 32 && (double)ml / (double)olx_min(l1, l2) >= 1.75);
-          if (l2 > 0)
+          if (l2 > 0) {
             stack.Push(d_t(pi + 1, tv.GetB(), sp ? l2 == ml : false));
-          if (l1 > 0)
+          }
+          if (l1 > 0) {
             stack.Push(d_t(tv.GetA(), pi - 1, sp ? l1 == ml : false));
+          }
         }
       }
     }
@@ -401,63 +406,6 @@ struct BubbleSorter : public SortInterface<BubbleSorter> {
   Make(list_t &list, const comparator_t &cmp, const listener_t &listener) {
     return BubbleSorter_<list_t,comparator_t,listener_t>(
       list, cmp, listener);
-  }
-};
-//.............................................................................
-struct InsertSorter : public SortInterface<InsertSorter> {
-  template <class list_t, class comparator_t, class listener_t>
-  struct InsertSorter_ {
-    InsertSorter_(list_t &list_, const comparator_t &cmp_,
-      const listener_t &listener_)
-    : list(list_), cmp(cmp_), listener(listener_)
-    {}
-    size_t findIndex(size_t sz) {
-      if (cmp.Compare(list[sz], list[0]) <= 0) {
-        return 0;
-      }
-      if (cmp.Compare(list[sz], list[sz-1]) >= 0) {
-        return sz;
-      }
-      size_t from = 0, to = sz-1;
-      while ((to - from) != 1) {
-        const size_t index = from + (to-from) / 2;
-        const int cr = cmp.Compare(list[index], list[sz]);
-        if (cr < 0)
-          from = index;
-        else if (cr > 0)
-          to = index;
-        else
-          return index;
-      }
-      return to;
-    }
-    void Sort() {
-      size_t lc = list.list.Count();
-      if (lc < 2) return;
-      if (cmp.Compare(list[0], list[1]) > 0) {
-        list.list.Move(1, 0);
-        listener.OnMove(1, 0);
-      }
-      size_t sorted_sz = 2;
-      while (sorted_sz != lc) {
-        size_t np = findIndex(sorted_sz);
-        if (np != sorted_sz) {
-          list.list.Move(sorted_sz, np);
-          listener.OnMove(sorted_sz, np);
-        }
-        sorted_sz++;
-      }
-    }
-  protected:
-    typename list_t::InternalAccessor list;
-    const comparator_t &cmp;
-    const listener_t &listener;
-  };
-  template <class list_t, class comparator_t, class listener_t>
-  static InsertSorter_<list_t, comparator_t, listener_t>
-   Make(list_t &list, const comparator_t &cmp, const listener_t &listener) {
-      return InsertSorter_<list_t, comparator_t, listener_t>(
-        list, cmp, listener);
   }
 };
 //.............................................................................

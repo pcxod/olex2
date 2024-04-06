@@ -10,7 +10,6 @@
 #ifndef __olx_sdl_array_list_H
 #define __olx_sdl_array_list_H
 #include "ebase.h"
-#include "esort.h"
 #include "etraverse.h"
 #include "exception.h"
 #include "shared.h"
@@ -461,8 +460,9 @@ public:
   //..............................................................................
   TArrayList& SetCount(size_t v) {
     if (v > FCount) {
-      if (v > cap.capacity)
+      if (v > cap.capacity) {
         SetCapacity(v);
+      }
     }
     else if (v == 0) {
       if (Items != 0) {
@@ -495,6 +495,32 @@ public:
   }
   //..............................................................................
   bool Contains(const T& v) const { return IndexOf(v) != InvalidIndex; }
+  //..............................................................................
+  template <class size_t_list_t>
+  TArrayList& Rearrange(const size_t_list_t& indices, bool inplace=true) {
+    if (FCount < 2) {
+      return *this;
+    }
+    if (FCount != indices.Count()) {
+      throw TInvalidArgumentException(__OlxSourceInfo,
+        "indices list size");
+    }
+    if (inplace) {
+      olx_list_rearrange(*this, indices);
+      return *this;
+    }
+    T* ni = olx_malloc<T>(cap.capacity = FCount);
+    for (size_t i = 0; i < FCount; i++) {
+#ifdef _DEBUG
+      TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo,
+        indices[i], 0, FCount);
+#endif
+      ni[i] = Items[indices[i]];
+    }
+    olx_free(Items);
+    Items = ni;
+    return *this;
+  }
   //..............................................................................
   static TListTraverser<TArrayList<T> > Traverser;
 public:

@@ -279,7 +279,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\repository\fsext.cpp" />
+    <ClCompile Include="..\..\repository\hkl_util.cpp" />
     <ClCompile Include="..\..\repository\olxvar.cpp" />
+    <ClCompile Include="..\..\repository\refinement_listener.cpp" />
     <ClCompile Include="..\..\repository\shellutil.cpp" />
     <ClCompile Include="tests.cpp" />
   </ItemGroup>
