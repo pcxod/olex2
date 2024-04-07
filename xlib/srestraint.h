@@ -84,6 +84,12 @@ public:
 
   short GetListType() const { return ListType; }
 
+  size_t GetGroupSize() const {
+    return ListType >= rltGroup2 && ListType <= rltGroup4
+      ? ((ListType - rltGroup2) + 2)
+      : InvalidIndex;
+  }
+
   size_t GetId() const { return Id; }
   DefPropP(size_t, Position)
   DefPropP(double, Value)

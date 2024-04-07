@@ -9,6 +9,7 @@
 
 #ifndef __olx_sdl_collectionItem_H
 #define __olx_sdl_collectionItem_H
+/* Check tagstack.h when performing embedded operations on tags */
 
 enum {
   OVERLAP_NONE = 0,
@@ -250,7 +251,7 @@ public:
   }
   
   /* Could be used to check if the lists contain items in the same order.
-  Checking size alows to check the list contains identical items in the same order.
+  Checking size allows to check the list contains identical items in the same order.
   */
   template <class ListA, class AccessorA, class ListB, class AccessorB>
   static bool IsTheSameOrder(

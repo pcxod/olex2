@@ -643,6 +643,7 @@
     <ClInclude Include="..\..\..\sdl\stable_sort.h" />
     <ClInclude Include="..\..\..\sdl\std_sort.h" />
     <ClInclude Include="..\..\..\sdl\strmask.h" />
+    <ClInclude Include="..\..\..\sdl\tagstack.h" />
     <ClInclude Include="..\..\..\sdl\talist.h" />
     <ClInclude Include="..\..\..\sdl\testsuit.h" />
     <ClInclude Include="..\..\..\sdl\tests\alg_test.h" />

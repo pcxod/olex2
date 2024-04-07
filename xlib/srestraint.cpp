@@ -56,10 +56,7 @@ void TSimpleRestraint::Delete() {
 }
 //..............................................................................
 TSimpleRestraint &TSimpleRestraint::Validate() {
-  size_t group_size = ListType >= rltGroup2 && ListType <= rltGroup4
-    ? ((ListType- rltGroup2)+2)
-    : InvalidIndex;
-  Atoms.Validate(group_size);
+  Atoms.Validate(GetGroupSize());
   if (ListType >= rltAtoms1N && (ListType <= rltAtoms4N)) {
     size_t min_ac = (ListType-rltAtoms1N)+1;
     if (Atoms.RefCount() < min_ac) {
@@ -96,7 +93,7 @@ void TSimpleRestraint::ToDataItem(TDataItem& item) const {
 ConstPtrList<PyObject> TSimpleRestraint::PyExport(TPtrList<PyObject>& atoms,
   TPtrList<PyObject>& equiv)
 {
-  size_t group_size = ListType >= 2 && ListType <= 4 ? ListType : InvalidIndex;
+  size_t group_size = GetGroupSize();
   TTypeList<TAtomRefList> ats = Atoms.Expand(Parent.GetRM(), group_size);
   TPtrList<PyObject> rv;
   if (group_size != InvalidIndex) {
@@ -224,7 +221,7 @@ TIString TSimpleRestraint::ToString() const {
 void TSimpleRestraint::OnAUUpdate() {
   Atoms.OnAUUpdate();
   // reduce subgroups symmetry to AU
-  size_t group_size = ListType >= 2 && ListType <= 4 ? ListType : InvalidIndex;
+  size_t group_size = GetGroupSize();
   if (group_size != InvalidIndex) {
     TPtrList<ExplicitCAtomRef> tr = Atoms.GetExplicit();
     for (size_t i = 0; i < tr.Count(); i+= group_size) {
@@ -254,7 +251,6 @@ void TSRestraintList::Assign(const TSRestraintList& rl)  {
   if (rl.GetRestraintListType() != RestraintListType) {
     throw TInvalidArgumentException(__OlxSourceInfo, "list type mismatch");
   }
-
   Clear();
   for (size_t i=0; i < rl.Count(); i++) {
     AddNew().Assign(rl.Restraints[i]);
