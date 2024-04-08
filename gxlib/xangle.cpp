@@ -77,7 +77,7 @@ void TXAngle::Create(const olxstr& cName) {
   }
   TStrList pnames;
   ListPrimitives(pnames);
-  TGlMaterial def_m("85;4294967040;4286611584;4290822336;64");
+  TGlMaterial def_m("255;4294967040;4294967040;4286611584;4286611584;4290822336;4290822336;16;16");
   TGraphicsStyle& GS = GPC->GetStyle();
   for (size_t i = 0; i < pnames.Count(); i++) {
     if ((pmask & (1 << i)) != 0) {
@@ -115,14 +115,16 @@ bool TXAngle::Orient(TGlPrimitive& glp) {
       olx_gl::lineWidth(1./thickness);
     }
   }
-  if (glp.GetOwnerId() == 1) {
+  else if (glp.GetOwnerId() == 1) {
     const TStringToList<olxstr, TGlPrimitive*>& primtives =
       GetSettings().GetPrimitives(true);
     ca = cos(ang / sections);
     olx_create_rotation_matrix(rm, normal, ca);
     a = (from - draw_center) * radius;
     for (int i = 0; i < sections; i++) {
-      olx_gl::translate(a);
+      vec3d b = a * rm;
+      vec3d t = a + (b-a) / 4;
+      olx_gl::translate(t);
       if (thickness != 1) {
         olx_gl::scale(thickness);
       }
@@ -130,9 +132,47 @@ bool TXAngle::Orient(TGlPrimitive& glp) {
       if (thickness != 1) {
         olx_gl::scale(1./thickness);
       }
-      olx_gl::translate(-a);
+      olx_gl::translate(-t);
+      a = b;
+    }
+  }
+  else if (glp.GetOwnerId() == 2) {
+    const TStringToList<olxstr, TGlPrimitive*>& primtives =
+      GetSettings().GetPrimitives(true);
+    ca = cos(ang / sections);
+    olx_create_rotation_matrix(rm, normal, ca);
+    a = (from - draw_center) * radius;
+    for (int i = 0; i < sections; i++) {
+      vec3d b = a * rm;
+      vec3d t = a + (b - a) / 4;
+      vec3d d = (b - a).Normalise();
+      double rang = acos(d[2]) * 180 / M_PI;
+      olx_gl::translate(t);
+      if (thickness != 1) {
+        olx_gl::scale(thickness);
+      }
+      olx_gl::rotate(rang, -d[1], d[0], 0.0);
+      primtives.GetObject(glp.GetOwnerId() - 1)->Draw();
+      olx_gl::rotate(-rang, -d[1], d[0], 0.0);
+      if (thickness != 1) {
+        olx_gl::scale(1. / thickness);
+      }
+      olx_gl::translate(-t);
+      a = b;
+    }
+  }
+  if (glp.GetOwnerId() == 3) {
+    olx_gl::begin(GL_TRIANGLE_FAN);
+    olx_gl::normal(normal);
+    olx_gl::vertex(vec3d());
+    olx_create_rotation_matrix(rm, normal, ca);
+    for (int i = 0; i < sections; i++) {
+      olx_gl::vertex(a);
+      a *= rm;
+      olx_gl::vertex(a);
       a *= rm;
     }
+    olx_gl::end();
   }
   return true;
 }
@@ -181,6 +221,8 @@ void TXAngle::UpdatePrimitiveParams(TGlPrimitive* Primitive) {
 void TXAngle::ListPrimitives(TStrList& List) const {
   List.Add("Lines");
   List.Add("Balls");
+  List.Add("Cylinders");
+  List.Add("Segment");
 }
 uint32_t TXAngle::GetPrimitiveMask() const {
   return GetPrimitives().GetStyle().GetNumParam(GetPrimitiveMaskName(),
@@ -213,11 +255,35 @@ bool TXAngle::DoZoom(double zoom, bool inc) {
 //...........................................................................
 void TXAngle::Settings::CreatePrimitives() {
   ClearPrimitives();
-  TGlPrimitive& sph = parent.NewPrimitive(sgloSphere);
-  sph.Params[0] = 0.04;
-  sph.Params[1] = 8;
-  sph.Params[2] = 8;
-  sph.Compile();
-  primitives.Add("Sphere", &sph);
+  {
+    TGlPrimitive& sph = parent.NewPrimitive(sgloSphere);
+    sph.Params[0] = 0.04;
+    sph.Params[1] = 8;
+    sph.Params[2] = 8;
+    sph.Compile();
+    primitives.Add("Sphere", &sph);
+  }
+  {
+    TGlPrimitive& glp = parent.NewPrimitive(sgloCommandList);
+
+    TGlPrimitive& tmp_c = parent.NewPrimitive(sgloCylinder);
+    tmp_c.Params[0] = 0.02;  tmp_c.Params[1] = 0.02;  tmp_c.Params[2] = 0.1;
+    tmp_c.Params[3] = 5;    tmp_c.Params[4] = 1;
+    tmp_c.Compile();
+
+    TGlPrimitive& tmp_d = parent.NewPrimitive(sgloDisk);
+    tmp_d.Params[0] = 0;  tmp_d.Params[1] = 0.02;  tmp_d.Params[2] = 5;
+    tmp_d.Params[3] = 1;
+    tmp_d.Compile();
+
+    glp.StartList();
+    olx_gl::translate(0.0, 0.0, -0.05);
+    glp.CallList(&tmp_c);
+    glp.CallList(&tmp_d);
+    olx_gl::translate(0.0, 0.0, 0.05);
+    glp.CallList(&tmp_d);
+    glp.EndList();
+    primitives.Add("Cylinder", &glp);
+  }
 }
 //...........................................................................

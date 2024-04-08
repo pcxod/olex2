@@ -614,7 +614,7 @@
     <ClInclude Include="..\..\..\sdl\stable_sort.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\sdl\tagstack.h">
+    <ClInclude Include="..\..\..\sdl\tagholder.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

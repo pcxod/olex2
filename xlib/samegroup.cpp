@@ -11,7 +11,7 @@
 #include "asymmunit.h"
 #include "refmodel.h"
 #include "index_range.h"
-#include "tagstack.h"
+#include "tagholder.h"
 
 TSameGroup::TSameGroup(uint16_t id, TSameGroupList& parent)
 : Atoms(parent.RM), Id(id), Parent(parent),
@@ -744,10 +744,10 @@ TSameGroupList::FindSupergroups(const TSameGroup& sg,
       sg_atoms_p->Add(&Groups[i], Groups[i].GetAtoms().ExpandList(RM));
     }
   }
-  ItemTagStack st;
+  ItemTagHolder ith;
   ExplicitCAtomRef::AtomAccessor acc = ExplicitCAtomRef::AtomAccessor();
   for (size_t i = 0; i < sg_atoms->Count(); i++) {
-    st.push(sg_atoms->GetValue(i), acc);
+    ith.store(sg_atoms->GetValue(i), acc);
   }
   TAtomRefList& ar1 = (*sg_atoms)[&sg];
   for (size_t i = 0; i < Groups.Count(); i++) {

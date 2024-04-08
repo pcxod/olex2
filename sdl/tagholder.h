@@ -17,55 +17,55 @@ They also must not get modified by themselves
 */
 BeginEsdlNamespace()
 
-struct ItemTagStack {
+struct ItemTagHolder {
   struct ACIList {
     TArrayList<index_t> tags;
     ACIList(size_t sz) : tags(sz) {}
     virtual const void* ptr() const = 0;
-    virtual void pop() = 0;
+    virtual void restore() = 0;
   };
 
-  olx_pdict<const void*, struct ACIList*> store;
+  olx_pdict<const void*, struct ACIList*> data;
 
-  ~ItemTagStack() {
-    pop_all();
+  ~ItemTagHolder() {
+    restore_all();
   }
 
   template <class list_t, class accessor_t>
-  ItemTagStack& push(const list_t& l, const accessor_t& acc) {
+  ItemTagHolder& store(const list_t& l, const accessor_t& acc) {
     ACIList* al = new CIList<list_t, accessor_t>(l, acc);
-    store.Add(al->ptr(), al);
+    data.Add(al->ptr(), al);
     return *this;
   }
 
   template <class list_t>
-  ItemTagStack& push(const list_t& l) { return push(l, DummyAccessor()); }
+  ItemTagHolder& store(const list_t& l) { return store(l, DummyAccessor()); }
 
   template <class list_t>
-  ItemTagStack& pop(const list_t& l) {
-    size_t i = store.IndexOf((const void*)&l);
+  ItemTagHolder& restore(const list_t& l) {
+    size_t i = data.IndexOf((const void*)&l);
     if (i != InvalidIndex) {
-      store.GetValue(i)->pop();
-      delete store.GetValue(i);
-      store.Delete(i);
+      data.GetValue(i)->pop();
+      delete data.GetValue(i);
+      data.Delete(i);
     }
     return *this;
   }
 
-  void pop_all() {
-    for (size_t i = 0; i < store.Count(); i++) {
-      store.GetValue(i)->pop();
-      delete store.GetValue(i);
+  void restore_all() {
+    for (size_t i = 0; i < data.Count(); i++) {
+      data.GetValue(i)->restore();
+      delete data.GetValue(i);
     }
-    store.Clear();
+    data.Clear();
   }
 
   // empties store without restoring tags
   void clear() {
-    for (size_t i = 0; i < store.Count(); i++) {
-      delete store.GetValue(i);
+    for (size_t i = 0; i < data.Count(); i++) {
+      delete data.GetValue(i);
     }
-    store.Clear();
+    data.Clear();
   }
 
   template <class list_t, class accessor_t>
@@ -79,7 +79,7 @@ struct ItemTagStack {
         this->tags[i] = olx_ref::get(acc(l[i])).GetTag();
       }
     }
-    void pop() {
+    void restore() {
       if (list.Count() != this->tags.Count()) {
         throw TFunctionFailedException(__OlxSrcInfo, "assert");
       }
