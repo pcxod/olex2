@@ -1031,12 +1031,12 @@ void DistanceGenerator::Generate(const TCAtomPList atoms, bool generate_13,
 }
 //........................................................................
 void DistanceGenerator::GenerateSADI_(
-  const DistanceGenerator::distance_set_t &d, double esd_k,
+  const DistanceGenerator::distance_set_t &d, double esd,
   RefinementModel &rm, const DistanceGenerator::atom_map_1_t &atom_map)
 {
   for (size_t i = 0; i < d.Count(); i++) {
     TSimpleRestraint &sr = rm.rSADI.AddNew();
-    sr.SetEsd(sr.GetEsd() * esd_k);
+    sr.SetEsd(esd);
     sr.AddAtomPair(rm.aunit.GetAtom(d[i].a), 0, rm.aunit.GetAtom(d[i].b), 0);
     sr.AddAtomPair(
       rm.aunit.GetAtom(atom_map.Find(d[i].a, d[i].a)), 0,
@@ -1045,13 +1045,13 @@ void DistanceGenerator::GenerateSADI_(
 }
 //........................................................................
 void DistanceGenerator::GenerateSADI_(
-  const DistanceGenerator::distance_set_t &d, double esd_k,
+  const DistanceGenerator::distance_set_t &d, double esd,
   RefinementModel &rm, const DistanceGenerator::atom_map_N_t &atom_map)
 {
   size_t gc = atom_map.GetValue(0).Count();
   for (size_t i = 0; i < d.Count(); i++) {
     TSimpleRestraint &sr = rm.rSADI.AddNew();
-    sr.SetEsd(sr.GetEsd() * esd_k);
+    sr.SetEsd(esd);
     sr.AddAtomPair(rm.aunit.GetAtom(d[i].a), 0, rm.aunit.GetAtom(d[i].b), 0);
     for (size_t j = 0; j < gc; j++) {
       size_t a_midx = atom_map.IndexOf(d[i].a);

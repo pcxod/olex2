@@ -168,16 +168,16 @@ struct DistanceGenerator {
     bool generate_13, bool inclusive);
   void Generate(const TCAtomPList atoms, bool generate_13, bool inclusive);
   void GenerateSADI(RefinementModel &rm, const atom_map_1_t &atom_map,
-    double esd13_k = 2.0) const
+    double esd12, double esd13) const
   {
-    GenerateSADI_(distances_12, 1.0, rm, atom_map);
-    GenerateSADI_(distances_13, esd13_k, rm, atom_map);
+    GenerateSADI_(distances_12, esd12, rm, atom_map);
+    GenerateSADI_(distances_13, esd13, rm, atom_map);
   }
   void GenerateSADI(RefinementModel &rm, const atom_map_N_t &atom_map,
-    double esd13_k = 2.0) const
+    double esd12, double esd13) const
   {
-    GenerateSADI_(distances_12, 1.0, rm, atom_map);
-    GenerateSADI_(distances_13, esd13_k, rm, atom_map);
+    GenerateSADI_(distances_12, esd12, rm, atom_map);
+    GenerateSADI_(distances_13, esd13, rm, atom_map);
   }
   TStrList::const_list_type GenerateSADIList(const TAsymmUnit& au,
     const atom_map_1_t& atom_map, double esd12 = 0.02, double esd13 = 0.04) const
@@ -198,9 +198,9 @@ struct DistanceGenerator {
   static void GenerateDFIX(TCAtomPList &atoms, bool explict = true,
     double esd_12=0.02, double esd_13=0.04);
 private:
-  static void GenerateSADI_(const distance_set_t &d, double esd_k,
+  static void GenerateSADI_(const distance_set_t &d, double esd,
     RefinementModel &rm, const atom_map_1_t &atom_map);
-  static void GenerateSADI_(const distance_set_t &d, double esd_k,
+  static void GenerateSADI_(const distance_set_t &d, double esd,
     RefinementModel &rm, const atom_map_N_t &atom_map);
   static TStrList::const_list_type GenerateSADIList_(
     const distance_set_t& d, double esd, const TAsymmUnit& au,

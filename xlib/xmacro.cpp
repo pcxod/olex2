@@ -10529,7 +10529,7 @@ struct PairListComparator {
 
 template <class list_t, typename accessor_t>
 void macSAME_expand(RefinementModel &rm, const list_t& groups,
-  const accessor_t &acc)
+  const accessor_t &acc, double esd12, double esd13)
 {
   DistanceGenerator::atom_set_t atom_set(olx_reserve(groups[0].Count()));
   DistanceGenerator::atom_map_N_t atom_map(olx_reserve(groups[0].Count()));
@@ -10543,7 +10543,7 @@ void macSAME_expand(RefinementModel &rm, const list_t& groups,
   }
   DistanceGenerator d;
   d.Generate(rm.aunit, atom_set, true, true);
-  d.GenerateSADI(rm, atom_map);
+  d.GenerateSADI(rm, atom_map, esd12, esd13);
 }
 void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &E)
@@ -10577,10 +10577,25 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
       "currently unsupported";
     return;
   }
+  double esd12 = -0.02, esd13 = -0.04;
   size_t groups_count = InvalidSize;
-  if (!Cmds.IsEmpty() && Cmds[0].IsNumber()) {
-    groups_count = Cmds[0].ToSizeT();
+  while (!Cmds.IsEmpty() && Cmds[0].IsNumber()) {
+    if (groups_count == InvalidIndex && Cmds[0].IsInt()) {
+      groups_count = Cmds[0].ToSizeT();
+    }
+    else {
+      if (esd12 < 0) {
+        esd12 = Cmds[0].ToDouble();
+      }
+      else {
+        esd13 = Cmds[0].ToDouble();
+      }
+    }
     Cmds.Delete(0);
+  }
+  esd12 = olx_abs(esd12);
+  if (esd13 < 0) {
+    esd13 = esd12 * 2;
   }
   TXApp &app = TXApp::GetInstance();
   TSAtomPList atoms = app.FindSAtoms(Cmds, false, true);
@@ -10624,7 +10639,8 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
         groups[1].Add(netB.Node(res[i].GetB()));
       }
       macSAME_expand(app.XFile().GetRM(), groups,
-        FunctionAccessor::MakeConst(&TSAtom::CAtom));
+        FunctionAccessor::MakeConst(&TSAtom::CAtom),
+        esd12, esd13);
     }
     else {
       TSameGroup* sg = 0;
@@ -10650,6 +10666,8 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
           }
           if (sg == 0) {
             sg = &app.XFile().GetRM().rSAME.New();
+            sg->Esd12 = esd12;
+            sg->Esd13 = esd13;
           }
           first = false;
         }
@@ -10658,6 +10676,8 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
       }
       TBasicApp::NewLogEntry();
       TSameGroup& d_sg = app.XFile().GetRM().rSAME.New(sg);
+      d_sg.Esd12 = esd12;
+      d_sg.Esd13 = esd13;
       for (size_t i = 0; i < res.Count(); i++) {
         if (netB.Node(res[i].GetB()).GetType().z < 2 ||
           netB.Node(res[i].GetB()).GetTag() == 0)
@@ -10681,13 +10701,15 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
         }
       }
       macSAME_expand(app.XFile().GetRM(), groups,
-        FunctionAccessor::MakeConst(&TSAtom::CAtom));
+        FunctionAccessor::MakeConst(&TSAtom::CAtom), esd12, esd13);
     }
     else {
       TPtrList<TSameGroup> deps;
       TSameGroup& ref = app.XFile().GetRM().rSAME.New();
       for (size_t i = 0; i < groups_count - 1; i++) {
         deps.Add(app.XFile().GetRM().rSAME.New(&ref));
+        deps.GetLast()->Esd12 = esd12;
+        deps.GetLast()->Esd13 = esd13;
       }
       for (size_t i = 0; i < cnt; i++) {
         ref.Add(atoms[i]->CAtom());
@@ -10718,11 +10740,13 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
         }
       }
       macSAME_expand(app.XFile().GetRM(), groups,
-        FunctionAccessor::MakeConst(&TSAtom::CAtom));
+        FunctionAccessor::MakeConst(&TSAtom::CAtom), esd12, esd13);
     }
     else {
       TSameGroup& sg = app.XFile().GetRM().rSAME.New();
       TSameGroup& dep = app.XFile().GetRM().rSAME.New(&sg);
+      dep.Esd12 = esd12;
+      dep.Esd13 = esd13;
       if (atoms[0]->IsConnectedTo(*atoms.GetLast())) {
         for (size_t i = 0; i < atoms.Count(); i++) {
           sg.Add(atoms[i]->CAtom());
@@ -10765,7 +10789,7 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
           }
         }
         macSAME_expand(app.XFile().GetRM(), groups,
-          DummyAccessor());
+          DummyAccessor(), esd12, esd13);
       }
       else {
         TSameGroup &rg = rm.rSAME.New();
@@ -10776,6 +10800,8 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
         }
         for (size_t fi = 0; fi < frags.Count(); fi++) {
           TSameGroup &dg = rm.rSAME.New(&rg);
+          dg.Esd12 = esd12;
+          dg.Esd13 = esd13;
           for (size_t i = 0; i < frags[fi].count(); i++) {
             if (fr[i].GetType().z > 1) {
               dg.Add(frags[fi][i]);
@@ -11050,7 +11076,7 @@ void XLibMacros::macSplit(TStrObjList &Cmds, const TParamList &Options,
   if (same) {
     DistanceGenerator dg;
     dg.Generate(au, atom_set, true, true);
-    dg.GenerateSADI(rm, atom_map, 2);
+    dg.GenerateSADI(rm, atom_map, 0.02, 0.04);
   }
 
   latt.SetAnis(ProcessedAtoms, false);

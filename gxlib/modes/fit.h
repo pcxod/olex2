@@ -257,7 +257,7 @@ public:
       if (Restrain) {
         DistanceGenerator ds;
         ds.Generate(au, atom_set, true, false);
-        ds.GenerateSADI(rm, atom_map);
+        ds.GenerateSADI(rm, atom_map, 0.02, 0.04);
       }
       if (RestrainU) {
         TSimpleRestraint &r1 = rm.rRIGU.AddNew();
