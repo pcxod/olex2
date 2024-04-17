@@ -1487,7 +1487,10 @@ void TAsymmUnit::LibSetAtomCrd(const TStrObjList& Params, TMacroData& E) {
   TCAtom& ca = GetAtom(index);
   for (int i = 0; i < 3; i++) {
     XVarReference* vr = ca.GetVarRef(catom_var_name_X + i);
-    const double val = Params[i + 1].ToDouble();
+    double val = Params[i + 1].ToDouble();
+    if (olx_abs(val) > 10) {
+      val = olx_sign(val)*10;
+    }
     if (vr != 0) {  // should preserve the variable - smtbx
       if (vr->relation_type == relation_AsVar) {
         vr->Parent.SetValue(val / vr->coefficient);
