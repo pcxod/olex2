@@ -45,7 +45,7 @@ struct ItemTagHolder {
   ItemTagHolder& restore(const list_t& l) {
     size_t i = data.IndexOf((const void*)&l);
     if (i != InvalidIndex) {
-      data.GetValue(i)->pop();
+      data.GetValue(i)->restore();
       delete data.GetValue(i);
       data.Delete(i);
     }
