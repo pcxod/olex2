@@ -74,6 +74,7 @@ void TSimpleRestraint::Assign(const TSimpleRestraint& sr) {
   Esd1 = sr.Esd1;
   AllNonHAtoms = sr.AllNonHAtoms;
   Position = sr.Position;
+  remarks = sr.remarks;
 }
 //..............................................................................
 void TSimpleRestraint::EndAUSort() {

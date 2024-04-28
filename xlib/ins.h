@@ -139,8 +139,9 @@ public:
   static TSizeList::const_list_type DrySave(const TAsymmUnit& au);
   static void ValidateRestraintsAtomNames(RefinementModel& rm,
     bool report = true);
-  static bool ParseRestraint(RefinementModel &rm, const TStrList& toks,
-    bool warnings = true, size_t r_position=InvalidIndex);
+  static bool ParseRestraint(RefinementModel &rm,
+    const TStrList& toks, bool warnings = true, size_t r_position=InvalidIndex,
+    class TSimpleRestraint** r=0);
   static void SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
     RefinementModel::ReleasedItems* processed, RefinementModel& rm);
   static void SaveExtras(TStrList& SL, const TCAtomPList* atoms,

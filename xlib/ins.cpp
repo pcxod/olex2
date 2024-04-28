@@ -352,9 +352,21 @@ void TIns::ParseRestraints(RefinementModel& rm,
   for (size_t i = 0; i < SL.Count(); i++) {
     TStrList Toks(SL[i], ' ');
     try {
-      if (ParseRestraint(rm, Toks, warnings, rp)) {
+      TSimpleRestraint* sr = 0;
+      if (ParseRestraint(rm, Toks, warnings, rp, &sr)) {
         SL[i].SetLength(0);
         rp++;
+        if (i == 0 || sr == 0) {
+          continue;
+        }
+        for (size_t j = i - 1; j != InvalidIndex; j--) {
+          if (SL[j].IsEmpty()) {
+            break;
+          }
+          sr->remarks.Add(SL[j]);
+          SL[j].SetLength(0);
+        }
+        olx_reverse(sr->remarks);
       }
     }
     catch (const TExceptionBase &e) {
@@ -2644,6 +2656,9 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
     if (line.IsEmpty()) {
       continue;
     }
+    if (!sr.remarks.IsEmpty()) {
+      SL.AddAll(sr.remarks);
+    }
     HyphenateIns(line, SL);
     if (processed != 0) {
       processed->restraints.Add(sr);
@@ -2993,8 +3008,11 @@ void TIns::ParseHeader(const TStrList& in) {
 }
 //..............................................................................
 bool TIns::ParseRestraint(RefinementModel &rm, const TStrList& _toks,
-  bool warnings, size_t r_position)
+  bool warnings, size_t r_position, TSimpleRestraint** srv)
 {
+  if (srv != 0) {
+    *srv = 0;
+  }
   if (_toks.IsEmpty()) {
     return false;
   }
@@ -3013,7 +3031,7 @@ bool TIns::ParseRestraint(RefinementModel &rm, const TStrList& _toks,
     }
     return true;
   }
-  TSRestraintList* srl = NULL;
+  TSRestraintList* srl = 0;
   short RequiredParams = 1, AcceptsParams = 1;
   bool AcceptsAll = false;
   double Esd1Mult = 0, DefVal = 0, esd = 0, esd1 = 0;
@@ -3200,6 +3218,9 @@ bool TIns::ParseRestraint(RefinementModel &rm, const TStrList& _toks,
       TBasicApp::NewLogEntry() <<
         (olxstr("Preserving invalid instruction: ").quote() << toks.Text(' '));
       return false;
+    }
+    if (srv != 0) {
+      *srv = &sr;
     }
     return true;
   }
