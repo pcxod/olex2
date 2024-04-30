@@ -2350,8 +2350,8 @@ olx_pair_t<bool,bool> RunExternalEdit(TStrList &SL, const olxstr& fn_) {
           for (size_t k = 0; k < CAtoms.Count(); k++) {
             TCAtom* CA = CAtoms[k];
             if (CA->GetLabel().Equalsi(CA1->GetLabel())) {
-              found = true
-                ;  break;
+              found = true;
+              break;
             }
           }
           if (found) {
@@ -2390,7 +2390,7 @@ olx_pair_t<bool,bool> RunExternalEdit(TStrList &SL, const olxstr& fn_) {
     FXApp->SetDisplayFrozen(true);
     if (dlg->ShowModal() == wxID_OK) {
       SL.Clear();
-      SL.Strtok(dlg->GetText(), '\n');
+      SL.Strtok(dlg->GetText(), '\n', false);
     }
     else {
       res.a = true;
@@ -2400,6 +2400,7 @@ olx_pair_t<bool,bool> RunExternalEdit(TStrList &SL, const olxstr& fn_) {
   if (!res.a) {
     FXApp->XFile().GetRM().Vars.Clear();
     TStrList NewIns;
+    //SL = SL.SubListFrom(3);
     try {
       TIns ins_;
       ins_.UpdateAtomsFromStrings(FXApp->XFile().GetRM(), atomIndex, SL, NewIns);
@@ -2439,7 +2440,7 @@ olx_pair_t<bool,bool> RunExternalEdit(TStrList &SL, const olxstr& fn_) {
   }
   else {
     for (size_t i = 0; i < RemovedIns.Count(); i++) {
-      delete (TStrList*)RemovedIns.GetObject(i);
+      delete RemovedIns.GetObject(i);
     }
     for (size_t i = 0; i < released.restraints.Count(); i++) {
       if (released.restraints[i]->GetVarRef(0) != 0) {

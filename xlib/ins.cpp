@@ -192,6 +192,7 @@ void TIns::LoadFromStrings(const TStrList& FileContent) {
   for (size_t i = 0; i < InsFile.Count(); i++) {
     try {
       if (InsFile[i].IsEmpty() || InsFile[i].StartsFrom(' ')) {
+        Ins.Add(); //marker for REM
         continue;
       }
       const size_t exi = InsFile[i].IndexOf('!');
@@ -214,6 +215,9 @@ void TIns::LoadFromStrings(const TStrList& FileContent) {
         continue;
       }
       else if (ParseIns(InsFile, Toks, cx, i)) {
+        if (!Toks[0].Equalsi("REM")) {
+          Ins.Add(); //marker for REM
+        }
         continue;
       }
       else if (Toks[0].Equalsi("END")) { //reset RESI to default
@@ -2113,6 +2117,7 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm,
   for (size_t i = 0; i < SL.Count(); i++) {
     olxstr Tmp = olxstr::DeleteSequencesOf<char>(SL[i], true);
     if (Tmp.IsEmpty()) {
+      ins.Add();
       continue;
     }
     const size_t exi = Tmp.IndexOf('!');
@@ -2124,8 +2129,10 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm,
       continue;
     }
     if (Toks[0].Equalsi("REM")) {
+      ins.Add(Tmp);
     }
     else if (ParseIns(SL, Toks, cx, i)) {
+      ins.Add();
     }
     else if (Toks.Count() < 6) { // should be at least
       ins.Add(Tmp);
@@ -2178,6 +2185,12 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm,
   _ReadExtras(SL, cx);
   if (!cx.Extras.IsEmpty()) {
     cx.rm.ReadInsExtras(cx.Extras);
+  }
+  // cleanup rems not consumed by restraints
+  for (size_t i = 0; i < ins.Count(); i++) {
+    if (ins[i].StartsFromi("REM ")) {
+      ins[i].SetLength(0);
+    }
   }
   ins.Pack();
   Instructions.AddAll(ins);
@@ -2964,6 +2977,7 @@ void TIns::ParseHeader(const TStrList& in) {
     try {
       olxstr Tmp = olxstr::DeleteSequencesOf<char>(lst[i], ' ');
       if (Tmp.IsEmpty()) {
+        Ins.Add(); // marker for rems
         continue;
       }
       size_t ci = Tmp.IndexOf('!');
@@ -2983,6 +2997,9 @@ void TIns::ParseHeader(const TStrList& in) {
       }
 
       if (ParseIns(lst, toks, cx, i)) {
+        if (!toks[0].Equalsi("REM")) {
+          Ins.Add(); // marker for rems
+        }
         continue;
       }
       else if (toks[0].Equalsi("TITL")) {
@@ -3000,7 +3017,7 @@ void TIns::ParseHeader(const TStrList& in) {
   for (size_t i = 0; i < cx.Symm.Count(); i++) {
     GetAsymmUnit().AddMatrix(TSymmParser::SymmToMatrix(cx.Symm[i]));
   }
-  Ins.Pack();
+  //Ins.Pack();
   ParseRestraints(cx.rm, Ins);
   Ins.Pack();
   _ProcessSame(cx);
