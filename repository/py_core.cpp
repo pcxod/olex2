@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2024 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -30,16 +30,16 @@ using namespace olex2;
 #ifdef _PYTHON
 #include "py_core.h"
 
-PyObject* pyVarValue(PyObject* self, PyObject* args)  {
+PyObject* pyVarValue(PyObject* self, PyObject* args) {
   olxstr varName;
-  PyObject* defVal = NULL;
-  if( !PythonExt::ParseTuple(args, "w|O", &varName, &defVal) )
+  PyObject* defVal = 0;
+  if (!PythonExt::ParseTuple(args, "w|O", &varName, &defVal))
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "w|O");
   size_t i = TOlxVars::VarIndex(varName);
-  if( i == InvalidIndex )  {
-    if( defVal != NULL )  {
+  if (i == InvalidIndex) {
+    if (defVal != 0) {
       TOlxVars::SetVar(varName, defVal);
-      Py_IncRef( defVal );
+      Py_IncRef(defVal);
       return TOlxPyVar::ObjectValue(defVal);
     }
     else {
@@ -50,16 +50,16 @@ PyObject* pyVarValue(PyObject* self, PyObject* args)  {
   return TOlxVars::GetVarValue(i);
 }
 //..............................................................................
-PyObject* pyVarObject(PyObject* self, PyObject* args)  {
+PyObject* pyVarObject(PyObject* self, PyObject* args) {
   olxstr varName;
-  PyObject* defVal = NULL;
-  if( !PythonExt::ParseTuple(args, "w|O", &varName, &defVal) )
+  PyObject* defVal = 0;
+  if (!PythonExt::ParseTuple(args, "w|O", &varName, &defVal))
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "w|O");
   size_t i = TOlxVars::VarIndex(varName);
-  if( i == InvalidIndex )  {
-    if( defVal != NULL )  {
+  if (i == InvalidIndex) {
+    if (defVal != 0) {
       TOlxVars::SetVar(varName, defVal);
-      Py_IncRef( defVal );
+      Py_IncRef(defVal);
       return defVal;
     }
     else {
@@ -67,69 +67,77 @@ PyObject* pyVarObject(PyObject* self, PyObject* args)  {
         "Undefined key name");
     }
   }
-  PyObject *rv = TOlxVars::GetVarWrapper(i);
-  if( rv == NULL )  rv = Py_None;
+  PyObject* rv = TOlxVars::GetVarWrapper(i);
+  if (rv == 0) {
+    rv = Py_None;
+  }
   Py_IncRef(rv);
   return rv;
 }
 //..............................................................................
-PyObject* pyIsVar(PyObject* self, PyObject* args)  {
+PyObject* pyIsVar(PyObject* self, PyObject* args) {
   olxstr varName;
-  if( !PythonExt::ParseTuple(args, "w", &varName) )
+  if (!PythonExt::ParseTuple(args, "w", &varName)) {
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "w");
+  }
   return Py_BuildValue("b", TOlxVars::IsVar(varName));
 }
 //..............................................................................
-PyObject* pyVarCount(PyObject* self, PyObject* args)  {
+PyObject* pyVarCount(PyObject* self, PyObject* args) {
   return Py_BuildValue("i", TOlxVars::VarCount());
 }
 //..............................................................................
-PyObject* pyGetVar(PyObject* self, PyObject* args)  {
+PyObject* pyGetVar(PyObject* self, PyObject* args) {
   int varIndex;
-  if( !PyArg_ParseTuple(args, "i", &varIndex) )
+  if (!PyArg_ParseTuple(args, "i", &varIndex)) {
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "i");
+  }
   return TOlxVars::GetVarValue(varIndex);
 }
 //..............................................................................
-PyObject* pyGetVarName(PyObject* self, PyObject* args)  {
+PyObject* pyGetVarName(PyObject* self, PyObject* args) {
   int varIndex;
-  if( !PyArg_ParseTuple(args, "i", &varIndex) )
+  if (!PyArg_ParseTuple(args, "i", &varIndex)) {
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "i");
+  }
   return PythonExt::BuildString(TOlxVars::GetVarName(varIndex));
 }
 //..............................................................................
-PyObject* pyFindGetVarName(PyObject* self, PyObject* args)  {
-  PyObject *val;
-  if( !PyArg_ParseTuple(args, "O", &val) )
+PyObject* pyFindGetVarName(PyObject* self, PyObject* args) {
+  PyObject* val;
+  if (!PyArg_ParseTuple(args, "O", &val)) {
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "O");
+  }
   return PythonExt::BuildString(TOlxVars::FindVarName(val));
 }
 //..............................................................................
-PyObject* pySetVar(PyObject* self, PyObject* args)  {
+PyObject* pySetVar(PyObject* self, PyObject* args) {
   olxstr varName;
-  PyObject *varValue = NULL;
-  if( !PythonExt::ParseTuple(args, "wO", &varName, &varValue) )
+  PyObject* varValue = 0;
+  if (!PythonExt::ParseTuple(args, "wO", &varName, &varValue)) {
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "wO");
+  }
   TOlxVars::SetVar(varName, varValue);
   return PythonExt::PyNone();
 }
 //..............................................................................
-PyObject* pyUnsetVar(PyObject* self, PyObject* args)  {
+PyObject* pyUnsetVar(PyObject* self, PyObject* args) {
   olxstr varName;
-  if( !PythonExt::ParseTuple(args, "w", &varName) )
+  if (!PythonExt::ParseTuple(args, "w", &varName)) {
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "w");
+  }
   return TOlxVars::UnsetVar(varName) ? PythonExt::PyTrue()
     : PythonExt::PyFalse();
 }
 //..............................................................................
-PyObject* pyExpFun(PyObject* self, PyObject* args)  {
+PyObject* pyExpFun(PyObject* self, PyObject* args) {
   TBasicFunctionPList functions;
   IOlex2Processor::GetInstance()->GetLibrary().ListAllFunctions(functions);
-  PyObject* af = PyTuple_New(functions.Count()), *f;
-  for( size_t i=0; i < functions.Count(); i++ )  {
+  PyObject* af = PyTuple_New(functions.Count()), * f;
+  for (size_t i = 0; i < functions.Count(); i++) {
     ABasicFunction* func = functions[i];
     f = PyTuple_New(3);
-    PyTuple_SetItem(af, i, f );
+    PyTuple_SetItem(af, i, f);
 
     PyTuple_SetItem(f, 0, PythonExt::BuildString(func->GetQualifiedName()));
     PyTuple_SetItem(f, 1, PythonExt::BuildString(func->GetSignature()));
@@ -138,20 +146,20 @@ PyObject* pyExpFun(PyObject* self, PyObject* args)  {
   return af;
 }
 //..............................................................................
-PyObject* pyExpMac(PyObject* self, PyObject* args)  {
+PyObject* pyExpMac(PyObject* self, PyObject* args) {
   TBasicFunctionPList functions;
   IOlex2Processor::GetInstance()->GetLibrary().ListAllMacros(functions);
-  PyObject* af = PyTuple_New( functions.Count() ), *f, *s;
-  for( size_t i=0; i < functions.Count(); i++ )  {
+  PyObject* af = PyTuple_New(functions.Count()), * f, * s;
+  for (size_t i = 0; i < functions.Count(); i++) {
     ABasicFunction* func = functions[i];
     f = PyTuple_New(4);
-    PyTuple_SetItem(af, i, f );
+    PyTuple_SetItem(af, i, f);
     PyTuple_SetItem(f, 0, PythonExt::BuildString(func->GetQualifiedName()));
     PyTuple_SetItem(f, 1, PythonExt::BuildString(func->GetSignature()));
     PyTuple_SetItem(f, 2, PythonExt::BuildString(func->GetDescription()));
     s = PyDict_New();
-    PyTuple_SetItem(f, 3, s );
-    for( size_t j=0; j < func->GetOptions().Count(); j++ )  {
+    PyTuple_SetItem(f, 3, s);
+    for (size_t j = 0; j < func->GetOptions().Count(); j++) {
       PythonExt::SetDictItem(s, func->GetOptions().GetKey(j).c_str(),
         PythonExt::BuildString(func->GetOptions().GetValue(j)));
     }
@@ -159,17 +167,18 @@ PyObject* pyExpMac(PyObject* self, PyObject* args)  {
   return af;
 }
 //..............................................................................
-PyObject* pyGetPlugins(PyObject* self, PyObject* args)  {
+PyObject* pyGetPlugins(PyObject* self, PyObject* args) {
   TStrList rv;
-  olxstr fn = TBasicApp::GetBaseDir()+"plugins.xld";
+  olxstr fn = TBasicApp::GetBaseDir() + "plugins.xld";
 #ifdef _CONSOLE
   if (TEFile::Exists(fn)) {
     TDataFile df;
     df.LoadFromXLFile(fn);
-    TDataItem *pi = df.Root().FindItem("Plugin");
-    if (pi != NULL) {
-      for (size_t i=0; i < pi->ItemCount(); i++)
+    TDataItem* pi = df.Root().FindItem("Plugin");
+    if (pi != 0) {
+      for (size_t i = 0; i < pi->ItemCount(); i++) {
         rv.Add(pi->GetItemByIndex(i).GetName());
+      }
     }
   }
 #else
@@ -185,15 +194,17 @@ PyObject* pyGetPlugins(PyObject* self, PyObject* args)  {
   return af;
 }
 //..............................................................................
-PyObject* pyTranslate(PyObject* self, PyObject* args)  {
+PyObject* pyTranslate(PyObject* self, PyObject* args) {
   olxstr str;
-  if( !PythonExt::ParseTuple(args, "w", &str) )
+  if (!PythonExt::ParseTuple(args, "w", &str)) {
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "w");
+  }
 #ifdef _CONSOLE
   return PythonExt::BuildString(str);
 #else
-  if (!AOlex2App::HasInstance())
+  if (!AOlex2App::HasInstance()) {
     return PythonExt::BuildString(str);
+  }
   return PythonExt::BuildString(
     AOlex2App::GetInstance().TranslateString(str));
 #endif
@@ -230,8 +241,9 @@ PyObject* pySGInfo(PyObject* self, PyObject* args) {
   }
   else {
     olxstr sg_name;
-    if (!PythonExt::ParseTuple(args, "w|b", &sg_name, &include_lattice))
+    if (!PythonExt::ParseTuple(args, "w|b", &sg_name, &include_lattice)) {
       return PythonExt::InvalidArgumentException(__OlxSourceInfo, "w|b");
+    }
     sg = TSymmLib::GetInstance().FindGroupByName(sg_name);
     if (sg == 0) {
       return PythonExt::PyNone();
@@ -326,27 +338,33 @@ PyObject* pySGInfo(PyObject* self, PyObject* args) {
   return out;
 }
 //..............................................................................
-PyObject* pyMatrixToString(PyObject* self, PyObject* args)  {
-  PyObject *m[3], *tp;
-  bool normalise_t=true;
-  if (!PyArg_ParseTuple(args, "O|b", &tp, &normalise_t))
+PyObject* pyMatrixToString(PyObject* self, PyObject* args) {
+  PyObject* m[3], * tp;
+  bool normalise_t = true;
+  if (!PyArg_ParseTuple(args, "O|b", &tp, &normalise_t)) {
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "O");
-  if (!PyArg_ParseTuple(tp, "OOO", &m[0], &m[1], &m[2]))
+  }
+  if (!PyArg_ParseTuple(tp, "OOO", &m[0], &m[1], &m[2])) {
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "OOO");
+  }
   smatd matr;
-  for (int i=0; i < 3; i++) {
+  for (int i = 0; i < 3; i++) {
     int x, y, z;
     double t;
-    if( !PyArg_ParseTuple(m[i], "iiid", &x, &y, &z, &t) )
+    if (!PyArg_ParseTuple(m[i], "iiid", &x, &y, &z, &t)) {
       return PythonExt::InvalidArgumentException(__OlxSourceInfo, "iiif");
-    matr.r[i][0] = x; matr.r[i][1] = y; matr.r[i][2] = z; matr.t[i] = t;
+    }
+    matr.r[i][0] = x;
+    matr.r[i][1] = y;
+    matr.r[i][2] = z;
+    matr.t[i] = t;
   }
   return PythonExt::BuildString(normalise_t ? TSymmParser::MatrixToSymmEx(matr)
     : TSymmParser::MatrixToSymm(matr));
 }
 //..............................................................................
-PyObject* pyHklStat(PyObject* self, PyObject* args)  {
-  try  {
+PyObject* pyHklStat(PyObject* self, PyObject* args) {
+  try {
     TXApp& xapp = TXApp::GetInstance();
     RefinementModel::HklStat hs = xapp.XFile().GetRM().GetMergeStat();
     PyObject* out = PyDict_New();
@@ -397,64 +415,70 @@ PyObject* pyHklStat(PyObject* self, PyObject* args)  {
 
     const TIntList& redInfo = xapp.XFile().GetRM().GetRedundancyInfo();
     PyObject* red = PyTuple_New(redInfo.Count());
-    for( size_t i=0; i < redInfo.Count(); i++ )
+    for (size_t i = 0; i < redInfo.Count(); i++) {
       PyTuple_SetItem(red, i, Py_BuildValue("i", redInfo[i]));
+    }
     PythonExt::SetDictItem(out, "Redundancy", red);
     return out;
   }
-  catch(const TExceptionBase& e)  {
+  catch (const TExceptionBase& e) {
     TBasicApp::NewLogEntry(logExceptionTrace) << e;
     return PythonExt::SetErrorMsg(PyExc_Exception, __OlxSourceInfo,
       e.GetException()->GetFullMessage());
   }
 }
 //..............................................................................
-PyObject* pyUpdateRepository(PyObject* self, PyObject* args)  {
+PyObject* pyUpdateRepository(PyObject* self, PyObject* args) {
   olxstr index, index_fn, repos, dest, proxy;
-  if( !PythonExt::ParseTuple(args, "ww", &index, &dest) )
+  if (!PythonExt::ParseTuple(args, "ww", &index, &dest)) {
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "ww");
+  }
   olxstr SettingsFile = updater::UpdateAPI::GetSettingsFileName();
-  if( TEFile::Exists(SettingsFile) )  {
+  if (TEFile::Exists(SettingsFile)) {
     const TSettingsFile settings(SettingsFile);
     proxy = settings["proxy"];
   }
   size_t lsi = index.LastIndexOf('/');
-  if( lsi == InvalidIndex ) {
+  if (lsi == InvalidIndex) {
     return PythonExt::SetErrorMsg(PyExc_AttributeError, __OlxSourceInfo,
       "Invalid index file");
   }
   dest = TBasicApp::GetBaseDir() + dest;
-  if( !TEFile::MakeDirs(dest) ) {
+  if (!TEFile::MakeDirs(dest)) {
     return PythonExt::SetErrorMsg(PyExc_AttributeError, __OlxSourceInfo,
       "Could not create destination folder");
   }
-  index_fn = index.SubStringFrom(lsi+1);
-  repos = index.SubStringTo(lsi+1);
+  index_fn = index.SubStringFrom(lsi + 1);
+  repos = index.SubStringTo(lsi + 1);
   TUrl url(repos);
-  if( !proxy.IsEmpty() )
+  if (!proxy.IsEmpty()) {
     url.SetProxy(TUrl(proxy));
+  }
   TSocketFS httpFS(url);
   TOSFileSystem osFS(dest);
   TFSIndex fsIndex(httpFS);
   TStrList properties;
-  try  {  fsIndex.Synchronise(osFS, properties, NULL, NULL, index_fn);  }
-  catch( const TExceptionBase& exc )  {
+  try {
+    fsIndex.Synchronise(osFS, properties, 0, 0, index_fn);
+  }
+  catch (const TExceptionBase& exc) {
     return PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo,
       exc.GetException()->GetFullMessage());
   }
   return Py_BuildValue("b", true);
 }
 //..............................................................................
-PyObject* pyGetVdWRadii(PyObject* self, PyObject* args)  {
+PyObject* pyGetVdWRadii(PyObject* self, PyObject* args) {
   ElementRadii radii;
   olxstr radii_fn;
-  if( !PythonExt::ParseTuple(args, "|w", &radii_fn) )
+  if (!PythonExt::ParseTuple(args, "|w", &radii_fn)) {
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "|w");
+  }
   radii = TXApp::ReadRadii(radii_fn);
   ContentList content =
     TXApp::GetInstance().XFile().GetAsymmUnit().GetContentList();
   PyObject* dict = PyDict_New();
-  for( size_t i=0; i < content.Count(); i++ )  {
+  for (size_t i = 0; i < content.Count(); i++) {
     const size_t ei = radii.IndexOf(content[i].element);
     const double r = (ei == InvalidIndex ? content[i].element->r_vdw
       : radii.GetValue(ei));
@@ -548,7 +572,7 @@ struct olxProcessWindow {
   olxProcessWindow(DWORD pid) : hwnd(0), pid(pid) {}
 };
 BOOL CALLBACK olx_EnumWindowsProc(HWND hwnd, LPARAM lParam) {
-  olxch bf[32];
+  olx_array_ptr<olxch> bf(32);
   GetWindowText(hwnd, &bf[0], 32);
   olxstr wn(&bf[0]);
   if (!(wn.Equalsi("P.L.A.T.O.N") || wn.Equalsi("P.L.U.T.O.N"))) {
@@ -571,14 +595,14 @@ PyObject* pyOnPlatonRun(PyObject* self, PyObject* args) {
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "i");
   }
   HANDLE ph = OpenProcess(PROCESS_QUERY_INFORMATION, false, pid);
-  if (ph == NULL) {
+  if (ph == 0) {
     return PythonExt::PyFalse();
   }
   olxProcessWindow pwt(pid);
   size_t cnt = 0;
   while (true) {
     EnumWindows(&olx_EnumWindowsProc, (LPARAM)&pwt);
-    if (pwt.hwnd != NULL) {
+    if (pwt.hwnd != 0) {
       break;
     }
     DWORD ec;
@@ -596,7 +620,7 @@ PyObject* pyOnPlatonRun(PyObject* self, PyObject* args) {
     }
   }
   HMENU  hMenu = GetSystemMenu(pwt.hwnd, FALSE);
-  if (hMenu != NULL) {
+  if (hMenu != 0) {
     EnableMenuItem(hMenu, SC_CLOSE,
       MF_BYCOMMAND | (MF_DISABLED | MF_GRAYED));
   }
@@ -621,11 +645,43 @@ PyObject* pyDecRuningThreads(PyObject* self, PyObject* args) {
   size_t tc = TOlxVars::FindValue(
     OlexPyCore::GetRunningPythonThreadsCount_VarName(), "0").ToSizeT();
   if (tc == 0) {
-    TBasicApp::NewLogEntry(logError) << olxstr(__OlxSourceInfo) << ": current value is 0";
+    TBasicApp::NewLogEntry(logError) << olxstr(__OlxSourceInfo)
+      << ": current value is 0";
     tc = 1;
   }
   TOlxVars::SetVar(OlexPyCore::GetRunningPythonThreadsCount_VarName(), tc - 1);
   return PythonExt::PyTrue();
+}
+//..............................................................................
+PyObject* pyGetRefs(PyObject* self, PyObject* args) {
+  try {
+    const RefinementModel &rm = TXApp::GetInstance().XFile().GetRM();
+    const TRefList &refs = rm.GetReflections();
+    PyObject * indices = PyList_New(refs.Count());
+    PyObject* data = PyList_New(refs.Count());
+    PyObject* sigmas = PyList_New(refs.Count());
+    PyObject* batches = rm.GetHKLF() >= 5 ? PyList_New(refs.Count()) : Py_None;
+    PyObject* rv = PyTuple_New(4);
+    PyTuple_SetItem(rv, 0, indices);
+    PyTuple_SetItem(rv, 1, data);
+    PyTuple_SetItem(rv, 2, sigmas);
+    PyTuple_SetItem(rv, 3, batches);
+    for (size_t i = 0; i < refs.Count(); i++) {
+      PyObject* mi = Py_BuildValue("(iii)",
+        refs[i].GetH(), refs[i].GetK(), refs[i].GetL());
+      PyList_SetItem(indices, i, mi);
+      PyList_SetItem(data, i, Py_BuildValue("d", refs[i].GetI()));
+      PyList_SetItem(sigmas, i, Py_BuildValue("d", refs[i].GetS()));
+      if (batches != Py_None) {
+        PyList_SetItem(batches, i, Py_BuildValue("i", refs[i].GetBatch()));
+      }
+    }
+    return rv;
+  }
+  catch (const TBasicException& e) {
+    return PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo,
+      e.GetException()->GetFullMessage());
+  }
 }
 //..............................................................................
 //..............................................................................
@@ -683,6 +739,8 @@ static PyMethodDef CORE_Methods[] = {
   "Increments the number of running Python threads - needed to allow them ro run" },
   { "DecRunningThreadsCount", pyDecRuningThreads, METH_VARARGS,
   "Decrements the number of running Python threads" },
+  { "GetReflections", pyGetRefs, METH_VARARGS,
+  "Returns a list of ([(iii)][(dd)][(i)]) of current reflections" },
   { NULL, NULL, 0, NULL }
    };
 
