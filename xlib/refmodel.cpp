@@ -1059,8 +1059,13 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
           }
         }
         Omits.Pack();
+        size_t tmp[] = { _HklStat.OmittedByUser, _HklStat.OmittedReflections };
+        // Filtering above already have removed them!
+        vec3i_list dummy_omits;
         _HklStat = RefMerger::DryMerge<RefMerger::ShelxMerger>(
-          sp, refs, Omits, mergeFP, 2);
+          sp, refs, dummy_omits, mergeFP, 2);
+        _HklStat.OmittedByUser = tmp[0];
+        _HklStat.OmittedReflections = tmp[1];
       }
       _HklStat.HKLF = HKLF;
       _HklStat.TWST = TWST;
@@ -1157,8 +1162,13 @@ RefinementModel::HklStat& RefinementModel::FilterHkl(TRefList& out,
     }
     bool add = true;
     for (size_t j = start; j <= i; j++) {
-      if (all_refs[j].IsOmitted() || rsf.IsOmitted(all_refs[j].GetHkl())) {
+      if (all_refs[j].IsOmitted()) {
         stats.OmittedReflections++;
+        add = false;
+        break;
+      }
+      if (rsf.IsOmitted(all_refs[j].GetHkl())) {
+        stats.OmittedByUser++;
         add = false;
         break;
       }

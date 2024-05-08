@@ -1944,16 +1944,18 @@ void TIns::SaveToStrings(TStrList& SL) {
         peaks << ac;
         continue;
       }
+      bool add_nl = false;
       if (ac.GetFragmentId() != fragmentId || !olx_is_valid_index(fragmentId)) {
-        if (olx_is_valid_index(fragmentId)) {
-          SL.Add(EmptyString());
-        }
+        add_nl = olx_is_valid_index(fragmentId);
         fragmentId = ac.GetFragmentId();
       }
       if (ac.GetParentAfixGroup() != 0 &&
         !ac.GetParentAfixGroup()->GetPivot().IsDeleted())
       {
         continue;
+      }
+      if (add_nl) {
+        SL.Add(EmptyString());
       }
       _SaveAtom(GetRM(), ac, part, afix, spec, &sfac, SL, 0, check_same, false);
     }

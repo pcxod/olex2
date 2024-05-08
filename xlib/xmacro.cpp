@@ -299,7 +299,7 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(File,
     "s-sort the main residue of the asymmetric unit&;"
     "p-coordinate precision for files supporting this option&;"
-    "a-save asymmetric unit only ",
+    "a-save asymmetric unit only",
     fpNone|fpOne|psFileLoaded,
     "Saves current model to a file. By default an ins file is saved and "
     "loaded");
@@ -662,8 +662,11 @@ void XLibMacros::Export(TLibrary& lib)  {
     "(or selection)");
   xlib_InitMacro(RESI,
     "a-alias&;"
-    "c-chain id (coule be a part of reidue name with *:chain_id&;"
-    "all-searches selected subfragment and creates residues",
+    "c-chain id (could be a part of reidue name with *:chain_id&;"
+    "all-searches selected subfragment and creates residues&;"
+    "p-extra parts to use along with -all&;"
+    "n-make N residues out of the selection"
+    ,
     (fpAny^fpNone)|psFileLoaded,
     "Creates residue with given class name and optionally number and adds "
     "selected or provided atoms into the residue. If provided residue class "
@@ -4680,7 +4683,7 @@ void CifMerge_UpdateAtomLoop(TCif &Cif) {
             }
           }
         }
-        if (a.ccrd().QDistanceTo(ta.ccrd()) > 5e-3) {
+        if (au.Orthogonalise(a.ccrd()).QDistanceTo(au.Orthogonalise(ta.ccrd())) > 0.05) {
           match = false;
           break;
         }
@@ -10599,6 +10602,8 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
   }
   TXApp &app = TXApp::GetInstance();
   TSAtomPList atoms = app.FindSAtoms(Cmds, false, true);
+  atoms = atoms.Filter(
+    olx_alg::olx_gt(iHydrogenZ, FunctionAccessor::MakeConst(&TSAtom::GetType)));
   TSameGroup *created = 0;
   if (atoms.Count() == 1 && invert) {
     if (atoms[0]->CAtom().GetResiId() != 0) {
@@ -10774,6 +10779,8 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
       parts->Add(extra_part.ToInt());
     }
     TCAtomPList fa(atoms, FunctionAccessor::MakeConst(&TSAtom::CAtom));
+    fa = fa.Filter(
+      olx_alg::olx_gt(iHydrogenZ, FunctionAccessor::MakeConst(&TCAtom::GetType)));
     ACollectionItem::Unify(fa);
     fragments::fragment fr(fa);
     TTypeList<fragments::fragment> frags =
@@ -10794,18 +10801,14 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
       else {
         TSameGroup &rg = rm.rSAME.New();
         for (size_t i = 0; i < fr.count(); i++) {
-          if (fr[i].GetType().z > 1) {
-            rg.Add(fr[i]);
-          }
+          rg.Add(fr[i]);
         }
         for (size_t fi = 0; fi < frags.Count(); fi++) {
           TSameGroup &dg = rm.rSAME.New(&rg);
           dg.Esd12 = esd12;
           dg.Esd13 = esd13;
           for (size_t i = 0; i < frags[fi].count(); i++) {
-            if (fr[i].GetType().z > 1) {
-              dg.Add(frags[fi][i]);
-            }
+             dg.Add(frags[fi][i]);
           }
         }
         TBasicApp::NewLogEntry() << "Reference: " << rg.GetAtoms().GetExpression();
@@ -10867,6 +10870,7 @@ void XLibMacros::macRESI(TStrObjList &Cmds, const TParamList &Options,
   if (ch_id.IsEmpty()) {
     ch_id = TResidue::NoChainId();
   }
+  size_t residues_N = Options.FindValue("n", "-1").ToInt();
   int resi_number = TResidue::NoResidue;
   if (resi_class.IsNumber()) {
     resi_number = resi_class.ToInt();
@@ -10891,7 +10895,7 @@ void XLibMacros::macRESI(TStrObjList &Cmds, const TParamList &Options,
   }
   TAsymmUnit& au = app.XFile().GetAsymmUnit();
   ACollectionItem::Unify(atoms);
-  if (resi_class.Equalsi("none")) {
+  if (resi_class.Equalsi("none") || resi_number == 0) {
     TResidue& main_resi = au.GetResidue(0);
     for (size_t i=0; i < atoms.Count(); i++) {
       TCAtom& ca = atoms[i]->CAtom();
@@ -10903,11 +10907,18 @@ void XLibMacros::macRESI(TStrObjList &Cmds, const TParamList &Options,
   else {
     if (Options.GetBoolOption("all")) {
       using namespace olx_analysis;
+      olxstr extra_part = Options.FindValue('p');
+      olx_object_ptr<olx_pset<int> > parts;
+      if (extra_part.IsInt()) {
+        parts = new olx_pset<int>();
+        parts->Add(0);
+        parts->Add(extra_part.ToInt());
+      }
       TCAtomPList fa(atoms, FunctionAccessor::MakeConst(&TSAtom::CAtom));
       ACollectionItem::Unify(fa);
       fragments::fragment fr(fa);
       TTypeList<fragments::fragment> frags =
-        fragments::extract(app.XFile().GetAsymmUnit(), fr);
+        fragments::extract(app.XFile().GetAsymmUnit(), fr, &parts);
       for (size_t fi = 0; fi <= frags.Count(); fi++) {
         fragments::fragment *f = (fi == 0 ? &fr : &frags[fi - 1]);
         TResidue *resi_;
@@ -10944,6 +10955,36 @@ void XLibMacros::macRESI(TStrObjList &Cmds, const TParamList &Options,
             if (fr[i].GetType().z > 1) {
               dg.Add(frags[fi][i]);
             }
+          }
+        }
+      }
+    }
+    else if (residues_N != InvalidIndex) {
+      TCAtomPList fa(atoms, FunctionAccessor::MakeConst(&TSAtom::CAtom));
+      ACollectionItem::Unify(fa);
+      if ((fa.Count() % residues_N) != 0) {
+        E.ProcessingError(__OlxSrcInfo, "mismatching number of atoms");
+        return;
+      }
+      size_t atoms_a_resi = fa.Count() / residues_N;
+      for (size_t ri = 0; ri < residues_N; ri++) {
+        TResidue* resi_;
+        if (resi_number == TResidue::NoResidue) {
+          resi_ = &au.NewResidue(resi_class, TResidue::NoResidue,
+            TResidue::NoResidue, TResidue::NoChainId());
+          resi_number = resi_->GetNumber() + 1;
+        }
+        else {
+          int rn = resi_number++;
+          resi_ = &au.NewResidue(resi_class, rn, rn, TResidue::NoChainId());
+        }
+        TResidue& resi = *resi_;
+        for (size_t ai = 0; ai < atoms_a_resi; ai++) {
+          resi.SetCapacity(atoms_a_resi);
+          TCAtom& ca = *fa[ri * atoms_a_resi + ai];
+          resi.Add(ca);
+          if (ri > 0) {
+            ca.SetLabel(fa[ai]->GetLabel());
           }
         }
       }

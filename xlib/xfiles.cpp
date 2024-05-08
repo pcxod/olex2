@@ -809,18 +809,30 @@ void TXFile::Sort(const TStrList& ins, const TParamList &options) {
     TSizeList indices = TIns::DrySave(au);
     au.RearrangeAtoms(indices);
     TSizeList indices1 = TIns::DrySave(au);
+    olxstr_buf offending;
     for (size_t i = 0; i < indices.Count(); i++) {
       if (indices[i] != indices1[i]) {
         changes = true;
         break;
       }
     }
-    au.SetNonHAtomTags_();
-    au._UpdateAtomIds();
     if (++changes_cnt > 3) {
       TBasicApp::NewLogEntry(logError) << "Atom order resolution has not converged!";
+      olxstr_buf offending;
+      for (size_t i = 0; i < indices.Count(); i++) {
+        if (indices[i] != indices1[i]) {
+          offending << ", " << au.GetAtom(indices[i]).GetResiLabel() << "<->"
+            << au.GetAtom(indices1[i]).GetResiLabel();
+          if (offending.Length() > 256) {
+            break;
+          }
+        }
+      }
+      TBasicApp::NewLogEntry(logInfo) << olxstr(offending).SubStringFrom(2);
       break;
     }
+    au.SetNonHAtomTags_();
+    au._UpdateAtomIds();
   }
   GetRM().AfterAUSort_();
   // 2010.11.29, ASB bug fix for ADPS on H...
