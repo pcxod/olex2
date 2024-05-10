@@ -3665,17 +3665,26 @@ void XLibMacros::macEADP(TStrObjList &Cmds, const TParamList &Options,
     return;
   }
   // validate that atoms of the same type
-  bool allIso = (atoms[0]->GetEllipsoid() == NULL);
+  bool allIso = (atoms[0]->GetEllipsoid() == 0);
   for (size_t i = 1; i < atoms.Count(); i++) {
-    if ((atoms[i]->GetEllipsoid() == NULL) != allIso) {
+    if ((atoms[i]->GetEllipsoid() == 0) != allIso) {
       E.ProcessingError(__OlxSrcInfo, "mixed atoms types (aniso and iso)");
       return;
     }
+    if (atoms[i]->CAtom().GetUisoOwner() != 0) {
+      atoms.NullItem(i);
+    }
+  }
+  atoms.Pack();
+  if (atoms.Count() < 2) {
+    E.ProcessingError(__OlxSrcInfo, "not enough atoms provided");
+    return;
   }
   TSimpleRestraint& sr = xapp.XFile().GetRM().rEADP.AddNew();
   for (size_t i = 0; i < atoms.Count(); i++) {
-    sr.AddAtom(atoms[i]->CAtom(), NULL);
+    sr.AddAtom(atoms[i]->CAtom(), 0);
   }
+  TBasicApp::NewLogEntry() << "Added:" << NewLineSequence() << sr.ToString();
   xapp.XFile().GetRM().rEADP.ValidateRestraint(sr);
 }
 //.............................................................................
