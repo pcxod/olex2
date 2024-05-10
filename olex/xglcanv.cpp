@@ -239,10 +239,10 @@ olx_array_ptr<int> TGlCanvas::GetGlAttributes(bool _default, bool stereo,
   olx_array_ptr<int> glAttrib(2*11+1);
   glAttrib[idx++] = WX_GL_RGBA;
   glAttrib[idx++] = WX_GL_DOUBLEBUFFER;
-  glAttrib[idx++] = WX_GL_MIN_ACCUM_RED;  glAttrib[idx++] = 8;
-  glAttrib[idx++] = WX_GL_MIN_ACCUM_GREEN;  glAttrib[idx++] = 8;
-  glAttrib[idx++] = WX_GL_MIN_ACCUM_BLUE;  glAttrib[idx++] = 8;
-  glAttrib[idx++] = WX_GL_MIN_ACCUM_ALPHA;  glAttrib[idx++] = 8;
+  //glAttrib[idx++] = WX_GL_MIN_ACCUM_RED;  glAttrib[idx++] = 16;
+  //glAttrib[idx++] = WX_GL_MIN_ACCUM_GREEN;  glAttrib[idx++] = 16;
+  //glAttrib[idx++] = WX_GL_MIN_ACCUM_BLUE;  glAttrib[idx++] = 16;
+  //glAttrib[idx++] = WX_GL_MIN_ACCUM_ALPHA;  glAttrib[idx++] = 16;
   glAttrib[idx++] = WX_GL_DEPTH_SIZE;  glAttrib[idx++] = depth_bits;
   glAttrib[idx++] = WX_GL_STENCIL_SIZE;  glAttrib[idx++] = 8;
 #if wxCHECK_VERSION(2,9,0)
