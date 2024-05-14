@@ -376,6 +376,10 @@ void GXLibMacros::Export(TLibrary& lib) {
     "o-matches overlayed lattices&;"
     "m-moves the atoms to the overlayed position permanently. Only valid for "
     "two atoms groups and selection of at least three atom pairs&;"
+    "p-uses proximity match vs full graph match&;"
+    "pcc-checks connectivity for the proximity match [true]&;"
+    "pct-checks types for the proximity match [true]&;"
+    "pd-distance threshold for the proximity match [1A]&;"
     ,
     fpNone|fpOne|fpTwo,
     "Fragment matching, alignment and label transfer routine");
@@ -4501,13 +4505,13 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
     //v = tm*(v-tr);
     return;
   }
-  const bool exclude_h = Options.GetBoolOption('h');
   if (Options.GetBoolOption('u')) { // do nothing...
     return;
   }
   olex2::IOlex2Processor::GetInstance()->callCallbackFunc(
     StartMatchCBName, TStrList() << EmptyString());
   const bool TryInvert = Options.GetBoolOption('i');
+  const bool exclude_h = Options.GetBoolOption('h');
   double(*weight_calculator)(const TSAtom&) = &TSAtom::weight_unit;
 
   if (Options.Contains('w')) {
@@ -4547,8 +4551,18 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
       TSizeList sk;
       TNetwork &netA = atoms[0]->GetNetwork(),
         &netB = atoms[1]->GetNetwork();
-      bool match = subgraph ? netA.IsSubgraphOf(netB, res, sk) :
-        netA.DoMatch(netB, res, TryInvert, weight_calculator);
+      bool match;
+      if (Options.GetBoolOption('p')) {
+        match = netA.ProximityMatch(netB, res,
+          Options.GetBoolOption("pcc", false, true),
+          Options.GetBoolOption("pct", false, true),
+          Options.FindValue("pd", "1").ToDouble()
+          );
+      }
+      else {
+        match = subgraph ? netA.IsSubgraphOf(netB, res, sk) :
+          netA.DoMatch(netB, res, TryInvert, weight_calculator);
+      }
       TBasicApp::NewLogEntry() << "Graphs match: " << match;
       if (match) {
         match_cnt++;
@@ -4649,7 +4663,6 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
             "Atom B";
           tab.ColName(2) = tab.ColName(5) = tab.ColName(8) = tab.ColName(11) =
             "Dist/A";
-          TBasicApp::NewLogEntry() << "Matching pairs:";
           for (size_t i = 0; i < sorted_pairs.Count(); i++) {
             size_t idx = sorted_pairs.GetValue(i);
             size_t c_off = (i % 4) * 3, r_i = i / 4;

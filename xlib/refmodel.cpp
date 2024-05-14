@@ -1773,6 +1773,87 @@ const_strlist RefinementModel::Describe() {
   return lst;
 }
 //.............................................................................
+const_strlist RefinementModel::AnalyseModel() const {
+  TStrList out;
+  olxset<TSBond::Ref, TComparableComparator> sadi_dist_set,
+    dfixi_dist_set,
+    sadi_duplicates,
+    dfix_duplicates;
+  for (size_t i = 0; i < rSAME.Count(); i++) {
+    if (rSAME[i].IsReference()) {
+      TTypeList<olx_pair_t<size_t, size_t> > x = rSAME[i].GetRestrainedDistances();
+      sadi_dist_set.SetCapacity(sadi_dist_set.Count() + x.Count());
+      for (size_t di = 0; di < x.Count(); di++) {
+        TSBond::Ref r = TSBond::GetRef(aunit.GetAtom(x[di].a), aunit.GetAtom(x[di].b));
+        if (!sadi_dist_set.Add(r)) {
+          sadi_duplicates.Add(r);
+        }
+      }
+    }
+  }
+  for (size_t i = 0; i < rSADI.Count(); i++) {
+    TAtomRefList x = rSADI[i].GetAtoms().ExpandList(*this, 2);
+    for (size_t ri = 0; ri < x.Count(); ri += 2) {
+      TSBond::Ref r = TSBond::GetRef(x[ri].GetAtom(), x[ri+1].GetAtom());
+      if (!sadi_dist_set.Add(r)) {
+        sadi_duplicates.Add(r);
+      }
+    }
+  }
+
+  for (int restraint_id = 0; restraint_id < 2; restraint_id++) {
+    const TSRestraintList& rl = restraint_id == 0 ? rDFIX : rDANG;
+    for (size_t i = 0; i < rl.Count(); i++) {
+      TAtomRefList x = rl[i].GetAtoms().ExpandList(*this, 2);
+      for (size_t ri = 0; ri < x.Count(); ri += 2) {
+        TSBond::Ref r = TSBond::GetRef(x[ri].GetAtom(), x[ri + 1].GetAtom());
+        if (!dfixi_dist_set.Add(r)) {
+          dfix_duplicates.Add(r);
+        }
+      }
+    }
+  }
+
+  if (!sadi_duplicates.IsEmpty()) {
+    olxstr& l = out.Add("SADI duplicates (") << sadi_duplicates.Count() << "): ";
+    for (size_t i = 0; i < sadi_duplicates.Count(); i++) {
+      l << aunit.GetAtom(sadi_duplicates[i].a.atom_id).GetResiLabel() << '-'
+        << aunit.GetAtom(sadi_duplicates[i].b.atom_id).GetResiLabel() << ", ";
+    }
+    l.SetLength(l.Length() - 2);
+  }
+  if (!dfix_duplicates.IsEmpty()) {
+    olxstr& l = out.Add("DFIX duplicates (") << dfix_duplicates.Count() << "): ";
+    for (size_t i = 0; i < dfix_duplicates.Count(); i++) {
+      l << aunit.GetAtom(dfix_duplicates[i].a.atom_id).GetResiLabel() << '-'
+        << aunit.GetAtom(dfix_duplicates[i].b.atom_id).GetResiLabel() << ", ";
+    }
+    l.SetLength(l.Length() - 2);
+  }
+  {
+    TPtrList<const TSBond::Ref> all_dist, constrained;
+    all_dist.AddAll(sadi_dist_set).AddAll(dfixi_dist_set);
+    for (size_t i = 0; i < all_dist.Count(); i++) {
+      const TCAtom &a = aunit.GetAtom(all_dist[i]->a.atom_id);
+      const TCAtom& b = aunit.GetAtom(all_dist[i]->b.atom_id);
+      if (a.GetAfix() != 0 || b.GetAfix() != 0) {
+        constrained.Add(all_dist[i]);
+      }
+    }
+    if (!constrained.IsEmpty()) {
+      olxstr& l = out.Add("Restraints on constrained atoms (") << constrained.Count() << "): ";
+      for (size_t i = 0; i < constrained.Count(); i++) {
+        l << aunit.GetAtom(constrained[i]->a.atom_id).GetResiLabel() << '-'
+          << aunit.GetAtom(constrained[i]->b.atom_id).GetResiLabel() << ", ";
+      }
+      l.SetLength(l.Length() - 2);
+
+    }
+  }
+
+  return out;
+}
+//.............................................................................
 void RefinementModel::ProcessFrags() {
   // generate missing atoms for the AFIX 59, 66
   olx_pdict<int, TPtrList<TAfixGroup> > a_groups;

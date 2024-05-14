@@ -79,6 +79,8 @@ public:
   bool operator == (const Ref& r) const {
     return (*FA == r.a && *FB == r.b) || (*FA == r.b && *FB == r.a);
   }
+  static Ref GetRef(const TSAtom &a, const TSAtom &b);
+  static Ref GetRef(const TCAtom& a, const TCAtom& b);
   DefPropP(short, Order)
     /* returns MOL file compatible bond order:
     1 = Single, 2 = Double, 3 = Triple, 4 = Aromatic, 0 - undefined

@@ -316,6 +316,40 @@ void TSameGroup::Reorder() {
   }
 }
 //.............................................................................
+TTypeList<olx_pair_t<size_t, size_t> >::const_list_type
+  TSameGroup::GetRestrainedDistances() const
+{
+  TTypeList<olx_pair_t<size_t, size_t> > rv;
+  if (!IsReference() || !Atoms.IsExplicit()) {
+    return rv;
+  }
+  TAtomRefList ar = GetAtoms().ExpandList(Parent.RM);
+  TArrayList<TAtomRefList> di_atoms(DependentCount());
+  for (size_t di = 0; di < DependentCount(); di++) {
+    di_atoms[di] = GetDependent(di).GetAtoms().ExpandList(Parent.RM);
+    if (ar.Count() != di_atoms[di].Count()) {
+      throw TInvalidArgumentException(__OlxSrcInfo, "atoms list sizes");
+    }
+  }
+  const olx_capacity_t cap = olx_reserve(ar.Count() * DependentCount());
+  DistanceGenerator::atom_set_t atom_set(cap);
+  DistanceGenerator::atom_map_N_t atom_map(cap);
+  for (size_t i = 0; i < ar.Count(); i++) {
+    const  TCAtom& a = ar[i].GetAtom();
+    atom_set.Add(a.GetId());
+    TSizeList& idl = atom_map.Add(a.GetId());
+    for (size_t j = 0; j < di_atoms.Count(); j++) {
+      idl.Add(di_atoms[j][i].GetAtom().GetId());
+    }
+  }
+  DistanceGenerator d;
+  d.Generate(Parent.RM.aunit, atom_set, true, true);
+  rv.SetCapacity(d.distances_12.Count() + d.distances_13.Count());
+  rv.AddCopyAll(d.distances_12);
+  rv.AddCopyAll(d.distances_13);
+  return rv;
+}
+//.............................................................................
 //.............................................................................
 //.............................................................................
 void TSameGroupList::Release(TSameGroup& sg) {

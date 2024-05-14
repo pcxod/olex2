@@ -217,6 +217,7 @@ public:
   void Validate();
   // creates a human readable description of the refinement
   const_strlist Describe();
+  const_strlist AnalyseModel() const;
 #ifdef _PYTHON
   PyObject* PyExport(bool export_connectivity);
 #endif

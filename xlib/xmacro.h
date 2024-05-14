@@ -84,6 +84,7 @@ public:
   static DefMacro(LstFS)
   static DefMacro(ASR)
   static DefMacro(Describe)
+  static DefMacro(AnalyseModel)
   static DefMacro(Sort)
   static DefMacro(SGInfo)
   static DefMacro(SAInfo)

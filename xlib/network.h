@@ -161,6 +161,11 @@ public:
   bool IsSubgraphOf(TNetwork& net,
     TTypeList< olx_pair_t<size_t, size_t> >& res,
     const TSizeList& rootsToSkip);
+  bool ProximityMatch(const TNetwork& net,
+    TTypeList< olx_pair_t<size_t, size_t> >& res,
+    bool check_atom_types=true,
+    bool check_connectivity=true,
+    double delta=0.5);
 
 protected:
   static int TNetwork_SortRingAtoms(const TSAtom &a, const TSAtom &b) {

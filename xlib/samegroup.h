@@ -97,6 +97,9 @@ public:
     return g.IsSubgroupOf(*this);
   }
 
+  // a list of restrained distnaces for atom indices in the AU
+  TTypeList<olx_pair_t<size_t,size_t> >::const_list_type GetRestrainedDistances() const;
+
   double Esd12, Esd13;
 
   void ToDataItem(TDataItem& item) const;

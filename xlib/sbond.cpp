@@ -17,15 +17,43 @@ TSBond::TSBond(TNetwork *P) :
   Deleted = false;
 }
 //..............................................................................
-void TSBond::OnAtomSet()  {
-  if( FA && FB )  {
-    if( FA->GetType().z < FB->GetType().z )
+void TSBond::OnAtomSet() {
+  if (FA != 0 && FB != 0) {
+    if (FA->GetType().z < FB->GetType().z) {
       olx_swap(FA, FB);
-    else if( FA->GetType().z == FB->GetType().z )  {
-      if( FA->GetLabel().Compare(FB->GetLabel()) < 0 )
+    }
+    else if (FA->GetType().z == FB->GetType().z) {
+      if (FA->GetLabel().Compare(FB->GetLabel()) < 0) {
         olx_swap(FA, FB);
+      }
     }
   }
+}
+//..............................................................................
+TSBond::Ref TSBond::GetRef(const TSAtom& a_, const TSAtom& b_) {
+  const TSAtom* a = &a_, * b = &b_;
+  if (a->GetType().z < b->GetType().z) {
+    olx_swap(a, b);
+  }
+  else if (a->GetType().z == b->GetType().z) {
+    if (a->GetLabel().Compare(b->GetLabel()) < 0) {
+      olx_swap(a, b);
+    }
+  }
+  return Ref(a->GetRef(), b->GetRef());
+}
+//..............................................................................
+TSBond::Ref TSBond::GetRef(const TCAtom& a_, const TCAtom& b_) {
+  const TCAtom* a = &a_, * b = &b_;
+  if (a->GetType().z < b->GetType().z) {
+    olx_swap(a, b);
+  }
+  else if (a->GetType().z == b->GetType().z) {
+    if (a->GetLabel().Compare(b->GetLabel()) < 0) {
+      olx_swap(a, b);
+    }
+  }
+  return Ref(TSAtom::Ref(*a, 0), TSAtom::Ref(*b, 0));
 }
 //..............................................................................
 void TSBond::ToDataItem(TDataItem& item) const {

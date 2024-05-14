@@ -331,6 +331,8 @@ void XLibMacros::Export(TLibrary& lib)  {
     " case of non-centrosymmetric structure");
   xlib_InitMacro(Describe, EmptyString(), fpNone^psFileLoaded,
     "Describes current refinement in a human readable form");
+  xlib_InitMacro(AnalyseModel, EmptyString(), fpNone^ psFileLoaded,
+    "Analyses current refinement for potential conflicts");
   xlib_InitMacro(Sort,
     "r-sort for atoms inside residues [true]&;"
     "rn-sort residues by number [true]&;"
@@ -6698,14 +6700,27 @@ void XLibMacros::macASR(TStrObjList &Cmds, const TParamList &Options,
   xapp.NewLogEntry() << "Done";
 }
 //.............................................................................
-void XLibMacros::macDescribe(TStrObjList &Cmds, const TParamList &Options,
-  TMacroData &E)
+void XLibMacros::macDescribe(TStrObjList& Cmds, const TParamList& Options,
+  TMacroData& E)
 {
   TXApp& xapp = TXApp::GetInstance();
-  TStrList lst =xapp.XFile().GetRM().Describe(),
+  TStrList lst = xapp.XFile().GetRM().Describe(),
     out;
-  for( size_t i=0; i < lst.Count(); i++ )
+  for (size_t i = 0; i < lst.Count(); i++) {
     out.Hyphenate(lst[i], 80, true);
+  }
+  xapp.NewLogEntry() << out;
+}
+//.............................................................................
+void XLibMacros::macAnalyseModel(TStrObjList& Cmds, const TParamList& Options,
+  TMacroData& E)
+{
+  TXApp& xapp = TXApp::GetInstance();
+  TStrList lst = xapp.XFile().GetRM().AnalyseModel(),
+    out;
+  for (size_t i = 0; i < lst.Count(); i++) {
+    out.Hyphenate(lst[i], 80, true);
+  }
   xapp.NewLogEntry() << out;
 }
 //.............................................................................
