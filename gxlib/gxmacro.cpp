@@ -4435,21 +4435,23 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
 {
   static const olxstr StartMatchCBName("startmatch");
   TActionQueueLock __queuelock(app.FindActionQueue(olxappevent_GL_DRAW));
-  // restore if already applied
   TLattice& latt = app.XFile().GetLattice();
   // note that this may be different to the overlayed file!!
-  const TAsymmUnit &au = latt.GetAsymmUnit();
-  for (size_t i = 0; i < app.XFiles().Count(); i++) {
-    app.XFile(i).GetLattice().RestoreADPs();
+  const TAsymmUnit& au = latt.GetAsymmUnit();
+  // restore if already applied
+  if (Options.GetBoolOption('u')) {
+    for (size_t i = 0; i < app.XFiles().Count(); i++) {
+      app.XFile(i).GetLattice().RestoreADPs();
+    }
+    if (app.XFiles().Count() > 1) {
+      app.AlignXFiles();
+      app.CenterView(true);
+    }
+    else {
+      app.CenterView();
+    }
+    app.UpdateBonds();
   }
-  if (app.XFiles().Count() > 1) {
-    app.AlignXFiles();
-    app.CenterView(true);
-  }
-  else {
-    app.CenterView();
-  }
-  app.UpdateBonds();
   if (Cmds.Count() == 1 && Cmds[0].Equalsi("cell")) {
     if (app.XFiles().Count() < 2) {
       E.ProcessingError(__OlxSrcInfo, "an overlayed file is expected");
@@ -4505,9 +4507,9 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
     //v = tm*(v-tr);
     return;
   }
-  if (Options.GetBoolOption('u')) { // do nothing...
-    return;
-  }
+  //if (Options.GetBoolOption('u')) { // do nothing...
+  //  return;
+  //}
   olex2::IOlex2Processor::GetInstance()->callCallbackFunc(
     StartMatchCBName, TStrList() << EmptyString());
   const bool TryInvert = Options.GetBoolOption('i');

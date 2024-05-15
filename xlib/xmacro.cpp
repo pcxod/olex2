@@ -5639,7 +5639,21 @@ void XLibMacros::macCifExtract(TStrObjList &Cmds, const TParamList &Options,
             break;
           }
         }
-        if (skip) continue;
+        if (skip) { // check for explicit extract
+          for (size_t j = 0; j < to_extract.Count(); j++) {
+            if (to_extract[j].GetMask() == cb.params[i]) {
+              try {
+                olxstr s = cb.params.GetObject(i)->GetStringValue();
+                if (s.IsEmpty() || s == '?') {
+                  continue;
+                }
+              }
+              catch (const TExceptionBase&) {}
+              mcf.SetParam(*cb.params.GetObject(i));
+            }
+          }
+          continue;
+        }
         for (size_t j = 0; j < to_extract.Count(); j++) {
           if (to_extract[j].DoesMatch(cb.params[i])) {
             try {

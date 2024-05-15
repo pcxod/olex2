@@ -914,7 +914,8 @@ bool proximity_check(const TSAtom& ref, const TSAtom& a,
           return false;
         }
       }
-      return ref.crd().DistanceTo(a.crd()) < delta;
+      double d = ref.crd().DistanceTo(a.crd());
+      return d < delta;
     }
     else {
       return TNetwork_NodeCounter(ref) == TNetwork_NodeCounter(a)
@@ -922,6 +923,54 @@ bool proximity_check(const TSAtom& ref, const TSAtom& a,
     }
   }
   return true;
+}
+
+bool proximity_check_up(size_t ii, const TSAtom &a, double l,
+  const TSAtomPList &lb,
+  TTypeList< olx_pair_t<size_t, size_t> >& res,
+  bool check_atom_types, bool check_connectivity, double delta)
+{
+  while (ii < lb.Count()) {
+    double l1 = lb[ii]->crd().Length();
+    if (olx_abs(l1 - l) > delta) {
+      break;
+    }
+    if (lb[ii]->IsProcessed()) {
+      ii++;
+      continue;
+    }
+    if (proximity_check(a, *lb[ii], check_atom_types, check_connectivity, delta)) {
+      lb[ii]->SetProcessed(true);
+      res.AddNew(a.GetTag(), lb[ii]->GetTag());
+      return true;
+    }
+    ii++;
+  }
+  return false;
+}
+
+bool proximity_check_dn(size_t ii, const TSAtom& a, double l,
+  const TSAtomPList& lb,
+  TTypeList< olx_pair_t<size_t, size_t> >& res,
+  bool check_atom_types, bool check_connectivity, double delta)
+{
+  while (ii != InvalidIndex) {
+    double l1 = lb[ii]->crd().Length();
+    if (olx_abs(l1 - l) > delta) {
+      break;
+    }
+    if (lb[ii]->IsProcessed()) {
+      ii--;
+      continue;
+    }
+    if (proximity_check(a, *lb[ii], check_atom_types, check_connectivity, delta)) {
+      lb[ii]->SetProcessed(true);
+      res.AddNew(a.GetTag(), lb[ii]->GetTag());
+      return true;
+    }
+    ii--;
+  }
+  return false;
 }
 
 bool TNetwork::ProximityMatch(const TNetwork& net,
@@ -956,82 +1005,25 @@ bool TNetwork::ProximityMatch(const TNetwork& net,
       if (olx_abs(l - lb_f) > delta) {
         return false;
       }
-      size_t dni = 0;
-      while (dni < lb.Count()) {
-        if (lb[dni]->IsProcessed()) {
-          dni++;
-          continue;
-        }
-        if (proximity_check(a, *lb[dni], check_atom_types, check_connectivity, delta)) {
-          found = true;
-          lb[dni]->SetProcessed(true);
-          res.AddNew(pair_t(a.GetTag(), lb[dni]->GetTag()));
-          break;
-        }
-        dni++;
+      if (proximity_check_up(0, a, l, lb, res, check_atom_types, check_connectivity, delta)) {
+        continue;
       }
     }
     else if (l > lb_l) {
       if (olx_abs(l - lb_l) > delta) {
         return false;
       }
-      size_t upi = lb.Count() - 1;
-      while (upi != InvalidIndex) {
-        if (lb[upi]->IsProcessed()) {
-          upi--;
-          continue;
-        }
-        if (proximity_check(a, *lb[upi], check_atom_types, check_connectivity, delta)) {
-          found = true;
-          lb[upi]->SetProcessed(true);
-          res.AddNew(pair_t(a.GetTag(), lb[upi]->GetTag()));
-          break;
-        }
-        upi--;
+      if (proximity_check_dn(lb.Count() - 1, a, l, lb, res, check_atom_types, check_connectivity, delta)) {
+        continue;
       }
     }
     else {
       size_t ii = sorted::FindInsertIndex(lb, cmp, a);
-      size_t upi = ii-1;
-      // go up
-      while (upi != InvalidIndex) {
-        double l1 = lb[upi]->crd().Length();
-        if (olx_abs(l1 - l) > delta) {
-          break;
-        }
-        if (lb[upi]->IsProcessed()) {
-          upi--;
-          continue;
-        }
-        if (proximity_check(a, *lb[upi], check_atom_types, check_connectivity, delta)) {
-          lb[upi]->SetProcessed(true);
-          res.AddNew(pair_t(a.GetTag(), lb[upi]->GetTag()));
-          found = true;
-          break;
-        }
-        upi--;
-      }
-      if (found) {
+      if (proximity_check_up(ii-1, a, l, lb, res, check_atom_types, check_connectivity, delta)) {
         continue;
       }
-      // go up
-      size_t dni = ii;
-      while (dni < lb.Count()) {
-        double l1 = lb[dni]->crd().Length();
-        if (olx_abs(l1 - l) > delta) {
-          break;
-        }
-        if (lb[dni]->IsProcessed()) {
-          dni++;
-          continue;
-        }
-        if (proximity_check(a, *lb[dni], check_atom_types, check_connectivity, delta)) {
-          lb[dni]->SetProcessed(true);
-          res.AddNew(pair_t(a.GetTag(), lb[dni]->GetTag()));
-          found = true;
-          break;
-        }
-        dni++;
+      if (proximity_check_dn(ii, a, l, lb, res, check_atom_types, check_connectivity, delta)) {
+        continue;
       }
     }
     if (!found) {
