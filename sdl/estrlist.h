@@ -735,7 +735,7 @@ template <class SC, typename OC> struct TObjectStrListData
   : public TSingleStringWrapper<SC>
 {
   OC Object;
-  TObjectStrListData() {}
+  TObjectStrListData(): Object(0) {}
   template <class S>
   TObjectStrListData(const S& str, const OC& obj)
     : TSingleStringWrapper<SC>(str), Object(obj)

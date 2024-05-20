@@ -51,7 +51,7 @@ void TIns::Clear() {
   // Shelxl default!
   GetAsymmUnit().SetLatt(1);
   for (size_t i = 0; i < Ins.Count(); i++) {
-    delete Ins.GetObject(i);
+    olx_del_obj(Ins.GetObject(i));
   }
   Ins.Clear();
   Skipped.Clear();

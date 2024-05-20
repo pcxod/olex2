@@ -394,6 +394,7 @@ void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
         catch (const TExceptionBase &exc) {
           TBasicApp::NewLogEntry(logError) << "Failed to update the refinement"
             " model from the embedded RES file.";
+          exc.GetException()->PrintStackTrace();
         }
         // build bonds from the CIF
         if (!rm_updated) {
