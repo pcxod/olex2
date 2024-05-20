@@ -1327,6 +1327,18 @@ double TXApp::GetMinHBondAngle()  {
   }
 }
 //..............................................................................
+double TXApp::GetEXYZSeparation() {
+  TXApp& a = GetInstance();
+  if (a.exyz_separation.ok()) {
+    return *a.exyz_separation;
+  }
+  else {
+    a.exyz_separation = TBasicApp::GetInstance().GetOptions()
+      .FindValue("exyz_separation", "0.5").ToDouble();
+    return *a.exyz_separation;
+  }
+}
+//..............................................................................
 bool TXApp::DoPreserveFVARs() {
   TXApp &a = GetInstance();
   if (a.preserve_fvars.ok()) {
@@ -1449,6 +1461,7 @@ bool TXApp::DoUseExternalExplicitSAME() {
 void TXApp::ResetOptions() {
   preserve_fvars.reset();
   min_hbond_angle.reset();
+  exyz_separation.reset();
   safe_afix.reset();
   rename_parts.reset();
   stack_restraints.reset();

@@ -41,3 +41,4 @@ external_editor [] - you can set notepad++ as an Editor for EditAtom, use like
   Use %f as a file name placeholder if order of arguments matters.
 external_explicit_same [false] - writes olex2.same file vs SAME embedded into the atom list. This
  gives more flexibility as it does not enforce atom order in the reference SAME groups
+exyz_separation [0.5] - separation for EXYZ atoms in special rendering mode

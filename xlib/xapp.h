@@ -65,7 +65,8 @@ protected:
   olxstr CifTemplatesDir;  // the folder with CIF templates/data
   ASelectionOwner* SelectionOwner;
   olx_object_ptr<bool> preserve_fvars;
-  olx_object_ptr<double> min_hbond_angle;
+  olx_object_ptr<double> min_hbond_angle,
+    exyz_separation;
   olx_object_ptr<bool> safe_afix;
   olx_object_ptr<bool> rename_parts;
   olx_object_ptr<bool> stack_restraints;
@@ -209,6 +210,8 @@ public:
   }
   // the returned value (in degrees) must be cached if used in loops etc
   static double GetMinHBondAngle();
+  // possibly should go to TGXApp...
+  static double GetEXYZSeparation();
   // preserve free vaiable if referenced once only
   static bool DoPreserveFVARs();
   // if true - AFIX are validated adter naming, deleting and HADD
