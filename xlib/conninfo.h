@@ -165,7 +165,13 @@ struct DistanceGenerator {
   group will be used!
   */
   void Generate(const TAsymmUnit &au, const atom_set_t &atoms,
-    bool generate_13, bool inclusive);
+    bool generate_13, bool inclusive,
+    const atom_set_t& Inclusive_set);
+  void Generate(const TAsymmUnit& au, const atom_set_t& atoms,
+    bool generate_13, bool inclusive)
+  {
+    Generate(au, atoms, generate_13, inclusive, atoms);
+  }
   void Generate(const TCAtomPList atoms, bool generate_13, bool inclusive);
   void GenerateSADI(RefinementModel &rm, const atom_map_1_t &atom_map,
     double esd12, double esd13) const

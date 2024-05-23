@@ -266,18 +266,22 @@ TStrList::const_list_type TSameGroup::GenerateList() const {
     }
   }
   const olx_capacity_t cap = olx_reserve(ar.Count() * DependentCount());
-  DistanceGenerator::atom_set_t atom_set(cap);
+  DistanceGenerator::atom_set_t atom_set(cap),
+    inc_set(cap);
   DistanceGenerator::atom_map_N_t atom_map(cap);
   for (size_t i = 0; i < ar.Count(); i++) {
     const  TCAtom& a = ar[i].GetAtom();
     atom_set.Add(a.GetId());
     TSizeList& idl = atom_map.Add(a.GetId());
     for (size_t j = 0; j < di_atoms.Count(); j++) {
-      idl.Add(di_atoms[j][i].GetAtom().GetId());
+      size_t aid = di_atoms[j][i].GetAtom().GetId();
+      idl.Add(aid);
+      inc_set.Add(aid);
     }
   }
+  inc_set.AddAll(atom_set);
   DistanceGenerator d;
-  d.Generate(Parent.RM.aunit, atom_set, true, true);
+  d.Generate(Parent.RM.aunit, atom_set, true, true, inc_set);
   rv.AddAll(d.GenerateSADIList(Parent.RM.aunit, atom_map, Esd12, Esd13));
   return rv;
 }
@@ -359,18 +363,22 @@ TTypeList<olx_pair_t<size_t, size_t> >::const_list_type
     }
   }
   const olx_capacity_t cap = olx_reserve(ar.Count() * DependentCount());
-  DistanceGenerator::atom_set_t atom_set(cap);
+  DistanceGenerator::atom_set_t atom_set(cap),
+    inc_set(cap);
   DistanceGenerator::atom_map_N_t atom_map(cap);
   for (size_t i = 0; i < ar.Count(); i++) {
     const  TCAtom& a = ar[i].GetAtom();
     atom_set.Add(a.GetId());
     TSizeList& idl = atom_map.Add(a.GetId());
     for (size_t j = 0; j < di_atoms.Count(); j++) {
-      idl.Add(di_atoms[j][i].GetAtom().GetId());
+      size_t aid = di_atoms[j][i].GetAtom().GetId();
+      idl.Add(aid);
+      inc_set.Add(aid);
     }
   }
+  inc_set.AddAll(atom_set);
   DistanceGenerator d;
-  d.Generate(Parent.RM.aunit, atom_set, true, true);
+  d.Generate(Parent.RM.aunit, atom_set, true, true, inc_set);
   rv.SetCapacity(d.distances_12.Count() + d.distances_13.Count());
   rv.AddCopyAll(d.distances_12);
   rv.AddCopyAll(d.distances_13);
@@ -882,6 +890,22 @@ void TSameGroupList::SortSupergroups(
   }
 }
 //..............................................................................
+void merge_Lists(size_t off, TStrList& a, const TStrList& b) {
+  size_t a_sz = a.Count();
+  for (size_t i = off; i < b.Count(); i += 2) {
+    bool uniq = true;
+    for (size_t j = off; j < a_sz; j += 2) {
+      if (b[i] == a[j] && b[i + 1] == a[j + 1]) {
+        uniq = false;
+        break;
+      }
+    }
+    if (uniq) {
+      a.Add(b[i]);
+      a.Add(b[i + 1]);
+    }
+  }
+}
 TStrList::const_list_type merg_SADI(const TStrList& l) {
   olxstr_dict<olx_object_ptr<TStrList> > dest;
   for (size_t i = 0; i < l.Count(); i++) {
@@ -894,14 +918,19 @@ TStrList::const_list_type merg_SADI(const TStrList& l) {
 
     for (size_t j = off; j < toks.Count(); j += 2) {
       olxstr key = toks[j] + toks[j + 1];
-      olx_object_ptr<TStrList> d_ = dest.Find(key, 0);
-      if (d_.ok()) {
+      size_t idx = dest.IndexOf(key);
+      if (idx != InvalidIndex) {
         if (!d.ok()) {
-          d = d_;
+          d = dest.GetValue(idx);
         }
-        else if (d != d_) {
-          d->AddAll(d_->SubListFrom(off));
-          delete d_.release();
+        else if (d != dest.GetValue(idx)) {
+          merge_Lists(off, *d, *dest.GetValue(idx));
+          olx_object_ptr<TStrList> d_ = dest.GetValue(idx);
+          for (size_t k = 0; k < dest.Count(); k++) {
+            if (dest.GetValue(k) == d_) {
+              dest.GetValue(k) = d;
+            }
+          }
         }
       }
     }
@@ -910,21 +939,15 @@ TStrList::const_list_type merg_SADI(const TStrList& l) {
       toks.SubList(0, off, *d);
     }
     TStrList& dl = *d;
+    size_t dl_sz = dl.Count();
     for (size_t j = off; j < toks.Count(); j += 2) {
-      bool uniq = true;
-      for (size_t k = off; k < dl.Count(); k+=2) {
-        if (dl[k] == toks[j] && dl[k+1] == toks[j+1]) {
-          uniq = false;
-          break;
-        }
-      }
-      if (!uniq) {
+      olxstr key = toks[j] + toks[j + 1];
+      if (dest.HasKey(key)) {
         continue;
       }
-      olxstr key = toks[j] + toks[j + 1];
       dl.Add(toks[j]);
       dl.Add(toks[j+1]);
-      dest(key, d);
+      dest.Add(key, d);
     }
   }
   TStrList rv;
