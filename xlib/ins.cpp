@@ -2033,7 +2033,9 @@ void TIns::_DrySaveAtom(TCAtom& a, TSizeList& indices, bool checkSame,
 //..............................................................................
 TSizeList::const_list_type TIns::DrySave(const TAsymmUnit& au) {
   TSizeList rv(olx_reserve(au.AtomCount()));
+  au.GetRefMod()->rSAME.BeginAUSort();
   au.GetRefMod()->rSAME.PrepareSave();
+  au.GetRefMod()->rSAME.EndAUSort();
   TEBitArray saved_flag(au.AtomCount());
   bool check_same = !TXApp::DoUseExternalExplicitSAME();
   for (size_t i = 0; i < au.AtomCount(); i++) {
@@ -2094,7 +2096,6 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm,
   for (size_t i = 0; i < rm.SfacCount(); i++) {
     sfacs.Add(rm.GetSfacData(i).GetLabel());
   }
-  TBasicApp::NewLogEntry() << olxstr(" ").Join(sfacs);
   size_t atomCount = 0;
   ParseContext cx(rm);
   Preprocess(SL);

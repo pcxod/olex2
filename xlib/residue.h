@@ -33,7 +33,7 @@ protected:
   // removes an atom and resets the ResiId, this is used internally from Add
   void Remove(TCAtom& ca) {
     if (Atoms.Remove(ca)) {
-      ca.SetResiId(0);
+      ca.SetResiId(~0);
     }
   }
   void SetId(uint32_t id) {

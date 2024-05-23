@@ -47,6 +47,9 @@ public:
   TStrList::const_list_type Analyse(bool log,
     TPtrList<const TSameGroup> *offending=0) const;
 
+  // generates SADI list
+  TStrList::const_list_type TSameGroup::GenerateList() const;
+
   void Clear() {
     SetAtomIds(~0);
     Atoms.Clear();

@@ -255,6 +255,33 @@ int TSameGroup::Compare(const TSameGroup& g) const {
   return olx_cmp(this_atoms[0].GetAtom().GetId(), that_atoms[0].GetAtom().GetId());
 }
 //.............................................................................
+TStrList::const_list_type TSameGroup::GenerateList() const {
+  TStrList rv;
+  TAtomRefList ar = GetAtoms().ExpandList(Parent.RM);
+  TArrayList<TAtomRefList> di_atoms(DependentCount());
+  for (size_t di = 0; di < DependentCount(); di++) {
+    di_atoms[di] = GetDependent(di).GetAtoms().ExpandList(Parent.RM);
+    if (ar.Count() != di_atoms[di].Count()) {
+      throw TInvalidArgumentException(__OlxSrcInfo, "atoms list sizes");
+    }
+  }
+  const olx_capacity_t cap = olx_reserve(ar.Count() * DependentCount());
+  DistanceGenerator::atom_set_t atom_set(cap);
+  DistanceGenerator::atom_map_N_t atom_map(cap);
+  for (size_t i = 0; i < ar.Count(); i++) {
+    const  TCAtom& a = ar[i].GetAtom();
+    atom_set.Add(a.GetId());
+    TSizeList& idl = atom_map.Add(a.GetId());
+    for (size_t j = 0; j < di_atoms.Count(); j++) {
+      idl.Add(di_atoms[j][i].GetAtom().GetId());
+    }
+  }
+  DistanceGenerator d;
+  d.Generate(Parent.RM.aunit, atom_set, true, true);
+  rv.AddAll(d.GenerateSADIList(Parent.RM.aunit, atom_map, Esd12, Esd13));
+  return rv;
+}
+//.............................................................................
 TStrList::const_list_type TSameGroup::Analyse(bool report,
   TPtrList<const TSameGroup>* offending) const
 {
@@ -569,14 +596,20 @@ TSameGroup& TSameGroupList::Build(const olxstr &exp, const olxstr &resi) {
 }
 //.............................................................................
 void TSameGroupList::Analyse() {
-  TPtrList<const TSameGroup> refs = Groups.ptr().Filter(
+  TPtrList< TSameGroup> refs = Groups.ptr().Filter(
     FunctionAccessorAnalyser::Make(
       FunctionAccessor::MakeConst(&TSameGroup::IsReference)));
   TStrList log;
   for (size_t i = 0; i < refs.Count(); i++) {
+    if (refs[i] == 0) {
+      continue;
+    }
     const TSameGroup& sg1 = *refs[i];
     log.AddAll(sg1.Analyse(true));
     for (size_t j = i + 1; j < refs.Count(); j++) {
+      if (refs[j] == 0) {
+        continue;
+      }
       const TSameGroup& sg2 = *refs[j];
       int ov = sg2.DoOverlapEx(sg1);
       if (ov == OVERLAP_NONE) {
@@ -584,9 +617,29 @@ void TSameGroupList::Analyse() {
       }
       if (ov == OVERLAP_OVERLAP) {
         log.Add("Invalid SAME - overlapping SAME do not share all of the atoms");
+        log.Add(sg1.GetAtoms().GetExpression());
+        log.Add(sg2.GetAtoms().GetExpression());
+        TPtrList<TSameGroup> del;
+        bool stop = false;
+        if (sg1.GetAtoms().RefCount() < sg2.GetAtoms().RefCount()) {
+          del << refs[i];
+          refs[i] = 0;
+          stop = true;
+        }
+        else {
+          del << refs[j];
+          refs[j] = 0;
+        }
+        TBasicApp::NewLogEntry() << del[0]->GenerateList();
+        //Delete(del);
+        //if (stop) { // ith has been deleted!
+        //  break;
+        //}
       }
       else {
         log.Add("Overlapping reference groups detected");
+        log.Add(sg1.GetAtoms().GetExpression());
+        log.Add(sg2.GetAtoms().GetExpression());
       }
     }
   }
@@ -829,6 +882,61 @@ void TSameGroupList::SortSupergroups(
   }
 }
 //..............................................................................
+TStrList::const_list_type merg_SADI(const TStrList& l) {
+  olxstr_dict<olx_object_ptr<TStrList> > dest;
+  for (size_t i = 0; i < l.Count(); i++) {
+    TStrList toks(l[i], ' ');
+    size_t off = 1;
+    while (toks[off].IsNumber()) {
+      off++;
+    }
+    olx_object_ptr<TStrList> d;
+
+    for (size_t j = off; j < toks.Count(); j += 2) {
+      olxstr key = toks[j] + toks[j + 1];
+      olx_object_ptr<TStrList> d_ = dest.Find(key, 0);
+      if (d_.ok()) {
+        if (!d.ok()) {
+          d = d_;
+        }
+        else if (d != d_) {
+          d->AddAll(d_->SubListFrom(off));
+          delete d_.release();
+        }
+      }
+    }
+    if (!d.ok()) {
+      d = new TStrList();
+      toks.SubList(0, off, *d);
+    }
+    TStrList& dl = *d;
+    for (size_t j = off; j < toks.Count(); j += 2) {
+      bool uniq = true;
+      for (size_t k = off; k < dl.Count(); k+=2) {
+        if (dl[k] == toks[j] && dl[k+1] == toks[j+1]) {
+          uniq = false;
+          break;
+        }
+      }
+      if (!uniq) {
+        continue;
+      }
+      olxstr key = toks[j] + toks[j + 1];
+      dl.Add(toks[j]);
+      dl.Add(toks[j+1]);
+      dest(key, d);
+    }
+  }
+  TStrList rv;
+  for (size_t i = 0; i < dest.Count(); i++) {
+    if (!dest.GetValue(i).ok() || dest.GetValue(i)->Count() < 5) {
+      continue;
+    }
+    rv.Add(olxstr(" ").Join(*dest.GetValue(i)));
+    delete dest.GetValue(i).release();
+  }
+  return rv;
+}
 TStrList::const_list_type TSameGroupList::GenerateList() const {
   TStrList rv;
   for (size_t gi = 0; gi < Groups.Count(); gi++) {
@@ -836,29 +944,9 @@ TStrList::const_list_type TSameGroupList::GenerateList() const {
     if (!sg.IsReference() || !sg.GetAtoms().IsExplicit()) {
       continue;
     }
-    TAtomRefList ar = sg.GetAtoms().ExpandList(RM);
-    TArrayList<TAtomRefList> di_atoms(sg.DependentCount());
-    for (size_t di=0; di < sg.DependentCount(); di++) {
-      di_atoms[di] = sg.GetDependent(di).GetAtoms().ExpandList(RM);
-      if (ar.Count() != di_atoms[di].Count()) {
-        throw TInvalidArgumentException(__OlxSrcInfo, "atoms list sizes");
-      }
-    }
-    const olx_capacity_t cap = olx_reserve(ar.Count() * sg.DependentCount());
-    DistanceGenerator::atom_set_t atom_set(cap);
-    DistanceGenerator::atom_map_N_t atom_map(cap);
-    for (size_t i = 0; i < ar.Count(); i++) {
-      const  TCAtom& a = ar[i].GetAtom();
-      atom_set.Add(a.GetId());
-      TSizeList& idl = atom_map.Add(a.GetId());
-      for (size_t j = 0; j < di_atoms.Count(); j++) {
-        idl.Add(di_atoms[j][i].GetAtom().GetId());
-      }
-    }
-    DistanceGenerator d;
-    d.Generate(RM.aunit, atom_set, true, true);
-    rv.AddAll(d.GenerateSADIList(RM.aunit, atom_map));
+    rv.AddAll(sg.GenerateList());
   }
+  rv = merg_SADI(rv);
   return rv;
 }
 //..............................................................................

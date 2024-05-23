@@ -150,7 +150,8 @@ public:
   the Residue number. If add part is true also adds '^' + parts as a Latin
   letter
   */
-  olxstr GetResiLabel(bool add_part = false) const;
+  olxstr GetResiLabel(bool add_part) const;
+  olxstr GetResiLabel() const { return GetResiLabel(false); }
 
   size_t AttachedSiteCount() const { return AttachedSites.Count(); }
   bool IsAttachedTo(const TCAtom& ca) const;

@@ -1847,7 +1847,57 @@ const_strlist RefinementModel::AnalyseModel() const {
           << aunit.GetAtom(constrained[i]->b.atom_id).GetResiLabel() << ", ";
       }
       l.SetLength(l.Length() - 2);
-
+    }
+  }
+  // find AFIX on fixed atoms
+  {
+    TPtrList<const TCAtom> atoms1, atoms2;
+    for (size_t i = 0; i < AfixGroups.Count(); i++) {
+      const TCAtom& a = AfixGroups[i].GetPivot();
+      if (a.IsDeleted()) {
+        continue;
+      }
+      // check pivot
+      {
+        size_t fixed_cnt = 0;
+        for (size_t j = 0; j < 3; j++) {
+          if (a.GetVarRef(catom_var_name_X + j) != 0 &&
+            a.GetVarRef(catom_var_name_X + j)->relation_type == relation_None)
+          {
+            fixed_cnt++;
+          }
+        }
+        if (fixed_cnt == 3) {
+          atoms1 << a;
+        }
+      }
+      // check dependent
+      for (size_t j = 0; j < AfixGroups[i].Count(); j++) {
+        const TCAtom& aa = AfixGroups[i][j];
+        if (aa.IsDeleted()) {
+          continue;
+        }
+        bool has_fixed = false;
+        for (size_t j = 0; j < 3; j++) {
+          if (aa.GetVarRef(catom_var_name_X + j) != 0 &&
+            aa.GetVarRef(catom_var_name_X + j)->relation_type == relation_None)
+          {
+            has_fixed = true;
+            break;
+          }
+        }
+        if (has_fixed) {
+          atoms2 << aa;
+        }
+      }
+    }
+    if (!atoms1.IsEmpty()) {
+      out.Add("AFIX on fixed atom(s): ") << olxstr(", ")
+        .Join(atoms1, FunctionAccessor::MakeConst(&TCAtom::GetResiLabel));
+    }
+    if (!atoms2.IsEmpty()) {
+      out.Add("Fixed coordinates in AFIX atom(s): ") << olxstr(", ")
+        .Join(atoms2, FunctionAccessor::MakeConst(&TCAtom::GetResiLabel));
     }
   }
 

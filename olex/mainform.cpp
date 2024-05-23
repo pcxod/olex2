@@ -549,12 +549,12 @@ void TMainForm::XApp(Olex2App *XA)  {
     " file in the interactive shell (on windows ShellExecute is used to avoid "
     "flickering console)");
   this_InitMacroD(Save, EmptyString(), fpAny^fpNone,
-    "Saves style/scene/view/gview/model");
+    "Saves style/scene/view/gview/model/ginfo");
   GetLibrary().Register(
     new TMacro<TMainForm>(this, &TMainForm::macLoad, "Load",
       "c-when loading style clears current model customisation [false]",
       fpAny^fpNone,
-      "Loads style/scene/view/gview/model/radii. For radii accepts sfil, vdw, pers"),
+      "Loads style/scene/view/gview/model/radii/ginfo. For radii accepts sfil, vdw, pers"),
     libChain
   );
   this_InitMacro(Link, , fpNone|fpOne);
