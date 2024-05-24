@@ -218,6 +218,7 @@ public:
   // creates a human readable description of the refinement
   const_strlist Describe();
   const_strlist AnalyseModel() const;
+  size_t MergeSADI();
 #ifdef _PYTHON
   PyObject* PyExport(bool export_connectivity);
 #endif

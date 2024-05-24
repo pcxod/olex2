@@ -651,6 +651,8 @@ void XLibMacros::Export(TLibrary& lib)  {
     "all-find fragments matching the selection and applies SAME to them&;"
     "p-extra part to use (along with 0) in the case of disorder and -all&;"
     "export-generates list of SADI for current SAME list&;"
+    "fix-expands smaller of the overlapping reference SAME into SADI"
+    "fix-expands smaller of the overlapping reference SAME into SADI"
     ,
     fpAny|psFileLoaded,
     "Creates SAME instruction for two fragments (two selected atoms or two "
@@ -10572,18 +10574,23 @@ template <class list_t, typename accessor_t>
 void macSAME_expand(RefinementModel &rm, const list_t& groups,
   const accessor_t &acc, double esd12, double esd13)
 {
-  DistanceGenerator::atom_set_t atom_set(olx_reserve(groups[0].Count()));
-  DistanceGenerator::atom_map_N_t atom_map(olx_reserve(groups[0].Count()));
+  olx_capacity_t cap = olx_reserve(groups[0].Count());
+  DistanceGenerator::atom_set_t atom_set(cap),
+    inc_set(cap);
+  DistanceGenerator::atom_map_N_t atom_map(cap);
   for (size_t i = 0; i < groups[0].Count(); i++) {
    const  TCAtom &a = olx_ref::get(acc(groups[0][i]));
     atom_set.Add(a.GetId());
     TSizeList &idl = atom_map.Add(a.GetId());
     for (size_t j = 1; j < groups.Count(); j++) {
-      idl.Add(olx_ref::get(acc(groups[j][i])).GetId());
+      size_t aid = olx_ref::get(acc(groups[j][i])).GetId();
+      idl.Add(aid);
+      inc_set.Add(aid);
     }
   }
+  inc_set.AddAll(atom_set);
   DistanceGenerator d;
-  d.Generate(rm.aunit, atom_set, true, true);
+  d.Generate(rm.aunit, atom_set, true, true, inc_set);
   d.GenerateSADI(rm, atom_map, esd12, esd13);
 }
 void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
@@ -10592,6 +10599,11 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
   if (Options.GetBoolOption("export")) {
     TXApp& app = TXApp::GetInstance();
     TBasicApp::NewLogEntry() << app.XFile().GetRM().rSAME.GenerateList();
+    return;
+  }
+  if (Options.GetBoolOption("fix")) {
+    TXApp& app = TXApp::GetInstance();
+    app.XFile().GetRM().rSAME.FixOverlapping();
     return;
   }
   if (!Cmds.IsEmpty() && (Cmds[0].Equalsi("adp") || Cmds[0].Equalsi("disp"))) {
@@ -10862,6 +10874,12 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   else {
+    if (expand) {
+      app.XFile().GetRM().rSAME.Expand();
+      app.XFile().GetRM().MergeSADI();
+      TBasicApp::NewLogEntry() << "SAME have been expanded and SADI combined";
+      return;
+    }
     E.ProcessingError(__OlxSrcInfo, "invalid input arguments");
     return;
   }

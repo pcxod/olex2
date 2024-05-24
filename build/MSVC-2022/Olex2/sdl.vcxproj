@@ -597,6 +597,7 @@
     <ClInclude Include="..\..\..\sdl\linked_list.h" />
     <ClInclude Include="..\..\..\sdl\linked_operators.h" />
     <ClInclude Include="..\..\..\sdl\listalg.h" />
+    <ClInclude Include="..\..\..\sdl\list_joiner.h" />
     <ClInclude Include="..\..\..\sdl\log.h" />
     <ClInclude Include="..\..\..\sdl\logfile.h" />
     <ClInclude Include="..\..\..\sdl\macroerror.h" />

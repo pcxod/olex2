@@ -44,6 +44,7 @@ public:
 
   struct Ref : public comparable_operators_full<Ref> {
     TSAtom::Ref a, b;
+    Ref() {}
     Ref(const TSAtom::Ref& _a, const TSAtom::Ref& _b)
       : a(_a), b(_b)
     {}
@@ -80,7 +81,10 @@ public:
     return (*FA == r.a && *FB == r.b) || (*FA == r.b && *FB == r.a);
   }
   static Ref GetRef(const TSAtom &a, const TSAtom &b);
-  static Ref GetRef(const TCAtom& a, const TCAtom& b);
+  static Ref GetRef(const TCAtom& a, const TCAtom& b) {
+    return GetRef(a, 0, b, 0);
+  }
+  static Ref GetRef(const TCAtom& a, const smatd* ma, const TCAtom& b, const smatd* mb);
   DefPropP(short, Order)
     /* returns MOL file compatible bond order:
     1 = Single, 2 = Double, 3 = Triple, 4 = Aromatic, 0 - undefined

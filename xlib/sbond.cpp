@@ -43,17 +43,23 @@ TSBond::Ref TSBond::GetRef(const TSAtom& a_, const TSAtom& b_) {
   return Ref(a->GetRef(), b->GetRef());
 }
 //..............................................................................
-TSBond::Ref TSBond::GetRef(const TCAtom& a_, const TCAtom& b_) {
+TSBond::Ref TSBond::GetRef(const TCAtom& a_, const smatd* ma_,
+  const TCAtom& b_, const smatd* mb_)
+{
   const TCAtom* a = &a_, * b = &b_;
+  const smatd* ma = ma_, * mb = mb_;
   if (a->GetType().z < b->GetType().z) {
     olx_swap(a, b);
+    olx_swap(ma, mb);
   }
   else if (a->GetType().z == b->GetType().z) {
     if (a->GetLabel().Compare(b->GetLabel()) < 0) {
       olx_swap(a, b);
+      olx_swap(ma, mb);
     }
   }
-  return Ref(TSAtom::Ref(*a, 0), TSAtom::Ref(*b, 0));
+  return Ref(TSAtom::Ref(*a, ma == 0 ? ~0 : ma->GetId()),
+    TSAtom::Ref(*b, mb == 0 ? ~0 : mb->GetId()));
 }
 //..............................................................................
 void TSBond::ToDataItem(TDataItem& item) const {

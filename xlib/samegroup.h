@@ -29,6 +29,8 @@ protected:
   void ClearAtomIds() { SetAtomIds(~0); }
   // re-orders this groups and dependent groups atoms according to tags
   void Reorder();
+  // initialises atom_map_N
+  olx_object_ptr<DistanceGenerator> get_generator() const;
 public:
   TSameGroup(uint16_t id, TSameGroupList& parent);
   ~TSameGroup();
@@ -46,9 +48,6 @@ public:
 
   TStrList::const_list_type Analyse(bool log,
     TPtrList<const TSameGroup> *offending=0) const;
-
-  // generates SADI list
-  TStrList::const_list_type TSameGroup::GenerateList() const;
 
   void Clear() {
     SetAtomIds(~0);
@@ -100,8 +99,28 @@ public:
     return g.IsSubgroupOf(*this);
   }
 
-  // a list of restrained distnaces for atom indices in the AU
-  TTypeList<olx_pair_t<size_t,size_t> >::const_list_type GetRestrainedDistances() const;
+  // generates SADI list
+  TStrList::const_list_type GenerateList() const;
+
+  // a list of restrained distances for atom indices in the AU
+  DistanceGenerator::pair_list_t::const_list_type GetRestrainedDistances() const {
+    TTypeList<DistanceGenerator::pair_list_t> rv1;
+    GetRestrainedDistances(rv1, rv1);
+    // GCC cannot deduce return type??? cannot use FunctionAccessor::MakeConst directly
+    size_t (DistanceGenerator::pair_list_t:: * f)() const = &DistanceGenerator::pair_list_t::Count;
+    size_t sz = olx_sum(rv1, FunctionAccessor::MakeConst(f));
+    DistanceGenerator::pair_list_t rv(olx_reserve(sz));
+    for (size_t i = 0; i < rv1.Count(); i++) {
+      rv.AddCopyAll(rv1[i]);
+    }
+    return rv;
+  }
+
+  void GetRestrainedDistances(TTypeList<DistanceGenerator::pair_list_t> &d12,
+    TTypeList<DistanceGenerator::pair_list_t>& d13) const;
+
+  // expands SAME into SADI lists
+  void Expand(TStrList* log=0) const;
 
   double Esd12, Esd13;
 
@@ -141,8 +160,12 @@ public:
   void Release(TSameGroup& sg);
   void Restore(TSameGroup& sg);
   void Delete(const TPtrList <TSameGroup> &groups);
+  void Delete(TSameGroup& g) {
+    Delete(TPtrList<TSameGroup>() << g);
+  }
   void Sort();
   void Analyse();
+  void FixOverlapping();
   void PrepareSave();
   // works on Reference groups only
   TPtrList<TSameGroup>::const_list_type
@@ -155,6 +178,8 @@ public:
   void EndAUSort();
 
   TStrList::const_list_type GenerateList() const;
+  // expands all SAME into SADI lists
+  void Expand();
 
   void ToDataItem(TDataItem& item) const;
 #ifdef _PYTHON

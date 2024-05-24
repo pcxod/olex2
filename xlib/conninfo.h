@@ -14,6 +14,7 @@
 #include "bapp.h"
 #include "connext.h"
 #include "dataitem.h"
+#include "list_joiner.h"
 
 BeginXlibNamespace()
 
@@ -157,6 +158,8 @@ struct DistanceGenerator {
   typedef olxset<size_t, TPrimitiveComparator> atom_set_t;
   typedef olxdict<size_t, size_t, TPrimitiveComparator> atom_map_1_t;
   typedef olxdict<size_t, TSizeList, TPrimitiveComparator> atom_map_N_t;
+  typedef TTypeList<idx_pair_t> pair_list_t;
+  typedef olx_object_ptr< pair_list_t> pair_list_ptr_t;
   distance_set_t distances_12, distances_13;
   /* inclusive - if true only atoms in the groups are considered, otherwise -
   the immediate environment is consedered too
@@ -180,10 +183,10 @@ struct DistanceGenerator {
     GenerateSADI_(distances_13, esd13, rm, atom_map);
   }
   void GenerateSADI(RefinementModel &rm, const atom_map_N_t &atom_map,
-    double esd12, double esd13) const
+    double esd12, double esd13, TStrList* log = 0) const
   {
-    GenerateSADI_(distances_12, esd12, rm, atom_map);
-    GenerateSADI_(distances_13, esd13, rm, atom_map);
+    GenerateSADI_(distances_12, esd12, rm, atom_map, log);
+    GenerateSADI_(distances_13, esd13, rm, atom_map, log);
   }
   TStrList::const_list_type GenerateSADIList(const TAsymmUnit& au,
     const atom_map_1_t& atom_map, double esd12 = 0.02, double esd13 = 0.04) const
@@ -203,11 +206,25 @@ struct DistanceGenerator {
   */
   static void GenerateDFIX(TCAtomPList &atoms, bool explict = true,
     double esd_12=0.02, double esd_13=0.04);
+  static TTypeList<pair_list_t>::const_list_type Merge(
+    const TTypeList<pair_list_t>& lists)
+  {
+    return ListJoiner::Join(lists, 2, DistanceGenerator::idx_pair_t(0, 0));
+  }
+  static TTypeList<pair_list_t>::const_list_type GeneratePairList(
+    const distance_set_t& d, const TAsymmUnit& au,
+    const atom_map_N_t& atom_map);
+  
+  // non-functional - for ferrying along the object
+  olx_object_ptr<atom_map_N_t> atom_map_N;
+  olx_object_ptr<atom_map_1_t> atom_map_1;
+
 private:
   static void GenerateSADI_(const distance_set_t &d, double esd,
     RefinementModel &rm, const atom_map_1_t &atom_map);
   static void GenerateSADI_(const distance_set_t &d, double esd,
-    RefinementModel &rm, const atom_map_N_t &atom_map);
+    RefinementModel &rm, const atom_map_N_t &atom_map,
+    TStrList *log=0);
   static TStrList::const_list_type GenerateSADIList_(
     const distance_set_t& d, double esd, const TAsymmUnit& au,
     const atom_map_1_t& atom_map);

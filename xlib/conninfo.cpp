@@ -1039,7 +1039,8 @@ void DistanceGenerator::GenerateSADI_(
 //........................................................................
 void DistanceGenerator::GenerateSADI_(
   const DistanceGenerator::distance_set_t &d, double esd,
-  RefinementModel &rm, const DistanceGenerator::atom_map_N_t &atom_map)
+  RefinementModel &rm, const DistanceGenerator::atom_map_N_t &atom_map,
+  TStrList *log)
 {
   size_t gc = atom_map.GetValue(0).Count();
   for (size_t i = 0; i < d.Count(); i++) {
@@ -1058,6 +1059,9 @@ void DistanceGenerator::GenerateSADI_(
         continue;
       }
       sr.AddAtomPair(rm.aunit.GetAtom(a_idx), 0, rm.aunit.GetAtom(b_idx), 0);
+    }
+    if (log != 0) {
+      log->Add(sr.ToString());
     }
   }
 }
@@ -1105,6 +1109,36 @@ TStrList::const_list_type DistanceGenerator::GenerateSADIList_(
     }
   }
   return rv;
+}
+//........................................................................
+TTypeList<DistanceGenerator::pair_list_t>::const_list_type
+DistanceGenerator::GeneratePairList(
+  const distance_set_t& d, const TAsymmUnit& au,
+  const atom_map_N_t& atom_map)
+{
+  TTypeList<TTypeList<idx_pair_t> > res;
+  size_t gc = atom_map.GetValue(0).Count();
+  for (size_t i = 0; i < d.Count(); i++) {
+    TTypeList<idx_pair_t>& row = res.AddNew();
+    row.AddNew(d[i]);
+    for (size_t j = 0; j < gc; j++) {
+      size_t a_midx = atom_map.IndexOf(d[i].a);
+      size_t b_midx = atom_map.IndexOf(d[i].b);
+      if (a_midx == InvalidIndex && b_midx == InvalidIndex) {
+        throw TInvalidArgumentException(__OlxSourceInfo, "atom map");
+      }
+      size_t a_idx = a_midx == InvalidIndex ? d[i].a : atom_map.GetValue(a_midx)[j];
+      size_t b_idx = b_midx == InvalidIndex ? d[i].b : atom_map.GetValue(b_midx)[j];
+      if (a_idx == b_idx) {
+        continue;
+      }
+      if (a_idx > b_idx) {
+        olx_swap(a_idx, b_idx);
+      }
+      row.AddNew(a_idx, b_idx);
+    }
+  }
+  return res;
 }
 //........................................................................
 void DistanceGenerator::GenerateDFIX(TCAtomPList& atoms_, bool explict,

@@ -1773,6 +1773,47 @@ const_strlist RefinementModel::Describe() {
   return lst;
 }
 //.............................................................................
+size_t RefinementModel::MergeSADI() {
+  typedef TTypeList<TSBond::Ref> list_t;
+  typedef TTypeList<list_t> lists_t;
+  olxdict<double, lists_t, TPrimitiveComparator> sets;
+  TTypeList<TTypeList<TSBond::Ref> > to_merge;
+  for (size_t i = 0; i < rSADI.Count(); i++) {
+    list_t& d = sets.Add(rSADI[i].GetEsd()).AddNew();
+    TAtomRefList x = rSADI[i].GetAtoms().ExpandList(*this, 2);
+    for (size_t ri = 0; ri < x.Count(); ri += 2) {
+      d.AddCopy(TSBond::GetRef(
+        x[ri].GetAtom(), x[ri].GetMatrix(),
+        x[ri + 1].GetAtom(), x[ri + 1].GetMatrix()));
+    }
+  }
+  rSADI.Clear();
+  const TUnitCell &uc = aunit.GetLattice().GetUnitCell();
+  for (size_t i = 0; i < sets.Count(); i++) {
+    lists_t res = ListJoiner::Join(sets.GetValue(i), 2, TSBond::Ref());
+    for (size_t j = 0; j < res.Count(); j++) {
+      TSimpleRestraint &r = rSADI.AddNew();
+      r.SetEsd(sets.GetKey(i));
+      for (size_t k = 0; k < res[j].Count(); k++) {
+        TSBond::Ref& ref = res[j][k];
+        TCAtom& ca = aunit.GetAtom(ref.a.atom_id),
+          &cb = aunit.GetAtom(ref.b.atom_id);
+        olx_object_ptr<smatd> ma, mb;
+        if (ref.a.matrix_id != ~0) {
+          ma = new smatd(smatd::FromId(ref.a.matrix_id,
+            uc.GetMatrix(smatd::GetContainerId(ref.a.matrix_id))));
+        }
+        if (ref.b.matrix_id != ~0) {
+          mb = new smatd(smatd::FromId(ref.b.matrix_id,
+            uc.GetMatrix(smatd::GetContainerId(ref.b.matrix_id))));
+        }
+        r.AddAtomPair(ca, &ma, cb, &mb);
+      }
+    }
+  }
+  return 0;
+}
+//.............................................................................
 const_strlist RefinementModel::AnalyseModel() const {
   TStrList out;
   olxset<TSBond::Ref, TComparableComparator> sadi_dist_set,
@@ -1794,7 +1835,9 @@ const_strlist RefinementModel::AnalyseModel() const {
   for (size_t i = 0; i < rSADI.Count(); i++) {
     TAtomRefList x = rSADI[i].GetAtoms().ExpandList(*this, 2);
     for (size_t ri = 0; ri < x.Count(); ri += 2) {
-      TSBond::Ref r = TSBond::GetRef(x[ri].GetAtom(), x[ri+1].GetAtom());
+      TSBond::Ref r = TSBond::GetRef(
+        x[ri].GetAtom(), x[ri].GetMatrix(),
+        x[ri+1].GetAtom(), x[ri+1].GetMatrix());
       if (!sadi_dist_set.Add(r)) {
         sadi_duplicates.Add(r);
       }
