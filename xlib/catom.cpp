@@ -606,6 +606,34 @@ SiteSymmCon TCAtom::GetSiteConstraints() const {
   return rv;
 }
 //..............................................................................
+bool TCAtom::IsPositionFixed(bool any) const {
+  size_t fixed_cnt = 0;
+  for (size_t j = 0; j < 3; j++) {
+    if (GetVarRef(catom_var_name_X + j) != 0 &&
+      GetVarRef(catom_var_name_X + j)->relation_type == relation_None)
+    {
+      fixed_cnt++;
+    }
+  }
+  return any ? fixed_cnt != 0 : fixed_cnt == 3;
+}
+//..............................................................................
+bool TCAtom::IsADPFixed(bool any) const {
+  if (GetEllipsoid() == 0) {
+    return GetVarRef(catom_var_name_Uiso) != 0 &&
+      GetVarRef(catom_var_name_Uiso)->relation_type == relation_None;
+  }
+  size_t fixed_cnt = 0;
+  for (size_t j = 0; j < 3; j++) {
+    if (GetVarRef(catom_var_name_U11 + j) != 0 &&
+      GetVarRef(catom_var_name_U11 + j)->relation_type == relation_None)
+    {
+      fixed_cnt++;
+    }
+  }
+  return any ? fixed_cnt != 0 : fixed_cnt == 6;
+}
+//..............................................................................
 //..............................................................................
 //..............................................................................
 int TCAtomComparator::Compare(const TCAtom& a1, const TCAtom& a2) {

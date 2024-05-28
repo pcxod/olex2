@@ -319,6 +319,10 @@ public:
   vec3d const& ccrd() const { return Center; }
   vec3d& ccrdEsd() { return Esd; }
   vec3d const& ccrdEsd() const { return Esd; }
+  //
+  bool IsPositionFixed(bool any=false) const;
+  // for either Uiso or U
+  bool IsADPFixed(bool any = false) const;
   // IXVarReferencer implementation
   virtual size_t VarCount() const { return 12; }
   virtual XVarReference* GetVarRef(size_t i) const {

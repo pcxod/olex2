@@ -1856,8 +1856,8 @@ const_strlist RefinementModel::AnalyseModel() const {
       }
     }
   }
-
-  if (!sadi_duplicates.IsEmpty()) {
+  // SADI 'duplicates' should be merged automatically
+  if (!sadi_duplicates.IsEmpty() && false) {
     olxstr& l = out.Add("SADI duplicates (") << sadi_duplicates.Count() << "): ";
     for (size_t i = 0; i < sadi_duplicates.Count(); i++) {
       l << aunit.GetAtom(sadi_duplicates[i].a.atom_id).GetResiLabel() << '-'
@@ -1902,15 +1902,7 @@ const_strlist RefinementModel::AnalyseModel() const {
       }
       // check pivot
       {
-        size_t fixed_cnt = 0;
-        for (size_t j = 0; j < 3; j++) {
-          if (a.GetVarRef(catom_var_name_X + j) != 0 &&
-            a.GetVarRef(catom_var_name_X + j)->relation_type == relation_None)
-          {
-            fixed_cnt++;
-          }
-        }
-        if (fixed_cnt == 3) {
+        if (a.IsPositionFixed()) {
           atoms1 << a;
         }
       }
@@ -1920,16 +1912,7 @@ const_strlist RefinementModel::AnalyseModel() const {
         if (aa.IsDeleted()) {
           continue;
         }
-        bool has_fixed = false;
-        for (size_t j = 0; j < 3; j++) {
-          if (aa.GetVarRef(catom_var_name_X + j) != 0 &&
-            aa.GetVarRef(catom_var_name_X + j)->relation_type == relation_None)
-          {
-            has_fixed = true;
-            break;
-          }
-        }
-        if (has_fixed) {
+        if (aa.IsPositionFixed(true)) {
           atoms2 << aa;
         }
       }
@@ -1941,6 +1924,45 @@ const_strlist RefinementModel::AnalyseModel() const {
     if (!atoms2.IsEmpty()) {
       out.Add("Fixed coordinates in AFIX atom(s): ") << olxstr(", ")
         .Join(atoms2, FunctionAccessor::MakeConst(&TCAtom::GetResiLabel));
+    }
+  }
+  // analyse FLAT
+  {
+    TPtrList<const TCAtom> atoms;
+    for (size_t i = 0; i < rFLAT.Count(); i++) {
+      TAtomRefList x = rFLAT[i].GetAtoms().ExpandList(*this);
+      for (size_t ri = 0; ri < x.Count(); ri ++) {
+        const TCAtom& a = x[ri].GetAtom();
+        if (a.GetAfix() != 0 || a.IsPositionFixed(true)) {
+          atoms << a;
+        }
+      }
+    }
+    if (!atoms.IsEmpty()) {
+      out.Add("FLAT on AFIX/fixed atom(s): ") << olxstr(", ")
+        .Join(atoms, FunctionAccessor::MakeConst(&TCAtom::GetResiLabel));
+    }
+  }
+  // analyse ADP restraints and EADP
+  {
+    olxset<const TCAtom, TPointerComparator> atoms;
+    TPtrList<TSimpleRestraint> rests;
+    rests << rSIMU << rDELU << rRIGU;
+    for (size_t ri = 0; ri < rests.Count(); ri++) {
+      for (size_t i = 0; i < rests.Count(); i++) {
+        TAtomRefList x = rests[ri]->GetAtoms().ExpandList(*this);
+        for (size_t ri = 0; ri < x.Count(); ri++) {
+          const TCAtom& a = x[ri].GetAtom();
+          if (a.GetAfix() == 2 || a.IsADPFixed(true)) {
+            atoms << a;
+          }
+        }
+      }
+      //rEADP
+    }
+    if (!atoms.IsEmpty()) {
+      out.Add("ADP restraints on EADP/AFIX/fixed ADP atom(s): ") << olxstr(", ")
+        .Join(atoms, FunctionAccessor::MakeConst(&TCAtom::GetResiLabel));
     }
   }
 
