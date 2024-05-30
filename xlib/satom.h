@@ -162,6 +162,8 @@ public:
     TLattice& GetLattice(const class TXApp& app) const;
     int Compare(const Ref& r) const;
     void ToDataItem(TDataItem& item, const TXApp& app, bool use_id=false) const;
+    // checks if the atom's tag is valid
+    bool IsValid(const TXApp& app) const;
     void FromDataItem(const TDataItem& item, const TXApp &app);
     void swap(Ref& r) {
       olx_swap(au_id, r.au_id);

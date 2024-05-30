@@ -5380,6 +5380,9 @@ void TGXApp::SaveStructureStyle(TDataItem& item) const {
   {
     TDataItem &pr = name_reg.AddItem("Atoms");
     for (size_t i = 0; i < TXAtom::NamesRegistry().Count(); i++) {
+      if (!TXAtom::NamesRegistry().GetKey(i).IsValid(*this)) {
+        continue;
+      }
       TDataItem& di = pr.AddItem("item");
       TXAtom::NamesRegistry().GetKey(i).ToDataItem(di, *this);
       di.AddField("value", TXAtom::NamesRegistry().GetValue(i));
@@ -5388,6 +5391,9 @@ void TGXApp::SaveStructureStyle(TDataItem& item) const {
   {
     TDataItem &pr = name_reg.AddItem("Bonds");
     for (size_t i = 0; i < TXBond::NamesRegistry().Count(); i++) {
+      if (!TXBond::NamesRegistry().GetKey(i).IsValid(*this)) {
+        continue;
+      }
       TDataItem& di = pr.AddItem("item");
       TXBond::NamesRegistry().GetKey(i).ToDataItem(di, *this);
       di.AddField("value", TXBond::NamesRegistry().GetValue(i));
@@ -5588,14 +5594,20 @@ void TGXApp::LoadStructureStyle(const TDataItem &item) {
     TDataItem& br = name_reg->GetItemByName("Bonds");
     if (version > 0) {
       for (size_t i = 0; i < ar.ItemCount(); i++) {
-        TXAtom::NamesRegistry().Add(
-          TSAtom::Ref(ar.GetItemByIndex(i), *this),
-          ar.GetItemByIndex(i).GetFieldByName("value"));
+        try {
+          TXAtom::NamesRegistry().Add(
+            TSAtom::Ref(ar.GetItemByIndex(i), *this),
+            ar.GetItemByIndex(i).GetFieldByName("value"));
+        }
+        catch (const TExceptionBase& e) {}
       }
       for (size_t i = 0; i < br.ItemCount(); i++) {
-        TXBond::NamesRegistry().Add(
-          TSBond::Ref(br.GetItemByIndex(i), *this),
-          br.GetItemByIndex(i).GetFieldByName("value"));
+        try {
+          TXBond::NamesRegistry().Add(
+            TSBond::Ref(br.GetItemByIndex(i), *this),
+            br.GetItemByIndex(i).GetFieldByName("value"));
+        }
+        catch (const TExceptionBase& e) {}
       }
     }
     else {

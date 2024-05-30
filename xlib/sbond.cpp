@@ -9,6 +9,7 @@
 
 #include "sbond.h"
 #include "lattice.h"
+#include "xapp.h"
 
 TSBond::TSBond(TNetwork *P) :
   TBasicBond<TNetwork,TSAtom>(P), Order(sboUndefined)
@@ -140,6 +141,10 @@ int TSBond::Ref::Compare(const Ref& r) const {
 void TSBond::Ref::ToDataItem(TDataItem& item, const TXApp& app, bool use_id) const {
   a.ToDataItem(item.AddItem("a"), app, use_id);
   b.ToDataItem(item.AddItem("b"), app, use_id);
+}
+//..............................................................................
+bool TSBond::Ref::IsValid(const TXApp& app) const {
+  return a.IsValid(app) && b.IsValid(app);
 }
 //..............................................................................
 void TSBond::Ref::FromDataItem(const TDataItem& item, const class TXApp& app) {
