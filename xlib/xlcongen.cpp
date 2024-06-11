@@ -258,7 +258,9 @@ bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group,
     else {
       var = &ovr->Parent;
       relation = ovr->relation_type;
-      occu_mult *= ovr->coefficient;
+      if (relation != relation_None) {
+        occu_mult *= ovr->coefficient;
+      }
     }
     for (size_t i = 0; i < CreatedAtoms.Count(); i++) {
       CreatedAtoms[i]->SetOccu(envi.GetBase().CAtom().GetOccu());

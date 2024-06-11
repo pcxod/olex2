@@ -16,10 +16,11 @@ namespace olex2 {
       return;
     }
     if (cmd == "olex2.refine") {
-      cmd = "FilePath()\nFileName()";
+      cmd = "StrDir()\nFileName()";
       if (ip->processFunction(cmd, EmptyString(), true)) {
         TStrList x(cmd, '\n');
         fin_fn = TEFile::AddPathDelimeterI(x[0])
+          << TEFile::TEFile::AddPathDelimeter("temp")
           << x[1].Replace(' ', EmptyString()) << ".fin";
       }
     }

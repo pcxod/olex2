@@ -155,7 +155,7 @@ void GXLibMacros::Export(TLibrary& lib) {
     "Shows/hides atom labels. Options may work as argument too. No options/args toggles the"
     "labels visibility [a boolean value can be used as an arg]");
   gxlib_InitMacro(Label,
-    "type-type of labels to make - subscript, brackers, default&;"
+    "type-type of labels to make - subscript, brackets, default&;"
     "symm-symmetry dependent tag type {[$], #, X, full}&;"
     "resi-add residue number(#) or name (n) like -resi=_# or -resi=@n&;"
     "a-aligns labels trying to avoid overlapping&;",
