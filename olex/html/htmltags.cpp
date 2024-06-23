@@ -189,7 +189,7 @@ TAG_HANDLER_PROC(tag) {
   }
 
   olx_object_ptr<wxFSFile> fsFile = TFileHandlerManager::GetFSFileHandler( src );
-  if (fsFile == 0) {
+  if (!fsFile.ok()) {
     TBasicApp::NewLogEntry(logError) << "Could not locate image: '"
       << src << '\'';
   }
