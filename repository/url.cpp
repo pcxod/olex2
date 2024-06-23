@@ -13,7 +13,7 @@
 
 //..............................................................................
 TUrl::TUrl( const olxstr& _url ) : Proxy(NULL)  {
-  Port = 80;
+  Port = _url.StartsFromi("https://") ? 443 : 80;
   olxstr url(_url);
   // extract proxy user and password, if any
   size_t useri = url.IndexOf("@");
