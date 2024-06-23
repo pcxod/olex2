@@ -157,6 +157,12 @@ size_t TAtomReference::_Expand(RefinementModel& rm, TCAtomGroup& atoms,
     }
     resi_name = resi_name.SubStringTo(eqiv_ind);
   }
+  size_t part_ind = resi_name.IndexOf('^');
+  //int part = -100;
+  if (part_ind != InvalidIndex) {
+    //part =
+    resi_name = resi_name.SubStringTo(part_ind);
+  }
   // validate syntax
   TPtrList<TResidue> residues;
   if (!resi_name.IsEmpty() &&
