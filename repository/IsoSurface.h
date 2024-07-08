@@ -28,9 +28,9 @@
 
 using namespace olx_array;
 struct IsoTriangle {
-  int pointID[3];
-  int operator [] (int i) const { return pointID[i]; }
-  int &operator [] (int i) { return pointID[i]; }
+  int64_t pointID[3];
+  int64_t operator [] (int i) const { return pointID[i]; }
+  int64_t& operator [] (int i) { return pointID[i]; }
 };
 
 class CIsoSurface {
@@ -115,7 +115,7 @@ protected:
     const IsoPoint& Get(int x, int y, int z, int extra) const {
       return Data.Get(x)->Get(y)->Get(z).ps[extra];
     }
-    const IsoPoint& Get(uint32_t crd) const {
+    const IsoPoint& Get(uint64_t crd) const {
       int x, y, z, e;
       decode(crd, x, y, z, e);
       return Data.Get(x)->Get(y)->Get(z).ps[e];
@@ -179,7 +179,7 @@ protected:
       }
       edgeId = extra;
     }
-    static uint32_t encode(int x, int y, int z, int edgeId) {
+    static uint64_t encode(int x, int y, int z, int edgeId) {
       int extra = 0;
       switch (edgeId) {
       case 0:  extra = 1;              break; // (x,y,z) + 1
@@ -197,16 +197,16 @@ protected:
       default: return ~0;         // Invalid edge no.
       }
       // max grid size is 1024x1024x1022
-      return (uint32_t)extra     |
-             (uint32_t)(x << 22) |
-             (uint32_t)(y << 12) |
-             (uint32_t)(z << 2);
+      return (uint64_t)(((uint64_t)extra) << 60)    |
+             ((((uint64_t)x) << 40) & 0xFFFFF0000000000) |
+             ((((uint64_t)y) << 20) & 0x00000FFFFF00000) |
+             (((uint64_t)z) & 0x0000000000FFFFF);
     }
-    static inline void decode(uint32_t code, int& x, int& y, int& z, int& extra) {
-      extra = (code & 0x00000002);
-      z =     ((code & 0x00000FFC) >> 2);
-      y =     ((code & 0x003FF000) >> 12);
-      x =     ((code & 0xFFC00000) >> 22);
+    static inline void decode(uint64_t code, int& x, int& y, int& z, int& extra) {
+      extra = ((code & 0xF000000000000000) >> 60);
+      z =     ((code & 0x0000000000FFFFF));
+      y =     ((code & 0x00000FFFFF00000) >> 20);
+      x =     ((code & 0xFFFFF0000000000) >> 40);
     }
   };
 ///////////////////////////////////////////////////////////////////////////////////
