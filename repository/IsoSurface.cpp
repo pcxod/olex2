@@ -566,7 +566,7 @@ reducer::reducer(TTypeList<vec3f>& vertices_,
   : vertices(vertices_), triangles(triangles_), vt_map(vertices.Count())
 {
   for (size_t i = 0; i < triangles.Count(); i++) {
-    const int *p = &triangles[i].pointID[0];
+    const int64_t *p = &triangles[i].pointID[0];
     vt_map[p[0]].Add(i);
     vt_map[p[1]].Add(i);
     vt_map[p[2]].Add(i);
@@ -711,7 +711,7 @@ smoother::smoother(TTypeList<vec3f> &v,
   n_map(v.Count())
 {
   for (size_t i = 0; i < triangles.Count(); i++) {
-    const int *p = &triangles[i][0];
+    const int64_t *p = &triangles[i][0];
     n_map[p[0]].Add(p[1]);    n_map[p[0]].Add(p[2]);
     n_map[p[1]].Add(p[0]);    n_map[p[1]].Add(p[2]);
     n_map[p[2]].Add(p[0]);    n_map[p[2]].Add(p[1]);

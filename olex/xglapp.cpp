@@ -208,8 +208,10 @@ bool TGlXApp::OnInit() {
     str_glStereo = olx_getenv("OLEX2_GL_STEREO"),
     str_glMultisampling = olx_getenv("OLEX2_GL_MULTISAMPLE"),
     str_glDepth = olx_getenv("OLEX2_GL_DEPTH_BITS");
+  GLboolean stereo_supported = GL_FALSE;
+  olx_gl::get(GL_STEREO, &stereo_supported);
 #if defined(__WIN32__)
-  olxstr str_glDefStereo = TrueString(),
+  olxstr str_glDefStereo = stereo_supported ? TrueString() : FalseString(),
     str_glDefMultisampling = TrueString();
 #else
   olxstr str_glDefStereo = FalseString(),
