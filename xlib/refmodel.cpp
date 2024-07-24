@@ -2533,10 +2533,12 @@ adirection& RefinementModel::DirectionById(const olxstr &id) const {
 //..............................................................................
 adirection *RefinementModel::AddDirection(const TCAtomGroup &atoms, uint16_t type) {
   olxstr dname;
-  if (type == direction_vector)
+  if (type == direction_vector) {
     dname << 'v';
-  else if (type == direction_normal)
+  }
+  else if (type == direction_normal) {
     dname << 'n';
+  }
   else {
     throw TInvalidArgumentException(__OlxSourceInfo,
       olxstr("direction type: ").quote() << type);

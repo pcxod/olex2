@@ -1209,7 +1209,12 @@ void GXLibMacros::macInfo(TStrObjList &Cmds, const TParamList &Options,
     Options.FindValue('p', "-3").ToInt(),
     Options.GetBoolOption('f', false, false)
   );
-  TBasicApp::NewLogEntry() << Output;
+  if (Error.IsMacroCall()) {
+    TBasicApp::NewLogEntry() << Output;
+  }
+  else {
+    Error.SetRetVal(Output.Text('\n'));
+  }
   if (Options.Contains('c')) {
     app.ToClipboard(Output);
   }

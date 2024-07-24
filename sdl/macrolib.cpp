@@ -126,6 +126,7 @@ olxstr TEMacroLib::ProcessEvaluator(
   me.GetStack().Push(e->ToStringBuffer());
   olxstr name = e->evator == 0 ? e->data : e->evator->name;
   size_t bi_ind = GetBuiltins().IndexOf(name);
+  me.SetMacroCall(e->macro_call);
   if (bi_ind != InvalidIndex && e->evator != 0) {
     (*GetBuiltins().GetValue(bi_ind))(e->evator, me, argv);
   }

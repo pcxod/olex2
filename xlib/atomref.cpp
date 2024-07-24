@@ -142,9 +142,18 @@ size_t TAtomReference::_Expand(RefinementModel& rm, TCAtomGroup& atoms,
     return atoms.Count() - ac;
   }
   //
-  size_t resi_ind = Expression.IndexOf('_');
+  int part = -1000;
+  olxstr lexp = Expression;
+  size_t part_ind = lexp.IndexOf('^');
+  if (part_ind != InvalidIndex) {
+    if (lexp.Length() > part_ind) {
+      part = lexp.SubStringFrom(part_ind+1).ToLowerCase().CharAt(0) - 'a' + 1;
+    }
+    lexp = lexp.SubStringTo(part_ind);
+  }
+  size_t resi_ind = lexp.IndexOf('_');
   olxstr resi_name = (resi_ind == InvalidIndex ? EmptyString()
-    : Expression.SubStringFrom(resi_ind + 1));
+    : lexp.SubStringFrom(resi_ind + 1));
   // check if it is just an equivalent position
   const smatd* eqiv = 0;
   size_t eqiv_ind = resi_name.IndexOf('$');
@@ -157,13 +166,6 @@ size_t TAtomReference::_Expand(RefinementModel& rm, TCAtomGroup& atoms,
     }
     resi_name = resi_name.SubStringTo(eqiv_ind);
   }
-  size_t part_ind = resi_name.IndexOf('^');
-  //int part = -100;
-  if (part_ind != InvalidIndex) {
-    //part =
-    resi_name = resi_name.SubStringTo(part_ind);
-  }
-  // validate syntax
   TPtrList<TResidue> residues;
   if (!resi_name.IsEmpty() &&
     (resi_name.CharAt(0) == '+' || resi_name.CharAt(0) == '-'))
@@ -192,9 +194,9 @@ size_t TAtomReference::_Expand(RefinementModel& rm, TCAtomGroup& atoms,
     }
   }
   residues.Pack();
-  if (Expression.CharAt(0) == '$') {  // sfac type
-    olxstr sfac = ((resi_ind == InvalidIndex) ? Expression.SubStringFrom(1)
-      : Expression.SubString(1, resi_ind - 1));
+  if (lexp.CharAt(0) == '$') {  // sfac type
+    olxstr sfac = ((resi_ind == InvalidIndex) ? lexp.SubStringFrom(1)
+      : lexp.SubString(1, resi_ind - 1));
     olx_object_ptr<IAtomSelectionCriterium> cr = BuildCriteria(sfac, rm.aunit);
     AtomLabelInfo li(Expression);
     for (size_t i = 0; i < residues.Count(); i++) {
@@ -208,15 +210,17 @@ size_t TAtomReference::_Expand(RefinementModel& rm, TCAtomGroup& atoms,
     }
   }
   else {  // just an atom
-    olxstr aname = ((resi_ind == InvalidIndex) ? Expression
-      : Expression.SubStringTo(resi_ind));
+    olxstr aname = ((resi_ind == InvalidIndex) ? lexp
+      : lexp.SubStringTo(resi_ind));
     for (size_t i = 0; i < residues.Count(); i++) {
       for (size_t j = 0; j < residues[i]->Count(); j++) {
         TCAtom* ca = &residues[i]->GetAtom(j);
         // must be unique!
         if (!ca->IsDeleted() && ca->GetLabel().Equalsi(aname)) {
-          atoms.AddNew(ca, eqiv);
-          break;
+          if (part != -1000 && ca->GetPart() == part) {
+            atoms.AddNew(ca, eqiv);
+            break;
+          }
         }
       }
     }

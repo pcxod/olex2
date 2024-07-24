@@ -375,7 +375,10 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(SAInfo, EmptyString(), fpAny,
     "Finds and prints space groups which include any of the provided "
     "systematic absences in the form 'b~~', '~b~' or '~~b'");
-  xlib_InitMacro(Inv, "f-force inversion for non-centrosymmetric space groups",
+  xlib_InitMacro(Inv,
+    "f-force inversion for non-centrosymmetric space groups&;"
+    "au-inverts the asymmetric unit disregarding the selection etc"
+    ,
     fpAny|psFileLoaded,
     "Inverts whole structure or provided fragments of the structure");
   xlib_InitMacro(Push, EmptyString(),
@@ -1016,11 +1019,38 @@ void XLibMacros::macInv(TStrObjList &Cmds, const TParamList &Options,
       frags.AddUnique(&atoms[i]->GetNetwork());
     }
   }
+  size_t s_c = specials.IndexOf(sg->GetName());
   smatd tm;
   tm.I() *= -1;
   tm.t = sg->GetInversionCenter()*(-2);
-  xapp.XFile().GetLattice().TransformFragments(atoms, tm);
-  size_t s_c = specials.IndexOf(sg->GetName());
+  bool transform_au = Options.GetBoolOption("au");
+  if (transform_au) {
+    TAsymmUnit &au = xapp.XFile().GetAsymmUnit();
+    vec3d center;
+    size_t ac = 0;
+    for (size_t i = 0; i < au.AtomCount(); i++) {
+      au.GetAtom(i).ccrd() = tm * au.GetAtom(i).ccrd();
+      if (au.GetAtom(i).IsAvailable()) {
+        center += au.GetAtom(i).ccrd();
+        ac++;
+      }
+    }
+    if (ac > 0) {
+      center /= ac;
+      vec3i nt = center.Floor<int>();
+      if (!nt.IsNull()) {
+        for (size_t i = 0; i < au.AtomCount(); i++) {
+          au.GetAtom(i).ccrd() -= nt;
+        }
+      }
+    }
+    if (s_c == InvalidIndex) {
+      xapp.XFile().EndUpdate();
+    }
+  }
+  else {
+    xapp.XFile().GetLattice().TransformFragments(atoms, tm);
+  }
   if (s_c != InvalidIndex) {
     TBasicApp::NewLogEntry() << "Changing space group from "
       << specials.GetKey(s_c) << " to " << specials.GetValue(s_c);
@@ -1040,10 +1070,12 @@ void XLibMacros::macInv(TStrObjList &Cmds, const TParamList &Options,
       "transformed. Reload the file to undo the transformation and use 'fmol' "
       "to show all fragments.";
   }
-  IOlex2Processor* op = IOlex2Processor::GetInstance();
-  if (op != 0) {
-    op->processMacro("move");
-    op->processMacro("center");
+  if (!transform_au) {
+    IOlex2Processor* op = IOlex2Processor::GetInstance();
+    if (op != 0) {
+      op->processMacro("move");
+      op->processMacro("center");
+    }
   }
 }
 //.............................................................................
@@ -11494,13 +11526,13 @@ void XLibMacros::macRSA(TStrObjList &Cmds, const TParamList &Options,
       w = olx_analysis::chirality::rsa_analyse(a, debug);
     }
     catch (const TDivException& exc) {
-      TBasicApp::NewLogEntry(logInfo) << "Check connectivity for " << a.GetLabel();
+      TBasicApp::NewLogEntry(logInfo) << "Check connectivity for " << a.GetResiLabel();
       continue;
     }
     if (w.IsEmpty()) {
       continue;
     }
-    olxstr lbl = a.GetLabel();
+    olxstr lbl = a.GetResiLabel();
     lbl.RightPadding(5, ' ') << ':';
     if (a.IsChiralR()) {
       lbl << " R";
@@ -11513,7 +11545,12 @@ void XLibMacros::macRSA(TStrObjList &Cmds, const TParamList &Options,
   if (result.IsEmpty()) {
     return;
   }
-  TBasicApp::NewLogEntry() << result;
+  if (Error.IsMacroCall()) {
+    TBasicApp::NewLogEntry() << result;
+  }
+  else {
+    Error.SetRetVal(result.Text('\n'));
+  }
   if (Options.GetBoolOption('c')) {
     TBasicApp::GetInstance().ToClipboard(result);
   }

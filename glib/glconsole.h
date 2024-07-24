@@ -148,7 +148,7 @@ public:
   void SetInviteString(const olxstr& S);
 
   void PrintText(const olxstr& S, TGlMaterial *M=NULL, bool Hyphenate=true);
-  void PrintText(const TStrList& SL, TGlMaterial *M=NULL, bool Hyphenate=true);
+  void PrintText(const IStrList& SL, TGlMaterial *M=NULL, bool Hyphenate=true);
   void NewLine()  {  FBuffer.Add(EmptyString()); }
   size_t MaxLines();
   void SetMaxLines(size_t V)  {  FMaxLines = V; }

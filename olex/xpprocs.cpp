@@ -1084,11 +1084,14 @@ void TMainForm::macEcho(TStrObjList &Cmds, const TParamList &Options,
       mat = &ExceptionFontColor;
     }
   }
-  FGlConsole->PrintText(TStrList(Cmds), mat, true);
+  if (Cmds.Count() == 1 && Cmds[0].Contains('\n')) {
+    Cmds = TStrList(Cmds[0], '\n');
+  }
+  FGlConsole->PrintText(Cmds, mat, true);
   FGlConsole->SetSkipPosting(true);
   TBasicApp::NewLogEntry() << Cmds;
   if (Options.GetBoolOption('c')) {
-    FXApp->ToClipboard(Cmds.Text(' '));
+    FXApp->ToClipboard(Cmds.Text(NewLineSequence()));
   }
 }
 //..............................................................................
@@ -2479,7 +2482,6 @@ void TMainForm::macEditIns(TStrObjList &Cmds, const TParamList &Options, TMacroD
   SL.Add();
   SL.AddAll(Ins.GetFooter().obj());
   Ins.SaveExtras(SL, 0, 0, Ins.GetRM());
-
   olx_pair_t<bool, bool> res = RunExternalEdit(SL, "ins.txt");
   if (!res.b) {
     TdlgEdit* dlg = new TdlgEdit(this, true);
@@ -2519,6 +2521,7 @@ void TMainForm::macEditIns(TStrObjList &Cmds, const TParamList &Options, TMacroD
   catch (const TExceptionBase& e)  {
     TBasicApp::NewLogEntry(logExceptionTrace) << e;
   }
+  ins_p.reset();
 }
 //..............................................................................
 const_strlist macHklEdit_SaveRef(THklFile &Hkl, TRefPList &refs, bool hklf5) {
