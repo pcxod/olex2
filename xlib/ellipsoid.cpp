@@ -159,7 +159,7 @@ void GramCharlier::FromStrings(const IStrList& str) {
     }
     if (str.Count() >= 25) {
       order = 4;
-      for (size_t i = 0; i < 10; i++) {
+      for (size_t i = 0; i < 15; i++) {
         D[i] = str[i + 10].ToDouble();
       }
     }
