@@ -217,7 +217,7 @@ size_t TAtomReference::_Expand(RefinementModel& rm, TCAtomGroup& atoms,
         TCAtom* ca = &residues[i]->GetAtom(j);
         // must be unique!
         if (!ca->IsDeleted() && ca->GetLabel().Equalsi(aname)) {
-          if (part != -1000 && ca->GetPart() == part) {
+          if (part == -1000 || ca->GetPart() == part) {
             atoms.AddNew(ca, eqiv);
             break;
           }
