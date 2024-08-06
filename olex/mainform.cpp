@@ -3958,8 +3958,9 @@ PyObject* pyIsControl(PyObject* self, PyObject* args)  {
   olxstr cname, pname;  // control and popup (if any) name
   if( !PythonExt::ParseTuple(args, "w|w", &cname, &pname) )
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "w|w");
-  if (!pname.IsEmpty())
+  if (!pname.IsEmpty()) {
     cname = pname << "->" << cname;
+  }
   return Py_BuildValue("b", TGlXApp::GetMainForm()->IsControl(cname));
 }
 //..............................................................................
@@ -3973,20 +3974,21 @@ PyObject* pyResetIdleTime(PyObject* self, PyObject* args)  {
   return PythonExt::PyNone();
 }
 //..............................................................................
-PyObject* pyGetUserInput(PyObject* self, PyObject* args)  {
+PyObject* pyGetUserInput(PyObject* self, PyObject* args) {
   olxstr title, str;
   int flags = 0;
-  if( !PythonExt::ParseTuple(args, "iww", &flags, &title, &str) )
+  if (!PythonExt::ParseTuple(args, "iww", &flags, &title, &str)) {
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "iww");
+  }
   const bool MultiLine = (flags != 1);
-  TdlgEdit *dlg = new TdlgEdit(TGlXApp::GetMainForm(), MultiLine);
+  TdlgEdit* dlg = new TdlgEdit(TGlXApp::GetMainForm(), MultiLine);
   dlg->SetTitle(title.u_str());
   dlg->SetText(str);
 
   PyObject* rv;
-  if( dlg->ShowModal() == wxID_OK )
+  if (dlg->ShowModal() == wxID_OK)
     rv = PythonExt::BuildString(dlg->GetText());
-  else  {
+  else {
     rv = Py_None;
     Py_IncRef(rv);
   }
@@ -3998,6 +4000,15 @@ PyObject* pyPPI(PyObject* self, PyObject* args) {
   wxWindowDC wx_dc(TGlXApp::GetMainForm());
   wxSize ppi = wx_dc.GetPPI();
   return Py_BuildValue("(ii)", ppi.GetX(), ppi.GetY());
+}
+//..............................................................................
+PyObject* pyPreprocessHtml(PyObject* self, PyObject* args) {
+  olxstr html;
+  if (!PythonExt::ParseTuple(args, "w", &html)) {
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "w");
+  }
+  THtmlPreprocessor htmlp;
+  return PythonExt::BuildString(htmlp.Preprocess(html));
 }
 //..............................................................................
 static PyMethodDef CORE_Methods[] = {
@@ -4012,6 +4023,7 @@ static PyMethodDef CORE_Methods[] = {
   {"GetPPI", pyPPI, METH_VARARGS, "Returns screen PPI"},
   { "GetIdleTime", pyGetIdleTime, METH_VARARGS, "Returns idle time" },
   { "ResetIdleTime", pyResetIdleTime, METH_VARARGS, "Resets idle time to 0" },
+  { "PreprocessHtml", pyPreprocessHtml, METH_VARARGS, "Preprocesses given HTML as in the GUI" },
   { NULL, NULL, 0, NULL }
 };
 //..............................................................................

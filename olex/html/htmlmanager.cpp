@@ -348,7 +348,7 @@ void THtmlManager::funGetItemState(const TStrObjList &Params, TMacroData &E) {
   if (sw->GetFileIndex() == InvalidIndex) {
     E.SetRetVal<olxstr>("-1");
   }
-  else if (sw->GetFileIndex() == UnknownSwitchState) {
+  else if (sw->GetFileIndex() == THtmlPreprocessor::UnknownSwitchState) {
     E.SetRetVal<olxstr>("-2");
   }
   else {
@@ -1462,7 +1462,7 @@ TLibrary *THtmlManager::ExportLibrary(const olxstr &name) {
   this_InitFuncD(Call, fpOne,
     "Calls event of specified control, expects [popup.]control.event");
   this_InitFuncD(Snippet, fpAny^fpNone,
-    "Loades a file (first arg), replaces #name from name=val for following "
+    "Loads a file (first arg), replaces #name from name=val for following "
     "params and returns the result.");
   return &Library;
 }

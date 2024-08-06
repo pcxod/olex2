@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2024 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -11,7 +11,7 @@
 #include "bapp.h"
 #include "log.h"
 #include "utf8file.h"
-#include "htmlext.h"
+#include "htmlprep.h"
 #include "fsext.h"
 #include "wxzipfs.h"
 #include "integration.h"
@@ -27,7 +27,7 @@ void THtmlSwitch::SetFileIndex(size_t ind) {
   ParentHtml->SetSwitchState(*this, FileIndex);
 }
 //..............................................................................
-void THtmlSwitch::UpdateFileIndex()  {
+void THtmlSwitch::UpdateFileIndex() {
   Clear();
   if (FileIndex == InvalidIndex || FileIndex >= FileCount()) {
     return;
@@ -44,8 +44,8 @@ void THtmlSwitch::UpdateFileIndex()  {
 #else
   Strings.LoadFromTextStream(*is);
 #endif
-  const olxstr ignore_open= "<!-- #ignoreif", ignore_close = "#ignoreif -->";
-  for (size_t i = 0; i < Strings.Count(); i++)  {
+  const olxstr ignore_open = "<!-- #ignoreif", ignore_close = "#ignoreif -->";
+  for (size_t i = 0; i < Strings.Count(); i++) {
     if (Strings[i].StartsFrom(ignore_open)) {
       olxstr fn = Strings[i].SubStringFrom(ignore_open.Length()).TrimWhiteChars();
       if (fn.IsEmpty()) {
@@ -53,7 +53,7 @@ void THtmlSwitch::UpdateFileIndex()  {
           (olxstr("Invalid ignoreif construct: ").quote() << Strings[i]);
       }
       int oc = 1;
-      size_t j = i+1;
+      size_t j = i + 1;
       bool delete_last = true;
       for (; j < Strings.Count(); j++) {
         if (Strings[j].StartsFrom(ignore_close)) {
@@ -67,7 +67,7 @@ void THtmlSwitch::UpdateFileIndex()  {
       }
       if (j >= Strings.Count()) {
         TBasicApp::NewLogEntry(logError) << "Missing closing ignoreif";
-        j = Strings.Count()-1;
+        j = Strings.Count() - 1;
         delete_last = false;
       }
       olxstr rv = fn;
@@ -85,21 +85,21 @@ void THtmlSwitch::UpdateFileIndex()  {
       else {
         TBasicApp::NewLogEntry(logError) <<
           (olxstr("Invalid function in ignoreif: ").quote() << fn);
-        i = j+1; // skip the block
+        i = j + 1; // skip the block
       }
       i--;
     }
     // replace the parameters with their values
-    else if (Strings[i].IndexOf('#') != InvalidIndex)  {
+    else if (Strings[i].IndexOf('#') != InvalidIndex) {
       // "key word parameter"
       Strings[i].Replace("#switch_name", Name);
-      if (ParentSwitch != NULL)  {
+      if (ParentSwitch != 0) {
         Strings[i].Replace("#parent_name", ParentSwitch->GetName()).\
           Replace("#parent_file", ParentSwitch->GetCurrentFile());
       }
       for (size_t j = 0; j < Params.Count(); j++) {
         Strings[i].Replace(
-          olxstr().Allocate(Params.GetName(j).Length()+2) <<
+          olxstr().Allocate(Params.GetName(j).Length() + 2) <<
           '#' << Params.GetName(j),
           Params.GetValue(j));
       }

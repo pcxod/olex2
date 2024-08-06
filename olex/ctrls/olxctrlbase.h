@@ -79,8 +79,6 @@ namespace ctrl_ext  {
     }
   };
 
-  const size_t UnknownSwitchState = (size_t)(-2);
-  
   static const olxstr CustomDraw_Highlight_Lightness = "140",
     CustomDraw_Border_Lightness = "64";
 
