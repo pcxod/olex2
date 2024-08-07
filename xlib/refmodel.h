@@ -615,6 +615,7 @@ Friedel opposites of components 1 ... m
     TMacroData &E);
   void LibModelSrc(const TStrObjList &Params, TMacroData &E);
   void LibStoreParam(TStrObjList& Cmds, const TParamList& Opts, TMacroData& E);
+  void LibClearParams(TStrObjList& Cmds, const TParamList& Opts, TMacroData& E);
 
   TLibrary* ExportLibrary(const olxstr& name=EmptyString());
   struct VPtr : public olx_virtual_ptr<RefinementModel> {

@@ -3741,6 +3741,11 @@ void RefinementModel::LibStoreParam(TStrObjList& Cmds, const TParamList& Opts,
   }
 }
 //..............................................................................
+void RefinementModel::LibClearParams(TStrObjList& Cmds, const TParamList& Opts,
+  TMacroData& E)
+{
+  GenericStore.Clear();
+}
 //..............................................................................
 //..............................................................................
 IOlxObject *RefinementModel::VPtr::get_ptr() const {
@@ -3845,6 +3850,12 @@ TLibrary* RefinementModel::ExportLibrary(const olxstr& name) {
       fpTwo,
       "Stores given parameter"
       ));
+  lib->Register(
+    new TMacro<RefinementModel>(thip, &RefinementModel::LibClearParams,
+      "ClearParams", EmptyString(),
+      fpNone,
+      "Clears all stored parameters"
+    ));
   return lib;
 }
 //..............................................................................
