@@ -212,6 +212,7 @@ olxstr THtmlPreprocessor::Preprocess(const olxstr& html) {
     root.UpdateFileIndex();
     TStrList res;
     root.ToStrings(res, false);
+    TFileHandlerManager::Remove(tmp_file_name);
     return res.Text('\n');
   }
   catch (const TExceptionBase& e) {

@@ -3556,10 +3556,25 @@ void RefinementModel::LibShareADP(TStrObjList &Cmds, const TParamList &Options,
   }
   plane::Sort(atoms, TSAtom::CrdAccessor(), center, normal);
   double ra = atoms.Count()*ang;
+  bool forward = true;
+  // check direction
+  {
+    mat3d rm;
+    olx_create_rotation_matrix(rm, normal, cos(ra - ang));
+    mat3d new_elp = rm * atoms[0]->CAtom().GetEllipsoid()->GetMatrix() * rm.GetT();
+    for (size_t i = 0; i < 3; i++) {
+      double dp1 = atoms[0]->CAtom().GetEllipsoid()->GetMatrix()[i].DotProd(normal);
+      double dp2 = new_elp[i].DotProd(normal);
+      if (olx_sign(dp1) != olx_sign(dp2)) {
+        forward = false;
+      }
+    }
+  }
   for (size_t i = 1; i < atoms.Count(); i++) {
+    size_t idx = forward ? i : atoms.Count() - i;
     SharedRotatedADPs.items.Add(
       new rotated_adp_constraint(
-        atoms[0]->CAtom(), atoms[i]->CAtom(), *d, (ra -= ang), false));
+        atoms[0]->CAtom(), atoms[idx]->CAtom(), *d, (ra -= ang), false));
   }
 }
 //..............................................................................

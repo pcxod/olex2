@@ -12436,5 +12436,11 @@ void XLibMacros::macADPInfo(TStrObjList& Cmds, const TParamList& Options,
       << fmt_adp_ca_as_ang(e.GetMatrix()[i].CAngle(d))  << ", ";
   }
   app.NewLogEntry() << tmp.SubStringFrom(0,2);
+
+  if (b->GetEllipsoid() != 0) {
+    mat3d rm = b->GetEllipsoid()->GetMatrix()* a->GetEllipsoid()->GetMatrix().Inverse();
+    app.NewLogEntry() << "Rotation matrix:";
+    app.NewLogEntry() << strof(rm);
+  }
 }
 //..............................................................................
