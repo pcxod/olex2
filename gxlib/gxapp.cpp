@@ -1172,8 +1172,10 @@ olxstr TGXApp::GetSelectionInfo(bool list) const {
 }
 //..............................................................................
 olxstr TGXApp::GetObjectInfoAt(int x, int y) const {
-  AGDrawObject *G = SelectObject(x, y);
-  if (G == NULL) return EmptyString();
+  AGDrawObject *G = SelectObject(x, y, false);
+  if (G == 0) {
+    return EmptyString();
+  }
   olxstr rv;
   if (G->IsSelected()) {
     rv = GetSelectionInfo();

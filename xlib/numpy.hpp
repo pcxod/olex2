@@ -315,7 +315,9 @@ void LoadArrayFromNumpy(
         total *= shape[i];
     }
     data.resize(total);
-    stream.read(reinterpret_cast<char*>(&data[0]), word_size*total);
+    if (total > 0) {
+      stream.read(reinterpret_cast<char*>(&data[0]), word_size * total);
+    }
 }
 
 template<typename Scalar>

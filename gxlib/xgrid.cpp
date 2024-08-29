@@ -408,6 +408,9 @@ bool TXGrid::Orient(TGlPrimitive& GlP) {
   if (ED == 0) {
     return true;
   }
+  if (Parent.IsPicking()) {
+    return true;
+  }
   if (Is3D()) {
     olx_gl::FlagManager fm;
     if (ColorData != 0) {

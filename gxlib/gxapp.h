@@ -356,8 +356,8 @@ public:
   // restores the on-screen rendering
   void FinishDrawBitmap();
   void Resize(int new_w, int new_h) { GlRenderer->Resize(new_w, new_h); }
-  AGDrawObject* SelectObject(int x, int y) const {
-    return GlRenderer->SelectObject(x, y);
+  AGDrawObject* SelectObject(int x, int y, bool picking) const {
+    return GlRenderer->SelectObject(x, y, picking);
   }
   TGlPrimitive *SelectPrimitive(int x, int y) const {
     return GlRenderer->SelectPrimitive(x, y);
@@ -669,6 +669,9 @@ public:
     bool keep_object = false)
   {
     FGlMouse->ResetMouseState(x, y, shift, button, keep_object);
+  }
+  AGDrawObject* GetMouseObject() const {
+    return FGlMouse->GetMouseData().GetObject();
   }
   void EnableSelection(bool v) { FGlMouse->SetSelectionEnabled(v); }
   //..............................................................................

@@ -52,19 +52,22 @@ TGlCanvas::~TGlCanvas() {
   if (TBasicApp::HasInstance()) {
     TwxGlScene *wgls = dynamic_cast<TwxGlScene*>(
       &FXApp->GetRenderer().GetScene());
-    if (wgls != NULL) {
-      wgls->SetCanvas(NULL);
-      wgls->SetContext(NULL);
+    if (wgls != 0) {
+      wgls->SetCanvas(0);
+      wgls->SetContext(0);
     }
   }
-  if (Context != NULL)
+  if (Context != 0) {
     delete Context;
+  }
 }
 //..............................................................................
 void TGlCanvas::XApp(TGXApp *XA) {
   FXApp = XA;
   TwxGlScene *wgls = dynamic_cast<TwxGlScene*>(&XA->GetRenderer().GetScene());
-  if (wgls == NULL)  return;
+  if (wgls == NULL) {
+    return;
+  }
   wgls->SetCanvas(this);
 #if wxCHECK_VERSION(2,9,0) || !(defined(__WXX11__) || defined(__MAC__))
   wgls->SetContext(Context);
@@ -99,29 +102,43 @@ void TGlCanvas::OnEraseBackground(wxEraseEvent& event)  {
 //..............................................................................
 short TGlCanvas::EncodeEvent(const wxMouseState &evt, bool update_button)  {
   short Fl = 0;
-  if (evt.m_altDown)  Fl |= sssAlt;
-  if (evt.m_shiftDown)  Fl |= sssShift;
-  if (evt.m_controlDown)  Fl |= sssCtrl;
+  if (evt.m_altDown) {
+    Fl |= sssAlt;
+  }
+  if (evt.m_shiftDown) {
+    Fl |= sssShift;
+  }
+  if (evt.m_controlDown) {
+    Fl |= sssCtrl;
+  }
   if (update_button) {
     MouseButton = 0;
-    if (evt.LeftIsDown())  MouseButton = smbLeft;
-    if (evt.MiddleIsDown())  MouseButton |= smbMiddle;
-    if (evt.RightIsDown())  MouseButton |= smbRight;
+    if (evt.LeftIsDown()) {
+      MouseButton = smbLeft;
+    }
+    if (evt.MiddleIsDown()) {
+      MouseButton |= smbMiddle;
+    }
+    if (evt.RightIsDown()) {
+      MouseButton |= smbRight;
+    }
   }
   return Fl;
 }
 //..............................................................................
-void TGlCanvas::OnMouseDown(wxMouseEvent& me)  {
+void TGlCanvas::OnMouseDown(wxMouseEvent& me) {
   //short mb = MouseButton;
   short Fl = EncodeEvent(me);
   //MouseButton |= mb;
   FParent->OnMouseDown(me.m_x, me.m_y, Fl, MouseButton);
   FXApp->MouseDown(me.m_x, me.m_y, Fl, MouseButton);
-  AGDrawObject *G = FXApp->SelectObject(me.m_x, me.m_y);
-  if (G != NULL) {
-    TGlGroup *GlG = FXApp->FindObjectGroup(*G);
-    if (GlG != NULL)
+  //AGDrawObject* G = FXApp->SelectObject(me.m_x, me.m_y, false);
+  AGDrawObject* G = FXApp->GetMouseObject();
+  if (G != 0) {
+    TGlGroup* GlG = FXApp->FindObjectGroup(*G);
+    if (GlG != 0) {
       G = GlG;
+    }
   }
   FParent->ObjectUnderMouse(G);
   FMX = me.m_x;
@@ -142,7 +159,8 @@ void TGlCanvas::OnMouseUp(wxMouseEvent& me)  {
   int os_mask = 0;
 #endif
   GetPosition(&left, &top);
-
+  // MouseUp resets the previously set object - capture it before that
+  AGDrawObject* G = FXApp->GetMouseObject();
   if (FParent->OnMouseUp(me.m_x, me.m_y, Fl, up)) {
   }
   else if (FXApp->MouseUp(me.m_x, me.m_y, Fl, up)) {
@@ -152,23 +170,27 @@ void TGlCanvas::OnMouseUp(wxMouseEvent& me)  {
   {
 //    FMY += (wxSystemSettings::GetMetric(wxSYS_MENU_Y)*FParent->pmMenu->GetMenuItemCount());
 //      FXApp->MouseUp(me.m_x, me.m_y, Fl, Btn);
-    AGDrawObject *G = FXApp->SelectObject(me.m_x, me.m_y);
+    //AGDrawObject *G = FXApp->SelectObject(me.m_x, me.m_y, false);
     bool Handled = false;
-    if (G != NULL) {
+    if (G != 0) {
       TGlGroup *GlG = FXApp->FindObjectGroup(*G);
-      if (GlG == NULL)
+      if (GlG == 0) {
         FParent->ObjectUnderMouse(G);
-      else
+      }
+      else {
         FParent->ObjectUnderMouse(GlG);
+      }
       if (FParent->CurrentPopupMenu()) {
         FParent->PopupMenu(FParent->CurrentPopupMenu(), FMX+left, FMY+top);
         Handled = true;
       }
-      if (!Handled)
-        FParent->PopupMenu(FParent->DefaultPopup(), FMX+left, FMY+top);
+      if (!Handled) {
+        FParent->PopupMenu(FParent->DefaultPopup(), FMX + left, FMY + top);
+      }
     }
-    else
-      FParent->PopupMenu(FParent->GeneralPopup(), FMX+left, FMY+top);
+    else {
+      FParent->PopupMenu(FParent->GeneralPopup(), FMX + left, FMY + top);
+    }
     SetFocus();
     return;
   }

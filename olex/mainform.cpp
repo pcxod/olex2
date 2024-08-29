@@ -3619,7 +3619,7 @@ int TMainForm::TranslateShortcut(const olxstr& sk) {
 }
 //..............................................................................
 bool TMainForm::OnMouseDblClick(int x, int y, short Flags, short Buttons) {
-  AGDrawObject *G = FXApp->SelectObject(x, y);
+  AGDrawObject *G = FXApp->SelectObject(x, y, false);
   if (Modes->GetCurrent() != 0 && Modes->GetCurrent()->OnDblClick()) {
     return true;
   }

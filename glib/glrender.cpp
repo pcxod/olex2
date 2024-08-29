@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2024 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -16,6 +16,7 @@
 #include "bapp.h"
 #include "log.h"
 #include "estrbuffer.h"
+#include "state_manager.h"
 #ifndef GL_MULTISAMPLE
 #define GL_MULTISAMPLE  0x809D
 #endif
@@ -974,10 +975,11 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects,
   olx_gl::popAttrib();
 }
 //..............................................................................
-AGDrawObject* TGlRenderer::SelectObject(int x, int y) {
+AGDrawObject* TGlRenderer::SelectObject(int x, int y, bool picking) {
   if ((Width*Height) <= 100) {
     return 0;
   }
+  StateManager<bool> picking_state(this->Picking, picking, false);
   for (size_t i = 0; i < ObjectCount(); i++) {
     GetObject(i).SetTag((int)(i + 1));
   }
