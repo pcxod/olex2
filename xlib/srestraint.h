@@ -36,6 +36,8 @@ const short
   rptValue1 = 0x0008
   ;
 
+class TSAtom;
+
 class TSimpleRestraint : public IXVarReferencer {
   TSRestraintList& Parent;
   size_t Id, Position;
@@ -60,8 +62,9 @@ public:
     AddAtom(aa, ma);
     return AddAtom(ab, mb);
   }
+  TSimpleRestraint& AddAtomPair(TSAtom& aa, TSAtom& ab);
   void AtomsFromExpression(const olxstr &e, const olxstr &resi = EmptyString());
-  void SetAtoms(const TPtrList<class TSAtom> &atoms) {
+  void SetAtoms(const TPtrList<TSAtom> &atoms) {
     Atoms.Build(atoms);
   }
   void ConvertToImplicit() { Atoms.ConvertToImplicit(); }

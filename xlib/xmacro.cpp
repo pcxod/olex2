@@ -556,7 +556,8 @@ void XLibMacros::Export(TLibrary& lib)  {
     "from Allen and Bruno, Acta Cryst., 2010, B66, 380-386.");
   xlib_InitMacro(Dfix,
     "i-[false] places implicit restraint&;"
-    "cs-do not clear selection",
+    "cs-do not clear selection&;"
+    "tls-restrain bonds to values from TLS",
     fpAny,
     "Restrains distancesto the given value");
   xlib_InitMacro(Tria,
@@ -9126,24 +9127,62 @@ void XLibMacros::macDfix(TStrObjList &Cmds, const TParamList &Options,
 {
   double fixLen = 0, esd = 0.02;  // length and esd for dfix
   bool esd_set = ParseResParam(Cmds, esd, &fixLen);
+  TXApp& app = TXApp::GetInstance();
+  MacroInput mi = ExtractSelection(Cmds, !Options.Contains("cs"));
+  TSAtomPList Atoms;
+  if (!mi.atoms.IsEmpty()) {
+    Atoms = mi.atoms;
+  }
+  else {
+    for (size_t i = 0; i < mi.bonds.Count(); i++) {
+      Atoms << mi.bonds[i]->A() << mi.bonds[i]->B();
+    }
+  }
+  if (Atoms.IsEmpty()) {
+    return;
+  }
+  olxstr tls = Options.FindValue("tls", "none");
+  if (tls != "none") {
+    if (Atoms.Pack().Count() < 4 || (Atoms.Count()%2) != 0) {
+      E.ProcessingError(__OlxSrcInfo,
+        "even number of at least 4 anisotropic atoms expected");
+      return;
+    }
+    TAsymmUnit& au = app.XFile().GetAsymmUnit();
+    xlib::TLS tls(Atoms);
+    typedef olx_pair_t<TSAtom*, TSAtom*> pair_t;
+    typedef TTypeList<pair_t> list_t;
+    olxdict<int, list_t, TPrimitiveComparator> groups;
+    for (size_t i = 0; i < Atoms.Count(); i+=2) {
+      TEValueD cb = tls.BondCorrect(*Atoms[i], *Atoms[i + 1]);
+      int v = cb.GetV() * 1000;
+      groups.Add(v).AddNew(Atoms[i], Atoms[i + 1]);
+    }
+    for (size_t i = 0; i < groups.Count(); i++) {
+      const list_t& pl = groups.GetValue(i);
+      double d = (double)groups.GetKey(i) / 1000;
+      TSimpleRestraint& dfix = app.XFile().GetRM().rDFIX.AddNew();
+      dfix.SetValue(d);
+      if (esd_set) {
+        dfix.SetEsd(esd);
+      }
+      for (size_t j = 0; j < pl.Count(); j++) {
+        dfix.AddAtomPair(*pl[j].GetA(), *pl[j].GetB());
+      }
+      TBasicApp::NewLogEntry() << dfix.ToString();
+    }
+    return;
+  }
   if (fixLen == 0) {
     E.ProcessingError(__OlxSrcInfo,
       "please specify the distance to restrain to");
     return;
   }
-  TXApp &app = TXApp::GetInstance();
-  MacroInput mi = ExtractSelection(Cmds, !Options.Contains("cs"));
-  TSAtomPList Atoms;
-  if (!mi.atoms.IsEmpty())
-    Atoms = mi.atoms;
-  else {
-    for (size_t i=0; i < mi.bonds.Count(); i++)
-      Atoms << mi.bonds[i]->A() << mi.bonds[i]->B();
-  }
-  if (Atoms.IsEmpty()) return;
   TSimpleRestraint &dfix = app.XFile().GetRM().rDFIX.AddNew();
   dfix.SetValue(fixLen);
-  if (esd_set) dfix.SetEsd(esd);
+  if (esd_set) {
+    dfix.SetEsd(esd);
+  }
   esd = dfix.GetEsd();
   if (Atoms.Count() == 1) {  // special case
     TSAtom* A = Atoms[0];
@@ -11231,7 +11270,6 @@ void XLibMacros::macTLS(TStrObjList &Cmds, const TParamList &Options,
       "at least 4 anisotropic atoms expected");
     return;
   }
-  evecd Q(6);
   TAsymmUnit &au = app.XFile().GetAsymmUnit();
   xlib::TLS tls(atoms);
   if (!Options.GetBoolOption('q')) {
@@ -11243,6 +11281,7 @@ void XLibMacros::macTLS(TStrObjList &Cmds, const TParamList &Options,
   if (Options.GetBoolOption('a') &&
       tls.GetElpList().Count() == atoms.Count())
   {
+    evecd Q(6);
     for (size_t i=0; i < atoms.Count(); i++) {
       atoms[i]->GetEllipsoid()->GetShelxQuad(Q);
       atoms[i]->GetEllipsoid()->Initialise(tls.GetElpList()[i]);

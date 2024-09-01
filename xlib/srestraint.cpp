@@ -51,6 +51,12 @@ TSimpleRestraint &TSimpleRestraint::AddAtom(TCAtom& aa, const smatd* ma) {
   return *this;
 }
 //..............................................................................
+TSimpleRestraint& TSimpleRestraint::AddAtomPair(TSAtom& aa, TSAtom& ab) {
+  AddAtom(aa.CAtom(), aa.GetMatrix().IsFirst() ? 0 : &aa.GetMatrix());
+  AddAtom(ab.CAtom(), ab.GetMatrix().IsFirst() ? 0 : &ab.GetMatrix());
+  return *this;
+}
+//..............................................................................
 void TSimpleRestraint::Delete() {
   Atoms.Clear();
 }
