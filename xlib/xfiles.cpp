@@ -24,6 +24,7 @@
 #include "absorpc.h"
 #include "analysis.h"
 #include "estopwatch.h"
+#include "olxvar.h"
 
 TBasicCFile::TBasicCFile()
   : RefMod(AsymmUnit), AsymmUnit(0)
@@ -381,6 +382,8 @@ void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
               TBasicApp::NewLogEntry(logError) << "Loading the refinement model "
                 "from the embedded RES file.";
               GetRM().Assign(ins.GetRM(), false);
+              // a little hack here!
+              TOlxVars::SetVar("cif_uses_masks", ins.InsExists("ABIN"));
               //ExpandHKLSource(GetRM(), fn);
               GetRM().SetHKLSource(EmptyString());
               rm_updated = true;

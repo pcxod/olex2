@@ -24,6 +24,9 @@
 #include "symmparser.h"
 #include "updateapi.h"
 #include "xapp.h"
+#include "cif.h"
+#include "hkl.h"
+
 #undef GetObject
 
 using namespace olex2;
@@ -684,6 +687,42 @@ PyObject* pyGetRefs(PyObject* self, PyObject* args) {
   }
 }
 //..............................................................................
+PyObject* pyGetMask(PyObject* self, PyObject* args) {
+  try {
+    TXApp& xapp = TXApp::GetInstance();
+    if (!xapp.CheckFileType<TCif>()) {
+      return PythonExt::PyNone();
+    }
+    using namespace cif_dp;
+    TCif& cif = xapp.XFile().GetLastLoader<TCif>();
+    cetStringList* s_fab = dynamic_cast<cetStringList*>(cif.FindEntry("_shelx_fab_file"));
+    if (s_fab == 0) {
+      return PythonExt::PyNone();
+    }
+    THklFile hkl;
+    hkl.LoadFromStrings(s_fab->lines, false, "free");
+
+    const RefinementModel& rm = TXApp::GetInstance().XFile().GetRM();
+    PyObject* indices = PyList_New(hkl.RefCount());
+    PyObject* mods = PyList_New(hkl.RefCount());
+    PyObject* rv = PyTuple_New(4);
+    PyTuple_SetItem(rv, 0, indices);
+    PyTuple_SetItem(rv, 1, mods);
+    for (size_t i = 0; i < hkl.RefCount(); i++) {
+      PyObject* mi = Py_BuildValue("(iii)",
+        hkl[i].GetH(), hkl[i].GetK(), hkl[i].GetL());
+      PyList_SetItem(indices, i, mi);
+      Py_complex m = { hkl[i].GetI() , hkl[i].GetS() };
+      PyList_SetItem(mods, i, Py_BuildValue("D", m));
+    }
+    return rv;
+  }
+  catch (const TBasicException& e) {
+    return PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo,
+      e.GetException()->GetFullMessage());
+  }
+}
+//..............................................................................
 //..............................................................................
 //..............................................................................
 static PyMethodDef CORE_Methods[] = {
@@ -741,6 +780,8 @@ static PyMethodDef CORE_Methods[] = {
   "Decrements the number of running Python threads" },
   { "GetReflections", pyGetRefs, METH_VARARGS,
   "Returns a list of ([(iii)][(dd)][(i)]) of current reflections" },
+  { "GetMask", pyGetMask, METH_VARARGS,
+  "Returns a list of ([(iii)][D]) of current mask if in the loaded CIF" },
   { NULL, NULL, 0, NULL }
    };
 
