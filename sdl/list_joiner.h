@@ -30,7 +30,7 @@ struct ListJoiner {
     for (size_t i = 0; i < b.Count(); i++) {
       bool uniq = true;
       for (size_t j = 0; j < a_sz; j++) {
-        if (b[i] == a[j]) {
+        if (b[i].Compare(a[j]) == 0) {
           uniq = false;
           break;
         }
