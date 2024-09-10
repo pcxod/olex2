@@ -642,9 +642,7 @@ void TAsymmUnit::PackEllps() {
     Ellipsoids[i]->SetId(i);
   }
   for (size_t i = 0; i < elps.Count(); i++) {
-    if (elps[i] != 0) {
-      CAtoms[i]->SetEllpId(elps[i]->GetId());
-    }
+    CAtoms[i]->SetEllpId(elps[i] != 0 ? elps[i]->GetId() : InvalidIndex);
   }
 }
 //..............................................................................
