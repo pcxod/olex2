@@ -3664,12 +3664,26 @@ void TMainForm::macCreateBitmap(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &E)
 {
   olx_object_ptr<wxFSFile> inf = TFileHandlerManager::GetFSFileHandler(Cmds[1]);
+  wxImage img;
   if (inf == 0) {
-    E.ProcessingError(__OlxSrcInfo, "Image file does not exist: ").quote() <<
-      Cmds[1];
-    return;
+    wxMemoryDC dc;
+    wxBitmap bmp(256, 32, dc);
+    dc.SelectObject(bmp);
+    dc.SetBackground(wxBrush(*wxRED, wxBRUSHSTYLE_SOLID));
+    //dc.SetPen(wxPen(*wxWHITE));
+    dc.Clear();
+    wxFont fnt(18, wxMODERN, wxNORMAL, wxNORMAL);
+    dc.SetFont(fnt);
+    dc.SetTextForeground(*wxWHITE);
+    dc.DrawLabel(Cmds[1].u_str(), wxRect(0, 0, 255, 31));
+    dc.SelectObject(wxNullBitmap);
+    img = bmp.ConvertToImage();
+    //E.ProcessingError(__OlxSrcInfo, "Image file does not exist: ").quote() << Cmds[1];
+    //return;
   }
-  wxImage img(*inf->GetStream());
+  else {
+    img = wxImage(*inf->GetStream());
+  }
   if (!img.Ok()) {
     E.ProcessingError(__OlxSrcInfo, "Invalid image file: ") << Cmds[1];
     return;
@@ -3680,8 +3694,9 @@ void TMainForm::macCreateBitmap(TStrObjList &Cmds, const TParamList &Options,
   l = CalcL(img.GetHeight());
   int sheight = (int)pow((double)2, (double)l);
 
-  if (swidth != owidth || sheight != oheight)
+  if (swidth != owidth || sheight != oheight) {
     img.Rescale(swidth, sheight);
+  }
 
   int cl = 3, bmpType = GL_RGB;
   if (img.HasAlpha()) {
@@ -3702,7 +3717,7 @@ void TMainForm::macCreateBitmap(TStrObjList &Cmds, const TParamList &Options,
       }
     }
   }
-  bool Created = (FXApp->FindGlBitmap(Cmds[0]) == NULL);
+  bool Created = (FXApp->FindGlBitmap(Cmds[0]) == 0);
   TGlBitmap* glB = FXApp->CreateGlBitmap(Cmds[0], 0, 0, swidth, sheight, RGBData, bmpType);
   int Top = FInfoBox->IsVisible() ? (FInfoBox->GetTop() + FInfoBox->GetHeight()) : 0;
   if (Created) {

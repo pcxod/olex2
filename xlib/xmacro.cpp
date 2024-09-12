@@ -5329,7 +5329,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
         bool contains = false;
         {
           ICifEntry *ie = Cif->FindEntry(e.GetName());
-          if (ie != 0) {
+          if (ie != 0 && !ie->Is<cetTable>()) {
             try {
               olxstr v = ie->GetStringValue();
               if (!(v.IsEmpty() || v == '?' || v == '.')) {
