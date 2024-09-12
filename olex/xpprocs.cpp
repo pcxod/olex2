@@ -3667,7 +3667,7 @@ void TMainForm::macCreateBitmap(TStrObjList &Cmds, const TParamList &Options,
   wxImage img;
   if (inf == 0) {
     wxMemoryDC dc;
-    wxBitmap bmp(256, 32, dc);
+    wxBitmap bmp(256, 32);
     dc.SelectObject(bmp);
     dc.SetBackground(wxBrush(*wxRED, wxBRUSHSTYLE_SOLID));
     //dc.SetPen(wxPen(*wxWHITE));
