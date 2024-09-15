@@ -1250,7 +1250,7 @@ void THtmlManager::funSnippet(const TStrObjList &Params,
   olx_object_ptr<IDataInputStream> is = TFileHandlerManager::GetInputStream(Params[0]);
   if (is == 0) {
     TBasicApp::NewLogEntry(logError) <<
-      (olxstr("THtmlSwitch::File does not exist: ").quote() << Params[0]);
+      (olxstr("Snippet::File does not exist: ").quote() << Params[0]);
     return;
   }
   TStrList lines;
@@ -1290,10 +1290,12 @@ void THtmlManager::funSnippet(const TStrObjList &Params,
     }
     pn.TrimWhiteChars();
     idx = values.IndexOf(pn);
-    if (idx != InvalidIndex)
+    if (idx != InvalidIndex) {
       values.GetValue(idx) = vl;
-    else
+    }
+    else {
       values.Add(pn, vl);
+    }
   }
   for (size_t i=data_start; i < lines.Count(); i++) {
     bool remove=false;
