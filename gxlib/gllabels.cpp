@@ -197,7 +197,7 @@ bool TXGlLabels::Orient(TGlPrimitive& P) {
         Tmp << ", " << olxstr::FormatFloat(2, rm.Vars.GetParam(ca, catom_var_name_Uiso));
       }
       if ((Mode & lmUisR) != 0) {
-        if (ca.GetUisoOwner() != 0) {
+        if (ca.GetUisoOwner() != 0 && ca.GetEllipsoid() == 0) {
           Tmp << ", " << olxstr::FormatFloat(2, ca.GetUisoScale());
         }
       }

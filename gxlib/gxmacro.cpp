@@ -714,7 +714,7 @@ void GXLibMacros::macName(TStrObjList &Cmds, const TParamList &Options,
   bool changeSuffix = Options.Contains('s');
   bool nameResi = Options.GetBoolOption('r', false, true);
   if (changeSuffix) {
-    TXAtomPList xatoms = app.FindXAtoms(Cmds, true, !Options.Contains("cs"));
+    TXAtomPList xatoms = app.FindXAtoms(Cmds, true, !Options.GetBoolOption("cs"));
     if (!xatoms.IsEmpty()) {
       TUndoData *ud = app.GetUndo().Push(app.ChangeSuffix(
         xatoms, Options.FindValue('s')));
@@ -737,18 +737,18 @@ void GXLibMacros::macName(TStrObjList &Cmds, const TParamList &Options,
       if (spi != InvalidIndex) {
         app.GetUndo().Push(
           app.Name(Cmds[0].SubStringTo(spi),
-          Cmds[0].SubStringFrom(spi+1), !Options.Contains("cs"), nameResi)
+          Cmds[0].SubStringFrom(spi+1), !Options.GetBoolOption("cs"), nameResi)
         );
       }
       else {
         app.GetUndo().Push(
-          app.Name("sel", Cmds[0], !Options.Contains("cs"),
+          app.Name("sel", Cmds[0], !Options.GetBoolOption("cs"),
           nameResi));
       }
       processed = true;
     }
     else if (Cmds.Count() == 2) {
-      app.GetUndo().Push(app.Name(Cmds[0], Cmds[1], !Options.Contains("cs"),
+      app.GetUndo().Push(app.Name(Cmds[0], Cmds[1], !Options.GetBoolOption("cs"),
         nameResi));
       processed = true;
     }

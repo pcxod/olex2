@@ -2227,7 +2227,7 @@ olx_pair_t<bool,bool> RunExternalEdit(TStrList &SL, const olxstr& fn_) {
   TXAtomPList Atoms;
   TIns* Ins = FXApp->CheckFileType<TIns>() ?
     &FXApp->XFile().GetLastLoader<TIns>() : 0;
-  if (!FindXAtoms(Cmds, Atoms, true, !Options.Contains("cs"))) {
+  if (!FindXAtoms(Cmds, Atoms, true, !Options.GetBoolOption("cs"))) {
     E.ProcessingError(__OlxSrcInfo, "wrong atom names");
     return;
   }
