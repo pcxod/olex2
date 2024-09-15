@@ -96,12 +96,12 @@ bool TXAngle::Orient(TGlPrimitive& glp) {
 
   int sections = GetSettings().GetSections();
   double ang = acos(a.CAngle(b));
-  double ca = cos(ang/sections/2);
   mat3d rm;
   if (glp.GetOwnerId() == 0) {
     if (thickness != 1) {
       olx_gl::lineWidth(thickness);
     }
+    double ca = cos(ang / ((double)sections-0.5) / 2);
     olx_gl::begin(GL_LINES);
     olx_create_rotation_matrix(rm, normal, ca);
     for (int i = 0; i < sections; i++) {
@@ -118,12 +118,11 @@ bool TXAngle::Orient(TGlPrimitive& glp) {
   else if (glp.GetOwnerId() == 1) {
     const TStringToList<olxstr, TGlPrimitive*>& primtives =
       GetSettings().GetPrimitives(true);
-    ca = cos(ang / sections);
+    double ca = cos(ang / sections);
     olx_create_rotation_matrix(rm, normal, ca);
-    a = (from - draw_center) * radius;
     for (int i = 0; i < sections; i++) {
       vec3d b = a * rm;
-      vec3d t = a + (b-a) / 4;
+      vec3d t = a + (b-a) / 2;
       olx_gl::translate(t);
       if (thickness != 1) {
         olx_gl::scale(thickness);
@@ -139,12 +138,11 @@ bool TXAngle::Orient(TGlPrimitive& glp) {
   else if (glp.GetOwnerId() == 2) {
     const TStringToList<olxstr, TGlPrimitive*>& primtives =
       GetSettings().GetPrimitives(true);
-    ca = cos(ang / sections);
+    double ca = cos(ang / sections);
     olx_create_rotation_matrix(rm, normal, ca);
-    a = (from - draw_center) * radius;
     for (int i = 0; i < sections; i++) {
       vec3d b = a * rm;
-      vec3d t = a + (b - a) / 4;
+      vec3d t = a + (b - a) / 2;
       vec3d d = (b - a).Normalise();
       double rang = acos(d[2]) * 180 / M_PI;
       olx_gl::translate(t);
@@ -162,6 +160,7 @@ bool TXAngle::Orient(TGlPrimitive& glp) {
     }
   }
   if (glp.GetOwnerId() == 3) {
+    double ca = cos(ang / sections / 2);
     olx_gl::begin(GL_TRIANGLE_FAN);
     olx_gl::normal(normal);
     olx_gl::vertex(vec3d());
@@ -172,6 +171,7 @@ bool TXAngle::Orient(TGlPrimitive& glp) {
       olx_gl::vertex(a);
       a *= rm;
     }
+    olx_gl::vertex(a);
     olx_gl::end();
   }
   return true;
