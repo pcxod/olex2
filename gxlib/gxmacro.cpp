@@ -2999,7 +2999,7 @@ void GXLibMacros::macPiM(TStrObjList &Cmds, const TParamList &Options,
       if (XElementLib::IsMetal(rings[0][i]->GetType())) {
         check_metal = false;
         metals.Add(rings[0][i]);
-        rings[0][i] = NULL;
+        rings[0][i] = 0;
       }
     }
     rings[0].Pack();
