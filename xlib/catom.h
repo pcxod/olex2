@@ -523,7 +523,7 @@ struct Atom3DId {
     return (int8_t)(id & z_mask);
   }
   Atom3DId(uint64_t id=~0) : id(id) {}
-  Atom3DId(int8_t z, const vec3d& crd, int64_t multiplier = 1);
+  Atom3DId(int8_t z, const vec3d& crd, double multiplier = 1);
   Atom3DId& operator = (const Atom3DId& i) {
     this->id = i.id;
     return *this;
