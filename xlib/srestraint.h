@@ -72,10 +72,12 @@ public:
   const TSRestraintList& GetParent() const { return Parent; }
   TSRestraintList& GetParent() { return Parent; }
   const AtomRefList &GetAtoms() const { return Atoms; }
+  // clears atoms and assiciated VarRef
   void Delete();
   bool IsEmpty() const { return Atoms.IsEmpty(); }
   olxstr GetAtomExpression() const { return Atoms.GetExpression(); }
   void UpdateResi() { Atoms.UpdateResi(); }
+  // in the case the atom list becomes empty - clears VarRef
   TSimpleRestraint &Validate();
   // this is called internally by the RM
   void OnAUUpdate();
@@ -101,10 +103,11 @@ public:
   DefPropBIsSet(AllNonHAtoms)
   TStrList remarks;
 
-    // compares pointer addresses only!
-    bool operator == (const TSimpleRestraint& sr) const { return this == &sr; }
+  // compares pointer addresses only!
+  bool operator == (const TSimpleRestraint& sr) const { return this == &sr; }
   // IXVarReferencer implementation
   virtual size_t VarCount() const { return 1; }
+  // for "released" restraints this must be deleted manually
   virtual XVarReference* GetVarRef(size_t var_index) const {
     if (var_index != 0) {
       throw TInvalidArgumentException(__OlxSourceInfo, "var index");
@@ -135,7 +138,9 @@ public:
     }
     Value = val;
   }
-  virtual bool IsValid() const { return true; }
+  virtual bool IsValid() const {
+    return Atoms.IsEmpty() ? AllNonHAtoms : true;
+  }
   virtual olxstr GetIdName() const;
   void ToDataItem(TDataItem& item) const;
   virtual TIString ToString() const;
@@ -166,9 +171,7 @@ public:
   values are removed
   */
   void ValidateRestraint(TSimpleRestraint& sr);
-  void ValidateAll() {
-    olx_list_call(Restraints, &TSimpleRestraint::Validate);
-  }
+  void ValidateAll();
   bool DoAllowSymmetry() const {
     return AllowSymm;
   }

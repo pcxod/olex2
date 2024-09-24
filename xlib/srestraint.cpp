@@ -59,6 +59,13 @@ TSimpleRestraint& TSimpleRestraint::AddAtomPair(TSAtom& aa, TSAtom& ab) {
 //..............................................................................
 void TSimpleRestraint::Delete() {
   Atoms.Clear();
+  if (GetVarRef(0) != 0) {
+    XVarReference *vr = Parent.GetRM().Vars.ReleaseRef(*this, 0);
+    if (vr != 0) {
+      delete vr;
+    }
+    SetVarRef(0, 0);
+  }
 }
 //..............................................................................
 TSimpleRestraint &TSimpleRestraint::Validate() {
@@ -68,6 +75,13 @@ TSimpleRestraint &TSimpleRestraint::Validate() {
     if (Atoms.RefCount() < min_ac) {
       Atoms.Clear();
     }
+  }
+  if (Atoms.IsEmpty() && GetVarRef(0) != 0) {
+    XVarReference* vr = Parent.GetRM().Vars.ReleaseRef(*this, 0);
+    if (vr != 0) {
+      delete vr;
+    }
+    SetVarRef(0, 0);
   }
   return *this;
 }
@@ -332,6 +346,20 @@ void TSRestraintList::ValidateRestraint(TSimpleRestraint& sr)  {
   }
 }
 //..............................................................................
+void TSRestraintList::ValidateAll() {
+  size_t valid_cnt = 0;
+  for (size_t i = 0; i < Restraints.Count(); i++) {
+    if (!Restraints[i].Validate().IsValid()) {
+      Restraints.NullItem(i);
+    }
+    else {
+      Restraints[i].SetId(valid_cnt);
+      valid_cnt++;
+    }
+  }
+  Restraints.Pack();
+}
+//..............................................................................
 void TSRestraintList::Clear() {
   for (size_t i = 0; i < Restraints.Count(); i++) {
     if (Restraints[i].GetVarRef(0) != 0) {
@@ -345,7 +373,11 @@ TSimpleRestraint& TSRestraintList::Release(size_t i) {
   if (Restraints[i].GetVarRef(0) != 0) {
     RefMod.Vars.ReleaseRef(Restraints[i], 0);
   }
-  return Restraints.Release(i);
+  TSimpleRestraint &rv = Restraints.Release(i);
+  for (size_t ri = i; ri < Restraints.Count(); ri++) {
+    Restraints[ri].SetId(ri);
+  }
+  return rv;
 }
 //..............................................................................
 void TSRestraintList::Restore(TSimpleRestraint& sr)  {
@@ -353,6 +385,7 @@ void TSRestraintList::Restore(TSimpleRestraint& sr)  {
     throw TInvalidArgumentException(__OlxSourceInfo,
       "restraint parent differs");
   }
+  sr.SetId(Restraints.Count());
   Restraints.Add(sr);
   if (sr.GetVarRef(0) != 0) {
     RefMod.Vars.RestoreRef(sr, 0, sr.GetVarRef(0));

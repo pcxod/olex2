@@ -3056,7 +3056,7 @@ bool TIns::ParseRestraint(RefinementModel &rm, const TStrList& _toks,
   bool AcceptsAll = false;
   double Esd1Mult = 0, DefVal = 0, esd = 0, esd1 = 0;
   double *Vals[] = { &DefVal, &esd, &esd1 };
-  bool use_var_manager = true, check_resi = true;
+  bool use_var_manager = false, check_resi = true;
   if (toks[0].StartsFromi("olex2.")) {
     check_resi = use_var_manager = false;
   }
@@ -3076,11 +3076,13 @@ bool TIns::ParseRestraint(RefinementModel &rm, const TStrList& _toks,
     srl = &rm.rDFIX;
     RequiredParams = 1;  AcceptsParams = 2;
     Vals[0] = &DefVal;  Vals[1] = &esd;
+    use_var_manager = true;
   }
   else if (ins_name.Equalsi("DANG")) {
     srl = &rm.rDANG;
     RequiredParams = 1;  AcceptsParams = 2;
     Vals[0] = &DefVal;  Vals[1] = &esd;
+    use_var_manager = true;
   }
   else if (ins_name.Equalsi("SADI")) {
     // special case to expand SAME
@@ -3122,7 +3124,6 @@ bool TIns::ParseRestraint(RefinementModel &rm, const TStrList& _toks,
     RequiredParams = 0;  AcceptsParams = 3;
     Vals[0] = &esd;  Vals[1] = &esd1;  Vals[2] = &DefVal;
     AcceptsAll = true;
-    use_var_manager = false;
   }
   else if (ins_name.Equalsi("ISOR")) {
     srl = &rm.rISOR;
@@ -3210,8 +3211,10 @@ bool TIns::ParseRestraint(RefinementModel &rm, const TStrList& _toks,
         index = 2;
       }
     }
-    if (use_var_manager) {
-      rm.Vars.SetParam(sr, 0, DefVal);
+    /* only DFIX and DANG, values cannot be fixed - hence only reference to
+    FVAR 2 and further allowed */
+    if (use_var_manager && olx_abs(DefVal) > 15) {
+        rm.Vars.SetParam(sr, 0, DefVal);
     }
     else {
       sr.SetValue(DefVal);

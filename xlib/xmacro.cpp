@@ -9113,43 +9113,52 @@ void XLibMacros::macNeutronHDist(TStrObjList& Cmds, const TParamList& Options,
   latt.UpdateConnectivity();
 }
 //.............................................................................
-bool XLibMacros::ParseResParam(TStrObjList &Cmds, double& esd, double* len,
+bool XLibMacros::ParseResParam(TStrObjList& Cmds, double& esd, double* len,
   double* len1, double* ang)
 {
   bool esd_set = false;
-  for (size_t i=0; i < Cmds.Count(); i++) {
+  for (size_t i = 0; i < Cmds.Count(); i++) {
     if (Cmds[i].IsNumber()) {
       double v = Cmds[i].ToDouble();
       if (olx_abs(v) > 0.25) {
         if (olx_abs(v) < 5) {
-          if (len == NULL) {
+          if (len == 0) {
             throw TInvalidArgumentException(__OlxSourceInfo,
               "too many numerical arguments, length");
           }
           else {
             if (*len == 0) {
               *len = v;
-              if( len1 != NULL )  *len1 = v;
+              if (len1 != 0) {
+                *len1 = v;
+              }
             }
-            else if (len1 != NULL)
+            else if (len1 != 0) {
               *len1 = v;
+            }
             else {
               throw TInvalidArgumentException(__OlxSourceInfo,
                 "too many numerical arguments, length");
             }
           }
         }
-        else if (olx_abs(v) >= 15 && olx_abs(v) <= 180) {  // looks line an angle?
-          if (ang != NULL)  *ang = v;
+        else if (olx_abs(v) >= 15) {  // looks line an angle?
+          if (ang != 0) {
+            *ang = v;
+          }
+          else if (len != 0) {
+            *len = v;
+          }
           else {
             throw TInvalidArgumentException(__OlxSourceInfo,
-              "too many numerical arguments, angle");
+              "too many numerical arguments, angle, FVAR");
           }
         }
-        else
+        else {
           throw TInvalidArgumentException(__OlxSourceInfo, Cmds[i]);
+        }
       }
-      else  {  // v < 0.25
+      else {  // v < 0.25
         esd = v;
         esd_set = true;
       }
@@ -9190,8 +9199,8 @@ XLibMacros::MacroInput XLibMacros::ExtractSelection(const TStrObjList &Cmds_,
   return XLibMacros::MacroInput(atoms, bonds, planes);
 }
 //.............................................................................
-void XLibMacros::macDfix(TStrObjList &Cmds, const TParamList &Options,
-  TMacroData &E)
+void XLibMacros::macDfix(TStrObjList& Cmds, const TParamList& Options,
+  TMacroData& E)
 {
   double fixLen = 0, esd = 0.02;  // length and esd for dfix
   bool esd_set = ParseResParam(Cmds, esd, &fixLen);
@@ -9211,7 +9220,7 @@ void XLibMacros::macDfix(TStrObjList &Cmds, const TParamList &Options,
   }
   olxstr tls = Options.FindValue("tls", "none");
   if (tls != "none") {
-    if (Atoms.Pack().Count() < 4 || (Atoms.Count()%2) != 0) {
+    if (Atoms.Pack().Count() < 4 || (Atoms.Count() % 2) != 0) {
       E.ProcessingError(__OlxSrcInfo,
         "even number of at least 4 anisotropic atoms expected");
       return;
@@ -9221,7 +9230,7 @@ void XLibMacros::macDfix(TStrObjList &Cmds, const TParamList &Options,
     typedef olx_pair_t<TSAtom*, TSAtom*> pair_t;
     typedef TTypeList<pair_t> list_t;
     olxdict<int, list_t, TPrimitiveComparator> groups;
-    for (size_t i = 0; i < Atoms.Count(); i+=2) {
+    for (size_t i = 0; i < Atoms.Count(); i += 2) {
       TEValueD cb = tls.BondCorrect(*Atoms[i], *Atoms[i + 1]);
       int v = cb.GetV() * 1000;
       groups.Add(v).AddNew(Atoms[i], Atoms[i + 1]);
@@ -9246,43 +9255,67 @@ void XLibMacros::macDfix(TStrObjList &Cmds, const TParamList &Options,
       "please specify the distance to restrain to");
     return;
   }
-  TSimpleRestraint &dfix = app.XFile().GetRM().rDFIX.AddNew();
+  TSimpleRestraint& dfix = app.XFile().GetRM().rDFIX.AddNew();
   dfix.SetValue(fixLen);
   if (esd_set) {
     dfix.SetEsd(esd);
   }
   esd = dfix.GetEsd();
+  size_t dist_cnt = 0;
+  double dist_sum = 0;
   if (Atoms.Count() == 1) {  // special case
     TSAtom* A = Atoms[0];
-    for (size_t i=0; i < A->NodeCount(); i++) {
+    for (size_t i = 0; i < A->NodeCount(); i++) {
       TSAtom* SA = &A->Node(i);
-      if (SA->IsDeleted() || SA->GetType() == iQPeakZ)
+      if (SA->IsDeleted() || SA->GetType() == iQPeakZ) {
         continue;
+      }
       dfix.AddAtomPair(
         A->CAtom(), &A->GetMatrix(),
         SA->CAtom(), &SA->GetMatrix());
+      dist_sum += A->crd().DistanceTo(SA->crd());
+      dist_cnt++;
     }
   }
   else if (Atoms.Count() == 3) {  // special case
     dfix.AddAtomPair(
       Atoms[0]->CAtom(), &Atoms[0]->GetMatrix(),
       Atoms[1]->CAtom(), &Atoms[1]->GetMatrix());
+    dist_sum += Atoms[0]->crd().DistanceTo(Atoms[1]->crd());
+    dist_cnt++;
     dfix.AddAtomPair(
       Atoms[1]->CAtom(), &Atoms[1]->GetMatrix(),
       Atoms[2]->CAtom(), &Atoms[2]->GetMatrix());
+    dist_sum += Atoms[1]->crd().DistanceTo(Atoms[2]->crd());
+    dist_cnt++;
   }
   else {
-    if ((Atoms.Count()%2) != 0) {
+    if ((Atoms.Count() % 2) != 0) {
       E.ProcessingError(__OlxSrcInfo, "even number of atoms is expected");
       return;
     }
-    for (size_t i=0; i < Atoms.Count(); i+=2) {
+    for (size_t i = 0; i < Atoms.Count(); i += 2) {
       dfix.AddAtomPair(
         Atoms[i]->CAtom(), &Atoms[i]->GetMatrix(),
-        Atoms[i+1]->CAtom(), &Atoms[i+1]->GetMatrix());
+        Atoms[i + 1]->CAtom(), &Atoms[i + 1]->GetMatrix());
+      dist_sum += Atoms[i]->crd().DistanceTo(Atoms[i+1]->crd());
+      dist_cnt++;
     }
   }
   dfix.UpdateResi();
+  // FVAR?
+  if (olx_abs(fixLen) > 15) {
+    XVarManager& vars = app.XFile().GetRM().Vars;
+    // no value given - take mean of the bonds
+    if (olx_abs(fixLen - (int)fixLen) < 1e-3 && (size_t)olx_abs(fixLen/ 10) > vars.VarCount()) {
+      XVar &var = vars.NewVar((double)olx_round(dist_sum * 1e3 / dist_cnt) / 1e3);
+      vars.AddVarRef(var, dfix, 0, relation_AsVar, 1);
+      dfix.SetValue(var.GetValue());
+    }
+    else {
+      app.XFile().GetRM().Vars.SetParam(dfix, 0, fixLen);
+    }
+  }
   if (Options.GetBoolOption('i')) {
     dfix.ConvertToImplicit();
   }
