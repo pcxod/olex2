@@ -1,7 +1,6 @@
 #include "refinement_listener.h"
 #include "../xlib/xapp.h"
 #include "integration.h"
-#include <thread>
 
 namespace olex2 {
 
