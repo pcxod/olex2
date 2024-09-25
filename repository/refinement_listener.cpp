@@ -1,6 +1,7 @@
 #include "refinement_listener.h"
 #include "../xlib/xapp.h"
 #include "integration.h"
+#include <thread>
 
 namespace olex2 {
 
@@ -39,6 +40,16 @@ namespace olex2 {
       }
       if (!i->fin_fn.IsEmpty() && TEFile::Exists(i->fin_fn)) {
         DoBreak();
+      }
+      IOlex2Processor* ip = IOlex2Processor::GetInstance();
+      if (ip != 0) {
+        ip->processMacro("refresh");
+      }
+    }
+    if (max == ~0 && pos == ~0) {
+      IOlex2Processor* ip = IOlex2Processor::GetInstance();
+      if (ip != 0) {
+        ip->processMacro("refresh");
       }
     }
     return Continue();
