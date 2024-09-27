@@ -19,6 +19,7 @@
 
 #include "../ebase.h"
 #include "../linked_operators.h"
+#include "../type_splitter.h"
 BeginEsdlNamespace()
 
 /* this class uses reference counting to reduce number of memory reallocations*/
@@ -58,6 +59,26 @@ protected:
     _Length += len;
     return *this;
   }
+  //..............................................................................
+#if !defined(_UNICODE)
+  inline void setObjValue(const IOlxObject& v) {
+    Assign(v.ToString());
+  }
+  struct t_constructor {
+    TCString& str;
+    t_constructor(TCString& str)
+      : str(str)
+    {}
+    template <typename type_t>
+    void p_functor(const type_t& v) const {
+      str.setTypeValue(printFormat(v), v);
+    }
+    template <class type_t>
+    void c_functor(const type_t& v) const {
+      str.setObjValue(v);
+    }
+  };
+#endif
   //..............................................................................
   template <class T> inline void setTypeValue(const char* format, T v) {
     _Start = 0;
@@ -109,7 +130,11 @@ public:
   TCString(const bool& v);
   TCString(const TTIString<wchar_t>& wstr);
   template <typename T> TCString(const T& v) {
+#if !defined(_UNICODE)
+    primitive_type_splitter::make(t_constructor(*this)).call(v);
+#else
     setTypeValue(printFormat(v), v);
+#endif
   }
   // float numbers need trimming of the 0000
   TCString(const float& v) {
@@ -211,19 +236,23 @@ public:
   //............................................................................
   virtual TIString ToString() const;
   //............................................................................
-  static const char* printFormat(const char)                   { return "%c"; }
-  static const char* printFormat(const wchar_t)                { return "%lc"; }
-  static const char* printFormat(const short int)              { return "%hd"; }
-  static const char* printFormat(const unsigned short int)     { return "%hu"; }
-  static const char* printFormat(const int)                    { return "%d"; }
-  static const char* printFormat(const unsigned int)           { return "%u"; }
-  static const char* printFormat(const long int)               { return "%ld"; }
-  static const char* printFormat(const unsigned long int)      { return "%lu"; }
-  static const char* printFormat(const long long int)          { return "%lld"; }
-  static const char* printFormat(const unsigned long long int) { return "%llu"; }
-  static const char* printFormat(const float)                  { return "%f"; }
-  static const char* printFormat(const double)                 { return "%lf"; }
-  static const char* printFormat(const long double)            { return "%Lf"; }
+  static const char* printFormat(char)                   { return "%c"; }
+  static const char* printFormat(wchar_t)                { return "%lc"; }
+  static const char* printFormat(short int)              { return "%hd"; }
+  static const char* printFormat(unsigned short int)     { return "%hu"; }
+  static const char* printFormat(int)                    { return "%d"; }
+  static const char* printFormat(unsigned int)           { return "%u"; }
+  static const char* printFormat(long int)               { return "%ld"; }
+  static const char* printFormat(unsigned long int)      { return "%lu"; }
+  static const char* printFormat(long long int)          { return "%lld"; }
+  static const char* printFormat(unsigned long long int) { return "%llu"; }
+  static const char* printFormat(float)                  { return "%f"; }
+  static const char* printFormat(double)                 { return "%lf"; }
+  static const char* printFormat(long double)            { return "%Lf"; }
+#if !defined(_UNICODE)
+  // need this for compilation
+  static const char* printFormat(const IOlxObject&) { return "%X"; }
+#endif
 };
 
 #include "strbuf.h"

@@ -266,6 +266,17 @@ public:
 #endif
     return SData->Data[_Start + i];
   }
+  void Assign(const TTIString& v) {
+    if (SData != 0 && --SData->RefCnt == 0) {
+      delete SData;
+    }
+    _Start = v._Start;
+    _Length = v._Length;
+    SData = v.SData;
+    if (SData != 0) {
+      SData->RefCnt++;
+    }
+  }
   /* reads content of the string to external buffer, which must be able to
  accommodate string length + 1 for the end of string char
   */

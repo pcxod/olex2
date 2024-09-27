@@ -678,6 +678,7 @@
     <ClInclude Include="..\..\..\sdl\threex3.h" />
     <ClInclude Include="..\..\..\sdl\tptrlist.h" />
     <ClInclude Include="..\..\..\sdl\typelist.h" />
+    <ClInclude Include="..\..\..\sdl\type_splitter.h" />
     <ClInclude Include="..\..\..\sdl\undo.h" />
     <ClInclude Include="..\..\..\sdl\utf16.h" />
     <ClInclude Include="..\..\..\sdl\utf8file.h" />

@@ -19,6 +19,7 @@
 
 #include "../ebase.h"
 #include "../linked_operators.h"
+#include "../type_splitter.h"
 BeginEsdlNamespace()
 
 class TWString : public TTIString<wchar_t>, public IOlxObject {
@@ -49,7 +50,7 @@ protected:
   template <class T> inline TWString& writeType(const wchar_t* format, T v) {
     olx_array_ptr<wchar_t> bf(80);
 #if defined(_MSC_VER)
-    swprintf_s(bf, 80, format, v);
+    swprintf_s(bf, 80, printFormat(v), v);
 #elif defined(__GNUC__) && !defined(__WIN32__)
     swprintf(bf, 80, format, v);
 #else
@@ -61,6 +62,26 @@ protected:
     _Length += len;
     return *this;
   }
+  //..............................................................................
+#if defined(_UNICODE)
+  inline void setObjValue(const IOlxObject &v) {
+    Assign(v.ToString());
+  }
+  struct t_constructor {
+    TWString& str;
+    t_constructor(TWString& str)
+      : str(str)
+    {}
+    template <typename type_t>
+    void p_functor(const type_t& v) const {
+      str.setTypeValue(printFormat(v), v);
+    }
+    template <class type_t>
+    void c_functor(const type_t& v) const {
+      str.setObjValue(v);
+    }
+  };
+#endif
   //..............................................................................
   template <class T> inline void setTypeValue(const wchar_t* format, T v) {
     _Start = 0;
@@ -108,6 +129,9 @@ protected:
   void init(const char* str, size_t len = InvalidIndex);
 public:
   TWString();
+  TWString(const IOlxObject& v)
+    :parent_t(v.ToString())
+  {}
   // simple convertion constructors
   TWString(const bool& v);
   TWString(const char& v);
@@ -118,7 +142,13 @@ public:
   //..........................................................................................
   TWString(const TTIString<char>& str);
   // primitive Type constructors
-  template <typename T> TWString(const T& v) { setTypeValue(printFormat(v), v); }
+  template <typename T> TWString(const T& v) {
+#if defined(_UNICODE)
+    primitive_type_splitter::make(t_constructor(*this)).call(v);
+#else
+    setTypeValue(printFormat(v), v);
+#endif
+  }
   // float numbers need trimming of the 0000
   TWString(const float& v) {
     setTypeValue(printFormat(v), v);
@@ -222,18 +252,22 @@ public:
   //............................................................................
   virtual TIString ToString() const;
   //............................................................................
-  static const wchar_t* printFormat(const char)                   { return L"%c"; }
-  static const wchar_t* printFormat(const short int)              { return L"%hd"; }
-  static const wchar_t* printFormat(const unsigned short int)     { return L"%hu"; }
-  static const wchar_t* printFormat(const int)                    { return L"%d"; }
-  static const wchar_t* printFormat(const unsigned int)           { return L"%u"; }
-  static const wchar_t* printFormat(const long int)               { return L"%ld"; }
-  static const wchar_t* printFormat(const unsigned long int)      { return L"%lu"; }
-  static const wchar_t* printFormat(const long long int)          { return L"%lld"; }
-  static const wchar_t* printFormat(const unsigned long long int) { return L"%llu"; }
-  static const wchar_t* printFormat(const float)                  { return L"%f"; }
-  static const wchar_t* printFormat(const double)                 { return L"%lf"; }
-  static const wchar_t* printFormat(const long double)            { return L"%Lf"; }
+  static const wchar_t* printFormat(char)                   { return L"%c"; }
+  static const wchar_t* printFormat(short int)              { return L"%hd"; }
+  static const wchar_t* printFormat(unsigned short int)     { return L"%hu"; }
+  static const wchar_t* printFormat(int)                    { return L"%d"; }
+  static const wchar_t* printFormat(unsigned int)           { return L"%u"; }
+  static const wchar_t* printFormat(long int)               { return L"%ld"; }
+  static const wchar_t* printFormat(unsigned long int)      { return L"%lu"; }
+  static const wchar_t* printFormat(long long int)          { return L"%lld"; }
+  static const wchar_t* printFormat(unsigned long long int) { return L"%llu"; }
+  static const wchar_t* printFormat(float)                  { return L"%f"; }
+  static const wchar_t* printFormat(double)                 { return L"%lf"; }
+  static const wchar_t* printFormat(long double)            { return L"%Lf"; }
+#if defined(_UNICODE)
+  // need this for compilation
+  static const wchar_t* printFormat(const IOlxObject &) { return L"%X"; }
+#endif
 };
 
 #include "strbuf.h"
