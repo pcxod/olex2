@@ -42,7 +42,7 @@ MAINICON           ICON         "olex2.ico"
             VALUE "FileDescription", "Olex2 executable\0"
             VALUE "FileVersion", "1.5.0\0"
             VALUE "InternalName", "Olex2\0"
-            VALUE "LegalCopyright", "Copyright (c) OlexSys Ltd, 2004-2021\0"
+            VALUE "LegalCopyright", "Copyright (c) OlexSys Ltd, 2004-2024\0"
             VALUE "OriginalFilename", "Olex2.exe\0"
             VALUE "ProductName", "Olex2\0"
             VALUE "ProductVersion", "1.5.0\0"
@@ -81,7 +81,7 @@ END
 #endif    // APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
 
-
+CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST "RT_MANIFEST.manifest"
 
 #ifndef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
