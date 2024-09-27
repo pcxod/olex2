@@ -262,6 +262,7 @@ public:
   static olxstr TrimPathDelimeter(const olxstr& Path);
   static olxstr& TrimPathDelimeterI(olxstr& Path);
   static bool IsAbsolutePath(const olxstr& Path);
+  static olxstr JoinPath(const IStrList &l);
   static char GetPathDelimeter() {
 #ifdef __WIN32__
     return '\\';
@@ -361,7 +362,7 @@ public:
     return lines.SaveToTextStream(out);
   }
 
-  struct Path {
+  struct Path: public IOlxObject {
     Path(const Path& p)
     : path(p.path)
     {}
@@ -369,8 +370,12 @@ public:
       : path(TEFile::OSPath(p))
     {}
     TStrList::const_list_type Split(const olxstr& path);
-    Path GetParent();
-    bool ChDir();
+    Path GetParent() const;
+    bool ChDir() const;
+    Path& operator << (const olxstr& t);
+
+    virtual TIString ToString() const { return path; }
+
     olxstr path;
   };
 };

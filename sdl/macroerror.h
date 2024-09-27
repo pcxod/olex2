@@ -25,6 +25,7 @@ const unsigned short
   peInvalidOption       = 0x0008,
   peInvalidArgCount     = 0x0010,
   peIllegalState        = 0x0020,
+  peProcessingBreak     = 0x0040,
   // these are for special handling
   peUnhandled           = 0x1000,
   // set false if called as a function with ()
@@ -70,7 +71,10 @@ public:
 
   void ProcessingException(const olxstr& location,
     const TExceptionBase& exc);
-
+  
+  void Break() {
+    ProcessError |= peProcessingBreak;
+  }
   bool IsSuccessful() const {
     return ((ProcessError & 0x0FFF) == 0);
   }
@@ -91,6 +95,9 @@ public:
   }
   bool IsIllegalState() const {
     return (ProcessError & peIllegalState) != 0;
+  }
+  bool IsBeakCalled() const {
+    return (ProcessError & peProcessingBreak) != 0;
   }
 
   bool IsHandled() const {

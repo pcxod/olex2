@@ -2864,6 +2864,9 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
       Macros.ProcessMacro("@reap", args, Options, Error);
       return;
     }
+    Error.ProcessingError(__OlxSrcInfo, "Cancelled");
+    Error.SetUnhandled(false);
+    return;
   }
   // the dialog has been successfully executed
   if (!file_n.file_name.IsEmpty()) {

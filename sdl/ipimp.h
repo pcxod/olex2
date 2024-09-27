@@ -35,15 +35,17 @@ protected:
 
   virtual void AnalyseErrorEx(const TMacroData &error, bool quiet) {
     if (!error.IsSuccessful()) {
-      if (error.IsProcessingException()) {
-        TBasicApp::NewLogEntry(logException) << error.GetLocation() << ": " <<
-          error.GetInfo();
+      if (!error.IsBeakCalled()) {
+        if (error.IsProcessingException()) {
+          TBasicApp::NewLogEntry(logException) << error.GetLocation() << ": " <<
+            error.GetInfo();
+        }
+        else if (!error.GetInfo().IsEmpty()) {
+          TBasicApp::NewLogEntry(quiet ? logInfo : logError) <<
+            error.GetLocation() << ": " << error.GetInfo();
+        }
+        error.PrintStack(quiet ? logInfo : logDefault, false, '\t');
       }
-      else if (!error.GetInfo().IsEmpty()) {
-        TBasicApp::NewLogEntry(quiet ? logInfo : logError) <<
-          error.GetLocation() << ": " <<  error.GetInfo();
-      }
-      error.PrintStack(quiet ? logInfo : logDefault, false, '\t');
     }
   }
   virtual void beforeCall(const olxstr &cmd) {}
