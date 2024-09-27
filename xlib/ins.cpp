@@ -1161,11 +1161,14 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
   }
   else if (Toks[0].Equalsi("RESI")) {
     //_ProcessAfix0(cx);
-    if (Toks.Count() < 2 || Toks.Count() > 4) {
+    if (Toks.Count() > 4) {
       throw TInvalidArgumentException(__OlxSourceInfo,
         "number of arguments for RESI");
     }
     olxstr chainId(' '), className, number, alias;
+    if (Toks.Count() == 1) {
+      number = "0";
+    }
     if (Toks.Count() == 2) {
       if (Toks[1].Contains(':') || Toks[1].IsNumber()) {
         number = Toks[1];
