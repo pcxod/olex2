@@ -16,6 +16,7 @@
 #include "integration.h"
 #include "utf8file.h"
 #include "olxstate.h"
+#include "htmlprep.h"
 
 #ifdef _UNICODE
   #define _StrFormat_ wxT("%ls")
@@ -1264,6 +1265,54 @@ TAG_HANDLER_PROC(tag) {
 }
 TAG_HANDLER_END(SNIPPET)
 
+TAG_HANDLER_BEGIN(INCLUDE, "INCLUDE")
+TAG_HANDLER_PROC(tag) {
+  if (tag.HasParam(wxT("TEST"))) {
+    olex2::IOlex2Processor* op = olex2::IOlex2Processor::GetInstance();
+    olxstr f = tag.GetParam("TEST");
+    if (!op->processFunction(f) && f.IsBool() && f.ToBool()) {
+      return true;
+    }
+  }
+  olxstr src = tag.GetParam("SRC");
+  olx_object_ptr<IDataInputStream> is = TFileHandlerManager::GetInputStream(src);
+  if (is == 0) {
+    TBasicApp::NewLogEntry(logError) <<
+      (olxstr("Include::File does not exist: ").quote() << src);
+    return true;
+  }
+  TStrList lines;
+#ifdef _UNICODE
+  lines = TUtf8File::ReadLines(*is, false);
+#else
+  lines.LoadFromTextStream(*is);
+#endif
+  TParamList params;
+  using namespace exparse;
+  olxstr alp = tag.GetAllParams();
+  size_t st = 0;
+  olxstr attr_name;
+  for (size_t i = 0; i < alp.Length(); i++) {
+    olxch ch = alp.CharAt(i);
+    if (ch == '=') {
+      attr_name = alp.SubString(st, i - st).c_str();
+    }
+    if (parser_util::is_quote(ch)) {
+      olxstr val;
+      size_t v_start = i;
+      parser_util::parse_string(alp, val, i);
+      val = val.c_str();
+      params.AddParam(attr_name, val);
+      st = i + 1;
+    }
+  }
+  THtmlPreprocessor p;
+  olxstr html = p.Preprocess(lines.Text(NewLineSequence()), params);
+  ParseInnerSource(html.u_str());
+  return true;
+}
+TAG_HANDLER_END(INCLUDE)
+
 TAGS_MODULE_BEGIN(Input)
     TAGS_MODULE_ADD(INPUT)
     TAGS_MODULE_ADD(IMAGE)
@@ -1272,5 +1321,6 @@ TAGS_MODULE_BEGIN(Input)
     TAGS_MODULE_ADD(SWITCHINFOS)
     TAGS_MODULE_ADD(SWITCHINFOE)
     TAGS_MODULE_ADD(IGNORE)
+    TAGS_MODULE_ADD(INCLUDE)
     TAGS_MODULE_ADD(SNIPPET)
   TAGS_MODULE_END(Input)

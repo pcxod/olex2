@@ -9,6 +9,7 @@
 
 #pragma once
 #include "edict.h"
+#include "paramlist.h"
 class THtmlSwitch;
 
 class THtmlPreprocessor {
@@ -27,7 +28,11 @@ public:
   void SetSwitchState(THtmlSwitch& sw, size_t state);
   void UpdateSwitchState(THtmlSwitch& Switch, olxstr& String);
 
-  olxstr Preprocess(const olxstr& html);
+  olxstr Preprocess(const olxstr& html, const TParamList& params);
+  olxstr Preprocess(const olxstr& html) {
+    return Preprocess(html, TParamList());
+  }
+
 
 protected:
   void ClearSwitchStates() { SwitchStates.Clear(); }

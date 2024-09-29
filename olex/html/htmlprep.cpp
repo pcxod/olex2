@@ -201,12 +201,13 @@ void THtmlPreprocessor::UpdateSwitchState(THtmlSwitch& Switch, olxstr& String) {
   String = Tmp;
 }
 //.............................................................................
-olxstr THtmlPreprocessor::Preprocess(const olxstr& html) {
+olxstr THtmlPreprocessor::Preprocess(const olxstr& html, const TParamList& params) {
   try {
     olxcstr cstr = TUtf8::Encode(html);
     olxstr tmp_file_name = "#html_preprocessor!";
     TFileHandlerManager::AddMemoryBlock(tmp_file_name, cstr.c_str(), cstr.Length(), 0);
     THtmlSwitch root(this, 0);
+    root.GetParams() = params;
     root.AddFile(tmp_file_name);
     root.SetFileIndex(0);
     root.UpdateFileIndex();

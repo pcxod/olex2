@@ -44,10 +44,17 @@ void THtmlSwitch::UpdateFileIndex() {
 #else
   Strings.LoadFromTextStream(*is);
 #endif
-  const olxstr ignore_open = "<!-- #ignoreif", ignore_close = "#ignoreif -->";
+  const olxstr ignore_open = "<!-- #ignoreif",
+    ignore_close = "#ignoreif -->",
+    ignore_close1 = "<!-- ignoreif# "
+    ;
   for (size_t i = 0; i < Strings.Count(); i++) {
     if (Strings[i].StartsFrom(ignore_open)) {
       olxstr fn = Strings[i].SubStringFrom(ignore_open.Length()).TrimWhiteChars();
+      if (fn.EndsWith("->")) {
+        fn.SetLength(fn.Length() - 3);
+        fn.TrimWhiteChars();
+      }
       if (fn.IsEmpty()) {
         TBasicApp::NewLogEntry(logError) <<
           (olxstr("Invalid ignoreif construct: ").quote() << Strings[i]);
@@ -56,7 +63,9 @@ void THtmlSwitch::UpdateFileIndex() {
       size_t j = i + 1;
       bool delete_last = true;
       for (; j < Strings.Count(); j++) {
-        if (Strings[j].StartsFrom(ignore_close)) {
+        if (Strings[j].StartsFrom(ignore_close) ||
+          Strings[j].StartsFrom(ignore_close1))
+        {
           if (--oc == 0) {
             break;
           }
