@@ -983,7 +983,7 @@ olxstr vec2str_ext(const TVector3<FT>& n, const olxcstr &fmt) {
 template <typename FT>
 olxcstr vec_element_fmt(const TVector3<FT>& n) {
   olxcstr f;
-  if (olx_is_float(n[0])) {
+  if (olx_is_float<FT>::is) {
     f << "%6.3" << olx_format_modifier(n[0]) << 'f';
   }
   else {

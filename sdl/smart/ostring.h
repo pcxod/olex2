@@ -11,6 +11,7 @@
 #define __olx_sdl_ostr_H
 #include <cstdarg>
 #include "olx_istring.h"
+#include "../type_splitter.h"
 BeginEsdlNamespace()
 
 template <bool CaseInsensetive> class olxstrComparator {
@@ -26,26 +27,6 @@ public:
 extern olxstr olx_print_(const char* format, va_list args);
 extern olxstr olx_print(const char* format, ...);
 extern olxstr olx_print(olxcstr format, ...);
-
-static bool olx_is_float(const float&) { return true; }
-static bool olx_is_float(const double&) { return true; }
-static bool olx_is_float(const long double&) { return true; }
-template <typename T>
-static bool olx_is_float(const T&) { return false; }
-
-static bool olx_is_primitive(bool) { return true; }
-static bool olx_is_primitive(char) { return true; }
-static bool olx_is_primitive(short int) { return true; }
-static bool olx_is_primitive(int) { return true; }
-static bool olx_is_primitive(long int) { return true; }
-static bool olx_is_primitive(unsigned char) { return true; }
-static bool olx_is_primitive(unsigned short int) { return true; }
-static bool olx_is_primitive(unsigned int) { return true; }
-static bool olx_is_primitive(unsigned long int) { return true; }
-template <typename T>
-static bool olx_is_primitive(const T &v) {
-  return olx_is_float(v);
-}
 
 static const char* olx_print_format(const char) { return "c"; }
 static const char* olx_print_format(const short int) { return "d"; }

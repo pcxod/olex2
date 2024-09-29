@@ -46,4 +46,31 @@ namespace esdl {
       return primitive_type_splitter_<functor_t>(f);
     }
   };
+
+  template <typename T>  struct olx_is_float {  const static bool is = false; };
+
+  template <> struct olx_is_float<float> { const static bool is = true; };
+  template <> struct olx_is_float<double> { const static bool is = true; };
+  template <> struct olx_is_float<long double> { const static bool is = true; };
+
+  template <typename T>  struct olx_is_primitive { const static bool is = false; };
+
+  template <> struct olx_is_primitive<bool> { const static bool is = true; };
+  template <> struct olx_is_primitive<char> { const static bool is = true; };
+  template <> struct olx_is_primitive<short> { const static bool is = true; };
+  template <> struct olx_is_primitive<int> { const static bool is = true; };
+  template <> struct olx_is_primitive<long> { const static bool is = true; };
+  template <> struct olx_is_primitive<long long> { const static bool is = true; };
+
+  template <> struct olx_is_primitive<unsigned char> { const static bool is = true; };
+  template <> struct olx_is_primitive<unsigned short> { const static bool is = true; };
+  template <> struct olx_is_primitive<unsigned int> { const static bool is = true; };
+  template <> struct olx_is_primitive<unsigned long> { const static bool is = true; };
+  template <> struct olx_is_primitive<unsigned long long> { const static bool is = true; };
+
+  template <> struct olx_is_primitive<float> { const static bool is = true; };
+  template <> struct olx_is_primitive<double> { const static bool is = true; };
+  template <> struct olx_is_primitive<long double> { const static bool is = true; };
+
+
 } // end of namespace esdl
