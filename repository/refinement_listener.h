@@ -24,7 +24,10 @@ namespace olex2 {
       static RefinementListener* i = 0;
       return i;
     }
-    bool valid;
     olxstr fin_fn;
+    static olx_critical_section& get_critical_section() {
+      static olx_critical_section cs_;
+      return cs_;
+    }
   };
 }

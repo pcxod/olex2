@@ -970,6 +970,10 @@ void XLibMacros::macPush(TStrObjList &Cmds, const TParamList &Options,
     Error.ProcessingError(__OlxSrcInfo, "invalid translation");
     return;
   }
+  if (pnt.AbsSum() > 6) {
+    Error.ProcessingError(__OlxSrcInfo, "[-2..2] values is expected");
+    return;
+  }
   TXApp& xapp = TXApp::GetInstance();
   TSAtomPList atoms = xapp.FindSAtoms(Cmds, true);
   smatd tm;

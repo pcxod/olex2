@@ -218,7 +218,8 @@ void TExceptionBase::ThrowInvalidBoolFormat(const char* file,
 //.............................................................................
 const TBasicException* TExceptionBase::GetException() const {
   const TBasicException* exc = dynamic_cast<const TBasicException*>(this);
-  if( exc == NULL )
+  if (exc == 0) {
     throw TFunctionFailedException(__OlxSourceInfo, "invalid exception type");
+  }
   return exc;
 }
