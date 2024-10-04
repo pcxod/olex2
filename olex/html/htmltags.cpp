@@ -525,9 +525,6 @@ TAG_HANDLER_PROC(tag) {
     Text->WI.SetWidth(ax);
     Text->WI.SetHeight(ay);
     Text->SetData(Data);
-    Text->SetOwnForegroundColour(*wxRED);
-    Text->SetForegroundColour(*wxRED);
-    Text->SetupColours();
     if (GetBoolAttribute(tag, "FIT")) {
       //Text->SetMaxSize(Text->GetBestSize());
       Text->SetInitialSize();

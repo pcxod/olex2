@@ -36,7 +36,7 @@ namespace olex2 {
       if (i == 0) {
         i = new RefinementListener();
       }
-      // exists creates a copy of a string it is not thread-safe!
+      // TEFile::Exists creates a copy of a string it is not thread-safe!
       if (!i->fin_fn.IsEmpty() && TEFile::Exists(i->fin_fn)) {
         DoBreak();
         TEFile::DelFile(i->fin_fn);
