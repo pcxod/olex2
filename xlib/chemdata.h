@@ -151,8 +151,13 @@ public:
     r_custom(0), gaussians(_gaussians), isotopes(_isotopes),
     henke_data(_henke_data), neutron_scattering(_neutron_scattering)
   {
-    for (int i = 0; i < isotope_count; i++) {
-      Mr += isotopes[i].Mr*isotopes[i].W;
+    if (z == 1 && symbol.CharAt(0) == 'D') {
+      Mr = isotopes[1].Mr;
+    }
+    else {
+      for (int i = 0; i < isotope_count; i++) {
+        Mr += isotopes[i].Mr * isotopes[i].W;
+      }
     }
   }
 
