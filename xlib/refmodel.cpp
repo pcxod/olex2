@@ -3749,6 +3749,9 @@ void RefinementModel::LibStoreParam(TStrObjList& Cmds, const TParamList& Opts,
       if (i != 0) {
         di->DeleteItem(i);
       }
+      else {
+        di->DeleteFieldByName(toks.GetLastString());
+      }
     }
     else {
       di->AddField(toks.GetLastString(), Cmds[1]);

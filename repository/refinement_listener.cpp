@@ -28,7 +28,7 @@ namespace olex2 {
   }
 
   bool RefinementListener::OnProgress(size_t max, size_t pos) {
-    if ((pos % 100) == 0) {
+    if (max == ~0 && pos == ~0) {
       volatile olx_scope_cs cs(get_critical_section());
       RefinementListener*& i = GetInstance();
       if (i == 0) {
@@ -38,8 +38,6 @@ namespace olex2 {
         DoBreak();
         TEFile::DelFile(i->fin_fn);
       }
-    }
-    if (max == ~0 && pos == ~0) {
       IOlex2Processor* ip = IOlex2Processor::GetInstance();
       if (ip != 0) {
         ip->processMacro("refresh");
