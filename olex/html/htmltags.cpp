@@ -511,13 +511,31 @@ TAG_HANDLER_PROC(tag) {
   }
 /******************* LABEL ***************************************************/
   else if (TagName.Equalsi("label")) {
-    TLabel *Text = new TLabel(html, Value);
+    long style = wxBG_STYLE_CUSTOM;
+    if (halign == wxHTML_ALIGN_CENTER) {
+      style = wxALIGN_CENTRE_HORIZONTAL;
+    }
+    else if (halign == wxHTML_ALIGN_RIGHT) {
+      style = wxALIGN_RIGHT;
+    }
+    TLabel *Text = new TLabel(html, Value, style);
     Text->SetFont(m_WParser->GetDC()->GetFont());
     CreatedObject = Text;
     CreatedWindow = Text;
     Text->WI.SetWidth(ax);
     Text->WI.SetHeight(ay);
     Text->SetData(Data);
+    Text->SetOwnForegroundColour(*wxRED);
+    Text->SetForegroundColour(*wxRED);
+    Text->SetupColours();
+    if (GetBoolAttribute(tag, "FIT")) {
+      //Text->SetMaxSize(Text->GetBestSize());
+      Text->SetInitialSize();
+    }
+    olxstr markup = tag.GetParam(wxT("MARKUP"));
+    if (!markup.IsEmpty()) {
+      Text->SetLabelMarkup(markup.u_str());
+    }
     m_WParser->GetContainer()->InsertCell(new THtmlWidgetCell(Text, fl));
   }
 /******************* BUTTON ***************************************************/

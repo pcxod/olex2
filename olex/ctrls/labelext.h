@@ -16,17 +16,21 @@ namespace ctrl_ext  {
     TActionQList *FActions;
     void ClickEvent(wxMouseEvent& event);
     olxstr Data;
+    void OnPaint(wxPaintEvent& event);
+    void onEraseBG(wxEraseEvent& event);
   public:
-    TLabel(wxWindow *Parent, const olxstr &label) :
+    TLabel(wxWindow *Parent, const olxstr &label, long style=0) :
       AOlxCtrl(this),
       OnClick(AOlxCtrl::ActionQueue::New(Actions, evt_on_click_id)),
-      wxStaticText(Parent, wxID_ANY, label.u_str()),
+      wxStaticText(Parent, wxID_ANY, label.u_str(), wxDefaultPosition, wxDefaultSize, style),
       Data(EmptyString())
     {
       Bind(wxEVT_LEFT_DOWN, &TLabel::ClickEvent, this);
+      Bind(wxEVT_PAINT, &TLabel::OnPaint, this);
+      Bind(wxEVT_ERASE_BACKGROUND, &TLabel::onEraseBG, this);
     }
 
-    DefPropC(olxstr, Data)
+    DefPropC(olxstr, Data);
 
     AOlxCtrl::ActionQueue &OnClick;
 

@@ -17,3 +17,14 @@ void TLabel::ClickEvent(wxMouseEvent& event)  {
   event.Skip();
   OnClick.Execute(this);
 }
+void TLabel::OnPaint(wxPaintEvent& event) {
+  wxPaintDC dc(this);
+  dc.SetBrush(GetBackgroundColour());
+  dc.SetPen(GetForegroundColour());
+  //dc.Clear();
+  wxStaticText::OnPaint(event);
+}
+//..............................................................................
+void TLabel::onEraseBG(wxEraseEvent& event) {
+  event.Skip();
+}
