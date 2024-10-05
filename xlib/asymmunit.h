@@ -200,8 +200,10 @@ public:
   void RearrangeAtoms(const TSizeList& indices);
   // sorts residues by class and number
   void SortResidues();
-  // if a number is provided, searches by Number otherwise - by ClassName
-  ConstPtrList<TResidue> FindResidues(const olxstr& resi) const;
+  /* if a number is provided, searches by Number otherwise - by ClassName
+  * when max_n (>0) is provided the list will contain max_n entries at max
+  */
+  ConstPtrList<TResidue> FindResidues(const olxstr& resi, size_t max_n=InvalidIndex) const;
   // this is called internally by the TCAtom, to sync connectivity info
   void _OnAtomTypeChanged(TCAtom& caller);
   // called by the ref model

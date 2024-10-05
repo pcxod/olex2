@@ -122,6 +122,8 @@ public:
   virtual bool IsExplicit() const { return false; }
   virtual size_t Expand(const RefinementModel& rm, TAtomRefList& res,
     TResidue& resi) const;
+  // returns 0 - nothing to do, 1 - not in the map, 2 - updated
+  int UpdateRef(const olxstr_dict<olxstr, true>& o2n_map);
   // may return 0
   static AAtomRef* NewInstance(const RefinementModel& rm, const olxstr& exp,
     const olxstr& resi, TResidue* _resi);
@@ -242,6 +244,7 @@ public:
   void AddExplicit(class TSAtom& a);
   // checks if all atoms are in the same RESI
   void UpdateResi();
+  void UpdateImplicitRefs(const olxstr_dict<olxstr, true>& old2new_map);
   void Clear();
   bool IsEmpty() const { return refs.IsEmpty(); }
   size_t RefCount() const { return refs.Count(); }

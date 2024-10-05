@@ -170,7 +170,7 @@ size_t ImplicitCAtomRef::Expand(const RefinementModel& rm,
   TAtomRefList& res, TResidue& resi) const
 {
   if (Name.Equalsi("last")) {
-    if (res.IsEmpty()) {
+    if (resi.IsEmpty()) {
       return 0;
     }
     size_t i = resi.Count() - 1;
@@ -183,6 +183,9 @@ size_t ImplicitCAtomRef::Expand(const RefinementModel& rm,
     return 1;
   }
   if (Name.Equalsi("first")) {
+    if (resi.IsEmpty()) {
+      return 0;
+    }
     size_t i = 0;
     while (resi[i++].IsDeleted() && i <= resi.Count()) {
     }
@@ -334,6 +337,22 @@ AAtomRef *ImplicitCAtomRef::ToImplicit(const olxstr &resi) const {
   olxstr ed = olxstr('_') << resi;
   return new ImplicitCAtomRef(
     Name.EndsWithi(ed) ? Name.SubStringFrom(0, ed.Length()) : Name);
+}
+//.............................................................................
+int ImplicitCAtomRef::UpdateRef(const olxstr_dict<olxstr, true>& o2n_map) {
+  if (Name.StartsFrom('*')) {
+    return 0;
+  }
+  size_t idx = Name.IndexOf('_');
+  if (idx == InvalidIndex) {
+    return 0;
+  }
+  const olxstr new_an = o2n_map.Find(Name.SubStringTo(idx), EmptyString());
+  if (new_an.IsEmpty()) {
+    return 1;
+  }
+  Name = new_an + Name.SubStringFrom(idx);
+  return 2;
 }
 //.............................................................................
 //.............................................................................
@@ -798,11 +817,28 @@ TPtrList<ExplicitCAtomRef>::const_list_type AtomRefList::GetExplicit() const {
 //.............................................................................
 AtomRefList &AtomRefList::ConvertToExplicit() {
   if (!IsExplicit()) {
-    throw TInvalidArgumentException(__OlxSourceInfo, "list type");
+    //if (residue.IsEmpty()) {
+      throw TInvalidArgumentException(__OlxSourceInfo, "list type");
+    //}
+    //TPtrList<TResidue> residues = rm.aunit.FindResidues(residue, 1);
+    //if (residues.IsEmpty()) {
+    //  throw TInvalidArgumentException(__OlxSourceInfo, "list type");
+    //}
+    //TTypeList<AAtomRef> nrefs(olx_reserve(refs.Count()));
+    //for (size_t i = 0; i < refs.Count(); i++) {
+    //  TAtomRefList lrefs;
+    //  // residue does not matter here
+    //  refs[i].Expand(rm, lrefs, *residues[0]);
+    //  nrefs.AddAll(lrefs);
+    //  lrefs.ReleaseAll();
+    //}
+    //refs.TakeOver(nrefs);
+    //return *this;
   }
   TTypeList<AAtomRef> nrefs(olx_reserve(refs.Count()));
   for (size_t i = 0; i < refs.Count(); i++) {
     TAtomRefList lrefs;
+    // residue does not matter here
     refs[i].Expand(rm, lrefs, rm.aunit.GetResidue(0));
     nrefs.AddAll(lrefs);
     lrefs.ReleaseAll();
@@ -1036,3 +1072,50 @@ void AtomRefList::SortByTag(const TPtrList<AtomRefList> &sync) {
   //  );
 }
 //.............................................................................
+void AtomRefList::UpdateImplicitRefs(const olxstr_dict<olxstr, true>& o2n_map) {
+  if (IsExplicit() || !ContainsImplicitAtoms) {
+    return;
+  }
+  size_t failed = 0, updated = 0;
+  for (size_t i = 0; i < refs.Count(); i++) {
+    AAtomRef& r = refs[i];
+    if (r.IsExpandable()) {
+      ListAtomRef* lr = dynamic_cast<ListAtomRef*>(&r);
+      if (lr != 0) {
+        if (!lr->GetStart().IsExplicit()) {
+          ImplicitCAtomRef* ir = dynamic_cast<ImplicitCAtomRef*>(&lr->GetStart());
+          if (ir != 0) {
+            if (ir->UpdateRef(o2n_map) == 2) {
+              updated++;
+            }
+            else {
+              failed++;
+            }
+          }
+        }
+        if (!lr->GetEnd().IsExplicit()) {
+          ImplicitCAtomRef* ir = dynamic_cast<ImplicitCAtomRef*>(&lr->GetEnd());
+          if (ir != 0) {
+            if (ir->UpdateRef(o2n_map) == 2) {
+              updated++;
+            }
+            else {
+              failed++;
+            }
+          }
+        }
+      }
+    }
+    else if (!r.IsExplicit()) {
+      ImplicitCAtomRef* ir = dynamic_cast<ImplicitCAtomRef*>(&r);
+      if (ir != 0) {
+        if (ir->UpdateRef(o2n_map) == 2) {
+          updated++;
+        }
+        else {
+          failed++;
+        }
+      }
+    }
+  }
+}

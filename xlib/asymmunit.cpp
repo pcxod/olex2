@@ -317,7 +317,7 @@ TResidue& TAsymmUnit::NewResidue(const olxstr& RClass, int number, int alias,
   return r;
 }
 //..............................................................................
-ConstPtrList<TResidue> TAsymmUnit::FindResidues(const olxstr& resi) const {
+ConstPtrList<TResidue> TAsymmUnit::FindResidues(const olxstr& resi, size_t max_n) const {
   TPtrList<TResidue> list;
   if (resi.IsEmpty()) {
     list.Add(&MainResidue);
@@ -332,6 +332,9 @@ ConstPtrList<TResidue> TAsymmUnit::FindResidues(const olxstr& resi) const {
         TResidue *r = ResidueRegistry.GetValue(cid).Find(n, 0);
         if (r != 0) {
           list.Add(r);
+          if (list.Count() >= max_n) {
+            return list;
+          }
         }
       }
     }
@@ -340,7 +343,7 @@ ConstPtrList<TResidue> TAsymmUnit::FindResidues(const olxstr& resi) const {
     if (resi == '*') {  //special case
       list.SetCapacity(Residues.Count() + 1);
       list.Add(MainResidue);
-      for (size_t i = 0; i < Residues.Count(); i++) {
+      for (size_t i = 0; i < olx_min(Residues.Count(), max_n); i++) {
         list.Add(Residues[i]);
       }
     }
@@ -348,6 +351,9 @@ ConstPtrList<TResidue> TAsymmUnit::FindResidues(const olxstr& resi) const {
       for (size_t i = 0; i < Residues.Count(); i++) {
         if (Residues[i].GetClassName().Equalsi(resi)) {
           list.Add(Residues[i]);
+          if (list.Count() >= max_n) {
+            return list;
+          }
         }
       }
     }
