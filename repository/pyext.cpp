@@ -300,7 +300,7 @@ PyObject* runRegisterCallback(PyObject* self, PyObject* args) {
   PythonExt::GetInstance()->GetOlexProcessor()->registerCallbackFunc(cbEvent,
     new TFunction<TFuncWrapper>(
       fw, &TFuncWrapper::Call, PyEval_GetFuncName(fun), fpAny));
-  return Py_BuildValue("b", true);
+  return PythonExt::PyTrue();
 }
 //.............................................................................
 PyObject* runUnregisterCallback(PyObject* self, PyObject* args) {
@@ -315,7 +315,7 @@ PyObject* runUnregisterCallback(PyObject* self, PyObject* args) {
   }
   PythonExt::GetInstance()->GetOlexProcessor()->unregisterCallbackFunc(
     cbEvent, PyEval_GetFuncName(fun));
-  return Py_BuildValue("b", true);
+  return PythonExt::PyTrue();
 }
 //.............................................................................
 PyObject* runRegisterMacro(PyObject* self, PyObject* args) {

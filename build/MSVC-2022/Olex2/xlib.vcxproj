@@ -425,6 +425,7 @@
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ac.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ag.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Al.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Am.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ar.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_As.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_At.cpp" />
@@ -433,12 +434,15 @@
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ba.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Be.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Bi.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Bk.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Br.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_C.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ca.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Cd.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ce.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Cf.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Cl.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Cm.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Co.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Cr.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Cs.cpp" />
@@ -474,6 +478,7 @@
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Nd.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ne.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ni.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Np.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_O.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Os.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_P.cpp" />
@@ -484,6 +489,7 @@
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Po.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Pr.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Pt.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Pu.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ra.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Rb.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Re.cpp" />

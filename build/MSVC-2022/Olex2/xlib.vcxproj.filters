@@ -504,9 +504,6 @@
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ac.cpp">
       <Filter>Source Files\absorpc</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ag.cpp">
-      <Filter>Source Files\absorpc</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Al.cpp">
       <Filter>Source Files\absorpc</Filter>
     </ClCompile>
@@ -824,6 +821,27 @@
     </ClCompile>
     <ClCompile Include="..\..\..\repository\refinement_listener.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Am.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Bk.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Cf.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Cm.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Np.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Pu.cpp">
+      <Filter>Source Files\absorpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ag.cpp">
+      <Filter>Source Files\absorpc</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
