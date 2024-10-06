@@ -30,9 +30,8 @@ Further enhanced by IT tables volume C, table 4.2.4.3
 BeginXlibNamespace()
 
 struct cm_Absorption_Coefficient {
-  double energy, mu_over_rho, muen_over_rho;
+  double energy, mu_over_rho;
   double GetMuOverRho() const {  return mu_over_rho;  }
-  double GetMuEnOverRho() const {  return muen_over_rho;  }
 };
 
 struct cm_Absorption_Entry  {
@@ -61,10 +60,6 @@ struct cm_Absorption_Coefficient_Reg  {
   // cm^2/g
   double CalcMuOverRhoForE(double eV, cm_Absorption_Entry& ac) const {
     return _CalcForE(eV, ac, &cm_Absorption_Coefficient::GetMuOverRho);
-  }
-  // cm^2/g
-  double CalcMuenOverRhoForE(double eV, cm_Absorption_Entry& ac)  {
-    return _CalcForE(eV, ac, &cm_Absorption_Coefficient::GetMuEnOverRho);
   }
   double _CalcForE(double eV, cm_Absorption_Entry& ac,
     double (cm_Absorption_Coefficient::*f)() const) const;
