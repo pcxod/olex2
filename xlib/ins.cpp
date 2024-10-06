@@ -3217,7 +3217,7 @@ bool TIns::ParseRestraint(RefinementModel &rm, const TStrList& _toks,
     /* only DFIX and DANG, values cannot be fixed - hence only reference to
     FVAR 2 and further allowed */
     if (use_var_manager && olx_abs(DefVal) > 15) {
-        rm.Vars.SetParam(sr, 0, DefVal);
+      rm.Vars.SetParam(sr, 0, DefVal);
     }
     else {
       sr.SetValue(DefVal);
@@ -3240,7 +3240,7 @@ bool TIns::ParseRestraint(RefinementModel &rm, const TStrList& _toks,
       }
     }
     srl->ValidateRestraint(sr);
-    if (!Ins_ProcessRestraint(NULL, sr, rm) && DoPreserveInvalid()) {
+    if (!Ins_ProcessRestraint(0, sr, rm) && DoPreserveInvalid()) {
       TBasicApp::NewLogEntry() <<
         (olxstr("Preserving invalid instruction: ").quote() << toks.Text(' '));
       return false;

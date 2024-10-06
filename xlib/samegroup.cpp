@@ -65,7 +65,7 @@ void TSameGroup::ToDataItem(TDataItem& item) const {
     item.AddField("esd12", Esd12)
       .AddField("esd13", Esd13);
   }
-  item.AddField("AtomList", Atoms.GetExpression());
+  Atoms.ToDataItem(item.AddItem("Atoms"));
   IndexRange::Builder irb;
   for (size_t i = 0; i < Dependent.Count(); i++) {
     if (Dependent[i]->IsValidForSave()) {
@@ -75,7 +75,7 @@ void TSameGroup::ToDataItem(TDataItem& item) const {
   if (IsReference()) {
     item.AddField("dependent", irb.GetString());
   }
-  else {
+  else if (ParentGroup !=0 ) { // implicit?
     item.AddField("parent", ParentGroup->GetTag());
   }
 }
@@ -118,8 +118,14 @@ void TSameGroup::FromDataItem(TDataItem& item) {
   Clear();
   Esd12 = item.FindField("esd12", "0").ToDouble();
   Esd13 = item.FindField("esd13", "0").ToDouble();
-  if (item.FieldExists("AtomList")) {
-    Atoms.Build(item.GetFieldByName("AtomList"));
+  TDataItem* atoms = item.FindItem("Atoms");
+  if (atoms != 0 || item.FieldExists("AtomList")) {
+    if (atoms != 0) {
+      Atoms.FromDataItem(*atoms);
+    }
+    else { // buggy version - no residue is saved...
+      Atoms.Build(item.GetFieldByName("AtomList"));
+    }
     olxstr dep_l = item.FindField("dependent");
     if (!dep_l.IsEmpty()) {
       IndexRange::RangeItr di(dep_l);

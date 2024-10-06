@@ -121,6 +121,10 @@ public:
   TInvalidArgumentException(const olxstr& location, const olxstr& argName)
     : TBasicException(location, argName)
   {}
+  TInvalidArgumentException(const olxstr& location, const olxstr& argName,
+    const olxstr &argVal)
+    : TBasicException(location, olxstr(argName) << '=' << argVal)
+  {}
   const olxstr& GetArgumentName() const { return GetError(); }
   virtual IOlxObject* Replicate() const {
     return new TInvalidArgumentException(*this);

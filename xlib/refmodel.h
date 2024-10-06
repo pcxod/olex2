@@ -385,7 +385,7 @@ Friedel opposites of components 1 ... m
   // internal: sorts all possible atom containers
   void Sort_();
   /* For internal use - this returns sensible results only in between a call to
-  BenAUSort_ and EndAUSorte_ each [TCAtom::GetId()] returns previous value
+  BeforeAUSort_ and EndAUSorte_ each [TCAtom::GetId()] returns previous value
   */
   const TSizeList & GetOldAtomIds_() { return old_atom_ids; }
 

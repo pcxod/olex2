@@ -110,10 +110,17 @@ C1_- - an explicit atom of previous residue
 */
 class ImplicitCAtomRef : public AAtomRef  {
   olxstr Name;
+  ExplicitCAtomRef* ref;
 public:
-  ImplicitCAtomRef(const ImplicitCAtomRef& ar) : Name(ar.Name) {}
-  ImplicitCAtomRef(const olxstr& _Name) : Name(_Name) {}
+  ImplicitCAtomRef(const olxstr& _Name)
+    : Name(_Name),
+    ref(0)
+  {}
+  // IntRef must be called after
   ImplicitCAtomRef(const TDataItem &di);
+  ~ImplicitCAtomRef() {
+    olx_del_obj(ref);
+  }
   // * is special char
   virtual olxstr GetExpression(TResidue *) const {
     return Name == '*' ? EmptyString() : Name;
@@ -122,14 +129,13 @@ public:
   virtual bool IsExplicit() const { return false; }
   virtual size_t Expand(const RefinementModel& rm, TAtomRefList& res,
     TResidue& resi) const;
-  // returns 0 - nothing to do, 1 - not in the map, 2 - updated
-  int UpdateRef(const olxstr_dict<olxstr, true>& o2n_map);
+  void InitRef(const RefinementModel& rm, const olxstr& rname,
+    TResidue *resi=0);
+  void Update(const RefinementModel& rm);
   // may return 0
   static AAtomRef* NewInstance(const RefinementModel& rm, const olxstr& exp,
     const olxstr& resi, TResidue* _resi);
-  virtual AAtomRef* Clone(RefinementModel& rm) const {
-    return new ImplicitCAtomRef(Name);
-  }
+  virtual AAtomRef* Clone(RefinementModel& rm) const;
   virtual void ToDataItem(TDataItem &di) const;
   virtual AAtomRef *ToImplicit(const olxstr &resi) const;
   static const olxstr &GetTypeId() {
@@ -192,6 +198,7 @@ class AtomRefList {
     return olx_cmp(a.GetAtom().GetId(), b.GetAtom().GetId());
   }
   TTypeList<AAtomRef>& GetRefs() { return refs; }
+  TPtrList<ImplicitCAtomRef>::const_list_type ExtractImplicit();
 public:
   /* creates an instance of the object from given expression for given residue
   class, number or alias. Empty residue specifies the main residue.
@@ -244,7 +251,8 @@ public:
   void AddExplicit(class TSAtom& a);
   // checks if all atoms are in the same RESI
   void UpdateResi();
-  void UpdateImplicitRefs(const olxstr_dict<olxstr, true>& old2new_map);
+  void InitImplicitRefs();
+  void UpdateImplicitRefs();
   void Clear();
   bool IsEmpty() const { return refs.IsEmpty(); }
   size_t RefCount() const { return refs.Count(); }

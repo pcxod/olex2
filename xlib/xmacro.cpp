@@ -2548,13 +2548,13 @@ void XLibMacros::macFixHL(TStrObjList &Cmds, const TParamList &Options, TMacroDa
     if (ca.GetType() == iQPeakZ) {
       ca.SetDetached(true);
     }
-    else if (ca.GetType().z < 2) {
+    else if (ca.GetType().z == 1) {
       ca.SetDetached(false);
     }
   }
   TActionQueueLock q_draw(xapp.FindActionQueue(olxappevent_GL_DRAW));
   xapp.XFile().GetLattice().UpdateConnectivity();
-  delete TXApp::GetInstance().FixHL();
+  delete xapp.FixHL();
   for (size_t i = 0; i < au.AtomCount(); i++) {
     au.GetAtom(i).SetDetached(detached[i]);
   }

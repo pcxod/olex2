@@ -70,7 +70,9 @@ void TSimpleRestraint::Delete() {
 //..............................................................................
 TSimpleRestraint &TSimpleRestraint::Validate() {
   Atoms.Validate(GetGroupSize());
-  if (ListType >= rltAtoms1N && (ListType <= rltAtoms4N) && Atoms.IsExplicit()) {
+  if (ListType >= rltAtoms1N && (ListType <= rltAtoms4N) &&
+    Atoms.IsExplicit() && !Atoms.IsExpandable())
+  {
     size_t min_ac = (ListType-rltAtoms1N)+1;
     if (Atoms.RefCount() < min_ac) {
       Atoms.Clear();

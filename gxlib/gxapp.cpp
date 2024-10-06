@@ -1994,9 +1994,16 @@ TXAtom* TGXApp::GetXAtom(const olxstr& AtomName, bool clearSelection) {
     }
   }
   AtomIterator ai(*this);
+  bool use_resi_n = AtomName.Contains('_'),
+    use_part = AtomName.Contains('^');
   while (ai.HasNext()) {
     TXAtom& xa = ai.Next();
-    if (xa.GetLabel().Equalsi(AtomName)) {
+    olxstr an = use_resi_n ? xa.CAtom().GetResiLabel(use_part)
+      : xa.CAtom().GetLabel();
+    if (!use_resi_n && use_part && xa.CAtom().GetPart() != 0) {
+      an << '^' << (olxch)('a' + olx_abs(xa.CAtom().GetPart()) - 1);
+    }
+    if (an.Equalsi(AtomName)) {
       return &xa;
     }
   }
