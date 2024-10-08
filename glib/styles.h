@@ -84,8 +84,7 @@ protected:
     Styles.Add(style->GetName(), style);
   }
   TGraphicsStyle* FindLocalStyle(const olxstr& name) const {
-    size_t i = Styles.IndexOf(name);
-    return i == InvalidIndex ? 0 : Styles.GetValue(i);
+    return Styles.Find(name, 0);
   }
   template <class T>
   TGlMaterial* FindInheritedMaterial(const T& PName, TGlMaterial* def = 0) const {
@@ -103,8 +102,9 @@ protected:
   template <class T>
   TGlMaterial* FindLocalMaterial(const T& PName, TGlMaterial* def = 0) const {
     for (size_t i = 0; i < PrimitiveStyleCount(); i++) {
-      if (PStyles[i]->GetName() == PName)
+      if (PStyles[i]->GetName() == PName) {
         return &PStyles[i]->GetProperties();
+      }
     }
     return def;
   }
@@ -276,8 +276,8 @@ public:
     }
     return false;
   }
-  TGraphicsStyle& NewStyle(const olxstr& Name, bool Force = false);
   // if force = true, then whole path "a.b.c" will be created
+  TGraphicsStyle& NewStyle(const olxstr& Name, bool Force = false);
   inline uint16_t GetLevel() const { return Level; }
 
   inline TGraphicsStyle* GetParentStyle() const { return ParentStyle; }
@@ -335,6 +335,8 @@ public:
   TGraphicsStyle& NewStyle(const olxstr& Name, bool Force = false) {
     return Root->NewStyle(Name, Force);
   }
+  void SetDefaultMaterial(const olxstr& object_name, const olxstr& p_name,
+    const TGlMaterial& m);
   void DeleteStyle(TGraphicsStyle* Style);
 
   void CopyStyle(const olxstr& COllectionFrom, const olxstr& COllectionTo);

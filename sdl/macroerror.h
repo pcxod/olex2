@@ -96,7 +96,7 @@ public:
   bool IsIllegalState() const {
     return (ProcessError & peIllegalState) != 0;
   }
-  bool IsBeakCalled() const {
+  bool IsBreakCalled() const {
     return (ProcessError & peProcessingBreak) != 0;
   }
 

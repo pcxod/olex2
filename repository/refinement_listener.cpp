@@ -43,6 +43,7 @@ namespace olex2 {
       }
       IOlex2Processor* ip = IOlex2Processor::GetInstance();
       if (ip != 0) {
+        TLog::Disabler ld = TBasicApp::GetInstance().GetLog().Disable();
         ip->processMacro("refresh");
       }
     }

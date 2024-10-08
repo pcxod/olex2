@@ -30,6 +30,7 @@ class TLog : public IOlxObject, public IDataOutputStream {
   TArrayList<olx_pair_t<IDataOutputStream*, bool> > Streams;
   TActionQList Actions;
   bool verbose;
+  int disabled;
 protected:
   virtual size_t Write(const void* Data, size_t size);
   virtual uint64_t GetSize() const { return 0; }
@@ -37,12 +38,18 @@ protected:
   virtual void SetPosition(uint64_t) {}
 
   void Add(const olxstr& str) {
+    if (disabled != 0) {
+      return;
+    }
     for (size_t i = 0; i < Streams.Count(); i++) {
       Streams[i].a->Writeln(str);
     }
   }
   template <class List>
   void Add(const List& lst) {
+    if (disabled != 0) {
+      return;
+    }
     for (size_t i = 0; i < lst.Count(); i++) {
       for (size_t j = 0; j < Streams.Count(); j++) {
         Streams[j].a->Writeln(lst[i]);
@@ -68,6 +75,9 @@ public:
   }
   // use this operators for unconditional 'printing'
   TLog& operator << (const olxstr& str) {
+    if (disabled != 0) {
+      return *this;
+    }
     for (size_t i = 0; i < Streams.Count(); i++) {
       Streams[i].a->Write(str);
     }
@@ -120,6 +130,24 @@ public:
     const olxstr& location = EmptyString())
   {
     return LogEntry(*this, evt, annotate, location);
+  }
+  //..............................................................................
+  struct Disabler {
+  private:
+    TLog& parent;
+  public:
+    Disabler(TLog& parent)
+      : parent(parent)
+    {
+      parent.disabled++;
+    }
+    ~Disabler() {
+      parent.disabled--;
+    }
+  };
+  //..............................................................................
+  Disabler Disable() {
+    return Disabler(*this);
   }
   //..............................................................................
   TActionQueue& OnInfo;

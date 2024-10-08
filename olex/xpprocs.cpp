@@ -4600,42 +4600,63 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
     sg->GetMatrices(ml, mattAll);
     vec3d_list p, allPoints;
     if (Cmds[0].Equalsi("sphere")) {
-      TDUserObj* uo = new TDUserObj(FXApp->GetRenderer(), sgloSphere, Cmds[1]);
+      vec3d center;
+      olx_object_ptr<TDUserObj> uo = new TDUserObj(FXApp->GetRenderer(), sgloSphere, Cmds[1]);
       try {
-        if (Cmds.Count() == 4) {
+        if (Cmds.Count() > 3) {
           uo->Params().Resize(1)[0] = Cmds[3].ToDouble();
         }
-        else if (Cmds.Count() == 7) {
-          uo->Params().Resize(1)[0] = Cmds[3].ToDouble();
-          uo->Basis.Translate(
-            vec3d(Cmds[4].ToDouble(), Cmds[5].ToDouble(), Cmds[6].ToDouble()));
+        if (Cmds.Count() == 7 || (Cmds.Count() == 5 && Cmds[4].CharCount(' ') == 2)) {
+          if (Cmds.Count() == 5) {
+            TStrList toks(Cmds[4], ' ');
+            if (toks.Count() == 3) {
+              center[0] = toks[0].ToDouble();
+              center[1] = toks[1].ToDouble();
+              center[2] = toks[2].ToDouble();
+            }
+          }
+          else {
+            center[0] = Cmds[4].ToDouble();
+            center[1] = Cmds[5].ToDouble();
+            center[2] = Cmds[6].ToDouble();
+          }
+          uo->Basis.Translate(center);
         }
         else {
-          delete uo;
-          uo = NULL;
+          uo = 0;
         }
-        if (uo != NULL) {
-          FXApp->AddObjectToCreate(uo);
+        if (uo.ok()) {
           uo->SetZoomable(true);
-          //uo->SetMove2D(true);
           uo->SetMoveable(true);
+          FXApp->GetRenderer().GetStyles().SetDefaultMaterial(
+            Cmds[1], "Object",
+            TGlMaterial("1109;4282384512;3212869760;4290822336;32")
+          );
           uo->Create();
+          if (Options.GetBoolOption('g')) {
+            const TLattice& latt = FXApp->XFile().GetLattice();
+            for (size_t i = 0; i < latt.MatrixCount(); i++) {
+              const smatd& m = latt.GetMatrix(i);
+              if (m.IsFirst()) {
+                continue;
+              }
+              vec3d p = latt.GetAsymmUnit().Orthogonalise(
+                m * latt.GetAsymmUnit().Fractionalise(center));
+              TDUserObj* ns = new TDUserObj(FXApp->GetRenderer(), sgloSphere, Cmds[1]);
+              ns->Params() = uo->Params();
+              ns->SetZoomable(true);
+              ns->SetMoveable(true);
+              ns->Basis.Translate(p);
+              FXApp->AddObjectToCreate(ns);
+              ns->Create();
+            }
+          }
+          FXApp->AddObjectToCreate(uo.release());
         }
       }
       catch (const TExceptionBase &e) {
-        delete uo;
         throw TFunctionFailedException(__OlxSourceInfo, e);
       }
-      //for( size_t i=3; i < Cmds.Count(); i+=3 )
-      //  p.AddNew(Cmds[i].ToDouble(), Cmds[i+1].ToDouble(), Cmds[i+2].ToDouble());
-      //main_GenerateCrd(p, ml, allPoints);
-      //TArrayList<vec3f>& data = *(new TArrayList<vec3f>(allPoints.Count()));
-      //for( size_t i=0; i < allPoints.Count(); i++ )
-      //  data[i] = allPoints[i] * uc->GetCellToCartesian();
-      //TDUserObj* uo = new TDUserObj(FXApp->GetRenderer(), sgloSphere, Cmds[1]);
-      //uo->SetVertices(&data);
-      //FXApp->AddObjectToCreate(uo);
-      //uo->Create();
     }
     else if (Cmds[0].Equalsi("line")) {
       if ((Cmds.Count() - 3) % 6 != 0) {

@@ -35,7 +35,7 @@ protected:
 
   virtual void AnalyseErrorEx(const TMacroData &error, bool quiet) {
     if (!error.IsSuccessful()) {
-      if (!error.IsBeakCalled()) {
+      if (!error.IsBreakCalled()) {
         if (error.IsProcessingException()) {
           TBasicApp::NewLogEntry(logException) << error.GetLocation() << ": " <<
             error.GetInfo();

@@ -12,6 +12,7 @@
 
 TLog::TLog()
   : verbose(false),
+  disabled(0),
   OnInfo(Actions.New("ONINF")),
   OnWarning(Actions.New("ONWRN")),
   OnError(Actions.New("ONERR")),

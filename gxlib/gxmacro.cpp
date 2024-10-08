@@ -1187,10 +1187,15 @@ void GXLibMacros::macBRad(TStrObjList &Cmds, const TParamList &Options,
   }
 }
 //.............................................................................
-void GXLibMacros::macTelpV(TStrObjList &Cmds, const TParamList &Options,
-  TMacroData &Error)
+void GXLibMacros::macTelpV(TStrObjList& Cmds, const TParamList& Options,
+  TMacroData& Error)
 {
-  float p = Cmds[0].ToFloat();
+  double p = Cmds[0].ToDouble();
+  if (!Error.IsMacroCall()) {
+    Error.SetRetVal(app.ProbFactor(p));
+    return;
+  }
+
   if (p > 0) {
     app.CalcProbFactor(p);
   }
