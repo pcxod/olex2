@@ -14,6 +14,9 @@
 #include "datastream.h"
 #include "actions.h"
 #include "estrlist.h"
+// convenience macro
+#define OLX_DISABLE_LOGGING()\
+ volatile TLog::Disabler olx_log_disabler = TBasicApp::GetInstance().GetLog().Disable()
 BeginEsdlNamespace()
 
 enum  {
@@ -38,21 +41,15 @@ protected:
   virtual void SetPosition(uint64_t) {}
 
   void Add(const olxstr& str) {
-    if (disabled != 0) {
-      return;
-    }
     for (size_t i = 0; i < Streams.Count(); i++) {
-      Streams[i].a->Writeln(str);
+      Streams[i].a->Writeln(disabled != 0 ? EmptyString() : str);
     }
   }
   template <class List>
   void Add(const List& lst) {
-    if (disabled != 0) {
-      return;
-    }
     for (size_t i = 0; i < lst.Count(); i++) {
       for (size_t j = 0; j < Streams.Count(); j++) {
-        Streams[j].a->Writeln(lst[i]);
+        Streams[j].a->Writeln(disabled != 0 ? EmptyString() : lst[i]);
       }
     }
   }
@@ -75,11 +72,8 @@ public:
   }
   // use this operators for unconditional 'printing'
   TLog& operator << (const olxstr& str) {
-    if (disabled != 0) {
-      return *this;
-    }
     for (size_t i = 0; i < Streams.Count(); i++) {
-      Streams[i].a->Write(str);
+      Streams[i].a->Write(disabled != 0 ? EmptyString() : str);
     }
     return *this;
   }

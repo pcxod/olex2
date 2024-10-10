@@ -463,7 +463,13 @@ PyObject* runPrintText(PyObject* self, PyObject* args) {
   time_t now = TETime::msNow();
   for (Py_ssize_t i = 0; i < sz; i++) {
     PyObject* po = PyTuple_GetItem(args, i);
-    olxstr s = PythonExt::ParseStr(po).Trim('\'');
+    olxstr s = PythonExt::ParseStr(po);
+    if (s.Length() >= 1 && s.CharAt(0) == '\'') {
+      s = s.SubStringFrom(1);
+    }
+    if (s.Length() >= 1 && s.CharAt(s.Length()-1) == '\'') {
+      s.SetLength(s.Length()-1);
+    }
     bool nl = false;
     if (s.EndsWith("\r\n")) {
       nl = true;

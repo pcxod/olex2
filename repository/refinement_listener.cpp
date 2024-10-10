@@ -41,11 +41,12 @@ namespace olex2 {
         DoBreak();
         TEFile::DelFile(i->fin_fn);
       }
-      IOlex2Processor* ip = IOlex2Processor::GetInstance();
-      if (ip != 0) {
-        TLog::Disabler ld = TBasicApp::GetInstance().GetLog().Disable();
-        ip->processMacro("refresh");
-      }
+      TBasicApp::GetInstance().Update();
+      //IOlex2Processor* ip = IOlex2Processor::GetInstance();
+      //if (ip != 0) {
+        //OLX_DISABLE_LOGGING();
+        //ip->processMacro("refresh");
+      //}
     }
     return Continue();
   }
