@@ -5139,6 +5139,21 @@ void CifMerge_UpdateAtomLoop(TCif &Cif) {
   }
 }
 
+//thanks to Berthold Stoger for sharing
+int32_t ShelXl_checksum(const olxstr &text) {
+  int32_t sum = 0;
+  for (size_t i = 0; i < text.Length(); i++) {
+    if (text.CharAt(i) > ' ') {
+      sum += text.CharAt(i);
+    }
+  }
+  sum %= 714025;
+  sum = sum * 1366 + 150889;
+  sum %= 714025;
+  sum %= 100000;
+  return sum;
+}
+
 void CifMerge_EmbeddData(TCif &Cif, bool insert_res, bool insert_hkl,
   bool insert_fab, bool hkl_fcf_format)
 {
@@ -5620,13 +5635,21 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
       Cif->RenameCurrentBlock(new_dn);
       //file_name = TEFile::ExtractFilePath(file_name) + new_dn + ".cif";
       ICifEntry *res_e = Cif->FindEntry("_shelx_res_file");
+      bool update_checksum = false;
       if (res_e == 0) {
         res_e = Cif->FindEntry("_iucr_refine_instructions_details");
+      }
+      else {
+        update_checksum = true;
       }
       if (res_e != 0) {
         cetStringList* res = dynamic_cast<cetStringList*>(res_e);
         if (res != 0) {
           UpdateHklSrc(res->lines, new_dn);
+        }
+        if (update_checksum) {
+          int32_t cs = ShelXl_checksum(res->lines.Text(EmptyString()));
+          Cif->SetParam("_shelx_res_checksum", olxstr(cs), false);
         }
       }
     }
