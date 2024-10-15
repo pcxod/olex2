@@ -1972,8 +1972,10 @@ void TIns::SaveToStrings(TStrList& SL) {
   SL.Add("END");
   for (size_t i = 0; i < peaks.Count(); i++) {
     TCAtom& p = *peaks[i];
-    SL.Add(p.GetLabel()).stream(' ') << "1" <<
-      p.ccrd()[0] << p.ccrd()[1] << p.ccrd()[2] << "11" << "0.05" << p.GetQPeak();
+    SL.Add(p.GetLabel()).stream(' ') << "1"
+      << p.ccrd()[0] << p.ccrd()[1] << p.ccrd()[2]
+      <<  GetRM().Vars.GetParam(p, catom_var_name_Sof)
+      << "0.05" << p.GetQPeak();
   }
 }
 //..............................................................................

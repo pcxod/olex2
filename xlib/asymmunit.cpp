@@ -1734,9 +1734,9 @@ void TAsymmUnit::LibNewAtom(const TStrObjList& Params, TMacroData& E) {
   else {
     ca.SetLabel(Params[0]);
   }
-  ca.SetOccu(1. / Lattice->GetUnitCell().GetPositionMultiplicity(crd));
-  GetRefMod()->Vars.SetParam(ca, catom_var_name_Sof,
-    1. / Lattice->GetUnitCell().GetPositionMultiplicity(crd));
+  double occu = 1. / Lattice->GetUnitCell().GetPositionMultiplicity(crd);
+  ca.SetOccu(occu);
+  GetRefMod()->Vars.SetParam(ca, catom_var_name_Sof, occu);
   GetRefMod()->Vars.FixParam(ca, catom_var_name_Sof);
   GetRefMod()->Vars.SetParam(ca, catom_var_name_Uiso, 0.5);
   for (short i = 0; i < 3; i++) {
