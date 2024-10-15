@@ -222,7 +222,7 @@ void TIns::LoadFromStrings(const TStrList& FileContent) {
       }
       else if (Toks[0].Equalsi("END")) { //reset RESI to default
         // this will help with recognising ins after end which to be ignored
-        Ins.Add(Toks[0]);
+        Ins.Add(Toks[0].ToUpperCase());
         cx.End = true;
         cx.Resi = &GetAsymmUnit().GetResidue(0);
         cx.AfixGroups.Clear();
@@ -354,6 +354,9 @@ void TIns::ParseRestraints(RefinementModel& rm,
   bool preserve = DoPreserveInvalid();
   size_t rp = 0;
   for (size_t i = 0; i < SL.Count(); i++) {
+    if (SL[i].Equals("END")) {
+      break;
+    }
     TStrList Toks(SL[i], ' ');
     try {
       TSimpleRestraint* sr = 0;
