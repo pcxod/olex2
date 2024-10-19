@@ -144,8 +144,21 @@ public:
 struct DistanceGenerator {
   struct idx_pair_t : public olx_pair_t<size_t, size_t> {
     idx_pair_t(size_t a, size_t b)
-      : olx_pair_t<size_t, size_t>(a, b)
-    {}
+      : olx_pair_t<size_t, size_t>(a, b),
+      extra(InvalidIndex)
+    {
+      if (this->a > this->b) {
+        olx_swap(this->a, this->b);
+      }
+    }
+    idx_pair_t(size_t a, size_t b, size_t extra)
+      : olx_pair_t<size_t, size_t>(a, b),
+      extra(extra)
+    {
+      if (this->a > this->b) {
+        olx_swap(this->a, this->b);
+      }
+    }
     int Compare(const idx_pair_t &p) const {
       int d = olx_cmp(a, p.a);
       if (d == 0) {
@@ -153,6 +166,10 @@ struct DistanceGenerator {
       }
       return d;
     }
+    /* could cary extra information, like source dependent group. Not used in
+    comparison
+    */
+    size_t extra;
   };
   typedef olxset<idx_pair_t, TComparableComparator> distance_set_t;
   typedef olxset<size_t, TPrimitiveComparator> atom_set_t;
@@ -169,13 +186,14 @@ struct DistanceGenerator {
   */
   void Generate(const TAsymmUnit &au, const atom_set_t &atoms,
     bool generate_13, bool inclusive,
-    const atom_set_t& Inclusive_set);
+    const atom_set_t& Inclusive_set, bool skip_h=true, bool skip_afixed=true);
   void Generate(const TAsymmUnit& au, const atom_set_t& atoms,
-    bool generate_13, bool inclusive)
+    bool generate_13, bool inclusive, bool skip_h=true, bool skip_afixed=true)
   {
-    Generate(au, atoms, generate_13, inclusive, atoms);
+    Generate(au, atoms, generate_13, inclusive, atoms, skip_h, skip_afixed);
   }
-  void Generate(const TCAtomPList atoms, bool generate_13, bool inclusive);
+  void Generate(const TCAtomPList atoms, bool generate_13, bool inclusive,
+    bool skip_h = true, bool skip_afixed = true);
   void GenerateSADI(RefinementModel &rm, const atom_map_1_t &atom_map,
     double esd12, double esd13) const
   {
@@ -211,6 +229,10 @@ struct DistanceGenerator {
   {
     return ListJoiner::Join(lists, 2, DistanceGenerator::idx_pair_t(0, 0));
   }
+  /* Generates the pair list and initialises extra to the group index from
+  the distance originates. This is helpful in the case some distances in
+  the rows are not valid and values could be shifted
+  */
   static TTypeList<pair_list_t>::const_list_type GeneratePairList(
     const distance_set_t& d, const TAsymmUnit& au,
     const atom_map_N_t& atom_map);

@@ -611,10 +611,12 @@ void TXFile::UpdateAsymmUnit() {
   for (size_t i = 0; i < GetAsymmUnit().EllpCount(); i++) {
     LL->GetAsymmUnit().NewEllp() = GetAsymmUnit().GetEllp(i);
   }
+  while (LL->GetAsymmUnit().AtomCount() < GetAsymmUnit().AtomCount()) {
+    LL->GetAsymmUnit().NewAtom();
+  }
   for (size_t i = 0; i < GetAsymmUnit().AtomCount(); i++) {
     TCAtom& CA = GetAsymmUnit().GetAtom(i);
-    TCAtom& CA1 = LL->GetAsymmUnit().AtomCount() <= i ?
-      LL->GetAsymmUnit().NewAtom() : LL->GetAsymmUnit().GetAtom(i);
+    TCAtom& CA1 = LL->GetAsymmUnit().GetAtom(i);
     CA1.Assign(CA);
   }
   LL->GetAsymmUnit().AssignResidues(GetAsymmUnit());
@@ -810,9 +812,9 @@ void TXFile::Sort(const TStrList& ins, const TParamList &options) {
     au.ComplyToResidues();
     au.GetAtoms().ForEach(ACollectionItem::IndexTagSetter());
     GetRM().Sort_();
-    TSizeList indices = TIns::DrySave(au);
+    TSizeList indices = TIns::DrySave(au, false);
     au.RearrangeAtoms(indices);
-    TSizeList indices1 = TIns::DrySave(au);
+    TSizeList indices1 = TIns::DrySave(au, false);
     olxstr_buf offending;
     for (size_t i = 0; i < indices.Count(); i++) {
       if (indices[i] != indices1[i]) {
@@ -939,7 +941,14 @@ void TXFile::SaveToFile(const olxstr& FN, int flags) {
   olxstr Ext = TEFile::ExtractFileExt(FN);
   TBasicCFile *Loader = FindFormat(Ext);
   TBasicCFile *LL = FLastLoader;
+
   if (!Loader->IsNative()) {
+    if (!TXApp::DoUseExplicitSAME() && !TXApp::DoUseExternalExplicitSAME()) {
+      GetRM().rSAME.BeginAUSort();
+      GetRM().rSAME.FixOverlapping();
+      GetRM().rSAME.PrepareSave();
+      GetRM().rSAME.EndAUSort();
+    }
     if (LL != Loader) {
       if (!Loader->Adopt(*this, flags)) {
         throw TFunctionFailedException(__OlxSourceInfo,

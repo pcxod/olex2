@@ -136,7 +136,8 @@ public:
     TIndexList& index, TStrList& SL,
     RefinementModel::ReleasedItems* processed);
   /* returns atom Ids as they will be saved according to constraints */
-  static TSizeList::const_list_type DrySave(const TAsymmUnit& au);
+  static TSizeList::const_list_type DrySave(const TAsymmUnit& au,
+    bool expandSAME=true);
   static void ValidateRestraintsAtomNames(RefinementModel& rm,
     bool report = true);
   static bool ParseRestraint(RefinementModel &rm,

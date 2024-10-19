@@ -1458,6 +1458,18 @@ bool TXApp::DoUseExternalExplicitSAME() {
   }
 }
 //..............................................................................
+bool TXApp::DoUseExplicitSAME() {
+  TXApp& a = GetInstance();
+  if (a.explicit_same.ok()) {
+    return *a.explicit_same;
+  }
+  else {
+    a.explicit_same = TBasicApp::GetInstance().GetOptions()
+      .FindValue("explicit_same", FalseString()).ToBool();
+    return *a.explicit_same;
+  }
+}
+//..............................................................................
 void TXApp::ResetOptions() {
   preserve_fvars.reset();
   min_hbond_angle.reset();

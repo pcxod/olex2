@@ -966,52 +966,70 @@ olxstr CXBondInfo::ToString(const TCAtom & from) const {
 ///////////////////////////////////////////////////////////////////////////////
 void DistanceGenerator::Generate(const TAsymmUnit &au,
   const DistanceGenerator::atom_set_t &atom_set,
-  bool generate_13, bool inclusive, const atom_set_t& inclusive_set)
+  bool generate_13, bool inclusive, const atom_set_t& inclusive_set,
+  bool skip_h, bool skip_afixed)
 {
   for (size_t i = 0; i < atom_set.Count(); i++) {
     TCAtom &a = au.GetAtom(atom_set[i]);
     for (size_t j = 0; j < a.AttachedSiteCount(); j++) {
       TCAtom::Site &s1 = a.GetAttachedSite(j);
-      if (!s1.matrix.IsFirst() || s1.atom->IsDeleted()) {
+      if (!s1.matrix.IsFirst() || s1.atom->IsDeleted() ||
+        (skip_h && s1.atom->GetType().z == 1) ||
+        (skip_afixed && s1.atom->GetAfix() > 0))
+      {
         continue;
       }
       if (inclusive && !inclusive_set.Contains(s1.atom->GetId())) {
+        // check an extra shell, when the connecting atom might be outside of the atom_set
+        if (generate_13) {
+          for (size_t k = 0; k < s1.atom->AttachedSiteCount(); k++) {
+            TCAtom::Site& s2 = s1.atom->GetAttachedSite(k);
+            if (!s2.matrix.IsFirst() || s2.atom->IsDeleted() ||
+              (skip_h && s2.atom->GetType().z == 1) ||
+              (skip_afixed && s2.atom->GetAfix() > 0))
+            {
+              continue;
+            }
+            if (s2.atom->GetId() == a.GetId()) {
+              continue;
+            }
+            if (inclusive && !inclusive_set.Contains(s2.atom->GetId())) {
+              continue;
+            }
+            distances_13.Add(idx_pair_t(a.GetId(), s2.atom->GetId()));
+          }
+        }
         continue;
       }
-      size_t a_idx = a.GetId(),
-        b_idx = s1.atom->GetId();
-      if (a_idx > b_idx) {
-        olx_swap(a_idx, b_idx);
-      }
-      distances_12.Add(idx_pair_t(a_idx, b_idx));
+      distances_12.Add(idx_pair_t(a.GetId(), s1.atom->GetId()));
       if (generate_13) {
-        bool set_atom = inclusive || atom_set.Contains(s1.atom->GetId());
+        bool set_atom_1 = atom_set.Contains(s1.atom->GetId());
         for (size_t k = j + 1; k < a.AttachedSiteCount(); k++) {
           TCAtom::Site &s2 = a.GetAttachedSite(k);
-          if (!s2.matrix.IsFirst() || s2.atom->IsDeleted()) {
+          if (!s2.matrix.IsFirst() || s2.atom->IsDeleted() ||
+            (skip_h && s2.atom->GetType().z == 1) ||
+            (skip_afixed && s2.atom->GetAfix() > 0))
+          {
+            continue;
+          }
+          bool set_atom_2 = atom_set.Contains(s2.atom->GetId());
+          // one of the atoms must be in the atom_set
+          if (!set_atom_1 && !set_atom_2) {
             continue;
           }
           // at least one of the atoms should be in the set if not inclusive
-          if (!inclusive_set.Contains(s2.atom->GetId())) {
-            if (!set_atom || inclusive) {
-              continue;
-            }
+          if (!set_atom_2 && inclusive && !inclusive_set.Contains(s2.atom->GetId())) {
+            continue;
           }
-          a_idx = s1.atom->GetId();
-          b_idx = s2.atom->GetId();
-          if (a_idx > b_idx) {
-            olx_swap(a_idx, b_idx);
-          }
-          distances_13.Add(idx_pair_t(a_idx, b_idx));
+          distances_13.Add(idx_pair_t(s1.atom->GetId(), s2.atom->GetId()));
         }
       }
     }
   }
-
 }
 //........................................................................
 void DistanceGenerator::Generate(const TCAtomPList atoms, bool generate_13,
-  bool inclusive)
+  bool inclusive, bool skip_h, bool skip_afixed)
 {
   if (atoms.IsEmpty()) {
     return;
@@ -1020,7 +1038,8 @@ void DistanceGenerator::Generate(const TCAtomPList atoms, bool generate_13,
   for (size_t i = 0; i < atoms.Count(); i++) {
     a_set.Add(atoms[i]->GetId());
   }
-  Generate(*atoms[0]->GetParent(), a_set, generate_13, inclusive);
+  Generate(*atoms[0]->GetParent(), a_set, generate_13, inclusive,
+    skip_h, skip_afixed);
 }
 //........................................................................
 void DistanceGenerator::GenerateSADI_(
@@ -1135,7 +1154,7 @@ DistanceGenerator::GeneratePairList(
       if (a_idx > b_idx) {
         olx_swap(a_idx, b_idx);
       }
-      row.AddNew(a_idx, b_idx);
+      row.AddNew(a_idx, b_idx, j);
     }
   }
   return res;

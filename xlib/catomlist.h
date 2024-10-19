@@ -248,6 +248,7 @@ public:
   void AddExplicit(TCAtom& a, const smatd* m = 0) {
     refs.Add(new ExplicitCAtomRef(a, m));
   }
+  void AddAll(const TAtomRefList& list, bool same_rm);
   void AddExplicit(class TSAtom& a);
   // checks if all atoms are in the same RESI
   void UpdateResi();

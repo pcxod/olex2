@@ -64,13 +64,15 @@ protected:
   TLibrary Library;
   olxstr CifTemplatesDir;  // the folder with CIF templates/data
   ASelectionOwner* SelectionOwner;
-  olx_object_ptr<bool> preserve_fvars;
   olx_object_ptr<double> min_hbond_angle,
     exyz_separation;
-  olx_object_ptr<bool> safe_afix;
-  olx_object_ptr<bool> rename_parts;
-  olx_object_ptr<bool> stack_restraints;
-  olx_object_ptr<bool> external_explicit_same;
+  olx_object_ptr<bool>
+    preserve_fvars,
+    safe_afix,
+    rename_parts,
+    stack_restraints,
+    external_explicit_same,
+    explicit_same;
   size_t max_label_length;
   bool interactions_i;
   SortedObjectList<int, TPrimitiveComparator> interactions_from,
@@ -224,6 +226,7 @@ public:
   static SortedObjectList<int, TPrimitiveComparator>& GetInteractionsTo();
   static bool DoStackRestraints();
   static bool DoUseExternalExplicitSAME();
+  static bool DoUseExplicitSAME();
   void ResetOptions();
 
   static const_strlist BangList(const TSAtom &A);

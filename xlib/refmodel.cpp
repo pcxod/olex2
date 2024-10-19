@@ -1776,19 +1776,25 @@ const_strlist RefinementModel::Describe() {
 size_t RefinementModel::MergeSADI() {
   typedef TTypeList<TSBond::Ref> list_t;
   typedef TTypeList<list_t> lists_t;
-  olxdict<double, lists_t, TPrimitiveComparator> sets;
+  olx_pdict<double, lists_t> sets;
+  olx_pdict<uint32_t, smatd> mats;
   TTypeList<TTypeList<TSBond::Ref> > to_merge;
   for (size_t i = 0; i < rSADI.Count(); i++) {
     list_t& d = sets.Add(rSADI[i].GetEsd()).AddNew();
     TAtomRefList x = rSADI[i].GetAtoms().ExpandList(*this, 2);
     for (size_t ri = 0; ri < x.Count(); ri += 2) {
+      if (x[ri].GetMatrix() != 0) {
+        mats(x[ri].GetMatrix()->GetId(), *x[ri].GetMatrix());
+      }
+      if (x[ri+1].GetMatrix() != 0) {
+        mats(x[ri+1].GetMatrix()->GetId(), *x[ri+1].GetMatrix());
+      }
       d.AddCopy(TSBond::GetRef(
         x[ri].GetAtom(), x[ri].GetMatrix(),
         x[ri + 1].GetAtom(), x[ri + 1].GetMatrix()));
     }
   }
   rSADI.Clear();
-  const TUnitCell &uc = aunit.GetLattice().GetUnitCell();
   for (size_t i = 0; i < sets.Count(); i++) {
     lists_t res = ListJoiner::Join(sets.GetValue(i), 2, TSBond::Ref());
     for (size_t j = 0; j < res.Count(); j++) {
@@ -1798,16 +1804,8 @@ size_t RefinementModel::MergeSADI() {
         TSBond::Ref& ref = res[j][k];
         TCAtom& ca = aunit.GetAtom(ref.a.atom_id),
           &cb = aunit.GetAtom(ref.b.atom_id);
-        olx_object_ptr<smatd> ma, mb;
-        if (ref.a.matrix_id != ~0) {
-          ma = new smatd(smatd::FromId(ref.a.matrix_id,
-            uc.GetMatrix(smatd::GetContainerId(ref.a.matrix_id))));
-        }
-        if (ref.b.matrix_id != ~0) {
-          mb = new smatd(smatd::FromId(ref.b.matrix_id,
-            uc.GetMatrix(smatd::GetContainerId(ref.b.matrix_id))));
-        }
-        r.AddAtomPair(ca, &ma, cb, &mb);
+        r.AddAtomPair(ca, ref.a.matrix_id == ~0 ? 0 : &mats[ref.a.matrix_id],
+          cb, ref.b.matrix_id == ~0 ? 0 : &mats[ref.b.matrix_id]);
       }
     }
   }
@@ -2246,10 +2244,35 @@ PyObject* RefinementModel::PyExport(bool export_conn) {
   PythonExt::SetDictItem(main, "exptl", expl.PyExport());
   PythonExt::SetDictItem(main, "afix", AfixGroups.PyExport(atoms));
   PythonExt::SetDictItem(main, "exyz", ExyzGroups.PyExport(atoms));
-  PythonExt::SetDictItem(main, "same", rSAME.PyExport(atoms, equivs));
+  PyObject* sadi = 0;
   for (size_t i = 0; i < rcList1.Count(); i++) {
-    PythonExt::SetDictItem(main, rcList1[i]->GetIdName().ToLowerCase(),
-      rcList1[i]->PyExport(atoms, equivs));
+    olxstr tuple_name = rcList1[i]->GetIdName().ToLowerCase();
+    PyObject* tuple = rcList1[i]->PyExport(atoms, equivs);
+    PythonExt::SetDictItem(main, tuple_name, tuple);
+    if (tuple_name == "sadi") {
+      sadi = tuple;
+    }
+  }
+  if (sadi != 0) {
+    TPtrList<PyObject> sadis = rSAME.PyExportAsSADI(atoms, equivs);
+    if (!sadis.IsEmpty()) {
+      size_t sadi_sz = PyTuple_Size(sadi),
+        new_sz = sadi_sz + sadis.Count();
+      PyObject* new_sadi = PyTuple_New(new_sz);
+      for (size_t i = 0; i < sadi_sz; i++) {
+        PyObject* si = PyTuple_GetItem(sadi, i);
+        Py_IncRef(si);
+        PyTuple_SetItem(new_sadi, i, si);
+      }
+      for (size_t i = 0; i < sadis.Count(); i++) {
+        PyTuple_SetItem(new_sadi, sadi_sz + i, sadis[i]);
+      }
+      PythonExt::SetDictItem(main, "sadi", new_sadi);
+      Py_DecRef(sadi);
+    }
+  }
+  else {
+    PythonExt::SetDictItem(main, "same", rSAME.PyExport(atoms, equivs));
   }
   for (size_t i = 0; i < rcList.Count(); i++) {
     PythonExt::SetDictItem(main, rcList[i]->GetName(), rcList[i]->PyExport());
@@ -2684,14 +2707,15 @@ olxstr RefinementModel::WriteInsExtras(const TCAtomPList* atoms,
       }
     }
   }
-  if (!rl.IsEmpty() ||
-    (TXApp::DoUseExternalExplicitSAME() && rSAME.Count() > 0))
+  bool explicit_same = TXApp::DoUseExternalExplicitSAME()
+    || TXApp::DoUseExplicitSAME();
+  if (!rl.IsEmpty() || (explicit_same && rSAME.Count() > 0))
   {
     TDataItem &ri = di.AddItem("restraints");
     for (size_t i = 0; i < rl.Count(); i++) {
       ri.AddItem("item", rl[i]);
     }
-    if (rSAME.Count() > 0) {
+    if (explicit_same && rSAME.Count() > 0) {
       rSAME.ToDataItem(ri.AddItem("SAME"));
     }
   }

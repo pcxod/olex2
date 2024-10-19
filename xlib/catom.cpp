@@ -169,6 +169,16 @@ void TCAtom::Assign(const TCAtom& S)  {
   if (S.GetDisp().ok()) {
     disp = new Disp(*S.GetDisp());
   }
+  AttachedSites.Clear();
+  AttachedSitesI.Clear();
+  for (size_t i = 0; i < S.AttachedSiteCount(); i++) {
+    const TCAtom::Site& s = S.GetAttachedSite(i);
+    AttachedSites.AddNew(&Parent->GetAtom(s.atom->GetId()), s.matrix);
+  }
+  for (size_t i = 0; i < S.AttachedSiteICount(); i++) {
+    const TCAtom::Site& s = S.GetAttachedSiteI(i);
+    AttachedSitesI.AddNew(&Parent->GetAtom(s.atom->GetId()), s.matrix);
+  }
 }
 //..............................................................................
 int TCAtom::GetAfix() const {

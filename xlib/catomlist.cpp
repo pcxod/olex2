@@ -776,26 +776,25 @@ AtomRefList &AtomRefList::Validate(size_t group_size) {
 }
 //.............................................................................
 void AtomRefList::ToDataItem(TDataItem &di) const {
-  di.AddField("residue", residue).
-    AddField("expression", expression).
-    AddField("has_implicit", ContainsImplicitAtoms);
-  size_t cnt=0;
-  for (size_t i=0; i < refs.Count(); i++) {
-    if (refs[i].IsValid()) {
-      refs[i].ToDataItem(di.AddItem("item"));
-    }
-  }
+  di.AddField("residue", residue)
+    .AddField("expression", GetExpression());
+    //.AddField("has_implicit", ContainsImplicitAtoms);
+  //size_t cnt=0;
+  //for (size_t i=0; i < refs.Count(); i++) {
+  //  if (refs[i].IsValid()) {
+  //    refs[i].ToDataItem(di.AddItem("item"));
+  //  }
+  //}
 }
 //.............................................................................
 void AtomRefList::FromDataItem(const TDataItem &di) {
-  residue = di.GetFieldByName("residue");
-  expression = di.GetFieldByName("expression");
-  ContainsImplicitAtoms = di.GetFieldByName("has_implicit").ToBool();
-  refs.Clear();
-  refs.SetCapacity(di.ItemCount());
-  for (size_t i = 0; i < di.ItemCount(); i++) {
-    refs.Add(AAtomRef::FromDataItem(di.GetItemByIndex(i), rm));
-  }
+  Build(di.GetFieldByName("expression"),
+    di.GetFieldByName("residue"));
+  //refs.Clear();
+  //refs.SetCapacity(di.ItemCount());
+  //for (size_t i = 0; i < di.ItemCount(); i++) {
+  //  refs.Add(AAtomRef::FromDataItem(di.GetItemByIndex(i), rm));
+  //}
   InitImplicitRefs();
 }
 //.............................................................................
@@ -881,6 +880,18 @@ olxstr AtomRefList::GetExpression() const {
 void AtomRefList::AddExplicit(class TSAtom &a) {
   refs.Add(new ExplicitCAtomRef(a.CAtom(),
     a.GetMatrix().IsFirst() ? 0 : &a.GetMatrix()));
+}
+//.............................................................................
+void AtomRefList::AddAll(const TAtomRefList& list, bool same_rm) {
+  for (size_t i = 0; i < list.Count(); i++) {
+    if (same_rm) {
+      refs.Add(new ExplicitCAtomRef(list[i]));
+
+    }
+    else {
+      refs.Add(list[i].Clone(rm));
+    }
+  }
 }
 //.............................................................................
 TPtrList<ExplicitCAtomRef>::const_list_type AtomRefList::GetExplicit() const {
