@@ -69,7 +69,8 @@ void GXLibMacros::Export(TLibrary& lib) {
   gxlib_InitMacro(Name,
     "s-simply changes suffix of provided atoms to the provided one (or none)&;"
     "cs-leaves current selection unchanged&;"
-    "r-synchronise names in the residues"
+    "r-synchronise names in the residues&;"
+    "ns-do not steal labels from other atoms"
     ,
     fpNone|fpOne|fpTwo|fpThree,
     "Names atoms. If the 'sel' keyword is used and a number (or just the number)"
@@ -713,6 +714,7 @@ void GXLibMacros::macName(TStrObjList &Cmds, const TParamList &Options,
   }
   bool changeSuffix = Options.Contains('s');
   bool nameResi = Options.GetBoolOption('r', false, true);
+  bool doNotSteal = Options.GetBoolOption("ns", true, true);
   if (changeSuffix) {
     TXAtomPList xatoms = app.FindXAtoms(Cmds, true, !Options.GetBoolOption("cs"));
     if (!xatoms.IsEmpty()) {
@@ -737,19 +739,20 @@ void GXLibMacros::macName(TStrObjList &Cmds, const TParamList &Options,
       if (spi != InvalidIndex) {
         app.GetUndo().Push(
           app.Name(Cmds[0].SubStringTo(spi),
-          Cmds[0].SubStringFrom(spi+1), !Options.GetBoolOption("cs"), nameResi)
+          Cmds[0].SubStringFrom(spi+1), !Options.GetBoolOption("cs"),
+            nameResi, doNotSteal)
         );
       }
       else {
         app.GetUndo().Push(
           app.Name("sel", Cmds[0], !Options.GetBoolOption("cs"),
-          nameResi));
+          nameResi, doNotSteal));
       }
       processed = true;
     }
     else if (Cmds.Count() == 2) {
       app.GetUndo().Push(app.Name(Cmds[0], Cmds[1], !Options.GetBoolOption("cs"),
-        nameResi));
+        nameResi, doNotSteal));
       processed = true;
     }
     if (!processed) {

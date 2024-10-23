@@ -929,6 +929,16 @@ void TAsymmUnit::TLabelChecker::SetLabel(TCAtom &a, const olxstr& label,
   labels.Add(label.ToLowerCase(), a.GetId(), true);
 }
 //..............................................................................
+bool TAsymmUnit::TLabelChecker::Exists(const olxstr& label) const {
+  olxstr lcl = label.ToLowerCase();
+  for (size_t i = 0; i < r_labels.Count(); i++) {
+    if (r_labels.GetValue(i).HasKey(lcl)) {
+      return true;
+    }
+  }
+  return false;
+}
+//..............................................................................
 //..............................................................................
 //..............................................................................
 double TAsymmUnit::CountElementOccupancy(const olxstr& Symbol) const {

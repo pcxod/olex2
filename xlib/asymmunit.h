@@ -385,6 +385,8 @@ public:
       const cm_Element* new_element,
       bool check_atom) const;
     void SetLabel(TCAtom& a, const olxstr& label, bool update_type = false);
+    // checks if the given labels exists globally
+    bool Exists(const olxstr& label) const;
   };
 };
 

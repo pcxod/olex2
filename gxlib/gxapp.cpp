@@ -2313,7 +2313,7 @@ TUndoData* TGXApp::Name(TXAtom& XA, const olxstr& _Name) {
 }
 //..............................................................................
 TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To,
-  bool ClearSelection, bool NameResi)
+  bool ClearSelection, bool NameResi, bool DoNotSteal)
 {
   TXAtomPList Atoms;
   olx_object_ptr<TNameUndo> undo;
@@ -2332,6 +2332,11 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To,
       const olxstr Tmp = XA->GetLabel();
       olxstr NL = XA->GetType().symbol;
       NL << j++;
+      if (DoNotSteal && lc.Exists(NL)) {
+        TBasicApp::NewLogEntry(logWarning)
+          << "Existing label encountered: " << NL;
+        return undo.release();
+      }
       const olxstr oldL = XA->GetLabel();
       lc.SetLabel(XA->CAtom(), NL);
       undo->AddAtom(XA->CAtom(), oldL);
@@ -2367,6 +2372,11 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To,
           const olxstr Tmp = XA->GetLabel();
           olxstr NL = XA->GetType().symbol;
           NL << j++;
+          if (DoNotSteal && lc.Exists(NL)) {
+            TBasicApp::NewLogEntry(logWarning)
+              << "Existing label encountered: " << NL;
+            return undo.release();
+          }
           const olxstr oldL = XA->GetLabel();
           lc.SetLabel(XA->CAtom(), NL);
           undo->AddAtom(XA->CAtom(), oldL);
@@ -2386,6 +2396,11 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To,
             const olxstr Tmp = XA->GetLabel();
             olxstr NL = elm->symbol;
             NL << Tmp.SubStringFrom(From.Length()-1);
+            if (DoNotSteal && lc.Exists(NL)) {
+              TBasicApp::NewLogEntry(logWarning)
+                << "Existing label encountered: " << NL;
+              return undo.release();
+            }
             bool recreate = XA->GetType() != *elm;
             const olxstr oldL = XA->GetLabel();
             lc.SetLabel(XA->CAtom(), NL);
@@ -2408,6 +2423,11 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To,
             const olxstr Tmp = XA->GetLabel();
             olxstr NL = XA->GetType().symbol;
             NL << j++;
+            if (DoNotSteal && lc.Exists(NL)) {
+              TBasicApp::NewLogEntry(logWarning)
+                << "Existing label encountered: " << NL;
+              return undo.release();
+            }
             const olxstr oldL = XA->GetLabel();
             lc.SetLabel(XA->CAtom(), NL);
             undo->AddAtom(XA->CAtom(), oldL);

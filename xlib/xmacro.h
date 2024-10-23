@@ -172,6 +172,7 @@ public:
   static DefMacro(Lowdin)
   static DefMacro(Adopt)
   static DefMacro(ADPInfo)
+  static DefMacro(Wigl)
 
   static DefFunc(Lst)
   static DefFunc(FileName)
