@@ -812,7 +812,7 @@ void XLibMacros::Export(TLibrary& lib)  {
     "Prints various ADP information");
   xlib_InitMacro(Wigl,
     EmptyString(),
-    fpNone | psFileLoaded,
+    fpNone | fpOne | fpTwo | psFileLoaded,
     "'Shakes' the structure as desribed in ShelXl manual");
   //_____________________________________________________________________________
 
@@ -5711,6 +5711,9 @@ void XLibMacros::macCifExtract(TStrObjList &Cmds, const TParamList &Options,
       dest = TEFile::JoinPath(TStrList()
         << TEFile::ExtractFilePath(xapp.XFile().GetFileName())
         << cif->GetDataName() +".cif_od");
+      if (TEFile::Exists(dest)) {
+        return;
+      }
     }
   }
   
